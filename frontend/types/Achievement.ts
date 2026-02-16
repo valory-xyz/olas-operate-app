@@ -6,6 +6,7 @@ export type PolystratAchievementData = {
   bet_amount: number;
   status: string;
   net_profit: number;
+  total_payout?: number;
   created_at: string;
   settled_at: string;
   transaction_hash: string;

@@ -1,5 +1,5 @@
 import { Button, Flex, Typography } from 'antd';
-import { capitalize } from 'lodash';
+import { capitalize, isNil } from 'lodash';
 import Image from 'next/image';
 import { useMemo } from 'react';
 import { LuSquareArrowOutUpRight } from 'react-icons/lu';
@@ -50,51 +50,45 @@ const StatColumn = ({ label, value }: StatColumnProps) => {
   );
 };
 
+type PolystratModalContentProps = {
+  achievement: Achievement;
+  onShare?: () => void;
+};
+
 export const PolystratPayoutAchievement = ({
   achievement,
   onShare,
-}: {
-  achievement: Achievement;
-  onShare?: () => void;
-}) => {
+}: PolystratModalContentProps) => {
   const { description = NA, achievement_type: type, data } = achievement ?? {};
-
   const {
     id: betId,
-    net_profit = 0,
     market,
     prediction_side: position,
     bet_amount = 0,
+    total_payout,
     transaction_hash,
   } = data ?? {};
 
   const question = market?.title ?? NA;
-  const totalPayout = net_profit + bet_amount;
-  const totalPayoutFormatted = formatAmount(totalPayout);
+  const totalPayout = total_payout ?? null;
+  const totalPayoutFormatted = isNil(totalPayout)
+    ? null
+    : formatAmount(totalPayout);
+  const totalPayoutText = isNil(totalPayoutFormatted)
+    ? NA
+    : `$${totalPayoutFormatted}`;
 
   const stats = [
-    {
-      label: 'Position',
-      value: capitalize(position),
-    },
-    {
-      label: 'Amount',
-      value: `$${formatAmount(bet_amount)}`,
-    },
-    {
-      label: 'Won',
-      value: `$${totalPayoutFormatted}`,
-    },
+    { label: 'Position', value: capitalize(position) },
+    { label: 'Amount', value: `$${formatAmount(bet_amount)}` },
+    { label: 'Won', value: totalPayoutText },
   ];
 
   const handleShareOnX = () => {
-    const [, polystratAchievemntType] = type.split('/');
+    const [, polystratAchievementType] = type.split('/');
     const predictUrl = getPredictWebsiteAchievementUrl(
       'polystrat',
-      new URLSearchParams({
-        betId,
-        type: polystratAchievemntType,
-      }),
+      new URLSearchParams({ betId, type: polystratAchievementType }),
     );
     const postText = description.replace('{achievement_url}', predictUrl);
     const xIntentUrl = generateXIntentUrl(postText);
@@ -104,7 +98,6 @@ export const PolystratPayoutAchievement = ({
 
   const payoutMultiplier = useMemo(() => {
     if (!totalPayout || !bet_amount) return null;
-
     return formatAmount(totalPayout / bet_amount);
   }, [bet_amount, totalPayout]);
 
@@ -128,7 +121,7 @@ export const PolystratPayoutAchievement = ({
 
       <Text className="text-center mb-12 text-neutral-secondary">
         Your Polystrat made a high-return trade and collected{' '}
-        <Text className="font-weight-600">${totalPayoutFormatted}</Text>.
+        <Text className="font-weight-600">{totalPayoutText}</Text>.
       </Text>
 
       {transaction_hash && (
