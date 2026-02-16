@@ -70,7 +70,7 @@ export const OnRampIframe = ({
 
   const onRampUrl = useMemo(() => {
     if (!isMasterWalletFetched) return;
-    if (!masterEoa || !masterEoa?.address) return;
+    if (!masterEoa?.address) return;
     if (!networkName || !cryptoCurrencyCode) return;
 
     // If master safe exists on the provided chain, we need to on-ramp there
@@ -92,7 +92,7 @@ export const OnRampIframe = ({
     return url.toString();
   }, [
     isMasterWalletFetched,
-    masterEoa,
+    masterEoa?.address,
     networkName,
     cryptoCurrencyCode,
     getMasterSafeOf,

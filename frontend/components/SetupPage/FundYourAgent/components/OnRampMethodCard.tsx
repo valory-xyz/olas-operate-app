@@ -107,6 +107,7 @@ export const OnRampMethodCard = () => {
   const isFiatAmountTooLow = useMemo(() => {
     if (isLoading) return false;
     if (isNativeTokenLoading) return false;
+    if (hasNativeTokenError) return false;
     if (totalNativeToken === 0) return true;
     if (
       totalFiatDetails?.fiatAmount &&
@@ -115,7 +116,13 @@ export const OnRampMethodCard = () => {
       return true;
     }
     return false;
-  }, [totalFiatDetails, isLoading, isNativeTokenLoading, totalNativeToken]);
+  }, [
+    totalFiatDetails,
+    isLoading,
+    isNativeTokenLoading,
+    totalNativeToken,
+    hasNativeTokenError,
+  ]);
 
   return (
     <OnRampMethodCardCard>

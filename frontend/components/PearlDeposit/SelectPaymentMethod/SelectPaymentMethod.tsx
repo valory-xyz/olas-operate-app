@@ -1,4 +1,5 @@
 import { Button, Flex, Skeleton, Typography } from 'antd';
+import entries from 'lodash/entries';
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { styled } from 'styled-components';
@@ -25,7 +26,7 @@ import {
   useTotalFiatFromNativeToken,
   useTotalNativeTokenRequired,
 } from '@/hooks';
-import { BridgeRefillRequirementsRequest } from '@/types/Bridge';
+import { BridgeRefillRequirementsRequest, BridgeRequest } from '@/types/Bridge';
 import { TokenAmountDetails } from '@/types/Wallet';
 import { asEvmChainDetails, asMiddlewareChain, formatNumber } from '@/utils';
 
@@ -50,7 +51,7 @@ const ShowAmountsToDeposit = ({
   const { amountsToDeposit } = usePearlWallet();
   return (
     <Flex vertical gap={12}>
-      {Object.entries(amountsToDeposit)
+      {entries(amountsToDeposit)
         .filter(([, { amount }]) => Number(amount) > 0)
         .map(([tokenSymbol, { amount }]) => (
           <Flex key={tokenSymbol} gap={8} align="center">
@@ -163,13 +164,13 @@ const OnRampMethod = ({ chainId, onSelect }: OnRampMethodProps) => {
     useGetOnRampRequirementsParams(onRampChainId);
 
   const handleGetOnRampRequirementsParams = useCallback(
-    (forceUpdate?: boolean): BridgeRefillRequirementsRequest => {
+    (forceUpdate?: boolean): BridgeRefillRequirementsRequest | null => {
       const toDeposit = Object.entries(amountsToDeposit).filter(
         ([, { amount }]) => amount && amount > 0,
       ) as [TokenSymbol, TokenAmountDetails][];
 
       if (toDeposit.length === 0) {
-        throw new Error('No amounts to deposit');
+        return null;
       }
 
       const onRampParams = toDeposit.map(([tokenSymbol, { amount }]) => {
@@ -187,7 +188,7 @@ const OnRampMethod = ({ chainId, onSelect }: OnRampMethodProps) => {
       });
 
       return {
-        bridge_requests: onRampParams,
+        bridge_requests: onRampParams as BridgeRequest[],
         force_update: forceUpdate ?? false,
       };
     },
@@ -217,6 +218,7 @@ const OnRampMethod = ({ chainId, onSelect }: OnRampMethodProps) => {
   const isFiatAmountTooLow = useMemo(() => {
     if (isLoading) return false;
     if (isNativeTokenLoading) return false;
+    if (hasNativeTokenError || isBuyDisabled) return false;
     if (totalNativeToken === 0) return true;
     if (
       totalFiatDetails?.fiatAmount &&
@@ -225,7 +227,14 @@ const OnRampMethod = ({ chainId, onSelect }: OnRampMethodProps) => {
       return true;
     }
     return false;
-  }, [totalFiatDetails, isLoading, isNativeTokenLoading, totalNativeToken]);
+  }, [
+    totalFiatDetails,
+    isLoading,
+    isNativeTokenLoading,
+    totalNativeToken,
+    hasNativeTokenError,
+    isBuyDisabled,
+  ]);
 
   return (
     <SelectPaymentMethodCard>

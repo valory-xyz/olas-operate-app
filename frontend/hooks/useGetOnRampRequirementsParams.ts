@@ -38,12 +38,16 @@ export const useGetOnRampRequirementsParams = (onRampChainId: EvmChainId) => {
 
   return useCallback(
     (toTokenAddress: Address, amount: number) => {
-      if (!masterEoa) throw new Error('Master EOA is not available');
-      if (!isMasterWalletFetched) throw new Error('Master wallet not loaded');
-      if (!fromAddress || !toAddress)
-        throw new Error('Wallet addresses not available');
-      if (!toChainConfig) throw new Error('Wallet chain config not available');
-      if (!toChain) throw new Error('Wallet chain not available');
+      if (
+        !masterEoa ||
+        !isMasterWalletFetched ||
+        !fromAddress ||
+        !toAddress ||
+        !toChainConfig ||
+        !toChain
+      ) {
+        return null;
+      }
 
       const tokenDecimal = getTokenDecimal(toTokenAddress, toChainConfig);
 

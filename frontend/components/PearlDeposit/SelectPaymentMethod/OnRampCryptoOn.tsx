@@ -45,9 +45,9 @@ export const OnRampCryptoOn = ({
     useGetOnRampRequirementsParams(onRampChainId);
 
   const handleGetOnRampRequirementsParams = useCallback(
-    (forceUpdate?: boolean): BridgeRefillRequirementsRequest => {
+    (forceUpdate?: boolean): BridgeRefillRequirementsRequest | null => {
       if (!walletChainId) {
-        throw new Error('Wallet chain ID is not available');
+        return null;
       }
 
       const toDeposit = Object.entries(amountsToDeposit).filter(
@@ -55,7 +55,7 @@ export const OnRampCryptoOn = ({
       ) as [TokenSymbol, TokenAmountDetails][];
 
       if (toDeposit.length === 0) {
-        throw new Error('No amounts to deposit');
+        return null;
       }
 
       const onRampParams = toDeposit.map(([tokenSymbol, { amount }]) => {

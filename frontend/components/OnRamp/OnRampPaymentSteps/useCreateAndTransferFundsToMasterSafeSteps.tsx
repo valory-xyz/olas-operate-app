@@ -8,8 +8,6 @@ import { useMasterWalletContext, useOnRampContext } from '@/hooks';
 import { useMasterSafeCreationAndTransfer } from '@/hooks/useMasterSafeCreationAndTransfer';
 import { Nullable } from '@/types';
 
-import { OnRampMode } from '../types';
-
 const EMPTY_STATE_STEPS: Record<string, TransactionStep> = {
   createPearlWallet: { status: 'wait', title: 'Create Pearl Wallet' },
   transferFunds: {
@@ -20,10 +18,9 @@ const EMPTY_STATE_STEPS: Record<string, TransactionStep> = {
 
 /**
  * Hook to create a Master Safe and transfer funds to it after the swap is completed.
- * Only creates safe during onboarding mode if it doesn't exist.
+ * Creates safe if it doesn't exist.
  */
 export const useCreateAndTransferFundsToMasterSafeSteps = (
-  mode: OnRampMode,
   isSwapCompleted: boolean,
   tokensToBeTransferred: TokenSymbol[],
 ) => {
@@ -43,8 +40,8 @@ export const useCreateAndTransferFundsToMasterSafeSteps = (
 
   const hasMasterSafe = !isNil(getMasterSafeOf?.(selectedChainId));
 
-  // Only create master safe during onboarding if it doesn't exist
-  const shouldCreateMasterSafe = mode === 'onboard' && !hasMasterSafe;
+  // Create master safe if it doesn't exist
+  const shouldCreateMasterSafe = !hasMasterSafe;
 
   const isSafeCreated = isMasterWalletFetched
     ? hasMasterSafe ||
@@ -59,7 +56,7 @@ export const useCreateAndTransferFundsToMasterSafeSteps = (
     creationAndTransferDetails?.transferDetails.transfers;
 
   // Check if the swap is completed and tokens are available for transfer
-  // Only create safe if we're in onboard mode and don't have one yet
+  // Create safe if we don't have one yet
   useEffect(() => {
     if (!shouldCreateMasterSafe) return;
     if (!isSwapCompleted) return;
@@ -79,7 +76,7 @@ export const useCreateAndTransferFundsToMasterSafeSteps = (
 
   // Step for creating the Master Safe
   const masterSafeCreationStep = useMemo<Nullable<TransactionStep>>(() => {
-    // Don't show this step if we shouldn't create a safe (deposit mode or safe already exists)
+    // Don't show this step if safe already exists
     if (!shouldCreateMasterSafe) return null;
 
     const currentMasterSafeCreationStatus = (() => {
