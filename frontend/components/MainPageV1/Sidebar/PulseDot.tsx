@@ -28,7 +28,6 @@ const Container = styled.span`
   place-items: center;
   z-index: 1;
   left: -20px;
-  filter: blur(0px);
 `;
 
 const Dot = styled.span`
