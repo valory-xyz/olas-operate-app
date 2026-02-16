@@ -48,9 +48,7 @@ const Ring = styled.span<{ $delayMs: number }>`
   border: ${RING_THICKNESS}px solid ${COLOR.PRIMARY};
   opacity: 0;
   transform: scale(1);
-  box-shadow:
-    0 0 0px color-mix(in oklab, ${COLOR.PRIMARY} 70%, transparent),
-    inset 0 0 6px rgba(0, 0, 0, 0.06);
+  box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.06);
   will-change: transform, opacity;
   animation: ${pulse} 1250ms cubic-bezier(0.1, 0, 0.2, 1) infinite;
   animation-delay: ${(p) => p.$delayMs}ms;
