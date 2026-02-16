@@ -9,7 +9,7 @@ import { TOKEN_CONFIG, TokenSymbol } from '@/config/tokens';
 import { AddressZero, EvmChainId } from '@/constants';
 import { usePearlWallet } from '@/context/PearlWalletProvider';
 import { useGetOnRampRequirementsParams, useOnRampContext } from '@/hooks';
-import { BridgeRefillRequirementsRequest } from '@/types/Bridge';
+import { BridgeRefillRequirementsRequest, BridgeRequest } from '@/types/Bridge';
 import { TokenAmountDetails, TokenAmounts } from '@/types/Wallet';
 import { asEvmChainDetails, asMiddlewareChain } from '@/utils';
 
@@ -73,7 +73,7 @@ export const OnRampCryptoOn = ({
       });
 
       return {
-        bridge_requests: onRampParams,
+        bridge_requests: onRampParams as BridgeRequest[],
         force_update: forceUpdate ?? false,
       };
     },
