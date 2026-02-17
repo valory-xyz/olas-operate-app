@@ -39,7 +39,7 @@ export const SelectStakingPage = ({ mode }: SelectStakingProps) => {
         {/* Do not allow going back if service is not yet created */}
         {selectedService && <BackButton onPrev={() => gotoPage(PAGES.Main)} />}
         <Title level={3} className="mt-12 mb-32">
-          Select Staking Contract
+          Select Activity Rewards Configuration
         </Title>
       </Flex>
 
