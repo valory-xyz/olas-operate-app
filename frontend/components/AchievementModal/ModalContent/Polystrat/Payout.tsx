@@ -7,6 +7,7 @@ import styled from 'styled-components';
 
 import { COLOR, EXPLORER_URL_BY_MIDDLEWARE_CHAIN, NA } from '@/constants';
 import { Achievement } from '@/types/Achievement';
+import { formatAmountNormalized } from '@/utils';
 
 import {
   generateXIntentUrl,
@@ -31,8 +32,6 @@ const StatsWrapper = styled(Flex)`
 
 const getTransactionUrl = (hash?: string) =>
   `${EXPLORER_URL_BY_MIDDLEWARE_CHAIN['polygon']}/tx/${hash}`;
-
-const formatAmount = (amount: number) => parseFloat(amount.toFixed(2));
 
 type StatColumnProps = {
   label: string;
@@ -73,7 +72,7 @@ export const PolystratPayoutAchievement = ({
   const totalPayout = total_payout ?? null;
   const totalPayoutFormatted = isNil(totalPayout)
     ? null
-    : formatAmount(totalPayout);
+    : formatAmountNormalized(totalPayout, 2);
   const totalPayoutText = isNil(totalPayoutFormatted)
     ? NA
     : `$${totalPayoutFormatted}`;
@@ -93,7 +92,7 @@ export const PolystratPayoutAchievement = ({
   const stats = useMemo(
     () => [
       { label: 'Position', value: capitalize(position) },
-      { label: 'Amount', value: `$${formatAmount(bet_amount)}` },
+      { label: 'Amount', value: `$${formatAmountNormalized(bet_amount, 2)}` },
       { label: 'Won', value: totalPayoutText },
     ],
     [position, bet_amount, totalPayoutText],
@@ -101,7 +100,7 @@ export const PolystratPayoutAchievement = ({
 
   const payoutMultiplier = useMemo(() => {
     if (!totalPayout || !bet_amount) return null;
-    return formatAmount(totalPayout / bet_amount);
+    return formatAmountNormalized(totalPayout / bet_amount, 2);
   }, [bet_amount, totalPayout]);
 
   return (

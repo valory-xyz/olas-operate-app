@@ -10,6 +10,7 @@ describe('formatAmountNormalized', () => {
     expect(formatAmountNormalized(1234.5)).toBe('1234.5');
     expect(formatAmountNormalized(1234.25)).toBe('1234.25');
     expect(formatAmountNormalized(1234.0)).toBe('1234');
+    expect(formatAmountNormalized(1234.56789, 2)).toBe('1234.57');
   });
 
   it('rounds to the provided decimals before trimming', () => {
