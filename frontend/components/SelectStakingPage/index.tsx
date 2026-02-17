@@ -24,11 +24,10 @@ type SelectStakingProps = {
 };
 
 export const SelectStakingPage = ({ mode }: SelectStakingProps) => {
+  const { goto: gotoPage } = usePageState();
+  const { selectedService } = useServices();
   const { orderedStakingProgramIds, currentStakingProgramId } =
     useStakingContracts();
-  const { selectedService } = useServices();
-
-  const { goto: gotoPage } = usePageState();
 
   return (
     <Flex vertical justify="center" className="w-full">
@@ -37,10 +36,8 @@ export const SelectStakingPage = ({ mode }: SelectStakingProps) => {
         className="mx-auto"
         style={{ width: MAIN_CONTENT_MAX_WIDTH }}
       >
-        {
-          // Do not allow going back if service is not yet created
-          selectedService && <BackButton onPrev={() => gotoPage(PAGES.Main)} />
-        }
+        {/* Do not allow going back if service is not yet created */}
+        {selectedService && <BackButton onPrev={() => gotoPage(PAGES.Main)} />}
         <Title level={3} className="mt-12 mb-32">
           Select Staking Contract
         </Title>
