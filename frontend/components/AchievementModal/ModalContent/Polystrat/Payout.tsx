@@ -1,7 +1,7 @@
 import { Button, Flex, Typography } from 'antd';
 import { capitalize, isNil } from 'lodash';
 import Image from 'next/image';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { LuSquareArrowOutUpRight } from 'react-icons/lu';
 import styled from 'styled-components';
 
@@ -78,13 +78,7 @@ export const PolystratPayoutAchievement = ({
     ? NA
     : `$${totalPayoutFormatted}`;
 
-  const stats = [
-    { label: 'Position', value: capitalize(position) },
-    { label: 'Amount', value: `$${formatAmount(bet_amount)}` },
-    { label: 'Won', value: totalPayoutText },
-  ];
-
-  const handleShareOnX = () => {
+  const handleShareOnX = useCallback(() => {
     const [, polystratAchievementType] = type.split('/');
     const predictUrl = getPredictWebsiteAchievementUrl(
       'polystrat',
@@ -94,7 +88,16 @@ export const PolystratPayoutAchievement = ({
     const xIntentUrl = generateXIntentUrl(postText);
     window.open(xIntentUrl, '_blank', 'noopener,noreferrer');
     onShare?.();
-  };
+  }, [description, type, betId, onShare]);
+
+  const stats = useMemo(
+    () => [
+      { label: 'Position', value: capitalize(position) },
+      { label: 'Amount', value: `$${formatAmount(bet_amount)}` },
+      { label: 'Won', value: totalPayoutText },
+    ],
+    [position, bet_amount, totalPayoutText],
+  );
 
   const payoutMultiplier = useMemo(() => {
     if (!totalPayout || !bet_amount) return null;
