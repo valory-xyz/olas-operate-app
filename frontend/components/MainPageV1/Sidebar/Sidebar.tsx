@@ -33,17 +33,18 @@ import {
   SIDER_WIDTH,
 } from '@/constants';
 import {
+  useAgentRunning,
   useBalanceAndRefillRequirementsContext,
   useMasterWalletContext,
   usePageState,
   useServices,
   useSetup,
 } from '@/hooks';
-import { AgentConfig } from '@/types';
 
 import { BackupSeedPhraseAlert } from '../BackupSeedPhraseAlert';
 import { UpdateAvailableAlert } from '../UpdateAvailableAlert/UpdateAvailableAlert';
 import { UpdateAvailableModal } from '../UpdateAvailableAlert/UpdateAvailableModal';
+import { PulseDot } from './PulseDot';
 
 const { Sider } = Layout;
 const { Text } = Typography;
@@ -60,9 +61,11 @@ const SiderContainer = styled.div`
       width: 100%;
     }
   }
+  .ant-menu-item.menu-running-agent {
+    padding-right: 0 !important;
+  }
 `;
 
-// TODO: make reusable for new styled buttons in Pearl v1
 const ResponsiveButton = styled(Button)`
   @media (max-width: ${ANTD_BREAKPOINTS[SIDEBAR_BREAKPOINT]}px) {
     > span:not(.ant-btn-icon) {
@@ -130,43 +133,54 @@ const AgentListMenu = ({
   myAgents,
   selectedMenuKeys,
   onAgentSelect,
-}: AgentListMenuProps) => (
-  <Menu
-    selectedKeys={selectedMenuKeys}
-    mode="inline"
-    inlineIndent={4}
-    onClick={onAgentSelect}
-    items={myAgents.map((agent) => ({
-      key: agent.agentType,
-      icon: (
-        <Image
-          key={agent.agentType}
-          src={`/agent-${agent.agentType}-icon.png`}
-          className="rounded-4"
-          alt={agent.name}
-          width={32}
-          height={32}
-        />
-      ),
-      label: (
-        <Flex justify="space-between" align="center">
-          {agent.name}{' '}
-          <Image
-            src={`/chains/${kebabCase(agent.chainName)}-chain.png`}
-            alt={`${agent.chainName} logo`}
-            width={14}
-            height={14}
-          />
-        </Flex>
-      ),
-    }))}
-  />
-);
+}: AgentListMenuProps) => {
+  const { runningAgentType } = useAgentRunning();
+
+  return (
+    <Menu
+      selectedKeys={selectedMenuKeys}
+      mode="inline"
+      inlineIndent={4}
+      onClick={onAgentSelect}
+      items={myAgents.map((agent) => {
+        const isRunning = runningAgentType === agent.agentType;
+        return {
+          key: agent.agentType,
+          className: isRunning ? 'menu-running-agent' : undefined,
+          icon: (
+            <Image
+              key={agent.agentType}
+              src={`/agent-${agent.agentType}-icon.png`}
+              className="rounded-4"
+              alt={agent.name}
+              width={32}
+              height={32}
+            />
+          ),
+          label: (
+            <Flex justify="space-between" align="center">
+              <span>{agent.name}</span>
+              {isRunning ? (
+                <PulseDot />
+              ) : (
+                <Image
+                  src={`/chains/${kebabCase(agent.chainName)}-chain.png`}
+                  alt={`${agent.chainName} logo`}
+                  width={14}
+                  height={14}
+                />
+              )}
+            </Flex>
+          ),
+        };
+      })}
+    />
+  );
+};
 
 export const Sidebar = () => {
   const { goto: gotoSetup } = useSetup();
   const { pageState, goto: gotoPage } = usePageState();
-
   const { services, isLoading, selectedAgentType, updateAgentType } =
     useServices();
 
@@ -183,17 +197,13 @@ export const Sidebar = () => {
       );
       if (!agent) return result;
 
-      const [agentType, agentConfig] = agent as [AgentType, AgentConfig];
+      const [agentType, agentConfig] = agent;
       if (!agentConfig.evmHomeChainId) return result;
 
       const chainId = agentConfig.evmHomeChainId;
       const chainName = CHAIN_CONFIG[chainId].name;
-      result.push({
-        name: agentConfig.displayName,
-        agentType,
-        chainName,
-        chainId,
-      });
+      const name = agentConfig.displayName;
+      result.push({ name, agentType, chainName, chainId });
       return result;
     }, []);
   }, [services]);

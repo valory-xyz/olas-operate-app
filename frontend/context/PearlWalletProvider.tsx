@@ -11,13 +11,7 @@ import {
 import { ACTIVE_AGENTS } from '@/config/agents';
 import { CHAIN_CONFIG } from '@/config/chains';
 import { TokenSymbol } from '@/config/tokens';
-import {
-  AgentType,
-  EvmChainId,
-  type EvmChainName,
-  MasterSafe,
-  PAGES,
-} from '@/constants';
+import { EvmChainId, type EvmChainName, MasterSafe, PAGES } from '@/constants';
 import {
   useAvailableAssets,
   useBalanceAndRefillRequirementsContext,
@@ -29,7 +23,6 @@ import {
 } from '@/hooks';
 import {
   Address,
-  AgentConfig,
   AvailableAsset,
   MiddlewareServiceResponse,
   Nullable,
@@ -69,7 +62,7 @@ const getChainList = (services?: MiddlewareServiceResponse[]) => {
     );
     if (!agent) return;
 
-    const [, agentConfig] = agent as [AgentType, AgentConfig];
+    const [, agentConfig] = agent;
     if (!agentConfig.evmHomeChainId) return;
 
     const chainId = agentConfig.evmHomeChainId;
