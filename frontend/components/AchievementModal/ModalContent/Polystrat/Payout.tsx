@@ -64,12 +64,11 @@ export const PolystratPayoutAchievement = ({
     market,
     prediction_side: position,
     bet_amount = 0,
-    total_payout,
+    total_payout: totalPayout,
     transaction_hash,
   } = data ?? {};
 
   const question = market?.title ?? NA;
-  const totalPayout = total_payout ?? null;
   const totalPayoutFormatted = isNil(totalPayout)
     ? null
     : formatAmountNormalized(totalPayout, 2);
@@ -99,7 +98,9 @@ export const PolystratPayoutAchievement = ({
   );
 
   const payoutMultiplier = useMemo(() => {
-    if (!totalPayout || !bet_amount) return null;
+    if (isNil(totalPayout) || isNil(bet_amount) || bet_amount === 0) {
+      return null;
+    }
     return formatAmountNormalized(totalPayout / bet_amount, 2);
   }, [bet_amount, totalPayout]);
 
