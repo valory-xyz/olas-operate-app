@@ -85,8 +85,8 @@ export const PolystratPayoutAchievement = ({
     );
     const postText = description.replace('{achievement_url}', predictUrl);
     const xIntentUrl = generateXIntentUrl(postText);
-    window.open(xIntentUrl, '_blank', 'noopener,noreferrer');
     onShare?.();
+    window.open(xIntentUrl, '_blank', 'noopener,noreferrer');
   }, [description, type, betId, onShare]);
 
   const stats = useMemo(
