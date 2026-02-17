@@ -34,15 +34,17 @@ type OnBackProps = Pick<OnRampProps, 'handleBack'>;
 const OnBack = ({ handleBack }: OnBackProps) => {
   const [isDoNotLeavePageModalOpen, setIsDoNotLeavePageModalOpen] =
     useState(false);
+  const { resetOnRampState } = useOnRampContext();
 
   const handleBackClick = useCallback(() => {
     setIsDoNotLeavePageModalOpen(true);
   }, []);
 
   const handleLeavePage = useCallback(() => {
+    resetOnRampState();
     setIsDoNotLeavePageModalOpen(false);
     handleBack();
-  }, [handleBack]);
+  }, [handleBack, resetOnRampState]);
 
   const handleStayOnPage = useCallback(() => {
     setIsDoNotLeavePageModalOpen(false);

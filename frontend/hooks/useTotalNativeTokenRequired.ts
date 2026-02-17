@@ -20,13 +20,14 @@ import { useBridgeRequirementsQuery } from '../components/OnRamp/PayingReceiving
  * @param onRampChainId - The chain ID where on-ramping occurs
  * @param toChainId - The destination chain ID where funds will be sent
  * @param getOnRampRequirementsParams - Function to get on-ramp requirements
- * @param queryKey - Query key suffix for caching
+ * @param mode - Calculation mode: 'onboard' for new agents (uses refill requirements),
+ *               'deposit' for existing wallets (uses total requirements)
  */
 export const useTotalNativeTokenRequired = (
   onRampChainId: EvmChainId,
   toChainId: EvmChainId,
   getOnRampRequirementsParams: GetOnRampRequirementsParams,
-  queryKey: 'onboard' | 'deposit' = 'onboard',
+  mode: 'onboard' | 'deposit' = 'onboard',
 ) => {
   const {
     updateNativeAmountToPay,
@@ -59,7 +60,7 @@ export const useTotalNativeTokenRequired = (
     getOnRampRequirementsParams,
     enabled: !isOnRampingTransactionSuccessful,
     stopPollingCondition: isOnRampingTransactionSuccessful,
-    queryKeySuffix: queryKey,
+    queryKeySuffix: mode,
   });
 
   /**
@@ -108,28 +109,32 @@ export const useTotalNativeTokenRequired = (
     const nativeTokenFromBridgeParams =
       toChainName === onRampNetworkName ? nativeTokenAmount : 0;
 
-    // Remaining token from the bridge quote.
-    // e.g, For optimus, OLAS and USDC are bridged to ETH
-    const bridgeRefillRequirements =
-      bridgeFundingRequirements.bridge_refill_requirements[onRampNetworkName];
-    const bridgeRefillRequirementsOfNonNativeTokens =
-      bridgeRefillRequirements?.[destinationAddress]?.[AddressZero];
+    // Select requirements based on mode:
+    // - onboard mode: Amount needed to top up (uses refill requirements)
+    // - deposit mode: Full amount required (uses total requirements)
+    const bridgeRequirements =
+      mode === 'deposit'
+        ? bridgeFundingRequirements.bridge_total_requirements[onRampNetworkName]
+        : bridgeFundingRequirements.bridge_refill_requirements[
+            onRampNetworkName
+          ];
+
+    const bridgeRequirementsOfNonNativeTokens =
+      bridgeRequirements?.[destinationAddress]?.[AddressZero];
+
     // Existing balance of native token on the source chain will be also used for bridging
     const bridgeBalance = bridgeFundingRequirements.balances[onRampNetworkName];
     const nativeBalance = bridgeBalance?.[destinationAddress]?.[AddressZero];
 
     // Return early only if both non-native token requirements AND native token params are missing
-    if (
-      !bridgeRefillRequirementsOfNonNativeTokens &&
-      !nativeTokenFromBridgeParams
-    )
+    if (!bridgeRequirementsOfNonNativeTokens && !nativeTokenFromBridgeParams)
       return;
 
     // e.g, For optimus, addition of (ETH required) + (OLAS and USDC bridged to ETH)
     // + existing balance in case we already have another agent on this chain
-    // Note: Handle case where only native token is deposited (bridgeRefillRequirementsOfNonNativeTokens is undefined)
+    // Note: Handle case where only native token is deposited (bridgeRequirementsOfNonNativeTokens is undefined)
     const totalNativeTokenToPay =
-      BigInt(bridgeRefillRequirementsOfNonNativeTokens || 0) +
+      BigInt(bridgeRequirementsOfNonNativeTokens || 0) +
       BigInt(nativeTokenFromBridgeParams || 0);
     // All the above + existing balance in case we already have another agent on this chain
     // and some native tokens are there
@@ -145,6 +150,7 @@ export const useTotalNativeTokenRequired = (
         : 0,
     };
   }, [
+    mode,
     nativeTokenAmount,
     bridgeFundingRequirements,
     masterEoa,

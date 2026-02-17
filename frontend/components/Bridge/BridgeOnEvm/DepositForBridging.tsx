@@ -149,10 +149,10 @@ export const DepositForBridging = ({
     isError: isBridgeRefillRequirementsError,
     isFetching: isBridgeRefillRequirementsFetching,
     refetch: refetchBridgeRefillRequirements,
-  } = useBridgeRefillRequirements(
-    bridgeRequirementsParams,
-    canPollForBridgeRefillRequirements,
-  );
+  } = useBridgeRefillRequirements({
+    params: bridgeRequirementsParams,
+    canPoll: canPollForBridgeRefillRequirements,
+  });
 
   // fetch bridge refill requirements manually on mount, this is to ensure
   // that stale values aren't shown - in case a user visits the bridging page again

@@ -122,7 +122,10 @@ export const useCreateAndTransferFundsToMasterSafeSteps = (
   ]);
 
   // Step for transferring funds to the Master Safe
-  const masterSafeTransferFundStep = useMemo<TransactionStep>(() => {
+  const masterSafeTransferFundStep = useMemo<Nullable<TransactionStep>>(() => {
+    // Don't show this step if safe already exists
+    if (!shouldCreateMasterSafe) return null;
+
     const currentMasterSafeCreationStatus = (() => {
       if (!isSwapCompleted) return 'wait';
 
@@ -168,11 +171,12 @@ export const useCreateAndTransferFundsToMasterSafeSteps = (
         }) || [],
     };
   }, [
+    shouldCreateMasterSafe,
+    transferStatuses,
     isSwapCompleted,
     isLoadingMasterSafeCreation,
     isSafeCreated,
     isTransferComplete,
-    transferStatuses,
     createMasterSafe,
   ]);
 
@@ -204,10 +208,9 @@ export const useCreateAndTransferFundsToMasterSafeSteps = (
   if (!isSwapCompleted) {
     return {
       isMasterSafeCreatedAndFundsTransferred: false,
-      steps: [
-        shouldCreateMasterSafe ? EMPTY_STATE_STEPS.createPearlWallet : null,
-        EMPTY_STATE_STEPS.transferFunds,
-      ].filter(Boolean),
+      steps: shouldCreateMasterSafe
+        ? [EMPTY_STATE_STEPS.createPearlWallet, EMPTY_STATE_STEPS.transferFunds]
+        : [],
     };
   }
 

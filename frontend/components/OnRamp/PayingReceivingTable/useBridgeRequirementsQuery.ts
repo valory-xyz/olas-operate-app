@@ -16,7 +16,7 @@ type UseBridgeRequirementsQueryParams = {
   getOnRampRequirementsParams: GetOnRampRequirementsParams;
   enabled: boolean;
   stopPollingCondition: boolean;
-  queryKeySuffix?: string;
+  queryKeySuffix: string;
 };
 
 /**
@@ -66,13 +66,13 @@ export const useBridgeRequirementsQuery = ({
     isLoading: isBridgeRefillRequirementsLoading,
     isError: isBridgeRefillRequirementsError,
     refetch: refetchBridgeRefillRequirements,
-  } = useBridgeRefillRequirements(
-    bridgeParamsExceptNativeToken,
-    canPollForBridgeRefillRequirements && !stopPollingCondition,
+  } = useBridgeRefillRequirements({
+    params: bridgeParamsExceptNativeToken,
+    canPoll: canPollForBridgeRefillRequirements && !stopPollingCondition,
     enabled,
     queryKeySuffix,
-    THIRTY_SECONDS_INTERVAL,
-  );
+    pollingInterval: THIRTY_SECONDS_INTERVAL,
+  });
 
   // fetch bridge refill requirements manually on mount
   useEffect(() => {

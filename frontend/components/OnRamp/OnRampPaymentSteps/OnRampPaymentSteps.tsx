@@ -38,10 +38,11 @@ export const OnRampPaymentSteps = ({
   const buyCryptoStep = useBuyCryptoStep();
 
   // step 2: Swap funds
-  const { tokensToBeTransferred, step: swapStep } = useSwapFundsStep(
-    onRampChainId,
-    getOnRampRequirementsParams,
-  );
+  const {
+    tokensToBeTransferred,
+    tokensToBeBridged,
+    step: swapStep,
+  } = useSwapFundsStep(onRampChainId, getOnRampRequirementsParams);
 
   // step 3 & 4: Create Master Safe and transfer funds
   const {
@@ -56,7 +57,7 @@ export const OnRampPaymentSteps = ({
   const [isSetupCompleted, setIsSetupCompleted] = useState(false);
   useEffect(() => {
     if (!isOnRampingStepCompleted) return;
-    if (!isSwappingFundsStepCompleted) return;
+    if (tokensToBeBridged.length > 0 && !isSwappingFundsStepCompleted) return;
     if (
       createAndTransferFundsToMasterSafeSteps.length > 0 &&
       !isMasterSafeCreatedAndFundsTransferred
@@ -79,6 +80,8 @@ export const OnRampPaymentSteps = ({
     isSwappingFundsStepCompleted,
     createAndTransferFundsToMasterSafeSteps.length,
     onOnRampCompleted,
+    tokensToBeTransferred.length,
+    tokensToBeBridged.length,
   ]);
 
   return (
@@ -86,8 +89,10 @@ export const OnRampPaymentSteps = ({
       <TransactionSteps
         steps={[
           buyCryptoStep,
-          swapStep,
-          ...compact(createAndTransferFundsToMasterSafeSteps),
+          ...compact([
+            tokensToBeBridged.length > 0 ? swapStep : null,
+            ...createAndTransferFundsToMasterSafeSteps,
+          ]),
         ]}
       />
       {mode === 'onboard' && isSetupCompleted && <AgentSetupCompleteModal />}

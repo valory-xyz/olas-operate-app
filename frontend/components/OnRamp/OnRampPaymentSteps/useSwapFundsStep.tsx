@@ -136,11 +136,13 @@ const TITLE = 'Swap funds';
 
 type SwapFundsStep = {
   tokensToBeTransferred: TokenSymbol[];
+  tokensToBeBridged: TokenSymbol[];
   step: TransactionStep;
 };
 
 const EMPTY_STATE: SwapFundsStep = {
   tokensToBeTransferred: [],
+  tokensToBeBridged: [],
   step: {
     status: 'wait',
     title: TITLE,
@@ -150,6 +152,7 @@ const EMPTY_STATE: SwapFundsStep = {
 
 const PROCESS_STATE: SwapFundsStep = {
   tokensToBeTransferred: [],
+  tokensToBeBridged: [],
   step: {
     status: 'process',
     title: TITLE,
@@ -159,6 +162,7 @@ const PROCESS_STATE: SwapFundsStep = {
 
 const getQuoteFailedErrorState = (onRetry: () => void): SwapFundsStep => ({
   tokensToBeTransferred: [],
+  tokensToBeBridged: [],
   step: {
     status: 'error',
     title: TITLE,
@@ -249,15 +253,22 @@ export const useSwapFundsStep = (
     return receivingTokens.map(({ symbol }) => symbol);
   }, [receivingTokens]);
 
-  if (!isOnRampingStepCompleted) return EMPTY_STATE;
+  if (!isOnRampingStepCompleted) {
+    return { ...EMPTY_STATE, tokensToBeBridged };
+  }
 
   if (!isSwappingFundsStepCompleted) {
-    if (isLoading || isBridging) return PROCESS_STATE;
-    if (hasError) return getQuoteFailedErrorState(onRetry);
+    if (isLoading || isBridging) {
+      return { ...PROCESS_STATE, tokensToBeBridged };
+    }
+    if (hasError) {
+      return { ...getQuoteFailedErrorState(onRetry), tokensToBeBridged };
+    }
   }
 
   return {
     tokensToBeTransferred,
+    tokensToBeBridged,
     step: {
       status: bridgeStepStatus,
       title: TITLE,

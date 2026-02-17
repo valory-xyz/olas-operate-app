@@ -25,7 +25,7 @@ export const OnRampCryptoOn = ({
   onBack,
 }: OnRampCryptoOnProps) => {
   const { onReset, walletChainId } = usePearlWallet();
-  const { updateNetworkConfig } = useOnRampContext();
+  const { updateNetworkConfig, resetOnRampState } = useOnRampContext();
   const [showOnRampCompleteModal, setShowOnRampCompleteModal] = useState(false);
 
   // Set network config for deposit mode
@@ -87,7 +87,8 @@ export const OnRampCryptoOn = ({
   const handleSeeWalletBalance = useCallback(() => {
     setShowOnRampCompleteModal(false);
     onReset(true);
-  }, [onReset]);
+    resetOnRampState();
+  }, [onReset, resetOnRampState]);
 
   useUnmount(() => {
     setShowOnRampCompleteModal(false);
