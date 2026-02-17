@@ -17,4 +17,17 @@ describe('formatAmountNormalized', () => {
     expect(formatAmountNormalized(1.23456)).toBe('1.2346');
     expect(formatAmountNormalized(1.20009, 3)).toBe('1.2');
   });
+
+  it('returns 0 for non-finite values', () => {
+    expect(formatAmountNormalized(Number.NaN)).toBe('0');
+    expect(formatAmountNormalized(Number.POSITIVE_INFINITY)).toBe('0');
+    expect(formatAmountNormalized(Number.NEGATIVE_INFINITY)).toBe('0');
+  });
+
+  it('returns 0 for nullish values', () => {
+    // @ts-expect-error Testing nullish values
+    expect(formatAmountNormalized(null)).toBe('0');
+    // @ts-expect-error Testing nullish values
+    expect(formatAmountNormalized(undefined)).toBe('0');
+  });
 });
