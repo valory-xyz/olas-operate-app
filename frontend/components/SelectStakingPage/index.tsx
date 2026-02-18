@@ -1,8 +1,13 @@
 import { Button, Flex, Spin, Typography } from 'antd';
-import { ReactNode, useEffect, useState } from 'react';
+import { ReactNode, useCallback, useEffect, useState } from 'react';
 import styled from 'styled-components';
 
-import { MAIN_CONTENT_MAX_WIDTH, PAGES, StakingProgramId } from '@/constants';
+import {
+  COLOR,
+  MAIN_CONTENT_MAX_WIDTH,
+  PAGES,
+  StakingProgramId,
+} from '@/constants';
 import {
   usePageState,
   useServices,
@@ -24,6 +29,22 @@ const StakingContractsWrapper = styled.div`
   justify-content: center;
   gap: 24px;
   margin-top: 32px;
+`;
+
+const ConfigureStakingContractCardContainer = styled.div`
+  background-color: ${COLOR.GRAY_3};
+  border-radius: 16px;
+  > .ant-typography {
+    display: inline-block;
+    text-align: center;
+    width: 100%;
+    padding: 8px 0px;
+    border-top-left-radius: inherit;
+    border-top-right-radius: inherit;
+  }
+  .ant-card {
+    width: 100%;
+  }
 `;
 
 const ViewType = {
@@ -59,9 +80,13 @@ const SelectActivityRewardsConfigurationTitle = () => (
   </>
 );
 
-type ConfigureActivityRewardsProps = { backButton?: ReactNode };
+type ConfigureActivityRewardsProps = {
+  backButton?: ReactNode;
+  onChangeConfiguration: () => void;
+};
 const ConfigureActivityRewards = ({
   backButton,
+  onChangeConfiguration,
 }: ConfigureActivityRewardsProps) => {
   const { defaultStakingProgramId } = useStakingProgram();
   assertRequired(
@@ -70,22 +95,28 @@ const ConfigureActivityRewards = ({
   );
 
   return (
-    <Flex vertical justify="center" className="w-full">
-      <Flex
-        vertical
-        className="mx-auto"
-        style={{ width: MAIN_CONTENT_MAX_WIDTH }}
-      >
+    <Flex
+      vertical
+      justify="center"
+      gap={32}
+      style={{ width: 516, margin: '0 auto' }}
+    >
+      <Flex vertical className="mx-auto">
         {backButton}
         <ConfigureActivityRewardsTitle />
       </Flex>
 
-      <StakingContractsWrapper>
+      <ConfigureStakingContractCardContainer>
+        <Text className="text-neutral-secondary">
+          Recommended configuration
+        </Text>
         <StakingContractCard
           stakingProgramId={defaultStakingProgramId}
           renderAction={() => (
             <Flex className="px-24 pb-24 mt-40" gap={16}>
-              <Button>Change Configuration</Button>
+              <Button size="large" block onClick={onChangeConfiguration}>
+                Change Configuration
+              </Button>
               <SelectStakingButton
                 stakingProgramId={defaultStakingProgramId}
                 isCurrentStakingProgram={true}
@@ -93,7 +124,7 @@ const ConfigureActivityRewards = ({
             </Flex>
           )}
         />
-      </StakingContractsWrapper>
+      </ConfigureStakingContractCardContainer>
     </Flex>
   );
 };
@@ -157,7 +188,7 @@ const SelectActivityRewards = ({
 };
 
 type SelectStakingProps = {
-  mode: 'onboard' | 'migrate';
+  mode: SelectMode;
 };
 
 export const SelectStakingPage = ({ mode }: SelectStakingProps) => {
@@ -177,9 +208,13 @@ export const SelectStakingPage = ({ mode }: SelectStakingProps) => {
         setViewType(ViewType.SELECT_FROM_LIST);
       }
     } else if (mode === 'onboard') {
-      setViewType(ViewType.SELECT_FROM_LIST);
+      setViewType(ViewType.CONFIGURE);
     }
   }, [mode, viewType]);
+
+  const onChangeConfiguration = useCallback(() => {
+    setViewType(ViewType.SELECT_FROM_LIST);
+  }, []);
 
   /**
    * show the recommended staking program for onboarding, iff
@@ -198,7 +233,10 @@ export const SelectStakingPage = ({ mode }: SelectStakingProps) => {
       <Spin tip="Loading..." />
     </Flex>
   ) : viewType === ViewType.CONFIGURE ? (
-    <ConfigureActivityRewards backButton={backButton} />
+    <ConfigureActivityRewards
+      backButton={backButton}
+      onChangeConfiguration={onChangeConfiguration}
+    />
   ) : viewType === ViewType.SELECT_FROM_LIST ? (
     <SelectActivityRewards
       mode={mode}
