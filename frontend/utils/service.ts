@@ -26,6 +26,7 @@ export const updateServiceIfNeeded = async (
   // Check if the hash is different
   if (service.hash !== serviceTemplate.hash) {
     partialServiceTemplate.hash = serviceTemplate.hash;
+    partialServiceTemplate.allow_different_service_public_id = agentType === AgentMap.AgentsFun;  // because of this: https://github.com/valory-xyz/meme-ooorr/commit/ee400040decf5cbda16c7409d7f4b513dd162d04
   }
 
   // Temporary: check if the service has incorrect name

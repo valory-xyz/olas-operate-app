@@ -106,6 +106,7 @@ export type ServiceTemplate = {
   >;
   env_variables: { [key: string]: EnvVariable };
   deploy?: boolean;
+  allow_different_service_public_id?: boolean;
 };
 
 export type MiddlewareServiceResponse = {
