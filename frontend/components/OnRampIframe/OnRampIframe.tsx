@@ -3,7 +3,6 @@ import { useEffect, useMemo, useRef } from 'react';
 
 import { APP_HEIGHT, APP_WIDTH, ON_RAMP_GATEWAY_URL } from '@/constants';
 import { useElectronApi, useMasterWalletContext } from '@/hooks';
-import { asEvmChainDetails } from '@/utils';
 import { delayInSeconds } from '@/utils/delay';
 
 type TransakEvent = {
@@ -30,11 +29,7 @@ export const OnRampIframe = ({
   cryptoCurrencyCode,
 }: OnRampIframeProps) => {
   const { onRampWindow, logEvent } = useElectronApi();
-  const {
-    masterEoa,
-    getMasterSafeOf,
-    isFetched: isMasterWalletFetched,
-  } = useMasterWalletContext();
+  const { masterEoa } = useMasterWalletContext();
 
   const ref = useRef<HTMLIFrameElement>(null);
 
@@ -69,15 +64,8 @@ export const OnRampIframe = ({
   }, [logEvent, onRampWindow]);
 
   const onRampUrl = useMemo(() => {
-    if (!isMasterWalletFetched) return;
     if (!masterEoa?.address) return;
     if (!networkName || !cryptoCurrencyCode) return;
-
-    // If master safe exists on the provided chain, we need to on-ramp there
-    const evmChainId = asEvmChainDetails(networkName)?.chainId;
-    const masterSafe =
-      getMasterSafeOf && evmChainId ? getMasterSafeOf(evmChainId) : undefined;
-    const walletAddress = masterSafe ? masterSafe.address : masterEoa.address;
 
     const url = new URL(ON_RAMP_GATEWAY_URL);
     url.searchParams.set('productsAvailed', 'BUY');
@@ -86,18 +74,13 @@ export const OnRampIframe = ({
     url.searchParams.set('cryptoCurrencyCode', cryptoCurrencyCode);
     url.searchParams.set('fiatCurrency', 'USD');
     url.searchParams.set('fiatAmount', String(usdAmountToPay));
-    url.searchParams.set('walletAddress', walletAddress);
+    // Note: "from" address should always be mEOA for bridging
+    // so we should on-ramp to mEOA only
+    url.searchParams.set('walletAddress', masterEoa.address);
     url.searchParams.set('hideMenu', 'true');
 
     return url.toString();
-  }, [
-    isMasterWalletFetched,
-    masterEoa?.address,
-    networkName,
-    cryptoCurrencyCode,
-    getMasterSafeOf,
-    usdAmountToPay,
-  ]);
+  }, [masterEoa, networkName, cryptoCurrencyCode, usdAmountToPay]);
 
   return (
     <Flex

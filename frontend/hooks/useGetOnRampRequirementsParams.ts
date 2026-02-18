@@ -32,8 +32,8 @@ export const useGetOnRampRequirementsParams = (onRampChainId: EvmChainId) => {
   const toChainConfig = walletChainId ? TOKEN_CONFIG[walletChainId] : undefined;
   const fromChain = asMiddlewareChain(onRampChainId);
   const toChain = walletChainId ? asMiddlewareChain(walletChainId) : undefined;
-  const fromAddress =
-    getMasterSafeOf?.(onRampChainId)?.address ?? masterEoa?.address;
+  // Note: "from" address should always be mEOA for bridging
+  const fromAddress = masterEoa?.address;
   const toAddress = masterSafe?.address ?? masterEoa?.address;
 
   return useCallback(
