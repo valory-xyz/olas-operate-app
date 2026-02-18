@@ -36,38 +36,36 @@ const ConfigurationDetails = ({
   slots,
 }: ConfigurationDetailsProps) => {
   return (
-    <Popover>
-      <Flex vertical gap={12} style={{ minWidth: 300 }}>
-        <Flex vertical gap={8}>
-          <Flex align="center" gap={6}>
-            <Text className="text-sm text-neutral-tertiary">
-              Contract name:
-            </Text>
-            <Text className="text-sm">{name}</Text>
-          </Flex>
-
-          <Flex align="center" gap={6}>
-            <Text className="text-sm text-neutral-tertiary">
-              Available slots:
-            </Text>
-            <Text className="text-sm">{slots}</Text>
-          </Flex>
+    <Flex vertical gap={12} style={{ minWidth: 300 }}>
+      <Flex vertical gap={8}>
+        <Flex align="center" gap={6}>
+          <Text className="text-sm text-neutral-tertiary">
+            Contract name:
+          </Text>
+          <Text className="text-sm">{name}</Text>
         </Flex>
 
-        <a
-          href={`${GOVERN_APP_URL}/contracts/${stakingProgramId}`}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Flex align="center" gap={6}>
-            <Text className="text-sm text-primary">View more details</Text>
-            <Text className="text-primary" style={{ fontSize: 10 }}>
-              ↗
-            </Text>
-          </Flex>
-        </a>
+        <Flex align="center" gap={6}>
+          <Text className="text-sm text-neutral-tertiary">
+            Available slots:
+          </Text>
+          <Text className="text-sm">{slots}</Text>
+        </Flex>
       </Flex>
-    </Popover>
+
+      <a
+        href={`${GOVERN_APP_URL}/contracts/${stakingProgramId}`}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        <Flex align="center" gap={6}>
+          <Text className="text-sm text-primary">View more details</Text>
+          <Text className="text-primary" style={{ fontSize: 10 }}>
+            ↗
+          </Text>
+        </Flex>
+      </a>
+    </Flex>
   );
 };
 
