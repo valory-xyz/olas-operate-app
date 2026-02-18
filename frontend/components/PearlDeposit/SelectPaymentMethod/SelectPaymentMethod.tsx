@@ -26,7 +26,7 @@ import {
   useTotalFiatFromNativeToken,
   useTotalNativeTokenRequired,
 } from '@/hooks';
-import { BridgeRefillRequirementsRequest } from '@/types/Bridge';
+import { BridgeRefillRequirementsRequest, BridgeRequest } from '@/types/Bridge';
 import { TokenAmountDetails } from '@/types/Wallet';
 import { asEvmChainDetails, asMiddlewareChain, formatNumber } from '@/utils';
 
@@ -187,7 +187,7 @@ const OnRampMethod = ({ chainId, onSelect }: OnRampMethodProps) => {
             amount,
           );
         })
-        .filter((request) => request !== null);
+        .filter((request) => request !== null) as BridgeRequest[];
 
       return {
         bridge_requests: onRampParams,
