@@ -2,7 +2,6 @@ import { useCallback, useMemo } from 'react';
 
 import { ACTIVE_AGENTS } from '@/config/agents';
 import {
-  AgentType,
   EvmChainId,
   type MiddlewareDeploymentStatus,
   MiddlewareDeploymentStatusMap,
@@ -219,7 +218,7 @@ export const useService = (serviceConfigId?: string) => {
           agentConfig.servicePublicId === service.service_public_id &&
           agentConfig.middlewareHomeChainId === service.home_chain,
       );
-      return agent ? (agent[0] as AgentType) : null;
+      return agent ? agent[0] : null;
     },
     [services],
   );
