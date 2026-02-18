@@ -35,11 +35,8 @@ export const useTotalNativeTokenRequired = (
     isOnRampingTransactionSuccessful,
     isBuyCryptoBtnLoading,
   } = useOnRampContext();
-  const {
-    masterEoa,
-    getMasterSafeOf,
-    isFetched: isMasterWalletFetched,
-  } = useMasterWalletContext();
+  const { masterEoa, isFetched: isMasterWalletFetched } =
+    useMasterWalletContext();
 
   // Ref to store frozen totalNativeTokens once step 1 completes
   // This prevents recalculation when bridge requirements update after onramping success
@@ -100,8 +97,9 @@ export const useTotalNativeTokenRequired = (
 
     // "FROM" chain - where we will on-ramp funds (source)
     const onRampNetworkName = asMiddlewareChain(onRampChainId);
-    const destinationAddress =
-      getMasterSafeOf?.(onRampChainId)?.address || masterEoa.address;
+    // Note: "from" address should always be mEOA for bridging
+    // so we should on-ramp to mEOA only
+    const onRampDestinationAddress = masterEoa.address;
 
     // "TO" chain - where we will send the on-ramped funds (destination)
     const toChainName = asMiddlewareChain(toChainId);
@@ -123,11 +121,12 @@ export const useTotalNativeTokenRequired = (
           ];
 
     const bridgeRequirementsOfNonNativeTokens =
-      bridgeRequirements?.[destinationAddress]?.[AddressZero];
+      bridgeRequirements?.[onRampDestinationAddress]?.[AddressZero];
 
     // Existing balance of native token on the source chain will be also used for bridging
     const bridgeBalance = bridgeFundingRequirements.balances[onRampNetworkName];
-    const nativeBalance = bridgeBalance?.[destinationAddress]?.[AddressZero];
+    const nativeBalance =
+      bridgeBalance?.[onRampDestinationAddress]?.[AddressZero];
 
     // Return early only if both non-native token requirements AND native token params are missing
     if (!bridgeRequirementsOfNonNativeTokens && !nativeTokenFromBridgeParams)
@@ -160,7 +159,6 @@ export const useTotalNativeTokenRequired = (
     isMasterWalletFetched,
     onRampChainId,
     toChainId,
-    getMasterSafeOf,
   ]);
 
   const totalNativeTokens = useMemo(() => {

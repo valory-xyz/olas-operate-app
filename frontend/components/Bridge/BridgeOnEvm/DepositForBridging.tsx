@@ -227,8 +227,6 @@ export const DepositForBridging = ({
     if (!isMasterWalletFetched) return [];
 
     const fromMiddlewareChain = fromChain;
-
-    // TODO: check if master safe exists once we support agents on From Chain
     const destinationAddress = masterEoa.address;
 
     const bridgeTotalRequirements =
