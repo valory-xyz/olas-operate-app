@@ -1,8 +1,15 @@
-import { Flex, Typography } from 'antd';
+import { Button, Flex, Spin, Typography } from 'antd';
+import { ReactNode, useEffect, useState } from 'react';
 import styled from 'styled-components';
 
-import { MAIN_CONTENT_MAX_WIDTH, PAGES } from '@/constants';
-import { usePageState, useServices, useStakingContracts } from '@/hooks';
+import { MAIN_CONTENT_MAX_WIDTH, PAGES, StakingProgramId } from '@/constants';
+import {
+  usePageState,
+  useServices,
+  useStakingContracts,
+  useStakingProgram,
+} from '@/hooks';
+import { assertRequired, Nullable } from '@/types';
 
 import { StakingContractCard } from '../StakingContractCard';
 import { BackButton } from '../ui/BackButton';
@@ -19,6 +26,132 @@ const StakingContractsWrapper = styled.div`
   margin-top: 32px;
 `;
 
+const ViewType = {
+  LOADING: 'LOADING',
+  CONFIGURE: 'CONFIGURE',
+  SELECT_FROM_LIST: 'SELECT_FROM_LIST',
+} as const;
+
+type ViewTypeValue = (typeof ViewType)[keyof typeof ViewType];
+
+type SelectMode = 'onboard' | 'migrate';
+const ConfigureActivityRewardsTitle = () => (
+  <>
+    <Title level={3} className="mt-12">
+      Configure Activity Rewards
+    </Title>
+    <Text className="text-neutral-secondary">
+      You can earn OLAS crypto for using your agent. Select the configuration –
+      called Staking Contract – that suits you best.
+    </Text>
+  </>
+);
+
+const SelectActivityRewardsConfigurationTitle = () => (
+  <>
+    <Title level={3} className="mt-12">
+      Select Activity Rewards Configuration
+    </Title>
+    <Text className="text-neutral-secondary">
+      Configuration defines how much activity rewards you can earn by using your
+      agent.
+    </Text>
+  </>
+);
+
+type ConfigureActivityRewardsProps = { backButton?: ReactNode };
+const ConfigureActivityRewards = ({
+  backButton,
+}: ConfigureActivityRewardsProps) => {
+  const { defaultStakingProgramId } = useStakingProgram();
+  assertRequired(
+    defaultStakingProgramId,
+    'Default staking program ID is required',
+  );
+
+  return (
+    <Flex vertical justify="center" className="w-full">
+      <Flex
+        vertical
+        className="mx-auto"
+        style={{ width: MAIN_CONTENT_MAX_WIDTH }}
+      >
+        {backButton}
+        <ConfigureActivityRewardsTitle />
+      </Flex>
+
+      <StakingContractsWrapper>
+        <StakingContractCard
+          stakingProgramId={defaultStakingProgramId}
+          renderAction={() => (
+            <Flex className="px-24 pb-24 mt-40" gap={16}>
+              <Button>Change Configuration</Button>
+              <SelectStakingButton stakingProgramId={defaultStakingProgramId} />
+            </Flex>
+          )}
+        />
+      </StakingContractsWrapper>
+    </Flex>
+  );
+};
+
+type SelectActivityRewardsProps = {
+  mode: SelectMode;
+  backButton?: ReactNode;
+  currentStakingProgramId: Nullable<StakingProgramId>;
+};
+const SelectActivityRewards = ({
+  mode,
+  backButton,
+  currentStakingProgramId,
+}: SelectActivityRewardsProps) => {
+  const { orderedStakingProgramIds } = useStakingContracts();
+  console.log({ orderedStakingProgramIds });
+
+  return (
+    <Flex vertical justify="center" className="w-full">
+      <Flex
+        vertical
+        className="mx-auto"
+        style={{ width: MAIN_CONTENT_MAX_WIDTH }}
+      >
+        {backButton}
+        <SelectActivityRewardsConfigurationTitle />
+      </Flex>
+
+      <StakingContractsWrapper>
+        {orderedStakingProgramIds.map((stakingProgramId) => {
+          const isCurrentStakingProgram =
+            stakingProgramId === currentStakingProgramId;
+          return (
+            <StakingContractCard
+              key={stakingProgramId}
+              stakingProgramId={stakingProgramId}
+              renderAction={() => (
+                <>
+                  {mode === 'onboard' && (
+                    <Flex className="px-24 pb-24 mt-40" gap={16}>
+                      <SelectStakingButton
+                        stakingProgramId={stakingProgramId}
+                      />
+                    </Flex>
+                  )}
+                  {mode === 'migrate' && (
+                    <SwitchStakingButton
+                      isCurrentStakingProgram={isCurrentStakingProgram}
+                      stakingProgramId={stakingProgramId}
+                    />
+                  )}
+                </>
+              )}
+            />
+          );
+        })}
+      </StakingContractsWrapper>
+    </Flex>
+  );
+};
+
 type SelectStakingProps = {
   mode: 'onboard' | 'migrate';
 };
@@ -28,49 +161,45 @@ export const SelectStakingPage = ({ mode }: SelectStakingProps) => {
   const { selectedService } = useServices();
   const { orderedStakingProgramIds, currentStakingProgramId } =
     useStakingContracts();
-
-  return (
-    <Flex vertical justify="center" className="w-full">
-      <Flex
-        vertical
-        className="mx-auto"
-        style={{ width: MAIN_CONTENT_MAX_WIDTH }}
-      >
-        {/* Do not allow going back if service is not yet created */}
-        {selectedService && <BackButton onPrev={() => gotoPage(PAGES.Main)} />}
-        <Title level={3} className="mt-12">
-          Select Activity Rewards Configuration
-        </Title>
-        <Text className="text-neutral-secondary">
-          Select the payment method that suits you best.
-        </Text>
-      </Flex>
-
-      <StakingContractsWrapper>
-        {orderedStakingProgramIds.map((stakingProgramId) => (
-          <StakingContractCard
-            key={stakingProgramId}
-            stakingProgramId={stakingProgramId}
-            renderAction={(contractDetails) => {
-              const isCurrentStakingProgram =
-                stakingProgramId === currentStakingProgramId;
-              return (
-                <>
-                  {mode === 'migrate' && (
-                    <SwitchStakingButton
-                      isCurrentStakingProgram={isCurrentStakingProgram}
-                      stakingProgramId={stakingProgramId}
-                    />
-                  )}
-                  {mode === 'onboard' && (
-                    <SelectStakingButton stakingProgramId={stakingProgramId} />
-                  )}
-                </>
-              );
-            }}
-          />
-        ))}
-      </StakingContractsWrapper>
-    </Flex>
+  const [viewType, setViewType] = useState<ViewTypeValue>(
+    mode === 'migrate' ? ViewType.SELECT_FROM_LIST : ViewType.LOADING,
   );
+
+  console.log({ currentStakingProgramId });
+
+  useEffect(() => {
+    if (mode === 'migrate') {
+      if (viewType === ViewType.LOADING) {
+        setViewType(ViewType.SELECT_FROM_LIST);
+      }
+    } else if (mode === 'onboard') {
+      setViewType(ViewType.SELECT_FROM_LIST);
+    }
+  }, [mode, viewType]);
+
+  /**
+   * show the recommended staking program for onboarding, iff
+   * - No service is created yet (i.e. user is in the middle of onboarding)
+   * - Either the selected service is present and the staking program is the default one.
+   * - If no service is selected
+   */
+
+  // Do not allow going back if service is not yet created
+  const backButton = selectedService && (
+    <BackButton onPrev={() => gotoPage(PAGES.Main)} />
+  );
+
+  return viewType === ViewType.LOADING ? (
+    <Flex justify="center" align="center" className="w-full py-32">
+      <Spin tip="Loading..." />
+    </Flex>
+  ) : viewType === ViewType.CONFIGURE ? (
+    <ConfigureActivityRewards backButton={backButton} />
+  ) : viewType === ViewType.SELECT_FROM_LIST ? (
+    <SelectActivityRewards
+      mode={mode}
+      currentStakingProgramId={currentStakingProgramId}
+      backButton={backButton}
+    />
+  ) : null;
 };

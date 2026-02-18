@@ -1,4 +1,5 @@
 import { Flex, Popover, Typography } from 'antd';
+import { ReactNode } from 'react';
 import { LuInfo } from 'react-icons/lu';
 import { TbLock, TbSparkles, TbSquareRoundedPercentage } from 'react-icons/tb';
 import styled from 'styled-components';
@@ -9,7 +10,6 @@ import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
 import { COLOR, GOVERN_APP_URL, StakingProgramId } from '@/constants';
 import { useServices } from '@/hooks';
 import { useStakingContractContext } from '@/hooks/useStakingContractDetails';
-import { StakingContractDetails } from '@/types';
 
 import { useEachStakingDetails } from './SelectStakingPage/hooks/useStakingDetails';
 
@@ -73,9 +73,7 @@ const ConfigurationDetails = ({
 
 type StakingContractCardProps = {
   stakingProgramId: StakingProgramId;
-  renderAction?: (
-    contractDetails: Partial<StakingContractDetails> | undefined,
-  ) => React.ReactNode;
+  renderAction?: () => ReactNode;
 };
 
 export const StakingContractCard = ({
@@ -137,7 +135,7 @@ export const StakingContractCard = ({
         </Flex>
       </Flex>
 
-      {renderAction?.(contractDetails)}
+      {renderAction?.()}
     </ContractCard>
   );
 };

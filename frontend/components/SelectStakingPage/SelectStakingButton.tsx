@@ -1,4 +1,4 @@
-import { Button, Flex, message } from 'antd';
+import { Button, message } from 'antd';
 import { useBoolean } from 'usehooks-ts';
 
 import { PAGES, SETUP_SCREEN, StakingProgramId } from '@/constants';
@@ -111,17 +111,15 @@ export const SelectStakingButton = ({
   };
 
   return (
-    <Flex className="px-24 pb-24 mt-40">
-      <Button
-        size="large"
-        type="primary"
-        onClick={handleSelect}
-        block
-        disabled={!canMigrate || isServicesLoading}
-        loading={isLoading}
-      >
-        {buttonText}
-      </Button>
-    </Flex>
+    <Button
+      size="large"
+      type="primary"
+      onClick={handleSelect}
+      block
+      disabled={!canMigrate || isServicesLoading}
+      loading={isLoading}
+    >
+      {buttonText}
+    </Button>
   );
 };
