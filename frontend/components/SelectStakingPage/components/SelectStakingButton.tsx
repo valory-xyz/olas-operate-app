@@ -97,6 +97,7 @@ export const SelectStakingButton = ({
             'An error occurred while updating the staking contract.',
           );
           stopLoading();
+          return;
         }
       }
 
