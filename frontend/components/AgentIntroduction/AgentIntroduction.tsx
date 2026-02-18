@@ -2,13 +2,15 @@ import { Flex, Typography } from 'antd';
 import { ReactNode, useCallback, useEffect, useState } from 'react';
 import styled from 'styled-components';
 
-import { AgentType } from '@/constants/agent';
+import { AgentMap, AgentType } from '@/constants/agent';
 import { COLOR } from '@/constants/colors';
 
 import {
   AGENTS_FUN_ONBOARDING_STEPS,
   MODIUS_ONBOARDING_STEPS,
   OPTIMUS_ONBOARDING_STEPS,
+  PETT_AI_ONBOARDING_STEPS,
+  POLYSTRAT_ONBOARDING_STEPS,
   PREDICTION_ONBOARDING_STEPS,
 } from './constants';
 import {
@@ -27,10 +29,12 @@ const Dot = styled.div<{ color?: string }>`
 `;
 
 const onboardingStepsMap: Record<AgentType, OnboardingStep[]> = {
-  trader: PREDICTION_ONBOARDING_STEPS,
-  memeooorr: AGENTS_FUN_ONBOARDING_STEPS,
-  modius: MODIUS_ONBOARDING_STEPS,
-  optimus: OPTIMUS_ONBOARDING_STEPS,
+  [AgentMap.PredictTrader]: PREDICTION_ONBOARDING_STEPS,
+  [AgentMap.AgentsFun]: AGENTS_FUN_ONBOARDING_STEPS,
+  [AgentMap.Modius]: MODIUS_ONBOARDING_STEPS,
+  [AgentMap.Optimus]: OPTIMUS_ONBOARDING_STEPS,
+  [AgentMap.PettAi]: PETT_AI_ONBOARDING_STEPS,
+  [AgentMap.Polystrat]: POLYSTRAT_ONBOARDING_STEPS,
 };
 
 type AgentIntroductionProps = {
@@ -97,7 +101,7 @@ export const AgentIntroduction = ({
         ))
       }
       renderAgentSelection={renderAgentSelection}
-      styles={styles}
+      styles={{ ...(styles || {}), ...(steps[onboardingStep]?.styles || {}) }}
     />
   );
 };

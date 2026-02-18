@@ -8,18 +8,20 @@ import { DepositOlasForStaking } from '@/components/ConfirmSwitch/DepositOlasFor
 import { HelpAndSupport } from '@/components/Pages/HelpAndSupportPage';
 import { Settings } from '@/components/SettingsPage';
 import { UpdateAgentPage } from '@/components/UpdateAgentPage';
-import { SIDER_WIDTH, TOP_BAR_HEIGHT } from '@/constants';
-import { Pages } from '@/enums/Pages';
-import { useNotifyOnNewEpoch, usePageState } from '@/hooks';
+import { PAGES, SIDER_WIDTH, TOP_BAR_HEIGHT } from '@/constants';
+import { usePageState } from '@/hooks';
 
+import { AchievementModal } from '../AchievementModal';
 import { AgentWallet } from '../AgentWallet';
 import { FundPearlWallet } from '../FundPearlWallet';
 import { PearlWallet } from '../PearlWallet';
 import { SelectStakingPage } from '../SelectStakingPage';
 import { Home } from './Home';
+import { useNotifyOnAgentRewards } from './hooks/useNotifyOnAgentRewards';
+import { useNotifyOnNewEpoch } from './hooks/useNotifyOnNewEpoch';
 import { useScrollPage } from './hooks/useScrollPage';
 import { useSetupTrayIcon } from './hooks/useSetupTrayIcon';
-import { Sidebar } from './Sidebar';
+import { Sidebar } from './Sidebar/Sidebar';
 
 const { Content: MainContent } = MainLayout;
 
@@ -49,11 +51,13 @@ const Content = styled(MainContent)<{ $isSplitScreenPage?: boolean }>`
 `;
 
 /**
- * Top-level hook to initialize page-level settings, electron window listeners, etc.
+ * Top-level hook to initialize page-level settings, electron window listeners,
+ * notifications etc.
  */
 const usePageInitialization = () => {
   useSetupTrayIcon();
   useNotifyOnNewEpoch();
+  useNotifyOnAgentRewards();
 };
 
 export const Main = () => {
@@ -63,38 +67,39 @@ export const Main = () => {
 
   const mainContent = useMemo(() => {
     switch (pageState) {
-      case Pages.PearlWallet:
+      case PAGES.PearlWallet:
         return <PearlWallet />;
-      case Pages.AgentWallet:
+      case PAGES.AgentWallet:
         return <AgentWallet />;
-      case Pages.Settings:
+      case PAGES.Settings:
         return <Settings />;
-      case Pages.HelpAndSupport:
+      case PAGES.HelpAndSupport:
         return <HelpAndSupport />;
-      case Pages.UpdateAgentTemplate:
+      case PAGES.UpdateAgentTemplate:
         return <UpdateAgentPage />;
-      case Pages.AgentStaking:
+      case PAGES.AgentStaking:
         return <AgentStaking />;
-      case Pages.SelectStaking:
+      case PAGES.SelectStaking:
         return <SelectStakingPage mode="migrate" />;
-      case Pages.ConfirmSwitch:
+      case PAGES.ConfirmSwitch:
         return <ConfirmSwitch />;
-      case Pages.DepositOlasForStaking:
+      case PAGES.DepositOlasForStaking:
         return <DepositOlasForStaking />;
-      case Pages.FundPearlWallet:
+      case PAGES.FundPearlWallet:
         return <FundPearlWallet />;
       default:
         return <Home />;
     }
   }, [pageState]);
 
-  const isSplitScreenPage = pageState === Pages.UpdateAgentTemplate;
+  const isSplitScreenPage = pageState === PAGES.UpdateAgentTemplate;
 
   return (
     <MainLayout>
       <Sidebar />
       <Content $isSplitScreenPage={isSplitScreenPage} ref={contentContainerRef}>
         <MainDraggableTopBar $isSplitScreenPage={isSplitScreenPage} />
+        <AchievementModal />
         {mainContent}
       </Content>
     </MainLayout>

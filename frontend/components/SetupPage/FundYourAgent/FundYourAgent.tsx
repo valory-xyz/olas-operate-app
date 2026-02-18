@@ -3,22 +3,17 @@ import { ReactNode } from 'react';
 import styled from 'styled-components';
 
 import { BackButton, CardFlex, CardTitle } from '@/components/ui';
-import { COLOR, EvmChainId, EvmChainName } from '@/constants';
-import { SetupScreen } from '@/enums/SetupScreen';
+import { COLOR, EvmChainName, SETUP_SCREEN } from '@/constants';
 import {
   useFeatureFlag,
-  useOnRampContext,
+  useGetRefillRequirements,
   useServices,
   useSetup,
-  useTotalFiatFromNativeToken,
-  useTotalNativeTokenRequired,
 } from '@/hooks';
+import { TokenRequirement } from '@/types';
 
-import {
-  type TokenRequirement,
-  TokenRequirements,
-} from './components/TokensRequirements';
-import { useGetRefillRequirementsWithMonthlyGas } from './hooks/useGetRefillRequirementsWithMonthlyGas';
+import { OnRampMethodCard } from './components/OnRampMethodCard';
+import { TokenRequirements } from './components/TokensRequirements';
 
 const { Text, Title, Paragraph } = Typography;
 
@@ -47,47 +42,6 @@ type FundMethodCardProps = {
   isBalancesAndFundingRequirementsLoading: boolean;
 };
 
-const OnRamp = ({ onRampChainId }: { onRampChainId: EvmChainId }) => {
-  const { goto } = useSetup();
-
-  const {
-    isLoading: isNativeTokenLoading,
-    hasError: hasNativeTokenError,
-    totalNativeToken,
-  } = useTotalNativeTokenRequired(onRampChainId, 'onboarding');
-  const { isLoading: isFiatLoading, data: fiatAmount } =
-    useTotalFiatFromNativeToken(
-      hasNativeTokenError ? undefined : totalNativeToken,
-    );
-  const isLoading = isNativeTokenLoading || isFiatLoading;
-
-  return (
-    <FundMethodCard>
-      <div className="fund-method-card-body">
-        <CardTitle>Buy</CardTitle>
-        <CardDescription>
-          Pay in fiat by using your credit or debit card — perfect for speed and
-          ease!
-        </CardDescription>
-        <TokenRequirements
-          fiatAmount={fiatAmount ?? 0}
-          isLoading={isLoading}
-          hasError={hasNativeTokenError}
-          fundType="onRamp"
-        />
-      </div>
-      <Button
-        type="primary"
-        size="large"
-        onClick={() => goto(SetupScreen.SetupOnRamp)}
-        disabled={isLoading || hasNativeTokenError}
-      >
-        Buy Crypto with USD
-      </Button>
-    </FundMethodCard>
-  );
-};
-
 const TransferTokens = ({
   chainName,
   tokenRequirements,
@@ -112,7 +66,7 @@ const TransferTokens = ({
       </div>
       <Button
         size="large"
-        onClick={() => goto(SetupScreen.TransferFunds)}
+        onClick={() => goto(SETUP_SCREEN.TransferFunds)}
         disabled={isBalancesAndFundingRequirementsLoading}
       >
         Transfer Crypto on {chainName}
@@ -137,15 +91,16 @@ const BridgeTokens = ({
           expensive.
         </CardDescription>
         <TokenRequirements
+          fundType="bridge"
           tokenRequirements={tokenRequirements}
           chainName={chainName}
           isLoading={isBalancesAndFundingRequirementsLoading}
-          fundType="bridge"
+          title="Estimated to pay"
         />
       </div>
       <Button
         size="large"
-        onClick={() => goto(SetupScreen.SetupBridgeOnboardingScreen)}
+        onClick={() => goto(SETUP_SCREEN.SetupBridgeOnboardingScreen)}
         disabled={isBalancesAndFundingRequirementsLoading}
       >
         Bridge Crypto from Ethereum
@@ -164,19 +119,14 @@ export const FundYourAgent = () => {
   ]);
   const { goto } = useSetup();
   const { selectedAgentConfig } = useServices();
-  const { evmHomeChainId, requiresSetup, isX402Enabled } = selectedAgentConfig;
+  const { evmHomeChainId } = selectedAgentConfig;
   const chainName = EvmChainName[evmHomeChainId];
   const {
     totalTokenRequirements: tokenRequirements,
     isLoading,
     resetTokenRequirements,
-  } = useGetRefillRequirementsWithMonthlyGas({
-    // In case x402 feature is turned off, service creation for agents
-    // requiring setup is already handled at the time of agentForm
-    shouldCreateDummyService: requiresSetup && !isX402Enabled ? false : true,
-  });
+  } = useGetRefillRequirements();
 
-  const { networkId: onRampChainId } = useOnRampContext();
   const areTokenRequirementsLoading =
     isLoading || tokenRequirements.length === 0;
 
@@ -185,7 +135,7 @@ export const FundYourAgent = () => {
       <BackButton
         onPrev={() => {
           resetTokenRequirements();
-          goto(SetupScreen.SelectStaking);
+          goto(SETUP_SCREEN.SelectStaking);
         }}
       />
       <Title level={3} className="mt-12">
@@ -196,9 +146,7 @@ export const FundYourAgent = () => {
       </Text>
 
       <Flex gap={24} style={{ marginTop: 56 }}>
-        {isOnRampEnabled && onRampChainId && (
-          <OnRamp onRampChainId={onRampChainId} />
-        )}
+        {isOnRampEnabled && <OnRampMethodCard />}
         <TransferTokens
           chainName={chainName}
           tokenRequirements={tokenRequirements}

@@ -8,8 +8,8 @@ import {
 } from 'react';
 import { useTimeout } from 'usehooks-ts';
 
+import { PAGES, Pages } from '@/constants';
 import { ONE_MINUTE_INTERVAL } from '@/constants/intervals';
-import { Pages } from '@/enums/Pages';
 
 type PageStateContextType = {
   pageState: Pages;
@@ -21,7 +21,7 @@ type PageStateContextType = {
 };
 
 export const PageStateContext = createContext<PageStateContextType>({
-  pageState: Pages.Setup,
+  pageState: PAGES.Setup,
   setPageState: () => {},
   isPageLoadedAndOneMinutePassed: false,
   isUserLoggedIn: false,
@@ -30,7 +30,7 @@ export const PageStateContext = createContext<PageStateContextType>({
 });
 
 export const PageStateProvider = ({ children }: PropsWithChildren) => {
-  const [pageState, setPageState] = useState<Pages>(Pages.Setup);
+  const [pageState, setPageState] = useState<Pages>(PAGES.Setup);
   const [isPageLoadedAndOneMinutePassed, setIsPageLoadedAndOneMinutePassed] =
     useState(false);
   const [isUserLoggedIn, setIsUserLoggedIn] = useState(false);
@@ -40,7 +40,7 @@ export const PageStateProvider = ({ children }: PropsWithChildren) => {
     () => {
       setIsPageLoadedAndOneMinutePassed(true);
     },
-    pageState === Pages.Setup || isPageLoadedAndOneMinutePassed
+    pageState === PAGES.Setup || isPageLoadedAndOneMinutePassed
       ? null
       : ONE_MINUTE_INTERVAL,
   );

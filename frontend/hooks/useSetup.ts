@@ -1,7 +1,7 @@
 import { useCallback, useContext, useEffect } from 'react';
 
+import { SetupScreen } from '@/constants';
 import { SetupContext } from '@/context/SetupProvider';
-import { SetupScreen } from '@/enums/SetupScreen';
 import { Address } from '@/types/Address';
 import { BackupWalletType } from '@/types/BackupWallet';
 
@@ -36,10 +36,7 @@ export const useSetup = () => {
     if (walletAddress && walletType) {
       setSetupObject((prev) =>
         Object.assign(prev, {
-          backupSigner: {
-            address: walletAddress,
-            type: walletType,
-          },
+          backupSigner: { address: walletAddress, type: walletType },
         }),
       );
     }

@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 
 import { TransferCryptoFromExternalWallet } from '@/components/PearlWallet';
 import { CHAIN_CONFIG } from '@/config/chains';
-import { Pages } from '@/enums';
+import { PAGES } from '@/constants';
 import {
   useMasterBalances,
   useMasterWalletContext,
@@ -38,8 +38,8 @@ export const FundPearlWallet = () => {
       chainName={chainName}
       address={masterEoa.address}
       tokensToDeposit={tokenAndDepositedAmounts}
-      onBack={() => goto(Pages.Main)}
-      onBackToPearlWallet={() => goto(Pages.PearlWallet)}
+      onBack={() => goto(PAGES.Main)}
+      onBackToPearlWallet={() => goto(PAGES.PearlWallet)}
       requestedColumnText="Total Amount Required"
     />
   );

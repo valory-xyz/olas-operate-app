@@ -1,17 +1,15 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import { MiddlewareChain } from '@/constants';
-import { Pages } from '@/enums/Pages';
+import { MiddlewareChain, MiddlewareChainMap, PAGES } from '@/constants';
 import { usePageState } from '@/hooks';
 import { CrossChainTransferDetails } from '@/types/Bridge';
 import { Nullable } from '@/types/Util';
 
-import { BridgeCompleted } from './BridgeCompleted';
 import { BridgeInProgress } from './BridgeInProgress/BridgeInProgress';
 import { BridgeOnEvm } from './BridgeOnEvm/BridgeOnEvm';
 import {
+  BridgeMode,
   BridgeRetryOutcome,
-  EnabledSteps,
   GetBridgeRequirementsParams,
 } from './types';
 
@@ -22,16 +20,17 @@ const TRANSFER_AMOUNTS_ERROR =
 type BridgeState = 'depositing' | 'in_progress' | 'completed';
 
 type BridgeProps = {
-  bridgeFromDescription: string;
-  showCompleteScreen?: {
-    completionMessage: string;
-    onComplete?: () => void;
-  } | null;
-  getBridgeRequirementsParams: GetBridgeRequirementsParams;
-  enabledStepsAfterBridging?: EnabledSteps;
-  onPrevBeforeBridging: () => void;
-  isOnboarding?: boolean;
+  mode?: BridgeMode;
+  fromChain?: MiddlewareChain;
   bridgeToChain: MiddlewareChain;
+  /**
+   * Function to get the bridge requirements params. We are passing the function
+   * instead of just the params so that the params can be requested again, in case
+   * another refill is required (In case of failures or quote changes)
+   */
+  getBridgeRequirementsParams: GetBridgeRequirementsParams;
+  onPrevBeforeBridging: () => void;
+  onBridgingCompleted?: () => void;
 };
 
 /**
@@ -40,15 +39,17 @@ type BridgeProps = {
  * - Handles retry outcomes and updates the UI accordingly.
  */
 export const Bridge = ({
-  showCompleteScreen,
-  getBridgeRequirementsParams,
-  bridgeFromDescription,
-  enabledStepsAfterBridging,
-  onPrevBeforeBridging,
-  isOnboarding = false,
+  mode = 'deposit',
+  fromChain,
   bridgeToChain,
+  getBridgeRequirementsParams,
+  onPrevBeforeBridging,
+  onBridgingCompleted,
 }: BridgeProps) => {
   const { goto } = usePageState();
+
+  // Default to ethereum if not specified for backward compatibility
+  const resolvedFromChain = fromChain || MiddlewareChainMap.ETHEREUM;
 
   const [bridgeState, setBridgeState] = useState<BridgeState>('depositing');
   const [quoteId, setQuoteId] = useState<Nullable<string>>(null);
@@ -57,7 +58,7 @@ export const Bridge = ({
   const [bridgeRetryOutcome, setBridgeRetryOutcome] =
     useState<Nullable<BridgeRetryOutcome>>(null);
 
-  // If retry outcome is set, we need to update the bridge state
+  // If retry outcome is set, we need to update the bridge states
   useEffect(() => {
     if (!bridgeRetryOutcome) return;
 
@@ -73,6 +74,12 @@ export const Bridge = ({
         break;
     }
   }, [bridgeRetryOutcome]);
+
+  useEffect(() => {
+    if (bridgeState === 'completed') {
+      onBridgingCompleted?.();
+    }
+  }, [bridgeState, onBridgingCompleted]);
 
   const updateQuoteId = useCallback(
     (quoteId: string) => setQuoteId(quoteId),
@@ -91,26 +98,22 @@ export const Bridge = ({
         setBridgeState('in_progress');
         break;
       case 'in_progress': {
-        if (showCompleteScreen || isOnboarding) {
-          setBridgeState('completed');
-        } else {
-          goto(Pages.Main);
-        }
+        setBridgeState('completed');
         break;
       }
       case 'completed':
-        goto(Pages.Main);
+        goto(PAGES.Main);
         break;
       default:
         throw new Error('Invalid bridge state');
     }
-  }, [bridgeState, goto, isOnboarding, showCompleteScreen]);
+  }, [bridgeState, goto]);
 
   switch (true) {
     case bridgeState === 'depositing':
       return (
         <BridgeOnEvm
-          bridgeFromDescription={bridgeFromDescription}
+          fromChain={resolvedFromChain}
           bridgeToChain={bridgeToChain}
           getBridgeRequirementsParams={getBridgeRequirementsParams}
           updateQuoteId={updateQuoteId}
@@ -120,11 +123,12 @@ export const Bridge = ({
         />
       );
     /**
-     * In case of onboarding, instead of showing the `BridgeCompleted` component to the user,
-     * Show the Setup complete modal on top of the `BridgeInProgress` component
+     * Shows the same component for in_progress and completed states,
+     * The parent component should take care of handling the logic post completion
+     * eg: For showing completion modal, redirecting etc.
      */
     case bridgeState === 'in_progress':
-    case bridgeState === 'completed' && isOnboarding: {
+    case bridgeState === 'completed': {
       if (!quoteId) throw new Error(QUOTE_ID_ERROR);
       if (!transferAndReceivingDetails) throw new Error(TRANSFER_AMOUNTS_ERROR);
       return (
@@ -135,25 +139,12 @@ export const Bridge = ({
           onBridgeRetryOutcome={(e: Nullable<BridgeRetryOutcome>) =>
             setBridgeRetryOutcome(e)
           }
-          enabledStepsAfterBridging={enabledStepsAfterBridging}
           onNext={handleNextStep}
-          isBridgeCompleted={bridgeState === 'completed'}
-          isOnboarding={isOnboarding}
+          areAllStepsCompleted={bridgeState === 'completed'}
+          mode={mode}
         />
       );
     }
-    case bridgeState === 'completed':
-      if (!transferAndReceivingDetails) throw new Error(TRANSFER_AMOUNTS_ERROR);
-      if (!showCompleteScreen || !showCompleteScreen.completionMessage) {
-        throw new Error('Completion message is required for completed state');
-      }
-      return (
-        <BridgeCompleted
-          {...transferAndReceivingDetails}
-          completionMessage={showCompleteScreen.completionMessage}
-          onComplete={showCompleteScreen.onComplete}
-        />
-      );
     default:
       throw new Error('Invalid bridge state!');
   }

@@ -12,9 +12,8 @@ import {
   Divider,
   TokenAmountInput,
 } from '@/components/ui';
-import { TOKEN_CONFIG } from '@/config/tokens';
-import { AddressZero, TokenSymbol } from '@/constants';
-import { Pages } from '@/enums';
+import { TOKEN_CONFIG, TokenSymbol } from '@/config/tokens';
+import { AddressZero, PAGES } from '@/constants';
 import { useAvailableAssets, usePageState, useServices } from '@/hooks';
 import { TokenAmountDetails, TokenAmounts } from '@/types/Wallet';
 import { formatUnitsToNumber } from '@/utils';
@@ -60,7 +59,7 @@ const PearlWalletToAgentWallet = () => {
         <ArrowRightOutlined style={{ fontSize: 12 }} />
         <Flex gap={8} align="center">
           <Text type="secondary">To</Text>{' '}
-          {agentName && agentImgSrc && (
+          {agentImgSrc && (
             <Image src={agentImgSrc} alt={agentName} width={28} height={28} />
           )}
           <Text className="font-weight-500">{agentName}</Text>
@@ -79,7 +78,7 @@ const FundPearlWallet = () => {
       <Text type="danger" className="text-sm">
         Not enough funds on Pearl Wallet balance.
       </Text>
-      <Button size="small" onClick={() => goto(Pages.PearlWallet)}>
+      <Button size="small" onClick={() => goto(PAGES.PearlWallet)}>
         Fund Pearl Wallet
       </Button>
     </Flex>

@@ -57,15 +57,28 @@ const main = async () => {
         gatekeeperAssess: false,
         entitlements: 'electron/entitlements.mac.plist',
         entitlementsInherit: 'electron/entitlements.mac.plist',
+        signIgnore: [
+          '.*/_internal/.*',
+          '.*/bins/middleware/pearl.*'
+        ],
       },
     },
   });
 };
 
 main().then((res) => {
-  console.log(JSON.stringify(res))
-  console.log('Build & Notarize complete');
+  console.log('\n✅ Build complete!');
+  console.log('📦 Result type:', typeof res);
+  console.log('📦 Result keys:', Object.keys(res || {}));
+  console.log('📦 Result:', res);
+  console.log('\n🎉 Build & Notarize complete!\n');
 }).catch((e) => {
-  console.error(JSON.stringify(e))
+  console.error('\n❌ Build failed!');
+  console.error('💥 Error type:', typeof e);
+  console.error('💥 Error message:', e?.message || 'No message');
+  console.error('💥 Error code:', e?.code || 'No code');
+  console.error('💥 Error stack:', e?.stack || 'No stack');
+  console.error('💥 Error details:', e);
+  console.error('\n');
   throw new Error('Failed to build and notarize.');
 });

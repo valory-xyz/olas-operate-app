@@ -9,14 +9,10 @@ import {
   useMemo,
 } from 'react';
 
-import { FIVE_SECONDS_INTERVAL } from '@/constants/intervals';
-import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
+import { FIVE_SECONDS_INTERVAL, REACT_QUERY_KEYS } from '@/constants';
+import { useElectronApi, useServices, useStore } from '@/hooks';
 import { useAgentStakingRewardsDetails } from '@/hooks/useAgentStakingRewardsDetails';
-import { useElectronApi } from '@/hooks/useElectronApi';
-import { useServices } from '@/hooks/useServices';
-import { useStore } from '@/hooks/useStore';
-import { StakingRewardsInfo } from '@/types/Autonolas';
-import { Nullable } from '@/types/Util';
+import { Nullable, StakingRewardsInfo } from '@/types';
 
 import { OnlineStatusContext } from './OnlineStatusProvider';
 import { StakingProgramContext } from './StakingProgramProvider';
@@ -24,6 +20,7 @@ import { StakingProgramContext } from './StakingProgramProvider';
 export const RewardContext = createContext<{
   isAvailableRewardsForEpochLoading?: boolean;
   stakingRewardsDetails?: Nullable<StakingRewardsInfo>;
+  /** current epoch rewards */
   accruedServiceStakingRewards?: number;
   availableRewardsForEpoch?: bigint;
   availableRewardsForEpochEth?: number;
@@ -68,7 +65,6 @@ const useAvailableRewardsForEpoch = () => {
     },
     enabled: !!isOnline && !!selectedStakingProgramId && !!serviceConfigId,
     refetchInterval: isOnline ? FIVE_SECONDS_INTERVAL : false,
-    refetchOnWindowFocus: false,
   });
 };
 

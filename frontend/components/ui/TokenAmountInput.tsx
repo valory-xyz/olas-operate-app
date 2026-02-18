@@ -5,7 +5,8 @@ import { ReactNode, useCallback } from 'react';
 import { TbInfoCircle, TbWallet } from 'react-icons/tb';
 import styled from 'styled-components';
 
-import { COLOR, TokenSymbol, TokenSymbolConfigMap } from '@/constants';
+import { TokenSymbol, TokenSymbolConfigMap } from '@/config/tokens';
+import { COLOR } from '@/constants';
 import { formatNumber } from '@/utils';
 
 import { NumberInput } from './NumberInput';

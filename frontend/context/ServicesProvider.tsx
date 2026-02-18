@@ -11,26 +11,24 @@ import {
   useState,
 } from 'react';
 
-import { AGENT_CONFIG } from '@/config/agents';
+import { ACTIVE_AGENTS, AGENT_CONFIG } from '@/config/agents';
 import {
+  AgentEoa,
   AgentMap,
+  AgentSafe,
   AgentType,
+  AgentWallet,
   EvmChainId,
   FIFTEEN_SECONDS_INTERVAL,
   FIVE_SECONDS_INTERVAL,
   MESSAGE_WIDTH,
   MiddlewareChain,
   MiddlewareDeploymentStatus,
+  PAGES,
   REACT_QUERY_KEYS,
+  WALLET_OWNER,
+  WALLET_TYPE,
 } from '@/constants';
-import {
-  AgentEoa,
-  AgentSafe,
-  AgentWallet,
-  Pages,
-  WalletOwnerType,
-  WalletType,
-} from '@/enums';
 import {
   useElectronApi,
   usePageState,
@@ -38,6 +36,7 @@ import {
   usePause,
   useStore,
 } from '@/hooks';
+import { useDynamicRefetchInterval } from '@/hooks/useDynamicRefetchInterval';
 import { ServicesService } from '@/service/Services';
 import {
   AgentConfig,
@@ -49,7 +48,12 @@ import {
   ServiceDeployment,
   ServiceValidationResponse,
 } from '@/types';
-import { asEvmChainId, isNilOrEmpty } from '@/utils';
+import {
+  asEvmChainId,
+  generateAgentName,
+  isNilOrEmpty,
+  isValidServiceId,
+} from '@/utils';
 
 import { OnlineStatusContext } from './OnlineStatusProvider';
 
@@ -69,13 +73,22 @@ type ServicesResponse = Pick<
 
 type ServicesContextType = {
   services?: MiddlewareServiceResponse[];
-  availableServiceConfigIds: { configId: string; chainId: EvmChainId }[];
+  availableServiceConfigIds: {
+    configId: string;
+    chainId: EvmChainId;
+    tokenId: Optional<number>;
+  }[];
+  getServiceConfigIdsOf: (chainId: EvmChainId) => string[];
+  getAgentTypeFromService: (serviceConfigId?: string) => Nullable<AgentType>;
+  getServiceConfigIdFromAgentType: (agentType: AgentType) => Nullable<string>;
   serviceWallets?: AgentWallet[];
   selectedService?: Service;
   serviceStatusOverrides?: Record<string, Maybe<MiddlewareDeploymentStatus>>;
   isSelectedServiceDeploymentStatusLoading: boolean;
   selectedAgentConfig: AgentConfig;
   selectedAgentType: AgentType;
+  selectedAgentName: Nullable<string>;
+  selectedAgentNameOrFallback: string;
   deploymentDetails: ServiceDeployment | undefined;
   updateAgentType: (agentType: AgentType) => void;
   overrideSelectedServiceStatus: (
@@ -92,10 +105,15 @@ export const ServicesContext = createContext<ServicesContextType>({
   isSelectedServiceDeploymentStatusLoading: true,
   selectedAgentConfig: AGENT_CONFIG[AgentMap.PredictTrader],
   selectedAgentType: AgentMap.PredictTrader,
+  selectedAgentName: null,
+  selectedAgentNameOrFallback: 'My agent',
   deploymentDetails: undefined,
   updateAgentType: noop,
   overrideSelectedServiceStatus: noop,
   availableServiceConfigIds: [],
+  getServiceConfigIdsOf: () => [],
+  getAgentTypeFromService: () => null,
+  getServiceConfigIdFromAgentType: () => null,
 });
 
 /**
@@ -104,20 +122,28 @@ export const ServicesContext = createContext<ServicesContextType>({
 export const ServicesProvider = ({ children }: PropsWithChildren) => {
   const { isOnline } = useContext(OnlineStatusContext);
   const { store } = useElectronApi();
+  const { paused, setPaused, togglePaused } = usePause();
   const { storeState } = useStore();
   const { pageState } = usePageState();
-  const { paused, setPaused, togglePaused } = usePause();
+  const serviceRefetchInterval = useDynamicRefetchInterval(
+    FIVE_SECONDS_INTERVAL,
+  );
 
   // state to track the services ids message shown
   // so that it is not shown again for the same service
   const [isInvalidMessageShown, setIsInvalidMessageShown] = useState(false);
   const agentTypeFromStore = storeState?.lastSelectedAgentType;
 
-  // set the agent type from the store on load
-  const selectedAgentType = useMemo(() => {
-    if (!agentTypeFromStore) return AgentMap.PredictTrader;
-    return agentTypeFromStore;
-  }, [agentTypeFromStore]);
+  const [selectedAgentType, setSelectedAgentType] = useState<AgentType>(
+    agentTypeFromStore || AgentMap.PredictTrader,
+  );
+
+  useEffect(() => {
+    // Only sync the state at initial mount
+    if (agentTypeFromStore && agentTypeFromStore !== selectedAgentType) {
+      setSelectedAgentType(agentTypeFromStore);
+    }
+  }, [agentTypeFromStore, selectedAgentType]);
 
   // user selected service identifier
   const [selectedServiceConfigId, setSelectedServiceConfigId] =
@@ -131,7 +157,8 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
     queryKey: REACT_QUERY_KEYS.SERVICES_KEY,
     queryFn: ({ signal }) => ServicesService.getServices(signal),
     enabled: isOnline && !paused,
-    refetchInterval: FIVE_SECONDS_INTERVAL,
+    refetchInterval: serviceRefetchInterval,
+    refetchIntervalInBackground: true,
   });
 
   const {
@@ -159,8 +186,10 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
       }),
     enabled: isOnline && !!selectedServiceConfigId,
     refetchInterval: (query) => {
-      return query?.state?.status === 'success' ? FIVE_SECONDS_INTERVAL : false;
+      if (query.state.status !== 'success') return false;
+      return serviceRefetchInterval;
     },
+    refetchIntervalInBackground: true,
   });
 
   // Stores temporary overrides for service statuses to avoid UI glitches.
@@ -183,7 +212,7 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
   useEffect(() => {
     if (isServicesValidationStatusLoading) return;
     if (!servicesValidationStatus) return;
-    if (pageState !== Pages.Main) return;
+    if (pageState !== PAGES.Main) return;
     if (isInvalidMessageShown) return;
 
     const isValid = Object.values(servicesValidationStatus).every((x) => !!x);
@@ -241,8 +270,8 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
                     (instance: string) =>
                       ({
                         address: instance,
-                        type: WalletType.EOA,
-                        owner: WalletOwnerType.Agent,
+                        type: WALLET_TYPE.EOA,
+                        owner: WALLET_OWNER.Agent,
                       }) as AgentEoa,
                   ),
                 );
@@ -251,8 +280,8 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
               if (multisig) {
                 acc.push({
                   address: multisig,
-                  type: WalletType.Safe,
-                  owner: WalletOwnerType.Agent,
+                  type: WALLET_TYPE.Safe,
+                  owner: WALLET_OWNER.Agent,
                   evmChainId: asEvmChainId(middlewareChain),
                 } as AgentSafe);
               }
@@ -269,6 +298,7 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
 
   const updateAgentType = useCallback(
     (agentType: AgentType) => {
+      setSelectedAgentType(agentType);
       store?.set?.('lastSelectedAgentType', agentType);
       setIsInvalidMessageShown(false);
     },
@@ -323,11 +353,61 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
           !currentAgent?.isUnderConstruction && !!currentAgent?.isAgentEnabled
         );
       })
-      .map(({ service_config_id, home_chain }) => ({
+      .map(({ service_config_id, home_chain, chain_configs }) => ({
         configId: service_config_id,
+        tokenId: chain_configs[home_chain].chain_data.token,
         chainId: asEvmChainId(home_chain),
       }));
   }, [services]);
+
+  const getServiceConfigIdsOf = useCallback(
+    (chainId: EvmChainId) =>
+      availableServiceConfigIds
+        .filter(({ chainId: serviceChainId }) => chainId === serviceChainId)
+        .map(({ configId }) => configId),
+    [availableServiceConfigIds],
+  );
+
+  const getAgentTypeFromService = (
+    serviceConfigId?: string,
+  ): AgentType | null => {
+    if (!serviceConfigId) return null;
+
+    const service = services?.find(
+      (service) => service.service_config_id === serviceConfigId,
+    );
+    if (!service) return null;
+
+    const agentEntry = ACTIVE_AGENTS.find(
+      ([, config]) => config.servicePublicId === service.service_public_id,
+    );
+
+    return agentEntry ? (agentEntry[0] as AgentType) : null;
+  };
+
+  const getServiceConfigIdFromAgentType = (agentType: AgentType) => {
+    const serviceConfigId = availableServiceConfigIds.find(
+      ({ configId }) => getAgentTypeFromService(configId) === agentType,
+    )?.configId;
+    return serviceConfigId ?? null;
+  };
+
+  // Agent name generated based on the tokenId and chain of the selected service
+  const selectedAgentName = useMemo(() => {
+    const tokenId =
+      selectedService?.chain_configs[selectedService.home_chain].chain_data
+        .token;
+    const chainId = selectedAgentConfig?.evmHomeChainId;
+    if (!chainId || !isValidServiceId(tokenId)) return null;
+    return generateAgentName(chainId, tokenId);
+  }, [
+    selectedAgentConfig?.evmHomeChainId,
+    selectedService?.chain_configs,
+    selectedService?.home_chain,
+  ]);
+
+  const selectedAgentNameOrFallback =
+    selectedAgentName ?? `My ${selectedAgentConfig.displayName}`;
 
   return (
     <ServicesContext.Provider
@@ -338,6 +418,9 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
         isLoading: isServicesLoading,
         refetch,
         availableServiceConfigIds,
+        getServiceConfigIdsOf,
+        getAgentTypeFromService,
+        getServiceConfigIdFromAgentType,
 
         // pause
         paused,
@@ -349,6 +432,8 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
         isSelectedServiceDeploymentStatusLoading,
         selectedAgentConfig,
         selectedAgentType,
+        selectedAgentName,
+        selectedAgentNameOrFallback,
 
         // others
         deploymentDetails,

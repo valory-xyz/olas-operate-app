@@ -2,7 +2,13 @@ const { contextBridge, ipcRenderer } = require('electron/renderer');
 
 /** IPC methods for transak window */
 const onRampWindow = {
-  show: (amountToPay) => ipcRenderer.invoke('onramp-window-show', amountToPay),
+  show: (amountToPay, networkName, cryptoCurrencyCode) =>
+    ipcRenderer.invoke(
+      'onramp-window-show',
+      amountToPay,
+      networkName,
+      cryptoCurrencyCode,
+    ),
   close: () => ipcRenderer.invoke('onramp-window-close'),
   transactionSuccess: () => ipcRenderer.invoke('onramp-transaction-success'),
   transactionFailure: () => ipcRenderer.invoke('onramp-transaction-failure'),
@@ -14,6 +20,17 @@ const web3AuthWindow = {
   close: () => ipcRenderer.invoke('web3auth-window-close'),
   authSuccess: (address) =>
     ipcRenderer.invoke('web3auth-address-received', address),
+};
+
+/** IPC methods for web3auth swap owner window */
+const web3AuthSwapOwnerWindow = {
+  show: (params) =>
+    ipcRenderer.invoke('web3auth-swap-owner-window-show', params),
+  close: () => ipcRenderer.invoke('web3auth-swap-owner-window-close'),
+  swapSuccess: (result) =>
+    ipcRenderer.invoke('web3auth-swap-owner-success', result),
+  swapFailure: (result) =>
+    ipcRenderer.invoke('web3auth-swap-owner-failure', result),
 };
 
 /** IPC methods for terms window */
@@ -45,10 +62,17 @@ contextBridge.exposeInMainWorld('electronAPI', {
   showNotification: (title, description) =>
     ipcRenderer.send('show-notification', title, description),
   saveLogs: (data) => ipcRenderer.invoke('save-logs', data),
+  saveLogsForSupport: (data) =>
+    ipcRenderer.invoke('save-logs-for-support', data),
+  cleanupSupportLogs: () => ipcRenderer.invoke('cleanup-support-logs'),
+  readFile: (filePath) => ipcRenderer.invoke('read-file', filePath),
   openPath: (filePath) => ipcRenderer.send('open-path', filePath),
   getAppVersion: () => ipcRenderer.invoke('app-version'),
   onRampWindow,
   web3AuthWindow,
+  web3AuthSwapOwnerWindow,
   termsAndConditionsWindow,
   logEvent: (message) => ipcRenderer.invoke('log-event', message),
+  nextLogError: (error, errorInfo) =>
+    ipcRenderer.invoke('next-log-error', error, errorInfo),
 });

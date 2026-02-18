@@ -1,8 +1,7 @@
 import { Button, Checkbox, Flex, Modal } from 'antd';
 import { useCallback, useState } from 'react';
 
-import { GEMINI_API_URL, MODAL_WIDTH } from '@/constants';
-import { Pages } from '@/enums/Pages';
+import { GEMINI_API_URL, MODAL_WIDTH, PAGES } from '@/constants';
 import { useElectronApi, usePageState, useServices } from '@/hooks';
 
 type UnlockChatUiAlertProps = {
@@ -33,7 +32,7 @@ export const UnlockChatUiAlert = ({
 
   const handleProvideKey = useCallback(() => {
     handleDoNotShowAgain(dontShowAgain);
-    goto(Pages.UpdateAgentTemplate);
+    goto(PAGES.UpdateAgentTemplate);
   }, [dontShowAgain, handleDoNotShowAgain, goto]);
 
   const handleProceed = useCallback(() => {

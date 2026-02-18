@@ -2,7 +2,8 @@ import { Button, Form, Input } from 'antd';
 import { get, isEqual, isUndefined, omitBy } from 'lodash';
 import { useCallback, useContext, useMemo } from 'react';
 
-import { Pages } from '@/enums/Pages';
+import { RequiredMark } from '@/components/ui';
+import { PAGES } from '@/constants';
 import { usePageState, useServices } from '@/hooks';
 import { Nullable } from '@/types/Util';
 
@@ -71,6 +72,7 @@ const PredictUpdateForm = ({ initialFormValues }: PredictUpdateFormProps) => {
       validateMessages={validateMessages}
       initialValues={{ ...initialFormValues }}
       className="label-no-padding"
+      requiredMark={RequiredMark}
     >
       <GeminiApiKeySubHeader name="Prediction" />
       <Form.Item
@@ -141,7 +143,7 @@ export const PredictUpdatePage = ({ renderForm }: PredictUpdatePageProps) => {
     if (hasUnsavedChanges) {
       unsavedModal.openModal();
     } else {
-      goto(Pages.Main);
+      goto(PAGES.Main);
     }
   }, [initialValues, form, unsavedModal, goto]);
 

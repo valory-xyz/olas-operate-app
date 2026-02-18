@@ -1,6 +1,8 @@
 import { useCallback, useMemo } from 'react';
 
+import { ACTIVE_AGENTS } from '@/config/agents';
 import {
+  AgentType,
   EvmChainId,
   type MiddlewareDeploymentStatus,
   MiddlewareDeploymentStatusMap,
@@ -9,9 +11,9 @@ import {
   AgentEoa,
   AgentSafe,
   AgentWallet,
-  WalletOwnerType,
-  WalletType,
-} from '@/enums/Wallet';
+  WALLET_OWNER,
+  WALLET_TYPE,
+} from '@/constants';
 import { Address } from '@/types/Address';
 import { Service } from '@/types/Service';
 import { Nullable, Optional } from '@/types/Util';
@@ -33,8 +35,8 @@ const getAgentEoas = (addresses?: Address[]) => {
     (address) =>
       ({
         address,
-        owner: WalletOwnerType.Agent,
-        type: WalletType.EOA,
+        owner: WALLET_OWNER.Agent,
+        type: WALLET_TYPE.EOA,
       }) satisfies AgentEoa,
   );
 };
@@ -64,11 +66,14 @@ export const useService = (serviceConfigId?: string) => {
     return service?.chain_configs?.[service?.home_chain]?.chain_data.token;
   }, [service?.chain_configs, service?.home_chain]);
 
-  // TODO: update this logic to support multiple agents per chain
   const getServiceWalletsOf = useCallback(
-    (chainId: EvmChainId): AgentWallet[] => {
+    (chainId: EvmChainId, configId?: string): AgentWallet[] => {
+      if (!configId) return [];
+
       const chainName = asMiddlewareChain(chainId);
-      const service = services?.find((s) => s.home_chain === chainName);
+      const service = services?.find(
+        (s) => s.home_chain === chainName && s.service_config_id === configId,
+      );
 
       if (!service) return [];
       if (!service.chain_configs?.[chainName]) return [];
@@ -78,8 +83,8 @@ export const useService = (serviceConfigId?: string) => {
 
       const agentSafe = {
         address: chainConfig.chain_data.multisig as Address,
-        owner: WalletOwnerType.Agent,
-        type: WalletType.Safe,
+        owner: WALLET_OWNER.Agent,
+        type: WALLET_TYPE.Safe,
         evmChainId: chainId,
       } satisfies AgentSafe;
 
@@ -93,13 +98,23 @@ export const useService = (serviceConfigId?: string) => {
 
   const serviceWallets: AgentWallet[] = useMemo(() => {
     if (!selectedService?.home_chain) return [];
-    return getServiceWalletsOf(asEvmChainId(selectedService.home_chain));
+    return getServiceWalletsOf(
+      asEvmChainId(selectedService.home_chain),
+      selectedService.service_config_id,
+    );
   }, [selectedService, getServiceWalletsOf]);
 
   const getAddressesOf = useCallback(
-    (chainId: EvmChainId): Nullable<ServiceChainIdAddressRecord> => {
+    (
+      chainId: EvmChainId,
+      configId?: string,
+    ): Nullable<ServiceChainIdAddressRecord> => {
+      if (!configId) return null;
+
       const chainName = asMiddlewareChain(chainId);
-      const service = services?.find((s) => s.home_chain === chainName);
+      const service = services?.find(
+        (s) => s.home_chain === chainName && s.service_config_id === configId,
+      );
       const chainData = service?.chain_configs;
 
       if (!chainData) return null;
@@ -123,9 +138,11 @@ export const useService = (serviceConfigId?: string) => {
    * ie, all agentSafe and agentEoas
    */
   const getAgentAddressesOf = useCallback(
-    (chainId: EvmChainId): Address[] => {
+    (chainId: EvmChainId, configId?: string): Address[] => {
+      if (!configId) return [];
+
       if (!service) return [];
-      const chainAddresses = getAddressesOf(chainId);
+      const chainAddresses = getAddressesOf(chainId, configId);
 
       if (!chainAddresses) return [];
 
@@ -143,16 +160,19 @@ export const useService = (serviceConfigId?: string) => {
 
   const agentAddresses = useMemo(() => {
     if (!service?.home_chain) return [];
-    return getAgentAddressesOf(asEvmChainId(service.home_chain));
+    return getAgentAddressesOf(
+      asEvmChainId(service.home_chain),
+      service.service_config_id,
+    );
   }, [getAgentAddressesOf, service]);
 
   const getServicesSafesOf = useCallback(
-    (chainId: EvmChainId) =>
-      getServiceWalletsOf(chainId).filter(
+    (chainId: EvmChainId, configId?: string) =>
+      getServiceWalletsOf(chainId, configId).filter(
         (wallet): wallet is AgentSafe =>
-          getAgentAddressesOf(chainId).includes(wallet.address) &&
-          wallet.owner === WalletOwnerType.Agent &&
-          wallet.type === WalletType.Safe,
+          getAgentAddressesOf(chainId, configId).includes(wallet.address) &&
+          wallet.owner === WALLET_OWNER.Agent &&
+          wallet.type === WALLET_TYPE.Safe,
       ),
     [getServiceWalletsOf, getAgentAddressesOf],
   );
@@ -162,8 +182,8 @@ export const useService = (serviceConfigId?: string) => {
     return serviceWallets.filter(
       (wallet): wallet is AgentSafe =>
         agentAddresses.includes(wallet.address) &&
-        wallet.owner === WalletOwnerType.Agent &&
-        wallet.type === WalletType.Safe,
+        wallet.owner === WALLET_OWNER.Agent &&
+        wallet.type === WALLET_TYPE.Safe,
     );
   }, [agentAddresses, serviceWallets]);
 
@@ -172,21 +192,37 @@ export const useService = (serviceConfigId?: string) => {
     return serviceWallets.find(
       (wallet): wallet is AgentEoa =>
         agentAddresses.includes(wallet.address) &&
-        wallet.owner === WalletOwnerType.Agent &&
-        wallet.type === WalletType.EOA,
+        wallet.owner === WALLET_OWNER.Agent &&
+        wallet.type === WALLET_TYPE.EOA,
     );
   }, [agentAddresses, serviceWallets]);
 
   // agent safe
   const getServiceSafeOf = useCallback(
-    (chainId: EvmChainId) =>
-      getServicesSafesOf(chainId)?.find((safe) => safe.evmChainId === chainId),
+    (chainId: EvmChainId, configId?: string) =>
+      getServicesSafesOf(chainId, configId)?.find(
+        (safe) => safe.evmChainId === chainId,
+      ),
     [getServicesSafesOf],
   );
 
-  // TODO: revise these statuses after Pearl v1, we often need isServiceRunning
-  // without isServiceTransitioning, and sometimes we check deploymentStatus
-  // manually, while could use one of these
+  const getAgentTypeOf = useCallback(
+    (chainId: EvmChainId, configId: string) => {
+      const service = services?.find(
+        (service) =>
+          service.service_config_id === configId &&
+          service.home_chain === asMiddlewareChain(chainId),
+      );
+      if (!service) return null;
+      const agent = ACTIVE_AGENTS.find(
+        ([, agentConfig]) =>
+          agentConfig.servicePublicId === service.service_public_id &&
+          agentConfig.middlewareHomeChainId === service.home_chain,
+      );
+      return agent ? (agent[0] as AgentType) : null;
+    },
+    [services],
+  );
 
   /**
    * @note statuses where middleware deployment is moving from stopped to
@@ -200,6 +236,10 @@ export const useService = (serviceConfigId?: string) => {
   const isServiceRunning =
     deploymentStatus === MiddlewareDeploymentStatusMap.DEPLOYING ||
     deploymentStatus === MiddlewareDeploymentStatusMap.STOPPING ||
+    deploymentStatus === MiddlewareDeploymentStatusMap.DEPLOYED;
+
+  /** @note deployment is running and agent is active */
+  const isServiceActive =
     deploymentStatus === MiddlewareDeploymentStatusMap.DEPLOYED;
 
   /** @note statuses where middleware is in the process of building/creating a new deployment */
@@ -218,9 +258,11 @@ export const useService = (serviceConfigId?: string) => {
     serviceEoa,
     service,
     getServiceSafeOf,
+    getAgentTypeOf,
 
     // service status
     isServiceRunning,
+    isServiceActive,
     isServiceBuilding,
     serviceNftTokenId,
   };

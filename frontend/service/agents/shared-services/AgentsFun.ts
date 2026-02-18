@@ -3,20 +3,23 @@ import { formatEther } from 'ethers/lib/utils';
 
 import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
 import { BASE_STAKING_PROGRAMS } from '@/config/stakingPrograms/base';
-import { PROVIDERS } from '@/constants/providers';
-import { EvmChainId } from '@/enums/Chain';
-import { StakingProgramId } from '@/enums/StakingProgram';
-import { Address } from '@/types/Address';
+import {
+  EvmChainId,
+  EvmChainIdMap,
+  PROVIDERS,
+  StakingProgramId,
+} from '@/constants';
+import { Address } from '@/types';
 import {
   ServiceStakingDetails,
   StakingContractDetails,
   StakingRewardsInfo,
 } from '@/types/Autonolas';
+import { isValidServiceId } from '@/utils';
 
 import { ONE_YEAR, StakedAgentService } from './StakedAgentService';
 
 const REQUESTS_SAFETY_MARGIN = 1;
-
 export abstract class AgentsFunService extends StakedAgentService {
   static getAgentStakingRewardsInfo = async ({
     agentMultisigAddress,
@@ -33,7 +36,7 @@ export abstract class AgentsFunService extends StakedAgentService {
 
     if (!agentMultisigAddress) return;
     if (!serviceId) return;
-    if (serviceId === -1) return;
+    if (!isValidServiceId(serviceId)) return;
 
     const stakingProgramConfig = STAKING_PROGRAMS[chainId][stakingProgramId];
     if (!stakingProgramConfig) throw new Error('Staking program not found');
@@ -107,13 +110,13 @@ export abstract class AgentsFunService extends StakedAgentService {
 
     const availableRewardsForEpoch = Math.max(
       rewardsPerSecond * livenessPeriod, // expected rewards for the epoch
-      rewardsPerSecond * (nowInSeconds - tsCheckpoint), // incase of late checkpoint
+      rewardsPerSecond * (nowInSeconds - tsCheckpoint), // in case of late checkpoint
     );
 
     // Minimum staked amount is double the minimum staking deposit
     // (all the bonds must be the same as deposit)
     const minimumStakedAmount =
-      parseFloat(ethers.utils.formatEther(`${minStakingDeposit}`)) * 2;
+      parseFloat(formatEther(`${minStakingDeposit}`)) * 2;
 
     return {
       serviceInfo,
@@ -123,7 +126,7 @@ export abstract class AgentsFunService extends StakedAgentService {
       isEligibleForRewards,
       availableRewardsForEpoch,
       accruedServiceStakingRewards: parseFloat(
-        ethers.utils.formatEther(`${accruedStakingReward}`),
+        formatEther(`${accruedStakingReward}`),
       ),
       minimumStakedAmount,
       tsCheckpoint,
@@ -202,7 +205,7 @@ export abstract class AgentsFunService extends StakedAgentService {
     const { multicallProvider } = PROVIDERS[chainId];
 
     const getStakingTokenConfig = () => {
-      if (chainId === EvmChainId.Base)
+      if (chainId === EvmChainIdMap.Base)
         return BASE_STAKING_PROGRAMS[stakingProgramId];
       return null;
     };
@@ -271,9 +274,7 @@ export abstract class AgentsFunService extends StakedAgentService {
       maxNumServices,
       serviceIds,
       minimumStakingDuration: minStakingDurationInBN.toNumber(),
-      minStakingDeposit: parseFloat(
-        ethers.utils.formatEther(minStakingDeposit),
-      ),
+      minStakingDeposit: parseFloat(formatEther(minStakingDeposit)),
       apy,
       olasStakeRequired,
       rewardsPerWorkPeriod,

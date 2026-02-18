@@ -38,7 +38,7 @@ export const Profile = () => {
   }
   return (
     <Container>
-      <Iframe src="http://127.0.0.1:8716" id="agent-ui" />
+      <Iframe src="http://127.0.0.1:8716" id="agent-ui" allow="popups" />
     </Container>
   );
 };

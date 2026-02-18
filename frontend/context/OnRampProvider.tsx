@@ -3,31 +3,39 @@ import {
   PropsWithChildren,
   useCallback,
   useEffect,
-  useMemo,
   useState,
 } from 'react';
 
-import { EvmChainId, onRampChainMap } from '@/constants';
-import { Pages } from '@/enums';
+import type { OnRampNetworkConfig } from '@/components/OnRamp';
+import { PAGES } from '@/constants';
 import {
   useElectronApi,
   useMasterBalances,
+  useMasterWalletContext,
   usePageState,
-  useServices,
 } from '@/hooks';
 import { Nullable } from '@/types';
-import { asEvmChainDetails, asMiddlewareChain, delayInSeconds } from '@/utils';
+import { delayInSeconds, parseEther } from '@/utils';
 
 const ETH_RECEIVED_THRESHOLD = 0.9;
 
 export const OnRampContext = createContext<{
-  networkId: Nullable<EvmChainId>;
-  networkName: Nullable<string>;
-  cryptoCurrencyCode: Nullable<string>;
+  networkId: OnRampNetworkConfig['networkId'];
+  networkName: OnRampNetworkConfig['networkName'];
+  cryptoCurrencyCode: OnRampNetworkConfig['cryptoCurrencyCode'];
+  /**
+   * Chain to which the funds are being transferred. It can have two cases:
+   * 1. Onboarding: homeChainId of the selected agent
+   * 2. Depositing: chainId to which the user is depositing new funds
+   */
+  selectedChainId: OnRampNetworkConfig['selectedChainId'];
+  updateNetworkConfig: (config: OnRampNetworkConfig) => void;
   resetOnRampState: () => void;
 
-  ethAmountToPay: Nullable<number>;
-  updateEthAmountToPay: (amount: Nullable<number>) => void;
+  nativeAmountToPay: Nullable<number>;
+  updateNativeAmountToPay: (amount: Nullable<number>) => void;
+  nativeTotalAmountRequired: Nullable<number>;
+  updateNativeTotalAmountRequired: (amount: Nullable<number>) => void;
   usdAmountToPay: Nullable<number>;
   updateUsdAmountToPay: (amount: Nullable<number>) => void;
   isBuyCryptoBtnLoading: boolean;
@@ -45,10 +53,14 @@ export const OnRampContext = createContext<{
   networkId: null,
   networkName: null,
   cryptoCurrencyCode: null,
+  selectedChainId: null,
+  updateNetworkConfig: () => {},
   resetOnRampState: () => {},
 
-  ethAmountToPay: null,
-  updateEthAmountToPay: () => {},
+  nativeAmountToPay: null,
+  updateNativeAmountToPay: () => {},
+  nativeTotalAmountRequired: null,
+  updateNativeTotalAmountRequired: () => {},
   usdAmountToPay: null,
   updateUsdAmountToPay: () => {},
   isBuyCryptoBtnLoading: false,
@@ -67,11 +79,16 @@ export const OnRampContext = createContext<{
 export const OnRampProvider = ({ children }: PropsWithChildren) => {
   const { ipcRenderer, onRampWindow } = useElectronApi();
   const { pageState } = usePageState();
-  const { selectedAgentConfig } = useServices();
-  const { getMasterEoaNativeBalanceOf } = useMasterBalances();
+  const { getMasterEoaNativeBalanceOf, getMasterSafeNativeBalanceOf } =
+    useMasterBalances();
+  const { getMasterSafeOf, isFetched: isMasterWalletFetched } =
+    useMasterWalletContext();
 
-  // State to track the amount of ETH to pay for on-ramping and the USD equivalent
-  const [ethAmountToPay, setEthAmountToPay] = useState<Nullable<number>>(null);
+  // State to track the amount of native tokens (e.g., ETH, POL, etc.) to pay for on-ramping and the USD equivalent
+  const [nativeAmountToPay, setNativeAmountToPay] =
+    useState<Nullable<number>>(null);
+  const [nativeTotalAmountRequired, setNativeTotalAmountRequired] =
+    useState<Nullable<number>>(null);
   const [usdAmountToPay, setUsdAmountToPay] = useState<Nullable<number>>(null);
 
   // State to track if the buy crypto button is loading
@@ -95,6 +112,13 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
     setIsBuyCryptoBtnLoading(loading);
   }, []);
 
+  const [networkConfig, setNetworkConfig] = useState<OnRampNetworkConfig>({
+    networkId: null,
+    networkName: null,
+    cryptoCurrencyCode: null,
+    selectedChainId: null,
+  });
+
   /**
    * Check if the on-ramping step is completed
    * ie. if the on-ramping is successful AND funds are received in the master EOA.
@@ -108,31 +132,35 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
   const isTransactionSuccessfulButFundsNotReceived =
     isOnRampingTransactionSuccessful && !hasFundsReceivedAfterOnRamp;
 
-  // Get the network id, name, and crypto currency code based on the selected agent's home chain
-  // This is used to determine the network and currency to on-ramp to.
-  const { networkId, networkName, cryptoCurrencyCode } = useMemo(() => {
-    const fromChainName = asMiddlewareChain(selectedAgentConfig.evmHomeChainId);
-    const networkId = onRampChainMap[fromChainName];
-    const chainDetails = asEvmChainDetails(asMiddlewareChain(networkId));
-    return {
-      networkId,
-      networkName: chainDetails.name,
-      cryptoCurrencyCode: chainDetails.symbol,
-    };
-  }, [selectedAgentConfig]);
+  const { networkId, networkName, cryptoCurrencyCode, selectedChainId } =
+    networkConfig;
 
   // check if the user has received funds after on-ramping to the master EOA
   useEffect(() => {
-    if (!ethAmountToPay) return;
+    if (!nativeTotalAmountRequired) return;
+    if (!usdAmountToPay) return;
     if (isOnRampingStepCompleted) return;
+    if (!isMasterWalletFetched) return;
+    if (!networkId) return;
 
-    // Get the master EOA balance of the network to on-ramp
-    const balance = getMasterEoaNativeBalanceOf(networkId);
+    // Get the master safe (in case it exists) or master EOA balance of the network to on-ramp
+    const hasMasterSafe = getMasterSafeOf?.(networkId);
+    const balance = hasMasterSafe
+      ? (getMasterSafeNativeBalanceOf(networkId)?.[0]?.balanceString ?? '0')
+      : getMasterEoaNativeBalanceOf(networkId);
     if (!balance) return;
 
-    // If the master EOA balance is greater than or equal to 90% of the ETH amount to pay,
+    // Limit decimals to 18 (ethers parseEther requirement) to avoid NUMERIC_FAULT
+    const thresholdAmount = (
+      nativeTotalAmountRequired * ETH_RECEIVED_THRESHOLD
+    ).toFixed(18);
+
+    // If the balance is greater than or equal to 90% of the ETH amount to pay,
     // considering that the user has received the funds after on-ramping.
-    if (balance >= ethAmountToPay * ETH_RECEIVED_THRESHOLD) {
+    if (
+      BigInt(parseEther(balance.toString())) >=
+      BigInt(parseEther(thresholdAmount))
+    ) {
       updateIsBuyCryptoBtnLoading(false);
       setHasFundsReceivedAfterOnRamp(true);
       setIsOnRampingTransactionSuccessful(true);
@@ -141,18 +169,31 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
       onRampWindow?.close?.();
     }
   }, [
-    ethAmountToPay,
+    nativeTotalAmountRequired,
     networkId,
     getMasterEoaNativeBalanceOf,
     updateIsBuyCryptoBtnLoading,
     onRampWindow,
     isOnRampingStepCompleted,
+    isMasterWalletFetched,
+    getMasterSafeOf,
+    getMasterSafeNativeBalanceOf,
+    usdAmountToPay,
   ]);
 
-  // Function to set the ETH amount to pay for on-ramping
-  const updateEthAmountToPay = useCallback((amount: Nullable<number>) => {
-    setEthAmountToPay(amount);
+  // Function to set the native token amount to pay for on-ramping
+  const updateNativeAmountToPay = useCallback((amount: Nullable<number>) => {
+    setNativeAmountToPay(amount);
   }, []);
+
+  // Function to set the total native token amount required for on-ramping
+  // (including what could possibly be on the balance + newly requested remaining amount to pay)
+  const updateNativeTotalAmountRequired = useCallback(
+    (amount: Nullable<number>) => {
+      setNativeTotalAmountRequired(amount);
+    },
+    [],
+  );
 
   // Function to set the USD amount for on-ramping
   const updateUsdAmountToPay = useCallback((amount: Nullable<number>) => {
@@ -162,6 +203,11 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
   // Function to set the swapping step completion state
   const updateIsSwappingStepCompleted = useCallback((completed: boolean) => {
     setIsSwappingStepCompleted(completed);
+  }, []);
+
+  // Function to set the network config
+  const updateNetworkConfig = useCallback((config: OnRampNetworkConfig) => {
+    setNetworkConfig(config);
   }, []);
 
   // Listen for onramp window transaction failure event to reset the loading state
@@ -193,7 +239,7 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
   }, [ipcRenderer]);
 
   const resetOnRampState = useCallback(() => {
-    setEthAmountToPay(null);
+    setNativeAmountToPay(null);
     setUsdAmountToPay(null);
     setIsBuyCryptoBtnLoading(false);
     setIsOnRampingTransactionSuccessful(false);
@@ -203,7 +249,7 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
 
   // Reset the on-ramp state when navigating to the main page
   useEffect(() => {
-    if (pageState === Pages.Main) {
+    if (pageState === PAGES.Main) {
       const timer = setTimeout(() => resetOnRampState(), 1000);
       return () => clearTimeout(timer);
     }
@@ -212,8 +258,10 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
   return (
     <OnRampContext.Provider
       value={{
-        ethAmountToPay,
-        updateEthAmountToPay,
+        nativeAmountToPay,
+        updateNativeAmountToPay,
+        nativeTotalAmountRequired,
+        updateNativeTotalAmountRequired,
         usdAmountToPay,
         updateUsdAmountToPay,
         isBuyCryptoBtnLoading,
@@ -234,6 +282,10 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
         networkName,
         /** Crypto currency code to on-ramp */
         cryptoCurrencyCode,
+        /** Chain to which the funds are eventually transferred */
+        selectedChainId,
+        /** Function to update the network config */
+        updateNetworkConfig,
 
         /** Function to reset the on-ramp state */
         resetOnRampState,

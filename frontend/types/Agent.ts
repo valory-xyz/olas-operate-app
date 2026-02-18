@@ -1,9 +1,10 @@
+import { TokenSymbol } from '@/config/tokens';
 import {
+  EvmChainId,
   MiddlewareDeploymentStatus,
+  StakingProgramId,
   SupportedMiddlewareChain,
 } from '@/constants';
-import { EvmChainId } from '@/enums/Chain';
-import { TokenSymbol } from '@/enums/Token';
 import { AgentsFunBaseService } from '@/service/agents/AgentsFunBase';
 import { ModiusService } from '@/service/agents/Modius';
 import { OptimismService } from '@/service/agents/Optimism';
@@ -15,13 +16,31 @@ type ServiceApi =
   | typeof OptimismService
   | typeof AgentsFunBaseService;
 
+type NeedsOpenProfileEachAgentRun = {
+  /** Whether the agent requires opening profile first before showing performance metrics */
+  needsOpenProfileEachAgentRun: true;
+  /** Custom message to show when agent requires to open profile after run */
+  needsOpenProfileEachAgentRunAlert: {
+    title: string;
+    message: string;
+  };
+};
+
+type DoesNotNeedOpenProfileEachAgentRun = {
+  needsOpenProfileEachAgentRun?: undefined;
+  needsOpenProfileEachAgentRunAlert?: never;
+};
+
+type needsOpenProfileEachAgentRun =
+  | NeedsOpenProfileEachAgentRun
+  | DoesNotNeedOpenProfileEachAgentRun;
+
 export type AgentConfig = {
   name: string;
   evmHomeChainId: EvmChainId;
   middlewareHomeChainId: SupportedMiddlewareChain;
   agentIds: number[];
-  requiresAgentSafesOn: EvmChainId[];
-  requiresMasterSafesOn: EvmChainId[];
+  defaultStakingProgramId: StakingProgramId;
   additionalRequirements?: Partial<
     Record<EvmChainId, Partial<Record<TokenSymbol, number>>>
   >;
@@ -44,7 +63,10 @@ export type AgentConfig = {
    * instead of asking users to manually provide them
    **/
   isX402Enabled: boolean;
-  hasChatUI: boolean;
+  /**
+   * Whether the chat UI requires an API key (either via x402 or agent form)
+   */
+  doesChatUiRequireApiKey: boolean;
   /** Whether the agent has external funds available (eg. agent invests funds) */
   hasExternalFunds: boolean;
   category?: 'Prediction Markets' | 'DeFi';
@@ -53,7 +75,9 @@ export type AgentConfig = {
    */
   defaultBehavior?: string;
   servicePublicId: string;
-};
+  /** Whether the agent is geo-location restricted */
+  isGeoLocationRestricted?: boolean;
+} & needsOpenProfileEachAgentRun;
 
 type AgentPerformanceMetric = {
   name: string;

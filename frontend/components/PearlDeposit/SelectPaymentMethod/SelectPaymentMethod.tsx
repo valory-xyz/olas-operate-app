@@ -6,12 +6,8 @@ import { styled } from 'styled-components';
 
 import { YouPayContainer } from '@/components/PearlWallet';
 import { BackButton, CardFlex, CardTitle } from '@/components/ui';
-import {
-  COLOR,
-  EvmChainId,
-  TokenSymbol,
-  TokenSymbolConfigMap,
-} from '@/constants';
+import { TokenSymbol, TokenSymbolConfigMap } from '@/config/tokens';
+import { COLOR, EvmChainId } from '@/constants';
 import { usePearlWallet } from '@/context/PearlWalletProvider';
 import { useFeatureFlag } from '@/hooks';
 import { asEvmChainDetails, asMiddlewareChain, formatNumber } from '@/utils';
@@ -29,7 +25,10 @@ const SelectPaymentMethodCard = styled(CardFlex)`
   }
 `;
 
-const ShowAmountsToDeposit = () => {
+type ShowAmountsToDepositProps = { amountPrefix?: string };
+const ShowAmountsToDeposit = ({
+  amountPrefix = '',
+}: ShowAmountsToDepositProps) => {
   const { amountsToDeposit } = usePearlWallet();
   return (
     <Flex vertical gap={12}>
@@ -45,6 +44,7 @@ const ShowAmountsToDeposit = () => {
             />
             <Flex gap={8} align="center">
               <Text>
+                {amountPrefix}
                 {formatNumber(amount, 4)} {tokenSymbol}
               </Text>
             </Flex>
@@ -100,12 +100,12 @@ const BridgeMethod = ({ onSelect }: { onSelect: () => void }) => (
 
       <Flex vertical gap={8}>
         <Paragraph className="m-0" type="secondary">
-          You will pay
+          Estimated to pay
         </Paragraph>
         <YouPayContainer vertical gap={12}>
-          <ShowAmountsToDeposit />
+          <ShowAmountsToDeposit amountPrefix="~" />
           <Text className="text-sm text-neutral-tertiary" type="secondary">
-            + bridging fees on Ethereum.
+            Final amount may be higher due to Ethereum bridge fees and slippage.
           </Text>
         </YouPayContainer>
       </Flex>

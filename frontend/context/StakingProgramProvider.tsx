@@ -1,11 +1,9 @@
 import { isNil } from 'lodash';
 import { createContext, PropsWithChildren, useEffect, useState } from 'react';
 
-import { DEFAULT_STAKING_PROGRAM_IDS } from '@/config/stakingPrograms';
-import { StakingProgramId } from '@/enums/StakingProgram';
-import { useActiveStakingProgramId } from '@/hooks/useActiveStakingProgramId';
-import { useServices } from '@/hooks/useServices';
-import { Maybe, Nullable } from '@/types/Util';
+import { StakingProgramId } from '@/constants';
+import { useActiveStakingProgramId, useServices } from '@/hooks';
+import { Maybe, Nullable } from '@/types';
 
 export const StakingProgramContext = createContext<{
   isActiveStakingProgramLoaded: boolean;
@@ -38,16 +36,14 @@ export const StakingProgramProvider = ({ children }: PropsWithChildren) => {
   const { selectedService, selectedAgentConfig } = useServices();
 
   const [defaultStakingProgramId, setDefaultStakingProgramId] = useState(
-    DEFAULT_STAKING_PROGRAM_IDS[selectedAgentConfig.evmHomeChainId],
+    selectedAgentConfig.defaultStakingProgramId,
   );
 
   const [stakingProgramIdToMigrateTo, setStakingProgramIdToMigrateTo] =
     useState<Nullable<StakingProgramId>>(null);
 
   useEffect(() => {
-    setDefaultStakingProgramId(
-      DEFAULT_STAKING_PROGRAM_IDS[selectedAgentConfig.evmHomeChainId],
-    );
+    setDefaultStakingProgramId(selectedAgentConfig.defaultStakingProgramId);
   }, [selectedAgentConfig]);
 
   const serviceNftTokenId = isNil(selectedService?.chain_configs)
@@ -59,10 +55,16 @@ export const StakingProgramProvider = ({ children }: PropsWithChildren) => {
     serviceNftTokenId,
     selectedAgentConfig,
   );
-
+  // Determine the staking program ID in the following order:
+  // 1) On-chain value (where the user actually staked)
+  // 2) If not available, use the selected service (can be updated during migration)
+  // 3) Fall back to the default config value
   const selectedStakingProgramId = isLoading
     ? null
-    : activeStakingProgramId || defaultStakingProgramId;
+    : activeStakingProgramId ||
+      selectedService?.chain_configs?.[selectedService?.home_chain]?.chain_data
+        .user_params.staking_program_id ||
+      defaultStakingProgramId;
 
   return (
     <StakingProgramContext.Provider

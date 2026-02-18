@@ -1,11 +1,11 @@
 import { Typography } from 'antd';
-import { useContext, useMemo } from 'react';
+import React, { useContext, useMemo } from 'react';
 import styled from 'styled-components';
 
-import { COLOR } from '@/constants/colors';
+import { COLOR, SETUP_SCREEN, SetupScreen } from '@/constants';
 import { SetupContext } from '@/context/SetupProvider';
-import { SetupScreen } from '@/enums/SetupScreen';
 
+import { AccountRecovery } from '../AccountRecovery';
 import { SelectStakingPage } from '../SelectStakingPage';
 import { CardFlex } from '../ui/CardFlex';
 import { AgentOnboarding } from './AgentOnboarding/AgentOnboarding';
@@ -16,13 +16,9 @@ import { SetupPassword } from './Create/SetupPassword';
 import { EarlyAccessOnly } from './EarlyAccessOnly';
 import { FundYourAgent } from './FundYourAgent/FundYourAgent';
 import { TransferFunds } from './FundYourAgent/TransferFunds';
-import {
-  SetupRestoreMain,
-  SetupRestoreSetPassword,
-  SetupRestoreViaBackup,
-} from './SetupRestore';
 import { SetupWelcome } from './SetupWelcome';
 import { SetupYourAgent } from './SetupYourAgent/SetupYourAgent';
+import { SupportButton } from './SupportButton';
 
 const { Title } = Typography;
 
@@ -49,14 +45,15 @@ const SetupCard = styled.div`
     0 3px 6px 0 rgba(170, 193, 203, 0.1);
 `;
 
-const screenWithoutCards: SetupScreen[] = [
-  SetupScreen.AgentOnboarding,
-  SetupScreen.SetupYourAgent,
-  SetupScreen.FundYourAgent,
-  SetupScreen.TransferFunds,
-  SetupScreen.SetupBridgeOnboardingScreen,
-  SetupScreen.SetupOnRamp,
-  SetupScreen.SelectStaking,
+const SCREEN_WITHOUT_CARDS: SetupScreen[] = [
+  SETUP_SCREEN.AgentOnboarding,
+  SETUP_SCREEN.SetupYourAgent,
+  SETUP_SCREEN.FundYourAgent,
+  SETUP_SCREEN.TransferFunds,
+  SETUP_SCREEN.SetupBridgeOnboardingScreen,
+  SETUP_SCREEN.SetupOnRamp,
+  SETUP_SCREEN.SelectStaking,
+  SETUP_SCREEN.AccountRecovery,
 ];
 
 export const Setup = () => {
@@ -64,46 +61,44 @@ export const Setup = () => {
 
   const setupScreen = useMemo(() => {
     switch (setupObject.state) {
-      case SetupScreen.Welcome:
+      case SETUP_SCREEN.Welcome:
         return <SetupWelcome />;
-
-      // Create account
-      case SetupScreen.SetupPassword:
+      case SETUP_SCREEN.SetupPassword:
         return <SetupPassword />;
-      case SetupScreen.SetupBackupSigner:
+      case SETUP_SCREEN.SetupBackupSigner:
         return <SetupBackupSigner />;
-      case SetupScreen.AgentOnboarding:
+      case SETUP_SCREEN.AgentOnboarding:
         return <AgentOnboarding />;
-      case SetupScreen.SetupYourAgent:
+      case SETUP_SCREEN.SetupYourAgent:
         return <SetupYourAgent />;
-      case SetupScreen.SelectStaking:
+      case SETUP_SCREEN.SelectStaking:
         return <SelectStakingPage mode="onboard" />;
-      case SetupScreen.FundYourAgent:
+      case SETUP_SCREEN.FundYourAgent:
         return <FundYourAgent />;
-      case SetupScreen.TransferFunds:
+      case SETUP_SCREEN.TransferFunds:
         return <TransferFunds />;
-      case SetupScreen.SetupBridgeOnboardingScreen:
+      case SETUP_SCREEN.SetupBridgeOnboardingScreen:
         return <SetupBridgeOnboarding />;
-      case SetupScreen.SetupOnRamp:
+      case SETUP_SCREEN.SetupOnRamp:
         return <SetupOnRamp />;
-      case SetupScreen.EarlyAccessOnly:
+      case SETUP_SCREEN.EarlyAccessOnly:
         return <EarlyAccessOnly />;
-
-      // Restore account, screens to be re-implemented as per v1
-      case SetupScreen.Restore:
-        return <SetupRestoreMain />;
-      case SetupScreen.RestoreSetPassword:
-        return <SetupRestoreSetPassword />;
-      case SetupScreen.RestoreViaBackup:
-        return <SetupRestoreViaBackup />;
+      case SETUP_SCREEN.AccountRecovery:
+        return <AccountRecovery />;
       default:
         return <UnexpectedError />;
     }
   }, [setupObject.state]);
 
-  if (screenWithoutCards.includes(setupObject.state)) {
-    return setupScreen;
+  let Wrapper: React.ElementType = SetupCard;
+  if (SCREEN_WITHOUT_CARDS.includes(setupObject.state)) {
+    Wrapper = React.Fragment;
   }
 
-  return <SetupCard>{setupScreen}</SetupCard>;
+  return (
+    <Wrapper>
+      <SupportButton />
+      {setupScreen}
+    </Wrapper>
+  );
 };

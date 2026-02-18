@@ -1,9 +1,8 @@
 import { Flex, Typography } from 'antd';
 import styled from 'styled-components';
 
-import { MAIN_CONTENT_MAX_WIDTH } from '@/constants';
-import { Pages } from '@/enums';
-import { usePageState, useStakingContracts } from '@/hooks';
+import { MAIN_CONTENT_MAX_WIDTH, PAGES } from '@/constants';
+import { usePageState, useServices, useStakingContracts } from '@/hooks';
 
 import { StakingContractCard } from '../StakingContractCard';
 import { BackButton } from '../ui/BackButton';
@@ -27,6 +26,7 @@ type SelectStakingProps = {
 export const SelectStakingPage = ({ mode }: SelectStakingProps) => {
   const { orderedStakingProgramIds, currentStakingProgramId } =
     useStakingContracts();
+  const { selectedService } = useServices();
 
   const { goto: gotoPage } = usePageState();
 
@@ -37,7 +37,10 @@ export const SelectStakingPage = ({ mode }: SelectStakingProps) => {
         className="mx-auto"
         style={{ width: MAIN_CONTENT_MAX_WIDTH }}
       >
-        <BackButton onPrev={() => gotoPage(Pages.Main)} />
+        {
+          // Do not allow going back if service is not yet created
+          selectedService && <BackButton onPrev={() => gotoPage(PAGES.Main)} />
+        }
         <Title level={3} className="mt-12 mb-32">
           Select Staking Contract
         </Title>

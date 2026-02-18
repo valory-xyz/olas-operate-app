@@ -3,8 +3,8 @@ import React, { useCallback, useState } from 'react';
 import { useUnmount } from 'usehooks-ts';
 
 import { RequiredMark } from '@/components/ui/RequiredMark';
-import { SetupScreen } from '@/enums/SetupScreen';
-import { useSetup, useStakingProgram } from '@/hooks';
+import { SETUP_SCREEN } from '@/constants';
+import { useServices, useSetup, useStakingProgram } from '@/hooks';
 import { ServiceTemplate } from '@/types';
 import { onDummyServiceCreation } from '@/utils';
 
@@ -46,6 +46,7 @@ export const ModiusAgentFormContent = ({
   const [form] = Form.useForm<ModiusFieldValues>();
   const { goto } = useSetup();
   const { defaultStakingProgramId } = useStakingProgram();
+  const { refetch: refetchServices } = useServices();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const {
@@ -65,7 +66,7 @@ export const ModiusAgentFormContent = ({
         updateNextStep();
       }
     } catch (error) {
-      console.error('Error in handleContinue:', error);
+      console.error('Error in validation:', error);
     }
   }, [form, isCoinGeckoStep, updateNextStep]);
 
@@ -102,10 +103,13 @@ export const ModiusAgentFormContent = ({
           overriddenServiceConfig,
         );
 
+        // fetch services to update the state after service creation
+        await refetchServices?.();
+
         message.success('Agent setup complete');
 
         // move to next page
-        goto(SetupScreen.SelectStaking);
+        goto(SETUP_SCREEN.SelectStaking);
       } catch (error) {
         message.error('Something went wrong. Please try again.');
         console.error(error);
@@ -119,6 +123,7 @@ export const ModiusAgentFormContent = ({
       serviceTemplate,
       validateForm,
       updateSubmitButtonText,
+      refetchServices,
       goto,
     ],
   );

@@ -1,9 +1,7 @@
 import { Button, Flex, Typography } from 'antd';
 import React from 'react';
 
-import { SUPPORT_URL, UNICODE_SYMBOLS } from '@/constants';
-
-import { ExportLogsButton } from '../ExportLogsButton';
+import { useSupportModal } from '@/context/SupportModalProvider';
 
 const { Text } = Typography;
 
@@ -17,34 +15,39 @@ export const FundsAreSafeMessage = ({
   onRetry,
   onRetryProps,
   showRestartMessage,
-}: FundsAreSafeMessageProps) => (
-  <Flex vertical gap={8} align="flex-start" className="mt-12 text-sm">
-    <Flex gap={8}>
-      {onRetry && (
+}: FundsAreSafeMessageProps) => {
+  const { toggleSupportModal } = useSupportModal();
+
+  return (
+    <Flex vertical gap={8} align="flex-start" className="mt-12 text-sm">
+      <Flex gap={8}>
+        {onRetry && (
+          <Button
+            loading={onRetryProps?.isLoading}
+            onClick={onRetry}
+            type="primary"
+          >
+            Retry
+          </Button>
+        )}
         <Button
           loading={onRetryProps?.isLoading}
-          onClick={onRetry}
-          type="primary"
-          size="small"
+          type="default"
+          onClick={toggleSupportModal}
         >
-          Retry
+          Contact Support
         </Button>
-      )}
-      <ExportLogsButton size="small" />
-    </Flex>
+      </Flex>
 
-    <Text className="text-sm text-lighter">
-      Don&apos;t worry, your funds remain safe. Try again or ask for help in the
-      <br />
-      <a href={SUPPORT_URL} target="_blank" rel="noopener noreferrer">
-        Olas community Discord server {UNICODE_SYMBOLS.EXTERNAL_LINK}
-      </a>
-    </Text>
-
-    {showRestartMessage && (
       <Text className="text-sm text-lighter">
-        You can also try restarting the app!
+        Don&apos;t worry, your funds remain safe. Try again or contact support.
       </Text>
-    )}
-  </Flex>
-);
+
+      {showRestartMessage && (
+        <Text className="text-sm text-lighter">
+          You can also try restarting the app!
+        </Text>
+      )}
+    </Flex>
+  );
+};

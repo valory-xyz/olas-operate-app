@@ -9,36 +9,38 @@ import { Contract as MulticallContract } from 'ethers-multicall';
 
 import { MECH_ACTIVITY_CHECKER_ABI } from '@/abis/mechActivityChecker';
 import { MEME_ACTIVITY_CHECKER_ABI } from '@/abis/memeActivityChecker';
+import { PET_ACTIVITY_CHECKER_ABI } from '@/abis/petActivityChecker';
 import { REQUESTER_ACTIVITY_CHECKER_ABI } from '@/abis/requesterActivityChecker';
 import { STAKING_ACTIVITY_CHECKER_ABI } from '@/abis/stakingActivityChecker';
-import {
-  OptimismStakingProgramId,
-  STAKING_PROGRAM_IDS,
-} from '@/enums/StakingProgram';
-import { Address } from '@/types/Address';
+import { OptimismStakingProgramId, STAKING_PROGRAM_IDS } from '@/constants';
+import { Address } from '@/types';
 
-export const getMechActivityCheckerContract = (
+const getMechActivityCheckerContract = (
   address: Address,
 ): MulticallContract => {
   return new MulticallContract(address, MECH_ACTIVITY_CHECKER_ABI);
 };
 
-export const getRequesterActivityCheckerContract = (
+const getRequesterActivityCheckerContract = (
   address: Address,
 ): MulticallContract => {
   return new MulticallContract(address, REQUESTER_ACTIVITY_CHECKER_ABI);
 };
 
-export const getStakingActivityCheckerContract = (
+const getStakingActivityCheckerContract = (
   address: Address,
 ): MulticallContract => {
   return new MulticallContract(address, STAKING_ACTIVITY_CHECKER_ABI);
 };
 
-export const getMemeActivityCheckerContract = (
+const getMemeActivityCheckerContract = (
   address: Address,
 ): MulticallContract => {
   return new MulticallContract(address, MEME_ACTIVITY_CHECKER_ABI);
+};
+
+const getPetActivityCheckerContract = (address: Address): MulticallContract => {
+  return new MulticallContract(address, PET_ACTIVITY_CHECKER_ABI);
 };
 
 export const GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS: Record<
@@ -70,6 +72,22 @@ export const GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS: Record<
     getRequesterActivityCheckerContract(
       '0x7Ec96996Cd146B91779f01419db42E67463817a0',
     ),
+  [STAKING_PROGRAM_IDS.PearlBetaMechMarketplace1]:
+    getRequesterActivityCheckerContract(
+      '0x95b37c45BADAf4668c18d00501948196761736b1',
+    ),
+  [STAKING_PROGRAM_IDS.PearlBetaMechMarketplace2]:
+    getRequesterActivityCheckerContract(
+      '0x95b37c45BADAf4668c18d00501948196761736b1',
+    ),
+  [STAKING_PROGRAM_IDS.PearlBetaMechMarketplace3]:
+    getRequesterActivityCheckerContract(
+      '0xd1185503F457c6234FAAf34436f9AB18948AA71B',
+    ),
+  [STAKING_PROGRAM_IDS.PearlBetaMechMarketplace4]:
+    getRequesterActivityCheckerContract(
+      '0xd1185503F457c6234FAAf34436f9AB18948AA71B',
+    ),
 } as const;
 
 export const BASE_STAKING_PROGRAMS_ACTIVITY_CHECKERS: Record<
@@ -96,6 +114,18 @@ export const BASE_STAKING_PROGRAMS_ACTIVITY_CHECKERS: Record<
   ),
   [STAKING_PROGRAM_IDS.AgentsFun3]: getRequesterActivityCheckerContract(
     '0xF0814A105c1b684922Fce8C3b80d7B6Ff1e399F9',
+  ),
+  [STAKING_PROGRAM_IDS.PettAiAgent]: getPetActivityCheckerContract(
+    '0x7aD8E6032849Edd8bF742E459722Ee8B10e2cCFc',
+  ),
+  [STAKING_PROGRAM_IDS.PettAiAgent2]: getPetActivityCheckerContract(
+    '0x7aD8E6032849Edd8bF742E459722Ee8B10e2cCFc',
+  ),
+  [STAKING_PROGRAM_IDS.PettAiAgent3]: getPetActivityCheckerContract(
+    '0x7aD8E6032849Edd8bF742E459722Ee8B10e2cCFc',
+  ),
+  [STAKING_PROGRAM_IDS.PettAiAgent4]: getPetActivityCheckerContract(
+    '0x7aD8E6032849Edd8bF742E459722Ee8B10e2cCFc',
   ),
 } as const;
 
@@ -132,5 +162,20 @@ export const OPTIMISM_STAKING_PROGRAMS_ACTIVITY_CHECKERS: Record<
   ),
   [STAKING_PROGRAM_IDS.OptimusAlpha4]: getStakingActivityCheckerContract(
     '0x7Fd1F4b764fA41d19fe3f63C85d12bf64d2bbf68',
+  ),
+} as const;
+
+export const POLYGON_STAKING_PROGRAMS_ACTIVITY_CHECKERS: Record<
+  string,
+  MulticallContract
+> = {
+  [STAKING_PROGRAM_IDS.PolygonBeta1]: getRequesterActivityCheckerContract(
+    '0x1f84F8F70dE0651C2d51Bf8850FE9D0289Ba3B3A',
+  ),
+  [STAKING_PROGRAM_IDS.PolygonBeta2]: getRequesterActivityCheckerContract(
+    '0x7F69B6783855772d10A4bc2AFAaE650599F040DB',
+  ),
+  [STAKING_PROGRAM_IDS.PolygonBeta3]: getRequesterActivityCheckerContract(
+    '0x0e998DaAedaCD59ba2F65558a29417b69f05D972',
   ),
 } as const;

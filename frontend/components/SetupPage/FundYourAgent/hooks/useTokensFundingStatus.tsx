@@ -1,8 +1,20 @@
+import { isEmpty } from 'lodash';
 import { useEffect, useMemo, useState } from 'react';
 
-import { useMasterBalances, useServices } from '@/hooks';
+import {
+  useGetRefillRequirements,
+  useMasterBalances,
+  useServices,
+} from '@/hooks';
+import { TokenRequirement } from '@/types';
 
-import { useGetRefillRequirementsWithMonthlyGas } from './useGetRefillRequirementsWithMonthlyGas';
+type TokenFundingStatus = {
+  symbol: string;
+  iconSrc: string;
+  totalAmount: number;
+  pendingAmount: number;
+  areFundsReceived: boolean;
+};
 
 /**
  * Hook to get the funding status of the tokens required for the agent onboarding.
@@ -11,37 +23,86 @@ import { useGetRefillRequirementsWithMonthlyGas } from './useGetRefillRequiremen
  * @example
  * {
  *  isFullyFunded: false,
+ *  isLoading: false,
  *  tokensFundingStatus: {
  *    OLAS: {
- *      funded: false,
+ *      symbol: 'OLAS',
+ *      iconSrc: '...',
+ *      totalAmount: 100,
  *      pendingAmount: 100,
+ *      areFundsReceived: false,
  *    },
  *    XDAI: {
- *      funded: true,
+ *      symbol: 'XDAI',
+ *      iconSrc: '...',
+ *      totalAmount: 11.5,
  *      pendingAmount: 0,
+ *      areFundsReceived: true,
  *    },
  *  }
  * }
  */
 export const useTokensFundingStatus = () => {
-  const { getMasterEoaBalancesOf } = useMasterBalances();
+  const { getMasterEoaBalancesOf, getMasterSafeBalancesOf, isLoaded } =
+    useMasterBalances();
   const { selectedAgentConfig } = useServices();
-  const { totalTokenRequirements: tokenRequirements } =
-    useGetRefillRequirementsWithMonthlyGas();
+  const {
+    totalTokenRequirements: tokenRequirements,
+    isLoading: isLoadingTotalTokenRequirements,
+  } = useGetRefillRequirements();
   const [hasBeenFullyFunded, setHasBeenFullyFunded] = useState(false);
   const currentChain = selectedAgentConfig.evmHomeChainId;
 
-  const requiredTokens = tokenRequirements?.map((token) => token.symbol);
-  const eoaBalances = useMemo(
-    () =>
-      getMasterEoaBalancesOf(currentChain).filter((balance) =>
-        requiredTokens?.includes(balance.symbol),
-      ),
-    [getMasterEoaBalancesOf, currentChain, requiredTokens],
-  );
+  const [requiredTokens, setRequiredTokens] = useState<TokenRequirement[]>([]);
+  useEffect(() => {
+    if (tokenRequirements?.length > 0 && requiredTokens.length === 0) {
+      setRequiredTokens(tokenRequirements);
+    }
+  }, [requiredTokens.length, tokenRequirements]);
+
+  const walletBalances = useMemo(() => {
+    if (!isLoaded) return [];
+
+    // Try to get balances from master safe if it exists
+    // otherwise use master eoa
+    let existingWalletBalances = getMasterSafeBalancesOf(currentChain);
+    if (existingWalletBalances.length === 0) {
+      existingWalletBalances = getMasterEoaBalancesOf(currentChain);
+    }
+
+    return existingWalletBalances.filter((balance) =>
+      requiredTokens.some((token) => token.symbol === balance.symbol),
+    );
+  }, [
+    isLoaded,
+    getMasterSafeBalancesOf,
+    currentChain,
+    getMasterEoaBalancesOf,
+    requiredTokens,
+  ]);
 
   const fundingStatus = useMemo(() => {
-    if (!tokenRequirements || tokenRequirements.length === 0 || !eoaBalances) {
+    if (hasBeenFullyFunded) {
+      return {
+        isFullyFunded: true,
+        tokensFundingStatus: requiredTokens
+          ? Object.fromEntries(
+              requiredTokens.map((token) => [
+                token.symbol,
+                {
+                  symbol: token.symbol,
+                  iconSrc: token.iconSrc,
+                  totalAmount: token.amount,
+                  pendingAmount: 0,
+                  areFundsReceived: true,
+                },
+              ]),
+            )
+          : {},
+      };
+    }
+
+    if (isEmpty(tokenRequirements) || isEmpty(walletBalances)) {
       return {
         isFullyFunded: false,
         tokensFundingStatus: {},
@@ -49,37 +110,41 @@ export const useTokensFundingStatus = () => {
     }
 
     // Create a map of required tokens with their funding status
-    const tokensFundingStatus: Record<
-      string,
-      { funded: boolean; pendingAmount: number }
-    > = {};
+    const tokensFundingStatus: Record<string, TokenFundingStatus> = {};
 
-    tokenRequirements.forEach((requirement) => {
-      const eoa = eoaBalances.find(
+    requiredTokens.forEach((requirement) => {
+      const wallet = walletBalances.find(
         (balance) => balance.symbol === requirement.symbol,
       );
+      const { symbol, iconSrc, amount } = requirement;
 
-      if (eoa && eoa.balance >= requirement.amount) {
-        tokensFundingStatus[requirement.symbol] = {
-          funded: true,
+      if (wallet && wallet.balance >= amount) {
+        tokensFundingStatus[symbol] = {
+          symbol,
+          iconSrc,
+          totalAmount: amount,
+          areFundsReceived: true,
           pendingAmount: 0,
         };
       } else {
-        tokensFundingStatus[requirement.symbol] = {
-          funded: false,
-          pendingAmount: requirement.amount - (eoa?.balance ?? 0),
+        tokensFundingStatus[symbol] = {
+          symbol,
+          iconSrc,
+          totalAmount: amount,
+          areFundsReceived: false,
+          pendingAmount: amount - (wallet?.balance ?? 0),
         };
       }
     });
 
     const isFullyFunded = Object.values(tokensFundingStatus).every(
-      (status) => status.funded,
+      (status) => status.areFundsReceived,
     );
     return {
       isFullyFunded,
       tokensFundingStatus,
     };
-  }, [eoaBalances, tokenRequirements]);
+  }, [hasBeenFullyFunded, requiredTokens, tokenRequirements, walletBalances]);
 
   /**
    * Once the funds have been received completely, don't recalculate the statuses,
@@ -91,18 +156,8 @@ export const useTokensFundingStatus = () => {
     }
   }, [fundingStatus.isFullyFunded, hasBeenFullyFunded]);
 
-  if (hasBeenFullyFunded)
-    return {
-      isFullyFunded: true,
-      tokensFundingStatus: requiredTokens
-        ? Object.fromEntries(
-            requiredTokens.map((token) => [
-              token,
-              { funded: true, pendingAmount: 0 },
-            ]),
-          )
-        : {},
-    };
-
-  return fundingStatus;
+  return {
+    ...fundingStatus,
+    isLoading: isLoadingTotalTokenRequirements,
+  };
 };

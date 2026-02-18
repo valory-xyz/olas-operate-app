@@ -1,13 +1,11 @@
 import { Contract as MulticallContract } from 'ethers-multicall';
 
 import { STAKING_TOKEN_PROXY_ABI } from '@/abis/stakingTokenProxy';
-import { AgentType } from '@/enums/Agent';
-import { EvmChainId } from '@/enums/Chain';
-import { STAKING_PROGRAM_IDS } from '@/enums/StakingProgram';
-import { TokenSymbol } from '@/enums/Token';
-import { Address } from '@/types/Address';
+import { AgentMap, EvmChainIdMap, STAKING_PROGRAM_IDS } from '@/constants';
+import { Address } from '@/types';
 
 import { MODE_STAKING_PROGRAMS_ACTIVITY_CHECKERS } from '../activityCheckers';
+import { TokenSymbolMap } from '../tokens';
 import { StakingProgramMap } from '.';
 
 export const MODE_STAKING_PROGRAMS_CONTRACT_ADDRESSES: Record<string, Address> =
@@ -27,28 +25,34 @@ export const MODE_STAKING_PROGRAMS_CONTRACT_ADDRESSES: Record<string, Address> =
 export const MODE_STAKING_PROGRAMS: StakingProgramMap = {
   // modius alpha
   [STAKING_PROGRAM_IDS.ModiusAlpha]: {
-    chainId: EvmChainId.Mode,
+    chainId: EvmChainIdMap.Mode,
     name: 'Modius Alpha',
-    agentsSupported: [AgentType.Modius],
+    agentsSupported: [AgentMap.Modius],
     stakingRequirements: {
-      [TokenSymbol.OLAS]: 40,
+      [TokenSymbolMap.OLAS]: 40,
     },
     activityChecker:
       MODE_STAKING_PROGRAMS_ACTIVITY_CHECKERS[STAKING_PROGRAM_IDS.ModiusAlpha],
+    address:
+      MODE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[STAKING_PROGRAM_IDS.ModiusAlpha],
     contract: new MulticallContract(
       MODE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[STAKING_PROGRAM_IDS.ModiusAlpha],
       STAKING_TOKEN_PROXY_ABI,
     ),
   },
   [STAKING_PROGRAM_IDS.ModiusAlpha2]: {
-    chainId: EvmChainId.Mode,
+    chainId: EvmChainIdMap.Mode,
     name: 'Modius Alpha II',
-    agentsSupported: [AgentType.Modius],
+    agentsSupported: [AgentMap.Modius],
     stakingRequirements: {
-      [TokenSymbol.OLAS]: 100,
+      [TokenSymbolMap.OLAS]: 100,
     },
     activityChecker:
       MODE_STAKING_PROGRAMS_ACTIVITY_CHECKERS[STAKING_PROGRAM_IDS.ModiusAlpha2],
+    address:
+      MODE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.ModiusAlpha2
+      ],
     contract: new MulticallContract(
       MODE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
         STAKING_PROGRAM_IDS.ModiusAlpha2
@@ -57,14 +61,18 @@ export const MODE_STAKING_PROGRAMS: StakingProgramMap = {
     ),
   },
   [STAKING_PROGRAM_IDS.ModiusAlpha3]: {
-    chainId: EvmChainId.Mode,
+    chainId: EvmChainIdMap.Mode,
     name: 'Modius Alpha III',
-    agentsSupported: [AgentType.Modius],
+    agentsSupported: [AgentMap.Modius],
     stakingRequirements: {
-      [TokenSymbol.OLAS]: 1000,
+      [TokenSymbolMap.OLAS]: 1000,
     },
     activityChecker:
       MODE_STAKING_PROGRAMS_ACTIVITY_CHECKERS[STAKING_PROGRAM_IDS.ModiusAlpha3],
+    address:
+      MODE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.ModiusAlpha3
+      ],
     contract: new MulticallContract(
       MODE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
         STAKING_PROGRAM_IDS.ModiusAlpha3
@@ -73,14 +81,18 @@ export const MODE_STAKING_PROGRAMS: StakingProgramMap = {
     ),
   },
   [STAKING_PROGRAM_IDS.ModiusAlpha4]: {
-    chainId: EvmChainId.Mode,
+    chainId: EvmChainIdMap.Mode,
     name: 'Modius Alpha IV',
-    agentsSupported: [AgentType.Modius],
+    agentsSupported: [AgentMap.Modius],
     stakingRequirements: {
-      [TokenSymbol.OLAS]: 5000,
+      [TokenSymbolMap.OLAS]: 5000,
     },
     activityChecker:
       MODE_STAKING_PROGRAMS_ACTIVITY_CHECKERS[STAKING_PROGRAM_IDS.ModiusAlpha4],
+    address:
+      MODE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.ModiusAlpha4
+      ],
     contract: new MulticallContract(
       MODE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
         STAKING_PROGRAM_IDS.ModiusAlpha4
@@ -90,14 +102,18 @@ export const MODE_STAKING_PROGRAMS: StakingProgramMap = {
   },
   // optimus alpha
   [STAKING_PROGRAM_IDS.OptimusAlpha]: {
-    chainId: EvmChainId.Mode,
+    chainId: EvmChainIdMap.Mode,
     name: 'Optimus Alpha',
-    agentsSupported: [AgentType.Modius],
+    agentsSupported: [AgentMap.Modius],
     stakingRequirements: {
-      [TokenSymbol.OLAS]: 40,
+      [TokenSymbolMap.OLAS]: 40,
     },
     activityChecker:
       MODE_STAKING_PROGRAMS_ACTIVITY_CHECKERS[STAKING_PROGRAM_IDS.OptimusAlpha],
+    address:
+      MODE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.OptimusAlpha
+      ],
     contract: new MulticallContract(
       MODE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
         STAKING_PROGRAM_IDS.OptimusAlpha

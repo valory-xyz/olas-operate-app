@@ -18,28 +18,49 @@ export const balanceFormat = (
 };
 
 /**
+ * @deprecated Use `formatAmount` instead
+ *
  * Displays balance in a human readable format
  * @example 1234.578 => 1,234.58
  */
 export const formatNumber = (
-  amount: number | undefined,
+  amount: number | string | undefined,
   decimals = 2,
   round: 'ceil' | 'floor' = 'ceil',
 ): string => {
   if (amount === undefined) return '--';
 
+  const amountInNumber =
+    typeof amount === 'string' ? parseFloat(amount) : amount;
+
   // Round the amount to the specified number of decimals
   const factor = 10 ** decimals;
+  const adjustedAmount = amountInNumber * factor;
+  // Extra precision to avoid floating point exception
+  const amountWithPrecision = parseFloat(adjustedAmount.toFixed(12));
+
   const rounded =
     round === 'ceil'
-      ? Math.ceil(amount * factor) / factor
-      : Math.floor(amount * factor) / factor;
+      ? Math.ceil(amountWithPrecision) / factor
+      : Math.floor(amountWithPrecision) / factor;
 
   // Format the number with commas and the specified decimals
   return Intl.NumberFormat('en-US', {
     maximumFractionDigits: decimals,
     minimumFractionDigits: decimals,
   }).format(rounded);
+};
+
+/**
+ * Accepts a number or numeric string and returns a locale-formatted string.
+ * @example formatAmount('1234.578', 2) => '1,234.58'
+ */
+export const formatAmount = (
+  amount: number | string | undefined,
+  decimals = 2,
+  round: 'ceil' | 'floor' = 'ceil',
+): string => {
+  return formatNumber(amount, decimals, round);
 };
 
 /**
@@ -89,4 +110,36 @@ export const parseUnits = (
  */
 export const parseEther = (ether: BigNumberish): string => {
   return ethers.utils.parseEther(`${ether}`).toString();
+};
+
+/**
+ *
+ * @deprecated This workaround shouldn't exist.
+ * BE sends numbers in requirements which for large numbers breaks FE (should be bigNumbers)
+ * Until they send strings, use this to quickly fix the issue
+ */
+export const numberToPlainString = (
+  possiblyBrokenBigNumber: string | number,
+) => {
+  if (typeof possiblyBrokenBigNumber === 'number') {
+    return possiblyBrokenBigNumber.toLocaleString('fullwide', {
+      useGrouping: false,
+    });
+  }
+  return possiblyBrokenBigNumber;
+};
+
+/**
+ * Removes trailing zeros from decimal numbers
+ * @example formatAmountNormalized(1234.578) => '1234.578'
+ * @example formatAmountNormalized(1234.0) => '1234'
+ */
+export const formatAmountNormalized = (
+  amount: number,
+  decimals = 4,
+): string => {
+  if (Number.isInteger(amount)) {
+    return amount.toString();
+  }
+  return amount.toFixed(decimals).replace(/\.?0+$/, '');
 };

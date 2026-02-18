@@ -1,24 +1,19 @@
 import { CloseCircleOutlined, ReloadOutlined } from '@ant-design/icons';
 import { Button, Flex, message, Spin, Typography } from 'antd';
-import { sortBy } from 'lodash';
+import { compact, sortBy } from 'lodash';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 
 import { ERROR_ICON_STYLE, LoadingSpinner } from '@/components/ui';
 import { TokenRequirementsTable } from '@/components/ui/TokenRequirementsTable';
 import {
-  ETHEREUM_TOKEN_CONFIG,
+  ALL_TOKEN_CONFIG,
   TOKEN_CONFIG,
+  TokenSymbol,
+  TokenSymbolConfigMap,
   TokenType,
 } from '@/config/tokens';
-import {
-  AddressZero,
-  COLOR,
-  MiddlewareChain,
-  MiddlewareChainMap,
-  TokenSymbolConfigMap,
-} from '@/constants';
-import { TokenSymbol } from '@/enums/Token';
+import { AddressZero, COLOR, MiddlewareChain } from '@/constants';
 import {
   useBalanceAndRefillRequirementsContext,
   useBridgeRefillRequirements,
@@ -36,6 +31,7 @@ import {
   asEvmChainId,
   delayInSeconds,
   formatUnitsToNumber,
+  getTokenDetails,
 } from '@/utils';
 
 type DepositTokenDetails = {
@@ -60,6 +56,24 @@ const RootCard = styled(Flex)`
   border: 1px solid ${COLOR.BORDER_GRAY};
   margin-top: 32px;
 `;
+
+const NATIVE_TOKEN_PRECISION = 5;
+const ERC20_TOKEN_PRECISION = 2;
+
+const formatTokenAmount = ({
+  amountInWei,
+  decimals,
+  isNative,
+}: {
+  amountInWei: bigint;
+  decimals: number;
+  isNative: boolean;
+}) =>
+  formatUnitsToNumber(
+    amountInWei,
+    decimals,
+    isNative ? NATIVE_TOKEN_PRECISION : ERC20_TOKEN_PRECISION,
+  );
 
 const RequestingQuote = () => (
   <Flex gap={8} align="center" className="p-16">
@@ -86,6 +100,7 @@ const QuoteRequestFailed = ({ onTryAgain }: { onTryAgain: () => void }) => (
 );
 
 type DepositForBridgingProps = {
+  fromChain: MiddlewareChain;
   getBridgeRequirementsParams: (
     forceUpdate?: boolean,
   ) => BridgeRefillRequirementsRequest | null;
@@ -95,17 +110,8 @@ type DepositForBridgingProps = {
   bridgeToChain: MiddlewareChain;
 };
 
-const formatTokenAmount = ({
-  amountInWei,
-  decimals,
-  isNative,
-}: {
-  amountInWei: bigint;
-  decimals: number;
-  isNative: boolean;
-}) => formatUnitsToNumber(amountInWei, decimals, isNative ? 5 : 2);
-
 export const DepositForBridging = ({
+  fromChain,
   getBridgeRequirementsParams,
   updateQuoteId,
   updateCrossChainTransferDetails,
@@ -113,7 +119,8 @@ export const DepositForBridging = ({
   bridgeToChain,
 }: DepositForBridgingProps) => {
   const { isLoading: isServicesLoading } = useServices();
-  const { masterEoa } = useMasterWalletContext();
+  const { masterEoa, isFetched: isMasterWalletFetched } =
+    useMasterWalletContext();
   const { isBalancesAndFundingRequirementsLoading } =
     useBalanceAndRefillRequirementsContext();
 
@@ -147,7 +154,8 @@ export const DepositForBridging = ({
     canPollForBridgeRefillRequirements,
   );
 
-  // fetch bridge refill requirements manually on mount
+  // fetch bridge refill requirements manually on mount, this is to ensure
+  // that stale values aren't shown - in case a user visits the bridging page again
   useEffect(() => {
     if (!isBridgeRefillRequirementsApiLoading) return;
 
@@ -207,21 +215,30 @@ export const DepositForBridging = ({
     setCanPollForBridgeRefillRequirements(false);
   }, [isRequestingQuoteFailed]);
 
-  // List of tokens that need to be deposited
+  /**
+   * List of tokens that need to be deposited
+   *
+   * Potential bug: doesn't return an empty array in case the quote is still being requested,
+   * this can result in showing stale values as per the expired quotes.
+   */
   const tokens = useMemo(() => {
     if (!bridgeFundingRequirements) return [];
     if (!masterEoa) return [];
+    if (!isMasterWalletFetched) return [];
 
-    const fromMiddlewareChain = MiddlewareChainMap.ETHEREUM;
+    const fromMiddlewareChain = fromChain;
+
+    // TODO: check if master safe exists once we support agents on From Chain
+    const destinationAddress = masterEoa.address;
 
     const bridgeTotalRequirements =
       bridgeFundingRequirements.bridge_total_requirements[
         fromMiddlewareChain
-      ]?.[masterEoa.address];
+      ]?.[destinationAddress];
     const bridgeRefillRequirements =
       bridgeFundingRequirements.bridge_refill_requirements[
         fromMiddlewareChain
-      ]?.[masterEoa.address];
+      ]?.[destinationAddress];
 
     if (!bridgeTotalRequirements || !bridgeRefillRequirements) return [];
 
@@ -237,7 +254,9 @@ export const DepositForBridging = ({
       // then the assumed current_balance = 1000 - 200 = 800
       const currentBalanceInWei = totalRequiredInWei - pendingAmountInWei;
 
-      const token = Object.values(ETHEREUM_TOKEN_CONFIG).find((tokenInfo) => {
+      const fromChainId = asEvmChainDetails(fromMiddlewareChain).chainId;
+      const fromChainTokenConfig = ALL_TOKEN_CONFIG[fromChainId];
+      const token = Object.values(fromChainTokenConfig).find((tokenInfo) => {
         if (tokenAddress === AddressZero && !tokenInfo.address) return true;
         return areAddressesEqual(tokenInfo.address!, tokenAddress);
       });
@@ -261,7 +280,7 @@ export const DepositForBridging = ({
         isNative: token.tokenType === TokenType.NativeGas,
       } satisfies DepositTokenDetails;
     });
-  }, [bridgeFundingRequirements, masterEoa]);
+  }, [bridgeFundingRequirements, isMasterWalletFetched, masterEoa, fromChain]);
 
   const tokensDataSource = useMemo(() => {
     const mappedTokens = tokens.map((token) => {
@@ -290,7 +309,9 @@ export const DepositForBridging = ({
     if (tokens.length === 0) return;
     if (isRequestingQuoteFailed) return;
     if (!masterEoa?.address) return;
+    if (!isMasterWalletFetched) return;
     if (!quoteEta) return;
+    if (!bridgeRequirementsParams?.bridge_requests) return;
 
     const areAllFundsReceived =
       tokens.every((token) => token.areFundsReceived) &&
@@ -298,43 +319,38 @@ export const DepositForBridging = ({
     if (!areAllFundsReceived) return;
     updateQuoteId(bridgeFundingRequirements.id);
     updateCrossChainTransferDetails({
-      fromChain: MiddlewareChainMap.ETHEREUM,
+      fromChain,
       toChain: bridgeToChain,
       eta: quoteEta,
-      transfers: tokens.map((token) => {
-        const toAmount = (() => {
-          // TODO: reuse getFromToken function from utils.ts
+      transfers: compact(
+        tokens.map((token) => {
+          const toTokenDetails = bridgeRequirementsParams.bridge_requests?.find(
+            ({ from }) =>
+              areAddressesEqual(from.token, token.address || AddressZero),
+          )?.to;
+
+          if (!toTokenDetails) return;
 
           // Find the token address on the destination chain.
           // eg. if the token is USDC on Ethereum, it will be USDC on Base
           // but the address will be different.
-          const chainTokenConfig =
-            TOKEN_CONFIG[asEvmChainId(bridgeToChain)][token.symbol];
-          const toTokenAddress =
-            token.symbol === TokenSymbol.ETH
-              ? token.address
-              : chainTokenConfig?.address;
-
-          if (!toTokenAddress) return BigInt(0);
-
-          const toToken = bridgeRequirementsParams?.bridge_requests?.find(
-            ({ to }) => areAddressesEqual(to.token, toTokenAddress),
+          const toTokenConfig = getTokenDetails(
+            toTokenDetails.token,
+            TOKEN_CONFIG[asEvmChainId(bridgeToChain)],
           );
-          if (!toToken) return BigInt(0);
+          if (!toTokenConfig) return;
 
-          return BigInt(toToken.to.amount);
-        })();
-
-        return {
-          fromSymbol: token.symbol,
-          fromAmount: token.currentBalanceInWei.toString(),
-          toSymbol: token.isNative
-            ? asEvmChainDetails(bridgeToChain).symbol
-            : token.symbol,
-          toAmount: toAmount.toString(),
-          decimals: token.decimals,
-        };
-      }),
+          return {
+            fromSymbol: token.symbol,
+            fromAmount: token.currentBalanceInWei.toString(),
+            toSymbol: token.isNative
+              ? asEvmChainDetails(bridgeToChain).symbol
+              : toTokenConfig.symbol,
+            toAmount: BigInt(toTokenDetails.amount).toString(),
+            decimals: token.decimals,
+          };
+        }),
+      ),
     });
 
     // wait for 2 seconds before proceeding to the next step.
@@ -359,6 +375,8 @@ export const DepositForBridging = ({
     onNext,
     updateQuoteId,
     updateCrossChainTransferDetails,
+    isMasterWalletFetched,
+    fromChain,
   ]);
 
   // Retry to fetch the bridge refill requirements
@@ -402,6 +420,7 @@ export const DepositForBridging = ({
     <TokenRequirementsTable
       tokensDataSource={tokensDataSource}
       locale={{ emptyText: 'No tokens to deposit!' }}
+      className="mt-32"
     />
   );
 };

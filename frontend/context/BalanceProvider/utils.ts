@@ -6,16 +6,15 @@ import { isNil } from 'lodash';
 import { ERC20_BALANCE_OF_STRING_FRAGMENT } from '@/abis/erc20';
 import { providers } from '@/config/providers';
 import { TOKEN_CONFIG, TokenType } from '@/config/tokens';
-import { type MiddlewareChain } from '@/constants';
-import { EvmChainId } from '@/enums/Chain';
-import { ServiceRegistryL2ServiceState } from '@/enums/ServiceRegistryL2ServiceState';
+import { EvmChainId, type MiddlewareChain } from '@/constants';
 import {
   AgentWallet,
   MasterSafe,
   MasterWallet,
-  Wallet,
-  WalletType,
-} from '@/enums/Wallet';
+  SERVICE_REGISTRY_L2_SERVICE_STATE,
+  ServiceRegistryL2ServiceState,
+  WALLET_TYPE,
+} from '@/constants';
 import { StakedAgentService } from '@/service/agents/shared-services/StakedAgentService';
 import { MiddlewareServiceResponse } from '@/types';
 import { CrossChainStakedBalances, WalletBalance } from '@/types/Balance';
@@ -37,15 +36,15 @@ const correctBondDepositByServiceState = ({
   serviceState: ServiceRegistryL2ServiceState;
 }) => {
   switch (serviceState) {
-    case ServiceRegistryL2ServiceState.NonExistent:
-    case ServiceRegistryL2ServiceState.PreRegistration:
+    case SERVICE_REGISTRY_L2_SERVICE_STATE.NonExistent:
+    case SERVICE_REGISTRY_L2_SERVICE_STATE.PreRegistration:
       return { olasBondBalance: 0, olasDepositBalance: 0 };
-    case ServiceRegistryL2ServiceState.ActiveRegistration:
+    case SERVICE_REGISTRY_L2_SERVICE_STATE.ActiveRegistration:
       return { olasBondBalance: 0, olasDepositBalance };
-    case ServiceRegistryL2ServiceState.FinishedRegistration:
-    case ServiceRegistryL2ServiceState.Deployed:
+    case SERVICE_REGISTRY_L2_SERVICE_STATE.FinishedRegistration:
+    case SERVICE_REGISTRY_L2_SERVICE_STATE.Deployed:
       return { olasBondBalance, olasDepositBalance };
-    case ServiceRegistryL2ServiceState.TerminatedBonded:
+    case SERVICE_REGISTRY_L2_SERVICE_STATE.TerminatedBonded:
       return { olasBondBalance, olasDepositBalance: 0 };
     default:
       console.error('Invalid service state');
@@ -54,7 +53,7 @@ const correctBondDepositByServiceState = ({
 };
 
 export const getCrossChainWalletBalances = async (
-  wallets: Wallet[],
+  wallets: (MasterWallet | AgentWallet)[],
 ): Promise<WalletBalance[]> => {
   const balanceResults: WalletBalance[] = [];
 
@@ -64,8 +63,8 @@ export const getCrossChainWalletBalances = async (
       const tokensOnChain = TOKEN_CONFIG[providerEvmChainId];
 
       const connectedWallets = wallets.filter((wallet) => {
-        const isEoa = wallet.type === WalletType.EOA;
-        const isSafe = wallet.type === WalletType.Safe;
+        const isEoa = wallet.type === WALLET_TYPE.EOA;
+        const isSafe = wallet.type === WALLET_TYPE.Safe;
         const isOnActiveChain =
           isEoa || (isSafe && wallet.evmChainId === providerEvmChainId);
 
@@ -82,8 +81,8 @@ export const getCrossChainWalletBalances = async (
         const isErc20 = tokenType === TokenType.Erc20;
         const isWrappedToken = tokenType === TokenType.Wrapped;
 
+        // get native balances for all relevant wallets
         if (isNative) {
-          // get native balances for all relevant wallets
           const nativeBalancePromises =
             connectedWallets.map<Promise<BigNumberish> | null>(
               ({ address: walletAddress }) => {
@@ -140,6 +139,7 @@ export const getCrossChainWalletBalances = async (
               symbol: tokenSymbol,
               isNative: false,
               isWrappedToken,
+              /** @deprecated Use balanceString instead */
               balance: Number(formatUnits(erc20Balances[index], decimals)),
               balanceString: formatUnits(erc20Balances[index], decimals),
             }),
@@ -238,7 +238,7 @@ export const getCrossChainBalances = async ({
 }) => {
   const masterSafes = masterWallets.filter(
     (masterWallet): masterWallet is MasterSafe =>
-      masterWallet.type === WalletType.Safe,
+      masterWallet.type === WALLET_TYPE.Safe,
   );
 
   const [walletBalancesResult, stakedBalancesResult] = await Promise.allSettled(

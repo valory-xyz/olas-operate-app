@@ -3,8 +3,8 @@ import React, { useMemo } from 'react';
 import styled from 'styled-components';
 
 import { FundsAreSafeMessage, LoadingSpinner, Steps } from '@/components/ui';
+import { TokenSymbol } from '@/config/tokens';
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
-import { TokenSymbol } from '@/constants/token';
 import { BridgingStepStatus as Status } from '@/types/Bridge';
 import { Maybe, Nullable } from '@/types/Util';
 import { asEvmChainDetails } from '@/utils/middlewareHelpers';
@@ -89,8 +89,8 @@ const generateMasterSafeCreationStep = (
   return {
     title: 'Create Pearl Wallet',
     status,
-    computedSubSteps: subSteps.map(({ txnLink }) => {
-      return { description, txnLink, isFailed };
+    computedSubSteps: subSteps.map(({ txnLink, onRetry, onRetryProps }) => {
+      return { description, txnLink, isFailed, onRetry, onRetryProps };
     }),
   };
 };
@@ -102,23 +102,25 @@ const generateMasterSafeTransferStep = (
   return {
     title: 'Transfer funds to the Pearl Wallet',
     status,
-    computedSubSteps: subSteps.map(({ symbol, status, txnLink }) => {
-      const isFailed = status === 'error';
-      const description = (() => {
-        if (status === 'finish') {
-          return `Transfer ${symbol} transaction complete.`;
-        }
-        if (status === 'process') {
-          return 'Sending transaction...';
-        }
-        if (status === 'error') {
-          return `Transfer ${symbol} transaction failed.`;
-        }
-        return null;
-      })();
+    computedSubSteps: subSteps.map(
+      ({ symbol, status, txnLink, onRetry, onRetryProps }) => {
+        const isFailed = status === 'error';
+        const description = (() => {
+          if (status === 'finish') {
+            return `Transfer ${symbol} transaction complete.`;
+          }
+          if (status === 'process') {
+            return 'Sending transaction...';
+          }
+          if (status === 'error') {
+            return `Transfer ${symbol} transaction failed.`;
+          }
+          return null;
+        })();
 
-      return { description, txnLink, isFailed };
-    }),
+        return { description, txnLink, isFailed, onRetry, onRetryProps };
+      },
+    ),
   };
 };
 

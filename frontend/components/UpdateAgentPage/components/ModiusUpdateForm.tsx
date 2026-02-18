@@ -2,7 +2,8 @@ import { Button, Form, Input } from 'antd';
 import { get, isEqual, isUndefined, omitBy } from 'lodash';
 import { useCallback, useContext, useMemo } from 'react';
 
-import { Pages } from '@/enums/Pages';
+import { RequiredMark } from '@/components/ui';
+import { PAGES } from '@/constants';
 import { usePageState, useServices } from '@/hooks';
 import { Nullable } from '@/types/Util';
 
@@ -78,6 +79,7 @@ const ModiusUpdateForm = ({ initialFormValues }: ModiusUpdateFormProps) => {
       validateMessages={validateMessages}
       initialValues={{ ...initialFormValues }}
       className="label-no-padding"
+      requiredMark={RequiredMark}
     >
       <CoinGeckoApiKeySubHeader />
       <Form.Item
@@ -155,7 +157,7 @@ export const ModiusUpdatePage = ({ renderForm }: ModiusUpdatePageProps) => {
     if (hasUnsavedChanges) {
       unsavedModal.openModal();
     } else {
-      goto(Pages.Main);
+      goto(PAGES.Main);
     }
   }, [initialValues, form, unsavedModal, goto]);
 

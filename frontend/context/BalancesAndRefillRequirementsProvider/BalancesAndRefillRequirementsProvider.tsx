@@ -18,16 +18,20 @@ import {
   AgentType,
   EvmChainId,
   MiddlewareDeploymentStatusMap,
+  REACT_QUERY_KEYS,
   SIXTY_MINUTE_INTERVAL,
   THIRTY_SECONDS_INTERVAL,
 } from '@/constants';
-import { REACT_QUERY_KEYS } from '@/constants/react-query-keys';
-import { useMasterWalletContext, useStore } from '@/hooks';
+import {
+  useDynamicRefetchInterval,
+  useMasterWalletContext,
+  useStore,
+} from '@/hooks';
 import { useOnlineStatusContext } from '@/hooks/useOnlineStatus';
 import { usePageState } from '@/hooks/usePageState';
 import { useRewardContext } from '@/hooks/useRewardContext';
 import { useServices } from '@/hooks/useServices';
-import { BalanceService } from '@/service/balances';
+import { BalanceService } from '@/service/Balance';
 import {
   AddressBalanceRecord,
   BalancesAndFundingRequirements,
@@ -43,29 +47,49 @@ import {
 
 export const BalancesAndRefillRequirementsProviderContext = createContext<{
   isBalancesAndFundingRequirementsLoading: boolean;
-  balances: Optional<AddressBalanceRecord>;
   refillRequirements: Optional<AddressBalanceRecord | MasterSafeBalanceRecord>;
-  getRefillRequirementsOf: (chainId: EvmChainId) => Maybe<AddressBalanceRecord>;
+  getRefillRequirementsOf: (
+    chainId: EvmChainId,
+    serviceConfigId?: string,
+  ) => Maybe<AddressBalanceRecord>;
   totalRequirements: Optional<AddressBalanceRecord | MasterSafeBalanceRecord>;
   agentFundingRequests: Optional<AddressBalanceRecord>;
   canStartAgent: boolean;
+  isRefillRequired: boolean;
   isAgentFundingRequestsStale: boolean;
   isPearlWalletRefillRequired: boolean;
   refetch: () => Promise<
+    [
+      QueryObserverResult<BalancesAndFundingRequirements, Error>,
+      QueryObserverResult<
+        Record<string, BalancesAndFundingRequirements>,
+        Error
+      >,
+    ]
+  >;
+  refetchForSelectedAgent: () => Promise<
     QueryObserverResult<BalancesAndFundingRequirements, Error>
   >;
   resetQueryCache: () => void;
 }>({
   isBalancesAndFundingRequirementsLoading: false,
-  balances: undefined,
   refillRequirements: undefined,
   getRefillRequirementsOf: () => null,
   totalRequirements: undefined,
   agentFundingRequests: undefined,
   canStartAgent: false,
+  isRefillRequired: true,
   isAgentFundingRequestsStale: false,
   isPearlWalletRefillRequired: false,
   refetch: () =>
+    Promise.resolve([
+      {} as QueryObserverResult<BalancesAndFundingRequirements, Error>,
+      {} as QueryObserverResult<
+        Record<string, BalancesAndFundingRequirements>,
+        Error
+      >,
+    ]),
+  refetchForSelectedAgent: () =>
     Promise.resolve(
       {} as QueryObserverResult<BalancesAndFundingRequirements, Error>,
     ),
@@ -162,12 +186,13 @@ export const BalancesAndRefillRequirementsProvider = ({
     selectedService?.deploymentStatus ===
     MiddlewareDeploymentStatusMap.DEPLOYED;
 
-  const { refetchInterval, updateRefetchCounter } =
+  const { refetchInterval: backoffRefetchInterval, updateRefetchCounter } =
     useRequirementsFetchInterval({
       configId,
       isServiceRunning,
       isEligibleForRewards,
     });
+  const refetchInterval = useDynamicRefetchInterval(backoffRefetchInterval);
 
   const {
     data: balancesAndFundingRequirements,
@@ -184,7 +209,6 @@ export const BalancesAndRefillRequirementsProvider = ({
       });
 
       updateRefetchCounter(data);
-
       return data;
     },
     enabled: !!configId && isUserLoggedIn && isOnline,
@@ -214,33 +238,18 @@ export const BalancesAndRefillRequirementsProvider = ({
     refetchInterval,
   });
 
-  const balances = useMemo(() => {
-    if (isBalancesAndFundingRequirementsLoading) return;
-    if (!balancesAndFundingRequirements) return;
-    return balancesAndFundingRequirements.balances[asMiddlewareChain(chainId)];
-  }, [
-    isBalancesAndFundingRequirementsLoading,
-    chainId,
-    balancesAndFundingRequirements,
-  ]);
-
-  // TODO: works only for single services per chain
-  // Needs to be updated if multi-service per chain is allowed
   const getRefillRequirementsOf = useCallback(
     <T extends AddressBalanceRecord | MasterSafeBalanceRecord>(
       chainId: EvmChainId,
+      serviceConfigId?: string,
     ): Optional<T> => {
+      if (!serviceConfigId) return;
       if (isBalancesAndFundingRequirementsLoadingForAllServices) return;
       if (!balancesAndFundingRequirementsForAllServices) return;
 
       const chain = asMiddlewareChain(chainId);
-      const serviceIdOfService = services?.find(
-        (s) => s.home_chain === chain,
-      )?.service_config_id;
-      if (!serviceIdOfService) return;
-
       const currentServiceBalancesAndFundingRequirements: Optional<BalancesAndFundingRequirements> =
-        balancesAndFundingRequirementsForAllServices?.[serviceIdOfService];
+        balancesAndFundingRequirementsForAllServices?.[serviceConfigId];
       if (!currentServiceBalancesAndFundingRequirements) return;
 
       const result = currentServiceBalancesAndFundingRequirements
@@ -250,7 +259,6 @@ export const BalancesAndRefillRequirementsProvider = ({
     [
       isBalancesAndFundingRequirementsLoadingForAllServices,
       balancesAndFundingRequirementsForAllServices,
-      services,
     ],
   );
 
@@ -343,7 +351,7 @@ export const BalancesAndRefillRequirementsProvider = ({
     return Promise.all([
       refetchBalancesAndFundingRequirements(),
       refetchBalancesAndFundingRequirementsForAllServices(),
-    ]).then(([result]) => result);
+    ]);
   }, [
     refetchBalancesAndFundingRequirements,
     refetchBalancesAndFundingRequirementsForAllServices,
@@ -355,17 +363,19 @@ export const BalancesAndRefillRequirementsProvider = ({
         isBalancesAndFundingRequirementsLoading,
         refillRequirements,
         getRefillRequirementsOf,
-        balances,
         totalRequirements,
         agentFundingRequests,
         canStartAgent:
           balancesAndFundingRequirements?.allow_start_agent || false,
+        isRefillRequired:
+          balancesAndFundingRequirements?.is_refill_required || true,
         isAgentFundingRequestsStale:
           balancesAndFundingRequirements?.agent_funding_in_progress ||
           balancesAndFundingRequirements?.agent_funding_requests_cooldown ||
           false,
         isPearlWalletRefillRequired,
         refetch,
+        refetchForSelectedAgent: refetchBalancesAndFundingRequirements,
         resetQueryCache,
       }}
     >

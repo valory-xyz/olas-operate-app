@@ -77,6 +77,11 @@ textarea,
   font-size: 14px;
 }
 
+.ant-input-textarea-show-count > textarea,
+textarea.ant-input {
+  padding: 8px !important;
+}
+
 
 /* === Start: button redesigns === */
 .ant-btn-primary {
@@ -325,6 +330,10 @@ textarea,
   align-items: center;
 }
 
+.gap-6 {
+  gap: 6px !important;
+}
+
 .m-0 {
   margin: 0 !important;
 }
@@ -369,8 +378,16 @@ textarea,
   margin-top: 32px !important;
 }
 
+.mt-40 {
+  margin-top: 40px !important;
+}
+
 .mb-0 {
   margin-bottom: 0px !important;
+}
+
+.mb-2 {
+  margin-bottom: 2px !important;
 }
 
 .mb-4 {
@@ -387,6 +404,10 @@ textarea,
 
 .mb-16 {
   margin-bottom: 16px !important;
+}
+
+.mb-20 {
+  margin-bottom: 20px !important;
 }
 
 .mb-24 {
@@ -558,6 +579,11 @@ textarea,
   margin-right: auto !important;
 }
 
+.mx-16 {
+  margin-left: 16px !important;
+  margin-right: 16px !important;
+}
+
 .mr-4 {
   margin-right: 4px !important;
 }
@@ -567,8 +593,16 @@ textarea,
 }
 
 // radius
+.rounded-4 {
+  border-radius: 4px
+}
+
 .rounded-8 {
   border-radius: 8px
+}
+
+.rounded-10 {
+  border-radius: 10px
 }
 
 .rounded-12 {
@@ -686,6 +720,10 @@ ul.alert-list {
   width: fit-content !important;
 }
 
+.h-full {
+  height: 100% !important;
+}
+
 .max-width-200 {
   max-width: 200px;
 }
@@ -706,6 +744,10 @@ ul.alert-list {
 // Flexbox & Grid
 .self-center {
   align-self: center;
+}
+
+.self-start {
+  align-self: flex-start;
 }
 
 .loading-ellipses {

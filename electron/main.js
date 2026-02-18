@@ -14,8 +14,17 @@ const {
 } = require('./windows/web3auth');
 
 const {
+  handleWeb3AuthSwapOwnerWindowShow,
+  handleWeb3AuthSwapOwnerSuccess,
+  handleWeb3AuthWindowSwapOwnerClose,
+  handleWeb3AuthSwapOwnerFailure,
+} = require('./windows/web3authSwapOwner');
+
+const {
   handleTermsAndConditionsWindowShow,
 } = require('./windows/termsAndConditions');
+
+const { nextLogger } = require('./logger');
 
 // Load the self-signed certificate for localhost HTTPS requests
 loadLocalCertificate();
@@ -25,7 +34,6 @@ const {
   BrowserWindow,
   Notification,
   ipcMain,
-  dialog,
   shell,
   systemPreferences,
 } = require('electron');
@@ -35,20 +43,28 @@ const fs = require('fs');
 const os = require('os');
 const next = require('next/dist/server/next');
 const http = require('http');
-const AdmZip = require('adm-zip');
 
 const { setupDarwin, setupUbuntu, setupWindows, Env } = require('./install');
 
-const { paths, isMac } = require('./constants');
+const {
+  paths,
+  isMac,
+  isDev,
+  popupAllowedUrls,
+  PORT_RANGE,
+  WIDTH,
+  HEIGHT,
+} = require('./constants');
 const { killProcesses } = require('./processes');
 const { isPortAvailable, findAvailablePort } = require('./ports');
-const { PORT_RANGE } = require('./constants');
 const { setupStoreIpc } = require('./store');
 const { logger } = require('./logger');
-const { isDev } = require('./constants');
 const { PearlTray } = require('./components/PearlTray');
 
 const { pki } = require('node-forge');
+
+// Register IPC handlers for logs
+require('./features/logs');
 
 // Validates environment variables required for Pearl
 // kills the app/process if required environment variables are unavailable
@@ -108,11 +124,11 @@ const platform = os.platform();
 
 const binaryPaths = {
   darwin: {
-    arm64: 'bins/pearl_arm64',
-    x64: 'bins/pearl_x64',
+    arm64: 'bins/middleware/pearl_arm64',
+    x64: 'bins/middleware/pearl_x64',
   },
   win32: {
-    x64: 'bins/pearl_win.exe',
+    x64: 'bins/middleware/pearl_win.exe',
   },
 };
 
@@ -388,10 +404,26 @@ const createMainWindow = async () => {
   });
 
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    // // web3auth links should be open in Pearl for redirect to work
-    // if (url.includes('web3auth')) return { action: 'allow' };
+    // If it's in the list of urls we allow to open as pop-ups, do so
+    if (popupAllowedUrls.includes(url)) {
+      return {
+        action: 'allow',
+        overrideBrowserWindowOptions: {
+          parent: mainWindow,
+          modal: true,
+          width: WIDTH,
+          height: HEIGHT,
+          autoHideMenuBar: true,
+          resizable: false,
+          webPreferences: {
+            nodeIntegration: false,
+            contextIsolation: true,
+          },
+        },
+      };
+    }
 
-    // open url in a browser and prevent default
+    // If it's an external link, open url in a browser and prevent default
     shell.openExternal(url);
     return { action: 'deny' };
   });
@@ -486,7 +518,11 @@ function createAndLoadSslCertificate() {
  * Create the on-ramping window for displaying transak iframe
  */
 /** @type {()=>Promise<BrowserWindow|undefined>} */
-const createOnRampWindow = async (amountToPay) => {
+const createOnRampWindow = async (
+  amountToPay,
+  networkName,
+  cryptoCurrencyCode,
+) => {
   if (!getOnRampWindow() || getOnRampWindow().isDestroyed) {
     onRampWindow = new BrowserWindow({
       title: 'Buy Crypto on Transak',
@@ -518,6 +554,12 @@ const createOnRampWindow = async (amountToPay) => {
     if (amountToPay) {
       onRampQuery.append('amount', amountToPay.toString());
     }
+    if (networkName) {
+      onRampQuery.append('networkName', networkName);
+    }
+    if (cryptoCurrencyCode) {
+      onRampQuery.append('cryptoCurrencyCode', cryptoCurrencyCode);
+    }
     const onRampUrl = `${nextUrl()}/onramp?${onRampQuery.toString()}`;
     logger.electron(`OnRamp URL: ${onRampUrl}`);
 
@@ -546,9 +588,33 @@ const createOnRampWindow = async (amountToPay) => {
   return onRampWindow;
 };
 
+function removeQuarantine(filePath) {
+  try {
+    const { execSync } = require('child_process');
+    execSync(`xattr -p com.apple.quarantine "${filePath}"`, {
+      stdio: 'ignore',
+    });
+    execSync(`xattr -d com.apple.quarantine "${filePath}"`);
+    logger.electron(`Removed quarantine attribute from ${filePath}`);
+  } catch (e) {
+    logger.electron(
+      `Failed to remove quarantine attribute from ${filePath}: ${e}`,
+    );
+  }
+}
+
 async function launchDaemon() {
   const check = new Promise(function (resolve, _reject) {
     const { keyPath, certPath } = createAndLoadSslCertificate();
+
+    const binPath = path.join(
+      process.resourcesPath,
+      binaryPaths[platform][process.arch.toString()],
+    );
+    if (platform === 'darwin') {
+      removeQuarantine(binPath);
+    }
+
     operateDaemon = spawn(
       path.join(
         process.resourcesPath,
@@ -797,230 +863,33 @@ ipcMain.on('open-path', (_, filePath) => {
 });
 
 /**
- * Sanitizes logs by replacing usernames in the log data with asterisks.
- * If a file path is provided, it reads the log data from the file and sanitizes it.
- * If the file path does not exist, it returns null.
- * If no file path is provided, it sanitizes the provided data directly.
- * The sanitized log data is then written to the destination path.
- * @param {Object} options - The options for sanitizing logs.
- * @param {string} options.name - The name of the log file.
- * @param {string} options.filePath - The file path to read the log data from.
- * @param {string} options.data - The log data to sanitize if no file path is provided.
- * @param {string} options.destPath - The destination path where the logs should be stored after sanitization.
- * @returns {string|null} - The file path of the sanitized log data, or null if the file path does not exist.
- */
-function sanitizeLogs({
-  name,
-  filePath,
-  data = '',
-  destPath = paths.osPearlTempDir,
-}) {
-  if (filePath && !fs.existsSync(filePath)) return null;
-
-  const logs = filePath ? fs.readFileSync(filePath, 'utf-8') : data;
-
-  const usernameRegex = /\/(Users|home)\/([^/]+)/g;
-  const sanitizedData = logs.replace(usernameRegex, '/$1/*****');
-  const sanitizedLogsFilePath = path.join(destPath, name);
-
-  if (!fs.existsSync(destPath)) {
-    fs.mkdirSync(destPath, { recursive: true });
-  }
-
-  fs.writeFileSync(sanitizedLogsFilePath, sanitizedData);
-
-  return sanitizedLogsFilePath;
-}
-
-/**
- * Exports logs by creating a zip file containing sanitized logs and other relevant data.
- */
-ipcMain.handle('save-logs', async (_, data) => {
-  const cliLogFiles = fs
-    .readdirSync(paths.dotOperateDirectory)
-    .filter((file) => file.startsWith('cli') && file.endsWith('.log'));
-
-  if (cliLogFiles.length >= 1) {
-    cliLogFiles.forEach((file) => {
-      const filePath = path.join(paths.dotOperateDirectory, file);
-      sanitizeLogs({ name: file, filePath });
-    });
-  }
-
-  sanitizeLogs({ name: 'next.log', filePath: paths.nextLogFile });
-
-  sanitizeLogs({ name: 'electron.log', filePath: paths.electronLogFile });
-
-  // OS info
-  const osInfo = `
-    OS Type: ${os.type()}
-    OS Platform: ${os.platform()}
-    OS Arch: ${os.arch()}
-    OS Release: ${os.release()}
-    Total Memory: ${os.totalmem()}
-    Free Memory: ${os.freemem()}
-    Available Parallelism: ${os.availableParallelism()}
-    CPUs: ${JSON.stringify(os.cpus())}
-  `;
-  const osInfoFilePath = path.join(paths.osPearlTempDir, 'os_info.txt');
-  fs.writeFileSync(osInfoFilePath, osInfo);
-
-  // Persistent store
-  if (data.store) {
-    sanitizeLogs({
-      name: 'store.txt',
-      data: JSON.stringify(data.store, null, 2),
-    });
-  }
-
-  // Other debug data: balances, addresses, etc.
-  if (data.debugData) {
-    const clonedDebugData = JSON.parse(JSON.stringify(data.debugData)); // TODO: deep clone with better method
-    const servicesData = clonedDebugData.services;
-    if (servicesData && Array.isArray(servicesData.services)) {
-      Object.entries(servicesData.services).forEach(([_, eachService]) => {
-        if (eachService && eachService.env_variables) {
-          Object.entries(eachService.env_variables).forEach(([_, envVar]) => {
-            if (envVar.provision_type === 'user') {
-              envVar.value = '*****';
-            }
-          });
-        }
-      });
-    }
-
-    clonedDebugData.services = servicesData;
-
-    sanitizeLogs({
-      name: 'debug_data.json',
-      data: JSON.stringify(clonedDebugData, null, 2),
-    });
-  }
-
-  // Bridge logs
-  try {
-    const bridgeLogFilePath = path.join(paths.bridgeDirectory, 'bridge.json');
-    if (fs.existsSync(bridgeLogFilePath)) {
-      sanitizeLogs({ name: 'bridge.json', filePath: bridgeLogFilePath });
-    }
-  } catch (e) {
-    logger.electron(e);
-  }
-
-  // agent_runner.log wraps agent runner process even before agent started, so can check issues with executable start
-  try {
-    if (fs.existsSync(paths.agentRunnerLogFile)) {
-      sanitizeLogs({
-        name: 'agent_runner.log',
-        filePath: paths.agentRunnerLogFile,
-      });
-    }
-  } catch (e) {
-    logger.electron(e);
-  }
-
-  // Agent logs
-  try {
-    fs.readdirSync(paths.servicesDir).forEach((serviceDirName) => {
-      const servicePath = path.join(paths.servicesDir, serviceDirName);
-      if (!fs.existsSync(servicePath)) return;
-      if (!fs.statSync(servicePath).isDirectory()) return;
-
-      // Most recent log
-      try {
-        const agentLogFilePath = path.join(
-          servicePath,
-          'deployment',
-          'agent',
-          'log.txt',
-        );
-        if (fs.existsSync(agentLogFilePath)) {
-          sanitizeLogs({
-            name: `${serviceDirName}_agent.log`,
-            filePath: agentLogFilePath,
-          });
-        }
-      } catch (e) {
-        logger.electron(e);
-      }
-
-      // Previous log
-      try {
-        const prevAgentLogFilePath = path.join(servicePath, 'prev_log.txt');
-        if (fs.existsSync(prevAgentLogFilePath)) {
-          sanitizeLogs({
-            name: `${serviceDirName}_prev_agent.log`,
-            filePath: prevAgentLogFilePath,
-          });
-        }
-      } catch (e) {
-        logger.electron(e);
-      }
-    });
-  } catch (e) {
-    logger.electron(e);
-  }
-
-  // Create a zip archive
-  const zip = new AdmZip();
-  fs.readdirSync(paths.osPearlTempDir).forEach((file) => {
-    const filePath = path.join(paths.osPearlTempDir, file);
-    if (!fs.existsSync(filePath)) return;
-    if (fs.statSync(filePath).isDirectory()) return;
-
-    zip.addLocalFile(filePath);
-  });
-
-  // Show save dialog
-  const { filePath } = await dialog.showSaveDialog({
-    title: 'Save Logs',
-    defaultPath: path.join(
-      os.homedir(),
-      `pearl_logs_${new Date(Date.now())
-        .toISOString()
-        .replaceAll(':', '-')}-${app.getVersion()}.zip`,
-    ),
-    filters: [{ name: 'Zip Files', extensions: ['zip'] }],
-  });
-
-  let result;
-  if (filePath) {
-    // Write the zip file to the selected path
-    zip.writeZip(filePath);
-    result = { success: true, dirPath: path.dirname(filePath) };
-  } else {
-    result = { success: false };
-  }
-
-  // Remove temporary files
-  if (fs.existsSync(paths.osPearlTempDir)) {
-    fs.rmSync(paths.osPearlTempDir, {
-      recursive: true,
-      force: true,
-    });
-  }
-  return result;
-});
-
-/**
  * Logs an event message to the logger.
  */
 ipcMain.handle('log-event', (_event, message) => {
   logger.electron(message);
 });
 
+ipcMain.handle('next-log-error', (_event, error, errorInfo) => {
+  nextLogger.error(error, errorInfo);
+});
+
 /**
  * OnRamp window handlers
  */
-ipcMain.handle('onramp-window-show', (_event, amountToPay) => {
-  logger.electron('onramp-window-show');
+ipcMain.handle(
+  'onramp-window-show',
+  (_event, amountToPay, networkName, cryptoCurrencyCode) => {
+    logger.electron('onramp-window-show');
 
-  if (!getOnRampWindow() || getOnRampWindow().isDestroyed()) {
-    createOnRampWindow(amountToPay)?.then((window) => window.show());
-  } else {
-    getOnRampWindow()?.show();
-  }
-});
+    if (!getOnRampWindow() || getOnRampWindow().isDestroyed()) {
+      createOnRampWindow(amountToPay, networkName, cryptoCurrencyCode)?.then(
+        (window) => window.show(),
+      );
+    } else {
+      getOnRampWindow()?.show();
+    }
+  },
+);
 
 ipcMain.handle('onramp-window-close', () => {
   logger.electron('onramp-window-close');
@@ -1066,6 +935,23 @@ ipcMain.handle('web3auth-window-show', () =>
 ipcMain.handle('web3auth-window-close', handleWeb3AuthWindowClose);
 ipcMain.handle('web3auth-address-received', (_event, address) =>
   handleWeb3AuthSuccessLogin(mainWindow, address),
+);
+
+/**
+ * Web3Auth swap owner window handlers
+ */
+ipcMain.handle('web3auth-swap-owner-window-show', (_event, params) =>
+  handleWeb3AuthSwapOwnerWindowShow(nextUrl(), params),
+);
+ipcMain.handle(
+  'web3auth-swap-owner-window-close',
+  handleWeb3AuthWindowSwapOwnerClose,
+);
+ipcMain.handle('web3auth-swap-owner-success', (_event, result) =>
+  handleWeb3AuthSwapOwnerSuccess(mainWindow, result),
+);
+ipcMain.handle('web3auth-swap-owner-failure', (_event, result) =>
+  handleWeb3AuthSwapOwnerFailure(mainWindow, result),
 );
 
 /**

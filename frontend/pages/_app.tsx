@@ -5,6 +5,7 @@ import { ConfigProvider } from 'antd';
 import type { AppProps } from 'next/app';
 import { useEffect, useState } from 'react';
 
+import ErrorBoundary from '@/components/ErrorBoundary';
 import { Layout } from '@/components/Layout';
 import { mainTheme } from '@/constants';
 import { BalanceProvider } from '@/context/BalanceProvider/BalanceProvider';
@@ -24,61 +25,76 @@ import { SharedProvider } from '@/context/SharedProvider/SharedProvider';
 import { StakingContractDetailsProvider } from '@/context/StakingContractDetailsProvider';
 import { StakingProgramProvider } from '@/context/StakingProgramProvider';
 import { StoreProvider } from '@/context/StoreProvider';
-import { SystemNotificationTriggers } from '@/context/SystemNotificationTriggers';
+import { SupportModalProvider } from '@/context/SupportModalProvider';
+import { useElectronApi } from '@/hooks/useElectronApi';
+import { useGlobalErrorHandlers } from '@/hooks/useGlobalErrorHandlers';
 
 const queryClient = new QueryClient();
 
-export default function App({ Component, pageProps }: AppProps) {
+function App({ Component, pageProps }: AppProps) {
   const [isMounted, setIsMounted] = useState(false);
+
+  const { nextLogError } = useElectronApi();
+
+  useGlobalErrorHandlers(nextLogError);
+
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
   return (
-    <OnlineStatusProvider>
-      <ElectronApiProvider>
+    <ErrorBoundary logger={nextLogError}>
+      <OnlineStatusProvider>
         <StoreProvider>
-          <QueryClientProvider client={queryClient}>
-            <PageStateProvider>
-              <ServicesProvider>
-                <MasterWalletProvider>
-                  <StakingProgramProvider>
-                    <StakingContractDetailsProvider>
-                      <RewardProvider>
-                        <BalanceProvider>
-                          <BalancesAndRefillRequirementsProvider>
-                            <SetupProvider>
-                              <SettingsProvider>
-                                <ConfigProvider theme={mainTheme}>
-                                  <MessageProvider>
-                                    <SharedProvider>
-                                      <OnRampProvider>
-                                        <PearlWalletProvider>
-                                          {isMounted ? (
-                                            <SystemNotificationTriggers>
-                                              <Layout>
-                                                <Component {...pageProps} />
-                                              </Layout>
-                                            </SystemNotificationTriggers>
-                                          ) : null}
-                                        </PearlWalletProvider>
-                                      </OnRampProvider>
-                                    </SharedProvider>
-                                  </MessageProvider>
-                                </ConfigProvider>
-                              </SettingsProvider>
-                            </SetupProvider>
-                          </BalancesAndRefillRequirementsProvider>
-                        </BalanceProvider>
-                      </RewardProvider>
-                    </StakingContractDetailsProvider>
-                  </StakingProgramProvider>
-                </MasterWalletProvider>
-              </ServicesProvider>
-            </PageStateProvider>
-          </QueryClientProvider>
+          <PageStateProvider>
+            <ServicesProvider>
+              <MasterWalletProvider>
+                <StakingProgramProvider>
+                  <StakingContractDetailsProvider>
+                    <RewardProvider>
+                      <BalanceProvider>
+                        <BalancesAndRefillRequirementsProvider>
+                          <SetupProvider>
+                            <SettingsProvider>
+                              <MessageProvider>
+                                <SharedProvider>
+                                  <OnRampProvider>
+                                    <PearlWalletProvider>
+                                      <SupportModalProvider>
+                                        {isMounted ? (
+                                          <Layout>
+                                            <Component {...pageProps} />
+                                          </Layout>
+                                        ) : null}
+                                      </SupportModalProvider>
+                                    </PearlWalletProvider>
+                                  </OnRampProvider>
+                                </SharedProvider>
+                              </MessageProvider>
+                            </SettingsProvider>
+                          </SetupProvider>
+                        </BalancesAndRefillRequirementsProvider>
+                      </BalanceProvider>
+                    </RewardProvider>
+                  </StakingContractDetailsProvider>
+                </StakingProgramProvider>
+              </MasterWalletProvider>
+            </ServicesProvider>
+          </PageStateProvider>
         </StoreProvider>
-      </ElectronApiProvider>
-    </OnlineStatusProvider>
+      </OnlineStatusProvider>
+    </ErrorBoundary>
+  );
+}
+
+export default function AppRoot(props: AppProps) {
+  return (
+    <ElectronApiProvider>
+      <QueryClientProvider client={queryClient}>
+        <ConfigProvider theme={mainTheme}>
+          <App {...props} />
+        </ConfigProvider>
+      </QueryClientProvider>
+    </ElectronApiProvider>
   );
 }

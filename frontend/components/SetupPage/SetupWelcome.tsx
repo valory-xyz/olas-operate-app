@@ -3,8 +3,8 @@ import { isNil } from 'lodash';
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { PAGES, SETUP_SCREEN } from '@/constants';
 import { useMessageApi } from '@/context/MessageProvider';
-import { Pages, SetupScreen } from '@/enums';
 import {
   useBackupSigner,
   useBalanceContext,
@@ -15,6 +15,7 @@ import {
   usePageState,
   useServices,
   useSetup,
+  useSharedContext,
 } from '@/hooks';
 import { AccountService } from '@/service/Account';
 import { WalletService } from '@/service/Wallet';
@@ -83,14 +84,14 @@ const useSetupNavigation = ({
     if (!selectedAgentConfig) return;
 
     if (isBackupWalletNotSet) {
-      goto(SetupScreen.SetupBackupSigner);
+      goto(SETUP_SCREEN.SetupBackupSigner);
       return;
     }
 
     // If the agent is disabled then redirect to agent selection,
     // if the disabled agent was previously selected.
     if (!selectedAgentConfig.isAgentEnabled) {
-      goto(SetupScreen.AgentOnboarding);
+      goto(SETUP_SCREEN.AgentOnboarding);
       return;
     }
 
@@ -99,17 +100,17 @@ const useSetupNavigation = ({
       window.console.log(
         `No service created for chain ${selectedServiceOrAgentChainId}`,
       );
-      goto(SetupScreen.AgentOnboarding);
+      goto(SETUP_SCREEN.AgentOnboarding);
       return;
     }
 
     // If no balance is loaded, redirect to setup screen
     if (isNil(getMasterEoaNativeBalanceOf(selectedServiceOrAgentChainId))) {
-      goto(SetupScreen.FundYourAgent);
+      goto(SETUP_SCREEN.FundYourAgent);
       return;
     }
 
-    gotoPage(Pages.Main);
+    gotoPage(PAGES.Main);
   }, [
     getMasterEoaNativeBalanceOf,
     goto,
@@ -128,6 +129,7 @@ enum MiddlewareAccountIsSetup {
   False,
   Loading,
   Error,
+  RecoveryNotComplete,
 }
 
 const WelcomeBack = () => (
@@ -152,6 +154,15 @@ const SetupLoader = () => (
 const SetupError = () => (
   <Flex justify="center" style={{ margin: '32px 0', textAlign: 'center' }}>
     <Text>Unable to determine the account setup status, please try again.</Text>
+  </Flex>
+);
+
+const RecoveryProcessInProgress = () => (
+  <Flex justify="center" style={{ margin: '32px 0', textAlign: 'center' }}>
+    <Text>
+      Account recovery was in progress but could not be completed. Please open a
+      support ticket.
+    </Text>
   </Flex>
 );
 
@@ -229,7 +240,7 @@ const SetupWelcomeLogin = () => {
             type="link"
             target="_blank"
             size="small"
-            onClick={() => goto(SetupScreen.Restore)}
+            onClick={() => goto(SETUP_SCREEN.AccountRecovery)}
           >
             Forgot password?
           </Button>
@@ -244,10 +255,34 @@ const SetupWelcomeLogin = () => {
  */
 export const SetupWelcome = () => {
   const electronApi = useElectronApi();
+  const { isAccountRecoveryStatusLoading, hasActiveRecoverySwap } =
+    useSharedContext();
   const [isSetup, setIsSetup] = useState<MiddlewareAccountIsSetup | null>(null);
+  const [hasCheckedAccount, setHasCheckedAccount] = useState(false);
 
   useEffect(() => {
-    if (isSetup !== null) return;
+    // Wait for account recovery status to load
+    if (isAccountRecoveryStatusLoading) {
+      setIsSetup(MiddlewareAccountIsSetup.Loading);
+      return;
+    }
+
+    // If already checked or determined the setup state, don't check again
+    if (
+      hasCheckedAccount ||
+      (isSetup !== null && isSetup !== MiddlewareAccountIsSetup.Loading)
+    ) {
+      return;
+    }
+
+    if (hasActiveRecoverySwap) {
+      setIsSetup(MiddlewareAccountIsSetup.RecoveryNotComplete);
+      setHasCheckedAccount(true);
+      return;
+    }
+
+    // Mark as checked and set loading state before making API call
+    setHasCheckedAccount(true);
     setIsSetup(MiddlewareAccountIsSetup.Loading);
 
     AccountService.getAccount()
@@ -272,7 +307,13 @@ export const SetupWelcome = () => {
         console.error(e);
         setIsSetup(MiddlewareAccountIsSetup.Error);
       });
-  }, [electronApi.store, isSetup]);
+  }, [
+    electronApi.store,
+    isSetup,
+    hasCheckedAccount,
+    isAccountRecoveryStatusLoading,
+    hasActiveRecoverySwap,
+  ]);
 
   const welcomeScreen = useMemo(() => {
     switch (isSetup) {
@@ -282,6 +323,8 @@ export const SetupWelcome = () => {
         return <SetupWelcomeCreate />;
       case MiddlewareAccountIsSetup.Loading:
         return <SetupLoader />;
+      case MiddlewareAccountIsSetup.RecoveryNotComplete:
+        return <RecoveryProcessInProgress />;
       case MiddlewareAccountIsSetup.Error:
         return <SetupError />;
       default:
@@ -289,13 +332,12 @@ export const SetupWelcome = () => {
     }
   }, [isSetup]);
 
-  // TODO: think about the widths of card
   return (
-    <Card bordered={false}>
+    <Card variant="borderless">
       <Flex vertical align="center">
         <Image
-          src={'/onboarding-robot.svg'}
-          alt="Onboarding Robot"
+          src="/onboarding-robot.svg"
+          alt="Onboarding Pearl"
           width={64}
           height={64}
         />

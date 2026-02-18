@@ -11,9 +11,10 @@ import {
   FundingDescription,
   Table,
 } from '@/components/ui';
-import { COLOR, TokenSymbolConfigMap } from '@/constants';
+import { TokenSymbolConfigMap } from '@/config/tokens';
+import { COLOR } from '@/constants';
 import { Address, AvailableAsset, Nullable } from '@/types';
-import { formatNumber } from '@/utils';
+import { formatAmount } from '@/utils';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -67,7 +68,7 @@ const getColumns = (
       title: requestedColumnText,
       key: 'tokenAmount',
       render: (_: unknown, record: AvailableAsset) => (
-        <Text>{formatNumber(record.amount, 4)}</Text>
+        <Text>{formatAmount(record.amount, 4)}</Text>
       ),
       width: '50%',
     },

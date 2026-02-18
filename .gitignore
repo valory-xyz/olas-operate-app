@@ -11,6 +11,7 @@ frontend/node_modules
 frontend/.next/
 frontend/out/
 frontend/.swc/
+*.tsbuildinfo
 
 # production
 frontend/build
@@ -45,7 +46,8 @@ leak_report
 
 *.dist
 *.build
-/electron/bins/
+/electron/bins/middleware/
+/electron/bins/tendermint_*/
 
 # logs
 *.log

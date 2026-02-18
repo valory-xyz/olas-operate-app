@@ -3,6 +3,10 @@ import { createContext, PropsWithChildren } from 'react';
 
 import { Address } from '@/types/Address';
 import { ElectronStore, ElectronTrayIconStatus } from '@/types/ElectronApi';
+import {
+  SwapOwnerTransactionFailure,
+  SwapOwnerTransactionSuccess,
+} from '@/types/Recovery';
 
 type ElectronApiContextProps = {
   getAppVersion?: () => Promise<string>;
@@ -39,9 +43,29 @@ type ElectronApiContextProps = {
     store?: ElectronStore;
     debugData?: Record<string, unknown>;
   }) => Promise<{ success: true; dirPath: string } | { success?: false }>;
+  saveLogsForSupport?: (data: {
+    store?: ElectronStore;
+    debugData?: Record<string, unknown>;
+  }) => Promise<
+    { success: true; filePath: string; fileName: string } | { success?: false }
+  >;
+  cleanupSupportLogs?: () => Promise<void>;
+  readFile?: (filePath: string) => Promise<
+    | {
+        success: true;
+        fileName: string;
+        fileContent: string;
+        mimeType: string;
+      }
+    | { success?: false; error?: string }
+  >;
   openPath?: (filePath: string) => void;
   onRampWindow?: {
-    show?: (amountToPay: number) => void;
+    show?: (
+      amountToPay: number,
+      networkName: string,
+      cryptoCurrencyCode: string,
+    ) => void;
     close?: () => void;
     /**
      * @deprecated On-ramp window will be closed automatically
@@ -55,11 +79,24 @@ type ElectronApiContextProps = {
     close?: () => void;
     authSuccess?: (address: Address) => void;
   };
+  web3AuthSwapOwnerWindow?: {
+    show?: (params: {
+      safeAddress: string;
+      oldOwnerAddress: string;
+      newOwnerAddress: string;
+      backupOwnerAddress: string;
+      chainId: number;
+    }) => void;
+    close?: () => void;
+    swapSuccess?: (result: SwapOwnerTransactionSuccess) => void;
+    swapFailure?: (result: SwapOwnerTransactionFailure) => void;
+  };
   termsAndConditionsWindow?: {
     show?: (hash?: string) => void;
     close?: () => void;
   };
   logEvent?: (message: string) => void;
+  nextLogError?: (error: Error, errorInfo: unknown) => void;
 };
 
 export const ElectronApiContext = createContext<ElectronApiContextProps>({
@@ -82,6 +119,9 @@ export const ElectronApiContext = createContext<ElectronApiContextProps>({
     clear: async () => {},
   },
   saveLogs: async () => ({ success: false }),
+  saveLogsForSupport: async () => ({ success: false }),
+  cleanupSupportLogs: async () => {},
+  readFile: async () => ({ success: false }),
   openPath: () => {},
   onRampWindow: {
     show: () => {},
@@ -92,11 +132,18 @@ export const ElectronApiContext = createContext<ElectronApiContextProps>({
     close: () => {},
     authSuccess: () => {},
   },
+  web3AuthSwapOwnerWindow: {
+    show: () => {},
+    close: () => {},
+    swapSuccess: () => {},
+    swapFailure: () => {},
+  },
   termsAndConditionsWindow: {
     show: () => {},
     close: () => {},
   },
   logEvent: () => {},
+  nextLogError: () => {},
 });
 
 export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
@@ -136,6 +183,9 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
         },
         showNotification: getElectronApiFunction('showNotification'),
         saveLogs: getElectronApiFunction('saveLogs'),
+        saveLogsForSupport: getElectronApiFunction('saveLogsForSupport'),
+        cleanupSupportLogs: getElectronApiFunction('cleanupSupportLogs'),
+        readFile: getElectronApiFunction('readFile'),
         openPath: getElectronApiFunction('openPath'),
         onRampWindow: {
           show: getElectronApiFunction('onRampWindow.show'),
@@ -152,10 +202,21 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
           close: getElectronApiFunction('web3AuthWindow.close'),
           authSuccess: getElectronApiFunction('web3AuthWindow.authSuccess'),
         },
+        web3AuthSwapOwnerWindow: {
+          show: getElectronApiFunction('web3AuthSwapOwnerWindow.show'),
+          close: getElectronApiFunction('web3AuthSwapOwnerWindow.close'),
+          swapSuccess: getElectronApiFunction(
+            'web3AuthSwapOwnerWindow.swapSuccess',
+          ),
+          swapFailure: getElectronApiFunction(
+            'web3AuthSwapOwnerWindow.swapFailure',
+          ),
+        },
         termsAndConditionsWindow: {
           show: getElectronApiFunction('termsAndConditionsWindow.show'),
         },
         logEvent: getElectronApiFunction('logEvent'),
+        nextLogError: getElectronApiFunction('nextLogError'),
       }}
     >
       {children}

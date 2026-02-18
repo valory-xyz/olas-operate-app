@@ -3,12 +3,11 @@ import { getAddress } from 'ethers/lib/utils';
 import { RiAppleFill, RiGoogleFill } from 'react-icons/ri';
 
 import { FormFlex } from '@/components/ui';
-import { COLOR } from '@/constants/colors';
-import { SetupScreen } from '@/enums/SetupScreen';
+import { COLOR, SETUP_SCREEN } from '@/constants';
 import { useSetup } from '@/hooks/useSetup';
 import { Address } from '@/types/Address';
 
-import { useWeb3AuthBackupWallet } from '../hooks/useWeb3AuthBackupWallet';
+import { useWeb3AuthBackupWallet } from './useWeb3AuthBackupWallet';
 
 const { Text } = Typography;
 
@@ -42,11 +41,11 @@ export const BackupWalletManual = () => {
     }
 
     setBackupSigner({ address: checksummedAddress, type: 'manual' });
-    goto(SetupScreen.AgentOnboarding);
+    goto(SETUP_SCREEN.AgentOnboarding);
   };
 
   const handleWeb3AuthSetupFinish = () => {
-    goto(SetupScreen.AgentOnboarding);
+    goto(SETUP_SCREEN.AgentOnboarding);
   };
 
   const { openWeb3AuthModel } = useWeb3AuthBackupWallet({

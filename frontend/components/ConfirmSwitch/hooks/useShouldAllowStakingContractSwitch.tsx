@@ -2,7 +2,7 @@ import { isNil } from 'lodash';
 import { useMemo } from 'react';
 
 import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
-import { TokenSymbolMap } from '@/constants';
+import { TokenSymbolMap } from '@/config/tokens';
 import {
   useBalanceContext,
   useMasterBalances,

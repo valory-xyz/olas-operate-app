@@ -3,8 +3,12 @@ import { entries, values } from 'lodash';
 import { useCallback, useMemo } from 'react';
 
 import { CHAIN_CONFIG } from '@/config/chains';
-import { ChainTokenConfig, TOKEN_CONFIG, TokenType } from '@/config/tokens';
-import { TokenSymbol } from '@/constants';
+import {
+  ChainTokenConfig,
+  TOKEN_CONFIG,
+  TokenSymbol,
+  TokenType,
+} from '@/config/tokens';
 import { AddressZero } from '@/constants/address';
 import { SupportedMiddlewareChainMap } from '@/constants/chains';
 import { CONTENT_TYPE_JSON_UTF8 } from '@/constants/headers';
@@ -96,7 +100,7 @@ const formatWithdrawAssets = (
       const withdrawableAmount = (() => {
         if (!withdrawAll) return amount;
         const asset = availableAssets.find((asset) => asset.symbol === symbol);
-        return asset?.amountString ?? '0';
+        return asset?.amountInStr ?? '0';
       })();
 
       acc[tokenAddress] = parseUnits(withdrawableAmount, decimals) || '0';

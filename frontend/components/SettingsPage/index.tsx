@@ -17,7 +17,7 @@ import {
   IconContainer,
 } from '@/components/ui';
 import { COLOR, NA } from '@/constants';
-import { SettingsScreen } from '@/enums';
+import { SettingsScreenMap } from '@/constants/screen';
 import {
   useFeatureFlag,
   useMasterWalletContext,
@@ -72,8 +72,12 @@ const SecretRecoveryPhraseSetting = () => {
     <>
       <CardSection $padding="24px" $borderTop vertical gap={8}>
         <Flex gap={16}>
-          <IconContainer>
-            <TbShieldHalfFilled size={20} color={COLOR.TEXT_NEUTRAL_TERTIARY} />
+          <IconContainer $borderWidth={2}>
+            <TbShieldHalfFilled
+              size={20}
+              fontSize={30}
+              color={COLOR.TEXT_NEUTRAL_TERTIARY}
+            />
           </IconContainer>
           <Flex vertical gap={12}>
             <Text strong>Secret Recovery Phrase</Text>
@@ -229,7 +233,7 @@ export const Settings = () => {
   const { screen } = useSettings();
   const settingsScreen = useMemo(() => {
     switch (screen) {
-      case SettingsScreen.Main:
+      case SettingsScreenMap.Main:
         return <SettingsMain />;
       default:
         return null;

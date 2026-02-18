@@ -44,6 +44,10 @@ const main = async () => {
         gatekeeperAssess: false,
         entitlements: 'electron/entitlements.mac.plist',
         entitlementsInherit: 'electron/entitlements.mac.plist',
+        signIgnore: [
+          '.*/_internal/.*',
+          '.*/bins/middleware/.*'
+        ],
       },
     },
   });

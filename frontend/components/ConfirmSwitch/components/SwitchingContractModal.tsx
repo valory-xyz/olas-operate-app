@@ -1,65 +1,101 @@
 import { Button, Spin } from 'antd';
+import { useCallback, useMemo } from 'react';
 
-import { LoadingOutlined, SuccessOutlined } from '@/components/custom-icons';
+import {
+  LoadingOutlined,
+  SuccessOutlined,
+  WarningOutlined,
+} from '@/components/custom-icons';
 import { Modal } from '@/components/ui';
 import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
-import { Pages } from '@/enums/Pages';
-import { usePageState, useService, useServices } from '@/hooks';
-import { generateName } from '@/utils/agentName';
+import { PAGES } from '@/constants';
+import { useSupportModal } from '@/context/SupportModalProvider';
+import { usePageState, useServices } from '@/hooks';
 
-const ModalHeader = ({ isLoading }: { isLoading: boolean }) =>
-  isLoading ? (
-    <Spin indicator={<LoadingOutlined />} size="large" />
-  ) : (
-    <SuccessOutlined />
-  );
+type SwitchingContractStatus = 'IN_PROGRESS' | 'COMPLETED' | 'ERROR';
+
+const ModalHeader = ({ status }: { status: SwitchingContractStatus }) => {
+  if (status === 'IN_PROGRESS')
+    return <Spin indicator={<LoadingOutlined />} size="large" />;
+  if (status === 'COMPLETED') return <SuccessOutlined />;
+  if (status === 'ERROR') return <WarningOutlined />;
+};
 
 type SwitchingContractModalProps = {
-  isSwitchingContract: boolean;
+  status: SwitchingContractStatus;
+  onClose: () => void;
   stakingProgramIdToMigrateTo: string;
 };
 
 export const SwitchingContractModal = ({
-  isSwitchingContract,
+  status,
+  onClose,
   stakingProgramIdToMigrateTo,
 }: SwitchingContractModalProps) => {
   const { goto } = usePageState();
-  const { selectedAgentConfig, selectedService } = useServices();
-  const { getServiceSafeOf } = useService(selectedService?.service_config_id);
-  const serviceSafe = getServiceSafeOf?.(selectedAgentConfig.evmHomeChainId);
+  const { toggleSupportModal } = useSupportModal();
+  const { selectedAgentConfig, selectedAgentName } = useServices();
 
-  const agentName = serviceSafe?.address
-    ? generateName(serviceSafe?.address)
-    : '-';
-  const stakingProgramMeta =
-    STAKING_PROGRAMS[selectedAgentConfig.evmHomeChainId][
-      stakingProgramIdToMigrateTo
-    ];
+  const handleContactSupport = useCallback(() => {
+    onClose();
+    toggleSupportModal();
+  }, [onClose, toggleSupportModal]);
 
-  const title = isSwitchingContract
-    ? 'Switching in Progress'
-    : 'Contract Switched Successfully!';
-  const description = isSwitchingContract
-    ? 'Your agent is switching contracts. It usually takes up to 5 min. Please keep the app open until the process is complete.'
-    : `Your ${selectedAgentConfig.displayName} agent ${agentName} is now staked on ${stakingProgramMeta?.name} staking contract.`;
+  const modalProps = useMemo(() => {
+    if (status === 'IN_PROGRESS') {
+      return {
+        title: 'Switching in Progress',
+        description:
+          'Your agent is switching contracts. It usually takes up to 5 min. Please keep the app open until the process is complete.',
+      };
+    }
 
-  return (
-    <Modal
-      header={<ModalHeader isLoading={isSwitchingContract} />}
-      title={title}
-      description={description}
-      action={
-        isSwitchingContract ? null : (
+    if (status === 'COMPLETED') {
+      const stakingProgramMeta =
+        STAKING_PROGRAMS[selectedAgentConfig.evmHomeChainId][
+          stakingProgramIdToMigrateTo
+        ];
+
+      return {
+        title: 'Contract Switched Successfully!',
+        description: `Your ${selectedAgentConfig.displayName} agent ${selectedAgentName} is now staked on ${stakingProgramMeta?.name} staking contract.`,
+        action: (
           <Button
             type="primary"
             block
-            onClick={() => goto(Pages.Main)}
+            onClick={() => goto(PAGES.Main)}
             className="mt-32"
           >
             View Agent
           </Button>
-        )
-      }
-    />
-  );
+        ),
+      };
+    }
+
+    if (status === 'ERROR') {
+      return {
+        title: 'Switching Error',
+        description:
+          'An error occurred during switching contracts. Please try again or contact support.',
+        closable: true,
+        onCancel: onClose,
+        action: (
+          <Button className="mt-16" onClick={handleContactSupport}>
+            Contact support
+          </Button>
+        ),
+      };
+    }
+  }, [
+    goto,
+    selectedAgentConfig.displayName,
+    selectedAgentConfig.evmHomeChainId,
+    stakingProgramIdToMigrateTo,
+    status,
+    onClose,
+    handleContactSupport,
+    selectedAgentName,
+  ]);
+
+  return <Modal header={<ModalHeader status={status} />} {...modalProps} />;
 };

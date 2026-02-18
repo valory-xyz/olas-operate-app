@@ -5,7 +5,7 @@ import { RiRobot3Line } from 'react-icons/ri';
 import { TbId } from 'react-icons/tb';
 
 import { Segmented } from '@/components/ui';
-import { MiddlewareDeploymentStatusMap } from '@/constants/deployment';
+import { useService } from '@/hooks';
 import { useServices } from '@/hooks/useServices';
 import { useStore } from '@/hooks/useStore';
 
@@ -48,14 +48,27 @@ export const Home = () => {
   const { storeState } = useStore();
   const { selectedAgentType, selectedService, selectedAgentConfig } =
     useServices();
+  const { isServiceActive } = useService(selectedService?.service_config_id);
 
   const [view, setView] = useState<View>('overview');
+  const [hasVisitedProfile, setHasVisitedProfile] = useState(false);
   const [isUnlockChatUiModalOpen, setIsUnlockChatUiModalOpen] = useState(false);
 
   const { isX402Enabled } = selectedAgentConfig;
 
   // Reset view to overview when switching between agents
   useEffect(() => setView('overview'), [selectedAgentType]);
+
+  useEffect(() => {
+    // Track when user visits profile
+    if (view === 'profile') {
+      setHasVisitedProfile(true);
+    }
+    // Reset if profile was visited after agent run
+    if (!isServiceActive) {
+      setHasVisitedProfile(false);
+    }
+  }, [view, isServiceActive]);
 
   const handleChangeView = useCallback(
     (nextView: View) => {
@@ -66,10 +79,7 @@ export const Home = () => {
       }
 
       // Ensure agent is running before opening profile
-      if (
-        selectedService?.deploymentStatus !==
-        MiddlewareDeploymentStatusMap.DEPLOYED
-      ) {
+      if (!isServiceActive) {
         message.open({
           type: 'error',
           content:
@@ -79,9 +89,10 @@ export const Home = () => {
         return;
       }
 
-      const requiresChatUI = selectedAgentConfig.hasChatUI;
+      const doesChatUiRequireApiKey =
+        selectedAgentConfig.doesChatUiRequireApiKey;
 
-      if (requiresChatUI && !isX402Enabled) {
+      if (doesChatUiRequireApiKey && !isX402Enabled) {
         const profileWarningDismissed = get(
           storeState,
           `${selectedAgentType}.isProfileWarningDisplayed`,
@@ -109,10 +120,10 @@ export const Home = () => {
       setView('profile');
     },
     [
+      isServiceActive,
       isX402Enabled,
-      selectedAgentConfig.hasChatUI,
+      selectedAgentConfig.doesChatUiRequireApiKey,
       selectedAgentType,
-      selectedService?.deploymentStatus,
       selectedService?.env_variables?.GENAI_API_KEY?.value,
       storeState,
     ],
@@ -122,7 +133,10 @@ export const Home = () => {
     <Flex vertical gap={40} className="flex-auto">
       <Switcher value={view} onChange={handleChangeView} />
       {view === 'overview' && (
-        <Overview openProfile={() => handleChangeView('profile')} />
+        <Overview
+          openProfile={() => handleChangeView('profile')}
+          hasVisitedProfile={hasVisitedProfile}
+        />
       )}
       {view === 'profile' && <Profile />}
       <UnlockChatUiAlert

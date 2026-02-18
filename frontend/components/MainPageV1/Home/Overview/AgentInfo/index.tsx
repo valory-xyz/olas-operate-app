@@ -6,10 +6,8 @@ import styled from 'styled-components';
 
 import { AgentIntroduction } from '@/components/AgentIntroduction';
 import { CardFlex, Tooltip } from '@/components/ui';
-import { AddressZero } from '@/constants/address';
-import { Pages } from '@/enums/Pages';
-import { usePageState, useService, useServices } from '@/hooks';
-import { generateName } from '@/utils';
+import { PAGES } from '@/constants';
+import { usePageState, useServices } from '@/hooks';
 
 import { AgentActivity } from './AgentActivity';
 import { AgentDisabledAlert } from './AgentDisabledAlert';
@@ -51,12 +49,12 @@ const AboutAgent = () => {
 };
 
 export const AgentInfo = () => {
-  const { selectedAgentType, selectedService, selectedAgentConfig } =
-    useServices();
   const { goto } = usePageState();
-
-  const { getServiceSafeOf } = useService(selectedService?.service_config_id);
-  const serviceSafe = getServiceSafeOf?.(selectedAgentConfig.evmHomeChainId);
+  const {
+    selectedAgentType,
+    selectedAgentConfig,
+    selectedAgentNameOrFallback,
+  } = useServices();
 
   const { isX402Enabled } = selectedAgentConfig;
 
@@ -66,10 +64,12 @@ export const AgentInfo = () => {
         <AgentInfoContainer>
           <Flex justify="start" align="center" gap={24}>
             <Image
+              key={selectedAgentType}
               src={`/agent-${selectedAgentType}-icon.png`}
               width={88}
               height={88}
               alt={selectedAgentType}
+              className="rounded-12"
             />
             <Flex className="w-full" vertical align="flex-start">
               <Flex
@@ -79,18 +79,20 @@ export const AgentInfo = () => {
                 className="mb-16 w-full"
               >
                 <Title level={5} className="m-0">
-                  {generateName(serviceSafe?.address ?? AddressZero)}
+                  {selectedAgentNameOrFallback}
                 </Title>
                 <Flex gap={12} align="center">
                   <AboutAgent />
-                  {isX402Enabled ? null : (
-                    <Tooltip title="Agent settings">
-                      <Button
-                        onClick={() => goto(Pages.UpdateAgentTemplate)}
-                        icon={<SettingOutlined />}
-                      />
-                    </Tooltip>
-                  )}
+                  {isX402Enabled
+                    ? null
+                    : selectedAgentConfig.requiresSetup && (
+                        <Tooltip title="Agent settings">
+                          <Button
+                            onClick={() => goto(PAGES.UpdateAgentTemplate)}
+                            icon={<SettingOutlined />}
+                          />
+                        </Tooltip>
+                      )}
                 </Flex>
               </Flex>
               <AgentRunButton />

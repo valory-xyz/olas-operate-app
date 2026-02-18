@@ -5,8 +5,13 @@ import Image from 'next/image';
 import styled from 'styled-components';
 
 import { Table } from '@/components/ui';
-import { COLOR } from '@/constants';
-import { formatNumber } from '@/utils';
+import {
+  CHAIN_IMAGE_MAP,
+  COLOR,
+  NA,
+  SupportedMiddlewareChain,
+} from '@/constants';
+import { asEvmChainDetails, asEvmChainId, formatNumber } from '@/utils';
 
 const LOCALE = {
   emptyText: 'No token requirements',
@@ -23,78 +28,117 @@ const CustomTag = styled(Tag)<{ $isWaiting: boolean }>`
   line-height: 20px;
 `;
 
-type TokenRowData = {
+export type TokenRequirementsRow = {
   totalAmount: number;
   pendingAmount: number;
   symbol: string;
   iconSrc: string;
   areFundsReceived: boolean;
+  chainName?: SupportedMiddlewareChain;
 };
 
-const columns: TableColumnsType<TokenRowData> = [
-  {
-    title: 'Token',
-    key: 'token',
-    width: '25%',
-    render: (_: unknown, record: TokenRowData) => (
-      <Flex align="center" gap={8}>
-        <Image
-          src={record.iconSrc}
-          alt={record.symbol}
-          width={20}
-          height={20}
-        />
-        <Text>{record.symbol}</Text>
-      </Flex>
-    ),
-  },
-  {
-    title: 'Total Amount Required',
-    key: 'totalAmount',
-    width: '35%',
-    render: (_: unknown, record: TokenRowData) => (
-      <Text>{record.totalAmount}</Text>
-    ),
-  },
-  {
-    title: 'Amount Pending',
-    key: 'pendingAmount',
-    width: '35%',
-    render: (_: unknown, record: TokenRowData) => {
-      const isWaiting = !record.areFundsReceived;
-      return (
-        <CustomTag
-          $isWaiting={isWaiting}
-          color={isWaiting ? undefined : COLOR.SUCCESS}
-          icon={isWaiting ? <ClockCircleOutlined /> : <CheckCircleOutlined />}
-        >
-          {record.areFundsReceived
-            ? 'No pending amount'
-            : `Pending ${formatNumber(record.pendingAmount, 4)}`}
-        </CustomTag>
-      );
+const getColumns = (
+  showChainColumn: boolean,
+): TableColumnsType<TokenRequirementsRow> => {
+  const baseColumns: TableColumnsType<TokenRequirementsRow> = [
+    {
+      title: 'Token',
+      key: 'token',
+      width: showChainColumn ? '20%' : '25%',
+      render: (_: unknown, record: TokenRequirementsRow) => (
+        <Flex align="center" gap={8}>
+          <Image
+            src={record.iconSrc}
+            alt={record.symbol}
+            width={20}
+            height={20}
+          />
+          <Text>{record.symbol}</Text>
+        </Flex>
+      ),
     },
-  },
-] as const;
+    {
+      title: 'Total Amount Required',
+      key: 'totalAmount',
+      dataIndex: 'totalAmount',
+      width: showChainColumn ? '30%' : '35%',
+      render: (totalAmount: number) => <Text>{totalAmount}</Text>,
+    },
+    {
+      title: 'Amount Pending',
+      key: 'pendingAmount',
+      width: showChainColumn ? '30%' : '35%',
+      render: (_: unknown, record: TokenRequirementsRow) => {
+        const isWaiting = !record.areFundsReceived;
+        return (
+          <CustomTag
+            $isWaiting={isWaiting}
+            color={isWaiting ? undefined : COLOR.SUCCESS}
+            icon={isWaiting ? <ClockCircleOutlined /> : <CheckCircleOutlined />}
+          >
+            {record.areFundsReceived
+              ? 'No pending amount'
+              : `Pending ${formatNumber(record.pendingAmount, 4)}`}
+          </CustomTag>
+        );
+      },
+    },
+  ];
+
+  // Optionally add the Chain column at the start
+  if (showChainColumn) {
+    baseColumns.unshift({
+      title: 'Chain',
+      key: 'chain',
+      dataIndex: 'chainName',
+      width: '20%',
+      render: (chainName: SupportedMiddlewareChain) => {
+        const chainId = asEvmChainId(chainName);
+        const chainImageSrc = chainId ? CHAIN_IMAGE_MAP[chainId] : undefined;
+        if (!chainImageSrc) return NA;
+
+        const chainDisplayName = asEvmChainDetails(chainName).displayName;
+
+        return (
+          <Flex align="center" gap={8}>
+            <Image
+              src={chainImageSrc}
+              alt={chainDisplayName || 'Chain'}
+              width={20}
+              height={20}
+            />
+            <Text>{chainDisplayName}</Text>
+          </Flex>
+        );
+      },
+    });
+  }
+
+  return baseColumns;
+};
 
 type TokenRequirementsTableProps = {
   isLoading?: boolean;
-  tokensDataSource: TokenRowData[];
+  tokensDataSource: TokenRequirementsRow[];
   locale?: TableLocale;
+  showChainColumn?: boolean;
+  className?: string;
 };
 
 export const TokenRequirementsTable = ({
   isLoading,
   tokensDataSource,
   locale = LOCALE,
+  showChainColumn = false,
+  className,
 }: TokenRequirementsTableProps) => (
-  <Table<TokenRowData>
+  <Table<TokenRequirementsRow>
     dataSource={isLoading ? [] : tokensDataSource}
-    columns={columns}
+    columns={getColumns(showChainColumn)}
     loading={isLoading}
     pagination={false}
     locale={locale}
-    className="mt-32"
+    className={className}
     rowKey={(record) => record.symbol}
   />
 );

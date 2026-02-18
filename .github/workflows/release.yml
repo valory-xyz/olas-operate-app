@@ -68,15 +68,30 @@ jobs:
           poetry run pyinstaller operate/tendermint.py --onefile
           cp dist/tendermint dist/tendermint_bin
 
-          poetry run pyinstaller --collect-data eth_account --collect-all aea --collect-all autonomy --collect-all operate --collect-all aea_ledger_ethereum --collect-all aea_ledger_cosmos --collect-all aea_ledger_ethereum_flashbots --hidden-import aea_ledger_ethereum --hidden-import aea_ledger_cosmos --hidden-import aea_ledger_ethereum_flashbots operate/pearl.py  --onefile --name pearl_${{ env.OS_ARCH }}
+          poetry run pyinstaller --collect-data eth_account --collect-all aea --collect-all autonomy --collect-all operate --collect-all aea_ledger_ethereum --collect-all aea_ledger_cosmos --collect-all aea_ledger_ethereum_flashbots --hidden-import aea_ledger_ethereum --hidden-import aea_ledger_cosmos --hidden-import aea_ledger_ethereum_flashbots operate/pearl.py --onedir --name pearl_${{ env.OS_ARCH }}
 
-      - name: Upload Release Assets
+      - name: Sign PyInstaller binaries
+        env:
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+        run: |
+          chmod +x scripts/sign_pyinstaller_macos.sh
+          ./scripts/sign_pyinstaller_macos.sh "dist/pearl_${{ env.OS_ARCH }}"
+
+      # Package middleware with tar to preserve signatures and extended attributes
+      - name: Package middleware with tar
+        run: |
+          cd dist
+          tar -czf pearl_${{ env.OS_ARCH }}.tar.gz pearl_${{ env.OS_ARCH }}/
+          cd ..
+
+      - name: Upload middleware artifact
         uses: actions/upload-artifact@v4
         with:
-          name: pearl_${{ env.OS_ARCH }}
-          path: dist/pearl_${{ env.OS_ARCH }}
+          name: middleware_${{ env.OS_ARCH }}
+          path: dist/pearl_${{ env.OS_ARCH }}.tar.gz
 
-      - name: Upload Tendermint
+      - name: Upload Tendermint artifact
         uses: actions/upload-artifact@v4
         with:
           name: tendermint_${{ env.OS_ARCH }}
@@ -102,6 +117,10 @@ jobs:
         id: setup-python
         with:
           python-version: "3.10"
+
+      - name: Add Python to PATH
+        run: |
+          echo "${{ steps.setup-python.outputs.python-path }}" >> $GITHUB_PATH
       
       - uses: actions/setup-node@v4
         with:
@@ -123,12 +142,19 @@ jobs:
           else 
             echo "OS_ARCH=arm64" >> $GITHUB_ENV; 
           fi
-      # Download the appropriate architecture artifact
-      - name: Download Pearl binary for architecture
+      # Download the appropriate architecture artifact (tar.gz)
+      - name: Download middleware binary for architecture
         uses: actions/download-artifact@v4
         with:
-          name: pearl_${{ env.OS_ARCH }}
-          path: electron/bins/
+          name: middleware_${{ env.OS_ARCH }}
+          path: .
+      
+      # Extract middleware from tar (preserves signatures and extended attributes)
+      - name: Extract middleware from tar
+        run: |
+          tar -xzf pearl_${{ env.OS_ARCH }}.tar.gz
+          mkdir -p electron/bins
+          mv pearl_${{ env.OS_ARCH }} electron/bins/middleware
       
       - name: Download tendermint binary for architecture
         uses: actions/download-artifact@v4
@@ -141,23 +167,54 @@ jobs:
         run: |
             ls electron/bins/
 
-      # download TM
-      - name: Set architecture environment variable
+      # Set Tendermint download URL based on architecture
+      - name: Set Tendermint download URL
         run: |
-          
           if [ "${{ matrix.os }}" == "macos-14-large" ]; then 
-            export TM_DOWNLOAD_URL=https://github.com/tendermint/tendermint/releases/download/v0.34.19/tendermint_0.34.19_darwin_amd64.tar.gz
+            echo "TM_DOWNLOAD_URL=https://github.com/tendermint/tendermint/releases/download/v0.34.19/tendermint_0.34.19_darwin_amd64.tar.gz" >> $GITHUB_ENV
           else 
-            export TM_DOWNLOAD_URL=https://github.com/tendermint/tendermint/releases/download/v0.34.19/tendermint_0.34.19_darwin_arm64.tar.gz
+            echo "TM_DOWNLOAD_URL=https://github.com/tendermint/tendermint/releases/download/v0.34.19/tendermint_0.34.19_darwin_arm64.tar.gz" >> $GITHUB_ENV
           fi
-          curl $TM_DOWNLOAD_URL -L -o tendermint.tar.gz
+
+      # Cache Tendermint binary
+      - name: Cache Tendermint binary
+        id: cache-tendermint
+        uses: actions/cache@v3
+        with:
+          path: tendermint_binary/
+          key: tendermint-v0.34.19-${{ runner.os }}-${{ env.OS_ARCH }}
+
+      # Download Tendermint (only if not cached)
+      - name: Download Tendermint
+        if: steps.cache-tendermint.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p tendermint_binary
+          curl -f -L -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            "${{ env.TM_DOWNLOAD_URL }}" -o tendermint_binary/tendermint.tar.gz
+          cd tendermint_binary
           tar -xvf tendermint.tar.gz
-          cp ./tendermint electron/bins/tendermint
+
+      # Copy Tendermint to bins
+      - name: Install Tendermint binary
+        run: |
+          cp tendermint_binary/tendermint electron/bins/tendermint
           chmod +x electron/bins/tendermint
+      
+      
+          # Copy tendermint binaries into middleware directory
+      - name: Copy tendermint binaries to middleware
+        run: |
+          cp electron/bins/tendermint electron/bins/middleware/tendermint
+          cp electron/bins/tendermint_bin electron/bins/middleware/tendermint_bin
+          chmod +x electron/bins/middleware/tendermint
+          chmod +x electron/bins/middleware/tendermint_bin
+
 
       # Add execution permissions to the binaries
       - name: Add exec permissions
-        run: chmod +x electron/bins/*
+        run: |
+          chmod +x electron/bins/tendermint
+          chmod +x electron/bins/middleware/pearl_*
 
       # Cache electron-builder downloads
       - name: Restore electron-builder cache
@@ -204,6 +261,7 @@ jobs:
           GNOSIS_RPC: https://rpc-gate.autonolas.tech/gnosis-rpc/
           ETHEREUM_RPC: https://rpc-gate.autonolas.tech/ethereum-rpc/
           MODE_RPC: https://mainnet.mode.network
+          POLYGON_RPC: https://rpc-gate.autonolas.tech/polygon-rpc/
           CELO_RPC: https://forno.celo.org
 
       # Run the build and notarization process for production
@@ -215,16 +273,20 @@ jobs:
           CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
           CSC_LINK: ${{ secrets.CSC_LINK }}
           GH_TOKEN: ${{ secrets.github_token }}
+          GITHUB_TOKEN: ${{ secrets.github_token }}
+          RELEASE_TAG: ${{ inputs.tag }}
           NODE_ENV: ${{ matrix.env }}
           ARCH: ${{ env.OS_ARCH }}
           ELECTRON_BUILDER_CACHE: ~/.cache/electron-builder
           ELECTRON_BUILDER_DOWNLOAD_RETRY: 10
           ELECTRON_BUILDER_DOWNLOAD_TIMEOUT: 120000
+          DEBUG: electron-builder,electron-osx-sign*
           OPTIMISM_RPC: https://rpc-gate.autonolas.tech/optimism-rpc/
           BASE_RPC: https://rpc-gate.autonolas.tech/base-rpc/
           GNOSIS_RPC: https://rpc-gate.autonolas.tech/gnosis-rpc/
           ETHEREUM_RPC: https://rpc-gate.autonolas.tech/ethereum-rpc/
           MODE_RPC: https://mainnet.mode.network
+          POLYGON_RPC: https://rpc-gate.autonolas.tech/polygon-rpc/
           CELO_RPC: https://forno.celo.org
         run: |
           echo "OPTIMISM_RPC=https://rpc-gate.autonolas.tech/optimism-rpc/" >> .env
@@ -232,5 +294,9 @@ jobs:
           echo "GNOSIS_RPC=https://rpc-gate.autonolas.tech/gnosis-rpc/" >> .env
           echo "ETHEREUM_RPC=https://rpc-gate.autonolas.tech/ethereum-rpc/" >> .env
           echo "MODE_RPC=https://mainnet.mode.network" >> .env
+          echo "POLYGON_RPC=https://rpc-gate.autonolas.tech/polygon-rpc/" >> .env
           echo "CELO_RPC=https://forno.celo.org" >> .env
+          export GITHUB_REF_TYPE="tag"
+          export GITHUB_REF_NAME="${RELEASE_TAG}"
+          export GITHUB_REF="refs/tags/${RELEASE_TAG}"
           node build.js

@@ -1,5 +1,5 @@
+import { TokenSymbol } from '@/config/tokens';
 import { EvmChainId, EvmChainName } from '@/constants/chains';
-import { TokenSymbol } from '@/constants/token';
 
 export type TransactionHistory = {
   type: 'deposit' | 'withdrawal';

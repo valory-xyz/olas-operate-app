@@ -1,6 +1,6 @@
 import { setMulticallAddress } from 'ethers-multicall';
 
-import { EvmChainId } from '@/enums/Chain';
+import { EvmChainId, EvmChainIdMap } from '@/constants';
 import { Address } from '@/types/Address';
 
 const DEFAULT_MULTICALL_ADDRESS = '0xcA11bde05977b3631167028862bE2a173976CA11';
@@ -10,10 +10,11 @@ type AddressesForAllChainIds = {
 };
 
 const addresses: AddressesForAllChainIds = {
-  [EvmChainId.Base]: DEFAULT_MULTICALL_ADDRESS,
-  [EvmChainId.Gnosis]: DEFAULT_MULTICALL_ADDRESS,
-  [EvmChainId.Mode]: DEFAULT_MULTICALL_ADDRESS,
-  [EvmChainId.Optimism]: DEFAULT_MULTICALL_ADDRESS,
+  [EvmChainIdMap.Base]: DEFAULT_MULTICALL_ADDRESS,
+  [EvmChainIdMap.Gnosis]: DEFAULT_MULTICALL_ADDRESS,
+  [EvmChainIdMap.Mode]: DEFAULT_MULTICALL_ADDRESS,
+  [EvmChainIdMap.Optimism]: DEFAULT_MULTICALL_ADDRESS,
+  [EvmChainIdMap.Polygon]: DEFAULT_MULTICALL_ADDRESS,
 };
 
 /**

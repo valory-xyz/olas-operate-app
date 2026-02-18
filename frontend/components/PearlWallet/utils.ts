@@ -11,7 +11,11 @@ import {
   TokenAmounts,
   TokenBalanceRecord,
 } from '@/types';
-import { areAddressesEqual, formatUnitsToNumber } from '@/utils';
+import {
+  areAddressesEqual,
+  formatUnitsToNumber,
+  numberToPlainString,
+} from '@/utils';
 
 const getAddressBalance = (
   data: AddressBalanceRecord,
@@ -56,7 +60,7 @@ const getInitialDepositValues = (
       if (!tokenDetails) return acc;
 
       const amount = formatUnitsToNumber(
-        `${amountInWei}`,
+        numberToPlainString(amountInWei),
         tokenDetails.decimals,
         6,
       );
@@ -77,18 +81,41 @@ const getInitialDepositValues = (
 export const getInitialDepositForMasterSafe = (
   walletChainId: EvmChainId,
   masterSafeAddress: Nullable<Address>,
-  getRefillRequirementsOf: (chainId: EvmChainId) => Maybe<AddressBalanceRecord>,
+  serviceConfigIds: string[],
+  getRefillRequirementsOf: (
+    chainId: EvmChainId,
+    serviceConfigId?: string,
+  ) => Maybe<AddressBalanceRecord>,
 ) => {
   if (!masterSafeAddress) return;
 
   // Get the refill requirements for the current chain
-  const refillRequirements = getRefillRequirementsOf(walletChainId);
+  const refillRequirements = serviceConfigIds.map((serviceConfigId) =>
+    getRefillRequirementsOf(walletChainId, serviceConfigId),
+  );
   if (!refillRequirements) return;
 
-  // Find the refill requirement for the master safe
-  const masterSafeRefillRequirement = getAddressBalance(
-    refillRequirements,
-    masterSafeAddress,
+  // Total of refill requirements across all the services on the chain
+  const masterSafeRefillRequirement = refillRequirements.reduce(
+    (acc, refillRequirementForService) => {
+      if (!refillRequirementForService) return acc;
+      const masterSafeRequirementForService = getAddressBalance(
+        refillRequirementForService,
+        masterSafeAddress,
+      );
+      if (!masterSafeRequirementForService) return acc;
+
+      for (const [untypedTokenAddress, amount] of entries(
+        masterSafeRequirementForService,
+      )) {
+        const tokenAddress = untypedTokenAddress as Address;
+        acc[tokenAddress] = (
+          BigInt(acc[tokenAddress] || 0) + BigInt(amount)
+        ).toString();
+      }
+      return acc;
+    },
+    {} as TokenBalanceRecord,
   );
 
   if (!masterSafeRefillRequirement) return;

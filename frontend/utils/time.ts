@@ -2,6 +2,7 @@ import { isNumber } from 'lodash';
 
 export const ONE_DAY_IN_S = 24 * 60 * 60;
 export const ONE_DAY_IN_MS = ONE_DAY_IN_S * 1000;
+export const ONE_MINUTE_IN_MS = 60 * 1000;
 
 export const getTimeAgo = (timestampInSeconds: number) => {
   if (!isNumber(timestampInSeconds)) return null;
@@ -39,6 +40,10 @@ export const formatToMonthDay = (timeInMs: number) => {
   });
 };
 
+/**
+ * returns formatted date in the format of 'Month YYYY'
+ * @example 1626825600000 => 'July 2021'
+ */
 export const formatToMonthYear = (timeInMs: number) => {
   if (!isNumber(timeInMs)) return '--';
   return new Date(timeInMs).toLocaleDateString('en-US', {

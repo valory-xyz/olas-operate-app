@@ -39,3 +39,13 @@ jobs:
     with:
       tag: ${{ needs.calculate-version.outputs.new_tag }}
     secrets: inherit
+
+  summary:
+    needs: [calculate-version, run-release, run-release-win]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create summary
+        run: |
+          echo "## Release Created Successfully :rocket:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Tag:** ${{ needs.calculate-version.outputs.new_tag }}" >> $GITHUB_STEP_SUMMARY

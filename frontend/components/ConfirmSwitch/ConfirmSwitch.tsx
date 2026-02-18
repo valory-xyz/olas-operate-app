@@ -2,8 +2,7 @@ import { ArrowRightOutlined } from '@ant-design/icons';
 import { Flex, Typography } from 'antd';
 import styled from 'styled-components';
 
-import { COLOR, MAIN_CONTENT_MAX_WIDTH } from '@/constants';
-import { Pages } from '@/enums/Pages';
+import { COLOR, MAIN_CONTENT_MAX_WIDTH, PAGES } from '@/constants';
 import { usePageState, useStakingContracts, useStakingProgram } from '@/hooks';
 
 import { BackButton } from '../ui/BackButton';
@@ -33,7 +32,7 @@ export const ConfirmSwitch = () => {
       className="mx-auto"
       style={{ width: MAIN_CONTENT_MAX_WIDTH }}
     >
-      <BackButton onPrev={() => goto(Pages.SelectStaking)} />
+      <BackButton onPrev={() => goto(PAGES.SelectStaking)} />
       <Title level={3} className="my-12">
         Confirm Switch
       </Title>

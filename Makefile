@@ -12,16 +12,15 @@ endef
 	mkdir -p ./electron/bins/
 
 
-./dist/tendermint_win.exe: ./electron/bins/ ./operate/
+./dist/tendermint_win: ./electron/bins/ ./operate/
 	pwd
 	poetry install --no-root && poetry run pyinstaller operate/tendermint.py --onefile --name tendermint_win
 	ls -l dist
-	cp dist/tendermint_win.exe ./electron/bins/tendermint_win.exe
 
 
-./dist/pearl_win.exe: ./operate/ ./dist/tendermint_win.exe
+./dist/pearl_win: ./operate/ ./dist/tendermint_win
 	pwd
-	poetry install --no-root && poetry run pyinstaller --collect-data eth_account --collect-all aea --collect-all coincurve --collect-all autonomy --collect-all operate --collect-all aea_ledger_ethereum --collect-all aea_ledger_cosmos --collect-all aea_ledger_ethereum_flashbots --hidden-import aea_ledger_ethereum --hidden-import aea_ledger_cosmos --hidden-import aea_ledger_ethereum_flashbots operate/pearl.py --onefile --name pearl_win
+	poetry install --no-root && poetry run pyinstaller --collect-data eth_account --collect-all aea --collect-all coincurve --collect-all autonomy --collect-all operate --collect-all aea_ledger_ethereum --collect-all aea_ledger_cosmos --collect-all aea_ledger_ethereum_flashbots --hidden-import aea_ledger_ethereum --hidden-import aea_ledger_cosmos --hidden-import aea_ledger_ethereum_flashbots operate/pearl.py --onedir --name pearl_win
 
 
 ./electron/bins/tendermint.exe: ./electron/bins/
@@ -30,16 +29,22 @@ endef
 	cp ./tendermint.exe ./electron/bins/tendermint.exe
 
 .PHONY: build
-build: ./dist/pearl_win.exe ./electron/bins/tendermint.exe
+build: ./dist/pearl_win ./electron/bins/tendermint.exe
 	$(call setup_env, prod)
-	cp -f dist/pearl_win.exe ./electron/bins/pearl_win.exe
-	NODE_ENV=${NODE_ENV} GNOSIS_RPC=${GNOSIS_RPC} OPTIMISM_RPC=${OPTIMISM_RPC} BASE_RPC=${BASE_RPC} ETHEREUM_RPC=${ETHEREUM_RPC} MODE_RPC=${MODE_RPC} yarn build:frontend
-	NODE_ENV=${NODE_ENV} GNOSIS_RPC=${GNOSIS_RPC} OPTIMISM_RPC=${OPTIMISM_RPC} BASE_RPC=${BASE_RPC} ETHEREUM_RPC=${ETHEREUM_RPC} MODE_RPC=${MODE_RPC} GH_TOKEN=${GH_TOKEN} node build-win.js
+	rm -rf ./electron/bins/middleware
+	cp -r dist/pearl_win ./electron/bins/middleware
+	cp ./electron/bins/tendermint.exe ./electron/bins/middleware/tendermint.exe
+	cp dist/tendermint_win.exe ./electron/bins/middleware/tendermint_win.exe
+	NODE_ENV=${NODE_ENV} GNOSIS_RPC=${GNOSIS_RPC} OPTIMISM_RPC=${OPTIMISM_RPC} BASE_RPC=${BASE_RPC} ETHEREUM_RPC=${ETHEREUM_RPC} MODE_RPC=${MODE_RPC} POLYGON_RPC=${POLYGON_RPC} yarn build:frontend
+	NODE_ENV=${NODE_ENV} GNOSIS_RPC=${GNOSIS_RPC} OPTIMISM_RPC=${OPTIMISM_RPC} BASE_RPC=${BASE_RPC} ETHEREUM_RPC=${ETHEREUM_RPC} MODE_RPC=${MODE_RPC} POLYGON_RPC=${POLYGON_RPC} GH_TOKEN=${GH_TOKEN} GITHUB_REF_TYPE=${GITHUB_REF_TYPE} GITHUB_REF_NAME=${GITHUB_REF_NAME} GITHUB_REF=${GITHUB_REF} node build-win.js
 
 
 .PHONY: build-tenderly
-build-tenderly:  ./dist/pearl_win.exe
+build-tenderly:  ./dist/pearl_win ./electron/bins/tendermint.exe
 	$(call setup_env, dev-tenderly)
-	cp -f dist/pearl_win.exe ./electron/bins/pearl_win.exe
-	NODE_ENV=${NODE_ENV} GNOSIS_RPC=${GNOSIS_RPC} OPTIMISM_RPC=${OPTIMISM_RPC} BASE_RPC=${BASE_RPC} ETHEREUM_RPC=${ETHEREUM_RPC} MODE_RPC=${MODE_RPC} yarn build:frontend
+	rm -rf ./electron/bins/middleware
+	cp -r dist/pearl_win ./electron/bins/middleware
+	cp ./electron/bins/tendermint.exe ./electron/bins/middleware/tendermint.exe
+	cp dist/tendermint_win.exe ./electron/bins/middleware/tendermint_win.exe
+	NODE_ENV=${NODE_ENV} GNOSIS_RPC=${GNOSIS_RPC} OPTIMISM_RPC=${OPTIMISM_RPC} BASE_RPC=${BASE_RPC} ETHEREUM_RPC=${ETHEREUM_RPC} MODE_RPC=${MODE_RPC} POLYGON_RPC=${POLYGON_RPC} yarn build:frontend
 	GH_TOKEN=${GH_TOKEN} node build-win-tenderly.js

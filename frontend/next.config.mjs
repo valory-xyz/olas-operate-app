@@ -3,6 +3,8 @@ const nextConfig = {
   compiler: {
     styledComponents: true,
   },
+  // Enable source maps in production, helpful for readable stack traces.
+  productionBrowserSourceMaps: true,
   images: {
     remotePatterns: [
       {
@@ -44,6 +46,7 @@ const nextConfig = {
     ETHEREUM_RPC: process.env.ETHEREUM_RPC,
     MODE_RPC: process.env.MODE_RPC,
     CELO_RPC: process.env.CELO_RPC,
+    POLYGON_RPC: process.env.POLYGON_RPC,
   },
 };
 

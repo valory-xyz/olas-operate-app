@@ -1,20 +1,29 @@
+import { Button } from 'antd';
 import { entries } from 'lodash';
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
+import { useUnmount } from 'usehooks-ts';
 
-import { Bridge, getFromToken, getTokenDecimal } from '@/components/Bridge';
-import { ETHEREUM_TOKEN_CONFIG, TOKEN_CONFIG } from '@/config/tokens';
+import { Bridge } from '@/components/Bridge';
+import { SuccessOutlined } from '@/components/custom-icons';
+import { Modal } from '@/components/ui';
 import {
-  AddressZero,
-  MiddlewareChain,
-  MiddlewareChainMap,
+  ETHEREUM_TOKEN_CONFIG,
+  TOKEN_CONFIG,
   TokenSymbol,
-} from '@/constants';
+} from '@/config/tokens';
+import { AddressZero, MiddlewareChain, MiddlewareChainMap } from '@/constants';
 import { usePearlWallet } from '@/context/PearlWalletProvider';
 import { useMasterWalletContext } from '@/hooks';
 import { Address } from '@/types/Address';
 import { BridgeRefillRequirementsRequest, BridgeRequest } from '@/types/Bridge';
 import { TokenAmountDetails, TokenAmounts } from '@/types/Wallet';
-import { asEvmChainId, parseUnits } from '@/utils';
+import {
+  asAllEvmChainId,
+  asEvmChainId,
+  getFromToken,
+  getTokenDecimal,
+  parseUnits,
+} from '@/utils';
 
 type BridgeCryptoOnProps = {
   onBack: () => void;
@@ -29,14 +38,28 @@ const fromChainConfig = ETHEREUM_TOKEN_CONFIG;
  * for the specified bridgeToChain.
  */
 const useGetBridgeRequirementsParams = (bridgeToChain: MiddlewareChain) => {
-  const { masterSafeAddress } = usePearlWallet();
-  const { masterEoa } = useMasterWalletContext();
+  const {
+    masterEoa,
+    getMasterSafeOf,
+    isFetched: isMasterWalletFetched,
+  } = useMasterWalletContext();
   const toChainConfig = TOKEN_CONFIG[asEvmChainId(bridgeToChain)];
 
   return useCallback(
     (toTokenAddress: Address, amount: number) => {
       if (!masterEoa) throw new Error('Master EOA is not available');
-      if (!masterSafeAddress) throw new Error('Master Safe is not available');
+      if (!isMasterWalletFetched) throw new Error('Master Safe not loaded');
+
+      const fromChain = MiddlewareChainMap.ETHEREUM;
+      const masterSafeOnFromChain = getMasterSafeOf?.(
+        asAllEvmChainId(fromChain),
+      );
+
+      const masterSafeOnToChain = getMasterSafeOf?.(
+        asEvmChainId(bridgeToChain),
+      );
+
+      if (!masterSafeOnToChain) throw new Error('Master Safe is not available');
 
       const fromToken = getFromToken(
         toTokenAddress,
@@ -48,18 +71,24 @@ const useGetBridgeRequirementsParams = (bridgeToChain: MiddlewareChain) => {
       return {
         from: {
           chain: MiddlewareChainMap.ETHEREUM,
-          address: masterEoa.address,
+          address: masterSafeOnFromChain?.address ?? masterEoa.address,
           token: fromToken,
         },
         to: {
           chain: bridgeToChain,
-          address: masterSafeAddress,
+          address: masterSafeOnToChain.address,
           token: toTokenAddress,
           amount: parseUnits(amount, tokenDecimal),
         },
       } satisfies BridgeRequest;
     },
-    [bridgeToChain, toChainConfig, masterEoa, masterSafeAddress],
+    [
+      masterEoa,
+      isMasterWalletFetched,
+      getMasterSafeOf,
+      bridgeToChain,
+      toChainConfig,
+    ],
   );
 };
 
@@ -69,6 +98,9 @@ export const BridgeCryptoOn = ({
   onBack,
 }: BridgeCryptoOnProps) => {
   const { onReset } = usePearlWallet();
+  const [showBridgingCompleteModal, setShowBridgingCompleteModal] =
+    useState(false);
+
   const getBridgeRequirementsParams =
     useGetBridgeRequirementsParams(bridgeToChain);
 
@@ -104,16 +136,45 @@ export const BridgeCryptoOn = ({
     [amountsToDeposit, bridgeToChain, getBridgeRequirementsParams],
   );
 
+  const handleBridgingCompleted = useCallback(() => {
+    setShowBridgingCompleteModal(true);
+  }, [setShowBridgingCompleteModal]);
+
+  const handleSeeWalletBalance = useCallback(() => {
+    setShowBridgingCompleteModal(false);
+    onReset(true);
+  }, [onReset]);
+
+  useUnmount(() => {
+    setShowBridgingCompleteModal(false);
+  });
+
   return (
-    <Bridge
-      bridgeFromDescription="Send the specified amounts from your external wallet to the Pearl Wallet address below. Pearl will automatically detect your transfer and bridge the funds for you."
-      bridgeToChain={bridgeToChain}
-      getBridgeRequirementsParams={handleGetBridgeRequirementsParams}
-      onPrevBeforeBridging={onBack}
-      showCompleteScreen={{
-        completionMessage: 'Bridge completed!',
-        onComplete: onReset,
-      }}
-    />
+    <>
+      <Bridge
+        bridgeToChain={bridgeToChain}
+        getBridgeRequirementsParams={handleGetBridgeRequirementsParams}
+        onPrevBeforeBridging={onBack}
+        onBridgingCompleted={handleBridgingCompleted}
+      />
+      {showBridgingCompleteModal && (
+        <Modal
+          header={<SuccessOutlined />}
+          title="Bridge Completed!"
+          description="Your funds have been bridged successfully."
+          action={
+            <Button
+              type="primary"
+              size="large"
+              block
+              className="mt-32"
+              onClick={handleSeeWalletBalance}
+            >
+              See wallet balance
+            </Button>
+          }
+        />
+      )}
+    </>
   );
 };

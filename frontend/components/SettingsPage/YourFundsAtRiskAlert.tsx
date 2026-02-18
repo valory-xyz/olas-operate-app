@@ -3,11 +3,8 @@ import { TbExternalLink } from 'react-icons/tb';
 import { useToggle } from 'usehooks-ts';
 
 import { Alert, Modal } from '@/components/ui';
-import {
-  AllEvmChainIdMap,
-  DISCORD_TICKET_URL,
-  EvmChainIdMap,
-} from '@/constants';
+import { AllEvmChainId, AllEvmChainIdMap, EvmChainIdMap } from '@/constants';
+import { useSupportModal } from '@/context/SupportModalProvider';
 import { useMasterWalletContext, useServices } from '@/hooks';
 
 const { Text } = Typography;
@@ -15,12 +12,15 @@ const { Text } = Typography;
 /**
  * update as needed; check https://app.safe.global/new-safe/create for prefixes
  */
-const safeChainPrefix = {
+const safeChainPrefix: {
+  [chainId in AllEvmChainId]: string;
+} = {
   [AllEvmChainIdMap.Ethereum]: 'eth',
   [EvmChainIdMap.Base]: 'base',
   [EvmChainIdMap.Optimism]: 'oeth',
   [EvmChainIdMap.Gnosis]: 'gno',
   [EvmChainIdMap.Mode]: '', // TODO: provide correct prefix once mode is supported on safe
+  [EvmChainIdMap.Polygon]: 'matic',
 };
 
 type AddBackupWalletAlertProps = {
@@ -36,6 +36,12 @@ const AddBackupWalletAlert = ({
   const {
     selectedAgentConfig: { evmHomeChainId },
   } = useServices();
+
+  const { toggleSupportModal } = useSupportModal();
+
+  const openSupportModal = () => {
+    toggleSupportModal();
+  };
 
   const masterSafe = masterSafes?.find(
     ({ evmChainId: chainId }) => evmHomeChainId === chainId,
@@ -70,13 +76,8 @@ const AddBackupWalletAlert = ({
             <Flex vertical gap={4}>
               <Text type="secondary">Not sure how?</Text>
               <Flex align="center" gap={4}></Flex>
-              <a
-                target="_blank"
-                className="flex align-center"
-                href={DISCORD_TICKET_URL}
-              >
-                Get community assistance via Discord{' '}
-                <TbExternalLink className="ml-4" />
+              <a className="flex align-center" onClick={openSupportModal}>
+                Contact support
               </a>
             </Flex>
           </Flex>

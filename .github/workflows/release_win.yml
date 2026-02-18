@@ -20,6 +20,7 @@ jobs:
             GNOSIS_RPC: "https://rpc-gate.autonolas.tech/gnosis-rpc/"
             ETHEREUM_RPC: "https://rpc-gate.autonolas.tech/ethereum-rpc/"
             MODE_RPC: "https://mainnet.mode.network"
+            POLYGON_RPC: "https://rpc-gate.autonolas.tech/polygon-rpc/"
             CELO_RPC: "https://forno.celo.org"
             arch: "x64"
     defaults:
@@ -148,9 +149,11 @@ jobs:
           ETHEREUM_RPC: ${{ matrix.ETHEREUM_RPC }}
           OPTIMISM_RPC: ${{ matrix.OPTIMISM_RPC }}
           MODE_RPC: ${{ matrix.MODE_RPC }}
+          POLYGON_RPC: ${{ matrix.POLYGON_RPC }}
           CELO_RPC: ${{ matrix.CELO_RPC }}
           IS_STAGING: ${{ github.ref != 'refs/heads/main' && 'true' || 'false' }}
           GH_TOKEN: ${{ secrets.github_token}}
+          RELEASE_TAG: ${{ inputs.tag }}
         run: |
           echo NODE_ENV=$NODE_ENV >> prod.env
           echo IS_STAGING=$IS_STAGING >> prod.env
@@ -159,9 +162,16 @@ jobs:
           echo ETHEREUM_RPC=$ETHEREUM_RPC >> prod.env
           echo GNOSIS_RPC=$GNOSIS_RPC >> prod.env
           echo MODE_RPC=$MODE_RPC >> prod.env
+          echo POLYGON_RPC=$POLYGON_RPC >> prod.env
           echo CELO_RPC=$CELO_RPC >> prod.env
           cat prod.env
           echo GH_TOKEN=$GH_TOKEN >> prod.env
       - run: rm -rf /dist
       - name: "Build, notarize, publish"
-        run: make build
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: |
+          export GITHUB_REF_TYPE="tag"
+          export GITHUB_REF_NAME="${RELEASE_TAG}"
+          export GITHUB_REF="refs/tags/${RELEASE_TAG}"
+          make build

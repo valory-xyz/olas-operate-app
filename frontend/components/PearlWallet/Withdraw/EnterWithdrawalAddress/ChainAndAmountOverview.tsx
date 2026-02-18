@@ -5,7 +5,8 @@ import styled from 'styled-components';
 
 import { BackButton, CardFlex } from '@/components/ui';
 import { CHAIN_CONFIG } from '@/config/chains';
-import { COLOR, TokenSymbol, TokenSymbolConfigMap } from '@/constants';
+import { TokenSymbol, TokenSymbolConfigMap } from '@/config/tokens';
+import { COLOR } from '@/constants';
 import { usePearlWallet } from '@/context/PearlWalletProvider';
 import { formatNumber } from '@/utils';
 

@@ -1,19 +1,16 @@
-import { Button, Flex, Typography } from 'antd';
-import { isEmpty } from 'lodash';
-import Image from 'next/image';
+import { Button, Flex, Spin, Typography } from 'antd';
 import { useCallback, useMemo, useState } from 'react';
-import { LuConstruction } from 'react-icons/lu';
 import styled from 'styled-components';
 
 import { AgentIntroduction } from '@/components/AgentIntroduction';
-import { BackButton } from '@/components/ui';
-import { ACTIVE_AGENTS, AGENT_CONFIG } from '@/config/agents';
-import { AgentType, COLOR } from '@/constants';
-import { Pages, SetupScreen } from '@/enums';
-import { usePageState, useServices, useSetup } from '@/hooks';
-import { AgentConfig, Optional } from '@/types';
+import { AGENT_CONFIG } from '@/config/agents';
+import { AgentType, COLOR, SETUP_SCREEN } from '@/constants';
+import { useIsAgentGeoRestricted, useServices, useSetup } from '@/hooks';
+import { Optional } from '@/types';
 
 import { FundingRequirementStep } from './FundingRequirementStep';
+import { RestrictedRegion } from './RestrictedRegion';
+import { SelectAgent } from './SelectAgent';
 
 const { Text, Title } = Typography;
 
@@ -33,91 +30,51 @@ const Container = styled(Flex)`
   }
 `;
 
-const AgentSelectionContainer = styled(Flex)<{ active?: boolean }>`
-  padding: 12px 24px;
-  cursor: pointer;
-  background-color: ${({ active }) => (active ? COLOR.GRAY_1 : COLOR.WHITE)};
-  border-bottom: 1px solid ${COLOR.GRAY_4};
-  border-left: 1px solid ${COLOR.WHITE};
-  &:hover {
-    background-color: ${COLOR.GRAY_1};
-  }
-`;
+const GeoLocationRestrictionLoading = () => (
+  <Flex
+    align="center"
+    justify="center"
+    style={{ width: '100%', height: '100%' }}
+  >
+    <Spin />
+  </Flex>
+);
 
-const UnderConstructionIcon = styled(LuConstruction)`
-  padding: 6px;
-  border-radius: 8px;
-  color: ${COLOR.TEXT_COLOR.WARNING.DEFAULT};
-  background-color: ${COLOR.BG.WARNING.DEFAULT};
-`;
-
-const SelectYourAgent = ({ canGoBack }: { canGoBack: boolean }) => {
-  const { goto } = usePageState();
-  return (
-    <Flex
-      vertical
-      gap={16}
-      className="p-24"
-      style={{ borderBottom: `1px solid ${COLOR.GRAY_4}` }}
-    >
-      {canGoBack && <BackButton onPrev={() => goto(Pages.Main)} />}
-      <Title level={3} className="m-0">
-        Select your agent
-      </Title>
-      <Text type="secondary">Review and select the AI agent you like.</Text>
-    </Flex>
-  );
-};
-
-type SelectYourAgentListProps = {
-  onSelectYourAgent: (agentType: AgentType) => void;
-  selectedAgent?: AgentType;
-};
-
-const SelectYourAgentList = ({
-  onSelectYourAgent,
-  selectedAgent,
-}: SelectYourAgentListProps) => {
-  const { services } = useServices();
-  const agents = useMemo(() => {
-    const isNotInServices = ([, agentConfig]: [string, AgentConfig]) =>
-      !services?.some(
-        ({ service_public_id, home_chain }) =>
-          service_public_id === agentConfig.servicePublicId &&
-          home_chain === agentConfig.middlewareHomeChainId,
-      );
-
-    return ACTIVE_AGENTS.filter(isNotInServices);
-  }, [services]);
-
-  return agents.map(([agentType, agentConfig]) => (
-    <AgentSelectionContainer
-      key={agentType}
-      active={selectedAgent === agentType}
-      onClick={() => onSelectYourAgent(agentType as AgentType)}
-      gap={12}
-      align="center"
-    >
-      <Image
-        src={`/agent-${agentType}-icon.png`}
-        alt={`${agentConfig.displayName} icon`}
-        width={36}
-        height={36}
-        style={{ borderRadius: 8, border: `1px solid ${COLOR.GRAY_3}` }}
-      />
-      <Text>{agentConfig.displayName}</Text>
-      {agentConfig.isUnderConstruction && <UnderConstructionIcon />}
-    </AgentSelectionContainer>
-  ));
-};
+const GeoLocationRestrictionCouldNotLoad = () => (
+  <Flex
+    vertical
+    align="center"
+    justify="center"
+    gap={16}
+    className="p-24 text-center"
+  >
+    <Title level={4} className="m-0">
+      Something went wrong
+    </Title>
+    <Text className="text-neutral-tertiary">
+      Something went wrong while checking your region eligibility. Please try
+      again.
+    </Text>
+  </Flex>
+);
 
 /**
  * Display the onboarding of the selected agent.
  */
 export const AgentOnboarding = () => {
   const { goto } = useSetup();
-  const { updateAgentType, services } = useServices();
+  const { updateAgentType } = useServices();
   const [selectedAgent, setSelectedAgent] = useState<Optional<AgentType>>();
+
+  const selectedAgentConfig = selectedAgent
+    ? AGENT_CONFIG[selectedAgent]
+    : undefined;
+
+  const { isAgentGeoRestricted, isGeoLoading, isGeoError } =
+    useIsAgentGeoRestricted({
+      agentType: selectedAgent,
+      agentConfig: selectedAgentConfig,
+    });
 
   const handleAgentSelect = useCallback(() => {
     if (!selectedAgent) return;
@@ -125,16 +82,16 @@ export const AgentOnboarding = () => {
 
     // if agent is "coming soon" should be redirected to EARLY ACCESS PAGE
     if (currentAgentConfig.isComingSoon) {
-      goto(SetupScreen.EarlyAccessOnly);
+      goto(SETUP_SCREEN.EarlyAccessOnly);
       return;
     }
 
     // if the selected type requires setting up an agent,
     // should be redirected to setup screen.
     if (currentAgentConfig.requiresSetup && !currentAgentConfig.isX402Enabled) {
-      goto(SetupScreen.SetupYourAgent);
+      goto(SETUP_SCREEN.SetupYourAgent);
     } else {
-      goto(SetupScreen.SelectStaking);
+      goto(SETUP_SCREEN.SelectStaking);
     }
   }, [goto, selectedAgent]);
 
@@ -146,43 +103,58 @@ export const AgentOnboarding = () => {
     [updateAgentType],
   );
 
-  const canSelectAgent = selectedAgent
-    ? !AGENT_CONFIG[selectedAgent].isUnderConstruction
-    : false;
+  const canSelectAgent = useMemo(() => {
+    if (!selectedAgent) return false;
+    const currentAgentConfig = AGENT_CONFIG[selectedAgent];
+    if (currentAgentConfig.isGeoLocationRestricted && isAgentGeoRestricted) {
+      return false;
+    }
+    if (currentAgentConfig.isUnderConstruction) {
+      return false;
+    }
+    return true;
+  }, [selectedAgent, isAgentGeoRestricted]);
 
   return (
     <Container>
       <Flex vertical className="agent-selection-left-content">
-        <SelectYourAgent canGoBack={!isEmpty(services)} />
-        <SelectYourAgentList
+        <SelectAgent
           onSelectYourAgent={handleSelectYourAgent}
           selectedAgent={selectedAgent}
         />
       </Flex>
 
       <Flex className="agent-selection-right-content">
-        <AgentIntroduction
-          agentType={selectedAgent}
-          renderFundingRequirements={(desc) =>
-            selectedAgent ? (
-              <FundingRequirementStep agentType={selectedAgent} desc={desc} />
-            ) : null
-          }
-          renderAgentSelection={
-            canSelectAgent
-              ? () => (
-                  <Button
-                    onClick={handleAgentSelect}
-                    type="primary"
-                    block
-                    size="large"
-                  >
-                    Select Agent
-                  </Button>
-                )
-              : undefined
-          }
-        />
+        {isGeoLoading && selectedAgentConfig?.isGeoLocationRestricted ? (
+          <GeoLocationRestrictionLoading />
+        ) : isGeoError ? (
+          <GeoLocationRestrictionCouldNotLoad />
+        ) : isAgentGeoRestricted ? (
+          <RestrictedRegion />
+        ) : (
+          <AgentIntroduction
+            agentType={selectedAgent}
+            renderFundingRequirements={(desc) =>
+              selectedAgent ? (
+                <FundingRequirementStep agentType={selectedAgent} desc={desc} />
+              ) : null
+            }
+            renderAgentSelection={
+              canSelectAgent
+                ? () => (
+                    <Button
+                      onClick={handleAgentSelect}
+                      type="primary"
+                      block
+                      size="large"
+                    >
+                      Select Agent
+                    </Button>
+                  )
+                : undefined
+            }
+          />
+        )}
       </Flex>
     </Container>
   );

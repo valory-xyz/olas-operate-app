@@ -32,7 +32,8 @@ jobs:
     if: ${{ github.actor != 'github-actions[bot]' && !contains(github.event.head_commit.message, '[skip release]') }}
     uses: ./.github/workflows/calculate-and-update-version.yml
     with:
-      version_strategy: production
+      version_strategy: production-rc
+      base_version_from_branch: true
     secrets: inherit
 
   run-release:
@@ -50,3 +51,14 @@ jobs:
     with:
       tag: ${{ needs.calculate-version.outputs.new_tag }}
     secrets: inherit
+
+  summary:
+    needs: [calculate-version, run-release, run-release-win]
+    if: ${{ github.actor != 'github-actions[bot]' && !contains(github.event.head_commit.message, '[skip release]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create summary
+        run: |
+          echo "## Release Created Successfully :rocket:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Tag:** ${{ needs.calculate-version.outputs.new_tag }}" >> $GITHUB_STEP_SUMMARY

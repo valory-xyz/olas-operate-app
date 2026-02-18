@@ -2,15 +2,19 @@ import styled from 'styled-components';
 
 import { COLOR } from '@/constants';
 
-export const IconContainer = styled.div`
-  width: 36px;
-  min-width: 36px;
-  height: 36px;
-  flex-shrink: 0;
+type IconContainerProps = {
+  $size?: number;
+  $borderWidth?: number;
+};
+
+export const IconContainer = styled.div<IconContainerProps>`
+  min-width: ${({ $size = 36 }) => $size}px;
+  height: ${({ $size = 36 }) => $size}px;
   display: flex;
   align-items: center;
+  align-self: center;
   justify-content: center;
-  border: 2px solid ${COLOR.BORDER_GRAY};
+  border: ${({ $borderWidth = 1 }) => $borderWidth}px solid ${COLOR.GRAY_3};
   border-radius: 8px;
   background-image: url('/icon-bg.svg');
 `;

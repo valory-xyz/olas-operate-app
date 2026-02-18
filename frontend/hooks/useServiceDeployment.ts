@@ -4,10 +4,9 @@ import { useCallback, useMemo } from 'react';
 
 import { MechType } from '@/config/mechs';
 import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
+import { MasterEoa, MasterSafe, PAGES } from '@/constants';
 import { MiddlewareDeploymentStatusMap } from '@/constants/deployment';
 import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
-import { Pages } from '@/enums/Pages';
-import { MasterEoa, MasterSafe } from '@/enums/Wallet';
 import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRefillRequirementsContext';
 import { useBalanceContext } from '@/hooks/useBalanceContext';
 import { useElectronApi } from '@/hooks/useElectronApi';
@@ -28,7 +27,8 @@ import { AgentConfig } from '@/types/Agent';
 import { delayInSeconds } from '@/utils/delay';
 import { updateServiceIfNeeded } from '@/utils/service';
 
-import { useAnotherAgentRunning } from './useAnotherAgentRunning';
+import { useAgentRunning } from './useAgentRunning';
+import { useIsAgentGeoRestricted } from './useIsAgentGeoRestricted';
 
 /**
  * hook to handle service deployment and starting the service
@@ -49,7 +49,7 @@ export const useServiceDeployment = () => {
     overrideSelectedServiceStatus,
   } = useServices();
   const serviceId = selectedService?.service_config_id;
-  const isAnotherAgentRunning = useAnotherAgentRunning();
+  const { isAnotherAgentRunning } = useAgentRunning();
 
   const { canStartAgent, isBalancesAndFundingRequirementsLoading } =
     useBalanceAndRefillRequirementsContext();
@@ -64,8 +64,7 @@ export const useServiceDeployment = () => {
     setIsPaused: setIsStakingContractInfoPollingPaused,
     refetchSelectedStakingContractDetails: refetchActiveStakingContractDetails,
   } = useStakingContractContext();
-  const { selectedStakingProgramId, selectedStakingProgramMeta } =
-    useStakingProgram();
+  const { selectedStakingProgramId } = useStakingProgram();
   const {
     isEligibleForStaking,
     isAgentEvicted,
@@ -74,6 +73,11 @@ export const useServiceDeployment = () => {
   } = useActiveStakingContractDetails();
 
   const { masterSafesOwners } = useMultisigs(masterSafes);
+
+  const { isAgentGeoRestricted } = useIsAgentGeoRestricted({
+    agentType: selectedAgentType,
+    agentConfig: selectedAgentConfig,
+  });
 
   const isLoading = useMemo(() => {
     if (isBalancesAndFundingRequirementsLoading) return true;
@@ -93,11 +97,13 @@ export const useServiceDeployment = () => {
     // If service is under construction, return false
     if (selectedAgentConfig.isUnderConstruction) return false;
 
+    // If agent is geo-restricted in the current region, return false
+    if (selectedAgentConfig.isGeoLocationRestricted && isAgentGeoRestricted) {
+      return false;
+    }
+
     // If another agent is running, return false;
     if (isAnotherAgentRunning) return false;
-
-    // If staking contract is deprecated, return false
-    if (selectedStakingProgramMeta?.deprecated) return false;
 
     // If not enough service slots, and service is not staked, return false
     const hasSlot = !isNil(hasEnoughServiceSlots) && !hasEnoughServiceSlots;
@@ -116,13 +122,14 @@ export const useServiceDeployment = () => {
     canStartAgent,
     hasEnoughServiceSlots,
     isAgentEvicted,
+    isAgentGeoRestricted,
     isAgentsFunFieldUpdateRequired,
     isAnotherAgentRunning,
     isEligibleForStaking,
     isLoading,
     isServiceStaked,
     selectedAgentConfig.isUnderConstruction,
-    selectedStakingProgramMeta?.deprecated,
+    selectedAgentConfig.isGeoLocationRestricted,
   ]);
 
   const pauseAllPolling = useCallback(() => {
@@ -231,7 +238,7 @@ export const useServiceDeployment = () => {
         masterSafesOwners,
         masterEoa,
         selectedAgentConfig,
-        gotoSettings: () => gotoPage(Pages.Settings),
+        gotoSettings: () => gotoPage(PAGES.Settings),
       });
       await deployAndStartService();
     } catch (error) {

@@ -13,8 +13,8 @@ import {
   GeminiApiKeySubHeader,
 } from '@/components/AgentForms/common/labels';
 import { RequiredMark } from '@/components/ui';
-import { SetupScreen } from '@/enums/SetupScreen';
-import { useSetup, useStakingProgram } from '@/hooks';
+import { SETUP_SCREEN } from '@/constants';
+import { useServices, useSetup, useStakingProgram } from '@/hooks';
 import { ServiceTemplate } from '@/types';
 import { onDummyServiceCreation } from '@/utils';
 
@@ -37,6 +37,7 @@ export const PredictAgentFormContent = ({
   const [form] = Form.useForm<PredictFieldValues>();
   const { goto } = useSetup();
   const { defaultStakingProgramId } = useStakingProgram();
+  const { refetch: refetchServices } = useServices();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -76,10 +77,13 @@ export const PredictAgentFormContent = ({
           overriddenServiceConfig,
         );
 
+        // fetch services to update the state after service creation
+        await refetchServices?.();
+
         message.success('Agent setup complete');
 
         // move to next page
-        goto(SetupScreen.SelectStaking);
+        goto(SETUP_SCREEN.SelectStaking);
       } finally {
         updateSubmitButtonText('Continue');
         setIsSubmitting(false);
@@ -90,6 +94,7 @@ export const PredictAgentFormContent = ({
       serviceTemplate,
       validateForm,
       updateSubmitButtonText,
+      refetchServices,
       goto,
     ],
   );

@@ -55,8 +55,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "bash -c \"GNOSIS_RPC=$GNOSIS_RPC BASE_RPC=$BASE_RPC OPTIMISM_RPC=$OPTIMISM_RPC ETHEREUM_RPC=$ETHEREUM_RPC MODE_RPC=$MODE_RPC CELO_RPC=$CELO_RPC NODE_ENV=production next build\"",
+    "build": "bash -c \"GNOSIS_RPC=$GNOSIS_RPC BASE_RPC=$BASE_RPC OPTIMISM_RPC=$OPTIMISM_RPC ETHEREUM_RPC=$ETHEREUM_RPC MODE_RPC=$MODE_RPC CELO_RPC=$CELO_RPC POLYGON_RPC=$POLYGON_RPC NODE_ENV=production next build\"",
     "lint": "next lint",
+    "lint:fix": "next lint --fix",
+    "eslint:fix": "eslint . --ext .ts,.tsx --fix",
     "test": "jest",
     "start": "next start",
     "typecheck": "tsc --noEmit --skipLibCheck",

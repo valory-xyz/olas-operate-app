@@ -1,14 +1,17 @@
 import { Button, Flex, message } from 'antd';
 import { useBoolean } from 'usehooks-ts';
 
-import { SetupScreen, StakingProgramId } from '@/enums';
+import { PAGES, SETUP_SCREEN, StakingProgramId } from '@/constants';
+import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
 import {
   useBalanceAndRefillRequirementsContext,
+  useIsInitiallyFunded,
+  usePageState,
   useServices,
   useSetup,
   useStakingProgram,
 } from '@/hooks';
-import { updateServiceStakingContract } from '@/utils';
+import { onDummyServiceCreation, updateServiceIfNeeded } from '@/utils';
 
 import { useCanMigrate } from './hooks/useCanMigrate';
 
@@ -27,35 +30,84 @@ export const SelectStakingButton = ({
     setTrue: startLoading,
     setFalse: stopLoading,
   } = useBoolean(false);
-  const { goto } = useSetup();
+
+  const { goto: gotoSetup } = useSetup();
+  const { goto: gotoPage } = usePageState();
+
   const { buttonText, canMigrate } = useCanMigrate({
     stakingProgramId,
     isCurrentStakingProgram: false,
   });
 
-  const { selectedService } = useServices();
-  const { refetch } = useBalanceAndRefillRequirementsContext();
+  const {
+    selectedService,
+    selectedAgentType,
+    isLoading: isServicesLoading,
+    refetch: refetchServices,
+  } = useServices();
+  const { refetchForSelectedAgent: refetchRequirements } =
+    useBalanceAndRefillRequirementsContext();
   const { setDefaultStakingProgramId } = useStakingProgram();
 
+  const { setIsInitiallyFunded } = useIsInitiallyFunded();
+
   const handleSelect = async () => {
+    startLoading();
+
+    // If service already exists, need to update the selected contract in it
+    // for proper fund requirements calculation
     if (selectedService) {
-      startLoading();
       try {
-        // If service already exists, need to update the selected contract in it
-        // for proper fund requirements calculation
-        await updateServiceStakingContract(selectedService, stakingProgramId);
-        await refetch();
+        await updateServiceIfNeeded(
+          selectedService,
+          selectedAgentType,
+          stakingProgramId,
+        );
       } catch (error) {
         console.error(error);
         message.error('An error occurred while updating the staking contract.');
+        stopLoading();
         return;
-      } finally {
+      }
+    } else {
+      // Otherwise need to create dummy service
+      const serviceTemplate = SERVICE_TEMPLATES.find(
+        (template) => template.agentType === selectedAgentType,
+      );
+
+      if (!serviceTemplate) {
+        throw new Error('Service template unavailable');
+      }
+
+      try {
+        await onDummyServiceCreation(stakingProgramId, serviceTemplate);
+      } catch (error) {
+        console.error(error);
+        message.error('An error occurred while updating the staking contract.');
         stopLoading();
       }
+
+      // fetch services again to update the state after service creation
+      // and to have correct state in the selectedService if we get back to this page
+      await refetchServices?.();
     }
 
+    // refetch refill requirements to check if the agent requires funding
+    const result = await refetchRequirements();
+    const isRefillRequired = result.data?.is_refill_required;
+    const allowStartAgent = result.data?.allow_start_agent;
+
+    // Update state in the end so the order change is not noticeable
     setDefaultStakingProgramId(stakingProgramId);
-    goto(SetupScreen.FundYourAgent);
+
+    // If has sufficient funds to run selected agent, navigate to main
+    if (isRefillRequired === false && allowStartAgent === true) {
+      setIsInitiallyFunded();
+      gotoPage(PAGES.Main);
+    } else {
+      // Otherwise navigate to funding page
+      gotoSetup(SETUP_SCREEN.FundYourAgent);
+    }
   };
 
   return (
@@ -65,7 +117,7 @@ export const SelectStakingButton = ({
         type="primary"
         onClick={handleSelect}
         block
-        disabled={!canMigrate}
+        disabled={!canMigrate || isServicesLoading}
         loading={isLoading}
       >
         {buttonText}

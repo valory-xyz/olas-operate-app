@@ -2,11 +2,7 @@ import { Flex, Spin } from 'antd';
 import { useEffect, useMemo, useRef } from 'react';
 
 import { APP_HEIGHT, APP_WIDTH, ON_RAMP_GATEWAY_URL } from '@/constants';
-import {
-  useElectronApi,
-  useMasterWalletContext,
-  useOnRampContext,
-} from '@/hooks';
+import { useElectronApi, useMasterWalletContext } from '@/hooks';
 import { delayInSeconds } from '@/utils/delay';
 
 type TransakEvent = {
@@ -21,11 +17,18 @@ type TransakEvent = {
   };
 };
 
-type OnRampIframeProps = { usdAmountToPay: number };
+type OnRampIframeProps = {
+  usdAmountToPay: number;
+  networkName?: string;
+  cryptoCurrencyCode?: string;
+};
 
-export const OnRampIframe = ({ usdAmountToPay }: OnRampIframeProps) => {
+export const OnRampIframe = ({
+  usdAmountToPay,
+  networkName,
+  cryptoCurrencyCode,
+}: OnRampIframeProps) => {
   const { onRampWindow, logEvent } = useElectronApi();
-  const { networkName, cryptoCurrencyCode } = useOnRampContext();
   const { masterEoa } = useMasterWalletContext();
 
   const ref = useRef<HTMLIFrameElement>(null);

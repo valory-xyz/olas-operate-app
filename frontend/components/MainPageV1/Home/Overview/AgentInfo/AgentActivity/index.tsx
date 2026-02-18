@@ -93,7 +93,7 @@ export const AgentActivity = () => {
 
       return {
         status: 'activity-not-ready',
-        content: 'Agent is pending first activity',
+        content: 'Agent is running',
       };
     }
 

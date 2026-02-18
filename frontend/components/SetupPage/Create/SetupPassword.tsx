@@ -1,58 +1,13 @@
-import { Button, Flex, Form, Input, Typography } from 'antd';
+import { Form } from 'antd';
 import React, { useEffect, useState } from 'react';
-import zxcvbn from 'zxcvbn';
 
-import { BackButton } from '@/components/ui/BackButton';
-import { FormLabel } from '@/components/ui/Typography';
-import { COLOR } from '@/constants/colors';
+import { PasswordForm } from '@/components/ui';
+import { SETUP_SCREEN } from '@/constants';
 import { useMessageApi } from '@/context/MessageProvider';
-import { SetupScreen } from '@/enums/SetupScreen';
-import { useMnemonicExists, usePageState } from '@/hooks';
-import { useSetup } from '@/hooks/useSetup';
+import { useMnemonicExists, usePageState, useSetup } from '@/hooks';
 import { AccountService } from '@/service/Account';
 import { WalletService } from '@/service/Wallet';
-import { getErrorMessage } from '@/utils/error';
-
-import { CardFlex } from '../../ui/CardFlex';
-
-const { Title, Text } = Typography;
-
-const strength = [
-  'Too weak',
-  'Weak',
-  'Moderate',
-  'Strong',
-  'Very strong! Nice job!',
-];
-
-const colors = [
-  COLOR.RED,
-  COLOR.WARNING,
-  COLOR.SUCCESS,
-  COLOR.SUCCESS,
-  COLOR.PURPLE,
-];
-
-const SetupPasswordTitle = () => (
-  <Flex vertical gap={12} style={{ marginBottom: 24 }}>
-    <Title level={3} className="m-0">
-      Set Password
-    </Title>
-    <Text type="secondary">
-      Your password must be at least 8 characters long. Use a mix of letters,
-      numbers, and symbols.
-    </Text>
-  </Flex>
-);
-
-export const PasswordStrength = ({ score }: { score: number }) => {
-  return (
-    <Text style={{ color: COLOR.GRAY_2 }}>
-      Password strength:{' '}
-      <span style={{ color: colors[score] }}>{strength[score]}</span>
-    </Text>
-  );
-};
+import { getErrorMessage } from '@/utils';
 
 export const SetupPassword = () => {
   const { goto } = useSetup();
@@ -86,7 +41,7 @@ export const SetupPassword = () => {
         // Mnemonic is always created for new accounts
         setMnemonicExists(true);
         setUserLoggedIn();
-        goto(SetupScreen.SetupBackupSigner);
+        goto(SETUP_SCREEN.SetupBackupSigner);
       })
       .catch((e: unknown) => {
         message.error(getErrorMessage(e));
@@ -95,60 +50,12 @@ export const SetupPassword = () => {
   };
 
   return (
-    <CardFlex $gap={10} styles={{ body: { padding: '12px 24px' } }} $noBorder>
-      <BackButton onPrev={() => goto(SetupScreen.Welcome)} />
-      <SetupPasswordTitle />
-
-      <Form
-        name="createEoa"
-        form={form}
-        layout="vertical"
-        onFinish={handleCreateEoa}
-        requiredMark={false}
-      >
-        <Form.Item
-          name="password"
-          label={<FormLabel>Enter password</FormLabel>}
-          help={
-            password && password.length > 0 && isPasswordValid ? (
-              <PasswordStrength score={zxcvbn(password).score} />
-            ) : null
-          }
-          rules={[
-            { required: true, message: 'Please input a Password!' },
-            {
-              validator: (_, value) => {
-                if (!value) return Promise.resolve();
-                const isAscii = /^[\x20-\x7E]*$/.test(value);
-                if (!isAscii) {
-                  return Promise.reject(
-                    new Error('Password must only contain ASCII characters.'),
-                  );
-                }
-                return Promise.resolve();
-              },
-            },
-          ]}
-          required={false}
-          labelCol={{ style: { paddingBottom: 4 } }}
-        >
-          <Input.Password size="large" placeholder="Password" maxLength={64} />
-        </Form.Item>
-
-        <Form.Item style={{ marginBottom: 0 }}>
-          <Button
-            size="large"
-            type="primary"
-            htmlType="submit"
-            disabled={!isPasswordValid || password?.length < 8}
-            loading={isLoading}
-            className="mt-24"
-            style={{ width: '100%' }}
-          >
-            Continue
-          </Button>
-        </Form.Item>
-      </Form>
-    </CardFlex>
+    <PasswordForm
+      form={form}
+      onFinish={handleCreateEoa}
+      isSubmitting={isLoading}
+      onBack={() => goto(SETUP_SCREEN.Welcome)}
+      isPasswordValid={isPasswordValid}
+    />
   );
 };

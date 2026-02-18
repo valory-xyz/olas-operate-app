@@ -3,7 +3,6 @@ import { kebabCase } from 'lodash';
 import Image from 'next/image';
 import { useEffect } from 'react';
 
-import { AgentNft } from '@/components/AgentNft';
 import {
   CardFlex,
   InfoTooltip,
@@ -74,31 +73,19 @@ const AvailableAssets = () => (
   </Flex>
 );
 
-const StakedAssets = () => {
-  const { availableServiceConfigIds } = useServices();
-  const { walletChainId } = usePearlWallet();
-
-  const configIds = availableServiceConfigIds.filter(
-    ({ chainId }) => chainId === walletChainId,
-  );
-
-  return (
-    <Flex vertical gap={12}>
-      <Flex align="center" gap={8}>
-        <Title level={5} className="m-0 text-lg">
-          Staked Assets
-        </Title>
-        <StakedAssetsTooltip />
-      </Flex>
-      <CardFlex $noBorder>
-        <StakedAssetsTable />
-        {configIds.map(({ configId, chainId }) => (
-          <AgentNft key={configId} configId={configId} chainId={chainId} />
-        ))}
-      </CardFlex>
+const StakedAssets = () => (
+  <Flex vertical gap={12}>
+    <Flex align="center" gap={8}>
+      <Title level={5} className="m-0 text-lg">
+        Staked Assets
+      </Title>
+      <StakedAssetsTooltip />
     </Flex>
-  );
-};
+    <CardFlex $noBorder>
+      <StakedAssetsTable />
+    </CardFlex>
+  </Flex>
+);
 
 type BalancesAndAssetsProps = {
   onWithdraw: () => void;

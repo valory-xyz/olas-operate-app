@@ -1,4 +1,3 @@
-import { compact } from 'lodash';
 import {
   createContext,
   ReactNode,
@@ -11,13 +10,14 @@ import {
 
 import { ACTIVE_AGENTS } from '@/config/agents';
 import { CHAIN_CONFIG } from '@/config/chains';
+import { TokenSymbol } from '@/config/tokens';
 import {
   AgentType,
   EvmChainId,
   type EvmChainName,
-  TokenSymbol,
+  MasterSafe,
+  PAGES,
 } from '@/constants';
-import { MasterSafe, Pages } from '@/enums';
 import {
   useAvailableAssets,
   useBalanceAndRefillRequirementsContext,
@@ -40,7 +40,8 @@ import {
   TokenBalanceRecord,
   ValueOf,
 } from '@/types';
-import { generateName } from '@/utils';
+import { generateAgentName, isValidServiceId } from '@/utils';
+import { asMiddlewareChain } from '@/utils/middlewareHelpers';
 
 import { STEPS, WalletChain } from '../components/PearlWallet/types';
 import { getInitialDepositForMasterSafe } from '../components/PearlWallet/utils';
@@ -51,27 +52,34 @@ const getMasterSafeAddress = (
 ) => masterSafes?.find((safe) => safe.evmChainId === chainId)?.address ?? null;
 
 /**
- * Get the list of chains from the middleware services.
+ * Get the unique list of chains from the middleware services.
  */
 const getChainList = (services?: MiddlewareServiceResponse[]) => {
   if (!services) return [];
-  return compact(
-    services.map((service) => {
-      const agent = ACTIVE_AGENTS.find(
-        ([, agentConfig]) =>
-          agentConfig.servicePublicId === service.service_public_id &&
-          agentConfig.middlewareHomeChainId === service.home_chain,
-      );
-      if (!agent) return null;
+  const chainMap = new Map<
+    EvmChainId,
+    { chainId: EvmChainId; chainName: EvmChainName }
+  >();
 
-      const [, agentConfig] = agent as [AgentType, AgentConfig];
-      if (!agentConfig.evmHomeChainId) return null;
+  services.forEach((service) => {
+    const agent = ACTIVE_AGENTS.find(
+      ([, agentConfig]) =>
+        agentConfig.servicePublicId === service.service_public_id &&
+        agentConfig.middlewareHomeChainId === service.home_chain,
+    );
+    if (!agent) return;
 
-      const chainId = agentConfig.evmHomeChainId;
+    const [, agentConfig] = agent as [AgentType, AgentConfig];
+    if (!agentConfig.evmHomeChainId) return;
+
+    const chainId = agentConfig.evmHomeChainId;
+    if (!chainMap.has(chainId)) {
       const chainName = CHAIN_CONFIG[chainId].name as EvmChainName;
-      return { chainId, chainName };
-    }),
-  );
+      chainMap.set(chainId, { chainId, chainName });
+    }
+  });
+
+  return Array.from(chainMap.values());
 };
 
 const PearlWalletContext = createContext<{
@@ -96,7 +104,7 @@ const PearlWalletContext = createContext<{
     details: TokenAmountDetails,
   ) => void;
   updateAmountsToDeposit: (amounts: TokenAmounts) => void;
-  onReset: () => void;
+  onReset: (canNavigateOnReset?: boolean) => void;
   /** Initial values for funding agent wallet based on refill requirements */
   defaultRequirementDepositValues: Optional<TokenBalanceRecord>;
 }>({
@@ -125,11 +133,13 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
     selectedAgentConfig,
     selectedService,
     services,
+    availableServiceConfigIds,
+    getServiceConfigIdsOf,
   } = useServices();
-  const { isLoaded, getServiceSafeOf } = useService(
+  const { isLoaded, getServiceSafeOf, getAgentTypeOf } = useService(
     selectedService?.service_config_id,
   );
-  const { isLoading: isBalanceLoading, getTotalStakedOlasBalanceOf } =
+  const { isLoading: isBalanceLoading, getStakedOlasBalanceOf } =
     useBalanceContext();
   const { getRefillRequirementsOf } = useBalanceAndRefillRequirementsContext();
   const { masterSafes } = useMasterWalletContext();
@@ -147,6 +157,21 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
   const [defaultRequirementDepositValues, setDefaultDepositValues] =
     useState<TokenBalanceRecord>({});
 
+  const getServiceTokenId = useCallback(
+    (chainId: EvmChainId, configId: string) => {
+      const chainName = asMiddlewareChain(chainId);
+      const service = services?.find(
+        (entry) =>
+          entry.service_config_id === configId &&
+          entry.home_chain === chainName,
+      );
+
+      const tokenId = service?.chain_configs?.[chainName]?.chain_data?.token;
+      return tokenId;
+    },
+    [services],
+  );
+
   // Update chain id when switching between agents
   useEffect(() => {
     setWalletChainId(selectedAgentConfig.evmHomeChainId);
@@ -157,7 +182,7 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
       // For deposit, we only want to show assets in the safe.
       includeMasterEoa:
         walletStep !== STEPS.DEPOSIT ||
-        pageState !== Pages.DepositOlasForStaking,
+        pageState !== PAGES.DepositOlasForStaking,
     });
   const masterSafeAddress = useMemo(
     () => getMasterSafeAddress(walletChainId, masterSafes),
@@ -171,6 +196,7 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
     const defaultRequirementDepositValues = getInitialDepositForMasterSafe(
       walletChainId,
       masterSafeAddress,
+      getServiceConfigIdsOf(walletChainId),
       getRefillRequirementsOf,
     );
 
@@ -178,30 +204,48 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
 
     setDefaultDepositValues(defaultRequirementDepositValues);
     setAmountsToDeposit(defaultRequirementDepositValues);
-  }, [getRefillRequirementsOf, walletChainId, masterSafeAddress]);
+  }, [
+    getRefillRequirementsOf,
+    walletChainId,
+    masterSafeAddress,
+    getServiceConfigIdsOf,
+  ]);
 
-  const agent = ACTIVE_AGENTS.find(
-    ([, agentConfig]) => agentConfig.evmHomeChainId === walletChainId,
-  );
-  const agentType = agent ? agent[0] : null;
-
-  // list of chains where the user has services
+  // list of unique chains where the user has services
   const chains = useMemo(() => getChainList(services), [services]);
 
   // staked OLAS
-  const stakedAssets: StakedAsset[] = useMemo(
-    () => [
-      {
-        agentName: walletChainId
-          ? generateName(getServiceSafeOf(walletChainId)?.address)
-          : 'Agent',
+  const stakedAssets: StakedAsset[] = useMemo(() => {
+    const configIds = availableServiceConfigIds.filter(
+      ({ chainId }) => chainId === walletChainId,
+    );
+
+    return configIds.map(({ configId, chainId }) => {
+      const agentSafe = getServiceSafeOf?.(walletChainId, configId)?.address;
+      const tokenId = getServiceTokenId(chainId, configId);
+      const agentName = isValidServiceId(tokenId)
+        ? generateAgentName(chainId, tokenId)
+        : `My ${selectedAgentConfig.displayName}`;
+      const agentType = getAgentTypeOf(walletChainId, configId);
+
+      return {
+        chainId,
+        configId,
+        agentName,
         agentImgSrc: agentType ? `/agent-${agentType}-icon.png` : null,
         symbol: 'OLAS',
-        amount: getTotalStakedOlasBalanceOf(walletChainId) ?? 0,
-      },
-    ],
-    [walletChainId, agentType, getTotalStakedOlasBalanceOf, getServiceSafeOf],
-  );
+        amount: getStakedOlasBalanceOf(agentSafe!) ?? 0,
+      };
+    });
+  }, [
+    availableServiceConfigIds,
+    walletChainId,
+    getServiceSafeOf,
+    getAgentTypeOf,
+    getServiceTokenId,
+    getStakedOlasBalanceOf,
+    selectedAgentConfig.displayName,
+  ]);
 
   const updateStep = useCallback(
     (newStep: ValueOf<typeof STEPS>) => {
@@ -250,7 +294,7 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
   );
 
   const gotoPearlWallet = useCallback(() => {
-    goto(Pages.PearlWallet);
+    goto(PAGES.PearlWallet);
     updateStep(STEPS.PEARL_WALLET_SCREEN);
   }, [updateStep, goto]);
 

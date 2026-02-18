@@ -1,19 +1,13 @@
-import { Button, message } from 'antd';
+import { Button } from 'antd';
 import { useCallback, useMemo, useState } from 'react';
 import { useUnmount } from 'usehooks-ts';
 
 import { MiddlewareDeploymentStatusMap } from '@/constants';
 import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
-import { Pages } from '@/enums';
-import {
-  useBalanceContext,
-  usePageState,
-  useServices,
-  useStakingProgram,
-} from '@/hooks';
+import { useBalanceContext, useServices, useStakingProgram } from '@/hooks';
 import { ServicesService } from '@/service/Services';
 import { ServiceTemplate } from '@/types';
-import { updateServiceStakingContract } from '@/utils';
+import { updateServiceIfNeeded } from '@/utils';
 
 import { SwitchingContractModal } from './SwitchingContractModal';
 
@@ -33,7 +27,6 @@ export const ConfirmSwitchButton = ({
   const [contractSwitchStatus, setContractSwitchStatus] =
     useState<ContractSwitchStatus>('NOT_STARTED');
 
-  const { goto } = usePageState();
   const {
     setPaused: setIsServicePollingPaused,
     isFetched: isServicesLoaded,
@@ -80,8 +73,9 @@ export const ConfirmSwitchButton = ({
 
       if (selectedService) {
         // update service
-        await updateServiceStakingContract(
+        await updateServiceIfNeeded(
           selectedService,
+          selectedAgentType,
           stakingProgramIdToMigrateTo,
         );
       } else {
@@ -99,11 +93,8 @@ export const ConfirmSwitchButton = ({
       // start service after updating or creating
       await ServicesService.startService(serviceConfigId);
       setContractSwitchStatus('COMPLETED');
-      message.success('Contract switched successfully.');
-      goto(Pages.Main);
     } catch (error) {
       console.error(error);
-      message.error('An error occurred while switching contract.');
       setContractSwitchStatus('ERROR');
       resetState();
     }
@@ -122,10 +113,10 @@ export const ConfirmSwitchButton = ({
       >
         Confirm Switch
       </Button>
-      {(contractSwitchStatus === 'IN_PROGRESS' ||
-        contractSwitchStatus === 'COMPLETED') && (
+      {contractSwitchStatus !== 'NOT_STARTED' && (
         <SwitchingContractModal
-          isSwitchingContract={contractSwitchStatus === 'IN_PROGRESS'}
+          status={contractSwitchStatus}
+          onClose={() => setContractSwitchStatus('NOT_STARTED')}
           stakingProgramIdToMigrateTo={stakingProgramIdToMigrateTo!}
         />
       )}

@@ -2,7 +2,7 @@ import { Button, Flex, Typography } from 'antd';
 
 import { Alert } from '@/components/ui';
 import { CHAIN_CONFIG } from '@/config/chains';
-import { Pages } from '@/enums';
+import { PAGES } from '@/constants';
 import { useMasterBalances, usePageState, useServices } from '@/hooks';
 
 const { Text } = Typography;
@@ -37,7 +37,7 @@ export const MasterEoaLowBalanceAlert = () => {
             </Text>
           </Flex>
 
-          <Button onClick={() => goto(Pages.FundPearlWallet)} size="small">
+          <Button onClick={() => goto(PAGES.FundPearlWallet)} size="small">
             Fund Pearl Wallet
           </Button>
         </Flex>

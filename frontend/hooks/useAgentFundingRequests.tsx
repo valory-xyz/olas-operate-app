@@ -1,12 +1,15 @@
 import { isEmpty } from 'lodash';
 import { useMemo } from 'react';
 
-import { getTokenDetails } from '@/components/Bridge/utils';
 import { CHAIN_CONFIG } from '@/config/chains';
 import { TOKEN_CONFIG } from '@/config/tokens';
 import { EvmChainId } from '@/constants';
 import { Address, TokenAmounts, TokenBalanceRecord } from '@/types';
-import { formatUnitsToNumber, tokenBalancesToSentence } from '@/utils';
+import {
+  formatUnitsToNumber,
+  getTokenDetails,
+  tokenBalancesToSentence,
+} from '@/utils';
 
 import { useBalanceAndRefillRequirementsContext } from './useBalanceAndRefillRequirementsContext';
 import { useService } from './useService';
@@ -54,15 +57,16 @@ const getFormattedTokensList = (
 export const useAgentFundingRequests = () => {
   const { selectedAgentConfig, selectedService } = useServices();
   const { serviceEoa } = useService(selectedService?.service_config_id);
-  const {
-    agentFundingRequests,
-    isBalancesAndFundingRequirementsLoading,
-    isAgentFundingRequestsStale,
-  } = useBalanceAndRefillRequirementsContext();
+  const { agentFundingRequests, isAgentFundingRequestsStale } =
+    useBalanceAndRefillRequirementsContext();
 
   /**
    * Merges amounts for the same token address by summing their BigInt values.
-   * @example {"address1": {"token1": "1", "token2": "2"}, "address2": {"token1": "3"}} -> {"token1": "4", "token2": "2"}
+   * @example
+   * {
+   *   "address1": {"token1": "1", "token2": "2"},
+   *   "address2": {"token1": "3"}
+   * } => {"token1": "4", "token2": "2"}
    * */
   const agentTokenRequirements = useMemo(() => {
     if (!agentFundingRequests) return null;
@@ -114,9 +118,6 @@ export const useAgentFundingRequests = () => {
   }, [agentFundingRequests, isAgentFundingRequestsStale, serviceEoa?.address]);
 
   return {
-    isLoading: isBalancesAndFundingRequirementsLoading,
-    /** All requirements, organized by wallet then by token address: {[walletAddress]: {[tokenAddress]: amount}} */
-    agentFundingRequests,
     /** Consolidated requirements per token address: {[tokenAddress]: totalAmount} */
     agentTokenRequirements,
     /** Requirements for service EOA address only: {[tokenAddress]: amount} */

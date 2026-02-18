@@ -9,19 +9,22 @@
  */
 import { ethers } from 'ethers';
 import { Contract as MulticallContract } from 'ethers-multicall';
+import { entries } from 'lodash';
 
 import { OLAS_CONTRACTS } from '@/config/olasContracts';
 import {
-  STAKING_PROGRAM_ADDRESS,
   STAKING_PROGRAMS,
+  StakingProgramConfig,
 } from '@/config/stakingPrograms';
-import { PROVIDERS } from '@/constants/providers';
-import { EvmChainId } from '@/enums/Chain';
-import { ContractType } from '@/enums/Contract';
-import { ServiceRegistryL2ServiceState } from '@/enums/ServiceRegistryL2ServiceState';
-import { StakingProgramId } from '@/enums/StakingProgram';
-import { Address } from '@/types/Address';
-import { Maybe, Nullable } from '@/types/Util';
+import {
+  CONTRACT_TYPE,
+  EvmChainId,
+  PROVIDERS,
+  ServiceRegistryL2ServiceState,
+  StakingProgramId,
+} from '@/constants';
+import { Address, Maybe, Nullable } from '@/types';
+import { areAddressesEqual } from '@/utils';
 
 export const ONE_YEAR = 1 * 24 * 60 * 60 * 365;
 
@@ -127,10 +130,10 @@ export abstract class StakedAgentService {
 
     const { multicallProvider } = PROVIDERS[chainId];
 
+    const tokenUtility = CONTRACT_TYPE.ServiceRegistryTokenUtility;
     const {
-      [ContractType.ServiceRegistryTokenUtility]:
-        serviceRegistryTokenUtilityContract,
-      [ContractType.ServiceRegistryL2]: serviceRegistryL2Contract,
+      [tokenUtility]: serviceRegistryTokenUtilityContract,
+      [CONTRACT_TYPE.ServiceRegistryL2]: serviceRegistryL2Contract,
     } = OLAS_CONTRACTS[chainId];
 
     const contractCalls = [
@@ -172,11 +175,12 @@ export abstract class StakedAgentService {
     chainId: EvmChainId,
     contractAddress: Address,
   ): Nullable<StakingProgramId> => {
-    const addresses = STAKING_PROGRAM_ADDRESS[chainId];
-    const entries = Object.entries(addresses) as [StakingProgramId, Address][];
-    const foundEntry = entries.find(
-      ([, address]) => address.toLowerCase() === contractAddress.toLowerCase(),
-    );
+    const stakingPrograms = STAKING_PROGRAMS[chainId];
+
+    const foundEntry = entries(stakingPrograms).find(([, config]) =>
+      areAddressesEqual(config.address, contractAddress),
+    ) as [StakingProgramId, StakingProgramConfig] | undefined;
+
     return foundEntry ? foundEntry[0] : null;
   };
 }

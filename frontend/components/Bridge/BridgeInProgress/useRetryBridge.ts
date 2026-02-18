@@ -11,7 +11,8 @@ import { BridgeRetryOutcome } from '../types';
  * If refill is required, it will navigate to the refill page
  */
 export const useRetryBridge = () => {
-  const { refetch } = useBalanceAndRefillRequirementsContext();
+  const { refetchForSelectedAgent: refetch } =
+    useBalanceAndRefillRequirementsContext();
 
   return useCallback(
     async (onRetryOutcome: (e: Nullable<BridgeRetryOutcome>) => void) => {

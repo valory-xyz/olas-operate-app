@@ -9,9 +9,9 @@ import {
 } from '@/components/custom-icons';
 import { CardFlex, cardStyles } from '@/components/ui';
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
-import { SUPPORT_URL } from '@/constants/urls';
 import { useMessageApi } from '@/context/MessageProvider';
 import { usePearlWallet } from '@/context/PearlWalletProvider';
+import { useSupportModal } from '@/context/SupportModalProvider';
 
 import { ChainAndAmountOverview } from './ChainAndAmountOverview';
 import { EnterPasswordBeforeWithdrawal } from './EnterPasswordBeforeWithdrawal';
@@ -77,32 +77,40 @@ const WithdrawalComplete = ({
 );
 
 type WithdrawalFailedProps = { onTryAgain: () => void };
-const WithdrawalFailed = ({ onTryAgain }: WithdrawalFailedProps) => (
-  <Flex gap={32} vertical>
-    <Flex align="center" justify="center">
-      <WarningOutlined />
-    </Flex>
+const WithdrawalFailed = ({ onTryAgain }: WithdrawalFailedProps) => {
+  const { toggleSupportModal } = useSupportModal();
 
-    <Flex gap={12} vertical className="text-center">
-      <Title level={4} className="m-0">
-        Withdrawal Failed
-      </Title>
-      <Text className="text-neutral-tertiary">
-        Something went wrong with your withdrawal. Please try again or contact
-        the Olas community.
-      </Text>
-    </Flex>
+  const openSupportModal = () => {
+    toggleSupportModal();
+  };
 
-    <Flex gap={16} vertical className="text-center">
-      <Button onClick={onTryAgain} type="primary" block size="large">
-        Try Again
-      </Button>
-      <Link href={SUPPORT_URL} target="_blank" rel="noreferrer">
-        Join Olas Community Discord Server {UNICODE_SYMBOLS.EXTERNAL_LINK}
-      </Link>
+  return (
+    <Flex gap={32} vertical>
+      <Flex align="center" justify="center">
+        <WarningOutlined />
+      </Flex>
+
+      <Flex gap={12} vertical className="text-center">
+        <Title level={4} className="m-0">
+          Withdrawal Failed
+        </Title>
+        <Text className="text-neutral-tertiary">
+          Something went wrong with your withdrawal. Please try again or contact
+          Valory support.
+        </Text>
+      </Flex>
+
+      <Flex gap={16} vertical className="text-center">
+        <Button onClick={onTryAgain} type="primary" block size="large">
+          Try Again
+        </Button>
+        <Button onClick={openSupportModal} type="default" block size="large">
+          Contact Support
+        </Button>
+      </Flex>
     </Flex>
-  </Flex>
-);
+  );
+};
 
 type WithdrawalAddressInputProps = {
   withdrawAddress: string;

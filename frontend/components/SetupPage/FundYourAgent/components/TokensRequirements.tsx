@@ -5,6 +5,7 @@ import styled from 'styled-components';
 import { SendFundAction } from '@/components/Bridge';
 import { Alert } from '@/components/ui';
 import { COLOR } from '@/constants';
+import { TokenRequirement } from '@/types';
 
 const { Text } = Typography;
 
@@ -16,9 +17,9 @@ const RequirementsContainer = styled(Flex)`
   margin: 12px 0 32px;
 `;
 
-const RequirementsSkeleton = () => (
+const RequirementsSkeleton = ({ title }: { title: string }) => (
   <div style={{ marginTop: 16 }}>
-    <Text className="text-neutral-tertiary">You will pay</Text>
+    <Text className="text-neutral-tertiary">{title}</Text>
     <RequirementsContainer gap={12}>
       {[1, 2, 3].map((index) => (
         <Flex key={index} align="center" gap={8} style={{ width: '100%' }}>
@@ -61,12 +62,6 @@ const RequirementsError = () => (
   </Flex>
 );
 
-export type TokenRequirement = {
-  amount: number;
-  symbol: string;
-  iconSrc: string;
-};
-
 const formatAmount = (amount: number): string => {
   if (Number.isInteger(amount)) {
     return amount.toString();
@@ -101,6 +96,7 @@ type TokenRequirementsProps = {
   isLoading: boolean;
   hasError?: boolean;
   fundType: SendFundAction;
+  title?: string;
 };
 
 export const TokenRequirements = ({
@@ -110,8 +106,9 @@ export const TokenRequirements = ({
   isLoading,
   hasError,
   fundType,
+  title = 'You will pay',
 }: TokenRequirementsProps) => {
-  if (isLoading) return <RequirementsSkeleton />;
+  if (isLoading) return <RequirementsSkeleton title={title} />;
   if (hasError) return <RequirementsError />;
 
   if (fundType === 'onRamp') {
@@ -122,19 +119,17 @@ export const TokenRequirements = ({
 
   return (
     <div style={{ marginTop: 16 }}>
-      <Text className="text-neutral-tertiary">You will pay</Text>
+      <Text className="text-neutral-tertiary">{title}</Text>
       <RequirementsContainer gap={12}>
         {tokenRequirements.map(({ amount, symbol, iconSrc }) => (
           <Flex key={symbol} align="center" gap={8} style={{ width: '100%' }}>
             <Image src={iconSrc} alt={symbol} height={20} width={20} />
-            <Text>
-              {formatAmount(amount)} {symbol}
-            </Text>
+            <Text>{`${fundType === 'bridge' ? '~' : ''}${formatAmount(amount)} ${symbol}`}</Text>
           </Flex>
         ))}
         <Text className="text-neutral-tertiary" style={{ fontSize: 14 }}>
           {fundType === 'bridge'
-            ? '+ bridging fees on Ethereum Mainnet.'
+            ? 'Final amount may be higher due to Ethereum bridge fees and slippage.'
             : `+ transaction fees on ${chainName}.`}
         </Text>
       </RequirementsContainer>

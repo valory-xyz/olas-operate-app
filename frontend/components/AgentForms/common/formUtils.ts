@@ -39,6 +39,13 @@ export const BABYDEGEN_FORM_STEP = {
 
 export type BabyDegenFormStep = keyof typeof BABYDEGEN_FORM_STEP;
 
+export const AGENTS_FUN_FORM_STEP = {
+  persona: 'persona',
+  x_account_api_tokens: 'x_account_api_tokens',
+} as const;
+
+export type AgentsFunFormStep = keyof typeof AGENTS_FUN_FORM_STEP;
+
 /**
  * form validator for API key.
  */
