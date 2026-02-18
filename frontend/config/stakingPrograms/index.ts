@@ -26,6 +26,7 @@ export type StakingProgramConfig = {
   mechType?: MechType;
   mech?: MulticallContract;
   activityChecker: MulticallContract;
+  id?: string;
 };
 
 export type StakingProgramMap = {

@@ -58,6 +58,7 @@ export const BASE_STAKING_PROGRAMS: StakingProgramMap = {
       ],
       STAKING_TOKEN_PROXY_ABI,
     ),
+    id: '0x000000000000000000000000c653622fd75026a020995a1d8c8651316cbbc4da',
   },
   [STAKING_PROGRAM_IDS.MemeBaseBeta]: {
     deprecated: true,
@@ -79,6 +80,7 @@ export const BASE_STAKING_PROGRAMS: StakingProgramMap = {
       ],
       STAKING_TOKEN_PROXY_ABI,
     ),
+    id: '0x0000000000000000000000006011e09e7c095e76980b22498d69df18eb62bed8',
   },
   [STAKING_PROGRAM_IDS.MemeBaseBeta2]: {
     deprecated: true,
@@ -102,6 +104,7 @@ export const BASE_STAKING_PROGRAMS: StakingProgramMap = {
       ],
       STAKING_TOKEN_PROXY_ABI,
     ),
+    id: '0x000000000000000000000000fb7669c3adf673b3a545fa5acd987dbfda805e22',
   },
   [STAKING_PROGRAM_IDS.MemeBaseBeta3]: {
     deprecated: true,
@@ -125,6 +128,7 @@ export const BASE_STAKING_PROGRAMS: StakingProgramMap = {
       ],
       STAKING_TOKEN_PROXY_ABI,
     ),
+    id: '0x000000000000000000000000ca61633b03c54f64b6a7f1f9a9c0a6feb231cc4d',
   },
   [STAKING_PROGRAM_IDS.AgentsFun1]: {
     chainId: EvmChainIdMap.Base,
@@ -143,6 +147,7 @@ export const BASE_STAKING_PROGRAMS: StakingProgramMap = {
       BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[STAKING_PROGRAM_IDS.AgentsFun1],
       STAKING_TOKEN_PROXY_ABI,
     ),
+    id: '0x0000000000000000000000002585e63df7bd9de8e058884d496658a030b5c6ce',
   },
   [STAKING_PROGRAM_IDS.AgentsFun2]: {
     chainId: EvmChainIdMap.Base,
@@ -161,6 +166,7 @@ export const BASE_STAKING_PROGRAMS: StakingProgramMap = {
       BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[STAKING_PROGRAM_IDS.AgentsFun2],
       STAKING_TOKEN_PROXY_ABI,
     ),
+    id: '0x00000000000000000000000026fa75ef9ccaa60e58260226a71e9d07564c01bf',
   },
   [STAKING_PROGRAM_IDS.AgentsFun3]: {
     chainId: EvmChainIdMap.Base,
@@ -179,6 +185,7 @@ export const BASE_STAKING_PROGRAMS: StakingProgramMap = {
       BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[STAKING_PROGRAM_IDS.AgentsFun3],
       STAKING_TOKEN_PROXY_ABI,
     ),
+    id: '0x0000000000000000000000004d4233ebf0473ca8f34d105a6256a2389176f0ce',
   },
   [STAKING_PROGRAM_IDS.PettAiAgent]: {
     deprecated: true,
@@ -196,6 +203,7 @@ export const BASE_STAKING_PROGRAMS: StakingProgramMap = {
       BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[STAKING_PROGRAM_IDS.PettAiAgent],
       STAKING_TOKEN_PROXY_ABI,
     ),
+    id: '0x000000000000000000000000fa0ca3935758cb81d35a8f1395b9eb5a596ce301',
   },
   [STAKING_PROGRAM_IDS.PettAiAgent2]: {
     deprecated: true,
@@ -217,6 +225,7 @@ export const BASE_STAKING_PROGRAMS: StakingProgramMap = {
       ],
       STAKING_TOKEN_PROXY_ABI,
     ),
+    id: '0x00000000000000000000000000d544c10bdc0e9b0a71ceaf52c1342bb8f21c1d',
   },
   [STAKING_PROGRAM_IDS.PettAiAgent3]: {
     chainId: EvmChainIdMap.Base,

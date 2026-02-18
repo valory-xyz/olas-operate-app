@@ -26,12 +26,12 @@ const ContractCard = styled(CardFlex)<{ $isView?: boolean }>`
 `;
 
 type ConfigurationDetailsProps = {
-  stakingProgramId: StakingProgramId;
+  id?: string;
   name: string;
   slots: string;
 };
 const ConfigurationDetails = ({
-  stakingProgramId,
+  id,
   name,
   slots,
 }: ConfigurationDetailsProps) => {
@@ -39,9 +39,7 @@ const ConfigurationDetails = ({
     <Flex vertical gap={12} style={{ minWidth: 300 }}>
       <Flex vertical gap={8}>
         <Flex align="center" gap={6}>
-          <Text className="text-sm text-neutral-tertiary">
-            Contract name:
-          </Text>
+          <Text className="text-sm text-neutral-tertiary">Contract name:</Text>
           <Text className="text-sm">{name}</Text>
         </Flex>
 
@@ -53,18 +51,20 @@ const ConfigurationDetails = ({
         </Flex>
       </Flex>
 
-      <a
-        href={`${GOVERN_APP_URL}/contracts/${stakingProgramId}`}
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        <Flex align="center" gap={6}>
-          <Text className="text-sm text-primary">View more details</Text>
-          <Text className="text-primary" style={{ fontSize: 10 }}>
-            ↗
-          </Text>
-        </Flex>
-      </a>
+      {id && (
+        <a
+          href={`${GOVERN_APP_URL}/contracts/${id}`}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <Flex align="center" gap={6}>
+            <Text className="text-sm text-primary">View more details</Text>
+            <Text className="text-primary" style={{ fontSize: 10 }}>
+              ↗
+            </Text>
+          </Flex>
+        </a>
+      )}
     </Flex>
   );
 };
@@ -105,7 +105,7 @@ export const StakingContractCard = ({
           content={
             <ConfigurationDetails
               name={stakingProgramMeta.name}
-              stakingProgramId={stakingProgramId}
+              id={stakingProgramMeta.id}
               slots={`${slotsLeft} / ${totalSlots}`}
             />
           }

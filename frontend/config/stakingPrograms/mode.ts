@@ -39,6 +39,7 @@ export const MODE_STAKING_PROGRAMS: StakingProgramMap = {
       MODE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[STAKING_PROGRAM_IDS.ModiusAlpha],
       STAKING_TOKEN_PROXY_ABI,
     ),
+    id: '0x000000000000000000000000534c0a05b6d4d28d5f3630d6d74857b253cf8332',
   },
   [STAKING_PROGRAM_IDS.ModiusAlpha2]: {
     chainId: EvmChainIdMap.Mode,
@@ -59,6 +60,7 @@ export const MODE_STAKING_PROGRAMS: StakingProgramMap = {
       ],
       STAKING_TOKEN_PROXY_ABI,
     ),
+    id: '0x000000000000000000000000ec013e68fe4b5734643499887941ec197fd757d0',
   },
   [STAKING_PROGRAM_IDS.ModiusAlpha3]: {
     chainId: EvmChainIdMap.Mode,
@@ -79,6 +81,7 @@ export const MODE_STAKING_PROGRAMS: StakingProgramMap = {
       ],
       STAKING_TOKEN_PROXY_ABI,
     ),
+    id: '0x0000000000000000000000009034d0413d122015710f1744a19efb1d7c2ceb13',
   },
   [STAKING_PROGRAM_IDS.ModiusAlpha4]: {
     chainId: EvmChainIdMap.Mode,
@@ -99,6 +102,7 @@ export const MODE_STAKING_PROGRAMS: StakingProgramMap = {
       ],
       STAKING_TOKEN_PROXY_ABI,
     ),
+    id: '0x0000000000000000000000008bcadb2c291c159f9385964e5ed95a9887302862',
   },
   // optimus alpha
   [STAKING_PROGRAM_IDS.OptimusAlpha]: {
@@ -120,5 +124,6 @@ export const MODE_STAKING_PROGRAMS: StakingProgramMap = {
       ],
       STAKING_TOKEN_PROXY_ABI,
     ),
+    id: '0x0000000000000000000000005fc25f50e96857373c64dc0edb1abcbed4587e91',
   },
 };

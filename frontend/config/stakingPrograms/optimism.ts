@@ -47,6 +47,7 @@ export const OPTIMISM_STAKING_PROGRAMS: {
       ],
       STAKING_TOKEN_PROXY_ABI,
     ),
+    id: '0x000000000000000000000000bca056952d2a7a8dd4a002079219807cfdf9fd29',
   },
   [OPTIMISM_STAKING_PROGRAM_IDS.OptimusAlpha3]: {
     chainId: EvmChainIdMap.Optimism,
@@ -69,6 +70,7 @@ export const OPTIMISM_STAKING_PROGRAMS: {
       ],
       STAKING_TOKEN_PROXY_ABI,
     ),
+    id: '0x0000000000000000000000000f69f35652b1acdbd769049334f1ac580927e139',
   },
   [OPTIMISM_STAKING_PROGRAM_IDS.OptimusAlpha4]: {
     chainId: EvmChainIdMap.Optimism,
@@ -91,5 +93,6 @@ export const OPTIMISM_STAKING_PROGRAMS: {
       ],
       STAKING_TOKEN_PROXY_ABI,
     ),
+    id: '0x0000000000000000000000006891cf116f9a3bdbd1e89413118ef81f69d298c3',
   },
 };
