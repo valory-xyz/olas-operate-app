@@ -4,7 +4,6 @@ import styled from 'styled-components';
 
 import { COLOR } from '@/constants';
 import { useServices } from '@/hooks';
-import { assertRequired } from '@/types';
 
 import { StakingContractCard } from '../../StakingContractCard';
 import { SelectStakingButton } from './SelectStakingButton';
@@ -38,10 +37,6 @@ export const ConfigureActivityRewards = ({
 }: ConfigureActivityRewardsProps) => {
   const { selectedAgentConfig } = useServices();
   const defaultStakingProgramId = selectedAgentConfig.defaultStakingProgramId;
-  assertRequired(
-    defaultStakingProgramId,
-    'Default staking program ID is required',
-  );
 
   return (
     <Flex

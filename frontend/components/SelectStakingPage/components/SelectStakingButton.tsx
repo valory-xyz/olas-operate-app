@@ -24,7 +24,7 @@ type SwitchStakingButtonProps = {
 };
 
 /**
- * Button for select default staking program during onboarding
+ * Button to select default staking program during onboarding
  */
 export const SelectStakingButton = ({
   stakingProgramId,
@@ -33,12 +33,6 @@ export const SelectStakingButton = ({
   onSelectStart,
   onSelectEnd,
 }: SwitchStakingButtonProps) => {
-  const {
-    value: isLoading,
-    setTrue: startLoading,
-    setFalse: stopLoading,
-  } = useBoolean(false);
-
   const { goto: gotoSetup } = useSetup();
   const { goto: gotoPage } = usePageState();
   const { setIsInitiallyFunded } = useIsInitiallyFunded();
@@ -51,11 +45,16 @@ export const SelectStakingButton = ({
     isLoading: isServicesLoading,
     refetch: refetchServices,
   } = useServices();
-
   const { buttonText, canMigrate } = useCanMigrate({
     stakingProgramId,
     isCurrentStakingProgram,
   });
+
+  const {
+    value: isLoading,
+    setTrue: startLoading,
+    setFalse: stopLoading,
+  } = useBoolean(false);
 
   const handleSelect = async () => {
     onSelectStart?.();

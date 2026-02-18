@@ -1,6 +1,6 @@
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { Button as AntdButton, Flex, Typography } from 'antd';
-import { ReactNode, useEffect, useState } from 'react';
+import { ReactNode, useCallback, useEffect, useState } from 'react';
 import styled from 'styled-components';
 
 import { StakingContractCard } from '@/components/StakingContractCard';
@@ -42,19 +42,19 @@ const SwitchStakingButton = ({
   stakingProgramId,
 }: SwitchStakingButtonProps) => {
   const { goto } = usePageState();
+  const { setStakingProgramIdToMigrateTo } = useStakingProgram();
   const { buttonText, canMigrate } = useCanMigrate({
     stakingProgramId,
     isCurrentStakingProgram,
   });
-  const { setStakingProgramIdToMigrateTo } = useStakingProgram();
 
   const agentInCooldownPeriod =
     buttonText === MigrateButtonText.AgentInCooldownPeriod;
 
-  const handleMigrate = () => {
+  const handleMigrate = useCallback(() => {
     setStakingProgramIdToMigrateTo(stakingProgramId);
     goto(PAGES.ConfirmSwitch);
-  };
+  }, [setStakingProgramIdToMigrateTo, stakingProgramId, goto]);
 
   // Reset the staking program id to null when component mounts.
   useEffect(() => {
@@ -101,6 +101,7 @@ export const SelectActivityRewardsConfiguration = ({
   const { orderedStakingProgramIds } = useStakingContracts();
   const [stableOrder, setStableOrder] = useState<StakingProgramId[]>([]);
 
+  // To ensure the order of staking programs remains stable to prevent unnecessary re-renders of the list
   useEffect(() => {
     if (!stableOrder.length) {
       setStableOrder(orderedStakingProgramIds);
