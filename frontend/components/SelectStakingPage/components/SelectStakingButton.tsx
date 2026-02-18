@@ -13,7 +13,7 @@ import {
 } from '@/hooks';
 import { onDummyServiceCreation, updateServiceIfNeeded } from '@/utils';
 
-import { useCanMigrate } from './hooks/useCanMigrate';
+import { useCanMigrate } from '../hooks/useCanMigrate';
 
 type SwitchStakingButtonProps = {
   stakingProgramId: StakingProgramId;
