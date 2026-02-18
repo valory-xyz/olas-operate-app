@@ -9,12 +9,7 @@ import {
 
 import type { OnRampNetworkConfig } from '@/components/OnRamp';
 import { PAGES } from '@/constants';
-import {
-  useElectronApi,
-  useMasterBalances,
-  useMasterWalletContext,
-  usePageState,
-} from '@/hooks';
+import { useElectronApi, useMasterBalances, usePageState } from '@/hooks';
 import { Nullable } from '@/types';
 import { delayInSeconds, parseEther } from '@/utils';
 
@@ -82,8 +77,6 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
   const { pageState } = usePageState();
   const { getMasterEoaNativeBalanceOf, getMasterSafeNativeBalanceOf } =
     useMasterBalances();
-  const { getMasterSafeOf, isFetched: isMasterWalletFetched } =
-    useMasterWalletContext();
 
   // State to track the amount of native tokens (e.g., ETH, POL, etc.) to pay for on-ramping and the USD equivalent
   const [nativeAmountToPay, setNativeAmountToPay] =
@@ -144,22 +137,16 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
   // This happens early when nativeAmountToPay is first set, before user clicks "Buy Crypto"
   useEffect(() => {
     if (!nativeAmountToPay) return;
-    if (!isMasterWalletFetched) return;
     if (!networkId) return;
     if (initialBalanceRef.current !== null) return;
 
-    // Get the master safe (in case it exists) or master EOA balance of the network to on-ramp
-    const hasMasterSafe = getMasterSafeOf?.(networkId);
-    const balance = hasMasterSafe
-      ? getMasterSafeNativeBalanceOf(networkId)?.[0]?.balanceString
-      : getMasterEoaNativeBalanceOf(networkId);
+    // Get the EOA balance of the network to on-ramp
+    const balance = getMasterEoaNativeBalanceOf(networkId);
 
     initialBalanceRef.current = balance || '0';
   }, [
     nativeAmountToPay,
     networkId,
-    isMasterWalletFetched,
-    getMasterSafeOf,
     getMasterSafeNativeBalanceOf,
     getMasterEoaNativeBalanceOf,
   ]);
@@ -169,15 +156,11 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
     if (!nativeAmountToPay) return;
     if (!usdAmountToPay) return;
     if (isOnRampingStepCompleted) return;
-    if (!isMasterWalletFetched) return;
     if (!networkId) return;
     if (initialBalanceRef.current === null) return; // Need initial balance first
 
-    // Get the master safe (in case it exists) or master EOA balance of the network to on-ramp
-    const hasMasterSafe = getMasterSafeOf?.(networkId);
-    const currentBalance = hasMasterSafe
-      ? getMasterSafeNativeBalanceOf(networkId)?.[0]?.balanceString
-      : getMasterEoaNativeBalanceOf(networkId);
+    // Get the master EOA balance of the network to on-ramp
+    const currentBalance = getMasterEoaNativeBalanceOf(networkId);
     if (!currentBalance) return;
 
     // Calculate the expected increase in balance (90% threshold)
@@ -206,8 +189,6 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
     updateIsBuyCryptoBtnLoading,
     onRampWindow,
     isOnRampingStepCompleted,
-    isMasterWalletFetched,
-    getMasterSafeOf,
     getMasterSafeNativeBalanceOf,
     usdAmountToPay,
   ]);
