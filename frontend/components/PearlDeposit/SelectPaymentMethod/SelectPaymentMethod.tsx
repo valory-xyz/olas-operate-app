@@ -26,7 +26,7 @@ import {
   useTotalFiatFromNativeToken,
   useTotalNativeTokenRequired,
 } from '@/hooks';
-import { BridgeRefillRequirementsRequest, BridgeRequest } from '@/types/Bridge';
+import { BridgeRefillRequirementsRequest } from '@/types/Bridge';
 import { TokenAmountDetails } from '@/types/Wallet';
 import { asEvmChainDetails, asMiddlewareChain, formatNumber } from '@/utils';
 
@@ -173,24 +173,26 @@ const OnRampMethod = ({ chainId, onSelect }: OnRampMethodProps) => {
         return null;
       }
 
-      const onRampParams = toDeposit.map(([tokenSymbol, { amount }]) => {
-        const token = TOKEN_CONFIG[chainId][tokenSymbol];
-        if (!token) {
-          throw new Error(
-            `Token ${tokenSymbol} is not supported on chain ${chainId}`,
-          );
-        }
+      const onRampParams = toDeposit
+        .map(([tokenSymbol, { amount }]) => {
+          const token = TOKEN_CONFIG[chainId][tokenSymbol];
+          if (!token) {
+            throw new Error(
+              `Token ${tokenSymbol} is not supported on chain ${chainId}`,
+            );
+          }
 
-        return getOnRampRequirementsParams(
-          token.address ?? AddressZero,
-          amount,
-        );
-      });
+          return getOnRampRequirementsParams(
+            token.address ?? AddressZero,
+            amount,
+          );
+        })
+        .filter((request) => request !== null);
 
       return {
-        bridge_requests: onRampParams as BridgeRequest[],
+        bridge_requests: onRampParams,
         force_update: forceUpdate ?? false,
-      };
+      } satisfies BridgeRefillRequirementsRequest;
     },
     [amountsToDeposit, chainId, getOnRampRequirementsParams],
   );

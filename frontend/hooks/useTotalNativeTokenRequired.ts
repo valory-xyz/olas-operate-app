@@ -112,6 +112,9 @@ export const useTotalNativeTokenRequired = (
     // Select requirements based on mode:
     // - onboard mode: Amount needed to top up (uses refill requirements)
     // - deposit mode: Full amount required (uses total requirements)
+    //
+    // TODO: reconsider this approach and split the hook into two for different purposes
+    // we ideally not pass the "mode" to avoid many if/else branches
     const bridgeRequirements =
       mode === 'deposit'
         ? bridgeFundingRequirements.bridge_total_requirements[onRampNetworkName]

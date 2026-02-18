@@ -151,7 +151,7 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
     // Get the master safe (in case it exists) or master EOA balance of the network to on-ramp
     const hasMasterSafe = getMasterSafeOf?.(networkId);
     const balance = hasMasterSafe
-      ? (getMasterSafeNativeBalanceOf(networkId)?.[0]?.balanceString ?? '0')
+      ? getMasterSafeNativeBalanceOf(networkId)?.[0]?.balanceString
       : getMasterEoaNativeBalanceOf(networkId);
 
     initialBalanceRef.current = balance || '0';
@@ -176,7 +176,7 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
     // Get the master safe (in case it exists) or master EOA balance of the network to on-ramp
     const hasMasterSafe = getMasterSafeOf?.(networkId);
     const currentBalance = hasMasterSafe
-      ? (getMasterSafeNativeBalanceOf(networkId)?.[0]?.balanceString ?? '0')
+      ? getMasterSafeNativeBalanceOf(networkId)?.[0]?.balanceString
       : getMasterEoaNativeBalanceOf(networkId);
     if (!currentBalance) return;
 
@@ -186,9 +186,9 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
     ).toFixed(18);
 
     // Calculate the actual increase in balance
-    const initialBalance = BigInt(parseEther(initialBalanceRef.current));
-    const currentBalanceBigInt = BigInt(parseEther(currentBalance.toString()));
-    const balanceIncrease = currentBalanceBigInt - initialBalance;
+    const balanceBeforeOnRamp = BigInt(parseEther(initialBalanceRef.current));
+    const balanceAfterOnRamp = BigInt(parseEther(currentBalance.toString()));
+    const balanceIncrease = balanceAfterOnRamp - balanceBeforeOnRamp;
 
     // Check if balance increased by at least the threshold amount
     if (balanceIncrease >= BigInt(parseEther(thresholdAmount))) {

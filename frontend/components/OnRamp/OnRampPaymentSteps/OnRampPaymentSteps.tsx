@@ -95,7 +95,11 @@ export const OnRampPaymentSteps = ({
           ]),
         ]}
       />
-      {mode === 'onboard' && isSetupCompleted && <AgentSetupCompleteModal />}
+      {
+        // TODO: move this out of steps and handle in parent component
+        // same as we do it with for depositing with showOnRampCompleteModal
+        mode === 'onboard' && isSetupCompleted && <AgentSetupCompleteModal />
+      }
     </>
   );
 };

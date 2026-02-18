@@ -1,5 +1,5 @@
 import { Button } from 'antd';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useUnmount } from 'usehooks-ts';
 
 import { SuccessOutlined } from '@/components/custom-icons';
@@ -9,9 +9,8 @@ import { TOKEN_CONFIG, TokenSymbol } from '@/config/tokens';
 import { AddressZero, EvmChainId } from '@/constants';
 import { usePearlWallet } from '@/context/PearlWalletProvider';
 import { useGetOnRampRequirementsParams, useOnRampContext } from '@/hooks';
-import { BridgeRefillRequirementsRequest, BridgeRequest } from '@/types/Bridge';
+import { BridgeRefillRequirementsRequest } from '@/types/Bridge';
 import { TokenAmountDetails, TokenAmounts } from '@/types/Wallet';
-import { asEvmChainDetails, asMiddlewareChain } from '@/utils';
 
 type OnRampCryptoOnProps = {
   onBack: () => void;
@@ -25,21 +24,8 @@ export const OnRampCryptoOn = ({
   onBack,
 }: OnRampCryptoOnProps) => {
   const { onReset, walletChainId } = usePearlWallet();
-  const { updateNetworkConfig, resetOnRampState } = useOnRampContext();
+  const { resetOnRampState } = useOnRampContext();
   const [showOnRampCompleteModal, setShowOnRampCompleteModal] = useState(false);
-
-  // Set network config for deposit mode
-  useEffect(() => {
-    const toChain = asMiddlewareChain(onRampChainId);
-    const chainDetails = asEvmChainDetails(toChain);
-
-    updateNetworkConfig({
-      networkId: onRampChainId,
-      networkName: chainDetails.name,
-      cryptoCurrencyCode: chainDetails.symbol,
-      selectedChainId: walletChainId,
-    });
-  }, [walletChainId, onRampChainId, updateNetworkConfig]);
 
   const getOnRampRequirementsParams =
     useGetOnRampRequirementsParams(onRampChainId);
@@ -58,24 +44,26 @@ export const OnRampCryptoOn = ({
         return null;
       }
 
-      const onRampParams = toDeposit.map(([tokenSymbol, { amount }]) => {
-        const token = TOKEN_CONFIG[walletChainId][tokenSymbol];
-        if (!token) {
-          throw new Error(
-            `Token ${tokenSymbol} is not supported on chain ${walletChainId}`,
-          );
-        }
+      const onRampParams = toDeposit
+        .map(([tokenSymbol, { amount }]) => {
+          const token = TOKEN_CONFIG[walletChainId][tokenSymbol];
+          if (!token) {
+            throw new Error(
+              `Token ${tokenSymbol} is not supported on chain ${walletChainId}`,
+            );
+          }
 
-        return getOnRampRequirementsParams(
-          token.address ?? AddressZero,
-          amount,
-        );
-      });
+          return getOnRampRequirementsParams(
+            token.address ?? AddressZero,
+            amount,
+          );
+        })
+        .filter((request) => request !== null);
 
       return {
-        bridge_requests: onRampParams as BridgeRequest[],
+        bridge_requests: onRampParams,
         force_update: forceUpdate ?? false,
-      };
+      } satisfies BridgeRefillRequirementsRequest;
     },
     [amountsToDeposit, walletChainId, getOnRampRequirementsParams],
   );

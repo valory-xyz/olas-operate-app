@@ -253,6 +253,9 @@ export const useSwapFundsStep = (
     return receivingTokens.map(({ symbol }) => symbol);
   }, [receivingTokens]);
 
+  // TODO: tokensToBeBridged are used to not display this step if the list is empty
+  // maybe we should handle it here instead, as we do for useCreateAndTransferFundsToMasterSafeSteps
+  // and simply return the step as null
   if (!isOnRampingStepCompleted) {
     return { ...EMPTY_STATE, tokensToBeBridged };
   }
