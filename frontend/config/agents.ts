@@ -171,6 +171,7 @@ export const AGENT_CONFIG: {
     hasExternalFunds: false,
     doesChatUiRequireApiKey: false,
     defaultBehavior: 'Autonomously posts to X based on the provided persona.',
+    // TODO: Support the new service ID dvilela/memeooorr:0.1.0 -> valory/memeooorr:0.1.0 (also update check_service_templates.ts)
     servicePublicId: 'dvilela/memeooorr:0.1.0',
   },
   [AgentMap.Modius]: {
