@@ -1,6 +1,5 @@
-import { Flex, Spin, Typography } from 'antd';
+import { Flex, Spin } from 'antd';
 import { useCallback, useEffect, useState } from 'react';
-import styled from 'styled-components';
 
 import { PAGES } from '@/constants';
 import {
@@ -16,16 +15,6 @@ import { ConfigureActivityRewards } from './components/ConfigureActivityRewards'
 import { SelectActivityRewardsConfiguration } from './components/SelectActivityRewardsConfiguration';
 import { SelectMode } from './types';
 
-const { Title, Text } = Typography;
-
-const StakingContractsWrapper = styled.div`
-  display: grid;
-  grid-template-columns: auto auto;
-  justify-content: center;
-  gap: 24px;
-  margin-top: 32px;
-`;
-
 const ViewType = {
   LOADING: 'LOADING',
   CONFIGURE: 'CONFIGURE',
@@ -40,18 +29,15 @@ type SelectStakingProps = {
 
 export const SelectStakingPage = ({ mode }: SelectStakingProps) => {
   const { goto: gotoPage } = usePageState();
-  const { selectedService } = useServices();
+  const { isLoading, selectedService, selectedAgentConfig } = useServices();
   const { currentStakingProgramId } = useStakingContracts();
-  const { selectedStakingProgramId, defaultStakingProgramId } =
-    useStakingProgram();
-  console.log('SelectStakingPage', {
-    currentStakingProgramId,
-    selectedStakingProgramId,
-    defaultStakingProgramId,
-  });
-  const [hasUserChangedConfig, setHasUserChangedConfig] = useState(false);
+  const { selectedStakingProgramId } = useStakingProgram();
+  const { defaultStakingProgramId } = selectedAgentConfig;
 
+  const [hasUserChangedConfig, setHasUserChangedConfig] = useState(false);
   const [viewType, setViewType] = useState<ViewTypeValue>(() => {
+    if (isLoading) return ViewType.LOADING;
+
     // For migrate flow, we always show the list of staking programs to select from
     if (mode === 'migrate') return ViewType.SELECT_FROM_LIST;
 
@@ -69,6 +55,13 @@ export const SelectStakingPage = ({ mode }: SelectStakingProps) => {
   });
 
   useEffect(() => {
+    if (isLoading) {
+      if (viewType !== ViewType.LOADING) {
+        setViewType(ViewType.LOADING);
+      }
+      return;
+    }
+
     // If migrating, then show the list of staking programs to select from
     if (mode === 'migrate') {
       if (viewType !== ViewType.SELECT_FROM_LIST) {
@@ -78,6 +71,8 @@ export const SelectStakingPage = ({ mode }: SelectStakingProps) => {
     }
 
     if (mode === 'onboard') {
+      if (hasUserChangedConfig) return;
+
       // If service is created and present
       if (selectedService) {
         const shouldShowList =
@@ -85,14 +80,17 @@ export const SelectStakingPage = ({ mode }: SelectStakingProps) => {
           !!selectedStakingProgramId &&
           selectedStakingProgramId !== defaultStakingProgramId;
 
-        // If default and selected staking are same, show configuration,
-        // else show the list to select from
-        const nextViewType = shouldShowList
-          ? ViewType.SELECT_FROM_LIST
-          : ViewType.CONFIGURE;
+        if (shouldShowList && viewType !== ViewType.SELECT_FROM_LIST) {
+          setViewType(ViewType.SELECT_FROM_LIST);
+          return;
+        }
 
-        if (!hasUserChangedConfig && viewType !== nextViewType) {
-          setViewType(nextViewType);
+        if (
+          !shouldShowList &&
+          !hasUserChangedConfig &&
+          viewType !== ViewType.CONFIGURE
+        ) {
+          setViewType(ViewType.CONFIGURE);
         }
         return;
       }
@@ -109,6 +107,7 @@ export const SelectStakingPage = ({ mode }: SelectStakingProps) => {
     defaultStakingProgramId,
     selectedStakingProgramId,
     hasUserChangedConfig,
+    isLoading,
   ]);
 
   const onChangeConfiguration = useCallback(() => {

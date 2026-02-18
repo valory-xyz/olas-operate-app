@@ -1,6 +1,6 @@
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { Button as AntdButton, Flex, Typography } from 'antd';
-import { ReactNode, useEffect } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import styled from 'styled-components';
 
 import { StakingContractCard } from '@/components/StakingContractCard';
@@ -95,6 +95,18 @@ export const SelectActivityRewardsConfiguration = ({
   currentStakingProgramId,
 }: SelectActivityRewardsConfigurationProps) => {
   const { orderedStakingProgramIds } = useStakingContracts();
+  const [stableOrder, setStableOrder] = useState<StakingProgramId[]>([]);
+
+  useEffect(() => {
+    if (!stableOrder.length) {
+      setStableOrder(orderedStakingProgramIds);
+      return;
+    }
+
+    if (stableOrder.length !== orderedStakingProgramIds.length) {
+      setStableOrder(orderedStakingProgramIds);
+    }
+  }, [orderedStakingProgramIds, stableOrder.length]);
 
   return (
     <Flex vertical justify="center" className="w-full">
@@ -114,7 +126,7 @@ export const SelectActivityRewardsConfiguration = ({
       </Flex>
 
       <StakingContractsWrapper>
-        {orderedStakingProgramIds.map((stakingProgramId) => {
+        {stableOrder.map((stakingProgramId) => {
           const isCurrentStakingProgram =
             stakingProgramId === currentStakingProgramId;
           return (

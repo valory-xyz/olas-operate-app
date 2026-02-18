@@ -3,7 +3,7 @@ import { ReactNode } from 'react';
 import styled from 'styled-components';
 
 import { COLOR } from '@/constants';
-import { useStakingProgram } from '@/hooks';
+import { useServices } from '@/hooks';
 import { assertRequired } from '@/types';
 
 import { StakingContractCard } from '../../StakingContractCard';
@@ -36,7 +36,8 @@ export const ConfigureActivityRewards = ({
   backButton,
   onChangeConfiguration,
 }: ConfigureActivityRewardsProps) => {
-  const { defaultStakingProgramId } = useStakingProgram();
+  const { selectedAgentConfig } = useServices();
+  const defaultStakingProgramId = selectedAgentConfig.defaultStakingProgramId;
   assertRequired(
     defaultStakingProgramId,
     'Default staking program ID is required',
@@ -73,9 +74,7 @@ export const ConfigureActivityRewards = ({
               </Button>
               <SelectStakingButton
                 stakingProgramId={defaultStakingProgramId}
-                isCurrentStakingProgram={true}
                 buttonLabelOverride="Continue"
-                ignoreCurrentSelection={true}
               />
             </Flex>
           )}

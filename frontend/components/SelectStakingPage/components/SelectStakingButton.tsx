@@ -19,7 +19,6 @@ type SwitchStakingButtonProps = {
   stakingProgramId: StakingProgramId;
   isCurrentStakingProgram?: boolean;
   buttonLabelOverride?: string;
-  ignoreCurrentSelection?: boolean;
 };
 
 /**
@@ -29,7 +28,6 @@ export const SelectStakingButton = ({
   stakingProgramId,
   isCurrentStakingProgram = false,
   buttonLabelOverride,
-  ignoreCurrentSelection = false,
 }: SwitchStakingButtonProps) => {
   const {
     value: isLoading,
@@ -52,9 +50,7 @@ export const SelectStakingButton = ({
 
   const { buttonText, canMigrate } = useCanMigrate({
     stakingProgramId,
-    isCurrentStakingProgram: ignoreCurrentSelection
-      ? false
-      : isCurrentStakingProgram,
+    isCurrentStakingProgram,
   });
 
   const handleSelect = async () => {
@@ -92,11 +88,11 @@ export const SelectStakingButton = ({
         message.error('An error occurred while updating the staking contract.');
         stopLoading();
       }
-
-      // fetch services again to update the state after service creation
-      // and to have correct state in the selectedService if we get back to this page
-      await refetchServices?.();
     }
+
+    // fetch services again to update the state after service creation
+    // and to have correct state in the selectedService if we get back to this page
+    await refetchServices?.();
 
     // refetch refill requirements to check if the agent requires funding
     const result = await refetchRequirements();
