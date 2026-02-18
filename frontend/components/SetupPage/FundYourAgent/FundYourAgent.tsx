@@ -131,21 +131,23 @@ export const FundYourAgent = () => {
     isLoading || tokenRequirements.length === 0;
 
   return (
-    <Flex align="center" vertical>
-      <BackButton
-        onPrev={() => {
-          resetTokenRequirements();
-          goto(SETUP_SCREEN.SelectStaking);
-        }}
-      />
-      <Title level={3} className="mt-12">
-        Fund your {selectedAgentConfig.displayName}
-      </Title>
-      <Text type="secondary">
-        Select the payment method that suits you best.
-      </Text>
+    <Flex vertical style={{ padding: '0 80px' }}>
+      <Flex vertical>
+        <BackButton
+          onPrev={() => {
+            resetTokenRequirements();
+            goto(SETUP_SCREEN.SelectStaking);
+          }}
+        />
+        <Title level={3} className="mt-12">
+          Fund your {selectedAgentConfig.displayName}
+        </Title>
+        <Text className="text-neutral-secondary">
+          Select the payment method that suits you best.
+        </Text>
+      </Flex>
 
-      <Flex gap={24} style={{ marginTop: 56 }}>
+      <Flex gap={24} style={{ marginTop: 32 }}>
         {isOnRampEnabled && <OnRampMethodCard />}
         <TransferTokens
           chainName={chainName}

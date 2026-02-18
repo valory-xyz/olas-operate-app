@@ -7,16 +7,16 @@ import { usePageState, useServices, useStakingContracts } from '@/hooks';
 import { StakingContractCard } from '../StakingContractCard';
 import { BackButton } from '../ui/BackButton';
 import { SelectStakingButton } from './SelectStakingButton';
-import { SlotsLeft } from './SlotsLeft';
 import { SwitchStakingButton } from './SwitchStakingButton';
 
-const { Title } = Typography;
+const { Title, Text } = Typography;
 
 const StakingContractsWrapper = styled.div`
   display: grid;
   grid-template-columns: auto auto;
   justify-content: center;
   gap: 24px;
+  margin-top: 32px;
 `;
 
 type SelectStakingProps = {
@@ -38,9 +38,12 @@ export const SelectStakingPage = ({ mode }: SelectStakingProps) => {
       >
         {/* Do not allow going back if service is not yet created */}
         {selectedService && <BackButton onPrev={() => gotoPage(PAGES.Main)} />}
-        <Title level={3} className="mt-12 mb-32">
+        <Title level={3} className="mt-12">
           Select Activity Rewards Configuration
         </Title>
+        <Text className="text-neutral-secondary">
+          Select the payment method that suits you best.
+        </Text>
       </Flex>
 
       <StakingContractsWrapper>
@@ -53,10 +56,6 @@ export const SelectStakingPage = ({ mode }: SelectStakingProps) => {
                 stakingProgramId === currentStakingProgramId;
               return (
                 <>
-                  <SlotsLeft
-                    contractDetails={contractDetails}
-                    isCurrentStakingProgram={isCurrentStakingProgram}
-                  />
                   {mode === 'migrate' && (
                     <SwitchStakingButton
                       isCurrentStakingProgram={isCurrentStakingProgram}

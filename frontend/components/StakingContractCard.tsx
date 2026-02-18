@@ -11,6 +11,8 @@ import { useServices } from '@/hooks';
 import { useStakingContractContext } from '@/hooks/useStakingContractDetails';
 import { StakingContractDetails } from '@/types';
 
+import { useEachStakingDetails } from './SelectStakingPage/hooks/useStakingDetails';
+
 const { Text, Title } = Typography;
 
 const ContractCard = styled(CardFlex)<{ $isView?: boolean }>`
@@ -26,10 +28,12 @@ const ContractCard = styled(CardFlex)<{ $isView?: boolean }>`
 type ConfigurationDetailsProps = {
   stakingProgramId: StakingProgramId;
   name: string;
+  slots: string;
 };
 const ConfigurationDetails = ({
   stakingProgramId,
   name,
+  slots,
 }: ConfigurationDetailsProps) => {
   return (
     <Popover>
@@ -46,7 +50,7 @@ const ConfigurationDetails = ({
             <Text className="text-sm text-neutral-tertiary">
               Available slots:
             </Text>
-            <Text className="text-sm">14/100</Text>
+            <Text className="text-sm">{slots}</Text>
           </Flex>
         </Flex>
 
@@ -83,6 +87,7 @@ export const StakingContractCard = ({
     STAKING_PROGRAMS[selectedAgentConfig.evmHomeChainId][stakingProgramId];
   const { allStakingContractDetailsRecord } = useStakingContractContext();
   const contractDetails = allStakingContractDetailsRecord?.[stakingProgramId];
+  const { slotsLeft, totalSlots } = useEachStakingDetails(stakingProgramId);
 
   return (
     <ContractCard $noBodyPadding $isView={!renderAction}>
@@ -100,13 +105,14 @@ export const StakingContractCard = ({
           </Text>
         </Flex>
         <Popover
+          title="Configuration details"
           content={
             <ConfigurationDetails
               name={stakingProgramMeta.name}
               stakingProgramId={stakingProgramId}
+              slots={`${slotsLeft} / ${totalSlots}`}
             />
           }
-          title="Configuration details"
         >
           <LuInfo style={{ color: COLOR.TEXT_NEUTRAL_TERTIARY }} />
         </Popover>

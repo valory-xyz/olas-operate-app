@@ -111,7 +111,7 @@ export const SelectStakingButton = ({
   };
 
   return (
-    <Flex className="px-24 py-24">
+    <Flex className="px-24 pb-24 mt-40">
       <Button
         size="large"
         type="primary"
