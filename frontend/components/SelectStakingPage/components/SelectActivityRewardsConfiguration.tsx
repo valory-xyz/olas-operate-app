@@ -87,12 +87,16 @@ type SelectActivityRewardsConfigurationProps = {
   mode: SelectMode;
   backButton?: ReactNode;
   currentStakingProgramId: Nullable<StakingProgramId>;
+  onSelectStart?: () => void;
+  onSelectEnd?: () => void;
 };
 
 export const SelectActivityRewardsConfiguration = ({
   mode,
   backButton,
   currentStakingProgramId,
+  onSelectStart,
+  onSelectEnd,
 }: SelectActivityRewardsConfigurationProps) => {
   const { orderedStakingProgramIds } = useStakingContracts();
   const [stableOrder, setStableOrder] = useState<StakingProgramId[]>([]);
@@ -140,6 +144,8 @@ export const SelectActivityRewardsConfiguration = ({
                       <SelectStakingButton
                         isCurrentStakingProgram={isCurrentStakingProgram}
                         stakingProgramId={stakingProgramId}
+                        onSelectStart={onSelectStart}
+                        onSelectEnd={onSelectEnd}
                       />
                     </Flex>
                   )}
