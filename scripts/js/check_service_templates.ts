@@ -36,6 +36,7 @@ async function checkServiceTemplates(): Promise<void> {
     const releaseUrls = [
       `https://github.com/${owner}/${repoName}/releases/download/${version}/agent_runner_macos_arm64`,
       `https://github.com/${owner}/${repoName}/releases/download/${version}/agent_runner_macos_x64`,
+      `https://github.com/${owner}/${repoName}/releases/download/${version}/agent_runner_linux_x64`,
       `https://github.com/${owner}/${repoName}/releases/download/${version}/agent_runner_windows_x64.exe`,
     ];
 
