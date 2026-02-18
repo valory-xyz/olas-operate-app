@@ -56,29 +56,6 @@ const ViewType = {
 type ViewTypeValue = (typeof ViewType)[keyof typeof ViewType];
 
 type SelectMode = 'onboard' | 'migrate';
-const ConfigureActivityRewardsTitle = () => (
-  <>
-    <Title level={3} className="mt-12">
-      Configure Activity Rewards
-    </Title>
-    <Text className="text-neutral-secondary">
-      You can earn OLAS crypto for using your agent. Select the configuration –
-      called Staking Contract – that suits you best.
-    </Text>
-  </>
-);
-
-const SelectActivityRewardsConfigurationTitle = () => (
-  <>
-    <Title level={3} className="mt-12">
-      Select Activity Rewards Configuration
-    </Title>
-    <Text className="text-neutral-secondary">
-      Configuration defines how much activity rewards you can earn by using your
-      agent.
-    </Text>
-  </>
-);
 
 type ConfigureActivityRewardsProps = {
   backButton?: ReactNode;
@@ -103,7 +80,13 @@ const ConfigureActivityRewards = ({
     >
       <Flex vertical className="mx-auto">
         {backButton}
-        <ConfigureActivityRewardsTitle />
+        <Title level={3} className="mt-12">
+          Configure Activity Rewards
+        </Title>
+        <Text className="text-neutral-secondary">
+          You can earn OLAS crypto for using your agent. Select the
+          configuration – called Staking Contract – that suits you best.
+        </Text>
       </Flex>
 
       <ConfigureStakingContractCardContainer>
@@ -120,6 +103,8 @@ const ConfigureActivityRewards = ({
               <SelectStakingButton
                 stakingProgramId={defaultStakingProgramId}
                 isCurrentStakingProgram={true}
+                buttonLabelOverride="Continue"
+                ignoreCurrentSelection={true}
               />
             </Flex>
           )}
@@ -140,7 +125,6 @@ const SelectActivityRewards = ({
   currentStakingProgramId,
 }: SelectActivityRewardsProps) => {
   const { orderedStakingProgramIds } = useStakingContracts();
-  console.log({ orderedStakingProgramIds });
 
   return (
     <Flex vertical justify="center" className="w-full">
@@ -150,7 +134,13 @@ const SelectActivityRewards = ({
         style={{ width: MAIN_CONTENT_MAX_WIDTH }}
       >
         {backButton}
-        <SelectActivityRewardsConfigurationTitle />
+        <Title level={3} className="mt-12">
+          Select Activity Rewards Configuration
+        </Title>
+        <Text className="text-neutral-secondary">
+          Configuration defines how much activity rewards you can earn by using
+          your agent.
+        </Text>
       </Flex>
 
       <StakingContractsWrapper>
@@ -196,37 +186,86 @@ export const SelectStakingPage = ({ mode }: SelectStakingProps) => {
   const { selectedService } = useServices();
   const { orderedStakingProgramIds, currentStakingProgramId } =
     useStakingContracts();
-  const [viewType, setViewType] = useState<ViewTypeValue>(
-    mode === 'migrate' ? ViewType.SELECT_FROM_LIST : ViewType.LOADING,
-  );
+  const { defaultStakingProgramId, selectedStakingProgramId } =
+    useStakingProgram();
+  const [hasUserChangedConfig, setHasUserChangedConfig] = useState(false);
 
-  console.log({ currentStakingProgramId });
+  const [viewType, setViewType] = useState<ViewTypeValue>(() => {
+    // For migrate flow, we always show the list of staking programs to select from
+    if (mode === 'migrate') return ViewType.SELECT_FROM_LIST;
+
+    // If onboarding, we show the loading state while we determine whether to show
+    // the list or just the default staking program configuration
+    if (mode !== 'onboard') return ViewType.LOADING;
+
+    const shouldShowList =
+      !!selectedService &&
+      !!defaultStakingProgramId &&
+      !!selectedStakingProgramId &&
+      selectedStakingProgramId !== defaultStakingProgramId;
+
+    return shouldShowList ? ViewType.SELECT_FROM_LIST : ViewType.CONFIGURE;
+  });
 
   useEffect(() => {
+    // If migrating, then show the list of staking programs to select from
     if (mode === 'migrate') {
-      if (viewType === ViewType.LOADING) {
+      if (viewType !== ViewType.SELECT_FROM_LIST) {
         setViewType(ViewType.SELECT_FROM_LIST);
       }
-    } else if (mode === 'onboard') {
-      setViewType(ViewType.CONFIGURE);
+      return;
     }
-  }, [mode, viewType]);
+
+    if (mode === 'onboard') {
+      // If service is created and present
+      if (selectedService) {
+        const shouldShowList =
+          !!defaultStakingProgramId &&
+          !!selectedStakingProgramId &&
+          selectedStakingProgramId !== defaultStakingProgramId;
+
+        // If default and selected staking are same, show configuration,
+        // else show the list to select from
+        const nextViewType = shouldShowList
+          ? ViewType.SELECT_FROM_LIST
+          : ViewType.CONFIGURE;
+
+        if (!hasUserChangedConfig && viewType !== nextViewType) {
+          setViewType(nextViewType);
+        }
+        return;
+      }
+
+      // If service is not yet created, show the default staking program configuration
+      if (viewType === ViewType.LOADING) {
+        setViewType(ViewType.CONFIGURE);
+      }
+    }
+  }, [
+    mode,
+    viewType,
+    selectedService,
+    defaultStakingProgramId,
+    selectedStakingProgramId,
+    hasUserChangedConfig,
+  ]);
 
   const onChangeConfiguration = useCallback(() => {
+    setHasUserChangedConfig(true);
     setViewType(ViewType.SELECT_FROM_LIST);
   }, []);
 
-  /**
-   * show the recommended staking program for onboarding, iff
-   * - No service is created yet (i.e. user is in the middle of onboarding)
-   * - Either the selected service is present and the staking program is the default one.
-   * - If no service is selected
-   */
+  const handleBack = useCallback(() => {
+    if (mode === 'onboard' && viewType === ViewType.SELECT_FROM_LIST) {
+      setViewType(ViewType.CONFIGURE);
+      return;
+    }
 
-  // Do not allow going back if service is not yet created
-  const backButton = selectedService && (
-    <BackButton onPrev={() => gotoPage(PAGES.Main)} />
-  );
+    gotoPage(PAGES.Main);
+  }, [gotoPage, mode, viewType]);
+
+  // do not allow going back if service is not yet created
+  const backButton = selectedService && <BackButton onPrev={handleBack} />;
 
   return viewType === ViewType.LOADING ? (
     <Flex justify="center" align="center" className="w-full py-32">

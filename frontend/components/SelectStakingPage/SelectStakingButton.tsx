@@ -18,6 +18,8 @@ import { useCanMigrate } from './hooks/useCanMigrate';
 type SwitchStakingButtonProps = {
   stakingProgramId: StakingProgramId;
   isCurrentStakingProgram?: boolean;
+  buttonLabelOverride?: string;
+  ignoreCurrentSelection?: boolean;
 };
 
 /**
@@ -26,6 +28,8 @@ type SwitchStakingButtonProps = {
 export const SelectStakingButton = ({
   stakingProgramId,
   isCurrentStakingProgram = false,
+  buttonLabelOverride,
+  ignoreCurrentSelection = false,
 }: SwitchStakingButtonProps) => {
   const {
     value: isLoading,
@@ -48,7 +52,9 @@ export const SelectStakingButton = ({
 
   const { buttonText, canMigrate } = useCanMigrate({
     stakingProgramId,
-    isCurrentStakingProgram,
+    isCurrentStakingProgram: ignoreCurrentSelection
+      ? false
+      : isCurrentStakingProgram,
   });
 
   const handleSelect = async () => {
@@ -119,7 +125,7 @@ export const SelectStakingButton = ({
       disabled={!canMigrate || isServicesLoading}
       loading={isLoading}
     >
-      {buttonText}
+      {buttonLabelOverride ?? buttonText}
     </Button>
   );
 };
