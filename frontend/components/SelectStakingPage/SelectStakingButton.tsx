@@ -17,6 +17,7 @@ import { useCanMigrate } from './hooks/useCanMigrate';
 
 type SwitchStakingButtonProps = {
   stakingProgramId: StakingProgramId;
+  isCurrentStakingProgram?: boolean;
 };
 
 /**
@@ -24,6 +25,7 @@ type SwitchStakingButtonProps = {
  */
 export const SelectStakingButton = ({
   stakingProgramId,
+  isCurrentStakingProgram = false,
 }: SwitchStakingButtonProps) => {
   const {
     value: isLoading,
@@ -33,23 +35,21 @@ export const SelectStakingButton = ({
 
   const { goto: gotoSetup } = useSetup();
   const { goto: gotoPage } = usePageState();
-
-  const { buttonText, canMigrate } = useCanMigrate({
-    stakingProgramId,
-    isCurrentStakingProgram: false,
-  });
-
+  const { setIsInitiallyFunded } = useIsInitiallyFunded();
+  const { setDefaultStakingProgramId } = useStakingProgram();
+  const { refetchForSelectedAgent: refetchRequirements } =
+    useBalanceAndRefillRequirementsContext();
   const {
     selectedService,
     selectedAgentType,
     isLoading: isServicesLoading,
     refetch: refetchServices,
   } = useServices();
-  const { refetchForSelectedAgent: refetchRequirements } =
-    useBalanceAndRefillRequirementsContext();
-  const { setDefaultStakingProgramId } = useStakingProgram();
 
-  const { setIsInitiallyFunded } = useIsInitiallyFunded();
+  const { buttonText, canMigrate } = useCanMigrate({
+    stakingProgramId,
+    isCurrentStakingProgram,
+  });
 
   const handleSelect = async () => {
     startLoading();

@@ -86,7 +86,10 @@ const ConfigureActivityRewards = ({
           renderAction={() => (
             <Flex className="px-24 pb-24 mt-40" gap={16}>
               <Button>Change Configuration</Button>
-              <SelectStakingButton stakingProgramId={defaultStakingProgramId} />
+              <SelectStakingButton
+                stakingProgramId={defaultStakingProgramId}
+                isCurrentStakingProgram={true}
+              />
             </Flex>
           )}
         />
@@ -132,6 +135,7 @@ const SelectActivityRewards = ({
                   {mode === 'onboard' && (
                     <Flex className="px-24 pb-24 mt-40" gap={16}>
                       <SelectStakingButton
+                        isCurrentStakingProgram={isCurrentStakingProgram}
                         stakingProgramId={stakingProgramId}
                       />
                     </Flex>

@@ -18,7 +18,7 @@ export enum MigrateButtonText {
   AgentInCooldownPeriod = 'Agent in cooldown period',
   NoSlotsAvailable = 'No slots available',
   SelectContract = 'Select',
-  CurrentContract = 'Current',
+  CurrentContract = 'Selected',
   CurrentlyRunning = 'Agent is currently running',
 }
 
