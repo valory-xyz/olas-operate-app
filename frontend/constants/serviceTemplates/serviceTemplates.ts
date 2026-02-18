@@ -22,7 +22,7 @@ const AGENTS_FUN_COMMON_TEMPLATE: Pick<
   | 'service_version'
   | 'agent_release'
 > = {
-  hash: 'bafybeiawqqwkoeovm453mscwkxvmtnvaanhatlqh52cf5sdqavz6ldybae',
+  hash: 'bafybeigknu2la7cxkfbfbcp6gyjwq7bypoeebfc2u5cacdhuyjyhaxf2ga',
   image:
     'https://gateway.autonolas.tech/ipfs/QmQYDGMg8m91QQkTWSSmANs5tZwKrmvUCawXZfXVVWQPcu',
   description: `${KPI_DESC_PREFIX} Agents.Fun @twitter_handle`, // NOTE: @twitter_handle to be replaced with twitter username
@@ -159,7 +159,7 @@ const AGENTS_FUN_BASE_TEMPLATE: ServiceTemplate = {
 export const PETT_AI_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentMap.PettAi,
   name: 'pett_agent',
-  hash: 'bafybeiebj5n56dvxyxp6ml53hkgiawnnyzikshmd6kvd5foaitcknx3m4q',
+  hash: 'bafybeicatbkc35po2zdgwripfvstabpkqqks6rqwgm2ttc2rbutqsd3gga',
   description: 'Pett.ai autonomous agent service for virtual pet management.',
   image:
     'https://gateway.autonolas.tech/ipfs/QmQYDGMg8m91QQkTWSSmANs5tZwKrmvUCawXZfXVVWQPcu',
