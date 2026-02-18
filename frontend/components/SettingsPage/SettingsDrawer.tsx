@@ -5,14 +5,10 @@ import Image from 'next/image';
 import { useMemo } from 'react';
 import { TbArrowsSplit2 } from 'react-icons/tb';
 
-import { AddressLink, IconContainer, Table } from '@/components/ui';
+import { IconContainer, Table } from '@/components/ui';
 import { CHAIN_CONFIG } from '@/config/chains';
-import {
-  COLOR,
-  SupportedMiddlewareChain,
-  TokenSymbol,
-  TokenSymbolConfigMap,
-} from '@/constants';
+import { TokenSymbol, TokenSymbolConfigMap } from '@/config/tokens';
+import { COLOR, SupportedMiddlewareChain } from '@/constants';
 import { AddressZero } from '@/constants/address';
 import { useMasterWalletContext, useServices } from '@/hooks';
 import { formatUnits } from '@/utils';
@@ -118,10 +114,9 @@ export const SettingsDrawer = ({
   isDrawerOpen,
   onClose,
 }: SettingsDrawerProps) => {
-  const { masterEoa, getMasterSafeOf } = useMasterWalletContext();
-  const { selectedAgentConfig, services } = useServices();
+  const { masterEoa } = useMasterWalletContext();
+  const { services } = useServices();
   const { data: settings, isLoading } = useSettingsDrawer();
-  const masterSafe = getMasterSafeOf?.(selectedAgentConfig.evmHomeChainId);
 
   const tableData = useMemo<TableData[]>(() => {
     if (!settings?.eoa_topups || !services) return [];
@@ -173,44 +168,24 @@ export const SettingsDrawer = ({
       width={520}
       extra={<Button type="text" icon={<CloseOutlined />} onClick={onClose} />}
     >
-      <IconContainer>
-        <TbArrowsSplit2
-          size={20}
-          fontSize={30}
-          color={COLOR.TEXT_NEUTRAL_TERTIARY}
-        />
-      </IconContainer>
+      <Flex justify="left">
+        <IconContainer>
+          <TbArrowsSplit2 size={20} color={COLOR.TEXT_NEUTRAL_TERTIARY} />
+        </IconContainer>
+      </Flex>
       <Flex gap={26} vertical>
         <SettingsDescription />
-        <Flex gap={16} vertical>
-          <Flex vertical gap={4}>
-            <Text className="text-xs">Pearl Wallet Address</Text>
-            {masterSafe?.address ? (
-              <AddressLink
-                truncate={false}
-                address={masterSafe.address}
-                middlewareChain={selectedAgentConfig.middlewareHomeChainId}
-              />
-            ) : (
-              <Text className="text-sm" type="secondary">
-                No Pearl Safe
-              </Text>
-            )}
-          </Flex>
-          <Flex vertical gap={4}>
-            <Text className="text-xs">Signer Wallet Address</Text>
-            {masterEoa ? (
-              <AddressLink
-                truncate={false}
-                address={masterEoa?.address}
-                middlewareChain={selectedAgentConfig.middlewareHomeChainId}
-              />
-            ) : (
-              <Text className="text-sm" type="secondary">
-                No Pearl Signer
-              </Text>
-            )}
-          </Flex>
+        <Flex vertical gap={4}>
+          <Text className="text-xs">Signer Wallet Address</Text>
+          {masterEoa?.address ? (
+            <Text className="text-sm" copyable>
+              {masterEoa.address}
+            </Text>
+          ) : (
+            <Text className="text-sm" type="secondary">
+              No Pearl Signer
+            </Text>
+          )}
         </Flex>
         <Table
           columns={columns}
