@@ -228,7 +228,7 @@ export const AGENT_CONFIG: {
 
 export const ACTIVE_AGENTS = entries(AGENT_CONFIG).filter(([, agentConfig]) => {
   return !!agentConfig.isAgentEnabled;
-});
+}) as [AgentType, AgentConfig][];
 
 export const AVAILABLE_FOR_ADDING_AGENTS = ACTIVE_AGENTS.filter(
   ([, agentConfig]) => !agentConfig.isUnderConstruction,
