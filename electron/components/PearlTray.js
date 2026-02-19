@@ -22,16 +22,16 @@ const invertImage = (nativeImg) => {
   // Get raw pixel data (RGBA)
   const buffer = nativeImg.toBitmap();
 
-  // Проходим по каждому пикселю и инвертируем цвета
-  // Структура: [R, G, B, A, R, G, B, A, ...]
+  // Go through each pixel and invert the colors
+  // Structure: [R, G, B, A, R, G, B, A, ...]
   for (let i = 0; i < buffer.length; i += 4) {
-    // Инвертируем только RGB, Альфа-канал (прозрачность) [i+3] не трогаем
+    // Invert only RGB, leave the Alpha channel (transparency) [i+3] untouched
     buffer[i] = 255 - buffer[i];     // Red
     buffer[i + 1] = 255 - buffer[i + 1]; // Green
     buffer[i + 2] = 255 - buffer[i + 2]; // Blue
   }
 
-  // Создаем новое изображение из измененного буфера
+  // Create new image from the modified buffer
   return Electron.nativeImage.createFromBitmap(buffer, {
     width: size.width,
     height: size.height,
