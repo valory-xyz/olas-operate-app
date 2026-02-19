@@ -142,10 +142,11 @@ export const SettingsDrawer = ({
         );
 
         const eoaThresholds = settings.eoa_thresholds?.[middlewareChain];
-        const refundingThreshold =
+        const refundingThreshold = BigInt(
           eoaThresholds && address && eoaThresholds[address] != null
-            ? BigInt(eoaThresholds[address])
-            : fundingRequirement / 2n;
+            ? eoaThresholds[address]
+            : fundingRequirement / 2n,
+        );
 
         return {
           key: String(chainConfig.evmChainId),
