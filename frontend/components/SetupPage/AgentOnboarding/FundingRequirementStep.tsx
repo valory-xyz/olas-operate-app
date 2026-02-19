@@ -10,11 +10,17 @@ import {
   TokenSymbolConfigMap,
   TokenSymbolMap,
 } from '@/config/tokens';
-import { AgentType, COLOR } from '@/constants';
+import {
+  AgentMap,
+  AgentType,
+  COLOR,
+  UNICODE_SYMBOLS,
+  X_DEVELOPER_CONSOLE_URL,
+} from '@/constants';
 import { useInitialFundingRequirements } from '@/hooks';
 import { asEvmChainDetails } from '@/utils';
 
-const { Text, Title } = Typography;
+const { Text, Title, Link } = Typography;
 
 const UnderConstructionAlert = () => (
   <Alert
@@ -32,6 +38,22 @@ const UnderConstructionAlert = () => (
       </Flex>
     }
   />
+);
+
+const AgentsFunXCreditDesc = () => (
+  <Flex align="center">
+    <Text>$5 for X API credits</Text>
+    &nbsp;
+    <Link
+      href={X_DEVELOPER_CONSOLE_URL}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex align-center"
+    >
+      charged by X&nbsp;
+      <span className="text-xxs">{UNICODE_SYMBOLS.EXTERNAL_LINK}</span>
+    </Link>
+  </Flex>
 );
 
 type HeaderProps = {
@@ -135,7 +157,7 @@ const MinimumFundingRequirements = ({
     return (
       <Flex vertical gap={8}>
         <Text className="text-neutral-tertiary">
-          Minimum funding requirement
+          Minimum funding requirements
         </Text>
         <Text className="text-tag">No funding required</Text>
       </Flex>
@@ -144,7 +166,9 @@ const MinimumFundingRequirements = ({
 
   return (
     <Flex vertical gap={8}>
-      <Text className="text-neutral-tertiary">Minimum funding requirement</Text>
+      <Text className="text-neutral-tertiary">
+        Minimum funding requirements
+      </Text>
       <Flex vertical className="text-tag" gap={12}>
         {allTokens.map(({ token, amount, icon }) => (
           <Flex key={token} gap={8} align="flex-start">
@@ -154,6 +178,7 @@ const MinimumFundingRequirements = ({
             </Text>
           </Flex>
         ))}
+        {agentType === AgentMap.AgentsFun && <AgentsFunXCreditDesc />}
       </Flex>
     </Flex>
   );
