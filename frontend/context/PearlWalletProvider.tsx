@@ -97,6 +97,7 @@ const PearlWalletContext = createContext<{
     details: TokenAmountDetails,
   ) => void;
   updateAmountsToDeposit: (amounts: TokenAmounts) => void;
+  initializeDepositAmounts: () => void;
   onReset: (canNavigateOnReset?: boolean) => void;
   /** Initial values for funding agent wallet based on refill requirements */
   defaultRequirementDepositValues: Optional<TokenBalanceRecord>;
@@ -116,6 +117,7 @@ const PearlWalletContext = createContext<{
   amountsToDeposit: {},
   onDepositAmountChange: () => {},
   updateAmountsToDeposit: () => {},
+  initializeDepositAmounts: () => {},
   onReset: () => {},
   defaultRequirementDepositValues: {},
 });
@@ -182,8 +184,8 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
     [masterSafes, walletChainId],
   );
 
-  // Set initial deposit amounts if refill requirements is requested
-  useEffect(() => {
+  // Function to manually initialize deposit amounts based on refill requirements
+  const initializeDepositAmounts = useCallback(() => {
     if (!masterSafeAddress) return;
 
     const defaultRequirementDepositValues = getInitialDepositForMasterSafe(
@@ -198,10 +200,10 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
     setDefaultDepositValues(defaultRequirementDepositValues);
     setAmountsToDeposit(defaultRequirementDepositValues);
   }, [
-    getRefillRequirementsOf,
     walletChainId,
     masterSafeAddress,
     getServiceConfigIdsOf,
+    getRefillRequirementsOf,
   ]);
 
   // list of unique chains where the user has services
@@ -322,6 +324,7 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
         amountsToDeposit,
         onDepositAmountChange,
         updateAmountsToDeposit,
+        initializeDepositAmounts,
         onReset,
 
         // Initial values for funding agent wallet
