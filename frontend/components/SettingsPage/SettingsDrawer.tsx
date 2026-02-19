@@ -155,8 +155,8 @@ export const SettingsDrawer = ({
           key: String(chainConfig.evmChainId),
           chain: chainConfig.name,
           middlewareChain,
-          threshold: `${formatUnits(String(refundingThreshold), 18)} ${chainConfig.nativeToken.symbol}`,
-          topUpAmount: `${formatUnits(String(fundingRequirement), 18)} ${chainConfig.nativeToken.symbol}`,
+          threshold: `${formatUnits(String(refundingThreshold), chainConfig.nativeToken.decimals)} ${chainConfig.nativeToken.symbol}`,
+          topUpAmount: `${formatUnits(String(fundingRequirement), chainConfig.nativeToken.decimals)} ${chainConfig.nativeToken.symbol}`,
           tokenSymbol: chainConfig.nativeToken.symbol,
         };
       });
