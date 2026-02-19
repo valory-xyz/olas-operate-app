@@ -40,8 +40,6 @@ const {
   nativeImage,
 } = require('electron');
 
-
-
 const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
@@ -51,12 +49,8 @@ const http = require('http');
 
 const { setupDarwin, setupUbuntu, setupWindows, Env } = require('./install');
 
-
-
-
 const iconPath = path.join(__dirname, 'assets/icons/512x512.png');
 const appIcon = nativeImage.createFromPath(iconPath);
-
 
 const {
   paths,
@@ -146,7 +140,6 @@ const binaryPaths = {
     x64: 'bins/middleware/pearl_x64',
   },
 };
-
 
 let appConfig = {
   ports: {

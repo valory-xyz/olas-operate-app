@@ -65,15 +65,14 @@ const trayIcons = Object.entries(trayIconPaths).reduce(
       let trayIcon = Electron.nativeImage.createFromPath(path);
 
       if (isLinux) {
-        logger.electron(`LINUX: ${isLinux}`);
-        logger.electron(`LINUX DARK: ${nativeTheme.shouldUseDarkColors}`);
+        isDev && logger.electron(`LINUX: ${isLinux}`);
+        isDev && logger.electron(`LINUX DARK: ${nativeTheme.shouldUseDarkColors}`);
         trayIcon = trayIcon.resize({ width: 22, height: 22 });
         // make it white! cause linux does not respect reverse color schemas. darkmode autodetect does not work for every linux
         try {
           trayIcon = invertImage(trayIcon);
         } catch (e) {
           logger.electron('Failed to invert tray icon:', e);
-          logger.electron(`LINUX DARK: Failed to invert tray icon`);
         }
       }
 
