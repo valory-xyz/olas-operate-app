@@ -135,20 +135,24 @@ export const SettingsDrawer = ({
         const eoaTopups = settings.eoa_topups[middlewareChain];
         const address = chainConfig.nativeToken.address ?? AddressZero;
 
-        const fundingRequirement = eoaTopups?.[address] || '0';
+        const fundingRequirement = BigInt(
+          eoaTopups && address && eoaTopups[address] != null
+            ? eoaTopups[address]
+            : '0',
+        );
 
         const eoaThresholds = settings.eoa_thresholds?.[middlewareChain];
         const refundingThreshold =
-          eoaThresholds && address
-            ? eoaThresholds[address] || '0'
-            : String(BigInt(fundingRequirement) / 2n);
+          eoaThresholds && address && eoaThresholds[address] != null
+            ? BigInt(eoaThresholds[address])
+            : fundingRequirement / 2n;
 
         return {
           key: String(chainConfig.evmChainId),
           chain: chainConfig.name,
           middlewareChain,
-          threshold: `${formatUnits(String(refundingThreshold), 18)} ${chainConfig.nativeToken.symbol}`,
-          topUpAmount: `${formatUnits(String(fundingRequirement), 18)} ${chainConfig.nativeToken.symbol}`,
+          threshold: `${formatUnits(String(refundingThreshold), chainConfig.nativeToken.decimals)} ${chainConfig.nativeToken.symbol}`,
+          topUpAmount: `${formatUnits(String(fundingRequirement), chainConfig.nativeToken.decimals)} ${chainConfig.nativeToken.symbol}`,
           tokenSymbol: chainConfig.nativeToken.symbol,
         };
       });
