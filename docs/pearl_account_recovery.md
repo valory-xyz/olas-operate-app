@@ -9,8 +9,8 @@ Pearl is a **self-custodial application**. Pearl, Valory, and the Autonolas DAO 
 There are **four supported recovery paths**:
 
 1. Recovery using the account recovery phrase (seed phrase)
-2. Recovery using an in-app backup wallet (Google or Apple)
-3. Recovery using an external backup wallet
+2. Recovery using an in-app backup wallet created via Web3Auth (Google or Apple)
+3. Recovery using an external backup wallet manually provided by user
 
 Each method provides a different recovery scope, as described below.
 
@@ -47,7 +47,7 @@ If you created a backup wallet using **Google or Apple**, you may recover your P
 ### **Recovery process**
 
 1. Open the Pearl application
-2. Select **“Forgot my password”**
+2. Select **"Forgot my password"**
 3. Follow the in-app recovery steps
 4. Set a new password
 
