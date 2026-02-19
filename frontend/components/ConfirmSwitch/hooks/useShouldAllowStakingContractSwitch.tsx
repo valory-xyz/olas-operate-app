@@ -32,7 +32,7 @@ export const useShouldAllowStakingContractSwitch = () => {
 
   const safeOlasBalance = useMemo(() => {
     if (!isBalanceLoaded) return 0;
-    return Number(getMasterSafeOlasBalanceOfInStr(homeChainId));
+    return Number(getMasterSafeOlasBalanceOfInStr(homeChainId) || 0);
   }, [homeChainId, isBalanceLoaded, getMasterSafeOlasBalanceOfInStr]);
 
   const totalOlas = safeOlasBalance + (totalStakedOlasBalance || 0);
