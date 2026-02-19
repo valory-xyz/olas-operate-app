@@ -382,7 +382,7 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
       ([, config]) => config.servicePublicId === service.service_public_id,
     );
 
-    return agentEntry ? (agentEntry[0] as AgentType) : null;
+    return agentEntry ? agentEntry[0] : null;
   };
 
   const getServiceConfigIdFromAgentType = (agentType: AgentType) => {

@@ -3,7 +3,6 @@ import { useMemo } from 'react';
 
 import { ACTIVE_AGENTS } from '@/config/agents';
 import {
-  AgentType,
   FIVE_SECONDS_INTERVAL,
   MiddlewareDeploymentStatusMap,
   REACT_QUERY_KEYS,
@@ -72,7 +71,7 @@ export const useAgentRunning = () => {
       );
 
       if (agentEntry) {
-        return agentEntry[0]; // AgentType
+        return agentEntry[0];
       }
     }
 
@@ -82,7 +81,7 @@ export const useAgentRunning = () => {
   const runningServiceConfigId = useMemo(() => {
     if (!runningAgentType) return null;
 
-    return getServiceConfigIdFromAgentType(runningAgentType as AgentType);
+    return getServiceConfigIdFromAgentType(runningAgentType);
   }, [getServiceConfigIdFromAgentType, runningAgentType]);
 
   return { isAnotherAgentRunning, runningAgentType, runningServiceConfigId };
