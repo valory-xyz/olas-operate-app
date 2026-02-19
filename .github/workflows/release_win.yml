@@ -1,5 +1,8 @@
 name: Release for Windows
 
+permissions:
+  contents: write
+
 on:
   workflow_call:
     inputs:

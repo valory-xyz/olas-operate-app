@@ -18,7 +18,6 @@ import { Address } from '@/types/Address';
 import { BridgeRefillRequirementsRequest, BridgeRequest } from '@/types/Bridge';
 import { TokenAmountDetails, TokenAmounts } from '@/types/Wallet';
 import {
-  asAllEvmChainId,
   asEvmChainId,
   getFromToken,
   getTokenDecimal,
@@ -50,11 +49,6 @@ const useGetBridgeRequirementsParams = (bridgeToChain: MiddlewareChain) => {
       if (!masterEoa) throw new Error('Master EOA is not available');
       if (!isMasterWalletFetched) throw new Error('Master Safe not loaded');
 
-      const fromChain = MiddlewareChainMap.ETHEREUM;
-      const masterSafeOnFromChain = getMasterSafeOf?.(
-        asAllEvmChainId(fromChain),
-      );
-
       const masterSafeOnToChain = getMasterSafeOf?.(
         asEvmChainId(bridgeToChain),
       );
@@ -71,7 +65,8 @@ const useGetBridgeRequirementsParams = (bridgeToChain: MiddlewareChain) => {
       return {
         from: {
           chain: MiddlewareChainMap.ETHEREUM,
-          address: masterSafeOnFromChain?.address ?? masterEoa.address,
+          // Note: "from" address should always be mEOA for bridging
+          address: masterEoa.address,
           token: fromToken,
         },
         to: {
