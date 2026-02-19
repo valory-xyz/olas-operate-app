@@ -11,7 +11,6 @@ There are **four supported recovery paths**:
 1. Recovery using the account recovery phrase (seed phrase)
 2. Recovery using an in-app backup wallet (Google or Apple)
 3. Recovery using an external backup wallet
-4. Fund recovery using an external backup wallet controlled by the user
 
 Each method provides a different recovery scope, as described below.
 
