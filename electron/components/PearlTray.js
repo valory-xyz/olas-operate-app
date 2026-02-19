@@ -19,7 +19,7 @@ const TrayIconStatus = {
 
 const invertImage = (nativeImg) => {
   const size = nativeImg.getSize();
-  // Получаем сырые данные пикселей (RGBA)
+  // Get raw pixel data (RGBA)
   const buffer = nativeImg.toBitmap();
 
   // Проходим по каждому пикселю и инвертируем цвета
