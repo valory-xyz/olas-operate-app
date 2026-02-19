@@ -138,14 +138,18 @@ export const SettingsDrawer = ({
         const eoaTopups = settings.eoa_topups[middlewareChain];
         const address = chainConfig.nativeToken.address ?? AddressZero;
 
-        const fundingRequirement =
-          eoaTopups && address ? eoaTopups[address] || 0 : 0;
+        const fundingRequirement = BigInt(
+          eoaTopups && address && eoaTopups[address] != null
+            ? eoaTopups[address]
+            : '0',
+        );
 
         const eoaThresholds = settings.eoa_thresholds?.[middlewareChain];
-        const refundingThreshold =
-          eoaThresholds && address
-            ? eoaThresholds[address] || 0
-            : fundingRequirement * 0.5;
+        const refundingThreshold = BigInt(
+          eoaThresholds && address && eoaThresholds[address] != null
+            ? eoaThresholds[address]
+            : fundingRequirement / 2n,
+        );
 
         return {
           key: String(chainConfig.evmChainId),
