@@ -5,9 +5,7 @@ import { SettingsService } from '@/service/Settings';
 
 export const useSettingsDrawer = () => {
   return useQuery({
-    queryKey: [REACT_QUERY_KEYS.SETTING_QUERY_KEY],
+    queryKey: REACT_QUERY_KEYS.SETTINGS_KEY,
     queryFn: ({ signal }) => SettingsService.getSettings(signal),
-    staleTime: Infinity,
-    retry: 3,
   });
 };

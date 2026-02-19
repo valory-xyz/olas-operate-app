@@ -5,12 +5,12 @@ import { Address } from '@/types';
 
 type EoaTopups = {
   [chainName in SupportedMiddlewareChain]: {
-    [address: Address]: number;
+    [address: Address]: string;
   };
 };
 type EoaThresholds = {
   [chainName in SupportedMiddlewareChain]: {
-    [address: Address]: number;
+    [address: Address]: string;
   };
 };
 type SettingsResponse = {

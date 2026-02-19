@@ -13,7 +13,6 @@ type AddressLinkProps = {
   middlewareChain: SupportedMiddlewareChain;
   prefix?: ReactNode;
   hideLinkArrow?: boolean;
-  truncate?: boolean;
 };
 
 export const AddressLink = ({
@@ -21,7 +20,6 @@ export const AddressLink = ({
   hideLinkArrow = false,
   prefix,
   middlewareChain,
-  truncate = true,
 }: AddressLinkProps) => {
   if (!address) return null;
   if (!middlewareChain) return null;
@@ -36,10 +34,8 @@ export const AddressLink = ({
           &nbsp;
           {prefix}
         </>
-      ) : truncate ? (
-        truncateAddress(address)
       ) : (
-        address
+        truncateAddress(address)
       )}
 
       {hideLinkArrow ? null : (

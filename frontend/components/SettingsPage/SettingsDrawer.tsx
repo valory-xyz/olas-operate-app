@@ -8,8 +8,7 @@ import { TbArrowsSplit2 } from 'react-icons/tb';
 import { IconContainer, Table } from '@/components/ui';
 import { CHAIN_CONFIG } from '@/config/chains';
 import { TokenSymbol, TokenSymbolConfigMap } from '@/config/tokens';
-import { COLOR, SupportedMiddlewareChain } from '@/constants';
-import { AddressZero } from '@/constants/address';
+import { AddressZero, COLOR, SupportedMiddlewareChain } from '@/constants';
 import { useMasterWalletContext, useServices } from '@/hooks';
 import { formatUnits } from '@/utils';
 
@@ -22,7 +21,7 @@ type SettingsDrawerProps = {
   onClose: () => void;
 };
 
-type TableData = {
+type TableRow = {
   key: string;
   chain: string;
   middlewareChain: SupportedMiddlewareChain;
@@ -59,7 +58,7 @@ const columns = [
     title: 'Chain',
     key: 'chain',
     dataIndex: 'middlewareChain',
-    render: (chain: SupportedMiddlewareChain, record: TableData) => (
+    render: (chain: SupportedMiddlewareChain, record: TableRow) => (
       <Flex align="center" gap={8}>
         <Image
           src={`/chains/${kebabCase(chain)}-chain.png`}
@@ -77,7 +76,7 @@ const columns = [
     title: 'Threshold',
     key: 'threshold',
     dataIndex: 'threshold',
-    render: (threshold: string, record: TableData) => (
+    render: (threshold: string, record: TableRow) => (
       <Flex align="center" gap={8}>
         <Image
           src={TokenSymbolConfigMap[record.tokenSymbol].image}
@@ -95,7 +94,7 @@ const columns = [
     title: 'Top-up Amount',
     key: 'topUpAmount',
     dataIndex: 'topUpAmount',
-    render: (topUpAmount: string, record: TableData) => (
+    render: (topUpAmount: string, record: TableRow) => (
       <Flex align="center" gap={8}>
         <Image
           src={TokenSymbolConfigMap[record.tokenSymbol].image}
@@ -118,7 +117,7 @@ export const SettingsDrawer = ({
   const { services } = useServices();
   const { data: settings, isLoading } = useSettingsDrawer();
 
-  const tableData = useMemo<TableData[]>(() => {
+  const tableData = useMemo<TableRow[]>(() => {
     if (!settings?.eoa_topups || !services) return [];
 
     const activeChains = new Set(
@@ -128,9 +127,7 @@ export const SettingsDrawer = ({
     return Object.values(CHAIN_CONFIG)
       .filter((chainConfig) => {
         // Only show chains that have active services
-        return activeChains.has(
-          chainConfig.middlewareChain as SupportedMiddlewareChain,
-        );
+        return activeChains.has(chainConfig.middlewareChain);
       })
       .map((chainConfig) => {
         const middlewareChain =
@@ -138,14 +135,13 @@ export const SettingsDrawer = ({
         const eoaTopups = settings.eoa_topups[middlewareChain];
         const address = chainConfig.nativeToken.address ?? AddressZero;
 
-        const fundingRequirement =
-          eoaTopups && address ? eoaTopups[address] || 0 : 0;
+        const fundingRequirement = eoaTopups?.[address] || '0';
 
         const eoaThresholds = settings.eoa_thresholds?.[middlewareChain];
         const refundingThreshold =
           eoaThresholds && address
-            ? eoaThresholds[address] || 0
-            : fundingRequirement * 0.5;
+            ? eoaThresholds[address] || '0'
+            : String(BigInt(fundingRequirement) / 2n);
 
         return {
           key: String(chainConfig.evmChainId),
@@ -189,7 +185,7 @@ export const SettingsDrawer = ({
         </Flex>
         <Table
           columns={columns}
-          dataSource={isLoading ? [] : tableData}
+          dataSource={tableData}
           loading={isLoading}
           pagination={false}
           size="small"
