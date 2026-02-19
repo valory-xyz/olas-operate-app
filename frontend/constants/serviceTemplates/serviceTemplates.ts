@@ -163,13 +163,13 @@ export const PETT_AI_SERVICE_TEMPLATE: ServiceTemplate = {
   description: 'Pett.ai autonomous agent service for virtual pet management.',
   image:
     'https://gateway.autonolas.tech/ipfs/QmQYDGMg8m91QQkTWSSmANs5tZwKrmvUCawXZfXVVWQPcu',
-  service_version: 'v0.1.4',
+  service_version: 'v0.1.5',
   agent_release: {
     is_aea: false,
     repository: {
       owner: 'valory-xyz',
       name: 'pettai-agent',
-      version: 'v0.1.4',
+      version: 'v0.1.5',
     },
   },
   home_chain: MiddlewareChainMap.BASE,
