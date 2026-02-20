@@ -26,7 +26,7 @@ const ContractCard = styled(CardFlex)<{ $isView?: boolean }>`
 `;
 
 type ConfigurationDetailsProps = {
-  id?: string;
+  id: string;
   name: string;
   slots: string;
 };
@@ -51,20 +51,18 @@ const ConfigurationDetails = ({
         </Flex>
       </Flex>
 
-      {id && (
-        <a
-          href={`${GOVERN_APP_URL}/contracts/${id}`}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Flex align="center" gap={6}>
-            <Text className="text-sm text-primary">View more details</Text>
-            <Text className="text-primary" style={{ fontSize: 10 }}>
-              ↗
-            </Text>
-          </Flex>
-        </a>
-      )}
+      <a
+        href={`${GOVERN_APP_URL}/contracts/${id}`}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        <Flex align="center" gap={6}>
+          <Text className="text-sm text-primary">View more details</Text>
+          <Text className="text-primary" style={{ fontSize: 10 }}>
+            ↗
+          </Text>
+        </Flex>
+      </a>
     </Flex>
   );
 };
