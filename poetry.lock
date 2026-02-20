@@ -2212,13 +2212,13 @@ nicer-shell = ["ipython"]
 
 [[package]]
 name = "olas-operate-middleware"
-version = "0.14.14"
+version = "0.14.15"
 description = ""
 optional = false
 python-versions = "<3.12,>=3.10"
 files = [
-    {file = "olas_operate_middleware-0.14.14-py3-none-any.whl", hash = "sha256:5964f59b85e38940d26468cd1e6dd8ebb2405628a463f7777c8964630c07e0a2"},
-    {file = "olas_operate_middleware-0.14.14.tar.gz", hash = "sha256:dce634006e008de808c97fcc6218d57430148054ffad6a2487d98d139240776c"},
+    {file = "olas_operate_middleware-0.14.15-py3-none-any.whl", hash = "sha256:ff431cbc7bafdda5da0604fe34a2683943b5a00cc5eba60782c90dfd0f6e0b1c"},
+    {file = "olas_operate_middleware-0.14.15.tar.gz", hash = "sha256:2af788c5052c7a1fd8f79f07e6cd18b71a6fb73acca52db3cad477422edeae72"},
 ]
 
 [package.dependencies]
@@ -2916,13 +2916,13 @@ hook-testing = ["execnet (>=1.5.0)", "psutil", "pytest (>=2.7.3)"]
 
 [[package]]
 name = "pyinstaller-hooks-contrib"
-version = "2026.0"
+version = "2026.1"
 description = "Community maintained hooks for PyInstaller"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "pyinstaller_hooks_contrib-2026.0-py3-none-any.whl", hash = "sha256:0590db8edeba3e6c30c8474937021f5cd39c0602b4d10f74a064c73911efaca5"},
-    {file = "pyinstaller_hooks_contrib-2026.0.tar.gz", hash = "sha256:0120893de491a000845470ca9c0b39284731ac6bace26f6849dea9627aaed48e"},
+    {file = "pyinstaller_hooks_contrib-2026.1-py3-none-any.whl", hash = "sha256:66ad4888ba67de6f3cfd7ef554f9dd1a4389e2eb19f84d7129a5a6818e3f2180"},
+    {file = "pyinstaller_hooks_contrib-2026.1.tar.gz", hash = "sha256:a5f0891a1e81e92406ab917d9e76adfd7a2b68415ee2e35c950a7b3910bc361b"},
 ]
 
 [package.dependencies]
@@ -3951,4 +3951,4 @@ propcache = ">=0.2.1"
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.12"
-content-hash = "4e48dc1454d01b7f92517ebb0fa0774f2d00b79e39a4c35d2678d8c462acf4a6"
+content-hash = "625bfdcc2542b93ccf5221d18c2d32874cdd89cc16b740597c7a398928e85f3d"

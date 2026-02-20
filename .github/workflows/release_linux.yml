@@ -1,4 +1,7 @@
-name: Release for Mac
+name: Release for linux
+
+permissions:
+  contents: write
 
 # Triggered only via workflow_call
 on:
@@ -11,11 +14,8 @@ on:
 
 jobs:
   # PyInstaller job for both x64 and arm64 binaries
-  build-macos-pyinstaller:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [macos-14, macos-14-large]
+  build-pyinstaller:
+    runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
@@ -42,11 +42,7 @@ jobs:
       # Set OS_ARCH env
       - name: Set architecture environment variable
         run: |
-          if [ "${{ matrix.os }}" == "macos-14-large" ]; then 
-            echo "OS_ARCH=x64" >> $GITHUB_ENV; 
-          else 
-            echo "OS_ARCH=arm64" >> $GITHUB_ENV; 
-          fi
+          echo "OS_ARCH=x64" >> $GITHUB_ENV; 
 
       # Cache Poetry dependencies with unique key for each environment and architecture
       - name: Cache Poetry dependencies
@@ -70,14 +66,6 @@ jobs:
 
           poetry run pyinstaller --collect-data eth_account --collect-all aea --collect-all autonomy --collect-all operate --collect-all aea_ledger_ethereum --collect-all aea_ledger_cosmos --collect-all aea_ledger_ethereum_flashbots --hidden-import aea_ledger_ethereum --hidden-import aea_ledger_cosmos --hidden-import aea_ledger_ethereum_flashbots operate/pearl.py --onedir --name pearl_${{ env.OS_ARCH }}
 
-      - name: Sign PyInstaller binaries
-        env:
-          CSC_LINK: ${{ secrets.CSC_LINK }}
-          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
-        run: |
-          chmod +x scripts/sign_pyinstaller_macos.sh
-          ./scripts/sign_pyinstaller_macos.sh "dist/pearl_${{ env.OS_ARCH }}"
-
       # Package middleware with tar to preserve signatures and extended attributes
       - name: Package middleware with tar
         run: |
@@ -88,24 +76,23 @@ jobs:
       - name: Upload middleware artifact
         uses: actions/upload-artifact@v4
         with:
-          name: middleware_${{ env.OS_ARCH }}
+          name: middleware_linux_${{ env.OS_ARCH }}
           path: dist/pearl_${{ env.OS_ARCH }}.tar.gz
 
       - name: Upload Tendermint artifact
         uses: actions/upload-artifact@v4
         with:
-          name: tendermint_${{ env.OS_ARCH }}
+          name: tendermint_linux_${{ env.OS_ARCH }}
           path: dist/tendermint_bin
       
 
   # Jobs for production, running separately for x64 and arm64
   build-release:
-    needs: [build-macos-pyinstaller]
-    runs-on: ${{ matrix.os }}
+    needs: [build-pyinstaller]
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         env: [production]
-        os: [macos-14, macos-14-large]
 
     steps:
       - uses: actions/checkout@v4
@@ -137,16 +124,12 @@ jobs:
       # Set OS_ARCH env
       - name: Set architecture environment variable
         run: |
-          if [ "${{ matrix.os }}" == "macos-14-large" ]; then 
-            echo "OS_ARCH=x64" >> $GITHUB_ENV; 
-          else 
-            echo "OS_ARCH=arm64" >> $GITHUB_ENV; 
-          fi
+          echo "OS_ARCH=x64" >> $GITHUB_ENV; 
       # Download the appropriate architecture artifact (tar.gz)
       - name: Download middleware binary for architecture
         uses: actions/download-artifact@v4
         with:
-          name: middleware_${{ env.OS_ARCH }}
+          name: middleware_linux_${{ env.OS_ARCH }}
           path: .
       
       # Extract middleware from tar (preserves signatures and extended attributes)
@@ -159,7 +142,7 @@ jobs:
       - name: Download tendermint binary for architecture
         uses: actions/download-artifact@v4
         with:
-          name: tendermint_${{ env.OS_ARCH }}
+          name: tendermint_linux_${{ env.OS_ARCH }}
           path: electron/bins/
       
       # Configure Yarn network settings for timeout, retries, and reduced concurrency
@@ -170,11 +153,7 @@ jobs:
       # Set Tendermint download URL based on architecture
       - name: Set Tendermint download URL
         run: |
-          if [ "${{ matrix.os }}" == "macos-14-large" ]; then 
-            echo "TM_DOWNLOAD_URL=https://github.com/tendermint/tendermint/releases/download/v0.34.19/tendermint_0.34.19_darwin_amd64.tar.gz" >> $GITHUB_ENV
-          else 
-            echo "TM_DOWNLOAD_URL=https://github.com/tendermint/tendermint/releases/download/v0.34.19/tendermint_0.34.19_darwin_arm64.tar.gz" >> $GITHUB_ENV
-          fi
+          echo "TM_DOWNLOAD_URL=https://github.com/tendermint/tendermint/releases/download/v0.34.19/tendermint_0.34.19_linux_amd64.tar.gz" >> $GITHUB_ENV
 
       # Cache Tendermint binary
       - name: Cache Tendermint binary
@@ -267,11 +246,6 @@ jobs:
       # Run the build and notarization process for production
       - name: Build, notarize, and publish (Production)
         env:
-          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLEIDPASS }}
-          APPLE_ID: ${{ secrets.APPLEID }}
-          APPLE_TEAM_ID: ${{ secrets.APPLETEAMID }}
-          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
-          CSC_LINK: ${{ secrets.CSC_LINK }}
           GH_TOKEN: ${{ secrets.github_token }}
           GITHUB_TOKEN: ${{ secrets.github_token }}
           RELEASE_TAG: ${{ inputs.tag }}
@@ -299,4 +273,4 @@ jobs:
           export GITHUB_REF_TYPE="tag"
           export GITHUB_REF_NAME="${RELEASE_TAG}"
           export GITHUB_REF="refs/tags/${RELEASE_TAG}"
-          node build.js
+          node build-linux.js

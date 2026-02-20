@@ -74,6 +74,8 @@ export const OnRampIframe = ({
     url.searchParams.set('cryptoCurrencyCode', cryptoCurrencyCode);
     url.searchParams.set('fiatCurrency', 'USD');
     url.searchParams.set('fiatAmount', String(usdAmountToPay));
+    // Note: "from" address should always be mEOA for bridging
+    // so we should on-ramp to mEOA only
     url.searchParams.set('walletAddress', masterEoa.address);
     url.searchParams.set('hideMenu', 'true');
 
