@@ -13,6 +13,7 @@ export * from './numberFormatters';
 export * from './sanitizeHtml';
 export * from './service';
 export * from './setupMulticall';
+export * from './stakingProgram';
 export * from './time';
 export * from './truncate';
 export * from './wallet';

@@ -33,11 +33,6 @@ export type StakingProgramMap = {
   [stakingProgramId: string]: StakingProgramConfig;
 };
 
-export const stakingProgramIdFromAddress = (address: Address): string => {
-  const normalized = address.toLowerCase().replace(/^0x/, '');
-  return `0x${normalized.padStart(64, '0')}`;
-};
-
 export const STAKING_PROGRAMS: {
   [chainId in EvmChainId]: StakingProgramMap;
 } = {

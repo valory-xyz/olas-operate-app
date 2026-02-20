@@ -3,16 +3,14 @@ import { Contract as MulticallContract } from 'ethers-multicall';
 import { STAKING_TOKEN_PROXY_ABI } from '@/abis/stakingTokenProxy';
 import { AgentMap, EvmChainIdMap, STAKING_PROGRAM_IDS } from '@/constants';
 import { Address } from '@/types';
+import { deriveStakingProgramId } from '@/utils';
 
 import { GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS } from '../activityCheckers';
 import { MECHS, MechType } from '../mechs';
 import { TokenSymbolMap } from '../tokens';
-import { stakingProgramIdFromAddress, StakingProgramMap } from '.';
+import type { StakingProgramMap } from '.';
 
-export const GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES: Record<
-  string,
-  Address
-> = {
+const GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES: Record<string, Address> = {
   [STAKING_PROGRAM_IDS.PearlAlpha]:
     '0xEE9F19b5DF06c7E8Bfc7B28745dcf944C504198A',
   [STAKING_PROGRAM_IDS.PearlBeta]: '0xeF44Fb0842DDeF59D37f85D61A1eF492bbA6135d',
@@ -244,7 +242,7 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
       ],
       STAKING_TOKEN_PROXY_ABI,
     ),
-    id: stakingProgramIdFromAddress(
+    id: deriveStakingProgramId(
       GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
         STAKING_PROGRAM_IDS.PearlBetaMechMarketplace1
       ],
@@ -273,7 +271,7 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
       ],
       STAKING_TOKEN_PROXY_ABI,
     ),
-    id: stakingProgramIdFromAddress(
+    id: deriveStakingProgramId(
       GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
         STAKING_PROGRAM_IDS.PearlBetaMechMarketplace2
       ],
@@ -302,7 +300,7 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
       ],
       STAKING_TOKEN_PROXY_ABI,
     ),
-    id: stakingProgramIdFromAddress(
+    id: deriveStakingProgramId(
       GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
         STAKING_PROGRAM_IDS.PearlBetaMechMarketplace3
       ],
@@ -331,7 +329,7 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
       ],
       STAKING_TOKEN_PROXY_ABI,
     ),
-    id: stakingProgramIdFromAddress(
+    id: deriveStakingProgramId(
       GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
         STAKING_PROGRAM_IDS.PearlBetaMechMarketplace4
       ],
