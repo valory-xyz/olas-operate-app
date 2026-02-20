@@ -41,16 +41,15 @@ const UnderConstructionAlert = () => (
 );
 
 const AgentsFunXCreditDesc = () => (
-  <Flex align="center">
+  <Flex align="center" gap={4}>
     <Text>$5 for X API credits</Text>
-    &nbsp;
     <Link
       href={X_DEVELOPER_CONSOLE_URL}
       target="_blank"
       rel="noopener noreferrer"
       className="flex align-center"
     >
-      charged by X&nbsp;
+      charged by X{' '}
       <span className="text-xxs">{UNICODE_SYMBOLS.EXTERNAL_LINK}</span>
     </Link>
   </Flex>
