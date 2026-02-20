@@ -59,6 +59,11 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
       ],
       STAKING_TOKEN_PROXY_ABI,
     ),
+    id: deriveStakingProgramId(
+      GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.PearlAlpha
+      ],
+    ),
   },
   [STAKING_PROGRAM_IDS.PearlBeta]: {
     deprecated: true,
@@ -77,6 +82,9 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
     contract: new MulticallContract(
       GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[STAKING_PROGRAM_IDS.PearlBeta],
       STAKING_TOKEN_PROXY_ABI,
+    ),
+    id: deriveStakingProgramId(
+      GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[STAKING_PROGRAM_IDS.PearlBeta],
     ),
   },
   [STAKING_PROGRAM_IDS.PearlBeta2]: {
@@ -101,6 +109,11 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
       ],
       STAKING_TOKEN_PROXY_ABI,
     ),
+    id: deriveStakingProgramId(
+      GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.PearlBeta2
+      ],
+    ),
   },
   [STAKING_PROGRAM_IDS.PearlBeta3]: {
     deprecated: true,
@@ -123,6 +136,11 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
         STAKING_PROGRAM_IDS.PearlBeta3
       ],
       STAKING_TOKEN_PROXY_ABI,
+    ),
+    id: deriveStakingProgramId(
+      GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.PearlBeta3
+      ],
     ),
   },
   [STAKING_PROGRAM_IDS.PearlBeta4]: {
@@ -147,6 +165,11 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
       ],
       STAKING_TOKEN_PROXY_ABI,
     ),
+    id: deriveStakingProgramId(
+      GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.PearlBeta4
+      ],
+    ),
   },
   [STAKING_PROGRAM_IDS.PearlBeta5]: {
     deprecated: true,
@@ -170,6 +193,11 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
       ],
       STAKING_TOKEN_PROXY_ABI,
     ),
+    id: deriveStakingProgramId(
+      GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.PearlBeta5
+      ],
+    ),
   },
   [STAKING_PROGRAM_IDS.PearlBeta6]: {
     deprecated: true,
@@ -192,6 +220,11 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
         STAKING_PROGRAM_IDS.PearlBeta6
       ],
       STAKING_TOKEN_PROXY_ABI,
+    ),
+    id: deriveStakingProgramId(
+      GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.PearlBeta6
+      ],
     ),
   },
   [STAKING_PROGRAM_IDS.PearlBetaMechMarketplace]: {
@@ -217,6 +250,11 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
         STAKING_PROGRAM_IDS.PearlBetaMechMarketplace
       ],
       STAKING_TOKEN_PROXY_ABI,
+    ),
+    id: deriveStakingProgramId(
+      GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.PearlBetaMechMarketplace
+      ],
     ),
   },
   [STAKING_PROGRAM_IDS.PearlBetaMechMarketplace1]: {

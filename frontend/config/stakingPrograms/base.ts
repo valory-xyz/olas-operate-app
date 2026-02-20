@@ -274,6 +274,11 @@ export const BASE_STAKING_PROGRAMS: StakingProgramMap = {
       ],
       STAKING_TOKEN_PROXY_ABI,
     ),
+    id: deriveStakingProgramId(
+      BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.PettAiAgent3
+      ],
+    ),
   },
   [STAKING_PROGRAM_IDS.PettAiAgent4]: {
     chainId: EvmChainIdMap.Base,
@@ -293,6 +298,11 @@ export const BASE_STAKING_PROGRAMS: StakingProgramMap = {
         STAKING_PROGRAM_IDS.PettAiAgent4
       ],
       STAKING_TOKEN_PROXY_ABI,
+    ),
+    id: deriveStakingProgramId(
+      BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.PettAiAgent4
+      ],
     ),
   },
 };
