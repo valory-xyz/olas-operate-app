@@ -16,18 +16,29 @@ import { SelectActivityRewardsConfiguration } from './components/SelectActivityR
 import { SelectMode } from './types';
 
 const ViewState = {
+  // LOADING: waiting for services/selected staking state to be available.
   LOADING: 'LOADING',
 
-  // Configuration view states
+  // CONFIGURE: show the recommended (agent-config default) staking contract.
+  // Example: default is 100 and either no service exists or selected is also 100.
   CONFIGURE: 'CONFIGURE',
+
+  // CONFIGURE_MANUAL: user explicitly navigated back from list to configure,
+  // keep showing configure even if selected contract is non-default.
+  // Example: user is on list, clicks Back, and expects to stay on Configure.
   CONFIGURE_MANUAL: 'CONFIGURE_MANUAL',
 
-  // List view states
+  // LIST_AUTO: list is shown because state indicates non-default is selected.
+  // Example: user selected 300 (default is 100), returned from Funding, should see list.
   LIST_AUTO: 'LIST_AUTO',
+
+  // LIST_MANUAL: list is shown because user clicked "Change Configuration".
+  // Example: user is on Configure and wants to browse other contracts.
   LIST_MANUAL: 'LIST_MANUAL',
 
-  // State when user has selected a staking program and is in the process of confirming it
-  SELECTING: 'SELECTING',
+  // SWITCHING: user clicked a contract; keep list stable while selection is in-flight.
+  // Example: clicking "Select" triggers service update + navigation to Funding.
+  SWITCHING: 'SWITCHING',
 } as const;
 
 type ViewStateValue = (typeof ViewState)[keyof typeof ViewState];
@@ -64,6 +75,7 @@ export const SelectStakingPage = ({ mode }: SelectStakingProps) => {
 
   useEffect(() => {
     if (isLoading) {
+      // Keep LOADING while services/staking state is still fetching.
       if (viewState !== ViewState.LOADING) {
         setViewState(ViewState.LOADING);
       }
@@ -72,6 +84,7 @@ export const SelectStakingPage = ({ mode }: SelectStakingProps) => {
 
     // If migrating, then show the list of staking programs to select from
     if (mode === 'migrate') {
+      // Migrate flow always shows the list, regardless of selection.
       if (viewState !== ViewState.LIST_AUTO) {
         setViewState(ViewState.LIST_AUTO);
       }
@@ -79,9 +92,12 @@ export const SelectStakingPage = ({ mode }: SelectStakingProps) => {
     }
 
     if (mode === 'onboard') {
-      if (viewState === ViewState.SELECTING) return;
+      // While a selection is in-flight, keep the list stable to avoid flicker.
+      if (viewState === ViewState.SWITCHING) return;
 
       if (shouldShowList && viewState !== ViewState.LIST_AUTO) {
+        // Non-default selected (e.g. selected=300, default=100) => list should be shown.
+        // If user manually backed to Configure, don't force them back to list.
         if (viewState === ViewState.CONFIGURE_MANUAL) return;
         setViewState(ViewState.LIST_AUTO);
         return;
@@ -93,6 +109,7 @@ export const SelectStakingPage = ({ mode }: SelectStakingProps) => {
         viewState !== ViewState.CONFIGURE_MANUAL &&
         viewState !== ViewState.LIST_MANUAL
       ) {
+        // Default selected (or no service yet) => show Configure unless user is browsing list.
         setViewState(ViewState.CONFIGURE);
       }
     }
@@ -123,7 +140,7 @@ export const SelectStakingPage = ({ mode }: SelectStakingProps) => {
   const isListView =
     viewState === ViewState.LIST_AUTO ||
     viewState === ViewState.LIST_MANUAL ||
-    viewState === ViewState.SELECTING;
+    viewState === ViewState.SWITCHING;
 
   return viewState === ViewState.LOADING ? (
     <Flex justify="center" align="center" className="w-full py-32">
@@ -139,7 +156,7 @@ export const SelectStakingPage = ({ mode }: SelectStakingProps) => {
       mode={mode}
       currentStakingProgramId={currentStakingProgramId}
       backButton={backButton}
-      onSelectStart={() => setViewState(ViewState.SELECTING)}
+      onSelectStart={() => setViewState(ViewState.SWITCHING)}
       onSelectEnd={() => setViewState(ViewState.LIST_MANUAL)}
     />
   ) : (
