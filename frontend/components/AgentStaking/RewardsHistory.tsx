@@ -16,7 +16,6 @@ import {
   Checkpoint,
   useRewardContext,
   useRewardsHistory,
-  useServiceOnlyRewardsHistory,
   useServices,
 } from '@/hooks';
 import {
@@ -72,7 +71,7 @@ const useCurrentEpochDetails = (lastCheckpoint?: Checkpoint) => {
 
 /** Get checkpoints grouped by months */
 const useCheckpointsByMonths = () => {
-  const { allCheckpoints = [], isFetched } = useServiceOnlyRewardsHistory();
+  const { allCheckpoints = [], isFetched } = useRewardsHistory();
   const currentEpochDetails = useCurrentEpochDetails(allCheckpoints[0]);
 
   const checkpointsByMonths = useMemo(() => {
@@ -113,23 +112,24 @@ const useCheckpointsByMonths = () => {
 
 const EarnedRewardsColumn = ({
   rewards,
-  hasRewards,
   className,
 }: {
   rewards: number;
-  hasRewards: boolean;
   className?: string;
-}) => (
-  <Flex align="center" gap={8}>
-    <Image src="/tokens/olas-icon.png" alt="OLAS" height={20} width={20} />
-    <Text
-      className={`${className} ${hasRewards ? 'text-success-default' : 'text-neutral-primary'}`}
-    >
-      {hasRewards && '+'}
-      {balanceFormat(rewards ?? 0, 2)} OLAS
-    </Text>
-  </Flex>
-);
+}) => {
+  const hasPositiveRewards = rewards > 0;
+  return (
+    <Flex align="center" gap={8}>
+      <Image src="/tokens/olas-icon.png" alt="OLAS" height={20} width={20} />
+      <Text
+        className={`${className} ${hasPositiveRewards ? 'text-success-default' : 'text-neutral-primary'}`}
+      >
+        {hasPositiveRewards && '+'}
+        {balanceFormat(rewards ?? 0, 2)} OLAS
+      </Text>
+    </Flex>
+  );
+};
 
 const PanelHeader = ({
   monthYear,
@@ -139,7 +139,6 @@ const PanelHeader = ({
   totalMonthlyRewards: number;
 }) => {
   const [month, year] = monthYear.split(' ');
-  const hasRewards = totalMonthlyRewards > 0;
   return (
     <Flex align="center" justify="space-between" className="py-2">
       <Flex gap={12} align="center">
@@ -149,7 +148,6 @@ const PanelHeader = ({
 
       <EarnedRewardsColumn
         rewards={totalMonthlyRewards}
-        hasRewards={hasRewards}
         className="leading-24"
       />
     </Flex>
@@ -215,7 +213,6 @@ const CheckpointRow = ({ checkpoint }: { checkpoint: Checkpoint }) => {
       <Col span={10} className="justify-items-end">
         <EarnedRewardsColumn
           rewards={checkpoint.reward}
-          hasRewards={checkpoint.earned}
           className="text-sm leading-20 "
         />
       </Col>

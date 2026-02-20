@@ -1,4 +1,3 @@
-import { isNil } from 'lodash';
 import {
   createContext,
   PropsWithChildren,
@@ -52,15 +51,8 @@ export const StakingProgramProvider = ({ children }: PropsWithChildren) => {
     setDefaultStakingProgramId(selectedAgentConfig.defaultStakingProgramId);
   }, [selectedAgentConfig]);
 
-  const serviceNftTokenId = isNil(selectedService?.chain_configs)
-    ? null
-    : selectedService.chain_configs?.[selectedService?.home_chain]?.chain_data
-        ?.token;
-
-  const { isLoading, data: activeStakingProgramId } = useActiveStakingProgramId(
-    serviceNftTokenId,
-    selectedAgentConfig,
-  );
+  const { isLoading, data: activeStakingProgramId } =
+    useActiveStakingProgramId(selectedAgentConfig);
 
   // Determine the staking program ID in the following order:
   // 1) On-chain value (where the user actually staked)

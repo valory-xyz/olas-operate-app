@@ -2,8 +2,15 @@ import { Button, Typography } from 'antd';
 import { useEffect, useMemo } from 'react';
 import styled from 'styled-components';
 
-import { COLOR, ON_RAMP_CHAIN_MAP, SETUP_SCREEN } from '@/constants';
 import {
+  AddressZero,
+  COLOR,
+  MIN_ONRAMP_AMOUNT,
+  ON_RAMP_CHAIN_MAP,
+  SETUP_SCREEN,
+} from '@/constants';
+import {
+  useGetBridgeRequirementsParams,
   useOnRampContext,
   useServices,
   useSetup,
@@ -15,8 +22,7 @@ import {
   asMiddlewareChain,
 } from '@/utils/middlewareHelpers';
 
-import { Alert, CardFlex, CardTitle } from '../../../ui';
-import { TokenRequirements } from './TokensRequirements';
+import { Alert, CardFlex, CardTitle, TokenRequirements } from '../../../ui';
 
 const OnRampMethodCardCard = styled(CardFlex)`
   width: 370px;
@@ -26,8 +32,6 @@ const OnRampMethodCardCard = styled(CardFlex)`
     height: 100%;
   }
 `;
-
-const MIN_ONRAMP_AMOUNT = 5;
 
 const { Paragraph } = Typography;
 
@@ -76,11 +80,23 @@ export const OnRampMethodCard = () => {
   const { goto } = useSetup();
   const { selectedChainId, networkId } = useOnRampNetworkConfig();
 
+  // Get requirements params function (use 'to' direction for on-ramping)
+  const getOnRampRequirementsParams = useGetBridgeRequirementsParams(
+    networkId.chain,
+    AddressZero,
+    'to',
+  );
+
   const {
     isLoading: isNativeTokenLoading,
     hasError: hasNativeTokenError,
     totalNativeToken,
-  } = useTotalNativeTokenRequired(networkId.chain, 'onboarding');
+  } = useTotalNativeTokenRequired(
+    networkId.chain,
+    selectedChainId,
+    getOnRampRequirementsParams,
+    'onboard',
+  );
   const { isLoading: isFiatLoading, data: totalFiatDetails } =
     useTotalFiatFromNativeToken({
       nativeTokenAmount: hasNativeTokenError ? undefined : totalNativeToken,
@@ -91,6 +107,7 @@ export const OnRampMethodCard = () => {
   const isFiatAmountTooLow = useMemo(() => {
     if (isLoading) return false;
     if (isNativeTokenLoading) return false;
+    if (hasNativeTokenError) return false;
     if (totalNativeToken === 0) return true;
     if (
       totalFiatDetails?.fiatAmount &&
@@ -99,7 +116,13 @@ export const OnRampMethodCard = () => {
       return true;
     }
     return false;
-  }, [totalFiatDetails, isLoading, isNativeTokenLoading, totalNativeToken]);
+  }, [
+    totalFiatDetails,
+    isLoading,
+    isNativeTokenLoading,
+    totalNativeToken,
+    hasNativeTokenError,
+  ]);
 
   return (
     <OnRampMethodCardCard>
@@ -127,6 +150,7 @@ export const OnRampMethodCard = () => {
         <Button
           type="primary"
           size="large"
+          className="mt-auto"
           onClick={() => goto(SETUP_SCREEN.SetupOnRamp)}
           disabled={isLoading || hasNativeTokenError}
         >

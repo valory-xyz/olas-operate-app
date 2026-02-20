@@ -9,7 +9,7 @@ import { MAIN_CONTENT_MAX_WIDTH, PAGES } from '@/constants';
 import {
   usePageState,
   useRewardContext,
-  useServiceOnlyRewardsHistory,
+  useRewardsHistory,
   useStakingDetails,
 } from '@/hooks';
 
@@ -23,8 +23,8 @@ const StatsSkeleton = () => <Skeleton.Input active size="small" />;
 const StakingStats = () => {
   const { optimisticStreak, isStreakLoading } = useStakingDetails();
   const { isEligibleForRewards } = useRewardContext();
-  const { isLoading: isTotalRewardsLoading } = useServiceOnlyRewardsHistory();
-  const { totalRewards } = useServiceOnlyRewardsHistory();
+  const { isLoading: isTotalRewardsLoading, totalRewards } =
+    useRewardsHistory();
 
   const isFlameActive = optimisticStreak > 0 && isEligibleForRewards;
 

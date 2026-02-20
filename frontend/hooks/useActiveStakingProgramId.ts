@@ -1,18 +1,14 @@
-import { useQuery } from '@tanstack/react-query';
 import { isNil } from 'lodash';
+import { useMemo } from 'react';
 
 import { AGENT_CONFIG } from '@/config/agents';
-import {
-  EvmChainId,
-  FIVE_SECONDS_INTERVAL,
-  REACT_QUERY_KEYS,
-} from '@/constants';
-import { useServices } from '@/hooks/useServices';
+import { EvmChainId, REACT_QUERY_KEYS } from '@/constants';
+import { Address } from '@/types/Address';
 import { AgentConfig } from '@/types/Agent';
 import { Maybe } from '@/types/Util';
 import { isValidServiceId } from '@/utils';
 
-import { useDynamicRefetchInterval } from './useDynamicRefetchInterval';
+import { useRewardsHistory } from './useRewardsHistory';
 
 type CreateActiveStakingProgramIdQueryParams = {
   evmHomeChainId: EvmChainId;
@@ -22,6 +18,11 @@ type CreateActiveStakingProgramIdQueryParams = {
   refetchInterval: number;
 };
 
+/**
+ * Legacy query creator for multi-service scenarios (e.g., useStakingRewardsOf).
+ * Uses on-chain multicall to determine active staking program.
+ * For single service queries, prefer using useActiveStakingProgramId hook which uses subgraph data.
+ */
 export const createActiveStakingProgramIdQuery = ({
   evmHomeChainId,
   serviceNftTokenId,
@@ -54,24 +55,31 @@ export const createActiveStakingProgramIdQuery = ({
 };
 
 /**
- * Hook to get the active staking program id.
+ * Hook to get the active staking program id from subgraph data.
  * If there is no active staking program, it returns null.
+ *
+ * This replaces the previous on-chain multicall approach with a more efficient
+ * subgraph query that provides the latestStakingContract directly.
  */
-export const useActiveStakingProgramId = (
-  serviceNftTokenId: Maybe<number>,
-  agentConfig: AgentConfig,
-) => {
-  const { isFetched: isServicesLoaded } = useServices();
+export const useActiveStakingProgramId = (agentConfig: AgentConfig) => {
   const { serviceApi, evmHomeChainId } = agentConfig;
-  const refetchInterval = useDynamicRefetchInterval(FIVE_SECONDS_INTERVAL);
+  const { recentStakingContractAddress, isFetched, isLoading, isError } =
+    useRewardsHistory();
 
-  return useQuery(
-    createActiveStakingProgramIdQuery({
+  // Convert contract address to staking program ID
+  const stakingProgramId = useMemo(() => {
+    if (!recentStakingContractAddress) return null;
+
+    return serviceApi.getStakingProgramIdByAddress(
       evmHomeChainId,
-      serviceNftTokenId,
-      serviceApi,
-      isServicesLoaded,
-      refetchInterval,
-    }),
-  );
+      recentStakingContractAddress as Address,
+    );
+  }, [recentStakingContractAddress, serviceApi, evmHomeChainId]);
+
+  return {
+    data: stakingProgramId,
+    isFetched,
+    isLoading,
+    isError,
+  };
 };

@@ -133,8 +133,8 @@ export const useGetBridgeRequirementsParams = (
       ? ETHEREUM_TOKEN_CONFIG
       : TOKEN_CONFIG[fromChainId as EvmChainId];
   const toMiddlewareChain = selectedAgentConfig.middlewareHomeChainId;
-  const fromAddress =
-    getMasterSafeOf?.(fromChainId as EvmChainId)?.address ?? masterEoa?.address;
+  // Note: "from" address should always be mEOA for bridging
+  const fromAddress = masterEoa?.address;
   const toAddress = masterSafe?.address ?? masterEoa?.address;
 
   return useCallback(

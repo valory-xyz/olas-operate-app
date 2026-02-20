@@ -1,5 +1,5 @@
 import { BigNumberish, ethers } from 'ethers';
-import { ceil } from 'lodash';
+import { ceil, isNil } from 'lodash';
 
 /**
  * Displays balance in a human readable format
@@ -138,6 +138,9 @@ export const formatAmountNormalized = (
   amount: number,
   decimals = 4,
 ): string => {
+  if (isNil(amount) || !Number.isFinite(amount)) {
+    return '0';
+  }
   if (Number.isInteger(amount)) {
     return amount.toString();
   }
