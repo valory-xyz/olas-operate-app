@@ -7,7 +7,7 @@ import { Address } from '@/types';
 import { GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS } from '../activityCheckers';
 import { MECHS, MechType } from '../mechs';
 import { TokenSymbolMap } from '../tokens';
-import { StakingProgramMap } from '.';
+import { stakingProgramIdFromAddress, StakingProgramMap } from '.';
 
 export const GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES: Record<
   string,
@@ -244,7 +244,11 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
       ],
       STAKING_TOKEN_PROXY_ABI,
     ),
-    id: '0x000000000000000000000000ab10188207ea030555f53c8a84339a92f473aa5e',
+    id: stakingProgramIdFromAddress(
+      GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.PearlBetaMechMarketplace1
+      ],
+    ),
   },
   [STAKING_PROGRAM_IDS.PearlBetaMechMarketplace2]: {
     chainId: EvmChainIdMap.Gnosis,
@@ -269,7 +273,11 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
       ],
       STAKING_TOKEN_PROXY_ABI,
     ),
-    id: '0x0000000000000000000000008d7be092d154b01d404f1accfa22cef98c613b5d',
+    id: stakingProgramIdFromAddress(
+      GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.PearlBetaMechMarketplace2
+      ],
+    ),
   },
   [STAKING_PROGRAM_IDS.PearlBetaMechMarketplace3]: {
     chainId: EvmChainIdMap.Gnosis,
@@ -294,7 +302,11 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
       ],
       STAKING_TOKEN_PROXY_ABI,
     ),
-    id: '0x0000000000000000000000009d00a0551f20979080d3762005c9b74d7aa77b85',
+    id: stakingProgramIdFromAddress(
+      GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.PearlBetaMechMarketplace3
+      ],
+    ),
   },
   [STAKING_PROGRAM_IDS.PearlBetaMechMarketplace4]: {
     chainId: EvmChainIdMap.Gnosis,
@@ -319,6 +331,10 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
       ],
       STAKING_TOKEN_PROXY_ABI,
     ),
-    id: '0x000000000000000000000000e2f80659db1069f3b6a08af1a62064190c119543',
+    id: stakingProgramIdFromAddress(
+      GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.PearlBetaMechMarketplace4
+      ],
+    ),
   },
 } as const;
