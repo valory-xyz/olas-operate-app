@@ -49,8 +49,8 @@ const AgentsFunXCreditDesc = () => (
       rel="noopener noreferrer"
       className="flex align-center"
     >
-      charged by X{' '}
-      <span className="text-xxs">{UNICODE_SYMBOLS.EXTERNAL_LINK}</span>
+      charged by X
+      <span className="text-xxs ml-4">{UNICODE_SYMBOLS.EXTERNAL_LINK}</span>
     </Link>
   </Flex>
 );
