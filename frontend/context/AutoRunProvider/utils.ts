@@ -1,15 +1,10 @@
-import { isEmpty, isNil, sortBy } from 'lodash';
+import { isEmpty, sortBy } from 'lodash';
 
 import { ACTIVE_AGENTS, AGENT_CONFIG } from '@/config/agents';
-import { AgentMap, AgentType, GEO_ELIGIBILITY_API_URL } from '@/constants';
-import {
-  Service,
-  ServiceStakingDetails,
-  StakingContractDetails,
-  StakingState,
-} from '@/types';
+import { AgentType } from '@/constants';
+import { Service } from '@/types';
 
-import { GeoEligibilityResponse, IncludedAgent } from './types';
+import { IncludedAgent } from './types';
 
 export const logAutoRun = (
   logEvent: ((message: string) => void) | undefined,
@@ -34,75 +29,12 @@ export const notifyStartFailed = (
   showNotification?.(`Failed to start ${agentName}`, 'Moving to next agent.');
 };
 
-export const fetchGeoEligibility = async (
-  signal: AbortSignal,
-): Promise<GeoEligibilityResponse> => {
-  const response = await fetch(GEO_ELIGIBILITY_API_URL, {
-    method: 'GET',
-    headers: { accept: 'application/json' },
-    signal,
-  });
-  if (!response.ok) {
-    throw new Error(`Failed to fetch geo eligibility: ${response.status}`);
-  }
-  return response.json();
-};
-
 export const getAgentFromService = (service: Service) => {
   return ACTIVE_AGENTS.find(
     ([, agentConfig]) =>
       agentConfig.servicePublicId === service.service_public_id &&
       agentConfig.middlewareHomeChainId === service.home_chain,
   );
-};
-
-export const getServiceStakingEligibility = ({
-  stakingDetails,
-  contractDetails,
-}: {
-  stakingDetails?: ServiceStakingDetails | null;
-  contractDetails?: Partial<StakingContractDetails> | null;
-}) => {
-  const serviceStakingState = stakingDetails?.serviceStakingState;
-  const serviceStakingStartTime = stakingDetails?.serviceStakingStartTime;
-  const minimumStakingDuration = contractDetails?.minimumStakingDuration;
-  const serviceIds = contractDetails?.serviceIds;
-  const maxNumServices = contractDetails?.maxNumServices;
-
-  const isAgentEvicted = serviceStakingState === StakingState.Evicted;
-  const isServiceStaked = serviceStakingState === StakingState.Staked;
-  const now = Math.round(Date.now() / 1000);
-  const isServiceStakedForMinimumDuration =
-    !isNil(serviceStakingStartTime) &&
-    !isNil(minimumStakingDuration) &&
-    now - serviceStakingStartTime >= minimumStakingDuration;
-
-  const isEligibleForStaking =
-    !isAgentEvicted || isServiceStakedForMinimumDuration;
-
-  const hasEnoughServiceSlots =
-    isNil(serviceIds) || isNil(maxNumServices)
-      ? null
-      : serviceIds.length < maxNumServices;
-
-  return {
-    isAgentEvicted,
-    isEligibleForStaking,
-    isServiceStaked,
-    hasEnoughServiceSlots,
-  };
-};
-
-export const isAgentsFunFieldUpdateRequired = (service: Service) => {
-  const areFieldsUpdated = [
-    'TWEEPY_CONSUMER_API_KEY',
-    'TWEEPY_CONSUMER_API_KEY_SECRET',
-    'TWEEPY_BEARER_TOKEN',
-    'TWEEPY_ACCESS_TOKEN',
-    'TWEEPY_ACCESS_TOKEN_SECRET',
-  ].every((key) => service.env_variables?.[key]?.value);
-
-  return !areFieldsUpdated;
 };
 
 export const sortIncludedAgents = (
@@ -135,6 +67,3 @@ export const appendNewAgents = (
 
 export const getAgentDisplayName = (agentType: AgentType) =>
   AGENT_CONFIG[agentType]?.displayName ?? agentType;
-
-export const isAgentsFunAgent = (agentType: AgentType) =>
-  agentType === AgentMap.AgentsFun;

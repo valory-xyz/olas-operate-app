@@ -15,7 +15,6 @@ import {
   AUTO_RUN_LOG_PREFIX,
   COOLDOWN_SECONDS,
   RETRY_BACKOFF_SECONDS,
-  START_TIMEOUT_SECONDS,
 } from '../constants';
 import { AgentMeta } from '../types';
 import {
@@ -35,6 +34,8 @@ const SCAN_ELIGIBLE_DELAY_SECONDS = 30 * 60;
 
 /** Time to wait for candidate eligibility data to load before skipping the candidate. */
 const CANDIDATE_ELIGIBILITY_TIMEOUT_SECONDS = 30 * ONE_SECOND_INTERVAL;
+
+const START_TIMEOUT_SECONDS = 120;
 
 type UseAutoRunControllerParams = {
   enabled: boolean;

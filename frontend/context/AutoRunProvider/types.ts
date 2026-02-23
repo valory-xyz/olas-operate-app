@@ -7,7 +7,7 @@ export type IncludedAgent = {
   order: number;
 };
 
-export type Eligibility = {
+type Eligibility = {
   canRun: boolean;
   reason?: string;
   isEligibleForRewards?: boolean;
