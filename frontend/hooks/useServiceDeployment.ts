@@ -25,6 +25,10 @@ import { ServicesService } from '@/service/Services';
 import { WalletService } from '@/service/Wallet';
 import { AgentConfig } from '@/types/Agent';
 import { delayInSeconds } from '@/utils/delay';
+import {
+  BACKUP_SIGNER_STATUS,
+  resolveBackupSignerForChain,
+} from '@/utils/safe';
 import { updateServiceIfNeeded } from '@/utils/service';
 
 import { useAgentRunning } from './useAgentRunning';
@@ -293,46 +297,40 @@ const createSafeIfNeeded = async ({
   masterSafes?: MasterSafe[];
   masterSafesOwners?: MultisigOwners[];
 }) => {
-  const selectedChainHasMasterSafe = masterSafes?.some(
-    ({ evmChainId }) => evmChainId === selectedAgentConfig.evmHomeChainId,
-  );
+  const resolution = resolveBackupSignerForChain({
+    chainId: selectedAgentConfig.evmHomeChainId,
+    masterSafes,
+    masterSafesOwners,
+    masterEoa,
+  });
 
-  if (selectedChainHasMasterSafe) return;
+  if (resolution.status === BACKUP_SIGNER_STATUS.HasSafe) return;
 
-  // 1. get safe owners on other chains
-  const otherChainOwners = new Set(
-    masterSafesOwners
-      ?.filter(
-        ({ evmChainId }) => evmChainId !== selectedAgentConfig.evmHomeChainId,
-      )
-      .map((masterSafe) => masterSafe.owners)
-      .flat(),
-  );
-
-  // 2. remove master eoa from the set, to find backup signers
-  if (masterEoa) otherChainOwners.delete(masterEoa?.address);
-
-  // 3. if there are no signers, the user needs to add a backup signer
-
-  if (otherChainOwners.size <= 0) {
-    message.error(
-      'A backup signer is required to create a new safe on the home chain. Please add a backup signer.',
-    );
+  if (
+    resolution.status !== BACKUP_SIGNER_STATUS.Ready ||
+    !resolution.backupOwner
+  ) {
+    if (resolution.status === BACKUP_SIGNER_STATUS.MissingBackupSigner) {
+      message.error(
+        'A backup signer is required to create a new safe on the home chain. Please add a backup signer.',
+      );
+    } else if (
+      resolution.status === BACKUP_SIGNER_STATUS.MultipleBackupSigners
+    ) {
+      message.error(
+        'The same backup signer address must be used on all chains. Please remove any extra backup signers.',
+      );
+    } else {
+      message.error(
+        'Safe data is still loading. Please wait a moment and try again.',
+      );
+    }
     gotoSettings();
-    throw new Error('No backup signers found');
+    throw new Error('Safe eligibility failed');
   }
 
-  if (otherChainOwners.size !== 1) {
-    message.error(
-      'The same backup signer address must be used on all chains. Please remove any extra backup signers.',
-    );
-    gotoSettings();
-    throw new Error('Multiple backup signers found');
-  }
-
-  // 4. otherwise, create a new safe with the same signer
   await WalletService.createSafe(
     selectedAgentConfig.middlewareHomeChainId,
-    [...otherChainOwners][0],
+    resolution.backupOwner,
   );
 };

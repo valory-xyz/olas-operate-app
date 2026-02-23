@@ -1,3 +1,3 @@
-import { useAutoRunContext } from '@/context/AutoRunProvider';
+import { useAutoRunContext } from '@/context/AutoRunProvider/AutoRunProvider';
 
 export const useAutoRun = () => useAutoRunContext();
