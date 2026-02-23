@@ -4,10 +4,7 @@ import { EvmChainId } from '@/constants/chains';
 import { useMasterWalletContext } from '@/hooks';
 import { useMultisigs } from '@/hooks/useMultisig';
 import { WalletService } from '@/service/Wallet';
-import {
-  BACKUP_SIGNER_STATUS,
-  resolveBackupSignerForChain,
-} from '@/utils/safe';
+import { BACKUP_SIGNER_STATUS, getSafeEligibility } from '@/utils/safe';
 
 import { AgentMeta } from '../types';
 
@@ -17,53 +14,57 @@ export const useSafeEligibility = () => {
 
   const canCreateSafeForChain = useCallback(
     (chainId: EvmChainId) => {
-      const resolution = resolveBackupSignerForChain({
+      const eligibility = getSafeEligibility({
         chainId,
         masterSafes,
         masterSafesOwners,
         masterEoa,
       });
 
-      if (resolution.status === BACKUP_SIGNER_STATUS.HasSafe) {
+      if (eligibility.status === BACKUP_SIGNER_STATUS.HasSafe) {
         return { ok: true };
       }
-      if (resolution.status === BACKUP_SIGNER_STATUS.Ready) {
+      if (eligibility.status === BACKUP_SIGNER_STATUS.Ready) {
         return { ok: true };
       }
 
-      return {
-        ok: false,
-        reason:
-          resolution.status === BACKUP_SIGNER_STATUS.MissingBackupSigner
-            ? 'Backup signer required'
-            : resolution.status === BACKUP_SIGNER_STATUS.MultipleBackupSigners
-              ? 'Multiple backup signers detected'
-              : 'Safe data loading',
-      };
+      const reason = (() => {
+        if (eligibility.status === BACKUP_SIGNER_STATUS.MissingBackupSigner) {
+          return 'Backup signer required';
+        }
+        if (eligibility.status === BACKUP_SIGNER_STATUS.MultipleBackupSigners) {
+          return 'Multiple backup signers detected';
+        }
+        return 'Safe data loading';
+      })();
+
+      return { ok: false, reason };
     },
     [masterEoa, masterSafes, masterSafesOwners],
   );
 
   const createSafeIfNeeded = useCallback(
     async (meta: AgentMeta) => {
-      const resolution = resolveBackupSignerForChain({
+      const eligibility = getSafeEligibility({
         chainId: meta.agentConfig.evmHomeChainId,
         masterSafes,
         masterSafesOwners,
         masterEoa,
       });
 
-      if (resolution.status === BACKUP_SIGNER_STATUS.HasSafe) return;
+      if (eligibility.status === BACKUP_SIGNER_STATUS.HasSafe) return;
+
       if (
-        resolution.status !== BACKUP_SIGNER_STATUS.Ready ||
-        !resolution.backupOwner
+        !eligibility.canProceed ||
+        !eligibility.shouldCreateSafe ||
+        !eligibility.backupOwner
       ) {
         throw new Error('Safe eligibility failed');
       }
 
       await WalletService.createSafe(
         meta.agentConfig.middlewareHomeChainId,
-        resolution.backupOwner,
+        eligibility.backupOwner,
       );
     },
     [masterEoa, masterSafes, masterSafesOwners],

@@ -39,7 +39,6 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
   const { logEvent } = useElectronApi();
   const { services, updateAgentType, selectedAgentType } = useServices();
   const { runningAgentType } = useAgentRunning();
-
   const { enabled, includedAgents, currentAgent, updateAutoRun } =
     useAutoRunStore();
 
@@ -125,6 +124,7 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
     if (!currentAgent) return;
     if (!configuredAgentTypes.includes(currentAgent)) return;
     if (selectedAgentType === currentAgent) return;
+
     updateAgentType(currentAgent);
   }, [
     canSyncSelection,

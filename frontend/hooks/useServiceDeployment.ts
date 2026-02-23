@@ -27,7 +27,8 @@ import { AgentConfig } from '@/types/Agent';
 import { delayInSeconds } from '@/utils/delay';
 import {
   BACKUP_SIGNER_STATUS,
-  resolveBackupSignerForChain,
+  getSafeEligibility,
+  getSafeEligibilityMessage,
 } from '@/utils/safe';
 import { updateServiceIfNeeded } from '@/utils/service';
 
@@ -47,41 +48,28 @@ const createSafeIfNeeded = async ({
   masterSafes?: MasterSafe[];
   masterSafesOwners?: MultisigOwners[];
 }) => {
-  const resolution = resolveBackupSignerForChain({
+  const eligibility = getSafeEligibility({
     chainId: selectedAgentConfig.evmHomeChainId,
     masterSafes,
     masterSafesOwners,
     masterEoa,
   });
 
-  if (resolution.status === BACKUP_SIGNER_STATUS.HasSafe) return;
+  if (eligibility.status === BACKUP_SIGNER_STATUS.HasSafe) return;
 
   if (
-    resolution.status !== BACKUP_SIGNER_STATUS.Ready ||
-    !resolution.backupOwner
+    !eligibility.canProceed ||
+    !eligibility.shouldCreateSafe ||
+    !eligibility.backupOwner
   ) {
-    if (resolution.status === BACKUP_SIGNER_STATUS.MissingBackupSigner) {
-      message.error(
-        'A backup signer is required to create a new safe on the home chain. Please add a backup signer.',
-      );
-    } else if (
-      resolution.status === BACKUP_SIGNER_STATUS.MultipleBackupSigners
-    ) {
-      message.error(
-        'The same backup signer address must be used on all chains. Please remove any extra backup signers.',
-      );
-    } else {
-      message.error(
-        'Safe data is still loading. Please wait a moment and try again.',
-      );
-    }
+    message.error(getSafeEligibilityMessage(eligibility.status));
     gotoSettings();
     throw new Error('Safe eligibility failed');
   }
 
   await WalletService.createSafe(
     selectedAgentConfig.middlewareHomeChainId,
-    resolution.backupOwner,
+    eligibility.backupOwner,
   );
 };
 
