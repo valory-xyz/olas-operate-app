@@ -1,7 +1,7 @@
 import { Flex, Spin, Typography } from 'antd';
 import styled from 'styled-components';
 
-import { useServices } from '@/hooks';
+import { useElectronApi, useServices } from '@/hooks';
 
 const { Text } = Typography;
 
@@ -20,7 +20,10 @@ const Iframe = styled.iframe`
   border-radius: 8px;
 `;
 
+const IFRAME_SRC = 'http://127.0.0.1:8716';
+
 export const Profile = () => {
+  const { nextLogError } = useElectronApi();
   const { deploymentDetails } = useServices();
 
   // If agent healthcheck is not accessible yet, show loader
@@ -38,7 +41,20 @@ export const Profile = () => {
   }
   return (
     <Container>
-      <Iframe src="http://127.0.0.1:8716" id="agent-ui" allow="popups" />
+      <Iframe
+        src={IFRAME_SRC}
+        id="agent-ui"
+        allow="popups"
+        onError={(e) => {
+          const errorEvent = e.nativeEvent as ErrorEvent;
+          const error = new Error(
+            errorEvent.message || 'Agent UI iframe failed to load',
+          );
+          nextLogError?.(error, {
+            errorInfo: `[Profile] Agent UI iframe failed to load from ${IFRAME_SRC}`,
+          });
+        }}
+      />
     </Container>
   );
 };
