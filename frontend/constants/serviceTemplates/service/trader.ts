@@ -11,14 +11,14 @@ import { X402_ENABLED_FLAGS } from '../../x402';
 import { KPI_DESC_PREFIX } from '../constants';
 
 export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
-  hash: 'bafybeigo2gspelgcyupama6dwmoigs6tyjunp52fyp4wreknrtny6rpz4u',
-  service_version: 'v0.31.1-rc3',
+  hash: 'bafybeibytzjwtjqasezhuxrgkvrp3jgg7b56mpgeh5czbu4eblm7uvya4a',
+  service_version: 'v0.31.2-rc2',
   agent_release: {
     is_aea: true,
     repository: {
       owner: 'valory-xyz',
       name: 'trader',
-      version: 'v0.31.1-rc3',
+      version: 'v0.31.2-rc2',
     },
   },
   agentType: AgentMap.PredictTrader,
