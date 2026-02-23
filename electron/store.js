@@ -5,6 +5,12 @@ const defaultInitialAgentSettings = {
   isProfileWarningDisplayed: false,
 };
 
+const defaultAutoRunSettings = {
+  enabled: false,
+  currentAgent: null,
+  includedAgents: [],
+};
+
 // Schema for validating store data
 const schema = {
   // Global settings
@@ -38,6 +44,12 @@ const schema = {
   polymarket_trader: {
     type: 'object',
     default: defaultInitialAgentSettings,
+  },
+
+  // Auto-run settings
+  autoRun: {
+    type: 'object',
+    default: defaultAutoRunSettings,
   },
 
   // Backup wallet information

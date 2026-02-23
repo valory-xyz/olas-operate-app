@@ -44,6 +44,7 @@ import {
 import { BackupSeedPhraseAlert } from '../BackupSeedPhraseAlert';
 import { UpdateAvailableAlert } from '../UpdateAvailableAlert/UpdateAvailableAlert';
 import { UpdateAvailableModal } from '../UpdateAvailableAlert/UpdateAvailableModal';
+import { AutoRunControl } from './AutoRunControl';
 import { PulseDot } from './PulseDot';
 
 const { Sider } = Layout;
@@ -268,6 +269,7 @@ export const Sidebar = () => {
       <Sider breakpoint={SIDEBAR_BREAKPOINT} theme="light" width={SIDER_WIDTH}>
         <Flex vertical flex={1} className="p-16" justify="space-between">
           <div>
+            <AutoRunControl />
             <MyAgentsHeader />
 
             <Flex vertical gap={16}>
