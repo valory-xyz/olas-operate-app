@@ -87,7 +87,6 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
     isSelectedDataLoading,
     getSelectedEligibility,
     createSafeIfNeeded,
-    logEvent,
   });
 
   // Seed included list if empty

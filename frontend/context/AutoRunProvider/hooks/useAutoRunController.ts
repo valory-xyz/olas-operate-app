@@ -4,7 +4,9 @@ import {
   AgentType,
   MiddlewareDeploymentStatus,
   MiddlewareDeploymentStatusMap,
+  ONE_SECOND_INTERVAL,
 } from '@/constants';
+import { useElectronApi } from '@/hooks';
 import { ServicesService } from '@/service/Services';
 import { delayInSeconds } from '@/utils/delay';
 import { updateServiceIfNeeded } from '@/utils/service';
@@ -23,9 +25,16 @@ import {
   notifyStartFailed,
 } from '../utils';
 
+/** Time to wait after stopping an agent before starting the next one,
+ * to allow for proper cooldown and avoid potential issues with rapid restarts. */
 const SCAN_BLOCKED_DELAY_SECONDS = 10 * 60;
+
+/** Time to wait before re-scanning for eligible agents when we find
+ * an eligible agent but fail to start it, to avoid rapid retry loops. */
 const SCAN_ELIGIBLE_DELAY_SECONDS = 30 * 60;
-const CANDIDATE_ELIGIBILITY_TIMEOUT_SECONDS = 30;
+
+/** Time to wait for candidate eligibility data to load before skipping the candidate. */
+const CANDIDATE_ELIGIBILITY_TIMEOUT_SECONDS = 30 * ONE_SECOND_INTERVAL;
 
 type UseAutoRunControllerParams = {
   enabled: boolean;
@@ -43,7 +52,6 @@ type UseAutoRunControllerParams = {
   isSelectedDataLoading: boolean;
   getSelectedEligibility: () => { canRun: boolean; reason?: string };
   createSafeIfNeeded: (meta: AgentMeta) => Promise<void>;
-  logEvent?: (message: string) => void;
   showNotification?: (title: string, body?: string) => void;
 };
 
@@ -60,9 +68,9 @@ export const useAutoRunController = ({
   isSelectedDataLoading,
   getSelectedEligibility,
   createSafeIfNeeded,
-  logEvent,
   showNotification,
 }: UseAutoRunControllerParams) => {
+  const { logEvent } = useElectronApi();
   const [hasActivated, setHasActivated] = useState(false);
   const isRotatingRef = useRef(false);
   const skipNotifiedRef = useRef<Partial<Record<AgentType, string>>>({});
@@ -72,6 +80,7 @@ export const useAutoRunController = ({
   const scanTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [scanTick, setScanTick] = useState(0);
 
+  // Notify the user that an agent was skipped for a specific reason, but only once per reason.
   const notifySkipOnce = useCallback(
     (agentType: AgentType, reason?: string) => {
       if (!reason) return;
@@ -83,12 +92,10 @@ export const useAutoRunController = ({
     [logEvent, showNotification],
   );
 
+  // Append new agents to the end of the included list, preserving order of existing agents.
   const waitForSelectedData = useCallback(async () => {
     const startedAt = Date.now();
-    while (
-      Date.now() - startedAt <
-      CANDIDATE_ELIGIBILITY_TIMEOUT_SECONDS * 1000
-    ) {
+    while (Date.now() - startedAt < CANDIDATE_ELIGIBILITY_TIMEOUT_SECONDS) {
       if (!isSelectedDataLoading) return true;
       await delayInSeconds(2);
     }
@@ -98,10 +105,7 @@ export const useAutoRunController = ({
   const waitForRewardsEligibility = useCallback(
     async (agentType: AgentType) => {
       const startedAt = Date.now();
-      while (
-        Date.now() - startedAt <
-        CANDIDATE_ELIGIBILITY_TIMEOUT_SECONDS * 1000
-      ) {
+      while (Date.now() - startedAt < CANDIDATE_ELIGIBILITY_TIMEOUT_SECONDS) {
         const snapshot = rewardSnapshotRef.current[agentType];
         if (snapshot !== undefined) return snapshot;
         await delayInSeconds(2);

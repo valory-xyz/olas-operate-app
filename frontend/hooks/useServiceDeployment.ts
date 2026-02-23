@@ -1,5 +1,4 @@
 import { message } from 'antd';
-import { isNil } from 'lodash';
 import { useCallback, useMemo } from 'react';
 
 import { MechType } from '@/config/mechs';
@@ -7,18 +6,14 @@ import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
 import { MasterEoa, MasterSafe, PAGES } from '@/constants';
 import { MiddlewareDeploymentStatusMap } from '@/constants/deployment';
 import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
-import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRefillRequirementsContext';
 import { useBalanceContext } from '@/hooks/useBalanceContext';
+import { useDeployability } from '@/hooks/useDeployability';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { MultisigOwners, useMultisigs } from '@/hooks/useMultisig';
 import { usePageState } from '@/hooks/usePageState';
 import { useService } from '@/hooks/useService';
 import { useServices } from '@/hooks/useServices';
-import { useSharedContext } from '@/hooks/useSharedContext';
-import {
-  useActiveStakingContractDetails,
-  useStakingContractContext,
-} from '@/hooks/useStakingContractDetails';
+import { useStakingContractContext } from '@/hooks/useStakingContractDetails';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
 import { useMasterWalletContext } from '@/hooks/useWallet';
 import { ServicesService } from '@/service/Services';
@@ -31,9 +26,6 @@ import {
   getSafeEligibilityMessage,
 } from '@/utils/safe';
 import { updateServiceIfNeeded } from '@/utils/service';
-
-import { useAgentRunning } from './useAgentRunning';
-import { useIsAgentGeoRestricted } from './useIsAgentGeoRestricted';
 
 const createSafeIfNeeded = async ({
   masterSafes,
@@ -78,7 +70,6 @@ const createSafeIfNeeded = async ({
  */
 export const useServiceDeployment = () => {
   const { showNotification } = useElectronApi();
-  const { isAgentsFunFieldUpdateRequired } = useSharedContext();
 
   const { goto: gotoPage } = usePageState();
   const { masterWallets, masterSafes, masterEoa } = useMasterWalletContext();
@@ -92,10 +83,6 @@ export const useServiceDeployment = () => {
     overrideSelectedServiceStatus,
   } = useServices();
   const serviceId = selectedService?.service_config_id;
-  const { isAnotherAgentRunning } = useAgentRunning();
-
-  const { canStartAgent, isBalancesAndFundingRequirementsLoading } =
-    useBalanceAndRefillRequirementsContext();
   const { service, isServiceRunning } = useService(serviceId);
 
   const { setIsPaused: setIsBalancePollingPaused, updateBalances } =
@@ -108,72 +95,20 @@ export const useServiceDeployment = () => {
     refetchSelectedStakingContractDetails: refetchActiveStakingContractDetails,
   } = useStakingContractContext();
   const { selectedStakingProgramId } = useStakingProgram();
-  const {
-    isEligibleForStaking,
-    isAgentEvicted,
-    isServiceStaked,
-    hasEnoughServiceSlots,
-  } = useActiveStakingContractDetails();
-
   const { masterSafesOwners } = useMultisigs(masterSafes);
 
-  const { isAgentGeoRestricted } = useIsAgentGeoRestricted({
-    agentType: selectedAgentType,
-    agentConfig: selectedAgentConfig,
-  });
-
   const isLoading = useMemo(() => {
-    if (isBalancesAndFundingRequirementsLoading) return true;
     if (isServicesLoading || isServiceRunning) return true;
     if (!isAllStakingContractDetailsRecordLoaded) return true;
     return false;
   }, [
     isAllStakingContractDetailsRecordLoaded,
-    isBalancesAndFundingRequirementsLoading,
     isServiceRunning,
     isServicesLoading,
   ]);
 
-  const isDeployable = useMemo(() => {
-    if (isLoading) return false;
-
-    // If service is under construction, return false
-    if (selectedAgentConfig.isUnderConstruction) return false;
-
-    // If agent is geo-restricted in the current region, return false
-    if (selectedAgentConfig.isGeoLocationRestricted && isAgentGeoRestricted) {
-      return false;
-    }
-
-    // If another agent is running, return false;
-    if (isAnotherAgentRunning) return false;
-
-    // If not enough service slots, and service is not staked, return false
-    const hasSlot = !isNil(hasEnoughServiceSlots) && !hasEnoughServiceSlots;
-    if (hasSlot && !isServiceStaked) return false;
-
-    // If was evicted and can't re-stake - return false
-    if (isAgentEvicted && !isEligibleForStaking) return false;
-
-    // agent specific checks
-    // If the agentsFun field update is not completed, can't start the agent
-    if (isAgentsFunFieldUpdateRequired) return false;
-
-    // allow starting based on refill requirements
-    return canStartAgent;
-  }, [
-    canStartAgent,
-    hasEnoughServiceSlots,
-    isAgentEvicted,
-    isAgentGeoRestricted,
-    isAgentsFunFieldUpdateRequired,
-    isAnotherAgentRunning,
-    isEligibleForStaking,
-    isLoading,
-    isServiceStaked,
-    selectedAgentConfig.isUnderConstruction,
-    selectedAgentConfig.isGeoLocationRestricted,
-  ]);
+  const deployability = useDeployability();
+  const isDeployable = deployability.canRun && !isLoading;
 
   const pauseAllPolling = useCallback(() => {
     setIsServicePollingPaused(true);
@@ -261,7 +196,7 @@ export const useServiceDeployment = () => {
     updateBalances,
   ]);
 
-  const onStart = useCallback(async () => {
+  const handleStart = useCallback(async () => {
     if (!masterWallets?.[0]) return;
     if (!selectedStakingProgramId) {
       throw new Error('Staking program ID required');
@@ -320,5 +255,5 @@ export const useServiceDeployment = () => {
     selectedAgentType,
   ]);
 
-  return { isLoading, isDeployable, onStart };
+  return { isLoading, isDeployable, handleStart };
 };

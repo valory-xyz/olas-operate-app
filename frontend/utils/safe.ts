@@ -37,7 +37,7 @@ export const resolveBackupSignerForChain = ({
     return { status: BACKUP_SIGNER_STATUS.Loading };
   }
 
-  // If there's already a safe for the selected chain, we're good to go.
+  // 1. If there's already a safe for the selected chain, we're good to go.
   const selectedChainHasMasterSafe = masterSafes.some(
     ({ evmChainId }) => evmChainId === chainId,
   );
@@ -53,10 +53,12 @@ export const resolveBackupSignerForChain = ({
       .flat(),
   );
 
+  // 2. remove master eoa from the set, to find backup signers
   if (masterEoa) {
     otherChainOwners.delete(masterEoa.address);
   }
 
+  // 3. if there are no signers, the user needs to add a backup signer
   if (otherChainOwners.size <= 0) {
     return { status: BACKUP_SIGNER_STATUS.MissingBackupSigner };
   }
@@ -65,6 +67,7 @@ export const resolveBackupSignerForChain = ({
     return { status: BACKUP_SIGNER_STATUS.MultipleBackupSigners };
   }
 
+  // 4. otherwise, create a new safe with the same signer
   return {
     status: BACKUP_SIGNER_STATUS.Ready,
     backupOwner: [...otherChainOwners][0],
