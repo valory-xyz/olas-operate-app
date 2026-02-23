@@ -269,11 +269,15 @@ export const Sidebar = () => {
       <Sider breakpoint={SIDEBAR_BREAKPOINT} theme="light" width={SIDER_WIDTH}>
         <Flex vertical flex={1} className="p-16" justify="space-between">
           <div>
-            <AutoRunControl />
             <MyAgentsHeader />
 
-            <Flex vertical gap={16}>
-              <Text className="font-weight-600">My Agents</Text>
+            <Flex vertical gap={16} className="w-full">
+              <Flex justify="space-between" align="center">
+                <Text className="font-weight-600" style={{ flex: 1 }}>
+                  My Agents
+                </Text>
+                <AutoRunControl />
+              </Flex>
               {isLoading || isMasterWalletLoading ? (
                 <AgentMenuLoading />
               ) : myAgents.length > 0 ? (

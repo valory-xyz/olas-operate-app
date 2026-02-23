@@ -24,15 +24,14 @@ import {
   notifyStartFailed,
 } from '../utils';
 
-/** Time to wait after stopping an agent before starting the next one,
- * to allow for proper cooldown and avoid potential issues with rapid restarts. */
+/** When every candidate is blocked or missing data, wait longer before re-scan. */
 const SCAN_BLOCKED_DELAY_SECONDS = 10 * 60;
 
-/** Time to wait before re-scanning for eligible agents when we find
- * an eligible agent but fail to start it, to avoid rapid retry loops. */
+/** When all agents have already earned rewards, back off longer. */
 const SCAN_ELIGIBLE_DELAY_SECONDS = 30 * 60;
 
-/** Time to wait for candidate eligibility data to load before skipping the candidate. */
+/** Time to wait for candidate eligibility data to load before skipping the candidate.
+ */
 const CANDIDATE_ELIGIBILITY_TIMEOUT_SECONDS = 30 * ONE_SECOND_INTERVAL;
 
 const START_TIMEOUT_SECONDS = 120;
@@ -72,13 +71,19 @@ export const useAutoRunController = ({
   showNotification,
 }: UseAutoRunControllerParams) => {
   const { logEvent } = useElectronApi();
+  // Auto-run only kicks in once a manual start happens while enabled.
   const [hasActivated, setHasActivated] = useState(false);
+  // Guards against overlapping scan/rotation loops.
   const isRotatingRef = useRef(false);
+  // Track per-agent skip reason to avoid spamming notifications.
   const skipNotifiedRef = useRef<Partial<Record<AgentType, string>>>({});
+  // Latest reward-eligibility snapshot keyed by agent type.
   const rewardSnapshotRef = useRef<
     Partial<Record<AgentType, boolean | undefined>>
   >({});
+  // Keeps delayed re-scan from stacking multiple timers.
   const scanTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Toggled to force re-scan in effects when we schedule a delay.
   const [scanTick, setScanTick] = useState(0);
 
   const logMessage = useCallback(
@@ -100,7 +105,7 @@ export const useAutoRunController = ({
     [logMessage, showNotification],
   );
 
-  // Append new agents to the end of the included list, preserving order of existing agents.
+  // Wait for the selected agent's data to finish loading before evaluating eligibility.
   const waitForSelectedData = useCallback(async () => {
     const startedAt = Date.now();
     while (Date.now() - startedAt < CANDIDATE_ELIGIBILITY_TIMEOUT_SECONDS) {
@@ -144,6 +149,7 @@ export const useAutoRunController = ({
     [orderedIncludedAgentTypes],
   );
 
+  // Poll deployment status until it reaches the desired state or timeout.
   const waitForDeploymentStatus = useCallback(
     async (
       serviceConfigId: string,
@@ -168,6 +174,7 @@ export const useAutoRunController = ({
     [logMessage],
   );
 
+  // Start a candidate agent with retries + backoff, respecting eligibility gates.
   const startAgentWithRetries = useCallback(
     async (agentType: AgentType) => {
       const meta = configuredAgents.find(
@@ -182,6 +189,7 @@ export const useAutoRunController = ({
         return false;
       }
 
+      // Persist + select before starting so downstream hooks query the right agent.
       updateAutoRun({ currentAgent: agentType });
       updateAgentType(agentType);
 
@@ -231,6 +239,7 @@ export const useAutoRunController = ({
     ],
   );
 
+  // Stop the current deployment and wait until it is fully stopped.
   const stopAgent = useCallback(
     async (serviceConfigId: string) => {
       try {
@@ -249,6 +258,7 @@ export const useAutoRunController = ({
     [logMessage, waitForDeploymentStatus],
   );
 
+  // Schedule a delayed scan, coalescing any existing timer.
   const scheduleNextScan = useCallback((delaySeconds: number) => {
     if (scanTimeoutRef.current) {
       clearTimeout(scanTimeoutRef.current);
@@ -259,6 +269,7 @@ export const useAutoRunController = ({
     }, delaySeconds * 1000);
   }, []);
 
+  // Scan sequentially through the queue and attempt to start the first eligible agent.
   const scanAndStartNext = useCallback(
     async (startFrom?: AgentType | null) => {
       let hasBlocked = false;
@@ -269,6 +280,7 @@ export const useAutoRunController = ({
       while (candidate && !visited.has(candidate)) {
         visited.add(candidate);
 
+        // Select candidate to load its data (eligibility, rewards).
         updateAgentType(candidate);
         rewardSnapshotRef.current[candidate] = undefined;
 
@@ -296,6 +308,7 @@ export const useAutoRunController = ({
           continue;
         }
 
+        // If candidate already earned rewards, keep scanning.
         if (candidateEligibility === true) {
           hasEligible = true;
           candidate = findNextInOrder(candidate);
@@ -333,6 +346,7 @@ export const useAutoRunController = ({
     ],
   );
 
+  // Stop current agent, cooldown, then scan for the next candidate.
   const rotateToNext = useCallback(
     async (currentAgentType: AgentType) => {
       const currentMeta = configuredAgents.find(
@@ -348,7 +362,6 @@ export const useAutoRunController = ({
 
       logMessage(`cooldown ${COOLDOWN_SECONDS}s`);
       await delayInSeconds(COOLDOWN_SECONDS);
-
       await scanAndStartNext(currentAgentType);
     },
     [configuredAgents, logMessage, scanAndStartNext, stopAgent],
@@ -359,6 +372,7 @@ export const useAutoRunController = ({
       setHasActivated(false);
       return;
     }
+    // Auto-run "activates" once we see a running agent while enabled.
     if (runningAgentType) setHasActivated(true);
   }, [enabled, runningAgentType]);
 
@@ -370,6 +384,7 @@ export const useAutoRunController = ({
     logMessage(`current agent set to ${runningAgentType}`);
   }, [currentAgent, enabled, logMessage, runningAgentType, updateAutoRun]);
 
+  // Keep latest rewards eligibility snapshot for the selected agent.
   useEffect(() => {
     if (!selectedAgentType) return;
     rewardSnapshotRef.current[selectedAgentType] = isEligibleForRewards;
@@ -383,6 +398,7 @@ export const useAutoRunController = ({
     };
   }, []);
 
+  // Rotation when current agent earns rewards.
   useEffect(() => {
     if (!enabled || !hasActivated) return;
     if (isRotatingRef.current) return;
@@ -413,6 +429,7 @@ export const useAutoRunController = ({
     scanTick,
   ]);
 
+  // Manual stop: if nothing is running, scan and start after cooldown.
   useEffect(() => {
     if (!enabled || !hasActivated) return;
     if (runningAgentType) return;
