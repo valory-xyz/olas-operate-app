@@ -80,6 +80,13 @@ export const useAutoRunController = ({
   const scanTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [scanTick, setScanTick] = useState(0);
 
+  const logMessage = useCallback(
+    (message: string) => {
+      logAutoRun(logEvent, AUTO_RUN_LOG_PREFIX, message);
+    },
+    [logEvent],
+  );
+
   // Notify the user that an agent was skipped for a specific reason, but only once per reason.
   const notifySkipOnce = useCallback(
     (agentType: AgentType, reason?: string) => {
@@ -87,9 +94,9 @@ export const useAutoRunController = ({
       if (skipNotifiedRef.current[agentType] === reason) return;
       skipNotifiedRef.current[agentType] = reason;
       notifySkipped(showNotification, getAgentDisplayName(agentType), reason);
-      logAutoRun(logEvent, AUTO_RUN_LOG_PREFIX, `skip ${agentType}: ${reason}`);
+      logMessage(`skip ${agentType}: ${reason}`);
     },
-    [logEvent, showNotification],
+    [logMessage, showNotification],
   );
 
   // Append new agents to the end of the included list, preserving order of existing agents.
@@ -151,17 +158,13 @@ export const useAutoRunController = ({
           });
           if (deployment?.status === status) return true;
         } catch (error) {
-          logAutoRun(
-            logEvent,
-            AUTO_RUN_LOG_PREFIX,
-            `deployment status check failed: ${error}`,
-          );
+          logMessage(`deployment status check failed: ${error}`);
         }
         await delayInSeconds(5);
       }
       return false;
     },
-    [logEvent],
+    [logMessage],
   );
 
   const startAgentWithRetries = useCallback(
@@ -187,11 +190,7 @@ export const useAutoRunController = ({
         attempt += 1
       ) {
         try {
-          logAutoRun(
-            logEvent,
-            AUTO_RUN_LOG_PREFIX,
-            `starting ${agentType} (attempt ${attempt + 1})`,
-          );
+          logMessage(`starting ${agentType} (attempt ${attempt + 1})`);
           await createSafeIfNeeded(meta);
           await updateServiceIfNeeded(meta.service, agentType);
           await ServicesService.startService(meta.serviceConfigId);
@@ -203,21 +202,13 @@ export const useAutoRunController = ({
           );
 
           if (deployed) {
-            logAutoRun(logEvent, AUTO_RUN_LOG_PREFIX, `started ${agentType}`);
+            logMessage(`started ${agentType}`);
             return true;
           }
 
-          logAutoRun(
-            logEvent,
-            AUTO_RUN_LOG_PREFIX,
-            `start timeout for ${agentType} (attempt ${attempt + 1})`,
-          );
+          logMessage(`start timeout for ${agentType} (attempt ${attempt + 1})`);
         } catch (error) {
-          logAutoRun(
-            logEvent,
-            AUTO_RUN_LOG_PREFIX,
-            `start error for ${agentType}: ${error}`,
-          );
+          logMessage(`start error for ${agentType}: ${error}`);
         }
 
         await delayInSeconds(RETRY_BACKOFF_SECONDS[attempt]);
@@ -230,7 +221,7 @@ export const useAutoRunController = ({
       configuredAgents,
       createSafeIfNeeded,
       getSelectedEligibility,
-      logEvent,
+      logMessage,
       notifySkipOnce,
       showNotification,
       updateAgentType,
@@ -242,18 +233,10 @@ export const useAutoRunController = ({
   const stopAgent = useCallback(
     async (serviceConfigId: string) => {
       try {
-        logAutoRun(
-          logEvent,
-          AUTO_RUN_LOG_PREFIX,
-          `stopping ${serviceConfigId}`,
-        );
+        logMessage(`stopping ${serviceConfigId}`);
         await ServicesService.stopDeployment(serviceConfigId);
       } catch (error) {
-        logAutoRun(
-          logEvent,
-          AUTO_RUN_LOG_PREFIX,
-          `stop failed for ${serviceConfigId}: ${error}`,
-        );
+        logMessage(`stop failed for ${serviceConfigId}: ${error}`);
       }
 
       return waitForDeploymentStatus(
@@ -262,7 +245,7 @@ export const useAutoRunController = ({
         START_TIMEOUT_SECONDS,
       );
     },
-    [logEvent, waitForDeploymentStatus],
+    [logMessage, waitForDeploymentStatus],
   );
 
   const scheduleNextScan = useCallback((delaySeconds: number) => {
@@ -331,11 +314,7 @@ export const useAutoRunController = ({
           ? SCAN_ELIGIBLE_DELAY_SECONDS
           : SCAN_BLOCKED_DELAY_SECONDS;
 
-      logAutoRun(
-        logEvent,
-        AUTO_RUN_LOG_PREFIX,
-        `scan complete; scheduling next scan in ${delay}s`,
-      );
+      logMessage(`scan complete; scheduling next scan in ${delay}s`);
       scheduleNextScan(delay);
 
       return { started: false };
@@ -343,7 +322,7 @@ export const useAutoRunController = ({
     [
       findNextInOrder,
       getSelectedEligibility,
-      logEvent,
+      logMessage,
       notifySkipOnce,
       scheduleNextScan,
       startAgentWithRetries,
@@ -362,24 +341,16 @@ export const useAutoRunController = ({
 
       const stopOk = await stopAgent(currentMeta.serviceConfigId);
       if (!stopOk) {
-        logAutoRun(
-          logEvent,
-          AUTO_RUN_LOG_PREFIX,
-          `stop timeout for ${currentAgentType}, aborting rotation`,
-        );
+        logMessage(`stop timeout for ${currentAgentType}, aborting rotation`);
         return;
       }
 
-      logAutoRun(
-        logEvent,
-        AUTO_RUN_LOG_PREFIX,
-        `cooldown ${COOLDOWN_SECONDS}s`,
-      );
+      logMessage(`cooldown ${COOLDOWN_SECONDS}s`);
       await delayInSeconds(COOLDOWN_SECONDS);
 
       await scanAndStartNext(currentAgentType);
     },
-    [configuredAgents, logEvent, scanAndStartNext, stopAgent],
+    [configuredAgents, logMessage, scanAndStartNext, stopAgent],
   );
 
   useEffect(() => {
@@ -395,12 +366,8 @@ export const useAutoRunController = ({
     if (!runningAgentType) return;
     if (currentAgent === runningAgentType) return;
     updateAutoRun({ currentAgent: runningAgentType });
-    logAutoRun(
-      logEvent,
-      AUTO_RUN_LOG_PREFIX,
-      `current agent set to ${runningAgentType}`,
-    );
-  }, [currentAgent, enabled, logEvent, runningAgentType, updateAutoRun]);
+    logMessage(`current agent set to ${runningAgentType}`);
+  }, [currentAgent, enabled, logMessage, runningAgentType, updateAutoRun]);
 
   useEffect(() => {
     if (!selectedAgentType) return;
@@ -428,7 +395,7 @@ export const useAutoRunController = ({
     isRotatingRef.current = true;
     rotateToNext(currentType)
       .catch((error) => {
-        logAutoRun(logEvent, AUTO_RUN_LOG_PREFIX, `rotation error: ${error}`);
+        logMessage(`rotation error: ${error}`);
       })
       .finally(() => {
         isRotatingRef.current = false;
@@ -438,7 +405,7 @@ export const useAutoRunController = ({
     enabled,
     hasActivated,
     isEligibleForRewards,
-    logEvent,
+    logMessage,
     rotateToNext,
     runningAgentType,
     selectedAgentType,
@@ -453,13 +420,7 @@ export const useAutoRunController = ({
     isRotatingRef.current = true;
     delayInSeconds(COOLDOWN_SECONDS)
       .then(() => scanAndStartNext(currentAgent))
-      .catch((error) =>
-        logAutoRun(
-          logEvent,
-          AUTO_RUN_LOG_PREFIX,
-          `manual stop start error: ${error}`,
-        ),
-      )
+      .catch((error) => logMessage(`manual stop start error: ${error}`))
       .finally(() => {
         isRotatingRef.current = false;
       });
@@ -467,7 +428,7 @@ export const useAutoRunController = ({
     currentAgent,
     enabled,
     hasActivated,
-    logEvent,
+    logMessage,
     runningAgentType,
     scanAndStartNext,
     scanTick,
