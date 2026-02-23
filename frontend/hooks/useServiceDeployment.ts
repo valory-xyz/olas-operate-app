@@ -218,7 +218,7 @@ export const useServiceDeployment = () => {
     updateBalances,
   ]);
 
-  const handleStart = useCallback(async () => {
+  const onStart = useCallback(async () => {
     if (!masterWallets?.[0]) return;
     if (!selectedStakingProgramId) {
       throw new Error('Staking program ID required');
@@ -277,7 +277,7 @@ export const useServiceDeployment = () => {
     selectedAgentType,
   ]);
 
-  return { isLoading, isDeployable, handleStart };
+  return { isLoading, isDeployable, onStart };
 };
 
 const createSafeIfNeeded = async ({

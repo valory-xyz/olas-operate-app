@@ -8,7 +8,7 @@ import { AgentBusyButton } from './AgentBusyButton';
  * Agent Not Running Button
  */
 export const AgentNotRunningButton = () => {
-  const { isLoading, isDeployable, handleStart } = useServiceDeployment();
+  const { isLoading, isDeployable, onStart } = useServiceDeployment();
 
   if (isLoading) {
     return <AgentBusyButton text="Loading" />;
@@ -19,7 +19,7 @@ export const AgentNotRunningButton = () => {
       type="primary"
       size="large"
       disabled={!isDeployable}
-      onClick={isDeployable ? handleStart : undefined}
+      onClick={isDeployable ? onStart : undefined}
     >
       Start agent
     </Button>
