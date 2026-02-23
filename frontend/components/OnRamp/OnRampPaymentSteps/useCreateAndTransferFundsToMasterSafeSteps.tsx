@@ -18,6 +18,7 @@ const EMPTY_STATE_STEPS: Record<string, TransactionStep> = {
 
 /**
  * Hook to create a Master Safe and transfer funds to it after the swap is completed.
+ * Creates safe if it doesn't exist.
  */
 export const useCreateAndTransferFundsToMasterSafeSteps = (
   isSwapCompleted: boolean,
@@ -38,6 +39,10 @@ export const useCreateAndTransferFundsToMasterSafeSteps = (
   }
 
   const hasMasterSafe = !isNil(getMasterSafeOf?.(selectedChainId));
+
+  // Create master safe if it doesn't exist
+  const shouldCreateMasterSafe = !hasMasterSafe;
+
   const isSafeCreated = isMasterWalletFetched
     ? hasMasterSafe ||
       creationAndTransferDetails?.safeCreationDetails?.isSafeCreated
@@ -51,7 +56,9 @@ export const useCreateAndTransferFundsToMasterSafeSteps = (
     creationAndTransferDetails?.transferDetails.transfers;
 
   // Check if the swap is completed and tokens are available for transfer
+  // Create safe if we don't have one yet
   useEffect(() => {
+    if (!shouldCreateMasterSafe) return;
     if (!isSwapCompleted) return;
     if (isLoadingMasterSafeCreation) return;
     if (isErrorMasterSafeCreation) return;
@@ -59,6 +66,7 @@ export const useCreateAndTransferFundsToMasterSafeSteps = (
 
     createMasterSafe();
   }, [
+    shouldCreateMasterSafe,
     isSwapCompleted,
     isLoadingMasterSafeCreation,
     isErrorMasterSafeCreation,
@@ -68,7 +76,8 @@ export const useCreateAndTransferFundsToMasterSafeSteps = (
 
   // Step for creating the Master Safe
   const masterSafeCreationStep = useMemo<Nullable<TransactionStep>>(() => {
-    if (isMasterWalletFetched && hasMasterSafe) return null;
+    // Don't show this step if safe already exists
+    if (!shouldCreateMasterSafe) return null;
 
     const currentMasterSafeCreationStatus = (() => {
       if (!isSwapCompleted) return 'wait';
@@ -103,8 +112,7 @@ export const useCreateAndTransferFundsToMasterSafeSteps = (
       ],
     };
   }, [
-    isMasterWalletFetched,
-    hasMasterSafe,
+    shouldCreateMasterSafe,
     creationAndTransferDetails?.safeCreationDetails?.txnLink,
     isErrorMasterSafeCreation,
     createMasterSafe,
@@ -114,7 +122,10 @@ export const useCreateAndTransferFundsToMasterSafeSteps = (
   ]);
 
   // Step for transferring funds to the Master Safe
-  const masterSafeTransferFundStep = useMemo<TransactionStep>(() => {
+  const masterSafeTransferFundStep = useMemo<Nullable<TransactionStep>>(() => {
+    // Don't show this step if safe already exists
+    if (!shouldCreateMasterSafe) return null;
+
     const currentMasterSafeCreationStatus = (() => {
       if (!isSwapCompleted) return 'wait';
 
@@ -160,11 +171,12 @@ export const useCreateAndTransferFundsToMasterSafeSteps = (
         }) || [],
     };
   }, [
+    shouldCreateMasterSafe,
+    transferStatuses,
     isSwapCompleted,
     isLoadingMasterSafeCreation,
     isSafeCreated,
     isTransferComplete,
-    transferStatuses,
     createMasterSafe,
   ]);
 
@@ -196,12 +208,9 @@ export const useCreateAndTransferFundsToMasterSafeSteps = (
   if (!isSwapCompleted) {
     return {
       isMasterSafeCreatedAndFundsTransferred: false,
-      steps: [
-        isMasterWalletFetched && hasMasterSafe
-          ? null
-          : EMPTY_STATE_STEPS.createPearlWallet,
-        EMPTY_STATE_STEPS.transferFunds,
-      ].filter(Boolean),
+      steps: shouldCreateMasterSafe
+        ? [EMPTY_STATE_STEPS.createPearlWallet, EMPTY_STATE_STEPS.transferFunds]
+        : [],
     };
   }
 

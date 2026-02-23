@@ -64,7 +64,10 @@ export const AchievementModal = () => {
         <>
           <ConfettiAnimation loop={false} />
           {agentType === AgentMap.Polystrat ? (
-            <PolystratModalContent achievement={currentAchievement} />
+            <PolystratModalContent
+              achievement={currentAchievement}
+              onShare={handleClose}
+            />
           ) : null}
         </>
       }

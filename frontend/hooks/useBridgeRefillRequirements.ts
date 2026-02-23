@@ -6,13 +6,21 @@ import { OnlineStatusContext } from '@/context/OnlineStatusProvider';
 import { BridgeService } from '@/service/Bridge';
 import { BridgeRefillRequirementsRequest } from '@/types/Bridge';
 
-export const useBridgeRefillRequirements = (
-  params: BridgeRefillRequirementsRequest | null,
-  canPoll: boolean = true,
-  enabled: boolean = true,
-  queryKeySuffix?: string,
-  pollingInterval: number = TEN_SECONDS_INTERVAL,
-) => {
+type UseBridgeRefillRequirementsOptions = {
+  params: BridgeRefillRequirementsRequest | null;
+  canPoll?: boolean;
+  enabled?: boolean;
+  queryKeySuffix?: string;
+  pollingInterval?: number;
+};
+
+export const useBridgeRefillRequirements = ({
+  params,
+  canPoll = true,
+  enabled = true,
+  queryKeySuffix,
+  pollingInterval = TEN_SECONDS_INTERVAL,
+}: UseBridgeRefillRequirementsOptions) => {
   const { isOnline } = useContext(OnlineStatusContext);
 
   return useQuery({

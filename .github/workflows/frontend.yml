@@ -65,9 +65,9 @@ jobs:
       # Lint and test
       - name: Lint & Typecheck
         run: yarn quality-check:frontend
-      # Test
-      # - name: Test
-      # run: yarn test:frontend
+      - name: Test
+        run: yarn test:frontend
 
+      # Run custom script to check service templates
       - name: Check service templates
         run: cd frontend && npx tsx ../scripts/js/check_service_templates.ts

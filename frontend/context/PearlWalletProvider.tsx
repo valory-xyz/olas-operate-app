@@ -11,13 +11,7 @@ import {
 import { ACTIVE_AGENTS } from '@/config/agents';
 import { CHAIN_CONFIG } from '@/config/chains';
 import { TokenSymbol } from '@/config/tokens';
-import {
-  AgentType,
-  EvmChainId,
-  type EvmChainName,
-  MasterSafe,
-  PAGES,
-} from '@/constants';
+import { EvmChainId, type EvmChainName, MasterSafe, PAGES } from '@/constants';
 import {
   useAvailableAssets,
   useBalanceAndRefillRequirementsContext,
@@ -29,7 +23,6 @@ import {
 } from '@/hooks';
 import {
   Address,
-  AgentConfig,
   AvailableAsset,
   MiddlewareServiceResponse,
   Nullable,
@@ -69,7 +62,7 @@ const getChainList = (services?: MiddlewareServiceResponse[]) => {
     );
     if (!agent) return;
 
-    const [, agentConfig] = agent as [AgentType, AgentConfig];
+    const [, agentConfig] = agent;
     if (!agentConfig.evmHomeChainId) return;
 
     const chainId = agentConfig.evmHomeChainId;
@@ -104,6 +97,7 @@ const PearlWalletContext = createContext<{
     details: TokenAmountDetails,
   ) => void;
   updateAmountsToDeposit: (amounts: TokenAmounts) => void;
+  initializeDepositAmounts: () => void;
   onReset: (canNavigateOnReset?: boolean) => void;
   /** Initial values for funding agent wallet based on refill requirements */
   defaultRequirementDepositValues: Optional<TokenBalanceRecord>;
@@ -123,6 +117,7 @@ const PearlWalletContext = createContext<{
   amountsToDeposit: {},
   onDepositAmountChange: () => {},
   updateAmountsToDeposit: () => {},
+  initializeDepositAmounts: () => {},
   onReset: () => {},
   defaultRequirementDepositValues: {},
 });
@@ -189,8 +184,8 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
     [masterSafes, walletChainId],
   );
 
-  // Set initial deposit amounts if refill requirements is requested
-  useEffect(() => {
+  // Function to manually initialize deposit amounts based on refill requirements
+  const initializeDepositAmounts = useCallback(() => {
     if (!masterSafeAddress) return;
 
     const defaultRequirementDepositValues = getInitialDepositForMasterSafe(
@@ -205,10 +200,10 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
     setDefaultDepositValues(defaultRequirementDepositValues);
     setAmountsToDeposit(defaultRequirementDepositValues);
   }, [
-    getRefillRequirementsOf,
     walletChainId,
     masterSafeAddress,
     getServiceConfigIdsOf,
+    getRefillRequirementsOf,
   ]);
 
   // list of unique chains where the user has services
@@ -329,6 +324,7 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
         amountsToDeposit,
         onDepositAmountChange,
         updateAmountsToDeposit,
+        initializeDepositAmounts,
         onReset,
 
         // Initial values for funding agent wallet

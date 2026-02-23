@@ -1,6 +1,7 @@
 import { Button, Flex, Select, Typography } from 'antd';
 import { isEmpty, kebabCase, values } from 'lodash';
 import Image from 'next/image';
+import { useEffect } from 'react';
 
 import {
   Alert,
@@ -95,7 +96,14 @@ export const Deposit = ({ onBack, onContinue }: DepositProps) => {
     amountsToDeposit,
     availableAssets,
     masterSafeAddress,
+    walletChainId,
+    initializeDepositAmounts,
   } = usePearlWallet();
+
+  // Initialize deposit amounts based on refill requirements when component mounts or chain changes
+  useEffect(() => {
+    initializeDepositAmounts();
+  }, [walletChainId, initializeDepositAmounts]);
 
   return (
     <CardFlex $noBorder $padding="32px" style={cardStyles}>
