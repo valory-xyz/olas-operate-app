@@ -1,6 +1,6 @@
 import { Flex, Statistic, Typography } from 'antd';
 import { isNil } from 'lodash';
-import { type CSSProperties, useMemo } from 'react';
+import { type CSSProperties, ReactNode, useMemo } from 'react';
 import styled from 'styled-components';
 
 import { Tooltip } from '@/components/ui';
@@ -19,13 +19,13 @@ const Timer = styled(AntdTimer)`
 
 const overlayStyle: CSSProperties = {
   maxWidth: 368,
-};
+} as const;
 
 const overlayInnerStyle: CSSProperties = {
   padding: 16,
   borderRadius: 16,
   backgroundColor: COLOR.WHITE,
-};
+} as const;
 
 const CooldownExplanation = () => (
   <>
@@ -95,11 +95,11 @@ const CooldownPeriodContent = () => {
   );
 };
 
+type CooldownContentTooltipProps = { children: ReactNode };
+
 export const CooldownContentTooltip = ({
   children,
-}: {
-  children: React.ReactNode;
-}) => (
+}: CooldownContentTooltipProps) => (
   <Tooltip
     trigger="hover"
     placement="top"
