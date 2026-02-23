@@ -18,8 +18,10 @@ import {
   EvmChainId,
   FIVE_SECONDS_INTERVAL,
   GEO_ELIGIBILITY_API_URL,
+  MiddlewareDeploymentStatus,
   MiddlewareDeploymentStatusMap,
   REACT_QUERY_KEYS,
+  StakingProgramId,
 } from '@/constants';
 import {
   useAgentRunning,
@@ -45,18 +47,21 @@ import {
 import { delayInSeconds } from '@/utils/delay';
 import { updateServiceIfNeeded } from '@/utils/service';
 
-type IncludedAgent = {
+/**
+ * Auto-run configuration saved in Electron store.
+ */
+export type IncludedAgent = {
   agentType: AgentType;
   order: number;
 };
 
-type Eligibility = {
+export type Eligibility = {
   canRun: boolean;
   reason?: string;
   isEligibleForRewards?: boolean;
 };
 
-type AutoRunContextType = {
+export type AutoRunContextType = {
   enabled: boolean;
   includedAgents: IncludedAgent[];
   excludedAgents: AgentType[];
@@ -84,7 +89,7 @@ type AgentMeta = {
   service: Service;
   serviceConfigId: ServiceConfigId;
   chainId: EvmChainId;
-  stakingProgramId: string;
+  stakingProgramId: StakingProgramId;
   multisig?: Address;
   serviceNftTokenId?: number;
 };
@@ -195,22 +200,34 @@ const isAgentsFunFieldUpdateRequired = (service: Service) => {
   return !areFieldsUpdated;
 };
 
-export const AutoRunProvider = ({ children }: PropsWithChildren) => {
-  const { store, showNotification, logEvent } = useElectronApi();
-  const { storeState } = useStore();
-  const { services, updateAgentType, selectedAgentType } = useServices();
-  const { runningAgentType } = useAgentRunning();
-  const { isOnline } = useOnlineStatusContext();
-  const {
-    allowStartAgentByServiceConfigId,
-    isBalancesAndFundingRequirementsLoadingForAllServices,
-  } = useBalanceAndRefillRequirementsContext();
-  const { masterSafes, masterEoa } = useMasterWalletContext();
-  const { masterSafesOwners } = useMultisigs(masterSafes);
+const sortIncludedAgents = (
+  includedAgents: IncludedAgent[],
+  allowedAgents: AgentType[],
+) => {
+  if (isEmpty(includedAgents)) return [] as IncludedAgent[];
+  const allowed = new Set(allowedAgents);
+  return sortBy(
+    includedAgents.filter((agent) => allowed.has(agent.agentType)),
+    (item) => item.order,
+  );
+};
 
-  const [hasActivated, setHasActivated] = useState(false);
-  const isRotatingRef = useRef(false);
-  const skipNotifiedRef = useRef<Partial<Record<AgentType, string>>>({});
+const buildIncludedAgentsFromOrder = (agentTypes: AgentType[]) =>
+  agentTypes.map((agentType, index) => ({ agentType, order: index }));
+
+const appendNewAgents = (existing: IncludedAgent[], newAgents: AgentType[]) => {
+  const maxOrder =
+    existing.length > 0 ? Math.max(...existing.map((item) => item.order)) : -1;
+  const appended = newAgents.map((agentType, index) => ({
+    agentType,
+    order: maxOrder + index + 1,
+  }));
+  return [...existing, ...appended];
+};
+
+const useAutoRunStore = () => {
+  const { store } = useElectronApi();
+  const { storeState } = useStore();
 
   const autoRun = storeState?.autoRun;
   const enabled = !!autoRun?.enabled;
@@ -230,7 +247,11 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
     [autoRun?.currentAgent, autoRun?.enabled, autoRun?.includedAgents, store],
   );
 
-  const configuredAgents = useMemo(() => {
+  return { enabled, includedAgents, currentAgent, updateAutoRun };
+};
+
+const useConfiguredAgents = (services?: Service[]) => {
+  return useMemo(() => {
     if (!services) return [] as AgentMeta[];
 
     return services.reduce<AgentMeta[]>((acc, service) => {
@@ -258,129 +279,19 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
       return acc;
     }, []);
   }, [services]);
+};
 
-  const configuredAgentTypes = useMemo(
-    () => configuredAgents.map((agent) => agent.agentType),
-    [configuredAgents],
-  );
-
-  const includedAgentsSorted = useMemo(() => {
-    if (isEmpty(includedAgents)) return [] as IncludedAgent[];
-    const allowed = new Set(configuredAgentTypes);
-    return sortBy(
-      includedAgents.filter((agent) => allowed.has(agent.agentType)),
-      (item) => item.order,
-    );
-  }, [includedAgents, configuredAgentTypes]);
-
-  const orderedIncludedAgentTypes = useMemo(() => {
-    if (includedAgentsSorted.length > 0) {
-      return includedAgentsSorted.map((agent) => agent.agentType);
-    }
-    return configuredAgentTypes;
-  }, [configuredAgentTypes, includedAgentsSorted]);
-
-  const excludedAgents = useMemo(() => {
-    const includedSet = new Set(orderedIncludedAgentTypes);
-    return configuredAgentTypes.filter(
-      (agentType) => !includedSet.has(agentType),
-    );
-  }, [configuredAgentTypes, orderedIncludedAgentTypes]);
-
-  // Seed included list if empty
-  useEffect(() => {
-    if (!store?.set) return;
-    if (!services) return;
-    if (includedAgents.length > 0) return;
-    if (configuredAgentTypes.length === 0) return;
-
-    updateAutoRun({
-      includedAgents: configuredAgentTypes.map((agentType, index) => ({
-        agentType,
-        order: index,
-      })),
-    });
-  }, [
-    configuredAgentTypes,
-    includedAgents.length,
-    services,
-    store?.set,
-    updateAutoRun,
-  ]);
-
-  // Append new agents to included list
-  useEffect(() => {
-    if (!store?.set) return;
-    if (!services) return;
-    if (configuredAgentTypes.length === 0) return;
-
-    const includedSet = new Set(includedAgents.map((item) => item.agentType));
-    const newAgents = configuredAgentTypes.filter(
-      (agentType) => !includedSet.has(agentType),
-    );
-    if (newAgents.length === 0) return;
-
-    const maxOrder =
-      includedAgents.length > 0
-        ? Math.max(...includedAgents.map((item) => item.order))
-        : -1;
-    const appended = newAgents.map((agentType, index) => ({
-      agentType,
-      order: maxOrder + index + 1,
-    }));
-
-    updateAutoRun({
-      includedAgents: [...includedAgents, ...appended],
-    });
-  }, [
-    configuredAgentTypes,
-    includedAgents,
-    services,
-    store?.set,
-    updateAutoRun,
-  ]);
-
-  // Sync selected agent with current auto-run agent when enabled
-  useEffect(() => {
-    if (!enabled) return;
-    if (!currentAgent) return;
-    if (!configuredAgentTypes.includes(currentAgent)) return;
-    if (selectedAgentType === currentAgent) return;
-    updateAgentType(currentAgent);
-  }, [
-    configuredAgentTypes,
-    currentAgent,
-    enabled,
-    selectedAgentType,
-    updateAgentType,
-  ]);
-
-  // Auto-run activation tracking
-  useEffect(() => {
-    if (!enabled) {
-      setHasActivated(false);
-      return;
-    }
-    if (runningAgentType) setHasActivated(true);
-  }, [enabled, runningAgentType]);
-
-  // Sync currentAgent with running agent while auto-run enabled
-  useEffect(() => {
-    if (!enabled) return;
-    if (!runningAgentType) return;
-    if (currentAgent === runningAgentType) return;
-    updateAutoRun({ currentAgent: runningAgentType });
-    logAutoRun(logEvent, `current agent set to ${runningAgentType}`);
-  }, [currentAgent, enabled, logEvent, runningAgentType, updateAutoRun]);
-
-  const geoEligibilityQuery = useQuery({
+const useGeoEligibility = (isOnline: boolean) => {
+  return useQuery({
     queryKey: ['geoEligibility', 'autorun'],
     queryFn: ({ signal }) => fetchGeoEligibility(signal),
     enabled: isOnline,
     staleTime: 1000 * 60 * 60,
   });
+};
 
-  const rewardsQueries = useQueries({
+const useRewardsQueries = (configuredAgents: AgentMeta[], isOnline: boolean) =>
+  useQueries({
     queries: configuredAgents.map((meta) =>
       createStakingRewardsQuery({
         chainId: meta.chainId,
@@ -395,7 +306,11 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
     ),
   });
 
-  const stakingDetailsQueries = useQueries({
+const useStakingDetailsQueries = (
+  configuredAgents: AgentMeta[],
+  isOnline: boolean,
+) =>
+  useQueries({
     queries: configuredAgents.map((meta) => ({
       queryKey: [
         'autorun',
@@ -407,7 +322,7 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
       queryFn: async () =>
         meta.agentConfig.serviceApi.getServiceStakingDetails(
           meta.serviceNftTokenId!,
-          meta.stakingProgramId as string,
+          meta.stakingProgramId,
           meta.chainId,
         ),
       enabled:
@@ -418,7 +333,8 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
     })),
   });
 
-  const stakingContractQueries = useQueries({
+const useStakingContractQueries = (configuredAgents: AgentMeta[]) =>
+  useQueries({
     queries: configuredAgents.map((meta) => ({
       queryKey: REACT_QUERY_KEYS.ALL_STAKING_CONTRACT_DETAILS(
         meta.chainId,
@@ -426,13 +342,17 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
       ),
       queryFn: async () =>
         meta.agentConfig.serviceApi.getStakingContractDetails(
-          meta.stakingProgramId as string,
+          meta.stakingProgramId,
           meta.chainId,
         ),
       enabled: !!meta.stakingProgramId,
       staleTime: 1000 * 60 * 5,
     })),
   });
+
+const useSafeEligibility = () => {
+  const { masterSafes, masterEoa } = useMasterWalletContext();
+  const { masterSafesOwners } = useMultisigs(masterSafes);
 
   const canCreateSafeForChain = useCallback(
     (chainId: EvmChainId) => {
@@ -468,7 +388,73 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
     [masterEoa, masterSafes, masterSafesOwners],
   );
 
-  const eligibilityByAgent = useMemo(() => {
+  const createSafeIfNeeded = useCallback(
+    async (meta: AgentMeta) => {
+      const { agentConfig } = meta;
+
+      if (!masterSafes || !masterSafesOwners) {
+        throw new Error('Safe data not loaded');
+      }
+
+      const selectedChainHasMasterSafe = masterSafes.some(
+        ({ evmChainId }) => evmChainId === agentConfig.evmHomeChainId,
+      );
+
+      if (selectedChainHasMasterSafe) return;
+
+      const otherChainOwners = new Set(
+        masterSafesOwners
+          ?.filter(
+            ({ evmChainId }) => evmChainId !== agentConfig.evmHomeChainId,
+          )
+          .map((masterSafe) => masterSafe.owners)
+          .flat(),
+      );
+
+      if (masterEoa) otherChainOwners.delete(masterEoa.address);
+
+      if (otherChainOwners.size <= 0) {
+        throw new Error('Backup signer required');
+      }
+
+      if (otherChainOwners.size !== 1) {
+        throw new Error('Multiple backup signers found');
+      }
+
+      await WalletService.createSafe(
+        agentConfig.middlewareHomeChainId,
+        [...otherChainOwners][0],
+      );
+    },
+    [masterEoa, masterSafes, masterSafesOwners],
+  );
+
+  return { canCreateSafeForChain, createSafeIfNeeded };
+};
+
+const useEligibilityByAgent = ({
+  configuredAgents,
+  rewardsQueries,
+  stakingDetailsQueries,
+  stakingContractQueries,
+  geoEligibility,
+  allowStartAgentByServiceConfigId,
+  isBalancesAndFundingRequirementsLoadingForAllServices,
+  canCreateSafeForChain,
+}: {
+  configuredAgents: AgentMeta[];
+  rewardsQueries: ReturnType<typeof useRewardsQueries>;
+  stakingDetailsQueries: ReturnType<typeof useStakingDetailsQueries>;
+  stakingContractQueries: ReturnType<typeof useStakingContractQueries>;
+  geoEligibility?: GeoEligibilityResponse;
+  allowStartAgentByServiceConfigId: (serviceConfigId?: string) => boolean;
+  isBalancesAndFundingRequirementsLoadingForAllServices: boolean;
+  canCreateSafeForChain: (chainId: EvmChainId) => {
+    ok: boolean;
+    reason?: string;
+  };
+}) => {
+  return useMemo(() => {
     return configuredAgents.reduce<Partial<Record<AgentType, Eligibility>>>(
       (acc, meta, index) => {
         const { agentConfig, agentType, service, chainId, serviceConfigId } =
@@ -494,8 +480,7 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
 
         const isGeoRestricted =
           agentConfig.isGeoLocationRestricted &&
-          geoEligibilityQuery.data?.eligibility?.[agentType]?.status !==
-            'allowed';
+          geoEligibility?.eligibility?.[agentType]?.status !== 'allowed';
 
         const allowStart = allowStartAgentByServiceConfigId(serviceConfigId);
 
@@ -582,11 +567,147 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
     allowStartAgentByServiceConfigId,
     canCreateSafeForChain,
     configuredAgents,
-    geoEligibilityQuery.data,
+    geoEligibility,
+    isBalancesAndFundingRequirementsLoadingForAllServices,
+    rewardsQueries,
+    stakingContractQueries,
+    stakingDetailsQueries,
+  ]);
+};
+
+export const AutoRunProvider = ({ children }: PropsWithChildren) => {
+  const { showNotification, logEvent } = useElectronApi();
+  const { services, updateAgentType, selectedAgentType } = useServices();
+  const { runningAgentType } = useAgentRunning();
+  const { isOnline } = useOnlineStatusContext();
+  const {
+    allowStartAgentByServiceConfigId,
+    isBalancesAndFundingRequirementsLoadingForAllServices,
+  } = useBalanceAndRefillRequirementsContext();
+
+  const { enabled, includedAgents, currentAgent, updateAutoRun } =
+    useAutoRunStore();
+
+  const configuredAgents = useConfiguredAgents(services);
+  const configuredAgentTypes = useMemo(
+    () => configuredAgents.map((agent) => agent.agentType),
+    [configuredAgents],
+  );
+
+  const includedAgentsSorted = useMemo(
+    () => sortIncludedAgents(includedAgents, configuredAgentTypes),
+    [configuredAgentTypes, includedAgents],
+  );
+
+  const orderedIncludedAgentTypes = useMemo(() => {
+    if (includedAgentsSorted.length > 0) {
+      return includedAgentsSorted.map((agent) => agent.agentType);
+    }
+    return configuredAgentTypes;
+  }, [configuredAgentTypes, includedAgentsSorted]);
+
+  const excludedAgents = useMemo(() => {
+    const includedSet = new Set(orderedIncludedAgentTypes);
+    return configuredAgentTypes.filter(
+      (agentType) => !includedSet.has(agentType),
+    );
+  }, [configuredAgentTypes, orderedIncludedAgentTypes]);
+
+  const geoEligibilityQuery = useGeoEligibility(isOnline);
+  const rewardsQueries = useRewardsQueries(configuredAgents, isOnline);
+  const stakingDetailsQueries = useStakingDetailsQueries(
+    configuredAgents,
+    isOnline,
+  );
+  const stakingContractQueries = useStakingContractQueries(configuredAgents);
+  const { canCreateSafeForChain, createSafeIfNeeded } = useSafeEligibility();
+
+  const eligibilityByAgent = useEligibilityByAgent({
+    configuredAgents,
     rewardsQueries,
     stakingDetailsQueries,
     stakingContractQueries,
+    geoEligibility: geoEligibilityQuery.data,
+    allowStartAgentByServiceConfigId,
+    isBalancesAndFundingRequirementsLoadingForAllServices,
+    canCreateSafeForChain,
+  });
+
+  const [hasActivated, setHasActivated] = useState(false);
+  const isRotatingRef = useRef(false);
+  const skipNotifiedRef = useRef<Partial<Record<AgentType, string>>>({});
+
+  /**
+   * Seed the included list using the services order when auto-run has no
+   * stored list yet (first run or reset).
+   */
+  useEffect(() => {
+    if (!services) return;
+    if (includedAgents.length > 0) return;
+    if (configuredAgentTypes.length === 0) return;
+
+    updateAutoRun({
+      includedAgents: buildIncludedAgentsFromOrder(configuredAgentTypes),
+    });
+  }, [configuredAgentTypes, includedAgents.length, services, updateAutoRun]);
+
+  /**
+   * Append any newly detected agents to the end of the included list.
+   */
+  useEffect(() => {
+    if (!services) return;
+    if (configuredAgentTypes.length === 0) return;
+
+    const includedSet = new Set(includedAgents.map((item) => item.agentType));
+    const newAgents = configuredAgentTypes.filter(
+      (agentType) => !includedSet.has(agentType),
+    );
+
+    if (newAgents.length === 0) return;
+
+    updateAutoRun({
+      includedAgents: appendNewAgents(includedAgents, newAgents),
+    });
+  }, [configuredAgentTypes, includedAgents, services, updateAutoRun]);
+
+  /**
+   * Sync sidebar selection with current auto-run agent when enabled.
+   */
+  useEffect(() => {
+    if (!enabled) return;
+    if (!currentAgent) return;
+    if (!configuredAgentTypes.includes(currentAgent)) return;
+    if (selectedAgentType === currentAgent) return;
+    updateAgentType(currentAgent);
+  }, [
+    configuredAgentTypes,
+    currentAgent,
+    enabled,
+    selectedAgentType,
+    updateAgentType,
   ]);
+
+  /**
+   * Auto-run only activates once the user manually starts any agent.
+   */
+  useEffect(() => {
+    if (!enabled) {
+      setHasActivated(false);
+      return;
+    }
+    if (runningAgentType) setHasActivated(true);
+  }, [enabled, runningAgentType]);
+
+  /**
+   * When a running agent is detected, keep currentAgent in sync.
+   */
+  useEffect(() => {
+    if (!enabled) return;
+    if (!runningAgentType) return;
+    if (currentAgent === runningAgentType) return;
+    updateAutoRun({ currentAgent: runningAgentType });
+    logAutoRun(logEvent, `current agent set to ${runningAgentType}`);
+  }, [currentAgent, enabled, logEvent, runningAgentType, updateAutoRun]);
 
   const notifySkipOnce = useCallback(
     (agentType: AgentType, reason?: string) => {
@@ -614,7 +735,6 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
             (startIndex + i) % orderedIncludedAgentTypes.length
           ];
         if (!candidate) continue;
-
         if (candidate === currentAgentType) continue;
 
         const eligibility = eligibilityByAgent[candidate];
@@ -634,7 +754,7 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
   const waitForDeploymentStatus = useCallback(
     async (
       serviceConfigId: ServiceConfigId,
-      status: MiddlewareDeploymentStatusMap,
+      status: MiddlewareDeploymentStatus,
       timeoutSeconds: number,
     ) => {
       const startedAt = Date.now();
@@ -653,47 +773,6 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
       return false;
     },
     [logEvent],
-  );
-
-  const createSafeIfNeeded = useCallback(
-    async (meta: AgentMeta) => {
-      const { agentConfig } = meta;
-
-      if (!masterSafes || !masterSafesOwners) {
-        throw new Error('Safe data not loaded');
-      }
-
-      const selectedChainHasMasterSafe = masterSafes.some(
-        ({ evmChainId }) => evmChainId === agentConfig.evmHomeChainId,
-      );
-
-      if (selectedChainHasMasterSafe) return;
-
-      const otherChainOwners = new Set(
-        masterSafesOwners
-          ?.filter(
-            ({ evmChainId }) => evmChainId !== agentConfig.evmHomeChainId,
-          )
-          .map((masterSafe) => masterSafe.owners)
-          .flat(),
-      );
-
-      if (masterEoa) otherChainOwners.delete(masterEoa.address);
-
-      if (otherChainOwners.size <= 0) {
-        throw new Error('Backup signer required');
-      }
-
-      if (otherChainOwners.size !== 1) {
-        throw new Error('Multiple backup signers found');
-      }
-
-      await WalletService.createSafe(
-        agentConfig.middlewareHomeChainId,
-        [...otherChainOwners][0],
-      );
-    },
-    [masterEoa, masterSafes, masterSafesOwners],
   );
 
   const startAgentWithRetries = useCallback(
@@ -758,6 +837,7 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
       eligibilityByAgent,
       logEvent,
       notifySkipOnce,
+      showNotification,
       updateAgentType,
       updateAutoRun,
       waitForDeploymentStatus,
@@ -818,7 +898,10 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
     ],
   );
 
-  // Main rotation loop
+  /**
+   * Main rotation loop: when the current agent becomes eligible for rewards,
+   * attempt to rotate to the next eligible candidate.
+   */
   useEffect(() => {
     if (!enabled || !hasActivated) return;
     if (isRotatingRef.current) return;
@@ -853,7 +936,10 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
     runningAgentType,
   ]);
 
-  // Manual stop: if enabled and no agent running, start next eligible
+  /**
+   * Manual stop: if auto-run is enabled and no agent is running,
+   * try to start the next eligible agent after cooldown.
+   */
   useEffect(() => {
     if (!enabled || !hasActivated) return;
     if (runningAgentType) return;
@@ -897,13 +983,8 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
       );
       if (existing) return;
 
-      const maxOrder =
-        includedAgents.length > 0
-          ? Math.max(...includedAgents.map((item) => item.order))
-          : -1;
-
       updateAutoRun({
-        includedAgents: [...includedAgents, { agentType, order: maxOrder + 1 }],
+        includedAgents: appendNewAgents(includedAgents, [agentType]),
       });
       logAutoRun(logEvent, `included ${agentType}`);
     },
@@ -951,41 +1032,3 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
 };
 
 export const useAutoRunContext = () => useContext(AutoRunContext);
-const createSafeIfNeeded = useCallback(
-  async (meta: AgentMeta) => {
-    const { agentConfig } = meta;
-
-    if (!masterSafes || !masterSafesOwners) {
-      throw new Error('Safe data not loaded');
-    }
-
-    const selectedChainHasMasterSafe = masterSafes.some(
-      ({ evmChainId }) => evmChainId === agentConfig.evmHomeChainId,
-    );
-
-    if (selectedChainHasMasterSafe) return;
-
-    const otherChainOwners = new Set(
-      masterSafesOwners
-        ?.filter(({ evmChainId }) => evmChainId !== agentConfig.evmHomeChainId)
-        .map((masterSafe) => masterSafe.owners)
-        .flat(),
-    );
-
-    if (masterEoa) otherChainOwners.delete(masterEoa.address);
-
-    if (otherChainOwners.size <= 0) {
-      throw new Error('Backup signer required');
-    }
-
-    if (otherChainOwners.size !== 1) {
-      throw new Error('Multiple backup signers found');
-    }
-
-    await WalletService.createSafe(
-      agentConfig.middlewareHomeChainId,
-      [...otherChainOwners][0],
-    );
-  },
-  [masterEoa, masterSafes, masterSafesOwners],
-);
