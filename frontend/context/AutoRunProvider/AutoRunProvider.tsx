@@ -19,6 +19,7 @@ import {
   useBalanceAndRefillRequirementsContext,
   useElectronApi,
   useOnlineStatusContext,
+  useRewardContext,
   useServices,
 } from '@/hooks';
 import { ServicesService } from '@/service/Services';
@@ -35,7 +36,6 @@ import { useAutoRunStore } from './hooks/useAutoRunStore';
 import { useConfiguredAgents } from './hooks/useConfiguredAgents';
 import { useEligibilityByAgent } from './hooks/useEligibilityByAgent';
 import { useGeoEligibility } from './hooks/useGeoEligibility';
-import { useRewardsQueries } from './hooks/useRewardsQueries';
 import { useSafeEligibility } from './hooks/useSafeEligibility';
 import { useStakingContractQueries } from './hooks/useStakingContractQueries';
 import { useStakingDetailsQueries } from './hooks/useStakingDetailsQueries';
@@ -61,11 +61,16 @@ const AutoRunContext = createContext<AutoRunContextType>({
   excludeAgent: () => {},
 });
 
+const SCAN_BLOCKED_DELAY_SECONDS = 10 * 60;
+const SCAN_ELIGIBLE_DELAY_SECONDS = 30 * 60;
+const CANDIDATE_ELIGIBILITY_TIMEOUT_SECONDS = 30;
+
 export const AutoRunProvider = ({ children }: PropsWithChildren) => {
   const { showNotification, logEvent } = useElectronApi();
   const { services, updateAgentType, selectedAgentType } = useServices();
   const { runningAgentType } = useAgentRunning();
   const { isOnline } = useOnlineStatusContext();
+  const { isEligibleForRewards } = useRewardContext();
   const {
     allowStartAgentByServiceConfigId,
     isBalancesAndFundingRequirementsLoadingForAllServices,
@@ -100,7 +105,6 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
   }, [configuredAgentTypes, orderedIncludedAgentTypes]);
 
   const geoEligibilityQuery = useGeoEligibility(isOnline);
-  const rewardsQueries = useRewardsQueries(configuredAgents, isOnline);
   const stakingDetailsQueries = useStakingDetailsQueries(
     configuredAgents,
     isOnline,
@@ -110,7 +114,6 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
 
   const eligibilityByAgent = useEligibilityByAgent({
     configuredAgents,
-    rewardsQueries,
     stakingDetailsQueries,
     stakingContractQueries,
     geoEligibility: geoEligibilityQuery.data,
@@ -122,6 +125,11 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
   const [hasActivated, setHasActivated] = useState(false);
   const isRotatingRef = useRef(false);
   const skipNotifiedRef = useRef<Partial<Record<AgentType, string>>>({});
+  const rewardSnapshotRef = useRef<
+    Partial<Record<AgentType, boolean | undefined>>
+  >({});
+  const scanTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [scanTick, setScanTick] = useState(0);
 
   /**
    * Seed the included list using the services order when auto-run has no
@@ -203,6 +211,22 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
     );
   }, [currentAgent, enabled, logEvent, runningAgentType, updateAutoRun]);
 
+  /**
+   * Track latest reward eligibility for the currently selected agent.
+   */
+  useEffect(() => {
+    if (!selectedAgentType) return;
+    rewardSnapshotRef.current[selectedAgentType] = isEligibleForRewards;
+  }, [isEligibleForRewards, selectedAgentType]);
+
+  useEffect(() => {
+    return () => {
+      if (scanTimeoutRef.current) {
+        clearTimeout(scanTimeoutRef.current);
+      }
+    };
+  }, []);
+
   const notifySkipOnce = useCallback(
     (agentType: AgentType, reason?: string) => {
       if (!reason) return;
@@ -212,6 +236,22 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
       logAutoRun(logEvent, AUTO_RUN_LOG_PREFIX, `skip ${agentType}: ${reason}`);
     },
     [logEvent, showNotification],
+  );
+
+  const waitForRewardsEligibility = useCallback(
+    async (agentType: AgentType) => {
+      const startedAt = Date.now();
+      while (
+        Date.now() - startedAt <
+        CANDIDATE_ELIGIBILITY_TIMEOUT_SECONDS * 1000
+      ) {
+        const snapshot = rewardSnapshotRef.current[agentType];
+        if (snapshot !== undefined) return snapshot;
+        await delayInSeconds(2);
+      }
+      return undefined;
+    },
+    [],
   );
 
   const findNextEligibleAgent = useCallback(
@@ -229,19 +269,12 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
           ];
         if (!candidate) continue;
         if (candidate === currentAgentType) continue;
-
-        const eligibility = eligibilityByAgent[candidate];
-        if (!eligibility?.canRun) {
-          notifySkipOnce(candidate, eligibility?.reason);
-          continue;
-        }
-        if (eligibility?.isEligibleForRewards === true) continue;
         return candidate;
       }
 
       return null;
     },
-    [eligibilityByAgent, notifySkipOnce, orderedIncludedAgentTypes],
+    [orderedIncludedAgentTypes],
   );
 
   const waitForDeploymentStatus = useCallback(
@@ -373,8 +406,87 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
     [logEvent, waitForDeploymentStatus],
   );
 
+  const scheduleNextScan = useCallback((delaySeconds: number) => {
+    if (scanTimeoutRef.current) {
+      clearTimeout(scanTimeoutRef.current);
+    }
+    scanTimeoutRef.current = setTimeout(() => {
+      scanTimeoutRef.current = null;
+      setScanTick((value) => value + 1);
+    }, delaySeconds * 1000);
+  }, []);
+
+  const scanAndStartNext = useCallback(
+    async (startFrom?: AgentType | null) => {
+      let hasBlocked = false;
+      let hasEligible = false;
+      let candidate = findNextEligibleAgent(startFrom);
+      const visited = new Set<AgentType>();
+
+      while (candidate && !visited.has(candidate)) {
+        visited.add(candidate);
+
+        const eligibility = eligibilityByAgent[candidate];
+        if (!eligibility?.canRun) {
+          notifySkipOnce(candidate, eligibility?.reason);
+          hasBlocked = true;
+          candidate = findNextEligibleAgent(candidate);
+          continue;
+        }
+
+        updateAgentType(candidate);
+        rewardSnapshotRef.current[candidate] = undefined;
+        const candidateEligibility = await waitForRewardsEligibility(candidate);
+
+        if (candidateEligibility === undefined) {
+          notifySkipOnce(candidate, 'Rewards status unavailable');
+          hasBlocked = true;
+          candidate = findNextEligibleAgent(candidate);
+          continue;
+        }
+
+        if (candidateEligibility === true) {
+          hasEligible = true;
+          candidate = findNextEligibleAgent(candidate);
+          continue;
+        }
+
+        const started = await startAgentWithRetries(candidate);
+        if (started) return { started: true };
+
+        hasBlocked = true;
+        candidate = findNextEligibleAgent(candidate);
+      }
+
+      const delay = hasBlocked
+        ? SCAN_BLOCKED_DELAY_SECONDS
+        : hasEligible
+          ? SCAN_ELIGIBLE_DELAY_SECONDS
+          : SCAN_BLOCKED_DELAY_SECONDS;
+
+      logAutoRun(
+        logEvent,
+        AUTO_RUN_LOG_PREFIX,
+        `scan complete; scheduling next scan in ${delay}s`,
+      );
+      scheduleNextScan(delay);
+
+      return { started: false };
+    },
+    [
+      eligibilityByAgent,
+      findNextEligibleAgent,
+      logEvent,
+      notifySkipOnce,
+      scheduleNextScan,
+      startAgentWithRetries,
+      updateAgentType,
+      waitForRewardsEligibility,
+    ],
+  );
+
   const rotateToNext = useCallback(
-    async (currentAgentType: AgentType, nextAgentType: AgentType) => {
+    async (currentAgentType: AgentType) => {
       const currentMeta = configuredAgents.find(
         (agent) => agent.agentType === currentAgentType,
       );
@@ -397,26 +509,14 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
       );
       await delayInSeconds(COOLDOWN_SECONDS);
 
-      const started = await startAgentWithRetries(nextAgentType);
-      if (!started) {
-        const nextCandidate = findNextEligibleAgent(nextAgentType);
-        if (nextCandidate) {
-          await rotateToNext(nextAgentType, nextCandidate);
-        }
-      }
+      await scanAndStartNext(currentAgentType);
     },
-    [
-      configuredAgents,
-      findNextEligibleAgent,
-      logEvent,
-      startAgentWithRetries,
-      stopAgent,
-    ],
+    [configuredAgents, logEvent, scanAndStartNext, stopAgent],
   );
 
   /**
    * Main rotation loop: when the current agent becomes eligible for rewards,
-   * attempt to rotate to the next eligible candidate.
+   * stop it, cooldown, then scan for the next candidate.
    */
   useEffect(() => {
     if (!enabled || !hasActivated) return;
@@ -425,16 +525,11 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
     const currentType = currentAgent || runningAgentType;
     if (!currentType) return;
 
-    const currentEligibility = eligibilityByAgent[currentType];
-    if (runningAgentType && currentEligibility?.isEligibleForRewards !== true) {
-      return;
-    }
-
-    const nextAgent = findNextEligibleAgent(currentType);
-    if (!nextAgent) return;
+    if (runningAgentType && selectedAgentType !== runningAgentType) return;
+    if (isEligibleForRewards !== true) return;
 
     isRotatingRef.current = true;
-    rotateToNext(currentType, nextAgent)
+    rotateToNext(currentType)
       .catch((error) => {
         logAutoRun(logEvent, AUTO_RUN_LOG_PREFIX, `rotation error: ${error}`);
       })
@@ -443,13 +538,14 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
       });
   }, [
     currentAgent,
-    eligibilityByAgent,
     enabled,
-    findNextEligibleAgent,
     hasActivated,
+    isEligibleForRewards,
     logEvent,
     rotateToNext,
     runningAgentType,
+    selectedAgentType,
+    scanTick,
   ]);
 
   /**
@@ -461,12 +557,9 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
     if (runningAgentType) return;
     if (isRotatingRef.current) return;
 
-    const nextAgent = findNextEligibleAgent(currentAgent);
-    if (!nextAgent) return;
-
     isRotatingRef.current = true;
     delayInSeconds(COOLDOWN_SECONDS)
-      .then(() => startAgentWithRetries(nextAgent))
+      .then(() => scanAndStartNext(currentAgent))
       .catch((error) =>
         logAutoRun(
           logEvent,
@@ -480,11 +573,11 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
   }, [
     currentAgent,
     enabled,
-    findNextEligibleAgent,
     hasActivated,
     logEvent,
     runningAgentType,
-    startAgentWithRetries,
+    scanAndStartNext,
+    scanTick,
   ]);
 
   const setEnabled = useCallback(

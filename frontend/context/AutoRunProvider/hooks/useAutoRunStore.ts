@@ -2,6 +2,9 @@ import { useCallback } from 'react';
 
 import { useElectronApi, useStore } from '@/hooks';
 
+/**
+ * Custom hook to manage the auto-run state.
+ */
 export const useAutoRunStore = () => {
   const { store } = useElectronApi();
   const { storeState } = useStore();

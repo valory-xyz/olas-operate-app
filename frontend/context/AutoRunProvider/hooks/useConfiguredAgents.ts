@@ -5,9 +5,14 @@ import { Service } from '@/types';
 import { AgentMeta } from '../types';
 import { getAgentFromService } from '../utils';
 
+/**
+ * Hook to get the list of configured agents based on the provided services.
+ * It extracts the agent type, configuration, and related details for
+ * each service that has an associated agent.
+ */
 export const useConfiguredAgents = (services?: Service[]) => {
   return useMemo(() => {
-    if (!services) return [] as AgentMeta[];
+    if (!services) return [];
 
     return services.reduce<AgentMeta[]>((acc, service) => {
       const agentEntry = getAgentFromService(service);

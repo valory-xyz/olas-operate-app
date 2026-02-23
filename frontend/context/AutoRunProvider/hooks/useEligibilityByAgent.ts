@@ -12,7 +12,6 @@ import {
 
 export const useEligibilityByAgent = ({
   configuredAgents,
-  rewardsQueries,
   stakingDetailsQueries,
   stakingContractQueries,
   geoEligibility,
@@ -21,9 +20,6 @@ export const useEligibilityByAgent = ({
   canCreateSafeForChain,
 }: {
   configuredAgents: AgentMeta[];
-  rewardsQueries: ReturnType<
-    typeof import('./useRewardsQueries').useRewardsQueries
-  >;
   stakingDetailsQueries: ReturnType<
     typeof import('./useStakingDetailsQueries').useStakingDetailsQueries
   >;
@@ -44,7 +40,6 @@ export const useEligibilityByAgent = ({
         const { agentConfig, agentType, service, chainId, serviceConfigId } =
           meta;
 
-        const rewardsDetails = rewardsQueries[index]?.data;
         const stakingDetails = stakingDetailsQueries[index]?.data;
         const contractDetails = stakingContractQueries[index]?.data;
 
@@ -60,8 +55,6 @@ export const useEligibilityByAgent = ({
 
         const hasSlot = !isNil(hasEnoughServiceSlots) && !hasEnoughServiceSlots;
 
-        const isEligibleForRewards = rewardsDetails?.isEligibleForRewards;
-
         const isGeoRestricted =
           agentConfig.isGeoLocationRestricted &&
           geoEligibility?.eligibility?.[agentType]?.status !== 'allowed';
@@ -75,56 +68,32 @@ export const useEligibilityByAgent = ({
         const safeEligibility = canCreateSafeForChain(chainId);
 
         if (agentConfig.isUnderConstruction) {
-          acc[agentType] = {
-            canRun: false,
-            reason: 'Under construction',
-            isEligibleForRewards,
-          };
+          acc[agentType] = { canRun: false, reason: 'Under construction' };
           return acc;
         }
 
         if (isGeoRestricted) {
-          acc[agentType] = {
-            canRun: false,
-            reason: 'Region restricted',
-            isEligibleForRewards,
-          };
+          acc[agentType] = { canRun: false, reason: 'Region restricted' };
           return acc;
         }
 
         if (isAgentEvicted && !isEligibleForStaking) {
-          acc[agentType] = {
-            canRun: false,
-            reason: 'Evicted',
-            isEligibleForRewards,
-          };
+          acc[agentType] = { canRun: false, reason: 'Evicted' };
           return acc;
         }
 
         if (hasSlot && !isServiceStaked) {
-          acc[agentType] = {
-            canRun: false,
-            reason: 'No available slots',
-            isEligibleForRewards,
-          };
+          acc[agentType] = { canRun: false, reason: 'No available slots' };
           return acc;
         }
 
         if (!safeEligibility.ok) {
-          acc[agentType] = {
-            canRun: false,
-            reason: safeEligibility.reason,
-            isEligibleForRewards,
-          };
+          acc[agentType] = { canRun: false, reason: safeEligibility.reason };
           return acc;
         }
 
         if (needsAgentsFunUpdate) {
-          acc[agentType] = {
-            canRun: false,
-            reason: 'Update required',
-            isEligibleForRewards,
-          };
+          acc[agentType] = { canRun: false, reason: 'Update required' };
           return acc;
         }
 
@@ -134,14 +103,12 @@ export const useEligibilityByAgent = ({
             reason: isBalancesAndFundingRequirementsLoadingForAllServices
               ? 'Requirements loading'
               : 'Low balance',
-            isEligibleForRewards,
           };
           return acc;
         }
 
         acc[agentType] = {
           canRun: true,
-          isEligibleForRewards,
         };
         return acc;
       },
@@ -153,7 +120,6 @@ export const useEligibilityByAgent = ({
     configuredAgents,
     geoEligibility,
     isBalancesAndFundingRequirementsLoadingForAllServices,
-    rewardsQueries,
     stakingContractQueries,
     stakingDetailsQueries,
   ]);

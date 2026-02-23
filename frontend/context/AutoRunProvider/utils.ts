@@ -109,7 +109,7 @@ export const sortIncludedAgents = (
   includedAgents: IncludedAgent[],
   allowedAgents: AgentType[],
 ) => {
-  if (isEmpty(includedAgents)) return [] as IncludedAgent[];
+  if (isEmpty(includedAgents)) return [];
   const allowed = new Set(allowedAgents);
   return sortBy(
     includedAgents.filter((agent) => allowed.has(agent.agentType)),
