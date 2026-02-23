@@ -53,7 +53,6 @@ export const StakingProgramProvider = ({ children }: PropsWithChildren) => {
 
   const { isLoading, data: activeStakingProgramId } =
     useActiveStakingProgramId(selectedAgentConfig);
-
   // Determine the staking program ID in the following order:
   // 1) On-chain value (where the user actually staked)
   // 2) If not available, use the selected service (can be updated during migration)
