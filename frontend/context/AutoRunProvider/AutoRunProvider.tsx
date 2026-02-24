@@ -70,7 +70,7 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
   const { canCreateSafeForChain, createSafeIfNeeded } = useSafeEligibility();
   const {
     isEligibleForRewards,
-    isSelectedDataLoading,
+    isSelectedAgentDetailsLoading,
     getSelectedEligibility,
   } = useSelectedEligibility({ canCreateSafeForChain });
 
@@ -84,7 +84,7 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
     selectedAgentType,
     runningAgentType,
     isEligibleForRewards,
-    isSelectedDataLoading,
+    isSelectedAgentDetailsLoading,
     getSelectedEligibility,
     createSafeIfNeeded,
   });

@@ -23,7 +23,7 @@ export const useSelectedEligibility = ({
   );
 
   const deployability = useDeployability({ safeEligibility });
-  const isSelectedDataLoading = deployability.isLoading;
+  const isSelectedAgentDetailsLoading = deployability.isLoading;
 
   const getSelectedEligibility = useCallback(
     () => ({ canRun: deployability.canRun, reason: deployability.reason }),
@@ -34,7 +34,7 @@ export const useSelectedEligibility = ({
     selectedAgentType,
     selectedAgentConfig,
     isEligibleForRewards,
-    isSelectedDataLoading,
+    isSelectedAgentDetailsLoading,
     getSelectedEligibility,
   };
 };

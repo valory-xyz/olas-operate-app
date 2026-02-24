@@ -1,11 +1,8 @@
 import { message } from 'antd';
 import { useCallback, useMemo } from 'react';
 
-import { MechType } from '@/config/mechs';
-import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
 import { MasterEoa, MasterSafe, PAGES } from '@/constants';
 import { MiddlewareDeploymentStatusMap } from '@/constants/deployment';
-import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
 import { useBalanceContext } from '@/hooks/useBalanceContext';
 import { useDeployability } from '@/hooks/useDeployability';
 import { useElectronApi } from '@/hooks/useElectronApi';
@@ -15,8 +12,8 @@ import { useService } from '@/hooks/useService';
 import { useServices } from '@/hooks/useServices';
 import { useStakingContractContext } from '@/hooks/useStakingContractDetails';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
+import { useStartService } from '@/hooks/useStartService';
 import { useMasterWalletContext } from '@/hooks/useWallet';
-import { ServicesService } from '@/service/Services';
 import { WalletService } from '@/service/Wallet';
 import { AgentConfig } from '@/types/Agent';
 import { delayInSeconds } from '@/utils/delay';
@@ -25,7 +22,6 @@ import {
   getSafeEligibility,
   getSafeEligibilityMessage,
 } from '@/utils/safe';
-import { updateServiceIfNeeded } from '@/utils/service';
 
 const createSafeIfNeeded = async ({
   masterSafes,
@@ -96,6 +92,7 @@ export const useServiceDeployment = () => {
   } = useStakingContractContext();
   const { selectedStakingProgramId } = useStakingProgram();
   const { masterSafesOwners } = useMultisigs(masterSafes);
+  const { startService } = useStartService();
 
   const isLoading = useMemo(() => {
     if (isServicesLoading || isServiceRunning) return true;
@@ -130,62 +127,6 @@ export const useServiceDeployment = () => {
     setIsStakingContractInfoPollingPaused,
   ]);
 
-  /**
-   * @note only create a service if `service` does not exist
-   */
-  const deployAndStartService = useCallback(async () => {
-    if (!selectedStakingProgramId) return;
-
-    const serviceTemplate = SERVICE_TEMPLATES.find(
-      (template) => template.agentType === selectedAgentType,
-    );
-
-    if (!serviceTemplate) {
-      throw new Error(`Service template not found for ${selectedAgentType}`);
-    }
-
-    // Create a new service if it does not exist
-    let middlewareServiceResponse;
-    if (!service) {
-      try {
-        middlewareServiceResponse = await ServicesService.createService({
-          stakingProgramId: selectedStakingProgramId,
-          serviceTemplate,
-          deploy: false, // TODO: deprecated will remove
-          useMechMarketplace:
-            STAKING_PROGRAMS[selectedAgentConfig.evmHomeChainId][
-              selectedStakingProgramId
-            ].mechType === MechType.Marketplace,
-        });
-      } catch (error) {
-        console.error('Failed to create service:', error);
-        showNotification?.('Failed to create service.');
-        throw error;
-      }
-    }
-
-    // Update the existing service
-    if (!middlewareServiceResponse && service) {
-      await updateServiceIfNeeded(service, selectedAgentType);
-    }
-
-    // Start the service
-    try {
-      const serviceToStart = service ?? middlewareServiceResponse;
-      await ServicesService.startService(serviceToStart!.service_config_id);
-    } catch (error) {
-      console.error('Error while starting the service:', error);
-      showNotification?.('Failed to start service.');
-      throw error;
-    }
-  }, [
-    selectedAgentConfig.evmHomeChainId,
-    selectedAgentType,
-    selectedStakingProgramId,
-    service,
-    showNotification,
-  ]);
-
   const updateStatesSequentially = useCallback(async () => {
     await updateServicesState?.();
     await refetchActiveStakingContractDetails();
@@ -202,23 +143,25 @@ export const useServiceDeployment = () => {
       throw new Error('Staking program ID required');
     }
 
-    const selectedServiceTemplate = SERVICE_TEMPLATES.find(
-      (template) => template.agentType === selectedAgentType,
-    );
-    if (!selectedServiceTemplate) throw new Error('Service template required');
-
     pauseAllPolling();
     overrideSelectedServiceStatus(MiddlewareDeploymentStatusMap.DEPLOYING);
 
     try {
-      await createSafeIfNeeded({
-        masterSafes,
-        masterSafesOwners,
-        masterEoa,
-        selectedAgentConfig,
-        gotoSettings: () => gotoPage(PAGES.Settings),
+      await startService({
+        agentType: selectedAgentType,
+        agentConfig: selectedAgentConfig,
+        service,
+        stakingProgramId: selectedStakingProgramId,
+        createServiceIfMissing: true,
+        createSafeIfNeeded: () =>
+          createSafeIfNeeded({
+            masterSafes,
+            masterSafesOwners,
+            masterEoa,
+            selectedAgentConfig,
+            gotoSettings: () => gotoPage(PAGES.Settings),
+          }),
       });
-      await deployAndStartService();
     } catch (error) {
       console.error('Error during start:', error);
       showNotification?.('An error occurred while starting. Please try again.');
@@ -248,11 +191,12 @@ export const useServiceDeployment = () => {
     masterSafesOwners,
     masterEoa,
     selectedAgentConfig,
-    deployAndStartService,
     gotoPage,
     showNotification,
     updateStatesSequentially,
     selectedAgentType,
+    service,
+    startService,
   ]);
 
   return { isLoading, isDeployable, handleStart };

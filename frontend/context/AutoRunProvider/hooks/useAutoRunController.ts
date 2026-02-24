@@ -4,12 +4,10 @@ import {
   AgentType,
   MiddlewareDeploymentStatus,
   MiddlewareDeploymentStatusMap,
-  ONE_SECOND_INTERVAL,
 } from '@/constants';
-import { useElectronApi } from '@/hooks';
+import { useElectronApi, useStartService } from '@/hooks';
 import { ServicesService } from '@/service/Services';
 import { delayInSeconds } from '@/utils/delay';
-import { updateServiceIfNeeded } from '@/utils/service';
 
 import {
   AUTO_RUN_LOG_PREFIX,
@@ -30,10 +28,6 @@ const SCAN_BLOCKED_DELAY_SECONDS = 10 * 60;
 /** When all agents have already earned rewards, back off longer. */
 const SCAN_ELIGIBLE_DELAY_SECONDS = 30 * 60;
 
-/** Time to wait for candidate eligibility data to load before skipping the candidate.
- */
-const CANDIDATE_ELIGIBILITY_TIMEOUT_SECONDS = 30 * ONE_SECOND_INTERVAL;
-
 const START_TIMEOUT_SECONDS = 120;
 
 type UseAutoRunControllerParams = {
@@ -49,7 +43,7 @@ type UseAutoRunControllerParams = {
   selectedAgentType: AgentType;
   runningAgentType: AgentType | null;
   isEligibleForRewards?: boolean;
-  isSelectedDataLoading: boolean;
+  isSelectedAgentDetailsLoading: boolean;
   getSelectedEligibility: () => { canRun: boolean; reason?: string };
   createSafeIfNeeded: (meta: AgentMeta) => Promise<void>;
   showNotification?: (title: string, body?: string) => void;
@@ -65,12 +59,13 @@ export const useAutoRunController = ({
   selectedAgentType,
   runningAgentType,
   isEligibleForRewards,
-  isSelectedDataLoading,
+  isSelectedAgentDetailsLoading,
   getSelectedEligibility,
   createSafeIfNeeded,
   showNotification,
 }: UseAutoRunControllerParams) => {
   const { logEvent } = useElectronApi();
+  const { startService } = useStartService();
   // Auto-run only kicks in once a manual start happens while enabled.
   const [hasActivated, setHasActivated] = useState(false);
   // Guards against overlapping scan/rotation loops.
@@ -107,23 +102,19 @@ export const useAutoRunController = ({
 
   // Wait for the selected agent's data to finish loading before evaluating eligibility.
   const waitForSelectedData = useCallback(async () => {
-    const startedAt = Date.now();
-    while (Date.now() - startedAt < CANDIDATE_ELIGIBILITY_TIMEOUT_SECONDS) {
-      if (!isSelectedDataLoading) return true;
+    while (isSelectedAgentDetailsLoading) {
       await delayInSeconds(2);
     }
-    return false;
-  }, [isSelectedDataLoading]);
+    return true;
+  }, [isSelectedAgentDetailsLoading]);
 
+  // Wait for rewards eligibility to be populated for the selected agent.
   const waitForRewardsEligibility = useCallback(
     async (agentType: AgentType) => {
-      const startedAt = Date.now();
-      while (Date.now() - startedAt < CANDIDATE_ELIGIBILITY_TIMEOUT_SECONDS) {
-        const snapshot = rewardSnapshotRef.current[agentType];
-        if (snapshot !== undefined) return snapshot;
+      while (rewardSnapshotRef.current[agentType] === undefined) {
         await delayInSeconds(2);
       }
-      return undefined;
+      return rewardSnapshotRef.current[agentType];
     },
     [],
   );
@@ -200,9 +191,13 @@ export const useAutoRunController = ({
       ) {
         try {
           logMessage(`starting ${agentType} (attempt ${attempt + 1})`);
-          await createSafeIfNeeded(meta);
-          await updateServiceIfNeeded(meta.service, agentType);
-          await ServicesService.startService(meta.serviceConfigId);
+          await startService({
+            agentType,
+            agentConfig: meta.agentConfig,
+            service: meta.service,
+            stakingProgramId: meta.stakingProgramId,
+            createSafeIfNeeded: () => createSafeIfNeeded(meta),
+          });
 
           const deployed = await waitForDeploymentStatus(
             meta.serviceConfigId,
@@ -233,6 +228,7 @@ export const useAutoRunController = ({
       logMessage,
       notifySkipOnce,
       showNotification,
+      startService,
       updateAgentType,
       updateAutoRun,
       waitForDeploymentStatus,
@@ -284,13 +280,7 @@ export const useAutoRunController = ({
         updateAgentType(candidate);
         rewardSnapshotRef.current[candidate] = undefined;
 
-        const dataReady = await waitForSelectedData();
-        if (!dataReady) {
-          notifySkipOnce(candidate, 'Data loading timeout');
-          hasBlocked = true;
-          candidate = findNextInOrder(candidate);
-          continue;
-        }
+        await waitForSelectedData();
 
         const eligibility = getSelectedEligibility();
         if (!eligibility.canRun) {
@@ -301,12 +291,6 @@ export const useAutoRunController = ({
         }
 
         const candidateEligibility = await waitForRewardsEligibility(candidate);
-        if (candidateEligibility === undefined) {
-          notifySkipOnce(candidate, 'Rewards status unavailable');
-          hasBlocked = true;
-          candidate = findNextInOrder(candidate);
-          continue;
-        }
 
         // If candidate already earned rewards, keep scanning.
         if (candidateEligibility === true) {

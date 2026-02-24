@@ -45,6 +45,7 @@ export * from './useStakingContractDetails';
 export * from './useStakingContracts';
 export * from './useStakingDetails';
 export * from './useStakingProgram';
+export * from './useStartService';
 export * from './useStore';
 export * from './useTotalFiatFromNativeToken';
 export * from './useTotalNativeTokenRequired';
