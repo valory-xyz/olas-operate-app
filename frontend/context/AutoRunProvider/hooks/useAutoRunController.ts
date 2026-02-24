@@ -108,13 +108,21 @@ export const useAutoRunController = ({
     [logMessage, showNotification],
   );
 
+  // Keep a ref so async loops always read the live loading value (avoids stale closure).
+  const isSelectedAgentDetailsLoadingRef = useRef(
+    isSelectedAgentDetailsLoading,
+  );
+  useEffect(() => {
+    isSelectedAgentDetailsLoadingRef.current = isSelectedAgentDetailsLoading;
+  }, [isSelectedAgentDetailsLoading]);
+
   // Wait until hooks for the selected agent finish loading before eligibility checks.
   const waitForSelectedAgentDetails = useCallback(async () => {
-    while (isSelectedAgentDetailsLoading) {
+    while (isSelectedAgentDetailsLoadingRef.current) {
       await delayInSeconds(2);
     }
     return true;
-  }, [isSelectedAgentDetailsLoading]);
+  }, []);
 
   // Wait for rewards eligibility to be populated for the selected agent.
   const waitForRewardsEligibility = useCallback(

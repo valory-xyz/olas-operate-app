@@ -14,7 +14,7 @@ import styled from 'styled-components';
 import { AGENT_CONFIG } from '@/config/agents';
 import { AgentType, COLOR } from '@/constants';
 import { useAutoRunContext } from '@/context/AutoRunProvider';
-import { useAgentRunning, useServiceDeployment } from '@/hooks';
+import { useAgentRunning } from '@/hooks';
 
 const { Text } = Typography;
 
@@ -77,12 +77,12 @@ export const AutoRunControl = () => {
     includedAgents,
     excludedAgents,
     eligibilityByAgent,
+    isToggling,
     setEnabled,
     includeAgent,
     excludeAgent,
   } = useAutoRunContext();
   const { runningAgentType } = useAgentRunning();
-  const { isLoading } = useServiceDeployment();
 
   // Preserve order from the store, but only pass the types to render rows.
   const includedAgentTypes = useMemo(
@@ -97,12 +97,12 @@ export const AutoRunControl = () => {
     <Flex vertical gap={0} style={{ width: 260 }}>
       <PopoverSection vertical gap={8}>
         <Flex align="center" justify="space-between">
-          <Text strong>Auto run</Text>
+          <Text strong>Auto-run</Text>
           <Switch
             checked={enabled}
-            onChange={(checked) => !isLoading && setEnabled(checked)}
-            disabled={isLoading}
-            loading={isLoading}
+            onChange={setEnabled}
+            disabled={isToggling}
+            loading={isToggling}
             size="small"
           />
         </Flex>
@@ -144,10 +144,11 @@ export const AutoRunControl = () => {
 
           {excludedAgents.length === 0 ? null : (
             <Flex vertical gap={8}>
-              <Text strong>Disabled agents</Text>
+              <Text strong>Excluded from auto-run</Text>
               <Divider className="m-0" />
               {excludedAgents.map((agentType) => {
-                const isBlocked = !!eligibilityByAgent[agentType]?.canRun;
+                const isBlocked =
+                  eligibilityByAgent[agentType]?.canRun === false;
 
                 return (
                   <AgentRow

@@ -177,12 +177,18 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
     [includedAgents, logEvent, updateAutoRun],
   );
 
-  const eligibilityByAgent = useMemo(
-    () => ({
-      [selectedAgentType]: getSelectedEligibility(),
-    }),
-    [getSelectedEligibility, selectedAgentType],
-  );
+  const eligibilityByAgent = useMemo(() => {
+    // Seed all configured agents with a permissive default so the "+" button
+    // is enabled by default. We only have live eligibility data for the
+    // currently selected agent; for the rest we fall back to canRun: true and
+    // let the execution-time checks (in useAutoRunController) handle skipping.
+    const base: AutoRunContextType['eligibilityByAgent'] = {};
+    for (const { agentType } of configuredAgents) {
+      base[agentType] = { canRun: true };
+    }
+    base[selectedAgentType] = getSelectedEligibility();
+    return base;
+  }, [configuredAgents, getSelectedEligibility, selectedAgentType]);
 
   const value = useMemo(
     () => ({

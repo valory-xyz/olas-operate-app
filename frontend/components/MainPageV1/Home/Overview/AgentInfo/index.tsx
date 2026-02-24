@@ -28,15 +28,17 @@ const AutoRunAlertContainer = styled(Flex)`
 `;
 
 const AutoRunAlert = () => (
-  <Tooltip
-    title="Selected agents will run in sequence automatically. To change which agents are included, use the auto-run toggle."
-    styles={{ body: { width: 324 } }}
-  >
-    <AutoRunAlertContainer align="center" gap={6}>
-      <Text className="text-sm text-primary">Auto-run is on</Text>
-      <LuInfo color={COLOR.PRIMARY} />
-    </AutoRunAlertContainer>
-  </Tooltip>
+  <Flex align="self-end" style={{ height: 40 }}>
+    <Tooltip
+      title="Selected agents will run in sequence automatically. To change which agents are included, use the auto-run toggle."
+      styles={{ body: { width: 324 } }}
+    >
+      <AutoRunAlertContainer align="center" gap={6}>
+        <Text className="text-sm text-primary">Auto-run is on</Text>
+        <LuInfo color={COLOR.PRIMARY} />
+      </AutoRunAlertContainer>
+    </Tooltip>
+  </Flex>
 );
 
 const AboutAgent = () => {
