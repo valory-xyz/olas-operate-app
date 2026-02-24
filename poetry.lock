@@ -2212,37 +2212,33 @@ nicer-shell = ["ipython"]
 
 [[package]]
 name = "olas-operate-middleware"
-version = "0.14.16"
+version = "0.14.17"
 description = ""
 optional = false
 python-versions = "<3.12,>=3.10"
-files = []
-develop = false
+files = [
+    {file = "olas_operate_middleware-0.14.17-py3-none-any.whl", hash = "sha256:4d297d15c1b158124b71875cace93409d4bd8caa919f3c1922f90c64bb9ecdb2"},
+    {file = "olas_operate_middleware-0.14.17.tar.gz", hash = "sha256:f4a1d09f83e1803866ffb2de038093f1d954ef845c824d5f846a3fe1f68a2e38"},
+]
 
 [package.dependencies]
-argon2-cffi = "==23.1.0"
-clea = "==0.1.0rc4"
-cryptography = "^46.0.3"
-cytoolz = "==0.12.3"
-deepdiff = "^8.6.1"
+argon2-cffi = "23.1.0"
+clea = "0.1.0rc4"
+cryptography = ">=46.0.3,<47.0.0"
+cytoolz = "0.12.3"
+deepdiff = ">=8.6.1,<9.0.0"
 fastapi = "0.110.3"
-halo = "==0.0.31"
-multiaddr = "==0.0.9"
-open-aea-cli-ipfs = "^2.0.8"
-open-aea-ledger-cosmos = "^2.0.8"
-open-aea-ledger-ethereum = "^2.0.8"
-open-aea-ledger-ethereum-flashbots = "^2.0.8"
-open-autonomy = "^0.21.11"
-psutil = "^5.9.8"
-pyinstaller = "^6.8.0"
-requests-mock = "^1.12.1"
-uvicorn = "==0.27.0"
-
-[package.source]
-type = "git"
-url = "https://github.com/valory-xyz/olas-operate-middleware.git"
-reference = "feat/stability-quality-improvement-plan"
-resolved_reference = "b54944177554d876f5f6aeeff7b44e2c2141d34b"
+halo = "0.0.31"
+multiaddr = "0.0.9"
+open-aea-cli-ipfs = ">=2.0.8,<3.0.0"
+open-aea-ledger-cosmos = ">=2.0.8,<3.0.0"
+open-aea-ledger-ethereum = ">=2.0.8,<3.0.0"
+open-aea-ledger-ethereum-flashbots = ">=2.0.8,<3.0.0"
+open-autonomy = ">=0.21.11,<0.22.0"
+psutil = ">=5.9.8,<6.0.0"
+pyinstaller = ">=6.8.0,<7.0.0"
+requests-mock = ">=1.12.1,<2.0.0"
+uvicorn = "0.27.0"
 
 [[package]]
 name = "open-aea"
@@ -3932,4 +3928,4 @@ propcache = ">=0.2.1"
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.12"
-content-hash = "3913599acb3b97c5ea0972b8e2674f6b5d76d7789d8fc7827be7dd68f6dcc613"
+content-hash = "7692cc9cbaec0fb0052ce90ff87bb7cdfc1fd54d3f689362d7e3edd51c3d9a78"
