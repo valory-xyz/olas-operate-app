@@ -101,7 +101,7 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
   const { isSelectedAgentDetailsLoading, getSelectedEligibility } =
     useSelectedEligibility({ canCreateSafeForChain });
 
-  const { canSyncSelection, stopRunningAgent } = useAutoRunController({
+  const { stopRunningAgent } = useAutoRunController({
     enabled,
     currentAgent,
     orderedIncludedAgentTypes,
@@ -112,6 +112,10 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
     isSelectedAgentDetailsLoading,
     getSelectedEligibility,
     createSafeIfNeeded,
+    onAutoRunAgentStarted: (agentType) => {
+      if (!configuredAgentTypes.includes(agentType)) return;
+      updateAgentType(agentType);
+    },
   });
 
   const [isToggling, setIsToggling] = useState(false);
@@ -174,22 +178,6 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
     if (!hasChanges) return;
     updateAutoRun({ includedAgents: normalized });
   }, [eligibleAgentTypes, includedAgents, updateAutoRun, userExcludedAgents]);
-
-  // Sync sidebar selection with current auto-run agent after activation
-  useEffect(() => {
-    if (!canSyncSelection) return;
-    if (!currentAgent) return;
-    if (!configuredAgentTypes.includes(currentAgent)) return;
-    if (selectedAgentType === currentAgent) return;
-
-    updateAgentType(currentAgent);
-  }, [
-    canSyncSelection,
-    configuredAgentTypes,
-    currentAgent,
-    selectedAgentType,
-    updateAgentType,
-  ]);
 
   const setEnabled = useCallback(
     (value: boolean) => {

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import {
   AgentType,
@@ -20,10 +20,10 @@ import {
 import { useAutoRunEvent } from './useLogAutoRunEvent';
 
 /** When every candidate is blocked or missing data, wait longer before re-scan. */
-const SCAN_BLOCKED_DELAY_SECONDS = 10 * 60;
+const SCAN_BLOCKED_DELAY_SECONDS = 10 * 60; // 10 minutes
 
 /** When all agents have already earned rewards, back off longer. */
-const SCAN_ELIGIBLE_DELAY_SECONDS = 30 * 60;
+const SCAN_ELIGIBLE_DELAY_SECONDS = 30 * 60; // 30 minutes
 
 const START_TIMEOUT_SECONDS = 120;
 
@@ -42,6 +42,7 @@ type UseAutoRunControllerParams = {
   getSelectedEligibility: () => { canRun: boolean; reason?: string };
   createSafeIfNeeded: (meta: AgentMeta) => Promise<void>;
   showNotification?: (title: string, body?: string) => void;
+  onAutoRunAgentStarted?: (agentType: AgentType) => void;
 };
 
 export const useAutoRunController = ({
@@ -56,6 +57,7 @@ export const useAutoRunController = ({
   getSelectedEligibility,
   createSafeIfNeeded,
   showNotification,
+  onAutoRunAgentStarted,
 }: UseAutoRunControllerParams) => {
   const { isEligibleForRewards } = useRewardContext();
   const { runningAgentType } = useAgentRunning();
@@ -227,6 +229,7 @@ export const useAutoRunController = ({
 
           if (deployed) {
             logMessage(`started ${agentType}`);
+            onAutoRunAgentStarted?.(agentType);
             return true;
           }
 
@@ -248,6 +251,7 @@ export const useAutoRunController = ({
       logMessage,
       notifySkipOnce,
       showNotification,
+      onAutoRunAgentStarted,
       startService,
       updateAgentType,
       updateAutoRun,
@@ -475,14 +479,7 @@ export const useAutoRunController = ({
     scanTick,
   ]);
 
-  const canSyncSelection = useMemo(() => {
-    if (!enabled) return false;
-    if (!currentAgent) return false;
-    return true;
-  }, [currentAgent, enabled]);
-
   return {
-    canSyncSelection,
     stopRunningAgent,
   };
 };
