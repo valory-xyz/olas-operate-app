@@ -3,6 +3,7 @@ import { Contract as MulticallContract } from 'ethers-multicall';
 import { STAKING_TOKEN_PROXY_ABI } from '@/abis/stakingTokenProxy';
 import { AgentMap, EvmChainIdMap, STAKING_PROGRAM_IDS } from '@/constants';
 import { Address } from '@/types';
+import { deriveStakingProgramId } from '@/utils';
 
 import { POLYGON_STAKING_PROGRAMS_ACTIVITY_CHECKERS } from '../activityCheckers';
 import { MECHS, MechType } from '../mechs';
@@ -44,6 +45,11 @@ export const POLYGON_STAKING_PROGRAMS: StakingProgramMap = {
       ],
       STAKING_TOKEN_PROXY_ABI,
     ),
+    id: deriveStakingProgramId(
+      POLYGON_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.PolygonBeta1
+      ],
+    ),
   },
   [STAKING_PROGRAM_IDS.PolygonBeta2]: {
     chainId: EvmChainIdMap.Polygon,
@@ -68,6 +74,11 @@ export const POLYGON_STAKING_PROGRAMS: StakingProgramMap = {
       ],
       STAKING_TOKEN_PROXY_ABI,
     ),
+    id: deriveStakingProgramId(
+      POLYGON_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.PolygonBeta2
+      ],
+    ),
   },
   [STAKING_PROGRAM_IDS.PolygonBeta3]: {
     chainId: EvmChainIdMap.Polygon,
@@ -91,6 +102,11 @@ export const POLYGON_STAKING_PROGRAMS: StakingProgramMap = {
         STAKING_PROGRAM_IDS.PolygonBeta3
       ],
       STAKING_TOKEN_PROXY_ABI,
+    ),
+    id: deriveStakingProgramId(
+      POLYGON_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.PolygonBeta3
+      ],
     ),
   },
 };
