@@ -2,7 +2,7 @@ import { Tooltip as AntdTooltip, TooltipProps } from 'antd';
 import { CSSProperties } from 'styled-components';
 
 const overlayInnerStyle: CSSProperties = {
-  padding: '12px 16px',
+  padding: '8px 12px',
   borderRadius: 16,
   boxShadow:
     '0px 2px 5px 0px rgba(115, 132, 156, 0.1), 0px 9px 9px 0px rgba(115, 132, 156, 0.09)',

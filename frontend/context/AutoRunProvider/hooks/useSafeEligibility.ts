@@ -21,11 +21,13 @@ export const useSafeEligibility = () => {
         masterEoa,
       });
 
+      const isLoading = eligibility.status === BACKUP_SIGNER_STATUS.Loading;
+
       if (eligibility.status === BACKUP_SIGNER_STATUS.HasSafe) {
-        return { ok: true };
+        return { ok: true, isLoading: false };
       }
       if (eligibility.status === BACKUP_SIGNER_STATUS.Ready) {
-        return { ok: true };
+        return { ok: true, isLoading: false };
       }
 
       const reason = (() => {
@@ -38,7 +40,7 @@ export const useSafeEligibility = () => {
         return 'Safe data loading';
       })();
 
-      return { ok: false, reason };
+      return { ok: false, reason, isLoading };
     },
     [masterEoa, masterSafes, masterSafesOwners],
   );

@@ -29,7 +29,7 @@ const AutoRunAlertContainer = styled(Flex)`
 
 const AutoRunAlert = () => (
   <Tooltip
-    title="Pearl is running your agents automatically. To run the agent manually, disable the auto-run setting in the Pearl sidebar."
+    title="Selected agents will run in sequence automatically. To change which agents are included, use the auto-run toggle."
     styles={{ body: { width: 324 } }}
   >
     <AutoRunAlertContainer align="center" gap={6}>

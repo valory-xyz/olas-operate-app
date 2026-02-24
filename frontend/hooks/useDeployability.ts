@@ -18,7 +18,7 @@ type DeployabilityResult = {
 export const useDeployability = ({
   safeEligibility,
 }: {
-  safeEligibility?: { ok: boolean; reason?: string };
+  safeEligibility?: { ok: boolean; reason?: string; isLoading?: boolean };
 } = {}): DeployabilityResult => {
   const {
     selectedAgentConfig,
@@ -49,6 +49,7 @@ export const useDeployability = ({
     if (isBalancesAndFundingRequirementsLoading) return true;
     if (isSelectedStakingContractDetailsLoading) return true;
     if (isGeoLoading) return true;
+    if (safeEligibility?.isLoading) return true;
     return false;
   }, [
     isBalancesAndFundingRequirementsLoading,
@@ -56,6 +57,7 @@ export const useDeployability = ({
     isOnline,
     isSelectedStakingContractDetailsLoading,
     isServicesLoading,
+    safeEligibility?.isLoading,
   ]);
 
   return useMemo(() => {

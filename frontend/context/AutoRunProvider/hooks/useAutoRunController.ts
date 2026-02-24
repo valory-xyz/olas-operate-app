@@ -440,6 +440,7 @@ export const useAutoRunController = ({
     currentAgent,
     enabled,
     logMessage,
+    orderedIncludedAgentTypes,
     runningAgentType,
     scanAndStartNext,
     scanTick,

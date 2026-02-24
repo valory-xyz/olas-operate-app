@@ -8,6 +8,7 @@ type UseSelectedEligibilityProps = {
   canCreateSafeForChain: (chainId: EvmChainId) => {
     ok: boolean;
     reason?: string;
+    isLoading?: boolean;
   };
 };
 

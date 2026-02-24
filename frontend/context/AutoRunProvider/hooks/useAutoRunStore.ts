@@ -1,6 +1,19 @@
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 
+import { AgentType } from '@/constants';
 import { useElectronApi, useStore } from '@/hooks';
+
+const DEFAULT_AUTO_RUN: {
+  enabled: boolean;
+  currentAgent: AgentType | null;
+  includedAgents: { agentType: AgentType; order: number }[];
+  isInitialized: boolean;
+} = {
+  enabled: false,
+  currentAgent: null,
+  includedAgents: [],
+  isInitialized: false,
+};
 
 /**
  * Custom hook to manage the auto-run state.
@@ -10,29 +23,31 @@ export const useAutoRunStore = () => {
   const { storeState } = useStore();
 
   const autoRun = storeState?.autoRun;
-  const enabled = !!autoRun?.enabled;
-  const includedAgents = autoRun?.includedAgents ?? [];
-  const currentAgent = autoRun?.currentAgent ?? null;
-  const isInitialized = autoRun?.isInitialized ?? false;
+  const autoRunRef = useRef(DEFAULT_AUTO_RUN);
+  if (autoRun) {
+    autoRunRef.current = {
+      ...DEFAULT_AUTO_RUN,
+      ...autoRun,
+    };
+  }
+  const resolvedAutoRun = autoRunRef.current;
+  const enabled = !!resolvedAutoRun.enabled;
+  const includedAgents = resolvedAutoRun.includedAgents ?? [];
+  const currentAgent = resolvedAutoRun.currentAgent ?? null;
+  const isInitialized = resolvedAutoRun.isInitialized ?? false;
 
   const updateAutoRun = useCallback(
     (partial: Partial<NonNullable<typeof autoRun>>) => {
       if (!store?.set) return;
-      store.set('autoRun', {
-        enabled: autoRun?.enabled ?? false,
-        currentAgent: autoRun?.currentAgent ?? null,
-        includedAgents: autoRun?.includedAgents ?? [],
-        isInitialized: autoRun?.isInitialized ?? false,
+      const next = {
+        ...DEFAULT_AUTO_RUN,
+        ...autoRunRef.current,
         ...partial,
-      });
+      };
+      autoRunRef.current = next;
+      store?.set?.('autoRun', next);
     },
-    [
-      autoRun?.currentAgent,
-      autoRun?.enabled,
-      autoRun?.includedAgents,
-      autoRun?.isInitialized,
-      store,
-    ],
+    [store],
   );
 
   return {

@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { isNil } from 'lodash';
 import { useContext } from 'react';
 
+import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
 import { EvmChainId, REACT_QUERY_KEYS, StakingProgramId } from '@/constants';
 import { FIVE_SECONDS_INTERVAL } from '@/constants/intervals';
 import { OnlineStatusContext } from '@/context/OnlineStatusProvider';
@@ -34,6 +35,8 @@ export const createStakingRewardsQuery = ({
   agentConfig,
   isOnline,
 }: CreateStakingRewardsQueryParams) => {
+  const hasStakingProgram =
+    !!stakingProgramId && !!STAKING_PROGRAMS[chainId]?.[stakingProgramId];
   return {
     queryKey: REACT_QUERY_KEYS.REWARDS_KEY(
       chainId,
@@ -43,6 +46,7 @@ export const createStakingRewardsQuery = ({
       serviceNftTokenId!,
     ),
     queryFn: async () => {
+      if (!hasStakingProgram) return null;
       try {
         const response =
           await agentConfig.serviceApi.getAgentStakingRewardsInfo({
@@ -70,6 +74,7 @@ export const createStakingRewardsQuery = ({
       !!isOnline &&
       !!serviceConfigId &&
       !!stakingProgramId &&
+      hasStakingProgram &&
       !!multisig &&
       isValidServiceId(serviceNftTokenId),
     refetchInterval: (isOnline ? FIVE_SECONDS_INTERVAL : false) as
