@@ -7,20 +7,20 @@ import {
   Switch,
   Typography,
 } from 'antd';
-import { ReactNode, useMemo, useState } from 'react';
+import { ReactNode, useMemo } from 'react';
 import { LuCircleMinus, LuCirclePlus, LuRefreshCcw } from 'react-icons/lu';
 import styled from 'styled-components';
 
 import { AGENT_CONFIG } from '@/config/agents';
 import { AgentType, COLOR } from '@/constants';
 import { useAutoRunContext } from '@/context/AutoRunProvider';
-import { useAgentRunning } from '@/hooks';
+import { useAgentRunning, useServiceDeployment } from '@/hooks';
 
 const { Text } = Typography;
 
-const Container = styled(Flex)`
-  background-color: ${COLOR.PURPLE_LIGHT_3};
-  border: 1px solid ${COLOR.GRAY_4};
+const Container = styled(Flex)<{ $enabled: boolean }>`
+  background-color: ${({ $enabled }) =>
+    $enabled ? COLOR.PURPLE_LIGHT_3 : COLOR.GRAY_4};
   border-radius: 10px;
   padding: 4px 4px 4px 10px;
 `;
@@ -73,16 +73,16 @@ const AgentRow = ({ agentType, action }: AgentRowProps) => {
 
 export const AutoRunControl = () => {
   const {
-    // enabled,
+    enabled,
     includedAgents,
     excludedAgents,
     eligibilityByAgent,
-    // setEnabled,
+    setEnabled,
     includeAgent,
     excludeAgent,
   } = useAutoRunContext();
   const { runningAgentType } = useAgentRunning();
-  const [enabled, setEnabled] = useState(false);
+  const { isLoading } = useServiceDeployment();
 
   // Preserve order from the store, but only pass the types to render rows.
   const includedAgentTypes = useMemo(
@@ -94,13 +94,15 @@ export const AutoRunControl = () => {
   // - Included agents (can run) with "-" action to exclude
   // - Excluded agents with "+" action to include
   const popoverContent = (
-    <Flex vertical gap={0} style={{ minWidth: 240 }}>
+    <Flex vertical gap={0} style={{ width: 260 }}>
       <PopoverSection vertical gap={8}>
         <Flex align="center" justify="space-between">
           <Text strong>Auto run</Text>
           <Switch
             checked={enabled}
-            onChange={(checked) => setEnabled(checked)}
+            onChange={(checked) => !isLoading && setEnabled(checked)}
+            disabled={isLoading}
+            loading={isLoading}
             size="small"
           />
         </Flex>
@@ -108,7 +110,7 @@ export const AutoRunControl = () => {
           className="text-neutral-tertiary text-sm flex"
           style={{ width: 200 }}
         >
-          Enables Pearl to run your agents automatically.
+          Enables Pearl to run your agents sequentially.
         </Text>
       </PopoverSection>
 
@@ -168,10 +170,12 @@ export const AutoRunControl = () => {
   );
 
   return (
-    <Container>
+    <Container $enabled={enabled}>
       <Flex vertical gap={8} className="w-full" flex={1}>
         <Flex justify="space-between" align="center" gap={10}>
-          <Text className="text-primary">{enabled ? 'On' : 'Off'}</Text>
+          <Text className={enabled ? 'text-primary' : 'text-neutral-secondary'}>
+            {enabled ? 'On' : 'Off'}
+          </Text>
           <Popover
             content={popoverContent}
             placement="rightTop"

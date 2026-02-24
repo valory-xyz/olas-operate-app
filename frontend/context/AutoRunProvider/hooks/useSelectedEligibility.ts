@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react';
 
 import { EvmChainId } from '@/constants';
-import { useRewardContext, useServices } from '@/hooks';
+import { useServices } from '@/hooks';
 import { useDeployability } from '@/hooks/useDeployability';
 
 type UseSelectedEligibilityProps = {
@@ -15,7 +15,6 @@ export const useSelectedEligibility = ({
   canCreateSafeForChain,
 }: UseSelectedEligibilityProps) => {
   const { selectedAgentConfig, selectedAgentType } = useServices();
-  const { isEligibleForRewards } = useRewardContext();
 
   const safeEligibility = useMemo(
     () => canCreateSafeForChain(selectedAgentConfig.evmHomeChainId),
@@ -33,7 +32,6 @@ export const useSelectedEligibility = ({
   return {
     selectedAgentType,
     selectedAgentConfig,
-    isEligibleForRewards,
     isSelectedAgentDetailsLoading,
     getSelectedEligibility,
   };

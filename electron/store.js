@@ -9,6 +9,7 @@ const defaultAutoRunSettings = {
   enabled: false,
   currentAgent: null,
   includedAgents: [],
+  isInitialized: false,
 };
 
 // Schema for validating store data

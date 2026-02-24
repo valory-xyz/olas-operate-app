@@ -13,6 +13,7 @@ export const useAutoRunStore = () => {
   const enabled = !!autoRun?.enabled;
   const includedAgents = autoRun?.includedAgents ?? [];
   const currentAgent = autoRun?.currentAgent ?? null;
+  const isInitialized = autoRun?.isInitialized ?? false;
 
   const updateAutoRun = useCallback(
     (partial: Partial<NonNullable<typeof autoRun>>) => {
@@ -21,11 +22,24 @@ export const useAutoRunStore = () => {
         enabled: autoRun?.enabled ?? false,
         currentAgent: autoRun?.currentAgent ?? null,
         includedAgents: autoRun?.includedAgents ?? [],
+        isInitialized: autoRun?.isInitialized ?? false,
         ...partial,
       });
     },
-    [autoRun?.currentAgent, autoRun?.enabled, autoRun?.includedAgents, store],
+    [
+      autoRun?.currentAgent,
+      autoRun?.enabled,
+      autoRun?.includedAgents,
+      autoRun?.isInitialized,
+      store,
+    ],
   );
 
-  return { enabled, includedAgents, currentAgent, updateAutoRun };
+  return {
+    enabled,
+    includedAgents,
+    currentAgent,
+    isInitialized,
+    updateAutoRun,
+  };
 };

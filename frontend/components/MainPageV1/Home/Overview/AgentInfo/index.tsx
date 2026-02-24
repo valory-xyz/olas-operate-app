@@ -2,22 +2,42 @@ import { InfoCircleOutlined, SettingOutlined } from '@ant-design/icons';
 import { Button, Flex, Modal, Typography } from 'antd';
 import Image from 'next/image';
 import { useState } from 'react';
+import { LuInfo } from 'react-icons/lu';
 import styled from 'styled-components';
 
 import { AgentIntroduction } from '@/components/AgentIntroduction';
 import { CardFlex, Tooltip } from '@/components/ui';
-import { PAGES } from '@/constants';
+import { COLOR, PAGES } from '@/constants';
+import { useAutoRunContext } from '@/context/AutoRunProvider';
 import { usePageState, useServices } from '@/hooks';
 
 import { AgentActivity } from './AgentActivity';
 import { AgentDisabledAlert } from './AgentDisabledAlert';
 import { AgentRunButton } from './AgentRunButton';
 
-const { Title } = Typography;
+const { Title, Text } = Typography;
 
 const AgentInfoContainer = styled.div`
   position: relative;
 `;
+
+const AutoRunAlertContainer = styled(Flex)`
+  background-color: ${COLOR.PURPLE_LIGHT_3};
+  border-radius: 6px;
+  padding: 2px 8px;
+`;
+
+const AutoRunAlert = () => (
+  <Tooltip
+    title="Pearl is running your agents automatically. To run the agent manually, disable the auto-run setting in the Pearl sidebar."
+    styles={{ body: { width: 324 } }}
+  >
+    <AutoRunAlertContainer align="center" gap={6}>
+      <Text className="text-sm text-primary">Auto-run is on</Text>
+      <LuInfo color={COLOR.PRIMARY} />
+    </AutoRunAlertContainer>
+  </Tooltip>
+);
 
 const AboutAgent = () => {
   const { selectedAgentType } = useServices();
@@ -55,6 +75,7 @@ export const AgentInfo = () => {
     selectedAgentConfig,
     selectedAgentNameOrFallback,
   } = useServices();
+  const { enabled: isAutoRunEnabled } = useAutoRunContext();
 
   const { isX402Enabled } = selectedAgentConfig;
 
@@ -95,7 +116,7 @@ export const AgentInfo = () => {
                       )}
                 </Flex>
               </Flex>
-              <AgentRunButton />
+              {isAutoRunEnabled ? <AutoRunAlert /> : <AgentRunButton />}
             </Flex>
           </Flex>
           <AgentDisabledAlert />

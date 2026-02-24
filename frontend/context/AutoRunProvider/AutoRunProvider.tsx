@@ -8,7 +8,7 @@ import {
 } from 'react';
 
 import { AgentType } from '@/constants';
-import { useAgentRunning, useElectronApi, useServices } from '@/hooks';
+import { useElectronApi, useServices } from '@/hooks';
 
 import { AUTO_RUN_LOG_PREFIX } from './constants';
 import { useAutoRunController } from './hooks/useAutoRunController';
@@ -37,10 +37,14 @@ const AutoRunContext = createContext<AutoRunContextType>({
 
 export const AutoRunProvider = ({ children }: PropsWithChildren) => {
   const { logEvent } = useElectronApi();
-  const { services, updateAgentType, selectedAgentType } = useServices();
-  const { runningAgentType } = useAgentRunning();
-  const { enabled, includedAgents, currentAgent, updateAutoRun } =
-    useAutoRunStore();
+  const { services, selectedAgentType, updateAgentType } = useServices();
+  const {
+    enabled,
+    includedAgents,
+    currentAgent,
+    isInitialized,
+    updateAutoRun,
+  } = useAutoRunStore();
 
   const configuredAgents = useConfiguredAgents(services);
   const configuredAgentTypes = useMemo(
@@ -68,11 +72,8 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
   }, [configuredAgentTypes, orderedIncludedAgentTypes]);
 
   const { canCreateSafeForChain, createSafeIfNeeded } = useSafeEligibility();
-  const {
-    isEligibleForRewards,
-    isSelectedAgentDetailsLoading,
-    getSelectedEligibility,
-  } = useSelectedEligibility({ canCreateSafeForChain });
+  const { isSelectedAgentDetailsLoading, getSelectedEligibility } =
+    useSelectedEligibility({ canCreateSafeForChain });
 
   const { canSyncSelection } = useAutoRunController({
     enabled,
@@ -82,28 +83,29 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
     updateAutoRun,
     updateAgentType,
     selectedAgentType,
-    runningAgentType,
-    isEligibleForRewards,
     isSelectedAgentDetailsLoading,
     getSelectedEligibility,
     createSafeIfNeeded,
   });
 
-  // Seed included list if empty
+  // Seed included list once. After that, treat empty as intentional.
   useEffect(() => {
     if (!services) return;
-    if (includedAgents.length > 0) return;
+    if (isInitialized) return;
     if (configuredAgentTypes.length === 0) return;
 
     updateAutoRun({
       includedAgents: buildIncludedAgentsFromOrder(configuredAgentTypes),
+      isInitialized: true,
     });
-  }, [configuredAgentTypes, includedAgents.length, services, updateAutoRun]);
+  }, [configuredAgentTypes, isInitialized, services, updateAutoRun]);
 
   // Append new agents to included list
   useEffect(() => {
     if (!services) return;
+    if (!isInitialized) return;
     if (configuredAgentTypes.length === 0) return;
+    if (includedAgents.length === 0) return;
 
     const includedSet = new Set(includedAgents.map((item) => item.agentType));
     const newAgents = configuredAgentTypes.filter(
@@ -115,7 +117,13 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
     updateAutoRun({
       includedAgents: appendNewAgents(includedAgents, newAgents),
     });
-  }, [configuredAgentTypes, includedAgents, services, updateAutoRun]);
+  }, [
+    configuredAgentTypes,
+    includedAgents,
+    isInitialized,
+    services,
+    updateAutoRun,
+  ]);
 
   // Sync sidebar selection with current auto-run agent after activation
   useEffect(() => {

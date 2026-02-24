@@ -32,6 +32,7 @@ export type ElectronStore = {
     enabled?: boolean;
     currentAgent?: AgentType | null;
     includedAgents?: { agentType: AgentType; order: number }[];
+    isInitialized?: boolean;
   };
   lastProvidedBackupWallet?: {
     address: Nullable<string>;
