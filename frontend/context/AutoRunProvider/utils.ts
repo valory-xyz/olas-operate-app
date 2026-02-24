@@ -65,5 +65,23 @@ export const appendNewAgents = (
   return [...existing, ...appended];
 };
 
+export const normalizeIncludedAgents = (includedAgents: IncludedAgent[]) => {
+  if (isEmpty(includedAgents)) return [];
+  const sorted = sortBy(includedAgents, (item) => item.order);
+  const seen = new Set<AgentType>();
+  const unique: IncludedAgent[] = [];
+
+  for (const item of sorted) {
+    if (seen.has(item.agentType)) continue;
+    seen.add(item.agentType);
+    unique.push(item);
+  }
+
+  return unique.map((item, index) => ({
+    agentType: item.agentType,
+    order: index,
+  }));
+};
+
 export const getAgentDisplayName = (agentType: AgentType) =>
   AGENT_CONFIG[agentType]?.displayName ?? agentType;

@@ -21,6 +21,7 @@ import { AutoRunContextType } from './types';
 import {
   appendNewAgents,
   buildIncludedAgentsFromOrder,
+  normalizeIncludedAgents,
   sortIncludedAgents,
 } from './utils';
 
@@ -44,6 +45,7 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
     includedAgents,
     currentAgent,
     isInitialized,
+    userExcludedAgents,
     updateAutoRun,
   } = useAutoRunStore();
 
@@ -51,6 +53,11 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
   const configuredAgentTypes = useMemo(
     () => configuredAgents.map((agent) => agent.agentType),
     [configuredAgents],
+  );
+
+  const normalizedIncludedAgents = useMemo(
+    () => normalizeIncludedAgents(includedAgents),
+    [includedAgents],
   );
 
   const decommissionedAgentTypes = useMemo(
@@ -72,8 +79,8 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
   }, [configuredAgentTypes, decommissionedAgentTypes]);
 
   const includedAgentsSorted = useMemo(
-    () => sortIncludedAgents(includedAgents, eligibleAgentTypes),
-    [eligibleAgentTypes, includedAgents],
+    () => sortIncludedAgents(normalizedIncludedAgents, eligibleAgentTypes),
+    [eligibleAgentTypes, normalizedIncludedAgents],
   );
 
   const orderedIncludedAgentTypes = useMemo(() => {
@@ -121,16 +128,16 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
     });
   }, [eligibleAgentTypes, isInitialized, services, updateAutoRun]);
 
-  // Append new agents to included list
+  // Auto-append newly onboarded agents unless explicitly excluded by user.
   useEffect(() => {
     if (!services) return;
     if (!isInitialized) return;
     if (eligibleAgentTypes.length === 0) return;
-    if (includedAgents.length === 0) return;
 
     const includedSet = new Set(includedAgents.map((item) => item.agentType));
+    const excludedSet = new Set(userExcludedAgents);
     const newAgents = eligibleAgentTypes.filter(
-      (agentType) => !includedSet.has(agentType),
+      (agentType) => !includedSet.has(agentType) && !excludedSet.has(agentType),
     );
 
     if (newAgents.length === 0) return;
@@ -144,7 +151,29 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
     isInitialized,
     services,
     updateAutoRun,
+    userExcludedAgents,
   ]);
+
+  // Keep included list normalized and drop explicitly excluded or decommissioned agents.
+  useEffect(() => {
+    if (includedAgents.length === 0) return;
+    const excludedSet = new Set(userExcludedAgents);
+    const normalized = normalizeIncludedAgents(includedAgents).filter(
+      (item) =>
+        eligibleAgentTypes.includes(item.agentType) &&
+        !excludedSet.has(item.agentType),
+    );
+    const hasChanges =
+      normalized.length !== includedAgents.length ||
+      normalized.some(
+        (item, index) =>
+          includedAgents[index]?.agentType !== item.agentType ||
+          includedAgents[index]?.order !== item.order,
+      );
+
+    if (!hasChanges) return;
+    updateAutoRun({ includedAgents: normalized });
+  }, [eligibleAgentTypes, includedAgents, updateAutoRun, userExcludedAgents]);
 
   // Sync sidebar selection with current auto-run agent after activation
   useEffect(() => {
@@ -197,29 +226,50 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
   const includeAgent = useCallback(
     (agentType: AgentType) => {
       if (!eligibleAgentTypes.includes(agentType)) return;
+      const nextExcluded = userExcludedAgents.filter(
+        (item) => item !== agentType,
+      );
       const existing = includedAgents.find(
         (item) => item.agentType === agentType,
       );
-      if (existing) return;
+      if (existing) {
+        if (nextExcluded.length !== userExcludedAgents.length) {
+          updateAutoRun({ userExcludedAgents: nextExcluded });
+        }
+        return;
+      }
 
       updateAutoRun({
         includedAgents: appendNewAgents(includedAgents, [agentType]),
+        userExcludedAgents: nextExcluded,
       });
       logMessage(`included ${agentType}`);
     },
-    [eligibleAgentTypes, includedAgents, logMessage, updateAutoRun],
+    [
+      eligibleAgentTypes,
+      includedAgents,
+      logMessage,
+      updateAutoRun,
+      userExcludedAgents,
+    ],
   );
 
   const excludeAgent = useCallback(
     (agentType: AgentType) => {
-      if (!includedAgents.length) return;
       const nextIncluded = includedAgents.filter(
         (item) => item.agentType !== agentType,
       );
-      updateAutoRun({ includedAgents: nextIncluded });
+      const nextExcluded = userExcludedAgents.includes(agentType)
+        ? userExcludedAgents
+        : [...userExcludedAgents, agentType];
+
+      updateAutoRun({
+        includedAgents: nextIncluded,
+        userExcludedAgents: nextExcluded,
+      });
       logMessage(`excluded ${agentType}`);
     },
-    [includedAgents, logMessage, updateAutoRun],
+    [includedAgents, logMessage, updateAutoRun, userExcludedAgents],
   );
 
   const eligibilityByAgent = useMemo(() => {

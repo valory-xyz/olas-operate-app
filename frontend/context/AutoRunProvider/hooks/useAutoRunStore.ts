@@ -8,11 +8,13 @@ const DEFAULT_AUTO_RUN: {
   currentAgent: AgentType | null;
   includedAgents: { agentType: AgentType; order: number }[];
   isInitialized: boolean;
+  userExcludedAgents: AgentType[];
 } = {
   enabled: false,
   currentAgent: null,
   includedAgents: [],
   isInitialized: false,
+  userExcludedAgents: [],
 };
 
 /**
@@ -35,9 +37,10 @@ export const useAutoRunStore = () => {
   const includedAgents = resolvedAutoRun.includedAgents ?? [];
   const currentAgent = resolvedAutoRun.currentAgent ?? null;
   const isInitialized = resolvedAutoRun.isInitialized ?? false;
+  const userExcludedAgents = resolvedAutoRun.userExcludedAgents ?? [];
 
   const updateAutoRun = useCallback(
-    (partial: Partial<NonNullable<typeof autoRun>>) => {
+    (partial: Partial<typeof DEFAULT_AUTO_RUN>) => {
       if (!store?.set) return;
       const next = {
         ...DEFAULT_AUTO_RUN,
@@ -55,6 +58,7 @@ export const useAutoRunStore = () => {
     includedAgents,
     currentAgent,
     isInitialized,
+    userExcludedAgents,
     updateAutoRun,
   };
 };
