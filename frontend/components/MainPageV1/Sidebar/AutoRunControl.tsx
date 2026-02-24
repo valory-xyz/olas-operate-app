@@ -5,6 +5,7 @@ import {
   Image,
   Popover,
   Switch,
+  Tooltip,
   Typography,
 } from 'antd';
 import { ReactNode, useMemo } from 'react';
@@ -15,6 +16,7 @@ import { AGENT_CONFIG } from '@/config/agents';
 import { AgentType, COLOR } from '@/constants';
 import { useAutoRunContext } from '@/context/AutoRunProvider';
 import { useAgentRunning } from '@/hooks';
+import { Nullable } from '@/types';
 
 const { Text } = Typography;
 
@@ -31,6 +33,7 @@ const PopoverSection = styled(Flex)<{ $small?: boolean }>`
 
 type AgentRowProps = {
   agentType: AgentType;
+  tooltip?: Nullable<string>;
   action?: {
     icon: ReactNode;
     onClick: () => void;
@@ -39,7 +42,7 @@ type AgentRowProps = {
     isDisabled?: boolean;
   };
 };
-const AgentRow = ({ agentType, action }: AgentRowProps) => {
+const AgentRow = ({ agentType, tooltip, action }: AgentRowProps) => {
   const name = AGENT_CONFIG[agentType].displayName;
 
   return (
@@ -57,15 +60,17 @@ const AgentRow = ({ agentType, action }: AgentRowProps) => {
         </Flex>
       </Flex>
       {action ? (
-        <Button
-          size="small"
-          type="text"
-          danger={action.isDanger}
-          disabled={action.isDisabled}
-          aria-label={action.ariaLabel}
-          onClick={action.onClick}
-          icon={action.icon}
-        />
+        <Tooltip title={tooltip} placement="right">
+          <Button
+            size="small"
+            type="text"
+            danger={action.isDanger}
+            disabled={action.isDisabled}
+            aria-label={action.ariaLabel}
+            onClick={action.onClick}
+            icon={action.icon}
+          />
+        </Tooltip>
       ) : null}
     </Flex>
   );
@@ -123,20 +128,22 @@ export const AutoRunControl = () => {
               ) : (
                 includedAgentTypes.map((agentType) => {
                   const isRunning = agentType === runningAgentType;
-                  const action = isRunning
-                    ? undefined
-                    : {
-                        icon: <LuCircleMinus size={16} />,
-                        onClick: () => excludeAgent(agentType),
-                        ariaLabel: `Exclude ${agentType}`,
-                        isDanger: true,
-                      };
-
                   return (
                     <AgentRow
                       key={`included-${agentType}`}
                       agentType={agentType}
-                      action={action}
+                      action={{
+                        icon: <LuCircleMinus size={16} />,
+                        onClick: () => excludeAgent(agentType),
+                        ariaLabel: `Exclude ${agentType}`,
+                        isDanger: true,
+                        isDisabled: isRunning,
+                      }}
+                      tooltip={
+                        isRunning
+                          ? 'Can’t exclude: agent is currently running'
+                          : 'Exclude agent from auto-run'
+                      }
                     />
                   );
                 })
@@ -165,6 +172,7 @@ export const AutoRunControl = () => {
                         ariaLabel: `Include ${agentType}`,
                         isDisabled: isBlocked,
                       }}
+                      tooltip={isBlocked ? null : 'Include agent in auto-run'}
                     />
                   );
                 })}
