@@ -18,6 +18,7 @@ export type AutoRunContextType = {
   includedAgents: IncludedAgent[];
   excludedAgents: AgentType[];
   currentAgent: AgentType | null;
+  isToggling: boolean;
   eligibilityByAgent: Partial<Record<AgentType, Eligibility>>;
   setEnabled: (enabled: boolean) => void;
   includeAgent: (agentType: AgentType) => void;

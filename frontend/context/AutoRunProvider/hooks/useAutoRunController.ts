@@ -5,28 +5,19 @@ import {
   MiddlewareDeploymentStatus,
   MiddlewareDeploymentStatusMap,
 } from '@/constants';
-import {
-  useAgentRunning,
-  useElectronApi,
-  useRewardContext,
-  useStartService,
-} from '@/hooks';
+import { useAgentRunning, useRewardContext, useStartService } from '@/hooks';
 import { ServicesService } from '@/service/Services';
 import { Maybe } from '@/types';
 import { delayInSeconds } from '@/utils/delay';
 
-import {
-  AUTO_RUN_LOG_PREFIX,
-  COOLDOWN_SECONDS,
-  RETRY_BACKOFF_SECONDS,
-} from '../constants';
+import { COOLDOWN_SECONDS, RETRY_BACKOFF_SECONDS } from '../constants';
 import { AgentMeta } from '../types';
 import {
   getAgentDisplayName,
-  logAutoRun,
   notifySkipped,
   notifyStartFailed,
 } from '../utils';
+import { useAutoRunEvent } from './useLogAutoRunEvent';
 
 /** When every candidate is blocked or missing data, wait longer before re-scan. */
 const SCAN_BLOCKED_DELAY_SECONDS = 10 * 60;
@@ -66,10 +57,10 @@ export const useAutoRunController = ({
   createSafeIfNeeded,
   showNotification,
 }: UseAutoRunControllerParams) => {
-  const { logEvent } = useElectronApi();
   const { isEligibleForRewards } = useRewardContext();
   const { runningAgentType } = useAgentRunning();
   const { startService } = useStartService();
+  const { logMessage } = useAutoRunEvent();
 
   // Guards against overlapping scan/rotation loops.
   const isRotatingRef = useRef(false);
@@ -88,13 +79,15 @@ export const useAutoRunController = ({
    * On first enable: start immediately. On later idle (manual stop): apply cooldown.
    */
   const wasAutoRunEnabledRef = useRef(false);
+  const enabledRef = useRef(enabled);
 
-  const logMessage = useCallback(
-    (message: string) => {
-      logAutoRun(logEvent, AUTO_RUN_LOG_PREFIX, message);
-    },
-    [logEvent],
-  );
+  useEffect(() => {
+    enabledRef.current = enabled;
+    if (!enabled && scanTimeoutRef.current) {
+      clearTimeout(scanTimeoutRef.current);
+      scanTimeoutRef.current = null;
+    }
+  }, [enabled]);
 
   // Notify the user that an agent was skipped for a specific reason, but only once per reason.
   const notifySkipOnce = useCallback(
@@ -157,6 +150,15 @@ export const useAutoRunController = ({
     [orderedIncludedAgentTypes],
   );
 
+  const getPreferredStartFrom = useCallback(() => {
+    const length = orderedIncludedAgentTypes.length;
+    if (length <= 1) return null;
+    const index = orderedIncludedAgentTypes.indexOf(selectedAgentType);
+    if (index === -1) return null;
+    const prevIndex = (index - 1 + length) % length;
+    return orderedIncludedAgentTypes[prevIndex] ?? null;
+  }, [orderedIncludedAgentTypes, selectedAgentType]);
+
   // Poll deployment status until it reaches the desired state or timeout.
   const waitForDeploymentStatus = useCallback(
     async (
@@ -185,6 +187,7 @@ export const useAutoRunController = ({
   // Start a candidate agent with retries + backoff, respecting eligibility gates.
   const startAgentWithRetries = useCallback(
     async (agentType: AgentType) => {
+      if (!enabledRef.current) return false;
       const meta = configuredAgents.find(
         (agent) => agent.agentType === agentType,
       );
@@ -273,6 +276,7 @@ export const useAutoRunController = ({
 
   // Schedule a delayed scan, coalescing any existing timer.
   const scheduleNextScan = useCallback((delaySeconds: number) => {
+    if (!enabledRef.current) return;
     if (scanTimeoutRef.current) {
       clearTimeout(scanTimeoutRef.current);
     }
@@ -285,12 +289,14 @@ export const useAutoRunController = ({
   // Scan sequentially through the queue and attempt to start the first eligible agent.
   const scanAndStartNext = useCallback(
     async (startFrom?: AgentType | null) => {
+      if (!enabledRef.current) return { started: false };
       let hasBlocked = false;
       let hasEligible = false;
       let candidate = findNextInOrder(startFrom);
       const visited = new Set<AgentType>();
 
       while (candidate && !visited.has(candidate)) {
+        if (!enabledRef.current) return { started: false };
         visited.add(candidate);
 
         // Select candidate to load its data (eligibility, rewards).
@@ -329,8 +335,10 @@ export const useAutoRunController = ({
         return SCAN_BLOCKED_DELAY_SECONDS;
       })();
 
-      logMessage(`scan complete; scheduling next scan in ${delay}s`);
-      scheduleNextScan(delay);
+      if (enabledRef.current) {
+        logMessage(`scan complete; scheduling next scan in ${delay}s`);
+        scheduleNextScan(delay);
+      }
 
       return { started: false };
     },
@@ -361,12 +369,25 @@ export const useAutoRunController = ({
         return;
       }
 
+      if (!enabledRef.current) return;
+
       logMessage(`cooldown ${COOLDOWN_SECONDS}s`);
       await delayInSeconds(COOLDOWN_SECONDS);
+      if (!enabledRef.current) return;
       await scanAndStartNext(currentAgentType);
     },
     [configuredAgents, logMessage, scanAndStartNext, stopAgent],
   );
+
+  const stopRunningAgent = useCallback(async () => {
+    const currentType = runningAgentType || currentAgent;
+    if (!currentType) return false;
+    const currentMeta = configuredAgents.find(
+      (agent) => agent.agentType === currentType,
+    );
+    if (!currentMeta) return false;
+    return stopAgent(currentMeta.serviceConfigId);
+  }, [configuredAgents, currentAgent, runningAgentType, stopAgent]);
 
   useEffect(() => {
     if (!enabled) return;
@@ -431,12 +452,13 @@ export const useAutoRunController = ({
 
     isRotatingRef.current = true;
     const startNext = async () => {
+      const preferredStartFrom = getPreferredStartFrom();
       if (!wasEnabled) {
-        await scanAndStartNext(currentAgent);
+        await scanAndStartNext(preferredStartFrom);
         return;
       }
       await delayInSeconds(COOLDOWN_SECONDS);
-      await scanAndStartNext(currentAgent);
+      await scanAndStartNext(preferredStartFrom);
     };
 
     startNext()
@@ -445,10 +467,9 @@ export const useAutoRunController = ({
         isRotatingRef.current = false;
       });
   }, [
-    currentAgent,
     enabled,
+    getPreferredStartFrom,
     logMessage,
-    orderedIncludedAgentTypes,
     runningAgentType,
     scanAndStartNext,
     scanTick,
@@ -462,5 +483,6 @@ export const useAutoRunController = ({
 
   return {
     canSyncSelection,
+    stopRunningAgent,
   };
 };

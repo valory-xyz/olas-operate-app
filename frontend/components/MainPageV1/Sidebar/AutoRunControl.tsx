@@ -25,8 +25,8 @@ const Container = styled(Flex)<{ $enabled: boolean }>`
   padding: 4px 4px 4px 10px;
 `;
 
-const PopoverSection = styled(Flex)`
-  padding: 12px 16px;
+const PopoverSection = styled(Flex)<{ $small?: boolean }>`
+  padding: ${({ $small }) => ($small ? '8px 16px' : '12px 16px')};
 `;
 
 type AgentRowProps = {
@@ -115,57 +115,63 @@ export const AutoRunControl = () => {
       </PopoverSection>
 
       {enabled ? (
-        <PopoverSection vertical gap={12}>
-          <Flex vertical gap={8}>
-            {includedAgentTypes.length === 0 ? (
-              <Text type="secondary">No agents enabled.</Text>
-            ) : (
-              includedAgentTypes.map((agentType) => {
-                const isRunning = agentType === runningAgentType;
-                const action = isRunning
-                  ? undefined
-                  : {
-                      icon: <LuCircleMinus size={16} />,
-                      onClick: () => excludeAgent(agentType),
-                      ariaLabel: `Exclude ${agentType}`,
-                      isDanger: true,
-                    };
+        <Flex vertical>
+          <PopoverSection>
+            <Flex vertical gap={8} className="w-full">
+              {includedAgentTypes.length === 0 ? (
+                <Text type="secondary">No agents enabled.</Text>
+              ) : (
+                includedAgentTypes.map((agentType) => {
+                  const isRunning = agentType === runningAgentType;
+                  const action = isRunning
+                    ? undefined
+                    : {
+                        icon: <LuCircleMinus size={16} />,
+                        onClick: () => excludeAgent(agentType),
+                        ariaLabel: `Exclude ${agentType}`,
+                        isDanger: true,
+                      };
 
-                return (
-                  <AgentRow
-                    key={`included-${agentType}`}
-                    agentType={agentType}
-                    action={action}
-                  />
-                );
-              })
-            )}
-          </Flex>
+                  return (
+                    <AgentRow
+                      key={`included-${agentType}`}
+                      agentType={agentType}
+                      action={action}
+                    />
+                  );
+                })
+              )}
+            </Flex>
+          </PopoverSection>
 
           {excludedAgents.length === 0 ? null : (
-            <Flex vertical gap={8}>
-              <Text strong>Excluded from auto-run</Text>
+            <Flex vertical>
+              <PopoverSection>
+                <Text className="text-sm">Excluded from auto-run</Text>
+              </PopoverSection>
               <Divider className="m-0" />
-              {excludedAgents.map((agentType) => {
-                const isBlocked =
-                  eligibilityByAgent[agentType]?.canRun === false;
+              <PopoverSection $small vertical gap={8}>
+                {excludedAgents.map((agentType) => {
+                  const isBlocked =
+                    eligibilityByAgent[agentType]?.canRun === false;
 
-                return (
-                  <AgentRow
-                    key={`excluded-${agentType}`}
-                    agentType={agentType}
-                    action={{
-                      icon: <LuCirclePlus size={16} />,
-                      onClick: () => includeAgent(agentType),
-                      ariaLabel: `Include ${agentType}`,
-                      isDisabled: isBlocked,
-                    }}
-                  />
-                );
-              })}
+                  return (
+                    <AgentRow
+                      key={`excluded-${agentType}`}
+                      agentType={agentType}
+                      action={{
+                        icon: <LuCirclePlus size={16} />,
+                        onClick: () => includeAgent(agentType),
+                        ariaLabel: `Include ${agentType}`,
+                        isDisabled: isBlocked,
+                      }}
+                    />
+                  );
+                })}
+              </PopoverSection>
             </Flex>
           )}
-        </PopoverSection>
+        </Flex>
       ) : null}
     </Flex>
   );
