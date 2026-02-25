@@ -114,7 +114,7 @@ export const AutoRunControl = () => {
           className="text-neutral-tertiary text-sm flex"
           style={{ width: 200 }}
         >
-          Enables Pearl to run your agents sequentially.
+          Runs agents one after another, automatically..
         </Text>
       </PopoverSection>
 
