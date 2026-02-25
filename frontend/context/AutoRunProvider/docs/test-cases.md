@@ -207,4 +207,30 @@ These waits are guarded by `enabledRef.current`, but do not all have time-based 
 - Backend start can hang without timeout beyond `waitForRunningAgent`.
 - Rewards eligibility is selection-driven; polling used as a workaround.
 - `waitForAgentSelection` and `waitForBalancesReady` have no hard time-based timeout while auto-run is enabled (only `enabledRef` guard). Acceptable for MVP.
-- Two locations contain a hardcoded `30`-second rescan delay (eligibility timeout path and post-loading rescan in scanner); should be extracted to a named constant.
+- Four locations contain a hardcoded `30`-second loading-retry rescan delay; should be extracted to a named constant (e.g. `SCAN_LOADING_RETRY_SECONDS`).
+
+---
+
+## Open Bugs
+
+### P1 — `waitForRewardsEligibility` missing `enabledRef` guard (`useAutoRunSignals.ts`)
+- Every other while loop exits when disabled. This one uses only a 20 s hard timeout, so it can run up to 20 s after auto-run is disabled.
+- Fix: add `&& enabledRef.current` to the while condition alongside the timeout.
+
+### P1 — `skipNotifiedRef` never cleared (`useAutoRunController.ts`)
+- Accumulates `agentType → reason` entries but is never reset — not on toggle off, not on scan cycle end.
+- Effect: if an agent is skipped for "Low balance", the user tops up, auto-run is re-enabled and balance drops again later — no notification fires because the reason is still stored.
+- Fix: clear `skipNotifiedRef.current = {}` in the `useEffect` block that handles `!enabled`.
+
+### P2 — `rotateToNext` stops the agent even when auto-run was disabled mid-rotation (`useAutoRunController.ts`)
+- `enabledRef` is checked only **after** `stopAgent` completes. If disabled between rewards detection and the stop call, the running service is stopped without user intent.
+- Fix: add `if (!enabledRef.current) return;` immediately before the `stopAgent` call.
+
+### P2 — `waitForRunningAgent` / `waitForStoppedAgent` lack `enabledRef` guard (`useAutoRunSignals.ts`)
+- Both loop for up to 120 s regardless of enabled state; adds unnecessary backend polling after disable.
+- Fix: add `enabledRef.current` to both while conditions.
+
+### P3 — `isRotatingRef` set asynchronously in rotation effect (`useAutoRunController.ts`)
+- Set to `true` only after `await refreshRewardsEligibility()` resolves; rapid `rewardsTick` increments can transiently allow two invocations to both see `false`, both calling `checkRewardsAndRotate`. `isActive` prevents double-rotation in most paths but both writes to `lastRewardsEligibilityRef` can prematurely suppress a valid rotation.
+- Fix: set `isRotatingRef.current = true` synchronously before the first `await`, matching the startup effect.
+
