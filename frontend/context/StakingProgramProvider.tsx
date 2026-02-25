@@ -1,4 +1,10 @@
-import { createContext, PropsWithChildren, useEffect, useState } from 'react';
+import {
+  createContext,
+  PropsWithChildren,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 
 import { StakingProgramId } from '@/constants';
 import { useActiveStakingProgramId, useServices } from '@/hooks';
@@ -51,12 +57,24 @@ export const StakingProgramProvider = ({ children }: PropsWithChildren) => {
   // 1) On-chain value (where the user actually staked)
   // 2) If not available, use the selected service (can be updated during migration)
   // 3) Fall back to the default config value
-  const selectedStakingProgramId = isLoading
-    ? null
-    : activeStakingProgramId ||
+  const selectedStakingProgramId = useMemo(() => {
+    if (isLoading) return null;
+
+    const serviceSelectedStakingProgramId =
       selectedService?.chain_configs?.[selectedService?.home_chain]?.chain_data
-        .user_params.staking_program_id ||
-      defaultStakingProgramId;
+        ?.user_params?.staking_program_id;
+
+    return (
+      activeStakingProgramId ||
+      serviceSelectedStakingProgramId ||
+      defaultStakingProgramId
+    );
+  }, [
+    isLoading,
+    activeStakingProgramId,
+    selectedService,
+    defaultStakingProgramId,
+  ]);
 
   return (
     <StakingProgramContext.Provider

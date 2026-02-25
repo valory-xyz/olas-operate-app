@@ -108,3 +108,6 @@ export const GEO_ELIGIBILITY_DOCS_URL =
 
 // Predict website
 export const PREDICT_WEBSITE_URL = 'https://predict.olas.network';
+
+// Govern app
+export const GOVERN_APP_URL = 'https://govern.olas.network';

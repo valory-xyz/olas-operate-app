@@ -62,8 +62,15 @@ jobs:
       tag: ${{ needs.calculate-version.outputs.new_tag }}
     secrets: inherit
 
+  run-release-linux:
+    needs: [check-label, calculate-version]
+    uses: ./.github/workflows/release_linux.yml
+    with:
+      tag: ${{ needs.calculate-version.outputs.new_tag }}
+    secrets: inherit
+
   summary:
-    needs: [check-label, calculate-version, run-release, run-release-win]
+    needs: [check-label, calculate-version, run-release, run-release-win, run-release-linux]
     runs-on: ubuntu-latest
     steps:
       - name: Create summary

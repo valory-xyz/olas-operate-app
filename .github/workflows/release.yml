@@ -274,6 +274,7 @@ jobs:
           CSC_LINK: ${{ secrets.CSC_LINK }}
           GH_TOKEN: ${{ secrets.github_token }}
           GITHUB_TOKEN: ${{ secrets.github_token }}
+          PUBLISH_FOR_PULL_REQUEST: true
           RELEASE_TAG: ${{ inputs.tag }}
           NODE_ENV: ${{ matrix.env }}
           ARCH: ${{ env.OS_ARCH }}

@@ -17,7 +17,6 @@ type PageStateContextType = {
   isPageLoadedAndOneMinutePassed: boolean;
   isUserLoggedIn: boolean;
   setUserLoggedIn: () => void;
-  setUserLogout: () => void;
 };
 
 export const PageStateContext = createContext<PageStateContextType>({
@@ -26,7 +25,6 @@ export const PageStateContext = createContext<PageStateContextType>({
   isPageLoadedAndOneMinutePassed: false,
   isUserLoggedIn: false,
   setUserLoggedIn: () => {},
-  setUserLogout: () => {},
 });
 
 export const PageStateProvider = ({ children }: PropsWithChildren) => {
@@ -49,17 +47,12 @@ export const PageStateProvider = ({ children }: PropsWithChildren) => {
     setIsUserLoggedIn(true);
   }, []);
 
-  const setUserLogout = useCallback(() => {
-    setIsUserLoggedIn(false);
-  }, []);
-
   return (
     <PageStateContext.Provider
       value={{
         // User login state
         isUserLoggedIn,
         setUserLoggedIn,
-        setUserLogout,
 
         // Page state
         pageState,

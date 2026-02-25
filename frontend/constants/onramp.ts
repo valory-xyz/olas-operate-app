@@ -1,4 +1,9 @@
-import { EvmChainId, EvmChainIdMap, SupportedMiddlewareChain, SupportedMiddlewareChainMap } from './chains';
+import {
+  EvmChainId,
+  EvmChainIdMap,
+  SupportedMiddlewareChain,
+  SupportedMiddlewareChainMap,
+} from './chains';
 
 /**
  * Minimum amount in USD required for on-ramping with credit/debit card

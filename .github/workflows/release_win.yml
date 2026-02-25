@@ -172,6 +172,7 @@ jobs:
       - run: rm -rf /dist
       - name: "Build, notarize, publish"
         env:
+          PUBLISH_FOR_PULL_REQUEST: true
           RELEASE_TAG: ${{ inputs.tag }}
         run: |
           export GITHUB_REF_TYPE="tag"
