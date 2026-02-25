@@ -24,9 +24,10 @@ import { AutoRunContextType } from './types';
 import {
   appendNewAgents,
   buildIncludedAgentsFromOrder,
+  getDecommissionedAgentTypes,
   normalizeIncludedAgents,
   sortIncludedAgents,
-} from './utils';
+} from './utils/utils';
 
 const AutoRunContext = createContext<AutoRunContextType>({
   enabled: false,
@@ -57,20 +58,8 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
     [configuredAgents],
   );
 
-  const normalizedIncludedAgents = useMemo(
-    () => normalizeIncludedAgents(includedAgents),
-    [includedAgents],
-  );
-
   const decommissionedAgentTypes = useMemo(
-    () =>
-      configuredAgents
-        .filter(
-          (agent) =>
-            agent.agentConfig.isUnderConstruction ||
-            agent.agentConfig.isAgentEnabled === false,
-        )
-        .map((agent) => agent.agentType),
+    () => getDecommissionedAgentTypes(configuredAgents),
     [configuredAgents],
   );
 
@@ -81,8 +70,12 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
   }, [configuredAgentTypes, decommissionedAgentTypes]);
 
   const includedAgentsSorted = useMemo(
-    () => sortIncludedAgents(normalizedIncludedAgents, eligibleAgentTypes),
-    [eligibleAgentTypes, normalizedIncludedAgents],
+    () =>
+      sortIncludedAgents(
+        normalizeIncludedAgents(includedAgents),
+        eligibleAgentTypes,
+      ),
+    [eligibleAgentTypes, includedAgents],
   );
 
   const orderedIncludedAgentTypes = useMemo(() => {

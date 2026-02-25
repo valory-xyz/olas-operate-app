@@ -7,7 +7,6 @@ const defaultInitialAgentSettings = {
 
 const defaultAutoRunSettings = {
   enabled: false,
-  currentAgent: null,
   includedAgents: [],
   isInitialized: false,
   userExcludedAgents: [],

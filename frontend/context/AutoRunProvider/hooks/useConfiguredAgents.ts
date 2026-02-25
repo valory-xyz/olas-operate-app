@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import { Service } from '@/types';
 
 import { AgentMeta } from '../types';
-import { getAgentFromService } from '../utils';
+import { getAgentFromService } from '../utils/utils';
 
 /**
  * Hook to get the list of configured agents based on the provided services.

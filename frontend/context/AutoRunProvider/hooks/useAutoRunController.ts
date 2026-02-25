@@ -2,14 +2,29 @@ import { useCallback, useEffect, useRef } from 'react';
 
 import { AgentType } from '@/constants';
 import { useAgentRunning, useRewardContext, useStartService } from '@/hooks';
+import { ServicesService } from '@/service/Services';
 import { delayInSeconds } from '@/utils/delay';
 
-import { COOLDOWN_SECONDS, REWARDS_POLL_SECONDS } from '../constants';
+import {
+  COOLDOWN_SECONDS,
+  RETRY_BACKOFF_SECONDS,
+  REWARDS_POLL_SECONDS,
+} from '../constants';
 import { AgentMeta } from '../types';
-import { getAgentDisplayName, notifySkipped } from '../utils';
-import { useAutoRunActions } from './useAutoRunActions';
+import {
+  formatEligibilityReason,
+  refreshRewardsEligibility as refreshRewardsEligibilityHelper,
+} from '../utils/autoRunHelpers';
+import {
+  getAgentDisplayName,
+  notifySkipped,
+  notifyStartFailed,
+} from '../utils/utils';
+import { useAutoRunScanner } from './useAutoRunScanner';
 import { useAutoRunSignals } from './useAutoRunSignals';
 import { useLogAutoRunEvent } from './useLogAutoRunEvent';
+
+const START_TIMEOUT_SECONDS = 120;
 
 type UseAutoRunControllerParams = {
   enabled: boolean;
@@ -77,55 +92,21 @@ export const useAutoRunController = ({
   const isRotatingRef = useRef(false);
   // Track per-agent skip reason to avoid spamming notifications.
   const skipNotifiedRef = useRef<Partial<Record<AgentType, string>>>({});
-  /**
-   * Track prior enabled state to distinguish initial enable vs. later idle.
-   * On first enable: start immediately. On later idle (manual stop): apply cooldown.
-   */
+  // Track prior enabled state to distinguish initial enable vs later idle (cooldown on manual stop).
   const wasAutoRunEnabledRef = useRef(false);
   // Throttle rewards fetch per agent to avoid spamming the API.
   const lastRewardsFetchRef = useRef<Partial<Record<AgentType, number>>>({});
 
   const refreshRewardsEligibility = useCallback(
-    async (agentType: AgentType) => {
-      const now = Date.now();
-      const lastFetch = lastRewardsFetchRef.current[agentType] ?? 0;
-      if (now - lastFetch < REWARDS_POLL_SECONDS * 1000) {
-        return getRewardSnapshot(agentType);
-      }
-
-      lastRewardsFetchRef.current[agentType] = now;
-      const meta = configuredAgents.find(
-        (agent) => agent.agentType === agentType,
-      );
-      if (!meta) {
-        logMessage(`rewards fetch: ${agentType} not configured`);
-        return undefined;
-      }
-      if (!meta.multisig || !meta.serviceNftTokenId || !meta.stakingProgramId) {
-        logMessage(`rewards fetch: ${agentType} missing staking details`);
-        return undefined;
-      }
-
-      try {
-        const response =
-          await meta.agentConfig.serviceApi.getAgentStakingRewardsInfo({
-            agentMultisigAddress: meta.multisig,
-            serviceId: meta.serviceNftTokenId,
-            stakingProgramId: meta.stakingProgramId,
-            chainId: meta.chainId,
-          });
-        const eligible = response?.isEligibleForRewards;
-        if (typeof eligible === 'boolean') {
-          setRewardSnapshot(agentType, eligible);
-          logMessage(`rewards fetched: ${agentType} -> ${String(eligible)}`);
-          return eligible;
-        }
-      } catch (error) {
-        logMessage(`rewards fetch error: ${agentType}: ${error}`);
-      }
-
-      return undefined;
-    },
+    (agentType: AgentType) =>
+      refreshRewardsEligibilityHelper({
+        agentType,
+        configuredAgents,
+        lastRewardsFetchRef,
+        getRewardSnapshot,
+        setRewardSnapshot,
+        logMessage,
+      }),
     [configuredAgents, getRewardSnapshot, logMessage, setRewardSnapshot],
   );
 
@@ -141,35 +122,168 @@ export const useAutoRunController = ({
     [logMessage, showNotification],
   );
 
+  const waitForEligibilityReady = useCallback(async () => {
+    while (enabledRef.current) {
+      const eligibility = getSelectedEligibility();
+      if (eligibility.reason !== 'Loading') return true;
+      await delayInSeconds(2);
+    }
+    return false;
+  }, [enabledRef, getSelectedEligibility]);
+
+  const startAgentWithRetries = useCallback(
+    async (agentType: AgentType) => {
+      {
+        if (!enabledRef.current) return false;
+        const meta = configuredAgents.find(
+          (agent) => agent.agentType === agentType,
+        );
+        if (!meta) {
+          logMessage(`start: ${agentType} not configured`);
+          return false;
+        }
+        const agentName = meta.agentConfig.displayName;
+        updateAgentType(agentType);
+        await waitForAgentSelection(agentType, meta.serviceConfigId);
+        await waitForBalancesReady();
+        const eligibilityReady = await waitForEligibilityReady();
+        if (!eligibilityReady) return false;
+        const eligibility = getSelectedEligibility();
+        if (!eligibility.canRun) {
+          const reason = formatEligibilityReason(eligibility);
+          logMessage(`start: ${agentType} blocked (${reason})`);
+          notifySkipOnce(agentType, reason);
+          return false;
+        }
+
+        for (
+          let attempt = 0;
+          attempt < RETRY_BACKOFF_SECONDS.length;
+          attempt += 1
+        ) {
+          try {
+            logMessage(`starting ${agentType} (attempt ${attempt + 1})`);
+            logMessage(`startService -> ${agentType} (begin)`);
+            await startService({
+              agentType,
+              agentConfig: meta.agentConfig,
+              service: meta.service,
+              stakingProgramId: meta.stakingProgramId,
+              createSafeIfNeeded: () => createSafeIfNeeded(meta),
+            });
+            logMessage(`startService -> ${agentType} (done)`);
+
+            const deployed = await waitForRunningAgent(
+              agentType,
+              START_TIMEOUT_SECONDS,
+            );
+            if (deployed) {
+              logMessage(`started ${agentType}`);
+              onAutoRunAgentStarted?.(agentType);
+              return true;
+            }
+            logMessage(
+              `start timeout for ${agentType} (attempt ${attempt + 1})`,
+            );
+          } catch (error) {
+            logMessage(`start error for ${agentType}: ${error}`);
+          }
+          await delayInSeconds(RETRY_BACKOFF_SECONDS[attempt]);
+        }
+        notifyStartFailed(showNotification, agentName);
+        logMessage(`start failed for ${agentType}`);
+        return false;
+      }
+    },
+    [
+      enabledRef,
+      configuredAgents,
+      updateAgentType,
+      waitForAgentSelection,
+      waitForBalancesReady,
+      waitForEligibilityReady,
+      getSelectedEligibility,
+      notifySkipOnce,
+      logMessage,
+      startService,
+      createSafeIfNeeded,
+      waitForRunningAgent,
+      onAutoRunAgentStarted,
+      showNotification,
+    ],
+  );
+
+  const stopAgent = useCallback(
+    async (agentType: AgentType, serviceConfigId: string) => {
+      try {
+        logMessage(`stopping ${serviceConfigId}`);
+        await ServicesService.stopDeployment(serviceConfigId);
+      } catch (error) {
+        logMessage(`stop failed for ${serviceConfigId}: ${error}`);
+      }
+      return waitForStoppedAgent(agentType, START_TIMEOUT_SECONDS);
+    },
+    [logMessage, waitForStoppedAgent],
+  );
+
   const {
     getPreferredStartFrom,
     scanAndStartNext,
     startSelectedAgentIfEligible,
-    rotateToNext,
-    stopRunningAgent,
-  } = useAutoRunActions({
+  } = useAutoRunScanner({
     enabledRef,
     orderedIncludedAgentTypes,
     configuredAgents,
     selectedAgentType,
     updateAgentType,
     getSelectedEligibility,
-    createSafeIfNeeded,
-    startService,
     waitForAgentSelection,
     waitForBalancesReady,
     waitForRewardsEligibility,
-    waitForRunningAgent,
-    waitForStoppedAgent,
+    refreshRewardsEligibility,
     markRewardSnapshotPending,
     getRewardSnapshot,
     notifySkipOnce,
-    refreshRewardsEligibility,
-    onAutoRunAgentStarted,
-    showNotification,
+    startAgentWithRetries,
     scheduleNextScan,
     logMessage,
   });
+
+  const rotateToNext = useCallback(
+    async (currentAgentType: AgentType) => {
+      const currentMeta = configuredAgents.find(
+        (agent) => agent.agentType === currentAgentType,
+      );
+      if (!currentMeta) return;
+
+      const stopOk = await stopAgent(
+        currentMeta.agentType,
+        currentMeta.serviceConfigId,
+      );
+      if (!stopOk) {
+        logMessage(`stop timeout for ${currentAgentType}, aborting rotation`);
+        return;
+      }
+      if (!enabledRef.current) return;
+      logMessage(`cooldown ${COOLDOWN_SECONDS}s`);
+      await delayInSeconds(COOLDOWN_SECONDS);
+      if (!enabledRef.current) return;
+      await scanAndStartNext(currentAgentType);
+    },
+    [configuredAgents, enabledRef, logMessage, scanAndStartNext, stopAgent],
+  );
+
+  const stopRunningAgent = useCallback(
+    async (currentAgentType?: AgentType | null) => {
+      if (!currentAgentType) return false;
+      const currentMeta = configuredAgents.find(
+        (agent) => agent.agentType === currentAgentType,
+      );
+      if (!currentMeta) return false;
+      return stopAgent(currentMeta.agentType, currentMeta.serviceConfigId);
+    },
+    [configuredAgents, stopAgent],
+  );
 
   // Stop the currently running agent without requiring a caller to pass a type.
   const stopCurrentRunningAgent = useCallback(async () => {

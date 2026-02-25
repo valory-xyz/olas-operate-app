@@ -4,7 +4,7 @@ import { ACTIVE_AGENTS, AGENT_CONFIG } from '@/config/agents';
 import { AgentType } from '@/constants';
 import { Service } from '@/types';
 
-import { IncludedAgent } from './types';
+import { AgentMeta, IncludedAgent } from '../types';
 
 export const notifySkipped = (
   showNotification: ((title: string, body?: string) => void) | undefined,
@@ -77,3 +77,12 @@ export const normalizeIncludedAgents = (includedAgents: IncludedAgent[]) => {
 
 export const getAgentDisplayName = (agentType: AgentType) =>
   AGENT_CONFIG[agentType]?.displayName ?? agentType;
+
+export const getDecommissionedAgentTypes = (configuredAgents: AgentMeta[]) =>
+  configuredAgents
+    .filter(
+      (agent) =>
+        agent.agentConfig.isUnderConstruction ||
+        agent.agentConfig.isAgentEnabled === false,
+    )
+    .map((agent) => agent.agentType);
