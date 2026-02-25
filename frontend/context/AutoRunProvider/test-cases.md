@@ -20,3 +20,8 @@
 
 
 ## Multiple agents
+TEST CASE
+- User has 4 agents onboarded, Omentstrat, polystrat, modius and optimus
+- Now, modius is decommissioned, so modius should be part of the "Excluded from auto-run" list and should not be auto-run and user cannot add to the auto-run list so the plus button should be disabled.
+- Now, if the Omenstrat and low order then it will be checked for eligiblity such as low funds, eviction etc and if all is good then we navigate in the sidebar, make it as the last selected in the store as well.
+and now we can start the agent.

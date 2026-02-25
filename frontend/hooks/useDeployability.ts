@@ -16,6 +16,16 @@ type DeployabilityResult = {
   loadingReason?: string;
 };
 
+/**
+ * Hook to determine if the currently selected agent is deployable,
+ * and if not, why not. Checks a variety of conditions that could prevent deployment, such as:
+ * - Offline status
+ * - Loading states of various services
+ * - Geo-restrictions
+ * - Another agent running
+ * - Service slot availability
+ * - Staking eligibility
+ */
 export const useDeployability = ({
   safeEligibility,
 }: {

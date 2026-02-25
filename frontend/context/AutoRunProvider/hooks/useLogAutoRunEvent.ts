@@ -4,7 +4,7 @@ import { useElectronApi } from '@/hooks';
 
 import { AUTO_RUN_LOG_PREFIX } from '../constants';
 
-export const useAutoRunEvent = () => {
+export const useLogAutoRunEvent = () => {
   const { logEvent } = useElectronApi();
 
   const logMessage = useCallback(

@@ -10,7 +10,7 @@ import { AgentMeta } from '../types';
 import { getAgentDisplayName, notifySkipped } from '../utils';
 import { useAutoRunActions } from './useAutoRunActions';
 import { useAutoRunSignals } from './useAutoRunSignals';
-import { useAutoRunEvent } from './useLogAutoRunEvent';
+import { useLogAutoRunEvent } from './useLogAutoRunEvent';
 
 type UseAutoRunControllerParams = {
   enabled: boolean;
@@ -53,7 +53,7 @@ export const useAutoRunController = ({
   const { isEligibleForRewards } = useRewardContext();
   const { runningAgentType } = useAgentRunning();
   const { startService } = useStartService();
-  const { logMessage } = useAutoRunEvent();
+  const { logMessage } = useLogAutoRunEvent();
   const {
     enabledRef,
     lastRewardsEligibilityRef,
@@ -241,6 +241,7 @@ export const useAutoRunController = ({
     runningAgentType,
     rewardsTick,
     scanTick,
+    lastRewardsEligibilityRef,
   ]);
 
   // Poll rewards for the running agent to allow rotation even when viewing others.
