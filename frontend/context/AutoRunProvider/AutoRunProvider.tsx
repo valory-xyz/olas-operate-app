@@ -9,11 +9,7 @@ import {
 } from 'react';
 
 import { AgentType } from '@/constants';
-import {
-  useBalanceAndRefillRequirementsContext,
-  useElectronApi,
-  useServices,
-} from '@/hooks';
+import { useElectronApi, useServices } from '@/hooks';
 
 import { useAutoRunController } from './hooks/useAutoRunController';
 import { useAutoRunStore } from './hooks/useAutoRunStore';
@@ -95,10 +91,6 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
   const { canCreateSafeForChain, createSafeIfNeeded } = useSafeEligibility();
   const { isSelectedAgentDetailsLoading, getSelectedEligibility } =
     useSelectedEligibility({ canCreateSafeForChain });
-  const {
-    isBalancesAndFundingRequirementsLoading,
-    isBalancesAndFundingRequirementsReady,
-  } = useBalanceAndRefillRequirementsContext();
 
   const { stopRunningAgent } = useAutoRunController({
     enabled,
@@ -108,8 +100,6 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
     selectedAgentType,
     selectedServiceConfigId: selectedService?.service_config_id ?? null,
     isSelectedAgentDetailsLoading,
-    isBalancesAndFundingRequirementsLoading,
-    isBalancesAndFundingRequirementsReady,
     getSelectedEligibility,
     createSafeIfNeeded,
     showNotification,

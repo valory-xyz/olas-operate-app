@@ -48,6 +48,8 @@ export const BalancesAndRefillRequirementsProviderContext = createContext<{
   isBalancesAndFundingRequirementsLoading: boolean;
   isBalancesAndFundingRequirementsLoadingForAllServices: boolean;
   isBalancesAndFundingRequirementsReady: boolean;
+  isBalancesAndFundingRequirementsReadyForAllServices: boolean;
+  isBalancesAndFundingRequirementsEnabledForAllServices: boolean;
   refillRequirements: Optional<AddressBalanceRecord | MasterSafeBalanceRecord>;
   getRefillRequirementsOf: (
     chainId: EvmChainId,
@@ -77,6 +79,8 @@ export const BalancesAndRefillRequirementsProviderContext = createContext<{
   isBalancesAndFundingRequirementsLoading: false,
   isBalancesAndFundingRequirementsLoadingForAllServices: false,
   isBalancesAndFundingRequirementsReady: false,
+  isBalancesAndFundingRequirementsReadyForAllServices: false,
+  isBalancesAndFundingRequirementsEnabledForAllServices: false,
   refillRequirements: undefined,
   getRefillRequirementsOf: () => null,
   totalRequirements: undefined,
@@ -242,6 +246,27 @@ export const BalancesAndRefillRequirementsProvider = ({
     enabled: !!serviceConfigIds.length && isUserLoggedIn && isOnline,
     refetchInterval,
   });
+  const isBalancesAndFundingRequirementsEnabledForAllServices =
+    !!serviceConfigIds.length && isUserLoggedIn && isOnline;
+
+  useEffect(() => {
+    // Debug balances loading for auto-run: helps pinpoint why "Balances" stays loading.
+    window?.console?.log('[balances] all-services', {
+      enabled: isBalancesAndFundingRequirementsEnabledForAllServices,
+      serviceConfigIdsCount: serviceConfigIds.length,
+      isUserLoggedIn,
+      isOnline,
+      loading: isBalancesAndFundingRequirementsLoadingForAllServices,
+      hasData: !!balancesAndFundingRequirementsForAllServices,
+    });
+  }, [
+    balancesAndFundingRequirementsForAllServices,
+    isBalancesAndFundingRequirementsLoadingForAllServices,
+    isBalancesAndFundingRequirementsEnabledForAllServices,
+    isOnline,
+    isUserLoggedIn,
+    serviceConfigIds.length,
+  ]);
 
   const getRefillRequirementsOf = useCallback(
     <T extends AddressBalanceRecord | MasterSafeBalanceRecord>(
@@ -382,6 +407,10 @@ export const BalancesAndRefillRequirementsProvider = ({
         isBalancesAndFundingRequirementsReady:
           !!balancesAndFundingRequirements &&
           !isBalancesAndFundingRequirementsLoading,
+        isBalancesAndFundingRequirementsReadyForAllServices:
+          isBalancesAndFundingRequirementsEnabledForAllServices &&
+          !isBalancesAndFundingRequirementsLoadingForAllServices,
+        isBalancesAndFundingRequirementsEnabledForAllServices,
         refillRequirements,
         getRefillRequirementsOf,
         totalRequirements,

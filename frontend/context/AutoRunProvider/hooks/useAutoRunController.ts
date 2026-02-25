@@ -34,8 +34,6 @@ type UseAutoRunControllerParams = {
   selectedAgentType: AgentType;
   selectedServiceConfigId: string | null;
   isSelectedAgentDetailsLoading: boolean;
-  isBalancesAndFundingRequirementsLoading: boolean;
-  isBalancesAndFundingRequirementsReady: boolean;
   getSelectedEligibility: () => {
     canRun: boolean;
     reason?: string;
@@ -55,8 +53,6 @@ export const useAutoRunController = ({
   selectedAgentType,
   selectedServiceConfigId,
   isSelectedAgentDetailsLoading,
-  isBalancesAndFundingRequirementsLoading,
-  isBalancesAndFundingRequirementsReady,
   getSelectedEligibility,
   createSafeIfNeeded,
   showNotification,
@@ -81,12 +77,11 @@ export const useAutoRunController = ({
     markRewardSnapshotPending,
     getRewardSnapshot,
     setRewardSnapshot,
+    getBalancesStatus,
   } = useAutoRunSignals({
     enabled,
     runningAgentType,
     isSelectedAgentDetailsLoading,
-    isBalancesAndFundingRequirementsLoading,
-    isBalancesAndFundingRequirementsReady,
     isEligibleForRewards,
     selectedAgentType,
     selectedServiceConfigId,
@@ -119,6 +114,7 @@ export const useAutoRunController = ({
   const notifySkipOnce = useCallback(
     (agentType: AgentType, reason?: string) => {
       if (!reason) return;
+      if (reason.toLowerCase().includes('loading')) return;
       if (skipNotifiedRef.current[agentType] === reason) return;
       skipNotifiedRef.current[agentType] = reason;
       notifySkipped(showNotification, getAgentDisplayName(agentType), reason);
@@ -127,13 +123,42 @@ export const useAutoRunController = ({
     [logMessage, showNotification],
   );
 
+  const normalizeEligibility = useCallback(
+    (eligibility: {
+      canRun: boolean;
+      reason?: string;
+      loadingReason?: string;
+    }) => {
+      if (eligibility.reason !== 'Loading') return eligibility;
+      const loadingReason = eligibility.loadingReason
+        ?.split(',')
+        .map((item) => item.trim());
+      const isOnlyBalances =
+        loadingReason &&
+        loadingReason.length === 1 &&
+        loadingReason[0] === 'Balances';
+      if (!isOnlyBalances) return eligibility;
+      const balances = getBalancesStatus();
+      if (balances.ready && !balances.loading) {
+        return { canRun: true };
+      }
+      return eligibility;
+    },
+    [getBalancesStatus],
+  );
+
   const waitForEligibilityReady = useCallback(async () => {
     logMessage('waiting for eligibility readiness');
+    const startedAt = Date.now();
     let lastLogAt = Date.now();
     while (enabledRef.current) {
-      const eligibility = getSelectedEligibility();
+      const eligibility = normalizeEligibility(getSelectedEligibility());
       if (eligibility.reason !== 'Loading') return true;
       const now = Date.now();
+      if (now - startedAt > 60_000) {
+        logMessage('eligibility wait timeout');
+        return false;
+      }
       if (now - lastLogAt >= 10000) {
         logMessage(
           `eligibility still loading: ${eligibility.loadingReason ?? 'unknown'}`,
@@ -143,7 +168,7 @@ export const useAutoRunController = ({
       await delayInSeconds(2);
     }
     return false;
-  }, [enabledRef, getSelectedEligibility, logMessage]);
+  }, [enabledRef, getSelectedEligibility, logMessage, normalizeEligibility]);
 
   const startAgentWithRetries = useCallback(
     async (agentType: AgentType) => {
@@ -162,7 +187,7 @@ export const useAutoRunController = ({
         await waitForBalancesReady();
         const eligibilityReady = await waitForEligibilityReady();
         if (!eligibilityReady) return false;
-        const eligibility = getSelectedEligibility();
+        const eligibility = normalizeEligibility(getSelectedEligibility());
         if (!eligibility.canRun) {
           const reason = formatEligibilityReason(eligibility);
           logMessage(`start: ${agentType} blocked (${reason})`);
@@ -221,6 +246,7 @@ export const useAutoRunController = ({
       waitForAgentSelection,
       waitForBalancesReady,
       waitForEligibilityReady,
+      normalizeEligibility,
       getSelectedEligibility,
       notifySkipOnce,
       logMessage,
@@ -263,6 +289,7 @@ export const useAutoRunController = ({
     refreshRewardsEligibility,
     markRewardSnapshotPending,
     getRewardSnapshot,
+    getBalancesStatus,
     notifySkipOnce,
     startAgentWithRetries,
     scheduleNextScan,

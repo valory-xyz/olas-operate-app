@@ -8,6 +8,11 @@ import { BACKUP_SIGNER_STATUS, getSafeEligibility } from '@/utils/safe';
 
 import { AgentMeta } from '../types';
 
+/**
+ * Hook to determine the eligibility of creating a Safe
+ * for a given chain and to create it if needed, based on
+ * the master wallet's current state and the agent's requirements.
+ */
 export const useSafeEligibility = () => {
   const { masterSafes, masterEoa } = useMasterWalletContext();
   const { masterSafesOwners } = useMultisigs(masterSafes);
@@ -45,6 +50,8 @@ export const useSafeEligibility = () => {
     [masterEoa, masterSafes, masterSafesOwners],
   );
 
+  // Creates a Safe if the eligibility check determines
+  // it's needed and possible, otherwise throws an error.
   const createSafeIfNeeded = useCallback(
     async (meta: AgentMeta) => {
       const eligibility = getSafeEligibility({

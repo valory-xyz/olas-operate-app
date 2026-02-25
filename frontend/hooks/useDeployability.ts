@@ -1,5 +1,5 @@
 import { isNil } from 'lodash';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 
 import { useAgentRunning } from '@/hooks/useAgentRunning';
 import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRefillRequirementsContext';
@@ -34,14 +34,15 @@ export const useDeployability = ({
   const {
     selectedAgentConfig,
     selectedAgentType,
+    selectedService,
     isLoading: isServicesLoading,
   } = useServices();
   const { isOnline } = useOnlineStatusContext();
   const { isAnotherAgentRunning } = useAgentRunning();
   const {
-    canStartAgent,
-    isBalancesAndFundingRequirementsLoading,
-    isBalancesAndFundingRequirementsReady,
+    allowStartAgentByServiceConfigId,
+    isBalancesAndFundingRequirementsEnabledForAllServices,
+    isBalancesAndFundingRequirementsLoadingForAllServices,
   } = useBalanceAndRefillRequirementsContext();
   const { isAgentsFunFieldUpdateRequired } = useSharedContext();
   const {
@@ -57,13 +58,19 @@ export const useDeployability = ({
     agentConfig: selectedAgentConfig,
   });
 
+  const selectedServiceConfigId = selectedService?.service_config_id;
+  const canStartSelectedAgent = useMemo(() => {
+    if (!selectedServiceConfigId) return false;
+    return allowStartAgentByServiceConfigId(selectedServiceConfigId);
+  }, [allowStartAgentByServiceConfigId, selectedServiceConfigId]);
+
   const loadingReasons = useMemo(() => {
     const reasons: string[] = [];
     if (!isOnline) reasons.push('Offline');
     if (isServicesLoading) reasons.push('Services');
     if (
-      isBalancesAndFundingRequirementsLoading ||
-      !isBalancesAndFundingRequirementsReady
+      !isBalancesAndFundingRequirementsEnabledForAllServices ||
+      isBalancesAndFundingRequirementsLoadingForAllServices
     ) {
       reasons.push('Balances');
     }
@@ -72,8 +79,8 @@ export const useDeployability = ({
     if (safeEligibility?.isLoading) reasons.push('Safe');
     return reasons;
   }, [
-    isBalancesAndFundingRequirementsLoading,
-    isBalancesAndFundingRequirementsReady,
+    isBalancesAndFundingRequirementsEnabledForAllServices,
+    isBalancesAndFundingRequirementsLoadingForAllServices,
     isGeoLoading,
     isOnline,
     isSelectedStakingContractDetailsLoading,
@@ -84,8 +91,24 @@ export const useDeployability = ({
   const loadingReason =
     loadingReasons.length > 0 ? loadingReasons.join(', ') : undefined;
 
+  useEffect(() => {
+    if (!loadingReasons.includes('Balances')) return;
+    window?.console?.log('[deployability] balances loading', {
+      isBalancesAndFundingRequirementsLoadingForAllServices,
+      isOnline,
+      isServicesLoading,
+      selectedServiceConfigId,
+    });
+  }, [
+    isBalancesAndFundingRequirementsLoadingForAllServices,
+    isOnline,
+    isServicesLoading,
+    loadingReasons,
+    selectedServiceConfigId,
+  ]);
+
   return useMemo(() => {
-    if (safeEligibility && !safeEligibility.ok) {
+    if (safeEligibility && !safeEligibility.ok && !safeEligibility.isLoading) {
       return {
         isLoading,
         canRun: false,
@@ -133,13 +156,13 @@ export const useDeployability = ({
     }
 
     // allow starting based on refill requirements
-    if (!canStartAgent) {
+    if (!canStartSelectedAgent) {
       return { isLoading, canRun: false, reason: 'Low balance' };
     }
 
     return { isLoading, canRun: true, loadingReason };
   }, [
-    canStartAgent,
+    canStartSelectedAgent,
     hasEnoughServiceSlots,
     isAgentEvicted,
     isAgentGeoRestricted,

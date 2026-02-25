@@ -1,14 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { AgentType } from '@/constants';
+import { useBalanceAndRefillRequirementsContext } from '@/hooks';
 import { delayInSeconds } from '@/utils/delay';
 
 type UseAutoRunSignalsParams = {
   enabled: boolean;
   runningAgentType: AgentType | null;
   isSelectedAgentDetailsLoading: boolean;
-  isBalancesAndFundingRequirementsLoading: boolean;
-  isBalancesAndFundingRequirementsReady: boolean;
   isEligibleForRewards: boolean | undefined;
   selectedAgentType: AgentType;
   selectedServiceConfigId: string | null;
@@ -24,13 +23,17 @@ export const useAutoRunSignals = ({
   enabled,
   runningAgentType,
   isSelectedAgentDetailsLoading,
-  isBalancesAndFundingRequirementsLoading,
-  isBalancesAndFundingRequirementsReady,
   isEligibleForRewards,
   selectedAgentType,
   selectedServiceConfigId,
   logMessage,
 }: UseAutoRunSignalsParams) => {
+  const {
+    isBalancesAndFundingRequirementsLoadingForAllServices,
+    isBalancesAndFundingRequirementsReadyForAllServices,
+    refetch,
+  } = useBalanceAndRefillRequirementsContext();
+
   // Refs keep async loops in sync with live state.
   const enabledRef = useRef(enabled);
   const runningAgentTypeRef = useRef(runningAgentType);
@@ -39,8 +42,13 @@ export const useAutoRunSignals = ({
   );
   const selectedAgentTypeRef = useRef(selectedAgentType);
   const selectedServiceConfigIdRef = useRef(selectedServiceConfigId);
-  const balancesLoadingRef = useRef(isBalancesAndFundingRequirementsLoading);
-  const balancesReadyRef = useRef(isBalancesAndFundingRequirementsReady);
+  const balancesLoadingRef = useRef(
+    isBalancesAndFundingRequirementsLoadingForAllServices,
+  );
+  const balancesReadyRef = useRef(
+    isBalancesAndFundingRequirementsReadyForAllServices,
+  );
+  const didRefetchBalancesRef = useRef(false);
   // Latest rewards snapshot per agent; updated by RewardProvider.
   const rewardSnapshotRef = useRef<
     Partial<Record<AgentType, boolean | undefined>>
@@ -61,6 +69,9 @@ export const useAutoRunSignals = ({
       clearTimeout(scanTimeoutRef.current);
       scanTimeoutRef.current = null;
     }
+    if (enabled) {
+      didRefetchBalancesRef.current = false;
+    }
   }, [enabled]);
 
   // Track the running agent from polling.
@@ -75,12 +86,14 @@ export const useAutoRunSignals = ({
   }, [isSelectedAgentDetailsLoading]);
 
   useEffect(() => {
-    balancesReadyRef.current = isBalancesAndFundingRequirementsReady;
-  }, [isBalancesAndFundingRequirementsReady]);
+    balancesReadyRef.current =
+      isBalancesAndFundingRequirementsReadyForAllServices;
+  }, [isBalancesAndFundingRequirementsReadyForAllServices]);
 
   useEffect(() => {
-    balancesLoadingRef.current = isBalancesAndFundingRequirementsLoading;
-  }, [isBalancesAndFundingRequirementsLoading]);
+    balancesLoadingRef.current =
+      isBalancesAndFundingRequirementsLoadingForAllServices;
+  }, [isBalancesAndFundingRequirementsLoadingForAllServices]);
 
   // Track current UI selection and its service config id.
   useEffect(() => {
@@ -88,8 +101,13 @@ export const useAutoRunSignals = ({
   }, [selectedAgentType]);
 
   useEffect(() => {
+    const previous = selectedServiceConfigIdRef.current;
     selectedServiceConfigIdRef.current = selectedServiceConfigId;
-  }, [selectedServiceConfigId]);
+    if (selectedServiceConfigId && selectedServiceConfigId !== previous) {
+      didRefetchBalancesRef.current = false;
+      logMessage(`balances selection changed: ${selectedServiceConfigId}`);
+    }
+  }, [logMessage, selectedServiceConfigId]);
 
   // Update rewards snapshot for the selected agent (RewardProvider is selection-driven).
   useEffect(() => {
@@ -135,21 +153,31 @@ export const useAutoRunSignals = ({
     }
     logMessage('waiting for balances readiness');
     let lastLogAt = Date.now();
+    let lastRefetchAt = Date.now();
     while (!balancesReadyRef.current || balancesLoadingRef.current) {
       await delayInSeconds(2);
       const now = Date.now();
+      if (!didRefetchBalancesRef.current && now - lastRefetchAt >= 15000) {
+        didRefetchBalancesRef.current = true;
+        lastRefetchAt = now;
+        logMessage('balances still loading: triggering refetch');
+        refetch().catch((error) => {
+          logMessage(`balances refetch failed: ${error}`);
+        });
+      }
       if (now - lastLogAt >= 10000) {
+        const details = ` loading=${String(balancesLoadingRef.current)} selected=${selectedServiceConfigIdRef.current ?? 'none'}`;
         logMessage(
           `balances still loading: ready=${String(
             balancesReadyRef.current,
-          )} loading=${String(balancesLoadingRef.current)}`,
+          )}${details}`,
         );
         lastLogAt = now;
       }
     }
     logMessage('balances ready');
     return true;
-  }, [logMessage]);
+  }, [logMessage, refetch]);
 
   // Wait for rewards eligibility to be populated for a given agent.
   const waitForRewardsEligibility = useCallback(
@@ -194,6 +222,14 @@ export const useAutoRunSignals = ({
       setRewardsTick((current) => current + 1);
     },
     [logMessage],
+  );
+
+  const getBalancesStatus = useCallback(
+    () => ({
+      ready: balancesReadyRef.current,
+      loading: balancesLoadingRef.current,
+    }),
+    [],
   );
 
   // Wait until the running agent type matches the requested agent.
@@ -264,6 +300,7 @@ export const useAutoRunSignals = ({
     markRewardSnapshotPending,
     getRewardSnapshot,
     setRewardSnapshot,
+    getBalancesStatus,
   };
 };
 const REWARDS_WAIT_TIMEOUT_SECONDS = 20;
