@@ -45,6 +45,14 @@ export const SCAN_ELIGIBLE_DELAY_SECONDS = 30 * 60; // 30 minutes
  */
 export const SCAN_LOADING_RETRY_SECONDS = 30;
 
+/**
+ * How long (in seconds) to wait for a service to reach DEPLOYED state after
+ * `startService()` is called. Initial deployments can be slow (safe creation,
+ * service registration, on-chain funding) so this must be generous.
+ * Value: 5 minutes
+ */
+export const START_TIMEOUT_SECONDS = 300;
+
 /** Eligibility reason labels used by deployability and auto-run. */
 export const ELIGIBILITY_REASON = {
   LOADING: 'Loading',

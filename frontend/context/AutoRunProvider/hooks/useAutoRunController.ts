@@ -12,6 +12,7 @@ import {
   RETRY_BACKOFF_SECONDS,
   REWARDS_POLL_SECONDS,
   SCAN_ELIGIBLE_DELAY_SECONDS,
+  START_TIMEOUT_SECONDS,
 } from '../constants';
 import { AgentMeta } from '../types';
 import {
@@ -27,8 +28,6 @@ import {
 import { useAutoRunScanner } from './useAutoRunScanner';
 import { useAutoRunSignals } from './useAutoRunSignals';
 import { useLogAutoRunEvent } from './useLogAutoRunEvent';
-
-const START_TIMEOUT_SECONDS = 120;
 
 type UseAutoRunControllerParams = {
   enabled: boolean;
@@ -69,6 +68,7 @@ export const useAutoRunController = ({
   const { logMessage } = useLogAutoRunEvent();
   const {
     enabledRef,
+    runningAgentTypeRef,
     lastRewardsEligibilityRef,
     scanTick,
     rewardsTick,
@@ -213,6 +213,12 @@ export const useAutoRunController = ({
             attempt += 1
           ) {
             if (!enabledRef.current) return false;
+            // If the service deployed during the previous attempt's backoff period,
+            // accept it without calling startService() again.
+            if (runningAgentTypeRef.current === agentType) {
+              onAutoRunAgentStarted?.(agentType);
+              return true;
+            }
             try {
               await startService({
                 agentType,
@@ -248,6 +254,7 @@ export const useAutoRunController = ({
     },
     [
       enabledRef,
+      runningAgentTypeRef,
       configuredAgents,
       updateAgentType,
       waitForAgentSelection,
