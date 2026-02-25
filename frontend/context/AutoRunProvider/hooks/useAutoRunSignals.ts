@@ -77,8 +77,7 @@ export const useAutoRunSignals = ({
   // Track the running agent from polling.
   useEffect(() => {
     runningAgentTypeRef.current = runningAgentType;
-    logMessage(`running agent update: ${String(runningAgentType)}`);
-  }, [runningAgentType, logMessage]);
+  }, [runningAgentType]);
 
   // Track selected-agent loading state to avoid stale closures.
   useEffect(() => {
@@ -105,19 +104,15 @@ export const useAutoRunSignals = ({
     selectedServiceConfigIdRef.current = selectedServiceConfigId;
     if (selectedServiceConfigId && selectedServiceConfigId !== previous) {
       didRefetchBalancesRef.current = false;
-      logMessage(`balances selection changed: ${selectedServiceConfigId}`);
     }
-  }, [logMessage, selectedServiceConfigId]);
+  }, [selectedServiceConfigId]);
 
   // Update rewards snapshot for the selected agent (RewardProvider is selection-driven).
   useEffect(() => {
     if (!selectedAgentType) return;
     rewardSnapshotRef.current[selectedAgentType] = isEligibleForRewards;
-    logMessage(
-      `rewards snapshot: ${selectedAgentType} -> ${String(isEligibleForRewards)}`,
-    );
     setRewardsTick((value) => value + 1);
-  }, [isEligibleForRewards, logMessage, selectedAgentType]);
+  }, [isEligibleForRewards, selectedAgentType]);
 
   // Cleanup pending scan timer on unmount.
   useEffect(() => {
@@ -131,7 +126,6 @@ export const useAutoRunSignals = ({
   // Wait until UI selection and service config match the requested agent.
   const waitForAgentSelection = useCallback(
     async (agentType: AgentType, serviceConfigId?: string | null) => {
-      logMessage(`waiting for selection: ${agentType}`);
       while (enabledRef.current) {
         if (
           !isSelectedAgentDetailsLoadingRef.current &&
@@ -139,27 +133,21 @@ export const useAutoRunSignals = ({
           (serviceConfigId == null ||
             selectedServiceConfigIdRef.current === serviceConfigId)
         ) {
-          logMessage(`selection ready: ${agentType}`);
           return true;
         }
         await delayInSeconds(2);
       }
       return false;
     },
-    [logMessage],
+    [],
   );
 
   const waitForBalancesReady = useCallback(async () => {
-    if (balancesReadyRef.current && !balancesLoadingRef.current) {
-      logMessage('balances already ready');
-      return true;
-    }
-    logMessage('waiting for balances readiness');
+    if (balancesReadyRef.current && !balancesLoadingRef.current) return true;
     let lastLogAt = Date.now();
     let lastRefetchAt = Date.now();
     while (enabledRef.current) {
       if (balancesReadyRef.current && !balancesLoadingRef.current) {
-        logMessage('balances ready');
         return true;
       }
       await delayInSeconds(2);
@@ -167,18 +155,11 @@ export const useAutoRunSignals = ({
       if (!didRefetchBalancesRef.current && now - lastRefetchAt >= 15000) {
         didRefetchBalancesRef.current = true;
         lastRefetchAt = now;
-        logMessage('balances still loading: triggering refetch');
         refetch().catch((error) => {
           logMessage(`balances refetch failed: ${error}`);
         });
       }
       if (now - lastLogAt >= 10000) {
-        const details = ` loading=${String(balancesLoadingRef.current)} selected=${selectedServiceConfigIdRef.current ?? 'none'}`;
-        logMessage(
-          `balances still loading: ready=${String(
-            balancesReadyRef.current,
-          )}${details}`,
-        );
         lastLogAt = now;
       }
     }
@@ -188,7 +169,6 @@ export const useAutoRunSignals = ({
   // Wait for rewards eligibility to be populated for a given agent.
   const waitForRewardsEligibility = useCallback(
     async (agentType: AgentType) => {
-      logMessage(`waiting for rewards eligibility: ${agentType}`);
       const startedAt = Date.now();
       while (rewardSnapshotRef.current[agentType] === undefined) {
         if (Date.now() - startedAt > REWARDS_WAIT_TIMEOUT_SECONDS * 1000) {
@@ -200,21 +180,16 @@ export const useAutoRunSignals = ({
         await delayInSeconds(2);
       }
       const value = rewardSnapshotRef.current[agentType];
-      logMessage(`rewards eligibility: ${agentType} -> ${String(value)}`);
       return value;
     },
     [logMessage],
   );
 
   // Reset rewards snapshot so downstream waits don't use stale values.
-  const markRewardSnapshotPending = useCallback(
-    (agentType: AgentType) => {
-      rewardSnapshotRef.current[agentType] = undefined;
-      logMessage(`rewards snapshot reset: ${agentType}`);
-      setRewardsTick((value) => value + 1);
-    },
-    [logMessage],
-  );
+  const markRewardSnapshotPending = useCallback((agentType: AgentType) => {
+    rewardSnapshotRef.current[agentType] = undefined;
+    setRewardsTick((value) => value + 1);
+  }, []);
 
   const getRewardSnapshot = useCallback(
     (agentType: AgentType) => rewardSnapshotRef.current[agentType],
@@ -224,10 +199,9 @@ export const useAutoRunSignals = ({
   const setRewardSnapshot = useCallback(
     (agentType: AgentType, value: boolean | undefined) => {
       rewardSnapshotRef.current[agentType] = value;
-      logMessage(`rewards snapshot: ${agentType} -> ${String(value)}`);
       setRewardsTick((current) => current + 1);
     },
-    [logMessage],
+    [],
   );
 
   const getBalancesStatus = useCallback(
@@ -241,13 +215,9 @@ export const useAutoRunSignals = ({
   // Wait until the running agent type matches the requested agent.
   const waitForRunningAgent = useCallback(
     async (agentType: AgentType, timeoutSeconds: number) => {
-      logMessage(`waiting for running agent: ${agentType}`);
       const startedAt = Date.now();
       while (Date.now() - startedAt < timeoutSeconds * 1000) {
-        if (runningAgentTypeRef.current === agentType) {
-          logMessage(`running confirmed: ${agentType}`);
-          return true;
-        }
+        if (runningAgentTypeRef.current === agentType) return true;
         await delayInSeconds(5);
       }
       logMessage(`running timeout: ${agentType}`);
@@ -259,13 +229,9 @@ export const useAutoRunSignals = ({
   // Wait until the running agent type no longer matches the given agent.
   const waitForStoppedAgent = useCallback(
     async (agentType: AgentType, timeoutSeconds: number) => {
-      logMessage(`waiting for stop: ${agentType}`);
       const startedAt = Date.now();
       while (Date.now() - startedAt < timeoutSeconds * 1000) {
-        if (runningAgentTypeRef.current !== agentType) {
-          logMessage(`stop confirmed: ${agentType}`);
-          return true;
-        }
+        if (runningAgentTypeRef.current !== agentType) return true;
         await delayInSeconds(5);
       }
       logMessage(`stop timeout: ${agentType}`);
@@ -275,20 +241,16 @@ export const useAutoRunSignals = ({
   );
 
   // Schedule a delayed scan and bump the tick when it fires.
-  const scheduleNextScan = useCallback(
-    (delaySeconds: number) => {
-      if (!enabledRef.current) return;
-      if (scanTimeoutRef.current) {
-        clearTimeout(scanTimeoutRef.current);
-      }
-      logMessage(`next scan scheduled in ${delaySeconds}s`);
-      scanTimeoutRef.current = setTimeout(() => {
-        scanTimeoutRef.current = null;
-        setScanTick((value) => value + 1);
-      }, delaySeconds * 1000);
-    },
-    [logMessage],
-  );
+  const scheduleNextScan = useCallback((delaySeconds: number) => {
+    if (!enabledRef.current) return;
+    if (scanTimeoutRef.current) {
+      clearTimeout(scanTimeoutRef.current);
+    }
+    scanTimeoutRef.current = setTimeout(() => {
+      scanTimeoutRef.current = null;
+      setScanTick((value) => value + 1);
+    }, delaySeconds * 1000);
+  }, []);
 
   return {
     enabledRef,

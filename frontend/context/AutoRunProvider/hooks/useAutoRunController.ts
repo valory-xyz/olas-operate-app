@@ -156,9 +156,7 @@ export const useAutoRunController = ({
   );
 
   const waitForEligibilityReady = useCallback(async () => {
-    logMessage('waiting for eligibility readiness');
     const startedAt = Date.now();
-    let lastLogAt = Date.now();
     while (enabledRef.current) {
       const eligibility = normalizeEligibility(getSelectedEligibility());
       if (eligibility.reason !== 'Loading') return true;
@@ -166,12 +164,6 @@ export const useAutoRunController = ({
       if (now - startedAt > 60_000) {
         logMessage('eligibility wait timeout');
         return false;
-      }
-      if (now - lastLogAt >= 10000) {
-        logMessage(
-          `eligibility still loading: ${eligibility.loadingReason ?? 'unknown'}`,
-        );
-        lastLogAt = now;
       }
       await delayInSeconds(2);
     }
@@ -203,7 +195,6 @@ export const useAutoRunController = ({
         const eligibility = normalizeEligibility(getSelectedEligibility());
         if (!eligibility.canRun) {
           const reason = formatEligibilityReason(eligibility);
-          logMessage(`start: ${agentType} blocked (${reason})`);
           notifySkipOnce(agentType, reason);
           return false;
         }
@@ -217,8 +208,6 @@ export const useAutoRunController = ({
           ) {
             if (!enabledRef.current) return false;
             try {
-              logMessage(`starting ${agentType} (attempt ${attempt + 1})`);
-              logMessage(`startService -> ${agentType} (begin)`);
               await startService({
                 agentType,
                 agentConfig: meta.agentConfig,
@@ -226,14 +215,12 @@ export const useAutoRunController = ({
                 stakingProgramId: meta.stakingProgramId,
                 createSafeIfNeeded: () => createSafeIfNeeded(meta),
               });
-              logMessage(`startService -> ${agentType} (done)`);
 
               const deployed = await waitForRunningAgent(
                 agentType,
                 START_TIMEOUT_SECONDS,
               );
               if (deployed) {
-                logMessage(`started ${agentType}`);
                 onAutoRunAgentStarted?.(agentType);
                 return true;
               }
@@ -276,7 +263,6 @@ export const useAutoRunController = ({
   const stopAgent = useCallback(
     async (agentType: AgentType, serviceConfigId: string) => {
       try {
-        logMessage(`stopping ${serviceConfigId}`);
         await ServicesService.stopDeployment(serviceConfigId);
       } catch (error) {
         logMessage(`stop failed for ${serviceConfigId}: ${error}`);
@@ -316,9 +302,6 @@ export const useAutoRunController = ({
         (agentType) => agentType !== currentAgentType,
       );
       if (otherAgents.length === 0) {
-        logMessage(
-          `rotation: no other agents, keep running ${currentAgentType}`,
-        );
         scheduleNextScan(SCAN_ELIGIBLE_DELAY_SECONDS);
         return;
       }
@@ -331,9 +314,6 @@ export const useAutoRunController = ({
       );
       const allEarnedOrUnknown = rewardStates.every((state) => state !== false);
       if (allEarnedOrUnknown) {
-        logMessage(
-          `rotation: all other agents earned/unknown, keep running ${currentAgentType}`,
-        );
         scheduleNextScan(SCAN_ELIGIBLE_DELAY_SECONDS);
         return;
       }
@@ -352,7 +332,6 @@ export const useAutoRunController = ({
         return;
       }
       if (!enabledRef.current) return;
-      logMessage(`cooldown ${COOLDOWN_SECONDS}s`);
       await delayInSeconds(COOLDOWN_SECONDS);
       if (!enabledRef.current) return;
       await scanAndStartNext(currentAgentType);
@@ -405,11 +384,6 @@ export const useAutoRunController = ({
       const previousEligibility =
         lastRewardsEligibilityRef.current[currentType];
       lastRewardsEligibilityRef.current[currentType] = snapshot;
-      logMessage(
-        `rotation check: ${currentType} rewards=${String(
-          snapshot,
-        )} prev=${String(previousEligibility)}`,
-      );
       if (snapshot !== true) return;
       if (previousEligibility === true) return;
       logMessage(`rotation triggered: ${currentType} earned rewards`);
@@ -465,10 +439,8 @@ export const useAutoRunController = ({
     const startNext = async () => {
       const preferredStartFrom = getPreferredStartFrom();
       if (!wasEnabled) {
-        logMessage('auto-run enabled: checking selected agent first');
         const startedSelected = await startSelectedAgentIfEligible();
         if (startedSelected) return;
-        logMessage('auto-run enabled: selected agent not started, scanning');
         await scanAndStartNext(preferredStartFrom);
         return;
       }

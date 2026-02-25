@@ -1,5 +1,5 @@
 import { isNil } from 'lodash';
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 
 import { useAgentRunning } from '@/hooks/useAgentRunning';
 import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRefillRequirementsContext';
@@ -90,22 +90,6 @@ export const useDeployability = ({
   const isLoading = loadingReasons.length > 0;
   const loadingReason =
     loadingReasons.length > 0 ? loadingReasons.join(', ') : undefined;
-
-  useEffect(() => {
-    if (!loadingReasons.includes('Balances')) return;
-    window?.console?.log('[deployability] balances loading', {
-      isBalancesAndFundingRequirementsLoadingForAllServices,
-      isOnline,
-      isServicesLoading,
-      selectedServiceConfigId,
-    });
-  }, [
-    isBalancesAndFundingRequirementsLoadingForAllServices,
-    isOnline,
-    isServicesLoading,
-    loadingReasons,
-    selectedServiceConfigId,
-  ]);
 
   return useMemo(() => {
     if (safeEligibility && !safeEligibility.ok && !safeEligibility.isLoading) {

@@ -19,10 +19,10 @@ type BackupSignerResolution = {
 };
 
 /**
- * Resolves whether a safe exists for the chain and, if not, whether we can
- * create one with a single backup owner.
+ * Resolves whether a safe exists for the chain and, if not,
+ * whether we can create one with a single backup owner.
  */
-export const resolveBackupSignerForChain = ({
+const resolveBackupSignerForChain = ({
   chainId,
   masterSafes,
   masterSafesOwners,
@@ -48,7 +48,7 @@ export const resolveBackupSignerForChain = ({
   // Otherwise, we need to find a backup signer that can be used to create a safe.
   const otherChainOwners = new Set(
     masterSafesOwners
-      ?.filter(({ evmChainId }) => evmChainId !== chainId)
+      .filter(({ evmChainId }) => evmChainId !== chainId)
       .map((safe) => safe.owners)
       .flat(),
   );
@@ -81,6 +81,10 @@ type SafeEligibility = {
   status: BackupSignerStatus;
 };
 
+/**
+ * Determines whether the user can proceed with the safe creation flow
+ * based on their current safe and backup signer configuration.
+ */
 export const getSafeEligibility = ({
   chainId,
   masterSafes,
@@ -99,6 +103,7 @@ export const getSafeEligibility = ({
     masterEoa,
   });
 
+  // If the safe already exists, the user can proceed without creating a new safe.
   if (resolution.status === BACKUP_SIGNER_STATUS.HasSafe) {
     return {
       status: resolution.status,
@@ -107,6 +112,8 @@ export const getSafeEligibility = ({
     };
   }
 
+  // If the safe doesn't exist but we have a backup signer ready,
+  // the user can proceed and we should create a new safe.
   if (resolution.status === BACKUP_SIGNER_STATUS.Ready) {
     return {
       status: resolution.status,
@@ -116,6 +123,7 @@ export const getSafeEligibility = ({
     };
   }
 
+  // Otherwise, the user cannot proceed until they resolve their backup signer situation.
   return {
     status: resolution.status,
     canProceed: false,

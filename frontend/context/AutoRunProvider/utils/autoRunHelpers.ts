@@ -38,12 +38,8 @@ export const refreshRewardsEligibility = async ({
 
   lastRewardsFetchRef.current[agentType] = now;
   const meta = configuredAgents.find((agent) => agent.agentType === agentType);
-  if (!meta) {
-    logMessage(`rewards fetch: ${agentType} not configured`);
-    return undefined;
-  }
+  if (!meta) return undefined;
   if (!meta.multisig || !meta.serviceNftTokenId || !meta.stakingProgramId) {
-    logMessage(`rewards fetch: ${agentType} missing staking details`);
     return undefined;
   }
 
@@ -58,7 +54,6 @@ export const refreshRewardsEligibility = async ({
     const eligible = response?.isEligibleForRewards;
     if (typeof eligible === 'boolean') {
       setRewardSnapshot(agentType, eligible);
-      logMessage(`rewards fetched: ${agentType} -> ${String(eligible)}`);
       return eligible;
     }
   } catch (error) {

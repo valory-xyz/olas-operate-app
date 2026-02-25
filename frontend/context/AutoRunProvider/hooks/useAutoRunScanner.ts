@@ -101,9 +101,7 @@ export const useAutoRunScanner = ({
   );
 
   const waitForEligibilityReady = useCallback(async () => {
-    logMessage('waiting for eligibility readiness');
     const startedAt = Date.now();
-    let lastLogAt = Date.now();
     while (enabledRef.current) {
       const eligibility = normalizeEligibility(getSelectedEligibility());
       if (eligibility.reason !== 'Loading') return true;
@@ -111,12 +109,6 @@ export const useAutoRunScanner = ({
       if (now - startedAt > 60_000) {
         logMessage('eligibility wait timeout');
         return false;
-      }
-      if (now - lastLogAt >= 10000) {
-        logMessage(
-          `eligibility still loading: ${eligibility.loadingReason ?? 'unknown'}`,
-        );
-        lastLogAt = now;
       }
       await delayInSeconds(2);
     }
@@ -155,7 +147,6 @@ export const useAutoRunScanner = ({
   const scanAndStartNext = useCallback(
     async (startFrom?: AgentType | null) => {
       if (!enabledRef.current) return { started: false };
-      logMessage(`scan: starting from ${startFrom ?? 'head'}`);
       let hasBlocked = false;
       let hasEligible = false;
       let candidate = findNextInOrder(startFrom);
@@ -173,7 +164,6 @@ export const useAutoRunScanner = ({
           (agent) => agent.agentType === candidate,
         );
         if (!candidateMeta) {
-          logMessage(`scan: ${candidate} not configured`);
           hasBlocked = true;
           candidate = findNextInOrder(candidate);
           continue;
@@ -204,17 +194,10 @@ export const useAutoRunScanner = ({
         if (!eligibility.canRun) {
           const reason = formatEligibilityReason(eligibility);
           const isLoadingReason = reason.toLowerCase().includes('loading');
-          if (reason.startsWith('Low balance')) {
-            logMessage(
-              `low balance check: ${candidate} service=${candidateMeta.serviceConfigId}`,
-            );
-          }
           if (isLoadingReason) {
-            logMessage(`scan: ${candidate} still loading (${reason})`);
             scheduleNextScan(30);
             return { started: false };
           }
-          logMessage(`scan: ${candidate} blocked (${reason})`);
           notifySkipOnce(candidate, reason);
           hasBlocked = true;
           candidate = findNextInOrder(candidate);
@@ -223,13 +206,11 @@ export const useAutoRunScanner = ({
 
         const candidateEligibility = await waitForRewardsEligibility(candidate);
         if (candidateEligibility === true) {
-          logMessage(`scan: ${candidate} already earned rewards`);
           hasEligible = true;
           candidate = findNextInOrder(candidate);
           continue;
         }
 
-        logMessage(`scan: starting ${candidate}`);
         const started = await startAgentWithRetries(candidate);
         if (started) return { started: true };
         hasBlocked = true;
@@ -250,7 +231,6 @@ export const useAutoRunScanner = ({
       enabledRef,
       findNextInOrder,
       getSelectedEligibility,
-      logMessage,
       markRewardSnapshotPending,
       refreshRewardsEligibility,
       notifySkipOnce,
@@ -268,9 +248,6 @@ export const useAutoRunScanner = ({
   // Try to start the currently selected agent first when auto-run is enabled.
   const startSelectedAgentIfEligible = useCallback(async () => {
     if (!orderedIncludedAgentTypes.includes(selectedAgentType)) {
-      logMessage(
-        `auto-run enable: selected ${selectedAgentType} not in included list`,
-      );
       return false;
     }
 
@@ -278,21 +255,12 @@ export const useAutoRunScanner = ({
       (agent) => agent.agentType === selectedAgentType,
     );
     if (!selectedMeta) {
-      logMessage(`auto-run enable: ${selectedAgentType} not configured`);
       return false;
     }
 
     const rewardSnapshot = getRewardSnapshot(selectedAgentType);
     if (rewardSnapshot === true) {
-      logMessage(
-        `auto-run enable: ${selectedAgentType} already earned rewards`,
-      );
       return false;
-    }
-    if (rewardSnapshot === undefined) {
-      logMessage(
-        `auto-run enable: rewards unknown for ${selectedAgentType}, proceeding`,
-      );
     }
 
     markRewardSnapshotPending(selectedAgentType);
@@ -318,21 +286,10 @@ export const useAutoRunScanner = ({
     if (!eligibility.canRun) {
       const reason = formatEligibilityReason(eligibility);
       const isLoadingReason = reason.toLowerCase().includes('loading');
-      if (reason.startsWith('Low balance')) {
-        logMessage(
-          `low balance check: ${selectedAgentType} service=${selectedMeta.serviceConfigId}`,
-        );
-      }
       if (isLoadingReason) {
-        logMessage(
-          `auto-run enable: selected ${selectedAgentType} still loading (${reason})`,
-        );
         scheduleNextScan(30);
         return false;
       }
-      logMessage(
-        `auto-run enable: selected ${selectedAgentType} blocked (${reason})`,
-      );
       notifySkipOnce(selectedAgentType, reason);
       return false;
     }
@@ -340,23 +297,15 @@ export const useAutoRunScanner = ({
     const rewardsEligibility =
       await waitForRewardsEligibility(selectedAgentType);
     if (rewardsEligibility === true) {
-      logMessage(
-        `auto-run enable: ${selectedAgentType} already earned rewards`,
-      );
       return false;
     }
 
-    logMessage(`auto-run enable: starting selected ${selectedAgentType}`);
     const started = await startAgentWithRetries(selectedAgentType);
-    if (!started) {
-      logMessage(`auto-run enable: failed to start ${selectedAgentType}`);
-    }
     return started;
   }, [
     configuredAgents,
     getSelectedEligibility,
     getRewardSnapshot,
-    logMessage,
     markRewardSnapshotPending,
     refreshRewardsEligibility,
     notifySkipOnce,
