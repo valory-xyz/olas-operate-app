@@ -137,6 +137,8 @@ Use this file for step-by-step logical testing. Each case includes **Expected (f
 - Current code: Low balance skipped; uses 10m delay when only blocked remain.
 
 ### 21) 1 agent: eligible but Safe loading
+- Expected: Wait; no skip notification.
+- Current code: Treated as loading (waits), no skip.
 
 ---
 
@@ -146,8 +148,6 @@ Use this file for step-by-step logical testing. Each case includes **Expected (f
 - Steps: Rotation triggers; previous agent is STOPPING while next is selected.
 - Expected: Treated as transient wait; no skip or notification.
 - Current code: “Another agent running” is treated as Loading (wait + rescan).
-- Expected: Wait; start once Safe ready.
-- Current code: Waits (loading), no skip.
 
 ---
 

@@ -29,7 +29,8 @@ Use this right before release. If any **A** or **B** item fails, itâ€™s a **Noâ€
 ## B. Stability & Safety (Release Blockers)
 
 7. **No infinite waits**
-   - Auto-run does not freeze permanently; timeouts or rescan kicks in.
+   - Current code still has two waits without timeouts (agent selection, balances ready).
+   - Treat as **No-Go** until guardrails are added.
 
 8. **Start failures handled**
    - If start fails repeatedly, auto-run logs and moves on without crashing.
@@ -56,4 +57,3 @@ Use this right before release. If any **A** or **B** item fails, itâ€™s a **Noâ€
 
 - **Go** if all A + B pass and no critical UX issues.
 - **Noâ€‘Go** if any A or B fails.
-

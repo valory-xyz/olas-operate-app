@@ -142,11 +142,11 @@ This checklist is organized as: **Scenario**, **Expected behavior**, **Current i
 
 27. **Eligibility stuck loading**
     - Expected: Timeout and rescan; no skip notifications.
-    - Current: 60s timeout, rescan in 30s.
+    - Current: 60s timeout, rescan in 30s (scanner path). Direct start path returns false.
 
 28. **Balances query disabled (offline / not logged in)**
     - Expected: Wait until enabled; no skip.
-    - Current: Treated as loading; no skip; rescan.
+    - Current: Treated as loading; no skip. Wait loop has no timeout (can hang).
 
 29. **Single agent earns rewards (no other candidates)**
     - Expected: Keep running current agent; schedule long rescan (30m).
