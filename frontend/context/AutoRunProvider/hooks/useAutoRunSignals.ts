@@ -7,6 +7,7 @@ type UseAutoRunSignalsParams = {
   enabled: boolean;
   runningAgentType: AgentType | null;
   isSelectedAgentDetailsLoading: boolean;
+  isBalancesAndFundingRequirementsLoading: boolean;
   isBalancesAndFundingRequirementsReady: boolean;
   isEligibleForRewards: boolean | undefined;
   selectedAgentType: AgentType;
@@ -23,6 +24,7 @@ export const useAutoRunSignals = ({
   enabled,
   runningAgentType,
   isSelectedAgentDetailsLoading,
+  isBalancesAndFundingRequirementsLoading,
   isBalancesAndFundingRequirementsReady,
   isEligibleForRewards,
   selectedAgentType,
@@ -37,6 +39,7 @@ export const useAutoRunSignals = ({
   );
   const selectedAgentTypeRef = useRef(selectedAgentType);
   const selectedServiceConfigIdRef = useRef(selectedServiceConfigId);
+  const balancesLoadingRef = useRef(isBalancesAndFundingRequirementsLoading);
   const balancesReadyRef = useRef(isBalancesAndFundingRequirementsReady);
   // Latest rewards snapshot per agent; updated by RewardProvider.
   const rewardSnapshotRef = useRef<
@@ -74,6 +77,10 @@ export const useAutoRunSignals = ({
   useEffect(() => {
     balancesReadyRef.current = isBalancesAndFundingRequirementsReady;
   }, [isBalancesAndFundingRequirementsReady]);
+
+  useEffect(() => {
+    balancesLoadingRef.current = isBalancesAndFundingRequirementsLoading;
+  }, [isBalancesAndFundingRequirementsLoading]);
 
   // Track current UI selection and its service config id.
   useEffect(() => {
@@ -122,10 +129,23 @@ export const useAutoRunSignals = ({
   );
 
   const waitForBalancesReady = useCallback(async () => {
-    if (balancesReadyRef.current) return true;
+    if (balancesReadyRef.current && !balancesLoadingRef.current) {
+      logMessage('balances already ready');
+      return true;
+    }
     logMessage('waiting for balances readiness');
-    while (!balancesReadyRef.current) {
+    let lastLogAt = Date.now();
+    while (!balancesReadyRef.current || balancesLoadingRef.current) {
       await delayInSeconds(2);
+      const now = Date.now();
+      if (now - lastLogAt >= 10000) {
+        logMessage(
+          `balances still loading: ready=${String(
+            balancesReadyRef.current,
+          )} loading=${String(balancesLoadingRef.current)}`,
+        );
+        lastLogAt = now;
+      }
     }
     logMessage('balances ready');
     return true;

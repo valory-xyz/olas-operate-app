@@ -95,8 +95,10 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
   const { canCreateSafeForChain, createSafeIfNeeded } = useSafeEligibility();
   const { isSelectedAgentDetailsLoading, getSelectedEligibility } =
     useSelectedEligibility({ canCreateSafeForChain });
-  const { isBalancesAndFundingRequirementsReady } =
-    useBalanceAndRefillRequirementsContext();
+  const {
+    isBalancesAndFundingRequirementsLoading,
+    isBalancesAndFundingRequirementsReady,
+  } = useBalanceAndRefillRequirementsContext();
 
   const { stopRunningAgent } = useAutoRunController({
     enabled,
@@ -106,6 +108,7 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
     selectedAgentType,
     selectedServiceConfigId: selectedService?.service_config_id ?? null,
     isSelectedAgentDetailsLoading,
+    isBalancesAndFundingRequirementsLoading,
     isBalancesAndFundingRequirementsReady,
     getSelectedEligibility,
     createSafeIfNeeded,
@@ -114,9 +117,20 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
       if (!configuredAgentTypes.includes(agentType)) return;
       updateAgentType(agentType);
     },
+    onAutoRunStartStateChange: (isStarting) => {
+      setIsStarting(isStarting);
+    },
   });
 
-  const [isToggling, setIsToggling] = useState(false);
+  const [isStopping, setIsStopping] = useState(false);
+  const [isStarting, setIsStarting] = useState(false);
+  const isToggling = isStopping || isStarting;
+
+  useEffect(() => {
+    if (!enabled && isStarting) {
+      setIsStarting(false);
+    }
+  }, [enabled, isStarting]);
 
   // Seed included list once. After that, treat empty as intentional.
   useEffect(() => {
@@ -188,17 +202,17 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
 
       // If disabling, we need to stop the currently running agent immediately.
       updateAutoRun({ enabled: false });
-      if (isToggling) return;
+      if (isStopping) return;
       if (!stopRunningAgent) return;
 
-      setIsToggling(true);
+      setIsStopping(true);
       stopRunningAgent()
         .then(() => {})
         .finally(() => {
-          setIsToggling(false);
+          setIsStopping(false);
         });
     },
-    [isToggling, stopRunningAgent, updateAutoRun],
+    [isStopping, stopRunningAgent, updateAutoRun],
   );
 
   const includeAgent = useCallback(

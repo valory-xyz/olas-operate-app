@@ -70,13 +70,22 @@ export const useAutoRunScanner = ({
   logMessage,
 }: UseAutoRunScannerParams) => {
   const waitForEligibilityReady = useCallback(async () => {
+    logMessage('waiting for eligibility readiness');
+    let lastLogAt = Date.now();
     while (enabledRef.current) {
       const eligibility = getSelectedEligibility();
       if (eligibility.reason !== 'Loading') return true;
+      const now = Date.now();
+      if (now - lastLogAt >= 10000) {
+        logMessage(
+          `eligibility still loading: ${eligibility.loadingReason ?? 'unknown'}`,
+        );
+        lastLogAt = now;
+      }
       await delayInSeconds(2);
     }
     return false;
-  }, [enabledRef, getSelectedEligibility]);
+  }, [enabledRef, getSelectedEligibility, logMessage]);
   // Iterate candidates in the included order, wrapping around once.
   const findNextInOrder = useCallback(
     (currentAgentType?: AgentType | null) => {

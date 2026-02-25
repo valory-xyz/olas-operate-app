@@ -34,6 +34,7 @@ type UseAutoRunControllerParams = {
   selectedAgentType: AgentType;
   selectedServiceConfigId: string | null;
   isSelectedAgentDetailsLoading: boolean;
+  isBalancesAndFundingRequirementsLoading: boolean;
   isBalancesAndFundingRequirementsReady: boolean;
   getSelectedEligibility: () => {
     canRun: boolean;
@@ -43,6 +44,7 @@ type UseAutoRunControllerParams = {
   createSafeIfNeeded: (meta: AgentMeta) => Promise<void>;
   showNotification?: (title: string, body?: string) => void;
   onAutoRunAgentStarted?: (agentType: AgentType) => void;
+  onAutoRunStartStateChange?: (isStarting: boolean) => void;
 };
 
 export const useAutoRunController = ({
@@ -53,11 +55,13 @@ export const useAutoRunController = ({
   selectedAgentType,
   selectedServiceConfigId,
   isSelectedAgentDetailsLoading,
+  isBalancesAndFundingRequirementsLoading,
   isBalancesAndFundingRequirementsReady,
   getSelectedEligibility,
   createSafeIfNeeded,
   showNotification,
   onAutoRunAgentStarted,
+  onAutoRunStartStateChange,
 }: UseAutoRunControllerParams) => {
   const { isEligibleForRewards } = useRewardContext();
   const { runningAgentType } = useAgentRunning();
@@ -81,6 +85,7 @@ export const useAutoRunController = ({
     enabled,
     runningAgentType,
     isSelectedAgentDetailsLoading,
+    isBalancesAndFundingRequirementsLoading,
     isBalancesAndFundingRequirementsReady,
     isEligibleForRewards,
     selectedAgentType,
@@ -123,13 +128,22 @@ export const useAutoRunController = ({
   );
 
   const waitForEligibilityReady = useCallback(async () => {
+    logMessage('waiting for eligibility readiness');
+    let lastLogAt = Date.now();
     while (enabledRef.current) {
       const eligibility = getSelectedEligibility();
       if (eligibility.reason !== 'Loading') return true;
+      const now = Date.now();
+      if (now - lastLogAt >= 10000) {
+        logMessage(
+          `eligibility still loading: ${eligibility.loadingReason ?? 'unknown'}`,
+        );
+        lastLogAt = now;
+      }
       await delayInSeconds(2);
     }
     return false;
-  }, [enabledRef, getSelectedEligibility]);
+  }, [enabledRef, getSelectedEligibility, logMessage]);
 
   const startAgentWithRetries = useCallback(
     async (agentType: AgentType) => {
@@ -156,39 +170,44 @@ export const useAutoRunController = ({
           return false;
         }
 
-        for (
-          let attempt = 0;
-          attempt < RETRY_BACKOFF_SECONDS.length;
-          attempt += 1
-        ) {
-          try {
-            logMessage(`starting ${agentType} (attempt ${attempt + 1})`);
-            logMessage(`startService -> ${agentType} (begin)`);
-            await startService({
-              agentType,
-              agentConfig: meta.agentConfig,
-              service: meta.service,
-              stakingProgramId: meta.stakingProgramId,
-              createSafeIfNeeded: () => createSafeIfNeeded(meta),
-            });
-            logMessage(`startService -> ${agentType} (done)`);
+        onAutoRunStartStateChange?.(true);
+        try {
+          for (
+            let attempt = 0;
+            attempt < RETRY_BACKOFF_SECONDS.length;
+            attempt += 1
+          ) {
+            try {
+              logMessage(`starting ${agentType} (attempt ${attempt + 1})`);
+              logMessage(`startService -> ${agentType} (begin)`);
+              await startService({
+                agentType,
+                agentConfig: meta.agentConfig,
+                service: meta.service,
+                stakingProgramId: meta.stakingProgramId,
+                createSafeIfNeeded: () => createSafeIfNeeded(meta),
+              });
+              logMessage(`startService -> ${agentType} (done)`);
 
-            const deployed = await waitForRunningAgent(
-              agentType,
-              START_TIMEOUT_SECONDS,
-            );
-            if (deployed) {
-              logMessage(`started ${agentType}`);
-              onAutoRunAgentStarted?.(agentType);
-              return true;
+              const deployed = await waitForRunningAgent(
+                agentType,
+                START_TIMEOUT_SECONDS,
+              );
+              if (deployed) {
+                logMessage(`started ${agentType}`);
+                onAutoRunAgentStarted?.(agentType);
+                return true;
+              }
+              logMessage(
+                `start timeout for ${agentType} (attempt ${attempt + 1})`,
+              );
+            } catch (error) {
+              logMessage(`start error for ${agentType}: ${error}`);
             }
-            logMessage(
-              `start timeout for ${agentType} (attempt ${attempt + 1})`,
-            );
-          } catch (error) {
-            logMessage(`start error for ${agentType}: ${error}`);
+            await delayInSeconds(RETRY_BACKOFF_SECONDS[attempt]);
           }
-          await delayInSeconds(RETRY_BACKOFF_SECONDS[attempt]);
+        } finally {
+          onAutoRunStartStateChange?.(false);
         }
         notifyStartFailed(showNotification, agentName);
         logMessage(`start failed for ${agentType}`);
@@ -209,6 +228,7 @@ export const useAutoRunController = ({
       createSafeIfNeeded,
       waitForRunningAgent,
       onAutoRunAgentStarted,
+      onAutoRunStartStateChange,
       showNotification,
     ],
   );
