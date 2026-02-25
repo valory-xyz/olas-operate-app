@@ -29,6 +29,7 @@ export const useSelectedEligibility = ({
   const deployability = useDeployability({ safeEligibility });
   const isSelectedAgentDetailsLoading = deployability.isLoading;
 
+  // Keep the latest eligibility in a ref so async flows read fresh values.
   const latestEligibilityRef = useRef({
     canRun: deployability.canRun,
     reason: deployability.reason,

@@ -41,6 +41,8 @@ export const useAutoRunStore = () => {
   const updateAutoRun = useCallback(
     (partial: Partial<typeof DEFAULT_AUTO_RUN>) => {
       if (!store?.set) return;
+      // Merge with the latest stored snapshot so we don't drop fields when only
+      // a subset of auto-run settings is updated.
       const next = {
         enabled:
           partial.enabled ??
