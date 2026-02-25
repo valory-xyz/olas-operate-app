@@ -61,7 +61,7 @@ export const useStartService = () => {
 
       // Staking program is required to determine mech type for service creation
       const stakingProgram =
-        STAKING_PROGRAMS[agentConfig.evmHomeChainId][stakingProgramId];
+        STAKING_PROGRAMS[agentConfig.evmHomeChainId]?.[stakingProgramId];
       if (!stakingProgram) {
         throw new Error(`Staking program not found for ${agentType}`);
       }
