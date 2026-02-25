@@ -127,21 +127,25 @@ export const AutoRunControl = () => {
               ) : (
                 includedAgentTypes.map((agentType) => {
                   const isRunning = agentType === runningAgentType;
+                  const isLastIncluded = includedAgentTypes.length <= 1;
+                  const tooltip = (() => {
+                    if (isRunning)
+                      return 'Can’t exclude: agent is currently running';
+                    if (isLastIncluded)
+                      return 'Can’t exclude the last enabled agent';
+                    return 'Exclude agent from auto-run';
+                  })();
                   return (
                     <AgentRow
                       key={`included-${agentType}`}
                       agentType={agentType}
                       action={{
-                        isDisabled: isRunning,
+                        isDisabled: isRunning || isLastIncluded,
                         onClick: () => excludeAgent(agentType),
                         isDanger: true,
                         icon: <LuCircleMinus size={16} />,
                       }}
-                      tooltip={
-                        isRunning
-                          ? 'Can’t exclude: agent is currently running'
-                          : 'Exclude agent from auto-run'
-                      }
+                      tooltip={tooltip}
                     />
                   );
                 })
@@ -194,10 +198,7 @@ export const AutoRunControl = () => {
             trigger="click"
             styles={{ body: { padding: 0 } }}
           >
-            <Button
-              loading={isServiceDeploymentLoading}
-              style={{ padding: '0 8px' }}
-            >
+            <Button style={{ padding: '0 8px' }}>
               <LuRefreshCcw />
             </Button>
           </Popover>

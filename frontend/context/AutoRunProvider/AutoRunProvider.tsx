@@ -83,10 +83,13 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
       getOrderedIncludedAgentTypes(includedAgentsSorted, eligibleAgentTypes),
     [eligibleAgentTypes, includedAgentsSorted],
   );
+  const includedAgentTypesForUi = useMemo(
+    () => includedAgentsSorted.map((agent) => agent.agentType),
+    [includedAgentsSorted],
+  );
   const excludedAgents = useMemo(
-    () =>
-      getExcludedAgentTypes(configuredAgentTypes, orderedIncludedAgentTypes),
-    [configuredAgentTypes, orderedIncludedAgentTypes],
+    () => getExcludedAgentTypes(configuredAgentTypes, includedAgentTypesForUi),
+    [configuredAgentTypes, includedAgentTypesForUi],
   );
 
   // Eligibility for the currently selected agent.
@@ -239,6 +242,10 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
    */
   const excludeAgent = useCallback(
     (agentType: AgentType) => {
+      const isLastIncluded =
+        includedAgentTypesForUi.length <= 1 &&
+        includedAgentTypesForUi.includes(agentType);
+      if (isLastIncluded) return;
       const nextIncluded = includedAgents.filter(
         (item) => item.agentType !== agentType,
       );
@@ -251,7 +258,12 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
         userExcludedAgents: nextExcluded,
       });
     },
-    [includedAgents, updateAutoRun, userExcludedAgents],
+    [
+      includedAgentTypesForUi,
+      includedAgents,
+      updateAutoRun,
+      userExcludedAgents,
+    ],
   );
 
   // Provide UI eligibility; non-selected agents default to permissive.
