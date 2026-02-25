@@ -15,7 +15,7 @@ import styled from 'styled-components';
 import { AGENT_CONFIG } from '@/config/agents';
 import { AgentType, COLOR } from '@/constants';
 import { useAutoRunContext } from '@/context/AutoRunProvider';
-import { useAgentRunning } from '@/hooks';
+import { useAgentRunning, useServiceDeployment } from '@/hooks';
 import { Nullable } from '@/types';
 
 const { Text } = Typography;
@@ -86,6 +86,7 @@ export const AutoRunControl = () => {
     excludeAgent,
   } = useAutoRunContext();
   const { runningAgentType } = useAgentRunning();
+  const { isLoading: isServiceDeploymentLoading } = useServiceDeployment();
 
   // Preserve order from the store, but only pass the types to render rows.
   const includedAgentTypes = useMemo(
@@ -104,7 +105,8 @@ export const AutoRunControl = () => {
           <Switch
             checked={enabled}
             onChange={setEnabled}
-            loading={isToggling}
+            loading={isToggling || isServiceDeploymentLoading}
+            disabled={isServiceDeploymentLoading}
             size="small"
           />
         </Flex>
@@ -192,7 +194,10 @@ export const AutoRunControl = () => {
             trigger="click"
             styles={{ body: { padding: 0 } }}
           >
-            <Button style={{ padding: '0 8px' }}>
+            <Button
+              loading={isServiceDeploymentLoading}
+              style={{ padding: '0 8px' }}
+            >
               <LuRefreshCcw />
             </Button>
           </Popover>
