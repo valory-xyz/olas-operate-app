@@ -101,6 +101,13 @@ export const useAutoRunController = ({
   // Throttle rewards fetch per agent to avoid spamming the API.
   const lastRewardsFetchRef = useRef<Partial<Record<AgentType, number>>>({});
 
+  // Reset per-agent skip dedup on each disable so notifications fire again on re-enable.
+  useEffect(() => {
+    if (!enabled) {
+      skipNotifiedRef.current = {};
+    }
+  }, [enabled]);
+
   const refreshRewardsEligibility = useCallback(
     (agentType: AgentType) =>
       refreshRewardsEligibilityHelper({
@@ -321,6 +328,7 @@ export const useAutoRunController = ({
         (agent) => agent.agentType === currentAgentType,
       );
       if (!currentMeta) return;
+      if (!enabledRef.current) return;
 
       const stopOk = await stopAgent(
         currentMeta.agentType,

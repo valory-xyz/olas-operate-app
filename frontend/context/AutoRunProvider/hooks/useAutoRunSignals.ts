@@ -166,7 +166,10 @@ export const useAutoRunSignals = ({
   const waitForRewardsEligibility = useCallback(
     async (agentType: AgentType) => {
       const startedAt = Date.now();
-      while (rewardSnapshotRef.current[agentType] === undefined) {
+      while (
+        rewardSnapshotRef.current[agentType] === undefined &&
+        enabledRef.current
+      ) {
         if (Date.now() - startedAt > REWARDS_WAIT_TIMEOUT_SECONDS * 1000) {
           logMessage(
             `rewards eligibility timeout: ${agentType}, proceeding without it`,
@@ -212,11 +215,14 @@ export const useAutoRunSignals = ({
   const waitForRunningAgent = useCallback(
     async (agentType: AgentType, timeoutSeconds: number) => {
       const startedAt = Date.now();
-      while (Date.now() - startedAt < timeoutSeconds * 1000) {
+      while (
+        enabledRef.current &&
+        Date.now() - startedAt < timeoutSeconds * 1000
+      ) {
         if (runningAgentTypeRef.current === agentType) return true;
         await delayInSeconds(5);
       }
-      logMessage(`running timeout: ${agentType}`);
+      if (enabledRef.current) logMessage(`running timeout: ${agentType}`);
       return false;
     },
     [logMessage],
@@ -226,11 +232,14 @@ export const useAutoRunSignals = ({
   const waitForStoppedAgent = useCallback(
     async (agentType: AgentType, timeoutSeconds: number) => {
       const startedAt = Date.now();
-      while (Date.now() - startedAt < timeoutSeconds * 1000) {
+      while (
+        enabledRef.current &&
+        Date.now() - startedAt < timeoutSeconds * 1000
+      ) {
         if (runningAgentTypeRef.current !== agentType) return true;
         await delayInSeconds(5);
       }
-      logMessage(`stop timeout: ${agentType}`);
+      if (enabledRef.current) logMessage(`stop timeout: ${agentType}`);
       return false;
     },
     [logMessage],

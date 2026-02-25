@@ -8,6 +8,7 @@ import {
   ELIGIBILITY_REASON,
   SCAN_BLOCKED_DELAY_SECONDS,
   SCAN_ELIGIBLE_DELAY_SECONDS,
+  SCAN_LOADING_RETRY_SECONDS,
 } from '../constants';
 import { AgentMeta } from '../types';
 import { isOnlyLoadingReason } from '../utils/autoRunHelpers';
@@ -93,12 +94,10 @@ export const useAutoRunScanner = ({
         };
       }
 
-      // If the reason is already a loading reason, keep it as is to preserve context.
-      const isLoadingReason = !isOnlyLoadingReason(
-        eligibility,
-        ELIGIBILITY_LOADING_REASON.BALANCES,
-      );
-      if (isLoadingReason) {
+      // Pass through if this isn't the specific "Loading: Balances" stale-read case.
+      if (
+        !isOnlyLoadingReason(eligibility, ELIGIBILITY_LOADING_REASON.BALANCES)
+      ) {
         return eligibility;
       }
 
@@ -205,7 +204,7 @@ export const useAutoRunScanner = ({
 
         const eligibilityReady = await waitForEligibilityReady();
         if (!eligibilityReady) {
-          scheduleNextScan(30);
+          scheduleNextScan(SCAN_LOADING_RETRY_SECONDS);
           return { started: false };
         }
 
@@ -215,7 +214,7 @@ export const useAutoRunScanner = ({
           const reason = formatEligibilityReason(eligibility);
           const isLoadingReason = reason.toLowerCase().includes('loading');
           if (isLoadingReason) {
-            scheduleNextScan(30);
+            scheduleNextScan(SCAN_LOADING_RETRY_SECONDS);
             return { started: false };
           }
           notifySkipOnce(candidate, reason);
@@ -298,7 +297,7 @@ export const useAutoRunScanner = ({
 
     const eligibilityReady = await waitForEligibilityReady();
     if (!eligibilityReady) {
-      scheduleNextScan(30);
+      scheduleNextScan(SCAN_LOADING_RETRY_SECONDS);
       return false;
     }
     const eligibility = normalizeEligibility(getSelectedEligibility());
@@ -306,7 +305,7 @@ export const useAutoRunScanner = ({
       const reason = formatEligibilityReason(eligibility);
       const isLoadingReason = reason.toLowerCase().includes('loading');
       if (isLoadingReason) {
-        scheduleNextScan(30);
+        scheduleNextScan(SCAN_LOADING_RETRY_SECONDS);
         return false;
       }
       notifySkipOnce(selectedAgentType, reason);

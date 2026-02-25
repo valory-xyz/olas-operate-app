@@ -38,6 +38,13 @@ export const SCAN_BLOCKED_DELAY_SECONDS = 10 * 60; // 10 minutes
  */
 export const SCAN_ELIGIBLE_DELAY_SECONDS = 30 * 60; // 30 minutes
 
+/**
+ * How long (in seconds) to wait before retrying when a scan or start attempt
+ * was skipped due to a transient loading state (e.g. eligibility timed out,
+ * or eligibility is still in a loading reason after the wait).
+ */
+export const SCAN_LOADING_RETRY_SECONDS = 30;
+
 /** Eligibility reason labels used by deployability and auto-run. */
 export const ELIGIBILITY_REASON = {
   LOADING: 'Loading',

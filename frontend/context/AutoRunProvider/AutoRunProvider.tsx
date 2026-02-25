@@ -200,7 +200,6 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
       // If disabling, we need to stop the currently running agent immediately.
       updateAutoRun({ enabled: false });
       if (isStopping) return;
-      if (!stopRunningAgent) return;
 
       setIsStopping(true);
       stopRunningAgent().finally(() => setIsStopping(false));
