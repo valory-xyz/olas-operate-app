@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { RiRobot3Line } from 'react-icons/ri';
 import { TbId } from 'react-icons/tb';
 
-import { Segmented } from '@/components/ui';
+import { PageTransition, Segmented } from '@/components/ui';
 import { useService } from '@/hooks';
 import { useServices } from '@/hooks/useServices';
 import { useStore } from '@/hooks/useStore';
@@ -130,20 +130,22 @@ export const Home = () => {
   );
 
   return (
-    <Flex vertical gap={40} className="flex-auto">
-      <Switcher value={view} onChange={handleChangeView} />
-      {view === 'overview' && (
-        <Overview
-          openProfile={() => handleChangeView('profile')}
-          hasVisitedProfile={hasVisitedProfile}
+    <PageTransition animationKey={selectedAgentType}>
+      <Flex vertical gap={40} className="flex-auto">
+        <Switcher value={view} onChange={handleChangeView} />
+        {view === 'overview' && (
+          <Overview
+            openProfile={() => handleChangeView('profile')}
+            hasVisitedProfile={hasVisitedProfile}
+          />
+        )}
+        {view === 'profile' && <Profile />}
+        <UnlockChatUiAlert
+          isOpen={isUnlockChatUiModalOpen}
+          onClose={() => setIsUnlockChatUiModalOpen(false)}
+          onSkip={() => setView('profile')}
         />
-      )}
-      {view === 'profile' && <Profile />}
-      <UnlockChatUiAlert
-        isOpen={isUnlockChatUiModalOpen}
-        onClose={() => setIsUnlockChatUiModalOpen(false)}
-        onSkip={() => setView('profile')}
-      />
-    </Flex>
+      </Flex>
+    </PageTransition>
   );
 };
