@@ -2,8 +2,6 @@
 
 - I can exclude the agent when it’s loading. (It can be OK but not sure how it'll then work)
 
-- To have a 30 seconds pause after the toggle is turned on (user can exclude / include agents) then start the actual auto-run.
-
 - there’s a major UX problem with Auto-run: when Auto-run starts an agent, the UI automatically navigates/switches to that running agent.	Example: If I’m viewing Optimus rewards, I get redirected to Polystrat just because it started running.
 
 - we should also exclude not fully onboarded agents from the list. for me optimus is not onboarded

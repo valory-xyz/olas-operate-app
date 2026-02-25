@@ -9,6 +9,12 @@ export const AUTO_RUN_LOG_PREFIX = 'autorun:';
 export const COOLDOWN_SECONDS = 20;
 
 /**
+ * Delay (in seconds) before auto-run starts after the user enables it.
+ * This gives users a brief window to include/exclude agents.
+ */
+export const AUTO_RUN_START_DELAY_SECONDS = 30;
+
+/**
  * Progressive back-off delays (in seconds) between consecutive start retries.
  * e.g. 1st retry after 15 s, 2nd after 30 s, 3rd+ after 60 s
  */

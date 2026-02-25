@@ -6,6 +6,7 @@ import { ServicesService } from '@/service/Services';
 import { delayInSeconds } from '@/utils/delay';
 
 import {
+  AUTO_RUN_START_DELAY_SECONDS,
   COOLDOWN_SECONDS,
   ELIGIBILITY_LOADING_REASON,
   ELIGIBILITY_REASON,
@@ -309,6 +310,16 @@ export const useAutoRunController = ({
     logMessage,
   });
 
+  const startSelectedAgentIfEligibleRef = useRef(startSelectedAgentIfEligible);
+  const scanAndStartNextRef = useRef(scanAndStartNext);
+  const getPreferredStartFromRef = useRef(getPreferredStartFrom);
+
+  useEffect(() => {
+    startSelectedAgentIfEligibleRef.current = startSelectedAgentIfEligible;
+    scanAndStartNextRef.current = scanAndStartNext;
+    getPreferredStartFromRef.current = getPreferredStartFrom;
+  }, [getPreferredStartFrom, scanAndStartNext, startSelectedAgentIfEligible]);
+
   const rotateToNext = useCallback(
     async (currentAgentType: AgentType) => {
       const otherAgents = orderedIncludedAgentTypes.filter(
@@ -348,7 +359,7 @@ export const useAutoRunController = ({
       if (!enabledRef.current) return;
       await delayInSeconds(COOLDOWN_SECONDS);
       if (!enabledRef.current) return;
-      await scanAndStartNext(currentAgentType);
+      await scanAndStartNextRef.current(currentAgentType);
     },
     [
       configuredAgents,
@@ -451,15 +462,19 @@ export const useAutoRunController = ({
 
     isRotatingRef.current = true;
     const startNext = async () => {
-      const preferredStartFrom = getPreferredStartFrom();
+      const preferredStartFrom = getPreferredStartFromRef.current();
       if (!wasEnabled) {
-        const startedSelected = await startSelectedAgentIfEligible();
+        await delayInSeconds(AUTO_RUN_START_DELAY_SECONDS);
+        if (!enabledRef.current || runningAgentTypeRef.current) return;
+        const startedSelected =
+          await startSelectedAgentIfEligibleRef.current();
         if (startedSelected) return;
-        await scanAndStartNext(preferredStartFrom);
+        await scanAndStartNextRef.current(preferredStartFrom);
         return;
       }
       await delayInSeconds(COOLDOWN_SECONDS);
-      await scanAndStartNext(preferredStartFrom);
+      if (!enabledRef.current) return;
+      await scanAndStartNextRef.current(preferredStartFrom);
     };
 
     startNext()
