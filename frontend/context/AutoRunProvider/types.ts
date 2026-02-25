@@ -26,7 +26,7 @@ export type AutoRunContextType = {
   /** Eligibility information for each agent.
    * @example
    *  {
-   *    [AgentMap..PredictTrader]: {
+   *    [AgentMap.PredictTrader]: {
    *      canRun: false,
    *      reason: "Insufficient funds",
    *      isEligibleForRewards: true,
