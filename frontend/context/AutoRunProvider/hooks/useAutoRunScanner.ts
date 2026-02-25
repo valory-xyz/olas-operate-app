@@ -1,6 +1,7 @@
 import { MutableRefObject, useCallback } from 'react';
 
 import { AgentType } from '@/constants';
+import { delayInSeconds } from '@/utils/delay';
 
 import { AgentMeta } from '../types';
 
@@ -25,6 +26,7 @@ type UseAutoRunScannerParams = {
     agentType: AgentType,
     serviceConfigId?: string | null,
   ) => Promise<boolean>;
+  waitForBalancesReady: () => Promise<boolean>;
   waitForRewardsEligibility: (
     agentType: AgentType,
   ) => Promise<boolean | undefined>;
@@ -57,6 +59,7 @@ export const useAutoRunScanner = ({
   updateAgentType,
   getSelectedEligibility,
   waitForAgentSelection,
+  waitForBalancesReady,
   waitForRewardsEligibility,
   refreshRewardsEligibility,
   markRewardSnapshotPending,
@@ -66,6 +69,14 @@ export const useAutoRunScanner = ({
   scheduleNextScan,
   logMessage,
 }: UseAutoRunScannerParams) => {
+  const waitForEligibilityReady = useCallback(async () => {
+    while (enabledRef.current) {
+      const eligibility = getSelectedEligibility();
+      if (eligibility.reason !== 'Loading') return true;
+      await delayInSeconds(2);
+    }
+    return false;
+  }, [enabledRef, getSelectedEligibility]);
   // Iterate candidates in the included order, wrapping around once.
   const findNextInOrder = useCallback(
     (currentAgentType?: AgentType | null) => {
@@ -123,10 +134,19 @@ export const useAutoRunScanner = ({
         markRewardSnapshotPending(candidate);
         await waitForAgentSelection(candidate, candidateMeta.serviceConfigId);
         await refreshRewardsEligibility(candidate);
+        await waitForAgentSelection(candidate, candidateMeta.serviceConfigId);
+        await waitForBalancesReady();
+        const eligibilityReady = await waitForEligibilityReady();
+        if (!eligibilityReady) return { started: false };
 
         const eligibility = getSelectedEligibility();
         if (!eligibility.canRun) {
           const reason = formatEligibilityReason(eligibility);
+          if (reason.startsWith('Low balance')) {
+            logMessage(
+              `low balance check: ${candidate} service=${candidateMeta.serviceConfigId}`,
+            );
+          }
           logMessage(`scan: ${candidate} blocked (${reason})`);
           notifySkipOnce(candidate, reason);
           hasBlocked = true;
@@ -171,7 +191,9 @@ export const useAutoRunScanner = ({
       startAgentWithRetries,
       updateAgentType,
       waitForAgentSelection,
+      waitForBalancesReady,
       waitForRewardsEligibility,
+      waitForEligibilityReady,
     ],
   );
 
@@ -211,9 +233,21 @@ export const useAutoRunScanner = ({
       selectedMeta.serviceConfigId,
     );
     await refreshRewardsEligibility(selectedAgentType);
+    await waitForAgentSelection(
+      selectedAgentType,
+      selectedMeta.serviceConfigId,
+    );
+    await waitForBalancesReady();
+    const eligibilityReady = await waitForEligibilityReady();
+    if (!eligibilityReady) return false;
     const eligibility = getSelectedEligibility();
     if (!eligibility.canRun) {
       const reason = formatEligibilityReason(eligibility);
+      if (reason.startsWith('Low balance')) {
+        logMessage(
+          `low balance check: ${selectedAgentType} service=${selectedMeta.serviceConfigId}`,
+        );
+      }
       logMessage(
         `auto-run enable: selected ${selectedAgentType} blocked (${reason})`,
       );
@@ -248,6 +282,8 @@ export const useAutoRunScanner = ({
     selectedAgentType,
     startAgentWithRetries,
     waitForAgentSelection,
+    waitForBalancesReady,
+    waitForEligibilityReady,
     waitForRewardsEligibility,
   ]);
 

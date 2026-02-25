@@ -9,12 +9,15 @@ import {
 } from 'react';
 
 import { AgentType } from '@/constants';
-import { useElectronApi, useServices } from '@/hooks';
+import {
+  useBalanceAndRefillRequirementsContext,
+  useElectronApi,
+  useServices,
+} from '@/hooks';
 
 import { useAutoRunController } from './hooks/useAutoRunController';
 import { useAutoRunStore } from './hooks/useAutoRunStore';
 import { useConfiguredAgents } from './hooks/useConfiguredAgents';
-import { useAutoRunEvent } from './hooks/useLogAutoRunEvent';
 import { useSafeEligibility } from './hooks/useSafeEligibility';
 import { useSelectedEligibility } from './hooks/useSelectedEligibility';
 import { AutoRunContextType } from './types';
@@ -29,7 +32,6 @@ const AutoRunContext = createContext<AutoRunContextType>({
   enabled: false,
   includedAgents: [],
   excludedAgents: [],
-  currentAgent: null,
   isToggling: false,
   eligibilityByAgent: {},
   setEnabled: () => {},
@@ -40,12 +42,10 @@ const AutoRunContext = createContext<AutoRunContextType>({
 export const AutoRunProvider = ({ children }: PropsWithChildren) => {
   const { services, selectedAgentType, selectedService, updateAgentType } =
     useServices();
-  const { logMessage } = useAutoRunEvent();
   const { showNotification } = useElectronApi();
   const {
     enabled,
     includedAgents,
-    currentAgent,
     isInitialized,
     userExcludedAgents,
     updateAutoRun,
@@ -102,17 +102,18 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
   const { canCreateSafeForChain, createSafeIfNeeded } = useSafeEligibility();
   const { isSelectedAgentDetailsLoading, getSelectedEligibility } =
     useSelectedEligibility({ canCreateSafeForChain });
+  const { isBalancesAndFundingRequirementsReady } =
+    useBalanceAndRefillRequirementsContext();
 
   const { stopRunningAgent } = useAutoRunController({
     enabled,
-    currentAgent,
     orderedIncludedAgentTypes,
     configuredAgents,
-    updateAutoRun,
     updateAgentType,
     selectedAgentType,
     selectedServiceConfigId: selectedService?.service_config_id ?? null,
     isSelectedAgentDetailsLoading,
+    isBalancesAndFundingRequirementsReady,
     getSelectedEligibility,
     createSafeIfNeeded,
     showNotification,
@@ -189,30 +190,22 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
       // will handle starting the first agent.
       if (value) {
         updateAutoRun({ enabled: true });
-        logMessage('enabled set to true');
         return;
       }
 
       // If disabling, we need to stop the currently running agent immediately.
       updateAutoRun({ enabled: false });
-      logMessage('enabled set to false');
-
       if (isToggling) return;
       if (!stopRunningAgent) return;
 
       setIsToggling(true);
       stopRunningAgent()
-        .then((stopped) => {
-          if (stopped) updateAutoRun({ currentAgent: null });
-        })
-        .catch((error) => {
-          logMessage(`failed to stop agent: ${error}`);
-        })
+        .then(() => {})
         .finally(() => {
           setIsToggling(false);
         });
     },
-    [isToggling, stopRunningAgent, updateAutoRun, logMessage],
+    [isToggling, stopRunningAgent, updateAutoRun],
   );
 
   const includeAgent = useCallback(
@@ -235,15 +228,8 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
         includedAgents: appendNewAgents(includedAgents, [agentType]),
         userExcludedAgents: nextExcluded,
       });
-      logMessage(`included ${agentType}`);
     },
-    [
-      eligibleAgentTypes,
-      includedAgents,
-      logMessage,
-      updateAutoRun,
-      userExcludedAgents,
-    ],
+    [eligibleAgentTypes, includedAgents, updateAutoRun, userExcludedAgents],
   );
 
   const excludeAgent = useCallback(
@@ -259,9 +245,8 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
         includedAgents: nextIncluded,
         userExcludedAgents: nextExcluded,
       });
-      logMessage(`excluded ${agentType}`);
     },
-    [includedAgents, logMessage, updateAutoRun, userExcludedAgents],
+    [includedAgents, updateAutoRun, userExcludedAgents],
   );
 
   const eligibilityByAgent = useMemo(() => {
@@ -290,7 +275,6 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
       enabled,
       includedAgents: includedAgentsSorted,
       excludedAgents,
-      currentAgent,
       isToggling,
       eligibilityByAgent,
       setEnabled,
@@ -298,7 +282,6 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
       excludeAgent,
     }),
     [
-      currentAgent,
       enabled,
       excludedAgents,
       eligibilityByAgent,

@@ -30,9 +30,9 @@ export type ElectronStore = {
   [AgentMap.Polystrat]?: AgentSettings;
   autoRun?: {
     enabled?: boolean;
-    currentAgent?: AgentType | null;
     includedAgents?: { agentType: AgentType; order: number }[];
     isInitialized?: boolean;
+    userExcludedAgents?: AgentType[];
   };
   lastProvidedBackupWallet?: {
     address: Nullable<string>;

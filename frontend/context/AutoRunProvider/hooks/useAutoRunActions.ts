@@ -16,7 +16,6 @@ type UseAutoRunActionsParams = {
   orderedIncludedAgentTypes: AgentType[];
   configuredAgents: AgentMeta[];
   selectedAgentType: AgentType;
-  updateAutoRun: (partial: { currentAgent: AgentType | null }) => void;
   updateAgentType: (agentType: AgentType) => void;
   getSelectedEligibility: () => {
     canRun: boolean;
@@ -35,6 +34,7 @@ type UseAutoRunActionsParams = {
     agentType: AgentType,
     serviceConfigId?: string | null,
   ) => Promise<boolean>;
+  waitForBalancesReady: () => Promise<boolean>;
   waitForRewardsEligibility: (
     agentType: AgentType,
   ) => Promise<boolean | undefined>;
@@ -78,12 +78,12 @@ export const useAutoRunActions = ({
   orderedIncludedAgentTypes,
   configuredAgents,
   selectedAgentType,
-  updateAutoRun,
   updateAgentType,
   getSelectedEligibility,
   createSafeIfNeeded,
   startService,
   waitForAgentSelection,
+  waitForBalancesReady,
   waitForRewardsEligibility,
   refreshRewardsEligibility,
   waitForRunningAgent,
@@ -96,6 +96,15 @@ export const useAutoRunActions = ({
   scheduleNextScan,
   logMessage,
 }: UseAutoRunActionsParams) => {
+  const waitForEligibilityReady = useCallback(async () => {
+    while (enabledRef.current) {
+      const eligibility = getSelectedEligibility();
+      if (eligibility.reason !== 'Loading') return true;
+      await delayInSeconds(2);
+    }
+    return false;
+  }, [enabledRef, getSelectedEligibility]);
+
   // Start a single agent with retries and wait for it to be running.
   const startAgentWithRetries = useCallback(
     async (agentType: AgentType) => {
@@ -108,6 +117,11 @@ export const useAutoRunActions = ({
         return false;
       }
       const agentName = meta.agentConfig.displayName;
+      updateAgentType(agentType);
+      await waitForAgentSelection(agentType, meta.serviceConfigId);
+      await waitForBalancesReady();
+      const eligibilityReady = await waitForEligibilityReady();
+      if (!eligibilityReady) return false;
       const eligibility = getSelectedEligibility();
       if (!eligibility.canRun) {
         const reason = formatEligibilityReason(eligibility);
@@ -115,9 +129,6 @@ export const useAutoRunActions = ({
         notifySkipOnce(agentType, reason);
         return false;
       }
-      updateAutoRun({ currentAgent: agentType });
-      updateAgentType(agentType);
-
       for (
         let attempt = 0;
         attempt < RETRY_BACKOFF_SECONDS.length;
@@ -165,7 +176,9 @@ export const useAutoRunActions = ({
       showNotification,
       startService,
       updateAgentType,
-      updateAutoRun,
+      waitForAgentSelection,
+      waitForBalancesReady,
+      waitForEligibilityReady,
       waitForRunningAgent,
     ],
   );
@@ -196,6 +209,7 @@ export const useAutoRunActions = ({
     updateAgentType,
     getSelectedEligibility,
     waitForAgentSelection,
+    waitForBalancesReady,
     waitForRewardsEligibility,
     refreshRewardsEligibility,
     markRewardSnapshotPending,

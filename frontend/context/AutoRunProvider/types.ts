@@ -18,7 +18,6 @@ export type AutoRunContextType = {
   enabled: boolean;
   includedAgents: IncludedAgent[];
   excludedAgents: AgentType[];
-  currentAgent: AgentType | null;
   isToggling: boolean;
   eligibilityByAgent: Partial<Record<AgentType, Eligibility>>;
   setEnabled: (enabled: boolean) => void;
@@ -35,12 +34,4 @@ export type AgentMeta = {
   stakingProgramId: StakingProgramId;
   multisig?: Address;
   serviceNftTokenId?: number;
-};
-
-export type GeoEligibilityResponse = {
-  eligibility: {
-    [key: string]: {
-      status: 'allowed' | 'restricted';
-    };
-  };
 };

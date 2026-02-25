@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef } from 'react';
 
 import { AgentType } from '@/constants';
 import { useAgentRunning, useRewardContext, useStartService } from '@/hooks';
-import { Maybe } from '@/types';
 import { delayInSeconds } from '@/utils/delay';
 
 import { COOLDOWN_SECONDS, REWARDS_POLL_SECONDS } from '../constants';
@@ -14,17 +13,13 @@ import { useLogAutoRunEvent } from './useLogAutoRunEvent';
 
 type UseAutoRunControllerParams = {
   enabled: boolean;
-  currentAgent: AgentType | null;
   orderedIncludedAgentTypes: AgentType[];
   configuredAgents: AgentMeta[];
-  updateAutoRun: (partial: {
-    currentAgent: Maybe<AgentType>;
-    enabled?: boolean;
-  }) => void;
   updateAgentType: (agentType: AgentType) => void;
   selectedAgentType: AgentType;
   selectedServiceConfigId: string | null;
   isSelectedAgentDetailsLoading: boolean;
+  isBalancesAndFundingRequirementsReady: boolean;
   getSelectedEligibility: () => {
     canRun: boolean;
     reason?: string;
@@ -37,14 +32,13 @@ type UseAutoRunControllerParams = {
 
 export const useAutoRunController = ({
   enabled,
-  currentAgent,
   orderedIncludedAgentTypes,
   configuredAgents,
-  updateAutoRun,
   updateAgentType,
   selectedAgentType,
   selectedServiceConfigId,
   isSelectedAgentDetailsLoading,
+  isBalancesAndFundingRequirementsReady,
   getSelectedEligibility,
   createSafeIfNeeded,
   showNotification,
@@ -61,6 +55,7 @@ export const useAutoRunController = ({
     rewardsTick,
     scheduleNextScan,
     waitForAgentSelection,
+    waitForBalancesReady,
     waitForRewardsEligibility,
     waitForRunningAgent,
     waitForStoppedAgent,
@@ -71,6 +66,7 @@ export const useAutoRunController = ({
     enabled,
     runningAgentType,
     isSelectedAgentDetailsLoading,
+    isBalancesAndFundingRequirementsReady,
     isEligibleForRewards,
     selectedAgentType,
     selectedServiceConfigId,
@@ -156,12 +152,12 @@ export const useAutoRunController = ({
     orderedIncludedAgentTypes,
     configuredAgents,
     selectedAgentType,
-    updateAutoRun,
     updateAgentType,
     getSelectedEligibility,
     createSafeIfNeeded,
     startService,
     waitForAgentSelection,
+    waitForBalancesReady,
     waitForRewardsEligibility,
     waitForRunningAgent,
     waitForStoppedAgent,
@@ -177,26 +173,16 @@ export const useAutoRunController = ({
 
   // Stop the currently running agent without requiring a caller to pass a type.
   const stopCurrentRunningAgent = useCallback(async () => {
-    const currentType = runningAgentType || currentAgent;
-    if (!currentType) return false;
-    return stopRunningAgent(currentType);
-  }, [currentAgent, runningAgentType, stopRunningAgent]);
-
-  // Sync current running agent into auto-run state once it appears.
-  useEffect(() => {
-    if (!enabled) return;
-    if (!runningAgentType) return;
-    if (currentAgent === runningAgentType) return;
-    updateAutoRun({ currentAgent: runningAgentType });
-    logMessage(`current agent set to ${runningAgentType}`);
-  }, [currentAgent, enabled, logMessage, runningAgentType, updateAutoRun]);
+    if (!runningAgentType) return false;
+    return stopRunningAgent(runningAgentType);
+  }, [runningAgentType, stopRunningAgent]);
 
   // Rotation when current agent earns rewards (false -> true).
   useEffect(() => {
     if (!enabled) return;
     if (isRotatingRef.current) return;
 
-    const currentType = currentAgent || runningAgentType;
+    const currentType = runningAgentType;
     if (!currentType) return;
 
     let isActive = true;
@@ -232,7 +218,6 @@ export const useAutoRunController = ({
       isActive = false;
     };
   }, [
-    currentAgent,
     enabled,
     getRewardSnapshot,
     logMessage,

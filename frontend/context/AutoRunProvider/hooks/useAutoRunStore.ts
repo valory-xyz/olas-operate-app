@@ -5,15 +5,13 @@ import { useElectronApi, useStore } from '@/hooks';
 
 const DEFAULT_AUTO_RUN: {
   enabled: boolean;
-  currentAgent: AgentType | null;
-  includedAgents: { agentType: AgentType; order: number }[];
   isInitialized: boolean;
+  includedAgents: { agentType: AgentType; order: number }[];
   userExcludedAgents: AgentType[];
 } = {
   enabled: false,
-  currentAgent: null,
-  includedAgents: [],
   isInitialized: false,
+  includedAgents: [],
   userExcludedAgents: [],
 };
 
@@ -28,24 +26,38 @@ export const useAutoRunStore = () => {
   const autoRunRef = useRef(DEFAULT_AUTO_RUN);
   if (autoRun) {
     autoRunRef.current = {
-      ...DEFAULT_AUTO_RUN,
-      ...autoRun,
+      enabled: !!autoRun.enabled,
+      includedAgents: autoRun.includedAgents ?? [],
+      isInitialized: autoRun.isInitialized ?? false,
+      userExcludedAgents: autoRun.userExcludedAgents ?? [],
     };
   }
   const resolvedAutoRun = autoRunRef.current;
-  const enabled = !!resolvedAutoRun.enabled;
-  const includedAgents = resolvedAutoRun.includedAgents ?? [];
-  const currentAgent = resolvedAutoRun.currentAgent ?? null;
-  const isInitialized = resolvedAutoRun.isInitialized ?? false;
-  const userExcludedAgents = resolvedAutoRun.userExcludedAgents ?? [];
+  const enabled = resolvedAutoRun.enabled;
+  const includedAgents = resolvedAutoRun.includedAgents;
+  const isInitialized = resolvedAutoRun.isInitialized;
+  const userExcludedAgents = resolvedAutoRun.userExcludedAgents;
 
   const updateAutoRun = useCallback(
     (partial: Partial<typeof DEFAULT_AUTO_RUN>) => {
       if (!store?.set) return;
       const next = {
-        ...DEFAULT_AUTO_RUN,
-        ...autoRunRef.current,
-        ...partial,
+        enabled:
+          partial.enabled ??
+          autoRunRef.current.enabled ??
+          DEFAULT_AUTO_RUN.enabled,
+        isInitialized:
+          partial.isInitialized ??
+          autoRunRef.current.isInitialized ??
+          DEFAULT_AUTO_RUN.isInitialized,
+        includedAgents:
+          partial.includedAgents ??
+          autoRunRef.current.includedAgents ??
+          DEFAULT_AUTO_RUN.includedAgents,
+        userExcludedAgents:
+          partial.userExcludedAgents ??
+          autoRunRef.current.userExcludedAgents ??
+          DEFAULT_AUTO_RUN.userExcludedAgents,
       };
       autoRunRef.current = next;
       store?.set?.('autoRun', next);
@@ -56,7 +68,6 @@ export const useAutoRunStore = () => {
   return {
     enabled,
     includedAgents,
-    currentAgent,
     isInitialized,
     userExcludedAgents,
     updateAutoRun,

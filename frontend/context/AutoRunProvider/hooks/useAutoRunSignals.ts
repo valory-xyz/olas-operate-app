@@ -7,6 +7,7 @@ type UseAutoRunSignalsParams = {
   enabled: boolean;
   runningAgentType: AgentType | null;
   isSelectedAgentDetailsLoading: boolean;
+  isBalancesAndFundingRequirementsReady: boolean;
   isEligibleForRewards: boolean | undefined;
   selectedAgentType: AgentType;
   selectedServiceConfigId: string | null;
@@ -22,6 +23,7 @@ export const useAutoRunSignals = ({
   enabled,
   runningAgentType,
   isSelectedAgentDetailsLoading,
+  isBalancesAndFundingRequirementsReady,
   isEligibleForRewards,
   selectedAgentType,
   selectedServiceConfigId,
@@ -35,6 +37,7 @@ export const useAutoRunSignals = ({
   );
   const selectedAgentTypeRef = useRef(selectedAgentType);
   const selectedServiceConfigIdRef = useRef(selectedServiceConfigId);
+  const balancesReadyRef = useRef(isBalancesAndFundingRequirementsReady);
   // Latest rewards snapshot per agent; updated by RewardProvider.
   const rewardSnapshotRef = useRef<
     Partial<Record<AgentType, boolean | undefined>>
@@ -67,6 +70,10 @@ export const useAutoRunSignals = ({
   useEffect(() => {
     isSelectedAgentDetailsLoadingRef.current = isSelectedAgentDetailsLoading;
   }, [isSelectedAgentDetailsLoading]);
+
+  useEffect(() => {
+    balancesReadyRef.current = isBalancesAndFundingRequirementsReady;
+  }, [isBalancesAndFundingRequirementsReady]);
 
   // Track current UI selection and its service config id.
   useEffect(() => {
@@ -113,6 +120,16 @@ export const useAutoRunSignals = ({
     },
     [logMessage],
   );
+
+  const waitForBalancesReady = useCallback(async () => {
+    if (balancesReadyRef.current) return true;
+    logMessage('waiting for balances readiness');
+    while (!balancesReadyRef.current) {
+      await delayInSeconds(2);
+    }
+    logMessage('balances ready');
+    return true;
+  }, [logMessage]);
 
   // Wait for rewards eligibility to be populated for a given agent.
   const waitForRewardsEligibility = useCallback(
@@ -220,6 +237,7 @@ export const useAutoRunSignals = ({
     rewardsTick,
     scheduleNextScan,
     waitForAgentSelection,
+    waitForBalancesReady,
     waitForRewardsEligibility,
     waitForRunningAgent,
     waitForStoppedAgent,

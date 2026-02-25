@@ -6,14 +6,6 @@ import { Service } from '@/types';
 
 import { IncludedAgent } from './types';
 
-export const logAutoRun = (
-  logEvent: ((message: string) => void) | undefined,
-  prefix: string,
-  message: string,
-) => {
-  logEvent?.(`${prefix} ${message}`);
-};
-
 export const notifySkipped = (
   showNotification: ((title: string, body?: string) => void) | undefined,
   agentName: string,

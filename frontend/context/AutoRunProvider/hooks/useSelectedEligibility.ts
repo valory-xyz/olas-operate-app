@@ -12,6 +12,10 @@ type UseSelectedEligibilityProps = {
   };
 };
 
+/**
+ * Hook to determine the eligibility of the currently selected agent for auto-run,
+ * based on the selected agent config and various conditions that could prevent deployment.
+ */
 export const useSelectedEligibility = ({
   canCreateSafeForChain,
 }: UseSelectedEligibilityProps) => {

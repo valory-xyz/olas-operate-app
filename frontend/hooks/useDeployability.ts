@@ -38,8 +38,11 @@ export const useDeployability = ({
   } = useServices();
   const { isOnline } = useOnlineStatusContext();
   const { isAnotherAgentRunning } = useAgentRunning();
-  const { canStartAgent, isBalancesAndFundingRequirementsLoading } =
-    useBalanceAndRefillRequirementsContext();
+  const {
+    canStartAgent,
+    isBalancesAndFundingRequirementsLoading,
+    isBalancesAndFundingRequirementsReady,
+  } = useBalanceAndRefillRequirementsContext();
   const { isAgentsFunFieldUpdateRequired } = useSharedContext();
   const {
     isAgentEvicted,
@@ -58,13 +61,19 @@ export const useDeployability = ({
     const reasons: string[] = [];
     if (!isOnline) reasons.push('Offline');
     if (isServicesLoading) reasons.push('Services');
-    if (isBalancesAndFundingRequirementsLoading) reasons.push('Balances');
+    if (
+      isBalancesAndFundingRequirementsLoading ||
+      !isBalancesAndFundingRequirementsReady
+    ) {
+      reasons.push('Balances');
+    }
     if (isSelectedStakingContractDetailsLoading) reasons.push('Staking');
     if (isGeoLoading) reasons.push('Geo');
     if (safeEligibility?.isLoading) reasons.push('Safe');
     return reasons;
   }, [
     isBalancesAndFundingRequirementsLoading,
+    isBalancesAndFundingRequirementsReady,
     isGeoLoading,
     isOnline,
     isSelectedStakingContractDetailsLoading,

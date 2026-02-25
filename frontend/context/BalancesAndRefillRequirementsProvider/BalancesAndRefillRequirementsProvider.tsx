@@ -47,6 +47,7 @@ import {
 export const BalancesAndRefillRequirementsProviderContext = createContext<{
   isBalancesAndFundingRequirementsLoading: boolean;
   isBalancesAndFundingRequirementsLoadingForAllServices: boolean;
+  isBalancesAndFundingRequirementsReady: boolean;
   refillRequirements: Optional<AddressBalanceRecord | MasterSafeBalanceRecord>;
   getRefillRequirementsOf: (
     chainId: EvmChainId,
@@ -75,6 +76,7 @@ export const BalancesAndRefillRequirementsProviderContext = createContext<{
 }>({
   isBalancesAndFundingRequirementsLoading: false,
   isBalancesAndFundingRequirementsLoadingForAllServices: false,
+  isBalancesAndFundingRequirementsReady: false,
   refillRequirements: undefined,
   getRefillRequirementsOf: () => null,
   totalRequirements: undefined,
@@ -377,6 +379,9 @@ export const BalancesAndRefillRequirementsProvider = ({
       value={{
         isBalancesAndFundingRequirementsLoading,
         isBalancesAndFundingRequirementsLoadingForAllServices,
+        isBalancesAndFundingRequirementsReady:
+          !!balancesAndFundingRequirements &&
+          !isBalancesAndFundingRequirementsLoading,
         refillRequirements,
         getRefillRequirementsOf,
         totalRequirements,
