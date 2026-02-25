@@ -15,7 +15,7 @@ import styled from 'styled-components';
 import { AGENT_CONFIG } from '@/config/agents';
 import { AgentType, COLOR } from '@/constants';
 import { useAutoRunContext } from '@/context/AutoRunProvider';
-import { useAgentRunning, useServiceDeployment } from '@/hooks';
+import { useAgentRunning, useService, useServices } from '@/hooks';
 import { Nullable } from '@/types';
 
 const { Text } = Typography;
@@ -86,7 +86,10 @@ export const AutoRunControl = () => {
     excludeAgent,
   } = useAutoRunContext();
   const { runningAgentType } = useAgentRunning();
-  const { isLoading: isServiceDeploymentLoading } = useServiceDeployment();
+  const { selectedService } = useServices();
+  const { isServiceTransitioning } = useService(
+    selectedService?.service_config_id,
+  );
 
   // Preserve order from the store, but only pass the types to render rows.
   const includedAgentTypes = useMemo(
@@ -105,8 +108,7 @@ export const AutoRunControl = () => {
           <Switch
             checked={enabled}
             onChange={setEnabled}
-            loading={isToggling || isServiceDeploymentLoading}
-            disabled={isServiceDeploymentLoading}
+            loading={isToggling || isServiceTransitioning}
             size="small"
           />
         </Flex>
@@ -114,7 +116,7 @@ export const AutoRunControl = () => {
           className="text-neutral-tertiary text-sm flex"
           style={{ width: 200 }}
         >
-          Runs agents one after another, automatically..
+          Runs agents one after another, automatically.
         </Text>
       </PopoverSection>
 
