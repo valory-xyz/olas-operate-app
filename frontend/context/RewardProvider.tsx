@@ -23,7 +23,7 @@ export const RewardContext = createContext<{
   stakingRewardsDetails?: Nullable<StakingRewardsInfo>;
   /** current epoch rewards */
   accruedServiceStakingRewards?: number;
-  availableRewardsForEpoch?: bigint;
+  availableRewardsForEpoch?: bigint | null;
   availableRewardsForEpochEth?: number;
   isEligibleForRewards?: boolean;
   optimisticRewardsEarnedForEpoch?: number;

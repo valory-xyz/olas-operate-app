@@ -10,6 +10,7 @@ export type IncludedAgent = {
 type Eligibility = {
   canRun: boolean;
   reason?: string;
+  loadingReason?: string;
   isEligibleForRewards?: boolean;
 };
 

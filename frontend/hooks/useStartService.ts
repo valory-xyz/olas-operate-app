@@ -32,12 +32,24 @@ export const useStartService = () => {
       createServiceIfMissing = false,
       createSafeIfNeeded,
     }: StartServiceInput) => {
+      const logStep = (message: string) => {
+        if (typeof window !== 'undefined') {
+          window.console.log(`[start-service] ${message}`);
+        }
+      };
+
+      logStep(`${agentType}: createSafeIfNeeded (begin)`);
       await createSafeIfNeeded();
+      logStep(`${agentType}: createSafeIfNeeded (done)`);
 
       // If service exists, ensure it's up to date and start it
       if (service) {
+        logStep(`${agentType}: updateServiceIfNeeded (begin)`);
         await updateServiceIfNeeded(service, agentType);
+        logStep(`${agentType}: updateServiceIfNeeded (done)`);
+        logStep(`${agentType}: startService (begin)`);
         await ServicesService.startService(service.service_config_id);
+        logStep(`${agentType}: startService (done)`);
         return service;
       }
 
@@ -62,13 +74,17 @@ export const useStartService = () => {
         throw new Error(`Staking program not found for ${agentType}`);
       }
 
+      logStep(`${agentType}: createService (begin)`);
       const serviceToStart = await ServicesService.createService({
         stakingProgramId,
         serviceTemplate,
         deploy: false, // TODO: deprecated will remove
         useMechMarketplace: stakingProgram.mechType === MechType.Marketplace,
       });
+      logStep(`${agentType}: createService (done)`);
+      logStep(`${agentType}: startService (begin)`);
       await ServicesService.startService(serviceToStart.service_config_id);
+      logStep(`${agentType}: startService (done)`);
       return serviceToStart;
     },
     [],

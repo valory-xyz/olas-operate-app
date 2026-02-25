@@ -1,31 +1,16 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
-import {
-  AgentType,
-  MiddlewareDeploymentStatus,
-  MiddlewareDeploymentStatusMap,
-} from '@/constants';
+import { AgentType } from '@/constants';
 import { useAgentRunning, useRewardContext, useStartService } from '@/hooks';
-import { ServicesService } from '@/service/Services';
 import { Maybe } from '@/types';
 import { delayInSeconds } from '@/utils/delay';
 
-import { COOLDOWN_SECONDS, RETRY_BACKOFF_SECONDS } from '../constants';
+import { COOLDOWN_SECONDS } from '../constants';
 import { AgentMeta } from '../types';
-import {
-  getAgentDisplayName,
-  notifySkipped,
-  notifyStartFailed,
-} from '../utils';
+import { getAgentDisplayName, notifySkipped } from '../utils';
+import { useAutoRunActions } from './useAutoRunActions';
+import { useAutoRunSignals } from './useAutoRunSignals';
 import { useAutoRunEvent } from './useLogAutoRunEvent';
-
-/** When every candidate is blocked or missing data, wait longer before re-scan. */
-const SCAN_BLOCKED_DELAY_SECONDS = 10 * 60; // 10 minutes
-
-/** When all agents have already earned rewards, back off longer. */
-const SCAN_ELIGIBLE_DELAY_SECONDS = 30 * 60; // 30 minutes
-
-const START_TIMEOUT_SECONDS = 120;
 
 type UseAutoRunControllerParams = {
   enabled: boolean;
@@ -38,8 +23,13 @@ type UseAutoRunControllerParams = {
   }) => void;
   updateAgentType: (agentType: AgentType) => void;
   selectedAgentType: AgentType;
+  selectedServiceConfigId: string | null;
   isSelectedAgentDetailsLoading: boolean;
-  getSelectedEligibility: () => { canRun: boolean; reason?: string };
+  getSelectedEligibility: () => {
+    canRun: boolean;
+    reason?: string;
+    loadingReason?: string;
+  };
   createSafeIfNeeded: (meta: AgentMeta) => Promise<void>;
   showNotification?: (title: string, body?: string) => void;
   onAutoRunAgentStarted?: (agentType: AgentType) => void;
@@ -53,6 +43,7 @@ export const useAutoRunController = ({
   updateAutoRun,
   updateAgentType,
   selectedAgentType,
+  selectedServiceConfigId,
   isSelectedAgentDetailsLoading,
   getSelectedEligibility,
   createSafeIfNeeded,
@@ -63,33 +54,36 @@ export const useAutoRunController = ({
   const { runningAgentType } = useAgentRunning();
   const { startService } = useStartService();
   const { logMessage } = useAutoRunEvent();
+  const {
+    enabledRef,
+    lastRewardsEligibilityRef,
+    scanTick,
+    scheduleNextScan,
+    waitForAgentSelection,
+    waitForRewardsEligibility,
+    waitForRunningAgent,
+    waitForStoppedAgent,
+    markRewardSnapshotPending,
+    getRewardSnapshot,
+  } = useAutoRunSignals({
+    enabled,
+    runningAgentType,
+    isSelectedAgentDetailsLoading,
+    isEligibleForRewards,
+    selectedAgentType,
+    selectedServiceConfigId,
+    logMessage,
+  });
 
   // Guards against overlapping scan/rotation loops.
   const isRotatingRef = useRef(false);
   // Track per-agent skip reason to avoid spamming notifications.
   const skipNotifiedRef = useRef<Partial<Record<AgentType, string>>>({});
-  // Latest reward-eligibility snapshot keyed by agent type.
-  const rewardSnapshotRef = useRef<
-    Partial<Record<AgentType, boolean | undefined>>
-  >({});
-  // Keeps delayed re-scan from stacking multiple timers.
-  const scanTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Toggled to force re-scan in effects when we schedule a delay.
-  const [scanTick, setScanTick] = useState(0);
   /**
    * Track prior enabled state to distinguish initial enable vs. later idle.
    * On first enable: start immediately. On later idle (manual stop): apply cooldown.
    */
   const wasAutoRunEnabledRef = useRef(false);
-  const enabledRef = useRef(enabled);
-
-  useEffect(() => {
-    enabledRef.current = enabled;
-    if (!enabled && scanTimeoutRef.current) {
-      clearTimeout(scanTimeoutRef.current);
-      scanTimeoutRef.current = null;
-    }
-  }, [enabled]);
 
   // Notify the user that an agent was skipped for a specific reason, but only once per reason.
   const notifySkipOnce = useCallback(
@@ -103,296 +97,36 @@ export const useAutoRunController = ({
     [logMessage, showNotification],
   );
 
-  // Keep a ref so async loops always read the live loading value (avoids stale closure).
-  const isSelectedAgentDetailsLoadingRef = useRef(
-    isSelectedAgentDetailsLoading,
-  );
-  useEffect(() => {
-    isSelectedAgentDetailsLoadingRef.current = isSelectedAgentDetailsLoading;
-  }, [isSelectedAgentDetailsLoading]);
+  const {
+    getPreferredStartFrom,
+    scanAndStartNext,
+    startSelectedAgentIfEligible,
+    rotateToNext,
+    stopRunningAgent,
+  } = useAutoRunActions({
+    enabledRef,
+    orderedIncludedAgentTypes,
+    configuredAgents,
+    selectedAgentType,
+    updateAutoRun,
+    updateAgentType,
+    getSelectedEligibility,
+    createSafeIfNeeded,
+    startService,
+    waitForAgentSelection,
+    waitForRewardsEligibility,
+    waitForRunningAgent,
+    waitForStoppedAgent,
+    markRewardSnapshotPending,
+    getRewardSnapshot,
+    notifySkipOnce,
+    onAutoRunAgentStarted,
+    showNotification,
+    scheduleNextScan,
+    logMessage,
+  });
 
-  // Wait until hooks for the selected agent finish loading before eligibility checks.
-  const waitForSelectedAgentDetails = useCallback(async () => {
-    while (isSelectedAgentDetailsLoadingRef.current) {
-      await delayInSeconds(2);
-    }
-    return true;
-  }, []);
-
-  // Wait for rewards eligibility to be populated for the selected agent.
-  const waitForRewardsEligibility = useCallback(
-    async (agentType: AgentType) => {
-      while (rewardSnapshotRef.current[agentType] === undefined) {
-        await delayInSeconds(2);
-      }
-      return rewardSnapshotRef.current[agentType];
-    },
-    [],
-  );
-
-  // Build the included agents list in the order of the configured agent types, excluding any that are not configured.
-  const findNextInOrder = useCallback(
-    (currentAgentType?: AgentType | null) => {
-      if (orderedIncludedAgentTypes.length === 0) return null;
-
-      const startIndex = currentAgentType
-        ? orderedIncludedAgentTypes.indexOf(currentAgentType)
-        : -1;
-
-      for (let i = 1; i <= orderedIncludedAgentTypes.length; i += 1) {
-        const index = (startIndex + i) % orderedIncludedAgentTypes.length;
-        const candidate = orderedIncludedAgentTypes[index];
-        if (!candidate) continue;
-        if (candidate === currentAgentType) continue;
-        return candidate;
-      }
-
-      return null;
-    },
-    [orderedIncludedAgentTypes],
-  );
-
-  const getPreferredStartFrom = useCallback(() => {
-    const length = orderedIncludedAgentTypes.length;
-    if (length <= 1) return null;
-    const index = orderedIncludedAgentTypes.indexOf(selectedAgentType);
-    if (index === -1) return null;
-    const prevIndex = (index - 1 + length) % length;
-    return orderedIncludedAgentTypes[prevIndex] ?? null;
-  }, [orderedIncludedAgentTypes, selectedAgentType]);
-
-  // Poll deployment status until it reaches the desired state or timeout.
-  const waitForDeploymentStatus = useCallback(
-    async (
-      serviceConfigId: string,
-      status: MiddlewareDeploymentStatus,
-      timeoutSeconds: number,
-    ) => {
-      const startedAt = Date.now();
-      while (Date.now() - startedAt < timeoutSeconds * 1000) {
-        try {
-          const deployment = await ServicesService.getDeployment({
-            serviceConfigId,
-            signal: new AbortController().signal,
-          });
-          if (deployment?.status === status) return true;
-        } catch (error) {
-          logMessage(`deployment status check failed: ${error}`);
-        }
-        await delayInSeconds(5);
-      }
-      return false;
-    },
-    [logMessage],
-  );
-
-  // Start a candidate agent with retries + backoff, respecting eligibility gates.
-  const startAgentWithRetries = useCallback(
-    async (agentType: AgentType) => {
-      if (!enabledRef.current) return false;
-      const meta = configuredAgents.find(
-        (agent) => agent.agentType === agentType,
-      );
-      if (!meta) return false;
-
-      const agentName = meta.agentConfig.displayName;
-      const eligibility = getSelectedEligibility();
-      if (!eligibility.canRun) {
-        notifySkipOnce(agentType, eligibility.reason);
-        return false;
-      }
-
-      // Persist + select before starting so downstream hooks query the right agent.
-      updateAutoRun({ currentAgent: agentType });
-      updateAgentType(agentType);
-
-      for (
-        let attempt = 0;
-        attempt < RETRY_BACKOFF_SECONDS.length;
-        attempt += 1
-      ) {
-        try {
-          logMessage(`starting ${agentType} (attempt ${attempt + 1})`);
-          await startService({
-            agentType,
-            agentConfig: meta.agentConfig,
-            service: meta.service,
-            stakingProgramId: meta.stakingProgramId,
-            createSafeIfNeeded: () => createSafeIfNeeded(meta),
-          });
-
-          const deployed = await waitForDeploymentStatus(
-            meta.serviceConfigId,
-            MiddlewareDeploymentStatusMap.DEPLOYED,
-            START_TIMEOUT_SECONDS,
-          );
-
-          if (deployed) {
-            logMessage(`started ${agentType}`);
-            onAutoRunAgentStarted?.(agentType);
-            return true;
-          }
-
-          logMessage(`start timeout for ${agentType} (attempt ${attempt + 1})`);
-        } catch (error) {
-          logMessage(`start error for ${agentType}: ${error}`);
-        }
-
-        await delayInSeconds(RETRY_BACKOFF_SECONDS[attempt]);
-      }
-
-      notifyStartFailed(showNotification, agentName);
-      return false;
-    },
-    [
-      configuredAgents,
-      createSafeIfNeeded,
-      getSelectedEligibility,
-      logMessage,
-      notifySkipOnce,
-      showNotification,
-      onAutoRunAgentStarted,
-      startService,
-      updateAgentType,
-      updateAutoRun,
-      waitForDeploymentStatus,
-    ],
-  );
-
-  // Stop the current deployment and wait until it is fully stopped.
-  const stopAgent = useCallback(
-    async (serviceConfigId: string) => {
-      try {
-        logMessage(`stopping ${serviceConfigId}`);
-        await ServicesService.stopDeployment(serviceConfigId);
-      } catch (error) {
-        logMessage(`stop failed for ${serviceConfigId}: ${error}`);
-      }
-
-      return waitForDeploymentStatus(
-        serviceConfigId,
-        MiddlewareDeploymentStatusMap.STOPPED,
-        START_TIMEOUT_SECONDS,
-      );
-    },
-    [logMessage, waitForDeploymentStatus],
-  );
-
-  // Schedule a delayed scan, coalescing any existing timer.
-  const scheduleNextScan = useCallback((delaySeconds: number) => {
-    if (!enabledRef.current) return;
-    if (scanTimeoutRef.current) {
-      clearTimeout(scanTimeoutRef.current);
-    }
-    scanTimeoutRef.current = setTimeout(() => {
-      scanTimeoutRef.current = null;
-      setScanTick((value) => value + 1);
-    }, delaySeconds * 1000);
-  }, []);
-
-  // Scan sequentially through the queue and attempt to start the first eligible agent.
-  const scanAndStartNext = useCallback(
-    async (startFrom?: AgentType | null) => {
-      if (!enabledRef.current) return { started: false };
-      let hasBlocked = false;
-      let hasEligible = false;
-      let candidate = findNextInOrder(startFrom);
-      const visited = new Set<AgentType>();
-
-      while (candidate && !visited.has(candidate)) {
-        if (!enabledRef.current) return { started: false };
-        visited.add(candidate);
-
-        // Select candidate to load its data (eligibility, rewards).
-        updateAgentType(candidate);
-        rewardSnapshotRef.current[candidate] = undefined;
-
-        await waitForSelectedAgentDetails();
-
-        const eligibility = getSelectedEligibility();
-        if (!eligibility.canRun) {
-          notifySkipOnce(candidate, eligibility.reason);
-          hasBlocked = true;
-          candidate = findNextInOrder(candidate);
-          continue;
-        }
-
-        // If candidate already earned rewards, keep scanning.
-        const candidateEligibility = await waitForRewardsEligibility(candidate);
-        if (candidateEligibility === true) {
-          hasEligible = true;
-          candidate = findNextInOrder(candidate);
-          continue;
-        }
-
-        // Attempt to start the first eligible candidate.
-        const started = await startAgentWithRetries(candidate);
-        if (started) return { started: true };
-
-        hasBlocked = true;
-        candidate = findNextInOrder(candidate);
-      }
-
-      const delay = (() => {
-        if (hasBlocked) return SCAN_BLOCKED_DELAY_SECONDS;
-        if (hasEligible) return SCAN_ELIGIBLE_DELAY_SECONDS;
-        return SCAN_BLOCKED_DELAY_SECONDS;
-      })();
-
-      if (enabledRef.current) {
-        logMessage(`scan complete; scheduling next scan in ${delay}s`);
-        scheduleNextScan(delay);
-      }
-
-      return { started: false };
-    },
-    [
-      findNextInOrder,
-      getSelectedEligibility,
-      logMessage,
-      notifySkipOnce,
-      scheduleNextScan,
-      startAgentWithRetries,
-      updateAgentType,
-      waitForRewardsEligibility,
-      waitForSelectedAgentDetails,
-    ],
-  );
-
-  // Stop current agent, cooldown, then scan for the next candidate.
-  const rotateToNext = useCallback(
-    async (currentAgentType: AgentType) => {
-      const currentMeta = configuredAgents.find(
-        (agent) => agent.agentType === currentAgentType,
-      );
-      if (!currentMeta) return;
-
-      const stopOk = await stopAgent(currentMeta.serviceConfigId);
-      if (!stopOk) {
-        logMessage(`stop timeout for ${currentAgentType}, aborting rotation`);
-        return;
-      }
-
-      if (!enabledRef.current) return;
-
-      logMessage(`cooldown ${COOLDOWN_SECONDS}s`);
-      await delayInSeconds(COOLDOWN_SECONDS);
-      if (!enabledRef.current) return;
-      await scanAndStartNext(currentAgentType);
-    },
-    [configuredAgents, logMessage, scanAndStartNext, stopAgent],
-  );
-
-  const stopRunningAgent = useCallback(async () => {
-    const currentType = runningAgentType || currentAgent;
-    if (!currentType) return false;
-    const currentMeta = configuredAgents.find(
-      (agent) => agent.agentType === currentType,
-    );
-    if (!currentMeta) return false;
-    return stopAgent(currentMeta.serviceConfigId);
-  }, [configuredAgents, currentAgent, runningAgentType, stopAgent]);
-
+  // Sync current running agent into auto-run state once it appears.
   useEffect(() => {
     if (!enabled) return;
     if (!runningAgentType) return;
@@ -401,21 +135,7 @@ export const useAutoRunController = ({
     logMessage(`current agent set to ${runningAgentType}`);
   }, [currentAgent, enabled, logMessage, runningAgentType, updateAutoRun]);
 
-  // Keep latest rewards eligibility snapshot for the selected agent.
-  useEffect(() => {
-    if (!selectedAgentType) return;
-    rewardSnapshotRef.current[selectedAgentType] = isEligibleForRewards;
-  }, [isEligibleForRewards, selectedAgentType]);
-
-  useEffect(() => {
-    return () => {
-      if (scanTimeoutRef.current) {
-        clearTimeout(scanTimeoutRef.current);
-      }
-    };
-  }, []);
-
-  // Rotation when current agent earns rewards.
+  // Rotation when current agent earns rewards (false -> true).
   useEffect(() => {
     if (!enabled) return;
     if (isRotatingRef.current) return;
@@ -423,8 +143,22 @@ export const useAutoRunController = ({
     const currentType = currentAgent || runningAgentType;
     if (!currentType) return;
 
-    if (runningAgentType && selectedAgentType !== runningAgentType) return;
+    if (runningAgentType && selectedAgentType !== runningAgentType) {
+      logMessage(
+        `rotation skipped: viewing ${selectedAgentType} while ${runningAgentType} running`,
+      );
+      return;
+    }
+    const previousEligibility = lastRewardsEligibilityRef.current[currentType];
+    lastRewardsEligibilityRef.current[currentType] = isEligibleForRewards;
+    logMessage(
+      `rotation check: ${currentType} rewards=${String(
+        isEligibleForRewards,
+      )} prev=${String(previousEligibility)}`,
+    );
     if (isEligibleForRewards !== true) return;
+    if (previousEligibility !== false) return;
+    logMessage(`rotation triggered: ${currentType} earned rewards`);
 
     isRotatingRef.current = true;
     rotateToNext(currentType)
@@ -442,10 +176,11 @@ export const useAutoRunController = ({
     rotateToNext,
     runningAgentType,
     selectedAgentType,
+    lastRewardsEligibilityRef,
     scanTick,
   ]);
 
-  // When enabled and nothing is running, scan and start.
+  // When enabled and nothing is running, start selected or scan for the next.
   // Skip cooldown on first enable, but keep cooldown after manual stops.
   useEffect(() => {
     const wasEnabled = wasAutoRunEnabledRef.current;
@@ -458,6 +193,10 @@ export const useAutoRunController = ({
     const startNext = async () => {
       const preferredStartFrom = getPreferredStartFrom();
       if (!wasEnabled) {
+        logMessage('auto-run enabled: checking selected agent first');
+        const startedSelected = await startSelectedAgentIfEligible();
+        if (startedSelected) return;
+        logMessage('auto-run enabled: selected agent not started, scanning');
         await scanAndStartNext(preferredStartFrom);
         return;
       }
@@ -477,6 +216,7 @@ export const useAutoRunController = ({
     runningAgentType,
     scanAndStartNext,
     scanTick,
+    startSelectedAgentIfEligible,
   ]);
 
   return {

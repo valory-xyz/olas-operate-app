@@ -13,6 +13,7 @@ type DeployabilityResult = {
   isLoading: boolean;
   canRun: boolean;
   reason?: string;
+  loadingReason?: string;
 };
 
 export const useDeployability = ({
@@ -43,14 +44,15 @@ export const useDeployability = ({
     agentConfig: selectedAgentConfig,
   });
 
-  const isLoading = useMemo(() => {
-    if (!isOnline) return true;
-    if (isServicesLoading) return true;
-    if (isBalancesAndFundingRequirementsLoading) return true;
-    if (isSelectedStakingContractDetailsLoading) return true;
-    if (isGeoLoading) return true;
-    if (safeEligibility?.isLoading) return true;
-    return false;
+  const loadingReasons = useMemo(() => {
+    const reasons: string[] = [];
+    if (!isOnline) reasons.push('Offline');
+    if (isServicesLoading) reasons.push('Services');
+    if (isBalancesAndFundingRequirementsLoading) reasons.push('Balances');
+    if (isSelectedStakingContractDetailsLoading) reasons.push('Staking');
+    if (isGeoLoading) reasons.push('Geo');
+    if (safeEligibility?.isLoading) reasons.push('Safe');
+    return reasons;
   }, [
     isBalancesAndFundingRequirementsLoading,
     isGeoLoading,
@@ -59,14 +61,22 @@ export const useDeployability = ({
     isServicesLoading,
     safeEligibility?.isLoading,
   ]);
+  const isLoading = loadingReasons.length > 0;
+  const loadingReason =
+    loadingReasons.length > 0 ? loadingReasons.join(', ') : undefined;
 
   return useMemo(() => {
     if (safeEligibility && !safeEligibility.ok) {
-      return { isLoading, canRun: false, reason: safeEligibility.reason };
+      return {
+        isLoading,
+        canRun: false,
+        reason: safeEligibility.reason,
+        loadingReason,
+      };
     }
 
     if (isLoading) {
-      return { isLoading, canRun: false, reason: 'Loading' };
+      return { isLoading, canRun: false, reason: 'Loading', loadingReason };
     }
 
     // If service is under construction, return false
@@ -108,7 +118,7 @@ export const useDeployability = ({
       return { isLoading, canRun: false, reason: 'Low balance' };
     }
 
-    return { isLoading, canRun: true };
+    return { isLoading, canRun: true, loadingReason };
   }, [
     canStartAgent,
     hasEnoughServiceSlots,
@@ -122,5 +132,6 @@ export const useDeployability = ({
     safeEligibility,
     selectedAgentConfig.isGeoLocationRestricted,
     selectedAgentConfig.isUnderConstruction,
+    loadingReason,
   ]);
 };

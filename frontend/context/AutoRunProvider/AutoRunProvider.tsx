@@ -9,7 +9,7 @@ import {
 } from 'react';
 
 import { AgentType } from '@/constants';
-import { useServices } from '@/hooks';
+import { useElectronApi, useServices } from '@/hooks';
 
 import { useAutoRunController } from './hooks/useAutoRunController';
 import { useAutoRunStore } from './hooks/useAutoRunStore';
@@ -38,8 +38,10 @@ const AutoRunContext = createContext<AutoRunContextType>({
 });
 
 export const AutoRunProvider = ({ children }: PropsWithChildren) => {
-  const { services, selectedAgentType, updateAgentType } = useServices();
+  const { services, selectedAgentType, selectedService, updateAgentType } =
+    useServices();
   const { logMessage } = useAutoRunEvent();
+  const { showNotification } = useElectronApi();
   const {
     enabled,
     includedAgents,
@@ -109,9 +111,11 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
     updateAutoRun,
     updateAgentType,
     selectedAgentType,
+    selectedServiceConfigId: selectedService?.service_config_id ?? null,
     isSelectedAgentDetailsLoading,
     getSelectedEligibility,
     createSafeIfNeeded,
+    showNotification,
     onAutoRunAgentStarted: (agentType) => {
       if (!configuredAgentTypes.includes(agentType)) return;
       updateAgentType(agentType);

@@ -9,6 +9,9 @@ export const useAutoRunEvent = () => {
 
   const logMessage = useCallback(
     (message: string) => {
+      if (typeof window !== 'undefined') {
+        window.console.log(`[auto-run] ${message}`);
+      }
       logEvent?.(`${AUTO_RUN_LOG_PREFIX}: ${message}`);
     },
     [logEvent],

@@ -15,7 +15,7 @@ import styled from 'styled-components';
 import { AGENT_CONFIG } from '@/config/agents';
 import { AgentType, COLOR } from '@/constants';
 import { useAutoRunContext } from '@/context/AutoRunProvider';
-import { useAgentRunning } from '@/hooks';
+import { useAgentRunning, useServiceDeployment } from '@/hooks';
 import { Nullable } from '@/types';
 
 const { Text } = Typography;
@@ -77,6 +77,7 @@ const AgentRow = ({ agentType, tooltip, action }: AgentRowProps) => {
 };
 
 export const AutoRunControl = () => {
+  const { isLoading } = useServiceDeployment();
   const {
     enabled,
     includedAgents,
@@ -106,8 +107,7 @@ export const AutoRunControl = () => {
           <Switch
             checked={enabled}
             onChange={setEnabled}
-            disabled={isToggling}
-            loading={isToggling}
+            loading={isToggling || isLoading}
             size="small"
           />
         </Flex>
