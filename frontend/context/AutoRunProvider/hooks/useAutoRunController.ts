@@ -9,6 +9,7 @@ import {
   COOLDOWN_SECONDS,
   RETRY_BACKOFF_SECONDS,
   REWARDS_POLL_SECONDS,
+  SCAN_ELIGIBLE_DELAY_SECONDS,
 } from '../constants';
 import { AgentMeta } from '../types';
 import {
@@ -129,6 +130,13 @@ export const useAutoRunController = ({
       reason?: string;
       loadingReason?: string;
     }) => {
+      if (eligibility.reason === 'Another agent running') {
+        return {
+          canRun: false,
+          reason: 'Loading',
+          loadingReason: 'Another agent running',
+        };
+      }
       if (eligibility.reason !== 'Loading') return eligibility;
       const loadingReason = eligibility.loadingReason
         ?.split(',')
@@ -183,8 +191,13 @@ export const useAutoRunController = ({
         }
         const agentName = meta.agentConfig.displayName;
         updateAgentType(agentType);
-        await waitForAgentSelection(agentType, meta.serviceConfigId);
-        await waitForBalancesReady();
+        const selectionReady = await waitForAgentSelection(
+          agentType,
+          meta.serviceConfigId,
+        );
+        if (!selectionReady) return false;
+        const balancesReady = await waitForBalancesReady();
+        if (!balancesReady) return false;
         const eligibilityReady = await waitForEligibilityReady();
         if (!eligibilityReady) return false;
         const eligibility = normalizeEligibility(getSelectedEligibility());
@@ -202,6 +215,7 @@ export const useAutoRunController = ({
             attempt < RETRY_BACKOFF_SECONDS.length;
             attempt += 1
           ) {
+            if (!enabledRef.current) return false;
             try {
               logMessage(`starting ${agentType} (attempt ${attempt + 1})`);
               logMessage(`startService -> ${agentType} (begin)`);
@@ -298,6 +312,32 @@ export const useAutoRunController = ({
 
   const rotateToNext = useCallback(
     async (currentAgentType: AgentType) => {
+      const otherAgents = orderedIncludedAgentTypes.filter(
+        (agentType) => agentType !== currentAgentType,
+      );
+      if (otherAgents.length === 0) {
+        logMessage(
+          `rotation: no other agents, keep running ${currentAgentType}`,
+        );
+        scheduleNextScan(SCAN_ELIGIBLE_DELAY_SECONDS);
+        return;
+      }
+
+      const refreshed = await Promise.all(
+        otherAgents.map((agentType) => refreshRewardsEligibility(agentType)),
+      );
+      const rewardStates = otherAgents.map(
+        (agentType, index) => refreshed[index] ?? getRewardSnapshot(agentType),
+      );
+      const allEarnedOrUnknown = rewardStates.every((state) => state !== false);
+      if (allEarnedOrUnknown) {
+        logMessage(
+          `rotation: all other agents earned/unknown, keep running ${currentAgentType}`,
+        );
+        scheduleNextScan(SCAN_ELIGIBLE_DELAY_SECONDS);
+        return;
+      }
+
       const currentMeta = configuredAgents.find(
         (agent) => agent.agentType === currentAgentType,
       );
@@ -317,7 +357,17 @@ export const useAutoRunController = ({
       if (!enabledRef.current) return;
       await scanAndStartNext(currentAgentType);
     },
-    [configuredAgents, enabledRef, logMessage, scanAndStartNext, stopAgent],
+    [
+      configuredAgents,
+      enabledRef,
+      getRewardSnapshot,
+      logMessage,
+      orderedIncludedAgentTypes,
+      refreshRewardsEligibility,
+      scanAndStartNext,
+      scheduleNextScan,
+      stopAgent,
+    ],
   );
 
   const stopRunningAgent = useCallback(

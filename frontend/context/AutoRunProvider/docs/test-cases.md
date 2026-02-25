@@ -148,6 +148,22 @@ This checklist is organized as: **Scenario**, **Expected behavior**, **Current i
     - Expected: Wait until enabled; no skip.
     - Current: Treated as loading; no skip; rescan.
 
+29. **Single agent earns rewards (no other candidates)**
+    - Expected: Keep running current agent; schedule long rescan (30m).
+    - Current: Rotation checks other agents; if none or all earned/unknown, keeps running and schedules 30m scan.
+
+30. **STOPPING race (Another agent running)**
+    - Expected: Treat as transient; wait and retry, no skip notification.
+    - Current: “Another agent running” treated as Loading; no skip.
+
+31. **Auto-run disabled during waits**
+    - Expected: Any wait loop exits early.
+    - Current: waitForAgentSelection / waitForBalancesReady return false when disabled.
+
+32. **Auto-run disabled during retries**
+    - Expected: Further retries stop; no new starts after disable.
+    - Current: start retries check `enabledRef` each iteration.
+
 ---
 
 ## Infinite Loop Risks (Needs Guardrails)

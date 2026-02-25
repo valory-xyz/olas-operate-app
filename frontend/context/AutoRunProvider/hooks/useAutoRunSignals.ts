@@ -132,16 +132,19 @@ export const useAutoRunSignals = ({
   const waitForAgentSelection = useCallback(
     async (agentType: AgentType, serviceConfigId?: string | null) => {
       logMessage(`waiting for selection: ${agentType}`);
-      while (
-        isSelectedAgentDetailsLoadingRef.current ||
-        selectedAgentTypeRef.current !== agentType ||
-        (serviceConfigId != null &&
-          selectedServiceConfigIdRef.current !== serviceConfigId)
-      ) {
+      while (enabledRef.current) {
+        if (
+          !isSelectedAgentDetailsLoadingRef.current &&
+          selectedAgentTypeRef.current === agentType &&
+          (serviceConfigId == null ||
+            selectedServiceConfigIdRef.current === serviceConfigId)
+        ) {
+          logMessage(`selection ready: ${agentType}`);
+          return true;
+        }
         await delayInSeconds(2);
       }
-      logMessage(`selection ready: ${agentType}`);
-      return true;
+      return false;
     },
     [logMessage],
   );
@@ -154,7 +157,11 @@ export const useAutoRunSignals = ({
     logMessage('waiting for balances readiness');
     let lastLogAt = Date.now();
     let lastRefetchAt = Date.now();
-    while (!balancesReadyRef.current || balancesLoadingRef.current) {
+    while (enabledRef.current) {
+      if (balancesReadyRef.current && !balancesLoadingRef.current) {
+        logMessage('balances ready');
+        return true;
+      }
       await delayInSeconds(2);
       const now = Date.now();
       if (!didRefetchBalancesRef.current && now - lastRefetchAt >= 15000) {
@@ -175,8 +182,7 @@ export const useAutoRunSignals = ({
         lastLogAt = now;
       }
     }
-    logMessage('balances ready');
-    return true;
+    return false;
   }, [logMessage, refetch]);
 
   // Wait for rewards eligibility to be populated for a given agent.

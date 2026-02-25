@@ -27,7 +27,12 @@ Use this file for step-by-step logical testing. Each case includes **Expected (f
 - Expected (feature): Skip with “Low balance” notice, cooldown 30m, retry.
 - Current code: Skips with notification, uses **blocked scan delay (10m)**, not 30m.
 
-### 4) Mixed funding
+### 4) 1 agent, earned rewards (no other candidates)
+- Steps: Auto-run is on; agent earns rewards.
+- Expected (feature): Keep running; rescan later (30m).
+- Current code: Keeps running and schedules 30m rescan when no other agents (or all earned/unknown).
+
+### 5) Mixed funding
 - Preconditions: 3 agents; 1 low balance, 2 funded.
 - Steps: Enable auto-run.
 - Expected: Skip low balance once; start funded agents; cooldown when all eligible finished.
@@ -37,19 +42,19 @@ Use this file for step-by-step logical testing. Each case includes **Expected (f
 
 ## Construction / Decommissioned / Exclusions
 
-### 5) Under construction
+### 6) Under construction
 - Preconditions: 3 agents, 1 under construction.
 - Steps: Enable auto-run while user is on eligible agent.
 - Expected: Start eligible, skip under construction with notification, run next.
 - Current code: “Under construction” is a hard skip with notification.
 
-### 6) Decommissioned agent
+### 7) Decommissioned agent
 - Preconditions: 4 agents, 1 decommissioned.
 - Steps: Open auto-run list.
 - Expected: Decommissioned appears in excluded, not addable.
 - Current code: Decommissioned is removed from eligible list; appears excluded.
 
-### 7) User excluded agent
+### 8) User excluded agent
 - Steps: Exclude agent via “-” button.
 - Expected: Moves to excluded, can be re-added later.
 - Current code: Stored in `userExcludedAgents`.
@@ -58,12 +63,12 @@ Use this file for step-by-step logical testing. Each case includes **Expected (f
 
 ## Rewards / Rotation
 
-### 8) Agent already earned rewards before start
+### 9) Agent already earned rewards before start
 - Steps: Enable auto-run with selected agent already earned.
 - Expected: Skip without start, move to next.
 - Current code: Skips via rewards snapshot.
 
-### 9) Earns rewards while viewing another agent
+### 10) Earns rewards while viewing another agent
 - Steps: Auto-run on; user clicks a different agent in sidebar.
 - Expected: Rotation still happens; sidebar can change automatically for running agent.
 - Current code: Rotation based on running agent; sidebar selection can still be changed manually.
@@ -72,19 +77,19 @@ Use this file for step-by-step logical testing. Each case includes **Expected (f
 
 ## Loading States (No Skips)
 
-### 10) Balances loading
+### 11) Balances loading
 - Expected: Wait until balances ready; do not skip or notify.
 - Current code: Waits; no skip notification; rescan after timeout.
 
-### 11) Safe data loading
+### 12) Safe data loading
 - Expected: Wait; do not skip.
 - Current code: Treated as loading (no skip).
 
-### 12) Services loading
+### 13) Services loading
 - Expected: Wait; do not skip.
 - Current code: Treated as loading (no skip).
 
-### 13) Geo / Staking loading
+### 14) Geo / Staking loading
 - Expected: Wait; do not skip.
 - Current code: Treated as loading (no skip).
 
@@ -92,11 +97,11 @@ Use this file for step-by-step logical testing. Each case includes **Expected (f
 
 ## Start / Stop Failures
 
-### 14) Start fails
+### 15) Start fails
 - Expected: Retry with backoff, then skip/notify.
 - Current code: Retries with backoff; notifies start failed after retries.
 
-### 15) Stop fails
+### 16) Stop fails
 - Expected: Timeout; no infinite loop; surface error.
 - Current code: Timeout logs; rotation aborts.
 
@@ -104,11 +109,11 @@ Use this file for step-by-step logical testing. Each case includes **Expected (f
 
 ## Login / Offline / Query Disabled
 
-### 16) Auto-run enabled before login completes
+### 17) Auto-run enabled before login completes
 - Expected: Wait, do not skip.
 - Current code: Balances treated as loading until login; no skip.
 
-### 17) Offline
+### 18) Offline
 - Expected: Wait or disable auto-run with notice.
 - Current code: Treated as loading; no skip; rescan later.
 
@@ -116,7 +121,7 @@ Use this file for step-by-step logical testing. Each case includes **Expected (f
 
 ## Combinations
 
-### 18) 3 agents: 2 eligible, 1 under construction
+### 19) 3 agents: 2 eligible, 1 under construction
 - Steps:
   1. User is on eligible agent.
   2. Auto-run starts it.
@@ -127,11 +132,20 @@ Use this file for step-by-step logical testing. Each case includes **Expected (f
 - Expected: Skip only the under construction agent; cooldown 30m.
 - Current code: Same flow, but cooldown depends on “all earned rewards”; blocked agents use 10m scan delay.
 
-### 19) 2 agents: 1 eligible, 1 low balance
+### 20) 2 agents: 1 eligible, 1 low balance
 - Expected: Start eligible; skip low balance once; cooldown when eligible done.
 - Current code: Low balance skipped; uses 10m delay when only blocked remain.
 
-### 20) 1 agent: eligible but Safe loading
+### 21) 1 agent: eligible but Safe loading
+
+---
+
+## Transient / Race Conditions
+
+### 22) STOPPING race (Another agent running)
+- Steps: Rotation triggers; previous agent is STOPPING while next is selected.
+- Expected: Treated as transient wait; no skip or notification.
+- Current code: “Another agent running” is treated as Loading (wait + rescan).
 - Expected: Wait; start once Safe ready.
 - Current code: Waits (loading), no skip.
 

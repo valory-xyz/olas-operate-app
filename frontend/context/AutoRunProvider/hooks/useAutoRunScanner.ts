@@ -3,13 +3,11 @@ import { MutableRefObject, useCallback } from 'react';
 import { AgentType } from '@/constants';
 import { delayInSeconds } from '@/utils/delay';
 
+import {
+  SCAN_BLOCKED_DELAY_SECONDS,
+  SCAN_ELIGIBLE_DELAY_SECONDS,
+} from '../constants';
 import { AgentMeta } from '../types';
-
-/** When every candidate is blocked or missing data, wait longer before re-scan. */
-const SCAN_BLOCKED_DELAY_SECONDS = 10 * 60; // 10 minutes
-
-/** When all agents have already earned rewards, back off longer. */
-const SCAN_ELIGIBLE_DELAY_SECONDS = 30 * 60; // 30 minutes
 
 type UseAutoRunScannerParams = {
   enabledRef: MutableRefObject<boolean>;
@@ -72,11 +70,26 @@ export const useAutoRunScanner = ({
   logMessage,
 }: UseAutoRunScannerParams) => {
   const normalizeEligibility = useCallback(
-    (eligibility: { canRun: boolean; reason?: string; loadingReason?: string }) => {
+    (eligibility: {
+      canRun: boolean;
+      reason?: string;
+      loadingReason?: string;
+    }) => {
+      if (eligibility.reason === 'Another agent running') {
+        return {
+          canRun: false,
+          reason: 'Loading',
+          loadingReason: 'Another agent running',
+        };
+      }
       if (eligibility.reason !== 'Loading') return eligibility;
-      const loadingReason = eligibility.loadingReason?.split(',').map((item) => item.trim());
+      const loadingReason = eligibility.loadingReason
+        ?.split(',')
+        .map((item) => item.trim());
       const isOnlyBalances =
-        loadingReason && loadingReason.length === 1 && loadingReason[0] === 'Balances';
+        loadingReason &&
+        loadingReason.length === 1 &&
+        loadingReason[0] === 'Balances';
       if (!isOnlyBalances) return eligibility;
       const balances = getBalancesStatus();
       if (balances.ready && !balances.loading) {
@@ -146,6 +159,10 @@ export const useAutoRunScanner = ({
       let hasBlocked = false;
       let hasEligible = false;
       let candidate = findNextInOrder(startFrom);
+      if (!candidate) {
+        scheduleNextScan(SCAN_ELIGIBLE_DELAY_SECONDS);
+        return { started: false };
+      }
       const visited = new Set<AgentType>();
 
       while (candidate && !visited.has(candidate)) {
@@ -164,10 +181,19 @@ export const useAutoRunScanner = ({
 
         updateAgentType(candidate);
         markRewardSnapshotPending(candidate);
-        await waitForAgentSelection(candidate, candidateMeta.serviceConfigId);
+        const selectionReady = await waitForAgentSelection(
+          candidate,
+          candidateMeta.serviceConfigId,
+        );
+        if (!selectionReady) return { started: false };
         await refreshRewardsEligibility(candidate);
-        await waitForAgentSelection(candidate, candidateMeta.serviceConfigId);
-        await waitForBalancesReady();
+        const selectionReadyAfterRefresh = await waitForAgentSelection(
+          candidate,
+          candidateMeta.serviceConfigId,
+        );
+        if (!selectionReadyAfterRefresh) return { started: false };
+        const balancesReady = await waitForBalancesReady();
+        if (!balancesReady) return { started: false };
         const eligibilityReady = await waitForEligibilityReady();
         if (!eligibilityReady) {
           scheduleNextScan(30);
@@ -228,6 +254,7 @@ export const useAutoRunScanner = ({
       markRewardSnapshotPending,
       refreshRewardsEligibility,
       notifySkipOnce,
+      normalizeEligibility,
       scheduleNextScan,
       startAgentWithRetries,
       updateAgentType,
@@ -269,16 +296,19 @@ export const useAutoRunScanner = ({
     }
 
     markRewardSnapshotPending(selectedAgentType);
-    await waitForAgentSelection(
+    const selectionReady = await waitForAgentSelection(
       selectedAgentType,
       selectedMeta.serviceConfigId,
     );
+    if (!selectionReady) return false;
     await refreshRewardsEligibility(selectedAgentType);
-    await waitForAgentSelection(
+    const selectionReadyAfterRefresh = await waitForAgentSelection(
       selectedAgentType,
       selectedMeta.serviceConfigId,
     );
-    await waitForBalancesReady();
+    if (!selectionReadyAfterRefresh) return false;
+    const balancesReady = await waitForBalancesReady();
+    if (!balancesReady) return false;
     const eligibilityReady = await waitForEligibilityReady();
     if (!eligibilityReady) {
       scheduleNextScan(30);
@@ -334,6 +364,8 @@ export const useAutoRunScanner = ({
     selectedAgentType,
     startAgentWithRetries,
     waitForAgentSelection,
+    normalizeEligibility,
+    scheduleNextScan,
     waitForBalancesReady,
     waitForEligibilityReady,
     waitForRewardsEligibility,

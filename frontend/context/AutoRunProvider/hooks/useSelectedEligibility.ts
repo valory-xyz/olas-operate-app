@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { EvmChainId } from '@/constants';
 import { useServices } from '@/hooks';
@@ -29,13 +29,23 @@ export const useSelectedEligibility = ({
   const deployability = useDeployability({ safeEligibility });
   const isSelectedAgentDetailsLoading = deployability.isLoading;
 
-  const getSelectedEligibility = useCallback(
-    () => ({
+  const latestEligibilityRef = useRef({
+    canRun: deployability.canRun,
+    reason: deployability.reason,
+    loadingReason: deployability.loadingReason,
+  });
+
+  useEffect(() => {
+    latestEligibilityRef.current = {
       canRun: deployability.canRun,
       reason: deployability.reason,
       loadingReason: deployability.loadingReason,
-    }),
-    [deployability.canRun, deployability.loadingReason, deployability.reason],
+    };
+  }, [deployability.canRun, deployability.loadingReason, deployability.reason]);
+
+  const getSelectedEligibility = useCallback(
+    () => latestEligibilityRef.current,
+    [],
   );
 
   return {
