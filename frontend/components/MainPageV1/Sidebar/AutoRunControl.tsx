@@ -37,7 +37,6 @@ type AgentRowProps = {
   action?: {
     icon: ReactNode;
     onClick: () => void;
-    ariaLabel: string;
     isDanger?: boolean;
     isDisabled?: boolean;
   };
@@ -59,19 +58,18 @@ const AgentRow = ({ agentType, tooltip, action }: AgentRowProps) => {
           <Text className="text-sm">{name}</Text>
         </Flex>
       </Flex>
-      {action ? (
+      {action && (
         <Tooltip title={tooltip} placement="right">
           <Button
             size="small"
             type="text"
             danger={action.isDanger}
             disabled={action.isDisabled}
-            aria-label={action.ariaLabel}
             onClick={action.onClick}
             icon={action.icon}
           />
         </Tooltip>
-      ) : null}
+      )}
     </Flex>
   );
 };
@@ -133,11 +131,10 @@ export const AutoRunControl = () => {
                       key={`included-${agentType}`}
                       agentType={agentType}
                       action={{
-                        icon: <LuCircleMinus size={16} />,
-                        onClick: () => excludeAgent(agentType),
-                        ariaLabel: `Exclude ${agentType}`,
-                        isDanger: true,
                         isDisabled: isRunning,
+                        onClick: () => excludeAgent(agentType),
+                        isDanger: true,
+                        icon: <LuCircleMinus size={16} />,
                       }}
                       tooltip={
                         isRunning
@@ -167,10 +164,9 @@ export const AutoRunControl = () => {
                       key={`excluded-${agentType}`}
                       agentType={agentType}
                       action={{
-                        icon: <LuCirclePlus size={16} />,
-                        onClick: () => includeAgent(agentType),
-                        ariaLabel: `Include ${agentType}`,
                         isDisabled: isBlocked,
+                        onClick: () => includeAgent(agentType),
+                        icon: <LuCirclePlus size={16} />,
                       }}
                       tooltip={isBlocked ? null : 'Include agent in auto-run'}
                     />

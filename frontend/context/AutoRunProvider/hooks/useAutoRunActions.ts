@@ -38,6 +38,9 @@ type UseAutoRunActionsParams = {
   waitForRewardsEligibility: (
     agentType: AgentType,
   ) => Promise<boolean | undefined>;
+  refreshRewardsEligibility: (
+    agentType: AgentType,
+  ) => Promise<boolean | undefined>;
   waitForRunningAgent: (
     agentType: AgentType,
     timeoutSeconds: number,
@@ -82,6 +85,7 @@ export const useAutoRunActions = ({
   startService,
   waitForAgentSelection,
   waitForRewardsEligibility,
+  refreshRewardsEligibility,
   waitForRunningAgent,
   waitForStoppedAgent,
   markRewardSnapshotPending,
@@ -193,6 +197,7 @@ export const useAutoRunActions = ({
     getSelectedEligibility,
     waitForAgentSelection,
     waitForRewardsEligibility,
+    refreshRewardsEligibility,
     markRewardSnapshotPending,
     getRewardSnapshot,
     notifySkipOnce,

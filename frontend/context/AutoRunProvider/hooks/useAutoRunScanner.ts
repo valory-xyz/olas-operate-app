@@ -28,6 +28,9 @@ type UseAutoRunScannerParams = {
   waitForRewardsEligibility: (
     agentType: AgentType,
   ) => Promise<boolean | undefined>;
+  refreshRewardsEligibility: (
+    agentType: AgentType,
+  ) => Promise<boolean | undefined>;
   markRewardSnapshotPending: (agentType: AgentType) => void;
   getRewardSnapshot: (agentType: AgentType) => boolean | undefined;
   notifySkipOnce: (agentType: AgentType, reason?: string) => void;
@@ -55,6 +58,7 @@ export const useAutoRunScanner = ({
   getSelectedEligibility,
   waitForAgentSelection,
   waitForRewardsEligibility,
+  refreshRewardsEligibility,
   markRewardSnapshotPending,
   getRewardSnapshot,
   notifySkipOnce,
@@ -118,6 +122,7 @@ export const useAutoRunScanner = ({
         updateAgentType(candidate);
         markRewardSnapshotPending(candidate);
         await waitForAgentSelection(candidate, candidateMeta.serviceConfigId);
+        await refreshRewardsEligibility(candidate);
 
         const eligibility = getSelectedEligibility();
         if (!eligibility.canRun) {
@@ -160,6 +165,7 @@ export const useAutoRunScanner = ({
       getSelectedEligibility,
       logMessage,
       markRewardSnapshotPending,
+      refreshRewardsEligibility,
       notifySkipOnce,
       scheduleNextScan,
       startAgentWithRetries,
@@ -204,6 +210,7 @@ export const useAutoRunScanner = ({
       selectedAgentType,
       selectedMeta.serviceConfigId,
     );
+    await refreshRewardsEligibility(selectedAgentType);
     const eligibility = getSelectedEligibility();
     if (!eligibility.canRun) {
       const reason = formatEligibilityReason(eligibility);
@@ -211,6 +218,15 @@ export const useAutoRunScanner = ({
         `auto-run enable: selected ${selectedAgentType} blocked (${reason})`,
       );
       notifySkipOnce(selectedAgentType, reason);
+      return false;
+    }
+
+    const rewardsEligibility =
+      await waitForRewardsEligibility(selectedAgentType);
+    if (rewardsEligibility === true) {
+      logMessage(
+        `auto-run enable: ${selectedAgentType} already earned rewards`,
+      );
       return false;
     }
 
@@ -226,11 +242,13 @@ export const useAutoRunScanner = ({
     getRewardSnapshot,
     logMessage,
     markRewardSnapshotPending,
+    refreshRewardsEligibility,
     notifySkipOnce,
     orderedIncludedAgentTypes,
     selectedAgentType,
     startAgentWithRetries,
     waitForAgentSelection,
+    waitForRewardsEligibility,
   ]);
 
   return {

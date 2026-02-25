@@ -46,6 +46,7 @@ export const useAutoRunSignals = ({
   // Timer + tick used to rescan after delays.
   const scanTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [scanTick, setScanTick] = useState(0);
+  const [rewardsTick, setRewardsTick] = useState(0);
 
   // Keep the enabled ref fresh and clear any scheduled scan on disable.
   useEffect(() => {
@@ -83,6 +84,7 @@ export const useAutoRunSignals = ({
     logMessage(
       `rewards snapshot: ${selectedAgentType} -> ${String(isEligibleForRewards)}`,
     );
+    setRewardsTick((value) => value + 1);
   }, [isEligibleForRewards, logMessage, selectedAgentType]);
 
   // Cleanup pending scan timer on unmount.
@@ -138,6 +140,7 @@ export const useAutoRunSignals = ({
     (agentType: AgentType) => {
       rewardSnapshotRef.current[agentType] = undefined;
       logMessage(`rewards snapshot reset: ${agentType}`);
+      setRewardsTick((value) => value + 1);
     },
     [logMessage],
   );
@@ -145,6 +148,15 @@ export const useAutoRunSignals = ({
   const getRewardSnapshot = useCallback(
     (agentType: AgentType) => rewardSnapshotRef.current[agentType],
     [],
+  );
+
+  const setRewardSnapshot = useCallback(
+    (agentType: AgentType, value: boolean | undefined) => {
+      rewardSnapshotRef.current[agentType] = value;
+      logMessage(`rewards snapshot: ${agentType} -> ${String(value)}`);
+      setRewardsTick((current) => current + 1);
+    },
+    [logMessage],
   );
 
   // Wait until the running agent type matches the requested agent.
@@ -205,6 +217,7 @@ export const useAutoRunSignals = ({
     rewardSnapshotRef,
     lastRewardsEligibilityRef,
     scanTick,
+    rewardsTick,
     scheduleNextScan,
     waitForAgentSelection,
     waitForRewardsEligibility,
@@ -212,6 +225,7 @@ export const useAutoRunSignals = ({
     waitForStoppedAgent,
     markRewardSnapshotPending,
     getRewardSnapshot,
+    setRewardSnapshot,
   };
 };
 const REWARDS_WAIT_TIMEOUT_SECONDS = 20;
