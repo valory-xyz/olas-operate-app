@@ -5,6 +5,7 @@ import { ELIGIBILITY_REASON } from '@/context/AutoRunProvider/constants';
 import { useAgentRunning } from '@/hooks/useAgentRunning';
 import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRefillRequirementsContext';
 import { useIsAgentGeoRestricted } from '@/hooks/useIsAgentGeoRestricted';
+import { useIsInitiallyFunded } from '@/hooks/useIsInitiallyFunded';
 import { useOnlineStatusContext } from '@/hooks/useOnlineStatus';
 import { useServices } from '@/hooks/useServices';
 import { useSharedContext } from '@/hooks/useSharedContext';
@@ -53,6 +54,7 @@ export const useDeployability = ({
     hasEnoughServiceSlots,
     isSelectedStakingContractDetailsLoading,
   } = useActiveStakingContractDetails();
+  const { isInitialFunded } = useIsInitiallyFunded();
   const { isAgentGeoRestricted, isGeoLoading } = useIsAgentGeoRestricted({
     agentType: selectedAgentType,
     agentConfig: selectedAgentConfig,
@@ -77,12 +79,14 @@ export const useDeployability = ({
     if (isSelectedStakingContractDetailsLoading) reasons.push('Staking');
     if (isGeoLoading) reasons.push('Geo');
     if (safeEligibility?.isLoading) reasons.push('Safe');
+    if (isInitialFunded === undefined) reasons.push('Setup');
     return reasons;
   }, [
     isBalancesAndFundingRequirementsEnabledForAllServices,
     isBalancesAndFundingRequirementsLoadingForAllServices,
     isGeoLoading,
     isOnline,
+    isInitialFunded,
     isSelectedStakingContractDetailsLoading,
     isServicesLoading,
     safeEligibility?.isLoading,
@@ -151,6 +155,10 @@ export const useDeployability = ({
       return { isLoading, canRun: false, reason: 'Update required' };
     }
 
+    if (isInitialFunded === false) {
+      return { isLoading, canRun: false, reason: 'Unfinished setup' };
+    }
+
     // allow starting based on refill requirements
     if (!canStartSelectedAgent) {
       return { isLoading, canRun: false, reason: 'Low balance' };
@@ -165,6 +173,7 @@ export const useDeployability = ({
     isAgentsFunFieldUpdateRequired,
     isAnotherAgentRunning,
     isEligibleForStaking,
+    isInitialFunded,
     isLoading,
     isServiceStaked,
     safeEligibility,
