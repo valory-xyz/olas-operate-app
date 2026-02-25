@@ -79,7 +79,7 @@ Use this file for step-by-step logical testing. Each case includes **Expected (f
 
 ### 11) Balances loading
 - Expected: Wait until balances ready; do not skip or notify.
-- Current code: Waits; no skip notification; rescan after timeout.
+- Current code: Waits; no skip notification; no hard timeout while auto-run is enabled.
 
 ### 12) Safe data loading
 - Expected: Wait; do not skip.
@@ -115,7 +115,7 @@ Use this file for step-by-step logical testing. Each case includes **Expected (f
 
 ### 18) Offline
 - Expected: Wait or disable auto-run with notice.
-- Current code: Treated as loading; no skip; rescan later.
+- Current code: Treated as loading; no skip; no hard timeout while auto-run is enabled.
 
 ---
 
@@ -148,6 +148,34 @@ Use this file for step-by-step logical testing. Each case includes **Expected (f
 - Steps: Rotation triggers; previous agent is STOPPING while next is selected.
 - Expected: Treated as transient wait; no skip or notification.
 - Current code: “Another agent running” is treated as Loading (wait + rescan).
+
+---
+
+## Initialization
+
+### 23) `includedAgents` list is empty — fallback to all eligible agents
+- Preconditions: User has excluded all agents (or list was never populated).
+- Steps: Enable auto-run.
+- Expected: Auto-run still starts something; falls back to all configured, non-decommissioned agents.
+- Current code: `getOrderedIncludedAgentTypes` returns `eligibleAgentTypes` when `includedAgentsSorted` is empty.
+
+---
+
+## Startup Cooldown
+
+### 24) Cooldown after manual stop vs. first enable
+- Preconditions: Auto-run is already on; running agent is stopped manually (not via rotation).
+- Expected: Before rescanning, apply a short cooldown to avoid an immediate restart.
+- Current code: `wasAutoRunEnabledRef` tracks whether auto-run was already on before the startup effect fires. On first enable it starts immediately; on subsequent startup triggers (agent stopped while auto-run is already on) it waits `COOLDOWN_SECONDS` before scanning.
+
+---
+
+## Eligibility Edge Cases
+
+### 25) Stale “Loading: Balances” reason overridden by live balances context
+- Preconditions: `useDeployability` returns `{ canRun: false, reason: 'Loading', loadingReason: 'Balances' }` from a stale render, but the balances context is already ready.
+- Expected: Agent is treated as eligible (not stuck in a loading wait).
+- Current code: `normalizeEligibility` checks `isOnlyLoadingReason(eligibility, 'Balances')` and, if `getBalancesStatus()` shows ready and not loading, overrides to `{ canRun: true }`.
 
 ---
 

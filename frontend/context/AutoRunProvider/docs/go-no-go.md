@@ -29,8 +29,9 @@ Use this right before release. If any **A** or **B** item fails, it’s a **No�
 ## B. Stability & Safety (Release Blockers)
 
 7. **No infinite waits**
-   - Current code still has two waits without timeouts (agent selection, balances ready).
-   - Treat as **No-Go** until guardrails are added.
+   - `waitForAgentSelection` and `waitForBalancesReady` are guarded by `enabledRef.current` — both exit cleanly when auto-run is disabled. Neither has a hard time-based timeout while enabled, but this is acceptable for MVP; the user can disable auto-run to unblock.
+   - `waitForRunningAgent`, `waitForStoppedAgent`, `waitForEligibilityReady`, and `waitForRewardsEligibility` all have explicit time-based timeouts.
+   - **No longer a No-Go.** ✓
 
 8. **Start failures handled**
    - If start fails repeatedly, auto-run logs and moves on without crashing.

@@ -146,7 +146,7 @@ This checklist is organized as: **Scenario**, **Expected behavior**, **Current i
 
 28. **Balances query disabled (offline / not logged in)**
     - Expected: Wait until enabled; no skip.
-    - Current: Treated as loading; no skip. Wait loop has no timeout (can hang).
+    - Current: Treated as loading; no skip. `waitForBalancesReady` exits cleanly when `enabledRef.current` becomes false (no infinite hang). No hard time-based timeout; it waits until balances are ready or auto-run is disabled.
 
 29. **Single agent earns rewards (no other candidates)**
     - Expected: Keep running current agent; schedule long rescan (30m).
@@ -166,21 +166,39 @@ This checklist is organized as: **Scenario**, **Expected behavior**, **Current i
 
 ---
 
-## Infinite Loop Risks (Needs Guardrails)
+## Wait Loop Guardrails (No Hard Timeouts)
 
-These are potential infinite waits in current logic (should be addressed in code cleanup):
+These waits are guarded by `enabledRef.current`, but do not all have time-based timeouts:
 
-- **waitForAgentSelection() has no timeout**
-  - If selection never matches (service config mismatch, services not loaded), the loop can wait forever.
-  - Suggested guard: 30–60s timeout → rescan with backoff.
+- **waitForAgentSelection()** — guarded by `enabledRef.current`; exits and returns `false` when auto-run is disabled. Still has no hard time-based timeout if auto-run stays enabled and selection never resolves (e.g. service config mismatch). Acceptable because the user can disable auto-run to unblock.
 
-- **waitForBalancesReady() has no timeout**
-  - If balances query never enables (not logged in / offline) or stalls, auto-run can wait forever.
-  - Suggested guard: 30–60s timeout → rescan with backoff, or disable auto-run with user notice.
+- **waitForBalancesReady()** — guarded by `enabledRef.current`; exits when disabled. Same caveat: no hard timeout while enabled.
 
-- **waitForRunningAgent() / waitForStoppedAgent()**
-  - Has timeouts, but if backend keeps flapping, rotation can retry endlessly.
-  - Suggested guard: track retry counts per agent and back off or pause auto-run.
+- **waitForRunningAgent() / waitForStoppedAgent()** — both have explicit time-based timeouts (`START_TIMEOUT_SECONDS`). Log and return `false` on expiry; rotation aborts cleanly.
+
+- **waitForRewardsEligibility()** — 20 s hard timeout (`REWARDS_WAIT_TIMEOUT_SECONDS`); returns `undefined` and logs if snapshot never arrives.
+
+- **waitForEligibilityReady()** — 60 s hard timeout (`ELIGIBILITY_WAIT_TIMEOUT_MS`); then reschedules scan in 30 s.
+
+---
+
+## New Cases
+
+33. **`includedAgents` list is empty — fallback to eligible agents**
+    - Expected: Auto-run still starts something; uses full eligible (non-decommissioned) list.
+    - Current: `getOrderedIncludedAgentTypes` returns `eligibleAgentTypes` when `includedAgentsSorted` is empty.
+
+34. **Cooldown after manual stop vs. first enable**
+    - Expected: First enable → start immediately. Agent stops while auto-run stays on → wait `COOLDOWN_SECONDS` before rescanning.
+    - Current: `wasAutoRunEnabledRef` tracks prior enabled state; cooldown applied only on re-entry (not on first enable).
+
+35. **Stale "Loading: Balances" overridden by live balances context**
+    - Expected: Not stuck in a loading wait if balances context is already ready.
+    - Current: `normalizeEligibility` detects when `loadingReason` is only `'Balances'` and `getBalancesStatus()` shows ready; overrides to `{ canRun: true }`.
+
+36. **Rewards snapshot timeout (20 s)**
+    - Expected: If rewards API never returns after a fresh snapshot was cleared, auto-run continues without blocking.
+    - Current: `waitForRewardsEligibility` returns `undefined` after `REWARDS_WAIT_TIMEOUT_SECONDS = 20`; scanner treats `undefined` snapshot as "not yet earned" and proceeds.
 
 ---
 
@@ -188,4 +206,5 @@ These are potential infinite waits in current logic (should be addressed in code
 
 - Backend start can hang without timeout beyond `waitForRunningAgent`.
 - Rewards eligibility is selection-driven; polling used as a workaround.
-- Additional UI feedback for long waits could be added (optional).
+- `waitForAgentSelection` and `waitForBalancesReady` have no hard time-based timeout while auto-run is enabled (only `enabledRef` guard). Acceptable for MVP.
+- Two locations contain a hardcoded `30`-second rescan delay (eligibility timeout path and post-loading rescan in scanner); should be extracted to a named constant.
