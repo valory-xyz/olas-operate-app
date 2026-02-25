@@ -68,11 +68,7 @@ const useAvailableRewardsForEpoch = () => {
         currentChainId,
       );
     },
-    enabled:
-      !!isOnline &&
-      !!selectedStakingProgramId &&
-      !!serviceConfigId &&
-      hasStakingProgram,
+    enabled: !!isOnline && !!serviceConfigId && hasStakingProgram,
     refetchInterval: isOnline ? FIVE_SECONDS_INTERVAL : false,
   });
 };

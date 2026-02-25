@@ -73,7 +73,6 @@ export const createStakingRewardsQuery = ({
     enabled:
       !!isOnline &&
       !!serviceConfigId &&
-      !!stakingProgramId &&
       hasStakingProgram &&
       !!multisig &&
       isValidServiceId(serviceNftTokenId),

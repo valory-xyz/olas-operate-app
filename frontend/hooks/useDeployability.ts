@@ -31,20 +31,20 @@ export const useDeployability = ({
 }: {
   safeEligibility?: { ok: boolean; reason?: string; isLoading?: boolean };
 } = {}): DeployabilityResult => {
+  const { isOnline } = useOnlineStatusContext();
+  const { isAgentsFunFieldUpdateRequired } = useSharedContext();
+  const { isAnotherAgentRunning } = useAgentRunning();
   const {
     selectedAgentConfig,
     selectedAgentType,
     selectedService,
     isLoading: isServicesLoading,
   } = useServices();
-  const { isOnline } = useOnlineStatusContext();
-  const { isAnotherAgentRunning } = useAgentRunning();
   const {
     allowStartAgentByServiceConfigId,
     isBalancesAndFundingRequirementsEnabledForAllServices,
     isBalancesAndFundingRequirementsLoadingForAllServices,
   } = useBalanceAndRefillRequirementsContext();
-  const { isAgentsFunFieldUpdateRequired } = useSharedContext();
   const {
     isAgentEvicted,
     isEligibleForStaking,
@@ -52,7 +52,6 @@ export const useDeployability = ({
     hasEnoughServiceSlots,
     isSelectedStakingContractDetailsLoading,
   } = useActiveStakingContractDetails();
-
   const { isAgentGeoRestricted, isGeoLoading } = useIsAgentGeoRestricted({
     agentType: selectedAgentType,
     agentConfig: selectedAgentConfig,
@@ -87,6 +86,9 @@ export const useDeployability = ({
     isServicesLoading,
     safeEligibility?.isLoading,
   ]);
+
+  // If any of the loading reasons are true, we consider it loading.
+  // We also capture a combined loading reason string for display if needed.
   const isLoading = loadingReasons.length > 0;
   const loadingReason =
     loadingReasons.length > 0 ? loadingReasons.join(', ') : undefined;
@@ -105,7 +107,7 @@ export const useDeployability = ({
       return { isLoading, canRun: false, reason: 'Loading', loadingReason };
     }
 
-    // If service is under construction, return false
+    // If service is under construction
     if (selectedAgentConfig.isUnderConstruction) {
       return { isLoading, canRun: false, reason: 'Under construction' };
     }

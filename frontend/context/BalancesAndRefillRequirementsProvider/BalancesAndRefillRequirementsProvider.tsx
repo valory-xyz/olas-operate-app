@@ -47,7 +47,6 @@ import {
 export const BalancesAndRefillRequirementsProviderContext = createContext<{
   isBalancesAndFundingRequirementsLoading: boolean;
   isBalancesAndFundingRequirementsLoadingForAllServices: boolean;
-  isBalancesAndFundingRequirementsReady: boolean;
   isBalancesAndFundingRequirementsReadyForAllServices: boolean;
   isBalancesAndFundingRequirementsEnabledForAllServices: boolean;
   refillRequirements: Optional<AddressBalanceRecord | MasterSafeBalanceRecord>;
@@ -78,7 +77,6 @@ export const BalancesAndRefillRequirementsProviderContext = createContext<{
 }>({
   isBalancesAndFundingRequirementsLoading: false,
   isBalancesAndFundingRequirementsLoadingForAllServices: false,
-  isBalancesAndFundingRequirementsReady: false,
   isBalancesAndFundingRequirementsReadyForAllServices: false,
   isBalancesAndFundingRequirementsEnabledForAllServices: false,
   refillRequirements: undefined,
@@ -385,9 +383,6 @@ export const BalancesAndRefillRequirementsProvider = ({
       value={{
         isBalancesAndFundingRequirementsLoading,
         isBalancesAndFundingRequirementsLoadingForAllServices,
-        isBalancesAndFundingRequirementsReady:
-          !!balancesAndFundingRequirements &&
-          !isBalancesAndFundingRequirementsLoading,
         isBalancesAndFundingRequirementsReadyForAllServices:
           isBalancesAndFundingRequirementsEnabledForAllServices &&
           !isBalancesAndFundingRequirementsLoadingForAllServices,

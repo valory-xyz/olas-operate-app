@@ -32,6 +32,7 @@ export const useStartService = () => {
       createServiceIfMissing = false,
       createSafeIfNeeded,
     }: StartServiceInput) => {
+      // Ensure safe exists before starting or creating service, as it's a prerequisite for both.
       await createSafeIfNeeded();
 
       // If service exists, ensure it's up to date and start it
@@ -41,7 +42,7 @@ export const useStartService = () => {
         return service;
       }
 
-      // If service doesn't exist, create it if allowed, then start it
+      // If creating service is not allowed, throw an error since we can't proceed without a service.
       if (!createServiceIfMissing) {
         throw new Error(`Service not found for agent: ${agentType}`);
       }
@@ -49,6 +50,8 @@ export const useStartService = () => {
         throw new Error(`Staking program ID required for ${agentType}`);
       }
 
+      // Service template is required to create a new service,
+      // so find the appropriate template for the agent type.
       const serviceTemplate = SERVICE_TEMPLATES.find(
         (template) => template.agentType === agentType,
       );
@@ -56,6 +59,7 @@ export const useStartService = () => {
         throw new Error(`Service template not found for ${agentType}`);
       }
 
+      // Staking program is required to determine mech type for service creation
       const stakingProgram =
         STAKING_PROGRAMS[agentConfig.evmHomeChainId][stakingProgramId];
       if (!stakingProgram) {
