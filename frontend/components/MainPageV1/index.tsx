@@ -101,7 +101,12 @@ export const Main = () => {
       <Content $isSplitScreenPage={isSplitScreenPage} ref={contentContainerRef}>
         <MainDraggableTopBar $isSplitScreenPage={isSplitScreenPage} />
         <AchievementModal />
-        <PageTransition animationKey={pageState}>{mainContent}</PageTransition>
+        <PageTransition
+          animationKey={pageState}
+          className="flex-auto flex flex-col"
+        >
+          {mainContent}
+        </PageTransition>
       </Content>
     </MainLayout>
   );

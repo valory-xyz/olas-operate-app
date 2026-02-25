@@ -11,6 +11,8 @@ type PageTransitionProps = {
   exitY?: number;
   duration?: number;
   ease?: string | number[];
+  className?: string;
+  style?: React.CSSProperties;
 };
 
 /**
@@ -23,11 +25,15 @@ export const PageTransition = ({
   exitY = -8,
   duration = PAGE_TRANSITION_DURATION,
   ease = 'easeOut',
+  className,
+  style,
 }: PageTransitionProps) => {
   return (
     <AnimatePresence mode="wait">
       <motion.div
         key={animationKey}
+        className={className}
+        style={style}
         initial={{ opacity: 0, y: initialY }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: exitY }}

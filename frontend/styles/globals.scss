@@ -310,6 +310,10 @@ textarea.ant-input {
   display: flex;
 }
 
+.flex-col {
+  flex-direction: column;
+}
+
 .flex-auto {
   flex: auto;
 }

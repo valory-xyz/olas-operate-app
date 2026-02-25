@@ -130,8 +130,8 @@ export const Home = () => {
   );
 
   return (
-    <PageTransition animationKey={selectedAgentType}>
-      <Flex vertical gap={40} className="flex-auto">
+    <PageTransition animationKey={selectedAgentType} className="flex-auto">
+      <Flex vertical gap={40}>
         <Switcher value={view} onChange={handleChangeView} />
         {view === 'overview' && (
           <Overview
