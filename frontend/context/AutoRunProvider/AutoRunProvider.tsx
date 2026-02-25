@@ -19,7 +19,6 @@ import { useSelectedEligibility } from './hooks/useSelectedEligibility';
 import { AutoRunContextType } from './types';
 import {
   appendNewAgents,
-  buildIncludedAgentsFromOrder,
   getDecommissionedAgentTypes,
   normalizeIncludedAgents,
   sortIncludedAgents,
@@ -128,10 +127,11 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
     if (isInitialized) return;
     if (eligibleAgentTypes.length === 0) return;
 
-    updateAutoRun({
-      includedAgents: buildIncludedAgentsFromOrder(eligibleAgentTypes),
-      isInitialized: true,
-    });
+    const includedAgents = eligibleAgentTypes.map((agentType, index) => ({
+      agentType,
+      order: index,
+    }));
+    updateAutoRun({ includedAgents, isInitialized: true });
   }, [eligibleAgentTypes, isInitialized, services, updateAutoRun]);
 
   // Auto-append newly onboarded agents unless explicitly excluded by user.

@@ -16,14 +16,14 @@ const DEFAULT_AUTO_RUN: {
 };
 
 /**
- * Custom hook to manage the auto-run state.
+ * Hook to manage the auto-run state.
  */
 export const useAutoRunStore = () => {
   const { store } = useElectronApi();
   const { storeState } = useStore();
+  const autoRunRef = useRef(DEFAULT_AUTO_RUN);
 
   const autoRun = storeState?.autoRun;
-  const autoRunRef = useRef(DEFAULT_AUTO_RUN);
   if (autoRun) {
     autoRunRef.current = {
       enabled: !!autoRun.enabled,

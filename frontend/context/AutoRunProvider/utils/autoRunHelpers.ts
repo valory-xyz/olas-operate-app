@@ -5,6 +5,13 @@ import { AgentType } from '@/constants';
 import { REWARDS_POLL_SECONDS } from '../constants';
 import { AgentMeta } from '../types';
 
+/**
+ * Format eligibility into a human-readable reason for logs/UI.
+ *  * @example
+ * - { reason: 'Loading', loadingReason: 'Balances' } → "Loading: Balances"
+ * - { reason: 'Low balance' }                         → "Low balance"
+ * - {}                                                → "unknown"
+ */
 export const formatEligibilityReason = (eligibility: {
   reason?: string;
   loadingReason?: string;
@@ -15,6 +22,15 @@ export const formatEligibilityReason = (eligibility: {
   return eligibility.reason ?? 'unknown';
 };
 
+/**
+ * Fetch staking reward eligibility for an agent, throttled per agent type.
+ *  * @returns
+ * - true      – agent has earned its staking rewards for the current epoch
+ * - false     – agent has not yet earned rewards
+ * - undefined  – agent not found in configuredAgents, missing required staking
+ *               data (multisig / serviceNftTokenId / stakingProgramId), or
+ *               the API call failed
+ */
 export const refreshRewardsEligibility = async ({
   agentType,
   configuredAgents,
