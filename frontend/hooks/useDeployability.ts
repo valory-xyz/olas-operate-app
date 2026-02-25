@@ -1,7 +1,7 @@
 import { isNil } from 'lodash';
 import { useMemo } from 'react';
 
-import { ELIGIBILITY_REASON } from '@/context/AutoRunProvider';
+import { ELIGIBILITY_REASON } from '@/context/AutoRunProvider/constants';
 import { useAgentRunning } from '@/hooks/useAgentRunning';
 import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRefillRequirementsContext';
 import { useIsAgentGeoRestricted } from '@/hooks/useIsAgentGeoRestricted';
