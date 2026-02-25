@@ -7,6 +7,8 @@ import { delayInSeconds } from '@/utils/delay';
 
 import {
   COOLDOWN_SECONDS,
+  ELIGIBILITY_LOADING_REASON,
+  ELIGIBILITY_REASON,
   RETRY_BACKOFF_SECONDS,
   REWARDS_POLL_SECONDS,
   SCAN_ELIGIBLE_DELAY_SECONDS,
@@ -14,6 +16,7 @@ import {
 import { AgentMeta } from '../types';
 import {
   formatEligibilityReason,
+  isOnlyLoadingReason,
   refreshRewardsEligibility as refreshRewardsEligibilityHelper,
 } from '../utils/autoRunHelpers';
 import {
@@ -130,22 +133,18 @@ export const useAutoRunController = ({
       reason?: string;
       loadingReason?: string;
     }) => {
-      if (eligibility.reason === 'Another agent running') {
+      if (eligibility.reason === ELIGIBILITY_REASON.ANOTHER_AGENT_RUNNING) {
         return {
           canRun: false,
-          reason: 'Loading',
-          loadingReason: 'Another agent running',
+          reason: ELIGIBILITY_REASON.LOADING,
+          loadingReason: ELIGIBILITY_REASON.ANOTHER_AGENT_RUNNING,
         };
       }
-      if (eligibility.reason !== 'Loading') return eligibility;
-      const loadingReason = eligibility.loadingReason
-        ?.split(',')
-        .map((item) => item.trim());
-      const isOnlyBalances =
-        loadingReason &&
-        loadingReason.length === 1 &&
-        loadingReason[0] === 'Balances';
-      if (!isOnlyBalances) return eligibility;
+      if (
+        !isOnlyLoadingReason(eligibility, ELIGIBILITY_LOADING_REASON.BALANCES)
+      ) {
+        return eligibility;
+      }
       const balances = getBalancesStatus();
       if (balances.ready && !balances.loading) {
         return { canRun: true };
@@ -159,7 +158,7 @@ export const useAutoRunController = ({
     const startedAt = Date.now();
     while (enabledRef.current) {
       const eligibility = normalizeEligibility(getSelectedEligibility());
-      if (eligibility.reason !== 'Loading') return true;
+      if (eligibility.reason !== ELIGIBILITY_REASON.LOADING) return true;
       const now = Date.now();
       if (now - startedAt > 60_000) {
         logMessage('eligibility wait timeout');

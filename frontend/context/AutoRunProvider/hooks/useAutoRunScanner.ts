@@ -4,10 +4,15 @@ import { AgentType } from '@/constants';
 import { delayInSeconds } from '@/utils/delay';
 
 import {
+  ELIGIBILITY_LOADING_REASON,
+  ELIGIBILITY_REASON,
   SCAN_BLOCKED_DELAY_SECONDS,
   SCAN_ELIGIBLE_DELAY_SECONDS,
 } from '../constants';
 import { AgentMeta } from '../types';
+import { isOnlyLoadingReason } from '../utils/autoRunHelpers';
+
+const ELIGIBILITY_WAIT_TIMEOUT_MS = 60_000; // 1 minute
 
 type UseAutoRunScannerParams = {
   enabledRef: MutableRefObject<boolean>;
@@ -40,11 +45,15 @@ type UseAutoRunScannerParams = {
   logMessage: (message: string) => void;
 };
 
+// Format an eligibility payload into a single readable reason.
 const formatEligibilityReason = (eligibility: {
   reason?: string;
   loadingReason?: string;
 }) => {
-  if (eligibility.reason === 'Loading' && eligibility.loadingReason) {
+  if (
+    eligibility.reason === ELIGIBILITY_REASON.LOADING &&
+    eligibility.loadingReason
+  ) {
     return `Loading: ${eligibility.loadingReason}`;
   }
   return eligibility.reason ?? 'unknown';
@@ -69,28 +78,31 @@ export const useAutoRunScanner = ({
   scheduleNextScan,
   logMessage,
 }: UseAutoRunScannerParams) => {
+  // Normalize transient eligibility states into a consistent "Loading" signal.
   const normalizeEligibility = useCallback(
     (eligibility: {
       canRun: boolean;
       reason?: string;
       loadingReason?: string;
     }) => {
-      if (eligibility.reason === 'Another agent running') {
+      if (eligibility.reason === ELIGIBILITY_REASON.ANOTHER_AGENT_RUNNING) {
         return {
           canRun: false,
-          reason: 'Loading',
-          loadingReason: 'Another agent running',
+          reason: ELIGIBILITY_REASON.LOADING,
+          loadingReason: ELIGIBILITY_REASON.ANOTHER_AGENT_RUNNING,
         };
       }
-      if (eligibility.reason !== 'Loading') return eligibility;
-      const loadingReason = eligibility.loadingReason
-        ?.split(',')
-        .map((item) => item.trim());
-      const isOnlyBalances =
-        loadingReason &&
-        loadingReason.length === 1 &&
-        loadingReason[0] === 'Balances';
-      if (!isOnlyBalances) return eligibility;
+
+      // If the reason is already a loading reason, keep it as is to preserve context.
+      const isLoadingReason = !isOnlyLoadingReason(
+        eligibility,
+        ELIGIBILITY_LOADING_REASON.BALANCES,
+      );
+      if (isLoadingReason) {
+        return eligibility;
+      }
+
+      // If balances are still loading, report as a generic loading reason to avoid
       const balances = getBalancesStatus();
       if (balances.ready && !balances.loading) {
         return { canRun: true };
@@ -100,13 +112,13 @@ export const useAutoRunScanner = ({
     [getBalancesStatus],
   );
 
+  // Wait until eligibility is no longer loading, with a hard timeout.
   const waitForEligibilityReady = useCallback(async () => {
     const startedAt = Date.now();
     while (enabledRef.current) {
       const eligibility = normalizeEligibility(getSelectedEligibility());
-      if (eligibility.reason !== 'Loading') return true;
-      const now = Date.now();
-      if (now - startedAt > 60_000) {
+      if (eligibility.reason !== ELIGIBILITY_REASON.LOADING) return true;
+      if (Date.now() - startedAt > ELIGIBILITY_WAIT_TIMEOUT_MS) {
         logMessage('eligibility wait timeout');
         return false;
       }
@@ -114,6 +126,7 @@ export const useAutoRunScanner = ({
     }
     return false;
   }, [enabledRef, getSelectedEligibility, logMessage, normalizeEligibility]);
+
   // Iterate candidates in the included order, wrapping around once.
   const findNextInOrder = useCallback(
     (currentAgentType?: AgentType | null) => {
@@ -134,6 +147,8 @@ export const useAutoRunScanner = ({
   );
 
   // Start scanning from the item before the selected agent for a fair rotation.
+  // example: if order is [a,b,c] and currently selected is b, start from a.
+  // If currently selected is c, start from b.
   const getPreferredStartFrom = useCallback(() => {
     const length = orderedIncludedAgentTypes.length;
     if (length <= 1) return null;
@@ -158,8 +173,8 @@ export const useAutoRunScanner = ({
 
       while (candidate && !visited.has(candidate)) {
         if (!enabledRef.current) return { started: false };
-        visited.add(candidate);
 
+        visited.add(candidate);
         const candidateMeta = configuredAgents.find(
           (agent) => agent.agentType === candidate,
         );
@@ -169,6 +184,7 @@ export const useAutoRunScanner = ({
           continue;
         }
 
+        // Move selection to candidate and wait for dependent data.
         updateAgentType(candidate);
         markRewardSnapshotPending(candidate);
         const selectionReady = await waitForAgentSelection(
@@ -176,20 +192,24 @@ export const useAutoRunScanner = ({
           candidateMeta.serviceConfigId,
         );
         if (!selectionReady) return { started: false };
+
         await refreshRewardsEligibility(candidate);
         const selectionReadyAfterRefresh = await waitForAgentSelection(
           candidate,
           candidateMeta.serviceConfigId,
         );
         if (!selectionReadyAfterRefresh) return { started: false };
+
         const balancesReady = await waitForBalancesReady();
         if (!balancesReady) return { started: false };
+
         const eligibilityReady = await waitForEligibilityReady();
         if (!eligibilityReady) {
           scheduleNextScan(30);
           return { started: false };
         }
 
+        // Evaluate eligibility and rewards before attempting a start.
         const eligibility = normalizeEligibility(getSelectedEligibility());
         if (!eligibility.canRun) {
           const reason = formatEligibilityReason(eligibility);
@@ -254,14 +274,10 @@ export const useAutoRunScanner = ({
     const selectedMeta = configuredAgents.find(
       (agent) => agent.agentType === selectedAgentType,
     );
-    if (!selectedMeta) {
-      return false;
-    }
+    if (!selectedMeta) return false;
 
     const rewardSnapshot = getRewardSnapshot(selectedAgentType);
-    if (rewardSnapshot === true) {
-      return false;
-    }
+    if (rewardSnapshot === true) return false;
 
     markRewardSnapshotPending(selectedAgentType);
     const selectionReady = await waitForAgentSelection(
@@ -269,14 +285,17 @@ export const useAutoRunScanner = ({
       selectedMeta.serviceConfigId,
     );
     if (!selectionReady) return false;
+
     await refreshRewardsEligibility(selectedAgentType);
     const selectionReadyAfterRefresh = await waitForAgentSelection(
       selectedAgentType,
       selectedMeta.serviceConfigId,
     );
     if (!selectionReadyAfterRefresh) return false;
+
     const balancesReady = await waitForBalancesReady();
     if (!balancesReady) return false;
+
     const eligibilityReady = await waitForEligibilityReady();
     if (!eligibilityReady) {
       scheduleNextScan(30);

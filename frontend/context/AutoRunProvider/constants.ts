@@ -37,3 +37,13 @@ export const SCAN_BLOCKED_DELAY_SECONDS = 10 * 60; // 10 minutes
  * Value: 30 minutes
  */
 export const SCAN_ELIGIBLE_DELAY_SECONDS = 30 * 60; // 30 minutes
+
+/** Eligibility reason labels used by deployability and auto-run. */
+export const ELIGIBILITY_REASON = {
+  LOADING: 'Loading',
+  ANOTHER_AGENT_RUNNING: 'Another agent running',
+} as const;
+
+export const ELIGIBILITY_LOADING_REASON = {
+  BALANCES: 'Balances',
+} as const;

@@ -4,6 +4,12 @@ import { AgentType } from '@/constants';
 import { useBalanceAndRefillRequirementsContext } from '@/hooks';
 import { delayInSeconds } from '@/utils/delay';
 
+/**
+ * Constants for timeouts and intervals used in auto-run signals,
+ * such as waiting for rewards eligibility or balances to be ready.
+ */
+const REWARDS_WAIT_TIMEOUT_SECONDS = 20;
+
 type UseAutoRunSignalsParams = {
   enabled: boolean;
   runningAgentType: AgentType | null;
@@ -34,7 +40,7 @@ export const useAutoRunSignals = ({
     refetch,
   } = useBalanceAndRefillRequirementsContext();
 
-  // Refs keep async loops in sync with live state.
+  // NOTE: Refs keep async loops in sync with live state without re-render churn.
   const enabledRef = useRef(enabled);
   const runningAgentTypeRef = useRef(runningAgentType);
   const isSelectedAgentDetailsLoadingRef = useRef(
@@ -78,27 +84,20 @@ export const useAutoRunSignals = ({
   useEffect(() => {
     runningAgentTypeRef.current = runningAgentType;
   }, [runningAgentType]);
-
-  // Track selected-agent loading state to avoid stale closures.
   useEffect(() => {
     isSelectedAgentDetailsLoadingRef.current = isSelectedAgentDetailsLoading;
   }, [isSelectedAgentDetailsLoading]);
-
   useEffect(() => {
     balancesReadyRef.current =
       isBalancesAndFundingRequirementsReadyForAllServices;
   }, [isBalancesAndFundingRequirementsReadyForAllServices]);
-
   useEffect(() => {
     balancesLoadingRef.current =
       isBalancesAndFundingRequirementsLoadingForAllServices;
   }, [isBalancesAndFundingRequirementsLoadingForAllServices]);
-
-  // Track current UI selection and its service config id.
   useEffect(() => {
     selectedAgentTypeRef.current = selectedAgentType;
   }, [selectedAgentType]);
-
   useEffect(() => {
     const previous = selectedServiceConfigIdRef.current;
     selectedServiceConfigIdRef.current = selectedServiceConfigId;
@@ -127,12 +126,12 @@ export const useAutoRunSignals = ({
   const waitForAgentSelection = useCallback(
     async (agentType: AgentType, serviceConfigId?: string | null) => {
       while (enabledRef.current) {
-        if (
+        const isSelectedAgent =
           !isSelectedAgentDetailsLoadingRef.current &&
           selectedAgentTypeRef.current === agentType &&
           (serviceConfigId == null ||
-            selectedServiceConfigIdRef.current === serviceConfigId)
-        ) {
+            selectedServiceConfigIdRef.current === serviceConfigId);
+        if (isSelectedAgent) {
           return true;
         }
         await delayInSeconds(2);
@@ -142,9 +141,9 @@ export const useAutoRunSignals = ({
     [],
   );
 
+  // Wait until balances are ready, with periodic refetches on long waits.
   const waitForBalancesReady = useCallback(async () => {
     if (balancesReadyRef.current && !balancesLoadingRef.current) return true;
-    let lastLogAt = Date.now();
     let lastRefetchAt = Date.now();
     while (enabledRef.current) {
       if (balancesReadyRef.current && !balancesLoadingRef.current) {
@@ -158,9 +157,6 @@ export const useAutoRunSignals = ({
         refetch().catch((error) => {
           logMessage(`balances refetch failed: ${error}`);
         });
-      }
-      if (now - lastLogAt >= 10000) {
-        lastLogAt = now;
       }
     }
     return false;
@@ -271,4 +267,3 @@ export const useAutoRunSignals = ({
     getBalancesStatus,
   };
 };
-const REWARDS_WAIT_TIMEOUT_SECONDS = 20;

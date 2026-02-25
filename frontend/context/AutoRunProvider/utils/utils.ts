@@ -125,3 +125,32 @@ export const getDecommissionedAgentTypes = (configuredAgents: AgentMeta[]) =>
         agent.agentConfig.isAgentEnabled === false,
     )
     .map((agent) => agent.agentType);
+
+export const getEligibleAgentTypes = (
+  configuredAgentTypes: AgentType[],
+  decommissionedAgentTypes: AgentType[],
+) => {
+  if (configuredAgentTypes.length === 0) return [];
+  const blocked = new Set(decommissionedAgentTypes);
+  return configuredAgentTypes.filter((agentType) => !blocked.has(agentType));
+};
+
+export const getOrderedIncludedAgentTypes = (
+  includedAgentsSorted: { agentType: AgentType }[],
+  eligibleAgentTypes: AgentType[],
+) => {
+  if (includedAgentsSorted.length > 0) {
+    return includedAgentsSorted.map((agent) => agent.agentType);
+  }
+  return eligibleAgentTypes;
+};
+
+export const getExcludedAgentTypes = (
+  configuredAgentTypes: AgentType[],
+  orderedIncludedAgentTypes: AgentType[],
+) => {
+  const includedSet = new Set(orderedIncludedAgentTypes);
+  return configuredAgentTypes.filter(
+    (agentType) => !includedSet.has(agentType),
+  );
+};

@@ -1,6 +1,7 @@
 import { isNil } from 'lodash';
 import { useMemo } from 'react';
 
+import { ELIGIBILITY_REASON } from '@/context/AutoRunProvider';
 import { useAgentRunning } from '@/hooks/useAgentRunning';
 import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRefillRequirementsContext';
 import { useIsAgentGeoRestricted } from '@/hooks/useIsAgentGeoRestricted';
@@ -104,7 +105,12 @@ export const useDeployability = ({
     }
 
     if (isLoading) {
-      return { isLoading, canRun: false, reason: 'Loading', loadingReason };
+      return {
+        isLoading,
+        canRun: false,
+        reason: ELIGIBILITY_REASON.LOADING,
+        loadingReason,
+      };
     }
 
     // If service is under construction
@@ -121,7 +127,11 @@ export const useDeployability = ({
 
     // If another agent is running
     if (isAnotherAgentRunning) {
-      return { isLoading, canRun: false, reason: 'Another agent running' };
+      return {
+        isLoading,
+        canRun: false,
+        reason: ELIGIBILITY_REASON.ANOTHER_AGENT_RUNNING,
+      };
     }
 
     // If not enough service slots, and service is not staked
