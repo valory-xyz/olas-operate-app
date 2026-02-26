@@ -44,6 +44,7 @@ import {
 import { BackupSeedPhraseAlert } from '../BackupSeedPhraseAlert';
 import { UpdateAvailableAlert } from '../UpdateAvailableAlert/UpdateAvailableAlert';
 import { UpdateAvailableModal } from '../UpdateAvailableAlert/UpdateAvailableModal';
+import { AutoRunControl } from './AutoRunControl';
 import { PulseDot } from './PulseDot';
 
 const { Sider } = Layout;
@@ -270,8 +271,13 @@ export const Sidebar = () => {
           <div>
             <MyAgentsHeader />
 
-            <Flex vertical gap={16}>
-              <Text className="font-weight-600">My Agents</Text>
+            <Flex vertical gap={16} className="w-full">
+              <Flex justify="space-between" align="center">
+                <Text className="font-weight-600" style={{ flex: 1 }}>
+                  My Agents
+                </Text>
+                <AutoRunControl />
+              </Flex>
               {isLoading || isMasterWalletLoading ? (
                 <AgentMenuLoading />
               ) : myAgents.length > 0 ? (

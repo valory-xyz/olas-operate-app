@@ -9,6 +9,7 @@ import {
   useMemo,
 } from 'react';
 
+import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
 import { FIVE_SECONDS_INTERVAL, REACT_QUERY_KEYS } from '@/constants';
 import { useElectronApi, useServices, useStore } from '@/hooks';
 import { useAgentStakingRewardsDetails } from '@/hooks/useAgentStakingRewardsDetails';
@@ -22,7 +23,7 @@ export const RewardContext = createContext<{
   stakingRewardsDetails?: Nullable<StakingRewardsInfo>;
   /** current epoch rewards */
   accruedServiceStakingRewards?: number;
-  availableRewardsForEpoch?: bigint;
+  availableRewardsForEpoch?: bigint | null;
   availableRewardsForEpochEth?: number;
   isEligibleForRewards?: boolean;
   optimisticRewardsEarnedForEpoch?: number;
@@ -50,6 +51,9 @@ const useAvailableRewardsForEpoch = () => {
   const serviceConfigId =
     isLoaded && selectedService ? selectedService?.service_config_id : null;
   const currentChainId = selectedAgentConfig.evmHomeChainId;
+  const hasStakingProgram =
+    !!selectedStakingProgramId &&
+    !!STAKING_PROGRAMS[currentChainId]?.[selectedStakingProgramId];
 
   return useQuery({
     queryKey: REACT_QUERY_KEYS.AVAILABLE_REWARDS_FOR_EPOCH_KEY(
@@ -58,12 +62,13 @@ const useAvailableRewardsForEpoch = () => {
       selectedStakingProgramId!,
     ),
     queryFn: async () => {
+      if (!hasStakingProgram) return null;
       return await selectedAgentConfig.serviceApi.getAvailableRewardsForEpoch(
         selectedStakingProgramId!,
         currentChainId,
       );
     },
-    enabled: !!isOnline && !!selectedStakingProgramId && !!serviceConfigId,
+    enabled: !!isOnline && !!serviceConfigId && hasStakingProgram,
     refetchInterval: isOnline ? FIVE_SECONDS_INTERVAL : false,
   });
 };
