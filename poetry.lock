@@ -2275,41 +2275,34 @@ nicer-shell = ["ipython"]
 
 [[package]]
 name = "olas-operate-middleware"
-version = "0.14.17"
+version = "0.14.18"
 description = ""
 optional = false
 python-versions = "<3.12,>=3.10"
 groups = ["main"]
 files = [
-    {file = "olas_operate_middleware-0.14.17-py3-none-any.whl", hash = "sha256:4d297d15c1b158124b71875cace93409d4bd8caa919f3c1922f90c64bb9ecdb2"},
-    {file = "olas_operate_middleware-0.14.17.tar.gz", hash = "sha256:f4a1d09f83e1803866ffb2de038093f1d954ef845c824d5f846a3fe1f68a2e38"},
+    {file = "olas_operate_middleware-0.14.18-py3-none-any.whl", hash = "sha256:4c54bd298b4ea00f165de1979759235238c21b59557cbc14ba62c91c6ce53534"},
+    {file = "olas_operate_middleware-0.14.18.tar.gz", hash = "sha256:8335d45566862ecd501baa008b5c5413f78132a15ee7f6c6bab5fbf3daa08eec"},
 ]
-develop = false
 
 [package.dependencies]
-argon2-cffi = "==23.1.0"
-clea = "==0.1.0rc4"
-cryptography = "^46.0.3"
-cytoolz = "==0.12.3"
-deepdiff = "^8.6.1"
+argon2-cffi = "23.1.0"
+clea = "0.1.0rc4"
+cryptography = ">=46.0.3,<47.0.0"
+cytoolz = "0.12.3"
+deepdiff = ">=8.6.1,<9.0.0"
 fastapi = "0.110.3"
-halo = "==0.0.31"
-multiaddr = "==0.0.9"
-open-aea-cli-ipfs = "^2.0.8"
-open-aea-ledger-cosmos = "^2.0.8"
-open-aea-ledger-ethereum = "^2.0.8"
-open-aea-ledger-ethereum-flashbots = "^2.0.8"
-open-autonomy = "^0.21.11"
-psutil = "^5.9.8"
-pyinstaller = "^6.8.0"
-requests-mock = "^1.12.1"
-uvicorn = "==0.27.0"
-
-[package.source]
-type = "git"
-url = "https://github.com/valory-xyz/olas-operate-middleware.git"
-reference = "2cb54c5316f40ce023bc26da14d588eccf7852c1"
-resolved_reference = "2cb54c5316f40ce023bc26da14d588eccf7852c1"
+halo = "0.0.31"
+multiaddr = "0.0.9"
+open-aea-cli-ipfs = ">=2.0.8,<3.0.0"
+open-aea-ledger-cosmos = ">=2.0.8,<3.0.0"
+open-aea-ledger-ethereum = ">=2.0.8,<3.0.0"
+open-aea-ledger-ethereum-flashbots = ">=2.0.8,<3.0.0"
+open-autonomy = ">=0.21.11,<0.22.0"
+psutil = ">=5.9.8,<6.0.0"
+pyinstaller = ">=6.8.0,<7.0.0"
+requests-mock = ">=1.12.1,<2.0.0"
+uvicorn = "0.27.0"
 
 [[package]]
 name = "open-aea"
@@ -4065,4 +4058,4 @@ propcache = ">=0.2.1"
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<3.12"
-content-hash = "7692cc9cbaec0fb0052ce90ff87bb7cdfc1fd54d3f689362d7e3edd51c3d9a78"
+content-hash = "996605000aa7c008f8c0f7773ebceeca1d70d0c120035c905d0e05037a9767ca"
