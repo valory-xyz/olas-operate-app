@@ -122,10 +122,7 @@ export const useAutoRunScanner = ({
         return false;
       }
       const ok = await sleepAwareDelay(2);
-      if (!ok) {
-        logMessage('sleep detected in waitForEligibilityReady');
-        return false;
-      }
+      if (!ok) return false;
     }
     return false;
   }, [enabledRef, getSelectedEligibility, logMessage, normalizeEligibility]);

@@ -173,10 +173,7 @@ export const useAutoRunController = ({
         return false;
       }
       const ok = await sleepAwareDelay(2);
-      if (!ok) {
-        logMessage('sleep detected in waitForEligibilityReady');
-        return false;
-      }
+      if (!ok) return false;
     }
     return false;
   }, [enabledRef, getSelectedEligibility, logMessage, normalizeEligibility]);
@@ -248,10 +245,7 @@ export const useAutoRunController = ({
               logMessage(`start error for ${agentType}: ${error}`);
             }
             const retryOk = await sleepAwareDelay(RETRY_BACKOFF_SECONDS[attempt]);
-            if (!retryOk) {
-              logMessage('sleep detected during start retry backoff');
-              return false;
-            }
+            if (!retryOk) return false;
           }
         } finally {
           onAutoRunStartStateChange?.(false);
@@ -366,10 +360,7 @@ export const useAutoRunController = ({
       }
       if (!enabledRef.current) return;
       const cooldownOk = await sleepAwareDelay(COOLDOWN_SECONDS);
-      if (!cooldownOk) {
-        logMessage('sleep detected during rotation cooldown');
-        return;
-      }
+      if (!cooldownOk) return;
       if (!enabledRef.current) return;
       await scanAndStartNextRef.current(currentAgentType);
     },
@@ -477,10 +468,7 @@ export const useAutoRunController = ({
       const preferredStartFrom = getPreferredStartFromRef.current();
       if (!wasEnabled) {
         const startOk = await sleepAwareDelay(AUTO_RUN_START_DELAY_SECONDS);
-        if (!startOk) {
-          logMessage('sleep detected during auto-run start delay');
-          return;
-        }
+        if (!startOk) return;
         if (!enabledRef.current || runningAgentTypeRef.current) return;
         const startedSelected =
           await startSelectedAgentIfEligibleRef.current();
@@ -489,10 +477,7 @@ export const useAutoRunController = ({
         return;
       }
       const cooldownOk = await sleepAwareDelay(COOLDOWN_SECONDS);
-      if (!cooldownOk) {
-        logMessage('sleep detected during manual stop cooldown');
-        return;
-      }
+      if (!cooldownOk) return;
       if (!enabledRef.current) return;
       await scanAndStartNextRef.current(preferredStartFrom);
     };

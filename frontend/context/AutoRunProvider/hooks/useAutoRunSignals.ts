@@ -135,14 +135,11 @@ export const useAutoRunSignals = ({
           return true;
         }
         const ok = await sleepAwareDelay(2);
-        if (!ok) {
-          logMessage('sleep detected in waitForAgentSelection');
-          return false;
-        }
+        if (!ok) return false;
       }
       return false;
     },
-    [logMessage],
+    [],
   );
 
   // Track when balance data was last updated to detect stale data after sleep/wake.
@@ -186,10 +183,7 @@ export const useAutoRunSignals = ({
         return true;
       }
       const ok = await sleepAwareDelay(2);
-      if (!ok) {
-        logMessage('sleep detected in waitForBalancesReady');
-        return false;
-      }
+      if (!ok) return false;
       const now = Date.now();
       if (!didRefetchBalancesRef.current && now - lastRefetchAt >= 15000) {
         didRefetchBalancesRef.current = true;
@@ -217,10 +211,7 @@ export const useAutoRunSignals = ({
           return undefined;
         }
         const ok = await sleepAwareDelay(2);
-        if (!ok) {
-          logMessage('sleep detected in waitForRewardsEligibility');
-          return undefined;
-        }
+        if (!ok) return undefined;
       }
       const value = rewardSnapshotRef.current[agentType];
       return value;
@@ -265,10 +256,7 @@ export const useAutoRunSignals = ({
       ) {
         if (runningAgentTypeRef.current === agentType) return true;
         const ok = await sleepAwareDelay(5);
-        if (!ok) {
-          logMessage('sleep detected in waitForRunningAgent');
-          return false;
-        }
+        if (!ok) return false;
       }
       if (enabledRef.current) logMessage(`running timeout: ${agentType}`);
       return false;
@@ -286,10 +274,7 @@ export const useAutoRunSignals = ({
       ) {
         if (runningAgentTypeRef.current !== agentType) return true;
         const ok = await sleepAwareDelay(5);
-        if (!ok) {
-          logMessage('sleep detected in waitForStoppedAgent');
-          return false;
-        }
+        if (!ok) return false;
       }
       if (enabledRef.current) logMessage(`stop timeout: ${agentType}`);
       return false;
