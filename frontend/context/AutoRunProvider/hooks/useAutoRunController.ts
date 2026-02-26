@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef } from 'react';
 import { AgentType } from '@/constants';
 import { useAgentRunning, useRewardContext, useStartService } from '@/hooks';
 import { ServicesService } from '@/service/Services';
-import { delayInSeconds } from '@/utils/delay';
+import { sleepAwareDelay } from '@/utils/delay';
 
 import {
   AUTO_RUN_START_DELAY_SECONDS,
@@ -172,7 +172,11 @@ export const useAutoRunController = ({
         logMessage('eligibility wait timeout');
         return false;
       }
-      await delayInSeconds(2);
+      const ok = await sleepAwareDelay(2);
+      if (!ok) {
+        logMessage('sleep detected in waitForEligibilityReady');
+        return false;
+      }
     }
     return false;
   }, [enabledRef, getSelectedEligibility, logMessage, normalizeEligibility]);
@@ -243,7 +247,11 @@ export const useAutoRunController = ({
             } catch (error) {
               logMessage(`start error for ${agentType}: ${error}`);
             }
-            await delayInSeconds(RETRY_BACKOFF_SECONDS[attempt]);
+            const retryOk = await sleepAwareDelay(RETRY_BACKOFF_SECONDS[attempt]);
+            if (!retryOk) {
+              logMessage('sleep detected during start retry backoff');
+              return false;
+            }
           }
         } finally {
           onAutoRunStartStateChange?.(false);
@@ -357,7 +365,11 @@ export const useAutoRunController = ({
         return;
       }
       if (!enabledRef.current) return;
-      await delayInSeconds(COOLDOWN_SECONDS);
+      const cooldownOk = await sleepAwareDelay(COOLDOWN_SECONDS);
+      if (!cooldownOk) {
+        logMessage('sleep detected during rotation cooldown');
+        return;
+      }
       if (!enabledRef.current) return;
       await scanAndStartNextRef.current(currentAgentType);
     },
@@ -464,7 +476,11 @@ export const useAutoRunController = ({
     const startNext = async () => {
       const preferredStartFrom = getPreferredStartFromRef.current();
       if (!wasEnabled) {
-        await delayInSeconds(AUTO_RUN_START_DELAY_SECONDS);
+        const startOk = await sleepAwareDelay(AUTO_RUN_START_DELAY_SECONDS);
+        if (!startOk) {
+          logMessage('sleep detected during auto-run start delay');
+          return;
+        }
         if (!enabledRef.current || runningAgentTypeRef.current) return;
         const startedSelected =
           await startSelectedAgentIfEligibleRef.current();
@@ -472,7 +488,11 @@ export const useAutoRunController = ({
         await scanAndStartNextRef.current(preferredStartFrom);
         return;
       }
-      await delayInSeconds(COOLDOWN_SECONDS);
+      const cooldownOk = await sleepAwareDelay(COOLDOWN_SECONDS);
+      if (!cooldownOk) {
+        logMessage('sleep detected during manual stop cooldown');
+        return;
+      }
       if (!enabledRef.current) return;
       await scanAndStartNextRef.current(preferredStartFrom);
     };

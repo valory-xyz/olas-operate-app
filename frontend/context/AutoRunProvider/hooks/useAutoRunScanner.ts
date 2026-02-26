@@ -1,7 +1,7 @@
 import { MutableRefObject, useCallback } from 'react';
 
 import { AgentType } from '@/constants';
-import { delayInSeconds } from '@/utils/delay';
+import { sleepAwareDelay } from '@/utils/delay';
 
 import {
   ELIGIBILITY_LOADING_REASON,
@@ -121,7 +121,11 @@ export const useAutoRunScanner = ({
         logMessage('eligibility wait timeout');
         return false;
       }
-      await delayInSeconds(2);
+      const ok = await sleepAwareDelay(2);
+      if (!ok) {
+        logMessage('sleep detected in waitForEligibilityReady');
+        return false;
+      }
     }
     return false;
   }, [enabledRef, getSelectedEligibility, logMessage, normalizeEligibility]);

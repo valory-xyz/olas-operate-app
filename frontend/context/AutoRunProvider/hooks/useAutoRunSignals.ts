@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { AgentType } from '@/constants';
 import { useBalanceAndRefillRequirementsContext } from '@/hooks';
-import { delayInSeconds } from '@/utils/delay';
+import { sleepAwareDelay } from '@/utils/delay';
 
 /**
  * Constants for timeouts and intervals used in auto-run signals,
@@ -134,22 +134,62 @@ export const useAutoRunSignals = ({
         if (isSelectedAgent) {
           return true;
         }
-        await delayInSeconds(2);
+        const ok = await sleepAwareDelay(2);
+        if (!ok) {
+          logMessage('sleep detected in waitForAgentSelection');
+          return false;
+        }
       }
       return false;
     },
-    [],
+    [logMessage],
   );
 
+  // Track when balance data was last updated to detect stale data after sleep/wake.
+  const balanceLastUpdatedRef = useRef(Date.now());
+  useEffect(() => {
+    balanceLastUpdatedRef.current = Date.now();
+  }, [isBalancesAndFundingRequirementsReadyForAllServices]);
+
   // Wait until balances are ready, with periodic refetches on long waits.
+  // After sleep/wake the balance ref may still be `true` from before sleep,
+  // so we also check freshness before accepting the cached value.
+  const BALANCE_STALENESS_MS = 60_000;
   const waitForBalancesReady = useCallback(async () => {
-    if (balancesReadyRef.current && !balancesLoadingRef.current) return true;
+    const isFresh = () =>
+      Date.now() - balanceLastUpdatedRef.current < BALANCE_STALENESS_MS;
+
+    if (
+      balancesReadyRef.current &&
+      !balancesLoadingRef.current &&
+      isFresh()
+    ) {
+      return true;
+    }
+
+    // If balances are stale (e.g. after sleep), force a refetch.
+    if (!isFresh()) {
+      logMessage('balances stale, triggering refetch');
+      didRefetchBalancesRef.current = false;
+      refetch().catch((error) => {
+        logMessage(`balances refetch failed: ${error}`);
+      });
+    }
+
     let lastRefetchAt = Date.now();
     while (enabledRef.current) {
-      if (balancesReadyRef.current && !balancesLoadingRef.current) {
+      if (
+        balancesReadyRef.current &&
+        !balancesLoadingRef.current &&
+        isFresh()
+      ) {
         return true;
       }
-      await delayInSeconds(2);
+      const ok = await sleepAwareDelay(2);
+      if (!ok) {
+        logMessage('sleep detected in waitForBalancesReady');
+        return false;
+      }
       const now = Date.now();
       if (!didRefetchBalancesRef.current && now - lastRefetchAt >= 15000) {
         didRefetchBalancesRef.current = true;
@@ -160,7 +200,7 @@ export const useAutoRunSignals = ({
       }
     }
     return false;
-  }, [logMessage, refetch]);
+  }, [isBalancesAndFundingRequirementsReadyForAllServices, logMessage, refetch]);
 
   // Wait for rewards eligibility to be populated for a given agent.
   const waitForRewardsEligibility = useCallback(
@@ -176,7 +216,11 @@ export const useAutoRunSignals = ({
           );
           return undefined;
         }
-        await delayInSeconds(2);
+        const ok = await sleepAwareDelay(2);
+        if (!ok) {
+          logMessage('sleep detected in waitForRewardsEligibility');
+          return undefined;
+        }
       }
       const value = rewardSnapshotRef.current[agentType];
       return value;
@@ -220,7 +264,11 @@ export const useAutoRunSignals = ({
         Date.now() - startedAt < timeoutSeconds * 1000
       ) {
         if (runningAgentTypeRef.current === agentType) return true;
-        await delayInSeconds(5);
+        const ok = await sleepAwareDelay(5);
+        if (!ok) {
+          logMessage('sleep detected in waitForRunningAgent');
+          return false;
+        }
       }
       if (enabledRef.current) logMessage(`running timeout: ${agentType}`);
       return false;
@@ -237,7 +285,11 @@ export const useAutoRunSignals = ({
         Date.now() - startedAt < timeoutSeconds * 1000
       ) {
         if (runningAgentTypeRef.current !== agentType) return true;
-        await delayInSeconds(5);
+        const ok = await sleepAwareDelay(5);
+        if (!ok) {
+          logMessage('sleep detected in waitForStoppedAgent');
+          return false;
+        }
       }
       if (enabledRef.current) logMessage(`stop timeout: ${agentType}`);
       return false;
