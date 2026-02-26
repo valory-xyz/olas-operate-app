@@ -220,6 +220,14 @@ These waits are guarded by `enabledRef.current` and `sleepAwareDelay()`, but do 
     - Expected: On wake, retry backoff delay detects drift, returns `false`; start attempt aborts without further retries.
     - Current: `startAgentWithRetries` uses `sleepAwareDelay(RETRY_BACKOFF_SECONDS[attempt])` and returns `false` on drift detection.
 
+41. **Resume previously-running agent after wake**
+    - Expected: If agent A was running before sleep and stopped during sleep, auto-run tries to restart A first. If A is still eligible (rewards not earned, funded), it restarts. If not, falls through to scanning.
+    - Current: `wasEnabled=true` path now calls `startSelectedAgentIfEligible` before `scanAndStartNext`. Since `selectedAgentType` is still set to agent A (via `updateAgentType` / `lastSelectedAgentType` persistence), it gets resume priority.
+
+42. **Resume agent that earned rewards during sleep**
+    - Expected: If agent A earned rewards while sleeping, resume attempt fails (rewards check returns `true`), falls through to normal scan and starts the next eligible agent.
+    - Current: `startSelectedAgentIfEligible` checks rewards snapshot; if `true`, returns `false` and scan proceeds.
+
 ---
 
 ## Known Gaps / TODOs
@@ -270,3 +278,8 @@ These waits are guarded by `enabledRef.current` and `sleepAwareDelay()`, but do 
   1. Added `sleepAwareDelay()` utility in `frontend/utils/delay.ts` — compares actual elapsed time against expected + 30 s threshold. Returns `false` on drift (sleep detected).
   2. Replaced all `delayInSeconds()` calls in wait loops and cooldown delays across `useAutoRunSignals.ts`, `useAutoRunController.ts`, and `useAutoRunScanner.ts` with `sleepAwareDelay()`. Each caller checks the return value and bails out on `false`.
   3. Added `balanceLastUpdatedRef` in `useAutoRunSignals.ts` to track when balance data was last updated. `waitForBalancesReady()` now checks freshness (< 60 s) and triggers a refetch when stale (e.g. after sleep).
+  4. Added safety net in startup effect `.finally()` — if auto-run is still enabled but nothing started, schedules a rescan to prevent dead orchestration loops.
+
+### P2 — Sleep/wake starts wrong agent instead of resuming ✓
+- **Root cause**: When auto-run was already enabled and the running agent stopped (e.g. during sleep), the `wasEnabled=true` path went straight to `scanAndStartNext` without trying to resume the previously-running agent. The scanner would iterate from a different position and start a different agent.
+- **Fix**: The `wasEnabled=true` path now calls `startSelectedAgentIfEligible` before `scanAndStartNext`. Since `selectedAgentType` is persisted to `lastSelectedAgentType` (electron store) whenever auto-run starts an agent, it still points to the previously-running agent after wake. If that agent is still eligible, it gets restarted. If not (earned rewards, low balance, etc.), normal scanning proceeds.

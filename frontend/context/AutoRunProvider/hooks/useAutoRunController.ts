@@ -463,6 +463,7 @@ export const useAutoRunController = ({
     if (isRotatingRef.current) return;
 
     isRotatingRef.current = true;
+    let reachedScan = false;
     const startNext = async () => {
       const preferredStartFrom = getPreferredStartFromRef.current();
       if (!wasEnabled) {
@@ -472,12 +473,22 @@ export const useAutoRunController = ({
         const startedSelected =
           await startSelectedAgentIfEligibleRef.current();
         if (startedSelected) return;
+        reachedScan = true;
         await scanAndStartNextRef.current(preferredStartFrom);
         return;
       }
+      // Auto-run was already enabled but the agent stopped (e.g. sleep/wake,
+      // backend crash, manual stop via backend). Try to resume the previously
+      // running agent first — selectedAgentType is still set to it because
+      // updateAgentType was called when it started. If it can't run (earned
+      // rewards, low balance, etc.), fall through to scanning.
       const cooldownOk = await sleepAwareDelay(COOLDOWN_SECONDS);
       if (!cooldownOk) return;
       if (!enabledRef.current) return;
+      const resumedSelected =
+        await startSelectedAgentIfEligibleRef.current();
+      if (resumedSelected) return;
+      reachedScan = true;
       await scanAndStartNextRef.current(preferredStartFrom);
     };
 
@@ -485,10 +496,15 @@ export const useAutoRunController = ({
       .catch((error) => logMessage(`manual stop start error: ${error}`))
       .finally(() => {
         isRotatingRef.current = false;
-        // Safety net: if auto-run is still on but nothing started (e.g. sleep
-        // bail-out interrupted the flow before a scan was scheduled), ensure
-        // the loop retries after a cooldown.
-        if (enabledRef.current && !runningAgentTypeRef.current) {
+        // Safety net: if auto-run is still on but nothing started and we
+        // never reached scanAndStartNext (e.g. sleep bail-out interrupted
+        // the flow before a scan was scheduled), ensure the loop retries.
+        // Skip if scan already ran — it schedules its own delay internally.
+        if (
+          !reachedScan &&
+          enabledRef.current &&
+          !runningAgentTypeRef.current
+        ) {
           scheduleNextScan(COOLDOWN_SECONDS);
         }
       });

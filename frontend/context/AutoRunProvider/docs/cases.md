@@ -165,8 +165,8 @@ Use this file for step-by-step logical testing. Each case includes **Expected (f
 
 ### 24) Cooldown after manual stop vs. first enable
 - Preconditions: Auto-run is already on; running agent is stopped manually (not via rotation).
-- Expected: Before rescanning, apply a short cooldown to avoid an immediate restart.
-- Current code: `wasAutoRunEnabledRef` tracks whether auto-run was already on before the startup effect fires. On first enable it starts immediately; on subsequent startup triggers (agent stopped while auto-run is already on) it waits `COOLDOWN_SECONDS` before scanning.
+- Expected: Before rescanning, apply a short cooldown to avoid an immediate restart. Try to resume the previously-running agent first; if it can't run, scan for the next.
+- Current code: `wasAutoRunEnabledRef` tracks whether auto-run was already on before the startup effect fires. On first enable it starts immediately; on subsequent startup triggers (agent stopped while auto-run is already on) it waits `COOLDOWN_SECONDS`, then tries `startSelectedAgentIfEligible` (resume), then falls through to `scanAndStartNext`.
 
 ---
 
@@ -198,6 +198,12 @@ Use this file for step-by-step logical testing. Each case includes **Expected (f
 - Steps: Close laptop lid → reopen after > 60 s.
 - Expected: Balance data is detected as stale; refetch triggered before proceeding.
 - Current code: `balanceLastUpdatedRef` tracks when `isBalancesAndFundingRequirementsReadyForAllServices` last changed. `waitForBalancesReady()` checks freshness (`< 60 s`); if stale, triggers a refetch and waits for fresh data.
+
+### 29) Resume previously-running agent after wake
+- Preconditions: Auto-run is on; agent A is running; laptop sleeps; backend stops agent A during sleep.
+- Steps: Reopen laptop → `runningAgentType` becomes `null` → startup effect fires with `wasEnabled=true`.
+- Expected: Try to restart agent A first (it was the last running agent). If it can still run (rewards not earned, funded, eligible), restart it. If not, fall through to scanning.
+- Current code: The `wasEnabled=true` path calls `startSelectedAgentIfEligible` before `scanAndStartNext`. Since `selectedAgentType` is still set to agent A (set by `updateAgentType` when auto-run started it), it gets priority. If ineligible (earned rewards, low balance, etc.), falls through to normal scan.
 
 ---
 
