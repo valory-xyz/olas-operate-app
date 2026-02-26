@@ -156,11 +156,7 @@ export const useAutoRunSignals = ({
     const isFresh = () =>
       Date.now() - balanceLastUpdatedRef.current < BALANCE_STALENESS_MS;
 
-    if (
-      balancesReadyRef.current &&
-      !balancesLoadingRef.current &&
-      isFresh()
-    ) {
+    if (balancesReadyRef.current && !balancesLoadingRef.current && isFresh()) {
       return true;
     }
 
@@ -202,7 +198,7 @@ export const useAutoRunSignals = ({
       }
     }
     return false;
-  }, [isBalancesAndFundingRequirementsReadyForAllServices, logMessage, refetch]);
+  }, [logMessage, refetch]);
 
   // Wait for rewards eligibility to be populated for a given agent.
   const waitForRewardsEligibility = useCallback(

@@ -8,12 +8,12 @@ import styled from 'styled-components';
 import { AgentIntroduction } from '@/components/AgentIntroduction';
 import { CardFlex, Tooltip, usePageTransitionValue } from '@/components/ui';
 import { COLOR, PAGES } from '@/constants';
+import { useAutoRunContext } from '@/context/AutoRunProvider';
 import { usePageState, useServices } from '@/hooks';
 
 import { AgentActivity } from './AgentActivity';
 import { AgentDisabledAlert } from './AgentDisabledAlert';
 import { AgentRunButton } from './AgentRunButton';
-import { useAutoRunContext } from '@/context/AutoRunProvider';
 
 const { Title, Text } = Typography;
 

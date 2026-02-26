@@ -83,7 +83,7 @@ export const mainTheme: ThemeConfig = {
     },
     Popover: {
       fontSize: 14,
-      // Keep popovers below Modal (default z-index: 1000) 
+      // Keep popovers below Modal (default z-index: 1000)
       // so they don't overlap open dialogs.
       zIndexPopup: 950,
     },

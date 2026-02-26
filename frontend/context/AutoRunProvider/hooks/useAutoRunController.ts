@@ -244,7 +244,9 @@ export const useAutoRunController = ({
             } catch (error) {
               logMessage(`start error for ${agentType}: ${error}`);
             }
-            const retryOk = await sleepAwareDelay(RETRY_BACKOFF_SECONDS[attempt]);
+            const retryOk = await sleepAwareDelay(
+              RETRY_BACKOFF_SECONDS[attempt],
+            );
             if (!retryOk) return false;
           }
         } finally {
@@ -371,7 +373,6 @@ export const useAutoRunController = ({
       logMessage,
       orderedIncludedAgentTypes,
       refreshRewardsEligibility,
-      scanAndStartNext,
       scheduleNextScan,
       stopAgent,
     ],
@@ -470,8 +471,7 @@ export const useAutoRunController = ({
         const startOk = await sleepAwareDelay(AUTO_RUN_START_DELAY_SECONDS);
         if (!startOk) return;
         if (!enabledRef.current || runningAgentTypeRef.current) return;
-        const startedSelected =
-          await startSelectedAgentIfEligibleRef.current();
+        const startedSelected = await startSelectedAgentIfEligibleRef.current();
         if (startedSelected) return;
         reachedScan = true;
         await scanAndStartNextRef.current(preferredStartFrom);
@@ -485,8 +485,7 @@ export const useAutoRunController = ({
       const cooldownOk = await sleepAwareDelay(COOLDOWN_SECONDS);
       if (!cooldownOk) return;
       if (!enabledRef.current) return;
-      const resumedSelected =
-        await startSelectedAgentIfEligibleRef.current();
+      const resumedSelected = await startSelectedAgentIfEligibleRef.current();
       if (resumedSelected) return;
       reachedScan = true;
       await scanAndStartNextRef.current(preferredStartFrom);
@@ -517,6 +516,8 @@ export const useAutoRunController = ({
     scanTick,
     scheduleNextScan,
     startSelectedAgentIfEligible,
+    runningAgentTypeRef,
+    enabledRef,
   ]);
 
   return {
