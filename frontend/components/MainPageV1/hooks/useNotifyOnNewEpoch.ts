@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 
+import { useAutoRunContext } from '@/context/AutoRunProvider';
 import {
   useActiveStakingContractDetails,
   useBalanceAndRefillRequirementsContext,
@@ -26,6 +27,7 @@ type EpochStatusNotification = {
  * Should also match the behavior of AgentDisabledAlert.
  */
 export const useNotifyOnNewEpoch = () => {
+  const { enabled } = useAutoRunContext();
   const { showNotification } = useElectronApi();
   const { isEligibleForRewards } = useRewardContext();
   const { isInitialFunded } = useIsInitiallyFunded();
@@ -79,7 +81,7 @@ export const useNotifyOnNewEpoch = () => {
     if (!epoch) return;
 
     // if latest epoch is not the last known epoch
-    if (epochStatusNotification?.lastEpoch !== epoch) {
+    if (!enabled && epochStatusNotification?.lastEpoch !== epoch) {
       showNotification(START_YOUR_AGENT_MESSAGE);
       setEpochStatusNotification({ lastEpoch: epoch, isNotified: true });
     }
@@ -98,5 +100,6 @@ export const useNotifyOnNewEpoch = () => {
     canStartAgent,
     isBalancesAndFundingRequirementsLoading,
     showNotification,
+    enabled,
   ]);
 };

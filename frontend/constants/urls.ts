@@ -50,6 +50,7 @@ export const OPEN_AI_API_URL: string =
   'https://help.openai.com/en/articles/4936850-where-do-i-find-my-openai-api-key';
 export const X_ACCOUNT_API_TOKENS_GUIDE_URL: Url =
   'https://github.com/dvilelaf/meme-ooorr/blob/main/docs/twitter_dev_account.md';
+export const X_DEVELOPER_CONSOLE_URL: Url = 'https://console.x.ai/';
 
 export const WEB3AUTH_URL: Url = 'https://web3auth.io';
 export const WEB3AUTH_TERMS_AND_CONDITIONS_URL: Url = `${WEB3AUTH_URL}/docs/legal/terms-and-conditions`;

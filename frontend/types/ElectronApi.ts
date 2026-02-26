@@ -28,6 +28,12 @@ export type ElectronStore = {
   [AgentMap.Optimus]?: AgentSettings;
   [AgentMap.PettAi]?: AgentSettings;
   [AgentMap.Polystrat]?: AgentSettings;
+  autoRun?: {
+    enabled?: boolean;
+    includedAgents?: { agentType: AgentType; order: number }[];
+    isInitialized?: boolean;
+    userExcludedAgents?: AgentType[];
+  };
   lastProvidedBackupWallet?: {
     address: Nullable<string>;
     type: BackupWalletType;

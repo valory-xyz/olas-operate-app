@@ -139,11 +139,20 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
   );
 
   useEffect(() => {
-    // Only sync the state at initial mount
+    // Sync the state when store changes
     if (agentTypeFromStore && agentTypeFromStore !== selectedAgentType) {
       setSelectedAgentType(agentTypeFromStore);
     }
   }, [agentTypeFromStore, selectedAgentType]);
+
+  const updateAgentType = useCallback(
+    (agentType: AgentType) => {
+      // Only set new value to the store, the state will be updated in useEffect
+      store?.set?.('lastSelectedAgentType', agentType);
+      setIsInvalidMessageShown(false);
+    },
+    [store],
+  );
 
   // user selected service identifier
   const [selectedServiceConfigId, setSelectedServiceConfigId] =
@@ -295,15 +304,6 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
       [],
     );
   }, [isServicesLoading, services]);
-
-  const updateAgentType = useCallback(
-    (agentType: AgentType) => {
-      setSelectedAgentType(agentType);
-      store?.set?.('lastSelectedAgentType', agentType);
-      setIsInvalidMessageShown(false);
-    },
-    [store],
-  );
 
   /**
    * Select the first service by default
