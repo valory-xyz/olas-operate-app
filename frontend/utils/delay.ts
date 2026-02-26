@@ -8,7 +8,7 @@ export const delayInSeconds = (seconds: number) =>
  * return as "system woke from sleep — bail out and let the loop restart
  * with fresh state."
  */
-const SLEEP_DRIFT_THRESHOLD_MS = 15_000;
+const SLEEP_DRIFT_THRESHOLD_MS = 30_000;
 
 /**
  * Like `delayInSeconds` but detects whether the device went to sleep

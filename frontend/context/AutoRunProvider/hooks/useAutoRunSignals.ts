@@ -168,9 +168,13 @@ export const useAutoRunSignals = ({
     if (!isFresh()) {
       logMessage('balances stale, triggering refetch');
       didRefetchBalancesRef.current = false;
-      refetch().catch((error) => {
-        logMessage(`balances refetch failed: ${error}`);
-      });
+      refetch()
+        .then(() => {
+          balanceLastUpdatedRef.current = Date.now();
+        })
+        .catch((error) => {
+          logMessage(`balances refetch failed: ${error}`);
+        });
     }
 
     let lastRefetchAt = Date.now();
@@ -188,9 +192,13 @@ export const useAutoRunSignals = ({
       if (!didRefetchBalancesRef.current && now - lastRefetchAt >= 15000) {
         didRefetchBalancesRef.current = true;
         lastRefetchAt = now;
-        refetch().catch((error) => {
-          logMessage(`balances refetch failed: ${error}`);
-        });
+        refetch()
+          .then(() => {
+            balanceLastUpdatedRef.current = Date.now();
+          })
+          .catch((error) => {
+            logMessage(`balances refetch failed: ${error}`);
+          });
       }
     }
     return false;

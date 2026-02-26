@@ -73,6 +73,7 @@ export const BalancesAndRefillRequirementsProviderContext = createContext<{
     QueryObserverResult<BalancesAndFundingRequirements, Error>
   >;
   allowStartAgentByServiceConfigId: (serviceConfigId?: string) => boolean;
+  hasBalancesForServiceConfigId: (serviceConfigId?: string) => boolean;
   resetQueryCache: () => void;
 }>({
   isBalancesAndFundingRequirementsLoading: false,
@@ -100,6 +101,7 @@ export const BalancesAndRefillRequirementsProviderContext = createContext<{
       {} as QueryObserverResult<BalancesAndFundingRequirements, Error>,
     ),
   allowStartAgentByServiceConfigId: () => false,
+  hasBalancesForServiceConfigId: () => false,
   resetQueryCache: () => {},
 });
 
@@ -378,6 +380,15 @@ export const BalancesAndRefillRequirementsProvider = ({
     [balancesAndFundingRequirementsForAllServices],
   );
 
+  const hasBalancesForServiceConfigId = useCallback(
+    (serviceConfigId?: string) => {
+      if (!serviceConfigId) return false;
+      if (!balancesAndFundingRequirementsForAllServices) return false;
+      return !!balancesAndFundingRequirementsForAllServices[serviceConfigId];
+    },
+    [balancesAndFundingRequirementsForAllServices],
+  );
+
   return (
     <BalancesAndRefillRequirementsProviderContext.Provider
       value={{
@@ -403,6 +414,7 @@ export const BalancesAndRefillRequirementsProvider = ({
         refetch,
         refetchForSelectedAgent: refetchBalancesAndFundingRequirements,
         allowStartAgentByServiceConfigId,
+        hasBalancesForServiceConfigId,
         resetQueryCache,
       }}
     >

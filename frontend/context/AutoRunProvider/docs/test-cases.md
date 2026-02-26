@@ -205,7 +205,7 @@ These waits are guarded by `enabledRef.current` and `sleepAwareDelay()`, but do 
 ## Sleep / Wake Recovery
 
 37. **Sleep during cooldown delay**
-    - Expected: On wake, `sleepAwareDelay` detects time drift (> expected + 15 s), returns `false`; rotation/startup aborts cleanly without cycling.
+    - Expected: On wake, `sleepAwareDelay` detects time drift (> expected + 30 s), returns `false`; rotation/startup aborts cleanly without cycling.
     - Current: All cooldown and startup delays use `sleepAwareDelay()`; callers check return value and bail with a log message on `false`.
 
 38. **Sleep during wait loop polling**
@@ -230,12 +230,6 @@ These waits are guarded by `enabledRef.current` and `sleepAwareDelay()`, but do 
 
 ---
 
-## Open Bugs
-
-### P3 — `isRotatingRef` set asynchronously in rotation effect (`useAutoRunController.ts`)
-- Set to `true` only after `await refreshRewardsEligibility()` resolves; rapid `rewardsTick` increments can transiently allow two invocations to both see `false`, both calling `checkRewardsAndRotate`. `isActive` prevents double-rotation in most paths but both writes to `lastRewardsEligibilityRef` can prematurely suppress a valid rotation.
-- Fix: set `isRotatingRef.current = true` synchronously before the first `await`, matching the startup effect.
-
 ---
 
 ## Fixed Bugs
@@ -256,6 +250,10 @@ These waits are guarded by `enabledRef.current` and `sleepAwareDelay()`, but do 
 - Added `enabledRef.current` to both while conditions in `useAutoRunSignals.ts`.
 - Timeout log suppressed when exit is due to disable (not a real timeout).
 
+### P3 — Rotation effect race on `isRotatingRef` ✓
+- `isRotatingRef.current` is now set to `true` before the first await in the rewards rotation path.
+- This prevents overlapping reward-triggered rotation checks under rapid tick updates.
+
 ### Code — `isLoadingReason` misleading variable name in `normalizeEligibility` ✓
 - Replaced intermediate variable with direct `if (!isOnlyLoadingReason(...))` inline check in `useAutoRunScanner.ts`, matching the controller version.
 
@@ -269,6 +267,6 @@ These waits are guarded by `enabledRef.current` and `sleepAwareDelay()`, but do 
 ### P1 — Sleep/wake causes chaotic agent cycling ✓
 - **Root cause**: `Date.now()` jumps forward after laptop sleep, causing all `delayInSeconds`/wait loops to expire instantly. Balance data remains stale (`balancesReadyRef` was `true` from before sleep). This led to rapid cycling through all agents with stale "Low balance" data and eventually starting the wrong agent.
 - **Fix**:
-  1. Added `sleepAwareDelay()` utility in `frontend/utils/delay.ts` — compares actual elapsed time against expected + 15 s threshold. Returns `false` on drift (sleep detected).
+  1. Added `sleepAwareDelay()` utility in `frontend/utils/delay.ts` — compares actual elapsed time against expected + 30 s threshold. Returns `false` on drift (sleep detected).
   2. Replaced all `delayInSeconds()` calls in wait loops and cooldown delays across `useAutoRunSignals.ts`, `useAutoRunController.ts`, and `useAutoRunScanner.ts` with `sleepAwareDelay()`. Each caller checks the return value and bails out on `false`.
   3. Added `balanceLastUpdatedRef` in `useAutoRunSignals.ts` to track when balance data was last updated. `waitForBalancesReady()` now checks freshness (< 60 s) and triggers a refetch when stale (e.g. after sleep).

@@ -44,6 +44,7 @@ export const useDeployability = ({
   } = useServices();
   const {
     allowStartAgentByServiceConfigId,
+    hasBalancesForServiceConfigId,
     isBalancesAndFundingRequirementsEnabledForAllServices,
     isBalancesAndFundingRequirementsLoadingForAllServices,
   } = useBalanceAndRefillRequirementsContext();
@@ -66,13 +67,19 @@ export const useDeployability = ({
     return allowStartAgentByServiceConfigId(selectedServiceConfigId);
   }, [allowStartAgentByServiceConfigId, selectedServiceConfigId]);
 
+  const hasSelectedAgentBalances = useMemo(() => {
+    if (!selectedServiceConfigId) return false;
+    return hasBalancesForServiceConfigId(selectedServiceConfigId);
+  }, [hasBalancesForServiceConfigId, selectedServiceConfigId]);
+
   const loadingReasons = useMemo(() => {
     const reasons: string[] = [];
     if (!isOnline) reasons.push('Offline');
     if (isServicesLoading) reasons.push('Services');
     if (
       !isBalancesAndFundingRequirementsEnabledForAllServices ||
-      isBalancesAndFundingRequirementsLoadingForAllServices
+      isBalancesAndFundingRequirementsLoadingForAllServices ||
+      !hasSelectedAgentBalances
     ) {
       reasons.push('Balances');
     }
@@ -85,6 +92,7 @@ export const useDeployability = ({
     isBalancesAndFundingRequirementsEnabledForAllServices,
     isBalancesAndFundingRequirementsLoadingForAllServices,
     isGeoLoading,
+    hasSelectedAgentBalances,
     isOnline,
     isInitialFunded,
     isSelectedStakingContractDetailsLoading,

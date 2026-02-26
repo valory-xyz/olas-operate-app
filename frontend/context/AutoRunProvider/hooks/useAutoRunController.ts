@@ -405,25 +405,24 @@ export const useAutoRunController = ({
 
     let isActive = true;
     const checkRewardsAndRotate = async () => {
-      const refreshed = await refreshRewardsEligibility(currentType);
-      if (!isActive) return;
-      const snapshot =
-        refreshed === undefined ? getRewardSnapshot(currentType) : refreshed;
-      const previousEligibility =
-        lastRewardsEligibilityRef.current[currentType];
-      lastRewardsEligibilityRef.current[currentType] = snapshot;
-      if (snapshot !== true) return;
-      if (previousEligibility === true) return;
-      logMessage(`rotation triggered: ${currentType} earned rewards`);
-
       isRotatingRef.current = true;
-      rotateToNext(currentType)
-        .catch((error) => {
-          logMessage(`rotation error: ${error}`);
-        })
-        .finally(() => {
-          isRotatingRef.current = false;
-        });
+      try {
+        const refreshed = await refreshRewardsEligibility(currentType);
+        if (!isActive) return;
+        const snapshot =
+          refreshed === undefined ? getRewardSnapshot(currentType) : refreshed;
+        const previousEligibility =
+          lastRewardsEligibilityRef.current[currentType];
+        lastRewardsEligibilityRef.current[currentType] = snapshot;
+        if (snapshot !== true) return;
+        if (previousEligibility === true) return;
+        logMessage(`rotation triggered: ${currentType} earned rewards`);
+        await rotateToNext(currentType);
+      } catch (error) {
+        logMessage(`rotation error: ${error}`);
+      } finally {
+        isRotatingRef.current = false;
+      }
     };
 
     checkRewardsAndRotate();
@@ -486,6 +485,12 @@ export const useAutoRunController = ({
       .catch((error) => logMessage(`manual stop start error: ${error}`))
       .finally(() => {
         isRotatingRef.current = false;
+        // Safety net: if auto-run is still on but nothing started (e.g. sleep
+        // bail-out interrupted the flow before a scan was scheduled), ensure
+        // the loop retries after a cooldown.
+        if (enabledRef.current && !runningAgentTypeRef.current) {
+          scheduleNextScan(COOLDOWN_SECONDS);
+        }
       });
   }, [
     enabled,
@@ -494,6 +499,7 @@ export const useAutoRunController = ({
     runningAgentType,
     scanAndStartNext,
     scanTick,
+    scheduleNextScan,
     startSelectedAgentIfEligible,
   ]);
 

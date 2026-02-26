@@ -185,7 +185,7 @@ Use this file for step-by-step logical testing. Each case includes **Expected (f
 - Preconditions: Auto-run is on; a delay (cooldown, start delay, retry backoff) is in progress.
 - Steps: Close laptop lid → reopen after 30+ minutes.
 - Expected: Detect the time drift, abort the stale delay, and let the orchestration loop restart with fresh state instead of cycling through agents with stale data.
-- Current code: All delays use `sleepAwareDelay()` which compares actual elapsed time against `expected + 15 s`. If drift exceeds this threshold, returns `false`; callers bail out cleanly.
+- Current code: All delays use `sleepAwareDelay()` which compares actual elapsed time against `expected + 30 s`. If drift exceeds this threshold, returns `false`; callers bail out cleanly.
 
 ### 27) Laptop sleep during wait loops
 - Preconditions: Auto-run is on; a wait loop (agent selection, balances, eligibility, running/stopped) is polling.
