@@ -6,14 +6,14 @@ import { LuInfo } from 'react-icons/lu';
 import styled from 'styled-components';
 
 import { AgentIntroduction } from '@/components/AgentIntroduction';
-import { CardFlex, Tooltip } from '@/components/ui';
+import { CardFlex, Tooltip, usePageTransitionValue } from '@/components/ui';
 import { COLOR, PAGES } from '@/constants';
-import { useAutoRunContext } from '@/context/AutoRunProvider';
 import { usePageState, useServices } from '@/hooks';
 
 import { AgentActivity } from './AgentActivity';
 import { AgentDisabledAlert } from './AgentDisabledAlert';
 import { AgentRunButton } from './AgentRunButton';
+import { useAutoRunContext } from '@/context/AutoRunProvider';
 
 const { Title, Text } = Typography;
 
@@ -80,6 +80,10 @@ export const AgentInfo = () => {
   const { enabled: isAutoRunEnabled } = useAutoRunContext();
 
   const { isX402Enabled } = selectedAgentConfig;
+  const displayedAgentType = usePageTransitionValue(selectedAgentType);
+  const displayedAgentName = usePageTransitionValue(
+    selectedAgentNameOrFallback,
+  );
 
   return (
     <Flex vertical>
@@ -87,11 +91,11 @@ export const AgentInfo = () => {
         <AgentInfoContainer>
           <Flex justify="start" align="center" gap={24}>
             <Image
-              key={selectedAgentType}
-              src={`/agent-${selectedAgentType}-icon.png`}
+              key={displayedAgentType}
+              src={`/agent-${displayedAgentType}-icon.png`}
               width={88}
               height={88}
-              alt={selectedAgentType}
+              alt={displayedAgentType}
               className="rounded-12"
             />
             <Flex className="w-full" vertical align="flex-start">
@@ -102,7 +106,7 @@ export const AgentInfo = () => {
                 className="mb-16 w-full"
               >
                 <Title level={5} className="m-0">
-                  {selectedAgentNameOrFallback}
+                  {displayedAgentName}
                 </Title>
                 <Flex gap={12} align="center">
                   <AboutAgent />

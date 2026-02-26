@@ -17,8 +17,8 @@ type UseCanMigrateProps = {
 export enum MigrateButtonText {
   AgentInCooldownPeriod = 'Agent in cooldown period',
   NoSlotsAvailable = 'No slots available',
-  SelectContract = 'Select Contract',
-  CurrentContract = 'Current Contract',
+  SelectContract = 'Select',
+  CurrentContract = 'Selected',
   CurrentlyRunning = 'Agent is currently running',
 }
 

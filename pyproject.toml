@@ -10,7 +10,7 @@ include = []
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.12"
-olas-operate-middleware = "0.14.15"
+olas-operate-middleware = "0.14.18"
 
 [build-system]
 requires = ["poetry-core"]

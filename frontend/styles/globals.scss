@@ -310,6 +310,10 @@ textarea.ant-input {
   display: flex;
 }
 
+.flex-col {
+  flex-direction: column;
+}
+
 .flex-auto {
   flex: auto;
 }
@@ -570,6 +574,10 @@ textarea.ant-input {
   padding-bottom: 4px !important;
 }
 
+.pb-24 {
+  padding-bottom: 24px !important;
+}
+
 .pb-32 {
   padding-bottom: 32px !important;
 }
@@ -628,6 +636,10 @@ textarea.ant-input {
 
 .text-xs {
   font-size: 12px !important;
+}
+
+.text-xxs {
+  font-size: 10px !important;
 }
 
 // text align

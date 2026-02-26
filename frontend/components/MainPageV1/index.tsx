@@ -7,6 +7,7 @@ import { ConfirmSwitch } from '@/components/ConfirmSwitch/ConfirmSwitch';
 import { DepositOlasForStaking } from '@/components/ConfirmSwitch/DepositOlasForStaking';
 import { HelpAndSupport } from '@/components/Pages/HelpAndSupportPage';
 import { Settings } from '@/components/SettingsPage';
+import { PageTransition } from '@/components/ui';
 import { UpdateAgentPage } from '@/components/UpdateAgentPage';
 import { PAGES, SIDER_WIDTH, TOP_BAR_HEIGHT } from '@/constants';
 import { usePageState } from '@/hooks';
@@ -100,7 +101,12 @@ export const Main = () => {
       <Content $isSplitScreenPage={isSplitScreenPage} ref={contentContainerRef}>
         <MainDraggableTopBar $isSplitScreenPage={isSplitScreenPage} />
         <AchievementModal />
-        {mainContent}
+        <PageTransition
+          animationKey={pageState}
+          className="flex-auto flex flex-col"
+        >
+          {mainContent}
+        </PageTransition>
       </Content>
     </MainLayout>
   );
