@@ -152,6 +152,13 @@ export const useAutoRunSignals = ({
   // After sleep/wake the balance ref may still be `true` from before sleep,
   // so we also check freshness before accepting the cached value.
   const BALANCE_STALENESS_MS = 60_000;
+  const didLogStaleRef = useRef(false);
+
+  // Reset the stale log flag when balance data actually updates.
+  useEffect(() => {
+    didLogStaleRef.current = false;
+  }, [isBalancesAndFundingRequirementsReadyForAllServices]);
+
   const waitForBalancesReady = useCallback(async () => {
     const isFresh = () =>
       Date.now() - balanceLastUpdatedRef.current < BALANCE_STALENESS_MS;
@@ -162,7 +169,10 @@ export const useAutoRunSignals = ({
 
     // If balances are stale (e.g. after sleep), force a refetch.
     if (!isFresh()) {
-      logMessage('balances stale, triggering refetch');
+      if (!didLogStaleRef.current) {
+        logMessage('balances stale, triggering refetch');
+        didLogStaleRef.current = true;
+      }
       didRefetchBalancesRef.current = false;
       refetch()
         .then(() => {

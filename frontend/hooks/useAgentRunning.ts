@@ -58,7 +58,7 @@ export const useAgentRunning = () => {
    * Determine which agent type is currently running (deployed).
    */
   const runningAgentType = useMemo(() => {
-    if (!selectedService || !allDeployments || !services) return null;
+    if (!allDeployments || !services) return null;
 
     for (const service of services) {
       const status = allDeployments[service.service_config_id]?.status;
@@ -76,7 +76,7 @@ export const useAgentRunning = () => {
     }
 
     return null;
-  }, [selectedService, allDeployments, services]);
+  }, [allDeployments, services]);
 
   const runningServiceConfigId = useMemo(() => {
     if (!runningAgentType) return null;

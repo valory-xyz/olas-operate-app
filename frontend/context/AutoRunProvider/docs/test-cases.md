@@ -129,8 +129,9 @@ This checklist is organized as: **Scenario**, **Expected behavior**, **Current i
     - Current: Retries `RETRY_BACKOFF_SECONDS`, then notifies start failed.
 
 25. **Stop fails**
-    - Expected: Timeout and log; avoid infinite loop.
-    - Current: `waitForStoppedAgent` timeout logs and aborts rotation.
+    - Expected: Timeout and log; avoid infinite loop; auto-run recovers.
+    - Current: `waitForStoppedAgent` timeout logs `stop timeout for X, aborting rotation`. Then resets `lastRewardsEligibilityRef[agent]` to `undefined` (prevents permanent rotation blockage) and schedules rescan in `SCAN_BLOCKED_DELAY_SECONDS` (10 min).
+    - Notes: Previously this was a permanent deadlock — no rescan was scheduled, and the rewards guard stayed `true`, blocking all future rotation attempts. Fixed in P0 stop timeout deadlock fix.
 
 26. **Rewards API fails**
     - Expected: Log error, continue; do not block auto-run.
@@ -189,8 +190,8 @@ These waits are guarded by `enabledRef.current` and `sleepAwareDelay()`, but do 
     - Current: `getOrderedIncludedAgentTypes` returns `eligibleAgentTypes` when `includedAgentsSorted` is empty.
 
 34. **Cooldown after manual stop vs. first enable**
-    - Expected: First enable → start immediately. Agent stops while auto-run stays on → wait `COOLDOWN_SECONDS` before rescanning.
-    - Current: `wasAutoRunEnabledRef` tracks prior enabled state; cooldown applied only on re-entry (not on first enable).
+    - Expected: First enable → start immediately. Agent stops while auto-run stays on → wait `COOLDOWN_SECONDS` before rescanning. Try to resume the previously-running agent first; if it can't run, scan for the next.
+    - Current: `wasAutoRunEnabledRef` tracks prior enabled state; cooldown applied only on re-entry (not on first enable). After cooldown, tries `startSelectedAgentIfEligible` (resume previously-running agent) then falls through to `scanAndStartNext`.
 
 35. **Stale "Loading: Balances" overridden by live balances context**
     - Expected: Not stuck in a loading wait if balances context is already ready.
@@ -227,6 +228,23 @@ These waits are guarded by `enabledRef.current` and `sleepAwareDelay()`, but do 
 42. **Resume agent that earned rewards during sleep**
     - Expected: If agent A earned rewards while sleeping, resume attempt fails (rewards check returns `true`), falls through to normal scan and starts the next eligible agent.
     - Current: `startSelectedAgentIfEligible` checks rewards snapshot; if `true`, returns `false` and scan proceeds.
+
+---
+
+## Stop Timeout Recovery
+
+43. **Stop timeout during rotation — auto-run recovers**
+    - Expected: If `waitForStoppedAgent` times out during `rotateToNext`, auto-run does not go permanently dormant. A rescan is scheduled and future rotations are not blocked.
+    - Current: On stop timeout, `lastRewardsEligibilityRef[agent]` is reset to `undefined` and `scheduleNextScan(SCAN_BLOCKED_DELAY_SECONDS)` (10 min) is called. This ensures auto-run can try again later.
+    - Notes: Previously this was the root cause of all "stuck agent" reports (P0 deadlock fix below).
+
+44. **Stop timeout — rewards rotation guard reset**
+    - Expected: After a stop timeout, the `lastRewardsEligibilityRef` guard for the agent that earned rewards must be cleared so subsequent reward events can re-trigger rotation.
+    - Current: `lastRewardsEligibilityRef[currentAgentType] = undefined` on stop timeout. Without this reset, the `previousEligibility === true` guard in the rotation effect would permanently block all future rotation attempts for that agent.
+
+45. **Balances stale log deduplication**
+    - Expected: "balances stale, triggering refetch" is logged at most once per staleness window, not on every poll iteration.
+    - Current: `didLogStaleRef` prevents duplicate log messages. Reset when `isBalancesAndFundingRequirementsReadyForAllServices` changes (i.e., when balance data actually updates).
 
 ---
 
@@ -283,3 +301,14 @@ These waits are guarded by `enabledRef.current` and `sleepAwareDelay()`, but do 
 ### P2 — Sleep/wake starts wrong agent instead of resuming ✓
 - **Root cause**: When auto-run was already enabled and the running agent stopped (e.g. during sleep), the `wasEnabled=true` path went straight to `scanAndStartNext` without trying to resume the previously-running agent. The scanner would iterate from a different position and start a different agent.
 - **Fix**: The `wasEnabled=true` path now calls `startSelectedAgentIfEligible` before `scanAndStartNext`. Since `selectedAgentType` is persisted to `lastSelectedAgentType` (electron store) whenever auto-run starts an agent, it still points to the previously-running agent after wake. If that agent is still eligible, it gets restarted. If not (earned rewards, low balance, etc.), normal scanning proceeds.
+
+### P0 — Stop timeout causes permanent auto-run deadlock ✓
+- **Root cause**: When `waitForStoppedAgent` timed out during `rotateToNext`, the function returned early without scheduling a rescan. Simultaneously, `lastRewardsEligibilityRef[agent]` remained set to `true`, which caused the `previousEligibility === true` guard in the rotation effect to permanently block all future rotation triggers for that agent. The net result: auto-run went permanently dormant — no rescan, no rotation, no recovery. This was the root cause of all "stuck agent" reports across 6 client log files (including one user who only ran 1 agent in 24 hours).
+- **Fix**:
+  1. On stop timeout in `rotateToNext`: reset `lastRewardsEligibilityRef[currentAgentType]` to `undefined` so future reward events can re-trigger rotation.
+  2. Schedule `scheduleNextScan(SCAN_BLOCKED_DELAY_SECONDS)` (10 min) so auto-run retries instead of going dormant.
+  3. Added diagnostic logging at key decision points: scan completion summary, all-agents-earned path, safety net activation.
+
+### Code — Balances stale log spam ✓
+- **Problem**: "balances stale, triggering refetch" was logged on every poll iteration during wait loops, flooding logs with identical messages.
+- **Fix**: Added `didLogStaleRef` in `useAutoRunSignals.ts`. The stale message is logged once per staleness window; `didLogStaleRef` resets when `isBalancesAndFundingRequirementsReadyForAllServices` changes.

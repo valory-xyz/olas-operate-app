@@ -243,6 +243,9 @@ export const useAutoRunScanner = ({
         return SCAN_BLOCKED_DELAY_SECONDS;
       })();
 
+      logMessage(
+        `scan complete: no agent started (blocked=${hasBlocked}, eligible=${hasEligible}), rescan in ${delay}s`,
+      );
       scheduleNextScan(delay);
       return { started: false };
     },

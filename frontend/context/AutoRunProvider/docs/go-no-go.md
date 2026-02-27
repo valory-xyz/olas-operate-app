@@ -37,7 +37,7 @@ Use this right before release. If any **A** or **B** item fails, itâ€™s a **Noâ€
    - If start fails repeatedly, auto-run logs and moves on without crashing.
 
 9. **Stop failures handled**
-   - If stop times out, auto-run logs and does not deadlock.
+   - If stop times out, auto-run logs and does not deadlock. The rewards rotation guard is reset and a rescan is scheduled in 10 minutes, ensuring auto-run recovers autonomously.
 
 10. **Sleep/wake recovery**
     - Close and reopen laptop lid while auto-run is active â†’ no chaotic cycling; stale delays abort cleanly and orchestration restarts with fresh state.
@@ -46,13 +46,13 @@ Use this right before release. If any **A** or **B** item fails, itâ€™s a **Noâ€
 
 ## C. UX Expectations (Strongly Recommended)
 
-10. **Toggle shows loading**
+11. **Toggle shows loading**
     - Switch shows loading state during start/stop.
 
-11. **Skip notifications are meaningful**
+12. **Skip notifications are meaningful**
     - Only real blockers (Low balance, Evicted, Region restricted, etc.) generate skip notifications.
 
-12. **Manual sidebar navigation works**
+13. **Manual sidebar navigation works**
     - User can browse agents while auto-run runs in background.
 
 ---

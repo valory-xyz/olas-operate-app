@@ -101,9 +101,9 @@ Use this file for step-by-step logical testing. Each case includes **Expected (f
 - Expected: Retry with backoff, then skip/notify.
 - Current code: Retries with backoff; notifies start failed after retries.
 
-### 16) Stop fails
-- Expected: Timeout; no infinite loop; surface error.
-- Current code: Timeout logs; rotation aborts.
+### 16) Stop fails (rotation stop timeout)
+- Expected: Timeout; no infinite loop; surface error; auto-run recovers.
+- Current code: `waitForStoppedAgent` times out → logs `stop timeout for X, aborting rotation` → resets `lastRewardsEligibilityRef[agent]` to `undefined` (so the rewards rotation guard doesn't permanently block) → schedules rescan in `SCAN_BLOCKED_DELAY_SECONDS` (10 min). This ensures auto-run recovers instead of going permanently dormant.
 
 ---
 

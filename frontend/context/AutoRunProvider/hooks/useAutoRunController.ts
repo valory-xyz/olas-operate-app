@@ -12,6 +12,7 @@ import {
   ELIGIBILITY_REASON,
   RETRY_BACKOFF_SECONDS,
   REWARDS_POLL_SECONDS,
+  SCAN_BLOCKED_DELAY_SECONDS,
   SCAN_ELIGIBLE_DELAY_SECONDS,
   START_TIMEOUT_SECONDS,
 } from '../constants';
@@ -342,6 +343,9 @@ export const useAutoRunController = ({
       );
       const allEarnedOrUnknown = rewardStates.every((state) => state !== false);
       if (allEarnedOrUnknown) {
+        logMessage(
+          `all other agents earned or unknown, keeping ${currentAgentType} running, rescan in ${SCAN_ELIGIBLE_DELAY_SECONDS}s`,
+        );
         scheduleNextScan(SCAN_ELIGIBLE_DELAY_SECONDS);
         return;
       }
@@ -358,6 +362,13 @@ export const useAutoRunController = ({
       );
       if (!stopOk) {
         logMessage(`stop timeout for ${currentAgentType}, aborting rotation`);
+        // Reset rewards guard so the next poll cycle can re-trigger rotation
+        // instead of being blocked by the previousEligibility === true check.
+        lastRewardsEligibilityRef.current[currentAgentType] = undefined;
+        logMessage(
+          `reset rewards guard for ${currentAgentType}, scheduling rescan in ${SCAN_BLOCKED_DELAY_SECONDS}s`,
+        );
+        scheduleNextScan(SCAN_BLOCKED_DELAY_SECONDS);
         return;
       }
       if (!enabledRef.current) return;
@@ -504,6 +515,9 @@ export const useAutoRunController = ({
           enabledRef.current &&
           !runningAgentTypeRef.current
         ) {
+          logMessage(
+            `safety net: flow interrupted before scan, retrying in ${COOLDOWN_SECONDS}s`,
+          );
           scheduleNextScan(COOLDOWN_SECONDS);
         }
       });
