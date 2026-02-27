@@ -54,7 +54,7 @@ export const useAutoRunSignals = ({
   const balancesReadyRef = useRef(
     isBalancesAndFundingRequirementsReadyForAllServices,
   );
-  const didRefetchBalancesRef = useRef(false);
+  const isRefetchingBalancesRef = useRef(false);
   // Latest rewards snapshot per agent; updated by RewardProvider.
   const rewardSnapshotRef = useRef<
     Partial<Record<AgentType, boolean | undefined>>
@@ -74,9 +74,6 @@ export const useAutoRunSignals = ({
     if (!enabled && scanTimeoutRef.current) {
       clearTimeout(scanTimeoutRef.current);
       scanTimeoutRef.current = null;
-    }
-    if (enabled) {
-      didRefetchBalancesRef.current = false;
     }
   }, [enabled]);
 
@@ -99,11 +96,7 @@ export const useAutoRunSignals = ({
     selectedAgentTypeRef.current = selectedAgentType;
   }, [selectedAgentType]);
   useEffect(() => {
-    const previous = selectedServiceConfigIdRef.current;
     selectedServiceConfigIdRef.current = selectedServiceConfigId;
-    if (selectedServiceConfigId && selectedServiceConfigId !== previous) {
-      didRefetchBalancesRef.current = false;
-    }
   }, [selectedServiceConfigId]);
 
   // Update rewards snapshot for the selected agent (RewardProvider is selection-driven).
@@ -173,14 +166,19 @@ export const useAutoRunSignals = ({
         logMessage('balances stale, triggering refetch');
         didLogStaleRef.current = true;
       }
-      didRefetchBalancesRef.current = false;
-      refetch()
-        .then(() => {
-          balanceLastUpdatedRef.current = Date.now();
-        })
-        .catch((error) => {
-          logMessage(`balances refetch failed: ${error}`);
-        });
+      if (!isRefetchingBalancesRef.current) {
+        isRefetchingBalancesRef.current = true;
+        refetch()
+          .then(() => {
+            balanceLastUpdatedRef.current = Date.now();
+          })
+          .catch((error) => {
+            logMessage(`balances refetch failed: ${error}`);
+          })
+          .finally(() => {
+            isRefetchingBalancesRef.current = false;
+          });
+      }
     }
 
     let lastRefetchAt = Date.now();
@@ -195,15 +193,18 @@ export const useAutoRunSignals = ({
       const ok = await sleepAwareDelay(2);
       if (!ok) return false;
       const now = Date.now();
-      if (!didRefetchBalancesRef.current && now - lastRefetchAt >= 15000) {
-        didRefetchBalancesRef.current = true;
+      if (now - lastRefetchAt >= 15000 && !isRefetchingBalancesRef.current) {
         lastRefetchAt = now;
+        isRefetchingBalancesRef.current = true;
         refetch()
           .then(() => {
             balanceLastUpdatedRef.current = Date.now();
           })
           .catch((error) => {
             logMessage(`balances refetch failed: ${error}`);
+          })
+          .finally(() => {
+            isRefetchingBalancesRef.current = false;
           });
       }
     }
@@ -278,24 +279,6 @@ export const useAutoRunSignals = ({
     [logMessage],
   );
 
-  // Wait until the running agent type no longer matches the given agent.
-  const waitForStoppedAgent = useCallback(
-    async (agentType: AgentType, timeoutSeconds: number) => {
-      const startedAt = Date.now();
-      while (
-        enabledRef.current &&
-        Date.now() - startedAt < timeoutSeconds * 1000
-      ) {
-        if (runningAgentTypeRef.current !== agentType) return true;
-        const ok = await sleepAwareDelay(5);
-        if (!ok) return false;
-      }
-      if (enabledRef.current) logMessage(`stop timeout: ${agentType}`);
-      return false;
-    },
-    [logMessage],
-  );
-
   // Schedule a delayed scan and bump the tick when it fires.
   const scheduleNextScan = useCallback((delaySeconds: number) => {
     if (!enabledRef.current) return;
@@ -320,7 +303,6 @@ export const useAutoRunSignals = ({
     waitForBalancesReady,
     waitForRewardsEligibility,
     waitForRunningAgent,
-    waitForStoppedAgent,
     markRewardSnapshotPending,
     getRewardSnapshot,
     setRewardSnapshot,

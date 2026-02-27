@@ -99,11 +99,11 @@ Use this file for step-by-step logical testing. Each case includes **Expected (f
 
 ### 15) Start fails
 - Expected: Retry with backoff, then skip/notify.
-- Current code: Retries with backoff; notifies start failed after retries.
+- Current code: Retries with backoff; classifies repeated transport/timeouts as transient infra failure and schedules short rescan without advancing queue to a different agent.
 
 ### 16) Stop fails (rotation stop timeout)
 - Expected: Timeout; no infinite loop; surface error; auto-run recovers.
-- Current code: `waitForStoppedAgent` times out → logs `stop timeout for X, aborting rotation` → resets `lastRewardsEligibilityRef[agent]` to `undefined` (so the rewards rotation guard doesn't permanently block) → schedules rescan in `SCAN_BLOCKED_DELAY_SECONDS` (10 min). This ensures auto-run recovers instead of going permanently dormant.
+- Current code: stop path runs bounded recovery (`STOP_RECOVERY_MAX_ATTEMPTS`) with deployment-status polling. If still unresolved, it logs timeout, resets `lastRewardsEligibilityRef[agent]`, and schedules rescan in `SCAN_BLOCKED_DELAY_SECONDS` (10 min). No next-agent start is attempted before stop confirmation.
 
 ---
 

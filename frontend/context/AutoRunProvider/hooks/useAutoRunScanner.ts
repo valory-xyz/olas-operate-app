@@ -4,6 +4,8 @@ import { AgentType } from '@/constants';
 import { sleepAwareDelay } from '@/utils/delay';
 
 import {
+  AUTO_RUN_START_STATUS,
+  AutoRunStartResult,
   ELIGIBILITY_LOADING_REASON,
   ELIGIBILITY_REASON,
   SCAN_BLOCKED_DELAY_SECONDS,
@@ -41,7 +43,7 @@ type UseAutoRunScannerParams = {
   getRewardSnapshot: (agentType: AgentType) => boolean | undefined;
   getBalancesStatus: () => { ready: boolean; loading: boolean };
   notifySkipOnce: (agentType: AgentType, reason?: string) => void;
-  startAgentWithRetries: (agentType: AgentType) => Promise<boolean>;
+  startAgentWithRetries: (agentType: AgentType) => Promise<AutoRunStartResult>;
   scheduleNextScan: (delaySeconds: number) => void;
   logMessage: (message: string) => void;
 };
@@ -212,12 +214,11 @@ export const useAutoRunScanner = ({
         // Evaluate eligibility and rewards before attempting a start.
         const eligibility = normalizeEligibility(getSelectedEligibility());
         if (!eligibility.canRun) {
-          const reason = formatEligibilityReason(eligibility);
-          const isLoadingReason = reason.toLowerCase().includes('loading');
-          if (isLoadingReason) {
+          if (eligibility.reason === ELIGIBILITY_REASON.LOADING) {
             scheduleNextScan(SCAN_LOADING_RETRY_SECONDS);
             return { started: false };
           }
+          const reason = formatEligibilityReason(eligibility);
           notifySkipOnce(candidate, reason);
           hasBlocked = true;
           candidate = findNextInOrder(candidate);
@@ -231,8 +232,20 @@ export const useAutoRunScanner = ({
           continue;
         }
 
-        const started = await startAgentWithRetries(candidate);
-        if (started) return { started: true };
+        const startResult = await startAgentWithRetries(candidate);
+        if (startResult.status === AUTO_RUN_START_STATUS.STARTED) {
+          return { started: true };
+        }
+        if (startResult.status === AUTO_RUN_START_STATUS.ABORTED) {
+          return { started: false };
+        }
+        if (startResult.status === AUTO_RUN_START_STATUS.INFRA_FAILED) {
+          logMessage(
+            `scan paused on ${candidate}: transient start failure (${startResult.reason ?? 'unknown'}), rescan in ${SCAN_LOADING_RETRY_SECONDS}s`,
+          );
+          scheduleNextScan(SCAN_LOADING_RETRY_SECONDS);
+          return { started: false };
+        }
         hasBlocked = true;
         candidate = findNextInOrder(candidate);
       }
@@ -265,6 +278,7 @@ export const useAutoRunScanner = ({
       waitForBalancesReady,
       waitForRewardsEligibility,
       waitForEligibilityReady,
+      logMessage,
     ],
   );
 
@@ -306,12 +320,11 @@ export const useAutoRunScanner = ({
     }
     const eligibility = normalizeEligibility(getSelectedEligibility());
     if (!eligibility.canRun) {
-      const reason = formatEligibilityReason(eligibility);
-      const isLoadingReason = reason.toLowerCase().includes('loading');
-      if (isLoadingReason) {
+      if (eligibility.reason === ELIGIBILITY_REASON.LOADING) {
         scheduleNextScan(SCAN_LOADING_RETRY_SECONDS);
         return false;
       }
+      const reason = formatEligibilityReason(eligibility);
       notifySkipOnce(selectedAgentType, reason);
       return false;
     }
@@ -322,8 +335,19 @@ export const useAutoRunScanner = ({
       return false;
     }
 
-    const started = await startAgentWithRetries(selectedAgentType);
-    return started;
+    const startResult = await startAgentWithRetries(selectedAgentType);
+    if (startResult.status === AUTO_RUN_START_STATUS.STARTED) return true;
+    if (startResult.status === AUTO_RUN_START_STATUS.INFRA_FAILED) {
+      logMessage(
+        `selected start paused: transient failure (${startResult.reason ?? 'unknown'}), rescan in ${SCAN_LOADING_RETRY_SECONDS}s`,
+      );
+      scheduleNextScan(SCAN_LOADING_RETRY_SECONDS);
+      return true;
+    }
+    if (startResult.status === AUTO_RUN_START_STATUS.ABORTED) {
+      return true;
+    }
+    return false;
   }, [
     configuredAgents,
     getSelectedEligibility,
@@ -336,6 +360,7 @@ export const useAutoRunScanner = ({
     startAgentWithRetries,
     waitForAgentSelection,
     normalizeEligibility,
+    logMessage,
     scheduleNextScan,
     waitForBalancesReady,
     waitForEligibilityReady,

@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useRef } from 'react';
 
-import { AgentType } from '@/constants';
+import { AgentType, MiddlewareDeploymentStatusMap } from '@/constants';
 import { useAgentRunning, useRewardContext, useStartService } from '@/hooks';
 import { ServicesService } from '@/service/Services';
 import { sleepAwareDelay } from '@/utils/delay';
 
 import {
   AUTO_RUN_START_DELAY_SECONDS,
+  AUTO_RUN_START_STATUS,
+  AutoRunStartResult,
   COOLDOWN_SECONDS,
   ELIGIBILITY_LOADING_REASON,
   ELIGIBILITY_REASON,
@@ -15,6 +17,8 @@ import {
   SCAN_BLOCKED_DELAY_SECONDS,
   SCAN_ELIGIBLE_DELAY_SECONDS,
   START_TIMEOUT_SECONDS,
+  STOP_RECOVERY_MAX_ATTEMPTS,
+  STOP_RECOVERY_RETRY_SECONDS,
 } from '../constants';
 import { AgentMeta } from '../types';
 import {
@@ -79,7 +83,6 @@ export const useAutoRunController = ({
     waitForBalancesReady,
     waitForRewardsEligibility,
     waitForRunningAgent,
-    waitForStoppedAgent,
     markRewardSnapshotPending,
     getRewardSnapshot,
     setRewardSnapshot,
@@ -179,16 +182,50 @@ export const useAutoRunController = ({
     return false;
   }, [enabledRef, getSelectedEligibility, logMessage, normalizeEligibility]);
 
+  const waitForStoppedDeployment = useCallback(
+    async (serviceConfigId: string, timeoutSeconds: number) => {
+      const startedAt = Date.now();
+      while (Date.now() - startedAt < timeoutSeconds * 1000) {
+        try {
+          const deployment = await ServicesService.getDeployment({
+            serviceConfigId,
+            signal: new AbortController().signal,
+          });
+          const status = deployment?.status;
+          const isActive =
+            status === MiddlewareDeploymentStatusMap.DEPLOYED ||
+            status === MiddlewareDeploymentStatusMap.DEPLOYING ||
+            status === MiddlewareDeploymentStatusMap.STOPPING;
+          if (!isActive) return true;
+        } catch (error) {
+          logMessage(
+            `stop status check failed for ${serviceConfigId}: ${error}`,
+          );
+        }
+        const waitOk = await sleepAwareDelay(5);
+        if (!waitOk) return false;
+      }
+      logMessage(`stop timeout (deployment status): ${serviceConfigId}`);
+      return false;
+    },
+    [logMessage],
+  );
+
   const startAgentWithRetries = useCallback(
-    async (agentType: AgentType) => {
+    async (agentType: AgentType): Promise<AutoRunStartResult> => {
       {
-        if (!enabledRef.current) return false;
+        if (!enabledRef.current) {
+          return { status: AUTO_RUN_START_STATUS.ABORTED };
+        }
         const meta = configuredAgents.find(
           (agent) => agent.agentType === agentType,
         );
         if (!meta) {
           logMessage(`start: ${agentType} not configured`);
-          return false;
+          return {
+            status: AUTO_RUN_START_STATUS.AGENT_BLOCKED,
+            reason: 'Not configured',
+          };
         }
         const agentName = meta.agentConfig.displayName;
         updateAgentType(agentType);
@@ -196,31 +233,40 @@ export const useAutoRunController = ({
           agentType,
           meta.serviceConfigId,
         );
-        if (!selectionReady) return false;
+        if (!selectionReady) {
+          return { status: AUTO_RUN_START_STATUS.ABORTED };
+        }
         const balancesReady = await waitForBalancesReady();
-        if (!balancesReady) return false;
+        if (!balancesReady) {
+          return { status: AUTO_RUN_START_STATUS.ABORTED };
+        }
         const eligibilityReady = await waitForEligibilityReady();
-        if (!eligibilityReady) return false;
+        if (!eligibilityReady) {
+          return { status: AUTO_RUN_START_STATUS.ABORTED };
+        }
         const eligibility = normalizeEligibility(getSelectedEligibility());
         if (!eligibility.canRun) {
           const reason = formatEligibilityReason(eligibility);
           notifySkipOnce(agentType, reason);
-          return false;
+          return { status: AUTO_RUN_START_STATUS.AGENT_BLOCKED, reason };
         }
 
         onAutoRunStartStateChange?.(true);
+        let lastInfraError = 'unknown';
         try {
           for (
             let attempt = 0;
             attempt < RETRY_BACKOFF_SECONDS.length;
             attempt += 1
           ) {
-            if (!enabledRef.current) return false;
+            if (!enabledRef.current) {
+              return { status: AUTO_RUN_START_STATUS.ABORTED };
+            }
             // If the service deployed during the previous attempt's backoff period,
             // accept it without calling startService() again.
             if (runningAgentTypeRef.current === agentType) {
               onAutoRunAgentStarted?.(agentType);
-              return true;
+              return { status: AUTO_RUN_START_STATUS.STARTED };
             }
             try {
               await startService({
@@ -237,25 +283,32 @@ export const useAutoRunController = ({
               );
               if (deployed) {
                 onAutoRunAgentStarted?.(agentType);
-                return true;
+                return { status: AUTO_RUN_START_STATUS.STARTED };
               }
+              lastInfraError = 'running timeout';
               logMessage(
                 `start timeout for ${agentType} (attempt ${attempt + 1})`,
               );
             } catch (error) {
+              lastInfraError = `${error}`;
               logMessage(`start error for ${agentType}: ${error}`);
             }
             const retryOk = await sleepAwareDelay(
               RETRY_BACKOFF_SECONDS[attempt],
             );
-            if (!retryOk) return false;
+            if (!retryOk) {
+              return { status: AUTO_RUN_START_STATUS.ABORTED };
+            }
           }
         } finally {
           onAutoRunStartStateChange?.(false);
         }
         notifyStartFailed(showNotification, agentName);
         logMessage(`start failed for ${agentType}`);
-        return false;
+        return {
+          status: AUTO_RUN_START_STATUS.INFRA_FAILED,
+          reason: lastInfraError,
+        };
       }
     },
     [
@@ -279,16 +332,42 @@ export const useAutoRunController = ({
     ],
   );
 
-  const stopAgent = useCallback(
+  const stopAgentOnce = useCallback(
     async (agentType: AgentType, serviceConfigId: string) => {
       try {
         await ServicesService.stopDeployment(serviceConfigId);
       } catch (error) {
         logMessage(`stop failed for ${serviceConfigId}: ${error}`);
       }
-      return waitForStoppedAgent(agentType, START_TIMEOUT_SECONDS);
+      const stoppedByDeployment = await waitForStoppedDeployment(
+        serviceConfigId,
+        START_TIMEOUT_SECONDS,
+      );
+      if (stoppedByDeployment) return true;
+      return runningAgentTypeRef.current !== agentType;
     },
-    [logMessage, waitForStoppedAgent],
+    [logMessage, runningAgentTypeRef, waitForStoppedDeployment],
+  );
+
+  const stopAgentWithRecovery = useCallback(
+    async (agentType: AgentType, serviceConfigId: string) => {
+      for (
+        let attempt = 0;
+        attempt < STOP_RECOVERY_MAX_ATTEMPTS;
+        attempt += 1
+      ) {
+        const stopOk = await stopAgentOnce(agentType, serviceConfigId);
+        if (stopOk) return true;
+        if (attempt >= STOP_RECOVERY_MAX_ATTEMPTS - 1) break;
+        logMessage(
+          `stop retry for ${agentType} (${attempt + 2}/${STOP_RECOVERY_MAX_ATTEMPTS}) in ${STOP_RECOVERY_RETRY_SECONDS}s`,
+        );
+        const retryOk = await sleepAwareDelay(STOP_RECOVERY_RETRY_SECONDS);
+        if (!retryOk) return false;
+      }
+      return false;
+    },
+    [logMessage, stopAgentOnce],
   );
 
   const {
@@ -356,7 +435,7 @@ export const useAutoRunController = ({
       if (!currentMeta) return;
       if (!enabledRef.current) return;
 
-      const stopOk = await stopAgent(
+      const stopOk = await stopAgentWithRecovery(
         currentMeta.agentType,
         currentMeta.serviceConfigId,
       );
@@ -385,7 +464,8 @@ export const useAutoRunController = ({
       orderedIncludedAgentTypes,
       refreshRewardsEligibility,
       scheduleNextScan,
-      stopAgent,
+      stopAgentWithRecovery,
+      lastRewardsEligibilityRef,
     ],
   );
 
@@ -396,9 +476,12 @@ export const useAutoRunController = ({
         (agent) => agent.agentType === currentAgentType,
       );
       if (!currentMeta) return false;
-      return stopAgent(currentMeta.agentType, currentMeta.serviceConfigId);
+      return stopAgentWithRecovery(
+        currentMeta.agentType,
+        currentMeta.serviceConfigId,
+      );
     },
-    [configuredAgents, stopAgent],
+    [configuredAgents, stopAgentWithRecovery],
   );
 
   // Stop the currently running agent without requiring a caller to pass a type.

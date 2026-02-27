@@ -30,14 +30,15 @@ Use this right before release. If any **A** or **B** item fails, it’s a **No�
 
 7. **No infinite waits**
    - `waitForAgentSelection` and `waitForBalancesReady` are guarded by `enabledRef.current` — both exit cleanly when auto-run is disabled. Neither has a hard time-based timeout while enabled, but this is acceptable for MVP; the user can disable auto-run to unblock.
-   - `waitForRunningAgent`, `waitForStoppedAgent`, `waitForEligibilityReady`, and `waitForRewardsEligibility` all have explicit time-based timeouts.
+   - `waitForRunningAgent`, `waitForEligibilityReady`, and `waitForRewardsEligibility` have explicit time-based timeouts; stop flow uses deployment-status timeout checks inside bounded recovery attempts.
    - **No longer a No-Go.** ✓
 
 8. **Start failures handled**
-   - If start fails repeatedly, auto-run logs and moves on without crashing.
+   - If start fails repeatedly due transient infra/RPC errors, auto-run retries the **same** agent and does not advance queue to a different agent.
 
 9. **Stop failures handled**
-   - If stop times out, auto-run logs and does not deadlock. The rewards rotation guard is reset and a rescan is scheduled in 10 minutes, ensuring auto-run recovers autonomously.
+   - If stop times out, auto-run enters bounded stop recovery (retries stop + deployment status checks) and does not start the next agent until stop is confirmed.
+   - Manual disable uses the same recovery path; disable should not exit early just because auto-run flag is OFF.
 
 10. **Sleep/wake recovery**
     - Close and reopen laptop lid while auto-run is active → no chaotic cycling; stale delays abort cleanly and orchestration restarts with fresh state.
