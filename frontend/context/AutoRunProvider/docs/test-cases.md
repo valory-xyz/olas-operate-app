@@ -151,7 +151,7 @@ This checklist is organized as: **Scenario**, **Expected behavior**, **Current i
 
 29. **Balances query disabled (offline / not logged in)**
     - Expected: Wait until enabled; no skip.
-    - Current: Treated as loading; no skip. `waitForBalancesReady` exits cleanly when `enabledRef.current` becomes false (no infinite hang). No hard time-based timeout; it waits until balances are ready or auto-run is disabled.
+    - Current: Treated as loading; no skip. `waitForBalancesReady` exits on disable and has a hard timeout, then scanner reschedules.
 
 30. **Single agent earns rewards (no other candidates)**
     - Expected: Keep running current agent; schedule long rescan (30m).
@@ -171,13 +171,13 @@ This checklist is organized as: **Scenario**, **Expected behavior**, **Current i
 
 ---
 
-## Wait Loop Guardrails (No Hard Timeouts)
+## Wait Loop Guardrails
 
 These waits are guarded by `enabledRef.current` and `sleepAwareDelay()`, but do not all have time-based timeouts:
 
-- **waitForAgentSelection()** — guarded by `enabledRef.current` and sleep detection; exits and returns `false` when auto-run is disabled or sleep is detected. Still has no hard time-based timeout if auto-run stays enabled and selection never resolves (e.g. service config mismatch). Acceptable because the user can disable auto-run to unblock.
+- **waitForAgentSelection()** — guarded by `enabledRef.current` and sleep detection, plus a hard timeout (`AGENT_SELECTION_WAIT_TIMEOUT_SECONDS`). Returns `false` on timeout so scanner can reschedule.
 
-- **waitForBalancesReady()** — guarded by `enabledRef.current` and sleep detection; exits when disabled or sleep detected. Also checks balance freshness (`balanceLastUpdatedRef` < 60 s) and triggers refetch if stale. Same caveat: no hard timeout while enabled.
+- **waitForBalancesReady()** — guarded by `enabledRef.current` and sleep detection, plus a hard timeout (`BALANCES_WAIT_TIMEOUT_SECONDS`). Also checks balance freshness (`balanceLastUpdatedRef` < 60 s) and triggers refetch if stale.
 
 - **waitForRunningAgent()** — explicit time-based timeout (`START_TIMEOUT_SECONDS`) plus sleep detection.
 - **Stop confirmation** — bounded deployment-status polling with `START_TIMEOUT_SECONDS` per attempt plus sleep detection.
@@ -257,7 +257,6 @@ These waits are guarded by `enabledRef.current` and `sleepAwareDelay()`, but do 
 
 - Backend start can hang without timeout beyond `waitForRunningAgent`.
 - Rewards eligibility is selection-driven; polling used as a workaround.
-- `waitForAgentSelection` and `waitForBalancesReady` have no hard time-based timeout while auto-run is enabled (only `enabledRef` guard). Acceptable for MVP.
 
 ---
 

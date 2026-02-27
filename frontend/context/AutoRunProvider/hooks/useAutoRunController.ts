@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef } from 'react';
 import { AgentType, MiddlewareDeploymentStatusMap } from '@/constants';
 import { useAgentRunning, useRewardContext, useStartService } from '@/hooks';
 import { ServicesService } from '@/service/Services';
-import { sleepAwareDelay } from '@/utils/delay';
+import { sleepAwareDelay, withTimeout } from '@/utils/delay';
 
 import {
   AUTO_RUN_START_DELAY_SECONDS,
@@ -34,6 +34,19 @@ import {
 import { useAutoRunScanner } from './useAutoRunScanner';
 import { useAutoRunSignals } from './useAutoRunSignals';
 import { useLogAutoRunEvent } from './useLogAutoRunEvent';
+
+const START_OPERATION_TIMEOUT_SECONDS = 15 * 60;
+
+const withOperationTimeout = <T>(
+  operation: Promise<T>,
+  timeoutSeconds: number,
+  label: string,
+) =>
+  withTimeout(
+    operation,
+    timeoutSeconds * 1000,
+    () => new Error(`${label} timed out after ${timeoutSeconds}s`),
+  );
 
 type UseAutoRunControllerParams = {
   enabled: boolean;
@@ -105,11 +118,16 @@ export const useAutoRunController = ({
   const wasAutoRunEnabledRef = useRef(false);
   // Throttle rewards fetch per agent to avoid spamming the API.
   const lastRewardsFetchRef = useRef<Partial<Record<AgentType, number>>>({});
+  // Prevent immediate re-trigger loops after stop timeouts for the same agent.
+  const stopRetryBackoffUntilRef = useRef<Partial<Record<AgentType, number>>>(
+    {},
+  );
 
   // Reset per-agent skip dedup on each disable so notifications fire again on re-enable.
   useEffect(() => {
     if (!enabled) {
       skipNotifiedRef.current = {};
+      stopRetryBackoffUntilRef.current = {};
     }
   }, [enabled]);
 
@@ -184,13 +202,27 @@ export const useAutoRunController = ({
 
   const waitForStoppedDeployment = useCallback(
     async (serviceConfigId: string, timeoutSeconds: number) => {
+      const DEPLOYMENT_CHECK_TIMEOUT_MS = 15_000;
+      const getDeploymentWithTimeout = async () => {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(
+          () => controller.abort(),
+          DEPLOYMENT_CHECK_TIMEOUT_MS,
+        );
+        try {
+          return await ServicesService.getDeployment({
+            serviceConfigId,
+            signal: controller.signal,
+          });
+        } finally {
+          clearTimeout(timeoutId);
+        }
+      };
+
       const startedAt = Date.now();
       while (Date.now() - startedAt < timeoutSeconds * 1000) {
         try {
-          const deployment = await ServicesService.getDeployment({
-            serviceConfigId,
-            signal: new AbortController().signal,
-          });
+          const deployment = await getDeploymentWithTimeout();
           const status = deployment?.status;
           const isActive =
             status === MiddlewareDeploymentStatusMap.DEPLOYED ||
@@ -269,13 +301,17 @@ export const useAutoRunController = ({
               return { status: AUTO_RUN_START_STATUS.STARTED };
             }
             try {
-              await startService({
-                agentType,
-                agentConfig: meta.agentConfig,
-                service: meta.service,
-                stakingProgramId: meta.stakingProgramId,
-                createSafeIfNeeded: () => createSafeIfNeeded(meta),
-              });
+              await withOperationTimeout(
+                startService({
+                  agentType,
+                  agentConfig: meta.agentConfig,
+                  service: meta.service,
+                  stakingProgramId: meta.stakingProgramId,
+                  createSafeIfNeeded: () => createSafeIfNeeded(meta),
+                }),
+                START_OPERATION_TIMEOUT_SECONDS,
+                `start operation for ${agentType}`,
+              );
 
               const deployed = await waitForRunningAgent(
                 agentType,
@@ -335,7 +371,11 @@ export const useAutoRunController = ({
   const stopAgentOnce = useCallback(
     async (agentType: AgentType, serviceConfigId: string) => {
       try {
-        await ServicesService.stopDeployment(serviceConfigId);
+        await withOperationTimeout(
+          ServicesService.stopDeployment(serviceConfigId),
+          60,
+          `stop request for ${serviceConfigId}`,
+        );
       } catch (error) {
         logMessage(`stop failed for ${serviceConfigId}: ${error}`);
       }
@@ -444,12 +484,15 @@ export const useAutoRunController = ({
         // Reset rewards guard so the next poll cycle can re-trigger rotation
         // instead of being blocked by the previousEligibility === true check.
         lastRewardsEligibilityRef.current[currentAgentType] = undefined;
+        stopRetryBackoffUntilRef.current[currentAgentType] =
+          Date.now() + SCAN_BLOCKED_DELAY_SECONDS * 1000;
         logMessage(
           `reset rewards guard for ${currentAgentType}, scheduling rescan in ${SCAN_BLOCKED_DELAY_SECONDS}s`,
         );
         scheduleNextScan(SCAN_BLOCKED_DELAY_SECONDS);
         return;
       }
+      stopRetryBackoffUntilRef.current[currentAgentType] = undefined;
       if (!enabledRef.current) return;
       const cooldownOk = await sleepAwareDelay(COOLDOWN_SECONDS);
       if (!cooldownOk) return;
@@ -466,6 +509,7 @@ export const useAutoRunController = ({
       scheduleNextScan,
       stopAgentWithRecovery,
       lastRewardsEligibilityRef,
+      stopRetryBackoffUntilRef,
     ],
   );
 
@@ -511,6 +555,9 @@ export const useAutoRunController = ({
         lastRewardsEligibilityRef.current[currentType] = snapshot;
         if (snapshot !== true) return;
         if (previousEligibility === true) return;
+        const stopRetryBackoffUntil =
+          stopRetryBackoffUntilRef.current[currentType] ?? 0;
+        if (Date.now() < stopRetryBackoffUntil) return;
         logMessage(`rotation triggered: ${currentType} earned rewards`);
         await rotateToNext(currentType);
       } catch (error) {
@@ -534,6 +581,7 @@ export const useAutoRunController = ({
     rewardsTick,
     scanTick,
     lastRewardsEligibilityRef,
+    stopRetryBackoffUntilRef,
   ]);
 
   // Poll rewards for the running agent to allow rotation even when viewing others.

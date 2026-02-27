@@ -29,7 +29,7 @@ Use this right before release. If any **A** or **B** item fails, it’s a **No�
 ## B. Stability & Safety (Release Blockers)
 
 7. **No infinite waits**
-   - `waitForAgentSelection` and `waitForBalancesReady` are guarded by `enabledRef.current` — both exit cleanly when auto-run is disabled. Neither has a hard time-based timeout while enabled, but this is acceptable for MVP; the user can disable auto-run to unblock.
+   - `waitForAgentSelection` and `waitForBalancesReady` are guarded by `enabledRef.current` and both have explicit hard timeouts, so they cannot block indefinitely.
    - `waitForRunningAgent`, `waitForEligibilityReady`, and `waitForRewardsEligibility` have explicit time-based timeouts; stop flow uses deployment-status timeout checks inside bounded recovery attempts.
    - **No longer a No-Go.** ✓
 

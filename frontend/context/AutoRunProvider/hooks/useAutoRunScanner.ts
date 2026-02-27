@@ -166,6 +166,7 @@ export const useAutoRunScanner = ({
       if (!enabledRef.current) return { started: false };
       let hasBlocked = false;
       let hasEligible = false;
+      let hasLoading = false;
       let candidate = findNextInOrder(startFrom);
       if (!candidate) {
         scheduleNextScan(SCAN_ELIGIBLE_DELAY_SECONDS);
@@ -193,30 +194,48 @@ export const useAutoRunScanner = ({
           candidate,
           candidateMeta.serviceConfigId,
         );
-        if (!selectionReady) return { started: false };
+        if (!selectionReady) {
+          if (enabledRef.current) {
+            scheduleNextScan(SCAN_LOADING_RETRY_SECONDS);
+          }
+          return { started: false };
+        }
 
         await refreshRewardsEligibility(candidate);
         const selectionReadyAfterRefresh = await waitForAgentSelection(
           candidate,
           candidateMeta.serviceConfigId,
         );
-        if (!selectionReadyAfterRefresh) return { started: false };
+        if (!selectionReadyAfterRefresh) {
+          if (enabledRef.current) {
+            scheduleNextScan(SCAN_LOADING_RETRY_SECONDS);
+          }
+          return { started: false };
+        }
 
         const balancesReady = await waitForBalancesReady();
-        if (!balancesReady) return { started: false };
+        if (!balancesReady) {
+          if (enabledRef.current) {
+            scheduleNextScan(SCAN_LOADING_RETRY_SECONDS);
+          }
+          return { started: false };
+        }
 
         const eligibilityReady = await waitForEligibilityReady();
         if (!eligibilityReady) {
-          scheduleNextScan(SCAN_LOADING_RETRY_SECONDS);
-          return { started: false };
+          if (!enabledRef.current) return { started: false };
+          hasLoading = true;
+          candidate = findNextInOrder(candidate);
+          continue;
         }
 
         // Evaluate eligibility and rewards before attempting a start.
         const eligibility = normalizeEligibility(getSelectedEligibility());
         if (!eligibility.canRun) {
           if (eligibility.reason === ELIGIBILITY_REASON.LOADING) {
-            scheduleNextScan(SCAN_LOADING_RETRY_SECONDS);
-            return { started: false };
+            hasLoading = true;
+            candidate = findNextInOrder(candidate);
+            continue;
           }
           const reason = formatEligibilityReason(eligibility);
           notifySkipOnce(candidate, reason);
@@ -251,13 +270,14 @@ export const useAutoRunScanner = ({
       }
 
       const delay = (() => {
+        if (hasLoading) return SCAN_LOADING_RETRY_SECONDS;
         if (hasBlocked) return SCAN_BLOCKED_DELAY_SECONDS;
         if (hasEligible) return SCAN_ELIGIBLE_DELAY_SECONDS;
         return SCAN_BLOCKED_DELAY_SECONDS;
       })();
 
       logMessage(
-        `scan complete: no agent started (blocked=${hasBlocked}, eligible=${hasEligible}), rescan in ${delay}s`,
+        `scan complete: no agent started (loading=${hasLoading}, blocked=${hasBlocked}, eligible=${hasEligible}), rescan in ${delay}s`,
       );
       scheduleNextScan(delay);
       return { started: false };

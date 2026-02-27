@@ -9,6 +9,8 @@ import { sleepAwareDelay } from '@/utils/delay';
  * such as waiting for rewards eligibility or balances to be ready.
  */
 const REWARDS_WAIT_TIMEOUT_SECONDS = 20;
+const AGENT_SELECTION_WAIT_TIMEOUT_SECONDS = 60;
+const BALANCES_WAIT_TIMEOUT_SECONDS = 3 * 60;
 
 type UseAutoRunSignalsParams = {
   enabled: boolean;
@@ -118,6 +120,7 @@ export const useAutoRunSignals = ({
   // Wait until UI selection and service config match the requested agent.
   const waitForAgentSelection = useCallback(
     async (agentType: AgentType, serviceConfigId?: string | null) => {
+      const startedAt = Date.now();
       while (enabledRef.current) {
         const isSelectedAgent =
           !isSelectedAgentDetailsLoadingRef.current &&
@@ -127,12 +130,21 @@ export const useAutoRunSignals = ({
         if (isSelectedAgent) {
           return true;
         }
+        if (
+          Date.now() - startedAt >
+          AGENT_SELECTION_WAIT_TIMEOUT_SECONDS * 1000
+        ) {
+          logMessage(
+            `selection wait timeout: ${agentType}${serviceConfigId ? ` (${serviceConfigId})` : ''}`,
+          );
+          return false;
+        }
         const ok = await sleepAwareDelay(2);
         if (!ok) return false;
       }
       return false;
     },
-    [],
+    [logMessage],
   );
 
   // Track when balance data was last updated to detect stale data after sleep/wake.
@@ -155,6 +167,7 @@ export const useAutoRunSignals = ({
   const waitForBalancesReady = useCallback(async () => {
     const isFresh = () =>
       Date.now() - balanceLastUpdatedRef.current < BALANCE_STALENESS_MS;
+    const startedAt = Date.now();
 
     if (balancesReadyRef.current && !balancesLoadingRef.current && isFresh()) {
       return true;
@@ -206,6 +219,10 @@ export const useAutoRunSignals = ({
           .finally(() => {
             isRefetchingBalancesRef.current = false;
           });
+      }
+      if (now - startedAt > BALANCES_WAIT_TIMEOUT_SECONDS * 1000) {
+        logMessage('balances wait timeout');
+        return false;
       }
     }
     return false;
