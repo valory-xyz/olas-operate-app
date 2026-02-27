@@ -5,7 +5,10 @@ import { useElectronApi } from '@/hooks';
 import { AUTO_RUN_LOG_PREFIX } from '../constants';
 
 /**
- * Hook to log messages related to the auto-run feature
+ * Auto-run logger adapter.
+ *
+ * Example output in electron logs:
+ * `autorun:: rotation triggered: optimus earned rewards`
  */
 export const useLogAutoRunEvent = () => {
   const { logEvent } = useElectronApi();

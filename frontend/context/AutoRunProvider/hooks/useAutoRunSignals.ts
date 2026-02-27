@@ -23,9 +23,14 @@ type UseAutoRunSignalsParams = {
 };
 
 /**
- * hook to manage signals related to auto-run state and agent status,
- * such as tracking the currently running agent, rewards eligibility snapshots,
- * and providing utility functions to wait for certain conditions or schedule scans.
+ * Runtime signal hub for auto-run.
+ *
+ * This hook keeps mutable refs in sync with the latest UI/network state so
+ * long-running async loops can read fresh values without stale-closure bugs.
+ *
+ * Example:
+ * scanner selects `polystrat` -> waits for selection/balances/rewards ->
+ * this hook provides those waits and snapshot reads.
  */
 export const useAutoRunSignals = ({
   enabled,
@@ -42,7 +47,8 @@ export const useAutoRunSignals = ({
     refetch,
   } = useBalanceAndRefillRequirementsContext();
 
-  // NOTE: Refs keep async loops in sync with live state without re-render churn.
+  // NOTE: refs are intentionally used here so async loops can always read the latest
+  // values even if React re-renders while a wait loop is in progress.
   const enabledRef = useRef(enabled);
   const runningAgentTypeRef = useRef(runningAgentType);
   const isSelectedAgentDetailsLoadingRef = useRef(
@@ -65,7 +71,8 @@ export const useAutoRunSignals = ({
   const lastRewardsEligibilityRef = useRef<
     Partial<Record<AgentType, boolean | undefined>>
   >({});
-  // Timer + tick used to rescan after delays.
+  // Timer + tick pair used for delayed rescans.
+  // Scheduling sets a timeout; when it fires we bump scanTick to trigger effects.
   const scanTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [scanTick, setScanTick] = useState(0);
   const [rewardsTick, setRewardsTick] = useState(0);
@@ -79,7 +86,7 @@ export const useAutoRunSignals = ({
     }
   }, [enabled]);
 
-  // Track the running agent from polling.
+  // Keep refs aligned with latest render values.
   useEffect(() => {
     runningAgentTypeRef.current = runningAgentType;
   }, [runningAgentType]);
@@ -120,6 +127,8 @@ export const useAutoRunSignals = ({
   // Wait until UI selection and service config match the requested agent.
   const waitForAgentSelection = useCallback(
     async (agentType: AgentType, serviceConfigId?: string | null) => {
+      // Wait until sidebar selection and selected service details match the candidate.
+      // Example: scanner requested `optimus`; this blocks until UI state is actually on `optimus`.
       const startedAt = Date.now();
       while (enabledRef.current) {
         const isSelectedAgent =
@@ -173,7 +182,7 @@ export const useAutoRunSignals = ({
       return true;
     }
 
-    // If balances are stale (e.g. after sleep), force a refetch.
+    // If balances are stale (e.g. laptop slept), force a refetch once.
     if (!isFresh()) {
       if (!didLogStaleRef.current) {
         logMessage('balances stale, triggering refetch');
@@ -194,6 +203,7 @@ export const useAutoRunSignals = ({
       }
     }
 
+    // While waiting, refresh every 15s to avoid getting stuck on stale backend state.
     let lastRefetchAt = Date.now();
     while (enabledRef.current) {
       if (
@@ -231,6 +241,8 @@ export const useAutoRunSignals = ({
   // Wait for rewards eligibility to be populated for a given agent.
   const waitForRewardsEligibility = useCallback(
     async (agentType: AgentType) => {
+      // RewardProvider is selection-driven, so snapshot may be undefined briefly
+      // right after switching candidates.
       const startedAt = Date.now();
       while (
         rewardSnapshotRef.current[agentType] === undefined &&
@@ -281,6 +293,7 @@ export const useAutoRunSignals = ({
   // Wait until the running agent type matches the requested agent.
   const waitForRunningAgent = useCallback(
     async (agentType: AgentType, timeoutSeconds: number) => {
+      // Confirm backend-reported running agent switches to the requested one.
       const startedAt = Date.now();
       while (
         enabledRef.current &&
@@ -298,6 +311,7 @@ export const useAutoRunSignals = ({
 
   // Schedule a delayed scan and bump the tick when it fires.
   const scheduleNextScan = useCallback((delaySeconds: number) => {
+    // Re-arm scan timer on each schedule call so only the latest schedule wins.
     if (!enabledRef.current) return;
     if (scanTimeoutRef.current) {
       clearTimeout(scanTimeoutRef.current);

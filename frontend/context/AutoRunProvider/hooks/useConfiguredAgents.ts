@@ -6,9 +6,11 @@ import { AgentMeta } from '../types';
 import { getAgentFromService } from '../utils/utils';
 
 /**
- * Hook to get the list of configured agents based on the provided services.
- * It extracts the agent type, configuration, and related details for
- * each service that has an associated agent.
+ * Maps backend services into normalized `AgentMeta[]` used by auto-run.
+ *
+ * Example:
+ * service `trader` + chain config + staking id -> one AgentMeta entry
+ * with agentType/serviceConfigId/multisig/token etc.
  */
 export const useConfiguredAgents = (services?: Service[]) => {
   return useMemo(() => {

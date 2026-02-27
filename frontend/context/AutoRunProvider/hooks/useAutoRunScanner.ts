@@ -81,6 +81,14 @@ export const useAutoRunScanner = ({
   scheduleNextScan,
   logMessage,
 }: UseAutoRunScannerParams) => {
+  /**
+   * Queue-scanning logic for auto-run.
+   *
+   * Example:
+   * Order is [omenstrat, polystrat, optimus].
+   * If scan starts from `omenstrat`, this hook checks `polystrat` first,
+   * then `optimus`, then wraps once.
+   */
   // Normalize transient eligibility states into a consistent "Loading" signal.
   const normalizeEligibility = useCallback(
     (eligibility: {
@@ -103,7 +111,9 @@ export const useAutoRunScanner = ({
         return eligibility;
       }
 
-      // If balances are still loading, report as a generic loading reason to avoid
+      // Special stale-read case:
+      // if deployability says "Loading: Balances" but global balances are already
+      // ready, we can treat this candidate as runnable and proceed.
       const balances = getBalancesStatus();
       if (balances.ready && !balances.loading) {
         return { canRun: true };
@@ -164,6 +174,10 @@ export const useAutoRunScanner = ({
   const scanAndStartNext = useCallback(
     async (startFrom?: AgentType | null) => {
       if (!enabledRef.current) return { started: false };
+      // Aggregate scan outcome across all visited candidates.
+      // - hasLoading: at least one candidate blocked only by transient loading.
+      // - hasBlocked: at least one deterministic blocker (low balance, evicted, etc.).
+      // - hasEligible: at least one already earned rewards (idle this epoch).
       let hasBlocked = false;
       let hasEligible = false;
       let hasLoading = false;
@@ -174,6 +188,7 @@ export const useAutoRunScanner = ({
       }
       const visited = new Set<AgentType>();
 
+      // Visit each included agent at most once per scan cycle.
       while (candidate && !visited.has(candidate)) {
         if (!enabledRef.current) return { started: false };
 
@@ -304,6 +319,9 @@ export const useAutoRunScanner = ({
 
   // Try to start the currently selected agent first when auto-run is enabled.
   const startSelectedAgentIfEligible = useCallback(async () => {
+    // Example:
+    // User enables auto-run while viewing `memeooorr`.
+    // We first try `memeooorr`; only if it can't start do we fall back to queue scan.
     if (!orderedIncludedAgentTypes.includes(selectedAgentType)) {
       return false;
     }
