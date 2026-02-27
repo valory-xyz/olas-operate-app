@@ -101,6 +101,7 @@ export const AGENT_CONFIG: {
     defaultBehavior:
       'Adopting a conservative strategy with small, high-confidence trades.',
     servicePublicId: 'valory/trader_pearl:0.1.0',
+    erc20Tokens: [TokenSymbolMap['USDC.e'], TokenSymbolMap.WXDAI],
   },
   [AgentMap.Polystrat]: {
     isAgentEnabled: true,
@@ -126,6 +127,7 @@ export const AGENT_CONFIG: {
       'Trade sizes adapt to market conditions and agent confidence.',
     servicePublicId: 'valory/polymarket_trader:0.1.0',
     isGeoLocationRestricted: true,
+    erc20Tokens: [TokenSymbolMap.USDC, TokenSymbolMap['USDC.e']],
   },
   [AgentMap.Optimus]: {
     isAgentEnabled: true,
@@ -152,6 +154,7 @@ export const AGENT_CONFIG: {
     defaultBehavior:
       'Conservative volatile exposure across DEXs and lending markets with advanced functionalities enabled.',
     servicePublicId: 'valory/optimus:0.1.0',
+    erc20Tokens: [TokenSymbolMap.USDC],
   },
   [AgentMap.AgentsFun]: {
     isAgentEnabled: true,
@@ -174,6 +177,7 @@ export const AGENT_CONFIG: {
     // TODO: Support the new service ID dvilela/memeooorr:0.1.0 -> valory/memeooorr:0.1.0
     // also remove its exception from check_service_templates.ts
     servicePublicId: 'dvilela/memeooorr:0.1.0',
+    erc20Tokens: [TokenSymbolMap.USDC],
   },
   [AgentMap.Modius]: {
     isAgentEnabled: true,
@@ -199,6 +203,7 @@ export const AGENT_CONFIG: {
     defaultBehavior:
       'Conservative volatile exposure across DEXs and lending markets with advanced functionalities enabled.',
     servicePublicId: 'valory/optimus:0.1.0',
+    erc20Tokens: [TokenSymbolMap.USDC],
   },
   [AgentMap.PettAi]: {
     isAgentEnabled: true,
