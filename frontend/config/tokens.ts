@@ -106,6 +106,17 @@ const GNOSIS_TOKEN_CONFIG: ChainTokenConfig = {
     tokenType: TokenType.Wrapped,
     symbol: TokenSymbolMap.WXDAI,
   },
+  /**
+   * @warning USDC.e (bridged USDC) is a special case, it has 6 decimals, not 18.
+   * @link https://gnosisscan.io/token/0x2a22f9c3b484c3629090feed35f17ff8f88f76f0
+   * @note When parsing or formatting units, use `decimals` (6) instead of the standard `ether` sizing (10^18).
+   */
+  [TokenSymbolMap['USDC.e']]: {
+    address: '0x2a22f9c3b484c3629090FeED35F17Ff8F88f76F0',
+    decimals: 6,
+    tokenType: TokenType.Erc20,
+    symbol: TokenSymbolMap['USDC.e'],
+  },
 } as const;
 
 const BASE_TOKEN_CONFIG: ChainTokenConfig = {
@@ -119,6 +130,17 @@ const BASE_TOKEN_CONFIG: ChainTokenConfig = {
     decimals: 18,
     tokenType: TokenType.Erc20,
     symbol: TokenSymbolMap.OLAS,
+  },
+  /**
+   * @warning USDC is a special case, it has 6 decimals, not 18.
+   * @link https://basescan.org/token/0x833589fcd6edb6e08f4c7c32d4f71b54bda02913
+   * @note When parsing or formatting units, use `decimals` (6) instead of the standard `ether` sizing (10^18).
+   */
+  [TokenSymbolMap.USDC]: {
+    address: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+    decimals: 6,
+    tokenType: TokenType.Erc20,
+    symbol: TokenSymbolMap.USDC,
   },
 } as const;
 
