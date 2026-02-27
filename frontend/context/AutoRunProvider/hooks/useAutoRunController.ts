@@ -29,6 +29,19 @@ type UseAutoRunControllerParams = {
   onAutoRunStartStateChange?: (isStarting: boolean) => void;
 };
 
+/**
+ * Thin composition hook:
+ * - `useAutoRunSignals`: shared runtime refs + wait helpers
+ * - `useAutoRunOperations`: start/stop/retry primitives
+ * - `useAutoRunScanner`: queue traversal and candidate selection
+ * - `useAutoRunLifecycle`: effects (rotation, polling, resume-after-stop)
+ *
+ * Example:
+ * Selected agent = `memeooorr`, running agent = `optimus`.
+ * - Controller wires all pieces so lifecycle can stop `optimus`,
+ * - scanner can pick next candidate and
+ * - operations can start it safely.
+ */
 export const useAutoRunController = ({
   enabled,
   orderedIncludedAgentTypes,
@@ -43,19 +56,6 @@ export const useAutoRunController = ({
   onAutoRunAgentStarted,
   onAutoRunStartStateChange,
 }: UseAutoRunControllerParams) => {
-  /**
-   * Thin composition hook:
-   * - `useAutoRunSignals`: shared runtime refs + wait helpers
-   * - `useAutoRunOperations`: start/stop/retry primitives
-   * - `useAutoRunScanner`: queue traversal and candidate selection
-   * - `useAutoRunLifecycle`: effects (rotation, polling, resume-after-stop)
-   *
-   * Example:
-   * Selected agent = `memeooorr`, running agent = `optimus`.
-   * - Controller wires all pieces so lifecycle can stop `optimus`,
-   * - scanner can pick next candidate and
-   * - operations can start it safely.
-   */
   const { isEligibleForRewards } = useRewardContext();
   const { runningAgentType } = useAgentRunning();
   const { startService } = useStartService();

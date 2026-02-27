@@ -44,6 +44,14 @@ type UseAutoRunLifecycleParams = {
   logMessage: (message: string) => void;
 };
 
+/**
+ * Lifecycle effects that keep auto-run moving over time.
+ *
+ * Example:
+ * - `optimus` is running
+ * - rewards flip to earned
+ * - lifecycle rotates to next candidate and starts scan
+ */
 export const useAutoRunLifecycle = ({
   enabled,
   runningAgentType,
@@ -64,14 +72,6 @@ export const useAutoRunLifecycle = ({
   stopRetryBackoffUntilRef,
   logMessage,
 }: UseAutoRunLifecycleParams) => {
-  /**
-   * Lifecycle effects that keep auto-run moving over time.
-   *
-   * Example:
-   * - `optimus` is running
-   * - rewards flip to earned
-   * - lifecycle rotates to next candidate and starts scan
-   */
   // Guards against overlapping scan/rotation loops.
   const isRotatingRef = useRef(false);
   // Track prior enabled state to distinguish initial enable vs later idle (cooldown on manual stop).
