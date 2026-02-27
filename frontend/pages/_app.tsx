@@ -8,6 +8,7 @@ import { useEffect, useState } from 'react';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { Layout } from '@/components/Layout';
 import { mainTheme } from '@/constants';
+import { AutoRunProvider } from '@/context/AutoRunProvider/AutoRunProvider';
 import { BalanceProvider } from '@/context/BalanceProvider/BalanceProvider';
 import { BalancesAndRefillRequirementsProvider } from '@/context/BalancesAndRefillRequirementsProvider/BalancesAndRefillRequirementsProvider';
 import { ElectronApiProvider } from '@/context/ElectronApiProvider';
@@ -54,25 +55,27 @@ function App({ Component, pageProps }: AppProps) {
                     <RewardProvider>
                       <BalanceProvider>
                         <BalancesAndRefillRequirementsProvider>
-                          <SetupProvider>
-                            <SettingsProvider>
-                              <MessageProvider>
-                                <SharedProvider>
-                                  <OnRampProvider>
-                                    <PearlWalletProvider>
-                                      <SupportModalProvider>
-                                        {isMounted ? (
-                                          <Layout>
-                                            <Component {...pageProps} />
-                                          </Layout>
-                                        ) : null}
-                                      </SupportModalProvider>
-                                    </PearlWalletProvider>
-                                  </OnRampProvider>
-                                </SharedProvider>
-                              </MessageProvider>
-                            </SettingsProvider>
-                          </SetupProvider>
+                          <AutoRunProvider>
+                            <SetupProvider>
+                              <SettingsProvider>
+                                <MessageProvider>
+                                  <SharedProvider>
+                                    <OnRampProvider>
+                                      <PearlWalletProvider>
+                                        <SupportModalProvider>
+                                          {isMounted ? (
+                                            <Layout>
+                                              <Component {...pageProps} />
+                                            </Layout>
+                                          ) : null}
+                                        </SupportModalProvider>
+                                      </PearlWalletProvider>
+                                    </OnRampProvider>
+                                  </SharedProvider>
+                                </MessageProvider>
+                              </SettingsProvider>
+                            </SetupProvider>
+                          </AutoRunProvider>
                         </BalancesAndRefillRequirementsProvider>
                       </BalanceProvider>
                     </RewardProvider>

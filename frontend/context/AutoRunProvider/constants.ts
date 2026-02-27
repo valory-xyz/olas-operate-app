@@ -1,0 +1,70 @@
+/** Prefix prepended to all auto-run log messages for easy filtering in the console. */
+export const AUTO_RUN_LOG_PREFIX = 'autorun:';
+
+/**
+ * Seconds to wait after stopping an agent before starting the next one during rotation.
+ * Gives the backend time to fully tear down the running service before a new one starts.
+ * e.g. Agent A earns rewards → stop A → wait 20 s → start Agent B
+ */
+export const COOLDOWN_SECONDS = 20;
+
+/**
+ * Delay (in seconds) before auto-run starts after the user enables it.
+ * This gives users a brief window to include/exclude agents.
+ */
+export const AUTO_RUN_START_DELAY_SECONDS = 30;
+
+/**
+ * Progressive back-off delays (in seconds) between consecutive start retries.
+ * e.g. 1st retry after 15 s, 2nd after 30 s, 3rd+ after 60 s
+ */
+export const RETRY_BACKOFF_SECONDS = [15, 30, 60];
+
+/**
+ * How often (in seconds) the rewards-eligibility poller checks whether the
+ * running agent has earned its staking rewards for the current epoch.
+ * e.g. every 60 s → fetch rewards info → compare snapshot → trigger rotation if earned
+ */
+export const REWARDS_POLL_SECONDS = 60; // 1 minute
+
+/**
+ * How long (in seconds) to wait before re-scanning for a runnable agent when
+ * the last scan found at least one agent that was blocked (e.g. low balance,
+ * no slots, evicted). A shorter delay is used because the blocking condition
+ * may resolve soon (funds topped up, slot freed, etc.).
+ */
+export const SCAN_BLOCKED_DELAY_SECONDS = 10 * 60; // 10 minutes
+
+/**
+ * How long (in seconds) to wait before re-scanning when the last scan found
+ * at least one eligible agent (or the running agent just earned its rewards
+ * and no other agent could be started). A longer delay is used because there
+ * is nothing actionable to do until the next epoch window opens.
+ * Value: 30 minutes
+ */
+export const SCAN_ELIGIBLE_DELAY_SECONDS = 30 * 60; // 30 minutes
+
+/**
+ * How long (in seconds) to wait before retrying when a scan or start attempt
+ * was skipped due to a transient loading state (e.g. eligibility timed out,
+ * or eligibility is still in a loading reason after the wait).
+ */
+export const SCAN_LOADING_RETRY_SECONDS = 30;
+
+/**
+ * How long (in seconds) to wait for a service to reach DEPLOYED state after
+ * `startService()` is called. Initial deployments can be slow (safe creation,
+ * service registration, on-chain funding) so this must be generous.
+ * Value: 5 minutes
+ */
+export const START_TIMEOUT_SECONDS = 300;
+
+/** Eligibility reason labels used by deployability and auto-run. */
+export const ELIGIBILITY_REASON = {
+  LOADING: 'Loading',
+  ANOTHER_AGENT_RUNNING: 'Another agent running',
+} as const;
+
+export const ELIGIBILITY_LOADING_REASON = {
+  BALANCES: 'Balances',
+} as const;

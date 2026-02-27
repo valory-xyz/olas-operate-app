@@ -1,0 +1,347 @@
+import { MutableRefObject, useCallback } from 'react';
+
+import { AgentType } from '@/constants';
+import { sleepAwareDelay } from '@/utils/delay';
+
+import {
+  ELIGIBILITY_LOADING_REASON,
+  ELIGIBILITY_REASON,
+  SCAN_BLOCKED_DELAY_SECONDS,
+  SCAN_ELIGIBLE_DELAY_SECONDS,
+  SCAN_LOADING_RETRY_SECONDS,
+} from '../constants';
+import { AgentMeta } from '../types';
+import { isOnlyLoadingReason } from '../utils/autoRunHelpers';
+
+const ELIGIBILITY_WAIT_TIMEOUT_MS = 60_000; // 1 minute
+
+type UseAutoRunScannerParams = {
+  enabledRef: MutableRefObject<boolean>;
+  orderedIncludedAgentTypes: AgentType[];
+  configuredAgents: AgentMeta[];
+  selectedAgentType: AgentType;
+  updateAgentType: (agentType: AgentType) => void;
+  getSelectedEligibility: () => {
+    canRun: boolean;
+    reason?: string;
+    loadingReason?: string;
+  };
+  waitForAgentSelection: (
+    agentType: AgentType,
+    serviceConfigId?: string | null,
+  ) => Promise<boolean>;
+  waitForBalancesReady: () => Promise<boolean>;
+  waitForRewardsEligibility: (
+    agentType: AgentType,
+  ) => Promise<boolean | undefined>;
+  refreshRewardsEligibility: (
+    agentType: AgentType,
+  ) => Promise<boolean | undefined>;
+  markRewardSnapshotPending: (agentType: AgentType) => void;
+  getRewardSnapshot: (agentType: AgentType) => boolean | undefined;
+  getBalancesStatus: () => { ready: boolean; loading: boolean };
+  notifySkipOnce: (agentType: AgentType, reason?: string) => void;
+  startAgentWithRetries: (agentType: AgentType) => Promise<boolean>;
+  scheduleNextScan: (delaySeconds: number) => void;
+  logMessage: (message: string) => void;
+};
+
+// Format an eligibility payload into a single readable reason.
+const formatEligibilityReason = (eligibility: {
+  reason?: string;
+  loadingReason?: string;
+}) => {
+  if (
+    eligibility.reason === ELIGIBILITY_REASON.LOADING &&
+    eligibility.loadingReason
+  ) {
+    return `Loading: ${eligibility.loadingReason}`;
+  }
+  return eligibility.reason ?? 'unknown';
+};
+
+export const useAutoRunScanner = ({
+  enabledRef,
+  orderedIncludedAgentTypes,
+  configuredAgents,
+  selectedAgentType,
+  updateAgentType,
+  getSelectedEligibility,
+  waitForAgentSelection,
+  waitForBalancesReady,
+  waitForRewardsEligibility,
+  refreshRewardsEligibility,
+  markRewardSnapshotPending,
+  getRewardSnapshot,
+  getBalancesStatus,
+  notifySkipOnce,
+  startAgentWithRetries,
+  scheduleNextScan,
+  logMessage,
+}: UseAutoRunScannerParams) => {
+  // Normalize transient eligibility states into a consistent "Loading" signal.
+  const normalizeEligibility = useCallback(
+    (eligibility: {
+      canRun: boolean;
+      reason?: string;
+      loadingReason?: string;
+    }) => {
+      if (eligibility.reason === ELIGIBILITY_REASON.ANOTHER_AGENT_RUNNING) {
+        return {
+          canRun: false,
+          reason: ELIGIBILITY_REASON.LOADING,
+          loadingReason: ELIGIBILITY_REASON.ANOTHER_AGENT_RUNNING,
+        };
+      }
+
+      // Pass through if this isn't the specific "Loading: Balances" stale-read case.
+      if (
+        !isOnlyLoadingReason(eligibility, ELIGIBILITY_LOADING_REASON.BALANCES)
+      ) {
+        return eligibility;
+      }
+
+      // If balances are still loading, report as a generic loading reason to avoid
+      const balances = getBalancesStatus();
+      if (balances.ready && !balances.loading) {
+        return { canRun: true };
+      }
+      return eligibility;
+    },
+    [getBalancesStatus],
+  );
+
+  // Wait until eligibility is no longer loading, with a hard timeout.
+  const waitForEligibilityReady = useCallback(async () => {
+    const startedAt = Date.now();
+    while (enabledRef.current) {
+      const eligibility = normalizeEligibility(getSelectedEligibility());
+      if (eligibility.reason !== ELIGIBILITY_REASON.LOADING) return true;
+      if (Date.now() - startedAt > ELIGIBILITY_WAIT_TIMEOUT_MS) {
+        logMessage('eligibility wait timeout');
+        return false;
+      }
+      const ok = await sleepAwareDelay(2);
+      if (!ok) return false;
+    }
+    return false;
+  }, [enabledRef, getSelectedEligibility, logMessage, normalizeEligibility]);
+
+  // Iterate candidates in the included order, wrapping around once.
+  const findNextInOrder = useCallback(
+    (currentAgentType?: AgentType | null) => {
+      if (orderedIncludedAgentTypes.length === 0) return null;
+      const startIndex = currentAgentType
+        ? orderedIncludedAgentTypes.indexOf(currentAgentType)
+        : -1;
+      for (let i = 1; i <= orderedIncludedAgentTypes.length; i += 1) {
+        const index = (startIndex + i) % orderedIncludedAgentTypes.length;
+        const candidate = orderedIncludedAgentTypes[index];
+        if (!candidate) continue;
+        if (candidate === currentAgentType) continue;
+        return candidate;
+      }
+      return null;
+    },
+    [orderedIncludedAgentTypes],
+  );
+
+  // Start scanning from the item before the selected agent for a fair rotation.
+  // example: if order is [a,b,c] and currently selected is b, start from a.
+  // If currently selected is c, start from b.
+  const getPreferredStartFrom = useCallback(() => {
+    const length = orderedIncludedAgentTypes.length;
+    if (length <= 1) return null;
+    const index = orderedIncludedAgentTypes.indexOf(selectedAgentType);
+    if (index === -1) return null;
+    const prevIndex = (index - 1 + length) % length;
+    return orderedIncludedAgentTypes[prevIndex] ?? null;
+  }, [orderedIncludedAgentTypes, selectedAgentType]);
+
+  // Scan the queue to start the next eligible agent.
+  const scanAndStartNext = useCallback(
+    async (startFrom?: AgentType | null) => {
+      if (!enabledRef.current) return { started: false };
+      let hasBlocked = false;
+      let hasEligible = false;
+      let candidate = findNextInOrder(startFrom);
+      if (!candidate) {
+        scheduleNextScan(SCAN_ELIGIBLE_DELAY_SECONDS);
+        return { started: false };
+      }
+      const visited = new Set<AgentType>();
+
+      while (candidate && !visited.has(candidate)) {
+        if (!enabledRef.current) return { started: false };
+
+        visited.add(candidate);
+        const candidateMeta = configuredAgents.find(
+          (agent) => agent.agentType === candidate,
+        );
+        if (!candidateMeta) {
+          hasBlocked = true;
+          candidate = findNextInOrder(candidate);
+          continue;
+        }
+
+        // Move selection to candidate and wait for dependent data.
+        updateAgentType(candidate);
+        markRewardSnapshotPending(candidate);
+        const selectionReady = await waitForAgentSelection(
+          candidate,
+          candidateMeta.serviceConfigId,
+        );
+        if (!selectionReady) return { started: false };
+
+        await refreshRewardsEligibility(candidate);
+        const selectionReadyAfterRefresh = await waitForAgentSelection(
+          candidate,
+          candidateMeta.serviceConfigId,
+        );
+        if (!selectionReadyAfterRefresh) return { started: false };
+
+        const balancesReady = await waitForBalancesReady();
+        if (!balancesReady) return { started: false };
+
+        const eligibilityReady = await waitForEligibilityReady();
+        if (!eligibilityReady) {
+          scheduleNextScan(SCAN_LOADING_RETRY_SECONDS);
+          return { started: false };
+        }
+
+        // Evaluate eligibility and rewards before attempting a start.
+        const eligibility = normalizeEligibility(getSelectedEligibility());
+        if (!eligibility.canRun) {
+          const reason = formatEligibilityReason(eligibility);
+          const isLoadingReason = reason.toLowerCase().includes('loading');
+          if (isLoadingReason) {
+            scheduleNextScan(SCAN_LOADING_RETRY_SECONDS);
+            return { started: false };
+          }
+          notifySkipOnce(candidate, reason);
+          hasBlocked = true;
+          candidate = findNextInOrder(candidate);
+          continue;
+        }
+
+        const candidateEligibility = await waitForRewardsEligibility(candidate);
+        if (candidateEligibility === true) {
+          hasEligible = true;
+          candidate = findNextInOrder(candidate);
+          continue;
+        }
+
+        const started = await startAgentWithRetries(candidate);
+        if (started) return { started: true };
+        hasBlocked = true;
+        candidate = findNextInOrder(candidate);
+      }
+
+      const delay = (() => {
+        if (hasBlocked) return SCAN_BLOCKED_DELAY_SECONDS;
+        if (hasEligible) return SCAN_ELIGIBLE_DELAY_SECONDS;
+        return SCAN_BLOCKED_DELAY_SECONDS;
+      })();
+
+      scheduleNextScan(delay);
+      return { started: false };
+    },
+    [
+      configuredAgents,
+      enabledRef,
+      findNextInOrder,
+      getSelectedEligibility,
+      markRewardSnapshotPending,
+      refreshRewardsEligibility,
+      notifySkipOnce,
+      normalizeEligibility,
+      scheduleNextScan,
+      startAgentWithRetries,
+      updateAgentType,
+      waitForAgentSelection,
+      waitForBalancesReady,
+      waitForRewardsEligibility,
+      waitForEligibilityReady,
+    ],
+  );
+
+  // Try to start the currently selected agent first when auto-run is enabled.
+  const startSelectedAgentIfEligible = useCallback(async () => {
+    if (!orderedIncludedAgentTypes.includes(selectedAgentType)) {
+      return false;
+    }
+
+    const selectedMeta = configuredAgents.find(
+      (agent) => agent.agentType === selectedAgentType,
+    );
+    if (!selectedMeta) return false;
+
+    const rewardSnapshot = getRewardSnapshot(selectedAgentType);
+    if (rewardSnapshot === true) return false;
+
+    markRewardSnapshotPending(selectedAgentType);
+    const selectionReady = await waitForAgentSelection(
+      selectedAgentType,
+      selectedMeta.serviceConfigId,
+    );
+    if (!selectionReady) return false;
+
+    await refreshRewardsEligibility(selectedAgentType);
+    const selectionReadyAfterRefresh = await waitForAgentSelection(
+      selectedAgentType,
+      selectedMeta.serviceConfigId,
+    );
+    if (!selectionReadyAfterRefresh) return false;
+
+    const balancesReady = await waitForBalancesReady();
+    if (!balancesReady) return false;
+
+    const eligibilityReady = await waitForEligibilityReady();
+    if (!eligibilityReady) {
+      scheduleNextScan(SCAN_LOADING_RETRY_SECONDS);
+      return false;
+    }
+    const eligibility = normalizeEligibility(getSelectedEligibility());
+    if (!eligibility.canRun) {
+      const reason = formatEligibilityReason(eligibility);
+      const isLoadingReason = reason.toLowerCase().includes('loading');
+      if (isLoadingReason) {
+        scheduleNextScan(SCAN_LOADING_RETRY_SECONDS);
+        return false;
+      }
+      notifySkipOnce(selectedAgentType, reason);
+      return false;
+    }
+
+    const rewardsEligibility =
+      await waitForRewardsEligibility(selectedAgentType);
+    if (rewardsEligibility === true) {
+      return false;
+    }
+
+    const started = await startAgentWithRetries(selectedAgentType);
+    return started;
+  }, [
+    configuredAgents,
+    getSelectedEligibility,
+    getRewardSnapshot,
+    markRewardSnapshotPending,
+    refreshRewardsEligibility,
+    notifySkipOnce,
+    orderedIncludedAgentTypes,
+    selectedAgentType,
+    startAgentWithRetries,
+    waitForAgentSelection,
+    normalizeEligibility,
+    scheduleNextScan,
+    waitForBalancesReady,
+    waitForEligibilityReady,
+    waitForRewardsEligibility,
+  ]);
+
+  return {
+    getPreferredStartFrom,
+    scanAndStartNext,
+    startSelectedAgentIfEligible,
+  };
+};
