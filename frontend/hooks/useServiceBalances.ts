@@ -73,6 +73,18 @@ export const useServiceBalances = (serviceConfigId: string | undefined) => {
     [serviceEoaBalances, evmHomeChainId],
   );
 
+  /** service eoa ERC20 balances for current chain (excluding OLAS) */
+  const serviceEoaErc20Balances = useMemo(
+    () =>
+      serviceEoaBalances?.filter(
+        ({ isNative, symbol, evmChainId }) =>
+          !isNative &&
+          symbol !== TokenSymbolMap.OLAS &&
+          evmChainId === evmHomeChainId,
+      ),
+    [serviceEoaBalances, evmHomeChainId],
+  );
+
   /** claimed OLAS */
   const serviceSafeOlas = useMemo(
     () =>
@@ -89,6 +101,7 @@ export const useServiceBalances = (serviceConfigId: string | undefined) => {
     serviceSafeNativeBalances,
     serviceSafeErc20Balances,
     serviceEoaNativeBalance,
+    serviceEoaErc20Balances,
     isLoading,
   };
 };

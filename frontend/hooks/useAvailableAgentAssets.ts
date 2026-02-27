@@ -21,6 +21,7 @@ export const useAvailableAgentAssets = () => {
     serviceSafeNativeBalances,
     serviceSafeErc20Balances,
     serviceEoaNativeBalance,
+    serviceEoaErc20Balances,
     serviceSafeOlas,
     isLoading,
   } = useServiceBalances(selectedService?.service_config_id);
@@ -30,6 +31,14 @@ export const useAvailableAgentAssets = () => {
 
     const tokenConfig = TOKEN_CONFIG[evmHomeChainId];
     const serviceSafeBalances = serviceSafeErc20Balances?.reduce<{
+      [tokenSymbol: string]: number;
+    }>((acc, { balance, symbol }) => {
+      if (!acc[symbol]) acc[symbol] = 0;
+      acc[symbol] += balance;
+      return acc;
+    }, {});
+
+    const serviceEoaErc20BalanceMap = serviceEoaErc20Balances?.reduce<{
       [tokenSymbol: string]: number;
     }>((acc, { balance, symbol }) => {
       if (!acc[symbol]) acc[symbol] = 0;
@@ -62,7 +71,11 @@ export const useAvailableAgentAssets = () => {
           }
 
           // balance for other required tokens (eg. USDC)
-          return serviceSafeBalances?.[symbol] ?? 0;
+          // includes both safe and EOA balances
+          return sum([
+            serviceSafeBalances?.[symbol] ?? 0,
+            serviceEoaErc20BalanceMap?.[symbol] ?? 0,
+          ]);
         })();
 
         const asset: AvailableAsset = {
@@ -79,6 +92,7 @@ export const useAvailableAgentAssets = () => {
     serviceSafeNativeBalances,
     serviceEoaNativeBalance,
     serviceSafeErc20Balances,
+    serviceEoaErc20Balances,
     serviceSafeOlas?.balance,
   ]);
 
