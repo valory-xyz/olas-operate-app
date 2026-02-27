@@ -2,7 +2,7 @@
 <b>Pearl</b>
 </h1>
 
-A cross-platform desktop application used to run autonomous agents powered by the OLAS Network.
+A cross-platform desktop application used to run autonomous agents powered by [Olas](https://olas.network).
 
 ## Getting Started
 
