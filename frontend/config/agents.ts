@@ -101,7 +101,7 @@ export const AGENT_CONFIG: {
     defaultBehavior:
       'Adopting a conservative strategy with small, high-confidence trades.',
     servicePublicId: 'valory/trader_pearl:0.1.0',
-    erc20Tokens: [TokenSymbolMap['USDC.e']],
+    erc20Tokens: [TokenSymbolMap['USDC.e'], TokenSymbolMap.WXDAI],
   },
   [AgentMap.Polystrat]: {
     isAgentEnabled: true,
