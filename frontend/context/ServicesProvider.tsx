@@ -21,6 +21,7 @@ import {
   EvmChainId,
   FIFTEEN_SECONDS_INTERVAL,
   FIVE_SECONDS_INTERVAL,
+  isTransitioningDeploymentStatus,
   MESSAGE_WIDTH,
   MiddlewareChain,
   MiddlewareDeploymentStatus,
@@ -128,6 +129,12 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
   const serviceRefetchInterval = useDynamicRefetchInterval(
     FIVE_SECONDS_INTERVAL,
   );
+  const selectedDeploymentFastRefetchInterval = useDynamicRefetchInterval(
+    FIVE_SECONDS_INTERVAL,
+  );
+  const selectedDeploymentSlowRefetchInterval = useDynamicRefetchInterval(
+    FIFTEEN_SECONDS_INTERVAL,
+  );
 
   // state to track the services ids message shown
   // so that it is not shown again for the same service
@@ -196,7 +203,13 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
     enabled: isOnline && !!selectedServiceConfigId,
     refetchInterval: (query) => {
       if (query.state.status !== 'success') return false;
-      return serviceRefetchInterval;
+
+      const status = query.state.data?.status;
+      if (isTransitioningDeploymentStatus(status)) {
+        return selectedDeploymentFastRefetchInterval;
+      }
+
+      return selectedDeploymentSlowRefetchInterval;
     },
     refetchIntervalInBackground: true,
   });

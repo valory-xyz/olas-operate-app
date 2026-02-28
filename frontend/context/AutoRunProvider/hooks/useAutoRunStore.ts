@@ -16,7 +16,12 @@ const DEFAULT_AUTO_RUN: {
 };
 
 /**
- * Hook to manage the auto-run state.
+ * Persisted auto-run settings bridge.
+ *
+ * Example:
+ * - user excludes `polystrat`
+ * - settings are written to Electron store
+ * - app restart loads the same included/excluded state from this hook
  */
 export const useAutoRunStore = () => {
   const { store } = useElectronApi();
@@ -25,6 +30,7 @@ export const useAutoRunStore = () => {
 
   const autoRun = storeState?.autoRun;
   if (autoRun) {
+    // Keep an always-defined local snapshot to avoid undefined checks in callers.
     autoRunRef.current = {
       enabled: !!autoRun.enabled,
       includedAgents: autoRun.includedAgents ?? [],
@@ -41,8 +47,8 @@ export const useAutoRunStore = () => {
   const updateAutoRun = useCallback(
     (partial: Partial<typeof DEFAULT_AUTO_RUN>) => {
       if (!store?.set) return;
-      // Merge with the latest stored snapshot so we don't drop fields when only
-      // a subset of auto-run settings is updated.
+      // Merge with latest snapshot so partial writes do not erase sibling fields.
+      // Example: toggling `enabled` should not wipe `includedAgents`.
       const next = {
         enabled:
           partial.enabled ??

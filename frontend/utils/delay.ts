@@ -21,3 +21,25 @@ export const sleepAwareDelay = async (seconds: number): Promise<boolean> => {
   const elapsed = Date.now() - before;
   return elapsed < seconds * 1000 + SLEEP_DRIFT_THRESHOLD_MS;
 };
+
+/**
+ * Resolves/rejects with `operation`, unless `timeoutMs` elapses first.
+ * Note: this does not cancel the underlying operation.
+ */
+export const withTimeout = async <T>(
+  operation: Promise<T>,
+  timeoutMs: number,
+  createTimeoutError: () => Error,
+): Promise<T> => {
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      operation,
+      new Promise<T>((_, reject) => {
+        timeoutId = setTimeout(() => reject(createTimeoutError()), timeoutMs);
+      }),
+    ]);
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId);
+  }
+};

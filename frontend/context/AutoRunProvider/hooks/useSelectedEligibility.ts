@@ -13,8 +13,14 @@ type UseSelectedEligibilityProps = {
 };
 
 /**
- * Hook to determine the eligibility of the currently selected agent for auto-run,
- * based on the selected agent config and various conditions that could prevent deployment.
+ * Selected-agent eligibility adapter.
+ *
+ * It combines safe readiness + deployability and exposes a stable getter for
+ * async auto-run flows.
+ *
+ * Example:
+ * scanner selects `memeooorr` -> UI rerenders ->
+ * async scanner calls `getSelectedEligibility()` and gets latest canRun/reason.
  */
 export const useSelectedEligibility = ({
   canCreateSafeForChain,
@@ -29,7 +35,7 @@ export const useSelectedEligibility = ({
   const deployability = useDeployability({ safeEligibility });
   const isSelectedAgentDetailsLoading = deployability.isLoading;
 
-  // Keep the latest eligibility in a ref so async flows read fresh values.
+  // Keep latest eligibility in a ref to avoid stale closures in long async loops.
   const latestEligibilityRef = useRef({
     canRun: deployability.canRun,
     reason: deployability.reason,

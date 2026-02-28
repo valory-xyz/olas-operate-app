@@ -1,6 +1,7 @@
 import { MutableRefObject } from 'react';
 
 import { AgentType } from '@/constants';
+import { fetchAgentStakingRewardsInfo } from '@/utils/stakingRewards';
 
 import { ELIGIBILITY_REASON, REWARDS_POLL_SECONDS } from '../constants';
 import { AgentMeta } from '../types';
@@ -55,38 +56,44 @@ export const refreshRewardsEligibility = async ({
     return getRewardSnapshot(agentType);
   }
 
+  //
   lastRewardsFetchRef.current[agentType] = now;
   const meta = configuredAgents.find((agent) => agent.agentType === agentType);
-  if (!meta) return undefined;
+  if (!meta) return;
   if (!meta.multisig || !meta.serviceNftTokenId || !meta.stakingProgramId) {
-    return undefined;
+    return;
   }
 
   try {
-    const response =
-      await meta.agentConfig.serviceApi.getAgentStakingRewardsInfo({
-        agentMultisigAddress: meta.multisig,
-        serviceId: meta.serviceNftTokenId,
-        stakingProgramId: meta.stakingProgramId,
-        chainId: meta.chainId,
-      });
+    const response = await fetchAgentStakingRewardsInfo({
+      chainId: meta.chainId,
+      multisig: meta.multisig,
+      serviceNftTokenId: meta.serviceNftTokenId,
+      stakingProgramId: meta.stakingProgramId,
+      agentConfig: meta.agentConfig,
+      onError: (error) =>
+        logMessage(`rewards fetch error: ${agentType}: ${error}`),
+    });
     const eligible = response?.isEligibleForRewards;
     if (typeof eligible === 'boolean') {
       setRewardSnapshot(agentType, eligible);
       return eligible;
     }
-  } catch (error) {
-    logMessage(`rewards fetch error: ${agentType}: ${error}`);
+  } catch {
+    // fetchAgentStakingRewardsInfo routes errors to onError and returns null.
   }
-
-  return undefined;
 };
 
+/**
+ * Check if the only reason for ineligibility is a specific loading reason.
+ * Useful for conditionally showing loading states in the UI.
+ */
 export const isOnlyLoadingReason = (
   eligibility: { reason?: string; loadingReason?: string },
   reason: string,
 ) => {
   if (eligibility.reason !== ELIGIBILITY_REASON.LOADING) return false;
+
   const reasons = eligibility.loadingReason
     ?.split(',')
     .map((item) => item.trim())
