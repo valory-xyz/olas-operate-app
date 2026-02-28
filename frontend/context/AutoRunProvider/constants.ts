@@ -54,15 +54,15 @@ export const SCAN_ELIGIBLE_DELAY_SECONDS = 30 * 60; // 30 minutes
  * or eligibility is still in a loading reason after the wait).
  * Example: scan hits "Loading: Balances" → retry scan in 30s.
  */
-export const SCAN_LOADING_RETRY_SECONDS = 30;
+export const SCAN_LOADING_RETRY_SECONDS = 30; // 30 seconds
 
 /**
  * How long (in seconds) to wait for a service to reach DEPLOYED state after
  * `startService()` is called. Initial deployments can be slow (safe creation,
  * service registration, on-chain funding) so this must be generous.
- * Value: 5 minutes
+ * Value: 15 minutes
  */
-export const START_TIMEOUT_SECONDS = 300;
+export const START_TIMEOUT_SECONDS = 900; // 15 minutes
 
 /**
  * How many times auto-run retries stopping the same running service before
@@ -73,9 +73,9 @@ export const STOP_RECOVERY_MAX_ATTEMPTS = 3;
 
 /**
  * Delay (in seconds) between stop recovery attempts.
- * Example: stop attempt 1 fails → wait 15s → attempt 2.
+ * Example: stop attempt 1 fails → wait 60s → attempt 2.
  */
-export const STOP_RECOVERY_RETRY_SECONDS = 15;
+export const STOP_RECOVERY_RETRY_SECONDS = 60; // 1 minute
 
 /**
  * Start-attempt outcome labels shared between controller and scanner.

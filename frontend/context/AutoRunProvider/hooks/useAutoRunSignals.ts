@@ -203,8 +203,6 @@ export const useAutoRunSignals = ({
       }
     }
 
-    // While waiting, refresh every 15s to avoid getting stuck on stale backend state.
-    let lastRefetchAt = Date.now();
     while (enabledRef.current) {
       if (
         balancesReadyRef.current &&
@@ -216,20 +214,6 @@ export const useAutoRunSignals = ({
       const ok = await sleepAwareDelay(2);
       if (!ok) return false;
       const now = Date.now();
-      if (now - lastRefetchAt >= 15000 && !isRefetchingBalancesRef.current) {
-        lastRefetchAt = now;
-        isRefetchingBalancesRef.current = true;
-        refetch()
-          .then(() => {
-            balanceLastUpdatedRef.current = Date.now();
-          })
-          .catch((error) => {
-            logMessage(`balances refetch failed: ${error}`);
-          })
-          .finally(() => {
-            isRefetchingBalancesRef.current = false;
-          });
-      }
       if (now - startedAt > BALANCES_WAIT_TIMEOUT_SECONDS * 1000) {
         logMessage('balances wait timeout');
         return false;
@@ -322,6 +306,11 @@ export const useAutoRunSignals = ({
     }, delaySeconds * 1000);
   }, []);
 
+  const hasScheduledScan = useCallback(
+    () => scanTimeoutRef.current !== null,
+    [],
+  );
+
   return {
     enabledRef,
     runningAgentTypeRef,
@@ -330,6 +319,7 @@ export const useAutoRunSignals = ({
     scanTick,
     rewardsTick,
     scheduleNextScan,
+    hasScheduledScan,
     waitForAgentSelection,
     waitForBalancesReady,
     waitForRewardsEligibility,

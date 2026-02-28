@@ -25,6 +25,7 @@ type UseAutoRunLifecycleParams = {
   scanTick: number;
   rewardsTick: number;
   scheduleNextScan: (delaySeconds: number) => void;
+  hasScheduledScan: () => boolean;
   refreshRewardsEligibility: (
     agentType: AgentType,
   ) => Promise<boolean | undefined>;
@@ -63,6 +64,7 @@ export const useAutoRunLifecycle = ({
   scanTick,
   rewardsTick,
   scheduleNextScan,
+  hasScheduledScan,
   refreshRewardsEligibility,
   getRewardSnapshot,
   getPreferredStartFrom,
@@ -300,7 +302,8 @@ export const useAutoRunLifecycle = ({
         if (
           !reachedScan &&
           enabledRef.current &&
-          !runningAgentTypeRef.current
+          !runningAgentTypeRef.current &&
+          !hasScheduledScan()
         ) {
           logMessage(
             `safety net: flow interrupted before scan, retrying in ${COOLDOWN_SECONDS}s`,
@@ -316,6 +319,7 @@ export const useAutoRunLifecycle = ({
     scanAndStartNext,
     scanTick,
     scheduleNextScan,
+    hasScheduledScan,
     startSelectedAgentIfEligible,
     runningAgentTypeRef,
     enabledRef,

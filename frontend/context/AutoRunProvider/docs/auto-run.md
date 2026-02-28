@@ -72,9 +72,9 @@ Note: constants come from both `constants.ts` and hook-local constants in
 | `SCAN_BLOCKED_DELAY_SECONDS` | 10min | Rescan delay when agents are blocked (low balance, evicted, etc.) |
 | `SCAN_ELIGIBLE_DELAY_SECONDS` | 30min | Rescan delay when all agents have earned rewards |
 | `SCAN_LOADING_RETRY_SECONDS` | 30s | Rescan delay on transient loading states |
-| `START_TIMEOUT_SECONDS` | 300s (5min) | How long to wait for DEPLOYED status after start |
+| `START_TIMEOUT_SECONDS` | 900s (15min) | How long to wait for DEPLOYED status after start |
 | `STOP_RECOVERY_MAX_ATTEMPTS` | 3 | Bounded stop retries per rotation |
-| `STOP_RECOVERY_RETRY_SECONDS` | 15s | Delay between stop recovery attempts |
+| `STOP_RECOVERY_RETRY_SECONDS` | 60s | Delay between stop recovery attempts |
 | `AGENT_SELECTION_WAIT_TIMEOUT_SECONDS` | 60s | Hard timeout for UI selection to match requested agent |
 | `BALANCES_WAIT_TIMEOUT_SECONDS` | 180s (3min) | Hard timeout for balances to become ready |
 | `REWARDS_WAIT_TIMEOUT_SECONDS` | 20s | Hard timeout for rewards snapshot to arrive |

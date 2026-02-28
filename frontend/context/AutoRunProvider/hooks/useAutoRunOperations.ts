@@ -315,7 +315,16 @@ export const useAutoRunOperations = ({
 
           const retryOk = await sleepAwareDelay(RETRY_BACKOFF_SECONDS[attempt]);
           if (!retryOk) {
-            return { status: AUTO_RUN_START_STATUS.ABORTED };
+            if (!enabledRef.current) {
+              return { status: AUTO_RUN_START_STATUS.ABORTED };
+            }
+            logMessage(
+              `start retry interrupted for ${agentType}, scheduling rescan`,
+            );
+            return {
+              status: AUTO_RUN_START_STATUS.INFRA_FAILED,
+              reason: 'retry interrupted',
+            };
           }
         }
       } finally {
