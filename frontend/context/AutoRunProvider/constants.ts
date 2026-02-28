@@ -9,20 +9,20 @@ export const AUTO_RUN_LOG_PREFIX = 'autorun:';
  * Gives the backend time to fully tear down the running service before a new one starts.
  * e.g. Agent A earns rewards → stop A → wait 20 s → start Agent B
  */
-export const COOLDOWN_SECONDS = 20;
+export const COOLDOWN_SECONDS = 20; // 20 seconds
 
 /**
  * Delay (in seconds) before auto-run starts after the user enables it.
  * This gives users a brief window to include/exclude agents.
  * Example: toggle ON → wait 30s → start selected/next eligible agent.
  */
-export const AUTO_RUN_START_DELAY_SECONDS = 30;
+export const AUTO_RUN_START_DELAY_SECONDS = 30; // 30 seconds
 
 /**
  * Progressive back-off delays (in seconds) between consecutive start retries.
- * e.g. 1st retry after 15 s, 2nd after 30 s, 3rd+ after 60 s
+ * e.g. 1st retry after 30 s, 2nd after 60 s, 3rd+ after 120 s
  */
-export const RETRY_BACKOFF_SECONDS = [15, 30, 60];
+export const RETRY_BACKOFF_SECONDS = [30, 60, 120]; // 30s, 1m, 2m
 
 /**
  * How often (in seconds) the rewards-eligibility poller checks whether the
@@ -44,7 +44,6 @@ export const SCAN_BLOCKED_DELAY_SECONDS = 10 * 60; // 10 minutes
  * at least one eligible agent (or the running agent just earned its rewards
  * and no other agent could be started). A longer delay is used because there
  * is nothing actionable to do until the next epoch window opens.
- * Value: 30 minutes
  */
 export const SCAN_ELIGIBLE_DELAY_SECONDS = 30 * 60; // 30 minutes
 
@@ -72,9 +71,8 @@ export const REWARDS_WAIT_TIMEOUT_SECONDS = 20; // 20 seconds
  * How long (in seconds) to wait for a service to reach DEPLOYED state after
  * `startService()` is called. Initial deployments can be slow (safe creation,
  * service registration, on-chain funding) so this must be generous.
- * Value: 15 minutes
  */
-export const START_TIMEOUT_SECONDS = 900; // 15 minutes
+export const START_TIMEOUT_SECONDS = 60 * 15; // 15 minutes
 
 /**
  * How many times auto-run retries stopping the same running service before

@@ -43,13 +43,23 @@ type UseAutoRunScannerParams = {
   markRewardSnapshotPending: (agentType: AgentType) => void;
   getRewardSnapshot: (agentType: AgentType) => boolean | undefined;
   getBalancesStatus: () => { ready: boolean; loading: boolean };
-  notifySkipOnce: (agentType: AgentType, reason?: string) => void;
+  notifySkipOnce: (
+    agentType: AgentType,
+    reason?: string,
+    isLoadingReason?: boolean,
+  ) => void;
   startAgentWithRetries: (agentType: AgentType) => Promise<AutoRunStartResult>;
   scheduleNextScan: (delaySeconds: number) => void;
   logMessage: (message: string) => void;
 };
 
-// Format an eligibility payload into a single readable reason.
+/**
+ * Converts a normalized eligibility object into a user/log-friendly reason.
+ *
+ * Example:
+ * - { reason: LOADING, loadingReason: 'Balances' } -> "Loading: Balances"
+ * - { reason: 'Low balance' } -> "Low balance"
+ */
 const formatEligibilityReason = (eligibility: {
   reason?: string;
   loadingReason?: string;
@@ -63,6 +73,14 @@ const formatEligibilityReason = (eligibility: {
   return eligibility.reason ?? 'unknown';
 };
 
+/**
+ * Queue-scanning logic for auto-run.
+ *
+ * Example:
+ * Order is [omenstrat, polystrat, optimus].
+ * If scan starts from `omenstrat`, this hook checks `polystrat` first,
+ * then `optimus`, then wraps once.
+ */
 export const useAutoRunScanner = ({
   enabledRef,
   orderedIncludedAgentTypes,
@@ -83,14 +101,12 @@ export const useAutoRunScanner = ({
   logMessage,
 }: UseAutoRunScannerParams) => {
   /**
-   * Queue-scanning logic for auto-run.
+   * Normalizes deployability output for scanner decisions.
    *
    * Example:
-   * Order is [omenstrat, polystrat, optimus].
-   * If scan starts from `omenstrat`, this hook checks `polystrat` first,
-   * then `optimus`, then wraps once.
+   * - "Another agent running" is treated as transient loading
+   * - stale "Loading: Balances" becomes runnable when global balances are ready
    */
-  // Normalize transient eligibility states into a consistent "Loading" signal.
   const normalizeEligibility = useCallback(
     (eligibility: {
       canRun: boolean;
@@ -124,7 +140,13 @@ export const useAutoRunScanner = ({
     [getBalancesStatus],
   );
 
-  // Wait until eligibility is no longer loading, with a hard timeout.
+  /**
+   * Waits until eligibility leaves loading state.
+   *
+   * Example:
+   * - candidate stays in loading (safe/balance/rewards metadata not ready)
+   * - we poll every 2s up to timeout, then continue scan logic safely
+   */
   const waitForEligibilityReady = useCallback(async () => {
     const startedAt = Date.now();
     while (enabledRef.current) {
@@ -140,7 +162,14 @@ export const useAutoRunScanner = ({
     return false;
   }, [enabledRef, getSelectedEligibility, logMessage, normalizeEligibility]);
 
-  // Iterate candidates in the included order, wrapping around once.
+  /**
+   * Returns the next candidate in circular included order.
+   * Skips the currently provided agent.
+   *
+   * Example:
+   * - included order: [a, b, c], current=b -> returns c
+   * - next call with current=c -> returns a
+   */
   const findNextInOrder = useCallback(
     (currentAgentType?: AgentType | null) => {
       if (orderedIncludedAgentTypes.length === 0) return null;
@@ -159,9 +188,16 @@ export const useAutoRunScanner = ({
     [orderedIncludedAgentTypes],
   );
 
-  // Start scanning from the item before the selected agent for a fair rotation.
-  // example: if order is [a,b,c] and currently selected is b, start from a.
-  // If currently selected is c, start from b.
+  /**
+   * Picks the "start-from" anchor so the selected agent gets first chance.
+   *
+   * Scanner always begins from `findNextInOrder(startFrom)`, so we pass the
+   * previous item as anchor to make selected agent the first candidate.
+   *
+   * Example:
+   * - order [a,b,c], selected=b -> startFrom=a -> first candidate=b
+   * - order [a,b,c], selected=c -> startFrom=b -> first candidate=c
+   */
   const getPreferredStartFrom = useCallback(() => {
     const length = orderedIncludedAgentTypes.length;
     if (length <= 1) return null;
@@ -171,14 +207,22 @@ export const useAutoRunScanner = ({
     return orderedIncludedAgentTypes[prevIndex] ?? null;
   }, [orderedIncludedAgentTypes, selectedAgentType]);
 
-  // Scan the queue to start the next eligible agent.
+  /**
+   * Core queue traversal.
+   *
+   * For each candidate once per scan cycle:
+   * 1) switch selection
+   * 2) refresh rewards snapshot
+   * 3) wait for required readiness gates
+   * 4) skip/start based on normalized eligibility + rewards state
+   *
+   * Returns `{ started: true }` only when an agent is actually started.
+   */
   const scanAndStartNext = useCallback(
     async (startFrom?: AgentType | null) => {
       if (!enabledRef.current) return { started: false };
-      // Aggregate scan outcome across all visited candidates.
-      // - hasLoading: at least one candidate blocked only by transient loading.
-      // - hasBlocked: at least one deterministic blocker (low balance, evicted, etc.).
-      // - hasEligible: at least one already earned rewards (idle this epoch).
+      // Aggregate scan outcome across all visited candidates so we can choose
+      // an appropriate next-scan delay when nothing starts.
       let hasBlocked = false;
       let hasEligible = false;
       let hasLoading = false;
@@ -189,7 +233,8 @@ export const useAutoRunScanner = ({
       }
       const visited = new Set<AgentType>();
 
-      // Visit each included agent at most once per scan cycle.
+      // Visit each included agent at most once per scan cycle to prevent
+      // infinite loops in a single scan pass.
       while (candidate && !visited.has(candidate)) {
         if (!enabledRef.current) return { started: false };
 
@@ -203,7 +248,8 @@ export const useAutoRunScanner = ({
           continue;
         }
 
-        // Move selection to candidate and wait for dependent data.
+        // Move UI context to candidate, then wait until selection-derived data
+        // is coherent before making decisions for this agent.
         updateAgentType(candidate);
         markRewardSnapshotPending(candidate);
         const selectionReady = await waitForAgentSelection(
@@ -245,7 +291,8 @@ export const useAutoRunScanner = ({
           continue;
         }
 
-        // Evaluate eligibility and rewards before attempting a start.
+        // Evaluate deterministic eligibility first, then rewards state,
+        // and only then attempt start.
         const eligibility = normalizeEligibility(getSelectedEligibility());
         if (!eligibility.canRun) {
           if (eligibility.reason === ELIGIBILITY_REASON.LOADING) {
@@ -254,7 +301,7 @@ export const useAutoRunScanner = ({
             continue;
           }
           const reason = formatEligibilityReason(eligibility);
-          notifySkipOnce(candidate, reason);
+          notifySkipOnce(candidate, reason, false);
           hasBlocked = true;
           candidate = findNextInOrder(candidate);
           continue;
@@ -318,11 +365,16 @@ export const useAutoRunScanner = ({
     ],
   );
 
-  // Try to start the currently selected agent first when auto-run is enabled.
+  /**
+   * Fast path used on enable/resume:
+   * tries current selected agent before queue scan.
+   *
+   * Example:
+   * - user is viewing `memeooorr` and enables auto-run
+   * - this function tries `memeooorr` first
+   * - if not startable, caller falls back to `scanAndStartNext`
+   */
   const startSelectedAgentIfEligible = useCallback(async () => {
-    // Example:
-    // User enables auto-run while viewing `memeooorr`.
-    // We first try `memeooorr`; only if it can't start do we fall back to queue scan.
     if (!orderedIncludedAgentTypes.includes(selectedAgentType)) {
       return false;
     }
@@ -364,7 +416,7 @@ export const useAutoRunScanner = ({
         return false;
       }
       const reason = formatEligibilityReason(eligibility);
-      notifySkipOnce(selectedAgentType, reason);
+      notifySkipOnce(selectedAgentType, reason, false);
       return false;
     }
 

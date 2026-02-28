@@ -72,7 +72,7 @@ export const useAutoRunSignals = ({
   const lastRewardsEligibilityRef = useRef<
     Partial<Record<AgentType, boolean | undefined>>
   >({});
-  // Timer + tick pair used for delayed rescans.
+  // Timer + tick pair used for delayed re-scans.
   // Scheduling sets a timeout; when it fires we bump scanTick to trigger effects.
   const scanTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [scanTick, setScanTick] = useState(0);
