@@ -5,6 +5,7 @@ import { ServicesService } from '@/service/Services';
 import { sleepAwareDelay, withTimeout } from '@/utils/delay';
 
 import {
+  AGENT_SELECTION_WAIT_TIMEOUT_SECONDS,
   AUTO_RUN_START_STATUS,
   AutoRunStartResult,
   ELIGIBILITY_LOADING_REASON,
@@ -26,7 +27,7 @@ import {
   notifyStartFailed,
 } from '../utils/utils';
 
-const START_OPERATION_TIMEOUT_SECONDS = 15 * 60;
+const ELIGIBILITY_WAIT_TIMEOUT_MS = AGENT_SELECTION_WAIT_TIMEOUT_SECONDS * 1000;
 
 type Eligibility = {
   canRun: boolean;
@@ -163,7 +164,7 @@ export const useAutoRunOperations = ({
       const eligibility = normalizeEligibility(getSelectedEligibility());
       if (eligibility.reason !== ELIGIBILITY_REASON.LOADING) return true;
       const now = Date.now();
-      if (now - startedAt > 60_000) {
+      if (now - startedAt > ELIGIBILITY_WAIT_TIMEOUT_MS) {
         logMessage('eligibility wait timeout');
         return false;
       }
@@ -289,10 +290,10 @@ export const useAutoRunOperations = ({
                 stakingProgramId: meta.stakingProgramId,
                 createSafeIfNeeded: () => createSafeIfNeeded(meta),
               }),
-              START_OPERATION_TIMEOUT_SECONDS * 1000,
+              START_TIMEOUT_SECONDS * 1000,
               () =>
                 new Error(
-                  `start operation for ${agentType} timed out after ${START_OPERATION_TIMEOUT_SECONDS}s`,
+                  `start operation for ${agentType} timed out after ${START_TIMEOUT_SECONDS}s`,
                 ),
             );
 

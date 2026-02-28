@@ -90,12 +90,17 @@ export const useAutoRunLifecycle = ({
   const scanAndStartNextRef = useRef(scanAndStartNext);
   const getPreferredStartFromRef = useRef(getPreferredStartFrom);
 
+  // Ensure refs are up to date with the latest implementations.
   useEffect(() => {
     startSelectedAgentIfEligibleRef.current = startSelectedAgentIfEligible;
     scanAndStartNextRef.current = scanAndStartNext;
     getPreferredStartFromRef.current = getPreferredStartFrom;
   }, [getPreferredStartFrom, scanAndStartNext, startSelectedAgentIfEligible]);
 
+  /**
+   * Rotation effect: when the currently running agent earns rewards, try to rotate to the next one.
+   * If no other agents are eligible, keep the current one running and retry rotation after a delay.
+   */
   const rotateToNext = useCallback(
     async (currentAgentType: AgentType) => {
       // Rotation policy:
@@ -115,6 +120,9 @@ export const useAutoRunLifecycle = ({
       const rewardStates = otherAgents.map(
         (agentType, index) => refreshed[index] ?? getRewardSnapshot(agentType),
       );
+
+      // If all other agents are either earned (true) or unknown (undefined),
+      // keep the current agent running and retry rotation after a delay.
       const allEarnedOrUnknown = rewardStates.every((state) => state !== false);
       if (allEarnedOrUnknown) {
         logMessage(
@@ -130,6 +138,10 @@ export const useAutoRunLifecycle = ({
       if (!currentMeta) return;
       if (!enabledRef.current) return;
 
+      // Stop the currently running agent, but if stopping fails (e.g. backend timeout),
+      // keep it running and retry rotation after a delay.
+      // This is to avoid a bad state where the current agent is stopped
+      // but fails to start again, leaving no agents running.
       const stopOk = await stopAgentWithRecovery(
         currentMeta.agentType,
         currentMeta.serviceConfigId,
@@ -148,6 +160,7 @@ export const useAutoRunLifecycle = ({
         return;
       }
 
+      // Rotation successful, reset rewards guard and stop backoff state for the current agent.
       stopRetryBackoffUntilRef.current[currentAgentType] = undefined;
       if (!enabledRef.current) return;
       const cooldownOk = await sleepAwareDelay(COOLDOWN_SECONDS);

@@ -60,15 +60,14 @@ AutoRunProvider
 
 ## 2. Configuration Constants
 
-Note: constants come from both `constants.ts` and hook-local constants in
-`useAutoRunSignals.ts`, `useAutoRunScanner.ts`, and `useAutoRunOperations.ts`.
+Note: timing constants are centralized in `constants.ts` to avoid duplicate knobs.
 
 | Constant | Value | Purpose |
 |----------|-------|---------|
 | `AUTO_RUN_START_DELAY_SECONDS` | 30s | Delay before starting after first enable (gives user time to configure) |
 | `COOLDOWN_SECONDS` | 20s | Delay after stop before starting next agent |
 | `RETRY_BACKOFF_SECONDS` | [15, 30, 60] | Progressive backoff between start retries |
-| `REWARDS_POLL_SECONDS` | 60s | How often to poll rewards for the running agent |
+| `REWARDS_POLL_SECONDS` | 120s | How often to poll rewards for the running agent |
 | `SCAN_BLOCKED_DELAY_SECONDS` | 10min | Rescan delay when agents are blocked (low balance, evicted, etc.) |
 | `SCAN_ELIGIBLE_DELAY_SECONDS` | 30min | Rescan delay when all agents have earned rewards |
 | `SCAN_LOADING_RETRY_SECONDS` | 30s | Rescan delay on transient loading states |
@@ -76,12 +75,12 @@ Note: constants come from both `constants.ts` and hook-local constants in
 | `STOP_RECOVERY_MAX_ATTEMPTS` | 3 | Bounded stop retries per rotation |
 | `STOP_RECOVERY_RETRY_SECONDS` | 60s | Delay between stop recovery attempts |
 | `AGENT_SELECTION_WAIT_TIMEOUT_SECONDS` | 60s | Hard timeout for UI selection to match requested agent |
-| `BALANCES_WAIT_TIMEOUT_SECONDS` | 180s (3min) | Hard timeout for balances to become ready |
 | `REWARDS_WAIT_TIMEOUT_SECONDS` | 20s | Hard timeout for rewards snapshot to arrive |
-| `ELIGIBILITY_WAIT_TIMEOUT_MS` | 60s | Hard timeout for eligibility to leave Loading state |
-| `START_OPERATION_TIMEOUT_SECONDS` | 15min | Hard timeout wrapping `startService()` call itself |
 | `SLEEP_DRIFT_THRESHOLD_MS` | 30s | Max allowed clock drift before treating as sleep/wake |
-| `BALANCE_STALENESS_MS` | 60s | Balance data older than this triggers refetch |
+| `START_TIMEOUT_SECONDS` | 900s (15min) | Shared timeout for `startService()` operation and running confirmation |
+| `AGENT_SELECTION_WAIT_TIMEOUT_SECONDS * 3` | 180s (3min) | Derived balances wait timeout |
+| `AGENT_SELECTION_WAIT_TIMEOUT_SECONDS * 1000` | 60s | Derived eligibility wait timeout (ms) |
+| `REWARDS_POLL_SECONDS * 1000` | 120s | Derived balance staleness threshold |
 
 ---
 
@@ -129,11 +128,11 @@ All waits are guarded by `enabledRef.current`, `sleepAwareDelay()`, and hard tim
 | Wait Function | Hard Timeout | Sleep Detection | Exits on Disable |
 |---------------|:---:|:---:|:---:|
 | `waitForAgentSelection` | 60s (`AGENT_SELECTION_WAIT_TIMEOUT_SECONDS`) | Yes | Yes |
-| `waitForBalancesReady` | 180s (`BALANCES_WAIT_TIMEOUT_SECONDS`) | Yes | Yes |
+| `waitForBalancesReady` | 180s (`AGENT_SELECTION_WAIT_TIMEOUT_SECONDS * 3`) | Yes | Yes |
 | `waitForRunningAgent` | 300s (`START_TIMEOUT_SECONDS`) | Yes | Yes |
 | `waitForStoppedDeployment` | 300s (`START_TIMEOUT_SECONDS`) | Yes | No (stop must finish) |
 | `waitForRewardsEligibility` | 20s (`REWARDS_WAIT_TIMEOUT_SECONDS`) | Yes | Yes |
-| `waitForEligibilityReady` | 60s (`ELIGIBILITY_WAIT_TIMEOUT_MS`) | Yes | Yes |
+| `waitForEligibilityReady` | 60s (`AGENT_SELECTION_WAIT_TIMEOUT_SECONDS * 1000`) | Yes | Yes |
 
 **No wait can block indefinitely.** Every wait has a hard timeout that returns `false` (or `undefined` for rewards), allowing the caller to reschedule or bail.
 
@@ -186,7 +185,7 @@ Every delay and poll interval in auto-run uses `sleepAwareDelay`. On `false`:
 - Safety net in startup effect's `.finally()` detects "flow interrupted before scan" and schedules a rescan.
 
 ### Stale Balance Detection
-`balanceLastUpdatedRef` tracks when balance data was last refreshed. If older than 60s, `waitForBalancesReady` triggers a refetch and waits for fresh data before proceeding.
+`balanceLastUpdatedRef` tracks when balance data was last refreshed. If older than 120s, `waitForBalancesReady` triggers a refetch and waits for fresh data before proceeding.
 
 ---
 
@@ -332,7 +331,7 @@ Every delay and poll interval in auto-run uses `sleepAwareDelay`. On `false`:
 
 - Backend start can hang beyond `waitForRunningAgent` timeout if `startService()` itself hangs (mitigated by `withTimeout` wrapping the call at 15min).
 - Rewards eligibility is selection-driven; polling via `setInterval` is a workaround.
-- `rotateToNext`: if `currentMeta` is not found (agent removed from config mid-rotation), returns without scheduling rescan. Low probability; rewards poll will re-trigger within 60s.
+- `rotateToNext`: if `currentMeta` is not found (agent removed from config mid-rotation), returns without scheduling rescan. Low probability; rewards poll will re-trigger within 120s.
 
 ---
 
@@ -353,6 +352,14 @@ Every delay and poll interval in auto-run uses `sleepAwareDelay`. On `false`:
 ### P1 — Sleep/wake causes chaotic agent cycling
 - **Root cause**: `Date.now()` jumps after sleep; all delays expire instantly; stale balance data causes wrong decisions.
 - **Fix**: `sleepAwareDelay()` detects drift; `balanceLastUpdatedRef` tracks freshness; safety net in `.finally()` reschedules on interrupted flow.
+
+### P1 — Start retries could stall on repeated "attempt 1" after interruptions
+- **Root cause**: backoff sleep interruption could return `aborted` while auto-run was still enabled, so orchestration restarted from scratch and repeatedly logged `start timeout ... (attempt 1)`.
+- **Fix**: interrupted retry backoff now returns `infra_failed` when still enabled, forcing a controlled rescan path instead of silent restart.
+
+### P1 — Safety net could over-schedule scans
+- **Root cause**: lifecycle safety net scheduled a retry even when scanner had already scheduled one, causing churn after sleep/wake.
+- **Fix**: safety net now checks `hasScheduledScan()` before scheduling a fallback timer.
 
 ### P2 — Sleep/wake starts wrong agent instead of resuming
 - **Root cause**: `wasEnabled=true` path went straight to `scanAndStartNext` without trying the currently selected agent first.
@@ -416,7 +423,7 @@ All auto-run logs are prefixed with `autorun::`.
 | `start error for X: ...` | Start threw an exception (e.g., Failed to fetch) | Warning |
 | `start failed for X` | All retries exhausted | Error |
 | `skip X: reason` | Agent skipped with notification | Normal |
-| `balances stale, triggering refetch` | Balance data older than 60s | Normal |
+| `balances stale, triggering refetch` | Balance data older than 120s | Normal |
 | `balances refetch failed: ...` | Refetch threw an error | Warning |
 | `rewards fetch error: X: ...` | RPC error fetching rewards | Warning |
 | `rewards eligibility timeout: X, proceeding without it` | Rewards snapshot never arrived in 20s | Warning |

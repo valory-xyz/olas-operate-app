@@ -4,6 +4,7 @@ import { AgentType } from '@/constants';
 import { sleepAwareDelay } from '@/utils/delay';
 
 import {
+  AGENT_SELECTION_WAIT_TIMEOUT_SECONDS,
   AUTO_RUN_START_STATUS,
   AutoRunStartResult,
   ELIGIBILITY_LOADING_REASON,
@@ -15,7 +16,7 @@ import {
 import { AgentMeta } from '../types';
 import { isOnlyLoadingReason } from '../utils/autoRunHelpers';
 
-const ELIGIBILITY_WAIT_TIMEOUT_MS = 60_000; // 1 minute
+const ELIGIBILITY_WAIT_TIMEOUT_MS = AGENT_SELECTION_WAIT_TIMEOUT_SECONDS * 1000;
 
 type UseAutoRunScannerParams = {
   enabledRef: MutableRefObject<boolean>;

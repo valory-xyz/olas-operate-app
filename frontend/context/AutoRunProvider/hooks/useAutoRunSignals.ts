@@ -4,13 +4,14 @@ import { AgentType } from '@/constants';
 import { useBalanceAndRefillRequirementsContext } from '@/hooks';
 import { sleepAwareDelay } from '@/utils/delay';
 
-/**
- * Constants for timeouts and intervals used in auto-run signals,
- * such as waiting for rewards eligibility or balances to be ready.
- */
-const REWARDS_WAIT_TIMEOUT_SECONDS = 20;
-const AGENT_SELECTION_WAIT_TIMEOUT_SECONDS = 60;
-const BALANCES_WAIT_TIMEOUT_SECONDS = 3 * 60;
+import {
+  AGENT_SELECTION_WAIT_TIMEOUT_SECONDS,
+  REWARDS_POLL_SECONDS,
+  REWARDS_WAIT_TIMEOUT_SECONDS,
+} from '../constants';
+
+const BALANCES_WAIT_TIMEOUT_SECONDS = AGENT_SELECTION_WAIT_TIMEOUT_SECONDS * 3;
+const BALANCE_STALENESS_MS = REWARDS_POLL_SECONDS * 1000;
 
 type UseAutoRunSignalsParams = {
   enabled: boolean;
@@ -165,7 +166,6 @@ export const useAutoRunSignals = ({
   // Wait until balances are ready, with periodic refetches on long waits.
   // After sleep/wake the balance ref may still be `true` from before sleep,
   // so we also check freshness before accepting the cached value.
-  const BALANCE_STALENESS_MS = 60_000;
   const didLogStaleRef = useRef(false);
 
   // Reset the stale log flag when balance data actually updates.

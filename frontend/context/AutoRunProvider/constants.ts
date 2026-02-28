@@ -27,9 +27,9 @@ export const RETRY_BACKOFF_SECONDS = [15, 30, 60];
 /**
  * How often (in seconds) the rewards-eligibility poller checks whether the
  * running agent has earned its staking rewards for the current epoch.
- * e.g. every 60 s → fetch rewards info → compare snapshot → trigger rotation if earned
+ * e.g. every 120 s → fetch rewards info → compare snapshot → trigger rotation if earned
  */
-export const REWARDS_POLL_SECONDS = 60; // 1 minute
+export const REWARDS_POLL_SECONDS = 120; // 2 minutes
 
 /**
  * How long (in seconds) to wait before re-scanning for a runnable agent when
@@ -55,6 +55,18 @@ export const SCAN_ELIGIBLE_DELAY_SECONDS = 30 * 60; // 30 minutes
  * Example: scan hits "Loading: Balances" → retry scan in 30s.
  */
 export const SCAN_LOADING_RETRY_SECONDS = 30; // 30 seconds
+
+/**
+ * Maximum time (in seconds) to wait for sidebar selection to match a candidate.
+ * Example: scanner picks `trader` and waits until UI selection + details are ready.
+ */
+export const AGENT_SELECTION_WAIT_TIMEOUT_SECONDS = 60; // 1 minute
+
+/**
+ * Maximum time (in seconds) to wait for rewards snapshot after selecting agent.
+ * Example: selection changed to `optimus`, wait up to 20s for rewards snapshot.
+ */
+export const REWARDS_WAIT_TIMEOUT_SECONDS = 20; // 20 seconds
 
 /**
  * How long (in seconds) to wait for a service to reach DEPLOYED state after

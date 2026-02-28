@@ -1,6 +1,7 @@
 import { MutableRefObject } from 'react';
 
 import { AgentType } from '@/constants';
+import { fetchAgentStakingRewardsInfo } from '@/utils/stakingRewards';
 
 import { ELIGIBILITY_REASON, REWARDS_POLL_SECONDS } from '../constants';
 import { AgentMeta } from '../types';
@@ -63,20 +64,22 @@ export const refreshRewardsEligibility = async ({
   }
 
   try {
-    const response =
-      await meta.agentConfig.serviceApi.getAgentStakingRewardsInfo({
-        agentMultisigAddress: meta.multisig,
-        serviceId: meta.serviceNftTokenId,
-        stakingProgramId: meta.stakingProgramId,
-        chainId: meta.chainId,
-      });
+    const response = await fetchAgentStakingRewardsInfo({
+      chainId: meta.chainId,
+      multisig: meta.multisig,
+      serviceNftTokenId: meta.serviceNftTokenId,
+      stakingProgramId: meta.stakingProgramId,
+      agentConfig: meta.agentConfig,
+      onError: (error) =>
+        logMessage(`rewards fetch error: ${agentType}: ${error}`),
+    });
     const eligible = response?.isEligibleForRewards;
     if (typeof eligible === 'boolean') {
       setRewardSnapshot(agentType, eligible);
       return eligible;
     }
-  } catch (error) {
-    logMessage(`rewards fetch error: ${agentType}: ${error}`);
+  } catch {
+    // fetchAgentStakingRewardsInfo routes errors to onError and returns null.
   }
 
   return undefined;
