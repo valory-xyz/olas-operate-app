@@ -1,6 +1,6 @@
 import { MutableRefObject, useCallback, useEffect, useRef } from 'react';
 
-import { AgentType, MiddlewareDeploymentStatusMap } from '@/constants';
+import { AgentType, isActiveDeploymentStatus } from '@/constants';
 import { ServicesService } from '@/service/Services';
 import { sleepAwareDelay, withTimeout } from '@/utils/delay';
 
@@ -14,6 +14,7 @@ import {
   START_TIMEOUT_SECONDS,
   STOP_RECOVERY_MAX_ATTEMPTS,
   STOP_RECOVERY_RETRY_SECONDS,
+  STOP_REQUEST_TIMEOUT_SECONDS,
 } from '../constants';
 import { AgentMeta } from '../types';
 import {
@@ -28,6 +29,7 @@ import {
 } from '../utils/utils';
 
 const ELIGIBILITY_WAIT_TIMEOUT_MS = AGENT_SELECTION_WAIT_TIMEOUT_SECONDS * 1000;
+const DEPLOYMENT_CHECK_TIMEOUT_MS = 15_000; // 15 seconds
 
 type Eligibility = {
   canRun: boolean;
@@ -174,11 +176,11 @@ export const useAutoRunOperations = ({
     return false;
   }, [enabledRef, getSelectedEligibility, logMessage, normalizeEligibility]);
 
+  // Wait for deployment status to confirm the agent has stopped,
+  // Poll middleware deployment state until the service is no longer active.
+  // Example: status transitions DEPLOYED -> STOPPING -> STOPPED.
   const waitForStoppedDeployment = useCallback(
     async (serviceConfigId: string, timeoutSeconds: number) => {
-      // Poll middleware deployment state until the service is no longer active.
-      // Example: status transitions DEPLOYED -> STOPPING -> STOPPED.
-      const DEPLOYMENT_CHECK_TIMEOUT_MS = 15_000;
       const getDeploymentWithTimeout = async () => {
         const controller = new AbortController();
         const timeoutId = setTimeout(
@@ -199,12 +201,7 @@ export const useAutoRunOperations = ({
       while (Date.now() - startedAt < timeoutSeconds * 1000) {
         try {
           const deployment = await getDeploymentWithTimeout();
-          const status = deployment?.status;
-          const isActive =
-            status === MiddlewareDeploymentStatusMap.DEPLOYED ||
-            status === MiddlewareDeploymentStatusMap.DEPLOYING ||
-            status === MiddlewareDeploymentStatusMap.STOPPING;
-          if (!isActive) return true;
+          if (!isActiveDeploymentStatus(deployment?.status)) return true;
         } catch (error) {
           logMessage(
             `stop status check failed for ${serviceConfigId}: ${error}`,
@@ -219,10 +216,10 @@ export const useAutoRunOperations = ({
     [logMessage],
   );
 
+  // Full guarded start sequence for one agent.
+  // Example: `pett_ai` fails first attempt due to RPC error, succeeds on retry.
   const startAgentWithRetries = useCallback(
     async (agentType: AgentType): Promise<AutoRunStartResult> => {
-      // Full guarded start sequence for one agent.
-      // Example: `pett_ai` fails first attempt due to RPC error, succeeds on retry.
       if (!enabledRef.current) {
         return { status: AUTO_RUN_START_STATUS.ABORTED };
       }
@@ -366,10 +363,10 @@ export const useAutoRunOperations = ({
       try {
         await withTimeout(
           ServicesService.stopDeployment(serviceConfigId),
-          60 * 1000,
+          STOP_REQUEST_TIMEOUT_SECONDS * 1000,
           () =>
             new Error(
-              `stop request for ${serviceConfigId} timed out after 60s`,
+              `stop request for ${serviceConfigId} timed out after ${STOP_REQUEST_TIMEOUT_SECONDS}s`,
             ),
         );
       } catch (error) {
@@ -385,10 +382,12 @@ export const useAutoRunOperations = ({
     [logMessage, runningAgentTypeRef, waitForStoppedDeployment],
   );
 
+  /**
+   * Retry stop with bounded attempts.
+   * Example: first stop request times out, second succeeds.
+   */
   const stopAgentWithRecovery = useCallback(
     async (agentType: AgentType, serviceConfigId: string) => {
-      // Retry stop with bounded attempts.
-      // Example: first stop request times out, second succeeds.
       for (
         let attempt = 0;
         attempt < STOP_RECOVERY_MAX_ATTEMPTS;

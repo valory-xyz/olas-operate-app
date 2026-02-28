@@ -90,6 +90,12 @@ export const STOP_RECOVERY_MAX_ATTEMPTS = 3;
 export const STOP_RECOVERY_RETRY_SECONDS = 60; // 1 minute
 
 /**
+ * Maximum time (in seconds) for the stop request API call itself.
+ * Note: actual stop confirmation is still handled separately via deployment polling.
+ */
+export const STOP_REQUEST_TIMEOUT_SECONDS = 300; // 5 minutes
+
+/**
  * Start-attempt outcome labels shared between controller and scanner.
  * Example flow:
  * - "started"       → agent deployed and running

@@ -56,11 +56,12 @@ export const refreshRewardsEligibility = async ({
     return getRewardSnapshot(agentType);
   }
 
+  //
   lastRewardsFetchRef.current[agentType] = now;
   const meta = configuredAgents.find((agent) => agent.agentType === agentType);
-  if (!meta) return undefined;
+  if (!meta) return;
   if (!meta.multisig || !meta.serviceNftTokenId || !meta.stakingProgramId) {
-    return undefined;
+    return;
   }
 
   try {
@@ -81,15 +82,18 @@ export const refreshRewardsEligibility = async ({
   } catch {
     // fetchAgentStakingRewardsInfo routes errors to onError and returns null.
   }
-
-  return undefined;
 };
 
+/**
+ * Check if the only reason for ineligibility is a specific loading reason.
+ * Useful for conditionally showing loading states in the UI.
+ */
 export const isOnlyLoadingReason = (
   eligibility: { reason?: string; loadingReason?: string },
   reason: string,
 ) => {
   if (eligibility.reason !== ELIGIBILITY_REASON.LOADING) return false;
+
   const reasons = eligibility.loadingReason
     ?.split(',')
     .map((item) => item.trim())
