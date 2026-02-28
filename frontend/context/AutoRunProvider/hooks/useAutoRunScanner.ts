@@ -319,6 +319,12 @@ export const useAutoRunScanner = ({
           return { started: true };
         }
         if (startResult.status === AUTO_RUN_START_STATUS.ABORTED) {
+          if (enabledRef.current) {
+            logMessage(
+              `scan paused on ${candidate}: start flow aborted, rescan in ${SCAN_LOADING_RETRY_SECONDS}s`,
+            );
+            scheduleNextScan(SCAN_LOADING_RETRY_SECONDS);
+          }
           return { started: false };
         }
         if (startResult.status === AUTO_RUN_START_STATUS.INFRA_FAILED) {
@@ -436,11 +442,18 @@ export const useAutoRunScanner = ({
       return true;
     }
     if (startResult.status === AUTO_RUN_START_STATUS.ABORTED) {
+      if (enabledRef.current) {
+        logMessage(
+          `selected start paused: start flow aborted, rescan in ${SCAN_LOADING_RETRY_SECONDS}s`,
+        );
+        scheduleNextScan(SCAN_LOADING_RETRY_SECONDS);
+      }
       return true;
     }
     return false;
   }, [
     configuredAgents,
+    enabledRef,
     getSelectedEligibility,
     getRewardSnapshot,
     markRewardSnapshotPending,

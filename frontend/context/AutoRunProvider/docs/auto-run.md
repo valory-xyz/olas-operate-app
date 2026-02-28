@@ -72,12 +72,12 @@ Note: timing constants are centralized in `constants.ts` to avoid duplicate knob
 | `SCAN_ELIGIBLE_DELAY_SECONDS` | 30min | Rescan delay when all agents have earned rewards |
 | `SCAN_LOADING_RETRY_SECONDS` | 30s | Rescan delay on transient loading states |
 | `START_TIMEOUT_SECONDS` | 900s (15min) | How long to wait for DEPLOYED status after start |
+| `STOP_REQUEST_TIMEOUT_SECONDS` | 300s (5min) | Timeout for stop request API call (separate from stop confirmation polling) |
 | `STOP_RECOVERY_MAX_ATTEMPTS` | 3 | Bounded stop retries per rotation |
 | `STOP_RECOVERY_RETRY_SECONDS` | 60s | Delay between stop recovery attempts |
 | `AGENT_SELECTION_WAIT_TIMEOUT_SECONDS` | 60s | Hard timeout for UI selection to match requested agent |
 | `REWARDS_WAIT_TIMEOUT_SECONDS` | 20s | Hard timeout for rewards snapshot to arrive |
 | `SLEEP_DRIFT_THRESHOLD_MS` | 30s | Max allowed clock drift before treating as sleep/wake |
-| `START_TIMEOUT_SECONDS` | 900s (15min) | Shared timeout for `startService()` operation and running confirmation |
 | `AGENT_SELECTION_WAIT_TIMEOUT_SECONDS * 3` | 180s (3min) | Derived balances wait timeout |
 | `AGENT_SELECTION_WAIT_TIMEOUT_SECONDS * 1000` | 60s | Derived eligibility wait timeout (ms) |
 | `REWARDS_POLL_SECONDS * 1000` | 120s | Derived balance staleness threshold |
@@ -129,8 +129,8 @@ All waits are guarded by `enabledRef.current`, `sleepAwareDelay()`, and hard tim
 |---------------|:---:|:---:|:---:|
 | `waitForAgentSelection` | 60s (`AGENT_SELECTION_WAIT_TIMEOUT_SECONDS`) | Yes | Yes |
 | `waitForBalancesReady` | 180s (`AGENT_SELECTION_WAIT_TIMEOUT_SECONDS * 3`) | Yes | Yes |
-| `waitForRunningAgent` | 300s (`START_TIMEOUT_SECONDS`) | Yes | Yes |
-| `waitForStoppedDeployment` | 300s (`START_TIMEOUT_SECONDS`) | Yes | No (stop must finish) |
+| `waitForRunningAgent` | 900s (`START_TIMEOUT_SECONDS`) | Yes | Yes |
+| `waitForStoppedDeployment` | 900s (`START_TIMEOUT_SECONDS`) | Yes | No (stop must finish) |
 | `waitForRewardsEligibility` | 20s (`REWARDS_WAIT_TIMEOUT_SECONDS`) | Yes | Yes |
 | `waitForEligibilityReady` | 60s (`AGENT_SELECTION_WAIT_TIMEOUT_SECONDS * 1000`) | Yes | Yes |
 
@@ -157,7 +157,7 @@ The `infra_failed` handling prevents the scanner from rotating to a different ag
 
 `stopAgentWithRecovery` uses bounded retries:
 
-1. Call `ServicesService.stopDeployment()` (with 60s HTTP timeout via `withTimeout`).
+1. Call `ServicesService.stopDeployment()` (with 300s HTTP timeout via `withTimeout`).
 2. Poll `ServicesService.getDeployment()` (with 15s per-request timeout) until status is not `DEPLOYED/DEPLOYING/STOPPING`, up to `START_TIMEOUT_SECONDS`.
 3. Fallback: check `runningAgentTypeRef.current !== agentType`.
 4. If failed → wait `STOP_RECOVERY_RETRY_SECONDS`, retry.
@@ -201,7 +201,7 @@ Every delay and poll interval in auto-run uses `sleepAwareDelay`. On `false`:
 ## 9. Notification Deduplication
 
 - **Skip notifications** (`notifySkipOnce`): Stored per `agentType + reason` in `skipNotifiedRef`. Same reason fires only once while auto-run stays enabled. Cleared on disable.
-- **Loading reasons** are never notified (filtered by string check).
+- **Loading reasons** are never notified (passed as structured loading flag).
 - **"balances stale" log**: `didLogStaleRef` logs once per staleness window; resets when balance data actually changes.
 
 ---
@@ -397,7 +397,7 @@ Every delay and poll interval in auto-run uses `sleepAwareDelay`. On `false`:
 Returns `Promise<boolean>`. `true` = normal completion. `false` = sleep/wake detected (elapsed > expected + 30s). All async delays in auto-run use this.
 
 ### `withTimeout(operation, timeoutMs, createTimeoutError)` — `frontend/utils/delay.ts`
-Races an operation against a timeout. Used to wrap `startService()` (15min) and `stopDeployment()` (60s) calls so they cannot hang indefinitely. Does not cancel the underlying operation.
+Races an operation against a timeout. Used to wrap `startService()` (15min) and `stopDeployment()` (5min) calls so they cannot hang indefinitely. Does not cancel the underlying operation.
 
 ### `refreshRewardsEligibility(params)` — `utils/autoRunHelpers.ts`
 Fetches staking rewards info from the chain. Throttled per agent (max once per `REWARDS_POLL_SECONDS`). Returns `true` (earned), `false` (not earned), or `undefined` (error/missing data).
