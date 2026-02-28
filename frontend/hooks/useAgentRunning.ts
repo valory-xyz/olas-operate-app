@@ -4,12 +4,19 @@ import { useMemo } from 'react';
 import { ACTIVE_AGENTS } from '@/config/agents';
 import {
   FIVE_SECONDS_INTERVAL,
+  MiddlewareDeploymentStatus,
   MiddlewareDeploymentStatusMap,
   REACT_QUERY_KEYS,
 } from '@/constants';
 import { ServicesService } from '@/service/Services';
 
 import { useServices } from './useServices';
+
+const ACTIVE_STATUSES: MiddlewareDeploymentStatus[] = [
+  MiddlewareDeploymentStatusMap.DEPLOYED,
+  MiddlewareDeploymentStatusMap.DEPLOYING,
+  MiddlewareDeploymentStatusMap.STOPPING,
+];
 
 export const useAgentRunning = () => {
   const {
@@ -42,11 +49,7 @@ export const useAgentRunning = () => {
       // Check if either the backend status or the override status
       // indicates an active or in-progress. Overrides might represent
       // the intended status while the real one is transitioning.
-      return [
-        MiddlewareDeploymentStatusMap.DEPLOYED,
-        MiddlewareDeploymentStatusMap.DEPLOYING,
-        MiddlewareDeploymentStatusMap.STOPPING,
-      ].some(
+      return ACTIVE_STATUSES.some(
         (status) =>
           status === serviceStatus ||
           status === serviceStatusOverrides?.[service.service_config_id],
@@ -55,14 +58,15 @@ export const useAgentRunning = () => {
   }, [services, selectedService, allDeployments, serviceStatusOverrides]);
 
   /**
-   * Determine which agent type is currently running (deployed).
+   * Determine which agent type is currently active
+   * (deployed, deploying, or stopping).
    */
   const runningAgentType = useMemo(() => {
     if (!allDeployments || !services) return null;
 
     for (const service of services) {
       const status = allDeployments[service.service_config_id]?.status;
-      if (status !== MiddlewareDeploymentStatusMap.DEPLOYED) continue;
+      if (status === undefined || !ACTIVE_STATUSES.includes(status)) continue;
 
       const agentEntry = ACTIVE_AGENTS.find(
         ([, agentConfig]) =>
