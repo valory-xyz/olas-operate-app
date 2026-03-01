@@ -94,6 +94,21 @@ export const STOP_RECOVERY_RETRY_SECONDS = 60; // 1 minute
 export const STOP_REQUEST_TIMEOUT_SECONDS = 300; // 5 minutes
 
 /**
+ * How long (in ms) to wait between each follow-up check during the
+ * disable-during-start race guard in AutoRunProvider.
+ * Example: disable is called while a start is in-flight → poll every 10 s
+ * until the agent appears or the check budget is exhausted.
+ */
+export const DISABLE_RACE_STOP_CHECK_INTERVAL_MS = 10_000; // 10 seconds
+
+/**
+ * Maximum number of follow-up polling checks for the disable-during-start
+ * race guard. Budget = DISABLE_RACE_STOP_MAX_CHECKS × DISABLE_RACE_STOP_CHECK_INTERVAL_MS.
+ * Example: 6 × 10 s = 60 s total before giving up.
+ */
+export const DISABLE_RACE_STOP_MAX_CHECKS = 6;
+
+/**
  * Start-attempt outcome labels shared between controller and scanner.
  * Example flow:
  * - "started"       → agent deployed and running
