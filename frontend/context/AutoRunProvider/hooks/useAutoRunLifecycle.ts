@@ -7,6 +7,8 @@ import {
   AUTO_RUN_START_DELAY_SECONDS,
   COOLDOWN_SECONDS,
   REWARDS_POLL_SECONDS,
+  RUNNING_AGENT_MAX_RUNTIME_SECONDS,
+  RUNNING_AGENT_WATCHDOG_CHECK_SECONDS,
   SCAN_BLOCKED_DELAY_SECONDS,
   SCAN_ELIGIBLE_DELAY_SECONDS,
 } from '../constants';
@@ -78,6 +80,8 @@ export const useAutoRunLifecycle = ({
   const isRotatingRef = useRef(false);
   // Track prior enabled state to distinguish initial enable vs later idle (cooldown on manual stop).
   const wasAutoRunEnabledRef = useRef(false);
+  // Tracks when the current running agent started, used by runtime watchdog.
+  const runningSinceRef = useRef<number | null>(null);
 
   useEffect(() => {
     // Clear stop-timeout backoff state whenever auto-run is disabled.
@@ -85,6 +89,15 @@ export const useAutoRunLifecycle = ({
       stopRetryBackoffUntilRef.current = {};
     }
   }, [enabled, stopRetryBackoffUntilRef]);
+
+  // Reset runtime tracking whenever running agent changes (or disappears).
+  useEffect(() => {
+    if (!enabled || !runningAgentType) {
+      runningSinceRef.current = null;
+      return;
+    }
+    runningSinceRef.current = Date.now();
+  }, [enabled, runningAgentType]);
 
   const startSelectedAgentIfEligibleRef = useRef(startSelectedAgentIfEligible);
   const scanAndStartNextRef = useRef(scanAndStartNext);
@@ -102,7 +115,7 @@ export const useAutoRunLifecycle = ({
    * If no other agents are eligible, keep the current one running and retry rotation after a delay.
    */
   const rotateToNext = useCallback(
-    async (currentAgentType: AgentType) => {
+    async (currentAgentType: AgentType, options?: { force?: boolean }) => {
       // Rotation policy:
       // 1) If all other agents are already earned/unknown -> keep current running.
       // 2) Otherwise stop current, cool down, and scan from next.
@@ -124,7 +137,7 @@ export const useAutoRunLifecycle = ({
       // If all other agents are either earned (true) or unknown (undefined),
       // keep the current agent running and retry rotation after a delay.
       const allEarnedOrUnknown = rewardStates.every((state) => state !== false);
-      if (allEarnedOrUnknown) {
+      if (allEarnedOrUnknown && !options?.force) {
         logMessage(
           `all other agents earned or unknown, keeping ${currentAgentType} running, rescan in ${SCAN_ELIGIBLE_DELAY_SECONDS}s`,
         );
@@ -275,6 +288,64 @@ export const useAutoRunLifecycle = ({
 
     return () => clearInterval(interval);
   }, [enabled, refreshRewardsEligibility, runningAgentType]);
+
+  // Runtime watchdog: if one agent keeps running too long, attempt rotation/recovery.
+  useEffect(() => {
+    if (!enabled) return;
+    if (!runningAgentType) return;
+
+    const intervalId = setInterval(() => {
+      const currentType = runningAgentTypeRef.current;
+      if (!enabledRef.current || !currentType) return;
+      if (isRotatingRef.current) return;
+
+      const runningSince = runningSinceRef.current;
+      if (!runningSince) return;
+      if (
+        Date.now() - runningSince <
+        RUNNING_AGENT_MAX_RUNTIME_SECONDS * 1000
+      ) {
+        return;
+      }
+
+      const stopRetryBackoffUntil =
+        stopRetryBackoffUntilRef.current[currentType] ?? 0;
+      if (Date.now() < stopRetryBackoffUntil) return;
+
+      isRotatingRef.current = true;
+      void (async () => {
+        try {
+          logMessage(
+            `watchdog: ${currentType} exceeded runtime (${RUNNING_AGENT_MAX_RUNTIME_SECONDS}s), rotating`,
+          );
+          await rotateToNext(currentType, { force: true });
+        } catch (error) {
+          logMessage(`watchdog rotation error: ${error}`);
+          // Reset the guard so the next rewards poll can re-trigger rotation
+          // instead of being permanently blocked by `previousEligibility === true`.
+          lastRewardsEligibilityRef.current[currentType] = undefined;
+          scheduleNextScan(SCAN_BLOCKED_DELAY_SECONDS);
+        } finally {
+          // Prevent watchdog from re-triggering immediately if the same agent
+          // is still running after this attempt.
+          runningSinceRef.current = Date.now();
+          isRotatingRef.current = false;
+        }
+      })();
+    }, RUNNING_AGENT_WATCHDOG_CHECK_SECONDS * 1000);
+
+    return () => clearInterval(intervalId);
+  }, [
+    enabled,
+    enabledRef,
+    lastRewardsEligibilityRef,
+    logMessage,
+    rotateToNext,
+    runningAgentType,
+    runningAgentTypeRef,
+    scheduleNextScan,
+    stopRetryBackoffUntilRef,
+  ]);
 
   // When enabled and nothing is running, start selected or scan for the next.
   // Skip cooldown on first enable, but keep cooldown after manual stops.

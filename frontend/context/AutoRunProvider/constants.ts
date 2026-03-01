@@ -12,6 +12,20 @@ export const AUTO_RUN_LOG_PREFIX = 'autorun:';
 export const COOLDOWN_SECONDS = 20; // 20 seconds
 
 /**
+ * Maximum wall-clock runtime (in seconds) allowed for one continuously
+ * running agent before watchdog-triggered rotation is attempted.
+ * Example: agent keeps running for 2h without rotating -> watchdog kicks in.
+ */
+export const RUNNING_AGENT_MAX_RUNTIME_SECONDS = 2 * 60 * 60; // 2 hours
+
+/**
+ * How often (in seconds) watchdog checks runtime against
+ * `RUNNING_AGENT_MAX_RUNTIME_SECONDS`.
+ * Example: every 5 minutes -> if runtime exceeded, rotate/recover.
+ */
+export const RUNNING_AGENT_WATCHDOG_CHECK_SECONDS = 5 * 60; // 5 minutes
+
+/**
  * Delay (in seconds) before auto-run starts after the user enables it.
  * This gives users a brief window to include/exclude agents.
  * Example: toggle ON → wait 30s → start selected/next eligible agent.
