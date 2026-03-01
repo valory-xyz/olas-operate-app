@@ -3,7 +3,11 @@ import { MutableRefObject } from 'react';
 import { AgentType } from '@/constants';
 import { fetchAgentStakingRewardsInfo } from '@/utils/stakingRewards';
 
-import { ELIGIBILITY_REASON, REWARDS_POLL_SECONDS } from '../constants';
+import {
+  ELIGIBILITY_LOADING_REASON,
+  ELIGIBILITY_REASON,
+  REWARDS_POLL_SECONDS,
+} from '../constants';
 import { AgentMeta } from '../types';
 
 /**
@@ -82,6 +86,40 @@ export const refreshRewardsEligibility = async ({
   } catch {
     // fetchAgentStakingRewardsInfo routes errors to onError and returns null.
   }
+};
+
+/**
+ * Normalize deployability output into auto-run behavior.
+ *
+ * Key policies:
+ * - `Another agent running` is treated as transient loading so the scanner
+ *   retries rather than blocking.
+ * - Stale `Loading: Balances` is promoted to runnable when global balances are
+ *   already ready, avoiding a false block during the brief re-render window.
+ *
+ * @example
+ * normalizeEligibility({ canRun: false, reason: 'Loading', loadingReason: 'Balances' }, () => ({ ready: true, loading: false }))
+ * // => { canRun: true }
+ */
+export const normalizeEligibility = (
+  eligibility: { canRun: boolean; reason?: string; loadingReason?: string },
+  getBalancesStatus: () => { ready: boolean; loading: boolean },
+): { canRun: boolean; reason?: string; loadingReason?: string } => {
+  if (eligibility.reason === ELIGIBILITY_REASON.ANOTHER_AGENT_RUNNING) {
+    return {
+      canRun: false,
+      reason: ELIGIBILITY_REASON.LOADING,
+      loadingReason: ELIGIBILITY_REASON.ANOTHER_AGENT_RUNNING,
+    };
+  }
+  if (!isOnlyLoadingReason(eligibility, ELIGIBILITY_LOADING_REASON.BALANCES)) {
+    return eligibility;
+  }
+  const balances = getBalancesStatus();
+  if (balances.ready && !balances.loading) {
+    return { canRun: true };
+  }
+  return eligibility;
 };
 
 /**

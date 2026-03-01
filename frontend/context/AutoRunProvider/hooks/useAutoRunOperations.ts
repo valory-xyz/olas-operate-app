@@ -8,7 +8,6 @@ import {
   AGENT_SELECTION_WAIT_TIMEOUT_SECONDS,
   AUTO_RUN_START_STATUS,
   AutoRunStartResult,
-  ELIGIBILITY_LOADING_REASON,
   ELIGIBILITY_REASON,
   RETRY_BACKOFF_SECONDS,
   START_TIMEOUT_SECONDS,
@@ -19,7 +18,7 @@ import {
 import { AgentMeta } from '../types';
 import {
   formatEligibilityReason,
-  isOnlyLoadingReason,
+  normalizeEligibility as normalizeEligibilityHelper,
   refreshRewardsEligibility as refreshRewardsEligibilityHelper,
 } from '../utils/autoRunHelpers';
 import {
@@ -164,25 +163,8 @@ export const useAutoRunOperations = ({
    * - normalized result becomes `{ canRun: true }`
    */
   const normalizeEligibility = useCallback(
-    (eligibility: Eligibility) => {
-      if (eligibility.reason === ELIGIBILITY_REASON.ANOTHER_AGENT_RUNNING) {
-        return {
-          canRun: false,
-          reason: ELIGIBILITY_REASON.LOADING,
-          loadingReason: ELIGIBILITY_REASON.ANOTHER_AGENT_RUNNING,
-        };
-      }
-      if (
-        !isOnlyLoadingReason(eligibility, ELIGIBILITY_LOADING_REASON.BALANCES)
-      ) {
-        return eligibility;
-      }
-      const balances = getBalancesStatus();
-      if (balances.ready && !balances.loading) {
-        return { canRun: true };
-      }
-      return eligibility;
-    },
+    (eligibility: Eligibility) =>
+      normalizeEligibilityHelper(eligibility, getBalancesStatus),
     [getBalancesStatus],
   );
 

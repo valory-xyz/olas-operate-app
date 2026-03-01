@@ -7,14 +7,16 @@ import {
   AGENT_SELECTION_WAIT_TIMEOUT_SECONDS,
   AUTO_RUN_START_STATUS,
   AutoRunStartResult,
-  ELIGIBILITY_LOADING_REASON,
   ELIGIBILITY_REASON,
   SCAN_BLOCKED_DELAY_SECONDS,
   SCAN_ELIGIBLE_DELAY_SECONDS,
   SCAN_LOADING_RETRY_SECONDS,
 } from '../constants';
 import { AgentMeta } from '../types';
-import { isOnlyLoadingReason } from '../utils/autoRunHelpers';
+import {
+  formatEligibilityReason,
+  normalizeEligibility as normalizeEligibilityHelper,
+} from '../utils/autoRunHelpers';
 
 const ELIGIBILITY_WAIT_TIMEOUT_MS = AGENT_SELECTION_WAIT_TIMEOUT_SECONDS * 1000;
 
@@ -51,26 +53,6 @@ type UseAutoRunScannerParams = {
   startAgentWithRetries: (agentType: AgentType) => Promise<AutoRunStartResult>;
   scheduleNextScan: (delaySeconds: number) => void;
   logMessage: (message: string) => void;
-};
-
-/**
- * Converts a normalized eligibility object into a user/log-friendly reason.
- *
- * Example:
- * - { reason: LOADING, loadingReason: 'Balances' } -> "Loading: Balances"
- * - { reason: 'Low balance' } -> "Low balance"
- */
-const formatEligibilityReason = (eligibility: {
-  reason?: string;
-  loadingReason?: string;
-}) => {
-  if (
-    eligibility.reason === ELIGIBILITY_REASON.LOADING &&
-    eligibility.loadingReason
-  ) {
-    return `Loading: ${eligibility.loadingReason}`;
-  }
-  return eligibility.reason ?? 'unknown';
 };
 
 /**
@@ -112,31 +94,7 @@ export const useAutoRunScanner = ({
       canRun: boolean;
       reason?: string;
       loadingReason?: string;
-    }) => {
-      if (eligibility.reason === ELIGIBILITY_REASON.ANOTHER_AGENT_RUNNING) {
-        return {
-          canRun: false,
-          reason: ELIGIBILITY_REASON.LOADING,
-          loadingReason: ELIGIBILITY_REASON.ANOTHER_AGENT_RUNNING,
-        };
-      }
-
-      // Pass through if this isn't the specific "Loading: Balances" stale-read case.
-      if (
-        !isOnlyLoadingReason(eligibility, ELIGIBILITY_LOADING_REASON.BALANCES)
-      ) {
-        return eligibility;
-      }
-
-      // Special stale-read case:
-      // if deployability says "Loading: Balances" but global balances are already
-      // ready, we can treat this candidate as runnable and proceed.
-      const balances = getBalancesStatus();
-      if (balances.ready && !balances.loading) {
-        return { canRun: true };
-      }
-      return eligibility;
-    },
+    }) => normalizeEligibilityHelper(eligibility, getBalancesStatus),
     [getBalancesStatus],
   );
 
@@ -321,7 +279,7 @@ export const useAutoRunScanner = ({
         if (startResult.status === AUTO_RUN_START_STATUS.ABORTED) {
           if (enabledRef.current) {
             logMessage(
-              `scan paused on ${candidate}: start flow aborted, rescan in ${SCAN_LOADING_RETRY_SECONDS}s`,
+              `scan paused on ${candidate}: start gates timed out, rescan in ${SCAN_LOADING_RETRY_SECONDS}s`,
             );
             scheduleNextScan(SCAN_LOADING_RETRY_SECONDS);
           }
@@ -444,7 +402,7 @@ export const useAutoRunScanner = ({
     if (startResult.status === AUTO_RUN_START_STATUS.ABORTED) {
       if (enabledRef.current) {
         logMessage(
-          `selected start paused: start flow aborted, rescan in ${SCAN_LOADING_RETRY_SECONDS}s`,
+          `selected start paused: start gates timed out, rescan in ${SCAN_LOADING_RETRY_SECONDS}s`,
         );
         scheduleNextScan(SCAN_LOADING_RETRY_SECONDS);
       }

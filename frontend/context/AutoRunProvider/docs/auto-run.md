@@ -79,6 +79,8 @@ Note: timing constants are centralized in `constants.ts` to avoid duplicate knob
 | `STOP_RECOVERY_RETRY_SECONDS` | 60s | Delay between stop recovery attempts |
 | `AGENT_SELECTION_WAIT_TIMEOUT_SECONDS` | 60s | Hard timeout for UI selection to match requested agent |
 | `REWARDS_WAIT_TIMEOUT_SECONDS` | 20s | Hard timeout for rewards snapshot to arrive |
+| `DISABLE_RACE_STOP_CHECK_INTERVAL_MS` | 10s | Poll cadence when checking for an agent that started during a concurrent disable |
+| `DISABLE_RACE_STOP_MAX_CHECKS` | 6 | Max follow-up checks (6 × 10s = 60s window) before giving up on the disable-race guard |
 | `SLEEP_DRIFT_THRESHOLD_MS` | 30s | Max allowed clock drift before treating as sleep/wake |
 | `AGENT_SELECTION_WAIT_TIMEOUT_SECONDS * 3` | 180s (3min) | Derived balances wait timeout |
 | `AGENT_SELECTION_WAIT_TIMEOUT_SECONDS * 1000` | 60s | Derived eligibility wait timeout (ms) |
