@@ -167,5 +167,6 @@ export const useAutoRunController = ({
 
   return {
     stopRunningAgent: stopCurrentRunningAgent,
+    runningAgentType,
   };
 };

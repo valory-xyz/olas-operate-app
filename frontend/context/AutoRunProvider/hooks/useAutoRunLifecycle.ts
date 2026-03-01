@@ -219,18 +219,28 @@ export const useAutoRunLifecycle = ({
         if (!isActive) return;
         const snapshot =
           refreshed === undefined ? getRewardSnapshot(currentType) : refreshed;
+        // Check backoff BEFORE updating the guard. If the guard were written
+        // first it would be overwritten to `true` during the backoff window;
+        // when the backoff later expired, `previousEligibility === true` would
+        // permanently block all future rotation triggers — a regression of the
+        // original P0 stop-timeout deadlock.
+        const stopRetryBackoffUntil =
+          stopRetryBackoffUntilRef.current[currentType] ?? 0;
+        if (Date.now() < stopRetryBackoffUntil) return;
         const previousEligibility =
           lastRewardsEligibilityRef.current[currentType];
         lastRewardsEligibilityRef.current[currentType] = snapshot;
         if (snapshot !== true) return;
         if (previousEligibility === true) return;
-        const stopRetryBackoffUntil =
-          stopRetryBackoffUntilRef.current[currentType] ?? 0;
-        if (Date.now() < stopRetryBackoffUntil) return;
         logMessage(`rotation triggered: ${currentType} earned rewards`);
         await rotateToNext(currentType);
       } catch (error) {
         logMessage(`rotation error: ${error}`);
+        // Reset the guard so the next rewards poll can re-trigger rotation
+        // instead of being permanently blocked by `previousEligibility === true`.
+        // Schedule a rescan as a recovery safety net.
+        lastRewardsEligibilityRef.current[currentType] = undefined;
+        scheduleNextScan(SCAN_BLOCKED_DELAY_SECONDS);
       } finally {
         isRotatingRef.current = false;
       }
@@ -243,13 +253,14 @@ export const useAutoRunLifecycle = ({
   }, [
     enabled,
     getRewardSnapshot,
+    lastRewardsEligibilityRef,
     logMessage,
     refreshRewardsEligibility,
     rotateToNext,
     runningAgentType,
     rewardsTick,
     scanTick,
-    lastRewardsEligibilityRef,
+    scheduleNextScan,
     stopRetryBackoffUntilRef,
   ]);
 

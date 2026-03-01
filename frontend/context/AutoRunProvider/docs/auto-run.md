@@ -66,7 +66,7 @@ Note: timing constants are centralized in `constants.ts` to avoid duplicate knob
 |----------|-------|---------|
 | `AUTO_RUN_START_DELAY_SECONDS` | 30s | Delay before starting after first enable (gives user time to configure) |
 | `COOLDOWN_SECONDS` | 20s | Delay after stop before starting next agent |
-| `RETRY_BACKOFF_SECONDS` | [15, 30, 60] | Progressive backoff between start retries |
+| `RETRY_BACKOFF_SECONDS` | [30, 60, 120] | Progressive backoff between start retries |
 | `REWARDS_POLL_SECONDS` | 120s | How often to poll rewards for the running agent |
 | `SCAN_BLOCKED_DELAY_SECONDS` | 10min | Rescan delay when agents are blocked (low balance, evicted, etc.) |
 | `SCAN_ELIGIBLE_DELAY_SECONDS` | 30min | Rescan delay when all agents have earned rewards |
@@ -289,7 +289,7 @@ Every delay and poll interval in auto-run uses `sleepAwareDelay`. On `false`:
 | # | Scenario | Expected | Implementation |
 |---|----------|----------|----------------|
 | 37 | Stop timeout — auto-run recovers | Reset rewards guard + schedule rescan 10min | `lastRewardsEligibilityRef` reset + `scheduleNextScan` |
-| 38 | Stop timeout — no immediate re-trigger | Backoff prevents rewards poll from re-triggering immediately | `stopRetryBackoffUntilRef` checked before rotation |
+| 38 | Stop timeout — no immediate re-trigger | Backoff prevents rewards poll from re-triggering immediately | `stopRetryBackoffUntilRef` checked **before** `lastRewardsEligibilityRef` is updated, preventing the guard from being overwritten to `true` during the window |
 
 ### Stale Balance Log Dedup
 
@@ -382,6 +382,18 @@ Every delay and poll interval in auto-run uses `sleepAwareDelay`. On `false`:
 
 ### Code — Balances stale log spam
 - **Fix**: `didLogStaleRef` deduplicates; resets on balance data change.
+
+### P0 — Stop-timeout deadlock regression (`lastRewardsEligibilityRef` overwritten during backoff)
+- **Root cause**: In `checkRewardsAndRotate`, the `lastRewardsEligibilityRef` guard was updated *before* the `stopRetryBackoffUntilRef` check. During the 10-minute backoff window after a stop timeout, the rewards poll would fire, the guard would be overwritten to `true`, and when the backoff later expired `previousEligibility === true` would permanently block all future rotation triggers — a silent regression of the original P0 deadlock.
+- **Fix**: Moved the `stopRetryBackoffUntilRef` check to *before* `lastRewardsEligibilityRef.current[currentType] = snapshot`. The guard is only written after confirming the backoff has expired, so it remains `undefined` during the window and allows re-triggering once the backoff clears.
+
+### P1 — `rotateToNext` exception leaves rotation permanently deadlocked
+- **Root cause**: The `catch` block in `checkRewardsAndRotate` only logged the error. If an exception was thrown after the guard had already been set to `true`, `previousEligibility === true` would block all future rotation attempts and no recovery rescan was scheduled.
+- **Fix**: The catch block now resets `lastRewardsEligibilityRef.current[currentType] = undefined` and calls `scheduleNextScan(SCAN_BLOCKED_DELAY_SECONDS)` so the system self-heals within 10 minutes. Added `scheduleNextScan` to the rotation effect's dependency array.
+
+### P1 — Disable-during-start race: agent starts but is never stopped
+- **Root cause**: `setEnabled(false)` calls `stopRunningAgent()` synchronously, but `runningAgentType` (React state) may still be `null` at that moment if the backend-reported running state hasn't been picked up by the polling interval yet. The narrow window: `startService` completes → user calls disable → stop is called with `runningAgentType = null` → polling later reports the agent as running but no further stop is attempted.
+- **Fix**: Added a `useEffect` in `AutoRunProvider` that watches `(enabled, runningAgentType, isStopping)`. When auto-run is disabled but an agent appears as running and no stop is already in progress, the effect triggers a stop. `runningAgentType` is now exposed from `useAutoRunController` for this purpose.
 
 ### Code — Magic numbers replaced with named constants
 - `SCAN_LOADING_RETRY_SECONDS = 30` replaces hardcoded `scheduleNextScan(30)`.

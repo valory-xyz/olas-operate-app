@@ -98,7 +98,7 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
     useSelectedEligibility({ canCreateSafeForChain });
 
   // Auto-run controller runs the orchestration loop.
-  const { stopRunningAgent } = useAutoRunController({
+  const { stopRunningAgent, runningAgentType } = useAutoRunController({
     enabled,
     orderedIncludedAgentTypes,
     configuredAgents,
@@ -130,6 +130,18 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
       setIsStarting(false);
     }
   }, [enabled, isStarting]);
+
+  // Guard against the narrow race where an agent starts during the disable window:
+  // setEnabled(false) calls stopRunningAgent() immediately, but runningAgentType
+  // may still be null at that moment if the polling interval hasn't yet reported
+  // the newly-started agent. Once polling updates runningAgentType, stop it here.
+  useEffect(() => {
+    if (enabled) return;
+    if (!runningAgentType) return;
+    if (isStopping) return;
+    setIsStopping(true);
+    stopRunningAgent().finally(() => setIsStopping(false));
+  }, [enabled, isStopping, runningAgentType, stopRunningAgent]);
 
   // Seed the included list once from eligible agents. After that, empty is intentional.
   useEffect(() => {
