@@ -137,7 +137,16 @@ export const useAutoRunLifecycle = ({
       // If all other agents are either earned (true) or unknown (undefined),
       // keep the current agent running and retry rotation after a delay.
       const allEarnedOrUnknown = rewardStates.every((state) => state !== false);
-      if (allEarnedOrUnknown && !options?.force) {
+      if (allEarnedOrUnknown) {
+        if (options?.force) {
+          // Watchdog force mode should not stop the current agent when there is
+          // no known alternative candidate. Doing so would create idle time.
+          logMessage(
+            `watchdog: no alternative candidate for ${currentAgentType} (all earned/unknown), keeping running, rescan in ${SCAN_BLOCKED_DELAY_SECONDS}s`,
+          );
+          scheduleNextScan(SCAN_BLOCKED_DELAY_SECONDS);
+          return;
+        }
         logMessage(
           `all other agents earned or unknown, keeping ${currentAgentType} running, rescan in ${SCAN_ELIGIBLE_DELAY_SECONDS}s`,
         );

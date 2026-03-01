@@ -80,7 +80,7 @@ Note: timing constants are centralized in `constants.ts` to avoid duplicate knob
 | `AGENT_SELECTION_WAIT_TIMEOUT_SECONDS` | 60s | Hard timeout for UI selection to match requested agent |
 | `REWARDS_WAIT_TIMEOUT_SECONDS` | 20s | Hard timeout for rewards snapshot to arrive |
 | `DISABLE_RACE_STOP_CHECK_INTERVAL_MS` | 10s | Poll cadence when checking for an agent that started during a concurrent disable |
-| `DISABLE_RACE_STOP_MAX_CHECKS` | 6 | Max follow-up checks (6 × 10s = 60s window) before giving up on the disable-race guard |
+| `DISABLE_RACE_STOP_MAX_CHECKS` | 90 | Max follow-up checks (90 × 10s = 15min window) before giving up on the disable-race guard |
 | `SLEEP_DRIFT_THRESHOLD_MS` | 30s | Max allowed clock drift before treating as sleep/wake |
 | `AGENT_SELECTION_WAIT_TIMEOUT_SECONDS * 3` | 180s (3min) | Derived balances wait timeout |
 | `AGENT_SELECTION_WAIT_TIMEOUT_SECONDS * 1000` | 60s | Derived eligibility wait timeout (ms) |
@@ -127,7 +127,8 @@ Note: timing constants are centralized in `constants.ts` to avoid duplicate knob
 
 1. While auto-run is enabled and an agent is running, watchdog checks runtime every 5 minutes.
 2. If the same agent has been running for more than 2 hours continuously, watchdog attempts forced `rotateToNext` (ignores the normal "all others earned/unknown" keep-running optimization).
-3. If rotate/recovery fails, scanner fallback is scheduled with blocked delay.
+3. In force mode, if all other agents are earned/unknown (no known alternative), current agent is kept running and watchdog retries later (no stop-to-idle).
+4. If rotate/recovery fails, scanner fallback is scheduled with blocked delay.
 
 ---
 

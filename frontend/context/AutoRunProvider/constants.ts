@@ -118,9 +118,9 @@ export const DISABLE_RACE_STOP_CHECK_INTERVAL_MS = 10_000; // 10 seconds
 /**
  * Maximum number of follow-up polling checks for the disable-during-start
  * race guard. Budget = DISABLE_RACE_STOP_MAX_CHECKS × DISABLE_RACE_STOP_CHECK_INTERVAL_MS.
- * Example: 6 × 10 s = 60 s total before giving up.
+ * Example: 90 × 10 s = 900 s (15 min) before giving up.
  */
-export const DISABLE_RACE_STOP_MAX_CHECKS = 6;
+export const DISABLE_RACE_STOP_MAX_CHECKS = 90;
 
 /**
  * Start-attempt outcome labels shared between controller and scanner.
