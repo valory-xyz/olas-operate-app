@@ -66,7 +66,7 @@ Note: timing constants are centralized in `constants.ts` to avoid duplicate knob
 |----------|-------|---------|
 | `AUTO_RUN_START_DELAY_SECONDS` | 30s | Delay before starting after first enable (gives user time to configure) |
 | `COOLDOWN_SECONDS` | 20s | Delay after stop before starting next agent |
-| `RUNNING_AGENT_MAX_RUNTIME_SECONDS` | 2h | Watchdog threshold for maximum continuous runtime per agent |
+| `RUNNING_AGENT_MAX_RUNTIME_SECONDS` | 1.5h | Watchdog threshold for maximum continuous runtime per agent |
 | `RUNNING_AGENT_WATCHDOG_CHECK_SECONDS` | 5min | Watchdog check cadence for long-running agent recovery |
 | `RETRY_BACKOFF_SECONDS` | [30, 60, 120] | Progressive backoff between start retries |
 | `REWARDS_POLL_SECONDS` | 120s | How often to poll rewards for the running agent |
@@ -126,7 +126,7 @@ Note: timing constants are centralized in `constants.ts` to avoid duplicate knob
 ### 3.5 Long-Running Agent Watchdog
 
 1. While auto-run is enabled and an agent is running, watchdog checks runtime every 5 minutes.
-2. If the same agent has been running for more than 2 hours continuously, watchdog attempts forced `rotateToNext` (ignores the normal "all others earned/unknown" keep-running optimization).
+2. If the same agent has been running for more than 1.5 hours continuously, watchdog attempts forced `rotateToNext` (ignores the normal "all others earned/unknown" keep-running optimization).
 3. In force mode, if all other agents are earned/unknown (no known alternative), current agent is kept running and watchdog retries later (no stop-to-idle).
 4. If rotate/recovery fails, scanner fallback is scheduled with blocked delay.
 
@@ -407,7 +407,7 @@ Every delay and poll interval in auto-run uses `sleepAwareDelay`. On `false`:
 - **Fix**: Added a `useEffect` in `AutoRunProvider` that watches `(enabled, runningAgentType, isStopping)`. When auto-run is disabled but an agent appears as running and no stop is already in progress, the effect triggers a stop. `runningAgentType` is now exposed from `useAutoRunController` for this purpose.
 
 ### P0 — Watchdog rotation exception leaves rewards guard permanently set, causing deadlock
-- **Root cause**: The watchdog catch block logged the error and scheduled a rescan but did **not** reset `lastRewardsEligibilityRef.current[agentType]`. Scenario: agent A runs 2h → rewards flip true → `checkRewardsAndRotate` detects true, sets guard to `true`, calls `rotateToNext` → all other agents earned/unknown → returns early keeping A running (guard stays `true`). Subsequent polls see `previousEligibility === true` and bail — correct during this epoch. 2 hours later the watchdog fires, `rotateToNext(force: true)` is called, but `refreshRewardsEligibility` (inside `Promise.all`) throws a network error → catch block does not reset guard → `lastRewardsEligibilityRef[A]` remains `true` → all future rewards polls blocked permanently — deadlock.
+- **Root cause**: The watchdog catch block logged the error and scheduled a rescan but did **not** reset `lastRewardsEligibilityRef.current[agentType]`. Scenario: agent A runs 1.5h → rewards flip true → `checkRewardsAndRotate` detects true, sets guard to `true`, calls `rotateToNext` → all other agents earned/unknown → returns early keeping A running (guard stays `true`). Subsequent polls see `previousEligibility === true` and bail — correct during this epoch. 1.5 hours later the watchdog fires, `rotateToNext(force: true)` is called, but `refreshRewardsEligibility` (inside `Promise.all`) throws a network error → catch block does not reset guard → `lastRewardsEligibilityRef[A]` remains `true` → all future rewards polls blocked permanently — deadlock.
 - **Fix**: Watchdog catch block now resets `lastRewardsEligibilityRef.current[currentType] = undefined`, mirroring the same fix already present in `checkRewardsAndRotate`'s catch block. Added `lastRewardsEligibilityRef` to the watchdog effect's dependency array for consistency.
 
 ### Code — Magic numbers replaced with named constants

@@ -14,9 +14,9 @@ export const COOLDOWN_SECONDS = 20; // 20 seconds
 /**
  * Maximum wall-clock runtime (in seconds) allowed for one continuously
  * running agent before watchdog-triggered rotation is attempted.
- * Example: agent keeps running for 2h without rotating -> watchdog kicks in.
+ * Example: agent keeps running for 1.5h without rotating -> watchdog kicks in.
  */
-export const RUNNING_AGENT_MAX_RUNTIME_SECONDS = 2 * 60 * 60; // 2 hours
+export const RUNNING_AGENT_MAX_RUNTIME_SECONDS = 90 * 60; // 1.5 hours
 
 /**
  * How often (in seconds) watchdog checks runtime against

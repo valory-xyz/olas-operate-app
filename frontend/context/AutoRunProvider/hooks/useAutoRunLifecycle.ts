@@ -83,8 +83,8 @@ export const useAutoRunLifecycle = ({
   // Tracks when the current running agent started, used by runtime watchdog.
   const runningSinceRef = useRef<number | null>(null);
 
+  // Clear stop-timeout backoff state whenever auto-run is disabled.
   useEffect(() => {
-    // Clear stop-timeout backoff state whenever auto-run is disabled.
     if (!enabled) {
       stopRetryBackoffUntilRef.current = {};
     }
@@ -99,11 +99,10 @@ export const useAutoRunLifecycle = ({
     runningSinceRef.current = Date.now();
   }, [enabled, runningAgentType]);
 
+  // Keep refs of async functions to avoid stale closures in lifecycle effects.
   const startSelectedAgentIfEligibleRef = useRef(startSelectedAgentIfEligible);
   const scanAndStartNextRef = useRef(scanAndStartNext);
   const getPreferredStartFromRef = useRef(getPreferredStartFrom);
-
-  // Ensure refs are up to date with the latest implementations.
   useEffect(() => {
     startSelectedAgentIfEligibleRef.current = startSelectedAgentIfEligible;
     scanAndStartNextRef.current = scanAndStartNext;
