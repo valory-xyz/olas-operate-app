@@ -40,6 +40,6 @@ export const withTimeout = async <T>(
       }),
     ]);
   } finally {
-    if (timeoutId) clearTimeout(timeoutId);
+    if (timeoutId !== undefined) clearTimeout(timeoutId);
   }
 };

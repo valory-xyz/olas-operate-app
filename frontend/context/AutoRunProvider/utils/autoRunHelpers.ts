@@ -1,6 +1,7 @@
 import { MutableRefObject } from 'react';
 
 import { AgentType } from '@/constants';
+import { isValidServiceId } from '@/utils/service';
 import { fetchAgentStakingRewardsInfo } from '@/utils/stakingRewards';
 
 import {
@@ -66,7 +67,11 @@ export const refreshRewardsEligibility = async ({
   lastRewardsFetchRef.current[agentType] = now;
   const meta = configuredAgents.find((agent) => agent.agentType === agentType);
   if (!meta) return;
-  if (!meta.multisig || !meta.serviceNftTokenId || !meta.stakingProgramId) {
+  if (
+    !meta.multisig ||
+    !isValidServiceId(meta.serviceNftTokenId) ||
+    !meta.stakingProgramId
+  ) {
     return;
   }
 
