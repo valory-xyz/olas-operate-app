@@ -17,9 +17,12 @@ frontend/context/AutoRunProvider/
   hooks/
     useAutoRunController.ts    — Composition root; wires signals + operations + scanner + lifecycle
     useAutoRunSignals.ts       — Shared refs, wait helpers, scan scheduling
-    useAutoRunOperations.ts    — Start/stop/retry primitives, eligibility normalization
+    useAutoRunOperations.ts    — Thin composition hook for start/stop/rewards operations
+    useAutoRunStartOperations.ts — Guarded start flow with retries and eligibility gates
+    useAutoRunStopOperations.ts  — Stop flow with deployment confirmation + recovery retries
     useAutoRunScanner.ts       — Queue traversal, candidate selection, startSelectedAgentIfEligible
     useAutoRunLifecycle.ts     — Effects: rotation on rewards, rewards polling, startup/resume
+    useAutoRunVerboseLogger.ts — Verbose log gate utility (tied to AUTO_RUN_VERBOSE_LOGS)
     useAutoRunStore.ts         — Electron store persistence (enabled, includedAgents, userExcludedAgents)
     useConfiguredAgents.ts     — Derives AgentMeta[] from services
     useLogAutoRunEvent.ts      — Prefixed logging utility
