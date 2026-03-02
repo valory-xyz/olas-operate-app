@@ -63,7 +63,6 @@ export const refreshRewardsEligibility = async ({
     return getRewardSnapshot(agentType);
   }
 
-  //
   lastRewardsFetchRef.current[agentType] = now;
   const meta = configuredAgents.find((agent) => agent.agentType === agentType);
   if (!meta) return;
