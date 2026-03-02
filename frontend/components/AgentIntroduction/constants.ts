@@ -16,7 +16,7 @@ export const PREDICTION_ONBOARDING_STEPS: OnboardingStep[] = [
   },
   {
     title: 'Collect Earnings',
-    desc: 'It collects your earning on the go, as the results of the corresponding prediction markets are finalized.',
+    desc: 'It collects your earnings on the go, as the results of the corresponding prediction markets are finalized.',
     imgSrc: 'introduction/setup-agent-omenstrat-3',
   },
 ] as const;
