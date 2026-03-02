@@ -5,6 +5,39 @@
 export const AUTO_RUN_LOG_PREFIX = 'autorun:';
 
 /**
+ * Enables detailed step-by-step auto-run logs used during incident debugging.
+ * Keep `false` in normal operation to reduce log noise and overhead.
+ * TODO(autorun): remove temporary verbose diagnostic logs once stability is confirmed.
+ */
+export const AUTO_RUN_VERBOSE_LOGS = true;
+
+/**
+ * Metric keys used by aggregated auto-run health summaries.
+ */
+export const AUTO_RUN_HEALTH_METRIC = {
+  START_ERRORS: 'startErrors',
+  STOP_TIMEOUTS: 'stopTimeouts',
+  REWARDS_ERRORS: 'rewardsErrors',
+  ELIGIBILITY_TIMEOUTS: 'eligibilityTimeouts',
+  ROTATIONS_SUCCEEDED: 'rotationsSucceeded',
+} as const;
+
+export type AutoRunHealthMetric =
+  (typeof AUTO_RUN_HEALTH_METRIC)[keyof typeof AUTO_RUN_HEALTH_METRIC];
+export type AutoRunHealthMetricNoRotation = Exclude<
+  AutoRunHealthMetric,
+  'rotationsSucceeded'
+>;
+export type AutoRunLifecycleMetric = Extract<
+  AutoRunHealthMetric,
+  'stopTimeouts' | 'rewardsErrors' | 'rotationsSucceeded'
+>;
+export type AutoRunScannerMetric = Extract<
+  AutoRunHealthMetric,
+  'eligibilityTimeouts'
+>;
+
+/**
  * Seconds to wait after stopping an agent before starting the next one during rotation.
  * Gives the backend time to fully tear down the running service before a new one starts.
  * e.g. Agent A earns rewards → stop A → wait 20 s → start Agent B
@@ -24,6 +57,13 @@ export const RUNNING_AGENT_MAX_RUNTIME_SECONDS = 90 * 60; // 1.5 hours
  * Example: every 5 minutes -> if runtime exceeded, rotate/recover.
  */
 export const RUNNING_AGENT_WATCHDOG_CHECK_SECONDS = 5 * 60; // 5 minutes
+
+/**
+ * How often (in seconds) auto-run emits an aggregated health summary log,
+ * when `AUTO_RUN_VERBOSE_LOGS` is enabled.
+ * This summarizes error/success counters without spamming per-event logs.
+ */
+export const HEALTH_SUMMARY_INTERVAL_SECONDS = 15 * 60; // 15 minutes
 
 /**
  * Delay (in seconds) before auto-run starts after the user enables it.

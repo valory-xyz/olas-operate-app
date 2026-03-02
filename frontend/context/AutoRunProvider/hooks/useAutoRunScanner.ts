@@ -5,7 +5,9 @@ import { sleepAwareDelay } from '@/utils/delay';
 
 import {
   AGENT_SELECTION_WAIT_TIMEOUT_SECONDS,
+  AUTO_RUN_HEALTH_METRIC,
   AUTO_RUN_START_STATUS,
+  AutoRunScannerMetric,
   AutoRunStartResult,
   ELIGIBILITY_REASON,
   SCAN_BLOCKED_DELAY_SECONDS,
@@ -17,6 +19,7 @@ import {
   formatEligibilityReason,
   normalizeEligibility as normalizeEligibilityHelper,
 } from '../utils/autoRunHelpers';
+import { useAutoRunVerboseLogger } from './useAutoRunVerboseLogger';
 
 const ELIGIBILITY_WAIT_TIMEOUT_MS = AGENT_SELECTION_WAIT_TIMEOUT_SECONDS * 1000;
 
@@ -52,6 +55,7 @@ type UseAutoRunScannerParams = {
   ) => void;
   startAgentWithRetries: (agentType: AgentType) => Promise<AutoRunStartResult>;
   scheduleNextScan: (delaySeconds: number) => void;
+  recordMetric: (metric: AutoRunScannerMetric) => void;
   logMessage: (message: string) => void;
 };
 
@@ -80,8 +84,11 @@ export const useAutoRunScanner = ({
   notifySkipOnce,
   startAgentWithRetries,
   scheduleNextScan,
+  recordMetric,
   logMessage,
 }: UseAutoRunScannerParams) => {
+  const logVerbose = useAutoRunVerboseLogger(logMessage);
+
   /**
    * Normalizes deployability output for scanner decisions.
    *
@@ -111,6 +118,7 @@ export const useAutoRunScanner = ({
       const eligibility = normalizeEligibility(getSelectedEligibility());
       if (eligibility.reason !== ELIGIBILITY_REASON.LOADING) return true;
       if (Date.now() - startedAt > ELIGIBILITY_WAIT_TIMEOUT_MS) {
+        recordMetric(AUTO_RUN_HEALTH_METRIC.ELIGIBILITY_TIMEOUTS);
         logMessage('eligibility wait timeout');
         return false;
       }
@@ -118,7 +126,13 @@ export const useAutoRunScanner = ({
       if (!ok) return false;
     }
     return false;
-  }, [enabledRef, getSelectedEligibility, logMessage, normalizeEligibility]);
+  }, [
+    enabledRef,
+    getSelectedEligibility,
+    logMessage,
+    normalizeEligibility,
+    recordMetric,
+  ]);
 
   /**
    * Returns the next candidate in circular included order.
@@ -278,7 +292,7 @@ export const useAutoRunScanner = ({
         }
         if (startResult.status === AUTO_RUN_START_STATUS.ABORTED) {
           if (enabledRef.current) {
-            logMessage(
+            logVerbose(
               `scan paused on ${candidate}: start gates timed out, rescan in ${SCAN_LOADING_RETRY_SECONDS}s`,
             );
             scheduleNextScan(SCAN_LOADING_RETRY_SECONDS);
@@ -286,7 +300,7 @@ export const useAutoRunScanner = ({
           return { started: false };
         }
         if (startResult.status === AUTO_RUN_START_STATUS.INFRA_FAILED) {
-          logMessage(
+          logVerbose(
             `scan paused on ${candidate}: transient start failure (${startResult.reason ?? 'unknown'}), rescan in ${SCAN_LOADING_RETRY_SECONDS}s`,
           );
           scheduleNextScan(SCAN_LOADING_RETRY_SECONDS);
@@ -303,7 +317,7 @@ export const useAutoRunScanner = ({
         return SCAN_BLOCKED_DELAY_SECONDS;
       })();
 
-      logMessage(
+      logVerbose(
         `scan complete: no agent started (loading=${hasLoading}, blocked=${hasBlocked}, eligible=${hasEligible}), rescan in ${delay}s`,
       );
       scheduleNextScan(delay);
@@ -325,7 +339,7 @@ export const useAutoRunScanner = ({
       waitForBalancesReady,
       waitForRewardsEligibility,
       waitForEligibilityReady,
-      logMessage,
+      logVerbose,
     ],
   );
 
@@ -393,7 +407,7 @@ export const useAutoRunScanner = ({
     const startResult = await startAgentWithRetries(selectedAgentType);
     if (startResult.status === AUTO_RUN_START_STATUS.STARTED) return true;
     if (startResult.status === AUTO_RUN_START_STATUS.INFRA_FAILED) {
-      logMessage(
+      logVerbose(
         `selected start paused: transient failure (${startResult.reason ?? 'unknown'}), rescan in ${SCAN_LOADING_RETRY_SECONDS}s`,
       );
       scheduleNextScan(SCAN_LOADING_RETRY_SECONDS);
@@ -401,7 +415,7 @@ export const useAutoRunScanner = ({
     }
     if (startResult.status === AUTO_RUN_START_STATUS.ABORTED) {
       if (enabledRef.current) {
-        logMessage(
+        logVerbose(
           `selected start paused: start gates timed out, rescan in ${SCAN_LOADING_RETRY_SECONDS}s`,
         );
         scheduleNextScan(SCAN_LOADING_RETRY_SECONDS);
@@ -422,7 +436,7 @@ export const useAutoRunScanner = ({
     startAgentWithRetries,
     waitForAgentSelection,
     normalizeEligibility,
-    logMessage,
+    logVerbose,
     scheduleNextScan,
     waitForBalancesReady,
     waitForEligibilityReady,

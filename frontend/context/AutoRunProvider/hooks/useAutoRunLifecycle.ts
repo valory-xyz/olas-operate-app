@@ -4,7 +4,9 @@ import { AgentType } from '@/constants';
 import { sleepAwareDelay } from '@/utils/delay';
 
 import {
+  AUTO_RUN_HEALTH_METRIC,
   AUTO_RUN_START_DELAY_SECONDS,
+  AutoRunLifecycleMetric,
   COOLDOWN_SECONDS,
   REWARDS_POLL_SECONDS,
   RUNNING_AGENT_MAX_RUNTIME_SECONDS,
@@ -13,6 +15,7 @@ import {
   SCAN_ELIGIBLE_DELAY_SECONDS,
 } from '../constants';
 import { AgentMeta } from '../types';
+import { useAutoRunVerboseLogger } from './useAutoRunVerboseLogger';
 
 type UseAutoRunLifecycleParams = {
   enabled: boolean;
@@ -44,6 +47,7 @@ type UseAutoRunLifecycleParams = {
   stopRetryBackoffUntilRef: MutableRefObject<
     Partial<Record<AgentType, number>>
   >;
+  recordMetric: (metric: AutoRunLifecycleMetric) => void;
   logMessage: (message: string) => void;
 };
 
@@ -74,14 +78,19 @@ export const useAutoRunLifecycle = ({
   startSelectedAgentIfEligible,
   stopAgentWithRecovery,
   stopRetryBackoffUntilRef,
+  recordMetric,
   logMessage,
 }: UseAutoRunLifecycleParams) => {
+  const logVerbose = useAutoRunVerboseLogger(logMessage);
+
   // Guards against overlapping scan/rotation loops.
   const isRotatingRef = useRef(false);
   // Track prior enabled state to distinguish initial enable vs later idle (cooldown on manual stop).
   const wasAutoRunEnabledRef = useRef(false);
   // Tracks when the current running agent started, used by runtime watchdog.
   const runningSinceRef = useRef<number | null>(null);
+  // Sequence for correlation IDs across rotation/watchdog cycles.
+  const rotationCycleSeqRef = useRef(0);
 
   // Clear stop-timeout backoff state whenever auto-run is disabled.
   useEffect(() => {
@@ -114,7 +123,15 @@ export const useAutoRunLifecycle = ({
    * If no other agents are eligible, keep the current one running and retry rotation after a delay.
    */
   const rotateToNext = useCallback(
-    async (currentAgentType: AgentType, options?: { force?: boolean }) => {
+    async (
+      currentAgentType: AgentType,
+      options?: { force?: boolean; cycleId?: string; trigger?: string },
+    ) => {
+      const cycleId = options?.cycleId ?? `cycle-unknown-${currentAgentType}`;
+      const trigger = options?.trigger ?? 'unknown';
+      logVerbose(
+        `cycle=${cycleId} trigger=${trigger} phase=rotate_begin current=${currentAgentType} force=${Boolean(options?.force)}`,
+      );
       // Rotation policy:
       // 1) If all other agents are already earned/unknown -> keep current running.
       // 2) Otherwise stop current, cool down, and scan from next.
@@ -140,13 +157,13 @@ export const useAutoRunLifecycle = ({
         if (options?.force) {
           // Watchdog force mode should not stop the current agent when there is
           // no known alternative candidate. Doing so would create idle time.
-          logMessage(
-            `watchdog: no alternative candidate for ${currentAgentType} (all earned/unknown), keeping running, rescan in ${SCAN_BLOCKED_DELAY_SECONDS}s`,
+          logVerbose(
+            `cycle=${cycleId} trigger=${trigger} phase=no_alternative current=${currentAgentType} rescan=${SCAN_BLOCKED_DELAY_SECONDS}s`,
           );
           scheduleNextScan(SCAN_BLOCKED_DELAY_SECONDS);
           return;
         }
-        logMessage(
+        logVerbose(
           `all other agents earned or unknown, keeping ${currentAgentType} running, rescan in ${SCAN_ELIGIBLE_DELAY_SECONDS}s`,
         );
         scheduleNextScan(SCAN_ELIGIBLE_DELAY_SECONDS);
@@ -188,6 +205,10 @@ export const useAutoRunLifecycle = ({
       if (!cooldownOk) return;
       if (!enabledRef.current) return;
       await scanAndStartNextRef.current(currentAgentType);
+      recordMetric(AUTO_RUN_HEALTH_METRIC.ROTATIONS_SUCCEEDED);
+      logVerbose(
+        `cycle=${cycleId} trigger=${trigger} phase=rotate_end status=ok current=${currentAgentType}`,
+      );
     },
     [
       configuredAgents,
@@ -196,9 +217,11 @@ export const useAutoRunLifecycle = ({
       logMessage,
       orderedIncludedAgentTypes,
       refreshRewardsEligibility,
+      recordMetric,
       scheduleNextScan,
       stopAgentWithRecovery,
       lastRewardsEligibilityRef,
+      logVerbose,
       stopRetryBackoffUntilRef,
     ],
   );
@@ -234,6 +257,7 @@ export const useAutoRunLifecycle = ({
 
     let isActive = true;
     const checkRewardsAndRotate = async () => {
+      const cycleId = `rewards-${currentType}-${++rotationCycleSeqRef.current}`;
       isRotatingRef.current = true;
       try {
         const refreshed = await refreshRewardsEligibility(currentType);
@@ -253,10 +277,16 @@ export const useAutoRunLifecycle = ({
         lastRewardsEligibilityRef.current[currentType] = snapshot;
         if (snapshot !== true) return;
         if (previousEligibility === true) return;
-        logMessage(`rotation triggered: ${currentType} earned rewards`);
-        await rotateToNext(currentType);
+        logVerbose(
+          `cycle=${cycleId} trigger=rewards phase=trigger current=${currentType}`,
+        );
+        await rotateToNext(currentType, {
+          cycleId,
+          trigger: 'rewards',
+        });
       } catch (error) {
         logMessage(`rotation error: ${error}`);
+        recordMetric(AUTO_RUN_HEALTH_METRIC.REWARDS_ERRORS);
         // Reset the guard so the next rewards poll can re-trigger rotation
         // instead of being permanently blocked by `previousEligibility === true`.
         // Schedule a rescan as a recovery safety net.
@@ -276,6 +306,8 @@ export const useAutoRunLifecycle = ({
     getRewardSnapshot,
     lastRewardsEligibilityRef,
     logMessage,
+    logVerbose,
+    recordMetric,
     refreshRewardsEligibility,
     rotateToNext,
     runningAgentType,
@@ -321,14 +353,20 @@ export const useAutoRunLifecycle = ({
       if (Date.now() < stopRetryBackoffUntil) return;
 
       isRotatingRef.current = true;
+      const cycleId = `watchdog-${currentType}-${++rotationCycleSeqRef.current}`;
       void (async () => {
         try {
-          logMessage(
-            `watchdog: ${currentType} exceeded runtime (${RUNNING_AGENT_MAX_RUNTIME_SECONDS}s), rotating`,
+          logVerbose(
+            `cycle=${cycleId} trigger=watchdog phase=trigger current=${currentType} runtimeThreshold=${RUNNING_AGENT_MAX_RUNTIME_SECONDS}s`,
           );
-          await rotateToNext(currentType, { force: true });
+          await rotateToNext(currentType, {
+            force: true,
+            cycleId,
+            trigger: 'watchdog',
+          });
         } catch (error) {
           logMessage(`watchdog rotation error: ${error}`);
+          recordMetric(AUTO_RUN_HEALTH_METRIC.REWARDS_ERRORS);
           // Reset the guard so the next rewards poll can re-trigger rotation
           // instead of being permanently blocked by `previousEligibility === true`.
           lastRewardsEligibilityRef.current[currentType] = undefined;
@@ -348,6 +386,8 @@ export const useAutoRunLifecycle = ({
     enabledRef,
     lastRewardsEligibilityRef,
     logMessage,
+    logVerbose,
+    recordMetric,
     rotateToNext,
     runningAgentType,
     runningAgentTypeRef,

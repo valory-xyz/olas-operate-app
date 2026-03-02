@@ -46,6 +46,7 @@ export const refreshRewardsEligibility = async ({
   getRewardSnapshot,
   setRewardSnapshot,
   logMessage,
+  onRewardsFetchError,
 }: {
   agentType: AgentType;
   configuredAgents: AgentMeta[];
@@ -53,6 +54,7 @@ export const refreshRewardsEligibility = async ({
   getRewardSnapshot: (agentType: AgentType) => boolean | undefined;
   setRewardSnapshot: (agentType: AgentType, value: boolean | undefined) => void;
   logMessage: (message: string) => void;
+  onRewardsFetchError?: () => void;
 }) => {
   const now = Date.now();
   const lastFetch = lastRewardsFetchRef.current[agentType] ?? 0;
@@ -75,8 +77,10 @@ export const refreshRewardsEligibility = async ({
       serviceNftTokenId: meta.serviceNftTokenId,
       stakingProgramId: meta.stakingProgramId,
       agentConfig: meta.agentConfig,
-      onError: (error) =>
-        logMessage(`rewards fetch error: ${agentType}: ${error}`),
+      onError: (error) => {
+        onRewardsFetchError?.();
+        logMessage(`rewards fetch error: ${agentType}: ${error}`);
+      },
     });
     const eligible = response?.isEligibleForRewards;
     if (typeof eligible === 'boolean') {

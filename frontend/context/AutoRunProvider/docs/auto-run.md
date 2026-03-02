@@ -65,9 +65,11 @@ Note: timing constants are centralized in `constants.ts` to avoid duplicate knob
 | Constant | Value | Purpose |
 |----------|-------|---------|
 | `AUTO_RUN_START_DELAY_SECONDS` | 30s | Delay before starting after first enable (gives user time to configure) |
+| `AUTO_RUN_VERBOSE_LOGS` | true | Gates high-volume diagnostic logs; set to true while actively debugging incidents |
 | `COOLDOWN_SECONDS` | 20s | Delay after stop before starting next agent |
 | `RUNNING_AGENT_MAX_RUNTIME_SECONDS` | 1.5h | Watchdog threshold for maximum continuous runtime per agent |
 | `RUNNING_AGENT_WATCHDOG_CHECK_SECONDS` | 5min | Watchdog check cadence for long-running agent recovery |
+| `HEALTH_SUMMARY_INTERVAL_SECONDS` | 15min | Aggregated auto-run health log cadence (error/success counters) |
 | `RETRY_BACKOFF_SECONDS` | [30, 60, 120] | Progressive backoff between start retries |
 | `REWARDS_POLL_SECONDS` | 120s | How often to poll rewards for the running agent |
 | `SCAN_BLOCKED_DELAY_SECONDS` | 10min | Rescan delay when agents are blocked (low balance, evicted, etc.) |
@@ -129,6 +131,15 @@ Note: timing constants are centralized in `constants.ts` to avoid duplicate knob
 2. If the same agent has been running for more than 1.5 hours continuously, watchdog attempts forced `rotateToNext` (ignores the normal "all others earned/unknown" keep-running optimization).
 3. In force mode, if all other agents are earned/unknown (no known alternative), current agent is kept running and watchdog retries later (no stop-to-idle).
 4. If rotate/recovery fails, scanner fallback is scheduled with blocked delay.
+
+### 3.6 Observability
+
+1. When `AUTO_RUN_VERBOSE_LOGS=true`, start/stop operations emit structured phase logs with operation ids:
+`start_prepare`, `start_request`, `start_confirm`, `stop_request`, `stop_confirm`, `stop_retry`.
+2. When `AUTO_RUN_VERBOSE_LOGS=true`, rotation and watchdog flows emit cycle correlation ids:
+`cycle=<id> trigger=<rewards|watchdog> phase=<...>`.
+3. When `AUTO_RUN_VERBOSE_LOGS=true`, every 15 minutes (while auto-run is enabled), a health summary log is emitted with counters:
+`startErrors`, `stopTimeouts`, `rewardsErrors`, `eligibilityTimeouts`, `rotationsSucceeded`.
 
 ---
 

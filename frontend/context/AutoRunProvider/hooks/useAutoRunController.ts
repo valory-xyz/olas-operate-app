@@ -1,8 +1,13 @@
-import { useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 import { AgentType } from '@/constants';
 import { useAgentRunning, useRewardContext, useStartService } from '@/hooks';
 
+import {
+  AUTO_RUN_VERBOSE_LOGS,
+  AutoRunHealthMetric,
+  HEALTH_SUMMARY_INTERVAL_SECONDS,
+} from '../constants';
 import { AgentMeta } from '../types';
 import { useAutoRunLifecycle } from './useAutoRunLifecycle';
 import { useAutoRunOperations } from './useAutoRunOperations';
@@ -61,6 +66,49 @@ export const useAutoRunController = ({
   const { startService } = useStartService();
   const { logMessage } = useLogAutoRunEvent();
 
+  const healthStatsRef = useRef({
+    startErrors: 0,
+    stopTimeouts: 0,
+    rewardsErrors: 0,
+    eligibilityTimeouts: 0,
+    rotationsSucceeded: 0,
+  });
+
+  const recordMetric = useCallback((metric: AutoRunHealthMetric) => {
+    healthStatsRef.current[metric] += 1;
+  }, []);
+
+  useEffect(() => {
+    if (!enabled || !AUTO_RUN_VERBOSE_LOGS) {
+      healthStatsRef.current = {
+        startErrors: 0,
+        stopTimeouts: 0,
+        rewardsErrors: 0,
+        eligibilityTimeouts: 0,
+        rotationsSucceeded: 0,
+      };
+      return;
+    }
+
+    const intervalId = setInterval(() => {
+      const snapshot = { ...healthStatsRef.current };
+      const hasEvents = Object.values(snapshot).some((count) => count > 0);
+      if (!hasEvents) return;
+      logMessage(
+        `health summary: startErrors=${snapshot.startErrors} stopTimeouts=${snapshot.stopTimeouts} rewardsErrors=${snapshot.rewardsErrors} eligibilityTimeouts=${snapshot.eligibilityTimeouts} rotationsSucceeded=${snapshot.rotationsSucceeded}`,
+      );
+      healthStatsRef.current = {
+        startErrors: 0,
+        stopTimeouts: 0,
+        rewardsErrors: 0,
+        eligibilityTimeouts: 0,
+        rotationsSucceeded: 0,
+      };
+    }, HEALTH_SUMMARY_INTERVAL_SECONDS * 1000);
+
+    return () => clearInterval(intervalId);
+  }, [enabled, logMessage]);
+
   const {
     enabledRef,
     runningAgentTypeRef,
@@ -116,6 +164,7 @@ export const useAutoRunController = ({
     getBalancesStatus,
     getRewardSnapshot,
     setRewardSnapshot,
+    recordMetric,
     logMessage,
   });
 
@@ -140,6 +189,7 @@ export const useAutoRunController = ({
     notifySkipOnce,
     startAgentWithRetries,
     scheduleNextScan,
+    recordMetric,
     logMessage,
   });
 
@@ -162,6 +212,7 @@ export const useAutoRunController = ({
     startSelectedAgentIfEligible,
     stopAgentWithRecovery,
     stopRetryBackoffUntilRef,
+    recordMetric,
     logMessage,
   });
 
