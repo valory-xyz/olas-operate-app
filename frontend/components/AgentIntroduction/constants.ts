@@ -2,7 +2,7 @@ import { OnboardingStep } from './IntroductionStep';
 
 export const PREDICTION_ONBOARDING_STEPS: OnboardingStep[] = [
   {
-    desc: 'Trade Omen prediction markets on autopilot with your customizable, always-on AI agent. It scans markets in real-time, places trades on future events for you, and collects winnings as the markets resolve.',
+    desc: 'Trade Omen prediction markets on autopilot with your customizable, always-on AI agent. It scans markets in real-time, executes trades on future events for you, and collects winnings as the markets resolve.',
   },
   {
     title: 'Market Opportunity Finder',
@@ -10,13 +10,13 @@ export const PREDICTION_ONBOARDING_STEPS: OnboardingStep[] = [
     imgSrc: 'introduction/setup-agent-omenstrat-1',
   },
   {
-    title: 'Open Intelligent Trades',
-    desc: 'Agent uses AI to make predictions and open trades on events by analyzing market trends and real-time data.',
+    title: 'Execute Intelligent Trades',
+    desc: 'Agent uses AI to make predictions and execute trades on events by analyzing market trends and real-time data.',
     imgSrc: 'introduction/setup-agent-omenstrat-2',
   },
   {
     title: 'Collect Earnings',
-    desc: 'It collects earnings on the go, as the results of the corresponding prediction markets are finalized.',
+    desc: 'It collects your earning on the go, as the results of the corresponding prediction markets are finalized.',
     imgSrc: 'introduction/setup-agent-omenstrat-3',
   },
 ] as const;
@@ -98,7 +98,7 @@ export const PETT_AI_ONBOARDING_STEPS: OnboardingStep[] = [
 
 export const POLYSTRAT_ONBOARDING_STEPS: OnboardingStep[] = [
   {
-    desc: 'Trade Polymarket on autopilot with your customizable, always-on AI agent. Polystrat scans markets in real-time, opens trades on future events for you and collects winnings as the markets resolve.',
+    desc: 'Trade Polymarket on autopilot with your customizable, always-on AI agent. Polystrat scans markets in real-time, executes trades on future events for you and collects winnings as the markets resolve.',
   },
   {
     title: 'Market Opportunity Finder',
