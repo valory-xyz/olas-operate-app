@@ -24,7 +24,7 @@ export const Wallet = () => {
   const { goto } = usePageState();
   const { availableAssets, isLoading } = useAvailableAgentAssets();
   const availableAssetsExceptOlas = availableAssets.filter(
-    ({ symbol, amount }) => symbol !== TokenSymbolMap.OLAS && amount > 0,
+    ({ symbol }) => symbol !== TokenSymbolMap.OLAS,
   );
 
   return (
