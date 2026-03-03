@@ -3,12 +3,15 @@ import { useMemo } from 'react';
 
 import { ACTIVE_AGENTS } from '@/config/agents';
 import {
+  FIFTEEN_SECONDS_INTERVAL,
   FIVE_SECONDS_INTERVAL,
-  MiddlewareDeploymentStatusMap,
+  isActiveDeploymentStatus,
   REACT_QUERY_KEYS,
 } from '@/constants';
 import { ServicesService } from '@/service/Services';
 
+import { useDynamicRefetchInterval } from './useDynamicRefetchInterval';
+import { useOnlineStatusContext } from './useOnlineStatus';
 import { useServices } from './useServices';
 
 export const useAgentRunning = () => {
@@ -18,13 +21,26 @@ export const useAgentRunning = () => {
     serviceStatusOverrides,
     getServiceConfigIdFromAgentType,
   } = useServices();
+  const { isOnline } = useOnlineStatusContext();
+  const fastRefetchInterval = useDynamicRefetchInterval(FIVE_SECONDS_INTERVAL);
+  const slowRefetchInterval = useDynamicRefetchInterval(
+    FIFTEEN_SECONDS_INTERVAL,
+  );
 
   const { data: allDeployments } = useQuery({
     queryKey: REACT_QUERY_KEYS.ALL_SERVICE_DEPLOYMENTS_KEY,
     queryFn: ({ signal }) => ServicesService.getAllServiceDeployments(signal),
+    enabled: isOnline && !!services?.length,
     refetchInterval: (query) => {
-      return query?.state?.status === 'success' ? FIVE_SECONDS_INTERVAL : false;
+      if (query.state.status !== 'success') return false;
+
+      const hasActiveDeployment = Object.values(query.state.data ?? {}).some(
+        (deployment) => isActiveDeploymentStatus(deployment?.status),
+      );
+
+      return hasActiveDeployment ? fastRefetchInterval : slowRefetchInterval;
     },
+    refetchIntervalInBackground: true,
   });
 
   const isAnotherAgentRunning = useMemo(() => {
@@ -42,27 +58,27 @@ export const useAgentRunning = () => {
       // Check if either the backend status or the override status
       // indicates an active or in-progress. Overrides might represent
       // the intended status while the real one is transitioning.
-      return [
-        MiddlewareDeploymentStatusMap.DEPLOYED,
-        MiddlewareDeploymentStatusMap.DEPLOYING,
-        MiddlewareDeploymentStatusMap.STOPPING,
-      ].some(
-        (status) =>
-          status === serviceStatus ||
-          status === serviceStatusOverrides?.[service.service_config_id],
+      return (
+        isActiveDeploymentStatus(serviceStatus) ||
+        isActiveDeploymentStatus(
+          serviceStatusOverrides?.[service.service_config_id],
+        )
       );
     });
   }, [services, selectedService, allDeployments, serviceStatusOverrides]);
 
   /**
-   * Determine which agent type is currently running (deployed).
+   * Determine which agent type is currently active
+   * (deployed, deploying, or stopping).
    */
   const runningAgentType = useMemo(() => {
-    if (!selectedService || !allDeployments || !services) return null;
+    if (!allDeployments || !services) return null;
 
     for (const service of services) {
       const status = allDeployments[service.service_config_id]?.status;
-      if (status !== MiddlewareDeploymentStatusMap.DEPLOYED) continue;
+      if (!isActiveDeploymentStatus(status)) {
+        continue;
+      }
 
       const agentEntry = ACTIVE_AGENTS.find(
         ([, agentConfig]) =>
@@ -76,7 +92,7 @@ export const useAgentRunning = () => {
     }
 
     return null;
-  }, [selectedService, allDeployments, services]);
+  }, [allDeployments, services]);
 
   const runningServiceConfigId = useMemo(() => {
     if (!runningAgentType) return null;

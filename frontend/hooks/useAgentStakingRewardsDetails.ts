@@ -9,10 +9,10 @@ import { OnlineStatusContext } from '@/context/OnlineStatusProvider';
 import { useServices } from '@/hooks/useServices';
 import { Address } from '@/types';
 import { AgentConfig } from '@/types/Agent';
-import { StakingRewardsInfoSchema } from '@/types/Autonolas';
 import { Maybe, Nullable } from '@/types/Util';
 import { asMiddlewareChain } from '@/utils/middlewareHelpers';
 import { isValidServiceId } from '@/utils/service';
+import { fetchAgentStakingRewardsInfo } from '@/utils/stakingRewards';
 
 import { useDynamicRefetchInterval } from './useDynamicRefetchInterval';
 
@@ -47,28 +47,15 @@ export const createStakingRewardsQuery = ({
     ),
     queryFn: async () => {
       if (!hasStakingProgram) return null;
-      try {
-        const response =
-          await agentConfig.serviceApi.getAgentStakingRewardsInfo({
-            agentMultisigAddress: multisig! as Address,
-            serviceId: serviceNftTokenId!,
-            stakingProgramId: stakingProgramId!,
-            chainId,
-          });
-
-        if (!response) return null;
-
-        try {
-          const parsed = StakingRewardsInfoSchema.parse(response);
-          return parsed;
-        } catch (e) {
-          console.error('Error parsing staking rewards info', e);
-        }
-      } catch (e) {
-        console.error('Error getting staking rewards info', e);
-      }
-
-      return null;
+      return fetchAgentStakingRewardsInfo({
+        chainId,
+        serviceNftTokenId: serviceNftTokenId!,
+        stakingProgramId: stakingProgramId!,
+        multisig: multisig! as Address,
+        agentConfig,
+        onError: (error) =>
+          console.error('Error getting staking rewards info', error),
+      });
     },
     enabled:
       !!isOnline &&

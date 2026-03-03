@@ -3,6 +3,8 @@ import { useCallback, useMemo } from 'react';
 import { ACTIVE_AGENTS } from '@/config/agents';
 import {
   EvmChainId,
+  isActiveDeploymentStatus,
+  isTransitioningDeploymentStatus,
   type MiddlewareDeploymentStatus,
   MiddlewareDeploymentStatusMap,
 } from '@/constants';
@@ -228,14 +230,10 @@ export const useService = (serviceConfigId?: string) => {
    * deployed, or vice versa, used for loading fallbacks
    */
   const isServiceTransitioning =
-    deploymentStatus === MiddlewareDeploymentStatusMap.DEPLOYING ||
-    deploymentStatus === MiddlewareDeploymentStatusMap.STOPPING;
+    isTransitioningDeploymentStatus(deploymentStatus);
 
   /** @note deployment is running, or transitioning, both assume the deployment is active */
-  const isServiceRunning =
-    deploymentStatus === MiddlewareDeploymentStatusMap.DEPLOYING ||
-    deploymentStatus === MiddlewareDeploymentStatusMap.STOPPING ||
-    deploymentStatus === MiddlewareDeploymentStatusMap.DEPLOYED;
+  const isServiceRunning = isActiveDeploymentStatus(deploymentStatus);
 
   /** @note deployment is running and agent is active */
   const isServiceActive =
