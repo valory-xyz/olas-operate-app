@@ -5,7 +5,12 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { LuSquareArrowOutUpRight } from 'react-icons/lu';
 import styled from 'styled-components';
 
-import { COLOR, EXPLORER_URL_BY_MIDDLEWARE_CHAIN, NA } from '@/constants';
+import {
+  type AchievementAgent,
+  COLOR,
+  EXPLORER_URL_BY_MIDDLEWARE_CHAIN,
+  NA,
+} from '@/constants';
 import { Achievement } from '@/types/Achievement';
 import { formatAmountNormalized } from '@/utils';
 
@@ -52,7 +57,7 @@ const StatColumn = ({ label, value }: StatColumnProps) => {
 type PolystratModalContentProps = {
   achievement: Achievement;
   onShare?: () => void;
-  areBackgroundTasksFinalized?: boolean;
+  areBackgroundTasksFinalized: boolean;
 };
 
 export const PolystratPayoutAchievement = ({
@@ -73,10 +78,10 @@ export const PolystratPayoutAchievement = ({
   } = data ?? {};
 
   const predictUrl = useMemo(() => {
-    const [, polystratAchievementType] = type.split('/');
+    const [agent, achievementType] = type.split('/');
     return getPredictWebsiteAchievementUrl(
-      'polystrat',
-      new URLSearchParams({ betId, type: polystratAchievementType }),
+      agent as AchievementAgent,
+      new URLSearchParams({ betId, type: achievementType }),
     );
   }, [type, betId]);
 
@@ -179,7 +184,6 @@ export const PolystratPayoutAchievement = ({
         type="primary"
         className="w-full mt-24"
         onClick={handleShareOnX}
-        disabled={!isShareReady}
         loading={!isShareReady}
       >
         Share on X <LuSquareArrowOutUpRight />

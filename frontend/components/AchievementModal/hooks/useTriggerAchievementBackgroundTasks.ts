@@ -57,6 +57,7 @@ export const useTriggerAchievementBackgroundTasks = () => {
 
       if (!dataId) {
         console.error('Failed to get achievement data id');
+        setAreBackgroundTasksFinalized(true);
         return;
       }
 

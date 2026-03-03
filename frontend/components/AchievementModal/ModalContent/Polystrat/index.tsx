@@ -6,7 +6,7 @@ import { PolystratPayoutAchievement } from './Payout';
 type PolystratModalContentProps = {
   achievement: AchievementWithConfig;
   onShare?: () => void;
-  areBackgroundTasksFinalized?: boolean;
+  areBackgroundTasksFinalized: boolean;
 };
 
 export const PolystratModalContent = ({
