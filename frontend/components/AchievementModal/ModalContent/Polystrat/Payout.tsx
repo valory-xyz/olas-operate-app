@@ -52,11 +52,13 @@ const StatColumn = ({ label, value }: StatColumnProps) => {
 type PolystratModalContentProps = {
   achievement: Achievement;
   onShare?: () => void;
+  areBackgroundTasksFinalized?: boolean;
 };
 
 export const PolystratPayoutAchievement = ({
   achievement,
   onShare,
+  areBackgroundTasksFinalized,
 }: PolystratModalContentProps) => {
   const [isShareReady, setIsShareReady] = useState(false);
 
@@ -90,8 +92,10 @@ export const PolystratPayoutAchievement = ({
   }, [predictUrl]);
 
   useEffect(() => {
-    warmUpPredictPage();
-  }, [warmUpPredictPage]);
+    if (areBackgroundTasksFinalized) {
+      warmUpPredictPage();
+    }
+  }, [areBackgroundTasksFinalized, warmUpPredictPage]);
 
   const question = market?.title ?? NA;
   const totalPayoutFormatted = isNil(totalPayout)

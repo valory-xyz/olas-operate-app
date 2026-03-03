@@ -1,5 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 
 import { ACHIEVEMENT_TYPE } from '@/constants';
 import {
@@ -30,13 +30,16 @@ const getAchievementDataIdFromType = (achievement: AchievementWithConfig) => {
  * This includes acknowledging the achievement and triggering the achievement image generation.
  */
 export const useTriggerAchievementBackgroundTasks = () => {
-  const { mutate: acknowledgeCurrentAchievement } = useMutation({
+  const [areBackgroundTasksFinalized, setAreBackgroundTasksFinalized] =
+    useState(false);
+
+  const { mutateAsync: acknowledgeCurrentAchievement } = useMutation({
     mutationFn: acknowledgeServiceAchievement,
     retry: RETRY_COUNT,
     onError: (error) =>
       console.error('Failed to acknowledge achievement', error),
   });
-  const { mutate: triggerImageGeneration } = useMutation({
+  const { mutateAsync: triggerImageGeneration } = useMutation({
     mutationFn: generateAchievementImage,
     retry: RETRY_COUNT,
     onError: (error) =>
@@ -44,7 +47,7 @@ export const useTriggerAchievementBackgroundTasks = () => {
   });
 
   const triggerAchievementBackgroundTasks = useCallback(
-    (currentAchievement: AchievementWithConfig) => {
+    async (currentAchievement: AchievementWithConfig) => {
       if (!currentAchievement) return;
 
       const { serviceConfigId, achievement_id, achievement_type } =
@@ -57,18 +60,24 @@ export const useTriggerAchievementBackgroundTasks = () => {
         return;
       }
 
-      acknowledgeCurrentAchievement({
-        serviceConfigId,
-        achievementId: achievement_id,
-      });
-      triggerImageGeneration({
-        agent,
-        type,
-        id: dataId,
-      });
+      setAreBackgroundTasksFinalized(false);
+
+      try {
+        await Promise.all([
+          acknowledgeCurrentAchievement({
+            serviceConfigId,
+            achievementId: achievement_id,
+          }),
+          triggerImageGeneration({ agent, type, id: dataId }),
+        ]);
+      } catch (error) {
+        console.error('Failed to complete background tasks', error);
+      } finally {
+        setAreBackgroundTasksFinalized(true);
+      }
     },
     [acknowledgeCurrentAchievement, triggerImageGeneration],
   );
 
-  return triggerAchievementBackgroundTasks;
+  return { triggerAchievementBackgroundTasks, areBackgroundTasksFinalized };
 };
