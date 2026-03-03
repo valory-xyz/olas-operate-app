@@ -135,6 +135,7 @@ const useConfirmTransfer = () => {
 type ConfirmTransferProps = {
   canTransfer?: boolean;
   fundsToTransfer: TokenAmounts;
+  onSuccess?: () => void;
 };
 
 /**
@@ -210,6 +211,7 @@ const prepareAgentFundsForTransfer = ({
 export const ConfirmTransfer = ({
   canTransfer,
   fundsToTransfer,
+  onSuccess,
 }: ConfirmTransferProps) => {
   const { selectedAgentConfig, selectedService } = useServices();
   const { serviceSafes, serviceEoa } = useService(
@@ -251,10 +253,10 @@ export const ConfirmTransfer = ({
     eoaTokenRequirements,
   ]);
 
-  const handleClose = useCallback(
-    () => setIsTransferStateModalVisible(false),
-    [],
-  );
+  const handleClose = useCallback(() => {
+    setIsTransferStateModalVisible(false);
+    if (isSuccess) onSuccess?.();
+  }, [isSuccess, onSuccess]);
 
   const canConfirmTransfer = useMemo(() => {
     if (!serviceSafe) return false;
