@@ -49,12 +49,6 @@ async function checkServiceTemplates(): Promise<void> {
       }
     }
 
-    // TODO: Support the new service ID dvilela/memeooorr:0.1.0 -> valory/memeooorr:0.1.0
-    // Since this change in Agents.fun https://github.com/valory-xyz/meme-ooorr/commit/ee400040decf5cbda16c7409d7f4b513dd162d04
-    // Until then, we use the hash from v2.0.2 but the binary from v2.1.1 for linux support
-    if (name === 'Agents.Fun')
-      version = 'v2.0.2';
-
     // Check 3: packages.json and service.yaml
     const packagesUrl = `https://raw.githubusercontent.com/${owner}/${repoName}/refs/tags/${version}/packages/packages.json`;
     const packagesUrlOlasSdk = `https://raw.githubusercontent.com/${owner}/${repoName}/refs/tags/${version}/olas-sdk-starter/packages/packages.json`;
