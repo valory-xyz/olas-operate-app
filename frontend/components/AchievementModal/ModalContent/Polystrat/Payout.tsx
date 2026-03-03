@@ -1,7 +1,7 @@
 import { Button, Flex, Typography } from 'antd';
 import { capitalize, isNil } from 'lodash';
 import Image from 'next/image';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { LuSquareArrowOutUpRight } from 'react-icons/lu';
 import styled from 'styled-components';
 
@@ -58,6 +58,8 @@ export const PolystratPayoutAchievement = ({
   achievement,
   onShare,
 }: PolystratModalContentProps) => {
+  const [isShareReady, setIsShareReady] = useState(false);
+
   const { description = NA, achievement_type: type, data } = achievement ?? {};
   const {
     id: betId,
@@ -68,6 +70,29 @@ export const PolystratPayoutAchievement = ({
     transaction_hash,
   } = data ?? {};
 
+  const predictUrl = useMemo(() => {
+    const [, polystratAchievementType] = type.split('/');
+    return getPredictWebsiteAchievementUrl(
+      'polystrat',
+      new URLSearchParams({ betId, type: polystratAchievementType }),
+    );
+  }, [type, betId]);
+
+  const warmUpPredictPage = useCallback(async () => {
+    setIsShareReady(false);
+    try {
+      await fetch(predictUrl, { mode: 'no-cors' });
+    } catch (error) {
+      console.error('Failed to warm up predict page', error);
+    } finally {
+      setIsShareReady(true);
+    }
+  }, [predictUrl]);
+
+  useEffect(() => {
+    warmUpPredictPage();
+  }, [warmUpPredictPage]);
+
   const question = market?.title ?? NA;
   const totalPayoutFormatted = isNil(totalPayout)
     ? null
@@ -77,16 +102,11 @@ export const PolystratPayoutAchievement = ({
     : `$${totalPayoutFormatted}`;
 
   const handleShareOnX = useCallback(() => {
-    const [, polystratAchievementType] = type.split('/');
-    const predictUrl = getPredictWebsiteAchievementUrl(
-      'polystrat',
-      new URLSearchParams({ betId, type: polystratAchievementType }),
-    );
     const postText = description.replace('{achievement_url}', predictUrl);
     const xIntentUrl = generateXIntentUrl(postText);
     onShare?.();
     window.open(xIntentUrl, '_blank', 'noopener,noreferrer');
-  }, [description, type, betId, onShare]);
+  }, [description, predictUrl, onShare]);
 
   const stats = useMemo(
     () => [
@@ -155,6 +175,8 @@ export const PolystratPayoutAchievement = ({
         type="primary"
         className="w-full mt-24"
         onClick={handleShareOnX}
+        disabled={!isShareReady}
+        loading={!isShareReady}
       >
         Share on X <LuSquareArrowOutUpRight />
       </Button>
