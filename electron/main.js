@@ -72,6 +72,19 @@ const { pki } = require('node-forge');
 // Register IPC handlers for logs
 require('./features/logs');
 
+// Global error handlers to catch unhandled errors
+process.on('unhandledRejection', (reason, promise) => {
+  const message = reason instanceof Error ? reason.message : String(reason);
+  const stack = reason instanceof Error ? reason.stack : 'No stack trace';
+  logger.next(`[Unhandled Rejection] ${message}`);
+  logger.next(`Stack: ${stack}`);
+});
+
+process.on('uncaughtException', (error) => {
+  logger.next(`[Uncaught Exception] ${error.message}`);
+  logger.next(`Stack: ${error.stack}`);
+});
+
 // Validates environment variables required for Pearl
 // kills the app/process if required environment variables are unavailable
 // mostly RPC URLs and NODE_ENV
@@ -705,15 +718,45 @@ async function launchDaemonDev() {
 async function launchNextApp() {
   logger.electron('Launching Next App');
 
-  logger.electron('Preparing Next App');
-  await nextApp.prepare();
+  try {
+    logger.electron('Preparing Next App');
+    await nextApp.prepare();
+  } catch (err) {
+    logger.next(`[Next.js Prepare Error] ${err.message}`);
+    logger.next(`Stack: ${err.stack}`);
+    throw err;
+  }
 
   logger.electron('Getting Next App Handler');
   const handle = nextApp.getRequestHandler();
 
   logger.electron('Creating Next App Server');
-  const server = http.createServer((req, res) => {
-    handle(req, res); // Handle requests using the Next.js request handler
+  const server = http.createServer(async (req, res) => {
+    // Intercept response to log errors
+    const originalEnd = res.end.bind(res);
+    res.end = function (...args) {
+      if (res.statusCode >= 500) {
+        logger.next(`[HTTP ${res.statusCode}] ${req.method} ${req.url}`);
+      }
+      return originalEnd(...args);
+    };
+
+    try {
+      await handle(req, res);
+    } catch (err) {
+      logger.next(`[Request Error] ${req.method} ${req.url}: ${err.message}`);
+      logger.next(`Stack: ${err.stack}`);
+      if (!res.headersSent) {
+        res.statusCode = 500;
+        res.setHeader('Content-Type', 'text/html');
+        res.end('Internal Server Error');
+      }
+    }
+  });
+
+  server.on('error', (err) => {
+    logger.next(`[Server Error] ${err.message}`);
+    logger.next(`Stack: ${err.stack}`);
   });
 
   logger.electron('Listening on Next App Server');
