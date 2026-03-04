@@ -4,11 +4,14 @@ import { AgentType } from '@/constants';
 import { useBalanceAndRefillRequirementsContext } from '@/hooks';
 import { sleepAwareDelay } from '@/utils/delay';
 
-/**
- * Constants for timeouts and intervals used in auto-run signals,
- * such as waiting for rewards eligibility or balances to be ready.
- */
-const REWARDS_WAIT_TIMEOUT_SECONDS = 20;
+import {
+  AGENT_SELECTION_WAIT_TIMEOUT_SECONDS,
+  REWARDS_POLL_SECONDS,
+  REWARDS_WAIT_TIMEOUT_SECONDS,
+} from '../constants';
+
+const BALANCES_WAIT_TIMEOUT_SECONDS = AGENT_SELECTION_WAIT_TIMEOUT_SECONDS * 3;
+const BALANCE_STALENESS_MS = REWARDS_POLL_SECONDS * 1000;
 
 type UseAutoRunSignalsParams = {
   enabled: boolean;
@@ -21,9 +24,14 @@ type UseAutoRunSignalsParams = {
 };
 
 /**
- * hook to manage signals related to auto-run state and agent status,
- * such as tracking the currently running agent, rewards eligibility snapshots,
- * and providing utility functions to wait for certain conditions or schedule scans.
+ * Runtime signal hub for auto-run.
+ *
+ * This hook keeps mutable refs in sync with the latest UI/network state so
+ * long-running async loops can read fresh values without stale-closure bugs.
+ *
+ * Example:
+ * scanner selects `polystrat` -> waits for selection/balances/rewards ->
+ * this hook provides those waits and snapshot reads.
  */
 export const useAutoRunSignals = ({
   enabled,
@@ -40,7 +48,8 @@ export const useAutoRunSignals = ({
     refetch,
   } = useBalanceAndRefillRequirementsContext();
 
-  // NOTE: Refs keep async loops in sync with live state without re-render churn.
+  // NOTE: refs are intentionally used here so async loops can always read the latest
+  // values even if React re-renders while a wait loop is in progress.
   const enabledRef = useRef(enabled);
   const runningAgentTypeRef = useRef(runningAgentType);
   const isSelectedAgentDetailsLoadingRef = useRef(
@@ -54,7 +63,7 @@ export const useAutoRunSignals = ({
   const balancesReadyRef = useRef(
     isBalancesAndFundingRequirementsReadyForAllServices,
   );
-  const didRefetchBalancesRef = useRef(false);
+  const isRefetchingBalancesRef = useRef(false);
   // Latest rewards snapshot per agent; updated by RewardProvider.
   const rewardSnapshotRef = useRef<
     Partial<Record<AgentType, boolean | undefined>>
@@ -63,7 +72,8 @@ export const useAutoRunSignals = ({
   const lastRewardsEligibilityRef = useRef<
     Partial<Record<AgentType, boolean | undefined>>
   >({});
-  // Timer + tick used to rescan after delays.
+  // Timer + tick pair used for delayed re-scans.
+  // Scheduling sets a timeout; when it fires we bump scanTick to trigger effects.
   const scanTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [scanTick, setScanTick] = useState(0);
   const [rewardsTick, setRewardsTick] = useState(0);
@@ -75,12 +85,9 @@ export const useAutoRunSignals = ({
       clearTimeout(scanTimeoutRef.current);
       scanTimeoutRef.current = null;
     }
-    if (enabled) {
-      didRefetchBalancesRef.current = false;
-    }
   }, [enabled]);
 
-  // Track the running agent from polling.
+  // Keep refs aligned with latest render values.
   useEffect(() => {
     runningAgentTypeRef.current = runningAgentType;
   }, [runningAgentType]);
@@ -99,11 +106,7 @@ export const useAutoRunSignals = ({
     selectedAgentTypeRef.current = selectedAgentType;
   }, [selectedAgentType]);
   useEffect(() => {
-    const previous = selectedServiceConfigIdRef.current;
     selectedServiceConfigIdRef.current = selectedServiceConfigId;
-    if (selectedServiceConfigId && selectedServiceConfigId !== previous) {
-      didRefetchBalancesRef.current = false;
-    }
   }, [selectedServiceConfigId]);
 
   // Update rewards snapshot for the selected agent (RewardProvider is selection-driven).
@@ -125,6 +128,9 @@ export const useAutoRunSignals = ({
   // Wait until UI selection and service config match the requested agent.
   const waitForAgentSelection = useCallback(
     async (agentType: AgentType, serviceConfigId?: string | null) => {
+      // Wait until sidebar selection and selected service details match the candidate.
+      // Example: scanner requested `optimus`; this blocks until UI state is actually on `optimus`.
+      const startedAt = Date.now();
       while (enabledRef.current) {
         const isSelectedAgent =
           !isSelectedAgentDetailsLoadingRef.current &&
@@ -134,12 +140,21 @@ export const useAutoRunSignals = ({
         if (isSelectedAgent) {
           return true;
         }
+        if (
+          Date.now() - startedAt >
+          AGENT_SELECTION_WAIT_TIMEOUT_SECONDS * 1000
+        ) {
+          logMessage(
+            `selection wait timeout: ${agentType}${serviceConfigId ? ` (${serviceConfigId})` : ''}`,
+          );
+          return false;
+        }
         const ok = await sleepAwareDelay(2);
         if (!ok) return false;
       }
       return false;
     },
-    [],
+    [logMessage],
   );
 
   // Track when balance data was last updated to detect stale data after sleep/wake.
@@ -151,29 +166,43 @@ export const useAutoRunSignals = ({
   // Wait until balances are ready, with periodic refetches on long waits.
   // After sleep/wake the balance ref may still be `true` from before sleep,
   // so we also check freshness before accepting the cached value.
-  const BALANCE_STALENESS_MS = 60_000;
+  const didLogStaleRef = useRef(false);
+
+  // Reset the stale log flag when balance data actually updates.
+  useEffect(() => {
+    didLogStaleRef.current = false;
+  }, [isBalancesAndFundingRequirementsReadyForAllServices]);
+
   const waitForBalancesReady = useCallback(async () => {
     const isFresh = () =>
       Date.now() - balanceLastUpdatedRef.current < BALANCE_STALENESS_MS;
+    const startedAt = Date.now();
 
     if (balancesReadyRef.current && !balancesLoadingRef.current && isFresh()) {
       return true;
     }
 
-    // If balances are stale (e.g. after sleep), force a refetch.
+    // If balances are stale (e.g. laptop slept), force a refetch once.
     if (!isFresh()) {
-      logMessage('balances stale, triggering refetch');
-      didRefetchBalancesRef.current = false;
-      refetch()
-        .then(() => {
-          balanceLastUpdatedRef.current = Date.now();
-        })
-        .catch((error) => {
-          logMessage(`balances refetch failed: ${error}`);
-        });
+      if (!didLogStaleRef.current) {
+        logMessage('balances stale, triggering refetch');
+        didLogStaleRef.current = true;
+      }
+      if (!isRefetchingBalancesRef.current) {
+        isRefetchingBalancesRef.current = true;
+        refetch()
+          .then(() => {
+            balanceLastUpdatedRef.current = Date.now();
+          })
+          .catch((error) => {
+            logMessage(`balances refetch failed: ${error}`);
+          })
+          .finally(() => {
+            isRefetchingBalancesRef.current = false;
+          });
+      }
     }
 
-    let lastRefetchAt = Date.now();
     while (enabledRef.current) {
       if (
         balancesReadyRef.current &&
@@ -185,16 +214,9 @@ export const useAutoRunSignals = ({
       const ok = await sleepAwareDelay(2);
       if (!ok) return false;
       const now = Date.now();
-      if (!didRefetchBalancesRef.current && now - lastRefetchAt >= 15000) {
-        didRefetchBalancesRef.current = true;
-        lastRefetchAt = now;
-        refetch()
-          .then(() => {
-            balanceLastUpdatedRef.current = Date.now();
-          })
-          .catch((error) => {
-            logMessage(`balances refetch failed: ${error}`);
-          });
+      if (now - startedAt > BALANCES_WAIT_TIMEOUT_SECONDS * 1000) {
+        logMessage('balances wait timeout');
+        return false;
       }
     }
     return false;
@@ -203,6 +225,8 @@ export const useAutoRunSignals = ({
   // Wait for rewards eligibility to be populated for a given agent.
   const waitForRewardsEligibility = useCallback(
     async (agentType: AgentType) => {
+      // RewardProvider is selection-driven, so snapshot may be undefined briefly
+      // right after switching candidates.
       const startedAt = Date.now();
       while (
         rewardSnapshotRef.current[agentType] === undefined &&
@@ -253,6 +277,7 @@ export const useAutoRunSignals = ({
   // Wait until the running agent type matches the requested agent.
   const waitForRunningAgent = useCallback(
     async (agentType: AgentType, timeoutSeconds: number) => {
+      // Confirm backend-reported running agent switches to the requested one.
       const startedAt = Date.now();
       while (
         enabledRef.current &&
@@ -268,26 +293,9 @@ export const useAutoRunSignals = ({
     [logMessage],
   );
 
-  // Wait until the running agent type no longer matches the given agent.
-  const waitForStoppedAgent = useCallback(
-    async (agentType: AgentType, timeoutSeconds: number) => {
-      const startedAt = Date.now();
-      while (
-        enabledRef.current &&
-        Date.now() - startedAt < timeoutSeconds * 1000
-      ) {
-        if (runningAgentTypeRef.current !== agentType) return true;
-        const ok = await sleepAwareDelay(5);
-        if (!ok) return false;
-      }
-      if (enabledRef.current) logMessage(`stop timeout: ${agentType}`);
-      return false;
-    },
-    [logMessage],
-  );
-
   // Schedule a delayed scan and bump the tick when it fires.
   const scheduleNextScan = useCallback((delaySeconds: number) => {
+    // Re-arm scan timer on each schedule call so only the latest schedule wins.
     if (!enabledRef.current) return;
     if (scanTimeoutRef.current) {
       clearTimeout(scanTimeoutRef.current);
@@ -298,6 +306,11 @@ export const useAutoRunSignals = ({
     }, delaySeconds * 1000);
   }, []);
 
+  const hasScheduledScan = useCallback(
+    () => scanTimeoutRef.current !== null,
+    [],
+  );
+
   return {
     enabledRef,
     runningAgentTypeRef,
@@ -306,11 +319,11 @@ export const useAutoRunSignals = ({
     scanTick,
     rewardsTick,
     scheduleNextScan,
+    hasScheduledScan,
     waitForAgentSelection,
     waitForBalancesReady,
     waitForRewardsEligibility,
     waitForRunningAgent,
-    waitForStoppedAgent,
     markRewardSnapshotPending,
     getRewardSnapshot,
     setRewardSnapshot,

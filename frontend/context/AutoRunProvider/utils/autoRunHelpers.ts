@@ -1,8 +1,14 @@
 import { MutableRefObject } from 'react';
 
 import { AgentType } from '@/constants';
+import { isValidServiceId } from '@/utils/service';
+import { fetchAgentStakingRewardsInfo } from '@/utils/stakingRewards';
 
-import { ELIGIBILITY_REASON, REWARDS_POLL_SECONDS } from '../constants';
+import {
+  ELIGIBILITY_LOADING_REASON,
+  ELIGIBILITY_REASON,
+  REWARDS_POLL_SECONDS,
+} from '../constants';
 import { AgentMeta } from '../types';
 
 /**
@@ -41,6 +47,7 @@ export const refreshRewardsEligibility = async ({
   getRewardSnapshot,
   setRewardSnapshot,
   logMessage,
+  onRewardsFetchError,
 }: {
   agentType: AgentType;
   configuredAgents: AgentMeta[];
@@ -48,6 +55,7 @@ export const refreshRewardsEligibility = async ({
   getRewardSnapshot: (agentType: AgentType) => boolean | undefined;
   setRewardSnapshot: (agentType: AgentType, value: boolean | undefined) => void;
   logMessage: (message: string) => void;
+  onRewardsFetchError?: () => void;
 }) => {
   const now = Date.now();
   const lastFetch = lastRewardsFetchRef.current[agentType] ?? 0;
@@ -57,36 +65,81 @@ export const refreshRewardsEligibility = async ({
 
   lastRewardsFetchRef.current[agentType] = now;
   const meta = configuredAgents.find((agent) => agent.agentType === agentType);
-  if (!meta) return undefined;
-  if (!meta.multisig || !meta.serviceNftTokenId || !meta.stakingProgramId) {
-    return undefined;
+  if (!meta) return;
+  if (
+    !meta.multisig ||
+    !isValidServiceId(meta.serviceNftTokenId) ||
+    !meta.stakingProgramId
+  ) {
+    return;
   }
 
   try {
-    const response =
-      await meta.agentConfig.serviceApi.getAgentStakingRewardsInfo({
-        agentMultisigAddress: meta.multisig,
-        serviceId: meta.serviceNftTokenId,
-        stakingProgramId: meta.stakingProgramId,
-        chainId: meta.chainId,
-      });
+    const response = await fetchAgentStakingRewardsInfo({
+      chainId: meta.chainId,
+      multisig: meta.multisig,
+      serviceNftTokenId: meta.serviceNftTokenId,
+      stakingProgramId: meta.stakingProgramId,
+      agentConfig: meta.agentConfig,
+      onError: (error) => {
+        onRewardsFetchError?.();
+        logMessage(`rewards fetch error: ${agentType}: ${error}`);
+      },
+    });
     const eligible = response?.isEligibleForRewards;
     if (typeof eligible === 'boolean') {
       setRewardSnapshot(agentType, eligible);
       return eligible;
     }
-  } catch (error) {
-    logMessage(`rewards fetch error: ${agentType}: ${error}`);
+  } catch {
+    // fetchAgentStakingRewardsInfo routes errors to onError and returns null.
   }
-
-  return undefined;
 };
 
+/**
+ * Normalize deployability output into auto-run behavior.
+ *
+ * Key policies:
+ * - `Another agent running` is treated as transient loading so the scanner
+ *   retries rather than blocking.
+ * - Stale `Loading: Balances` is promoted to runnable when global balances are
+ *   already ready, avoiding a false block during the brief re-render window.
+ *
+ * @example
+ * normalizeEligibility({ canRun: false, reason: 'Loading', loadingReason: 'Balances' }, () => ({ ready: true, loading: false }))
+ * // => { canRun: true }
+ */
+export const normalizeEligibility = (
+  eligibility: { canRun: boolean; reason?: string; loadingReason?: string },
+  getBalancesStatus: () => { ready: boolean; loading: boolean },
+): { canRun: boolean; reason?: string; loadingReason?: string } => {
+  if (eligibility.reason === ELIGIBILITY_REASON.ANOTHER_AGENT_RUNNING) {
+    return {
+      canRun: false,
+      reason: ELIGIBILITY_REASON.LOADING,
+      loadingReason: ELIGIBILITY_REASON.ANOTHER_AGENT_RUNNING,
+    };
+  }
+  if (!isOnlyLoadingReason(eligibility, ELIGIBILITY_LOADING_REASON.BALANCES)) {
+    return eligibility;
+  }
+  const balances = getBalancesStatus();
+  if (balances.ready && !balances.loading) {
+    return { canRun: true };
+  }
+  return eligibility;
+};
+
+/**
+ * Check if the only reason for ineligibility is a specific loading reason.
+ * Useful for conditionally showing loading states in the UI.
+ */
 export const isOnlyLoadingReason = (
   eligibility: { reason?: string; loadingReason?: string },
   reason: string,
 ) => {
   if (eligibility.reason !== ELIGIBILITY_REASON.LOADING) return false;
+
   const reasons = eligibility.loadingReason
     ?.split(',')
     .map((item) => item.trim())
