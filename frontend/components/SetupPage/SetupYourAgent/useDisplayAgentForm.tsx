@@ -30,6 +30,19 @@ export const AgentFormContainer = styled(Flex)<{ $hasMinHeight?: boolean }>`
       font-size: 14px !important;
     }
   }
+
+  @media (max-width: 1000px) {
+    .setup-left-content {
+      width: 100%;
+      max-width: 100%;
+      padding: 32px 24px;
+    }
+    .setup-right-content {
+      width: 260px;
+      padding: 24px;
+      box-sizing: border-box;
+    }
+  }
 `;
 
 export type RenderForm = (

@@ -4,7 +4,8 @@ import { ReactNode, useCallback, useEffect, useState } from 'react';
 import styled from 'styled-components';
 
 import { StakingContractCard } from '@/components/StakingContractCard';
-import { MAIN_CONTENT_MAX_WIDTH, PAGES, StakingProgramId } from '@/constants';
+import { MainContentContainer } from '@/components/ui';
+import { PAGES, StakingProgramId } from '@/constants';
 import { usePageState, useStakingContracts, useStakingProgram } from '@/hooks';
 import { Nullable } from '@/types';
 
@@ -115,11 +116,7 @@ export const SelectActivityRewardsConfiguration = ({
 
   return (
     <Flex vertical justify="center" className="w-full">
-      <Flex
-        vertical
-        className="mx-auto"
-        style={{ width: MAIN_CONTENT_MAX_WIDTH }}
-      >
+      <MainContentContainer vertical>
         {backButton}
         <Title level={3} className="mt-12">
           Select Activity Rewards Configuration
@@ -128,7 +125,7 @@ export const SelectActivityRewardsConfiguration = ({
           Configuration defines how much activity rewards you can earn by using
           your agent.
         </Text>
-      </Flex>
+      </MainContentContainer>
 
       <StakingContractsWrapper>
         {stableOrder.map((stakingProgramId) => {
