@@ -577,7 +577,8 @@ const createOnRampWindow = async (
   networkName,
   cryptoCurrencyCode,
 ) => {
-  if (!getOnRampWindow() || getOnRampWindow().isDestroyed) {
+  const existingWindow = getOnRampWindow();
+  if (!existingWindow || existingWindow.isDestroyed()) {
     const { width, height: onRampHeight } = getWindowDimensions(APP_WIDTH, 700);
     onRampWindow = new BrowserWindow({
       title: 'Buy Crypto on Transak',
