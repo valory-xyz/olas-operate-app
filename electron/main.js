@@ -338,16 +338,22 @@ const SCREEN_EDGE_MARGIN = 20;
 
 /**
  * Returns window dimensions capped to the primary display's work area.
- * On screens smaller than APP_WIDTH x APP_HEIGHT the window is shrunk to fit
+ * On screens smaller than the desired size the window is shrunk to fit
  * with a small margin around it, so content remains reachable via internal
  * scrolling instead of being clipped off-screen.
+ *
+ * @param {number} [desiredWidth=APP_WIDTH]
+ * @param {number} [desiredHeight=APP_HEIGHT]
  */
-const getWindowDimensions = () => {
+const getWindowDimensions = (
+  desiredWidth = APP_WIDTH,
+  desiredHeight = APP_HEIGHT,
+) => {
   const { width: screenWidth, height: screenHeight } =
     screen.getPrimaryDisplay().workAreaSize;
   return {
-    width: Math.min(APP_WIDTH, screenWidth - SCREEN_EDGE_MARGIN * 2),
-    height: Math.min(APP_HEIGHT, screenHeight - SCREEN_EDGE_MARGIN * 2),
+    width: Math.min(desiredWidth, screenWidth - SCREEN_EDGE_MARGIN * 2),
+    height: Math.min(desiredHeight, screenHeight - SCREEN_EDGE_MARGIN * 2),
   };
 };
 
@@ -572,6 +578,7 @@ const createOnRampWindow = async (
   cryptoCurrencyCode,
 ) => {
   if (!getOnRampWindow() || getOnRampWindow().isDestroyed) {
+    const { width, height: onRampHeight } = getWindowDimensions(APP_WIDTH, 700);
     onRampWindow = new BrowserWindow({
       title: 'Buy Crypto on Transak',
       resizable: false,
@@ -581,8 +588,8 @@ const createOnRampWindow = async (
       fullscreenable: false,
       maximizable: false,
       closable: false,
-      width: APP_WIDTH,
-      height: 700,
+      width,
+      height: onRampHeight,
       media: true,
       webPreferences: {
         nodeIntegration: false,

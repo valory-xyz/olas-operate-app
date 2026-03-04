@@ -59,6 +59,7 @@ const SiderContainer = styled.div`
     @media (min-width: ${ANTD_BREAKPOINTS[SIDEBAR_BREAKPOINT] + 1}px) {
       display: flex;
       width: 100%;
+      overflow: auto;
     }
   }
   .ant-menu-item.menu-running-agent {

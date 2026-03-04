@@ -34,7 +34,6 @@ const SetupCard = styled.div`
   max-width: 516px;
   width: 100%;
   margin: auto;
-  overflow: hidden;
   border-radius: 16px;
   background: ${COLOR.WHITE};
   box-shadow:
