@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { MiddlewareDeploymentStatusMap, StakingProgramId } from '@/constants';
+import { isActiveDeploymentStatus, StakingProgramId } from '@/constants';
 import {
   useActiveStakingContractDetails,
   useService,
@@ -39,11 +39,7 @@ export const useCanMigrate = ({
     const maxSlots = Number(contractDetails?.maxNumServices ?? 0);
     const slotsTaken = Number(contractDetails?.serviceIds?.length ?? 0);
 
-    const isServiceRunning = [
-      MiddlewareDeploymentStatusMap.DEPLOYED,
-      MiddlewareDeploymentStatusMap.DEPLOYING,
-      MiddlewareDeploymentStatusMap.STOPPING,
-    ].some((status) => status === serviceStatus);
+    const isServiceRunning = isActiveDeploymentStatus(serviceStatus);
 
     switch (true) {
       case isCurrentStakingProgram:

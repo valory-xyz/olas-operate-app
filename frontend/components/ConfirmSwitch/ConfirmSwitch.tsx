@@ -2,7 +2,8 @@ import { ArrowRightOutlined } from '@ant-design/icons';
 import { Flex, Typography } from 'antd';
 import styled from 'styled-components';
 
-import { COLOR, MAIN_CONTENT_MAX_WIDTH, PAGES } from '@/constants';
+import { MainContentContainer } from '@/components/ui';
+import { COLOR, PAGES } from '@/constants';
 import { usePageState, useStakingContracts, useStakingProgram } from '@/hooks';
 
 import { BackButton } from '../ui/BackButton';
@@ -27,11 +28,7 @@ export const ConfirmSwitch = () => {
   if (!currentStakingProgramId || !stakingProgramIdToMigrateTo) return null;
 
   return (
-    <Flex
-      vertical
-      className="mx-auto"
-      style={{ width: MAIN_CONTENT_MAX_WIDTH }}
-    >
+    <MainContentContainer vertical>
       <BackButton onPrev={() => goto(PAGES.SelectStaking)} />
       <Title level={3} className="my-12">
         Confirm Switch
@@ -56,6 +53,6 @@ export const ConfirmSwitch = () => {
       </Flex>
 
       <ConfirmSwitchSection />
-    </Flex>
+    </MainContentContainer>
   );
 };

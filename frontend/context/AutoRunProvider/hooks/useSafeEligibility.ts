@@ -9,9 +9,12 @@ import { BACKUP_SIGNER_STATUS, getSafeEligibility } from '@/utils/safe';
 import { AgentMeta } from '../types';
 
 /**
- * Hook to determine the eligibility of creating a Safe
- * for a given chain and to create it if needed, based on
- * the master wallet's current state and the agent's requirements.
+ * Safe readiness utilities for auto-run.
+ *
+ * Example:
+ * - `optimus` selected on chain X
+ * - if master safe exists -> can proceed
+ * - if backup signer missing -> returns blocker reason
  */
 export const useSafeEligibility = () => {
   const { masterSafes, masterEoa } = useMasterWalletContext();
@@ -19,6 +22,7 @@ export const useSafeEligibility = () => {
 
   const canCreateSafeForChain = useCallback(
     (chainId: EvmChainId) => {
+      // Pure readiness check used by deployability gating.
       const eligibility = getSafeEligibility({
         chainId,
         masterSafes,
@@ -50,8 +54,8 @@ export const useSafeEligibility = () => {
     [masterEoa, masterSafes, masterSafesOwners],
   );
 
-  // Creates a Safe if the eligibility check determines
-  // it's needed and possible, otherwise throws an error.
+  // Executes safe creation only when the eligibility contract says it is required.
+  // Throws for non-actionable states so caller can treat it as a start blocker.
   const createSafeIfNeeded = useCallback(
     async (meta: AgentMeta) => {
       const eligibility = getSafeEligibility({

@@ -48,7 +48,7 @@ const Content = styled(MainContent)<{ $isSplitScreenPage?: boolean }>`
   flex-direction: column;
   margin: 0 auto;
   overflow: auto;
-  ${(props) => (props.$isSplitScreenPage ? `` : `padding-bottom: 40px;`)}
+  ${(props) => (props.$isSplitScreenPage ? `` : `padding: 0 16px 40px 16px;`)}
 `;
 
 /**

@@ -1,4 +1,3 @@
-
 require('dotenv').config();
 
 const {
@@ -38,6 +37,7 @@ const {
   shell,
   systemPreferences,
   nativeImage,
+  screen,
 } = require('electron');
 
 const { spawn } = require('child_process');
@@ -330,14 +330,43 @@ const APP_WIDTH = 1320;
 const APP_HEIGHT = 796;
 
 /**
+ * Margin (px) kept on each side of the window when the screen is smaller than
+ * APP_WIDTH x APP_HEIGHT, so the window doesn't fill the entire display.
+ * Has no effect on screens large enough to fit the default window size.
+ */
+const SCREEN_EDGE_MARGIN = 20;
+
+/**
+ * Returns window dimensions capped to the primary display's work area.
+ * On screens smaller than the desired size the window is shrunk to fit
+ * with a small margin around it, so content remains reachable via internal
+ * scrolling instead of being clipped off-screen.
+ *
+ * @param {number} [desiredWidth=APP_WIDTH]
+ * @param {number} [desiredHeight=APP_HEIGHT]
+ */
+const getWindowDimensions = (
+  desiredWidth = APP_WIDTH,
+  desiredHeight = APP_HEIGHT,
+) => {
+  const { width: screenWidth, height: screenHeight } =
+    screen.getPrimaryDisplay().workAreaSize;
+  return {
+    width: Math.min(desiredWidth, screenWidth - SCREEN_EDGE_MARGIN * 2),
+    height: Math.min(desiredHeight, screenHeight - SCREEN_EDGE_MARGIN * 2),
+  };
+};
+
+/**
  * Creates the splash window
  */
 const createSplashWindow = () => {
+  const { width, height } = getWindowDimensions();
   /** @type {Electron.BrowserWindow} */
   splashWindow = new BrowserWindow({
-    width: APP_WIDTH,
+    width,
     icon: appIcon,
-    height: APP_HEIGHT,
+    height,
     resizable: false,
     show: true,
     title: 'Pearl',
@@ -355,6 +384,7 @@ const createSplashWindow = () => {
  */
 const createMainWindow = async () => {
   if (mainWindow) return;
+  const { width, height } = getWindowDimensions();
   mainWindow = new BrowserWindow({
     title: 'Pearl',
     icon: appIcon,
@@ -364,9 +394,9 @@ const createMainWindow = async () => {
     transparent: true,
     fullscreenable: false,
     maximizable: false,
-    width: APP_WIDTH,
-    maxWidth: APP_WIDTH,
-    height: APP_HEIGHT,
+    width,
+    maxWidth: width,
+    height,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -547,7 +577,9 @@ const createOnRampWindow = async (
   networkName,
   cryptoCurrencyCode,
 ) => {
-  if (!getOnRampWindow() || getOnRampWindow().isDestroyed) {
+  const existingWindow = getOnRampWindow();
+  if (!existingWindow || existingWindow.isDestroyed()) {
+    const { width, height: onRampHeight } = getWindowDimensions(APP_WIDTH, 700);
     onRampWindow = new BrowserWindow({
       title: 'Buy Crypto on Transak',
       resizable: false,
@@ -557,8 +589,8 @@ const createOnRampWindow = async (
       fullscreenable: false,
       maximizable: false,
       closable: false,
-      width: APP_WIDTH,
-      height: 700,
+      width,
+      height: onRampHeight,
       media: true,
       webPreferences: {
         nodeIntegration: false,
@@ -640,7 +672,7 @@ async function launchDaemon() {
     }
     logger.electron(`middleware bin path: ${binPath}`);
     operateDaemon = spawn(
-        binPath,
+      binPath,
       [
         'daemon',
         `--port=${appConfig.ports.prod.operate}`,

@@ -8,10 +8,6 @@ export const TOP_BAR_HEIGHT = 40;
 
 export const MODAL_WIDTH = 512;
 
-export const TERMS_WIDTH = 800;
-
-export const POPOVER_WIDTH_MEDIUM = 260;
-
 export const POPOVER_WIDTH_LARGE = 340;
 
 export const MESSAGE_WIDTH = 280;

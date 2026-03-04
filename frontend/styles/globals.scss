@@ -19,7 +19,7 @@ body {
   border-radius: 8px;
   user-select: none;
   scroll-behavior: smooth;
-  overflow: hidden;
+  overflow-y: auto;
 }
 
 button,

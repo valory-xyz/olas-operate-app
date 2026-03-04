@@ -167,10 +167,18 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
     [services],
   );
 
-  // Update chain id when switching between agents
+  // Keep wallet chain stable while user is actively on Pearl Wallet screens.
+  // Auto-run can rotate selected agents in the background; that should not
+  // force-switch the segmented chain tab while the user is viewing wallets.
   useEffect(() => {
+    if (
+      pageState === PAGES.PearlWallet ||
+      pageState === PAGES.FundPearlWallet
+    ) {
+      return;
+    }
     setWalletChainId(selectedAgentConfig.evmHomeChainId);
-  }, [selectedAgentConfig.evmHomeChainId]);
+  }, [pageState, selectedAgentConfig.evmHomeChainId]);
 
   const { isLoading: isAvailableAssetsLoading, availableAssets } =
     useAvailableAssets(walletChainId, {
