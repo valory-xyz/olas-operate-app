@@ -77,6 +77,8 @@ export type AgentConfig = {
   servicePublicId: string;
   /** Whether the agent is geo-location restricted */
   isGeoLocationRestricted?: boolean;
+  /** ERC20 tokens (beyond native + OLAS) to display and track for this agent */
+  erc20Tokens?: TokenSymbol[];
 } & needsOpenProfileEachAgentRun;
 
 type AgentPerformanceMetric = {

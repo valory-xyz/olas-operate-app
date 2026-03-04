@@ -11,6 +11,10 @@ import {
 import { AgentType } from '@/constants';
 import { useElectronApi, useServices } from '@/hooks';
 
+import {
+  DISABLE_RACE_STOP_CHECK_INTERVAL_MS,
+  DISABLE_RACE_STOP_MAX_CHECKS,
+} from './constants';
 import { useAutoRunController } from './hooks/useAutoRunController';
 import { useAutoRunStore } from './hooks/useAutoRunStore';
 import { useConfiguredAgents } from './hooks/useConfiguredAgents';
@@ -98,7 +102,7 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
     useSelectedEligibility({ canCreateSafeForChain });
 
   // Auto-run controller runs the orchestration loop.
-  const { stopRunningAgent } = useAutoRunController({
+  const { stopRunningAgent, runningAgentType } = useAutoRunController({
     enabled,
     orderedIncludedAgentTypes,
     configuredAgents,
@@ -122,6 +126,7 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
   // which is used to disable UI controls and prevent concurrent operations.
   const [isStopping, setIsStopping] = useState(false);
   const [isStarting, setIsStarting] = useState(false);
+  const [disableRaceStopChecksLeft, setDisableRaceStopChecksLeft] = useState(0);
   const isToggling = isStopping || isStarting;
 
   // Reset the starting flag if auto-run is turned off mid-start.
@@ -130,6 +135,41 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
       setIsStarting(false);
     }
   }, [enabled, isStarting]);
+
+  // Guard against the narrow race where auto-run is disabled while a start
+  // operation is still in-flight: runningAgentType can still be null at disable
+  // time, and only appears a few seconds later via polling. In that case we do
+  // bounded follow-up checks and stop once if the agent appears.
+  useEffect(() => {
+    if (enabled) {
+      if (disableRaceStopChecksLeft !== 0) {
+        setDisableRaceStopChecksLeft(0);
+      }
+      return;
+    }
+    if (disableRaceStopChecksLeft <= 0) return;
+    if (isStopping) return;
+
+    if (runningAgentType) {
+      setIsStopping(true);
+      stopRunningAgent()
+        .finally(() => setIsStopping(false))
+        .finally(() => setDisableRaceStopChecksLeft(0));
+      return;
+    }
+
+    const timeoutId = setTimeout(() => {
+      setDisableRaceStopChecksLeft((value) => Math.max(value - 1, 0));
+    }, DISABLE_RACE_STOP_CHECK_INTERVAL_MS);
+
+    return () => clearTimeout(timeoutId);
+  }, [
+    enabled,
+    disableRaceStopChecksLeft,
+    isStopping,
+    runningAgentType,
+    stopRunningAgent,
+  ]);
 
   // Seed the included list once from eligible agents. After that, empty is intentional.
   useEffect(() => {
@@ -196,18 +236,33 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
       // If enabling, update the state and useEffect in `useAutoRunController`
       // will handle starting the first agent.
       if (value) {
+        setDisableRaceStopChecksLeft(0);
         updateAutoRun({ enabled: true });
         return;
       }
 
+      if (!enabled) return;
+
       // If disabling, we need to stop the currently running agent immediately.
+      if (isStarting && !runningAgentType) {
+        setDisableRaceStopChecksLeft(DISABLE_RACE_STOP_MAX_CHECKS);
+      } else {
+        setDisableRaceStopChecksLeft(0);
+      }
       updateAutoRun({ enabled: false });
       if (isStopping) return;
 
       setIsStopping(true);
       stopRunningAgent().finally(() => setIsStopping(false));
     },
-    [isStopping, stopRunningAgent, updateAutoRun],
+    [
+      enabled,
+      isStarting,
+      isStopping,
+      runningAgentType,
+      stopRunningAgent,
+      updateAutoRun,
+    ],
   );
 
   /**

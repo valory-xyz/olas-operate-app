@@ -6,7 +6,6 @@ import {
   SupportedMiddlewareChain,
 } from '@/constants';
 import {
-  Address,
   AgentPerformance,
   DeepPartial,
   MiddlewareServiceResponse,
@@ -207,10 +206,8 @@ const getDeployment = async ({
  * Withdraws the balance of a service
  */
 const withdrawBalance = async ({
-  withdrawAddress,
   serviceConfigId,
 }: {
-  withdrawAddress: Address;
   serviceConfigId: ServiceConfigId;
 }): Promise<{ error: Nullable<string> }> =>
   new Promise((resolve, reject) =>
@@ -218,7 +215,6 @@ const withdrawBalance = async ({
       `${BACKEND_URL_V2}/service/${serviceConfigId}/terminate_and_withdraw`,
       {
         method: 'POST',
-        body: JSON.stringify({ withdrawal_address: withdrawAddress }),
         headers: { ...CONTENT_TYPE_JSON_UTF8 },
       },
     ).then((response) => {
