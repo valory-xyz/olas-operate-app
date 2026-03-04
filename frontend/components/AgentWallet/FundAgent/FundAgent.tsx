@@ -203,6 +203,7 @@ export const FundAgent = ({ onBack }: { onBack: () => void }) => {
       <ConfirmTransfer
         canTransfer={canTransfer}
         fundsToTransfer={amountsToFund}
+        onSuccess={onBack}
       />
     </Flex>
   );

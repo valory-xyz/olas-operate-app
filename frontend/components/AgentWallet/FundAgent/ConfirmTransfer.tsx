@@ -15,6 +15,7 @@ import { useSupportModal } from '@/context/SupportModalProvider';
 import {
   useAgentFundingRequests,
   useBalanceAndRefillRequirementsContext,
+  useBalanceContext,
   useService,
   useServices,
 } from '@/hooks';
@@ -105,6 +106,7 @@ const TransferFailed = ({ onTryAgain }: { onTryAgain: () => void }) => {
 const useConfirmTransfer = () => {
   const { selectedService } = useServices();
   const { refetch } = useBalanceAndRefillRequirementsContext();
+  const { updateBalances } = useBalanceContext();
   const { isPending, isSuccess, isError, mutateAsync } = useMutation({
     mutationFn: async (funds: ChainFunds) => {
       if (!selectedService) throw new Error('No service selected');
@@ -113,8 +115,9 @@ const useConfirmTransfer = () => {
       await FundService.fundAgent({ funds, serviceConfigId });
     },
     onSuccess: () => {
-      // Refetch funding requirements because balances are changed
+      // Refetch funding requirements and wallet balances because balances are changed
       refetch();
+      updateBalances();
     },
   });
 
@@ -135,6 +138,7 @@ const useConfirmTransfer = () => {
 type ConfirmTransferProps = {
   canTransfer?: boolean;
   fundsToTransfer: TokenAmounts;
+  onSuccess?: () => void;
 };
 
 /**
@@ -210,6 +214,7 @@ const prepareAgentFundsForTransfer = ({
 export const ConfirmTransfer = ({
   canTransfer,
   fundsToTransfer,
+  onSuccess,
 }: ConfirmTransferProps) => {
   const { selectedAgentConfig, selectedService } = useServices();
   const { serviceSafes, serviceEoa } = useService(
@@ -251,10 +256,10 @@ export const ConfirmTransfer = ({
     eoaTokenRequirements,
   ]);
 
-  const handleClose = useCallback(
-    () => setIsTransferStateModalVisible(false),
-    [],
-  );
+  const handleClose = useCallback(() => {
+    setIsTransferStateModalVisible(false);
+    if (isSuccess) onSuccess?.();
+  }, [isSuccess, onSuccess]);
 
   const canConfirmTransfer = useMemo(() => {
     if (!serviceSafe) return false;
