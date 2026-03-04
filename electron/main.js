@@ -330,17 +330,24 @@ const APP_WIDTH = 1320;
 const APP_HEIGHT = 796;
 
 /**
+ * Margin (px) kept on each side of the window when the screen is smaller than
+ * APP_WIDTH x APP_HEIGHT, so the window doesn't fill the entire display.
+ * Has no effect on screens large enough to fit the default window size.
+ */
+const SCREEN_EDGE_MARGIN = 20;
+
+/**
  * Returns window dimensions capped to the primary display's work area.
- * On screens smaller than APP_WIDTH x APP_HEIGHT the window is shrunk to fit,
- * so content remains reachable via internal scrolling instead of being
- * clipped off-screen.
+ * On screens smaller than APP_WIDTH x APP_HEIGHT the window is shrunk to fit
+ * with a small margin around it, so content remains reachable via internal
+ * scrolling instead of being clipped off-screen.
  */
 const getWindowDimensions = () => {
   const { width: screenWidth, height: screenHeight } =
     screen.getPrimaryDisplay().workAreaSize;
   return {
-    width: Math.min(APP_WIDTH, screenWidth),
-    height: Math.min(APP_HEIGHT, screenHeight),
+    width: Math.min(APP_WIDTH, screenWidth - SCREEN_EDGE_MARGIN * 2),
+    height: Math.min(APP_HEIGHT, screenHeight - SCREEN_EDGE_MARGIN * 2),
   };
 };
 
