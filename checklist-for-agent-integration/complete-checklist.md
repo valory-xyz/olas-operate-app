@@ -1,11 +1,11 @@
-# Agent Integration Checklist — OLAS & Pearl
+# Agent Integration Checklist
 
-This is the single source of truth for integrating an agent into the OLAS ecosystem and making it available in Pearl. It covers the full journey in chronological order: build → package → deploy on-chain → middleware → Pearl frontend.
+This document covers integrating an agent into the OLAS ecosystem and making it available in Pearl. It covers the full journey in chronological order: build → package → deploy on-chain → middleware → Pearl frontend.
 
 **Works for:** brand new agents and existing agents being integrated for the first time.
 **Who does it:** the agent team, with Pearl team review at Phase 4 and 5.
 
-> **New chain?** If your agent runs on a chain not yet supported in Pearl (currently: Gnosis, Base, Mode, Optimism, Polygon), contact the Pearl team before starting Phase 5. Chain-level infrastructure requires internal coordination.
+> **New chain?** If your agent runs on a chain not yet supported in Pearl (currently: Gnosis, Base, Mode, Optimism, Polygon), contact the Pearl team before starting Phase 5. Chain-level infrastructure will be done internally by the Pearl team.
 
 ---
 
@@ -18,7 +18,6 @@ Confirm these before writing any code:
   - **Regular Open Autonomy** — packages + FSM app, see [docs.olas.network/open-autonomy](https://docs.olas.network/open-autonomy/)
   - **Olas SDK** — external agent wrapped in a minimal Open Autonomy agent, see [docs.olas.network/olas-sdk](https://docs.olas.network/olas-sdk/)
 - [ ] Agent business logic complete and tested locally
-- [ ] Activity checker logic defined — what actions count as "active" for staking reward purposes
 
 ---
 
@@ -308,4 +307,4 @@ Run through these once the agent is live and running in Pearl:
 
 ---
 
-For questions, contact the Pearl team or open an issue at [github.com/valory-xyz/olas-operate-app/issues](https://github.com/valory-xyz/olas-operate-app/issues).
+For questions, contact the Pearl team: PM Iason Rovis — iason.rovis@valory.xyz, or open an issue at [github.com/valory-xyz/olas-operate-app/issues](https://github.com/valory-xyz/olas-operate-app/issues).
