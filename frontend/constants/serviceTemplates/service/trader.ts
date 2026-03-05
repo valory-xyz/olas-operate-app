@@ -144,7 +144,7 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
     ENABLE_MULTI_BETS_FALLBACK: {
       name: 'Enable multi-bets fallback mode',
       description: 'Enables agents to run in multi-bets fallback mode',
-      value: 'true',
+      value: 'false',
       provision_type: EnvProvisionType.FIXED,
     },
   },
