@@ -9,12 +9,17 @@ Integrating an agent into Pearl involves three separate repositories. Each layer
                │ agent is built, packaged, published
                ▼
 ┌─────────────────────────────┐
-│  2. olas-operate-middleware  │  ← Staking contract registration
+│     2. On-chain Setup        │  ← Olas Registry + staking contracts
+└──────────────┬──────────────┘
+               │ contracts deployed, hashes noted
+               ▼
+┌─────────────────────────────┐
+│  3. olas-operate-middleware  │  ← Staking contract registration
 └──────────────┬──────────────┘
                │ middleware PR merged, commit hash noted
                ▼
 ┌─────────────────────────────┐
-│    3. olas-operate-app       │  ← Pearl frontend integration
+│    4. olas-operate-app       │  ← Pearl frontend integration
 └─────────────────────────────┘
 ```
 
@@ -43,11 +48,28 @@ This is your agent's own codebase. All changes here are internal to your team.
 
 ---
 
-## Layer 2 — olas-operate-middleware
+## Layer 2 — On-chain Setup
+
+**Who:** Agent team
+**Dependency:** Layer 1 must be complete (agent packaged and pushed to IPFS)
+
+This produces the on-chain artefacts and addresses that all subsequent layers depend on.
+
+| Area | What to do |
+|------|------------|
+| Olas Registry | Mint all agent components (excluding the service) at [marketplace.olas.network](https://marketplace.olas.network/ethereum/ai-agents) — note the **agent ID(s)** |
+| IPFS | Publish the service package — note the **service IPFS hash** |
+| Staking contract | Deploy on the target chain — note the **chain**, **contract address(es)**, and **OLAS staking requirement per tier** |
+| Activity checker | Deploy on the target chain — note the **contract address** and **ABI type** (Mech / Requester / Staking / Meme / Pet) |
+| NFT IPFS hash | Note the IPFS hash of the on-chain NFT representing the service registration — used in the service template `configurations.nft` field |
+
+---
+
+## Layer 3 — olas-operate-middleware
 
 **Repository:** [github.com/valory-xyz/olas-operate-middleware](https://github.com/valory-xyz/olas-operate-middleware)
 **Who:** Agent team raises PR; Pearl middleware team reviews and merges
-**Dependency:** Layer 1 must be complete (staking contract deployed, agent registered)
+**Dependency:** Layer 2 must be complete (staking contract deployed, agent registered)
 
 This registers your agent's staking contract so Pearl's backend knows how to interact with it.
 
@@ -60,11 +82,11 @@ This registers your agent's staking contract so Pearl's backend knows how to int
 
 ---
 
-## Layer 3 — olas-operate-app (Pearl Frontend)
+## Layer 4 — olas-operate-app (Pearl Frontend)
 
 **Repository:** [github.com/valory-xyz/olas-operate-app](https://github.com/valory-xyz/olas-operate-app)
 **Who:** Agent team raises PR against `staging`; Pearl frontend team reviews and merges
-**Dependency:** Layer 2 PR must be merged and commit hash noted
+**Dependency:** Layer 3 PR must be merged and commit hash noted
 
 This is where the agent becomes visible and usable inside the Pearl desktop app.
 
@@ -134,6 +156,7 @@ If the agent runs on a chain not yet in Pearl, these additional files also need 
 
 | Layer | Blocked until… |
 |-------|----------------|
-| Layer 2 (middleware) | Staking contract deployed, agent registered on Olas Registry |
-| Layer 3 (Pearl frontend) | Layer 2 PR merged and commit hash noted |
-| Final verification | Layer 3 PR merged and deployed |
+| Layer 2 (on-chain) | Layer 1 complete — agent packaged and pushed to IPFS |
+| Layer 3 (middleware) | Layer 2 complete — staking contract deployed, agent registered on Olas Registry |
+| Layer 4 (Pearl frontend) | Layer 3 PR merged and commit hash noted |
+| Final verification | Layer 4 PR merged and deployed |
