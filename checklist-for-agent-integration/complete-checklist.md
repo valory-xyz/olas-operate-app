@@ -1,11 +1,13 @@
 # Agent Integration Checklist
 
-This document covers integrating an agent into the OLAS ecosystem and making it available in Pearl. It covers the full journey in chronological order: build → package → deploy on-chain → middleware → Pearl frontend.
+This is the complete guide for integrating an agent into the OLAS ecosystem and making it available in Pearl. It covers the full journey in chronological order: build → package → deploy on-chain → middleware → Pearl frontend.
 
 **Works for:** brand new agents and existing agents being integrated for the first time.
-**Who does it:** the agent team, with Pearl team review at Phase 4 and 5.
+**Who does it:** the agent team, with Pearl team review at Phases 4 and 5.
 
-> **New chain?** If your agent runs on a chain not yet supported in Pearl (currently: Gnosis, Base, Mode, Optimism, Polygon), contact the Pearl team before starting Phase 5. Chain-level infrastructure will be done internally by the Pearl team.
+> **New chain?** If your agent runs on a chain not yet supported in Pearl (currently: Gnosis, Base, Mode, Optimism, Polygon), contact the Pearl team before starting Phase 5. Chain-level infrastructure will be handled internally by the Pearl team.
+
+> **Stuck at any point?** Reach out to PM Iason Rovis — iason.rovis@valory.xyz, or open an issue at [github.com/valory-xyz/olas-operate-app/issues](https://github.com/valory-xyz/olas-operate-app/issues).
 
 ---
 
@@ -44,7 +46,8 @@ The agent must implement a set of standard interfaces so Pearl can manage, monit
 
 - [ ] Agent exposes `GET http://127.0.0.1:8716/healthcheck`
 - [ ] Response JSON includes `is_healthy` (boolean)
-- [ ] Recommended: also include `seconds_since_last_transition` and other observability fields for easier debugging
+
+> **Recommended:** also include `seconds_since_last_transition` and other observability fields — these are not required but make debugging significantly easier.
 
 ### 1.5 Agent UI (optional)
 
@@ -76,7 +79,7 @@ If the agent has an embedded interface shown inside Pearl:
 
 ### 1.10 Performance Reporting
 
-Pearl displays agent metrics in the Performance tab. Agents must write a `agent_performance.json` file at the path defined by the `CONNECTION_CONFIGS_CONFIG_STORE_PATH` env var.
+Pearl displays agent metrics in the Performance tab. Agents must write an `agent_performance.json` file at the path defined by the `CONNECTION_CONFIGS_CONFIG_STORE_PATH` env var.
 
 **Required fields:**
 
@@ -152,7 +155,7 @@ Additional top-level keys (`agent_details`, `prediction_history`, `profit_over_t
 - [ ] Service package published to IPFS — note the **service hash**
 - [ ] Staking contract(s) deployed on-chain — note the **chain**, **contract address(es)**, and **OLAS staking requirement per tier** (e.g. 100 OLAS for tier 1, 1000 OLAS for tier 2)
 - [ ] Activity checker contract deployed — note the **contract address** and the **ABI type** it uses (Mech / Requester / Staking / Meme / Pet)
-- [ ] NFT IPFS hash available — used in the `configurations.nft` field of the service template
+- [ ] NFT IPFS hash available — this is the IPFS hash of the on-chain NFT that represents the agent service registration; it goes into the `configurations.nft` field of the service template
 
 ---
 
@@ -163,7 +166,7 @@ Open a PR on [olas-operate-middleware](https://github.com/valory-xyz/olas-operat
 - [ ] Add the staking contract to [`operate/ledger/profiles.py`](https://github.com/valory-xyz/olas-operate-middleware/blob/df4e440fccff4364321ffec6b97f6939792c14f6/operate/ledger/profiles.py#L62) — use the same name that will be used in the Pearl frontend
 - [ ] (Optional) Add to [`operate/quickstart/run_service.py`](https://github.com/valory-xyz/olas-operate-middleware/blob/df4e440fccff4364321ffec6b97f6939792c14f6/operate/quickstart/run_service.py#L74) if the agent should be available via quickstart
 
-Once the PR is merged, note the **commit hash** — it is needed for Phase 5 step 11.
+Once the PR is merged, **note the commit hash** — it is required for Phase 5, step 11.
 
 ---
 
@@ -171,11 +174,11 @@ Once the PR is merged, note the **commit hash** — it is needed for Phase 5 ste
 
 Open a PR on [olas-operate-app](https://github.com/valory-xyz/olas-operate-app) against the `staging` branch.
 
-> **Two paths:** You can either make the code changes below yourself, or hand off all the gathered information to the Pearl team and let them raise the PR.
+> **Two paths:** You can either make the code changes below yourself and raise a PR, or open an issue at [github.com/valory-xyz/olas-operate-app/issues](https://github.com/valory-xyz/olas-operate-app/issues) with all the information from section 5.1 and let the Pearl team raise the PR on your behalf.
 
 ### 5.1 Gather Required Information
 
-Collect all of this before touching any code.
+Collect all of this before touching any code. If raising the PR yourself, you will use these values directly in the code changes. If handing off to the Pearl team, share this filled-in section with them.
 
 **Identity**
 
@@ -200,6 +203,8 @@ Collect all of this before touching any code.
 - [ ] For each ERC20 token the agent requires on its chain: token symbol, contract address, decimals — only needed if the token is not already configured for that chain in the repository
 
 **Agent Flags**
+
+These flags control how Pearl handles the agent. Confirm the correct value for each with the Pearl PM.
 
 - [ ] `requiresSetup` — does the user need to enter API keys or config during first-time setup? If yes, list each input field: label, placeholder, and validation rule.
 - [ ] `isGeoLocationRestricted` — should a geo-restriction warning appear in certain regions?
@@ -227,11 +232,11 @@ Collect all of this before touching any code.
 
 **Performance Metrics**
 
-- [ ] List of metrics the agent will report — for each: name, `is_primary` (true/false), description, and an example value. This is used to verify the Performance tab in final verification.
+- [ ] List of metrics the agent will report — for each: name, `is_primary` (true/false), description, and an example value. This is used to verify the Performance tab during final verification.
 
 ### 5.2 New Chain Setup (skip if chain is already supported)
 
-If the agent's chain is not yet in Pearl, complete these before the agent-specific code changes. Contact the Pearl team — chain infrastructure also requires changes outside the repository (RPC endpoints, build scripts).
+If the agent's chain is not yet in Pearl, complete these before the agent-specific code changes. Contact the Pearl team first (iason.rovis@valory.xyz) — chain infrastructure also requires changes outside the repository such as RPC endpoints and build scripts.
 
 - [ ] Add chain to `EvmChainIdMap` and `MiddlewareChainMap` in [`frontend/constants/chains.ts`](https://github.com/valory-xyz/olas-operate-app/blob/main/frontend/constants/chains.ts) and add the chain image to `frontend/public/chains/`
 - [ ] Add RPC env var and safe creation threshold in [`frontend/config/chains.ts`](https://github.com/valory-xyz/olas-operate-app/blob/main/frontend/config/chains.ts)
@@ -246,7 +251,7 @@ Work through these steps in order:
 
 - [ ] **1. Register agent type** — add the agent key to `AgentMap` in [`frontend/constants/agent.ts`](https://github.com/valory-xyz/olas-operate-app/blob/main/frontend/constants/agent.ts). The string value must match the internal name used by the middleware.
 - [ ] **2. Staking program IDs** — add program ID constant(s) to [`frontend/constants/stakingProgram.ts`](https://github.com/valory-xyz/olas-operate-app/blob/main/frontend/constants/stakingProgram.ts)
-- [ ] **3. Activity checkers** — add entries to the correct chain map in [`frontend/config/activityCheckers.ts`](https://github.com/valory-xyz/olas-operate-app/blob/main/frontend/config/activityCheckers.ts) using the helper that matches the ABI type: `getMechActivityCheckerContract`, `getRequesterActivityCheckerContract`, `getStakingActivityCheckerContract`, `getMemeActivityCheckerContract`, or `getPetActivityCheckerContract`
+- [ ] **3. Activity checkers** — add entries to the correct chain map in [`frontend/config/activityCheckers.ts`](https://github.com/valory-xyz/olas-operate-app/blob/main/frontend/config/activityCheckers.ts) using the helper that matches the ABI type you noted in Phase 3: `getMechActivityCheckerContract`, `getRequesterActivityCheckerContract`, `getStakingActivityCheckerContract`, `getMemeActivityCheckerContract`, or `getPetActivityCheckerContract`
 - [ ] **4. Staking program configs** — add entries to the correct chain file in [`frontend/config/stakingPrograms/`](https://github.com/valory-xyz/olas-operate-app/blob/main/frontend/config/stakingPrograms/) with: contract address, OLAS staking requirement, `agentsSupported`, `activityChecker`, `mechType` (if applicable), and `MulticallContract`
 - [ ] **5. Service template** — create `frontend/constants/serviceTemplates/service/{agentname}.ts` following [`trader.ts`](https://github.com/valory-xyz/olas-operate-app/blob/main/frontend/constants/serviceTemplates/service/trader.ts), then import it and add it to `SERVICE_TEMPLATES` in [`serviceTemplates.ts`](https://github.com/valory-xyz/olas-operate-app/blob/main/frontend/constants/serviceTemplates/serviceTemplates.ts). See the [service config guide](https://github.com/valory-xyz/quickstart/?tab=readme-ov-file#guide-for-the-service-configjson) for field definitions.
 - [ ] **6. Agent service class** — create `frontend/service/agents/{AgentName}.ts` extending `StakedAgentService`, following [`Polystrat.ts`](https://github.com/valory-xyz/olas-operate-app/blob/main/frontend/service/agents/Polystrat.ts) as a reference
@@ -254,7 +259,7 @@ Work through these steps in order:
 - [ ] **8. Feature flags** — add entry for the new agent in `FEATURES_CONFIG` in [`frontend/hooks/useFeatureFlag.ts`](https://github.com/valory-xyz/olas-operate-app/blob/main/frontend/hooks/useFeatureFlag.ts) using the decisions from 5.1
 - [ ] **9. Onboarding steps** — add `{AGENTNAME}_ONBOARDING_STEPS` to [`frontend/components/AgentIntroduction/constants.ts`](https://github.com/valory-xyz/olas-operate-app/blob/main/frontend/components/AgentIntroduction/constants.ts) and map the agent type to its steps in `AgentIntroduction.tsx`. Each step has `title`, `desc`, and `imgSrc`. Any number of steps is supported.
 - [ ] **10. Setup wizard** (only if `requiresSetup = true`) — create form component + validation hook under `frontend/components/SetupPage/SetupYourAgent/` following `PredictAgentForm` as a reference, then register it in `SetupYourAgent.tsx`
-- [ ] **11. Update middleware dependency** — in [`pyproject.toml`](https://github.com/valory-xyz/olas-operate-app/blob/main/pyproject.toml), pin `olas-operate-middleware` to the commit hash from Phase 4:
+- [ ] **11. Update middleware dependency** — in [`pyproject.toml`](https://github.com/valory-xyz/olas-operate-app/blob/main/pyproject.toml), pin `olas-operate-middleware` to the commit hash noted at the end of Phase 4:
   ```
   olas-operate-middleware = {git = "https://github.com/valory-xyz/olas-operate-middleware.git", rev = "<commit_hash>"}
   ```
@@ -267,11 +272,11 @@ Work through these steps in order:
 
 ### 5.5 PR Description
 
-Include in the PR description:
+Include the following in your PR description so reviewers can verify the integration:
 
 - [ ] Agent name, icon, and one-sentence description
 - [ ] Home chain and staking program(s) with contract addresses
-- [ ] List of `USER` provision type env vars (what the user will be asked to provide)
+- [ ] List of `USER` provision type env vars (what the user will be asked to provide during setup)
 - [ ] Screenshots or a screen recording of the onboarding flow and agent running in Pearl
 
 ---
@@ -307,4 +312,4 @@ Run through these once the agent is live and running in Pearl:
 
 ---
 
-For questions, contact the Pearl team: PM Iason Rovis — iason.rovis@valory.xyz, or open an issue at [github.com/valory-xyz/olas-operate-app/issues](https://github.com/valory-xyz/olas-operate-app/issues).
+For questions, contact PM Iason Rovis — iason.rovis@valory.xyz, or open an issue at [github.com/valory-xyz/olas-operate-app/issues](https://github.com/valory-xyz/olas-operate-app/issues).
