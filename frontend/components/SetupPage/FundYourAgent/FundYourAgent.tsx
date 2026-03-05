@@ -8,7 +8,12 @@ import {
   CardTitle,
   TokenRequirements,
 } from '@/components/ui';
-import { COLOR, EvmChainName, SETUP_SCREEN } from '@/constants';
+import {
+  ANTD_BREAKPOINTS,
+  COLOR,
+  EvmChainName,
+  SETUP_SCREEN,
+} from '@/constants';
 import {
   useFeatureFlag,
   useGetRefillRequirements,
@@ -20,6 +25,18 @@ import { TokenRequirement } from '@/types';
 import { OnRampMethodCard } from './components/OnRampMethodCard';
 
 const { Text, Title, Paragraph } = Typography;
+
+const FundingContainer = styled(Flex)`
+  padding: 0 80px;
+
+  @media (max-width: ${ANTD_BREAKPOINTS.xl}px) {
+    padding: 0 24px;
+  }
+
+  @media (max-width: ${ANTD_BREAKPOINTS.md}px) {
+    padding: 0 8px;
+  }
+`;
 
 const FundMethodCard = styled(CardFlex)`
   width: 370px;
@@ -136,7 +153,7 @@ export const FundYourAgent = () => {
     isLoading || tokenRequirements.length === 0;
 
   return (
-    <Flex vertical style={{ padding: '0 80px' }}>
+    <FundingContainer vertical>
       <Flex vertical>
         <BackButton
           onPrev={() => {
@@ -169,6 +186,6 @@ export const FundYourAgent = () => {
           />
         )}
       </Flex>
-    </Flex>
+    </FundingContainer>
   );
 };

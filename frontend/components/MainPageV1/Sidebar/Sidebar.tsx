@@ -24,7 +24,6 @@ import { CHAIN_CONFIG } from '@/config/chains';
 import {
   AgentType,
   ANTD_BREAKPOINTS,
-  APP_HEIGHT,
   COLOR,
   EvmChainId,
   PAGES,
@@ -55,11 +54,12 @@ const SIDEBAR_BREAKPOINT = 'md';
 const SiderContainer = styled.div`
   display: flex;
   border-right: 1px solid ${COLOR.GRAY_4};
-  height: ${APP_HEIGHT}px;
+  height: 100vh;
   .ant-layout-sider-children {
     @media (min-width: ${ANTD_BREAKPOINTS[SIDEBAR_BREAKPOINT] + 1}px) {
       display: flex;
       width: 100%;
+      overflow: auto;
     }
   }
   .ant-menu-item.menu-running-agent {

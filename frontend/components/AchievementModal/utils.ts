@@ -1,8 +1,7 @@
-import { PREDICT_WEBSITE_URL } from '@/constants';
+import { type AchievementAgent, PREDICT_WEBSITE_URL } from '@/constants';
 
-// TODO: Use AgentType
 export const getPredictWebsiteAchievementUrl = (
-  agent: 'omenstrat' | 'polystrat',
+  agent: AchievementAgent,
   params: URLSearchParams,
 ) =>
   new URL(

@@ -26,7 +26,7 @@ export const AchievementModal = () => {
     isLoading,
     isError,
   } = useCurrentAchievement();
-  const triggerAchievementBackgroundTasks =
+  const { triggerAchievementBackgroundTasks, areBackgroundTasksFinalized } =
     useTriggerAchievementBackgroundTasks();
 
   const [showModal, setShowModal] = useState(false);
@@ -67,6 +67,7 @@ export const AchievementModal = () => {
             <PolystratModalContent
               achievement={currentAchievement}
               onShare={handleClose}
+              areBackgroundTasksFinalized={areBackgroundTasksFinalized}
             />
           ) : null}
         </>
