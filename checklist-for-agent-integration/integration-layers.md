@@ -42,7 +42,8 @@ This is your agent's own codebase. All changes here are internal to your team.
 | Environment variables | Declare all env vars in `service.yaml` with `CONNECTION_CONFIGS_CONFIG_` prefix |
 | Withdrawal | Handle `WITHDRAWAL_MODE=true` (if agent manages external funds) |
 | Performance reporting | Write `agent_performance.json` to `CONNECTION_CONFIGS_CONFIG_STORE_PATH` |
-| Packaging | `packages/packages.json` with service IPFS hash |
+| Security | Source code meets [OWASP Developer Guide](https://owasp.org/www-project-developer-guide/) and [CWE Top 25](https://cwe.mitre.org/top25/) standards |
+| Packaging | `packages/packages.json` with service IPFS hash; grant repository access to Valory for forking |
 | Binary workflow | GitHub Actions workflow that builds `agent_runner_{os}_{arch}` binaries on release |
 | Open Autonomy extras | `autonomy push-all`, linters (Isort, Black, Mypy, Bandit), ASCII printable range |
 
@@ -78,7 +79,7 @@ This registers your agent's staking contract so Pearl's backend knows how to int
 | [`operate/ledger/profiles.py`](https://github.com/valory-xyz/olas-operate-middleware/blob/df4e440fccff4364321ffec6b97f6939792c14f6/operate/ledger/profiles.py#L62) | Add your staking contract — use the same name you will use in the Pearl frontend |
 | [`operate/quickstart/run_service.py`](https://github.com/valory-xyz/olas-operate-middleware/blob/df4e440fccff4364321ffec6b97f6939792c14f6/operate/quickstart/run_service.py#L74) | *(Optional)* Add your agent here to make it available via quickstart |
 
-**After merge:** Note the commit hash — it is used to pin the dependency in Layer 3.
+**After merge:** Note the commit hash — it is used to pin the dependency in Layer 4.
 
 ---
 
@@ -94,7 +95,7 @@ This is where the agent becomes visible and usable inside the Pearl desktop app.
 
 | File | What to update |
 |------|----------------|
-| [`pyproject.toml`](https://github.com/valory-xyz/olas-operate-app/blob/main/pyproject.toml) | Pin `olas-operate-middleware` to the Layer 2 commit hash |
+| [`pyproject.toml`](https://github.com/valory-xyz/olas-operate-app/blob/main/pyproject.toml) | Pin `olas-operate-middleware` to the Layer 3 commit hash |
 
 ### Frontend — Constants & Config
 
@@ -137,7 +138,7 @@ This is where the agent becomes visible and usable inside the Pearl desktop app.
 
 ### New Chain Only
 
-If the agent runs on a chain not yet in Pearl, these additional files also need updating in Layer 3:
+If the agent runs on a chain not yet in Pearl, these additional files also need updating in Layer 4:
 
 | File | What to update |
 |------|----------------|
