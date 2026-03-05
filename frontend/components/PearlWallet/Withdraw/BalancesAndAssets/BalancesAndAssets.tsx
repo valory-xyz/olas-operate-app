@@ -3,40 +3,15 @@ import { kebabCase } from 'lodash';
 import Image from 'next/image';
 import { useEffect } from 'react';
 
-import {
-  CardFlex,
-  InfoTooltip,
-  Segmented,
-  Tooltip,
-  WalletsTooltip,
-} from '@/components/ui';
+import { CardFlex, InfoTooltip, Segmented, Tooltip } from '@/components/ui';
 import { COLOR } from '@/constants';
 import { usePearlWallet } from '@/context/PearlWalletProvider';
-import { useMasterWalletContext } from '@/hooks';
-import { asMiddlewareChain } from '@/utils';
 
 import { AvailableAssetsTable } from './AvailableAssetsTable';
 import { LowPearlWalletBalanceAlert } from './LowPearlWalletBalanceAlert';
 import { StakedAssetsTable } from './StakedAssetsTable';
 
 const { Text, Title } = Typography;
-
-const AvailableAssetsTooltip = () => {
-  const { masterEoa, getMasterSafeOf } = useMasterWalletContext();
-  const { walletChainId } = usePearlWallet();
-  const masterSafe = getMasterSafeOf
-    ? getMasterSafeOf(walletChainId!)
-    : undefined;
-
-  return (
-    <WalletsTooltip
-      type="pearl"
-      eoaAddress={masterEoa?.address}
-      safeAddress={masterSafe?.address}
-      middlewareHomeChainId={asMiddlewareChain(walletChainId!)}
-    />
-  );
-};
 
 const StakedAssetsTooltip = () => (
   <InfoTooltip
@@ -62,12 +37,9 @@ const PearlWalletTitle = () => (
 
 const AvailableAssets = () => (
   <Flex vertical gap={12}>
-    <Flex align="center" gap={8}>
-      <Title level={5} className="m-0 text-lg">
-        Available Assets
-      </Title>
-      <AvailableAssetsTooltip />
-    </Flex>
+    <Title level={5} className="m-0 text-lg">
+      Available Assets
+    </Title>
     <CardFlex $noBorder>
       <AvailableAssetsTable />
     </CardFlex>

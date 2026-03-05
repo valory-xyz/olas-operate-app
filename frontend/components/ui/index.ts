@@ -29,4 +29,5 @@ export * from './TokenRequirementsTable';
 export * from './tooltips';
 export * from './TransactionSteps';
 export * from './Typography';
+export * from './WalletAvailableAssetsTable';
 export * from './WalletTransferDirection';
