@@ -17,8 +17,8 @@ Confirm these before writing any code:
 
 - [ ] Agent will run on a supported EVM chain: Gnosis (100), Base (8453), Mode (34443), Optimism (10), or Polygon (137)
 - [ ] Agent development framework chosen:
-  - **Regular Open Autonomy** — packages + FSM app, see [docs.olas.network/open-autonomy](https://docs.olas.network/open-autonomy/)
-  - **Olas SDK** — external agent wrapped in a minimal Open Autonomy agent, see [docs.olas.network/olas-sdk](https://docs.olas.network/olas-sdk/)
+  - **Regular Open Autonomy** — packages + FSM app, see [stack.olas.network/open-autonomy](https://stack.olas.network/open-autonomy/)
+  - **Olas SDK** — external agent wrapped in a minimal Open Autonomy agent, see [stack.olas.network/olas-sdk](https://stack.olas.network/olas-sdk/)
 - [ ] Agent business logic complete and tested locally
 
 ---
@@ -315,6 +315,65 @@ Include the following in your PR description so reviewers can verify the integra
 
 ---
 
+## Phase 6 — Self-Serve Testing
+
+Before notifying Valory that the integration is ready, you must test your agent end-to-end in a real Pearl environment. Valory will create a Pearl test branch that includes your agent — this is your testing environment.
+
+### 6.1 CI/CD Readiness
+
+- [ ] Release binaries built for all supported target platforms and available as release artifacts
+- [ ] Linting, type checking, and security checks passing in CI
+- [ ] Unit and integration tests passing in CI
+
+### 6.2 Set Up Your Test Environment
+
+- [ ] Wait for Valory to notify you that your Pearl test branch is ready
+- [ ] Fork that branch into your own repository
+- [ ] Build and run Pearl locally from your fork
+- [ ] Confirm your agent appears in the agent selection list
+
+### 6.3 Wallet & Funding
+
+- [ ] Full onboarding flow from a fresh state completes without errors
+- [ ] Pearl Signer is funded correctly with the required gas token for your network
+- [ ] Pearl Safe is created automatically once all required funds are received
+- [ ] Funds move from Signer to Safe as expected
+- [ ] Correct token type is required and surfaced in the UI
+- [ ] Insufficient funds and wrong token type error states are handled correctly
+
+### 6.4 Agent Lifecycle
+
+- [ ] Agent starts successfully
+- [ ] Agent stops cleanly and resumes correctly after a restart
+- [ ] No stuck states or unexpected errors during normal operation
+- [ ] Agent UI is accessible and works as expected (if applicable)
+
+### 6.5 Staking & Rewards (if applicable)
+
+- [ ] Rewards display correctly after agent activity
+- [ ] User can unstake and withdraw cleanly
+
+### 6.6 Edge Cases & Error Handling
+
+- [ ] RPC failures are handled gracefully — agent retries or surfaces a clear error
+- [ ] Mid-run stop and restart completes without data loss
+- [ ] Withdrawal flow works correctly from all expected lifecycle states (active, paused, recently restarted)
+- [ ] `agent_performance.json` remains readable after an abrupt shutdown or restart
+- [ ] `/funds-status` avoids repeated small deficit requests and remains valid under partial RPC failures
+
+### 6.7 Handoff to Valory
+
+Once all tests pass, notify the Valory team. Share your fork and a summary of what was tested, including any known limitations or open questions.
+
+Valory will then:
+
+1. **Fork** your agent repository
+2. **Audit & review** — security and code review of the agent
+3. **Release** — create a release from the Valory-managed fork
+4. **Pearl integration** — include the release in a Pearl update and ship to users
+
+---
+
 ## Final Verification
 
 Run through these once the agent is live and running in Pearl:
@@ -341,6 +400,7 @@ Run through these once the agent is live and running in Pearl:
 - [ ] Phase 3 — On-chain setup complete (contracts deployed, registry entries created)
 - [ ] Phase 4 — Middleware PR merged
 - [ ] Phase 5 — Pearl frontend PR merged and validated
+- [ ] Phase 6 — Self-serve testing complete, handoff to Valory done
 - [ ] Final verification passed
 - [ ] Integration live in Pearl
 

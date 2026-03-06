@@ -39,6 +39,7 @@ This is your agent's own codebase. All changes here are internal to your team.
 | Logging | Write `log.txt` with the standard format |
 | Healthcheck | Expose `GET http://127.0.0.1:8716/healthcheck` returning `is_healthy` |
 | Agent UI | Expose `GET http://127.0.0.1:8716/` (optional, for embedded Pearl UI) |
+| Funding status | Expose `GET http://127.0.0.1:8716/funds-status` — middleware polls this when deployed and prompts user to top up if `deficit > 0`; return `{}` when no funds needed |
 | Environment variables | Declare all env vars in `service.yaml` with `CONNECTION_CONFIGS_CONFIG_` prefix |
 | Withdrawal | Handle `WITHDRAWAL_MODE=true` (if agent manages external funds) |
 | Performance reporting | Write `agent_performance.json` to `CONNECTION_CONFIGS_CONFIG_STORE_PATH` |
