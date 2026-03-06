@@ -47,37 +47,49 @@ Layer 10: Remaining Component UI + Pages (rendering)
 
 ---
 
-## Phase 0 — Shared Utilities & Config (~20 files) `[EASY]`
+## Phase 0 — Shared Utilities & Config (~22 files) `[EASY]` ✅ COMPLETE
 
-**Goal:** Cover all pure generic functions with zero mocking. Establishes test patterns.
+**Goal:** Cover all pure generic functions. Establishes test patterns.
 
-**Utilities (18 files):**
-- `utils/numberFormatters.ts` — complete remaining 46% coverage
-- `utils/address.ts` — address validation/comparison
-- `utils/truncate.ts` — string truncation
-- `utils/calculations.ts` — BigInt math helpers
-- `utils/time.ts` — time constants and formatting
-- `utils/dateFormatter.ts` — date formatting
-- `utils/delay.ts` — delay/retry utilities
-- `utils/backoff.ts` — exponential backoff
-- `utils/error.ts` — error parsing
-- `utils/lodashExtensions.ts` — custom lodash helpers
-- `utils/middlewareHelpers.ts` — chain/middleware conversions
-- `utils/sanitizeHtml.ts` — HTML sanitization
-- `utils/copyToClipboard.ts` — clipboard
-- `utils/abi.ts` — ABI utilities
-- `utils/safe.ts` — safe eligibility utilities
-- `utils/service.ts` — service utilities
-- `utils/x.ts` — Twitter/X utilities
-- `utils/generateAgentName/computeAgentId.ts` — ID computation
-- `utils/generateAgentName/generateAgentName.ts` — name generation
-- `utils/setupMulticall.ts` — multicall setup (may need ethers mock)
+**Result:** 22 test files, 230 tests, all passing, 0 lint errors.
 
-**Config (2 files with logic):**
-- `config/providers.ts` — ethers provider initialization
-- `config/agents.ts` — agent config helpers
+**Shared test infrastructure in `tests/mocks/`:**
+- `mocks/factories.ts` — factories (`makeMasterEoa`, `makeMasterSafe`, `makeMultisigOwners`), address constants (`DEFAULT_EOA_ADDRESS`, `DEFAULT_SAFE_ADDRESS`, `BACKUP_SIGNER_ADDRESS`, `BACKUP_SIGNER_ADDRESS_2`), and sentinels (`INVALID_CHAIN_ID`, `UNKNOWN_TOKEN_ADDRESS`, `ALL_EVM_CHAIN_IDS`). All phases should use these instead of inline `as any` casts or short placeholder addresses.
+- `mocks/ethersMulticall.ts` — shared `ethers-multicall` module mock (used via `jest.mock` + `require`).
+- `mocks/servicesService.ts` — shared `ServicesService` module mock (used via `jest.mock` + `require`).
 
-**Estimated tests:** ~80-120
+**Note:** Most Phase 0 files are pure functions tested without mocks. Three files (`service.ts`, `setupMulticall.ts`, `config/providers.ts`) require mocking external modules (`ServicesService`, `ethers-multicall`, `constants/providers`) due to side effects at import time.
+
+**Utilities (20 files):**
+- ✅ `utils/numberFormatters.ts` — 100% (was 46%)
+- ✅ `utils/address.ts` — 100%
+- ✅ `utils/truncate.ts` — 100%
+- ✅ `utils/calculations.ts` — 100%
+- ✅ `utils/time.ts` — 100%
+- ✅ `utils/dateFormatter.ts` — 100%
+- ✅ `utils/delay.ts` — 100% (needs `jest.useFakeTimers()` for `sleepAwareDelay`)
+- ✅ `utils/backoff.ts` — 100%
+- ✅ `utils/error.ts` — 100%
+- ✅ `utils/lodashExtensions.ts` — 100%
+- ✅ `utils/middlewareHelpers.ts` — 100% (including `getTokenDetailsFromAddress`)
+- ✅ `utils/sanitizeHtml.ts` — 100%
+- ✅ `utils/copyToClipboard.ts` — 100%
+- ✅ `utils/abi.ts` — 100%
+- ✅ `utils/safe.ts` — 100%
+- ✅ `utils/service.ts` — 100% (`updateServiceIfNeeded`/`onDummyServiceCreation` tested with mocked `ServicesService`)
+- ✅ `utils/x.ts` — 100%
+- ✅ `utils/generateAgentName/computeAgentId.ts` — 100%
+- ✅ `utils/generateAgentName/generateAgentName.ts` — 99% (unreachable `normalizeToSeedHex64` null branch)
+- ✅ `utils/setupMulticall.ts` — 93.5% (unreachable error for hardcoded addresses; needs `jest.mock('ethers-multicall')` + `jest.mock('../../constants/providers')` to break circular dep)
+
+**Config (2 files):**
+- ✅ `config/providers.ts` — structure validation (needs `ethers-multicall` mock with `Contract` constructor)
+- ✅ `config/agents.ts` — structure validation (`AGENT_CONFIG`, `ACTIVE_AGENTS`, `AVAILABLE_FOR_ADDING_AGENTS`)
+
+**Observations for later phases:**
+- `constants/providers.ts` calls `setupMulticallAddresses()` at module scope, creating circular deps. Mock `ethers-multicall` (with `Contract`) and/or `constants/providers` in tests that transitively import `@/constants`.
+- Service-related tests that import `config/agents.ts` pull in agent service classes, which need `ethers-multicall` `Contract` mocked.
+- `utils/service.ts` `updateServiceIfNeeded` has complex env_variable diffing logic — mocking `SERVICE_TEMPLATES` and `ServicesService` keeps tests focused.
 
 ---
 
