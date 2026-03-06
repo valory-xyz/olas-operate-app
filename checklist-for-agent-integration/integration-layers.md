@@ -1,6 +1,6 @@
 # Where Things Get Updated
 
-Integrating an agent into Pearl involves three separate repositories. Each layer depends on the one before it — do not move to the next layer until the current one is complete.
+Integrating an agent into Pearl involves four layers. Layers 1, 3, and 4 are code repositories; Layer 2 is on-chain work with no repository. Each layer depends on the one before it — do not move to the next layer until the current one is complete.
 
 ```
 ┌─────────────────────────────┐
@@ -44,7 +44,7 @@ This is your agent's own codebase. All changes here are internal to your team.
 | Withdrawal | Handle `WITHDRAWAL_MODE=true` (if agent manages external funds) |
 | Performance reporting | Write `agent_performance.json` to `CONNECTION_CONFIGS_CONFIG_STORE_PATH` |
 | Security | Source code meets [OWASP Developer Guide](https://owasp.org/www-project-developer-guide/) and [CWE Top 25](https://cwe.mitre.org/top25/) standards |
-| Packaging | `packages/packages.json` with service IPFS hash; grant repository access to Valory for forking |
+| Packaging | `packages/packages.json` with service IPFS hash; repository must be public or access granted to Valory for forking |
 | Binary workflow | GitHub Actions workflow that builds `agent_runner_{os}_{arch}` binaries on release |
 | Open Autonomy extras | `autonomy push-all`, linters (Isort, Black, Mypy, Bandit), ASCII printable range |
 

@@ -15,7 +15,7 @@ This is the complete guide for integrating an agent into the OLAS ecosystem and 
 
 Confirm these before writing any code:
 
-- [ ] Agent will run on a supported EVM chain: Gnosis (100), Base (8453), Mode (34443), Optimism (10), or Polygon (137)
+- [ ] Agent will run on one of the supported EVM chains listed above
 - [ ] Agent development framework chosen:
   - **Regular Open Autonomy** — packages + FSM app, see [stack.olas.network/open-autonomy](https://stack.olas.network/open-autonomy/)
   - **Olas SDK** — external agent wrapped in a minimal Open Autonomy agent, see [stack.olas.network/olas-sdk](https://stack.olas.network/olas-sdk/)
@@ -179,7 +179,7 @@ Additional top-level keys (`agent_details`, `prediction_history`, `profit_over_t
   - `agent_runner_windows_x64.exe`
   - `agent_runner_windows_arm64.exe`
 - [ ] Binaries are uploaded to GitHub release artifacts and downloadable from the release page
-- [ ] Repository access granted to Valory so it can be forked if needed
+- [ ] Repository is public or access granted to Valory so it can be forked
 
 ---
 
@@ -208,9 +208,20 @@ Once the PR is merged, **note the commit hash** — it is required for Phase 5, 
 
 Open a PR on [olas-operate-app](https://github.com/valory-xyz/olas-operate-app) against the `staging` branch.
 
-> **Two paths:** You can either make the code changes below yourself and raise a PR, or open an issue at [github.com/valory-xyz/olas-operate-app/issues](https://github.com/valory-xyz/olas-operate-app/issues) with all the information from section 5.1 and let the Pearl team raise the PR on your behalf.
+> **Two paths:** You can either make the code changes below yourself and raise a PR, or open an issue at [github.com/valory-xyz/olas-operate-app/issues](https://github.com/valory-xyz/olas-operate-app/issues) with all the information from section 5.2 and let the Pearl team raise the PR on your behalf.
 
-### 5.1 Gather Required Information
+### 5.1 New Chain Setup (skip if chain is already supported)
+
+If the agent's chain is not yet in Pearl, contact the Pearl team first (iason.rovis@valory.xyz) — chain infrastructure also requires changes outside the repository such as RPC endpoints and build scripts. Complete this before gathering information or making any agent-specific code changes.
+
+- [ ] Add chain to `EvmChainIdMap` and `MiddlewareChainMap` in [`frontend/constants/chains.ts`](https://github.com/valory-xyz/olas-operate-app/blob/main/frontend/constants/chains.ts) and add the chain image to `frontend/public/chains/`
+- [ ] Add RPC env var and safe creation threshold in [`frontend/config/chains.ts`](https://github.com/valory-xyz/olas-operate-app/blob/main/frontend/config/chains.ts)
+- [ ] Add token config (symbol, address, decimals) to [`frontend/config/tokens.ts`](https://github.com/valory-xyz/olas-operate-app/blob/main/frontend/config/tokens.ts)
+- [ ] Add `ServiceRegistryL2` and `ServiceRegistryTokenUtility` addresses to [`frontend/config/olasContracts.ts`](https://github.com/valory-xyz/olas-operate-app/blob/main/frontend/config/olasContracts.ts)
+- [ ] Create `frontend/config/stakingPrograms/{chain}.ts` following the pattern in [`polygon.ts`](https://github.com/valory-xyz/olas-operate-app/blob/main/frontend/config/stakingPrograms/polygon.ts) and register it in [`index.ts`](https://github.com/valory-xyz/olas-operate-app/blob/main/frontend/config/stakingPrograms/index.ts)
+- [ ] Add chain-level activity checker map to [`frontend/config/activityCheckers.ts`](https://github.com/valory-xyz/olas-operate-app/blob/main/frontend/config/activityCheckers.ts)
+
+### 5.2 Gather Required Information
 
 Collect all of this before touching any code. If raising the PR yourself, you will use these values directly in the code changes. If handing off to the Pearl team, share this filled-in section with them.
 
@@ -218,7 +229,7 @@ Collect all of this before touching any code. If raising the PR yourself, you wi
 
 - [ ] Display name shown in the UI (e.g. "Polystrat")
 - [ ] Short description — one sentence shown on the agent selection card
-- [ ] Category — optional, one of: `Prediction Markets` | `DeFi`
+- [ ] Category — optional, free-text label shown on the agent card (e.g. `Prediction Markets`, `DeFi`; new categories can be added)
 - [ ] Default behavior string — optional, shown in the Performance tab alongside `agent_behavior`
 - [ ] Service public ID — Olas Registry identifier (e.g. `valory/trader`)
 - [ ] Agent type key — snake_case internal name matching the middleware (e.g. `polymarket_trader`)
@@ -226,7 +237,7 @@ Collect all of this before touching any code. If raising the PR yourself, you wi
 **Service Template**
 
 - [ ] Service IPFS hash (from Phase 3)
-- [ ] Service version string (e.g. `v0.31.7`)
+- [ ] Service version string (e.g. `v0.31.7`) — provide your current version as a reference; the final version will be assigned by Valory when they fork your repository and create a release
 - [ ] Agent release GitHub repository and version tag
 - [ ] Full list of environment variables — for each: name, description, provision type (`USER` / `COMPUTED` / `FIXED`), and default value for `FIXED` vars
 - [ ] Fund requirements per chain — native token amounts for agent wallet and safe wallet, plus any ERC20 token and amount
@@ -241,8 +252,8 @@ Collect all of this before touching any code. If raising the PR yourself, you wi
 These flags control how Pearl handles the agent. Confirm the correct value for each with the Pearl PM.
 
 - [ ] `requiresSetup` — does the user need to enter API keys or config during first-time setup? If yes, list each input field: label, placeholder, and validation rule.
-- [ ] `isGeoLocationRestricted` — should a geo-restriction warning appear in certain regions?
-- [ ] `hasExternalFunds` — does the agent hold funds in external DeFi protocols (not only in the agent/safe wallet)?
+- [ ] `isGeoLocationRestricted` — should a geo-restriction warning appear in certain regions? If yes, provide the list of regions/countries in the PR description
+- [ ] `hasExternalFunds` — does the agent hold funds in external protocols (not only in the agent/safe wallet)?
 - [ ] `isX402Enabled` — does the agent use the X402 payment protocol?
 - [ ] `doesChatUiRequireApiKey` — does the embedded chat UI require a user-provided API key?
 - [ ] `needsOpenProfileEachAgentRun` — must the user open an external URL each run (e.g. a pet profile page)? If yes, provide the alert title and message.
@@ -263,21 +274,6 @@ These flags control how Pearl handles the agent. Confirm the correct value for e
 - [ ] Agent icon — PNG, 64×64 px, filename: `agent-{agentType}-icon.png`
 - [ ] Onboarding step images — one PNG per step (any number of steps), filename: `setup-agent-{agentType}-{n}.png`
 - [ ] Onboarding copy — for each step: a short title and a one-sentence description
-
-**Performance Metrics**
-
-- [ ] List of metrics the agent will report — for each: name, `is_primary` (true/false), description, and an example value. This is used to verify the Performance tab during final verification.
-
-### 5.2 New Chain Setup (skip if chain is already supported)
-
-If the agent's chain is not yet in Pearl, complete these before the agent-specific code changes. Contact the Pearl team first (iason.rovis@valory.xyz) — chain infrastructure also requires changes outside the repository such as RPC endpoints and build scripts.
-
-- [ ] Add chain to `EvmChainIdMap` and `MiddlewareChainMap` in [`frontend/constants/chains.ts`](https://github.com/valory-xyz/olas-operate-app/blob/main/frontend/constants/chains.ts) and add the chain image to `frontend/public/chains/`
-- [ ] Add RPC env var and safe creation threshold in [`frontend/config/chains.ts`](https://github.com/valory-xyz/olas-operate-app/blob/main/frontend/config/chains.ts)
-- [ ] Add token config (symbol, address, decimals) to [`frontend/config/tokens.ts`](https://github.com/valory-xyz/olas-operate-app/blob/main/frontend/config/tokens.ts)
-- [ ] Add `ServiceRegistryL2` and `ServiceRegistryTokenUtility` addresses to [`frontend/config/olasContracts.ts`](https://github.com/valory-xyz/olas-operate-app/blob/main/frontend/config/olasContracts.ts)
-- [ ] Create `frontend/config/stakingPrograms/{chain}.ts` following the pattern in [`polygon.ts`](https://github.com/valory-xyz/olas-operate-app/blob/main/frontend/config/stakingPrograms/polygon.ts) and register it in [`index.ts`](https://github.com/valory-xyz/olas-operate-app/blob/main/frontend/config/stakingPrograms/index.ts)
-- [ ] Add chain-level activity checker map to [`frontend/config/activityCheckers.ts`](https://github.com/valory-xyz/olas-operate-app/blob/main/frontend/config/activityCheckers.ts)
 
 ### 5.3 Code Changes
 
@@ -309,8 +305,9 @@ Work through these steps in order:
 Include the following in your PR description so reviewers can verify the integration:
 
 - [ ] Agent name, icon, and one-sentence description
+- [ ] Brief description of what the agent does and how it operates (business logic and running flow)
 - [ ] Home chain and staking program(s) with contract addresses
-- [ ] List of `USER` provision type env vars (what the user will be asked to provide during setup)
+- [ ] Restricted regions/countries (if `isGeoLocationRestricted = true`)
 - [ ] Screenshots or a screen recording of the onboarding flow and agent running in Pearl
 
 ---
