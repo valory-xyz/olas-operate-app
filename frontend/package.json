@@ -60,6 +60,7 @@
     "lint:fix": "next lint --fix",
     "eslint:fix": "eslint . --ext .ts,.tsx --fix",
     "test": "jest",
+    "test:coverage": "jest --coverage",
     "start": "next start",
     "typecheck": "tsc --noEmit --skipLibCheck",
     "quality-check": "yarn run lint && tsc --noEmit --skipLibCheck --incremental false"
