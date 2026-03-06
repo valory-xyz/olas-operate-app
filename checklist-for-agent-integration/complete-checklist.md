@@ -56,28 +56,62 @@ If the agent has an embedded interface shown inside Pearl:
 - [ ] Agent exposes `GET http://127.0.0.1:8716/` — can return HTML with `Content-Type: text/html`
 - [ ] Agent handles `POST` requests to that endpoint if real-time communication is needed
 
-### 1.6 Environment Variables
+### 1.6 Funding Status Interface
+
+Pearl polls this endpoint when the service is in `DEPLOYED` state. If the agent reports a non-zero deficit, Pearl prompts the user to approve a top-up transfer. A 5-minute cooldown applies after each successful transfer.
+
+- [ ] Agent exposes `GET http://127.0.0.1:8716/funds-status`
+- [ ] Returns HTTP 200 on success; any other status code is treated as a failure
+- [ ] Only the agent's own EOA and Safe addresses are reported — requests for any other address are ignored by middleware
+- [ ] Deficit uses a "fixed threshold and topup" strategy: if `balance < threshold`, set `deficit = topup - balance`; as a rule of thumb `topup >= 2 × threshold` to avoid repeated small requests
+
+Response is keyed by chain (lowercase) → checksummed address (EOA or Safe) → asset address → `{balance, deficit, decimals}`. All values are strings in the smallest token unit. Native token uses the zero address; ERC20 tokens use their contract address. Return `{}` when no funds are needed.
+
+```json
+{
+  "base": {
+    "0xC9FE...AgentEOA": {
+      "0x0000000000000000000000000000000000000000": {
+        "balance": "80000000000000",
+        "deficit": "120000000000000",
+        "decimals": "18"
+      }
+    },
+    "0x5E25...Safe": {
+      "0x0b2C...USDC": {
+        "balance": "0",
+        "deficit": "10000000",
+        "decimals": "6"
+      }
+    }
+  }
+}
+```
+
+> **Recommended:** read fund requirements from an environment variable rather than hardcoding them, so values can be adjusted from Pearl without a code change.
+
+### 1.7 Environment Variables
 
 - [ ] Agent uses the standard RPC env vars provided by Pearl where needed: `ETHEREUM_LEDGER_RPC`, `GNOSIS_LEDGER_RPC`, `BASE_LEDGER_RPC`, `MODE_LEDGER_RPC`, `OPTIMISM_LEDGER_RPC`, `POLYGON_LEDGER_RPC`
 - [ ] Every env var the agent uses is declared in the service template JSON with a provision type (`USER` / `COMPUTED` / `FIXED`)
 - [ ] The same env vars are listed in `service.yaml` and accessed by the agent using the prefix `CONNECTION_CONFIGS_CONFIG_<variable_name>`
 
-### 1.7 Security
+### 1.8 Security
 
 - [ ] Source code meets [OWASP Developer Guide](https://owasp.org/www-project-developer-guide/) and [CWE Top 25](https://cwe.mitre.org/top25/) standards
 
-### 1.8 Withdrawal (only if agent invests or manages external funds)
+### 1.9 Withdrawal (only if agent invests or manages external funds)
 
 - [ ] Agent handles `WITHDRAWAL_MODE=true` env var to withdraw all invested funds back to the Agent Safe before stopping
 
-### 1.9 Open Autonomy — Additional Requirements (skip if using Olas SDK)
+### 1.10 Open Autonomy — Additional Requirements (skip if using Olas SDK)
 
 - [ ] Agent uses the Open Autonomy version compatible with the current Pearl repository
 - [ ] Source code contains only ASCII printable characters (range 32–126)
 - [ ] Repository passes standard linters: Isort, Black, Mypy, Bandit
 - [ ] All dev packages pushed via `autonomy push-all` — note the resulting IPFS hash
 
-### 1.10 Performance Reporting
+### 1.11 Performance Reporting
 
 Pearl displays agent metrics in the Performance tab. Agents must write an `agent_performance.json` file at the path defined by the `CONNECTION_CONFIGS_CONFIG_STORE_PATH` env var.
 
