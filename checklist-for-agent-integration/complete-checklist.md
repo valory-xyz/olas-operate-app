@@ -11,6 +11,33 @@ This is the complete guide for integrating an agent into the OLAS ecosystem and 
 
 ---
 
+## Overview
+
+The integration spans four layers. Each layer depends on the one before it — do not move to the next until the current one is complete.
+
+```
+┌─────────────────────────────┐
+│   1. Your Agent Repository  │  ← Phases 0–2  (build, package, publish)
+└──────────────┬──────────────┘
+               │ agent built, packaged, binaries published
+               ▼
+┌─────────────────────────────┐
+│     2. On-chain Setup        │  ← Phase 3  (Olas Registry + staking contracts)
+└──────────────┬──────────────┘
+               │ contracts deployed, hashes noted
+               ▼
+┌─────────────────────────────┐
+│  3. olas-operate-middleware  │  ← Phase 4  (staking contract registration)
+└──────────────┬──────────────┘
+               │ middleware PR merged, commit hash noted
+               ▼
+┌─────────────────────────────┐
+│    4. olas-operate-app       │  ← Phase 5  (Pearl frontend integration)
+└─────────────────────────────┘
+```
+
+---
+
 ## Phase 0 — Prerequisites
 
 Confirm these before writing any code:
@@ -46,6 +73,7 @@ The agent must implement a set of standard interfaces so Pearl can manage, monit
 
 - [ ] Agent exposes `GET http://127.0.0.1:8716/healthcheck`
 - [ ] Response JSON includes `is_healthy` (boolean)
+- [ ] Response JSON includes `rounds` — current and previous round names (e.g. `{"current": "CollectObservationRound", "previous": "RegistrationRound"}`); Pearl displays this to show the user what the agent is currently doing
 
 > **Recommended:** also include `seconds_since_last_transition` and other observability fields — these are not required but make debugging significantly easier.
 
@@ -285,8 +313,8 @@ Work through these steps in order:
 - [ ] **4. Staking program configs** — add entries to the correct chain file in [`frontend/config/stakingPrograms/`](https://github.com/valory-xyz/olas-operate-app/blob/main/frontend/config/stakingPrograms/) with: contract address, OLAS staking requirement, `agentsSupported`, `activityChecker`, `mechType` (if applicable), and `MulticallContract`
 - [ ] **5. Service template** — create `frontend/constants/serviceTemplates/service/{agentname}.ts` following [`trader.ts`](https://github.com/valory-xyz/olas-operate-app/blob/main/frontend/constants/serviceTemplates/service/trader.ts), then import it and add it to `SERVICE_TEMPLATES` in [`serviceTemplates.ts`](https://github.com/valory-xyz/olas-operate-app/blob/main/frontend/constants/serviceTemplates/serviceTemplates.ts). See the [service config guide](https://github.com/valory-xyz/quickstart/?tab=readme-ov-file#guide-for-the-service-configjson) for field definitions.
 - [ ] **6. Agent service class** — create `frontend/service/agents/{AgentName}.ts` extending `StakedAgentService`, following [`Polystrat.ts`](https://github.com/valory-xyz/olas-operate-app/blob/main/frontend/service/agents/Polystrat.ts) as a reference
-- [ ] **7. Agent config** — add entry to [`frontend/config/agents.ts`](https://github.com/valory-xyz/olas-operate-app/blob/main/frontend/config/agents.ts). See the `AgentConfig` type in [`frontend/types/Agent.ts`](https://github.com/valory-xyz/olas-operate-app/blob/main/frontend/types/Agent.ts) for all available fields.
-- [ ] **8. Feature flags** — add entry for the new agent in `FEATURES_CONFIG` in [`frontend/hooks/useFeatureFlag.ts`](https://github.com/valory-xyz/olas-operate-app/blob/main/frontend/hooks/useFeatureFlag.ts) using the decisions from 5.1
+- [ ] **7. Agent config** — add entry to [`frontend/config/agents.ts`](https://github.com/valory-xyz/olas-operate-app/blob/main/frontend/config/agents.ts). See the `AgentConfig` type in [`frontend/types/Agent.ts`](https://github.com/valory-xyz/olas-operate-app/blob/main/frontend/types/Agent.ts) for all available fields. **Set `isAgentEnabled: true`** — without this the agent will not appear in Pearl.
+- [ ] **8. Feature flags** — add entry for the new agent in `FEATURES_CONFIG` in [`frontend/hooks/useFeatureFlag.ts`](https://github.com/valory-xyz/olas-operate-app/blob/main/frontend/hooks/useFeatureFlag.ts) using the decisions from 5.2
 - [ ] **9. Onboarding steps** — add `{AGENTNAME}_ONBOARDING_STEPS` to [`frontend/components/AgentIntroduction/constants.ts`](https://github.com/valory-xyz/olas-operate-app/blob/main/frontend/components/AgentIntroduction/constants.ts) and map the agent type to its steps in `AgentIntroduction.tsx`. Each step has `title`, `desc`, and `imgSrc`. Any number of steps is supported.
 - [ ] **10. Setup wizard** (only if `requiresSetup = true`) — create form component + validation hook under `frontend/components/SetupPage/SetupYourAgent/` following `PredictAgentForm` as a reference, then register it in `SetupYourAgent.tsx`
 - [ ] **11. Update middleware dependency** — in [`pyproject.toml`](https://github.com/valory-xyz/olas-operate-app/blob/main/pyproject.toml), pin `olas-operate-middleware` to the commit hash noted at the end of Phase 4:
@@ -324,6 +352,8 @@ Before notifying Valory that the integration is ready, you must test your agent 
 
 ### 6.2 Set Up Your Test Environment
 
+Once Phase 5 PR is submitted, notify Valory (iason.rovis@valory.xyz) so they can prepare a test branch that includes your agent.
+
 - [ ] Wait for Valory to notify you that your Pearl test branch is ready
 - [ ] Fork that branch into your own repository
 - [ ] Build and run Pearl locally from your fork
@@ -343,6 +373,8 @@ Before notifying Valory that the integration is ready, you must test your agent 
 - [ ] Agent starts successfully
 - [ ] Agent stops cleanly and resumes correctly after a restart
 - [ ] No stuck states or unexpected errors during normal operation
+- [ ] Healthcheck `rounds` field updates correctly and shows the current agent round in Pearl
+- [ ] Performance tab displays live metrics from `agent_performance.json` with correct names and values
 - [ ] Agent UI is accessible and works as expected (if applicable)
 
 ### 6.5 Staking & Rewards (if applicable)
@@ -373,7 +405,7 @@ Valory will then:
 
 ## Final Verification
 
-Run through these once the agent is live and running in Pearl:
+**Run by: Pearl team after deployment.** Go through these once the agent is live in Pearl to confirm the full integration is correct end-to-end.
 
 - [ ] Agent appears in the agent selection list during setup
 - [ ] Agent icon and all onboarding images load without 404
@@ -382,9 +414,11 @@ Run through these once the agent is live and running in Pearl:
 - [ ] Setup wizard appears, accepts input, and validates correctly (if `requiresSetup = true`)
 - [ ] Funding step shows correct amounts — native token, ERC20 (if applicable), and OLAS
 - [ ] Agent starts successfully and the main dashboard loads
+- [ ] Healthcheck `rounds` field is visible and reflects the agent's current round
 - [ ] Staking section shows the correct staking program(s) and OLAS requirements
 - [ ] Feature flags behave as agreed with the PM
-- [ ] Performance tab displays metrics from `agent_performance.json`
+- [ ] Performance tab displays metrics from `agent_performance.json` with correct names and values
+- [ ] When agent wallet balance drops below threshold, Pearl prompts the user to top up (via `/funds-status`)
 - [ ] `GET http://127.0.0.1:8716/healthcheck` returns `is_healthy: true` when agent is running
 
 ---
