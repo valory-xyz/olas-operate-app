@@ -7,7 +7,7 @@ This is the complete guide for integrating an agent into the OLAS ecosystem and 
 
 > **New chain?** If your agent runs on a chain not yet supported in Pearl (currently: Gnosis, Base, Mode, Optimism, Polygon), contact the Pearl team before starting Phase 5. Chain-level infrastructure will be handled internally by the Pearl team.
 
-> **Stuck at any point?** Reach out to PM Iason Rovis — iason.rovis@valory.xyz, or open an issue at [github.com/valory-xyz/olas-operate-app/issues](https://github.com/valory-xyz/olas-operate-app/issues).
+> **Stuck at any point?** Reach out to support@valory.zendesk.com, or open an issue at [github.com/valory-xyz/olas-operate-app/issues](https://github.com/valory-xyz/olas-operate-app/issues).
 
 ---
 
@@ -22,17 +22,17 @@ The integration spans four layers. Each layer depends on the one before it — d
                │ agent built, packaged, binaries published
                ▼
 ┌─────────────────────────────┐
-│     2. On-chain Setup        │  ← Phase 3  (Olas Registry + staking contracts)
+│     2. On-chain Setup       │  ← Phase 3  (Olas Registry + staking contracts)
 └──────────────┬──────────────┘
                │ contracts deployed, hashes noted
                ▼
 ┌─────────────────────────────┐
-│  3. olas-operate-middleware  │  ← Phase 4  (staking contract registration)
+│  3. olas-operate-middleware │  ← Phase 4  (middleware configuration)
 └──────────────┬──────────────┘
                │ middleware PR merged, commit hash noted
                ▼
 ┌─────────────────────────────┐
-│    4. olas-operate-app       │  ← Phase 5  (Pearl frontend integration)
+│    4. olas-operate-app      │  ← Phase 5  (Pearl frontend integration)
 └─────────────────────────────┘
 ```
 
@@ -77,11 +77,9 @@ The agent must implement a set of standard interfaces so Pearl can manage, monit
 
 > **Recommended:** also include `seconds_since_last_transition` and other observability fields — these are not required but make debugging significantly easier.
 
-### 1.5 Agent UI (optional)
+### 1.5 Agent UI
 
-If the agent has an embedded interface shown inside Pearl:
-
-- [ ] Agent exposes `GET http://127.0.0.1:8716/` — can return HTML with `Content-Type: text/html`
+- [ ] Agent exposes `GET http://127.0.0.1:8716/` — returns HTML with `Content-Type: text/html`, rendered as the embedded interface inside Pearl
 - [ ] Agent handles `POST` requests to that endpoint if real-time communication is needed
 
 ### 1.6 Funding Status Interface
@@ -240,7 +238,7 @@ Open a PR on [olas-operate-app](https://github.com/valory-xyz/olas-operate-app) 
 
 ### 5.1 New Chain Setup (skip if chain is already supported)
 
-If the agent's chain is not yet in Pearl, contact the Pearl team first (iason.rovis@valory.xyz) — chain infrastructure also requires changes outside the repository such as RPC endpoints and build scripts. Complete this before gathering information or making any agent-specific code changes.
+If the agent's chain is not yet in Pearl, contact the Pearl team first (support@valory.zendesk.com) — chain infrastructure also requires changes outside the repository such as RPC endpoints and build scripts. Complete this before gathering information or making any agent-specific code changes.
 
 - [ ] Add chain to `EvmChainIdMap` and `MiddlewareChainMap` in [`frontend/constants/chains.ts`](https://github.com/valory-xyz/olas-operate-app/blob/main/frontend/constants/chains.ts) and add the chain image to `frontend/public/chains/`
 - [ ] Add RPC env var and safe creation threshold in [`frontend/config/chains.ts`](https://github.com/valory-xyz/olas-operate-app/blob/main/frontend/config/chains.ts)
@@ -352,12 +350,14 @@ Before notifying Valory that the integration is ready, you must test your agent 
 
 ### 6.2 Set Up Your Test Environment
 
-Once Phase 5 PR is submitted, notify Valory (iason.rovis@valory.xyz) so they can prepare a test branch that includes your agent.
+Once Phase 5 PR is submitted, notify Valory (support@valory.zendesk.com) so they can prepare a test branch that includes your agent.
 
 - [ ] Wait for Valory to notify you that your Pearl test branch is ready
 - [ ] Fork that branch into your own repository
 - [ ] Build and run Pearl locally from your fork
 - [ ] Confirm your agent appears in the agent selection list
+
+The scenarios below (6.3–6.6) are the **minimum required test cases**. All of them must pass before handing off to Valory. Your agent may have additional flows that require testing beyond what is listed — document any extra scenarios and their results in the handoff summary.
 
 ### 6.3 Wallet & Funding
 
@@ -437,4 +437,4 @@ Valory will then:
 
 ---
 
-For questions, contact PM Iason Rovis — iason.rovis@valory.xyz, or open an issue at [github.com/valory-xyz/olas-operate-app/issues](https://github.com/valory-xyz/olas-operate-app/issues).
+For questions, contact support@valory.zendesk.com, or open an issue at [github.com/valory-xyz/olas-operate-app/issues](https://github.com/valory-xyz/olas-operate-app/issues).
