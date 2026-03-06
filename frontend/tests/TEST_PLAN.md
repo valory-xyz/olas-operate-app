@@ -25,6 +25,10 @@ Pearl frontend has **577 files** tracked by Jest coverage, nearly all at 0% (onl
 | `abis/` | 13 | No — pure ABI exports |
 | `pages/` | 5 | Minimal — Next.js wrappers |
 
+## Backend API reference
+
+The middleware API docs (endpoint URLs, request/response shapes, error formats) are stored in the Claude memory directory at `memory/middleware-api.md`. Consult when testing service files in Phase 2+. Upstream source: https://github.com/valory-xyz/olas-operate-middleware/blob/main/docs/api.md
+
 ## Dependency Order
 
 ```

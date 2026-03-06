@@ -148,6 +148,17 @@ describe('useHookUnderTest', () => {
 - Use TypeScript — no `any` unless absolutely necessary for mocking
 - Import from source using relative paths (e.g., `../../hooks/useDeployability`) since tests live under `tests/`
 
+## Backend API reference
+
+The middleware API documentation is stored at `memory/middleware-api.md` (in the Claude memory directory). When testing service files (`service/Account.ts`, `service/Wallet.ts`, `service/Services.ts`, `service/Balance.ts`, `service/Bridge.ts`, `service/Fund.ts`, etc.), consult this reference for:
+- Correct endpoint URLs and HTTP methods
+- Request body shapes for mocking
+- Response shapes for assertions
+- Error response formats and status codes
+- Deployment status codes (1=not deployed, 3=running, 5=stopped)
+
+The full upstream source is at: https://github.com/valory-xyz/olas-operate-middleware/blob/main/docs/api.md
+
 ## After writing tests
 
 1. Run the specific test file: `cd frontend && npx jest tests/path/to/file.test.ts`
