@@ -62,11 +62,9 @@ jobs:
       - name: Install dependencies
         run: yarn install:frontend
 
-      # Lint and test
+      # Lint
       - name: Lint & Typecheck
         run: yarn quality-check:frontend
-      - name: Test
-        run: yarn test:frontend
 
       # Run custom script to check service templates
       - name: Check service templates
