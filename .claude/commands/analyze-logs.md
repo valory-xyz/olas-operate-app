@@ -69,24 +69,60 @@ Look for:
 - Component stack traces (note the failing component if identifiable)
 - Multiple rapid restarts of Next.js server
 
-### 3c. `cli*.log` — Python Backend
+### 3c. `cli*.log` — Python Backend (Backend Team)
 
-Look for:
-- `[ERROR]` or `[WARNING]` entries from named components (e.g. `[FUNDING MANAGER]`, `[SERVICE MANAGER]`)
-- HTTP 4xx / 5xx responses
-- Exception tracebacks (Python stack traces)
-- Service deployment failures
-- Funding/balance computation errors
-- Database or file system errors
+This is the primary source for backend API debugging. Look for:
 
-### 3d. `agent_runner.log` — Agent Bootstrap
+**API call failures** (useful for backend team):
+- HTTP 4xx / 5xx responses — note the endpoint, method, and status code
+- Failed API requests with error bodies — quote the full response where available
+- Repeated failing endpoints — indicates a persistent backend issue vs transient
 
-Look for:
-- `[WARNING]` or `[ERROR]` entries
-- Missing config/param warnings (`kwargs have not been set`)
-- Failed initialization (database, network, connection issues)
-- Balance check results (insufficient balance messages)
-- Tendermint/ABCI connection failures
+**Service lifecycle errors**:
+- `[ERROR]` or `[WARNING]` from named components: `[FUNDING MANAGER]`, `[SERVICE MANAGER]`, `[HEALTH_CHECKER]`
+- Service deployment failures (start/stop errors, Tendermint exit failures)
+- `[HEALTH_CHECKER] not healthy for N time in a row` — note how many consecutive failures and whether the service eventually recovered
+
+**Agent setup errors**:
+- IPFS fetch failures during agent package download
+- Certificate issuance failures
+- `aea command` errors (init, fetch, add-key, issue-certificates)
+
+**Python exceptions**:
+- Tracebacks (`Traceback (most recent call last)`) — quote the exception type and message
+- `Exception` or `Error` in log lines outside HTTP responses
+
+**Funding / balance**:
+- `[FUNDING MANAGER] Skipping non-positive amount` — normal, safe to ignore
+- Actual funding transfer failures or chain RPC errors during funding
+
+**Note**: Routine lines to skip — `200 OK` HTTP responses, `[INFO] Computing protocol asset requirements`, `Successfully added` package lines during agent setup.
+
+### 3d. `agent_runner.log` — Agent Runtime (Agents Team)
+
+This log covers the AEA (Autonomous Economic Agent) lifecycle after bootstrap. The top of the file contains a large IPFS package table — skip this noise and focus on timestamped entries after the table. Look for:
+
+**Bootstrap warnings** (often benign but worth noting):
+- `kwargs ... have not been set` — optional config params not provided (e.g. Tenderly, CoinGecko API keys); flag only if they seem required for the agent's core function
+- `Class BaseHandler ... not declared in the configuration file` — usually benign, skip
+
+**Agent initialization**:
+- `KV database initialized` / `KV database connection established` — confirms DB is up
+- Balance checks: `USDC balance sufficient` / `ETH balance` — note values and thresholds; flag if insufficient
+- `ABCI` or `Tendermint` connection status at startup
+
+**Round and behaviour transitions** (useful for tracking agent progress):
+- `Entered in the '{round_name}' round for period {N}` — normal execution flow
+- `'{round_name}' round is done with event: Event.{EVENT}` — note unexpected events (not `DONE`)
+- Stalled rounds: if the same round appears repeatedly without advancing, flag it
+
+**Skill / behaviour errors**:
+- `[ERROR]` entries — quote them; common example: `Incorrect number of contents. Expected N. Found M`
+- Failed HTTP calls made by the agent (e.g. to Safe API, RPC endpoints, external APIs)
+- Transaction failures or simulation errors
+
+**Operational data** (useful context, not errors):
+- Position amounts, token balances, strategy fetches — helps understand what the agent was doing when something failed
 
 ### 3e. `tm.log` — Tendermint
 
