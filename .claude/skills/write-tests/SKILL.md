@@ -2,7 +2,7 @@
 name: write-tests
 description: Write frontend unit tests for business logic — hooks, context providers, services, utilities, and components. Use when the user asks to write tests, add test coverage, or test a specific hook/provider/service/component. Triggers on tasks involving testing, test coverage, unit tests, or test files.
 argument-hint: [file-or-module-to-test]
-allowed-tools: Read, Grep, Glob, Write, Edit, Bash(cd /Users/raver/valory/olas-operate-app/frontend && npx jest *), Agent
+allowed-tools: Read, Grep, Glob, Write, Edit, Bash(cd frontend && npx jest *), Agent
 ---
 
 # Frontend Test Writing Skill

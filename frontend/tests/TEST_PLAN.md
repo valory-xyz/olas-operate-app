@@ -141,7 +141,11 @@ Layer 10: Remaining Component UI + Pages (rendering)
 - `components/AccountRecovery/hooks/useWeb3AuthSwapOwner.ts` — web3auth swap owner hook
 - `components/AccountRecovery/components/ApproveWithBackupWallet/` — approval logic
 
-**Estimated tests:** ~60-80
+**Wallet components:**
+- `components/AgentWallet/` — wallet display, fund agent, withdraw
+- `components/PearlWallet/` — wallet withdraw flow
+
+**Estimated tests:** ~70-90
 
 ---
 
@@ -219,11 +223,12 @@ StakedAgentService (abstract base)
 - `service/agents/AgentsFunBase.ts`
 
 **Staking components:**
+- `components/AgentStaking/` — staking display logic
 - `components/ConfirmSwitch/hooks/useShouldAllowStakingContractSwitch.ts` — switch eligibility hook
 - `components/SelectStakingPage/hooks/useCanMigrate.ts` — migration eligibility hook
 - `components/SelectStakingPage/hooks/useStakingDetails.ts` — staking details hook
 
-**Estimated tests:** ~100-120
+**Estimated tests:** ~110-130
 
 ---
 
@@ -418,13 +423,9 @@ AutoRunProvider.tsx
 **Goal:** Cover remaining component rendering and page-level behavior not already covered by feature phases. Focus on business logic in render paths, not DOM structure.
 
 **Components with meaningful render logic:**
-- `components/AgentStaking/` — staking display logic
-- `components/AgentWallet/` — wallet display, fund agent, withdraw
-- `components/PearlWallet/` — wallet withdraw flow
 - `components/SetupPage/` — setup wizard steps (excluding FundYourAgent hooks in Phase 5)
 - `components/SettingsPage/` — settings forms
 - `components/MainPageV1/` — main dashboard (excluding hooks in Phase 1)
-- `components/SelectStakingPage/` — staking program selection (excluding hooks in Phase 4)
 - `components/UpdateAgentPage/` — agent update flow (excluding hooks/context in Phase 7)
 - `components/SupportModal/` — support modal
 - `components/Web3AuthIframe/` — web3auth integration
