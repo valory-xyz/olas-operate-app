@@ -128,7 +128,12 @@ Response is keyed by chain (lowercase) → checksummed address (EOA or Safe) →
 
 ### 1.9 Withdrawal (only if agent invests or manages external funds)
 
-- [ ] Agent handles `WITHDRAWAL_MODE=true` env var to withdraw all invested funds back to the Agent Safe before stopping
+If the agent holds funds in external protocols (e.g. DeFi positions), the user must be able to retrieve those funds before doing a Pearl-level wallet withdrawal. The expected flow is:
+
+1. User triggers withdrawal from the agent's own UI (exposed at `http://127.0.0.1:8716/`) — enters the destination address and the agent unwinds its positions back to the Agent Safe
+2. Once the agent's external funds are settled, the user returns to Pearl and completes the Pearl-level withdrawal
+
+- [ ] Agent exposes a withdrawal action in its embedded UI that allows the user to unwind external positions and return funds to the Agent Safe
 
 ### 1.10 Open Autonomy — Additional Requirements (skip if using Olas SDK)
 
@@ -311,7 +316,7 @@ Work through these steps in order:
 - [ ] **4. Staking program configs** — add entries to the correct chain file in [`frontend/config/stakingPrograms/`](https://github.com/valory-xyz/olas-operate-app/blob/main/frontend/config/stakingPrograms/) with: contract address, OLAS staking requirement, `agentsSupported`, `activityChecker`, `mechType` (if applicable), and `MulticallContract`
 - [ ] **5. Service template** — create `frontend/constants/serviceTemplates/service/{agentname}.ts` following [`trader.ts`](https://github.com/valory-xyz/olas-operate-app/blob/main/frontend/constants/serviceTemplates/service/trader.ts), then import it and add it to `SERVICE_TEMPLATES` in [`serviceTemplates.ts`](https://github.com/valory-xyz/olas-operate-app/blob/main/frontend/constants/serviceTemplates/serviceTemplates.ts). See the [service config guide](https://github.com/valory-xyz/quickstart/?tab=readme-ov-file#guide-for-the-service-configjson) for field definitions.
 - [ ] **6. Agent service class** — create `frontend/service/agents/{AgentName}.ts` extending `StakedAgentService`, following [`Polystrat.ts`](https://github.com/valory-xyz/olas-operate-app/blob/main/frontend/service/agents/Polystrat.ts) as a reference
-- [ ] **7. Agent config** — add entry to [`frontend/config/agents.ts`](https://github.com/valory-xyz/olas-operate-app/blob/main/frontend/config/agents.ts). See the `AgentConfig` type in [`frontend/types/Agent.ts`](https://github.com/valory-xyz/olas-operate-app/blob/main/frontend/types/Agent.ts) for all available fields. **Set `isAgentEnabled: true`** — without this the agent will not appear in Pearl.
+- [ ] **7. Agent config** — add entry to [`frontend/config/agents.ts`](https://github.com/valory-xyz/olas-operate-app/blob/main/frontend/config/agents.ts). See the `AgentConfig` type in [`frontend/types/Agent.ts`](https://github.com/valory-xyz/olas-operate-app/blob/main/frontend/types/Agent.ts) for all available fields. **Set `isAgentEnabled: true`** — without this the agent will not appear in Pearl. If the agent manages external funds (see section 1.9), also set `hasExternalFunds: true`.
 - [ ] **8. Feature flags** — add entry for the new agent in `FEATURES_CONFIG` in [`frontend/hooks/useFeatureFlag.ts`](https://github.com/valory-xyz/olas-operate-app/blob/main/frontend/hooks/useFeatureFlag.ts) using the decisions from 5.2
 - [ ] **9. Onboarding steps** — add `{AGENTNAME}_ONBOARDING_STEPS` to [`frontend/components/AgentIntroduction/constants.ts`](https://github.com/valory-xyz/olas-operate-app/blob/main/frontend/components/AgentIntroduction/constants.ts) and map the agent type to its steps in `AgentIntroduction.tsx`. Each step has `title`, `desc`, and `imgSrc`. Any number of steps is supported.
 - [ ] **10. Setup wizard** (only if `requiresSetup = true`) — create form component + validation hook under `frontend/components/SetupPage/SetupYourAgent/` following `PredictAgentForm` as a reference, then register it in `SetupYourAgent.tsx`
