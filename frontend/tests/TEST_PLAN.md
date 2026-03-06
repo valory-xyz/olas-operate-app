@@ -124,8 +124,8 @@ Layer 10: Remaining Component UI + Pages (rendering)
 - `hooks/useGlobalErrorHandlers.ts` — global error listeners
 - `hooks/useLogs.ts` — log aggregation
 
-**MainPageV1 hooks (app-level concerns):**
-- `components/MainPageV1/hooks/` — notifications, epoch, scroll, tray icon logic
+**MainPage hooks (app-level concerns):**
+- `components/MainPage/hooks/` — notifications, epoch, scroll, tray icon logic
 
 **Estimated tests:** ~40-55
 
@@ -441,7 +441,7 @@ AutoRunProvider.tsx
 **Components with meaningful render logic:**
 - `components/SetupPage/` — setup wizard steps (excluding FundYourAgent hooks in Phase 5)
 - `components/SettingsPage/` — settings forms
-- `components/MainPageV1/` — main dashboard (excluding hooks in Phase 1)
+- `components/MainPage/` — main dashboard (excluding hooks in Phase 1)
 - `components/UpdateAgentPage/` — agent update flow (excluding hooks/context in Phase 7)
 - `components/SupportModal/` — support modal
 - `components/Web3AuthIframe/` — web3auth integration
