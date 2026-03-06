@@ -17,15 +17,15 @@ describe('generateAgentName', () => {
   });
 
   it('returns consistent names for same inputs', () => {
-    const a = generateAgentName(EvmChainIdMap.Base, 194);
-    const b = generateAgentName(EvmChainIdMap.Base, 194);
-    expect(a).toBe(b);
+    const firstCall = generateAgentName(EvmChainIdMap.Base, 194);
+    const secondCall = generateAgentName(EvmChainIdMap.Base, 194);
+    expect(firstCall).toBe(secondCall);
   });
 
   it('returns different names for different token IDs', () => {
-    const a = generateAgentName(EvmChainIdMap.Gnosis, 1);
-    const b = generateAgentName(EvmChainIdMap.Gnosis, 2);
-    expect(a).not.toBe(b);
+    const nameForToken1 = generateAgentName(EvmChainIdMap.Gnosis, 1);
+    const nameForToken2 = generateAgentName(EvmChainIdMap.Gnosis, 2);
+    expect(nameForToken1).not.toBe(nameForToken2);
   });
 
   it('returns different names for different chain IDs', () => {

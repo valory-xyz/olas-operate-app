@@ -24,11 +24,11 @@ describe('getExponentialInterval', () => {
   });
 
   it('grows exponentially', () => {
-    const v0 = getExponentialInterval(0, customIntervals);
-    const v1 = getExponentialInterval(1, customIntervals);
-    const v2 = getExponentialInterval(2, customIntervals);
-    expect(v1).toBeGreaterThan(v0);
-    expect(v2).toBeGreaterThan(v1);
+    const intervalAtStep0 = getExponentialInterval(0, customIntervals);
+    const intervalAtStep1 = getExponentialInterval(1, customIntervals);
+    const intervalAtStep2 = getExponentialInterval(2, customIntervals);
+    expect(intervalAtStep1).toBeGreaterThan(intervalAtStep0);
+    expect(intervalAtStep2).toBeGreaterThan(intervalAtStep1);
   });
 
   it('clamps at maxMs for counts beyond steps', () => {
@@ -37,10 +37,10 @@ describe('getExponentialInterval', () => {
 
   it('uses default intervals when none provided', () => {
     // Default: minMs=30000, maxMs=300000, steps=5
-    const v0 = getExponentialInterval(0);
-    expect(v0).toBe(30000);
+    const defaultMinInterval = getExponentialInterval(0);
+    expect(defaultMinInterval).toBe(30000);
 
-    const vMax = getExponentialInterval(4);
-    expect(vMax).toBe(300000);
+    const defaultMaxInterval = getExponentialInterval(4);
+    expect(defaultMaxInterval).toBe(300000);
   });
 });

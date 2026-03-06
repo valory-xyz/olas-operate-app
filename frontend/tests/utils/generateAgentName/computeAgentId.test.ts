@@ -9,21 +9,21 @@ describe('computeAgentId', () => {
   });
 
   it('returns consistent results for same inputs', () => {
-    const a = computeAgentId(EvmChainIdMap.Base, 42);
-    const b = computeAgentId(EvmChainIdMap.Base, 42);
-    expect(a).toBe(b);
+    const firstCall = computeAgentId(EvmChainIdMap.Base, 42);
+    const secondCall = computeAgentId(EvmChainIdMap.Base, 42);
+    expect(firstCall).toBe(secondCall);
   });
 
   it('returns different results for different token IDs', () => {
-    const a = computeAgentId(EvmChainIdMap.Gnosis, 1);
-    const b = computeAgentId(EvmChainIdMap.Gnosis, 2);
-    expect(a).not.toBe(b);
+    const idForToken1 = computeAgentId(EvmChainIdMap.Gnosis, 1);
+    const idForToken2 = computeAgentId(EvmChainIdMap.Gnosis, 2);
+    expect(idForToken1).not.toBe(idForToken2);
   });
 
   it('returns different results for different chain IDs', () => {
-    const a = computeAgentId(EvmChainIdMap.Gnosis, 1);
-    const b = computeAgentId(EvmChainIdMap.Base, 1);
-    expect(a).not.toBe(b);
+    const idOnGnosis = computeAgentId(EvmChainIdMap.Gnosis, 1);
+    const idOnBase = computeAgentId(EvmChainIdMap.Base, 1);
+    expect(idOnGnosis).not.toBe(idOnBase);
   });
 
   it('works for all supported chains', () => {
