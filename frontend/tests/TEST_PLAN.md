@@ -89,41 +89,52 @@ Layer 10: Remaining Component UI + Pages (rendering)
 
 ---
 
-## Phase 1 — App Infrastructure (~22 files) `[EASY-MEDIUM]`
+## Phase 1 — App Infrastructure (~28 files) `[EASY-MEDIUM]` ✅ COMPLETE
 
 **Goal:** Cover infrastructure hooks/providers and main page hooks that everything else depends on.
 
-**Context accessors (generic infra only):**
-- `hooks/useElectronApi.ts`
-- `hooks/useStore.ts`
-- `hooks/useOnlineStatus.ts`
-- `hooks/usePageState.ts`
-- `hooks/useSettings.ts`
-- `hooks/useServices.ts`
-- `hooks/useWallet.ts`
-- `hooks/useRewardContext.ts`
-- `hooks/useSharedContext.ts`
+**Result:** 28 test files, 106 tests, all passing, 0 lint errors.
 
-**Providers:**
-- `context/ElectronApiProvider.tsx` — Electron IPC bridge
-- `context/StoreProvider.tsx` — store sync + IPC listener
-- `context/OnlineStatusProvider.tsx` — online/offline events
-- `context/PageStateProvider.tsx` — page navigation
-- `context/MessageProvider.tsx` — toast messages
-- `context/SettingsProvider.tsx` — settings screen state
-- `context/SupportModalProvider.tsx` — support modal state
+**Context accessors (12 files):**
+- ✅ `hooks/useElectronApi.ts` — 100%
+- ✅ `hooks/useStore.ts` — 100%
+- ✅ `hooks/useOnlineStatus.ts` — 100%
+- ✅ `hooks/usePageState.ts` — 100%
+- ✅ `hooks/useSettings.ts` — 100%
+- ✅ `hooks/useServices.ts` — 100%
+- ✅ `hooks/useWallet.ts` — 100%
+- ✅ `hooks/useRewardContext.ts` — 100%
+- ✅ `hooks/useSharedContext.ts` — 100% (error guard tested)
+- ✅ `hooks/useBalanceContext.ts` — 100%
+- ✅ `hooks/useBalanceAndRefillRequirementsContext.ts` — 100%
+- ✅ `hooks/useOnRampContext.ts` — 100% (error guard tested)
 
-**Hooks with logic:**
-- `hooks/usePause.ts` — pause/resume state
-- `hooks/useDynamicRefetchInterval.ts` — adaptive polling intervals
-- `hooks/useFeatureFlag.ts` — feature flag fetching + validation
-- `hooks/useGlobalErrorHandlers.ts` — global error listeners
-- `hooks/useLogs.ts` — log aggregation
+**Providers (7 files):**
+- ✅ `context/ElectronApiProvider.tsx` — 100% stmts (error path + happy path)
+- ✅ `context/StoreProvider.tsx` — 95% (IPC listener registration)
+- ✅ `context/OnlineStatusProvider.tsx` — 92% (online/offline events, `useOnlineStatus` guard is dead code)
+- ✅ `context/PageStateProvider.tsx` — 97% (useTimeout mock, page state transitions)
+- ✅ `context/MessageProvider.tsx` — 61% (error guard + provider rendering)
+- ✅ `context/SettingsProvider.tsx` — 100%
+- ✅ `context/SupportModalProvider.tsx` — 100% (toggle behavior)
 
-**MainPageV1 hooks (app-level concerns):**
-- `components/MainPageV1/hooks/` — notifications, epoch, scroll, tray icon logic
+**Hooks with logic (5 files):**
+- ✅ `hooks/usePause.ts` — 100%
+- ✅ `hooks/useDynamicRefetchInterval.ts` — 99% (all window states: focused/visible/hidden, function/number/false/undefined)
+- ✅ `hooks/useFeatureFlag.ts` — 99% (all agent types, single + array flags, error guard)
+- ✅ `hooks/useGlobalErrorHandlers.ts` — 100% (error events, rejection events, Error wrapping)
+- ✅ `hooks/useLogs.ts` — all branches covered (services, addresses, balances, backup EOA filtering)
 
-**Estimated tests:** ~40-55
+**MainPageV1 hooks (4 files):**
+- ✅ `components/MainPageV1/hooks/useScrollPage.ts` — ref creation
+- ✅ `components/MainPageV1/hooks/useNotifyOnAgentRewards.ts` — all 5 branches (eligibility transitions, deployment status guard)
+- ✅ `components/MainPageV1/hooks/useSetupTrayIcon.ts` — all 5 tray icon states + priority
+- ✅ `components/MainPageV1/hooks/useNotifyOnNewEpoch.ts` — all 12 guard branches
+
+**Patterns established:**
+- `PromiseRejectionEvent` polyfill for jsdom (in `useGlobalErrorHandlers.test.ts`)
+- `document.hasFocus()` spy for window visibility state testing
+- `usehooks-ts` `useTimeout` mock for timer-based providers
 
 ---
 
