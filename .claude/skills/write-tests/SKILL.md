@@ -146,6 +146,7 @@ describe('useHookUnderTest', () => {
 - Use `beforeEach` for shared setup, avoid deep nesting
 - Prefer explicit mock values over shared fixtures — each test should be readable standalone
 - Use TypeScript — no `any` unless absolutely necessary for mocking
+- Use descriptive variable names — no `v0`, `v1`, `res`, `val`, etc. Names should convey what the value represents (e.g., `mockBalance`, `stakingProgramId`, `expectedReward`)
 - Import from source using relative paths (e.g., `../../hooks/useDeployability`) since tests live under `tests/`
 
 ## Backend API reference
