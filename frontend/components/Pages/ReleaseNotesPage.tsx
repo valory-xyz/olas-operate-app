@@ -1,59 +1,100 @@
 import { Card, Flex, Tag, Tooltip, Typography } from 'antd';
 import Image from 'next/image';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { FiExternalLink } from 'react-icons/fi';
+import styled, { css } from 'styled-components';
 import { useIsMounted } from 'usehooks-ts';
 
-import { AGENT_CONFIG } from '@/config/agents';
+import { ACTIVE_AGENTS } from '@/config/agents';
 import { COLOR, PAGES } from '@/constants';
+import { AgentType } from '@/constants/agent';
 import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
 import { GITHUB_API_RELEASES, IPFS_GATEWAY_URL } from '@/constants/urls';
-import { useElectronApi, usePageState } from '@/hooks';
+import { useElectronApi, usePageState, useServices } from '@/hooks';
 
-import { BackButton, CardSection, cardStyles } from '../ui';
+import { BackButton, cardStyles } from '../ui';
 
 const { Title, Text } = Typography;
+
+const ReleaseNotesGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+`;
+
+const cellBase = css<{ $hasBorder?: boolean; $justifyContent?: string }>`
+  min-height: 60px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: ${({ $justifyContent }) => $justifyContent || 'flex-start'};
+  ${({ $hasBorder }) =>
+    $hasBorder ? `border-bottom: 1px solid ${COLOR.BORDER_GRAY};` : ''}
+`;
+
+const NameCell = styled.div<{ $hasBorder?: boolean }>`
+  ${cellBase}
+  gap: 12px;
+`;
+
+const ActionCell = styled.div<{
+  $hasBorder?: boolean;
+  $justifyContent?: string;
+}>`
+  ${cellBase}
+`;
+
+const AgentIconWrapper = styled.div`
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  overflow: hidden;
+  flex-shrink: 0;
+`;
+
+const VersionTag = styled(Tag)`
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+`;
+
+const Row = styled.div`
+  display: contents;
+`;
+
+const AgentHashAnchor = styled.a`
+  color: ${COLOR.PURPLE};
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+`;
 
 const VersionBadge = ({ href, version }: { href: string; version: string }) => (
   <Tooltip title="View release notes">
     <a href={href} target="_blank" rel="noopener noreferrer">
-      <Tag
-        color="purple"
-        style={{
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 4,
-        }}
-      >
+      <VersionTag color="purple" bordered={false}>
         {version}
         <FiExternalLink size={12} />
-      </Tag>
+      </VersionTag>
     </a>
   </Tooltip>
 );
 
 const AgentHashLink = ({ href }: { href: string }) => (
-  <a
-    href={href}
-    target="_blank"
-    rel="noopener noreferrer"
-    style={{
-      color: COLOR.PURPLE,
-      display: 'flex',
-      alignItems: 'center',
-      gap: 4,
-    }}
-  >
+  <AgentHashAnchor href={href} target="_blank" rel="noopener noreferrer">
     <Text style={{ color: COLOR.PURPLE }}>Agent hash</Text>
     <FiExternalLink size={14} color={COLOR.PURPLE} />
-  </a>
+  </AgentHashAnchor>
 );
 
 export const ReleaseNotesPage = () => {
   const [latestTag, setLatestTag] = useState<string | null>(null);
   const { getAppVersion } = useElectronApi();
   const { goto } = usePageState();
+  const { services } = useServices();
   const isMounted = useIsMounted();
 
   useEffect(() => {
@@ -61,9 +102,7 @@ export const ReleaseNotesPage = () => {
       if (typeof getAppVersion !== 'function') return;
       try {
         const version = await getAppVersion();
-        if (version && isMounted()) {
-          setLatestTag(version);
-        }
+        if (version && isMounted()) setLatestTag(version);
       } catch (error) {
         console.error('Failed to get app version:', error);
       }
@@ -71,14 +110,29 @@ export const ReleaseNotesPage = () => {
     getTag();
   }, [getAppVersion, isMounted]);
 
-  // Deduplicate by agentType - one row per agent type
-  const agentRows = SERVICE_TEMPLATES.filter((template, index, arr) => {
-    const config = AGENT_CONFIG[template.agentType];
-    return (
-      config?.isAgentEnabled &&
-      arr.findIndex((t) => t.agentType === template.agentType) === index
-    );
-  });
+  const configuredAgents = useMemo(() => {
+    if (!services) return null;
+    const types = new Set<AgentType>();
+    services.forEach((service) => {
+      const agent = ACTIVE_AGENTS.find(
+        ([, agentConfig]) =>
+          agentConfig.servicePublicId === service.service_public_id &&
+          agentConfig.middlewareHomeChainId === service.home_chain,
+      );
+      if (agent) types.add(agent[0] as AgentType);
+    });
+    return types;
+  }, [services]);
+
+  const agentRows = useMemo(() => {
+    if (!configuredAgents) return [];
+    const seen = new Set<AgentType>();
+    return SERVICE_TEMPLATES.filter((template) => {
+      if (seen.has(template.agentType)) return false;
+      seen.add(template.agentType);
+      return configuredAgents.has(template.agentType);
+    });
+  }, [configuredAgents]);
 
   return (
     <Flex style={cardStyles} vertical gap={16}>
@@ -88,64 +142,69 @@ export const ReleaseNotesPage = () => {
         Release Notes
       </Title>
 
-      <Card styles={{ body: { paddingTop: 8, paddingBottom: 8 } }}>
-        {/* Pearl row */}
-        {latestTag && (
-          <CardSection
-            $padding="12px 16px"
-            $borderBottom={agentRows.length > 0}
-            align="center"
-            justify="space-between"
-          >
-            <Flex align="center" gap={12}>
-              <Image
-                src="/pearl-with-gradient.png"
-                alt="Pearl"
-                width={32}
-                height={32}
-                style={{ borderRadius: 4 }}
-              />
-              <Text strong>Pearl</Text>
-            </Flex>
-            <VersionBadge
-              href={`${GITHUB_API_RELEASES}/tag/v${latestTag}`}
-              version={`v${latestTag}`}
-            />
-          </CardSection>
-        )}
+      <Card styles={{ body: { padding: 0 } }}>
+        <ReleaseNotesGrid>
+          {/* Pearl row */}
+          {latestTag && (
+            <Row key="pearl">
+              <NameCell $hasBorder={agentRows.length > 0}>
+                <AgentIconWrapper>
+                  <Image
+                    src="/pearl-with-gradient.png"
+                    alt="Pearl"
+                    width={32}
+                    height={32}
+                  />
+                </AgentIconWrapper>
+                <Text strong>Pearl</Text>
+              </NameCell>
 
-        {/* Agent rows */}
-        {agentRows.map((template, index) => {
-          const config = AGENT_CONFIG[template.agentType];
-          const { owner, name, version } = template.agent_release.repository;
-          const releaseUrl = `https://github.com/${owner}/${name}/releases/tag/${version}`;
-          const ipfsUrl = `${IPFS_GATEWAY_URL}${template.hash}`;
+              <ActionCell $hasBorder={agentRows.length > 0} />
 
-          return (
-            <CardSection
-              key={template.agentType}
-              $padding="12px 16px"
-              $borderBottom={index < agentRows.length - 1}
-              align="center"
-              justify="space-between"
-            >
-              <Flex align="center" gap={12}>
-                <Image
-                  src={`/agent-${template.agentType}-icon.png`}
-                  alt={config.displayName}
-                  width={32}
-                  height={32}
-                  style={{ borderRadius: 4 }}
+              <ActionCell $hasBorder={agentRows.length > 0}>
+                <VersionBadge
+                  href={`${GITHUB_API_RELEASES}/tag/v${latestTag}`}
+                  version={`v${latestTag}`}
                 />
-                <Text strong>{config.displayName}</Text>
-              </Flex>
-              <Flex align="center" gap={12}>
-                <AgentHashLink href={ipfsUrl} />
-                <VersionBadge href={releaseUrl} version={version} />
-              </Flex>
-            </CardSection>
-          );
-        })}
+              </ActionCell>
+            </Row>
+          )}
+
+          {/* Agent rows */}
+          {agentRows.map((template, index) => {
+            const { displayName } = ACTIVE_AGENTS.find(
+              ([agentType]) => agentType === template.agentType,
+            )![1];
+            const { owner, name, version } = template.agent_release.repository;
+            const releaseUrl = `https://github.com/${owner}/${name}/releases/tag/${version}`;
+            const ipfsUrl = `${IPFS_GATEWAY_URL}${template.hash}`;
+            const hasBorder = index < agentRows.length - 1;
+
+            return (
+              <Row key={template.agentType}>
+                <NameCell $hasBorder={hasBorder}>
+                  <AgentIconWrapper>
+                    <Image
+                      src={`/agent-${template.agentType}-icon.png`}
+                      alt={displayName}
+                      width={32}
+                      height={32}
+                    />
+                  </AgentIconWrapper>
+                  <Text strong>{displayName}</Text>
+                </NameCell>
+
+                <ActionCell $hasBorder={hasBorder}>
+                  <AgentHashLink href={ipfsUrl} />
+                </ActionCell>
+
+                <ActionCell $hasBorder={hasBorder} $justifyContent="flex-end">
+                  <VersionBadge href={releaseUrl} version={version} />
+                </ActionCell>
+              </Row>
+            );
+          })}
+        </ReleaseNotesGrid>
       </Card>
     </Flex>
   );

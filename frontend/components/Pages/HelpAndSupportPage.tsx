@@ -19,6 +19,7 @@ type HelpItem = {
   href?: string;
   onClick?: () => void;
   isExternal?: boolean;
+  hideIcon?: boolean;
 };
 
 export const HelpAndSupport = () => {
@@ -32,6 +33,7 @@ export const HelpAndSupport = () => {
         {
           label: 'Release notes',
           onClick: () => goto(PAGES.ReleaseNotes),
+          hideIcon: true,
         },
         {
           label: `Olas DAO's Discord server`,
@@ -57,32 +59,35 @@ export const HelpAndSupport = () => {
         Help Center
       </Title>
       <Card styles={{ body: { paddingTop: 8, paddingBottom: 8 } }}>
-        {helpItems.map(({ label, href, onClick, isExternal }, index) => (
-          <CardSection
-            key={index}
-            $borderBottom={index !== helpItems.length - 1}
-            $padding="16px"
-            vertical
-          >
-            {href || onClick ? (
-              <a
-                href={href}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={onClick}
-              >
-                <Flex justify="space-between" align="center">
-                  {label}
-                  {isExternal ? (
-                    <FiExternalLink color={COLOR.PURPLE} fontSize={20} />
-                  ) : (
-                    <FiArrowUpRight color={COLOR.PURPLE} fontSize={20} />
-                  )}
-                </Flex>
-              </a>
-            ) : null}
-          </CardSection>
-        ))}
+        {helpItems.map(
+          ({ label, href, onClick, isExternal, hideIcon }, index) => (
+            <CardSection
+              key={index}
+              $borderBottom={index !== helpItems.length - 1}
+              $padding="16px"
+              vertical
+            >
+              {href || onClick ? (
+                <a
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={onClick}
+                >
+                  <Flex justify="space-between" align="center">
+                    {label}
+                    {!hideIcon &&
+                      (isExternal ? (
+                        <FiExternalLink color={COLOR.PURPLE} fontSize={20} />
+                      ) : (
+                        <FiArrowUpRight color={COLOR.PURPLE} fontSize={20} />
+                      ))}
+                  </Flex>
+                </a>
+              ) : null}
+            </CardSection>
+          ),
+        )}
       </Card>
 
       <Card styles={{ body: { padding: 16 } }}>
