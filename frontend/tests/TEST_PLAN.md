@@ -432,19 +432,19 @@ AutoRunProvider.tsx
 
 ## Summary
 
-| Phase | Feature Domain | Difficulty | PR |
-|-------|---------------|------------|-----|
-| 0 | Shared Utilities & Config | EASY | PR #1 |
-| 1 | App Infrastructure | EASY-MEDIUM | PR #2 |
-| 2 | Account & Wallet | MEDIUM | PR #3 |
-| 3 | Balance & Services | MEDIUM-HARD | PR #4 |
-| 4 | Staking & Rewards | HARD | PR #5 |
-| 5 | Funding & Refill | MEDIUM-HARD | PR #6 |
-| 6 | Bridging & On-ramping | MEDIUM-HARD | PR #7 |
-| 7 | Deployability & Lifecycle | HARD | PR #8 |
-| 8 | Auto-run System | VERY HARD | PR #9 |
-| 9 | Static Data & Pure Types | EASY | PR #10 |
-| 10 | Remaining Component UI & Pages | MEDIUM | PR #11 |
+| Phase | Feature Domain | Difficulty |
+|-------|---------------|------------|
+| 0 | Shared Utilities & Config | EASY |
+| 1 | App Infrastructure | EASY-MEDIUM |
+| 2 | Account & Wallet | MEDIUM |
+| 3 | Balance & Services | MEDIUM-HARD |
+| 4 | Staking & Rewards | HARD |
+| 5 | Funding & Refill | MEDIUM-HARD |
+| 6 | Bridging & On-ramping | MEDIUM-HARD |
+| 7 | Deployability & Lifecycle | HARD |
+| 8 | Auto-run System | VERY HARD |
+| 9 | Static Data & Pure Types | EASY |
+| 10 | Remaining Component UI & Pages | MEDIUM |
 
 ## Workflow per phase
 
