@@ -26,8 +26,8 @@ const ContractCard = styled(CardFlex)<{ $isView?: boolean }>`
 `;
 
 type ConfigurationDetailsProps = {
-  id: string;
-  name: string;
+  id: string | undefined;
+  name: string | undefined;
   slots: string;
 };
 const ConfigurationDetails = ({
@@ -78,7 +78,7 @@ export const StakingContractCard = ({
 }: StakingContractCardProps) => {
   const { selectedAgentConfig } = useServices();
   const stakingProgramMeta =
-    STAKING_PROGRAMS[selectedAgentConfig.evmHomeChainId][stakingProgramId];
+    STAKING_PROGRAMS[selectedAgentConfig.evmHomeChainId]?.[stakingProgramId];
   const { allStakingContractDetailsRecord } = useStakingContractContext();
   const contractDetails = allStakingContractDetailsRecord?.[stakingProgramId];
   const { slotsLeft, totalSlots } = useEachStakingDetails(stakingProgramId);
@@ -102,8 +102,8 @@ export const StakingContractCard = ({
           title="Configuration details"
           content={
             <ConfigurationDetails
-              name={stakingProgramMeta.name}
-              id={stakingProgramMeta.id}
+              name={stakingProgramMeta?.name}
+              id={stakingProgramMeta?.id}
               slots={`${slotsLeft} / ${totalSlots}`}
             />
           }
