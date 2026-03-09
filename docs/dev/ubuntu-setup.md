@@ -44,7 +44,7 @@ sudo apt install pipx
 ## 7. Poetry
 
 ```bash
-pipx install poetry==1.8.5
+pipx install poetry==2.3.2
 ```
 
 If prompted to add the `poetry` command to your shell's config file, accept the prompt.
