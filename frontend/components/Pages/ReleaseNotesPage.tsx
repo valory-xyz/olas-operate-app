@@ -6,10 +6,14 @@ import styled, { css } from 'styled-components';
 import { useIsMounted } from 'usehooks-ts';
 
 import { ACTIVE_AGENTS } from '@/config/agents';
-import { COLOR, PAGES } from '@/constants';
-import { AgentType } from '@/constants/agent';
+import {
+  AgentType,
+  COLOR,
+  GITHUB_API_RELEASES,
+  IPFS_GATEWAY_URL,
+  PAGES,
+} from '@/constants';
 import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
-import { GITHUB_API_RELEASES, IPFS_GATEWAY_URL } from '@/constants/urls';
 import { useElectronApi, usePageState, useServices } from '@/hooks';
 
 import { BackButton, cardStyles } from '../ui';
@@ -23,11 +27,11 @@ const ReleaseNotesGrid = styled.div`
 `;
 
 const cellBase = css<{ $hasBorder?: boolean; $justifyContent?: string }>`
-  min-height: 60px;
-  padding: 12px 16px;
   display: flex;
   align-items: center;
   justify-content: ${({ $justifyContent }) => $justifyContent || 'flex-start'};
+  min-height: 60px;
+  padding: 12px 16px;
   ${({ $hasBorder }) =>
     $hasBorder ? `border-bottom: 1px solid ${COLOR.BORDER_GRAY};` : ''}
 `;
