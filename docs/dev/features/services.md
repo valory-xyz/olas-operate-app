@@ -290,11 +290,13 @@ Reads `storeState[selectedAgentType].isInitialFunded` from Electron store. Once 
 - **Invalid services**: If validation returns `false` for any service, an Ant Design error message is shown once per page session (only on `PAGES.Main`)
 - **Missing service**: If `selectedServiceConfigId` is null, deployment polling doesn't run and `selectedService` is undefined
 - **AbortSignal**: Read-style `ServicesService` methods (`getService`, `getServices`, `getServicesValidationStatus`, `getAllServiceDeployments`, `getDeployment`) accept `AbortSignal` for cleanup on unmount. Mutation-style methods (`createService`, `updateService`, `startService`, `stopDeployment`, `withdrawBalance`, `getAgentPerformance`) do not
+- **stopDeployment**: `POST /api/v2/service/{id}/deployment/stop` — throws `Error('Failed to stop deployment')` on non-ok response. Does not accept `AbortSignal`. Returns `{ status, nodes }` on success.
+- **withdrawBalance**: `POST /api/v2/service/{id}/terminate_and_withdraw` — rejects with a plain string (`'Failed to withdraw balance.'`), not an `Error` object, on non-ok response. Does not accept `AbortSignal`. Returns `{ error: string | null }` on success.
 - **Geo API failure**: `isGeoError` is true, `isAgentGeoRestricted` defaults to false (permissive)
 
 ## Test-relevant notes
 
-- `ServicesService` methods are pure HTTP calls to `/api/v2/service*` — mock `fetch` or the service module
+- `ServicesService` methods are pure HTTP calls to `/api/v2/service*` — mock `fetch` or the service module. Note: `withdrawBalance` rejects with a string, not an `Error` — test `.catch()` handling accordingly
 - `ServicesProvider` has 3 concurrent React Query polls (2 with dynamic intervals, 1 fixed) — test with `renderHook` + wrapper, mock `ServicesService` and dependencies
 - `useService` derives wallets from `chain_configs` — test wallet extraction with multi-chain services containing various combinations of instances/multisig
 - `useAgentRunning` cross-references `serviceStatusOverrides` with backend status — test both override and non-override paths
