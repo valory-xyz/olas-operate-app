@@ -7,7 +7,7 @@ import styled from 'styled-components';
 import { CardFlex } from '@/components/ui/CardFlex';
 import { Divider } from '@/components/ui/Divider';
 import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
-import { COLOR, GOVERN_APP_URL, StakingProgramId } from '@/constants';
+import { COLOR, GOVERN_APP_URL, NA, StakingProgramId } from '@/constants';
 import { useServices } from '@/hooks';
 import { useStakingContractContext } from '@/hooks/useStakingContractDetails';
 
@@ -40,7 +40,7 @@ const ConfigurationDetails = ({
       <Flex vertical gap={8}>
         <Flex align="center" gap={6}>
           <Text className="text-sm text-neutral-tertiary">Contract name:</Text>
-          <Text className="text-sm">{name}</Text>
+          <Text className="text-sm">{name ?? NA}</Text>
         </Flex>
 
         <Flex align="center" gap={6}>
@@ -51,18 +51,20 @@ const ConfigurationDetails = ({
         </Flex>
       </Flex>
 
-      <a
-        href={`${GOVERN_APP_URL}/contracts/${id}`}
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        <Flex align="center" gap={6}>
-          <Text className="text-sm text-primary">View more details</Text>
-          <Text className="text-primary" style={{ fontSize: 10 }}>
-            ↗
-          </Text>
-        </Flex>
-      </a>
+      {id && (
+        <a
+          href={`${GOVERN_APP_URL}/contracts/${id}`}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <Flex align="center" gap={6}>
+            <Text className="text-sm text-primary">View more details</Text>
+            <Text className="text-primary" style={{ fontSize: 10 }}>
+              ↗
+            </Text>
+          </Flex>
+        </a>
+      )}
     </Flex>
   );
 };
