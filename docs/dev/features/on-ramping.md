@@ -66,7 +66,7 @@ When the on-ramp chain matches the agent chain (e.g., Optimism, Base, Polygon), 
 
 ### Minimum on-ramp amount
 
-`MIN_ONRAMP_AMOUNT = 5` (USD). Enforced in `useTotalFiatFromNativeToken` — if the computed fiat amount (with $5 buffer) is below `MIN_ONRAMP_AMOUNT`, returns `MIN_ONRAMP_AMOUNT` instead. This prevents Transak from rejecting tiny purchases.
+`MIN_ONRAMP_AMOUNT = 5` (USD). The floor is enforced before the user enters the on-ramp flow in `OnRampMethodCard` and `SelectPaymentMethod`. `useTotalFiatFromNativeToken` still provides the buffered quote shown by the UI, but it does not enforce the minimum by itself.
 
 ### OnRampProvider context shape
 
@@ -126,42 +126,13 @@ The Transak widget runs in a separate Electron window. Communication flows throu
 | `onramp-transaction-failure` | Electron → renderer | Widget reports failure → resets loading state |
 | `onramp-window-did-close` | Electron → renderer | Window closed → resets `isBuyCryptoBtnLoading` |
 
-### Transak price quote API
+### Transak price quote
 
-`GET {ON_RAMP_GATEWAY_URL}price-quote?fiatCurrency=USD&cryptoCurrency=ETH&isBuyOrSell=BUY&network=base&paymentMethod=credit_debit_card&cryptoAmount=0.00570715`
-
-```json
-{
-  "response": {
-    "quoteId": "72180367-a015-4895-aacc-e23f80841042",
-    "conversionPrice": 0.0004919954686004446,
-    "marketConversionPrice": 0.0004954983970626855,
-    "slippage": 0.71,
-    "fiatCurrency": "USD",
-    "cryptoCurrency": "ETH",
-    "paymentMethod": "credit_debit_card",
-    "fiatAmount": 13.12,
-    "cryptoAmount": 0.00570715,
-    "isBuyOrSell": "BUY",
-    "network": "base",
-    "feeDecimal": 0.11585365853658537,
-    "totalFee": 1.52,
-    "feeBreakdown": [
-      { "name": "Transak fee", "value": 1.52, "id": "transak_fee", "ids": ["transak_fee"] },
-      { "name": "Network/Exchange fee", "value": 0, "id": "network_fee", "ids": ["network_fee"] }
-    ],
-    "nonce": 1773079012,
-    "cryptoLiquidityProvider": "transak",
-    "notes": ["Cryptocurrency Services Powered by Zero Hash."]
-  }
-}
-```
-
-The frontend uses `fiatAmount` and `cryptoAmount` from the response. `fiatAmount` gets a $5 buffer added (`round(13.12 + 5, 2)` = `$18.12`). `cryptoAmount` is used to derive the equivalent buffer in crypto via `getEthWithBuffer`: `nativeAmountToPay + (cryptoAmount / fiatAmount) * $5`.
+`PayingReceivingTable` uses `useTotalFiatFromNativeToken` to fetch the Transak quote and derive the buffered USD/native amounts shown in the flow. The request/response shape and buffer math are documented in `docs/dev/features/funding-and-refill.md`.
 
 ### Bridge quote API
 
-Covered in the bridging doc. `useBridgeRequirementsQuery` uses `POST /api/bridge/bridge_refill_requirements` to get bridge quotes for the swap step.
+`useBridgeRequirementsQuery` uses `POST /api/bridge/bridge_refill_requirements` for the swap step. The request/response schema and bridge status model are documented in `docs/dev/features/bridging.md`.
 
 ## Runtime behavior
 
@@ -277,6 +248,7 @@ Handles quote fetching with polling and retry for the on-ramp flow:
 5. On success: resets `force_update` to false, resumes polling
 
 **Error state**: `hasError` is true when the query itself errors OR any `bridge_request_status` entry has `QUOTE_FAILED`.
+The bridge quote request/response contract itself is documented in `docs/dev/features/bridging.md`.
 
 ### Native token filtering (`useBridgeRequirementsUtils`)
 
@@ -295,14 +267,11 @@ Wires up the quote display pipeline:
 3. Freezes displayed `tokensRequired` once `isTransactionSuccessfulButFundsNotReceived` or `isOnRampingStepCompleted` becomes true (prevents UI flicker during/after payment)
 4. Updates `usdAmountToPay` in OnRamp context (only while not yet paying)
 
+The calculation details for `useTotalNativeTokenRequired`, `useTotalFiatFromNativeToken`, and `useGetOnRampRequirementsParams` are documented in `docs/dev/features/funding-and-refill.md`.
+
 ### On-ramp requirements params (`useGetOnRampRequirementsParams`)
 
-Creates a single `BridgeRequest` from a token address and amount (deposit mode, manual input):
-
-- `from`: on-ramp chain, master EOA, native token (`AddressZero`)
-- `to`: wallet chain, master safe (or EOA if no safe), specified token, `parseUnits(amount, decimals)`
-
-Returns `null` when wallet data is not yet fetched.
+This hook creates the single deposit-mode `BridgeRequest` used by the on-ramp quote flow. The exact parameter shape, address selection, and token rules are documented in `docs/dev/features/funding-and-refill.md`.
 
 ## Failure / guard behavior
 

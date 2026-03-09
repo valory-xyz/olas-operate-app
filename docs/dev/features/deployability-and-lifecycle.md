@@ -54,7 +54,6 @@ SettingsService (backend config)
 - `frontend/utils/safe.ts` — `getSafeEligibility` (safe status derivation), `getSafeEligibilityMessage` (user-facing messages), `BACKUP_SIGNER_STATUS`
 - `frontend/context/SharedProvider/SharedProvider.tsx` — shared context (AgentsFun field check, recovery status, OLAS balance animation)
 - `frontend/hooks/useSharedContext.ts` — context accessor
-- `frontend/service/Recovery.ts` — `getRecoveryStatus` (`GET /api/wallet/recovery/status`), used by SharedProvider for `hasActiveRecoverySwap` (also in account doc)
 - `frontend/service/Settings.ts` — settings API client (`getSettings`)
 - `frontend/service/Achievement.ts` — achievement API client (`getServiceAchievements`, `acknowledgeServiceAchievement`, `generateAchievementImage`)
 - `frontend/types/Achievement.ts` — `Achievement`, `ServiceAchievements`, `AchievementWithConfig`
@@ -295,13 +294,7 @@ handleStart()
 
 ### Stop and update flow
 
-**Stopping a service** (`ServicesService.stopDeployment`):
-
-`POST /api/v2/service/{id}/deployment/stop` — stops the running service. Returns `{ status, nodes }`. Throws `Error('Failed to stop deployment')` on non-ok response.
-
-**Withdrawing** (`ServicesService.withdrawBalance`):
-
-`POST /api/v2/service/{id}/terminate_and_withdraw` — terminates on-chain and withdraws funds to the Master Safe. Returns `{ error: string | null }`. Rejects with `'Failed to withdraw balance.'` string (not an Error object) on non-ok response.
+This flow reuses the service/deployment API surface documented in `docs/dev/features/services.md`. In this doc, the relevant lifecycle actions are when `stopDeployment()` and `withdrawBalance()` are invoked from UI flows and how restart/update orchestration behaves around them.
 
 **Updating agent settings** (`UpdateAgentPage` + `useConfirmUpdateModal`):
 
@@ -339,7 +332,7 @@ For all other agent types, `isAgentsFunFieldUpdateRequired` is always `false`.
 
 ### Recovery status check (SharedProvider)
 
-On mount, queries `GET /api/wallet/recovery/status` once (via React Query with `staleTime: Infinity`, no refetch). Extracts `has_swaps` to set `hasActiveRecoverySwap`. Only runs when online.
+On mount, SharedProvider queries recovery status once (via React Query with `staleTime: Infinity`, no refetch) and maps `has_swaps` to `hasActiveRecoverySwap`. This only runs when online. The recovery endpoint and response schema are documented in `docs/dev/features/account.md`.
 
 ### Achievement display lifecycle
 
@@ -369,8 +362,6 @@ On mount, queries `GET /api/wallet/recovery/status` once (via React Query with `
 - **AchievementService** — all three methods throw `Error` on non-ok responses. `getServiceAchievements` accepts `AbortSignal`; `acknowledgeServiceAchievement` and `generateAchievementImage` do not.
 - **SharedProvider AgentsFun check** — only runs for `AgentsFun` agent type. For all others, `isAgentsFunFieldUpdateRequired` is immediately set to `false`. Returns early if `selectedService` is undefined.
 - **SharedProvider recovery query** — runs once on mount with `staleTime: Infinity`. Does not refetch on window focus, reconnect, or remount. Only fires when online.
-- **ServicesService.stopDeployment** — throws `Error('Failed to stop deployment')` on non-ok response.
-- **ServicesService.withdrawBalance** — rejects with a string (`'Failed to withdraw balance.'`), not an Error object.
 - **UpdateAgentPage** — throws `Error` if `selectedAgentConfig.isX402Enabled` is true (updates not supported for x402 agents).
 - **useConfirmUpdateModal restart** — fire-and-forget: runs `stop → start` in background. Restart errors show a toast (`'Failed to restart service.'`) but don't propagate. If service isn't running, restart is skipped entirely.
 - **Achievement polling** — `useAchievements` only queries when a service is actively running. If the service stops, polling stops.
@@ -398,6 +389,5 @@ On mount, queries `GET /api/wallet/recovery/status` once (via React Query with `
 - `useTriggerAchievementBackgroundTasks` — test the 3-retry behavior and that both acknowledge + image generation run in parallel.
 - `useConfirmUpdateModal` — test the fire-and-forget restart: verify `stopDeployment` + `startService` are called when service is running, and skipped when not. Test that restart errors show toast but don't throw. Test that modal closes only on success.
 - `UpdateAgentPage` — test that it throws for x402-enabled agents. Test that it renders the correct form for each agent type.
-- `ServicesService.withdrawBalance` — note that it rejects with a string, not an Error object. Test accordingly.
 - `useTriggerAchievementBackgroundTasks` — test that `generateAchievementImage` receives `achievement.data.id` (not `achievement_id`). Test that unknown achievement types (where `getAchievementDataIdFromType` returns null) skip background tasks and set `areBackgroundTasksFinalized = true`.
 - `isValidServiceId` — test with valid numbers, 0, -1, null, undefined.

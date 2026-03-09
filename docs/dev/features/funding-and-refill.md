@@ -95,55 +95,9 @@ type TokenRequirement = {
 };
 ```
 
-### BridgeRefillRequirementsRequest (output of useGetBridgeRequirementsParams)
+### Bridge quote request/response used by funding hooks
 
-```typescript
-type BridgeRefillRequirementsRequest = {
-  bridge_requests: Array<{
-    from: { chain: string; address: Address; token: Address };
-    to: { chain: string; address: Address; token: Address; amount: string };
-  }>;
-  force_update: boolean;
-};
-```
-
-### Bridge refill requirements response (used by useTotalNativeTokenRequired)
-
-`POST /api/bridge/bridge_refill_requirements` — response after submitting bridge requests from `useGetBridgeRequirementsParams`:
-
-```json
-{
-  "id": "rb-36c6cbe0-1841-4de3-b9f6-873305a833f5",
-  "bridge_request_status": [
-    { "eta": 5, "message": null, "status": "QUOTE_DONE" }
-  ],
-  "balances": {
-    "ethereum": {
-      "0x74074a70dcE60E6996EC4b555342679645788ce5": {
-        "0x0000000000000000000000000000000000000000": "0"
-      }
-    }
-  },
-  "bridge_refill_requirements": {
-    "ethereum": {
-      "0x74074a70dcE60E6996EC4b555342679645788ce5": {
-        "0x0000000000000000000000000000000000000000": "5628894686394391"
-      }
-    }
-  },
-  "bridge_total_requirements": {
-    "ethereum": {
-      "0x74074a70dcE60E6996EC4b555342679645788ce5": {
-        "0x0000000000000000000000000000000000000000": "5628894686394391"
-      }
-    }
-  },
-  "expiration_timestamp": 1773075127,
-  "is_refill_required": true
-}
-```
-
-`useTotalNativeTokenRequired` reads `bridge_refill_requirements` (onboard mode) or `bridge_total_requirements` (deposit mode) to calculate how much native token the user needs on the source chain. `balances` provides the existing native token balance, which is added to the top-up amount to get `totalNativeTokenRequired` (the full amount that should be on-chain).
+`useGetBridgeRequirementsParams` returns `BridgeRefillRequirementsRequest` for `BridgeService.getBridgeRefillRequirements`. `useTotalNativeTokenRequired` consumes that response and reads `bridge_refill_requirements` (onboard mode), `bridge_total_requirements` (deposit mode), and `balances` (existing source-chain native balance). The full bridge request/response schema and status model are documented in `docs/dev/features/bridging.md`.
 
 ### Transak quote response (used by useTotalFiatFromNativeToken)
 
@@ -267,6 +221,7 @@ For each wallet+token pair in `refillRequirements`:
 5. Post-processes via `useCombineNativeTokenRequirements`: for native tokens, combines master safe + master EOA refill requirements into the `to.amount`
 
 `from.address` is always the master EOA. `to.address` is the master safe (or master EOA if no safe exists).
+The exact bridge request schema is documented in `docs/dev/features/bridging.md`.
 
 ### On-ramp requirements params (useGetOnRampRequirementsParams)
 
