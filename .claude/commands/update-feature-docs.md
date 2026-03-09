@@ -6,7 +6,7 @@ You are updating feature documentation in `docs/dev/features/` to reflect code c
 
 Run `git diff --name-only HEAD` (unstaged + staged changes) and `git diff --name-only --cached` (staged only). Combine both lists. If no changes are found, also try `git diff --name-only main...HEAD` to catch all changes on the current branch.
 
-Filter to only `frontend/` files (the feature docs only cover frontend code).
+Filter to `frontend/` and `electron/` files (most feature docs cover frontend code, but `electron-api.md` also depends on `electron/` files).
 
 ## Step 2: Map changed files to feature docs
 
@@ -26,7 +26,7 @@ Use this mapping to determine which feature doc(s) need updating. A changed file
 
 **feature-flags.md**: `frontend/hooks/useFeatureFlag.ts`
 
-**funding-and-refill.md**: `frontend/service/Fund.ts`, `frontend/context/BalancesAndRefillRequirementsProvider/BalancesAndRefillRequirementsProvider.tsx`, `frontend/types/Funding.ts`, `frontend/types/Bridge.ts`, `frontend/hooks/useGetRefillRequirements.ts`, `frontend/hooks/useAgentFundingRequests.tsx`, `frontend/hooks/useInitialFundingRequirements.ts`, `frontend/hooks/useGetBridgeRequirementsParams.ts`, `frontend/hooks/useGetOnRampRequirementsParams.ts`, `frontend/hooks/useTotalNativeTokenRequired.ts`, `frontend/hooks/useTotalFiatFromNativeToken.ts`
+**funding-and-refill.md**: `frontend/service/Fund.ts`, `frontend/service/Balance.ts`, `frontend/context/BalancesAndRefillRequirementsProvider/BalancesAndRefillRequirementsProvider.tsx`, `frontend/types/Funding.ts`, `frontend/types/Bridge.ts`, `frontend/hooks/useGetRefillRequirements.ts`, `frontend/hooks/useAgentFundingRequests.tsx`, `frontend/hooks/useInitialFundingRequirements.ts`, `frontend/hooks/useGetBridgeRequirementsParams.ts`, `frontend/hooks/useGetOnRampRequirementsParams.ts`, `frontend/hooks/useTotalNativeTokenRequired.ts`, `frontend/hooks/useTotalFiatFromNativeToken.ts`
 
 **on-ramping.md**: `frontend/context/OnRampProvider.tsx`, `frontend/hooks/useOnRampContext.ts`, `frontend/hooks/useGetOnRampRequirementsParams.ts`, `frontend/components/OnRamp/OnRamp.tsx`, `frontend/components/OnRamp/OnRampPaymentSteps/OnRampPaymentSteps.tsx`, `frontend/components/OnRamp/OnRampPaymentSteps/useBuyCryptoStep.tsx`, `frontend/components/OnRamp/OnRampPaymentSteps/useSwapFundsStep.tsx`, `frontend/components/OnRamp/OnRampPaymentSteps/useCreateAndTransferFundsToMasterSafeSteps.tsx`, `frontend/components/OnRamp/PayingReceivingTable/PayingReceivingTable.tsx`, `frontend/components/OnRamp/PayingReceivingTable/useBridgeRequirementsQuery.ts`, `frontend/components/OnRamp/hooks/useBridgeRequirementsUtils.ts`, `frontend/hooks/useTotalNativeTokenRequired.ts`, `frontend/hooks/useTotalFiatFromNativeToken.ts`, `frontend/components/OnRamp/types.ts`, `frontend/components/OnRampIframe/OnRampIframe.tsx`, `frontend/pages/onramp.tsx`, `frontend/constants/onramp.ts`, `frontend/constants/urls.ts`
 
@@ -34,7 +34,7 @@ Use this mapping to determine which feature doc(s) need updating. A changed file
 
 **staking-and-rewards.md**: `frontend/config/stakingPrograms/index.ts`, `frontend/config/stakingPrograms/*.ts`, `frontend/constants/stakingProgram.ts`, `frontend/types/Autonolas.ts`, `frontend/context/StakingProgramProvider.tsx`, `frontend/context/StakingContractDetailsProvider.tsx`, `frontend/context/RewardProvider.tsx`, `frontend/hooks/useStakingProgram.ts`, `frontend/hooks/useStakingContracts.ts`, `frontend/hooks/useStakingContractDetails.ts`, `frontend/hooks/useStakingContractCountdown.ts`, `frontend/hooks/useStakingDetails.ts`, `frontend/hooks/useActiveStakingProgramId.ts`, `frontend/hooks/useStakingRewardsOf.ts`, `frontend/hooks/useAgentStakingRewardsDetails.ts`, `frontend/hooks/useRewardsHistory.ts`, `frontend/utils/stakingProgram.ts`, `frontend/utils/stakingRewards.ts`
 
-**support-and-logs.md**: `frontend/service/Support.ts`, `frontend/hooks/useLogs.ts`, `frontend/components/SupportModal/useFallbackLogs.ts`, `frontend/components/SupportModal/useUploadSupportFiles.ts`, `frontend/components/SupportModal/utils.ts`, `frontend/components/SupportModal/SupportModal.tsx`, `frontend/components/ExportLogsButton.tsx`, `frontend/context/SupportModalProvider.tsx`
+**support-and-logs.md**: `frontend/service/Support.ts`, `frontend/hooks/useLogs.ts`, `frontend/components/SupportModal/useFallbackLogs.ts`, `frontend/components/SupportModal/useUploadSupportFiles.ts`, `frontend/components/SupportModal/utils.ts`, `frontend/components/SupportModal/SupportModal.tsx`, `frontend/components/ExportLogsButton.tsx`, `frontend/context/SupportModalProvider.tsx`, `frontend/constants/urls.ts`
 
 **wallet.md**: `frontend/service/Wallet.ts`, `frontend/context/MasterWalletProvider.tsx`, `frontend/context/PearlWalletProvider.tsx`, `frontend/hooks/useWallet.ts`, `frontend/hooks/useBackupSigner.ts`, `frontend/hooks/useMultisig.ts`, `frontend/hooks/useMasterSafeCreationAndTransfer.ts`, `frontend/utils/wallet.ts`, `frontend/constants/wallet.ts`, `frontend/types/Wallet.ts`
 

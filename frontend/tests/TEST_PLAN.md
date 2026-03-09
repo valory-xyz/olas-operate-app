@@ -27,7 +27,7 @@ Pearl frontend has **577 files** tracked by Jest coverage, nearly all at 0% (onl
 
 ## Backend API reference
 
-The middleware API docs (endpoint URLs, request/response shapes, error formats) are stored in the Claude memory directory at `memory/middleware-api.md`. Consult when testing service files in Phase 2+. Upstream source: https://github.com/valory-xyz/olas-operate-middleware/blob/main/docs/api.md
+The middleware API docs (endpoint URLs, request/response shapes, error formats) live upstream at https://github.com/valory-xyz/olas-operate-middleware/blob/main/docs/api.md. Consult when testing service files in Phase 2+.
 
 ## Feature documentation reference
 
@@ -36,13 +36,13 @@ Each phase has corresponding feature documentation in `docs/dev/features/`. **Al
 | Phase | Feature doc(s) |
 |-------|---------------|
 | 0 | (none — pure utilities) |
-| 1 | `electron-api.md`, `dynamic-polling.md`, `feature-flags.md`, `support-and-logs.md` |
+| 1 | `electron-api.md`, `dynamic-polling.md`, `feature-flags.md`, `support-and-logs.md` (partial — most Phase 1 files are thin wrappers) |
 | 2 | `account.md`, `wallet.md` |
 | 3 | `balance.md`, `services.md` |
 | 4 | `staking-and-rewards.md` |
 | 5 | `funding-and-refill.md` |
-| 6 | `bridging.md`, `on-ramping.md` |
-| 7 | `deployability-and-lifecycle.md` |
+| 6 | `bridging.md`, `on-ramping.md`, `funding-and-refill.md` |
+| 7 | `deployability-and-lifecycle.md`, `services.md`, `account.md` |
 | 8 | [`frontend/context/AutoRunProvider/docs/auto-run.md`](../context/AutoRunProvider/docs/auto-run.md) |
 | 9 | (none — static data) |
 | 10 | (refer to phase-specific docs for the feature each component belongs to) |
@@ -268,6 +268,7 @@ StakedAgentService (abstract base)
 - `hooks/useGetOnRampRequirementsParams.ts` — on-ramp requirement params
 - `context/BalancesAndRefillRequirementsProvider/BalancesAndRefillRequirementsProvider.tsx` — consolidated provider
 - `service/Fund.ts` — fund API client
+- `hooks/useTotalNativeTokenRequired.ts` — total native token calc with freeze logic
 - `hooks/useTotalFiatFromNativeToken.ts` — fiat price conversion
 
 **Funding components:**
@@ -298,7 +299,6 @@ StakedAgentService (abstract base)
 **On-ramping (hooks & context):**
 - `hooks/useOnRampContext.ts` — on-ramp context accessor
 - `context/OnRampProvider.tsx` — on-ramp flow state (310 lines)
-- `hooks/useTotalNativeTokenRequired.ts` — total native token calc with freeze logic
 
 **On-ramping (components):**
 - `components/OnRamp/OnRamp.tsx` — on-ramp entry component
@@ -329,7 +329,6 @@ StakedAgentService (abstract base)
 - `hooks/useServiceDeployment.ts` — full deployment workflow (203 lines)
 - `service/Settings.ts` — settings API
 - `service/Achievement.ts` — achievement tracking
-- `service/Support.ts` — support API
 - `context/SharedProvider/SharedProvider.tsx` — AgentsFun field updates
 
 **Achievement components:**
