@@ -42,11 +42,12 @@ Mirror the source path under `frontend/tests/`:
 ## Before writing any test
 
 1. **Read the source file** completely — understand every branch, edge case, and dependency
-2. **Read the types/interfaces** it imports — know the shape of inputs and outputs
-3. **Trace dependencies** — identify which hooks, contexts, or services it calls
-4. **Read related constants/configs** if the logic references them (e.g., staking programs, chain configs, token configs)
-5. **Check for existing tests** in `frontend/tests/` to maintain consistency
-6. **Check the TEST_PLAN.md** to understand which phase the file belongs to and what else in that feature domain is being tested
+2. **Read the feature doc** for the file's domain (see the "Feature documentation reference" table in `frontend/tests/TEST_PLAN.md`). Feature docs live in `docs/dev/features/` and describe runtime behavior, state transitions, failure modes, and test-relevant notes. For auto-run files, read `frontend/context/AutoRunProvider/docs/auto-run.md` instead.
+3. **Read the types/interfaces** it imports — know the shape of inputs and outputs
+4. **Trace dependencies** — identify which hooks, contexts, or services it calls
+5. **Read related constants/configs** if the logic references them (e.g., staking programs, chain configs, token configs)
+6. **Check for existing tests** in `frontend/tests/` to maintain consistency
+7. **Check the TEST_PLAN.md** to understand which phase the file belongs to and what else in that feature domain is being tested
 
 ## Feature domain awareness
 

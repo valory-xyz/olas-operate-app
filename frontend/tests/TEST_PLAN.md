@@ -29,6 +29,24 @@ Pearl frontend has **577 files** tracked by Jest coverage, nearly all at 0% (onl
 
 The middleware API docs (endpoint URLs, request/response shapes, error formats) are stored in the Claude memory directory at `memory/middleware-api.md`. Consult when testing service files in Phase 2+. Upstream source: https://github.com/valory-xyz/olas-operate-middleware/blob/main/docs/api.md
 
+## Feature documentation reference
+
+Each phase has corresponding feature documentation in `docs/dev/features/`. **Always read the relevant feature doc(s) before writing tests for a phase** — they describe runtime behavior, state transitions, failure modes, edge cases, and test-relevant notes that inform what to assert.
+
+| Phase | Feature doc(s) |
+|-------|---------------|
+| 0 | (none — pure utilities) |
+| 1 | `electron-api.md`, `dynamic-polling.md`, `feature-flags.md`, `support-and-logs.md` |
+| 2 | `account.md`, `wallet.md` |
+| 3 | `balance.md`, `services.md` |
+| 4 | `staking-and-rewards.md` |
+| 5 | `funding-and-refill.md` |
+| 6 | `bridging.md`, `on-ramping.md` |
+| 7 | `deployability-and-lifecycle.md` |
+| 8 | [`frontend/context/AutoRunProvider/docs/auto-run.md`](../context/AutoRunProvider/docs/auto-run.md) |
+| 9 | (none — static data) |
+| 10 | (refer to phase-specific docs for the feature each component belongs to) |
+
 ## Dependency Order
 
 ```
@@ -462,10 +480,11 @@ AutoRunProvider.tsx
 ## Workflow per phase
 
 1. Branch off `main` (after previous PR is merged)
-2. Write all tests for the phase, run after each file
-3. Run `yarn test:coverage` to verify
-4. Commit, create PR, review together
-5. Merge, move to next phase
+2. **Read the feature doc(s)** for the phase (see table above) — understand runtime behavior, edge cases, and test-relevant notes before writing any tests
+3. Write all tests for the phase, run after each file
+4. Run `yarn test:coverage` to verify
+5. Commit, create PR, review together
+6. Merge, move to next phase
 
 ## Verification
 
