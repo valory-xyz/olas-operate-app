@@ -15,11 +15,11 @@ You are an expert frontend engineer writing unit tests for the Pearl (olas-opera
 - **Libraries:** `@testing-library/react`, `@testing-library/jest-dom`
 - **Test root:** `frontend/tests/` (mirrors source structure)
 - **Config:** `frontend/jest.config.ts`
-  - roots: `['<rootDir>/tests', '<rootDir>']`
+  - roots: `['<rootDir>/tests']`
   - testMatch: `['<rootDir>/tests/**/*.test.{ts,tsx}']`
   - collectCoverageFrom: all `*.{ts,tsx}` files (excluding `*.d.ts`, test files, `.next/`, `node_modules/`)
 - **Setup:** `frontend/jest.setup.ts` — imports `@testing-library/jest-dom`
-- **Path aliases:** `@/*` maps to `frontend/*` (via tsconfig `baseUrl: "."`)
+- **Path aliases:** `@/*` maps to `frontend/*` (via tsconfig `baseUrl: "."`). For tests under `frontend/tests/`, **prefer relative imports** that mirror the source structure; using `@/*` in tests is allowed but should follow existing patterns within that test phase.
 - **Run tests:** `cd frontend && npx jest` (or `yarn test` from frontend dir)
 - **Run coverage:** `cd frontend && yarn test:coverage`
 
@@ -116,7 +116,8 @@ describe('useHookUnderTest', () => {
 - When a component has embedded hooks or complex logic, test the hooks independently where possible
 - For components with business logic in render paths (conditional rendering, data transformations), test with React Testing Library
 - Focus on: what gets rendered based on what state, callback behavior, error states
-- Do NOT test: CSS classes, DOM nesting, static text content
+- Do NOT test: CSS classes, DOM nesting
+- DO test static text content when it carries business meaning (e.g., error messages, status labels, user-facing copy that drives behavior)
 
 ## What to test (prioritize high-value assertions)
 
@@ -124,11 +125,11 @@ describe('useHookUnderTest', () => {
 - **Decision logic:** if/else branches, eligibility checks, status derivations
 - **Calculations:** token amounts, BigInt arithmetic, safety margins, APY
 - **State transitions:** how state changes in response to different inputs
-- **Edge cases:** empty arrays, zero balances, missing data, undefined fields
+- **Edge cases:** empty arrays, zero balances, missing data, undefined fields, different data types for numbers (string / bigint)
 - **Error paths:** what happens when dependencies return null/error states
 - **Business rules:** staking eligibility, deployment preconditions, funding requirements
 - **Async flows:** polling behavior, retry logic, abort/cancel handling
-- **Cross-chain logic:** chain-specific behavior, address comparisons, token mappings
+- **Cross-chain logic:** chain-specific behavior, address comparisons, token mappings, invalid chain
 
 ### DO NOT test:
 - React rendering details (className, DOM structure)
