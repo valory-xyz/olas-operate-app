@@ -209,12 +209,27 @@ jobs:
         uses: actions/cache@v3
         with:
           path: node_modules
-          key: electron-node-modules-${{ runner.os }}-${{ env.OS_ARCH }}-${{ matrix.env }}-${{ hashFiles('yarn.lock') }}
+          key: electron-node-modules-v2-${{ runner.os }}-${{ env.OS_ARCH }}-${{ matrix.env }}-${{ hashFiles('yarn.lock', '.github/workflows/release_linux.yml') }}
 
-      # Install electron dependencies if cache miss
+      # Guard against stale absolute symlinks from previously cached node_modules.
+      - name: Validate cached electron node_modules
+        id: validate-electron-node-modules
+        if: steps.cache-electron-node-modules.outputs.cache-hit == 'true'
+        run: |
+          dangling_link=$(find node_modules -type l ! -exec test -e {} \; -print -quit 2>/dev/null || true)
+
+          if [ -n "$dangling_link" ]; then
+            echo "::warning::Detected dangling symlink in cached node_modules: $dangling_link"
+            rm -rf node_modules
+            echo "is-valid=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "is-valid=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Install electron dependencies if cache miss or cached tree is invalid.
       - name: Install electron dependencies
-        if: steps.cache-electron-node-modules.outputs.cache-hit != 'true'
-        run: yarn install
+        if: steps.cache-electron-node-modules.outputs.cache-hit != 'true' || steps.validate-electron-node-modules.outputs.is-valid != 'true'
+        run: yarn install --frozen-lockfile --check-files
 
       # Cache frontend node_modules with unique key for each environment and architecture
       - name: Restore frontend node_modules cache
