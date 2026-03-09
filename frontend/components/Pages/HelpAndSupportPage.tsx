@@ -1,13 +1,13 @@
 import { Button, Card, Flex, Typography } from 'antd';
 import { compact } from 'lodash';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { FiArrowUpRight, FiExternalLink } from 'react-icons/fi';
-import { useIsMounted } from 'usehooks-ts';
 
 import { COLOR } from '@/constants/colors';
-import { FAQ_URL, GITHUB_API_RELEASES, SUPPORT_URL } from '@/constants/urls';
+import { PAGES } from '@/constants/pages';
+import { FAQ_URL, SUPPORT_URL } from '@/constants/urls';
 import { useSupportModal } from '@/context/SupportModalProvider';
-import { useElectronApi } from '@/hooks';
+import { useElectronApi, usePageState } from '@/hooks';
 
 import { ExportLogsButton } from '../ExportLogsButton';
 import { CardSection, cardStyles } from '../ui';
@@ -22,38 +22,17 @@ type HelpItem = {
 };
 
 export const HelpAndSupport = () => {
-  const [latestTag, setLatestTag] = useState<string | null>(null);
-
   const { toggleSupportModal } = useSupportModal();
-  const { getAppVersion, termsAndConditionsWindow } = useElectronApi();
-  const isMounted = useIsMounted();
-
-  useEffect(() => {
-    const getTag = async () => {
-      if (typeof getAppVersion !== 'function') return;
-      try {
-        const version = await getAppVersion();
-        if (version && isMounted()) {
-          setLatestTag(version);
-        }
-      } catch (error) {
-        console.error('Failed to get app version:', error);
-      }
-    };
-
-    getTag();
-  }, [getAppVersion, isMounted]);
+  const { termsAndConditionsWindow } = useElectronApi();
+  const { goto } = usePageState();
 
   const helpItems: HelpItem[] = useMemo(
     () =>
       compact([
-        latestTag
-          ? {
-              label: 'Latest release notes',
-              href: `${GITHUB_API_RELEASES}/tag/v${latestTag}`,
-              isExternal: true,
-            }
-          : null,
+        {
+          label: 'Release notes',
+          onClick: () => goto(PAGES.ReleaseNotes),
+        },
         {
           label: `Olas DAO's Discord server`,
           href: SUPPORT_URL,
@@ -69,7 +48,7 @@ export const HelpAndSupport = () => {
           onClick: () => termsAndConditionsWindow?.show?.(),
         },
       ]),
-    [latestTag, termsAndConditionsWindow],
+    [goto, termsAndConditionsWindow],
   );
 
   return (
