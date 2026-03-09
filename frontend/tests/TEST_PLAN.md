@@ -7,7 +7,7 @@ Pearl frontend has **577 files** tracked by Jest coverage, nearly all at 0% (onl
 ## Coverage scope
 
 `jest.config.ts` collects from **all** `.ts/.tsx` files, excluding only:
-- `*.d.ts`, `*.test.*`, `tests/`, `.next/`, `node_modules/`, `jest.config.ts`, `jest.setup.ts`, `next.config.mjs`
+- `*.d.ts`, `*.test.*`, `tests/`, `.next/`, `node_modules/`, `jest.config.ts`, `jest.setup.ts`
 
 ## File categories
 
@@ -89,6 +89,7 @@ Layer 10: Remaining Component UI + Pages (rendering)
 **Observations for later phases:**
 - `constants/providers.ts` calls `setupMulticallAddresses()` at module scope, creating circular deps. Mock `ethers-multicall` (with `Contract`) and/or `constants/providers` in tests that transitively import `@/constants`.
 - Service-related tests that import `config/agents.ts` pull in agent service classes, which need `ethers-multicall` `Contract` mocked.
+- `utils/service.ts` `updateServiceIfNeeded` has complex env_variable diffing logic — mocking `SERVICE_TEMPLATES` and `ServicesService` keeps tests focused.
 
 ---
 
@@ -396,8 +397,6 @@ AutoRunProvider.tsx
 
 **Provider:**
 - `context/AutoRunProvider/AutoRunProvider.tsx` — full provider (374 lines)
-
-**Reference:** See [`frontend/context/AutoRunProvider/docs/auto-run.md`](../../context/AutoRunProvider/docs/auto-run.md) for documented bugs fixed, edge cases, and design decisions.
 
 **Estimated tests:** ~100-120
 

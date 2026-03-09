@@ -12,7 +12,7 @@ const config: Config = {
   testEnvironment: 'jsdom',
   globals: { fetch },
   setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
-  roots: ['<rootDir>/tests'],
+  roots: ['<rootDir>/tests', '<rootDir>'],
   testMatch: ['<rootDir>/tests/**/*.test.{ts,tsx}'],
   collectCoverageFrom: [
     '**/*.{ts,tsx}',
