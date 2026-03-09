@@ -15,7 +15,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [macos-14, macos-14-large]
+        os: [macos-15, macos-15-large]
 
     steps:
       - uses: actions/checkout@v4
@@ -42,7 +42,7 @@ jobs:
       # Set OS_ARCH env
       - name: Set architecture environment variable
         run: |
-          if [ "${{ matrix.os }}" == "macos-14-large" ]; then 
+          if [[ "${{ matrix.os }}" == *-large ]]; then 
             echo "OS_ARCH=x64" >> $GITHUB_ENV; 
           else 
             echo "OS_ARCH=arm64" >> $GITHUB_ENV; 
@@ -105,7 +105,7 @@ jobs:
     strategy:
       matrix:
         env: [production]
-        os: [macos-14, macos-14-large]
+        os: [macos-15, macos-15-large]
 
     steps:
       - uses: actions/checkout@v4
@@ -142,7 +142,7 @@ jobs:
       # Set OS_ARCH env
       - name: Set architecture environment variable
         run: |
-          if [ "${{ matrix.os }}" == "macos-14-large" ]; then 
+          if [[ "${{ matrix.os }}" == *-large ]]; then 
             echo "OS_ARCH=x64" >> $GITHUB_ENV; 
           else 
             echo "OS_ARCH=arm64" >> $GITHUB_ENV; 
@@ -175,7 +175,7 @@ jobs:
       # Set Tendermint download URL based on architecture
       - name: Set Tendermint download URL
         run: |
-          if [ "${{ matrix.os }}" == "macos-14-large" ]; then 
+          if [[ "${{ matrix.os }}" == *-large ]]; then 
             echo "TM_DOWNLOAD_URL=https://github.com/tendermint/tendermint/releases/download/v0.34.19/tendermint_0.34.19_darwin_amd64.tar.gz" >> $GITHUB_ENV
           else 
             echo "TM_DOWNLOAD_URL=https://github.com/tendermint/tendermint/releases/download/v0.34.19/tendermint_0.34.19_darwin_arm64.tar.gz" >> $GITHUB_ENV
