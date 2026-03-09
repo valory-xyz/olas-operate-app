@@ -28,7 +28,7 @@ jobs:
 
   run-release:
     needs: calculate-version
-    uses: ./.github/workflows/release.yml
+    uses: ./.github/workflows/release_mac.yml
     with:
       tag: ${{ needs.calculate-version.outputs.new_tag }}
     secrets: inherit
@@ -48,7 +48,7 @@ jobs:
     secrets: inherit
 
   summary:
-    needs: [calculate-version, run-release, run-release-win]
+    needs: [calculate-version, run-release, run-release-win, run-release-linux]
     runs-on: ubuntu-latest
     steps:
       - name: Create summary
