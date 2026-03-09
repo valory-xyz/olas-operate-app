@@ -12,7 +12,7 @@ jobs:
       # Node.js (for package scripts)
       - uses: actions/setup-node@v4
         with:
-          node-version: "22.12.0"
+          node-version: "22.18"
 
       # Configure Yarn network settings for timeout, retries, and reduced concurrency
       - name: Configure Yarn network settings

@@ -58,7 +58,7 @@
   },
   "engineStrict": true,
   "engines": {
-    "node": ">=22.12.0",
+    "node": ">=22.18",
     "npm": "please-use-yarn",
     "yarn": ">=1.22.0"
   },
@@ -85,7 +85,7 @@
   },
   "version": "1.4.0-rc21",
   "engine": {
-    "node": "22.12.0",
+    "node": "22.18",
     "yarn": ">=1.22.0",
     "npm": "please-use-yarn"
   },
