@@ -1,7 +1,7 @@
 import { EvmChainIdMap } from '../../../constants/chains';
 import { NA } from '../../../constants/symbols';
 import { generateAgentName } from '../../../utils/generateAgentName/generateAgentName';
-import { ALL_EVM_CHAIN_IDS } from '../../mocks/factories';
+import { ALL_EVM_CHAIN_IDS } from '../../helpers/factories';
 
 describe('generateAgentName', () => {
   it('generates suscus-jelfo63 for Base token 194', () => {

@@ -11,7 +11,7 @@ import {
   makeMasterEoa,
   makeMasterSafe,
   makeMultisigOwners,
-} from '../mocks/factories';
+} from '../helpers/factories';
 
 const masterEoa = makeMasterEoa();
 

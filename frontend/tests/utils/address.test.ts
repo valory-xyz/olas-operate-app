@@ -1,5 +1,5 @@
 import { areAddressesEqual } from '../../utils/address';
-import { BACKUP_SIGNER_ADDRESS, DEFAULT_EOA_ADDRESS } from '../mocks/factories';
+import { BACKUP_SIGNER_ADDRESS, DEFAULT_EOA_ADDRESS } from '../helpers/factories';
 
 describe('areAddressesEqual', () => {
   it('returns true for identical addresses', () => {

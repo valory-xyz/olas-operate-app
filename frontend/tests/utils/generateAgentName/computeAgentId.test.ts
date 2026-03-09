@@ -1,6 +1,6 @@
 import { EvmChainIdMap } from '../../../constants/chains';
 import { computeAgentId } from '../../../utils/generateAgentName/computeAgentId';
-import { ALL_EVM_CHAIN_IDS, INVALID_CHAIN_ID } from '../../mocks/factories';
+import { ALL_EVM_CHAIN_IDS, INVALID_CHAIN_ID } from '../../helpers/factories';
 
 describe('computeAgentId', () => {
   it('returns a bytes32 hex string (66 chars with 0x prefix)', () => {
