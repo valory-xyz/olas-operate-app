@@ -13,7 +13,7 @@ import {
   asMiddlewareChain,
   getTokenDetailsFromAddress,
 } from '../../utils/middlewareHelpers';
-import { INVALID_CHAIN_ID, UNKNOWN_TOKEN_ADDRESS } from '../mocks/factories';
+import { INVALID_CHAIN_ID, UNKNOWN_TOKEN_ADDRESS } from '../helpers/factories';
 
 describe('asEvmChainId', () => {
   it('converts gnosis to 100', () => {

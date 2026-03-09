@@ -7,7 +7,7 @@ Pearl frontend has **577 files** tracked by Jest coverage, nearly all at 0% (onl
 ## Coverage scope
 
 `jest.config.ts` collects from **all** `.ts/.tsx` files, excluding only:
-- `*.d.ts`, `*.test.*`, `tests/`, `.next/`, `node_modules/`, `jest.config.ts`, `jest.setup.ts`
+- `*.d.ts`, `*.test.*`, `tests/`, `.next/`, `node_modules/`, `jest.config.ts`, `jest.setup.ts`, `next.config.mjs`
 
 ## File categories
 
@@ -47,14 +47,14 @@ Layer 10: Remaining Component UI + Pages (rendering)
 
 ---
 
-## Phase 0 — Shared Utilities & Config (~22 files) `[EASY]` ✅ COMPLETE
+## Phase 0 — Shared Utilities & Config `[EASY]` ✅ COMPLETE
 
 **Goal:** Cover all pure generic functions. Establishes test patterns.
 
 **Result:** 22 test files, 230 tests, all passing, 0 lint errors.
 
-**Shared test infrastructure in `tests/mocks/`:**
-- `mocks/factories.ts` — factories (`makeMasterEoa`, `makeMasterSafe`, `makeMultisigOwners`), address constants (`DEFAULT_EOA_ADDRESS`, `DEFAULT_SAFE_ADDRESS`, `BACKUP_SIGNER_ADDRESS`, `BACKUP_SIGNER_ADDRESS_2`), and sentinels (`INVALID_CHAIN_ID`, `UNKNOWN_TOKEN_ADDRESS`, `ALL_EVM_CHAIN_IDS`). All phases should use these instead of inline `as any` casts or short placeholder addresses.
+**Shared test infrastructure:**
+- `helpers/factories.ts` — factories (`makeMasterEoa`, `makeMasterSafe`, `makeMultisigOwners`), address constants (`DEFAULT_EOA_ADDRESS`, `DEFAULT_SAFE_ADDRESS`, `BACKUP_SIGNER_ADDRESS`, `BACKUP_SIGNER_ADDRESS_2`), and sentinels (`INVALID_CHAIN_ID`, `UNKNOWN_TOKEN_ADDRESS`, `ALL_EVM_CHAIN_IDS`). All phases should use these instead of inline `as any` casts or short placeholder addresses.
 - `mocks/ethersMulticall.ts` — shared `ethers-multicall` module mock (used via `jest.mock` + `require`).
 - `mocks/servicesService.ts` — shared `ServicesService` module mock (used via `jest.mock` + `require`).
 
@@ -90,10 +90,9 @@ Layer 10: Remaining Component UI + Pages (rendering)
 - `constants/providers.ts` calls `setupMulticallAddresses()` at module scope, creating circular deps. Mock `ethers-multicall` (with `Contract`) and/or `constants/providers` in tests that transitively import `@/constants`.
 - Service-related tests that import `config/agents.ts` pull in agent service classes, which need `ethers-multicall` `Contract` mocked.
 - `utils/service.ts` `updateServiceIfNeeded` has complex env_variable diffing logic — mocking `SERVICE_TEMPLATES` and `ServicesService` keeps tests focused.
-
 ---
 
-## Phase 1 — App Infrastructure (~20 files) `[EASY-MEDIUM]`
+## Phase 1 — App Infrastructure `[EASY-MEDIUM]`
 
 **Goal:** Cover infrastructure hooks/providers and main page hooks that everything else depends on.
 
@@ -125,11 +124,9 @@ Layer 10: Remaining Component UI + Pages (rendering)
 **MainPage hooks (app-level concerns):**
 - `components/MainPage/hooks/` — notifications, epoch, scroll, tray icon logic
 
-**Estimated tests:** ~40-55
-
 ---
 
-## Phase 2 — Account & Wallet Management (~19 files) `[MEDIUM]`
+## Phase 2 — Account & Wallet Management `[MEDIUM]`
 
 **Goal:** Cover account lifecycle, wallet operations, and recovery — including related components.
 
@@ -160,11 +157,9 @@ Layer 10: Remaining Component UI + Pages (rendering)
 - `components/AgentWallet/` — wallet display, fund agent, withdraw
 - `components/PearlWallet/` — wallet withdraw flow
 
-**Estimated tests:** ~70-90
-
 ---
 
-## Phase 3 — Balance & Services (~16 files) `[MEDIUM-HARD]`
+## Phase 3 — Balance & Services `[MEDIUM-HARD]`
 
 **Goal:** Cover the two core data providers that almost every feature depends on.
 
@@ -188,11 +183,9 @@ Layer 10: Remaining Component UI + Pages (rendering)
 - `hooks/useIsInitiallyFunded.ts` — initial funding flag
 - `hooks/useIsAgentGeoRestricted.ts` — geo restrictions
 
-**Estimated tests:** ~80-100
-
 ---
 
-## Phase 4 — Staking & Rewards (~28 files) `[HARD]`
+## Phase 4 — Staking & Rewards `[HARD]`
 
 **Goal:** Cover the staking system — programs, contracts, eligibility, rewards — including staking-related components.
 
@@ -244,11 +237,9 @@ StakedAgentService (abstract base)
 - `components/SelectStakingPage/hooks/useCanMigrate.ts` — migration eligibility hook
 - `components/SelectStakingPage/hooks/useStakingDetails.ts` — staking details hook
 
-**Estimated tests:** ~110-130
-
 ---
 
-## Phase 5 — Funding & Refill Requirements (~10 files) `[MEDIUM-HARD]`
+## Phase 5 — Funding & Refill Requirements `[MEDIUM-HARD]`
 
 **Goal:** Cover the funding logic — what tokens are needed, how much, and where — including setup funding components.
 
@@ -264,11 +255,9 @@ StakedAgentService (abstract base)
 **Funding components:**
 - `components/SetupPage/FundYourAgent/hooks/` — funding setup hooks
 
-**Estimated tests:** ~55-75
-
 ---
 
-## Phase 6 — Bridging & On-ramping (~25 files) `[MEDIUM-HARD]`
+## Phase 6 — Bridging & On-ramping `[MEDIUM-HARD]`
 
 **Goal:** Cover the cross-chain and fiat-to-crypto flows — hooks, services, context, AND components together.
 
@@ -311,11 +300,9 @@ StakedAgentService (abstract base)
 - `components/PearlDeposit/SelectPaymentMethod/OnRampCryptoOn.tsx` — on-ramp option
 - `components/PearlDeposit/SelectPaymentMethod/TransferCryptoOn.tsx` — transfer option
 
-**Estimated tests:** ~70-90
-
 ---
 
-## Phase 7 — Deployability & Service Lifecycle (~12 files) `[HARD]`
+## Phase 7 — Deployability & Service Lifecycle `[HARD]`
 
 **Goal:** Cover the deployment decision tree, service start/stop orchestration, agent updates, and achievements — including related components.
 
@@ -334,11 +321,9 @@ StakedAgentService (abstract base)
 - `components/UpdateAgentPage/hooks/` — update logic
 - `components/UpdateAgentPage/context/` — update context provider
 
-**Estimated tests:** ~70-90
-
 ---
 
-## Phase 8 — Auto-run System (~18 files) `[VERY HARD]`
+## Phase 8 — Auto-run System `[VERY HARD]`
 
 **Goal:** Cover the most complex subsystem — agent rotation, scanning, eligibility, signals, lifecycle.
 
@@ -398,11 +383,11 @@ AutoRunProvider.tsx
 **Provider:**
 - `context/AutoRunProvider/AutoRunProvider.tsx` — full provider (374 lines)
 
-**Estimated tests:** ~100-120
+**Reference:** See [`frontend/context/AutoRunProvider/docs/auto-run.md`](../../context/AutoRunProvider/docs/auto-run.md) for documented bugs fixed, edge cases, and design decisions.
 
 ---
 
-## Phase 9 — Static Data & Pure Types (~55 files) `[EASY]`
+## Phase 9 — Static Data & Pure Types `[EASY]`
 
 **Goal:** Cover constants, types, and ABIs. These are mostly pure data — tests validate structure and completeness.
 
@@ -430,11 +415,9 @@ AutoRunProvider.tsx
 
 **Note:** These files contain no logic — tests verify exports exist, data shapes are correct, and no accidental breakage of config values.
 
-**Estimated tests:** ~30-50
-
 ---
 
-## Phase 10 — Remaining Component UI & Pages (~50 files) `[MEDIUM]`
+## Phase 10 — Remaining Component UI & Pages `[MEDIUM]`
 
 **Goal:** Cover remaining component rendering and page-level behavior not already covered by feature phases. Focus on business logic in render paths, not DOM structure.
 
@@ -458,26 +441,23 @@ AutoRunProvider.tsx
 - `pages/onramp.tsx` — on-ramp page
 - `pages/web3auth.tsx`, `pages/web3auth-swap-owner.tsx` — web3auth pages
 
-**Estimated tests:** ~60-80
-
 ---
 
 ## Summary
 
-| Phase | Feature Domain | Files | Difficulty | Est. Tests | PR |
-|-------|---------------|-------|------------|------------|-----|
-| 0 | Shared Utilities & Config | ~20 | EASY | 80-120 | PR #1 |
-| 1 | App Infrastructure | ~20 | EASY-MEDIUM | 40-55 | PR #2 |
-| 2 | Account & Wallet | ~19 | MEDIUM | 60-80 | PR #3 |
-| 3 | Balance & Services | ~16 | MEDIUM-HARD | 80-100 | PR #4 |
-| 4 | Staking & Rewards | ~28 | HARD | 100-120 | PR #5 |
-| 5 | Funding & Refill | ~10 | MEDIUM-HARD | 55-75 | PR #6 |
-| 6 | Bridging & On-ramping | ~25 | MEDIUM-HARD | 70-90 | PR #7 |
-| 7 | Deployability & Lifecycle | ~12 | HARD | 70-90 | PR #8 |
-| 8 | Auto-run System | ~18 | VERY HARD | 100-120 | PR #9 |
-| 9 | Static Data & Pure Types | ~55 | EASY | 30-50 | PR #10 |
-| 10 | Remaining Component UI & Pages | ~50 | MEDIUM | 60-80 | PR #11 |
-| **Total** | | **~273** | | **~745-980** |  |
+| Phase | Feature Domain | Difficulty |
+|-------|---------------|------------|
+| 0 | Shared Utilities & Config | EASY |
+| 1 | App Infrastructure | EASY-MEDIUM |
+| 2 | Account & Wallet | MEDIUM |
+| 3 | Balance & Services | MEDIUM-HARD |
+| 4 | Staking & Rewards | HARD |
+| 5 | Funding & Refill | MEDIUM-HARD |
+| 6 | Bridging & On-ramping | MEDIUM-HARD |
+| 7 | Deployability & Lifecycle | HARD |
+| 8 | Auto-run System | VERY HARD |
+| 9 | Static Data & Pure Types | EASY |
+| 10 | Remaining Component UI & Pages | MEDIUM |
 
 ## Workflow per phase
 

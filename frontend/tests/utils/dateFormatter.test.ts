@@ -25,4 +25,17 @@ describe('formatDate', () => {
     const timestamp = Date.UTC(2024, 11, 31, 0, 0, 0);
     expect(formatDate(timestamp)).toBe(expectedFormat(timestamp));
   });
+
+  it('returns null for negative zero', () => {
+    expect(formatDate(-0)).toBeNull();
+  });
+
+  it('throws on NaN', () => {
+    expect(() => formatDate(NaN)).toThrow();
+  });
+
+  it('formats negative timestamps (pre-epoch)', () => {
+    const timestamp = -1000;
+    expect(formatDate(timestamp)).toBe(expectedFormat(timestamp));
+  });
 });
