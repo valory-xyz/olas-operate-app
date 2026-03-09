@@ -29,10 +29,10 @@ npm install --global yarn
 
 ## 5. Python
 
-Use Python 3.10 for the project.
+Use Python 3.14 for the project.
 
 ```bash
-sudo apt install python3.10
+sudo apt install python3.14
 ```
 
 ## 6. Pipx

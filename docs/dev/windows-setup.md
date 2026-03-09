@@ -42,18 +42,18 @@ Yarn is the package manager used for dependency management of the Electron app a
 npm install --global yarn
 ```
 
-## 5. Python 3.10
+## 5. Python 3.14
 
 ```powershell
 # run as administrator
-choco install python3.10
+choco install python3.14
 ```
 
 ## 6. Pipx
 
 ```powershell
 # run as administrator
-python3.10 -m pip install pipx
+python3.14 -m pip install pipx
 ```
 
 ## 7. Poetry
