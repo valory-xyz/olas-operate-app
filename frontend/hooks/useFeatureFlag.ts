@@ -7,10 +7,8 @@ import { useServices } from './useServices';
 
 const FeatureFlagsSchema = z.enum([
   'withdraw-funds', // Enables withdrawing funds from the wallet (Manage Wallet → Withdraw)
-  'staking-contract-section', // Shows the staking contract section and related management UI
   'backup-via-safe', // Enables wallet backup via Safe (alerts and settings)
   'bridge-onboarding', // Enables the bridge funds flow during setup
-  'bridge-add-funds', // Enables the bridge funds flow in low-balance alerts when agents require a refill
   'on-ramp', // Enables the fiat on-ramp (buy crypto) flow/screens
 ]);
 type FeatureFlags = z.infer<typeof FeatureFlagsSchema>;
@@ -28,50 +26,38 @@ const FeaturesConfigSchema = z.record(
 const FEATURES_CONFIG = FeaturesConfigSchema.parse({
   [AgentMap.PredictTrader]: {
     'withdraw-funds': true,
-    'staking-contract-section': true,
     'backup-via-safe': true,
     'bridge-onboarding': true,
-    'bridge-add-funds': true,
     'on-ramp': true,
   },
   [AgentMap.Polystrat]: {
     'withdraw-funds': true,
-    'staking-contract-section': true,
     'backup-via-safe': true,
     'bridge-onboarding': true,
-    'bridge-add-funds': true,
     'on-ramp': true,
   },
   [AgentMap.AgentsFun]: {
     'withdraw-funds': true,
-    'staking-contract-section': true,
     'backup-via-safe': true,
     'bridge-onboarding': true,
-    'bridge-add-funds': false,
     'on-ramp': true,
   },
   [AgentMap.Modius]: {
     'withdraw-funds': true,
-    'staking-contract-section': true,
     'backup-via-safe': false, // temporarily hidden until mode is available on safe https://app.safe.global/new-safe/create
     'bridge-onboarding': true,
-    'bridge-add-funds': true,
     'on-ramp': true,
   },
   [AgentMap.Optimus]: {
     'withdraw-funds': true,
-    'staking-contract-section': true,
     'backup-via-safe': true,
     'bridge-onboarding': true,
-    'bridge-add-funds': true,
     'on-ramp': true,
   },
   [AgentMap.PettAi]: {
     'withdraw-funds': true,
-    'staking-contract-section': false,
     'backup-via-safe': true,
     'bridge-onboarding': true,
-    'bridge-add-funds': false,
     'on-ramp': true,
   },
 });

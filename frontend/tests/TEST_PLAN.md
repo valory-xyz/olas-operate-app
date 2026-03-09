@@ -93,7 +93,7 @@ Layer 10: Remaining Component UI + Pages (rendering)
 
 ---
 
-## Phase 1 — App Infrastructure (~22 files) `[EASY-MEDIUM]`
+## Phase 1 — App Infrastructure (~20 files) `[EASY-MEDIUM]`
 
 **Goal:** Cover infrastructure hooks/providers and main page hooks that everything else depends on.
 
@@ -104,8 +104,6 @@ Layer 10: Remaining Component UI + Pages (rendering)
 - `hooks/usePageState.ts`
 - `hooks/useSettings.ts`
 - `hooks/useServices.ts`
-- `hooks/useWallet.ts`
-- `hooks/useRewardContext.ts`
 - `hooks/useSharedContext.ts`
 
 **Providers:**
@@ -131,7 +129,7 @@ Layer 10: Remaining Component UI + Pages (rendering)
 
 ---
 
-## Phase 2 — Account & Wallet Management (~18 files) `[MEDIUM]`
+## Phase 2 — Account & Wallet Management (~19 files) `[MEDIUM]`
 
 **Goal:** Cover account lifecycle, wallet operations, and recovery — including related components.
 
@@ -146,6 +144,7 @@ Layer 10: Remaining Component UI + Pages (rendering)
 - `service/Recovery.ts` — recovery operations
 
 **Wallet:**
+- `hooks/useWallet.ts` — wallet context accessor
 - `utils/wallet.ts` — wallet helpers
 - `service/Wallet.ts` — EOA/Safe creation, mnemonic
 - `context/MasterWalletProvider.tsx` — master wallet state
@@ -193,7 +192,7 @@ Layer 10: Remaining Component UI + Pages (rendering)
 
 ---
 
-## Phase 4 — Staking & Rewards (~27 files) `[HARD]`
+## Phase 4 — Staking & Rewards (~28 files) `[HARD]`
 
 **Goal:** Cover the staking system — programs, contracts, eligibility, rewards — including staking-related components.
 
@@ -215,6 +214,7 @@ Layer 10: Remaining Component UI + Pages (rendering)
 - `context/StakingContractDetailsProvider.tsx` — staking details context
 
 **Rewards:**
+- `hooks/useRewardContext.ts` — reward context accessor
 - `hooks/useRewardsHistory.ts` — GraphQL subgraph query + epoch grouping
 - `context/RewardProvider.tsx` — rewards state + optimistic calculation
 
@@ -467,10 +467,10 @@ AutoRunProvider.tsx
 | Phase | Feature Domain | Files | Difficulty | Est. Tests | PR |
 |-------|---------------|-------|------------|------------|-----|
 | 0 | Shared Utilities & Config | ~20 | EASY | 80-120 | PR #1 |
-| 1 | App Infrastructure | ~22 | EASY-MEDIUM | 40-55 | PR #2 |
-| 2 | Account & Wallet | ~18 | MEDIUM | 60-80 | PR #3 |
+| 1 | App Infrastructure | ~20 | EASY-MEDIUM | 40-55 | PR #2 |
+| 2 | Account & Wallet | ~19 | MEDIUM | 60-80 | PR #3 |
 | 3 | Balance & Services | ~16 | MEDIUM-HARD | 80-100 | PR #4 |
-| 4 | Staking & Rewards | ~27 | HARD | 100-120 | PR #5 |
+| 4 | Staking & Rewards | ~28 | HARD | 100-120 | PR #5 |
 | 5 | Funding & Refill | ~10 | MEDIUM-HARD | 55-75 | PR #6 |
 | 6 | Bridging & On-ramping | ~25 | MEDIUM-HARD | 70-90 | PR #7 |
 | 7 | Deployability & Lifecycle | ~12 | HARD | 70-90 | PR #8 |
