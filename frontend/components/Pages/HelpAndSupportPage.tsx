@@ -1,5 +1,4 @@
 import { Button, Card, Flex, Typography } from 'antd';
-import { compact } from 'lodash';
 import { useMemo } from 'react';
 import { FiArrowUpRight, FiExternalLink } from 'react-icons/fi';
 
@@ -28,28 +27,27 @@ export const HelpAndSupport = () => {
   const { goto } = usePageState();
 
   const helpItems: HelpItem[] = useMemo(
-    () =>
-      compact([
-        {
-          label: 'Release notes',
-          onClick: () => goto(PAGES.ReleaseNotes),
-          hideIcon: true,
-        },
-        {
-          label: `Olas DAO's Discord server`,
-          href: SUPPORT_URL,
-          isExternal: true,
-        },
-        {
-          label: 'Frequently asked questions',
-          href: FAQ_URL,
-          isExternal: false,
-        },
-        {
-          label: 'Pearl Terms',
-          onClick: () => termsAndConditionsWindow?.show?.(),
-        },
-      ]),
+    () => [
+      {
+        label: 'Release notes',
+        onClick: () => goto(PAGES.ReleaseNotes),
+        hideIcon: true,
+      },
+      {
+        label: `Olas DAO's Discord server`,
+        href: SUPPORT_URL,
+        isExternal: true,
+      },
+      {
+        label: 'Frequently asked questions',
+        href: FAQ_URL,
+        isExternal: false,
+      },
+      {
+        label: 'Pearl Terms',
+        onClick: () => termsAndConditionsWindow?.show?.(),
+      },
+    ],
     [goto, termsAndConditionsWindow],
   );
 
