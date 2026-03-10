@@ -33,21 +33,9 @@ ServicesService (middleware API)
 
 ## Contract / schema
 
-### Middleware API endpoints
+### Middleware API (`ServicesService`)
 
-| Method | Endpoint | Frontend caller |
-|--------|----------|-----------------|
-| `GET` | `/api/v2/services` | `getServices()` |
-| `GET` | `/api/v2/services/validate` | `getServicesValidationStatus()` |
-| `GET` | `/api/v2/services/deployment` | `getAllServiceDeployments()` |
-| `GET` | `/api/v2/service/{id}` | `getService(id)` |
-| `GET` | `/api/v2/service/{id}/deployment` | `getDeployment(id)` |
-| `GET` | `/api/v2/service/{id}/agent_performance` | `getAgentPerformance(id)` |
-| `POST` | `/api/v2/service` | `createService()` |
-| `PATCH` | `/api/v2/service/{id}` | `updateService()` |
-| `POST` | `/api/v2/service/{id}` | `startService()` |
-| `POST` | `/api/v2/service/{id}/deployment/stop` | `stopDeployment()` |
-| `POST` | `/api/v2/service/{id}/terminate_and_withdraw` | `withdrawBalance()` |
+Methods: `getServices`, `getServicesValidationStatus`, `getAllServiceDeployments`, `getService`, `getDeployment`, `getAgentPerformance`, `createService`, `updateService`, `startService`, `stopDeployment`, `withdrawBalance`. See [middleware API docs](https://github.com/valory-xyz/olas-operate-middleware/blob/main/docs/api.md) for endpoint details.
 
 ### Service object (middleware response)
 
@@ -177,62 +165,15 @@ Middleware status codes: 1 (not deployed), 3 (deployed/running), 5 (stopped).
 
 ### Frontend deployment status enum
 
-The frontend defines a richer set of statuses than the middleware docs expose:
-
-```typescript
-const MiddlewareDeploymentStatusMap = {
-  CREATED: 0,
-  BUILT: 1,
-  DEPLOYING: 2,
-  DEPLOYED: 3,
-  STOPPING: 4,
-  STOPPED: 5,
-  DELETED: 6,
-} as const;
-
-// Predicates
-isActiveDeploymentStatus(status)       // DEPLOYED | DEPLOYING | STOPPING
-isTransitioningDeploymentStatus(status) // DEPLOYING | STOPPING
-```
+`MiddlewareDeploymentStatusMap` in `frontend/constants/deployment.ts` defines statuses: CREATED (0), BUILT (1), DEPLOYING (2), DEPLOYED (3), STOPPING (4), STOPPED (5), DELETED (6). Predicate helpers `isActiveDeploymentStatus` (DEPLOYED | DEPLOYING | STOPPING) and `isTransitioningDeploymentStatus` (DEPLOYING | STOPPING) are in the same file.
 
 ### Wallet types extracted from services
 
-```typescript
-type AgentEoa = { address: Address; type: 'eoa'; owner: 'agent' };
-type AgentSafe = { address: Address; type: 'multisig'; owner: 'agent'; evmChainId: EvmChainId };
-type AgentWallet = AgentEoa | AgentSafe;
-```
+`AgentEoa`, `AgentSafe`, `AgentWallet` — defined in `frontend/constants/wallet.ts`.
 
 ### ServicesProvider context shape
 
-```typescript
-type ServicesContextType = {
-  services?: MiddlewareServiceResponse[];
-  serviceWallets?: AgentWallet[];
-  availableServiceConfigIds: Array<{ configId: string; chainId: EvmChainId; tokenId?: number }>;
-  selectedService?: Service;              // Service with deploymentStatus override
-  deploymentDetails?: ServiceDeployment;
-  selectedAgentType: AgentType;
-  selectedAgentConfig: AgentConfig;
-  selectedAgentName: Nullable<string>;
-  selectedAgentNameOrFallback: string;
-  serviceStatusOverrides?: Record<string, Maybe<MiddlewareDeploymentStatus>>;
-  isSelectedServiceDeploymentStatusLoading: boolean;
-
-  getServiceConfigIdsOf(chainId: EvmChainId): string[];
-  getAgentTypeFromService(serviceConfigId?: string): Nullable<AgentType>;
-  getServiceConfigIdFromAgentType(agentType: AgentType): Nullable<string>;
-  updateAgentType(agentType: AgentType): void;
-  overrideSelectedServiceStatus(status?: MiddlewareDeploymentStatus): void;
-
-  isLoading?: boolean;
-  isFetched?: boolean;
-  refetch?: () => void;
-  paused: boolean;
-  setPaused: (paused: boolean) => void;
-  togglePaused: () => void;
-};
-```
+Defined as `ServicesContextType` in `frontend/context/ServicesProvider.tsx`.
 
 ## Runtime behavior
 

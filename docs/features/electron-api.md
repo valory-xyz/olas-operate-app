@@ -44,16 +44,7 @@ The store schema (keys, types, defaults, per-agent settings) is defined in `elec
 
 **Layer 1 — Direct store operations** (via `ElectronApiProvider`):
 
-```typescript
-const { store } = useElectronApi();
-const allData = await store.store();                              // get entire store snapshot
-const agentType = await store.get('lastSelectedAgentType');       // get single value
-await store.set('updateAvailableKnownVersion', 'v1.4.4');        // set value
-await store.delete('isInitialFunded');                            // delete key
-await store.clear();                                             // clear all
-```
-
-These are Promise-based — each invokes an IPC handler (`store-get`, `store-set`, `store-delete`, `store-clear`) on the main process.
+Access via `useElectronApi().store` — provides `store()` (full snapshot), `get(key)`, `set(key, value)`, `delete(key)`, `clear()`. All are Promise-based, each invoking an IPC handler (`store-get`, `store-set`, `store-delete`, `store-clear`) on the main process.
 
 **Layer 2 — Reactive store state** (via `StoreProvider`):
 

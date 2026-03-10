@@ -13,37 +13,15 @@ Dynamic polling scales React Query refetch intervals based on window visibility.
 
 ### Window states
 
-```typescript
-type WindowState = 'focused' | 'visible' | 'hidden';
-```
-
-- `focused` — user is actively interacting (window has focus)
-- `visible` — window is on screen but not focused (e.g., behind another window)
-- `hidden` — minimized or tab switched away (`document.hidden === true`)
+`WindowState` type in `frontend/hooks/useDynamicRefetchInterval.ts`: `'focused'` (user actively interacting), `'visible'` (on screen but unfocused), `'hidden'` (minimized or tab switched, `document.hidden === true`).
 
 ### Multipliers
 
-```typescript
-const INTERVAL_MULTIPLIERS = {
-  focused: 1,   // normal rate
-  visible: 3,   // 3x slower
-  hidden: 10,   // 10x slower
-};
-```
-
-A 5-second base interval becomes 5s (focused), 15s (visible), or 50s (hidden).
+`INTERVAL_MULTIPLIERS` in `frontend/hooks/useDynamicRefetchInterval.ts`: `focused: 1` (normal rate), `visible: 3` (3x slower), `hidden: 10` (10x slower). A 5-second base interval becomes 5s, 15s, or 50s.
 
 ### Input types
 
-```typescript
-type AdaptiveInterval =
-  | number                                              // static interval in ms
-  | false                                               // polling disabled
-  | undefined                                           // polling disabled
-  | ((...args: unknown[]) => number | false | undefined); // function-style (React Query pattern)
-```
-
-The hook preserves the input type — `useDynamicRefetchInterval(5000)` returns a `number`, `useDynamicRefetchInterval(fn)` returns a function with the same signature.
+`AdaptiveInterval` type in `frontend/hooks/useDynamicRefetchInterval.ts` — accepts `number`, `false`, `undefined`, or a function returning those. The hook preserves the input type — `useDynamicRefetchInterval(5000)` returns a `number`, `useDynamicRefetchInterval(fn)` returns a function with the same signature.
 
 ## Runtime behavior
 
@@ -71,17 +49,7 @@ The function-style case is used when React Query's `refetchInterval` callback ne
 
 ### Integration pattern
 
-Consumers wrap their base interval before passing to React Query:
-
-```typescript
-const refetchInterval = useDynamicRefetchInterval(FIVE_SECONDS_INTERVAL);
-
-const { data } = useQuery({
-  queryKey: ['services'],
-  queryFn: fetchSomething,
-  refetchInterval,  // 5s, 15s, or 50s depending on window state
-});
-```
+Consumers wrap their base interval with `useDynamicRefetchInterval()` before passing to React Query's `refetchInterval` option. The resulting interval scales automatically based on window state.
 
 ### Consumers
 
@@ -91,7 +59,7 @@ Used across polling-heavy providers and hooks: `ServicesProvider`, `StakingContr
 
 | Condition | Behavior |
 |---|---|
-| SSR (no `document`/`window`) | `useWindowVisibility` will throw — it accesses `document.hidden` and `document.hasFocus()` directly without SSR guards |
+| SSR (no `document`/`window`) | Safe during SSR render — `document`/`window` accesses are inside `useEffect`, which does not run during SSR. Will only execute client-side. |
 | `false` or `undefined` input | Returned as-is — no multiplication, polling stays disabled |
 | Function input returns `false`/`undefined` | Wrapper passes through without multiplication — polling stays disabled for that cycle |
 | Window regains focus after being hidden | State transitions back to `'focused'`, multiplier drops to 1 on next `useMemo` recomputation |
@@ -100,7 +68,7 @@ Used across polling-heavy providers and hooks: `ServicesProvider`, `StakingContr
 
 - **`useWindowVisibility` is internal** (not exported) — it can only be tested through `useDynamicRefetchInterval` or by testing event dispatch effects on the returned interval.
 - **Event simulation:** Tests need to dispatch `visibilitychange`, `focus`, and `blur` events on `document`/`window`. `document.hidden` and `document.hasFocus()` may need to be mocked since jsdom doesn't fully support them.
-- **No SSR guard:** Unlike `ElectronApiProvider`, this hook does not check `typeof window === 'undefined'`. In jsdom (Jest default), this is fine since `document` and `window` exist.
+- **SSR-safe:** All `document`/`window` accesses are inside `useEffect`, so no SSR guard is needed. In jsdom (Jest default), `document` and `window` exist natively.
 - **Multiplier is deterministic:** Given a window state and input, the output is always `input * multiplier`. No randomness, no async, no side effects beyond event listeners.
 - **Function-style input:** When testing the function wrapper case, call the returned function and verify it multiplies numeric results but passes through `false`/`undefined` unchanged.
 - **Cleanup:** The hook removes all three event listeners on unmount — testable by unmounting the hook and verifying listeners are removed or events no longer change the interval.

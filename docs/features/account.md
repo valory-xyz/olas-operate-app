@@ -27,12 +27,7 @@ Account (password-protected)
 
 ### Account API (`AccountService`)
 
-| Method | HTTP | Endpoint | Body | Returns |
-|---|---|---|---|---|
-| `getAccount` | GET | `/account` | — | `{ is_setup: boolean }` |
-| `createAccount` | POST | `/account` | `{ password }` | Account object |
-| `updateAccount` | PUT | `/account` | `{ old_password, new_password }` | Account object |
-| `loginAccount` | POST | `/account/login` | `{ password }` | Account object |
+Methods: `getAccount`, `createAccount`, `updateAccount`, `loginAccount`. See [middleware API docs](https://github.com/valory-xyz/olas-operate-middleware/blob/main/docs/api.md) for endpoint details.
 
 All use `CONTENT_TYPE_JSON_UTF8` headers. Non-ok responses throw via `parseApiError` (except `getAccount` which throws a generic error). `parseApiError` parses the response body as JSON and reads `error` or `message` (preferring `error`), falling back to its `fallbackMessage` argument if neither is present or if JSON parsing fails. Backend typically returns `{ "error": "..." }` with HTTP 400/401/404/409.
 
@@ -73,15 +68,9 @@ Example: `updateAccount` request:
 
 ### Recovery API (`RecoveryService`)
 
-| Method | HTTP | Endpoint | Body | Returns |
-|---|---|---|---|---|
-| `getRecoveryStatus` | GET | `/wallet/recovery/status` | — | `RecoveryStatus` |
-| `getExtendedWallet` | GET | `/wallet/extended` | — | `ExtendedWallet[]` |
-| `getRecoveryFundingRequirements` | GET | `/wallet/recovery/funding_requirements` | — | `RecoveryFundingRequirements` |
-| `prepareRecovery` | POST | `/wallet/recovery/prepare` | `{ new_password }` | `RecoveryPrepareProcess` |
-| `completeRecovery` | POST | `/wallet/recovery/complete` | — | `{ success: boolean }` |
+Methods: `getRecoveryStatus`, `getExtendedWallet`, `getRecoveryFundingRequirements`, `prepareRecovery`, `completeRecovery`. See [middleware API docs](https://github.com/valory-xyz/olas-operate-middleware/blob/main/docs/api.md) for endpoint details.
 
-All accept optional `AbortSignal`.
+All accept optional `AbortSignal`. The backend response for `getRecoveryStatus` includes additional fields (`num_safes`, `num_safes_with_new_wallet`, `num_safes_with_old_wallet`, etc.) that the frontend does not type or consume.
 
 Example: `getRecoveryStatus` response (only fields used by frontend `RecoveryStatus` type):
 ```json
@@ -92,8 +81,6 @@ Example: `getRecoveryStatus` response (only fields used by frontend `RecoverySta
   "has_pending_swaps": true
 }
 ```
-
-Note: The backend response includes additional fields (`num_safes`, `num_safes_with_new_wallet`, `num_safes_with_old_wallet`, etc.) that the frontend does not type or consume.
 
 Example: `prepareRecovery` request/response:
 
@@ -170,44 +157,11 @@ Example: `getExtendedWallet` response:
 
 ### Recovery types
 
-```typescript
-type RecoveryStatus = {
-  prepared: boolean;
-  bundle_id: string;
-  has_swaps: boolean;        // must complete recovery before login
-  has_pending_swaps: boolean;
-};
-
-type RecoveryPrepareProcess = {
-  id: string;                // bundle id
-  wallets: [{
-    current_wallet: RecoveryWallet;  // old master EOA
-    new_wallet: RecoveryWallet;      // new master EOA
-    new_mnemonic: string[];
-  }];
-};
-
-type RecoveryFundingRequirements = {
-  balances: ChainAddressTokenBalances;
-  total_requirements: ChainAddressTokenBalances;
-  refill_requirements: ChainAddressTokenBalances;
-  is_refill_required: boolean;
-  pending_backup_owner_swaps: Record<SupportedMiddlewareChain, Address[]>;
-};
-```
+Defined in `frontend/types/Recovery.ts`: `RecoveryStatus`, `RecoveryPrepareProcess`, `RecoveryFundingRequirements`. Key field: `has_swaps` on `RecoveryStatus` — when true, login is blocked until recovery is completed.
 
 ### Setup state
 
-```typescript
-type SetupObjectType = {
-  state: SetupScreen;           // current screen (enum from constants)
-  prevState: Maybe<SetupScreen>; // previous screen (for back navigation)
-  backupSigner?: {
-    address: Address;
-    type: BackupWalletType;
-  };
-};
-```
+Defined as `SetupObjectType` in `frontend/context/SetupProvider.tsx`. Tracks current screen, previous screen (for back navigation), and optional backup signer.
 
 Initial state: `{ state: SETUP_SCREEN.Welcome, prevState: null, backupSigner: undefined }`.
 

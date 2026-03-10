@@ -27,13 +27,7 @@ Master EOA (single, derived from mnemonic)
 
 ### Wallet API (`WalletService`)
 
-| Method | HTTP | Endpoint | Body | Returns |
-|---|---|---|---|---|
-| `getWallets` | GET | `/wallet` | — | `MiddlewareWalletResponse[]` |
-| `createEoa` | POST | `/wallet` | `{ ledger_type: 'ethereum' }` | `{ wallet, mnemonic }` (`mnemonic` is `null` if wallet already exists) |
-| `createSafe` | POST | `/wallet/safe` | `{ chain, backup_owner?, transfer_excess_assets: true }` | `SafeCreationResponse` |
-| `updateSafeBackupOwner` | PUT | `/wallet/safe` | `{ chain, backup_owner }` | Response object |
-| `getRecoverySeedPhrase` | POST | `/wallet/mnemonic` | `{ ledger_type: 'ethereum', password }` | `{ mnemonic: string[] }` |
+Methods: `getWallets`, `createEoa`, `createSafe`, `updateSafeBackupOwner`, `getRecoverySeedPhrase`. See [middleware API docs](https://github.com/valory-xyz/olas-operate-middleware/blob/main/docs/api.md) for endpoint details.
 
 `getWallets` accepts an `AbortSignal` for cancellation (used by React Query). `getRecoverySeedPhrase` uses `parseApiError` on failure (note: the error message is `"Failed to login"` — a copy-paste artifact). All other methods throw generic errors. Backend errors use the format `{ "error": "message" }`.
 
@@ -148,30 +142,11 @@ Response:
 
 ### Wallet type hierarchy
 
-```typescript
-// Base types
-type Eoa = { address: Address; type: 'eoa' }
-type Safe = { address: Address; type: 'multisig'; evmChainId: EvmChainId }
-
-// Owner-typed
-type MasterEoa = Eoa & { owner: 'master' }
-type MasterSafe = Safe & { owner: 'master' }
-type MasterWallet = MasterEoa | MasterSafe
-
-type AgentEoa = Eoa & { owner: 'agent' }
-type AgentSafe = Safe & { owner: 'agent' }
-type AgentWallet = AgentEoa | AgentSafe
-```
+Defined in `frontend/constants/wallet.ts`: `Eoa`, `Safe`, `MasterEoa`, `MasterSafe`, `MasterWallet`, `AgentEoa`, `AgentSafe`, `AgentWallet`. Base types are discriminated by `type` (`'eoa'` | `'multisig'`), then extended with `owner` (`'master'` | `'agent'`).
 
 ### Bridged token source map (`utils/wallet.ts`)
 
-```typescript
-const BRIDGED_TOKEN_SOURCE_MAP: Partial<Record<TokenSymbol, TokenSymbol>> = {
-  'USDC.e': 'USDC',
-};
-```
-
-Ethereum-specific. Used by `getFromToken` to resolve destination-chain bridged tokens to their source-chain equivalents.
+`BRIDGED_TOKEN_SOURCE_MAP` in `frontend/utils/wallet.ts` maps bridged token symbols to their source-chain equivalents (e.g., `USDC.e` → `USDC`). Used by `getFromToken` to resolve destination-chain bridged tokens.
 
 ## Runtime behavior
 

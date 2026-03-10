@@ -70,39 +70,7 @@ When the on-ramp chain matches the agent chain (e.g., Optimism, Base, Polygon), 
 
 ### OnRampProvider context shape
 
-```typescript
-{
-  // Network config (set by parent component)
-  networkId: Nullable<EvmChainId>;
-  networkName: Nullable<string>;
-  cryptoCurrencyCode: Nullable<string>;
-  selectedChainId: Nullable<EvmChainId>;   // agent's destination chain
-  updateNetworkConfig: (config: OnRampNetworkConfig) => void;
-
-  // Payment amounts (set by PayingReceivingTable hooks)
-  nativeAmountToPay: Nullable<number>;
-  updateNativeAmountToPay: (amount: Nullable<number>) => void;
-  nativeTotalAmountRequired: Nullable<number>;
-  updateNativeTotalAmountRequired: (amount: Nullable<number>) => void;
-  usdAmountToPay: Nullable<number>;
-  updateUsdAmountToPay: (amount: Nullable<number>) => void;
-
-  // Buy crypto button state
-  isBuyCryptoBtnLoading: boolean;
-  updateIsBuyCryptoBtnLoading: (loading: boolean) => void;
-
-  // Transaction lifecycle
-  isOnRampingTransactionSuccessful: boolean;
-  isTransactionSuccessfulButFundsNotReceived: boolean;
-  isOnRampingStepCompleted: boolean;  // successful AND funds received
-
-  // Swap step
-  isSwappingFundsStepCompleted: boolean;
-  updateIsSwappingStepCompleted: (completed: boolean) => void;
-
-  resetOnRampState: () => void;
-}
-```
+Defined in `frontend/context/OnRampProvider.tsx`. Manages network config, payment amounts, buy-crypto button loading state, transaction lifecycle flags (`isOnRampingTransactionSuccessful`, `isTransactionSuccessfulButFundsNotReceived`, `isOnRampingStepCompleted`), and swap step completion.
 
 ### Transak iframe URL construction
 
@@ -128,11 +96,11 @@ The Transak widget runs in a separate Electron window. Communication flows throu
 
 ### Transak price quote
 
-`PayingReceivingTable` uses `useTotalFiatFromNativeToken` to fetch the Transak quote and derive the buffered USD/native amounts shown in the flow. The request/response shape and buffer math are documented in `docs/dev/features/funding-and-refill.md`.
+`PayingReceivingTable` uses `useTotalFiatFromNativeToken` to fetch the Transak quote and derive the buffered USD/native amounts shown in the flow. The request/response shape and buffer math are documented in `docs/features/funding-and-refill.md`.
 
 ### Bridge quote API
 
-`useBridgeRequirementsQuery` uses `POST /api/bridge/bridge_refill_requirements` for the swap step. The request/response schema and bridge status model are documented in `docs/dev/features/bridging.md`.
+`useBridgeRequirementsQuery` uses `POST /api/bridge/bridge_refill_requirements` for the swap step. The request/response schema and bridge status model are documented in `docs/features/bridging.md`.
 
 ## Runtime behavior
 
@@ -248,7 +216,7 @@ Handles quote fetching with polling and retry for the on-ramp flow:
 5. On success: resets `force_update` to false, resumes polling
 
 **Error state**: `hasError` is true when the query itself errors OR any `bridge_request_status` entry has `QUOTE_FAILED`.
-The bridge quote request/response contract itself is documented in `docs/dev/features/bridging.md`.
+The bridge quote request/response contract itself is documented in `docs/features/bridging.md`.
 
 ### Native token filtering (`useBridgeRequirementsUtils`)
 
@@ -267,11 +235,11 @@ Wires up the quote display pipeline:
 3. Freezes displayed `tokensRequired` once `isTransactionSuccessfulButFundsNotReceived` or `isOnRampingStepCompleted` becomes true (prevents UI flicker during/after payment)
 4. Updates `usdAmountToPay` in OnRamp context (only while not yet paying)
 
-The calculation details for `useTotalNativeTokenRequired`, `useTotalFiatFromNativeToken`, and `useGetOnRampRequirementsParams` are documented in `docs/dev/features/funding-and-refill.md`.
+The calculation details for `useTotalNativeTokenRequired`, `useTotalFiatFromNativeToken`, and `useGetOnRampRequirementsParams` are documented in `docs/features/funding-and-refill.md`.
 
 ### On-ramp requirements params (`useGetOnRampRequirementsParams`)
 
-This hook creates the single deposit-mode `BridgeRequest` used by the on-ramp quote flow. The exact parameter shape, address selection, and token rules are documented in `docs/dev/features/funding-and-refill.md`.
+This hook creates the single deposit-mode `BridgeRequest` used by the on-ramp quote flow. The exact parameter shape, address selection, and token rules are documented in `docs/features/funding-and-refill.md`.
 
 ## Failure / guard behavior
 
