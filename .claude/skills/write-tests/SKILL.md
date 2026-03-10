@@ -187,8 +187,10 @@ When testing service files (`service/Account.ts`, `service/Wallet.ts`, `service/
 
 1. Run the specific test file: `cd frontend && npx jest tests/path/to/file.test.ts`
 2. Fix any failures — if a test fails, read the error carefully and fix the test or identify a real bug
-3. Run coverage for the file: `cd frontend && npx jest --coverage tests/path/to/file.test.ts` — verify you hit the target lines
-4. If unsure about business intent or expected behavior, **ask the user** before guessing
+3. Run `cd frontend && yarn lint:fix` to auto-fix lint/formatting issues, then fix any remaining errors manually
+4. Run `cd frontend && npx tsc --noEmit` to catch TypeScript errors (e.g., wrong type literals, missing properties). Never use `as never` or `as any` to silence type errors — use the correct types from source.
+5. Run coverage: `cd frontend && npx jest --coverage tests/path/to/file.test.ts`
+6. If unsure about business intent or expected behavior, **ask the user** before guessing
 
 ## Working with the user
 

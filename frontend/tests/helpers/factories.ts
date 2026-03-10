@@ -1,4 +1,9 @@
-import { EvmChainId, EvmChainIdMap } from '../../constants/chains';
+import {
+  EvmChainId,
+  EvmChainIdMap,
+  MiddlewareChainMap,
+} from '../../constants/chains';
+import { MiddlewareDeploymentStatusMap } from '../../constants/deployment';
 import {
   MasterEoa,
   MasterSafe,
@@ -7,6 +12,7 @@ import {
 } from '../../constants/wallet';
 import { MultisigOwners } from '../../hooks/useMultisig';
 import { Address } from '../../types/Address';
+import { Service } from '../../types/Service';
 
 export const INVALID_CHAIN_ID = 999 as EvmChainId;
 
@@ -29,6 +35,8 @@ export const BACKUP_SIGNER_ADDRESS: Address =
   '0xAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAa';
 export const BACKUP_SIGNER_ADDRESS_2: Address =
   '0xBBbbBBbbBBbbBBbbBBbbBBbbBBbbBBbbBBbbBBbb';
+export const AGENT_KEY_ADDRESS: Address =
+  '0xCcCcCcCcCcCcCcCcCcCcCcCcCcCcCcCcCcCcCcCc';
 
 export const makeMasterEoa = (
   address: Address = DEFAULT_EOA_ADDRESS,
@@ -56,4 +64,37 @@ export const makeMultisigOwners = (
   safeAddress,
   evmChainId,
   owners,
+});
+
+export const DEFAULT_SERVICE_CONFIG_ID =
+  'sc-aa001122-bb33-cc44-dd55-eeff66778899';
+
+export const makeService = (overrides: Partial<Service> = {}): Service => ({
+  service_public_id: 'valory/trader:0.1.0',
+  service_config_id: DEFAULT_SERVICE_CONFIG_ID,
+  version: 1,
+  name: 'Trader Agent',
+  description: 'Trader agent for omen prediction markets',
+  hash: 'bafybeib5hmzpf7cmxyfevq65tk22fjvlothjskw7nacgh4ervgs5mos7ra',
+  hash_history: {},
+  agent_release: {
+    is_aea: true,
+    repository: {
+      owner: 'valory-xyz',
+      name: 'trader',
+      version: 'v0.31.7-rc2',
+    },
+  },
+  home_chain: MiddlewareChainMap.GNOSIS,
+  keys: [
+    {
+      address: AGENT_KEY_ADDRESS,
+      private_key: 'key',
+      ledger: MiddlewareChainMap.ETHEREUM,
+    },
+  ],
+  chain_configs: {},
+  env_variables: {},
+  deploymentStatus: MiddlewareDeploymentStatusMap.DEPLOYED,
+  ...overrides,
 });
