@@ -95,4 +95,17 @@ describe('sumBigNumbers', () => {
     const result = sumBigNumbers(['10', '20', '30'], 0);
     expect(result).toBe('60');
   });
+
+  it('gracefully handles invalid and falsy values', () => {
+    const result = sumBigNumbers(['1.0', '', '2.0'], 18);
+    expect(result).toBe('3.0');
+
+    // @ts-expect-error: invalid value passed
+    const resultWithNull = sumBigNumbers(['1.0', null, '2.0'], 18);
+    expect(resultWithNull).toBe('3.0');
+
+    // @ts-expect-error: invalid value passed
+    const resultWithUndefined = sumBigNumbers(['1.0', undefined, '2.0'], 18);
+    expect(resultWithUndefined).toBe('3.0');
+  });
 });
