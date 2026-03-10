@@ -123,19 +123,16 @@ export const ReleaseNotesPage = () => {
           agentConfig.servicePublicId === service.service_public_id &&
           agentConfig.middlewareHomeChainId === service.home_chain,
       );
-      if (agent) types.add(agent[0] as AgentType);
+      if (agent) types.add(agent[0]);
     });
     return types;
   }, [services]);
 
   const agentRows = useMemo(() => {
     if (!configuredAgents) return [];
-    const seen = new Set<AgentType>();
-    return SERVICE_TEMPLATES.filter((template) => {
-      if (seen.has(template.agentType)) return false;
-      seen.add(template.agentType);
-      return configuredAgents.has(template.agentType);
-    }).flatMap((template) => {
+    return SERVICE_TEMPLATES.filter((template) =>
+      configuredAgents.has(template.agentType),
+    ).flatMap((template) => {
       const agent = ACTIVE_AGENTS.find(
         ([agentType]) => agentType === template.agentType,
       );
