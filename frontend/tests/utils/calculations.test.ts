@@ -29,6 +29,10 @@ describe('bigintMax', () => {
     const large = 10n ** 18n;
     expect(bigintMax(large, large + 1n)).toBe(large + 1n);
   });
+
+  it('handles zero', () => {
+    expect(bigintMax(0n, 1n)).toBe(1n);
+  });
 });
 
 describe('bigintMin', () => {
@@ -54,6 +58,15 @@ describe('bigintMin', () => {
 
   it('handles zero', () => {
     expect(bigintMin(0n, 1n)).toBe(0n);
+  });
+
+  it('handles equal values', () => {
+    expect(bigintMin(5n, 5n, 5n)).toBe(5n);
+  });
+
+  it('handles very small values', () => {
+    const small = -(10n ** 18n);
+    expect(bigintMin(small, small - 1n)).toBe(small - 1n);
   });
 });
 

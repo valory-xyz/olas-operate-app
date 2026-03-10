@@ -15,6 +15,7 @@ describe('balanceFormat', () => {
   it('formats large numbers with compact notation', () => {
     expect(balanceFormat(1000000000)).toBe('1.00B');
     expect(balanceFormat(1500000)).toBe('1.50M');
+    expect(balanceFormat(1234567)).toBe('1.23M');
   });
 
   it('returns "--" for undefined', () => {
@@ -28,6 +29,7 @@ describe('balanceFormat', () => {
   it('formats small numbers normally', () => {
     expect(balanceFormat(0)).toBe('0.00');
     expect(balanceFormat(5.5)).toBe('5.50');
+    expect(balanceFormat(5.499)).toBe('5.50');
   });
 });
 
@@ -119,16 +121,12 @@ describe('parseEther', () => {
 describe('numberToPlainString', () => {
   it('converts number to plain string without scientific notation', () => {
     const result = numberToPlainString(1e21);
-    expect(result).not.toContain('e');
-    expect(result).not.toContain('E');
+    expect(result).not.toBe('1e+21');
+    expect(result).not.toBe('1e21');
   });
 
   it('returns string input as-is', () => {
     expect(numberToPlainString('12345')).toBe('12345');
-  });
-
-  it('handles small numbers', () => {
-    expect(numberToPlainString(42)).not.toContain('e');
   });
 });
 

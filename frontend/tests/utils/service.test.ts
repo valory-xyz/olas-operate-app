@@ -304,6 +304,63 @@ describe('updateServiceIfNeeded', () => {
     });
   });
 
+  it('does not update service_public_id even when it differs', async () => {
+    const service = createService({
+      service_public_id: 'valory/old-service:0.0.1',
+    });
+
+    await updateServiceIfNeeded(service, AgentMap.AgentsFun);
+    expect(mockUpdateService).not.toHaveBeenCalled();
+  });
+
+  it('does not update hash_history even when it differs', async () => {
+    const service = createService({
+      hash_history: { '1700000000': 'bafybeiold' },
+    });
+
+    await updateServiceIfNeeded(service, AgentMap.AgentsFun);
+    expect(mockUpdateService).not.toHaveBeenCalled();
+  });
+
+  it('does not update chain_configs metadata when only hash changes', async () => {
+    const service = createService({
+      hash: 'bafybeiold000000000000000000000000000000000000000000000000000',
+      chain_configs: {
+        [MiddlewareChainMap.BASE]: {
+          ledger_config: {
+            rpc: 'https://custom-rpc.example.com',
+            chain: 'base',
+          },
+          chain_data: {
+            instances: ['0x1111111111111111111111111111111111111111'],
+            token: '999',
+            multisig: '0x2222222222222222222222222222222222222222',
+            staked: true,
+            on_chain_state: 3,
+            user_params: {
+              fund_requirements: TEMPLATE_FUND_REQUIREMENTS,
+            },
+          },
+        },
+      },
+    });
+
+    await updateServiceIfNeeded(service, AgentMap.AgentsFun);
+    expect(mockUpdateService).toHaveBeenCalledWith({
+      serviceConfigId: SERVICE_CONFIG_ID,
+      partialServiceTemplate: {
+        hash: TEMPLATE_HASH,
+      },
+    });
+
+    // Verify chain_configs metadata is NOT in the update
+    const updatePayload =
+      mockUpdateService.mock.calls[0][0].partialServiceTemplate;
+    expect(updatePayload).not.toHaveProperty('chain_configs');
+    expect(updatePayload).not.toHaveProperty('service_public_id');
+    expect(updatePayload).not.toHaveProperty('hash_history');
+  });
+
   it('updates staking program when requested even with no other changes', async () => {
     const service = createService();
 

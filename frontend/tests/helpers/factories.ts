@@ -22,13 +22,13 @@ export const ALL_EVM_CHAIN_IDS: EvmChainId[] = [
 ];
 
 export const DEFAULT_EOA_ADDRESS: Address =
-  '0x1234567890abcdef1234567890abcdef12345678';
+  '0x1234567890AbcdEF1234567890aBCDef12345678';
 export const DEFAULT_SAFE_ADDRESS: Address =
-  '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd';
+  '0xAbCDefAbCDefAbCDefAbCDefAbCDefAbCDefAbCd';
 export const BACKUP_SIGNER_ADDRESS: Address =
-  '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+  '0xAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAa';
 export const BACKUP_SIGNER_ADDRESS_2: Address =
-  '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb';
+  '0xBBbbBBbbBBbbBBbbBBbbBBbbBBbbBBbbBBbbBBbb';
 
 export const makeMasterEoa = (
   address: Address = DEFAULT_EOA_ADDRESS,
