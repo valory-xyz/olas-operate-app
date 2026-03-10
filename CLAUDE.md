@@ -17,7 +17,7 @@ The frontend is embedded in Electron via Next.js, and communicates with the Pyth
 **Prerequisites:**
 - Node.js 20+ (see `.nvmrc`)
 - Yarn 1.22.0+
-- Python 3.10-3.11
+- Python 3.14
 - Poetry 2.3.2
 
 ### Installation

@@ -67,6 +67,12 @@ export const AgentActivity = () => {
     status: AgentStatus;
     content: string | ReactNode;
   }>(() => {
+    // When data is still loading (not deployable/running/deploying),
+    // show "not running" to prevent layout shifts during agent transitions.
+    if (!isServiceRunning && !isServiceDeploying && !isDeployable) {
+      return { status: 'not-running', content: 'Agent is not running' };
+    }
+
     if (isServiceDeploying) {
       return { status: 'loading', content: 'Agent is loading' };
     }
@@ -99,16 +105,13 @@ export const AgentActivity = () => {
 
     return { status: 'not-running', content: 'Agent is not running' };
   }, [
+    isDeployable,
     isEligibleForRewards,
     isServiceDeploying,
     isServiceRunning,
     rounds,
     roundsInfo,
   ]);
-
-  if (isServiceRunning || isServiceDeploying ? false : !isDeployable) {
-    return null;
-  }
 
   return (
     <>
