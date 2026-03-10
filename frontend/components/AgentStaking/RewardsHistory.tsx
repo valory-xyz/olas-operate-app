@@ -72,7 +72,6 @@ const useCurrentEpochDetails = (lastCheckpoint?: Checkpoint) => {
 /** Get checkpoints grouped by months */
 const useCheckpointsByMonths = () => {
   const { allCheckpoints = [], isFetched } = useRewardsHistory();
-  const { selectedAgentConfig } = useServices();
   const currentEpochDetails = useCurrentEpochDetails(allCheckpoints[0]);
 
   const checkpointsByMonths = useMemo(() => {
@@ -84,15 +83,8 @@ const useCheckpointsByMonths = () => {
 
     if (!combinedCheckpoints.length) return [];
 
-    // Exclude checkpoints whose staking program cannot be resolved
-    const resolvableCheckpoints = combinedCheckpoints.filter(
-      (cp) =>
-        cp.contractName &&
-        STAKING_PROGRAMS[selectedAgentConfig.evmHomeChainId]?.[cp.contractName],
-    );
-
     const months: Months = [];
-    resolvableCheckpoints.forEach((checkpoint) => {
+    combinedCheckpoints.forEach((checkpoint) => {
       const epochEndTimeInMs = checkpoint.epochEndTimeStamp * 1000;
       const monthYear = formatToMonthYear(epochEndTimeInMs);
 
@@ -113,12 +105,7 @@ const useCheckpointsByMonths = () => {
       (a, b) =>
         b.checkpoints[0].epochEndTimeStamp - a.checkpoints[0].epochEndTimeStamp,
     );
-  }, [
-    allCheckpoints,
-    isFetched,
-    currentEpochDetails,
-    selectedAgentConfig.evmHomeChainId,
-  ]);
+  }, [allCheckpoints, isFetched, currentEpochDetails]);
 
   return checkpointsByMonths;
 };
@@ -213,7 +200,7 @@ const CheckpointRow = ({ checkpoint }: { checkpoint: Checkpoint }) => {
   return (
     <RewardRow key={checkpoint.epochEndTimeStamp}>
       <Col span={10} className="leading-20">
-        <Text className="text-sm">{stakingProgramMeta.name}</Text>
+        <Text className="text-sm">{stakingProgramMeta?.name}</Text>
       </Col>
       <Col span={4} className="leading-20">
         <Flex align="center" gap={4}>

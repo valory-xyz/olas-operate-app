@@ -103,13 +103,14 @@ export const SelectActivityRewardsConfiguration = ({
   const [stableOrder, setStableOrder] = useState<StakingProgramId[]>([]);
 
   // To ensure the order of staking programs remains stable to prevent unnecessary re-renders of the list.
-  // Reset when the set of IDs changes (e.g. agent switch) in either direction —
+  // Reset when the set of IDs changes (e.g. agent switch), not just when the length changes —
   // two agents can have the same number of programs but completely different IDs,
   // and a strict subset must also trigger a reset to avoid rendering stale programs.
   useEffect(() => {
     const nextSet = new Set(orderedStakingProgramIds);
+    const currentSet = new Set(stableOrder);
     const hasNewIds = orderedStakingProgramIds.some(
-      (id) => !new Set(stableOrder).has(id),
+      (id) => !currentSet.has(id),
     );
     const hasRemovedIds = stableOrder.some((id) => !nextSet.has(id));
 
