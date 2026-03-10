@@ -47,10 +47,10 @@ npm install --global yarn
 
 ## 5. Python
 
-Use Python 3.10 for the project.
+Use Python 3.14 for the project.
 
 ```bash
-brew install python@3.10
+brew install python@3.14
 ```
 
 ## 6. Pipx
@@ -62,7 +62,7 @@ brew install pipx
 ## 7. Poetry
 
 ```bash
-pipx install poetry==1.8.5
+pipx install poetry==2.3.2
 ```
 
 If prompted to add the `poetry` command to your shell's config file, accept the prompt.
