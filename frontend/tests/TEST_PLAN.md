@@ -27,7 +27,25 @@ Pearl frontend has **577 files** tracked by Jest coverage, nearly all at 0% (onl
 
 ## Backend API reference
 
-The middleware API docs (endpoint URLs, request/response shapes, error formats) are stored in the Claude memory directory at `memory/middleware-api.md`. Consult when testing service files in Phase 2+. Upstream source: https://github.com/valory-xyz/olas-operate-middleware/blob/main/docs/api.md
+The middleware API docs (endpoint URLs, request/response shapes, error formats) live upstream at https://github.com/valory-xyz/olas-operate-middleware/blob/main/docs/api.md. Consult when testing service files in Phase 2+.
+
+## Feature documentation reference
+
+Each phase has corresponding feature documentation in `docs/features/`. **Always read the relevant feature doc(s) before writing tests for a phase** — they describe runtime behavior, state transitions, failure modes, edge cases, and test-relevant notes that inform what to assert.
+
+| Phase | Feature doc(s) |
+|-------|---------------|
+| 0 | (none — pure utilities) |
+| 1 | `electron-api.md`, `dynamic-polling.md`, `feature-flags.md`, `support-and-logs.md` (partial — most Phase 1 files are thin wrappers) |
+| 2 | `account.md`, `wallet.md` |
+| 3 | `balance.md`, `services.md` |
+| 4 | `staking-and-rewards.md` |
+| 5 | `funding-and-refill.md` |
+| 6 | `bridging.md`, `on-ramping.md`, `funding-and-refill.md` |
+| 7 | `deployability-and-lifecycle.md`, `achievements.md`, `agent-settings.md`, `services.md`, `account.md` |
+| 8 | [`frontend/context/AutoRunProvider/docs/auto-run.md`](../context/AutoRunProvider/docs/auto-run.md) |
+| 9 | (none — static data) |
+| 10 | (refer to phase-specific docs for the feature each component belongs to) |
 
 ## Dependency Order
 
@@ -103,8 +121,6 @@ Layer 10: Remaining Component UI + Pages (rendering)
 - `hooks/usePageState.ts`
 - `hooks/useSettings.ts`
 - `hooks/useServices.ts`
-- `hooks/useWallet.ts`
-- `hooks/useRewardContext.ts`
 - `hooks/useSharedContext.ts`
 
 **Providers:**
@@ -143,6 +159,7 @@ Layer 10: Remaining Component UI + Pages (rendering)
 - `service/Recovery.ts` — recovery operations
 
 **Wallet:**
+- `hooks/useWallet.ts` — wallet context accessor
 - `utils/wallet.ts` — wallet helpers
 - `service/Wallet.ts` — EOA/Safe creation, mnemonic
 - `context/MasterWalletProvider.tsx` — master wallet state
@@ -208,6 +225,7 @@ Layer 10: Remaining Component UI + Pages (rendering)
 - `context/StakingContractDetailsProvider.tsx` — staking details context
 
 **Rewards:**
+- `hooks/useRewardContext.ts` — reward context accessor
 - `hooks/useRewardsHistory.ts` — GraphQL subgraph query + epoch grouping
 - `context/RewardProvider.tsx` — rewards state + optimistic calculation
 
@@ -250,6 +268,7 @@ StakedAgentService (abstract base)
 - `hooks/useGetOnRampRequirementsParams.ts` — on-ramp requirement params
 - `context/BalancesAndRefillRequirementsProvider/BalancesAndRefillRequirementsProvider.tsx` — consolidated provider
 - `service/Fund.ts` — fund API client
+- `hooks/useTotalNativeTokenRequired.ts` — total native token calc with freeze logic
 - `hooks/useTotalFiatFromNativeToken.ts` — fiat price conversion
 
 **Funding components:**
@@ -280,7 +299,6 @@ StakedAgentService (abstract base)
 **On-ramping (hooks & context):**
 - `hooks/useOnRampContext.ts` — on-ramp context accessor
 - `context/OnRampProvider.tsx` — on-ramp flow state (310 lines)
-- `hooks/useTotalNativeTokenRequired.ts` — total native token calc with freeze logic
 
 **On-ramping (components):**
 - `components/OnRamp/OnRamp.tsx` — on-ramp entry component
@@ -304,14 +322,13 @@ StakedAgentService (abstract base)
 
 ## Phase 7 — Deployability & Service Lifecycle `[HARD]`
 
-**Goal:** Cover the deployment decision tree, service start/stop orchestration, agent updates, and achievements — including related components.
+**Goal:** Cover the deployment decision tree, service start/stop orchestration, agent updates, and achievements — including related components. Achievement feature doc: `docs/features/achievements.md`.
 
 - `hooks/useDeployability.ts` — 14-branch eligibility decision tree
 - `hooks/useStartService.ts` — service start orchestration
 - `hooks/useServiceDeployment.ts` — full deployment workflow (203 lines)
 - `service/Settings.ts` — settings API
 - `service/Achievement.ts` — achievement tracking
-- `service/Support.ts` — support API
 - `context/SharedProvider/SharedProvider.tsx` — AgentsFun field updates
 
 **Achievement components:**
@@ -462,10 +479,11 @@ AutoRunProvider.tsx
 ## Workflow per phase
 
 1. Branch off `main` (after previous PR is merged)
-2. Write all tests for the phase, run after each file
-3. Run `yarn test:coverage` to verify
-4. Commit, create PR, review together
-5. Merge, move to next phase
+2. **Read the feature doc(s)** for the phase (see table above) — understand runtime behavior, edge cases, and test-relevant notes before writing any tests
+3. Write all tests for the phase, run after each file
+4. Run `yarn test:coverage` to verify
+5. Commit, create PR, review together
+6. Merge, move to next phase
 
 ## Verification
 

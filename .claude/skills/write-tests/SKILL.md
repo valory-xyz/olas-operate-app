@@ -42,11 +42,13 @@ Mirror the source path under `frontend/tests/`:
 ## Before writing any test
 
 1. **Read the source file** completely — understand every branch, edge case, and dependency
-2. **Read the types/interfaces** it imports — know the shape of inputs and outputs
-3. **Trace dependencies** — identify which hooks, contexts, or services it calls
-4. **Read related constants/configs** if the logic references them (e.g., staking programs, chain configs, token configs)
-5. **Check for existing tests** in `frontend/tests/` to maintain consistency
-6. **Check the TEST_PLAN.md** to understand which phase the file belongs to and what else in that feature domain is being tested
+2. **Read the feature doc** for the file's domain (see the "Feature documentation reference" table in `frontend/tests/TEST_PLAN.md`). Feature docs live in `docs/features/` and describe runtime behavior, state transitions, failure modes, and test-relevant notes. For auto-run files, read `frontend/context/AutoRunProvider/docs/auto-run.md` instead.
+3. **Follow cross-references** — if the feature doc delegates contract details to another doc (e.g., on-ramping.md references bridging.md and funding-and-refill.md for shared API shapes; deployability-and-lifecycle.md references services.md for stop/withdraw error behavior), read those referenced docs too. The delegated details affect mocking and assertions.
+4. **Read the types/interfaces** it imports — know the shape of inputs and outputs
+5. **Trace dependencies** — identify which hooks, contexts, or services it calls
+6. **Read related constants/configs** if the logic references them (e.g., staking programs, chain configs, token configs)
+7. **Check for existing tests** in `frontend/tests/` to maintain consistency
+8. **Check the TEST_PLAN.md** to understand which phase the file belongs to and what else in that feature domain is being tested
 
 ## Feature domain awareness
 
@@ -174,14 +176,12 @@ describe('useHookUnderTest', () => {
 
 ## Backend API reference
 
-The middleware API documentation is stored at `memory/middleware-api.md` (in the Claude memory directory). When testing service files (`service/Account.ts`, `service/Wallet.ts`, `service/Services.ts`, `service/Balance.ts`, `service/Bridge.ts`, `service/Fund.ts`, etc.), consult this reference for:
+When testing service files (`service/Account.ts`, `service/Wallet.ts`, `service/Services.ts`, `service/Balance.ts`, `service/Bridge.ts`, `service/Fund.ts`, etc.), consult the upstream middleware API docs at https://github.com/valory-xyz/olas-operate-middleware/blob/main/docs/api.md for:
 - Correct endpoint URLs and HTTP methods
 - Request body shapes for mocking
 - Response shapes for assertions
 - Error response formats and status codes
 - Deployment status codes (1=not deployed, 3=running, 5=stopped)
-
-The full upstream source is at: https://github.com/valory-xyz/olas-operate-middleware/blob/main/docs/api.md
 
 ## After writing tests
 
