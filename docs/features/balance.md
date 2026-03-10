@@ -42,10 +42,7 @@ On-chain RPC (ethers + multicall)
 
 ### Balance API (`BalanceService`)
 
-| Method | HTTP | Endpoint | Body | Returns |
-|---|---|---|---|---|
-| `getBalancesAndFundingRequirements` | GET | `/v2/service/{serviceConfigId}/funding_requirements` | — | `BalancesAndFundingRequirements` |
-| `getAllBalancesAndFundingRequirements` | GET | (parallel calls per service) | — | `Record<string, BalancesAndFundingRequirements>` |
+Methods: `getBalancesAndFundingRequirements`, `getAllBalancesAndFundingRequirements`. See [middleware API docs](https://github.com/valory-xyz/olas-operate-middleware/blob/main/docs/api.md) for endpoint details.
 
 Both accept `AbortSignal` for cancellation. `getAllBalancesAndFundingRequirements` uses `Promise.allSettled` — failed individual fetches are silently dropped (via `compact`), so the result may be a partial map.
 
@@ -99,52 +96,19 @@ Both accept `AbortSignal` for cancellation. `getAllBalancesAndFundingRequirement
 }
 ```
 
-All balance values are wei strings. `0x000...000` represents the native gas token. Token addresses like `0xcE11e14225575945b8E6Dc0D4F2dD4C570f79d9f` are OLAS on Gnosis.
+All balance values are wei strings. `0x000...000` represents the native gas token. Token addresses like `0xcE11e14225575945b8E6Dc0D4F2dD4C570f79d9f` are any other ERC-20 tokens.
 
 ### BalancesAndFundingRequirements type
 
-```typescript
-type BalancesAndFundingRequirements = {
-  balances: Partial<{ [chain in MiddlewareChain]: AddressBalanceRecord }>;
-  refill_requirements: Partial<{ [chain in MiddlewareChain]: AddressBalanceRecord | MasterSafeBalanceRecord }>;
-  total_requirements: { [chain in MiddlewareChain]: AddressBalanceRecord | MasterSafeBalanceRecord };
-  agent_funding_requests: Partial<{ [chain in MiddlewareChain]: AddressBalanceRecord | ServiceSafeBalanceRecord }>;
-  protocol_asset_requirements: Partial<{ [chain in MiddlewareChain]: TokenBalanceRecord }>;
-  bonded_assets: Partial<{ [chain in MiddlewareChain]: TokenBalanceRecord }>;
-  is_refill_required: boolean;
-  allow_start_agent: boolean;
-  agent_funding_in_progress: boolean;
-  agent_funding_requests_cooldown: boolean;
-};
-```
-
-Note: `refill_requirements` and `total_requirements` can contain either `AddressBalanceRecord` (keyed by wallet address) or `MasterSafeBalanceRecord` (keyed by literal `"master_safe"`). Similarly, `agent_funding_requests` can use `ServiceSafeBalanceRecord` (keyed by `"service_safe"`).
+Defined in `frontend/types/Funding.ts`. Note: `refill_requirements` and `total_requirements` can contain either `AddressBalanceRecord` (keyed by wallet address) or `MasterSafeBalanceRecord` (keyed by literal `"master_safe"`). Similarly, `agent_funding_requests` can use `ServiceSafeBalanceRecord` (keyed by `"service_safe"`). Those are placeholders used until the corresponding Pearl or agent safe wallet is created. For `"master_safe"` there's a constant in `frontend/constants/defaults.ts`.
 
 ### WalletBalance type (on-chain)
 
-```typescript
-type WalletBalance = {
-  walletAddress: Address;
-  evmChainId: EvmChainId;
-  symbol: TokenSymbol;
-  isNative: boolean;
-  balance: number;          // deprecated — loses precision
-  balanceString?: string;   // formatted string preserving precision
-  isWrappedToken?: boolean;
-};
-```
+Defined in `frontend/types/Balance.ts`. Note: `balance` (number) is deprecated and loses precision — use `balanceString` instead.
 
 ### CrossChainStakedBalances type (on-chain)
 
-```typescript
-type CrossChainStakedBalances = Array<{
-  serviceId: string;
-  evmChainId: number;
-  olasBondBalance: number;
-  olasDepositBalance: number;
-  walletAddress: Address;
-}>;
-```
+Defined in `frontend/types/Balance.ts`. Array of per-service staked OLAS entries with bond and deposit balances.
 
 ### Service state → staked balance correction
 

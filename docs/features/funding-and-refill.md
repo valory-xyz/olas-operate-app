@@ -2,13 +2,40 @@
 
 ## Overview
 
-The funding system determines what tokens an agent needs, how much, and orchestrates the flow of funds from external sources (on-ramp) through the master wallet to the agent. It builds on top of the balance system (which tracks what you *have*) to compute what you *need* and how to get it.
+The funding system has **two flows** that share the same three payment mechanisms.
 
-The system has three layers:
+### Flow 1: Alert-based (reactive)
 
-1. **Refill requirements provider** — polls the middleware for per-service funding requirements, derives refill/total/agent-funding amounts, and exposes start-agent eligibility
-2. **Requirement formatting hooks** — transform raw wei-denominated requirements into UI-ready token lists, consolidate multi-wallet needs, and compute static initial funding estimates
-3. **Bridge/on-ramp parameter builders** — convert refill requirements into bridge request shapes and Transak quote queries for cross-chain and fiat-to-crypto flows
+The system detects low balances and shows alerts with pre-calculated amounts:
+
+- **Low Agent Wallet** — `useAgentFundingRequests` consolidates `agent_funding_requests` from middleware across all agent wallets. If any token requirement > 0, `AgentLowBalanceAlert` renders with the exact shortfall. Clicking "Fund Agent" pre-fills amounts and navigates to funding.
+- **Low Pearl Wallet (master safe)** — `isPearlWalletRefillRequired` flag drives `LowPearlWalletBalanceAlert` and sidebar "Low" tag. Amounts derived from `refill_requirements`.
+- **Low Master EOA** — `MasterEoaLowBalanceAlert` sends user to `FundPearlWallet` page showing required native-token gas amount.
+
+Amounts are **system-determined**, user just confirms.
+
+### Flow 2: User-initiated deposit (proactive)
+
+User clicks Deposit from Pearl Wallet at any time:
+
+1. `Deposit.tsx` — editable token amount inputs per chain, optionally pre-filled from refill requirements via `initializeDepositAmounts()`
+2. `SelectPaymentMethod.tsx` — user picks payment method, cost estimates derived from user-entered amounts
+
+Amounts are **user-controlled**.
+
+### Three payment mechanisms (shared)
+
+1. **Buy (on-ramp)** — Fiat via Transak. Token amounts → native token equivalent (`useTotalNativeTokenRequired`) → fiat estimate (`useTotalFiatFromNativeToken`). Enforces `MIN_ONRAMP_AMOUNT`.
+2. **Transfer** — Direct on-chain send to master safe address. Lowest fees.
+3. **Bridge** — From Ethereum mainnet to target chain. Behind `bridge-onboarding` feature flag. Estimates include fees/slippage.
+
+### Data flow
+
+`BalancesAndRefillRequirementsProvider` polls middleware for `refill_requirements`, `total_requirements`, and `agent_funding_requests`. Polling adapts: 30s during funding, exponential back-off while running, hourly idle. These raw values feed into:
+
+- `useAgentFundingRequests` — merges per-wallet requirements into consolidated token amounts (BigInt sums), formats for display
+- `getInitialDepositForMasterSafe` — aggregates refill requirements across services on a chain for deposit pre-fill
+- `useGetOnRampRequirementsParams` / `useBridgeRefillRequirements` — convert amounts into bridge request shapes and Transak queries
 
 ```
 BalancesAndRefillRequirementsProvider (middleware polling + derivation)
@@ -43,61 +70,23 @@ FundService (POST /fund → trigger master-to-agent transfer)
 
 ### Fund API (`FundService`)
 
-| Method | HTTP | Endpoint | Body | Returns |
-|---|---|---|---|---|
-| `fundAgent` | POST | `/api/v2/service/{id}/fund` | `ChainFunds` | `{ error: string \| null }` |
+Methods: `fundAgent`. See [middleware API docs](https://github.com/valory-xyz/olas-operate-middleware/blob/main/docs/api.md) for endpoint details.
 
-The request body is a nested map of chain → wallet address → token address → wei amount:
-
-```typescript
-type ChainFunds = Partial<{
-  [chain in SupportedMiddlewareChain]: {
-    [address: Address]: {
-      [tokenAddress: Address]: string; // wei amount
-    };
-  };
-}>;
-```
+The request body type `ChainFunds` is defined in `frontend/service/Fund.ts` — a nested map of chain → wallet address → token address → wei amount string.
 
 The backend returns 409 if a funding operation is already in progress, but the frontend does not distinguish status codes — `fundAgent` rejects with the generic string `"Failed to fund agent"` for any non-ok response.
 
 ### BalancesAndRefillRequirementsProvider context shape
 
-```typescript
-{
-  isBalancesAndFundingRequirementsLoading: boolean;
-  isBalancesAndFundingRequirementsLoadingForAllServices: boolean;
-  isBalancesAndFundingRequirementsReadyForAllServices: boolean;
-  isBalancesAndFundingRequirementsEnabledForAllServices: boolean;
-  refillRequirements: Optional<AddressBalanceRecord | MasterSafeBalanceRecord>;
-  getRefillRequirementsOf: (chainId: EvmChainId, serviceConfigId?: string) => Maybe<AddressBalanceRecord>;
-  totalRequirements: Optional<AddressBalanceRecord | MasterSafeBalanceRecord>;
-  agentFundingRequests: Optional<AddressBalanceRecord>;
-  canStartAgent: boolean;
-  isRefillRequired: boolean;
-  isAgentFundingRequestsStale: boolean;       // true during in_progress or cooldown
-  isPearlWalletRefillRequired: boolean;       // any initially-funded agent needs refill
-  refetch: () => Promise<[...]>;
-  refetchForSelectedAgent: () => Promise<...>;
-  allowStartAgentByServiceConfigId: (id?: string) => boolean;
-  hasBalancesForServiceConfigId: (id?: string) => boolean;
-  resetQueryCache: () => void;
-}
-```
+Defined in `frontend/context/BalancesAndRefillRequirementsProvider/BalancesAndRefillRequirementsProvider.tsx`. Key fields: `isAgentFundingRequestsStale` (true during `in_progress` or `cooldown`), `isPearlWalletRefillRequired` (any initially-funded agent needs refill).
 
 ### TokenRequirement (output of useGetRefillRequirements)
 
-```typescript
-type TokenRequirement = {
-  amount: number;       // formatted (not wei)
-  symbol: TokenSymbol;
-  iconSrc: string;
-};
-```
+Defined in `frontend/types/Wallet.ts`. Contains `amount` (formatted, not wei), `symbol`, and `iconSrc`.
 
 ### Bridge quote request/response used by funding hooks
 
-`useGetBridgeRequirementsParams` returns `BridgeRefillRequirementsRequest` for `BridgeService.getBridgeRefillRequirements`. `useTotalNativeTokenRequired` consumes that response and reads `bridge_refill_requirements` (onboard mode), `bridge_total_requirements` (deposit mode), and `balances` (existing source-chain native balance). The full bridge request/response schema and status model are documented in `docs/dev/features/bridging.md`.
+`useGetBridgeRequirementsParams` returns `BridgeRefillRequirementsRequest` for `BridgeService.getBridgeRefillRequirements`. `useTotalNativeTokenRequired` consumes that response and reads `bridge_refill_requirements` (onboard mode), `bridge_total_requirements` (deposit mode), and `balances` (existing source-chain native balance). The full bridge request/response schema and status model are documented in `docs/features/bridging.md`.
 
 ### Transak quote response (used by useTotalFiatFromNativeToken)
 
@@ -221,7 +210,7 @@ For each wallet+token pair in `refillRequirements`:
 5. Post-processes via `useCombineNativeTokenRequirements`: for native tokens, combines master safe + master EOA refill requirements into the `to.amount`
 
 `from.address` is always the master EOA. `to.address` is the master safe (or master EOA if no safe exists).
-The exact bridge request schema is documented in `docs/dev/features/bridging.md`.
+The exact bridge request schema is documented in `docs/features/bridging.md`.
 
 ### On-ramp requirements params (useGetOnRampRequirementsParams)
 

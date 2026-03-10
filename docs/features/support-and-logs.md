@@ -36,44 +36,11 @@ Two endpoints, both `POST` with JSON body:
 
 ### Main log payload (`useLogs`)
 
-```typescript
-{
-  store: ElectronStore | undefined,
-  debugData: {
-    services: { services: FormattedService[] } | null,
-    addresses: [
-      { masterEoa: MasterEoa | 'undefined' },
-      { masterSafe: MasterSafe[] | 'undefined' },
-      { masterSafeBackups: BackupEoa[] | 'undefined' },
-    ] | null,
-    balances: [
-      { masterWallets: MasterWallet[] | 'undefined' },
-      { walletBalances: WalletBalance[] | 'undefined' },
-      { totalOlasStakedBalance: bigint | 'undefined' },
-      { totalEthBalance: bigint | 'undefined' },
-      { totalOlasBalance: bigint | 'undefined' },
-    ] | null,
-  }
-}
-```
-
-Each `debugData` section is `null` until its source `isLoaded` flag is `true`. When loaded, missing values are serialized as the **string** `'undefined'` (not actual `undefined` or empty arrays) — e.g., `{ masterEoa: 'undefined' }` when no EOA exists.
+Defined in `frontend/hooks/useLogs.ts`. Returns `{ store, debugData }` where `debugData` has sections for `services`, `addresses`, and `balances`. Each section is `null` until its source `isLoaded` flag is `true`. When loaded, missing values are serialized as the **string** `'undefined'` (not actual `undefined` or empty arrays) — e.g., `{ masterEoa: 'undefined' }` when no EOA exists.
 
 ### Fallback log payload (`useFallbackLogs`)
 
-Different shape — no `store` key, uses `wallets` instead of `addresses`:
-
-```typescript
-{
-  debugData: {
-    services: { services: FormattedService[] } | null,
-    wallets: [],       // always empty array
-    balances: [],      // always empty array
-  }
-}
-```
-
-Used inside `ErrorBoundary` where context providers are unavailable. Fetches services directly via `ServicesService.getServices()` with React Query (retry: 1, staleTime: 30s). Uses the same query keys as `ServicesProvider` to leverage cache.
+Defined in `frontend/components/SupportModal/useFallbackLogs.ts`. Different shape — no `store` key, uses `wallets` and `balances` as empty arrays. Used inside `ErrorBoundary` where context providers are unavailable. Fetches services directly via `ServicesService.getServices()` with React Query (retry: 1, staleTime: 30s). Uses the same query keys as `ServicesProvider` to leverage cache.
 
 ## Runtime behavior
 

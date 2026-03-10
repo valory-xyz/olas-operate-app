@@ -41,11 +41,7 @@ BridgeService (middleware API)
 
 ### Bridge API (`BridgeService`)
 
-| Method | HTTP | Endpoint | Body | Returns |
-|---|---|---|---|---|
-| `getBridgeRefillRequirements` | POST | `/api/bridge/bridge_refill_requirements` | `BridgeRefillRequirementsRequest` | `BridgeRefillRequirementsResponse` |
-| `executeBridge` | POST | `/api/bridge/execute` | `{ id: string }` | `BridgeStatusResponse` |
-| `getBridgeStatus` | GET | `/api/bridge/status/{id}` | — | `BridgeStatusResponse` |
+Methods: `getBridgeRefillRequirements`, `executeBridge`, `getBridgeStatus`. See [middleware API docs](https://github.com/valory-xyz/olas-operate-middleware/blob/main/docs/api.md) for endpoint details.
 
 All three methods accept `AbortSignal` for cleanup. All throw `Error` objects on non-ok responses with endpoint-specific messages (e.g., `"Failed to execute bridge quote for the following quote id: {id}"`).
 
@@ -170,7 +166,7 @@ Backend `QuoteStatus` values are mapped to frontend `BridgingStepStatus` for UI 
 ### BridgeMode
 
 - `'onboard'` — first-time setup; uses `bridge_refill_requirements` from the quote response; may create master safe after bridging
-- `'deposit'` — adding funds to existing agent; uses `bridge_total_requirements` from the quote response
+- `'deposit'` — adding funds to existing agent; uses `bridge_total_requirements` from the quote response which are based on what amounts and tokens user requests
 
 ## Runtime behavior
 

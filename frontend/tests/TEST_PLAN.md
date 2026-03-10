@@ -31,7 +31,7 @@ The middleware API docs (endpoint URLs, request/response shapes, error formats) 
 
 ## Feature documentation reference
 
-Each phase has corresponding feature documentation in `docs/dev/features/`. **Always read the relevant feature doc(s) before writing tests for a phase** — they describe runtime behavior, state transitions, failure modes, edge cases, and test-relevant notes that inform what to assert.
+Each phase has corresponding feature documentation in `docs/features/`. **Always read the relevant feature doc(s) before writing tests for a phase** — they describe runtime behavior, state transitions, failure modes, edge cases, and test-relevant notes that inform what to assert.
 
 | Phase | Feature doc(s) |
 |-------|---------------|
@@ -42,7 +42,7 @@ Each phase has corresponding feature documentation in `docs/dev/features/`. **Al
 | 4 | `staking-and-rewards.md` |
 | 5 | `funding-and-refill.md` |
 | 6 | `bridging.md`, `on-ramping.md`, `funding-and-refill.md` |
-| 7 | `deployability-and-lifecycle.md`, `services.md`, `account.md` |
+| 7 | `deployability-and-lifecycle.md`, `achievements.md`, `agent-settings.md`, `services.md`, `account.md` |
 | 8 | [`frontend/context/AutoRunProvider/docs/auto-run.md`](../context/AutoRunProvider/docs/auto-run.md) |
 | 9 | (none — static data) |
 | 10 | (refer to phase-specific docs for the feature each component belongs to) |
@@ -334,7 +334,7 @@ StakedAgentService (abstract base)
 
 ## Phase 7 — Deployability & Service Lifecycle `[HARD]`
 
-**Goal:** Cover the deployment decision tree, service start/stop orchestration, agent updates, and achievements — including related components.
+**Goal:** Cover the deployment decision tree, service start/stop orchestration, agent updates, and achievements — including related components. Achievement feature doc: `docs/features/achievements.md`.
 
 - `hooks/useDeployability.ts` — 14-branch eligibility decision tree
 - `hooks/useStartService.ts` — service start orchestration

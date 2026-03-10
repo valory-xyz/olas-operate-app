@@ -59,131 +59,24 @@ useStakingRewardsOf (multi-service rewards aggregation)
 
 ### Staking program configuration
 
-Each chain has a map of staking programs keyed by `StakingProgramId`. Programs are defined in per-chain files and aggregated in `STAKING_PROGRAMS`:
-
-```typescript
-type StakingProgramConfig = {
-  chainId: EvmChainId;
-  deprecated?: boolean;              // hides from UI unless user is already staked
-  name: string;                      // "Pearl Beta 6", "MemeBase Beta", etc.
-  address: Address;                  // on-chain staking contract address
-  agentsSupported: AgentType[];      // which agent types can use this program
-  stakingRequirements: {             // token symbol → min amount
-    [tokenSymbol: string]: number;
-  };
-  contract: MulticallContract;       // ethers-multicall contract instance
-  mechType?: MechType;              // "agent" or "toolkit" (for mech-based eligibility)
-  mech?: MulticallContract;         // mech contract for request counting
-  activityChecker: MulticallContract; // contract for multisig nonce checking
-  id: string;                       // normalized address (padded to 64 hex chars)
-};
-
-// Aggregated across chains
-const STAKING_PROGRAMS: { [chainId in EvmChainId]: StakingProgramMap } = {
-  100: GNOSIS_STAKING_PROGRAMS,
-  8453: BASE_STAKING_PROGRAMS,
-  34443: MODE_STAKING_PROGRAMS,
-  10: OPTIMISM_STAKING_PROGRAMS,
-  137: POLYGON_STAKING_PROGRAMS,
-};
-```
+Each chain has a map of staking programs keyed by `StakingProgramId`. `StakingProgramConfig` is defined in `frontend/config/stakingPrograms/index.ts`, with per-chain definitions in `frontend/config/stakingPrograms/{gnosis,base,mode,optimism,polygon}.ts`. Programs are aggregated into `STAKING_PROGRAMS` keyed by chain ID.
 
 Example program IDs: `pearl_beta_6` (Gnosis), `meme_base_beta` (Base), `modius_alpha` (Mode), `optimus_alpha_4` (Optimism), `polygon_beta_1` (Polygon).
 
 ### On-chain types
 
-`StakingContractDetails` — retrieved from staking contract via multicall:
+All defined in `frontend/types/Autonolas.ts`:
 
-```typescript
-type StakingContractDetails = {
-  availableRewards: number;         // OLAS pool available this epoch
-  maxNumServices: number;           // max services that can stake
-  serviceIds: number[];             // currently staked service IDs
-  minimumStakingDuration: number;   // min seconds before unstake (e.g., 3 days)
-  minStakingDeposit: number;        // min OLAS bond per service
-  apy: number;                      // estimated annual percentage yield
-  olasStakeRequired: number;        // total OLAS needed to stake
-  rewardsPerWorkPeriod: number;     // OLAS earned per liveness period
-  epochCounter: number;             // current epoch number
-  livenessPeriod: number;           // epoch length in seconds (e.g., 86400)
-};
-```
-
-`ServiceStakingDetails` — per-service state on the contract:
-
-```typescript
-type ServiceStakingDetails = {
-  serviceStakingStartTime: number;   // epoch seconds when service was staked (0 = never)
-  serviceStakingState: StakingState; // 0=NotStaked, 1=Staked, 2=Evicted
-};
-
-enum StakingState {
-  NotStaked = 0,
-  Staked = 1,
-  Evicted = 2,
-}
-```
-
-`StakingRewardsInfo` — detailed rewards + eligibility for a service (Zod-validated):
-
-```typescript
-type StakingRewardsInfo = {
-  serviceInfo: unknown[];              // raw service data from contract
-  livenessPeriod: BigNumber;           // epoch length in seconds
-  livenessRatio: BigNumber;            // activity threshold ratio
-  rewardsPerSecond: BigNumber;         // base reward rate
-  isEligibleForRewards: boolean;       // true if service met liveness threshold
-  availableRewardsForEpoch: number;    // OLAS pool for this epoch
-  accruedServiceStakingRewards: number; // OLAS earned this epoch (in ETH format)
-  minimumStakedAmount: number;         // min OLAS to hold
-  tsCheckpoint: number;                // last checkpoint timestamp (hex → int via Zod transform)
-};
-```
+- `StakingContractDetails` — contract-level state (available rewards, max services, staking duration, APY, epoch info)
+- `ServiceStakingDetails` — per-service state (staking start time, staking state)
+- `StakingState` — enum: `NotStaked` (0), `Staked` (1), `Evicted` (2)
+- `StakingRewardsInfo` — detailed rewards + eligibility for a service (Zod-validated). Key fields: `isEligibleForRewards`, `accruedServiceStakingRewards`, `tsCheckpoint` (hex → int via Zod transform)
 
 ### Subgraph schema
 
-The subgraph is queried per service NFT token ID. The response is Zod-validated with `ServiceResponseSchema`:
+The subgraph is queried per service NFT token ID in `frontend/hooks/useRewardsHistory.ts`. The response is Zod-validated with `ServiceResponseSchema`. Returns `latestStakingContract` (address or null) and `rewardsHistory` with epoch, reward amounts (OLAS in wei), and checkpoint data.
 
-```typescript
-// Query
-query GetServiceRewardsHistory($serviceId: ID!) {
-  service(id: $serviceId) {
-    id
-    latestStakingContract     // address of current staking contract (or null)
-    rewardsHistory(orderBy: blockTimestamp, orderDirection: desc, first: 1000) {
-      id
-      epoch
-      contractAddress
-      rewardAmount            // OLAS in wei
-      checkpointedAt
-      blockTimestamp
-      blockNumber
-      transactionHash
-      checkpoint {
-        epochLength           // seconds
-        availableRewards      // OLAS pool in wei
-      }
-    }
-  }
-}
-```
-
-Transformed into `Checkpoint` records:
-
-```typescript
-type Checkpoint = {
-  epoch: string;
-  blockTimestamp: string;
-  transactionHash: string;
-  epochLength: string;
-  contractAddress: string;
-  contractName: Nullable<string>;    // resolved StakingProgramId from address
-  epochEndTimeStamp: number;         // blockTimestamp as number
-  epochStartTimeStamp: number;       // derived from previous epoch or (blockTimestamp - epochLength)
-  reward: number;                    // OLAS formatted as ETH (18 decimals)
-  earned: boolean;                   // true if rewardAmount > 0
-};
-```
+Transformed into `Checkpoint` records (also in `useRewardsHistory.ts`). Key derived fields: `epochStartTimeStamp` (from previous epoch or `blockTimestamp - epochLength`), `reward` (OLAS formatted as ETH, 18 decimals), `earned` (true if `rewardAmount > 0`).
 
 ### Service object staking fields
 
@@ -199,49 +92,9 @@ Staking configuration is stored in the service object at `chain_configs[chain].c
 
 ### Context shapes
 
-`StakingProgramContext`:
-
-```typescript
-{
-  isActiveStakingProgramLoaded: boolean;
-  activeStakingProgramId?: Maybe<StakingProgramId>;     // subgraph-derived (most authoritative)
-  defaultStakingProgramId?: Maybe<StakingProgramId>;    // from agent config
-  selectedStakingProgramId: Nullable<StakingProgramId>; // resolved with fallback priority
-  setDefaultStakingProgramId: (id: StakingProgramId) => void;
-  stakingProgramIdToMigrateTo: Nullable<StakingProgramId>;
-  setStakingProgramIdToMigrateTo: (id: Nullable<StakingProgramId>) => void;
-}
-```
-
-`StakingContractDetailsContext`:
-
-```typescript
-{
-  selectedStakingContractDetails: Maybe<Partial<StakingContractDetails & ServiceStakingDetails>>;
-  isSelectedStakingContractDetailsLoading: boolean;
-  allStakingContractDetailsRecord?: Record<StakingProgramId, Partial<StakingContractDetails>>;
-  isAllStakingContractDetailsRecordLoaded: boolean;
-  refetchSelectedStakingContractDetails: () => Promise<void>;
-  isPaused: boolean;
-  setIsPaused: Dispatch<SetStateAction<boolean>>;
-}
-```
-
-`RewardContext`:
-
-```typescript
-{
-  isStakingRewardsDetailsLoading?: boolean;
-  stakingRewardsDetails?: Nullable<StakingRewardsInfo>;
-  accruedServiceStakingRewards?: number;
-  availableRewardsForEpoch?: bigint | null;
-  availableRewardsForEpochEth?: number;          // formatted to ETH
-  isEligibleForRewards?: boolean;
-  optimisticRewardsEarnedForEpoch?: number;      // = availableRewardsForEpochEth if eligible
-  minimumStakedAmountRequired?: number;
-  updateRewards: () => Promise<void>;            // manual refetch
-}
-```
+- `StakingProgramContext` — defined in `frontend/context/StakingProgramProvider.tsx`. Key fields: `activeStakingProgramId` (subgraph-derived, most authoritative), `defaultStakingProgramId` (from agent config), `selectedStakingProgramId` (resolved with fallback priority).
+- `StakingContractDetailsContext` — defined in `frontend/context/StakingContractDetailsProvider.tsx`.
+- `RewardContext` — defined in `frontend/context/RewardProvider.tsx`. Key field: `optimisticRewardsEarnedForEpoch` equals `availableRewardsForEpochEth` when eligible, otherwise undefined.
 
 ## Runtime behavior
 
