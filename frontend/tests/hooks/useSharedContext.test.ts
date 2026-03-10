@@ -18,7 +18,7 @@ describe('useSharedContext', () => {
     // Suppress React error boundary console.error noise during throw test
     const consoleErrorSpy = jest
       .spyOn(console, 'error')
-      .mockImplementation(() => { });
+      .mockImplementation(() => {});
 
     expect(() => renderHook(() => useSharedContext(), { wrapper })).toThrow(
       'useSharedContext must be used within SharedContext',
