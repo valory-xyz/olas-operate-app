@@ -20,7 +20,9 @@ Use this mapping to determine which feature doc(s) need updating. A changed file
 
 **achievements.md**: `frontend/service/Achievement.ts`, `frontend/types/Achievement.ts`, `frontend/constants/achievement.ts`, `frontend/components/AchievementModal/hooks/useAchievements.ts`, `frontend/components/AchievementModal/hooks/useCurrentAchievement.ts`, `frontend/components/AchievementModal/hooks/useTriggerAchievementBackgroundTasks.ts`, `frontend/components/AchievementModal/index.tsx`, `frontend/components/AchievementModal/utils.ts`
 
-**deployability-and-lifecycle.md**: `frontend/hooks/useDeployability.ts`, `frontend/hooks/useStartService.ts`, `frontend/hooks/useServiceDeployment.ts`, `frontend/utils/service.ts`, `frontend/utils/safe.ts`, `frontend/context/SharedProvider/SharedProvider.tsx`, `frontend/hooks/useSharedContext.ts`, `frontend/service/Settings.ts`, `frontend/components/UpdateAgentPage/index.tsx`, `frontend/components/UpdateAgentPage/hooks/useConfirmModal.ts`, `frontend/components/UpdateAgentPage/context/UpdateAgentProvider.tsx`
+**agent-settings.md**: `frontend/components/UpdateAgentPage/index.tsx`, `frontend/components/UpdateAgentPage/hooks/useConfirmModal.ts`, `frontend/components/UpdateAgentPage/context/UpdateAgentProvider.tsx`
+
+**deployability-and-lifecycle.md**: `frontend/hooks/useDeployability.ts`, `frontend/hooks/useStartService.ts`, `frontend/hooks/useServiceDeployment.ts`, `frontend/utils/service.ts`, `frontend/utils/safe.ts`, `frontend/context/SharedProvider/SharedProvider.tsx`, `frontend/hooks/useSharedContext.ts`, `frontend/service/Settings.ts`
 
 **dynamic-polling.md**: `frontend/hooks/useDynamicRefetchInterval.ts`, `frontend/constants/intervals.ts`
 

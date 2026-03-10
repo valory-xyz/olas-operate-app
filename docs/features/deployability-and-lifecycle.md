@@ -9,7 +9,7 @@ The system has four layers:
 1. **Deployability check** — `useDeployability` evaluates ~10 conditions to produce a `canRun` boolean with a reason string
 2. **Service start** — `useStartService` handles safe creation, service creation/update, and starting the service (shared by manual and auto-run)
 3. **Deployment workflow** — `useServiceDeployment` orchestrates the full manual start flow: polling control, status overrides, state refresh, and error handling
-4. **Stop and update** — `stopDeployment` stops a running service, `useConfirmUpdateModal` saves settings then fire-and-forget restarts
+4. **Stop** — `stopDeployment` stops a running service
 
 ```
 useServiceDeployment (manual start orchestration)
@@ -49,9 +49,6 @@ SettingsService (backend config)
 - `frontend/context/SharedProvider/SharedProvider.tsx` — shared context (AgentsFun field check, recovery status, OLAS balance animation)
 - `frontend/hooks/useSharedContext.ts` — context accessor
 - `frontend/service/Settings.ts` — settings API client (`getSettings`)
-- `frontend/components/UpdateAgentPage/index.tsx` — agent settings update page (routes to per-agent forms)
-- `frontend/components/UpdateAgentPage/hooks/useConfirmModal.ts` — update confirmation + fire-and-forget restart
-- `frontend/components/UpdateAgentPage/context/UpdateAgentProvider.tsx` — update page context
 
 ## Contract / schema
 
@@ -215,29 +212,9 @@ handleStart()
 
 **`isLoading`** in this hook is broader than `useDeployability`'s — it also checks `isServiceRunning` and `isAllStakingContractDetailsRecordLoaded`.
 
-### Stop and update flow
+### Stop flow
 
-This flow reuses the service/deployment API surface documented in `docs/features/services.md`. In this doc, the relevant lifecycle actions are when `stopDeployment()` and `withdrawBalance()` are invoked from UI flows and how restart/update orchestration behaves around them.
-
-**Updating agent settings** (`UpdateAgentPage` + `useConfirmUpdateModal`):
-
-The update flow lets users change agent-specific environment variables (API keys, configuration). Each agent type has its own update form (PredictUpdateForm, AgentsFunUpdateForm, ModiusUpdateForm, OptimusUpdateForm). The `x402`-enabled agents throw an error — updates are not supported for them.
-
-`useConfirmUpdateModal` orchestrates the update + optional restart:
-
-```
-confirm()
-  ├── confirmCallback()  (saves new env vars via ServicesService.updateService)
-  ├── On success:
-  │     ├── Show 'Agent settings updated successfully'
-  │     └── restartIfServiceRunning() (fire-and-forget, not awaited)
-  │           ├── ServicesService.stopDeployment(serviceConfigId)
-  │           └── ServicesService.startService(serviceConfigId)
-  ├── On error: re-throw (caller handles)
-  └── Close modal (only on success)
-```
-
-The restart is fire-and-forget — it runs in the background after the modal closes. If the service isn't running, no restart occurs. Restart errors show a toast but don't throw.
+This flow reuses the service/deployment API surface documented in `docs/features/services.md`. In this doc, the relevant lifecycle actions are when `stopDeployment()` and `withdrawBalance()` are invoked from UI flows.
 
 ### AgentsFun field update check (SharedProvider)
 
@@ -271,8 +248,7 @@ On mount, SharedProvider queries recovery status once (via React Query with `sta
 - **SettingsService** — throws `Error('Failed to fetch settings')` on non-ok response. Accepts `AbortSignal`.
 - **SharedProvider AgentsFun check** — only runs for `AgentsFun` agent type. For all others, `isAgentsFunFieldUpdateRequired` is immediately set to `false`. Returns early if `selectedService` is undefined.
 - **SharedProvider recovery query** — runs once on mount with `staleTime: Infinity`. Does not refetch on window focus, reconnect, or remount. Only fires when online.
-- **UpdateAgentPage** — throws `Error` if `selectedAgentConfig.isX402Enabled` is true (updates not supported for x402 agents).
-- **useConfirmUpdateModal restart** — fire-and-forget: runs `stop → start` in background. Restart errors show a toast (`'Failed to restart service.'`) but don't propagate. If service isn't running, restart is skipped entirely.
+
 ## Test-relevant notes
 
 - `useDeployability` has ~10 prioritized branches — test each in isolation by mocking all dependencies. Priority order matters: safe eligibility blocks before loading, loading blocks before all runtime checks.
@@ -289,6 +265,4 @@ On mount, SharedProvider queries recovery status once (via React Query with `sta
 - `SharedProvider` AgentsFun check — test with all 5 env vars present (false), one missing (true), non-AgentsFun agent (always false), and `selectedService` undefined (no-op).
 - `SharedProvider` recovery query — mock `RecoveryService.getRecoveryStatus`, verify it fires once, and test `has_swaps` → `hasActiveRecoverySwap` mapping.
 - `SettingsService` — mock `fetch`, test request URL and headers, test ok and error responses.
-- `useConfirmUpdateModal` — test the fire-and-forget restart: verify `stopDeployment` + `startService` are called when service is running, and skipped when not. Test that restart errors show toast but don't throw. Test that modal closes only on success.
-- `UpdateAgentPage` — test that it throws for x402-enabled agents. Test that it renders the correct form for each agent type.
 - `isValidServiceId` — test with valid numbers, 0, -1, null, undefined.
