@@ -135,6 +135,22 @@ export const ReleaseNotesPage = () => {
       if (seen.has(template.agentType)) return false;
       seen.add(template.agentType);
       return configuredAgents.has(template.agentType);
+    }).flatMap((template) => {
+      const agent = ACTIVE_AGENTS.find(
+        ([agentType]) => agentType === template.agentType,
+      );
+      if (!agent) return [];
+      const { displayName } = agent[1];
+      const { owner, name, version } = template.agent_release.repository;
+      return [
+        {
+          agentType: template.agentType,
+          displayName,
+          releaseUrl: `https://github.com/${owner}/${name}/releases/tag/${version}`,
+          ipfsUrl: `${IPFS_GATEWAY_URL}${template.hash}`,
+          version,
+        },
+      ];
     });
   }, [configuredAgents]);
 
@@ -175,39 +191,37 @@ export const ReleaseNotesPage = () => {
           )}
 
           {/* Agent rows */}
-          {agentRows.map((template, index) => {
-            const { displayName } = ACTIVE_AGENTS.find(
-              ([agentType]) => agentType === template.agentType,
-            )![1];
-            const { owner, name, version } = template.agent_release.repository;
-            const releaseUrl = `https://github.com/${owner}/${name}/releases/tag/${version}`;
-            const ipfsUrl = `${IPFS_GATEWAY_URL}${template.hash}`;
-            const hasBorder = index < agentRows.length - 1;
+          {agentRows.map(
+            (
+              { agentType, displayName, releaseUrl, ipfsUrl, version },
+              index,
+            ) => {
+              const hasBorder = index < agentRows.length - 1;
+              return (
+                <Row key={agentType}>
+                  <NameCell $hasBorder={hasBorder}>
+                    <AgentIconWrapper>
+                      <Image
+                        src={`/agent-${agentType}-icon.png`}
+                        alt={displayName}
+                        width={32}
+                        height={32}
+                      />
+                    </AgentIconWrapper>
+                    <Text strong>{displayName}</Text>
+                  </NameCell>
 
-            return (
-              <Row key={template.agentType}>
-                <NameCell $hasBorder={hasBorder}>
-                  <AgentIconWrapper>
-                    <Image
-                      src={`/agent-${template.agentType}-icon.png`}
-                      alt={displayName}
-                      width={32}
-                      height={32}
-                    />
-                  </AgentIconWrapper>
-                  <Text strong>{displayName}</Text>
-                </NameCell>
+                  <ActionCell $hasBorder={hasBorder}>
+                    <AgentHashLink href={ipfsUrl} />
+                  </ActionCell>
 
-                <ActionCell $hasBorder={hasBorder}>
-                  <AgentHashLink href={ipfsUrl} />
-                </ActionCell>
-
-                <ActionCell $hasBorder={hasBorder} $justifyContent="flex-end">
-                  <VersionBadge href={releaseUrl} version={version} />
-                </ActionCell>
-              </Row>
-            );
-          })}
+                  <ActionCell $hasBorder={hasBorder} $justifyContent="flex-end">
+                    <VersionBadge href={releaseUrl} version={version} />
+                  </ActionCell>
+                </Row>
+              );
+            },
+          )}
         </ReleaseNotesGrid>
       </Card>
     </Flex>
