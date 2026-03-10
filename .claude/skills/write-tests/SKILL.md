@@ -152,6 +152,28 @@ describe('useHookUnderTest', () => {
 - Use descriptive variable names — no `v0`, `v1`, `res`, `val`, etc. Names should convey what the value represents (e.g., `mockBalance`, `stakingProgramId`, `expectedReward`)
 - Import from source using relative paths (e.g., `../../hooks/useDeployability`) since tests live under `tests/`
 
+## Testing patterns (learned from PR reviews)
+
+### Assertion precision
+- **Use `toBe` over `toContain`/`toMatch` for exact value checks.** `expect(result).not.toContain('e')` is loose and could pass incorrectly.
+- **Assert all relevant return properties**, not just the primary ones. When a function returns an object (e.g., `{ status, canProceed, shouldCreateSafe }`), test every business-relevant field, not just the "main" one.
+
+### Coverage completeness
+- **Test ALL variants, not just one.** When testing a mapping/conversion function (e.g., chain ID conversions), test ALL supported values (all chains). A test checking only Gnosis is incomplete.
+- **Include edge cases:** zero values, equal values, very small/large values, rounding boundaries, case sensitivity for addresses.
+- **Write negative tests.** Verify that functions DON'T do unwanted things. E.g., `expect(updatePayload).not.toHaveProperty('chain_configs')` ensures fields are excluded from partial updates.
+
+### Avoid redundancy
+- **Don't test what TypeScript already enforces.** If a config object's type requires certain fields, don't write tests asserting those fields exist — the compiler guarantees it.
+
+### Use source constants, not hardcoded values
+- **Reference config constants in tests**, not hardcoded strings. Instead of `'0xcE11e14225575945b8E6Dc0D4F2dD4C570f79d9f'`, use `GNOSIS_TOKEN_CONFIG[TokenSymbolMap.OLAS].address`. Tests should break when config changes, not silently pass with stale data. If a config constant isn't exported, export it.
+- **Use checksummed (EIP-55) addresses in test fixtures.** Real-world data uses mixed-case checksummed addresses, not all-lowercase. Use `'0xAbCDefAbCDefAbCDef...'` format in factories and mocks.
+
+### Test naming and variables
+- **Use descriptive variable names in assertions**, not inline expected values. 
+- **Test names should describe behavior**, not implementation. 
+
 ## Backend API reference
 
 When testing service files (`service/Account.ts`, `service/Wallet.ts`, `service/Services.ts`, `service/Balance.ts`, `service/Bridge.ts`, `service/Fund.ts`, etc.), consult the upstream middleware API docs at https://github.com/valory-xyz/olas-operate-middleware/blob/main/docs/api.md for:

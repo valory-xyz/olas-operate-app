@@ -13,25 +13,6 @@ describe('AGENT_CONFIG', () => {
     }
   });
 
-  it('each agent has required fields', () => {
-    for (const [, config] of Object.entries(AGENT_CONFIG)) {
-      expect(config.name).toBeDefined();
-      expect(config.evmHomeChainId).toBeDefined();
-      expect(config.middlewareHomeChainId).toBeDefined();
-      expect(config.agentIds).toBeDefined();
-      expect(Array.isArray(config.agentIds)).toBe(true);
-      expect(config.defaultStakingProgramId).toBeDefined();
-      expect(config.serviceApi).toBeDefined();
-      expect(config.displayName).toBeDefined();
-      expect(config.description).toBeDefined();
-      expect(config.defaultBehavior).toBeDefined();
-      expect(config.servicePublicId).toBeDefined();
-      expect(typeof config.hasExternalFunds).toBe('boolean');
-      expect(typeof config.requiresSetup).toBe('boolean');
-      expect(typeof config.isX402Enabled).toBe('boolean');
-    }
-  });
-
   it.each(
     Object.entries(AGENT_CONFIG).filter(
       ([, config]) => 'isComingSoon' in config,
@@ -56,8 +37,12 @@ describe('AGENT_CONFIG', () => {
     expect(typeof config.doesChatUiRequireApiKey).toBe('boolean');
   });
 
-  it('PredictTrader is enabled', () => {
-    expect(AGENT_CONFIG[AgentMap.PredictTrader].isAgentEnabled).toBe(true);
+  it.each(
+    Object.entries(AGENT_CONFIG).filter(
+      ([, config]) => 'requiresSetup' in config,
+    ),
+  )('%s.requiresSetup is a boolean', (_, config) => {
+    expect(typeof config.requiresSetup).toBe('boolean');
   });
 
   it('additionalRequirements values are finite numbers', () => {

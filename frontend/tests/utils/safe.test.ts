@@ -100,6 +100,7 @@ describe('getSafeEligibility', () => {
     });
     expect(result.status).toBe(BACKUP_SIGNER_STATUS.MultipleBackupSigners);
     expect(result.canProceed).toBe(false);
+    expect(result.shouldCreateSafe).toBe(false);
   });
 
   it('returns MissingBackupSigner when no safes exist on other chains', () => {
@@ -111,6 +112,7 @@ describe('getSafeEligibility', () => {
     });
     expect(result.status).toBe(BACKUP_SIGNER_STATUS.MissingBackupSigner);
     expect(result.canProceed).toBe(false);
+    expect(result.shouldCreateSafe).toBe(false);
   });
 
   it('ignores owners from the selected chain when finding backup signers', () => {
@@ -128,6 +130,7 @@ describe('getSafeEligibility', () => {
     // Safe exists on selected chain -> HasSafe
     expect(result.status).toBe(BACKUP_SIGNER_STATUS.HasSafe);
     expect(result.canProceed).toBe(true);
+    expect(result.shouldCreateSafe).toBe(false);
   });
 });
 

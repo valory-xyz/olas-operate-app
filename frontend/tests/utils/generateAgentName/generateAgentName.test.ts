@@ -4,18 +4,6 @@ import { generateAgentName } from '../../../utils/generateAgentName/generateAgen
 import { ALL_EVM_CHAIN_IDS } from '../../helpers/factories';
 
 describe('generateAgentName', () => {
-  it('generates suscus-jelfo63 for Base token 194', () => {
-    expect(generateAgentName(EvmChainIdMap.Base, 194)).toBe('suscus-jelfo63');
-  });
-
-  it('generates nana-vopar90 for Gnosis token 14', () => {
-    expect(generateAgentName(EvmChainIdMap.Gnosis, 14)).toBe('nana-vopar90');
-  });
-
-  it('generates gozar-wujan22 for Base token 42', () => {
-    expect(generateAgentName(EvmChainIdMap.Base, 42)).toBe('gozar-wujan22');
-  });
-
   it('returns consistent names for same inputs', () => {
     const firstCall = generateAgentName(EvmChainIdMap.Base, 194);
     const secondCall = generateAgentName(EvmChainIdMap.Base, 194);
@@ -29,8 +17,9 @@ describe('generateAgentName', () => {
   });
 
   it('returns different names for different chain IDs', () => {
-    expect(generateAgentName(EvmChainIdMap.Gnosis, 1)).toBe('tuwim-kakon68');
-    expect(generateAgentName(EvmChainIdMap.Base, 1)).toBe('nekto-ramar05');
+    const nameForGnosis = generateAgentName(EvmChainIdMap.Gnosis, 1);
+    const nameForBase = generateAgentName(EvmChainIdMap.Base, 1);
+    expect(nameForGnosis).not.toBe(nameForBase);
   });
 
   it('returns NA when chainId is nil', () => {

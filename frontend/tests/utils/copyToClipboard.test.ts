@@ -1,3 +1,4 @@
+import { AddressZero } from '../../constants';
 import { copyToClipboard } from '../../utils/copyToClipboard';
 
 describe('copyToClipboard', () => {
@@ -11,12 +12,20 @@ describe('copyToClipboard', () => {
   });
 
   it('calls navigator.clipboard.writeText with the provided text', async () => {
-    await copyToClipboard('hello world');
-    expect(writeTextMock).toHaveBeenCalledWith('hello world');
+    await copyToClipboard(AddressZero);
+    expect(writeTextMock).toHaveBeenCalledWith(AddressZero);
   });
 
   it('handles empty string', async () => {
     await copyToClipboard('');
     expect(writeTextMock).toHaveBeenCalledWith('');
+  });
+
+  it('handles falsy values', async () => {
+    await copyToClipboard(null as unknown as string);
+    expect(writeTextMock).toHaveBeenCalledWith(null);
+
+    await copyToClipboard(undefined as unknown as string);
+    expect(writeTextMock).toHaveBeenCalledWith(undefined);
   });
 });

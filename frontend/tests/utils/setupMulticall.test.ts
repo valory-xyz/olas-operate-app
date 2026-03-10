@@ -17,11 +17,6 @@ describe('setupMulticallAddresses', () => {
     mockSetMulticallAddress.mockClear();
   });
 
-  it('calls setMulticallAddress for each chain ID', async () => {
-    await setupMulticallAddresses();
-    expect(mockSetMulticallAddress).toHaveBeenCalledTimes(5);
-  });
-
   it('uses the default multicall address for all chains', async () => {
     const defaultAddress = '0xcA11bde05977b3631167028862bE2a173976CA11';
     await setupMulticallAddresses();

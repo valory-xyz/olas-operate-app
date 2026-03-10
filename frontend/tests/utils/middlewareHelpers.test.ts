@@ -1,10 +1,11 @@
-import { TokenSymbolMap } from '../../config/tokens';
+import { GNOSIS_TOKEN_CONFIG, TokenSymbolMap } from '../../config/tokens';
 import { AddressZero } from '../../constants/address';
 import {
   AllEvmChainIdMap,
   EvmChainIdMap,
   MiddlewareChainMap,
 } from '../../constants/chains';
+import { Address } from '../../types';
 import {
   asAllEvmChainId,
   asAllMiddlewareChain,
@@ -63,6 +64,14 @@ describe('asAllEvmChainId', () => {
   it('delegates non-ethereum chains to asEvmChainId', () => {
     expect(asAllEvmChainId(MiddlewareChainMap.GNOSIS)).toBe(
       EvmChainIdMap.Gnosis,
+    );
+    expect(asAllEvmChainId(MiddlewareChainMap.BASE)).toBe(EvmChainIdMap.Base);
+    expect(asAllEvmChainId(MiddlewareChainMap.MODE)).toBe(EvmChainIdMap.Mode);
+    expect(asAllEvmChainId(MiddlewareChainMap.OPTIMISM)).toBe(
+      EvmChainIdMap.Optimism,
+    );
+    expect(asAllEvmChainId(MiddlewareChainMap.POLYGON)).toBe(
+      EvmChainIdMap.Polygon,
     );
   });
 });
@@ -144,10 +153,24 @@ describe('asAllMiddlewareChain', () => {
     expect(asAllMiddlewareChain(AllEvmChainIdMap.Gnosis)).toBe(
       MiddlewareChainMap.GNOSIS,
     );
+    expect(asAllMiddlewareChain(AllEvmChainIdMap.Base)).toBe(
+      MiddlewareChainMap.BASE,
+    );
+    expect(asAllMiddlewareChain(AllEvmChainIdMap.Mode)).toBe(
+      MiddlewareChainMap.MODE,
+    );
+    expect(asAllMiddlewareChain(AllEvmChainIdMap.Optimism)).toBe(
+      MiddlewareChainMap.OPTIMISM,
+    );
+    expect(asAllMiddlewareChain(AllEvmChainIdMap.Polygon)).toBe(
+      MiddlewareChainMap.POLYGON,
+    );
   });
 });
 
 describe('getTokenDetailsFromAddress', () => {
+  const olasAddressOnGnosis = GNOSIS_TOKEN_CONFIG.OLAS?.address as Address;
+
   it('returns native token details for AddressZero', () => {
     const details = getTokenDetailsFromAddress(
       MiddlewareChainMap.GNOSIS,
@@ -158,19 +181,18 @@ describe('getTokenDetailsFromAddress', () => {
 
   it('returns token details for a known ERC20 address', () => {
     // OLAS on Gnosis
-    const olasAddress = '0xcE11e14225575945b8E6Dc0D4F2dD4C570f79d9f';
     const details = getTokenDetailsFromAddress(
       MiddlewareChainMap.GNOSIS,
-      olasAddress,
+      olasAddressOnGnosis,
     );
     expect(details.symbol).toBe(TokenSymbolMap.OLAS);
   });
 
   it('is case-insensitive for token address matching', () => {
-    const olasAddress = '0xce11e14225575945b8e6dc0d4f2dd4c570f79d9f';
+    const olasAddressInLowerCase = olasAddressOnGnosis.toLowerCase() as Address;
     const details = getTokenDetailsFromAddress(
       MiddlewareChainMap.GNOSIS,
-      olasAddress,
+      olasAddressInLowerCase,
     );
     expect(details.symbol).toBe(TokenSymbolMap.OLAS);
   });
