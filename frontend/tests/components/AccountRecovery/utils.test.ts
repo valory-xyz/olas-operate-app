@@ -4,7 +4,6 @@ import {
   getBackupWalletStatus,
   parseRecoveryFundingRequirements,
 } from '../../../components/AccountRecovery/utils';
-import { GNOSIS_TOKEN_CONFIG } from '../../../config/tokens';
 import { AddressZero } from '../../../constants/address';
 import {
   CHAIN_IMAGE_MAP,
@@ -212,8 +211,6 @@ describe('checkNewMasterEoaSwapStatus', () => {
 });
 
 describe('parseRecoveryFundingRequirements', () => {
-  const olasAddress = GNOSIS_TOKEN_CONFIG.OLAS!.address!;
-
   it('parses native token (XDAI) refill requirement on Gnosis', () => {
     const fundingRequirements: RecoveryFundingRequirements = {
       balances: {} as RecoveryFundingRequirements['balances'],
@@ -246,36 +243,6 @@ describe('parseRecoveryFundingRequirements', () => {
     expect(rows[0].iconSrc).toBe(CHAIN_IMAGE_MAP[EvmChainIdMap.Gnosis]);
   });
 
-  it('parses OLAS refill requirement on Gnosis', () => {
-    const fundingRequirements: RecoveryFundingRequirements = {
-      balances: {} as RecoveryFundingRequirements['balances'],
-      is_refill_required: true,
-      pending_backup_owner_swaps:
-        {} as RecoveryFundingRequirements['pending_backup_owner_swaps'],
-      refill_requirements: {
-        [MiddlewareChainMap.GNOSIS]: {
-          [DEFAULT_SAFE_ADDRESS]: {
-            [olasAddress]: '5000000000000000000', // 5 OLAS
-          },
-        },
-      } as RecoveryFundingRequirements['refill_requirements'],
-      total_requirements: {
-        [MiddlewareChainMap.GNOSIS]: {
-          [DEFAULT_SAFE_ADDRESS]: {
-            [olasAddress]: '10000000000000000000', // 10 OLAS total
-          },
-        },
-      } as RecoveryFundingRequirements['total_requirements'],
-    };
-
-    const rows = parseRecoveryFundingRequirements(fundingRequirements);
-    expect(rows).toHaveLength(1);
-    expect(rows[0].symbol).toBe('OLAS');
-    expect(rows[0].pendingAmount).toBe(5);
-    expect(rows[0].totalAmount).toBe(10);
-    expect(rows[0].areFundsReceived).toBe(false);
-  });
-
   it('marks areFundsReceived=true when refill amount is zero', () => {
     const fundingRequirements: RecoveryFundingRequirements = {
       balances: {} as RecoveryFundingRequirements['balances'],
@@ -304,7 +271,7 @@ describe('parseRecoveryFundingRequirements', () => {
     expect(rows[0].pendingAmount).toBe(0);
   });
 
-  it('returns multiple rows for multiple tokens on the same chain', () => {
+  it('returns multiple rows for native tokens across multiple chains', () => {
     const fundingRequirements: RecoveryFundingRequirements = {
       balances: {} as RecoveryFundingRequirements['balances'],
       is_refill_required: true,
@@ -314,7 +281,11 @@ describe('parseRecoveryFundingRequirements', () => {
         [MiddlewareChainMap.GNOSIS]: {
           [DEFAULT_SAFE_ADDRESS]: {
             [AddressZero]: '1000000000000000000',
-            [olasAddress]: '2000000000000000000',
+          },
+        },
+        [MiddlewareChainMap.POLYGON]: {
+          [POLYGON_SAFE_ADDRESS]: {
+            [AddressZero]: '2000000000000000000',
           },
         },
       } as RecoveryFundingRequirements['refill_requirements'],
@@ -322,7 +293,11 @@ describe('parseRecoveryFundingRequirements', () => {
         [MiddlewareChainMap.GNOSIS]: {
           [DEFAULT_SAFE_ADDRESS]: {
             [AddressZero]: '1000000000000000000',
-            [olasAddress]: '2000000000000000000',
+          },
+        },
+        [MiddlewareChainMap.POLYGON]: {
+          [POLYGON_SAFE_ADDRESS]: {
+            [AddressZero]: '2000000000000000000',
           },
         },
       } as RecoveryFundingRequirements['total_requirements'],
@@ -332,7 +307,7 @@ describe('parseRecoveryFundingRequirements', () => {
     expect(rows).toHaveLength(2);
     const symbols = rows.map((r) => r.symbol);
     expect(symbols).toContain('XDAI');
-    expect(symbols).toContain('OLAS');
+    expect(symbols).toContain('POL');
   });
 
   it('skips unknown token addresses', () => {
