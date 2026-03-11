@@ -106,7 +106,7 @@ export const RewardProvider = ({ children }: PropsWithChildren) => {
 
   // available rewards for the current epoch in ETH
   const availableRewardsForEpochEth = useMemo<number | undefined>(() => {
-    if (!availableRewardsForEpoch) return;
+    if (availableRewardsForEpoch == null) return undefined;
     return parseFloat(formatUnits(`${availableRewardsForEpoch}`));
   }, [availableRewardsForEpoch]);
 

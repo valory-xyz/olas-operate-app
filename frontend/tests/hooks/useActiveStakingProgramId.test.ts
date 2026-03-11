@@ -100,37 +100,27 @@ describe('createActiveStakingProgramIdQuery', () => {
       expect(result.enabled).toBe(true);
     });
 
-    it('is false when evmHomeChainId is null', () => {
-      const result = createActiveStakingProgramIdQuery({
-        ...baseParams,
-        evmHomeChainId: null as unknown as EvmChainId,
-      });
-      expect(result.enabled).toBe(false);
-    });
+    it.each([null, undefined])(
+      'is false when evmHomeChainId is %s',
+      (chainId) => {
+        const result = createActiveStakingProgramIdQuery({
+          ...baseParams,
+          evmHomeChainId: chainId as unknown as EvmChainId,
+        });
+        expect(result.enabled).toBe(false);
+      },
+    );
 
-    it('is false when evmHomeChainId is undefined', () => {
-      const result = createActiveStakingProgramIdQuery({
-        ...baseParams,
-        evmHomeChainId: undefined as unknown as EvmChainId,
-      });
-      expect(result.enabled).toBe(false);
-    });
-
-    it('is false when isServicesLoaded is false', () => {
-      const result = createActiveStakingProgramIdQuery({
-        ...baseParams,
-        isServicesLoaded: false,
-      });
-      expect(result.enabled).toBe(false);
-    });
-
-    it('is false when isServicesLoaded is null', () => {
-      const result = createActiveStakingProgramIdQuery({
-        ...baseParams,
-        isServicesLoaded: null,
-      });
-      expect(result.enabled).toBe(false);
-    });
+    it.each([false, null])(
+      'is false when isServicesLoaded is %s',
+      (isServicesLoaded) => {
+        const result = createActiveStakingProgramIdQuery({
+          ...baseParams,
+          isServicesLoaded,
+        });
+        expect(result.enabled).toBe(false);
+      },
+    );
 
     it.each([null, undefined, 0, -1])(
       'is false when serviceNftTokenId is %s',
