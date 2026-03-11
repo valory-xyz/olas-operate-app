@@ -151,6 +151,7 @@ describe('useHookUnderTest', () => {
 - Use TypeScript — no `any` unless absolutely necessary for mocking
 - Use descriptive variable names — no `v0`, `v1`, `res`, `val`, etc. Names should convey what the value represents (e.g., `mockBalance`, `stakingProgramId`, `expectedReward`)
 - Import from source using relative paths (e.g., `../../hooks/useDeployability`) since tests live under `tests/`
+- **Import `act` from `'react'`, NOT from `'@testing-library/react'`.** Combine it with other React imports: `import { act, createElement, PropsWithChildren } from 'react';`
 
 ## Testing patterns (learned from PR reviews)
 
@@ -166,9 +167,12 @@ describe('useHookUnderTest', () => {
 ### Avoid redundancy
 - **Don't test what TypeScript already enforces.** If a config object's type requires certain fields, don't write tests asserting those fields exist — the compiler guarantees it.
 
-### Use source constants, not hardcoded values
+### Use source constants and factories, not hardcoded values
 - **Reference config constants in tests**, not hardcoded strings. Instead of `'0xcE11e14225575945b8E6Dc0D4F2dD4C570f79d9f'`, use `GNOSIS_TOKEN_CONFIG[TokenSymbolMap.OLAS].address`. Tests should break when config changes, not silently pass with stale data. If a config constant isn't exported, export it.
-- **Use checksummed (EIP-55) addresses in test fixtures.** Real-world data uses mixed-case checksummed addresses, not all-lowercase. Use `'0xAbCDefAbCDefAbCDef...'` format in factories and mocks.
+- **Use factory addresses from `tests/helpers/factories.ts`**, not inline hex strings. The factories export EIP-55 checksummed addresses that are safe with ethers `getAddress()` and `isAddress()`. Available constants: `DEFAULT_EOA_ADDRESS`, `DEFAULT_SAFE_ADDRESS`, `SECOND_SAFE_ADDRESS`, `POLYGON_SAFE_ADDRESS`, `GNOSIS_SAFE_ADDRESS`, `BACKUP_SIGNER_ADDRESS`, `BACKUP_SIGNER_ADDRESS_2`, `AGENT_KEY_ADDRESS`, `MOCK_BACKUP_OWNER`, `MOCK_INSTANCE_ADDRESS`, `MOCK_MULTISIG_ADDRESS`, `UNKNOWN_TOKEN_ADDRESS`. Use factory functions (`makeMasterEoa`, `makeMasterSafe`, `makeMultisigOwners`, `makeService`) to build test data.
+- **Use factory transaction hashes**, not inline strings. Available: `MOCK_TX_HASH_1`, `MOCK_TX_HASH_2`, `MOCK_TX_HASH_3` — all properly `0x`-prefixed 64-char hex strings. For `AddressZero`, import from `../../constants/address`.
+- **Never invent new inline hex values.** If a test needs an address or tx hash not in factories, add it to `factories.ts` with a valid format (EIP-55 checksum for addresses, `0x`-prefixed 64-char hex for tx hashes). Invalid checksums cause silent failures in code that calls `getAddress()`.
+- **Inside `jest.mock` factories**, imported constants are not available (hoisted above imports). Use `require()` to access constants: `const { AddressZero } = require('../../constants/address');`
 
 ### Test naming and variables
 - **Use descriptive variable names in assertions**, not inline expected values. 
@@ -187,8 +191,10 @@ When testing service files (`service/Account.ts`, `service/Wallet.ts`, `service/
 
 1. Run the specific test file: `cd frontend && npx jest tests/path/to/file.test.ts`
 2. Fix any failures — if a test fails, read the error carefully and fix the test or identify a real bug
-3. Run coverage for the file: `cd frontend && npx jest --coverage tests/path/to/file.test.ts` — verify you hit the target lines
-4. If unsure about business intent or expected behavior, **ask the user** before guessing
+3. Run `cd frontend && yarn lint:fix` to auto-fix lint/formatting issues, then fix any remaining errors manually
+4. Run `cd frontend && npx tsc --noEmit` to catch TypeScript errors (e.g., wrong type literals, missing properties). Never use `as never` or `as any` to silence type errors — use the correct types from source.
+5. Run coverage: `cd frontend && npx jest --coverage tests/path/to/file.test.ts`
+6. If unsure about business intent or expected behavior, **ask the user** before guessing
 
 ## Working with the user
 

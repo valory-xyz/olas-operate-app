@@ -110,37 +110,49 @@ Layer 10: Remaining Component UI + Pages (rendering)
 - `utils/service.ts` `updateServiceIfNeeded` has complex env_variable diffing logic — mocking `SERVICE_TEMPLATES` and `ServicesService` keeps tests focused.
 ---
 
-## Phase 1 — App Infrastructure `[EASY-MEDIUM]`
+## Phase 1 — App Infrastructure `[EASY-MEDIUM]` ✅ COMPLETE
 
 **Goal:** Cover infrastructure hooks/providers and main page hooks that everything else depends on.
 
+**Result:** 23 test files, 166 tests, all passing, 0 lint errors.
+
 **Context accessors (generic infra only):**
-- `hooks/useElectronApi.ts`
-- `hooks/useStore.ts`
-- `hooks/useOnlineStatus.ts`
-- `hooks/usePageState.ts`
-- `hooks/useSettings.ts`
-- `hooks/useServices.ts`
-- `hooks/useSharedContext.ts`
+- ✅ `hooks/useElectronApi.ts`
+- ✅ `hooks/useStore.ts`
+- ✅ `hooks/useOnlineStatus.ts`
+- ✅ `hooks/usePageState.ts`
+- ✅ `hooks/useSettings.ts`
+- ✅ `hooks/useServices.ts`
+- ✅ `hooks/useSharedContext.ts`
 
 **Providers:**
-- `context/ElectronApiProvider.tsx` — Electron IPC bridge
-- `context/StoreProvider.tsx` — store sync + IPC listener
-- `context/OnlineStatusProvider.tsx` — online/offline events
-- `context/PageStateProvider.tsx` — page navigation
-- `context/MessageProvider.tsx` — toast messages
-- `context/SettingsProvider.tsx` — settings screen state
-- `context/SupportModalProvider.tsx` — support modal state
+- ✅ `context/ElectronApiProvider.tsx` — Electron IPC bridge
+- ✅ `context/StoreProvider.tsx` — store sync + IPC listener
+- ✅ `context/OnlineStatusProvider.tsx` — online/offline events
+- ✅ `context/PageStateProvider.tsx` — page navigation
+- ✅ `context/MessageProvider.tsx` — toast messages
+- ✅ `context/SettingsProvider.tsx` — settings screen state
+- ✅ `context/SupportModalProvider.tsx` — support modal state
 
 **Hooks with logic:**
-- `hooks/usePause.ts` — pause/resume state
-- `hooks/useDynamicRefetchInterval.ts` — adaptive polling intervals
-- `hooks/useFeatureFlag.ts` — feature flag fetching + validation
-- `hooks/useGlobalErrorHandlers.ts` — global error listeners
-- `hooks/useLogs.ts` — log aggregation
+- ✅ `hooks/usePause.ts` — pause/resume state
+- ✅ `hooks/useDynamicRefetchInterval.ts` — adaptive polling intervals
+- ✅ `hooks/useFeatureFlag.ts` — feature flag fetching + validation
+- ✅ `hooks/useGlobalErrorHandlers.ts` — global error listeners
+- ✅ `hooks/useLogs.ts` — log aggregation
 
 **MainPage hooks (app-level concerns):**
-- `components/MainPage/hooks/` — notifications, epoch, scroll, tray icon logic
+- ✅ `components/MainPage/hooks/useNotifyOnAgentRewards.ts` — reward notifications
+- ✅ `components/MainPage/hooks/useNotifyOnNewEpoch.ts` — epoch notifications (12 guard conditions)
+- ✅ `components/MainPage/hooks/useScrollPage.ts` — scroll to top on navigation
+- ✅ `components/MainPage/hooks/useSetupTrayIcon.ts` — tray icon status logic
+
+**Observations for later phases:**
+- `useLogs` depends on `useMultisigs`, `useBalanceContext`, `useMasterWalletContext`, `useServices` — all mocked in Phase 1, will be tested directly in Phases 2-3.
+- `useFeatureFlag` uses Zod validation at module scope — `FEATURES_CONFIG` is validated on import. Modius has `backup-via-safe: false` while all other agents have it `true`.
+- `useNotifyOnNewEpoch` has 12 guard conditions — each tested independently. Depends on auto-run context, staking, balance, and service hooks.
+- `useDynamicRefetchInterval` requires `jest.spyOn(document, 'hasFocus')` since jsdom returns `false` by default.
+- `useGlobalErrorHandlers` requires a `PromiseRejectionEvent` polyfill (jsdom lacks it).
 
 ---
 
