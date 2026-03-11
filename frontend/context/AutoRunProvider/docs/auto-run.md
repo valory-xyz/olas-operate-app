@@ -249,6 +249,7 @@ Every delay and poll interval in auto-run uses `sleepAwareDelay`. On `false`:
 | 5 | Agent earns rewards | Stop → cooldown → start next | `false→true` transition triggers `rotateToNext` |
 | 6 | Agent already earned before enable | Skip, move to next | Rewards snapshot check before start |
 | 7 | All agents earned | Keep current running, rescan in 30min | `allEarnedOrUnknown` → `SCAN_ELIGIBLE_DELAY_SECONDS` |
+| 40 | Epoch expired (clock = 0), all agents show `isEligibleForRewards = true` from old epoch, no agent running | Normalize eligibility to `false`, start next agent to trigger on-chain checkpoint | `epochExpired` check in `refreshRewardsEligibility` + controller-level normalization before passing to `useAutoRunSignals` |
 
 ### Blocked Agents
 
@@ -423,6 +424,10 @@ Every delay and poll interval in auto-run uses `sleepAwareDelay`. On `false`:
 ### P0 — Watchdog rotation exception leaves rewards guard permanently set, causing deadlock
 - **Root cause**: The watchdog catch block logged the error and scheduled a rescan but did **not** reset `lastRewardsEligibilityRef.current[agentType]`. Scenario: agent A runs 1.5h → rewards flip true → `checkRewardsAndRotate` detects true, sets guard to `true`, calls `rotateToNext` → all other agents earned/unknown → returns early keeping A running (guard stays `true`). Subsequent polls see `previousEligibility === true` and bail — correct during this epoch. 1.5 hours later the watchdog fires, `rotateToNext(force: true)` is called, but `refreshRewardsEligibility` (inside `Promise.all`) throws a network error → catch block does not reset guard → `lastRewardsEligibilityRef[A]` remains `true` → all future rewards polls blocked permanently — deadlock.
 - **Fix**: Watchdog catch block now resets `lastRewardsEligibilityRef.current[currentType] = undefined`, mirroring the same fix already present in `checkRewardsAndRotate`'s catch block. Added `lastRewardsEligibilityRef` to the watchdog effect's dependency array for consistency.
+
+### P1 — Agents permanently stuck after epoch expires (epoch clock = 0)
+- **Root cause**: When the staking epoch expires (`nowInSeconds - tsCheckpoint >= livenessPeriod`) but no `checkpoint()` has been called on-chain, every agent that ran in the previous epoch retains `isEligibleForRewards = true`. Auto-run's scanner skips every candidate (`candidateEligibility === true`) and schedules a 30-min rescan. Since no agent is running to trigger `checkpoint()`, `tsCheckpoint` never advances, `isEligibleForRewards` stays `true` for all, and the system stays stuck indefinitely. The epoch clock UI shows 0 / "Soon".
+- **Fix**: Two-layer normalization: (1) `refreshRewardsEligibility` in `autoRunHelpers.ts` computes `epochExpired = livenessPeriodSeconds > 0 && nowInSeconds - tsCheckpoint >= livenessPeriodSeconds` from the fresh chain response and overrides `eligible` to `false` when expired; (2) `useAutoRunController` also normalizes `isEligibleForRewards` from the `RewardProvider` (which polls every 5s and would otherwise overwrite the snapshot back to `true`) before feeding it into `useAutoRunSignals`. With both layers active, auto-run treats all agents as not-yet-earned in the new epoch and starts one, which triggers the on-chain checkpoint.
 
 ### Code — Magic numbers replaced with named constants
 - `SCAN_LOADING_RETRY_SECONDS = 30` replaces hardcoded `scheduleNextScan(30)`.

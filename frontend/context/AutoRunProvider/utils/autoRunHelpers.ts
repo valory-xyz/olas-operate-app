@@ -12,6 +12,26 @@ import {
 import { AgentMeta } from '../types';
 
 /**
+ * Returns true when the staking epoch has expired but no on-chain checkpoint
+ * has been called yet (i.e. livenessPeriod seconds have elapsed since tsCheckpoint).
+ *
+ * Used to normalize `isEligibleForRewards` to false so auto-run doesn't skip
+ * all agents and stall until someone manually triggers the next checkpoint.
+ */
+export const isStakingEpochExpired = ({
+  livenessPeriod,
+  tsCheckpoint,
+}: {
+  livenessPeriod: { _hex: string };
+  tsCheckpoint: number;
+}): boolean => {
+  const livenessPeriodSeconds = parseInt(livenessPeriod._hex, 16);
+  if (livenessPeriodSeconds <= 0) return false;
+  const nowInSeconds = Math.floor(Date.now() / 1000);
+  return nowInSeconds - tsCheckpoint >= livenessPeriodSeconds;
+};
+
+/**
  * Format eligibility into a human-readable reason for logs/UI.
  *  * @example
  * - { reason: 'Loading', loadingReason: 'Balances' } → "Loading: Balances"
@@ -86,7 +106,15 @@ export const refreshRewardsEligibility = async ({
         logMessage(`rewards fetch error: ${agentType}: ${error}`);
       },
     });
-    const eligible = response?.isEligibleForRewards;
+    if (!response) return;
+
+    const epochExpired = isStakingEpochExpired(response);
+    if (epochExpired && response.isEligibleForRewards) {
+      logMessage(
+        `epoch expired for ${agentType}, overriding rewards eligibility to false for new epoch`,
+      );
+    }
+    const eligible = epochExpired ? false : response.isEligibleForRewards;
     if (typeof eligible === 'boolean') {
       setRewardSnapshot(agentType, eligible);
       return eligible;
