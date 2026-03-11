@@ -2,8 +2,10 @@ import {
   EvmChainId,
   EvmChainIdMap,
   MiddlewareChainMap,
+  SupportedMiddlewareChain,
 } from '../../constants/chains';
 import { MiddlewareDeploymentStatusMap } from '../../constants/deployment';
+import { StakingProgramId } from '../../constants/stakingProgram';
 import {
   MasterEoa,
   MasterSafe,
@@ -12,7 +14,8 @@ import {
 } from '../../constants/wallet';
 import { MultisigOwners } from '../../hooks/useMultisig';
 import { Address } from '../../types/Address';
-import { Service } from '../../types/Service';
+import { AgentConfig } from '../../types/Agent';
+import { MiddlewareServiceResponse, Service } from '../../types/Service';
 
 export const INVALID_CHAIN_ID = 999 as EvmChainId;
 
@@ -93,6 +96,19 @@ export const makeMultisigOwners = (
 
 export const DEFAULT_SERVICE_CONFIG_ID =
   'sc-aa001122-bb33-cc44-dd55-eeff66778899';
+export const MOCK_SERVICE_CONFIG_ID_2 =
+  'sc-aa001122-bb33-cc44-dd55-eeff66778890';
+export const MOCK_SERVICE_CONFIG_ID_3 =
+  'sc-11223344-5566-7788-99aa-bbccddeeff00';
+export const MOCK_SERVICE_CONFIG_ID_4 =
+  'sc-aabbccdd-eeff-0011-2233-445566778899';
+
+export const SERVICE_PUBLIC_ID_MAP = {
+  TRADER: 'valory/trader_pearl:0.1.0',
+  OPTIMUS: 'valory/optimus:0.1.0',
+  PETT_AI: 'pettaidev/pett_agent:0.1.0',
+  MEMOOORR: 'dvilela/memeooorr:0.1.0',
+};
 
 export const makeService = (overrides: Partial<Service> = {}): Service => ({
   service_public_id: 'valory/trader:0.1.0',
@@ -123,3 +139,85 @@ export const makeService = (overrides: Partial<Service> = {}): Service => ({
   deploymentStatus: MiddlewareDeploymentStatusMap.DEPLOYED,
   ...overrides,
 });
+
+/** Builds a chain_configs entry for a single chain. */
+export const makeChainConfig = (
+  chain: SupportedMiddlewareChain,
+  overrides: {
+    instances?: Address[] | undefined;
+    multisig?: Address | undefined;
+    token?: number;
+    on_chain_state?: number;
+    staked?: boolean;
+    staking_program_id?: StakingProgramId;
+  } = {},
+) => ({
+  [chain]: {
+    ledger_config: { rpc: 'http://localhost', chain },
+    chain_data: {
+      instances:
+        'instances' in overrides
+          ? overrides.instances
+          : [MOCK_INSTANCE_ADDRESS],
+      multisig:
+        'multisig' in overrides ? overrides.multisig : MOCK_MULTISIG_ADDRESS,
+      token: overrides.token ?? 42,
+      on_chain_state: overrides.on_chain_state ?? 3,
+      staked: overrides.staked ?? true,
+      user_params: {
+        agent_id: 14,
+        cost_of_bond: '10000000000000000',
+        fund_requirements: {},
+        nft: 'bafybeig64atqaladigoc3ds4arltdu63wkdrk3gesjfvnfdmz35amv7faq',
+        staking_program_id:
+          overrides.staking_program_id ??
+          ('pearl_beta_mech_marketplace_3' as StakingProgramId),
+        threshold: 1,
+        use_mech_marketplace: true,
+        use_staking: true,
+      },
+    },
+  },
+});
+
+/** Builds a MiddlewareServiceResponse for a given chain. */
+export const makeMiddlewareService = (
+  chain: SupportedMiddlewareChain = MiddlewareChainMap.GNOSIS,
+  overrides: Partial<MiddlewareServiceResponse> = {},
+): MiddlewareServiceResponse => ({
+  service_public_id: SERVICE_PUBLIC_ID_MAP.TRADER,
+  service_config_id: DEFAULT_SERVICE_CONFIG_ID,
+  version: 1,
+  name: 'Trader Agent',
+  description: 'Trader agent for omen prediction markets',
+  hash: 'bafybeib5hmzpf7cmxyfevq65tk22fjvlothjskw7nacgh4ervgs5mos7ra',
+  hash_history: {},
+  agent_release: {
+    is_aea: true,
+    repository: { owner: 'valory-xyz', name: 'trader', version: 'v0.31.7-rc2' },
+  },
+  home_chain: chain,
+  keys: [],
+  chain_configs: makeChainConfig(chain),
+  env_variables: {},
+  ...overrides,
+});
+
+/**
+ * Builds a MiddlewareServiceResponse from an AgentConfig.
+ * Callers pass `AGENT_CONFIG[AgentMap.X]` — factories.ts avoids importing
+ * config/agents directly (it triggers parseEther via service templates).
+ */
+export const makeAgentService = (
+  agentConfig: Pick<
+    AgentConfig,
+    'servicePublicId' | 'middlewareHomeChainId' | 'name' | 'description'
+  >,
+  overrides: Partial<MiddlewareServiceResponse> = {},
+): MiddlewareServiceResponse =>
+  makeMiddlewareService(agentConfig.middlewareHomeChainId, {
+    service_public_id: agentConfig.servicePublicId,
+    name: agentConfig.name,
+    description: agentConfig.description,
+    ...overrides,
+  });

@@ -72,7 +72,14 @@ Layer 10: Remaining Component UI + Pages (rendering)
 **Result:** 22 test files, 230 tests, all passing, 0 lint errors.
 
 **Shared test infrastructure:**
-- `helpers/factories.ts` — factories (`makeMasterEoa`, `makeMasterSafe`, `makeMultisigOwners`), address constants (`DEFAULT_EOA_ADDRESS`, `DEFAULT_SAFE_ADDRESS`, `BACKUP_SIGNER_ADDRESS`, `BACKUP_SIGNER_ADDRESS_2`), and sentinels (`INVALID_CHAIN_ID`, `UNKNOWN_TOKEN_ADDRESS`, `ALL_EVM_CHAIN_IDS`). All phases should use these instead of inline `as any` casts or short placeholder addresses.
+- `helpers/factories.ts` — factories and constants for all phases:
+  - **Wallet factories:** `makeMasterEoa`, `makeMasterSafe`, `makeMultisigOwners`
+  - **Service factories:** `makeService` (Service type), `makeChainConfig` (chain_configs entry), `makeMiddlewareService` (MiddlewareServiceResponse), `makeAgentService` (agent-config-aware, accepts `AGENT_CONFIG[AgentMap.X]`)
+  - **Address constants:** `DEFAULT_EOA_ADDRESS`, `DEFAULT_SAFE_ADDRESS`, `BACKUP_SIGNER_ADDRESS`, `MOCK_INSTANCE_ADDRESS`, `MOCK_MULTISIG_ADDRESS`, etc.
+  - **Config ID constants:** `DEFAULT_SERVICE_CONFIG_ID`, `MOCK_SERVICE_CONFIG_ID_2`/`_3`/`_4`
+  - **Service public IDs:** `SERVICE_PUBLIC_ID_MAP` (matches real `AGENT_CONFIG` values)
+  - **Sentinels:** `INVALID_CHAIN_ID`, `UNKNOWN_TOKEN_ADDRESS`, `ALL_EVM_CHAIN_IDS`
+  - All phases should use these instead of inline hex strings or local config ID constants.
 - `mocks/ethersMulticall.ts` — shared `ethers-multicall` module mock (used via `jest.mock` + `require`).
 - `mocks/servicesService.ts` — shared `ServicesService` module mock (used via `jest.mock` + `require`).
 
@@ -156,62 +163,84 @@ Layer 10: Remaining Component UI + Pages (rendering)
 
 ---
 
-## Phase 2 — Account & Wallet Management `[MEDIUM]`
+## Phase 2 — Account & Wallet Management `[MEDIUM]` ✅ COMPLETE
 
 **Goal:** Cover account lifecycle, wallet operations, and recovery — including related components.
 
 **Account:**
-- `service/Account.ts` — account creation, login, password
-- `hooks/useValidatePassword.ts` — password validation
-- `hooks/useMnemonicExists.ts` — mnemonic check
-- `hooks/useRecoveryPhraseBackup.ts` — backup status
-- `hooks/useSetup.ts` — setup flow sync
-- `hooks/useBackupSigner.ts` — backup signer info
-- `context/SetupProvider.tsx` — setup context
-- `service/Recovery.ts` — recovery operations
+- ✅ `service/Account.ts` — account creation, login, password
+- ✅ `hooks/useValidatePassword.ts` — password validation
+- ✅ `hooks/useMnemonicExists.ts` — mnemonic check
+- ✅ `hooks/useRecoveryPhraseBackup.ts` — backup status
+- ✅ `hooks/useSetup.ts` — setup flow sync
+- ✅ `hooks/useBackupSigner.ts` — backup signer info
+- ✅ `context/SetupProvider.tsx` — setup context
+- ✅ `service/Recovery.ts` — recovery operations
 
 **Wallet:**
-- `hooks/useWallet.ts` — wallet context accessor
-- `utils/wallet.ts` — wallet helpers
-- `service/Wallet.ts` — EOA/Safe creation, mnemonic
-- `context/MasterWalletProvider.tsx` — master wallet state
-- `context/PearlWalletProvider.tsx` — wallet chain context, deposit/withdraw state (353 lines)
-- `hooks/useMultisig.ts` — multisig owners via multicall
-- `hooks/useMasterSafeCreationAndTransfer.ts` — safe creation + transfers
+- ✅ `hooks/useWallet.ts` — wallet context accessor
+- ✅ `utils/wallet.ts` — wallet helpers
+- ✅ `service/Wallet.ts` — EOA/Safe creation, mnemonic
+- ✅ `context/MasterWalletProvider.tsx` — master wallet state
+- ✅ `context/PearlWalletProvider.tsx` — wallet chain context, deposit/withdraw state (353 lines)
+- ✅ `hooks/useMultisig.ts` — multisig owners via multicall
+- ✅ `hooks/useMasterSafeCreationAndTransfer.ts` — safe creation + transfers
 
 **Account Recovery (components):**
-- `components/AccountRecovery/hooks/useWeb3AuthSwapOwner.ts` — web3auth swap owner hook
-- `components/AccountRecovery/components/ApproveWithBackupWallet/` — approval logic
+- ✅ `components/AccountRecovery/hooks/useWeb3AuthSwapOwner.ts` — web3auth swap owner hook
+- ✅ `components/AccountRecovery/components/ApproveWithBackupWallet/` — approval logic
 
 **Wallet components:**
-- `components/AgentWallet/` — wallet display, fund agent, withdraw
-- `components/PearlWallet/` — wallet withdraw flow
+- ✅ `components/AgentWallet/` — wallet display, fund agent, withdraw
+- ✅ `components/PearlWallet/` — wallet withdraw flow
 
 ---
 
-## Phase 3 — Balance & Services `[MEDIUM-HARD]`
+## Phase 3 — Balance & Services `[MEDIUM-HARD]` ✅ COMPLETE
 
 **Goal:** Cover the two core data providers that almost every feature depends on.
 
+**Result:** 17 test files, 445+ tests, all passing, 0 lint/tsc errors.
+
 **Balance:**
-- `hooks/useBalanceContext.ts` — balance context accessor
-- `hooks/useBalanceAndRefillRequirementsContext.ts` — refill requirements context accessor
-- `service/Balance.ts` — balance API client
-- `context/BalanceProvider/utils.ts` — balance calculation utilities
-- `context/BalanceProvider/BalanceProvider.tsx` — balance state + polling
-- `hooks/useMasterBalances.ts` — master wallet balances (18 branches)
-- `hooks/useServiceBalances.ts` — service wallet balances
-- `hooks/useAvailableAssets.ts` — available master assets
-- `hooks/useAvailableAgentAssets.ts` — available agent assets
+- ✅ `hooks/useBalanceContext.ts` — balance context accessor (4 tests)
+- ✅ `hooks/useBalanceAndRefillRequirementsContext.ts` — refill requirements context accessor (7 tests)
+- ✅ `service/Balance.ts` — balance API client (~20 tests)
+- ✅ `context/BalanceProvider/utils.ts` — balance calculation utilities (~60 tests)
+- ✅ `context/BalanceProvider/BalanceProvider.tsx` — balance state + polling (28 tests)
+- ✅ `hooks/useMasterBalances.ts` — master wallet balances (~25 tests)
+- ✅ `hooks/useServiceBalances.ts` — service wallet balances (~15 tests)
+- ✅ `hooks/useAvailableAssets.ts` — available master assets (34 tests)
+- ✅ `hooks/useAvailableAgentAssets.ts` — available agent assets (45 tests)
 
 **Services:**
-- `service/Services.ts` — service CRUD + deployment API
-- `context/ServicesProvider.tsx` — services state + polling (461 lines)
-- `hooks/useService.ts` — single service details
-- `hooks/useAgentRunning.ts` — running agent detection
-- `hooks/useAgentActivity.ts` — deployment status
-- `hooks/useIsInitiallyFunded.ts` — initial funding flag
-- `hooks/useIsAgentGeoRestricted.ts` — geo restrictions
+- ✅ `service/Services.ts` — service CRUD + deployment API (~30 tests)
+- ✅ `context/ServicesProvider.tsx` — services state + polling (41 tests)
+- ✅ `context/PearlWalletProvider.tsx` — wallet chain context (62 tests)
+- ✅ `hooks/useService.ts` — single service details (~40 tests)
+- ✅ `hooks/useAgentRunning.ts` — running agent detection (~15 tests)
+- ✅ `hooks/useAgentActivity.ts` — deployment status (~10 tests)
+- ✅ `hooks/useIsInitiallyFunded.ts` — initial funding flag (~10 tests)
+- ✅ `hooks/useIsAgentGeoRestricted.ts` — geo restriction check (~10 tests)
+
+**Behaviors/bugs caught:**
+- `sumBigNumbers` returns `.0` suffix (e.g. `"5000000000000000000.0"`)
+- `CREATED` deployment status (value `0`) is falsy — `isServiceBuilding` is false for CREATED
+- `useAgentRunning` requires exact `service_public_id` + `home_chain` match from `ACTIVE_AGENTS`
+
+**Factory consolidation:**
+- Shared `makeChainConfig(chain, overrides)` — builds chain_configs entry, supports `undefined` instances/multisig via `'key' in overrides` pattern
+- Shared `makeMiddlewareService(chain, overrides)` — builds MiddlewareServiceResponse
+- Shared `makeAgentService(agentConfig, overrides)` — accepts `Pick<AgentConfig, ...>` to avoid importing `config/agents` in factories
+- `MOCK_SERVICE_CONFIG_ID_3`/`_4` replace all local config ID constants
+- `SERVICE_PUBLIC_ID_MAP` values fixed to match real `AGENT_CONFIG` values
+- ServicesProvider.test.tsx uses `serviceFor(AgentMap.X)` thin wrapper over shared factories
+- useService.test.ts `makeFullService` delegates to `makeChainConfig`; inlined chain_configs replaced with one-liner overrides
+
+**Observations for later phases:**
+- `config/agents.ts` can't be imported directly in factories.ts (triggers `parseEther` via service templates). Use `makeAgentService(AGENT_CONFIG[AgentMap.X])` pattern instead — callers import `AGENT_CONFIG`, factory accepts the config object.
+- `config/chains.ts` also uses `parseEther` — must be mocked in tests that import it transitively.
+- `config/providers.ts` mock (`{ providers: [] }`) needed when import chain touches `BalanceProvider` or `BalancesAndRefillRequirementsProvider`.
 
 ---
 
@@ -474,19 +503,19 @@ AutoRunProvider.tsx
 
 ## Summary
 
-| Phase | Feature Domain | Difficulty |
-|-------|---------------|------------|
-| 0 | Shared Utilities & Config | EASY |
-| 1 | App Infrastructure | EASY-MEDIUM |
-| 2 | Account & Wallet | MEDIUM |
-| 3 | Balance & Services | MEDIUM-HARD |
-| 4 | Staking & Rewards | HARD |
-| 5 | Funding & Refill | MEDIUM-HARD |
-| 6 | Bridging & On-ramping | MEDIUM-HARD |
-| 7 | Deployability & Lifecycle | HARD |
-| 8 | Auto-run System | VERY HARD |
-| 9 | Static Data & Pure Types | EASY |
-| 10 | Remaining Component UI & Pages | MEDIUM |
+| Phase | Feature Domain | Difficulty | Status |
+|-------|---------------|------------|--------|
+| 0 | Shared Utilities & Config | EASY | ✅ COMPLETE |
+| 1 | App Infrastructure | EASY-MEDIUM | ✅ COMPLETE |
+| 2 | Account & Wallet | MEDIUM | ✅ COMPLETE |
+| 3 | Balance & Services | MEDIUM-HARD | ✅ COMPLETE |
+| 4 | Staking & Rewards | HARD | Not started |
+| 5 | Funding & Refill | MEDIUM-HARD | Not started |
+| 6 | Bridging & On-ramping | MEDIUM-HARD | Not started |
+| 7 | Deployability & Lifecycle | HARD | Not started |
+| 8 | Auto-run System | VERY HARD | Not started |
+| 9 | Static Data & Pure Types | EASY | Not started |
+| 10 | Remaining Component UI & Pages | MEDIUM | Not started |
 
 ## Workflow per phase
 
