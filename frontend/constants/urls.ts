@@ -31,7 +31,6 @@ export const REWARDS_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN: Record<
 
 // telegram
 export const SUPPORT_URL: Url = 'https://t.me/olaschat';
-export const COMMUNITY_ASSISTANCE_URL: Url = 'https://t.me/olaschat';
 
 // github
 export const GITHUB_API_LATEST_RELEASE: Url =
