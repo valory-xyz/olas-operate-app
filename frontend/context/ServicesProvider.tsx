@@ -61,7 +61,7 @@ import { OnlineStatusContext } from './OnlineStatusProvider';
 const TECHNICAL_ISSUE: MessageArgsProps = {
   type: 'error',
   content:
-    "It looks like one of your agents has encountered a technical issue and won't be able to run. You can join the Olas community Telegram and connect with the community to resolve this.",
+    "It looks like one of your agents has encountered a technical issue and won't be able to run. You can join the Olas community on Telegram to get help resolving this.",
   key: 'service-error',
   duration: 5,
   style: { maxWidth: MESSAGE_WIDTH, margin: '0 auto' },

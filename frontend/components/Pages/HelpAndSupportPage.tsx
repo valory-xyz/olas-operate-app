@@ -34,7 +34,7 @@ export const HelpAndSupport = () => {
         hideIcon: true,
       },
       {
-        label: 'Olas community Telegram',
+        label: 'Olas community on Telegram',
         href: SUPPORT_URL,
         isExternal: true,
       },
