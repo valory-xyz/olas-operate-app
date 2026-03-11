@@ -335,7 +335,7 @@ describe('useAvailableAssets', () => {
       mockUseMasterBalances.mockReturnValue({
         ...defaultMasterBalances,
         getMasterSafeErc20BalancesInStr: jest.fn().mockReturnValue({
-          [TokenSymbolMap.WXDAI]: '7000000000000000000.0',
+          [TokenSymbolMap.WXDAI]: '42.5',
         }),
       });
 
@@ -346,8 +346,8 @@ describe('useAvailableAssets', () => {
         (a) => a.symbol === TokenSymbolMap.WXDAI,
       );
 
-      expect(wxdaiAsset?.amountInStr).toBe('7000000000000000000.0');
-      expect(wxdaiAsset?.amount).toBe(7000000000000000000);
+      expect(wxdaiAsset?.amountInStr).toBe('42.5');
+      expect(wxdaiAsset?.amount).toBe(42.5);
       expect(wxdaiAsset?.address).toBe(GNOSIS_TOKEN_CONFIG.WXDAI!.address);
     });
 
