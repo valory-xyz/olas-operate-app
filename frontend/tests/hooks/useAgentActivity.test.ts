@@ -66,7 +66,7 @@ describe('useAgentActivity', () => {
     expect(result.current.deploymentDetails).toBeUndefined();
   });
 
-  it('returns both flags false when deployment status is STOPPING', () => {
+  it('returns isServiceRunning & isServiceDeploying flags false when deployment status is STOPPING', () => {
     mockUseServices.mockReturnValue({
       selectedService: makeService({
         deploymentStatus: MiddlewareDeploymentStatusMap.STOPPING,
