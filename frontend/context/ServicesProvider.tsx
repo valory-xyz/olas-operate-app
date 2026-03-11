@@ -8,6 +8,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 
@@ -61,7 +62,7 @@ import { OnlineStatusContext } from './OnlineStatusProvider';
 const TECHNICAL_ISSUE: MessageArgsProps = {
   type: 'error',
   content:
-    "It looks like one of your agents has encountered a technical issue and won't be able to run. You can open a Discord ticket and connect with the community to resolve this.",
+    "It looks like one of your agents has encountered a technical issue and won't be able to run. You can join the Olas community on Telegram to get help resolving this.",
   key: 'service-error',
   duration: 5,
   style: { maxWidth: MESSAGE_WIDTH, margin: '0 auto' },
@@ -145,16 +146,20 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
     agentTypeFromStore || AgentMap.PredictTrader,
   );
 
+  // Used to update the state only once, when the store value is initially synced
+  const isSelectedAgentInitiallySyncedRef = useRef(!!agentTypeFromStore);
+
   useEffect(() => {
-    // Sync the state when store changes
-    if (agentTypeFromStore && agentTypeFromStore !== selectedAgentType) {
-      setSelectedAgentType(agentTypeFromStore);
-    }
-  }, [agentTypeFromStore, selectedAgentType]);
+    if (isSelectedAgentInitiallySyncedRef.current) return;
+    if (!agentTypeFromStore) return;
+
+    isSelectedAgentInitiallySyncedRef.current = true;
+    setSelectedAgentType(agentTypeFromStore);
+  }, [agentTypeFromStore]);
 
   const updateAgentType = useCallback(
     (agentType: AgentType) => {
-      // Only set new value to the store, the state will be updated in useEffect
+      setSelectedAgentType(agentType);
       store?.set?.('lastSelectedAgentType', agentType);
       setIsInvalidMessageShown(false);
     },

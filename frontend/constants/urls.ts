@@ -29,17 +29,17 @@ export const REWARDS_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN: Record<
   [EvmChainIdMap.Polygon]: 'https://staking-polygon.subgraph.autonolas.tech',
 };
 
-// discord
-export const SUPPORT_URL: Url =
-  'https://discord.com/channels/899649805582737479/1244588374736502847';
-export const COMMUNITY_ASSISTANCE_URL: Url =
-  'https://discord.com/channels/899649805582737479/1335000001797034044';
+// telegram
+export const SUPPORT_URL: Url = 'https://t.me/olaschat';
 
 // github
 export const GITHUB_API_LATEST_RELEASE: Url =
   'https://api.github.com/repos/valory-xyz/olas-operate-app/releases/latest';
 export const GITHUB_API_RELEASES: Url =
   'https://github.com/valory-xyz/olas-operate-app/releases';
+
+// ipfs
+export const IPFS_GATEWAY_URL: Url = 'https://gateway.autonolas.tech/ipfs/';
 
 // others
 export const COINGECKO_URL: string = 'https://www.coingecko.com';
