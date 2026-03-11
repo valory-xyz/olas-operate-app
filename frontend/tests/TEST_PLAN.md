@@ -75,13 +75,22 @@ Layer 10: Remaining Component UI + Pages (rendering)
 - `helpers/factories.ts` — factories and constants for all phases:
   - **Wallet factories:** `makeMasterEoa`, `makeMasterSafe`, `makeMultisigOwners`
   - **Service factories:** `makeService` (Service type), `makeChainConfig` (chain_configs entry), `makeMiddlewareService` (MiddlewareServiceResponse), `makeAgentService` (agent-config-aware, accepts `AGENT_CONFIG[AgentMap.X]`)
+  - **Staking factories:** `makeStakingContractDetails`, `makeServiceStakingDetails`, `makeRawStakingRewardsInfo`, `makeStakingRewardsInfo`, `makeRewardsHistoryEntry`, `makeRewardsHistoryServiceResponse`
   - **Address constants:** `DEFAULT_EOA_ADDRESS`, `DEFAULT_SAFE_ADDRESS`, `BACKUP_SIGNER_ADDRESS`, `MOCK_INSTANCE_ADDRESS`, `MOCK_MULTISIG_ADDRESS`, etc.
   - **Config ID constants:** `DEFAULT_SERVICE_CONFIG_ID`, `MOCK_SERVICE_CONFIG_ID_2`/`_3`/`_4`
+  - **Staking constants:** `DEFAULT_STAKING_PROGRAM_ID`, `SECOND_STAKING_PROGRAM_ID`, `DEFAULT_STAKING_CONTRACT_ADDRESS`, `SECOND_STAKING_CONTRACT_ADDRESS`, `DEFAULT_SERVICE_NFT_TOKEN_ID`
   - **Service public IDs:** `SERVICE_PUBLIC_ID_MAP` (matches real `AGENT_CONFIG` values)
   - **Sentinels:** `INVALID_CHAIN_ID`, `UNKNOWN_TOKEN_ADDRESS`, `ALL_EVM_CHAIN_IDS`
   - All phases should use these instead of inline hex strings or local config ID constants.
 - `mocks/ethersMulticall.ts` — shared `ethers-multicall` module mock (used via `jest.mock` + `require`).
 - `mocks/servicesService.ts` — shared `ServicesService` module mock (used via `jest.mock` + `require`).
+
+**Test authoring rules (all later phases):**
+- If a value already exists in `helpers/factories.ts`, do not restate it in a test. Override only the field that matters to the behavior under test.
+- If a suite needs a convenience helper, keep it as a thin wrapper over shared factories (for example `serviceFor(agentType, overrides)`), not a second source of truth.
+- Provider tests should own query wiring, enable/disable guards, polling, refetch, and merge behavior. Consumer hook tests should focus on derivation. Component tests should focus on rendering/interaction with mocked hooks. Do not repeat the same branch matrix across all three layers.
+- When a payload shape appears in two suites, promote it into `helpers/factories.ts` before adding more inline literals.
+- Reviews should flag misleading tests that only restate imported constants or default context values without exercising the implementation branch they are named after.
 
 **Note:** Most Phase 0 files are pure functions tested without mocks. Three files (`service.ts`, `setupMulticall.ts`, `config/providers.ts`) require mocking external modules (`ServicesService`, `ethers-multicall`, `constants/providers`) due to side effects at import time.
 
@@ -247,6 +256,26 @@ Layer 10: Remaining Component UI + Pages (rendering)
 ## Phase 4 — Staking & Rewards `[HARD]`
 
 **Goal:** Cover the staking system — programs, contracts, eligibility, rewards — including staking-related components.
+
+**Execution order (keep these as separate Claude-sized batches, not one sweep):**
+1. Foundations: `utils/stakingProgram.ts`, `utils/stakingRewards.ts`, `config/stakingPrograms/index.ts`, `hooks/useRewardContext.ts`, `hooks/useStakingProgram.ts`, `context/StakingProgramProvider.tsx`
+2. Contract state: `hooks/useStakingContracts.ts`, `hooks/useStakingContractDetails.ts`, `hooks/useStakingContractCountdown.ts`, `hooks/useStakingDetails.ts`, `hooks/useActiveStakingProgramId.ts`, `context/StakingContractDetailsProvider.tsx`
+3. Rewards data: `hooks/useAgentStakingRewardsDetails.ts`, `hooks/useStakingRewardsOf.ts`, `hooks/useRewardsHistory.ts`, `context/RewardProvider.tsx`
+4. Agent service hierarchy: `StakedAgentService`, `AgentsFun`, `PredictTrader`, `Modius`, `Optimism`, `PettAi`, `Polystrat`, `AgentsFunBase`
+5. UI-facing staking logic: `components/AgentStaking/`, `components/ConfirmSwitch/hooks/useShouldAllowStakingContractSwitch.ts`, `components/SelectStakingPage/hooks/useCanMigrate.ts`, `components/SelectStakingPage/hooks/useStakingDetails.ts`
+
+**Required shared fixtures before adding more Phase 4 suites:**
+- Use `makeStakingContractDetails` and `makeServiceStakingDetails` for contract-detail/provider tests instead of suite-local staking payload builders.
+- Use `makeRawStakingRewardsInfo` for service-api responses and `makeStakingRewardsInfo` for already-parsed hook/provider values.
+- Use `makeRewardsHistoryEntry` and `makeRewardsHistoryServiceResponse` for subgraph payloads; do not inline GraphQL objects in each test file.
+- Use `DEFAULT_STAKING_PROGRAM_ID`, `SECOND_STAKING_PROGRAM_ID`, `DEFAULT_STAKING_CONTRACT_ADDRESS`, and `DEFAULT_SERVICE_NFT_TOKEN_ID` instead of retyping program ids, addresses, and token ids.
+
+**Phase 4 review rules:**
+- Test documented quirks exactly once at the lowest layer that owns them. Examples: `availableRewards ?? 0 > 0` precedence in `useStakingContractDetails`, streak stopping at the first missed epoch in `useRewardsHistory`, and optimistic reward calculation in `RewardProvider`.
+- `StakingProgramProvider` owns fallback priority. Downstream hook/component suites should mock the provider state instead of rebuilding the same active/service/default-selection matrix.
+- `StakingContractDetailsProvider` owns query strategy differences. Hook tests should cover derived booleans; they should not duplicate provider polling assertions.
+- `RewardProvider` owns optimistic reward and store persistence. Component tests should consume those outputs, not re-test Electron store writes.
+- For the agent service class hierarchy, keep shared base-contract behavior in the `StakedAgentService` suite and limit subclass suites to chain/program-specific overrides.
 
 **Staking utils & config:**
 - `utils/stakingProgram.ts` — staking program helpers
