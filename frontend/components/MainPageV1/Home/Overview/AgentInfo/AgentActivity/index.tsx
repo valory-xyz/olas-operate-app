@@ -6,11 +6,7 @@ import { useBoolean } from 'usehooks-ts';
 
 import { InfoTooltip } from '@/components/ui';
 import { COLOR } from '@/constants';
-import {
-  useAgentActivity,
-  useRewardContext,
-  useServiceDeployment,
-} from '@/hooks';
+import { useAgentActivity, useRewardContext } from '@/hooks';
 
 import { AgentActivityModal } from './AgentActivityModal';
 import { Container, Text } from './styles';
@@ -43,7 +39,6 @@ const IdleContent = () => (
 );
 
 export const AgentActivity = () => {
-  const { isDeployable } = useServiceDeployment();
   const { deploymentDetails, isServiceRunning, isServiceDeploying } =
     useAgentActivity();
   const { isEligibleForRewards } = useRewardContext();
@@ -67,12 +62,6 @@ export const AgentActivity = () => {
     status: AgentStatus;
     content: string | ReactNode;
   }>(() => {
-    // When data is still loading (not deployable/running/deploying),
-    // show "not running" to prevent layout shifts during agent transitions.
-    if (!isServiceRunning && !isServiceDeploying && !isDeployable) {
-      return { status: 'not-running', content: 'Agent is not running' };
-    }
-
     if (isServiceDeploying) {
       return { status: 'loading', content: 'Agent is loading' };
     }
@@ -105,7 +94,6 @@ export const AgentActivity = () => {
 
     return { status: 'not-running', content: 'Agent is not running' };
   }, [
-    isDeployable,
     isEligibleForRewards,
     isServiceDeploying,
     isServiceRunning,
