@@ -41,6 +41,9 @@ export const GITHUB_API_LATEST_RELEASE: Url =
 export const GITHUB_API_RELEASES: Url =
   'https://github.com/valory-xyz/olas-operate-app/releases';
 
+// ipfs
+export const IPFS_GATEWAY_URL: Url = 'https://gateway.autonolas.tech/ipfs/';
+
 // others
 export const COINGECKO_URL: string = 'https://www.coingecko.com';
 export const COINGECKO_DEMO_API_URL: string =
