@@ -11,6 +11,7 @@ import {
 import { StakingProgramContext } from '../../context/StakingProgramProvider';
 import { AgentConfig } from '../../types/Agent';
 import { Service } from '../../types/Service';
+import { createStakingProgramContextValue } from '../helpers/contextDefaults';
 import {
   DEFAULT_SERVICE_CONFIG_ID,
   DEFAULT_SERVICE_NFT_TOKEN_ID,
@@ -177,15 +178,11 @@ const wrapper = (
     createElement(
       StakingProgramContext.Provider,
       {
-        value: {
-          isActiveStakingProgramLoaded: true,
-          activeStakingProgramId: selectedStakingProgramId,
-          defaultStakingProgramId: selectedStakingProgramId,
+        value: createStakingProgramContextValue({
+          activeStakingProgramId: selectedStakingProgramId ?? undefined,
+          defaultStakingProgramId: selectedStakingProgramId ?? undefined,
           selectedStakingProgramId,
-          setDefaultStakingProgramId: () => {},
-          stakingProgramIdToMigrateTo: null,
-          setStakingProgramIdToMigrateTo: () => {},
-        },
+        }),
       },
       createElement(StakingContractDetailsProvider, null, children),
     );

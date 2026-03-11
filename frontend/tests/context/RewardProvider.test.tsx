@@ -12,6 +12,7 @@ import { RewardContext, RewardProvider } from '../../context/RewardProvider';
 import { StakingProgramContext } from '../../context/StakingProgramProvider';
 import { AgentConfig } from '../../types/Agent';
 import { StakingRewardsInfo } from '../../types/Autonolas';
+import { createStakingProgramContextValue } from '../helpers/contextDefaults';
 import {
   DEFAULT_SERVICE_CONFIG_ID,
   DEFAULT_STAKING_PROGRAM_ID,
@@ -173,14 +174,10 @@ const wrapper = ({ children }: PropsWithChildren) =>
     createElement(
       StakingProgramContext.Provider,
       {
-        value: {
-          isActiveStakingProgramLoaded: true,
+        value: createStakingProgramContextValue({
           selectedStakingProgramId:
             DEFAULT_STAKING_PROGRAM_ID as StakingProgramId,
-          setDefaultStakingProgramId: jest.fn(),
-          stakingProgramIdToMigrateTo: null,
-          setStakingProgramIdToMigrateTo: jest.fn(),
-        },
+        }),
       },
       createElement(RewardProvider, null, children),
     ),
@@ -413,14 +410,10 @@ describe('RewardProvider', () => {
           createElement(
             StakingProgramContext.Provider,
             {
-              value: {
-                isActiveStakingProgramLoaded: true,
+              value: createStakingProgramContextValue({
                 selectedStakingProgramId:
                   'nonexistent_program' as StakingProgramId,
-                setDefaultStakingProgramId: jest.fn(),
-                stakingProgramIdToMigrateTo: null,
-                setStakingProgramIdToMigrateTo: jest.fn(),
-              },
+              }),
             },
             createElement(RewardProvider, null, children),
           ),
@@ -450,14 +443,10 @@ describe('RewardProvider', () => {
           createElement(
             StakingProgramContext.Provider,
             {
-              value: {
-                isActiveStakingProgramLoaded: true,
+              value: createStakingProgramContextValue({
                 selectedStakingProgramId:
                   DEFAULT_STAKING_PROGRAM_ID as StakingProgramId,
-                setDefaultStakingProgramId: jest.fn(),
-                stakingProgramIdToMigrateTo: null,
-                setStakingProgramIdToMigrateTo: jest.fn(),
-              },
+              }),
             },
             createElement(RewardProvider, null, children),
           ),

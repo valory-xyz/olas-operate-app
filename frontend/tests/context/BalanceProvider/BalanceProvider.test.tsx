@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { renderHook, waitFor } from '@testing-library/react';
 import { act, PropsWithChildren, useContext } from 'react';
 
@@ -30,6 +30,7 @@ import {
   MOCK_MULTISIG_ADDRESS,
   SECOND_SAFE_ADDRESS,
 } from '../../helpers/factories';
+import { createTestQueryClient } from '../../helpers/queryClient';
 
 /* eslint-disable @typescript-eslint/no-var-requires */
 jest.mock(
@@ -95,11 +96,7 @@ const createWrapper = (options: WrapperOptions = {}) => {
       ? undefined
       : (options.services ?? [defaultService]);
 
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: { retry: false, gcTime: 0 },
-    },
-  });
+  const queryClient = createTestQueryClient();
 
   // eslint-disable-next-line react/display-name
   return ({ children }: PropsWithChildren) => (
