@@ -27,16 +27,41 @@ export const ALL_EVM_CHAIN_IDS: EvmChainId[] = [
   EvmChainIdMap.Polygon,
 ];
 
+/** EIP-55 checksummed addresses — safe with `getAddress()` and `isAddress()` */
 export const DEFAULT_EOA_ADDRESS: Address =
-  '0x1234567890AbcdEF1234567890aBCDef12345678';
+  '0x1234567890AbcdEF1234567890aBcdef12345678';
 export const DEFAULT_SAFE_ADDRESS: Address =
-  '0xAbCDefAbCDefAbCDefAbCDefAbCDefAbCDefAbCd';
+  '0xABcdEFABcdEFabcdEfAbCdefabcdeFABcDEFabCD';
+export const SECOND_SAFE_ADDRESS: Address =
+  '0xC581D42746dfBf60E9F1beA5BeeF2ED4619CCfEE';
+export const POLYGON_SAFE_ADDRESS: Address =
+  '0x7a1B537D2F56bbAE9E57CA04bC0E2BfD2e176c2A';
 export const BACKUP_SIGNER_ADDRESS: Address =
-  '0xAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAa';
+  '0xaAaAaAaaAaAaAaaAaAAAAAAAAaaaAaAaAaaAaaAa';
 export const BACKUP_SIGNER_ADDRESS_2: Address =
-  '0xBBbbBBbbBBbbBBbbBBbbBBbbBBbbBBbbBBbbBBbb';
+  '0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB';
 export const AGENT_KEY_ADDRESS: Address =
-  '0xCcCcCcCcCcCcCcCcCcCcCcCcCcCcCcCcCcCcCcCc';
+  '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC';
+
+export const GNOSIS_SAFE_ADDRESS: Address =
+  '0xE97C17124cd1CD95300E2bE3e207C4B8162A535C';
+export const MOCK_BACKUP_OWNER: Address =
+  '0x2455556c4bd75975ccFa293B87476Fb0d6CB5524';
+
+export const MOCK_INSTANCE_ADDRESS: Address =
+  '0x1111111111111111111111111111111111111111';
+export const MOCK_MULTISIG_ADDRESS: Address =
+  '0x2222222222222222222222222222222222222222';
+
+export const MOCK_TX_HASH_1: `0x${string}` =
+  '0xabc123def456abc123def456abc123def456abc123def456abc123def456abc1';
+export const MOCK_TX_HASH_2: `0x${string}` =
+  '0xdef789abc012def789abc012def789abc012def789abc012def789abc012def7';
+export const MOCK_TX_HASH_3: `0x${string}` =
+  '0x111222333444555666777888999aaabbbcccdddeeefff000111222333444555666';
+
+export const DEFAULT_MULTICALL_ADDRESS =
+  '0xcA11bde05977b3631167028862bE2a173976CA11';
 
 export const makeMasterEoa = (
   address: Address = DEFAULT_EOA_ADDRESS,

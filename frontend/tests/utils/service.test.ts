@@ -3,12 +3,17 @@ import {
   MiddlewareChainMap,
   StakingProgramId,
 } from '../../constants';
+import { AddressZero } from '../../constants/address';
 import { Service, ServiceTemplate } from '../../types/Service';
 import {
   isValidServiceId,
   onDummyServiceCreation,
   updateServiceIfNeeded,
 } from '../../utils/service';
+import {
+  MOCK_INSTANCE_ADDRESS,
+  MOCK_MULTISIG_ADDRESS,
+} from '../helpers/factories';
 import { mockCreateService, mockUpdateService } from '../mocks/servicesService';
 
 /* eslint-disable @typescript-eslint/no-var-requires */
@@ -18,62 +23,67 @@ jest.mock(
 );
 /* eslint-enable @typescript-eslint/no-var-requires */
 
-jest.mock('../../constants/serviceTemplates', () => ({
-  KPI_DESC_PREFIX: '[Pearl service]',
-  SERVICE_TEMPLATES: [
-    {
-      agentType: 'memeooorr',
-      name: 'Agents.Fun',
-      hash: 'bafybeiem4rsgu5ffgllwroru2ahaxb4wcw5zpxfszo6iiki7tvnmvbfe5q',
-      description: '[Pearl service] Agents.Fun @twitter_handle',
-      home_chain: 'base',
-      env_variables: {
-        RESET_PAUSE_DURATION: {
-          name: 'Reset pause duration',
-          description: '',
-          value: '300',
-          provision_type: 'fixed',
+/* eslint-disable @typescript-eslint/no-var-requires */
+jest.mock('../../constants/serviceTemplates', () => {
+  const { AddressZero: addr } = require('../../constants/address');
+  return {
+    KPI_DESC_PREFIX: '[Pearl service]',
+    SERVICE_TEMPLATES: [
+      {
+        agentType: 'memeooorr',
+        name: 'Agents.Fun',
+        hash: 'bafybeiem4rsgu5ffgllwroru2ahaxb4wcw5zpxfszo6iiki7tvnmvbfe5q',
+        description: '[Pearl service] Agents.Fun @twitter_handle',
+        home_chain: 'base',
+        env_variables: {
+          RESET_PAUSE_DURATION: {
+            name: 'Reset pause duration',
+            description: '',
+            value: '300',
+            provision_type: 'fixed',
+          },
+          STORE_PATH: {
+            name: 'Store path',
+            description: '',
+            value: 'persistent_data/',
+            provision_type: 'computed',
+          },
+          PERSONA: {
+            name: 'Persona description',
+            description: '',
+            value: '',
+            provision_type: 'user',
+          },
         },
-        STORE_PATH: {
-          name: 'Store path',
-          description: '',
-          value: 'persistent_data/',
-          provision_type: 'computed',
-        },
-        PERSONA: {
-          name: 'Persona description',
-          description: '',
-          value: '',
-          provision_type: 'user',
-        },
-      },
-      configurations: {
-        base: {
-          fund_requirements: {
-            '0x0000000000000000000000000000000000000000': {
-              agent: '325700000000000',
-              safe: '1628500000000000',
+        configurations: {
+          base: {
+            fund_requirements: {
+              [addr]: {
+                agent: '325700000000000',
+                safe: '1628500000000000',
+              },
             },
           },
         },
-      },
-      agent_release: {
-        is_aea: true,
-        repository: {
-          owner: 'valory-xyz',
-          name: 'meme-ooorr',
-          version: 'v2.3.1',
+        agent_release: {
+          is_aea: true,
+          repository: {
+            owner: 'valory-xyz',
+            name: 'meme-ooorr',
+            version: 'v2.3.1',
+          },
         },
       },
-    },
-  ],
-}));
+    ],
+  };
+});
+/* eslint-enable @typescript-eslint/no-var-requires */
 
 const TEMPLATE_HASH =
   'bafybeiem4rsgu5ffgllwroru2ahaxb4wcw5zpxfszo6iiki7tvnmvbfe5q';
 
 const TEMPLATE_FUND_REQUIREMENTS = {
-  '0x0000000000000000000000000000000000000000': {
+  [AddressZero]: {
     agent: '325700000000000',
     safe: '1628500000000000',
   },
@@ -257,7 +267,7 @@ describe('updateServiceIfNeeded', () => {
           chain_data: {
             user_params: {
               fund_requirements: {
-                '0x0000000000000000000000000000000000000000': {
+                [AddressZero]: {
                   agent: '100000000000000',
                   safe: '500000000000000',
                 },
@@ -332,9 +342,9 @@ describe('updateServiceIfNeeded', () => {
             chain: 'base',
           },
           chain_data: {
-            instances: ['0x1111111111111111111111111111111111111111'],
+            instances: [MOCK_INSTANCE_ADDRESS],
             token: '999',
-            multisig: '0x2222222222222222222222222222222222222222',
+            multisig: MOCK_MULTISIG_ADDRESS,
             staked: true,
             on_chain_state: 3,
             user_params: {

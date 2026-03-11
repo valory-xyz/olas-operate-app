@@ -1,6 +1,7 @@
 import { setMulticallAddress } from 'ethers-multicall';
 
 import { setupMulticallAddresses } from '../../utils/setupMulticall';
+import { DEFAULT_MULTICALL_ADDRESS } from '../helpers/factories';
 
 /* eslint-disable @typescript-eslint/no-var-requires */
 jest.mock(
@@ -18,10 +19,9 @@ describe('setupMulticallAddresses', () => {
   });
 
   it('uses the default multicall address for all chains', async () => {
-    const defaultAddress = '0xcA11bde05977b3631167028862bE2a173976CA11';
     await setupMulticallAddresses();
     for (const call of mockSetMulticallAddress.mock.calls) {
-      expect(call[1]).toBe(defaultAddress);
+      expect(call[1]).toBe(DEFAULT_MULTICALL_ADDRESS);
     }
   });
 
