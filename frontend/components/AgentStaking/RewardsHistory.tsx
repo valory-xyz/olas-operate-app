@@ -194,11 +194,13 @@ const CheckpointRow = ({ checkpoint }: { checkpoint: Checkpoint }) => {
   if (!stakingProgramId) return null;
 
   const stakingProgramMeta =
-    STAKING_PROGRAMS[selectedAgentConfig.evmHomeChainId][stakingProgramId];
+    STAKING_PROGRAMS[selectedAgentConfig.evmHomeChainId]?.[stakingProgramId];
+  if (!stakingProgramMeta) return null;
+
   return (
     <RewardRow key={checkpoint.epochEndTimeStamp}>
       <Col span={10} className="leading-20">
-        <Text className="text-sm">{stakingProgramMeta.name}</Text>
+        <Text className="text-sm">{stakingProgramMeta?.name}</Text>
       </Col>
       <Col span={4} className="leading-20">
         <Flex align="center" gap={4}>
