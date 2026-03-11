@@ -174,7 +174,7 @@ export const SupportModal = ({
         header={<WarningOutlined />}
         closable
         title="Request Submission Failed"
-        description="Please try contacting the Valory support team again. Alternatively, you can contact the Olas DAO in their Discord."
+        description="Please try contacting the Valory support team again. Alternatively, you can contact the Olas community Telegram."
         action={
           <a
             href={SUPPORT_URL}
@@ -182,7 +182,7 @@ export const SupportModal = ({
             rel="noopener noreferrer"
             className="flex align-center mt-32"
           >
-            Visit the Olas DAO&apos;s Discord Server{' '}
+            Visit Olas community Telegram{' '}
             <FiExternalLink
               color={COLOR.PURPLE}
               fontSize={20}

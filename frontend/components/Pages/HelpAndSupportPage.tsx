@@ -34,7 +34,7 @@ export const HelpAndSupport = () => {
         hideIcon: true,
       },
       {
-        label: `Olas DAO's Discord server`,
+        label: 'Olas community Telegram',
         href: SUPPORT_URL,
         isExternal: true,
       },
