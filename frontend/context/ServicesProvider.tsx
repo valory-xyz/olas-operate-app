@@ -8,6 +8,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 
@@ -145,16 +146,20 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
     agentTypeFromStore || AgentMap.PredictTrader,
   );
 
+  // Used to update the state only once, when the store value is initially synced
+  const isSelectedAgentInitiallySyncedRef = useRef(!!agentTypeFromStore);
+
   useEffect(() => {
-    // Sync the state when store changes
-    if (agentTypeFromStore && agentTypeFromStore !== selectedAgentType) {
-      setSelectedAgentType(agentTypeFromStore);
-    }
-  }, [agentTypeFromStore, selectedAgentType]);
+    if (isSelectedAgentInitiallySyncedRef.current) return;
+    if (!agentTypeFromStore) return;
+
+    isSelectedAgentInitiallySyncedRef.current = true;
+    setSelectedAgentType(agentTypeFromStore);
+  }, [agentTypeFromStore]);
 
   const updateAgentType = useCallback(
     (agentType: AgentType) => {
-      // Only set new value to the store, the state will be updated in useEffect
+      setSelectedAgentType(agentType);
       store?.set?.('lastSelectedAgentType', agentType);
       setIsInvalidMessageShown(false);
     },

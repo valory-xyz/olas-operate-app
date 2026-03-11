@@ -6,11 +6,7 @@ import { useBoolean } from 'usehooks-ts';
 
 import { InfoTooltip } from '@/components/ui';
 import { COLOR } from '@/constants';
-import {
-  useAgentActivity,
-  useRewardContext,
-  useServiceDeployment,
-} from '@/hooks';
+import { useAgentActivity, useRewardContext } from '@/hooks';
 
 import { AgentActivityModal } from './AgentActivityModal';
 import { Container, Text } from './styles';
@@ -43,7 +39,6 @@ const IdleContent = () => (
 );
 
 export const AgentActivity = () => {
-  const { isDeployable } = useServiceDeployment();
   const { deploymentDetails, isServiceRunning, isServiceDeploying } =
     useAgentActivity();
   const { isEligibleForRewards } = useRewardContext();
@@ -105,10 +100,6 @@ export const AgentActivity = () => {
     rounds,
     roundsInfo,
   ]);
-
-  if (isServiceRunning || isServiceDeploying ? false : !isDeployable) {
-    return null;
-  }
 
   return (
     <>
