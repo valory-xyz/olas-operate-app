@@ -1,3 +1,4 @@
+import { BigNumber } from 'ethers';
 import { MutableRefObject } from 'react';
 
 import { AgentType } from '@/constants';
@@ -22,10 +23,10 @@ export const isStakingEpochExpired = ({
   livenessPeriod,
   tsCheckpoint,
 }: {
-  livenessPeriod: { _hex: string };
+  livenessPeriod: { _isBigNumber: boolean; _hex: string };
   tsCheckpoint: number;
 }): boolean => {
-  const livenessPeriodSeconds = parseInt(livenessPeriod._hex, 16);
+  const livenessPeriodSeconds = BigNumber.from(livenessPeriod).toNumber();
   if (livenessPeriodSeconds <= 0) return false;
   const nowInSeconds = Math.floor(Date.now() / 1000);
   return nowInSeconds - tsCheckpoint >= livenessPeriodSeconds;
@@ -111,9 +112,13 @@ export const refreshRewardsEligibility = async ({
     const epochExpired = isStakingEpochExpired(response);
     if (epochExpired && response.isEligibleForRewards) {
       logMessage(
-        `epoch expired for ${agentType}, overriding rewards eligibility to false for new epoch`,
+        `${agentType}: epoch expired, stale isEligibleForRewards=true overridden to false so agent runs and triggers on-chain checkpoint`,
       );
     }
+    // isEligibleForRewards=true → agent already earned this epoch → auto-run SKIPS it.
+    // isEligibleForRewards=false → agent hasn't earned yet → auto-run STARTS it.
+    // Epoch expired but checkpoint not yet called: true is stale, override to false so
+    // auto-run starts the agent and triggers the on-chain checkpoint for the new epoch.
     const eligible = epochExpired ? false : response.isEligibleForRewards;
     if (typeof eligible === 'boolean') {
       setRewardSnapshot(agentType, eligible);
