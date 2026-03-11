@@ -253,9 +253,11 @@ Layer 10: Remaining Component UI + Pages (rendering)
 
 ---
 
-## Phase 4 — Staking & Rewards `[HARD]`
+## Phase 4 — Staking & Rewards `[HARD]` ✅ COMPLETE
 
 **Goal:** Cover the staking system — programs, contracts, eligibility, rewards — including staking-related components.
+
+**Result:** 23 test files, 411 tests, all passing, 0 lint errors.
 
 **Execution order (keep these as separate Claude-sized batches, not one sweep):**
 1. Foundations: `utils/stakingProgram.ts`, `utils/stakingRewards.ts`, `config/stakingPrograms/index.ts`, `hooks/useRewardContext.ts`, `hooks/useStakingProgram.ts`, `context/StakingProgramProvider.tsx`
@@ -327,9 +329,11 @@ StakedAgentService (abstract base)
 
 ---
 
-## Phase 5 — Funding & Refill Requirements `[MEDIUM-HARD]`
+## Phase 5 — Funding & Refill Requirements `[MEDIUM-HARD]` ✅ COMPLETE
 
 **Goal:** Cover the funding logic — what tokens are needed, how much, and where — including setup funding components.
+
+**Result:** 10 test files, 167 tests, all passing, 0 lint errors.
 
 - `hooks/useGetRefillRequirements.ts` — requirement aggregation + formatting
 - `hooks/useAgentFundingRequests.tsx` — agent funding needs consolidation
@@ -343,6 +347,8 @@ StakedAgentService (abstract base)
 
 **Funding components:**
 - `components/SetupPage/FundYourAgent/hooks/` — funding setup hooks
+
+**Known bug (not testable):** `useGetRefillRequirements.ts:203-206` — when `getRequirementsPerToken` returns `[]`, `isEmpty([])` is `true`, so the effect re-runs with a new `[]` reference every cycle, causing React "Maximum update depth exceeded". The empty-requirements path cannot be tested until the source is fixed (e.g., use `null` as the sentinel instead of relying on `isEmpty`).
 
 ---
 
