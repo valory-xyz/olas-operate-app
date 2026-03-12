@@ -1,10 +1,9 @@
 import { renderHook } from '@testing-library/react';
 
-import { TokenSymbolMap } from '../../../../config/tokens';
+import { GNOSIS_TOKEN_CONFIG, TokenSymbolMap } from '../../../../config/tokens';
 import { AddressZero } from '../../../../constants/address';
 import { EvmChainIdMap } from '../../../../constants/chains';
 import { useOnRampContext } from '../../../../hooks/useOnRampContext';
-import { Address } from '../../../../types/Address';
 import { BridgeRefillRequirementsRequest } from '../../../../types/Bridge';
 import {
   DEFAULT_EOA_ADDRESS,
@@ -51,8 +50,7 @@ const {
 // Helpers
 // ---------------------------------------------------------------------------
 
-const GNOSIS_OLAS_ADDRESS: Address =
-  '0xcE11e14225575945b8E6Dc0D4F2dD4C570f79d9f';
+const GNOSIS_OLAS_ADDRESS = GNOSIS_TOKEN_CONFIG[TokenSymbolMap.OLAS]!.address!;
 
 const makeBridgeParams = (
   overrides: Partial<BridgeRefillRequirementsRequest> = {},

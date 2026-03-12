@@ -1,7 +1,10 @@
 import { renderHook } from '@testing-library/react';
 
 import { EvmChainIdMap } from '../../../../constants/chains';
-import { DEFAULT_SAFE_ADDRESS } from '../../../helpers/factories';
+import {
+  DEFAULT_SAFE_ADDRESS,
+  MOCK_TX_HASH_1,
+} from '../../../helpers/factories';
 
 // ---------------------------------------------------------------------------
 // Module mocks
@@ -47,7 +50,7 @@ const {
 
 const MOCK_QUOTE_ID = 'quote-abc-123';
 const MOCK_SYMBOLS = ['ETH', 'OLAS'];
-const MOCK_TXN_LINK = 'https://gnosisscan.io/tx/0xabc';
+const MOCK_TXN_LINK = `https://gnosisscan.io/tx/${MOCK_TX_HASH_1}`;
 
 const mockCreateMasterSafe = jest.fn();
 
