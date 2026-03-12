@@ -24,10 +24,17 @@ export const isStakingEpochExpired = ({
   livenessPeriod,
   tsCheckpoint,
 }: Pick<StakingRewardsInfo, 'livenessPeriod' | 'tsCheckpoint'>): boolean => {
-  const livenessPeriodSeconds = BigNumber.from(livenessPeriod).toNumber();
-  if (livenessPeriodSeconds <= 0) return false;
-  const nowInSeconds = Math.floor(Date.now() / 1000);
-  return nowInSeconds - tsCheckpoint >= livenessPeriodSeconds;
+  try {
+    const livenessPeriodBN = BigNumber.from(livenessPeriod);
+    if (livenessPeriodBN.lte(0)) return false;
+    const nowInSeconds = Math.floor(Date.now() / 1000);
+    // Epoch expired when time elapsed since last checkpoint >= liveness period.
+    // Comparison done in BigNumber to avoid toNumber() overflow on large values.
+    return livenessPeriodBN.lte(nowInSeconds - tsCheckpoint);
+  } catch {
+    // Malformed livenessPeriod: fail closed (treat as not expired).
+    return false;
+  }
 };
 
 /**
