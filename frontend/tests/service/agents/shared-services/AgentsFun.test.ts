@@ -175,7 +175,8 @@ describe('AgentsFunService.getAgentStakingRewardsInfo', () => {
     expect(result).toBeUndefined();
   });
 
-  it('throws when staking program is not found', async () => {
+  it('throws when staking program is not found on chain', async () => {
+    // PROGRAM_WITH_MECH exists on Base, not Gnosis — using Gnosis triggers "not found"
     await expect(
       callWith({
         chainId: GNOSIS,

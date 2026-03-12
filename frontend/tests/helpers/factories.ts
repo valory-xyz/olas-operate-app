@@ -360,6 +360,7 @@ export const makeStakingRewardsInfo = (
   ...overrides,
 });
 
+// Local type — not exported from source (GraphQL response shape)
 type RewardsHistoryEntry = {
   id: string;
   epoch: string;

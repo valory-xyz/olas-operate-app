@@ -141,7 +141,7 @@ describe('createStakingRewardsQuery', () => {
     });
 
     it.each([undefined, 0, -1])(
-      'is fale when serviceNftTokenId is %s',
+      'is false when serviceNftTokenId is %s',
       (serviceNftTokenId) => {
         const { enabled } = createStakingRewardsQuery({
           ...baseParams,

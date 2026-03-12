@@ -360,37 +360,37 @@ describe('ModiusService.getStakingContractDetails', () => {
       MODE,
     );
 
-    expect(result).toBeDefined();
+    if (!result) throw new Error('result should be defined');
 
     // availableRewards = formatUnits(5e18, 18) = 5.0
-    expect(result!.availableRewards).toBe(5.0);
+    expect(result.availableRewards).toBe(5.0);
 
     // maxNumServices — raw .toNumber(), no MAX_ALLOWED_SERVICES cap
-    expect(result!.maxNumServices).toBe(10);
+    expect(result.maxNumServices).toBe(10);
 
     // serviceIds — identity mapping (no Number() conversion)
-    expect(result!.serviceIds).toEqual(serviceIds);
-    expect(result!.minimumStakingDuration).toBe(86400);
-    expect(result!.epochCounter).toBe(7);
-    expect(result!.livenessPeriod).toBe(DEFAULT_LIVENESS_PERIOD_S);
+    expect(result.serviceIds).toEqual(serviceIds);
+    expect(result.minimumStakingDuration).toBe(86400);
+    expect(result.epochCounter).toBe(7);
+    expect(result.livenessPeriod).toBe(DEFAULT_LIVENESS_PERIOD_S);
 
     // minStakingDeposit = 100 OLAS formatted
-    expect(result!.minStakingDeposit).toBe(100);
+    expect(result.minStakingDeposit).toBe(100);
 
     // olasStakeRequired = minDeposit + minDeposit * numAgentInstances = 200
-    expect(result!.olasStakeRequired).toBe(200);
+    expect(result.olasStakeRequired).toBe(200);
 
     // APY = rewardsPerYear * 100 / minStakingDeposit / (1 + numAgentInstances)
     const rewardsPerYear = rewardsPerSecond.mul(ONE_YEAR);
     const expectedApy =
       rewardsPerYear.mul(100).div(minStakingDeposit).toNumber() /
       (1 + numAgentInstances.toNumber());
-    expect(result!.apy).toBe(expectedApy);
+    expect(result.apy).toBe(expectedApy);
 
     // rewardsPerWorkPeriod = formatEther(rewardsPerSecond) * livenessPeriod
     const expectedRewardsPerWork =
       Number(formatEther(rewardsPerSecond)) * livenessPeriod.toNumber();
-    expect(result!.rewardsPerWorkPeriod).toBe(expectedRewardsPerWork);
+    expect(result.rewardsPerWorkPeriod).toBe(expectedRewardsPerWork);
   });
 
   it('returns APY of 0 when rewardsPerSecond is 0', async () => {

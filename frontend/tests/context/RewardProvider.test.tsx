@@ -319,6 +319,8 @@ describe('RewardProvider', () => {
     });
   });
 
+  // Note: firstStakingRewardAchieved is still written to store in the source
+  // (previously used for confetti UI). Tests cover the store persistence logic.
   describe('firstStakingRewardAchieved store persistence', () => {
     it('writes firstStakingRewardAchieved to store on first eligibility', async () => {
       setupMocks({
