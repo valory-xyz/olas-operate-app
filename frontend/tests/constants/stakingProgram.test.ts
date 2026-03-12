@@ -176,14 +176,8 @@ describe('STAKING_PROGRAM_IDS', () => {
   });
 
   describe('completeness and uniqueness', () => {
-    it('covers exactly 28 staking programs across all chains', () => {
-      // 12 Gnosis + 11 Base + 5 Mode + 3 Optimism + 3 Polygon = 34
-      // but wait let me count: Gnosis: PearlAlpha, PearlBeta, PearlBeta2-6, PearlBetaMM, PMM1, PMM2, PMM3, PMM4 = 12
-      // Base: MemeBaseAlpha2, MemeBaseBeta, MemeBaseBeta2, MemeBaseBeta3, AgentsFun1-3, PettAiAgent, PettAiAgent2-4 = 11
-      // Mode: ModiusAlpha, ModiusAlpha2-4, OptimusAlpha = 5
-      // Optimism: OptimusAlpha2-4 = 3
-      // Polygon: PolygonBeta1-3 = 3
-      // Total = 12 + 11 + 5 + 3 + 3 = 34
+    it('covers exactly 34 staking programs across all chains', () => {
+      // Chain totals: 12 Gnosis + 11 Base + 5 Mode + 3 Optimism + 3 Polygon = 34
       expect(Object.keys(STAKING_PROGRAM_IDS)).toHaveLength(34);
     });
 
