@@ -352,7 +352,7 @@ StakedAgentService (abstract base)
 
 ---
 
-## Phase 6 — Bridging & On-ramping `[MEDIUM-HARD]`
+## Phase 6 — Bridging & On-ramping `[MEDIUM-HARD]` ✅ COMPLETE
 
 **Goal:** Cover the cross-chain and fiat-to-crypto flows — hooks, services, context, AND components together.
 
@@ -544,9 +544,9 @@ AutoRunProvider.tsx
 | 1 | App Infrastructure | EASY-MEDIUM | ✅ COMPLETE |
 | 2 | Account & Wallet | MEDIUM | ✅ COMPLETE |
 | 3 | Balance & Services | MEDIUM-HARD | ✅ COMPLETE |
-| 4 | Staking & Rewards | HARD | Not started |
-| 5 | Funding & Refill | MEDIUM-HARD | Not started |
-| 6 | Bridging & On-ramping | MEDIUM-HARD | Not started |
+| 4 | Staking & Rewards | HARD | ✅ COMPLETE |
+| 5 | Funding & Refill | MEDIUM-HARD | ✅ COMPLETE |
+| 6 | Bridging & On-ramping | MEDIUM-HARD | ✅ COMPLETE |
 | 7 | Deployability & Lifecycle | HARD | Not started |
 | 8 | Auto-run System | VERY HARD | Not started |
 | 9 | Static Data & Pure Types | EASY | Not started |
