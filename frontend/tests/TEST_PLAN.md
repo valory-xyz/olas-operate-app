@@ -253,9 +253,11 @@ Layer 10: Remaining Component UI + Pages (rendering)
 
 ---
 
-## Phase 4 — Staking & Rewards `[HARD]`
+## Phase 4 — Staking & Rewards `[HARD]` ✅ COMPLETE
 
 **Goal:** Cover the staking system — programs, contracts, eligibility, rewards — including staking-related components.
+
+**Result:** 23 test files, 411 tests, all passing, 0 lint errors.
 
 **Execution order (keep these as separate Claude-sized batches, not one sweep):**
 1. Foundations: `utils/stakingProgram.ts`, `utils/stakingRewards.ts`, `config/stakingPrograms/index.ts`, `hooks/useRewardContext.ts`, `hooks/useStakingProgram.ts`, `context/StakingProgramProvider.tsx`
@@ -327,9 +329,11 @@ StakedAgentService (abstract base)
 
 ---
 
-## Phase 5 — Funding & Refill Requirements `[MEDIUM-HARD]`
+## Phase 5 — Funding & Refill Requirements `[MEDIUM-HARD]` ✅ COMPLETE
 
 **Goal:** Cover the funding logic — what tokens are needed, how much, and where — including setup funding components.
+
+**Result:** 10 test files, 167 tests, all passing, 0 lint errors.
 
 - `hooks/useGetRefillRequirements.ts` — requirement aggregation + formatting
 - `hooks/useAgentFundingRequests.tsx` — agent funding needs consolidation
@@ -343,6 +347,8 @@ StakedAgentService (abstract base)
 
 **Funding components:**
 - `components/SetupPage/FundYourAgent/hooks/` — funding setup hooks
+
+**Bug fix:** `useGetRefillRequirements.ts` — replaced `isEmpty(totalTokenRequirements)` guard with `totalTokenRequirements === null` to prevent infinite re-renders when `getRequirementsPerToken` returns `[]` (since `isEmpty([])` is `true`, causing the effect to re-run every cycle).
 
 ---
 
