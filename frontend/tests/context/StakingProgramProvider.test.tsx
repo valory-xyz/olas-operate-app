@@ -117,14 +117,14 @@ describe('StakingProgramProvider', () => {
       expect(result.current.activeStakingProgramId).toBe(ACTIVE_PROGRAM);
     });
 
-    it('is undefined when hook returns null', () => {
+    it('is null when hook returns null', () => {
       setupMocks({ activeStakingProgramId: null });
       const { result } = renderStakingProgramContext();
       expect(result.current.activeStakingProgramId).toBeNull();
     });
   });
 
-  describe('selectedStakingProgramId (3-tier fallback)', () => {
+  describe('selectedStakingProgramId (fallback: active → service → default)', () => {
     it('returns null while loading', () => {
       setupMocks({ isLoading: true, activeStakingProgramId: ACTIVE_PROGRAM });
       const { result } = renderStakingProgramContext();

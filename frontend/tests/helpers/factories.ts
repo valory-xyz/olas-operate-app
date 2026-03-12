@@ -1,4 +1,6 @@
 import { ACHIEVEMENT_TYPE } from '../../constants/achievement';
+import { StakingProgramConfig } from '../../config/stakingPrograms';
+import { AgentMap } from '../../constants/agent';
 import {
   EvmChainId,
   EvmChainIdMap,
@@ -252,6 +254,21 @@ export const makeAgentService = (
     ...overrides,
   });
 
+/** Creates a StakingProgramConfig for tests (defaults based on PearlBetaMechMarketplace3). */
+export const makeStakingProgramConfig = (
+  overrides: Partial<StakingProgramConfig> = {},
+): StakingProgramConfig =>
+  ({
+    chainId: EvmChainIdMap.Gnosis,
+    name: 'Pearl Beta Mech Marketplace III',
+    address: DEFAULT_STAKING_CONTRACT_ADDRESS,
+    deprecated: false,
+    agentsSupported: [AgentMap.PredictTrader],
+    stakingRequirements: { OLAS: 40 },
+    id: '0x0000000000000000000000003333333333333333333333333333333333333333',
+    ...overrides,
+  }) as StakingProgramConfig;
+
 export const makeStakingContractDetails = (
   overrides: Partial<StakingContractDetails> = {},
 ): StakingContractDetails => ({
@@ -353,6 +370,7 @@ export const makeStakingRewardsInfo = (
   ...overrides,
 });
 
+// Local type — not exported from source (GraphQL response shape)
 type RewardsHistoryEntry = {
   id: string;
   epoch: string;

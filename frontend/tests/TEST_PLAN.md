@@ -348,7 +348,7 @@ StakedAgentService (abstract base)
 **Funding components:**
 - `components/SetupPage/FundYourAgent/hooks/` — funding setup hooks
 
-**Known bug (not testable):** `useGetRefillRequirements.ts:203-206` — when `getRequirementsPerToken` returns `[]`, `isEmpty([])` is `true`, so the effect re-runs with a new `[]` reference every cycle, causing React "Maximum update depth exceeded". The empty-requirements path cannot be tested until the source is fixed (e.g., use `null` as the sentinel instead of relying on `isEmpty`).
+**Bug fix:** `useGetRefillRequirements.ts` — replaced `isEmpty(totalTokenRequirements)` guard with `totalTokenRequirements === null` to prevent infinite re-renders when `getRequirementsPerToken` returns `[]` (since `isEmpty([])` is `true`, causing the effect to re-run every cycle).
 
 ---
 

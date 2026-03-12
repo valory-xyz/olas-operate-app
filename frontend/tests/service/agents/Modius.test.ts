@@ -12,6 +12,10 @@ import {
   makeBN,
   MOCK_MULTISIG_ADDRESS,
 } from '../../helpers/factories';
+import {
+  createNonceActivityCheckerMock,
+  createStakingContractMock,
+} from '../../mocks/agentServiceMocks';
 
 // ---------------------------------------------------------------------------
 // Shared mock storage — `var` ensures declaration is hoisted above jest.mock
@@ -28,25 +32,8 @@ var shared: {
 
 shared = {
   multicallAll: jest.fn(),
-  stakingContract: {
-    getServiceInfo: jest.fn().mockReturnValue('getServiceInfo'),
-    livenessPeriod: jest.fn().mockReturnValue('livenessPeriod'),
-    rewardsPerSecond: jest.fn().mockReturnValue('rewardsPerSecond'),
-    calculateStakingReward: jest.fn().mockReturnValue('calculateStakingReward'),
-    minStakingDeposit: jest.fn().mockReturnValue('minStakingDeposit'),
-    tsCheckpoint: jest.fn().mockReturnValue('tsCheckpoint'),
-    getStakingState: jest.fn().mockReturnValue('getStakingState'),
-    availableRewards: jest.fn().mockReturnValue('availableRewards'),
-    maxNumServices: jest.fn().mockReturnValue('maxNumServices'),
-    getServiceIds: jest.fn().mockReturnValue('getServiceIds'),
-    minStakingDuration: jest.fn().mockReturnValue('minStakingDuration'),
-    numAgentInstances: jest.fn().mockReturnValue('numAgentInstances'),
-    epochCounter: jest.fn().mockReturnValue('epochCounter'),
-  },
-  activityChecker: {
-    livenessRatio: jest.fn().mockReturnValue('livenessRatio'),
-    getMultisigNonces: jest.fn().mockReturnValue('getMultisigNonces'),
-  },
+  stakingContract: createStakingContractMock(),
+  activityChecker: createNonceActivityCheckerMock(),
 };
 
 // ---------------------------------------------------------------------------
@@ -59,70 +46,59 @@ jest.mock(
 );
 
 jest.mock('../../../constants/providers', () => {
-  const { EvmChainIdMap: C } = require('../../../constants/chains');
-  const mp = () => ({
-    provider: { _isProvider: true },
-    multicallProvider: { all: (...a: unknown[]) => shared.multicallAll(...a) },
-  });
+  const { EvmChainIdMap } = require('../../../constants/chains');
+  const { createProvidersMock } = require('../../mocks/agentServiceMocks');
   return {
-    PROVIDERS: {
-      [C.Base]: mp(),
-      [C.Gnosis]: mp(),
-      [C.Mode]: mp(),
-      [C.Optimism]: mp(),
-      [C.Polygon]: mp(),
-    },
+    PROVIDERS: createProvidersMock(EvmChainIdMap, (...args: unknown[]) =>
+      shared.multicallAll(...args),
+    ),
   };
 });
 
 jest.mock('../../../config/stakingPrograms', () => {
-  const { EvmChainIdMap: C } = require('../../../constants/chains');
+  const { EvmChainIdMap } = require('../../../constants/chains');
+  const { STAKING_PROGRAM_IDS } = require('../../../constants/stakingProgram');
   const {
-    STAKING_PROGRAM_IDS: SP,
-  } = require('../../../constants/stakingProgram');
-  const {
-    DEFAULT_STAKING_CONTRACT_ADDRESS: ADDR1,
+    DEFAULT_STAKING_CONTRACT_ADDRESS: stakingAddr1,
   } = require('../../helpers/factories');
 
   return {
     STAKING_PROGRAMS: {
-      [C.Mode]: {
-        [SP.ModiusAlpha]: {
+      [EvmChainIdMap.Mode]: {
+        [STAKING_PROGRAM_IDS.ModiusAlpha]: {
           get activityChecker() {
             return shared.activityChecker;
           },
           get contract() {
             return shared.stakingContract;
           },
-          address: ADDR1,
-          chainId: C.Mode,
+          address: stakingAddr1,
+          chainId: EvmChainIdMap.Mode,
         },
       },
-      [C.Base]: {},
-      [C.Gnosis]: {},
-      [C.Optimism]: {},
-      [C.Polygon]: {},
+      [EvmChainIdMap.Base]: {},
+      [EvmChainIdMap.Gnosis]: {},
+      [EvmChainIdMap.Optimism]: {},
+      [EvmChainIdMap.Polygon]: {},
     } as Record<number, Record<string, unknown>>,
   };
 });
 
 jest.mock('../../../config/stakingPrograms/mode', () => {
-  const { EvmChainIdMap: C } = require('../../../constants/chains');
+  const { EvmChainIdMap } = require('../../../constants/chains');
+  const { STAKING_PROGRAM_IDS } = require('../../../constants/stakingProgram');
   const {
-    STAKING_PROGRAM_IDS: SP,
-  } = require('../../../constants/stakingProgram');
-  const {
-    DEFAULT_STAKING_CONTRACT_ADDRESS: ADDR1,
+    DEFAULT_STAKING_CONTRACT_ADDRESS: stakingAddr1,
   } = require('../../helpers/factories');
 
   return {
     MODE_STAKING_PROGRAMS: {
-      [SP.ModiusAlpha]: {
+      [STAKING_PROGRAM_IDS.ModiusAlpha]: {
         get contract() {
           return shared.stakingContract;
         },
-        address: ADDR1,
-        chainId: C.Mode,
+        address: stakingAddr1,
+        chainId: EvmChainIdMap.Mode,
       },
     },
   };
@@ -384,37 +360,37 @@ describe('ModiusService.getStakingContractDetails', () => {
       MODE,
     );
 
-    expect(result).toBeDefined();
+    if (!result) throw new Error('result should be defined');
 
     // availableRewards = formatUnits(5e18, 18) = 5.0
-    expect(result!.availableRewards).toBe(5.0);
+    expect(result.availableRewards).toBe(5.0);
 
     // maxNumServices — raw .toNumber(), no MAX_ALLOWED_SERVICES cap
-    expect(result!.maxNumServices).toBe(10);
+    expect(result.maxNumServices).toBe(10);
 
     // serviceIds — identity mapping (no Number() conversion)
-    expect(result!.serviceIds).toEqual(serviceIds);
-    expect(result!.minimumStakingDuration).toBe(86400);
-    expect(result!.epochCounter).toBe(7);
-    expect(result!.livenessPeriod).toBe(DEFAULT_LIVENESS_PERIOD_S);
+    expect(result.serviceIds).toEqual(serviceIds);
+    expect(result.minimumStakingDuration).toBe(86400);
+    expect(result.epochCounter).toBe(7);
+    expect(result.livenessPeriod).toBe(DEFAULT_LIVENESS_PERIOD_S);
 
     // minStakingDeposit = 100 OLAS formatted
-    expect(result!.minStakingDeposit).toBe(100);
+    expect(result.minStakingDeposit).toBe(100);
 
     // olasStakeRequired = minDeposit + minDeposit * numAgentInstances = 200
-    expect(result!.olasStakeRequired).toBe(200);
+    expect(result.olasStakeRequired).toBe(200);
 
     // APY = rewardsPerYear * 100 / minStakingDeposit / (1 + numAgentInstances)
     const rewardsPerYear = rewardsPerSecond.mul(ONE_YEAR);
     const expectedApy =
       rewardsPerYear.mul(100).div(minStakingDeposit).toNumber() /
       (1 + numAgentInstances.toNumber());
-    expect(result!.apy).toBe(expectedApy);
+    expect(result.apy).toBe(expectedApy);
 
     // rewardsPerWorkPeriod = formatEther(rewardsPerSecond) * livenessPeriod
     const expectedRewardsPerWork =
       Number(formatEther(rewardsPerSecond)) * livenessPeriod.toNumber();
-    expect(result!.rewardsPerWorkPeriod).toBe(expectedRewardsPerWork);
+    expect(result.rewardsPerWorkPeriod).toBe(expectedRewardsPerWork);
   });
 
   it('returns APY of 0 when rewardsPerSecond is 0', async () => {

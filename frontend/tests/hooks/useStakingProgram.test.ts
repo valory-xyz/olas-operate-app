@@ -1,22 +1,18 @@
 import { renderHook } from '@testing-library/react';
-import { createElement, PropsWithChildren } from 'react';
 
-import {
-  StakingProgramConfig,
-  StakingProgramMap,
-} from '../../config/stakingPrograms';
+import { StakingProgramMap } from '../../config/stakingPrograms';
 import {
   AgentType,
   EvmChainId,
   EvmChainIdMap,
-  StakingProgramId,
+  STAKING_PROGRAM_IDS,
 } from '../../constants';
 import { AgentMap } from '../../constants/agent';
-import { StakingProgramContext } from '../../context/StakingProgramProvider';
 import { useServices } from '../../hooks/useServices';
 import { useStakingProgram } from '../../hooks/useStakingProgram';
+import { createStakingProgramContextWrapper } from '../helpers/contextDefaults';
 import {
-  DEFAULT_STAKING_CONTRACT_ADDRESS,
+  makeStakingProgramConfig,
   SECOND_STAKING_CONTRACT_ADDRESS,
 } from '../helpers/factories';
 
@@ -35,64 +31,41 @@ jest.mock('../../hooks/useServices', () => ({
 
 const mockUseServices = useServices as jest.Mock;
 
-// --- Fake staking program configs ---
+// --- Staking program configs using real STAKING_PROGRAM_IDS ---
 
-const FAKE_CHAIN_ID = EvmChainIdMap.Gnosis;
+const MARKETPLACE_3_ID = STAKING_PROGRAM_IDS.PearlBetaMechMarketplace3;
+const MARKETPLACE_4_ID = STAKING_PROGRAM_IDS.PearlBetaMechMarketplace4;
+const BETA_5_ID = STAKING_PROGRAM_IDS.PearlBeta5;
+const OPTIMUS_ALPHA_2_ID = STAKING_PROGRAM_IDS.OptimusAlpha2;
 
-const makeFakeProgram = (
-  overrides: Partial<StakingProgramConfig> & { agentsSupported: AgentType[] },
-): StakingProgramConfig => {
-  const { agentsSupported, deprecated, id, ...rest } = overrides;
-  return {
-    chainId: FAKE_CHAIN_ID,
-    name: 'Fake Program',
-    address: DEFAULT_STAKING_CONTRACT_ADDRESS,
-    agentsSupported,
-    stakingRequirements: {},
-    deprecated,
-    id: id ?? '0x01',
-    ...rest,
-  } as StakingProgramConfig;
-};
-
-const PROGRAM_A_ID = 'program_a' as StakingProgramId;
-const PROGRAM_B_ID = 'program_b' as StakingProgramId;
-const PROGRAM_C_ID = 'program_c' as StakingProgramId;
-const PROGRAM_D_ID = 'program_d' as StakingProgramId;
-
-const PROGRAM_A = makeFakeProgram({
-  name: 'Program A',
-  address: DEFAULT_STAKING_CONTRACT_ADDRESS,
+const MARKETPLACE_3_CONFIG = makeStakingProgramConfig({
+  name: 'Pearl Beta Mech Marketplace III',
   agentsSupported: [AgentMap.PredictTrader],
-  id: '0xaa',
 });
 
-const PROGRAM_B = makeFakeProgram({
-  name: 'Program B',
+const MARKETPLACE_4_CONFIG = makeStakingProgramConfig({
+  name: 'Pearl Beta Mech Marketplace IV',
   address: SECOND_STAKING_CONTRACT_ADDRESS,
   agentsSupported: [AgentMap.PredictTrader, AgentMap.Modius],
-  id: '0xbb',
 });
 
-const PROGRAM_C = makeFakeProgram({
-  name: 'Program C (Modius only)',
+const BETA_5_CONFIG = makeStakingProgramConfig({
+  name: 'Pearl Beta 5',
   agentsSupported: [AgentMap.Modius],
   deprecated: true,
-  id: '0xcc',
 });
 
-const PROGRAM_D = makeFakeProgram({
-  name: 'Program D (unsupported agent)',
+const OPTIMUS_ALPHA_2_CONFIG = makeStakingProgramConfig({
+  name: 'Optimus Alpha 2',
   agentsSupported: [AgentMap.Optimus],
-  id: '0xdd',
 });
 
-const FAKE_STAKING_PROGRAMS: Record<EvmChainId, StakingProgramMap> = {
+const MOCK_STAKING_PROGRAMS: Record<EvmChainId, StakingProgramMap> = {
   [EvmChainIdMap.Gnosis]: {
-    [PROGRAM_A_ID]: PROGRAM_A,
-    [PROGRAM_B_ID]: PROGRAM_B,
-    [PROGRAM_C_ID]: PROGRAM_C,
-    [PROGRAM_D_ID]: PROGRAM_D,
+    [MARKETPLACE_3_ID]: MARKETPLACE_3_CONFIG,
+    [MARKETPLACE_4_ID]: MARKETPLACE_4_CONFIG,
+    [BETA_5_ID]: BETA_5_CONFIG,
+    [OPTIMUS_ALPHA_2_ID]: OPTIMUS_ALPHA_2_CONFIG,
   },
   [EvmChainIdMap.Base]: {},
   [EvmChainIdMap.Mode]: {},
@@ -103,43 +76,11 @@ const FAKE_STAKING_PROGRAMS: Record<EvmChainId, StakingProgramMap> = {
 // Mock the STAKING_PROGRAMS export from config
 jest.mock('../../config/stakingPrograms', () => ({
   get STAKING_PROGRAMS() {
-    return FAKE_STAKING_PROGRAMS;
+    return MOCK_STAKING_PROGRAMS;
   },
 }));
 
 // --- Helpers ---
-
-type StakingProgramContextValue = {
-  isActiveStakingProgramLoaded: boolean;
-  activeStakingProgramId?: StakingProgramId;
-  defaultStakingProgramId?: StakingProgramId;
-  selectedStakingProgramId: StakingProgramId | null;
-  setDefaultStakingProgramId: (id: StakingProgramId) => void;
-  stakingProgramIdToMigrateTo: StakingProgramId | null;
-  setStakingProgramIdToMigrateTo: (id: StakingProgramId | null) => void;
-};
-
-const DEFAULT_CONTEXT: StakingProgramContextValue = {
-  isActiveStakingProgramLoaded: true,
-  activeStakingProgramId: undefined,
-  defaultStakingProgramId: undefined,
-  selectedStakingProgramId: null,
-  setDefaultStakingProgramId: jest.fn(),
-  stakingProgramIdToMigrateTo: null,
-  setStakingProgramIdToMigrateTo: jest.fn(),
-};
-
-const createWrapper = (
-  contextOverrides: Partial<StakingProgramContextValue> = {},
-) => {
-  // eslint-disable-next-line react/display-name
-  return ({ children }: PropsWithChildren) =>
-    createElement(
-      StakingProgramContext.Provider,
-      { value: { ...DEFAULT_CONTEXT, ...contextOverrides } },
-      children,
-    );
-};
 
 const setupUseServices = (
   agentType: AgentType = AgentMap.PredictTrader,
@@ -162,36 +103,42 @@ describe('useStakingProgram', () => {
   describe('context passthrough values', () => {
     it('returns isActiveStakingProgramLoaded from context', () => {
       const { result } = renderHook(() => useStakingProgram(), {
-        wrapper: createWrapper({ isActiveStakingProgramLoaded: false }),
+        wrapper: createStakingProgramContextWrapper({
+          isActiveStakingProgramLoaded: false,
+        }),
       });
       expect(result.current.isActiveStakingProgramLoaded).toBe(false);
     });
 
     it('returns activeStakingProgramId from context', () => {
       const { result } = renderHook(() => useStakingProgram(), {
-        wrapper: createWrapper({ activeStakingProgramId: PROGRAM_A_ID }),
+        wrapper: createStakingProgramContextWrapper({
+          activeStakingProgramId: MARKETPLACE_3_ID,
+        }),
       });
-      expect(result.current.activeStakingProgramId).toBe(PROGRAM_A_ID);
+      expect(result.current.activeStakingProgramId).toBe(MARKETPLACE_3_ID);
     });
 
     it('returns setDefaultStakingProgramId from context', () => {
       const mockSetter = jest.fn();
       const { result } = renderHook(() => useStakingProgram(), {
-        wrapper: createWrapper({ setDefaultStakingProgramId: mockSetter }),
+        wrapper: createStakingProgramContextWrapper({
+          setDefaultStakingProgramId: mockSetter,
+        }),
       });
-      result.current.setDefaultStakingProgramId(PROGRAM_B_ID);
-      expect(mockSetter).toHaveBeenCalledWith(PROGRAM_B_ID);
+      result.current.setDefaultStakingProgramId(MARKETPLACE_4_ID);
+      expect(mockSetter).toHaveBeenCalledWith(MARKETPLACE_4_ID);
     });
 
     it('returns stakingProgramIdToMigrateTo and its setter from context', () => {
       const mockSetter = jest.fn();
       const { result } = renderHook(() => useStakingProgram(), {
-        wrapper: createWrapper({
-          stakingProgramIdToMigrateTo: PROGRAM_B_ID,
+        wrapper: createStakingProgramContextWrapper({
+          stakingProgramIdToMigrateTo: MARKETPLACE_4_ID,
           setStakingProgramIdToMigrateTo: mockSetter,
         }),
       });
-      expect(result.current.stakingProgramIdToMigrateTo).toBe(PROGRAM_B_ID);
+      expect(result.current.stakingProgramIdToMigrateTo).toBe(MARKETPLACE_4_ID);
       result.current.setStakingProgramIdToMigrateTo(null);
       expect(mockSetter).toHaveBeenCalledWith(null);
     });
@@ -200,32 +147,34 @@ describe('useStakingProgram', () => {
   describe('allAvailableStakingPrograms filtering', () => {
     it('filters programs to only those supporting the selected agent type', () => {
       const { result } = renderHook(() => useStakingProgram(), {
-        wrapper: createWrapper(),
+        wrapper: createStakingProgramContextWrapper(),
       });
-      // PredictTrader is supported by PROGRAM_A and PROGRAM_B
+      // PredictTrader is supported by MARKETPLACE_3 and MARKETPLACE_4
       expect(result.current.allStakingProgramIds).toEqual(
-        expect.arrayContaining([PROGRAM_A_ID, PROGRAM_B_ID]),
+        expect.arrayContaining([MARKETPLACE_3_ID, MARKETPLACE_4_ID]),
       );
-      expect(result.current.allStakingProgramIds).not.toContain(PROGRAM_C_ID);
-      expect(result.current.allStakingProgramIds).not.toContain(PROGRAM_D_ID);
+      expect(result.current.allStakingProgramIds).not.toContain(BETA_5_ID);
+      expect(result.current.allStakingProgramIds).not.toContain(
+        OPTIMUS_ALPHA_2_ID,
+      );
       expect(result.current.allStakingProgramIds).toHaveLength(2);
     });
 
     it('includes deprecated programs in available list (filtering is done elsewhere)', () => {
       setupUseServices(AgentMap.Modius);
       const { result } = renderHook(() => useStakingProgram(), {
-        wrapper: createWrapper(),
+        wrapper: createStakingProgramContextWrapper(),
       });
-      // Modius is supported by PROGRAM_B and PROGRAM_C (deprecated)
-      expect(result.current.allStakingProgramIds).toContain(PROGRAM_B_ID);
-      expect(result.current.allStakingProgramIds).toContain(PROGRAM_C_ID);
+      // Modius is supported by MARKETPLACE_4 and BETA_5 (deprecated)
+      expect(result.current.allStakingProgramIds).toContain(MARKETPLACE_4_ID);
+      expect(result.current.allStakingProgramIds).toContain(BETA_5_ID);
       expect(result.current.allStakingProgramIds).toHaveLength(2);
     });
 
     it('returns empty when no programs support the selected agent type', () => {
       setupUseServices(AgentMap.PettAi);
       const { result } = renderHook(() => useStakingProgram(), {
-        wrapper: createWrapper(),
+        wrapper: createStakingProgramContextWrapper(),
       });
       expect(result.current.allStakingProgramIds).toEqual([]);
       expect(result.current.allStakingProgramsMeta).toEqual({});
@@ -233,32 +182,36 @@ describe('useStakingProgram', () => {
 
     it('returns the full config objects in allStakingProgramsMeta', () => {
       const { result } = renderHook(() => useStakingProgram(), {
-        wrapper: createWrapper(),
+        wrapper: createStakingProgramContextWrapper(),
       });
-      expect(result.current.allStakingProgramsMeta[PROGRAM_A_ID]).toBe(
-        PROGRAM_A,
+      expect(result.current.allStakingProgramsMeta[MARKETPLACE_3_ID]).toBe(
+        MARKETPLACE_3_CONFIG,
       );
-      expect(result.current.allStakingProgramsMeta[PROGRAM_B_ID]).toBe(
-        PROGRAM_B,
+      expect(result.current.allStakingProgramsMeta[MARKETPLACE_4_ID]).toBe(
+        MARKETPLACE_4_CONFIG,
       );
-      expect(
-        result.current.allStakingProgramsMeta[PROGRAM_C_ID],
-      ).toBeUndefined();
+      expect(result.current.allStakingProgramsMeta[BETA_5_ID]).toBeUndefined();
     });
   });
 
   describe('defaultStakingProgramMeta', () => {
     it('returns the program config when defaultStakingProgramId is set', () => {
       const { result } = renderHook(() => useStakingProgram(), {
-        wrapper: createWrapper({ defaultStakingProgramId: PROGRAM_A_ID }),
+        wrapper: createStakingProgramContextWrapper({
+          defaultStakingProgramId: MARKETPLACE_3_ID,
+        }),
       });
-      expect(result.current.defaultStakingProgramId).toBe(PROGRAM_A_ID);
-      expect(result.current.defaultStakingProgramMeta).toBe(PROGRAM_A);
+      expect(result.current.defaultStakingProgramId).toBe(MARKETPLACE_3_ID);
+      expect(result.current.defaultStakingProgramMeta).toBe(
+        MARKETPLACE_3_CONFIG,
+      );
     });
 
     it('returns null when defaultStakingProgramId is undefined', () => {
       const { result } = renderHook(() => useStakingProgram(), {
-        wrapper: createWrapper({ defaultStakingProgramId: undefined }),
+        wrapper: createStakingProgramContextWrapper({
+          defaultStakingProgramId: undefined,
+        }),
       });
       expect(result.current.defaultStakingProgramMeta).toBeNull();
     });
@@ -267,15 +220,21 @@ describe('useStakingProgram', () => {
   describe('selectedStakingProgramMeta', () => {
     it('returns the program config when selectedStakingProgramId is set', () => {
       const { result } = renderHook(() => useStakingProgram(), {
-        wrapper: createWrapper({ selectedStakingProgramId: PROGRAM_B_ID }),
+        wrapper: createStakingProgramContextWrapper({
+          selectedStakingProgramId: MARKETPLACE_4_ID,
+        }),
       });
-      expect(result.current.selectedStakingProgramId).toBe(PROGRAM_B_ID);
-      expect(result.current.selectedStakingProgramMeta).toBe(PROGRAM_B);
+      expect(result.current.selectedStakingProgramId).toBe(MARKETPLACE_4_ID);
+      expect(result.current.selectedStakingProgramMeta).toBe(
+        MARKETPLACE_4_CONFIG,
+      );
     });
 
     it('returns null when selectedStakingProgramId is null', () => {
       const { result } = renderHook(() => useStakingProgram(), {
-        wrapper: createWrapper({ selectedStakingProgramId: null }),
+        wrapper: createStakingProgramContextWrapper({
+          selectedStakingProgramId: null,
+        }),
       });
       expect(result.current.selectedStakingProgramMeta).toBeNull();
     });
@@ -286,7 +245,7 @@ describe('useStakingProgram', () => {
       // Base chain has no programs in our mock
       setupUseServices(AgentMap.PredictTrader, EvmChainIdMap.Base);
       const { result } = renderHook(() => useStakingProgram(), {
-        wrapper: createWrapper(),
+        wrapper: createStakingProgramContextWrapper(),
       });
       expect(result.current.allStakingProgramIds).toEqual([]);
     });

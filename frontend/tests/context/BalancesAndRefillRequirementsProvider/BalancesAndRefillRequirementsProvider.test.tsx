@@ -311,9 +311,9 @@ describe('BalancesAndRefillRequirementsProvider', () => {
   });
 
   describe('isRefillRequired', () => {
-    it('is true when data is undefined (uses || not ??)', async () => {
+    it('defaults to true when data has not resolved yet', async () => {
       // When the query has not resolved yet or is disabled,
-      // the expression `data?.is_refill_required || true` always yields true.
+      // `data?.is_refill_required ?? true` defaults to true.
       mockGetBalancesAndFundingRequirements.mockReturnValue(
         new Promise(() => {}), // never resolves
       );
@@ -340,9 +340,7 @@ describe('BalancesAndRefillRequirementsProvider', () => {
       });
     });
 
-    it('is still true when is_refill_required is false (|| true bug)', async () => {
-      // NOTE: Due to the `|| true` pattern, isRefillRequired is always true.
-      // `false || true` evaluates to `true`.
+    it('is false when is_refill_required is false', async () => {
       mockGetBalancesAndFundingRequirements.mockResolvedValue(
         makeBalancesAndFundingRequirements({ is_refill_required: false }),
       );
@@ -351,11 +349,8 @@ describe('BalancesAndRefillRequirementsProvider', () => {
       await waitFor(() => {
         const ctx = parseContext(container);
         expect(ctx.isBalancesAndFundingRequirementsLoading).toBe(false);
+        expect(ctx.isRefillRequired).toBe(false);
       });
-      // This documents the actual behavior: isRefillRequired is always true
-      // because `false || true` === true
-      const ctx = parseContext(container);
-      expect(ctx.isRefillRequired).toBe(true);
     });
   });
 
@@ -603,14 +598,10 @@ describe('BalancesAndRefillRequirementsProvider', () => {
         },
       });
 
-      // Wait for the all-services query to resolve
       await waitFor(() => {
-        expect(mockGetAllBalancesAndFundingRequirements).toHaveBeenCalled();
+        const ctx = parseContext(container);
+        expect(ctx.isPearlWalletRefillRequired).toBe(false);
       });
-      // Give React time to re-render
-      await new Promise((r) => setTimeout(r, 50));
-      const ctx = parseContext(container);
-      expect(ctx.isPearlWalletRefillRequired).toBe(false);
     });
 
     it('is false when is_refill_required is false even if isInitialFunded', async () => {
@@ -640,11 +631,9 @@ describe('BalancesAndRefillRequirementsProvider', () => {
       });
 
       await waitFor(() => {
-        expect(mockGetAllBalancesAndFundingRequirements).toHaveBeenCalled();
+        const ctx = parseContext(container);
+        expect(ctx.isPearlWalletRefillRequired).toBe(false);
       });
-      await new Promise((r) => setTimeout(r, 50));
-      const ctx = parseContext(container);
-      expect(ctx.isPearlWalletRefillRequired).toBe(false);
     });
   });
 
@@ -652,19 +641,21 @@ describe('BalancesAndRefillRequirementsProvider', () => {
     it('does NOT fetch when user is not logged in', async () => {
       const { container } = setup({ isUserLoggedIn: false });
 
-      await new Promise((r) => setTimeout(r, 50));
+      await waitFor(() => {
+        const ctx = parseContext(container);
+        expect(ctx.isBalancesAndFundingRequirementsLoading).toBe(false);
+      });
       expect(mockGetBalancesAndFundingRequirements).not.toHaveBeenCalled();
-      const ctx = parseContext(container);
-      expect(ctx.isBalancesAndFundingRequirementsLoading).toBe(false);
     });
 
     it('does NOT fetch when offline', async () => {
       const { container } = setup({ isOnline: false });
 
-      await new Promise((r) => setTimeout(r, 50));
+      await waitFor(() => {
+        const ctx = parseContext(container);
+        expect(ctx.isBalancesAndFundingRequirementsLoading).toBe(false);
+      });
       expect(mockGetBalancesAndFundingRequirements).not.toHaveBeenCalled();
-      const ctx = parseContext(container);
-      expect(ctx.isBalancesAndFundingRequirementsLoading).toBe(false);
     });
 
     it('does NOT fetch when no configId and queries are disabled', async () => {
@@ -676,11 +667,12 @@ describe('BalancesAndRefillRequirementsProvider', () => {
         availableServiceConfigIds: [],
       });
 
-      await new Promise((r) => setTimeout(r, 50));
+      await waitFor(() => {
+        const ctx = parseContext(container);
+        expect(ctx.isBalancesAndFundingRequirementsLoading).toBe(false);
+      });
       expect(mockGetBalancesAndFundingRequirements).not.toHaveBeenCalled();
       expect(mockGetAllBalancesAndFundingRequirements).not.toHaveBeenCalled();
-      const ctx = parseContext(container);
-      expect(ctx.isBalancesAndFundingRequirementsLoading).toBe(false);
     });
 
     it('fetches when online, logged in, and configId is present', async () => {
@@ -765,14 +757,11 @@ describe('BalancesAndRefillRequirementsProvider', () => {
       const { container } = setupWithConsumer(FnConsumer);
 
       await waitFor(() => {
-        expect(mockGetAllBalancesAndFundingRequirements).toHaveBeenCalled();
+        const text = container.querySelector(
+          '[data-testid="fn-result"]',
+        )?.textContent;
+        expect(text).toBe('false');
       });
-      await new Promise((r) => setTimeout(r, 50));
-
-      const text = container.querySelector(
-        '[data-testid="fn-result"]',
-      )?.textContent;
-      expect(text).toBe('false');
     });
   });
 
@@ -822,14 +811,11 @@ describe('BalancesAndRefillRequirementsProvider', () => {
       const { container } = setupWithConsumer(FnConsumer);
 
       await waitFor(() => {
-        expect(mockGetAllBalancesAndFundingRequirements).toHaveBeenCalled();
+        const text = container.querySelector(
+          '[data-testid="fn-result"]',
+        )?.textContent;
+        expect(text).toBe('false');
       });
-      await new Promise((r) => setTimeout(r, 50));
-
-      const text = container.querySelector(
-        '[data-testid="fn-result"]',
-      )?.textContent;
-      expect(text).toBe('false');
     });
 
     it('returns false when serviceConfigId is undefined', async () => {
@@ -931,14 +917,11 @@ describe('BalancesAndRefillRequirementsProvider', () => {
       const { container } = setupWithConsumer(FnConsumer);
 
       await waitFor(() => {
-        expect(mockGetAllBalancesAndFundingRequirements).toHaveBeenCalled();
+        const text = container.querySelector(
+          '[data-testid="fn-result"]',
+        )?.textContent;
+        expect(text).toBe('undefined');
       });
-      await new Promise((r) => setTimeout(r, 50));
-
-      const text = container.querySelector(
-        '[data-testid="fn-result"]',
-      )?.textContent;
-      expect(text).toBe('undefined');
     });
   });
 
@@ -955,11 +938,12 @@ describe('BalancesAndRefillRequirementsProvider', () => {
 
     it('is false when all-services query is disabled (no configIds)', async () => {
       const { container } = setup({ availableServiceConfigIds: [] });
-      await new Promise((r) => setTimeout(r, 50));
-      const ctx = parseContext(container);
-      expect(ctx.isBalancesAndFundingRequirementsReadyForAllServices).toBe(
-        false,
-      );
+      await waitFor(() => {
+        const ctx = parseContext(container);
+        expect(ctx.isBalancesAndFundingRequirementsReadyForAllServices).toBe(
+          false,
+        );
+      });
     });
   });
 

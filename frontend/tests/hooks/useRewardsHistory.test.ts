@@ -158,6 +158,19 @@ describe('useRewardsHistory', () => {
       expect(capturedQueryConfig?.enabled).toBe(false);
     });
 
+    it('sets enabled to true when serviceNftTokenId is -1 (invalid but truthy)', () => {
+      mockUseService.mockReturnValue({
+        service: makeService({
+          chain_configs: makeChainConfig(MiddlewareChainMap.GNOSIS, {
+            token: -1,
+          }),
+        }),
+      });
+      renderHook(() => useRewardsHistory());
+      // -1 is truthy, so !!serviceId is true — no validation on value
+      expect(capturedQueryConfig?.enabled).toBe(true);
+    });
+
     it('includes chainId and serviceId in the queryKey', () => {
       renderHook(() => useRewardsHistory());
       expect(capturedQueryConfig?.queryKey).toEqual([

@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { renderHook, waitFor } from '@testing-library/react';
 import { createElement, PropsWithChildren, useContext } from 'react';
 
@@ -15,6 +15,7 @@ import {
   DEFAULT_SAFE_ADDRESS,
   POLYGON_SAFE_ADDRESS,
 } from '../helpers/factories';
+import { createTestQueryClient } from '../helpers/queryClient';
 
 /* eslint-disable @typescript-eslint/no-var-requires */
 jest.mock(
@@ -29,19 +30,16 @@ jest.mock('../../service/Wallet', () => ({
   },
 }));
 
-jest.mock('../../context/OnlineStatusProvider', () => ({
-  OnlineStatusContext: require('react').createContext({ isOnline: true }),
-}));
+jest.mock(
+  '../../context/OnlineStatusProvider',
+  () => require('../mocks/onlineStatus').onlineStatusProviderMock,
+);
 /* eslint-enable @typescript-eslint/no-var-requires */
 
 const mockGetWallets = WalletService.getWallets as jest.Mock;
 
 const createWrapper = () => {
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: { retry: false, gcTime: 0 },
-    },
-  });
+  const queryClient = createTestQueryClient();
   // eslint-disable-next-line react/display-name
   return ({ children }: PropsWithChildren) =>
     createElement(
