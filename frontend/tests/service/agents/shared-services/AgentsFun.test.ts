@@ -12,6 +12,11 @@ import {
   makeBN,
   MOCK_MULTISIG_ADDRESS,
 } from '../../../helpers/factories';
+import {
+  createAgentsFunActivityCheckerMock,
+  createMinimalMechContractMock,
+  createStakingContractMock,
+} from '../../../mocks/agentServiceMocks';
 
 // ---------------------------------------------------------------------------
 // Shared mock storage — `var` ensures declaration is hoisted above jest.mock
@@ -29,28 +34,9 @@ var shared: {
 
 shared = {
   multicallAll: jest.fn(),
-  stakingContract: {
-    getServiceInfo: jest.fn().mockReturnValue('getServiceInfo'),
-    livenessPeriod: jest.fn().mockReturnValue('livenessPeriod'),
-    rewardsPerSecond: jest.fn().mockReturnValue('rewardsPerSecond'),
-    calculateStakingReward: jest.fn().mockReturnValue('calculateStakingReward'),
-    minStakingDeposit: jest.fn().mockReturnValue('minStakingDeposit'),
-    tsCheckpoint: jest.fn().mockReturnValue('tsCheckpoint'),
-    getStakingState: jest.fn().mockReturnValue('getStakingState'),
-    availableRewards: jest.fn().mockReturnValue('availableRewards'),
-    maxNumServices: jest.fn().mockReturnValue('maxNumServices'),
-    getServiceIds: jest.fn().mockReturnValue('getServiceIds'),
-    minStakingDuration: jest.fn().mockReturnValue('minStakingDuration'),
-    numAgentInstances: jest.fn().mockReturnValue('numAgentInstances'),
-    epochCounter: jest.fn().mockReturnValue('epochCounter'),
-  },
-  activityChecker: {
-    livenessRatio: jest.fn().mockReturnValue('livenessRatio'),
-    getMultisigNonces: jest.fn(),
-  },
-  mechContract: {
-    mapRequestCounts: jest.fn().mockReturnValue('mapRequestCounts'),
-  },
+  stakingContract: createStakingContractMock(),
+  activityChecker: createAgentsFunActivityCheckerMock(),
+  mechContract: createMinimalMechContractMock(),
 };
 
 // ---------------------------------------------------------------------------
@@ -63,36 +49,29 @@ jest.mock(
 );
 
 jest.mock('../../../../constants/providers', () => {
-  const { EvmChainIdMap: C } = require('../../../../constants/chains');
-  const mp = () => ({
-    provider: { _isProvider: true },
-    multicallProvider: { all: (...a: unknown[]) => shared.multicallAll(...a) },
-  });
+  const { EvmChainIdMap } = require('../../../../constants/chains');
+  const { createProvidersMock } = require('../../../mocks/agentServiceMocks');
   return {
-    PROVIDERS: {
-      [C.Base]: mp(),
-      [C.Gnosis]: mp(),
-      [C.Mode]: mp(),
-      [C.Optimism]: mp(),
-      [C.Polygon]: mp(),
-    },
+    PROVIDERS: createProvidersMock(EvmChainIdMap, (...args: unknown[]) =>
+      shared.multicallAll(...args),
+    ),
   };
 });
 
 jest.mock('../../../../config/stakingPrograms', () => {
-  const { EvmChainIdMap: C } = require('../../../../constants/chains');
+  const { EvmChainIdMap } = require('../../../../constants/chains');
   const {
-    STAKING_PROGRAM_IDS: SP,
+    STAKING_PROGRAM_IDS,
   } = require('../../../../constants/stakingProgram');
   const {
-    DEFAULT_STAKING_CONTRACT_ADDRESS: ADDR1,
-    SECOND_STAKING_CONTRACT_ADDRESS: ADDR2,
+    DEFAULT_STAKING_CONTRACT_ADDRESS: stakingAddr1,
+    SECOND_STAKING_CONTRACT_ADDRESS: stakingAddr2,
   } = require('../../../helpers/factories');
 
   return {
     STAKING_PROGRAMS: {
-      [C.Base]: {
-        [SP.AgentsFun1]: {
+      [EvmChainIdMap.Base]: {
+        [STAKING_PROGRAM_IDS.AgentsFun1]: {
           get activityChecker() {
             return shared.activityChecker;
           },
@@ -102,10 +81,10 @@ jest.mock('../../../../config/stakingPrograms', () => {
           get mech() {
             return shared.mechContract;
           },
-          address: ADDR1,
-          chainId: C.Base,
+          address: stakingAddr1,
+          chainId: EvmChainIdMap.Base,
         },
-        [SP.MemeBaseAlpha2]: {
+        [STAKING_PROGRAM_IDS.MemeBaseAlpha2]: {
           get activityChecker() {
             return shared.activityChecker;
           },
@@ -113,35 +92,35 @@ jest.mock('../../../../config/stakingPrograms', () => {
             return shared.stakingContract;
           },
           mech: undefined,
-          address: ADDR2,
-          chainId: C.Base,
+          address: stakingAddr2,
+          chainId: EvmChainIdMap.Base,
         },
       },
-      [C.Gnosis]: {},
-      [C.Mode]: {},
-      [C.Optimism]: {},
-      [C.Polygon]: {},
+      [EvmChainIdMap.Gnosis]: {},
+      [EvmChainIdMap.Mode]: {},
+      [EvmChainIdMap.Optimism]: {},
+      [EvmChainIdMap.Polygon]: {},
     } as Record<number, Record<string, unknown>>,
   };
 });
 
 jest.mock('../../../../config/stakingPrograms/base', () => {
-  const { EvmChainIdMap: C } = require('../../../../constants/chains');
+  const { EvmChainIdMap } = require('../../../../constants/chains');
   const {
-    STAKING_PROGRAM_IDS: SP,
+    STAKING_PROGRAM_IDS,
   } = require('../../../../constants/stakingProgram');
   const {
-    DEFAULT_STAKING_CONTRACT_ADDRESS: ADDR1,
+    DEFAULT_STAKING_CONTRACT_ADDRESS: stakingAddr1,
   } = require('../../../helpers/factories');
 
   return {
     BASE_STAKING_PROGRAMS: {
-      [SP.AgentsFun1]: {
+      [STAKING_PROGRAM_IDS.AgentsFun1]: {
         get contract() {
           return shared.stakingContract;
         },
-        address: ADDR1,
-        chainId: C.Base,
+        address: stakingAddr1,
+        chainId: EvmChainIdMap.Base,
       },
     },
   };

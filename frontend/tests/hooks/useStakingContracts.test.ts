@@ -1,12 +1,16 @@
 import { renderHook } from '@testing-library/react';
 
 import { StakingProgramConfig } from '../../config/stakingPrograms';
-import { AgentType } from '../../constants/agent';
+import { AgentMap, AgentType } from '../../constants/agent';
 import { EvmChainId, EvmChainIdMap } from '../../constants/chains';
-import { StakingProgramId } from '../../constants/stakingProgram';
+import {
+  STAKING_PROGRAM_IDS,
+  StakingProgramId,
+} from '../../constants/stakingProgram';
 import { useServices } from '../../hooks/useServices';
 import { useStakingContracts } from '../../hooks/useStakingContracts';
 import { useStakingProgram } from '../../hooks/useStakingProgram';
+import { makeStakingProgramConfig } from '../helpers/factories';
 
 /* eslint-disable @typescript-eslint/no-var-requires */
 jest.mock(
@@ -27,42 +31,37 @@ jest.mock('../../hooks/useStakingProgram', () => ({
 
 /**
  * Mock STAKING_PROGRAMS with four programs to test all filtering branches:
- * - program_a: active, supports selected agent type
- * - program_b: deprecated, supports selected agent type
- * - program_c: not deprecated, supports selected agent type
- * - program_d: not deprecated, does NOT support selected agent type
+ * - PearlBetaMechMarketplace3: active, supports PredictTrader
+ * - PearlBeta5: deprecated, supports PredictTrader
+ * - PearlBetaMechMarketplace4: active, supports PredictTrader
+ * - ModiusAlpha: active, supports Modius only (NOT PredictTrader)
  */
-const MOCK_AGENT_TYPE = 'trader' as AgentType;
-const OTHER_AGENT_TYPE = 'modius' as AgentType;
-const MOCK_CHAIN_ID = EvmChainIdMap.Gnosis;
-
-const PROGRAM_A = 'program_a' as StakingProgramId;
-const PROGRAM_B = 'program_b' as StakingProgramId;
-const PROGRAM_C = 'program_c' as StakingProgramId;
-const PROGRAM_D = 'program_d' as StakingProgramId;
-
-const makeStubConfig = (
-  overrides: Partial<StakingProgramConfig> = {},
-): StakingProgramConfig =>
-  ({
-    chainId: MOCK_CHAIN_ID,
-    deprecated: false,
-    name: 'Stub',
-    agentsSupported: [MOCK_AGENT_TYPE],
-    ...overrides,
-  }) as StakingProgramConfig;
+const MARKETPLACE_3 = STAKING_PROGRAM_IDS.PearlBetaMechMarketplace3;
+const DEPRECATED_BETA_5 = STAKING_PROGRAM_IDS.PearlBeta5;
+const MARKETPLACE_4 = STAKING_PROGRAM_IDS.PearlBetaMechMarketplace4;
+const MODIUS_ALPHA = STAKING_PROGRAM_IDS.ModiusAlpha;
 
 const MOCK_STAKING_PROGRAMS: Record<
   EvmChainId,
   Record<string, StakingProgramConfig>
 > = {
   [EvmChainIdMap.Gnosis]: {
-    [PROGRAM_A]: makeStubConfig({ name: 'Program A' }),
-    [PROGRAM_B]: makeStubConfig({ name: 'Program B', deprecated: true }),
-    [PROGRAM_C]: makeStubConfig({ name: 'Program C' }),
-    [PROGRAM_D]: makeStubConfig({
-      name: 'Program D',
-      agentsSupported: [OTHER_AGENT_TYPE],
+    [MARKETPLACE_3]: makeStakingProgramConfig({
+      name: 'Pearl Beta Mech Marketplace III',
+      agentsSupported: [AgentMap.PredictTrader],
+    }),
+    [DEPRECATED_BETA_5]: makeStakingProgramConfig({
+      name: 'Pearl Beta 5',
+      deprecated: true,
+      agentsSupported: [AgentMap.PredictTrader],
+    }),
+    [MARKETPLACE_4]: makeStakingProgramConfig({
+      name: 'Pearl Beta Mech Marketplace IV',
+      agentsSupported: [AgentMap.PredictTrader],
+    }),
+    [MODIUS_ALPHA]: makeStakingProgramConfig({
+      name: 'Modius Alpha',
+      agentsSupported: [AgentMap.Modius],
     }),
   },
   [EvmChainIdMap.Base]: {},
@@ -82,9 +81,9 @@ const mockUseStakingProgram = useStakingProgram as jest.Mock;
 
 const setupMocks = ({
   isActiveStakingProgramLoaded = true,
-  selectedStakingProgramId = PROGRAM_A as StakingProgramId | null,
-  evmHomeChainId = MOCK_CHAIN_ID as EvmChainId,
-  selectedAgentType = MOCK_AGENT_TYPE as AgentType,
+  selectedStakingProgramId = MARKETPLACE_3 as StakingProgramId | null,
+  evmHomeChainId = EvmChainIdMap.Gnosis as EvmChainId,
+  selectedAgentType = AgentMap.PredictTrader as AgentType,
 }: {
   isActiveStakingProgramLoaded?: boolean;
   selectedStakingProgramId?: StakingProgramId | null;
@@ -110,17 +109,17 @@ describe('useStakingContracts', () => {
     it('returns selectedStakingProgramId when isActiveStakingProgramLoaded is true', () => {
       setupMocks({
         isActiveStakingProgramLoaded: true,
-        selectedStakingProgramId: PROGRAM_A,
+        selectedStakingProgramId: MARKETPLACE_3,
       });
 
       const { result } = renderHook(() => useStakingContracts());
-      expect(result.current.currentStakingProgramId).toBe(PROGRAM_A);
+      expect(result.current.currentStakingProgramId).toBe(MARKETPLACE_3);
     });
 
     it('returns null when isActiveStakingProgramLoaded is false', () => {
       setupMocks({
         isActiveStakingProgramLoaded: false,
-        selectedStakingProgramId: PROGRAM_A,
+        selectedStakingProgramId: MARKETPLACE_3,
       });
 
       const { result } = renderHook(() => useStakingContracts());
@@ -153,7 +152,9 @@ describe('useStakingContracts', () => {
       });
 
       const { result } = renderHook(() => useStakingContracts());
-      expect(result.current.orderedStakingProgramIds).not.toContain(PROGRAM_B);
+      expect(result.current.orderedStakingProgramIds).not.toContain(
+        DEPRECATED_BETA_5,
+      );
     });
 
     it('filters out programs that do not support the selected agent type', () => {
@@ -163,7 +164,9 @@ describe('useStakingContracts', () => {
       });
 
       const { result } = renderHook(() => useStakingContracts());
-      expect(result.current.orderedStakingProgramIds).not.toContain(PROGRAM_D);
+      expect(result.current.orderedStakingProgramIds).not.toContain(
+        MODIUS_ALPHA,
+      );
     });
 
     it('includes non-deprecated programs that support the agent type', () => {
@@ -173,30 +176,30 @@ describe('useStakingContracts', () => {
       });
 
       const { result } = renderHook(() => useStakingContracts());
-      expect(result.current.orderedStakingProgramIds).toContain(PROGRAM_A);
-      expect(result.current.orderedStakingProgramIds).toContain(PROGRAM_C);
+      expect(result.current.orderedStakingProgramIds).toContain(MARKETPLACE_3);
+      expect(result.current.orderedStakingProgramIds).toContain(MARKETPLACE_4);
     });
 
     it('places the active staking program first', () => {
       setupMocks({
         isActiveStakingProgramLoaded: true,
-        selectedStakingProgramId: PROGRAM_C,
+        selectedStakingProgramId: MARKETPLACE_4,
       });
 
       const { result } = renderHook(() => useStakingContracts());
-      expect(result.current.orderedStakingProgramIds[0]).toBe(PROGRAM_C);
-      expect(result.current.orderedStakingProgramIds).toContain(PROGRAM_A);
+      expect(result.current.orderedStakingProgramIds[0]).toBe(MARKETPLACE_4);
+      expect(result.current.orderedStakingProgramIds).toContain(MARKETPLACE_3);
     });
 
     it('does not duplicate the active program in the list', () => {
       setupMocks({
         isActiveStakingProgramLoaded: true,
-        selectedStakingProgramId: PROGRAM_A,
+        selectedStakingProgramId: MARKETPLACE_3,
       });
 
       const { result } = renderHook(() => useStakingContracts());
       const occurrences = result.current.orderedStakingProgramIds.filter(
-        (id) => id === PROGRAM_A,
+        (id) => id === MARKETPLACE_3,
       );
       expect(occurrences).toHaveLength(1);
     });
@@ -204,52 +207,54 @@ describe('useStakingContracts', () => {
     it('filters out a deprecated program even if it is the active staking program', () => {
       setupMocks({
         isActiveStakingProgramLoaded: true,
-        selectedStakingProgramId: PROGRAM_B,
+        selectedStakingProgramId: DEPRECATED_BETA_5,
       });
 
       const { result } = renderHook(() => useStakingContracts());
-      // PROGRAM_B is deprecated — the deprecated check runs before the active check
-      expect(result.current.orderedStakingProgramIds).not.toContain(PROGRAM_B);
+      // DEPRECATED_BETA_5 is deprecated — the deprecated check runs before the active check
+      expect(result.current.orderedStakingProgramIds).not.toContain(
+        DEPRECATED_BETA_5,
+      );
       // Remaining non-deprecated, supported programs are still present
       expect(result.current.orderedStakingProgramIds).toEqual([
-        PROGRAM_A,
-        PROGRAM_C,
+        MARKETPLACE_3,
+        MARKETPLACE_4,
       ]);
     });
 
     it('returns programs in correct order: active first then remaining', () => {
       setupMocks({
         isActiveStakingProgramLoaded: true,
-        selectedStakingProgramId: PROGRAM_C,
+        selectedStakingProgramId: MARKETPLACE_4,
       });
 
       const { result } = renderHook(() => useStakingContracts());
-      // PROGRAM_C is active (first), PROGRAM_A is non-deprecated + supported (appended)
-      // PROGRAM_B is deprecated (filtered), PROGRAM_D is unsupported (filtered)
+      // MARKETPLACE_4 is active (first), MARKETPLACE_3 is non-deprecated + supported (appended)
+      // DEPRECATED_BETA_5 is deprecated (filtered), MODIUS_ALPHA is unsupported (filtered)
       expect(result.current.orderedStakingProgramIds).toEqual([
-        PROGRAM_C,
-        PROGRAM_A,
+        MARKETPLACE_4,
+        MARKETPLACE_3,
       ]);
     });
 
     it('includes active program even if it does not support the selected agent type', () => {
-      // PROGRAM_D does NOT support MOCK_AGENT_TYPE — but it IS the active program.
+      // MODIUS_ALPHA does NOT support PredictTrader — but it IS the active program.
       // The implementation promotes active before the agent-support filter (line 31 vs 35),
       // so the active program bypasses the agent-support check.
       setupMocks({
         isActiveStakingProgramLoaded: true,
-        selectedStakingProgramId: PROGRAM_D,
+        selectedStakingProgramId: MODIUS_ALPHA,
       });
 
       const { result } = renderHook(() => useStakingContracts());
-      // PROGRAM_D is active → promoted first despite not supporting the agent type
-      expect(result.current.orderedStakingProgramIds).toContain(PROGRAM_D);
-      expect(result.current.orderedStakingProgramIds[0]).toBe(PROGRAM_D);
-      // PROGRAM_A and PROGRAM_C still included (non-deprecated, supported)
+      // MODIUS_ALPHA is active → promoted first despite not supporting the agent type
+      expect(result.current.orderedStakingProgramIds).toContain(MODIUS_ALPHA);
+      expect(result.current.orderedStakingProgramIds[0]).toBe(MODIUS_ALPHA);
+      // MARKETPLACE_3 and MARKETPLACE_4 still included (non-deprecated, supported)
       expect(result.current.orderedStakingProgramIds).toEqual([
-        PROGRAM_D,
-        PROGRAM_A,
-        PROGRAM_C,
+        MODIUS_ALPHA,
+        MARKETPLACE_3,
+        MARKETPLACE_4,
       ]);
     });
 
@@ -261,8 +266,8 @@ describe('useStakingContracts', () => {
 
       const { result } = renderHook(() => useStakingContracts());
       expect(result.current.orderedStakingProgramIds).toEqual([
-        PROGRAM_A,
-        PROGRAM_C,
+        MARKETPLACE_3,
+        MARKETPLACE_4,
       ]);
     });
 

@@ -1,6 +1,4 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { renderHook, waitFor } from '@testing-library/react';
-import { createElement, PropsWithChildren } from 'react';
 
 import { EvmChainIdMap } from '../../constants/chains';
 import { PROVIDERS } from '../../constants/providers';
@@ -15,6 +13,7 @@ import {
   DEFAULT_SAFE_ADDRESS,
   POLYGON_SAFE_ADDRESS,
 } from '../helpers/factories';
+import { createQueryClientWrapper } from '../helpers/queryClient';
 
 /* eslint-disable @typescript-eslint/no-var-requires */
 const mockGetOwners = jest.fn();
@@ -67,17 +66,6 @@ const mockMulticallAll = PROVIDERS[EvmChainIdMap.Gnosis].multicallProvider
 
 const mockUseMasterWalletContext = useMasterWalletContext as jest.Mock;
 
-const createWrapper = () => {
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: { retry: false, gcTime: 0 },
-    },
-  });
-  // eslint-disable-next-line react/display-name
-  return ({ children }: PropsWithChildren) =>
-    createElement(QueryClientProvider, { client: queryClient }, children);
-};
-
 describe('useMultisig', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -104,7 +92,7 @@ describe('useMultisig', () => {
     };
 
     const { result } = renderHook(() => useMultisig(safe), {
-      wrapper: createWrapper(),
+      wrapper: createQueryClientWrapper(),
     });
 
     await waitFor(() => {
@@ -131,7 +119,7 @@ describe('useMultisig', () => {
     };
 
     const { result } = renderHook(() => useMultisig(safe), {
-      wrapper: createWrapper(),
+      wrapper: createQueryClientWrapper(),
     });
 
     await waitFor(() => {
@@ -153,7 +141,7 @@ describe('useMultisig', () => {
     };
 
     const { result } = renderHook(() => useMultisig(safe), {
-      wrapper: createWrapper(),
+      wrapper: createQueryClientWrapper(),
     });
 
     await waitFor(() => {
@@ -165,7 +153,7 @@ describe('useMultisig', () => {
 
   it('is disabled when safe is undefined', () => {
     const { result } = renderHook(() => useMultisig(undefined), {
-      wrapper: createWrapper(),
+      wrapper: createQueryClientWrapper(),
     });
 
     // When disabled, owners is undefined (query never runs)
@@ -217,7 +205,7 @@ describe('useMultisigs', () => {
     const { result } = renderHook(
       () => useMultisigs([gnosisSafe, polygonSafe]),
       {
-        wrapper: createWrapper(),
+        wrapper: createQueryClientWrapper(),
       },
     );
 
@@ -241,7 +229,7 @@ describe('useMultisigs', () => {
     ]);
 
     const { result } = renderHook(() => useMultisigs([gnosisSafe]), {
-      wrapper: createWrapper(),
+      wrapper: createQueryClientWrapper(),
     });
 
     await waitFor(() => {
@@ -275,7 +263,7 @@ describe('useMultisigs', () => {
 
     const { result } = renderHook(
       () => useMultisigs([gnosisSafe, polygonSafe]),
-      { wrapper: createWrapper() },
+      { wrapper: createQueryClientWrapper() },
     );
 
     await waitFor(() => {
@@ -306,7 +294,7 @@ describe('useMultisigs', () => {
 
     const { result } = renderHook(
       () => useMultisigs([gnosisSafe, polygonSafe]),
-      { wrapper: createWrapper() },
+      { wrapper: createQueryClientWrapper() },
     );
 
     await waitFor(() => {
@@ -320,7 +308,7 @@ describe('useMultisigs', () => {
 
   it('is disabled when safes is undefined', () => {
     const { result } = renderHook(() => useMultisigs(undefined), {
-      wrapper: createWrapper(),
+      wrapper: createQueryClientWrapper(),
     });
 
     expect(result.current.masterSafesOwners).toBeUndefined();
@@ -329,7 +317,7 @@ describe('useMultisigs', () => {
 
   it('is disabled when safes is empty', () => {
     const { result } = renderHook(() => useMultisigs([]), {
-      wrapper: createWrapper(),
+      wrapper: createQueryClientWrapper(),
     });
 
     expect(result.current.masterSafesOwners).toBeUndefined();
@@ -352,7 +340,7 @@ describe('useMultisigs', () => {
     // by chainId — since 999 is not in PROVIDERS, no multicall is attempted.
     // So this test verifies the hook gracefully handles no matching chains.
     const { result } = renderHook(() => useMultisigs([safe]), {
-      wrapper: createWrapper(),
+      wrapper: createQueryClientWrapper(),
     });
 
     await waitFor(() => {
@@ -388,7 +376,7 @@ describe('useMultisigs', () => {
     ]);
 
     const { result } = renderHook(() => useMultisigs([gnosisSafe]), {
-      wrapper: createWrapper(),
+      wrapper: createQueryClientWrapper(),
     });
 
     await waitFor(() => {

@@ -1,10 +1,9 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { renderHook, waitFor } from '@testing-library/react';
-import { createElement, PropsWithChildren } from 'react';
 
 import { AgentMap } from '../../constants/agent';
 import { useIsAgentGeoRestricted } from '../../hooks/useIsAgentGeoRestricted';
 import { AgentConfig } from '../../types';
+import { createQueryClientWrapper } from '../helpers/queryClient';
 
 /* eslint-disable @typescript-eslint/no-var-requires */
 jest.mock(
@@ -13,15 +12,6 @@ jest.mock(
 );
 /* eslint-enable @typescript-eslint/no-var-requires */
 jest.mock('../../constants/providers', () => ({}));
-
-const createWrapper = () => {
-  const queryClient = new QueryClient({
-    defaultOptions: { queries: { retry: false } },
-  });
-  // eslint-disable-next-line react/display-name
-  return ({ children }: PropsWithChildren) =>
-    createElement(QueryClientProvider, { client: queryClient }, children);
-};
 
 const geoRestrictedConfig = {
   isGeoLocationRestricted: true,
@@ -48,7 +38,7 @@ describe('useIsAgentGeoRestricted', () => {
           agentType: AgentMap.Polystrat,
           agentConfig: nonGeoRestrictedConfig,
         }),
-      { wrapper: createWrapper() },
+      { wrapper: createQueryClientWrapper() },
     );
 
     expect(result.current.isAgentGeoRestricted).toBe(false);
@@ -62,7 +52,7 @@ describe('useIsAgentGeoRestricted', () => {
           agentType: AgentMap.Polystrat,
           agentConfig: undefined,
         }),
-      { wrapper: createWrapper() },
+      { wrapper: createQueryClientWrapper() },
     );
     expect(result.current.isAgentGeoRestricted).toBe(false);
   });
@@ -85,7 +75,7 @@ describe('useIsAgentGeoRestricted', () => {
           agentType: AgentMap.Polystrat,
           agentConfig: geoRestrictedConfig,
         }),
-      { wrapper: createWrapper() },
+      { wrapper: createQueryClientWrapper() },
     );
     await waitFor(() => {
       expect(result.current.isAgentGeoRestricted).toBe(true);
@@ -110,7 +100,7 @@ describe('useIsAgentGeoRestricted', () => {
           agentType: AgentMap.Polystrat,
           agentConfig: geoRestrictedConfig,
         }),
-      { wrapper: createWrapper() },
+      { wrapper: createQueryClientWrapper() },
     );
     await waitFor(() => {
       expect(result.current.isAgentGeoRestricted).toBe(false);
@@ -135,7 +125,7 @@ describe('useIsAgentGeoRestricted', () => {
           agentType: AgentMap.Polystrat,
           agentConfig: geoRestrictedConfig,
         }),
-      { wrapper: createWrapper() },
+      { wrapper: createQueryClientWrapper() },
     );
 
     await waitFor(() => {
@@ -156,7 +146,7 @@ describe('useIsAgentGeoRestricted', () => {
           agentType: AgentMap.Polystrat,
           agentConfig: geoRestrictedConfig,
         }),
-      { wrapper: createWrapper() },
+      { wrapper: createQueryClientWrapper() },
     );
 
     await waitFor(() => {
