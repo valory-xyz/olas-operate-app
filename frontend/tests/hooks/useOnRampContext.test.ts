@@ -42,10 +42,11 @@ describe('useOnRampContext', () => {
   });
 
   it('returns default context values when used without provider (createContext default)', () => {
-    // OnRampContext has a default value from createContext, so useContext
-    // will never return null/undefined. The `if (!context)` guard in
-    // useOnRampContext will never trigger because createContext always
-    // provides a value. This test verifies the hook still works.
+    // OnRampContext is initialized with a non-null default via createContext,
+    // so useContext always returns a value. The `if (!context)` guard in
+    // useOnRampContext is unreachable — it would only trigger if the default
+    // were undefined. This test verifies the hook works with the default
+    // context values (no wrapping provider needed).
     const { result } = renderHook(() => useOnRampContext());
 
     expect(result.current.nativeAmountToPay).toBeNull();

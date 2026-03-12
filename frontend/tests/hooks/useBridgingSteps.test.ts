@@ -3,6 +3,7 @@ import { renderHook } from '@testing-library/react';
 import { TokenSymbol } from '../../config/tokens';
 import { FIVE_SECONDS_INTERVAL } from '../../constants/intervals';
 import { BridgeStatusResponse, QuoteStatus } from '../../types/Bridge';
+import { MOCK_TX_HASH_1 } from '../helpers/factories';
 
 // ---------------------------------------------------------------------------
 // Module mocks
@@ -109,11 +110,10 @@ const makeRequestStatus = (
 ): BridgeStatusResponse['bridge_request_status'][number] => ({
   status,
   explorer_link:
-    explorerLink ?? `https://explorer.example.com/tx/${txHash ?? '0xabc'}`,
+    explorerLink ??
+    `https://explorer.example.com/tx/${txHash ?? MOCK_TX_HASH_1}`,
   message: null,
-  tx_hash:
-    txHash ??
-    '0xabc123def456abc123def456abc123def456abc123def456abc123def456abc1',
+  tx_hash: txHash ?? MOCK_TX_HASH_1,
 });
 
 const makeBridgeResponse = (

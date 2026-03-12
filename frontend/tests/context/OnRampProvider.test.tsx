@@ -199,10 +199,11 @@ describe('OnRampProvider', () => {
       mockGetMasterEoaNativeBalanceOf.mockReturnValue('100.0');
       rerender();
 
-      // Detection should NOT trigger here because 100 - 5 >= 0.9 is true
-      // so actually detection WILL trigger with 100 - 5 = 95. Let's verify
-      // that the initial balance was indeed captured at "5.0" by checking
-      // that fund receipt WAS detected (since 100 - 5 = 95 >> 0.9).
+      // With the ref guard, the initial balance remains "5.0", so when the
+      // balance jumps to "100.0" the increase is 100 - 5 = 95, which is
+      // far above the 0.9 threshold. We verify that the initial balance
+      // was indeed captured at "5.0" by checking that fund receipt WAS
+      // detected (since 100 - 5 = 95 >> 0.9).
       expect(result.current.isOnRampingStepCompleted).toBe(true);
     });
 

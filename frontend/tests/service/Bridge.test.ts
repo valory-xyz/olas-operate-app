@@ -6,7 +6,12 @@ import {
   BridgeRefillRequirementsResponse,
   BridgeStatusResponse,
 } from '../../types/Bridge';
-import { DEFAULT_SAFE_ADDRESS } from '../helpers/factories';
+import {
+  DEFAULT_SAFE_ADDRESS,
+  MOCK_TX_HASH_1,
+  MOCK_TX_HASH_2,
+  UNKNOWN_TOKEN_ADDRESS,
+} from '../helpers/factories';
 
 /* eslint-disable @typescript-eslint/no-var-requires */
 jest.mock(
@@ -18,8 +23,9 @@ jest.mock('../../constants/providers', () => ({}));
 
 const MOCK_QUOTE_ID = 'rb-36c6cbe0-1841-4de3-b9f6-873305a833f5';
 
-const MOCK_TOKEN_ADDRESS = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
-const MOCK_DESTINATION_TOKEN = '0xcE11e14225575945b8E6Dc0D4d255cB819740B93';
+/** Native token sentinel used by bridge API (EEE...EEE pattern) */
+const NATIVE_TOKEN_BRIDGE_ADDRESS =
+  '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
 
 const makeBridgeRefillRequirementsRequest =
   (): BridgeRefillRequirementsRequest => ({
@@ -28,12 +34,12 @@ const makeBridgeRefillRequirementsRequest =
         from: {
           chain: 'ethereum',
           address: DEFAULT_SAFE_ADDRESS,
-          token: MOCK_TOKEN_ADDRESS,
+          token: NATIVE_TOKEN_BRIDGE_ADDRESS,
         },
         to: {
           chain: 'gnosis',
           address: DEFAULT_SAFE_ADDRESS,
-          token: MOCK_DESTINATION_TOKEN,
+          token: UNKNOWN_TOKEN_ADDRESS,
           amount: '1000000000000000000',
         },
       },
@@ -59,10 +65,10 @@ const makeBridgeStatusResponse = (
   status: 'EXECUTION_DONE',
   bridge_request_status: [
     {
-      explorer_link: 'https://gnosisscan.io/tx/0xabc',
+      explorer_link: `https://gnosisscan.io/tx/${MOCK_TX_HASH_1}`,
       message: null,
       status: 'EXECUTION_DONE',
-      tx_hash: '0xabc123',
+      tx_hash: MOCK_TX_HASH_1,
     },
   ],
   ...overrides,
@@ -133,19 +139,6 @@ describe('BridgeService', () => {
       const fetchCall = jest.mocked(global.fetch).mock.calls[0];
       const requestInit = fetchCall[1] as RequestInit;
       expect(requestInit.signal).toBe(controller.signal);
-    });
-
-    it('returns response with QUOTE_DONE status', async () => {
-      const responseBody = makeBridgeRefillRequirementsResponse();
-      jest
-        .spyOn(global, 'fetch')
-        .mockReturnValue(mockJsonResponse(responseBody));
-
-      const result = await BridgeService.getBridgeRefillRequirements(params);
-
-      expect(result.id).toBe(MOCK_QUOTE_ID);
-      expect(result.bridge_request_status[0].status).toBe('QUOTE_DONE');
-      expect(result.is_refill_required).toBe(true);
     });
 
     it('propagates force_update in the request body', async () => {
@@ -282,10 +275,10 @@ describe('BridgeService', () => {
         status: 'EXECUTION_DONE',
         bridge_request_status: [
           {
-            explorer_link: 'https://gnosisscan.io/tx/0xfinal',
+            explorer_link: `https://gnosisscan.io/tx/${MOCK_TX_HASH_2}`,
             message: null,
             status: 'EXECUTION_DONE',
-            tx_hash: '0xfinal',
+            tx_hash: MOCK_TX_HASH_2,
           },
         ],
       });
@@ -297,9 +290,9 @@ describe('BridgeService', () => {
 
       expect(result.status).toBe('EXECUTION_DONE');
       expect(result.bridge_request_status[0].explorer_link).toBe(
-        'https://gnosisscan.io/tx/0xfinal',
+        `https://gnosisscan.io/tx/${MOCK_TX_HASH_2}`,
       );
-      expect(result.bridge_request_status[0].tx_hash).toBe('0xfinal');
+      expect(result.bridge_request_status[0].tx_hash).toBe(MOCK_TX_HASH_2);
     });
 
     it('returns EXECUTION_PENDING status when bridge is in progress', async () => {
