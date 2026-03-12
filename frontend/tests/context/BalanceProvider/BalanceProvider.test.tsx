@@ -1,6 +1,6 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { renderHook, waitFor } from '@testing-library/react';
-import { act, createElement, PropsWithChildren, useContext } from 'react';
+import { act, PropsWithChildren, useContext } from 'react';
 
 import { AGENT_CONFIG } from '../../../config/agents';
 import { TokenSymbolMap } from '../../../config/tokens';
@@ -30,6 +30,7 @@ import {
   MOCK_MULTISIG_ADDRESS,
   SECOND_SAFE_ADDRESS,
 } from '../../helpers/factories';
+import { createTestQueryClient } from '../../helpers/queryClient';
 
 /* eslint-disable @typescript-eslint/no-var-requires */
 jest.mock(
@@ -95,51 +96,40 @@ const createWrapper = (options: WrapperOptions = {}) => {
       ? undefined
       : (options.services ?? [defaultService]);
 
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: { retry: false, gcTime: 0 },
-    },
-  });
+  const queryClient = createTestQueryClient();
 
   // eslint-disable-next-line react/display-name
-  return ({ children }: PropsWithChildren) =>
-    createElement(
-      QueryClientProvider,
-      { client: queryClient },
-      createElement(
-        OnlineStatusContext.Provider,
-        { value: { isOnline } },
-        createElement(
-          MasterWalletContext.Provider,
-          { value: { masterWallets } },
-          createElement(
-            ServicesContext.Provider,
-            {
-              value: {
-                services,
-                selectedAgentConfig,
-                serviceWallets: undefined as AgentWallet[] | undefined,
-                availableServiceConfigIds: [],
-                getServiceConfigIdsOf: () => [],
-                getAgentTypeFromService: () => null,
-                getServiceConfigIdFromAgentType: () => null,
-                isSelectedServiceDeploymentStatusLoading: false,
-                selectedAgentType: AgentMap.PredictTrader,
-                selectedAgentName: null,
-                selectedAgentNameOrFallback: 'My agent',
-                deploymentDetails: undefined,
-                updateAgentType: jest.fn(),
-                overrideSelectedServiceStatus: jest.fn(),
-                paused: false,
-                setPaused: jest.fn(),
-                togglePaused: jest.fn(),
-              },
-            },
-            createElement(BalanceProvider, null, children),
-          ),
-        ),
-      ),
-    );
+  return ({ children }: PropsWithChildren) => (
+    <QueryClientProvider client={queryClient}>
+      <OnlineStatusContext.Provider value={{ isOnline }}>
+        <MasterWalletContext.Provider value={{ masterWallets }}>
+          <ServicesContext.Provider
+            value={{
+              services,
+              selectedAgentConfig,
+              serviceWallets: undefined as AgentWallet[] | undefined,
+              availableServiceConfigIds: [],
+              getServiceConfigIdsOf: () => [],
+              getAgentTypeFromService: () => null,
+              getServiceConfigIdFromAgentType: () => null,
+              isSelectedServiceDeploymentStatusLoading: false,
+              selectedAgentType: AgentMap.PredictTrader,
+              selectedAgentName: null,
+              selectedAgentNameOrFallback: 'My agent',
+              deploymentDetails: undefined,
+              updateAgentType: jest.fn(),
+              overrideSelectedServiceStatus: jest.fn(),
+              paused: false,
+              setPaused: jest.fn(),
+              togglePaused: jest.fn(),
+            }}
+          >
+            <BalanceProvider>{children}</BalanceProvider>
+          </ServicesContext.Provider>
+        </MasterWalletContext.Provider>
+      </OnlineStatusContext.Provider>
+    </QueryClientProvider>
+  );
 };
 
 describe('BalanceProvider', () => {
@@ -289,8 +279,12 @@ describe('BalanceProvider', () => {
       await waitFor(() => {
         expect(result.current.isLoaded).toBe(true);
       });
-      // stakedBalances is not directly exposed via context but used internally;
-      // we verify via totalStakedOlasBalance
+      // `stakedBalances` is not directly exposed by the context; the provider
+      // derives `totalStakedOlasBalance` from it (sum of olasBondBalance +
+      // olasDepositBalance for all entries on the agent's home chain).
+      // makeStakedBalance() uses Gnosis (PredictTrader's home chain) with
+      // olasBondBalance=10 and olasDepositBalance=20, so we expect 30.
+      expect(result.current.totalStakedOlasBalance).toBe(30);
     });
 
     describe('totalEthBalance', () => {

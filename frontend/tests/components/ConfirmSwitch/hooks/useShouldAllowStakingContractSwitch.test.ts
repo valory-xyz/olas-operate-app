@@ -1,0 +1,396 @@
+import { renderHook } from '@testing-library/react';
+
+import { useShouldAllowStakingContractSwitch } from '../../../../components/ConfirmSwitch/hooks/useShouldAllowStakingContractSwitch';
+import {
+  EvmChainIdMap,
+  MiddlewareChainMap,
+} from '../../../../constants/chains';
+import { useBalanceContext } from '../../../../hooks/useBalanceContext';
+import { useMasterBalances } from '../../../../hooks/useMasterBalances';
+import { useServices } from '../../../../hooks/useServices';
+import { useStakingProgram } from '../../../../hooks/useStakingProgram';
+import {
+  DEFAULT_SERVICE_NFT_TOKEN_ID,
+  makeChainConfig,
+  makeService,
+} from '../../../helpers/factories';
+
+const MOCK_STAKING_PROGRAM_ID = 'mock_staking_program';
+
+jest.mock('../../../../hooks/useBalanceContext', () => ({
+  useBalanceContext: jest.fn(),
+}));
+jest.mock('../../../../hooks/useMasterBalances', () => ({
+  useMasterBalances: jest.fn(),
+}));
+jest.mock('../../../../hooks/useServices', () => ({
+  useServices: jest.fn(),
+}));
+jest.mock('../../../../hooks/useStakingProgram', () => ({
+  useStakingProgram: jest.fn(),
+}));
+jest.mock('../../../../config/stakingPrograms', () => ({
+  STAKING_PROGRAMS: {
+    // EvmChainIdMap.Gnosis = 100
+    [100]: {
+      // MOCK_STAKING_PROGRAM_ID
+      mock_staking_program: {
+        // MIN_OLAS_REQUIRED
+        stakingRequirements: { OLAS: 100 },
+      },
+    },
+  },
+}));
+
+const mockUseBalanceContext = useBalanceContext as jest.MockedFunction<
+  typeof useBalanceContext
+>;
+const mockUseMasterBalances = useMasterBalances as jest.MockedFunction<
+  typeof useMasterBalances
+>;
+const mockUseServices = useServices as jest.MockedFunction<typeof useServices>;
+const mockUseStakingProgram = useStakingProgram as jest.MockedFunction<
+  typeof useStakingProgram
+>;
+
+type MockOverrides = {
+  isBalanceLoaded?: boolean;
+  totalStakedOlasBalance?: number | undefined;
+  safeOlasBalanceStr?: string | undefined;
+  stakingProgramIdToMigrateTo?: string;
+  isFetched?: boolean;
+  selectedService?: ReturnType<typeof makeService> | undefined;
+  serviceToken?: number;
+};
+
+const setupMocks = ({
+  isBalanceLoaded = true,
+  totalStakedOlasBalance = 0,
+  safeOlasBalanceStr = '0',
+  stakingProgramIdToMigrateTo = MOCK_STAKING_PROGRAM_ID,
+  isFetched = true,
+  selectedService,
+  serviceToken,
+}: MockOverrides = {}) => {
+  mockUseBalanceContext.mockReturnValue({
+    isLoaded: isBalanceLoaded,
+    totalStakedOlasBalance,
+  } as ReturnType<typeof useBalanceContext>);
+
+  const getMasterSafeOlasBalanceOfInStr = jest.fn(() => safeOlasBalanceStr);
+  mockUseMasterBalances.mockReturnValue({
+    getMasterSafeOlasBalanceOfInStr,
+  } as unknown as ReturnType<typeof useMasterBalances>);
+
+  mockUseStakingProgram.mockReturnValue({
+    stakingProgramIdToMigrateTo,
+  } as ReturnType<typeof useStakingProgram>);
+
+  // Build selectedService with the appropriate chain_configs
+  const service =
+    selectedService !== undefined
+      ? selectedService
+      : makeService({
+          chain_configs: makeChainConfig(MiddlewareChainMap.GNOSIS, {
+            token: serviceToken ?? DEFAULT_SERVICE_NFT_TOKEN_ID,
+          }),
+        });
+
+  mockUseServices.mockReturnValue({
+    selectedAgentConfig: {
+      evmHomeChainId: EvmChainIdMap.Gnosis,
+    },
+    selectedService: service,
+    isFetched,
+  } as unknown as ReturnType<typeof useServices>);
+};
+
+describe('useShouldAllowStakingContractSwitch', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  describe('safeOlasBalance', () => {
+    it('returns 0 when balance is not loaded', () => {
+      setupMocks({ isBalanceLoaded: false, safeOlasBalanceStr: '50' });
+      const { result } = renderHook(() =>
+        useShouldAllowStakingContractSwitch(),
+      );
+      // When balance is not loaded, safeOlasBalance is 0, so totalOlas is just staked
+      expect(result.current.totalOlas).toBe(0);
+    });
+
+    it('returns parsed balance when balance is loaded', () => {
+      setupMocks({ safeOlasBalanceStr: '42', totalStakedOlasBalance: 0 });
+      const { result } = renderHook(() =>
+        useShouldAllowStakingContractSwitch(),
+      );
+      expect(result.current.totalOlas).toBe(42);
+    });
+
+    it('returns 0 when getMasterSafeOlasBalanceOfInStr returns undefined', () => {
+      setupMocks({
+        safeOlasBalanceStr: undefined,
+        totalStakedOlasBalance: 0,
+      });
+      const { result } = renderHook(() =>
+        useShouldAllowStakingContractSwitch(),
+      );
+      expect(result.current.totalOlas).toBe(0);
+    });
+  });
+
+  describe('totalOlas', () => {
+    it('sums safeOlasBalance and totalStakedOlasBalance', () => {
+      setupMocks({ safeOlasBalanceStr: '30', totalStakedOlasBalance: 70 });
+      const { result } = renderHook(() =>
+        useShouldAllowStakingContractSwitch(),
+      );
+      expect(result.current.totalOlas).toBe(100);
+    });
+
+    it('handles null totalStakedOlasBalance by treating it as 0', () => {
+      setupMocks({
+        safeOlasBalanceStr: '50',
+        totalStakedOlasBalance: undefined,
+      });
+      const { result } = renderHook(() =>
+        useShouldAllowStakingContractSwitch(),
+      );
+      expect(result.current.totalOlas).toBe(50);
+    });
+  });
+
+  describe('olasRequiredToMigrate', () => {
+    it('returns deficit when totalOlas is less than minimum', () => {
+      setupMocks({ safeOlasBalanceStr: '30', totalStakedOlasBalance: 10 });
+      const { result } = renderHook(() =>
+        useShouldAllowStakingContractSwitch(),
+      );
+      // minimum is 100, totalOlas is 40 => deficit is 60
+      expect(result.current.olasRequiredToMigrate).toBe(60);
+    });
+
+    it('clamps to 0 when totalOlas exceeds minimum', () => {
+      setupMocks({ safeOlasBalanceStr: '80', totalStakedOlasBalance: 50 });
+      const { result } = renderHook(() =>
+        useShouldAllowStakingContractSwitch(),
+      );
+      expect(result.current.olasRequiredToMigrate).toBe(0);
+    });
+
+    it('returns 0 when totalOlas equals minimum exactly', () => {
+      setupMocks({ safeOlasBalanceStr: '60', totalStakedOlasBalance: 40 });
+      const { result } = renderHook(() =>
+        useShouldAllowStakingContractSwitch(),
+      );
+      expect(result.current.olasRequiredToMigrate).toBe(0);
+    });
+  });
+
+  describe('isFirstDeploy (internal) — inferred through shouldAllowSwitch', () => {
+    it('treats service as not first deploy when services are not loaded', () => {
+      // When isFetched=false, isFirstDeploy=false (not first deploy path)
+      // So the !isFirstDeploy rule applies: blocked when !hasEnoughOlasToMigrate
+      setupMocks({
+        isFetched: false,
+        safeOlasBalanceStr: '0',
+        totalStakedOlasBalance: 0,
+      });
+      const { result } = renderHook(() =>
+        useShouldAllowStakingContractSwitch(),
+      );
+      // Not first deploy + totalOlas (0) < minimum (100) => blocked
+      expect(result.current.shouldAllowSwitch).toBe(false);
+    });
+
+    it('treats as first deploy when selectedService is undefined', () => {
+      // No service => first deploy. safeOlasBalance < minimum => blocked
+      setupMocks({
+        selectedService: undefined,
+        safeOlasBalanceStr: '50',
+        totalStakedOlasBalance: 0,
+      });
+      const { result } = renderHook(() =>
+        useShouldAllowStakingContractSwitch(),
+      );
+      expect(result.current.shouldAllowSwitch).toBe(false);
+    });
+
+    it('treats as first deploy when service token is 0 (invalid)', () => {
+      setupMocks({
+        serviceToken: 0,
+        safeOlasBalanceStr: '50',
+        totalStakedOlasBalance: 0,
+      });
+      const { result } = renderHook(() =>
+        useShouldAllowStakingContractSwitch(),
+      );
+      // First deploy + safeOlasBalance (50) < minimum (100) => blocked
+      expect(result.current.shouldAllowSwitch).toBe(false);
+    });
+
+    it('treats as first deploy when service token is -1 (invalid)', () => {
+      setupMocks({
+        serviceToken: -1,
+        safeOlasBalanceStr: '50',
+        totalStakedOlasBalance: 0,
+      });
+      const { result } = renderHook(() =>
+        useShouldAllowStakingContractSwitch(),
+      );
+      expect(result.current.shouldAllowSwitch).toBe(false);
+    });
+
+    it('treats as not first deploy when service has a valid token', () => {
+      setupMocks({
+        serviceToken: DEFAULT_SERVICE_NFT_TOKEN_ID,
+        safeOlasBalanceStr: '0',
+        totalStakedOlasBalance: 150,
+      });
+      const { result } = renderHook(() =>
+        useShouldAllowStakingContractSwitch(),
+      );
+      // Not first deploy, totalOlas (150) >= minimum (100) => allowed
+      expect(result.current.shouldAllowSwitch).toBe(true);
+    });
+  });
+
+  describe('shouldAllowSwitch', () => {
+    describe('first deploy (no valid service token)', () => {
+      it('blocks when safeOlasBalance is below minimum', () => {
+        setupMocks({
+          serviceToken: 0,
+          safeOlasBalanceStr: '99',
+          totalStakedOlasBalance: 0,
+        });
+        const { result } = renderHook(() =>
+          useShouldAllowStakingContractSwitch(),
+        );
+        expect(result.current.shouldAllowSwitch).toBe(false);
+      });
+
+      it('allows when safeOlasBalance equals minimum', () => {
+        setupMocks({
+          serviceToken: 0,
+          safeOlasBalanceStr: '100',
+          totalStakedOlasBalance: 0,
+        });
+        const { result } = renderHook(() =>
+          useShouldAllowStakingContractSwitch(),
+        );
+        expect(result.current.shouldAllowSwitch).toBe(true);
+      });
+
+      it('allows when safeOlasBalance exceeds minimum', () => {
+        setupMocks({
+          serviceToken: 0,
+          safeOlasBalanceStr: '200',
+          totalStakedOlasBalance: 0,
+        });
+        const { result } = renderHook(() =>
+          useShouldAllowStakingContractSwitch(),
+        );
+        expect(result.current.shouldAllowSwitch).toBe(true);
+      });
+
+      it('uses only safeOlasBalance (staked balance is ignored for first deploy rule)', () => {
+        // safeOlasBalance=50 < minimum=100, even though totalOlas=150
+        setupMocks({
+          serviceToken: 0,
+          safeOlasBalanceStr: '50',
+          totalStakedOlasBalance: 100,
+        });
+        const { result } = renderHook(() =>
+          useShouldAllowStakingContractSwitch(),
+        );
+        expect(result.current.shouldAllowSwitch).toBe(false);
+      });
+    });
+
+    describe('not first deploy (valid service token)', () => {
+      it('allows when totalOlas meets minimum', () => {
+        setupMocks({
+          serviceToken: DEFAULT_SERVICE_NFT_TOKEN_ID,
+          safeOlasBalanceStr: '60',
+          totalStakedOlasBalance: 40,
+        });
+        const { result } = renderHook(() =>
+          useShouldAllowStakingContractSwitch(),
+        );
+        expect(result.current.shouldAllowSwitch).toBe(true);
+      });
+
+      it('allows when totalOlas exceeds minimum', () => {
+        setupMocks({
+          serviceToken: DEFAULT_SERVICE_NFT_TOKEN_ID,
+          safeOlasBalanceStr: '80',
+          totalStakedOlasBalance: 80,
+        });
+        const { result } = renderHook(() =>
+          useShouldAllowStakingContractSwitch(),
+        );
+        expect(result.current.shouldAllowSwitch).toBe(true);
+      });
+
+      it('blocks when totalOlas is below minimum', () => {
+        setupMocks({
+          serviceToken: DEFAULT_SERVICE_NFT_TOKEN_ID,
+          safeOlasBalanceStr: '30',
+          totalStakedOlasBalance: 20,
+        });
+        const { result } = renderHook(() =>
+          useShouldAllowStakingContractSwitch(),
+        );
+        expect(result.current.shouldAllowSwitch).toBe(false);
+      });
+
+      it('considers staked balance for non-first-deploy check', () => {
+        // safeOlasBalance=10 but totalStakedOlasBalance=90, totalOlas=100 >= minimum
+        setupMocks({
+          serviceToken: DEFAULT_SERVICE_NFT_TOKEN_ID,
+          safeOlasBalanceStr: '10',
+          totalStakedOlasBalance: 90,
+        });
+        const { result } = renderHook(() =>
+          useShouldAllowStakingContractSwitch(),
+        );
+        expect(result.current.shouldAllowSwitch).toBe(true);
+      });
+    });
+  });
+
+  describe('service with no chain_configs', () => {
+    it('treats as first deploy when service has null chain_configs', () => {
+      const service = makeService({ chain_configs: {} });
+      setupMocks({
+        selectedService: service,
+        safeOlasBalanceStr: '50',
+        totalStakedOlasBalance: 0,
+      });
+      const { result } = renderHook(() =>
+        useShouldAllowStakingContractSwitch(),
+      );
+      // First deploy (no chain_data for gnosis) + safeOlasBalance (50) < 100 => blocked
+      expect(result.current.shouldAllowSwitch).toBe(false);
+    });
+  });
+
+  describe('return values', () => {
+    it('returns totalOlas, olasRequiredToMigrate, and shouldAllowSwitch', () => {
+      setupMocks({
+        serviceToken: DEFAULT_SERVICE_NFT_TOKEN_ID,
+        safeOlasBalanceStr: '75',
+        totalStakedOlasBalance: 10,
+      });
+      const { result } = renderHook(() =>
+        useShouldAllowStakingContractSwitch(),
+      );
+      expect(result.current).toEqual({
+        totalOlas: 85,
+        olasRequiredToMigrate: 15,
+        shouldAllowSwitch: false,
+      });
+    });
+  });
+});
