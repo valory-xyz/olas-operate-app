@@ -64,11 +64,8 @@ export const useAutoRunController = ({
 }: UseAutoRunControllerParams) => {
   const { isEligibleForRewards, stakingRewardsDetails } = useRewardContext();
 
-  // Separate from isEligibleForRewards: tracks whether the staking epoch has
-  // expired without a checkpoint being called on-chain yet. Used alongside
-  // isEligibleForRewards at the decision point — an agent should run if it
-  // hasn't earned (!isEligibleForRewards) OR if the epoch has expired and the
-  // stale earned-status from the previous epoch shouldn't block it.
+  // Tracks whether the staking epoch has expired without a checkpoint
+  // being called on-chain yet
   const isEpochExpired = useMemo(() => {
     if (!stakingRewardsDetails) return false;
     return isStakingEpochExpired(stakingRewardsDetails);
