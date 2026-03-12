@@ -249,7 +249,7 @@ Every delay and poll interval in auto-run uses `sleepAwareDelay`. On `false`:
 | 5 | Agent earns rewards | Stop → cooldown → start next | `false→true` transition triggers `rotateToNext` |
 | 6 | Agent already earned before enable | Skip, move to next | Rewards snapshot check before start |
 | 7 | All agents earned | Keep current running, rescan in 30min | `allEarnedOrUnknown` → `SCAN_ELIGIBLE_DELAY_SECONDS` |
-| 40 | Epoch expired (clock = 0), all agents show `isEligibleForRewards = true` from old epoch, no agent running | Normalize eligibility to `false`, start next agent to trigger on-chain checkpoint | `epochExpired` check in `refreshRewardsEligibility` + controller-level normalization before passing to `useAutoRunSignals` |
+| 7a | Epoch expired (clock = 0), all agents show `isEligibleForRewards = true` from old epoch, no agent running | Treat as not-yet-earned and start next agent to trigger on-chain checkpoint | `epochExpired` check in `refreshRewardsEligibility` (fresh chain data) + separate `isEpochExpired` flag passed to `useAutoRunSignals` where `!isEligibleForRewards \|\| isEpochExpired` is evaluated at the snapshot write |
 
 ### Blocked Agents
 
@@ -427,7 +427,7 @@ Every delay and poll interval in auto-run uses `sleepAwareDelay`. On `false`:
 
 ### P1 — Agents permanently stuck after epoch expires (epoch clock = 0)
 - **Root cause**: When the staking epoch expires (`nowInSeconds - tsCheckpoint >= livenessPeriod`) but no `checkpoint()` has been called on-chain, every agent that ran in the previous epoch retains `isEligibleForRewards = true`. Auto-run's scanner skips every candidate (`candidateEligibility === true`) and schedules a 30-min rescan. Since no agent is running to trigger `checkpoint()`, `tsCheckpoint` never advances, `isEligibleForRewards` stays `true` for all, and the system stays stuck indefinitely. The epoch clock UI shows 0 / "Soon".
-- **Fix**: Two-layer normalization: (1) `refreshRewardsEligibility` in `autoRunHelpers.ts` computes `epochExpired = livenessPeriodSeconds > 0 && nowInSeconds - tsCheckpoint >= livenessPeriodSeconds` from the fresh chain response and overrides `eligible` to `false` when expired; (2) `useAutoRunController` also normalizes `isEligibleForRewards` from the `RewardProvider` (which polls every 5s and would otherwise overwrite the snapshot back to `true`) before feeding it into `useAutoRunSignals`. With both layers active, auto-run treats all agents as not-yet-earned in the new epoch and starts one, which triggers the on-chain checkpoint.
+- **Fix**: Two-layer check using `isEligibleForRewards` and `isEpochExpired` as separate concerns — `isEligibleForRewards` is not mutated (it remains valid business data: the agent did earn in the previous epoch). (1) `refreshRewardsEligibility` in `autoRunHelpers.ts` computes `epochExpired` from the fresh chain response and writes `false` to the snapshot when the epoch has expired, regardless of `isEligibleForRewards`; (2) `useAutoRunController` computes a separate `isEpochExpired: boolean` flag (from `stakingRewardsDetails`) and passes it alongside the raw `isEligibleForRewards` to `useAutoRunSignals`, which applies `isEpochExpired ? false : isEligibleForRewards` at the snapshot write — preventing the RewardProvider's 5s poll from overwriting the corrected snapshot with stale `true`. Both layers evaluate `!isEligibleForRewards || isEpochExpired` to decide whether an agent should run.
 
 ### Code — Magic numbers replaced with named constants
 - `SCAN_LOADING_RETRY_SECONDS = 30` replaces hardcoded `scheduleNextScan(30)`.
@@ -446,9 +446,12 @@ Returns `Promise<boolean>`. `true` = normal completion. `false` = sleep/wake det
 Races an operation against a timeout. Used to wrap `startService()` (15min) and `stopDeployment()` (5min) calls so they cannot hang indefinitely. Does not cancel the underlying operation.
 
 ### `refreshRewardsEligibility(params)` — `utils/autoRunHelpers.ts`
-Fetches staking rewards info from the chain. Throttled per agent (max once per `REWARDS_POLL_SECONDS`). Returns `true` (earned), `false` (not earned), or `undefined` (error/missing data).
+Fetches staking rewards info from the chain. Throttled per agent (max once per `REWARDS_POLL_SECONDS`). Returns `true` (earned), `false` (not earned), or `undefined` (error/missing data). When the epoch has expired, always returns `false` regardless of `isEligibleForRewards` (stale data guard).
 
-### `normalizeEligibility(eligibility)` — `useAutoRunOperations.ts`
+### `isStakingEpochExpired({ livenessPeriod, tsCheckpoint })` — `utils/autoRunHelpers.ts`
+Returns `true` when `nowInSeconds - tsCheckpoint >= livenessPeriod` (epoch timer elapsed but `checkpoint()` not yet called). Used in two places: inside `refreshRewardsEligibility` (fresh chain data), and in `useAutoRunController` to compute `isEpochExpired` passed to `useAutoRunSignals`. Does not modify `isEligibleForRewards`.
+
+### `normalizeEligibility(eligibility)` — `utils/autoRunHelpers.ts`
 Converts transient states ("Another agent running", stale "Loading: Balances") into consistent signals for the scanner to act on.
 
 ---

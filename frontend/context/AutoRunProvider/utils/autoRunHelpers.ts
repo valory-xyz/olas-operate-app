@@ -2,6 +2,7 @@ import { BigNumber } from 'ethers';
 import { MutableRefObject } from 'react';
 
 import { AgentType } from '@/constants';
+import { StakingRewardsInfo } from '@/types';
 import { isValidServiceId } from '@/utils/service';
 import { fetchAgentStakingRewardsInfo } from '@/utils/stakingRewards';
 
@@ -22,10 +23,7 @@ import { AgentMeta } from '../types';
 export const isStakingEpochExpired = ({
   livenessPeriod,
   tsCheckpoint,
-}: {
-  livenessPeriod: { _isBigNumber: boolean; _hex: string };
-  tsCheckpoint: number;
-}): boolean => {
+}: Pick<StakingRewardsInfo, 'livenessPeriod' | 'tsCheckpoint'>): boolean => {
   const livenessPeriodSeconds = BigNumber.from(livenessPeriod).toNumber();
   if (livenessPeriodSeconds <= 0) return false;
   const nowInSeconds = Math.floor(Date.now() / 1000);
