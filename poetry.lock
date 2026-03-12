@@ -2299,34 +2299,38 @@ nicer-shell = ["ipython"]
 
 [[package]]
 name = "olas-operate-middleware"
-version = "0.15.2"
+version = "0.15.3"
 description = ""
 optional = false
 python-versions = "<3.15,>=3.10"
 groups = ["main"]
-files = [
-    {file = "olas_operate_middleware-0.15.2-py3-none-any.whl", hash = "sha256:39f1efef1ff9f1e31d01530ece1f8521b9ba1d0a12e9fcb77da00f6a2a0e8eee"},
-    {file = "olas_operate_middleware-0.15.2.tar.gz", hash = "sha256:daecf1b645f09053f950046750187ddd43e315d746207f44cab569dfb24db109"},
-]
+files = []
+develop = false
 
 [package.dependencies]
-argon2-cffi = "23.1.0"
-clea = "0.1.0rc4"
-cryptography = ">=46.0.3,<47.0.0"
-cytoolz = "0.12.3"
-deepdiff = ">=8.6.1,<9.0.0"
+argon2-cffi = "==23.1.0"
+clea = "==0.1.0rc4"
+cryptography = "^46.0.3"
+cytoolz = "==0.12.3"
+deepdiff = "^8.6.1"
 fastapi = "0.110.3"
-halo = "0.0.31"
-multiaddr = "0.0.9"
-open-aea-cli-ipfs = ">=2.1.0,<3.0.0"
-open-aea-ledger-cosmos = ">=2.1.0,<3.0.0"
-open-aea-ledger-ethereum = ">=2.1.0,<3.0.0"
-open-aea-ledger-ethereum-flashbots = ">=2.1.0,<3.0.0"
-open-autonomy = ">=0.21.12,<0.22.0"
-psutil = ">=5.9.8,<6.0.0"
-pyinstaller = ">=6.8.0,<7.0.0"
-requests-mock = ">=1.12.1,<2.0.0"
-uvicorn = "0.27.0"
+halo = "==0.0.31"
+multiaddr = "==0.0.9"
+open-aea-cli-ipfs = "^2.1.0"
+open-aea-ledger-cosmos = "^2.1.0"
+open-aea-ledger-ethereum = "^2.1.0"
+open-aea-ledger-ethereum-flashbots = "^2.1.0"
+open-autonomy = "^0.21.13"
+psutil = "^5.9.8"
+pyinstaller = "^6.8.0"
+requests-mock = "^1.12.1"
+uvicorn = "==0.27.0"
+
+[package.source]
+type = "git"
+url = "https://github.com/valory-xyz/olas-operate-middleware.git"
+reference = "f03470cf3e011475fac424b0fa5b6ce2e1185a46"
+resolved_reference = "f03470cf3e011475fac424b0fa5b6ce2e1185a46"
 
 [[package]]
 name = "open-aea"
@@ -2457,14 +2461,14 @@ open-aea-ledger-ethereum = ">=2.1.0,<2.2.0"
 
 [[package]]
 name = "open-autonomy"
-version = "0.21.12"
+version = "0.21.13"
 description = "A framework for the creation of autonomous agent services."
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "open_autonomy-0.21.12-py3-none-any.whl", hash = "sha256:fb35576ac8b2ba3c402d41ce2eea408c43087122f2207f8e0456aecb63362781"},
-    {file = "open_autonomy-0.21.12.tar.gz", hash = "sha256:081f601bbfa8ee3409a551d9a557d3d780a6b2345a3cdf64e12871adab325656"},
+    {file = "open_autonomy-0.21.13-py3-none-any.whl", hash = "sha256:bbb495faeb2a88f47a6f31806af41ae173e19ad82633fcb7e87111ae9260c7fa"},
+    {file = "open_autonomy-0.21.13.tar.gz", hash = "sha256:eedc9bf38f8b07368a4259088afd3064ed459b16360c34b2d55f5b94f7ada5c9"},
 ]
 
 [package.dependencies]
@@ -3248,7 +3252,7 @@ description = "Python for Window Extensions"
 optional = false
 python-versions = "*"
 groups = ["main"]
-markers = "platform_system == \"Windows\" or sys_platform == \"win32\""
+markers = "sys_platform == \"win32\" or platform_system == \"Windows\""
 files = [
     {file = "pywin32-311-cp310-cp310-win32.whl", hash = "sha256:d03ff496d2a0cd4a5893504789d4a15399133fe82517455e78bad62efbb7f0a3"},
     {file = "pywin32-311-cp310-cp310-win_amd64.whl", hash = "sha256:797c2772017851984b97180b0bebe4b620bb86328e8a884bb626156295a63b3b"},
@@ -4263,4 +4267,4 @@ propcache = ">=0.2.1"
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.14,<3.15"
-content-hash = "7816b1d46bab1014e914d6c043000908b59f351b1e8dad399448a70418a42852"
+content-hash = "68e922c98680c4ac44d31794322ae87ce9a23cc6c4695c65f6a53e7fe1d0549f"
