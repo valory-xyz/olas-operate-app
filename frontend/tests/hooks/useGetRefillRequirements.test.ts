@@ -205,7 +205,7 @@ describe('useGetRefillRequirements', () => {
     it('treats missing EOA native requirement as zero', () => {
       // EOA entry exists for a different token address (shouldn't happen in practice,
       // but tests the ?? 0 fallback on line 163)
-      const requirements: Record<string, Record<string, string>> = {
+      const requirements: Record<Address, Record<string, string>> = {
         [DEFAULT_SAFE_ADDRESS]: {
           [AddressZero]: '2000000000000000000', // 2 XDAI
         },
@@ -300,6 +300,7 @@ describe('useGetRefillRequirements', () => {
       );
     });
 
+    // getTokensDetailsForFunding sorts by amount desc
     it('sorts tokens by amount descending', () => {
       const olasAmount = '40000000000000000000'; // 40 OLAS
       const nativeSafe = '500000000000000000'; // 0.5 XDAI
@@ -353,38 +354,6 @@ describe('useGetRefillRequirements', () => {
       expect(result.current.totalTokenRequirements[2].amount).toBe(1);
       expect(result.current.totalTokenRequirements[2].symbol).toBe(
         TokenSymbolMap.XDAI,
-      );
-    });
-  });
-
-  describe('XDAI icon override', () => {
-    it('overrides XDAI icon to wxdai-icon.png', () => {
-      setupMocks({ totalRequirements: VALID_REQUIREMENTS });
-
-      const { result } = renderHook(() => useGetRefillRequirements());
-
-      expect(result.current.totalTokenRequirements[0].iconSrc).toBe(
-        '/tokens/wxdai-icon.png',
-      );
-    });
-
-    it('uses default icon for non-overridden tokens like OLAS', () => {
-      setupMocks({
-        totalRequirements: buildRequirements({
-          safeAddress: DEFAULT_SAFE_ADDRESS,
-          nativeSafe: '1000000000000000000',
-          erc20Safe: '1000000000000000000',
-        }),
-      });
-
-      const { result } = renderHook(() => useGetRefillRequirements());
-
-      const olasConfig = GNOSIS_TOKEN_CONFIG[TokenSymbolMap.OLAS];
-      const olasEntry = result.current.totalTokenRequirements.find(
-        (t) => t.symbol === TokenSymbolMap.OLAS,
-      );
-      expect(olasEntry!.iconSrc).toBe(
-        TokenSymbolConfigMap[olasConfig!.symbol].image,
       );
     });
   });

@@ -311,9 +311,9 @@ describe('BalancesAndRefillRequirementsProvider', () => {
   });
 
   describe('isRefillRequired', () => {
-    it('is true when data is undefined (uses || not ??)', async () => {
+    it('defaults to true when data has not resolved yet', async () => {
       // When the query has not resolved yet or is disabled,
-      // the expression `data?.is_refill_required || true` always yields true.
+      // `data?.is_refill_required ?? true` defaults to true.
       mockGetBalancesAndFundingRequirements.mockReturnValue(
         new Promise(() => {}), // never resolves
       );
