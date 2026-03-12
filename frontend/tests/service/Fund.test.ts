@@ -96,6 +96,18 @@ describe('FundService', () => {
       ).rejects.toBe('Failed to fund agent');
     });
 
+    it('rejects when fetch throws a network error', async () => {
+      const networkError = new Error('Network error');
+      jest.spyOn(global, 'fetch').mockRejectedValue(networkError);
+
+      await expect(
+        FundService.fundAgent({
+          funds: sampleFunds,
+          serviceConfigId: DEFAULT_SERVICE_CONFIG_ID,
+        }),
+      ).rejects.toBe(networkError);
+    });
+
     it('handles multi-chain funds with multiple wallets', async () => {
       const multiChainFunds: ChainFunds = {
         [MiddlewareChainMap.GNOSIS]: {
