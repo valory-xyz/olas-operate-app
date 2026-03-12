@@ -1,6 +1,4 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { renderHook, waitFor } from '@testing-library/react';
-import { createElement, PropsWithChildren } from 'react';
 
 import { AGENT_CONFIG } from '../../config/agents';
 import { AgentMap } from '../../constants/agent';
@@ -13,6 +11,7 @@ import {
   DEFAULT_SERVICE_CONFIG_ID,
   MOCK_SERVICE_CONFIG_ID_2,
 } from '../helpers/factories';
+import { createQueryClientWrapper } from '../helpers/queryClient';
 
 /* eslint-disable @typescript-eslint/no-var-requires */
 jest.mock(
@@ -43,15 +42,6 @@ const mockUseOnlineStatusContext = useOnlineStatusContext as jest.Mock;
 const mockGetAllServiceDeployments =
   ServicesService.getAllServiceDeployments as jest.Mock;
 
-const createWrapper = () => {
-  const queryClient = new QueryClient({
-    defaultOptions: { queries: { retry: false } },
-  });
-  // eslint-disable-next-line react/display-name
-  return ({ children }: PropsWithChildren) =>
-    createElement(QueryClientProvider, { client: queryClient }, children);
-};
-
 const traderConfig = AGENT_CONFIG[AgentMap.PredictTrader];
 
 const makeServiceEntry = (
@@ -79,7 +69,7 @@ describe('useAgentRunning', () => {
     });
 
     const { result } = renderHook(() => useAgentRunning(), {
-      wrapper: createWrapper(),
+      wrapper: createQueryClientWrapper(),
     });
 
     expect(result.current.isAnotherAgentRunning).toBe(false);
@@ -102,7 +92,7 @@ describe('useAgentRunning', () => {
     });
 
     const { result } = renderHook(() => useAgentRunning(), {
-      wrapper: createWrapper(),
+      wrapper: createQueryClientWrapper(),
     });
 
     await waitFor(() => {
@@ -129,7 +119,7 @@ describe('useAgentRunning', () => {
     });
 
     const { result } = renderHook(() => useAgentRunning(), {
-      wrapper: createWrapper(),
+      wrapper: createQueryClientWrapper(),
     });
 
     await waitFor(() => {
@@ -158,7 +148,7 @@ describe('useAgentRunning', () => {
     });
 
     const { result } = renderHook(() => useAgentRunning(), {
-      wrapper: createWrapper(),
+      wrapper: createQueryClientWrapper(),
     });
     await waitFor(() => {
       expect(result.current.isAnotherAgentRunning).toBe(true);
@@ -184,7 +174,7 @@ describe('useAgentRunning', () => {
     });
 
     const { result } = renderHook(() => useAgentRunning(), {
-      wrapper: createWrapper(),
+      wrapper: createQueryClientWrapper(),
     });
     await waitFor(() => {
       expect(result.current.isAnotherAgentRunning).toBe(false);
@@ -210,7 +200,7 @@ describe('useAgentRunning', () => {
     });
 
     const { result } = renderHook(() => useAgentRunning(), {
-      wrapper: createWrapper(),
+      wrapper: createQueryClientWrapper(),
     });
 
     await waitFor(() => {
@@ -235,7 +225,7 @@ describe('useAgentRunning', () => {
     });
 
     const { result } = renderHook(() => useAgentRunning(), {
-      wrapper: createWrapper(),
+      wrapper: createQueryClientWrapper(),
     });
 
     await waitFor(() => {
@@ -252,7 +242,9 @@ describe('useAgentRunning', () => {
       getServiceConfigIdFromAgentType: jest.fn(),
     });
 
-    renderHook(() => useAgentRunning(), { wrapper: createWrapper() });
+    renderHook(() => useAgentRunning(), {
+      wrapper: createQueryClientWrapper(),
+    });
 
     expect(mockGetAllServiceDeployments).not.toHaveBeenCalled();
   });
@@ -265,7 +257,9 @@ describe('useAgentRunning', () => {
       getServiceConfigIdFromAgentType: jest.fn(),
     });
 
-    renderHook(() => useAgentRunning(), { wrapper: createWrapper() });
+    renderHook(() => useAgentRunning(), {
+      wrapper: createQueryClientWrapper(),
+    });
 
     expect(mockGetAllServiceDeployments).not.toHaveBeenCalled();
   });

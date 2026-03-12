@@ -28,9 +28,10 @@ jest.mock(
   'ethers-multicall',
   () => require('../mocks/ethersMulticall').ethersMulticallMock,
 );
-jest.mock('../../context/OnlineStatusProvider', () => ({
-  OnlineStatusContext: require('react').createContext({ isOnline: true }),
-}));
+jest.mock(
+  '../../context/OnlineStatusProvider',
+  () => require('../mocks/onlineStatus').onlineStatusProviderMock,
+);
 /* eslint-enable @typescript-eslint/no-var-requires */
 jest.mock('../../constants/providers', () => ({}));
 
@@ -140,7 +141,7 @@ describe('createStakingRewardsQuery', () => {
     });
 
     it.each([undefined, 0, -1])(
-      'is fale when serviceNftTokenId is %s',
+      'is false when serviceNftTokenId is %s',
       (serviceNftTokenId) => {
         const { enabled } = createStakingRewardsQuery({
           ...baseParams,

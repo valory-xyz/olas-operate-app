@@ -1,6 +1,6 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { formatUnits } from 'ethers/lib/utils';
-import { act, createElement, PropsWithChildren, useContext } from 'react';
+import { act, PropsWithChildren, useContext } from 'react';
 
 import { EvmChainIdMap } from '../../constants/chains';
 import {
@@ -12,6 +12,7 @@ import { RewardContext, RewardProvider } from '../../context/RewardProvider';
 import { StakingProgramContext } from '../../context/StakingProgramProvider';
 import { AgentConfig } from '../../types/Agent';
 import { StakingRewardsInfo } from '../../types/Autonolas';
+import { createStakingProgramContextValue } from '../helpers/contextDefaults';
 import {
   DEFAULT_SERVICE_CONFIG_ID,
   DEFAULT_STAKING_PROGRAM_ID,
@@ -166,28 +167,21 @@ const setupMocks = (opts: SetupMocksOptions = {}) => {
   });
 };
 
-const wrapper = ({ children }: PropsWithChildren) =>
-  createElement(
-    OnlineStatusContext.Provider,
-    { value: { isOnline: true } },
-    createElement(
-      StakingProgramContext.Provider,
-      {
-        value: {
-          isActiveStakingProgramLoaded: true,
-          selectedStakingProgramId:
-            DEFAULT_STAKING_PROGRAM_ID as StakingProgramId,
-          setDefaultStakingProgramId: jest.fn(),
-          stakingProgramIdToMigrateTo: null,
-          setStakingProgramIdToMigrateTo: jest.fn(),
-        },
-      },
-      createElement(RewardProvider, null, children),
-    ),
-  );
+const Wrapper = ({ children }: PropsWithChildren) => (
+  <OnlineStatusContext.Provider value={{ isOnline: true }}>
+    <StakingProgramContext.Provider
+      value={createStakingProgramContextValue({
+        selectedStakingProgramId:
+          DEFAULT_STAKING_PROGRAM_ID as StakingProgramId,
+      })}
+    >
+      <RewardProvider>{children}</RewardProvider>
+    </StakingProgramContext.Provider>
+  </OnlineStatusContext.Provider>
+);
 
 const renderRewardContext = () =>
-  renderHook(() => useContext(RewardContext), { wrapper });
+  renderHook(() => useContext(RewardContext), { wrapper: Wrapper });
 
 // ── Tests ─────────────────────────────────────────────────────────────
 
@@ -269,6 +263,13 @@ describe('RewardProvider', () => {
       expect(result.current.availableRewardsForEpochEth).toBe(2.0);
     });
 
+    it('is undefined when availableRewardsForEpoch is BigInt(0) (falsy)', () => {
+      setupMocks({ availableRewardsForEpoch: BigInt(0) });
+      const { result } = renderRewardContext();
+      // BigInt(0) is falsy, so the guard `if (!availableRewardsForEpoch)` returns early
+      expect(result.current.availableRewardsForEpochEth).toBeUndefined();
+    });
+
     it('is undefined when availableRewardsForEpoch is null', () => {
       setupMocks({ availableRewardsForEpoch: null });
       const { result } = renderRewardContext();
@@ -306,7 +307,7 @@ describe('RewardProvider', () => {
       expect(result.current.optimisticRewardsEarnedForEpoch).toBeUndefined();
     });
 
-    it('is undefined when availableRewardsForEpochEth is falsy (0 or undefined)', () => {
+    it('is undefined when availableRewardsForEpoch is null', () => {
       setupMocks({
         stakingRewardsDetails: makeStakingRewardsInfo({
           isEligibleForRewards: true,
@@ -318,6 +319,8 @@ describe('RewardProvider', () => {
     });
   });
 
+  // Note: firstStakingRewardAchieved is still written to store in the source
+  // (previously used for confetti UI). Tests cover the store persistence logic.
   describe('firstStakingRewardAchieved store persistence', () => {
     it('writes firstStakingRewardAchieved to store on first eligibility', async () => {
       setupMocks({
@@ -406,27 +409,22 @@ describe('RewardProvider', () => {
   describe('useAvailableRewardsForEpoch queryFn', () => {
     it('returns null when hasStakingProgram is false', async () => {
       setupMocks();
-      const wrapperWithNonexistentProgram = ({ children }: PropsWithChildren) =>
-        createElement(
-          OnlineStatusContext.Provider,
-          { value: { isOnline: true } },
-          createElement(
-            StakingProgramContext.Provider,
-            {
-              value: {
-                isActiveStakingProgramLoaded: true,
-                selectedStakingProgramId:
-                  'nonexistent_program' as StakingProgramId,
-                setDefaultStakingProgramId: jest.fn(),
-                stakingProgramIdToMigrateTo: null,
-                setStakingProgramIdToMigrateTo: jest.fn(),
-              },
-            },
-            createElement(RewardProvider, null, children),
-          ),
-        );
+      const WrapperWithNonexistentProgram = ({
+        children,
+      }: PropsWithChildren) => (
+        <OnlineStatusContext.Provider value={{ isOnline: true }}>
+          <StakingProgramContext.Provider
+            value={createStakingProgramContextValue({
+              selectedStakingProgramId:
+                'nonexistent_program' as StakingProgramId,
+            })}
+          >
+            <RewardProvider>{children}</RewardProvider>
+          </StakingProgramContext.Provider>
+        </OnlineStatusContext.Provider>
+      );
       renderHook(() => useContext(RewardContext), {
-        wrapper: wrapperWithNonexistentProgram,
+        wrapper: WrapperWithNonexistentProgram,
       });
       const result = await capturedAvailableRewardsQueryConfig!.queryFn();
       expect(result).toBeNull();
@@ -443,27 +441,20 @@ describe('RewardProvider', () => {
 
     it('enabled is false when offline', () => {
       setupMocks();
-      const offlineWrapper = ({ children }: PropsWithChildren) =>
-        createElement(
-          OnlineStatusContext.Provider,
-          { value: { isOnline: false } },
-          createElement(
-            StakingProgramContext.Provider,
-            {
-              value: {
-                isActiveStakingProgramLoaded: true,
-                selectedStakingProgramId:
-                  DEFAULT_STAKING_PROGRAM_ID as StakingProgramId,
-                setDefaultStakingProgramId: jest.fn(),
-                stakingProgramIdToMigrateTo: null,
-                setStakingProgramIdToMigrateTo: jest.fn(),
-              },
-            },
-            createElement(RewardProvider, null, children),
-          ),
-        );
+      const OfflineWrapper = ({ children }: PropsWithChildren) => (
+        <OnlineStatusContext.Provider value={{ isOnline: false }}>
+          <StakingProgramContext.Provider
+            value={createStakingProgramContextValue({
+              selectedStakingProgramId:
+                DEFAULT_STAKING_PROGRAM_ID as StakingProgramId,
+            })}
+          >
+            <RewardProvider>{children}</RewardProvider>
+          </StakingProgramContext.Provider>
+        </OnlineStatusContext.Provider>
+      );
       renderHook(() => useContext(RewardContext), {
-        wrapper: offlineWrapper,
+        wrapper: OfflineWrapper,
       });
       expect(capturedAvailableRewardsQueryConfig!.enabled).toBe(false);
     });

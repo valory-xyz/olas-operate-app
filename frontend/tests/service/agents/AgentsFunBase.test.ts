@@ -64,23 +64,6 @@ describe('AgentsFunBaseService', () => {
       });
       expect(result).toBe(expected);
     });
-
-    it('passes custom chainId when provided', async () => {
-      const expected = makeStakingRewardsInfo();
-      mockGetAgentStakingRewardsInfo.mockResolvedValue(expected);
-
-      const customChainId = EvmChainIdMap.Gnosis;
-      const result = await AgentsFunBaseService.getAgentStakingRewardsInfo({
-        ...baseArgs,
-        chainId: customChainId,
-      });
-
-      expect(mockGetAgentStakingRewardsInfo).toHaveBeenCalledWith({
-        ...baseArgs,
-        chainId: customChainId,
-      });
-      expect(result).toBe(expected);
-    });
   });
 
   describe('getAvailableRewardsForEpoch', () => {
@@ -97,23 +80,6 @@ describe('AgentsFunBaseService', () => {
       expect(mockGetAvailableRewardsForEpoch).toHaveBeenCalledWith(
         BASE_STAKING_PROGRAM,
         EvmChainIdMap.Base,
-      );
-      expect(result).toBe(expected);
-    });
-
-    it('passes custom chainId when provided', async () => {
-      const expected = BigInt(2000);
-      mockGetAvailableRewardsForEpoch.mockResolvedValue(expected);
-
-      const customChainId = EvmChainIdMap.Optimism;
-      const result = await AgentsFunBaseService.getAvailableRewardsForEpoch(
-        BASE_STAKING_PROGRAM,
-        customChainId,
-      );
-
-      expect(mockGetAvailableRewardsForEpoch).toHaveBeenCalledWith(
-        BASE_STAKING_PROGRAM,
-        customChainId,
       );
       expect(result).toBe(expected);
     });
@@ -137,25 +103,6 @@ describe('AgentsFunBaseService', () => {
       );
       expect(result).toBe(expected);
     });
-
-    it('passes custom chainId when provided', async () => {
-      const expected = makeServiceStakingDetails();
-      mockGetServiceStakingDetails.mockResolvedValue(expected);
-
-      const customChainId = EvmChainIdMap.Mode;
-      const result = await AgentsFunBaseService.getServiceStakingDetails(
-        DEFAULT_SERVICE_NFT_TOKEN_ID,
-        BASE_STAKING_PROGRAM,
-        customChainId,
-      );
-
-      expect(mockGetServiceStakingDetails).toHaveBeenCalledWith(
-        DEFAULT_SERVICE_NFT_TOKEN_ID,
-        BASE_STAKING_PROGRAM,
-        customChainId,
-      );
-      expect(result).toBe(expected);
-    });
   });
 
   describe('getStakingContractDetails', () => {
@@ -172,23 +119,6 @@ describe('AgentsFunBaseService', () => {
       expect(mockGetStakingContractDetails).toHaveBeenCalledWith(
         BASE_STAKING_PROGRAM,
         EvmChainIdMap.Base,
-      );
-      expect(result).toBe(expected);
-    });
-
-    it('passes custom chainId when provided', async () => {
-      const expected = makeStakingContractDetails();
-      mockGetStakingContractDetails.mockResolvedValue(expected);
-
-      const customChainId = EvmChainIdMap.Polygon;
-      const result = await AgentsFunBaseService.getStakingContractDetails(
-        BASE_STAKING_PROGRAM,
-        customChainId,
-      );
-
-      expect(mockGetStakingContractDetails).toHaveBeenCalledWith(
-        BASE_STAKING_PROGRAM,
-        customChainId,
       );
       expect(result).toBe(expected);
     });

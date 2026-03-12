@@ -39,87 +39,16 @@ jest.mock(
 jest.mock('../../constants/providers', () => ({}));
 
 /* eslint-disable @typescript-eslint/no-var-requires */
-jest.mock('../../config/agents', () => {
-  const { SERVICE_PUBLIC_ID_MAP } = require('../helpers/factories');
-  const { EvmChainIdMap, MiddlewareChainMap } = require('../../constants');
-  return {
-    ACTIVE_AGENTS: [
-      [
-        'trader',
-        {
-          isAgentEnabled: true,
-          servicePublicId: SERVICE_PUBLIC_ID_MAP.TRADER,
-          evmHomeChainId: EvmChainIdMap.Gnosis,
-          middlewareHomeChainId: MiddlewareChainMap.GNOSIS,
-          displayName: 'Omenstrat',
-        },
-      ],
-      [
-        'optimus',
-        {
-          isAgentEnabled: true,
-          servicePublicId: SERVICE_PUBLIC_ID_MAP.OPTIMUS,
-          evmHomeChainId: EvmChainIdMap.Optimism,
-          middlewareHomeChainId: MiddlewareChainMap.OPTIMISM,
-          displayName: 'Optimus',
-        },
-      ],
-      [
-        'memeooorr',
-        {
-          isAgentEnabled: true,
-          servicePublicId: SERVICE_PUBLIC_ID_MAP.MEMOOORR,
-          evmHomeChainId: EvmChainIdMap.Base,
-          middlewareHomeChainId: MiddlewareChainMap.BASE,
-          displayName: 'Agents.fun',
-        },
-      ],
-      [
-        'pett_ai',
-        {
-          isAgentEnabled: true,
-          servicePublicId: SERVICE_PUBLIC_ID_MAP.PETT_AI,
-          evmHomeChainId: EvmChainIdMap.Base,
-          middlewareHomeChainId: MiddlewareChainMap.BASE,
-          displayName: 'PettBro by Pett.ai',
-        },
-      ],
-    ],
-  };
-});
+jest.mock(
+  '../../config/agents',
+  () => require('../mocks/configAgents').configAgentsMock,
+);
 
-jest.mock('../../config/chains', () => {
-  const { EvmChainIdMap } = require('../../constants');
-  return {
-    CHAIN_CONFIG: {
-      [EvmChainIdMap.Gnosis]: {
-        name: 'Gnosis',
-        rpc: '',
-        evmChainId: EvmChainIdMap.Gnosis,
-      },
-      [EvmChainIdMap.Optimism]: {
-        name: 'Optimism',
-        rpc: '',
-        evmChainId: EvmChainIdMap.Optimism,
-      },
-      [EvmChainIdMap.Polygon]: {
-        name: 'Polygon',
-        rpc: '',
-        evmChainId: EvmChainIdMap.Polygon,
-      },
-      [EvmChainIdMap.Base]: {
-        name: 'Base',
-        rpc: '',
-        evmChainId: EvmChainIdMap.Base,
-      },
-      [EvmChainIdMap.Mode]: {
-        name: 'Mode',
-        rpc: '',
-        evmChainId: EvmChainIdMap.Mode,
-      },
-    },
-  };
-});
+jest.mock(
+  '../../config/chains',
+  () => require('../mocks/configChains').configChainsMock,
+);
+/* eslint-enable @typescript-eslint/no-var-requires */
 
 jest.mock('../../hooks', () => ({
   useAvailableAssets: jest.fn(() => ({

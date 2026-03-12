@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { renderHook, waitFor } from '@testing-library/react';
 import { message } from 'antd';
 import { act, createElement, PropsWithChildren, useContext } from 'react';
@@ -25,6 +25,7 @@ import {
   MOCK_INSTANCE_ADDRESS,
   MOCK_MULTISIG_ADDRESS,
 } from '../helpers/factories';
+import { createTestQueryClient } from '../helpers/queryClient';
 
 // ── Module mocks ──────────────────────────────────────────────────────
 
@@ -98,14 +99,6 @@ const serviceFor = (
   agentType: AgentType = AgentMap.PredictTrader,
   overrides: Partial<MiddlewareServiceResponse> = {},
 ) => makeAgentService(AGENT_CONFIG[agentType], overrides);
-
-/** Fresh QueryClient per test to avoid cache pollution. */
-const createTestQueryClient = () =>
-  new QueryClient({
-    defaultOptions: {
-      queries: { retry: false, gcTime: 0 },
-    },
-  });
 
 type WrapperOpts = { isOnline?: boolean };
 

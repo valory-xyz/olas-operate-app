@@ -3,7 +3,6 @@ import { renderHook } from '@testing-library/react';
 import {
   ETHEREUM_TOKEN_CONFIG,
   GNOSIS_TOKEN_CONFIG,
-  TOKEN_CONFIG,
   TokenSymbolMap,
 } from '../../config/tokens';
 import { AddressZero } from '../../constants/address';
@@ -388,16 +387,10 @@ describe('useGetBridgeRequirementsParams', () => {
 
     const request = result.current();
     expect(request).not.toBeNull();
-    // getFromToken resolves Gnosis OLAS -> Ethereum OLAS address
-    const ethereumOlasAddress =
-      TOKEN_CONFIG[EvmChainIdMap.Gnosis].OLAS!.address;
-    // The from token should be the Ethereum OLAS (since fromChainConfig is ETHEREUM_TOKEN_CONFIG)
     // getFromToken looks up symbol on toChain (Gnosis) -> 'OLAS', then finds 'OLAS' on fromChain (Ethereum)
-    expect(request!.bridge_requests[0].from.token).toBeDefined();
-    // Ethereum OLAS address from ETHEREUM_TOKEN_CONFIG
     expect(request!.bridge_requests[0].from.token).toBe(ETHEREUM_OLAS_ADDRESS);
-    // Sanity: to.token is the Gnosis OLAS address
-    expect(request!.bridge_requests[0].to.token).toBe(ethereumOlasAddress);
+    // to.token is the Gnosis OLAS address
+    expect(request!.bridge_requests[0].to.token).toBe(GNOSIS_OLAS_ADDRESS);
   });
 
   it('uses defaultFromToken when provided', () => {

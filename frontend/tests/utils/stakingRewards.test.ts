@@ -55,7 +55,8 @@ describe('fetchAgentStakingRewardsInfo', () => {
   it('returns null when stakingProgramId is undefined', async () => {
     const result = await fetchAgentStakingRewardsInfo({
       ...defaultParams,
-      stakingProgramId: undefined as unknown as null,
+      stakingProgramId:
+        undefined as unknown as typeof DEFAULT_STAKING_PROGRAM_ID,
     });
     expect(result).toBeNull();
     expect(mockGetAgentStakingRewardsInfo).not.toHaveBeenCalled();

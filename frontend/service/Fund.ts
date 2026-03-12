@@ -30,13 +30,16 @@ const fundAgent = async ({
       method: 'POST',
       body: JSON.stringify(funds),
       headers: { ...CONTENT_TYPE_JSON_UTF8 },
-    }).then((response) => {
-      if (response.ok) {
-        resolve(response.json());
-      } else {
-        reject('Failed to fund agent');
-      }
-    }),
+    }).then(
+      (response) => {
+        if (response.ok) {
+          resolve(response.json());
+        } else {
+          reject('Failed to fund agent');
+        }
+      },
+      (error) => reject(error),
+    ),
   );
 
 export const FundService = {
