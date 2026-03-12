@@ -1,0 +1,146 @@
+import { renderHook } from '@testing-library/react';
+import { act } from 'react';
+
+import { useTriggerAchievementBackgroundTasks } from '../../../../components/AchievementModal/hooks/useTriggerAchievementBackgroundTasks';
+import { ACHIEVEMENT_TYPE } from '../../../../constants/achievement';
+import {
+  acknowledgeServiceAchievement,
+  generateAchievementImage,
+} from '../../../../service/Achievement';
+import {
+  DEFAULT_SERVICE_CONFIG_ID,
+  makePolystratPayoutAchievement as makeFactoryAchievement,
+  MOCK_ACHIEVEMENT_ID,
+  MOCK_BET_ID,
+} from '../../../helpers/factories';
+
+jest.mock('../../../../service/Achievement', () => ({
+  acknowledgeServiceAchievement: jest.fn(),
+  generateAchievementImage: jest.fn(),
+}));
+
+const mockAcknowledge = acknowledgeServiceAchievement as jest.MockedFunction<
+  typeof acknowledgeServiceAchievement
+>;
+const mockGenerateImage = generateAchievementImage as jest.MockedFunction<
+  typeof generateAchievementImage
+>;
+
+// Mock react-query useMutation to call mutationFn directly
+jest.mock('@tanstack/react-query', () => ({
+  useMutation: ({
+    mutationFn,
+  }: {
+    mutationFn: (...args: unknown[]) => unknown;
+  }) => ({
+    mutateAsync: mutationFn,
+  }),
+}));
+
+const makePolystratAchievement = makeFactoryAchievement;
+
+describe('useTriggerAchievementBackgroundTasks', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockAcknowledge.mockResolvedValue({ acknowledged: true });
+    mockGenerateImage.mockResolvedValue({ ok: true });
+  });
+
+  it('starts with areBackgroundTasksFinalized=false', () => {
+    const { result } = renderHook(() => useTriggerAchievementBackgroundTasks());
+    expect(result.current.areBackgroundTasksFinalized).toBe(false);
+  });
+
+  it('calls acknowledge and generateImage in parallel for POLYSTRAT_PAYOUT', async () => {
+    const achievement = makePolystratAchievement();
+    const { result } = renderHook(() => useTriggerAchievementBackgroundTasks());
+
+    await act(async () => {
+      await result.current.triggerAchievementBackgroundTasks(achievement);
+    });
+
+    expect(mockAcknowledge).toHaveBeenCalledWith({
+      serviceConfigId: DEFAULT_SERVICE_CONFIG_ID,
+      achievementId: MOCK_ACHIEVEMENT_ID,
+    });
+    expect(mockGenerateImage).toHaveBeenCalledWith({
+      agent: 'polystrat',
+      type: 'payout',
+      id: MOCK_BET_ID,
+    });
+  });
+
+  it('sets areBackgroundTasksFinalized=true after completion', async () => {
+    const achievement = makePolystratAchievement();
+    const { result } = renderHook(() => useTriggerAchievementBackgroundTasks());
+
+    await act(async () => {
+      await result.current.triggerAchievementBackgroundTasks(achievement);
+    });
+
+    expect(result.current.areBackgroundTasksFinalized).toBe(true);
+  });
+
+  it('sets areBackgroundTasksFinalized=true on error', async () => {
+    const consoleSpy = jest
+      .spyOn(console, 'error')
+      .mockImplementation(() => {});
+    mockAcknowledge.mockRejectedValue(new Error('Ack failed'));
+
+    const achievement = makePolystratAchievement();
+    const { result } = renderHook(() => useTriggerAchievementBackgroundTasks());
+
+    await act(async () => {
+      await result.current.triggerAchievementBackgroundTasks(achievement);
+    });
+
+    expect(result.current.areBackgroundTasksFinalized).toBe(true);
+    consoleSpy.mockRestore();
+  });
+
+  it('logs error and sets finalized=true when dataId is null (unknown achievement type)', async () => {
+    const consoleSpy = jest
+      .spyOn(console, 'error')
+      .mockImplementation(() => {});
+
+    const unknownAchievement = makePolystratAchievement({
+      achievement_type:
+        'unknown/type' as typeof ACHIEVEMENT_TYPE.POLYSTRAT_PAYOUT,
+    });
+
+    const { result } = renderHook(() => useTriggerAchievementBackgroundTasks());
+
+    await act(async () => {
+      await result.current.triggerAchievementBackgroundTasks(
+        unknownAchievement,
+      );
+    });
+
+    expect(consoleSpy).toHaveBeenCalledWith(
+      'Failed to get achievement data id',
+    );
+    expect(result.current.areBackgroundTasksFinalized).toBe(true);
+    expect(mockAcknowledge).not.toHaveBeenCalled();
+    expect(mockGenerateImage).not.toHaveBeenCalled();
+    consoleSpy.mockRestore();
+  });
+
+  it('splits achievement_type into agent and type for image generation', async () => {
+    const achievement = makePolystratAchievement({
+      achievement_type: ACHIEVEMENT_TYPE.POLYSTRAT_PAYOUT,
+    });
+
+    const { result } = renderHook(() => useTriggerAchievementBackgroundTasks());
+
+    await act(async () => {
+      await result.current.triggerAchievementBackgroundTasks(achievement);
+    });
+
+    expect(mockGenerateImage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        agent: 'polystrat',
+        type: 'payout',
+      }),
+    );
+  });
+});

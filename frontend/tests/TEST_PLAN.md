@@ -396,23 +396,29 @@ StakedAgentService (abstract base)
 
 ---
 
-## Phase 7 — Deployability & Service Lifecycle `[HARD]`
+## Phase 7 — Deployability & Service Lifecycle `[HARD]` ✅ COMPLETE
 
 **Goal:** Cover the deployment decision tree, service start/stop orchestration, agent updates, and achievements — including related components. Achievement feature doc: `docs/features/achievements.md`.
 
-- `hooks/useDeployability.ts` — 14-branch eligibility decision tree
-- `hooks/useStartService.ts` — service start orchestration
-- `hooks/useServiceDeployment.ts` — full deployment workflow (203 lines)
-- `service/Settings.ts` — settings API
-- `service/Achievement.ts` — achievement tracking
-- `context/SharedProvider/SharedProvider.tsx` — AgentsFun field updates
+**Result:** 13 test files, 146 tests, all passing, 0 lint/TS errors. Total: 148 suites, 2273 tests.
+
+- ✅ `hooks/useDeployability.ts` — 36 tests: all 14 branches, loading reason accumulation, branch priority
+- ✅ `hooks/useStartService.ts` — 12 tests: existing service path, creation path, mech type, error cases
+- ✅ `hooks/useServiceDeployment.ts` — 24 tests: isLoading, isDeployable, handleStart flow, error recovery, polling control, createSafeIfNeeded callback (HasSafe, Ready, canProceed=false, missing backupOwner)
+- ✅ `service/Settings.ts` — 5 tests: fetch, AbortSignal, error paths
+- ✅ `service/Achievement.ts` — 10 tests: 3 API functions (get, acknowledge, generateImage)
+- ✅ `service/Support.ts` — 12 tests: uploadFile, createTicket, discriminated union returns, error handling
+- ✅ `context/SharedProvider/SharedProvider.tsx` — 9 tests: AgentsFun env var checks, animation state
 
 **Achievement components:**
-- `components/AchievementModal/hooks/` — achievement display logic
+- ✅ `components/AchievementModal/hooks/useAchievements.ts` — 7 tests: query config, polling, error logging
+- ✅ `components/AchievementModal/hooks/useCurrentAchievement.ts` — 9 tests: cycling, 1-minute delay, timeout cleanup, unmount cleanup
+- ✅ `components/AchievementModal/hooks/useTriggerAchievementBackgroundTasks.ts` — 6 tests: parallel mutations, data ID extraction, achievement_type split, error handling
 
 **Agent update components:**
-- `components/UpdateAgentPage/hooks/` — update logic
-- `components/UpdateAgentPage/context/` — update context provider
+- ✅ `components/UpdateAgentPage/hooks/useModal.ts` — 5 tests: open/close, cancel, confirm
+- ✅ `components/UpdateAgentPage/hooks/useConfirmModal.ts` — 7 tests: callback, restart, pending state, error paths
+- ✅ `components/UpdateAgentPage/hooks/useUnsavedModal.ts` — 3 tests: confirm callback, cancel
 
 ---
 
