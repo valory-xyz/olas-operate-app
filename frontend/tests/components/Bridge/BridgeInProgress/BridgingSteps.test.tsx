@@ -183,9 +183,13 @@ describe('BridgingSteps', () => {
         },
       });
 
-      expect(getByTestId('step-desc-0').textContent).toContain(
-        'Bridging  transaction complete.',
-      );
+      // When symbol is missing, the source produces a double space:
+      // `Bridging ${symbol || ''} transaction complete.` → "Bridging  transaction complete."
+      // Normalize whitespace to avoid coupling the test to this formatting quirk.
+      const text = (getByTestId('step-desc-0').textContent || '')
+        .replace(/\s+/g, ' ')
+        .trim();
+      expect(text).toBe('Bridging transaction complete.');
     });
 
     it('renders FundsAreSafeMessage for error sub-steps', () => {

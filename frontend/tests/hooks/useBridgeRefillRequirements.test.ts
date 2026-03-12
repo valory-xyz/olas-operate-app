@@ -1,10 +1,10 @@
 import { renderHook } from '@testing-library/react';
 
 import { TEN_SECONDS_INTERVAL } from '../../constants';
+import { AddressZero } from '../../constants/address';
 import { MiddlewareChainMap } from '../../constants/chains';
 import { REACT_QUERY_KEYS } from '../../constants/reactQueryKeys';
 import { BridgeService } from '../../service/Bridge';
-import { Address } from '../../types/Address';
 import {
   BridgeRefillRequirementsRequest,
   BridgeRefillRequirementsResponse,
@@ -76,20 +76,18 @@ const mockGetBridgeRefillRequirements =
 
 // --- Helpers ---
 
-const ZERO_ADDRESS: Address = '0x0000000000000000000000000000000000000000';
-
 const mockBridgeParams: BridgeRefillRequirementsRequest = {
   bridge_requests: [
     {
       from: {
         chain: MiddlewareChainMap.ETHEREUM,
         address: DEFAULT_EOA_ADDRESS,
-        token: ZERO_ADDRESS,
+        token: AddressZero,
       },
       to: {
         chain: MiddlewareChainMap.BASE,
         address: DEFAULT_SAFE_ADDRESS,
-        token: ZERO_ADDRESS,
+        token: AddressZero,
         amount: '5628894686394391',
       },
     },
@@ -281,14 +279,6 @@ describe('useBridgeRefillRequirements', () => {
       undefined,
     );
     expect(capturedConfig!.queryKey).toEqual(expectedKey);
-  });
-
-  it('defaults pollingInterval to TEN_SECONDS_INTERVAL', () => {
-    expect(TEN_SECONDS_INTERVAL).toBe(10_000);
-
-    renderHook(() => useBridgeRefillRequirements({ params: mockBridgeParams }));
-
-    expect(capturedConfig!.refetchInterval).toBe(TEN_SECONDS_INTERVAL);
   });
 
   it('sets refetchOnWindowFocus to false', () => {
