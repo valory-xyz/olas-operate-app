@@ -84,6 +84,9 @@ const { useAutoRunLifecycle } = jest.requireMock(
 const { useAutoRunOperations } = jest.requireMock(
   '../../../../context/AutoRunProvider/hooks/useAutoRunOperations',
 ) as { useAutoRunOperations: jest.Mock };
+const { useAutoRunSignals } = jest.requireMock(
+  '../../../../context/AutoRunProvider/hooks/useAutoRunSignals',
+) as { useAutoRunSignals: jest.Mock };
 const { useLogAutoRunEvent } = jest.requireMock(
   '../../../../context/AutoRunProvider/hooks/useLogAutoRunEvent',
 ) as { useLogAutoRunEvent: jest.Mock };
@@ -138,11 +141,17 @@ describe('useAutoRunController', () => {
 
   it('resets health stats when disabled', () => {
     const params = makeHookParams({ enabled: true });
-    const { rerender } = renderHook((props) => useAutoRunController(props), {
-      initialProps: params,
-    });
-    // Disable — internal health stats ref resets (no crash = success)
+    const { rerender, result } = renderHook(
+      (props) => useAutoRunController(props),
+      { initialProps: params },
+    );
     rerender({ ...params, enabled: false });
+    // Hook still exposes its interface after disabling
+    expect(typeof result.current.stopRunningAgent).toBe('function');
+    // Disabled state propagates to signals sub-hook
+    const lastSignalsCall =
+      useAutoRunSignals.mock.calls[useAutoRunSignals.mock.calls.length - 1][0];
+    expect(lastSignalsCall.enabled).toBe(false);
   });
 
   // Tests for verbose logging — skipped (not silently dropped) when the flag is off
@@ -218,15 +227,24 @@ describe('useAutoRunController', () => {
     });
 
     it('clears health summary interval on disable', () => {
+      const mockLogMessage = jest.fn();
+      useLogAutoRunEvent.mockReturnValue({ logMessage: mockLogMessage });
+
       const params = makeHookParams({ enabled: true });
       const { rerender } = renderHook((props) => useAutoRunController(props), {
         initialProps: params,
       });
       rerender({ ...params, enabled: false });
-      // Advancing timers after disable should not cause errors
+      // Advancing timers after disable should not trigger health summary logging
       act(() => {
         jest.advanceTimersByTime(HEALTH_SUMMARY_INTERVAL_SECONDS * 1000 * 2);
       });
+      // Interval should have been cleared - no health summary logged
+      const summaryCalls = mockLogMessage.mock.calls.filter(
+        (call: string[]) =>
+          typeof call[0] === 'string' && call[0].includes('health summary'),
+      );
+      expect(summaryCalls).toHaveLength(0);
     });
   });
 });
