@@ -198,6 +198,7 @@ export const useAutoRunScanner = ({
       let hasBlocked = false;
       let hasEligible = false;
       let hasLoading = false;
+      let hasInfraFailed = false;
       let candidate = findNextInOrder(startFrom);
       if (!candidate) {
         scheduleNextScan(SCAN_ELIGIBLE_DELAY_SECONDS);
@@ -301,24 +302,25 @@ export const useAutoRunScanner = ({
         }
         if (startResult.status === AUTO_RUN_START_STATUS.INFRA_FAILED) {
           logVerbose(
-            `scan paused on ${candidate}: transient start failure (${startResult.reason ?? 'unknown'}), rescan in ${SCAN_LOADING_RETRY_SECONDS}s`,
+            `scan: ${candidate} infra_failed (${startResult.reason ?? 'unknown'}), trying next candidate`,
           );
-          scheduleNextScan(SCAN_LOADING_RETRY_SECONDS);
-          return { started: false };
+          hasInfraFailed = true;
+          candidate = findNextInOrder(candidate);
+          continue;
         }
         hasBlocked = true;
         candidate = findNextInOrder(candidate);
       }
 
       const delay = (() => {
-        if (hasLoading) return SCAN_LOADING_RETRY_SECONDS;
+        if (hasLoading || hasInfraFailed) return SCAN_LOADING_RETRY_SECONDS;
         if (hasBlocked) return SCAN_BLOCKED_DELAY_SECONDS;
         if (hasEligible) return SCAN_ELIGIBLE_DELAY_SECONDS;
         return SCAN_BLOCKED_DELAY_SECONDS;
       })();
 
       logVerbose(
-        `scan complete: no agent started (loading=${hasLoading}, blocked=${hasBlocked}, eligible=${hasEligible}), rescan in ${delay}s`,
+        `scan complete: no agent started (loading=${hasLoading}, blocked=${hasBlocked}, eligible=${hasEligible}, infraFailed=${hasInfraFailed}), rescan in ${delay}s`,
       );
       scheduleNextScan(delay);
       return { started: false };
@@ -408,9 +410,17 @@ export const useAutoRunScanner = ({
     if (startResult.status === AUTO_RUN_START_STATUS.STARTED) return true;
     if (startResult.status === AUTO_RUN_START_STATUS.INFRA_FAILED) {
       logVerbose(
-        `selected start paused: transient failure (${startResult.reason ?? 'unknown'}), rescan in ${SCAN_LOADING_RETRY_SECONDS}s`,
+        `selected start paused: transient failure (${startResult.reason ?? 'unknown'}), scanning other agents`,
       );
-      scheduleNextScan(SCAN_LOADING_RETRY_SECONDS);
+      if (orderedIncludedAgentTypes.length > 1) {
+        // Scan from the selected agent so other candidates are tried before rescheduling.
+        // scanAndStartNext schedules its own rescan delay at the end.
+        await scanAndStartNext(selectedAgentType);
+      } else {
+        // Single-agent: scanAndStartNext would find no next candidate and schedule
+        // SCAN_ELIGIBLE_DELAY_SECONDS (30min). Use short retry instead.
+        scheduleNextScan(SCAN_LOADING_RETRY_SECONDS);
+      }
       return true;
     }
     if (startResult.status === AUTO_RUN_START_STATUS.ABORTED) {
@@ -432,6 +442,7 @@ export const useAutoRunScanner = ({
     refreshRewardsEligibility,
     notifySkipOnce,
     orderedIncludedAgentTypes,
+    scanAndStartNext,
     selectedAgentType,
     startAgentWithRetries,
     waitForAgentSelection,
