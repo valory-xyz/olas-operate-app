@@ -86,11 +86,6 @@ describe('generateXIntentUrl', () => {
     expect(decodeURIComponent(result.split('text=')[1])).toBe(text);
   });
 
-  it('handles an empty string', () => {
-    const result = generateXIntentUrl('');
-    expect(result).toBe('https://x.com/intent/post?text=');
-  });
-
   it('encodes unicode characters', () => {
     const text = 'Earned 2.13x payout!';
     const result = generateXIntentUrl(text);

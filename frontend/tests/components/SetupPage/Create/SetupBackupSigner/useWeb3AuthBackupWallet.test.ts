@@ -139,11 +139,18 @@ describe('useWeb3AuthBackupWallet', () => {
   });
 
   it('cleans up listener on unmount', () => {
+    // NOTE: The hook correctly passes the same handler reference to both
+    // ipcRenderer.on and ipcRenderer.removeListener. However, the real
+    // Electron preload (electron/preload.js) wraps the handler in .on()
+    // with `(event, ...args) => func(...args)`, so removeListener with the
+    // original func is effectively a no-op in production. This is a known
+    // preload-layer issue, not a hook bug.
     const { unmount } = renderHook(() => useWeb3AuthBackupWallet({ onFinish }));
+    const registeredHandler = mockOn.mock.calls[0][1];
     unmount();
     expect(mockRemoveListener).toHaveBeenCalledWith(
       'web3auth-address-received',
-      expect.any(Function),
+      registeredHandler,
     );
   });
 });
