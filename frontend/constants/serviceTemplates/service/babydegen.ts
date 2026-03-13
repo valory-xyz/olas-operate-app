@@ -18,14 +18,14 @@ const BABYDEGEN_COMMON_TEMPLATE: Pick<
   ServiceTemplate,
   'hash' | 'service_version' | 'agent_release'
 > = {
-  hash: 'bafybeigtnkikil2ndeplembc6svap5t6blslz626ut4swhigiqr36mkaf4',
-  service_version: 'v0.7.0-rc2',
+  hash: 'bafybeiadkd37febrdyluweihzkorkey6sbve4xcpgoczvl35ijrhcldyge',
+  service_version: 'v0.7.0-rc4',
   agent_release: {
     is_aea: true,
     repository: {
       owner: 'valory-xyz',
       name: 'optimus',
-      version: 'v0.7.0-rc2',
+      version: 'v0.7.0-rc4',
     },
   },
 };
