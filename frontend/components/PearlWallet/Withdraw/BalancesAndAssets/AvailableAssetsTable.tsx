@@ -1,53 +1,58 @@
-import { Flex, TableColumnsType, Typography } from 'antd';
-import Image from 'next/image';
+import { useMemo } from 'react';
 
-import { Table } from '@/components/ui';
-import { TokenSymbolConfigMap } from '@/config/tokens';
+import { WalletAvailableAssetsTable } from '@/components/ui';
+import { TOKEN_CONFIG, TokenType } from '@/config/tokens';
 import { usePearlWallet } from '@/context/PearlWalletProvider';
-import { AvailableAsset } from '@/types/Wallet';
-import { formatNumber } from '@/utils';
-
-const { Text } = Typography;
-
-const columns: TableColumnsType<AvailableAsset> = [
-  {
-    title: 'Token',
-    key: 'token',
-    render: (_: unknown, record: AvailableAsset) => (
-      <Flex align="center" gap={8}>
-        <Image
-          src={TokenSymbolConfigMap[record.symbol].image}
-          alt={record.symbol}
-          width={20}
-          height={20}
-        />
-        <Text>{record.symbol}</Text>
-      </Flex>
-    ),
-    width: '50%',
-  },
-  {
-    title: 'Amount',
-    key: 'amount',
-    render: (_: unknown, record: AvailableAsset) => (
-      <Text>{formatNumber(record.amount, 4)}</Text>
-    ),
-    width: '50%',
-  },
-];
+import { useMasterBalances, useMasterWalletContext } from '@/hooks';
+import { asMiddlewareChain } from '@/utils';
 
 export const AvailableAssetsTable = () => {
-  const { isLoading, availableAssets } = usePearlWallet();
+  const { isLoading, availableAssets, walletChainId } = usePearlWallet();
+  const { masterEoa, getMasterSafeOf } = useMasterWalletContext();
+  const { getMasterSafeNativeBalanceOf, getMasterEoaNativeBalanceOf } =
+    useMasterBalances();
+
+  const nativeTokenSymbol = useMemo(() => {
+    if (!walletChainId) return undefined;
+
+    const tokenConfig = TOKEN_CONFIG[walletChainId];
+    const nativeTokenEntry = Object.values(tokenConfig).find(
+      (tokenConfigItem) => tokenConfigItem.tokenType === TokenType.NativeGas,
+    );
+    return nativeTokenEntry?.symbol;
+  }, [walletChainId]);
+
+  const safeNativeBalance = useMemo(() => {
+    if (!walletChainId || !nativeTokenSymbol) return 0;
+
+    return (
+      getMasterSafeNativeBalanceOf(walletChainId)?.find(
+        (balanceItem) => balanceItem.symbol === nativeTokenSymbol,
+      )?.balance ?? 0
+    );
+  }, [getMasterSafeNativeBalanceOf, nativeTokenSymbol, walletChainId]);
+
+  const signerNativeBalance = useMemo(() => {
+    if (!walletChainId || !nativeTokenSymbol) return 0;
+
+    return Number(getMasterEoaNativeBalanceOf(walletChainId) ?? '0');
+  }, [getMasterEoaNativeBalanceOf, nativeTokenSymbol, walletChainId]);
+
+  const masterSafe = walletChainId ? getMasterSafeOf?.(walletChainId) : null;
 
   return (
-    <Table<AvailableAsset>
-      loading={isLoading}
-      dataSource={availableAssets}
-      columns={columns}
-      rowKey={(record) => record.symbol}
-      pagination={false}
-      rowHoverable={false}
-      locale={{ emptyText: 'No available assets' }}
+    <WalletAvailableAssetsTable
+      isLoading={isLoading}
+      availableAssets={availableAssets}
+      walletTitle="Pearl"
+      nativeTokenSymbol={nativeTokenSymbol}
+      safeNativeBalance={safeNativeBalance}
+      signerNativeBalance={signerNativeBalance}
+      safeAddress={masterSafe?.address}
+      signerAddress={masterEoa?.address}
+      middlewareHomeChainId={
+        walletChainId ? asMiddlewareChain(walletChainId) : undefined
+      }
     />
   );
 };
