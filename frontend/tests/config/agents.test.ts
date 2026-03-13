@@ -78,3 +78,54 @@ describe('AVAILABLE_FOR_ADDING_AGENTS', () => {
     expect(AVAILABLE_FOR_ADDING_AGENTS).toEqual(expected);
   });
 });
+
+describe('defensive guard: getModiusUsdcConfig throws when USDC config is missing', () => {
+  it('throws "Modius USDC config not found"', () => {
+    expect(() => {
+      jest.isolateModules(() => {
+        jest.mock('../../config/tokens', () => {
+          const actual = jest.requireActual('../../config/tokens');
+          return {
+            ...actual,
+            MODE_TOKEN_CONFIG: {},
+          };
+        });
+        require('../../config/agents');
+      });
+    }).toThrow('Modius USDC config not found');
+  });
+});
+
+describe('defensive guard: getOptimusUsdcConfig throws when USDC config is missing', () => {
+  it('throws "Optimus USDC config not found"', () => {
+    expect(() => {
+      jest.isolateModules(() => {
+        jest.mock('../../config/tokens', () => {
+          const actual = jest.requireActual('../../config/tokens');
+          return {
+            ...actual,
+            OPTIMISM_TOKEN_CONFIG: {},
+          };
+        });
+        require('../../config/agents');
+      });
+    }).toThrow('Optimus USDC config not found');
+  });
+});
+
+describe('defensive guard: getPolystratUsdceConfig throws when USDC.e config is missing', () => {
+  it('throws "Polystrat USDC.e config not found"', () => {
+    expect(() => {
+      jest.isolateModules(() => {
+        jest.mock('../../config/tokens', () => {
+          const actual = jest.requireActual('../../config/tokens');
+          return {
+            ...actual,
+            POLYGON_TOKEN_CONFIG: {},
+          };
+        });
+        require('../../config/agents');
+      });
+    }).toThrow('Polystrat USDC.e config not found');
+  });
+});

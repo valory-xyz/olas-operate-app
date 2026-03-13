@@ -5,7 +5,7 @@ import { act, PropsWithChildren, useContext } from 'react';
 import { AGENT_CONFIG } from '../../../config/agents';
 import { TokenSymbolMap } from '../../../config/tokens';
 import { AgentMap } from '../../../constants/agent';
-import { EvmChainIdMap } from '../../../constants/chains';
+import { EvmChainId, EvmChainIdMap } from '../../../constants/chains';
 import { AgentWallet, MasterWallet } from '../../../constants/wallet';
 import {
   BalanceContext,
@@ -467,6 +467,27 @@ describe('BalanceProvider', () => {
         });
         // Only Gnosis: 10+20 = 30
         expect(result.current.totalStakedOlasBalance).toBe(30);
+      });
+
+      it('returns undefined when selectedAgentConfig has no evmHomeChainId', async () => {
+        mockGetCrossChainBalances.mockResolvedValue({
+          walletBalances: [],
+          stakedBalances: [makeStakedBalance()],
+        });
+
+        const { result } = renderHook(() => useContext(BalanceContext), {
+          wrapper: createWrapper({
+            selectedAgentConfig: {
+              ...defaultAgentConfig,
+              evmHomeChainId: undefined as unknown as EvmChainId,
+            },
+          }),
+        });
+
+        await waitFor(() => {
+          expect(result.current.isLoaded).toBe(true);
+        });
+        expect(result.current.totalStakedOlasBalance).toBeUndefined();
       });
 
       it('returns 0 when no staked balances exist on the home chain', async () => {

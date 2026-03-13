@@ -100,6 +100,21 @@ jest.mock('../../../config/stakingPrograms', () => {
           address: stakingAddr2,
           chainId: EvmChainIdMap.Polygon,
         },
+        [STAKING_PROGRAM_IDS.PolygonBeta3]: {
+          get activityChecker() {
+            return shared.activityChecker;
+          },
+          get contract() {
+            return shared.stakingContract;
+          },
+          get mech() {
+            return shared.mechContract;
+          },
+          mechType: 'legacy-mech',
+          address: require('../../helpers/factories')
+            .THIRD_STAKING_CONTRACT_ADDRESS,
+          chainId: EvmChainIdMap.Polygon,
+        },
       },
       [EvmChainIdMap.Base]: {},
       [EvmChainIdMap.Gnosis]: {},
@@ -115,6 +130,7 @@ jest.mock('../../../config/stakingPrograms', () => {
 // ---------------------------------------------------------------------------
 const PROGRAM_WITH_MECH = STAKING_PROGRAM_IDS.PolygonBeta1;
 const PROGRAM_WITHOUT_MECH = STAKING_PROGRAM_IDS.PolygonBeta2;
+const PROGRAM_WITH_LEGACY_MECH = STAKING_PROGRAM_IDS.PolygonBeta3;
 const POLYGON = EvmChainIdMap.Polygon;
 const GNOSIS = EvmChainIdMap.Gnosis;
 const NOW_S = 1_710_100_000;
@@ -199,6 +215,19 @@ describe('Polystrat.getAgentStakingRewardsInfo', () => {
     expect(shared.mechContract.mapRequestCounts).toHaveBeenCalledWith(
       MOCK_MULTISIG_ADDRESS,
     );
+  });
+
+  it('uses getRequestsCount for non-MarketplaceV2 mechType programs', async () => {
+    shared.multicallAll.mockResolvedValueOnce(buildMulticallResponse(100));
+
+    await callWith({
+      stakingProgramId: PROGRAM_WITH_LEGACY_MECH,
+    });
+
+    expect(shared.mechContract.getRequestsCount).toHaveBeenCalledWith(
+      MOCK_MULTISIG_ADDRESS,
+    );
+    expect(shared.mechContract.mapRequestCounts).not.toHaveBeenCalled();
   });
 
   it('returns eligible when mech request count exceeds threshold', async () => {

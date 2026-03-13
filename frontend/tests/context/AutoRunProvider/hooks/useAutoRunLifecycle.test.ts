@@ -4,6 +4,7 @@ import { act } from 'react';
 import { AGENT_CONFIG } from '../../../../config/agents';
 import { AgentMap, AgentType } from '../../../../constants/agent';
 import {
+  AUTO_RUN_HEALTH_METRIC,
   COOLDOWN_SECONDS,
   RUNNING_AGENT_MAX_RUNTIME_SECONDS,
   RUNNING_AGENT_WATCHDOG_CHECK_SECONDS,
@@ -523,6 +524,154 @@ describe('useAutoRunLifecycle', () => {
       expect(mockSleepAwareDelay).toHaveBeenCalledWith(COOLDOWN_SECONDS);
       expect(params.startSelectedAgentIfEligible).toHaveBeenCalled();
       expect(params.scanAndStartNext).toHaveBeenCalled();
+    });
+  });
+
+  describe('rotation with no other agents (empty orderedIncludedAgentTypes)', () => {
+    it('schedules eligible delay when current agent is the only included agent', async () => {
+      const lastRewardsEligibilityRef = {
+        current: {
+          [trader]: false,
+        } as Partial<Record<AgentType, boolean | undefined>>,
+      };
+      const params = makeHookParams({
+        enabled: true,
+        enabledRef: { current: true },
+        runningAgentType: trader,
+        runningAgentTypeRef: { current: trader },
+        lastRewardsEligibilityRef,
+        // Only trader in the list — no other agents to rotate to
+        orderedIncludedAgentTypes: [trader],
+        configuredAgents: [
+          makeAutoRunAgentMeta(
+            trader,
+            AGENT_CONFIG[trader],
+            DEFAULT_SERVICE_CONFIG_ID,
+          ),
+        ],
+        // trader returns true (triggers false→true transition)
+        refreshRewardsEligibility: jest.fn().mockResolvedValue(true),
+        getRewardSnapshot: jest.fn().mockReturnValue(false),
+      });
+
+      renderHook(() => useAutoRunLifecycle(params));
+      await act(async () => {
+        await new Promise((r) => setTimeout(r, 0));
+      });
+
+      // rotateToNext sees otherAgents.length === 0, schedules eligible delay, returns early
+      expect(params.scheduleNextScan).toHaveBeenCalledWith(
+        SCAN_ELIGIBLE_DELAY_SECONDS,
+      );
+      expect(params.stopAgentWithRecovery).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('rewards check error handler', () => {
+    it('logs error, records metric, resets guard, and schedules rescan when rewards check throws', async () => {
+      const lastRewardsEligibilityRef = {
+        current: {
+          [trader]: false,
+        } as Partial<Record<AgentType, boolean | undefined>>,
+      };
+      const params = makeHookParams({
+        enabled: true,
+        enabledRef: { current: true },
+        runningAgentType: trader,
+        runningAgentTypeRef: { current: trader },
+        lastRewardsEligibilityRef,
+        refreshRewardsEligibility: jest
+          .fn()
+          .mockRejectedValue(new Error('rewards fetch failed')),
+      });
+
+      renderHook(() => useAutoRunLifecycle(params));
+      await act(async () => {
+        await new Promise((r) => setTimeout(r, 0));
+      });
+
+      expect(params.logMessage).toHaveBeenCalledWith(
+        expect.stringContaining('rotation error'),
+      );
+      expect(params.recordMetric).toHaveBeenCalledWith(
+        AUTO_RUN_HEALTH_METRIC.REWARDS_ERRORS,
+      );
+      expect(lastRewardsEligibilityRef.current[trader]).toBeUndefined();
+      expect(params.scheduleNextScan).toHaveBeenCalledWith(
+        SCAN_BLOCKED_DELAY_SECONDS,
+      );
+    });
+  });
+
+  describe('watchdog error handler', () => {
+    beforeEach(() => {
+      jest.useFakeTimers();
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    const flushMicrotasks = async () => {
+      for (let i = 0; i < 10; i++) {
+        await Promise.resolve();
+      }
+    };
+
+    it('logs error, records metric, resets guard, and schedules rescan when watchdog rotation throws', async () => {
+      const lastRewardsEligibilityRef = {
+        current: {} as Partial<Record<AgentType, boolean | undefined>>,
+      };
+      const refreshMock = jest.fn().mockResolvedValue(false);
+      // stopAgentWithRecovery rejects to make rotateToNext throw inside the watchdog
+      const stopMock = jest.fn().mockRejectedValue(new Error('stop exploded'));
+      const params = makeHookParams({
+        enabled: true,
+        enabledRef: { current: true },
+        runningAgentType: trader,
+        runningAgentTypeRef: { current: trader },
+        lastRewardsEligibilityRef,
+        refreshRewardsEligibility: refreshMock,
+        getRewardSnapshot: jest.fn().mockReturnValue(false),
+        stopAgentWithRecovery: stopMock,
+      });
+
+      renderHook(() => useAutoRunLifecycle(params));
+
+      // Flush the initial rewards-check effect (refreshRewardsEligibility
+      // returns false for trader, so snapshot !== true → no rotation triggered)
+      await act(async () => {
+        await flushMicrotasks();
+      });
+
+      // Clear mocks from initial effects
+      (params.logMessage as jest.Mock).mockClear();
+      (params.recordMetric as jest.Mock).mockClear();
+      (params.scheduleNextScan as jest.Mock).mockClear();
+      stopMock.mockClear();
+
+      // Make stopAgentWithRecovery reject again for the watchdog call
+      stopMock.mockRejectedValue(new Error('stop exploded'));
+
+      // Advance past max runtime + one watchdog interval to trigger the watchdog
+      await act(async () => {
+        jest.advanceTimersByTime(
+          RUNNING_AGENT_MAX_RUNTIME_SECONDS * 1000 +
+            RUNNING_AGENT_WATCHDOG_CHECK_SECONDS * 1000,
+        );
+        await flushMicrotasks();
+      });
+
+      expect(params.logMessage).toHaveBeenCalledWith(
+        expect.stringContaining('watchdog rotation error'),
+      );
+      expect(params.recordMetric).toHaveBeenCalledWith(
+        AUTO_RUN_HEALTH_METRIC.REWARDS_ERRORS,
+      );
+      expect(lastRewardsEligibilityRef.current[trader]).toBeUndefined();
+      expect(params.scheduleNextScan).toHaveBeenCalledWith(
+        SCAN_BLOCKED_DELAY_SECONDS,
+      );
     });
   });
 });

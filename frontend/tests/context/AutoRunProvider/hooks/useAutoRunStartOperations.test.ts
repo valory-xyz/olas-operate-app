@@ -283,4 +283,136 @@ describe('useAutoRunStartOperations', () => {
     // sleepAwareDelay called for each backoff period
     expect(mockSleepAwareDelay).toHaveBeenCalled();
   });
+
+  it('returns ABORTED when eligibility wait times out', async () => {
+    const params = makeHookParams({
+      getSelectedEligibility: jest.fn().mockReturnValue({
+        canRun: false,
+        reason: ELIGIBILITY_REASON.LOADING,
+        loadingReason: 'Safe',
+      }),
+      getBalancesStatus: jest
+        .fn()
+        .mockReturnValue({ ready: false, loading: true }),
+    });
+    // sleepAwareDelay returns false to simulate timeout in waitForEligibilityReady
+    mockSleepAwareDelay.mockResolvedValue(false);
+
+    const { result } = renderHook(() => useAutoRunStartOperations(params));
+
+    let startResult: { status: string } | undefined;
+    await act(async () => {
+      startResult = await result.current.startAgentWithRetries(
+        AgentMap.PredictTrader,
+      );
+    });
+    expect(startResult?.status).toBe(AUTO_RUN_START_STATUS.ABORTED);
+  });
+
+  it('returns ABORTED when disabled during eligibility wait loop', async () => {
+    const enabledRef = { current: true };
+    let callCount = 0;
+    const params = makeHookParams({
+      enabledRef,
+      getSelectedEligibility: jest.fn().mockImplementation(() => {
+        callCount += 1;
+        if (callCount > 1) enabledRef.current = false;
+        return {
+          canRun: false,
+          reason: ELIGIBILITY_REASON.LOADING,
+          loadingReason: 'Safe',
+        };
+      }),
+      getBalancesStatus: jest
+        .fn()
+        .mockReturnValue({ ready: false, loading: true }),
+    });
+
+    const { result } = renderHook(() => useAutoRunStartOperations(params));
+
+    let startResult: { status: string } | undefined;
+    await act(async () => {
+      startResult = await result.current.startAgentWithRetries(
+        AgentMap.PredictTrader,
+      );
+    });
+    expect(startResult?.status).toBe(AUTO_RUN_START_STATUS.ABORTED);
+  });
+
+  it('returns INFRA_FAILED with retry interrupted when sleepAwareDelay returns false but still enabled', async () => {
+    const params = makeHookParams({
+      waitForRunningAgent: jest.fn().mockResolvedValue(false),
+    });
+    mockWithTimeout.mockResolvedValue(undefined);
+    // First call to sleepAwareDelay (retry backoff) returns false to interrupt
+    mockSleepAwareDelay.mockResolvedValue(false);
+
+    const { result } = renderHook(() => useAutoRunStartOperations(params));
+
+    let startResult: { status: string; reason?: string } | undefined;
+    await act(async () => {
+      startResult = await result.current.startAgentWithRetries(
+        AgentMap.PredictTrader,
+      );
+    });
+    expect(startResult?.status).toBe(AUTO_RUN_START_STATUS.INFRA_FAILED);
+    expect(startResult?.reason).toBe('retry interrupted');
+  });
+
+  it('returns ABORTED when sleepAwareDelay returns false and enabledRef becomes false', async () => {
+    const enabledRef = { current: true };
+    const params = makeHookParams({
+      enabledRef,
+      waitForRunningAgent: jest.fn().mockResolvedValue(false),
+    });
+    mockWithTimeout.mockResolvedValue(undefined);
+    // sleepAwareDelay returns false and also disables
+    mockSleepAwareDelay.mockImplementation(async () => {
+      enabledRef.current = false;
+      return false;
+    });
+
+    const { result } = renderHook(() => useAutoRunStartOperations(params));
+
+    let startResult: { status: string } | undefined;
+    await act(async () => {
+      startResult = await result.current.startAgentWithRetries(
+        AgentMap.PredictTrader,
+      );
+    });
+    expect(startResult?.status).toBe(AUTO_RUN_START_STATUS.ABORTED);
+  });
+
+  it('records eligibilityTimeouts metric when eligibility wait exceeds timeout', async () => {
+    const params = makeHookParams({
+      getSelectedEligibility: jest.fn().mockReturnValue({
+        canRun: false,
+        reason: ELIGIBILITY_REASON.LOADING,
+        loadingReason: 'Safe',
+      }),
+      getBalancesStatus: jest
+        .fn()
+        .mockReturnValue({ ready: false, loading: true }),
+    });
+    // Simulate time advancing past the eligibility timeout
+    const realDateNow = Date.now;
+    let elapsed = 0;
+    Date.now = jest.fn(() => {
+      elapsed += 61_000; // 61s > AGENT_SELECTION_WAIT_TIMEOUT_SECONDS (60s)
+      return realDateNow() + elapsed;
+    });
+
+    const { result } = renderHook(() => useAutoRunStartOperations(params));
+
+    let startResult: { status: string } | undefined;
+    await act(async () => {
+      startResult = await result.current.startAgentWithRetries(
+        AgentMap.PredictTrader,
+      );
+    });
+    expect(startResult?.status).toBe(AUTO_RUN_START_STATUS.ABORTED);
+    expect(params.recordMetric).toHaveBeenCalledWith('eligibilityTimeouts');
+    expect(params.logMessage).toHaveBeenCalledWith('eligibility wait timeout');
+    Date.now = realDateNow;
+  });
 });

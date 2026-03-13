@@ -3,6 +3,23 @@ import { NA } from '../../../constants/symbols';
 import { generateAgentName } from '../../../utils/generateAgentName/generateAgentName';
 import { ALL_EVM_CHAIN_IDS } from '../../helpers/factories';
 
+// Access the internal `computeAgentId` module so we can mock it for edge cases
+jest.mock('../../../utils/generateAgentName/computeAgentId', () => {
+  const actual = jest.requireActual(
+    '../../../utils/generateAgentName/computeAgentId',
+  );
+  return {
+    ...actual,
+    computeAgentId: jest.fn(actual.computeAgentId),
+  };
+});
+
+/* eslint-disable @typescript-eslint/no-var-requires */
+const {
+  computeAgentId,
+} = require('../../../utils/generateAgentName/computeAgentId');
+/* eslint-enable @typescript-eslint/no-var-requires */
+
 describe('generateAgentName', () => {
   it('returns consistent names for same inputs', () => {
     const firstCall = generateAgentName(EvmChainIdMap.Base, 194);
@@ -41,5 +58,34 @@ describe('generateAgentName', () => {
       const name = generateAgentName(chain, 1);
       expect(name).toMatch(/^[a-z]+-[a-z]+\d{2}$/);
     }
+  });
+
+  describe('normalizeToSeedHex64 edge cases', () => {
+    afterEach(() => {
+      computeAgentId.mockRestore?.();
+    });
+
+    it('returns NA when computeAgentId returns a non-hex string', () => {
+      computeAgentId.mockReturnValueOnce('not-a-hex-string');
+      expect(generateAgentName(EvmChainIdMap.Base, 1)).toBe(NA);
+    });
+
+    it('returns NA when computeAgentId returns a hex string shorter than 64 chars', () => {
+      // 40-char hex (address-length) — not 64 chars
+      computeAgentId.mockReturnValueOnce(
+        '0x1234567890abcdef1234567890abcdef12345678',
+      );
+      expect(generateAgentName(EvmChainIdMap.Base, 1)).toBe(NA);
+    });
+
+    it('returns NA when computeAgentId returns an empty string', () => {
+      computeAgentId.mockReturnValueOnce('');
+      expect(generateAgentName(EvmChainIdMap.Base, 1)).toBe(NA);
+    });
+
+    it('returns NA when computeAgentId returns undefined', () => {
+      computeAgentId.mockReturnValueOnce(undefined);
+      expect(generateAgentName(EvmChainIdMap.Base, 1)).toBe(NA);
+    });
   });
 });

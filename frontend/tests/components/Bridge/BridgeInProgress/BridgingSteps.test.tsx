@@ -192,6 +192,21 @@ describe('BridgingSteps', () => {
       expect(text).toBe('Bridging transaction complete.');
     });
 
+    it('handles empty symbol in error description', () => {
+      const { getByTestId } = renderBridgingSteps({
+        chainName: 'gnosis',
+        bridge: {
+          status: 'error',
+          subSteps: [{ status: 'error' }],
+        },
+      });
+
+      const text = (getByTestId('step-desc-0').textContent || '')
+        .replace(/\s+/g, ' ')
+        .trim();
+      expect(text).toContain('Bridging failed.');
+    });
+
     it('renders FundsAreSafeMessage for error sub-steps', () => {
       const { queryAllByTestId } = renderBridgingSteps({
         chainName: 'gnosis',

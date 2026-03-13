@@ -509,4 +509,52 @@ describe('useGetRefillRequirements', () => {
       expect(result.current.resetTokenRequirements).toBe(firstRef);
     });
   });
+
+  describe('guard conditions in getRequirementsPerToken', () => {
+    it('returns empty requirements when masterEoa is undefined', () => {
+      setupMocks({
+        masterEoa: undefined as unknown as ReturnType<
+          typeof useMasterWalletContext
+        >['masterEoa'],
+        totalRequirements: VALID_REQUIREMENTS,
+        isLoading: true,
+      });
+
+      const { result } = renderHook(() => useGetRefillRequirements());
+
+      expect(result.current.totalTokenRequirements).toEqual([]);
+      expect(result.current.isLoading).toBe(true);
+    });
+
+    it('returns empty requirements when isMasterWalletsFetched is false', () => {
+      setupMocks({
+        isFetched: false,
+        totalRequirements: VALID_REQUIREMENTS,
+        isLoading: true,
+      });
+
+      const { result } = renderHook(() => useGetRefillRequirements());
+
+      expect(result.current.totalTokenRequirements).toEqual([]);
+      expect(result.current.isLoading).toBe(true);
+    });
+
+    it('returns empty requirements when masterSafeRequirements is not found for wallet', () => {
+      // totalRequirements contains an entry keyed by a different address
+      // than the master safe or the placeholder, so masterSafeRequirements is undefined
+      const requirements: Record<string, Record<string, string>> = {
+        '0xUnrelatedAddress': {
+          [AddressZero]: '1000000000000000000',
+        },
+      };
+
+      setupMocks({ totalRequirements: requirements });
+
+      const { result } = renderHook(() => useGetRefillRequirements());
+
+      // No matching requirements found -> empty array stored
+      expect(result.current.totalTokenRequirements).toEqual([]);
+      expect(result.current.isLoading).toBe(false);
+    });
+  });
 });

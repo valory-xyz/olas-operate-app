@@ -361,6 +361,30 @@ describe('SelectPaymentMethod', () => {
     expect(screen.getByText('Select Payment Method')).toBeInTheDocument();
   });
 
+  it('shows the fiat amount when loaded and available', () => {
+    setupMocks({ fiatAmount: 42.99 });
+    render(createElement(SelectPaymentMethod, { onBack: mockOnBack }));
+    expect(screen.getByText('~$42.99')).toBeInTheDocument();
+  });
+
+  it('shows $0.00 when fiatAmount is undefined', () => {
+    setupMocks();
+    mockUseTotalFiatFromNativeToken.mockReturnValue({
+      isLoading: false,
+      data: { fiatAmount: undefined },
+    });
+    render(createElement(SelectPaymentMethod, { onBack: mockOnBack }));
+    expect(screen.getByText('~$0.00')).toBeInTheDocument();
+  });
+
+  it('shows the low-amount warning when totalNativeToken is 0', () => {
+    setupMocks({ totalNativeToken: 0 });
+    render(createElement(SelectPaymentMethod, { onBack: mockOnBack }));
+    expect(screen.getByTestId('alert')).toHaveTextContent(
+      `The minimum value of crypto to buy with your credit card is $${MIN_ONRAMP_AMOUNT}.`,
+    );
+  });
+
   it('opens and closes the on-ramp flow with the mapped on-ramp chain', () => {
     render(createElement(SelectPaymentMethod, { onBack: mockOnBack }));
 

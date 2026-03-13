@@ -207,6 +207,34 @@ describe('OnRampProvider', () => {
       expect(result.current.isOnRampingStepCompleted).toBe(true);
     });
 
+    it('does not re-capture initial balance when nativeAmountToPay changes', () => {
+      // First capture: balance = '5.0'
+      mockGetMasterEoaNativeBalanceOf.mockReturnValue('5.0');
+
+      const { result } = renderHook(useOnRamp, { wrapper });
+
+      act(() =>
+        result.current.updateNetworkConfig({
+          networkId: CHAIN_ID,
+          networkName: 'Base',
+          cryptoCurrencyCode: 'ETH',
+          selectedChainId: CHAIN_ID,
+        }),
+      );
+      act(() => result.current.updateNativeAmountToPay(1.0));
+
+      // Ref is now '5.0'. Change nativeAmountToPay to trigger the effect
+      // to re-run — but the ref guard (line 141) should prevent re-capture.
+      mockGetMasterEoaNativeBalanceOf.mockReturnValue('99.0');
+      act(() => result.current.updateNativeAmountToPay(2.0));
+      act(() => result.current.updateUsdAmountToPay(3000));
+
+      // If the ref was re-captured as '99.0', the increase from 99 to 99
+      // would be 0 (below threshold). But since the ref stayed at '5.0',
+      // the increase is 99 - 5 = 94, well above 1.8 (90% of 2.0).
+      expect(result.current.isOnRampingStepCompleted).toBe(true);
+    });
+
     it('defaults to "0" when getMasterEoaNativeBalanceOf returns falsy', () => {
       // Return undefined (falsy) for balance
       mockGetMasterEoaNativeBalanceOf.mockReturnValue(undefined);
@@ -311,6 +339,45 @@ describe('OnRampProvider', () => {
       mockGetMasterEoaNativeBalanceOf.mockReturnValue('5.0');
       hook.rerender();
 
+      expect(hook.result.current.isOnRampingTransactionSuccessful).toBe(false);
+    });
+
+    it('does not detect when currentBalance is falsy', () => {
+      const hook = renderHook(useOnRamp, { wrapper });
+
+      // Set up initial balance capture first
+      mockGetMasterEoaNativeBalanceOf.mockReturnValue('0');
+      act(() =>
+        hook.result.current.updateNetworkConfig({
+          networkId: CHAIN_ID,
+          networkName: 'Base',
+          cryptoCurrencyCode: 'ETH',
+          selectedChainId: CHAIN_ID,
+        }),
+      );
+      act(() => hook.result.current.updateNativeAmountToPay(1.0));
+      act(() => hook.result.current.updateUsdAmountToPay(3000));
+
+      // Now getMasterEoaNativeBalanceOf returns undefined (falsy currentBalance)
+      mockGetMasterEoaNativeBalanceOf.mockReturnValue(undefined);
+      hook.rerender();
+
+      // Fund detection should not trigger because currentBalance is falsy
+      expect(hook.result.current.isOnRampingTransactionSuccessful).toBe(false);
+      expect(mockOnRampWindowClose).not.toHaveBeenCalled();
+    });
+
+    it('does not detect when networkId is not set in fund detection', () => {
+      const hook = renderHook(useOnRamp, { wrapper });
+
+      // Set amounts but no network config (networkId stays null)
+      act(() => hook.result.current.updateNativeAmountToPay(1.0));
+      act(() => hook.result.current.updateUsdAmountToPay(3000));
+
+      mockGetMasterEoaNativeBalanceOf.mockReturnValue('5.0');
+      hook.rerender();
+
+      // No fund detection since networkId is null
       expect(hook.result.current.isOnRampingTransactionSuccessful).toBe(false);
     });
 

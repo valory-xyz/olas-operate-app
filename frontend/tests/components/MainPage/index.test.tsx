@@ -43,6 +43,10 @@ jest.mock('../../../components/Pages/HelpAndSupportPage', () => ({
   HelpAndSupport: () => <div data-testid="help-and-support" />,
 }));
 
+jest.mock('../../../components/Pages/ReleaseNotesPage', () => ({
+  ReleaseNotesPage: () => <div data-testid="release-notes" />,
+}));
+
 jest.mock('../../../components/UpdateAgentPage', () => ({
   UpdateAgentPage: () => <div data-testid="update-agent-page" />,
 }));
@@ -181,6 +185,11 @@ describe('Main (MainPage entry)', () => {
         label: 'HelpAndSupport',
         pageState: PAGES.HelpAndSupport,
         expectedTestId: 'help-and-support',
+      },
+      {
+        label: 'ReleaseNotes',
+        pageState: PAGES.ReleaseNotes,
+        expectedTestId: 'release-notes',
       },
       {
         label: 'UpdateAgentTemplate',

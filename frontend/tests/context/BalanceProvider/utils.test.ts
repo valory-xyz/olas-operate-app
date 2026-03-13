@@ -890,6 +890,57 @@ describe('getCrossChainBalances', () => {
     });
   });
 
+  describe('invalid wallet address in native balance', () => {
+    it('skips wallets with invalid addresses for native balance fetch', async () => {
+      setupSingleChainProvider(EvmChainIdMap.Gnosis);
+      mockGetBalance.mockResolvedValue(BigNumber.from('1000000000000000000'));
+      mockMulticallAll.mockResolvedValue([BigNumber.from(0)]);
+
+      // Create a wallet with an invalid (non-checksummed, invalid) address
+      const invalidWallet = {
+        address: 'not-a-valid-address' as `0x${string}`,
+        type: WALLET_TYPE.EOA,
+        owner: WALLET_OWNER.Master,
+      };
+
+      const result = await getCrossChainWalletBalances([invalidWallet]);
+
+      // The invalid address wallet should be skipped for native balance
+      const nativeResults = result.filter((r) => r.isNative);
+      expect(nativeResults).toHaveLength(0);
+    });
+  });
+
+  describe('walletBalances rejected in getCrossChainBalances', () => {
+    it('returns empty walletBalances when getCrossChainWalletBalances rejects', async () => {
+      // Make providers throw an error that breaks the iteration
+      // by setting providers as an object with a throwing iterator
+      const throwingProviders = {
+        [Symbol.iterator]: () => {
+          throw new Error('Providers iteration exploded');
+        },
+      };
+      mockProviders = throwingProviders as unknown as typeof mockProviders;
+
+      mockGetServiceRegistryInfo.mockResolvedValue({
+        bondValue: 10,
+        depositValue: 20,
+        serviceState: SERVICE_REGISTRY_L2_SERVICE_STATE.Deployed,
+      });
+
+      const eoa = makeMasterEoa();
+      const safe = makeMasterSafe(EvmChainIdMap.Gnosis);
+
+      const result = await getCrossChainBalances({
+        services: [makeMiddlewareService()],
+        masterWallets: [eoa, safe],
+      });
+
+      // walletBalances should be empty due to rejection
+      expect(result.walletBalances).toEqual([]);
+    });
+  });
+
   describe('empty inputs', () => {
     it('returns empty arrays when services is empty', async () => {
       setupSingleChainProvider(EvmChainIdMap.Gnosis);

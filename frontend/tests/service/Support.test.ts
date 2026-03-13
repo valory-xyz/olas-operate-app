@@ -1,6 +1,15 @@
 import { SUPPORT_API_URL } from '../../constants/urls';
 import { SupportService } from '../../service/Support';
 
+jest.mock('../../utils/error', () => ({
+  ...jest.requireActual('../../utils/error'),
+  parseApiError: jest.fn(),
+}));
+
+const { parseApiError: mockParseApiError } = jest.requireMock(
+  '../../utils/error',
+) as { parseApiError: jest.Mock };
+
 const mockJsonResponse = (body: unknown, ok = true) =>
   Promise.resolve({
     ok,
@@ -10,7 +19,8 @@ const mockJsonResponse = (body: unknown, ok = true) =>
 
 beforeEach(() => {
   global.fetch = jest.fn();
-  jest.restoreAllMocks();
+  // By default, parseApiError throws (matching real behavior)
+  mockParseApiError.mockRejectedValue(new Error('API error'));
 });
 
 describe('SupportService', () => {
@@ -158,6 +168,117 @@ describe('SupportService', () => {
         success: false,
         error: 'Failed to create ticket',
       });
+    });
+  });
+
+  describe('uploadFile – parseApiError branch', () => {
+    const fileParams = {
+      fileName: 'log.txt',
+      fileContent: 'some log content',
+      mimeType: 'text/plain',
+    };
+
+    it('calls parseApiError and surfaces the API error message on non-ok response', async () => {
+      mockParseApiError.mockRejectedValue(new Error('Payload too large'));
+      jest.spyOn(global, 'fetch').mockReturnValue(
+        Promise.resolve({
+          ok: false,
+          status: 400,
+          json: () => Promise.resolve({ error: 'Payload too large' }),
+        } as Response),
+      );
+
+      const result = await SupportService.uploadFile(fileParams);
+      expect(result).toEqual({
+        success: false,
+        error: 'Payload too large',
+      });
+    });
+
+    it('uses fallback message when parseApiError response has no error or message field', async () => {
+      mockParseApiError.mockRejectedValue(new Error('Failed to upload file'));
+      jest.spyOn(global, 'fetch').mockReturnValue(
+        Promise.resolve({
+          ok: false,
+          status: 500,
+          json: () => Promise.resolve({}),
+        } as Response),
+      );
+
+      const result = await SupportService.uploadFile(fileParams);
+      expect(result).toEqual({
+        success: false,
+        error: 'Failed to upload file',
+      });
+    });
+
+    it('falls through when parseApiError resolves without throwing', async () => {
+      mockParseApiError.mockResolvedValue(undefined);
+      jest.spyOn(global, 'fetch').mockReturnValue(
+        Promise.resolve({
+          ok: false,
+          status: 400,
+          json: () => Promise.resolve({ upload: { token: 'tok-recover' } }),
+        } as Response),
+      );
+
+      const result = await SupportService.uploadFile(fileParams);
+      expect(result).toEqual({ success: true, token: 'tok-recover' });
+    });
+  });
+
+  describe('createTicket – parseApiError branch', () => {
+    const ticketParams = {
+      subject: 'Test',
+      description: 'Test description',
+    };
+
+    it('calls parseApiError and surfaces the API error message on non-ok response', async () => {
+      mockParseApiError.mockRejectedValue(new Error('Invalid email'));
+      jest.spyOn(global, 'fetch').mockReturnValue(
+        Promise.resolve({
+          ok: false,
+          status: 422,
+          json: () => Promise.resolve({ error: 'Invalid email' }),
+        } as Response),
+      );
+
+      const result = await SupportService.createTicket(ticketParams);
+      expect(result).toEqual({
+        success: false,
+        error: 'Invalid email',
+      });
+    });
+
+    it('uses fallback message when parseApiError response has no error or message field', async () => {
+      mockParseApiError.mockRejectedValue(new Error('Failed to create ticket'));
+      jest.spyOn(global, 'fetch').mockReturnValue(
+        Promise.resolve({
+          ok: false,
+          status: 500,
+          json: () => Promise.resolve({}),
+        } as Response),
+      );
+
+      const result = await SupportService.createTicket(ticketParams);
+      expect(result).toEqual({
+        success: false,
+        error: 'Failed to create ticket',
+      });
+    });
+
+    it('falls through when parseApiError resolves without throwing', async () => {
+      mockParseApiError.mockResolvedValue(undefined);
+      jest.spyOn(global, 'fetch').mockReturnValue(
+        Promise.resolve({
+          ok: false,
+          status: 422,
+          json: () => Promise.resolve({ ticket: { id: 77 } }),
+        } as Response),
+      );
+
+      const result = await SupportService.createTicket(ticketParams);
+      expect(result).toEqual({ success: true, ticketId: 77 });
     });
   });
 });

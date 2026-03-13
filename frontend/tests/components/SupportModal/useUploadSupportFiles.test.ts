@@ -218,6 +218,19 @@ describe('useUploadSupportFiles', () => {
       expect(tokens).toEqual([]);
     });
 
+    it('uses default error message when readFile fails without error field', async () => {
+      mockReadFile.mockResolvedValue({ success: false });
+      const { result } = renderHook(() =>
+        useUploadSupportFiles({ shouldUseFallbackLogs: false }),
+      );
+      let tokens: string[] = [];
+      await act(async () => {
+        tokens = await result.current.uploadFiles([], true);
+      });
+      expect(mockReadFile).toHaveBeenCalled();
+      expect(tokens).toEqual([]);
+    });
+
     it('returns null when readFile fails', async () => {
       mockReadFile.mockResolvedValue({
         success: false,
@@ -303,6 +316,23 @@ describe('useUploadSupportFiles', () => {
         );
       });
 
+      expect(tokens).toEqual([]);
+    });
+
+    it('uses default message when upload throws a non-Error exception', async () => {
+      const attachment = makeFileDetails('crash.png');
+      mockFormatAttachments.mockResolvedValue([attachment]);
+      mockSupportUploadFile.mockRejectedValue('string error');
+      const { result } = renderHook(() =>
+        useUploadSupportFiles({ shouldUseFallbackLogs: false }),
+      );
+      let tokens: string[] = [];
+      await act(async () => {
+        tokens = await result.current.uploadFiles(
+          [makeAntdUploadFile('crash.png')],
+          false,
+        );
+      });
       expect(tokens).toEqual([]);
     });
 

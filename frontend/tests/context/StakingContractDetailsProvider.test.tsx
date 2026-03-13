@@ -628,6 +628,28 @@ describe('StakingContractDetailsProvider', () => {
         );
       });
 
+      it('logs error via onError callback', () => {
+        const consoleSpy = jest
+          .spyOn(console, 'error')
+          .mockImplementation(() => {});
+
+        setupMocks();
+        renderProvider();
+
+        const onError = capturedUseQueriesConfig!.queries[0].onError;
+        expect(onError).toBeDefined();
+
+        const testError = new Error('staking fetch failed');
+        onError!(testError);
+
+        expect(consoleSpy).toHaveBeenCalledWith(
+          `Error fetching staking details for ${DEFAULT_STAKING_PROGRAM_ID}:`,
+          testError,
+        );
+
+        consoleSpy.mockRestore();
+      });
+
       it('stops refetching on success', () => {
         setupMocks();
         renderProvider();

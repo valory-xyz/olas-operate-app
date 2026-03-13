@@ -26,15 +26,20 @@ const mockGenerateImage = generateAchievementImage as jest.MockedFunction<
   typeof generateAchievementImage
 >;
 
-// Mock react-query useMutation to call mutationFn directly
+// Track onError callbacks so we can invoke them in tests
+const onErrorCallbacks: Array<(error: unknown) => void> = [];
+
 jest.mock('@tanstack/react-query', () => ({
   useMutation: ({
     mutationFn,
+    onError,
   }: {
     mutationFn: (...args: unknown[]) => unknown;
-  }) => ({
-    mutateAsync: mutationFn,
-  }),
+    onError?: (error: unknown) => void;
+  }) => {
+    if (onError) onErrorCallbacks.push(onError);
+    return { mutateAsync: mutationFn };
+  },
 }));
 
 const makePolystratAchievement = makeFactoryAchievement;
@@ -42,8 +47,18 @@ const makePolystratAchievement = makeFactoryAchievement;
 describe('useTriggerAchievementBackgroundTasks', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    onErrorCallbacks.length = 0;
     mockAcknowledge.mockResolvedValue({ acknowledged: true });
     mockGenerateImage.mockResolvedValue({ ok: true });
+  });
+
+  it('returns early when called with a falsy achievement', async () => {
+    const { result } = renderHook(() => useTriggerAchievementBackgroundTasks());
+    await act(async () => {
+      await result.current.triggerAchievementBackgroundTasks(null as never);
+    });
+    expect(mockAcknowledge).not.toHaveBeenCalled();
+    expect(mockGenerateImage).not.toHaveBeenCalled();
   });
 
   it('starts with areBackgroundTasksFinalized=false', () => {
@@ -122,6 +137,33 @@ describe('useTriggerAchievementBackgroundTasks', () => {
     expect(result.current.areBackgroundTasksFinalized).toBe(true);
     expect(mockAcknowledge).not.toHaveBeenCalled();
     expect(mockGenerateImage).not.toHaveBeenCalled();
+    consoleSpy.mockRestore();
+  });
+
+  it('logs error via onError when acknowledge mutation fails', () => {
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+    renderHook(() => useTriggerAchievementBackgroundTasks());
+    // onErrorCallbacks[0] is the acknowledge onError, [1] is the image generation onError
+    expect(onErrorCallbacks.length).toBeGreaterThanOrEqual(2);
+    const error = new Error('Ack failed');
+    onErrorCallbacks[0](error);
+    expect(consoleSpy).toHaveBeenCalledWith(
+      'Failed to acknowledge achievement',
+      error,
+    );
+    consoleSpy.mockRestore();
+  });
+
+  it('logs error via onError when image generation mutation fails', () => {
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+    renderHook(() => useTriggerAchievementBackgroundTasks());
+    expect(onErrorCallbacks.length).toBeGreaterThanOrEqual(2);
+    const error = new Error('Image gen failed');
+    onErrorCallbacks[1](error);
+    expect(consoleSpy).toHaveBeenCalledWith(
+      'Failed to trigger image generation',
+      error,
+    );
     consoleSpy.mockRestore();
   });
 

@@ -470,6 +470,17 @@ describe('useRewardsHistory', () => {
 
       expect(result.latestStakingContract).toBeUndefined();
     });
+
+    it('returns empty contractCheckpoints when rewardsHistory is undefined (|| [] fallback)', () => {
+      renderHook(() => useRewardsHistory());
+      const result = capturedQueryConfig!.select({
+        id: '42',
+        latestStakingContract: DEFAULT_STAKING_CONTRACT_ADDRESS,
+        rewardsHistory: undefined,
+      }) as { contractCheckpoints: Record<string, unknown[]> };
+
+      expect(result.contractCheckpoints).toEqual({});
+    });
   });
 
   // -----------------------------------------------------------------------

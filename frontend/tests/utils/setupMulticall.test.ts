@@ -1,5 +1,6 @@
 import { setMulticallAddress } from 'ethers-multicall';
 
+import { EvmChainIdMap } from '../../constants/chains';
 import { setupMulticallAddresses } from '../../utils/setupMulticall';
 import { DEFAULT_MULTICALL_ADDRESS } from '../helpers/factories';
 
@@ -25,15 +26,21 @@ describe('setupMulticallAddresses', () => {
     }
   });
 
-  it('passes numeric chain IDs', async () => {
+  it('passes numeric chain IDs for all supported chains', async () => {
     await setupMulticallAddresses();
     const chainIds = mockSetMulticallAddress.mock.calls.map(
       (call: unknown[]) => call[0],
     );
-    expect(chainIds).toContain(8453);
-    expect(chainIds).toContain(100);
-    expect(chainIds).toContain(34443);
-    expect(chainIds).toContain(10);
-    expect(chainIds).toContain(137);
+    expect(chainIds).toContain(EvmChainIdMap.Base);
+    expect(chainIds).toContain(EvmChainIdMap.Gnosis);
+    expect(chainIds).toContain(EvmChainIdMap.Mode);
+    expect(chainIds).toContain(EvmChainIdMap.Optimism);
+    expect(chainIds).toContain(EvmChainIdMap.Polygon);
+  });
+
+  it('calls setMulticallAddress once per supported chain', async () => {
+    await setupMulticallAddresses();
+    const supportedChainCount = Object.values(EvmChainIdMap).length;
+    expect(mockSetMulticallAddress).toHaveBeenCalledTimes(supportedChainCount);
   });
 });

@@ -1,4 +1,5 @@
 import { renderHook } from '@testing-library/react';
+import { act } from 'react';
 
 import { useElectronApi } from '../../../../hooks/useElectronApi';
 import { useOnRampContext } from '../../../../hooks/useOnRampContext';
@@ -83,13 +84,15 @@ const setupMocks = (
 
   mockUseOnRampContext.mockReturnValue({
     isBuyCryptoBtnLoading: overrides.isBuyCryptoBtnLoading ?? false,
-    usdAmountToPay: overrides.usdAmountToPay ?? 18.17,
+    usdAmountToPay:
+      'usdAmountToPay' in overrides ? overrides.usdAmountToPay : 18.17,
     updateIsBuyCryptoBtnLoading,
     isTransactionSuccessfulButFundsNotReceived:
       overrides.isTransactionSuccessfulButFundsNotReceived ?? false,
     isOnRampingStepCompleted: overrides.isOnRampingStepCompleted ?? false,
-    networkName: overrides.networkName ?? 'base',
-    cryptoCurrencyCode: overrides.cryptoCurrencyCode ?? 'ETH',
+    networkName: 'networkName' in overrides ? overrides.networkName : 'base',
+    cryptoCurrencyCode:
+      'cryptoCurrencyCode' in overrides ? overrides.cryptoCurrencyCode : 'ETH',
   } as unknown as ReturnType<typeof useOnRampContext>);
 
   mockUseMasterWalletContext.mockReturnValue({
@@ -239,6 +242,110 @@ describe('useBuyCryptoStep', () => {
 
       // openTerms is embedded in JSX, so we can verify the mock was set up
       expect(termsShowFn).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('handleBuyCrypto invocation', () => {
+    it('calls onRampWindow.show and updateIsBuyCryptoBtnLoading when all params present', async () => {
+      const showFn = jest.fn();
+      const { updateIsBuyCryptoBtnLoading } = setupMocks({
+        onRampWindowShow: showFn,
+        usdAmountToPay: 18.17,
+        networkName: 'base',
+        cryptoCurrencyCode: 'ETH',
+      });
+      const { result } = renderHook(() => useBuyCryptoStep());
+
+      // Extract the Button element from subSteps[1] and invoke its onClick
+      const buyButtonElement = result.current.subSteps[1].description;
+      const onClick = (
+        buyButtonElement as { props: { onClick: () => Promise<void> } }
+      ).props.onClick;
+      await act(async () => {
+        await onClick();
+      });
+
+      expect(showFn).toHaveBeenCalledWith(18.17, 'base', 'ETH');
+      expect(updateIsBuyCryptoBtnLoading).toHaveBeenCalledWith(true);
+    });
+
+    it('early-returns when onRampWindow.show is undefined', async () => {
+      const { updateIsBuyCryptoBtnLoading } = setupMocks();
+      mockUseElectronApi.mockReturnValue({
+        onRampWindow: { show: undefined },
+        termsAndConditionsWindow: { show: jest.fn() },
+      } as unknown as ReturnType<typeof useElectronApi>);
+      const { result } = renderHook(() => useBuyCryptoStep());
+      const buyButtonElement = result.current.subSteps[1].description;
+      const onClick = (
+        buyButtonElement as { props: { onClick: () => Promise<void> } }
+      ).props.onClick;
+      await act(async () => {
+        await onClick();
+      });
+      expect(updateIsBuyCryptoBtnLoading).not.toHaveBeenCalled();
+    });
+
+    it('early-returns when usdAmountToPay is null', async () => {
+      const showFn = jest.fn();
+      setupMocks({ onRampWindowShow: showFn, usdAmountToPay: null });
+      const { result } = renderHook(() => useBuyCryptoStep());
+      const buyButtonElement = result.current.subSteps[1].description;
+      const onClick = (
+        buyButtonElement as { props: { onClick: () => Promise<void> } }
+      ).props.onClick;
+      await act(async () => {
+        await onClick();
+      });
+      expect(showFn).not.toHaveBeenCalled();
+    });
+
+    it('early-returns when networkName is null', async () => {
+      const showFn = jest.fn();
+      setupMocks({ onRampWindowShow: showFn, networkName: null });
+      const { result } = renderHook(() => useBuyCryptoStep());
+      const buyButtonElement = result.current.subSteps[1].description;
+      const onClick = (
+        buyButtonElement as { props: { onClick: () => Promise<void> } }
+      ).props.onClick;
+      await act(async () => {
+        await onClick();
+      });
+      expect(showFn).not.toHaveBeenCalled();
+    });
+
+    it('early-returns when cryptoCurrencyCode is null', async () => {
+      const showFn = jest.fn();
+      setupMocks({ onRampWindowShow: showFn, cryptoCurrencyCode: null });
+      const { result } = renderHook(() => useBuyCryptoStep());
+      const buyButtonElement = result.current.subSteps[1].description;
+      const onClick = (
+        buyButtonElement as { props: { onClick: () => Promise<void> } }
+      ).props.onClick;
+      await act(async () => {
+        await onClick();
+      });
+      expect(showFn).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('openTerms invocation', () => {
+    it('calls termsAndConditionsWindow.show("transak-terms") via OnRampAgreement link', async () => {
+      const termsShowFn = jest.fn();
+      setupMocks({ termsAndConditionsWindowShow: termsShowFn });
+      const { result } = renderHook(() => useBuyCryptoStep());
+
+      // subSteps[0].description is the OnRampAgreement React element
+      const agreementElement = result.current.subSteps[0].description;
+      // The <a onClick={onClick}> is nested inside OnRampAgreement
+      const onClick = (
+        agreementElement as { props: { onClick: () => Promise<void> } }
+      ).props.onClick;
+      await act(async () => {
+        await onClick();
+      });
+
+      expect(termsShowFn).toHaveBeenCalledWith('transak-terms');
     });
   });
 });

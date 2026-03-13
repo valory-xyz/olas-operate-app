@@ -214,6 +214,62 @@ describe('OnRampIframe', () => {
       expect(closeFn).toHaveBeenCalled();
     });
 
+    it('ignores message events with no data', () => {
+      const closeFn = jest.fn();
+      mockUseElectronApi.mockReturnValue({
+        onRampWindow: { close: closeFn, transactionFailure: jest.fn() },
+        logEvent: jest.fn(),
+      } as unknown as ReturnType<typeof useElectronApi>);
+      mockUseMasterWalletContext.mockReturnValue({
+        masterEoa: makeMasterEoa(),
+      } as unknown as ReturnType<typeof useMasterWalletContext>);
+
+      render(
+        createElement(OnRampIframe, {
+          usdAmountToPay: 10,
+          networkName: 'base',
+          cryptoCurrencyCode: 'ETH',
+        }),
+      );
+
+      const iframe = document.querySelector('iframe');
+      const event = new MessageEvent('message', {
+        source: iframe?.contentWindow,
+        data: undefined,
+      });
+      window.dispatchEvent(event);
+
+      expect(closeFn).not.toHaveBeenCalled();
+    });
+
+    it('ignores message events with data but no event_id', () => {
+      const closeFn = jest.fn();
+      mockUseElectronApi.mockReturnValue({
+        onRampWindow: { close: closeFn, transactionFailure: jest.fn() },
+        logEvent: jest.fn(),
+      } as unknown as ReturnType<typeof useElectronApi>);
+      mockUseMasterWalletContext.mockReturnValue({
+        masterEoa: makeMasterEoa(),
+      } as unknown as ReturnType<typeof useMasterWalletContext>);
+
+      render(
+        createElement(OnRampIframe, {
+          usdAmountToPay: 10,
+          networkName: 'base',
+          cryptoCurrencyCode: 'ETH',
+        }),
+      );
+
+      const iframe = document.querySelector('iframe');
+      const event = new MessageEvent('message', {
+        source: iframe?.contentWindow,
+        data: { someOther: 'field' },
+      });
+      window.dispatchEvent(event);
+
+      expect(closeFn).not.toHaveBeenCalled();
+    });
+
     it('ignores message events from other sources', () => {
       const closeFn = jest.fn();
       mockUseElectronApi.mockReturnValue({
@@ -243,6 +299,43 @@ describe('OnRampIframe', () => {
       window.dispatchEvent(event);
 
       expect(closeFn).not.toHaveBeenCalled();
+    });
+
+    it('calls transactionFailure after delay on TRANSAK_ORDER_FAILED event', async () => {
+      const transactionFailureFn = jest.fn();
+      mockUseElectronApi.mockReturnValue({
+        onRampWindow: {
+          close: jest.fn(),
+          transactionFailure: transactionFailureFn,
+        },
+        logEvent: jest.fn(),
+      } as unknown as ReturnType<typeof useElectronApi>);
+      mockUseMasterWalletContext.mockReturnValue({
+        masterEoa: makeMasterEoa(),
+      } as unknown as ReturnType<typeof useMasterWalletContext>);
+
+      render(
+        createElement(OnRampIframe, {
+          usdAmountToPay: 10,
+          networkName: 'base',
+          cryptoCurrencyCode: 'ETH',
+        }),
+      );
+
+      const iframe = document.querySelector('iframe');
+      const event = new MessageEvent('message', {
+        source: iframe?.contentWindow,
+        data: {
+          event_id: 'TRANSAK_ORDER_FAILED',
+          data: {},
+        },
+      });
+      window.dispatchEvent(event);
+
+      // delayInSeconds is mocked to resolve immediately
+      await Promise.resolve();
+
+      expect(transactionFailureFn).toHaveBeenCalledTimes(1);
     });
   });
 });

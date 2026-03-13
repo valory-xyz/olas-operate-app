@@ -4,6 +4,7 @@ import { act } from 'react';
 import { AGENT_CONFIG } from '../../../../config/agents';
 import { AgentMap } from '../../../../constants/agent';
 import {
+  AUTO_RUN_HEALTH_METRIC,
   AUTO_RUN_START_STATUS,
   ELIGIBILITY_REASON,
   SCAN_BLOCKED_DELAY_SECONDS,
@@ -501,6 +502,333 @@ describe('useAutoRunScanner', () => {
         started = await result.current.startSelectedAgentIfEligible();
       });
       expect(started).toBe(false);
+    });
+
+    it('schedules loading retry when eligibility wait times out', async () => {
+      const params = makeHookParams({
+        getSelectedEligibility: jest.fn().mockReturnValue({
+          canRun: false,
+          reason: ELIGIBILITY_REASON.LOADING,
+          loadingReason: 'Safe',
+        }),
+        getBalancesStatus: jest
+          .fn()
+          .mockReturnValue({ ready: false, loading: true }),
+      });
+      // Make sleepAwareDelay always return true so the loop continues,
+      // but advance Date.now() past the timeout threshold.
+      let callCount = 0;
+      mockSleepAwareDelay.mockImplementation(async () => {
+        callCount += 1;
+        // On 2nd+ call, jump time forward past 60s timeout
+        if (callCount >= 2) {
+          jest.spyOn(Date, 'now').mockReturnValue(Date.now() + 120_000);
+        }
+        return true;
+      });
+
+      const { result } = renderHook(() => useAutoRunScanner(params));
+
+      let started: boolean | undefined;
+      await act(async () => {
+        started = await result.current.startSelectedAgentIfEligible();
+      });
+      expect(started).toBe(false);
+      expect(params.scheduleNextScan).toHaveBeenCalledWith(
+        SCAN_LOADING_RETRY_SECONDS,
+      );
+      jest.restoreAllMocks();
+    });
+
+    it('schedules loading retry when eligibility is LOADING after wait', async () => {
+      const params = makeHookParams({
+        getSelectedEligibility: jest
+          .fn()
+          // First call in waitForEligibilityReady → canRun (exits wait)
+          .mockReturnValueOnce({ canRun: true })
+          // Second call after wait → LOADING
+          .mockReturnValue({
+            canRun: false,
+            reason: ELIGIBILITY_REASON.LOADING,
+            loadingReason: 'Balances',
+          }),
+        getBalancesStatus: jest
+          .fn()
+          .mockReturnValue({ ready: false, loading: true }),
+      });
+      const { result } = renderHook(() => useAutoRunScanner(params));
+
+      let started: boolean | undefined;
+      await act(async () => {
+        started = await result.current.startSelectedAgentIfEligible();
+      });
+      expect(started).toBe(false);
+      expect(params.scheduleNextScan).toHaveBeenCalledWith(
+        SCAN_LOADING_RETRY_SECONDS,
+      );
+    });
+
+    it('returns true and uses short retry for infra_failed with single agent', async () => {
+      const params = makeHookParams({
+        orderedIncludedAgentTypes: [trader],
+        configuredAgents: [
+          makeAutoRunAgentMeta(
+            trader,
+            AGENT_CONFIG[trader],
+            DEFAULT_SERVICE_CONFIG_ID,
+          ),
+        ],
+        startAgentWithRetries: jest.fn().mockResolvedValue({
+          status: AUTO_RUN_START_STATUS.INFRA_FAILED,
+          reason: 'timeout',
+        }),
+      });
+      const { result } = renderHook(() => useAutoRunScanner(params));
+
+      let started: boolean | undefined;
+      await act(async () => {
+        started = await result.current.startSelectedAgentIfEligible();
+      });
+      expect(started).toBe(true);
+      // Single agent: should use SCAN_LOADING_RETRY_SECONDS directly
+      expect(params.scheduleNextScan).toHaveBeenCalledWith(
+        SCAN_LOADING_RETRY_SECONDS,
+      );
+    });
+
+    it('returns true and does not schedule rescan for aborted when disabled', async () => {
+      const enabledRef = { current: true };
+      const params = makeHookParams({
+        enabledRef,
+        startAgentWithRetries: jest.fn().mockImplementation(async () => {
+          enabledRef.current = false;
+          return { status: AUTO_RUN_START_STATUS.ABORTED };
+        }),
+      });
+      const { result } = renderHook(() => useAutoRunScanner(params));
+
+      let started: boolean | undefined;
+      await act(async () => {
+        started = await result.current.startSelectedAgentIfEligible();
+      });
+      expect(started).toBe(true);
+      // enabledRef is false → scheduleNextScan should NOT be called
+      expect(params.scheduleNextScan).not.toHaveBeenCalled();
+    });
+
+    it('returns false for unknown start status (fallthrough)', async () => {
+      const params = makeHookParams({
+        startAgentWithRetries: jest.fn().mockResolvedValue({
+          status: 'some_unknown_status',
+        }),
+      });
+      const { result } = renderHook(() => useAutoRunScanner(params));
+
+      let started: boolean | undefined;
+      await act(async () => {
+        started = await result.current.startSelectedAgentIfEligible();
+      });
+      expect(started).toBe(false);
+    });
+  });
+
+  describe('waitForEligibilityReady (via scanAndStartNext)', () => {
+    it('records metric and returns false on eligibility wait timeout', async () => {
+      const params = makeHookParams({
+        getSelectedEligibility: jest.fn().mockReturnValue({
+          canRun: false,
+          reason: ELIGIBILITY_REASON.LOADING,
+          loadingReason: 'Safe',
+        }),
+        getBalancesStatus: jest
+          .fn()
+          .mockReturnValue({ ready: false, loading: true }),
+      });
+
+      // Make sleepAwareDelay return true but advance time past timeout
+      let callCount = 0;
+      mockSleepAwareDelay.mockImplementation(async () => {
+        callCount += 1;
+        if (callCount >= 2) {
+          jest.spyOn(Date, 'now').mockReturnValue(Date.now() + 120_000);
+        }
+        return true;
+      });
+
+      const { result } = renderHook(() => useAutoRunScanner(params));
+
+      await act(async () => {
+        await result.current.scanAndStartNext(trader);
+      });
+      expect(params.recordMetric).toHaveBeenCalledWith(
+        AUTO_RUN_HEALTH_METRIC.ELIGIBILITY_TIMEOUTS,
+      );
+      expect(params.logMessage).toHaveBeenCalledWith(
+        'eligibility wait timeout',
+      );
+      jest.restoreAllMocks();
+    });
+
+    it('returns false when enabledRef becomes false during eligibility wait', async () => {
+      const enabledRef = { current: true };
+      const params = makeHookParams({
+        enabledRef,
+        getSelectedEligibility: jest.fn().mockReturnValue({
+          canRun: false,
+          reason: ELIGIBILITY_REASON.LOADING,
+          loadingReason: 'Safe',
+        }),
+        getBalancesStatus: jest
+          .fn()
+          .mockReturnValue({ ready: false, loading: true }),
+      });
+
+      mockSleepAwareDelay.mockImplementation(async () => {
+        enabledRef.current = false;
+        return true;
+      });
+
+      const { result } = renderHook(() => useAutoRunScanner(params));
+
+      let scanResult: { started: boolean } | undefined;
+      await act(async () => {
+        scanResult = await result.current.scanAndStartNext(trader);
+      });
+      expect(scanResult?.started).toBe(false);
+    });
+  });
+
+  describe('findNextInOrder (via scanAndStartNext)', () => {
+    it('handles null startFrom by starting from beginning of order', async () => {
+      const params = makeHookParams();
+      const { result } = renderHook(() => useAutoRunScanner(params));
+
+      let scanResult: { started: boolean } | undefined;
+      await act(async () => {
+        scanResult = await result.current.scanAndStartNext(null);
+      });
+      expect(scanResult?.started).toBe(true);
+      // null startFrom → indexOf returns -1 → first candidate is trader (index 0)
+      expect(params.startAgentWithRetries).toHaveBeenCalledWith(trader);
+    });
+
+    it('returns null (no candidate) when single agent wraps to itself', async () => {
+      const params = makeHookParams({
+        orderedIncludedAgentTypes: [trader],
+        configuredAgents: [
+          makeAutoRunAgentMeta(
+            trader,
+            AGENT_CONFIG[trader],
+            DEFAULT_SERVICE_CONFIG_ID,
+          ),
+        ],
+      });
+      const { result } = renderHook(() => useAutoRunScanner(params));
+
+      let scanResult: { started: boolean } | undefined;
+      await act(async () => {
+        // Start from trader → findNextInOrder(trader) wraps to trader → skips self → null
+        scanResult = await result.current.scanAndStartNext(trader);
+      });
+      expect(scanResult?.started).toBe(false);
+      expect(params.scheduleNextScan).toHaveBeenCalledWith(
+        SCAN_ELIGIBLE_DELAY_SECONDS,
+      );
+    });
+  });
+
+  describe('scanAndStartNext — eligibility LOADING after waitForEligibilityReady', () => {
+    it('marks hasLoading and continues to next candidate when eligibility still LOADING', async () => {
+      const params = makeHookParams({
+        getSelectedEligibility: jest
+          .fn()
+          // For first candidate (optimus): eligibility wait → exits OK, then main check → LOADING
+          .mockReturnValueOnce({ canRun: true }) // waitForEligibilityReady exits
+          .mockReturnValueOnce({
+            canRun: false,
+            reason: ELIGIBILITY_REASON.LOADING,
+            loadingReason: 'Balances',
+          })
+          // For second candidate (polystrat): canRun
+          .mockReturnValue({ canRun: true }),
+        getBalancesStatus: jest
+          .fn()
+          .mockReturnValue({ ready: false, loading: true }),
+      });
+
+      const { result } = renderHook(() => useAutoRunScanner(params));
+
+      await act(async () => {
+        await result.current.scanAndStartNext(trader);
+      });
+      // polystrat was attempted after optimus was skipped for LOADING
+      expect(params.startAgentWithRetries).toHaveBeenCalledWith(polystrat);
+    });
+  });
+
+  describe('scanAndStartNext — first waitForAgentSelection fails while enabled', () => {
+    it('schedules loading retry when first selection fails while enabled', async () => {
+      const params = makeHookParams({
+        waitForAgentSelection: jest.fn().mockResolvedValue(false),
+      });
+      const { result } = renderHook(() => useAutoRunScanner(params));
+
+      let scanResult: { started: boolean } | undefined;
+      await act(async () => {
+        scanResult = await result.current.scanAndStartNext(trader);
+      });
+      expect(scanResult?.started).toBe(false);
+      expect(params.scheduleNextScan).toHaveBeenCalledWith(
+        SCAN_LOADING_RETRY_SECONDS,
+      );
+    });
+  });
+
+  describe('scanAndStartNext — delay IIFE coverage', () => {
+    it('uses blocked delay for unknown start status (sets hasBlocked)', async () => {
+      const params = makeHookParams({
+        orderedIncludedAgentTypes: [trader, optimus],
+        startAgentWithRetries: jest.fn().mockResolvedValue({
+          status: 'some_unknown_status',
+        }),
+      });
+      const { result } = renderHook(() => useAutoRunScanner(params));
+
+      await act(async () => {
+        await result.current.scanAndStartNext(trader);
+      });
+      // Unknown status sets hasBlocked=true → SCAN_BLOCKED_DELAY_SECONDS
+      expect(params.scheduleNextScan).toHaveBeenCalledWith(
+        SCAN_BLOCKED_DELAY_SECONDS,
+      );
+    });
+
+    // Lines 319-320: The default `return SCAN_BLOCKED_DELAY_SECONDS` in the delay
+    // IIFE is a defensive unreachable guard. Every code path in the while loop
+    // sets at least one flag (hasBlocked, hasLoading, hasEligible, hasInfraFailed)
+    // or returns early (STARTED/ABORTED), so the fallthrough with all flags false
+    // cannot be reached in practice.
+  });
+
+  describe('scanAndStartNext — ABORTED while disabled mid-scan', () => {
+    it('returns started=false without scheduling when disabled on ABORTED', async () => {
+      const enabledRef = { current: true };
+      const params = makeHookParams({
+        enabledRef,
+        startAgentWithRetries: jest.fn().mockImplementation(async () => {
+          enabledRef.current = false;
+          return { status: AUTO_RUN_START_STATUS.ABORTED };
+        }),
+      });
+      const { result } = renderHook(() => useAutoRunScanner(params));
+
+      let scanResult: { started: boolean } | undefined;
+      await act(async () => {
+        scanResult = await result.current.scanAndStartNext(trader);
+      });
+      expect(scanResult?.started).toBe(false);
+      // enabledRef is false → scheduleNextScan should NOT be called
+      expect(params.scheduleNextScan).not.toHaveBeenCalled();
     });
   });
 });

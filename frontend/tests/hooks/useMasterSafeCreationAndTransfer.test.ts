@@ -373,4 +373,29 @@ describe('useMasterSafeCreationAndTransfer', () => {
 
     consoleSpy.mockRestore();
   });
+
+  it('throws when token config is not found for the given symbol on chain', async () => {
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+    mockCreateSafe.mockResolvedValue(makeSafeCreationResponse());
+
+    const { result } = renderHook(
+      () =>
+        useMasterSafeCreationAndTransfer([
+          'NONEXISTENT_TOKEN' as typeof TokenSymbolMap.XDAI,
+        ]),
+      { wrapper: createWrapper() },
+    );
+
+    let caught: unknown;
+    await act(async () => {
+      try {
+        await result.current.mutateAsync();
+      } catch (error) {
+        caught = error;
+      }
+    });
+    expect((caught as Error).message).toContain('Token config not found');
+
+    consoleSpy.mockRestore();
+  });
 });

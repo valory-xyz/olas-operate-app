@@ -562,11 +562,11 @@ describe('SupportModal', () => {
         'Please try contacting the Valory support team again',
       );
       expect(screen.getByTestId('modal-description')).toHaveTextContent(
-        'you can contact the Olas DAO in their Discord',
+        'you can contact the Olas community on Telegram',
       );
     });
 
-    it('renders Discord link text', async () => {
+    it('renders Telegram link text', async () => {
       (SupportService.createTicket as jest.Mock).mockResolvedValueOnce({
         success: false,
         error: 'Server error',
@@ -578,7 +578,9 @@ describe('SupportModal', () => {
         await capturedOnFinish!(MOCK_FORM_VALUES);
       });
 
-      expect(screen.getByText(/Visit the Olas DAO/)).toBeInTheDocument();
+      expect(
+        screen.getByText(/Visit Olas community on Telegram/),
+      ).toBeInTheDocument();
     });
   });
 

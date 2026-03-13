@@ -9,6 +9,7 @@ import {
 import {
   formatEligibilityReason,
   isOnlyLoadingReason,
+  isStakingEpochExpired,
   normalizeEligibility,
   refreshRewardsEligibility,
 } from '../../../../context/AutoRunProvider/utils/autoRunHelpers';
@@ -22,6 +23,32 @@ jest.mock('../../../../utils/stakingRewards', () => ({
 const mockFetchRewards = fetchAgentStakingRewardsInfo as jest.MockedFunction<
   typeof fetchAgentStakingRewardsInfo
 >;
+
+describe('isStakingEpochExpired', () => {
+  const makeArgs = (livenessPeriod: unknown, tsCheckpoint: number) =>
+    ({ livenessPeriod, tsCheckpoint }) as Parameters<
+      typeof isStakingEpochExpired
+    >[0];
+
+  it('returns false when livenessPeriod <= 0', () => {
+    expect(isStakingEpochExpired(makeArgs(0, 0))).toBe(false);
+    expect(isStakingEpochExpired(makeArgs(-1, 0))).toBe(false);
+  });
+
+  it('returns true when elapsed time >= livenessPeriod', () => {
+    const now = Math.floor(Date.now() / 1000);
+    expect(isStakingEpochExpired(makeArgs(100, now - 200))).toBe(true);
+  });
+
+  it('returns false when elapsed time < livenessPeriod', () => {
+    const now = Math.floor(Date.now() / 1000);
+    expect(isStakingEpochExpired(makeArgs(10000, now - 10))).toBe(false);
+  });
+
+  it('returns false (fail closed) when livenessPeriod is malformed', () => {
+    expect(isStakingEpochExpired(makeArgs('not-a-number', 0))).toBe(false);
+  });
+});
 
 describe('formatEligibilityReason', () => {
   it('formats Loading + sub-reason as "Loading: <sub>"', () => {
@@ -348,6 +375,27 @@ describe('refreshRewardsEligibility', () => {
     });
     await refreshRewardsEligibility(params);
     expect(mockFetchRewards).toHaveBeenCalled();
+  });
+
+  it('overrides isEligibleForRewards=true to false when epoch expired', async () => {
+    const now = Math.floor(Date.now() / 1000);
+    mockFetchRewards.mockResolvedValue({
+      isEligibleForRewards: true,
+      livenessPeriod: 100,
+      tsCheckpoint: now - 200, // epoch expired
+    } as unknown as Awaited<ReturnType<typeof fetchAgentStakingRewardsInfo>>);
+    const setRewardSnapshot = jest.fn();
+    const logMessage = jest.fn();
+    const params = makeParams({ setRewardSnapshot, logMessage });
+    const result = await refreshRewardsEligibility(params);
+    expect(result).toBe(false);
+    expect(setRewardSnapshot).toHaveBeenCalledWith(
+      AgentMap.PredictTrader,
+      false,
+    );
+    expect(logMessage).toHaveBeenCalledWith(
+      expect.stringContaining('epoch expired'),
+    );
   });
 
   it('returns undefined silently when fetch throws', async () => {

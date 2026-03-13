@@ -391,6 +391,51 @@ describe('Bridge', () => {
     });
   });
 
+  describe('default switch branches', () => {
+    it('does nothing for an unrecognized bridgeRetryOutcome (default case)', async () => {
+      const { getByTestId } = renderBridge();
+      const updateQuoteId = bridgeOnEvmProps.updateQuoteId as (
+        id: string,
+      ) => void;
+      const updateCrossChainTransferDetails =
+        bridgeOnEvmProps.updateCrossChainTransferDetails as (
+          details: unknown,
+        ) => void;
+
+      act(() => {
+        updateQuoteId('q1');
+        updateCrossChainTransferDetails({
+          fromChain: MiddlewareChainMap.ETHEREUM,
+          toChain: MiddlewareChainMap.GNOSIS,
+          eta: 100,
+          transfers: [],
+        });
+      });
+
+      // Transition to in_progress
+      act(() => {
+        (bridgeOnEvmProps.onNext as () => void)();
+      });
+
+      expect(getByTestId('bridge-in-progress')).toBeTruthy();
+
+      // Trigger an unknown retry outcome (hits the default: break case)
+      const onBridgeRetryOutcome =
+        bridgeInProgressProps.onBridgeRetryOutcome as (
+          outcome: string | null,
+        ) => void;
+
+      act(() => {
+        onBridgeRetryOutcome('SOME_UNKNOWN_OUTCOME');
+      });
+
+      // Should remain in in_progress (default case does nothing)
+      await waitFor(() => {
+        expect(getByTestId('bridge-in-progress')).toBeTruthy();
+      });
+    });
+  });
+
   describe('handleNextStep completed → goto Main', () => {
     it('navigates to Main page when handleNextStep called in completed state', async () => {
       renderBridge();

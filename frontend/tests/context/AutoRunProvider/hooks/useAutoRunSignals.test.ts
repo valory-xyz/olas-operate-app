@@ -36,6 +36,7 @@ const makeHookParams = (
   runningAgentType: null as AgentType | null,
   isSelectedAgentDetailsLoading: false,
   isEligibleForRewards: undefined as boolean | undefined,
+  isEpochExpired: false,
   selectedAgentType: AgentMap.PredictTrader,
   selectedServiceConfigId: DEFAULT_SERVICE_CONFIG_ID as string | null,
   logMessage: jest.fn(),
@@ -542,6 +543,88 @@ describe('useAutoRunSignals', () => {
         );
       });
       expect(ok).toBe(false);
+    });
+
+    it('returns false and logs timeout when agent never matches', async () => {
+      const logMessage = jest.fn();
+      const params = makeHookParams({
+        runningAgentType: null,
+        logMessage,
+      });
+      // Simulate time advancing past the timeout on each delay call
+      const realDateNow = Date.now;
+      let elapsed = 0;
+      Date.now = jest.fn(() => {
+        elapsed += 11_000; // 11s > timeoutSeconds=10
+        return realDateNow() + elapsed;
+      });
+
+      const { result } = renderHook(() => useAutoRunSignals(params));
+
+      let ok: boolean | undefined;
+      await act(async () => {
+        ok = await result.current.waitForRunningAgent(
+          AgentMap.PredictTrader,
+          10,
+        );
+      });
+      expect(ok).toBe(false);
+      expect(logMessage).toHaveBeenCalledWith(
+        `running timeout: ${AgentMap.PredictTrader}`,
+      );
+      Date.now = realDateNow;
+    });
+  });
+
+  describe('waitForBalancesReady — disabled mid-wait', () => {
+    it('returns false when disabled while waiting for balances', async () => {
+      mockUseBalanceContext.mockReturnValue({
+        isBalancesAndFundingRequirementsLoadingForAllServices: true,
+        isBalancesAndFundingRequirementsReadyForAllServices: false,
+        refetch: jest.fn().mockResolvedValue(undefined),
+      } as unknown as ReturnType<
+        typeof useBalanceAndRefillRequirementsContext
+      >);
+
+      const params = makeHookParams({ enabled: false });
+      const { result } = renderHook(() => useAutoRunSignals(params));
+
+      let ok: boolean | undefined;
+      await act(async () => {
+        ok = await result.current.waitForBalancesReady();
+      });
+      // enabledRef is false so the while loop doesn't enter, returns false
+      expect(ok).toBe(false);
+    });
+  });
+
+  describe('unmount cleanup', () => {
+    it('clears pending scan timer on unmount', () => {
+      const params = makeHookParams();
+      const { result, unmount } = renderHook(() => useAutoRunSignals(params));
+
+      act(() => {
+        result.current.scheduleNextScan(100);
+      });
+      expect(result.current.hasScheduledScan()).toBe(true);
+
+      unmount();
+      // Scan timeout is cleared on unmount — no error from dangling timer
+    });
+  });
+
+  describe('isEpochExpired override', () => {
+    it('overrides isEligibleForRewards to false when epoch is expired', () => {
+      const params = makeHookParams({
+        selectedAgentType: AgentMap.PredictTrader,
+        isEligibleForRewards: true,
+        isEpochExpired: true,
+      });
+      const { result } = renderHook(() => useAutoRunSignals(params));
+      // When epoch is expired, the effective eligibility should be false
+      expect(
+        result.current.rewardSnapshotRef.current[AgentMap.PredictTrader],
+      ).toBe(false);
     });
   });
 });

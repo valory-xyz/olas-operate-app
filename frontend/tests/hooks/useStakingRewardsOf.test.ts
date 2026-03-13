@@ -528,4 +528,29 @@ describe('useStakingRewardsOf', () => {
       expect(result.current.totalStakingRewards).toBe('0.0');
     });
   });
+
+  // -- Service with nil chain_configs -----------------------------------------
+  describe('service with nil chain_configs', () => {
+    it('returns null chain_data when chain_configs is nil', () => {
+      const service = makeGnosisTraderService({
+        chain_configs: undefined as never,
+      });
+      setupServices({ services: [service] });
+      setupUseQueries({
+        stakingProgramResults: [{ data: null, isLoading: false }],
+        rewardsResults: [{ data: null, isLoading: false, isSuccess: false }],
+      });
+
+      renderHook(() => useStakingRewardsOf(GNOSIS));
+
+      // The createStakingRewardsQuery should be called with
+      // serviceNftTokenId and multisig from null chain_data
+      expect(mockCreateStakingRewardsQuery).toHaveBeenCalledWith(
+        expect.objectContaining({
+          serviceNftTokenId: undefined,
+          multisig: undefined,
+        }),
+      );
+    });
+  });
 });

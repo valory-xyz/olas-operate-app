@@ -180,6 +180,21 @@ describe('updateServiceIfNeeded', () => {
     });
   });
 
+  it('updates name when AgentsFun service name differs from template', async () => {
+    const service = createService({
+      name: 'Old Agents.Fun Name',
+    });
+
+    await updateServiceIfNeeded(service, AgentMap.AgentsFun);
+
+    expect(mockUpdateService).toHaveBeenCalledWith({
+      serviceConfigId: SERVICE_CONFIG_ID,
+      partialServiceTemplate: expect.objectContaining({
+        name: 'Agents.Fun',
+      }),
+    });
+  });
+
   it('prepends KPI prefix to description when missing', async () => {
     const service = createService({
       description: 'Agents.Fun @2252_raver',
@@ -389,6 +404,43 @@ describe('updateServiceIfNeeded', () => {
           },
         },
       },
+    });
+  });
+
+  it('merges staking program with existing fund_requirements in configurations', async () => {
+    const service = createService({
+      chain_configs: {
+        [MiddlewareChainMap.BASE]: {
+          chain_data: {
+            user_params: {
+              fund_requirements: {
+                [AddressZero]: {
+                  agent: '100000000000000',
+                  safe: '500000000000000',
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    await updateServiceIfNeeded(
+      service,
+      AgentMap.AgentsFun,
+      'staking-program-v3' as StakingProgramId,
+    );
+
+    expect(mockUpdateService).toHaveBeenCalledWith({
+      serviceConfigId: SERVICE_CONFIG_ID,
+      partialServiceTemplate: expect.objectContaining({
+        configurations: {
+          [MiddlewareChainMap.BASE]: {
+            fund_requirements: TEMPLATE_FUND_REQUIREMENTS,
+            staking_program_id: 'staking-program-v3',
+          },
+        },
+      }),
     });
   });
 });

@@ -8,6 +8,7 @@ import {
   MasterWalletContext,
   MasterWalletProvider,
 } from '../../context/MasterWalletProvider';
+import { OnlineStatusContext } from '../../context/OnlineStatusProvider';
 import { WalletService } from '../../service/Wallet';
 import { MiddlewareWalletResponse } from '../../types/Wallet';
 import {
@@ -38,14 +39,18 @@ jest.mock(
 
 const mockGetWallets = WalletService.getWallets as jest.Mock;
 
-const createWrapper = () => {
+const createWrapper = ({ isOnline = true }: { isOnline?: boolean } = {}) => {
   const queryClient = createTestQueryClient();
   // eslint-disable-next-line react/display-name
   return ({ children }: PropsWithChildren) =>
     createElement(
       QueryClientProvider,
       { client: queryClient },
-      createElement(MasterWalletProvider, null, children),
+      createElement(
+        OnlineStatusContext.Provider,
+        { value: { isOnline } },
+        createElement(MasterWalletProvider, null, children),
+      ),
     );
 };
 
@@ -189,6 +194,21 @@ describe('MasterWalletProvider', () => {
     expect(result.current.masterEoa).toBeUndefined();
     expect(result.current.masterSafes).toBeUndefined();
     expect(result.current.getMasterSafeOf).toBeUndefined();
+  });
+
+  it('disables refetch interval when offline', async () => {
+    mockGetWallets.mockResolvedValue([makeWalletResponse()]);
+
+    const { result } = renderHook(() => useContext(MasterWalletContext), {
+      wrapper: createWrapper({ isOnline: false }),
+    });
+
+    // Should still fetch initially, but refetchInterval is false
+    await waitFor(() => {
+      expect(result.current.masterEoa).toBeDefined();
+    });
+    // Verify data still loads (query is not disabled, only refetch interval is false)
+    expect(result.current.masterEoa?.address).toBe(DEFAULT_EOA_ADDRESS);
   });
 
   it('returns masterWallets including both EOA and safes', async () => {

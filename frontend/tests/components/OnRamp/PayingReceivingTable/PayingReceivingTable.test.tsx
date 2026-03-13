@@ -234,6 +234,141 @@ describe('PayingReceivingTable', () => {
     expect(screen.getAllByTestId('skeleton').length).toBeGreaterThan(0);
   });
 
+  it('renders n/a when usdAmountToPay is null/falsy', () => {
+    mockUseOnRampContext.mockReturnValue({
+      selectedChainId: EvmChainIdMap.Gnosis,
+      isOnRampingStepCompleted: false,
+      isTransactionSuccessfulButFundsNotReceived: false,
+      isBuyCryptoBtnLoading: false,
+      usdAmountToPay: null,
+      nativeAmountToPay: 0.45,
+      updateUsdAmountToPay: mockUpdateUsdAmountToPay,
+    });
+
+    render(
+      createElement(PayingReceivingTable, {
+        onRampChainId: EvmChainIdMap.Base,
+        mode: 'deposit',
+        getOnRampRequirementsParams: mockGetOnRampRequirementsParams,
+      }),
+    );
+
+    expect(screen.getByText('n/a')).toBeInTheDocument();
+  });
+
+  it('displays "0 ETH" when nativeAmountToDisplay is undefined', () => {
+    setupMocks({ nativeAmountToDisplay: undefined, fiatAmount: 12.34 });
+
+    render(
+      createElement(PayingReceivingTable, {
+        onRampChainId: EvmChainIdMap.Base,
+        mode: 'deposit',
+        getOnRampRequirementsParams: mockGetOnRampRequirementsParams,
+      }),
+    );
+
+    // onRampChainId=Base -> asAllMiddlewareChain returns 'base' -> asEvmChainDetails returns symbol 'ETH'
+    expect(screen.getByText('0 ETH')).toBeInTheDocument();
+  });
+
+  it('returns null for receiving tokens with missing icon or symbol', () => {
+    setupMocks({
+      receivingTokens: [{ symbol: 'UNKNOWN_TOKEN_XYZ', amount: 5 }],
+    });
+
+    render(
+      createElement(PayingReceivingTable, {
+        onRampChainId: EvmChainIdMap.Base,
+        mode: 'deposit',
+        getOnRampRequirementsParams: mockGetOnRampRequirementsParams,
+      }),
+    );
+
+    // The unknown token should not render (returns null from ViewReceivingTokens)
+    expect(screen.queryByText('5 UNKNOWN_TOKEN_XYZ')).toBeNull();
+  });
+
+  it('does not update tokensRequired when isTransactionSuccessfulButFundsNotReceived is true', () => {
+    const { rerender } = render(
+      createElement(PayingReceivingTable, {
+        onRampChainId: EvmChainIdMap.Base,
+        mode: 'deposit',
+        getOnRampRequirementsParams: mockGetOnRampRequirementsParams,
+      }),
+    );
+
+    expect(screen.getByText('2 USDC')).toBeInTheDocument();
+
+    // Now change to successful-but-not-received state with different tokens
+    setupMocks({
+      isTransactionSuccessfulButFundsNotReceived: true,
+      receivingTokens: [{ symbol: 'OLAS', amount: 7 }],
+    });
+
+    rerender(
+      createElement(PayingReceivingTable, {
+        onRampChainId: EvmChainIdMap.Base,
+        mode: 'deposit',
+        getOnRampRequirementsParams: mockGetOnRampRequirementsParams,
+      }),
+    );
+
+    // Tokens should remain frozen at 2 USDC
+    expect(screen.getByText('2 USDC')).toBeInTheDocument();
+    expect(screen.queryByText('7 OLAS')).toBeNull();
+  });
+
+  it('does not update USD amount when isTransactionSuccessfulButFundsNotReceived is true', () => {
+    setupMocks({ isTransactionSuccessfulButFundsNotReceived: true });
+
+    render(
+      createElement(PayingReceivingTable, {
+        onRampChainId: EvmChainIdMap.Base,
+        mode: 'deposit',
+        getOnRampRequirementsParams: mockGetOnRampRequirementsParams,
+      }),
+    );
+
+    // updateUsdAmountToPay should NOT have been called because early return
+    expect(mockUpdateUsdAmountToPay).not.toHaveBeenCalled();
+  });
+
+  it('does not update USD amount when isBuyCryptoBtnLoading is true', () => {
+    setupMocks({ isBuyCryptoBtnLoading: true });
+
+    render(
+      createElement(PayingReceivingTable, {
+        onRampChainId: EvmChainIdMap.Base,
+        mode: 'deposit',
+        getOnRampRequirementsParams: mockGetOnRampRequirementsParams,
+      }),
+    );
+
+    expect(mockUpdateUsdAmountToPay).not.toHaveBeenCalled();
+  });
+
+  it('does not update tokensRequired when receivingTokens is undefined', () => {
+    mockUseTotalNativeTokenRequired.mockReturnValue({
+      isLoading: false,
+      hasError: false,
+      totalNativeToken: 0.45,
+      receivingTokens: undefined,
+      onRetry: mockOnRetry,
+    });
+
+    render(
+      createElement(PayingReceivingTable, {
+        onRampChainId: EvmChainIdMap.Base,
+        mode: 'deposit',
+        getOnRampRequirementsParams: mockGetOnRampRequirementsParams,
+      }),
+    );
+
+    // When receivingTokens is undefined, setTokensRequired is not called,
+    // so no tokens should be displayed in the receiving column
+    expect(screen.queryByText('USDC')).toBeNull();
+  });
+
   it('freezes the receiving tokens once the buy step is marked as completed', () => {
     const { rerender } = render(
       createElement(PayingReceivingTable, {

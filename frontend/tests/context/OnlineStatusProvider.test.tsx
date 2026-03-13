@@ -2,6 +2,7 @@ import { renderHook } from '@testing-library/react';
 import { act, createElement, PropsWithChildren } from 'react';
 
 import {
+  OnlineStatusContext,
   OnlineStatusProvider,
   useOnlineStatus,
 } from '../../context/OnlineStatusProvider';
@@ -81,5 +82,25 @@ describe('OnlineStatusProvider', () => {
 
     addSpy.mockRestore();
     removeSpy.mockRestore();
+  });
+
+  it('throws when useOnlineStatus receives undefined context', () => {
+    const consoleSpy = jest
+      .spyOn(console, 'error')
+      .mockImplementation(() => {});
+
+    // Provide undefined as the context value to trigger the guard
+    const wrapper = ({ children }: PropsWithChildren) =>
+      createElement(
+        OnlineStatusContext.Provider,
+        { value: undefined as unknown as { isOnline: boolean } },
+        children,
+      );
+
+    expect(() => {
+      renderHook(() => useOnlineStatus(), { wrapper });
+    }).toThrow('useOnlineStatus must be used within an OnlineStatusProvider');
+
+    consoleSpy.mockRestore();
   });
 });

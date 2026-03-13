@@ -224,6 +224,19 @@ describe('AgentsFunService.getAgentStakingRewardsInfo', () => {
       expect(result!.isEligibleForRewards).toBe(true);
     });
 
+    it('treats mechRequestCountOnLastCheckpoint as 0 when service is not staked (mech path)', async () => {
+      // isServiceStaked = false (empty serviceInfo[2]) => mechRequestCountOnLastCheckpoint = 0
+      // mechRequestCount = 100, mechRequestCountOnLastCheckpoint = 0 => 100 >= 1 => eligible
+      shared.multicallAll
+        .mockResolvedValueOnce(buildFirstResponse(0, serviceInfoUnstaked))
+        .mockResolvedValueOnce([100]);
+
+      const result = await callWith();
+
+      expect(result).toBeDefined();
+      expect(result!.isEligibleForRewards).toBe(true);
+    });
+
     it('returns not eligible when mech request count is below threshold', async () => {
       // mechRequestCount = 10, mechCheckpoint = 10 => 0 < 1 => not eligible
       shared.multicallAll

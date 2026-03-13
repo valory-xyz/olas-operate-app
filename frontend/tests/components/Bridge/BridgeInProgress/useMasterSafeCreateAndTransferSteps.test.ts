@@ -1020,6 +1020,57 @@ describe('useMasterSafeCreateAndTransferSteps', () => {
   // Re-render stability
   // -------------------------------------------------------------------------
 
+  describe('createMasterSafe guard: isMasterWalletFetched goes false after ref is set', () => {
+    it('does not call createMasterSafe when isMasterWalletFetched becomes false after ref is set', () => {
+      // First render: set the ref by having wallet fetched and mode=onboard
+      setupMocks({
+        wallet: {
+          getMasterSafeOf: jest.fn().mockReturnValue(undefined),
+          isFetched: true,
+        },
+        bridging: { isBridgingCompleted: true },
+      });
+      const { rerender } = renderAndSettle({
+        ...defaultProps,
+        mode: 'onboard',
+      });
+      expect(mockCreateMasterSafe).toHaveBeenCalledTimes(1);
+
+      // Now re-render with isFetched: false (wallet no longer fetched)
+      mockCreateMasterSafe.mockClear();
+      mockUseMasterWalletContext.mockReturnValue({
+        getMasterSafeOf: jest.fn().mockReturnValue(undefined),
+        isFetched: false,
+      });
+      rerender({ ...defaultProps, mode: 'onboard' });
+      // shouldCreateMasterSafe is true (ref was set), but isMasterWalletFetched is now false
+      expect(mockCreateMasterSafe).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('masterSafeTransferDetails: isBridging with isBridgingCompleted and isSafeCreated', () => {
+    it('returns wait when isBridging is true even if isSafeCreated', () => {
+      setupMocks({
+        wallet: {
+          getMasterSafeOf: jest.fn().mockReturnValue(undefined),
+          isFetched: true,
+        },
+        bridging: { isBridging: true, isBridgingCompleted: true },
+        creation: {
+          data: {
+            safeCreationDetails: { isSafeCreated: true },
+            transferDetails: { isTransferComplete: false, transfers: [] },
+          },
+        },
+      });
+      const { result } = renderAndSettle({
+        ...defaultProps,
+        mode: 'onboard',
+      });
+      expect(result.current.steps.masterSafeTransfer?.status).toBe('wait');
+    });
+  });
+
   describe('re-render stability', () => {
     it('does not call createMasterSafe again when safe is now created', () => {
       setupMocks({
