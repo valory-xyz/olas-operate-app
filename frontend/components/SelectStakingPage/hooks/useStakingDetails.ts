@@ -9,9 +9,10 @@ export const useEachStakingDetails = (stakingProgramId: StakingProgramId) => {
   const { allStakingContractDetailsRecord } = useStakingContractContext();
 
   const stakingProgramMeta =
-    STAKING_PROGRAMS[selectedAgentConfig.evmHomeChainId][stakingProgramId];
+    STAKING_PROGRAMS[selectedAgentConfig.evmHomeChainId]?.[stakingProgramId];
   const contractDetails = allStakingContractDetailsRecord?.[stakingProgramId];
   const { maxNumServices = 0, serviceIds = [] } = contractDetails ?? {};
+  const programName = stakingProgramMeta?.name;
 
   return useMemo(() => {
     const usedSlots = serviceIds.length;
@@ -19,8 +20,8 @@ export const useEachStakingDetails = (stakingProgramId: StakingProgramId) => {
 
     return {
       slotsLeft,
-      name: stakingProgramMeta.name,
+      name: programName,
       totalSlots: maxNumServices,
     };
-  }, [maxNumServices, serviceIds, stakingProgramMeta.name]);
+  }, [maxNumServices, serviceIds, programName]);
 };

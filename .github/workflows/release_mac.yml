@@ -15,7 +15,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [macos-14, macos-14-large]
+        os: [macos-15, macos-15-large]
 
     steps:
       - uses: actions/checkout@v4
@@ -27,13 +27,13 @@ jobs:
       - uses: actions/setup-python@v5
         id: setup-python
         with:
-          python-version: "3.10"
+          python-version: "3.14"
 
       # Install Poetry and its dependencies
       - name: Install and configure Poetry
         uses: snok/install-poetry@v1
         with:
-          version: "1.8.5"
+          version: "2.3.2"
           virtualenvs-create: true
           virtualenvs-in-project: false
           virtualenvs-path: ~/my-custom-path
@@ -42,7 +42,7 @@ jobs:
       # Set OS_ARCH env
       - name: Set architecture environment variable
         run: |
-          if [ "${{ matrix.os }}" == "macos-14-large" ]; then 
+          if [[ "${{ matrix.os }}" == *-large ]]; then 
             echo "OS_ARCH=x64" >> $GITHUB_ENV; 
           else 
             echo "OS_ARCH=arm64" >> $GITHUB_ENV; 
@@ -105,7 +105,7 @@ jobs:
     strategy:
       matrix:
         env: [production]
-        os: [macos-14, macos-14-large]
+        os: [macos-15, macos-15-large]
 
     steps:
       - uses: actions/checkout@v4
@@ -116,15 +116,20 @@ jobs:
       - uses: actions/setup-python@v5
         id: setup-python
         with:
-          python-version: "3.10"
+          python-version: "3.14"
 
       - name: Add Python to PATH
         run: |
-          echo "${{ steps.setup-python.outputs.python-path }}" >> $GITHUB_PATH
+          PYTHON_PATH="${{ steps.setup-python.outputs.python-path }}"
+          if [ -d "$PYTHON_PATH" ]; then
+            echo "$PYTHON_PATH" >> $GITHUB_PATH
+          elif [ -x "$PYTHON_PATH" ]; then
+            echo "$(dirname "$PYTHON_PATH")" >> $GITHUB_PATH
+          fi
       
       - uses: actions/setup-node@v4
         with:
-          node-version: "20.x"
+          node-version: "22.18"
           registry-url: "https://registry.npmjs.org"
 
       # Configure Yarn network settings for timeout, retries, and reduced concurrency
@@ -137,7 +142,7 @@ jobs:
       # Set OS_ARCH env
       - name: Set architecture environment variable
         run: |
-          if [ "${{ matrix.os }}" == "macos-14-large" ]; then 
+          if [[ "${{ matrix.os }}" == *-large ]]; then 
             echo "OS_ARCH=x64" >> $GITHUB_ENV; 
           else 
             echo "OS_ARCH=arm64" >> $GITHUB_ENV; 
@@ -170,7 +175,7 @@ jobs:
       # Set Tendermint download URL based on architecture
       - name: Set Tendermint download URL
         run: |
-          if [ "${{ matrix.os }}" == "macos-14-large" ]; then 
+          if [[ "${{ matrix.os }}" == *-large ]]; then 
             echo "TM_DOWNLOAD_URL=https://github.com/tendermint/tendermint/releases/download/v0.34.19/tendermint_0.34.19_darwin_amd64.tar.gz" >> $GITHUB_ENV
           else 
             echo "TM_DOWNLOAD_URL=https://github.com/tendermint/tendermint/releases/download/v0.34.19/tendermint_0.34.19_darwin_arm64.tar.gz" >> $GITHUB_ENV
@@ -230,12 +235,27 @@ jobs:
         uses: actions/cache@v3
         with:
           path: node_modules
-          key: electron-node-modules-${{ runner.os }}-${{ env.OS_ARCH }}-${{ matrix.env }}-${{ hashFiles('yarn.lock') }}
+          key: electron-node-modules-v2-${{ runner.os }}-${{ env.OS_ARCH }}-${{ matrix.env }}-${{ hashFiles('yarn.lock', '.github/workflows/release.yml') }}
 
-      # Install electron dependencies if cache miss
+      # Guard against stale absolute symlinks from previously cached node_modules.
+      - name: Validate cached electron node_modules
+        id: validate-electron-node-modules
+        if: steps.cache-electron-node-modules.outputs.cache-hit == 'true'
+        run: |
+          dangling_link=$(find node_modules -type l ! -exec test -e {} \; -print -quit 2>/dev/null || true)
+
+          if [ -n "$dangling_link" ]; then
+            echo "::warning::Detected dangling symlink in cached node_modules: $dangling_link"
+            rm -rf node_modules
+            echo "is-valid=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "is-valid=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Install electron dependencies if cache miss or cached tree is invalid.
       - name: Install electron dependencies
-        if: steps.cache-electron-node-modules.outputs.cache-hit != 'true'
-        run: yarn install
+        if: steps.cache-electron-node-modules.outputs.cache-hit != 'true' || steps.validate-electron-node-modules.outputs.is-valid != 'true'
+        run: yarn install --frozen-lockfile --check-files
 
       # Cache frontend node_modules with unique key for each environment and architecture
       - name: Restore frontend node_modules cache

@@ -51,6 +51,7 @@ leak_report
 
 # logs
 *.log
+logs/
 
 # custom script for development
 .scripts/

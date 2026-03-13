@@ -1,3 +1,6 @@
+import { AnimatePresence, motion } from 'framer-motion';
+import { ReactNode, useMemo } from 'react';
+
 import { AgentLowBalanceAlert } from '@/components/AgentLowBalanceAlert';
 import { PAGES } from '@/constants';
 import {
@@ -38,44 +41,85 @@ export const AgentDisabledAlert = () => {
     agentConfig: selectedAgentConfig,
   });
 
-  if (selectedAgentConfig?.isGeoLocationRestricted && isAgentGeoRestricted) {
-    return <AgentGeoBlockedAlert />;
-  }
+  const { key, content } = useMemo<{
+    key: string;
+    content: ReactNode;
+  }>(() => {
+    if (selectedAgentConfig?.isGeoLocationRestricted && isAgentGeoRestricted) {
+      return { key: 'geo-blocked', content: <AgentGeoBlockedAlert /> };
+    }
 
-  if (selectedAgentConfig.isUnderConstruction) {
-    return <UnderConstructionAlert />;
-  }
+    if (selectedAgentConfig.isUnderConstruction) {
+      return { key: 'under-construction', content: <UnderConstructionAlert /> };
+    }
 
-  if (isAnotherAgentRunning) {
-    return <AgentRunningAlert />;
-  }
+    if (isAnotherAgentRunning) {
+      return { key: 'another-running', content: <AgentRunningAlert /> };
+    }
 
-  // The "store" is `undefined` during updates, hence waiting till we get the correct value from the store.
-  if (isInitialFunded === false) return <UnfinishedSetupAlert />;
+    // The "store" is `undefined` during updates, hence waiting till we get the correct value from the store.
+    if (isInitialFunded === false) {
+      return { key: 'unfinished-setup', content: <UnfinishedSetupAlert /> };
+    }
 
-  if (selectedStakingProgramMeta && selectedStakingProgramMeta.deprecated) {
-    return (
-      <ContractDeprecatedAlert
-        stakingProgramName={selectedStakingProgramMeta.name}
-      />
-    );
-  }
+    if (selectedStakingProgramMeta && selectedStakingProgramMeta.deprecated) {
+      return {
+        key: 'contract-deprecated',
+        content: (
+          <ContractDeprecatedAlert
+            stakingProgramName={selectedStakingProgramMeta.name}
+          />
+        ),
+      };
+    }
 
-  if (
-    !isSelectedStakingContractDetailsLoading &&
-    isServiceStaked === false &&
-    hasEnoughServiceSlots === false
-  ) {
-    return <NoSlotsAvailableAlert />;
-  }
+    if (
+      !isSelectedStakingContractDetailsLoading &&
+      isServiceStaked === false &&
+      hasEnoughServiceSlots === false
+    ) {
+      return { key: 'no-slots', content: <NoSlotsAvailableAlert /> };
+    }
 
-  if (isAgentEvicted && !isEligibleForStaking) return <EvictedAlert />;
+    if (isAgentEvicted && !isEligibleForStaking) {
+      return { key: 'evicted', content: <EvictedAlert /> };
+    }
 
-  // NOTE: Low-balance alerts, each component controls its own visibility.
+    // NOTE: Low-balance alerts, each component controls its own visibility.
+    return {
+      key: 'low-balance',
+      content: (
+        <>
+          <AgentLowBalanceAlert onFund={() => goto(PAGES.AgentWallet)} />
+          <MasterEoaLowBalanceAlert />
+        </>
+      ),
+    };
+  }, [
+    goto,
+    hasEnoughServiceSlots,
+    isAgentEvicted,
+    isAgentGeoRestricted,
+    isAnotherAgentRunning,
+    isEligibleForStaking,
+    isInitialFunded,
+    isSelectedStakingContractDetailsLoading,
+    isServiceStaked,
+    selectedAgentConfig,
+    selectedStakingProgramMeta,
+  ]);
+
   return (
-    <>
-      <AgentLowBalanceAlert onFund={() => goto(PAGES.AgentWallet)} />
-      <MasterEoaLowBalanceAlert />
-    </>
+    <AnimatePresence mode="wait" initial={false}>
+      <motion.div
+        key={key}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.1 }}
+      >
+        {content}
+      </motion.div>
+    </AnimatePresence>
   );
 };

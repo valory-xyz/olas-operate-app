@@ -1,6 +1,8 @@
+import { BigNumber } from 'ethers';
 import { MutableRefObject } from 'react';
 
 import { AgentType } from '@/constants';
+import { StakingRewardsInfo } from '@/types';
 import { isValidServiceId } from '@/utils/service';
 import { fetchAgentStakingRewardsInfo } from '@/utils/stakingRewards';
 
@@ -10,6 +12,30 @@ import {
   REWARDS_POLL_SECONDS,
 } from '../constants';
 import { AgentMeta } from '../types';
+
+/**
+ * Returns true when the staking epoch has expired but no on-chain checkpoint
+ * has been called yet (i.e. livenessPeriod seconds have elapsed since tsCheckpoint).
+ *
+ * Used to normalize `isEligibleForRewards` to false so auto-run doesn't skip
+ * all agents and stall until someone manually triggers the next checkpoint.
+ */
+export const isStakingEpochExpired = ({
+  livenessPeriod,
+  tsCheckpoint,
+}: Pick<StakingRewardsInfo, 'livenessPeriod' | 'tsCheckpoint'>): boolean => {
+  try {
+    const livenessPeriodBN = BigNumber.from(livenessPeriod);
+    if (livenessPeriodBN.lte(0)) return false;
+    const nowInSeconds = Math.floor(Date.now() / 1000);
+    // Epoch expired when time elapsed since last checkpoint >= liveness period.
+    // Comparison done in BigNumber to avoid toNumber() overflow on large values.
+    return livenessPeriodBN.lte(nowInSeconds - tsCheckpoint);
+  } catch {
+    // Malformed livenessPeriod: fail closed (treat as not expired).
+    return false;
+  }
+};
 
 /**
  * Format eligibility into a human-readable reason for logs/UI.
@@ -86,7 +112,19 @@ export const refreshRewardsEligibility = async ({
         logMessage(`rewards fetch error: ${agentType}: ${error}`);
       },
     });
-    const eligible = response?.isEligibleForRewards;
+    if (!response) return;
+
+    const epochExpired = isStakingEpochExpired(response);
+    if (epochExpired && response.isEligibleForRewards) {
+      logMessage(
+        `${agentType}: epoch expired, stale isEligibleForRewards=true overridden to false so agent runs and triggers on-chain checkpoint`,
+      );
+    }
+    // isEligibleForRewards=true → agent already earned this epoch → auto-run SKIPS it.
+    // isEligibleForRewards=false → agent hasn't earned yet → auto-run STARTS it.
+    // Epoch expired but checkpoint not yet called: true is stale, override to false so
+    // auto-run starts the agent and triggers the on-chain checkpoint for the new epoch.
+    const eligible = epochExpired ? false : response.isEligibleForRewards;
     if (typeof eligible === 'boolean') {
       setRewardSnapshot(agentType, eligible);
       return eligible;
