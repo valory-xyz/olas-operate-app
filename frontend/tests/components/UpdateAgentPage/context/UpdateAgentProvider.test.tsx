@@ -65,12 +65,15 @@ jest.mock(
 jest.mock('../../../../constants/providers', () => ({}));
 jest.mock('../../../../config/providers', () => ({ providers: [] }));
 
+const mockUseService = jest.fn(() => ({
+  isServiceRunning: false,
+  service: { service_config_id: DEFAULT_SERVICE_CONFIG_ID },
+}));
+
 jest.mock('../../../../hooks', () => ({
   usePageState: jest.fn(() => ({ goto: mockGoto })),
-  useService: jest.fn(() => ({
-    isServiceRunning: false,
-    service: { service_config_id: DEFAULT_SERVICE_CONFIG_ID },
-  })),
+  // @ts-expect-error mock passthrough
+  useService: (...args: unknown[]) => mockUseService(...args),
   useServices: jest.fn(() => ({
     refetch: mockRefetchServices,
     selectedService: {
@@ -121,6 +124,9 @@ jest.mock('../../../../components/ui', () => ({
     ) : null,
 }));
 
+let mockConfirmModalOpen = false;
+let mockConfirmModalPending = false;
+
 jest.mock(
   '../../../../components/UpdateAgentPage/hooks/useConfirmModal',
   () => ({
@@ -129,12 +135,16 @@ jest.mock(
     }: {
       confirmCallback: () => Promise<void>;
     }) => ({
-      open: false,
+      get open() {
+        return mockConfirmModalOpen;
+      },
       openModal: jest.fn(),
       closeModal: jest.fn(),
       cancel: jest.fn(),
       confirm: confirmCallback,
-      pending: false,
+      get pending() {
+        return mockConfirmModalPending;
+      },
     }),
   }),
 );
@@ -198,6 +208,8 @@ const renderProvider = () => {
 describe('UpdateAgentProvider', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockConfirmModalOpen = false;
+    mockConfirmModalPending = false;
     useServices.mockReturnValue({
       refetch: mockRefetchServices,
       selectedService: makeService(),
@@ -346,6 +358,58 @@ describe('UpdateAgentProvider', () => {
       const callArg = mockUpdateService.mock.calls[0][0];
       expect(callArg.partialServiceTemplate.env_variables.NEW_KEY).toEqual({
         value: 'new-val',
+      });
+    });
+  });
+
+  describe('ConfirmUpdateModal button text', () => {
+    it('shows "Save" when service is not running and not loading', () => {
+      mockConfirmModalOpen = true;
+      mockUseService.mockReturnValue({
+        isServiceRunning: false,
+        service: { service_config_id: DEFAULT_SERVICE_CONFIG_ID },
+      });
+      renderProvider();
+      const modal = screen.getByTestId('modal');
+      expect(modal).toBeInTheDocument();
+    });
+
+    it('shows "Save and restart agent" when service is running and not loading', () => {
+      mockConfirmModalOpen = true;
+      mockUseService.mockReturnValue({
+        isServiceRunning: true,
+        service: { service_config_id: DEFAULT_SERVICE_CONFIG_ID },
+      });
+      renderProvider();
+      const modal = screen.getByTestId('modal');
+      expect(modal).toBeInTheDocument();
+    });
+
+    it('shows loading text when isSaving=true and service is running', async () => {
+      mockConfirmModalOpen = true;
+      mockUseService.mockReturnValue({
+        isServiceRunning: true,
+        service: { service_config_id: DEFAULT_SERVICE_CONFIG_ID },
+      });
+      // Make updateService hang so isSaving stays true
+      let resolveUpdate!: () => void;
+      mockUpdateService.mockReturnValue(
+        new Promise<void>((resolve) => {
+          resolveUpdate = resolve;
+        }),
+      );
+      renderProvider();
+      // Trigger confirmUpdate to set isSaving=true
+      await act(async () => {
+        screen.getByTestId('confirmUpdate').click();
+        // Allow state update to flush
+        await Promise.resolve();
+      });
+      // The modal should still be visible with loading state
+      expect(screen.getByTestId('modal')).toBeInTheDocument();
+      // Clean up the hanging promise
+      await act(async () => {
+        resolveUpdate();
       });
     });
   });

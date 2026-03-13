@@ -327,18 +327,19 @@ describe('useMultisigs', () => {
   it('logs error when multicallProvider is missing for a chain', async () => {
     const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
 
-    // Use a chainId that doesn't have a provider in our mock
+    // Temporarily set one provider's multicallProvider to undefined
+    const original = PROVIDERS[EvmChainIdMap.Gnosis].multicallProvider;
+    (
+      PROVIDERS[EvmChainIdMap.Gnosis] as Record<string, unknown>
+    ).multicallProvider = undefined;
+
     const safe = {
       address: DEFAULT_SAFE_ADDRESS,
-      evmChainId: 999 as typeof EvmChainIdMap.Gnosis,
+      evmChainId: EvmChainIdMap.Gnosis,
       type: WALLET_TYPE.Safe,
       owner: WALLET_OWNER.Master,
     };
 
-    // No PROVIDERS entry for chainId 999, but we need PROVIDERS to iterate
-    // over it. The hook iterates Object.entries(PROVIDERS) and filters safes
-    // by chainId — since 999 is not in PROVIDERS, no multicall is attempted.
-    // So this test verifies the hook gracefully handles no matching chains.
     const { result } = renderHook(() => useMultisigs([safe]), {
       wrapper: createQueryClientWrapper(),
     });
@@ -347,8 +348,15 @@ describe('useMultisigs', () => {
       expect(result.current.masterSafesOwnersIsFetched).toBe(true);
     });
 
-    // No owners found since the chain is not in PROVIDERS
+    expect(consoleSpy).toHaveBeenCalledWith(
+      `No provider found for chainId ${EvmChainIdMap.Gnosis}`,
+    );
     expect(result.current.masterSafesOwners).toEqual([]);
+
+    // Restore
+    (
+      PROVIDERS[EvmChainIdMap.Gnosis] as Record<string, unknown>
+    ).multicallProvider = original;
     consoleSpy.mockRestore();
   });
 

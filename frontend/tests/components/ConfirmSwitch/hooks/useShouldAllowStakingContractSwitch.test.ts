@@ -128,6 +128,17 @@ describe('useShouldAllowStakingContractSwitch', () => {
       expect(result.current.totalOlas).toBe(42);
     });
 
+    it('returns 0 when getMasterSafeOlasBalanceOfInStr returns empty string', () => {
+      setupMocks({
+        safeOlasBalanceStr: '',
+        totalStakedOlasBalance: 0,
+      });
+      const { result } = renderHook(() =>
+        useShouldAllowStakingContractSwitch(),
+      );
+      expect(result.current.totalOlas).toBe(0);
+    });
+
     it('returns 0 when getMasterSafeOlasBalanceOfInStr returns undefined', () => {
       setupMocks({
         safeOlasBalanceStr: undefined,
@@ -361,7 +372,7 @@ describe('useShouldAllowStakingContractSwitch', () => {
   });
 
   describe('service with no chain_configs', () => {
-    it('treats as first deploy when service has null chain_configs', () => {
+    it('treats as first deploy when service has empty chain_configs', () => {
       const service = makeService({ chain_configs: {} });
       setupMocks({
         selectedService: service,
@@ -372,6 +383,45 @@ describe('useShouldAllowStakingContractSwitch', () => {
         useShouldAllowStakingContractSwitch(),
       );
       // First deploy (no chain_data for gnosis) + safeOlasBalance (50) < 100 => blocked
+      expect(result.current.shouldAllowSwitch).toBe(false);
+    });
+
+    it('treats as first deploy when service has null chain_configs (isNil path)', () => {
+      const service = makeService({ chain_configs: null as never });
+      setupMocks({
+        selectedService: service,
+        safeOlasBalanceStr: '50',
+        totalStakedOlasBalance: 0,
+      });
+      const { result } = renderHook(() =>
+        useShouldAllowStakingContractSwitch(),
+      );
+      // isNil(null) => true => chainData = null => first deploy
+      expect(result.current.shouldAllowSwitch).toBe(false);
+    });
+  });
+
+  describe('service with non-null chain_configs but no matching chain', () => {
+    it('treats as first deploy when chain_configs has entry but chain_data is undefined', () => {
+      const service = makeService({
+        chain_configs: {
+          gnosis: {
+            ledger_config: {
+              rpc: 'http://localhost',
+              chain: 'gnosis' as never,
+            },
+            // chain_data is missing
+          },
+        } as never,
+      });
+      setupMocks({
+        selectedService: service,
+        safeOlasBalanceStr: '50',
+        totalStakedOlasBalance: 0,
+      });
+      const { result } = renderHook(() =>
+        useShouldAllowStakingContractSwitch(),
+      );
       expect(result.current.shouldAllowSwitch).toBe(false);
     });
   });

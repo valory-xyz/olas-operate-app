@@ -13,17 +13,10 @@ const mockIpcRemoveListener = jest.fn();
 const mockWindowShow = jest.fn();
 const mockWindowClose = jest.fn();
 
+let mockElectronApi: Record<string, unknown> = {};
+
 jest.mock('../../../../hooks', () => ({
-  useElectronApi: () => ({
-    ipcRenderer: {
-      on: mockIpcOn,
-      removeListener: mockIpcRemoveListener,
-    },
-    web3AuthSwapOwnerWindow: {
-      show: mockWindowShow,
-      close: mockWindowClose,
-    },
-  }),
+  useElectronApi: () => mockElectronApi,
 }));
 
 jest.mock('antd', () => ({
@@ -36,6 +29,16 @@ describe('useWeb3AuthSwapOwner', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockElectronApi = {
+      ipcRenderer: {
+        on: mockIpcOn,
+        removeListener: mockIpcRemoveListener,
+      },
+      web3AuthSwapOwnerWindow: {
+        show: mockWindowShow,
+        close: mockWindowClose,
+      },
+    };
   });
 
   it('opens web3auth window with params', () => {
@@ -144,6 +147,89 @@ describe('useWeb3AuthSwapOwner', () => {
     });
     expect(mockOnClose).toHaveBeenCalled();
     expect(mockWindowClose).toHaveBeenCalled();
+  });
+
+  it('does nothing when web3AuthSwapOwnerWindow.show is undefined', () => {
+    mockElectronApi = {
+      ipcRenderer: {
+        on: mockIpcOn,
+        removeListener: mockIpcRemoveListener,
+      },
+      web3AuthSwapOwnerWindow: { close: mockWindowClose },
+    };
+    const { result } = renderHook(() =>
+      useWeb3AuthSwapOwner({ onFinish: mockOnFinish, onClose: mockOnClose }),
+    );
+    const params = {
+      safeAddress: DEFAULT_SAFE_ADDRESS,
+      chainId: 100,
+    } as unknown as SwapOwnerParams;
+    act(() => {
+      result.current.openWeb3AuthSwapOwnerModel(params);
+    });
+    expect(mockWindowShow).not.toHaveBeenCalled();
+  });
+
+  it('ignores success callback when data is null', () => {
+    renderHook(() =>
+      useWeb3AuthSwapOwner({ onFinish: mockOnFinish, onClose: mockOnClose }),
+    );
+    const successHandler = mockIpcOn.mock.calls.find(
+      ([event]) => event === 'web3auth-swap-owner-success',
+    )![1];
+    act(() => {
+      successHandler(null);
+    });
+    expect(mockOnFinish).not.toHaveBeenCalled();
+  });
+
+  it('ignores failure callback when data is null', () => {
+    renderHook(() =>
+      useWeb3AuthSwapOwner({ onFinish: mockOnFinish, onClose: mockOnClose }),
+    );
+    const failureHandler = mockIpcOn.mock.calls.find(
+      ([event]) => event === 'web3auth-swap-owner-failure',
+    )![1];
+    act(() => {
+      failureHandler(null);
+    });
+    expect(mockOnFinish).not.toHaveBeenCalled();
+  });
+
+  it('ignores duplicate success callback when result is already received', () => {
+    renderHook(() =>
+      useWeb3AuthSwapOwner({ onFinish: mockOnFinish, onClose: mockOnClose }),
+    );
+    const successHandler = mockIpcOn.mock.calls.find(
+      ([event]) => event === 'web3auth-swap-owner-success',
+    )![1];
+    act(() => {
+      successHandler({ txHash: MOCK_TX_HASH_1 });
+    });
+    expect(mockOnFinish).toHaveBeenCalledTimes(1);
+    // Second success call should be ignored
+    act(() => {
+      successHandler({ txHash: MOCK_TX_HASH_1 });
+    });
+    expect(mockOnFinish).toHaveBeenCalledTimes(1);
+  });
+
+  it('ignores duplicate failure callback when result is already received', () => {
+    renderHook(() =>
+      useWeb3AuthSwapOwner({ onFinish: mockOnFinish, onClose: mockOnClose }),
+    );
+    const failureHandler = mockIpcOn.mock.calls.find(
+      ([event]) => event === 'web3auth-swap-owner-failure',
+    )![1];
+    act(() => {
+      failureHandler({ error: 'Transaction reverted' });
+    });
+    expect(mockOnFinish).toHaveBeenCalledTimes(1);
+    // Second failure call should be ignored
+    act(() => {
+      failureHandler({ error: 'Transaction reverted' });
+    });
+    expect(mockOnFinish).toHaveBeenCalledTimes(1);
   });
 
   it('prevents duplicate callbacks via isResultReceived ref', () => {

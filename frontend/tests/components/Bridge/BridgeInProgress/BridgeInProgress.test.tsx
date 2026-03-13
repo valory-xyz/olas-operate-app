@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { createElement } from 'react';
+import { act, createElement } from 'react';
 
 import { TokenSymbolMap } from '../../../../config/tokens';
 import { MiddlewareChainMap } from '../../../../constants/chains';
@@ -48,15 +48,20 @@ jest.mock('../../../../components/Bridge/BridgeTransferFlow', () => ({
     }),
 }));
 
-// Mock BridgingSteps
+// Mock BridgingSteps — capture full bridge prop for testing onRetry
+let lastBridgingStepsProps: Record<string, unknown> = {};
 jest.mock(
   '../../../../components/Bridge/BridgeInProgress/BridgingSteps',
   () => ({
-    BridgingSteps: (props: { bridge?: { status: string } }) =>
-      createElement('div', {
+    BridgingSteps: (props: {
+      bridge?: { status: string; subSteps: unknown[] };
+    }) => {
+      lastBridgingStepsProps = props as Record<string, unknown>;
+      return createElement('div', {
         'data-testid': 'bridging-steps',
         'data-bridge-status': props.bridge?.status,
-      }),
+      });
+    },
   }),
 );
 
@@ -209,6 +214,7 @@ const renderComponent = (overrides: Partial<BridgeInProgressProps> = {}) =>
 describe('BridgeInProgress', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    lastBridgingStepsProps = {};
   });
 
   // -------------------------------------------------------------------------
@@ -518,6 +524,51 @@ describe('BridgeInProgress', () => {
       expect(
         screen.getByText('Keep the app open until the process is complete.'),
       ).toBeInTheDocument();
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // onBridgeFailRetry callback (lines 114-121)
+  // -------------------------------------------------------------------------
+  describe('onBridgeFailRetry callback', () => {
+    it('calls refetchBridgeExecute and forwards the outcome', async () => {
+      setupMocks({
+        bridging: {
+          isBridgingFailed: true,
+          bridgeStatus: [
+            { symbol: TokenSymbolMap.XDAI, status: 'error', txnLink: null },
+          ],
+        },
+      });
+      const onBridgeRetryOutcome = jest.fn();
+      renderComponent({ onBridgeRetryOutcome });
+
+      // Extract onRetry from the bridge subSteps passed to BridgingSteps
+      const bridgeProp = lastBridgingStepsProps.bridge as {
+        status: string;
+        subSteps: Array<{
+          onRetry?: () => void;
+          onRetryProps?: { isLoading: boolean };
+        }>;
+      };
+      expect(bridgeProp.subSteps).toHaveLength(1);
+      const { onRetry } = bridgeProp.subSteps[0];
+      expect(onRetry).toBeDefined();
+
+      // Call onRetry (which triggers onBridgeFailRetry internally)
+      await act(async () => {
+        onRetry!();
+        await Promise.resolve();
+      });
+
+      // refetchBridgeExecute should have been called with a callback
+      expect(mockRefetchBridgeExecute).toHaveBeenCalledTimes(1);
+      const callbackArg = mockRefetchBridgeExecute.mock.calls[0][0];
+      expect(typeof callbackArg).toBe('function');
+
+      // The callback should forward to onBridgeRetryOutcome
+      callbackArg('NEED_REFILL');
+      expect(onBridgeRetryOutcome).toHaveBeenCalledWith('NEED_REFILL');
     });
   });
 });

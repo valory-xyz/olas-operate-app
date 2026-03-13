@@ -28,8 +28,10 @@ jest.mock(
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   () => require('../../../helpers/autoRunMocks').verboseLoggerMockFactory(),
 );
+const mockRefreshRewardsEligibilityHelper = jest.fn().mockResolvedValue(false);
 jest.mock('../../../../context/AutoRunProvider/utils/autoRunHelpers', () => ({
-  refreshRewardsEligibility: jest.fn().mockResolvedValue(false),
+  refreshRewardsEligibility: (...args: unknown[]) =>
+    mockRefreshRewardsEligibilityHelper(...args),
 }));
 jest.mock('../../../../context/AutoRunProvider/utils/utils', () => ({
   getAgentDisplayName: jest.fn().mockReturnValue('Omenstrat'),
@@ -123,6 +125,47 @@ describe('useAutoRunOperations', () => {
         result.current.notifySkipOnce(AgentMap.PredictTrader, 'Evicted');
       });
       expect(params.logMessage).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe('refreshRewardsEligibility', () => {
+    it('delegates to helper with correct arguments', async () => {
+      const params = makeHookParams();
+      const { result } = renderHook(() => useAutoRunOperations(params));
+
+      await act(async () => {
+        await result.current.refreshRewardsEligibility(AgentMap.PredictTrader);
+      });
+
+      expect(mockRefreshRewardsEligibilityHelper).toHaveBeenCalledWith(
+        expect.objectContaining({
+          agentType: AgentMap.PredictTrader,
+          configuredAgents: params.configuredAgents,
+          logMessage: params.logMessage,
+        }),
+      );
+    });
+
+    it('calls recordMetric on rewards fetch error via onRewardsFetchError callback', async () => {
+      mockRefreshRewardsEligibilityHelper.mockImplementation(
+        async ({
+          onRewardsFetchError,
+        }: {
+          onRewardsFetchError?: () => void;
+        }) => {
+          onRewardsFetchError?.();
+          return false;
+        },
+      );
+
+      const params = makeHookParams();
+      const { result } = renderHook(() => useAutoRunOperations(params));
+
+      await act(async () => {
+        await result.current.refreshRewardsEligibility(AgentMap.PredictTrader);
+      });
+
+      expect(params.recordMetric).toHaveBeenCalledWith('rewardsErrors');
     });
   });
 

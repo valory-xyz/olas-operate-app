@@ -109,6 +109,32 @@ describe('useAutoRunStore', () => {
     expect(mockStoreSet).not.toHaveBeenCalled();
   });
 
+  it('updateAutoRun falls back to defaults when ref fields are undefined', () => {
+    // autoRunRef.current has explicitly undefined fields (not missing)
+    mockUseStore.mockReturnValue({
+      storeState: {
+        autoRun: {
+          enabled: undefined,
+          isInitialized: undefined,
+          includedAgents: undefined,
+          userExcludedAgents: undefined,
+        },
+      },
+    } as unknown as ReturnType<typeof useStore>);
+    const { result } = renderHook(() => useAutoRunStore());
+    // Pass partial with only one field - others should fall through to
+    // autoRunRef.current.x (undefined) ?? DEFAULT_AUTO_RUN.x
+    act(() => {
+      result.current.updateAutoRun({ enabled: true });
+    });
+    expect(mockStoreSet).toHaveBeenCalledWith('autoRun', {
+      enabled: true,
+      isInitialized: false,
+      includedAgents: [],
+      userExcludedAgents: [],
+    });
+  });
+
   it('updateAutoRun uses defaults when ref has no prior values', () => {
     const { result } = renderHook(() => useAutoRunStore());
     act(() => {

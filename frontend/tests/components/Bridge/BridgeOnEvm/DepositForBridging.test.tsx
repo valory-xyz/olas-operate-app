@@ -671,6 +671,92 @@ describe('DepositForBridging', () => {
       );
     });
 
+    it('returns tokens for ERC20 addresses using areAddressesEqual fallback', async () => {
+      const OLAS_ADDRESS = '0x0001A500A6B18995B03f44bb040A5fFc28E45CB0';
+      const requirements = makeBridgeFundingRequirements({
+        bridge_total_requirements: {
+          [MiddlewareChainMap.ETHEREUM]: {
+            [DEFAULT_EOA_ADDRESS]: {
+              [OLAS_ADDRESS]: '2000000000000000000',
+            },
+          },
+        },
+        bridge_refill_requirements: {
+          [MiddlewareChainMap.ETHEREUM]: {
+            [DEFAULT_EOA_ADDRESS]: {
+              [OLAS_ADDRESS]: '1000000000000000000',
+            },
+          },
+        },
+      });
+      mockUseBridgeRefillRequirements.mockReturnValue({
+        data: requirements,
+        isLoading: false,
+        isError: false,
+        isFetching: false,
+        refetch: mockRefetch,
+      });
+
+      await act(async () => {
+        renderComponent();
+      });
+      await act(async () => {
+        await Promise.resolve();
+      });
+
+      expect(screen.getByTestId('token-table')).toBeInTheDocument();
+      expect(screen.getByTestId('token-table').getAttribute('data-count')).toBe(
+        '1',
+      );
+    });
+
+    it('throws when token address does not match any known token config', async () => {
+      const UNKNOWN_TOKEN = '0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF';
+      // Make areAddressesEqual always return false so no token matches
+      mockAreAddressesEqual.mockReturnValue(false);
+
+      const requirements = makeBridgeFundingRequirements({
+        bridge_total_requirements: {
+          [MiddlewareChainMap.ETHEREUM]: {
+            [DEFAULT_EOA_ADDRESS]: {
+              [UNKNOWN_TOKEN]: '1000000000000000000',
+            },
+          },
+        },
+        bridge_refill_requirements: {
+          [MiddlewareChainMap.ETHEREUM]: {
+            [DEFAULT_EOA_ADDRESS]: {
+              [UNKNOWN_TOKEN]: '500000000000000000',
+            },
+          },
+        },
+      });
+      mockUseBridgeRefillRequirements.mockReturnValue({
+        data: requirements,
+        isLoading: false,
+        isError: false,
+        isFetching: false,
+        refetch: mockRefetch,
+      });
+
+      const consoleSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => undefined);
+
+      await expect(async () => {
+        await act(async () => {
+          renderComponent();
+        });
+        await act(async () => {
+          await Promise.resolve();
+        });
+      }).rejects.toThrow(
+        `Failed to get the token info for the following token address: ${UNKNOWN_TOKEN}`,
+      );
+
+      consoleSpy.mockRestore();
+    });
+
     it('maps token data correctly from requirements', async () => {
       const requirements = makeBridgeFundingRequirements();
       mockUseBridgeRefillRequirements.mockReturnValue({
@@ -988,6 +1074,128 @@ describe('DepositForBridging', () => {
       await waitFor(() => {
         expect(mockOnNext).toHaveBeenCalledTimes(1);
       });
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // Auto-advance when toTokenDetails or toTokenConfig is missing
+  // -------------------------------------------------------------------------
+  describe('Auto-advance edge cases', () => {
+    it('does NOT call onNext when masterEoa.address is undefined', async () => {
+      mockUseMasterWalletContext.mockReturnValue({
+        masterEoa: undefined,
+        isFetched: true,
+      });
+      const requirements = makeBridgeFundingRequirements({
+        bridge_refill_requirements: {
+          [MiddlewareChainMap.ETHEREUM]: {
+            [DEFAULT_EOA_ADDRESS]: { [AddressZero]: '0' },
+          },
+        },
+        is_refill_required: false,
+      });
+      mockUseBridgeRefillRequirements.mockReturnValue({
+        data: requirements,
+        isLoading: false,
+        isError: false,
+        isFetching: false,
+        refetch: mockRefetch,
+      });
+
+      await act(async () => {
+        renderComponent();
+      });
+      await act(async () => {
+        await Promise.resolve();
+      });
+
+      expect(mockOnNext).not.toHaveBeenCalled();
+    });
+
+    it('does NOT call onNext when isMasterWalletFetched is false in auto-advance', async () => {
+      mockUseMasterWalletContext.mockReturnValue({
+        masterEoa: makeMasterEoa(),
+        isFetched: false,
+      });
+      const requirements = makeBridgeFundingRequirements({
+        bridge_refill_requirements: {
+          [MiddlewareChainMap.ETHEREUM]: {
+            [DEFAULT_EOA_ADDRESS]: { [AddressZero]: '0' },
+          },
+        },
+        is_refill_required: false,
+      });
+      mockUseBridgeRefillRequirements.mockReturnValue({
+        data: requirements,
+        isLoading: false,
+        isError: false,
+        isFetching: false,
+        refetch: mockRefetch,
+      });
+
+      await act(async () => {
+        renderComponent();
+      });
+      await act(async () => {
+        await Promise.resolve();
+      });
+
+      expect(mockOnNext).not.toHaveBeenCalled();
+    });
+
+    it('skips transfer entries when getTokenDetails returns null', async () => {
+      mockGetTokenDetails.mockReturnValueOnce(
+        null as unknown as { symbol: 'ETH'; decimals: number },
+      );
+      const requirements = makeBridgeFundingRequirements({
+        bridge_refill_requirements: {
+          [MiddlewareChainMap.ETHEREUM]: {
+            [DEFAULT_EOA_ADDRESS]: { [AddressZero]: '0' },
+          },
+        },
+        is_refill_required: false,
+      });
+      mockUseBridgeRefillRequirements.mockReturnValue({
+        data: requirements,
+        isLoading: false,
+        isError: false,
+        isFetching: false,
+        refetch: mockRefetch,
+      });
+
+      await act(async () => {
+        renderComponent();
+      });
+      await act(async () => {
+        await Promise.resolve();
+      });
+      await act(async () => {
+        await Promise.resolve();
+      });
+
+      // Should still advance but with empty transfers array
+      await waitFor(() => {
+        expect(mockUpdateCrossChainTransferDetails).toHaveBeenCalled();
+      });
+      const details: CrossChainTransferDetails =
+        mockUpdateCrossChainTransferDetails.mock.calls[0][0];
+      expect(details.transfers).toEqual([]);
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // getBridgeRequirementsParams null
+  // -------------------------------------------------------------------------
+  describe('getBridgeRequirementsParams null', () => {
+    it('passes null params when getBridgeRequirementsParams returns null', async () => {
+      mockGetBridgeRequirementsParams.mockReturnValue(null);
+      await act(async () => {
+        renderComponent();
+      });
+      // The useMemo should return null, passed to useBridgeRefillRequirements
+      expect(mockUseBridgeRefillRequirements).toHaveBeenCalledWith(
+        expect.objectContaining({ params: null }),
+      );
     });
   });
 

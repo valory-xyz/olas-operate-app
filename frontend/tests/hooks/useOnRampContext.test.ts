@@ -28,6 +28,11 @@ jest.mock('../../utils', () => ({
 
 // ── Tests ─────────────────────────────────────────────────────────────
 
+// NOTE: The `if (!context)` guard in useOnRampContext (lines 7-9) is
+// unreachable because OnRampContext is initialized with a non-null default
+// via createContext. Spying on useContext from requireActual does not
+// intercept the bundled import, so we skip that branch.
+
 describe('useOnRampContext', () => {
   it('returns context values when used within OnRampProvider', () => {
     const wrapper = ({ children }: PropsWithChildren) =>

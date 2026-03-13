@@ -142,6 +142,22 @@ describe('getBackupWalletStatus', () => {
     expect(result.areAllBackupOwnersSame).toBe(true);
   });
 
+  it('defaults to empty array when backup_owners is undefined', () => {
+    const safes = {
+      [MiddlewareChainMap.GNOSIS]: {
+        [DEFAULT_SAFE_ADDRESS]: {
+          // backup_owners missing (undefined)
+        },
+      },
+    };
+    const masterSafes = [
+      { address: DEFAULT_SAFE_ADDRESS, evmChainId: EvmChainIdMap.Gnosis },
+    ];
+    const result = getBackupWalletStatus(safes as never, masterSafes);
+    expect(result.hasBackupWalletsAcrossEveryChain).toBe(false);
+    expect(result.backupAddress).toBeUndefined();
+  });
+
   it('returns backupAddress from the first chain in the list', () => {
     const safes = {
       [MiddlewareChainMap.GNOSIS]: {
@@ -350,6 +366,33 @@ describe('parseRecoveryFundingRequirements', () => {
 
     const rows = parseRecoveryFundingRequirements(fundingRequirements);
     expect(rows).toHaveLength(0);
+  });
+
+  it('defaults totalAmount to 0 when total_requirements has chain+safe but not token', () => {
+    const fundingRequirements: RecoveryFundingRequirements = {
+      balances: {} as RecoveryFundingRequirements['balances'],
+      is_refill_required: true,
+      pending_backup_owner_swaps:
+        {} as RecoveryFundingRequirements['pending_backup_owner_swaps'],
+      refill_requirements: {
+        [MiddlewareChainMap.GNOSIS]: {
+          [DEFAULT_SAFE_ADDRESS]: {
+            [AddressZero]: '500000000000000000',
+          },
+        },
+      } as RecoveryFundingRequirements['refill_requirements'],
+      total_requirements: {
+        [MiddlewareChainMap.GNOSIS]: {
+          [DEFAULT_SAFE_ADDRESS]: {
+            // Token address exists in refill but not in total
+          },
+        },
+      } as RecoveryFundingRequirements['total_requirements'],
+    };
+    const rows = parseRecoveryFundingRequirements(fundingRequirements);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].totalAmount).toBe(0);
+    expect(rows[0].pendingAmount).toBe(0.5);
   });
 
   it('defaults totalAmount to 0 when total_requirements entry is missing', () => {

@@ -413,6 +413,109 @@ describe('useGetBridgeRequirementsParams', () => {
     expect(request!.bridge_requests[0].from.token).toBe(UNKNOWN_TOKEN_ADDRESS);
   });
 
+  it('uses non-Ethereum fromChainConfig (TOKEN_CONFIG branch)', () => {
+    const refillRequirements: AddressBalanceRecord = {
+      [DEFAULT_SAFE_ADDRESS]: {
+        [GNOSIS_OLAS_ADDRESS]: '40000000000000000000', // 40 OLAS
+      },
+    };
+    setupMocks({ refillRequirements });
+
+    const { result } = renderHook(() =>
+      useGetBridgeRequirementsParams(AllEvmChainIdMap.Base),
+    );
+
+    const request = result.current();
+    expect(request).not.toBeNull();
+    expect(request!.bridge_requests).toHaveLength(1);
+    // from.chain should be the Base middleware chain, not Ethereum
+    expect(request!.bridge_requests[0].from.chain).toBe('base');
+  });
+
+  it('does not combine native token amounts when isMasterWalletsFetched is false', () => {
+    // When isMasterWalletsFetched is false, the combine function returns undefined,
+    // and the fallback uses the un-combined bridgeRequests from the main loop.
+    // Only safe address entries pass the isRecipientAddress/isMasterSafeAddress check.
+    const refillRequirements: AddressBalanceRecord = {
+      [DEFAULT_SAFE_ADDRESS]: {
+        [AddressZero]: '300000000000000000', // 0.3 native
+      },
+      [DEFAULT_EOA_ADDRESS]: {
+        [AddressZero]: '200000000000000000', // 0.2 native
+      },
+    };
+    setupMocks({ refillRequirements, isFetched: false });
+
+    const { result } = renderHook(() =>
+      useGetBridgeRequirementsParams(AllEvmChainIdMap.Ethereum),
+    );
+
+    const request = result.current();
+    expect(request).not.toBeNull();
+    // combine returns undefined (not fetched), fallback to un-combined bridgeRequests
+    const nativeBridgeReq = request!.bridge_requests.find(
+      (req) => req.to.token === AddressZero,
+    );
+    expect(nativeBridgeReq).toBeDefined();
+    // Only safe's 0.3 — EOA entry is skipped by isRecipientAddress/isMasterSafeAddress
+    expect(nativeBridgeReq!.to.amount).toBe('300000000000000000');
+  });
+
+  it('does not combine native when masterEoaRequirementAmount is missing', () => {
+    // Only safe has native requirement, EOA has none.
+    // combine runs but !masterEoaRequirementAmount returns early.
+    const refillRequirements: AddressBalanceRecord = {
+      [DEFAULT_SAFE_ADDRESS]: {
+        [AddressZero]: '300000000000000000', // 0.3 native
+        [GNOSIS_OLAS_ADDRESS]: '40000000000000000000', // 40 OLAS
+      },
+    };
+    setupMocks({ refillRequirements });
+
+    const { result } = renderHook(() =>
+      useGetBridgeRequirementsParams(AllEvmChainIdMap.Ethereum),
+    );
+
+    const request = result.current();
+    expect(request).not.toBeNull();
+    // combine returns undefined because masterEoaRequirementAmount is falsy
+    // so fallback keeps the original bridgeRequests
+    const nativeBridgeReq = request!.bridge_requests.find(
+      (req) => req.to.token === AddressZero,
+    );
+    expect(nativeBridgeReq).toBeDefined();
+    expect(nativeBridgeReq!.to.amount).toBe('300000000000000000');
+  });
+
+  it('does not combine native when safeRequirementAmount is missing', () => {
+    // No masterSafe: toAddress = masterEoa. EOA has native (creates bridge request via
+    // isRecipientAddress). Placeholder has OLAS but NO native. Combine finds
+    // masterEoaRequirementAmount (truthy) but safeRequirementAmount is falsy (line 89).
+    const refillRequirements = {
+      [DEFAULT_EOA_ADDRESS]: {
+        [AddressZero]: '200000000000000000', // 0.2 native
+      },
+      [MASTER_SAFE_REFILL_PLACEHOLDER]: {
+        [GNOSIS_OLAS_ADDRESS]: '40000000000000000000', // OLAS only, no native
+      },
+    } as unknown as AddressBalanceRecord & MasterSafeBalanceRecord;
+    setupMocks({ refillRequirements, masterSafe: null });
+
+    const { result } = renderHook(() =>
+      useGetBridgeRequirementsParams(AllEvmChainIdMap.Ethereum),
+    );
+
+    const request = result.current();
+    expect(request).not.toBeNull();
+    // combine returns undefined (!safeRequirementAmount), fallback to un-combined bridgeRequests
+    const nativeBridgeReq = request!.bridge_requests.find(
+      (req) => req.to.token === AddressZero,
+    );
+    expect(nativeBridgeReq).toBeDefined();
+    // Un-combined amount from EOA
+    expect(nativeBridgeReq!.to.amount).toBe('200000000000000000');
+  });
+
   it('handles multiple tokens in a single wallet creating separate bridge requests', () => {
     // Realistic: 0.3 XDAI safe gas + 40 OLAS staking + 0.2 XDAI EOA gas
     const refillRequirements: AddressBalanceRecord = {

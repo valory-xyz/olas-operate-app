@@ -145,6 +145,36 @@ describe('useStakingContractCountdown', () => {
     expect(result.current.countdownDisplay).toBe(formatCountdownDisplay(0));
   });
 
+  it('returns undefined when minimumStakingDuration is nil despite both keys being present', () => {
+    const info: Partial<StakingContractDetails & ServiceStakingDetails> = {
+      serviceStakingStartTime: NOW_IN_S - 1000,
+      minimumStakingDuration: undefined as unknown as number,
+    };
+    const { result } = renderHook(() => useStakingContractCountdown(info));
+
+    act(() => {
+      intervalCallback?.();
+    });
+
+    expect(result.current.secondsUntilReady).toBeUndefined();
+    expect(result.current.countdownDisplay).toBe('');
+  });
+
+  it('returns undefined when serviceStakingStartTime is nil despite both keys being present', () => {
+    const info: Partial<StakingContractDetails & ServiceStakingDetails> = {
+      serviceStakingStartTime: undefined as unknown as number,
+      minimumStakingDuration: 5000,
+    };
+    const { result } = renderHook(() => useStakingContractCountdown(info));
+
+    act(() => {
+      intervalCallback?.();
+    });
+
+    expect(result.current.secondsUntilReady).toBeUndefined();
+    expect(result.current.countdownDisplay).toBe('');
+  });
+
   it('passes 1000ms delay to useInterval', () => {
     renderHook(() => useStakingContractCountdown(null));
     expect(mockUseInterval).toHaveBeenCalledWith(expect.any(Function), 1000);

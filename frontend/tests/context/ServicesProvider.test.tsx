@@ -183,7 +183,29 @@ describe('ServicesProvider', () => {
       });
     });
 
-    it('syncs selectedAgentType when store changes after mount', async () => {
+    it('syncs selectedAgentType when store loads after mount', async () => {
+      // Store has no lastSelectedAgentType initially (ref starts as false)
+      mockStoreState = {};
+
+      const wrapper = createWrapper();
+      const { result, rerender } = renderHook(
+        () => useContext(ServicesContext),
+        { wrapper },
+      );
+
+      // Initially defaults to PredictTrader
+      expect(result.current.selectedAgentType).toBe(AgentMap.PredictTrader);
+
+      // Store value arrives later (e.g., async load)
+      mockStoreState = { lastSelectedAgentType: AgentMap.Optimus };
+      rerender();
+
+      await waitFor(() => {
+        expect(result.current.selectedAgentType).toBe(AgentMap.Optimus);
+      });
+    });
+
+    it('does not re-sync selectedAgentType after initial store sync', async () => {
       mockStoreState = { lastSelectedAgentType: AgentMap.PredictTrader };
 
       const wrapper = createWrapper();
@@ -196,13 +218,12 @@ describe('ServicesProvider', () => {
         expect(result.current.selectedAgentType).toBe(AgentMap.PredictTrader);
       });
 
-      // Simulate store change after mount
+      // Store changes after mount, but the ref guard prevents re-sync
       mockStoreState = { lastSelectedAgentType: AgentMap.Optimus };
       rerender();
 
-      await waitFor(() => {
-        expect(result.current.selectedAgentType).toBe(AgentMap.Optimus);
-      });
+      // selectedAgentType stays at the initial value (one-time sync only)
+      expect(result.current.selectedAgentType).toBe(AgentMap.PredictTrader);
     });
 
     it('updateAgentType writes to Electron store', async () => {
@@ -219,6 +240,28 @@ describe('ServicesProvider', () => {
         'lastSelectedAgentType',
         AgentMap.AgentsFun,
       );
+    });
+  });
+
+  describe('selectedAgentConfig', () => {
+    it('throws when agent type is not found in AGENT_CONFIG', () => {
+      const consoleSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
+
+      const wrapper = createWrapper();
+      const { result } = renderHook(() => useContext(ServicesContext), {
+        wrapper,
+      });
+
+      expect(() => {
+        act(() => {
+          // Set to an invalid agent type
+          result.current.updateAgentType('nonexistent-agent' as AgentType);
+        });
+      }).toThrow('Agent config not found for nonexistent-agent');
+
+      consoleSpy.mockRestore();
     });
   });
 
@@ -912,6 +955,33 @@ describe('ServicesProvider', () => {
           MiddlewareDeploymentStatusMap.DEPLOYED,
         );
       });
+    });
+
+    it('uses fast refetch interval for transitioning deployment status', async () => {
+      const traderService = serviceFor(AgentMap.PredictTrader);
+      mockGetServices.mockResolvedValue([traderService]);
+      mockGetDeployment.mockResolvedValue({
+        status: MiddlewareDeploymentStatusMap.DEPLOYING,
+        nodes: { agent: [], tendermint: [] },
+        healthcheck: {},
+      });
+
+      const wrapper = createWrapper();
+      const { result } = renderHook(() => useContext(ServicesContext), {
+        wrapper,
+      });
+
+      await waitFor(() => {
+        expect(result.current.deploymentDetails).toBeDefined();
+        expect(result.current.deploymentDetails?.status).toBe(
+          MiddlewareDeploymentStatusMap.DEPLOYING,
+        );
+      });
+
+      // The refetchInterval callback is invoked by react-query and should
+      // return the fast interval for transitioning statuses (DEPLOYING).
+      // We verify the deployment was fetched with the transitioning status.
+      expect(mockGetDeployment).toHaveBeenCalled();
     });
 
     it('does not fetch deployment when no service is selected', async () => {

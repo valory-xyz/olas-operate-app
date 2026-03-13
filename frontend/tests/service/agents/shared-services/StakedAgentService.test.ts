@@ -324,4 +324,25 @@ describe('StakedAgentService', () => {
       expect(result).toBeNull();
     });
   });
+
+  describe('getCurrentStakingProgramByServiceId – activeStakingProgramId fallback', () => {
+    it('returns null when the active entry index is out of bounds', async () => {
+      mockGetStakingStateA.mockReturnValue('call_a');
+      mockGetStakingStateB.mockReturnValue('call_b');
+      // Both programs resolve to false, but we manipulate the
+      // findIndex result by having an extra truthy element that
+      // does not correspond to a staking program entry.
+      // Simulate: multicall returns [0, 0, 1] where index 2 has no matching entry
+      mockMulticallAll.mockResolvedValue([0, 0, 1]);
+
+      const result =
+        await StakedAgentService.getCurrentStakingProgramByServiceId(
+          DEFAULT_SERVICE_NFT_TOKEN_ID,
+          MOCK_CHAIN_ID,
+        );
+      // activeStakingProgramIndex = 2, but stakingProgramEntries only has 2 entries (0,1)
+      // so stakingProgramEntries[2]?.[0] is undefined => returns null
+      expect(result).toBeNull();
+    });
+  });
 });

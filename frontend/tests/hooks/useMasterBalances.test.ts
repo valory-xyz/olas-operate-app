@@ -419,6 +419,164 @@ describe('useMasterBalances', () => {
     });
   });
 
+  describe('nil wallet/safe guards', () => {
+    it('returns empty allMasterWalletBalances when walletBalances is undefined', () => {
+      mockUseBalanceContext.mockReturnValue({
+        isLoaded: true,
+        walletBalances: undefined,
+      });
+
+      const { result } = renderHook(() => useMasterBalances());
+
+      // allMasterWalletBalances guard: !walletBalances => []
+      // getMasterEoaNativeBalanceOf => undefined (allMasterWalletBalances is [])
+      const nativeBalance = result.current.getMasterEoaNativeBalanceOf(
+        EvmChainIdMap.Gnosis,
+      );
+      expect(nativeBalance).toBeDefined();
+    });
+
+    it('returns empty allMasterWalletBalances when masterSafes is undefined', () => {
+      mockUseMasterWalletContext.mockReturnValue({
+        masterEoa: makeMasterEoa(),
+        masterSafes: undefined,
+      });
+
+      const { result } = renderHook(() => useMasterBalances());
+
+      // allMasterWalletBalances guard: !masterSafes => []
+      const balances = result.current.getMasterSafeBalancesOf(
+        EvmChainIdMap.Gnosis,
+      );
+      expect(balances).toEqual([]);
+    });
+
+    it('getMasterEoaBalancesOf returns empty when masterEoa is nil', () => {
+      mockUseMasterWalletContext.mockReturnValue({
+        masterEoa: undefined,
+        masterSafes: [makeMasterSafe(EvmChainIdMap.Gnosis)],
+      });
+
+      const { result } = renderHook(() => useMasterBalances());
+
+      const balances = result.current.getMasterEoaBalancesOf(
+        EvmChainIdMap.Gnosis,
+      );
+      expect(balances).toEqual([]);
+    });
+
+    it('getMasterSafeNativeBalanceOf returns undefined when allMasterWalletBalances is nil', () => {
+      mockUseBalanceContext.mockReturnValue({
+        isLoaded: true,
+        walletBalances: undefined,
+      });
+      mockUseMasterWalletContext.mockReturnValue({
+        masterEoa: makeMasterEoa(),
+        masterSafes: undefined,
+      });
+
+      const { result } = renderHook(() => useMasterBalances());
+
+      const balance = result.current.getMasterSafeNativeBalanceOf(
+        EvmChainIdMap.Gnosis,
+      );
+      expect(balance).toBeUndefined();
+    });
+
+    it('getMasterSafeErc20BalancesInStr returns undefined when no safe exists for chain', () => {
+      mockUseMasterWalletContext.mockReturnValue({
+        masterEoa: makeMasterEoa(),
+        masterSafes: [makeMasterSafe(EvmChainIdMap.Base)],
+      });
+
+      const { result } = renderHook(() => useMasterBalances());
+
+      const erc20 = result.current.getMasterSafeErc20BalancesInStr(
+        EvmChainIdMap.Gnosis,
+      );
+      expect(erc20).toBeUndefined();
+    });
+
+    it('masterEoaNative is undefined when evmHomeChainId is falsy', () => {
+      mockUseServices.mockReturnValue({
+        selectedAgentConfig: { evmHomeChainId: 0 },
+      });
+
+      const { result } = renderHook(() => useMasterBalances());
+
+      expect(result.current.masterEoaGasRequirement).toBeUndefined();
+    });
+
+    it('getMasterSafeErc20BalancesInStr sums multiple ERC20 balances with same symbol', () => {
+      mockUseBalanceContext.mockReturnValue({
+        isLoaded: true,
+        walletBalances: [
+          makeWalletBalance({
+            walletAddress: DEFAULT_SAFE_ADDRESS,
+            symbol: TokenSymbolMap.WXDAI,
+            isNative: false,
+            balanceString: '1000000000000000000',
+          }),
+          makeWalletBalance({
+            walletAddress: DEFAULT_SAFE_ADDRESS,
+            symbol: TokenSymbolMap.WXDAI,
+            isNative: false,
+            balanceString: '2000000000000000000',
+          }),
+        ],
+      });
+
+      const { result } = renderHook(() => useMasterBalances());
+
+      const erc20Balances = result.current.getMasterSafeErc20BalancesInStr(
+        EvmChainIdMap.Gnosis,
+      );
+      expect(erc20Balances).toEqual({ WXDAI: '3000000000000000000.0' });
+    });
+
+    it('getMasterEoaNativeBalanceOf returns undefined when chainId is falsy (0)', () => {
+      const { result } = renderHook(() => useMasterBalances());
+
+      const balance = result.current.getMasterEoaNativeBalanceOf(
+        // @ts-expect-error testing falsy chainId
+        0,
+      );
+      expect(balance).toBeUndefined();
+    });
+
+    it('getMasterEoaBalancesOf returns empty when chainId is falsy (0)', () => {
+      const { result } = renderHook(() => useMasterBalances());
+
+      const balances = result.current.getMasterEoaBalancesOf(
+        // @ts-expect-error testing falsy chainId
+        0,
+      );
+      expect(balances).toEqual([]);
+    });
+
+    it('getMasterSafeErc20BalancesInStr handles undefined balanceString with ?? fallback', () => {
+      mockUseBalanceContext.mockReturnValue({
+        isLoaded: true,
+        walletBalances: [
+          makeWalletBalance({
+            walletAddress: DEFAULT_SAFE_ADDRESS,
+            symbol: TokenSymbolMap.WXDAI,
+            isNative: false,
+            balanceString: undefined as unknown as string,
+          }),
+        ],
+      });
+
+      const { result } = renderHook(() => useMasterBalances());
+
+      const erc20Balances = result.current.getMasterSafeErc20BalancesInStr(
+        EvmChainIdMap.Gnosis,
+      );
+      // undefined balanceString falls back to '0'
+      expect(erc20Balances).toEqual({ WXDAI: '0.0' });
+    });
+  });
+
   describe('cross-chain filtering', () => {
     it('only returns balances for the correct chain', () => {
       mockUseMasterWalletContext.mockReturnValue({

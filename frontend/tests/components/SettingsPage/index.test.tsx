@@ -402,6 +402,23 @@ describe('Settings (SettingsPage entry)', () => {
     });
   });
 
+  describe('masterSafeBackupAddresses when masterEoa is undefined', () => {
+    it('treats backup addresses as undefined and shows fallback text', () => {
+      setupDefaults({ ownersIsFetched: true, owners: [BACKUP_SIGNER_ADDRESS] });
+      mockUseMasterWalletContext.mockReturnValue({
+        masterEoa: undefined,
+        masterSafes: [mockMasterSafe],
+        isLoading: false,
+      });
+      render(<Settings />);
+      // When masterEoa is undefined, masterSafeBackupAddresses returns undefined
+      // from the early return at line 137, masterSafeBackupAddress is also undefined,
+      // and walletBackup renders "No backup wallet added." (not the AddressLink)
+      expect(screen.getByText('No backup wallet added.')).toBeInTheDocument();
+      expect(screen.queryByTestId('address-link')).not.toBeInTheDocument();
+    });
+  });
+
   describe('SettingsScreenMap constant', () => {
     it('exports Main as the only screen', () => {
       expect(SettingsScreenMap).toEqual({ Main: 'Main' });

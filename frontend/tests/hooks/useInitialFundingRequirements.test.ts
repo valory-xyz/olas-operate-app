@@ -251,4 +251,87 @@ describe('useInitialFundingRequirements', () => {
     stakingMock.STAKING_PROGRAMS[100].pearl_beta_mech_marketplace_3 =
       originalStakingReqs;
   });
+
+  it('handles undefined fund_requirements by treating native gas as 0', () => {
+    const templatesMock = jest.requireMock('../../constants/serviceTemplates');
+    const originalConfigurations =
+      templatesMock.SERVICE_TEMPLATES[0].configurations;
+
+    // Set fund_requirements to undefined for the gnosis config
+    templatesMock.SERVICE_TEMPLATES[0].configurations = {
+      gnosis: { fund_requirements: undefined },
+    };
+
+    const { result } = renderHook(() =>
+      useInitialFundingRequirements(AgentMap.PredictTrader),
+    );
+
+    const gnosisResult = result.current[EvmChainIdMap.Gnosis];
+    expect(gnosisResult).toBeDefined();
+    // monthlyGas = 0n (no fund_requirements)
+    // safeCreationThreshold = 0.1e18 (no master safe)
+    // agentDeploymentGas = 2n
+    // total = (0 + 0.1e18 + 2) / 1e18 = 0.1
+    expect(gnosisResult.XDAI).toBe(0.1);
+
+    // Restore
+    templatesMock.SERVICE_TEMPLATES[0].configurations = originalConfigurations;
+  });
+
+  it('handles fund_requirements with AddressZero but missing safe/agent fields', () => {
+    const templatesMock = jest.requireMock('../../constants/serviceTemplates');
+    const originalConfigurations =
+      templatesMock.SERVICE_TEMPLATES[0].configurations;
+
+    // AddressZero entry exists but safe/agent are undefined
+    templatesMock.SERVICE_TEMPLATES[0].configurations = {
+      gnosis: {
+        fund_requirements: {
+          '0x0000000000000000000000000000000000000000': {},
+        },
+      },
+    };
+
+    const { result } = renderHook(() =>
+      useInitialFundingRequirements(AgentMap.PredictTrader),
+    );
+
+    const gnosisResult = result.current[EvmChainIdMap.Gnosis];
+    expect(gnosisResult).toBeDefined();
+    // safe || 0 => 0, agent || 0 => 0, so monthlyGas = 0n
+    expect(gnosisResult.XDAI).toBe(0.1);
+
+    // Restore
+    templatesMock.SERVICE_TEMPLATES[0].configurations = originalConfigurations;
+  });
+
+  it('handles fund_requirements without AddressZero entry', () => {
+    const templatesMock = jest.requireMock('../../constants/serviceTemplates');
+    const originalConfigurations =
+      templatesMock.SERVICE_TEMPLATES[0].configurations;
+
+    // Set fund_requirements with a non-AddressZero token only
+    templatesMock.SERVICE_TEMPLATES[0].configurations = {
+      gnosis: {
+        fund_requirements: {
+          '0x1234567890123456789012345678901234567890': {
+            safe: '1000000000000000000',
+            agent: '500000000000000000',
+          },
+        },
+      },
+    };
+
+    const { result } = renderHook(() =>
+      useInitialFundingRequirements(AgentMap.PredictTrader),
+    );
+
+    const gnosisResult = result.current[EvmChainIdMap.Gnosis];
+    expect(gnosisResult).toBeDefined();
+    // No native token in fund_requirements -> getNativeInitialGasRequirement returns 0n
+    expect(gnosisResult.XDAI).toBe(0.1);
+
+    // Restore
+    templatesMock.SERVICE_TEMPLATES[0].configurations = originalConfigurations;
+  });
 });

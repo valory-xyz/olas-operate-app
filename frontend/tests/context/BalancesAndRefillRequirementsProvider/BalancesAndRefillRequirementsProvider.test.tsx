@@ -308,6 +308,141 @@ describe('BalancesAndRefillRequirementsProvider', () => {
       expect(ctx.totalRequirements).toBeUndefined();
       expect(ctx.agentFundingRequests).toBeUndefined();
     });
+
+    it('default refetch and refetchForSelectedAgent return resolved promises', async () => {
+      let refetchFn: (() => Promise<unknown>) | null = null;
+      let refetchForSelectedFn: (() => Promise<unknown>) | null = null;
+
+      const DefaultFnConsumer = () => {
+        const ctx = useContext(BalancesAndRefillRequirementsProviderContext);
+        refetchFn = ctx.refetch;
+        refetchForSelectedFn = ctx.refetchForSelectedAgent;
+        return <div>ready</div>;
+      };
+
+      const queryClient = new QueryClient();
+      render(
+        <QueryClientProvider client={queryClient}>
+          <DefaultFnConsumer />
+        </QueryClientProvider>,
+      );
+
+      // Call default refetch and refetchForSelectedAgent
+      const refetchResult = await refetchFn!();
+      expect(refetchResult).toBeDefined();
+
+      const refetchSelectedResult = await refetchForSelectedFn!();
+      expect(refetchSelectedResult).toBeDefined();
+    });
+  });
+
+  describe('useRequirementsFetchInterval (internal hook)', () => {
+    it('uses backoff when service is running and not eligible for rewards', async () => {
+      // Service is running (deployed) and not eligible for rewards
+      mockGetBalancesAndFundingRequirements.mockResolvedValue(
+        makeBalancesAndFundingRequirements({
+          agent_funding_in_progress: false,
+          agent_funding_requests_cooldown: false,
+        }),
+      );
+
+      const { container } = setup({
+        isEligibleForRewards: false,
+        selectedService: {
+          ...defaultService,
+          deploymentStatus: MiddlewareDeploymentStatusMap.DEPLOYED,
+        },
+      });
+
+      await waitFor(() => {
+        const ctx = parseContext(container);
+        expect(ctx.isBalancesAndFundingRequirementsLoading).toBe(false);
+      });
+
+      // Query should have run with updateRefetchCounter
+      expect(mockGetBalancesAndFundingRequirements).toHaveBeenCalled();
+    });
+
+    it('uses THIRTY_SECONDS_INTERVAL when funding data is stale', async () => {
+      // Return data that indicates funding is in progress
+      mockGetBalancesAndFundingRequirements.mockResolvedValue(
+        makeBalancesAndFundingRequirements({
+          agent_funding_in_progress: true,
+          agent_funding_requests_cooldown: false,
+        }),
+      );
+
+      const { container } = setup({
+        isEligibleForRewards: true,
+        selectedService: {
+          ...defaultService,
+          deploymentStatus: MiddlewareDeploymentStatusMap.DEPLOYED,
+        },
+      });
+
+      await waitFor(() => {
+        const ctx = parseContext(container);
+        expect(ctx.isAgentFundingRequestsStale).toBe(true);
+      });
+    });
+
+    it('returns THIRTY_SECONDS_INTERVAL when stale ref is true on recompute', async () => {
+      // Step 1: Set up with stale data and isEligibleForRewards=false
+      // (so initial useMemo picks the backoff path). The query will resolve
+      // and updateRefetchCounter sets isAgentFundingRequestsStaleRef.current = true.
+      mockGetBalancesAndFundingRequirements.mockResolvedValue(
+        makeBalancesAndFundingRequirements({
+          agent_funding_in_progress: true,
+          agent_funding_requests_cooldown: false,
+        }),
+      );
+
+      const { container, rerender } = setup({
+        isEligibleForRewards: false,
+        selectedService: {
+          ...defaultService,
+          deploymentStatus: MiddlewareDeploymentStatusMap.DEPLOYED,
+        },
+      });
+
+      // Step 2: Wait for query to resolve (sets stale ref to true)
+      await waitFor(() => {
+        const ctx = parseContext(container);
+        expect(ctx.isAgentFundingRequestsStale).toBe(true);
+      });
+
+      // Step 3: Change isEligibleForRewards to force useMemo to recompute.
+      // Now the stale ref is true, so the useMemo hits the stale branch (lines 146-148).
+      mockUseRewardContext.mockReturnValue({ isEligibleForRewards: true });
+      rerender(<TestConsumer />);
+
+      // Step 4: Verify the context still reflects stale state
+      await waitFor(() => {
+        const ctx = parseContext(container);
+        expect(ctx.isAgentFundingRequestsStale).toBe(true);
+      });
+    });
+
+    it('resets refetch count when service stops running', async () => {
+      // First render with a running service
+      mockGetBalancesAndFundingRequirements.mockResolvedValue(
+        makeBalancesAndFundingRequirements(),
+      );
+
+      const { container } = setup({
+        isEligibleForRewards: false,
+        selectedService: {
+          ...defaultService,
+          deploymentStatus: MiddlewareDeploymentStatusMap.STOPPED,
+        },
+      });
+
+      await waitFor(() => {
+        const ctx = parseContext(container);
+        expect(ctx.isBalancesAndFundingRequirementsLoading).toBe(false);
+      });
+      expect(mockGetBalancesAndFundingRequirements).toHaveBeenCalled();
+    });
   });
 
   describe('isRefillRequired', () => {

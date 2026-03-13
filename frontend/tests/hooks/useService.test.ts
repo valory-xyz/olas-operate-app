@@ -603,7 +603,27 @@ describe('useService', () => {
   });
 
   // -------------------------------------------------------------------
-  // 9. Edge cases
+  // 9. Internal callback guard branches
+  // -------------------------------------------------------------------
+  describe('internal guard branches', () => {
+    it('getServiceSafeOf returns undefined when hook service is undefined', () => {
+      // Hook rendered with nonexistent configId → service is undefined
+      // Calling getServiceSafeOf with a valid configId still hits !service guard
+      const svc = makeFullService();
+      setupMock({ services: [svc], selectedService: svc });
+
+      const { result } = renderHook(() => useService('nonexistent-id'));
+      expect(
+        result.current.getServiceSafeOf(
+          EvmChainIdMap.Gnosis,
+          DEFAULT_SERVICE_CONFIG_ID,
+        ),
+      ).toBeUndefined();
+    });
+  });
+
+  // -------------------------------------------------------------------
+  // 10. Edge cases
   // -------------------------------------------------------------------
   describe('edge cases', () => {
     it('returns isLoaded from useServices isFetched', () => {
