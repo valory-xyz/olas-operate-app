@@ -1,6 +1,6 @@
 import { StakingProgramConfig } from '../../config/stakingPrograms';
 import { ACHIEVEMENT_TYPE } from '../../constants/achievement';
-import { AgentMap } from '../../constants/agent';
+import { AgentMap, AgentType } from '../../constants/agent';
 import {
   EvmChainId,
   EvmChainIdMap,
@@ -418,6 +418,30 @@ export const makeRewardsHistoryServiceResponse = ({
     latestStakingContract,
     rewardsHistory,
   },
+});
+
+// --- Auto-run AgentMeta factory ---
+
+/**
+ * Builds an AgentMeta for auto-run tests.
+ *
+ * NOTE: `agentConfig` must be passed by the caller (e.g. `AGENT_CONFIG[agentType]`).
+ * We cannot import AGENT_CONFIG here because it triggers `parseEther` and staking
+ * program imports, creating circular dependencies in agent service tests.
+ */
+export const makeAutoRunAgentMeta = (
+  agentType: AgentType,
+  agentConfig: AgentConfig,
+  serviceConfigId: string = DEFAULT_SERVICE_CONFIG_ID,
+) => ({
+  agentType,
+  agentConfig,
+  service: makeService({ service_config_id: serviceConfigId }),
+  serviceConfigId,
+  chainId: agentConfig.evmHomeChainId,
+  stakingProgramId: DEFAULT_STAKING_PROGRAM_ID,
+  multisig: MOCK_MULTISIG_ADDRESS,
+  serviceNftTokenId: DEFAULT_SERVICE_NFT_TOKEN_ID,
 });
 
 // --- Achievement factories ---
