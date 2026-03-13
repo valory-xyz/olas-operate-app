@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { AgentType } from '@/constants';
 import { useAgentRunning, useRewardContext, useStartService } from '@/hooks';
@@ -9,6 +9,7 @@ import {
   HEALTH_SUMMARY_INTERVAL_SECONDS,
 } from '../constants';
 import { AgentMeta } from '../types';
+import { isStakingEpochExpired } from '../utils/autoRunHelpers';
 import { useAutoRunLifecycle } from './useAutoRunLifecycle';
 import { useAutoRunOperations } from './useAutoRunOperations';
 import { useAutoRunScanner } from './useAutoRunScanner';
@@ -61,7 +62,14 @@ export const useAutoRunController = ({
   onAutoRunAgentStarted,
   onAutoRunStartStateChange,
 }: UseAutoRunControllerParams) => {
-  const { isEligibleForRewards } = useRewardContext();
+  const { isEligibleForRewards, stakingRewardsDetails } = useRewardContext();
+
+  // Tracks whether the staking epoch has expired without a checkpoint
+  // being called on-chain yet
+  const isEpochExpired = useMemo(() => {
+    if (!stakingRewardsDetails) return false;
+    return isStakingEpochExpired(stakingRewardsDetails);
+  }, [stakingRewardsDetails]);
   const { runningAgentType } = useAgentRunning();
   const { startService } = useStartService();
   const { logMessage } = useLogAutoRunEvent();
@@ -130,6 +138,7 @@ export const useAutoRunController = ({
     runningAgentType,
     isSelectedAgentDetailsLoading,
     isEligibleForRewards,
+    isEpochExpired,
     selectedAgentType,
     selectedServiceConfigId,
     logMessage,

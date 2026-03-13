@@ -29,11 +29,8 @@ export const REWARDS_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN: Record<
   [EvmChainIdMap.Polygon]: 'https://staking-polygon.subgraph.autonolas.tech',
 };
 
-// discord
-export const SUPPORT_URL: Url =
-  'https://discord.com/channels/899649805582737479/1244588374736502847';
-export const COMMUNITY_ASSISTANCE_URL: Url =
-  'https://discord.com/channels/899649805582737479/1335000001797034044';
+// telegram
+export const SUPPORT_URL: Url = 'https://t.me/olaschat';
 
 // github
 export const GITHUB_API_LATEST_RELEASE: Url =

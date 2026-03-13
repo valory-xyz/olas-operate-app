@@ -171,10 +171,10 @@ All waits are guarded by `enabledRef.current`, `sleepAwareDelay()`, and hard tim
 |--------|---------|-----------------|
 | `started` | Agent deployed and running | Done |
 | `agent_blocked` | Deterministic blocker (low balance, evicted, etc.) | Skip with notification, advance queue |
-| `infra_failed` | Transient failure (RPC/network/timeout) | Schedule short rescan, do NOT advance queue |
+| `infra_failed` | Transient failure (RPC/network/timeout) | Mark `hasInfraFailed`, continue scan to try remaining candidates; schedule short rescan if all fail |
 | `aborted` | Auto-run disabled or sleep detected | Stop processing |
 
-The `infra_failed` handling prevents the scanner from rotating to a different agent when the backend is temporarily down.
+The `infra_failed` handling prevents the scanner from permanently rotating the selected agent on a transient failure. Remaining candidates in the current scan cycle are still tried (they may have different staking contracts and sufficient balance), but the selected agent is not replaced as the preferred choice.
 
 ---
 
@@ -249,6 +249,7 @@ Every delay and poll interval in auto-run uses `sleepAwareDelay`. On `false`:
 | 5 | Agent earns rewards | Stop → cooldown → start next | `false→true` transition triggers `rotateToNext` |
 | 6 | Agent already earned before enable | Skip, move to next | Rewards snapshot check before start |
 | 7 | All agents earned | Keep current running, rescan in 30min | `allEarnedOrUnknown` → `SCAN_ELIGIBLE_DELAY_SECONDS` |
+| 7a | Epoch expired (clock = 0), all agents show `isEligibleForRewards = true` from old epoch, no agent running | Treat as not-yet-earned and start next agent to trigger on-chain checkpoint | `epochExpired` check in `refreshRewardsEligibility` (fresh chain data) + separate `isEpochExpired` flag passed to `useAutoRunSignals` where `!isEligibleForRewards \|\| isEpochExpired` is evaluated at the snapshot write |
 
 ### Blocked Agents
 
@@ -283,7 +284,7 @@ Every delay and poll interval in auto-run uses `sleepAwareDelay`. On `false`:
 
 | # | Scenario | Expected | Implementation |
 |---|----------|----------|----------------|
-| 22 | Start fails (transient) | Retry with backoff; on final failure return `INFRA_FAILED`; do NOT advance queue | `startAgentWithRetries` → `INFRA_FAILED` → `SCAN_LOADING_RETRY_SECONDS` rescan |
+| 22 | Start fails (transient) | Retry with backoff; on final failure return `INFRA_FAILED`; try remaining scan candidates, then schedule short rescan | `startAgentWithRetries` → `INFRA_FAILED` → scanner continues to next candidates → `SCAN_LOADING_RETRY_SECONDS` rescan if all fail |
 | 23 | Stop fails | Bounded retries; reset rewards guard; schedule rescan | `stopAgentWithRecovery` + guard reset + `SCAN_BLOCKED_DELAY_SECONDS` |
 | 24 | Disable during stop recovery | Stop recovery runs to completion | `waitForStoppedDeployment` does not check `enabledRef` |
 | 25 | Rewards API fails (RPC error) | Log error, continue | Returns `undefined`; treated as "not yet earned" |
@@ -367,8 +368,12 @@ Every delay and poll interval in auto-run uses `sleepAwareDelay`. On `false`:
 - **Fix**: Reset rewards guard + schedule `SCAN_BLOCKED_DELAY_SECONDS` rescan + `stopRetryBackoffUntilRef` prevents immediate re-trigger loop.
 
 ### P0 — Transient start failures rotated queue to wrong agent
-- **Root cause**: Scanner treated all failures (including `Failed to fetch`) as blocked and advanced queue.
-- **Fix**: Structured `AutoRunStartResult` with `infra_failed` status; scanner pauses on infra failure without advancing.
+- **Root cause**: Scanner treated all failures (including `Failed to fetch`) as blocked and advanced queue, causing permanent rotation to the wrong agent on transient errors.
+- **Fix**: Structured `AutoRunStartResult` with `infra_failed` status; scanner marks `hasInfraFailed` and continues to remaining candidates rather than treating transient failures as permanent blockers.
+
+### P1 — `infra_failed` caused infinite single-agent retry loop, other candidates never tried
+- **Root cause**: Two compounding bugs: (1) `scanAndStartNext` returned early on `INFRA_FAILED` instead of continuing to try remaining candidates; (2) `startSelectedAgentIfEligible` scheduled a blind 30s rescan of the same failing agent on `INFRA_FAILED` instead of scanning other candidates. In practice: if memeooorr failed due to insufficient staking balance, optimus and trader were never tried even though they might have different staking contracts and sufficient balance. The system retried the same agent every 30s indefinitely.
+- **Fix**: (1) `scanAndStartNext` now uses `hasInfraFailed = true` + `continue` on `INFRA_FAILED`, visiting all remaining candidates before scheduling rescan; (2) `startSelectedAgentIfEligible` now calls `await scanAndStartNext(selectedAgentType)` on `INFRA_FAILED` (passing selected as `startFrom` so other agents are tried first), then returns `true` to prevent lifecycle double-invocation.
 
 ### P0 — Stop recovery lacked bounded retries
 - **Root cause**: Single stop attempt relied on derived running-agent signal; backend hiccups caused instability.
@@ -424,6 +429,10 @@ Every delay and poll interval in auto-run uses `sleepAwareDelay`. On `false`:
 - **Root cause**: The watchdog catch block logged the error and scheduled a rescan but did **not** reset `lastRewardsEligibilityRef.current[agentType]`. Scenario: agent A runs 1.5h → rewards flip true → `checkRewardsAndRotate` detects true, sets guard to `true`, calls `rotateToNext` → all other agents earned/unknown → returns early keeping A running (guard stays `true`). Subsequent polls see `previousEligibility === true` and bail — correct during this epoch. 1.5 hours later the watchdog fires, `rotateToNext(force: true)` is called, but `refreshRewardsEligibility` (inside `Promise.all`) throws a network error → catch block does not reset guard → `lastRewardsEligibilityRef[A]` remains `true` → all future rewards polls blocked permanently — deadlock.
 - **Fix**: Watchdog catch block now resets `lastRewardsEligibilityRef.current[currentType] = undefined`, mirroring the same fix already present in `checkRewardsAndRotate`'s catch block. Added `lastRewardsEligibilityRef` to the watchdog effect's dependency array for consistency.
 
+### P1 — Agents permanently stuck after epoch expires (epoch clock = 0)
+- **Root cause**: When the staking epoch expires (`nowInSeconds - tsCheckpoint >= livenessPeriod`) but no `checkpoint()` has been called on-chain, every agent that ran in the previous epoch retains `isEligibleForRewards = true`. Auto-run's scanner skips every candidate (`candidateEligibility === true`) and schedules a 30-min rescan. Since no agent is running to trigger `checkpoint()`, `tsCheckpoint` never advances, `isEligibleForRewards` stays `true` for all, and the system stays stuck indefinitely. The epoch clock UI shows 0 / "Soon".
+- **Fix**: Two-layer check using `isEligibleForRewards` and `isEpochExpired` as separate concerns — `isEligibleForRewards` is not mutated (it remains valid business data: the agent did earn in the previous epoch). (1) `refreshRewardsEligibility` in `autoRunHelpers.ts` computes `epochExpired` from the fresh chain response and writes `false` to the snapshot when the epoch has expired, regardless of `isEligibleForRewards`; (2) `useAutoRunController` computes a separate `isEpochExpired: boolean` flag (from `stakingRewardsDetails`) and passes it alongside the raw `isEligibleForRewards` to `useAutoRunSignals`, which applies `isEpochExpired ? false : isEligibleForRewards` at the snapshot write — preventing the RewardProvider's 5s poll from overwriting the corrected snapshot with stale `true`. Both layers evaluate `!isEligibleForRewards || isEpochExpired` to decide whether an agent should run.
+
 ### Code — Magic numbers replaced with named constants
 - `SCAN_LOADING_RETRY_SECONDS = 30` replaces hardcoded `scheduleNextScan(30)`.
 
@@ -441,9 +450,12 @@ Returns `Promise<boolean>`. `true` = normal completion. `false` = sleep/wake det
 Races an operation against a timeout. Used to wrap `startService()` (15min) and `stopDeployment()` (5min) calls so they cannot hang indefinitely. Does not cancel the underlying operation.
 
 ### `refreshRewardsEligibility(params)` — `utils/autoRunHelpers.ts`
-Fetches staking rewards info from the chain. Throttled per agent (max once per `REWARDS_POLL_SECONDS`). Returns `true` (earned), `false` (not earned), or `undefined` (error/missing data).
+Fetches staking rewards info from the chain. Throttled per agent (max once per `REWARDS_POLL_SECONDS`). Returns `true` (earned), `false` (not earned), or `undefined` (error/missing data). When the epoch has expired, always returns `false` regardless of `isEligibleForRewards` (stale data guard).
 
-### `normalizeEligibility(eligibility)` — `useAutoRunOperations.ts`
+### `isStakingEpochExpired({ livenessPeriod, tsCheckpoint })` — `utils/autoRunHelpers.ts`
+Returns `true` when `nowInSeconds - tsCheckpoint >= livenessPeriod` (epoch timer elapsed but `checkpoint()` not yet called). Used in two places: inside `refreshRewardsEligibility` (fresh chain data), and in `useAutoRunController` to compute `isEpochExpired` passed to `useAutoRunSignals`. Does not modify `isEligibleForRewards`.
+
+### `normalizeEligibility(eligibility)` — `utils/autoRunHelpers.ts`
 Converts transient states ("Another agent running", stale "Loading: Balances") into consistent signals for the scanner to act on.
 
 ---

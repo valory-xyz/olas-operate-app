@@ -3,8 +3,8 @@
 #        ▼
 # calculate-version  (create next prod version)
 #        │
-#        ├─► run-release      (Mac/Linux)
-#        │       uses release.yml
+#        ├─► run-release      (Mac)
+#        │       uses release_mac.yml
 #        │       gets tag = new_tag
 #        │
 #        └─► run-release-win  (Windows)
@@ -39,7 +39,7 @@ jobs:
   run-release:
     needs: calculate-version
     if: ${{ github.actor != 'github-actions[bot]' && !contains(github.event.head_commit.message, '[skip release]') }}
-    uses: ./.github/workflows/release.yml
+    uses: ./.github/workflows/release_mac.yml
     with:
       tag: ${{ needs.calculate-version.outputs.new_tag }}
     secrets: inherit
