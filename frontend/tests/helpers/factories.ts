@@ -467,7 +467,7 @@ export const makePolystratPayoutAchievement = (
   acknowledged: false,
   title: '2.13× Payout',
   description: 'Your prediction paid off with a 2.13× return',
-  timestamp: 1741336277,
+  timestamp: 1772668800,
   data: {
     id: MOCK_BET_ID,
     prediction_side: 'Yes',
