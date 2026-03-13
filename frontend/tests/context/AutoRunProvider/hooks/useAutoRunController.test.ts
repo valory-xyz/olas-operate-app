@@ -145,7 +145,9 @@ describe('useAutoRunController', () => {
     rerender({ ...params, enabled: false });
   });
 
-  if (AUTO_RUN_VERBOSE_LOGS) {
+  // Tests for verbose logging — skipped (not silently dropped) when the flag is off
+  const describeVerbose = AUTO_RUN_VERBOSE_LOGS ? describe : describe.skip;
+  describeVerbose('health summary logging (AUTO_RUN_VERBOSE_LOGS)', () => {
     it('logs health summary at interval when enabled', () => {
       const mockLogMessage = jest.fn();
       useLogAutoRunEvent.mockReturnValue({ logMessage: mockLogMessage });
@@ -226,5 +228,5 @@ describe('useAutoRunController', () => {
         jest.advanceTimersByTime(HEALTH_SUMMARY_INTERVAL_SECONDS * 1000 * 2);
       });
     });
-  }
+  });
 });

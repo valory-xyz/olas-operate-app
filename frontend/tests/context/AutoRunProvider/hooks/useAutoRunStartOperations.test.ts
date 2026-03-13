@@ -214,30 +214,40 @@ describe('useAutoRunStartOperations', () => {
   });
 
   it('notifies skip with isLoadingReason=true when eligibility is Loading', async () => {
+    const loadingEligibility = {
+      canRun: false,
+      reason: ELIGIBILITY_REASON.LOADING,
+      loadingReason: 'Balances',
+    };
     const params = makeHookParams({
-      getSelectedEligibility: jest.fn().mockReturnValue({
-        canRun: false,
-        reason: ELIGIBILITY_REASON.LOADING,
-        loadingReason: 'Balances',
-      }),
+      // First call inside waitForEligibilityReady: non-LOADING so the wait
+      // exits with true. Second call at the post-wait check: still LOADING.
+      getSelectedEligibility: jest
+        .fn()
+        .mockReturnValueOnce({ canRun: false, reason: 'InsufficientBalance' })
+        .mockReturnValue(loadingEligibility),
       // Balances not ready so normalizeEligibility won't promote to canRun=true
       getBalancesStatus: jest
         .fn()
         .mockReturnValue({ ready: false, loading: true }),
     });
-    // Make eligibility wait timeout so we reach the eligibility check
-    mockSleepAwareDelay.mockResolvedValue(false);
 
     const { result } = renderHook(() => useAutoRunStartOperations(params));
 
+    let startResult: { status: string; reason?: string } | undefined;
     await act(async () => {
-      await result.current.startAgentWithRetries(AgentMap.PredictTrader);
+      startResult = await result.current.startAgentWithRetries(
+        AgentMap.PredictTrader,
+      );
     });
 
-    // When eligibility wait times out (sleepAwareDelay returns false),
-    // the flow returns ABORTED, not AGENT_BLOCKED
-    // But the eligibility check after waitForEligibilityReady returning false
-    // should be an ABORTED result
+    expect(startResult?.status).toBe(AUTO_RUN_START_STATUS.AGENT_BLOCKED);
+    expect(startResult?.reason).toBe('Loading: Balances');
+    expect(params.notifySkipOnce).toHaveBeenCalledWith(
+      AgentMap.PredictTrader,
+      'Loading: Balances',
+      true, // isLoadingReason
+    );
   });
 
   it('calls onAutoRunStartStateChange(false) in finally block', async () => {

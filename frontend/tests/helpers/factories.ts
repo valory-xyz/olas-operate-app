@@ -1,7 +1,6 @@
-import { ACHIEVEMENT_TYPE } from '../../constants/achievement';
-import { AgentType } from '../../constants/agent';
 import { StakingProgramConfig } from '../../config/stakingPrograms';
-import { AgentMap } from '../../constants/agent';
+import { ACHIEVEMENT_TYPE } from '../../constants/achievement';
+import { AgentMap, AgentType } from '../../constants/agent';
 import {
   EvmChainId,
   EvmChainIdMap,

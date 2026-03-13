@@ -483,21 +483,21 @@ AutoRunProvider.tsx
 - `context/AutoRunProvider/AutoRunProvider.tsx` — full provider (374 lines)
 
 **Test files:**
-- ✅ `context/AutoRunProvider/utils/utils.test.ts` — 30 tests: notifications, agent matching, sorting, normalizing, decommissioned/eligible/excluded derivation
-- ✅ `context/AutoRunProvider/utils/autoRunHelpers.test.ts` — 27 tests: formatEligibilityReason, isOnlyLoadingReason, normalizeEligibility, refreshRewardsEligibility (throttle, fetch, onError)
+- ✅ `context/AutoRunProvider/utils/utils.test.ts` — 29 tests: notifications, agent matching, sorting, normalizing, decommissioned/eligible/excluded derivation
+- ✅ `context/AutoRunProvider/utils/autoRunHelpers.test.ts` — 28 tests: formatEligibilityReason, isOnlyLoadingReason, normalizeEligibility, refreshRewardsEligibility (throttle, fetch, onError)
 - ✅ `context/AutoRunProvider/hooks/useAutoRunStore.test.ts` — 6 tests: defaults, reads, partial updates, no-op when store undefined
-- ✅ `context/AutoRunProvider/hooks/useConfiguredAgents.test.ts` — 7 tests: undefined/empty services, mapping, staking fallback, skip cases, memoization
+- ✅ `context/AutoRunProvider/hooks/useConfiguredAgents.test.ts` — 8 tests: undefined/empty services, mapping, staking fallback, skip cases, memoization
 - ✅ `context/AutoRunProvider/hooks/useAutoRunVerboseLogger.test.ts` — 2 tests: calls logMessage, stable callback
 - ✅ `context/AutoRunProvider/hooks/useLogAutoRunEvent.test.ts` — 2 tests: prefix prepended, undefined logEvent
 - ✅ `context/AutoRunProvider/hooks/useSafeEligibility.test.ts` — 8 tests: canCreateSafeForChain (5 states), createSafeIfNeeded (3 paths)
 - ✅ `context/AutoRunProvider/hooks/useSelectedEligibility.test.ts` — 6 tests: returns, config, loading, eligibility getter, rerender, chain passing
-- ✅ `context/AutoRunProvider/hooks/useAutoRunSignals.test.ts` — 18 tests: ref syncing, reward snapshots, balances status, scheduleNextScan (4 cases), waitForAgentSelection, waitForRunningAgent
+- ✅ `context/AutoRunProvider/hooks/useAutoRunSignals.test.ts` — 26 tests: ref syncing, reward snapshots, balances status, scheduleNextScan (4 cases), waitForAgentSelection, waitForRunningAgent
 - ✅ `context/AutoRunProvider/hooks/useAutoRunStartOperations.test.ts` — 12 tests: ABORTED (4 cases), AGENT_BLOCKED (2 cases), STARTED (2 cases), INFRA_FAILED (2 cases), Loading notification, finally block
 - ✅ `context/AutoRunProvider/hooks/useAutoRunStopOperations.test.ts` — 6 tests: first poll stop, local fallback, 3-attempt metrics, error handling, sleep/wake interrupt, verbose logging
-- ✅ `context/AutoRunProvider/hooks/useAutoRunScanner.test.ts` — 21 tests: getPreferredStartFrom (4), scanAndStartNext (10), startSelectedAgentIfEligible (7)
-- ✅ `context/AutoRunProvider/hooks/useAutoRunOperations.test.ts` — 8 tests: exposes functions, notifySkipOnce dedup (4 cases), reset on disable
-- ✅ `context/AutoRunProvider/hooks/useAutoRunLifecycle.test.ts` — 12 tests: stopCurrentRunningAgent (3), backoff cleanup, rotation flow (5), startup flow (2)
-- ✅ `context/AutoRunProvider/hooks/useAutoRunController.test.ts` — 5 tests: returns, delegation, health stats reset, health summary interval, interval cleanup
+- ✅ `context/AutoRunProvider/hooks/useAutoRunScanner.test.ts` — 26 tests: getPreferredStartFrom (4), scanAndStartNext (10), startSelectedAgentIfEligible (7)
+- ✅ `context/AutoRunProvider/hooks/useAutoRunOperations.test.ts` — 6 tests: exposes functions, notifySkipOnce dedup (4 cases), reset on disable
+- ✅ `context/AutoRunProvider/hooks/useAutoRunLifecycle.test.ts` — 16 tests: stopCurrentRunningAgent (3), backoff cleanup, rotation flow (5), startup flow (2)
+- ✅ `context/AutoRunProvider/hooks/useAutoRunController.test.ts` — 6 tests: returns, delegation, health stats reset, health summary interval, interval cleanup
 - ✅ `context/AutoRunProvider/AutoRunProvider.test.tsx` — 13 tests: context values, seeding (2), setEnabled (3), includeAgent (3), excludeAgent (2), eligibilityByAgent (2)
 
 **Reference:** See [`frontend/context/AutoRunProvider/docs/auto-run.md`](../../context/AutoRunProvider/docs/auto-run.md) for documented bugs fixed, edge cases, and design decisions.
