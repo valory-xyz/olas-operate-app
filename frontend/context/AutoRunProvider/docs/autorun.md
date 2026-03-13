@@ -171,10 +171,10 @@ All waits are guarded by `enabledRef.current`, `sleepAwareDelay()`, and hard tim
 |--------|---------|-----------------|
 | `started` | Agent deployed and running | Done |
 | `agent_blocked` | Deterministic blocker (low balance, evicted, etc.) | Skip with notification, advance queue |
-| `infra_failed` | Transient failure (RPC/network/timeout) | Schedule short rescan, do NOT advance queue |
+| `infra_failed` | Transient failure (RPC/network/timeout) | Mark `hasInfraFailed`, continue scan to try remaining candidates; schedule short rescan if all fail |
 | `aborted` | Auto-run disabled or sleep detected | Stop processing |
 
-The `infra_failed` handling prevents the scanner from rotating to a different agent when the backend is temporarily down.
+The `infra_failed` handling prevents the scanner from permanently rotating the selected agent on a transient failure. Remaining candidates in the current scan cycle are still tried (they may have different staking contracts and sufficient balance), but the selected agent is not replaced as the preferred choice.
 
 ---
 
@@ -284,7 +284,7 @@ Every delay and poll interval in auto-run uses `sleepAwareDelay`. On `false`:
 
 | # | Scenario | Expected | Implementation |
 |---|----------|----------|----------------|
-| 22 | Start fails (transient) | Retry with backoff; on final failure return `INFRA_FAILED`; do NOT advance queue | `startAgentWithRetries` → `INFRA_FAILED` → `SCAN_LOADING_RETRY_SECONDS` rescan |
+| 22 | Start fails (transient) | Retry with backoff; on final failure return `INFRA_FAILED`; try remaining scan candidates, then schedule short rescan | `startAgentWithRetries` → `INFRA_FAILED` → scanner continues to next candidates → `SCAN_LOADING_RETRY_SECONDS` rescan if all fail |
 | 23 | Stop fails | Bounded retries; reset rewards guard; schedule rescan | `stopAgentWithRecovery` + guard reset + `SCAN_BLOCKED_DELAY_SECONDS` |
 | 24 | Disable during stop recovery | Stop recovery runs to completion | `waitForStoppedDeployment` does not check `enabledRef` |
 | 25 | Rewards API fails (RPC error) | Log error, continue | Returns `undefined`; treated as "not yet earned" |
@@ -368,8 +368,12 @@ Every delay and poll interval in auto-run uses `sleepAwareDelay`. On `false`:
 - **Fix**: Reset rewards guard + schedule `SCAN_BLOCKED_DELAY_SECONDS` rescan + `stopRetryBackoffUntilRef` prevents immediate re-trigger loop.
 
 ### P0 — Transient start failures rotated queue to wrong agent
-- **Root cause**: Scanner treated all failures (including `Failed to fetch`) as blocked and advanced queue.
-- **Fix**: Structured `AutoRunStartResult` with `infra_failed` status; scanner pauses on infra failure without advancing.
+- **Root cause**: Scanner treated all failures (including `Failed to fetch`) as blocked and advanced queue, causing permanent rotation to the wrong agent on transient errors.
+- **Fix**: Structured `AutoRunStartResult` with `infra_failed` status; scanner marks `hasInfraFailed` and continues to remaining candidates rather than treating transient failures as permanent blockers.
+
+### P1 — `infra_failed` caused infinite single-agent retry loop, other candidates never tried
+- **Root cause**: Two compounding bugs: (1) `scanAndStartNext` returned early on `INFRA_FAILED` instead of continuing to try remaining candidates; (2) `startSelectedAgentIfEligible` scheduled a blind 30s rescan of the same failing agent on `INFRA_FAILED` instead of scanning other candidates. In practice: if memeooorr failed due to insufficient staking balance, optimus and trader were never tried even though they might have different staking contracts and sufficient balance. The system retried the same agent every 30s indefinitely.
+- **Fix**: (1) `scanAndStartNext` now uses `hasInfraFailed = true` + `continue` on `INFRA_FAILED`, visiting all remaining candidates before scheduling rescan; (2) `startSelectedAgentIfEligible` now calls `await scanAndStartNext(selectedAgentType)` on `INFRA_FAILED` (passing selected as `startFrom` so other agents are tried first), then returns `true` to prevent lifecycle double-invocation.
 
 ### P0 — Stop recovery lacked bounded retries
 - **Root cause**: Single stop attempt relied on derived running-agent signal; backend hiccups caused instability.
