@@ -18,6 +18,8 @@ type UseAutoRunSignalsParams = {
   runningAgentType: AgentType | null;
   isSelectedAgentDetailsLoading: boolean;
   isEligibleForRewards: boolean | undefined;
+  /** Whether the staking epoch has expired without a checkpoint being called. */
+  isEpochExpired: boolean;
   selectedAgentType: AgentType;
   selectedServiceConfigId: string | null;
   logMessage: (message: string) => void;
@@ -38,6 +40,7 @@ export const useAutoRunSignals = ({
   runningAgentType,
   isSelectedAgentDetailsLoading,
   isEligibleForRewards,
+  isEpochExpired,
   selectedAgentType,
   selectedServiceConfigId,
   logMessage,
@@ -110,11 +113,16 @@ export const useAutoRunSignals = ({
   }, [selectedServiceConfigId]);
 
   // Update rewards snapshot for the selected agent (RewardProvider is selection-driven).
+  // isEligibleForRewards=true means the agent earned rewards in the current epoch.
+  // However if the epoch has already expired (clock = 0, checkpoint not yet called),
+  // that value is stale — the agent needs to run in the new epoch to trigger checkpoint.
+  // We check both conditions separately rather than modifying the business value itself.
   useEffect(() => {
     if (!selectedAgentType) return;
-    rewardSnapshotRef.current[selectedAgentType] = isEligibleForRewards;
+    const effectiveEligibility = isEpochExpired ? false : isEligibleForRewards;
+    rewardSnapshotRef.current[selectedAgentType] = effectiveEligibility;
     setRewardsTick((value) => value + 1);
-  }, [isEligibleForRewards, selectedAgentType]);
+  }, [isEligibleForRewards, isEpochExpired, selectedAgentType]);
 
   // Cleanup pending scan timer on unmount.
   useEffect(() => {
