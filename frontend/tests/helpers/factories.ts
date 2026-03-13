@@ -1,4 +1,5 @@
 import { StakingProgramConfig } from '../../config/stakingPrograms';
+import { ACHIEVEMENT_TYPE } from '../../constants/achievement';
 import { AgentMap } from '../../constants/agent';
 import {
   EvmChainId,
@@ -18,6 +19,7 @@ import {
   WALLET_TYPE,
 } from '../../constants/wallet';
 import { MultisigOwners } from '../../hooks/useMultisig';
+import { AchievementWithConfig } from '../../types/Achievement';
 import { Address } from '../../types/Address';
 import { AgentConfig } from '../../types/Agent';
 import {
@@ -88,6 +90,14 @@ export const MOCK_TX_HASH_3: `0x${string}` =
 
 export const DEFAULT_MULTICALL_ADDRESS =
   '0xcA11bde05977b3631167028862bE2a173976CA11';
+
+export const TRADER_SERVICE_HASH =
+  'bafybeib5hmzpf7cmxyfevq65tk22fjvlothjskw7nacgh4ervgs5mos7ra';
+export const MODIUS_SERVICE_HASH =
+  'bafybeicrpqmggwurhkxiakuxzuxhdzm2x5zqyfvwcned56eikomkufma4i';
+
+export const TRADER_SERVICE_NAME = 'Trader Agent';
+export const MODIUS_SERVICE_NAME = 'Optimus';
 
 export const makeMasterEoa = (
   address: Address = DEFAULT_EOA_ADDRESS,
@@ -408,4 +418,48 @@ export const makeRewardsHistoryServiceResponse = ({
     latestStakingContract,
     rewardsHistory,
   },
+});
+
+// --- Achievement factories ---
+
+/** Bet ID: transaction hash + position suffix (Polymarket format) */
+export const MOCK_BET_ID = `${MOCK_TX_HASH_1}f7080000` as `0x${string}`;
+
+export const MOCK_MARKET_ID = '0x5Cd1f40b82F3e3b1DD1BCaF916245AbcDEF12345';
+
+export const MOCK_ACHIEVEMENT_ID = 'ach-polystrat-payout-001';
+
+/**
+ * Realistic polystrat payout achievement based on a real Polymarket
+ * USDC.e bet settlement (2.50 wagered → 5.32 payout ≈ 2.13× multiplier).
+ * Achievements are shown when the multiplier exceeds 1.5×.
+ */
+export const makePolystratPayoutAchievement = (
+  overrides: Partial<AchievementWithConfig> = {},
+): AchievementWithConfig => ({
+  achievement_id: MOCK_ACHIEVEMENT_ID,
+  achievement_type: ACHIEVEMENT_TYPE.POLYSTRAT_PAYOUT,
+  acknowledgement_timestamp: 0,
+  acknowledged: false,
+  title: '2.13× Payout',
+  description: 'Your prediction paid off with a 2.13× return',
+  timestamp: 1772668800,
+  data: {
+    id: MOCK_BET_ID,
+    prediction_side: 'Yes',
+    bet_amount: 2.5,
+    status: 'settled',
+    net_profit: 2.82,
+    total_payout: 5.32,
+    created_at: '2026-03-05T14:00:00Z',
+    settled_at: '2026-03-07T09:31:17Z',
+    transaction_hash: MOCK_TX_HASH_1,
+    market: {
+      id: MOCK_MARKET_ID,
+      title: 'Will ETH hit $5,000 by March 2026?',
+      external_url: `https://polymarket.com/event/${MOCK_MARKET_ID}`,
+    },
+  },
+  serviceConfigId: DEFAULT_SERVICE_CONFIG_ID,
+  ...overrides,
 });
