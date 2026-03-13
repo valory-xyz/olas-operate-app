@@ -27,10 +27,7 @@ describe('useSharedContext', () => {
   });
 
   it('returns the context value when used inside a SharedContext provider', () => {
-    const mockSetMainOlasBalanceAnimated = jest.fn();
     const contextValue = {
-      hasMainOlasBalanceAnimatedOnLoad: true,
-      setMainOlasBalanceAnimated: mockSetMainOlasBalanceAnimated,
       isAgentsFunFieldUpdateRequired: false,
       isAccountRecoveryStatusLoading: false,
       hasActiveRecoverySwap: false,
@@ -41,10 +38,6 @@ describe('useSharedContext', () => {
 
     const { result } = renderHook(() => useSharedContext(), { wrapper });
 
-    expect(result.current.hasMainOlasBalanceAnimatedOnLoad).toBe(true);
-    expect(result.current.setMainOlasBalanceAnimated).toBe(
-      mockSetMainOlasBalanceAnimated,
-    );
     expect(result.current.isAgentsFunFieldUpdateRequired).toBe(false);
   });
 });

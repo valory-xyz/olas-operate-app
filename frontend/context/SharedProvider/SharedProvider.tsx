@@ -2,9 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import {
   createContext,
   PropsWithChildren,
-  useCallback,
   useEffect,
-  useRef,
   useState,
 } from 'react';
 
@@ -15,9 +13,6 @@ import { RecoveryService } from '@/service/Recovery';
 import { useOnlineStatus } from '../OnlineStatusProvider';
 
 export const SharedContext = createContext<{
-  hasMainOlasBalanceAnimatedOnLoad: boolean;
-  setMainOlasBalanceAnimated: (value: boolean) => void;
-
   // agent specific checks
   isAgentsFunFieldUpdateRequired: boolean;
 
@@ -27,9 +22,6 @@ export const SharedContext = createContext<{
 
   // others
 }>({
-  hasMainOlasBalanceAnimatedOnLoad: false,
-  setMainOlasBalanceAnimated: () => {},
-
   // agent specific checks
   isAgentsFunFieldUpdateRequired: false,
 
@@ -43,18 +35,11 @@ export const SharedContext = createContext<{
 /**
  * Shared provider to provide shared context to all components in the app.
  * @example
- * - Track the main OLAS balance animation state & mount state.
  * - Track the onboarding step of the user (independent of the agent).
  * - Track the healthcheck alert shown to the user (so that they are not shown again).
  */
 export const SharedProvider = ({ children }: PropsWithChildren) => {
   const { isOnline } = useOnlineStatus();
-
-  // state to track the main OLAS balance animation state & mount state
-  const hasAnimatedRef = useRef(false);
-  const setMainOlasBalanceAnimated = useCallback((value: boolean) => {
-    hasAnimatedRef.current = value;
-  }, []);
 
   // agent specific checks
   const { selectedAgentType, selectedService } = useServices();
@@ -100,9 +85,6 @@ export const SharedProvider = ({ children }: PropsWithChildren) => {
   return (
     <SharedContext.Provider
       value={{
-        hasMainOlasBalanceAnimatedOnLoad: hasAnimatedRef.current,
-        setMainOlasBalanceAnimated,
-
         // agent specific checks
         isAgentsFunFieldUpdateRequired,
 

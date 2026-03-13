@@ -169,21 +169,4 @@ describe('SharedProvider', () => {
       expect(result.current.isAgentsFunFieldUpdateRequired).toBe(false);
     });
   });
-
-  describe('animation state', () => {
-    it('hasMainOlasBalanceAnimatedOnLoad starts as false', () => {
-      const { result } = renderHook(() => useSharedContextHook(), { wrapper });
-      expect(result.current.hasMainOlasBalanceAnimatedOnLoad).toBe(false);
-    });
-
-    it('setMainOlasBalanceAnimated updates the ref-based flag', () => {
-      const { result, rerender } = renderHook(() => useSharedContextHook(), {
-        wrapper,
-      });
-
-      result.current.setMainOlasBalanceAnimated(true);
-      rerender();
-      expect(result.current.hasMainOlasBalanceAnimatedOnLoad).toBe(true);
-    });
-  });
 });
