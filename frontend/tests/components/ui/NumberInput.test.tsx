@@ -202,8 +202,14 @@ describe('NumberInput', () => {
     it('prevents value exceeding max', () => {
       render(<NumberInput value={99} max={100} />);
       const input = screen.getByRole('spinbutton');
-      // Simulate trying to type '9' which would make it 999 > 100
-      fireEvent.keyDown(input, { key: '9' });
+      const event = new KeyboardEvent('keydown', {
+        key: '9',
+        bubbles: true,
+        cancelable: true,
+      });
+      const spy = jest.spyOn(event, 'preventDefault');
+      input.dispatchEvent(event);
+      expect(spy).toHaveBeenCalled();
     });
   });
 

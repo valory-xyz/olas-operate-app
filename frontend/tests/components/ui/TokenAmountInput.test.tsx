@@ -162,8 +162,8 @@ describe('TokenAmountInput', () => {
     const input = screen.getByRole('spinbutton');
     // Try to enter a number with > 6 decimal places
     fireEvent.change(input, { target: { value: '1.1234567' } });
-    // antd InputNumber will parse the value, the handleChange should reject it
-    // The check in handleChange prevents > 6 decimal places
+    // handleChange rejects values with more than 6 decimal places
+    expect(onChange).not.toHaveBeenCalled();
   });
 
   it('renders with maxAmount prop', () => {

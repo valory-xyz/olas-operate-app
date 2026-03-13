@@ -428,12 +428,12 @@ describe('useMasterBalances', () => {
 
       const { result } = renderHook(() => useMasterBalances());
 
-      // allMasterWalletBalances guard: !walletBalances => []
-      // getMasterEoaNativeBalanceOf => undefined (allMasterWalletBalances is [])
+      // allMasterWalletBalances defaults to [] when walletBalances is undefined,
+      // so getMasterEoaNativeBalanceOf returns a formatted sum of an empty list
       const nativeBalance = result.current.getMasterEoaNativeBalanceOf(
         EvmChainIdMap.Gnosis,
       );
-      expect(nativeBalance).toBeDefined();
+      expect(nativeBalance).toBe('0.0');
     });
 
     it('returns empty allMasterWalletBalances when masterSafes is undefined', () => {
