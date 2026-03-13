@@ -2299,14 +2299,14 @@ nicer-shell = ["ipython"]
 
 [[package]]
 name = "olas-operate-middleware"
-version = "0.15.2"
+version = "0.15.4"
 description = ""
 optional = false
 python-versions = "<3.15,>=3.10"
 groups = ["main"]
 files = [
-    {file = "olas_operate_middleware-0.15.2-py3-none-any.whl", hash = "sha256:39f1efef1ff9f1e31d01530ece1f8521b9ba1d0a12e9fcb77da00f6a2a0e8eee"},
-    {file = "olas_operate_middleware-0.15.2.tar.gz", hash = "sha256:daecf1b645f09053f950046750187ddd43e315d746207f44cab569dfb24db109"},
+    {file = "olas_operate_middleware-0.15.4-py3-none-any.whl", hash = "sha256:d94961e418e091dd35f70b207a38a8fde838db0f4ffbaf8a6f5eb6eb71af92d7"},
+    {file = "olas_operate_middleware-0.15.4.tar.gz", hash = "sha256:00963023448f23d8ffb0baa21675c44756108f1fd8e1b1e3bbf260559f7fd6c3"},
 ]
 
 [package.dependencies]
@@ -2322,7 +2322,7 @@ open-aea-cli-ipfs = ">=2.1.0,<3.0.0"
 open-aea-ledger-cosmos = ">=2.1.0,<3.0.0"
 open-aea-ledger-ethereum = ">=2.1.0,<3.0.0"
 open-aea-ledger-ethereum-flashbots = ">=2.1.0,<3.0.0"
-open-autonomy = ">=0.21.12,<0.22.0"
+open-autonomy = ">=0.21.13,<0.22.0"
 psutil = ">=5.9.8,<6.0.0"
 pyinstaller = ">=6.8.0,<7.0.0"
 requests-mock = ">=1.12.1,<2.0.0"
@@ -2457,14 +2457,14 @@ open-aea-ledger-ethereum = ">=2.1.0,<2.2.0"
 
 [[package]]
 name = "open-autonomy"
-version = "0.21.12"
+version = "0.21.13"
 description = "A framework for the creation of autonomous agent services."
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "open_autonomy-0.21.12-py3-none-any.whl", hash = "sha256:fb35576ac8b2ba3c402d41ce2eea408c43087122f2207f8e0456aecb63362781"},
-    {file = "open_autonomy-0.21.12.tar.gz", hash = "sha256:081f601bbfa8ee3409a551d9a557d3d780a6b2345a3cdf64e12871adab325656"},
+    {file = "open_autonomy-0.21.13-py3-none-any.whl", hash = "sha256:bbb495faeb2a88f47a6f31806af41ae173e19ad82633fcb7e87111ae9260c7fa"},
+    {file = "open_autonomy-0.21.13.tar.gz", hash = "sha256:eedc9bf38f8b07368a4259088afd3064ed459b16360c34b2d55f5b94f7ada5c9"},
 ]
 
 [package.dependencies]
@@ -4263,4 +4263,4 @@ propcache = ">=0.2.1"
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.14,<3.15"
-content-hash = "7816b1d46bab1014e914d6c043000908b59f351b1e8dad399448a70418a42852"
+content-hash = "0482d69a8444c0a1bc996e074e504092ed94c673ab06893b92512646ad4ca48c"
