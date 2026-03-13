@@ -88,7 +88,7 @@ export const ETHEREUM_TOKEN_CONFIG: ChainTokenConfig = {
   },
 } as const;
 
-const GNOSIS_TOKEN_CONFIG: ChainTokenConfig = {
+export const GNOSIS_TOKEN_CONFIG: ChainTokenConfig = {
   [TokenSymbolMap.XDAI]: {
     decimals: 18,
     tokenType: TokenType.NativeGas,
