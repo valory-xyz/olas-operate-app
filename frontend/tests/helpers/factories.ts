@@ -1,5 +1,5 @@
-import { ACHIEVEMENT_TYPE } from '../../constants/achievement';
 import { StakingProgramConfig } from '../../config/stakingPrograms';
+import { ACHIEVEMENT_TYPE } from '../../constants/achievement';
 import { AgentMap } from '../../constants/agent';
 import {
   EvmChainId,
@@ -443,7 +443,7 @@ export const makePolystratPayoutAchievement = (
   acknowledged: false,
   title: '2.13× Payout',
   description: 'Your prediction paid off with a 2.13× return',
-  timestamp: 1741336277,
+  timestamp: 1772668800,
   data: {
     id: MOCK_BET_ID,
     prediction_side: 'Yes',
