@@ -53,7 +53,7 @@ describe('UpdateAvailableAlert', () => {
       consoleSpy.mockRestore();
     });
 
-    it('returns null when isFetched is false', () => {
+    it("shouldn't show alert when isFetched is false", () => {
       mockUseAppStatus.mockReturnValue({
         data: undefined,
         isFetched: false,
@@ -65,7 +65,7 @@ describe('UpdateAvailableAlert', () => {
       expect(container.innerHTML).toBe('');
     });
 
-    it('returns null when data is undefined', () => {
+    it("shouldn't show alert when data is undefined", () => {
       mockUseAppStatus.mockReturnValue({
         data: undefined,
         isFetched: true,
@@ -77,7 +77,7 @@ describe('UpdateAvailableAlert', () => {
       expect(container.innerHTML).toBe('');
     });
 
-    it('returns null when data.isOutdated is false', () => {
+    it("shouldn't show alert when data.isOutdated is false", () => {
       mockUseAppStatus.mockReturnValue({
         data: { isOutdated: false, latestTag: 'v1.0.0' },
         isFetched: true,
