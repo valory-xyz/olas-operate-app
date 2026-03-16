@@ -43,12 +43,11 @@ const main = async () => {
           to: '.env'
         },
       ],
-      
       linux: {
         target: [
           {
             target: 'AppImage',
-            arch: [process.env.ARCH || 'x64'], 
+            arch: [process.env.ARCH || 'x64'],
           }
         ],
         category: 'Utility',
@@ -56,9 +55,9 @@ const main = async () => {
         maintainer: 'Valory',
         synopsis: 'Pearl - Olas Operate App',
       },
-
-
-
+      toolsets: {
+        appimage: '1.0.2',
+      }
     },
   });
 };
