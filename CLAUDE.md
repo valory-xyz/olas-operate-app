@@ -78,6 +78,16 @@ yarn build:pearl        # Uses build_pearl.sh
 yarn download-binaries
 ```
 
+## Frontend Coverage Workflow
+
+When adding or reviewing frontend tests, use `frontend/tests/TEST_PLAN.md` as the source of truth for phase scope and read the matching feature doc in `docs/features/` before writing suites.
+
+- Reuse `frontend/tests/helpers/factories.ts` first. If a default already exists there, do not repeat it in the test body; override only the field required for the case.
+- If a suite needs a local helper, keep it as a thin wrapper over a shared factory rather than a second fixture system.
+- Split coverage by ownership: providers cover query wiring, polling, refetch, and merge behavior; hooks cover derivation; components cover rendering and user interaction with mocked hooks/providers.
+- If the same payload shape appears in two suites, promote it into `frontend/tests/helpers/factories.ts` before adding more inline literals.
+- For Phase 4 staking/rewards work, start with the shared staking factories (`makeStakingContractDetails`, `makeServiceStakingDetails`, `makeRawStakingRewardsInfo`, `makeStakingRewardsInfo`, `makeRewardsHistoryEntry`, `makeRewardsHistoryServiceResponse`) and follow the staged execution order in `frontend/tests/TEST_PLAN.md` rather than attempting the entire phase in one pass.
+
 ## Architecture Details
 
 ### Communication Flow

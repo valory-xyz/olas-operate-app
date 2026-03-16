@@ -45,6 +45,7 @@ export type BalancesAndFundingRequirements = {
   bonded_assets: Partial<{
     [chain in MiddlewareChain]: TokenBalanceRecord;
   }>;
+  /** Whether any wallet needs funds to meet funding requirements */
   is_refill_required: boolean;
   /**
    * Whether a funding transaction is currently in progress.
@@ -56,5 +57,6 @@ export type BalancesAndFundingRequirements = {
    * @note When `true`, new funding requests are suppressed and `agent_funding_requests` will be empty until the cooldown ends.
    */
   agent_funding_requests_cooldown: boolean;
+  /** Whether the agent has sufficient funds and meets all prerequisites to start */
   allow_start_agent: boolean;
 };

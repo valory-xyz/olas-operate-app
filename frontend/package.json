@@ -56,10 +56,11 @@
   "scripts": {
     "dev": "next dev",
     "build": "bash -c \"GNOSIS_RPC=$GNOSIS_RPC BASE_RPC=$BASE_RPC OPTIMISM_RPC=$OPTIMISM_RPC ETHEREUM_RPC=$ETHEREUM_RPC MODE_RPC=$MODE_RPC CELO_RPC=$CELO_RPC POLYGON_RPC=$POLYGON_RPC NODE_ENV=production next build\"",
-    "lint": "next lint",
-    "lint:fix": "next lint --fix",
+    "lint": "eslint . --ext .ts,.tsx",
+    "lint:fix": "eslint . --ext .ts,.tsx --fix",
     "eslint:fix": "eslint . --ext .ts,.tsx --fix",
     "test": "jest",
+    "test:coverage": "jest --coverage",
     "start": "next start",
     "typecheck": "tsc --noEmit --skipLibCheck",
     "quality-check": "yarn run lint && tsc --noEmit --skipLibCheck --incremental false"
