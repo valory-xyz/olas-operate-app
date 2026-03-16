@@ -22,10 +22,15 @@ export type StakingProgramConfig = {
   stakingRequirements: {
     [tokenSymbol: string]: number;
   };
+  /** ethers-multicall contract instance for the staking contract */
   contract: MulticallContract;
+  /** "agent" or "toolkit" — determines mech-based eligibility method */
   mechType?: MechType;
+  /** mech contract for request counting */
   mech?: MulticallContract;
+  /** contract for multisig nonce checking */
   activityChecker: MulticallContract;
+  /** normalized address (padded to 64 hex chars) */
   id: string;
 };
 
