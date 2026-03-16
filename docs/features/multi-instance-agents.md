@@ -225,11 +225,12 @@ All must become `Partial<Record<string /* service_config_id */, ...>>`. The `use
 
 ### 6g. Auto-Run UI — Per-Instance Exclusion
 
-The auto-run control popover/context menu (currently in sidebar area) must change from a flat agent-type checkbox list to a **grouped tree of instance checkboxes**:
+The auto-run control popover/context menu (currently in sidebar area) must change from a flat agent-type checkbox list to a **collapsible grouped tree of instance checkboxes** (Figma Option 2):
 
-- Agent types as group headers (e.g., "Polystrat", "Omenstrat")
+- Agent types as collapsible group headers (e.g., "Polystrat", "Omenstrat")
 - Individual instances as checkbox items under each group (e.g., "corzim-vardor96", "tobin-vondor92")
 - Each instance independently includable/excludable
+- **"Excluded from auto-run" section** — separated at the bottom of the popover under a divider, listing excluded instances grouped by agent type
 - Stored as `userExcludedInstances: string[]` (`service_config_id`s) in Electron store
 
 **File:** `frontend/components/MainPageV1/Sidebar/AutoRunControl.tsx` (or wherever the auto-run toggle/popover lives)
