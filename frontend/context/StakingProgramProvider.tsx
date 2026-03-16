@@ -58,6 +58,8 @@ export const StakingProgramProvider = ({ children }: PropsWithChildren) => {
   // 2) If not available, use the selected service (can be updated during migration)
   // 3) Fall back to the default config value
   const selectedStakingProgramId = useMemo(() => {
+    if (isLoading) return null;
+
     const serviceSelectedStakingProgramId =
       selectedService?.chain_configs?.[selectedService?.home_chain]?.chain_data
         ?.user_params?.staking_program_id;
@@ -65,14 +67,13 @@ export const StakingProgramProvider = ({ children }: PropsWithChildren) => {
     return (
       activeStakingProgramId ||
       serviceSelectedStakingProgramId ||
-      defaultStakingProgramId ||
-      selectedAgentConfig.defaultStakingProgramId
+      defaultStakingProgramId
     );
   }, [
+    isLoading,
     activeStakingProgramId,
-    defaultStakingProgramId,
-    selectedAgentConfig,
     selectedService,
+    defaultStakingProgramId,
   ]);
 
   return (
