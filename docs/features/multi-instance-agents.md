@@ -8,7 +8,7 @@ The backend already supports this (each instance gets a unique `service_config_i
 
 ### Core Paradigm Shift
 
-**Before:** User selects `AgentType` → system derives THE single service
+**Before:** User selects `AgentType` → system derives THE single service <br/>
 **After:** User selects a specific instance (`service_config_id`) → system derives the agent type from it
 
 ### Instance Behavior Summary
@@ -27,12 +27,13 @@ The backend already supports this (each instance gets a unique `service_config_i
 ### 1a. `frontend/types/ElectronApi.ts`
 
 - Add `lastSelectedServiceConfigId?: string` to `ElectronStore`
-- Keep `lastSelectedAgentType` for backward compat (migration reads old value)
-- Add `instanceSettings?: Record<string, AgentSettings>` (keyed by `service_config_id`) for per-instance funded/warning state
+- Keep `lastSelectedAgentType` for backward compat only (used as fallback when `lastSelectedServiceConfigId` is missing after upgrade)
+- **Remove `isInitialFunded` from Electron store** — replace with backend's `is_refill_required` per service. **[CONFIRM WITH TEAM]** that `is_refill_required` correctly distinguishes first-time funding vs refill scenarios.
+- **`isProfileWarningDisplayed` becomes per instance** — move from `${agentType}.isProfileWarningDisplayed` to a new `instanceSettings` map keyed by `service_config_id`
 - Extend `autoRun` type:
   ```
   includedInstances?: { serviceConfigId: string; order: number }[]
-  userExcludedInstances?: string[]
+  userExcludedInstances?: string[]  // service_config_ids
   ```
   Keep existing `AgentType`-based fields alongside for backward compat.
 
@@ -47,10 +48,8 @@ Convenience type used across sidebar, auto-run, wallet:
 type AgentInstance = {
   serviceConfigId: string;
   agentType: AgentType;
-  agentConfig: AgentConfig;
   name: string;           // from generateAgentName(chainId, tokenId)
-  chainId: EvmChainId;
-  tokenId?: number;
+  tokenId?: number;       // NFT token ID from staking contract, used for name generation
 };
 ```
 
@@ -70,7 +69,7 @@ type AgentInstance = {
      getAgentTypeFromService(selectedServiceConfigId), [selectedServiceConfigId, ...]);
    ```
 
-3. **New `updateSelectedInstance(serviceConfigId)`** — sets `selectedServiceConfigId`, persists both `lastSelectedServiceConfigId` and `lastSelectedAgentType` to store
+3. **New `updateSelectedInstance(serviceConfigId)`** — sets `selectedServiceConfigId`, persists `lastSelectedServiceConfigId` to store
 
 4. **`updateAgentType(agentType)` stays** but now selects the FIRST instance of that type internally (for sidebar parent-click and backward compat)
 
@@ -87,8 +86,8 @@ type AgentInstance = {
 
 9. **Define deterministic instance ordering** — `MiddlewareServiceResponse` has no `created_at` field. Sort instances by `service_config_id` (likely monotonically increasing) as a stable default. Define this sort once in a shared util and reuse across sidebar child order, auto-run rotation, migration, and selection fallback.
 
-### Backward Compatibility
-On first launch after update: `lastSelectedServiceConfigId` is empty → provider reads `lastSelectedAgentType` → finds first service for that type → uses its `service_config_id` → writes to store.
+### Selection Restoration
+On relaunch, `lastSelectedServiceConfigId` from the Electron store is used to restore the selected instance (agent type is derived from it). If `lastSelectedServiceConfigId` is missing (e.g., first launch after upgrade), falls back to `lastSelectedAgentType` and selects the first instance of that type.
 
 ---
 
@@ -111,7 +110,7 @@ On first launch after update: `lastSelectedServiceConfigId` is empty → provide
    - Parent click: expand/collapse + select first child instance via `updateSelectedInstance(firstChild.serviceConfigId)`
    - Child click: `updateSelectedInstance(serviceConfigId)`
 
-5. **`canAddNewAgents`** — always `true` (can always add another instance)
+5. **Remove `canAddNewAgents`** — no longer needed since users can always add another instance. Always show the "Add Agent" button.
 
 6. **Fallback selection** (lines 212-222): if selected instance not in myAgents, select first available instance (not first agent type)
 
@@ -119,67 +118,61 @@ On first launch after update: `lastSelectedServiceConfigId` is empty → provide
 
 ## Step 4: New Instance Creation Flow
 
-The instance creation flow is a **new multi-step flow**, not a reuse of the existing setup flow. It has 4 screens:
+The instance creation flow is a **new multi-step flow**. It has up to 5 screens depending on Pearl wallet balance:
 
-### Screen 1: Select Agent (with tabs)
+### Screen 1: Select Agent
 
 **File:** `frontend/components/SetupPage/AgentOnboarding/SelectAgent.tsx` (major rework)
 
-#### "New agents" tab:
 - Show ALL `ACTIVE_AGENTS` (remove `isNotInServices` filter)
 - Add **"You own N"** badge per agent type using `instanceCountByAgentType`
-- Right panel: agent details card with operating chain, minimum staking requirements (OLAS), minimum funding requirements (USDC + ETH), and "You can cover all requirements instantly with your card" note
-- Pagination dots on the detail card (for agents with multiple chain variants?)
-- "Select Agent" button proceeds to next screen
+- Right panel and "Select Agent" button remain unchanged
 
-#### "Archived agents" tab (NEW):
-- Lists stopped/removed instances by their generated name (e.g., "Mki-vondri")
-- Right panel shows: agent type name, operating chain, **wallet balance** of the archived instance (OLAS, USDC, ETH)
-- **"Restore Agent"** button to re-activate the instance (instead of "Select Agent")
-- Implies instances are soft-deleted, not permanently removed — their service data persists in the backend
+### Screen 2: Configure Activity Rewards (existing, redesigned)
 
-### Screen 2: Configure Activity Rewards (NEW)
-
-**New component** — replaces the current "Select Staking Program" screen.
-
-- Header: "Configure Activity Rewards" with agent icons
-- Subtext: "You can earn OLAS crypto for using your agent. Configure ... select Staking Contract ... that suits ..."
-- Shows **recommended configuration** card:
-  - APR percentage (e.g., 130%)
-  - OLAS activity reward amount (e.g., ~0.34 OLAS)
-  - Required OLAS deposit (e.g., 1,000 OLAS)
-- **"Change Configuration"** link to select a different staking contract
-- **"Continue"** button proceeds to next screen
+Same as the current staking program selection — defaults to the agent's `defaultStakingProgramId`, user can change if they want. No functional change, just a UI refresh.
 
 ### Screen 3: Using Your Pearl Wallet Balance (NEW)
 
-**New component** — intermediate balance-check screen.
+**New component** — intermediate balance-check screen. Applies to both multi-instance and existing flows (e.g., user already has Agents.fun on Base and is setting up PettBro on the same chain — the wallet may already have funds).
 
-- Header: "Using Your Pearl Wallet Balance" with agent icons
-- Subtext: "Some of the required funds will be taken from your Pearl wallet. You'll need to deposit the remaining amounts in the next step."
-- Shows **"From Pearl wallet"** card with current OLAS balance (e.g., 40.9855 OLAS)
-- If balance is sufficient: proceed directly
-- If balance is insufficient: **"Top up wallet"** button redirects to wallet top-up
-- Proceeds to confirmation screen
+- Shows the Pearl wallet balances for only the tokens that appear in `refill_requirements`
+- **If all required tokens are fully covered:** skip Screen 4, go directly to Screen 5 (Confirm Agent Funding)
+- **If any token is missing or insufficient:** proceed to Screen 4 (Fund Your Agent) which requests the missing/shortfall amounts
 
-### Screen 4: Confirm Agent Funding (NEW)
+### Screen 4: Fund Your Agent (existing, conditional)
 
-**New component** — final confirmation before agent starts.
+Only shown when Pearl wallet balance is insufficient. This is the **existing** "Fund Your Agent" screen with payment method selection (Buy/Transfer/Bridge). The change to show `refill_requirements` instead of `total_requirements` applies to the existing flow as well, not just multi-instance (see Step 4a).
 
-- Header: "Confirm Agent Funding"
-- Subtext: "Funds will be transferred from your Pearl wallet when the agent starts for the first time."
-- Shows funding breakdown card:
-  - From Pearl wallet: OLAS amount + ETH amount
-  - Transaction fee estimate (e.g., "1 transaction fee on Optimism")
+### Screen 5: Confirm Agent Funding (NEW)
+
+**New component** — only shown when funds are being used from the Pearl wallet (i.e., wallet has sufficient balance and no manual funding is needed from the user).
+
+- Shows the token amounts that will be transferred from the Pearl wallet + transaction fee estimate
 - **"Confirm"** button triggers service creation and starts the agent
 - After creation: `refetchServices` picks up new service → `updateSelectedInstance(newService.service_config_id)` selects the new instance
+- **Not shown** when the user had to manually fund via Screen 4 (in that case the flow proceeds directly after funding)
+
+### Step 4a: Update Existing "Fund Your Agent" Screen to Show Actual Shortfall
+
+**This is a cross-cutting change that affects the existing flow too, not just multi-instance.**
+
+The backend already returns both `total_requirements` and `refill_requirements` from `GET /api/v2/service/{id}/funding_requirements`. The `refill_requirements` field represents the actual shortfall (needed minus current balance). However, the existing "Fund Your Agent" screen currently displays `totalTokenRequirements` (mapped from `total_requirements`).
+
+**Fix:** Switch `FundYourAgent.tsx` to display `refill_requirements` instead of `total_requirements`.
+
+Files to update:
+- `frontend/components/SetupPage/FundYourAgent/FundYourAgent.tsx` — change from `totalTokenRequirements` to refill-based amounts
+- `frontend/hooks/useGetRefillRequirements.ts` — the hook already has access to both; just expose the refill data for display. Also: has `selectedAgentType` in a `useEffect` dependency that resets token requirements — must change to `selectedServiceConfigId`, otherwise switching between same-type instances won't trigger a reset
+- The "Using Your Pearl Wallet Balance" and "Select Payment Method" screens in the new flow should also use `refill_requirements`
+
+**Note:** For new instances, the "dummy service" pattern (created via `onDummyServiceCreation`) gives the service a `service_config_id` immediately, so the backend can compute `refill_requirements` even before the agent starts.
 
 ### Implementation Notes
 
-- The 4-screen flow needs a new stepper/wizard component or extension of the existing setup flow state machine
+- The 5-screen flow needs a new stepper/wizard component or extension of the existing setup flow state machine
 - The current `SETUP_SCREEN` enum in `frontend/constants/pages.ts` will need new entries for these screens
-- The backend already returns ALL services including STOPPED (status 5) and DELETED (status 6) — no backend change needed for archived visibility. Frontend currently doesn't filter by deployment status. Use `MiddlewareDeploymentStatus.STOPPED` to identify archived instances. **Open question:** confirm that the balance endpoint returns balances for stopped services.
-- The "Restore Agent" flow likely skips screens 2-3 (staking already configured, funds may already be present)
+- The balance-check → conditional branching (sufficient vs insufficient) is the key routing logic
 
 ---
 
@@ -212,7 +205,7 @@ Most complex subsystem change. Multiple files.
 - `getAgentFromServiceConfigId(configId, services)` — safer lookup
 
 ### 6d. `frontend/context/AutoRunProvider/AutoRunProvider.tsx`
-- `orderedIncludedAgentTypes` → `orderedIncludedConfigIds`
+- `orderedIncludedAgentTypes` → `orderedIncludedConfigIds` (keyed by `service_config_id`)
 - Two instances of same type = two separate rotation entries
 
 ### 6e. `frontend/context/AutoRunProvider/hooks/useAutoRunController.ts`
@@ -231,25 +224,38 @@ The following refs use `Partial<Record<AgentType, ...>>` and will collapse multi
 | `useAutoRunOperations.ts:86` | `skipNotifiedRef` | Skip notification dedup |
 | `useAutoRunOperations.ts:87` | `lastRewardsFetchRef` | Rewards fetch throttling |
 
-All must become `Partial<Record<string /* serviceConfigId */, ...>>`. The `useAutoRunLifecycle.ts` hook reads/writes these same refs and must be updated accordingly (lines 28, 191-192, 273-277).
+All must become `Partial<Record<string /* service_config_id */, ...>>`. The `useAutoRunLifecycle.ts` hook reads/writes these same refs and must be updated accordingly (lines 28, 191-192, 273-277).
+
+### 6g. Auto-Run UI — Per-Instance Exclusion
+
+The auto-run control popover/context menu (currently in sidebar area) must change from a flat agent-type checkbox list to a **grouped tree of instance checkboxes**:
+
+- Agent types as group headers (e.g., "Polystrat", "Omenstrat")
+- Individual instances as checkbox items under each group (e.g., "corzim-vardor96", "tobin-vondor92")
+- Each instance independently includable/excludable
+- Stored as `userExcludedInstances: string[]` (`service_config_id`s) in Electron store
+
+**File:** `frontend/components/MainPageV1/Sidebar/AutoRunControl.tsx` (or wherever the auto-run toggle/popover lives)
 
 ---
 
 ## Step 7: Balance, Staking & Funding — Instance-Level
 
 ### 7a. `frontend/context/BalancesAndRefillRequirementsProvider/`
-- `isPearlWalletRefillRequired`: check `instanceSettings?.[serviceConfigId]?.isInitialFunded` instead of `storeState?.[agentType]?.isInitialFunded`
+- `isPearlWalletRefillRequired`: remove the `isInitialFunded` gate entirely — use the backend's `is_refill_required` flag per service instead. **[CONFIRM WITH TEAM]**
 
 ### 7b. `frontend/hooks/useAgentStakingRewardsDetails.ts`
 - Use `selectedService` directly from `useServices()` instead of re-finding by `service_public_id`
 
 ### 7c. `frontend/hooks/useIsInitiallyFunded.ts`
-- Read/write `instanceSettings.{configId}.isInitialFunded` with fallback to per-type flag
+- Remove this hook entirely — replace all usages with the backend's `is_refill_required` from `BalancesAndFundingRequirements`. **[CONFIRM WITH TEAM]**
+- Clean up Electron store: remove the `${agentType}.isInitialFunded` keys
 
-### 7d. `isProfileWarningDisplayed` — also per-instance
-- `UnlockChatUiAlert.tsx:26` writes `${selectedAgentType}.isProfileWarningDisplayed`
-- `Home/index.tsx:98` reads the same key
-- Both must use `instanceSettings.{configId}.isProfileWarningDisplayed` instead
+### 7d. `isProfileWarningDisplayed` — per instance
+- `UnlockChatUiAlert.tsx:26` writes `${selectedAgentType}.isProfileWarningDisplayed` → change to `instanceSettings[serviceConfigId].isProfileWarningDisplayed`
+- `Home/index.tsx:98` reads the same key → update accordingly
+- `service_config_id` is globally unique (UUID-based), safe to use as sole key
+- Migration: existing per-type flags can be ignored (users will see the warning once per instance)
 
 ---
 
@@ -270,13 +276,13 @@ These files use patterns that already work with multi-instance or need only mino
 
 ### Step 8a: UI state keys that must use `selectedServiceConfigId`
 
-These fire on agent-type change but won't fire when switching between instances of the **same** type:
+These fire on agent-type change but won't fire when switching between instances of the **same** type. Use `selectedServiceConfigId` as the key/dependency:
 
 | File | Line | What it does | Fix |
 |------|------|-------------|-----|
-| `Home/index.tsx` | 60 | `useEffect(() => setView('overview'), [selectedAgentType])` — resets tab to "Overview" | Add `selectedServiceConfigId` to deps |
+| `Home/index.tsx` | 60 | `useEffect(() => setView('overview'), [selectedAgentType])` — resets tab to "Overview" | Use `selectedServiceConfigId` in deps |
 | `Home/index.tsx` | 134 | `PageTransition key={selectedAgentType}` — remounts animation | Use `selectedServiceConfigId` as key |
-| `useScrollPage.ts` | 14 | Scroll-to-top on `[pageState, selectedAgentType]` | Add `selectedServiceConfigId` to deps |
+| `useScrollPage.ts` | 14 | Scroll-to-top on `[pageState, selectedAgentType]` | Use `selectedServiceConfigId` in deps |
 
 ---
 
@@ -305,7 +311,7 @@ Step 8 (Cleanup)
 **Suggested PRs:**
 1. **PR 1 — Foundation:** Steps 1-2 (types + ServicesProvider). Critical path.
 2. **PR 2 — Sidebar:** Step 3 (tree structure with instances).
-3. **PR 3 — Creation Flow:** Step 4 (new 4-screen instance creation + archived agents tab). Largest UI PR.
+3. **PR 3 — Creation Flow:** Step 4 (new 3-screen instance creation flow). Largest UI PR.
 4. **PR 4 — Runtime:** Steps 5-6 (Running state + Auto-run). Complex but isolated.
 5. **PR 5 — Cleanup:** Steps 7-8 (Balance, staking, remaining components).
 
@@ -313,9 +319,10 @@ Step 8 (Cleanup)
 
 ## Estimated Scope
 
-- **~32-35 files** modified (increased due to new creation flow screens)
-- **~1500-2000 lines** changed (additions + deletions)
-- **3-4 new components** for the instance creation flow (Configure Activity Rewards, Pearl Wallet Balance check, Confirm Funding, possibly Archived Agents tab)
+- **~35-40 files** modified
+- **~2000-2500 lines** changed (additions + deletions)
+- **4-5 new components** (Configure Activity Rewards, Pearl Wallet Balance check, Select Payment Method, Confirm Funding, auto-run instance popover)
+- **1 existing screen updated** (Fund Your Agent — show actual shortfall, not total requirements)
 - **No backend changes** needed
 - **No breaking changes** for existing users (store migration handles backward compat)
 
@@ -325,11 +332,9 @@ Step 8 (Cleanup)
 
 1. **Optimus/Modius share `service_public_id`** — `getAgentTypeFromService` must check BOTH `servicePublicId` AND `middlewareHomeChainId` (latent bug today, must fix in Step 2)
 
-2. **`isInitialFunded` per instance** — New instance of an already-funded agent type must NOT inherit the type-level "funded" flag. The `instanceSettings` map solves this.
+2. **`isInitialFunded` removal** — Replace with backend's `is_refill_required` per service. **[CONFIRM WITH TEAM]** that the backend flag correctly handles the first-time funding vs refill distinction. If not, a per-instance frontend flag will be needed.
 
-3. **Instance deletion** — If the selected instance is removed, selection must fall back to another instance of the same type, or the first available instance.
-
-4. **Auto-run migration** — Users with existing `includedAgents` (AgentType-based) must be migrated to `includedInstances` (serviceConfigId-based) on first load.
+3. **Auto-run migration** — Users with existing `includedAgents` (AgentType-based) must be migrated to `includedInstances` (serviceConfigId-based) on first load.
 
 5. **Setup flow completion** — After creating a new instance, the new service must be explicitly selected via `updateSelectedInstance(newConfigId)`, not left to the auto-select logic (which would pick the first/existing instance).
 
@@ -341,5 +346,4 @@ Step 8 (Cleanup)
 2. **Create second instance:** Add Agent → select existing type → setup flow → new instance appears in sidebar as child
 3. **Sidebar navigation:** Click parent = expand + select first child; click child = select that instance
 4. **Auto-run:** Two instances of same type → both appear in rotation queue → each runs independently
-5. **Instance deletion:** Remove one instance → sidebar updates → selection falls back correctly
-6. **Funding:** New instance requires its own initial funding even if another instance of same type is funded
+5. **Funding:** New instance requires its own initial funding even if another instance of same type is funded
