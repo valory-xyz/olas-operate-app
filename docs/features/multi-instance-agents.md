@@ -125,7 +125,7 @@ After migration, the legacy paths never run again.
 
 ## Step 4: New Instance Creation Flow
 
-The instance creation flow is a **new multi-step flow**. It has up to 5 screens depending on Pearl wallet balance:
+The instance creation flow reuses existing screens with extensions:
 
 ### Screen 1: Select Agent
 
@@ -139,25 +139,17 @@ The instance creation flow is a **new multi-step flow**. It has up to 5 screens 
 
 Same as the current staking program selection — defaults to the agent's `defaultStakingProgramId`, user can change if they want. No functional change, just a UI refresh.
 
-### Screen 3: Using Your Pearl Wallet Balance (NEW)
+### Screens 3-5: Fund Your Agent (extended, multi-step)
 
-**New component** — intermediate balance-check screen. Applies to both multi-instance and existing flows (e.g., user already has Agents.fun on Base and is setting up PettBro on the same chain — the wallet may already have funds).
+Extend the existing `FundYourAgent` component into a multi-step internal flow. The staking page navigates to "fund" as it does today — `FundYourAgent` internally handles the branching. Applies to both multi-instance and existing flows (e.g., user already has Agents.fun on Base and is setting up PettBro on the same chain — the wallet may already have funds).
 
-- Shows the Pearl wallet balances for only the tokens that appear in `refill_requirements`
-- **If all required tokens are fully covered:** skip Screen 4, go directly to Screen 5 (Confirm Agent Funding)
-- **If any token is missing or insufficient:** proceed to Screen 4 (Fund Your Agent) which requests the missing/shortfall amounts
+`FundYourAgent` determines which screen to show based on existing instances and wallet balance:
 
-### Screen 4: Fund Your Agent (existing, conditional)
+- **Balance check screen (new)** — shown when another instance (same or different agent type) already exists on the same chain. Fetches `refill_requirements`, checks Pearl wallet balances for the required tokens. Routes to either the confirm screen or the payment screen based on whether funds are sufficient.
 
-Only shown when Pearl wallet balance is insufficient. This is the **existing** "Fund Your Agent" screen with payment method selection (Buy/Transfer/Bridge). The change to show `refill_requirements` instead of `total_requirements` applies to the existing flow as well, not just multi-instance (see Step 4a).
+- **Payment method selection screen (existing)** — shown when no instance exists on the chain, or when the Pearl wallet doesn't have enough funds. The existing Buy/Transfer/Bridge screen, updated to show the **actual shortfall** (`refill_requirements`) not total requirements (see Step 4a).
 
-### Screen 5: Confirm Agent Funding (NEW)
-
-**New component** — only shown when funds are being used from the Pearl wallet (i.e., wallet has sufficient balance and no manual funding is needed from the user).
-
-- Shows the token amounts that will be used from the Pearl wallet
-- **"Confirm"** button navigates to main page where the newly created service is selected. No fund transfer happens until the agent is actually run.
-- **Not shown** when the user had to manually fund via Screen 4 (in that case the flow proceeds directly after funding)
+- **Confirm funding screen (new)** — shown when the Pearl wallet fully covers the required funds. Shows token amounts that will be used from the wallet. **"Confirm"** button navigates to main page where the newly created service is selected. No fund transfer happens until the agent is actually run.
 
 ### Step 4a: Update Existing "Fund Your Agent" Screen to Show Actual Shortfall
 
@@ -176,9 +168,8 @@ Files to update:
 
 ### Implementation Notes
 
-- The 5-screen flow needs a new stepper/wizard component or extension of the existing setup flow state machine
-- The current `SETUP_SCREEN` enum in `frontend/constants/pages.ts` will need new entries for these screens
-- The balance-check → conditional branching (sufficient vs insufficient) is the key routing logic
+- `FundYourAgent` becomes a multi-step component with internal state tracking which sub-step to show (balance check → payment method → confirm)
+- No new entries needed in `SETUP_SCREEN` enum — the staking page navigates to fund as today, branching is internal to `FundYourAgent`
 
 ---
 
@@ -316,7 +307,7 @@ Step 8 (Cleanup)
 **Suggested PRs:**
 1. **PR 1 — Foundation:** Steps 1-2 (types + ServicesProvider). Critical path.
 2. **PR 2 — Sidebar:** Step 3 (tree structure with instances).
-3. **PR 3 — Creation Flow:** Step 4 (up to 5-screen instance creation flow with conditional branching). Largest UI PR.
+3. **PR 3 — Creation Flow:** Step 4 (SelectAgent rework + FundYourAgent multi-step extension). Largest UI PR.
 4. **PR 4 — Runtime:** Steps 5-6 (Running state + Auto-run). Complex but isolated.
 5. **PR 5 — Cleanup:** Steps 7-8 (Balance, staking, remaining components).
 
@@ -326,7 +317,7 @@ Step 8 (Cleanup)
 
 - **~35-40 files** modified
 - **~2000-2500 lines** changed (additions + deletions)
-- **4-5 new components** (Configure Activity Rewards, Pearl Wallet Balance check, Select Payment Method, Confirm Funding, auto-run instance popover)
+- **2-3 new sub-components** within FundYourAgent (balance check step, confirm funding step) + auto-run instance popover
 - **1 existing screen updated** (Fund Your Agent — show actual shortfall, not total requirements)
 - **No backend changes** needed
 - **No breaking changes** for existing users (store migration handles backward compat)
