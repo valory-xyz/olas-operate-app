@@ -98,7 +98,7 @@ After migration, the legacy paths never run again.
 
 ## Step 3: Sidebar — Tree Structure
 
-**File:** `frontend/components/MainPageV1/Sidebar/Sidebar.tsx`
+**File:** `frontend/components/MainPage/Sidebar/Sidebar.tsx`
 
 ### Changes:
 
@@ -233,7 +233,7 @@ The auto-run control popover/context menu (currently in sidebar area) must chang
 - **"Excluded from auto-run" section** — separated at the bottom of the popover under a divider, listing excluded instances grouped by agent type
 - Stored as `userExcludedInstances: string[]` (`service_config_id`s) in Electron store
 
-**File:** `frontend/components/MainPageV1/Sidebar/AutoRunControl.tsx` (or wherever the auto-run toggle/popover lives)
+**File:** `frontend/components/MainPage/Sidebar/AutoRunControl.tsx` (or wherever the auto-run toggle/popover lives)
 
 ---
 
