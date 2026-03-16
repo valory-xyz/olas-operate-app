@@ -2,7 +2,7 @@
 
 ## Context
 
-Pearl currently enforces a 1:1 relationship between agent type and service instance. Every lookup in the frontend assumes `AgentType` uniquely identifies a single running service. We need to support **multiple instances** of the same agent type — each with its own EOA, Safe, OLAS stake, staking slot, and independent lifecycle.
+Pearl currently enforces a 1:1 relationship between agent type and service instance. Every lookup in the frontend assumes `AgentType` uniquely identifies a single running service. We need to support **multiple instances** of the same agent type — each with its own EOA, Safe, OLAS stake, and independent lifecycle.
 
 The backend already supports this (each instance gets a unique `service_config_id`). This is a **frontend-only change**.
 
@@ -13,11 +13,10 @@ The backend already supports this (each instance gets a unique `service_config_i
 
 ### Instance Behavior Summary
 
-- Each instance has its own agent EOA, agent Safe, OLAS stake, and staking slot
-- Each instance is independently startable, pausable, and removable
-- Each instance has fully independent agent-level settings (strategy, goal, risk parameters)
+- Each instance has its own agent EOA, agent Safe, and OLAS stake
+- Each instance is independently startable, and pausable.
 - Instance names are auto-generated deterministically via `generateAgentName(chainId, tokenId)` (e.g., "fafon-norlo48")
-- No frontend limit on instances per agent type (bounded only by staking slot availability)
+- No frontend limit on instances per agent type
 - Instance creation uses the existing "Add New Agent" flow; already-owned agent types show "You own N" badge
 
 ---
@@ -27,9 +26,9 @@ The backend already supports this (each instance gets a unique `service_config_i
 ### 1a. `frontend/types/ElectronApi.ts`
 
 - Add `lastSelectedServiceConfigId?: string` to `ElectronStore`
-- Keep `lastSelectedAgentType` for backward compat only (used as fallback when `lastSelectedServiceConfigId` is missing after upgrade)
-- **Remove `isInitialFunded` from Electron store** — replace with backend's `is_refill_required` per service. **[CONFIRM WITH TEAM]** that `is_refill_required` correctly distinguishes first-time funding vs refill scenarios.
-- **`isProfileWarningDisplayed` becomes per instance** — move from `${agentType}.isProfileWarningDisplayed` to a new `instanceSettings` map keyed by `service_config_id`
+- Keep `lastSelectedAgentType` for backward compat only — one-time migration in `ServicesProvider` converts it to `lastSelectedServiceConfigId` after services are first fetched
+- **`isInitialFunded` becomes per service** — move from `${agentType}.isInitialFunded` to per `service_config_id`, e.g. `"optimus": {"isInitialFunded": {"sc-111": true, "sc-222": false}}`. Migration of existing boolean values handled in `ServicesProvider` after services are fetched (needs `service_config_id` from backend).
+- **Remove `isProfileWarningDisplayed`** — confirmed no longer needed (all agents support x402). Remove the store keys and related code (`UnlockChatUiAlert.tsx`, `Home/index.tsx`).
 - Extend `autoRun` type:
   ```
   includedInstances?: { serviceConfigId: string; order: number }[]
@@ -39,7 +38,8 @@ The backend already supports this (each instance gets a unique `service_config_i
 
 ### 1b. `electron/store.js`
 
-- Add new fields to schema with defaults (`lastSelectedServiceConfigId: ''`, `instanceSettings: {}`, auto-run instance fields)
+- Add new fields to schema with defaults (`lastSelectedServiceConfigId: ''`, auto-run instance fields)
+- `setupStoreIpc` only adds new schema fields with defaults
 
 ### 1c. Optional: `frontend/types/Instance.ts`
 
@@ -61,7 +61,7 @@ type AgentInstance = {
 
 ### Changes:
 
-1. **`selectedServiceConfigId` becomes primary state** (initialized from `storeState?.lastSelectedServiceConfigId`, falling back to deriving from `lastSelectedAgentType` for migration)
+1. **`selectedServiceConfigId` becomes primary state** (initialized from `storeState?.lastSelectedServiceConfigId`, with one-time migration from `lastSelectedAgentType` after first services fetch)
 
 2. **`selectedAgentType` becomes derived** via `useMemo`:
    ```ts
@@ -73,9 +73,9 @@ type AgentInstance = {
 
 4. **`updateAgentType(agentType)` stays** but now selects the FIRST instance of that type internally (for sidebar parent-click and backward compat)
 
-5. **Fix service-select effect (lines 329-344)** — if `selectedServiceConfigId` is already valid, keep it; only auto-select if no valid selection exists
+5. **Fix service-select effect** (the `useEffect` that sets `selectedServiceConfigId` when `selectedAgentConfig` or `services` change) — if `selectedServiceConfigId` is already valid, keep it; only auto-select if no valid selection exists
 
-6. **Fix `getAgentTypeFromService` (line 395)** — currently only checks `servicePublicId`, must also check `middlewareHomeChainId` to disambiguate Optimus/Modius (latent bug)
+6. **Fix `getAgentTypeFromService`** — currently only checks `servicePublicId`, must also check `middlewareHomeChainId` to disambiguate Optimus/Modius (latent bug)
 
 7. **New helpers to expose:**
    - `updateSelectedInstance: (serviceConfigId: string) => void`
@@ -84,10 +84,15 @@ type AgentInstance = {
 
 8. **`availableServiceConfigIds`** — already iterates all services, no change needed
 
-9. **Define deterministic instance ordering** — `MiddlewareServiceResponse` has no `created_at` field. Sort instances by `service_config_id` (likely monotonically increasing) as a stable default. Define this sort once in a shared util and reuse across sidebar child order, auto-run rotation, migration, and selection fallback.
+9. **Define deterministic instance ordering** — `MiddlewareServiceResponse` has no `created_at` field. Raised with BE team to introduce one. Until then, use a stable default sort (e.g., lexicographic by `service_config_id`). Define this sort once in a shared util and reuse across sidebar child order, auto-run rotation, migration, and selection fallback.
 
-### Selection Restoration
-On relaunch, `lastSelectedServiceConfigId` from the Electron store is used to restore the selected instance (agent type is derived from it). If `lastSelectedServiceConfigId` is missing (e.g., first launch after upgrade), falls back to `lastSelectedAgentType` and selects the first instance of that type.
+### Selection Restoration & Migration
+On relaunch, `lastSelectedServiceConfigId` from the Electron store is used to restore the selected instance. Both one-time migrations run in `ServicesProvider` after services are first fetched (both need `service_config_id` from backend):
+
+1. **`lastSelectedServiceConfigId`** — if empty but `lastSelectedAgentType` exists, find the first matching service for that agent type and write its `service_config_id` to the store.
+2. **`isInitialFunded`** — if still a per-type boolean, convert to per-service map by applying the existing value to the first service of that agent type.
+
+After migration, the legacy paths never run again.
 
 ---
 
@@ -100,9 +105,11 @@ On relaunch, `lastSelectedServiceConfigId` from the Electron store is used to re
 1. **`myAgents` becomes grouped** — `Map<AgentType, { config: AgentConfig; instances: AgentInstance[] }>`
 
 2. **Ant Design `Menu` renders as tree:**
-   - Parent items: agent type icon + display name + instance count
-   - Child items: generated instance name + status indicator (running dot / chain icon)
+   - Parent items: agent type icon + display name
+   - Child items: generated instance name + status indicator (running dot)
    - Use `Menu` with `children` sub-items or `type: 'group'`
+   - Chain icon is moved to `AgentInfo` component
+   - If a group is collapsed, the running dot is shown per group, if expanded - per instance (child).
 
 3. **Selection key changes** from `[selectedAgentType]` to `[selectedServiceConfigId]`
 
@@ -112,7 +119,7 @@ On relaunch, `lastSelectedServiceConfigId` from the Electron store is used to re
 
 5. **Remove `canAddNewAgents`** — no longer needed since users can always add another instance. Always show the "Add Agent" button.
 
-6. **Fallback selection** (lines 212-222): if selected instance not in myAgents, select first available instance (not first agent type)
+6. **Fallback selection** (the `useEffect` that validates `selectedAgentType` against `myAgents`): if selected instance not in myAgents, select first available instance (not first agent type)
 
 ---
 
@@ -148,9 +155,8 @@ Only shown when Pearl wallet balance is insufficient. This is the **existing** "
 
 **New component** — only shown when funds are being used from the Pearl wallet (i.e., wallet has sufficient balance and no manual funding is needed from the user).
 
-- Shows the token amounts that will be transferred from the Pearl wallet + transaction fee estimate
-- **"Confirm"** button triggers service creation and starts the agent
-- After creation: `refetchServices` picks up new service → `updateSelectedInstance(newService.service_config_id)` selects the new instance
+- Shows the token amounts that will be used from the Pearl wallet
+- **"Confirm"** button navigates to main page where the newly created service is selected. No fund transfer happens until the agent is actually run.
 - **Not shown** when the user had to manually fund via Screen 4 (in that case the flow proceeds directly after funding)
 
 ### Step 4a: Update Existing "Fund Your Agent" Screen to Show Actual Shortfall
@@ -198,7 +204,7 @@ Most complex subsystem change. Multiple files.
 
 ### 6b. `frontend/context/AutoRunProvider/hooks/useAutoRunStore.ts`
 - Read/write `includedInstances` and `userExcludedInstances`
-- Migration: convert existing `includedAgents` → `includedInstances` by resolving each agent type to its service(s)
+- One-time migration after services are fetched: convert existing `includedAgents` → `includedInstances` and `userExcludedAgents` → `userExcludedInstances` by resolving each agent type to its service(s). Cannot run in `setupStoreIpc` — needs `service_config_id` from backend.
 
 ### 6c. `frontend/context/AutoRunProvider/utils/utils.ts`
 - Add instance-level sorting/normalization helpers
@@ -224,7 +230,7 @@ The following refs use `Partial<Record<AgentType, ...>>` and will collapse multi
 | `useAutoRunOperations.ts:86` | `skipNotifiedRef` | Skip notification dedup |
 | `useAutoRunOperations.ts:87` | `lastRewardsFetchRef` | Rewards fetch throttling |
 
-All must become `Partial<Record<string /* service_config_id */, ...>>`. The `useAutoRunLifecycle.ts` hook reads/writes these same refs and must be updated accordingly (lines 28, 191-192, 273-277).
+All must become `Partial<Record<string /* service_config_id */, ...>>`. The `useAutoRunLifecycle.ts` hook reads/writes these same refs (param types, reset guards during stop failure, eligibility transition tracking) and must be updated accordingly.
 
 ### 6g. Auto-Run UI — Per-Instance Exclusion
 
@@ -242,20 +248,19 @@ The auto-run control popover/context menu (currently in sidebar area) must chang
 ## Step 7: Balance, Staking & Funding — Instance-Level
 
 ### 7a. `frontend/context/BalancesAndRefillRequirementsProvider/`
-- `isPearlWalletRefillRequired`: remove the `isInitialFunded` gate entirely — use the backend's `is_refill_required` flag per service instead. **[CONFIRM WITH TEAM]**
+- `isPearlWalletRefillRequired`: change `isInitialFunded` lookup from `storeState?.[agentType]?.isInitialFunded` to the per-service structure `storeState?.[agentType]?.isInitialFunded?.[serviceConfigId]`
 
 ### 7b. `frontend/hooks/useAgentStakingRewardsDetails.ts`
 - Use `selectedService` directly from `useServices()` instead of re-finding by `service_public_id`
 
 ### 7c. `frontend/hooks/useIsInitiallyFunded.ts`
-- Remove this hook entirely — replace all usages with the backend's `is_refill_required` from `BalancesAndFundingRequirements`. **[CONFIRM WITH TEAM]**
-- Clean up Electron store: remove the `${agentType}.isInitialFunded` keys
+- Update to read/write per `service_config_id`: `storeState?.[agentType]?.isInitialFunded?.[serviceConfigId]`
+- Migration: existing boolean `isInitialFunded: true` should be converted to apply to the first service of that agent type
 
-### 7d. `isProfileWarningDisplayed` — per instance
-- `UnlockChatUiAlert.tsx:26` writes `${selectedAgentType}.isProfileWarningDisplayed` → change to `instanceSettings[serviceConfigId].isProfileWarningDisplayed`
-- `Home/index.tsx:98` reads the same key → update accordingly
-- `service_config_id` is globally unique (UUID-based), safe to use as sole key
-- Migration: existing per-type flags can be ignored (users will see the warning once per instance)
+### 7d. Remove `isProfileWarningDisplayed` entirely
+- All agents now support x402 — this alert is no longer needed
+- Remove store keys `${agentType}.isProfileWarningDisplayed`
+- Remove related code in `UnlockChatUiAlert.tsx` and `Home/index.tsx`
 
 ---
 
@@ -311,7 +316,7 @@ Step 8 (Cleanup)
 **Suggested PRs:**
 1. **PR 1 — Foundation:** Steps 1-2 (types + ServicesProvider). Critical path.
 2. **PR 2 — Sidebar:** Step 3 (tree structure with instances).
-3. **PR 3 — Creation Flow:** Step 4 (new 3-screen instance creation flow). Largest UI PR.
+3. **PR 3 — Creation Flow:** Step 4 (up to 5-screen instance creation flow with conditional branching). Largest UI PR.
 4. **PR 4 — Runtime:** Steps 5-6 (Running state + Auto-run). Complex but isolated.
 5. **PR 5 — Cleanup:** Steps 7-8 (Balance, staking, remaining components).
 
@@ -332,11 +337,11 @@ Step 8 (Cleanup)
 
 1. **Optimus/Modius share `service_public_id`** — `getAgentTypeFromService` must check BOTH `servicePublicId` AND `middlewareHomeChainId` (latent bug today, must fix in Step 2)
 
-2. **`isInitialFunded` removal** — Replace with backend's `is_refill_required` per service. **[CONFIRM WITH TEAM]** that the backend flag correctly handles the first-time funding vs refill distinction. If not, a per-instance frontend flag will be needed.
+2. **`isInitialFunded` migration** — Moving from per-type boolean to per-service map. Existing `isInitialFunded: true` must be migrated to apply to the first service of that agent type.
 
 3. **Auto-run migration** — Users with existing `includedAgents` (AgentType-based) must be migrated to `includedInstances` (serviceConfigId-based) on first load.
 
-5. **Setup flow completion** — After creating a new instance, the new service must be explicitly selected via `updateSelectedInstance(newConfigId)`, not left to the auto-select logic (which would pick the first/existing instance).
+4. **Setup flow completion** — After creating a new instance, the new service must be explicitly selected via `updateSelectedInstance(newConfigId)`, not left to the auto-select logic (which would pick the first/existing instance).
 
 ---
 
