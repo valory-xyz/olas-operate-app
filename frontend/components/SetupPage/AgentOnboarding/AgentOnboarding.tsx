@@ -267,10 +267,7 @@ export const AgentOnboarding = () => {
         <SelectYourAgent canGoBack={isNonEmpty(services)} />
 
         {archivedAgents.length > 0 && (
-          <Flex
-            className="px-24 py-12"
-            style={{ borderBottom: `1px solid ${COLOR.GRAY_4}` }}
-          >
+          <Flex style={{ borderBottom: `1px solid ${COLOR.GRAY_4}` }}>
             <Segmented
               options={OPTIONS}
               value={activeTab}

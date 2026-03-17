@@ -271,8 +271,9 @@ export const Sidebar = () => {
       if (
         archivedAgents.includes(agentType) ||
         optimisticArchivedAgents.includes(agentType)
-      )
+      ) {
         return result;
+      }
 
       const chainId = agentConfig.evmHomeChainId;
       const chainName = CHAIN_CONFIG[chainId].name;
