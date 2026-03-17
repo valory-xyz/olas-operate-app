@@ -1,6 +1,5 @@
 import {
   Button,
-  Dropdown,
   Flex,
   Layout,
   Menu,
@@ -9,11 +8,9 @@ import {
   Tag,
   Typography,
 } from 'antd';
-import { kebabCase } from 'lodash';
 import Image from 'next/image';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import {
-  TbDots,
   TbHelpSquareRounded,
   TbPlus,
   TbSettings,
@@ -21,21 +18,17 @@ import {
 } from 'react-icons/tb';
 import styled from 'styled-components';
 
-import { ACTIVE_AGENTS, AVAILABLE_FOR_ADDING_AGENTS } from '@/config/agents';
-import { CHAIN_CONFIG } from '@/config/chains';
+import { AVAILABLE_FOR_ADDING_AGENTS } from '@/config/agents';
 import {
   AgentType,
   ANTD_BREAKPOINTS,
   COLOR,
-  EvmChainId,
   PAGES,
   Pages,
   SETUP_SCREEN,
   SIDER_WIDTH,
 } from '@/constants';
 import {
-  useAgentRunning,
-  useArchivedAgents,
   useBalanceAndRefillRequirementsContext,
   useMasterWalletContext,
   usePageState,
@@ -44,11 +37,12 @@ import {
 } from '@/hooks';
 
 import { BackupSeedPhraseAlert } from '../BackupSeedPhraseAlert';
+import { useSidebarArchive } from '../hooks/useSidebarArchive';
 import { UpdateAvailableAlert } from '../UpdateAvailableAlert/UpdateAvailableAlert';
 import { UpdateAvailableModal } from '../UpdateAvailableAlert/UpdateAvailableModal';
+import { AgentListMenu } from './AgentListMenu';
 import { ArchiveAgentModal } from './ArchiveAgentModal';
 import { AutoRunControl } from './AutoRunControl';
-import { PulseDot } from './PulseDot';
 
 const { Sider } = Layout;
 const { Text } = Typography;
@@ -76,23 +70,6 @@ const ResponsiveButton = styled(Button)`
     > span:not(.ant-btn-icon) {
       display: none;
     }
-  }
-`;
-
-/** Hidden by default; revealed when parent menu item is hovered. */
-const ArchiveMenuButton = styled.span`
-  visibility: hidden;
-  display: flex;
-  align-items: center;
-  padding: 2px 4px;
-  border-radius: 4px;
-  color: ${COLOR.TEXT_NEUTRAL_SECONDARY};
-  .ant-menu-item:hover & {
-    visibility: visible;
-  }
-  &:hover {
-    color: ${COLOR.TEXT_NEUTRAL_TERTIARY};
-    background-color: ${COLOR.GRAY_3};
   }
 `;
 
@@ -139,151 +116,23 @@ const menuItems: MenuProps['items'] = [
   { key: PAGES.Settings, icon: <TbSettings size={20} />, label: 'Settings' },
 ];
 
-type AgentList = {
-  name: string;
-  agentType: AgentType;
-  chainName: string;
-  chainId: EvmChainId;
-}[];
-
-type AgentListMenuProps = {
-  myAgents: AgentList;
-  selectedMenuKeys: (Pages | AgentType)[];
-  onAgentSelect: MenuProps['onClick'];
-  onArchiveRequest: (agentType: AgentType) => void;
-};
-
-const AgentListMenu = ({
-  myAgents,
-  selectedMenuKeys,
-  onAgentSelect,
-  onArchiveRequest,
-}: AgentListMenuProps) => {
-  const { runningAgentType } = useAgentRunning();
-  const canShowArchiveMenu = myAgents.length > 1;
-
-  return (
-    <Menu
-      selectedKeys={selectedMenuKeys}
-      mode="inline"
-      inlineIndent={4}
-      onClick={onAgentSelect}
-      items={myAgents.map((agent) => {
-        const isRunning = runningAgentType === agent.agentType;
-        const showArchiveButton = canShowArchiveMenu && !isRunning;
-
-        return {
-          key: agent.agentType,
-          className: isRunning ? 'menu-running-agent' : undefined,
-          icon: (
-            <Image
-              key={agent.agentType}
-              src={`/agent-${agent.agentType}-icon.png`}
-              className="rounded-4"
-              alt={agent.name}
-              width={32}
-              height={32}
-            />
-          ),
-          label: (
-            <Flex justify="space-between" align="center">
-              <span>{agent.name}</span>
-              {isRunning ? (
-                <PulseDot />
-              ) : showArchiveButton ? (
-                <Dropdown
-                  trigger={['click']}
-                  menu={{
-                    items: [
-                      {
-                        key: 'archive',
-                        label: 'Move to archive',
-                        onClick: ({ domEvent }) => {
-                          domEvent.stopPropagation();
-                          onArchiveRequest(agent.agentType);
-                        },
-                      },
-                    ],
-                  }}
-                >
-                  <ArchiveMenuButton
-                    role="button"
-                    aria-label={`Archive ${agent.name}`}
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <TbDots size={16} />
-                  </ArchiveMenuButton>
-                </Dropdown>
-              ) : (
-                <Image
-                  src={`/chains/${kebabCase(agent.chainName)}-chain.png`}
-                  alt={`${agent.chainName} logo`}
-                  width={14}
-                  height={14}
-                />
-              )}
-            </Flex>
-          ),
-        };
-      })}
-    />
-  );
-};
-
 export const Sidebar = () => {
   const { goto: gotoSetup } = useSetup();
   const { pageState, goto: gotoPage } = usePageState();
-  const { services, isLoading, selectedAgentType, updateAgentType } =
-    useServices();
-  const { archiveAgent, archivedAgents } = useArchivedAgents();
-
+  const { isLoading, selectedAgentType, updateAgentType } = useServices();
   const { masterSafes, isLoading: isMasterWalletLoading } =
     useMasterWalletContext();
 
-  const [pendingArchiveAgent, setPendingArchiveAgent] = useState<
-    AgentType | undefined
-  >();
+  const {
+    myAgents,
+    archivedAgents,
+    pendingArchiveAgent,
+    setPendingArchiveAgent,
+    pendingArchiveAgentName,
+    handleArchiveConfirm,
+  } = useSidebarArchive();
 
-  // Optimistic exclusion: immediately hide an agent when archiving is confirmed,
-  // before the IPC store-changed response arrives. Cleared once the store catches up.
-  const [optimisticArchivedAgents, setOptimisticArchivedAgents] = useState<
-    AgentType[]
-  >([]);
-
-  useEffect(() => {
-    setOptimisticArchivedAgents((prev) =>
-      prev.filter((a) => !archivedAgents.includes(a)),
-    );
-  }, [archivedAgents]);
-
-  const myAgents = useMemo(() => {
-    if (!services) return [];
-    return services.reduce<AgentList>((result, service) => {
-      const agent = ACTIVE_AGENTS.find(
-        ([, agentConfig]) =>
-          agentConfig.servicePublicId === service.service_public_id &&
-          agentConfig.middlewareHomeChainId === service.home_chain,
-      );
-      if (!agent) return result;
-
-      const [agentType, agentConfig] = agent;
-      if (!agentConfig.evmHomeChainId) return result;
-      if (
-        archivedAgents.includes(agentType) ||
-        optimisticArchivedAgents.includes(agentType)
-      ) {
-        return result;
-      }
-
-      const chainId = agentConfig.evmHomeChainId;
-      const chainName = CHAIN_CONFIG[chainId].name;
-      const name = agentConfig.displayName;
-      result.push({ name, agentType, chainName, chainId });
-      return result;
-    }, []);
-  }, [services, archivedAgents, optimisticArchivedAgents]);
-
-  // if the selectedAgentType is not in myAgents, select the first one
+  // If the selectedAgentType is not in myAgents, select the first one
   useEffect(() => {
     const isSelectedAgentAvailable = myAgents.some(
       (agent) => agent.agentType === selectedAgentType,
@@ -339,44 +188,6 @@ export const Sidebar = () => {
 
     return availableAgents.length < AVAILABLE_FOR_ADDING_AGENTS.length;
   }, [myAgents, archivedAgents]);
-
-  const handleArchiveConfirm = useCallback(() => {
-    if (!pendingArchiveAgent) return;
-
-    // Optimistically hide immediately — before IPC round-trip completes
-    setOptimisticArchivedAgents((prev) => [...prev, pendingArchiveAgent]);
-    archiveAgent(pendingArchiveAgent);
-
-    // Select next available agent if the archived one was selected
-    if (selectedAgentType === pendingArchiveAgent) {
-      const nextAgent = myAgents.find(
-        (agent) => agent.agentType !== pendingArchiveAgent,
-      );
-      if (nextAgent) {
-        updateAgentType(nextAgent.agentType);
-        gotoPage(PAGES.Main);
-      } else {
-        gotoPage(PAGES.Setup);
-        gotoSetup(SETUP_SCREEN.AgentOnboarding);
-      }
-    }
-
-    setPendingArchiveAgent(undefined);
-  }, [
-    archiveAgent,
-    gotoPage,
-    gotoSetup,
-    myAgents,
-    pendingArchiveAgent,
-    selectedAgentType,
-    updateAgentType,
-  ]);
-
-  const pendingArchiveAgentName = useMemo(() => {
-    if (!pendingArchiveAgent) return '';
-    const agent = myAgents.find((a) => a.agentType === pendingArchiveAgent);
-    return agent?.name ?? '';
-  }, [myAgents, pendingArchiveAgent]);
 
   return (
     <SiderContainer>
