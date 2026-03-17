@@ -73,7 +73,7 @@ describe('useIsInitiallyFunded', () => {
     it('returns undefined when the selected service is not in the record', () => {
       const storeState: Partial<ElectronStore> = {
         [AgentMap.PredictTrader]: {
-          isInitialFunded: { MOCK_SERVICE_CONFIG_ID_2: true },
+          isInitialFunded: { [MOCK_SERVICE_CONFIG_ID_2]: true },
         },
       };
       mockUseStore.mockReturnValue({ storeState });
@@ -176,7 +176,7 @@ describe('useIsInitiallyFunded', () => {
     it('preserves existing entries when writing', () => {
       const storeState: Partial<ElectronStore> = {
         [AgentMap.PredictTrader]: {
-          isInitialFunded: { MOCK_SERVICE_CONFIG_ID_2: true },
+          isInitialFunded: { [MOCK_SERVICE_CONFIG_ID_2]: true },
         },
       };
       mockUseStore.mockReturnValue({ storeState });
@@ -188,7 +188,7 @@ describe('useIsInitiallyFunded', () => {
       });
       expect(mockSetStore).toHaveBeenCalledWith(
         `${AgentMap.PredictTrader}.isInitialFunded`,
-        { MOCK_SERVICE_CONFIG_ID_2: true, [DEFAULT_SERVICE_CONFIG_ID]: true },
+        { [MOCK_SERVICE_CONFIG_ID_2]: true, [DEFAULT_SERVICE_CONFIG_ID]: true },
       );
     });
 

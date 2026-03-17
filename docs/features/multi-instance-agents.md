@@ -82,8 +82,7 @@ type AgentInstance = {
 
 7. **New helpers to expose:**
    - `updateSelectedInstance: (serviceConfigId: string) => void`
-   - `getInstancesOfType: (agentType: AgentType) => Service[]`
-   - `instanceCountByAgentType: Record<AgentType, number>`
+   - `getInstancesOfAgentType: (agentType: AgentType) => MiddlewareServiceResponse[]`
 
 8. **`availableServiceConfigIds`** — already iterates all services, no change needed
 
@@ -284,6 +283,10 @@ These fire on agent-type change but won't fire when switching between instances 
 | `Home/index.tsx` | 134 | `PageTransition key={selectedAgentType}` — remounts animation | Use `selectedServiceConfigId` as key |
 | `useScrollPage.ts` | 14 | Scroll-to-top on `[pageState, selectedAgentType]` | Use `selectedServiceConfigId` in deps |
 
+### Step 8b: Notifications — per-instance format
+
+Notification strings currently reference agent type only. Update to include instance name using `{AgentType} agent "{instanceName}"` format, e.g., `Polystrat agent "corzim-vardor96" was skipped`.
+
 ---
 
 ## Dependency Order & PR Strategy
@@ -337,12 +340,6 @@ Step 8 (Cleanup)
 3. **Auto-run migration** — Users with existing `includedAgents` (AgentType-based) must be migrated to `includedAgentInstances` (serviceConfigId-based) on first load.
 
 4. **Setup flow completion** — After creating a new instance, the new service must be explicitly selected via `updateSelectedInstance(newConfigId)`, not left to the auto-select logic (which would pick the first/existing instance).
-
----
-
-## Open Questions (pending product decision)
-
-1. **Notifications per instance** — Currently notifications are shown per agent type. With multiple instances, we need product guidance on whether notifications should be per instance (e.g., "corzim-vardor96 needs refill") or grouped per type. Must be resolved before feature review.
 
 ---
 

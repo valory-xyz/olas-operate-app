@@ -3,7 +3,7 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { message } from 'antd';
 import { act, createElement, PropsWithChildren, useContext } from 'react';
 
-import { ACTIVE_AGENTS, AGENT_CONFIG } from '../../config/agents';
+import { AGENT_CONFIG } from '../../config/agents';
 import { AgentMap, AgentType } from '../../constants/agent';
 import { EvmChainIdMap, MiddlewareChainMap } from '../../constants/chains';
 import { MiddlewareDeploymentStatusMap } from '../../constants/deployment';
@@ -334,10 +334,49 @@ describe('ServicesProvider', () => {
         DEFAULT_SERVICE_CONFIG_ID,
       );
     });
+
+    it('switches between instances of the same type without changing selectedAgentType', async () => {
+      const instance1 = serviceFor(AgentMap.PredictTrader, {
+        service_config_id: DEFAULT_SERVICE_CONFIG_ID,
+      });
+      const instance2 = serviceFor(AgentMap.PredictTrader, {
+        service_config_id: MOCK_SERVICE_CONFIG_ID_2,
+      });
+      mockGetServices.mockResolvedValue([instance1, instance2]);
+
+      const wrapper = createWrapper();
+      const { result } = renderHook(() => useContext(ServicesContext), {
+        wrapper,
+      });
+
+      await waitFor(() => {
+        expect(result.current.services).toHaveLength(2);
+      });
+
+      // Select instance 2
+      act(() => {
+        result.current.updateSelectedInstance(MOCK_SERVICE_CONFIG_ID_2);
+      });
+
+      expect(result.current.selectedServiceConfigId).toBe(
+        MOCK_SERVICE_CONFIG_ID_2,
+      );
+      expect(result.current.selectedAgentType).toBe(AgentMap.PredictTrader);
+
+      // Switch back to instance 1
+      act(() => {
+        result.current.updateSelectedInstance(DEFAULT_SERVICE_CONFIG_ID);
+      });
+
+      expect(result.current.selectedServiceConfigId).toBe(
+        DEFAULT_SERVICE_CONFIG_ID,
+      );
+      expect(result.current.selectedAgentType).toBe(AgentMap.PredictTrader);
+    });
   });
 
-  describe('selectedAgentConfig', () => {
-    it('updateAgentType is a no-op for unknown agent type (no matching instances)', async () => {
+  describe('updateAgentType', () => {
+    it('is a no-op for unknown agent type (no matching instances)', async () => {
       mockGetServices.mockResolvedValue([]);
 
       const wrapper = createWrapper();
@@ -959,7 +998,7 @@ describe('ServicesProvider', () => {
     it('matches agent type by service_public_id via ACTIVE_AGENTS', async () => {
       // Test with Optimus
       const optimusService = serviceFor(AgentMap.Optimus, {
-        service_config_id: 'sc-optimus-test',
+        service_config_id: MOCK_SERVICE_CONFIG_ID_3,
       });
       mockGetServices.mockResolvedValue([optimusService]);
 
@@ -972,16 +1011,37 @@ describe('ServicesProvider', () => {
         expect(result.current.services).toHaveLength(1);
       });
 
-      const agentType =
-        result.current.getAgentTypeFromService('sc-optimus-test');
-      // Optimus and Modius have the same servicePublicId.
-      // ACTIVE_AGENTS.find returns the first match.
-      const expectedEntry = ACTIVE_AGENTS.find(
-        ([, config]) =>
-          config.servicePublicId ===
-          AGENT_CONFIG[AgentMap.Optimus].servicePublicId,
-      );
-      expect(agentType).toBe(expectedEntry?.[0]);
+      expect(
+        result.current.getAgentTypeFromService(MOCK_SERVICE_CONFIG_ID_3),
+      ).toBe(AgentMap.Optimus);
+    });
+
+    it('disambiguates Optimus and Modius despite shared servicePublicId', async () => {
+      // Optimus and Modius share servicePublicId ('valory/optimus:0.1.0')
+      // but differ on home_chain (OPTIMISM vs MODE)
+      const optimusService = serviceFor(AgentMap.Optimus, {
+        service_config_id: MOCK_SERVICE_CONFIG_ID_2,
+      });
+      const modiusService = serviceFor(AgentMap.Modius, {
+        service_config_id: MOCK_SERVICE_CONFIG_ID_3,
+      });
+      mockGetServices.mockResolvedValue([optimusService, modiusService]);
+
+      const wrapper = createWrapper();
+      const { result } = renderHook(() => useContext(ServicesContext), {
+        wrapper,
+      });
+
+      await waitFor(() => {
+        expect(result.current.services).toHaveLength(2);
+      });
+
+      expect(
+        result.current.getAgentTypeFromService(MOCK_SERVICE_CONFIG_ID_2),
+      ).toBe(AgentMap.Optimus);
+      expect(
+        result.current.getAgentTypeFromService(MOCK_SERVICE_CONFIG_ID_3),
+      ).toBe(AgentMap.Modius);
     });
   });
 
@@ -1160,6 +1220,57 @@ describe('ServicesProvider', () => {
     });
   });
 
+  // ─── isInitialFunded migration effect ───────────────────────────────
+
+  describe('isInitialFunded migration', () => {
+    it('migrates legacy boolean isInitialFunded to per-service record', async () => {
+      const traderService = serviceFor(AgentMap.PredictTrader);
+      mockGetServices.mockResolvedValue([traderService]);
+      mockStoreState = {
+        [AgentMap.PredictTrader]: { isInitialFunded: true },
+      };
+
+      const wrapper = createWrapper();
+      renderHook(() => useContext(ServicesContext), { wrapper });
+
+      await waitFor(() => {
+        expect(mockStoreSet).toHaveBeenCalledWith(
+          `${AgentMap.PredictTrader}.isInitialFunded`,
+          { [DEFAULT_SERVICE_CONFIG_ID]: true },
+        );
+      });
+    });
+
+    it('does not migrate when isInitialFunded is already a record', async () => {
+      const traderService = serviceFor(AgentMap.PredictTrader);
+      mockGetServices.mockResolvedValue([traderService]);
+      mockStoreState = {
+        [AgentMap.PredictTrader]: {
+          isInitialFunded: { [DEFAULT_SERVICE_CONFIG_ID]: true },
+        },
+      };
+
+      const wrapper = createWrapper();
+      renderHook(() => useContext(ServicesContext), { wrapper });
+
+      await waitFor(() => {
+        // Wait for services to load
+        expect(mockGetServices).toHaveBeenCalled();
+      });
+
+      // Give time for potential migration
+      await act(async () => {
+        await new Promise((r) => setTimeout(r, 50));
+      });
+
+      // Should not write isInitialFunded (only lastSelectedServiceConfigId from selection)
+      const isInitialFundedCalls = mockStoreSet.mock.calls.filter(
+        ([key]: [string]) => key.includes('isInitialFunded'),
+      );
+      expect(isInitialFundedCalls).toHaveLength(0);
+    });
+  });
+
   // ─── Multiple agents in availableServiceConfigIds ─────────────────
 
   describe('multiple agents', () => {
@@ -1192,6 +1303,80 @@ describe('ServicesProvider', () => {
         expect(configIds).toContain('sc-optimus');
         expect(configIds).toContain('sc-agentsfun');
       });
+    });
+  });
+
+  // ─── getInstancesOfAgentType ──────────────────────────────────────
+
+  describe('getInstancesOfAgentType', () => {
+    it('returns matching services for a given agent type', async () => {
+      const traderService1 = serviceFor(AgentMap.PredictTrader, {
+        service_config_id: DEFAULT_SERVICE_CONFIG_ID,
+      });
+      const traderService2 = serviceFor(AgentMap.PredictTrader, {
+        service_config_id: MOCK_SERVICE_CONFIG_ID_2,
+      });
+      const optimusService = serviceFor(AgentMap.Optimus, {
+        service_config_id: MOCK_SERVICE_CONFIG_ID_3,
+      });
+      mockGetServices.mockResolvedValue([
+        traderService1,
+        traderService2,
+        optimusService,
+      ]);
+
+      const wrapper = createWrapper();
+      const { result } = renderHook(() => useContext(ServicesContext), {
+        wrapper,
+      });
+
+      await waitFor(() => {
+        expect(result.current.services).toHaveLength(3);
+      });
+
+      const traderInstances = result.current.getInstancesOfAgentType(
+        AgentMap.PredictTrader,
+      );
+      expect(traderInstances).toHaveLength(2);
+      expect(traderInstances.map((s) => s.service_config_id)).toEqual([
+        DEFAULT_SERVICE_CONFIG_ID,
+        MOCK_SERVICE_CONFIG_ID_2,
+      ]);
+    });
+
+    it('returns empty array when no services match', async () => {
+      const traderService = serviceFor(AgentMap.PredictTrader);
+      mockGetServices.mockResolvedValue([traderService]);
+
+      const wrapper = createWrapper();
+      const { result } = renderHook(() => useContext(ServicesContext), {
+        wrapper,
+      });
+
+      await waitFor(() => {
+        expect(result.current.services).toHaveLength(1);
+      });
+
+      expect(result.current.getInstancesOfAgentType(AgentMap.Optimus)).toEqual(
+        [],
+      );
+    });
+
+    it('returns empty array when services are not loaded', async () => {
+      mockGetServices.mockResolvedValue([]);
+
+      const wrapper = createWrapper();
+      const { result } = renderHook(() => useContext(ServicesContext), {
+        wrapper,
+      });
+
+      await waitFor(() => {
+        expect(result.current.isFetched).toBe(true);
+      });
+
+      expect(
+        result.current.getInstancesOfAgentType(AgentMap.PredictTrader),
+      ).toEqual([]);
     });
   });
 });
