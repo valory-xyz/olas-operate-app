@@ -44,6 +44,7 @@ export const SelectStakingButton = ({
     selectedAgentType,
     isLoading: isServicesLoading,
     refetch: refetchServices,
+    updateSelectedInstance,
   } = useServices();
   const { buttonText, canMigrate } = useCanMigrate({
     stakingProgramId,
@@ -61,6 +62,8 @@ export const SelectStakingButton = ({
     startLoading();
 
     try {
+      let newServiceConfigId: string | undefined;
+
       // If service already exists, need to update the selected contract in it
       // for proper fund requirements calculation
       if (selectedService) {
@@ -89,7 +92,11 @@ export const SelectStakingButton = ({
         }
 
         try {
-          await onDummyServiceCreation(stakingProgramId, serviceTemplate);
+          const newService = await onDummyServiceCreation(
+            stakingProgramId,
+            serviceTemplate,
+          );
+          newServiceConfigId = newService.service_config_id;
         } catch (error) {
           console.error(error);
           message.error(
@@ -103,6 +110,11 @@ export const SelectStakingButton = ({
       // fetch services again to update the state after service creation
       // and to have correct state in the selectedService if we get back to this page
       await refetchServices?.();
+
+      // Select the newly created instance
+      if (newServiceConfigId) {
+        updateSelectedInstance(newServiceConfigId);
+      }
 
       // refetch refill requirements to check if the agent requires funding
       const result = await refetchRequirements();

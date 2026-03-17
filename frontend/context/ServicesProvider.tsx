@@ -99,6 +99,7 @@ type ServicesContextType = {
   selectedAgentNameOrFallback: string;
   deploymentDetails: ServiceDeployment | undefined;
   updateAgentType: (agentType: AgentType) => void;
+  selectAgentTypeForSetup: (agentType: AgentType) => void;
   updateSelectedInstance: (serviceConfigId: string) => void;
   overrideSelectedServiceStatus: (
     status?: Maybe<MiddlewareDeploymentStatus>,
@@ -119,6 +120,7 @@ export const ServicesContext = createContext<ServicesContextType>({
   selectedServiceConfigId: null,
   deploymentDetails: undefined,
   updateAgentType: noop,
+  selectAgentTypeForSetup: noop,
   updateSelectedInstance: noop,
   overrideSelectedServiceStatus: noop,
   availableServiceConfigIds: [],
@@ -155,6 +157,12 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
   const [selectedServiceConfigId, setSelectedServiceConfigId] = useState<
     Nullable<string>
   >(serviceConfigIdFromStore || null);
+
+  // Set when updateAgentType is called for a type with no instances yet
+  // (e.g., setup flow for a new agent). Allows selectedAgentType/Config to
+  // reflect the user's choice before a service exists.
+  const [pendingAgentType, setPendingAgentType] =
+    useState<Nullable<AgentType>>(null);
 
   // Sync from store on first load (store may arrive async)
   const isSelectedInstanceInitiallySyncedRef = useRef(
@@ -406,12 +414,19 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
     [services],
   );
 
+  useEffect(() => {
+    if (pageState !== PAGES.Setup && pendingAgentType) {
+      setPendingAgentType(null);
+    }
+  }, [pageState, pendingAgentType]);
+
   const selectedAgentType = useMemo<AgentType>(() => {
     return (
       getAgentTypeFromService(selectedServiceConfigId ?? undefined) ??
+      pendingAgentType ??
       AgentMap.PredictTrader
     );
-  }, [selectedServiceConfigId, getAgentTypeFromService]);
+  }, [selectedServiceConfigId, getAgentTypeFromService, pendingAgentType]);
 
   const selectedAgentConfig = useMemo(() => {
     const config: Maybe<AgentConfig> = AGENT_CONFIG[selectedAgentType];
@@ -423,6 +438,7 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
 
   const updateSelectedInstance = useCallback(
     (serviceConfigId: string) => {
+      setPendingAgentType(null);
       setSelectedServiceConfigId(serviceConfigId);
       store?.set?.('lastSelectedServiceConfigId', serviceConfigId);
       setIsInvalidMessageShown(false);
@@ -440,8 +456,15 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
     [getInstancesOfAgentType, updateSelectedInstance],
   );
 
+  /** Setter fn to be used when the service_config_id doesn't exist (eg: Setup flow) */
+  const selectAgentTypeForSetup = useCallback((agentType: AgentType) => {
+    setPendingAgentType(agentType);
+    setSelectedServiceConfigId(null);
+  }, []);
+
   useEffect(() => {
     if (isNilOrEmpty(services)) return;
+    if (pendingAgentType) return;
 
     const result = resolveSelectedServiceConfigId({
       services,
@@ -463,6 +486,7 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
       store?.set?.('lastSelectedServiceConfigId', result.serviceConfigId);
     }
   }, [
+    pendingAgentType,
     services,
     selectedServiceConfigId,
     storeState?.lastSelectedAgentType,
@@ -531,6 +555,7 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
         deploymentDetails,
         serviceStatusOverrides,
         updateAgentType,
+        selectAgentTypeForSetup,
         updateSelectedInstance,
         overrideSelectedServiceStatus,
       }}

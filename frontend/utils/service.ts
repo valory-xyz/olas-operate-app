@@ -122,7 +122,7 @@ export const onDummyServiceCreation = async (
   stakingProgramId: StakingProgramId,
   serviceTemplateConfig: ServiceTemplate,
 ) => {
-  await ServicesService.createService({
+  return ServicesService.createService({
     serviceTemplate: serviceTemplateConfig,
     deploy: true,
     stakingProgramId,

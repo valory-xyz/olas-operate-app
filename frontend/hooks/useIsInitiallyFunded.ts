@@ -15,7 +15,8 @@ export const useIsInitiallyFunded = () => {
     // We can't handle boolean before the one-time migration
     if (typeof stored === 'boolean') return;
     if (!selectedServiceConfigId) return undefined;
-    return stored[selectedServiceConfigId];
+    // If the service has no entry in the record, it hasn't been funded yet
+    return stored[selectedServiceConfigId] ?? false;
   }, [storeState, selectedAgentType, selectedServiceConfigId]);
 
   const setIsInitiallyFunded = useCallback(() => {

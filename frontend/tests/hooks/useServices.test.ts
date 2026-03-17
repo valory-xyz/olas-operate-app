@@ -21,6 +21,7 @@ describe('useServices', () => {
       selectedAgentNameOrFallback: 'Agent-1',
       deploymentDetails: undefined,
       updateAgentType: mockUpdateAgentType,
+      selectAgentTypeForSetup: jest.fn(),
       updateSelectedInstance: jest.fn(),
       overrideSelectedServiceStatus: jest.fn(),
       availableServiceConfigIds: [],

@@ -63,7 +63,7 @@ const GeoLocationRestrictionCouldNotLoad = () => (
  */
 export const AgentOnboarding = () => {
   const { goto } = useSetup();
-  const { updateAgentType } = useServices();
+  const { selectAgentTypeForSetup } = useServices();
   const [selectedAgent, setSelectedAgent] = useState<Optional<AgentType>>();
 
   const selectedAgentConfig = selectedAgent
@@ -97,10 +97,10 @@ export const AgentOnboarding = () => {
 
   const handleSelectYourAgent = useCallback(
     (agentType: AgentType) => {
-      updateAgentType(agentType);
+      selectAgentTypeForSetup(agentType);
       setSelectedAgent(agentType);
     },
-    [updateAgentType],
+    [selectAgentTypeForSetup],
   );
 
   const canSelectAgent = useMemo(() => {

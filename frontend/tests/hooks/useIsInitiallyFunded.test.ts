@@ -70,7 +70,7 @@ describe('useIsInitiallyFunded', () => {
       expect(result.current.isInitialFunded).toBe(false);
     });
 
-    it('returns undefined when the selected service is not in the record', () => {
+    it('returns false when the selected service is not in the record (not yet funded)', () => {
       const storeState: Partial<ElectronStore> = {
         [AgentMap.PredictTrader]: {
           isInitialFunded: { [MOCK_SERVICE_CONFIG_ID_2]: true },
@@ -79,7 +79,7 @@ describe('useIsInitiallyFunded', () => {
       mockUseStore.mockReturnValue({ storeState });
 
       const { result } = renderHook(() => useIsInitiallyFunded());
-      expect(result.current.isInitialFunded).toBeUndefined();
+      expect(result.current.isInitialFunded).toBe(false);
     });
 
     it('returns undefined when selectedServiceConfigId is null', () => {

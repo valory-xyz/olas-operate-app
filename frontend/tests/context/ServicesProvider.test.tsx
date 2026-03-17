@@ -376,7 +376,7 @@ describe('ServicesProvider', () => {
   });
 
   describe('updateAgentType', () => {
-    it('is a no-op for unknown agent type (no matching instances)', async () => {
+    it('is a no-op when no instances exist', async () => {
       mockGetServices.mockResolvedValue([]);
 
       const wrapper = createWrapper();
@@ -388,13 +388,64 @@ describe('ServicesProvider', () => {
         expect(result.current.isFetched).toBe(true);
       });
 
-      // Should not throw — just does nothing since no instances exist
       act(() => {
-        result.current.updateAgentType('nonexistent-agent' as AgentType);
+        result.current.updateAgentType(AgentMap.Optimus);
       });
 
-      // selectedAgentType remains default
+      // No instances, so selectedAgentType stays as default
       expect(result.current.selectedAgentType).toBe(AgentMap.PredictTrader);
+    });
+  });
+
+  describe('selectAgentTypeForSetup', () => {
+    it('sets pendingAgentType and nulls selectedServiceConfigId', async () => {
+      const traderService = serviceFor(AgentMap.PredictTrader);
+      mockGetServices.mockResolvedValue([traderService]);
+      mockStoreState = {
+        lastSelectedServiceConfigId: DEFAULT_SERVICE_CONFIG_ID,
+      };
+
+      const wrapper = createWrapper();
+      const { result } = renderHook(() => useContext(ServicesContext), {
+        wrapper,
+      });
+
+      await waitFor(() => {
+        expect(result.current.selectedServiceConfigId).toBe(
+          DEFAULT_SERVICE_CONFIG_ID,
+        );
+      });
+
+      act(() => {
+        result.current.selectAgentTypeForSetup(AgentMap.Optimus);
+      });
+
+      expect(result.current.selectedAgentType).toBe(AgentMap.Optimus);
+      expect(result.current.selectedServiceConfigId).toBeNull();
+    });
+
+    it('works even when instances of the type already exist', async () => {
+      const optimusService = serviceFor(AgentMap.Optimus, {
+        service_config_id: MOCK_SERVICE_CONFIG_ID_2,
+      });
+      mockGetServices.mockResolvedValue([optimusService]);
+
+      const wrapper = createWrapper();
+      const { result } = renderHook(() => useContext(ServicesContext), {
+        wrapper,
+      });
+
+      await waitFor(() => {
+        expect(result.current.services).toHaveLength(1);
+      });
+
+      act(() => {
+        result.current.selectAgentTypeForSetup(AgentMap.Optimus);
+      });
+
+      // selectedServiceConfigId is null (not the existing instance)
+      expect(result.current.selectedServiceConfigId).toBeNull();
+      expect(result.current.selectedAgentType).toBe(AgentMap.Optimus);
     });
   });
 
