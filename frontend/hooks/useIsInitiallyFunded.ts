@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { useElectronApi } from './useElectronApi';
 import { useServices } from './useServices';
@@ -7,12 +7,34 @@ import { useStore } from './useStore';
 export const useIsInitiallyFunded = () => {
   const { storeState } = useStore();
   const electronApi = useElectronApi();
-  const { selectedAgentType } = useServices();
-  const isInitialFunded = storeState?.[selectedAgentType]?.isInitialFunded;
+  const { selectedAgentType, selectedServiceConfigId } = useServices();
+
+  const isInitialFunded = useMemo(() => {
+    const stored = storeState?.[selectedAgentType]?.isInitialFunded;
+    if (stored === undefined) return;
+    // We can't handle boolean before the one-time migration
+    if (typeof stored === 'boolean') return;
+    if (!selectedServiceConfigId) return undefined;
+    return stored[selectedServiceConfigId];
+  }, [storeState, selectedAgentType, selectedServiceConfigId]);
 
   const setIsInitiallyFunded = useCallback(() => {
-    electronApi.store?.set?.(`${selectedAgentType}.isInitialFunded`, true);
-  }, [electronApi.store, selectedAgentType]);
+    if (!selectedServiceConfigId) return;
+
+    const current = storeState?.[selectedAgentType]?.isInitialFunded;
+    const existing =
+      typeof current === 'object' && current !== null ? current : {};
+
+    electronApi.store?.set?.(`${selectedAgentType}.isInitialFunded`, {
+      ...existing,
+      [selectedServiceConfigId]: true,
+    });
+  }, [
+    electronApi.store,
+    selectedAgentType,
+    selectedServiceConfigId,
+    storeState,
+  ]);
 
   return {
     isInitialFunded,

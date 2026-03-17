@@ -1,8 +1,8 @@
-import { Button, Checkbox, Flex, Modal } from 'antd';
-import { useCallback, useState } from 'react';
+import { Button, Flex, Modal } from 'antd';
+import { useCallback } from 'react';
 
 import { GEMINI_API_URL, MODAL_WIDTH, PAGES } from '@/constants';
-import { useElectronApi, usePageState, useServices } from '@/hooks';
+import { usePageState, useServices } from '@/hooks';
 
 type UnlockChatUiAlertProps = {
   isOpen: boolean;
@@ -15,31 +15,18 @@ export const UnlockChatUiAlert = ({
   onClose,
   onSkip,
 }: UnlockChatUiAlertProps) => {
-  const electronApi = useElectronApi();
-  const { selectedAgentType, selectedAgentConfig } = useServices();
+  const { selectedAgentConfig } = useServices();
   const { goto } = usePageState();
 
-  const [dontShowAgain, setDontShowAgain] = useState(false);
-
-  const handleDoNotShowAgain = useCallback(
-    (value: boolean) => {
-      const key = `${selectedAgentType}.isProfileWarningDisplayed`;
-      electronApi.store?.set?.(key, value);
-      onClose;
-    },
-    [electronApi.store, selectedAgentType, onClose],
-  );
-
   const handleProvideKey = useCallback(() => {
-    handleDoNotShowAgain(dontShowAgain);
+    onClose();
     goto(PAGES.UpdateAgentTemplate);
-  }, [dontShowAgain, handleDoNotShowAgain, goto]);
+  }, [onClose, goto]);
 
   const handleProceed = useCallback(() => {
-    handleDoNotShowAgain(dontShowAgain);
     onClose();
     onSkip();
-  }, [dontShowAgain, handleDoNotShowAgain, onClose, onSkip]);
+  }, [onClose, onSkip]);
 
   return (
     <Modal
@@ -59,12 +46,6 @@ export const UnlockChatUiAlert = ({
           </a>
           .
         </div>
-
-        <Flex align="center" gap={8}>
-          <Checkbox onChange={(e) => setDontShowAgain(e.target.checked)}>
-            {"Don't show again"}
-          </Checkbox>
-        </Flex>
 
         <Flex gap={8}>
           <Button onClick={handleProceed}>Proceed anyway</Button>

@@ -57,6 +57,8 @@ import {
   isValidServiceId,
 } from '@/utils';
 
+import { migrateIsInitialFunded } from './migrations/isInitialFunded';
+import { resolveSelectedServiceConfigId } from './migrations/serviceSelection';
 import { OnlineStatusContext } from './OnlineStatusProvider';
 
 const TECHNICAL_ISSUE: MessageArgsProps = {
@@ -83,8 +85,12 @@ type ServicesContextType = {
   getServiceConfigIdsOf: (chainId: EvmChainId) => string[];
   getAgentTypeFromService: (serviceConfigId?: string) => Nullable<AgentType>;
   getServiceConfigIdFromAgentType: (agentType: AgentType) => Nullable<string>;
+  getInstancesOfAgentType: (
+    agentType: AgentType,
+  ) => MiddlewareServiceResponse[];
   serviceWallets?: AgentWallet[];
   selectedService?: Service;
+  selectedServiceConfigId: Nullable<string>;
   serviceStatusOverrides?: Record<string, Maybe<MiddlewareDeploymentStatus>>;
   isSelectedServiceDeploymentStatusLoading: boolean;
   selectedAgentConfig: AgentConfig;
@@ -93,6 +99,7 @@ type ServicesContextType = {
   selectedAgentNameOrFallback: string;
   deploymentDetails: ServiceDeployment | undefined;
   updateAgentType: (agentType: AgentType) => void;
+  updateSelectedInstance: (serviceConfigId: string) => void;
   overrideSelectedServiceStatus: (
     status?: Maybe<MiddlewareDeploymentStatus>,
   ) => void;
@@ -109,13 +116,16 @@ export const ServicesContext = createContext<ServicesContextType>({
   selectedAgentType: AgentMap.PredictTrader,
   selectedAgentName: null,
   selectedAgentNameOrFallback: 'My agent',
+  selectedServiceConfigId: null,
   deploymentDetails: undefined,
   updateAgentType: noop,
+  updateSelectedInstance: noop,
   overrideSelectedServiceStatus: noop,
   availableServiceConfigIds: [],
   getServiceConfigIdsOf: () => [],
   getAgentTypeFromService: () => null,
   getServiceConfigIdFromAgentType: () => null,
+  getInstancesOfAgentType: () => [],
 });
 
 /**
@@ -140,35 +150,28 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
   // state to track the services ids message shown
   // so that it is not shown again for the same service
   const [isInvalidMessageShown, setIsInvalidMessageShown] = useState(false);
-  const agentTypeFromStore = storeState?.lastSelectedAgentType;
 
-  const [selectedAgentType, setSelectedAgentType] = useState<AgentType>(
-    agentTypeFromStore || AgentMap.PredictTrader,
+  const serviceConfigIdFromStore = storeState?.lastSelectedServiceConfigId;
+  const [selectedServiceConfigId, setSelectedServiceConfigId] = useState<
+    Nullable<string>
+  >(serviceConfigIdFromStore || null);
+
+  // Sync from store on first load (store may arrive async)
+  const isSelectedInstanceInitiallySyncedRef = useRef(
+    !!serviceConfigIdFromStore,
   );
-
-  // Used to update the state only once, when the store value is initially synced
-  const isSelectedAgentInitiallySyncedRef = useRef(!!agentTypeFromStore);
+  /** One-time migration: selectedAgentType → selectedConfigId */
+  const hasSelectedServiceMigrated = useRef(false);
+  /** One-time migration: isInitialFunded boolean → per-service record */
+  const hasIsInitialFundedMigratedRef = useRef(false);
 
   useEffect(() => {
-    if (isSelectedAgentInitiallySyncedRef.current) return;
-    if (!agentTypeFromStore) return;
+    if (isSelectedInstanceInitiallySyncedRef.current) return;
+    if (!serviceConfigIdFromStore) return;
 
-    isSelectedAgentInitiallySyncedRef.current = true;
-    setSelectedAgentType(agentTypeFromStore);
-  }, [agentTypeFromStore]);
-
-  const updateAgentType = useCallback(
-    (agentType: AgentType) => {
-      setSelectedAgentType(agentType);
-      store?.set?.('lastSelectedAgentType', agentType);
-      setIsInvalidMessageShown(false);
-    },
-    [store],
-  );
-
-  // user selected service identifier
-  const [selectedServiceConfigId, setSelectedServiceConfigId] =
-    useState<Nullable<string>>(null);
+    isSelectedInstanceInitiallySyncedRef.current = true;
+    setSelectedServiceConfigId(serviceConfigIdFromStore);
+  }, [serviceConfigIdFromStore]);
 
   const {
     data: services,
@@ -264,15 +267,6 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
     };
   }, [selectedService, deploymentDetails?.status, serviceStatusOverrides]);
 
-  const selectedAgentConfig = useMemo(() => {
-    const config: Maybe<AgentConfig> = AGENT_CONFIG[selectedAgentType];
-
-    if (!config) {
-      throw new Error(`Agent config not found for ${selectedAgentType}`);
-    }
-    return config;
-  }, [selectedAgentType]);
-
   const serviceWallets: Optional<AgentWallet[]> = useMemo(() => {
     if (isServicesLoading) return;
     if (isNilOrEmpty(services)) return [];
@@ -323,26 +317,6 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
     );
   }, [isServicesLoading, services]);
 
-  /**
-   * Select the first service by default
-   */
-  useEffect(() => {
-    if (!selectedAgentConfig) return;
-    if (isNilOrEmpty(services)) return;
-
-    const currentService = services.find(
-      ({ service_public_id, home_chain }) =>
-        service_public_id === selectedAgentConfig.servicePublicId &&
-        home_chain === selectedAgentConfig.middlewareHomeChainId,
-    );
-    if (!currentService) {
-      setSelectedServiceConfigId(null);
-      return;
-    }
-
-    setSelectedServiceConfigId(currentService.service_config_id);
-  }, [selectedServiceConfigId, services, selectedAgentConfig]);
-
   const overrideSelectedServiceStatus = useCallback(
     (status: Maybe<MiddlewareDeploymentStatus>) => {
       if (selectedServiceConfigId) {
@@ -386,29 +360,127 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
     [availableServiceConfigIds],
   );
 
-  const getAgentTypeFromService = (
-    serviceConfigId?: string,
-  ): AgentType | null => {
-    if (!serviceConfigId) return null;
+  const getAgentTypeFromService = useCallback(
+    (serviceConfigId?: string): AgentType | null => {
+      if (!serviceConfigId) return null;
 
-    const service = services?.find(
-      (service) => service.service_config_id === serviceConfigId,
+      const service = services?.find(
+        (service) => service.service_config_id === serviceConfigId,
+      );
+      if (!service) return null;
+
+      const agentEntry = ACTIVE_AGENTS.find(
+        ([, config]) =>
+          config.servicePublicId === service.service_public_id &&
+          config.middlewareHomeChainId === service.home_chain,
+      );
+
+      return agentEntry ? agentEntry[0] : null;
+    },
+    [services],
+  );
+
+  const getServiceConfigIdFromAgentType = useCallback(
+    (agentType: AgentType) => {
+      const serviceConfigId = availableServiceConfigIds.find(
+        ({ configId }) => getAgentTypeFromService(configId) === agentType,
+      )?.configId;
+      return serviceConfigId ?? null;
+    },
+    [availableServiceConfigIds, getAgentTypeFromService],
+  );
+
+  const getInstancesOfAgentType = useCallback(
+    (agentType: AgentType): MiddlewareServiceResponse[] => {
+      if (!services) return [];
+
+      const config = AGENT_CONFIG[agentType];
+      if (!config) return [];
+
+      return services.filter(
+        (service) =>
+          service.service_public_id === config.servicePublicId &&
+          service.home_chain === config.middlewareHomeChainId,
+      );
+    },
+    [services],
+  );
+
+  const selectedAgentType = useMemo<AgentType>(() => {
+    return (
+      getAgentTypeFromService(selectedServiceConfigId ?? undefined) ??
+      AgentMap.PredictTrader
     );
-    if (!service) return null;
+  }, [selectedServiceConfigId, getAgentTypeFromService]);
 
-    const agentEntry = ACTIVE_AGENTS.find(
-      ([, config]) => config.servicePublicId === service.service_public_id,
-    );
+  const selectedAgentConfig = useMemo(() => {
+    const config: Maybe<AgentConfig> = AGENT_CONFIG[selectedAgentType];
+    if (!config) {
+      throw new Error(`Agent config not found for ${selectedAgentType}`);
+    }
+    return config;
+  }, [selectedAgentType]);
 
-    return agentEntry ? agentEntry[0] : null;
-  };
+  const updateSelectedInstance = useCallback(
+    (serviceConfigId: string) => {
+      setSelectedServiceConfigId(serviceConfigId);
+      store?.set?.('lastSelectedServiceConfigId', serviceConfigId);
+      setIsInvalidMessageShown(false);
+    },
+    [store],
+  );
 
-  const getServiceConfigIdFromAgentType = (agentType: AgentType) => {
-    const serviceConfigId = availableServiceConfigIds.find(
-      ({ configId }) => getAgentTypeFromService(configId) === agentType,
-    )?.configId;
-    return serviceConfigId ?? null;
-  };
+  const updateAgentType = useCallback(
+    (agentType: AgentType) => {
+      const instances = getInstancesOfAgentType(agentType);
+      if (instances.length > 0) {
+        updateSelectedInstance(instances[0].service_config_id);
+      }
+    },
+    [getInstancesOfAgentType, updateSelectedInstance],
+  );
+
+  useEffect(() => {
+    if (isNilOrEmpty(services)) return;
+
+    const result = resolveSelectedServiceConfigId({
+      services,
+      currentServiceConfigId: selectedServiceConfigId,
+      legacyAgentType: storeState?.lastSelectedAgentType,
+      hasMigrated: hasSelectedServiceMigrated.current,
+    });
+
+    if (result.migrated) {
+      hasSelectedServiceMigrated.current = true;
+      store?.delete?.('lastSelectedAgentType');
+    }
+
+    if (result.serviceConfigId !== selectedServiceConfigId) {
+      setSelectedServiceConfigId(result.serviceConfigId);
+    }
+
+    if (result.shouldPersist && result.serviceConfigId) {
+      store?.set?.('lastSelectedServiceConfigId', result.serviceConfigId);
+    }
+  }, [
+    services,
+    selectedServiceConfigId,
+    storeState?.lastSelectedAgentType,
+    store,
+  ]);
+
+  useEffect(() => {
+    if (hasIsInitialFundedMigratedRef.current) return;
+    if (isNilOrEmpty(services)) return;
+    if (!storeState) return;
+
+    hasIsInitialFundedMigratedRef.current = true;
+
+    const writes = migrateIsInitialFunded({ storeState, services });
+    for (const { storeKey, value } of writes) {
+      store?.set?.(storeKey, value);
+    }
+  }, [services, storeState, store]);
 
   // Agent name generated based on the tokenId and chain of the selected service
   const selectedAgentName = useMemo(() => {
@@ -439,6 +511,7 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
         getServiceConfigIdsOf,
         getAgentTypeFromService,
         getServiceConfigIdFromAgentType,
+        getInstancesOfAgentType,
 
         // pause
         paused,
@@ -447,6 +520,7 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
 
         // selected service info
         selectedService: selectedServiceWithStatus,
+        selectedServiceConfigId,
         isSelectedServiceDeploymentStatusLoading,
         selectedAgentConfig,
         selectedAgentType,
@@ -457,6 +531,7 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
         deploymentDetails,
         serviceStatusOverrides,
         updateAgentType,
+        updateSelectedInstance,
         overrideSelectedServiceStatus,
       }}
     >
