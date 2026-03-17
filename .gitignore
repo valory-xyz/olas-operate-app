@@ -56,5 +56,5 @@ logs/
 # custom script for development
 .scripts/
 
-# frontend coverage
+# tests
 frontend/coverage

@@ -244,6 +244,18 @@ export const Sidebar = () => {
     AgentType | undefined
   >();
 
+  // Optimistic exclusion: immediately hide an agent when archiving is confirmed,
+  // before the IPC store-changed response arrives. Cleared once the store catches up.
+  const [optimisticArchivedAgents, setOptimisticArchivedAgents] = useState<
+    AgentType[]
+  >([]);
+
+  useEffect(() => {
+    setOptimisticArchivedAgents((prev) =>
+      prev.filter((a) => !archivedAgents.includes(a)),
+    );
+  }, [archivedAgents]);
+
   const myAgents = useMemo(() => {
     if (!services) return [];
     return services.reduce<AgentList>((result, service) => {
@@ -256,7 +268,11 @@ export const Sidebar = () => {
 
       const [agentType, agentConfig] = agent;
       if (!agentConfig.evmHomeChainId) return result;
-      if (archivedAgents.includes(agentType)) return result;
+      if (
+        archivedAgents.includes(agentType) ||
+        optimisticArchivedAgents.includes(agentType)
+      )
+        return result;
 
       const chainId = agentConfig.evmHomeChainId;
       const chainName = CHAIN_CONFIG[chainId].name;
@@ -264,7 +280,7 @@ export const Sidebar = () => {
       result.push({ name, agentType, chainName, chainId });
       return result;
     }, []);
-  }, [services, archivedAgents]);
+  }, [services, archivedAgents, optimisticArchivedAgents]);
 
   // if the selectedAgentType is not in myAgents, select the first one
   useEffect(() => {
@@ -324,6 +340,8 @@ export const Sidebar = () => {
   const handleArchiveConfirm = useCallback(() => {
     if (!pendingArchiveAgent) return;
 
+    // Optimistically hide immediately — before IPC round-trip completes
+    setOptimisticArchivedAgents((prev) => [...prev, pendingArchiveAgent]);
     archiveAgent(pendingArchiveAgent);
 
     // Select next available agent if the archived one was selected

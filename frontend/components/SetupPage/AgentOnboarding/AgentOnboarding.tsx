@@ -1,10 +1,13 @@
-import { Button, Flex, Segmented, Spin, Typography } from 'antd';
-import { useCallback, useMemo, useState } from 'react';
+import { Button, Flex, Spin, Typography } from 'antd';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { LuArchive } from 'react-icons/lu';
+import { TbPlus } from 'react-icons/tb';
 import styled from 'styled-components';
 
 import { AgentIntroduction } from '@/components/AgentIntroduction';
+import { Segmented } from '@/components/ui';
 import { BackButton } from '@/components/ui/BackButton';
-import { AGENT_CONFIG } from '@/config/agents';
+import { ACTIVE_AGENTS, AGENT_CONFIG } from '@/config/agents';
 import { AgentType, COLOR, PAGES, SETUP_SCREEN } from '@/constants';
 import {
   useArchivedAgents,
@@ -25,9 +28,7 @@ const { Text, Title } = Typography;
 type AgentTab = (typeof AGENT_TAB)[keyof typeof AGENT_TAB];
 
 const AgentOnboardingContainer = styled(Flex)`
-  width: 840px;
-  margin: 16px auto 0 auto;
-  border-radius: 8px;
+  margin: 0 auto;
 `;
 
 const Container = styled(Flex)`
@@ -36,6 +37,7 @@ const Container = styled(Flex)`
   background-color: ${COLOR.WHITE};
   .agent-selection-left-content {
     width: 380px;
+    padding: 16px 0;
     border-right: 1px solid ${COLOR.GRAY_4};
   }
   .agent-selection-right-content {
@@ -53,10 +55,19 @@ const SelectYourAgent = ({ canGoBack }: { canGoBack: boolean }) => {
       <Title level={3} className="m-0">
         Select Agent
       </Title>
-      <Text type="secondary">Review and select the AI agent you like.</Text>
+      <Text type="secondary">
+        Review and select the AI agent you’d like to add or restore.
+      </Text>
     </Flex>
   );
 };
+
+type BlockButtonProps = { text: string; onClick: () => void };
+const BlockButton = ({ text, onClick }: BlockButtonProps) => (
+  <Button onClick={onClick} type="primary" block size="large">
+    {text}
+  </Button>
+);
 
 const GeoLocationRestrictionLoading = () => (
   <Flex
@@ -97,6 +108,27 @@ export const AgentOnboarding = () => {
 
   const [selectedAgent, setSelectedAgent] = useState<Optional<AgentType>>();
   const [activeTab, setActiveTab] = useState<AgentTab>(AGENT_TAB.New);
+
+  // Default to "Archived" tab if there are no new agents to add
+  const hasSetDefaultTab = useRef(false);
+  useEffect(() => {
+    if (hasSetDefaultTab.current) return;
+    if (!services) return;
+    hasSetDefaultTab.current = true;
+
+    const hasNewAgents = ACTIVE_AGENTS.some(
+      ([agentType, agentConfig]) =>
+        !services.some(
+          ({ service_public_id, home_chain }) =>
+            service_public_id === agentConfig.servicePublicId &&
+            home_chain === agentConfig.middlewareHomeChainId,
+        ) && !archivedAgents.includes(agentType as AgentType),
+    );
+
+    if (!hasNewAgents && archivedAgents.length > 0) {
+      setActiveTab(AGENT_TAB.Archived);
+    }
+  }, [archivedAgents, services]);
 
   const selectedAgentConfig = selectedAgent
     ? AGENT_CONFIG[selectedAgent]
@@ -166,14 +198,10 @@ export const AgentOnboarding = () => {
           renderAgentSelection={
             selectedAgent
               ? () => (
-                  <Button
+                  <BlockButton
+                    text="Restore Agent"
                     onClick={handleRestoreAgent}
-                    type="primary"
-                    block
-                    size="large"
-                  >
-                    Restore Agent
-                  </Button>
+                  />
                 )
               : undefined
           }
@@ -202,14 +230,7 @@ export const AgentOnboarding = () => {
         renderAgentSelection={
           canSelectAgent
             ? () => (
-                <Button
-                  onClick={handleAgentSelect}
-                  type="primary"
-                  block
-                  size="large"
-                >
-                  Select Agent
-                </Button>
+                <BlockButton text="Select Agent" onClick={handleAgentSelect} />
               )
             : undefined
         }
@@ -232,29 +253,35 @@ export const AgentOnboarding = () => {
       <AgentOnboardingContainer vertical gap={24}>
         <SelectYourAgent canGoBack={isNonEmpty(services)} />
 
-        <Flex>
-          {archivedAgents.length > 0 && (
-            <Flex
-              className="px-24 py-12"
-              style={{ borderBottom: `1px solid ${COLOR.GRAY_4}` }}
-            >
-              <Segmented
-                block
-                options={[
-                  { label: '+ New agents', value: AGENT_TAB.New },
-                  { label: 'Archived agents', value: AGENT_TAB.Archived },
-                ]}
-                value={activeTab}
-                onChange={(val) => {
-                  setActiveTab(val as AgentTab);
-                  setSelectedAgent(undefined);
-                }}
-              />
-            </Flex>
-          )}
-        </Flex>
+        {archivedAgents.length > 0 && (
+          <Flex
+            className="px-24 py-12"
+            style={{ borderBottom: `1px solid ${COLOR.GRAY_4}` }}
+          >
+            <Segmented
+              options={[
+                {
+                  label: 'New agents',
+                  value: AGENT_TAB.New,
+                  icon: <TbPlus />,
+                },
+                {
+                  label: 'Archived agents',
+                  value: AGENT_TAB.Archived,
+                  icon: <LuArchive />,
+                },
+              ]}
+              value={activeTab}
+              onChange={(val) => {
+                setActiveTab(val as AgentTab);
+                setSelectedAgent(undefined);
+              }}
+              size="large"
+            />
+          </Flex>
+        )}
 
-        <Container vertical>
+        <Container>
           <Flex vertical className="agent-selection-left-content">
             <SelectAgent
               onSelectYourAgent={handleSelectYourAgent}
