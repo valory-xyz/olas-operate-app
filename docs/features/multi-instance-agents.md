@@ -29,10 +29,11 @@ The backend already supports this (each instance gets a unique `service_config_i
 - Keep `lastSelectedAgentType` for backward compat only — one-time migration in `ServicesProvider` converts it to `lastSelectedServiceConfigId` after services are first fetched
 - **`isInitialFunded` becomes per service** — move from `${agentType}.isInitialFunded` to per `service_config_id`, e.g. `"optimus": {"isInitialFunded": {"sc-111": true, "sc-222": false}}`. Migration of existing boolean values handled in `ServicesProvider` after services are fetched (needs `service_config_id` from backend).
 - **Remove `isProfileWarningDisplayed`** — confirmed no longer needed (all agents support x402). Remove the store keys and related code (`UnlockChatUiAlert.tsx`, `Home/index.tsx`).
+- **Remove `firstRewardNotificationShown` and `agentEvictionAlertShown`** — unused in production code, only in type definitions.
 - Extend `autoRun` type:
   ```
-  includedInstances?: { serviceConfigId: string; order: number }[]
-  userExcludedInstances?: string[]  // service_config_ids
+  includedAgentInstances?: { serviceConfigId: string; order: number }[]
+  userExcludedAgentInstances?: string[]  // service_config_ids
   ```
   Keep existing `AgentType`-based fields alongside for backward compat.
 
@@ -77,6 +78,8 @@ type AgentInstance = {
 
 6. **Fix `getAgentTypeFromService`** — currently only checks `servicePublicId`, must also check `middlewareHomeChainId` to disambiguate Optimus/Modius (latent bug)
 
+6a. **Extract shared service matcher** — the pattern `servicePublicId === service.service_public_id && middlewareHomeChainId === service.home_chain` is repeated across ~18 files. Extract into a shared util (e.g., `matchesAgentConfig(service, config)`). New code should use the matcher; existing usages can be refactored incrementally.
+
 7. **New helpers to expose:**
    - `updateSelectedInstance: (serviceConfigId: string) => void`
    - `getInstancesOfType: (agentType: AgentType) => Service[]`
@@ -89,10 +92,10 @@ type AgentInstance = {
 ### Selection Restoration & Migration
 On relaunch, `lastSelectedServiceConfigId` from the Electron store is used to restore the selected instance. Both one-time migrations run in `ServicesProvider` after services are first fetched (both need `service_config_id` from backend):
 
-1. **`lastSelectedServiceConfigId`** — if empty but `lastSelectedAgentType` exists, find the first matching service for that agent type and write its `service_config_id` to the store.
+1. **`lastSelectedServiceConfigId`** — if empty but `lastSelectedAgentType` exists, find the first matching service for that agent type and write its `service_config_id` to the store. After migration, `lastSelectedAgentType` is deleted from the store.
 2. **`isInitialFunded`** — if still a per-type boolean, convert to per-service map by applying the existing value to the first service of that agent type.
 
-After migration, the legacy paths never run again.
+After migration, the legacy keys are deleted and the migration paths never run again.
 
 ---
 
@@ -194,8 +197,8 @@ Most complex subsystem change. Multiple files.
 ### 6a. `frontend/types/ElectronApi.ts` (already done in Step 1)
 
 ### 6b. `frontend/context/AutoRunProvider/hooks/useAutoRunStore.ts`
-- Read/write `includedInstances` and `userExcludedInstances`
-- One-time migration after services are fetched: convert existing `includedAgents` → `includedInstances` and `userExcludedAgents` → `userExcludedInstances` by resolving each agent type to its service(s). Cannot run in `setupStoreIpc` — needs `service_config_id` from backend.
+- Read/write `includedAgentInstances` and `userExcludedAgentInstances`
+- One-time migration after services are fetched: convert existing `includedAgents` → `includedAgentInstances` and `userExcludedAgents` → `userExcludedAgentInstances` by resolving each agent type to its service(s). Cannot run in `setupStoreIpc` — needs `service_config_id` from backend.
 
 ### 6c. `frontend/context/AutoRunProvider/utils/utils.ts`
 - Add instance-level sorting/normalization helpers
@@ -225,13 +228,13 @@ All must become `Partial<Record<string /* service_config_id */, ...>>`. The `use
 
 ### 6g. Auto-Run UI — Per-Instance Exclusion
 
-The auto-run control popover/context menu (currently in sidebar area) must change from a flat agent-type checkbox list to a **collapsible grouped tree of instance checkboxes** (Figma Option 2):
+The auto-run control popover/context menu (currently in sidebar area) must change from a flat agent-type list to a **collapsible grouped tree** using Ant Design Tree component:
 
 - Agent types as collapsible group headers (e.g., "Polystrat", "Omenstrat")
-- Individual instances as checkbox items under each group (e.g., "corzim-vardor96", "tobin-vondor92")
-- Each instance independently includable/excludable
+- Individual instances as tree items under each group (e.g., "corzim-vardor96", "tobin-vondor92")
+- Each instance independently includable/excludable via tree selection
 - **"Excluded from auto-run" section** — separated at the bottom of the popover under a divider, listing excluded instances grouped by agent type
-- Stored as `userExcludedInstances: string[]` (`service_config_id`s) in Electron store
+- Stored as `userExcludedAgentInstances: string[]` (`service_config_id`s) in Electron store
 
 **File:** `frontend/components/MainPage/Sidebar/AutoRunControl.tsx` (or wherever the auto-run toggle/popover lives)
 
@@ -331,9 +334,15 @@ Step 8 (Cleanup)
 
 2. **`isInitialFunded` migration** — Moving from per-type boolean to per-service map. Existing `isInitialFunded: true` must be migrated to apply to the first service of that agent type.
 
-3. **Auto-run migration** — Users with existing `includedAgents` (AgentType-based) must be migrated to `includedInstances` (serviceConfigId-based) on first load.
+3. **Auto-run migration** — Users with existing `includedAgents` (AgentType-based) must be migrated to `includedAgentInstances` (serviceConfigId-based) on first load.
 
 4. **Setup flow completion** — After creating a new instance, the new service must be explicitly selected via `updateSelectedInstance(newConfigId)`, not left to the auto-select logic (which would pick the first/existing instance).
+
+---
+
+## Open Questions (pending product decision)
+
+1. **Notifications per instance** — Currently notifications are shown per agent type. With multiple instances, we need product guidance on whether notifications should be per instance (e.g., "corzim-vardor96 needs refill") or grouped per type. Must be resolved before feature review.
 
 ---
 
