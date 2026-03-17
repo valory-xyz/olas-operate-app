@@ -7,7 +7,12 @@ import { ACTIVE_AGENTS, AGENT_CONFIG } from '../../config/agents';
 import { AgentMap, AgentType } from '../../constants/agent';
 import { EvmChainIdMap, MiddlewareChainMap } from '../../constants/chains';
 import { MiddlewareDeploymentStatusMap } from '../../constants/deployment';
+import {
+  FIFTEEN_SECONDS_INTERVAL,
+  FIVE_SECONDS_INTERVAL,
+} from '../../constants/intervals';
 import { PAGES } from '../../constants/pages';
+import { REACT_QUERY_KEYS } from '../../constants/reactQueryKeys';
 import { WALLET_OWNER, WALLET_TYPE } from '../../constants/wallet';
 import { OnlineStatusContext } from '../../context/OnlineStatusProvider';
 import {
@@ -116,7 +121,7 @@ const createWrapper = ({ isOnline = true }: WrapperOpts = {}) => {
       ),
     );
   }
-  return Wrapper;
+  return Object.assign(Wrapper, { queryClient });
 };
 
 // ── Tests ──────────────────────────────────────────────────────────────
@@ -1075,6 +1080,108 @@ describe('ServicesProvider', () => {
         expect(configIds).toContain('sc-optimus');
         expect(configIds).toContain('sc-agentsfun');
       });
+    });
+  });
+
+  // ─── allDeployments polling interval ──────────────────────────────
+
+  describe('allDeployments polling interval', () => {
+    /** Evaluate the current refetchInterval for the allDeployments query. */
+    const getDeploymentsRefetchInterval = (
+      queryClient: ReturnType<typeof createTestQueryClient>,
+    ) => {
+      const query = queryClient.getQueryCache().find({
+        queryKey: REACT_QUERY_KEYS.ALL_SERVICE_DEPLOYMENTS_KEY,
+      });
+      expect(query).toBeDefined();
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const opts = query!.options as any;
+      return typeof opts.refetchInterval === 'function'
+        ? opts.refetchInterval(query!)
+        : opts.refetchInterval;
+    };
+
+    it('uses fast interval when backend reports an active deployment', async () => {
+      const traderService = serviceFor(AgentMap.PredictTrader);
+      mockGetServices.mockResolvedValue([traderService]);
+      mockGetAllServiceDeployments.mockResolvedValue({
+        [traderService.service_config_id]: {
+          status: MiddlewareDeploymentStatusMap.DEPLOYED,
+          nodes: { agent: [], tendermint: [] },
+          healthcheck: {},
+        },
+      });
+
+      const wrapper = createWrapper();
+      const { result } = renderHook(() => useContext(ServicesContext), {
+        wrapper,
+      });
+
+      await waitFor(() => {
+        expect(result.current.allDeployments).toBeDefined();
+      });
+
+      expect(getDeploymentsRefetchInterval(wrapper.queryClient)).toBe(
+        FIVE_SECONDS_INTERVAL,
+      );
+    });
+
+    it('uses slow interval when all backend deployments are stopped', async () => {
+      const traderService = serviceFor(AgentMap.PredictTrader);
+      mockGetServices.mockResolvedValue([traderService]);
+      mockGetAllServiceDeployments.mockResolvedValue({
+        [traderService.service_config_id]: {
+          status: MiddlewareDeploymentStatusMap.STOPPED,
+          nodes: { agent: [], tendermint: [] },
+          healthcheck: {},
+        },
+      });
+
+      const wrapper = createWrapper();
+      const { result } = renderHook(() => useContext(ServicesContext), {
+        wrapper,
+      });
+
+      await waitFor(() => {
+        expect(result.current.allDeployments).toBeDefined();
+      });
+
+      expect(getDeploymentsRefetchInterval(wrapper.queryClient)).toBe(
+        FIFTEEN_SECONDS_INTERVAL,
+      );
+    });
+
+    it('uses fast interval when override indicates active status even if backend is stopped', async () => {
+      const traderService = serviceFor(AgentMap.PredictTrader);
+      mockGetServices.mockResolvedValue([traderService]);
+      mockGetAllServiceDeployments.mockResolvedValue({
+        [traderService.service_config_id]: {
+          status: MiddlewareDeploymentStatusMap.STOPPED,
+          nodes: { agent: [], tendermint: [] },
+          healthcheck: {},
+        },
+      });
+
+      const wrapper = createWrapper();
+      const { result } = renderHook(() => useContext(ServicesContext), {
+        wrapper,
+      });
+
+      await waitFor(() => {
+        expect(result.current.allDeployments).toBeDefined();
+      });
+
+      // Set an override to DEPLOYING while backend still says STOPPED
+      act(() => {
+        result.current.overrideSelectedServiceStatus(
+          MiddlewareDeploymentStatusMap.DEPLOYING,
+        );
+      });
+
+      expect(getDeploymentsRefetchInterval(wrapper.queryClient)).toBe(
+        FIVE_SECONDS_INTERVAL,
+      );
     });
   });
 });
