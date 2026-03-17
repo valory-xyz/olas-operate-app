@@ -10,6 +10,7 @@ import { useOnlineStatusContext } from '../../hooks/useOnlineStatus';
 import { useServices } from '../../hooks/useServices';
 import { useSharedContext } from '../../hooks/useSharedContext';
 import { useActiveStakingContractDetails } from '../../hooks/useStakingContractDetails';
+import { useStakingProgram } from '../../hooks/useStakingProgram';
 import { DEFAULT_SERVICE_CONFIG_ID } from '../helpers/factories';
 
 // --- mocks ---
@@ -38,6 +39,9 @@ jest.mock('../../hooks/useIsInitiallyFunded', () => ({
 jest.mock('../../hooks/useIsAgentGeoRestricted', () => ({
   useIsAgentGeoRestricted: jest.fn(),
 }));
+jest.mock('../../hooks/useStakingProgram', () => ({
+  useStakingProgram: jest.fn(),
+}));
 
 const mockUseOnlineStatusContext =
   useOnlineStatusContext as jest.MockedFunction<typeof useOnlineStatusContext>;
@@ -63,6 +67,9 @@ const mockUseIsAgentGeoRestricted =
   useIsAgentGeoRestricted as jest.MockedFunction<
     typeof useIsAgentGeoRestricted
   >;
+const mockUseStakingProgram = useStakingProgram as jest.MockedFunction<
+  typeof useStakingProgram
+>;
 
 // --- defaults ---
 
@@ -96,6 +103,9 @@ const defaultGeoRestricted = {
   isAgentGeoRestricted: false,
   isGeoLoading: false,
 };
+const defaultStakingProgram = {
+  isActiveStakingProgramLoaded: true,
+};
 
 const setupDefaults = (
   overrides: {
@@ -107,6 +117,7 @@ const setupDefaults = (
     staking?: Partial<typeof defaultStakingDetails>;
     funded?: Partial<typeof defaultIsInitiallyFunded>;
     geo?: Partial<typeof defaultGeoRestricted>;
+    stakingProgram?: Partial<typeof defaultStakingProgram>;
   } = {},
 ) => {
   mockUseOnlineStatusContext.mockReturnValue({
@@ -141,6 +152,10 @@ const setupDefaults = (
     ...defaultGeoRestricted,
     ...overrides.geo,
   } as ReturnType<typeof useIsAgentGeoRestricted>);
+  mockUseStakingProgram.mockReturnValue({
+    ...defaultStakingProgram,
+    ...overrides.stakingProgram,
+  } as ReturnType<typeof useStakingProgram>);
 };
 
 // --- tests ---
