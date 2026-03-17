@@ -405,7 +405,7 @@ export const BalancesAndRefillRequirementsProvider = ({
         canStartAgent:
           balancesAndFundingRequirements?.allow_start_agent || false,
         isRefillRequired:
-          balancesAndFundingRequirements?.is_refill_required || true,
+          balancesAndFundingRequirements?.is_refill_required ?? true,
         isAgentFundingRequestsStale:
           balancesAndFundingRequirements?.agent_funding_in_progress ||
           balancesAndFundingRequirements?.agent_funding_requests_cooldown ||

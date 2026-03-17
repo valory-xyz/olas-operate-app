@@ -22,7 +22,7 @@ import {
   EvmChainId,
   FIFTEEN_SECONDS_INTERVAL,
   FIVE_SECONDS_INTERVAL,
-  isTransitioningDeploymentStatus,
+  isActiveDeploymentStatus,
   MESSAGE_WIDTH,
   MiddlewareChain,
   MiddlewareDeploymentStatus,
@@ -85,6 +85,7 @@ type ServicesContextType = {
   getServiceConfigIdFromAgentType: (agentType: AgentType) => Nullable<string>;
   serviceWallets?: AgentWallet[];
   selectedService?: Service;
+  allDeployments?: Record<string, ServiceDeployment>;
   serviceStatusOverrides?: Record<string, Maybe<MiddlewareDeploymentStatus>>;
   isSelectedServiceDeploymentStatusLoading: boolean;
   selectedAgentConfig: AgentConfig;
@@ -130,10 +131,10 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
   const serviceRefetchInterval = useDynamicRefetchInterval(
     FIVE_SECONDS_INTERVAL,
   );
-  const selectedDeploymentFastRefetchInterval = useDynamicRefetchInterval(
+  const allDeploymentsFastRefetchInterval = useDynamicRefetchInterval(
     FIVE_SECONDS_INTERVAL,
   );
-  const selectedDeploymentSlowRefetchInterval = useDynamicRefetchInterval(
+  const allDeploymentsSlowRefetchInterval = useDynamicRefetchInterval(
     FIFTEEN_SECONDS_INTERVAL,
   );
 
@@ -193,31 +194,35 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
     refetchInterval: FIFTEEN_SECONDS_INTERVAL,
   });
 
-  const {
-    data: deploymentDetails,
-    isLoading: isSelectedServiceDeploymentStatusLoading,
-  } = useQuery({
-    queryKey: REACT_QUERY_KEYS.SERVICE_DEPLOYMENT_STATUS_KEY(
-      selectedServiceConfigId,
-    ),
-    queryFn: ({ signal }) =>
-      ServicesService.getDeployment({
-        serviceConfigId: selectedServiceConfigId!,
-        signal,
-      }),
-    enabled: isOnline && !!selectedServiceConfigId,
-    refetchInterval: (query) => {
-      if (query.state.status !== 'success') return false;
+  const { data: allDeployments, isLoading: isAllDeploymentsLoading } = useQuery(
+    {
+      queryKey: REACT_QUERY_KEYS.ALL_SERVICE_DEPLOYMENTS_KEY,
+      queryFn: ({ signal }) => ServicesService.getAllServiceDeployments(signal),
+      enabled: isOnline && !!services?.length,
+      refetchInterval: (query) => {
+        if (query.state.status !== 'success') return false;
 
-      const status = query.state.data?.status;
-      if (isTransitioningDeploymentStatus(status)) {
-        return selectedDeploymentFastRefetchInterval;
-      }
+        const hasActiveBackendDeployment = Object.values(
+          query.state.data ?? {},
+        ).some((deployment) => isActiveDeploymentStatus(deployment?.status));
 
-      return selectedDeploymentSlowRefetchInterval;
+        const hasActiveOverride = Object.values(serviceStatusOverrides).some(
+          (status) => isActiveDeploymentStatus(status),
+        );
+
+        return hasActiveBackendDeployment || hasActiveOverride
+          ? allDeploymentsFastRefetchInterval
+          : allDeploymentsSlowRefetchInterval;
+      },
+      refetchIntervalInBackground: true,
     },
-    refetchIntervalInBackground: true,
-  });
+  );
+
+  const deploymentDetails = selectedServiceConfigId
+    ? allDeployments?.[selectedServiceConfigId]
+    : undefined;
+
+  const isSelectedServiceDeploymentStatusLoading = isAllDeploymentsLoading;
 
   // Stores temporary overrides for service statuses to avoid UI glitches.
   // Right after updating the status on the backend, initial queries
@@ -454,6 +459,7 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
         selectedAgentNameOrFallback,
 
         // others
+        allDeployments,
         deploymentDetails,
         serviceStatusOverrides,
         updateAgentType,

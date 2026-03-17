@@ -1,4 +1,4 @@
-import { compact, isEmpty } from 'lodash';
+import { compact } from 'lodash';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
@@ -201,7 +201,7 @@ export const useGetRefillRequirements = (): UseGetRefillRequirementsReturn => {
 
   // Get the total token requirements
   useEffect(() => {
-    if (isEmpty(totalTokenRequirements)) {
+    if (totalTokenRequirements === null) {
       setTotalTokenRequirements(getRequirementsPerToken(totalRequirements));
     }
   }, [totalRequirements, getRequirementsPerToken, totalTokenRequirements]);

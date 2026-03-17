@@ -10,6 +10,7 @@ import { useOnlineStatusContext } from '@/hooks/useOnlineStatus';
 import { useServices } from '@/hooks/useServices';
 import { useSharedContext } from '@/hooks/useSharedContext';
 import { useActiveStakingContractDetails } from '@/hooks/useStakingContractDetails';
+import { useStakingProgram } from '@/hooks/useStakingProgram';
 
 type DeployabilityResult = {
   isLoading: boolean;
@@ -55,6 +56,7 @@ export const useDeployability = ({
     hasEnoughServiceSlots,
     isSelectedStakingContractDetailsLoading,
   } = useActiveStakingContractDetails();
+  const { isActiveStakingProgramLoaded } = useStakingProgram();
   const { isInitialFunded } = useIsInitiallyFunded();
   const { isAgentGeoRestricted, isGeoLoading } = useIsAgentGeoRestricted({
     agentType: selectedAgentType,
@@ -83,12 +85,17 @@ export const useDeployability = ({
     ) {
       reasons.push('Balances');
     }
-    if (isSelectedStakingContractDetailsLoading) reasons.push('Staking');
+    if (
+      !isActiveStakingProgramLoaded ||
+      isSelectedStakingContractDetailsLoading
+    )
+      reasons.push('Staking');
     if (isGeoLoading) reasons.push('Geo');
     if (safeEligibility?.isLoading) reasons.push('Safe');
     if (isInitialFunded === undefined) reasons.push('Setup');
     return reasons;
   }, [
+    isActiveStakingProgramLoaded,
     isBalancesAndFundingRequirementsEnabledForAllServices,
     isBalancesAndFundingRequirementsLoadingForAllServices,
     isGeoLoading,
