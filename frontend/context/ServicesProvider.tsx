@@ -202,11 +202,15 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
       refetchInterval: (query) => {
         if (query.state.status !== 'success') return false;
 
-        const hasActiveDeployment = Object.values(query.state.data ?? {}).some(
-          (deployment) => isActiveDeploymentStatus(deployment?.status),
+        const hasActiveBackendDeployment = Object.values(
+          query.state.data ?? {},
+        ).some((deployment) => isActiveDeploymentStatus(deployment?.status));
+
+        const hasActiveOverride = Object.values(serviceStatusOverrides).some(
+          (status) => isActiveDeploymentStatus(status),
         );
 
-        return hasActiveDeployment
+        return hasActiveBackendDeployment || hasActiveOverride
           ? allDeploymentsFastRefetchInterval
           : allDeploymentsSlowRefetchInterval;
       },
