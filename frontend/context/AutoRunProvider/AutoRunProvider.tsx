@@ -9,7 +9,7 @@ import {
 } from 'react';
 
 import { AgentType } from '@/constants';
-import { useElectronApi, useServices } from '@/hooks';
+import { useArchivedAgents, useElectronApi, useServices } from '@/hooks';
 
 import {
   DISABLE_RACE_STOP_CHECK_INTERVAL_MS,
@@ -70,9 +70,14 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
     () => getDecommissionedAgentTypes(configuredAgents),
     [configuredAgents],
   );
+  const { archivedAgents } = useArchivedAgents();
   const eligibleAgentTypes = useMemo(
-    () => getEligibleAgentTypes(configuredAgentTypes, decommissionedAgentTypes),
-    [configuredAgentTypes, decommissionedAgentTypes],
+    () =>
+      getEligibleAgentTypes(configuredAgentTypes, [
+        ...decommissionedAgentTypes,
+        ...archivedAgents,
+      ]),
+    [configuredAgentTypes, decommissionedAgentTypes, archivedAgents],
   );
   const includedAgentsSorted = useMemo(
     () =>

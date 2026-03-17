@@ -1,23 +1,38 @@
-import { Button, Flex, Spin, Typography } from 'antd';
+import { Button, Flex, Segmented, Spin, Typography } from 'antd';
 import { useCallback, useMemo, useState } from 'react';
 import styled from 'styled-components';
 
 import { AgentIntroduction } from '@/components/AgentIntroduction';
+import { BackButton } from '@/components/ui/BackButton';
 import { AGENT_CONFIG } from '@/config/agents';
-import { AgentType, COLOR, SETUP_SCREEN } from '@/constants';
-import { useIsAgentGeoRestricted, useServices, useSetup } from '@/hooks';
+import { AgentType, COLOR, PAGES, SETUP_SCREEN } from '@/constants';
+import {
+  useArchivedAgents,
+  useIsAgentGeoRestricted,
+  usePageState,
+  useServices,
+  useSetup,
+} from '@/hooks';
 import { Optional } from '@/types';
+import { isNonEmpty } from '@/utils';
 
 import { FundingRequirementStep } from './FundingRequirementStep';
 import { RestrictedRegion } from './RestrictedRegion';
-import { SelectAgent } from './SelectAgent';
+import { AGENT_TAB, SelectAgent } from './SelectAgent';
 
 const { Text, Title } = Typography;
 
-const Container = styled(Flex)`
+type AgentTab = (typeof AGENT_TAB)[keyof typeof AGENT_TAB];
+
+const AgentOnboardingContainer = styled(Flex)`
   width: 840px;
   margin: 16px auto 0 auto;
   border-radius: 8px;
+`;
+
+const Container = styled(Flex)`
+  width: 840px;
+  border-radius: 16px;
   background-color: ${COLOR.WHITE};
   .agent-selection-left-content {
     width: 380px;
@@ -29,6 +44,19 @@ const Container = styled(Flex)`
     overflow: hidden;
   }
 `;
+
+const SelectYourAgent = ({ canGoBack }: { canGoBack: boolean }) => {
+  const { goto } = usePageState();
+  return (
+    <Flex vertical gap={12}>
+      {canGoBack && <BackButton onPrev={() => goto(PAGES.Main)} />}
+      <Title level={3} className="m-0">
+        Select Agent
+      </Title>
+      <Text type="secondary">Review and select the AI agent you like.</Text>
+    </Flex>
+  );
+};
 
 const GeoLocationRestrictionLoading = () => (
   <Flex
@@ -63,8 +91,12 @@ const GeoLocationRestrictionCouldNotLoad = () => (
  */
 export const AgentOnboarding = () => {
   const { goto } = useSetup();
-  const { updateAgentType } = useServices();
+  const { goto: gotoPage } = usePageState();
+  const { updateAgentType, services } = useServices();
+  const { archivedAgents, unarchiveAgent } = useArchivedAgents();
+
   const [selectedAgent, setSelectedAgent] = useState<Optional<AgentType>>();
+  const [activeTab, setActiveTab] = useState<AgentTab>(AGENT_TAB.New);
 
   const selectedAgentConfig = selectedAgent
     ? AGENT_CONFIG[selectedAgent]
@@ -103,6 +135,17 @@ export const AgentOnboarding = () => {
     [updateAgentType],
   );
 
+  const handleSelectArchivedAgent = useCallback((agentType: AgentType) => {
+    setSelectedAgent(agentType);
+  }, []);
+
+  const handleRestoreAgent = useCallback(() => {
+    if (!selectedAgent) return;
+    unarchiveAgent(selectedAgent);
+    updateAgentType(selectedAgent);
+    gotoPage(PAGES.Main);
+  }, [gotoPage, selectedAgent, unarchiveAgent, updateAgentType]);
+
   const canSelectAgent = useMemo(() => {
     if (!selectedAgent) return false;
     const currentAgentConfig = AGENT_CONFIG[selectedAgent];
@@ -115,47 +158,117 @@ export const AgentOnboarding = () => {
     return true;
   }, [selectedAgent, isAgentGeoRestricted]);
 
-  return (
-    <Container>
-      <Flex vertical className="agent-selection-left-content">
-        <SelectAgent
-          onSelectYourAgent={handleSelectYourAgent}
-          selectedAgent={selectedAgent}
+  const rightPanelContent = useMemo(() => {
+    if (activeTab === AGENT_TAB.Archived) {
+      return (
+        <AgentIntroduction
+          agentType={selectedAgent}
+          renderAgentSelection={
+            selectedAgent
+              ? () => (
+                  <Button
+                    onClick={handleRestoreAgent}
+                    type="primary"
+                    block
+                    size="large"
+                  >
+                    Restore Agent
+                  </Button>
+                )
+              : undefined
+          }
         />
-      </Flex>
+      );
+    }
 
-      <Flex className="agent-selection-right-content">
-        {isGeoLoading && selectedAgentConfig?.isGeoLocationRestricted ? (
-          <GeoLocationRestrictionLoading />
-        ) : isGeoError ? (
-          <GeoLocationRestrictionCouldNotLoad />
-        ) : isAgentGeoRestricted ? (
-          <RestrictedRegion />
-        ) : (
-          <AgentIntroduction
-            agentType={selectedAgent}
-            renderFundingRequirements={(desc) =>
-              selectedAgent ? (
-                <FundingRequirementStep agentType={selectedAgent} desc={desc} />
-              ) : null
-            }
-            renderAgentSelection={
-              canSelectAgent
-                ? () => (
-                    <Button
-                      onClick={handleAgentSelect}
-                      type="primary"
-                      block
-                      size="large"
-                    >
-                      Select Agent
-                    </Button>
-                  )
-                : undefined
-            }
-          />
-        )}
-      </Flex>
-    </Container>
+    if (isGeoLoading && selectedAgentConfig?.isGeoLocationRestricted) {
+      return <GeoLocationRestrictionLoading />;
+    }
+    if (isGeoError) {
+      return <GeoLocationRestrictionCouldNotLoad />;
+    }
+    if (isAgentGeoRestricted) {
+      return <RestrictedRegion />;
+    }
+
+    return (
+      <AgentIntroduction
+        agentType={selectedAgent}
+        renderFundingRequirements={(desc) =>
+          selectedAgent ? (
+            <FundingRequirementStep agentType={selectedAgent} desc={desc} />
+          ) : null
+        }
+        renderAgentSelection={
+          canSelectAgent
+            ? () => (
+                <Button
+                  onClick={handleAgentSelect}
+                  type="primary"
+                  block
+                  size="large"
+                >
+                  Select Agent
+                </Button>
+              )
+            : undefined
+        }
+      />
+    );
+  }, [
+    activeTab,
+    canSelectAgent,
+    handleAgentSelect,
+    handleRestoreAgent,
+    isAgentGeoRestricted,
+    isGeoError,
+    isGeoLoading,
+    selectedAgent,
+    selectedAgentConfig?.isGeoLocationRestricted,
+  ]);
+
+  return (
+    <>
+      <AgentOnboardingContainer vertical gap={24}>
+        <SelectYourAgent canGoBack={isNonEmpty(services)} />
+
+        <Flex>
+          {archivedAgents.length > 0 && (
+            <Flex
+              className="px-24 py-12"
+              style={{ borderBottom: `1px solid ${COLOR.GRAY_4}` }}
+            >
+              <Segmented
+                block
+                options={[
+                  { label: '+ New agents', value: AGENT_TAB.New },
+                  { label: 'Archived agents', value: AGENT_TAB.Archived },
+                ]}
+                value={activeTab}
+                onChange={(val) => {
+                  setActiveTab(val as AgentTab);
+                  setSelectedAgent(undefined);
+                }}
+              />
+            </Flex>
+          )}
+        </Flex>
+
+        <Container vertical>
+          <Flex vertical className="agent-selection-left-content">
+            <SelectAgent
+              onSelectYourAgent={handleSelectYourAgent}
+              onSelectArchivedAgent={handleSelectArchivedAgent}
+              selectedAgent={selectedAgent}
+              activeTab={activeTab}
+            />
+          </Flex>
+
+          <Flex className="agent-selection-right-content">
+            {rightPanelContent}
+          </Flex>
+        </Container>
+      </AgentOnboardingContainer>
+    </>
   );
 };

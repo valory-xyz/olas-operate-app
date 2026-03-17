@@ -1,5 +1,6 @@
 import {
   Button,
+  Dropdown,
   Flex,
   Layout,
   Menu,
@@ -10,8 +11,9 @@ import {
 } from 'antd';
 import { kebabCase } from 'lodash';
 import Image from 'next/image';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
+  TbDots,
   TbHelpSquareRounded,
   TbPlus,
   TbSettings,
@@ -33,6 +35,7 @@ import {
 } from '@/constants';
 import {
   useAgentRunning,
+  useArchivedAgents,
   useBalanceAndRefillRequirementsContext,
   useMasterWalletContext,
   usePageState,
@@ -43,6 +46,7 @@ import {
 import { BackupSeedPhraseAlert } from '../BackupSeedPhraseAlert';
 import { UpdateAvailableAlert } from '../UpdateAvailableAlert/UpdateAvailableAlert';
 import { UpdateAvailableModal } from '../UpdateAvailableAlert/UpdateAvailableModal';
+import { ArchiveAgentModal } from './ArchiveAgentModal';
 import { AutoRunControl } from './AutoRunControl';
 import { PulseDot } from './PulseDot';
 
@@ -72,6 +76,23 @@ const ResponsiveButton = styled(Button)`
     > span:not(.ant-btn-icon) {
       display: none;
     }
+  }
+`;
+
+/** Hidden by default; revealed when parent menu item is hovered. */
+const ArchiveMenuButton = styled.span`
+  visibility: hidden;
+  display: flex;
+  align-items: center;
+  padding: 2px 4px;
+  border-radius: 4px;
+  color: ${COLOR.TEXT_NEUTRAL_SECONDARY};
+  .ant-menu-item:hover & {
+    visibility: visible;
+  }
+  &:hover {
+    color: ${COLOR.TEXT_NEUTRAL_TERTIARY};
+    background-color: ${COLOR.GRAY_3};
   }
 `;
 
@@ -129,13 +150,17 @@ type AgentListMenuProps = {
   myAgents: AgentList;
   selectedMenuKeys: (Pages | AgentType)[];
   onAgentSelect: MenuProps['onClick'];
+  onArchiveRequest: (agentType: AgentType) => void;
 };
+
 const AgentListMenu = ({
   myAgents,
   selectedMenuKeys,
   onAgentSelect,
+  onArchiveRequest,
 }: AgentListMenuProps) => {
   const { runningAgentType } = useAgentRunning();
+  const canShowArchiveMenu = myAgents.length > 1;
 
   return (
     <Menu
@@ -145,6 +170,8 @@ const AgentListMenu = ({
       onClick={onAgentSelect}
       items={myAgents.map((agent) => {
         const isRunning = runningAgentType === agent.agentType;
+        const showArchiveButton = canShowArchiveMenu && !isRunning;
+
         return {
           key: agent.agentType,
           className: isRunning ? 'menu-running-agent' : undefined,
@@ -163,6 +190,30 @@ const AgentListMenu = ({
               <span>{agent.name}</span>
               {isRunning ? (
                 <PulseDot />
+              ) : showArchiveButton ? (
+                <Dropdown
+                  trigger={['click']}
+                  menu={{
+                    items: [
+                      {
+                        key: 'archive',
+                        label: 'Move to archive',
+                        onClick: ({ domEvent }) => {
+                          domEvent.stopPropagation();
+                          onArchiveRequest(agent.agentType);
+                        },
+                      },
+                    ],
+                  }}
+                >
+                  <ArchiveMenuButton
+                    role="button"
+                    aria-label={`Archive ${agent.name}`}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <TbDots size={16} />
+                  </ArchiveMenuButton>
+                </Dropdown>
               ) : (
                 <Image
                   src={`/chains/${kebabCase(agent.chainName)}-chain.png`}
@@ -184,9 +235,14 @@ export const Sidebar = () => {
   const { pageState, goto: gotoPage } = usePageState();
   const { services, isLoading, selectedAgentType, updateAgentType } =
     useServices();
+  const { archiveAgent, archivedAgents } = useArchivedAgents();
 
   const { masterSafes, isLoading: isMasterWalletLoading } =
     useMasterWalletContext();
+
+  const [pendingArchiveAgent, setPendingArchiveAgent] = useState<
+    AgentType | undefined
+  >();
 
   const myAgents = useMemo(() => {
     if (!services) return [];
@@ -200,6 +256,7 @@ export const Sidebar = () => {
 
       const [agentType, agentConfig] = agent;
       if (!agentConfig.evmHomeChainId) return result;
+      if (archivedAgents.includes(agentType)) return result;
 
       const chainId = agentConfig.evmHomeChainId;
       const chainName = CHAIN_CONFIG[chainId].name;
@@ -207,7 +264,7 @@ export const Sidebar = () => {
       result.push({ name, agentType, chainName, chainId });
       return result;
     }, []);
-  }, [services]);
+  }, [services, archivedAgents]);
 
   // if the selectedAgentType is not in myAgents, select the first one
   useEffect(() => {
@@ -264,6 +321,42 @@ export const Sidebar = () => {
     return availableAgents.length < AVAILABLE_FOR_ADDING_AGENTS.length;
   }, [myAgents]);
 
+  const handleArchiveConfirm = useCallback(() => {
+    if (!pendingArchiveAgent) return;
+
+    archiveAgent(pendingArchiveAgent);
+
+    // Select next available agent if the archived one was selected
+    if (selectedAgentType === pendingArchiveAgent) {
+      const nextAgent = myAgents.find(
+        (agent) => agent.agentType !== pendingArchiveAgent,
+      );
+      if (nextAgent) {
+        updateAgentType(nextAgent.agentType);
+        gotoPage(PAGES.Main);
+      } else {
+        gotoPage(PAGES.Setup);
+        gotoSetup(SETUP_SCREEN.AgentOnboarding);
+      }
+    }
+
+    setPendingArchiveAgent(undefined);
+  }, [
+    archiveAgent,
+    gotoPage,
+    gotoSetup,
+    myAgents,
+    pendingArchiveAgent,
+    selectedAgentType,
+    updateAgentType,
+  ]);
+
+  const pendingArchiveAgentName = useMemo(() => {
+    if (!pendingArchiveAgent) return '';
+    const agent = myAgents.find((a) => a.agentType === pendingArchiveAgent);
+    return agent?.name ?? '';
+  }, [myAgents, pendingArchiveAgent]);
+
   return (
     <SiderContainer>
       <Sider breakpoint={SIDEBAR_BREAKPOINT} theme="light" width={SIDER_WIDTH}>
@@ -285,6 +378,7 @@ export const Sidebar = () => {
                   myAgents={myAgents}
                   selectedMenuKeys={selectedMenuKey}
                   onAgentSelect={handleAgentSelect}
+                  onArchiveRequest={setPendingArchiveAgent}
                 />
               ) : null}
 
@@ -319,6 +413,13 @@ export const Sidebar = () => {
           </div>
         </Flex>
       </Sider>
+
+      <ArchiveAgentModal
+        agentName={pendingArchiveAgentName}
+        open={!!pendingArchiveAgent}
+        onConfirm={handleArchiveConfirm}
+        onCancel={() => setPendingArchiveAgent(undefined)}
+      />
     </SiderContainer>
   );
 };
