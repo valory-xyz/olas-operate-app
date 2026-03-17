@@ -185,9 +185,11 @@ Three React Query polls run inside the provider:
 |-------|-----|----------|--------------|
 | Services list | `SERVICES_KEY` | 5s (dynamic) | online + not paused |
 | Validation status | `SERVICES_VALIDATION_STATUS_KEY` | 15s (fixed) | online + not paused |
-| Selected deployment | `SERVICE_DEPLOYMENT_STATUS_KEY(id)` | 5s if transitioning, 15s otherwise | online + selectedServiceConfigId exists |
+| All deployments | `ALL_SERVICE_DEPLOYMENTS_KEY` | 5s if any active, 15s otherwise | online + services exist |
 
-Services list and selected deployment intervals are scaled by `useDynamicRefetchInterval` based on window visibility. The validation query uses a fixed interval.
+Services list and all deployments intervals are scaled by `useDynamicRefetchInterval` based on window visibility. The validation query uses a fixed interval.
+
+The selected service's `deploymentDetails` is derived from the bulk all-deployments query by looking up `allDeployments[selectedServiceConfigId]`.
 
 ### Service selection
 
