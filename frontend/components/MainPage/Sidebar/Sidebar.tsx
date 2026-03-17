@@ -328,6 +328,8 @@ export const Sidebar = () => {
   }, [pageState, selectedAgentType]);
 
   const canAddNewAgents = useMemo(() => {
+    if (archivedAgents.length > 0) return true;
+
     const availableAgents = myAgents.filter((agent) => {
       return AVAILABLE_FOR_ADDING_AGENTS.some(
         ([agentType]) => agentType === agent.agentType,
@@ -335,7 +337,7 @@ export const Sidebar = () => {
     });
 
     return availableAgents.length < AVAILABLE_FOR_ADDING_AGENTS.length;
-  }, [myAgents]);
+  }, [myAgents, archivedAgents]);
 
   const handleArchiveConfirm = useCallback(() => {
     if (!pendingArchiveAgent) return;

@@ -27,6 +27,19 @@ const { Text, Title } = Typography;
 
 type AgentTab = (typeof AGENT_TAB)[keyof typeof AGENT_TAB];
 
+const OPTIONS = [
+  {
+    label: 'New agents',
+    value: AGENT_TAB.New,
+    icon: <TbPlus />,
+  },
+  {
+    label: 'Archived agents',
+    value: AGENT_TAB.Archived,
+    icon: <LuArchive />,
+  },
+];
+
 const AgentOnboardingContainer = styled(Flex)`
   margin: 0 auto;
 `;
@@ -259,18 +272,7 @@ export const AgentOnboarding = () => {
             style={{ borderBottom: `1px solid ${COLOR.GRAY_4}` }}
           >
             <Segmented
-              options={[
-                {
-                  label: 'New agents',
-                  value: AGENT_TAB.New,
-                  icon: <TbPlus />,
-                },
-                {
-                  label: 'Archived agents',
-                  value: AGENT_TAB.Archived,
-                  icon: <LuArchive />,
-                },
-              ]}
+              options={OPTIONS}
               value={activeTab}
               onChange={(val) => {
                 setActiveTab(val as AgentTab);

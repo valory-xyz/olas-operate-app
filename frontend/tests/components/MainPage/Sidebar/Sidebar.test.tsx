@@ -281,6 +281,16 @@ describe('Sidebar', () => {
     expect(mockArchiveAgent).toHaveBeenCalledTimes(1);
   });
 
+  it('shows "Add New Agent" button when there are archived agents (even if no new agents)', () => {
+    // AVAILABLE_FOR_ADDING_AGENTS is [] in mock, so normally button would be hidden.
+    // But archived agents exist, so the button must still show for restore flow.
+    defaultSetup({ archivedAgents: ['memeooorr'], services: twoServices });
+    render(<Sidebar />);
+    expect(
+      screen.getByRole('button', { name: /Add New Agent/i }),
+    ).toBeInTheDocument();
+  });
+
   it('dismisses modal on cancel without archiving', () => {
     defaultSetup({ runningAgentType: null });
     render(<Sidebar />);
