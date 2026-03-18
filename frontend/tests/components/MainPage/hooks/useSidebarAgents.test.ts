@@ -1,12 +1,13 @@
 import { act, renderHook } from '@testing-library/react';
 
-import { useSidebarArchive } from '../../../../components/MainPage/hooks/useSidebarArchive';
+import { useSidebarAgents } from '../../../../components/MainPage/hooks/useSidebarAgents';
 import { AgentMap, PAGES, SETUP_SCREEN } from '../../../../constants';
 import {
-  useArchivedAgents,
+  useElectronApi,
   usePageState,
   useServices,
   useSetup,
+  useStore,
 } from '../../../../hooks';
 
 jest.mock('../../../../constants/providers', () => ({}));
@@ -16,7 +17,7 @@ jest.mock('../../../../constants/providers', () => ({}));
 // ---------------------------------------------------------------------------
 
 // Three entries: two standard agents + one without evmHomeChainId to cover
-// the defensive guard branch in useSidebarArchive.
+// the defensive guard branch in useSidebarAgents.
 jest.mock('../../../../config/agents', () => ({
   ACTIVE_AGENTS: [
     [
@@ -50,6 +51,10 @@ jest.mock('../../../../config/agents', () => ({
       },
     ],
   ],
+  AVAILABLE_FOR_ADDING_AGENTS: [
+    ['memeooorr', {}],
+    ['trader', {}],
+  ],
 }));
 
 jest.mock('../../../../config/chains', () => ({
@@ -67,7 +72,8 @@ jest.mock('../../../../hooks', () => ({
   useSetup: jest.fn(),
   usePageState: jest.fn(),
   useServices: jest.fn(),
-  useArchivedAgents: jest.fn(),
+  useElectronApi: jest.fn(),
+  useStore: jest.fn(),
 }));
 
 const mockUseSetup = useSetup as jest.MockedFunction<typeof useSetup>;
@@ -75,14 +81,15 @@ const mockUsePageState = usePageState as jest.MockedFunction<
   typeof usePageState
 >;
 const mockUseServices = useServices as jest.MockedFunction<typeof useServices>;
-const mockUseArchivedAgents = useArchivedAgents as jest.MockedFunction<
-  typeof useArchivedAgents
+const mockUseElectronApi = useElectronApi as jest.MockedFunction<
+  typeof useElectronApi
 >;
+const mockUseStore = useStore as jest.MockedFunction<typeof useStore>;
 
 const mockGotoSetup = jest.fn();
 const mockGotoPage = jest.fn();
 const mockUpdateAgentType = jest.fn();
-const mockArchiveAgent = jest.fn();
+const mockStoreSet = jest.fn();
 
 const twoServices = [
   {
@@ -123,19 +130,19 @@ const defaultSetup = (
     selectedAgentType,
     updateAgentType: mockUpdateAgentType,
   } as unknown as ReturnType<typeof useServices>);
-  mockUseArchivedAgents.mockReturnValue({
-    archivedAgents,
-    archiveAgent: mockArchiveAgent,
-    isArchived: (t: string) => archivedAgents.includes(t),
-    unarchiveAgent: jest.fn(),
-  } as unknown as ReturnType<typeof useArchivedAgents>);
+  mockUseElectronApi.mockReturnValue({
+    store: { set: mockStoreSet },
+  } as unknown as ReturnType<typeof useElectronApi>);
+  mockUseStore.mockReturnValue({
+    storeState: { archivedAgents },
+  } as unknown as ReturnType<typeof useStore>);
 };
 
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
 
-describe('useSidebarArchive', () => {
+describe('useSidebarAgents', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     defaultSetup();
@@ -143,7 +150,7 @@ describe('useSidebarArchive', () => {
 
   describe('myAgents', () => {
     it('returns both agents when none are archived', () => {
-      const { result } = renderHook(() => useSidebarArchive());
+      const { result } = renderHook(() => useSidebarAgents());
       expect(result.current.myAgents).toHaveLength(2);
       expect(result.current.myAgents.map((a) => a.agentType)).toEqual([
         AgentMap.AgentsFun,
@@ -153,19 +160,19 @@ describe('useSidebarArchive', () => {
 
     it('excludes archived agents from myAgents', () => {
       defaultSetup({ archivedAgents: [AgentMap.AgentsFun] });
-      const { result } = renderHook(() => useSidebarArchive());
+      const { result } = renderHook(() => useSidebarAgents());
       expect(result.current.myAgents).toHaveLength(1);
       expect(result.current.myAgents[0].agentType).toBe(AgentMap.PredictTrader);
     });
 
     it('returns empty array when services is null', () => {
       defaultSetup({ services: null });
-      const { result } = renderHook(() => useSidebarArchive());
+      const { result } = renderHook(() => useSidebarAgents());
       expect(result.current.myAgents).toEqual([]);
     });
 
     it('populates chainName and name from config', () => {
-      const { result } = renderHook(() => useSidebarArchive());
+      const { result } = renderHook(() => useSidebarAgents());
       const agentsFun = result.current.myAgents.find(
         (a) => a.agentType === AgentMap.AgentsFun,
       );
@@ -184,7 +191,7 @@ describe('useSidebarArchive', () => {
           },
         ],
       });
-      const { result } = renderHook(() => useSidebarArchive());
+      const { result } = renderHook(() => useSidebarAgents());
       expect(result.current.myAgents).toEqual([]);
     });
 
@@ -199,19 +206,19 @@ describe('useSidebarArchive', () => {
           },
         ],
       });
-      const { result } = renderHook(() => useSidebarArchive());
+      const { result } = renderHook(() => useSidebarAgents());
       expect(result.current.myAgents).toEqual([]);
     });
   });
 
   describe('pendingArchiveAgent / setPendingArchiveAgent', () => {
     it('starts as undefined', () => {
-      const { result } = renderHook(() => useSidebarArchive());
+      const { result } = renderHook(() => useSidebarAgents());
       expect(result.current.pendingArchiveAgent).toBeUndefined();
     });
 
     it('can be set via setPendingArchiveAgent', () => {
-      const { result } = renderHook(() => useSidebarArchive());
+      const { result } = renderHook(() => useSidebarAgents());
       act(() => {
         result.current.setPendingArchiveAgent(AgentMap.AgentsFun);
       });
@@ -221,12 +228,12 @@ describe('useSidebarArchive', () => {
 
   describe('pendingArchiveAgentName', () => {
     it('returns empty string when no pending agent', () => {
-      const { result } = renderHook(() => useSidebarArchive());
+      const { result } = renderHook(() => useSidebarAgents());
       expect(result.current.pendingArchiveAgentName).toBe('');
     });
 
     it('returns the display name of the pending agent', () => {
-      const { result } = renderHook(() => useSidebarArchive());
+      const { result } = renderHook(() => useSidebarAgents());
       act(() => {
         result.current.setPendingArchiveAgent(AgentMap.AgentsFun);
       });
@@ -235,7 +242,7 @@ describe('useSidebarArchive', () => {
 
     it('returns empty string when pending agent is not in myAgents', () => {
       // AgentMap.Modius is not in twoServices so it never appears in myAgents
-      const { result } = renderHook(() => useSidebarArchive());
+      const { result } = renderHook(() => useSidebarAgents());
       act(() => {
         result.current.setPendingArchiveAgent(AgentMap.Modius);
       });
@@ -245,26 +252,28 @@ describe('useSidebarArchive', () => {
 
   describe('handleArchiveConfirm', () => {
     it('does nothing when pendingArchiveAgent is undefined', () => {
-      const { result } = renderHook(() => useSidebarArchive());
+      const { result } = renderHook(() => useSidebarAgents());
       act(() => {
         result.current.handleArchiveConfirm();
       });
-      expect(mockArchiveAgent).not.toHaveBeenCalled();
+      expect(mockStoreSet).not.toHaveBeenCalled();
     });
 
-    it('calls archiveAgent with the pending agent type', () => {
-      const { result } = renderHook(() => useSidebarArchive());
+    it('writes updated archivedAgents to store', () => {
+      const { result } = renderHook(() => useSidebarAgents());
       act(() => {
         result.current.setPendingArchiveAgent(AgentMap.AgentsFun);
       });
       act(() => {
         result.current.handleArchiveConfirm();
       });
-      expect(mockArchiveAgent).toHaveBeenCalledWith(AgentMap.AgentsFun);
+      expect(mockStoreSet).toHaveBeenCalledWith('archivedAgents', [
+        AgentMap.AgentsFun,
+      ]);
     });
 
     it('clears pendingArchiveAgent after confirm', () => {
-      const { result } = renderHook(() => useSidebarArchive());
+      const { result } = renderHook(() => useSidebarAgents());
       act(() => {
         result.current.setPendingArchiveAgent(AgentMap.AgentsFun);
       });
@@ -276,7 +285,7 @@ describe('useSidebarArchive', () => {
 
     it('selects next agent and navigates to Main when archived agent was selected', () => {
       defaultSetup({ selectedAgentType: AgentMap.AgentsFun });
-      const { result } = renderHook(() => useSidebarArchive());
+      const { result } = renderHook(() => useSidebarAgents());
       act(() => {
         result.current.setPendingArchiveAgent(AgentMap.AgentsFun);
       });
@@ -298,7 +307,7 @@ describe('useSidebarArchive', () => {
         ],
         selectedAgentType: AgentMap.AgentsFun,
       });
-      const { result } = renderHook(() => useSidebarArchive());
+      const { result } = renderHook(() => useSidebarAgents());
       act(() => {
         result.current.setPendingArchiveAgent(AgentMap.AgentsFun);
       });
@@ -311,7 +320,7 @@ describe('useSidebarArchive', () => {
 
     it('does not call updateAgentType when a different agent was selected', () => {
       defaultSetup({ selectedAgentType: AgentMap.PredictTrader });
-      const { result } = renderHook(() => useSidebarArchive());
+      const { result } = renderHook(() => useSidebarAgents());
       act(() => {
         result.current.setPendingArchiveAgent(AgentMap.AgentsFun);
       });
@@ -321,12 +330,24 @@ describe('useSidebarArchive', () => {
       expect(mockUpdateAgentType).not.toHaveBeenCalled();
       expect(mockGotoPage).not.toHaveBeenCalled();
     });
+
+    it('does not archive the same agent twice', () => {
+      defaultSetup({ archivedAgents: [AgentMap.AgentsFun] });
+      const { result } = renderHook(() => useSidebarAgents());
+      act(() => {
+        result.current.setPendingArchiveAgent(AgentMap.AgentsFun);
+      });
+      act(() => {
+        result.current.handleArchiveConfirm();
+      });
+      expect(mockStoreSet).not.toHaveBeenCalled();
+    });
   });
 
-  describe('optimistic exclusion', () => {
-    it('hides agent immediately on archive confirm before store updates', () => {
+  describe('immediate hide on archive', () => {
+    it('hides agent immediately on archive confirm', () => {
       defaultSetup({ selectedAgentType: AgentMap.PredictTrader });
-      const { result } = renderHook(() => useSidebarArchive());
+      const { result } = renderHook(() => useSidebarAgents());
 
       expect(result.current.myAgents).toHaveLength(2);
 
@@ -342,30 +363,42 @@ describe('useSidebarArchive', () => {
       ).toBeUndefined();
     });
 
-    it('clears optimistic entry once archivedAgents from store catches up', () => {
-      defaultSetup({ selectedAgentType: AgentMap.PredictTrader });
-      const { result, rerender } = renderHook(() => useSidebarArchive());
+    it('seeds archivedAgents from store when store loads after initial render', () => {
+      // Simulate store not yet loaded on first render
+      mockUseStore.mockReturnValue({
+        storeState: { archivedAgents: undefined },
+      } as unknown as ReturnType<typeof useStore>);
 
-      act(() => {
-        result.current.setPendingArchiveAgent(AgentMap.AgentsFun);
-      });
-      act(() => {
-        result.current.handleArchiveConfirm();
-      });
+      const { result, rerender } = renderHook(() => useSidebarAgents());
+      expect(result.current.myAgents).toHaveLength(2);
 
-      // Simulate store catching up
-      mockUseArchivedAgents.mockReturnValue({
-        archivedAgents: [AgentMap.AgentsFun],
-        archiveAgent: mockArchiveAgent,
-        isArchived: (t: string) => t === AgentMap.AgentsFun,
-        unarchiveAgent: jest.fn(),
-      } as unknown as ReturnType<typeof useArchivedAgents>);
+      // Store loads with an archived agent
+      mockUseStore.mockReturnValue({
+        storeState: { archivedAgents: [AgentMap.AgentsFun] },
+      } as unknown as ReturnType<typeof useStore>);
       rerender();
 
-      // Agent still absent (now via archivedAgents, not optimistic state)
       expect(
         result.current.myAgents.find((a) => a.agentType === AgentMap.AgentsFun),
       ).toBeUndefined();
+    });
+
+    it('reflects restore (unarchive) written externally to store', () => {
+      // Start with AgentsFun archived
+      defaultSetup({ archivedAgents: [AgentMap.AgentsFun] });
+      const { result, rerender } = renderHook(() => useSidebarAgents());
+      expect(result.current.myAgents).toHaveLength(1);
+
+      // External code calls unarchiveAgent → store updates
+      mockUseStore.mockReturnValue({
+        storeState: { archivedAgents: [] },
+      } as unknown as ReturnType<typeof useStore>);
+      rerender();
+
+      expect(result.current.myAgents).toHaveLength(2);
+      expect(
+        result.current.myAgents.find((a) => a.agentType === AgentMap.AgentsFun),
+      ).toBeDefined();
     });
   });
 });

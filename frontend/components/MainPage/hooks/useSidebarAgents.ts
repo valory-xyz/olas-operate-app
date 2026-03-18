@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { ACTIVE_AGENTS } from '@/config/agents';
+import { ACTIVE_AGENTS, AVAILABLE_FOR_ADDING_AGENTS } from '@/config/agents';
 import { CHAIN_CONFIG } from '@/config/chains';
 import { AgentType, EvmChainId, PAGES, SETUP_SCREEN } from '@/constants';
 import {
-  useArchivedAgents,
+  useElectronApi,
   usePageState,
   useServices,
   useSetup,
+  useStore,
 } from '@/hooks';
 
 import { AgentList } from '../Sidebar/AgentListMenu';
@@ -16,27 +17,26 @@ import { AgentList } from '../Sidebar/AgentListMenu';
  * Manages the agent list (filtered by archive state) and all archive-related
  * state and callbacks for the Sidebar.
  */
-export const useSidebarArchive = () => {
+export const useSidebarAgents = () => {
   const { goto: gotoSetup } = useSetup();
   const { goto: gotoPage } = usePageState();
   const { services, selectedAgentType, updateAgentType } = useServices();
-  const { archiveAgent, archivedAgents } = useArchivedAgents();
+  const { store } = useElectronApi();
+  const { storeState } = useStore();
+
+  const [archivedAgents, setArchivedAgents] = useState<AgentType[]>(
+    storeState?.archivedAgents ?? [],
+  );
+
+  // Always sync from store so external writes (e.g. unarchiveAgent) are reflected.
+  // handleArchiveConfirm also calls setArchivedAgents immediately for instant hide.
+  useEffect(() => {
+    setArchivedAgents(storeState?.archivedAgents ?? []);
+  }, [storeState?.archivedAgents]);
 
   const [pendingArchiveAgent, setPendingArchiveAgent] = useState<
     AgentType | undefined
   >();
-
-  // Optimistic exclusion: immediately hide an agent when archiving is confirmed,
-  // before the IPC store-changed response arrives. Cleared once the store catches up.
-  const [optimisticArchivedAgents, setOptimisticArchivedAgents] = useState<
-    AgentType[]
-  >([]);
-
-  useEffect(() => {
-    setOptimisticArchivedAgents((prev) =>
-      prev.filter((a) => !archivedAgents.includes(a)),
-    );
-  }, [archivedAgents]);
 
   const myAgents = useMemo(() => {
     if (!services) return [];
@@ -50,12 +50,7 @@ export const useSidebarArchive = () => {
 
       const [agentType, agentConfig] = agent;
       if (!agentConfig.evmHomeChainId) return result;
-      if (
-        archivedAgents.includes(agentType) ||
-        optimisticArchivedAgents.includes(agentType)
-      ) {
-        return result;
-      }
+      if (archivedAgents.includes(agentType)) return result;
 
       const chainId = agentConfig.evmHomeChainId as EvmChainId;
       const chainName = CHAIN_CONFIG[chainId].name;
@@ -63,14 +58,15 @@ export const useSidebarArchive = () => {
       result.push({ name, agentType, chainName, chainId });
       return result;
     }, []);
-  }, [services, archivedAgents, optimisticArchivedAgents]);
+  }, [services, archivedAgents]);
 
   const handleArchiveConfirm = useCallback(() => {
     if (!pendingArchiveAgent) return;
+    if (archivedAgents.includes(pendingArchiveAgent)) return;
 
-    // Optimistically hide immediately — before IPC round-trip completes
-    setOptimisticArchivedAgents((prev) => [...prev, pendingArchiveAgent]);
-    archiveAgent(pendingArchiveAgent);
+    const updated = [...archivedAgents, pendingArchiveAgent];
+    setArchivedAgents(updated);
+    store?.set?.('archivedAgents', updated);
 
     // Select next available agent if the archived one was selected
     if (selectedAgentType === pendingArchiveAgent) {
@@ -88,12 +84,13 @@ export const useSidebarArchive = () => {
 
     setPendingArchiveAgent(undefined);
   }, [
-    archiveAgent,
+    archivedAgents,
     gotoPage,
     gotoSetup,
     myAgents,
     pendingArchiveAgent,
     selectedAgentType,
+    store,
     updateAgentType,
   ]);
 
@@ -103,9 +100,20 @@ export const useSidebarArchive = () => {
     return agent?.name ?? '';
   }, [myAgents, pendingArchiveAgent]);
 
+  const canAddNewAgents = useMemo(() => {
+    if (archivedAgents.length > 0) return true;
+    const availableAgents = myAgents.filter((agent) =>
+      AVAILABLE_FOR_ADDING_AGENTS.some(
+        ([agentType]) => agentType === agent.agentType,
+      ),
+    );
+    return availableAgents.length < AVAILABLE_FOR_ADDING_AGENTS.length;
+  }, [myAgents, archivedAgents]);
+
   return {
     myAgents,
     archivedAgents,
+    canAddNewAgents,
     pendingArchiveAgent,
     setPendingArchiveAgent,
     pendingArchiveAgentName,

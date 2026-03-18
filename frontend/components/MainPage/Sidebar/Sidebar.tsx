@@ -18,7 +18,6 @@ import {
 } from 'react-icons/tb';
 import styled from 'styled-components';
 
-import { AVAILABLE_FOR_ADDING_AGENTS } from '@/config/agents';
 import {
   AgentType,
   ANTD_BREAKPOINTS,
@@ -37,7 +36,7 @@ import {
 } from '@/hooks';
 
 import { BackupSeedPhraseAlert } from '../BackupSeedPhraseAlert';
-import { useSidebarArchive } from '../hooks/useSidebarArchive';
+import { useSidebarAgents } from '../hooks/useSidebarAgents';
 import { UpdateAvailableAlert } from '../UpdateAvailableAlert/UpdateAvailableAlert';
 import { UpdateAvailableModal } from '../UpdateAvailableAlert/UpdateAvailableModal';
 import { AgentListMenu } from './AgentListMenu';
@@ -125,12 +124,12 @@ export const Sidebar = () => {
 
   const {
     myAgents,
-    archivedAgents,
     pendingArchiveAgent,
     setPendingArchiveAgent,
     pendingArchiveAgentName,
     handleArchiveConfirm,
-  } = useSidebarArchive();
+    canAddNewAgents,
+  } = useSidebarAgents();
 
   // If the selectedAgentType is not in myAgents, select the first one
   useEffect(() => {
@@ -176,18 +175,6 @@ export const Sidebar = () => {
     }
     return [selectedAgentType];
   }, [pageState, selectedAgentType]);
-
-  const canAddNewAgents = useMemo(() => {
-    if (archivedAgents.length > 0) return true;
-
-    const availableAgents = myAgents.filter((agent) => {
-      return AVAILABLE_FOR_ADDING_AGENTS.some(
-        ([agentType]) => agentType === agent.agentType,
-      );
-    });
-
-    return availableAgents.length < AVAILABLE_FOR_ADDING_AGENTS.length;
-  }, [myAgents, archivedAgents]);
 
   return (
     <SiderContainer>

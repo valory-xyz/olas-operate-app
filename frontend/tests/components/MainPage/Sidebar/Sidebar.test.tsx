@@ -90,10 +90,14 @@ const mockGotoPage = jest.fn();
 const mockUpdateAgentType = jest.fn();
 const mockArchiveAgent = jest.fn();
 
+const mockStoreSet = jest.fn();
+
 const mockUseSetup = jest.fn();
 const mockUsePageState = jest.fn();
 const mockUseServices = jest.fn();
 const mockUseArchivedAgents = jest.fn();
+const mockUseElectronApi = jest.fn();
+const mockUseStore = jest.fn();
 const mockUseMasterWalletContext = jest.fn();
 const mockUseAgentRunning = jest.fn();
 const mockUseBalanceAndRefillRequirementsContext = jest.fn();
@@ -103,6 +107,8 @@ jest.mock('../../../../hooks', () => ({
   usePageState: (...args: unknown[]) => mockUsePageState(...args),
   useServices: (...args: unknown[]) => mockUseServices(...args),
   useArchivedAgents: (...args: unknown[]) => mockUseArchivedAgents(...args),
+  useElectronApi: (...args: unknown[]) => mockUseElectronApi(...args),
+  useStore: (...args: unknown[]) => mockUseStore(...args),
   useMasterWalletContext: (...args: unknown[]) =>
     mockUseMasterWalletContext(...args),
   useAgentRunning: (...args: unknown[]) => mockUseAgentRunning(...args),
@@ -186,6 +192,8 @@ const defaultSetup = (
     archivedAgents,
     archiveAgent: mockArchiveAgent,
   });
+  mockUseElectronApi.mockReturnValue({ store: { set: mockStoreSet } });
+  mockUseStore.mockReturnValue({ storeState: { archivedAgents } });
   mockUseMasterWalletContext.mockReturnValue({
     masterSafes: [],
     isLoading: false,
@@ -269,7 +277,7 @@ describe('Sidebar', () => {
     ).toBeInTheDocument();
   });
 
-  it('calls archiveAgent and selects next agent on archive confirm', () => {
+  it('writes to store and selects next agent on archive confirm', () => {
     defaultSetup({ runningAgentType: null });
     render(<Sidebar />);
 
@@ -278,7 +286,10 @@ describe('Sidebar', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Archive Agent' }));
 
-    expect(mockArchiveAgent).toHaveBeenCalledTimes(1);
+    expect(mockStoreSet).toHaveBeenCalledWith(
+      'archivedAgents',
+      expect.any(Array),
+    );
   });
 
   it('shows "Add New Agent" button when there are archived agents (even if no new agents)', () => {

@@ -188,7 +188,7 @@ export const AgentOnboarding = () => {
     if (!selectedAgent) return;
     unarchiveAgent(selectedAgent);
     updateAgentType(selectedAgent);
-    gotoPage(PAGES.Main);
+    setTimeout(() => gotoPage(PAGES.Main), 300);
   }, [gotoPage, selectedAgent, unarchiveAgent, updateAgentType]);
 
   const canSelectAgent = useMemo(() => {
