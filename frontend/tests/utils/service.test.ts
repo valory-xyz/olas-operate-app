@@ -513,9 +513,9 @@ describe('getServiceInstanceName', () => {
 
   it('returns fallback when token is undefined', () => {
     const service = makeServiceWithToken(undefined);
-    expect(
-      getServiceInstanceName(service, 'Modius', EvmChainIdMap.Mode),
-    ).toBe('My Modius');
+    expect(getServiceInstanceName(service, 'Modius', EvmChainIdMap.Mode)).toBe(
+      'My Modius',
+    );
   });
 
   it('returns fallback when service is null', () => {
