@@ -121,9 +121,7 @@ export const SelectStakingPage = ({ mode }: SelectStakingProps) => {
 
   const handleBack = useCallback(() => {
     const isList =
-      viewState === ViewState.LIST_AUTO ||
-      viewState === ViewState.LIST_MANUAL ||
-      viewState === ViewState.SWITCHING;
+      viewState === ViewState.LIST_AUTO || viewState === ViewState.LIST_MANUAL;
     if (mode === 'onboard' && isList) {
       setViewState(ViewState.CONFIGURE_MANUAL);
       return;
@@ -141,12 +139,11 @@ export const SelectStakingPage = ({ mode }: SelectStakingProps) => {
     viewState === ViewState.LIST_MANUAL ||
     viewState === ViewState.SWITCHING;
 
-  // In list views (onboard mode), always show back even without a service —
-  // back from list always goes to CONFIGURE, never exits the flow.
-  // In configure views, only show back if a service already exists.
-  const backButton = (selectedService || isListView) && (
-    <BackButton onPrev={handleBack} />
-  );
+  // In onboard mode list views, always show back even without a service —
+  // back from list returns to CONFIGURE instead of immediately exiting to Main.
+  // In all modes, configure views only show back if a service already exists.
+  const backButton = (selectedService ||
+    (mode === 'onboard' && isListView)) && <BackButton onPrev={handleBack} />;
 
   return viewState === ViewState.LOADING ? (
     <Flex justify="center" align="center" className="w-full py-32">
