@@ -210,7 +210,7 @@ describe('SelectStakingPage', () => {
     });
 
     describe('onboard mode — list view', () => {
-      it('shows back button in LIST_AUTO even when service exists', () => {
+      it('shows back button in LIST_AUTO (onboard mode)', () => {
         setupMocks({
           hasService: true,
           defaultStakingProgramId: DEFAULT_STAKING_PROGRAM_ID,
@@ -361,6 +361,19 @@ describe('SelectStakingPage', () => {
       it('LIST_AUTO → back → gotoPage(Main)', () => {
         setupMocks({ hasService: true });
         render(<SelectStakingPage mode="migrate" />);
+        expect(screen.getByTestId('list-view')).toBeInTheDocument();
+
+        fireEvent.click(screen.getByTestId('back-button'));
+
+        expect(mockGotoPage).toHaveBeenCalledWith(PAGES.Main);
+        expect(mockGotoPage).toHaveBeenCalledTimes(1);
+      });
+
+      it('SWITCHING → back → gotoPage(Main)', () => {
+        setupMocks({ hasService: true });
+        render(<SelectStakingPage mode="migrate" />);
+
+        fireEvent.click(screen.getByTestId('select-start')); // → SWITCHING
         expect(screen.getByTestId('list-view')).toBeInTheDocument();
 
         fireEvent.click(screen.getByTestId('back-button'));
