@@ -40,6 +40,42 @@ type AgentListMenuProps = {
   onArchiveRequest: (agentType: AgentType) => void;
 };
 
+type AgentArchiveDropdownProps = {
+  agentName: string;
+  agentType: AgentType;
+  onArchiveRequest: (agentType: AgentType) => void;
+};
+
+const AgentArchiveDropdown = ({
+  agentName,
+  agentType,
+  onArchiveRequest,
+}: AgentArchiveDropdownProps) => (
+  <Dropdown
+    trigger={['click']}
+    menu={{
+      items: [
+        {
+          key: 'archive',
+          label: 'Move to archive',
+          onClick: ({ domEvent }) => {
+            domEvent.stopPropagation();
+            onArchiveRequest(agentType);
+          },
+        },
+      ],
+    }}
+  >
+    <ArchiveMenuButton
+      role="button"
+      aria-label={`Archive ${agentName}`}
+      onClick={(e) => e.stopPropagation()}
+    >
+      <TbDots size={16} />
+    </ArchiveMenuButton>
+  </Dropdown>
+);
+
 export const AgentListMenu = ({
   myAgents,
   selectedMenuKeys,
@@ -78,29 +114,11 @@ export const AgentListMenu = ({
               {isRunning ? (
                 <PulseDot />
               ) : showArchiveButton ? (
-                <Dropdown
-                  trigger={['click']}
-                  menu={{
-                    items: [
-                      {
-                        key: 'archive',
-                        label: 'Move to archive',
-                        onClick: ({ domEvent }) => {
-                          domEvent.stopPropagation();
-                          onArchiveRequest(agent.agentType);
-                        },
-                      },
-                    ],
-                  }}
-                >
-                  <ArchiveMenuButton
-                    role="button"
-                    aria-label={`Archive ${agent.name}`}
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <TbDots size={16} />
-                  </ArchiveMenuButton>
-                </Dropdown>
+                <AgentArchiveDropdown
+                  agentName={agent.name}
+                  agentType={agent.agentType}
+                  onArchiveRequest={onArchiveRequest}
+                />
               ) : (
                 <Image
                   src={`/chains/${kebabCase(agent.chainName)}-chain.png`}
