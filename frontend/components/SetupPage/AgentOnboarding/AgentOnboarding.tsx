@@ -3,14 +3,41 @@ import { useCallback, useMemo, useState } from 'react';
 import styled from 'styled-components';
 
 import { AgentIntroduction } from '@/components/AgentIntroduction';
-import { AGENT_CONFIG } from '@/config/agents';
-import { AgentType, COLOR, SETUP_SCREEN } from '@/constants';
-import { useIsAgentGeoRestricted, useServices, useSetup } from '@/hooks';
-import { Optional } from '@/types';
+import { ACTIVE_AGENTS, AGENT_CONFIG } from '@/config/agents';
+import { AgentType, COLOR, PAGES, SETUP_SCREEN } from '@/constants';
+import {
+  useIsAgentGeoRestricted,
+  usePageState,
+  useServices,
+  useSetup,
+} from '@/hooks';
+import { MiddlewareServiceResponse, Optional } from '@/types';
+import { isValidServiceId } from '@/utils';
 
 import { FundingRequirementStep } from './FundingRequirementStep';
 import { RestrictedRegion } from './RestrictedRegion';
 import { SelectAgent } from './SelectAgent';
+
+/** Find an undeployed instance of the given agent type */
+const findUndeployedInstance = (
+  agentType: AgentType,
+  services: MiddlewareServiceResponse[],
+): MiddlewareServiceResponse | undefined => {
+  const agentConfig = ACTIVE_AGENTS.find(([type]) => type === agentType)?.[1];
+  if (!agentConfig) return undefined;
+
+  return services.find((service) => {
+    if (
+      service.service_public_id !== agentConfig.servicePublicId ||
+      service.home_chain !== agentConfig.middlewareHomeChainId
+    ) {
+      return false;
+    }
+    const tokenId =
+      service.chain_configs[service.home_chain]?.chain_data?.token;
+    return !isValidServiceId(tokenId);
+  });
+};
 
 const { Text, Title } = Typography;
 
@@ -63,7 +90,9 @@ const GeoLocationRestrictionCouldNotLoad = () => (
  */
 export const AgentOnboarding = () => {
   const { goto } = useSetup();
-  const { selectAgentTypeForSetup } = useServices();
+  const { goto: gotoPage } = usePageState();
+  const { services, selectAgentTypeForSetup, updateSelectedInstance } =
+    useServices();
   const [selectedAgent, setSelectedAgent] = useState<Optional<AgentType>>();
 
   const selectedAgentConfig = selectedAgent
@@ -80,6 +109,17 @@ export const AgentOnboarding = () => {
     if (!selectedAgent) return;
     const currentAgentConfig = AGENT_CONFIG[selectedAgent];
 
+    // If an undeployed instance exists, select it, instead of
+    // letting the user create another new instance
+    if (services) {
+      const undeployed = findUndeployedInstance(selectedAgent, services);
+      if (undeployed) {
+        updateSelectedInstance(undeployed.service_config_id);
+        gotoPage(PAGES.Main);
+        return;
+      }
+    }
+
     // if agent is "coming soon" should be redirected to EARLY ACCESS PAGE
     if (currentAgentConfig.isComingSoon) {
       goto(SETUP_SCREEN.EarlyAccessOnly);
@@ -93,7 +133,7 @@ export const AgentOnboarding = () => {
     } else {
       goto(SETUP_SCREEN.SelectStaking);
     }
-  }, [goto, selectedAgent]);
+  }, [goto, gotoPage, selectedAgent, services, updateSelectedInstance]);
 
   const handleSelectYourAgent = useCallback(
     (agentType: AgentType) => {

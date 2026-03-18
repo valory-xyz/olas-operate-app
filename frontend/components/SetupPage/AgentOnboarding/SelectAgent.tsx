@@ -9,7 +9,6 @@ import { BackButton } from '@/components/ui';
 import { ACTIVE_AGENTS } from '@/config/agents';
 import { AgentType, COLOR, PAGES } from '@/constants';
 import { usePageState, useServices } from '@/hooks';
-import { AgentConfig } from '@/types';
 
 const { Text, Title } = Typography;
 
@@ -31,6 +30,12 @@ const UnderConstructionIcon = styled(LuConstruction)`
   background-color: ${COLOR.BG.WARNING.DEFAULT};
 `;
 
+const InstanceTag = styled(Flex)`
+  padding: 2px 6px;
+  border: 1px solid ${COLOR.GRAY_3};
+  border-radius: 6px;
+`;
+
 const SelectYourAgent = ({ canGoBack }: { canGoBack: boolean }) => {
   const { goto } = usePageState();
   return (
@@ -42,10 +47,28 @@ const SelectYourAgent = ({ canGoBack }: { canGoBack: boolean }) => {
     >
       {canGoBack && <BackButton onPrev={() => goto(PAGES.Main)} />}
       <Title level={3} className="m-0">
-        Select your agent
+        Select Agent
       </Title>
-      <Text type="secondary">Review and select the AI agent you like.</Text>
+      <Text type="secondary">
+        Review and select the AI agent you&apos;d like to add or restore.
+      </Text>
     </Flex>
+  );
+};
+
+type InstanceCountProps = {
+  count: number;
+};
+
+const InstanceCount = ({ count }: InstanceCountProps) => {
+  if (!count) return null;
+
+  return (
+    <InstanceTag>
+      <Text type="secondary" className="text-sm">
+        You own {count}
+      </Text>
+    </InstanceTag>
   );
 };
 
@@ -58,41 +81,41 @@ const SelectYourAgentList = ({
   onSelectYourAgent,
   selectedAgent,
 }: SelectYourAgentListProps) => {
-  const { services } = useServices();
-  const agents = useMemo(() => {
-    const isNotInServices = ([, agentConfig]: [string, AgentConfig]) =>
-      !services?.some(
-        ({ service_public_id, home_chain }) =>
-          service_public_id === agentConfig.servicePublicId &&
-          home_chain === agentConfig.middlewareHomeChainId,
-      );
+  const { getInstancesOfAgentType } = useServices();
+
+  const agents = useMemo(
+    () =>
+      // Sorted with under-construction at the end
+      [...ACTIVE_AGENTS].sort(([, agent]) =>
+        agent.isUnderConstruction ? 1 : -1,
+      ),
+    [],
+  );
+
+  return agents.map(([agentType, agentConfig]) => {
+    const instanceCount = getInstancesOfAgentType(agentType).length;
 
     return (
-      ACTIVE_AGENTS.filter(isNotInServices)
-        // put all under construction in the end
-        .sort(([, agentConfig]) => (agentConfig.isUnderConstruction ? 1 : -1))
+      <AgentSelectionContainer
+        key={agentType}
+        active={selectedAgent === agentType}
+        onClick={() => onSelectYourAgent(agentType as AgentType)}
+        gap={12}
+        align="center"
+      >
+        <Image
+          src={`/agent-${agentType}-icon.png`}
+          alt={`${agentConfig.displayName} icon`}
+          width={36}
+          height={36}
+          style={{ borderRadius: 8, border: `1px solid ${COLOR.GRAY_3}` }}
+        />
+        <Text style={{ flex: 1 }}>{agentConfig.displayName}</Text>
+        <InstanceCount count={instanceCount} />
+        {agentConfig.isUnderConstruction && <UnderConstructionIcon />}
+      </AgentSelectionContainer>
     );
-  }, [services]);
-
-  return agents.map(([agentType, agentConfig]) => (
-    <AgentSelectionContainer
-      key={agentType}
-      active={selectedAgent === agentType}
-      onClick={() => onSelectYourAgent(agentType as AgentType)}
-      gap={12}
-      align="center"
-    >
-      <Image
-        src={`/agent-${agentType}-icon.png`}
-        alt={`${agentConfig.displayName} icon`}
-        width={36}
-        height={36}
-        style={{ borderRadius: 8, border: `1px solid ${COLOR.GRAY_3}` }}
-      />
-      <Text>{agentConfig.displayName}</Text>
-      {agentConfig.isUnderConstruction && <UnderConstructionIcon />}
-    </AgentSelectionContainer>
-  ));
+  });
 };
 
 type SelectAgentProps = {

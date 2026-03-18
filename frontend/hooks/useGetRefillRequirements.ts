@@ -112,7 +112,7 @@ export const useGetRefillRequirements = (): UseGetRefillRequirementsReturn => {
     getMasterSafeOf,
     isFetched: isMasterWalletsFetched,
   } = useMasterWalletContext();
-  const { selectedAgentConfig, selectedAgentType } = useServices();
+  const { selectedAgentConfig, selectedServiceConfigId } = useServices();
 
   const [totalTokenRequirements, setTotalTokenRequirements] = useState<
     TokenRequirement[] | null
@@ -131,7 +131,7 @@ export const useGetRefillRequirements = (): UseGetRefillRequirementsReturn => {
         !masterEoa ||
         !isMasterWalletsFetched
       ) {
-        return [];
+        return null;
       }
 
       const chainConfig = TOKEN_CONFIG[selectedAgentConfig.evmHomeChainId];
@@ -193,11 +193,11 @@ export const useGetRefillRequirements = (): UseGetRefillRequirementsReturn => {
   );
 
   /**
-   * @important Reset the token requirements when the selected agent type changes.
+   * @important Reset the token requirements when the selected service changes.
    */
   useEffect(() => {
     resetTokenRequirements(false);
-  }, [selectedAgentType, resetTokenRequirements]);
+  }, [selectedServiceConfigId, resetTokenRequirements]);
 
   // Get the total token requirements
   useEffect(() => {

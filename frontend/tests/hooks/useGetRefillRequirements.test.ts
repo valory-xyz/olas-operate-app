@@ -19,6 +19,7 @@ import {
   DEFAULT_SAFE_ADDRESS,
   makeMasterEoa,
   makeMasterSafe,
+  MOCK_SERVICE_CONFIG_ID_2,
 } from '../helpers/factories';
 
 const OLAS_ADDRESS = GNOSIS_TOKEN_CONFIG[TokenSymbolMap.OLAS]!
@@ -423,9 +424,8 @@ describe('useGetRefillRequirements', () => {
       expect(result.current.totalTokenRequirements[0].amount).toBe(2);
     });
 
-    it('resets cache when selectedAgentType changes', () => {
+    it('resets cache when selectedServiceConfigId changes', () => {
       setupMocks({
-        selectedAgentType: 'trader',
         totalRequirements: buildRequirements({
           safeAddress: DEFAULT_SAFE_ADDRESS,
           nativeSafe: '2000000000000000000', // 2 XDAI
@@ -436,10 +436,10 @@ describe('useGetRefillRequirements', () => {
 
       expect(result.current.totalTokenRequirements[0].amount).toBe(2);
 
-      // Change agent type and provide new requirements
+      // Change selectedServiceConfigId and provide new requirements
       mockUseServices.mockReturnValue({
         selectedAgentConfig: defaultSelectedAgentConfig,
-        selectedAgentType: 'optimus',
+        selectedServiceConfigId: MOCK_SERVICE_CONFIG_ID_2,
       } as ReturnType<typeof useServices>);
       mockUseBalanceContext.mockReturnValue({
         totalRequirements: buildRequirements({
@@ -454,7 +454,7 @@ describe('useGetRefillRequirements', () => {
 
       rerender();
 
-      // Cache was cleared by agent type change, so new value appears
+      // Cache was cleared by selectedServiceConfigId change, so new value appears
       expect(result.current.totalTokenRequirements[0].amount).toBe(7);
     });
   });
