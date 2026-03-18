@@ -1,11 +1,13 @@
 import {
   AgentMap,
+  EvmChainIdMap,
   MiddlewareChainMap,
   StakingProgramId,
 } from '../../constants';
 import { AddressZero } from '../../constants/address';
 import { Service, ServiceTemplate } from '../../types/Service';
 import {
+  getServiceInstanceName,
   isValidServiceId,
   onDummyServiceCreation,
   updateServiceIfNeeded,
@@ -462,5 +464,100 @@ describe('onDummyServiceCreation', () => {
       deploy: true,
       stakingProgramId: 'staking-program-v1',
     });
+  });
+});
+
+describe('getServiceInstanceName', () => {
+  const makeServiceWithToken = (token: number | null | undefined) =>
+    ({
+      home_chain: MiddlewareChainMap.GNOSIS,
+      chain_configs: {
+        [MiddlewareChainMap.GNOSIS]: {
+          chain_data: { token },
+        },
+      },
+    }) as unknown as Service;
+
+  it('returns generated name when service has a valid token ID', () => {
+    const service = makeServiceWithToken(42);
+    const name = getServiceInstanceName(
+      service,
+      'Omenstrat',
+      EvmChainIdMap.Gnosis,
+    );
+    // generateAgentName returns a deterministic name for a given chainId + tokenId
+    expect(name).not.toBe('My Omenstrat');
+    expect(name.length).toBeGreaterThan(0);
+  });
+
+  it('returns fallback when token is null', () => {
+    const service = makeServiceWithToken(null);
+    expect(
+      getServiceInstanceName(service, 'Omenstrat', EvmChainIdMap.Gnosis),
+    ).toBe('My Omenstrat');
+  });
+
+  it('returns fallback when token is 0', () => {
+    const service = makeServiceWithToken(0);
+    expect(
+      getServiceInstanceName(service, 'Optimus', EvmChainIdMap.Optimism),
+    ).toBe('My Optimus');
+  });
+
+  it('returns fallback when token is -1', () => {
+    const service = makeServiceWithToken(-1);
+    expect(
+      getServiceInstanceName(service, 'Polystrat', EvmChainIdMap.Polygon),
+    ).toBe('My Polystrat');
+  });
+
+  it('returns fallback when token is undefined', () => {
+    const service = makeServiceWithToken(undefined);
+    expect(
+      getServiceInstanceName(service, 'Modius', EvmChainIdMap.Mode),
+    ).toBe('My Modius');
+  });
+
+  it('returns fallback when service is null', () => {
+    expect(
+      getServiceInstanceName(null, 'Omenstrat', EvmChainIdMap.Gnosis),
+    ).toBe('My Omenstrat');
+  });
+
+  it('returns fallback when service is undefined', () => {
+    expect(
+      getServiceInstanceName(undefined, 'Optimus', EvmChainIdMap.Optimism),
+    ).toBe('My Optimus');
+  });
+
+  it('returns consistent name for same chainId and tokenId', () => {
+    const service = makeServiceWithToken(42);
+    const name1 = getServiceInstanceName(
+      service,
+      'Omenstrat',
+      EvmChainIdMap.Gnosis,
+    );
+    const name2 = getServiceInstanceName(
+      service,
+      'Omenstrat',
+      EvmChainIdMap.Gnosis,
+    );
+    expect(name1).toBe(name2);
+  });
+
+  it('returns different names for different tokenIds', () => {
+    const service1 = makeServiceWithToken(42);
+    const service2 = makeServiceWithToken(99);
+    const name1 = getServiceInstanceName(
+      service1,
+      'Omenstrat',
+      EvmChainIdMap.Gnosis,
+    );
+    const name2 = getServiceInstanceName(
+      service2,
+      'Omenstrat',
+      EvmChainIdMap.Gnosis,
+    );
+    expect(name1).not.toBe(name2);
   });
 });
