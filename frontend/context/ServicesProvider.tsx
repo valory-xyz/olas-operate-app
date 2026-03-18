@@ -52,7 +52,7 @@ import {
 } from '@/types';
 import {
   asEvmChainId,
-  generateAgentName,
+  getServiceInstanceName,
   isNilOrEmpty,
   isValidServiceId,
 } from '@/utils';
@@ -506,22 +506,23 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
     }
   }, [services, storeState, store]);
 
-  // Agent name generated based on the tokenId and chain of the selected service
-  const selectedAgentName = useMemo(() => {
-    const tokenId =
-      selectedService?.chain_configs[selectedService.home_chain].chain_data
-        .token;
-    const chainId = selectedAgentConfig?.evmHomeChainId;
-    if (!chainId || !isValidServiceId(tokenId)) return null;
-    return generateAgentName(chainId, tokenId);
-  }, [
-    selectedAgentConfig?.evmHomeChainId,
-    selectedService?.chain_configs,
-    selectedService?.home_chain,
-  ]);
+  const selectedAgentNameOrFallback = useMemo(
+    () =>
+      getServiceInstanceName(
+        selectedService,
+        selectedAgentConfig.displayName,
+        selectedAgentConfig.evmHomeChainId,
+      ),
+    [selectedService, selectedAgentConfig],
+  );
 
-  const selectedAgentNameOrFallback =
-    selectedAgentName ?? `My ${selectedAgentConfig.displayName}`;
+  const selectedAgentName: Nullable<string> = (() => {
+    if (!selectedService) return null;
+    const tokenId =
+      selectedService.chain_configs[selectedService.home_chain]?.chain_data
+        ?.token;
+    return isValidServiceId(tokenId) ? selectedAgentNameOrFallback : null;
+  })();
 
   return (
     <ServicesContext.Provider
