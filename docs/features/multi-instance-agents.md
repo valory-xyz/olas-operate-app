@@ -106,28 +106,34 @@ After migration, the legacy keys are deleted and the migration paths never run a
 
 ## Step 3: Sidebar — Tree Structure
 
-**File:** `frontend/components/MainPage/Sidebar/Sidebar.tsx`
+**Files:** `frontend/components/MainPage/Sidebar/Sidebar.tsx`, `AgentTreeMenu.tsx`, `types.ts`
 
 ### Changes:
 
-1. **`myAgents` becomes grouped** — `Map<AgentType, { config: AgentConfig; instances: AgentInstance[] }>`
+1. **`myAgents` becomes grouped** — `Map<AgentType, SidebarAgentGroup>` where `SidebarAgentGroup = { agentType, instances[] }`. Config is looked up via `AGENT_CONFIG[agentType]` (not stored in the group).
 
-2. **Ant Design `Menu` renders as tree:**
-   - Parent items: agent type icon + display name
+2. **Custom tree components** (Ant Design Menu's animation can't be disabled, so we use custom `GroupHeader`, `InstanceRow`, `TreeLine` styled components with Ant Design `Flex`/`Text` primitives):
+   - Parent items: chevron (left) + agent type icon + display name
    - Child items: generated instance name + status indicator (running dot)
-   - Use `Menu` with `children` sub-items or `type: 'group'`
-   - Chain icon is moved to `AgentInfo` component
-   - If a group is collapsed, the running dot is shown per group, if expanded - per instance (child).
+   - Tree connector line (`TreeLine`) on the left of expanded children
+   - Chain icon moved to `AgentInfo` component (new `IconButton` styled component, consistent with info/settings buttons)
+   - If a group is collapsed, the running dot is shown per group; if expanded, per instance (child)
 
 3. **Selection key changes** from `[selectedAgentType]` to `[selectedServiceConfigId]`
 
 4. **Click handling:**
-   - Parent click: expand/collapse + select first child instance via `updateSelectedInstance(firstChild.serviceConfigId)`
-   - Child click: `updateSelectedInstance(serviceConfigId)`
+   - Parent click (`onGroupSelect`): expand/collapse + select first child instance (no navigation)
+   - Child click (`onInstanceSelect`): select instance + navigate if needed (fund page for unfunded, main for funded)
 
 5. **Remove `canAddNewAgents`** — no longer needed since users can always add another instance. Always show the "Add Agent" button.
 
-6. **Fallback selection** (the `useEffect` that validates `selectedAgentType` against `myAgents`): if selected instance not in myAgents, select first available instance (not first agent type)
+6. **Fallback selection** (`useEffect`): if selected instance not in any group, select first available instance
+
+7. **Sidebar width** updated from 256px to 300px (per Figma)
+
+8. **Scroll** — only the agent list area scrolls; header ("My agents" + auto-run toggle) and footer (Pearl Wallet, Help Center, Settings) are fixed
+
+9. **Shared util** — `getServiceInstanceName(service, displayName, evmHomeChainId)` extracted to `utils/service.ts`, used by both `ServicesProvider` and the sidebar for consistent instance naming
 
 ---
 
