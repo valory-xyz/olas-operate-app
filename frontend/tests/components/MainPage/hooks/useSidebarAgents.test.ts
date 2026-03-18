@@ -401,4 +401,37 @@ describe('useSidebarAgents', () => {
       ).toBeDefined();
     });
   });
+
+  describe('canAddNewAgents', () => {
+    it('returns true when there are archived agents regardless of available slots', () => {
+      // AVAILABLE_FOR_ADDING_AGENTS has 2 entries, both already deployed in twoServices.
+      // Without archived agents this would return false, but archived agents flip it to true.
+      defaultSetup({ archivedAgents: [AgentMap.AgentsFun] });
+      const { result } = renderHook(() => useSidebarAgents());
+      expect(result.current.canAddNewAgents).toBe(true);
+    });
+
+    it('returns true when not all available agent slots are deployed', () => {
+      // Only one service deployed; AVAILABLE_FOR_ADDING_AGENTS has 2 entries.
+      defaultSetup({
+        services: [
+          {
+            service_public_id: 'valory/memeooorr_pearl:0.1.0',
+            home_chain: 8453,
+            service_config_id: 'sc-1',
+          },
+        ],
+        archivedAgents: [],
+      });
+      const { result } = renderHook(() => useSidebarAgents());
+      expect(result.current.canAddNewAgents).toBe(true);
+    });
+
+    it('returns false when all available slots are deployed and no archived agents', () => {
+      // Both services deployed, no archived agents, AVAILABLE_FOR_ADDING_AGENTS = 2.
+      defaultSetup({ archivedAgents: [] });
+      const { result } = renderHook(() => useSidebarAgents());
+      expect(result.current.canAddNewAgents).toBe(false);
+    });
+  });
 });

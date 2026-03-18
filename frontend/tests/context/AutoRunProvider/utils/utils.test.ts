@@ -259,6 +259,28 @@ describe('getEligibleAgentTypes', () => {
     const configured = [AgentMap.PredictTrader, AgentMap.Optimus];
     expect(getEligibleAgentTypes(configured, [])).toEqual(configured);
   });
+
+  it('excludes archived agents when passed in the blocked list', () => {
+    const configured = [
+      AgentMap.PredictTrader,
+      AgentMap.AgentsFun,
+      AgentMap.Optimus,
+    ];
+    const blocked = [AgentMap.AgentsFun]; // archived
+    const result = getEligibleAgentTypes(configured, blocked);
+    expect(result).toEqual([AgentMap.PredictTrader, AgentMap.Optimus]);
+  });
+
+  it('excludes both decommissioned and archived agents', () => {
+    const configured = [
+      AgentMap.PredictTrader,
+      AgentMap.Modius,
+      AgentMap.AgentsFun,
+    ];
+    const blocked = [AgentMap.Modius, AgentMap.AgentsFun];
+    const result = getEligibleAgentTypes(configured, blocked);
+    expect(result).toEqual([AgentMap.PredictTrader]);
+  });
 });
 
 describe('getOrderedIncludedAgentTypes', () => {
