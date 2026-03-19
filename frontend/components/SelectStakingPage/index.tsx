@@ -130,9 +130,6 @@ export const SelectStakingPage = ({ mode }: SelectStakingProps) => {
     gotoPage(PAGES.Main);
   }, [gotoPage, mode, viewState]);
 
-  // do not allow going back if service is not yet created
-  const backButton = selectedService && <BackButton onPrev={handleBack} />;
-
   const isConfigurationView =
     viewState === ViewState.CONFIGURE ||
     viewState === ViewState.CONFIGURE_MANUAL;
@@ -141,6 +138,13 @@ export const SelectStakingPage = ({ mode }: SelectStakingProps) => {
     viewState === ViewState.LIST_AUTO ||
     viewState === ViewState.LIST_MANUAL ||
     viewState === ViewState.SWITCHING;
+
+  // In onboard mode list views, always show back even without a service.
+  // LIST_AUTO/LIST_MANUAL → back returns to CONFIGURE_MANUAL.
+  // SWITCHING → back exits to Main (selection already committed).
+  // In onboard mode, configure views only show back if a service already exists.
+  const backButton = (selectedService ||
+    (mode === 'onboard' && isListView)) && <BackButton onPrev={handleBack} />;
 
   return viewState === ViewState.LOADING ? (
     <Flex justify="center" align="center" className="w-full py-32">
