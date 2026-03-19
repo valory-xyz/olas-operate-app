@@ -29,12 +29,20 @@ export type ElectronStore = {
   [AgentMap.Polystrat]?: AgentSettings;
   autoRun?: {
     enabled?: boolean;
-    /** @deprecated Use `includedAgentInstances` instead. Kept for one-time migration only. */
+    /**
+     * Legacy inclusion list, keyed by AgentType.
+     * @deprecated Use `includedAgentInstances` instead.
+     */
     includedAgents?: { agentType: AgentType; order: number }[];
+    /** Instances included in auto-run rotation, keyed by serviceConfigId. */
     includedAgentInstances?: { serviceConfigId: string; order: number }[];
     isInitialized?: boolean;
-    /** @deprecated Use `userExcludedAgentInstances` instead. Kept for one-time migration only. */
+    /**
+     * Legacy exclusion list, keyed by AgentType.
+     * @deprecated Use `userExcludedAgentInstances` instead.
+     */
     userExcludedAgents?: AgentType[];
+    /** Instances explicitly excluded from auto-run by the user, keyed by serviceConfigId. */
     userExcludedAgentInstances?: string[];
   };
   lastProvidedBackupWallet?: {

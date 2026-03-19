@@ -406,7 +406,9 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
       const config = AGENT_CONFIG[agentType];
       if (!config) return [];
 
-      return services.filter((service) => isServiceOfAgent(service, config));
+      return services
+        .filter((service) => isServiceOfAgent(service, config))
+        .sort((a, b) => a.service_config_id.localeCompare(b.service_config_id));
     },
     [services],
   );

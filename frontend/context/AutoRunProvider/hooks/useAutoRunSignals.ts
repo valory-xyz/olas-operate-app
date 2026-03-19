@@ -16,6 +16,7 @@ const BALANCE_STALENESS_MS = REWARDS_POLL_SECONDS * 1000;
 type UseAutoRunSignalsParams = {
   enabled: boolean;
   runningAgentType: AgentType | null;
+  runningServiceConfigId: string | null;
   isSelectedAgentDetailsLoading: boolean;
   isEligibleForRewards: boolean | undefined;
   /** Whether the staking epoch has expired without a checkpoint being called. */
@@ -32,12 +33,13 @@ type UseAutoRunSignalsParams = {
  * long-running async loops can read fresh values without stale-closure bugs.
  *
  * Example:
- * scanner selects `polystrat` -> waits for selection/balances/rewards ->
+ * Scanner selects instance `sc-aaa` → waits for selection/balances/rewards →
  * this hook provides those waits and snapshot reads.
  */
 export const useAutoRunSignals = ({
   enabled,
   runningAgentType,
+  runningServiceConfigId,
   isSelectedAgentDetailsLoading,
   isEligibleForRewards,
   isEpochExpired,
@@ -55,6 +57,7 @@ export const useAutoRunSignals = ({
   // values even if React re-renders while a wait loop is in progress.
   const enabledRef = useRef(enabled);
   const runningAgentTypeRef = useRef(runningAgentType);
+  const runningServiceConfigIdRef = useRef(runningServiceConfigId);
   const isSelectedAgentDetailsLoadingRef = useRef(
     isSelectedAgentDetailsLoading,
   );
@@ -67,13 +70,13 @@ export const useAutoRunSignals = ({
     isBalancesAndFundingRequirementsReadyForAllServices,
   );
   const isRefetchingBalancesRef = useRef(false);
-  // Latest rewards snapshot per agent; updated by RewardProvider.
+  // Latest rewards snapshot per instance; updated by RewardProvider.
   const rewardSnapshotRef = useRef<
-    Partial<Record<AgentType, boolean | undefined>>
+    Partial<Record<string, boolean | undefined>>
   >({});
   // Track the previous rewards state to detect transitions.
   const lastRewardsEligibilityRef = useRef<
-    Partial<Record<AgentType, boolean | undefined>>
+    Partial<Record<string, boolean | undefined>>
   >({});
   // Timer + tick pair used for delayed re-scans.
   // Scheduling sets a timeout; when it fires we bump scanTick to trigger effects.
@@ -95,6 +98,9 @@ export const useAutoRunSignals = ({
     runningAgentTypeRef.current = runningAgentType;
   }, [runningAgentType]);
   useEffect(() => {
+    runningServiceConfigIdRef.current = runningServiceConfigId;
+  }, [runningServiceConfigId]);
+  useEffect(() => {
     isSelectedAgentDetailsLoadingRef.current = isSelectedAgentDetailsLoading;
   }, [isSelectedAgentDetailsLoading]);
   useEffect(() => {
@@ -112,17 +118,17 @@ export const useAutoRunSignals = ({
     selectedServiceConfigIdRef.current = selectedServiceConfigId;
   }, [selectedServiceConfigId]);
 
-  // Update rewards snapshot for the selected agent (RewardProvider is selection-driven).
-  // isEligibleForRewards=true means the agent earned rewards in the current epoch.
+  // Update rewards snapshot for the selected instance (RewardProvider is selection-driven).
+  // isEligibleForRewards=true means the instance earned rewards in the current epoch.
   // However if the epoch has already expired (clock = 0, checkpoint not yet called),
-  // that value is stale — the agent needs to run in the new epoch to trigger checkpoint.
+  // that value is stale — the instance needs to run in the new epoch to trigger checkpoint.
   // We check both conditions separately rather than modifying the business value itself.
   useEffect(() => {
-    if (!selectedAgentType) return;
+    if (!selectedServiceConfigId) return;
     const effectiveEligibility = isEpochExpired ? false : isEligibleForRewards;
-    rewardSnapshotRef.current[selectedAgentType] = effectiveEligibility;
+    rewardSnapshotRef.current[selectedServiceConfigId] = effectiveEligibility;
     setRewardsTick((value) => value + 1);
-  }, [isEligibleForRewards, isEpochExpired, selectedAgentType]);
+  }, [isEligibleForRewards, isEpochExpired, selectedServiceConfigId]);
 
   // Cleanup pending scan timer on unmount.
   useEffect(() => {
@@ -133,28 +139,23 @@ export const useAutoRunSignals = ({
     };
   }, []);
 
-  // Wait until UI selection and service config match the requested agent.
-  const waitForAgentSelection = useCallback(
-    async (agentType: AgentType, serviceConfigId?: string | null) => {
-      // Wait until sidebar selection and selected service details match the candidate.
-      // Example: scanner requested `optimus`; this blocks until UI state is actually on `optimus`.
+  // Wait until UI selection and selected service details match the requested instance.
+  // Example: scanner requested `sc-aaa`; this blocks until UI state is actually on `sc-aaa`.
+  const waitForInstanceSelection = useCallback(
+    async (serviceConfigId: string) => {
       const startedAt = Date.now();
       while (enabledRef.current) {
-        const isSelectedAgent =
+        const isSelected =
           !isSelectedAgentDetailsLoadingRef.current &&
-          selectedAgentTypeRef.current === agentType &&
-          (serviceConfigId == null ||
-            selectedServiceConfigIdRef.current === serviceConfigId);
-        if (isSelectedAgent) {
+          selectedServiceConfigIdRef.current === serviceConfigId;
+        if (isSelected) {
           return true;
         }
         if (
           Date.now() - startedAt >
           AGENT_SELECTION_WAIT_TIMEOUT_SECONDS * 1000
         ) {
-          logMessage(
-            `selection wait timeout: ${agentType}${serviceConfigId ? ` (${serviceConfigId})` : ''}`,
-          );
+          logMessage(`selection wait timeout: ${serviceConfigId}`);
           return false;
         }
         const ok = await sleepAwareDelay(2);
@@ -230,45 +231,45 @@ export const useAutoRunSignals = ({
     return false;
   }, [logMessage, refetch]);
 
-  // Wait for rewards eligibility to be populated for a given agent.
+  // Wait for rewards eligibility to be populated for a given instance.
   const waitForRewardsEligibility = useCallback(
-    async (agentType: AgentType) => {
-      // RewardProvider is selection-driven, so snapshot may be undefined briefly
-      // right after switching candidates.
+    // RewardProvider is selection-driven, so snapshot may be undefined briefly
+    // right after switching candidates.
+    async (serviceConfigId: string) => {
       const startedAt = Date.now();
       while (
-        rewardSnapshotRef.current[agentType] === undefined &&
+        rewardSnapshotRef.current[serviceConfigId] === undefined &&
         enabledRef.current
       ) {
         if (Date.now() - startedAt > REWARDS_WAIT_TIMEOUT_SECONDS * 1000) {
           logMessage(
-            `rewards eligibility timeout: ${agentType}, proceeding without it`,
+            `rewards eligibility timeout: ${serviceConfigId}, proceeding without it`,
           );
           return undefined;
         }
         const ok = await sleepAwareDelay(2);
         if (!ok) return undefined;
       }
-      const value = rewardSnapshotRef.current[agentType];
+      const value = rewardSnapshotRef.current[serviceConfigId];
       return value;
     },
     [logMessage],
   );
 
   // Reset rewards snapshot so downstream waits don't use stale values.
-  const markRewardSnapshotPending = useCallback((agentType: AgentType) => {
-    rewardSnapshotRef.current[agentType] = undefined;
+  const markRewardSnapshotPending = useCallback((serviceConfigId: string) => {
+    rewardSnapshotRef.current[serviceConfigId] = undefined;
     setRewardsTick((value) => value + 1);
   }, []);
 
   const getRewardSnapshot = useCallback(
-    (agentType: AgentType) => rewardSnapshotRef.current[agentType],
+    (serviceConfigId: string) => rewardSnapshotRef.current[serviceConfigId],
     [],
   );
 
   const setRewardSnapshot = useCallback(
-    (agentType: AgentType, value: boolean | undefined) => {
-      rewardSnapshotRef.current[agentType] = value;
+    (serviceConfigId: string, value: boolean | undefined) => {
+      rewardSnapshotRef.current[serviceConfigId] = value;
       setRewardsTick((current) => current + 1);
     },
     [],
@@ -282,20 +283,19 @@ export const useAutoRunSignals = ({
     [],
   );
 
-  // Wait until the running agent type matches the requested agent.
-  const waitForRunningAgent = useCallback(
-    async (agentType: AgentType, timeoutSeconds: number) => {
-      // Confirm backend-reported running agent switches to the requested one.
+  // Wait until the running service config ID matches the requested one.
+  const waitForRunningInstance = useCallback(
+    async (serviceConfigId: string, timeoutSeconds: number) => {
       const startedAt = Date.now();
       while (
         enabledRef.current &&
         Date.now() - startedAt < timeoutSeconds * 1000
       ) {
-        if (runningAgentTypeRef.current === agentType) return true;
+        if (runningServiceConfigIdRef.current === serviceConfigId) return true;
         const ok = await sleepAwareDelay(5);
         if (!ok) return false;
       }
-      if (enabledRef.current) logMessage(`running timeout: ${agentType}`);
+      if (enabledRef.current) logMessage(`running timeout: ${serviceConfigId}`);
       return false;
     },
     [logMessage],
@@ -322,16 +322,17 @@ export const useAutoRunSignals = ({
   return {
     enabledRef,
     runningAgentTypeRef,
+    runningServiceConfigIdRef,
     rewardSnapshotRef,
     lastRewardsEligibilityRef,
     scanTick,
     rewardsTick,
     scheduleNextScan,
     hasScheduledScan,
-    waitForAgentSelection,
+    waitForInstanceSelection,
     waitForBalancesReady,
     waitForRewardsEligibility,
-    waitForRunningAgent,
+    waitForRunningInstance,
     markRewardSnapshotPending,
     getRewardSnapshot,
     setRewardSnapshot,

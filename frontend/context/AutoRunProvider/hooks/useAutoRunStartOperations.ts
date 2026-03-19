@@ -18,7 +18,7 @@ import {
   formatEligibilityReason,
   normalizeEligibility as normalizeEligibilityHelper,
 } from '../utils/autoRunHelpers';
-import { notifyStartFailed } from '../utils/utils';
+import { getInstanceDisplayNames, notifyStartFailed } from '../utils/utils';
 
 const ELIGIBILITY_WAIT_TIMEOUT_MS = AGENT_SELECTION_WAIT_TIMEOUT_SECONDS * 1000;
 
@@ -30,9 +30,9 @@ type Eligibility = {
 
 type UseAutoRunStartOperationsParams = {
   enabledRef: MutableRefObject<boolean>;
-  runningAgentTypeRef: MutableRefObject<AgentType | null>;
+  runningServiceConfigIdRef: MutableRefObject<string | null>;
   configuredAgents: AgentMeta[];
-  updateAgentType: (agentType: AgentType) => void;
+  updateSelectedServiceConfigId: (serviceConfigId: string) => void;
   getSelectedEligibility: () => Eligibility;
   createSafeIfNeeded: (meta: AgentMeta) => Promise<void>;
   startService: (params: {
@@ -42,22 +42,19 @@ type UseAutoRunStartOperationsParams = {
     stakingProgramId: AgentMeta['stakingProgramId'];
     createSafeIfNeeded: () => Promise<void>;
   }) => Promise<unknown>;
-  waitForAgentSelection: (
-    agentType: AgentType,
-    serviceConfigId?: string | null,
-  ) => Promise<boolean>;
+  waitForInstanceSelection: (serviceConfigId: string) => Promise<boolean>;
   waitForBalancesReady: () => Promise<boolean>;
-  waitForRunningAgent: (
-    agentType: AgentType,
+  waitForRunningInstance: (
+    serviceConfigId: string,
     timeoutSeconds: number,
   ) => Promise<boolean>;
   getBalancesStatus: () => { ready: boolean; loading: boolean };
   notifySkipOnce: (
-    agentType: AgentType,
+    serviceConfigId: string,
     reason?: string,
     isLoadingReason?: boolean,
   ) => void;
-  onAutoRunAgentStarted?: (agentType: AgentType) => void;
+  onAutoRunInstanceStarted?: (serviceConfigId: string) => void;
   onAutoRunStartStateChange?: (isStarting: boolean) => void;
   showNotification?: (title: string, body?: string) => void;
   recordMetric: (metric: AutoRunHealthMetricNoRotation) => void;
@@ -67,18 +64,18 @@ type UseAutoRunStartOperationsParams = {
 
 export const useAutoRunStartOperations = ({
   enabledRef,
-  runningAgentTypeRef,
+  runningServiceConfigIdRef,
   configuredAgents,
-  updateAgentType,
+  updateSelectedServiceConfigId,
   getSelectedEligibility,
   createSafeIfNeeded,
   startService,
-  waitForAgentSelection,
+  waitForInstanceSelection,
   waitForBalancesReady,
-  waitForRunningAgent,
+  waitForRunningInstance,
   getBalancesStatus,
   notifySkipOnce,
-  onAutoRunAgentStarted,
+  onAutoRunInstanceStarted,
   onAutoRunStartStateChange,
   showNotification,
   recordMetric,
@@ -116,15 +113,15 @@ export const useAutoRunStartOperations = ({
   ]);
 
   const startAgentWithRetries = useCallback(
-    async (agentType: AgentType): Promise<AutoRunStartResult> => {
+    async (serviceConfigId: string): Promise<AutoRunStartResult> => {
       if (!enabledRef.current) {
         return { status: AUTO_RUN_START_STATUS.ABORTED };
       }
       const meta = configuredAgents.find(
-        (agent) => agent.agentType === agentType,
+        (agent) => agent.serviceConfigId === serviceConfigId,
       );
       if (!meta) {
-        logMessage(`start: ${agentType} not configured`);
+        logMessage(`start: ${serviceConfigId} not configured`);
         return {
           status: AUTO_RUN_START_STATUS.AGENT_BLOCKED,
           reason: 'Not configured',
@@ -132,16 +129,13 @@ export const useAutoRunStartOperations = ({
       }
 
       startOperationSeqRef.current += 1;
-      const opId = `start-${startOperationSeqRef.current}-${agentType}`;
+      const opId = `start-${startOperationSeqRef.current}-${serviceConfigId}`;
       logVerbose(
-        `op=${opId} phase=start_prepare agent=${agentType} service=${meta.serviceConfigId}`,
+        `op=${opId} phase=start_prepare service=${meta.serviceConfigId} agent=${meta.agentType}`,
       );
 
-      updateAgentType(agentType);
-      const selectionReady = await waitForAgentSelection(
-        agentType,
-        meta.serviceConfigId,
-      );
+      updateSelectedServiceConfigId(serviceConfigId);
+      const selectionReady = await waitForInstanceSelection(serviceConfigId);
       if (!selectionReady) {
         return { status: AUTO_RUN_START_STATUS.ABORTED };
       }
@@ -161,7 +155,7 @@ export const useAutoRunStartOperations = ({
         const reason = formatEligibilityReason(eligibility);
         const isLoadingReason =
           eligibility.reason === ELIGIBILITY_REASON.LOADING;
-        notifySkipOnce(agentType, reason, isLoadingReason);
+        notifySkipOnce(serviceConfigId, reason, isLoadingReason);
         return { status: AUTO_RUN_START_STATUS.AGENT_BLOCKED, reason };
       }
 
@@ -176,20 +170,20 @@ export const useAutoRunStartOperations = ({
           if (!enabledRef.current) {
             return { status: AUTO_RUN_START_STATUS.ABORTED };
           }
-          if (runningAgentTypeRef.current === agentType) {
+          if (runningServiceConfigIdRef.current === serviceConfigId) {
             logVerbose(
-              `op=${opId} phase=start_confirm status=already_running agent=${agentType} service=${meta.serviceConfigId}`,
+              `op=${opId} phase=start_confirm status=already_running service=${meta.serviceConfigId}`,
             );
-            onAutoRunAgentStarted?.(agentType);
+            onAutoRunInstanceStarted?.(serviceConfigId);
             return { status: AUTO_RUN_START_STATUS.STARTED };
           }
           try {
             logVerbose(
-              `op=${opId} phase=start_request status=begin attempt=${attempt + 1} agent=${agentType} service=${meta.serviceConfigId}`,
+              `op=${opId} phase=start_request status=begin attempt=${attempt + 1} service=${meta.serviceConfigId}`,
             );
             await withTimeout(
               startService({
-                agentType,
+                agentType: meta.agentType,
                 agentConfig: meta.agentConfig,
                 service: meta.service,
                 stakingProgramId: meta.stakingProgramId,
@@ -198,35 +192,35 @@ export const useAutoRunStartOperations = ({
               START_TIMEOUT_SECONDS * 1000,
               () =>
                 new Error(
-                  `start operation for ${agentType} timed out after ${START_TIMEOUT_SECONDS}s`,
+                  `start operation for ${serviceConfigId} timed out after ${START_TIMEOUT_SECONDS}s`,
                 ),
             );
             logVerbose(
-              `op=${opId} phase=start_request status=ok attempt=${attempt + 1} agent=${agentType} service=${meta.serviceConfigId}`,
+              `op=${opId} phase=start_request status=ok attempt=${attempt + 1} service=${meta.serviceConfigId}`,
             );
 
-            const deployed = await waitForRunningAgent(
-              agentType,
+            const deployed = await waitForRunningInstance(
+              serviceConfigId,
               START_TIMEOUT_SECONDS,
             );
             if (deployed) {
               logVerbose(
-                `op=${opId} phase=start_confirm status=ok attempt=${attempt + 1} agent=${agentType} service=${meta.serviceConfigId}`,
+                `op=${opId} phase=start_confirm status=ok attempt=${attempt + 1} service=${meta.serviceConfigId}`,
               );
-              onAutoRunAgentStarted?.(agentType);
+              onAutoRunInstanceStarted?.(serviceConfigId);
               return { status: AUTO_RUN_START_STATUS.STARTED };
             }
 
             lastInfraError = 'running timeout';
             recordMetric(AUTO_RUN_HEALTH_METRIC.START_ERRORS);
             logMessage(
-              `op=${opId} phase=start_confirm status=timeout attempt=${attempt + 1} agent=${agentType} service=${meta.serviceConfigId}`,
+              `op=${opId} phase=start_confirm status=timeout attempt=${attempt + 1} service=${meta.serviceConfigId}`,
             );
           } catch (error) {
             lastInfraError = `${error}`;
             recordMetric(AUTO_RUN_HEALTH_METRIC.START_ERRORS);
             logMessage(
-              `op=${opId} phase=start_request status=error attempt=${attempt + 1} agent=${agentType} service=${meta.serviceConfigId} error=${error}`,
+              `op=${opId} phase=start_request status=error attempt=${attempt + 1} service=${meta.serviceConfigId} error=${error}`,
             );
           }
 
@@ -236,7 +230,7 @@ export const useAutoRunStartOperations = ({
               return { status: AUTO_RUN_START_STATUS.ABORTED };
             }
             logMessage(
-              `op=${opId} phase=start_retry status=interrupted agent=${agentType} service=${meta.serviceConfigId}`,
+              `op=${opId} phase=start_retry status=interrupted service=${meta.serviceConfigId}`,
             );
             return {
               status: AUTO_RUN_START_STATUS.INFRA_FAILED,
@@ -248,9 +242,13 @@ export const useAutoRunStartOperations = ({
         onAutoRunStartStateChange?.(false);
       }
 
-      notifyStartFailed(showNotification, meta.agentConfig.displayName);
+      const { agentName, instanceName } = getInstanceDisplayNames(
+        serviceConfigId,
+        configuredAgents,
+      );
+      notifyStartFailed(showNotification, agentName, instanceName);
       logMessage(
-        `op=${opId} phase=start_final status=failed agent=${agentType} service=${meta.serviceConfigId} reason=${lastInfraError}`,
+        `op=${opId} phase=start_final status=failed service=${meta.serviceConfigId} reason=${lastInfraError}`,
       );
       return {
         status: AUTO_RUN_START_STATUS.INFRA_FAILED,
@@ -259,10 +257,10 @@ export const useAutoRunStartOperations = ({
     },
     [
       enabledRef,
-      runningAgentTypeRef,
+      runningServiceConfigIdRef,
       configuredAgents,
-      updateAgentType,
-      waitForAgentSelection,
+      updateSelectedServiceConfigId,
+      waitForInstanceSelection,
       waitForBalancesReady,
       waitForEligibilityReady,
       normalizeEligibility,
@@ -272,8 +270,8 @@ export const useAutoRunStartOperations = ({
       logVerbose,
       startService,
       createSafeIfNeeded,
-      waitForRunningAgent,
-      onAutoRunAgentStarted,
+      waitForRunningInstance,
+      onAutoRunInstanceStarted,
       onAutoRunStartStateChange,
       recordMetric,
       showNotification,

@@ -3,30 +3,46 @@ import { isEmpty, sortBy } from 'lodash';
 import { ACTIVE_AGENTS, AGENT_CONFIG } from '@/config/agents';
 import { AgentType } from '@/constants';
 import { Service } from '@/types';
+import { getServiceInstanceName } from '@/utils/service';
 
-import { AgentMeta, IncludedAgent } from '../types';
+import { AgentMeta, IncludedAgentInstance } from '../types';
 
 /**
- * Desktop notification informing the user that an agent was skipped
+ * Desktop notification informing the user that an instance was skipped
  * during an auto-run scan cycle (e.g. due to low balance, eviction, etc.).
+ *
+ * @example notifySkipped(show, "Polystrat", "corzim-vardor96", "Low balance")
+ * // → title: 'Polystrat agent "corzim-vardor96" was skipped'
+ * // → body:  'Low balance'
  */
 export const notifySkipped = (
   showNotification: ((title: string, body?: string) => void) | undefined,
-  agentName: string,
+  agentDisplayName: string,
+  instanceName: string,
   reason?: string,
 ) => {
-  showNotification?.(`Agent ${agentName} was skipped`, reason);
+  showNotification?.(
+    `${agentDisplayName} agent "${instanceName}" was skipped`,
+    reason,
+  );
 };
 
 /**
- * Desktop notification when all start retries for an agent have been
+ * Desktop notification when all start retries for an instance have been
  * exhausted and the rotation loop is moving on to the next candidate.
+ *
+ * @example notifyStartFailed(show, "Optimus", "nekfam-nushim36")
+ * // → title: 'Failed to start Optimus agent "nekfam-nushim36"'
  */
 export const notifyStartFailed = (
   showNotification: ((title: string, body?: string) => void) | undefined,
-  agentName: string,
+  agentDisplayName: string,
+  instanceName: string,
 ) => {
-  showNotification?.(`Failed to start ${agentName}`, 'Moving to next agent.');
+  showNotification?.(
+    `Failed to start ${agentDisplayName} agent "${instanceName}"`,
+    'Moving to next agent.',
+  );
 };
 
 /**
@@ -44,67 +60,71 @@ export const getAgentFromService = (service: Service) => {
 };
 
 /**
- * Filters `includedAgents` to only those present in `allowedAgents`, then
+ * Filters `includedInstances` to only those present in `allowedInstances`, then
  * sorts the result by the `order` field (ascending). Used to produce the
  * deterministic rotation sequence for auto-run.
  */
-export const sortIncludedAgents = (
-  includedAgents: IncludedAgent[],
-  allowedAgents: AgentType[],
+export const sortIncludedInstances = (
+  includedInstances: IncludedAgentInstance[],
+  allowedInstances: string[],
 ) => {
-  if (isEmpty(includedAgents)) return [];
-  const allowed = new Set(allowedAgents);
+  if (isEmpty(includedInstances)) return [];
+  const allowed = new Set(allowedInstances);
   return sortBy(
-    includedAgents.filter((agent) => allowed.has(agent.agentType)),
+    includedInstances.filter((instance) =>
+      allowed.has(instance.serviceConfigId),
+    ),
     (item) => item.order,
   );
 };
 
 /**
- * Appends new agent types to the end of an existing `IncludedAgent[]` list by
- * assigning them order values that continue after the current maximum. Used
- * when newly onboarded agents are auto-added to the rotation.
+ * Appends new instances to the end of an existing list by
+ * assigning them order values that continue after the current maximum.
+ * Used when newly onboarded instances are auto-added to the rotation.
  *
  * @example
- * - existing=[{order:0},{order:2}], newAgents=['optimus']
- * - [...existing, {agentType:'optimus', order:3}]
+ * - existing=[{serviceConfigId:'sc-aaa',order:0},{serviceConfigId:'sc-bbb',order:2}]
+ * - newInstances=['sc-ccc']
+ * - result=[...existing, {serviceConfigId:'sc-ccc', order:3}]
  */
-export const appendNewAgents = (
-  existing: IncludedAgent[],
-  newAgents: AgentType[],
+export const appendNewInstances = (
+  existing: IncludedAgentInstance[],
+  newInstances: string[],
 ) => {
   const maxOrder =
     existing.length > 0 ? Math.max(...existing.map((item) => item.order)) : -1;
-  const appended = newAgents.map((agentType, index) => ({
-    agentType,
+  const appended = newInstances.map((serviceConfigId, index) => ({
+    serviceConfigId,
     order: maxOrder + index + 1,
   }));
   return [...existing, ...appended];
 };
 
 /**
- * Deduplicates and re-sequences the `order` values in an `IncludedAgent[]`
- * list. Sorting is done first so the first occurrence of a duplicate agent
- * type is kept.
+ * Deduplicates and re-sequences the `order` values in an `IncludedAgentInstance[]`
+ * list. Sorting is done first so the first occurrence of a duplicate is kept.
  *
  * @example
- * - [{agentType:'a',order:0},{agentType:'b',order:5},{agentType:'a',order:7}]
- * - [{agentType:'a',order:0},{agentType:'b',order:1}]  (duplicate 'a' removed, orders compacted)
+ * - [{serviceConfigId:'sc-aaa',order:0},{serviceConfigId:'sc-bbb',order:5},{serviceConfigId:'sc-aaa',order:7}]
+ * - result: [{serviceConfigId:'sc-aaa',order:0},{serviceConfigId:'sc-bbb',order:1}]  (duplicate removed, orders compacted)
  */
-export const normalizeIncludedAgents = (includedAgents: IncludedAgent[]) => {
-  if (isEmpty(includedAgents)) return [];
-  const sorted = sortBy(includedAgents, (item) => item.order);
-  const seen = new Set<AgentType>();
-  const unique: IncludedAgent[] = [];
+export const normalizeIncludedInstances = (
+  includedInstances: IncludedAgentInstance[],
+) => {
+  if (isEmpty(includedInstances)) return [];
+  const sorted = sortBy(includedInstances, (item) => item.order);
+  const seen = new Set<string>();
+  const unique: IncludedAgentInstance[] = [];
 
   for (const item of sorted) {
-    if (seen.has(item.agentType)) continue;
-    seen.add(item.agentType);
+    if (seen.has(item.serviceConfigId)) continue;
+    seen.add(item.serviceConfigId);
     unique.push(item);
   }
 
   return unique.map((item, index) => ({
-    agentType: item.agentType,
+    serviceConfigId: item.serviceConfigId,
     order: index,
   }));
 };
@@ -113,44 +133,63 @@ export const getAgentDisplayName = (agentType: AgentType) =>
   AGENT_CONFIG[agentType]?.displayName ?? agentType;
 
 /**
- * Returns the agent types from `configuredAgents` that are no longer available
- * for deployment. These agents are excluded from the auto-run rotation
- * and from the `includedAgents` list.
+ * Returns `{ agentName, instanceName }` for notification messages.
  */
-export const getDecommissionedAgentTypes = (configuredAgents: AgentMeta[]) =>
+export const getInstanceDisplayNames = (
+  serviceConfigId: string,
+  configuredAgents: AgentMeta[],
+): { agentName: string; instanceName: string } => {
+  const meta = configuredAgents.find(
+    (agent) => agent.serviceConfigId === serviceConfigId,
+  );
+  if (!meta)
+    return { agentName: serviceConfigId, instanceName: serviceConfigId };
+
+  const instanceName = getServiceInstanceName(
+    meta.service,
+    meta.agentConfig.displayName,
+    meta.agentConfig.evmHomeChainId,
+  );
+
+  return { agentName: meta.agentConfig.displayName, instanceName };
+};
+
+/**
+ * Returns the service config IDs from `configuredAgents` that are no longer
+ * available for deployment.
+ */
+export const getDecommissionedInstances = (configuredAgents: AgentMeta[]) =>
   configuredAgents
     .filter(
       (agent) =>
         agent.agentConfig.isUnderConstruction ||
         agent.agentConfig.isAgentEnabled === false,
     )
-    .map((agent) => agent.agentType);
+    .map((agent) => agent.serviceConfigId);
 
-export const getEligibleAgentTypes = (
-  configuredAgentTypes: AgentType[],
-  decommissionedAgentTypes: AgentType[],
+export const getEligibleInstances = (
+  configuredInstances: string[],
+  decommissionedInstances: string[],
 ) => {
-  if (configuredAgentTypes.length === 0) return [];
-  const blocked = new Set(decommissionedAgentTypes);
-  return configuredAgentTypes.filter((agentType) => !blocked.has(agentType));
+  if (configuredInstances.length === 0) return [];
+  const blocked = new Set(decommissionedInstances);
+  return configuredInstances.filter((id) => !blocked.has(id));
 };
 
-export const getOrderedIncludedAgentTypes = (
-  includedAgentsSorted: { agentType: AgentType }[],
-  eligibleAgentTypes: AgentType[],
+export const getOrderedIncludedInstances = (
+  includedInstancesSorted: { serviceConfigId: string }[],
+  eligibleInstances: string[],
 ) => {
-  if (includedAgentsSorted.length > 0) {
-    return includedAgentsSorted.map((agent) => agent.agentType);
+  if (includedInstancesSorted.length > 0) {
+    return includedInstancesSorted.map((inst) => inst.serviceConfigId);
   }
-  return eligibleAgentTypes;
+  return eligibleInstances;
 };
 
-export const getExcludedAgentTypes = (
-  configuredAgentTypes: AgentType[],
-  orderedIncludedAgentTypes: AgentType[],
+export const getExcludedInstances = (
+  configuredInstances: string[],
+  orderedIncludedInstances: string[],
 ) => {
-  const includedSet = new Set(orderedIncludedAgentTypes);
-  return configuredAgentTypes.filter(
-    (agentType) => !includedSet.has(agentType),
-  );
+  const includedSet = new Set(orderedIncludedInstances);
+  return configuredInstances.filter((id) => !includedSet.has(id));
 };
