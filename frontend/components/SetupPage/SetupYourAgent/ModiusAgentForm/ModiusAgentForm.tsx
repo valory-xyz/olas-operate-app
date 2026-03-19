@@ -46,7 +46,8 @@ export const ModiusAgentFormContent = ({
   const [form] = Form.useForm<ModiusFieldValues>();
   const { goto } = useSetup();
   const { defaultStakingProgramId } = useStakingProgram();
-  const { refetch: refetchServices, updateSelectedInstance } = useServices();
+  const { refetch: refetchServices, updateSelectedServiceConfigId } =
+    useServices();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const {
@@ -105,7 +106,7 @@ export const ModiusAgentFormContent = ({
 
         // Refetch so the new service is in the list, then select it
         await refetchServices?.();
-        updateSelectedInstance(newService.service_config_id);
+        updateSelectedServiceConfigId(newService.service_config_id);
 
         message.success('Agent setup complete');
 
@@ -124,7 +125,7 @@ export const ModiusAgentFormContent = ({
       serviceTemplate,
       validateForm,
       updateSubmitButtonText,
-      updateSelectedInstance,
+      updateSelectedServiceConfigId,
       refetchServices,
       goto,
     ],

@@ -37,7 +37,8 @@ export const PredictAgentFormContent = ({
   const [form] = Form.useForm<PredictFieldValues>();
   const { goto } = useSetup();
   const { defaultStakingProgramId } = useStakingProgram();
-  const { refetch: refetchServices, updateSelectedInstance } = useServices();
+  const { refetch: refetchServices, updateSelectedServiceConfigId } =
+    useServices();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -79,7 +80,7 @@ export const PredictAgentFormContent = ({
 
         // Refetch so the new service is in the list, then select it
         await refetchServices?.();
-        updateSelectedInstance(newService.service_config_id);
+        updateSelectedServiceConfigId(newService.service_config_id);
 
         message.success('Agent setup complete');
 
@@ -95,7 +96,7 @@ export const PredictAgentFormContent = ({
       serviceTemplate,
       validateForm,
       updateSubmitButtonText,
-      updateSelectedInstance,
+      updateSelectedServiceConfigId,
       refetchServices,
       goto,
     ],
