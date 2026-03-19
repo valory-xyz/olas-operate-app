@@ -1,14 +1,13 @@
 import { Flex, Typography } from 'antd';
-import Image from 'next/image';
 import { useCallback, useEffect, useState } from 'react';
 import { RiArrowDownSLine, RiArrowRightSLine } from 'react-icons/ri';
 import styled from 'styled-components';
 
-import { AGENT_CONFIG } from '@/config/agents';
+import { AgentGroupHeader, TreeLine } from '@/components/ui/AgentTree';
 import { COLOR } from '@/constants';
 
 import { PulseDot } from './PulseDot';
-import { SidebarAgentGroup, SidebarInstance } from './types';
+import { SidebarAgentGroup } from './types';
 
 const { Text } = Typography;
 
@@ -30,24 +29,7 @@ const GroupHeader = styled(Flex)`
   }
 `;
 
-const TreeLine = styled.div`
-  width: 16px;
-  flex-shrink: 0;
-  position: relative;
-
-  &::after {
-    content: '';
-    position: absolute;
-    left: 50%;
-    top: 0;
-    bottom: 0;
-    width: 1.5px;
-    background: ${COLOR.GRAY_4};
-    border-radius: 1px;
-  }
-`;
-
-const InstanceRow = styled(Flex)<{ $isSelected: boolean }>`
+const ClickableInstanceRow = styled(Flex)<{ $isSelected: boolean }>`
   cursor: pointer;
   padding: 6px 12px;
   border-radius: 6px;
@@ -59,46 +41,6 @@ const InstanceRow = styled(Flex)<{ $isSelected: boolean }>`
     background: ${COLOR.GRAY_1};
   }
 `;
-
-type ExpandedInstancesProps = {
-  instances: SidebarInstance[];
-  selectedServiceConfigId: string | null;
-  runningServiceConfigIds: Set<string>;
-  onInstanceSelect: (serviceConfigId: string) => void;
-};
-
-const ExpandedInstances = ({
-  instances,
-  selectedServiceConfigId,
-  runningServiceConfigIds,
-  onInstanceSelect,
-}: ExpandedInstancesProps) => (
-  <Flex style={{ padding: '4px 8px' }} gap={10}>
-    <TreeLine />
-    <Flex vertical style={{ flex: 1, minWidth: 0 }}>
-      {instances.map((instance) => {
-        const isSelected = instance.serviceConfigId === selectedServiceConfigId;
-        const isRunning = runningServiceConfigIds.has(instance.serviceConfigId);
-
-        return (
-          <InstanceRow
-            key={instance.serviceConfigId}
-            $isSelected={isSelected}
-            align="center"
-            justify="space-between"
-            gap={8}
-            onClick={() => onInstanceSelect(instance.serviceConfigId)}
-          >
-            <Text ellipsis style={{ fontSize: 14, lineHeight: '20px' }}>
-              {instance.name}
-            </Text>
-            {isRunning && <PulseDot />}
-          </InstanceRow>
-        );
-      })}
-    </Flex>
-  </Flex>
-);
 
 export const AgentTreeMenu = ({
   groups,
@@ -148,7 +90,6 @@ export const AgentTreeMenu = ({
   return (
     <Flex vertical>
       {groups.map((group) => {
-        const config = AGENT_CONFIG[group.agentType];
         const isExpanded = expandedGroups.has(group.agentType);
         const hasRunningInstance = group.instances.some((i) =>
           runningServiceConfigIds.has(i.serviceConfigId),
@@ -166,32 +107,45 @@ export const AgentTreeMenu = ({
               ) : (
                 <RiArrowRightSLine size={16} color={COLOR.TEXT_LIGHT} />
               )}
-              <Image
-                src={`/agent-${group.agentType}-icon.png`}
-                alt={config.displayName}
-                width={28}
-                height={28}
-                style={{ borderRadius: 5.25 }}
-              />
-              <Flex
-                justify="space-between"
-                align="center"
-                style={{ flex: 1, minWidth: 0 }}
-              >
-                <Text ellipsis style={{ fontSize: 14, lineHeight: '20px' }}>
-                  {config.displayName}
-                </Text>
+              <AgentGroupHeader agentType={group.agentType}>
                 {!isExpanded && hasRunningInstance && <PulseDot />}
-              </Flex>
+              </AgentGroupHeader>
             </GroupHeader>
 
             {isExpanded && (
-              <ExpandedInstances
-                instances={group.instances}
-                selectedServiceConfigId={selectedServiceConfigId}
-                runningServiceConfigIds={runningServiceConfigIds}
-                onInstanceSelect={onInstanceSelect}
-              />
+              <Flex style={{ padding: '4px 8px' }} gap={10}>
+                <TreeLine />
+                <Flex vertical style={{ flex: 1, minWidth: 0 }}>
+                  {group.instances.map((instance) => {
+                    const isSelected =
+                      instance.serviceConfigId === selectedServiceConfigId;
+                    const isRunning = runningServiceConfigIds.has(
+                      instance.serviceConfigId,
+                    );
+
+                    return (
+                      <ClickableInstanceRow
+                        key={instance.serviceConfigId}
+                        $isSelected={isSelected}
+                        align="center"
+                        justify="space-between"
+                        gap={8}
+                        onClick={() =>
+                          onInstanceSelect(instance.serviceConfigId)
+                        }
+                      >
+                        <Text
+                          ellipsis
+                          style={{ fontSize: 14, lineHeight: '20px' }}
+                        >
+                          {instance.name}
+                        </Text>
+                        {isRunning && <PulseDot />}
+                      </ClickableInstanceRow>
+                    );
+                  })}
+                </Flex>
+              </Flex>
             )}
           </div>
         );
