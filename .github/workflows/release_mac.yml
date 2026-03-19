@@ -61,7 +61,9 @@ jobs:
             poetry-${{ env.OS_ARCH }}-
 
       - name: Install dependencies
-        run: poetry install
+        run: |
+          export SDKROOT=$(xcrun --show-sdk-path)
+          poetry install
 
       - name: Build with PyInstaller
         run: |
