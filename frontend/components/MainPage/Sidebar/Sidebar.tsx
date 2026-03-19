@@ -31,12 +31,13 @@ import {
 import {
   useAgentRunning,
   useBalanceAndRefillRequirementsContext,
+  useIsInitiallyFunded,
   useMasterWalletContext,
   usePageState,
   useServices,
   useSetup,
 } from '@/hooks';
-import { asEvmChainId, getServiceInstanceName } from '@/utils';
+import { getServiceInstanceName } from '@/utils';
 
 import { BackupSeedPhraseAlert } from '../BackupSeedPhraseAlert';
 import { UpdateAvailableAlert } from '../UpdateAvailableAlert/UpdateAvailableAlert';
@@ -138,10 +139,10 @@ export const Sidebar = () => {
     isLoading,
     selectedServiceConfigId,
     updateSelectedInstance,
+    getAgentTypeFromService,
   } = useServices();
   const { runningServiceConfigId } = useAgentRunning();
-  const { masterSafes, isLoading: isMasterWalletLoading } =
-    useMasterWalletContext();
+  const { isLoading: isMasterWalletLoading } = useMasterWalletContext();
 
   const [fade, setFade] = useState({ top: false, bottom: false });
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -199,6 +200,13 @@ export const Sidebar = () => {
       });
     }
 
+    // Sort instances within each group by service config ID (lexicographic)
+    for (const group of groupMap.values()) {
+      group.instances.sort((a, b) =>
+        a.serviceConfigId.localeCompare(b.serviceConfigId),
+      );
+    }
+
     return Array.from(groupMap.values());
   }, [services]);
 
@@ -228,28 +236,30 @@ export const Sidebar = () => {
     }
   }, [agentGroups, selectedServiceConfigId, services, updateSelectedInstance]);
 
+  const { isInstanceInitiallyFunded } = useIsInitiallyFunded();
+
   const handleInstanceSelect = useCallback(
     (serviceConfigId: string) => {
       updateSelectedInstance(serviceConfigId);
 
-      const service = services?.find(
-        (service) => service.service_config_id === serviceConfigId,
-      );
-      if (!service) return;
-
-      const chainId = asEvmChainId(service.home_chain);
-      const isSafeCreated = masterSafes?.some(
-        (safe) => safe.evmChainId === chainId,
-      );
-
-      if (isSafeCreated) {
-        gotoPage(PAGES.Main);
-      } else {
+      const agentType = getAgentTypeFromService(serviceConfigId);
+      if (
+        !agentType ||
+        !isInstanceInitiallyFunded(serviceConfigId, agentType)
+      ) {
         gotoPage(PAGES.Setup);
         gotoSetup(SETUP_SCREEN.FundYourAgent);
+      } else {
+        gotoPage(PAGES.Main);
       }
     },
-    [updateSelectedInstance, services, masterSafes, gotoPage, gotoSetup],
+    [
+      updateSelectedInstance,
+      gotoPage,
+      gotoSetup,
+      getAgentTypeFromService,
+      isInstanceInitiallyFunded,
+    ],
   );
 
   const handleBottomMenuClick = useCallback<NonNullable<MenuProps['onClick']>>(
