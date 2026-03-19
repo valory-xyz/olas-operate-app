@@ -91,7 +91,7 @@ const GeoLocationRestrictionCouldNotLoad = () => (
 export const AgentOnboarding = () => {
   const { goto } = useSetup();
   const { goto: gotoPage } = usePageState();
-  const { services, selectAgentTypeForSetup, updateSelectedInstance } =
+  const { services, selectAgentTypeForSetup, updateSelectedServiceConfigId } =
     useServices();
   const [selectedAgent, setSelectedAgent] = useState<Optional<AgentType>>();
 
@@ -114,7 +114,7 @@ export const AgentOnboarding = () => {
     if (services) {
       const undeployed = findUndeployedInstance(selectedAgent, services);
       if (undeployed) {
-        updateSelectedInstance(undeployed.service_config_id);
+        updateSelectedServiceConfigId(undeployed.service_config_id);
         gotoPage(PAGES.Main);
         return;
       }
@@ -133,7 +133,7 @@ export const AgentOnboarding = () => {
     } else {
       goto(SETUP_SCREEN.SelectStaking);
     }
-  }, [goto, gotoPage, selectedAgent, services, updateSelectedInstance]);
+  }, [goto, gotoPage, selectedAgent, services, updateSelectedServiceConfigId]);
 
   const handleSelectYourAgent = useCallback(
     (agentType: AgentType) => {

@@ -138,7 +138,7 @@ export const Sidebar = () => {
     services,
     isLoading,
     selectedServiceConfigId,
-    updateSelectedInstance,
+    updateSelectedServiceConfigId,
     getAgentTypeFromService,
   } = useServices();
   const { runningServiceConfigId } = useAgentRunning();
@@ -232,15 +232,20 @@ export const Sidebar = () => {
 
     const firstInstance = agentGroups[0]?.instances[0];
     if (firstInstance) {
-      updateSelectedInstance(firstInstance.serviceConfigId);
+      updateSelectedServiceConfigId(firstInstance.serviceConfigId);
     }
-  }, [agentGroups, selectedServiceConfigId, services, updateSelectedInstance]);
+  }, [
+    agentGroups,
+    selectedServiceConfigId,
+    services,
+    updateSelectedServiceConfigId,
+  ]);
 
   const { isInstanceInitiallyFunded } = useIsInitiallyFunded();
 
   const handleInstanceSelect = useCallback(
     (serviceConfigId: string) => {
-      updateSelectedInstance(serviceConfigId);
+      updateSelectedServiceConfigId(serviceConfigId);
 
       const agentType = getAgentTypeFromService(serviceConfigId);
       if (
@@ -254,7 +259,7 @@ export const Sidebar = () => {
       }
     },
     [
-      updateSelectedInstance,
+      updateSelectedServiceConfigId,
       gotoPage,
       gotoSetup,
       getAgentTypeFromService,
@@ -310,7 +315,7 @@ export const Sidebar = () => {
                   groups={agentGroups}
                   selectedServiceConfigId={selectedServiceConfigId}
                   runningServiceConfigIds={runningServiceConfigIds}
-                  onGroupSelect={updateSelectedInstance}
+                  onGroupSelect={updateSelectedServiceConfigId}
                   onInstanceSelect={handleInstanceSelect}
                 />
               ) : null}

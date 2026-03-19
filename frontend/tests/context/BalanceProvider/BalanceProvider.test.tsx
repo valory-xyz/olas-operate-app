@@ -121,7 +121,7 @@ const createWrapper = (options: WrapperOptions = {}) => {
               deploymentDetails: undefined,
               updateAgentType: jest.fn(),
               selectAgentTypeForSetup: jest.fn(),
-              updateSelectedInstance: jest.fn(),
+              updateSelectedServiceConfigId: jest.fn(),
               overrideSelectedServiceStatus: jest.fn(),
               paused: false,
               setPaused: jest.fn(),

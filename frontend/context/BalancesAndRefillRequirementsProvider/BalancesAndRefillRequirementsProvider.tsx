@@ -347,10 +347,10 @@ export const BalancesAndRefillRequirementsProvider = ({
         // Check if initial funding is done for this service instance
         // and only then consider refill requirement
         const stored = storeState?.[agentType]?.isInitialFunded;
-        const isFunded =
+        const isInitiallyFunded =
           typeof stored === 'object' && !!stored?.[serviceConfigId];
 
-        return data.is_refill_required && isFunded;
+        return data.is_refill_required && isInitiallyFunded;
       })
       .some((isRefillRequired) => isRefillRequired);
   }, [

@@ -309,7 +309,7 @@ describe('ServicesProvider', () => {
       expect(result.current.selectedAgentType).toBe(AgentMap.AgentsFun);
     });
 
-    it('updateSelectedInstance writes to store and updates selection', async () => {
+    it('updateSelectedServiceConfigId writes to store and updates selection', async () => {
       const traderService = serviceFor(AgentMap.PredictTrader);
       mockGetServices.mockResolvedValue([traderService]);
 
@@ -323,7 +323,7 @@ describe('ServicesProvider', () => {
       });
 
       act(() => {
-        result.current.updateSelectedInstance(DEFAULT_SERVICE_CONFIG_ID);
+        result.current.updateSelectedServiceConfigId(DEFAULT_SERVICE_CONFIG_ID);
       });
 
       expect(mockStoreSet).toHaveBeenCalledWith(
@@ -355,7 +355,7 @@ describe('ServicesProvider', () => {
 
       // Select instance 2
       act(() => {
-        result.current.updateSelectedInstance(MOCK_SERVICE_CONFIG_ID_2);
+        result.current.updateSelectedServiceConfigId(MOCK_SERVICE_CONFIG_ID_2);
       });
 
       expect(result.current.selectedServiceConfigId).toBe(
@@ -365,7 +365,7 @@ describe('ServicesProvider', () => {
 
       // Switch back to instance 1
       act(() => {
-        result.current.updateSelectedInstance(DEFAULT_SERVICE_CONFIG_ID);
+        result.current.updateSelectedServiceConfigId(DEFAULT_SERVICE_CONFIG_ID);
       });
 
       expect(result.current.selectedServiceConfigId).toBe(

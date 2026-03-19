@@ -10,10 +10,9 @@ type IsInitialFundedWrite = {
 };
 
 /**
- * Migrates legacy `isInitialFunded: boolean` to `isInitialFunded: { [serviceConfigId]: boolean }`.
+ * Helper function for migrating legacy `isInitialFunded: boolean`
+ * to `isInitialFunded: { [serviceConfigId]: boolean }`.
  *
- * For each agent type where the stored value is a plain boolean,
- * converts it to a record keyed by the first matching service_config_id.
  * Returns the list of store writes to perform (empty if nothing to migrate).
  */
 export const migrateIsInitialFunded = ({

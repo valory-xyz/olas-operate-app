@@ -65,7 +65,7 @@ export const SelectStakingButton = ({
     selectedAgentConfig,
     isLoading: isServicesLoading,
     refetch: refetchServices,
-    updateSelectedInstance,
+    updateSelectedServiceConfigId,
   } = useServices();
   const { getMasterSafeBalancesOf, getMasterEoaBalancesOf } =
     useMasterBalances();
@@ -147,7 +147,7 @@ export const SelectStakingButton = ({
 
       // Select the newly created instance
       if (newServiceConfigId) {
-        updateSelectedInstance(newServiceConfigId);
+        updateSelectedServiceConfigId(newServiceConfigId);
       }
 
       setDefaultStakingProgramId(stakingProgramId);

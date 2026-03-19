@@ -7,7 +7,15 @@ import {
   SERVICE_TEMPLATES,
 } from '@/constants/serviceTemplates';
 import { ServicesService } from '@/service/Services';
-import { Address, DeepPartial, Maybe, Service, ServiceTemplate } from '@/types';
+import {
+  Address,
+  AgentConfig,
+  DeepPartial,
+  Maybe,
+  MiddlewareServiceResponse,
+  Service,
+  ServiceTemplate,
+} from '@/types';
 
 import { generateAgentName } from './generateAgentName';
 
@@ -139,6 +147,14 @@ export const isValidServiceId = (
 ): token is number => {
   return typeof token === 'number' && token !== -1 && token !== 0;
 };
+
+/** Checks if a service belongs to a given agent config */
+export const isServiceOfAgent = (
+  service: Service | MiddlewareServiceResponse,
+  config: AgentConfig,
+): boolean =>
+  service.service_public_id === config.servicePublicId &&
+  service.home_chain === config.middlewareHomeChainId;
 
 /**
  * Get display name for a service instance.
