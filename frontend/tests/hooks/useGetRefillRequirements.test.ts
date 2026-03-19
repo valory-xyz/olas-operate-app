@@ -68,6 +68,9 @@ type SetupMocksOptions = {
   totalRequirements?: ReturnType<
     typeof useBalanceAndRefillRequirementsContext
   >['totalRequirements'];
+  refillRequirements?: ReturnType<
+    typeof useBalanceAndRefillRequirementsContext
+  >['refillRequirements'];
   masterEoa?: ReturnType<typeof useMasterWalletContext>['masterEoa'];
   isFetched?: boolean;
   getMasterSafeOf?: ReturnType<
@@ -81,6 +84,7 @@ function setupMocks(options: SetupMocksOptions = {}) {
   const {
     isLoading = false,
     totalRequirements = undefined,
+    refillRequirements = undefined,
     masterEoa = defaultMasterEoa,
     isFetched = true,
     getMasterSafeOf = () => defaultMasterSafe,
@@ -90,6 +94,7 @@ function setupMocks(options: SetupMocksOptions = {}) {
 
   mockUseBalanceContext.mockReturnValue({
     totalRequirements,
+    refillRequirements,
     resetQueryCache: mockResetQueryCache,
     isBalancesAndFundingRequirementsLoading: isLoading,
   } as unknown as ReturnType<typeof useBalanceAndRefillRequirementsContext>);
@@ -356,6 +361,84 @@ describe('useGetRefillRequirements', () => {
       expect(result.current.totalTokenRequirements[2].symbol).toBe(
         TokenSymbolMap.XDAI,
       );
+    });
+  });
+
+  describe('refillTokenRequirements', () => {
+    it('computes refillTokenRequirements from refillRequirements using getRequirementsPerToken', () => {
+      const totalReqs = buildRequirements({
+        safeAddress: DEFAULT_SAFE_ADDRESS,
+        nativeSafe: '5000000000000000000', // 5 XDAI total
+        erc20Safe: '40000000000000000000', // 40 OLAS total
+      });
+      const refillReqs = buildRequirements({
+        safeAddress: DEFAULT_SAFE_ADDRESS,
+        nativeSafe: '2000000000000000000', // 2 XDAI shortfall
+        erc20Safe: '10000000000000000000', // 10 OLAS shortfall
+      });
+
+      setupMocks({
+        totalRequirements: totalReqs,
+        refillRequirements: refillReqs,
+      });
+
+      const { result } = renderHook(() => useGetRefillRequirements());
+
+      // totalTokenRequirements should reflect totals
+      expect(result.current.totalTokenRequirements).toHaveLength(2);
+      const totalOlas = result.current.totalTokenRequirements.find(
+        (t) => t.symbol === TokenSymbolMap.OLAS,
+      );
+      expect(totalOlas!.amount).toBe(40);
+
+      // refillTokenRequirements should reflect shortfall
+      expect(result.current.refillTokenRequirements).toHaveLength(2);
+      const refillOlas = result.current.refillTokenRequirements.find(
+        (t) => t.symbol === TokenSymbolMap.OLAS,
+      );
+      const refillXdai = result.current.refillTokenRequirements.find(
+        (t) => t.symbol === TokenSymbolMap.XDAI,
+      );
+      expect(refillOlas!.amount).toBe(10);
+      expect(refillXdai!.amount).toBe(2);
+    });
+
+    it('returns empty refillTokenRequirements when refillRequirements is undefined', () => {
+      setupMocks({
+        totalRequirements: VALID_REQUIREMENTS,
+        refillRequirements: undefined,
+      });
+
+      const { result } = renderHook(() => useGetRefillRequirements());
+
+      expect(result.current.refillTokenRequirements).toEqual([]);
+    });
+
+    it('combines master safe + master EOA native amounts in refillTokenRequirements', () => {
+      const totalReqs = buildRequirements({
+        safeAddress: DEFAULT_SAFE_ADDRESS,
+        nativeSafe: '5000000000000000000',
+        nativeEoa: '2000000000000000000',
+      });
+      const refillReqs = buildRequirements({
+        safeAddress: DEFAULT_SAFE_ADDRESS,
+        nativeSafe: '1000000000000000000', // 1 XDAI safe shortfall
+        nativeEoa: '500000000000000000', // 0.5 XDAI EOA shortfall
+      });
+
+      setupMocks({
+        totalRequirements: totalReqs,
+        refillRequirements: refillReqs,
+      });
+
+      const { result } = renderHook(() => useGetRefillRequirements());
+
+      expect(result.current.refillTokenRequirements).toHaveLength(1);
+      // 1 + 0.5 = 1.5 XDAI
+      expect(result.current.refillTokenRequirements[0].symbol).toBe(
+        TokenSymbolMap.XDAI,
+      );
+      expect(result.current.refillTokenRequirements[0].amount).toBe(1.5);
     });
   });
 

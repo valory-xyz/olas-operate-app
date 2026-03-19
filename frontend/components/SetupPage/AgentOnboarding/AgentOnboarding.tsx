@@ -19,7 +19,7 @@ import { RestrictedRegion } from './RestrictedRegion';
 import { SelectAgent } from './SelectAgent';
 
 /** Find an undeployed instance of the given agent type */
-const findUndeployedInstance = (
+export const findUndeployedInstance = (
   agentType: AgentType,
   services: MiddlewareServiceResponse[],
 ): MiddlewareServiceResponse | undefined => {
