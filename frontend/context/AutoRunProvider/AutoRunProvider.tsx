@@ -4,6 +4,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -116,12 +117,15 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
   // Block auto-run from switching agents when the user is not on the Main page
   // (e.g. Setup/FundYourAgent, PearlWallet, AgentWallet, staking flows, etc.).
   // Scans will reschedule themselves in SCAN_LOADING_RETRY_SECONDS when blocked.
+  // useLayoutEffect (not useEffect) so the ref is updated inside React's
+  // synchronous commit phase — before the browser returns control to the event
+  // loop. This guarantees no setTimeout/setInterval scan tick can fire with a
+  // stale value between pageState changing and the ref being written.
   const { pageState } = usePageState();
-  const isOnMainPage = pageState === PAGES.Main;
-  const canSwitchAgentRef = useRef(isOnMainPage);
-  useEffect(() => {
-    canSwitchAgentRef.current = isOnMainPage;
-  }, [isOnMainPage]);
+  const canSwitchAgentRef = useRef(pageState === PAGES.Main);
+  useLayoutEffect(() => {
+    canSwitchAgentRef.current = pageState === PAGES.Main;
+  }, [pageState]);
 
   // Auto-run controller runs the orchestration loop.
   const { stopRunningAgent, runningAgentType } = useAutoRunController({
