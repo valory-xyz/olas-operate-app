@@ -62,20 +62,21 @@ const SiderContainer = styled.div`
   }
 `;
 
-const AgentListScrollArea = styled.div<{ $hasOverflow: boolean }>`
+const AgentListScrollArea = styled.div<{
+  $fadeTop: boolean;
+  $fadeBottom: boolean;
+}>`
   flex: 1;
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
-  ${({ $hasOverflow }) =>
-    $hasOverflow &&
-    `mask-image: linear-gradient(
-      to bottom,
-      transparent 0%,
-      black 16px,
-      black calc(100% - 16px),
-      transparent 100%
-    );`}
+  mask-image: linear-gradient(
+    to bottom,
+    ${({ $fadeTop }) => ($fadeTop ? 'transparent' : 'black')} 0%,
+    black 16px,
+    black calc(100% - 16px),
+    ${({ $fadeBottom }) => ($fadeBottom ? 'transparent' : 'black')} 100%
+  );
 `;
 
 const ResponsiveButton = styled(Button)`
@@ -142,20 +143,33 @@ export const Sidebar = () => {
   const { masterSafes, isLoading: isMasterWalletLoading } =
     useMasterWalletContext();
 
-  const [hasOverflow, setHasOverflow] = useState(false);
+  const [fade, setFade] = useState({ top: false, bottom: false });
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+
+  const updateFade = useCallback(() => {
+    const node = scrollAreaRef.current;
+    if (!node) return;
+
+    const { scrollTop, scrollHeight, clientHeight } = node;
+    setFade({
+      top: scrollTop > 0,
+      bottom: scrollTop + clientHeight < scrollHeight - 1,
+    });
+  }, []);
 
   useEffect(() => {
     const node = scrollAreaRef.current;
     if (!node) return;
 
-    const observer = new ResizeObserver(() => {
-      setHasOverflow(node.scrollHeight > node.clientHeight);
-    });
+    const observer = new ResizeObserver(updateFade);
     observer.observe(node);
+    node.addEventListener('scroll', updateFade);
 
-    return () => observer.disconnect();
-  }, []);
+    return () => {
+      observer.disconnect();
+      node.removeEventListener('scroll', updateFade);
+    };
+  }, [updateFade]);
 
   const agentGroups = useMemo<SidebarAgentGroup[]>(() => {
     if (!services) return [];
@@ -275,7 +289,8 @@ export const Sidebar = () => {
 
             <AgentListScrollArea
               ref={scrollAreaRef}
-              $hasOverflow={hasOverflow}
+              $fadeTop={fade.top}
+              $fadeBottom={fade.bottom}
               className="px-16"
             >
               {isLoading || isMasterWalletLoading ? (
