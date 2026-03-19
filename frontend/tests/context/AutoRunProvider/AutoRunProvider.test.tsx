@@ -2,31 +2,35 @@ import { renderHook } from '@testing-library/react';
 import { act, PropsWithChildren } from 'react';
 
 import { AGENT_CONFIG } from '../../../config/agents';
-import { AgentMap, AgentType } from '../../../constants/agent';
+import { AgentMap } from '../../../constants/agent';
 import {
   AutoRunProvider,
   useAutoRunContext,
 } from '../../../context/AutoRunProvider/AutoRunProvider';
 import { DISABLE_RACE_STOP_CHECK_INTERVAL_MS } from '../../../context/AutoRunProvider/constants';
-import { IncludedAgent } from '../../../context/AutoRunProvider/types';
+import { IncludedAgentInstance } from '../../../context/AutoRunProvider/types';
+import {
+  DEFAULT_SERVICE_CONFIG_ID,
+  MOCK_SERVICE_CONFIG_ID_2,
+} from '../../helpers/factories';
 
 // --- Mutable mock state ---
 const mockAutoRunStore = {
   enabled: false,
-  includedAgents: [] as IncludedAgent[],
+  includedInstances: [] as IncludedAgentInstance[],
   isInitialized: false,
-  userExcludedAgents: [] as AgentType[],
+  userExcludedInstances: [] as string[],
   updateAutoRun: jest.fn(),
 };
 
 const mockStopRunningAgent = jest.fn().mockResolvedValue(true);
-const mockControllerRunningAgentType = { current: null as AgentType | null };
-const mockUpdateAgentType = jest.fn();
+const mockControllerRunningAgentType = { current: null as string | null };
+const mockUpdateSelectedServiceConfigId = jest.fn();
 
 /** Captured callbacks from the last useAutoRunController call. */
 const capturedControllerCallbacks = {
-  onAutoRunAgentStarted: undefined as
-    | ((agentType: AgentType) => void)
+  onAutoRunInstanceStarted: undefined as
+    | ((serviceConfigId: string) => void)
     | undefined,
   onAutoRunStartStateChange: undefined as
     | ((isStarting: boolean) => void)
@@ -36,10 +40,16 @@ const capturedControllerCallbacks = {
 // --- Mocks ---
 jest.mock('../../../hooks', () => ({
   useServices: jest.fn().mockReturnValue({
-    services: [{ service_config_id: 'sc-1' }, { service_config_id: 'sc-2' }],
-    selectedAgentType: AgentMap.PredictTrader,
-    selectedService: { service_config_id: 'sc-1' },
-    updateAgentType: jest.fn(),
+    services: [
+      { service_config_id: 'sc-aa001122-bb33-cc44-dd55-eeff66778899' },
+      { service_config_id: 'sc-11223344-5566-7788-99aa-bbccddeeff00' },
+    ],
+    selectedAgentType: 'trader',
+    selectedService: {
+      service_config_id: 'sc-aa001122-bb33-cc44-dd55-eeff66778899',
+    },
+    selectedServiceConfigId: 'sc-aa001122-bb33-cc44-dd55-eeff66778899',
+    updateSelectedServiceConfigId: jest.fn(),
   }),
   useElectronApi: jest.fn().mockReturnValue({
     showNotification: jest.fn(),
@@ -98,8 +108,8 @@ const { useServices } = jest.requireMock('../../../hooks') as {
   useServices: jest.Mock;
 };
 
-const trader = AgentMap.PredictTrader;
-const optimus = AgentMap.Optimus;
+const scTrader = DEFAULT_SERVICE_CONFIG_ID;
+const scOptimus = MOCK_SERVICE_CONFIG_ID_2;
 
 const wrapper = ({ children }: PropsWithChildren) => (
   <AutoRunProvider>{children}</AutoRunProvider>
@@ -110,29 +120,33 @@ describe('AutoRunProvider', () => {
     jest.clearAllMocks();
     jest.useFakeTimers();
     mockAutoRunStore.enabled = false;
-    mockAutoRunStore.includedAgents = [];
+    mockAutoRunStore.includedInstances = [];
     mockAutoRunStore.isInitialized = false;
-    mockAutoRunStore.userExcludedAgents = [];
+    mockAutoRunStore.userExcludedInstances = [];
     mockAutoRunStore.updateAutoRun = jest.fn();
     mockControllerRunningAgentType.current = null;
-    mockUpdateAgentType.mockClear();
+    mockUpdateSelectedServiceConfigId.mockClear();
 
     useServices.mockReturnValue({
-      services: [{ service_config_id: 'sc-1' }, { service_config_id: 'sc-2' }],
-      selectedAgentType: trader,
-      selectedService: { service_config_id: 'sc-1' },
-      updateAgentType: mockUpdateAgentType,
+      services: [
+        { service_config_id: scTrader },
+        { service_config_id: scOptimus },
+      ],
+      selectedAgentType: AgentMap.PredictTrader,
+      selectedService: { service_config_id: scTrader },
+      selectedServiceConfigId: scTrader,
+      updateSelectedServiceConfigId: mockUpdateSelectedServiceConfigId,
     });
     useAutoRunStore.mockImplementation(() => ({ ...mockAutoRunStore }));
-    capturedControllerCallbacks.onAutoRunAgentStarted = undefined;
+    capturedControllerCallbacks.onAutoRunInstanceStarted = undefined;
     capturedControllerCallbacks.onAutoRunStartStateChange = undefined;
     useAutoRunController.mockImplementation(
       (params: {
-        onAutoRunAgentStarted?: (agentType: AgentType) => void;
+        onAutoRunInstanceStarted?: (serviceConfigId: string) => void;
         onAutoRunStartStateChange?: (isStarting: boolean) => void;
       }) => {
-        capturedControllerCallbacks.onAutoRunAgentStarted =
-          params.onAutoRunAgentStarted;
+        capturedControllerCallbacks.onAutoRunInstanceStarted =
+          params.onAutoRunInstanceStarted;
         capturedControllerCallbacks.onAutoRunStartStateChange =
           params.onAutoRunStartStateChange;
         return {
@@ -142,8 +156,16 @@ describe('AutoRunProvider', () => {
       },
     );
     useConfiguredAgents.mockReturnValue([
-      { agentType: trader, agentConfig: AGENT_CONFIG[trader] },
-      { agentType: optimus, agentConfig: AGENT_CONFIG[optimus] },
+      {
+        agentType: AgentMap.PredictTrader,
+        agentConfig: AGENT_CONFIG[AgentMap.PredictTrader],
+        serviceConfigId: scTrader,
+      },
+      {
+        agentType: AgentMap.Optimus,
+        agentConfig: AGENT_CONFIG[AgentMap.Optimus],
+        serviceConfigId: scOptimus,
+      },
     ]);
     useSelectedEligibility.mockReturnValue({
       isSelectedAgentDetailsLoading: false,
@@ -160,12 +182,12 @@ describe('AutoRunProvider', () => {
     expect(result.current.enabled).toBe(false);
     expect(result.current.isToggling).toBe(false);
     expect(typeof result.current.setEnabled).toBe('function');
-    expect(typeof result.current.includeAgent).toBe('function');
-    expect(typeof result.current.excludeAgent).toBe('function');
+    expect(typeof result.current.includeInstance).toBe('function');
+    expect(typeof result.current.excludeInstance).toBe('function');
   });
 
   describe('seeding', () => {
-    it('seeds included agents on first initialization', () => {
+    it('seeds included instances on first initialization', () => {
       mockAutoRunStore.isInitialized = false;
       useAutoRunStore.mockImplementation(() => ({ ...mockAutoRunStore }));
 
@@ -174,9 +196,9 @@ describe('AutoRunProvider', () => {
       expect(mockAutoRunStore.updateAutoRun).toHaveBeenCalledWith(
         expect.objectContaining({
           isInitialized: true,
-          includedAgents: expect.arrayContaining([
-            expect.objectContaining({ agentType: trader }),
-            expect.objectContaining({ agentType: optimus }),
+          includedInstances: expect.arrayContaining([
+            expect.objectContaining({ serviceConfigId: scTrader }),
+            expect.objectContaining({ serviceConfigId: scOptimus }),
           ]),
         }),
       );
@@ -184,7 +206,9 @@ describe('AutoRunProvider', () => {
 
     it('does not re-seed after initialization', () => {
       mockAutoRunStore.isInitialized = true;
-      mockAutoRunStore.includedAgents = [{ agentType: trader, order: 0 }];
+      mockAutoRunStore.includedInstances = [
+        { serviceConfigId: scTrader, order: 0 },
+      ];
       useAutoRunStore.mockImplementation(() => ({ ...mockAutoRunStore }));
 
       renderHook(() => useAutoRunContext(), { wrapper });
@@ -242,127 +266,135 @@ describe('AutoRunProvider', () => {
     });
   });
 
-  describe('includeAgent', () => {
-    it('adds agent to included list', () => {
+  describe('includeInstance', () => {
+    it('adds instance to included list', () => {
       mockAutoRunStore.isInitialized = true;
-      mockAutoRunStore.includedAgents = [{ agentType: trader, order: 0 }];
-      useAutoRunStore.mockImplementation(() => ({ ...mockAutoRunStore }));
-
-      const { result } = renderHook(() => useAutoRunContext(), { wrapper });
-
-      act(() => {
-        result.current.includeAgent(optimus);
-      });
-
-      expect(mockAutoRunStore.updateAutoRun).toHaveBeenCalledWith(
-        expect.objectContaining({
-          includedAgents: expect.arrayContaining([
-            expect.objectContaining({ agentType: trader }),
-            expect.objectContaining({ agentType: optimus }),
-          ]),
-        }),
-      );
-    });
-
-    it('removes agent from user-excluded when including', () => {
-      mockAutoRunStore.isInitialized = true;
-      mockAutoRunStore.includedAgents = [{ agentType: trader, order: 0 }];
-      mockAutoRunStore.userExcludedAgents = [optimus];
-      useAutoRunStore.mockImplementation(() => ({ ...mockAutoRunStore }));
-
-      const { result } = renderHook(() => useAutoRunContext(), { wrapper });
-
-      act(() => {
-        result.current.includeAgent(optimus);
-      });
-
-      expect(mockAutoRunStore.updateAutoRun).toHaveBeenCalledWith(
-        expect.objectContaining({
-          userExcludedAgents: [],
-        }),
-      );
-    });
-
-    it('does not include ineligible agent', () => {
-      // Only trader is configured
-      useConfiguredAgents.mockReturnValue([
-        { agentType: trader, agentConfig: AGENT_CONFIG[trader] },
-      ]);
-      mockAutoRunStore.isInitialized = true;
-      mockAutoRunStore.includedAgents = [{ agentType: trader, order: 0 }];
-      useAutoRunStore.mockImplementation(() => ({ ...mockAutoRunStore }));
-
-      const { result } = renderHook(() => useAutoRunContext(), { wrapper });
-
-      act(() => {
-        // Try to include an agent that's not in configuredAgents (and thus not eligible)
-        result.current.includeAgent(optimus);
-      });
-
-      // No updateAutoRun call for including optimus
-      const includeCalls = mockAutoRunStore.updateAutoRun.mock.calls.filter(
-        (call: [Record<string, unknown>]) =>
-          Array.isArray(call[0]?.includedAgents) &&
-          (call[0].includedAgents as IncludedAgent[]).some(
-            (a: IncludedAgent) => a.agentType === optimus,
-          ),
-      );
-      expect(includeCalls).toHaveLength(0);
-    });
-  });
-
-  describe('excludeAgent', () => {
-    it('removes agent from included and adds to excluded', () => {
-      mockAutoRunStore.isInitialized = true;
-      mockAutoRunStore.includedAgents = [
-        { agentType: trader, order: 0 },
-        { agentType: optimus, order: 1 },
+      mockAutoRunStore.includedInstances = [
+        { serviceConfigId: scTrader, order: 0 },
       ];
       useAutoRunStore.mockImplementation(() => ({ ...mockAutoRunStore }));
 
       const { result } = renderHook(() => useAutoRunContext(), { wrapper });
 
       act(() => {
-        result.current.excludeAgent(optimus);
+        result.current.includeInstance(scOptimus);
       });
 
       expect(mockAutoRunStore.updateAutoRun).toHaveBeenCalledWith(
         expect.objectContaining({
-          includedAgents: [{ agentType: trader, order: 0 }],
-          userExcludedAgents: [optimus],
+          includedInstances: expect.arrayContaining([
+            expect.objectContaining({ serviceConfigId: scTrader }),
+            expect.objectContaining({ serviceConfigId: scOptimus }),
+          ]),
         }),
       );
     });
 
-    it('prevents excluding the last included agent', () => {
+    it('removes instance from user-excluded when including', () => {
       mockAutoRunStore.isInitialized = true;
-      mockAutoRunStore.includedAgents = [{ agentType: trader, order: 0 }];
+      mockAutoRunStore.includedInstances = [
+        { serviceConfigId: scTrader, order: 0 },
+      ];
+      mockAutoRunStore.userExcludedInstances = [scOptimus];
       useAutoRunStore.mockImplementation(() => ({ ...mockAutoRunStore }));
 
       const { result } = renderHook(() => useAutoRunContext(), { wrapper });
 
       act(() => {
-        result.current.excludeAgent(trader);
+        result.current.includeInstance(scOptimus);
       });
 
-      // Should NOT update — cannot remove the last included agent
+      expect(mockAutoRunStore.updateAutoRun).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userExcludedInstances: [],
+        }),
+      );
+    });
+
+    it('does not include ineligible instance', () => {
+      useConfiguredAgents.mockReturnValue([
+        {
+          agentType: AgentMap.PredictTrader,
+          agentConfig: AGENT_CONFIG[AgentMap.PredictTrader],
+          serviceConfigId: scTrader,
+        },
+      ]);
+      mockAutoRunStore.isInitialized = true;
+      mockAutoRunStore.includedInstances = [
+        { serviceConfigId: scTrader, order: 0 },
+      ];
+      useAutoRunStore.mockImplementation(() => ({ ...mockAutoRunStore }));
+
+      const { result } = renderHook(() => useAutoRunContext(), { wrapper });
+
+      act(() => {
+        result.current.includeInstance(scOptimus);
+      });
+
+      const includeCalls = mockAutoRunStore.updateAutoRun.mock.calls.filter(
+        (call: [Record<string, unknown>]) =>
+          Array.isArray(call[0]?.includedInstances) &&
+          (call[0].includedInstances as IncludedAgentInstance[]).some(
+            (a: IncludedAgentInstance) => a.serviceConfigId === scOptimus,
+          ),
+      );
+      expect(includeCalls).toHaveLength(0);
+    });
+  });
+
+  describe('excludeInstance', () => {
+    it('removes instance from included and adds to excluded', () => {
+      mockAutoRunStore.isInitialized = true;
+      mockAutoRunStore.includedInstances = [
+        { serviceConfigId: scTrader, order: 0 },
+        { serviceConfigId: scOptimus, order: 1 },
+      ];
+      useAutoRunStore.mockImplementation(() => ({ ...mockAutoRunStore }));
+
+      const { result } = renderHook(() => useAutoRunContext(), { wrapper });
+
+      act(() => {
+        result.current.excludeInstance(scOptimus);
+      });
+
+      expect(mockAutoRunStore.updateAutoRun).toHaveBeenCalledWith(
+        expect.objectContaining({
+          includedInstances: [{ serviceConfigId: scTrader, order: 0 }],
+          userExcludedInstances: [scOptimus],
+        }),
+      );
+    });
+
+    it('prevents excluding the last included instance', () => {
+      mockAutoRunStore.isInitialized = true;
+      mockAutoRunStore.includedInstances = [
+        { serviceConfigId: scTrader, order: 0 },
+      ];
+      useAutoRunStore.mockImplementation(() => ({ ...mockAutoRunStore }));
+
+      const { result } = renderHook(() => useAutoRunContext(), { wrapper });
+
+      act(() => {
+        result.current.excludeInstance(scTrader);
+      });
+
       const excludeCalls = mockAutoRunStore.updateAutoRun.mock.calls.filter(
         (call: [Record<string, unknown>]) =>
-          Array.isArray(call[0]?.userExcludedAgents),
+          Array.isArray(call[0]?.userExcludedInstances),
       );
       expect(excludeCalls).toHaveLength(0);
     });
   });
 
-  describe('eligibilityByAgent', () => {
-    it('defaults non-selected agents to canRun: true', () => {
+  describe('eligibilityByInstance', () => {
+    it('defaults non-selected instances to canRun: true', () => {
       const { result } = renderHook(() => useAutoRunContext(), { wrapper });
-      expect(result.current.eligibilityByAgent[optimus]).toEqual({
+      expect(result.current.eligibilityByInstance[scOptimus]).toEqual({
         canRun: true,
       });
     });
 
-    it('uses real eligibility for selected agent', () => {
+    it('uses real eligibility for selected instance', () => {
       useSelectedEligibility.mockReturnValue({
         isSelectedAgentDetailsLoading: false,
         getSelectedEligibility: jest
@@ -371,60 +403,75 @@ describe('AutoRunProvider', () => {
       });
 
       const { result } = renderHook(() => useAutoRunContext(), { wrapper });
-      expect(result.current.eligibilityByAgent[trader]).toEqual({
+      expect(result.current.eligibilityByInstance[scTrader]).toEqual({
         canRun: false,
         reason: 'Low balance',
       });
     });
 
     it('marks decommissioned agents as canRun: false with reason', () => {
-      const modius = AgentMap.Modius;
+      const scModius = 'sc-modius-test';
       useConfiguredAgents.mockReturnValue([
-        { agentType: trader, agentConfig: AGENT_CONFIG[trader] },
-        { agentType: optimus, agentConfig: AGENT_CONFIG[optimus] },
         {
-          agentType: modius,
-          agentConfig: { ...AGENT_CONFIG[modius], isAgentEnabled: false },
+          agentType: AgentMap.PredictTrader,
+          agentConfig: AGENT_CONFIG[AgentMap.PredictTrader],
+          serviceConfigId: scTrader,
+        },
+        {
+          agentType: AgentMap.Optimus,
+          agentConfig: AGENT_CONFIG[AgentMap.Optimus],
+          serviceConfigId: scOptimus,
+        },
+        {
+          agentType: AgentMap.Modius,
+          agentConfig: {
+            ...AGENT_CONFIG[AgentMap.Modius],
+            isAgentEnabled: false,
+          },
+          serviceConfigId: scModius,
         },
       ]);
 
       const { result } = renderHook(() => useAutoRunContext(), { wrapper });
-      expect(result.current.eligibilityByAgent[modius]).toEqual({
+      expect(result.current.eligibilityByInstance[scModius]).toEqual({
         canRun: false,
         reason: 'Decommissioned',
       });
     });
   });
 
-  describe('onAutoRunAgentStarted callback', () => {
-    it('calls updateAgentType when agent is configured', () => {
+  describe('onAutoRunInstanceStarted callback', () => {
+    it('calls updateSelectedServiceConfigId when instance is configured', () => {
       renderHook(() => useAutoRunContext(), { wrapper });
 
       act(() => {
-        capturedControllerCallbacks.onAutoRunAgentStarted!(trader);
+        capturedControllerCallbacks.onAutoRunInstanceStarted!(scTrader);
       });
 
-      expect(mockUpdateAgentType).toHaveBeenCalledWith(trader);
+      expect(mockUpdateSelectedServiceConfigId).toHaveBeenCalledWith(scTrader);
     });
 
-    it('does not call updateAgentType when agent is not configured', () => {
+    it('does not call updateSelectedServiceConfigId when instance is not configured', () => {
       useConfiguredAgents.mockReturnValue([
-        { agentType: trader, agentConfig: AGENT_CONFIG[trader] },
+        {
+          agentType: AgentMap.PredictTrader,
+          agentConfig: AGENT_CONFIG[AgentMap.PredictTrader],
+          serviceConfigId: scTrader,
+        },
       ]);
 
       renderHook(() => useAutoRunContext(), { wrapper });
 
       act(() => {
-        capturedControllerCallbacks.onAutoRunAgentStarted!(optimus);
+        capturedControllerCallbacks.onAutoRunInstanceStarted!(scOptimus);
       });
 
-      expect(mockUpdateAgentType).not.toHaveBeenCalled();
+      expect(mockUpdateSelectedServiceConfigId).not.toHaveBeenCalled();
     });
   });
 
   describe('onAutoRunStartStateChange callback (isToggling)', () => {
     it('sets isStarting to true via onAutoRunStartStateChange', () => {
-      // Must be enabled so the cleanup effect (!enabled && isStarting) doesn't reset it
       mockAutoRunStore.enabled = true;
       useAutoRunStore.mockImplementation(() => ({ ...mockAutoRunStore }));
 
@@ -438,7 +485,6 @@ describe('AutoRunProvider', () => {
     });
 
     it('resets isStarting when enabled becomes false', () => {
-      // Start with enabled=true so the effect path is reachable
       mockAutoRunStore.enabled = true;
       useAutoRunStore.mockImplementation(() => ({ ...mockAutoRunStore }));
 
@@ -446,13 +492,11 @@ describe('AutoRunProvider', () => {
         wrapper,
       });
 
-      // Trigger isStarting = true via callback
       act(() => {
         capturedControllerCallbacks.onAutoRunStartStateChange!(true);
       });
       expect(result.current.isToggling).toBe(true);
 
-      // Now disable auto-run => effect should reset isStarting
       mockAutoRunStore.enabled = false;
       useAutoRunStore.mockImplementation(() => ({ ...mockAutoRunStore }));
       rerender();
@@ -468,12 +512,10 @@ describe('AutoRunProvider', () => {
 
       const { result } = renderHook(() => useAutoRunContext(), { wrapper });
 
-      // Set isStarting via callback
       act(() => {
         capturedControllerCallbacks.onAutoRunStartStateChange!(true);
       });
 
-      // Now disable while isStarting=true, no runningAgentType
       mockAutoRunStore.enabled = false;
       useAutoRunStore.mockImplementation(() => ({ ...mockAutoRunStore }));
 
@@ -486,98 +528,8 @@ describe('AutoRunProvider', () => {
       });
     });
 
-    it('resets disableRaceStopChecksLeft to 0 when enabled becomes true', async () => {
-      // Start disabled with race-stop checks active by triggering the sequence
-      mockAutoRunStore.enabled = true;
-      useAutoRunStore.mockImplementation(() => ({ ...mockAutoRunStore }));
-
-      const { result, rerender } = renderHook(() => useAutoRunContext(), {
-        wrapper,
-      });
-
-      // Trigger isStarting
-      act(() => {
-        capturedControllerCallbacks.onAutoRunStartStateChange!(true);
-      });
-
-      // Disable while starting (sets disableRaceStopChecksLeft)
-      mockAutoRunStore.enabled = false;
-      useAutoRunStore.mockImplementation(() => ({ ...mockAutoRunStore }));
-      rerender();
-
-      await act(async () => {
-        result.current.setEnabled(false);
-      });
-
-      // Re-enable => should reset checks to 0
-      mockAutoRunStore.enabled = true;
-      useAutoRunStore.mockImplementation(() => ({ ...mockAutoRunStore }));
-      rerender();
-
-      // The effect for race-stop with enabled=true and checks!=0 resets checks
-      // No crash or infinite loop means it worked
-      expect(result.current.enabled).toBe(true);
-    });
-
-    it('stops running agent when it appears during race-stop polling', async () => {
-      mockAutoRunStore.enabled = true;
-      // Make updateAutoRun actually flip the `enabled` flag so the effect
-      // sees `enabled=false` on the very next render.
-      mockAutoRunStore.updateAutoRun = jest.fn(
-        (patch: Record<string, unknown>) => {
-          if ('enabled' in patch) {
-            mockAutoRunStore.enabled = patch.enabled as boolean;
-          }
-        },
-      );
-      useAutoRunStore.mockImplementation(() => ({ ...mockAutoRunStore }));
-
-      const { result, rerender } = renderHook(() => useAutoRunContext(), {
-        wrapper,
-      });
-
-      // Trigger isStarting
-      act(() => {
-        capturedControllerCallbacks.onAutoRunStartStateChange!(true);
-      });
-
-      // Disable while isStarting=true, no runningAgentType.
-      // updateAutoRun now flips enabled=false synchronously before the next render,
-      // so the race-stop effect sees enabled=false AND disableRaceStopChecksLeft>0.
-      await act(async () => {
-        result.current.setEnabled(false);
-      });
-
-      // After the promise resolves, isStopping becomes false.
-      // Now simulate the running agent appearing.
-      useAutoRunController.mockImplementation(
-        (params: {
-          onAutoRunAgentStarted?: (agentType: AgentType) => void;
-          onAutoRunStartStateChange?: (isStarting: boolean) => void;
-        }) => {
-          capturedControllerCallbacks.onAutoRunAgentStarted =
-            params.onAutoRunAgentStarted;
-          capturedControllerCallbacks.onAutoRunStartStateChange =
-            params.onAutoRunStartStateChange;
-          return {
-            stopRunningAgent: mockStopRunningAgent,
-            runningAgentType: trader,
-          };
-        },
-      );
-
-      await act(async () => {
-        rerender();
-      });
-
-      // stopRunningAgent called at least twice:
-      // once from setEnabled(false) and once from the race-stop effect (lines 154-159).
-      expect(mockStopRunningAgent).toHaveBeenCalledTimes(2);
-    });
-
     it('decrements check counter on timeout when no running agent', async () => {
       mockAutoRunStore.enabled = true;
-      // Make updateAutoRun flip enabled synchronously so the effect sees enabled=false
       mockAutoRunStore.updateAutoRun = jest.fn(
         (patch: Record<string, unknown>) => {
           if ('enabled' in patch) {
@@ -591,118 +543,107 @@ describe('AutoRunProvider', () => {
         wrapper,
       });
 
-      // Trigger isStarting
       act(() => {
         capturedControllerCallbacks.onAutoRunStartStateChange!(true);
       });
 
-      // Disable while starting — sets disableRaceStopChecksLeft and calls stop
       await act(async () => {
         result.current.setEnabled(false);
       });
 
-      // No running agent appears; advance timer to trigger the countdown callback (line 162)
       await act(async () => {
         jest.advanceTimersByTime(DISABLE_RACE_STOP_CHECK_INTERVAL_MS);
       });
 
-      // The effect decrements the counter. No crash = success.
-      // The stop was called once from setEnabled(false)
       expect(mockStopRunningAgent).toHaveBeenCalled();
     });
   });
 
   describe('normalization cleanup effect', () => {
-    it('normalizes included agents when changes are detected', () => {
+    it('normalizes included instances when changes are detected', () => {
       mockAutoRunStore.isInitialized = true;
-      // Set up included agents with non-sequential order values that need normalization
-      mockAutoRunStore.includedAgents = [
-        { agentType: trader, order: 5 },
-        { agentType: optimus, order: 10 },
+      mockAutoRunStore.includedInstances = [
+        { serviceConfigId: scTrader, order: 5 },
+        { serviceConfigId: scOptimus, order: 10 },
       ];
       useAutoRunStore.mockImplementation(() => ({ ...mockAutoRunStore }));
 
       renderHook(() => useAutoRunContext(), { wrapper });
 
-      // The normalization effect should detect order discrepancy and call updateAutoRun
       const normalizeCalls = mockAutoRunStore.updateAutoRun.mock.calls.filter(
         (call: [Record<string, unknown>]) =>
-          Array.isArray(call[0]?.includedAgents) &&
+          Array.isArray(call[0]?.includedInstances) &&
           !('isInitialized' in call[0]) &&
-          !('userExcludedAgents' in call[0]),
+          !('userExcludedInstances' in call[0]),
       );
       expect(normalizeCalls.length).toBeGreaterThanOrEqual(1);
-      expect(normalizeCalls[0][0].includedAgents).toEqual([
-        { agentType: trader, order: 0 },
-        { agentType: optimus, order: 1 },
+      expect(normalizeCalls[0][0].includedInstances).toEqual([
+        { serviceConfigId: scTrader, order: 0 },
+        { serviceConfigId: scOptimus, order: 1 },
       ]);
     });
   });
 
-  describe('includeAgent — agent already in list', () => {
-    it('only updates userExcludedAgents when agent is already included but was excluded', () => {
+  describe('includeInstance — instance already in list', () => {
+    it('only updates userExcludedInstances when instance is already included but was excluded', () => {
       mockAutoRunStore.isInitialized = true;
-      mockAutoRunStore.includedAgents = [
-        { agentType: trader, order: 0 },
-        { agentType: optimus, order: 1 },
+      mockAutoRunStore.includedInstances = [
+        { serviceConfigId: scTrader, order: 0 },
+        { serviceConfigId: scOptimus, order: 1 },
       ];
-      // optimus is in both included AND excluded — include should just remove from excluded
-      mockAutoRunStore.userExcludedAgents = [optimus];
+      mockAutoRunStore.userExcludedInstances = [scOptimus];
       useAutoRunStore.mockImplementation(() => ({ ...mockAutoRunStore }));
 
       const { result } = renderHook(() => useAutoRunContext(), { wrapper });
 
       act(() => {
-        result.current.includeAgent(optimus);
+        result.current.includeInstance(scOptimus);
       });
 
-      // Should only update userExcludedAgents, not includedAgents
       expect(mockAutoRunStore.updateAutoRun).toHaveBeenCalledWith({
-        userExcludedAgents: [],
+        userExcludedInstances: [],
       });
     });
 
-    it('does nothing when agent is already included and not in excluded list', () => {
+    it('does nothing when instance is already included and not in excluded list', () => {
       mockAutoRunStore.isInitialized = true;
-      mockAutoRunStore.includedAgents = [
-        { agentType: trader, order: 0 },
-        { agentType: optimus, order: 1 },
+      mockAutoRunStore.includedInstances = [
+        { serviceConfigId: scTrader, order: 0 },
+        { serviceConfigId: scOptimus, order: 1 },
       ];
-      mockAutoRunStore.userExcludedAgents = [];
+      mockAutoRunStore.userExcludedInstances = [];
       useAutoRunStore.mockImplementation(() => ({ ...mockAutoRunStore }));
 
       const { result } = renderHook(() => useAutoRunContext(), { wrapper });
       mockAutoRunStore.updateAutoRun.mockClear();
 
       act(() => {
-        result.current.includeAgent(optimus);
+        result.current.includeInstance(scOptimus);
       });
 
-      // No update needed — already included and not excluded
       expect(mockAutoRunStore.updateAutoRun).not.toHaveBeenCalled();
     });
   });
 
-  describe('excludeAgent — already in userExcludedAgents', () => {
-    it('does not duplicate agent in userExcludedAgents when already present', () => {
+  describe('excludeInstance — already in userExcludedInstances', () => {
+    it('does not duplicate instance in userExcludedInstances when already present', () => {
       mockAutoRunStore.isInitialized = true;
-      mockAutoRunStore.includedAgents = [
-        { agentType: trader, order: 0 },
-        { agentType: optimus, order: 1 },
+      mockAutoRunStore.includedInstances = [
+        { serviceConfigId: scTrader, order: 0 },
+        { serviceConfigId: scOptimus, order: 1 },
       ];
-      mockAutoRunStore.userExcludedAgents = [optimus];
+      mockAutoRunStore.userExcludedInstances = [scOptimus];
       useAutoRunStore.mockImplementation(() => ({ ...mockAutoRunStore }));
 
       const { result } = renderHook(() => useAutoRunContext(), { wrapper });
 
       act(() => {
-        result.current.excludeAgent(optimus);
+        result.current.excludeInstance(scOptimus);
       });
 
-      // userExcludedAgents should remain [optimus], not [optimus, optimus]
       expect(mockAutoRunStore.updateAutoRun).toHaveBeenCalledWith(
         expect.objectContaining({
-          userExcludedAgents: [optimus],
+          userExcludedInstances: [scOptimus],
         }),
       );
     });
@@ -712,25 +653,28 @@ describe('AutoRunProvider', () => {
     it('does not seed when services is undefined', () => {
       useServices.mockReturnValue({
         services: undefined,
-        selectedAgentType: trader,
+        selectedAgentType: AgentMap.PredictTrader,
         selectedService: undefined,
-        updateAgentType: mockUpdateAgentType,
+        selectedServiceConfigId: null,
+        updateSelectedServiceConfigId: mockUpdateSelectedServiceConfigId,
       });
 
       renderHook(() => useAutoRunContext(), { wrapper });
 
-      // No seed call when services is undefined
       expect(mockAutoRunStore.updateAutoRun).not.toHaveBeenCalledWith(
         expect.objectContaining({ isInitialized: true }),
       );
     });
 
     it('does not seed when no eligible agents', () => {
-      // All agents are decommissioned
       useConfiguredAgents.mockReturnValue([
         {
-          agentType: trader,
-          agentConfig: { ...AGENT_CONFIG[trader], isAgentEnabled: false },
+          agentType: AgentMap.PredictTrader,
+          agentConfig: {
+            ...AGENT_CONFIG[AgentMap.PredictTrader],
+            isAgentEnabled: false,
+          },
+          serviceConfigId: scTrader,
         },
       ]);
 
@@ -743,66 +687,19 @@ describe('AutoRunProvider', () => {
 
     it('uses null for selectedServiceConfigId when selectedService is undefined', () => {
       useServices.mockReturnValue({
-        services: [{ service_config_id: 'sc-1' }],
-        selectedAgentType: trader,
+        services: [{ service_config_id: scTrader }],
+        selectedAgentType: AgentMap.PredictTrader,
         selectedService: undefined,
-        updateAgentType: mockUpdateAgentType,
+        selectedServiceConfigId: null,
+        updateSelectedServiceConfigId: mockUpdateSelectedServiceConfigId,
       });
 
       renderHook(() => useAutoRunContext(), { wrapper });
 
-      // Check that useAutoRunController was called with null serviceConfigId
       const controllerArgs = useAutoRunController.mock.calls[0][0] as {
         selectedServiceConfigId: string | null;
       };
       expect(controllerArgs.selectedServiceConfigId).toBeNull();
-    });
-
-    it('does not auto-append when services is undefined and initialized', () => {
-      mockAutoRunStore.isInitialized = true;
-      mockAutoRunStore.includedAgents = [{ agentType: trader, order: 0 }];
-      useAutoRunStore.mockImplementation(() => ({ ...mockAutoRunStore }));
-      useServices.mockReturnValue({
-        services: undefined,
-        selectedAgentType: trader,
-        selectedService: undefined,
-        updateAgentType: mockUpdateAgentType,
-      });
-
-      renderHook(() => useAutoRunContext(), { wrapper });
-
-      // No auto-append call
-      const appendCalls = mockAutoRunStore.updateAutoRun.mock.calls.filter(
-        (call: [Record<string, unknown>]) =>
-          Array.isArray(call[0]?.includedAgents) &&
-          !('isInitialized' in call[0]),
-      );
-      expect(appendCalls).toHaveLength(0);
-    });
-
-    it('does not auto-append when no eligible agents and initialized', () => {
-      mockAutoRunStore.isInitialized = true;
-      mockAutoRunStore.includedAgents = [{ agentType: trader, order: 0 }];
-      useAutoRunStore.mockImplementation(() => ({ ...mockAutoRunStore }));
-      useConfiguredAgents.mockReturnValue([
-        {
-          agentType: trader,
-          agentConfig: { ...AGENT_CONFIG[trader], isAgentEnabled: false },
-        },
-      ]);
-
-      renderHook(() => useAutoRunContext(), { wrapper });
-
-      // Normalization may clean up, but no append with new agents
-      const appendCalls = mockAutoRunStore.updateAutoRun.mock.calls.filter(
-        (call: [Record<string, unknown>]) => {
-          const agents = call[0]?.includedAgents;
-          return (
-            Array.isArray(agents) && (agents as IncludedAgent[]).length > 1
-          );
-        },
-      );
-      expect(appendCalls).toHaveLength(0);
     });
   });
 
@@ -811,7 +708,6 @@ describe('AutoRunProvider', () => {
       mockAutoRunStore.enabled = true;
       useAutoRunStore.mockImplementation(() => ({ ...mockAutoRunStore }));
 
-      // Use a never-resolving promise to keep isStopping=true from first disable
       let resolveStop!: () => void;
       const pendingStop = new Promise<boolean>((resolve) => {
         resolveStop = () => resolve(true);
@@ -822,81 +718,24 @@ describe('AutoRunProvider', () => {
         wrapper,
       });
 
-      // First disable — sets isStopping=true, calls stopRunningAgent (which pends)
       act(() => {
         result.current.setEnabled(false);
       });
       expect(mockStopRunningAgent).toHaveBeenCalledTimes(1);
 
-      // Re-enable so we can disable again
       mockAutoRunStore.enabled = true;
       useAutoRunStore.mockImplementation(() => ({ ...mockAutoRunStore }));
       rerender();
 
-      // Second disable — isStopping is still true from the pending first stop
       act(() => {
         result.current.setEnabled(false);
       });
 
-      // stopRunningAgent should NOT have been called a second time (line 253 guard)
       expect(mockStopRunningAgent).toHaveBeenCalledTimes(1);
 
-      // Cleanup: resolve the pending stop
       await act(async () => {
         resolveStop();
       });
-    });
-  });
-
-  describe('setEnabled — race-stop branching', () => {
-    it('sets DISABLE_RACE_STOP_MAX_CHECKS when disabling while isStarting and no runningAgent', async () => {
-      mockAutoRunStore.enabled = true;
-      useAutoRunStore.mockImplementation(() => ({ ...mockAutoRunStore }));
-
-      const { result } = renderHook(() => useAutoRunContext(), { wrapper });
-
-      // Set isStarting via callback
-      act(() => {
-        capturedControllerCallbacks.onAutoRunStartStateChange!(true);
-      });
-
-      // Disable while isStarting=true and no runningAgentType
-      await act(async () => {
-        result.current.setEnabled(false);
-      });
-
-      expect(mockAutoRunStore.updateAutoRun).toHaveBeenCalledWith({
-        enabled: false,
-      });
-      expect(mockStopRunningAgent).toHaveBeenCalled();
-    });
-
-    it('does not stop again when already isStopping', async () => {
-      mockAutoRunStore.enabled = true;
-      useAutoRunStore.mockImplementation(() => ({ ...mockAutoRunStore }));
-
-      const { result } = renderHook(() => useAutoRunContext(), { wrapper });
-
-      // First disable — triggers stopRunningAgent (sets isStopping)
-      await act(async () => {
-        result.current.setEnabled(false);
-      });
-
-      // Re-enable so we can disable again
-      mockAutoRunStore.enabled = true;
-      useAutoRunStore.mockImplementation(() => ({ ...mockAutoRunStore }));
-
-      // Use a never-resolving promise to keep isStopping=true
-      const neverResolve = new Promise<boolean>(() => {});
-      mockStopRunningAgent.mockReturnValueOnce(neverResolve);
-
-      await act(async () => {
-        result.current.setEnabled(false);
-      });
-
-      // The second disable should call stopRunningAgent again
-      // (isStopping resets after first promise resolves)
-      expect(mockStopRunningAgent).toHaveBeenCalledTimes(2);
     });
   });
 });
