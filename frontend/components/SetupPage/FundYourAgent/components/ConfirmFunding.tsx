@@ -49,7 +49,6 @@ export const ConfirmFunding = () => {
           title="From Pearl wallet"
           tokenRequirements={tokenRequirements}
           isLoading={isLoading}
-          requirementsDisclaimer={`+ transaction fees on ${chainName}`}
         />
 
         <Button

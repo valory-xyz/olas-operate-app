@@ -19,14 +19,12 @@ type RequiredTokenListProps = {
   title?: string;
   tokenRequirements: TokenRequirement[];
   isLoading?: boolean;
-  requirementsDisclaimer?: string;
 };
 
 export const RequiredTokenList = ({
   title,
   tokenRequirements,
   isLoading,
-  requirementsDisclaimer = '',
 }: RequiredTokenListProps) => {
   if (isLoading) {
     return (
@@ -37,8 +35,8 @@ export const RequiredTokenList = ({
             <Skeleton.Input
               key={i}
               size="small"
-              style={{ width: 180, height: 16 }}
               active
+              style={{ width: 180 }}
             />
           ))}
         </Container>
@@ -58,12 +56,6 @@ export const RequiredTokenList = ({
             <Text>{`${formatAmountNormalized(amount)} ${symbol}`}</Text>
           </Flex>
         ))}
-
-        {!!requirementsDisclaimer && (
-          <Text className="text-neutral-tertiary" style={{ fontSize: 14 }}>
-            {requirementsDisclaimer}
-          </Text>
-        )}
       </Container>
     </>
   );
