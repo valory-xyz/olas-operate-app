@@ -33,6 +33,7 @@ const makeHookParams = (
   updateAgentType: jest.fn(),
   getSelectedEligibility: jest.fn().mockReturnValue({ canRun: true }),
   createSafeIfNeeded: jest.fn().mockResolvedValue(undefined),
+  canSwitchAgentRef: { current: true },
   startService: jest.fn().mockResolvedValue(undefined),
   waitForAgentSelection: jest.fn().mockResolvedValue(true),
   waitForBalancesReady: jest.fn().mockResolvedValue(true),

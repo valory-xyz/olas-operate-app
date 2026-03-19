@@ -5,11 +5,18 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 
 import { AgentType } from '@/constants';
-import { useArchivedAgents, useElectronApi, useServices } from '@/hooks';
+import { PAGES } from '@/constants/pages';
+import {
+  useArchivedAgents,
+  useElectronApi,
+  usePageState,
+  useServices,
+} from '@/hooks';
 
 import {
   DISABLE_RACE_STOP_CHECK_INTERVAL_MS,
@@ -106,6 +113,16 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
   const { isSelectedAgentDetailsLoading, getSelectedEligibility } =
     useSelectedEligibility({ canCreateSafeForChain });
 
+  // Block auto-run from switching agents when the user is not on the Main page
+  // (e.g. Setup/FundYourAgent, PearlWallet, AgentWallet, staking flows, etc.).
+  // Scans will reschedule themselves in SCAN_LOADING_RETRY_SECONDS when blocked.
+  const { pageState } = usePageState();
+  const isOnMainPage = pageState === PAGES.Main;
+  const canSwitchAgentRef = useRef(isOnMainPage);
+  useEffect(() => {
+    canSwitchAgentRef.current = isOnMainPage;
+  }, [isOnMainPage]);
+
   // Auto-run controller runs the orchestration loop.
   const { stopRunningAgent, runningAgentType } = useAutoRunController({
     enabled,
@@ -117,6 +134,7 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
     isSelectedAgentDetailsLoading,
     getSelectedEligibility,
     createSafeIfNeeded,
+    canSwitchAgentRef,
     showNotification,
     onAutoRunAgentStarted: (agentType) => {
       if (!configuredAgentTypes.includes(agentType)) return;

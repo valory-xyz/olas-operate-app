@@ -27,6 +27,7 @@ type UseAutoRunOperationsParams = {
   updateAgentType: (agentType: AgentType) => void;
   getSelectedEligibility: () => Eligibility;
   createSafeIfNeeded: (meta: AgentMeta) => Promise<void>;
+  canSwitchAgentRef: MutableRefObject<boolean>;
   showNotification?: (title: string, body?: string) => void;
   onAutoRunAgentStarted?: (agentType: AgentType) => void;
   onAutoRunStartStateChange?: (isStarting: boolean) => void;
@@ -67,6 +68,7 @@ export const useAutoRunOperations = ({
   updateAgentType,
   getSelectedEligibility,
   createSafeIfNeeded,
+  canSwitchAgentRef,
   showNotification,
   onAutoRunAgentStarted,
   onAutoRunStartStateChange,
@@ -133,6 +135,7 @@ export const useAutoRunOperations = ({
     updateAgentType,
     getSelectedEligibility,
     createSafeIfNeeded,
+    canSwitchAgentRef,
     startService,
     waitForAgentSelection,
     waitForBalancesReady,

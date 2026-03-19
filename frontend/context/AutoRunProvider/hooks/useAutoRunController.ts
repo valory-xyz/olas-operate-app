@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import {
+  MutableRefObject,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+} from 'react';
 
 import { AgentType } from '@/constants';
 import { useAgentRunning, useRewardContext, useStartService } from '@/hooks';
@@ -30,6 +36,9 @@ type UseAutoRunControllerParams = {
     loadingReason?: string;
   };
   createSafeIfNeeded: (meta: AgentMeta) => Promise<void>;
+  /** Ref that is `true` only when the user is on PAGES.Main. When false,
+   *  the scanner will not call updateAgentType and will reschedule instead. */
+  canSwitchAgentRef: MutableRefObject<boolean>;
   showNotification?: (title: string, body?: string) => void;
   onAutoRunAgentStarted?: (agentType: AgentType) => void;
   onAutoRunStartStateChange?: (isStarting: boolean) => void;
@@ -58,6 +67,7 @@ export const useAutoRunController = ({
   isSelectedAgentDetailsLoading,
   getSelectedEligibility,
   createSafeIfNeeded,
+  canSwitchAgentRef,
   showNotification,
   onAutoRunAgentStarted,
   onAutoRunStartStateChange,
@@ -163,6 +173,7 @@ export const useAutoRunController = ({
     updateAgentType,
     getSelectedEligibility,
     createSafeIfNeeded,
+    canSwitchAgentRef,
     showNotification,
     onAutoRunAgentStarted,
     onAutoRunStartStateChange,
@@ -183,6 +194,7 @@ export const useAutoRunController = ({
     startSelectedAgentIfEligible,
   } = useAutoRunScanner({
     enabledRef,
+    canSwitchAgentRef,
     orderedIncludedAgentTypes,
     configuredAgents,
     selectedAgentType,

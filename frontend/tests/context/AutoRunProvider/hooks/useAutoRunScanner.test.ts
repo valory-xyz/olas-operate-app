@@ -46,6 +46,7 @@ const makeHookParams = (
   overrides: Partial<Parameters<typeof useAutoRunScanner>[0]> = {},
 ) => ({
   enabledRef: { current: true },
+  canSwitchAgentRef: { current: true },
   orderedIncludedAgentTypes: [trader, optimus, polystrat],
   configuredAgents: [
     makeAutoRunAgentMeta(

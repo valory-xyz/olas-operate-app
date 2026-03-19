@@ -51,6 +51,7 @@ const makeHookParams = () => ({
   updateAgentType: jest.fn(),
   getSelectedEligibility: jest.fn().mockReturnValue({ canRun: true }),
   createSafeIfNeeded: jest.fn().mockResolvedValue(undefined),
+  canSwitchAgentRef: { current: true },
   showNotification: jest.fn(),
   onAutoRunAgentStarted: jest.fn(),
   onAutoRunStartStateChange: jest.fn(),

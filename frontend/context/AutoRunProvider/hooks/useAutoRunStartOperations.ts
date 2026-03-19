@@ -35,6 +35,8 @@ type UseAutoRunStartOperationsParams = {
   updateAgentType: (agentType: AgentType) => void;
   getSelectedEligibility: () => Eligibility;
   createSafeIfNeeded: (meta: AgentMeta) => Promise<void>;
+  /** Defense-in-depth: also checked here in case the scanner guard is bypassed. */
+  canSwitchAgentRef: MutableRefObject<boolean>;
   startService: (params: {
     agentType: AgentType;
     agentConfig: AgentMeta['agentConfig'];
@@ -72,6 +74,7 @@ export const useAutoRunStartOperations = ({
   updateAgentType,
   getSelectedEligibility,
   createSafeIfNeeded,
+  canSwitchAgentRef,
   startService,
   waitForAgentSelection,
   waitForBalancesReady,
@@ -137,6 +140,11 @@ export const useAutoRunStartOperations = ({
         `op=${opId} phase=start_prepare agent=${agentType} service=${meta.serviceConfigId}`,
       );
 
+      // Defense-in-depth: if user navigated away between the scanner gate and
+      // here, abort rather than switching the visible agent.
+      if (!canSwitchAgentRef.current) {
+        return { status: AUTO_RUN_START_STATUS.ABORTED };
+      }
       updateAgentType(agentType);
       const selectionReady = await waitForAgentSelection(
         agentType,
@@ -258,6 +266,7 @@ export const useAutoRunStartOperations = ({
       };
     },
     [
+      canSwitchAgentRef,
       enabledRef,
       runningAgentTypeRef,
       configuredAgents,
