@@ -15,12 +15,7 @@ import { useOnlineStatusContext } from './useOnlineStatus';
 import { useServices } from './useServices';
 
 export const useAgentRunning = () => {
-  const {
-    services,
-    selectedService,
-    serviceStatusOverrides,
-    getServiceConfigIdFromAgentType,
-  } = useServices();
+  const { services, selectedService, serviceStatusOverrides } = useServices();
   const { isOnline } = useOnlineStatusContext();
   const fastRefetchInterval = useDynamicRefetchInterval(FIVE_SECONDS_INTERVAL);
   const slowRefetchInterval = useDynamicRefetchInterval(
@@ -68,11 +63,12 @@ export const useAgentRunning = () => {
   }, [services, selectedService, allDeployments, serviceStatusOverrides]);
 
   /**
-   * Determine which agent type is currently active
-   * (deployed, deploying, or stopping).
+   * Determine which service instance is currently active
+   * (deployed, deploying, or stopping) and its agent type.
    */
-  const runningAgentType = useMemo(() => {
-    if (!allDeployments || !services) return null;
+  const { runningAgentType, runningServiceConfigId } = useMemo(() => {
+    if (!allDeployments || !services)
+      return { runningAgentType: null, runningServiceConfigId: null };
 
     for (const service of services) {
       const status = allDeployments[service.service_config_id]?.status;
@@ -87,18 +83,15 @@ export const useAgentRunning = () => {
       );
 
       if (agentEntry) {
-        return agentEntry[0];
+        return {
+          runningAgentType: agentEntry[0],
+          runningServiceConfigId: service.service_config_id,
+        };
       }
     }
 
-    return null;
+    return { runningAgentType: null, runningServiceConfigId: null };
   }, [allDeployments, services]);
-
-  const runningServiceConfigId = useMemo(() => {
-    if (!runningAgentType) return null;
-
-    return getServiceConfigIdFromAgentType(runningAgentType);
-  }, [getServiceConfigIdFromAgentType, runningAgentType]);
 
   return { isAnotherAgentRunning, runningAgentType, runningServiceConfigId };
 };

@@ -9,7 +9,7 @@ import {
   Typography,
 } from 'antd';
 import Image from 'next/image';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   TbHelpSquareRounded,
   TbPlus,
@@ -62,10 +62,20 @@ const SiderContainer = styled.div`
   }
 `;
 
-const AgentListScrollArea = styled.div`
+const AgentListScrollArea = styled.div<{ $hasOverflow: boolean }>`
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
+  ${({ $hasOverflow }) =>
+    $hasOverflow &&
+    `mask-image: linear-gradient(
+      to bottom,
+      transparent 0%,
+      black 16px,
+      black calc(100% - 16px),
+      transparent 100%
+    );`}
 `;
 
 const ResponsiveButton = styled(Button)`
@@ -131,6 +141,21 @@ export const Sidebar = () => {
   const { runningServiceConfigId } = useAgentRunning();
   const { masterSafes, isLoading: isMasterWalletLoading } =
     useMasterWalletContext();
+
+  const [hasOverflow, setHasOverflow] = useState(false);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const node = scrollAreaRef.current;
+    if (!node) return;
+
+    const observer = new ResizeObserver(() => {
+      setHasOverflow(node.scrollHeight > node.clientHeight);
+    });
+    observer.observe(node);
+
+    return () => observer.disconnect();
+  }, []);
 
   const agentGroups = useMemo<SidebarAgentGroup[]>(() => {
     if (!services) return [];
@@ -234,7 +259,7 @@ export const Sidebar = () => {
           justify="space-between"
           style={{ height: '100%' }}
         >
-          <Flex vertical style={{ flex: 1, minHeight: 0 }}>
+          <Flex vertical style={{ overflow: 'hidden' }}>
             <div className="p-16">
               <MyAgentsHeader />
               <Flex justify="space-between" align="center" className="mb-16">
@@ -248,7 +273,11 @@ export const Sidebar = () => {
               </Flex>
             </div>
 
-            <AgentListScrollArea className="px-16">
+            <AgentListScrollArea
+              ref={scrollAreaRef}
+              $hasOverflow={hasOverflow}
+              className="px-16"
+            >
               {isLoading || isMasterWalletLoading ? (
                 <AgentMenuLoading />
               ) : agentGroups.length > 0 ? (
@@ -260,10 +289,12 @@ export const Sidebar = () => {
                   onInstanceSelect={handleInstanceSelect}
                 />
               ) : null}
+            </AgentListScrollArea>
 
+            <div className="px-16 mt-16">
               <ResponsiveButton
                 size="large"
-                className="flex mx-auto mt-16 w-full"
+                className="flex mx-auto w-full"
                 onClick={() => {
                   gotoPage(PAGES.Setup);
                   gotoSetup(SETUP_SCREEN.AgentOnboarding);
@@ -272,7 +303,7 @@ export const Sidebar = () => {
               >
                 Add Agent
               </ResponsiveButton>
-            </AgentListScrollArea>
+            </div>
           </Flex>
 
           <div className="p-16">

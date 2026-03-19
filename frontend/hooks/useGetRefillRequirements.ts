@@ -66,10 +66,14 @@ const getTokensDetailsForFunding = (
 
 type UseGetRefillRequirementsReturn = {
   /**
-   * Total token requirements, doesn't consider the eoa balances. This is what we show on the
-   * funding cards (fund your agent screen)
+   * Total token requirements — the full amount needed regardless of current balances.
    */
   totalTokenRequirements: TokenRequirement[];
+  /**
+   * Refill token requirements — the actual shortfall (total minus current balances).
+   * This is what should be shown on the funding cards.
+   */
+  refillTokenRequirements: TokenRequirement[];
   isLoading: boolean;
   resetTokenRequirements: () => void;
 };
@@ -104,6 +108,7 @@ type UseGetRefillRequirementsReturn = {
 export const useGetRefillRequirements = (): UseGetRefillRequirementsReturn => {
   const {
     totalRequirements,
+    refillRequirements,
     resetQueryCache,
     isBalancesAndFundingRequirementsLoading,
   } = useBalanceAndRefillRequirementsContext();
@@ -115,6 +120,9 @@ export const useGetRefillRequirements = (): UseGetRefillRequirementsReturn => {
   const { selectedAgentConfig, selectedServiceConfigId } = useServices();
 
   const [totalTokenRequirements, setTotalTokenRequirements] = useState<
+    TokenRequirement[] | null
+  >(null);
+  const [refillTokenRequirements, setRefillTokenRequirements] = useState<
     TokenRequirement[] | null
   >(null);
 
@@ -187,6 +195,7 @@ export const useGetRefillRequirements = (): UseGetRefillRequirementsReturn => {
   const resetTokenRequirements = useCallback(
     (resetCache = true) => {
       setTotalTokenRequirements(null);
+      setRefillTokenRequirements(null);
       if (resetCache) resetQueryCache?.();
     },
     [resetQueryCache],
@@ -206,10 +215,18 @@ export const useGetRefillRequirements = (): UseGetRefillRequirementsReturn => {
     }
   }, [totalRequirements, getRequirementsPerToken, totalTokenRequirements]);
 
+  // Get the refill token requirements
+  useEffect(() => {
+    if (refillTokenRequirements === null) {
+      setRefillTokenRequirements(getRequirementsPerToken(refillRequirements));
+    }
+  }, [refillRequirements, getRequirementsPerToken, refillTokenRequirements]);
+
   return {
     isLoading:
       isBalancesAndFundingRequirementsLoading || !totalTokenRequirements,
     totalTokenRequirements: totalTokenRequirements || [],
+    refillTokenRequirements: refillTokenRequirements || [],
     resetTokenRequirements,
   };
 };
