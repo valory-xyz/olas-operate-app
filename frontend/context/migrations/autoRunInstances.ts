@@ -1,3 +1,5 @@
+import { isEmpty } from 'lodash';
+
 import { AgentType } from '@/constants';
 import { IncludedAgentInstance } from '@/context/AutoRunProvider/types';
 import { MiddlewareServiceResponse } from '@/types';
@@ -9,14 +11,14 @@ type AutoRunMigrationResult = {
 };
 
 /**
- * Migrates legacy AgentType-keyed auto-run data to serviceConfigId-keyed.
+ * Prepares the legacy AgentType-keyed auto-run data to serviceConfigId-keyed for migration.
  *
  * - `includedAgents` → `includedAgentInstances`
  * - `userExcludedAgents` → `userExcludedAgentInstances`
  *
  * Returns `didMigrate: false` when old fields are absent or empty.
  */
-export const migrateAutoRunInstances = (
+export const prepateAutoRunInstancesForMigration = (
   autoRun: Record<string, unknown>,
   getInstancesOfAgentType: (
     agentType: AgentType,
@@ -34,10 +36,7 @@ export const migrateAutoRunInstances = (
     | undefined;
 
   // Already migrated or no old data
-  if (
-    (!oldIncluded || oldIncluded.length === 0) &&
-    (!oldExcluded || oldExcluded.length === 0)
-  ) {
+  if (isEmpty(oldIncluded) && isEmpty(oldExcluded)) {
     return {
       includedInstances: existingInstances ?? [],
       userExcludedInstances: existingExcluded ?? [],

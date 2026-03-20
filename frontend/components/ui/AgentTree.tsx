@@ -1,5 +1,6 @@
 import { Flex, Typography } from 'antd';
 import Image from 'next/image';
+import { ReactNode } from 'react';
 import styled from 'styled-components';
 
 import { AGENT_CONFIG } from '@/config/agents';
@@ -27,7 +28,7 @@ export const TreeLine = styled.div`
 type AgentGroupHeaderProps = {
   agentType: AgentType;
   /** Rendered after the display name (e.g. running dot). */
-  children?: React.ReactNode;
+  children?: ReactNode;
 };
 
 /** Agent icon + display name. Pass children for trailing elements. */

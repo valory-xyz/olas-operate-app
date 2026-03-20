@@ -172,14 +172,14 @@ export const useAutoRunStartOperations = ({
           }
           if (runningServiceConfigIdRef.current === serviceConfigId) {
             logVerbose(
-              `op=${opId} phase=start_confirm status=already_running service=${meta.serviceConfigId}`,
+              `op=${opId} phase=start_confirm status=already_running service=${meta.serviceConfigId} agent=${meta.agentType}`,
             );
             onAutoRunInstanceStarted?.(serviceConfigId);
             return { status: AUTO_RUN_START_STATUS.STARTED };
           }
           try {
             logVerbose(
-              `op=${opId} phase=start_request status=begin attempt=${attempt + 1} service=${meta.serviceConfigId}`,
+              `op=${opId} phase=start_request status=begin attempt=${attempt + 1} service=${meta.serviceConfigId} agent=${meta.agentType}`,
             );
             await withTimeout(
               startService({
@@ -196,7 +196,7 @@ export const useAutoRunStartOperations = ({
                 ),
             );
             logVerbose(
-              `op=${opId} phase=start_request status=ok attempt=${attempt + 1} service=${meta.serviceConfigId}`,
+              `op=${opId} phase=start_request status=ok attempt=${attempt + 1} service=${meta.serviceConfigId} agent=${meta.agentType}`,
             );
 
             const deployed = await waitForRunningInstance(
@@ -205,7 +205,7 @@ export const useAutoRunStartOperations = ({
             );
             if (deployed) {
               logVerbose(
-                `op=${opId} phase=start_confirm status=ok attempt=${attempt + 1} service=${meta.serviceConfigId}`,
+                `op=${opId} phase=start_confirm status=ok attempt=${attempt + 1} service=${meta.serviceConfigId} agent=${meta.agentType}`,
               );
               onAutoRunInstanceStarted?.(serviceConfigId);
               return { status: AUTO_RUN_START_STATUS.STARTED };
@@ -214,13 +214,13 @@ export const useAutoRunStartOperations = ({
             lastInfraError = 'running timeout';
             recordMetric(AUTO_RUN_HEALTH_METRIC.START_ERRORS);
             logMessage(
-              `op=${opId} phase=start_confirm status=timeout attempt=${attempt + 1} service=${meta.serviceConfigId}`,
+              `op=${opId} phase=start_confirm status=timeout attempt=${attempt + 1} service=${meta.serviceConfigId} agent=${meta.agentType}`,
             );
           } catch (error) {
             lastInfraError = `${error}`;
             recordMetric(AUTO_RUN_HEALTH_METRIC.START_ERRORS);
             logMessage(
-              `op=${opId} phase=start_request status=error attempt=${attempt + 1} service=${meta.serviceConfigId} error=${error}`,
+              `op=${opId} phase=start_request status=error attempt=${attempt + 1} service=${meta.serviceConfigId} agent=${meta.agentType} error=${error}`,
             );
           }
 
@@ -230,7 +230,7 @@ export const useAutoRunStartOperations = ({
               return { status: AUTO_RUN_START_STATUS.ABORTED };
             }
             logMessage(
-              `op=${opId} phase=start_retry status=interrupted service=${meta.serviceConfigId}`,
+              `op=${opId} phase=start_retry status=interrupted service=${meta.serviceConfigId} agent=${meta.agentType}`,
             );
             return {
               status: AUTO_RUN_START_STATUS.INFRA_FAILED,
@@ -248,7 +248,7 @@ export const useAutoRunStartOperations = ({
       );
       notifyStartFailed(showNotification, agentName, instanceName);
       logMessage(
-        `op=${opId} phase=start_final status=failed service=${meta.serviceConfigId} reason=${lastInfraError}`,
+        `op=${opId} phase=start_final status=failed service=${meta.serviceConfigId} agent=${meta.agentType} reason=${lastInfraError}`,
       );
       return {
         status: AUTO_RUN_START_STATUS.INFRA_FAILED,
