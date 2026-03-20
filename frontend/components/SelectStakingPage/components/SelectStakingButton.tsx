@@ -163,6 +163,7 @@ export const SelectStakingButton = ({
       const route = await resolveFundingRoute(serviceConfigId, walletBalances);
       gotoSetup(route);
     } finally {
+      stopLoading();
       onSelectEnd?.();
     }
   };

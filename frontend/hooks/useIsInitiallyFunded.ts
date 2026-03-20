@@ -41,7 +41,9 @@ export const useIsInitiallyFunded = () => {
   const isInstanceInitiallyFunded = useCallback(
     (serviceConfigId: string, agentType: typeof selectedAgentType) => {
       const stored = storeState?.[agentType]?.isInitialFunded;
-      if (stored === undefined || typeof stored === 'boolean') return false;
+      if (stored === undefined) return false;
+      // Legacy boolean: treat as-is until migration converts to per-service record
+      if (typeof stored === 'boolean') return stored;
       return stored[serviceConfigId] ?? false;
     },
     [storeState],

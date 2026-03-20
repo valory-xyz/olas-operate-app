@@ -3,12 +3,11 @@ import { useCallback } from 'react';
 import styled from 'styled-components';
 
 import { BackButton, CardFlex, RequiredTokenList } from '@/components/ui';
-import { EvmChainName, PAGES, SETUP_SCREEN } from '@/constants';
+import { PAGES, SETUP_SCREEN } from '@/constants';
 import {
   useGetRefillRequirements,
   useIsInitiallyFunded,
   usePageState,
-  useServices,
   useSetup,
 } from '@/hooks';
 
@@ -22,11 +21,9 @@ const Container = styled(Flex)`
 export const ConfirmFunding = () => {
   const { goto: gotoSetup } = useSetup();
   const { goto: gotoPage } = usePageState();
-  const { selectedAgentConfig } = useServices();
   const { setIsInitiallyFunded } = useIsInitiallyFunded();
   const { totalTokenRequirements: tokenRequirements, isLoading } =
     useGetRefillRequirements();
-  const chainName = EvmChainName[selectedAgentConfig.evmHomeChainId];
 
   const handleConfirm = useCallback(() => {
     setIsInitiallyFunded();
