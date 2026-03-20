@@ -64,6 +64,10 @@ const schema = {
     type: 'array',
     default: [],
   },
+  archivedInstances: {
+    type: 'array',
+    default: [],
+  },
 };
 
 /**
