@@ -9,7 +9,7 @@ import {
   Typography,
 } from 'antd';
 import Image from 'next/image';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   TbHelpSquareRounded,
   TbPlus,
@@ -31,12 +31,13 @@ import {
 import {
   useAgentRunning,
   useBalanceAndRefillRequirementsContext,
+  useIsInitiallyFunded,
   useMasterWalletContext,
   usePageState,
   useServices,
   useSetup,
 } from '@/hooks';
-import { asEvmChainId, getServiceInstanceName } from '@/utils';
+import { getServiceInstanceName } from '@/utils';
 
 import { BackupSeedPhraseAlert } from '../BackupSeedPhraseAlert';
 import { UpdateAvailableAlert } from '../UpdateAvailableAlert/UpdateAvailableAlert';
@@ -62,10 +63,21 @@ const SiderContainer = styled.div`
   }
 `;
 
-const AgentListScrollArea = styled.div`
+const AgentListScrollArea = styled.div<{
+  $fadeTop: boolean;
+  $fadeBottom: boolean;
+}>`
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
+  mask-image: linear-gradient(
+    to bottom,
+    ${({ $fadeTop }) => ($fadeTop ? 'transparent' : 'black')} 0%,
+    black 16px,
+    black calc(100% - 16px),
+    ${({ $fadeBottom }) => ($fadeBottom ? 'transparent' : 'black')} 100%
+  );
 `;
 
 const ResponsiveButton = styled(Button)`
@@ -126,11 +138,39 @@ export const Sidebar = () => {
     services,
     isLoading,
     selectedServiceConfigId,
-    updateSelectedInstance,
+    updateSelectedServiceConfigId,
+    getAgentTypeFromService,
   } = useServices();
   const { runningServiceConfigId } = useAgentRunning();
-  const { masterSafes, isLoading: isMasterWalletLoading } =
-    useMasterWalletContext();
+  const { isLoading: isMasterWalletLoading } = useMasterWalletContext();
+
+  const [fade, setFade] = useState({ top: false, bottom: false });
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+
+  const updateFade = useCallback(() => {
+    const node = scrollAreaRef.current;
+    if (!node) return;
+
+    const { scrollTop, scrollHeight, clientHeight } = node;
+    setFade({
+      top: scrollTop > 0,
+      bottom: scrollTop + clientHeight < scrollHeight - 1,
+    });
+  }, []);
+
+  useEffect(() => {
+    const node = scrollAreaRef.current;
+    if (!node) return;
+
+    const observer = new ResizeObserver(updateFade);
+    observer.observe(node);
+    node.addEventListener('scroll', updateFade);
+
+    return () => {
+      observer.disconnect();
+      node.removeEventListener('scroll', updateFade);
+    };
+  }, [updateFade]);
 
   const agentGroups = useMemo<SidebarAgentGroup[]>(() => {
     if (!services) return [];
@@ -160,6 +200,13 @@ export const Sidebar = () => {
       });
     }
 
+    // Sort instances within each group by service config ID (lexicographic)
+    for (const group of groupMap.values()) {
+      group.instances.sort((a, b) =>
+        a.serviceConfigId.localeCompare(b.serviceConfigId),
+      );
+    }
+
     return Array.from(groupMap.values());
   }, [services]);
 
@@ -185,32 +232,39 @@ export const Sidebar = () => {
 
     const firstInstance = agentGroups[0]?.instances[0];
     if (firstInstance) {
-      updateSelectedInstance(firstInstance.serviceConfigId);
+      updateSelectedServiceConfigId(firstInstance.serviceConfigId);
     }
-  }, [agentGroups, selectedServiceConfigId, services, updateSelectedInstance]);
+  }, [
+    agentGroups,
+    selectedServiceConfigId,
+    services,
+    updateSelectedServiceConfigId,
+  ]);
+
+  const { isInstanceInitiallyFunded } = useIsInitiallyFunded();
 
   const handleInstanceSelect = useCallback(
     (serviceConfigId: string) => {
-      updateSelectedInstance(serviceConfigId);
+      updateSelectedServiceConfigId(serviceConfigId);
 
-      const service = services?.find(
-        (service) => service.service_config_id === serviceConfigId,
-      );
-      if (!service) return;
-
-      const chainId = asEvmChainId(service.home_chain);
-      const isSafeCreated = masterSafes?.some(
-        (safe) => safe.evmChainId === chainId,
-      );
-
-      if (isSafeCreated) {
-        gotoPage(PAGES.Main);
-      } else {
+      const agentType = getAgentTypeFromService(serviceConfigId);
+      if (
+        !agentType ||
+        !isInstanceInitiallyFunded(serviceConfigId, agentType)
+      ) {
         gotoPage(PAGES.Setup);
         gotoSetup(SETUP_SCREEN.FundYourAgent);
+      } else {
+        gotoPage(PAGES.Main);
       }
     },
-    [updateSelectedInstance, services, masterSafes, gotoPage, gotoSetup],
+    [
+      updateSelectedServiceConfigId,
+      gotoPage,
+      gotoSetup,
+      getAgentTypeFromService,
+      isInstanceInitiallyFunded,
+    ],
   );
 
   const handleBottomMenuClick = useCallback<NonNullable<MenuProps['onClick']>>(
@@ -234,7 +288,7 @@ export const Sidebar = () => {
           justify="space-between"
           style={{ height: '100%' }}
         >
-          <Flex vertical style={{ flex: 1, minHeight: 0 }}>
+          <Flex vertical style={{ overflow: 'hidden' }}>
             <div className="p-16">
               <MyAgentsHeader />
               <Flex justify="space-between" align="center" className="mb-16">
@@ -248,7 +302,12 @@ export const Sidebar = () => {
               </Flex>
             </div>
 
-            <AgentListScrollArea className="px-16">
+            <AgentListScrollArea
+              ref={scrollAreaRef}
+              $fadeTop={fade.top}
+              $fadeBottom={fade.bottom}
+              className="px-16"
+            >
               {isLoading || isMasterWalletLoading ? (
                 <AgentMenuLoading />
               ) : agentGroups.length > 0 ? (
@@ -256,14 +315,16 @@ export const Sidebar = () => {
                   groups={agentGroups}
                   selectedServiceConfigId={selectedServiceConfigId}
                   runningServiceConfigIds={runningServiceConfigIds}
-                  onGroupSelect={updateSelectedInstance}
+                  onGroupSelect={updateSelectedServiceConfigId}
                   onInstanceSelect={handleInstanceSelect}
                 />
               ) : null}
+            </AgentListScrollArea>
 
+            <div className="px-16 mt-16">
               <ResponsiveButton
                 size="large"
-                className="flex mx-auto mt-16 w-full"
+                className="flex mx-auto w-full"
                 onClick={() => {
                   gotoPage(PAGES.Setup);
                   gotoSetup(SETUP_SCREEN.AgentOnboarding);
@@ -272,7 +333,7 @@ export const Sidebar = () => {
               >
                 Add Agent
               </ResponsiveButton>
-            </AgentListScrollArea>
+            </div>
           </Flex>
 
           <div className="p-16">

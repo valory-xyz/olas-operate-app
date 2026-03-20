@@ -10,6 +10,7 @@ import { ServicesService } from '../../service/Services';
 import {
   DEFAULT_SERVICE_CONFIG_ID,
   MOCK_SERVICE_CONFIG_ID_2,
+  MOCK_SERVICE_CONFIG_ID_3,
 } from '../helpers/factories';
 import { createQueryClientWrapper } from '../helpers/queryClient';
 
@@ -262,5 +263,71 @@ describe('useAgentRunning', () => {
     });
 
     expect(mockGetAllServiceDeployments).not.toHaveBeenCalled();
+  });
+
+  it('returns the second instance config ID when two instances of the same agent type exist and the second is running', async () => {
+    const firstInstance = makeServiceEntry(DEFAULT_SERVICE_CONFIG_ID);
+    const secondInstance = makeServiceEntry(MOCK_SERVICE_CONFIG_ID_2);
+    const selectedService = makeServiceEntry(MOCK_SERVICE_CONFIG_ID_3);
+
+    mockUseServices.mockReturnValue({
+      services: [firstInstance, secondInstance, selectedService],
+      selectedService,
+      serviceStatusOverrides: {},
+      getServiceConfigIdFromAgentType: jest.fn(),
+    });
+    mockGetAllServiceDeployments.mockResolvedValue({
+      [DEFAULT_SERVICE_CONFIG_ID]: {
+        status: MiddlewareDeploymentStatusMap.STOPPED,
+      },
+      [MOCK_SERVICE_CONFIG_ID_2]: {
+        status: MiddlewareDeploymentStatusMap.DEPLOYED,
+      },
+      [MOCK_SERVICE_CONFIG_ID_3]: {
+        status: MiddlewareDeploymentStatusMap.STOPPED,
+      },
+    });
+
+    const { result } = renderHook(() => useAgentRunning(), {
+      wrapper: createQueryClientWrapper(),
+    });
+
+    await waitFor(() => {
+      expect(result.current.runningServiceConfigId).toBe(
+        MOCK_SERVICE_CONFIG_ID_2,
+      );
+      expect(result.current.runningAgentType).toBe(AgentMap.PredictTrader);
+    });
+  });
+
+  it('returns the first instance config ID when the first of two same-type instances is running', async () => {
+    const firstInstance = makeServiceEntry(DEFAULT_SERVICE_CONFIG_ID);
+    const secondInstance = makeServiceEntry(MOCK_SERVICE_CONFIG_ID_2);
+
+    mockUseServices.mockReturnValue({
+      services: [firstInstance, secondInstance],
+      selectedService: firstInstance,
+      serviceStatusOverrides: {},
+      getServiceConfigIdFromAgentType: jest.fn(),
+    });
+    mockGetAllServiceDeployments.mockResolvedValue({
+      [DEFAULT_SERVICE_CONFIG_ID]: {
+        status: MiddlewareDeploymentStatusMap.DEPLOYED,
+      },
+      [MOCK_SERVICE_CONFIG_ID_2]: {
+        status: MiddlewareDeploymentStatusMap.STOPPED,
+      },
+    });
+
+    const { result } = renderHook(() => useAgentRunning(), {
+      wrapper: createQueryClientWrapper(),
+    });
+
+    await waitFor(() => {
+      expect(result.current.runningServiceConfigId).toBe(
+        DEFAULT_SERVICE_CONFIG_ID,
+      );
+      expect(result.current.runningAgentType).toBe(AgentMap.PredictTrader);
+    });
   });
 });

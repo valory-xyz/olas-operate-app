@@ -115,10 +115,13 @@ export const AgentTreeMenu = ({
     const group = groups.find((g) =>
       g.instances.some((i) => i.serviceConfigId === selectedServiceConfigId),
     );
-    if (group && !expandedGroups.has(group.agentType)) {
-      setExpandedGroups((prev) => new Set([...prev, group.agentType]));
+    if (group) {
+      setExpandedGroups((prev) => {
+        if (prev.has(group.agentType)) return prev;
+        return new Set([...prev, group.agentType]);
+      });
     }
-  }, [selectedServiceConfigId, groups, expandedGroups]);
+  }, [selectedServiceConfigId, groups]);
 
   const toggleGroup = useCallback(
     (agentType: string) => {
@@ -126,18 +129,20 @@ export const AgentTreeMenu = ({
         const next = new Set(prev);
         if (next.has(agentType)) {
           next.delete(agentType);
-        } else {
-          next.add(agentType);
+          return next;
         }
+        next.add(agentType);
         return next;
       });
 
-      const group = groups.find((g) => g.agentType === agentType);
-      if (group?.instances[0]) {
-        onGroupSelect(group.instances[0].serviceConfigId);
+      if (!expandedGroups.has(agentType)) {
+        const group = groups.find((group) => group.agentType === agentType);
+        if (group?.instances[0]) {
+          onGroupSelect(group.instances[0].serviceConfigId);
+        }
       }
     },
-    [groups, onGroupSelect],
+    [expandedGroups, groups, onGroupSelect],
   );
 
   return (

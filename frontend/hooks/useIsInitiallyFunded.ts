@@ -37,8 +37,19 @@ export const useIsInitiallyFunded = () => {
     storeState,
   ]);
 
+  /** Check if a specific instance is initially funded */
+  const isInstanceInitiallyFunded = useCallback(
+    (serviceConfigId: string, agentType: typeof selectedAgentType) => {
+      const stored = storeState?.[agentType]?.isInitialFunded;
+      if (stored === undefined || typeof stored === 'boolean') return false;
+      return stored[serviceConfigId] ?? false;
+    },
+    [storeState],
+  );
+
   return {
     isInitialFunded,
     setIsInitiallyFunded,
+    isInstanceInitiallyFunded,
   };
 };

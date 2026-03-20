@@ -19,6 +19,7 @@ export * from './Modal';
 export * from './NumberInput';
 export * from './Progress';
 export * from './RequiredMark';
+export * from './RequiredTokenList';
 export * from './Segmented';
 export * from './Steps';
 export * from './styles';

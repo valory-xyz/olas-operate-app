@@ -70,7 +70,7 @@ type AgentInstance = {
      getAgentTypeFromService(selectedServiceConfigId), [selectedServiceConfigId, ...]);
    ```
 
-3. **New `updateSelectedInstance(serviceConfigId)`** — sets `selectedServiceConfigId`, persists `lastSelectedServiceConfigId` to store
+3. **New `updateSelectedServiceConfigId(serviceConfigId)`** — sets `selectedServiceConfigId`, persists `lastSelectedServiceConfigId` to store
 
 4. **`updateAgentType(agentType)` stays** but now selects the FIRST instance of that type internally (for sidebar parent-click and backward compat). When no instances exist (setup flow for a new agent type), sets `pendingAgentType` instead — see point 10.
 
@@ -81,7 +81,7 @@ type AgentInstance = {
 6a. **Extract shared service matcher** — the pattern `servicePublicId === service.service_public_id && middlewareHomeChainId === service.home_chain` is repeated across ~18 files. Extract into a shared util (e.g., `matchesAgentConfig(service, config)`). New code should use the matcher; existing usages can be refactored incrementally.
 
 7. **New helpers to expose:**
-   - `updateSelectedInstance: (serviceConfigId: string) => void` — clears `pendingAgentType`
+   - `updateSelectedServiceConfigId: (serviceConfigId: string) => void` — clears `pendingAgentType`
    - `getInstancesOfAgentType: (agentType: AgentType) => MiddlewareServiceResponse[]`
 
 8. **`availableServiceConfigIds`** — already iterates all services, no change needed
@@ -89,7 +89,7 @@ type AgentInstance = {
 10. **`pendingAgentType` override** — during the setup flow, `updateAgentType` may be called for an agent type with no instances yet (e.g., user selects Polystrat but doesn't have one). Since `selectedServiceConfigId` can't resolve to the correct type, `pendingAgentType` bridges the gap:
     - Set by `updateAgentType` when no instances exist (also sets `selectedServiceConfigId` to `null`)
     - `selectedAgentType` derivation: `getAgentTypeFromService(configId) ?? pendingAgentType ?? PredictTrader`
-    - Cleared by `updateSelectedInstance` (when a real instance is selected) or when leaving the Setup page
+    - Cleared by `updateSelectedServiceConfigId` (when a real instance is selected) or when leaving the Setup page
     - Service-select effect skips when `pendingAgentType` is set
 
 9. **Define deterministic instance ordering** — `MiddlewareServiceResponse` has no `created_at` field. Raised with BE team to introduce one. Until then, use a stable default sort (e.g., lexicographic by `service_config_id`). Define this sort once in a shared util and reuse across sidebar child order, auto-run rotation, migration, and selection fallback.
@@ -148,60 +148,55 @@ The instance creation flow reuses existing screens with extensions:
 - Show ALL `ACTIVE_AGENTS` (remove `isNotInServices` filter)
 - Add **"You own N"** badge per agent type using `getInstancesOfAgentType(type).length`
 - Right panel and "Select Agent" button remain unchanged
-- **Guard: undeployed instance exists** — If the user already has an instance of the selected agent type that was never deployed, do NOT create a new instance. Instead, select that undeployed instance via `updateSelectedInstance` and navigate the user back to the main page. This prevents orphaned instances from accumulating. Detection: use `getInstancesOfAgentType(type)` and check each instance's token ID via `isValidServiceId(tokenId)` — an instance with an invalid token ID (null, -1, or 0) has not been deployed yet. If any such instance exists, select the first one instead of creating a new instance.
+- **Guard: undeployed instance exists** — If the user already has an instance of the selected agent type that was never deployed, do NOT create a new instance. Instead, select that undeployed instance via `updateSelectedServiceConfigId` and navigate the user back to the main page. This prevents orphaned instances from accumulating. Detection: use `getInstancesOfAgentType(type)` and check each instance's token ID via `isValidServiceId(tokenId)` — an instance with an invalid token ID (null, -1, or 0) has not been deployed yet. If any such instance exists, select the first one instead of creating a new instance.
 
 ### Screen 2: Configure Activity Rewards (existing, redesigned)
 
 Same as the current staking program selection — defaults to the agent's `defaultStakingProgramId`, user can change if they want. No functional change, just a UI refresh.
 
-### Screens 3-5: Fund Your Agent (extended, multi-step)
+### Screens 3-5: Funding Flow (separate setup screens)
 
-Extend the existing `FundYourAgent` component into a multi-step internal flow. The staking page navigates to "fund" as it does today — `FundYourAgent` internally handles the branching. Applies to both multi-instance and existing flows (e.g., user already has Agents.fun on Base and is setting up PettBro on the same chain — the wallet may already have funds).
+Routing is handled by `resolveFundingRoute` in `SelectStakingButton`, which calls `BalanceService.getBalancesAndFundingRequirements` directly with the target service config ID and checks wallet balances:
 
-`FundYourAgent` determines which screen to show based on existing instances and wallet balance:
+- **`SETUP_SCREEN.ConfirmFunding`** — shown when `isRefillRequired === false && allowStartAgent === true` (wallet fully covers requirements). Shows token amounts from wallet. "Confirm" calls `setIsInitiallyFunded()` and navigates to main.
 
-- **Balance check screen (new)** — shown when another instance (same or different agent type) already exists on the same chain. Fetches `refill_requirements`, checks Pearl wallet balances for the required tokens. Routes to either the confirm screen or the payment screen based on whether funds are sufficient.
+- **`SETUP_SCREEN.BalanceCheck`** — shown when wallet has funds on the chain (`walletBalances.some(b => b.balance > 0)`). Shows wallet contribution amounts via `useWalletContribution`. "Continue" navigates to `FundYourAgent`.
 
-- **Payment method selection screen (existing)** — shown when no instance exists on the chain, or when the Pearl wallet doesn't have enough funds. The existing Buy/Transfer/Bridge screen, updated to show the **actual shortfall** (`refill_requirements`) not total requirements (see Step 4a).
+- **`SETUP_SCREEN.FundYourAgent`** — shown when wallet has no relevant funds. The existing Buy/Transfer/Bridge screen, now showing **actual shortfall** (`refillTokenRequirements`) not total requirements.
 
-- **Confirm funding screen (new)** — shown when the Pearl wallet fully covers the required funds. Shows token amounts that will be used from the wallet. **"Confirm"** button navigates to main page where the newly created service is selected. No fund transfer happens until the agent is actually run.
+### Step 4a: Refill Requirements
 
-### Step 4a: Update Existing "Fund Your Agent" Screen to Show Actual Shortfall
+- `useGetRefillRequirements` now exposes both `totalTokenRequirements` and `refillTokenRequirements`
+- `FundYourAgent` cards show `refillTokenRequirements` (shortfall)
+- `useTokensFundingStatus` uses `totalTokenRequirements` (for received/pending tracking on transfer screen)
+- Bridge and OnRamp flows already used `refillRequirements` from the balance context
+- `getRequirementsPerToken` returns `null` (not `[]`) when data isn't ready, preventing premature caching
 
-**This is a cross-cutting change that affects the existing flow too, not just multi-instance.**
+### Shared components
 
-The backend already returns both `total_requirements` and `refill_requirements` from `GET /api/v2/service/{id}/funding_requirements`. The `refill_requirements` field represents the actual shortfall (needed minus current balance). However, the existing "Fund Your Agent" screen currently displays `totalTokenRequirements` (mapped from `total_requirements`).
+- `RequiredTokenList` — reusable UI component for rendering token icon + amount + symbol list with skeleton loading
+- `useWalletContribution` — shared hook computing `min(walletBalance, totalRequirement)` per token via `useTokensFundingStatus`
 
-**Fix:** Switch `FundYourAgent.tsx` to display `refill_requirements` instead of `total_requirements`.
+### Routing after staking selection
 
-Files to update:
-- `frontend/components/SetupPage/FundYourAgent/FundYourAgent.tsx` — change from `totalTokenRequirements` to refill-based amounts
-- `frontend/hooks/useGetRefillRequirements.ts` — the hook already has access to both; just expose the refill data for display. Also: has `selectedAgentType` in a `useEffect` dependency that resets token requirements — must change to `selectedServiceConfigId`, otherwise switching between same-type instances won't trigger a reset
-- The "Using Your Pearl Wallet Balance" and "Select Payment Method" screens in the new flow should also use `refill_requirements`
-
-**Note:** For new instances, the "dummy service" pattern (created via `onDummyServiceCreation`) gives the service a `service_config_id` immediately, so the backend can compute `refill_requirements` even before the agent starts.
+`SelectStakingButton.resolveFundingRoute` calls `BalanceService.getBalancesAndFundingRequirements` directly with the target service config ID (avoids the timing issue where `selectedService` hasn't propagated yet after `updateSelectedServiceConfigId`).
 
 ### Instance selection after dummy service creation
 
 `onDummyServiceCreation` now returns the `MiddlewareServiceResponse` from the backend. All callers (`SelectStakingButton`, agent form components) follow this pattern:
 1. `const newService = await onDummyServiceCreation(...)` — capture the response
 2. `await refetchServices()` — ensure the new service is in the services list
-3. `updateSelectedInstance(newService.service_config_id)` — select it (clears `pendingAgentType`, derivation works since service is now in the list)
-
-### Implementation Notes
-
-- `FundYourAgent` becomes a multi-step component with internal state tracking which sub-step to show (balance check → payment method → confirm)
-- No new entries needed in `SETUP_SCREEN` enum — the staking page navigates to fund as today, branching is internal to `FundYourAgent`
+3. `updateSelectedServiceConfigId(newService.service_config_id)` — select it (clears `pendingAgentType`, derivation works since service is now in the list)
 
 ---
 
-## Step 5: useAgentRunning — Instance-Aware Running State
+## Step 5: useAgentRunning — Instance-Aware Running State (DONE in PR 3)
 
 **File:** `frontend/hooks/useAgentRunning.ts`
 
 ### Changes:
 
-1. **`runningServiceConfigId`** — derive directly from deployment data, not via `getServiceConfigIdFromAgentType` (which returns first match)
+1. **`runningServiceConfigId`** — now derived directly from deployment data in the same `useMemo` as `runningAgentType`, not via `getServiceConfigIdFromAgentType` (which returned the first match, causing the wrong instance to show the running dot)
 
 2. **`runningAgentType`** stays (derived from running service)
 
@@ -228,7 +223,7 @@ Most complex subsystem change. Multiple files.
 - Two instances of same type = two separate rotation entries
 
 ### 6e. `frontend/context/AutoRunProvider/hooks/useAutoRunController.ts`
-- `updateAgentType` calls → `updateSelectedInstance` calls
+- `updateAgentType` calls → `updateSelectedServiceConfigId` calls
 - Scanner iterates instance configIds, not agent types
 
 ### 6f. Re-key all AgentType-keyed refs to `service_config_id` (CRITICAL)
@@ -309,6 +304,8 @@ These fire on agent-type change but won't fire when switching between instances 
 
 Notification strings currently reference agent type only. Update to include instance name using `{AgentType} agent "{instanceName}"` format, e.g., `Polystrat agent "corzim-vardor96" was skipped`.
 
+Also move some functions outside of the services provider as it is very large file now. 
+
 ---
 
 ## Dependency Order & PR Strategy
@@ -361,7 +358,7 @@ Step 8 (Cleanup)
 
 3. **Auto-run migration** — Users with existing `includedAgents` (AgentType-based) must be migrated to `includedAgentInstances` (serviceConfigId-based) on first load.
 
-4. **Setup flow completion** — After creating a new instance, the new service must be explicitly selected via `updateSelectedInstance(newConfigId)`, not left to the auto-select logic (which would pick the first/existing instance).
+4. **Setup flow completion** — After creating a new instance, the new service must be explicitly selected via `updateSelectedServiceConfigId(newConfigId)`, not left to the auto-select logic (which would pick the first/existing instance).
 
 ---
 
