@@ -54,6 +54,12 @@ jest.mock('../../../hooks', () => ({
   useElectronApi: jest.fn().mockReturnValue({
     showNotification: jest.fn(),
   }),
+  useArchivedAgents: jest.fn().mockReturnValue({
+    archivedInstances: [],
+    isArchived: jest.fn().mockReturnValue(false),
+    archiveInstance: jest.fn(),
+    unarchiveInstance: jest.fn(),
+  }),
 }));
 
 jest.mock('../../../context/AutoRunProvider/hooks/useAutoRunStore', () => ({

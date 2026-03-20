@@ -44,9 +44,11 @@ import {
 } from '@/utils';
 
 import { BackupSeedPhraseAlert } from '../BackupSeedPhraseAlert';
+import { useSidebarAgents } from '../hooks/useSidebarAgents';
 import { UpdateAvailableAlert } from '../UpdateAvailableAlert/UpdateAvailableAlert';
 import { UpdateAvailableModal } from '../UpdateAvailableAlert/UpdateAvailableModal';
 import { AgentTreeMenu } from './AgentTreeMenu';
+import { ArchiveAgentModal } from './ArchiveAgentModal';
 import { AutoRunControl } from './AutoRunControl';
 import { useListFade } from './hooks/useListFade';
 import { SidebarAgentGroup } from './types';
@@ -146,9 +148,16 @@ export const Sidebar = () => {
     updateSelectedServiceConfigId,
     getAgentTypeFromService,
   } = useServices();
-  const { runningServiceConfigId } = useAgentRunning();
   const { isLoading: isMasterWalletLoading } = useMasterWalletContext();
   const { fade, ref: scrollAreaRef } = useListFade();
+
+  const {
+    pendingArchiveInstanceId,
+    setPendingArchiveInstanceId,
+    pendingArchiveInstanceName,
+    handleArchiveConfirm,
+    archivedInstances,
+  } = useSidebarAgents();
 
   const agentGroups = useMemo<SidebarAgentGroup[]>(() => {
     if (!services) return [];
@@ -165,6 +174,10 @@ export const Sidebar = () => {
       if (!agentEntry) continue;
 
       const [agentType, config] = agentEntry;
+
+      // Hide archived instances from the sidebar
+      if (archivedInstances.includes(service.service_config_id)) continue;
+
       if (!groupMap.has(agentType)) {
         groupMap.set(agentType, { agentType, instances: [] });
       }
@@ -194,7 +207,9 @@ export const Sidebar = () => {
       }
       return configIndex(a.agentType) - configIndex(b.agentType);
     });
-  }, [services]);
+  }, [services, archivedInstances]);
+
+  const { runningServiceConfigId } = useAgentRunning();
 
   const runningServiceConfigIds = useMemo(() => {
     const set = new Set<string>();
@@ -301,8 +316,13 @@ export const Sidebar = () => {
                   groups={agentGroups}
                   selectedServiceConfigId={selectedServiceConfigId}
                   runningServiceConfigIds={runningServiceConfigIds}
+                  totalInstanceCount={agentGroups.reduce(
+                    (sum, g) => sum + g.instances.length,
+                    0,
+                  )}
                   onGroupSelect={handleInstanceSelect}
                   onInstanceSelect={handleInstanceSelect}
+                  onArchiveRequest={setPendingArchiveInstanceId}
                 />
               ) : null}
             </AgentListScrollArea>
@@ -337,6 +357,13 @@ export const Sidebar = () => {
           </div>
         </Flex>
       </Sider>
+
+      <ArchiveAgentModal
+        agentName={pendingArchiveInstanceName}
+        open={!!pendingArchiveInstanceId}
+        onConfirm={handleArchiveConfirm}
+        onCancel={() => setPendingArchiveInstanceId(undefined)}
+      />
     </SiderContainer>
   );
 };

@@ -110,8 +110,22 @@ jest.mock('../../../../components/MainPage/Sidebar/AgentTreeMenu', () => ({
   ),
 }));
 
+jest.mock('../../../../components/MainPage/Sidebar/ArchiveAgentModal', () => ({
+  ArchiveAgentModal: () => <div data-testid="archive-modal" />,
+}));
+
 jest.mock('../../../../components/MainPage/Sidebar/AutoRunControl', () => ({
   AutoRunControl: () => <div data-testid="auto-run-control" />,
+}));
+
+jest.mock('../../../../components/MainPage/hooks/useSidebarAgents', () => ({
+  useSidebarAgents: () => ({
+    pendingArchiveInstanceId: undefined,
+    setPendingArchiveInstanceId: jest.fn(),
+    pendingArchiveInstanceName: null,
+    handleArchiveConfirm: jest.fn(),
+    archivedInstances: [],
+  }),
 }));
 
 const mockServiceWithConfig = (
@@ -231,5 +245,10 @@ describe('Sidebar', () => {
 
     render(<Sidebar />);
     expect(screen.queryByTestId('agent-tree-menu')).not.toBeInTheDocument();
+  });
+
+  it('renders archive modal component', () => {
+    render(<Sidebar />);
+    expect(screen.getByTestId('archive-modal')).toBeInTheDocument();
   });
 });

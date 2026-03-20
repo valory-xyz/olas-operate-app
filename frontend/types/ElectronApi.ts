@@ -5,6 +5,8 @@ import { Nullable } from './Util';
 
 type AgentSettings = {
   isInitialFunded: boolean | Record<string, boolean>;
+  /** @deprecated Preserved during migration from boolean → per-service record. */
+  isInitialFundedLegacy?: boolean;
 };
 
 export type ElectronStore = {
@@ -49,6 +51,10 @@ export type ElectronStore = {
     address: Nullable<string>;
     type: BackupWalletType;
   };
+  /** @deprecated Use `archivedInstances` instead. Kept for one-time migration. */
+  archivedAgents?: AgentType[];
+  /** serviceConfigIds of archived instances (hidden from sidebar, restorable). */
+  archivedInstances?: string[];
 };
 
 export type ElectronTrayIconStatus =

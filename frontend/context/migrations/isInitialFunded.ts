@@ -1,18 +1,17 @@
 import { ACTIVE_AGENTS } from '@/config/agents';
-import { AgentType } from '@/constants';
 import { MiddlewareServiceResponse } from '@/types';
 import { ElectronStore } from '@/types/ElectronApi';
 
 type IsInitialFundedWrite = {
-  agentType: AgentType;
   storeKey: string;
-  value: Record<string, boolean>;
+  value: unknown;
 };
 
 /**
  * Helper function for migrating legacy `isInitialFunded: boolean`
  * to `isInitialFunded: { [serviceConfigId]: boolean }`.
  *
+ * Preserves the original boolean in `isInitialFundedLegacy` for rollback safety.
  * Returns the list of store writes to perform (empty if nothing to migrate).
  */
 export const migrateIsInitialFunded = ({
@@ -33,6 +32,12 @@ export const migrateIsInitialFunded = ({
     // if already migrated
     if (typeof isInitialFunded !== 'boolean') continue;
 
+    // Save original boolean for rollback safety
+    writes.push({
+      storeKey: `${agentType}.isInitialFundedLegacy`,
+      value: isInitialFunded,
+    });
+
     const firstMatchingService = services.find(
       (service) =>
         service.service_public_id === config.servicePublicId &&
@@ -41,13 +46,11 @@ export const migrateIsInitialFunded = ({
 
     if (firstMatchingService) {
       writes.push({
-        agentType,
         storeKey: `${agentType}.isInitialFunded`,
         value: { [firstMatchingService.service_config_id]: isInitialFunded },
       });
     } else {
       writes.push({
-        agentType,
         storeKey: `${agentType}.isInitialFunded`,
         value: {},
       });

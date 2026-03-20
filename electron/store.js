@@ -58,6 +58,16 @@ const schema = {
     type: 'object',
     default: { address: null, type: 'manual' },
   },
+
+  // Archived agents (hidden from sidebar, restorable)
+  archivedAgents: {
+    type: 'array',
+    default: [],
+  },
+  archivedInstances: {
+    type: 'array',
+    default: [],
+  },
 };
 
 /**

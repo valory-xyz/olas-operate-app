@@ -1,6 +1,7 @@
-import { Flex, Typography } from 'antd';
+import { Dropdown, Flex, Typography } from 'antd';
 import { useCallback, useState } from 'react';
 import { RiArrowDownSLine, RiArrowRightSLine } from 'react-icons/ri';
+import { TbDots } from 'react-icons/tb';
 import styled from 'styled-components';
 
 import { AgentGroupHeader, TreeLine } from '@/components/ui/AgentTree';
@@ -15,8 +16,10 @@ type AgentTreeMenuProps = {
   groups: SidebarAgentGroup[];
   selectedServiceConfigId: string | null;
   runningServiceConfigIds: Set<string>;
+  totalInstanceCount: number;
   onGroupSelect: (serviceConfigId: string) => void;
   onInstanceSelect: (serviceConfigId: string) => void;
+  onArchiveRequest: (serviceConfigId: string) => void;
 };
 
 const GroupHeader = styled(Flex)`
@@ -42,12 +45,67 @@ const ClickableInstanceRow = styled(Flex)<{ $isSelected: boolean }>`
   }
 `;
 
+/** Hidden by default; revealed when parent row is hovered. */
+const ArchiveMenuButton = styled.span`
+  visibility: hidden;
+  display: flex;
+  align-items: center;
+  padding: 2px 4px;
+  border-radius: 4px;
+  color: ${COLOR.TEXT_NEUTRAL_SECONDARY};
+  ${ClickableInstanceRow}:hover & {
+    visibility: visible;
+  }
+  &:hover {
+    color: ${COLOR.TEXT_NEUTRAL_TERTIARY};
+    background-color: ${COLOR.GRAY_3};
+  }
+`;
+
+type InstanceArchiveDropdownProps = {
+  instanceName: string;
+  serviceConfigId: string;
+  onArchiveRequest: (serviceConfigId: string) => void;
+};
+
+const InstanceArchiveDropdown = ({
+  instanceName,
+  serviceConfigId,
+  onArchiveRequest,
+}: InstanceArchiveDropdownProps) => (
+  <Dropdown
+    trigger={['click']}
+    menu={{
+      items: [
+        {
+          key: 'archive',
+          label: 'Move to archive',
+          onClick: ({ domEvent }) => {
+            domEvent.stopPropagation();
+            onArchiveRequest(serviceConfigId);
+          },
+        },
+      ],
+    }}
+  >
+    <ArchiveMenuButton
+      role="button"
+      aria-label={`Archive ${instanceName}`}
+      onClick={(e) => e.stopPropagation()}
+    >
+      <TbDots size={16} />
+    </ArchiveMenuButton>
+  </Dropdown>
+);
+
 export const AgentTreeMenu = ({
   groups,
   selectedServiceConfigId,
   runningServiceConfigIds,
+  totalInstanceCount,
   onGroupSelect,
   onInstanceSelect,
+  onArchiveRequest,
 }: AgentTreeMenuProps) => {
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(() => {
     if (!selectedServiceConfigId) return new Set();
@@ -56,6 +114,9 @@ export const AgentTreeMenu = ({
     );
     return group ? new Set([group.agentType]) : new Set();
   });
+
+  // Only show archive button if there are at least 2 non-archived instances total
+  const canArchive = totalInstanceCount > 1;
 
   const toggleGroup = useCallback(
     (agentType: string) => {
@@ -71,7 +132,6 @@ export const AgentTreeMenu = ({
 
       if (!expandedGroups.has(agentType)) {
         const group = groups.find((group) => group.agentType === agentType);
-        // Only select first instance if no instance in this group is already selected
         const alreadySelected = group?.instances.some(
           (instance) => instance.serviceConfigId === selectedServiceConfigId,
         );
@@ -118,6 +178,7 @@ export const AgentTreeMenu = ({
                     const isRunning = runningServiceConfigIds.has(
                       instance.serviceConfigId,
                     );
+                    const showArchive = canArchive && !isRunning;
 
                     return (
                       <ClickableInstanceRow
@@ -136,7 +197,15 @@ export const AgentTreeMenu = ({
                         >
                           {instance.name}
                         </Text>
-                        {isRunning && <PulseDot />}
+                        {isRunning ? (
+                          <PulseDot />
+                        ) : showArchive ? (
+                          <InstanceArchiveDropdown
+                            instanceName={instance.name}
+                            serviceConfigId={instance.serviceConfigId}
+                            onArchiveRequest={onArchiveRequest}
+                          />
+                        ) : null}
                       </ClickableInstanceRow>
                     );
                   })}

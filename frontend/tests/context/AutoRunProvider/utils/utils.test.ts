@@ -307,6 +307,31 @@ describe('getEligibleInstances', () => {
     const configured = [DEFAULT_SERVICE_CONFIG_ID, MOCK_SERVICE_CONFIG_ID_2];
     expect(getEligibleInstances(configured, [])).toEqual(configured);
   });
+
+  it('excludes archived instances when passed in the blocked list', () => {
+    const configured = [
+      DEFAULT_SERVICE_CONFIG_ID,
+      MOCK_SERVICE_CONFIG_ID_2,
+      MOCK_SERVICE_CONFIG_ID_3,
+    ];
+    const blocked = [MOCK_SERVICE_CONFIG_ID_2]; // archived
+    const result = getEligibleInstances(configured, blocked);
+    expect(result).toEqual([
+      DEFAULT_SERVICE_CONFIG_ID,
+      MOCK_SERVICE_CONFIG_ID_3,
+    ]);
+  });
+
+  it('excludes both decommissioned and archived instances', () => {
+    const configured = [
+      DEFAULT_SERVICE_CONFIG_ID,
+      MOCK_SERVICE_CONFIG_ID_2,
+      MOCK_SERVICE_CONFIG_ID_3,
+    ];
+    const blocked = [MOCK_SERVICE_CONFIG_ID_2, MOCK_SERVICE_CONFIG_ID_3];
+    const result = getEligibleInstances(configured, blocked);
+    expect(result).toEqual([DEFAULT_SERVICE_CONFIG_ID]);
+  });
 });
 
 describe('getOrderedIncludedInstances', () => {

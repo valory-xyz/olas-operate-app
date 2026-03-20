@@ -1,43 +1,14 @@
-import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
 import { ACTIVE_AGENTS } from '@/config/agents';
-import {
-  FIFTEEN_SECONDS_INTERVAL,
-  FIVE_SECONDS_INTERVAL,
-  isActiveDeploymentStatus,
-  REACT_QUERY_KEYS,
-} from '@/constants';
-import { ServicesService } from '@/service/Services';
+import { isActiveDeploymentStatus } from '@/constants';
 import { isServiceOfAgent } from '@/utils/service';
 
-import { useDynamicRefetchInterval } from './useDynamicRefetchInterval';
-import { useOnlineStatusContext } from './useOnlineStatus';
 import { useServices } from './useServices';
 
 export const useAgentRunning = () => {
-  const { services, selectedService, serviceStatusOverrides } = useServices();
-  const { isOnline } = useOnlineStatusContext();
-  const fastRefetchInterval = useDynamicRefetchInterval(FIVE_SECONDS_INTERVAL);
-  const slowRefetchInterval = useDynamicRefetchInterval(
-    FIFTEEN_SECONDS_INTERVAL,
-  );
-
-  const { data: allDeployments } = useQuery({
-    queryKey: REACT_QUERY_KEYS.ALL_SERVICE_DEPLOYMENTS_KEY,
-    queryFn: ({ signal }) => ServicesService.getAllServiceDeployments(signal),
-    enabled: isOnline && !!services?.length,
-    refetchInterval: (query) => {
-      if (query.state.status !== 'success') return false;
-
-      const hasActiveDeployment = Object.values(query.state.data ?? {}).some(
-        (deployment) => isActiveDeploymentStatus(deployment?.status),
-      );
-
-      return hasActiveDeployment ? fastRefetchInterval : slowRefetchInterval;
-    },
-    refetchIntervalInBackground: true,
-  });
+  const { services, selectedService, allDeployments, serviceStatusOverrides } =
+    useServices();
 
   const isAnotherAgentRunning = useMemo(() => {
     if (!services || !selectedService || !allDeployments) return false;
@@ -72,7 +43,11 @@ export const useAgentRunning = () => {
       return { runningAgentType: null, runningServiceConfigId: null };
 
     for (const service of services) {
-      const status = allDeployments[service.service_config_id]?.status;
+      const overrideStatus =
+        serviceStatusOverrides?.[service.service_config_id];
+      const backendStatus = allDeployments[service.service_config_id]?.status;
+      const status = overrideStatus ?? backendStatus;
+
       if (!isActiveDeploymentStatus(status)) {
         continue;
       }
@@ -90,7 +65,7 @@ export const useAgentRunning = () => {
     }
 
     return { runningAgentType: null, runningServiceConfigId: null };
-  }, [allDeployments, services]);
+  }, [allDeployments, services, serviceStatusOverrides]);
 
   return { isAnotherAgentRunning, runningAgentType, runningServiceConfigId };
 };

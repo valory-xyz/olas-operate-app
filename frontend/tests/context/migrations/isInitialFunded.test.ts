@@ -23,7 +23,7 @@ const serviceFor = (
 ) => makeAgentService(AGENT_CONFIG[agentType], overrides);
 
 describe('migrateIsInitialFunded', () => {
-  it('converts boolean true to per-service record', () => {
+  it('converts boolean true to per-service record and preserves legacy', () => {
     const service = serviceFor(AgentMap.PredictTrader);
     const storeState: ElectronStore = {
       [AgentMap.PredictTrader]: { isInitialFunded: true },
@@ -36,14 +36,17 @@ describe('migrateIsInitialFunded', () => {
 
     expect(writes).toEqual([
       {
-        agentType: AgentMap.PredictTrader,
+        storeKey: `${AgentMap.PredictTrader}.isInitialFundedLegacy`,
+        value: true,
+      },
+      {
         storeKey: `${AgentMap.PredictTrader}.isInitialFunded`,
         value: { [DEFAULT_SERVICE_CONFIG_ID]: true },
       },
     ]);
   });
 
-  it('converts boolean false to per-service record', () => {
+  it('converts boolean false to per-service record and preserves legacy', () => {
     const service = serviceFor(AgentMap.PredictTrader);
     const storeState: ElectronStore = {
       [AgentMap.PredictTrader]: { isInitialFunded: false },
@@ -56,7 +59,10 @@ describe('migrateIsInitialFunded', () => {
 
     expect(writes).toEqual([
       {
-        agentType: AgentMap.PredictTrader,
+        storeKey: `${AgentMap.PredictTrader}.isInitialFundedLegacy`,
+        value: false,
+      },
+      {
         storeKey: `${AgentMap.PredictTrader}.isInitialFunded`,
         value: { [DEFAULT_SERVICE_CONFIG_ID]: false },
       },
@@ -91,8 +97,7 @@ describe('migrateIsInitialFunded', () => {
     expect(writes).toEqual([]);
   });
 
-  it('writes empty record when no matching service exists', () => {
-    // Store has trader settings but services only has optimus
+  it('writes legacy + empty record when no matching service exists', () => {
     const optimusService = serviceFor(AgentMap.Optimus, {
       service_config_id: MOCK_SERVICE_CONFIG_ID_2,
     });
@@ -107,7 +112,10 @@ describe('migrateIsInitialFunded', () => {
 
     expect(writes).toEqual([
       {
-        agentType: AgentMap.PredictTrader,
+        storeKey: `${AgentMap.PredictTrader}.isInitialFundedLegacy`,
+        value: true,
+      },
+      {
         storeKey: `${AgentMap.PredictTrader}.isInitialFunded`,
         value: {},
       },
@@ -129,16 +137,23 @@ describe('migrateIsInitialFunded', () => {
       services: [traderService, optimusService],
     });
 
-    expect(writes).toHaveLength(2);
+    // 2 writes per agent type (legacy + migrated)
+    expect(writes).toHaveLength(4);
     expect(writes).toEqual(
       expect.arrayContaining([
         {
-          agentType: AgentMap.PredictTrader,
+          storeKey: `${AgentMap.PredictTrader}.isInitialFundedLegacy`,
+          value: true,
+        },
+        {
           storeKey: `${AgentMap.PredictTrader}.isInitialFunded`,
           value: { [DEFAULT_SERVICE_CONFIG_ID]: true },
         },
         {
-          agentType: AgentMap.Optimus,
+          storeKey: `${AgentMap.Optimus}.isInitialFundedLegacy`,
+          value: false,
+        },
+        {
           storeKey: `${AgentMap.Optimus}.isInitialFunded`,
           value: { [MOCK_SERVICE_CONFIG_ID_2]: false },
         },
@@ -163,8 +178,13 @@ describe('migrateIsInitialFunded', () => {
       services: [traderService, optimusService],
     });
 
-    // Only trader needs migration, optimus is already a record
-    expect(writes).toHaveLength(1);
-    expect(writes[0].agentType).toBe(AgentMap.PredictTrader);
+    // Only trader needs migration (2 writes: legacy + migrated), optimus is already a record
+    expect(writes).toHaveLength(2);
+    expect(writes[0].storeKey).toBe(
+      `${AgentMap.PredictTrader}.isInitialFundedLegacy`,
+    );
+    expect(writes[1].storeKey).toBe(
+      `${AgentMap.PredictTrader}.isInitialFunded`,
+    );
   });
 });

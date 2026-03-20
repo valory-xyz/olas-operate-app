@@ -82,36 +82,6 @@ describe('static (non-factory) keys', () => {
 
 // ─── Factory keys ─────────────────────────────────────────────────────────────
 
-describe('SERVICE_DEPLOYMENT_STATUS_KEY', () => {
-  it('embeds the service config id in position [1]', () => {
-    const key = REACT_QUERY_KEYS.SERVICE_DEPLOYMENT_STATUS_KEY('my-service-1');
-    expect(key[0]).toBe('serviceStatus');
-    expect(key[1]).toBe('my-service-1');
-  });
-
-  it('falls back to empty string when serviceConfigId is null', () => {
-    const key = REACT_QUERY_KEYS.SERVICE_DEPLOYMENT_STATUS_KEY(null);
-    expect(key[1]).toBe('');
-  });
-
-  it('falls back to empty string when serviceConfigId is undefined', () => {
-    const key = REACT_QUERY_KEYS.SERVICE_DEPLOYMENT_STATUS_KEY(undefined);
-    expect(key[1]).toBe('');
-  });
-
-  it('two calls with the same id produce equal keys', () => {
-    const key1 = REACT_QUERY_KEYS.SERVICE_DEPLOYMENT_STATUS_KEY('svc');
-    const key2 = REACT_QUERY_KEYS.SERVICE_DEPLOYMENT_STATUS_KEY('svc');
-    expect(key1).toEqual(key2);
-  });
-
-  it('two calls with different ids produce different keys', () => {
-    const key1 = REACT_QUERY_KEYS.SERVICE_DEPLOYMENT_STATUS_KEY('svc-1');
-    const key2 = REACT_QUERY_KEYS.SERVICE_DEPLOYMENT_STATUS_KEY('svc-2');
-    expect(key1).not.toEqual(key2);
-  });
-});
-
 describe('STAKING_CONTRACT_DETAILS_BY_STAKING_PROGRAM_KEY', () => {
   it('embeds chainId, serviceConfigId, and stakingProgramId in the key', () => {
     const key =
