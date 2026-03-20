@@ -8,7 +8,6 @@ import {
   Tag,
   Typography,
 } from 'antd';
-import { kebabCase } from 'lodash';
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo } from 'react';
 import {
@@ -19,20 +18,16 @@ import {
 } from 'react-icons/tb';
 import styled from 'styled-components';
 
-import { ACTIVE_AGENTS, AVAILABLE_FOR_ADDING_AGENTS } from '@/config/agents';
-import { CHAIN_CONFIG } from '@/config/chains';
 import {
   AgentType,
   ANTD_BREAKPOINTS,
   COLOR,
-  EvmChainId,
   PAGES,
   Pages,
   SETUP_SCREEN,
   SIDER_WIDTH,
 } from '@/constants';
 import {
-  useAgentRunning,
   useBalanceAndRefillRequirementsContext,
   useMasterWalletContext,
   usePageState,
@@ -41,10 +36,12 @@ import {
 } from '@/hooks';
 
 import { BackupSeedPhraseAlert } from '../BackupSeedPhraseAlert';
+import { useSidebarAgents } from '../hooks/useSidebarAgents';
 import { UpdateAvailableAlert } from '../UpdateAvailableAlert/UpdateAvailableAlert';
 import { UpdateAvailableModal } from '../UpdateAvailableAlert/UpdateAvailableModal';
+import { AgentListMenu } from './AgentListMenu';
+import { ArchiveAgentModal } from './ArchiveAgentModal';
 import { AutoRunControl } from './AutoRunControl';
-import { PulseDot } from './PulseDot';
 
 const { Sider } = Layout;
 const { Text } = Typography;
@@ -118,98 +115,23 @@ const menuItems: MenuProps['items'] = [
   { key: PAGES.Settings, icon: <TbSettings size={20} />, label: 'Settings' },
 ];
 
-type AgentList = {
-  name: string;
-  agentType: AgentType;
-  chainName: string;
-  chainId: EvmChainId;
-}[];
-
-type AgentListMenuProps = {
-  myAgents: AgentList;
-  selectedMenuKeys: (Pages | AgentType)[];
-  onAgentSelect: MenuProps['onClick'];
-};
-const AgentListMenu = ({
-  myAgents,
-  selectedMenuKeys,
-  onAgentSelect,
-}: AgentListMenuProps) => {
-  const { runningAgentType } = useAgentRunning();
-
-  return (
-    <Menu
-      selectedKeys={selectedMenuKeys}
-      mode="inline"
-      inlineIndent={4}
-      onClick={onAgentSelect}
-      items={myAgents.map((agent) => {
-        const isRunning = runningAgentType === agent.agentType;
-        return {
-          key: agent.agentType,
-          className: isRunning ? 'menu-running-agent' : undefined,
-          icon: (
-            <Image
-              key={agent.agentType}
-              src={`/agent-${agent.agentType}-icon.png`}
-              className="rounded-4"
-              alt={agent.name}
-              width={32}
-              height={32}
-            />
-          ),
-          label: (
-            <Flex justify="space-between" align="center">
-              <span>{agent.name}</span>
-              {isRunning ? (
-                <PulseDot />
-              ) : (
-                <Image
-                  src={`/chains/${kebabCase(agent.chainName)}-chain.png`}
-                  alt={`${agent.chainName} logo`}
-                  width={14}
-                  height={14}
-                />
-              )}
-            </Flex>
-          ),
-        };
-      })}
-    />
-  );
-};
-
 export const Sidebar = () => {
   const { goto: gotoSetup } = useSetup();
   const { pageState, goto: gotoPage } = usePageState();
-  const { services, isLoading, selectedAgentType, updateAgentType } =
-    useServices();
-
+  const { isLoading, selectedAgentType, updateAgentType } = useServices();
   const { masterSafes, isLoading: isMasterWalletLoading } =
     useMasterWalletContext();
 
-  const myAgents = useMemo(() => {
-    if (!services) return [];
-    return services.reduce<AgentList>((result, service) => {
-      const agent = ACTIVE_AGENTS.find(
-        ([, agentConfig]) =>
-          agentConfig.servicePublicId === service.service_public_id &&
-          agentConfig.middlewareHomeChainId === service.home_chain,
-      );
-      if (!agent) return result;
+  const {
+    myAgents,
+    pendingArchiveAgent,
+    setPendingArchiveAgent,
+    pendingArchiveAgentName,
+    handleArchiveConfirm,
+    canAddNewAgents,
+  } = useSidebarAgents();
 
-      const [agentType, agentConfig] = agent;
-      if (!agentConfig.evmHomeChainId) return result;
-
-      const chainId = agentConfig.evmHomeChainId;
-      const chainName = CHAIN_CONFIG[chainId].name;
-      const name = agentConfig.displayName;
-      result.push({ name, agentType, chainName, chainId });
-      return result;
-    }, []);
-  }, [services]);
-
-  // if the selectedAgentType is not in myAgents, select the first one
+  // If the selectedAgentType is not in myAgents, select the first one
   useEffect(() => {
     const isSelectedAgentAvailable = myAgents.some(
       (agent) => agent.agentType === selectedAgentType,
@@ -254,16 +176,6 @@ export const Sidebar = () => {
     return [selectedAgentType];
   }, [pageState, selectedAgentType]);
 
-  const canAddNewAgents = useMemo(() => {
-    const availableAgents = myAgents.filter((agent) => {
-      return AVAILABLE_FOR_ADDING_AGENTS.some(
-        ([agentType]) => agentType === agent.agentType,
-      );
-    });
-
-    return availableAgents.length < AVAILABLE_FOR_ADDING_AGENTS.length;
-  }, [myAgents]);
-
   return (
     <SiderContainer>
       <Sider breakpoint={SIDEBAR_BREAKPOINT} theme="light" width={SIDER_WIDTH}>
@@ -285,6 +197,7 @@ export const Sidebar = () => {
                   myAgents={myAgents}
                   selectedMenuKeys={selectedMenuKey}
                   onAgentSelect={handleAgentSelect}
+                  onArchiveRequest={setPendingArchiveAgent}
                 />
               ) : null}
 
@@ -319,6 +232,13 @@ export const Sidebar = () => {
           </div>
         </Flex>
       </Sider>
+
+      <ArchiveAgentModal
+        agentName={pendingArchiveAgentName}
+        open={!!pendingArchiveAgent}
+        onConfirm={handleArchiveConfirm}
+        onCancel={() => setPendingArchiveAgent(undefined)}
+      />
     </SiderContainer>
   );
 };
