@@ -8,7 +8,7 @@ import {
   useState,
 } from 'react';
 
-import { useElectronApi, useServices } from '@/hooks';
+import { useArchivedAgents, useElectronApi, useServices } from '@/hooks';
 
 import {
   DISABLE_RACE_STOP_CHECK_INTERVAL_MS,
@@ -76,9 +76,24 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
     () => getDecommissionedInstances(configuredAgents),
     [configuredAgents],
   );
+  const { archivedAgents } = useArchivedAgents();
+
+  // Instances belonging to archived agent types should also be excluded
+  const archivedInstances = useMemo(
+    () =>
+      configuredAgents
+        .filter((agent) => archivedAgents.includes(agent.agentType))
+        .map((agent) => agent.serviceConfigId),
+    [configuredAgents, archivedAgents],
+  );
+
   const eligibleInstances = useMemo(
-    () => getEligibleInstances(configuredInstances, decommissionedInstances),
-    [configuredInstances, decommissionedInstances],
+    () =>
+      getEligibleInstances(configuredInstances, [
+        ...decommissionedInstances,
+        ...archivedInstances,
+      ]),
+    [configuredInstances, decommissionedInstances, archivedInstances],
   );
   const includedInstancesSorted = useMemo(
     () =>

@@ -44,9 +44,11 @@ import {
 } from '@/utils';
 
 import { BackupSeedPhraseAlert } from '../BackupSeedPhraseAlert';
+import { useSidebarAgents } from '../hooks/useSidebarAgents';
 import { UpdateAvailableAlert } from '../UpdateAvailableAlert/UpdateAvailableAlert';
 import { UpdateAvailableModal } from '../UpdateAvailableAlert/UpdateAvailableModal';
 import { AgentTreeMenu } from './AgentTreeMenu';
+import { ArchiveAgentModal } from './ArchiveAgentModal';
 import { AutoRunControl } from './AutoRunControl';
 import { useListFade } from './hooks/useListFade';
 import { SidebarAgentGroup } from './types';
@@ -146,9 +148,16 @@ export const Sidebar = () => {
     updateSelectedServiceConfigId,
     getAgentTypeFromService,
   } = useServices();
-  const { runningServiceConfigId } = useAgentRunning();
   const { isLoading: isMasterWalletLoading } = useMasterWalletContext();
   const { fade, ref: scrollAreaRef } = useListFade();
+
+  const {
+    pendingArchiveAgent,
+    setPendingArchiveAgent,
+    pendingArchiveAgentName,
+    handleArchiveConfirm,
+    archivedAgents,
+  } = useSidebarAgents();
 
   const agentGroups = useMemo<SidebarAgentGroup[]>(() => {
     if (!services) return [];
@@ -165,6 +174,10 @@ export const Sidebar = () => {
       if (!agentEntry) continue;
 
       const [agentType, config] = agentEntry;
+
+      // Hide archived agents from the sidebar
+      if (archivedAgents.includes(agentType)) continue;
+
       if (!groupMap.has(agentType)) {
         groupMap.set(agentType, { agentType, instances: [] });
       }
@@ -194,7 +207,9 @@ export const Sidebar = () => {
       }
       return configIndex(a.agentType) - configIndex(b.agentType);
     });
-  }, [services]);
+  }, [services, archivedAgents]);
+
+  const { runningServiceConfigId } = useAgentRunning();
 
   const runningServiceConfigIds = useMemo(() => {
     const set = new Set<string>();
@@ -337,6 +352,13 @@ export const Sidebar = () => {
           </div>
         </Flex>
       </Sider>
+
+      <ArchiveAgentModal
+        agentName={pendingArchiveAgentName}
+        open={!!pendingArchiveAgent}
+        onConfirm={handleArchiveConfirm}
+        onCancel={() => setPendingArchiveAgent(undefined)}
+      />
     </SiderContainer>
   );
 };

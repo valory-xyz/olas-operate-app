@@ -188,6 +188,9 @@ To test with a custom service hash:
 - All agents communicate through the Python middleware layer
 - Services interact with blockchain via ethers.js (v5.8.0)
 
+## Code Style
+- Never use `// eslint-disable-next-line`. Fix the code instead.
+
 ## Plans
 - Make the plan extremely concise. Sacrifice grammar for the sake of concision.
 - At the end of each plan, give me a list of unresolved questions to answer, if any.

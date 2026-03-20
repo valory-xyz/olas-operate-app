@@ -7,7 +7,12 @@ import { AGENT_CONFIG } from '../../config/agents';
 import { AgentMap, AgentType } from '../../constants/agent';
 import { EvmChainIdMap, MiddlewareChainMap } from '../../constants/chains';
 import { MiddlewareDeploymentStatusMap } from '../../constants/deployment';
+import {
+  FIFTEEN_SECONDS_INTERVAL,
+  FIVE_SECONDS_INTERVAL,
+} from '../../constants/intervals';
 import { PAGES } from '../../constants/pages';
+import { REACT_QUERY_KEYS } from '../../constants/reactQueryKeys';
 import { WALLET_OWNER, WALLET_TYPE } from '../../constants/wallet';
 import { OnlineStatusContext } from '../../context/OnlineStatusProvider';
 import {
@@ -51,7 +56,7 @@ const mockGetServicesValidationStatus = jest.fn<
   Promise<ServiceValidationResponse>,
   [AbortSignal?]
 >();
-const mockGetDeployment = jest.fn();
+const mockGetAllServiceDeployments = jest.fn();
 
 jest.mock('../../service/Services', () => ({
   ServicesService: {
@@ -59,7 +64,8 @@ jest.mock('../../service/Services', () => ({
       mockGetServices(args[0] as AbortSignal),
     getServicesValidationStatus: (...args: unknown[]) =>
       mockGetServicesValidationStatus(args[0] as AbortSignal),
-    getDeployment: (...args: unknown[]) => mockGetDeployment(args[0]),
+    getAllServiceDeployments: (...args: unknown[]) =>
+      mockGetAllServiceDeployments(args[0]),
   },
 }));
 
@@ -118,7 +124,7 @@ const createWrapper = ({ isOnline = true }: WrapperOpts = {}) => {
       ),
     );
   }
-  return Wrapper;
+  return Object.assign(Wrapper, { queryClient });
 };
 
 // ── Tests ──────────────────────────────────────────────────────────────
@@ -130,11 +136,7 @@ describe('ServicesProvider', () => {
     mockPageState = PAGES.Setup;
     mockGetServices.mockResolvedValue([]);
     mockGetServicesValidationStatus.mockResolvedValue({});
-    mockGetDeployment.mockResolvedValue({
-      status: MiddlewareDeploymentStatusMap.STOPPED,
-      nodes: { agent: [], tendermint: [] },
-      healthcheck: {},
-    });
+    mockGetAllServiceDeployments.mockResolvedValue({});
   });
 
   describe('default context values', () => {
@@ -786,10 +788,12 @@ describe('ServicesProvider', () => {
     it('overrides the selected service deployment status', async () => {
       const traderService = serviceFor(AgentMap.PredictTrader);
       mockGetServices.mockResolvedValue([traderService]);
-      mockGetDeployment.mockResolvedValue({
-        status: MiddlewareDeploymentStatusMap.STOPPED,
-        nodes: { agent: [], tendermint: [] },
-        healthcheck: {},
+      mockGetAllServiceDeployments.mockResolvedValue({
+        [traderService.service_config_id]: {
+          status: MiddlewareDeploymentStatusMap.STOPPED,
+          nodes: { agent: [], tendermint: [] },
+          healthcheck: {},
+        },
       });
 
       const wrapper = createWrapper();
@@ -818,10 +822,12 @@ describe('ServicesProvider', () => {
     it('clears override when set to undefined', async () => {
       const traderService = serviceFor(AgentMap.PredictTrader);
       mockGetServices.mockResolvedValue([traderService]);
-      mockGetDeployment.mockResolvedValue({
-        status: MiddlewareDeploymentStatusMap.DEPLOYED,
-        nodes: { agent: [], tendermint: [] },
-        healthcheck: {},
+      mockGetAllServiceDeployments.mockResolvedValue({
+        [traderService.service_config_id]: {
+          status: MiddlewareDeploymentStatusMap.DEPLOYED,
+          nodes: { agent: [], tendermint: [] },
+          healthcheck: {},
+        },
       });
 
       const wrapper = createWrapper();
@@ -1142,15 +1148,16 @@ describe('ServicesProvider', () => {
   // ─── Deployment details ────────────────────────────────────────────
 
   describe('deploymentDetails', () => {
-    it('fetches deployment when a service is selected', async () => {
+    it('derives deployment details from allDeployments for the selected service', async () => {
       const traderService = serviceFor(AgentMap.PredictTrader);
       mockGetServices.mockResolvedValue([traderService]);
-      const mockDeployment = {
-        status: MiddlewareDeploymentStatusMap.DEPLOYED,
-        nodes: { agent: [], tendermint: [] },
-        healthcheck: {},
-      };
-      mockGetDeployment.mockResolvedValue(mockDeployment);
+      mockGetAllServiceDeployments.mockResolvedValue({
+        [traderService.service_config_id]: {
+          status: MiddlewareDeploymentStatusMap.DEPLOYED,
+          nodes: { agent: [], tendermint: [] },
+          healthcheck: {},
+        },
+      });
 
       const wrapper = createWrapper();
       const { result } = renderHook(() => useContext(ServicesContext), {
@@ -1165,35 +1172,10 @@ describe('ServicesProvider', () => {
       });
     });
 
-    it('uses fast refetch interval for transitioning deployment status', async () => {
-      const traderService = serviceFor(AgentMap.PredictTrader);
-      mockGetServices.mockResolvedValue([traderService]);
-      mockGetDeployment.mockResolvedValue({
-        status: MiddlewareDeploymentStatusMap.DEPLOYING,
-        nodes: { agent: [], tendermint: [] },
-        healthcheck: {},
-      });
-
-      const wrapper = createWrapper();
-      const { result } = renderHook(() => useContext(ServicesContext), {
-        wrapper,
-      });
-
-      await waitFor(() => {
-        expect(result.current.deploymentDetails).toBeDefined();
-        expect(result.current.deploymentDetails?.status).toBe(
-          MiddlewareDeploymentStatusMap.DEPLOYING,
-        );
-      });
-
-      // The refetchInterval callback is invoked by react-query and should
-      // return the fast interval for transitioning statuses (DEPLOYING).
-      // We verify the deployment was fetched with the transitioning status.
-      expect(mockGetDeployment).toHaveBeenCalled();
-    });
-
-    it('does not fetch deployment when no services exist', async () => {
-      mockGetServices.mockResolvedValue([]);
+    it('auto-selects the only available service when no prior selection exists', async () => {
+      // Only Optimus exists; multi-instance auto-selects it
+      const optimusService = serviceFor(AgentMap.Optimus);
+      mockGetServices.mockResolvedValue([optimusService]);
 
       const wrapper = createWrapper();
       const { result } = renderHook(() => useContext(ServicesContext), {
@@ -1204,14 +1186,14 @@ describe('ServicesProvider', () => {
         expect(result.current.isFetched).toBe(true);
       });
 
-      // Give time for potential deployment fetch
+      // Give time for selection migration
       await act(async () => {
         await new Promise((r) => setTimeout(r, 50));
       });
 
-      // Should not call getDeployment since no service exists
-      expect(result.current.selectedService).toBeUndefined();
-      expect(mockGetDeployment).not.toHaveBeenCalled();
+      // Multi-instance branch auto-selects the only available service
+      expect(result.current.selectedService).toBeDefined();
+      expect(result.current.selectedAgentType).toBe(AgentMap.Optimus);
     });
   });
 
@@ -1221,10 +1203,12 @@ describe('ServicesProvider', () => {
     it('merges deployment status from deploymentDetails', async () => {
       const traderService = serviceFor(AgentMap.PredictTrader);
       mockGetServices.mockResolvedValue([traderService]);
-      mockGetDeployment.mockResolvedValue({
-        status: MiddlewareDeploymentStatusMap.DEPLOYED,
-        nodes: { agent: [], tendermint: [] },
-        healthcheck: {},
+      mockGetAllServiceDeployments.mockResolvedValue({
+        [traderService.service_config_id]: {
+          status: MiddlewareDeploymentStatusMap.DEPLOYED,
+          nodes: { agent: [], tendermint: [] },
+          healthcheck: {},
+        },
       });
 
       const wrapper = createWrapper();
@@ -1242,10 +1226,12 @@ describe('ServicesProvider', () => {
     it('prefers status override over deploymentDetails', async () => {
       const traderService = serviceFor(AgentMap.PredictTrader);
       mockGetServices.mockResolvedValue([traderService]);
-      mockGetDeployment.mockResolvedValue({
-        status: MiddlewareDeploymentStatusMap.DEPLOYED,
-        nodes: { agent: [], tendermint: [] },
-        healthcheck: {},
+      mockGetAllServiceDeployments.mockResolvedValue({
+        [traderService.service_config_id]: {
+          status: MiddlewareDeploymentStatusMap.DEPLOYED,
+          nodes: { agent: [], tendermint: [] },
+          healthcheck: {},
+        },
       });
 
       const wrapper = createWrapper();
@@ -1389,10 +1375,10 @@ describe('ServicesProvider', () => {
         AgentMap.PredictTrader,
       );
       expect(traderInstances).toHaveLength(2);
-      // Sorted lexicographically by service_config_id
+      // Sorted by creation time; both have empty hash_history so insertion order is preserved
       expect(traderInstances.map((s) => s.service_config_id)).toEqual([
-        MOCK_SERVICE_CONFIG_ID_2,
         DEFAULT_SERVICE_CONFIG_ID,
+        MOCK_SERVICE_CONFIG_ID_2,
       ]);
     });
 
@@ -1429,6 +1415,108 @@ describe('ServicesProvider', () => {
       expect(
         result.current.getInstancesOfAgentType(AgentMap.PredictTrader),
       ).toEqual([]);
+    });
+  });
+
+  // ─── allDeployments polling interval ──────────────────────────────
+
+  describe('allDeployments polling interval', () => {
+    /** Evaluate the current refetchInterval for the allDeployments query. */
+    const getDeploymentsRefetchInterval = (
+      queryClient: ReturnType<typeof createTestQueryClient>,
+    ) => {
+      const query = queryClient.getQueryCache().find({
+        queryKey: REACT_QUERY_KEYS.ALL_SERVICE_DEPLOYMENTS_KEY,
+      });
+      expect(query).toBeDefined();
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const opts = query!.options as any;
+      return typeof opts.refetchInterval === 'function'
+        ? opts.refetchInterval(query!)
+        : opts.refetchInterval;
+    };
+
+    it('uses fast interval when backend reports an active deployment', async () => {
+      const traderService = serviceFor(AgentMap.PredictTrader);
+      mockGetServices.mockResolvedValue([traderService]);
+      mockGetAllServiceDeployments.mockResolvedValue({
+        [traderService.service_config_id]: {
+          status: MiddlewareDeploymentStatusMap.DEPLOYED,
+          nodes: { agent: [], tendermint: [] },
+          healthcheck: {},
+        },
+      });
+
+      const wrapper = createWrapper();
+      const { result } = renderHook(() => useContext(ServicesContext), {
+        wrapper,
+      });
+
+      await waitFor(() => {
+        expect(result.current.allDeployments).toBeDefined();
+      });
+
+      expect(getDeploymentsRefetchInterval(wrapper.queryClient)).toBe(
+        FIVE_SECONDS_INTERVAL,
+      );
+    });
+
+    it('uses slow interval when all backend deployments are stopped', async () => {
+      const traderService = serviceFor(AgentMap.PredictTrader);
+      mockGetServices.mockResolvedValue([traderService]);
+      mockGetAllServiceDeployments.mockResolvedValue({
+        [traderService.service_config_id]: {
+          status: MiddlewareDeploymentStatusMap.STOPPED,
+          nodes: { agent: [], tendermint: [] },
+          healthcheck: {},
+        },
+      });
+
+      const wrapper = createWrapper();
+      const { result } = renderHook(() => useContext(ServicesContext), {
+        wrapper,
+      });
+
+      await waitFor(() => {
+        expect(result.current.allDeployments).toBeDefined();
+      });
+
+      expect(getDeploymentsRefetchInterval(wrapper.queryClient)).toBe(
+        FIFTEEN_SECONDS_INTERVAL,
+      );
+    });
+
+    it('uses fast interval when override indicates active status even if backend is stopped', async () => {
+      const traderService = serviceFor(AgentMap.PredictTrader);
+      mockGetServices.mockResolvedValue([traderService]);
+      mockGetAllServiceDeployments.mockResolvedValue({
+        [traderService.service_config_id]: {
+          status: MiddlewareDeploymentStatusMap.STOPPED,
+          nodes: { agent: [], tendermint: [] },
+          healthcheck: {},
+        },
+      });
+
+      const wrapper = createWrapper();
+      const { result } = renderHook(() => useContext(ServicesContext), {
+        wrapper,
+      });
+
+      await waitFor(() => {
+        expect(result.current.allDeployments).toBeDefined();
+      });
+
+      // Set an override to DEPLOYING while backend still says STOPPED
+      act(() => {
+        result.current.overrideSelectedServiceStatus(
+          MiddlewareDeploymentStatusMap.DEPLOYING,
+        );
+      });
+
+      expect(getDeploymentsRefetchInterval(wrapper.queryClient)).toBe(
+        FIVE_SECONDS_INTERVAL,
+      );
     });
   });
 });

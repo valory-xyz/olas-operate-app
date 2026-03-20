@@ -49,6 +49,7 @@ export type ElectronStore = {
     address: Nullable<string>;
     type: BackupWalletType;
   };
+  archivedAgents?: AgentType[];
 };
 
 export type ElectronTrayIconStatus =

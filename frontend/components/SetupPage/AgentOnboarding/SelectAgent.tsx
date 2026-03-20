@@ -1,16 +1,24 @@
 import { Flex, Typography } from 'antd';
-import { isEmpty } from 'lodash';
 import Image from 'next/image';
 import { useMemo } from 'react';
 import { LuConstruction } from 'react-icons/lu';
 import styled from 'styled-components';
 
-import { BackButton } from '@/components/ui';
 import { ACTIVE_AGENTS } from '@/config/agents';
-import { AgentType, COLOR, PAGES } from '@/constants';
-import { usePageState, useServices } from '@/hooks';
+import { AgentType, COLOR } from '@/constants';
+import { useArchivedAgents, useServices } from '@/hooks';
+import { AgentConfig } from '@/types';
 
-const { Text, Title } = Typography;
+import { ArchivedAgentsList } from './ArchivedAgentsList';
+
+const { Text } = Typography;
+
+export const AGENT_TAB = {
+  New: 'new',
+  Archived: 'archived',
+} as const;
+
+type AgentTab = (typeof AGENT_TAB)[keyof typeof AGENT_TAB];
 
 const AgentSelectionContainer = styled(Flex)<{ active?: boolean }>`
   padding: 12px 24px;
@@ -35,26 +43,6 @@ const InstanceTag = styled(Flex)`
   border: 1px solid ${COLOR.GRAY_3};
   border-radius: 6px;
 `;
-
-const SelectYourAgent = ({ canGoBack }: { canGoBack: boolean }) => {
-  const { goto } = usePageState();
-  return (
-    <Flex
-      vertical
-      gap={16}
-      className="p-24"
-      style={{ borderBottom: `1px solid ${COLOR.GRAY_4}` }}
-    >
-      {canGoBack && <BackButton onPrev={() => goto(PAGES.Main)} />}
-      <Title level={3} className="m-0">
-        Select Agent
-      </Title>
-      <Text type="secondary">
-        Review and select the AI agent you&apos;d like to add or restore.
-      </Text>
-    </Flex>
-  );
-};
 
 type InstanceCountProps = {
   count: number;
@@ -82,46 +70,59 @@ const SelectYourAgentList = ({
   selectedAgent,
 }: SelectYourAgentListProps) => {
   const { getInstancesOfAgentType } = useServices();
+  const { archivedAgents } = useArchivedAgents();
 
-  const agents = useMemo(
-    () =>
-      // Sorted with under-construction at the end
-      [...ACTIVE_AGENTS].sort(([, agentA], [, agentB]) => {
-        if (agentA.isUnderConstruction === agentB.isUnderConstruction) return 0;
-        return agentA.isUnderConstruction ? 1 : -1;
-      }),
-    [],
-  );
-
-  return agents.map(([agentType, agentConfig]) => {
-    const instanceCount = getInstancesOfAgentType(agentType).length;
+  const agents = useMemo(() => {
+    const isNotArchived = ([agentType]: [string, AgentConfig]) =>
+      !archivedAgents.includes(agentType as AgentType);
 
     return (
-      <AgentSelectionContainer
-        key={agentType}
-        active={selectedAgent === agentType}
-        onClick={() => onSelectYourAgent(agentType as AgentType)}
-        gap={12}
-        align="center"
-      >
-        <Image
-          src={`/agent-${agentType}-icon.png`}
-          alt={`${agentConfig.displayName} icon`}
-          width={36}
-          height={36}
-          style={{ borderRadius: 8, border: `1px solid ${COLOR.GRAY_3}` }}
-        />
-        <Text style={{ flex: 1 }}>{agentConfig.displayName}</Text>
-        <InstanceCount count={instanceCount} />
-        {agentConfig.isUnderConstruction && <UnderConstructionIcon />}
-      </AgentSelectionContainer>
+      [...ACTIVE_AGENTS]
+        .filter(isNotArchived)
+        // Sorted with under-construction at the end
+        .sort(([, agentA], [, agentB]) => {
+          if (agentA.isUnderConstruction === agentB.isUnderConstruction)
+            return 0;
+          return agentA.isUnderConstruction ? 1 : -1;
+        })
     );
-  });
+  }, [archivedAgents]);
+
+  return (
+    <>
+      {agents.map(([agentType, agentConfig]) => {
+        const instanceCount = getInstancesOfAgentType(agentType).length;
+
+        return (
+          <AgentSelectionContainer
+            key={agentType}
+            active={selectedAgent === agentType}
+            onClick={() => onSelectYourAgent(agentType as AgentType)}
+            gap={12}
+            align="center"
+          >
+            <Image
+              src={`/agent-${agentType}-icon.png`}
+              alt={`${agentConfig.displayName} icon`}
+              width={36}
+              height={36}
+              style={{ borderRadius: 8, border: `1px solid ${COLOR.GRAY_3}` }}
+            />
+            <Text style={{ flex: 1 }}>{agentConfig.displayName}</Text>
+            <InstanceCount count={instanceCount} />
+            {agentConfig.isUnderConstruction && <UnderConstructionIcon />}
+          </AgentSelectionContainer>
+        );
+      })}
+    </>
+  );
 };
 
 type SelectAgentProps = {
   selectedAgent?: AgentType;
+  activeTab: AgentTab;
   onSelectYourAgent: (agentType: AgentType) => void;
+  onSelectArchivedAgent: (agentType: AgentType) => void;
 };
 
 /**
@@ -129,17 +130,23 @@ type SelectAgentProps = {
  */
 export const SelectAgent = ({
   selectedAgent,
+  activeTab,
   onSelectYourAgent,
+  onSelectArchivedAgent,
 }: SelectAgentProps) => {
-  const { services } = useServices();
-
   return (
     <>
-      <SelectYourAgent canGoBack={!isEmpty(services)} />
-      <SelectYourAgentList
-        onSelectYourAgent={onSelectYourAgent}
-        selectedAgent={selectedAgent}
-      />
+      {activeTab === AGENT_TAB.New ? (
+        <SelectYourAgentList
+          onSelectYourAgent={onSelectYourAgent}
+          selectedAgent={selectedAgent}
+        />
+      ) : (
+        <ArchivedAgentsList
+          selectedAgent={selectedAgent}
+          onSelectAgent={onSelectArchivedAgent}
+        />
+      )}
     </>
   );
 };
