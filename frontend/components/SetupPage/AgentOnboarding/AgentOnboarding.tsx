@@ -66,10 +66,10 @@ const SelectYourAgent = ({ canGoBack }: { canGoBack: boolean }) => {
   return (
     <Flex vertical gap={12}>
       {canGoBack && <BackButton onPrev={() => goto(PAGES.Main)} />}
-      <Title level={3} className='m-0'>
+      <Title level={3} className="m-0">
         Select Agent
       </Title>
-      <Text type='secondary'>
+      <Text type="secondary">
         Review and select the AI agent you&apos;d like to add or restore.
       </Text>
     </Flex>
@@ -78,15 +78,15 @@ const SelectYourAgent = ({ canGoBack }: { canGoBack: boolean }) => {
 
 type BlockButtonProps = { text: string; onClick: () => void };
 const BlockButton = ({ text, onClick }: BlockButtonProps) => (
-  <Button onClick={onClick} type='primary' block size='large'>
+  <Button onClick={onClick} type="primary" block size="large">
     {text}
   </Button>
 );
 
 const GeoLocationRestrictionLoading = () => (
   <Flex
-    align='center'
-    justify='center'
+    align="center"
+    justify="center"
     style={{ width: '100%', height: '100%' }}
   >
     <Spin />
@@ -96,15 +96,15 @@ const GeoLocationRestrictionLoading = () => (
 const GeoLocationRestrictionCouldNotLoad = () => (
   <Flex
     vertical
-    align='center'
-    justify='center'
+    align="center"
+    justify="center"
     gap={16}
-    className='p-24 text-center'
+    className="p-24 text-center"
   >
-    <Title level={4} className='m-0'>
+    <Title level={4} className="m-0">
       Something went wrong
     </Title>
-    <Text className='text-neutral-tertiary'>
+    <Text className="text-neutral-tertiary">
       Something went wrong while checking your region eligibility. Please try
       again.
     </Text>
@@ -249,7 +249,7 @@ export const AgentOnboarding = () => {
             selectedArchivedInstanceId
               ? () => (
                   <BlockButton
-                    text='Restore Agent'
+                    text="Restore Agent"
                     onClick={handleRestoreInstance}
                   />
                 )
@@ -280,7 +280,7 @@ export const AgentOnboarding = () => {
         renderAgentSelection={
           canSelectAgent
             ? () => (
-                <BlockButton text='Select Agent' onClick={handleAgentSelect} />
+                <BlockButton text="Select Agent" onClick={handleAgentSelect} />
               )
             : undefined
         }
@@ -315,13 +315,13 @@ export const AgentOnboarding = () => {
                 setSelectedAgent(undefined);
                 setSelectedArchivedInstanceId(undefined);
               }}
-              size='large'
+              size="large"
             />
           </Flex>
         )}
 
         <Container>
-          <Flex vertical className='agent-selection-left-content'>
+          <Flex vertical className="agent-selection-left-content">
             <SelectAgent
               onSelectYourAgent={handleSelectYourAgent}
               onSelectArchivedInstance={handleSelectArchivedInstance}
@@ -331,7 +331,7 @@ export const AgentOnboarding = () => {
             />
           </Flex>
 
-          <Flex className='agent-selection-right-content'>
+          <Flex className="agent-selection-right-content">
             {rightPanelContent}
           </Flex>
         </Container>

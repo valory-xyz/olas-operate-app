@@ -5,6 +5,8 @@ import { Nullable } from './Util';
 
 type AgentSettings = {
   isInitialFunded: boolean | Record<string, boolean>;
+  /** @deprecated Preserved during migration from boolean → per-service record. */
+  isInitialFundedLegacy?: boolean;
 };
 
 export type ElectronStore = {

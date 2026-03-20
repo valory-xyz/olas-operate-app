@@ -13,6 +13,17 @@ import {
 
 jest.mock('../../../../constants/providers', () => ({}));
 
+jest.mock('../../../../utils', () => ({
+  getServiceInstanceName: (_service: unknown, displayName: string) =>
+    `My ${displayName}`,
+  isServiceOfAgent: (
+    service: { service_public_id: string; home_chain: number },
+    config: { servicePublicId: string; middlewareHomeChainId: number },
+  ) =>
+    service.service_public_id === config.servicePublicId &&
+    service.home_chain === config.middlewareHomeChainId,
+}));
+
 // ---------------------------------------------------------------------------
 // Config mocks
 // ---------------------------------------------------------------------------
@@ -197,12 +208,14 @@ describe('useSidebarAgents', () => {
       expect(result.current.pendingArchiveInstanceName).toBe('');
     });
 
-    it('returns the service config id when pending instance exists', () => {
+    it('returns formatted name when pending instance exists', () => {
       const { result } = renderHook(() => useSidebarAgents());
       act(() => {
         result.current.setPendingArchiveInstanceId('sc-1');
       });
-      expect(result.current.pendingArchiveInstanceName).toBe('sc-1');
+      expect(result.current.pendingArchiveInstanceName).toBe(
+        'My Agents.fun (Agents.fun)',
+      );
     });
 
     it('returns empty string when pending instance is not in services', () => {
@@ -223,7 +236,14 @@ describe('useSidebarAgents', () => {
       expect(mockStoreSet).not.toHaveBeenCalled();
     });
 
-    it('writes updated archivedInstances to store', () => {
+    it('calls archiveInstance with the pending id', () => {
+      const mockArchive = jest.fn();
+      mockUseArchivedAgents.mockReturnValue({
+        archivedInstances: [],
+        isArchived: () => false,
+        archiveInstance: mockArchive,
+        unarchiveInstance: jest.fn(),
+      });
       const { result } = renderHook(() => useSidebarAgents());
       act(() => {
         result.current.setPendingArchiveInstanceId('sc-1');
@@ -231,7 +251,7 @@ describe('useSidebarAgents', () => {
       act(() => {
         result.current.handleArchiveConfirm();
       });
-      expect(mockStoreSet).toHaveBeenCalledWith('archivedInstances', ['sc-1']);
+      expect(mockArchive).toHaveBeenCalledWith('sc-1');
     });
 
     it('clears pendingArchiveInstanceId after confirm', () => {
@@ -307,46 +327,40 @@ describe('useSidebarAgents', () => {
   });
 
   describe('immediate hide on archive', () => {
-    it('hides instance immediately on archive confirm', () => {
-      defaultSetup({ selectedServiceConfigId: 'sc-2' });
+    it('filters out archived instances from active list', () => {
+      defaultSetup({ archivedInstances: ['sc-1'] });
       const { result } = renderHook(() => useSidebarAgents());
-
-      expect(result.current.activeServiceConfigIds).toHaveLength(2);
-
-      act(() => {
-        result.current.setPendingArchiveInstanceId('sc-1');
-      });
-      act(() => {
-        result.current.handleArchiveConfirm();
-      });
-
       expect(result.current.activeServiceConfigIds).not.toContain('sc-1');
+      expect(result.current.activeServiceConfigIds).toEqual(['sc-2']);
     });
 
-    it('seeds archivedInstances from store when store loads after initial render', () => {
-      mockUseStore.mockReturnValue({
-        storeState: { archivedInstances: undefined },
-      } as unknown as ReturnType<typeof useStore>);
-
+    it('reflects changes when useArchivedAgents updates', () => {
+      defaultSetup();
       const { result, rerender } = renderHook(() => useSidebarAgents());
       expect(result.current.activeServiceConfigIds).toHaveLength(2);
 
-      mockUseStore.mockReturnValue({
-        storeState: { archivedInstances: ['sc-1'] },
-      } as unknown as ReturnType<typeof useStore>);
+      mockUseArchivedAgents.mockReturnValue({
+        archivedInstances: ['sc-1'],
+        isArchived: (id: string) => id === 'sc-1',
+        archiveInstance: jest.fn(),
+        unarchiveInstance: jest.fn(),
+      });
       rerender();
 
       expect(result.current.activeServiceConfigIds).not.toContain('sc-1');
     });
 
-    it('reflects restore (unarchive) written externally to store', () => {
+    it('reflects restore when archived list empties', () => {
       defaultSetup({ archivedInstances: ['sc-1'] });
       const { result, rerender } = renderHook(() => useSidebarAgents());
       expect(result.current.activeServiceConfigIds).toHaveLength(1);
 
-      mockUseStore.mockReturnValue({
-        storeState: { archivedInstances: [] },
-      } as unknown as ReturnType<typeof useStore>);
+      mockUseArchivedAgents.mockReturnValue({
+        archivedInstances: [],
+        isArchived: () => false,
+        archiveInstance: jest.fn(),
+        unarchiveInstance: jest.fn(),
+      });
       rerender();
 
       expect(result.current.activeServiceConfigIds).toHaveLength(2);
