@@ -68,15 +68,15 @@ export const useSidebarAgents = () => {
   ]);
 
   const pendingArchiveInstanceName = useMemo(() => {
-    if (!pendingArchiveInstanceId || !services) return '';
+    if (!pendingArchiveInstanceId || !services) return null;
     const service = services.find(
       (s) => s.service_config_id === pendingArchiveInstanceId,
     );
-    if (!service) return '';
+    if (!service) return null;
     const agentEntry = ACTIVE_AGENTS.find(([, config]) =>
       isServiceOfAgent(service, config),
     );
-    if (!agentEntry) return '';
+    if (!agentEntry) return null;
     const [, config] = agentEntry;
     const instanceName = getServiceInstanceName(
       service,

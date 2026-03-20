@@ -31,31 +31,34 @@ export const useArchivedAgents = () => {
     if (!services || services.length === 0) return;
 
     const legacyArchived = storeState?.archivedAgents;
-    if (!legacyArchived || legacyArchived.length === 0) return;
-
-    // Only migrate if archivedInstances is empty (first migration)
-    if (
-      storeState?.archivedInstances &&
-      storeState.archivedInstances.length > 0
-    )
+    if (!legacyArchived || legacyArchived.length === 0) {
+      hasMigrated.current = true;
       return;
+    }
 
     hasMigrated.current = true;
 
-    const migratedIds: string[] = [];
-    for (const agentType of legacyArchived) {
-      const config = AGENT_CONFIG[agentType];
-      if (!config) continue;
-      const matching = services.filter((s) => isServiceOfAgent(s, config));
-      for (const svc of matching) {
-        migratedIds.push(svc.service_config_id);
+    // Only migrate if archivedInstances is empty (first migration)
+    if (
+      !storeState?.archivedInstances ||
+      storeState.archivedInstances.length === 0
+    ) {
+      const migratedIds: string[] = [];
+      for (const agentType of legacyArchived) {
+        const config = AGENT_CONFIG[agentType];
+        if (!config) continue;
+        const matching = services.filter((s) => isServiceOfAgent(s, config));
+        for (const svc of matching) {
+          migratedIds.push(svc.service_config_id);
+        }
+      }
+
+      if (migratedIds.length > 0) {
+        store?.set?.('archivedInstances', migratedIds);
       }
     }
 
-    if (migratedIds.length > 0) {
-      store?.set?.('archivedInstances', migratedIds);
-    }
-    // Clear legacy key
+    // Always clear legacy key
     store?.set?.('archivedAgents', []);
   }, [
     services,

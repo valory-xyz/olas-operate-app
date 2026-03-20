@@ -122,7 +122,7 @@ jest.mock('../../../../components/MainPage/hooks/useSidebarAgents', () => ({
   useSidebarAgents: () => ({
     pendingArchiveInstanceId: undefined,
     setPendingArchiveInstanceId: jest.fn(),
-    pendingArchiveInstanceName: '',
+    pendingArchiveInstanceName: null,
     handleArchiveConfirm: jest.fn(),
     archivedInstances: [],
   }),

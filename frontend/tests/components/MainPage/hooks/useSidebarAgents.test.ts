@@ -203,9 +203,9 @@ describe('useSidebarAgents', () => {
   });
 
   describe('pendingArchiveInstanceName', () => {
-    it('returns empty string when no pending instance', () => {
+    it('returns null when no pending instance', () => {
       const { result } = renderHook(() => useSidebarAgents());
-      expect(result.current.pendingArchiveInstanceName).toBe('');
+      expect(result.current.pendingArchiveInstanceName).toBeNull();
     });
 
     it('returns formatted name when pending instance exists', () => {
@@ -218,12 +218,12 @@ describe('useSidebarAgents', () => {
       );
     });
 
-    it('returns empty string when pending instance is not in services', () => {
+    it('returns null when pending instance is not in services', () => {
       const { result } = renderHook(() => useSidebarAgents());
       act(() => {
         result.current.setPendingArchiveInstanceId('sc-unknown');
       });
-      expect(result.current.pendingArchiveInstanceName).toBe('');
+      expect(result.current.pendingArchiveInstanceName).toBeNull();
     });
   });
 

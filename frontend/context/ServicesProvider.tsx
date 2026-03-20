@@ -150,6 +150,13 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
     FIFTEEN_SECONDS_INTERVAL,
   );
 
+  // Stores temporary overrides for service statuses to avoid UI glitches.
+  // Right after updating the status on the backend, initial queries
+  // might return outdated or incorrect value
+  const [serviceStatusOverrides, setServiceStatusOverrides] = useState<
+    Record<string, Maybe<MiddlewareDeploymentStatus>>
+  >({});
+
   // state to track the services ids message shown
   // so that it is not shown again for the same service
   const [isInvalidMessageShown, setIsInvalidMessageShown] = useState(false);
@@ -234,13 +241,6 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
     : undefined;
 
   const isSelectedServiceDeploymentStatusLoading = isAllDeploymentsLoading;
-
-  // Stores temporary overrides for service statuses to avoid UI glitches.
-  // Right after updating the status on the backend, initial queries
-  // might return outdated or incorrect value
-  const [serviceStatusOverrides, setServiceStatusOverrides] = useState<
-    Record<string, Maybe<MiddlewareDeploymentStatus>>
-  >({});
 
   const selectedService = useMemo<Service | undefined>(() => {
     if (!services) return;

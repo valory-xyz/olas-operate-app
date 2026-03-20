@@ -15,6 +15,7 @@ import {
   usePageState,
   useServices,
   useSetup,
+  useStore,
 } from '@/hooks';
 import { Optional } from '@/types';
 import { isNonEmpty } from '@/utils';
@@ -124,6 +125,7 @@ export const AgentOnboarding = () => {
     getAgentTypeFromService,
   } = useServices();
   const { archivedInstances, unarchiveInstance } = useArchivedAgents();
+  const { storeState } = useStore();
 
   const [selectedAgent, setSelectedAgent] = useState<Optional<AgentType>>();
   const [selectedArchivedInstanceId, setSelectedArchivedInstanceId] =
@@ -141,6 +143,8 @@ export const AgentOnboarding = () => {
   useEffect(() => {
     if (hasSetDefaultTab.current) return;
     if (!services) return;
+    // Wait for store state so archivedInstances reflects real data
+    if (!storeState) return;
     hasSetDefaultTab.current = true;
 
     const hasNewAgents = ACTIVE_AGENTS.some(
@@ -155,7 +159,7 @@ export const AgentOnboarding = () => {
     if (!hasNewAgents && archivedInstances.length > 0) {
       setActiveTab(AGENT_TAB.Archived);
     }
-  }, [archivedInstances, services]);
+  }, [archivedInstances, services, storeState]);
 
   const selectedAgentConfig = selectedAgent
     ? AGENT_CONFIG[selectedAgent]
@@ -199,7 +203,14 @@ export const AgentOnboarding = () => {
     } else {
       goto(SETUP_SCREEN.SelectStaking);
     }
-  }, [goto, gotoPage, selectedAgent, services, updateSelectedServiceConfigId]);
+  }, [
+    archivedInstances,
+    goto,
+    gotoPage,
+    selectedAgent,
+    services,
+    updateSelectedServiceConfigId,
+  ]);
 
   const handleSelectYourAgent = useCallback(
     (agentType: AgentType) => {
