@@ -165,7 +165,10 @@ export const getServiceInstanceName = (
   displayName: string,
   evmHomeChainId: EvmChainId,
 ): string => {
-  const tokenId = service?.chain_configs[service.home_chain]?.chain_data?.token;
+  const homeChain = service?.home_chain;
+  const tokenId = homeChain
+    ? service?.chain_configs[homeChain]?.chain_data?.token
+    : undefined;
 
   if (isValidServiceId(tokenId)) {
     return generateAgentName(evmHomeChainId, tokenId);
