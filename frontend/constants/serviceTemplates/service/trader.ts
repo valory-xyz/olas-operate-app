@@ -241,13 +241,13 @@ export const PREDICT_POLYMARKET_SERVICE_TEMPLATE: ServiceTemplate = {
     TOOLS_ACCURACY_HASH: {
       name: 'Tools accuracy hash',
       description: '',
-      value: 'QmWgsqncF22hPLNTyWtDzVoKPJ9gmgR1jcuLL5t31xyzzr',
+      value: 'QmdNF1cidJASsVKSnbvSSmZLLaYfBPixBzpT4Pw3ZvmYTu',
       provision_type: EnvProvisionType.FIXED,
     },
     ACC_INFO_FIELDS_REQUESTS: {
       name: 'Acc info fields requests',
       description: '',
-      value: 'nr_responses',
+      value: 'total_requests',
       provision_type: EnvProvisionType.FIXED,
     },
     MECH_INTERACT_ROUND_TIMEOUT_SECONDS: {
