@@ -243,13 +243,14 @@ describe('useAgentStakingRewardsDetails', () => {
   const setupServices = (
     overrides: { isOnline?: boolean; services?: unknown[] } = {},
   ) => {
+    const defaultService = makeMiddlewareService(MiddlewareChainMap.GNOSIS, {
+      service_public_id: SERVICE_PUBLIC_ID_MAP.TRADER,
+      service_config_id: DEFAULT_SERVICE_CONFIG_ID,
+    });
+    const services = overrides.services ?? [defaultService];
     mockUseServices.mockReturnValue({
-      services: overrides.services ?? [
-        makeMiddlewareService(MiddlewareChainMap.GNOSIS, {
-          service_public_id: SERVICE_PUBLIC_ID_MAP.TRADER,
-          service_config_id: DEFAULT_SERVICE_CONFIG_ID,
-        }),
-      ],
+      services,
+      selectedService: services[0],
       selectedAgentConfig: traderConfig,
     });
   };
@@ -279,16 +280,8 @@ describe('useAgentStakingRewardsDetails', () => {
     expect(queryConfig.enabled).toBe(true);
   });
 
-  it('matches service by service_public_id and home_chain', () => {
-    const gnosisService = makeMiddlewareService(MiddlewareChainMap.GNOSIS, {
-      service_public_id: SERVICE_PUBLIC_ID_MAP.TRADER,
-      service_config_id: DEFAULT_SERVICE_CONFIG_ID,
-    });
-    const baseService = makeMiddlewareService(MiddlewareChainMap.BASE, {
-      service_public_id: 'other/service:0.1.0',
-      service_config_id: 'sc-different-id',
-    });
-    setupServices({ services: [baseService, gnosisService] });
+  it('uses selectedService directly for query params', () => {
+    setupServices();
 
     renderHook(() =>
       useAgentStakingRewardsDetails(
@@ -358,6 +351,7 @@ describe('useAgentStakingRewardsDetails', () => {
 
     mockUseServices.mockReturnValue({
       services: [baseService],
+      selectedService: baseService,
       selectedAgentConfig: agentsFunConfig,
     });
 

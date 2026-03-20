@@ -79,12 +79,16 @@ export const AgentTreeMenu = ({
 
       if (!expandedGroups.has(agentType)) {
         const group = groups.find((group) => group.agentType === agentType);
-        if (group?.instances[0]) {
+        // Only select first instance if no instance in this group is already selected
+        const alreadySelected = group?.instances.some(
+          (instance) => instance.serviceConfigId === selectedServiceConfigId,
+        );
+        if (!alreadySelected && group?.instances[0]) {
           onGroupSelect(group.instances[0].serviceConfigId);
         }
       }
     },
-    [expandedGroups, groups, onGroupSelect],
+    [expandedGroups, groups, onGroupSelect, selectedServiceConfigId],
   );
 
   return (

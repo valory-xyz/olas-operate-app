@@ -18,7 +18,7 @@ import {
 } from 'react-icons/tb';
 import styled from 'styled-components';
 
-import { ACTIVE_AGENTS } from '@/config/agents';
+import { ACTIVE_AGENTS, AGENT_CONFIG } from '@/config/agents';
 import {
   AgentType,
   ANTD_BREAKPOINTS,
@@ -37,7 +37,7 @@ import {
   useServices,
   useSetup,
 } from '@/hooks';
-import { getServiceInstanceName } from '@/utils';
+import { getServiceInstanceName, isServiceOfAgent } from '@/utils';
 
 import { BackupSeedPhraseAlert } from '../BackupSeedPhraseAlert';
 import { UpdateAvailableAlert } from '../UpdateAvailableAlert/UpdateAvailableAlert';
@@ -178,10 +178,8 @@ export const Sidebar = () => {
     const groupMap = new Map<AgentType, SidebarAgentGroup>();
 
     for (const service of services) {
-      const agentEntry = ACTIVE_AGENTS.find(
-        ([, config]) =>
-          config.servicePublicId === service.service_public_id &&
-          config.middlewareHomeChainId === service.home_chain,
+      const agentEntry = ACTIVE_AGENTS.find(([, config]) =>
+        isServiceOfAgent(service, config),
       );
       if (!agentEntry) continue;
 
@@ -207,7 +205,21 @@ export const Sidebar = () => {
       );
     }
 
-    return Array.from(groupMap.values());
+    // Sort groups: active agents in ACTIVE_AGENTS config order,
+    // under-construction agents at the end.
+    const isUnderConstruction = (type: AgentType) =>
+      AGENT_CONFIG[type]?.isUnderConstruction ?? false;
+    const configIndex = (type: AgentType) =>
+      ACTIVE_AGENTS.findIndex(([t]) => t === type);
+
+    return Array.from(groupMap.values()).sort((a, b) => {
+      if (
+        isUnderConstruction(a.agentType) !== isUnderConstruction(b.agentType)
+      ) {
+        return isUnderConstruction(a.agentType) ? 1 : -1;
+      }
+      return configIndex(a.agentType) - configIndex(b.agentType);
+    });
   }, [services]);
 
   const runningServiceConfigIds = useMemo(() => {
