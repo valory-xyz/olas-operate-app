@@ -72,20 +72,25 @@ type AgentInstance = {
 
 3. **New `updateSelectedInstance(serviceConfigId)`** — sets `selectedServiceConfigId`, persists `lastSelectedServiceConfigId` to store
 
-4. **`updateAgentType(agentType)` stays** but now selects the FIRST instance of that type internally (for sidebar parent-click and backward compat)
+4. **`updateAgentType(agentType)` stays** but now selects the FIRST instance of that type internally (for sidebar parent-click and backward compat). When no instances exist (setup flow for a new agent type), sets `pendingAgentType` instead — see point 10.
 
-5. **Fix service-select effect** (the `useEffect` that sets `selectedServiceConfigId` when `selectedAgentConfig` or `services` change) — if `selectedServiceConfigId` is already valid, keep it; only auto-select if no valid selection exists
+5. **Fix service-select effect** (the `useEffect` that sets `selectedServiceConfigId` when `selectedAgentConfig` or `services` change) — if `selectedServiceConfigId` is already valid, keep it; only auto-select if no valid selection exists. Skips entirely when `pendingAgentType` is set to avoid overwriting the setup flow's choice.
 
 6. **Fix `getAgentTypeFromService`** — currently only checks `servicePublicId`, must also check `middlewareHomeChainId` to disambiguate Optimus/Modius (latent bug)
 
 6a. **Extract shared service matcher** — the pattern `servicePublicId === service.service_public_id && middlewareHomeChainId === service.home_chain` is repeated across ~18 files. Extract into a shared util (e.g., `matchesAgentConfig(service, config)`). New code should use the matcher; existing usages can be refactored incrementally.
 
 7. **New helpers to expose:**
-   - `updateSelectedInstance: (serviceConfigId: string) => void`
-   - `getInstancesOfType: (agentType: AgentType) => Service[]`
-   - `instanceCountByAgentType: Record<AgentType, number>`
+   - `updateSelectedInstance: (serviceConfigId: string) => void` — clears `pendingAgentType`
+   - `getInstancesOfAgentType: (agentType: AgentType) => MiddlewareServiceResponse[]`
 
 8. **`availableServiceConfigIds`** — already iterates all services, no change needed
+
+10. **`pendingAgentType` override** — during the setup flow, `updateAgentType` may be called for an agent type with no instances yet (e.g., user selects Polystrat but doesn't have one). Since `selectedServiceConfigId` can't resolve to the correct type, `pendingAgentType` bridges the gap:
+    - Set by `updateAgentType` when no instances exist (also sets `selectedServiceConfigId` to `null`)
+    - `selectedAgentType` derivation: `getAgentTypeFromService(configId) ?? pendingAgentType ?? PredictTrader`
+    - Cleared by `updateSelectedInstance` (when a real instance is selected) or when leaving the Setup page
+    - Service-select effect skips when `pendingAgentType` is set
 
 9. **Define deterministic instance ordering** — `MiddlewareServiceResponse` has no `created_at` field. Raised with BE team to introduce one. Until then, use a stable default sort (e.g., lexicographic by `service_config_id`). Define this sort once in a shared util and reuse across sidebar child order, auto-run rotation, migration, and selection fallback.
 
@@ -135,8 +140,9 @@ The instance creation flow reuses existing screens with extensions:
 **File:** `frontend/components/SetupPage/AgentOnboarding/SelectAgent.tsx` (major rework)
 
 - Show ALL `ACTIVE_AGENTS` (remove `isNotInServices` filter)
-- Add **"You own N"** badge per agent type using `instanceCountByAgentType`
+- Add **"You own N"** badge per agent type using `getInstancesOfAgentType(type).length`
 - Right panel and "Select Agent" button remain unchanged
+- **Guard: undeployed instance exists** — If the user already has an instance of the selected agent type that was never deployed, do NOT create a new instance. Instead, select that undeployed instance via `updateSelectedInstance` and navigate the user back to the main page. This prevents orphaned instances from accumulating. Detection: use `getInstancesOfAgentType(type)` and check each instance's token ID via `isValidServiceId(tokenId)` — an instance with an invalid token ID (null, -1, or 0) has not been deployed yet. If any such instance exists, select the first one instead of creating a new instance.
 
 ### Screen 2: Configure Activity Rewards (existing, redesigned)
 
@@ -168,6 +174,13 @@ Files to update:
 - The "Using Your Pearl Wallet Balance" and "Select Payment Method" screens in the new flow should also use `refill_requirements`
 
 **Note:** For new instances, the "dummy service" pattern (created via `onDummyServiceCreation`) gives the service a `service_config_id` immediately, so the backend can compute `refill_requirements` even before the agent starts.
+
+### Instance selection after dummy service creation
+
+`onDummyServiceCreation` now returns the `MiddlewareServiceResponse` from the backend. All callers (`SelectStakingButton`, agent form components) follow this pattern:
+1. `const newService = await onDummyServiceCreation(...)` — capture the response
+2. `await refetchServices()` — ensure the new service is in the services list
+3. `updateSelectedInstance(newService.service_config_id)` — select it (clears `pendingAgentType`, derivation works since service is now in the list)
 
 ### Implementation Notes
 
@@ -250,6 +263,8 @@ The auto-run control popover/context menu (currently in sidebar area) must chang
 
 ### 7c. `frontend/hooks/useIsInitiallyFunded.ts`
 - Update to read/write per `service_config_id`: `storeState?.[agentType]?.isInitialFunded?.[serviceConfigId]`
+- For services not yet in the record, returns `false` (not `undefined`) — ensures "unfinished setup" alerts show correctly for new services
+- Write: merges `{ [serviceConfigId]: true }` into the existing record, preserving other entries
 - Migration: existing boolean `isInitialFunded: true` should be converted to apply to the first service of that agent type
 
 ### 7d. Remove `isProfileWarningDisplayed` entirely
@@ -283,6 +298,10 @@ These fire on agent-type change but won't fire when switching between instances 
 | `Home/index.tsx` | 60 | `useEffect(() => setView('overview'), [selectedAgentType])` — resets tab to "Overview" | Use `selectedServiceConfigId` in deps |
 | `Home/index.tsx` | 134 | `PageTransition key={selectedAgentType}` — remounts animation | Use `selectedServiceConfigId` as key |
 | `useScrollPage.ts` | 14 | Scroll-to-top on `[pageState, selectedAgentType]` | Use `selectedServiceConfigId` in deps |
+
+### Step 8b: Notifications — per-instance format
+
+Notification strings currently reference agent type only. Update to include instance name using `{AgentType} agent "{instanceName}"` format, e.g., `Polystrat agent "corzim-vardor96" was skipped`.
 
 ---
 
@@ -337,12 +356,6 @@ Step 8 (Cleanup)
 3. **Auto-run migration** — Users with existing `includedAgents` (AgentType-based) must be migrated to `includedAgentInstances` (serviceConfigId-based) on first load.
 
 4. **Setup flow completion** — After creating a new instance, the new service must be explicitly selected via `updateSelectedInstance(newConfigId)`, not left to the auto-select logic (which would pick the first/existing instance).
-
----
-
-## Open Questions (pending product decision)
-
-1. **Notifications per instance** — Currently notifications are shown per agent type. With multiple instances, we need product guidance on whether notifications should be per instance (e.g., "corzim-vardor96 needs refill") or grouped per type. Must be resolved before feature review.
 
 ---
 

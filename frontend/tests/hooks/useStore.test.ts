@@ -13,18 +13,14 @@ const mockStoreState: ElectronStore = {
   knownVersion: '1.4.5',
 
   firstStakingRewardAchieved: true,
-  firstRewardNotificationShown: false,
-  agentEvictionAlertShown: false,
   recoveryPhraseBackedUp: true,
   mnemonicExists: true,
 
   [AgentMap.PredictTrader]: {
     isInitialFunded: true,
-    isProfileWarningDisplayed: false,
   },
   [AgentMap.AgentsFun]: {
     isInitialFunded: false,
-    isProfileWarningDisplayed: true,
   },
 
   autoRun: {
@@ -60,10 +56,6 @@ describe('useStore', () => {
     expect(result.current.storeState?.recoveryPhraseBackedUp).toBe(true);
     expect(
       result.current.storeState?.[AgentMap.PredictTrader]?.isInitialFunded,
-    ).toBe(true);
-    expect(
-      result.current.storeState?.[AgentMap.AgentsFun]
-        ?.isProfileWarningDisplayed,
     ).toBe(true);
     expect(result.current.storeState?.autoRun?.enabled).toBe(true);
     expect(result.current.storeState?.autoRun?.userExcludedAgents).toEqual([

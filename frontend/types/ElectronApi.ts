@@ -4,20 +4,19 @@ import { BackupWalletType } from './BackupWallet';
 import { Nullable } from './Util';
 
 type AgentSettings = {
-  isInitialFunded: boolean;
-  isProfileWarningDisplayed: boolean;
+  isInitialFunded: boolean | Record<string, boolean>;
 };
 
 export type ElectronStore = {
   // Global settings
   environmentName?: string;
+  /** @deprecated Use `lastSelectedServiceConfigId` instead. Kept for one-time migration only. */
   lastSelectedAgentType?: AgentType;
+  lastSelectedServiceConfigId?: string;
   knownVersion?: string;
 
   // First time user settings
   firstStakingRewardAchieved?: boolean;
-  firstRewardNotificationShown?: boolean;
-  agentEvictionAlertShown?: boolean;
   recoveryPhraseBackedUp?: boolean;
   mnemonicExists?: boolean;
 
@@ -30,9 +29,13 @@ export type ElectronStore = {
   [AgentMap.Polystrat]?: AgentSettings;
   autoRun?: {
     enabled?: boolean;
+    /** @deprecated Use `includedAgentInstances` instead. Kept for one-time migration only. */
     includedAgents?: { agentType: AgentType; order: number }[];
+    includedAgentInstances?: { serviceConfigId: string; order: number }[];
     isInitialized?: boolean;
+    /** @deprecated Use `userExcludedAgentInstances` instead. Kept for one-time migration only. */
     userExcludedAgents?: AgentType[];
+    userExcludedAgentInstances?: string[];
   };
   lastProvidedBackupWallet?: {
     address: Nullable<string>;
