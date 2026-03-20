@@ -1,13 +1,15 @@
 import { isEmpty, isEqual } from 'lodash';
 
-import { AgentMap, AgentType, StakingProgramId } from '@/constants';
+import { AgentMap, AgentType, EvmChainId, StakingProgramId } from '@/constants';
 import { EnvProvisionMap } from '@/constants/envVariables';
 import {
   KPI_DESC_PREFIX,
   SERVICE_TEMPLATES,
 } from '@/constants/serviceTemplates';
 import { ServicesService } from '@/service/Services';
-import { Address, DeepPartial, Service, ServiceTemplate } from '@/types';
+import { Address, DeepPartial, Maybe, Service, ServiceTemplate } from '@/types';
+
+import { generateAgentName } from './generateAgentName';
 
 export const updateServiceIfNeeded = async (
   service: Service,
@@ -136,4 +138,22 @@ export const isValidServiceId = (
   token: number | null | undefined | -1,
 ): token is number => {
   return typeof token === 'number' && token !== -1 && token !== 0;
+};
+
+/**
+ * Get display name for a service instance.
+ * Falls back to "My `agentName`" if the instance isn't deployed yet.
+ */
+export const getServiceInstanceName = (
+  service: Maybe<Service>,
+  displayName: string,
+  evmHomeChainId: EvmChainId,
+): string => {
+  const tokenId = service?.chain_configs[service.home_chain]?.chain_data?.token;
+
+  if (isValidServiceId(tokenId)) {
+    return generateAgentName(evmHomeChainId, tokenId);
+  }
+
+  return `My ${displayName}`;
 };
