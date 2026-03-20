@@ -1,6 +1,5 @@
 import { act, renderHook } from '@testing-library/react';
 
-import { AgentMap } from '../../constants/agent';
 import { useArchivedAgents } from '../../hooks/useArchivedAgents';
 
 /* eslint-disable @typescript-eslint/no-var-requires */
@@ -14,12 +13,16 @@ jest.mock('../../constants/providers', () => ({}));
 const mockSetStore = jest.fn();
 const mockElectronApi = jest.fn();
 const mockUseStore = jest.fn();
+const mockUseServices = jest.fn();
 
 jest.mock('../../hooks/useElectronApi', () => ({
   useElectronApi: () => mockElectronApi(),
 }));
 jest.mock('../../hooks/useStore', () => ({
   useStore: () => mockUseStore(),
+}));
+jest.mock('../../hooks/useServices', () => ({
+  useServices: () => mockUseServices(),
 }));
 
 describe('useArchivedAgents', () => {
@@ -29,124 +32,118 @@ describe('useArchivedAgents', () => {
       store: { set: mockSetStore },
     });
     mockUseStore.mockReturnValue({ storeState: {} });
+    mockUseServices.mockReturnValue({ services: [] });
   });
 
-  it('returns empty archivedAgents when storeState has no archivedAgents', () => {
+  it('returns empty archivedInstances when storeState has no archivedInstances', () => {
     mockUseStore.mockReturnValue({ storeState: {} });
     const { result } = renderHook(() => useArchivedAgents());
-    expect(result.current.archivedAgents).toEqual([]);
+    expect(result.current.archivedInstances).toEqual([]);
   });
 
-  it('returns empty archivedAgents when storeState is undefined', () => {
+  it('returns empty archivedInstances when storeState is undefined', () => {
     mockUseStore.mockReturnValue({ storeState: undefined });
     const { result } = renderHook(() => useArchivedAgents());
-    expect(result.current.archivedAgents).toEqual([]);
+    expect(result.current.archivedInstances).toEqual([]);
   });
 
-  it('returns archivedAgents from storeState', () => {
+  it('returns archivedInstances from storeState', () => {
     mockUseStore.mockReturnValue({
-      storeState: { archivedAgents: [AgentMap.AgentsFun, AgentMap.Modius] },
+      storeState: { archivedInstances: ['sc-1', 'sc-2'] },
     });
     const { result } = renderHook(() => useArchivedAgents());
-    expect(result.current.archivedAgents).toEqual([
-      AgentMap.AgentsFun,
-      AgentMap.Modius,
-    ]);
+    expect(result.current.archivedInstances).toEqual(['sc-1', 'sc-2']);
   });
 
-  it('isArchived returns true for an archived agent', () => {
+  it('isArchived returns true for an archived instance', () => {
     mockUseStore.mockReturnValue({
-      storeState: { archivedAgents: [AgentMap.AgentsFun] },
+      storeState: { archivedInstances: ['sc-1'] },
     });
     const { result } = renderHook(() => useArchivedAgents());
-    expect(result.current.isArchived(AgentMap.AgentsFun)).toBe(true);
+    expect(result.current.isArchived('sc-1')).toBe(true);
   });
 
-  it('isArchived returns false for a non-archived agent', () => {
+  it('isArchived returns false for a non-archived instance', () => {
     mockUseStore.mockReturnValue({
-      storeState: { archivedAgents: [AgentMap.AgentsFun] },
+      storeState: { archivedInstances: ['sc-1'] },
     });
     const { result } = renderHook(() => useArchivedAgents());
-    expect(result.current.isArchived(AgentMap.PredictTrader)).toBe(false);
+    expect(result.current.isArchived('sc-2')).toBe(false);
   });
 
-  it('isArchived returns false when no agents are archived', () => {
+  it('isArchived returns false when no instances are archived', () => {
     mockUseStore.mockReturnValue({ storeState: {} });
     const { result } = renderHook(() => useArchivedAgents());
-    expect(result.current.isArchived(AgentMap.PredictTrader)).toBe(false);
+    expect(result.current.isArchived('sc-1')).toBe(false);
   });
 
-  it('archiveAgent calls store.set with the agent added to archivedAgents', () => {
-    mockUseStore.mockReturnValue({ storeState: { archivedAgents: [] } });
+  it('archiveInstance calls store.set with the instance added to archivedInstances', () => {
+    mockUseStore.mockReturnValue({
+      storeState: { archivedInstances: [] },
+    });
     const { result } = renderHook(() => useArchivedAgents());
 
     act(() => {
-      result.current.archiveAgent(AgentMap.AgentsFun);
+      result.current.archiveInstance('sc-1');
     });
 
-    expect(mockSetStore).toHaveBeenCalledWith('archivedAgents', [
-      AgentMap.AgentsFun,
+    expect(mockSetStore).toHaveBeenCalledWith('archivedInstances', ['sc-1']);
+  });
+
+  it('archiveInstance appends to existing archived instances', () => {
+    mockUseStore.mockReturnValue({
+      storeState: { archivedInstances: ['sc-1'] },
+    });
+    const { result } = renderHook(() => useArchivedAgents());
+
+    act(() => {
+      result.current.archiveInstance('sc-2');
+    });
+
+    expect(mockSetStore).toHaveBeenCalledWith('archivedInstances', [
+      'sc-1',
+      'sc-2',
     ]);
   });
 
-  it('archiveAgent appends to existing archived agents', () => {
+  it('archiveInstance is idempotent — does not add duplicates', () => {
     mockUseStore.mockReturnValue({
-      storeState: { archivedAgents: [AgentMap.AgentsFun] },
+      storeState: { archivedInstances: ['sc-1'] },
     });
     const { result } = renderHook(() => useArchivedAgents());
 
     act(() => {
-      result.current.archiveAgent(AgentMap.Modius);
-    });
-
-    expect(mockSetStore).toHaveBeenCalledWith('archivedAgents', [
-      AgentMap.AgentsFun,
-      AgentMap.Modius,
-    ]);
-  });
-
-  it('archiveAgent is idempotent — does not add duplicates', () => {
-    mockUseStore.mockReturnValue({
-      storeState: { archivedAgents: [AgentMap.AgentsFun] },
-    });
-    const { result } = renderHook(() => useArchivedAgents());
-
-    act(() => {
-      result.current.archiveAgent(AgentMap.AgentsFun);
+      result.current.archiveInstance('sc-1');
     });
 
     expect(mockSetStore).not.toHaveBeenCalled();
   });
 
-  it('unarchiveAgent calls store.set with the agent removed from archivedAgents', () => {
+  it('unarchiveInstance calls store.set with the instance removed from archivedInstances', () => {
     mockUseStore.mockReturnValue({
-      storeState: { archivedAgents: [AgentMap.AgentsFun, AgentMap.Modius] },
+      storeState: { archivedInstances: ['sc-1', 'sc-2'] },
     });
     const { result } = renderHook(() => useArchivedAgents());
 
     act(() => {
-      result.current.unarchiveAgent(AgentMap.AgentsFun);
+      result.current.unarchiveInstance('sc-1');
     });
 
-    expect(mockSetStore).toHaveBeenCalledWith('archivedAgents', [
-      AgentMap.Modius,
-    ]);
+    expect(mockSetStore).toHaveBeenCalledWith('archivedInstances', ['sc-2']);
   });
 
-  it('unarchiveAgent is a no-op if agent was not archived', () => {
+  it('unarchiveInstance is a no-op if instance was not archived', () => {
     mockUseStore.mockReturnValue({
-      storeState: { archivedAgents: [AgentMap.AgentsFun] },
+      storeState: { archivedInstances: ['sc-1'] },
     });
     const { result } = renderHook(() => useArchivedAgents());
 
     act(() => {
-      result.current.unarchiveAgent(AgentMap.Modius);
+      result.current.unarchiveInstance('sc-2');
     });
 
     // store.set is still called, but with unchanged list
-    expect(mockSetStore).toHaveBeenCalledWith('archivedAgents', [
-      AgentMap.AgentsFun,
-    ]);
+    expect(mockSetStore).toHaveBeenCalledWith('archivedInstances', ['sc-1']);
   });
 
   it('does not throw when store.set is undefined', () => {
@@ -156,7 +153,7 @@ describe('useArchivedAgents', () => {
 
     expect(() => {
       act(() => {
-        result.current.archiveAgent(AgentMap.AgentsFun);
+        result.current.archiveInstance('sc-1');
       });
     }).not.toThrow();
   });
@@ -168,7 +165,7 @@ describe('useArchivedAgents', () => {
 
     expect(() => {
       act(() => {
-        result.current.unarchiveAgent(AgentMap.AgentsFun);
+        result.current.unarchiveInstance('sc-1');
       });
     }).not.toThrow();
   });

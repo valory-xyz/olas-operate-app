@@ -44,6 +44,20 @@ jest.mock('../../../components/SelectStakingPage', () => ({
   ),
 }));
 
+jest.mock(
+  '../../../components/SetupPage/FundYourAgent/components/BalanceCheck',
+  () => ({
+    BalanceCheck: () => <div data-testid="balance-check" />,
+  }),
+);
+
+jest.mock(
+  '../../../components/SetupPage/FundYourAgent/components/ConfirmFunding',
+  () => ({
+    ConfirmFunding: () => <div data-testid="confirm-funding" />,
+  }),
+);
+
 jest.mock('../../../components/SetupPage/FundYourAgent/FundYourAgent', () => ({
   FundYourAgent: () => <div data-testid="fund-your-agent" />,
 }));
@@ -169,9 +183,19 @@ describe('Setup (SetupPage entry)', () => {
         expectedTestId: 'select-staking-page',
       },
       {
+        screenKey: 'BalanceCheck',
+        state: SETUP_SCREEN.BalanceCheck,
+        expectedTestId: 'balance-check',
+      },
+      {
         screenKey: 'FundYourAgent',
         state: SETUP_SCREEN.FundYourAgent,
         expectedTestId: 'fund-your-agent',
+      },
+      {
+        screenKey: 'ConfirmFunding',
+        state: SETUP_SCREEN.ConfirmFunding,
+        expectedTestId: 'confirm-funding',
       },
       {
         screenKey: 'TransferFunds',
@@ -259,7 +283,9 @@ describe('Setup (SetupPage entry)', () => {
     }[] = [
       { screenKey: 'AgentOnboarding', state: SETUP_SCREEN.AgentOnboarding },
       { screenKey: 'SetupYourAgent', state: SETUP_SCREEN.SetupYourAgent },
+      { screenKey: 'BalanceCheck', state: SETUP_SCREEN.BalanceCheck },
       { screenKey: 'FundYourAgent', state: SETUP_SCREEN.FundYourAgent },
+      { screenKey: 'ConfirmFunding', state: SETUP_SCREEN.ConfirmFunding },
       { screenKey: 'TransferFunds', state: SETUP_SCREEN.TransferFunds },
       {
         screenKey: 'SetupBridgeOnboardingScreen',

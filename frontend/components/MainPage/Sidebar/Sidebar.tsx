@@ -18,6 +18,7 @@ import {
 } from 'react-icons/tb';
 import styled from 'styled-components';
 
+import { ACTIVE_AGENTS, AGENT_CONFIG } from '@/config/agents';
 import {
   AgentType,
   ANTD_BREAKPOINTS,
@@ -28,20 +29,29 @@ import {
   SIDER_WIDTH,
 } from '@/constants';
 import {
+  useAgentRunning,
   useBalanceAndRefillRequirementsContext,
+  useIsInitiallyFunded,
   useMasterWalletContext,
   usePageState,
   useServices,
   useSetup,
 } from '@/hooks';
+import {
+  getServiceInstanceName,
+  isServiceOfAgent,
+  sortByCreationTime,
+} from '@/utils';
 
 import { BackupSeedPhraseAlert } from '../BackupSeedPhraseAlert';
 import { useSidebarAgents } from '../hooks/useSidebarAgents';
 import { UpdateAvailableAlert } from '../UpdateAvailableAlert/UpdateAvailableAlert';
 import { UpdateAvailableModal } from '../UpdateAvailableAlert/UpdateAvailableModal';
-import { AgentListMenu } from './AgentListMenu';
+import { AgentTreeMenu } from './AgentTreeMenu';
 import { ArchiveAgentModal } from './ArchiveAgentModal';
 import { AutoRunControl } from './AutoRunControl';
+import { useListFade } from './hooks/useListFade';
+import { SidebarAgentGroup } from './types';
 
 const { Sider } = Layout;
 const { Text } = Typography;
@@ -56,12 +66,25 @@ const SiderContainer = styled.div`
     @media (min-width: ${ANTD_BREAKPOINTS[SIDEBAR_BREAKPOINT] + 1}px) {
       display: flex;
       width: 100%;
-      overflow: auto;
     }
   }
-  .ant-menu-item.menu-running-agent {
-    padding-right: 0 !important;
-  }
+`;
+
+const AgentListScrollArea = styled.div<{
+  $fadeTop: boolean;
+  $fadeBottom: boolean;
+}>`
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  mask-image: linear-gradient(
+    to bottom,
+    ${({ $fadeTop }) => ($fadeTop ? 'transparent' : 'black')} 0%,
+    black 16px,
+    black calc(100% - 16px),
+    ${({ $fadeBottom }) => ($fadeBottom ? 'transparent' : 'black')} 100%
+  );
 `;
 
 const ResponsiveButton = styled(Button)`
@@ -101,7 +124,7 @@ const PearlWalletLabel = () => {
   );
 };
 
-const menuItems: MenuProps['items'] = [
+const bottomMenuItems: MenuProps['items'] = [
   {
     key: PAGES.PearlWallet,
     icon: <TbWallet size={20} />,
@@ -118,126 +141,228 @@ const menuItems: MenuProps['items'] = [
 export const Sidebar = () => {
   const { goto: gotoSetup } = useSetup();
   const { pageState, goto: gotoPage } = usePageState();
-  const { isLoading, selectedAgentType, updateAgentType } = useServices();
-  const { masterSafes, isLoading: isMasterWalletLoading } =
-    useMasterWalletContext();
+  const {
+    services,
+    isLoading,
+    selectedServiceConfigId,
+    updateSelectedServiceConfigId,
+    getAgentTypeFromService,
+  } = useServices();
+  const { isLoading: isMasterWalletLoading } = useMasterWalletContext();
+  const { fade, ref: scrollAreaRef } = useListFade();
 
   const {
-    myAgents,
-    pendingArchiveAgent,
-    setPendingArchiveAgent,
-    pendingArchiveAgentName,
+    pendingArchiveInstanceId,
+    setPendingArchiveInstanceId,
+    pendingArchiveInstanceName,
     handleArchiveConfirm,
-    canAddNewAgents,
+    archivedInstances,
   } = useSidebarAgents();
 
-  // If the selectedAgentType is not in myAgents, select the first one
+  const agentGroups = useMemo<SidebarAgentGroup[]>(() => {
+    if (!services) return [];
+
+    const groupMap = new Map<AgentType, SidebarAgentGroup>();
+
+    // Sort services by creation time first so instances are inserted in order
+    const sorted = [...services].sort(sortByCreationTime);
+
+    for (const service of sorted) {
+      const agentEntry = ACTIVE_AGENTS.find(([, config]) =>
+        isServiceOfAgent(service, config),
+      );
+      if (!agentEntry) continue;
+
+      const [agentType, config] = agentEntry;
+
+      // Hide archived instances from the sidebar
+      if (archivedInstances.includes(service.service_config_id)) continue;
+
+      if (!groupMap.has(agentType)) {
+        groupMap.set(agentType, { agentType, instances: [] });
+      }
+
+      groupMap.get(agentType)!.instances.push({
+        serviceConfigId: service.service_config_id,
+        name: getServiceInstanceName(
+          service,
+          config.displayName,
+          config.evmHomeChainId,
+        ),
+      });
+    }
+
+    // Sort groups: active agents in ACTIVE_AGENTS config order,
+    // under-construction agents at the end.
+    const isUnderConstruction = (type: AgentType) =>
+      AGENT_CONFIG[type]?.isUnderConstruction ?? false;
+    const configIndex = (type: AgentType) =>
+      ACTIVE_AGENTS.findIndex(([t]) => t === type);
+
+    return Array.from(groupMap.values()).sort((a, b) => {
+      if (
+        isUnderConstruction(a.agentType) !== isUnderConstruction(b.agentType)
+      ) {
+        return isUnderConstruction(a.agentType) ? 1 : -1;
+      }
+      return configIndex(a.agentType) - configIndex(b.agentType);
+    });
+  }, [services, archivedInstances]);
+
+  const { runningServiceConfigId } = useAgentRunning();
+
+  const runningServiceConfigIds = useMemo(() => {
+    const set = new Set<string>();
+    if (runningServiceConfigId) {
+      set.add(runningServiceConfigId);
+    }
+    return set;
+  }, [runningServiceConfigId]);
+
+  // If selected instance is not in any group, select the first available
   useEffect(() => {
-    const isSelectedAgentAvailable = myAgents.some(
-      (agent) => agent.agentType === selectedAgentType,
+    if (!services?.length) return;
+    if (!selectedServiceConfigId) return;
+
+    const isSelectedAvailable = agentGroups.some((group) =>
+      group.instances.some(
+        (instance) => instance.serviceConfigId === selectedServiceConfigId,
+      ),
     );
-    if (isSelectedAgentAvailable) return;
+    if (isSelectedAvailable) return;
 
-    if (selectedAgentType && myAgents.length > 0) {
-      updateAgentType(myAgents[0].agentType);
+    const firstInstance = agentGroups[0]?.instances[0];
+    if (firstInstance) {
+      updateSelectedServiceConfigId(firstInstance.serviceConfigId);
     }
-  }, [myAgents, selectedAgentType, updateAgentType]);
+  }, [
+    agentGroups,
+    selectedServiceConfigId,
+    services,
+    updateSelectedServiceConfigId,
+  ]);
 
-  const handleAgentSelect: MenuProps['onClick'] = (info) => {
-    updateAgentType(info.key as AgentType);
+  const { isInstanceInitiallyFunded } = useIsInitiallyFunded();
 
-    const agent = myAgents.find((item) => item.agentType === info.key);
-    const isSafeCreated = masterSafes?.find(
-      (masterSafe) => masterSafe.evmChainId === agent?.chainId,
-    );
+  const handleInstanceSelect = useCallback(
+    (serviceConfigId: string) => {
+      updateSelectedServiceConfigId(serviceConfigId);
 
-    if (isSafeCreated) {
-      gotoPage(PAGES.Main);
-    } else {
-      gotoPage(PAGES.Setup);
-
-      // TODO: make back button on funding screen properly sending back to main
-      // if was redirected from here
-      gotoSetup(SETUP_SCREEN.FundYourAgent);
-    }
-  };
-
-  const handleMenuClick = useCallback<NonNullable<MenuProps['onClick']>>(
-    ({ key }) => {
-      gotoPage(key as Pages);
+      const agentType = getAgentTypeFromService(serviceConfigId);
+      if (
+        !agentType ||
+        !isInstanceInitiallyFunded(serviceConfigId, agentType)
+      ) {
+        gotoPage(PAGES.Setup);
+        gotoSetup(SETUP_SCREEN.FundYourAgent);
+      } else {
+        gotoPage(PAGES.Main);
+      }
     },
+    [
+      updateSelectedServiceConfigId,
+      gotoPage,
+      gotoSetup,
+      getAgentTypeFromService,
+      isInstanceInitiallyFunded,
+    ],
+  );
+
+  const handleBottomMenuClick = useCallback<NonNullable<MenuProps['onClick']>>(
+    ({ key }) => gotoPage(key as Pages),
     [gotoPage],
   );
 
-  const selectedMenuKey = useMemo(() => {
-    if (menuItems.find((item) => item?.key === pageState)) {
+  const selectedBottomMenuKey = useMemo(() => {
+    if (bottomMenuItems.find((item) => item?.key === pageState)) {
       return [pageState];
     }
-    return [selectedAgentType];
-  }, [pageState, selectedAgentType]);
+    return selectedServiceConfigId ? [selectedServiceConfigId] : [];
+  }, [pageState, selectedServiceConfigId]);
 
   return (
     <SiderContainer>
       <Sider breakpoint={SIDEBAR_BREAKPOINT} theme="light" width={SIDER_WIDTH}>
-        <Flex vertical flex={1} className="p-16" justify="space-between">
-          <div>
-            <MyAgentsHeader />
-
-            <Flex vertical gap={16} className="w-full">
-              <Flex justify="space-between" align="center">
-                <Text className="font-weight-600" style={{ flex: 1 }}>
-                  My Agents
+        <Flex
+          vertical
+          flex={1}
+          justify="space-between"
+          style={{ height: '100%' }}
+        >
+          <Flex vertical style={{ overflow: 'hidden' }}>
+            <div className="p-16">
+              <MyAgentsHeader />
+              <Flex justify="space-between" align="center" className="mb-16">
+                <Text
+                  className="font-weight-600"
+                  style={{ fontSize: 16, lineHeight: '24px' }}
+                >
+                  My agents
                 </Text>
                 <AutoRunControl />
               </Flex>
+            </div>
+
+            <AgentListScrollArea
+              ref={scrollAreaRef}
+              $fadeTop={fade.top}
+              $fadeBottom={fade.bottom}
+              className="px-16"
+            >
               {isLoading || isMasterWalletLoading ? (
                 <AgentMenuLoading />
-              ) : myAgents.length > 0 ? (
-                <AgentListMenu
-                  myAgents={myAgents}
-                  selectedMenuKeys={selectedMenuKey}
-                  onAgentSelect={handleAgentSelect}
-                  onArchiveRequest={setPendingArchiveAgent}
+              ) : agentGroups.length > 0 ? (
+                <AgentTreeMenu
+                  groups={agentGroups}
+                  selectedServiceConfigId={selectedServiceConfigId}
+                  runningServiceConfigIds={runningServiceConfigIds}
+                  totalInstanceCount={agentGroups.reduce(
+                    (sum, g) => sum + g.instances.length,
+                    0,
+                  )}
+                  onGroupSelect={handleInstanceSelect}
+                  onInstanceSelect={handleInstanceSelect}
+                  onArchiveRequest={setPendingArchiveInstanceId}
                 />
               ) : null}
+            </AgentListScrollArea>
 
-              {canAddNewAgents && (
-                <ResponsiveButton
-                  size="large"
-                  className="flex mx-auto"
-                  onClick={() => {
-                    gotoPage(PAGES.Setup);
-                    gotoSetup(SETUP_SCREEN.AgentOnboarding);
-                  }}
-                  icon={<TbPlus size={20} />}
-                >
-                  Add New Agent
-                </ResponsiveButton>
-              )}
-            </Flex>
-          </div>
+            <div className="px-16 mt-16">
+              <ResponsiveButton
+                size="large"
+                className="flex mx-auto w-full"
+                onClick={() => {
+                  gotoPage(PAGES.Setup);
+                  gotoSetup(SETUP_SCREEN.AgentOnboarding);
+                }}
+                icon={<TbPlus size={20} />}
+              >
+                Add Agent
+              </ResponsiveButton>
+            </div>
+          </Flex>
 
-          <div>
+          <div className="p-16">
             <BackupSeedPhraseAlert />
             <UpdateAvailableAlert />
             <UpdateAvailableModal />
 
             <Menu
-              selectedKeys={selectedMenuKey}
+              selectedKeys={selectedBottomMenuKey}
               mode="inline"
               inlineIndent={12}
-              onClick={handleMenuClick}
-              items={menuItems}
+              onClick={handleBottomMenuClick}
+              items={bottomMenuItems}
             />
           </div>
         </Flex>
       </Sider>
 
       <ArchiveAgentModal
-        agentName={pendingArchiveAgentName}
-        open={!!pendingArchiveAgent}
+        agentName={pendingArchiveInstanceName}
+        open={!!pendingArchiveInstanceId}
         onConfirm={handleArchiveConfirm}
-        onCancel={() => setPendingArchiveAgent(undefined)}
+        onCancel={() => setPendingArchiveInstanceId(undefined)}
       />
     </SiderContainer>
   );

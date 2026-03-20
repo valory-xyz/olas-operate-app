@@ -65,6 +65,7 @@ const makeWalletBalance = (symbol: string, balance: number) => ({
 
 const defaultRefillReturn = {
   totalTokenRequirements: [] as TokenRequirement[],
+  refillTokenRequirements: [] as TokenRequirement[],
   isLoading: false,
   resetTokenRequirements: jest.fn(),
 };

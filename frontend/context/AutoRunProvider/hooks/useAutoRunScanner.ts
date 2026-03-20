@@ -1,6 +1,5 @@
 import { MutableRefObject, useCallback } from 'react';
 
-import { AgentType } from '@/constants';
 import { sleepAwareDelay } from '@/utils/delay';
 
 import {
@@ -25,35 +24,34 @@ const ELIGIBILITY_WAIT_TIMEOUT_MS = AGENT_SELECTION_WAIT_TIMEOUT_SECONDS * 1000;
 
 type UseAutoRunScannerParams = {
   enabledRef: MutableRefObject<boolean>;
-  orderedIncludedAgentTypes: AgentType[];
+  orderedIncludedInstances: string[];
   configuredAgents: AgentMeta[];
-  selectedAgentType: AgentType;
-  updateAgentType: (agentType: AgentType) => void;
+  selectedServiceConfigId: string | null;
+  updateSelectedServiceConfigId: (serviceConfigId: string) => void;
   getSelectedEligibility: () => {
     canRun: boolean;
     reason?: string;
     loadingReason?: string;
   };
-  waitForAgentSelection: (
-    agentType: AgentType,
-    serviceConfigId?: string | null,
-  ) => Promise<boolean>;
+  waitForInstanceSelection: (serviceConfigId: string) => Promise<boolean>;
   waitForBalancesReady: () => Promise<boolean>;
   waitForRewardsEligibility: (
-    agentType: AgentType,
+    serviceConfigId: string,
   ) => Promise<boolean | undefined>;
   refreshRewardsEligibility: (
-    agentType: AgentType,
+    serviceConfigId: string,
   ) => Promise<boolean | undefined>;
-  markRewardSnapshotPending: (agentType: AgentType) => void;
-  getRewardSnapshot: (agentType: AgentType) => boolean | undefined;
+  markRewardSnapshotPending: (serviceConfigId: string) => void;
+  getRewardSnapshot: (serviceConfigId: string) => boolean | undefined;
   getBalancesStatus: () => { ready: boolean; loading: boolean };
   notifySkipOnce: (
-    agentType: AgentType,
+    serviceConfigId: string,
     reason?: string,
     isLoadingReason?: boolean,
   ) => void;
-  startAgentWithRetries: (agentType: AgentType) => Promise<AutoRunStartResult>;
+  startAgentWithRetries: (
+    serviceConfigId: string,
+  ) => Promise<AutoRunStartResult>;
   scheduleNextScan: (delaySeconds: number) => void;
   recordMetric: (metric: AutoRunScannerMetric) => void;
   logMessage: (message: string) => void;
@@ -63,18 +61,18 @@ type UseAutoRunScannerParams = {
  * Queue-scanning logic for auto-run.
  *
  * Example:
- * Order is [omenstrat, polystrat, optimus].
- * If scan starts from `omenstrat`, this hook checks `polystrat` first,
- * then `optimus`, then wraps once.
+ * Order is [sc-aaa, sc-bbb, sc-ccc].
+ * If scan starts from `sc-aaa`, this hook checks `sc-bbb` first,
+ * then `sc-ccc`, then wraps once.
  */
 export const useAutoRunScanner = ({
   enabledRef,
-  orderedIncludedAgentTypes,
+  orderedIncludedInstances,
   configuredAgents,
-  selectedAgentType,
-  updateAgentType,
+  selectedServiceConfigId,
+  updateSelectedServiceConfigId,
   getSelectedEligibility,
-  waitForAgentSelection,
+  waitForInstanceSelection,
   waitForBalancesReady,
   waitForRewardsEligibility,
   refreshRewardsEligibility,
@@ -136,48 +134,49 @@ export const useAutoRunScanner = ({
 
   /**
    * Returns the next candidate in circular included order.
-   * Skips the currently provided agent.
+   * Skips the currently provided instance.
    *
    * Example:
    * - included order: [a, b, c], current=b -> returns c
    * - next call with current=c -> returns a
    */
   const findNextInOrder = useCallback(
-    (currentAgentType?: AgentType | null) => {
-      if (orderedIncludedAgentTypes.length === 0) return null;
-      const startIndex = currentAgentType
-        ? orderedIncludedAgentTypes.indexOf(currentAgentType)
+    (currentId?: string | null) => {
+      if (orderedIncludedInstances.length === 0) return null;
+      const startIndex = currentId
+        ? orderedIncludedInstances.indexOf(currentId)
         : -1;
-      for (let i = 1; i <= orderedIncludedAgentTypes.length; i += 1) {
-        const index = (startIndex + i) % orderedIncludedAgentTypes.length;
-        const candidate = orderedIncludedAgentTypes[index];
+      for (let i = 1; i <= orderedIncludedInstances.length; i += 1) {
+        const index = (startIndex + i) % orderedIncludedInstances.length;
+        const candidate = orderedIncludedInstances[index];
         if (!candidate) continue;
-        if (candidate === currentAgentType) continue;
+        if (candidate === currentId) continue;
         return candidate;
       }
       return null;
     },
-    [orderedIncludedAgentTypes],
+    [orderedIncludedInstances],
   );
 
   /**
-   * Picks the "start-from" anchor so the selected agent gets first chance.
+   * Picks the "start-from" anchor so the selected instance gets first chance.
    *
    * Scanner always begins from `findNextInOrder(startFrom)`, so we pass the
-   * previous item as anchor to make selected agent the first candidate.
+   * previous item as anchor to make the selected instance the first candidate.
    *
    * Example:
    * - order [a,b,c], selected=b -> startFrom=a -> first candidate=b
    * - order [a,b,c], selected=c -> startFrom=b -> first candidate=c
    */
   const getPreferredStartFrom = useCallback(() => {
-    const length = orderedIncludedAgentTypes.length;
+    const length = orderedIncludedInstances.length;
     if (length <= 1) return null;
-    const index = orderedIncludedAgentTypes.indexOf(selectedAgentType);
+    if (!selectedServiceConfigId) return null;
+    const index = orderedIncludedInstances.indexOf(selectedServiceConfigId);
     if (index === -1) return null;
     const prevIndex = (index - 1 + length) % length;
-    return orderedIncludedAgentTypes[prevIndex] ?? null;
-  }, [orderedIncludedAgentTypes, selectedAgentType]);
+    return orderedIncludedInstances[prevIndex] ?? null;
+  }, [orderedIncludedInstances, selectedServiceConfigId]);
 
   /**
    * Core queue traversal.
@@ -188,10 +187,10 @@ export const useAutoRunScanner = ({
    * 3) wait for required readiness gates
    * 4) skip/start based on normalized eligibility + rewards state
    *
-   * Returns `{ started: true }` only when an agent is actually started.
+   * Returns `{ started: true }` only when an instance is actually started.
    */
   const scanAndStartNext = useCallback(
-    async (startFrom?: AgentType | null) => {
+    async (startFrom?: string | null) => {
       if (!enabledRef.current) return { started: false };
       // Aggregate scan outcome across all visited candidates so we can choose
       // an appropriate next-scan delay when nothing starts.
@@ -204,7 +203,7 @@ export const useAutoRunScanner = ({
         scheduleNextScan(SCAN_ELIGIBLE_DELAY_SECONDS);
         return { started: false };
       }
-      const visited = new Set<AgentType>();
+      const visited = new Set<string>();
 
       // Visit each included agent at most once per scan cycle to prevent
       // infinite loops in a single scan pass.
@@ -213,7 +212,7 @@ export const useAutoRunScanner = ({
 
         visited.add(candidate);
         const candidateMeta = configuredAgents.find(
-          (agent) => agent.agentType === candidate,
+          (agent) => agent.serviceConfigId === candidate,
         );
         if (!candidateMeta) {
           hasBlocked = true;
@@ -223,12 +222,9 @@ export const useAutoRunScanner = ({
 
         // Move UI context to candidate, then wait until selection-derived data
         // is coherent before making decisions for this agent.
-        updateAgentType(candidate);
+        updateSelectedServiceConfigId(candidate);
         markRewardSnapshotPending(candidate);
-        const selectionReady = await waitForAgentSelection(
-          candidate,
-          candidateMeta.serviceConfigId,
-        );
+        const selectionReady = await waitForInstanceSelection(candidate);
         if (!selectionReady) {
           if (enabledRef.current) {
             scheduleNextScan(SCAN_LOADING_RETRY_SECONDS);
@@ -237,10 +233,8 @@ export const useAutoRunScanner = ({
         }
 
         await refreshRewardsEligibility(candidate);
-        const selectionReadyAfterRefresh = await waitForAgentSelection(
-          candidate,
-          candidateMeta.serviceConfigId,
-        );
+        const selectionReadyAfterRefresh =
+          await waitForInstanceSelection(candidate);
         if (!selectionReadyAfterRefresh) {
           if (enabledRef.current) {
             scheduleNextScan(SCAN_LOADING_RETRY_SECONDS);
@@ -336,8 +330,8 @@ export const useAutoRunScanner = ({
       normalizeEligibility,
       scheduleNextScan,
       startAgentWithRetries,
-      updateAgentType,
-      waitForAgentSelection,
+      updateSelectedServiceConfigId,
+      waitForInstanceSelection,
       waitForBalancesReady,
       waitForRewardsEligibility,
       waitForEligibilityReady,
@@ -347,37 +341,38 @@ export const useAutoRunScanner = ({
 
   /**
    * Fast path used on enable/resume:
-   * tries current selected agent before queue scan.
+   * tries current selected instance before queue scan.
    *
    * Example:
-   * - user is viewing `memeooorr` and enables auto-run
-   * - this function tries `memeooorr` first
+   * - user is viewing instance `sc-aaa` and enables auto-run
+   * - this function tries `sc-aaa` first
    * - if not startable, caller falls back to `scanAndStartNext`
    */
   const startSelectedAgentIfEligible = useCallback(async () => {
-    if (!orderedIncludedAgentTypes.includes(selectedAgentType)) {
+    if (
+      !selectedServiceConfigId ||
+      !orderedIncludedInstances.includes(selectedServiceConfigId)
+    ) {
       return false;
     }
 
     const selectedMeta = configuredAgents.find(
-      (agent) => agent.agentType === selectedAgentType,
+      (agent) => agent.serviceConfigId === selectedServiceConfigId,
     );
     if (!selectedMeta) return false;
 
-    const rewardSnapshot = getRewardSnapshot(selectedAgentType);
+    const rewardSnapshot = getRewardSnapshot(selectedServiceConfigId);
     if (rewardSnapshot === true) return false;
 
-    markRewardSnapshotPending(selectedAgentType);
-    const selectionReady = await waitForAgentSelection(
-      selectedAgentType,
-      selectedMeta.serviceConfigId,
+    markRewardSnapshotPending(selectedServiceConfigId);
+    const selectionReady = await waitForInstanceSelection(
+      selectedServiceConfigId,
     );
     if (!selectionReady) return false;
 
-    await refreshRewardsEligibility(selectedAgentType);
-    const selectionReadyAfterRefresh = await waitForAgentSelection(
-      selectedAgentType,
-      selectedMeta.serviceConfigId,
+    await refreshRewardsEligibility(selectedServiceConfigId);
+    const selectionReadyAfterRefresh = await waitForInstanceSelection(
+      selectedServiceConfigId,
     );
     if (!selectionReadyAfterRefresh) return false;
 
@@ -396,28 +391,29 @@ export const useAutoRunScanner = ({
         return false;
       }
       const reason = formatEligibilityReason(eligibility);
-      notifySkipOnce(selectedAgentType, reason, false);
+      notifySkipOnce(selectedServiceConfigId, reason, false);
       return false;
     }
 
-    const rewardsEligibility =
-      await waitForRewardsEligibility(selectedAgentType);
+    const rewardsEligibility = await waitForRewardsEligibility(
+      selectedServiceConfigId,
+    );
     if (rewardsEligibility === true) {
       return false;
     }
 
-    const startResult = await startAgentWithRetries(selectedAgentType);
+    const startResult = await startAgentWithRetries(selectedServiceConfigId);
     if (startResult.status === AUTO_RUN_START_STATUS.STARTED) return true;
     if (startResult.status === AUTO_RUN_START_STATUS.INFRA_FAILED) {
       logVerbose(
         `selected start paused: transient failure (${startResult.reason ?? 'unknown'}), scanning other agents`,
       );
-      if (orderedIncludedAgentTypes.length > 1) {
-        // Scan from the selected agent so other candidates are tried before rescheduling.
+      if (orderedIncludedInstances.length > 1) {
+        // Scan from the selected instance so other candidates are tried before rescheduling.
         // scanAndStartNext schedules its own rescan delay at the end.
-        await scanAndStartNext(selectedAgentType);
+        await scanAndStartNext(selectedServiceConfigId);
       } else {
-        // Single-agent: scanAndStartNext would find no next candidate and schedule
+        // Single-instance: scanAndStartNext would find no next candidate and schedule
         // SCAN_ELIGIBLE_DELAY_SECONDS (30min). Use short retry instead.
         scheduleNextScan(SCAN_LOADING_RETRY_SECONDS);
       }
@@ -441,11 +437,11 @@ export const useAutoRunScanner = ({
     markRewardSnapshotPending,
     refreshRewardsEligibility,
     notifySkipOnce,
-    orderedIncludedAgentTypes,
+    orderedIncludedInstances,
     scanAndStartNext,
-    selectedAgentType,
+    selectedServiceConfigId,
     startAgentWithRetries,
-    waitForAgentSelection,
+    waitForInstanceSelection,
     normalizeEligibility,
     logVerbose,
     scheduleNextScan,

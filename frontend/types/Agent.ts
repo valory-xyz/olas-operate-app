@@ -1,5 +1,6 @@
 import { TokenSymbol } from '@/config/tokens';
 import {
+  AgentType,
   EvmChainId,
   MiddlewareDeploymentStatus,
   StakingProgramId,
@@ -125,4 +126,11 @@ export type ServiceDeployment = {
   status: MiddlewareDeploymentStatus;
   nodes: DeployedNodes;
   healthcheck: AgentHealthCheck;
+};
+
+export type AgentInstance = {
+  serviceConfigId: string;
+  name: string;
+  tokenId?: number;
+  agentType: AgentType;
 };

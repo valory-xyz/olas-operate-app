@@ -43,6 +43,7 @@ import {
   BACKOFF_STEPS,
   getExponentialInterval,
 } from '@/utils';
+import { isServiceOfAgent } from '@/utils/service';
 
 export const BalancesAndRefillRequirementsProviderContext = createContext<{
   isBalancesAndFundingRequirementsLoading: boolean;
@@ -335,20 +336,20 @@ export const BalancesAndRefillRequirementsProvider = ({
         );
         if (!currentService) return false;
 
-        const agentConfig = ACTIVE_AGENTS.find(
-          ([, agentConfig]) =>
-            agentConfig.servicePublicId === currentService?.service_public_id &&
-            agentConfig.middlewareHomeChainId === currentService?.home_chain,
+        const agentEntry = ACTIVE_AGENTS.find(([, config]) =>
+          isServiceOfAgent(currentService, config),
         );
-        if (!agentConfig) return false;
+        if (!agentEntry) return false;
 
-        const agentType = agentConfig[0];
+        const agentType = agentEntry[0];
 
-        // Check if initial funding is done for this agent
+        // Check if initial funding is done for this service instance
         // and only then consider refill requirement
-        return (
-          data.is_refill_required && !!storeState?.[agentType]?.isInitialFunded
-        );
+        const stored = storeState?.[agentType]?.isInitialFunded;
+        const isInitiallyFunded =
+          typeof stored === 'object' && !!stored?.[serviceConfigId];
+
+        return data.is_refill_required && isInitiallyFunded;
       })
       .some((isRefillRequired) => isRefillRequired);
   }, [

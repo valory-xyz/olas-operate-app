@@ -5,13 +5,13 @@ import { usePageState } from '@/hooks/usePageState';
 
 export const useScrollPage = () => {
   const { pageState } = usePageState();
-  const { selectedAgentType } = useServices();
+  const { selectedServiceConfigId } = useServices();
   const contentContainerRef = useRef<HTMLDivElement>(null);
 
-  // Scroll to top when page or selected agent is changed
+  // Scroll to top when page or selected instance is changed
   useEffect(() => {
     contentContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [pageState, selectedAgentType]);
+  }, [pageState, selectedServiceConfigId]);
 
   return contentContainerRef;
 };
