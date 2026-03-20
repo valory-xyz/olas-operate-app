@@ -86,9 +86,10 @@ const SelectYourAgentList = ({
   const agents = useMemo(
     () =>
       // Sorted with under-construction at the end
-      [...ACTIVE_AGENTS].sort(([, agent]) =>
-        agent.isUnderConstruction ? 1 : -1,
-      ),
+      [...ACTIVE_AGENTS].sort(([, agentA], [, agentB]) => {
+        if (agentA.isUnderConstruction === agentB.isUnderConstruction) return 0;
+        return agentA.isUnderConstruction ? 1 : -1;
+      }),
     [],
   );
 

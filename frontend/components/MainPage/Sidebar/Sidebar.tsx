@@ -9,7 +9,7 @@ import {
   Typography,
 } from 'antd';
 import Image from 'next/image';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import {
   TbHelpSquareRounded,
   TbPlus,
@@ -37,13 +37,18 @@ import {
   useServices,
   useSetup,
 } from '@/hooks';
-import { getServiceInstanceName, isServiceOfAgent } from '@/utils';
+import {
+  getServiceInstanceName,
+  isServiceOfAgent,
+  sortByCreationTime,
+} from '@/utils';
 
 import { BackupSeedPhraseAlert } from '../BackupSeedPhraseAlert';
 import { UpdateAvailableAlert } from '../UpdateAvailableAlert/UpdateAvailableAlert';
 import { UpdateAvailableModal } from '../UpdateAvailableAlert/UpdateAvailableModal';
 import { AgentTreeMenu } from './AgentTreeMenu';
 import { AutoRunControl } from './AutoRunControl';
+import { useListFade } from './hooks/useListFade';
 import { SidebarAgentGroup } from './types';
 
 const { Sider } = Layout;
@@ -143,41 +148,17 @@ export const Sidebar = () => {
   } = useServices();
   const { runningServiceConfigId } = useAgentRunning();
   const { isLoading: isMasterWalletLoading } = useMasterWalletContext();
-
-  const [fade, setFade] = useState({ top: false, bottom: false });
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
-
-  const updateFade = useCallback(() => {
-    const node = scrollAreaRef.current;
-    if (!node) return;
-
-    const { scrollTop, scrollHeight, clientHeight } = node;
-    setFade({
-      top: scrollTop > 0,
-      bottom: scrollTop + clientHeight < scrollHeight - 1,
-    });
-  }, []);
-
-  useEffect(() => {
-    const node = scrollAreaRef.current;
-    if (!node) return;
-
-    const observer = new ResizeObserver(updateFade);
-    observer.observe(node);
-    node.addEventListener('scroll', updateFade);
-
-    return () => {
-      observer.disconnect();
-      node.removeEventListener('scroll', updateFade);
-    };
-  }, [updateFade]);
+  const { fade, ref: scrollAreaRef } = useListFade();
 
   const agentGroups = useMemo<SidebarAgentGroup[]>(() => {
     if (!services) return [];
 
     const groupMap = new Map<AgentType, SidebarAgentGroup>();
 
-    for (const service of services) {
+    // Sort services by creation time first so instances are inserted in order
+    const sorted = [...services].sort(sortByCreationTime);
+
+    for (const service of sorted) {
       const agentEntry = ACTIVE_AGENTS.find(([, config]) =>
         isServiceOfAgent(service, config),
       );
@@ -196,13 +177,6 @@ export const Sidebar = () => {
           config.evmHomeChainId,
         ),
       });
-    }
-
-    // Sort instances within each group by service config ID (lexicographic)
-    for (const group of groupMap.values()) {
-      group.instances.sort((a, b) =>
-        a.serviceConfigId.localeCompare(b.serviceConfigId),
-      );
     }
 
     // Sort groups: active agents in ACTIVE_AGENTS config order,

@@ -231,6 +231,7 @@ describe('useAutoRunController', () => {
       act(() => {
         jest.advanceTimersByTime(HEALTH_SUMMARY_INTERVAL_SECONDS * 1000 * 2);
       });
+      // Interval should have been cleared - no health summary logged
       const summaryCalls = mockLogMessage.mock.calls.filter(
         (call: string[]) =>
           typeof call[0] === 'string' && call[0].includes('health summary'),

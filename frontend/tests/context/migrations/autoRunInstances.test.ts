@@ -1,6 +1,6 @@
 import { AGENT_CONFIG } from '../../../config/agents';
 import { AgentMap, AgentType } from '../../../constants/agent';
-import { migrateAutoRunInstances } from '../../../context/migrations/autoRunInstances';
+import { prepateAutoRunInstancesForMigration } from '../../../context/migrations/autoRunInstances';
 import { MiddlewareServiceResponse } from '../../../types';
 import {
   DEFAULT_SERVICE_CONFIG_ID,
@@ -28,17 +28,20 @@ const makeGetInstances =
   (agentType: AgentType) =>
     map[agentType] ?? [];
 
-describe('migrateAutoRunInstances', () => {
+describe('prepateAutoRunInstancesForMigration', () => {
   describe('no old data', () => {
     it('returns didMigrate false when autoRun is empty', () => {
-      const result = migrateAutoRunInstances({}, makeGetInstances({}));
+      const result = prepateAutoRunInstancesForMigration(
+        {},
+        makeGetInstances({}),
+      );
       expect(result.didMigrate).toBe(false);
       expect(result.includedInstances).toEqual([]);
       expect(result.userExcludedInstances).toEqual([]);
     });
 
     it('returns didMigrate false when old fields are undefined', () => {
-      const result = migrateAutoRunInstances(
+      const result = prepateAutoRunInstancesForMigration(
         { includedAgents: undefined, userExcludedAgents: undefined },
         makeGetInstances({}),
       );
@@ -46,7 +49,7 @@ describe('migrateAutoRunInstances', () => {
     });
 
     it('returns didMigrate false when old fields are empty arrays', () => {
-      const result = migrateAutoRunInstances(
+      const result = prepateAutoRunInstancesForMigration(
         { includedAgents: [], userExcludedAgents: [] },
         makeGetInstances({}),
       );
@@ -57,7 +60,7 @@ describe('migrateAutoRunInstances', () => {
       const existing = [
         { serviceConfigId: DEFAULT_SERVICE_CONFIG_ID, order: 0 },
       ];
-      const result = migrateAutoRunInstances(
+      const result = prepateAutoRunInstancesForMigration(
         { includedAgentInstances: existing },
         makeGetInstances({}),
       );
@@ -67,7 +70,7 @@ describe('migrateAutoRunInstances', () => {
 
     it('preserves existing excluded instances when no old data', () => {
       const excluded = [DEFAULT_SERVICE_CONFIG_ID];
-      const result = migrateAutoRunInstances(
+      const result = prepateAutoRunInstancesForMigration(
         { userExcludedAgentInstances: excluded },
         makeGetInstances({}),
       );
@@ -79,7 +82,7 @@ describe('migrateAutoRunInstances', () => {
   describe('migrate includedAgents', () => {
     it('converts old includedAgents to includedAgentInstances', () => {
       const traderService = serviceFor(AgentMap.PredictTrader);
-      const result = migrateAutoRunInstances(
+      const result = prepateAutoRunInstancesForMigration(
         {
           includedAgents: [{ agentType: AgentMap.PredictTrader, order: 0 }],
         },
@@ -99,7 +102,7 @@ describe('migrateAutoRunInstances', () => {
       const service2 = serviceFor(AgentMap.PredictTrader, {
         service_config_id: MOCK_SERVICE_CONFIG_ID_2,
       });
-      const result = migrateAutoRunInstances(
+      const result = prepateAutoRunInstancesForMigration(
         {
           includedAgents: [{ agentType: AgentMap.PredictTrader, order: 1 }],
         },
@@ -118,7 +121,7 @@ describe('migrateAutoRunInstances', () => {
 
     it('deduplicates instances across agent types', () => {
       const traderService = serviceFor(AgentMap.PredictTrader);
-      const result = migrateAutoRunInstances(
+      const result = prepateAutoRunInstancesForMigration(
         {
           includedAgents: [
             { agentType: AgentMap.PredictTrader, order: 0 },
@@ -142,7 +145,7 @@ describe('migrateAutoRunInstances', () => {
       const optimusService = serviceFor(AgentMap.Optimus, {
         service_config_id: MOCK_SERVICE_CONFIG_ID_2,
       });
-      const result = migrateAutoRunInstances(
+      const result = prepateAutoRunInstancesForMigration(
         {
           userExcludedAgents: [AgentMap.Optimus],
         },
@@ -162,7 +165,7 @@ describe('migrateAutoRunInstances', () => {
       const service2 = serviceFor(AgentMap.Optimus, {
         service_config_id: MOCK_SERVICE_CONFIG_ID_3,
       });
-      const result = migrateAutoRunInstances(
+      const result = prepateAutoRunInstancesForMigration(
         {
           userExcludedAgents: [AgentMap.Optimus],
         },
@@ -182,7 +185,7 @@ describe('migrateAutoRunInstances', () => {
       const service = serviceFor(AgentMap.Optimus, {
         service_config_id: MOCK_SERVICE_CONFIG_ID_2,
       });
-      const result = migrateAutoRunInstances(
+      const result = prepateAutoRunInstancesForMigration(
         {
           userExcludedAgents: [AgentMap.Optimus, AgentMap.Optimus],
         },
@@ -201,7 +204,7 @@ describe('migrateAutoRunInstances', () => {
       const optimusService = serviceFor(AgentMap.Optimus, {
         service_config_id: MOCK_SERVICE_CONFIG_ID_2,
       });
-      const result = migrateAutoRunInstances(
+      const result = prepateAutoRunInstancesForMigration(
         {
           includedAgents: [{ agentType: AgentMap.PredictTrader, order: 0 }],
           userExcludedAgents: [AgentMap.Optimus],
@@ -225,7 +228,7 @@ describe('migrateAutoRunInstances', () => {
       const existing = [
         { serviceConfigId: DEFAULT_SERVICE_CONFIG_ID, order: 0 },
       ];
-      const result = migrateAutoRunInstances(
+      const result = prepateAutoRunInstancesForMigration(
         {
           includedAgents: [],
           userExcludedAgents: [],
@@ -243,7 +246,7 @@ describe('migrateAutoRunInstances', () => {
 
   describe('edge cases', () => {
     it('handles agent type with no instances gracefully', () => {
-      const result = migrateAutoRunInstances(
+      const result = prepateAutoRunInstancesForMigration(
         {
           includedAgents: [{ agentType: AgentMap.PredictTrader, order: 0 }],
         },
@@ -258,7 +261,7 @@ describe('migrateAutoRunInstances', () => {
       const existing = [
         { serviceConfigId: MOCK_SERVICE_CONFIG_ID_2, order: 1 },
       ];
-      const result = migrateAutoRunInstances(
+      const result = prepateAutoRunInstancesForMigration(
         {
           includedAgents: [{ agentType: AgentMap.PredictTrader, order: 0 }],
           includedAgentInstances: existing,

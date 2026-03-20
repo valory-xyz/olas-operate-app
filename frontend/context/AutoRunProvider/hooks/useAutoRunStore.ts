@@ -1,6 +1,6 @@
 import { useCallback, useRef } from 'react';
 
-import { migrateAutoRunInstances } from '@/context/migrations/autoRunInstances';
+import { prepateAutoRunInstancesForMigration } from '@/context/migrations/autoRunInstances';
 import { useElectronApi, useServices, useStore } from '@/hooks';
 
 import { IncludedAgentInstance } from '../types';
@@ -47,7 +47,7 @@ export const useAutoRunStore = () => {
     if (!hasMigratedRef.current && services?.length) {
       hasMigratedRef.current = true;
       const { includedInstances, userExcludedInstances, didMigrate } =
-        migrateAutoRunInstances(
+        prepateAutoRunInstancesForMigration(
           autoRun as Record<string, unknown>,
           getInstancesOfAgentType,
         );

@@ -1,5 +1,5 @@
 import { Flex, Typography } from 'antd';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { RiArrowDownSLine, RiArrowRightSLine } from 'react-icons/ri';
 import styled from 'styled-components';
 
@@ -49,21 +49,13 @@ export const AgentTreeMenu = ({
   onGroupSelect,
   onInstanceSelect,
 }: AgentTreeMenuProps) => {
-  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
-
-  useEffect(() => {
-    if (!selectedServiceConfigId) return;
-
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(() => {
+    if (!selectedServiceConfigId) return new Set();
     const group = groups.find((g) =>
       g.instances.some((i) => i.serviceConfigId === selectedServiceConfigId),
     );
-    if (group) {
-      setExpandedGroups((prev) => {
-        if (prev.has(group.agentType)) return prev;
-        return new Set([...prev, group.agentType]);
-      });
-    }
-  }, [selectedServiceConfigId, groups]);
+    return group ? new Set([group.agentType]) : new Set();
+  });
 
   const toggleGroup = useCallback(
     (agentType: string) => {

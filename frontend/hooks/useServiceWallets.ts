@@ -41,10 +41,10 @@ export const useServiceWallets = (
                 ...instances.map(
                   (instance: string) =>
                     ({
-                      address: instance,
+                      address: instance as `0x${string}`,
                       type: WALLET_TYPE.EOA,
                       owner: WALLET_OWNER.Agent,
-                    }) as AgentEoa,
+                    }) satisfies AgentEoa,
                 ),
               );
             }
@@ -55,7 +55,7 @@ export const useServiceWallets = (
                 type: WALLET_TYPE.Safe,
                 owner: WALLET_OWNER.Agent,
                 evmChainId: asEvmChainId(middlewareChain),
-              } as AgentSafe);
+              } satisfies AgentSafe);
             }
 
             return acc;

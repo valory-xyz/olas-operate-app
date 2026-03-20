@@ -19,6 +19,24 @@ import {
 
 import { generateAgentName } from './generateAgentName';
 
+/**
+ * Returns the creation timestamp of a service from its hash_history.
+ * The smallest key in hash_history represents the first block (creation).
+ * Returns Infinity if hash_history is empty or missing.
+ */
+export const getServiceCreationTime = (
+  service: MiddlewareServiceResponse,
+): number => {
+  const keys = Object.keys(service.hash_history || {}).map(Number);
+  return keys.length > 0 ? Math.min(...keys) : Infinity;
+};
+
+/** Sort comparator: services created first come first. */
+export const sortByCreationTime = (
+  a: MiddlewareServiceResponse,
+  b: MiddlewareServiceResponse,
+): number => getServiceCreationTime(a) - getServiceCreationTime(b);
+
 export const updateServiceIfNeeded = async (
   service: Service,
   agentType: AgentType,
@@ -165,7 +183,10 @@ export const getServiceInstanceName = (
   displayName: string,
   evmHomeChainId: EvmChainId,
 ): string => {
-  const tokenId = service?.chain_configs[service.home_chain]?.chain_data?.token;
+  const homeChain = service?.home_chain;
+  const tokenId = homeChain
+    ? service?.chain_configs[homeChain]?.chain_data?.token
+    : undefined;
 
   if (isValidServiceId(tokenId)) {
     return generateAgentName(evmHomeChainId, tokenId);
