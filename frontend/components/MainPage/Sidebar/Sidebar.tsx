@@ -315,7 +315,7 @@ export const Sidebar = () => {
                   groups={agentGroups}
                   selectedServiceConfigId={selectedServiceConfigId}
                   runningServiceConfigIds={runningServiceConfigIds}
-                  onGroupSelect={updateSelectedServiceConfigId}
+                  onGroupSelect={handleInstanceSelect}
                   onInstanceSelect={handleInstanceSelect}
                 />
               ) : null}

@@ -1,7 +1,6 @@
 import { BigNumber } from 'ethers';
 import { MutableRefObject } from 'react';
 
-import { AgentType } from '@/constants';
 import { StakingRewardsInfo } from '@/types';
 import { isValidServiceId } from '@/utils/service';
 import { fetchAgentStakingRewardsInfo } from '@/utils/stakingRewards';
@@ -58,16 +57,16 @@ export const formatEligibilityReason = (eligibility: {
 };
 
 /**
- * Fetch staking reward eligibility for an agent, throttled per agent type.
+ * Fetch staking reward eligibility for an instance, throttled per serviceConfigId.
  *  * @returns
  * - true      – agent has earned its staking rewards for the current epoch
  * - false     – agent has not yet earned rewards
- * - undefined  – agent not found in configuredAgents, missing required staking
+ * - undefined  – instance not found in configuredAgents, missing required staking
  *               data (multisig / serviceNftTokenId / stakingProgramId), or
  *               the API call failed
  */
 export const refreshRewardsEligibility = async ({
-  agentType,
+  serviceConfigId,
   configuredAgents,
   lastRewardsFetchRef,
   getRewardSnapshot,
@@ -75,22 +74,27 @@ export const refreshRewardsEligibility = async ({
   logMessage,
   onRewardsFetchError,
 }: {
-  agentType: AgentType;
+  serviceConfigId: string;
   configuredAgents: AgentMeta[];
-  lastRewardsFetchRef: MutableRefObject<Partial<Record<AgentType, number>>>;
-  getRewardSnapshot: (agentType: AgentType) => boolean | undefined;
-  setRewardSnapshot: (agentType: AgentType, value: boolean | undefined) => void;
+  lastRewardsFetchRef: MutableRefObject<Partial<Record<string, number>>>;
+  getRewardSnapshot: (serviceConfigId: string) => boolean | undefined;
+  setRewardSnapshot: (
+    serviceConfigId: string,
+    value: boolean | undefined,
+  ) => void;
   logMessage: (message: string) => void;
   onRewardsFetchError?: () => void;
 }) => {
   const now = Date.now();
-  const lastFetch = lastRewardsFetchRef.current[agentType] ?? 0;
+  const lastFetch = lastRewardsFetchRef.current[serviceConfigId] ?? 0;
   if (now - lastFetch < REWARDS_POLL_SECONDS * 1000) {
-    return getRewardSnapshot(agentType);
+    return getRewardSnapshot(serviceConfigId);
   }
 
-  lastRewardsFetchRef.current[agentType] = now;
-  const meta = configuredAgents.find((agent) => agent.agentType === agentType);
+  lastRewardsFetchRef.current[serviceConfigId] = now;
+  const meta = configuredAgents.find(
+    (agent) => agent.serviceConfigId === serviceConfigId,
+  );
   if (!meta) return;
   if (
     !meta.multisig ||
@@ -109,7 +113,7 @@ export const refreshRewardsEligibility = async ({
       agentConfig: meta.agentConfig,
       onError: (error) => {
         onRewardsFetchError?.();
-        logMessage(`rewards fetch error: ${agentType}: ${error}`);
+        logMessage(`rewards fetch error: ${serviceConfigId}: ${error}`);
       },
     });
     if (!response) return;
@@ -117,7 +121,7 @@ export const refreshRewardsEligibility = async ({
     const epochExpired = isStakingEpochExpired(response);
     if (epochExpired && response.isEligibleForRewards) {
       logMessage(
-        `${agentType}: epoch expired, stale isEligibleForRewards=true overridden to false so agent runs and triggers on-chain checkpoint`,
+        `${serviceConfigId}: epoch expired, stale isEligibleForRewards=true overridden to false so agent runs and triggers on-chain checkpoint`,
       );
     }
     // isEligibleForRewards=true → agent already earned this epoch → auto-run SKIPS it.
@@ -126,7 +130,7 @@ export const refreshRewardsEligibility = async ({
     // auto-run starts the agent and triggers the on-chain checkpoint for the new epoch.
     const eligible = epochExpired ? false : response.isEligibleForRewards;
     if (typeof eligible === 'boolean') {
-      setRewardSnapshot(agentType, eligible);
+      setRewardSnapshot(serviceConfigId, eligible);
       return eligible;
     }
   } catch {

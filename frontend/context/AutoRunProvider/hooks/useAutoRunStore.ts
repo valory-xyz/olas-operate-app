@@ -1,54 +1,86 @@
 import { useCallback, useRef } from 'react';
 
-import { AgentType } from '@/constants';
-import { useElectronApi, useStore } from '@/hooks';
+import { migrateAutoRunInstances } from '@/context/migrations/autoRunInstances';
+import { useElectronApi, useServices, useStore } from '@/hooks';
 
-const DEFAULT_AUTO_RUN: {
+import { IncludedAgentInstance } from '../types';
+
+type AutoRunStoreState = {
   enabled: boolean;
   isInitialized: boolean;
-  includedAgents: { agentType: AgentType; order: number }[];
-  userExcludedAgents: AgentType[];
-} = {
+  includedInstances: IncludedAgentInstance[];
+  userExcludedInstances: string[];
+};
+
+const DEFAULT_AUTO_RUN: AutoRunStoreState = {
   enabled: false,
   isInitialized: false,
-  includedAgents: [],
-  userExcludedAgents: [],
+  includedInstances: [],
+  userExcludedInstances: [],
 };
 
 /**
  * Persisted auto-run settings bridge.
  *
- * Example:
- * - user excludes `polystrat`
- * - settings are written to Electron store
- * - app restart loads the same included/excluded state from this hook
+ * Reads/writes `includedAgentInstances` and `userExcludedAgentInstances`
+ * (keyed by serviceConfigId). On first load, migrates from legacy
+ * `includedAgents`/`userExcludedAgents` (keyed by AgentType).
  */
 export const useAutoRunStore = () => {
   const { store } = useElectronApi();
   const { storeState } = useStore();
+  const { services, getInstancesOfAgentType } = useServices();
   const autoRunRef = useRef(DEFAULT_AUTO_RUN);
+  const hasMigratedRef = useRef(false);
 
   const autoRun = storeState?.autoRun;
   if (autoRun) {
-    // Keep an always-defined local snapshot to avoid undefined checks in callers.
+    // Always read from the current store fields
     autoRunRef.current = {
       enabled: !!autoRun.enabled,
-      includedAgents: autoRun.includedAgents ?? [],
       isInitialized: autoRun.isInitialized ?? false,
-      userExcludedAgents: autoRun.userExcludedAgents ?? [],
+      includedInstances: autoRun.includedAgentInstances ?? [],
+      userExcludedInstances: autoRun.userExcludedAgentInstances ?? [],
     };
+
+    // Run one-time migration from AgentType → serviceConfigId
+    if (!hasMigratedRef.current && services?.length) {
+      hasMigratedRef.current = true;
+      const { includedInstances, userExcludedInstances, didMigrate } =
+        migrateAutoRunInstances(
+          autoRun as Record<string, unknown>,
+          getInstancesOfAgentType,
+        );
+
+      if (didMigrate) {
+        autoRunRef.current = {
+          ...autoRunRef.current,
+          includedInstances,
+          userExcludedInstances,
+        };
+        store?.set?.('autoRun', {
+          enabled: autoRunRef.current.enabled,
+          isInitialized: autoRunRef.current.isInitialized,
+          includedAgentInstances: includedInstances,
+          userExcludedAgentInstances: userExcludedInstances,
+          includedAgents: [],
+          userExcludedAgents: [],
+        });
+      }
+    }
   }
+
   const resolvedAutoRun = autoRunRef.current;
   const enabled = resolvedAutoRun.enabled;
-  const includedAgents = resolvedAutoRun.includedAgents;
+  const includedInstances = resolvedAutoRun.includedInstances;
   const isInitialized = resolvedAutoRun.isInitialized;
-  const userExcludedAgents = resolvedAutoRun.userExcludedAgents;
+  const userExcludedInstances = resolvedAutoRun.userExcludedInstances;
 
   const updateAutoRun = useCallback(
-    (partial: Partial<typeof DEFAULT_AUTO_RUN>) => {
+    (partial: Partial<AutoRunStoreState>) => {
       if (!store?.set) return;
       // Merge with latest snapshot so partial writes do not erase sibling fields.
-      // Example: toggling `enabled` should not wipe `includedAgents`.
+      // Example: toggling `enabled` should not wipe `includedInstances`.
       const next = {
         enabled:
           partial.enabled ??
@@ -58,16 +90,21 @@ export const useAutoRunStore = () => {
           partial.isInitialized ??
           autoRunRef.current.isInitialized ??
           DEFAULT_AUTO_RUN.isInitialized,
-        includedAgents:
-          partial.includedAgents ??
-          autoRunRef.current.includedAgents ??
-          DEFAULT_AUTO_RUN.includedAgents,
-        userExcludedAgents:
-          partial.userExcludedAgents ??
-          autoRunRef.current.userExcludedAgents ??
-          DEFAULT_AUTO_RUN.userExcludedAgents,
+        includedAgentInstances:
+          partial.includedInstances ??
+          autoRunRef.current.includedInstances ??
+          DEFAULT_AUTO_RUN.includedInstances,
+        userExcludedAgentInstances:
+          partial.userExcludedInstances ??
+          autoRunRef.current.userExcludedInstances ??
+          DEFAULT_AUTO_RUN.userExcludedInstances,
       };
-      autoRunRef.current = next;
+      autoRunRef.current = {
+        enabled: next.enabled,
+        isInitialized: next.isInitialized,
+        includedInstances: next.includedAgentInstances,
+        userExcludedInstances: next.userExcludedAgentInstances,
+      };
       store?.set?.('autoRun', next);
     },
     [store],
@@ -75,9 +112,9 @@ export const useAutoRunStore = () => {
 
   return {
     enabled,
-    includedAgents,
+    includedInstances,
     isInitialized,
-    userExcludedAgents,
+    userExcludedInstances,
     updateAutoRun,
   };
 };

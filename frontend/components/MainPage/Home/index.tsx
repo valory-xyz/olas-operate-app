@@ -43,8 +43,12 @@ const Switcher = ({ value, onChange }: SwitcherProps) => {
 };
 
 export const Home = () => {
-  const { selectedAgentType, selectedService, selectedAgentConfig } =
-    useServices();
+  const {
+    selectedAgentType,
+    selectedServiceConfigId,
+    selectedService,
+    selectedAgentConfig,
+  } = useServices();
   const { isServiceActive } = useService(selectedService?.service_config_id);
 
   const [view, setView] = useState<View>('overview');
@@ -53,8 +57,8 @@ export const Home = () => {
 
   const { isX402Enabled } = selectedAgentConfig;
 
-  // Reset view to overview when switching between agents
-  useEffect(() => setView('overview'), [selectedAgentType]);
+  // Reset view to overview when switching between instances
+  useEffect(() => setView('overview'), [selectedServiceConfigId]);
 
   useEffect(() => {
     // Track when user visits profile
@@ -111,7 +115,7 @@ export const Home = () => {
 
   return (
     <PageTransition
-      animationKey={selectedAgentType}
+      animationKey={selectedServiceConfigId ?? selectedAgentType}
       className="flex flex-col flex-auto"
     >
       <Flex vertical gap={40} className="flex-auto">

@@ -34,6 +34,7 @@ const makeHookParams = (
 ) => ({
   enabled: true,
   runningAgentType: null as AgentType | null,
+  runningServiceConfigId: null as string | null,
   isSelectedAgentDetailsLoading: false,
   isEligibleForRewards: undefined as boolean | undefined,
   isEpochExpired: false,
@@ -71,23 +72,26 @@ describe('useAutoRunSignals', () => {
     expect(result.current.enabledRef.current).toBe(false);
   });
 
-  it('syncs runningAgentTypeRef with runningAgentType prop', () => {
-    const params = makeHookParams({ runningAgentType: null });
+  it('syncs runningServiceConfigIdRef with runningServiceConfigId prop', () => {
+    const params = makeHookParams({ runningServiceConfigId: null });
     const { result, rerender } = renderHook(
       (props) => useAutoRunSignals(props),
       { initialProps: params },
     );
-    expect(result.current.runningAgentTypeRef.current).toBeNull();
+    expect(result.current.runningServiceConfigIdRef.current).toBeNull();
 
-    rerender({ ...params, runningAgentType: AgentMap.PredictTrader });
-    expect(result.current.runningAgentTypeRef.current).toBe(
-      AgentMap.PredictTrader,
+    rerender({
+      ...params,
+      runningServiceConfigId: DEFAULT_SERVICE_CONFIG_ID,
+    });
+    expect(result.current.runningServiceConfigIdRef.current).toBe(
+      DEFAULT_SERVICE_CONFIG_ID,
     );
   });
 
   it('updates reward snapshot when isEligibleForRewards changes', () => {
     const params = makeHookParams({
-      selectedAgentType: AgentMap.PredictTrader,
+      selectedServiceConfigId: DEFAULT_SERVICE_CONFIG_ID,
       isEligibleForRewards: false,
     });
     const { result, rerender } = renderHook(
@@ -95,12 +99,12 @@ describe('useAutoRunSignals', () => {
       { initialProps: params },
     );
     expect(
-      result.current.rewardSnapshotRef.current[AgentMap.PredictTrader],
+      result.current.rewardSnapshotRef.current[DEFAULT_SERVICE_CONFIG_ID],
     ).toBe(false);
 
     rerender({ ...params, isEligibleForRewards: true });
     expect(
-      result.current.rewardSnapshotRef.current[AgentMap.PredictTrader],
+      result.current.rewardSnapshotRef.current[DEFAULT_SERVICE_CONFIG_ID],
     ).toBe(true);
   });
 
@@ -108,26 +112,28 @@ describe('useAutoRunSignals', () => {
     const params = makeHookParams({ isEligibleForRewards: true });
     const { result } = renderHook(() => useAutoRunSignals(params));
     act(() => {
-      result.current.markRewardSnapshotPending(AgentMap.PredictTrader);
+      result.current.markRewardSnapshotPending(DEFAULT_SERVICE_CONFIG_ID);
     });
     expect(
-      result.current.rewardSnapshotRef.current[AgentMap.PredictTrader],
+      result.current.rewardSnapshotRef.current[DEFAULT_SERVICE_CONFIG_ID],
     ).toBeUndefined();
   });
 
   it('getRewardSnapshot returns the stored value', () => {
     const params = makeHookParams({ isEligibleForRewards: true });
     const { result } = renderHook(() => useAutoRunSignals(params));
-    expect(result.current.getRewardSnapshot(AgentMap.PredictTrader)).toBe(true);
+    expect(result.current.getRewardSnapshot(DEFAULT_SERVICE_CONFIG_ID)).toBe(
+      true,
+    );
   });
 
   it('setRewardSnapshot updates the snapshot', () => {
     const params = makeHookParams();
     const { result } = renderHook(() => useAutoRunSignals(params));
     act(() => {
-      result.current.setRewardSnapshot(AgentMap.PredictTrader, false);
+      result.current.setRewardSnapshot(DEFAULT_SERVICE_CONFIG_ID, false);
     });
-    expect(result.current.getRewardSnapshot(AgentMap.PredictTrader)).toBe(
+    expect(result.current.getRewardSnapshot(DEFAULT_SERVICE_CONFIG_ID)).toBe(
       false,
     );
   });
@@ -204,18 +210,17 @@ describe('useAutoRunSignals', () => {
     });
   });
 
-  describe('waitForAgentSelection', () => {
-    it('returns true immediately when agent is already selected', async () => {
+  describe('waitForInstanceSelection', () => {
+    it('returns true immediately when instance is already selected', async () => {
       const params = makeHookParams({
-        selectedAgentType: AgentMap.PredictTrader,
+        selectedServiceConfigId: DEFAULT_SERVICE_CONFIG_ID,
         isSelectedAgentDetailsLoading: false,
       });
       const { result } = renderHook(() => useAutoRunSignals(params));
 
       let ok: boolean | undefined;
       await act(async () => {
-        ok = await result.current.waitForAgentSelection(
-          AgentMap.PredictTrader,
+        ok = await result.current.waitForInstanceSelection(
           DEFAULT_SERVICE_CONFIG_ID,
         );
       });
@@ -228,41 +233,17 @@ describe('useAutoRunSignals', () => {
 
       let ok: boolean | undefined;
       await act(async () => {
-        ok = await result.current.waitForAgentSelection(AgentMap.PredictTrader);
-      });
-      expect(ok).toBe(false);
-    });
-
-    it('logs timeout message with agentType when selection wait times out', async () => {
-      const logMessage = jest.fn();
-      const params = makeHookParams({
-        selectedAgentType: AgentMap.Optimus,
-        isSelectedAgentDetailsLoading: true,
-        logMessage,
-      });
-      // Advance past the timeout on each sleepAwareDelay call
-      mockSleepAwareDelay.mockImplementation(async () => {
-        jest.advanceTimersByTime(
-          AGENT_SELECTION_WAIT_TIMEOUT_SECONDS * 1000 + 1,
+        ok = await result.current.waitForInstanceSelection(
+          DEFAULT_SERVICE_CONFIG_ID,
         );
-        return true;
-      });
-      const { result } = renderHook(() => useAutoRunSignals(params));
-
-      let ok: boolean | undefined;
-      await act(async () => {
-        ok = await result.current.waitForAgentSelection(AgentMap.PredictTrader);
       });
       expect(ok).toBe(false);
-      expect(logMessage).toHaveBeenCalledWith(
-        `selection wait timeout: ${AgentMap.PredictTrader}`,
-      );
     });
 
-    it('logs timeout message with serviceConfigId when provided', async () => {
+    it('logs timeout message with serviceConfigId when selection wait times out', async () => {
       const logMessage = jest.fn();
       const params = makeHookParams({
-        selectedAgentType: AgentMap.Optimus,
+        selectedServiceConfigId: 'sc-other',
         isSelectedAgentDetailsLoading: true,
         logMessage,
       });
@@ -276,14 +257,13 @@ describe('useAutoRunSignals', () => {
 
       let ok: boolean | undefined;
       await act(async () => {
-        ok = await result.current.waitForAgentSelection(
-          AgentMap.PredictTrader,
+        ok = await result.current.waitForInstanceSelection(
           DEFAULT_SERVICE_CONFIG_ID,
         );
       });
       expect(ok).toBe(false);
       expect(logMessage).toHaveBeenCalledWith(
-        `selection wait timeout: ${AgentMap.PredictTrader} (${DEFAULT_SERVICE_CONFIG_ID})`,
+        `selection wait timeout: ${DEFAULT_SERVICE_CONFIG_ID}`,
       );
     });
   });
@@ -314,36 +294,19 @@ describe('useAutoRunSignals', () => {
       const params = makeHookParams({ logMessage });
       const { result } = renderHook(() => useAutoRunSignals(params));
 
-      // Advance time past staleness threshold so isFresh() returns false
       jest.advanceTimersByTime(BALANCE_STALENESS_MS + 1);
 
-      // Make sleepAwareDelay resolve then simulate balances becoming fresh
       let callCount = 0;
       mockSleepAwareDelay.mockImplementation(async () => {
         callCount += 1;
         if (callCount === 1) {
           // Simulate balances becoming fresh on the next iteration
-          // by not advancing time further — the refetch mock already updates
-          // balanceLastUpdatedRef via the .then() handler
         }
         return true;
       });
 
-      // waitForBalancesReady will see stale data, call refetch, then loop
-      // The refetch resolves immediately, updating balanceLastUpdatedRef
-      // But the while loop checks balancesReadyRef which is already true,
-      // and isFresh() which needs balanceLastUpdatedRef to be recent.
-      // Since refetch().then() updates balanceLastUpdatedRef to Date.now(),
-      // and we're using fake timers, Date.now() is deterministic.
-      // After refetch resolves, the next loop iteration should see fresh data.
-
-      // We need to make the while loop see fresh data after refetch
-      // The refetch .then() sets balanceLastUpdatedRef.current = Date.now()
-      // Since the refetch mock resolves immediately, this happens before sleepAwareDelay
-
-      let ok: boolean | undefined;
       await act(async () => {
-        ok = await result.current.waitForBalancesReady();
+        await result.current.waitForBalancesReady();
       });
 
       expect(logMessage).toHaveBeenCalledWith(
@@ -367,10 +330,8 @@ describe('useAutoRunSignals', () => {
       const params = makeHookParams({ logMessage });
       const { result } = renderHook(() => useAutoRunSignals(params));
 
-      // Advance time past staleness threshold
       jest.advanceTimersByTime(BALANCE_STALENESS_MS + 1);
 
-      // After refetch rejects, the loop will continue. Let it timeout.
       mockSleepAwareDelay.mockImplementation(async () => {
         jest.advanceTimersByTime(BALANCES_WAIT_TIMEOUT_SECONDS * 1000 + 1);
         return true;
@@ -399,7 +360,6 @@ describe('useAutoRunSignals', () => {
       const params = makeHookParams({ logMessage });
       const { result } = renderHook(() => useAutoRunSignals(params));
 
-      // Advance past timeout on first sleepAwareDelay call
       mockSleepAwareDelay.mockImplementation(async () => {
         jest.advanceTimersByTime(BALANCES_WAIT_TIMEOUT_SECONDS * 1000 + 1);
         return true;
@@ -442,7 +402,7 @@ describe('useAutoRunSignals', () => {
       let value: boolean | undefined;
       await act(async () => {
         value = await result.current.waitForRewardsEligibility(
-          AgentMap.PredictTrader,
+          DEFAULT_SERVICE_CONFIG_ID,
         );
       });
       expect(value).toBe(true);
@@ -455,7 +415,7 @@ describe('useAutoRunSignals', () => {
       let value: boolean | undefined;
       await act(async () => {
         value = await result.current.waitForRewardsEligibility(
-          AgentMap.PredictTrader,
+          DEFAULT_SERVICE_CONFIG_ID,
         );
       });
       expect(value).toBe(false);
@@ -469,12 +429,10 @@ describe('useAutoRunSignals', () => {
       });
       const { result } = renderHook(() => useAutoRunSignals(params));
 
-      // Mark snapshot as pending so it stays undefined
       act(() => {
-        result.current.markRewardSnapshotPending(AgentMap.PredictTrader);
+        result.current.markRewardSnapshotPending(DEFAULT_SERVICE_CONFIG_ID);
       });
 
-      // Advance past timeout on each sleepAwareDelay call
       mockSleepAwareDelay.mockImplementation(async () => {
         jest.advanceTimersByTime(REWARDS_WAIT_TIMEOUT_SECONDS * 1000 + 1);
         return true;
@@ -483,12 +441,12 @@ describe('useAutoRunSignals', () => {
       let value: boolean | undefined;
       await act(async () => {
         value = await result.current.waitForRewardsEligibility(
-          AgentMap.PredictTrader,
+          DEFAULT_SERVICE_CONFIG_ID,
         );
       });
       expect(value).toBeUndefined();
       expect(logMessage).toHaveBeenCalledWith(
-        `rewards eligibility timeout: ${AgentMap.PredictTrader}, proceeding without it`,
+        `rewards eligibility timeout: ${DEFAULT_SERVICE_CONFIG_ID}, proceeding without it`,
       );
     });
 
@@ -496,9 +454,8 @@ describe('useAutoRunSignals', () => {
       const params = makeHookParams({ isEligibleForRewards: undefined });
       const { result } = renderHook(() => useAutoRunSignals(params));
 
-      // Mark snapshot as pending
       act(() => {
-        result.current.markRewardSnapshotPending(AgentMap.PredictTrader);
+        result.current.markRewardSnapshotPending(DEFAULT_SERVICE_CONFIG_ID);
       });
 
       mockSleepAwareDelay.mockResolvedValue(false);
@@ -506,24 +463,24 @@ describe('useAutoRunSignals', () => {
       let value: boolean | undefined;
       await act(async () => {
         value = await result.current.waitForRewardsEligibility(
-          AgentMap.PredictTrader,
+          DEFAULT_SERVICE_CONFIG_ID,
         );
       });
       expect(value).toBeUndefined();
     });
   });
 
-  describe('waitForRunningAgent', () => {
-    it('returns true when agent matches immediately', async () => {
+  describe('waitForRunningInstance', () => {
+    it('returns true when instance matches immediately', async () => {
       const params = makeHookParams({
-        runningAgentType: AgentMap.PredictTrader,
+        runningServiceConfigId: DEFAULT_SERVICE_CONFIG_ID,
       });
       const { result } = renderHook(() => useAutoRunSignals(params));
 
       let ok: boolean | undefined;
       await act(async () => {
-        ok = await result.current.waitForRunningAgent(
-          AgentMap.PredictTrader,
+        ok = await result.current.waitForRunningInstance(
+          DEFAULT_SERVICE_CONFIG_ID,
           10,
         );
       });
@@ -532,30 +489,29 @@ describe('useAutoRunSignals', () => {
 
     it('returns false when sleep/wake interrupts', async () => {
       mockSleepAwareDelay.mockResolvedValue(false);
-      const params = makeHookParams({ runningAgentType: null });
+      const params = makeHookParams({ runningServiceConfigId: null });
       const { result } = renderHook(() => useAutoRunSignals(params));
 
       let ok: boolean | undefined;
       await act(async () => {
-        ok = await result.current.waitForRunningAgent(
-          AgentMap.PredictTrader,
+        ok = await result.current.waitForRunningInstance(
+          DEFAULT_SERVICE_CONFIG_ID,
           10,
         );
       });
       expect(ok).toBe(false);
     });
 
-    it('returns false and logs timeout when agent never matches', async () => {
+    it('returns false and logs timeout when instance never matches', async () => {
       const logMessage = jest.fn();
       const params = makeHookParams({
-        runningAgentType: null,
+        runningServiceConfigId: null,
         logMessage,
       });
-      // Simulate time advancing past the timeout on each delay call
       const realDateNow = Date.now;
       let elapsed = 0;
       Date.now = jest.fn(() => {
-        elapsed += 11_000; // 11s > timeoutSeconds=10
+        elapsed += 11_000;
         return realDateNow() + elapsed;
       });
 
@@ -563,14 +519,14 @@ describe('useAutoRunSignals', () => {
 
       let ok: boolean | undefined;
       await act(async () => {
-        ok = await result.current.waitForRunningAgent(
-          AgentMap.PredictTrader,
+        ok = await result.current.waitForRunningInstance(
+          DEFAULT_SERVICE_CONFIG_ID,
           10,
         );
       });
       expect(ok).toBe(false);
       expect(logMessage).toHaveBeenCalledWith(
-        `running timeout: ${AgentMap.PredictTrader}`,
+        `running timeout: ${DEFAULT_SERVICE_CONFIG_ID}`,
       );
       Date.now = realDateNow;
     });
@@ -593,7 +549,6 @@ describe('useAutoRunSignals', () => {
       await act(async () => {
         ok = await result.current.waitForBalancesReady();
       });
-      // enabledRef is false so the while loop doesn't enter, returns false
       expect(ok).toBe(false);
     });
   });
@@ -609,21 +564,19 @@ describe('useAutoRunSignals', () => {
       expect(result.current.hasScheduledScan()).toBe(true);
 
       unmount();
-      // Scan timeout is cleared on unmount — no error from dangling timer
     });
   });
 
   describe('isEpochExpired override', () => {
     it('overrides isEligibleForRewards to false when epoch is expired', () => {
       const params = makeHookParams({
-        selectedAgentType: AgentMap.PredictTrader,
+        selectedServiceConfigId: DEFAULT_SERVICE_CONFIG_ID,
         isEligibleForRewards: true,
         isEpochExpired: true,
       });
       const { result } = renderHook(() => useAutoRunSignals(params));
-      // When epoch is expired, the effective eligibility should be false
       expect(
-        result.current.rewardSnapshotRef.current[AgentMap.PredictTrader],
+        result.current.rewardSnapshotRef.current[DEFAULT_SERVICE_CONFIG_ID],
       ).toBe(false);
     });
   });

@@ -1,58 +1,74 @@
 import { AGENT_CONFIG } from '../../../../config/agents';
 import { AgentMap, AgentType } from '../../../../constants/agent';
 import { MiddlewareChainMap } from '../../../../constants/chains';
-import { IncludedAgent } from '../../../../context/AutoRunProvider/types';
+import { IncludedAgentInstance } from '../../../../context/AutoRunProvider/types';
 import {
-  appendNewAgents,
+  appendNewInstances,
   getAgentDisplayName,
   getAgentFromService,
-  getDecommissionedAgentTypes,
-  getEligibleAgentTypes,
-  getExcludedAgentTypes,
-  getOrderedIncludedAgentTypes,
-  normalizeIncludedAgents,
+  getDecommissionedInstances,
+  getEligibleInstances,
+  getExcludedInstances,
+  getInstanceDisplayNames,
+  getOrderedIncludedInstances,
+  normalizeIncludedInstances,
   notifySkipped,
   notifyStartFailed,
-  sortIncludedAgents,
+  sortIncludedInstances,
 } from '../../../../context/AutoRunProvider/utils/utils';
-import { makeAutoRunAgentMeta, makeService } from '../../../helpers/factories';
+import {
+  DEFAULT_SERVICE_CONFIG_ID,
+  makeAutoRunAgentMeta,
+  makeService,
+  MOCK_SERVICE_CONFIG_ID_2,
+  MOCK_SERVICE_CONFIG_ID_3,
+} from '../../../helpers/factories';
 
 describe('notifySkipped', () => {
-  it('calls showNotification with agent name and reason', () => {
+  it('calls showNotification with agent name, instance name, and reason', () => {
     const showNotification = jest.fn();
-    notifySkipped(showNotification, 'Omenstrat', 'Low balance');
+    notifySkipped(
+      showNotification,
+      'Omenstrat',
+      'corzim-vardor96',
+      'Low balance',
+    );
     expect(showNotification).toHaveBeenCalledWith(
-      'Agent Omenstrat was skipped',
+      'Omenstrat agent "corzim-vardor96" was skipped',
       'Low balance',
     );
   });
 
   it('calls showNotification without reason when undefined', () => {
     const showNotification = jest.fn();
-    notifySkipped(showNotification, 'Polystrat');
+    notifySkipped(showNotification, 'Polystrat', 'nekfam-nushim36');
     expect(showNotification).toHaveBeenCalledWith(
-      'Agent Polystrat was skipped',
+      'Polystrat agent "nekfam-nushim36" was skipped',
       undefined,
     );
   });
 
   it('does not throw when showNotification is undefined', () => {
-    expect(() => notifySkipped(undefined, 'Omenstrat', 'reason')).not.toThrow();
+    expect(() =>
+      notifySkipped(undefined, 'Omenstrat', 'corzim-vardor96', 'reason'),
+    ).not.toThrow();
   });
 });
 
 describe('notifyStartFailed', () => {
   it('calls showNotification with failure message', () => {
     const showNotification = jest.fn();
-    notifyStartFailed(showNotification, 'Omenstrat');
+    notifyStartFailed(showNotification, 'Optimus', 'nekfam-nushim36');
     expect(showNotification).toHaveBeenCalledWith(
-      'Failed to start Omenstrat',
+      'Failed to start Optimus agent "nekfam-nushim36"',
       'Moving to next agent.',
     );
   });
 
   it('does not throw when showNotification is undefined', () => {
-    expect(() => notifyStartFailed(undefined, 'Omenstrat')).not.toThrow();
+    expect(() =>
+      notifyStartFailed(undefined, 'Omenstrat', 'corzim-vardor96'),
+    ).not.toThrow();
   });
 });
 
@@ -64,7 +80,7 @@ describe('getAgentFromService', () => {
     });
     const result = getAgentFromService(service);
     expect(result).toBeDefined();
-    expect(result![0]).toBe(AgentMap.PredictTrader);
+    expect(result?.[0]).toBe(AgentMap.PredictTrader);
   });
 
   it('returns undefined when servicePublicId does not match', () => {
@@ -84,99 +100,104 @@ describe('getAgentFromService', () => {
   });
 });
 
-describe('sortIncludedAgents', () => {
-  const trader = AgentMap.PredictTrader;
-  const optimus = AgentMap.Optimus;
-  const polystrat = AgentMap.Polystrat;
+describe('sortIncludedInstances', () => {
+  const scA = DEFAULT_SERVICE_CONFIG_ID;
+  const scB = MOCK_SERVICE_CONFIG_ID_2;
+  const scC = MOCK_SERVICE_CONFIG_ID_3;
 
-  it('returns empty array when includedAgents is empty', () => {
-    expect(sortIncludedAgents([], [trader, optimus])).toEqual([]);
+  it('returns empty array when includedInstances is empty', () => {
+    expect(sortIncludedInstances([], [scA, scB])).toEqual([]);
   });
 
-  it('filters out agents not in allowedAgents', () => {
-    const included: IncludedAgent[] = [
-      { agentType: trader, order: 0 },
-      { agentType: optimus, order: 1 },
+  it('filters out instances not in allowedInstances', () => {
+    const included: IncludedAgentInstance[] = [
+      { serviceConfigId: scA, order: 0 },
+      { serviceConfigId: scB, order: 1 },
     ];
-    const result = sortIncludedAgents(included, [trader]);
+    const result = sortIncludedInstances(included, [scA]);
     expect(result).toHaveLength(1);
-    expect(result[0].agentType).toBe(trader);
+    expect(result[0].serviceConfigId).toBe(scA);
   });
 
   it('sorts by order ascending', () => {
-    const included: IncludedAgent[] = [
-      { agentType: optimus, order: 5 },
-      { agentType: trader, order: 1 },
-      { agentType: polystrat, order: 3 },
+    const included: IncludedAgentInstance[] = [
+      { serviceConfigId: scB, order: 5 },
+      { serviceConfigId: scA, order: 1 },
+      { serviceConfigId: scC, order: 3 },
     ];
-    const result = sortIncludedAgents(included, [trader, optimus, polystrat]);
-    expect(result.map((a) => a.agentType)).toEqual([
-      trader,
-      polystrat,
-      optimus,
-    ]);
+    const result = sortIncludedInstances(included, [scA, scB, scC]);
+    expect(result.map((a) => a.serviceConfigId)).toEqual([scA, scC, scB]);
   });
 });
 
-describe('appendNewAgents', () => {
-  it('appends agents with order continuing from max existing order', () => {
-    const existing: IncludedAgent[] = [
-      { agentType: AgentMap.PredictTrader, order: 0 },
-      { agentType: AgentMap.Optimus, order: 2 },
+describe('appendNewInstances', () => {
+  it('appends instances with order continuing from max existing order', () => {
+    const existing: IncludedAgentInstance[] = [
+      { serviceConfigId: DEFAULT_SERVICE_CONFIG_ID, order: 0 },
+      { serviceConfigId: MOCK_SERVICE_CONFIG_ID_2, order: 2 },
     ];
-    const result = appendNewAgents(existing, [AgentMap.Polystrat]);
+    const result = appendNewInstances(existing, [MOCK_SERVICE_CONFIG_ID_3]);
     expect(result).toHaveLength(3);
-    expect(result[2]).toEqual({ agentType: AgentMap.Polystrat, order: 3 });
+    expect(result[2]).toEqual({
+      serviceConfigId: MOCK_SERVICE_CONFIG_ID_3,
+      order: 3,
+    });
   });
 
   it('starts from order 0 when existing is empty', () => {
-    const result = appendNewAgents(
+    const result = appendNewInstances(
       [],
-      [AgentMap.PredictTrader, AgentMap.Optimus],
+      [DEFAULT_SERVICE_CONFIG_ID, MOCK_SERVICE_CONFIG_ID_2],
     );
     expect(result).toEqual([
-      { agentType: AgentMap.PredictTrader, order: 0 },
-      { agentType: AgentMap.Optimus, order: 1 },
+      { serviceConfigId: DEFAULT_SERVICE_CONFIG_ID, order: 0 },
+      { serviceConfigId: MOCK_SERVICE_CONFIG_ID_2, order: 1 },
     ]);
   });
 
-  it('handles multiple new agents with sequential orders', () => {
-    const existing: IncludedAgent[] = [
-      { agentType: AgentMap.PredictTrader, order: 0 },
+  it('handles multiple new instances with sequential orders', () => {
+    const existing: IncludedAgentInstance[] = [
+      { serviceConfigId: DEFAULT_SERVICE_CONFIG_ID, order: 0 },
     ];
-    const result = appendNewAgents(existing, [
-      AgentMap.Optimus,
-      AgentMap.Polystrat,
+    const result = appendNewInstances(existing, [
+      MOCK_SERVICE_CONFIG_ID_2,
+      MOCK_SERVICE_CONFIG_ID_3,
     ]);
-    expect(result[1]).toEqual({ agentType: AgentMap.Optimus, order: 1 });
-    expect(result[2]).toEqual({ agentType: AgentMap.Polystrat, order: 2 });
+    expect(result[1]).toEqual({
+      serviceConfigId: MOCK_SERVICE_CONFIG_ID_2,
+      order: 1,
+    });
+    expect(result[2]).toEqual({
+      serviceConfigId: MOCK_SERVICE_CONFIG_ID_3,
+      order: 2,
+    });
   });
 });
 
-describe('normalizeIncludedAgents', () => {
+describe('normalizeIncludedInstances', () => {
   it('returns empty array when input is empty', () => {
-    expect(normalizeIncludedAgents([])).toEqual([]);
+    expect(normalizeIncludedInstances([])).toEqual([]);
   });
 
   it('deduplicates keeping first occurrence by order', () => {
-    const agents: IncludedAgent[] = [
-      { agentType: AgentMap.PredictTrader, order: 0 },
-      { agentType: AgentMap.Optimus, order: 5 },
-      { agentType: AgentMap.PredictTrader, order: 7 },
+    const instances: IncludedAgentInstance[] = [
+      { serviceConfigId: DEFAULT_SERVICE_CONFIG_ID, order: 0 },
+      { serviceConfigId: MOCK_SERVICE_CONFIG_ID_2, order: 5 },
+      { serviceConfigId: DEFAULT_SERVICE_CONFIG_ID, order: 7 },
     ];
-    const result = normalizeIncludedAgents(agents);
+    const result = normalizeIncludedInstances(instances);
     expect(result).toEqual([
-      { agentType: AgentMap.PredictTrader, order: 0 },
-      { agentType: AgentMap.Optimus, order: 1 },
+      { serviceConfigId: DEFAULT_SERVICE_CONFIG_ID, order: 0 },
+      { serviceConfigId: MOCK_SERVICE_CONFIG_ID_2, order: 1 },
     ]);
   });
 
   it('re-sequences orders starting from 0', () => {
-    const agents: IncludedAgent[] = [
-      { agentType: AgentMap.Polystrat, order: 10 },
-      { agentType: AgentMap.Optimus, order: 20 },
+    const instances: IncludedAgentInstance[] = [
+      { serviceConfigId: MOCK_SERVICE_CONFIG_ID_3, order: 10 },
+      { serviceConfigId: MOCK_SERVICE_CONFIG_ID_2, order: 20 },
     ];
-    const result = normalizeIncludedAgents(agents);
+    const result = normalizeIncludedInstances(instances);
     expect(result[0].order).toBe(0);
     expect(result[1].order).toBe(1);
   });
@@ -196,8 +217,30 @@ describe('getAgentDisplayName', () => {
   });
 });
 
-describe('getDecommissionedAgentTypes', () => {
-  it('returns agents that are under construction', () => {
+describe('getInstanceDisplayNames', () => {
+  it('returns agentName and instanceName for a known serviceConfigId', () => {
+    const agents = [
+      makeAutoRunAgentMeta(
+        AgentMap.PredictTrader,
+        AGENT_CONFIG[AgentMap.PredictTrader],
+      ),
+    ];
+    const result = getInstanceDisplayNames(DEFAULT_SERVICE_CONFIG_ID, agents);
+    expect(result.agentName).toBe(
+      AGENT_CONFIG[AgentMap.PredictTrader].displayName,
+    );
+    expect(typeof result.instanceName).toBe('string');
+  });
+
+  it('falls back to serviceConfigId when not found', () => {
+    const result = getInstanceDisplayNames('sc-unknown', []);
+    expect(result.agentName).toBe('sc-unknown');
+    expect(result.instanceName).toBe('sc-unknown');
+  });
+});
+
+describe('getDecommissionedInstances', () => {
+  it('returns serviceConfigIds of agents that are under construction', () => {
     const agents = [
       {
         ...makeAutoRunAgentMeta(AgentMap.Modius, AGENT_CONFIG[AgentMap.Modius]),
@@ -207,10 +250,12 @@ describe('getDecommissionedAgentTypes', () => {
         },
       },
     ];
-    expect(getDecommissionedAgentTypes(agents)).toEqual([AgentMap.Modius]);
+    expect(getDecommissionedInstances(agents)).toEqual([
+      DEFAULT_SERVICE_CONFIG_ID,
+    ]);
   });
 
-  it('returns agents that are not enabled', () => {
+  it('returns serviceConfigIds of agents that are not enabled', () => {
     const agents = [
       {
         ...makeAutoRunAgentMeta(
@@ -223,8 +268,8 @@ describe('getDecommissionedAgentTypes', () => {
         },
       },
     ];
-    expect(getDecommissionedAgentTypes(agents)).toEqual([
-      AgentMap.PredictTrader,
+    expect(getDecommissionedInstances(agents)).toEqual([
+      DEFAULT_SERVICE_CONFIG_ID,
     ]);
   });
 
@@ -235,66 +280,72 @@ describe('getDecommissionedAgentTypes', () => {
         AGENT_CONFIG[AgentMap.PredictTrader],
       ),
     ];
-    expect(getDecommissionedAgentTypes(agents)).toEqual([]);
+    expect(getDecommissionedInstances(agents)).toEqual([]);
   });
 });
 
-describe('getEligibleAgentTypes', () => {
-  it('excludes decommissioned agents', () => {
+describe('getEligibleInstances', () => {
+  it('excludes decommissioned instances', () => {
     const configured = [
-      AgentMap.PredictTrader,
-      AgentMap.Modius,
-      AgentMap.Optimus,
+      DEFAULT_SERVICE_CONFIG_ID,
+      MOCK_SERVICE_CONFIG_ID_2,
+      MOCK_SERVICE_CONFIG_ID_3,
     ];
-    const decommissioned = [AgentMap.Modius];
-    const result = getEligibleAgentTypes(configured, decommissioned);
-    expect(result).toEqual([AgentMap.PredictTrader, AgentMap.Optimus]);
+    const decommissioned = [MOCK_SERVICE_CONFIG_ID_2];
+    const result = getEligibleInstances(configured, decommissioned);
+    expect(result).toEqual([
+      DEFAULT_SERVICE_CONFIG_ID,
+      MOCK_SERVICE_CONFIG_ID_3,
+    ]);
   });
 
   it('returns empty when configured is empty', () => {
-    expect(getEligibleAgentTypes([], [AgentMap.Modius])).toEqual([]);
+    expect(getEligibleInstances([], [MOCK_SERVICE_CONFIG_ID_2])).toEqual([]);
   });
 
-  it('returns all when no decommissioned agents', () => {
-    const configured = [AgentMap.PredictTrader, AgentMap.Optimus];
-    expect(getEligibleAgentTypes(configured, [])).toEqual(configured);
+  it('returns all when no decommissioned instances', () => {
+    const configured = [DEFAULT_SERVICE_CONFIG_ID, MOCK_SERVICE_CONFIG_ID_2];
+    expect(getEligibleInstances(configured, [])).toEqual(configured);
   });
 });
 
-describe('getOrderedIncludedAgentTypes', () => {
-  it('returns included agent types when list is non-empty', () => {
+describe('getOrderedIncludedInstances', () => {
+  it('returns included serviceConfigIds when list is non-empty', () => {
     const included = [
-      { agentType: AgentMap.Optimus },
-      { agentType: AgentMap.PredictTrader },
+      { serviceConfigId: MOCK_SERVICE_CONFIG_ID_2 },
+      { serviceConfigId: DEFAULT_SERVICE_CONFIG_ID },
     ];
-    const result = getOrderedIncludedAgentTypes(included, [
-      AgentMap.PredictTrader,
+    const result = getOrderedIncludedInstances(included, [
+      DEFAULT_SERVICE_CONFIG_ID,
     ]);
-    expect(result).toEqual([AgentMap.Optimus, AgentMap.PredictTrader]);
+    expect(result).toEqual([
+      MOCK_SERVICE_CONFIG_ID_2,
+      DEFAULT_SERVICE_CONFIG_ID,
+    ]);
   });
 
-  it('falls back to eligible agent types when included is empty', () => {
-    const eligible = [AgentMap.PredictTrader, AgentMap.Polystrat];
-    const result = getOrderedIncludedAgentTypes([], eligible);
+  it('falls back to eligible instances when included is empty', () => {
+    const eligible = [DEFAULT_SERVICE_CONFIG_ID, MOCK_SERVICE_CONFIG_ID_3];
+    const result = getOrderedIncludedInstances([], eligible);
     expect(result).toEqual(eligible);
   });
 });
 
-describe('getExcludedAgentTypes', () => {
-  it('returns configured agents not in included list', () => {
+describe('getExcludedInstances', () => {
+  it('returns configured instances not in included list', () => {
     const configured = [
-      AgentMap.PredictTrader,
-      AgentMap.Optimus,
-      AgentMap.Polystrat,
+      DEFAULT_SERVICE_CONFIG_ID,
+      MOCK_SERVICE_CONFIG_ID_2,
+      MOCK_SERVICE_CONFIG_ID_3,
     ];
-    const included = [AgentMap.PredictTrader, AgentMap.Polystrat];
-    const result = getExcludedAgentTypes(configured, included);
-    expect(result).toEqual([AgentMap.Optimus]);
+    const included = [DEFAULT_SERVICE_CONFIG_ID, MOCK_SERVICE_CONFIG_ID_3];
+    const result = getExcludedInstances(configured, included);
+    expect(result).toEqual([MOCK_SERVICE_CONFIG_ID_2]);
   });
 
   it('returns empty when all configured are included', () => {
-    const configured = [AgentMap.PredictTrader];
-    const result = getExcludedAgentTypes(configured, configured);
+    const configured = [DEFAULT_SERVICE_CONFIG_ID];
+    const result = getExcludedInstances(configured, configured);
     expect(result).toEqual([]);
   });
 });

@@ -1389,9 +1389,10 @@ describe('ServicesProvider', () => {
         AgentMap.PredictTrader,
       );
       expect(traderInstances).toHaveLength(2);
+      // Sorted lexicographically by service_config_id
       expect(traderInstances.map((s) => s.service_config_id)).toEqual([
-        DEFAULT_SERVICE_CONFIG_ID,
         MOCK_SERVICE_CONFIG_ID_2,
+        DEFAULT_SERVICE_CONFIG_ID,
       ]);
     });
 

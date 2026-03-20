@@ -14,7 +14,10 @@ import {
   refreshRewardsEligibility,
 } from '../../../../context/AutoRunProvider/utils/autoRunHelpers';
 import { fetchAgentStakingRewardsInfo } from '../../../../utils/stakingRewards';
-import { makeAutoRunAgentMeta } from '../../../helpers/factories';
+import {
+  DEFAULT_SERVICE_CONFIG_ID,
+  makeAutoRunAgentMeta,
+} from '../../../helpers/factories';
 
 jest.mock('../../../../utils/stakingRewards', () => ({
   fetchAgentStakingRewardsInfo: jest.fn(),
@@ -206,7 +209,7 @@ describe('refreshRewardsEligibility', () => {
   const makeParams = (
     overrides: Partial<Parameters<typeof refreshRewardsEligibility>[0]> = {},
   ) => ({
-    agentType: AgentMap.PredictTrader,
+    serviceConfigId: DEFAULT_SERVICE_CONFIG_ID,
     configuredAgents: [
       makeAutoRunAgentMeta(
         AgentMap.PredictTrader,
@@ -229,13 +232,13 @@ describe('refreshRewardsEligibility', () => {
     const getRewardSnapshot = jest.fn().mockReturnValue(true);
     const params = makeParams({
       lastRewardsFetchRef: {
-        current: { [AgentMap.PredictTrader]: Date.now() },
+        current: { [DEFAULT_SERVICE_CONFIG_ID]: Date.now() },
       },
       getRewardSnapshot,
     });
     const result = await refreshRewardsEligibility(params);
     expect(result).toBe(true);
-    expect(getRewardSnapshot).toHaveBeenCalledWith(AgentMap.PredictTrader);
+    expect(getRewardSnapshot).toHaveBeenCalledWith(DEFAULT_SERVICE_CONFIG_ID);
     expect(mockFetchRewards).not.toHaveBeenCalled();
   });
 
@@ -303,7 +306,7 @@ describe('refreshRewardsEligibility', () => {
     const result = await refreshRewardsEligibility(params);
     expect(result).toBe(true);
     expect(setRewardSnapshot).toHaveBeenCalledWith(
-      AgentMap.PredictTrader,
+      DEFAULT_SERVICE_CONFIG_ID,
       true,
     );
   });
@@ -317,7 +320,7 @@ describe('refreshRewardsEligibility', () => {
     const result = await refreshRewardsEligibility(params);
     expect(result).toBe(false);
     expect(setRewardSnapshot).toHaveBeenCalledWith(
-      AgentMap.PredictTrader,
+      DEFAULT_SERVICE_CONFIG_ID,
       false,
     );
   });
@@ -344,9 +347,12 @@ describe('refreshRewardsEligibility', () => {
     };
     const params = makeParams({ lastRewardsFetchRef });
     await refreshRewardsEligibility(params);
-    expect(lastRewardsFetchRef.current[AgentMap.PredictTrader]).toBeDefined();
     expect(
-      Date.now() - (lastRewardsFetchRef.current[AgentMap.PredictTrader] ?? 0),
+      lastRewardsFetchRef.current[DEFAULT_SERVICE_CONFIG_ID],
+    ).toBeDefined();
+    expect(
+      Date.now() -
+        (lastRewardsFetchRef.current[DEFAULT_SERVICE_CONFIG_ID] ?? 0),
     ).toBeLessThan(1000);
   });
 
@@ -355,7 +361,7 @@ describe('refreshRewardsEligibility', () => {
     const almostExpired = Date.now() - (REWARDS_POLL_SECONDS * 1000 - 100);
     const params = makeParams({
       lastRewardsFetchRef: {
-        current: { [AgentMap.PredictTrader]: almostExpired },
+        current: { [DEFAULT_SERVICE_CONFIG_ID]: almostExpired },
       },
     });
     await refreshRewardsEligibility(params);
@@ -370,7 +376,7 @@ describe('refreshRewardsEligibility', () => {
     const expired = Date.now() - (REWARDS_POLL_SECONDS * 1000 + 100);
     const params = makeParams({
       lastRewardsFetchRef: {
-        current: { [AgentMap.PredictTrader]: expired },
+        current: { [DEFAULT_SERVICE_CONFIG_ID]: expired },
       },
     });
     await refreshRewardsEligibility(params);
@@ -390,7 +396,7 @@ describe('refreshRewardsEligibility', () => {
     const result = await refreshRewardsEligibility(params);
     expect(result).toBe(false);
     expect(setRewardSnapshot).toHaveBeenCalledWith(
-      AgentMap.PredictTrader,
+      DEFAULT_SERVICE_CONFIG_ID,
       false,
     );
     expect(logMessage).toHaveBeenCalledWith(
