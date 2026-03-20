@@ -36,8 +36,9 @@ type UseAutoRunControllerParams = {
     loadingReason?: string;
   };
   createSafeIfNeeded: (meta: AgentMeta) => Promise<void>;
-  /** Ref that is `true` only when the user is on PAGES.Main. When false,
-   *  the scanner will not call updateAgentType and will reschedule instead. */
+  /** Ref that is `true` when the user is on a page where agent switching is
+   *  allowed (see AGENT_SWITCH_ALLOWED_PAGES). When false, the scanner will
+   *  not call updateAgentType and will reschedule instead. */
   canSwitchAgentRef: MutableRefObject<boolean>;
   showNotification?: (title: string, body?: string) => void;
   onAutoRunAgentStarted?: (agentType: AgentType) => void;

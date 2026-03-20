@@ -26,7 +26,9 @@ const ELIGIBILITY_WAIT_TIMEOUT_MS = AGENT_SELECTION_WAIT_TIMEOUT_SECONDS * 1000;
 type UseAutoRunScannerParams = {
   enabledRef: MutableRefObject<boolean>;
   /** When false, scanner pauses and reschedules — prevents switching agents
-   *  while the user is on Setup/wallet/staking pages. */
+   *  while the user is on agent-specific pages (Setup, AgentWallet,
+   *  AgentStaking, staking flows). Neutral pages (Settings, HelpAndSupport,
+   *  ReleaseNotes, PearlWallet) allow switching. */
   canSwitchAgentRef: MutableRefObject<boolean>;
   orderedIncludedAgentTypes: AgentType[];
   configuredAgents: AgentMeta[];

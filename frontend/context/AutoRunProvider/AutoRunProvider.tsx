@@ -11,7 +11,7 @@ import {
 } from 'react';
 
 import { AgentType } from '@/constants';
-import { PAGES } from '@/constants/pages';
+import { PAGES, Pages } from '@/constants/pages';
 import {
   useArchivedAgents,
   useElectronApi,
@@ -38,6 +38,26 @@ import {
   normalizeIncludedAgents,
   sortIncludedAgents,
 } from './utils/utils';
+
+/**
+ * Pages on which auto-run is allowed to call updateAgentType.
+ * Agent-specific pages (AgentWallet, AgentStaking, Setup, staking flows,
+ * UpdateAgentTemplate, FundPearlWallet) are excluded so visible content is not
+ * disrupted by a background rotation. Neutral pages whose content is
+ * independent of selectedAgentType are included.
+ * New pages are blocked by default (safe); add here only when confirmed neutral.
+ *
+ * Note: FundPearlWallet is excluded — it reads selectedAgentConfig.evmHomeChainId
+ * to derive chain, symbol, and gas requirement, so a switch would change those
+ * values mid-flow.
+ */
+const AGENT_SWITCH_ALLOWED_PAGES = new Set<Pages>([
+  PAGES.Main,
+  PAGES.Settings,
+  PAGES.HelpAndSupport,
+  PAGES.ReleaseNotes,
+  PAGES.PearlWallet,
+]);
 
 const AutoRunContext = createContext<AutoRunContextType>({
   enabled: false,
@@ -122,9 +142,9 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
   // loop. This guarantees no setTimeout/setInterval scan tick can fire with a
   // stale value between pageState changing and the ref being written.
   const { pageState } = usePageState();
-  const canSwitchAgentRef = useRef(pageState === PAGES.Main);
+  const canSwitchAgentRef = useRef(AGENT_SWITCH_ALLOWED_PAGES.has(pageState));
   useLayoutEffect(() => {
-    canSwitchAgentRef.current = pageState === PAGES.Main;
+    canSwitchAgentRef.current = AGENT_SWITCH_ALLOWED_PAGES.has(pageState);
   }, [pageState]);
 
   // Auto-run controller runs the orchestration loop.
