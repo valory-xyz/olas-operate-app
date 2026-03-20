@@ -52,6 +52,7 @@ import {
   isNilOrEmpty,
   isServiceOfAgent,
   isValidServiceId,
+  sortByCreationTime,
 } from '@/utils';
 
 import { migrateIsInitialFunded } from './migrations/isInitialFunded';
@@ -352,10 +353,9 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
       const config = AGENT_CONFIG[agentType];
       if (!config) return [];
 
-      // TODO: sort by time of creation
       return services
         .filter((service) => isServiceOfAgent(service, config))
-        .sort((a, b) => a.service_config_id.localeCompare(b.service_config_id));
+        .sort(sortByCreationTime);
     },
     [services],
   );

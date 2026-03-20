@@ -37,7 +37,11 @@ import {
   useServices,
   useSetup,
 } from '@/hooks';
-import { getServiceInstanceName, isServiceOfAgent } from '@/utils';
+import {
+  getServiceInstanceName,
+  isServiceOfAgent,
+  sortByCreationTime,
+} from '@/utils';
 
 import { BackupSeedPhraseAlert } from '../BackupSeedPhraseAlert';
 import { UpdateAvailableAlert } from '../UpdateAvailableAlert/UpdateAvailableAlert';
@@ -151,7 +155,10 @@ export const Sidebar = () => {
 
     const groupMap = new Map<AgentType, SidebarAgentGroup>();
 
-    for (const service of services) {
+    // Sort services by creation time first so instances are inserted in order
+    const sorted = [...services].sort(sortByCreationTime);
+
+    for (const service of sorted) {
       const agentEntry = ACTIVE_AGENTS.find(([, config]) =>
         isServiceOfAgent(service, config),
       );
@@ -170,13 +177,6 @@ export const Sidebar = () => {
           config.evmHomeChainId,
         ),
       });
-    }
-
-    // Sort instances within each group by service config ID (lexicographic)
-    for (const group of groupMap.values()) {
-      group.instances.sort((a, b) =>
-        a.serviceConfigId.localeCompare(b.serviceConfigId),
-      );
     }
 
     // Sort groups: active agents in ACTIVE_AGENTS config order,
