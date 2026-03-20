@@ -1,6 +1,6 @@
 import { QueryObserverBaseResult, useQuery } from '@tanstack/react-query';
 import { message, MessageArgsProps } from 'antd';
-import { noop, values } from 'lodash';
+import { noop } from 'lodash';
 import {
   createContext,
   PropsWithChildren,
@@ -14,9 +14,7 @@ import {
 
 import { ACTIVE_AGENTS, AGENT_CONFIG } from '@/config/agents';
 import {
-  AgentEoa,
   AgentMap,
-  AgentSafe,
   AgentType,
   AgentWallet,
   EvmChainId,
@@ -24,12 +22,9 @@ import {
   FIVE_SECONDS_INTERVAL,
   isTransitioningDeploymentStatus,
   MESSAGE_WIDTH,
-  MiddlewareChain,
   MiddlewareDeploymentStatus,
   PAGES,
   REACT_QUERY_KEYS,
-  WALLET_OWNER,
-  WALLET_TYPE,
 } from '@/constants';
 import {
   useElectronApi,
@@ -39,6 +34,7 @@ import {
   useStore,
 } from '@/hooks';
 import { useDynamicRefetchInterval } from '@/hooks/useDynamicRefetchInterval';
+import { useServiceWallets } from '@/hooks/useServiceWallets';
 import { ServicesService } from '@/service/Services';
 import {
   AgentConfig,
@@ -278,55 +274,7 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
     };
   }, [selectedService, deploymentDetails?.status, serviceStatusOverrides]);
 
-  const serviceWallets: Optional<AgentWallet[]> = useMemo(() => {
-    if (isServicesLoading) return;
-    if (isNilOrEmpty(services)) return [];
-
-    return services.reduce<AgentWallet[]>(
-      (acc, service: MiddlewareServiceResponse) => {
-        return [
-          ...acc,
-          ...Object.keys(service.chain_configs).reduce(
-            (acc: AgentWallet[], middlewareChain: string) => {
-              const chainConfig =
-                service.chain_configs[middlewareChain as MiddlewareChain];
-
-              if (!chainConfig) return acc;
-
-              const instances = chainConfig.chain_data.instances;
-              const multisig = chainConfig.chain_data.multisig;
-
-              if (instances) {
-                acc.push(
-                  ...instances.map(
-                    (instance: string) =>
-                      ({
-                        address: instance,
-                        type: WALLET_TYPE.EOA,
-                        owner: WALLET_OWNER.Agent,
-                      }) as AgentEoa,
-                  ),
-                );
-              }
-
-              if (multisig) {
-                acc.push({
-                  address: multisig,
-                  type: WALLET_TYPE.Safe,
-                  owner: WALLET_OWNER.Agent,
-                  evmChainId: asEvmChainId(middlewareChain),
-                } as AgentSafe);
-              }
-
-              return acc;
-            },
-            [],
-          ),
-        ];
-      },
-      [],
-    );
-  }, [isServicesLoading, services]);
+  const serviceWallets = useServiceWallets(services, isServicesLoading);
 
   const overrideSelectedServiceStatus = useCallback(
     (status: Maybe<MiddlewareDeploymentStatus>) => {
@@ -346,15 +294,13 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
   const availableServiceConfigIds = useMemo(() => {
     if (!services) return [];
     return services
-      .filter(({ service_public_id, home_chain }) => {
-        const currentAgent = values(AGENT_CONFIG).find(
-          ({ servicePublicId, evmHomeChainId }) =>
-            servicePublicId === service_public_id &&
-            evmHomeChainId === asEvmChainId(home_chain),
+      .filter((service) => {
+        const agentEntry = ACTIVE_AGENTS.find(([, config]) =>
+          isServiceOfAgent(service, config),
         );
-        return (
-          !currentAgent?.isUnderConstruction && !!currentAgent?.isAgentEnabled
-        );
+        if (!agentEntry) return false;
+        const [, config] = agentEntry;
+        return !config.isUnderConstruction && !!config.isAgentEnabled;
       })
       .map(({ service_config_id, home_chain, chain_configs }) => ({
         configId: service_config_id,

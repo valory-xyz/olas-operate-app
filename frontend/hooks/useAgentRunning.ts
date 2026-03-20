@@ -9,6 +9,7 @@ import {
   REACT_QUERY_KEYS,
 } from '@/constants';
 import { ServicesService } from '@/service/Services';
+import { isServiceOfAgent } from '@/utils/service';
 
 import { useDynamicRefetchInterval } from './useDynamicRefetchInterval';
 import { useOnlineStatusContext } from './useOnlineStatus';
@@ -76,10 +77,8 @@ export const useAgentRunning = () => {
         continue;
       }
 
-      const agentEntry = ACTIVE_AGENTS.find(
-        ([, agentConfig]) =>
-          agentConfig.servicePublicId === service.service_public_id &&
-          agentConfig.middlewareHomeChainId === service.home_chain,
+      const agentEntry = ACTIVE_AGENTS.find(([, config]) =>
+        isServiceOfAgent(service, config),
       );
 
       if (agentEntry) {
