@@ -56,12 +56,16 @@ describe('AgentTreeMenu', () => {
     { serviceConfigId: MOCK_SERVICE_CONFIG_ID_3, name: 'Optimus #1' },
   ]);
 
+  const mockOnArchiveRequest = jest.fn();
+
   const defaultProps = {
     groups: [traderGroup, optimusGroup],
     selectedServiceConfigId: DEFAULT_SERVICE_CONFIG_ID,
     runningServiceConfigIds: new Set<string>(),
+    totalInstanceCount: 3,
     onGroupSelect: mockOnGroupSelect,
     onInstanceSelect: mockOnInstanceSelect,
+    onArchiveRequest: mockOnArchiveRequest,
   };
 
   beforeEach(() => {
