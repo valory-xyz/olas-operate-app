@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-import { findUndeployedInstance } from '@/utils';
+import { findUndeployedInstance } from '@/components/SetupPage/AgentOnboarding/utils';
 
 import { AGENT_CONFIG } from '../../../../config/agents';
 import { AgentMap } from '../../../../constants/agent';

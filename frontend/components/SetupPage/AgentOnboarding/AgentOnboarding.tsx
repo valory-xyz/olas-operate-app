@@ -12,11 +12,11 @@ import {
   useSetup,
 } from '@/hooks';
 import { Optional } from '@/types';
-import { findUndeployedInstance } from '@/utils';
 
 import { FundingRequirementStep } from './FundingRequirementStep';
 import { RestrictedRegion } from './RestrictedRegion';
 import { SelectAgent } from './SelectAgent';
+import { findUndeployedInstance } from './utils';
 
 const { Text, Title } = Typography;
 
