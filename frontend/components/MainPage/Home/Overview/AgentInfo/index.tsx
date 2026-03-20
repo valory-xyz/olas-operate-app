@@ -129,7 +129,7 @@ export const AgentInfo = () => {
         </AgentInfoContainer>
       </CardFlex>
 
-      <AgentActivity />
+      <AgentActivity key={displayedAgentType} />
     </Flex>
   );
 };

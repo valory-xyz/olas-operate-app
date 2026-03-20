@@ -1,7 +1,7 @@
+import { isEqual } from 'lodash';
 import {
   createContext,
   PropsWithChildren,
-  useCallback,
   useContext,
   useEffect,
   useState,
@@ -19,17 +19,32 @@ export const StoreProvider = ({ children }: PropsWithChildren) => {
   const { store, ipcRenderer } = useContext(ElectronApiContext);
   const [storeState, setStoreState] = useState<ElectronStore>();
 
-  const setupStore = useCallback(async () => {
-    const tempStore = await store?.store?.();
-    setStoreState(tempStore);
-    ipcRenderer?.on?.('store-changed', (_event: unknown, data: unknown) => {
-      setStoreState(data as ElectronStore);
-    });
-  }, [ipcRenderer, store]);
-
+  // Load initial store state
   useEffect(() => {
-    if (!storeState) setupStore().catch(console.error);
-  }, [setupStore, storeState]);
+    if (storeState) return;
+
+    store
+      ?.store?.()
+      .then((tempStore: ElectronStore) => setStoreState(tempStore))
+      .catch(console.error);
+  }, [store, storeState]);
+
+  // Register store-changed listener separately (once)
+  useEffect(() => {
+    if (!ipcRenderer?.on) return;
+
+    // NOTE: preload.js `on` wrapper already strips the IPC event,
+    // so the handler receives `(data)` directly, NOT `(event, data)`.
+    const handleStoreChanged = (data: unknown) => {
+      setStoreState((prev) => {
+        const next = data as ElectronStore;
+        if (isEqual(prev, next)) return prev;
+        return next;
+      });
+    };
+
+    ipcRenderer.on('store-changed', handleStoreChanged);
+  }, [ipcRenderer]);
 
   return (
     <StoreContext.Provider value={{ storeState }}>

@@ -2,6 +2,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { ReactNode, useMemo } from 'react';
 
 import { AgentLowBalanceAlert } from '@/components/AgentLowBalanceAlert';
+import { usePageTransitionValue } from '@/components/ui';
 import { PAGES } from '@/constants';
 import {
   useActiveStakingContractDetails,
@@ -41,7 +42,7 @@ export const AgentDisabledAlert = () => {
     agentConfig: selectedAgentConfig,
   });
 
-  const { key, content } = useMemo<{
+  const alertResult = useMemo<{
     key: string;
     content: ReactNode;
   }>(() => {
@@ -108,6 +109,11 @@ export const AgentDisabledAlert = () => {
     selectedAgentConfig,
     selectedStakingProgramMeta,
   ]);
+
+  // Delay the entire alert result so the old content stays frozen
+  // during the page transition (old React element references are preserved,
+  // so React skips re-rendering children during the delay).
+  const { key, content } = usePageTransitionValue(alertResult);
 
   return (
     <AnimatePresence mode="wait" initial={false}>

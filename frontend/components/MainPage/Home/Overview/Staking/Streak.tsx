@@ -1,14 +1,17 @@
 import { Flex, Skeleton } from 'antd';
 
 import { FireV1 } from '@/components/custom-icons';
+import { usePageTransitionValue } from '@/components/ui';
 import { NA } from '@/constants/symbols';
 import { useRewardContext } from '@/hooks';
 import { useStakingDetails } from '@/hooks/useStakingDetails';
 
 export const Streak = () => {
-  const { isStreakLoading, isStreakError, optimisticStreak } =
+  const { isStreakLoading, isStreakError, optimisticStreak: rawStreak } =
     useStakingDetails();
-  const { isEligibleForRewards } = useRewardContext();
+  const { isEligibleForRewards: rawIsEligible } = useRewardContext();
+  const optimisticStreak = usePageTransitionValue(rawStreak);
+  const isEligibleForRewards = usePageTransitionValue(rawIsEligible);
 
   if (isStreakLoading) return <Skeleton.Input active size="small" />;
   if (isStreakError) return NA;

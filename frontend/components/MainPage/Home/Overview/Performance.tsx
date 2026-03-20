@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { Button, Col, Flex, Row, Spin, Typography } from 'antd';
 import { isNil } from 'lodash';
 import { useMemo } from 'react';
@@ -90,6 +90,7 @@ const useAgentPerformance = () => {
     },
     enabled: !isNil(chainId) && !isNil(serviceConfigId),
     refetchInterval: FIVE_MINUTE_INTERVAL,
+    placeholderData: keepPreviousData,
   });
 };
 

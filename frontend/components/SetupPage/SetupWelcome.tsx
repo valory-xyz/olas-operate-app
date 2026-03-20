@@ -1,4 +1,5 @@
 import { Button, Card, Flex, Form, Input, Spin, Typography } from 'antd';
+import { AnimatePresence, motion } from 'framer-motion';
 import { isNil } from 'lodash';
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -257,7 +258,9 @@ export const SetupWelcome = () => {
   const electronApi = useElectronApi();
   const { isAccountRecoveryStatusLoading, hasActiveRecoverySwap } =
     useSharedContext();
-  const [isSetup, setIsSetup] = useState<MiddlewareAccountIsSetup | null>(null);
+  const [isSetup, setIsSetup] = useState<MiddlewareAccountIsSetup>(
+    MiddlewareAccountIsSetup.Loading,
+  );
   const [hasCheckedAccount, setHasCheckedAccount] = useState(false);
 
   useEffect(() => {
@@ -268,10 +271,7 @@ export const SetupWelcome = () => {
     }
 
     // If already checked or determined the setup state, don't check again
-    if (
-      hasCheckedAccount ||
-      (isSetup !== null && isSetup !== MiddlewareAccountIsSetup.Loading)
-    ) {
+    if (hasCheckedAccount || isSetup !== MiddlewareAccountIsSetup.Loading) {
       return;
     }
 
@@ -342,7 +342,17 @@ export const SetupWelcome = () => {
           height={64}
         />
       </Flex>
-      {welcomeScreen}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={isSetup}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.15 }}
+        >
+          {welcomeScreen}
+        </motion.div>
+      </AnimatePresence>
     </Card>
   );
 };
