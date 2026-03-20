@@ -1,8 +1,9 @@
 import { act, renderHook } from '@testing-library/react';
 
 import { useSidebarAgents } from '../../../../components/MainPage/hooks/useSidebarAgents';
-import { AgentMap, PAGES, SETUP_SCREEN } from '../../../../constants';
+import { PAGES, SETUP_SCREEN } from '../../../../constants';
 import {
+  useArchivedAgents,
   useElectronApi,
   usePageState,
   useServices,
@@ -16,8 +17,6 @@ jest.mock('../../../../constants/providers', () => ({}));
 // Config mocks
 // ---------------------------------------------------------------------------
 
-// Three entries: two standard agents + one without evmHomeChainId to cover
-// the defensive guard branch in useSidebarAgents.
 jest.mock('../../../../config/agents', () => ({
   ACTIVE_AGENTS: [
     [
@@ -74,6 +73,7 @@ jest.mock('../../../../hooks', () => ({
   useServices: jest.fn(),
   useElectronApi: jest.fn(),
   useStore: jest.fn(),
+  useArchivedAgents: jest.fn(),
 }));
 
 const mockUseSetup = useSetup as jest.MockedFunction<typeof useSetup>;
@@ -85,10 +85,13 @@ const mockUseElectronApi = useElectronApi as jest.MockedFunction<
   typeof useElectronApi
 >;
 const mockUseStore = useStore as jest.MockedFunction<typeof useStore>;
+const mockUseArchivedAgents = useArchivedAgents as jest.MockedFunction<
+  typeof useArchivedAgents
+>;
 
 const mockGotoSetup = jest.fn();
 const mockGotoPage = jest.fn();
-const mockUpdateAgentType = jest.fn();
+const mockUpdateSelectedServiceConfigId = jest.fn();
 const mockStoreSet = jest.fn();
 
 const twoServices = [
@@ -107,14 +110,14 @@ const twoServices = [
 const defaultSetup = (
   overrides: {
     services?: unknown[] | null;
-    archivedAgents?: string[];
-    selectedAgentType?: string;
+    archivedInstances?: string[];
+    selectedServiceConfigId?: string;
   } = {},
 ) => {
   const {
     services = twoServices,
-    archivedAgents = [],
-    selectedAgentType = AgentMap.AgentsFun,
+    archivedInstances = [],
+    selectedServiceConfigId = 'sc-1',
   } = overrides;
 
   mockUseSetup.mockReturnValue({
@@ -127,15 +130,21 @@ const defaultSetup = (
   mockUseServices.mockReturnValue({
     services,
     isLoading: false,
-    selectedAgentType,
-    updateAgentType: mockUpdateAgentType,
+    selectedServiceConfigId,
+    updateSelectedServiceConfigId: mockUpdateSelectedServiceConfigId,
   } as unknown as ReturnType<typeof useServices>);
   mockUseElectronApi.mockReturnValue({
     store: { set: mockStoreSet },
   } as unknown as ReturnType<typeof useElectronApi>);
   mockUseStore.mockReturnValue({
-    storeState: { archivedAgents },
+    storeState: { archivedInstances },
   } as unknown as ReturnType<typeof useStore>);
+  mockUseArchivedAgents.mockReturnValue({
+    archivedInstances,
+    isArchived: (id: string) => archivedInstances.includes(id),
+    archiveInstance: jest.fn(),
+    unarchiveInstance: jest.fn(),
+  });
 };
 
 // ---------------------------------------------------------------------------
@@ -148,110 +157,65 @@ describe('useSidebarAgents', () => {
     defaultSetup();
   });
 
-  describe('myAgents', () => {
-    it('returns both agents when none are archived', () => {
+  describe('activeServiceConfigIds', () => {
+    it('returns all service config ids when none are archived', () => {
       const { result } = renderHook(() => useSidebarAgents());
-      expect(result.current.myAgents).toHaveLength(2);
-      expect(result.current.myAgents.map((a) => a.agentType)).toEqual([
-        AgentMap.AgentsFun,
-        AgentMap.PredictTrader,
-      ]);
+      expect(result.current.activeServiceConfigIds).toEqual(['sc-1', 'sc-2']);
     });
 
-    it('excludes archived agents from myAgents', () => {
-      defaultSetup({ archivedAgents: [AgentMap.AgentsFun] });
+    it('excludes archived instances', () => {
+      defaultSetup({ archivedInstances: ['sc-1'] });
       const { result } = renderHook(() => useSidebarAgents());
-      expect(result.current.myAgents).toHaveLength(1);
-      expect(result.current.myAgents[0].agentType).toBe(AgentMap.PredictTrader);
+      expect(result.current.activeServiceConfigIds).toEqual(['sc-2']);
     });
 
     it('returns empty array when services is null', () => {
       defaultSetup({ services: null });
       const { result } = renderHook(() => useSidebarAgents());
-      expect(result.current.myAgents).toEqual([]);
-    });
-
-    it('populates chainName and name from config', () => {
-      const { result } = renderHook(() => useSidebarAgents());
-      const agentsFun = result.current.myAgents.find(
-        (a) => a.agentType === AgentMap.AgentsFun,
-      );
-      expect(agentsFun?.name).toBe('Agents.fun');
-      expect(agentsFun?.chainName).toBe('Base');
-      expect(agentsFun?.chainId).toBe(8453);
-    });
-
-    it('skips services that have no matching agent config', () => {
-      defaultSetup({
-        services: [
-          {
-            service_public_id: 'unknown/agent:0.1.0',
-            home_chain: 8453,
-            service_config_id: 'sc-unknown',
-          },
-        ],
-      });
-      const { result } = renderHook(() => useSidebarAgents());
-      expect(result.current.myAgents).toEqual([]);
-    });
-
-    it('skips agents whose config has no evmHomeChainId', () => {
-      // The modius entry in ACTIVE_AGENTS mock has evmHomeChainId: undefined
-      defaultSetup({
-        services: [
-          {
-            service_public_id: 'valory/modius_pearl:0.1.0',
-            home_chain: 1,
-            service_config_id: 'sc-modius',
-          },
-        ],
-      });
-      const { result } = renderHook(() => useSidebarAgents());
-      expect(result.current.myAgents).toEqual([]);
+      expect(result.current.activeServiceConfigIds).toEqual([]);
     });
   });
 
-  describe('pendingArchiveAgent / setPendingArchiveAgent', () => {
+  describe('pendingArchiveInstanceId / setPendingArchiveInstanceId', () => {
     it('starts as undefined', () => {
       const { result } = renderHook(() => useSidebarAgents());
-      expect(result.current.pendingArchiveAgent).toBeUndefined();
+      expect(result.current.pendingArchiveInstanceId).toBeUndefined();
     });
 
-    it('can be set via setPendingArchiveAgent', () => {
+    it('can be set via setPendingArchiveInstanceId', () => {
       const { result } = renderHook(() => useSidebarAgents());
       act(() => {
-        result.current.setPendingArchiveAgent(AgentMap.AgentsFun);
+        result.current.setPendingArchiveInstanceId('sc-1');
       });
-      expect(result.current.pendingArchiveAgent).toBe(AgentMap.AgentsFun);
+      expect(result.current.pendingArchiveInstanceId).toBe('sc-1');
     });
   });
 
-  describe('pendingArchiveAgentName', () => {
-    it('returns empty string when no pending agent', () => {
+  describe('pendingArchiveInstanceName', () => {
+    it('returns empty string when no pending instance', () => {
       const { result } = renderHook(() => useSidebarAgents());
-      expect(result.current.pendingArchiveAgentName).toBe('');
+      expect(result.current.pendingArchiveInstanceName).toBe('');
     });
 
-    it('returns the display name of the pending agent', () => {
+    it('returns the service config id when pending instance exists', () => {
       const { result } = renderHook(() => useSidebarAgents());
       act(() => {
-        result.current.setPendingArchiveAgent(AgentMap.AgentsFun);
+        result.current.setPendingArchiveInstanceId('sc-1');
       });
-      expect(result.current.pendingArchiveAgentName).toBe('Agents.fun');
+      expect(result.current.pendingArchiveInstanceName).toBe('sc-1');
     });
 
-    it('returns empty string when pending agent is not in myAgents', () => {
-      // AgentMap.Modius is not in twoServices so it never appears in myAgents
+    it('returns empty string when pending instance is not in services', () => {
       const { result } = renderHook(() => useSidebarAgents());
       act(() => {
-        result.current.setPendingArchiveAgent(AgentMap.Modius);
+        result.current.setPendingArchiveInstanceId('sc-unknown');
       });
-      expect(result.current.pendingArchiveAgentName).toBe('');
+      expect(result.current.pendingArchiveInstanceName).toBe('');
     });
   });
 
   describe('handleArchiveConfirm', () => {
-    it('does nothing when pendingArchiveAgent is undefined', () => {
+    it('does nothing when pendingArchiveInstanceId is undefined', () => {
       const { result } = renderHook(() => useSidebarAgents());
       act(() => {
         result.current.handleArchiveConfirm();
@@ -259,44 +223,42 @@ describe('useSidebarAgents', () => {
       expect(mockStoreSet).not.toHaveBeenCalled();
     });
 
-    it('writes updated archivedAgents to store', () => {
+    it('writes updated archivedInstances to store', () => {
       const { result } = renderHook(() => useSidebarAgents());
       act(() => {
-        result.current.setPendingArchiveAgent(AgentMap.AgentsFun);
+        result.current.setPendingArchiveInstanceId('sc-1');
       });
       act(() => {
         result.current.handleArchiveConfirm();
       });
-      expect(mockStoreSet).toHaveBeenCalledWith('archivedAgents', [
-        AgentMap.AgentsFun,
-      ]);
+      expect(mockStoreSet).toHaveBeenCalledWith('archivedInstances', ['sc-1']);
     });
 
-    it('clears pendingArchiveAgent after confirm', () => {
+    it('clears pendingArchiveInstanceId after confirm', () => {
       const { result } = renderHook(() => useSidebarAgents());
       act(() => {
-        result.current.setPendingArchiveAgent(AgentMap.AgentsFun);
+        result.current.setPendingArchiveInstanceId('sc-1');
       });
       act(() => {
         result.current.handleArchiveConfirm();
       });
-      expect(result.current.pendingArchiveAgent).toBeUndefined();
+      expect(result.current.pendingArchiveInstanceId).toBeUndefined();
     });
 
-    it('selects next agent and navigates to Main when archived agent was selected', () => {
-      defaultSetup({ selectedAgentType: AgentMap.AgentsFun });
+    it('selects next instance and navigates to Main when archived instance was selected', () => {
+      defaultSetup({ selectedServiceConfigId: 'sc-1' });
       const { result } = renderHook(() => useSidebarAgents());
       act(() => {
-        result.current.setPendingArchiveAgent(AgentMap.AgentsFun);
+        result.current.setPendingArchiveInstanceId('sc-1');
       });
       act(() => {
         result.current.handleArchiveConfirm();
       });
-      expect(mockUpdateAgentType).toHaveBeenCalledWith(AgentMap.PredictTrader);
+      expect(mockUpdateSelectedServiceConfigId).toHaveBeenCalledWith('sc-2');
       expect(mockGotoPage).toHaveBeenCalledWith(PAGES.Main);
     });
 
-    it('navigates to AgentOnboarding when no next agent exists', () => {
+    it('navigates to AgentOnboarding when no next instance exists', () => {
       defaultSetup({
         services: [
           {
@@ -305,11 +267,11 @@ describe('useSidebarAgents', () => {
             service_config_id: 'sc-1',
           },
         ],
-        selectedAgentType: AgentMap.AgentsFun,
+        selectedServiceConfigId: 'sc-1',
       });
       const { result } = renderHook(() => useSidebarAgents());
       act(() => {
-        result.current.setPendingArchiveAgent(AgentMap.AgentsFun);
+        result.current.setPendingArchiveInstanceId('sc-1');
       });
       act(() => {
         result.current.handleArchiveConfirm();
@@ -318,24 +280,24 @@ describe('useSidebarAgents', () => {
       expect(mockGotoSetup).toHaveBeenCalledWith(SETUP_SCREEN.AgentOnboarding);
     });
 
-    it('does not call updateAgentType when a different agent was selected', () => {
-      defaultSetup({ selectedAgentType: AgentMap.PredictTrader });
+    it('does not navigate when a different instance was selected', () => {
+      defaultSetup({ selectedServiceConfigId: 'sc-2' });
       const { result } = renderHook(() => useSidebarAgents());
       act(() => {
-        result.current.setPendingArchiveAgent(AgentMap.AgentsFun);
+        result.current.setPendingArchiveInstanceId('sc-1');
       });
       act(() => {
         result.current.handleArchiveConfirm();
       });
-      expect(mockUpdateAgentType).not.toHaveBeenCalled();
+      expect(mockUpdateSelectedServiceConfigId).not.toHaveBeenCalled();
       expect(mockGotoPage).not.toHaveBeenCalled();
     });
 
-    it('does not archive the same agent twice', () => {
-      defaultSetup({ archivedAgents: [AgentMap.AgentsFun] });
+    it('does not archive the same instance twice', () => {
+      defaultSetup({ archivedInstances: ['sc-1'] });
       const { result } = renderHook(() => useSidebarAgents());
       act(() => {
-        result.current.setPendingArchiveAgent(AgentMap.AgentsFun);
+        result.current.setPendingArchiveInstanceId('sc-1');
       });
       act(() => {
         result.current.handleArchiveConfirm();
@@ -345,74 +307,60 @@ describe('useSidebarAgents', () => {
   });
 
   describe('immediate hide on archive', () => {
-    it('hides agent immediately on archive confirm', () => {
-      defaultSetup({ selectedAgentType: AgentMap.PredictTrader });
+    it('hides instance immediately on archive confirm', () => {
+      defaultSetup({ selectedServiceConfigId: 'sc-2' });
       const { result } = renderHook(() => useSidebarAgents());
 
-      expect(result.current.myAgents).toHaveLength(2);
+      expect(result.current.activeServiceConfigIds).toHaveLength(2);
 
       act(() => {
-        result.current.setPendingArchiveAgent(AgentMap.AgentsFun);
+        result.current.setPendingArchiveInstanceId('sc-1');
       });
       act(() => {
         result.current.handleArchiveConfirm();
       });
 
-      expect(
-        result.current.myAgents.find((a) => a.agentType === AgentMap.AgentsFun),
-      ).toBeUndefined();
+      expect(result.current.activeServiceConfigIds).not.toContain('sc-1');
     });
 
-    it('seeds archivedAgents from store when store loads after initial render', () => {
-      // Simulate store not yet loaded on first render
+    it('seeds archivedInstances from store when store loads after initial render', () => {
       mockUseStore.mockReturnValue({
-        storeState: { archivedAgents: undefined },
+        storeState: { archivedInstances: undefined },
       } as unknown as ReturnType<typeof useStore>);
 
       const { result, rerender } = renderHook(() => useSidebarAgents());
-      expect(result.current.myAgents).toHaveLength(2);
+      expect(result.current.activeServiceConfigIds).toHaveLength(2);
 
-      // Store loads with an archived agent
       mockUseStore.mockReturnValue({
-        storeState: { archivedAgents: [AgentMap.AgentsFun] },
+        storeState: { archivedInstances: ['sc-1'] },
       } as unknown as ReturnType<typeof useStore>);
       rerender();
 
-      expect(
-        result.current.myAgents.find((a) => a.agentType === AgentMap.AgentsFun),
-      ).toBeUndefined();
+      expect(result.current.activeServiceConfigIds).not.toContain('sc-1');
     });
 
     it('reflects restore (unarchive) written externally to store', () => {
-      // Start with AgentsFun archived
-      defaultSetup({ archivedAgents: [AgentMap.AgentsFun] });
+      defaultSetup({ archivedInstances: ['sc-1'] });
       const { result, rerender } = renderHook(() => useSidebarAgents());
-      expect(result.current.myAgents).toHaveLength(1);
+      expect(result.current.activeServiceConfigIds).toHaveLength(1);
 
-      // External code calls unarchiveAgent → store updates
       mockUseStore.mockReturnValue({
-        storeState: { archivedAgents: [] },
+        storeState: { archivedInstances: [] },
       } as unknown as ReturnType<typeof useStore>);
       rerender();
 
-      expect(result.current.myAgents).toHaveLength(2);
-      expect(
-        result.current.myAgents.find((a) => a.agentType === AgentMap.AgentsFun),
-      ).toBeDefined();
+      expect(result.current.activeServiceConfigIds).toHaveLength(2);
     });
   });
 
   describe('canAddNewAgents', () => {
-    it('returns true when there are archived agents regardless of available slots', () => {
-      // AVAILABLE_FOR_ADDING_AGENTS has 2 entries, both already deployed in twoServices.
-      // Without archived agents this would return false, but archived agents flip it to true.
-      defaultSetup({ archivedAgents: [AgentMap.AgentsFun] });
+    it('returns true when there are archived instances regardless of available slots', () => {
+      defaultSetup({ archivedInstances: ['sc-1'] });
       const { result } = renderHook(() => useSidebarAgents());
       expect(result.current.canAddNewAgents).toBe(true);
     });
 
     it('returns true when not all available agent slots are deployed', () => {
-      // Only one service deployed; AVAILABLE_FOR_ADDING_AGENTS has 2 entries.
       defaultSetup({
         services: [
           {
@@ -421,15 +369,14 @@ describe('useSidebarAgents', () => {
             service_config_id: 'sc-1',
           },
         ],
-        archivedAgents: [],
+        archivedInstances: [],
       });
       const { result } = renderHook(() => useSidebarAgents());
       expect(result.current.canAddNewAgents).toBe(true);
     });
 
-    it('returns false when all available slots are deployed and no archived agents', () => {
-      // Both services deployed, no archived agents, AVAILABLE_FOR_ADDING_AGENTS = 2.
-      defaultSetup({ archivedAgents: [] });
+    it('returns false when all available slots are deployed and no archived instances', () => {
+      defaultSetup({ archivedInstances: [] });
       const { result } = renderHook(() => useSidebarAgents());
       expect(result.current.canAddNewAgents).toBe(false);
     });

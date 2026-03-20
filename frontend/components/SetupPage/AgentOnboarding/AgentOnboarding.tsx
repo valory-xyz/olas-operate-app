@@ -66,10 +66,10 @@ const SelectYourAgent = ({ canGoBack }: { canGoBack: boolean }) => {
   return (
     <Flex vertical gap={12}>
       {canGoBack && <BackButton onPrev={() => goto(PAGES.Main)} />}
-      <Title level={3} className="m-0">
+      <Title level={3} className='m-0'>
         Select Agent
       </Title>
-      <Text type="secondary">
+      <Text type='secondary'>
         Review and select the AI agent you&apos;d like to add or restore.
       </Text>
     </Flex>
@@ -78,15 +78,15 @@ const SelectYourAgent = ({ canGoBack }: { canGoBack: boolean }) => {
 
 type BlockButtonProps = { text: string; onClick: () => void };
 const BlockButton = ({ text, onClick }: BlockButtonProps) => (
-  <Button onClick={onClick} type="primary" block size="large">
+  <Button onClick={onClick} type='primary' block size='large'>
     {text}
   </Button>
 );
 
 const GeoLocationRestrictionLoading = () => (
   <Flex
-    align="center"
-    justify="center"
+    align='center'
+    justify='center'
     style={{ width: '100%', height: '100%' }}
   >
     <Spin />
@@ -96,15 +96,15 @@ const GeoLocationRestrictionLoading = () => (
 const GeoLocationRestrictionCouldNotLoad = () => (
   <Flex
     vertical
-    align="center"
-    justify="center"
+    align='center'
+    justify='center'
     gap={16}
-    className="p-24 text-center"
+    className='p-24 text-center'
   >
-    <Title level={4} className="m-0">
+    <Title level={4} className='m-0'>
       Something went wrong
     </Title>
-    <Text className="text-neutral-tertiary">
+    <Text className='text-neutral-tertiary'>
       Something went wrong while checking your region eligibility. Please try
       again.
     </Text>
@@ -117,12 +117,24 @@ const GeoLocationRestrictionCouldNotLoad = () => (
 export const AgentOnboarding = () => {
   const { goto } = useSetup();
   const { goto: gotoPage } = usePageState();
-  const { services, selectAgentTypeForSetup, updateSelectedServiceConfigId } =
-    useServices();
-  const { archivedAgents, unarchiveAgent } = useArchivedAgents();
+  const {
+    services,
+    selectAgentTypeForSetup,
+    updateSelectedServiceConfigId,
+    getAgentTypeFromService,
+  } = useServices();
+  const { archivedInstances, unarchiveInstance } = useArchivedAgents();
 
   const [selectedAgent, setSelectedAgent] = useState<Optional<AgentType>>();
+  const [selectedArchivedInstanceId, setSelectedArchivedInstanceId] =
+    useState<Optional<string>>();
   const [activeTab, setActiveTab] = useState<AgentTab>(AGENT_TAB.New);
+
+  // Derive agentType for the selected archived instance (for AgentIntroduction)
+  const selectedArchivedAgentType = useMemo<Optional<AgentType>>(() => {
+    if (!selectedArchivedInstanceId) return undefined;
+    return getAgentTypeFromService(selectedArchivedInstanceId) ?? undefined;
+  }, [selectedArchivedInstanceId, getAgentTypeFromService]);
 
   // Default to "Archived" tab if there are no new agents to add
   const hasSetDefaultTab = useRef(false);
@@ -132,18 +144,18 @@ export const AgentOnboarding = () => {
     hasSetDefaultTab.current = true;
 
     const hasNewAgents = ACTIVE_AGENTS.some(
-      ([agentType, agentConfig]) =>
+      ([, agentConfig]) =>
         !services.some(
           ({ service_public_id, home_chain }) =>
             service_public_id === agentConfig.servicePublicId &&
             home_chain === agentConfig.middlewareHomeChainId,
-        ) && !archivedAgents.includes(agentType as AgentType),
+        ),
     );
 
-    if (!hasNewAgents && archivedAgents.length > 0) {
+    if (!hasNewAgents && archivedInstances.length > 0) {
       setActiveTab(AGENT_TAB.Archived);
     }
-  }, [archivedAgents, services]);
+  }, [archivedInstances, services]);
 
   const selectedAgentConfig = selectedAgent
     ? AGENT_CONFIG[selectedAgent]
@@ -163,7 +175,11 @@ export const AgentOnboarding = () => {
     // letting the user create another new instance
     if (services) {
       const undeployed = findUndeployedInstance(selectedAgent, services);
-      if (undeployed) {
+      const isArchived = undeployed
+        ? archivedInstances.includes(undeployed.service_config_id)
+        : false;
+
+      if (undeployed && !isArchived) {
         updateSelectedServiceConfigId(undeployed.service_config_id);
         gotoPage(PAGES.Main);
         return;
@@ -193,30 +209,22 @@ export const AgentOnboarding = () => {
     [selectAgentTypeForSetup],
   );
 
-  const handleSelectArchivedAgent = useCallback((agentType: AgentType) => {
-    setSelectedAgent(agentType);
-  }, []);
+  const handleSelectArchivedInstance = useCallback(
+    (serviceConfigId: string) => {
+      setSelectedArchivedInstanceId(serviceConfigId);
+    },
+    [],
+  );
 
-  const handleRestoreAgent = useCallback(() => {
-    if (!selectedAgent) return;
-    unarchiveAgent(selectedAgent);
-    // After restoring, select the first instance of this agent type
-    const restoredService = services?.find((service) => {
-      const agentConfig = AGENT_CONFIG[selectedAgent];
-      return (
-        service.service_public_id === agentConfig.servicePublicId &&
-        service.home_chain === agentConfig.middlewareHomeChainId
-      );
-    });
-    if (restoredService) {
-      updateSelectedServiceConfigId(restoredService.service_config_id);
-    }
+  const handleRestoreInstance = useCallback(() => {
+    if (!selectedArchivedInstanceId) return;
+    unarchiveInstance(selectedArchivedInstanceId);
+    updateSelectedServiceConfigId(selectedArchivedInstanceId);
     setTimeout(() => gotoPage(PAGES.Main), 300);
   }, [
     gotoPage,
-    selectedAgent,
-    services,
-    unarchiveAgent,
+    selectedArchivedInstanceId,
+    unarchiveInstance,
     updateSelectedServiceConfigId,
   ]);
 
@@ -236,13 +244,13 @@ export const AgentOnboarding = () => {
     if (activeTab === AGENT_TAB.Archived) {
       return (
         <AgentIntroduction
-          agentType={selectedAgent}
+          agentType={selectedArchivedAgentType}
           renderAgentSelection={
-            selectedAgent
+            selectedArchivedInstanceId
               ? () => (
                   <BlockButton
-                    text="Restore Agent"
-                    onClick={handleRestoreAgent}
+                    text='Restore Agent'
+                    onClick={handleRestoreInstance}
                   />
                 )
               : undefined
@@ -272,7 +280,7 @@ export const AgentOnboarding = () => {
         renderAgentSelection={
           canSelectAgent
             ? () => (
-                <BlockButton text="Select Agent" onClick={handleAgentSelect} />
+                <BlockButton text='Select Agent' onClick={handleAgentSelect} />
               )
             : undefined
         }
@@ -282,12 +290,14 @@ export const AgentOnboarding = () => {
     activeTab,
     canSelectAgent,
     handleAgentSelect,
-    handleRestoreAgent,
+    handleRestoreInstance,
     isAgentGeoRestricted,
     isGeoError,
     isGeoLoading,
     selectedAgent,
     selectedAgentConfig?.isGeoLocationRestricted,
+    selectedArchivedAgentType,
+    selectedArchivedInstanceId,
   ]);
 
   return (
@@ -295,7 +305,7 @@ export const AgentOnboarding = () => {
       <AgentOnboardingContainer vertical gap={24}>
         <SelectYourAgent canGoBack={isNonEmpty(services)} />
 
-        {archivedAgents.length > 0 && (
+        {archivedInstances.length > 0 && (
           <Flex style={{ borderBottom: `1px solid ${COLOR.GRAY_4}` }}>
             <Segmented
               options={OPTIONS}
@@ -303,23 +313,25 @@ export const AgentOnboarding = () => {
               onChange={(val) => {
                 setActiveTab(val as AgentTab);
                 setSelectedAgent(undefined);
+                setSelectedArchivedInstanceId(undefined);
               }}
-              size="large"
+              size='large'
             />
           </Flex>
         )}
 
         <Container>
-          <Flex vertical className="agent-selection-left-content">
+          <Flex vertical className='agent-selection-left-content'>
             <SelectAgent
               onSelectYourAgent={handleSelectYourAgent}
-              onSelectArchivedAgent={handleSelectArchivedAgent}
+              onSelectArchivedInstance={handleSelectArchivedInstance}
               selectedAgent={selectedAgent}
+              selectedArchivedInstance={selectedArchivedInstanceId}
               activeTab={activeTab}
             />
           </Flex>
 
-          <Flex className="agent-selection-right-content">
+          <Flex className='agent-selection-right-content'>
             {rightPanelContent}
           </Flex>
         </Container>

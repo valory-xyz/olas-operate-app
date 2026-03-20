@@ -6,7 +6,7 @@ import styled from 'styled-components';
 
 import { ACTIVE_AGENTS } from '@/config/agents';
 import { AgentType, COLOR } from '@/constants';
-import { useArchivedAgents, useServices } from '@/hooks';
+import { useServices } from '@/hooks';
 import { AgentConfig } from '@/types';
 
 import { ArchivedAgentsList } from './ArchivedAgentsList';
@@ -70,23 +70,23 @@ const SelectYourAgentList = ({
   selectedAgent,
 }: SelectYourAgentListProps) => {
   const { getInstancesOfAgentType } = useServices();
-  const { archivedAgents } = useArchivedAgents();
 
   const agents = useMemo(() => {
-    const isNotArchived = ([agentType]: [string, AgentConfig]) =>
-      !archivedAgents.includes(agentType as AgentType);
-
     return (
       [...ACTIVE_AGENTS]
-        .filter(isNotArchived)
         // Sorted with under-construction at the end
-        .sort(([, agentA], [, agentB]) => {
-          if (agentA.isUnderConstruction === agentB.isUnderConstruction)
-            return 0;
-          return agentA.isUnderConstruction ? 1 : -1;
-        })
+        .sort(
+          (
+            [, agentA]: [string, AgentConfig],
+            [, agentB]: [string, AgentConfig],
+          ) => {
+            if (agentA.isUnderConstruction === agentB.isUnderConstruction)
+              return 0;
+            return agentA.isUnderConstruction ? 1 : -1;
+          },
+        )
     );
-  }, [archivedAgents]);
+  }, []);
 
   return (
     <>
@@ -120,9 +120,10 @@ const SelectYourAgentList = ({
 
 type SelectAgentProps = {
   selectedAgent?: AgentType;
+  selectedArchivedInstance?: string;
   activeTab: AgentTab;
   onSelectYourAgent: (agentType: AgentType) => void;
-  onSelectArchivedAgent: (agentType: AgentType) => void;
+  onSelectArchivedInstance: (serviceConfigId: string) => void;
 };
 
 /**
@@ -130,9 +131,10 @@ type SelectAgentProps = {
  */
 export const SelectAgent = ({
   selectedAgent,
+  selectedArchivedInstance,
   activeTab,
   onSelectYourAgent,
-  onSelectArchivedAgent,
+  onSelectArchivedInstance,
 }: SelectAgentProps) => {
   return (
     <>
@@ -143,8 +145,8 @@ export const SelectAgent = ({
         />
       ) : (
         <ArchivedAgentsList
-          selectedAgent={selectedAgent}
-          onSelectAgent={onSelectArchivedAgent}
+          selectedInstance={selectedArchivedInstance}
+          onSelectInstance={onSelectArchivedInstance}
         />
       )}
     </>

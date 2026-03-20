@@ -152,11 +152,11 @@ export const Sidebar = () => {
   const { fade, ref: scrollAreaRef } = useListFade();
 
   const {
-    pendingArchiveAgent,
-    setPendingArchiveAgent,
-    pendingArchiveAgentName,
+    pendingArchiveInstanceId,
+    setPendingArchiveInstanceId,
+    pendingArchiveInstanceName,
     handleArchiveConfirm,
-    archivedAgents,
+    archivedInstances,
   } = useSidebarAgents();
 
   const agentGroups = useMemo<SidebarAgentGroup[]>(() => {
@@ -175,8 +175,8 @@ export const Sidebar = () => {
 
       const [agentType, config] = agentEntry;
 
-      // Hide archived agents from the sidebar
-      if (archivedAgents.includes(agentType)) continue;
+      // Hide archived instances from the sidebar
+      if (archivedInstances.includes(service.service_config_id)) continue;
 
       if (!groupMap.has(agentType)) {
         groupMap.set(agentType, { agentType, instances: [] });
@@ -207,7 +207,7 @@ export const Sidebar = () => {
       }
       return configIndex(a.agentType) - configIndex(b.agentType);
     });
-  }, [services, archivedAgents]);
+  }, [services, archivedInstances]);
 
   const { runningServiceConfigId } = useAgentRunning();
 
@@ -316,8 +316,13 @@ export const Sidebar = () => {
                   groups={agentGroups}
                   selectedServiceConfigId={selectedServiceConfigId}
                   runningServiceConfigIds={runningServiceConfigIds}
+                  totalInstanceCount={agentGroups.reduce(
+                    (sum, g) => sum + g.instances.length,
+                    0,
+                  )}
                   onGroupSelect={handleInstanceSelect}
                   onInstanceSelect={handleInstanceSelect}
+                  onArchiveRequest={setPendingArchiveInstanceId}
                 />
               ) : null}
             </AgentListScrollArea>
@@ -354,10 +359,10 @@ export const Sidebar = () => {
       </Sider>
 
       <ArchiveAgentModal
-        agentName={pendingArchiveAgentName}
-        open={!!pendingArchiveAgent}
+        agentName={pendingArchiveInstanceName}
+        open={!!pendingArchiveInstanceId}
         onConfirm={handleArchiveConfirm}
-        onCancel={() => setPendingArchiveAgent(undefined)}
+        onCancel={() => setPendingArchiveInstanceId(undefined)}
       />
     </SiderContainer>
   );

@@ -76,24 +76,15 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
     () => getDecommissionedInstances(configuredAgents),
     [configuredAgents],
   );
-  const { archivedAgents } = useArchivedAgents();
-
-  // Instances belonging to archived agent types should also be excluded
-  const archivedInstances = useMemo(
-    () =>
-      configuredAgents
-        .filter((agent) => archivedAgents.includes(agent.agentType))
-        .map((agent) => agent.serviceConfigId),
-    [configuredAgents, archivedAgents],
-  );
+  const { archivedInstances: archivedInstanceIds } = useArchivedAgents();
 
   const eligibleInstances = useMemo(
     () =>
       getEligibleInstances(configuredInstances, [
         ...decommissionedInstances,
-        ...archivedInstances,
+        ...archivedInstanceIds,
       ]),
-    [configuredInstances, decommissionedInstances, archivedInstances],
+    [configuredInstances, decommissionedInstances, archivedInstanceIds],
   );
   const includedInstancesSorted = useMemo(
     () =>

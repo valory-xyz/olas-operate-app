@@ -55,10 +55,10 @@ jest.mock('../../../hooks', () => ({
     showNotification: jest.fn(),
   }),
   useArchivedAgents: jest.fn().mockReturnValue({
-    archivedAgents: [],
+    archivedInstances: [],
     isArchived: jest.fn().mockReturnValue(false),
-    archiveAgent: jest.fn(),
-    unarchiveAgent: jest.fn(),
+    archiveInstance: jest.fn(),
+    unarchiveInstance: jest.fn(),
   }),
 }));
 
