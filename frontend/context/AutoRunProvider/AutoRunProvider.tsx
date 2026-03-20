@@ -134,8 +134,10 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
   const { isSelectedAgentDetailsLoading, getSelectedEligibility } =
     useSelectedEligibility({ canCreateSafeForChain });
 
-  // Block auto-run from switching agents when the user is not on the Main page
-  // (e.g. Setup/FundYourAgent, PearlWallet, AgentWallet, staking flows, etc.).
+  // Block auto-run from switching agents on agent-specific pages
+  // (Setup, AgentWallet, AgentStaking, staking flows, FundPearlWallet, etc.).
+  // Neutral pages (Main, Settings, HelpAndSupport, ReleaseNotes, PearlWallet)
+  // are allowed — see AGENT_SWITCH_ALLOWED_PAGES.
   // Scans will reschedule themselves in SCAN_LOADING_RETRY_SECONDS when blocked.
   // useLayoutEffect (not useEffect) so the ref is updated inside React's
   // synchronous commit phase — before the browser returns control to the event

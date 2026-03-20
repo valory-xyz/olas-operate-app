@@ -199,8 +199,8 @@ export const useAutoRunScanner = ({
   const scanAndStartNext = useCallback(
     async (startFrom?: AgentType | null) => {
       if (!enabledRef.current) return { started: false };
-      // Block scan when the user is not on PAGES.Main (e.g. Setup/FundYourAgent,
-      // PearlWallet, AgentWallet, staking flows). Reschedule to retry shortly.
+      // Block scan on agent-specific pages (Setup/FundYourAgent, AgentWallet,
+      // AgentStaking, staking flows, FundPearlWallet). Reschedule to retry shortly.
       if (!canSwitchAgentRef.current) {
         logVerbose(
           `scan paused: user on non-Main page, retry in ${SCAN_LOADING_RETRY_SECONDS}s`,
@@ -380,7 +380,7 @@ export const useAutoRunScanner = ({
    * - if not startable, caller falls back to `scanAndStartNext`
    */
   const startSelectedAgentIfEligible = useCallback(async () => {
-    // Block when user is not on PAGES.Main — same guard as scanAndStartNext.
+    // Block on agent-specific pages — same guard as scanAndStartNext entry.
     if (!canSwitchAgentRef.current) {
       if (enabledRef.current) scheduleNextScan(SCAN_LOADING_RETRY_SECONDS);
       return false;
