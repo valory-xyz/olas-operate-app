@@ -1,5 +1,4 @@
 import { Flex, message } from 'antd';
-import get from 'lodash/get';
 import { useCallback, useEffect, useState } from 'react';
 import { RiRobot3Line } from 'react-icons/ri';
 import { TbId } from 'react-icons/tb';
@@ -7,7 +6,6 @@ import { TbId } from 'react-icons/tb';
 import { PageTransition, Segmented } from '@/components/ui';
 import { useService } from '@/hooks';
 import { useServices } from '@/hooks/useServices';
-import { useStore } from '@/hooks/useStore';
 
 import { Overview } from './Overview/Overview';
 import { Profile } from './Profile/Profile';
@@ -45,9 +43,12 @@ const Switcher = ({ value, onChange }: SwitcherProps) => {
 };
 
 export const Home = () => {
-  const { storeState } = useStore();
-  const { selectedAgentType, selectedService, selectedAgentConfig } =
-    useServices();
+  const {
+    selectedAgentType,
+    selectedServiceConfigId,
+    selectedService,
+    selectedAgentConfig,
+  } = useServices();
   const { isServiceActive } = useService(selectedService?.service_config_id);
 
   const [view, setView] = useState<View>('overview');
@@ -56,8 +57,8 @@ export const Home = () => {
 
   const { isX402Enabled } = selectedAgentConfig;
 
-  // Reset view to overview when switching between agents
-  useEffect(() => setView('overview'), [selectedAgentType]);
+  // Reset view to overview when switching between instances
+  useEffect(() => setView('overview'), [selectedServiceConfigId]);
 
   useEffect(() => {
     // Track when user visits profile
@@ -93,16 +94,6 @@ export const Home = () => {
         selectedAgentConfig.doesChatUiRequireApiKey;
 
       if (doesChatUiRequireApiKey && !isX402Enabled) {
-        const profileWarningDismissed = get(
-          storeState,
-          `${selectedAgentType}.isProfileWarningDisplayed`,
-        );
-        // If user already skipped the warning → go straight to profile
-        if (profileWarningDismissed) {
-          setView('profile');
-          return;
-        }
-
         const geminiApiKey =
           selectedService?.env_variables?.GENAI_API_KEY?.value;
         // Chat UI requires Gemini key → show modal if missing
@@ -110,28 +101,21 @@ export const Home = () => {
           setIsUnlockChatUiModalOpen(true);
           return;
         }
-
-        // Otherwise unlock profile with chat UI
-        setView('profile');
-        return;
       }
 
-      // If chat UI not required → just go to profile
       setView('profile');
     },
     [
       isServiceActive,
       isX402Enabled,
       selectedAgentConfig.doesChatUiRequireApiKey,
-      selectedAgentType,
       selectedService?.env_variables?.GENAI_API_KEY?.value,
-      storeState,
     ],
   );
 
   return (
     <PageTransition
-      animationKey={selectedAgentType}
+      animationKey={selectedServiceConfigId ?? selectedAgentType}
       className="flex flex-col flex-auto"
     >
       <Flex vertical gap={40} className="flex-auto">

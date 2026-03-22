@@ -6,7 +6,7 @@ import styled from 'styled-components';
 
 import { ACTIVE_AGENTS } from '@/config/agents';
 import { AgentType, COLOR } from '@/constants';
-import { useArchivedAgents, useServices } from '@/hooks';
+import { useServices } from '@/hooks';
 import { AgentConfig } from '@/types';
 
 import { ArchivedAgentsList } from './ArchivedAgentsList';
@@ -38,6 +38,28 @@ const UnderConstructionIcon = styled(LuConstruction)`
   background-color: ${COLOR.BG.WARNING.DEFAULT};
 `;
 
+const InstanceTag = styled(Flex)`
+  padding: 2px 6px;
+  border: 1px solid ${COLOR.GRAY_3};
+  border-radius: 6px;
+`;
+
+type InstanceCountProps = {
+  count: number;
+};
+
+const InstanceCount = ({ count }: InstanceCountProps) => {
+  if (!count) return null;
+
+  return (
+    <InstanceTag>
+      <Text type="secondary" className="text-sm">
+        You own {count}
+      </Text>
+    </InstanceTag>
+  );
+};
+
 type SelectYourAgentListProps = {
   onSelectYourAgent: (agentType: AgentType) => void;
   selectedAgent?: AgentType;
@@ -47,58 +69,61 @@ const SelectYourAgentList = ({
   onSelectYourAgent,
   selectedAgent,
 }: SelectYourAgentListProps) => {
-  const { services } = useServices();
-  const { archivedAgents } = useArchivedAgents();
+  const { getInstancesOfAgentType } = useServices();
 
   const agents = useMemo(() => {
-    const isNotInServices = ([, agentConfig]: [string, AgentConfig]) =>
-      !services?.some(
-        ({ service_public_id, home_chain }) =>
-          service_public_id === agentConfig.servicePublicId &&
-          home_chain === agentConfig.middlewareHomeChainId,
-      );
-
-    const isNotArchived = ([agentType]: [string, AgentConfig]) =>
-      !archivedAgents.includes(agentType as AgentType);
-
     return (
-      ACTIVE_AGENTS.filter(isNotInServices)
-        .filter(isNotArchived)
-        // put all under construction in the end
-        .sort(([, agentConfig]) => (agentConfig.isUnderConstruction ? 1 : -1))
+      [...ACTIVE_AGENTS]
+        // Sorted with under-construction at the end
+        .sort(
+          (
+            [, agentA]: [string, AgentConfig],
+            [, agentB]: [string, AgentConfig],
+          ) => {
+            if (agentA.isUnderConstruction === agentB.isUnderConstruction)
+              return 0;
+            return agentA.isUnderConstruction ? 1 : -1;
+          },
+        )
     );
-  }, [services, archivedAgents]);
+  }, []);
 
   return (
     <>
-      {agents.map(([agentType, agentConfig]) => (
-        <AgentSelectionContainer
-          key={agentType}
-          active={selectedAgent === agentType}
-          onClick={() => onSelectYourAgent(agentType as AgentType)}
-          gap={12}
-          align="center"
-        >
-          <Image
-            src={`/agent-${agentType}-icon.png`}
-            alt={`${agentConfig.displayName} icon`}
-            width={36}
-            height={36}
-            style={{ borderRadius: 8, border: `1px solid ${COLOR.GRAY_3}` }}
-          />
-          <Text>{agentConfig.displayName}</Text>
-          {agentConfig.isUnderConstruction && <UnderConstructionIcon />}
-        </AgentSelectionContainer>
-      ))}
+      {agents.map(([agentType, agentConfig]) => {
+        const instanceCount = getInstancesOfAgentType(agentType).length;
+
+        return (
+          <AgentSelectionContainer
+            key={agentType}
+            active={selectedAgent === agentType}
+            onClick={() => onSelectYourAgent(agentType as AgentType)}
+            gap={12}
+            align="center"
+          >
+            <Image
+              src={`/agent-${agentType}-icon.png`}
+              alt={`${agentConfig.displayName} icon`}
+              width={36}
+              height={36}
+              style={{ borderRadius: 8, border: `1px solid ${COLOR.GRAY_3}` }}
+            />
+            <Text style={{ flex: 1 }}>{agentConfig.displayName}</Text>
+            <InstanceCount count={instanceCount} />
+            {agentConfig.isUnderConstruction && <UnderConstructionIcon />}
+          </AgentSelectionContainer>
+        );
+      })}
     </>
   );
 };
 
 type SelectAgentProps = {
   selectedAgent?: AgentType;
+  selectedArchivedInstance?: string;
   activeTab: AgentTab;
   onSelectYourAgent: (agentType: AgentType) => void;
-  onSelectArchivedAgent: (agentType: AgentType) => void;
+  onSelectArchivedInstance: (serviceConfigId: string) => void;
 };
 
 /**
@@ -106,9 +131,10 @@ type SelectAgentProps = {
  */
 export const SelectAgent = ({
   selectedAgent,
+  selectedArchivedInstance,
   activeTab,
   onSelectYourAgent,
-  onSelectArchivedAgent,
+  onSelectArchivedInstance,
 }: SelectAgentProps) => {
   return (
     <>
@@ -119,8 +145,8 @@ export const SelectAgent = ({
         />
       ) : (
         <ArchivedAgentsList
-          selectedAgent={selectedAgent}
-          onSelectAgent={onSelectArchivedAgent}
+          selectedInstance={selectedArchivedInstance}
+          onSelectInstance={onSelectArchivedInstance}
         />
       )}
     </>

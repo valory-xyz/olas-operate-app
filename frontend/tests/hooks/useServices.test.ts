@@ -21,11 +21,15 @@ describe('useServices', () => {
       selectedAgentNameOrFallback: 'Agent-1',
       deploymentDetails: undefined,
       updateAgentType: mockUpdateAgentType,
+      selectAgentTypeForSetup: jest.fn(),
+      updateSelectedServiceConfigId: jest.fn(),
       overrideSelectedServiceStatus: jest.fn(),
       availableServiceConfigIds: [],
+      selectedServiceConfigId: null,
       getServiceConfigIdsOf: jest.fn().mockReturnValue([]),
       getAgentTypeFromService: jest.fn().mockReturnValue(null),
       getServiceConfigIdFromAgentType: jest.fn().mockReturnValue(null),
+      getInstancesOfAgentType: jest.fn().mockReturnValue([]),
     };
 
     const wrapper = ({ children }: PropsWithChildren) =>

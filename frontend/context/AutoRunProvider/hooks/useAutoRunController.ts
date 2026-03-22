@@ -24,9 +24,9 @@ import { useLogAutoRunEvent } from './useLogAutoRunEvent';
 
 type UseAutoRunControllerParams = {
   enabled: boolean;
-  orderedIncludedAgentTypes: AgentType[];
+  orderedIncludedInstances: string[];
   configuredAgents: AgentMeta[];
-  updateAgentType: (agentType: AgentType) => void;
+  updateSelectedServiceConfigId: (serviceConfigId: string) => void;
   selectedAgentType: AgentType;
   selectedServiceConfigId: string | null;
   isSelectedAgentDetailsLoading: boolean;
@@ -41,7 +41,7 @@ type UseAutoRunControllerParams = {
    *  not call updateAgentType and will reschedule instead. */
   canSwitchAgentRef: MutableRefObject<boolean>;
   showNotification?: (title: string, body?: string) => void;
-  onAutoRunAgentStarted?: (agentType: AgentType) => void;
+  onAutoRunInstanceStarted?: (serviceConfigId: string) => void;
   onAutoRunStartStateChange?: (isStarting: boolean) => void;
 };
 
@@ -53,16 +53,16 @@ type UseAutoRunControllerParams = {
  * - `useAutoRunLifecycle`: effects (rotation, polling, resume-after-stop)
  *
  * Example:
- * Selected agent = `memeooorr`, running agent = `optimus`.
- * - Controller wires all pieces so lifecycle can stop `optimus`,
+ * Selected instance = `sc-xyz`, running instance = `sc-123`.
+ * - Controller wires all pieces so lifecycle can stop `sc-123`,
  * - scanner can pick next candidate and
  * - operations can start it safely.
  */
 export const useAutoRunController = ({
   enabled,
-  orderedIncludedAgentTypes,
+  orderedIncludedInstances,
   configuredAgents,
-  updateAgentType,
+  updateSelectedServiceConfigId,
   selectedAgentType,
   selectedServiceConfigId,
   isSelectedAgentDetailsLoading,
@@ -70,7 +70,7 @@ export const useAutoRunController = ({
   createSafeIfNeeded,
   canSwitchAgentRef,
   showNotification,
-  onAutoRunAgentStarted,
+  onAutoRunInstanceStarted,
   onAutoRunStartStateChange,
 }: UseAutoRunControllerParams) => {
   const { isEligibleForRewards, stakingRewardsDetails } = useRewardContext();
@@ -81,7 +81,7 @@ export const useAutoRunController = ({
     if (!stakingRewardsDetails) return false;
     return isStakingEpochExpired(stakingRewardsDetails);
   }, [stakingRewardsDetails]);
-  const { runningAgentType } = useAgentRunning();
+  const { runningAgentType, runningServiceConfigId } = useAgentRunning();
   const { startService } = useStartService();
   const { logMessage } = useLogAutoRunEvent();
 
@@ -131,15 +131,16 @@ export const useAutoRunController = ({
   const {
     enabledRef,
     runningAgentTypeRef,
+    runningServiceConfigIdRef,
     lastRewardsEligibilityRef,
     scanTick,
     rewardsTick,
     scheduleNextScan,
     hasScheduledScan,
-    waitForAgentSelection,
+    waitForInstanceSelection,
     waitForBalancesReady,
     waitForRewardsEligibility,
-    waitForRunningAgent,
+    waitForRunningInstance,
     markRewardSnapshotPending,
     getRewardSnapshot,
     setRewardSnapshot,
@@ -147,6 +148,7 @@ export const useAutoRunController = ({
   } = useAutoRunSignals({
     enabled,
     runningAgentType,
+    runningServiceConfigId,
     isSelectedAgentDetailsLoading,
     isEligibleForRewards,
     isEpochExpired,
@@ -155,11 +157,8 @@ export const useAutoRunController = ({
     logMessage,
   });
 
-  // Per-agent backoff after stop-timeout to avoid immediate re-trigger loops.
-  // Example: if `optimus` fails to stop, keep a temporary "do not rotate yet" window.
-  const stopRetryBackoffUntilRef = useRef<Partial<Record<AgentType, number>>>(
-    {},
-  );
+  // Per-instance backoff after stop-timeout to avoid immediate re-trigger loops.
+  const stopRetryBackoffUntilRef = useRef<Partial<Record<string, number>>>({});
 
   const {
     refreshRewardsEligibility,
@@ -169,19 +168,19 @@ export const useAutoRunController = ({
   } = useAutoRunOperations({
     enabled,
     enabledRef,
-    runningAgentTypeRef,
+    runningServiceConfigIdRef,
     configuredAgents,
-    updateAgentType,
+    updateSelectedServiceConfigId,
     getSelectedEligibility,
     createSafeIfNeeded,
     canSwitchAgentRef,
     showNotification,
-    onAutoRunAgentStarted,
+    onAutoRunInstanceStarted,
     onAutoRunStartStateChange,
     startService,
-    waitForAgentSelection,
+    waitForInstanceSelection,
     waitForBalancesReady,
-    waitForRunningAgent,
+    waitForRunningInstance,
     getBalancesStatus,
     getRewardSnapshot,
     setRewardSnapshot,
@@ -196,12 +195,12 @@ export const useAutoRunController = ({
   } = useAutoRunScanner({
     enabledRef,
     canSwitchAgentRef,
-    orderedIncludedAgentTypes,
+    orderedIncludedInstances,
     configuredAgents,
-    selectedAgentType,
-    updateAgentType,
+    selectedServiceConfigId,
+    updateSelectedServiceConfigId,
     getSelectedEligibility,
-    waitForAgentSelection,
+    waitForInstanceSelection,
     waitForBalancesReady,
     waitForRewardsEligibility,
     refreshRewardsEligibility,
@@ -218,10 +217,11 @@ export const useAutoRunController = ({
   const { stopCurrentRunningAgent } = useAutoRunLifecycle({
     enabled,
     runningAgentType,
-    orderedIncludedAgentTypes,
-    configuredAgents,
+    runningServiceConfigId,
+    orderedIncludedInstances,
     enabledRef,
     runningAgentTypeRef,
+    runningServiceConfigIdRef,
     lastRewardsEligibilityRef,
     scanTick,
     rewardsTick,

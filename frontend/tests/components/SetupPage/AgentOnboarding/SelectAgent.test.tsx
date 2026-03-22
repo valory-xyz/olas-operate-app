@@ -1,7 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 
 import { SelectAgent } from '../../../../components/SetupPage/AgentOnboarding/SelectAgent';
-import { AgentMap } from '../../../../constants/agent';
 
 /* eslint-disable @typescript-eslint/no-var-requires */
 jest.mock(
@@ -15,11 +14,9 @@ jest.mock('next/image', () => ({
   default: ({ alt }: { alt: string }) => <img alt={alt} />,
 }));
 
-const mockUseArchivedAgents = jest.fn();
 const mockUseServices = jest.fn();
 
 jest.mock('../../../../hooks', () => ({
-  useArchivedAgents: (...args: unknown[]) => mockUseArchivedAgents(...args),
   useServices: (...args: unknown[]) => mockUseServices(...args),
 }));
 
@@ -51,12 +48,12 @@ jest.mock(
   '../../../../components/SetupPage/AgentOnboarding/ArchivedAgentsList',
   () => ({
     ArchivedAgentsList: ({
-      onSelectAgent,
+      onSelectInstance,
     }: {
-      onSelectAgent: (t: string) => void;
+      onSelectInstance: (id: string) => void;
     }) => (
       <div data-testid="archived-agents-list">
-        <button onClick={() => onSelectAgent(AgentMap.AgentsFun)}>
+        <button onClick={() => onSelectInstance('sc-archived-1')}>
           Agents.fun (archived)
         </button>
       </div>
@@ -66,20 +63,26 @@ jest.mock(
 
 const defaultProps = {
   selectedAgent: undefined,
+  selectedArchivedInstance: undefined,
   activeTab: 'new' as const,
   onSelectYourAgent: jest.fn(),
-  onSelectArchivedAgent: jest.fn(),
+  onSelectArchivedInstance: jest.fn(),
 };
 
 describe('SelectAgent', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockUseServices.mockReturnValue({ services: [{}] });
-    mockUseArchivedAgents.mockReturnValue({ archivedAgents: [] });
+    mockUseServices.mockReturnValue({
+      services: [{}],
+      getInstancesOfAgentType: () => [],
+    });
   });
 
   it('shows new agents list when activeTab is "new"', () => {
-    mockUseServices.mockReturnValue({ services: [] });
+    mockUseServices.mockReturnValue({
+      services: [],
+      getInstancesOfAgentType: () => [],
+    });
     render(<SelectAgent {...defaultProps} activeTab="new" />);
     expect(screen.getByText('Omenstrat')).toBeInTheDocument();
     expect(
@@ -92,26 +95,26 @@ describe('SelectAgent', () => {
     expect(screen.getByTestId('archived-agents-list')).toBeInTheDocument();
   });
 
-  it('calls onSelectArchivedAgent when an archived agent is selected', () => {
-    const onSelectArchivedAgent = jest.fn();
+  it('calls onSelectArchivedInstance when an archived instance is selected', () => {
+    const onSelectArchivedInstance = jest.fn();
     render(
       <SelectAgent
         {...defaultProps}
         activeTab="archived"
-        onSelectArchivedAgent={onSelectArchivedAgent}
+        onSelectArchivedInstance={onSelectArchivedInstance}
       />,
     );
     fireEvent.click(screen.getByText('Agents.fun (archived)'));
-    expect(onSelectArchivedAgent).toHaveBeenCalledWith(AgentMap.AgentsFun);
+    expect(onSelectArchivedInstance).toHaveBeenCalledWith('sc-archived-1');
   });
 
-  it('filters archived agents from the new agents list', () => {
-    mockUseArchivedAgents.mockReturnValue({
-      archivedAgents: [AgentMap.AgentsFun],
+  it('shows all agent types in the new agents list (no filtering by archive)', () => {
+    mockUseServices.mockReturnValue({
+      services: [],
+      getInstancesOfAgentType: () => [],
     });
-    mockUseServices.mockReturnValue({ services: [] });
     render(<SelectAgent {...defaultProps} activeTab="new" />);
     expect(screen.getByText('Omenstrat')).toBeInTheDocument();
-    expect(screen.queryByText('Agents.fun')).not.toBeInTheDocument();
+    expect(screen.getByText('Agents.fun')).toBeInTheDocument();
   });
 });

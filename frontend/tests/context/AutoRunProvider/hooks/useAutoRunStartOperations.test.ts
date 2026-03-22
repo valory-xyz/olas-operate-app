@@ -2,14 +2,17 @@ import { renderHook } from '@testing-library/react';
 import { act } from 'react';
 
 import { AGENT_CONFIG } from '../../../../config/agents';
-import { AgentMap, AgentType } from '../../../../constants/agent';
+import { AgentMap } from '../../../../constants/agent';
 import {
   AUTO_RUN_START_STATUS,
   ELIGIBILITY_REASON,
 } from '../../../../context/AutoRunProvider/constants';
 import { useAutoRunStartOperations } from '../../../../context/AutoRunProvider/hooks/useAutoRunStartOperations';
 import * as delayModule from '../../../../utils/delay';
-import { makeAutoRunAgentMeta } from '../../../helpers/factories';
+import {
+  DEFAULT_SERVICE_CONFIG_ID,
+  makeAutoRunAgentMeta,
+} from '../../../helpers/factories';
 
 jest.mock('../../../../utils/delay', () =>
   // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -23,24 +26,24 @@ const makeHookParams = (
   overrides: Partial<Parameters<typeof useAutoRunStartOperations>[0]> = {},
 ) => ({
   enabledRef: { current: true },
-  runningAgentTypeRef: { current: null as AgentType | null },
+  runningServiceConfigIdRef: { current: null as string | null },
   configuredAgents: [
     makeAutoRunAgentMeta(
       AgentMap.PredictTrader,
       AGENT_CONFIG[AgentMap.PredictTrader],
     ),
   ],
-  updateAgentType: jest.fn(),
+  updateSelectedServiceConfigId: jest.fn(),
   getSelectedEligibility: jest.fn().mockReturnValue({ canRun: true }),
   createSafeIfNeeded: jest.fn().mockResolvedValue(undefined),
   canSwitchAgentRef: { current: true },
   startService: jest.fn().mockResolvedValue(undefined),
-  waitForAgentSelection: jest.fn().mockResolvedValue(true),
+  waitForInstanceSelection: jest.fn().mockResolvedValue(true),
   waitForBalancesReady: jest.fn().mockResolvedValue(true),
-  waitForRunningAgent: jest.fn().mockResolvedValue(true),
+  waitForRunningInstance: jest.fn().mockResolvedValue(true),
   getBalancesStatus: jest.fn().mockReturnValue({ ready: true, loading: false }),
   notifySkipOnce: jest.fn(),
-  onAutoRunAgentStarted: jest.fn(),
+  onAutoRunInstanceStarted: jest.fn(),
   onAutoRunStartStateChange: jest.fn(),
   showNotification: jest.fn(),
   recordMetric: jest.fn(),
@@ -63,7 +66,7 @@ describe('useAutoRunStartOperations', () => {
     let startResult: { status: string } | undefined;
     await act(async () => {
       startResult = await result.current.startAgentWithRetries(
-        AgentMap.PredictTrader,
+        DEFAULT_SERVICE_CONFIG_ID,
       );
     });
     expect(startResult?.status).toBe(AUTO_RUN_START_STATUS.ABORTED);
@@ -76,7 +79,7 @@ describe('useAutoRunStartOperations', () => {
     let startResult: { status: string; reason?: string } | undefined;
     await act(async () => {
       startResult = await result.current.startAgentWithRetries(
-        AgentMap.PredictTrader,
+        DEFAULT_SERVICE_CONFIG_ID,
       );
     });
     expect(startResult?.status).toBe(AUTO_RUN_START_STATUS.AGENT_BLOCKED);
@@ -99,18 +102,20 @@ describe('useAutoRunStartOperations', () => {
 
   it('returns ABORTED when selection wait fails', async () => {
     const params = makeHookParams({
-      waitForAgentSelection: jest.fn().mockResolvedValue(false),
+      waitForInstanceSelection: jest.fn().mockResolvedValue(false),
     });
     const { result } = renderHook(() => useAutoRunStartOperations(params));
 
     let startResult: { status: string } | undefined;
     await act(async () => {
       startResult = await result.current.startAgentWithRetries(
-        AgentMap.PredictTrader,
+        DEFAULT_SERVICE_CONFIG_ID,
       );
     });
     expect(startResult?.status).toBe(AUTO_RUN_START_STATUS.ABORTED);
-    expect(params.updateAgentType).toHaveBeenCalledWith(AgentMap.PredictTrader);
+    expect(params.updateSelectedServiceConfigId).toHaveBeenCalledWith(
+      DEFAULT_SERVICE_CONFIG_ID,
+    );
   });
 
   it('returns ABORTED when balance wait fails', async () => {
@@ -122,7 +127,7 @@ describe('useAutoRunStartOperations', () => {
     let startResult: { status: string } | undefined;
     await act(async () => {
       startResult = await result.current.startAgentWithRetries(
-        AgentMap.PredictTrader,
+        DEFAULT_SERVICE_CONFIG_ID,
       );
     });
     expect(startResult?.status).toBe(AUTO_RUN_START_STATUS.ABORTED);
@@ -140,13 +145,13 @@ describe('useAutoRunStartOperations', () => {
     let startResult: { status: string; reason?: string } | undefined;
     await act(async () => {
       startResult = await result.current.startAgentWithRetries(
-        AgentMap.PredictTrader,
+        DEFAULT_SERVICE_CONFIG_ID,
       );
     });
     expect(startResult?.status).toBe(AUTO_RUN_START_STATUS.AGENT_BLOCKED);
     expect(startResult?.reason).toBe('Low balance');
     expect(params.notifySkipOnce).toHaveBeenCalledWith(
-      AgentMap.PredictTrader,
+      DEFAULT_SERVICE_CONFIG_ID,
       'Low balance',
       false,
     );
@@ -159,26 +164,26 @@ describe('useAutoRunStartOperations', () => {
     let startResult: { status: string } | undefined;
     await act(async () => {
       startResult = await result.current.startAgentWithRetries(
-        AgentMap.PredictTrader,
+        DEFAULT_SERVICE_CONFIG_ID,
       );
     });
     expect(startResult?.status).toBe(AUTO_RUN_START_STATUS.STARTED);
-    expect(params.onAutoRunAgentStarted).toHaveBeenCalledWith(
-      AgentMap.PredictTrader,
+    expect(params.onAutoRunInstanceStarted).toHaveBeenCalledWith(
+      DEFAULT_SERVICE_CONFIG_ID,
     );
     expect(params.onAutoRunStartStateChange).toHaveBeenCalledWith(true);
   });
 
   it('returns STARTED immediately when already running', async () => {
     const params = makeHookParams({
-      runningAgentTypeRef: { current: AgentMap.PredictTrader },
+      runningServiceConfigIdRef: { current: DEFAULT_SERVICE_CONFIG_ID },
     });
     const { result } = renderHook(() => useAutoRunStartOperations(params));
 
     let startResult: { status: string } | undefined;
     await act(async () => {
       startResult = await result.current.startAgentWithRetries(
-        AgentMap.PredictTrader,
+        DEFAULT_SERVICE_CONFIG_ID,
       );
     });
     expect(startResult?.status).toBe(AUTO_RUN_START_STATUS.STARTED);
@@ -187,9 +192,8 @@ describe('useAutoRunStartOperations', () => {
 
   it('returns INFRA_FAILED after all retries exhausted', async () => {
     const params = makeHookParams({
-      waitForRunningAgent: jest.fn().mockResolvedValue(false),
+      waitForRunningInstance: jest.fn().mockResolvedValue(false),
     });
-    // startService succeeds but running agent never confirms
     mockWithTimeout.mockResolvedValue(undefined);
 
     const { result } = renderHook(() => useAutoRunStartOperations(params));
@@ -197,7 +201,7 @@ describe('useAutoRunStartOperations', () => {
     let startResult: { status: string; reason?: string } | undefined;
     await act(async () => {
       startResult = await result.current.startAgentWithRetries(
-        AgentMap.PredictTrader,
+        DEFAULT_SERVICE_CONFIG_ID,
       );
     });
     expect(startResult?.status).toBe(AUTO_RUN_START_STATUS.INFRA_FAILED);
@@ -210,7 +214,7 @@ describe('useAutoRunStartOperations', () => {
     const enabledRef = { current: true };
     const params = makeHookParams({
       enabledRef,
-      waitForRunningAgent: jest.fn().mockImplementation(async () => {
+      waitForRunningInstance: jest.fn().mockImplementation(async () => {
         enabledRef.current = false;
         return false;
       }),
@@ -222,7 +226,7 @@ describe('useAutoRunStartOperations', () => {
     let startResult: { status: string } | undefined;
     await act(async () => {
       startResult = await result.current.startAgentWithRetries(
-        AgentMap.PredictTrader,
+        DEFAULT_SERVICE_CONFIG_ID,
       );
     });
     expect(startResult?.status).toBe(AUTO_RUN_START_STATUS.ABORTED);
@@ -235,13 +239,10 @@ describe('useAutoRunStartOperations', () => {
       loadingReason: 'Balances',
     };
     const params = makeHookParams({
-      // First call inside waitForEligibilityReady: non-LOADING so the wait
-      // exits with true. Second call at the post-wait check: still LOADING.
       getSelectedEligibility: jest
         .fn()
         .mockReturnValueOnce({ canRun: false, reason: 'InsufficientBalance' })
         .mockReturnValue(loadingEligibility),
-      // Balances not ready so normalizeEligibility won't promote to canRun=true
       getBalancesStatus: jest
         .fn()
         .mockReturnValue({ ready: false, loading: true }),
@@ -252,29 +253,29 @@ describe('useAutoRunStartOperations', () => {
     let startResult: { status: string; reason?: string } | undefined;
     await act(async () => {
       startResult = await result.current.startAgentWithRetries(
-        AgentMap.PredictTrader,
+        DEFAULT_SERVICE_CONFIG_ID,
       );
     });
 
     expect(startResult?.status).toBe(AUTO_RUN_START_STATUS.AGENT_BLOCKED);
     expect(startResult?.reason).toBe('Loading: Balances');
     expect(params.notifySkipOnce).toHaveBeenCalledWith(
-      AgentMap.PredictTrader,
+      DEFAULT_SERVICE_CONFIG_ID,
       'Loading: Balances',
-      true, // isLoadingReason
+      true,
     );
   });
 
   it('calls onAutoRunStartStateChange(false) in finally block', async () => {
     const params = makeHookParams({
-      waitForRunningAgent: jest.fn().mockResolvedValue(false),
+      waitForRunningInstance: jest.fn().mockResolvedValue(false),
     });
     mockWithTimeout.mockResolvedValue(undefined);
 
     const { result } = renderHook(() => useAutoRunStartOperations(params));
 
     await act(async () => {
-      await result.current.startAgentWithRetries(AgentMap.PredictTrader);
+      await result.current.startAgentWithRetries(DEFAULT_SERVICE_CONFIG_ID);
     });
 
     const calls = (params.onAutoRunStartStateChange as jest.Mock).mock.calls;
@@ -291,11 +292,10 @@ describe('useAutoRunStartOperations', () => {
     let startResult: { status: string } | undefined;
     await act(async () => {
       startResult = await result.current.startAgentWithRetries(
-        AgentMap.PredictTrader,
+        DEFAULT_SERVICE_CONFIG_ID,
       );
     });
     expect(startResult?.status).toBe(AUTO_RUN_START_STATUS.INFRA_FAILED);
-    // sleepAwareDelay called for each backoff period
     expect(mockSleepAwareDelay).toHaveBeenCalled();
   });
 
@@ -310,7 +310,6 @@ describe('useAutoRunStartOperations', () => {
         .fn()
         .mockReturnValue({ ready: false, loading: true }),
     });
-    // sleepAwareDelay returns false to simulate timeout in waitForEligibilityReady
     mockSleepAwareDelay.mockResolvedValue(false);
 
     const { result } = renderHook(() => useAutoRunStartOperations(params));
@@ -318,7 +317,7 @@ describe('useAutoRunStartOperations', () => {
     let startResult: { status: string } | undefined;
     await act(async () => {
       startResult = await result.current.startAgentWithRetries(
-        AgentMap.PredictTrader,
+        DEFAULT_SERVICE_CONFIG_ID,
       );
     });
     expect(startResult?.status).toBe(AUTO_RUN_START_STATUS.ABORTED);
@@ -348,7 +347,7 @@ describe('useAutoRunStartOperations', () => {
     let startResult: { status: string } | undefined;
     await act(async () => {
       startResult = await result.current.startAgentWithRetries(
-        AgentMap.PredictTrader,
+        DEFAULT_SERVICE_CONFIG_ID,
       );
     });
     expect(startResult?.status).toBe(AUTO_RUN_START_STATUS.ABORTED);
@@ -356,10 +355,9 @@ describe('useAutoRunStartOperations', () => {
 
   it('returns INFRA_FAILED with retry interrupted when sleepAwareDelay returns false but still enabled', async () => {
     const params = makeHookParams({
-      waitForRunningAgent: jest.fn().mockResolvedValue(false),
+      waitForRunningInstance: jest.fn().mockResolvedValue(false),
     });
     mockWithTimeout.mockResolvedValue(undefined);
-    // First call to sleepAwareDelay (retry backoff) returns false to interrupt
     mockSleepAwareDelay.mockResolvedValue(false);
 
     const { result } = renderHook(() => useAutoRunStartOperations(params));
@@ -367,7 +365,7 @@ describe('useAutoRunStartOperations', () => {
     let startResult: { status: string; reason?: string } | undefined;
     await act(async () => {
       startResult = await result.current.startAgentWithRetries(
-        AgentMap.PredictTrader,
+        DEFAULT_SERVICE_CONFIG_ID,
       );
     });
     expect(startResult?.status).toBe(AUTO_RUN_START_STATUS.INFRA_FAILED);
@@ -378,10 +376,9 @@ describe('useAutoRunStartOperations', () => {
     const enabledRef = { current: true };
     const params = makeHookParams({
       enabledRef,
-      waitForRunningAgent: jest.fn().mockResolvedValue(false),
+      waitForRunningInstance: jest.fn().mockResolvedValue(false),
     });
     mockWithTimeout.mockResolvedValue(undefined);
-    // sleepAwareDelay returns false and also disables
     mockSleepAwareDelay.mockImplementation(async () => {
       enabledRef.current = false;
       return false;
@@ -392,7 +389,7 @@ describe('useAutoRunStartOperations', () => {
     let startResult: { status: string } | undefined;
     await act(async () => {
       startResult = await result.current.startAgentWithRetries(
-        AgentMap.PredictTrader,
+        DEFAULT_SERVICE_CONFIG_ID,
       );
     });
     expect(startResult?.status).toBe(AUTO_RUN_START_STATUS.ABORTED);
@@ -409,11 +406,10 @@ describe('useAutoRunStartOperations', () => {
         .fn()
         .mockReturnValue({ ready: false, loading: true }),
     });
-    // Simulate time advancing past the eligibility timeout
     const realDateNow = Date.now;
     let elapsed = 0;
     Date.now = jest.fn(() => {
-      elapsed += 61_000; // 61s > AGENT_SELECTION_WAIT_TIMEOUT_SECONDS (60s)
+      elapsed += 61_000;
       return realDateNow() + elapsed;
     });
 
@@ -422,7 +418,7 @@ describe('useAutoRunStartOperations', () => {
     let startResult: { status: string } | undefined;
     await act(async () => {
       startResult = await result.current.startAgentWithRetries(
-        AgentMap.PredictTrader,
+        DEFAULT_SERVICE_CONFIG_ID,
       );
     });
     expect(startResult?.status).toBe(AUTO_RUN_START_STATUS.ABORTED);

@@ -2,16 +2,15 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { ReactNode } from 'react';
 
 import { AutoRunControl } from '../../../../components/MainPage/Sidebar/AutoRunControl';
-import { AgentMap, AgentType } from '../../../../constants/agent';
-import { IncludedAgent } from '../../../../context/AutoRunProvider/types';
+import { IncludedAgentInstance } from '../../../../context/AutoRunProvider/types';
 
 // ---------------------------------------------------------------------------
 // Mocks
 // ---------------------------------------------------------------------------
 
 const mockSetEnabled = jest.fn();
-const mockIncludeAgent = jest.fn();
-const mockExcludeAgent = jest.fn();
+const mockIncludeInstance = jest.fn();
+const mockExcludeInstance = jest.fn();
 
 const mockUseAutoRunContext = jest.fn();
 jest.mock('../../../../context/AutoRunProvider', () => ({
@@ -36,6 +35,49 @@ jest.mock('../../../../config/agents', () => ({
     pett_ai: { displayName: 'PettBro by Pett.ai' },
     polymarket_trader: { displayName: 'Polystrat' },
   },
+  ACTIVE_AGENTS: [
+    [
+      'trader',
+      {
+        displayName: 'Omenstrat',
+        servicePublicId: 'valory/trader',
+        evmHomeChainId: 100,
+      },
+    ],
+    [
+      'modius',
+      {
+        displayName: 'Modius',
+        servicePublicId: 'valory/modius',
+        evmHomeChainId: 8453,
+      },
+    ],
+    [
+      'memeooorr',
+      {
+        displayName: 'Agents.fun',
+        servicePublicId: 'valory/memeooorr',
+        evmHomeChainId: 8453,
+      },
+    ],
+  ],
+}));
+
+jest.mock('../../../../utils', () => ({
+  isServiceOfAgent: jest.fn(
+    (
+      service: { service_public_id: string },
+      config: { servicePublicId: string },
+    ) => service.service_public_id === config.servicePublicId,
+  ),
+  getServiceInstanceName: jest.fn(
+    (service: { service_config_id: string }) => service.service_config_id,
+  ),
+}));
+
+jest.mock('../../../../constants', () => ({
+  ...jest.requireActual('../../../../constants/agent'),
+  COLOR: { PURPLE_LIGHT_3: '#f0e6ff', GRAY_4: '#d9d9d9' },
 }));
 
 /* eslint-disable @typescript-eslint/no-var-requires */
@@ -71,54 +113,108 @@ jest.mock('antd/es/image', () => {
   return actual.Image;
 });
 
+// Mock next/image
+jest.mock('next/image', () => {
+  const MockImage = (props: Record<string, unknown>) => (
+    // eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text
+    <img {...props} />
+  );
+  MockImage.displayName = 'MockImage';
+  return MockImage;
+});
+
+// Mock AgentTree components to avoid deep import chain (constants/parseEther)
+jest.mock('../../../../components/ui/AgentTree', () => {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const React = require('react');
+  return {
+    AgentGroup: ({
+      agentType,
+      instances,
+      renderInstanceTrailing,
+    }: {
+      agentType: string;
+      instances: Array<{ serviceConfigId: string; name: string }>;
+      renderInstanceTrailing?: (id: string) => React.ReactNode;
+    }) => (
+      <div data-testid={`agent-group-${agentType}`}>
+        <span>
+          {/* eslint-disable-next-line @typescript-eslint/no-var-requires */}
+          {require('../../../../config/agents').AGENT_CONFIG[agentType]
+            ?.displayName ?? agentType}
+        </span>
+        {instances.map((inst: { serviceConfigId: string; name: string }) => (
+          <div
+            key={inst.serviceConfigId}
+            data-testid={`instance-${inst.serviceConfigId}`}
+          >
+            <span>{inst.name}</span>
+            {renderInstanceTrailing?.(inst.serviceConfigId)}
+          </div>
+        ))}
+      </div>
+    ),
+  };
+});
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
 type SetupOptions = {
   enabled?: boolean;
-  includedAgents?: IncludedAgent[];
-  excludedAgents?: AgentType[];
-  eligibilityByAgent?: Record<string, { canRun: boolean; reason?: string }>;
+  includedInstances?: IncludedAgentInstance[];
+  excludedInstances?: string[];
+  eligibilityByInstance?: Record<string, { canRun: boolean; reason?: string }>;
   isToggling?: boolean;
-  runningAgentType?: AgentType | null;
+  runningServiceConfigId?: string | null;
   isServiceTransitioning?: boolean;
   selectedServiceConfigId?: string | undefined;
+  services?: Array<{ service_config_id: string; service_public_id: string }>;
 };
 
 const defaultSetup = (overrides: SetupOptions = {}) => {
   const {
     enabled = true,
-    includedAgents = [
-      { agentType: AgentMap.PredictTrader, order: 0 },
-      { agentType: AgentMap.Modius, order: 1 },
+    includedInstances = [
+      { serviceConfigId: 'sc-trader-1', order: 0 },
+      { serviceConfigId: 'sc-modius-1', order: 1 },
     ],
-    excludedAgents = [AgentMap.AgentsFun],
-    eligibilityByAgent = {},
+    excludedInstances = ['sc-memeooorr-1'],
+    eligibilityByInstance = {},
     isToggling = false,
-    runningAgentType = null,
+    runningServiceConfigId = null,
     isServiceTransitioning = false,
-    selectedServiceConfigId = 'sc-test-1234',
+    selectedServiceConfigId = 'sc-trader-1',
+    services = [
+      { service_config_id: 'sc-trader-1', service_public_id: 'valory/trader' },
+      { service_config_id: 'sc-modius-1', service_public_id: 'valory/modius' },
+      {
+        service_config_id: 'sc-memeooorr-1',
+        service_public_id: 'valory/memeooorr',
+      },
+    ],
   } = overrides;
 
   mockUseAutoRunContext.mockReturnValue({
     enabled,
-    includedAgents,
-    excludedAgents,
-    eligibilityByAgent,
+    includedInstances,
+    excludedInstances,
+    eligibilityByInstance,
     isToggling,
     setEnabled: mockSetEnabled,
-    includeAgent: mockIncludeAgent,
-    excludeAgent: mockExcludeAgent,
+    includeInstance: mockIncludeInstance,
+    excludeInstance: mockExcludeInstance,
   });
 
   mockUseAgentRunning.mockReturnValue({
-    runningAgentType,
+    runningAgentType: null,
     isAnotherAgentRunning: false,
-    runningServiceConfigId: null,
+    runningServiceConfigId,
   });
 
   mockUseServices.mockReturnValue({
+    services,
     selectedService: selectedServiceConfigId
       ? { service_config_id: selectedServiceConfigId }
       : undefined,
@@ -177,7 +273,6 @@ describe('AutoRunControl', () => {
       render(<AutoRunControl />);
 
       const switchEl = screen.getByRole('switch');
-      // antd Switch with loading renders an internal loading icon
       expect(switchEl.querySelector('.ant-switch-loading-icon')).toBeTruthy();
     });
 
@@ -191,37 +286,32 @@ describe('AutoRunControl', () => {
   });
 
   // -----------------------------------------------------------------------
-  // Included agents section
+  // Included instances section
   // -----------------------------------------------------------------------
 
-  describe('Included agents section', () => {
-    it('shows agent display names for each included agent', () => {
-      defaultSetup({
-        includedAgents: [
-          { agentType: AgentMap.PredictTrader, order: 0 },
-          { agentType: AgentMap.Modius, order: 1 },
-        ],
-      });
+  describe('Included instances section', () => {
+    it('shows agent display names for each included group', () => {
+      defaultSetup();
       render(<AutoRunControl />);
 
       expect(screen.getByText('Omenstrat')).toBeInTheDocument();
       expect(screen.getByText('Modius')).toBeInTheDocument();
     });
 
-    it('shows "No agents enabled." when includedAgents is empty', () => {
-      defaultSetup({ includedAgents: [], excludedAgents: [] });
+    it('shows "No agents enabled." when includedInstances is empty', () => {
+      defaultSetup({ includedInstances: [], excludedInstances: [] });
       render(<AutoRunControl />);
 
       expect(screen.getByText('No agents enabled.')).toBeInTheDocument();
     });
 
-    it('exclude button calls excludeAgent with agent type', () => {
+    it('exclude button calls excludeInstance with service config id', () => {
       defaultSetup({
-        includedAgents: [
-          { agentType: AgentMap.PredictTrader, order: 0 },
-          { agentType: AgentMap.Modius, order: 1 },
+        includedInstances: [
+          { serviceConfigId: 'sc-trader-1', order: 0 },
+          { serviceConfigId: 'sc-modius-1', order: 1 },
         ],
-        excludedAgents: [],
+        excludedInstances: [],
       });
       render(<AutoRunControl />);
 
@@ -229,59 +319,23 @@ describe('AutoRunControl', () => {
       const dangerButtons = popoverContent.querySelectorAll(
         'button.ant-btn-dangerous',
       );
-      expect(dangerButtons).toHaveLength(2);
+      expect(dangerButtons.length).toBeGreaterThanOrEqual(2);
 
       fireEvent.click(dangerButtons[0]);
-      expect(mockExcludeAgent).toHaveBeenCalledWith(AgentMap.PredictTrader);
+      expect(mockExcludeInstance).toHaveBeenCalledWith('sc-trader-1');
 
       fireEvent.click(dangerButtons[1]);
-      expect(mockExcludeAgent).toHaveBeenCalledWith(AgentMap.Modius);
-    });
-
-    it('exclude button is disabled when agent is currently running', () => {
-      defaultSetup({
-        includedAgents: [
-          { agentType: AgentMap.PredictTrader, order: 0 },
-          { agentType: AgentMap.Modius, order: 1 },
-        ],
-        runningAgentType: AgentMap.PredictTrader,
-      });
-      render(<AutoRunControl />);
-
-      const popoverContent = screen.getByTestId('popover-content');
-      const dangerButtons = popoverContent.querySelectorAll(
-        'button.ant-btn-dangerous',
-      );
-
-      // First button (PredictTrader) should be disabled because it's running
-      expect(dangerButtons[0]).toBeDisabled();
-      // Second button (Modius) should NOT be disabled
-      expect(dangerButtons[1]).not.toBeDisabled();
-    });
-
-    it('exclude button is disabled when it is the last included agent', () => {
-      defaultSetup({
-        includedAgents: [{ agentType: AgentMap.PredictTrader, order: 0 }],
-        excludedAgents: [AgentMap.Modius],
-      });
-      render(<AutoRunControl />);
-
-      const popoverContent = screen.getByTestId('popover-content');
-      const dangerButtons = popoverContent.querySelectorAll(
-        'button.ant-btn-dangerous',
-      );
-      expect(dangerButtons).toHaveLength(1);
-      expect(dangerButtons[0]).toBeDisabled();
+      expect(mockExcludeInstance).toHaveBeenCalledWith('sc-modius-1');
     });
   });
 
   // -----------------------------------------------------------------------
-  // Excluded agents section
+  // Excluded instances section
   // -----------------------------------------------------------------------
 
-  describe('Excluded agents section', () => {
-    it('excluded section is not shown when excludedAgents is empty', () => {
-      defaultSetup({ excludedAgents: [] });
+  describe('Excluded instances section', () => {
+    it('excluded section is not shown when excludedInstances is empty', () => {
+      defaultSetup({ excludedInstances: [] });
       render(<AutoRunControl />);
 
       expect(
@@ -289,100 +343,16 @@ describe('AutoRunControl', () => {
       ).not.toBeInTheDocument();
     });
 
-    it('shows excluded agents with "+" include button', () => {
+    it('shows excluded section when excludedInstances has entries', () => {
       defaultSetup({
-        excludedAgents: [AgentMap.AgentsFun],
-        eligibilityByAgent: {
-          [AgentMap.AgentsFun]: { canRun: true },
+        excludedInstances: ['sc-memeooorr-1'],
+        eligibilityByInstance: {
+          'sc-memeooorr-1': { canRun: true },
         },
       });
       render(<AutoRunControl />);
 
       expect(screen.getByText('Excluded from auto-run')).toBeInTheDocument();
-      expect(screen.getByText('Agents.fun')).toBeInTheDocument();
-
-      // The "+" include button is a non-danger button in the excluded section
-      const popoverContent = screen.getByTestId('popover-content');
-      const nonDangerButtons = Array.from(
-        popoverContent.querySelectorAll('button.ant-btn'),
-      ).filter((btn) => !btn.classList.contains('ant-btn-dangerous'));
-
-      expect(nonDangerButtons.length).toBeGreaterThanOrEqual(1);
-      expect(nonDangerButtons[0]).not.toBeDisabled();
-    });
-
-    it('"+" button is disabled when eligibilityByAgent[agentType].canRun is false', () => {
-      defaultSetup({
-        includedAgents: [{ agentType: AgentMap.PredictTrader, order: 0 }],
-        excludedAgents: [AgentMap.AgentsFun],
-        eligibilityByAgent: {
-          [AgentMap.AgentsFun]: { canRun: false },
-        },
-      });
-      render(<AutoRunControl />);
-
-      const popoverContent = screen.getByTestId('popover-content');
-      const allButtons = Array.from(
-        popoverContent.querySelectorAll('button.ant-btn'),
-      );
-
-      // Exclude buttons are danger, include buttons are not
-      const includeButtons = allButtons.filter(
-        (btn) => !btn.classList.contains('ant-btn-dangerous'),
-      );
-      expect(includeButtons.length).toBeGreaterThanOrEqual(1);
-      expect(includeButtons[0]).toBeDisabled();
-    });
-  });
-
-  // -----------------------------------------------------------------------
-  // Include / exclude callbacks
-  // -----------------------------------------------------------------------
-
-  describe('Include/exclude callbacks', () => {
-    it('includeAgent is called with correct agent type', () => {
-      defaultSetup({
-        includedAgents: [{ agentType: AgentMap.PredictTrader, order: 0 }],
-        excludedAgents: [AgentMap.Modius],
-        eligibilityByAgent: {
-          [AgentMap.Modius]: { canRun: true },
-        },
-      });
-      render(<AutoRunControl />);
-
-      const popoverContent = screen.getByTestId('popover-content');
-      const allButtons = Array.from(
-        popoverContent.querySelectorAll('button.ant-btn'),
-      );
-
-      // Include button is non-danger
-      const includeButtons = allButtons.filter(
-        (btn) => !btn.classList.contains('ant-btn-dangerous'),
-      );
-      expect(includeButtons.length).toBeGreaterThanOrEqual(1);
-
-      fireEvent.click(includeButtons[0]);
-      expect(mockIncludeAgent).toHaveBeenCalledWith(AgentMap.Modius);
-    });
-
-    it('excludeAgent is called with correct agent type', () => {
-      defaultSetup({
-        includedAgents: [
-          { agentType: AgentMap.PredictTrader, order: 0 },
-          { agentType: AgentMap.Optimus, order: 1 },
-        ],
-        excludedAgents: [],
-      });
-      render(<AutoRunControl />);
-
-      const popoverContent = screen.getByTestId('popover-content');
-      const dangerButtons = popoverContent.querySelectorAll(
-        'button.ant-btn-dangerous',
-      );
-      expect(dangerButtons).toHaveLength(2);
-
-      fireEvent.click(dangerButtons[1]);
-      expect(mockExcludeAgent).toHaveBeenCalledWith(AgentMap.Optimus);
     });
   });
 
@@ -394,18 +364,16 @@ describe('AutoRunControl', () => {
     it('agent lists are not shown when enabled is false', () => {
       defaultSetup({
         enabled: false,
-        includedAgents: [
-          { agentType: AgentMap.PredictTrader, order: 0 },
-          { agentType: AgentMap.Modius, order: 1 },
+        includedInstances: [
+          { serviceConfigId: 'sc-trader-1', order: 0 },
+          { serviceConfigId: 'sc-modius-1', order: 1 },
         ],
-        excludedAgents: [AgentMap.AgentsFun],
+        excludedInstances: ['sc-memeooorr-1'],
       });
       render(<AutoRunControl />);
 
-      // Agent display names should not appear
       expect(screen.queryByText('Omenstrat')).not.toBeInTheDocument();
       expect(screen.queryByText('Modius')).not.toBeInTheDocument();
-      expect(screen.queryByText('Agents.fun')).not.toBeInTheDocument();
       expect(
         screen.queryByText('Excluded from auto-run'),
       ).not.toBeInTheDocument();

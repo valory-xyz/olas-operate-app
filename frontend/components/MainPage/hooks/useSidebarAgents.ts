@@ -1,80 +1,53 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { ACTIVE_AGENTS, AVAILABLE_FOR_ADDING_AGENTS } from '@/config/agents';
-import { CHAIN_CONFIG } from '@/config/chains';
-import { AgentType, EvmChainId, PAGES, SETUP_SCREEN } from '@/constants';
+import { PAGES, SETUP_SCREEN } from '@/constants';
 import {
-  useElectronApi,
+  useArchivedAgents,
   usePageState,
   useServices,
   useSetup,
-  useStore,
 } from '@/hooks';
-
-import { AgentList } from '../Sidebar/AgentListMenu';
+import { getServiceInstanceName, isServiceOfAgent } from '@/utils';
 
 /**
  * Manages the agent list (filtered by archive state) and all archive-related
  * state and callbacks for the Sidebar.
+ *
+ * Archiving operates at the serviceConfigId level (individual instances).
  */
 export const useSidebarAgents = () => {
   const { goto: gotoSetup } = useSetup();
   const { goto: gotoPage } = usePageState();
-  const { services, selectedAgentType, updateAgentType } = useServices();
-  const { store } = useElectronApi();
-  const { storeState } = useStore();
+  const { services, selectedServiceConfigId, updateSelectedServiceConfigId } =
+    useServices();
+  const { archivedInstances, archiveInstance } = useArchivedAgents();
 
-  const [archivedAgents, setArchivedAgents] = useState<AgentType[]>(
-    storeState?.archivedAgents ?? [],
-  );
-
-  // Always sync from store so external writes (e.g. unarchiveAgent) are reflected.
-  // handleArchiveConfirm also calls setArchivedAgents immediately for instant hide.
-  useEffect(() => {
-    setArchivedAgents(storeState?.archivedAgents ?? []);
-  }, [storeState?.archivedAgents]);
-
-  const [pendingArchiveAgent, setPendingArchiveAgent] = useState<
-    AgentType | undefined
+  const [pendingArchiveInstanceId, setPendingArchiveInstanceId] = useState<
+    string | undefined
   >();
 
-  const myAgents = useMemo(() => {
+  /** The filtered list of non-archived serviceConfigIds */
+  const activeServiceConfigIds = useMemo(() => {
     if (!services) return [];
-    return services.reduce<AgentList>((result, service) => {
-      const agent = ACTIVE_AGENTS.find(
-        ([, agentConfig]) =>
-          agentConfig.servicePublicId === service.service_public_id &&
-          agentConfig.middlewareHomeChainId === service.home_chain,
-      );
-      if (!agent) return result;
-
-      const [agentType, agentConfig] = agent;
-      if (!agentConfig.evmHomeChainId) return result;
-      if (archivedAgents.includes(agentType)) return result;
-
-      const chainId = agentConfig.evmHomeChainId as EvmChainId;
-      const chainName = CHAIN_CONFIG[chainId].name;
-      const name = agentConfig.displayName;
-      result.push({ name, agentType, chainName, chainId });
-      return result;
-    }, []);
-  }, [services, archivedAgents]);
+    return services
+      .filter((s) => !archivedInstances.includes(s.service_config_id))
+      .map((s) => s.service_config_id);
+  }, [services, archivedInstances]);
 
   const handleArchiveConfirm = useCallback(() => {
-    if (!pendingArchiveAgent) return;
-    if (archivedAgents.includes(pendingArchiveAgent)) return;
+    if (!pendingArchiveInstanceId) return;
+    if (archivedInstances.includes(pendingArchiveInstanceId)) return;
 
-    const updated = [...archivedAgents, pendingArchiveAgent];
-    setArchivedAgents(updated);
-    store?.set?.('archivedAgents', updated);
+    archiveInstance(pendingArchiveInstanceId);
 
-    // Select next available agent if the archived one was selected
-    if (selectedAgentType === pendingArchiveAgent) {
-      const nextAgent = myAgents.find(
-        (agent) => agent.agentType !== pendingArchiveAgent,
+    // Select next available instance if the archived one was selected
+    if (selectedServiceConfigId === pendingArchiveInstanceId) {
+      const nextId = activeServiceConfigIds.find(
+        (id) => id !== pendingArchiveInstanceId,
       );
-      if (nextAgent) {
-        updateAgentType(nextAgent.agentType);
+      if (nextId) {
+        updateSelectedServiceConfigId(nextId);
         gotoPage(PAGES.Main);
       } else {
         gotoPage(PAGES.Setup);
@@ -82,41 +55,49 @@ export const useSidebarAgents = () => {
       }
     }
 
-    setPendingArchiveAgent(undefined);
+    setPendingArchiveInstanceId(undefined);
   }, [
-    archivedAgents,
+    activeServiceConfigIds,
+    archiveInstance,
+    archivedInstances,
     gotoPage,
     gotoSetup,
-    myAgents,
-    pendingArchiveAgent,
-    selectedAgentType,
-    store,
-    updateAgentType,
+    pendingArchiveInstanceId,
+    selectedServiceConfigId,
+    updateSelectedServiceConfigId,
   ]);
 
-  const pendingArchiveAgentName = useMemo(() => {
-    if (!pendingArchiveAgent) return '';
-    const agent = myAgents.find((a) => a.agentType === pendingArchiveAgent);
-    return agent?.name ?? '';
-  }, [myAgents, pendingArchiveAgent]);
+  const pendingArchiveInstanceName = useMemo(() => {
+    if (!pendingArchiveInstanceId || !services) return null;
+    const service = services.find(
+      (s) => s.service_config_id === pendingArchiveInstanceId,
+    );
+    if (!service) return null;
+    const agentEntry = ACTIVE_AGENTS.find(([, config]) =>
+      isServiceOfAgent(service, config),
+    );
+    if (!agentEntry) return null;
+    const [, config] = agentEntry;
+    const instanceName = getServiceInstanceName(
+      service,
+      config.displayName,
+      config.evmHomeChainId,
+    );
+    return `${instanceName} (${config.displayName})`;
+  }, [services, pendingArchiveInstanceId]);
 
   const canAddNewAgents = useMemo(() => {
-    if (archivedAgents.length > 0) return true;
-    const availableAgents = myAgents.filter((agent) =>
-      AVAILABLE_FOR_ADDING_AGENTS.some(
-        ([agentType]) => agentType === agent.agentType,
-      ),
-    );
-    return availableAgents.length < AVAILABLE_FOR_ADDING_AGENTS.length;
-  }, [myAgents, archivedAgents]);
+    if (archivedInstances.length > 0) return true;
+    return activeServiceConfigIds.length < AVAILABLE_FOR_ADDING_AGENTS.length;
+  }, [activeServiceConfigIds, archivedInstances]);
 
   return {
-    myAgents,
-    archivedAgents,
+    archivedInstances,
+    activeServiceConfigIds,
     canAddNewAgents,
-    pendingArchiveAgent,
-    setPendingArchiveAgent,
-    pendingArchiveAgentName,
+    pendingArchiveInstanceId,
+    setPendingArchiveInstanceId,
+    pendingArchiveInstanceName,
     handleArchiveConfirm,
   };
 };

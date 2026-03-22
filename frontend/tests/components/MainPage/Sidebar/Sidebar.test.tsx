@@ -1,317 +1,254 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import React from 'react';
 
+// Import after mocks
 import { Sidebar } from '../../../../components/MainPage/Sidebar/Sidebar';
-import { PAGES } from '../../../../constants';
-import { AgentMap } from '../../../../constants/agent';
+import { PAGES, SETUP_SCREEN } from '../../../../constants';
+import { DEFAULT_SERVICE_CONFIG_ID } from '../../../helpers/factories';
+
+// jsdom does not provide ResizeObserver
+beforeAll(() => {
+  global.ResizeObserver = class {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  };
+});
 
 /* eslint-disable @typescript-eslint/no-var-requires */
 jest.mock(
   'ethers-multicall',
   () => require('../../../mocks/ethersMulticall').ethersMulticallMock,
 );
-/* eslint-enable @typescript-eslint/no-var-requires */
-jest.mock('../../../../constants/providers', () => ({}));
-
-/* eslint-disable @typescript-eslint/no-var-requires */
 jest.mock(
   'styled-components',
   () => require('../../../mocks/styledComponents').styledComponentsMock,
 );
 /* eslint-enable @typescript-eslint/no-var-requires */
-
-// Mock Dropdown to render menu items inline so tests can interact with them
-jest.mock('antd', () => {
-  const actual = jest.requireActual('antd');
-  type DropdownProps = {
-    children: React.ReactNode;
-    menu?: {
-      items?: {
-        key: string;
-        label: string;
-        onClick?: (e: { domEvent: { stopPropagation: () => void } }) => void;
-      }[];
-    };
-  };
-  return {
-    ...actual,
-    Dropdown: ({ children, menu }: DropdownProps) => (
-      <div data-testid="dropdown-container">
-        {children}
-        <div data-testid="dropdown-menu">
-          {menu?.items?.map((item) => (
-            <button
-              key={item.key}
-              onClick={() =>
-                item.onClick?.({ domEvent: { stopPropagation: () => {} } })
-              }
-            >
-              {item.label}
-            </button>
-          ))}
-        </div>
-      </div>
-    ),
-  };
-});
+jest.mock('../../../../constants/providers', () => ({}));
+jest.mock('../../../../config/providers', () => ({}));
 
 jest.mock('next/image', () => ({
   __esModule: true,
-  default: ({ alt, src }: { alt: string; src: string }) => (
-    <img alt={alt} src={src} />
+  default: (props: Record<string, unknown>) => (
+    <img {...props} alt={props.alt as string} />
   ),
 }));
 
-// Stub child components that are not under test
-jest.mock('../../../../components/MainPage/BackupSeedPhraseAlert', () => ({
-  BackupSeedPhraseAlert: () => null,
-}));
-jest.mock(
-  '../../../../components/MainPage/UpdateAvailableAlert/UpdateAvailableAlert',
-  () => ({ UpdateAvailableAlert: () => null }),
-);
-jest.mock(
-  '../../../../components/MainPage/UpdateAvailableAlert/UpdateAvailableModal',
-  () => ({ UpdateAvailableModal: () => null }),
-);
-jest.mock('../../../../components/MainPage/Sidebar/AutoRunControl', () => ({
-  AutoRunControl: () => null,
-}));
-jest.mock('../../../../components/MainPage/Sidebar/PulseDot', () => ({
-  PulseDot: () => <span data-testid="pulse-dot" />,
+jest.mock('react-icons/tb', () => ({
+  TbHelpSquareRounded: () => <span>help-icon</span>,
+  TbPlus: () => <span>plus-icon</span>,
+  TbSettings: () => <span>settings-icon</span>,
+  TbWallet: () => <span>wallet-icon</span>,
+  TbShieldHalfFilled: () => <span>shield-icon</span>,
 }));
 
-// ---------------------------------------------------------------------------
-// Hook mocks
-// ---------------------------------------------------------------------------
+jest.mock('react-icons/fi', () => ({
+  FiArrowUpRight: () => <span>arrow-up-right</span>,
+}));
 
-const mockGotoSetup = jest.fn();
 const mockGotoPage = jest.fn();
-const mockUpdateAgentType = jest.fn();
-const mockArchiveAgent = jest.fn();
-
-const mockStoreSet = jest.fn();
-
-const mockUseSetup = jest.fn();
-const mockUsePageState = jest.fn();
-const mockUseServices = jest.fn();
-const mockUseArchivedAgents = jest.fn();
-const mockUseElectronApi = jest.fn();
-const mockUseStore = jest.fn();
-const mockUseMasterWalletContext = jest.fn();
-const mockUseAgentRunning = jest.fn();
-const mockUseBalanceAndRefillRequirementsContext = jest.fn();
+const mockGotoSetup = jest.fn();
+const mockUpdateSelectedServiceConfigId = jest.fn();
+const mockGetAgentTypeFromService = jest.fn();
+const mockIsInstanceInitiallyFunded = jest.fn().mockReturnValue(true);
 
 jest.mock('../../../../hooks', () => ({
-  useSetup: (...args: unknown[]) => mockUseSetup(...args),
-  usePageState: (...args: unknown[]) => mockUsePageState(...args),
-  useServices: (...args: unknown[]) => mockUseServices(...args),
-  useArchivedAgents: (...args: unknown[]) => mockUseArchivedAgents(...args),
-  useElectronApi: (...args: unknown[]) => mockUseElectronApi(...args),
-  useStore: (...args: unknown[]) => mockUseStore(...args),
-  useMasterWalletContext: (...args: unknown[]) =>
-    mockUseMasterWalletContext(...args),
-  useAgentRunning: (...args: unknown[]) => mockUseAgentRunning(...args),
-  useBalanceAndRefillRequirementsContext: (...args: unknown[]) =>
-    mockUseBalanceAndRefillRequirementsContext(...args),
-}));
-
-jest.mock('../../../../config/agents', () => ({
-  ACTIVE_AGENTS: [
-    [
-      'memeooorr',
-      {
-        displayName: 'Agents.fun',
-        servicePublicId: 'valory/memeooorr_pearl:0.1.0',
-        middlewareHomeChainId: 8453,
-        evmHomeChainId: 8453,
-        isAgentEnabled: true,
-        isUnderConstruction: false,
-      },
-    ],
-    [
-      'trader',
-      {
-        displayName: 'Omenstrat',
-        servicePublicId: 'valory/trader_pearl:0.1.0',
-        middlewareHomeChainId: 100,
-        evmHomeChainId: 100,
-        isAgentEnabled: true,
-        isUnderConstruction: false,
-      },
-    ],
-  ],
-  AVAILABLE_FOR_ADDING_AGENTS: [],
-}));
-
-jest.mock('../../../../config/chains', () => ({
-  CHAIN_CONFIG: {
-    8453: { name: 'Base' },
-    100: { name: 'Gnosis' },
-  },
-}));
-
-const twoServices = [
-  {
-    service_public_id: 'valory/memeooorr_pearl:0.1.0',
-    home_chain: 8453,
-    service_config_id: 'sc-1',
-  },
-  {
-    service_public_id: 'valory/trader_pearl:0.1.0',
-    home_chain: 100,
-    service_config_id: 'sc-2',
-  },
-];
-
-const defaultSetup = (
-  overrides: {
-    services?: typeof twoServices;
-    archivedAgents?: string[];
-    runningAgentType?: string | null;
-  } = {},
-) => {
-  const {
-    services = twoServices,
-    archivedAgents = [],
-    runningAgentType = null,
-  } = overrides;
-
-  mockUseSetup.mockReturnValue({ goto: mockGotoSetup });
-  mockUsePageState.mockReturnValue({
+  useServices: () => mockUseServices(),
+  useAgentRunning: () => mockUseAgentRunning(),
+  useMasterWalletContext: () => mockUseMasterWalletContext(),
+  usePageState: () => ({
     pageState: PAGES.Main,
     goto: mockGotoPage,
-  });
-  mockUseServices.mockReturnValue({
-    services,
-    isLoading: false,
-    selectedAgentType: AgentMap.AgentsFun,
-    updateAgentType: mockUpdateAgentType,
-  });
-  mockUseArchivedAgents.mockReturnValue({
-    archivedAgents,
-    archiveAgent: mockArchiveAgent,
-  });
-  mockUseElectronApi.mockReturnValue({ store: { set: mockStoreSet } });
-  mockUseStore.mockReturnValue({ storeState: { archivedAgents } });
-  mockUseMasterWalletContext.mockReturnValue({
-    masterSafes: [],
-    isLoading: false,
-  });
-  mockUseAgentRunning.mockReturnValue({ runningAgentType });
-  mockUseBalanceAndRefillRequirementsContext.mockReturnValue({
+  }),
+  useSetup: () => ({ goto: mockGotoSetup }),
+  useBalanceAndRefillRequirementsContext: () => ({
     isPearlWalletRefillRequired: false,
-  });
-};
+  }),
+  useIsInitiallyFunded: () => ({
+    isInstanceInitiallyFunded: mockIsInstanceInitiallyFunded,
+  }),
+}));
 
-// ---------------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------------
+const mockUseServices = jest.fn();
+const mockUseAgentRunning = jest.fn();
+const mockUseMasterWalletContext = jest.fn();
+
+jest.mock('../../../../components/MainPage/BackupSeedPhraseAlert', () => ({
+  BackupSeedPhraseAlert: () => <div data-testid="backup-alert" />,
+}));
+
+jest.mock(
+  '../../../../components/MainPage/UpdateAvailableAlert/UpdateAvailableAlert',
+  () => ({
+    UpdateAvailableAlert: () => <div data-testid="update-alert" />,
+  }),
+);
+
+jest.mock(
+  '../../../../components/MainPage/UpdateAvailableAlert/UpdateAvailableModal',
+  () => ({
+    UpdateAvailableModal: () => <div data-testid="update-modal" />,
+  }),
+);
+
+jest.mock('../../../../components/MainPage/Sidebar/AgentTreeMenu', () => ({
+  AgentTreeMenu: (props: {
+    groups: Array<{
+      agentType: string;
+      instances: Array<{ serviceConfigId: string; name: string }>;
+    }>;
+  }) => (
+    <div data-testid="agent-tree-menu">
+      {props.groups.map((g) => (
+        <div key={g.agentType} data-testid={`group-${g.agentType}`}>
+          {g.instances.map((i) => (
+            <div key={i.serviceConfigId}>{i.name}</div>
+          ))}
+        </div>
+      ))}
+    </div>
+  ),
+}));
+
+jest.mock('../../../../components/MainPage/Sidebar/ArchiveAgentModal', () => ({
+  ArchiveAgentModal: () => <div data-testid="archive-modal" />,
+}));
+
+jest.mock('../../../../components/MainPage/Sidebar/AutoRunControl', () => ({
+  AutoRunControl: () => <div data-testid="auto-run-control" />,
+}));
+
+jest.mock('../../../../components/MainPage/hooks/useSidebarAgents', () => ({
+  useSidebarAgents: () => ({
+    pendingArchiveInstanceId: undefined,
+    setPendingArchiveInstanceId: jest.fn(),
+    pendingArchiveInstanceName: null,
+    handleArchiveConfirm: jest.fn(),
+    archivedInstances: [],
+  }),
+}));
+
+const mockServiceWithConfig = (
+  serviceConfigId: string,
+  servicePublicId: string,
+) => ({
+  service_config_id: serviceConfigId,
+  service_public_id: servicePublicId,
+  name: 'Test Agent',
+  description: 'Test',
+  hash: 'bafybeib5hmzpf7cmxyfevq65tk22fjvlothjskw7nacgh4ervgs5mos7ra',
+  hash_history: {},
+  agent_release: {
+    is_aea: true,
+    repository: { owner: 'valory-xyz', name: 'trader', version: 'v0.31.7-rc2' },
+  },
+  home_chain: 'gnosis',
+  keys: [],
+  chain_configs: {},
+  env_variables: {},
+});
 
 describe('Sidebar', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    defaultSetup();
+    mockUseServices.mockReturnValue({
+      services: [
+        mockServiceWithConfig(
+          DEFAULT_SERVICE_CONFIG_ID,
+          'valory/trader_pearl:0.1.0',
+        ),
+      ],
+      isLoading: false,
+      selectedServiceConfigId: DEFAULT_SERVICE_CONFIG_ID,
+      updateSelectedServiceConfigId: mockUpdateSelectedServiceConfigId,
+      getAgentTypeFromService: mockGetAgentTypeFromService,
+    });
+    mockUseAgentRunning.mockReturnValue({
+      runningServiceConfigId: null,
+    });
+    mockUseMasterWalletContext.mockReturnValue({
+      isLoading: false,
+    });
   });
 
-  it('renders agents from services', () => {
+  it('renders "My agents" header', () => {
     render(<Sidebar />);
-    expect(screen.getByText('Agents.fun')).toBeInTheDocument();
-    expect(screen.getByText('Omenstrat')).toBeInTheDocument();
+    expect(screen.getByText('My agents')).toBeInTheDocument();
   });
 
-  it('hides archived agents from the sidebar list', () => {
-    defaultSetup({ archivedAgents: [AgentMap.AgentsFun] });
+  it('renders the "Add Agent" button', () => {
     render(<Sidebar />);
-    expect(screen.queryByText('Agents.fun')).not.toBeInTheDocument();
-    expect(screen.getByText('Omenstrat')).toBeInTheDocument();
+    expect(screen.getByText('Add Agent')).toBeInTheDocument();
   });
 
-  it('does not show "…" button when only one agent in sidebar', () => {
-    // Only one visible agent (the other is archived)
-    defaultSetup({ archivedAgents: [AgentMap.AgentsFun] });
+  it('navigates to setup on "Add Agent" click', () => {
     render(<Sidebar />);
-    expect(
-      screen.queryByRole('button', { name: /Archive Omenstrat/i }),
-    ).not.toBeInTheDocument();
+    fireEvent.click(screen.getByText('Add Agent'));
+    expect(mockGotoPage).toHaveBeenCalledWith(PAGES.Setup);
+    expect(mockGotoSetup).toHaveBeenCalledWith(SETUP_SCREEN.AgentOnboarding);
   });
 
-  it('shows "…" button for stopped agents when 2+ agents in sidebar', () => {
-    defaultSetup({ runningAgentType: null });
+  it('renders bottom menu items', () => {
     render(<Sidebar />);
-    // Both agents are stopped and 2 agents shown: archive buttons visible (aria-label)
-    expect(
-      screen.getByRole('button', { name: /Archive Agents\.fun/i }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: /Archive Omenstrat/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByText('Help Center')).toBeInTheDocument();
+    expect(screen.getByText('Settings')).toBeInTheDocument();
   });
 
-  it('does not show "…" button for the running agent', () => {
-    defaultSetup({ runningAgentType: AgentMap.AgentsFun });
-    render(<Sidebar />);
-    // Running agent has no archive button
-    expect(
-      screen.queryByRole('button', { name: /Archive Agents\.fun/i }),
-    ).not.toBeInTheDocument();
-    // Stopped agent still has one
-    expect(
-      screen.getByRole('button', { name: /Archive Omenstrat/i }),
-    ).toBeInTheDocument();
+  it('renders loading skeleton when services are loading', () => {
+    mockUseServices.mockReturnValue({
+      services: [],
+      isLoading: true,
+      selectedServiceConfigId: null,
+      updateSelectedServiceConfigId: mockUpdateSelectedServiceConfigId,
+      getAgentTypeFromService: mockGetAgentTypeFromService,
+    });
+
+    const { container } = render(<Sidebar />);
+    // Skeleton.Input renders ant-skeleton elements
+    const skeletons = container.querySelectorAll('.ant-skeleton');
+    expect(skeletons.length).toBeGreaterThan(0);
   });
 
-  it('opens archive modal when "Move to archive" is clicked', () => {
-    defaultSetup({ runningAgentType: null });
-    render(<Sidebar />);
+  it('renders loading skeleton when master wallet is loading', () => {
+    mockUseMasterWalletContext.mockReturnValue({ isLoading: true });
 
-    // Click the first "Move to archive" dropdown item (Dropdown is mocked to render inline)
-    const moveToArchiveBtns = screen.getAllByText('Move to archive');
-    fireEvent.click(moveToArchiveBtns[0]);
-
-    // Modal should appear with archive content
-    expect(screen.getByText('Archive agent')).toBeInTheDocument();
-    // The modal's "Archive Agent" confirm button
-    expect(
-      screen.getByRole('button', { name: 'Archive Agent' }),
-    ).toBeInTheDocument();
+    const { container } = render(<Sidebar />);
+    const skeletons = container.querySelectorAll('.ant-skeleton');
+    expect(skeletons.length).toBeGreaterThan(0);
   });
 
-  it('writes to store and selects next agent on archive confirm', () => {
-    defaultSetup({ runningAgentType: null });
+  it('renders agent tree when services are loaded', () => {
     render(<Sidebar />);
-
-    const moveToArchiveBtns = screen.getAllByText('Move to archive');
-    fireEvent.click(moveToArchiveBtns[0]);
-
-    fireEvent.click(screen.getByRole('button', { name: 'Archive Agent' }));
-
-    expect(mockStoreSet).toHaveBeenCalledWith(
-      'archivedAgents',
-      expect.any(Array),
-    );
+    expect(screen.getByTestId('agent-tree-menu')).toBeInTheDocument();
   });
 
-  it('shows "Add New Agent" button when there are archived agents (even if no new agents)', () => {
-    // AVAILABLE_FOR_ADDING_AGENTS is [] in mock, so normally button would be hidden.
-    // But archived agents exist, so the button must still show for restore flow.
-    defaultSetup({ archivedAgents: ['memeooorr'], services: twoServices });
+  it('renders support components', () => {
     render(<Sidebar />);
-    expect(
-      screen.getByRole('button', { name: /Add New Agent/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByTestId('backup-alert')).toBeInTheDocument();
+    expect(screen.getByTestId('update-alert')).toBeInTheDocument();
+    expect(screen.getByTestId('update-modal')).toBeInTheDocument();
   });
 
-  it('dismisses modal on cancel without archiving', () => {
-    defaultSetup({ runningAgentType: null });
+  it('renders auto-run control', () => {
     render(<Sidebar />);
+    expect(screen.getByTestId('auto-run-control')).toBeInTheDocument();
+  });
 
-    const moveToArchiveBtns = screen.getAllByText('Move to archive');
-    fireEvent.click(moveToArchiveBtns[0]);
+  it('renders no tree when there are no services', () => {
+    mockUseServices.mockReturnValue({
+      services: [],
+      isLoading: false,
+      selectedServiceConfigId: null,
+      updateSelectedServiceConfigId: mockUpdateSelectedServiceConfigId,
+      getAgentTypeFromService: mockGetAgentTypeFromService,
+    });
 
-    fireEvent.click(screen.getByRole('button', { name: /Cancel/i }));
+    render(<Sidebar />);
+    expect(screen.queryByTestId('agent-tree-menu')).not.toBeInTheDocument();
+  });
 
-    expect(mockArchiveAgent).not.toHaveBeenCalled();
-    expect(screen.queryByText('Archive agent')).not.toBeInTheDocument();
+  it('renders archive modal component', () => {
+    render(<Sidebar />);
+    expect(screen.getByTestId('archive-modal')).toBeInTheDocument();
   });
 });

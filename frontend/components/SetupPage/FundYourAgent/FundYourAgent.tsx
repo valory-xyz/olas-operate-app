@@ -144,7 +144,7 @@ export const FundYourAgent = () => {
   const { evmHomeChainId } = selectedAgentConfig;
   const chainName = EvmChainName[evmHomeChainId];
   const {
-    totalTokenRequirements: tokenRequirements,
+    refillTokenRequirements: tokenRequirements,
     isLoading,
     resetTokenRequirements,
   } = useGetRefillRequirements();

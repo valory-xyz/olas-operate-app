@@ -37,7 +37,8 @@ export const PredictAgentFormContent = ({
   const [form] = Form.useForm<PredictFieldValues>();
   const { goto } = useSetup();
   const { defaultStakingProgramId } = useStakingProgram();
-  const { refetch: refetchServices } = useServices();
+  const { refetch: refetchServices, updateSelectedServiceConfigId } =
+    useServices();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -72,13 +73,14 @@ export const PredictAgentFormContent = ({
           },
         };
 
-        await onDummyServiceCreation(
+        const newService = await onDummyServiceCreation(
           defaultStakingProgramId,
           overriddenServiceConfig,
         );
 
-        // fetch services to update the state after service creation
+        // Refetch so the new service is in the list, then select it
         await refetchServices?.();
+        updateSelectedServiceConfigId(newService.service_config_id);
 
         message.success('Agent setup complete');
 
@@ -94,6 +96,7 @@ export const PredictAgentFormContent = ({
       serviceTemplate,
       validateForm,
       updateSubmitButtonText,
+      updateSelectedServiceConfigId,
       refetchServices,
       goto,
     ],
