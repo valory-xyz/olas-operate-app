@@ -2,10 +2,14 @@ import { BigNumber } from 'ethers';
 import { MutableRefObject } from 'react';
 
 import { StakingRewardsInfo } from '@/types';
+import { sleepAwareDelay } from '@/utils/delay';
 import { isValidServiceId } from '@/utils/service';
 import { fetchAgentStakingRewardsInfo } from '@/utils/stakingRewards';
 
 import {
+  AGENT_SELECTION_WAIT_TIMEOUT_SECONDS,
+  AUTO_RUN_HEALTH_METRIC,
+  AutoRunScannerMetric,
   ELIGIBILITY_LOADING_REASON,
   ELIGIBILITY_REASON,
   REWARDS_POLL_SECONDS,
@@ -187,4 +191,46 @@ export const isOnlyLoadingReason = (
     .map((item) => item.trim())
     .filter(Boolean);
   return !!reasons && reasons.length === 1 && reasons[0] === reason;
+};
+
+const ELIGIBILITY_WAIT_TIMEOUT_MS = AGENT_SELECTION_WAIT_TIMEOUT_SECONDS * 1000;
+
+type Eligibility = { canRun: boolean; reason?: string; loadingReason?: string };
+
+/**
+ * Shared eligibility-wait implementation used by both scanner and start operations.
+ *
+ * Polls every 2s until eligibility leaves the LOADING state, returns true.
+ * Returns false on disable, sleep/wake detection, or hard timeout (60 s).
+ *
+ * Example:
+ * - candidate eligibility is "Loading: Balances" → polls until balances resolve
+ * - disabled mid-wait → returns false immediately
+ */
+export const waitForEligibilityReadyHelper = async ({
+  enabledRef,
+  getSelectedEligibility,
+  normalizeEligibility,
+  recordMetric,
+  logMessage,
+}: {
+  enabledRef: MutableRefObject<boolean>;
+  getSelectedEligibility: () => Eligibility;
+  normalizeEligibility: (eligibility: Eligibility) => Eligibility;
+  recordMetric: (metric: AutoRunScannerMetric) => void;
+  logMessage: (message: string) => void;
+}): Promise<boolean> => {
+  const startedAt = Date.now();
+  while (enabledRef.current) {
+    const eligibility = normalizeEligibility(getSelectedEligibility());
+    if (eligibility.reason !== ELIGIBILITY_REASON.LOADING) return true;
+    if (Date.now() - startedAt > ELIGIBILITY_WAIT_TIMEOUT_MS) {
+      recordMetric(AUTO_RUN_HEALTH_METRIC.ELIGIBILITY_TIMEOUTS);
+      logMessage('eligibility wait timeout');
+      return false;
+    }
+    const ok = await sleepAwareDelay(2);
+    if (!ok) return false;
+  }
+  return false;
 };

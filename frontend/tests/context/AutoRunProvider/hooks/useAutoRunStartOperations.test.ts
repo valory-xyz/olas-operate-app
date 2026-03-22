@@ -86,18 +86,18 @@ describe('useAutoRunStartOperations', () => {
     expect(startResult?.reason).toBe('Not configured');
   });
 
-  it('returns ABORTED and does not call updateAgentType when canSwitchAgentRef is false', async () => {
+  it('returns ABORTED and does not call updateSelectedServiceConfigId when canSwitchAgentRef is false', async () => {
     const params = makeHookParams({ canSwitchAgentRef: { current: false } });
     const { result } = renderHook(() => useAutoRunStartOperations(params));
 
     let startResult: { status: string } | undefined;
     await act(async () => {
       startResult = await result.current.startAgentWithRetries(
-        AgentMap.PredictTrader,
+        DEFAULT_SERVICE_CONFIG_ID,
       );
     });
     expect(startResult?.status).toBe(AUTO_RUN_START_STATUS.ABORTED);
-    expect(params.updateAgentType).not.toHaveBeenCalled();
+    expect(params.updateSelectedServiceConfigId).not.toHaveBeenCalled();
   });
 
   it('returns ABORTED when selection wait fails', async () => {

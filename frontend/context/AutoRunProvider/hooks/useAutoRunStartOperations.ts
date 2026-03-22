@@ -4,7 +4,6 @@ import { AgentType } from '@/constants';
 import { sleepAwareDelay, withTimeout } from '@/utils/delay';
 
 import {
-  AGENT_SELECTION_WAIT_TIMEOUT_SECONDS,
   AUTO_RUN_HEALTH_METRIC,
   AUTO_RUN_START_STATUS,
   AutoRunHealthMetricNoRotation,
@@ -17,10 +16,9 @@ import { AgentMeta } from '../types';
 import {
   formatEligibilityReason,
   normalizeEligibility as normalizeEligibilityHelper,
+  waitForEligibilityReadyHelper,
 } from '../utils/autoRunHelpers';
 import { getInstanceDisplayNames, notifyStartFailed } from '../utils/utils';
-
-const ELIGIBILITY_WAIT_TIMEOUT_MS = AGENT_SELECTION_WAIT_TIMEOUT_SECONDS * 1000;
 
 type Eligibility = {
   canRun: boolean;
@@ -93,27 +91,23 @@ export const useAutoRunStartOperations = ({
     [getBalancesStatus],
   );
 
-  const waitForEligibilityReady = useCallback(async () => {
-    const startedAt = Date.now();
-    while (enabledRef.current) {
-      const eligibility = normalizeEligibility(getSelectedEligibility());
-      if (eligibility.reason !== ELIGIBILITY_REASON.LOADING) return true;
-      if (Date.now() - startedAt > ELIGIBILITY_WAIT_TIMEOUT_MS) {
-        recordMetric(AUTO_RUN_HEALTH_METRIC.ELIGIBILITY_TIMEOUTS);
-        logMessage('eligibility wait timeout');
-        return false;
-      }
-      const ok = await sleepAwareDelay(2);
-      if (!ok) return false;
-    }
-    return false;
-  }, [
-    enabledRef,
-    getSelectedEligibility,
-    logMessage,
-    normalizeEligibility,
-    recordMetric,
-  ]);
+  const waitForEligibilityReady = useCallback(
+    () =>
+      waitForEligibilityReadyHelper({
+        enabledRef,
+        getSelectedEligibility,
+        normalizeEligibility,
+        recordMetric,
+        logMessage,
+      }),
+    [
+      enabledRef,
+      getSelectedEligibility,
+      logMessage,
+      normalizeEligibility,
+      recordMetric,
+    ],
+  );
 
   const startAgentWithRetries = useCallback(
     async (serviceConfigId: string): Promise<AutoRunStartResult> => {

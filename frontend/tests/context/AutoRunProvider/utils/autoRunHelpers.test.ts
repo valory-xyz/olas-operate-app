@@ -2,6 +2,7 @@ import { AGENT_CONFIG } from '../../../../config/agents';
 import { AgentMap } from '../../../../constants/agent';
 import { STAKING_PROGRAM_IDS } from '../../../../constants/stakingProgram';
 import {
+  AUTO_RUN_HEALTH_METRIC,
   ELIGIBILITY_LOADING_REASON,
   ELIGIBILITY_REASON,
   REWARDS_POLL_SECONDS,
@@ -12,7 +13,9 @@ import {
   isStakingEpochExpired,
   normalizeEligibility,
   refreshRewardsEligibility,
+  waitForEligibilityReadyHelper,
 } from '../../../../context/AutoRunProvider/utils/autoRunHelpers';
+import * as delayModule from '../../../../utils/delay';
 import { fetchAgentStakingRewardsInfo } from '../../../../utils/stakingRewards';
 import {
   DEFAULT_SERVICE_CONFIG_ID,
@@ -22,6 +25,13 @@ import {
 jest.mock('../../../../utils/stakingRewards', () => ({
   fetchAgentStakingRewardsInfo: jest.fn(),
 }));
+
+jest.mock('../../../../utils/delay', () =>
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  require('../../../helpers/autoRunMocks').delayMockFactory(),
+);
+
+const mockSleepAwareDelay = delayModule.sleepAwareDelay as jest.Mock;
 
 const mockFetchRewards = fetchAgentStakingRewardsInfo as jest.MockedFunction<
   typeof fetchAgentStakingRewardsInfo
@@ -350,10 +360,8 @@ describe('refreshRewardsEligibility', () => {
     expect(
       lastRewardsFetchRef.current[DEFAULT_SERVICE_CONFIG_ID],
     ).toBeDefined();
-    expect(
-      Date.now() -
-        (lastRewardsFetchRef.current[DEFAULT_SERVICE_CONFIG_ID] ?? 0),
-    ).toBeLessThan(1000);
+    const after = lastRewardsFetchRef.current[DEFAULT_SERVICE_CONFIG_ID] ?? 0;
+    expect(Date.now() - after).toBeLessThan(1000);
   });
 
   it('uses throttle window from REWARDS_POLL_SECONDS', async () => {
@@ -409,5 +417,120 @@ describe('refreshRewardsEligibility', () => {
     const params = makeParams();
     const result = await refreshRewardsEligibility(params);
     expect(result).toBeUndefined();
+  });
+});
+
+describe('waitForEligibilityReadyHelper', () => {
+  const makeParams = (
+    overrides: Partial<
+      Parameters<typeof waitForEligibilityReadyHelper>[0]
+    > = {},
+  ) => ({
+    enabledRef: { current: true },
+    getSelectedEligibility: jest.fn().mockReturnValue({ canRun: true } as {
+      canRun: boolean;
+      reason?: string;
+      loadingReason?: string;
+    }),
+    normalizeEligibility: jest
+      .fn()
+      .mockImplementation(
+        (e: { canRun: boolean; reason?: string; loadingReason?: string }) => e,
+      ),
+    recordMetric: jest.fn(),
+    logMessage: jest.fn(),
+    ...overrides,
+  });
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockSleepAwareDelay.mockResolvedValue(true);
+  });
+
+  it('returns true immediately when eligibility is not Loading', async () => {
+    const params = makeParams();
+    const result = await waitForEligibilityReadyHelper(params);
+    expect(result).toBe(true);
+    expect(mockSleepAwareDelay).not.toHaveBeenCalled();
+  });
+
+  it('returns false immediately when auto-run is disabled', async () => {
+    const params = makeParams({
+      enabledRef: { current: false },
+      getSelectedEligibility: jest.fn().mockReturnValue({
+        canRun: false,
+        reason: ELIGIBILITY_REASON.LOADING,
+      }),
+      normalizeEligibility: jest.fn().mockReturnValue({
+        canRun: false,
+        reason: ELIGIBILITY_REASON.LOADING,
+      }),
+    });
+    const result = await waitForEligibilityReadyHelper(params);
+    expect(result).toBe(false);
+    expect(mockSleepAwareDelay).not.toHaveBeenCalled();
+  });
+
+  it('returns false on sleep detection (sleepAwareDelay returns false)', async () => {
+    mockSleepAwareDelay.mockResolvedValueOnce(false);
+    const params = makeParams({
+      getSelectedEligibility: jest.fn().mockReturnValue({
+        canRun: false,
+        reason: ELIGIBILITY_REASON.LOADING,
+      }),
+      normalizeEligibility: jest.fn().mockReturnValue({
+        canRun: false,
+        reason: ELIGIBILITY_REASON.LOADING,
+      }),
+    });
+    const result = await waitForEligibilityReadyHelper(params);
+    expect(result).toBe(false);
+    expect(params.recordMetric).not.toHaveBeenCalled();
+  });
+
+  it('returns false, records metric, and logs on 60s timeout', async () => {
+    const start = 1_000_000;
+    const dateNowSpy = jest
+      .spyOn(Date, 'now')
+      .mockReturnValueOnce(start) // startedAt
+      .mockReturnValue(start + 61_000); // subsequent calls exceed timeout
+
+    const params = makeParams({
+      getSelectedEligibility: jest.fn().mockReturnValue({
+        canRun: false,
+        reason: ELIGIBILITY_REASON.LOADING,
+      }),
+      normalizeEligibility: jest.fn().mockReturnValue({
+        canRun: false,
+        reason: ELIGIBILITY_REASON.LOADING,
+      }),
+    });
+
+    const result = await waitForEligibilityReadyHelper(params);
+    expect(result).toBe(false);
+    expect(params.recordMetric).toHaveBeenCalledWith(
+      AUTO_RUN_HEALTH_METRIC.ELIGIBILITY_TIMEOUTS,
+    );
+    expect(params.logMessage).toHaveBeenCalledWith('eligibility wait timeout');
+    dateNowSpy.mockRestore();
+  });
+
+  it('polls every 2s until eligibility resolves out of Loading', async () => {
+    let pollCount = 0;
+    const params = makeParams({
+      normalizeEligibility: jest.fn().mockImplementation(() => {
+        pollCount += 1;
+        // First two polls: still Loading. Third: resolved.
+        if (pollCount <= 2) {
+          return { canRun: false, reason: ELIGIBILITY_REASON.LOADING };
+        }
+        return { canRun: true };
+      }),
+    });
+
+    const result = await waitForEligibilityReadyHelper(params);
+    expect(result).toBe(true);
+    expect(mockSleepAwareDelay).toHaveBeenCalledTimes(2);
+    expect(mockSleepAwareDelay).toHaveBeenCalledWith(2);
   });
 });

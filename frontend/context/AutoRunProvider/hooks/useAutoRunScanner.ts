@@ -1,10 +1,6 @@
 import { MutableRefObject, useCallback } from 'react';
 
-import { sleepAwareDelay } from '@/utils/delay';
-
 import {
-  AGENT_SELECTION_WAIT_TIMEOUT_SECONDS,
-  AUTO_RUN_HEALTH_METRIC,
   AUTO_RUN_START_STATUS,
   AutoRunScannerMetric,
   AutoRunStartResult,
@@ -17,10 +13,9 @@ import { AgentMeta } from '../types';
 import {
   formatEligibilityReason,
   normalizeEligibility as normalizeEligibilityHelper,
+  waitForEligibilityReadyHelper,
 } from '../utils/autoRunHelpers';
 import { useAutoRunVerboseLogger } from './useAutoRunVerboseLogger';
-
-const ELIGIBILITY_WAIT_TIMEOUT_MS = AGENT_SELECTION_WAIT_TIMEOUT_SECONDS * 1000;
 
 type UseAutoRunScannerParams = {
   enabledRef: MutableRefObject<boolean>;
@@ -116,27 +111,23 @@ export const useAutoRunScanner = ({
    * - candidate stays in loading (safe/balance/rewards metadata not ready)
    * - we poll every 2s up to timeout, then continue scan logic safely
    */
-  const waitForEligibilityReady = useCallback(async () => {
-    const startedAt = Date.now();
-    while (enabledRef.current) {
-      const eligibility = normalizeEligibility(getSelectedEligibility());
-      if (eligibility.reason !== ELIGIBILITY_REASON.LOADING) return true;
-      if (Date.now() - startedAt > ELIGIBILITY_WAIT_TIMEOUT_MS) {
-        recordMetric(AUTO_RUN_HEALTH_METRIC.ELIGIBILITY_TIMEOUTS);
-        logMessage('eligibility wait timeout');
-        return false;
-      }
-      const ok = await sleepAwareDelay(2);
-      if (!ok) return false;
-    }
-    return false;
-  }, [
-    enabledRef,
-    getSelectedEligibility,
-    logMessage,
-    normalizeEligibility,
-    recordMetric,
-  ]);
+  const waitForEligibilityReady = useCallback(
+    () =>
+      waitForEligibilityReadyHelper({
+        enabledRef,
+        getSelectedEligibility,
+        normalizeEligibility,
+        recordMetric,
+        logMessage,
+      }),
+    [
+      enabledRef,
+      getSelectedEligibility,
+      logMessage,
+      normalizeEligibility,
+      recordMetric,
+    ],
+  );
 
   /**
    * Returns the next candidate in circular included order.

@@ -60,6 +60,7 @@ jest.mock('../../../hooks', () => ({
     archiveInstance: jest.fn(),
     unarchiveInstance: jest.fn(),
   }),
+  usePageState: jest.fn().mockReturnValue({ pageState: 'Main' }),
 }));
 
 jest.mock('../../../context/AutoRunProvider/hooks/useAutoRunStore', () => ({
