@@ -1,17 +1,24 @@
 import { Flex, Typography } from 'antd';
-import { isEmpty } from 'lodash';
 import Image from 'next/image';
 import { useMemo } from 'react';
 import { LuConstruction } from 'react-icons/lu';
 import styled from 'styled-components';
 
-import { BackButton } from '@/components/ui';
 import { ACTIVE_AGENTS } from '@/config/agents';
-import { AgentType, COLOR, PAGES } from '@/constants';
-import { usePageState, useServices } from '@/hooks';
+import { AgentType, COLOR } from '@/constants';
+import { useServices } from '@/hooks';
 import { AgentConfig } from '@/types';
 
-const { Text, Title } = Typography;
+import { ArchivedAgentsList } from './ArchivedAgentsList';
+
+const { Text } = Typography;
+
+export const AGENT_TAB = {
+  New: 'new',
+  Archived: 'archived',
+} as const;
+
+type AgentTab = (typeof AGENT_TAB)[keyof typeof AGENT_TAB];
 
 const AgentSelectionContainer = styled(Flex)<{ active?: boolean }>`
   padding: 12px 24px;
@@ -31,21 +38,25 @@ const UnderConstructionIcon = styled(LuConstruction)`
   background-color: ${COLOR.BG.WARNING.DEFAULT};
 `;
 
-const SelectYourAgent = ({ canGoBack }: { canGoBack: boolean }) => {
-  const { goto } = usePageState();
+const InstanceTag = styled(Flex)`
+  padding: 2px 6px;
+  border: 1px solid ${COLOR.GRAY_3};
+  border-radius: 6px;
+`;
+
+type InstanceCountProps = {
+  count: number;
+};
+
+const InstanceCount = ({ count }: InstanceCountProps) => {
+  if (!count) return null;
+
   return (
-    <Flex
-      vertical
-      gap={16}
-      className="p-24"
-      style={{ borderBottom: `1px solid ${COLOR.GRAY_4}` }}
-    >
-      {canGoBack && <BackButton onPrev={() => goto(PAGES.Main)} />}
-      <Title level={3} className="m-0">
-        Select your agent
-      </Title>
-      <Text type="secondary">Review and select the AI agent you like.</Text>
-    </Flex>
+    <InstanceTag>
+      <Text type="secondary" className="text-sm">
+        You own {count}
+      </Text>
+    </InstanceTag>
   );
 };
 
@@ -58,46 +69,61 @@ const SelectYourAgentList = ({
   onSelectYourAgent,
   selectedAgent,
 }: SelectYourAgentListProps) => {
-  const { services } = useServices();
+  const { getInstancesOfAgentType } = useServices();
+
   const agents = useMemo(() => {
-    const isNotInServices = ([, agentConfig]: [string, AgentConfig]) =>
-      !services?.some(
-        ({ service_public_id, home_chain }) =>
-          service_public_id === agentConfig.servicePublicId &&
-          home_chain === agentConfig.middlewareHomeChainId,
-      );
-
     return (
-      ACTIVE_AGENTS.filter(isNotInServices)
-        // put all under construction in the end
-        .sort(([, agentConfig]) => (agentConfig.isUnderConstruction ? 1 : -1))
+      [...ACTIVE_AGENTS]
+        // Sorted with under-construction at the end
+        .sort(
+          (
+            [, agentA]: [string, AgentConfig],
+            [, agentB]: [string, AgentConfig],
+          ) => {
+            if (agentA.isUnderConstruction === agentB.isUnderConstruction)
+              return 0;
+            return agentA.isUnderConstruction ? 1 : -1;
+          },
+        )
     );
-  }, [services]);
+  }, []);
 
-  return agents.map(([agentType, agentConfig]) => (
-    <AgentSelectionContainer
-      key={agentType}
-      active={selectedAgent === agentType}
-      onClick={() => onSelectYourAgent(agentType as AgentType)}
-      gap={12}
-      align="center"
-    >
-      <Image
-        src={`/agent-${agentType}-icon.png`}
-        alt={`${agentConfig.displayName} icon`}
-        width={36}
-        height={36}
-        style={{ borderRadius: 8, border: `1px solid ${COLOR.GRAY_3}` }}
-      />
-      <Text>{agentConfig.displayName}</Text>
-      {agentConfig.isUnderConstruction && <UnderConstructionIcon />}
-    </AgentSelectionContainer>
-  ));
+  return (
+    <>
+      {agents.map(([agentType, agentConfig]) => {
+        const instanceCount = getInstancesOfAgentType(agentType).length;
+
+        return (
+          <AgentSelectionContainer
+            key={agentType}
+            active={selectedAgent === agentType}
+            onClick={() => onSelectYourAgent(agentType as AgentType)}
+            gap={12}
+            align="center"
+          >
+            <Image
+              src={`/agent-${agentType}-icon.png`}
+              alt={`${agentConfig.displayName} icon`}
+              width={36}
+              height={36}
+              style={{ borderRadius: 8, border: `1px solid ${COLOR.GRAY_3}` }}
+            />
+            <Text style={{ flex: 1 }}>{agentConfig.displayName}</Text>
+            <InstanceCount count={instanceCount} />
+            {agentConfig.isUnderConstruction && <UnderConstructionIcon />}
+          </AgentSelectionContainer>
+        );
+      })}
+    </>
+  );
 };
 
 type SelectAgentProps = {
   selectedAgent?: AgentType;
+  selectedArchivedInstance?: string;
+  activeTab: AgentTab;
   onSelectYourAgent: (agentType: AgentType) => void;
+  onSelectArchivedInstance: (serviceConfigId: string) => void;
 };
 
 /**
@@ -105,17 +131,24 @@ type SelectAgentProps = {
  */
 export const SelectAgent = ({
   selectedAgent,
+  selectedArchivedInstance,
+  activeTab,
   onSelectYourAgent,
+  onSelectArchivedInstance,
 }: SelectAgentProps) => {
-  const { services } = useServices();
-
   return (
     <>
-      <SelectYourAgent canGoBack={!isEmpty(services)} />
-      <SelectYourAgentList
-        onSelectYourAgent={onSelectYourAgent}
-        selectedAgent={selectedAgent}
-      />
+      {activeTab === AGENT_TAB.New ? (
+        <SelectYourAgentList
+          onSelectYourAgent={onSelectYourAgent}
+          selectedAgent={selectedAgent}
+        />
+      ) : (
+        <ArchivedAgentsList
+          selectedInstance={selectedArchivedInstance}
+          onSelectInstance={onSelectArchivedInstance}
+        />
+      )}
     </>
   );
 };

@@ -2,17 +2,13 @@ import { useMemo } from 'react';
 
 import { ACTIVE_AGENTS } from '@/config/agents';
 import { isActiveDeploymentStatus } from '@/constants';
+import { isServiceOfAgent } from '@/utils/service';
 
 import { useServices } from './useServices';
 
 export const useAgentRunning = () => {
-  const {
-    services,
-    selectedService,
-    allDeployments,
-    serviceStatusOverrides,
-    getServiceConfigIdFromAgentType,
-  } = useServices();
+  const { services, selectedService, allDeployments, serviceStatusOverrides } =
+    useServices();
 
   const isAnotherAgentRunning = useMemo(() => {
     if (!services || !selectedService || !allDeployments) return false;
@@ -39,11 +35,12 @@ export const useAgentRunning = () => {
   }, [services, selectedService, allDeployments, serviceStatusOverrides]);
 
   /**
-   * Determine which agent type is currently active
-   * (deployed, deploying, or stopping).
+   * Determine which service instance is currently active
+   * (deployed, deploying, or stopping) and its agent type.
    */
-  const runningAgentType = useMemo(() => {
-    if (!allDeployments || !services) return null;
+  const { runningAgentType, runningServiceConfigId } = useMemo(() => {
+    if (!allDeployments || !services)
+      return { runningAgentType: null, runningServiceConfigId: null };
 
     for (const service of services) {
       const overrideStatus =
@@ -55,25 +52,20 @@ export const useAgentRunning = () => {
         continue;
       }
 
-      const agentEntry = ACTIVE_AGENTS.find(
-        ([, agentConfig]) =>
-          agentConfig.servicePublicId === service.service_public_id &&
-          agentConfig.middlewareHomeChainId === service.home_chain,
+      const agentEntry = ACTIVE_AGENTS.find(([, config]) =>
+        isServiceOfAgent(service, config),
       );
 
       if (agentEntry) {
-        return agentEntry[0];
+        return {
+          runningAgentType: agentEntry[0],
+          runningServiceConfigId: service.service_config_id,
+        };
       }
     }
 
-    return null;
+    return { runningAgentType: null, runningServiceConfigId: null };
   }, [allDeployments, services, serviceStatusOverrides]);
-
-  const runningServiceConfigId = useMemo(() => {
-    if (!runningAgentType) return null;
-
-    return getServiceConfigIdFromAgentType(runningAgentType);
-  }, [getServiceConfigIdFromAgentType, runningAgentType]);
 
   return { isAnotherAgentRunning, runningAgentType, runningServiceConfigId };
 };

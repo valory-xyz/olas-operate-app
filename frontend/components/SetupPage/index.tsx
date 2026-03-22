@@ -14,6 +14,8 @@ import { SetupBridgeOnboarding } from './Create/SetupBridgeOnboarding/SetupBridg
 import { SetupOnRamp } from './Create/SetupOnRamp/SetupOnRamp';
 import { SetupPassword } from './Create/SetupPassword';
 import { EarlyAccessOnly } from './EarlyAccessOnly';
+import { BalanceCheck } from './FundYourAgent/components/BalanceCheck';
+import { ConfirmFunding } from './FundYourAgent/components/ConfirmFunding';
 import { FundYourAgent } from './FundYourAgent/FundYourAgent';
 import { TransferFunds } from './FundYourAgent/TransferFunds';
 import { SetupWelcome } from './SetupWelcome';
@@ -47,7 +49,9 @@ const SetupCard = styled.div`
 const SCREEN_WITHOUT_CARDS: SetupScreen[] = [
   SETUP_SCREEN.AgentOnboarding,
   SETUP_SCREEN.SetupYourAgent,
+  SETUP_SCREEN.BalanceCheck,
   SETUP_SCREEN.FundYourAgent,
+  SETUP_SCREEN.ConfirmFunding,
   SETUP_SCREEN.TransferFunds,
   SETUP_SCREEN.SetupBridgeOnboardingScreen,
   SETUP_SCREEN.SetupOnRamp,
@@ -72,8 +76,12 @@ export const Setup = () => {
         return <SetupYourAgent />;
       case SETUP_SCREEN.SelectStaking:
         return <SelectStakingPage mode="onboard" />;
+      case SETUP_SCREEN.BalanceCheck:
+        return <BalanceCheck />;
       case SETUP_SCREEN.FundYourAgent:
         return <FundYourAgent />;
+      case SETUP_SCREEN.ConfirmFunding:
+        return <ConfirmFunding />;
       case SETUP_SCREEN.TransferFunds:
         return <TransferFunds />;
       case SETUP_SCREEN.SetupBridgeOnboardingScreen:

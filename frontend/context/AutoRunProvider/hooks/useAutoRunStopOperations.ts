@@ -1,6 +1,6 @@
 import { MutableRefObject, useCallback, useRef } from 'react';
 
-import { AgentType, isActiveDeploymentStatus } from '@/constants';
+import { isActiveDeploymentStatus } from '@/constants';
 import { ServicesService } from '@/service/Services';
 import { sleepAwareDelay, withTimeout } from '@/utils/delay';
 
@@ -16,14 +16,14 @@ import {
 const DEPLOYMENT_CHECK_TIMEOUT_MS = 15_000; // 15 seconds
 
 type UseAutoRunStopOperationsParams = {
-  runningAgentTypeRef: MutableRefObject<AgentType | null>;
+  runningServiceConfigIdRef: MutableRefObject<string | null>;
   recordMetric: (metric: AutoRunHealthMetricNoRotation) => void;
   logMessage: (message: string) => void;
   logVerbose: (message: string) => void;
 };
 
 export const useAutoRunStopOperations = ({
-  runningAgentTypeRef,
+  runningServiceConfigIdRef,
   recordMetric,
   logMessage,
   logVerbose,
@@ -94,15 +94,10 @@ export const useAutoRunStopOperations = ({
   );
 
   const stopAgentOnce = useCallback(
-    async (
-      agentType: AgentType,
-      serviceConfigId: string,
-      opId: string,
-      attempt: number,
-    ) => {
+    async (serviceConfigId: string, opId: string, attempt: number) => {
       try {
         logVerbose(
-          `op=${opId} phase=stop_request status=begin attempt=${attempt} agent=${agentType} service=${serviceConfigId}`,
+          `op=${opId} phase=stop_request status=begin attempt=${attempt} service=${serviceConfigId}`,
         );
         await withTimeout(
           ServicesService.stopDeployment(serviceConfigId),
@@ -113,11 +108,11 @@ export const useAutoRunStopOperations = ({
             ),
         );
         logVerbose(
-          `op=${opId} phase=stop_request status=ok attempt=${attempt} agent=${agentType} service=${serviceConfigId}`,
+          `op=${opId} phase=stop_request status=ok attempt=${attempt} service=${serviceConfigId}`,
         );
       } catch (error) {
         logMessage(
-          `op=${opId} phase=stop_request status=error attempt=${attempt} agent=${agentType} service=${serviceConfigId} error=${error}`,
+          `op=${opId} phase=stop_request status=error attempt=${attempt} service=${serviceConfigId} error=${error}`,
         );
       }
 
@@ -129,46 +124,47 @@ export const useAutoRunStopOperations = ({
       );
       if (stopResult.stopped) {
         logVerbose(
-          `op=${opId} phase=stop_confirm status=ok attempt=${attempt} agent=${agentType} service=${serviceConfigId} checks=${stopResult.checks} elapsed=${stopResult.elapsedSeconds}s`,
+          `op=${opId} phase=stop_confirm status=ok attempt=${attempt} service=${serviceConfigId} checks=${stopResult.checks} elapsed=${stopResult.elapsedSeconds}s`,
         );
         return true;
       }
 
-      const stoppedByRunningState = runningAgentTypeRef.current !== agentType;
+      const stoppedByRunningState =
+        runningServiceConfigIdRef.current !== serviceConfigId;
       if (stoppedByRunningState) {
         logVerbose(
-          `op=${opId} phase=stop_confirm status=local_fallback_ok attempt=${attempt} agent=${agentType} service=${serviceConfigId} runningAgent=${String(runningAgentTypeRef.current)}`,
+          `op=${opId} phase=stop_confirm status=local_fallback_ok attempt=${attempt} service=${serviceConfigId} runningService=${String(runningServiceConfigIdRef.current)}`,
         );
         return true;
       }
 
       logMessage(
-        `op=${opId} phase=stop_confirm status=failed attempt=${attempt} agent=${agentType} service=${serviceConfigId} runningAgent=${String(runningAgentTypeRef.current)} lastStatus=${String(stopResult.lastStatus)} checks=${stopResult.checks} elapsed=${stopResult.elapsedSeconds}s`,
+        `op=${opId} phase=stop_confirm status=failed attempt=${attempt} service=${serviceConfigId} runningService=${String(runningServiceConfigIdRef.current)} lastStatus=${String(stopResult.lastStatus)} checks=${stopResult.checks} elapsed=${stopResult.elapsedSeconds}s`,
       );
       return false;
     },
-    [logMessage, logVerbose, runningAgentTypeRef, waitForStoppedDeployment],
+    [
+      logMessage,
+      logVerbose,
+      runningServiceConfigIdRef,
+      waitForStoppedDeployment,
+    ],
   );
 
   const stopAgentWithRecovery = useCallback(
-    async (agentType: AgentType, serviceConfigId: string) => {
+    async (serviceConfigId: string) => {
       stopOperationSeqRef.current += 1;
-      const opId = `stop-${stopOperationSeqRef.current}-${agentType}`;
+      const opId = `stop-${stopOperationSeqRef.current}-${serviceConfigId}`;
       for (
         let attempt = 0;
         attempt < STOP_RECOVERY_MAX_ATTEMPTS;
         attempt += 1
       ) {
-        const stopOk = await stopAgentOnce(
-          agentType,
-          serviceConfigId,
-          opId,
-          attempt + 1,
-        );
+        const stopOk = await stopAgentOnce(serviceConfigId, opId, attempt + 1);
         if (stopOk) return true;
         if (attempt >= STOP_RECOVERY_MAX_ATTEMPTS - 1) break;
         logVerbose(
-          `op=${opId} phase=stop_retry status=scheduled nextAttempt=${attempt + 2}/${STOP_RECOVERY_MAX_ATTEMPTS} wait=${STOP_RECOVERY_RETRY_SECONDS}s agent=${agentType} service=${serviceConfigId}`,
+          `op=${opId} phase=stop_retry status=scheduled nextAttempt=${attempt + 2}/${STOP_RECOVERY_MAX_ATTEMPTS} wait=${STOP_RECOVERY_RETRY_SECONDS}s service=${serviceConfigId}`,
         );
         const retryOk = await sleepAwareDelay(STOP_RECOVERY_RETRY_SECONDS);
         if (!retryOk) return false;

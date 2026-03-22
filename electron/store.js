@@ -1,15 +1,16 @@
 const Store = require('electron-store');
 
 const defaultInitialAgentSettings = {
-  isInitialFunded: false,
-  isProfileWarningDisplayed: false,
+  isInitialFunded: {},
 };
 
 const defaultAutoRunSettings = {
   enabled: false,
   includedAgents: [],
+  includedAgentInstances: [],
   isInitialized: false,
   userExcludedAgents: [],
+  userExcludedAgentInstances: [],
 };
 
 // Schema for validating store data
@@ -17,12 +18,11 @@ const schema = {
   // Global settings
   environmentName: { type: 'string', default: '' },
   lastSelectedAgentType: { type: 'string', default: 'trader' },
+  lastSelectedServiceConfigId: { type: 'string', default: '' },
   knownVersion: { type: 'string', default: '' },
 
   // First time user settings
   firstStakingRewardAchieved: { type: 'boolean', default: false },
-  firstRewardNotificationShown: { type: 'boolean', default: false },
-  agentEvictionAlertShown: { type: 'boolean', default: false },
 
   // Each agent has its own settings
   trader: {
@@ -57,6 +57,16 @@ const schema = {
   lastProvidedBackupWallet: {
     type: 'object',
     default: { address: null, type: 'manual' },
+  },
+
+  // Archived agents (hidden from sidebar, restorable)
+  archivedAgents: {
+    type: 'array',
+    default: [],
+  },
+  archivedInstances: {
+    type: 'array',
+    default: [],
   },
 };
 

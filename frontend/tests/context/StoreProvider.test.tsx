@@ -43,13 +43,10 @@ describe('StoreProvider', () => {
     const updatedData: ElectronStore = { environmentName: 'updated' };
 
     const mockStoreStore = jest.fn().mockResolvedValue(initialData);
-    let storeChangedCallback: (
-      event: unknown,
-      data: unknown,
-    ) => void = () => {};
+    let storeChangedCallback: (data: unknown) => void = () => {};
 
     const mockIpcRendererOn = jest.fn(
-      (channel: string, fn: (event: unknown, data: unknown) => void) => {
+      (channel: string, fn: (data: unknown) => void) => {
         if (channel === 'store-changed') {
           storeChangedCallback = fn;
         }
@@ -75,9 +72,9 @@ describe('StoreProvider', () => {
       expect(result.current.storeState).toEqual(initialData);
     });
 
-    // Simulate store-changed IPC event
+    // Simulate store-changed IPC event (preload strips native event, passes payload directly)
     act(() => {
-      storeChangedCallback(null, updatedData);
+      storeChangedCallback(updatedData);
     });
 
     expect(result.current.storeState).toEqual(updatedData);

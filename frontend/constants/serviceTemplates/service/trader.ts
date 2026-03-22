@@ -11,14 +11,14 @@ import { X402_ENABLED_FLAGS } from '../../x402';
 import { KPI_DESC_PREFIX } from '../constants';
 
 export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
-  hash: 'bafybeigeslt3vivbt2sx2hry3yn6zld7cnkqmq5vehuz62qx3jzagczxbm',
-  service_version: 'v0.31.8',
+  hash: 'bafybeig6miv3a3wt6lyapctmoeaanbdaytgabywhrxo3iewgtiz7jh3olu',
+  service_version: 'v0.32.0-rc1',
   agent_release: {
     is_aea: true,
     repository: {
       owner: 'valory-xyz',
       name: 'trader',
-      version: 'v0.31.8',
+      version: 'v0.32.0-rc1',
     },
   },
   agentType: AgentMap.PredictTrader,
@@ -151,14 +151,14 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
 } as const;
 
 export const PREDICT_POLYMARKET_SERVICE_TEMPLATE: ServiceTemplate = {
-  hash: 'bafybeigppcanwvzmb467i7oqknmmgrhyzffkda6s726j4cu5lon3nrtb5a',
-  service_version: 'v0.31.8',
+  hash: 'bafybeibjgef35jsksepbn27x5ye2ayjdmnzu6dcq2gjidcnsnz6s3uwvhe',
+  service_version: 'v0.32.0-rc1',
   agent_release: {
     is_aea: true,
     repository: {
       owner: 'valory-xyz',
       name: 'trader',
-      version: 'v0.31.8',
+      version: 'v0.32.0-rc1',
     },
   },
   agentType: AgentMap.Polystrat,
@@ -241,7 +241,7 @@ export const PREDICT_POLYMARKET_SERVICE_TEMPLATE: ServiceTemplate = {
     TOOLS_ACCURACY_HASH: {
       name: 'Tools accuracy hash',
       description: '',
-      value: 'QmWgsqncF22hPLNTyWtDzVoKPJ9gmgR1jcuLL5t31xyzzr',
+      value: 'QmdNF1cidJASsVKSnbvSSmZLLaYfBPixBzpT4Pw3ZvmYTu',
       provision_type: EnvProvisionType.FIXED,
     },
     ACC_INFO_FIELDS_REQUESTS: {

@@ -29,7 +29,7 @@ describe('useScrollPage', () => {
       pageState: PAGES.Main,
     } as ReturnType<typeof usePageState>);
     mockUseServices.mockReturnValue({
-      selectedAgentType: 'trader',
+      selectedServiceConfigId: 'sc-test-1234',
     } as unknown as ReturnType<typeof useServices>);
   });
 
@@ -57,7 +57,7 @@ describe('useScrollPage', () => {
     expect(mockScrollTo).toHaveBeenCalledWith({ top: 0, behavior: 'smooth' });
   });
 
-  it('calls scrollTo when selectedAgentType changes', () => {
+  it('calls scrollTo when selectedServiceConfigId changes', () => {
     const { result, rerender } = renderHook(() => useScrollPage());
 
     Object.defineProperty(result.current, 'current', {
@@ -66,7 +66,7 @@ describe('useScrollPage', () => {
     });
 
     mockUseServices.mockReturnValue({
-      selectedAgentType: 'modius',
+      selectedServiceConfigId: 'sc-other-5678',
     } as unknown as ReturnType<typeof useServices>);
     rerender();
 

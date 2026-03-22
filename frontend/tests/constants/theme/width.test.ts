@@ -42,8 +42,8 @@ describe('app window dimensions', () => {
 });
 
 describe('layout component dimensions', () => {
-  it('SIDER_WIDTH is 256', () => {
-    expect(SIDER_WIDTH).toBe(256);
+  it('SIDER_WIDTH is 300', () => {
+    expect(SIDER_WIDTH).toBe(300);
   });
 
   it('TOP_BAR_HEIGHT is 40', () => {
