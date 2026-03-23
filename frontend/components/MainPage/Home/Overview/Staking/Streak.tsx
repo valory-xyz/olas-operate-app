@@ -7,8 +7,11 @@ import { useRewardContext } from '@/hooks';
 import { useStakingDetails } from '@/hooks/useStakingDetails';
 
 export const Streak = () => {
-  const { isStreakLoading, isStreakError, optimisticStreak: rawStreak } =
-    useStakingDetails();
+  const {
+    isStreakLoading,
+    isStreakError,
+    optimisticStreak: rawStreak,
+  } = useStakingDetails();
   const { isEligibleForRewards: rawIsEligible } = useRewardContext();
   const optimisticStreak = useContentTransitionValue(rawStreak);
   const isEligibleForRewards = useContentTransitionValue(rawIsEligible);
