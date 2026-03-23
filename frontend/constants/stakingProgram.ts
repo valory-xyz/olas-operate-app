@@ -13,6 +13,7 @@ const GNOSIS_STAKING_PROGRAM_IDS = {
   PearlBetaMechMarketplace2: 'pearl_beta_mech_marketplace_2',
   PearlBetaMechMarketplace3: 'pearl_beta_mech_marketplace_3',
   PearlBetaMechMarketplace4: 'pearl_beta_mech_marketplace_4',
+  MemoraMemoryWeaver: 'memora_memory_weaver',
 } as const;
 
 const BASE_STAKING_PROGRAM_IDS = {
