@@ -4,19 +4,11 @@ import {
   useCallback,
   useContext,
   useEffect,
-  useLayoutEffect,
   useMemo,
-  useRef,
   useState,
 } from 'react';
 
-import { PAGES, Pages } from '@/constants/pages';
-import {
-  useArchivedAgents,
-  useElectronApi,
-  usePageState,
-  useServices,
-} from '@/hooks';
+import { useArchivedAgents, useElectronApi, useServices } from '@/hooks';
 
 import {
   DISABLE_RACE_STOP_CHECK_INTERVAL_MS,
@@ -37,26 +29,6 @@ import {
   normalizeIncludedInstances,
   sortIncludedInstances,
 } from './utils/utils';
-
-/**
- * Pages on which auto-run scanning is allowed to run.
- * Agent-specific pages (AgentWallet, AgentStaking, Setup, staking flows,
- * UpdateAgentTemplate, FundPearlWallet) are excluded so background scans
- * do not interfere with visible flows. Neutral pages are included.
- * New pages are blocked by default (safe); add here only when confirmed neutral.
- *
- * Note: auto-run no longer switches the UI selection during scanning —
- * deployability is fetched directly via fetchDeployabilityForAgent. This
- * ref is kept so scans pause on agent-specific pages where background
- * network activity (staking API calls) could cause unexpected UI transitions.
- */
-const AGENT_SWITCH_ALLOWED_PAGES = new Set<Pages>([
-  PAGES.Main,
-  PAGES.Settings,
-  PAGES.HelpAndSupport,
-  PAGES.ReleaseNotes,
-  PAGES.PearlWallet,
-]);
 
 const AutoRunContext = createContext<AutoRunContextType>({
   enabled: false,
@@ -140,21 +112,6 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
   const { isSelectedAgentDetailsLoading, getSelectedEligibility } =
     useSelectedEligibility({ canCreateSafeForChain });
 
-  // Block auto-run from switching agents on agent-specific pages
-  // (Setup, AgentWallet, AgentStaking, staking flows, FundPearlWallet, etc.).
-  // Neutral pages (Main, Settings, HelpAndSupport, ReleaseNotes, PearlWallet)
-  // are allowed — see AGENT_SWITCH_ALLOWED_PAGES.
-  // Scans will reschedule themselves in SCAN_LOADING_RETRY_SECONDS when blocked.
-  // useLayoutEffect (not useEffect) so the ref is updated inside React's
-  // synchronous commit phase — before the browser returns control to the event
-  // loop. This guarantees no setTimeout/setInterval scan tick can fire with a
-  // stale value between pageState changing and the ref being written.
-  const { pageState } = usePageState();
-  const canSwitchAgentRef = useRef(AGENT_SWITCH_ALLOWED_PAGES.has(pageState));
-  useLayoutEffect(() => {
-    canSwitchAgentRef.current = AGENT_SWITCH_ALLOWED_PAGES.has(pageState);
-  }, [pageState]);
-
   // Auto-run controller runs the orchestration loop.
   const { stopRunningAgent, runningAgentType } = useAutoRunController({
     enabled,
@@ -166,7 +123,6 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
     getSelectedEligibility,
     canCreateSafeForChain,
     createSafeIfNeeded,
-    canSwitchAgentRef,
     showNotification,
     onAutoRunStartStateChange: (isStarting) => {
       setIsStarting(isStarting);

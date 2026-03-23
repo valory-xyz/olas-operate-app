@@ -20,11 +20,6 @@ import { useAutoRunVerboseLogger } from './useAutoRunVerboseLogger';
 
 type UseAutoRunScannerParams = {
   enabledRef: MutableRefObject<boolean>;
-  /** When false, scanner pauses and reschedules — prevents switching agents
-   *  while the user is on agent-specific pages (Setup, AgentWallet,
-   *  AgentStaking, staking flows). Neutral pages (Settings, HelpAndSupport,
-   *  ReleaseNotes, PearlWallet) allow switching. */
-  canSwitchAgentRef: MutableRefObject<boolean>;
   orderedIncludedInstances: string[];
   configuredAgents: AgentMeta[];
   selectedServiceConfigId: string | null;
@@ -71,7 +66,6 @@ type UseAutoRunScannerParams = {
  */
 export const useAutoRunScanner = ({
   enabledRef,
-  canSwitchAgentRef,
   orderedIncludedInstances,
   configuredAgents,
   selectedServiceConfigId,
@@ -193,15 +187,6 @@ export const useAutoRunScanner = ({
   const scanAndStartNext = useCallback(
     async (startFrom?: string | null) => {
       if (!enabledRef.current) return { started: false };
-      // Block scan on agent-specific pages (Setup/FundYourAgent, AgentWallet,
-      // AgentStaking, staking flows, FundPearlWallet). Reschedule to retry shortly.
-      if (!canSwitchAgentRef.current) {
-        logVerbose(
-          `scan paused: user on non-Main page, retry in ${SCAN_LOADING_RETRY_SECONDS}s`,
-        );
-        scheduleNextScan(SCAN_LOADING_RETRY_SECONDS);
-        return { started: false };
-      }
 
       // Wait for global balance data before scanning any candidate.
       const balancesReady = await waitForBalancesReady();
@@ -229,15 +214,6 @@ export const useAutoRunScanner = ({
         if (!enabledRef.current) return { started: false };
 
         visited.add(candidate);
-        // Re-check page guard mid-loop: user may have navigated away after the
-        // scan started. Stop and reschedule rather than switching agents.
-        if (!canSwitchAgentRef.current) {
-          logVerbose(
-            `scan paused mid-loop on ${candidate}: user navigated away, retry in ${SCAN_LOADING_RETRY_SECONDS}s`,
-          );
-          if (enabledRef.current) scheduleNextScan(SCAN_LOADING_RETRY_SECONDS);
-          return { started: false };
-        }
         const candidateMeta = configuredAgents.find(
           (agent) => agent.serviceConfigId === candidate,
         );
@@ -310,7 +286,6 @@ export const useAutoRunScanner = ({
       return { started: false };
     },
     [
-      canSwitchAgentRef,
       configuredAgents,
       enabledRef,
       findNextInOrder,
@@ -336,11 +311,6 @@ export const useAutoRunScanner = ({
    * - if not startable, caller falls back to `scanAndStartNext`
    */
   const startSelectedAgentIfEligible = useCallback(async () => {
-    // Block on agent-specific pages — same guard as scanAndStartNext entry.
-    if (!canSwitchAgentRef.current) {
-      if (enabledRef.current) scheduleNextScan(SCAN_LOADING_RETRY_SECONDS);
-      return false;
-    }
     if (
       !selectedServiceConfigId ||
       !orderedIncludedInstances.includes(selectedServiceConfigId)
@@ -422,7 +392,6 @@ export const useAutoRunScanner = ({
     }
     return false;
   }, [
-    canSwitchAgentRef,
     configuredAgents,
     enabledRef,
     getSelectedEligibility,

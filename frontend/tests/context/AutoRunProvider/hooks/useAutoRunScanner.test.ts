@@ -46,7 +46,6 @@ const makeHookParams = (
   overrides: Partial<Parameters<typeof useAutoRunScanner>[0]> = {},
 ) => ({
   enabledRef: { current: true },
-  canSwitchAgentRef: { current: true },
   orderedIncludedInstances: [scTrader, scOptimus, scPolystrat],
   configuredAgents: [
     makeAutoRunAgentMeta(
@@ -128,47 +127,6 @@ describe('useAutoRunScanner', () => {
   });
 
   describe('scanAndStartNext', () => {
-    it('does not call startAgentWithRetries and reschedules when canSwitchAgentRef is false at entry', async () => {
-      const params = makeHookParams({ canSwitchAgentRef: { current: false } });
-      const { result } = renderHook(() => useAutoRunScanner(params));
-
-      let scanResult: { started: boolean } | undefined;
-      await act(async () => {
-        scanResult = await result.current.scanAndStartNext(scTrader);
-      });
-      expect(scanResult?.started).toBe(false);
-      expect(params.startAgentWithRetries).not.toHaveBeenCalled();
-      expect(params.scheduleNextScan).toHaveBeenCalledWith(
-        SCAN_LOADING_RETRY_SECONDS,
-      );
-    });
-
-    it('stops mid-loop and reschedules when user navigates away after first candidate starts', async () => {
-      // Entry guard passes (true), but after the first candidate's start attempt
-      // completes, canSwitchAgentRef flips to false — simulating navigation during
-      // the scan's await phase. The mid-loop guard in the next iteration catches it.
-      const canSwitchAgentRef = { current: true };
-      const params = makeHookParams({
-        canSwitchAgentRef,
-        startAgentWithRetries: jest.fn().mockImplementation(async () => {
-          canSwitchAgentRef.current = false;
-          return { status: AUTO_RUN_START_STATUS.INFRA_FAILED, reason: 'rpc' };
-        }),
-      });
-      const { result } = renderHook(() => useAutoRunScanner(params));
-
-      let scanResult: { started: boolean } | undefined;
-      await act(async () => {
-        // startFrom=trader → first candidate=optimus; optimus infra_fails and
-        // flips the ref; polystrat is next but mid-loop guard fires first
-        scanResult = await result.current.scanAndStartNext(scTrader);
-      });
-      expect(scanResult?.started).toBe(false);
-      expect(params.scheduleNextScan).toHaveBeenCalledWith(
-        SCAN_LOADING_RETRY_SECONDS,
-      );
-    });
-
     it('returns started=false and schedules rescan when no candidates', async () => {
       const params = makeHookParams({ orderedIncludedInstances: [] });
       const { result } = renderHook(() => useAutoRunScanner(params));
@@ -404,24 +362,6 @@ describe('useAutoRunScanner', () => {
   });
 
   describe('startSelectedAgentIfEligible', () => {
-    it('does not call startAgentWithRetries and reschedules when canSwitchAgentRef is false at entry', async () => {
-      // Covers the PR scenario: lifecycle calls startSelectedAgentIfEligible
-      // while user is on Setup/FundYourAgent — the guard must bail immediately
-      // without touching agent selection state.
-      const params = makeHookParams({ canSwitchAgentRef: { current: false } });
-      const { result } = renderHook(() => useAutoRunScanner(params));
-
-      let started: boolean | undefined;
-      await act(async () => {
-        started = await result.current.startSelectedAgentIfEligible();
-      });
-      expect(started).toBe(false);
-      expect(params.startAgentWithRetries).not.toHaveBeenCalled();
-      expect(params.scheduleNextScan).toHaveBeenCalledWith(
-        SCAN_LOADING_RETRY_SECONDS,
-      );
-    });
-
     it('returns false when selected instance not in included list', async () => {
       const params = makeHookParams({
         orderedIncludedInstances: [scOptimus, scPolystrat],

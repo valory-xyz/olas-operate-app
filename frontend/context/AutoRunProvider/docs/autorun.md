@@ -63,7 +63,6 @@ AutoRunProvider
 | `skipNotifiedRef` | Per-instance+reason notification dedup; cleared on disable |
 | `runningSinceRef` | Timestamp when current instance started; used by runtime watchdog |
 | `rotationCycleSeqRef` | Sequence counter for cycle correlation IDs in verbose logs |
-| `canSwitchAgentRef` | Derived from `pageState`; blocks scanner on non-allowed pages |
 | `startOperationSeqRef` | Op-id sequence for structured start phase logs |
 | `stopOperationSeqRef` | Op-id sequence for structured stop phase logs |
 
@@ -85,7 +84,7 @@ Note: timing constants are centralized in `constants.ts` to avoid duplicate knob
 | `REWARDS_POLL_SECONDS` | 120s | How often to poll rewards for the running instance |
 | `SCAN_BLOCKED_DELAY_SECONDS` | 10min | Rescan delay when instances are blocked (low balance, evicted, etc.) |
 | `SCAN_ELIGIBLE_DELAY_SECONDS` | 30min | Rescan delay when all instances have earned rewards |
-| `SCAN_LOADING_RETRY_SECONDS` | 30s | Rescan delay on transient loading states or non-Main page guard |
+| `SCAN_LOADING_RETRY_SECONDS` | 30s | Rescan delay on transient loading states |
 | `START_TIMEOUT_SECONDS` | 900s (15min) | How long to wait for DEPLOYED status after start; also used as stop-confirmation timeout |
 | `STOP_REQUEST_TIMEOUT_SECONDS` | 300s (5min) | Timeout for stop request API call (separate from stop confirmation polling) |
 | `STOP_RECOVERY_MAX_ATTEMPTS` | 3 | Bounded stop retries per rotation |
@@ -101,16 +100,6 @@ Note: timing constants are centralized in `constants.ts` to avoid duplicate knob
 ---
 
 ## 3. Core Flows
-
-### Agent Switch Allowed Pages
-
-Auto-run no longer switches the visible UI selection during scanning. Deployability for each candidate is fetched directly via `fetchDeployabilityForAgent` (direct `serviceApi` calls), so the user stays on whichever page they opened.
-
-`canSwitchAgentRef` is still checked at the start and mid-loop of `scanAndStartNext` and at entry to `startSelectedAgentIfEligible`. When `false`, the scanner pauses and reschedules in `SCAN_LOADING_RETRY_SECONDS` rather than making staking API calls that could cause unexpected background network activity during sensitive flows (Setup, wallet funding, staking configuration).
-
-**Allowed** (scanner runs): `Main`, `Settings`, `HelpAndSupport`, `ReleaseNotes`, `PearlWallet`
-
-**Blocked** (scanner pauses and reschedules in `SCAN_LOADING_RETRY_SECONDS`): `Setup`, `AgentWallet`, `FundPearlWallet`, `AgentStaking`, `SelectStaking`, `ConfirmSwitch`, `DepositOlasForStaking`, `UpdateAgentTemplate`, and any new page not explicitly listed above.
 
 ### 3.1 First Enable
 
@@ -455,8 +444,7 @@ Every delay and poll interval in auto-run uses `sleepAwareDelay`. On `false`:
 
 ### P1 — Scanner switches agent screen during Setup/wallet/staking flows
 - **Root cause**: Auto-run scanner calls `updateAgentType()` during candidate evaluation regardless of which page the user is on. When the user was on `PAGES.Setup` (e.g. `SETUP_SCREEN.FundYourAgent` for agents.fun) or any non-Main page (AgentWallet, PearlWallet, AgentStaking, etc.), the scanner silently switched `selectedAgentType`, changing the visible content mid-flow. Reported as "funding page switched to Omenstrat" while setting up agents.fun.
-- **Initial fix**: `canSwitchAgentRef` (= `pageState === PAGES.Main`) created in `AutoRunProvider` and threaded to scanner/start-ops. Both `scanAndStartNext` (entry + mid-loop) and `startSelectedAgentIfEligible` (entry) check this ref and return early with a `SCAN_LOADING_RETRY_SECONDS` rescan when the user is not on `PAGES.Main`.
-- **Superseded by**: Full background mode (see next entry). `canSwitchAgentRef` is retained to prevent staking API calls during sensitive page flows.
+- **Initial fix**: `canSwitchAgentRef` guard — fully removed in the follow-up background-mode fix below.
 
 ### P1 — Auto-run scanner switches visible agent page during each scan cycle
 - **Root cause**: `scanAndStartNext` called `updateSelectedServiceConfigId(candidate)` for every candidate to make `getSelectedEligibility()` (which reads selection-keyed `selectedStakingContractDetails`) return data for that candidate. This meant the visible agent page switched up to N times per scan cycle (once per included agent). Users saw the sidebar and staking/balance UI jump repeatedly while auto-run was running in the background.

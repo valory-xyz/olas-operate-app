@@ -1,10 +1,4 @@
-import {
-  MutableRefObject,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-} from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { AGENT_CONFIG } from '@/config/agents';
 import { AgentMap, AgentType, EvmChainId } from '@/constants';
@@ -47,10 +41,6 @@ type UseAutoRunControllerParams = {
     isLoading?: boolean;
   };
   createSafeIfNeeded: (meta: AgentMeta) => Promise<void>;
-  /** Ref that is `true` when the user is on a page where scanning is allowed
-   *  (see AGENT_SWITCH_ALLOWED_PAGES). When false, the scanner pauses and
-   *  reschedules in SCAN_LOADING_RETRY_SECONDS instead of evaluating candidates. */
-  canSwitchAgentRef: MutableRefObject<boolean>;
   showNotification?: (title: string, body?: string) => void;
   onAutoRunInstanceStarted?: (serviceConfigId: string) => void;
   onAutoRunStartStateChange?: (isStarting: boolean) => void;
@@ -79,7 +69,6 @@ export const useAutoRunController = ({
   getSelectedEligibility,
   canCreateSafeForChain,
   createSafeIfNeeded,
-  canSwitchAgentRef,
   showNotification,
   onAutoRunInstanceStarted,
   onAutoRunStartStateChange,
@@ -249,7 +238,6 @@ export const useAutoRunController = ({
     startSelectedAgentIfEligible,
   } = useAutoRunScanner({
     enabledRef,
-    canSwitchAgentRef,
     orderedIncludedInstances,
     configuredAgents,
     selectedServiceConfigId,
