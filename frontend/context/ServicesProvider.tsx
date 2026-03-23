@@ -212,13 +212,6 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
     refetchInterval: FIFTEEN_SECONDS_INTERVAL,
   });
 
-  // Stores temporary overrides for service statuses to avoid UI glitches.
-  // Right after updating the status on the backend, initial queries
-  // might return outdated or incorrect value
-  const [serviceStatusOverrides, setServiceStatusOverrides] = useState<
-    Record<string, Maybe<MiddlewareDeploymentStatus>>
-  >({});
-
   const { data: allDeployments, isLoading: isAllDeploymentsLoading } = useQuery(
     {
       queryKey: REACT_QUERY_KEYS.ALL_SERVICE_DEPLOYMENTS_KEY,

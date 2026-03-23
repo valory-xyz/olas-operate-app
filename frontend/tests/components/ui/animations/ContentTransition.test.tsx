@@ -5,11 +5,11 @@ import { act } from 'react';
 // Import after mocks
 // ---------------------------------------------------------------------------
 import {
-  PAGE_TRANSITION_DELAY_MS,
-  PAGE_TRANSITION_DURATION,
-  PageTransition,
-  usePageTransitionValue,
-} from '../../../../components/ui/animations/PageTransition';
+  CONTENT_TRANSITION_DELAY_MS,
+  CONTENT_TRANSITION_DURATION,
+  ContentTransition,
+  useContentTransitionValue,
+} from '../../../../components/ui/animations/ContentTransition';
 
 // ---------------------------------------------------------------------------
 // Module mocks
@@ -53,39 +53,39 @@ const HookTestComponent = ({
   value: string;
   delayMs?: number;
 }) => {
-  const delayed = usePageTransitionValue(value, delayMs);
+  const delayed = useContentTransitionValue(value, delayMs);
   return <span data-testid="delayed-value">{delayed}</span>;
 };
 
-describe('PageTransition', () => {
+describe('ContentTransition', () => {
   it('exports correct constants', () => {
-    expect(PAGE_TRANSITION_DURATION).toBe(0.1);
-    expect(PAGE_TRANSITION_DELAY_MS).toBe(80);
+    expect(CONTENT_TRANSITION_DURATION).toBe(0.1);
+    expect(CONTENT_TRANSITION_DELAY_MS).toBe(80);
   });
 
   it('renders children', () => {
     render(
-      <PageTransition animationKey="page1">
+      <ContentTransition animationKey="page1">
         <span>Page content</span>
-      </PageTransition>,
+      </ContentTransition>,
     );
     expect(screen.getByText('Page content')).toBeInTheDocument();
   });
 
   it('wraps children in AnimatePresence', () => {
     render(
-      <PageTransition animationKey="page1">
+      <ContentTransition animationKey="page1">
         <span>Content</span>
-      </PageTransition>,
+      </ContentTransition>,
     );
     expect(screen.getByTestId('animate-presence')).toBeInTheDocument();
   });
 
   it('applies default animation values', () => {
     render(
-      <PageTransition animationKey="page1">
+      <ContentTransition animationKey="page1">
         <span>Content</span>
-      </PageTransition>,
+      </ContentTransition>,
     );
     const motionDiv = screen.getByTestId('motion-div');
     expect(JSON.parse(motionDiv.getAttribute('data-initial')!)).toEqual({
@@ -101,16 +101,16 @@ describe('PageTransition', () => {
       y: -8,
     });
     expect(JSON.parse(motionDiv.getAttribute('data-transition')!)).toEqual({
-      duration: PAGE_TRANSITION_DURATION,
+      duration: CONTENT_TRANSITION_DURATION,
       ease: 'easeOut',
     });
   });
 
   it('applies custom initialY and exitY', () => {
     render(
-      <PageTransition animationKey="page1" initialY={20} exitY={-20}>
+      <ContentTransition animationKey="page1" initialY={20} exitY={-20}>
         <span>Content</span>
-      </PageTransition>,
+      </ContentTransition>,
     );
     const motionDiv = screen.getByTestId('motion-div');
     expect(JSON.parse(motionDiv.getAttribute('data-initial')!)).toEqual({
@@ -125,9 +125,9 @@ describe('PageTransition', () => {
 
   it('applies custom duration and ease', () => {
     render(
-      <PageTransition animationKey="page1" duration={0.5} ease="linear">
+      <ContentTransition animationKey="page1" duration={0.5} ease="linear">
         <span>Content</span>
-      </PageTransition>,
+      </ContentTransition>,
     );
     const motionDiv = screen.getByTestId('motion-div');
     expect(JSON.parse(motionDiv.getAttribute('data-transition')!)).toEqual({
@@ -138,13 +138,13 @@ describe('PageTransition', () => {
 
   it('applies className and style props', () => {
     render(
-      <PageTransition
+      <ContentTransition
         animationKey="page1"
         className="custom-class"
         style={{ padding: 10 }}
       >
         <span>Content</span>
-      </PageTransition>,
+      </ContentTransition>,
     );
     const motionDiv = screen.getByTestId('motion-div');
     expect(motionDiv).toHaveClass('custom-class');
@@ -153,28 +153,28 @@ describe('PageTransition', () => {
 
   it('accepts numeric animationKey', () => {
     render(
-      <PageTransition animationKey={42}>
+      <ContentTransition animationKey={42}>
         <span>Content</span>
-      </PageTransition>,
+      </ContentTransition>,
     );
     expect(screen.getByText('Content')).toBeInTheDocument();
   });
 
   it('accepts ease as number array', () => {
     render(
-      <PageTransition animationKey="page1" ease={[0.4, 0, 0.2, 1]}>
+      <ContentTransition animationKey="page1" ease={[0.4, 0, 0.2, 1]}>
         <span>Content</span>
-      </PageTransition>,
+      </ContentTransition>,
     );
     const motionDiv = screen.getByTestId('motion-div');
     expect(JSON.parse(motionDiv.getAttribute('data-transition')!)).toEqual({
-      duration: PAGE_TRANSITION_DURATION,
+      duration: CONTENT_TRANSITION_DURATION,
       ease: [0.4, 0, 0.2, 1],
     });
   });
 });
 
-describe('usePageTransitionValue', () => {
+describe('useContentTransitionValue', () => {
   beforeEach(() => {
     jest.useFakeTimers();
   });
@@ -194,7 +194,7 @@ describe('usePageTransitionValue', () => {
     // Value should still be "first" before timeout
     expect(screen.getByTestId('delayed-value')).toHaveTextContent('first');
     act(() => {
-      jest.advanceTimersByTime(PAGE_TRANSITION_DELAY_MS);
+      jest.advanceTimersByTime(CONTENT_TRANSITION_DELAY_MS);
     });
     expect(screen.getByTestId('delayed-value')).toHaveTextContent('second');
   });
@@ -222,7 +222,7 @@ describe('usePageTransitionValue', () => {
     });
     rerender(<HookTestComponent value="third" />);
     act(() => {
-      jest.advanceTimersByTime(PAGE_TRANSITION_DELAY_MS);
+      jest.advanceTimersByTime(CONTENT_TRANSITION_DELAY_MS);
     });
     expect(screen.getByTestId('delayed-value')).toHaveTextContent('third');
   });

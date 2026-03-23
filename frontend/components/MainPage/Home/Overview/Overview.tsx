@@ -1,4 +1,7 @@
-import { MainContentContainer, usePageTransitionValue } from '@/components/ui';
+import {
+  MainContentContainer,
+  useContentTransitionValue,
+} from '@/components/ui';
 import { useServices } from '@/hooks';
 
 import { AgentInfo } from './AgentInfo';
@@ -13,7 +16,7 @@ type OverviewProps = {
 
 export const Overview = ({ openProfile, hasVisitedProfile }: OverviewProps) => {
   const { selectedAgentType } = useServices();
-  const displayedAgentType = usePageTransitionValue(selectedAgentType);
+  const displayedAgentType = useContentTransitionValue(selectedAgentType);
 
   return (
     <MainContentContainer vertical gap={40}>

@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { RiRobot3Line } from 'react-icons/ri';
 import { TbId } from 'react-icons/tb';
 
-import { PageTransition, Segmented } from '@/components/ui';
+import { ContentTransition, Segmented } from '@/components/ui';
 import { useService } from '@/hooks';
 import { useServices } from '@/hooks/useServices';
 
@@ -114,7 +114,7 @@ export const Home = () => {
   );
 
   return (
-    <PageTransition
+    <ContentTransition
       animationKey={selectedServiceConfigId ?? selectedAgentType}
       className="flex flex-col flex-auto"
     >
@@ -133,6 +133,6 @@ export const Home = () => {
           onSkip={() => setView('profile')}
         />
       </Flex>
-    </PageTransition>
+    </ContentTransition>
   );
 };

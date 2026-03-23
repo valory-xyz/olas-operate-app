@@ -1,5 +1,4 @@
 import { Button, Card, Flex, Form, Input, Spin, Typography } from 'antd';
-import { AnimatePresence, motion } from 'framer-motion';
 import { isNil } from 'lodash';
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -22,6 +21,7 @@ import { AccountService } from '@/service/Account';
 import { WalletService } from '@/service/Wallet';
 import { asEvmChainId, getErrorMessage } from '@/utils';
 
+import { ContentTransition } from '../ui';
 import { FormFlex } from '../ui/FormFlex';
 import { FormLabel } from '../ui/Typography';
 import { SetupWelcomeCreate } from './SetupWelcomeCreate';
@@ -342,17 +342,9 @@ export const SetupWelcome = () => {
           height={64}
         />
       </Flex>
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={isSetup}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.15 }}
-        >
-          {welcomeScreen}
-        </motion.div>
-      </AnimatePresence>
+      <ContentTransition animationKey={isSetup} initialY={0} exitY={0}>
+        {welcomeScreen}
+      </ContentTransition>
     </Card>
   );
 };

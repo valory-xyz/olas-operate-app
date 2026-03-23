@@ -73,10 +73,10 @@ jest.mock('../../../components/FundPearlWallet', () => ({
   FundPearlWallet: () => <div data-testid="fund-pearl-wallet" />,
 }));
 
-// PageTransition: pass children through
+// ContentTransition: pass children through
 jest.mock('../../../components/ui', () => ({
-  PageTransition: ({ children }: { children?: ReactNode }) => (
-    <div data-testid="page-transition">{children}</div>
+  ContentTransition: ({ children }: { children?: ReactNode }) => (
+    <div data-testid="content-transition">{children}</div>
   ),
 }));
 

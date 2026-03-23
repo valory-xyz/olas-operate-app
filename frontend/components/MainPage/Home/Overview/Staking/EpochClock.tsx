@@ -2,7 +2,7 @@ import { Flex, Statistic, Typography } from 'antd';
 import { TbClock } from 'react-icons/tb';
 import styled from 'styled-components';
 
-import { usePageTransitionValue } from '@/components/ui';
+import { useContentTransitionValue } from '@/components/ui';
 import { COLOR } from '@/constants';
 import { useStakingDetails } from '@/hooks';
 
@@ -44,7 +44,7 @@ const WARNING_HOURS = 12;
 
 export const EpochClock = () => {
   const { currentEpochLifetime: rawEpochLifetime } = useStakingDetails();
-  const currentEpochLifetime = usePageTransitionValue(rawEpochLifetime);
+  const currentEpochLifetime = useContentTransitionValue(rawEpochLifetime);
 
   const getClockColor = (): 'danger' | 'warning' | undefined => {
     if (!currentEpochLifetime) return;

@@ -1,2 +1,2 @@
 export * from './AnimateNumber';
-export * from './PageTransition';
+export * from './ContentTransition';
