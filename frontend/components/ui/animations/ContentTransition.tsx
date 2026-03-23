@@ -54,7 +54,7 @@ export const ContentTransition = ({
  */
 export const useContentTransitionValue = <T,>(
   value: T,
-  delayMs: number = CONTENT_TRANSITION_DELAY_MS,
+  delayMs: number = CONTENT_TRANSITION_DELAY_MS + 10,
 ) => {
   const [delayedValue, setDelayedValue] = useState(value);
 

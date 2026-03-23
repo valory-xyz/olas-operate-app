@@ -25,7 +25,9 @@ export const StoreProvider = ({ children }: PropsWithChildren) => {
 
     store
       ?.store?.()
-      .then((tempStore: ElectronStore) => setStoreState(tempStore))
+      .then((tempStore: ElectronStore) =>
+        setStoreState((prev) => (prev === undefined ? tempStore : prev)),
+      )
       .catch(console.error);
   }, [store, storeState]);
 
@@ -43,7 +45,8 @@ export const StoreProvider = ({ children }: PropsWithChildren) => {
       });
     };
 
-    ipcRenderer.on('store-changed', handleStoreChanged);
+    const unsubscribe = ipcRenderer.on('store-changed', handleStoreChanged);
+    return unsubscribe;
   }, [ipcRenderer]);
 
   return (

@@ -73,11 +73,12 @@ jest.mock('../../../components/FundPearlWallet', () => ({
   FundPearlWallet: () => <div data-testid="fund-pearl-wallet" />,
 }));
 
-// ContentTransition: pass children through
+// ContentTransition: pass children through; stub the hook as identity
 jest.mock('../../../components/ui', () => ({
   ContentTransition: ({ children }: { children?: ReactNode }) => (
     <div data-testid="content-transition">{children}</div>
   ),
+  useContentTransitionValue: <T,>(value: T): T => value,
 }));
 
 // Hooks -- use inline jest.fn() inside factories to avoid hoisting issues

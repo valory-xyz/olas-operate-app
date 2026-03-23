@@ -1,8 +1,4 @@
-import {
-  MainContentContainer,
-  useContentTransitionValue,
-} from '@/components/ui';
-import { useServices } from '@/hooks';
+import { MainContentContainer } from '@/components/ui';
 
 import { AgentInfo } from './AgentInfo';
 import { Performance } from './Performance';
@@ -15,19 +11,15 @@ type OverviewProps = {
 };
 
 export const Overview = ({ openProfile, hasVisitedProfile }: OverviewProps) => {
-  const { selectedAgentType } = useServices();
-  const displayedAgentType = useContentTransitionValue(selectedAgentType);
-
   return (
     <MainContentContainer vertical gap={40}>
       <AgentInfo />
       <Performance
-        key={displayedAgentType}
         openProfile={openProfile}
         hasVisitedProfile={hasVisitedProfile}
       />
-      <Staking key={`staking-${displayedAgentType}`} />
-      <Wallet key={`wallet-${displayedAgentType}`} />
+      <Staking />
+      <Wallet />
     </MainContentContainer>
   );
 };
