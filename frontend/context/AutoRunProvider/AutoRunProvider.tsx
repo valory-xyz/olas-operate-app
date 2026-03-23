@@ -39,16 +39,16 @@ import {
 } from './utils/utils';
 
 /**
- * Pages on which auto-run is allowed to call updateAgentType.
+ * Pages on which auto-run scanning is allowed to run.
  * Agent-specific pages (AgentWallet, AgentStaking, Setup, staking flows,
- * UpdateAgentTemplate, FundPearlWallet) are excluded so visible content is not
- * disrupted by a background rotation. Neutral pages whose content is
- * independent of selectedAgentType are included.
+ * UpdateAgentTemplate, FundPearlWallet) are excluded so background scans
+ * do not interfere with visible flows. Neutral pages are included.
  * New pages are blocked by default (safe); add here only when confirmed neutral.
  *
- * Note: FundPearlWallet is excluded — it reads selectedAgentConfig.evmHomeChainId
- * to derive chain, symbol, and gas requirement, so a switch would change those
- * values mid-flow.
+ * Note: auto-run no longer switches the UI selection during scanning —
+ * deployability is fetched directly via fetchDeployabilityForAgent. This
+ * ref is kept so scans pause on agent-specific pages where background
+ * network activity (staking API calls) could cause unexpected UI transitions.
  */
 const AGENT_SWITCH_ALLOWED_PAGES = new Set<Pages>([
   PAGES.Main,
@@ -81,7 +81,6 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
     selectedAgentType,
     selectedService,
     selectedServiceConfigId,
-    updateSelectedServiceConfigId,
   } = useServices();
   const { showNotification } = useElectronApi();
 
@@ -161,18 +160,14 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
     enabled,
     orderedIncludedInstances,
     configuredAgents,
-    updateSelectedServiceConfigId,
     selectedAgentType,
     selectedServiceConfigId: selectedService?.service_config_id ?? null,
     isSelectedAgentDetailsLoading,
     getSelectedEligibility,
+    canCreateSafeForChain,
     createSafeIfNeeded,
     canSwitchAgentRef,
     showNotification,
-    onAutoRunInstanceStarted: (serviceConfigId) => {
-      if (!configuredInstances.includes(serviceConfigId)) return;
-      updateSelectedServiceConfigId(serviceConfigId);
-    },
     onAutoRunStartStateChange: (isStarting) => {
       setIsStarting(isStarting);
     },

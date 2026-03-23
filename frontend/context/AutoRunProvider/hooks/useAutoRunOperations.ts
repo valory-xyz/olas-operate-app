@@ -13,21 +13,12 @@ import { useAutoRunStartOperations } from './useAutoRunStartOperations';
 import { useAutoRunStopOperations } from './useAutoRunStopOperations';
 import { useAutoRunVerboseLogger } from './useAutoRunVerboseLogger';
 
-type Eligibility = {
-  canRun: boolean;
-  reason?: string;
-  loadingReason?: string;
-};
-
 type UseAutoRunOperationsParams = {
   enabled: boolean;
   enabledRef: MutableRefObject<boolean>;
   runningServiceConfigIdRef: MutableRefObject<string | null>;
   configuredAgents: AgentMeta[];
-  updateSelectedServiceConfigId: (serviceConfigId: string) => void;
-  getSelectedEligibility: () => Eligibility;
   createSafeIfNeeded: (meta: AgentMeta) => Promise<void>;
-  canSwitchAgentRef: MutableRefObject<boolean>;
   showNotification?: (title: string, body?: string) => void;
   onAutoRunInstanceStarted?: (serviceConfigId: string) => void;
   onAutoRunStartStateChange?: (isStarting: boolean) => void;
@@ -38,13 +29,11 @@ type UseAutoRunOperationsParams = {
     stakingProgramId: AgentMeta['stakingProgramId'];
     createSafeIfNeeded: () => Promise<void>;
   }) => Promise<unknown>;
-  waitForInstanceSelection: (serviceConfigId: string) => Promise<boolean>;
   waitForBalancesReady: () => Promise<boolean>;
   waitForRunningInstance: (
     serviceConfigId: string,
     timeoutSeconds: number,
   ) => Promise<boolean>;
-  getBalancesStatus: () => { ready: boolean; loading: boolean };
   getRewardSnapshot: (serviceConfigId: string) => boolean | undefined;
   setRewardSnapshot: (
     serviceConfigId: string,
@@ -65,18 +54,13 @@ export const useAutoRunOperations = ({
   enabledRef,
   runningServiceConfigIdRef,
   configuredAgents,
-  updateSelectedServiceConfigId,
-  getSelectedEligibility,
   createSafeIfNeeded,
-  canSwitchAgentRef,
   showNotification,
   onAutoRunInstanceStarted,
   onAutoRunStartStateChange,
   startService,
-  waitForInstanceSelection,
   waitForBalancesReady,
   waitForRunningInstance,
-  getBalancesStatus,
   getRewardSnapshot,
   setRewardSnapshot,
   recordMetric,
@@ -136,16 +120,10 @@ export const useAutoRunOperations = ({
     enabledRef,
     runningServiceConfigIdRef,
     configuredAgents,
-    updateSelectedServiceConfigId,
-    getSelectedEligibility,
     createSafeIfNeeded,
-    canSwitchAgentRef,
     startService,
-    waitForInstanceSelection,
     waitForBalancesReady,
     waitForRunningInstance,
-    getBalancesStatus,
-    notifySkipOnce,
     onAutoRunInstanceStarted,
     onAutoRunStartStateChange,
     showNotification,

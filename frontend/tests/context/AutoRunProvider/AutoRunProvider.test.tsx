@@ -447,36 +447,6 @@ describe('AutoRunProvider', () => {
     });
   });
 
-  describe('onAutoRunInstanceStarted callback', () => {
-    it('calls updateSelectedServiceConfigId when instance is configured', () => {
-      renderHook(() => useAutoRunContext(), { wrapper });
-
-      act(() => {
-        capturedControllerCallbacks.onAutoRunInstanceStarted!(scTrader);
-      });
-
-      expect(mockUpdateSelectedServiceConfigId).toHaveBeenCalledWith(scTrader);
-    });
-
-    it('does not call updateSelectedServiceConfigId when instance is not configured', () => {
-      useConfiguredAgents.mockReturnValue([
-        {
-          agentType: AgentMap.PredictTrader,
-          agentConfig: AGENT_CONFIG[AgentMap.PredictTrader],
-          serviceConfigId: scTrader,
-        },
-      ]);
-
-      renderHook(() => useAutoRunContext(), { wrapper });
-
-      act(() => {
-        capturedControllerCallbacks.onAutoRunInstanceStarted!(scOptimus);
-      });
-
-      expect(mockUpdateSelectedServiceConfigId).not.toHaveBeenCalled();
-    });
-  });
-
   describe('onAutoRunStartStateChange callback (isToggling)', () => {
     it('sets isStarting to true via onAutoRunStartStateChange', () => {
       mockAutoRunStore.enabled = true;

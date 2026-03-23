@@ -1,5 +1,15 @@
 # Staking & Rewards
 
+## Why staking?
+
+Staking is the mechanism that lets a Pearl agent earn OLAS rewards. When a service is deployed, its NFT is locked into an on-chain staking program. Without staking:
+
+- The agent earns **no OLAS rewards** regardless of how much work it does.
+- If all slots in a program are full, an **unstaked agent cannot start** ("No available slots" blocker in `useDeployability`).
+- **Inactive agents are evicted** — if a service fails the liveness check (insufficient mech requests or multisig nonce increments), it is removed from the staking program and blocked from restarting until the minimum staking duration has elapsed.
+
+One service can be staked in exactly one program at a time. Switching programs requires stopping the agent, migrating, then restarting.
+
 ## Overview
 
 The staking system allows users to stake their agent's service NFT in on-chain staking programs and earn OLAS rewards. A service can be staked in exactly one program at a time. Rewards are distributed per epoch (typically 1 day) based on whether the service met a liveness threshold — measured by mech request counts or multisig nonce increments.
@@ -33,6 +43,106 @@ useStakingDetails (streak + epoch lifetime)
 useStakingContractCountdown (minimum duration timer)
 useStakingRewardsOf (multi-service rewards aggregation)
 ```
+
+## User journey
+
+### Onboarding
+
+Staking is introduced in two steps during agent onboarding:
+
+**1. Funding requirement display** (`frontend/components/SetupPage/AgentOnboarding/FundingRequirementStep.tsx`)
+
+Shows the user exactly how much OLAS is required before the first deploy. Two line items are distinct:
+- **Minimum staking requirement** — OLAS amount to stake (e.g. 20 OLAS for Predict Trader on Gnosis). Read from the selected staking program's `stakingRequirements`.
+- **Minimum funding requirements** — native token amounts for the agent EOA and Safe to operate (gas, operational costs). Read from `useInitialFundingRequirements()`.
+
+**2. Staking program selection** (`frontend/components/SelectStakingPage/index.tsx`)
+
+The user picks which staking program to use. The view cycles through these states:
+
+| State | Description |
+|-------|-------------|
+| `LOADING` | Waiting for services/staking data to load |
+| `CONFIGURE` | Recommended (default) program shown; user can continue or change |
+| `CONFIGURE_MANUAL` | User backed from list; shows configure view again |
+| `LIST_AUTO` | Non-default program active; list shown automatically |
+| `LIST_MANUAL` | User clicked "Change Configuration"; full list shown |
+| `SWITCHING` | Selection in-flight; list frozen to avoid flicker |
+
+- Default program = `selectedAgentConfig.defaultStakingProgramId` (from `frontend/config/agents.ts`)
+- "Change Configuration" button toggles to list view (`LIST_MANUAL`)
+- List is ordered by `useStakingContracts`: active program first, deprecated programs hidden, filtered by `agentsSupported`
+- On selection, `SelectStakingButton` writes the chosen `staking_program_id` to the service config before first deploy
+
+### Main page — Staking block
+
+Component: `frontend/components/MainPage/Home/Overview/Staking/Staking.tsx`
+
+Always visible in the main page Overview section. Displays:
+
+- **`EpochClock`** — countdown to epoch end. Color-coded: warning (yellow) when < 12 h remain, danger (red) when < 3 h remain. Derived from `currentEpochLifetime` in `useStakingDetails`.
+- **`Streak`** — consecutive epochs with rewards earned, with a flame icon. Uses `optimisticStreak` (adds 1 if `isEligibleForRewards` is true, since the subgraph lags the current epoch).
+- **Status alerts** (mutually exclusive, priority order):
+  - "Under construction" — `selectedAgentConfig.isUnderConstruction`
+  - "Agent evicted" — `isAgentEvicted && !isEligibleForStaking`; includes eviction countdown via `useStakingContractCountdown`
+  - "Start agent to join staking" — agent not running and not staked
+- **"Manage Staking" button** — navigates to the Agent Staking page (`/agentStaking`)
+
+### Agent Staking page
+
+Component: `frontend/components/AgentStaking/AgentStaking.tsx`
+
+Two tabs:
+
+**Staking Contract tab** (`StakingContractDetails.tsx`)
+
+| Field | Source |
+|-------|--------|
+| APY | `stakingContractInfo.apy` |
+| Rewards per epoch | `stakingContractInfo.rewardsPerWorkPeriod` |
+| Required deposit | `stakingContractInfo.minStakingDeposit` (OLAS) |
+| Epoch countdown | `currentEpochLifetime` from `useStakingDetails` |
+| Stats card | Total rewards earned, current streak |
+
+"Switch Staking Contract" button → opens SelectStakingPage in migrate mode (see Staking Migration below).
+
+**Rewards History tab** (`RewardsHistory.tsx`)
+
+- Checkpoints grouped by month/year with collapsible sections
+- Each checkpoint: staking program name, epoch number (hover = duration + tx link), earned amount (green if > 0, gray if 0)
+- Monthly totals
+- In-progress epoch shown at top with optimistic reward (`optimisticRewardsEarnedForEpoch`)
+- Data from GraphQL subgraph, refetched once per day
+
+## Staking migration
+
+When the user clicks "Switch Staking Contract", SelectStakingPage opens in **migrate mode**. In this mode:
+
+- Always shows the full program list (skips the configure view)
+- `stakingProgramIdToMigrateTo` is set in `StakingProgramProvider` on selection
+- On next agent start, `updateServiceIfNeeded` detects the `updatedStakingProgramId` and patches `staking_program_id` in the service config before starting
+
+Migration requires the agent to be stopped first (or auto-run to rotate away). The new program's slot availability and rewards are checked before the UI allows selection.
+
+## AutoRun integration
+
+AutoRun uses staking eligibility as its primary scheduling signal. The key function is `refreshRewardsEligibility()` in `frontend/context/AutoRunProvider/utils/autoRunHelpers.ts`.
+
+**`refreshRewardsEligibility(candidate)`**:
+- Throttled per `serviceConfigId` (minimum 120 s between fetches)
+- Calls `fetchAgentStakingRewardsInfo()` to get the current epoch snapshot
+- Stale epoch detection: if `isStakingEpochExpired()` returns `true` (i.e. `livenessPeriod ≤ now − tsCheckpoint`) and `isEligibleForRewards` is `true`, overrides eligibility to `false` so the agent runs and triggers the on-chain checkpoint
+- Returns `true` (eligible), `false` (not eligible), or `undefined` (data missing)
+
+**Scanner logic** (`useAutoRunScanner.ts`):
+- `eligibility === true` → agent already earned this epoch → skip, wait for next scan slot
+- `eligibility === false` → agent hasn't earned yet → start the agent
+- `eligibility === undefined` → data missing → retry after `SCAN_LOADING_RETRY_SECONDS` (30 s)
+
+**Reward-triggered rotation** (`useAutoRunLifecycle.ts`):
+- `lastRewardsEligibilityRef` tracks the previous eligibility value per agent
+- On transition from `false → true` (reward earned), rotation is triggered: stop current agent → 20 s cooldown → `scanAndStartNext`
+- Prevents duplicate rotation: `isRotatingRef` blocks overlapping rotation/startup
 
 ## Source of truth
 
