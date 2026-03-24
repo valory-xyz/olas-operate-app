@@ -7,7 +7,7 @@ import { LuInfo } from 'react-icons/lu';
 import styled from 'styled-components';
 
 import { AgentIntroduction } from '@/components/AgentIntroduction';
-import { CardFlex, Tooltip, usePageTransitionValue } from '@/components/ui';
+import { CardFlex, Tooltip, useContentTransitionValue } from '@/components/ui';
 import { CHAIN_CONFIG } from '@/config/chains';
 import { COLOR, PAGES } from '@/constants';
 import { useAutoRunContext } from '@/context/AutoRunProvider';
@@ -119,8 +119,8 @@ export const AgentInfo = () => {
   const { enabled: isAutoRunEnabled } = useAutoRunContext();
 
   const { isX402Enabled } = selectedAgentConfig;
-  const displayedAgentType = usePageTransitionValue(selectedAgentType);
-  const displayedAgentName = usePageTransitionValue(
+  const displayedAgentType = useContentTransitionValue(selectedAgentType);
+  const displayedAgentName = useContentTransitionValue(
     selectedAgentNameOrFallback,
   );
 
@@ -172,7 +172,7 @@ export const AgentInfo = () => {
         </AgentInfoContainer>
       </CardFlex>
 
-      <AgentActivity />
+      <AgentActivity key={displayedAgentType} />
     </Flex>
   );
 };

@@ -46,8 +46,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   setTrayIcon: (status) => ipcRenderer.send('tray', status),
   ipcRenderer: {
     send: (channel, data) => ipcRenderer.send(channel, data),
-    on: (channel, func) =>
-      ipcRenderer.on(channel, (event, ...args) => func(...args)),
+    on: (channel, func) => {
+      const handler = (event, ...args) => func(...args);
+      ipcRenderer.on(channel, handler);
+      return () => ipcRenderer.removeListener(channel, handler);
+    },
     invoke: (channel, data) => ipcRenderer.invoke(channel, data),
     removeListener: (channel, func) =>
       ipcRenderer.removeListener(channel, func),

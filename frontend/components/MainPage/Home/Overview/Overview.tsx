@@ -10,14 +10,16 @@ type OverviewProps = {
   hasVisitedProfile?: boolean;
 };
 
-export const Overview = ({ openProfile, hasVisitedProfile }: OverviewProps) => (
-  <MainContentContainer vertical gap={40}>
-    <AgentInfo />
-    <Performance
-      openProfile={openProfile}
-      hasVisitedProfile={hasVisitedProfile}
-    />
-    <Staking />
-    <Wallet />
-  </MainContentContainer>
-);
+export const Overview = ({ openProfile, hasVisitedProfile }: OverviewProps) => {
+  return (
+    <MainContentContainer vertical gap={40}>
+      <AgentInfo />
+      <Performance
+        openProfile={openProfile}
+        hasVisitedProfile={hasVisitedProfile}
+      />
+      <Staking />
+      <Wallet />
+    </MainContentContainer>
+  );
+};

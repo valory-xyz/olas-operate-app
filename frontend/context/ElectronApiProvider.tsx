@@ -17,8 +17,8 @@ type ElectronApiContextProps = {
   ipcRenderer?: {
     /** send messages to main process */
     send?: (channel: string, data: unknown) => void;
-    /** listen to messages from main process */
-    on?: (channel: string, func: (...args: unknown[]) => void) => void;
+    /** listen to messages from main process, returns unsubscribe function */
+    on?: (channel: string, func: (...args: unknown[]) => void) => () => void;
     /** send message to main process and get Promise response */
     invoke?: (channel: string, data: unknown) => Promise<unknown>;
     /** remove listener for messages from main process */
@@ -104,7 +104,7 @@ export const ElectronApiContext = createContext<ElectronApiContextProps>({
   setTrayIcon: () => {},
   ipcRenderer: {
     send: () => {},
-    on: () => {},
+    on: () => () => {},
     invoke: async () => {},
     removeListener: () => {},
   },
