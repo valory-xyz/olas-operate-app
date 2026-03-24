@@ -60,6 +60,7 @@ jest.mock('../../../hooks', () => ({
     archiveInstance: jest.fn(),
     unarchiveInstance: jest.fn(),
   }),
+  usePageState: jest.fn().mockReturnValue({ pageState: 'Main' }),
 }));
 
 jest.mock('../../../context/AutoRunProvider/hooks/useAutoRunStore', () => ({
@@ -443,36 +444,6 @@ describe('AutoRunProvider', () => {
         canRun: false,
         reason: 'Decommissioned',
       });
-    });
-  });
-
-  describe('onAutoRunInstanceStarted callback', () => {
-    it('calls updateSelectedServiceConfigId when instance is configured', () => {
-      renderHook(() => useAutoRunContext(), { wrapper });
-
-      act(() => {
-        capturedControllerCallbacks.onAutoRunInstanceStarted!(scTrader);
-      });
-
-      expect(mockUpdateSelectedServiceConfigId).toHaveBeenCalledWith(scTrader);
-    });
-
-    it('does not call updateSelectedServiceConfigId when instance is not configured', () => {
-      useConfiguredAgents.mockReturnValue([
-        {
-          agentType: AgentMap.PredictTrader,
-          agentConfig: AGENT_CONFIG[AgentMap.PredictTrader],
-          serviceConfigId: scTrader,
-        },
-      ]);
-
-      renderHook(() => useAutoRunContext(), { wrapper });
-
-      act(() => {
-        capturedControllerCallbacks.onAutoRunInstanceStarted!(scOptimus);
-      });
-
-      expect(mockUpdateSelectedServiceConfigId).not.toHaveBeenCalled();
     });
   });
 

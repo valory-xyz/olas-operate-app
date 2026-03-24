@@ -278,6 +278,9 @@ describe('useAutoRunLifecycle', () => {
       expect(params.stopAgentWithRecovery).toHaveBeenCalled();
       expect(params.scanAndStartNext).toHaveBeenCalledWith(scTrader);
       expect(params.recordMetric).toHaveBeenCalledWith('rotationsSucceeded');
+      // P1 fix: rewards guard must be cleared so the next epoch can re-trigger rotation.
+      // Without this reset, previousEligibility === true permanently blocks future rotations.
+      expect(lastRewardsEligibilityRef.current[scTrader]).toBeUndefined();
     });
   });
 

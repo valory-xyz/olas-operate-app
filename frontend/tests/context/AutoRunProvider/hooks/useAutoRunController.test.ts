@@ -10,7 +10,10 @@ import { useAutoRunController } from '../../../../context/AutoRunProvider/hooks/
 import { DEFAULT_SERVICE_CONFIG_ID } from '../../../helpers/factories';
 
 jest.mock('../../../../hooks', () => ({
-  useRewardContext: jest.fn().mockReturnValue({ isEligibleForRewards: false }),
+  useRewardContext: jest.fn().mockReturnValue({
+    isEligibleForRewards: false,
+    stakingRewardsDetails: null,
+  }),
   useAgentRunning: jest.fn().mockReturnValue({
     runningAgentType: null,
     runningServiceConfigId: null,
@@ -18,6 +21,26 @@ jest.mock('../../../../hooks', () => ({
   useStartService: jest.fn().mockReturnValue({
     startService: jest.fn().mockResolvedValue(undefined),
   }),
+}));
+jest.mock('../../../../hooks/useBalanceAndRefillRequirementsContext', () => ({
+  useBalanceAndRefillRequirementsContext: jest.fn().mockReturnValue({
+    allowStartAgentByServiceConfigId: jest.fn().mockReturnValue(true),
+    hasBalancesForServiceConfigId: jest.fn().mockReturnValue(true),
+  }),
+}));
+jest.mock('../../../../hooks/useIsAgentGeoRestricted', () => ({
+  useIsAgentGeoRestricted: jest
+    .fn()
+    .mockReturnValue({ isAgentGeoRestricted: false }),
+}));
+jest.mock('../../../../hooks/useIsInitiallyFunded', () => ({
+  useIsInitiallyFunded: jest.fn().mockReturnValue({
+    isInstanceInitiallyFunded: jest.fn().mockReturnValue(true),
+  }),
+}));
+jest.mock('../../../../context/AutoRunProvider/utils/autoRunHelpers', () => ({
+  fetchDeployabilityForAgent: jest.fn().mockResolvedValue({ canRun: true }),
+  isStakingEpochExpired: jest.fn().mockReturnValue(false),
 }));
 jest.mock(
   '../../../../context/AutoRunProvider/hooks/useLogAutoRunEvent',
@@ -101,11 +124,11 @@ const makeHookParams = (
   enabled: false,
   orderedIncludedInstances: [DEFAULT_SERVICE_CONFIG_ID],
   configuredAgents: [],
-  updateSelectedServiceConfigId: jest.fn(),
   selectedAgentType: AgentMap.PredictTrader,
   selectedServiceConfigId: DEFAULT_SERVICE_CONFIG_ID,
   isSelectedAgentDetailsLoading: false,
   getSelectedEligibility: jest.fn().mockReturnValue({ canRun: true }),
+  canCreateSafeForChain: jest.fn().mockReturnValue({ ok: true }),
   createSafeIfNeeded: jest.fn().mockResolvedValue(undefined),
   showNotification: jest.fn(),
   onAutoRunInstanceStarted: jest.fn(),
