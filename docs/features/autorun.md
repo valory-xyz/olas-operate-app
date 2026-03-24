@@ -18,7 +18,7 @@ frontend/context/AutoRunProvider/
     useAutoRunController.ts    — Composition root; wires signals + operations + scanner + lifecycle
     useAutoRunSignals.ts       — Shared refs, wait helpers, scan scheduling
     useAutoRunOperations.ts    — Thin composition hook for start/stop/rewards operations
-    useAutoRunStartOperations.ts — Guarded start flow with retries and eligibility gates
+    useAutoRunStartOperations.ts — Guarded start flow with retries (eligibility verified by scanner before call)
     useAutoRunStopOperations.ts  — Stop flow with deployment confirmation + recovery retries
     useAutoRunScanner.ts       — Queue traversal, candidate selection, startSelectedAgentIfEligible
     useAutoRunLifecycle.ts     — Effects: rotation on rewards, rewards polling, startup/resume, watchdog
@@ -29,7 +29,7 @@ frontend/context/AutoRunProvider/
     useSelectedEligibility.ts  — Eligibility for the currently selected agent
     useSafeEligibility.ts      — Safe creation checks
   utils/
-    autoRunHelpers.ts          — refreshRewardsEligibility, formatEligibilityReason, isOnlyLoadingReason, waitForEligibilityReadyHelper
+    autoRunHelpers.ts          — refreshRewardsEligibility, fetchDeployabilityForAgent, formatEligibilityReason, isOnlyLoadingReason, waitForEligibilityReadyHelper
     utils.ts                   — getAgentDisplayName, notifySkipped, notifyStartFailed, list utilities
 ```
 
@@ -63,7 +63,6 @@ AutoRunProvider
 | `skipNotifiedRef` | Per-instance+reason notification dedup; cleared on disable |
 | `runningSinceRef` | Timestamp when current instance started; used by runtime watchdog |
 | `rotationCycleSeqRef` | Sequence counter for cycle correlation IDs in verbose logs |
-| `canSwitchAgentRef` | Derived from `pageState`; blocks scanner on non-allowed pages |
 | `startOperationSeqRef` | Op-id sequence for structured start phase logs |
 | `stopOperationSeqRef` | Op-id sequence for structured stop phase logs |
 
@@ -85,7 +84,7 @@ Note: timing constants are centralized in `constants.ts` to avoid duplicate knob
 | `REWARDS_POLL_SECONDS` | 120s | How often to poll rewards for the running instance |
 | `SCAN_BLOCKED_DELAY_SECONDS` | 10min | Rescan delay when instances are blocked (low balance, evicted, etc.) |
 | `SCAN_ELIGIBLE_DELAY_SECONDS` | 30min | Rescan delay when all instances have earned rewards |
-| `SCAN_LOADING_RETRY_SECONDS` | 30s | Rescan delay on transient loading states or non-Main page guard |
+| `SCAN_LOADING_RETRY_SECONDS` | 30s | Rescan delay on transient loading states |
 | `START_TIMEOUT_SECONDS` | 900s (15min) | How long to wait for DEPLOYED status after start; also used as stop-confirmation timeout |
 | `STOP_REQUEST_TIMEOUT_SECONDS` | 300s (5min) | Timeout for stop request API call (separate from stop confirmation polling) |
 | `STOP_RECOVERY_MAX_ATTEMPTS` | 3 | Bounded stop retries per rotation |
@@ -101,16 +100,6 @@ Note: timing constants are centralized in `constants.ts` to avoid duplicate knob
 ---
 
 ## 3. Core Flows
-
-### Agent Switch Allowed Pages
-
-The scanner and start operations check `canSwitchAgentRef` before switching the selected instance. This ref reflects `pageState` and is updated synchronously via `useLayoutEffect`.
-
-**Allowed** (scanner may switch): `Main`, `Settings`, `HelpAndSupport`, `ReleaseNotes`, `PearlWallet`
-
-**Blocked** (scanner pauses and reschedules in `SCAN_LOADING_RETRY_SECONDS`): `Setup`, `AgentWallet`, `FundPearlWallet`, `AgentStaking`, `SelectStaking`, `ConfirmSwitch`, `DepositOlasForStaking`, `UpdateAgentTemplate`, and any new page not explicitly listed above.
-
-Note: `FundPearlWallet` is blocked because it derives chain, symbol, and gas requirement from `selectedAgentConfig.evmHomeChainId`; a switch mid-flow would corrupt those values. `PearlWallet` is allowed because its content is independent of selected agent type.
 
 ### 3.1 First Enable
 
@@ -367,6 +356,7 @@ Every delay and poll interval in auto-run uses `sleepAwareDelay`. On `false`:
 11. Toggle shows loading state during start/stop.
 12. Skip notifications only for real blockers (not Loading states).
 13. Manual sidebar navigation works while auto-run runs.
+14. UI page never switches during a scan cycle (background mode).
 
 **Go** if all A + B pass and no critical UX issues. **No-Go** if any A or B fails.
 
@@ -454,8 +444,11 @@ Every delay and poll interval in auto-run uses `sleepAwareDelay`. On `false`:
 
 ### P1 — Scanner switches agent screen during Setup/wallet/staking flows
 - **Root cause**: Auto-run scanner calls `updateAgentType()` during candidate evaluation regardless of which page the user is on. When the user was on `PAGES.Setup` (e.g. `SETUP_SCREEN.FundYourAgent` for agents.fun) or any non-Main page (AgentWallet, PearlWallet, AgentStaking, etc.), the scanner silently switched `selectedAgentType`, changing the visible content mid-flow. Reported as "funding page switched to Omenstrat" while setting up agents.fun.
-- **Affected pages**: `PAGES.Setup`, `PAGES.PearlWallet`, `PAGES.AgentWallet`, `PAGES.FundPearlWallet`, `PAGES.AgentStaking`, `PAGES.SelectStaking`, `PAGES.ConfirmSwitch`, `PAGES.DepositOlasForStaking`, `PAGES.UpdateAgentTemplate`, `PAGES.Settings`, `PAGES.HelpAndSupport`, `PAGES.ReleaseNotes`.
-- **Fix**: `canSwitchAgentRef` (= `pageState === PAGES.Main`) is created in `AutoRunProvider` and threaded to `useAutoRunScanner` and `useAutoRunStartOperations`. Both `scanAndStartNext` (entry + mid-loop) and `startSelectedAgentIfEligible` (entry) check this ref and return early with a `SCAN_LOADING_RETRY_SECONDS` rescan when the user is not on `PAGES.Main`. Log: `"scan paused: user on non-Main page, retry in 30s"` / `"scan paused mid-loop ... user navigated away"`.
+- **Initial fix**: `canSwitchAgentRef` guard — fully removed in the follow-up background-mode fix below.
+
+### P1 — Auto-run scanner switches visible agent page during each scan cycle
+- **Root cause**: `scanAndStartNext` called `updateSelectedServiceConfigId(candidate)` for every candidate to make `getSelectedEligibility()` (which reads selection-keyed `selectedStakingContractDetails`) return data for that candidate. This meant the visible agent page switched up to N times per scan cycle (once per included agent). Users saw the sidebar and staking/balance UI jump repeatedly while auto-run was running in the background.
+- **Fix**: `fetchDeployabilityForAgent(agentMeta, ctx)` added to `autoRunHelpers.ts`. It calls `agentMeta.agentConfig.serviceApi.getStakingContractDetails()` and `getServiceStakingDetails()` directly — the same endpoints as `StakingContractDetailsProvider` but without requiring a UI selection switch. `scanAndStartNext` now calls `getDeployabilityForAgent(candidateMeta)` per candidate instead of switching selection and waiting. `startAgentWithRetries` pre-start eligibility block removed (scanner verified it). `onAutoRunInstanceStarted` no longer calls `updateSelectedServiceConfigId` after start. Result: the visible page never changes during a scan cycle. Log: `"scan complete: no agent started (loading=..., blocked=..., eligible=..., infraFailed=...)"` — unaffected.
 
 ### P1 — `lastRewardsEligibilityRef` not reset on successful rotation → agents blocked in all future epochs
 - **Root cause**: In `rotateToNext`, after `stopAgentWithRecovery` succeeds, the comment said "reset rewards guard and stop backoff state" but the code only reset `stopRetryBackoffUntilRef`. `lastRewardsEligibilityRef.current[A]` stayed `true` from the rotation that just completed. When A ran again in any subsequent epoch and earned rewards, `checkRewardsAndRotate` read `previousEligibility === true` (stale from epoch 1) and returned early without rotating — permanently. The 70-min watchdog was the only escape.
@@ -490,7 +483,12 @@ Returns `true` when `nowInSeconds - tsCheckpoint >= livenessPeriod` (epoch timer
 Converts transient states ("Another agent running", stale "Loading: Balances") into consistent signals for the scanner to act on.
 
 ### `waitForEligibilityReadyHelper(params)` — `utils/autoRunHelpers.ts`
-Shared eligibility-wait implementation. Polls every 2s until eligibility leaves `LOADING` state. Returns `false` on disable, sleep detection, or 60s hard timeout. Used by both `useAutoRunScanner` and `useAutoRunStartOperations` via `useCallback` wrappers.
+Shared eligibility-wait implementation. Polls every 2s until eligibility leaves `LOADING` state. Returns `false` on disable, sleep detection, or 60s hard timeout. Used by `useAutoRunScanner` (for `startSelectedAgentIfEligible`) via `useCallback` wrapper.
+
+### `fetchDeployabilityForAgent(agentMeta, ctx)` — `utils/autoRunHelpers.ts`
+Checks whether a candidate agent is deployable without switching the UI selection. Mirrors `useDeployability` but fetches staking state directly via `agentMeta.agentConfig.serviceApi` (same pattern as `fetchAgentStakingRewardsInfo`). Called by `scanAndStartNext` for each candidate so the visible page never changes during a scan cycle.
+
+Returns `{ canRun: true }`, `{ canRun: false, isTransient: true }` (transient/loading — short retry), or `{ canRun: false }` (deterministic block). Checks in order: safe readiness, `isUnderConstruction`, geo restriction, another agent running, on-chain slots/staking state (via `getStakingContractDetails` + `getServiceStakingDetails`), initial funding, balance sufficiency. API errors return `isTransient: true` (scanner uses short retry rather than treating as permanent block).
 
 ---
 

@@ -247,7 +247,7 @@ export const PREDICT_POLYMARKET_SERVICE_TEMPLATE: ServiceTemplate = {
     ACC_INFO_FIELDS_REQUESTS: {
       name: 'Acc info fields requests',
       description: '',
-      value: 'nr_responses',
+      value: 'total_requests',
       provision_type: EnvProvisionType.FIXED,
     },
     MECH_INTERACT_ROUND_TIMEOUT_SECONDS: {

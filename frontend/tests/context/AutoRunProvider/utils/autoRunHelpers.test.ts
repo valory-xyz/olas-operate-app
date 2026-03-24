@@ -7,7 +7,10 @@ import {
   ELIGIBILITY_REASON,
   REWARDS_POLL_SECONDS,
 } from '../../../../context/AutoRunProvider/constants';
+import { AgentMeta } from '../../../../context/AutoRunProvider/types';
 import {
+  FetchDeployabilityContext,
+  fetchDeployabilityForAgent,
   formatEligibilityReason,
   isOnlyLoadingReason,
   isStakingEpochExpired,
@@ -15,6 +18,7 @@ import {
   refreshRewardsEligibility,
   waitForEligibilityReadyHelper,
 } from '../../../../context/AutoRunProvider/utils/autoRunHelpers';
+import { StakingState } from '../../../../types';
 import * as delayModule from '../../../../utils/delay';
 import { fetchAgentStakingRewardsInfo } from '../../../../utils/stakingRewards';
 import {
@@ -532,5 +536,223 @@ describe('waitForEligibilityReadyHelper', () => {
     expect(result).toBe(true);
     expect(mockSleepAwareDelay).toHaveBeenCalledTimes(2);
     expect(mockSleepAwareDelay).toHaveBeenCalledWith(2);
+  });
+});
+
+describe('fetchDeployabilityForAgent', () => {
+  const mockGetStakingContractDetails = jest.fn();
+  const mockGetServiceStakingDetails = jest.fn();
+
+  const makeAgentMeta = (): AgentMeta => {
+    const base = makeAutoRunAgentMeta(
+      AgentMap.PredictTrader,
+      AGENT_CONFIG[AgentMap.PredictTrader],
+    );
+    return {
+      ...base,
+      agentConfig: {
+        ...base.agentConfig,
+        serviceApi: {
+          ...base.agentConfig.serviceApi,
+          getStakingContractDetails: mockGetStakingContractDetails,
+          getServiceStakingDetails: mockGetServiceStakingDetails,
+        },
+      },
+    } as unknown as AgentMeta;
+  };
+
+  const makeCtx = (
+    overrides: Partial<FetchDeployabilityContext> = {},
+  ): FetchDeployabilityContext => ({
+    runningServiceConfigId: null,
+    canCreateSafeForChain: jest.fn().mockReturnValue({ ok: true }),
+    allowStartAgentByServiceConfigId: jest.fn().mockReturnValue(true),
+    hasBalancesForServiceConfigId: jest.fn().mockReturnValue(true),
+    isInstanceInitiallyFunded: jest.fn().mockReturnValue(true),
+    isGeoRestrictedForAgent: jest.fn().mockReturnValue(false),
+    logMessage: jest.fn(),
+    ...overrides,
+  });
+
+  const makeOkStaking = () => ({
+    contractDetails: {
+      serviceIds: [1, 2],
+      maxNumServices: 10,
+      minimumStakingDuration: 86400,
+    },
+    stakingDetails: {
+      serviceStakingState: StakingState.Staked,
+      serviceStakingStartTime: Math.floor(Date.now() / 1000) - 100,
+    },
+  });
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    const { contractDetails, stakingDetails } = makeOkStaking();
+    mockGetStakingContractDetails.mockResolvedValue(contractDetails);
+    mockGetServiceStakingDetails.mockResolvedValue(stakingDetails);
+  });
+
+  it('returns canRun=true when all checks pass', async () => {
+    const result = await fetchDeployabilityForAgent(makeAgentMeta(), makeCtx());
+    expect(result).toEqual({ canRun: true });
+  });
+
+  it('returns canRun=false isTransient=true when safe is loading', async () => {
+    const ctx = makeCtx({
+      canCreateSafeForChain: jest
+        .fn()
+        .mockReturnValue({ ok: false, isLoading: true }),
+    });
+    const result = await fetchDeployabilityForAgent(makeAgentMeta(), ctx);
+    expect(result.canRun).toBe(false);
+    expect(result.isTransient).toBe(true);
+    expect(result.reason).toMatch(/safe/i);
+  });
+
+  it('returns canRun=false when safe is not ready', async () => {
+    const ctx = makeCtx({
+      canCreateSafeForChain: jest
+        .fn()
+        .mockReturnValue({ ok: false, reason: 'No wallet' }),
+    });
+    const result = await fetchDeployabilityForAgent(makeAgentMeta(), ctx);
+    expect(result.canRun).toBe(false);
+    expect(result.reason).toBe('No wallet');
+  });
+
+  it('returns canRun=false when agent is under construction', async () => {
+    const meta = {
+      ...makeAgentMeta(),
+      agentConfig: {
+        ...makeAgentMeta().agentConfig,
+        isUnderConstruction: true,
+      },
+    };
+    const result = await fetchDeployabilityForAgent(meta, makeCtx());
+    expect(result.canRun).toBe(false);
+    expect(result.reason).toBe('Under construction');
+  });
+
+  it('returns canRun=false when agent is geo-restricted', async () => {
+    const meta = {
+      ...makeAgentMeta(),
+      agentConfig: {
+        ...makeAgentMeta().agentConfig,
+        isGeoLocationRestricted: true,
+      },
+    };
+    const ctx = makeCtx({
+      isGeoRestrictedForAgent: jest.fn().mockReturnValue(true),
+    });
+    const result = await fetchDeployabilityForAgent(meta, ctx);
+    expect(result.canRun).toBe(false);
+    expect(result.reason).toBe('Region restricted');
+  });
+
+  it('returns canRun=false isTransient=true when another agent is running', async () => {
+    const meta = makeAgentMeta();
+    const ctx = makeCtx({ runningServiceConfigId: 'sc-other' });
+    const result = await fetchDeployabilityForAgent(meta, ctx);
+    expect(result.canRun).toBe(false);
+    expect(result.isTransient).toBe(true);
+    expect(result.reason).toBe('Another agent running');
+  });
+
+  it('returns canRun=true when the running agent is itself', async () => {
+    const meta = makeAgentMeta();
+    const ctx = makeCtx({ runningServiceConfigId: meta.serviceConfigId });
+    const result = await fetchDeployabilityForAgent(meta, ctx);
+    expect(result.canRun).toBe(true);
+  });
+
+  it('returns canRun=false when no staking slots available and service not staked', async () => {
+    mockGetStakingContractDetails.mockResolvedValue({
+      serviceIds: [1, 2, 3],
+      maxNumServices: 3,
+      minimumStakingDuration: 86400,
+    });
+    mockGetServiceStakingDetails.mockResolvedValue({
+      serviceStakingState: StakingState.NotStaked,
+      serviceStakingStartTime: 0,
+    });
+    const result = await fetchDeployabilityForAgent(makeAgentMeta(), makeCtx());
+    expect(result.canRun).toBe(false);
+    expect(result.reason).toBe('No available slots');
+  });
+
+  it('returns canRun=false when agent is evicted and not yet eligible', async () => {
+    const now = Math.floor(Date.now() / 1000);
+    mockGetStakingContractDetails.mockResolvedValue({
+      serviceIds: [1],
+      maxNumServices: 10,
+      minimumStakingDuration: 86400,
+    });
+    mockGetServiceStakingDetails.mockResolvedValue({
+      serviceStakingState: StakingState.Evicted,
+      serviceStakingStartTime: now - 100, // only 100s since start, min is 86400
+    });
+    const result = await fetchDeployabilityForAgent(makeAgentMeta(), makeCtx());
+    expect(result.canRun).toBe(false);
+    expect(result.reason).toBe('Evicted');
+  });
+
+  it('returns canRun=true when agent is evicted but minimum duration elapsed', async () => {
+    const now = Math.floor(Date.now() / 1000);
+    mockGetStakingContractDetails.mockResolvedValue({
+      serviceIds: [1],
+      maxNumServices: 10,
+      minimumStakingDuration: 86400,
+    });
+    mockGetServiceStakingDetails.mockResolvedValue({
+      serviceStakingState: StakingState.Evicted,
+      serviceStakingStartTime: now - 90000, // > 86400s elapsed
+    });
+    const result = await fetchDeployabilityForAgent(makeAgentMeta(), makeCtx());
+    expect(result.canRun).toBe(true);
+  });
+
+  it('returns canRun=false isTransient=true when staking API throws', async () => {
+    mockGetStakingContractDetails.mockRejectedValue(new Error('RPC error'));
+    const result = await fetchDeployabilityForAgent(makeAgentMeta(), makeCtx());
+    expect(result.canRun).toBe(false);
+    expect(result.isTransient).toBe(true);
+    expect(result.reason).toBe('Staking data unavailable');
+  });
+
+  it('returns canRun=false when not initially funded', async () => {
+    const ctx = makeCtx({
+      isInstanceInitiallyFunded: jest.fn().mockReturnValue(false),
+    });
+    const result = await fetchDeployabilityForAgent(makeAgentMeta(), ctx);
+    expect(result.canRun).toBe(false);
+    expect(result.reason).toBe('Unfinished setup');
+  });
+
+  it('returns canRun=false isTransient=true when balance data not loaded yet', async () => {
+    const ctx = makeCtx({
+      hasBalancesForServiceConfigId: jest.fn().mockReturnValue(false),
+    });
+    const result = await fetchDeployabilityForAgent(makeAgentMeta(), ctx);
+    expect(result.canRun).toBe(false);
+    expect(result.isTransient).toBe(true);
+    expect(result.reason).toBe('Balance data loading');
+  });
+
+  it('returns canRun=false when balance is insufficient', async () => {
+    const ctx = makeCtx({
+      allowStartAgentByServiceConfigId: jest.fn().mockReturnValue(false),
+    });
+    const result = await fetchDeployabilityForAgent(makeAgentMeta(), ctx);
+    expect(result.canRun).toBe(false);
+    expect(result.reason).toBe('Low balance');
+  });
+
+  it('skips staking API calls when service has no NFT token ID', async () => {
+    const meta = { ...makeAgentMeta(), serviceNftTokenId: -1 };
+    const result = await fetchDeployabilityForAgent(meta, makeCtx());
+    expect(mockGetStakingContractDetails).not.toHaveBeenCalled();
+    expect(mockGetServiceStakingDetails).not.toHaveBeenCalled();
+    expect(result.canRun).toBe(true);
   });
 });

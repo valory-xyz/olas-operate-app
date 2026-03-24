@@ -8,33 +8,17 @@ import {
   AUTO_RUN_START_STATUS,
   AutoRunHealthMetricNoRotation,
   AutoRunStartResult,
-  ELIGIBILITY_REASON,
   RETRY_BACKOFF_SECONDS,
   START_TIMEOUT_SECONDS,
 } from '../constants';
 import { AgentMeta } from '../types';
-import {
-  formatEligibilityReason,
-  normalizeEligibility as normalizeEligibilityHelper,
-  waitForEligibilityReadyHelper,
-} from '../utils/autoRunHelpers';
 import { getInstanceDisplayNames, notifyStartFailed } from '../utils/utils';
-
-type Eligibility = {
-  canRun: boolean;
-  reason?: string;
-  loadingReason?: string;
-};
 
 type UseAutoRunStartOperationsParams = {
   enabledRef: MutableRefObject<boolean>;
   runningServiceConfigIdRef: MutableRefObject<string | null>;
   configuredAgents: AgentMeta[];
-  updateSelectedServiceConfigId: (serviceConfigId: string) => void;
-  getSelectedEligibility: () => Eligibility;
   createSafeIfNeeded: (meta: AgentMeta) => Promise<void>;
-  /** Defense-in-depth: also checked here in case the scanner guard is bypassed. */
-  canSwitchAgentRef: MutableRefObject<boolean>;
   startService: (params: {
     agentType: AgentType;
     agentConfig: AgentMeta['agentConfig'];
@@ -42,18 +26,11 @@ type UseAutoRunStartOperationsParams = {
     stakingProgramId: AgentMeta['stakingProgramId'];
     createSafeIfNeeded: () => Promise<void>;
   }) => Promise<unknown>;
-  waitForInstanceSelection: (serviceConfigId: string) => Promise<boolean>;
   waitForBalancesReady: () => Promise<boolean>;
   waitForRunningInstance: (
     serviceConfigId: string,
     timeoutSeconds: number,
   ) => Promise<boolean>;
-  getBalancesStatus: () => { ready: boolean; loading: boolean };
-  notifySkipOnce: (
-    serviceConfigId: string,
-    reason?: string,
-    isLoadingReason?: boolean,
-  ) => void;
   onAutoRunInstanceStarted?: (serviceConfigId: string) => void;
   onAutoRunStartStateChange?: (isStarting: boolean) => void;
   showNotification?: (title: string, body?: string) => void;
@@ -66,16 +43,10 @@ export const useAutoRunStartOperations = ({
   enabledRef,
   runningServiceConfigIdRef,
   configuredAgents,
-  updateSelectedServiceConfigId,
-  getSelectedEligibility,
   createSafeIfNeeded,
-  canSwitchAgentRef,
   startService,
-  waitForInstanceSelection,
   waitForBalancesReady,
   waitForRunningInstance,
-  getBalancesStatus,
-  notifySkipOnce,
   onAutoRunInstanceStarted,
   onAutoRunStartStateChange,
   showNotification,
@@ -84,30 +55,6 @@ export const useAutoRunStartOperations = ({
   logVerbose,
 }: UseAutoRunStartOperationsParams) => {
   const startOperationSeqRef = useRef(0);
-
-  const normalizeEligibility = useCallback(
-    (eligibility: Eligibility) =>
-      normalizeEligibilityHelper(eligibility, getBalancesStatus),
-    [getBalancesStatus],
-  );
-
-  const waitForEligibilityReady = useCallback(
-    () =>
-      waitForEligibilityReadyHelper({
-        enabledRef,
-        getSelectedEligibility,
-        normalizeEligibility,
-        recordMetric,
-        logMessage,
-      }),
-    [
-      enabledRef,
-      getSelectedEligibility,
-      logMessage,
-      normalizeEligibility,
-      recordMetric,
-    ],
-  );
 
   const startAgentWithRetries = useCallback(
     async (serviceConfigId: string): Promise<AutoRunStartResult> => {
@@ -131,34 +78,10 @@ export const useAutoRunStartOperations = ({
         `op=${opId} phase=start_prepare service=${meta.serviceConfigId} agent=${meta.agentType}`,
       );
 
-      // Defense-in-depth: if user navigated away between the scanner gate and
-      // here, abort rather than switching the visible agent.
-      if (!canSwitchAgentRef.current) {
-        return { status: AUTO_RUN_START_STATUS.ABORTED };
-      }
-      updateSelectedServiceConfigId(serviceConfigId);
-      const selectionReady = await waitForInstanceSelection(serviceConfigId);
-      if (!selectionReady) {
-        return { status: AUTO_RUN_START_STATUS.ABORTED };
-      }
-
+      // Lightweight global balance gate before the expensive start call.
       const balancesReady = await waitForBalancesReady();
       if (!balancesReady) {
         return { status: AUTO_RUN_START_STATUS.ABORTED };
-      }
-
-      const eligibilityReady = await waitForEligibilityReady();
-      if (!eligibilityReady) {
-        return { status: AUTO_RUN_START_STATUS.ABORTED };
-      }
-
-      const eligibility = normalizeEligibility(getSelectedEligibility());
-      if (!eligibility.canRun) {
-        const reason = formatEligibilityReason(eligibility);
-        const isLoadingReason =
-          eligibility.reason === ELIGIBILITY_REASON.LOADING;
-        notifySkipOnce(serviceConfigId, reason, isLoadingReason);
-        return { status: AUTO_RUN_START_STATUS.AGENT_BLOCKED, reason };
       }
 
       onAutoRunStartStateChange?.(true);
@@ -258,22 +181,15 @@ export const useAutoRunStartOperations = ({
       };
     },
     [
-      canSwitchAgentRef,
       enabledRef,
       runningServiceConfigIdRef,
       configuredAgents,
-      updateSelectedServiceConfigId,
-      waitForInstanceSelection,
       waitForBalancesReady,
-      waitForEligibilityReady,
-      normalizeEligibility,
-      getSelectedEligibility,
-      notifySkipOnce,
+      waitForRunningInstance,
       logMessage,
       logVerbose,
       startService,
       createSafeIfNeeded,
-      waitForRunningInstance,
       onAutoRunInstanceStarted,
       onAutoRunStartStateChange,
       recordMetric,

@@ -1,13 +1,11 @@
-import {
-  MutableRefObject,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-} from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 
-import { AgentType } from '@/constants';
+import { AGENT_CONFIG } from '@/config/agents';
+import { AgentMap, AgentType, EvmChainId } from '@/constants';
 import { useAgentRunning, useRewardContext, useStartService } from '@/hooks';
+import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRefillRequirementsContext';
+import { useIsAgentGeoRestricted } from '@/hooks/useIsAgentGeoRestricted';
+import { useIsInitiallyFunded } from '@/hooks/useIsInitiallyFunded';
 
 import {
   AUTO_RUN_VERBOSE_LOGS,
@@ -15,7 +13,10 @@ import {
   HEALTH_SUMMARY_INTERVAL_SECONDS,
 } from '../constants';
 import { AgentMeta } from '../types';
-import { isStakingEpochExpired } from '../utils/autoRunHelpers';
+import {
+  fetchDeployabilityForAgent,
+  isStakingEpochExpired,
+} from '../utils/autoRunHelpers';
 import { useAutoRunLifecycle } from './useAutoRunLifecycle';
 import { useAutoRunOperations } from './useAutoRunOperations';
 import { useAutoRunScanner } from './useAutoRunScanner';
@@ -26,7 +27,6 @@ type UseAutoRunControllerParams = {
   enabled: boolean;
   orderedIncludedInstances: string[];
   configuredAgents: AgentMeta[];
-  updateSelectedServiceConfigId: (serviceConfigId: string) => void;
   selectedAgentType: AgentType;
   selectedServiceConfigId: string | null;
   isSelectedAgentDetailsLoading: boolean;
@@ -35,11 +35,12 @@ type UseAutoRunControllerParams = {
     reason?: string;
     loadingReason?: string;
   };
+  canCreateSafeForChain: (chainId: EvmChainId) => {
+    ok: boolean;
+    reason?: string;
+    isLoading?: boolean;
+  };
   createSafeIfNeeded: (meta: AgentMeta) => Promise<void>;
-  /** Ref that is `true` when the user is on a page where agent switching is
-   *  allowed (see AGENT_SWITCH_ALLOWED_PAGES). When false, the scanner will
-   *  not call updateAgentType and will reschedule instead. */
-  canSwitchAgentRef: MutableRefObject<boolean>;
   showNotification?: (title: string, body?: string) => void;
   onAutoRunInstanceStarted?: (serviceConfigId: string) => void;
   onAutoRunStartStateChange?: (isStarting: boolean) => void;
@@ -62,13 +63,12 @@ export const useAutoRunController = ({
   enabled,
   orderedIncludedInstances,
   configuredAgents,
-  updateSelectedServiceConfigId,
   selectedAgentType,
   selectedServiceConfigId,
   isSelectedAgentDetailsLoading,
   getSelectedEligibility,
+  canCreateSafeForChain,
   createSafeIfNeeded,
-  canSwitchAgentRef,
   showNotification,
   onAutoRunInstanceStarted,
   onAutoRunStartStateChange,
@@ -84,6 +84,30 @@ export const useAutoRunController = ({
   const { runningAgentType, runningServiceConfigId } = useAgentRunning();
   const { startService } = useStartService();
   const { logMessage } = useLogAutoRunEvent();
+
+  // Balance and refill requirements — keyed per serviceConfigId, not selection-dependent.
+  const { allowStartAgentByServiceConfigId, hasBalancesForServiceConfigId } =
+    useBalanceAndRefillRequirementsContext();
+
+  // Initial funding check — reads electron store, not selection-dependent.
+  const { isInstanceInitiallyFunded } = useIsInitiallyFunded();
+
+  // Geo-restriction check for Polystrat (the only geo-restricted agent).
+  // Queried once here; result is passed into fetchDeployabilityForAgent as a
+  // callback so it never touches the selection-keyed context.
+  const { isAgentGeoRestricted: isPolystratGeoRestricted } =
+    useIsAgentGeoRestricted({
+      agentType: AgentMap.Polystrat,
+      agentConfig: AGENT_CONFIG[AgentMap.Polystrat],
+    });
+
+  const isGeoRestrictedForAgent = useCallback(
+    (agentType: AgentType) => {
+      if (agentType === AgentMap.Polystrat) return isPolystratGeoRestricted;
+      return false;
+    },
+    [isPolystratGeoRestricted],
+  );
 
   const healthStatsRef = useRef({
     startErrors: 0,
@@ -160,6 +184,31 @@ export const useAutoRunController = ({
   // Per-instance backoff after stop-timeout to avoid immediate re-trigger loops.
   const stopRetryBackoffUntilRef = useRef<Partial<Record<string, number>>>({});
 
+  // Build the deployability callback that scanAndStartNext uses instead of
+  // switching UI selection. Captures stable refs/callbacks so it doesn't
+  // change on every render.
+  const getDeployabilityForAgent = useCallback(
+    (agentMeta: AgentMeta) =>
+      fetchDeployabilityForAgent(agentMeta, {
+        runningServiceConfigId: runningServiceConfigIdRef.current,
+        canCreateSafeForChain,
+        allowStartAgentByServiceConfigId,
+        hasBalancesForServiceConfigId,
+        isInstanceInitiallyFunded,
+        isGeoRestrictedForAgent,
+        logMessage,
+      }),
+    [
+      runningServiceConfigIdRef,
+      canCreateSafeForChain,
+      allowStartAgentByServiceConfigId,
+      hasBalancesForServiceConfigId,
+      isInstanceInitiallyFunded,
+      isGeoRestrictedForAgent,
+      logMessage,
+    ],
+  );
+
   const {
     refreshRewardsEligibility,
     notifySkipOnce,
@@ -170,18 +219,13 @@ export const useAutoRunController = ({
     enabledRef,
     runningServiceConfigIdRef,
     configuredAgents,
-    updateSelectedServiceConfigId,
-    getSelectedEligibility,
     createSafeIfNeeded,
-    canSwitchAgentRef,
     showNotification,
     onAutoRunInstanceStarted,
     onAutoRunStartStateChange,
     startService,
-    waitForInstanceSelection,
     waitForBalancesReady,
     waitForRunningInstance,
-    getBalancesStatus,
     getRewardSnapshot,
     setRewardSnapshot,
     recordMetric,
@@ -194,11 +238,9 @@ export const useAutoRunController = ({
     startSelectedAgentIfEligible,
   } = useAutoRunScanner({
     enabledRef,
-    canSwitchAgentRef,
     orderedIncludedInstances,
     configuredAgents,
     selectedServiceConfigId,
-    updateSelectedServiceConfigId,
     getSelectedEligibility,
     waitForInstanceSelection,
     waitForBalancesReady,
@@ -208,6 +250,7 @@ export const useAutoRunController = ({
     getRewardSnapshot,
     getBalancesStatus,
     notifySkipOnce,
+    getDeployabilityForAgent,
     startAgentWithRetries,
     scheduleNextScan,
     recordMetric,
