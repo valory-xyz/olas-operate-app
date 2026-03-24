@@ -188,14 +188,15 @@ describe('useContentTransitionValue', () => {
     expect(screen.getByTestId('delayed-value')).toHaveTextContent('initial');
   });
 
-  it('delays value updates by default (80ms)', () => {
+  it('delays value updates by default (CONTENT_TRANSITION_DELAY_MS + 10)', () => {
     const { rerender } = render(<HookTestComponent value="first" />);
+    // Rerender so React schedules the effect with the new value
     rerender(<HookTestComponent value="second" />);
     // Value should still be "first" before timeout
     expect(screen.getByTestId('delayed-value')).toHaveTextContent('first');
-    act(() => {
-      jest.advanceTimersByTime(CONTENT_TRANSITION_DELAY_MS);
-    });
+    // Advance timers inside act so the setTimeout callback + resulting state update are flushed
+    // The hook's default delay is CONTENT_TRANSITION_DELAY_MS + 10
+    act(() => jest.advanceTimersByTime(CONTENT_TRANSITION_DELAY_MS + 10));
     expect(screen.getByTestId('delayed-value')).toHaveTextContent('second');
   });
 
@@ -204,26 +205,21 @@ describe('useContentTransitionValue', () => {
       <HookTestComponent value="first" delayMs={200} />,
     );
     rerender(<HookTestComponent value="second" delayMs={200} />);
-    act(() => {
-      jest.advanceTimersByTime(100);
-    });
+    act(() => jest.advanceTimersByTime(100));
     expect(screen.getByTestId('delayed-value')).toHaveTextContent('first');
-    act(() => {
-      jest.advanceTimersByTime(100);
-    });
+    act(() => jest.advanceTimersByTime(100));
     expect(screen.getByTestId('delayed-value')).toHaveTextContent('second');
   });
 
   it('clears previous timeout on rapid updates', () => {
     const { rerender } = render(<HookTestComponent value="first" />);
     rerender(<HookTestComponent value="second" />);
-    act(() => {
-      jest.advanceTimersByTime(40);
-    });
+    // Partially advance — not enough for the first timeout to fire
+    act(() => jest.advanceTimersByTime(40));
+    expect(screen.getByTestId('delayed-value')).toHaveTextContent('first');
+    // Rerender with third value, which should clear the pending "second" timeout
     rerender(<HookTestComponent value="third" />);
-    act(() => {
-      jest.advanceTimersByTime(CONTENT_TRANSITION_DELAY_MS);
-    });
+    act(() => jest.advanceTimersByTime(CONTENT_TRANSITION_DELAY_MS + 10));
     expect(screen.getByTestId('delayed-value')).toHaveTextContent('third');
   });
 });

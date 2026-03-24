@@ -104,7 +104,7 @@ export const ElectronApiContext = createContext<ElectronApiContextProps>({
   setTrayIcon: () => {},
   ipcRenderer: {
     send: () => {},
-    on: () => {},
+    on: () => () => {},
     invoke: async () => {},
     removeListener: () => {},
   },
