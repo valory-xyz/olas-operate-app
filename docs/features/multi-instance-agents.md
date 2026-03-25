@@ -297,7 +297,7 @@ These fire on agent-type change but won't fire when switching between instances 
 | File | Line | What it does | Fix |
 |------|------|-------------|-----|
 | `Home/index.tsx` | 60 | `useEffect(() => setView('overview'), [selectedAgentType])` — resets tab to "Overview" | Use `selectedServiceConfigId` in deps |
-| `Home/index.tsx` | 134 | `PageTransition key={selectedAgentType}` — remounts animation | Use `selectedServiceConfigId` as key |
+| `Home/index.tsx` | 134 | `ContentTransition key={selectedAgentType}` — remounts animation | Use `selectedServiceConfigId` as key |
 | `useScrollPage.ts` | 14 | Scroll-to-top on `[pageState, selectedAgentType]` | Use `selectedServiceConfigId` in deps |
 
 ### Step 8b: Notifications — per-instance format

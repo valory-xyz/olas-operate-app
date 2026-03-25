@@ -190,7 +190,11 @@ export const useAutoRunLifecycle = ({
         return;
       }
 
-      // Rotation successful, reset rewards guard and stop backoff state for the current instance.
+      // Rotation successful: reset BOTH the rewards guard AND the stop backoff for this instance.
+      // Resetting lastRewardsEligibilityRef is critical — without it the guard stays `true` from the
+      // current epoch and permanently blocks rotation in all future epochs (previousEligibility === true
+      // check bails early every time this instance runs and earns rewards again).
+      lastRewardsEligibilityRef.current[currentServiceConfigId] = undefined;
       stopRetryBackoffUntilRef.current[currentServiceConfigId] = undefined;
       if (!enabledRef.current) return;
       const cooldownOk = await sleepAwareDelay(COOLDOWN_SECONDS);

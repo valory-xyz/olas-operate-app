@@ -3,10 +3,7 @@ import { act } from 'react';
 
 import { AGENT_CONFIG } from '../../../../config/agents';
 import { AgentMap } from '../../../../constants/agent';
-import {
-  AUTO_RUN_START_STATUS,
-  ELIGIBILITY_REASON,
-} from '../../../../context/AutoRunProvider/constants';
+import { AUTO_RUN_START_STATUS } from '../../../../context/AutoRunProvider/constants';
 import { useAutoRunStartOperations } from '../../../../context/AutoRunProvider/hooks/useAutoRunStartOperations';
 import * as delayModule from '../../../../utils/delay';
 import {
@@ -33,15 +30,10 @@ const makeHookParams = (
       AGENT_CONFIG[AgentMap.PredictTrader],
     ),
   ],
-  updateSelectedServiceConfigId: jest.fn(),
-  getSelectedEligibility: jest.fn().mockReturnValue({ canRun: true }),
   createSafeIfNeeded: jest.fn().mockResolvedValue(undefined),
   startService: jest.fn().mockResolvedValue(undefined),
-  waitForInstanceSelection: jest.fn().mockResolvedValue(true),
   waitForBalancesReady: jest.fn().mockResolvedValue(true),
   waitForRunningInstance: jest.fn().mockResolvedValue(true),
-  getBalancesStatus: jest.fn().mockReturnValue({ ready: true, loading: false }),
-  notifySkipOnce: jest.fn(),
   onAutoRunInstanceStarted: jest.fn(),
   onAutoRunStartStateChange: jest.fn(),
   showNotification: jest.fn(),
@@ -85,24 +77,6 @@ describe('useAutoRunStartOperations', () => {
     expect(startResult?.reason).toBe('Not configured');
   });
 
-  it('returns ABORTED when selection wait fails', async () => {
-    const params = makeHookParams({
-      waitForInstanceSelection: jest.fn().mockResolvedValue(false),
-    });
-    const { result } = renderHook(() => useAutoRunStartOperations(params));
-
-    let startResult: { status: string } | undefined;
-    await act(async () => {
-      startResult = await result.current.startAgentWithRetries(
-        DEFAULT_SERVICE_CONFIG_ID,
-      );
-    });
-    expect(startResult?.status).toBe(AUTO_RUN_START_STATUS.ABORTED);
-    expect(params.updateSelectedServiceConfigId).toHaveBeenCalledWith(
-      DEFAULT_SERVICE_CONFIG_ID,
-    );
-  });
-
   it('returns ABORTED when balance wait fails', async () => {
     const params = makeHookParams({
       waitForBalancesReady: jest.fn().mockResolvedValue(false),
@@ -116,30 +90,6 @@ describe('useAutoRunStartOperations', () => {
       );
     });
     expect(startResult?.status).toBe(AUTO_RUN_START_STATUS.ABORTED);
-  });
-
-  it('returns AGENT_BLOCKED when canRun=false with deterministic reason', async () => {
-    const params = makeHookParams({
-      getSelectedEligibility: jest.fn().mockReturnValue({
-        canRun: false,
-        reason: 'Low balance',
-      }),
-    });
-    const { result } = renderHook(() => useAutoRunStartOperations(params));
-
-    let startResult: { status: string; reason?: string } | undefined;
-    await act(async () => {
-      startResult = await result.current.startAgentWithRetries(
-        DEFAULT_SERVICE_CONFIG_ID,
-      );
-    });
-    expect(startResult?.status).toBe(AUTO_RUN_START_STATUS.AGENT_BLOCKED);
-    expect(startResult?.reason).toBe('Low balance');
-    expect(params.notifySkipOnce).toHaveBeenCalledWith(
-      DEFAULT_SERVICE_CONFIG_ID,
-      'Low balance',
-      false,
-    );
   });
 
   it('returns STARTED on successful start and deploy confirmation', async () => {
@@ -217,40 +167,6 @@ describe('useAutoRunStartOperations', () => {
     expect(startResult?.status).toBe(AUTO_RUN_START_STATUS.ABORTED);
   });
 
-  it('notifies skip with isLoadingReason=true when eligibility is Loading', async () => {
-    const loadingEligibility = {
-      canRun: false,
-      reason: ELIGIBILITY_REASON.LOADING,
-      loadingReason: 'Balances',
-    };
-    const params = makeHookParams({
-      getSelectedEligibility: jest
-        .fn()
-        .mockReturnValueOnce({ canRun: false, reason: 'InsufficientBalance' })
-        .mockReturnValue(loadingEligibility),
-      getBalancesStatus: jest
-        .fn()
-        .mockReturnValue({ ready: false, loading: true }),
-    });
-
-    const { result } = renderHook(() => useAutoRunStartOperations(params));
-
-    let startResult: { status: string; reason?: string } | undefined;
-    await act(async () => {
-      startResult = await result.current.startAgentWithRetries(
-        DEFAULT_SERVICE_CONFIG_ID,
-      );
-    });
-
-    expect(startResult?.status).toBe(AUTO_RUN_START_STATUS.AGENT_BLOCKED);
-    expect(startResult?.reason).toBe('Loading: Balances');
-    expect(params.notifySkipOnce).toHaveBeenCalledWith(
-      DEFAULT_SERVICE_CONFIG_ID,
-      'Loading: Balances',
-      true,
-    );
-  });
-
   it('calls onAutoRunStartStateChange(false) in finally block', async () => {
     const params = makeHookParams({
       waitForRunningInstance: jest.fn().mockResolvedValue(false),
@@ -282,60 +198,6 @@ describe('useAutoRunStartOperations', () => {
     });
     expect(startResult?.status).toBe(AUTO_RUN_START_STATUS.INFRA_FAILED);
     expect(mockSleepAwareDelay).toHaveBeenCalled();
-  });
-
-  it('returns ABORTED when eligibility wait times out', async () => {
-    const params = makeHookParams({
-      getSelectedEligibility: jest.fn().mockReturnValue({
-        canRun: false,
-        reason: ELIGIBILITY_REASON.LOADING,
-        loadingReason: 'Safe',
-      }),
-      getBalancesStatus: jest
-        .fn()
-        .mockReturnValue({ ready: false, loading: true }),
-    });
-    mockSleepAwareDelay.mockResolvedValue(false);
-
-    const { result } = renderHook(() => useAutoRunStartOperations(params));
-
-    let startResult: { status: string } | undefined;
-    await act(async () => {
-      startResult = await result.current.startAgentWithRetries(
-        DEFAULT_SERVICE_CONFIG_ID,
-      );
-    });
-    expect(startResult?.status).toBe(AUTO_RUN_START_STATUS.ABORTED);
-  });
-
-  it('returns ABORTED when disabled during eligibility wait loop', async () => {
-    const enabledRef = { current: true };
-    let callCount = 0;
-    const params = makeHookParams({
-      enabledRef,
-      getSelectedEligibility: jest.fn().mockImplementation(() => {
-        callCount += 1;
-        if (callCount > 1) enabledRef.current = false;
-        return {
-          canRun: false,
-          reason: ELIGIBILITY_REASON.LOADING,
-          loadingReason: 'Safe',
-        };
-      }),
-      getBalancesStatus: jest
-        .fn()
-        .mockReturnValue({ ready: false, loading: true }),
-    });
-
-    const { result } = renderHook(() => useAutoRunStartOperations(params));
-
-    let startResult: { status: string } | undefined;
-    await act(async () => {
-      startResult = await result.current.startAgentWithRetries(
-        DEFAULT_SERVICE_CONFIG_ID,
-      );
-    });
-    expect(startResult?.status).toBe(AUTO_RUN_START_STATUS.ABORTED);
   });
 
   it('returns INFRA_FAILED with retry interrupted when sleepAwareDelay returns false but still enabled', async () => {
@@ -378,37 +240,5 @@ describe('useAutoRunStartOperations', () => {
       );
     });
     expect(startResult?.status).toBe(AUTO_RUN_START_STATUS.ABORTED);
-  });
-
-  it('records eligibilityTimeouts metric when eligibility wait exceeds timeout', async () => {
-    const params = makeHookParams({
-      getSelectedEligibility: jest.fn().mockReturnValue({
-        canRun: false,
-        reason: ELIGIBILITY_REASON.LOADING,
-        loadingReason: 'Safe',
-      }),
-      getBalancesStatus: jest
-        .fn()
-        .mockReturnValue({ ready: false, loading: true }),
-    });
-    const realDateNow = Date.now;
-    let elapsed = 0;
-    Date.now = jest.fn(() => {
-      elapsed += 61_000;
-      return realDateNow() + elapsed;
-    });
-
-    const { result } = renderHook(() => useAutoRunStartOperations(params));
-
-    let startResult: { status: string } | undefined;
-    await act(async () => {
-      startResult = await result.current.startAgentWithRetries(
-        DEFAULT_SERVICE_CONFIG_ID,
-      );
-    });
-    expect(startResult?.status).toBe(AUTO_RUN_START_STATUS.ABORTED);
-    expect(params.recordMetric).toHaveBeenCalledWith('eligibilityTimeouts');
-    expect(params.logMessage).toHaveBeenCalledWith('eligibility wait timeout');
-    Date.now = realDateNow;
   });
 });

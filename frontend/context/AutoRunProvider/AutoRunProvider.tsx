@@ -53,7 +53,6 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
     selectedAgentType,
     selectedService,
     selectedServiceConfigId,
-    updateSelectedServiceConfigId,
   } = useServices();
   const { showNotification } = useElectronApi();
 
@@ -118,17 +117,13 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
     enabled,
     orderedIncludedInstances,
     configuredAgents,
-    updateSelectedServiceConfigId,
     selectedAgentType,
     selectedServiceConfigId: selectedService?.service_config_id ?? null,
     isSelectedAgentDetailsLoading,
     getSelectedEligibility,
+    canCreateSafeForChain,
     createSafeIfNeeded,
     showNotification,
-    onAutoRunInstanceStarted: (serviceConfigId) => {
-      if (!configuredInstances.includes(serviceConfigId)) return;
-      updateSelectedServiceConfigId(serviceConfigId);
-    },
     onAutoRunStartStateChange: (isStarting) => {
       setIsStarting(isStarting);
     },

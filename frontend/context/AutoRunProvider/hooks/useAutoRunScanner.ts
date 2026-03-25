@@ -1,10 +1,6 @@
 import { MutableRefObject, useCallback } from 'react';
 
-import { sleepAwareDelay } from '@/utils/delay';
-
 import {
-  AGENT_SELECTION_WAIT_TIMEOUT_SECONDS,
-  AUTO_RUN_HEALTH_METRIC,
   AUTO_RUN_START_STATUS,
   AutoRunScannerMetric,
   AutoRunStartResult,
@@ -15,19 +11,18 @@ import {
 } from '../constants';
 import { AgentMeta } from '../types';
 import {
+  DeployabilityCheckResult,
   formatEligibilityReason,
   normalizeEligibility as normalizeEligibilityHelper,
+  waitForEligibilityReadyHelper,
 } from '../utils/autoRunHelpers';
 import { useAutoRunVerboseLogger } from './useAutoRunVerboseLogger';
-
-const ELIGIBILITY_WAIT_TIMEOUT_MS = AGENT_SELECTION_WAIT_TIMEOUT_SECONDS * 1000;
 
 type UseAutoRunScannerParams = {
   enabledRef: MutableRefObject<boolean>;
   orderedIncludedInstances: string[];
   configuredAgents: AgentMeta[];
   selectedServiceConfigId: string | null;
-  updateSelectedServiceConfigId: (serviceConfigId: string) => void;
   getSelectedEligibility: () => {
     canRun: boolean;
     reason?: string;
@@ -49,6 +44,10 @@ type UseAutoRunScannerParams = {
     reason?: string,
     isLoadingReason?: boolean,
   ) => void;
+  /** Fetches deployability for a candidate without switching UI selection. */
+  getDeployabilityForAgent: (
+    agentMeta: AgentMeta,
+  ) => Promise<DeployabilityCheckResult>;
   startAgentWithRetries: (
     serviceConfigId: string,
   ) => Promise<AutoRunStartResult>;
@@ -70,7 +69,6 @@ export const useAutoRunScanner = ({
   orderedIncludedInstances,
   configuredAgents,
   selectedServiceConfigId,
-  updateSelectedServiceConfigId,
   getSelectedEligibility,
   waitForInstanceSelection,
   waitForBalancesReady,
@@ -80,6 +78,7 @@ export const useAutoRunScanner = ({
   getRewardSnapshot,
   getBalancesStatus,
   notifySkipOnce,
+  getDeployabilityForAgent,
   startAgentWithRetries,
   scheduleNextScan,
   recordMetric,
@@ -110,27 +109,23 @@ export const useAutoRunScanner = ({
    * - candidate stays in loading (safe/balance/rewards metadata not ready)
    * - we poll every 2s up to timeout, then continue scan logic safely
    */
-  const waitForEligibilityReady = useCallback(async () => {
-    const startedAt = Date.now();
-    while (enabledRef.current) {
-      const eligibility = normalizeEligibility(getSelectedEligibility());
-      if (eligibility.reason !== ELIGIBILITY_REASON.LOADING) return true;
-      if (Date.now() - startedAt > ELIGIBILITY_WAIT_TIMEOUT_MS) {
-        recordMetric(AUTO_RUN_HEALTH_METRIC.ELIGIBILITY_TIMEOUTS);
-        logMessage('eligibility wait timeout');
-        return false;
-      }
-      const ok = await sleepAwareDelay(2);
-      if (!ok) return false;
-    }
-    return false;
-  }, [
-    enabledRef,
-    getSelectedEligibility,
-    logMessage,
-    normalizeEligibility,
-    recordMetric,
-  ]);
+  const waitForEligibilityReady = useCallback(
+    () =>
+      waitForEligibilityReadyHelper({
+        enabledRef,
+        getSelectedEligibility,
+        normalizeEligibility,
+        recordMetric,
+        logMessage,
+      }),
+    [
+      enabledRef,
+      getSelectedEligibility,
+      logMessage,
+      normalizeEligibility,
+      recordMetric,
+    ],
+  );
 
   /**
    * Returns the next candidate in circular included order.
@@ -179,19 +174,27 @@ export const useAutoRunScanner = ({
   }, [orderedIncludedInstances, selectedServiceConfigId]);
 
   /**
-   * Core queue traversal.
+   * Core queue traversal — runs entirely in the background without switching
+   * the visible agent page.
    *
    * For each candidate once per scan cycle:
-   * 1) switch selection
-   * 2) refresh rewards snapshot
-   * 3) wait for required readiness gates
-   * 4) skip/start based on normalized eligibility + rewards state
+   * 1) refresh rewards snapshot
+   * 2) fetch deployability directly (no UI switch)
+   * 3) skip/start based on deployability + rewards state
    *
    * Returns `{ started: true }` only when an instance is actually started.
    */
   const scanAndStartNext = useCallback(
     async (startFrom?: string | null) => {
       if (!enabledRef.current) return { started: false };
+
+      // Wait for global balance data before scanning any candidate.
+      const balancesReady = await waitForBalancesReady();
+      if (!balancesReady) {
+        if (enabledRef.current) scheduleNextScan(SCAN_LOADING_RETRY_SECONDS);
+        return { started: false };
+      }
+
       // Aggregate scan outcome across all visited candidates so we can choose
       // an appropriate next-scan delay when nothing starts.
       let hasBlocked = false;
@@ -220,56 +223,19 @@ export const useAutoRunScanner = ({
           continue;
         }
 
-        // Move UI context to candidate, then wait until selection-derived data
-        // is coherent before making decisions for this agent.
-        updateSelectedServiceConfigId(candidate);
         markRewardSnapshotPending(candidate);
-        const selectionReady = await waitForInstanceSelection(candidate);
-        if (!selectionReady) {
-          if (enabledRef.current) {
-            scheduleNextScan(SCAN_LOADING_RETRY_SECONDS);
-          }
-          return { started: false };
-        }
-
         await refreshRewardsEligibility(candidate);
-        const selectionReadyAfterRefresh =
-          await waitForInstanceSelection(candidate);
-        if (!selectionReadyAfterRefresh) {
-          if (enabledRef.current) {
-            scheduleNextScan(SCAN_LOADING_RETRY_SECONDS);
-          }
-          return { started: false };
-        }
 
-        const balancesReady = await waitForBalancesReady();
-        if (!balancesReady) {
-          if (enabledRef.current) {
-            scheduleNextScan(SCAN_LOADING_RETRY_SECONDS);
-          }
-          return { started: false };
-        }
-
-        const eligibilityReady = await waitForEligibilityReady();
-        if (!eligibilityReady) {
-          if (!enabledRef.current) return { started: false };
-          hasLoading = true;
-          candidate = findNextInOrder(candidate);
-          continue;
-        }
-
-        // Evaluate deterministic eligibility first, then rewards state,
-        // and only then attempt start.
-        const eligibility = normalizeEligibility(getSelectedEligibility());
-        if (!eligibility.canRun) {
-          if (eligibility.reason === ELIGIBILITY_REASON.LOADING) {
+        // Fetch deployability directly without switching UI selection.
+        const deployability = await getDeployabilityForAgent(candidateMeta);
+        if (!enabledRef.current) return { started: false };
+        if (!deployability.canRun) {
+          if (deployability.isTransient) {
             hasLoading = true;
-            candidate = findNextInOrder(candidate);
-            continue;
+          } else {
+            notifySkipOnce(candidate, deployability.reason, false);
+            hasBlocked = true;
           }
-          const reason = formatEligibilityReason(eligibility);
-          notifySkipOnce(candidate, reason, false);
-          hasBlocked = true;
           candidate = findNextInOrder(candidate);
           continue;
         }
@@ -323,18 +289,14 @@ export const useAutoRunScanner = ({
       configuredAgents,
       enabledRef,
       findNextInOrder,
-      getSelectedEligibility,
+      getDeployabilityForAgent,
       markRewardSnapshotPending,
       refreshRewardsEligibility,
       notifySkipOnce,
-      normalizeEligibility,
       scheduleNextScan,
       startAgentWithRetries,
-      updateSelectedServiceConfigId,
-      waitForInstanceSelection,
       waitForBalancesReady,
       waitForRewardsEligibility,
-      waitForEligibilityReady,
       logVerbose,
     ],
   );

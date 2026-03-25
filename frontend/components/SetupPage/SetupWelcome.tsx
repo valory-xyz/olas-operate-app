@@ -21,6 +21,7 @@ import { AccountService } from '@/service/Account';
 import { WalletService } from '@/service/Wallet';
 import { asEvmChainId, getErrorMessage } from '@/utils';
 
+import { ContentTransition } from '../ui';
 import { FormFlex } from '../ui/FormFlex';
 import { FormLabel } from '../ui/Typography';
 import { SetupWelcomeCreate } from './SetupWelcomeCreate';
@@ -257,7 +258,9 @@ export const SetupWelcome = () => {
   const electronApi = useElectronApi();
   const { isAccountRecoveryStatusLoading, hasActiveRecoverySwap } =
     useSharedContext();
-  const [isSetup, setIsSetup] = useState<MiddlewareAccountIsSetup | null>(null);
+  const [isSetup, setIsSetup] = useState<MiddlewareAccountIsSetup>(
+    MiddlewareAccountIsSetup.Loading,
+  );
   const [hasCheckedAccount, setHasCheckedAccount] = useState(false);
 
   useEffect(() => {
@@ -268,10 +271,7 @@ export const SetupWelcome = () => {
     }
 
     // If already checked or determined the setup state, don't check again
-    if (
-      hasCheckedAccount ||
-      (isSetup !== null && isSetup !== MiddlewareAccountIsSetup.Loading)
-    ) {
+    if (hasCheckedAccount || isSetup !== MiddlewareAccountIsSetup.Loading) {
       return;
     }
 
@@ -342,7 +342,9 @@ export const SetupWelcome = () => {
           height={64}
         />
       </Flex>
-      {welcomeScreen}
+      <ContentTransition animationKey={isSetup} initialY={0} exitY={0}>
+        {welcomeScreen}
+      </ContentTransition>
     </Card>
   );
 };

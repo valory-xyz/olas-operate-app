@@ -1,5 +1,5 @@
 import { Button, Flex, Spin, Typography } from 'antd';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { LuArchive } from 'react-icons/lu';
 import { TbPlus } from 'react-icons/tb';
 import styled from 'styled-components';
@@ -7,7 +7,7 @@ import styled from 'styled-components';
 import { AgentIntroduction } from '@/components/AgentIntroduction';
 import { Segmented } from '@/components/ui';
 import { BackButton } from '@/components/ui/BackButton';
-import { ACTIVE_AGENTS, AGENT_CONFIG } from '@/config/agents';
+import { AGENT_CONFIG } from '@/config/agents';
 import { AgentType, COLOR, PAGES, SETUP_SCREEN } from '@/constants';
 import {
   useArchivedAgents,
@@ -15,7 +15,6 @@ import {
   usePageState,
   useServices,
   useSetup,
-  useStore,
 } from '@/hooks';
 import { Optional } from '@/types';
 import { isNonEmpty } from '@/utils';
@@ -125,7 +124,6 @@ export const AgentOnboarding = () => {
     getAgentTypeFromService,
   } = useServices();
   const { archivedInstances, unarchiveInstance } = useArchivedAgents();
-  const { storeState } = useStore();
 
   const [selectedAgent, setSelectedAgent] = useState<Optional<AgentType>>();
   const [selectedArchivedInstanceId, setSelectedArchivedInstanceId] =
@@ -137,29 +135,6 @@ export const AgentOnboarding = () => {
     if (!selectedArchivedInstanceId) return undefined;
     return getAgentTypeFromService(selectedArchivedInstanceId) ?? undefined;
   }, [selectedArchivedInstanceId, getAgentTypeFromService]);
-
-  // Default to "Archived" tab if there are no new agents to add
-  const hasSetDefaultTab = useRef(false);
-  useEffect(() => {
-    if (hasSetDefaultTab.current) return;
-    if (!services) return;
-    // Wait for store state so archivedInstances reflects real data
-    if (!storeState) return;
-    hasSetDefaultTab.current = true;
-
-    const hasNewAgents = ACTIVE_AGENTS.some(
-      ([, agentConfig]) =>
-        !services.some(
-          ({ service_public_id, home_chain }) =>
-            service_public_id === agentConfig.servicePublicId &&
-            home_chain === agentConfig.middlewareHomeChainId,
-        ),
-    );
-
-    if (!hasNewAgents && archivedInstances.length > 0) {
-      setActiveTab(AGENT_TAB.Archived);
-    }
-  }, [archivedInstances, services, storeState]);
 
   const selectedAgentConfig = selectedAgent
     ? AGENT_CONFIG[selectedAgent]

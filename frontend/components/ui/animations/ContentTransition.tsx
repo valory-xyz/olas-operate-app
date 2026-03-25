@@ -1,10 +1,10 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { ReactNode, useEffect, useState } from 'react';
 
-export const PAGE_TRANSITION_DURATION = 0.1;
-export const PAGE_TRANSITION_DELAY_MS = 80;
+export const CONTENT_TRANSITION_DURATION = 0.1;
+export const CONTENT_TRANSITION_DELAY_MS = 80;
 
-type PageTransitionProps = {
+type ContentTransitionProps = {
   animationKey: string | number;
   children: ReactNode;
   initialY?: number;
@@ -13,23 +13,26 @@ type PageTransitionProps = {
   ease?: string | number[];
   className?: string;
   style?: React.CSSProperties;
+  /** When false, skip the enter animation on first mount. Maps to AnimatePresence `initial`. */
+  initialAnimation?: boolean;
 };
 
 /**
  * Shared wrapper for simple fade + vertical slide transitions.
  */
-export const PageTransition = ({
+export const ContentTransition = ({
   animationKey,
   children,
   initialY = 8,
   exitY = -8,
-  duration = PAGE_TRANSITION_DURATION,
+  duration = CONTENT_TRANSITION_DURATION,
   ease = 'easeOut',
   className,
   style,
-}: PageTransitionProps) => {
+  initialAnimation = true,
+}: ContentTransitionProps) => {
   return (
-    <AnimatePresence mode="wait">
+    <AnimatePresence mode="wait" initial={initialAnimation}>
       <motion.div
         key={animationKey}
         className={className}
@@ -47,11 +50,11 @@ export const PageTransition = ({
 
 /**
  * Returns a value that is updated with a small delay,
- * so visual changes can better align with the page transition.
+ * so visual changes can better align with the content transition.
  */
-export const usePageTransitionValue = <T,>(
+export const useContentTransitionValue = <T,>(
   value: T,
-  delayMs: number = PAGE_TRANSITION_DELAY_MS,
+  delayMs: number = CONTENT_TRANSITION_DELAY_MS + 10,
 ) => {
   const [delayedValue, setDelayedValue] = useState(value);
 
