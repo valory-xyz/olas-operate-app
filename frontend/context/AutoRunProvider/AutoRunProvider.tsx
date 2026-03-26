@@ -220,6 +220,7 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
   // Keep included list normalized and drop excluded or decommissioned instances.
   useEffect(() => {
     if (includedInstances.length === 0) return;
+    if (eligibleInstances.length === 0) return;
     const excludedSet = new Set(userExcludedInstances);
     const normalized = normalizeIncludedInstances(includedInstances).filter(
       (item) =>
@@ -353,13 +354,15 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
     for (const id of decommissionedInstances) {
       base[id] = { canRun: false, reason: 'Decommissioned' };
     }
-    if (selectedServiceConfigId) {
+    const excludedSet = new Set(excludedInstances);
+    if (selectedServiceConfigId && !excludedSet.has(selectedServiceConfigId)) {
       base[selectedServiceConfigId] = getSelectedEligibility();
     }
     return base;
   }, [
     configuredAgents,
     decommissionedInstances,
+    excludedInstances,
     getSelectedEligibility,
     selectedServiceConfigId,
   ]);

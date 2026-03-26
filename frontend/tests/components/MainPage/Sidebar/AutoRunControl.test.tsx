@@ -379,4 +379,45 @@ describe('AutoRunControl', () => {
       ).not.toBeInTheDocument();
     });
   });
+
+  // -----------------------------------------------------------------------
+  // Include button — blocked only when canRun is false
+  // -----------------------------------------------------------------------
+
+  describe('Include button eligibility', () => {
+    it('enables the + button when canRun is true', () => {
+      defaultSetup({
+        excludedInstances: ['sc-memeooorr-1'],
+        eligibilityByInstance: {
+          'sc-memeooorr-1': { canRun: true },
+        },
+      });
+      render(<AutoRunControl />);
+
+      const button = screen
+        .getByTestId('instance-sc-memeooorr-1')
+        .querySelector('button')!;
+
+      expect(button).not.toBeDisabled();
+
+      fireEvent.click(button);
+      expect(mockIncludeInstance).toHaveBeenCalledWith('sc-memeooorr-1');
+    });
+
+    it('disables the + button when canRun is false', () => {
+      defaultSetup({
+        excludedInstances: ['sc-memeooorr-1'],
+        eligibilityByInstance: {
+          'sc-memeooorr-1': { canRun: false, reason: 'Decommissioned' },
+        },
+      });
+      render(<AutoRunControl />);
+
+      const button = screen
+        .getByTestId('instance-sc-memeooorr-1')
+        .querySelector('button')!;
+
+      expect(button).toBeDisabled();
+    });
+  });
 });
