@@ -46,7 +46,8 @@ export const AgentsFunAgentFormContent = ({
   const [submitButtonText, setSubmitButtonText] = useState('Continue');
 
   const { defaultStakingProgramId } = useStakingProgram();
-  const { refetch: refetchServices } = useServices();
+  const { refetch: refetchServices, updateSelectedServiceConfigId } =
+    useServices();
 
   const [form] = Form.useForm<AgentsFunFormValues>();
 
@@ -105,13 +106,14 @@ export const AgentsFunAgentFormContent = ({
           },
         };
 
-        await onDummyServiceCreation(
+        const newService = await onDummyServiceCreation(
           defaultStakingProgramId,
           overriddenServiceConfig,
         );
 
-        // fetch services to update the state after service creation
+        // Refetch so the new service is in the list, then select it
         await refetchServices?.();
+        updateSelectedServiceConfigId(newService.service_config_id);
 
         message.success('Agent setup complete');
 
@@ -125,7 +127,13 @@ export const AgentsFunAgentFormContent = ({
         setSubmitButtonText('Continue');
       }
     },
-    [defaultStakingProgramId, serviceTemplate, refetchServices, goto],
+    [
+      defaultStakingProgramId,
+      serviceTemplate,
+      updateSelectedServiceConfigId,
+      refetchServices,
+      goto,
+    ],
   );
 
   return (

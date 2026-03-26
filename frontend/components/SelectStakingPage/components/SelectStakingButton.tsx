@@ -1,19 +1,43 @@
 import { Button, message } from 'antd';
+import { useMemo } from 'react';
 import { useBoolean } from 'usehooks-ts';
 
-import { PAGES, SETUP_SCREEN, StakingProgramId } from '@/constants';
+import { SETUP_SCREEN, SetupScreen, StakingProgramId } from '@/constants';
 import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
 import {
-  useBalanceAndRefillRequirementsContext,
-  useIsInitiallyFunded,
-  usePageState,
+  useMasterBalances,
   useServices,
   useSetup,
   useStakingProgram,
 } from '@/hooks';
+import { BalanceService } from '@/service/Balance';
+import { WalletBalance } from '@/types';
 import { onDummyServiceCreation, updateServiceIfNeeded } from '@/utils';
 
 import { useCanMigrate } from '../hooks/useCanMigrate';
+
+/** Determines which funding screen to route to after staking selection */
+const resolveFundingRoute = async (
+  serviceConfigId: string,
+  walletBalances: WalletBalance[],
+): Promise<SetupScreen> => {
+  const controller = new AbortController();
+  const { is_refill_required, allow_start_agent } =
+    await BalanceService.getBalancesAndFundingRequirements({
+      serviceConfigId,
+      signal: controller.signal,
+    });
+
+  if (!is_refill_required && allow_start_agent) {
+    return SETUP_SCREEN.ConfirmFunding;
+  }
+
+  if (walletBalances.some((b) => b.balance > 0)) {
+    return SETUP_SCREEN.BalanceCheck;
+  }
+
+  return SETUP_SCREEN.FundYourAgent;
+};
 
 type SwitchStakingButtonProps = {
   stakingProgramId: StakingProgramId;
@@ -34,17 +58,29 @@ export const SelectStakingButton = ({
   onSelectEnd,
 }: SwitchStakingButtonProps) => {
   const { goto: gotoSetup } = useSetup();
-  const { goto: gotoPage } = usePageState();
-  const { setIsInitiallyFunded } = useIsInitiallyFunded();
   const { setDefaultStakingProgramId } = useStakingProgram();
-  const { refetchForSelectedAgent: refetchRequirements } =
-    useBalanceAndRefillRequirementsContext();
   const {
     selectedService,
     selectedAgentType,
+    selectedAgentConfig,
     isLoading: isServicesLoading,
     refetch: refetchServices,
+    updateSelectedServiceConfigId,
   } = useServices();
+  const { getMasterSafeBalancesOf, getMasterEoaBalancesOf } =
+    useMasterBalances();
+
+  const walletBalances = useMemo(() => {
+    const chainId = selectedAgentConfig.evmHomeChainId;
+    const safeBalances = getMasterSafeBalancesOf(chainId);
+    return safeBalances.length > 0
+      ? safeBalances
+      : getMasterEoaBalancesOf(chainId);
+  }, [
+    selectedAgentConfig.evmHomeChainId,
+    getMasterSafeBalancesOf,
+    getMasterEoaBalancesOf,
+  ]);
   const { buttonText, canMigrate } = useCanMigrate({
     stakingProgramId,
     isCurrentStakingProgram,
@@ -61,6 +97,8 @@ export const SelectStakingButton = ({
     startLoading();
 
     try {
+      let newServiceConfigId: string | undefined;
+
       // If service already exists, need to update the selected contract in it
       // for proper fund requirements calculation
       if (selectedService) {
@@ -89,7 +127,11 @@ export const SelectStakingButton = ({
         }
 
         try {
-          await onDummyServiceCreation(stakingProgramId, serviceTemplate);
+          const newService = await onDummyServiceCreation(
+            stakingProgramId,
+            serviceTemplate,
+          );
+          newServiceConfigId = newService.service_config_id;
         } catch (error) {
           console.error(error);
           message.error(
@@ -101,26 +143,27 @@ export const SelectStakingButton = ({
       }
 
       // fetch services again to update the state after service creation
-      // and to have correct state in the selectedService if we get back to this page
       await refetchServices?.();
 
-      // refetch refill requirements to check if the agent requires funding
-      const result = await refetchRequirements();
-      const isRefillRequired = result.data?.is_refill_required;
-      const allowStartAgent = result.data?.allow_start_agent;
+      // Select the newly created instance
+      if (newServiceConfigId) {
+        updateSelectedServiceConfigId(newServiceConfigId);
+      }
 
-      // Update state in the end so the order change is not noticeable
       setDefaultStakingProgramId(stakingProgramId);
 
-      // If has sufficient funds to run selected agent, navigate to main
-      if (isRefillRequired === false && allowStartAgent === true) {
-        setIsInitiallyFunded();
-        gotoPage(PAGES.Main);
-      } else {
-        // Otherwise navigate to funding page
+      const serviceConfigId =
+        newServiceConfigId ?? selectedService?.service_config_id;
+
+      if (!serviceConfigId) {
         gotoSetup(SETUP_SCREEN.FundYourAgent);
+        return;
       }
+
+      const route = await resolveFundingRoute(serviceConfigId, walletBalances);
+      gotoSetup(route);
     } finally {
+      stopLoading();
       onSelectEnd?.();
     }
   };

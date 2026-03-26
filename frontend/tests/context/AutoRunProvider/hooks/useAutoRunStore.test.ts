@@ -1,13 +1,20 @@
 import { renderHook } from '@testing-library/react';
 import { act } from 'react';
 
-import { AgentMap } from '../../../../constants/agent';
 import { useAutoRunStore } from '../../../../context/AutoRunProvider/hooks/useAutoRunStore';
 import { useElectronApi, useStore } from '../../../../hooks';
+import {
+  DEFAULT_SERVICE_CONFIG_ID,
+  MOCK_SERVICE_CONFIG_ID_2,
+} from '../../../helpers/factories';
 
 jest.mock('../../../../hooks', () => ({
   useElectronApi: jest.fn(),
   useStore: jest.fn(),
+  useServices: jest.fn().mockReturnValue({
+    services: [],
+    getInstancesOfAgentType: jest.fn().mockReturnValue([]),
+  }),
 }));
 
 const mockUseElectronApi = useElectronApi as jest.MockedFunction<
@@ -32,19 +39,21 @@ describe('useAutoRunStore', () => {
     const { result } = renderHook(() => useAutoRunStore());
     expect(result.current.enabled).toBe(false);
     expect(result.current.isInitialized).toBe(false);
-    expect(result.current.includedAgents).toEqual([]);
-    expect(result.current.userExcludedAgents).toEqual([]);
+    expect(result.current.includedInstances).toEqual([]);
+    expect(result.current.userExcludedInstances).toEqual([]);
   });
 
-  it('reads enabled and includedAgents from storeState', () => {
-    const storedIncluded = [{ agentType: AgentMap.PredictTrader, order: 0 }];
+  it('reads enabled and includedInstances from storeState', () => {
+    const storedIncluded = [
+      { serviceConfigId: DEFAULT_SERVICE_CONFIG_ID, order: 0 },
+    ];
     mockUseStore.mockReturnValue({
       storeState: {
         autoRun: {
           enabled: true,
           isInitialized: true,
-          includedAgents: storedIncluded,
-          userExcludedAgents: [AgentMap.Modius],
+          includedAgentInstances: storedIncluded,
+          userExcludedAgentInstances: [MOCK_SERVICE_CONFIG_ID_2],
         },
       },
     } as unknown as ReturnType<typeof useStore>);
@@ -52,8 +61,10 @@ describe('useAutoRunStore', () => {
     const { result } = renderHook(() => useAutoRunStore());
     expect(result.current.enabled).toBe(true);
     expect(result.current.isInitialized).toBe(true);
-    expect(result.current.includedAgents).toEqual(storedIncluded);
-    expect(result.current.userExcludedAgents).toEqual([AgentMap.Modius]);
+    expect(result.current.includedInstances).toEqual(storedIncluded);
+    expect(result.current.userExcludedInstances).toEqual([
+      MOCK_SERVICE_CONFIG_ID_2,
+    ]);
   });
 
   it('defaults missing fields from storeState.autoRun', () => {
@@ -66,19 +77,21 @@ describe('useAutoRunStore', () => {
     const { result } = renderHook(() => useAutoRunStore());
     expect(result.current.enabled).toBe(true);
     expect(result.current.isInitialized).toBe(false);
-    expect(result.current.includedAgents).toEqual([]);
-    expect(result.current.userExcludedAgents).toEqual([]);
+    expect(result.current.includedInstances).toEqual([]);
+    expect(result.current.userExcludedInstances).toEqual([]);
   });
 
   it('updateAutoRun merges partial with existing state', () => {
-    const storedIncluded = [{ agentType: AgentMap.PredictTrader, order: 0 }];
+    const storedIncluded = [
+      { serviceConfigId: DEFAULT_SERVICE_CONFIG_ID, order: 0 },
+    ];
     mockUseStore.mockReturnValue({
       storeState: {
         autoRun: {
           enabled: true,
           isInitialized: true,
-          includedAgents: storedIncluded,
-          userExcludedAgents: [],
+          includedAgentInstances: storedIncluded,
+          userExcludedAgentInstances: [],
         },
       },
     } as unknown as ReturnType<typeof useStore>);
@@ -91,8 +104,8 @@ describe('useAutoRunStore', () => {
     expect(mockStoreSet).toHaveBeenCalledWith('autoRun', {
       enabled: false,
       isInitialized: true,
-      includedAgents: storedIncluded,
-      userExcludedAgents: [],
+      includedAgentInstances: storedIncluded,
+      userExcludedAgentInstances: [],
     });
   });
 
@@ -110,28 +123,25 @@ describe('useAutoRunStore', () => {
   });
 
   it('updateAutoRun falls back to defaults when ref fields are undefined', () => {
-    // autoRunRef.current has explicitly undefined fields (not missing)
     mockUseStore.mockReturnValue({
       storeState: {
         autoRun: {
           enabled: undefined,
           isInitialized: undefined,
-          includedAgents: undefined,
-          userExcludedAgents: undefined,
+          includedAgentInstances: undefined,
+          userExcludedAgentInstances: undefined,
         },
       },
     } as unknown as ReturnType<typeof useStore>);
     const { result } = renderHook(() => useAutoRunStore());
-    // Pass partial with only one field - others should fall through to
-    // autoRunRef.current.x (undefined) ?? DEFAULT_AUTO_RUN.x
     act(() => {
       result.current.updateAutoRun({ enabled: true });
     });
     expect(mockStoreSet).toHaveBeenCalledWith('autoRun', {
       enabled: true,
       isInitialized: false,
-      includedAgents: [],
-      userExcludedAgents: [],
+      includedAgentInstances: [],
+      userExcludedAgentInstances: [],
     });
   });
 
@@ -139,15 +149,19 @@ describe('useAutoRunStore', () => {
     const { result } = renderHook(() => useAutoRunStore());
     act(() => {
       result.current.updateAutoRun({
-        includedAgents: [{ agentType: AgentMap.Optimus, order: 0 }],
+        includedInstances: [
+          { serviceConfigId: MOCK_SERVICE_CONFIG_ID_2, order: 0 },
+        ],
       });
     });
 
     expect(mockStoreSet).toHaveBeenCalledWith('autoRun', {
       enabled: false,
       isInitialized: false,
-      includedAgents: [{ agentType: AgentMap.Optimus, order: 0 }],
-      userExcludedAgents: [],
+      includedAgentInstances: [
+        { serviceConfigId: MOCK_SERVICE_CONFIG_ID_2, order: 0 },
+      ],
+      userExcludedAgentInstances: [],
     });
   });
 });

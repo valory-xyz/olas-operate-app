@@ -1,10 +1,12 @@
 import { Flex, Typography } from 'antd';
 import Image from 'next/image';
+import { useMemo } from 'react';
 import styled from 'styled-components';
 
-import { AGENT_CONFIG } from '@/config/agents';
-import { AgentType, COLOR } from '@/constants';
-import { useArchivedAgents } from '@/hooks';
+import { ACTIVE_AGENTS } from '@/config/agents';
+import { COLOR } from '@/constants';
+import { useArchivedAgents, useServices } from '@/hooks';
+import { getServiceInstanceName, isServiceOfAgent } from '@/utils';
 
 const { Text } = Typography;
 
@@ -19,18 +21,53 @@ const AgentSelectionContainer = styled(Flex)<{ active?: boolean }>`
   }
 `;
 
+type ArchivedInstance = {
+  serviceConfigId: string;
+  name: string;
+  agentIcon: string;
+};
+
 type ArchivedAgentsListProps = {
-  selectedAgent?: AgentType;
-  onSelectAgent: (agentType: AgentType) => void;
+  selectedInstance?: string;
+  onSelectInstance: (serviceConfigId: string) => void;
 };
 
 export const ArchivedAgentsList = ({
-  selectedAgent,
-  onSelectAgent,
+  selectedInstance,
+  onSelectInstance,
 }: ArchivedAgentsListProps) => {
-  const { archivedAgents } = useArchivedAgents();
+  const { archivedInstances } = useArchivedAgents();
+  const { services } = useServices();
 
-  if (archivedAgents.length === 0) {
+  const archivedItems = useMemo<ArchivedInstance[]>(() => {
+    if (!services) return [];
+    return archivedInstances
+      .map((serviceConfigId) => {
+        const service = services.find(
+          (s) => s.service_config_id === serviceConfigId,
+        );
+        if (!service) return null;
+
+        const agentEntry = ACTIVE_AGENTS.find(([, config]) =>
+          isServiceOfAgent(service, config),
+        );
+        if (!agentEntry) return null;
+
+        const [agentType, config] = agentEntry;
+        return {
+          serviceConfigId,
+          name: getServiceInstanceName(
+            service,
+            config.displayName,
+            config.evmHomeChainId,
+          ),
+          agentIcon: `/agent-${agentType}-icon.png`,
+        };
+      })
+      .filter((item): item is ArchivedInstance => item !== null);
+  }, [archivedInstances, services]);
+
+  if (archivedItems.length === 0) {
     return (
       <Flex
         align="center"
@@ -45,29 +82,24 @@ export const ArchivedAgentsList = ({
 
   return (
     <>
-      {archivedAgents.map((agentType) => {
-        const agentConfig = AGENT_CONFIG[agentType];
-        if (!agentConfig) return null;
-
-        return (
-          <AgentSelectionContainer
-            key={agentType}
-            active={selectedAgent === agentType}
-            onClick={() => onSelectAgent(agentType)}
-            gap={12}
-            align="center"
-          >
-            <Image
-              src={`/agent-${agentType}-icon.png`}
-              alt={`${agentConfig.displayName} icon`}
-              width={36}
-              height={36}
-              style={{ borderRadius: 8, border: `1px solid ${COLOR.GRAY_3}` }}
-            />
-            <Text>{agentConfig.displayName}</Text>
-          </AgentSelectionContainer>
-        );
-      })}
+      {archivedItems.map((item) => (
+        <AgentSelectionContainer
+          key={item.serviceConfigId}
+          active={selectedInstance === item.serviceConfigId}
+          onClick={() => onSelectInstance(item.serviceConfigId)}
+          gap={12}
+          align="center"
+        >
+          <Image
+            src={item.agentIcon}
+            alt={`${item.name} icon`}
+            width={36}
+            height={36}
+            style={{ borderRadius: 8, border: `1px solid ${COLOR.GRAY_3}` }}
+          />
+          <Text>{item.name}</Text>
+        </AgentSelectionContainer>
+      ))}
     </>
   );
 };

@@ -1,12 +1,14 @@
 import { InfoCircleOutlined, SettingOutlined } from '@ant-design/icons';
-import { Button, Flex, Modal, Typography } from 'antd';
+import { Flex, Modal, Typography } from 'antd';
+import { kebabCase } from 'lodash';
 import Image from 'next/image';
 import { useState } from 'react';
 import { LuInfo } from 'react-icons/lu';
 import styled from 'styled-components';
 
 import { AgentIntroduction } from '@/components/AgentIntroduction';
-import { CardFlex, Tooltip, usePageTransitionValue } from '@/components/ui';
+import { CardFlex, Tooltip, useContentTransitionValue } from '@/components/ui';
+import { CHAIN_CONFIG } from '@/config/chains';
 import { COLOR, PAGES } from '@/constants';
 import { useAutoRunContext } from '@/context/AutoRunProvider';
 import { usePageState, useServices } from '@/hooks';
@@ -19,6 +21,18 @@ const { Title, Text } = Typography;
 
 const AgentInfoContainer = styled.div`
   position: relative;
+`;
+
+const IconButton = styled(Flex)`
+  padding: 8px;
+  cursor: pointer;
+  border-radius: 10px;
+  background: ${COLOR.WHITE};
+  border: 1px solid ${COLOR.BORDER_GRAY};
+
+  &:hover {
+    background: ${COLOR.GRAY_1};
+  }
 `;
 
 const AutoRunAlertContainer = styled(Flex)`
@@ -47,10 +61,13 @@ const AboutAgent = () => {
 
   return (
     <>
-      <Button
+      <IconButton
+        align="center"
+        justify="center"
         onClick={() => setIsAboutAgentModalOpen(true)}
-        icon={<InfoCircleOutlined />}
-      />
+      >
+        <InfoCircleOutlined style={{ fontSize: 20 }} />
+      </IconButton>
       {isAboutAgentModalOpen && (
         <Modal
           open
@@ -70,6 +87,28 @@ const AboutAgent = () => {
   );
 };
 
+const ChainBadge = () => {
+  const { selectedAgentConfig } = useServices();
+  const chainConfig = CHAIN_CONFIG[selectedAgentConfig.evmHomeChainId];
+  const chainName = chainConfig?.name;
+
+  if (!chainName) return null;
+  return (
+    <Tooltip
+      title={`${selectedAgentConfig.displayName} is operating on ${chainName} chain`}
+    >
+      <IconButton align="center" justify="center" style={{ padding: 10 }}>
+        <Image
+          src={`/chains/${kebabCase(chainName)}-chain.png`}
+          alt={`${chainName} logo`}
+          width={16}
+          height={16}
+        />
+      </IconButton>
+    </Tooltip>
+  );
+};
+
 export const AgentInfo = () => {
   const { goto } = usePageState();
   const {
@@ -80,8 +119,8 @@ export const AgentInfo = () => {
   const { enabled: isAutoRunEnabled } = useAutoRunContext();
 
   const { isX402Enabled } = selectedAgentConfig;
-  const displayedAgentType = usePageTransitionValue(selectedAgentType);
-  const displayedAgentName = usePageTransitionValue(
+  const displayedAgentType = useContentTransitionValue(selectedAgentType);
+  const displayedAgentName = useContentTransitionValue(
     selectedAgentNameOrFallback,
   );
 
@@ -108,16 +147,20 @@ export const AgentInfo = () => {
                 <Title level={5} className="m-0">
                   {displayedAgentName}
                 </Title>
-                <Flex gap={12} align="center">
+                <Flex gap={8} align="center">
+                  <ChainBadge />
                   <AboutAgent />
                   {isX402Enabled
                     ? null
                     : selectedAgentConfig.requiresSetup && (
                         <Tooltip title="Agent settings">
-                          <Button
+                          <IconButton
+                            align="center"
+                            justify="center"
                             onClick={() => goto(PAGES.UpdateAgentTemplate)}
-                            icon={<SettingOutlined />}
-                          />
+                          >
+                            <SettingOutlined style={{ fontSize: 20 }} />
+                          </IconButton>
                         </Tooltip>
                       )}
                 </Flex>
@@ -129,7 +172,7 @@ export const AgentInfo = () => {
         </AgentInfoContainer>
       </CardFlex>
 
-      <AgentActivity />
+      <AgentActivity key={displayedAgentType} />
     </Flex>
   );
 };

@@ -10,11 +10,37 @@ import { useAutoRunController } from '../../../../context/AutoRunProvider/hooks/
 import { DEFAULT_SERVICE_CONFIG_ID } from '../../../helpers/factories';
 
 jest.mock('../../../../hooks', () => ({
-  useRewardContext: jest.fn().mockReturnValue({ isEligibleForRewards: false }),
-  useAgentRunning: jest.fn().mockReturnValue({ runningAgentType: null }),
+  useRewardContext: jest.fn().mockReturnValue({
+    isEligibleForRewards: false,
+    stakingRewardsDetails: null,
+  }),
+  useAgentRunning: jest.fn().mockReturnValue({
+    runningAgentType: null,
+    runningServiceConfigId: null,
+  }),
   useStartService: jest.fn().mockReturnValue({
     startService: jest.fn().mockResolvedValue(undefined),
   }),
+}));
+jest.mock('../../../../hooks/useBalanceAndRefillRequirementsContext', () => ({
+  useBalanceAndRefillRequirementsContext: jest.fn().mockReturnValue({
+    allowStartAgentByServiceConfigId: jest.fn().mockReturnValue(true),
+    hasBalancesForServiceConfigId: jest.fn().mockReturnValue(true),
+  }),
+}));
+jest.mock('../../../../hooks/useIsAgentGeoRestricted', () => ({
+  useIsAgentGeoRestricted: jest
+    .fn()
+    .mockReturnValue({ isAgentGeoRestricted: false }),
+}));
+jest.mock('../../../../hooks/useIsInitiallyFunded', () => ({
+  useIsInitiallyFunded: jest.fn().mockReturnValue({
+    isInstanceInitiallyFunded: jest.fn().mockReturnValue(true),
+  }),
+}));
+jest.mock('../../../../context/AutoRunProvider/utils/autoRunHelpers', () => ({
+  fetchDeployabilityForAgent: jest.fn().mockResolvedValue({ canRun: true }),
+  isStakingEpochExpired: jest.fn().mockReturnValue(false),
 }));
 jest.mock(
   '../../../../context/AutoRunProvider/hooks/useLogAutoRunEvent',
@@ -30,15 +56,16 @@ jest.mock(
     useAutoRunSignals: jest.fn().mockReturnValue({
       enabledRef: { current: false },
       runningAgentTypeRef: { current: null },
+      runningServiceConfigIdRef: { current: null },
       lastRewardsEligibilityRef: { current: {} },
       scanTick: 0,
       rewardsTick: 0,
       scheduleNextScan: jest.fn(),
       hasScheduledScan: jest.fn().mockReturnValue(false),
-      waitForAgentSelection: jest.fn().mockResolvedValue(true),
+      waitForInstanceSelection: jest.fn().mockResolvedValue(true),
       waitForBalancesReady: jest.fn().mockResolvedValue(true),
       waitForRewardsEligibility: jest.fn().mockResolvedValue(false),
-      waitForRunningAgent: jest.fn().mockResolvedValue(true),
+      waitForRunningInstance: jest.fn().mockResolvedValue(true),
       markRewardSnapshotPending: jest.fn(),
       getRewardSnapshot: jest.fn().mockReturnValue(undefined),
       setRewardSnapshot: jest.fn(),
@@ -95,16 +122,16 @@ const makeHookParams = (
   overrides: Partial<Parameters<typeof useAutoRunController>[0]> = {},
 ) => ({
   enabled: false,
-  orderedIncludedAgentTypes: [AgentMap.PredictTrader],
+  orderedIncludedInstances: [DEFAULT_SERVICE_CONFIG_ID],
   configuredAgents: [],
-  updateAgentType: jest.fn(),
   selectedAgentType: AgentMap.PredictTrader,
   selectedServiceConfigId: DEFAULT_SERVICE_CONFIG_ID,
   isSelectedAgentDetailsLoading: false,
   getSelectedEligibility: jest.fn().mockReturnValue({ canRun: true }),
+  canCreateSafeForChain: jest.fn().mockReturnValue({ ok: true }),
   createSafeIfNeeded: jest.fn().mockResolvedValue(undefined),
   showNotification: jest.fn(),
-  onAutoRunAgentStarted: jest.fn(),
+  onAutoRunInstanceStarted: jest.fn(),
   onAutoRunStartStateChange: jest.fn(),
   ...overrides,
 });
@@ -146,15 +173,12 @@ describe('useAutoRunController', () => {
       { initialProps: params },
     );
     rerender({ ...params, enabled: false });
-    // Hook still exposes its interface after disabling
     expect(typeof result.current.stopRunningAgent).toBe('function');
-    // Disabled state propagates to signals sub-hook
     const lastSignalsCall =
       useAutoRunSignals.mock.calls[useAutoRunSignals.mock.calls.length - 1][0];
     expect(lastSignalsCall.enabled).toBe(false);
   });
 
-  // Tests for verbose logging — skipped (not silently dropped) when the flag is off
   const describeVerbose = AUTO_RUN_VERBOSE_LOGS ? describe : describe.skip;
   describeVerbose('health summary logging (AUTO_RUN_VERBOSE_LOGS)', () => {
     it('logs health summary at interval when enabled', () => {
@@ -164,11 +188,9 @@ describe('useAutoRunController', () => {
       const params = makeHookParams({ enabled: true });
       renderHook(() => useAutoRunController(params));
 
-      // With no events, interval fires but skips logging (hasEvents check)
       act(() => {
         jest.advanceTimersByTime(HEALTH_SUMMARY_INTERVAL_SECONDS * 1000);
       });
-      // No health events → no log call for summary
       const summaryCalls = mockLogMessage.mock.calls.filter(
         (call: string[]) =>
           typeof call[0] === 'string' && call[0].includes('health summary'),
@@ -183,25 +205,21 @@ describe('useAutoRunController', () => {
       const params = makeHookParams({ enabled: true });
       renderHook(() => useAutoRunController(params));
 
-      // Grab the recordMetric callback passed to useAutoRunOperations
       const operationsCallArgs = useAutoRunOperations.mock.calls[0][0] as {
         recordMetric: (metric: string) => void;
       };
       const { recordMetric } = operationsCallArgs;
 
-      // Record some health events
       act(() => {
         recordMetric('startErrors');
         recordMetric('startErrors');
         recordMetric('stopTimeouts');
       });
 
-      // Advance to trigger the health summary interval
       act(() => {
         jest.advanceTimersByTime(HEALTH_SUMMARY_INTERVAL_SECONDS * 1000);
       });
 
-      // Should have logged a health summary with the recorded metrics
       const summaryCalls = mockLogMessage.mock.calls.filter(
         (call: string[]) =>
           typeof call[0] === 'string' && call[0].includes('health summary'),
@@ -211,10 +229,8 @@ describe('useAutoRunController', () => {
       expect(summaryCalls[0][0]).toContain('stopTimeouts=1');
       expect(summaryCalls[0][0]).toContain('rewardsErrors=0');
 
-      // Reset logMessage to track only new calls
       mockLogMessage.mockClear();
 
-      // Advance again — stats should have been reset, so no new summary
       act(() => {
         jest.advanceTimersByTime(HEALTH_SUMMARY_INTERVAL_SECONDS * 1000);
       });
@@ -235,7 +251,6 @@ describe('useAutoRunController', () => {
         initialProps: params,
       });
       rerender({ ...params, enabled: false });
-      // Advancing timers after disable should not trigger health summary logging
       act(() => {
         jest.advanceTimersByTime(HEALTH_SUMMARY_INTERVAL_SECONDS * 1000 * 2);
       });

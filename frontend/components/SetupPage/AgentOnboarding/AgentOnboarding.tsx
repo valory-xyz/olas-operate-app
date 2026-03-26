@@ -1,5 +1,5 @@
 import { Button, Flex, Spin, Typography } from 'antd';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { LuArchive } from 'react-icons/lu';
 import { TbPlus } from 'react-icons/tb';
 import styled from 'styled-components';
@@ -7,7 +7,7 @@ import styled from 'styled-components';
 import { AgentIntroduction } from '@/components/AgentIntroduction';
 import { Segmented } from '@/components/ui';
 import { BackButton } from '@/components/ui/BackButton';
-import { ACTIVE_AGENTS, AGENT_CONFIG } from '@/config/agents';
+import { AGENT_CONFIG } from '@/config/agents';
 import { AgentType, COLOR, PAGES, SETUP_SCREEN } from '@/constants';
 import {
   useArchivedAgents,
@@ -22,6 +22,7 @@ import { isNonEmpty } from '@/utils';
 import { FundingRequirementStep } from './FundingRequirementStep';
 import { RestrictedRegion } from './RestrictedRegion';
 import { AGENT_TAB, SelectAgent } from './SelectAgent';
+import { findUndeployedInstance } from './utils';
 
 const { Text, Title } = Typography;
 
@@ -69,7 +70,7 @@ const SelectYourAgent = ({ canGoBack }: { canGoBack: boolean }) => {
         Select Agent
       </Title>
       <Text type="secondary">
-        Review and select the AI agent you’d like to add or restore.
+        Review and select the AI agent you&apos;d like to add or restore.
       </Text>
     </Flex>
   );
@@ -116,32 +117,24 @@ const GeoLocationRestrictionCouldNotLoad = () => (
 export const AgentOnboarding = () => {
   const { goto } = useSetup();
   const { goto: gotoPage } = usePageState();
-  const { updateAgentType, services } = useServices();
-  const { archivedAgents, unarchiveAgent } = useArchivedAgents();
+  const {
+    services,
+    selectAgentTypeForSetup,
+    updateSelectedServiceConfigId,
+    getAgentTypeFromService,
+  } = useServices();
+  const { archivedInstances, unarchiveInstance } = useArchivedAgents();
 
   const [selectedAgent, setSelectedAgent] = useState<Optional<AgentType>>();
+  const [selectedArchivedInstanceId, setSelectedArchivedInstanceId] =
+    useState<Optional<string>>();
   const [activeTab, setActiveTab] = useState<AgentTab>(AGENT_TAB.New);
 
-  // Default to "Archived" tab if there are no new agents to add
-  const hasSetDefaultTab = useRef(false);
-  useEffect(() => {
-    if (hasSetDefaultTab.current) return;
-    if (!services) return;
-    hasSetDefaultTab.current = true;
-
-    const hasNewAgents = ACTIVE_AGENTS.some(
-      ([agentType, agentConfig]) =>
-        !services.some(
-          ({ service_public_id, home_chain }) =>
-            service_public_id === agentConfig.servicePublicId &&
-            home_chain === agentConfig.middlewareHomeChainId,
-        ) && !archivedAgents.includes(agentType as AgentType),
-    );
-
-    if (!hasNewAgents && archivedAgents.length > 0) {
-      setActiveTab(AGENT_TAB.Archived);
-    }
-  }, [archivedAgents, services]);
+  // Derive agentType for the selected archived instance (for AgentIntroduction)
+  const selectedArchivedAgentType = useMemo<Optional<AgentType>>(() => {
+    if (!selectedArchivedInstanceId) return undefined;
+    return getAgentTypeFromService(selectedArchivedInstanceId) ?? undefined;
+  }, [selectedArchivedInstanceId, getAgentTypeFromService]);
 
   const selectedAgentConfig = selectedAgent
     ? AGENT_CONFIG[selectedAgent]
@@ -157,6 +150,21 @@ export const AgentOnboarding = () => {
     if (!selectedAgent) return;
     const currentAgentConfig = AGENT_CONFIG[selectedAgent];
 
+    // If an undeployed instance exists, select it, instead of
+    // letting the user create another new instance
+    if (services) {
+      const undeployed = findUndeployedInstance(selectedAgent, services);
+      const isArchived = undeployed
+        ? archivedInstances.includes(undeployed.service_config_id)
+        : false;
+
+      if (undeployed && !isArchived) {
+        updateSelectedServiceConfigId(undeployed.service_config_id);
+        gotoPage(PAGES.Main);
+        return;
+      }
+    }
+
     // if agent is "coming soon" should be redirected to EARLY ACCESS PAGE
     if (currentAgentConfig.isComingSoon) {
       goto(SETUP_SCREEN.EarlyAccessOnly);
@@ -170,26 +178,41 @@ export const AgentOnboarding = () => {
     } else {
       goto(SETUP_SCREEN.SelectStaking);
     }
-  }, [goto, selectedAgent]);
+  }, [
+    archivedInstances,
+    goto,
+    gotoPage,
+    selectedAgent,
+    services,
+    updateSelectedServiceConfigId,
+  ]);
 
   const handleSelectYourAgent = useCallback(
     (agentType: AgentType) => {
-      updateAgentType(agentType);
+      selectAgentTypeForSetup(agentType);
       setSelectedAgent(agentType);
     },
-    [updateAgentType],
+    [selectAgentTypeForSetup],
   );
 
-  const handleSelectArchivedAgent = useCallback((agentType: AgentType) => {
-    setSelectedAgent(agentType);
-  }, []);
+  const handleSelectArchivedInstance = useCallback(
+    (serviceConfigId: string) => {
+      setSelectedArchivedInstanceId(serviceConfigId);
+    },
+    [],
+  );
 
-  const handleRestoreAgent = useCallback(() => {
-    if (!selectedAgent) return;
-    unarchiveAgent(selectedAgent);
-    updateAgentType(selectedAgent);
+  const handleRestoreInstance = useCallback(() => {
+    if (!selectedArchivedInstanceId) return;
+    unarchiveInstance(selectedArchivedInstanceId);
+    updateSelectedServiceConfigId(selectedArchivedInstanceId);
     setTimeout(() => gotoPage(PAGES.Main), 300);
-  }, [gotoPage, selectedAgent, unarchiveAgent, updateAgentType]);
+  }, [
+    gotoPage,
+    selectedArchivedInstanceId,
+    unarchiveInstance,
+    updateSelectedServiceConfigId,
+  ]);
 
   const canSelectAgent = useMemo(() => {
     if (!selectedAgent) return false;
@@ -207,13 +230,13 @@ export const AgentOnboarding = () => {
     if (activeTab === AGENT_TAB.Archived) {
       return (
         <AgentIntroduction
-          agentType={selectedAgent}
+          agentType={selectedArchivedAgentType}
           renderAgentSelection={
-            selectedAgent
+            selectedArchivedInstanceId
               ? () => (
                   <BlockButton
                     text="Restore Agent"
-                    onClick={handleRestoreAgent}
+                    onClick={handleRestoreInstance}
                   />
                 )
               : undefined
@@ -253,12 +276,14 @@ export const AgentOnboarding = () => {
     activeTab,
     canSelectAgent,
     handleAgentSelect,
-    handleRestoreAgent,
+    handleRestoreInstance,
     isAgentGeoRestricted,
     isGeoError,
     isGeoLoading,
     selectedAgent,
     selectedAgentConfig?.isGeoLocationRestricted,
+    selectedArchivedAgentType,
+    selectedArchivedInstanceId,
   ]);
 
   return (
@@ -266,7 +291,7 @@ export const AgentOnboarding = () => {
       <AgentOnboardingContainer vertical gap={24}>
         <SelectYourAgent canGoBack={isNonEmpty(services)} />
 
-        {archivedAgents.length > 0 && (
+        {archivedInstances.length > 0 && (
           <Flex style={{ borderBottom: `1px solid ${COLOR.GRAY_4}` }}>
             <Segmented
               options={OPTIONS}
@@ -274,6 +299,7 @@ export const AgentOnboarding = () => {
               onChange={(val) => {
                 setActiveTab(val as AgentTab);
                 setSelectedAgent(undefined);
+                setSelectedArchivedInstanceId(undefined);
               }}
               size="large"
             />
@@ -284,8 +310,9 @@ export const AgentOnboarding = () => {
           <Flex vertical className="agent-selection-left-content">
             <SelectAgent
               onSelectYourAgent={handleSelectYourAgent}
-              onSelectArchivedAgent={handleSelectArchivedAgent}
+              onSelectArchivedInstance={handleSelectArchivedInstance}
               selectedAgent={selectedAgent}
+              selectedArchivedInstance={selectedArchivedInstanceId}
               activeTab={activeTab}
             />
           </Flex>

@@ -8,7 +8,6 @@ import {
   useState,
 } from 'react';
 
-import { AgentType } from '@/constants';
 import { useArchivedAgents, useElectronApi, useServices } from '@/hooks';
 
 import {
@@ -22,83 +21,90 @@ import { useSafeEligibility } from './hooks/useSafeEligibility';
 import { useSelectedEligibility } from './hooks/useSelectedEligibility';
 import { AutoRunContextType } from './types';
 import {
-  appendNewAgents,
-  getDecommissionedAgentTypes,
-  getEligibleAgentTypes,
-  getExcludedAgentTypes,
-  getOrderedIncludedAgentTypes,
-  normalizeIncludedAgents,
-  sortIncludedAgents,
+  appendNewInstances,
+  getDecommissionedInstances,
+  getEligibleInstances,
+  getExcludedInstances,
+  getOrderedIncludedInstances,
+  normalizeIncludedInstances,
+  sortIncludedInstances,
 } from './utils/utils';
 
 const AutoRunContext = createContext<AutoRunContextType>({
   enabled: false,
-  includedAgents: [],
-  excludedAgents: [],
+  includedInstances: [],
+  excludedInstances: [],
   isToggling: false,
-  eligibilityByAgent: {},
+  eligibilityByInstance: {},
   setEnabled: () => {},
-  includeAgent: () => {},
-  excludeAgent: () => {},
+  includeInstance: () => {},
+  excludeInstance: () => {},
 });
 
 /**
- * - Provider that manages the state and logic for auto-running agents
- * based on the user's configuration and the current eligibility of agents.
- * - It orchestrates the rotation of agents, handles enabling/disabling auto-run,
+ * - Provider that manages the state and logic for auto-running agent instances
+ * based on the user's configuration and the current eligibility of the instances.
+ * - It orchestrates the rotation of instances, handles enabling/disabling auto-run,
  * and provides context values for the UI to consume.
  */
 export const AutoRunProvider = ({ children }: PropsWithChildren) => {
-  const { services, selectedAgentType, selectedService, updateAgentType } =
-    useServices();
+  const {
+    services,
+    selectedAgentType,
+    selectedService,
+    selectedServiceConfigId,
+  } = useServices();
   const { showNotification } = useElectronApi();
+
+  // Derive agent metadata from services.
+  const configuredAgents = useConfiguredAgents(services);
+
   const {
     enabled,
-    includedAgents,
+    includedInstances,
     isInitialized,
-    userExcludedAgents,
+    userExcludedInstances,
     updateAutoRun,
   } = useAutoRunStore();
 
-  // Derived agent lists used for UI and rotation ordering.
-  const configuredAgents = useConfiguredAgents(services);
-  const configuredAgentTypes = useMemo(
-    () => configuredAgents.map((agent) => agent.agentType),
+  const configuredInstances = useMemo(
+    () => configuredAgents.map((agent) => agent.serviceConfigId),
     [configuredAgents],
   );
-  const decommissionedAgentTypes = useMemo(
-    () => getDecommissionedAgentTypes(configuredAgents),
+  const decommissionedInstances = useMemo(
+    () => getDecommissionedInstances(configuredAgents),
     [configuredAgents],
   );
-  const { archivedAgents } = useArchivedAgents();
-  const eligibleAgentTypes = useMemo(
+  const { archivedInstances: archivedInstanceIds } = useArchivedAgents();
+
+  const eligibleInstances = useMemo(
     () =>
-      getEligibleAgentTypes(configuredAgentTypes, [
-        ...decommissionedAgentTypes,
-        ...archivedAgents,
+      getEligibleInstances(configuredInstances, [
+        ...decommissionedInstances,
+        ...archivedInstanceIds,
       ]),
-    [configuredAgentTypes, decommissionedAgentTypes, archivedAgents],
+    [configuredInstances, decommissionedInstances, archivedInstanceIds],
   );
-  const includedAgentsSorted = useMemo(
+  const includedInstancesSorted = useMemo(
     () =>
-      sortIncludedAgents(
-        normalizeIncludedAgents(includedAgents),
-        eligibleAgentTypes,
+      sortIncludedInstances(
+        normalizeIncludedInstances(includedInstances),
+        eligibleInstances,
       ),
-    [eligibleAgentTypes, includedAgents],
+    [eligibleInstances, includedInstances],
   );
-  const orderedIncludedAgentTypes = useMemo(
+  const orderedIncludedInstances = useMemo(
     () =>
-      getOrderedIncludedAgentTypes(includedAgentsSorted, eligibleAgentTypes),
-    [eligibleAgentTypes, includedAgentsSorted],
+      getOrderedIncludedInstances(includedInstancesSorted, eligibleInstances),
+    [eligibleInstances, includedInstancesSorted],
   );
-  const includedAgentTypesForUi = useMemo(
-    () => includedAgentsSorted.map((agent) => agent.agentType),
-    [includedAgentsSorted],
+  const includedInstancesForUi = useMemo(
+    () => includedInstancesSorted.map((instance) => instance.serviceConfigId),
+    [includedInstancesSorted],
   );
-  const excludedAgents = useMemo(
-    () => getExcludedAgentTypes(configuredAgentTypes, includedAgentTypesForUi),
-    [configuredAgentTypes, includedAgentTypesForUi],
+  const excludedInstances = useMemo(
+    () => getExcludedInstances(configuredInstances, includedInstancesForUi),
+    [configuredInstances, includedInstancesForUi],
   );
 
   // Eligibility for the currently selected agent.
@@ -109,19 +115,15 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
   // Auto-run controller runs the orchestration loop.
   const { stopRunningAgent, runningAgentType } = useAutoRunController({
     enabled,
-    orderedIncludedAgentTypes,
+    orderedIncludedInstances,
     configuredAgents,
-    updateAgentType,
     selectedAgentType,
     selectedServiceConfigId: selectedService?.service_config_id ?? null,
     isSelectedAgentDetailsLoading,
     getSelectedEligibility,
+    canCreateSafeForChain,
     createSafeIfNeeded,
     showNotification,
-    onAutoRunAgentStarted: (agentType) => {
-      if (!configuredAgentTypes.includes(agentType)) return;
-      updateAgentType(agentType);
-    },
     onAutoRunStartStateChange: (isStarting) => {
       setIsStarting(isStarting);
     },
@@ -142,9 +144,7 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
   }, [enabled, isStarting]);
 
   // Guard against the narrow race where auto-run is disabled while a start
-  // operation is still in-flight: runningAgentType can still be null at disable
-  // time, and only appears a few seconds later via polling. In that case we do
-  // bounded follow-up checks and stop once if the agent appears.
+  // operation is still in-flight.
   useEffect(() => {
     if (enabled) {
       if (disableRaceStopChecksLeft !== 0) {
@@ -176,65 +176,72 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
     stopRunningAgent,
   ]);
 
-  // Seed the included list once from eligible agents. After that, empty is intentional.
+  // Seed the included list once from eligible instances. After that, empty is intentional.
   useEffect(() => {
     if (!services) return;
     if (isInitialized) return;
-    if (eligibleAgentTypes.length === 0) return;
+    if (eligibleInstances.length === 0) return;
 
-    const includedAgents = eligibleAgentTypes.map((agentType, index) => ({
-      agentType,
+    const instances = eligibleInstances.map((serviceConfigId, index) => ({
+      serviceConfigId,
       order: index,
     }));
-    updateAutoRun({ includedAgents, isInitialized: true });
-  }, [eligibleAgentTypes, isInitialized, services, updateAutoRun]);
+    updateAutoRun({ includedInstances: instances, isInitialized: true });
+  }, [eligibleInstances, isInitialized, services, updateAutoRun]);
 
-  // Auto-append newly onboarded agents unless explicitly excluded by the user.
+  // Auto-append newly onboarded instances unless explicitly excluded by the user.
   useEffect(() => {
     if (!services) return;
     if (!isInitialized) return;
-    if (eligibleAgentTypes.length === 0) return;
+    if (eligibleInstances.length === 0) return;
 
-    const includedSet = new Set(includedAgents.map((item) => item.agentType));
-    const excludedSet = new Set(userExcludedAgents);
-    const newAgents = eligibleAgentTypes.filter(
-      (agentType) => !includedSet.has(agentType) && !excludedSet.has(agentType),
+    const includedSet = new Set(
+      includedInstances.map((item) => item.serviceConfigId),
+    );
+    const excludedSet = new Set(userExcludedInstances);
+    const newInstances = eligibleInstances.filter(
+      (id) => !includedSet.has(id) && !excludedSet.has(id),
     );
 
-    if (newAgents.length === 0) return;
+    if (newInstances.length === 0) return;
 
     updateAutoRun({
-      includedAgents: appendNewAgents(includedAgents, newAgents),
+      includedInstances: appendNewInstances(includedInstances, newInstances),
     });
   }, [
-    eligibleAgentTypes,
-    includedAgents,
+    eligibleInstances,
+    includedInstances,
     isInitialized,
     services,
     updateAutoRun,
-    userExcludedAgents,
+    userExcludedInstances,
   ]);
 
-  // Keep included list normalized and drop excluded or decommissioned agents.
+  // Keep included list normalized and drop excluded or decommissioned instances.
   useEffect(() => {
-    if (includedAgents.length === 0) return;
-    const excludedSet = new Set(userExcludedAgents);
-    const normalized = normalizeIncludedAgents(includedAgents).filter(
+    if (includedInstances.length === 0) return;
+    const excludedSet = new Set(userExcludedInstances);
+    const normalized = normalizeIncludedInstances(includedInstances).filter(
       (item) =>
-        eligibleAgentTypes.includes(item.agentType) &&
-        !excludedSet.has(item.agentType),
+        eligibleInstances.includes(item.serviceConfigId) &&
+        !excludedSet.has(item.serviceConfigId),
     );
     const hasChanges =
-      normalized.length !== includedAgents.length ||
+      normalized.length !== includedInstances.length ||
       normalized.some(
         (item, index) =>
-          includedAgents[index]?.agentType !== item.agentType ||
-          includedAgents[index]?.order !== item.order,
+          includedInstances[index]?.serviceConfigId !== item.serviceConfigId ||
+          includedInstances[index]?.order !== item.order,
       );
 
     if (!hasChanges) return;
-    updateAutoRun({ includedAgents: normalized });
-  }, [eligibleAgentTypes, includedAgents, updateAutoRun, userExcludedAgents]);
+    updateAutoRun({ includedInstances: normalized });
+  }, [
+    eligibleInstances,
+    includedInstances,
+    updateAutoRun,
+    userExcludedInstances,
+  ]);
 
   const setEnabled = useCallback(
     (value: boolean) => {
@@ -271,101 +278,110 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
   );
 
   /**
-   * Include an agent in the auto-run rotation.
+   * Include an instance in the auto-run rotation.
    */
-  const includeAgent = useCallback(
-    (agentType: AgentType) => {
-      if (!eligibleAgentTypes.includes(agentType)) return;
-      const nextExcluded = userExcludedAgents.filter(
-        (item) => item !== agentType,
+  const includeInstance = useCallback(
+    (serviceConfigId: string) => {
+      if (!eligibleInstances.includes(serviceConfigId)) return;
+      const nextExcluded = userExcludedInstances.filter(
+        (item) => item !== serviceConfigId,
       );
-      const existing = includedAgents.find(
-        (item) => item.agentType === agentType,
+      const existing = includedInstances.find(
+        (item) => item.serviceConfigId === serviceConfigId,
       );
       if (existing) {
-        if (nextExcluded.length !== userExcludedAgents.length) {
-          updateAutoRun({ userExcludedAgents: nextExcluded });
+        if (nextExcluded.length !== userExcludedInstances.length) {
+          updateAutoRun({ userExcludedInstances: nextExcluded });
         }
         return;
       }
 
       updateAutoRun({
-        includedAgents: appendNewAgents(includedAgents, [agentType]),
-        userExcludedAgents: nextExcluded,
-      });
-    },
-    [eligibleAgentTypes, includedAgents, updateAutoRun, userExcludedAgents],
-  );
-
-  /**
-   * Exclude an agent from the auto-run rotation.
-   */
-  const excludeAgent = useCallback(
-    (agentType: AgentType) => {
-      const isLastIncluded =
-        includedAgentTypesForUi.length <= 1 &&
-        includedAgentTypesForUi.includes(agentType);
-      if (isLastIncluded) return;
-      const nextIncluded = includedAgents.filter(
-        (item) => item.agentType !== agentType,
-      );
-      const nextExcluded = userExcludedAgents.includes(agentType)
-        ? userExcludedAgents
-        : [...userExcludedAgents, agentType];
-
-      updateAutoRun({
-        includedAgents: nextIncluded,
-        userExcludedAgents: nextExcluded,
+        includedInstances: appendNewInstances(includedInstances, [
+          serviceConfigId,
+        ]),
+        userExcludedInstances: nextExcluded,
       });
     },
     [
-      includedAgentTypesForUi,
-      includedAgents,
+      eligibleInstances,
+      includedInstances,
       updateAutoRun,
-      userExcludedAgents,
+      userExcludedInstances,
     ],
   );
 
-  // Provide UI eligibility; non-selected agents default to permissive.
-  const eligibilityByAgent = useMemo(() => {
-    // Seed all configured agents with a permissive default so the "+" button
+  /**
+   * Exclude an instance from the auto-run rotation.
+   */
+  const excludeInstance = useCallback(
+    (serviceConfigId: string) => {
+      const isLastIncluded =
+        includedInstancesForUi.length <= 1 &&
+        includedInstancesForUi.includes(serviceConfigId);
+      if (isLastIncluded) return;
+      const nextIncluded = includedInstances.filter(
+        (item) => item.serviceConfigId !== serviceConfigId,
+      );
+      const nextExcluded = userExcludedInstances.includes(serviceConfigId)
+        ? userExcludedInstances
+        : [...userExcludedInstances, serviceConfigId];
+
+      updateAutoRun({
+        includedInstances: nextIncluded,
+        userExcludedInstances: nextExcluded,
+      });
+    },
+    [
+      includedInstancesForUi,
+      includedInstances,
+      updateAutoRun,
+      userExcludedInstances,
+    ],
+  );
+
+  // Provide UI eligibility; non-selected instances default to permissive.
+  const eligibilityByInstance = useMemo(() => {
+    // Seed all configured instances with a permissive default so the "+" button
     // is enabled by default. We only have live eligibility data for the
-    // currently selected agent; for the rest we fall back to canRun: true and
+    // currently selected instance; for the rest we fall back to canRun: true and
     // let the execution-time checks (in useAutoRunController) handle skipping.
-    const base: AutoRunContextType['eligibilityByAgent'] = {};
-    for (const { agentType } of configuredAgents) {
-      base[agentType] = { canRun: true };
+    const base: AutoRunContextType['eligibilityByInstance'] = {};
+    for (const { serviceConfigId } of configuredAgents) {
+      base[serviceConfigId] = { canRun: true };
     }
-    for (const agentType of decommissionedAgentTypes) {
-      base[agentType] = { canRun: false, reason: 'Decommissioned' };
+    for (const id of decommissionedInstances) {
+      base[id] = { canRun: false, reason: 'Decommissioned' };
     }
-    base[selectedAgentType] = getSelectedEligibility();
+    if (selectedServiceConfigId) {
+      base[selectedServiceConfigId] = getSelectedEligibility();
+    }
     return base;
   }, [
     configuredAgents,
-    decommissionedAgentTypes,
+    decommissionedInstances,
     getSelectedEligibility,
-    selectedAgentType,
+    selectedServiceConfigId,
   ]);
 
   const value = useMemo(
     () => ({
       enabled,
-      includedAgents: includedAgentsSorted,
-      excludedAgents,
+      includedInstances: includedInstancesSorted,
+      excludedInstances,
       isToggling,
-      eligibilityByAgent,
+      eligibilityByInstance,
       setEnabled,
-      includeAgent,
-      excludeAgent,
+      includeInstance,
+      excludeInstance,
     }),
     [
       enabled,
-      excludedAgents,
-      eligibilityByAgent,
-      excludeAgent,
-      includeAgent,
-      includedAgentsSorted,
+      excludedInstances,
+      eligibilityByInstance,
+      excludeInstance,
+      includeInstance,
+      includedInstancesSorted,
       isToggling,
       setEnabled,
     ],

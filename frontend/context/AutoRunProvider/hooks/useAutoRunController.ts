@@ -1,7 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 
-import { AgentType } from '@/constants';
+import { AGENT_CONFIG } from '@/config/agents';
+import { AgentMap, AgentType, EvmChainId } from '@/constants';
 import { useAgentRunning, useRewardContext, useStartService } from '@/hooks';
+import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRefillRequirementsContext';
+import { useIsAgentGeoRestricted } from '@/hooks/useIsAgentGeoRestricted';
+import { useIsInitiallyFunded } from '@/hooks/useIsInitiallyFunded';
 
 import {
   AUTO_RUN_VERBOSE_LOGS,
@@ -9,7 +13,10 @@ import {
   HEALTH_SUMMARY_INTERVAL_SECONDS,
 } from '../constants';
 import { AgentMeta } from '../types';
-import { isStakingEpochExpired } from '../utils/autoRunHelpers';
+import {
+  fetchDeployabilityForAgent,
+  isStakingEpochExpired,
+} from '../utils/autoRunHelpers';
 import { useAutoRunLifecycle } from './useAutoRunLifecycle';
 import { useAutoRunOperations } from './useAutoRunOperations';
 import { useAutoRunScanner } from './useAutoRunScanner';
@@ -18,9 +25,8 @@ import { useLogAutoRunEvent } from './useLogAutoRunEvent';
 
 type UseAutoRunControllerParams = {
   enabled: boolean;
-  orderedIncludedAgentTypes: AgentType[];
+  orderedIncludedInstances: string[];
   configuredAgents: AgentMeta[];
-  updateAgentType: (agentType: AgentType) => void;
   selectedAgentType: AgentType;
   selectedServiceConfigId: string | null;
   isSelectedAgentDetailsLoading: boolean;
@@ -29,9 +35,14 @@ type UseAutoRunControllerParams = {
     reason?: string;
     loadingReason?: string;
   };
+  canCreateSafeForChain: (chainId: EvmChainId) => {
+    ok: boolean;
+    reason?: string;
+    isLoading?: boolean;
+  };
   createSafeIfNeeded: (meta: AgentMeta) => Promise<void>;
   showNotification?: (title: string, body?: string) => void;
-  onAutoRunAgentStarted?: (agentType: AgentType) => void;
+  onAutoRunInstanceStarted?: (serviceConfigId: string) => void;
   onAutoRunStartStateChange?: (isStarting: boolean) => void;
 };
 
@@ -43,23 +54,23 @@ type UseAutoRunControllerParams = {
  * - `useAutoRunLifecycle`: effects (rotation, polling, resume-after-stop)
  *
  * Example:
- * Selected agent = `memeooorr`, running agent = `optimus`.
- * - Controller wires all pieces so lifecycle can stop `optimus`,
+ * Selected instance = `sc-xyz`, running instance = `sc-123`.
+ * - Controller wires all pieces so lifecycle can stop `sc-123`,
  * - scanner can pick next candidate and
  * - operations can start it safely.
  */
 export const useAutoRunController = ({
   enabled,
-  orderedIncludedAgentTypes,
+  orderedIncludedInstances,
   configuredAgents,
-  updateAgentType,
   selectedAgentType,
   selectedServiceConfigId,
   isSelectedAgentDetailsLoading,
   getSelectedEligibility,
+  canCreateSafeForChain,
   createSafeIfNeeded,
   showNotification,
-  onAutoRunAgentStarted,
+  onAutoRunInstanceStarted,
   onAutoRunStartStateChange,
 }: UseAutoRunControllerParams) => {
   const { isEligibleForRewards, stakingRewardsDetails } = useRewardContext();
@@ -70,9 +81,33 @@ export const useAutoRunController = ({
     if (!stakingRewardsDetails) return false;
     return isStakingEpochExpired(stakingRewardsDetails);
   }, [stakingRewardsDetails]);
-  const { runningAgentType } = useAgentRunning();
+  const { runningAgentType, runningServiceConfigId } = useAgentRunning();
   const { startService } = useStartService();
   const { logMessage } = useLogAutoRunEvent();
+
+  // Balance and refill requirements — keyed per serviceConfigId, not selection-dependent.
+  const { allowStartAgentByServiceConfigId, hasBalancesForServiceConfigId } =
+    useBalanceAndRefillRequirementsContext();
+
+  // Initial funding check — reads electron store, not selection-dependent.
+  const { isInstanceInitiallyFunded } = useIsInitiallyFunded();
+
+  // Geo-restriction check for Polystrat (the only geo-restricted agent).
+  // Queried once here; result is passed into fetchDeployabilityForAgent as a
+  // callback so it never touches the selection-keyed context.
+  const { isAgentGeoRestricted: isPolystratGeoRestricted } =
+    useIsAgentGeoRestricted({
+      agentType: AgentMap.Polystrat,
+      agentConfig: AGENT_CONFIG[AgentMap.Polystrat],
+    });
+
+  const isGeoRestrictedForAgent = useCallback(
+    (agentType: AgentType) => {
+      if (agentType === AgentMap.Polystrat) return isPolystratGeoRestricted;
+      return false;
+    },
+    [isPolystratGeoRestricted],
+  );
 
   const healthStatsRef = useRef({
     startErrors: 0,
@@ -120,15 +155,16 @@ export const useAutoRunController = ({
   const {
     enabledRef,
     runningAgentTypeRef,
+    runningServiceConfigIdRef,
     lastRewardsEligibilityRef,
     scanTick,
     rewardsTick,
     scheduleNextScan,
     hasScheduledScan,
-    waitForAgentSelection,
+    waitForInstanceSelection,
     waitForBalancesReady,
     waitForRewardsEligibility,
-    waitForRunningAgent,
+    waitForRunningInstance,
     markRewardSnapshotPending,
     getRewardSnapshot,
     setRewardSnapshot,
@@ -136,6 +172,7 @@ export const useAutoRunController = ({
   } = useAutoRunSignals({
     enabled,
     runningAgentType,
+    runningServiceConfigId,
     isSelectedAgentDetailsLoading,
     isEligibleForRewards,
     isEpochExpired,
@@ -144,10 +181,32 @@ export const useAutoRunController = ({
     logMessage,
   });
 
-  // Per-agent backoff after stop-timeout to avoid immediate re-trigger loops.
-  // Example: if `optimus` fails to stop, keep a temporary "do not rotate yet" window.
-  const stopRetryBackoffUntilRef = useRef<Partial<Record<AgentType, number>>>(
-    {},
+  // Per-instance backoff after stop-timeout to avoid immediate re-trigger loops.
+  const stopRetryBackoffUntilRef = useRef<Partial<Record<string, number>>>({});
+
+  // Build the deployability callback that scanAndStartNext uses instead of
+  // switching UI selection. Captures stable refs/callbacks so it doesn't
+  // change on every render.
+  const getDeployabilityForAgent = useCallback(
+    (agentMeta: AgentMeta) =>
+      fetchDeployabilityForAgent(agentMeta, {
+        runningServiceConfigId: runningServiceConfigIdRef.current,
+        canCreateSafeForChain,
+        allowStartAgentByServiceConfigId,
+        hasBalancesForServiceConfigId,
+        isInstanceInitiallyFunded,
+        isGeoRestrictedForAgent,
+        logMessage,
+      }),
+    [
+      runningServiceConfigIdRef,
+      canCreateSafeForChain,
+      allowStartAgentByServiceConfigId,
+      hasBalancesForServiceConfigId,
+      isInstanceInitiallyFunded,
+      isGeoRestrictedForAgent,
+      logMessage,
+    ],
   );
 
   const {
@@ -158,19 +217,15 @@ export const useAutoRunController = ({
   } = useAutoRunOperations({
     enabled,
     enabledRef,
-    runningAgentTypeRef,
+    runningServiceConfigIdRef,
     configuredAgents,
-    updateAgentType,
-    getSelectedEligibility,
     createSafeIfNeeded,
     showNotification,
-    onAutoRunAgentStarted,
+    onAutoRunInstanceStarted,
     onAutoRunStartStateChange,
     startService,
-    waitForAgentSelection,
     waitForBalancesReady,
-    waitForRunningAgent,
-    getBalancesStatus,
+    waitForRunningInstance,
     getRewardSnapshot,
     setRewardSnapshot,
     recordMetric,
@@ -183,12 +238,11 @@ export const useAutoRunController = ({
     startSelectedAgentIfEligible,
   } = useAutoRunScanner({
     enabledRef,
-    orderedIncludedAgentTypes,
+    orderedIncludedInstances,
     configuredAgents,
-    selectedAgentType,
-    updateAgentType,
+    selectedServiceConfigId,
     getSelectedEligibility,
-    waitForAgentSelection,
+    waitForInstanceSelection,
     waitForBalancesReady,
     waitForRewardsEligibility,
     refreshRewardsEligibility,
@@ -196,6 +250,7 @@ export const useAutoRunController = ({
     getRewardSnapshot,
     getBalancesStatus,
     notifySkipOnce,
+    getDeployabilityForAgent,
     startAgentWithRetries,
     scheduleNextScan,
     recordMetric,
@@ -205,10 +260,11 @@ export const useAutoRunController = ({
   const { stopCurrentRunningAgent } = useAutoRunLifecycle({
     enabled,
     runningAgentType,
-    orderedIncludedAgentTypes,
-    configuredAgents,
+    runningServiceConfigId,
+    orderedIncludedInstances,
     enabledRef,
     runningAgentTypeRef,
+    runningServiceConfigIdRef,
     lastRewardsEligibilityRef,
     scanTick,
     rewardsTick,

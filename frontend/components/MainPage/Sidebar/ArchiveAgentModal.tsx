@@ -3,7 +3,7 @@ import { Button, Flex } from 'antd';
 import { Modal } from '@/components/ui/Modal';
 
 type ArchiveAgentModalProps = {
-  agentName: string;
+  agentName: string | null;
   open: boolean;
   onConfirm: () => void;
   onCancel: () => void;

@@ -194,8 +194,7 @@ const setup = (options: SetupOptions = {}) => {
     isEligibleForRewards = true,
     storeState = {
       [AgentMap.PredictTrader]: {
-        isInitialFunded: true,
-        isProfileWarningDisplayed: false,
+        isInitialFunded: { [DEFAULT_SERVICE_CONFIG_ID]: true },
       },
     },
     availableServiceConfigIds = [
@@ -695,8 +694,7 @@ describe('BalancesAndRefillRequirementsProvider', () => {
         ],
         storeState: {
           [AgentMap.PredictTrader]: {
-            isInitialFunded: true,
-            isProfileWarningDisplayed: false,
+            isInitialFunded: { [DEFAULT_SERVICE_CONFIG_ID]: true },
           },
         },
       });
@@ -727,8 +725,7 @@ describe('BalancesAndRefillRequirementsProvider', () => {
         ],
         storeState: {
           [AgentMap.PredictTrader]: {
-            isInitialFunded: false,
-            isProfileWarningDisplayed: false,
+            isInitialFunded: { [DEFAULT_SERVICE_CONFIG_ID]: false },
           },
         },
       });
@@ -759,8 +756,7 @@ describe('BalancesAndRefillRequirementsProvider', () => {
         ],
         storeState: {
           [AgentMap.PredictTrader]: {
-            isInitialFunded: true,
-            isProfileWarningDisplayed: false,
+            isInitialFunded: { [DEFAULT_SERVICE_CONFIG_ID]: true },
           },
         },
       });

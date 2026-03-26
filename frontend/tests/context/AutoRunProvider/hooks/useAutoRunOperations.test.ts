@@ -2,9 +2,12 @@ import { renderHook } from '@testing-library/react';
 import { act } from 'react';
 
 import { AGENT_CONFIG } from '../../../../config/agents';
-import { AgentMap, AgentType } from '../../../../constants/agent';
+import { AgentMap } from '../../../../constants/agent';
 import { useAutoRunOperations } from '../../../../context/AutoRunProvider/hooks/useAutoRunOperations';
-import { makeAutoRunAgentMeta } from '../../../helpers/factories';
+import {
+  DEFAULT_SERVICE_CONFIG_ID,
+  makeAutoRunAgentMeta,
+} from '../../../helpers/factories';
 
 // Mock sub-hooks since this is a composition hook
 jest.mock(
@@ -34,31 +37,30 @@ jest.mock('../../../../context/AutoRunProvider/utils/autoRunHelpers', () => ({
     mockRefreshRewardsEligibilityHelper(...args),
 }));
 jest.mock('../../../../context/AutoRunProvider/utils/utils', () => ({
-  getAgentDisplayName: jest.fn().mockReturnValue('Omenstrat'),
+  getInstanceDisplayNames: jest.fn().mockReturnValue({
+    agentName: 'Omenstrat',
+    instanceName: 'corzim-vardor96',
+  }),
   notifySkipped: jest.fn(),
 }));
 
 const makeHookParams = () => ({
   enabled: true,
   enabledRef: { current: true },
-  runningAgentTypeRef: { current: null as AgentType | null },
+  runningServiceConfigIdRef: { current: null as string | null },
   configuredAgents: [
     makeAutoRunAgentMeta(
       AgentMap.PredictTrader,
       AGENT_CONFIG[AgentMap.PredictTrader],
     ),
   ],
-  updateAgentType: jest.fn(),
-  getSelectedEligibility: jest.fn().mockReturnValue({ canRun: true }),
   createSafeIfNeeded: jest.fn().mockResolvedValue(undefined),
   showNotification: jest.fn(),
-  onAutoRunAgentStarted: jest.fn(),
+  onAutoRunInstanceStarted: jest.fn(),
   onAutoRunStartStateChange: jest.fn(),
   startService: jest.fn().mockResolvedValue(undefined),
-  waitForAgentSelection: jest.fn().mockResolvedValue(true),
   waitForBalancesReady: jest.fn().mockResolvedValue(true),
-  waitForRunningAgent: jest.fn().mockResolvedValue(true),
-  getBalancesStatus: jest.fn().mockReturnValue({ ready: true, loading: false }),
+  waitForRunningInstance: jest.fn().mockResolvedValue(true),
   getRewardSnapshot: jest.fn().mockReturnValue(undefined),
   setRewardSnapshot: jest.fn(),
   recordMetric: jest.fn(),
@@ -84,7 +86,7 @@ describe('useAutoRunOperations', () => {
       const params = makeHookParams();
       const { result } = renderHook(() => useAutoRunOperations(params));
       act(() => {
-        result.current.notifySkipOnce(AgentMap.PredictTrader, undefined);
+        result.current.notifySkipOnce(DEFAULT_SERVICE_CONFIG_ID, undefined);
       });
       expect(params.showNotification).not.toHaveBeenCalled();
     });
@@ -94,7 +96,7 @@ describe('useAutoRunOperations', () => {
       const { result } = renderHook(() => useAutoRunOperations(params));
       act(() => {
         result.current.notifySkipOnce(
-          AgentMap.PredictTrader,
+          DEFAULT_SERVICE_CONFIG_ID,
           'Loading: Balances',
           true,
         );
@@ -102,14 +104,14 @@ describe('useAutoRunOperations', () => {
       expect(params.logMessage).not.toHaveBeenCalled();
     });
 
-    it('notifies once per reason per agent', () => {
+    it('notifies once per reason per instance', () => {
       const params = makeHookParams();
       const { result } = renderHook(() => useAutoRunOperations(params));
       act(() => {
-        result.current.notifySkipOnce(AgentMap.PredictTrader, 'Low balance');
+        result.current.notifySkipOnce(DEFAULT_SERVICE_CONFIG_ID, 'Low balance');
       });
       act(() => {
-        result.current.notifySkipOnce(AgentMap.PredictTrader, 'Low balance');
+        result.current.notifySkipOnce(DEFAULT_SERVICE_CONFIG_ID, 'Low balance');
       });
       // Only logged once (dedup)
       expect(params.logMessage).toHaveBeenCalledTimes(1);
@@ -119,10 +121,10 @@ describe('useAutoRunOperations', () => {
       const params = makeHookParams();
       const { result } = renderHook(() => useAutoRunOperations(params));
       act(() => {
-        result.current.notifySkipOnce(AgentMap.PredictTrader, 'Low balance');
+        result.current.notifySkipOnce(DEFAULT_SERVICE_CONFIG_ID, 'Low balance');
       });
       act(() => {
-        result.current.notifySkipOnce(AgentMap.PredictTrader, 'Evicted');
+        result.current.notifySkipOnce(DEFAULT_SERVICE_CONFIG_ID, 'Evicted');
       });
       expect(params.logMessage).toHaveBeenCalledTimes(2);
     });
@@ -134,12 +136,14 @@ describe('useAutoRunOperations', () => {
       const { result } = renderHook(() => useAutoRunOperations(params));
 
       await act(async () => {
-        await result.current.refreshRewardsEligibility(AgentMap.PredictTrader);
+        await result.current.refreshRewardsEligibility(
+          DEFAULT_SERVICE_CONFIG_ID,
+        );
       });
 
       expect(mockRefreshRewardsEligibilityHelper).toHaveBeenCalledWith(
         expect.objectContaining({
-          agentType: AgentMap.PredictTrader,
+          serviceConfigId: DEFAULT_SERVICE_CONFIG_ID,
           configuredAgents: params.configuredAgents,
           logMessage: params.logMessage,
         }),
@@ -162,7 +166,9 @@ describe('useAutoRunOperations', () => {
       const { result } = renderHook(() => useAutoRunOperations(params));
 
       await act(async () => {
-        await result.current.refreshRewardsEligibility(AgentMap.PredictTrader);
+        await result.current.refreshRewardsEligibility(
+          DEFAULT_SERVICE_CONFIG_ID,
+        );
       });
 
       expect(params.recordMetric).toHaveBeenCalledWith('rewardsErrors');
@@ -178,11 +184,11 @@ describe('useAutoRunOperations', () => {
       );
 
       act(() => {
-        result.current.notifySkipOnce(AgentMap.PredictTrader, 'Low balance');
+        result.current.notifySkipOnce(DEFAULT_SERVICE_CONFIG_ID, 'Low balance');
       });
       expect(params.logMessage).toHaveBeenCalledTimes(1);
 
-      // Disable auto-run → resets dedup state
+      // Disable auto-run -> resets dedup state
       rerender({ enabled: false });
 
       // Re-enable
@@ -190,7 +196,7 @@ describe('useAutoRunOperations', () => {
 
       // Same reason should notify again after reset
       act(() => {
-        result.current.notifySkipOnce(AgentMap.PredictTrader, 'Low balance');
+        result.current.notifySkipOnce(DEFAULT_SERVICE_CONFIG_ID, 'Low balance');
       });
       expect(params.logMessage).toHaveBeenCalledTimes(2);
     });

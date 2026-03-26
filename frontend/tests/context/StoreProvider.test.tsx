@@ -11,7 +11,7 @@ describe('StoreProvider', () => {
       environmentName: 'test-env',
     };
     const mockStoreStore = jest.fn().mockResolvedValue(mockStoreData);
-    const mockIpcRendererOn = jest.fn();
+    const mockIpcRendererOn = jest.fn().mockReturnValue(jest.fn());
 
     const electronContextValue = {
       store: { store: mockStoreStore },
@@ -50,6 +50,7 @@ describe('StoreProvider', () => {
         if (channel === 'store-changed') {
           storeChangedCallback = fn;
         }
+        return jest.fn(); // unsubscribe
       },
     );
 
@@ -117,7 +118,7 @@ describe('StoreProvider', () => {
   it('catches store.store() rejection and logs to console.error', async () => {
     const storeError = new Error('store unavailable');
     const mockStoreStore = jest.fn().mockRejectedValue(storeError);
-    const mockIpcRendererOn = jest.fn();
+    const mockIpcRendererOn = jest.fn().mockReturnValue(jest.fn());
 
     const consoleSpy = jest
       .spyOn(console, 'error')
