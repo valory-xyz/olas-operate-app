@@ -20,27 +20,30 @@ The user will provide a functional requirement (pasted text, `.md` file, or inli
 - Prod: `https://localhost:8765/api` and `/api/v2`
 - Middleware repo (external team): https://github.com/valory-xyz/olas-operate-middleware
 
-### Provider Hierarchy (outermost → innermost, deps flow inward)
+### Provider Hierarchy (outermost → innermost, matches `frontend/pages/_app.tsx`)
 ```
 ElectronApiProvider
-  StoreProvider                      ← electron-store persistence + IPC sync
-    OnlineStatusProvider
-      PageStateProvider              ← client-side routing
-        ServicesProvider             ← service list, deployment polling, selected agent
-          MasterWalletProvider       ← master EOA + master safes per chain
-            StakingProgramProvider
-              StakingContractDetailsProvider
-                RewardProvider       ← optimistic rewards + epoch tracking
-                  BalanceProvider    ← cross-chain wallet balances
-                    BalancesAndRefillRequirementsProvider
-                      AutoRunProvider  ← agent rotation orchestration
-                        SetupProvider
-                          SettingsProvider
-                            MessageProvider
-                              SharedProvider
-                                OnRampProvider
-                                  PearlWalletProvider
-                                    SupportModalProvider
+  QueryClientProvider (TanStack React Query)
+    ConfigProvider (Ant Design theme)
+      ErrorBoundary
+        OnlineStatusProvider
+          StoreProvider              ← electron-store persistence + IPC sync
+            PageStateProvider        ← client-side routing
+              ServicesProvider       ← service list, deployment polling, selected agent
+                MasterWalletProvider ← master EOA + master safes per chain
+                  StakingProgramProvider
+                    StakingContractDetailsProvider
+                      RewardProvider ← optimistic rewards + epoch tracking
+                        BalanceProvider ← cross-chain wallet balances
+                          BalancesAndRefillRequirementsProvider
+                            AutoRunProvider ← agent rotation orchestration
+                              SetupProvider
+                                SettingsProvider
+                                  MessageProvider
+                                    SharedProvider
+                                      OnRampProvider
+                                        PearlWalletProvider
+                                          SupportModalProvider
 ```
 
 ### Key File Locations
@@ -65,21 +68,21 @@ ElectronApiProvider
 | Feature documentation | `docs/features/` |
 
 ### Agents in the System
-| Agent key | Display name | Chain | Notes |
+| Agent key (`AgentType`) | Display name | Chain | Notes |
 |---|---|---|---|
 | `trader` | PredictTrader / Omenstrat | Gnosis | Prediction markets |
-| `polystrat` | Polystrat | Polygon | Polymarket, geo-restricted |
+| `polymarket_trader` | Polystrat | Polygon | Polymarket, geo-restricted |
 | `optimus` | Optimus | Optimism | DeFi portfolio |
 | `modius` | Modius | Mode | DeFi portfolio, under construction |
-| `memeooorr` / `agents.fun` | AgentsFun | Base | Twitter agent + memecoins |
+| `memeooorr` | AgentsFun | Base | Twitter agent + memecoins |
 | `pett_ai` | PettAi | Base | |
 
 ### Electron Store Schema (key keys)
 - `lastSelectedServiceConfigId` — last selected agent
-- `autoRun` — `{ enabled, includedAgentInstances, userExcludedAgentInstances }`
-- Per-agent: `trader.isInitialFunded`, `trader.isProfileWarningDisplayed`
+- `autoRun` — full shape: `{ enabled, includedAgents, includedAgentInstances, isInitialized, userExcludedAgents, userExcludedAgentInstances }` (see `electron/store.js` `defaultAutoRunSettings` for canonical defaults)
+- Per-agent: `trader.isInitialFunded`
 - `archivedInstances` — hidden service instances
-- All store mutations go through `StoreProvider` — never write directly
+- Store writes: `useElectronApi()` → `store.set(key, value)` → IPC → `electron/main.js`. `StoreProvider` is read-only; never bypass IPC to write from the renderer
 
 ### AutoRun Key Facts
 - Hook hierarchy: `AutoRunProvider → useAutoRunController → {useAutoRunSignals, useAutoRunOperations, useAutoRunScanner, useAutoRunLifecycle}`
@@ -145,7 +148,7 @@ For each required change:
 - New store keys → schema addition in `electron/store.js` with default value + migration if upgrading existing keys
 - New IPC request-response → handler in `electron/main.js` + `ipcRenderer.invoke` in `electron/preload.js`
 - New IPC fire-and-forget → `ipcRenderer.send` in `electron/preload.js` + `ipcMain.on` in `electron/main.js`
-- **All store writes must go through `StoreProvider` — never write directly to electron-store**
+- **Store write path:** `useElectronApi()` → `store.set(key, value)` → IPC → `electron/main.js` → `electron-store`. `StoreProvider` is read-only (subscribes to `store-changed`, surfaces state). Never bypass IPC to write to the store from the renderer.
 
 ### 7. Implementation Approach
 Lead with the single recommended approach. If alternatives exist, footnote only:
@@ -154,7 +157,7 @@ Lead with the single recommended approach. If alternatives exist, footnote only:
 ### 8. Hard Constraints Checklist
 - [ ] No `eslint-disable` comments — fix the pattern instead
 - [ ] No new top-level context providers unless strictly unavoidable (provider tree is already deep)
-- [ ] No direct electron-store writes outside `StoreProvider`
+- [ ] Store writes use `useElectronApi()` → `store.set()` — never bypass IPC or write to electron-store directly from the renderer
 - [ ] New visible UI must be behind a feature flag in `frontend/config/featureFlags.ts`
 - [ ] All timing/delay constants in `frontend/context/AutoRunProvider/constants.ts` or relevant `constants.ts` — no inline numbers
 - [ ] Middleware API changes flagged as blocker with full contract spec above
