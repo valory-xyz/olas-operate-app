@@ -401,7 +401,14 @@ describe('AutoRunProvider', () => {
       });
     });
 
-    it('uses real eligibility for selected instance', () => {
+    it('uses real eligibility for selected instance when included', () => {
+      mockAutoRunStore.isInitialized = true;
+      mockAutoRunStore.includedInstances = [
+        { serviceConfigId: scTrader, order: 0 },
+        { serviceConfigId: scOptimus, order: 1 },
+      ];
+      useAutoRunStore.mockImplementation(() => ({ ...mockAutoRunStore }));
+
       useSelectedEligibility.mockReturnValue({
         isSelectedAgentDetailsLoading: false,
         getSelectedEligibility: jest
@@ -413,6 +420,38 @@ describe('AutoRunProvider', () => {
       expect(result.current.eligibilityByInstance[scTrader]).toEqual({
         canRun: false,
         reason: 'Low balance',
+      });
+    });
+
+    it('keeps canRun: true for excluded instance even when it is selected', () => {
+      mockAutoRunStore.isInitialized = true;
+      mockAutoRunStore.includedInstances = [
+        { serviceConfigId: scTrader, order: 0 },
+      ];
+      mockAutoRunStore.userExcludedInstances = [scOptimus];
+      useAutoRunStore.mockImplementation(() => ({ ...mockAutoRunStore }));
+
+      useServices.mockReturnValue({
+        services: [
+          { service_config_id: scTrader },
+          { service_config_id: scOptimus },
+        ],
+        selectedAgentType: AgentMap.Optimus,
+        selectedService: { service_config_id: scOptimus },
+        selectedServiceConfigId: scOptimus,
+        updateSelectedServiceConfigId: mockUpdateSelectedServiceConfigId,
+      });
+
+      useSelectedEligibility.mockReturnValue({
+        isSelectedAgentDetailsLoading: false,
+        getSelectedEligibility: jest
+          .fn()
+          .mockReturnValue({ canRun: false, reason: 'Low balance' }),
+      });
+
+      const { result } = renderHook(() => useAutoRunContext(), { wrapper });
+      expect(result.current.eligibilityByInstance[scOptimus]).toEqual({
+        canRun: true,
       });
     });
 
@@ -558,6 +597,27 @@ describe('AutoRunProvider', () => {
         { serviceConfigId: scTrader, order: 0 },
         { serviceConfigId: scOptimus, order: 1 },
       ]);
+    });
+
+    it('does not clear included instances when eligible instances are temporarily empty', () => {
+      mockAutoRunStore.isInitialized = true;
+      mockAutoRunStore.includedInstances = [
+        { serviceConfigId: scTrader, order: 0 },
+        { serviceConfigId: scOptimus, order: 1 },
+      ];
+      useConfiguredAgents.mockReturnValue([]);
+      useAutoRunStore.mockImplementation(() => ({ ...mockAutoRunStore }));
+
+      renderHook(() => useAutoRunContext(), { wrapper });
+
+      const cleanupCalls = mockAutoRunStore.updateAutoRun.mock.calls.filter(
+        (call: [Record<string, unknown>]) =>
+          Array.isArray(call[0]?.includedInstances) &&
+          !('isInitialized' in call[0]) &&
+          !('userExcludedInstances' in call[0]),
+      );
+
+      expect(cleanupCalls).toHaveLength(0);
     });
   });
 
