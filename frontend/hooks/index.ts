@@ -1,5 +1,6 @@
 export * from './useActiveStakingProgramId';
 export * from './useAgentActivity';
+export * from './useAllInstancesRewardStatus';
 export * from './useAgentFundingRequests';
 export * from './useAgentRunning';
 export * from './useAgentStakingRewardsDetails';

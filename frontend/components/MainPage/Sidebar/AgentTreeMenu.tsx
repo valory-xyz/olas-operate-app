@@ -8,6 +8,7 @@ import { AgentGroupHeader, TreeLine } from '@/components/ui/AgentTree';
 import { COLOR } from '@/constants';
 
 import { PulseDot } from './PulseDot';
+import { RewardDot } from './RewardDot';
 import { SidebarAgentGroup } from './types';
 
 const { Text } = Typography;
@@ -32,7 +33,7 @@ const GroupHeader = styled(Flex)`
   }
 `;
 
-const ClickableInstanceRow = styled(Flex)<{ $isSelected: boolean }>`
+export const ClickableInstanceRow = styled(Flex)<{ $isSelected: boolean }>`
   cursor: pointer;
   padding: 6px 12px;
   border-radius: 6px;
@@ -42,6 +43,15 @@ const ClickableInstanceRow = styled(Flex)<{ $isSelected: boolean }>`
 
   &:hover {
     background: ${COLOR.GRAY_1};
+  }
+`;
+
+/** Visible by default; hidden when parent row is hovered so the archive button can appear. */
+const RewardDotVisible = styled.span`
+  display: flex;
+  align-items: center;
+  ${ClickableInstanceRow}:hover & {
+    visibility: hidden;
   }
 `;
 
@@ -179,6 +189,8 @@ export const AgentTreeMenu = ({
                       instance.serviceConfigId,
                     );
                     const showArchive = canArchive && !isRunning;
+                    const hasRewardData =
+                      instance.hasEarnedRewards !== undefined;
 
                     return (
                       <ClickableInstanceRow
@@ -199,6 +211,25 @@ export const AgentTreeMenu = ({
                         </Text>
                         {isRunning ? (
                           <PulseDot />
+                        ) : hasRewardData ? (
+                          <span
+                            style={{ position: 'relative', display: 'flex', alignItems: 'center' }}
+                          >
+                            <RewardDotVisible>
+                              <RewardDot
+                                hasEarnedRewards={
+                                  instance.hasEarnedRewards as boolean
+                                }
+                              />
+                            </RewardDotVisible>
+                            {showArchive && (
+                              <InstanceArchiveDropdown
+                                instanceName={instance.name}
+                                serviceConfigId={instance.serviceConfigId}
+                                onArchiveRequest={onArchiveRequest}
+                              />
+                            )}
+                          </span>
                         ) : showArchive ? (
                           <InstanceArchiveDropdown
                             instanceName={instance.name}
