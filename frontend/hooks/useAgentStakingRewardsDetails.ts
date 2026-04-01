@@ -24,7 +24,10 @@ type CreateStakingRewardsQueryParams = {
   serviceNftTokenId: Maybe<number>;
   agentConfig: AgentConfig;
   isOnline: boolean;
-  refetchInterval: number;
+  // NOTE: refetchInterval is accepted for API compatibility but the factory
+  // always hardcodes FIVE_SECONDS_INTERVAL internally. Pass it from callers
+  // that have a dynamic interval; omit it otherwise.
+  refetchInterval?: number;
 };
 export const createStakingRewardsQuery = ({
   chainId,

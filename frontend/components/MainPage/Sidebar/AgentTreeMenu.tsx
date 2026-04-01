@@ -55,6 +55,13 @@ const RewardDotVisible = styled.span`
   }
 `;
 
+/** Fixed-size slot that holds RewardDotVisible + InstanceArchiveDropdown side by side. */
+const RewardArchiveSlot = styled.span`
+  position: relative;
+  display: flex;
+  align-items: center;
+`;
+
 /** Hidden by default; revealed when parent row is hovered. */
 const ArchiveMenuButton = styled.span`
   visibility: hidden;
@@ -189,8 +196,6 @@ export const AgentTreeMenu = ({
                       instance.serviceConfigId,
                     );
                     const showArchive = canArchive && !isRunning;
-                    const hasRewardData =
-                      instance.hasEarnedRewards !== undefined;
 
                     return (
                       <ClickableInstanceRow
@@ -211,13 +216,11 @@ export const AgentTreeMenu = ({
                         </Text>
                         {isRunning ? (
                           <PulseDot />
-                        ) : hasRewardData ? (
-                          <span
-                            style={{ position: 'relative', display: 'flex', alignItems: 'center' }}
-                          >
+                        ) : instance.hasEarnedRewards !== undefined ? (
+                          <RewardArchiveSlot>
                             <RewardDotVisible>
                               <RewardDot
-                                hasEarnedRewards={instance.hasEarnedRewards!}
+                                hasEarnedRewards={instance.hasEarnedRewards}
                               />
                             </RewardDotVisible>
                             {showArchive && (
@@ -227,7 +230,7 @@ export const AgentTreeMenu = ({
                                 onArchiveRequest={onArchiveRequest}
                               />
                             )}
-                          </span>
+                          </RewardArchiveSlot>
                         ) : showArchive ? (
                           <InstanceArchiveDropdown
                             instanceName={instance.name}

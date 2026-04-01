@@ -5,6 +5,11 @@ import { COLOR } from '@/constants';
 
 const DOT_SIZE = 8;
 
+const Container = styled.span`
+  display: flex;
+  align-items: center;
+`;
+
 const Dot = styled.span<{ $hasEarnedRewards: boolean }>`
   display: inline-block;
   width: ${DOT_SIZE}px;
@@ -15,16 +20,27 @@ const Dot = styled.span<{ $hasEarnedRewards: boolean }>`
     $hasEarnedRewards ? COLOR.SUCCESS : COLOR.GRAY_3};
 `;
 
+const VisuallyHidden = styled.span`
+  border: 0;
+  clip: rect(0 0 0 0);
+  height: 1px;
+  width: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  position: absolute;
+  white-space: nowrap;
+`;
+
 type RewardDotProps = {
   hasEarnedRewards: boolean;
 };
 
 export const RewardDot = ({ hasEarnedRewards }: RewardDotProps) => (
-  <Dot
-    role="img"
-    aria-label={
-      hasEarnedRewards ? 'Earned rewards this cycle' : 'No rewards earned this cycle'
-    }
-    $hasEarnedRewards={hasEarnedRewards}
-  />
+  <Container>
+    <VisuallyHidden>
+      {hasEarnedRewards ? 'Earned rewards this cycle' : 'No rewards earned this cycle'}
+    </VisuallyHidden>
+    <Dot aria-hidden="true" $hasEarnedRewards={hasEarnedRewards} />
+  </Container>
 );

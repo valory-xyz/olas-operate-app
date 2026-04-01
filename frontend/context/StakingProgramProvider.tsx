@@ -78,6 +78,12 @@ export const StakingProgramProvider = ({ children }: PropsWithChildren) => {
     defaultStakingProgramId,
   ]);
 
+  // NOTE: this map uses only the service-stored staking_program_id, not the
+  // three-tier fallback (subgraph → service-stored → default) used by
+  // selectedStakingProgramId. During a staking migration the value may lag the
+  // on-chain subgraph-confirmed program by one poll cycle, but this is
+  // acceptable for the reward-dot use case (a transient visual lag is
+  // preferable to the extra complexity of per-instance subgraph lookups).
   const stakingProgramIdByServiceConfigId = useMemo(() => {
     const map = new Map<string, Nullable<StakingProgramId>>();
     if (!services) return map;

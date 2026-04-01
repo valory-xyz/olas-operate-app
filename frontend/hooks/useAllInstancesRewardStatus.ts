@@ -3,7 +3,6 @@ import { isNil } from 'lodash';
 import { useContext, useMemo } from 'react';
 
 import { ACTIVE_AGENTS, AGENT_CONFIG } from '@/config/agents';
-import { FIVE_SECONDS_INTERVAL } from '@/constants';
 import { OnlineStatusContext } from '@/context/OnlineStatusProvider';
 import { StakingProgramContext } from '@/context/StakingProgramProvider';
 import { isServiceOfAgent } from '@/utils/service';
@@ -79,7 +78,6 @@ export const useAllInstancesRewardStatus = (): Map<
         serviceNftTokenId: detail.serviceNftTokenId,
         agentConfig: detail.agentConfig,
         isOnline,
-        refetchInterval: FIVE_SECONDS_INTERVAL,
       }),
     ),
   });
