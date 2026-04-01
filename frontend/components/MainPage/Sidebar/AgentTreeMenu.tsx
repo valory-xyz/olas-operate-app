@@ -33,7 +33,7 @@ const GroupHeader = styled(Flex)`
   }
 `;
 
-export const ClickableInstanceRow = styled(Flex)<{ $isSelected: boolean }>`
+const ClickableInstanceRow = styled(Flex)<{ $isSelected: boolean }>`
   cursor: pointer;
   padding: 6px 12px;
   border-radius: 6px;
@@ -217,9 +217,7 @@ export const AgentTreeMenu = ({
                           >
                             <RewardDotVisible>
                               <RewardDot
-                                hasEarnedRewards={
-                                  instance.hasEarnedRewards as boolean
-                                }
+                                hasEarnedRewards={instance.hasEarnedRewards!}
                               />
                             </RewardDotVisible>
                             {showArchive && (

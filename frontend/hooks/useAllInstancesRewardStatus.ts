@@ -10,7 +10,6 @@ import { isServiceOfAgent } from '@/utils/service';
 import { asEvmChainId, asMiddlewareChain } from '@/utils/middlewareHelpers';
 
 import { createStakingRewardsQuery } from './useAgentStakingRewardsDetails';
-import { useDynamicRefetchInterval } from './useDynamicRefetchInterval';
 import { useServices } from './useServices';
 
 /**
@@ -26,7 +25,6 @@ export const useAllInstancesRewardStatus = (): Map<
   string,
   boolean | undefined
 > => {
-  const refetchInterval = useDynamicRefetchInterval(FIVE_SECONDS_INTERVAL);
   const { isOnline } = useContext(OnlineStatusContext);
   const { stakingProgramIdByServiceConfigId } =
     useContext(StakingProgramContext);
@@ -44,7 +42,13 @@ export const useAllInstancesRewardStatus = (): Map<
       const [agentType] = agentEntry;
       const agentConfig = AGENT_CONFIG[agentType];
 
-      const chainId = asEvmChainId(service.home_chain);
+      let chainId;
+      try {
+        chainId = asEvmChainId(service.home_chain);
+      } catch {
+        // Skip services on chains not yet recognized by the frontend.
+        return [];
+      }
       const chainDetails = isNil(service.chain_configs)
         ? null
         : service.chain_configs[asMiddlewareChain(chainId)]?.chain_data;
@@ -75,7 +79,7 @@ export const useAllInstancesRewardStatus = (): Map<
         serviceNftTokenId: detail.serviceNftTokenId,
         agentConfig: detail.agentConfig,
         isOnline,
-        refetchInterval,
+        refetchInterval: FIVE_SECONDS_INTERVAL,
       }),
     ),
   });
