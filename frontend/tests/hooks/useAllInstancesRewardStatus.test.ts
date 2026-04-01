@@ -1,8 +1,10 @@
+import React from 'react';
 import { renderHook } from '@testing-library/react';
 
 import { AGENT_CONFIG } from '../../config/agents';
 import { AgentMap } from '../../constants/agent';
 import { MiddlewareChainMap } from '../../constants/chains';
+import { StakingProgramContext } from '../../context/StakingProgramProvider';
 import { createStakingRewardsQuery } from '../../hooks/useAgentStakingRewardsDetails';
 import { useAllInstancesRewardStatus } from '../../hooks/useAllInstancesRewardStatus';
 import { useServices } from '../../hooks/useServices';
@@ -51,6 +53,15 @@ const mockCreateStakingRewardsQuery = createStakingRewardsQuery as jest.Mock;
 
 const traderConfig = AGENT_CONFIG[AgentMap.PredictTrader];
 
+const baseContextValue: React.ContextType<typeof StakingProgramContext> = {
+  isActiveStakingProgramLoaded: true,
+  selectedStakingProgramId: null,
+  setDefaultStakingProgramId: () => {},
+  stakingProgramIdToMigrateTo: null,
+  setStakingProgramIdToMigrateTo: () => {},
+  stakingProgramIdByServiceConfigId: new Map(),
+};
+
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
@@ -64,27 +75,13 @@ describe('useAllInstancesRewardStatus', () => {
     mockUseServices.mockReturnValue({ services: undefined });
     mockUseQueries.mockReturnValue([]);
 
-    jest.mock('../../context/StakingProgramProvider', () => ({
-      StakingProgramContext: {
-        _currentValue: { stakingProgramIdByServiceConfigId: new Map() },
-      },
-    }));
-
-    /* eslint-disable @typescript-eslint/no-var-requires */
-    const React = require('react');
-    const {
-      StakingProgramContext,
-    } = require('../../context/StakingProgramProvider');
-    /* eslint-enable @typescript-eslint/no-var-requires */
-
     const { result } = renderHook(() => useAllInstancesRewardStatus(), {
-      wrapper: ({ children }) => {
-        return React.createElement(
+      wrapper: ({ children }: { children: React.ReactNode }) =>
+        React.createElement(
           StakingProgramContext.Provider,
-          { value: { stakingProgramIdByServiceConfigId: new Map() } },
+          { value: baseContextValue },
           children,
-        );
-      },
+        ),
     });
 
     expect(result.current.size).toBe(0);
@@ -115,21 +112,20 @@ describe('useAllInstancesRewardStatus', () => {
       },
     ]);
 
-    /* eslint-disable @typescript-eslint/no-var-requires */
-    const React = require('react');
-    const {
-      StakingProgramContext,
-    } = require('../../context/StakingProgramProvider');
-    /* eslint-enable @typescript-eslint/no-var-requires */
     const stakingMap = new Map([
       [DEFAULT_SERVICE_CONFIG_ID, DEFAULT_STAKING_PROGRAM_ID],
     ]);
 
     const { result } = renderHook(() => useAllInstancesRewardStatus(), {
-      wrapper: ({ children }) =>
+      wrapper: ({ children }: { children: React.ReactNode }) =>
         React.createElement(
           StakingProgramContext.Provider,
-          { value: { stakingProgramIdByServiceConfigId: stakingMap } },
+          {
+            value: {
+              ...baseContextValue,
+              stakingProgramIdByServiceConfigId: stakingMap,
+            },
+          },
           children,
         ),
     });
@@ -162,21 +158,20 @@ describe('useAllInstancesRewardStatus', () => {
       },
     ]);
 
-    /* eslint-disable @typescript-eslint/no-var-requires */
-    const React = require('react');
-    const {
-      StakingProgramContext,
-    } = require('../../context/StakingProgramProvider');
-    /* eslint-enable @typescript-eslint/no-var-requires */
     const stakingMap = new Map([
       [DEFAULT_SERVICE_CONFIG_ID, DEFAULT_STAKING_PROGRAM_ID],
     ]);
 
     const { result } = renderHook(() => useAllInstancesRewardStatus(), {
-      wrapper: ({ children }) =>
+      wrapper: ({ children }: { children: React.ReactNode }) =>
         React.createElement(
           StakingProgramContext.Provider,
-          { value: { stakingProgramIdByServiceConfigId: stakingMap } },
+          {
+            value: {
+              ...baseContextValue,
+              stakingProgramIdByServiceConfigId: stakingMap,
+            },
+          },
           children,
         ),
     });
@@ -197,21 +192,20 @@ describe('useAllInstancesRewardStatus', () => {
     mockUseServices.mockReturnValue({ services: [service] });
     mockUseQueries.mockReturnValue([{ isSuccess: false, data: undefined }]);
 
-    /* eslint-disable @typescript-eslint/no-var-requires */
-    const React = require('react');
-    const {
-      StakingProgramContext,
-    } = require('../../context/StakingProgramProvider');
-    /* eslint-enable @typescript-eslint/no-var-requires */
     const stakingMap = new Map([
       [DEFAULT_SERVICE_CONFIG_ID, DEFAULT_STAKING_PROGRAM_ID],
     ]);
 
     const { result } = renderHook(() => useAllInstancesRewardStatus(), {
-      wrapper: ({ children }) =>
+      wrapper: ({ children }: { children: React.ReactNode }) =>
         React.createElement(
           StakingProgramContext.Provider,
-          { value: { stakingProgramIdByServiceConfigId: stakingMap } },
+          {
+            value: {
+              ...baseContextValue,
+              stakingProgramIdByServiceConfigId: stakingMap,
+            },
+          },
           children,
         ),
     });
@@ -228,18 +222,11 @@ describe('useAllInstancesRewardStatus', () => {
     mockUseServices.mockReturnValue({ services: [unknownService] });
     mockUseQueries.mockReturnValue([]);
 
-    /* eslint-disable @typescript-eslint/no-var-requires */
-    const React = require('react');
-    const {
-      StakingProgramContext,
-    } = require('../../context/StakingProgramProvider');
-    /* eslint-enable @typescript-eslint/no-var-requires */
-
     const { result } = renderHook(() => useAllInstancesRewardStatus(), {
-      wrapper: ({ children }) =>
+      wrapper: ({ children }: { children: React.ReactNode }) =>
         React.createElement(
           StakingProgramContext.Provider,
-          { value: { stakingProgramIdByServiceConfigId: new Map() } },
+          { value: baseContextValue },
           children,
         ),
     });
@@ -277,22 +264,21 @@ describe('useAllInstancesRewardStatus', () => {
       },
     ]);
 
-    /* eslint-disable @typescript-eslint/no-var-requires */
-    const React = require('react');
-    const {
-      StakingProgramContext,
-    } = require('../../context/StakingProgramProvider');
-    /* eslint-enable @typescript-eslint/no-var-requires */
     const stakingMap = new Map([
       [DEFAULT_SERVICE_CONFIG_ID, DEFAULT_STAKING_PROGRAM_ID],
       [MOCK_SERVICE_CONFIG_ID_2, DEFAULT_STAKING_PROGRAM_ID],
     ]);
 
     const { result } = renderHook(() => useAllInstancesRewardStatus(), {
-      wrapper: ({ children }) =>
+      wrapper: ({ children }: { children: React.ReactNode }) =>
         React.createElement(
           StakingProgramContext.Provider,
-          { value: { stakingProgramIdByServiceConfigId: stakingMap } },
+          {
+            value: {
+              ...baseContextValue,
+              stakingProgramIdByServiceConfigId: stakingMap,
+            },
+          },
           children,
         ),
     });
@@ -312,18 +298,11 @@ describe('useAllInstancesRewardStatus', () => {
     mockUseServices.mockReturnValue({ services: [badService] });
     mockUseQueries.mockReturnValue([]);
 
-    /* eslint-disable @typescript-eslint/no-var-requires */
-    const React = require('react');
-    const {
-      StakingProgramContext,
-    } = require('../../context/StakingProgramProvider');
-    /* eslint-enable @typescript-eslint/no-var-requires */
-
     const { result } = renderHook(() => useAllInstancesRewardStatus(), {
-      wrapper: ({ children }) =>
+      wrapper: ({ children }: { children: React.ReactNode }) =>
         React.createElement(
           StakingProgramContext.Provider,
-          { value: { stakingProgramIdByServiceConfigId: new Map() } },
+          { value: baseContextValue },
           children,
         ),
     });

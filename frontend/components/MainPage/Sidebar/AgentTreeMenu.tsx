@@ -46,7 +46,6 @@ const ClickableInstanceRow = styled(Flex)<{ $isSelected: boolean }>`
   }
 `;
 
-/** Visible by default; hidden when parent row is hovered so the archive button can appear. */
 const RewardDotVisible = styled.span`
   display: flex;
   align-items: center;
@@ -55,14 +54,12 @@ const RewardDotVisible = styled.span`
   }
 `;
 
-/** Fixed-size slot that holds RewardDotVisible + InstanceArchiveDropdown side by side. */
 const RewardArchiveSlot = styled.span`
   position: relative;
   display: flex;
   align-items: center;
 `;
 
-/** Hidden by default; revealed when parent row is hovered. */
 const ArchiveMenuButton = styled.span`
   visibility: hidden;
   display: flex;
