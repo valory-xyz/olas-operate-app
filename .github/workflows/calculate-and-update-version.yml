@@ -243,8 +243,8 @@ jobs:
 
           echo "Latest commit hash: $COMMIT_HASH"
 
-          # Update pyproject.toml using poetry add (--no-install to skip resolution)
-          poetry add --no-install "git+https://github.com/valory-xyz/olas-operate-middleware.git@$COMMIT_HASH"
+          # Update pyproject.toml using poetry add (--no-install to skip resolution, --yes to skip prompts)
+          poetry add --no-install --yes "git+https://github.com/valory-xyz/olas-operate-middleware.git@$COMMIT_HASH"
 
           echo "Updated pyproject.toml to use middleware commit: $COMMIT_HASH"
 
