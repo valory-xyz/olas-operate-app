@@ -192,9 +192,7 @@ export const Sidebar = () => {
           config.displayName,
           config.evmHomeChainId,
         ),
-        hasEarnedRewards: rewardStatusByConfigId.get(
-          service.service_config_id,
-        ),
+        hasEarnedRewards: rewardStatusByConfigId.get(service.service_config_id),
       });
     }
 

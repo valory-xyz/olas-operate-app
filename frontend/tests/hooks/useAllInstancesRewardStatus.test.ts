@@ -4,8 +4,8 @@ import { AGENT_CONFIG } from '../../config/agents';
 import { AgentMap } from '../../constants/agent';
 import { MiddlewareChainMap } from '../../constants/chains';
 import { createStakingRewardsQuery } from '../../hooks/useAgentStakingRewardsDetails';
-import { useServices } from '../../hooks/useServices';
 import { useAllInstancesRewardStatus } from '../../hooks/useAllInstancesRewardStatus';
+import { useServices } from '../../hooks/useServices';
 import {
   DEFAULT_SERVICE_CONFIG_ID,
   DEFAULT_SERVICE_NFT_TOKEN_ID,
@@ -65,12 +65,16 @@ describe('useAllInstancesRewardStatus', () => {
     mockUseQueries.mockReturnValue([]);
 
     jest.mock('../../context/StakingProgramProvider', () => ({
-      StakingProgramContext: { _currentValue: { stakingProgramIdByServiceConfigId: new Map() } },
+      StakingProgramContext: {
+        _currentValue: { stakingProgramIdByServiceConfigId: new Map() },
+      },
     }));
 
     /* eslint-disable @typescript-eslint/no-var-requires */
     const React = require('react');
-    const { StakingProgramContext } = require('../../context/StakingProgramProvider');
+    const {
+      StakingProgramContext,
+    } = require('../../context/StakingProgramProvider');
     /* eslint-enable @typescript-eslint/no-var-requires */
 
     const { result } = renderHook(() => useAllInstancesRewardStatus(), {
@@ -113,9 +117,13 @@ describe('useAllInstancesRewardStatus', () => {
 
     /* eslint-disable @typescript-eslint/no-var-requires */
     const React = require('react');
-    const { StakingProgramContext } = require('../../context/StakingProgramProvider');
+    const {
+      StakingProgramContext,
+    } = require('../../context/StakingProgramProvider');
     /* eslint-enable @typescript-eslint/no-var-requires */
-    const stakingMap = new Map([[DEFAULT_SERVICE_CONFIG_ID, DEFAULT_STAKING_PROGRAM_ID]]);
+    const stakingMap = new Map([
+      [DEFAULT_SERVICE_CONFIG_ID, DEFAULT_STAKING_PROGRAM_ID],
+    ]);
 
     const { result } = renderHook(() => useAllInstancesRewardStatus(), {
       wrapper: ({ children }) =>
@@ -156,9 +164,13 @@ describe('useAllInstancesRewardStatus', () => {
 
     /* eslint-disable @typescript-eslint/no-var-requires */
     const React = require('react');
-    const { StakingProgramContext } = require('../../context/StakingProgramProvider');
+    const {
+      StakingProgramContext,
+    } = require('../../context/StakingProgramProvider');
     /* eslint-enable @typescript-eslint/no-var-requires */
-    const stakingMap = new Map([[DEFAULT_SERVICE_CONFIG_ID, DEFAULT_STAKING_PROGRAM_ID]]);
+    const stakingMap = new Map([
+      [DEFAULT_SERVICE_CONFIG_ID, DEFAULT_STAKING_PROGRAM_ID],
+    ]);
 
     const { result } = renderHook(() => useAllInstancesRewardStatus(), {
       wrapper: ({ children }) =>
@@ -187,9 +199,13 @@ describe('useAllInstancesRewardStatus', () => {
 
     /* eslint-disable @typescript-eslint/no-var-requires */
     const React = require('react');
-    const { StakingProgramContext } = require('../../context/StakingProgramProvider');
+    const {
+      StakingProgramContext,
+    } = require('../../context/StakingProgramProvider');
     /* eslint-enable @typescript-eslint/no-var-requires */
-    const stakingMap = new Map([[DEFAULT_SERVICE_CONFIG_ID, DEFAULT_STAKING_PROGRAM_ID]]);
+    const stakingMap = new Map([
+      [DEFAULT_SERVICE_CONFIG_ID, DEFAULT_STAKING_PROGRAM_ID],
+    ]);
 
     const { result } = renderHook(() => useAllInstancesRewardStatus(), {
       wrapper: ({ children }) =>
@@ -214,7 +230,9 @@ describe('useAllInstancesRewardStatus', () => {
 
     /* eslint-disable @typescript-eslint/no-var-requires */
     const React = require('react');
-    const { StakingProgramContext } = require('../../context/StakingProgramProvider');
+    const {
+      StakingProgramContext,
+    } = require('../../context/StakingProgramProvider');
     /* eslint-enable @typescript-eslint/no-var-requires */
 
     const { result } = renderHook(() => useAllInstancesRewardStatus(), {
@@ -249,13 +267,21 @@ describe('useAllInstancesRewardStatus', () => {
 
     mockUseServices.mockReturnValue({ services: [service1, service2] });
     mockUseQueries.mockReturnValue([
-      { isSuccess: true, data: makeStakingRewardsInfo({ isEligibleForRewards: true }) },
-      { isSuccess: true, data: makeStakingRewardsInfo({ isEligibleForRewards: false }) },
+      {
+        isSuccess: true,
+        data: makeStakingRewardsInfo({ isEligibleForRewards: true }),
+      },
+      {
+        isSuccess: true,
+        data: makeStakingRewardsInfo({ isEligibleForRewards: false }),
+      },
     ]);
 
     /* eslint-disable @typescript-eslint/no-var-requires */
     const React = require('react');
-    const { StakingProgramContext } = require('../../context/StakingProgramProvider');
+    const {
+      StakingProgramContext,
+    } = require('../../context/StakingProgramProvider');
     /* eslint-enable @typescript-eslint/no-var-requires */
     const stakingMap = new Map([
       [DEFAULT_SERVICE_CONFIG_ID, DEFAULT_STAKING_PROGRAM_ID],
@@ -288,7 +314,9 @@ describe('useAllInstancesRewardStatus', () => {
 
     /* eslint-disable @typescript-eslint/no-var-requires */
     const React = require('react');
-    const { StakingProgramContext } = require('../../context/StakingProgramProvider');
+    const {
+      StakingProgramContext,
+    } = require('../../context/StakingProgramProvider');
     /* eslint-enable @typescript-eslint/no-var-requires */
 
     const { result } = renderHook(() => useAllInstancesRewardStatus(), {

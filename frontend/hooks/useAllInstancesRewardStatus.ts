@@ -5,8 +5,8 @@ import { useContext, useMemo } from 'react';
 import { ACTIVE_AGENTS, AGENT_CONFIG } from '@/config/agents';
 import { OnlineStatusContext } from '@/context/OnlineStatusProvider';
 import { StakingProgramContext } from '@/context/StakingProgramProvider';
-import { isServiceOfAgent } from '@/utils/service';
 import { asEvmChainId, asMiddlewareChain } from '@/utils/middlewareHelpers';
+import { isServiceOfAgent } from '@/utils/service';
 
 import { createStakingRewardsQuery } from './useAgentStakingRewardsDetails';
 import { useServices } from './useServices';
@@ -25,8 +25,9 @@ export const useAllInstancesRewardStatus = (): Map<
   boolean | undefined
 > => {
   const { isOnline } = useContext(OnlineStatusContext);
-  const { stakingProgramIdByServiceConfigId } =
-    useContext(StakingProgramContext);
+  const { stakingProgramIdByServiceConfigId } = useContext(
+    StakingProgramContext,
+  );
   const { services } = useServices();
 
   const serviceDetails = useMemo(() => {
@@ -59,9 +60,8 @@ export const useAllInstancesRewardStatus = (): Map<
           multisig: chainDetails?.multisig,
           serviceNftTokenId: chainDetails?.token,
           stakingProgramId:
-            stakingProgramIdByServiceConfigId.get(
-              service.service_config_id,
-            ) ?? null,
+            stakingProgramIdByServiceConfigId.get(service.service_config_id) ??
+            null,
           agentConfig,
         },
       ];
@@ -87,7 +87,11 @@ export const useAllInstancesRewardStatus = (): Map<
     serviceDetails.forEach((detail, index) => {
       const result = queryResults[index];
       if (!result) return;
-      if (result.isSuccess && result.data !== null && result.data !== undefined) {
+      if (
+        result.isSuccess &&
+        result.data !== null &&
+        result.data !== undefined
+      ) {
         map.set(detail.serviceConfigId, result.data.isEligibleForRewards);
       } else {
         map.set(detail.serviceConfigId, undefined);

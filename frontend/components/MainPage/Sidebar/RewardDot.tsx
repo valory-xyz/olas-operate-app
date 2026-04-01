@@ -39,7 +39,9 @@ type RewardDotProps = {
 export const RewardDot = ({ hasEarnedRewards }: RewardDotProps) => (
   <Container>
     <VisuallyHidden>
-      {hasEarnedRewards ? 'Earned rewards this cycle' : 'No rewards earned this cycle'}
+      {hasEarnedRewards
+        ? 'Earned rewards this cycle'
+        : 'No rewards earned this cycle'}
     </VisuallyHidden>
     <Dot aria-hidden="true" $hasEarnedRewards={hasEarnedRewards} />
   </Container>
