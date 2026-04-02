@@ -35,10 +35,36 @@ set -euo pipefail
 # Args + usage
 # ---------------------------------------------------------------------------
 usage() {
-  head -n 30 "${BASH_SOURCE[0]}" | sed -n '1d; s/^# \{0,1\}//p' >&2
+  cat >&2 << 'USAGE'
+extract-context.sh — Extract structured context from a Pearl logs zip bundle
+
+Usage: extract-context.sh <zipfile> <subcommand> [options]
+
+Subcommands:
+  services                          — All services table (ID, name, chain, addresses, token, version)
+  master-wallet                     — Master EOA + Master Safe addresses by chain
+  log-summary                       — Per-agent log snapshot: last timestamp, last round, sorted most-recent first
+  os-info                           — OS, platform, memory from os_info.txt
+  balances <address> <chainid>      — Native + token balances (current and at export time)
+  tx-history <address> <chainid>    — Tx history filtered by --since / --until (unix timestamps)
+    Options: --since <unix-ts>  (default: export_time - 48h)
+             --until <unix-ts>  (default: export_time)
+
+Chain IDs: 1=Ethereum  10=Optimism  100=Gnosis  137=Polygon  8453=Base  34443=Mode
+
+Env vars (optional):
+  ETHERSCAN_API_KEY  — required only for Ethereum (chainid=1)
+
+Examples:
+  curl -fsSL <url> | bash -s -- bundle.zip services
+  curl -fsSL <url> | bash -s -- bundle.zip log-summary
+  curl -fsSL <url> | bash -s -- bundle.zip balances 0xf17be80d... 10
+  curl -fsSL <url> | bash -s -- bundle.zip tx-history 0xf17be80d... 10 --since 1743500000
+USAGE
   exit 1
 }
 
+[[ $# -eq 0 || "${1:-}" == "--help" || "${1:-}" == "help" ]] && usage
 [[ $# -lt 2 ]] && usage
 
 ZIPFILE="${1}"
