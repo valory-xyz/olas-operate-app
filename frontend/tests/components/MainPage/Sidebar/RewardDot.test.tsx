@@ -1,14 +1,11 @@
 import { render, screen } from '@testing-library/react';
 
-/* eslint-enable @typescript-eslint/no-var-requires */
+jest.mock('styled-components', () =>
+  jest.requireActual('../../../mocks/styledComponents').styledComponentsMock,
+);
+
 // Import after mocks
 import { RewardDot } from '../../../../components/MainPage/Sidebar/RewardDot';
-
-/* eslint-disable @typescript-eslint/no-var-requires */
-jest.mock(
-  'styled-components',
-  () => require('../../../mocks/styledComponents').styledComponentsMock,
-);
 
 describe('RewardDot', () => {
   it('renders with role="img"', () => {

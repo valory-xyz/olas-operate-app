@@ -2,7 +2,7 @@ import { Dropdown, Flex, Typography } from 'antd';
 import { useCallback, useState } from 'react';
 import { RiArrowDownSLine, RiArrowRightSLine } from 'react-icons/ri';
 import { TbDots } from 'react-icons/tb';
-import styled from 'styled-components';
+import styled, { css } from 'styled-components';
 
 import { AgentGroupHeader, TreeLine } from '@/components/ui/AgentTree';
 import { COLOR } from '@/constants';
@@ -46,13 +46,17 @@ const ClickableInstanceRow = styled(Flex)<{ $isSelected: boolean }>`
   }
 `;
 
-const RewardDotVisible = styled.span`
+const RewardDotVisible = styled.span<{ $canArchive: boolean }>`
   grid-area: 1 / 1;
   display: flex;
   align-items: center;
-  ${ClickableInstanceRow}:hover & {
-    visibility: hidden;
-  }
+  ${({ $canArchive }) =>
+    $canArchive &&
+    css`
+      ${ClickableInstanceRow}:hover & {
+        visibility: hidden;
+      }
+    `}
 `;
 
 const RewardArchiveSlot = styled.span`
@@ -217,7 +221,7 @@ export const AgentTreeMenu = ({
                           <PulseDot />
                         ) : hasEarnedRewards !== undefined ? (
                           <RewardArchiveSlot>
-                            <RewardDotVisible>
+                            <RewardDotVisible $canArchive={canArchive}>
                               <RewardDot hasEarnedRewards={hasEarnedRewards} />
                             </RewardDotVisible>
                             {showArchive && (
