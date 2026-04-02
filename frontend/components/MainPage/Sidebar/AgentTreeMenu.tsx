@@ -47,6 +47,7 @@ const ClickableInstanceRow = styled(Flex)<{ $isSelected: boolean }>`
 `;
 
 const RewardDotVisible = styled.span`
+  grid-area: 1 / 1;
   display: flex;
   align-items: center;
   ${ClickableInstanceRow}:hover & {
@@ -55,12 +56,12 @@ const RewardDotVisible = styled.span`
 `;
 
 const RewardArchiveSlot = styled.span`
-  position: relative;
-  display: flex;
-  align-items: center;
+  display: grid;
+  place-items: center;
 `;
 
 const ArchiveMenuButton = styled.span`
+  grid-area: 1 / 1;
   visibility: hidden;
   display: flex;
   align-items: center;
@@ -193,6 +194,7 @@ export const AgentTreeMenu = ({
                       instance.serviceConfigId,
                     );
                     const showArchive = canArchive && !isRunning;
+                    const { hasEarnedRewards } = instance;
 
                     return (
                       <ClickableInstanceRow
@@ -213,11 +215,11 @@ export const AgentTreeMenu = ({
                         </Text>
                         {isRunning ? (
                           <PulseDot />
-                        ) : instance.hasEarnedRewards !== undefined ? (
+                        ) : hasEarnedRewards !== undefined ? (
                           <RewardArchiveSlot>
                             <RewardDotVisible>
                               <RewardDot
-                                hasEarnedRewards={instance.hasEarnedRewards}
+                                hasEarnedRewards={hasEarnedRewards}
                               />
                             </RewardDotVisible>
                             {showArchive && (

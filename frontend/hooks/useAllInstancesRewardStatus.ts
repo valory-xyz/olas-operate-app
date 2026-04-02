@@ -2,7 +2,7 @@ import { useQueries } from '@tanstack/react-query';
 import { isNil } from 'lodash';
 import { useContext, useMemo } from 'react';
 
-import { ACTIVE_AGENTS, AGENT_CONFIG } from '@/config/agents';
+import { ACTIVE_AGENTS } from '@/config/agents';
 import { OnlineStatusContext } from '@/context/OnlineStatusProvider';
 import { StakingProgramContext } from '@/context/StakingProgramProvider';
 import { asEvmChainId, asMiddlewareChain } from '@/utils/middlewareHelpers';
@@ -11,15 +11,6 @@ import { isServiceOfAgent } from '@/utils/service';
 import { createStakingRewardsQuery } from './useAgentStakingRewardsDetails';
 import { useServices } from './useServices';
 
-/**
- * Hook to fetch staking reward status for all visible (non-archived) agent
- * instances across all agent types and chains.
- *
- * Returns a Map from serviceConfigId to `boolean | undefined`:
- * - `true`  → instance has earned rewards this staking cycle
- * - `false` → instance has not earned rewards
- * - `undefined` → still loading or no staking program configured
- */
 export const useAllInstancesRewardStatus = (): Map<
   string,
   boolean | undefined
@@ -39,8 +30,7 @@ export const useAllInstancesRewardStatus = (): Map<
       );
       if (!agentEntry) return [];
 
-      const [agentType] = agentEntry;
-      const agentConfig = AGENT_CONFIG[agentType];
+      const [, agentConfig] = agentEntry;
 
       let chainId;
       try {
