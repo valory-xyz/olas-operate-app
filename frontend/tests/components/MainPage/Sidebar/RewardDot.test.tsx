@@ -1,11 +1,12 @@
 import { render, screen } from '@testing-library/react';
 
-jest.mock('styled-components', () =>
-  jest.requireActual('../../../mocks/styledComponents').styledComponentsMock,
-);
-
-// Import after mocks
 import { RewardDot } from '../../../../components/MainPage/Sidebar/RewardDot';
+
+jest.mock(
+  'styled-components',
+  () =>
+    jest.requireActual('../../../mocks/styledComponents').styledComponentsMock,
+);
 
 describe('RewardDot', () => {
   it('renders with role="img"', () => {
