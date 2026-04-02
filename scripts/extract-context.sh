@@ -6,9 +6,9 @@
 # Subcommands:
 #   services                          — All services table (ID, name, chain, addresses, token, version)
 #   master-wallet                     — Master EOA + Master Safe addresses by chain
-#   log-summary                       — Per-agent log summary: last timestamp, gap to export, last round, last error
+#   log-summary                       — Per-agent log summary: last timestamp, last round
 #   os-info                           — OS, platform, memory from os_info.txt
-#   balances <address> <chainid>      — Native + token balances (current and at export time)
+#   balances <address> <chainid>      — Native balances plus recent token transfer activity
 #   tx-history <address> <chainid>    — Tx history filtered by --since / --until (unix timestamps)
 #     Options: --since <unix-ts>  (default: export_time - 48h)
 #              --until <unix-ts>  (default: export_time)
@@ -35,7 +35,7 @@ set -euo pipefail
 # Args + usage
 # ---------------------------------------------------------------------------
 usage() {
-  head -n 30 "${BASH_SOURCE[0]}" | sed -n 's/^# \{0,1\}//p' >&2
+  head -n 30 "${BASH_SOURCE[0]}" | sed -n '1d; s/^# \{0,1\}//p' >&2
   exit 1
 }
 
@@ -80,7 +80,7 @@ parse_export_ts() {
   fi
   # Convert 2026-04-02T13-28-30 → 2026-04-02T13:28:30
   local iso="${raw:0:10}T${raw:11:2}:${raw:14:2}:${raw:17:2}"
-  date -d "${iso}Z" +%s 2>/dev/null || date -j -f "%Y-%m-%dT%H:%M:%S" "${iso}" +%s 2>/dev/null || date +%s
+  date -u -d "${iso}Z" +%s 2>/dev/null || date -j -u -f "%Y-%m-%dT%H:%M:%S" "${iso}" +%s 2>/dev/null || date +%s
 }
 
 # Chain ID → explorer base URL and result parsing style
@@ -125,16 +125,19 @@ chain_explorer_url() {
   printf '%s/%s/%s' "${base}" "${type}" "${addr}"
 }
 
-# EVM chain ID from chain name string (for debug_data home_chain field)
-chainid_from_name() {
-  case "${1}" in
-    ethereum|mainnet) printf '1' ;;
-    optimism)         printf '10' ;;
-    gnosis)           printf '100' ;;
-    polygon)          printf '137' ;;
-    base)             printf '8453' ;;
-    mode)             printf '34443' ;;
-    *)                printf '0' ;;
+# Validate EVM address format
+validate_address() {
+  local address="${1}"
+  [[ "${address}" =~ ^0x[0-9a-fA-F]{40}$ ]]
+}
+
+# Validate chain ID is supported by this script
+validate_chainid() {
+  local chainid="${1}"
+  [[ "${chainid}" =~ ^[0-9]+$ ]] || return 1
+  case "${chainid}" in
+    1|10|100|137|8453|34443) return 0 ;;
+    *) return 1 ;;
   esac
 }
 
@@ -396,7 +399,6 @@ export_iso = '${export_iso}'
 bracket_ts = re.compile(r'^\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})')   # [YYYY-MM-DD HH:MM:SS
 plain_ts   = re.compile(r'^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})')      # YYYY-MM-DD HH:MM:SS
 round_pat  = re.compile(r\"Entered in the '([^']+_round)'\")
-error_pat  = re.compile(r'\[ERROR\]')
 
 def parse_ts(line):
     m = bracket_ts.match(line) or plain_ts.match(line)
@@ -425,7 +427,6 @@ results = []
 for label, lines in blocks:
     last_ts = None
     last_round = None
-    last_error = None
 
     for line in lines:
         ts = parse_ts(line)
@@ -434,9 +435,6 @@ for label, lines in blocks:
         m = round_pat.search(line)
         if m:
             last_round = m.group(1)
-        if error_pat.search(line):
-            last_error = line.strip()
-
     sort_key = last_ts or '0000-00-00 00:00:00'
 
     parts = [
@@ -477,6 +475,8 @@ cmd_balances() {
   local address="${1:-}"
   local chainid="${2:-}"
   [[ -z "${address}" || -z "${chainid}" ]] && { printf 'Usage: balances <address> <chainid>\n' >&2; exit 1; }
+  validate_address "${address}" || { printf '[extract-context] ERROR: invalid address format: %s\n' "${address}" >&2; exit 1; }
+  validate_chainid "${chainid}" || { printf '[extract-context] ERROR: unsupported chainid: %s (supported: 1, 10, 100, 137, 8453, 34443)\n' "${chainid}" >&2; exit 1; }
 
   local chain_nm export_ts
   chain_nm=$(chain_name "${chainid}")
@@ -516,7 +516,12 @@ cmd_balances() {
   local start_block
   start_block=$(get_block_at_ts "${chainid}" "${since_48h}" "after")
   local tokentx_raw
-  tokentx_raw=$(api_call "${chainid}" "module=account&action=tokentx&address=${address}&startblock=${start_block}&endblock=${export_block}&sort=desc&page=1&offset=50")
+  if [[ "${export_block}" == "0" ]]; then
+    printf '[extract-context] WARNING: export block lookup failed; skipping ERC-20 token transfer query.\n' >&2
+    tokentx_raw='{"status":"1","message":"export block lookup failed; tokentx query skipped","result":[]}'
+  else
+    tokentx_raw=$(api_call "${chainid}" "module=account&action=tokentx&address=${address}&startblock=${start_block}&endblock=${export_block}&sort=desc&page=1&offset=50")
+  fi
 
   printf '=== Balances: %s on %s (chainid=%s) ===\n\n' "${address}" "${chain_nm}" "${chainid}"
   printf 'Explorer:          %s\n' "$(chain_explorer_url "${chainid}" "${address}" "address")"
@@ -526,9 +531,12 @@ cmd_balances() {
   printf '\n'
 
   # Parse and display recent token transfers
-  printf '%s\n' "${tokentx_raw}" | python3 -c "
+  printf '%s\n' "${tokentx_raw}" | ADDRESS_LOWER="${address,,}" python3 -c "
 import sys, json
+import os
 from collections import defaultdict
+
+address_lower = os.environ.get('ADDRESS_LOWER', '').lower()
 
 raw = sys.stdin.read().strip()
 try:
@@ -554,7 +562,7 @@ for tx in txs:
     dec  = int(tx.get('tokenDecimal', '18') or '18')
     val  = int(tx.get('value', '0') or '0')
     decimals[sym] = dec
-    if tx.get('to', '').lower() == '${address}'.lower():
+    if tx.get('to', '').lower() == address_lower:
         flows[sym] += val
     else:
         flows[sym] -= val
@@ -572,7 +580,7 @@ for tx in txs[:10]:
     dec  = int(tx.get('tokenDecimal','18') or '18')
     val  = int(tx.get('value','0') or '0')
     human = val / (10 ** dec)
-    direction = 'IN ' if tx.get('to','').lower() == '${address}'.lower() else 'OUT'
+    direction = 'IN ' if tx.get('to','').lower() == address_lower else 'OUT'
     print(f'  {direction} {human:.6f} {sym}  tx={tx.get(\"hash\",\"?\")[:20]}...  time={tx.get(\"timeStamp\",\"?\")}')
 "
   printf '\n'
@@ -585,6 +593,8 @@ cmd_tx_history() {
   local address="${1:-}"
   local chainid="${2:-}"
   [[ -z "${address}" || -z "${chainid}" ]] && { printf 'Usage: tx-history <address> <chainid> [--since <unix-ts>] [--until <unix-ts>]\n' >&2; exit 1; }
+  validate_address "${address}" || { printf '[extract-context] ERROR: invalid address format: %s\n' "${address}" >&2; exit 1; }
+  validate_chainid "${chainid}" || { printf '[extract-context] ERROR: unsupported chainid: %s (supported: 1, 10, 100, 137, 8453, 34443)\n' "${chainid}" >&2; exit 1; }
   shift 2
 
   local export_ts
@@ -594,11 +604,22 @@ cmd_tx_history() {
 
   while [[ $# -gt 0 ]]; do
     case "${1}" in
-      --since) since_ts="${2}"; shift 2 ;;
-      --until) until_ts="${2}"; shift 2 ;;
+      --since)
+        [[ $# -lt 2 ]] && { printf 'Usage: tx-history <address> <chainid> [--since <unix-ts>] [--until <unix-ts>]\n' >&2; exit 1; }
+        since_ts="${2}"
+        shift 2
+        ;;
+      --until)
+        [[ $# -lt 2 ]] && { printf 'Usage: tx-history <address> <chainid> [--since <unix-ts>] [--until <unix-ts>]\n' >&2; exit 1; }
+        until_ts="${2}"
+        shift 2
+        ;;
       *) printf '[extract-context] WARNING: unknown option: %s\n' "${1}" >&2; shift ;;
     esac
   done
+
+  [[ "${since_ts}" =~ ^[0-9]+$ ]] || { printf '[extract-context] ERROR: --since must be a unix timestamp: %s\n' "${since_ts}" >&2; exit 1; }
+  [[ "${until_ts}" =~ ^[0-9]+$ ]] || { printf '[extract-context] ERROR: --until must be a unix timestamp: %s\n' "${until_ts}" >&2; exit 1; }
 
   local chain_nm
   chain_nm=$(chain_name "${chainid}")
@@ -611,6 +632,30 @@ cmd_tx_history() {
   end_block=$(get_block_at_ts "${chainid}" "${until_ts}" "before")
 
   printf '[extract-context] Block range: %s → %s\n' "${start_block}" "${end_block}" >&2
+
+  if [[ "${start_block}" -eq 0 || "${end_block}" -eq 0 ]]; then
+    printf '[extract-context] WARNING: could not resolve block range for %s on %s (%s → %s resolved to %s → %s); skipping on-chain tx queries.\n' \
+      "${address}" "${chain_nm}" "${since_ts}" "${until_ts}" "${start_block}" "${end_block}" >&2
+    printf '=== Tx History: %s on %s (chainid=%s) ===\n\n' "${address}" "${chain_nm}" "${chainid}"
+    printf 'Explorer:   %s\n' "$(chain_explorer_url "${chainid}" "${address}" "address")"
+    printf 'Window:     %s  →  %s\n' "${since_ts}" "${until_ts}"
+    printf 'Blocks:     %s  →  %s\n\n' "${start_block}" "${end_block}"
+    printf 'Normal transactions: skipped (block lookup failed)\n'
+    printf 'ERC-20 transfers: skipped (block lookup failed)\n\n'
+    return 0
+  fi
+
+  if [[ "${start_block}" -gt "${end_block}" ]]; then
+    printf '[extract-context] WARNING: invalid block range for %s on %s (start_block %s > end_block %s); skipping on-chain tx queries.\n' \
+      "${address}" "${chain_nm}" "${start_block}" "${end_block}" >&2
+    printf '=== Tx History: %s on %s (chainid=%s) ===\n\n' "${address}" "${chain_nm}" "${chainid}"
+    printf 'Explorer:   %s\n' "$(chain_explorer_url "${chainid}" "${address}" "address")"
+    printf 'Window:     %s  →  %s\n' "${since_ts}" "${until_ts}"
+    printf 'Blocks:     %s  →  %s\n\n' "${start_block}" "${end_block}"
+    printf 'Normal transactions: skipped (invalid block range)\n'
+    printf 'ERC-20 transfers: skipped (invalid block range)\n\n'
+    return 0
+  fi
 
   local since_iso until_iso
   since_iso=$(date -d "@${since_ts}" --utc +"%Y-%m-%dT%H:%M:%SZ" 2>/dev/null || date -r "${since_ts}" -u +"%Y-%m-%dT%H:%M:%SZ" 2>/dev/null || printf '%s' "${since_ts}")
@@ -632,8 +677,11 @@ cmd_tx_history() {
   printf 'Blocks:     %s  →  %s\n\n' "${start_block}" "${end_block}"
 
   # Parse and display normal txs
-  printf '%s\n' "${txlist_raw}" | python3 -c "
+  printf '%s\n' "${txlist_raw}" | ADDRESS_LOWER="${address,,}" python3 -c "
 import sys, json
+import os
+
+address_lower = os.environ.get('ADDRESS_LOWER', '').lower()
 
 raw = sys.stdin.read().strip()
 try:
@@ -661,7 +709,7 @@ else:
         val  = int(tx.get('value','0') or '0')
         eth  = val / 1e18
         err  = ' [FAILED]' if tx.get('isError','0') == '1' else ''
-        direction = 'OUT' if frm.lower() == '${address}'.lower() else 'IN '
+        direction = 'OUT' if frm.lower() == address_lower else 'IN '
         print(f'  {direction} {eth:.6f} ETH  {h[:20]}...  {ts}{err}')
         print(f'      from={frm[:20]}...  to={to[:20]}...')
 " 2>/dev/null || printf 'Normal transactions: (error parsing response)\n'
@@ -669,8 +717,11 @@ else:
   printf '\n'
 
   # Parse and display token transfers
-  printf '%s\n' "${tokentx_raw}" | python3 -c "
+  printf '%s\n' "${tokentx_raw}" | ADDRESS_LOWER="${address,,}" python3 -c "
 import sys, json
+import os
+
+address_lower = os.environ.get('ADDRESS_LOWER', '').lower()
 
 raw = sys.stdin.read().strip()
 try:
@@ -697,7 +748,7 @@ else:
         dec  = int(tx.get('tokenDecimal','18') or '18')
         val  = int(tx.get('value','0') or '0')
         human = val / (10 ** dec)
-        direction = 'IN ' if tx.get('to','').lower() == '${address}'.lower() else 'OUT'
+        direction = 'IN ' if tx.get('to','').lower() == address_lower else 'OUT'
         print(f'  {direction} {human:.6f} {sym}  {h[:20]}...  {ts}')
 " 2>/dev/null || printf 'ERC-20 transfers: (error parsing response)\n'
 
