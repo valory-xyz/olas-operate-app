@@ -2,12 +2,13 @@ import { Dropdown, Flex, Typography } from 'antd';
 import { useCallback, useState } from 'react';
 import { RiArrowDownSLine, RiArrowRightSLine } from 'react-icons/ri';
 import { TbDots } from 'react-icons/tb';
-import styled from 'styled-components';
+import styled, { css } from 'styled-components';
 
 import { AgentGroupHeader, TreeLine } from '@/components/ui/AgentTree';
 import { COLOR } from '@/constants';
 
 import { PulseDot } from './PulseDot';
+import { RewardDot } from './RewardDot';
 import { SidebarAgentGroup } from './types';
 
 const { Text } = Typography;
@@ -24,7 +25,7 @@ type AgentTreeMenuProps = {
 
 const GroupHeader = styled(Flex)`
   cursor: pointer;
-  padding: 4px 16px 4px 8px;
+  padding: 4px 20px 4px 8px;
   border-radius: 8px;
 
   &:hover {
@@ -45,8 +46,26 @@ const ClickableInstanceRow = styled(Flex)<{ $isSelected: boolean }>`
   }
 `;
 
-/** Hidden by default; revealed when parent row is hovered. */
+const RewardDotVisible = styled.span<{ $canArchive: boolean }>`
+  grid-area: 1 / 1;
+  display: flex;
+  align-items: center;
+  ${({ $canArchive }) =>
+    $canArchive &&
+    css`
+      ${ClickableInstanceRow}:hover & {
+        visibility: hidden;
+      }
+    `}
+`;
+
+const RewardArchiveSlot = styled.span`
+  display: grid;
+  place-items: center;
+`;
+
 const ArchiveMenuButton = styled.span`
+  grid-area: 1 / 1;
   visibility: hidden;
   display: flex;
   align-items: center;
@@ -179,6 +198,7 @@ export const AgentTreeMenu = ({
                       instance.serviceConfigId,
                     );
                     const showArchive = canArchive && !isRunning;
+                    const { hasEarnedRewards } = instance;
 
                     return (
                       <ClickableInstanceRow
@@ -199,6 +219,19 @@ export const AgentTreeMenu = ({
                         </Text>
                         {isRunning ? (
                           <PulseDot />
+                        ) : hasEarnedRewards !== undefined ? (
+                          <RewardArchiveSlot>
+                            <RewardDotVisible $canArchive={canArchive}>
+                              <RewardDot hasEarnedRewards={hasEarnedRewards} />
+                            </RewardDotVisible>
+                            {showArchive && (
+                              <InstanceArchiveDropdown
+                                instanceName={instance.name}
+                                serviceConfigId={instance.serviceConfigId}
+                                onArchiveRequest={onArchiveRequest}
+                              />
+                            )}
+                          </RewardArchiveSlot>
                         ) : showArchive ? (
                           <InstanceArchiveDropdown
                             instanceName={instance.name}

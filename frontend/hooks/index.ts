@@ -3,6 +3,7 @@ export * from './useAgentActivity';
 export * from './useAgentFundingRequests';
 export * from './useAgentRunning';
 export * from './useAgentStakingRewardsDetails';
+export * from './useAllInstancesRewardStatus';
 export * from './useArchivedAgents';
 export * from './useAvailableAgentAssets';
 export * from './useAvailableAssets';

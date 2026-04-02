@@ -30,6 +30,7 @@ import {
 } from '@/constants';
 import {
   useAgentRunning,
+  useAllInstancesRewardStatus,
   useBalanceAndRefillRequirementsContext,
   useIsInitiallyFunded,
   useMasterWalletContext,
@@ -159,6 +160,8 @@ export const Sidebar = () => {
     archivedInstances,
   } = useSidebarAgents();
 
+  const rewardStatusByConfigId = useAllInstancesRewardStatus();
+
   const agentGroups = useMemo<SidebarAgentGroup[]>(() => {
     if (!services) return [];
 
@@ -189,6 +192,7 @@ export const Sidebar = () => {
           config.displayName,
           config.evmHomeChainId,
         ),
+        hasEarnedRewards: rewardStatusByConfigId.get(service.service_config_id),
       });
     }
 
@@ -207,7 +211,7 @@ export const Sidebar = () => {
       }
       return configIndex(a.agentType) - configIndex(b.agentType);
     });
-  }, [services, archivedInstances]);
+  }, [services, archivedInstances, rewardStatusByConfigId]);
 
   const { runningServiceConfigId } = useAgentRunning();
 

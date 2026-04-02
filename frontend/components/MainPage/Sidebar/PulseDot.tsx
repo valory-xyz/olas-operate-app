@@ -25,7 +25,7 @@ const Container = styled.span`
   position: relative;
   display: grid;
   place-items: center;
-  left: -20px;
+  min-width: 24px;
 `;
 
 const Dot = styled.span`
