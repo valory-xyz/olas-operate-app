@@ -35,32 +35,107 @@ set -euo pipefail
 # Args + usage
 # ---------------------------------------------------------------------------
 usage() {
-  cat >&2 << 'USAGE'
+  cat >&2 << 'HELP_TEXT'
 extract-context.sh — Extract structured context from a Pearl logs zip bundle
 
-Usage: extract-context.sh <zipfile> <subcommand> [options]
+OVERVIEW
+  This script reads a Pearl logs .zip bundle (exported from the Pearl desktop app) and
+  extracts structured diagnostic context. It is invoked via curl so it is always the
+  latest version:
 
-Subcommands:
-  services                          — All services table (ID, name, chain, addresses, token, version)
-  master-wallet                     — Master EOA + Master Safe addresses by chain
-  log-summary                       — Per-agent log snapshot: last timestamp, last round, sorted most-recent first
-  os-info                           — OS, platform, memory from os_info.txt
-  balances <address> <chainid>      — Native + token balances (current and at export time)
-  tx-history <address> <chainid>    — Tx history filtered by --since / --until (unix timestamps)
-    Options: --since <unix-ts>  (default: export_time - 48h)
-             --until <unix-ts>  (default: export_time)
+    curl -fsSL <url> | bash -s -- <zipfile> <subcommand> [options]
 
-Chain IDs: 1=Ethereum  10=Optimism  100=Gnosis  137=Polygon  8453=Base  34443=Mode
+  All subcommands read directly from the zip — no temp directory is created.
+  Subcommands that make live API calls are clearly marked below.
 
-Env vars (optional):
-  ETHERSCAN_API_KEY  — required only for Ethereum (chainid=1)
-
-Examples:
-  curl -fsSL <url> | bash -s -- bundle.zip services
-  curl -fsSL <url> | bash -s -- bundle.zip log-summary
-  curl -fsSL <url> | bash -s -- bundle.zip balances 0xf17be80d... 10
-  curl -fsSL <url> | bash -s -- bundle.zip tx-history 0xf17be80d... 10 --since 1743500000
 USAGE
+  extract-context.sh <zipfile> <subcommand> [options]
+
+SUBCOMMANDS — ZIP-ONLY (fast, no network calls)
+
+  services
+    Reads:   debug_data.json inside the zip
+    Outputs: One block per service with:
+               - service_config_id (sc-{uuid}) — use this to match log files
+               - name, home chain, agent version (owner/repo@tag)
+               - Multisig (Safe) address — the service's on-chain safe wallet
+               - Agent EOA address(es) — the hot wallet(s) that sign transactions
+               - Service token ID, agent type ID
+               - Required ERC-20 token contract addresses (from fund_requirements)
+    When:    Run first. Use the output to build the service inventory and extract
+             addresses needed for on-chain subcommands.
+
+  master-wallet
+    Reads:   debug_data.json inside the zip
+    Outputs: Master EOA address (owns all Safes) and Master Safe address(es) per chain,
+             plus any backup EOAs.
+    When:    Run when investigating wallet ownership, funding issues, or Safe setup.
+             The Master EOA funds the Agent EOAs and owns the Master Safe.
+
+  log-summary
+    Reads:   sc-{uuid}_agent.log files + agent_runner.log inside the zip
+    Outputs: One block per agent log file, sorted newest-first, showing:
+               - Last log timestamp (local time — compare against export time to gauge staleness)
+               - Last ABCI round entered (e.g. reset_and_pause_round = healthy cycle completed;
+                 validate_transaction_round with no further transition = likely stuck)
+             The entry labelled (current runner) is agent_runner.log — written by whichever
+             agent was most recently started.
+    When:    Run to identify which service is actively failing vs stopped. A service with a
+             recent last-log timestamp but stuck in a non-reset_and_pause_round round is the
+             one to focus on. Services whose last log is days before export were likely stopped
+             intentionally.
+    Note:    Timestamps in agent logs are local time, not UTC. The export time shown is UTC
+             (parsed from the zip filename). Do not compute gaps — compare them visually.
+
+  os-info
+    Reads:   os_info.txt inside the zip
+    Outputs: OS name, platform (x64/arm64), total memory
+    When:    Run when the issue might be platform-specific (e.g. Windows-on-ARM, low memory,
+             unsupported OS). Also useful context for any bug report.
+
+SUBCOMMANDS — LIVE API CALLS (require network; use Blockscout for most chains, Etherscan V2 for Ethereum)
+
+  balances <address> <chainid>
+    Fetches: Current native balance + native balance at log-export time (via block lookup)
+             + ERC-20 token activity in the 48h window before export (net flow + recent transfers)
+    Outputs: Explorer URL, native balance now vs at export, token transfer summary
+    When:    Run for the failing service's Safe address and Agent EOA to check:
+               - Is the Safe funded? Did it run out of gas/tokens during the issue window?
+               - Did the Agent EOA run out of gas (ETH/xDAI/MATIC etc)?
+               - Were there unexpected token inflows or outflows around the failure time?
+    Note:    The export-time balance reflects what the agent had when the user exported logs.
+             The current balance may differ if the agent has since been topped up or drained.
+    Env:     ETHERSCAN_API_KEY required for chainid=1 (Ethereum) only.
+
+  tx-history <address> <chainid> [--since <unix-ts>] [--until <unix-ts>]
+    Fetches: Normal transactions + ERC-20 token transfers for <address> in the time window
+    Outputs: Explorer URL, time/block window, normal txs (with direction, value, hash, status),
+             ERC-20 transfers (with direction, token symbol, amount, hash)
+    Default: --since = export_time - 48h, --until = export_time
+    When:    Run after balances, for the failing service's Agent EOA, to see:
+               - Did the agent successfully submit transactions? Did any fail on-chain?
+               - Were there failed txs ([FAILED] flag) that explain a stuck round?
+               - What was the last successful action before the failure?
+             Also run for the Safe address if investigating DeFi position activity.
+    Options: --since <unix-ts>  override window start (unix timestamp)
+             --until <unix-ts>  override window end (unix timestamp)
+    Env:     ETHERSCAN_API_KEY required for chainid=1 (Ethereum) only.
+
+CHAIN IDS
+  1=Ethereum  10=Optimism  100=Gnosis  137=Polygon  8453=Base  34443=Mode
+
+OUTPUT
+  Human-readable text on stdout. Progress lines on stderr. Exit: 0=success  1=error.
+
+EXAMPLES
+  curl -fsSL <url> | bash -s -- bundle.zip services
+  curl -fsSL <url> | bash -s -- bundle.zip master-wallet
+  curl -fsSL <url> | bash -s -- bundle.zip log-summary
+  curl -fsSL <url> | bash -s -- bundle.zip os-info
+  curl -fsSL <url> | bash -s -- bundle.zip balances 0xf17be80d... 10
+  curl -fsSL <url> | bash -s -- bundle.zip tx-history 0xf17be80d... 10
+  curl -fsSL <url> | bash -s -- bundle.zip tx-history 0xf17be80d... 10 --since 1743500000 --until 1743600000
+HELP_TEXT
   exit 1
 }
 
