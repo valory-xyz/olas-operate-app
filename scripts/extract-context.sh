@@ -190,7 +190,7 @@ chain_api_base() {
   local chainid="${1}"
   case "${chainid}" in
     1)     printf 'https://api.etherscan.io/v2/api?chainid=1&apikey=%s' "${ETHERSCAN_API_KEY:-YourApiKeyToken}" ;;
-    10)    printf 'https://optimism.blockscout.com/api' ;;
+    10)    printf 'https://explorer.optimism.io/api' ;;
     100)   printf 'https://gnosis.blockscout.com/api' ;;
     137)   printf 'https://polygon.blockscout.com/api' ;;
     8453)  printf 'https://base.blockscout.com/api' ;;
@@ -216,7 +216,7 @@ chain_explorer_url() {
   local base
   case "${chainid}" in
     1)     base='https://etherscan.io' ;;
-    10)    base='https://optimistic.etherscan.io' ;;
+    10)    base='https://explorer.optimism.io' ;;
     100)   base='https://gnosisscan.io' ;;
     137)   base='https://polygonscan.com' ;;
     8453)  base='https://basescan.org' ;;
