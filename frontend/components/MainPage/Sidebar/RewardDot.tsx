@@ -28,7 +28,9 @@ export const RewardDot = ({ hasEarnedRewards }: RewardDotProps) => (
   <Container
     role="img"
     aria-label={
-      hasEarnedRewards ? 'Earned rewards this cycle' : 'No rewards earned this cycle'
+      hasEarnedRewards
+        ? 'Earned rewards this cycle'
+        : 'No rewards earned this cycle'
     }
   >
     <Dot $hasEarnedRewards={hasEarnedRewards} />

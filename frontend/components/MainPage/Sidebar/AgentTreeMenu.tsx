@@ -25,7 +25,7 @@ type AgentTreeMenuProps = {
 
 const GroupHeader = styled(Flex)`
   cursor: pointer;
-  padding: 4px 16px 4px 8px;
+  padding: 4px 20px 4px 8px;
   border-radius: 8px;
 
   &:hover {
@@ -218,9 +218,7 @@ export const AgentTreeMenu = ({
                         ) : hasEarnedRewards !== undefined ? (
                           <RewardArchiveSlot>
                             <RewardDotVisible>
-                              <RewardDot
-                                hasEarnedRewards={hasEarnedRewards}
-                              />
+                              <RewardDot hasEarnedRewards={hasEarnedRewards} />
                             </RewardDotVisible>
                             {showArchive && (
                               <InstanceArchiveDropdown

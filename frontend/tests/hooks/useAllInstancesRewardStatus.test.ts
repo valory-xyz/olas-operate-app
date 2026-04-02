@@ -1,5 +1,5 @@
-import React from 'react';
 import { renderHook } from '@testing-library/react';
+import React from 'react';
 
 import { AGENT_CONFIG } from '../../config/agents';
 import { AgentMap } from '../../constants/agent';
