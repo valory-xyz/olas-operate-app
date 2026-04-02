@@ -3,12 +3,14 @@ import { isNil } from 'lodash';
 import { useContext, useMemo } from 'react';
 
 import { ACTIVE_AGENTS } from '@/config/agents';
+import { FIFTEEN_SECONDS_INTERVAL } from '@/constants/intervals';
 import { OnlineStatusContext } from '@/context/OnlineStatusProvider';
 import { StakingProgramContext } from '@/context/StakingProgramProvider';
 import { asEvmChainId, asMiddlewareChain } from '@/utils/middlewareHelpers';
 import { isServiceOfAgent } from '@/utils/service';
 
 import { createStakingRewardsQuery } from './useAgentStakingRewardsDetails';
+import { useDynamicRefetchInterval } from './useDynamicRefetchInterval';
 import { useServices } from './useServices';
 
 export const useAllInstancesRewardStatus = (): Map<
@@ -16,6 +18,7 @@ export const useAllInstancesRewardStatus = (): Map<
   boolean | undefined
 > => {
   const { isOnline } = useContext(OnlineStatusContext);
+  const refetchInterval = useDynamicRefetchInterval(FIFTEEN_SECONDS_INTERVAL);
   const { stakingProgramIdByServiceConfigId } = useContext(
     StakingProgramContext,
   );
@@ -68,6 +71,7 @@ export const useAllInstancesRewardStatus = (): Map<
         serviceNftTokenId: detail.serviceNftTokenId,
         agentConfig: detail.agentConfig,
         isOnline,
+        refetchInterval,
       }),
     ),
   });

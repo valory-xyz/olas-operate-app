@@ -34,6 +34,7 @@ export const createStakingRewardsQuery = ({
   serviceNftTokenId,
   agentConfig,
   isOnline,
+  refetchInterval,
 }: CreateStakingRewardsQueryParams) => {
   const hasStakingProgram =
     !!stakingProgramId && !!STAKING_PROGRAMS[chainId]?.[stakingProgramId];
@@ -63,9 +64,9 @@ export const createStakingRewardsQuery = ({
       hasStakingProgram &&
       !!multisig &&
       isValidServiceId(serviceNftTokenId),
-    refetchInterval: (isOnline ? FIVE_SECONDS_INTERVAL : false) as
-      | number
-      | false,
+    refetchInterval: (isOnline
+      ? (refetchInterval ?? FIVE_SECONDS_INTERVAL)
+      : false) as number | false,
     refetchOnWindowFocus: false,
   };
 };

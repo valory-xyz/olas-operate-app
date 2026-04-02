@@ -6,8 +6,9 @@ import { COLOR } from '@/constants';
 const DOT_SIZE = 8;
 
 const Container = styled.span`
-  display: flex;
-  align-items: center;
+  display: grid;
+  place-items: center;
+  min-width: 24px;
 `;
 
 const Dot = styled.span<{ $hasEarnedRewards: boolean }>`
