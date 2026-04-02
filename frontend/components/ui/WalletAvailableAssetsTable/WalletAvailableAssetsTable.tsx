@@ -81,12 +81,12 @@ export const WalletAvailableAssetsTable = ({
                 ) : null
               ) : null}
 
-              {showNativeBreakdown ? (
+              {showNativeBreakdown && (
                 <Text className="rounded-md bg-neutral-tertiary px-8 py-1 text-sm text-neutral-secondary">
                   Safe: {formatNumber(safeNativeBalance, 4)} / Signer:{' '}
                   {formatNumber(signerNativeBalance, 4)}
                 </Text>
-              ) : null}
+              )}
             </Flex>
           );
         },
