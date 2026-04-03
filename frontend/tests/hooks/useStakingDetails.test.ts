@@ -4,7 +4,6 @@ import { useBalanceContext } from '../../hooks/useBalanceContext';
 import { useRewardContext } from '../../hooks/useRewardContext';
 import { useRewardsHistory } from '../../hooks/useRewardsHistory';
 import { useStakingDetails } from '../../hooks/useStakingDetails';
-import { ONE_DAY_IN_S } from '../../utils/time';
 
 jest.mock('../../hooks/useBalanceContext', () => ({
   useBalanceContext: jest.fn(),
@@ -21,6 +20,11 @@ jest.mock('../../hooks/useRewardsHistory', () => ({
 const mockUseBalanceContext = useBalanceContext as jest.Mock;
 const mockUseRewardContext = useRewardContext as jest.Mock;
 const mockUseRewardsHistory = useRewardsHistory as jest.Mock;
+
+const makeBigNumberLike = (value: number) => ({
+  _isBigNumber: true,
+  _hex: `0x${value.toString(16)}`,
+});
 
 const setupMocks = ({
   isBalanceLoading = false,
@@ -84,15 +88,20 @@ describe('useStakingDetails', () => {
   });
 
   describe('currentEpochLifetime', () => {
-    it('calculates (tsCheckpoint + ONE_DAY_IN_S) * 1000 when data is available', () => {
-      const tsCheckpoint = 1700000000;
+    it('calculates (tsCheckpoint + livenessPeriod) * 1000 when data is available', () => {
+      const nowInSeconds = Math.floor(Date.now() / 1000);
+      const livenessPeriod = 43200;
+      const tsCheckpoint = nowInSeconds - 60;
       setupMocks({
-        stakingRewardsDetails: { tsCheckpoint },
+        stakingRewardsDetails: {
+          tsCheckpoint,
+          livenessPeriod: makeBigNumberLike(livenessPeriod),
+        },
         isStakingRewardsDetailsLoading: false,
       });
       const { result } = renderHook(() => useStakingDetails());
       expect(result.current.currentEpochLifetime).toBe(
-        (tsCheckpoint + ONE_DAY_IN_S) * 1000,
+        (tsCheckpoint + livenessPeriod) * 1000,
       );
     });
 
@@ -107,7 +116,10 @@ describe('useStakingDetails', () => {
 
     it('returns undefined when isStakingRewardsDetailsLoading is true', () => {
       setupMocks({
-        stakingRewardsDetails: { tsCheckpoint: 1700000000 },
+        stakingRewardsDetails: {
+          tsCheckpoint: 1700000000,
+          livenessPeriod: makeBigNumberLike(86400),
+        },
         isStakingRewardsDetailsLoading: true,
       });
       const { result } = renderHook(() => useStakingDetails());
@@ -116,7 +128,10 @@ describe('useStakingDetails', () => {
 
     it('returns undefined when tsCheckpoint is 0 (falsy)', () => {
       setupMocks({
-        stakingRewardsDetails: { tsCheckpoint: 0 },
+        stakingRewardsDetails: {
+          tsCheckpoint: 0,
+          livenessPeriod: makeBigNumberLike(86400),
+        },
         isStakingRewardsDetailsLoading: false,
       });
       const { result } = renderHook(() => useStakingDetails());
@@ -125,11 +140,41 @@ describe('useStakingDetails', () => {
 
     it('returns undefined when tsCheckpoint is undefined', () => {
       setupMocks({
-        stakingRewardsDetails: {},
+        stakingRewardsDetails: { livenessPeriod: makeBigNumberLike(86400) },
         isStakingRewardsDetailsLoading: false,
       });
       const { result } = renderHook(() => useStakingDetails());
       expect(result.current.currentEpochLifetime).toBeUndefined();
+    });
+
+    it('returns undefined when livenessPeriod is missing', () => {
+      setupMocks({
+        stakingRewardsDetails: { tsCheckpoint: 1700000000 },
+        isStakingRewardsDetailsLoading: false,
+      });
+      const { result } = renderHook(() => useStakingDetails());
+      expect(result.current.currentEpochLifetime).toBeUndefined();
+    });
+
+    it('returns undefined when the epoch has already expired', () => {
+      const tsCheckpoint = 1700000000;
+      const livenessPeriod = 60;
+      const dateNowSpy = jest
+        .spyOn(Date, 'now')
+        .mockReturnValue((tsCheckpoint + livenessPeriod + 1) * 1000);
+
+      setupMocks({
+        stakingRewardsDetails: {
+          tsCheckpoint,
+          livenessPeriod: makeBigNumberLike(livenessPeriod),
+        },
+        isStakingRewardsDetailsLoading: false,
+      });
+
+      const { result } = renderHook(() => useStakingDetails());
+      expect(result.current.currentEpochLifetime).toBeUndefined();
+
+      dateNowSpy.mockRestore();
     });
   });
 
