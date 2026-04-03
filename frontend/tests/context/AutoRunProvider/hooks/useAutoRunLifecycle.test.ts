@@ -268,6 +268,7 @@ describe('useAutoRunLifecycle', () => {
           .mockImplementation(async (id: string) => id === scTrader),
         getRewardSnapshot: jest.fn().mockReturnValue(false),
         stopAgentWithRecovery: jest.fn().mockResolvedValue(true),
+        scanAndStartNext: jest.fn().mockResolvedValue({ started: true }),
       });
 
       renderHook(() => useAutoRunLifecycle(params));
@@ -281,6 +282,42 @@ describe('useAutoRunLifecycle', () => {
       // P1 fix: rewards guard must be cleared so the next epoch can re-trigger rotation.
       // Without this reset, previousEligibility === true permanently blocks future rotations.
       expect(lastRewardsEligibilityRef.current[scTrader]).toBeUndefined();
+    });
+
+    it('keeps rewards guard when scan fails to start a replacement', async () => {
+      const lastRewardsEligibilityRef = {
+        current: {
+          [scTrader]: false,
+        } as Partial<Record<string, boolean | undefined>>,
+      };
+      const params = makeHookParams({
+        enabled: true,
+        enabledRef: { current: true },
+        runningAgentType: AgentMap.PredictTrader,
+        runningServiceConfigId: scTrader,
+        runningAgentTypeRef: { current: AgentMap.PredictTrader },
+        runningServiceConfigIdRef: { current: scTrader },
+        lastRewardsEligibilityRef,
+        refreshRewardsEligibility: jest
+          .fn()
+          .mockImplementation(async (id: string) => id === scTrader),
+        getRewardSnapshot: jest.fn().mockReturnValue(false),
+        stopAgentWithRecovery: jest.fn().mockResolvedValue(true),
+        scanAndStartNext: jest.fn().mockResolvedValue({ started: false }),
+      });
+
+      renderHook(() => useAutoRunLifecycle(params));
+      await act(async () => {
+        await new Promise((r) => setTimeout(r, 0));
+      });
+
+      expect(params.stopAgentWithRecovery).toHaveBeenCalled();
+      expect(params.scanAndStartNext).toHaveBeenCalledWith(scTrader);
+      // Guard stays at `true` so the next poll sees true→true and suppresses re-trigger.
+      expect(lastRewardsEligibilityRef.current[scTrader]).toBe(true);
+      expect(params.recordMetric).not.toHaveBeenCalledWith(
+        'rotationsSucceeded',
+      );
     });
   });
 

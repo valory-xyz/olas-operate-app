@@ -190,18 +190,32 @@ export const useAutoRunLifecycle = ({
         return;
       }
 
-      // Rotation successful: reset BOTH the rewards guard AND the stop backoff for this instance.
-      // Resetting lastRewardsEligibilityRef is critical — without it the guard stays `true` from the
-      // current epoch and permanently blocks rotation in all future epochs (previousEligibility === true
-      // check bails early every time this instance runs and earns rewards again).
-      lastRewardsEligibilityRef.current[currentServiceConfigId] = undefined;
+      // Clear the stop backoff since stop succeeded.
       stopRetryBackoffUntilRef.current[currentServiceConfigId] = undefined;
       if (!enabledRef.current) return;
       const cooldownOk = await sleepAwareDelay(COOLDOWN_SECONDS);
       if (!cooldownOk) return;
       if (!enabledRef.current) return;
-      await scanAndStartNextRef.current(currentServiceConfigId);
-      recordMetric(AUTO_RUN_HEALTH_METRIC.ROTATIONS_SUCCEEDED);
+      const scanResult = await scanAndStartNextRef.current(
+        currentServiceConfigId,
+      );
+
+      if (scanResult?.started) {
+        // Reset the rewards guard only when a replacement agent actually started.
+        // Without this reset the guard stays `true` from the current epoch and
+        // permanently blocks rotation in future epochs (previousEligibility === true
+        // bails early every time this instance runs and earns rewards again).
+        lastRewardsEligibilityRef.current[currentServiceConfigId] = undefined;
+        recordMetric(AUTO_RUN_HEALTH_METRIC.ROTATIONS_SUCCEEDED);
+      } else {
+        // Scan failed to start any agent. Keep the guard at `true` so the next
+        // rewards poll sees `true → true` and suppresses the duplicate trigger.
+        // The scheduled rescan (inside scanAndStartNext) handles retry.
+        logVerbose(
+          `cycle=${cycleId} trigger=${trigger} phase=rotate_end status=scan_failed current=${currentServiceConfigId}`,
+        );
+        return;
+      }
       logVerbose(
         `cycle=${cycleId} trigger=${trigger} phase=rotate_end status=ok current=${currentServiceConfigId}`,
       );
@@ -275,8 +289,11 @@ export const useAutoRunLifecycle = ({
         recordMetric(AUTO_RUN_HEALTH_METRIC.REWARDS_ERRORS);
         // Reset the guard so the next rewards poll can re-trigger rotation
         // instead of being permanently blocked by `previousEligibility === true`.
-        // Schedule a rescan as a recovery safety net.
+        // Set a backoff to prevent rapid-fire re-triggers — without this the
+        // next poll immediately sees `undefined → true` and re-triggers.
         lastRewardsEligibilityRef.current[currentId] = undefined;
+        stopRetryBackoffUntilRef.current[currentId] =
+          Date.now() + SCAN_BLOCKED_DELAY_SECONDS * 1000;
         scheduleNextScan(SCAN_BLOCKED_DELAY_SECONDS);
       } finally {
         isRotatingRef.current = false;
