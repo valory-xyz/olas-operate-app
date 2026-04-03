@@ -37,7 +37,11 @@ jest.mock('react-icons/ri', () => ({
 
 const makeGroup = (
   agentType: string,
-  instances: Array<{ serviceConfigId: string; name: string }>,
+  instances: Array<{
+    serviceConfigId: string;
+    name: string;
+    hasEarnedRewards?: boolean;
+  }>,
 ): SidebarAgentGroup => ({
   agentType: agentType as SidebarAgentGroup['agentType'],
   instances,
@@ -161,5 +165,77 @@ describe('AgentTreeMenu', () => {
   it('does not show running dot when no instances are running', () => {
     render(<AgentTreeMenu {...defaultProps} />);
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
+  });
+
+  it('shows green reward dot (role="img") for non-running instance with hasEarnedRewards=true', () => {
+    const traderGroupWithRewards = makeGroup(AgentMap.PredictTrader, [
+      {
+        serviceConfigId: DEFAULT_SERVICE_CONFIG_ID,
+        name: 'Omenstrat #1',
+        hasEarnedRewards: true,
+      },
+      {
+        serviceConfigId: MOCK_SERVICE_CONFIG_ID_2,
+        name: 'Omenstrat #2',
+        hasEarnedRewards: false,
+      },
+    ]);
+
+    render(
+      <AgentTreeMenu
+        {...defaultProps}
+        groups={[traderGroupWithRewards]}
+        runningServiceConfigIds={new Set()}
+      />,
+    );
+
+    expect(
+      screen.getByRole('img', { name: 'Earned rewards this cycle' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('img', { name: 'No rewards earned this cycle' }),
+    ).toBeInTheDocument();
+  });
+
+  it('does not show reward dot for non-running instance when hasEarnedRewards is undefined', () => {
+    const traderGroupNoRewardData = makeGroup(AgentMap.PredictTrader, [
+      {
+        serviceConfigId: DEFAULT_SERVICE_CONFIG_ID,
+        name: 'Omenstrat #1',
+        // hasEarnedRewards intentionally omitted
+      },
+    ]);
+
+    render(
+      <AgentTreeMenu
+        {...defaultProps}
+        groups={[traderGroupNoRewardData]}
+        runningServiceConfigIds={new Set()}
+      />,
+    );
+
+    expect(screen.queryByRole('img')).not.toBeInTheDocument();
+  });
+
+  it('does not show reward dot for a running instance', () => {
+    const traderGroupWithRewards = makeGroup(AgentMap.PredictTrader, [
+      {
+        serviceConfigId: DEFAULT_SERVICE_CONFIG_ID,
+        name: 'Omenstrat #1',
+        hasEarnedRewards: true,
+      },
+    ]);
+
+    render(
+      <AgentTreeMenu
+        {...defaultProps}
+        groups={[traderGroupWithRewards]}
+        runningServiceConfigIds={new Set([DEFAULT_SERVICE_CONFIG_ID])}
+      />,
+    );
+
+    // PulseDot (role="status") should be shown, no RewardDot (role="img")
+    expect(screen.getByRole('status')).toBeInTheDocument();
+    expect(screen.queryByRole('img')).not.toBeInTheDocument();
   });
 });
