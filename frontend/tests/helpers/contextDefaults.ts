@@ -12,6 +12,7 @@ type StakingProgramContextValue = {
   setDefaultStakingProgramId: (id: StakingProgramId) => void;
   stakingProgramIdToMigrateTo: StakingProgramId | null;
   setStakingProgramIdToMigrateTo: (id: StakingProgramId | null) => void;
+  stakingProgramIdByServiceConfigId: Map<string, StakingProgramId | null>;
 };
 
 /** Default StakingProgramContext value for tests. Override individual fields as needed. */
@@ -25,6 +26,7 @@ export const createStakingProgramContextValue = (
   setDefaultStakingProgramId: jest.fn(),
   stakingProgramIdToMigrateTo: null,
   setStakingProgramIdToMigrateTo: jest.fn(),
+  stakingProgramIdByServiceConfigId: new Map(),
   ...overrides,
 });
 
