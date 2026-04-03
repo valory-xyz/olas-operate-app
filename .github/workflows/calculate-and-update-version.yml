@@ -4,25 +4,25 @@ on:
   workflow_call:
     inputs:
       branch:
-        description: 'Branch/ref to checkout and work with'
+        description: "Branch/ref to checkout and work with"
         required: false
         type: string
-        default: ''
+        default: ""
       version_strategy:
-        description: 'Version calculation strategy: increment, override, production-rc, or production-release'
+        description: "Version calculation strategy: increment, override, production-rc, or production-release"
         required: true
         type: string
       base_version_from_branch:
-        description: 'If true, extract base version from branch name (e.g., release/v1.1.1 -> 1.1.1)'
+        description: "If true, extract base version from branch name (e.g., release/v1.1.1 -> 1.1.1)"
         required: false
         type: boolean
         default: false
     outputs:
       new_tag:
-        description: 'The newly calculated tag name'
+        description: "The newly calculated tag name"
         value: ${{ jobs.calculate-and-update-version.outputs.new_tag }}
       new_version:
-        description: 'The newly calculated version'
+        description: "The newly calculated version"
         value: ${{ jobs.calculate-and-update-version.outputs.new_version }}
 
 permissions:
@@ -45,7 +45,20 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '22.18'
+          node-version: "22.18"
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Setup Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: "2.3.2"
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          installer-parallel: true
 
       - name: Configure Git
         run: |
@@ -62,7 +75,7 @@ jobs:
           else
             BRANCH_NAME="${GITHUB_REF_NAME}"
           fi
-          
+
           # Extract version from branch name (e.g., release/v1.2.3 -> 1.2.3)
           # Support formats: release/v1.2.3, release/1.2.3, v1.2.3, 1.2.3
           if [[ "$BRANCH_NAME" =~ (release/)?v?([0-9]+\.[0-9]+\.[0-9]+) ]]; then
@@ -86,7 +99,7 @@ jobs:
           # Extract only the base semantic version (major.minor.patch).
           # Example: 1.2.3-rc5 → 1.2.3
           BASE_VERSION=$(echo "$PACKAGE_VERSION" | sed -E 's/^([0-9]+\.[0-9]+\.[0-9]+).*/\1/')
-    
+
           # ✅ VALIDATION — Fail the workflow if the base version is empty or invalid.
           if [[ ! "$BASE_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo "❌ ERROR: Failed to extract a valid base version from package.json."
@@ -112,16 +125,16 @@ jobs:
         run: |
           # Fetch all tags
           git fetch --tags || true
-          
+
           if [ "${{ inputs.base_version_from_branch }}" = "true" ]; then
             BASE_VERSION="${{ steps.branch-version.outputs.base_version }}"
           else
             BASE_VERSION="${{ steps.pkg-version.outputs.base_version }}"
           fi
-          
+
           # Get the latest RC tag for this base version (format: vX.Y.Z-rcN)
           LATEST_RC_TAG=$(git tag -l "v${BASE_VERSION}-rc*" | sort -V | tail -1)
-          
+
           # Extract RC number if a matching tag exists; accept optional suffix like -signed
           if [[ "$LATEST_RC_TAG" =~ ^v${BASE_VERSION}-rc([0-9]+)(-.+)?$ ]]; then
             LATEST_RC_NUMBER="${BASH_REMATCH[1]}"
@@ -138,13 +151,13 @@ jobs:
         id: calculate-version
         run: |
           STRATEGY="${{ inputs.version_strategy }}"
-          
+
           if [ "${{ inputs.base_version_from_branch }}" = "true" ]; then
             BASE_VERSION="${{ steps.branch-version.outputs.base_version }}"
           else
             BASE_VERSION="${{ steps.pkg-version.outputs.base_version }}"
           fi
-          
+
           # Set tag suffix, commit message suffix, delete tag flag, and message prefix based on strategy
           if [ "$STRATEGY" = "production-release" ]; then
             # Production release: no RC number
@@ -204,6 +217,44 @@ jobs:
             echo "package.json version is already $NEW_VERSION, skipping update"
           fi
 
+      - name: Check middleware branch and update dependency
+        run: |
+          BRANCH="${{ inputs.branch }}"
+
+          # Skip if no branch is provided (not a feature release workflow)
+          if [ -z "$BRANCH" ]; then
+            echo "No branch provided, skipping middleware check"
+            exit 0
+          fi
+
+          # Check if branch exists in olas-operate-middleware repository
+          echo "Checking if branch '$BRANCH' exists in olas-operate-middleware..."
+          BRANCH_EXISTS=$(curl -s -o /dev/null -w "%{http_code}" \
+            "https://api.github.com/repos/valory-xyz/olas-operate-middleware/branches/$BRANCH")
+
+          if [ "$BRANCH_EXISTS" != "200" ]; then
+            echo "Branch '$BRANCH' does not exist in olas-operate-middleware, keeping default dependency"
+            exit 0
+          fi
+
+          echo "Branch '$BRANCH' found in olas-operate-middleware, fetching latest commit..."
+
+          # Get the latest commit hash from the branch
+          COMMIT_HASH=$(curl -s "https://api.github.com/repos/valory-xyz/olas-operate-middleware/branches/$BRANCH" | \
+            node -p "JSON.parse(require('fs').readFileSync(0, 'utf8')).commit.sha")
+
+          if [ -z "$COMMIT_HASH" ]; then
+            echo "ERROR: Failed to get commit hash from branch '$BRANCH'"
+            exit 1
+          fi
+
+          echo "Latest commit hash: $COMMIT_HASH"
+
+          # Update pyproject.toml using poetry add
+          poetry add "git+https://github.com/valory-xyz/olas-operate-middleware.git@$COMMIT_HASH"
+
+          echo "Updated pyproject.toml to use middleware commit: $COMMIT_HASH"
+
       - name: Update pyproject.toml version
         run: |
           NEW_VERSION="${{ steps.calculate-version.outputs.new_version }}"
@@ -217,7 +268,7 @@ jobs:
 
       - name: Commit and push version update
         run: |
-          git add package.json pyproject.toml
+          git add package.json pyproject.toml poetry.lock
           if git diff --staged --quiet; then
             echo "No version file changes detected — skipping commit."
           else
@@ -246,20 +297,20 @@ jobs:
           echo "🔧 Tag name: $TAG_NAME"
           echo "🔧 Delete existing tag: $DELETE_EXISTING_TAG"
           echo "🔧 Tag message prefix: $TAG_MESSAGE_PREFIX"
-          
+
           # Validate tag name is not empty
           if [ -z "$TAG_NAME" ]; then
             echo "ERROR: TAG_NAME is empty. Cannot create tag."
             exit 1
           fi
-          
+
           # Delete tag locally if it exists (for feature releases)
           if [ "$DELETE_EXISTING_TAG" = "true" ]; then
             git tag -d "$TAG_NAME" 2>/dev/null || true
             # Delete tag remotely if it exists
             git push origin --delete "$TAG_NAME" 2>/dev/null || true
           fi
-          
+
           # Create and push the new tag
           git tag -a "$TAG_NAME" -m "$TAG_MESSAGE_PREFIX $TAG_NAME"
           git push origin "$TAG_NAME"
