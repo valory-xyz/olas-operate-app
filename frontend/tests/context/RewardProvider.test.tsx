@@ -79,9 +79,11 @@ jest.mock('@tanstack/react-query', () => ({
 }));
 
 const mockStoreSet = jest.fn();
+const mockLogEvent = jest.fn();
 
 const mockUseElectronApi = jest.fn(() => ({
   store: { set: mockStoreSet },
+  logEvent: mockLogEvent,
 }));
 
 const mockUseServices = jest.fn<
@@ -138,7 +140,9 @@ const setupMocks = (opts: SetupMocksOptions = {}) => {
   const stakingRewardsDetails =
     'stakingRewardsDetails' in opts
       ? opts.stakingRewardsDetails
-      : (makeStakingRewardsInfo() as StakingRewardsInfo);
+      : (makeStakingRewardsInfo({
+          tsCheckpoint: Math.floor(Date.now() / 1000),
+        }) as StakingRewardsInfo);
   const availableRewardsForEpoch =
     'availableRewardsForEpoch' in opts
       ? opts.availableRewardsForEpoch
@@ -194,6 +198,7 @@ describe('RewardProvider', () => {
     it('exposes stakingRewardsDetails from useAgentStakingRewardsDetails', () => {
       const details = makeStakingRewardsInfo({
         accruedServiceStakingRewards: 7,
+        tsCheckpoint: Math.floor(Date.now() / 1000),
       });
       setupMocks({ stakingRewardsDetails: details as StakingRewardsInfo });
       const { result } = renderRewardContext();
@@ -208,12 +213,30 @@ describe('RewardProvider', () => {
       const { result } = renderRewardContext();
       expect(result.current.stakingRewardsDetails).toBeUndefined();
     });
+
+    it('normalizes stale earned rewards to not eligible when the epoch is overdue', () => {
+      const staleDetails = makeStakingRewardsInfo({
+        isEligibleForRewards: true,
+        livenessPeriod: { _hex: '0x64', _isBigNumber: true },
+        tsCheckpoint: Math.floor(Date.now() / 1000) - 200,
+      }) as StakingRewardsInfo;
+
+      setupMocks({ stakingRewardsDetails: staleDetails });
+
+      const { result } = renderRewardContext();
+
+      expect(result.current.stakingRewardsDetails).toEqual({
+        ...staleDetails,
+        isEligibleForRewards: false,
+      });
+    });
   });
 
   describe('isEligibleForRewards', () => {
     it('is true when stakingRewardsDetails.isEligibleForRewards is true', () => {
       setupMocks({
         stakingRewardsDetails: makeStakingRewardsInfo({
+          tsCheckpoint: Math.floor(Date.now() / 1000),
           isEligibleForRewards: true,
         }) as StakingRewardsInfo,
       });
@@ -238,6 +261,20 @@ describe('RewardProvider', () => {
       });
       const { result } = renderRewardContext();
       expect(result.current.isEligibleForRewards).toBeUndefined();
+    });
+
+    it('is false when the epoch is expired even if raw staking details still say true', () => {
+      setupMocks({
+        stakingRewardsDetails: makeStakingRewardsInfo({
+          isEligibleForRewards: true,
+          livenessPeriod: { _hex: '0x64', _isBigNumber: true },
+          tsCheckpoint: Math.floor(Date.now() / 1000) - 200,
+        }) as StakingRewardsInfo,
+      });
+
+      const { result } = renderRewardContext();
+
+      expect(result.current.isEligibleForRewards).toBe(false);
     });
   });
 
@@ -288,6 +325,7 @@ describe('RewardProvider', () => {
       const bigValue = BigInt('3000000000000000000'); // 3 ether
       setupMocks({
         stakingRewardsDetails: makeStakingRewardsInfo({
+          tsCheckpoint: Math.floor(Date.now() / 1000),
           isEligibleForRewards: true,
         }) as StakingRewardsInfo,
         availableRewardsForEpoch: bigValue,
@@ -310,6 +348,7 @@ describe('RewardProvider', () => {
     it('is undefined when availableRewardsForEpoch is null', () => {
       setupMocks({
         stakingRewardsDetails: makeStakingRewardsInfo({
+          tsCheckpoint: Math.floor(Date.now() / 1000),
           isEligibleForRewards: true,
         }) as StakingRewardsInfo,
         availableRewardsForEpoch: null,
@@ -325,6 +364,7 @@ describe('RewardProvider', () => {
     it('writes firstStakingRewardAchieved to store on first eligibility', async () => {
       setupMocks({
         stakingRewardsDetails: makeStakingRewardsInfo({
+          tsCheckpoint: Math.floor(Date.now() / 1000),
           isEligibleForRewards: true,
         }) as StakingRewardsInfo,
         storeState: { firstStakingRewardAchieved: undefined },
@@ -341,11 +381,27 @@ describe('RewardProvider', () => {
     it('does not write to store when already achieved', () => {
       setupMocks({
         stakingRewardsDetails: makeStakingRewardsInfo({
+          tsCheckpoint: Math.floor(Date.now() / 1000),
           isEligibleForRewards: true,
         }) as StakingRewardsInfo,
         storeState: { firstStakingRewardAchieved: true },
       });
       renderRewardContext();
+      expect(mockStoreSet).not.toHaveBeenCalled();
+    });
+
+    it('does not write to store when eligibility is stale from an expired epoch', () => {
+      setupMocks({
+        stakingRewardsDetails: makeStakingRewardsInfo({
+          isEligibleForRewards: true,
+          livenessPeriod: { _hex: '0x64', _isBigNumber: true },
+          tsCheckpoint: Math.floor(Date.now() / 1000) - 200,
+        }) as StakingRewardsInfo,
+        storeState: { firstStakingRewardAchieved: undefined },
+      });
+
+      renderRewardContext();
+
       expect(mockStoreSet).not.toHaveBeenCalled();
     });
 
@@ -358,6 +414,28 @@ describe('RewardProvider', () => {
       });
       renderRewardContext();
       expect(mockStoreSet).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('stale eligibility logging', () => {
+    it('logs when stale earned rewards are normalized after epoch expiry', async () => {
+      setupMocks({
+        stakingRewardsDetails: makeStakingRewardsInfo({
+          isEligibleForRewards: true,
+          livenessPeriod: { _hex: '0x64', _isBigNumber: true },
+          tsCheckpoint: Math.floor(Date.now() / 1000) - 200,
+        }) as StakingRewardsInfo,
+      });
+
+      renderRewardContext();
+
+      await waitFor(() => {
+        expect(mockLogEvent).toHaveBeenCalledWith(
+          expect.stringContaining(
+            'rewards:: normalized stale eligibility after epoch expiry',
+          ),
+        );
+      });
     });
   });
 

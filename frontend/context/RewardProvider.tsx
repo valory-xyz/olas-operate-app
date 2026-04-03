@@ -7,6 +7,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
 } from 'react';
 
 import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
@@ -14,11 +15,12 @@ import { FIVE_SECONDS_INTERVAL, REACT_QUERY_KEYS } from '@/constants';
 import { useElectronApi, useServices, useStore } from '@/hooks';
 import { useAgentStakingRewardsDetails } from '@/hooks/useAgentStakingRewardsDetails';
 import { Nullable, StakingRewardsInfo } from '@/types';
+import { normalizeStakingRewardsInfo } from '@/utils/stakingRewards';
 
 import { OnlineStatusContext } from './OnlineStatusProvider';
 import { StakingProgramContext } from './StakingProgramProvider';
 
-export const RewardContext = createContext<{
+type RewardContextValue = {
   isAvailableRewardsForEpochLoading?: boolean;
   stakingRewardsDetails?: Nullable<StakingRewardsInfo>;
   /** current epoch rewards */
@@ -30,7 +32,9 @@ export const RewardContext = createContext<{
   minimumStakedAmountRequired?: number;
   updateRewards: () => Promise<void>;
   isStakingRewardsDetailsLoading?: boolean;
-}>({
+};
+
+export const RewardContext = createContext<RewardContextValue>({
   isAvailableRewardsForEpochLoading: false,
   stakingRewardsDetails: null,
   updateRewards: async () => {},
@@ -80,12 +84,12 @@ export const RewardProvider = ({ children }: PropsWithChildren) => {
   const { storeState } = useStore();
   const electronApi = useElectronApi();
   const { selectedStakingProgramId } = useContext(StakingProgramContext);
-  const { selectedAgentConfig } = useServices();
+  const { selectedAgentConfig, selectedService } = useServices();
 
   const currentChainId = selectedAgentConfig.evmHomeChainId;
 
   const {
-    data: stakingRewardsDetails,
+    data: rawStakingRewardsDetails,
     refetch: refetchStakingRewardsDetails,
     isLoading: isStakingRewardsDetailsLoading,
   } = useAgentStakingRewardsDetails(
@@ -94,11 +98,19 @@ export const RewardProvider = ({ children }: PropsWithChildren) => {
     selectedAgentConfig,
   );
 
+  const stakingRewardsDetails: RewardContextValue['stakingRewardsDetails'] =
+    useMemo(
+      () => normalizeStakingRewardsInfo(rawStakingRewardsDetails),
+      [rawStakingRewardsDetails],
+    );
+
   const {
     data: availableRewardsForEpoch,
     isLoading: isAvailableRewardsForEpochLoading,
     refetch: refetchAvailableRewardsForEpoch,
   } = useAvailableRewardsForEpoch();
+
+  const lastLoggedExpiredEligibilityRef = useRef<string | null>(null);
 
   const isEligibleForRewards = stakingRewardsDetails?.isEligibleForRewards;
   const accruedServiceStakingRewards =
@@ -116,6 +128,46 @@ export const RewardProvider = ({ children }: PropsWithChildren) => {
     if (!availableRewardsForEpochEth) return;
     return availableRewardsForEpochEth;
   }, [availableRewardsForEpochEth, isEligibleForRewards]);
+
+  useEffect(() => {
+    if (!rawStakingRewardsDetails?.isEligibleForRewards) {
+      lastLoggedExpiredEligibilityRef.current = null;
+      return;
+    }
+
+    if (stakingRewardsDetails?.isEligibleForRewards !== false) return;
+
+    const serviceConfigId = selectedService?.service_config_id ?? 'unknown';
+    const livenessPeriod = rawStakingRewardsDetails.livenessPeriod?._hex;
+    const logKey = [
+      serviceConfigId,
+      rawStakingRewardsDetails.tsCheckpoint,
+      livenessPeriod,
+      selectedStakingProgramId,
+    ].join(':');
+
+    if (lastLoggedExpiredEligibilityRef.current === logKey) return;
+    lastLoggedExpiredEligibilityRef.current = logKey;
+
+    electronApi.logEvent?.(
+      [
+        'rewards:: normalized stale eligibility after epoch expiry',
+        `service=${serviceConfigId}`,
+        `chainId=${currentChainId}`,
+        `stakingProgram=${selectedStakingProgramId ?? 'unknown'}`,
+        `tsCheckpoint=${rawStakingRewardsDetails.tsCheckpoint}`,
+        `livenessPeriod=${livenessPeriod ?? 'unknown'}`,
+        `now=${Math.floor(Date.now() / 1000)}`,
+      ].join(' '),
+    );
+  }, [
+    currentChainId,
+    electronApi,
+    rawStakingRewardsDetails,
+    selectedService?.service_config_id,
+    selectedStakingProgramId,
+    stakingRewardsDetails?.isEligibleForRewards,
+  ]);
 
   // store the first staking reward achieved in the store for notification
   useEffect(() => {

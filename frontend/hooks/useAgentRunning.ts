@@ -19,18 +19,14 @@ export const useAgentRunning = () => {
         return false;
       }
 
-      const deployment = allDeployments[service.service_config_id];
-      const serviceStatus = deployment?.status;
+      const overrideStatus =
+        serviceStatusOverrides?.[service.service_config_id];
+      const backendStatus = allDeployments[service.service_config_id]?.status;
+      const status = overrideStatus ?? backendStatus;
 
-      // Check if either the backend status or the override status
-      // indicates an active or in-progress. Overrides might represent
-      // the intended status while the real one is transitioning.
-      return (
-        isActiveDeploymentStatus(serviceStatus) ||
-        isActiveDeploymentStatus(
-          serviceStatusOverrides?.[service.service_config_id],
-        )
-      );
+      // Overrides represent the frontend's freshest known transition state.
+      // That includes STOPPED overriding a stale active backend deployment.
+      return isActiveDeploymentStatus(status);
     });
   }, [services, selectedService, allDeployments, serviceStatusOverrides]);
 

@@ -283,7 +283,9 @@ Returns empty array while `isActiveStakingProgramLoaded` is false.
 
 Adds 1 to the subgraph streak if `isEligibleForRewards` is true (since the subgraph doesn't account for the current in-progress epoch).
 
-`currentEpochLifetime` is calculated as `(tsCheckpoint + ONE_DAY_IN_S) * 1000` (in milliseconds).
+`currentEpochLifetime` is calculated as `(tsCheckpoint + livenessPeriod) * 1000` (in milliseconds).
+
+If that timestamp is already in the past, the hook returns no countdown value and the UI falls back to `Soon` while the next on-chain checkpoint is pending.
 
 ### Countdown timer (useStakingContractCountdown)
 

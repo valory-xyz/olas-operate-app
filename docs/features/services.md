@@ -216,7 +216,7 @@ Status classification in `useService`:
 
 ### Agent running detection (useAgentRunning)
 
-Polls `getAllServiceDeployments()` and checks if any service OTHER than `selectedService` has an active deployment status. `isAnotherAgentRunning` considers both backend status and `serviceStatusOverrides`. `runningAgentType` is derived from backend deployments only (does not use overrides), matched via `ACTIVE_AGENTS` by `servicePublicId` + `middlewareHomeChainId`.
+Polls `getAllServiceDeployments()` and checks if any service OTHER than `selectedService` has an active deployment status. For both `isAnotherAgentRunning` and `runningAgentType`, `serviceStatusOverrides` take precedence over backend status, so a local `STOPPED` override can suppress a stale active backend deployment during stop transitions. The active service is matched via `ACTIVE_AGENTS` by `servicePublicId` + `middlewareHomeChainId`.
 
 ### Geo restrictions (useIsAgentGeoRestricted)
 

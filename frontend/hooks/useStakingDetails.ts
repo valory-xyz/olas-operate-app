@@ -1,6 +1,5 @@
+import { BigNumber } from 'ethers';
 import { useMemo } from 'react';
-
-import { ONE_DAY_IN_S } from '@/utils/time';
 
 import { useBalanceContext } from './useBalanceContext';
 import { useRewardContext } from './useRewardContext';
@@ -26,14 +25,27 @@ export const useStakingDetails = () => {
   // Calculate the time remaining in the current epoch
   const currentEpochLifetime = useMemo(() => {
     const lastEpochEndTime = stakingRewardsDetails?.tsCheckpoint;
+    const livenessPeriod = stakingRewardsDetails?.livenessPeriod;
     if (
       !stakingRewardsDetails ||
       isStakingRewardsDetailsLoading ||
-      !lastEpochEndTime
+      !lastEpochEndTime ||
+      !livenessPeriod
     )
       return;
 
-    return (lastEpochEndTime + ONE_DAY_IN_S) * 1000;
+    try {
+      const currentEpochEndTime =
+        (lastEpochEndTime + BigNumber.from(livenessPeriod).toNumber()) * 1000;
+
+      // When the epoch is already overdue and auto-run is waiting on an on-chain
+      // checkpoint, avoid rendering a frozen 00:00:00 countdown.
+      if (currentEpochEndTime <= Date.now()) return;
+
+      return currentEpochEndTime;
+    } catch {
+      return;
+    }
   }, [stakingRewardsDetails, isStakingRewardsDetailsLoading]);
 
   // If rewards history is loading for the first time

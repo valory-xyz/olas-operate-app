@@ -1,3 +1,5 @@
+import { BigNumber } from 'ethers';
+
 import { EvmChainId, StakingProgramId } from '@/constants';
 import { Address, Nullable } from '@/types';
 import { AgentConfig } from '@/types/Agent';
@@ -13,6 +15,36 @@ type FetchAgentStakingRewardsInfoParams = {
   serviceNftTokenId: number;
   agentConfig: AgentConfig;
   onError?: (error: unknown) => void;
+};
+
+export const isStakingRewardsEpochExpired = ({
+  livenessPeriod,
+  tsCheckpoint,
+}: Pick<StakingRewardsInfo, 'livenessPeriod' | 'tsCheckpoint'>): boolean => {
+  try {
+    const livenessPeriodBN = BigNumber.from(livenessPeriod);
+    if (livenessPeriodBN.lte(0)) return false;
+
+    const nowInSeconds = Math.floor(Date.now() / 1000);
+    return livenessPeriodBN.lte(nowInSeconds - tsCheckpoint);
+  } catch {
+    return false;
+  }
+};
+
+export const normalizeStakingRewardsInfo = (
+  stakingRewardsInfo: Nullable<StakingRewardsInfo> | undefined,
+): Nullable<StakingRewardsInfo> | undefined => {
+  if (!stakingRewardsInfo) return stakingRewardsInfo;
+  if (!stakingRewardsInfo.isEligibleForRewards) return stakingRewardsInfo;
+  if (!isStakingRewardsEpochExpired(stakingRewardsInfo)) {
+    return stakingRewardsInfo;
+  }
+
+  return {
+    ...stakingRewardsInfo,
+    isEligibleForRewards: false,
+  };
 };
 
 /**

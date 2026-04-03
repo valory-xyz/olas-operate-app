@@ -117,6 +117,31 @@ describe('useAgentRunning', () => {
     expect(result.current.isAnotherAgentRunning).toBe(true);
   });
 
+  it('override of STOPPED suppresses isAnotherAgentRunning when backend says another service is DEPLOYED', () => {
+    const selectedService = makeServiceEntry(DEFAULT_SERVICE_CONFIG_ID);
+    const otherService = makeServiceEntry(MOCK_SERVICE_CONFIG_ID_2);
+    mockUseServices.mockReturnValue({
+      services: [selectedService, otherService],
+      selectedService,
+      allDeployments: {
+        [DEFAULT_SERVICE_CONFIG_ID]: {
+          status: MiddlewareDeploymentStatusMap.STOPPED,
+        },
+        [MOCK_SERVICE_CONFIG_ID_2]: {
+          status: MiddlewareDeploymentStatusMap.DEPLOYED,
+        },
+      },
+      serviceStatusOverrides: {
+        [MOCK_SERVICE_CONFIG_ID_2]: MiddlewareDeploymentStatusMap.STOPPED,
+      },
+      getServiceConfigIdFromAgentType: jest.fn(),
+    });
+
+    const { result } = renderHook(() => useAgentRunning());
+
+    expect(result.current.isAnotherAgentRunning).toBe(false);
+  });
+
   it('returns isAnotherAgentRunning=false when all other services are stopped', () => {
     const selectedService = makeServiceEntry(DEFAULT_SERVICE_CONFIG_ID);
     const otherService = makeServiceEntry(MOCK_SERVICE_CONFIG_ID_2);
