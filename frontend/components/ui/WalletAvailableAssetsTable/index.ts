@@ -1,0 +1,1 @@
+export { WalletAvailableAssetsTable } from './WalletAvailableAssetsTable';

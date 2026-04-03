@@ -4,7 +4,7 @@ import { COLOR, SupportedMiddlewareChain } from '@/constants';
 import { Address, Optional } from '@/types';
 
 import { AddressLink } from '../AddressLink';
-import { InfoTooltip } from './InfoTooltip';
+import { InfoTooltip } from '../tooltips/InfoTooltip';
 
 const { Text } = Typography;
 
