@@ -12,22 +12,10 @@ const WordGrid = styled.div`
   gap: 8px;
 `;
 
-const WordInputWrapper = styled(Flex)`
-  align-items: center;
-  gap: 4px;
-`;
-
-const WordNumber = styled(Text)`
-  min-width: 20px;
-  text-align: right;
-  color: rgba(0, 0, 0, 0.45);
-  font-size: 12px;
-`;
-
 type FundRecoverySeedPhraseProps = {
   words: string[];
   isScanning: boolean;
-  scanError?: string | null;
+  scanError?: boolean;
   onWordsChange: (words: string[]) => void;
   onScan: () => void;
 };
@@ -103,11 +91,13 @@ export const FundRecoverySeedPhrase = ({
   return (
     <Flex vertical gap={24}>
       <Flex vertical gap={8}>
-        <Title level={4} className="m-0">
+        <Title level={3} className="m-0">
           Withdraw Funds
         </Title>
         <Text type="secondary">
-          Enter your 12-word recovery phrase to scan for recoverable balances.
+          Enter the 12-word recovery phrase of the lost Pearl account to
+          withdraw funds to an external wallet. Pearl neither stores nor has
+          access to your secret recovery phrase.
         </Text>
       </Flex>
 
@@ -115,35 +105,35 @@ export const FundRecoverySeedPhrase = ({
         <Alert
           type="error"
           showIcon
-          message={scanError}
+          message="Invalid Secret Recovery Phrase"
+          description="Please review your input and try again."
           style={{ borderRadius: 8 }}
         />
       )}
 
-      <Flex vertical gap={12}>
-        <Text strong>Recovery phrase (12 words)</Text>
-        <WordGrid>
-          {orderedIndices.map((wordIndex, gridPosition) => (
-            <WordInputWrapper key={wordIndex}>
-              <WordNumber>{wordIndex + 1}.</WordNumber>
-              <Input
-                ref={(el) => {
-                  inputRefs.current[gridPosition] = el;
-                }}
-                value={words[wordIndex]}
-                onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                  handleWordChange(wordIndex, e.target.value)
-                }
-                onPaste={(e) => handlePaste(wordIndex, e)}
-                onKeyDown={(e) => handleKeyDown(gridPosition, e)}
-                size="small"
-                autoComplete="off"
-                spellCheck={false}
-              />
-            </WordInputWrapper>
-          ))}
-        </WordGrid>
-      </Flex>
+      <WordGrid>
+        {orderedIndices.map((wordIndex, gridPosition) => (
+          <Input
+            key={wordIndex}
+            ref={(el) => {
+              inputRefs.current[gridPosition] = el;
+            }}
+            value={words[wordIndex]}
+            prefix={
+              <Text type="secondary" style={{ fontSize: 12 }}>
+                {wordIndex + 1}.
+              </Text>
+            }
+            onChange={(e: ChangeEvent<HTMLInputElement>) =>
+              handleWordChange(wordIndex, e.target.value)
+            }
+            onPaste={(e) => handlePaste(wordIndex, e)}
+            onKeyDown={(e) => handleKeyDown(gridPosition, e)}
+            autoComplete="off"
+            spellCheck={false}
+          />
+        ))}
+      </WordGrid>
 
       <Button
         type="primary"

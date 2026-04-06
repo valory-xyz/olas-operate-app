@@ -24,7 +24,7 @@ export const FundRecovery = () => {
   const [step, setStep] = useState<WizardStep>('seedPhrase');
   const [scanResult, setScanResult] =
     useState<FundRecoveryScanResponse | null>(null);
-  const [scanError, setScanError] = useState<string | null>(null);
+  const [scanError, setScanError] = useState(false);
   const [isResultModalOpen, setIsResultModalOpen] = useState(false);
 
   const {
@@ -44,7 +44,7 @@ export const FundRecovery = () => {
   const getMnemonic = useCallback(() => words.join(' ').trim(), [words]);
 
   const handleScan = useCallback(() => {
-    setScanError(null);
+    setScanError(false);
     runScan(
       { mnemonic: getMnemonic() },
       {
@@ -52,12 +52,8 @@ export const FundRecovery = () => {
           setScanResult(data);
           setStep('chainBalances');
         },
-        onError: (err) => {
-          setScanError(
-            err instanceof Error
-              ? err.message
-              : 'Invalid recovery phrase. Please check your words and try again.',
-          );
+        onError: () => {
+          setScanError(true);
         },
       },
     );
@@ -84,11 +80,9 @@ export const FundRecovery = () => {
   const handleTryAgain = useCallback(() => {
     setIsResultModalOpen(false);
     resetExecute();
-    // Go back to seed phrase so user can re-enter and re-scan
-    setStep('seedPhrase');
-    setScanResult(null);
-    resetScan();
-  }, [resetExecute, resetScan]);
+    // Re-fire execute immediately
+    handleRecover();
+  }, [resetExecute, handleRecover]);
 
   const handleBack = useCallback(() => {
     if (step === 'chainBalances') {
@@ -104,13 +98,13 @@ export const FundRecovery = () => {
     (newWords: string[]) => {
       setWords(newWords);
       // Clear scan error when user edits words
-      if (scanError) setScanError(null);
+      if (scanError) setScanError(false);
     },
     [scanError],
   );
 
   return (
-    <Flex vertical style={{ padding: '24px 24px 32px' }}>
+    <Flex vertical>
       <Flex align="center" style={{ marginBottom: 16 }}>
         <BackButton onPrev={handleBack} />
       </Flex>
