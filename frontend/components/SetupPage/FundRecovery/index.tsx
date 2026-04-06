@@ -6,27 +6,25 @@ import { useFundRecoveryExecute, useFundRecoveryScan, useSetup } from '@/hooks';
 import { FundRecoveryScanResponse } from '@/types/FundRecovery';
 
 import { BackButton } from '../../ui/BackButton';
-import { FundRecoveryLoadingScreen } from './FundRecoveryLoadingScreen';
 import { FundRecoveryResultModal } from './FundRecoveryResultModal';
 import { FundRecoveryScanResults } from './FundRecoveryScanResults';
 import { FundRecoverySeedPhrase } from './FundRecoverySeedPhrase';
 
-type WizardStep = 'seedPhrase' | 'scanResults';
+type WizardStep = 'seedPhrase' | 'chainBalances';
 
-const createEmptyWords = (count: number): string[] =>
-  Array.from({ length: count }, () => '');
+const createEmptyWords = (): string[] => Array.from({ length: 12 }, () => '');
 
 export const FundRecovery = () => {
   const { goto } = useSetup();
 
   // Seed phrase state — held only in React component state, never persisted
-  const [wordCount, setWordCount] = useState<12 | 24>(12);
-  const [words, setWords] = useState<string[]>(createEmptyWords(12));
+  const [words, setWords] = useState<string[]>(createEmptyWords());
   const [destinationAddress, setDestinationAddress] = useState('');
 
   const [step, setStep] = useState<WizardStep>('seedPhrase');
   const [scanResult, setScanResult] =
     useState<FundRecoveryScanResponse | null>(null);
+  const [scanError, setScanError] = useState<string | null>(null);
   const [isResultModalOpen, setIsResultModalOpen] = useState(false);
 
   const {
@@ -46,34 +44,24 @@ export const FundRecovery = () => {
   const getMnemonic = useCallback(() => words.join(' ').trim(), [words]);
 
   const handleScan = useCallback(() => {
+    setScanError(null);
     runScan(
-      {
-        mnemonic: getMnemonic(),
-        destination_address: destinationAddress,
-      },
+      { mnemonic: getMnemonic() },
       {
         onSuccess: (data) => {
           setScanResult(data);
-          setStep('scanResults');
+          setStep('chainBalances');
+        },
+        onError: (err) => {
+          setScanError(
+            err instanceof Error
+              ? err.message
+              : 'Invalid recovery phrase. Please check your words and try again.',
+          );
         },
       },
     );
-  }, [runScan, getMnemonic, destinationAddress]);
-
-  const handleRescan = useCallback(() => {
-    resetScan();
-    runScan(
-      {
-        mnemonic: getMnemonic(),
-        destination_address: destinationAddress,
-      },
-      {
-        onSuccess: (data) => {
-          setScanResult(data);
-        },
-      },
-    );
-  }, [runScan, resetScan, getMnemonic, destinationAddress]);
+  }, [runScan, getMnemonic]);
 
   const handleRecover = useCallback(() => {
     runExecute(
@@ -97,31 +85,24 @@ export const FundRecovery = () => {
     resetExecute();
   }, [resetExecute]);
 
-  const handleResultModalClose = useCallback(() => {
-    setIsResultModalOpen(false);
-  }, []);
-
   const handleBack = useCallback(() => {
-    if (step === 'scanResults') {
+    if (step === 'chainBalances') {
       setStep('seedPhrase');
       setScanResult(null);
       resetScan();
     } else {
-      goto(SETUP_SCREEN.Welcome);
+      goto(SETUP_SCREEN.MigrateOperateFolder);
     }
   }, [step, goto, resetScan]);
 
-  const handleWordCountToggle = useCallback(() => {
-    const newCount = wordCount === 12 ? 24 : 12;
-    setWordCount(newCount);
-    setWords(createEmptyWords(newCount));
-  }, [wordCount]);
-
-  if (isExecuting) {
-    return (
-      <FundRecoveryLoadingScreen message="Recovering funds, please wait..." />
-    );
-  }
+  const handleWordsChange = useCallback(
+    (newWords: string[]) => {
+      setWords(newWords);
+      // Clear scan error when user edits words
+      if (scanError) setScanError(null);
+    },
+    [scanError],
+  );
 
   return (
     <Flex vertical style={{ padding: '24px 24px 32px' }}>
@@ -131,28 +112,25 @@ export const FundRecovery = () => {
 
       {step === 'seedPhrase' && (
         <FundRecoverySeedPhrase
-          wordCount={wordCount}
           words={words}
-          destinationAddress={destinationAddress}
           isScanning={isScanning}
-          onWordsChange={setWords}
-          onDestinationAddressChange={setDestinationAddress}
-          onWordCountToggle={handleWordCountToggle}
+          scanError={scanError}
+          onWordsChange={handleWordsChange}
           onScan={handleScan}
         />
       )}
 
-      {step === 'scanResults' && scanResult && (
+      {step === 'chainBalances' && scanResult && (
         <FundRecoveryScanResults
           scanResult={scanResult}
+          destinationAddress={destinationAddress}
           isExecuting={isExecuting}
-          isRescanning={isScanning}
-          onRescan={handleRescan}
+          onDestinationAddressChange={setDestinationAddress}
           onRecover={handleRecover}
         />
       )}
 
-      {step === 'scanResults' && !scanResult && (
+      {step === 'chainBalances' && !scanResult && (
         <Alert
           type="warning"
           showIcon
@@ -164,7 +142,7 @@ export const FundRecovery = () => {
         result={executeResult ?? null}
         error={executeError}
         open={isResultModalOpen}
-        onClose={handleResultModalClose}
+        isExecuting={isExecuting}
         onTryAgain={handleTryAgain}
       />
     </Flex>

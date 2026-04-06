@@ -2,7 +2,6 @@ import { Button, Typography } from 'antd';
 import { TbWallet } from 'react-icons/tb';
 
 import { COLOR } from '@/constants';
-import { useStore } from '@/hooks';
 
 import { CardTitle, IconContainer } from '../../ui';
 import { useAccountRecoveryContext } from '../AccountRecoveryProvider';
@@ -10,10 +9,14 @@ import { RecoveryMethodCard } from '../styles';
 
 const { Paragraph } = Typography;
 
-export const RecoveryViaBackupWallet = () => {
+type ForgotPasswordCardProps = {
+  isRecoveryAvailable: boolean;
+};
+
+export const ForgotPasswordCard = ({
+  isRecoveryAvailable,
+}: ForgotPasswordCardProps) => {
   const { onNext } = useAccountRecoveryContext();
-  const { storeState } = useStore();
-  const walletType = storeState?.lastProvidedBackupWallet?.type;
 
   return (
     <RecoveryMethodCard>
@@ -21,23 +24,29 @@ export const RecoveryViaBackupWallet = () => {
         <TbWallet size={20} fontSize={30} color={COLOR.PRIMARY} />
       </IconContainer>
       <div className="recovery-method-card-body">
-        <CardTitle className="mb-8 text-lg">Via Backup Wallet</CardTitle>
+        <CardTitle className="mb-8 text-lg">Forgot Password</CardTitle>
         <Paragraph className="text-neutral-secondary text-center mb-32">
-          Use the backup wallet you’ve set up during Pearl sign up.
+          Reset your password using the backup wallet you set up during Pearl
+          sign up.
         </Paragraph>
-        {walletType === 'web3auth' ? (
+        {isRecoveryAvailable ? (
           <Button onClick={onNext} type="primary" size="large" block>
-            Recover with Backup Wallet
+            Reset Password
           </Button>
         ) : (
           <Paragraph
             className="flex align-center text-neutral-tertiary text-sm mb-0 justify-center"
             style={{ height: 40 }}
           >
-            Recovery with a Backup Wallet coming soon.
+            No backup wallet found. Set up a backup wallet first.
           </Paragraph>
         )}
       </div>
     </RecoveryMethodCard>
   );
 };
+
+/**
+ * @deprecated Use ForgotPasswordCard instead
+ */
+export const RecoveryViaBackupWallet = ForgotPasswordCard;

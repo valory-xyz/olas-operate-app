@@ -15,6 +15,7 @@ export const SETUP_SCREEN = {
   EarlyAccessOnly: 'EarlyAccessOnly',
   AccountRecovery: 'AccountRecovery',
   RestoreViaBackup: 'RestoreViaBackup',
+  MigrateOperateFolder: 'MigrateOperateFolder',
   FundRecovery: 'FundRecovery',
 } as const;
 

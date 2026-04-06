@@ -1,67 +1,22 @@
-import { Alert, Button, Flex, Modal, Typography } from 'antd';
-import { useMemo } from 'react';
-
-import { Table } from '@/components/ui';
 import {
-  ChainAmounts,
-  FundRecoveryExecuteResponse,
-} from '@/types/FundRecovery';
+  CheckCircleOutlined,
+  LoadingOutlined,
+  WarningOutlined,
+} from '@ant-design/icons';
+import { Button, Flex, Modal, Typography } from 'antd';
+
+import { COLOR, SETUP_SCREEN } from '@/constants';
+import { useSupportModal } from '@/context/SupportModalProvider';
+import { useSetup } from '@/hooks';
+import { FundRecoveryExecuteResponse } from '@/types/FundRecovery';
 
 const { Title, Text } = Typography;
-
-type FundsMovedRow = {
-  key: string;
-  chainId: string;
-  address: string;
-  token: string;
-  amount: string;
-};
-
-const buildFundsMovedRows = (totalFundsMoved: ChainAmounts): FundsMovedRow[] =>
-  Object.entries(totalFundsMoved).flatMap(([chainId, addressMap]) =>
-    Object.entries(addressMap).flatMap(([address, tokenMap]) =>
-      Object.entries(tokenMap)
-        .filter(([, amount]) => amount !== '0' && amount !== '')
-        .map(([token, amount]) => ({
-          key: `${chainId}-${address}-${token}`,
-          chainId,
-          address,
-          token,
-          amount,
-        })),
-    ),
-  );
-
-const fundsMovedColumns = [
-  {
-    title: 'Chain',
-    dataIndex: 'chainId',
-    key: 'chainId',
-  },
-  {
-    title: 'Token',
-    dataIndex: 'token',
-    key: 'token',
-    render: (token: string) => (
-      <Text ellipsis style={{ maxWidth: 120 }} title={token}>
-        {token.startsWith('0x')
-          ? `${token.slice(0, 6)}...${token.slice(-4)}`
-          : token}
-      </Text>
-    ),
-  },
-  {
-    title: 'Amount',
-    dataIndex: 'amount',
-    key: 'amount',
-  },
-];
 
 type FundRecoveryResultModalProps = {
   result: FundRecoveryExecuteResponse | null;
   error: Error | null;
   open: boolean;
-  onClose: () => void;
+  isExecuting: boolean;
   onTryAgain: () => void;
 };
 
@@ -69,123 +24,86 @@ export const FundRecoveryResultModal = ({
   result,
   error,
   open,
-  onClose,
+  isExecuting,
   onTryAgain,
 }: FundRecoveryResultModalProps) => {
-  const fundsMovedRows = useMemo(() => {
-    if (!result) return [];
-    return buildFundsMovedRows(result.total_funds_moved);
-  }, [result]);
+  const { goto } = useSetup();
+  const { toggleSupportModal } = useSupportModal();
 
-  const isSuccess = result?.success === true;
+  const isSuccess = result?.success === true && result.partial_failure === false;
   const isPartialFailure = result?.partial_failure === true;
-  const isError = !!error && !result;
+  const isError = (!!error && !result) || isPartialFailure;
 
-  const title = useMemo(() => {
-    if (isSuccess) return 'Funds recovered successfully';
-    if (isPartialFailure) return 'Partial recovery';
-    if (isError) return 'Recovery failed';
-    return '';
-  }, [isSuccess, isPartialFailure, isError]);
+  if (isExecuting) {
+    return (
+      <Modal open={open} footer={null} closable={false} centered width={400}>
+        <Flex vertical align="center" gap={16} style={{ padding: '24px 0' }}>
+          <LoadingOutlined style={{ fontSize: 48, color: COLOR.PRIMARY }} />
+          <Title level={4} className="m-0">
+            Withdrawal in Progress
+          </Title>
+          <Text type="secondary" style={{ textAlign: 'center' }}>
+            It usually takes a few minutes. Please keep Pearl open.
+          </Text>
+        </Flex>
+      </Modal>
+    );
+  }
 
-  const footer = useMemo(() => {
-    if (isSuccess) {
-      return (
-        <Button type="primary" onClick={onClose}>
-          Done
-        </Button>
-      );
-    }
-    if (isPartialFailure || isError) {
-      return (
-        <Flex gap={8} justify="flex-end">
-          <Button onClick={onClose}>Close</Button>
-          <Button type="primary" onClick={onTryAgain}>
-            Try again
+  if (isSuccess) {
+    return (
+      <Modal open={open} footer={null} closable={false} centered width={400}>
+        <Flex vertical align="center" gap={16} style={{ padding: '24px 0' }}>
+          <CheckCircleOutlined
+            style={{ fontSize: 48, color: COLOR.SUCCESS }}
+          />
+          <Title level={4} className="m-0">
+            Withdrawal Complete!
+          </Title>
+          <Text type="secondary" style={{ textAlign: 'center' }}>
+            Your funds have been successfully sent to your destination address.
+          </Text>
+          <Button
+            type="primary"
+            size="large"
+            block
+            onClick={() => goto(SETUP_SCREEN.Welcome)}
+          >
+            Done
           </Button>
         </Flex>
-      );
-    }
-    return null;
-  }, [isSuccess, isPartialFailure, isError, onClose, onTryAgain]);
+      </Modal>
+    );
+  }
 
-  return (
-    <Modal
-      open={open}
-      title={
-        <Title level={4} className="m-0">
-          {title}
-        </Title>
-      }
-      onCancel={onClose}
-      footer={footer}
-      width={560}
-    >
-      <Flex vertical gap={16} style={{ marginTop: 16 }}>
-        {isSuccess && (
-          <>
-            <Alert
-              type="success"
-              showIcon
-              message="All funds have been successfully recovered to your destination address."
-            />
-            {fundsMovedRows.length > 0 && (
-              <Flex vertical gap={8}>
-                <Text strong>Funds moved</Text>
-                <Table<FundsMovedRow>
-                  dataSource={fundsMovedRows}
-                  columns={fundsMovedColumns}
-                  pagination={false}
-                  size="small"
-                />
-              </Flex>
-            )}
-          </>
-        )}
+  if (isError) {
+    return (
+      <Modal open={open} footer={null} closable={false} centered width={400}>
+        <Flex vertical align="center" gap={16} style={{ padding: '24px 0' }}>
+          <WarningOutlined style={{ fontSize: 48, color: COLOR.WARNING }} />
+          <Title level={4} className="m-0">
+            Withdrawal Failed
+          </Title>
+          {isPartialFailure && (
+            <Text
+              type="secondary"
+              style={{ textAlign: 'center', fontSize: 13 }}
+            >
+              Some funds may have been transferred successfully.
+            </Text>
+          )}
+          <Flex vertical gap={8} style={{ width: '100%' }}>
+            <Button type="primary" size="large" block onClick={onTryAgain}>
+              Try Again
+            </Button>
+            <Button size="large" block onClick={toggleSupportModal}>
+              Contact Support
+            </Button>
+          </Flex>
+        </Flex>
+      </Modal>
+    );
+  }
 
-        {isPartialFailure && (
-          <>
-            <Alert
-              type="warning"
-              showIcon
-              message="Some funds could not be recovered. You can try again to recover the remaining funds."
-            />
-            {fundsMovedRows.length > 0 && (
-              <Flex vertical gap={8}>
-                <Text strong>Funds moved</Text>
-                <Table<FundsMovedRow>
-                  dataSource={fundsMovedRows}
-                  columns={fundsMovedColumns}
-                  pagination={false}
-                  size="small"
-                />
-              </Flex>
-            )}
-            {result &&
-              !result.success &&
-              result.partial_failure &&
-              result.errors.length > 0 && (
-                <Flex vertical gap={8}>
-                  <Text strong type="danger">
-                    Errors
-                  </Text>
-                  {result.errors.map((err) => (
-                    <Alert key={err} type="error" showIcon message={err} />
-                  ))}
-                </Flex>
-              )}
-          </>
-        )}
-
-        {isError && (
-          <Alert
-            type="error"
-            showIcon
-            message="An error occurred during recovery"
-            description={error?.message ?? 'Unknown error'}
-          />
-        )}
-      </Flex>
-    </Modal>
-  );
+  return null;
 };

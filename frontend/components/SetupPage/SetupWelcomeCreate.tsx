@@ -112,14 +112,14 @@ export const SetupWelcomeCreate = () => {
           disabled={!isFormValid}
           onClick={() => goto(SETUP_SCREEN.SetupPassword)}
         >
-          Create account
+          Sign Up
         </Button>
         <Button
           type="link"
           size="small"
-          onClick={() => goto(SETUP_SCREEN.FundRecovery)}
+          onClick={() => goto(SETUP_SCREEN.AccountRecovery)}
         >
-          Recover funds with recovery phrase
+          I already have an account
         </Button>
       </Flex>
     </Flex>

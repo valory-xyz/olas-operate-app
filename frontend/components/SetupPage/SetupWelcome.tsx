@@ -239,18 +239,10 @@ const SetupWelcomeLogin = () => {
           </Button>
           <Button
             type="link"
-            target="_blank"
             size="small"
             onClick={() => goto(SETUP_SCREEN.AccountRecovery)}
           >
-            Forgot password?
-          </Button>
-          <Button
-            type="link"
-            size="small"
-            onClick={() => goto(SETUP_SCREEN.FundRecovery)}
-          >
-            Recover funds with recovery phrase
+            Can&apos;t sign in? View recovery options
           </Button>
         </Flex>
       </FormFlex>

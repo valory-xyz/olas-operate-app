@@ -1,199 +1,179 @@
-import { Alert, Button, Flex, Tag, Typography } from 'antd';
-import { useMemo } from 'react';
+import { Alert, Button, Flex, Input, Tag, Typography } from 'antd';
+import Image from 'next/image';
+import { ChangeEvent, useCallback, useMemo } from 'react';
+import styled from 'styled-components';
 
-import { Table } from '@/components/ui';
+import {
+  CHAIN_IMAGE_MAP,
+  EvmChainIdMap,
+  EvmChainName,
+} from '@/constants/chains';
 import {
   ChainAmounts,
-  FundRecoveryServiceInfo,
   FundRecoveryScanResponse,
 } from '@/types/FundRecovery';
 
 const { Title, Text } = Typography;
 
-type BalanceRow = {
-  key: string;
-  chainId: string;
-  walletType: string;
-  address: string;
-  token: string;
-  amount: string;
+const EVM_ADDRESS_REGEX = /^0x[0-9a-fA-F]{40}$/;
+
+const isValidEvmAddress = (address: string): boolean =>
+  EVM_ADDRESS_REGEX.test(address);
+
+const ChainCard = styled(Flex)`
+  border: 1px solid #f0f0f0;
+  border-radius: 8px;
+  padding: 16px;
+  background: #fafafa;
+`;
+
+type ChainBalance = {
+  chainId: number;
+  chainName: string;
+  chainImage: string;
+  tokens: { symbol: string; amount: string }[];
+  hasInsufficientGas: boolean;
 };
 
-const buildBalanceRows = (
+const aggregateChainBalances = (
   balances: ChainAmounts,
-  masterEoaAddress: string,
-): BalanceRow[] => {
-  const rows: BalanceRow[] = [];
+  gasWarning: Record<string, { insufficient: boolean }>,
+): ChainBalance[] => {
+  const result: ChainBalance[] = [];
 
-  Object.entries(balances).forEach(([chainId, addressMap]) => {
-    Object.entries(addressMap).forEach(([address, tokenMap]) => {
-      Object.entries(tokenMap).forEach(([token, amount]) => {
-        if (amount === '0' || amount === '') return;
+  for (const [chainIdStr, addressMap] of Object.entries(balances)) {
+    const chainId = Number(chainIdStr);
+    const chainName =
+      EvmChainName[chainId as keyof typeof EvmChainName] ?? `Chain ${chainId}`;
+    const chainImage =
+      CHAIN_IMAGE_MAP[chainId as keyof typeof CHAIN_IMAGE_MAP] ?? '';
 
-        const isMasterEoa =
-          address.toLowerCase() === masterEoaAddress.toLowerCase();
-        const walletType = isMasterEoa ? 'Master EOA' : 'Master Safe';
+    // Aggregate token amounts across all addresses (Master EOA + Master Safe)
+    const tokenAggregates: Record<string, bigint> = {};
+    for (const tokenMap of Object.values(addressMap)) {
+      for (const [token, amountStr] of Object.entries(tokenMap)) {
+        const current = tokenAggregates[token] ?? 0n;
+        try {
+          tokenAggregates[token] = current + BigInt(amountStr);
+        } catch {
+          // skip unparseable amounts
+        }
+      }
+    }
 
-        rows.push({
-          key: `${chainId}-${address}-${token}`,
-          chainId,
-          walletType,
-          address,
-          token,
-          amount,
-        });
-      });
+    const tokens = Object.entries(tokenAggregates)
+      .filter(([, amount]) => amount > 0n)
+      .map(([symbol, amount]) => ({
+        symbol: symbol.startsWith('0x')
+          ? `${symbol.slice(0, 6)}...${symbol.slice(-4)}`
+          : symbol,
+        amount: amount.toString(),
+      }));
+
+    // Skip chains with no positive balances
+    if (tokens.length === 0) continue;
+
+    result.push({
+      chainId,
+      chainName,
+      chainImage,
+      tokens,
+      hasInsufficientGas: gasWarning[chainIdStr]?.insufficient === true,
     });
-  });
+  }
 
-  return rows;
+  return result;
 };
 
-const balanceColumns = [
-  {
-    title: 'Chain',
-    dataIndex: 'chainId',
-    key: 'chainId',
-    render: (chainId: string) => <Tag>{chainId}</Tag>,
-  },
-  {
-    title: 'Wallet',
-    dataIndex: 'walletType',
-    key: 'walletType',
-  },
-  {
-    title: 'Token',
-    dataIndex: 'token',
-    key: 'token',
-    render: (token: string) => (
-      <Text ellipsis style={{ maxWidth: 120 }} title={token}>
-        {token.startsWith('0x')
-          ? `${token.slice(0, 6)}...${token.slice(-4)}`
-          : token}
-      </Text>
-    ),
-  },
-  {
-    title: 'Amount',
-    dataIndex: 'amount',
-    key: 'amount',
-  },
-];
-
-type ServiceWarningsProps = {
-  services: FundRecoveryServiceInfo[];
+type ChainBalanceCardProps = {
+  chain: ChainBalance;
 };
 
-const ServiceWarnings = ({ services }: ServiceWarningsProps) => {
-  const nonUnstakableServices = services.filter((s) => !s.can_unstake);
-  if (nonUnstakableServices.length === 0) return null;
-
-  return (
-    <Flex vertical gap={8}>
-      {nonUnstakableServices.map((service) => (
-        <Alert
-          key={`${service.chain_id}-${service.service_id}`}
-          type="warning"
-          showIcon
-          message={`Service ${service.service_id} on chain ${service.chain_id} cannot be unstaked (state: ${service.state}). Recovery will proceed without unstaking this service.`}
+const ChainBalanceCard = ({ chain }: ChainBalanceCardProps) => (
+  <ChainCard vertical gap={12}>
+    <Flex align="center" gap={8}>
+      {chain.chainImage && (
+        <Image
+          src={chain.chainImage}
+          alt={chain.chainName}
+          width={20}
+          height={20}
+          style={{ borderRadius: '50%' }}
         />
+      )}
+      <Text strong>{chain.chainName}</Text>
+    </Flex>
+
+    <Flex wrap="wrap" gap={6}>
+      {chain.tokens.map((token) => (
+        <Tag key={token.symbol} color="blue">
+          {token.amount} {token.symbol}
+        </Tag>
       ))}
     </Flex>
-  );
-};
 
-type GasWarningsProps = {
-  gasWarning: Record<string, { insufficient: boolean }>;
-  onRescan: () => void;
-  isRescanning: boolean;
-};
-
-const GasWarnings = ({
-  gasWarning,
-  onRescan,
-  isRescanning,
-}: GasWarningsProps) => {
-  const insufficientChains = Object.entries(gasWarning)
-    .filter(([, v]) => v.insufficient)
-    .map(([chainId]) => chainId);
-
-  if (insufficientChains.length === 0) return null;
-
-  return (
-    <Flex vertical gap={8}>
-      {insufficientChains.map((chainId) => (
-        <Alert
-          key={chainId}
-          type="error"
-          showIcon
-          message={`Insufficient gas on chain ${chainId}`}
-          description={
-            <Flex vertical gap={8} style={{ marginTop: 4 }}>
-              <Text>
-                There is not enough native token to pay gas fees on chain{' '}
-                {chainId}. Please add funds to the master EOA before recovering.
-              </Text>
-              <Button
-                size="small"
-                onClick={onRescan}
-                loading={isRescanning}
-                style={{ width: 'fit-content' }}
-              >
-                Re-scan
-              </Button>
-            </Flex>
-          }
-        />
-      ))}
-    </Flex>
-  );
-};
+    {chain.hasInsufficientGas && (
+      <Alert
+        type="warning"
+        showIcon
+        message={`Insufficient gas on ${chain.chainName}. Top up native token before withdrawing.`}
+        style={{ fontSize: 12 }}
+      />
+    )}
+  </ChainCard>
+);
 
 type FundRecoveryScanResultsProps = {
   scanResult: FundRecoveryScanResponse;
+  destinationAddress: string;
   isExecuting: boolean;
-  isRescanning: boolean;
-  onRescan: () => void;
+  onDestinationAddressChange: (address: string) => void;
   onRecover: () => void;
 };
 
 export const FundRecoveryScanResults = ({
   scanResult,
+  destinationAddress,
   isExecuting,
-  isRescanning,
-  onRescan,
+  onDestinationAddressChange,
   onRecover,
 }: FundRecoveryScanResultsProps) => {
-  const balanceRows = useMemo(
-    () => buildBalanceRows(scanResult.balances, scanResult.master_eoa_address),
-    [scanResult.balances, scanResult.master_eoa_address],
+  const chainBalances = useMemo(
+    () => aggregateChainBalances(scanResult.balances, scanResult.gas_warning),
+    [scanResult.balances, scanResult.gas_warning],
   );
 
-  const hasInsufficientGas = useMemo(
-    () => Object.values(scanResult.gas_warning).some((v) => v.insufficient),
-    [scanResult.gas_warning],
-  );
+  const hasInsufficientGas = chainBalances.some((c) => c.hasInsufficientGas);
+  const hasBalances = chainBalances.length > 0;
 
-  const hasBalances = balanceRows.length > 0;
+  const isAddressValid = isValidEvmAddress(destinationAddress);
+  const canWithdraw =
+    hasBalances && isAddressValid && !hasInsufficientGas && !isExecuting;
+
+  const handleAddressChange = useCallback(
+    (e: ChangeEvent<HTMLInputElement>) => {
+      onDestinationAddressChange(e.target.value);
+    },
+    [onDestinationAddressChange],
+  );
 
   return (
     <Flex vertical gap={24}>
       <Flex vertical gap={8}>
         <Title level={4} className="m-0">
-          Scan results
+          Recoverable Balances
         </Title>
         <Text type="secondary">
-          Master EOA: <Text code>{scanResult.master_eoa_address}</Text>
+          Balances found across supported chains for your recovery phrase.
         </Text>
       </Flex>
 
       {hasBalances ? (
-        <Table<BalanceRow>
-          dataSource={balanceRows}
-          columns={balanceColumns}
-          pagination={false}
-          size="small"
-        />
+        <Flex vertical gap={8}>
+          {chainBalances.map((chain) => (
+            <ChainBalanceCard key={chain.chainId} chain={chain} />
+          ))}
+        </Flex>
       ) : (
         <Alert
           type="info"
@@ -203,29 +183,43 @@ export const FundRecoveryScanResults = ({
         />
       )}
 
-      <ServiceWarnings services={scanResult.services} />
-
-      <GasWarnings
-        gasWarning={scanResult.gas_warning}
-        onRescan={onRescan}
-        isRescanning={isRescanning}
-      />
-
-      <Flex gap={12}>
-        <Button size="large" onClick={onRescan} loading={isRescanning} block>
-          Re-scan
-        </Button>
-        <Button
-          type="primary"
+      <Flex vertical gap={8}>
+        <Text strong>
+          Withdrawal address <Text type="danger">*</Text>
+        </Text>
+        <Input
+          value={destinationAddress}
+          onChange={handleAddressChange}
+          placeholder="0x..."
           size="large"
-          block
-          disabled={hasInsufficientGas || !hasBalances}
-          loading={isExecuting}
-          onClick={onRecover}
-        >
-          Recover Funds
-        </Button>
+          status={destinationAddress && !isAddressValid ? 'error' : undefined}
+        />
+        {destinationAddress && !isAddressValid && (
+          <Text type="danger" style={{ fontSize: 12 }}>
+            Please enter a valid EVM address (0x followed by 40 hex characters)
+          </Text>
+        )}
+        <Text type="secondary" style={{ fontSize: 12 }}>
+          Ensure this is an EVM-compatible address you can access on all
+          relevant chains. ENS names aren&apos;t supported.
+        </Text>
       </Flex>
+
+      <Text type="secondary" style={{ fontSize: 12 }}>
+        By proceeding, all recoverable funds will be sent to the address above.
+        This action cannot be undone.
+      </Text>
+
+      <Button
+        type="primary"
+        size="large"
+        block
+        disabled={!canWithdraw}
+        loading={isExecuting}
+        onClick={onRecover}
+      >
+        Withdraw
+      </Button>
     </Flex>
   );
 };

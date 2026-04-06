@@ -11,7 +11,7 @@ export type ChainAmounts = Record<
 
 export type FundRecoveryScanRequest = {
   mnemonic: string;
-  destination_address: string;
+  destination_address?: string;
 };
 
 export type FundRecoveryServiceInfo = {

@@ -4,9 +4,11 @@ import styled from 'styled-components';
 
 const { Title, Text } = Typography;
 
+const WORD_COUNT = 12;
+
 const WordGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 8px;
 `;
 
@@ -22,37 +24,25 @@ const WordNumber = styled(Text)`
   font-size: 12px;
 `;
 
-const EVM_ADDRESS_REGEX = /^0x[0-9a-fA-F]{40}$/;
-
-const isValidEvmAddress = (address: string): boolean =>
-  EVM_ADDRESS_REGEX.test(address);
-
 type FundRecoverySeedPhraseProps = {
-  wordCount: 12 | 24;
   words: string[];
-  destinationAddress: string;
   isScanning: boolean;
+  scanError?: string | null;
   onWordsChange: (words: string[]) => void;
-  onDestinationAddressChange: (address: string) => void;
-  onWordCountToggle: () => void;
   onScan: () => void;
 };
 
 export const FundRecoverySeedPhrase = ({
-  wordCount,
   words,
-  destinationAddress,
   isScanning,
+  scanError,
   onWordsChange,
-  onDestinationAddressChange,
-  onWordCountToggle,
   onScan,
 }: FundRecoverySeedPhraseProps) => {
   const inputRefs = useRef<(InputRef | null)[]>([]);
 
   const allWordsFilled = words.every((w) => w.trim().length > 0);
-  const isAddressValid = isValidEvmAddress(destinationAddress);
-  const canScan = allWordsFilled && isAddressValid;
+  const canScan = allWordsFilled;
 
   const handleWordChange = useCallback(
     (index: number, value: string) => {
@@ -73,18 +63,18 @@ export const FundRecoverySeedPhrase = ({
         const updated = [...words];
         pastedWords.forEach((word, i) => {
           const targetIndex = index + i;
-          if (targetIndex < wordCount) {
+          if (targetIndex < WORD_COUNT) {
             updated[targetIndex] = word;
           }
         });
         onWordsChange(updated);
 
         // Focus the next unfilled input after paste
-        const nextIndex = Math.min(index + pastedWords.length, wordCount - 1);
+        const nextIndex = Math.min(index + pastedWords.length, WORD_COUNT - 1);
         inputRefs.current[nextIndex]?.focus();
       }
     },
-    [words, wordCount, onWordsChange],
+    [words, onWordsChange],
   );
 
   const handleKeyDown = useCallback(
@@ -92,48 +82,58 @@ export const FundRecoverySeedPhrase = ({
       if (e.key === ' ' || e.key === 'Enter') {
         e.preventDefault();
         const next = index + 1;
-        if (next < wordCount) {
+        if (next < WORD_COUNT) {
           inputRefs.current[next]?.focus();
         }
       }
     },
-    [wordCount],
+    [],
   );
+
+  // Reorder words for 2-column layout: left column words 1-6, right column words 7-12
+  const orderedIndices = Array.from({ length: WORD_COUNT }, (_, i) => {
+    const half = WORD_COUNT / 2;
+    const col = Math.floor(i / half);
+    const row = i % half;
+    return col === 0 ? row : row + half;
+  });
 
   return (
     <Flex vertical gap={24}>
       <Flex vertical gap={8}>
         <Title level={4} className="m-0">
-          Recover funds with recovery phrase
+          Withdraw Funds
         </Title>
         <Text type="secondary">
-          Enter your 12 or 24-word recovery phrase and a destination address to
-          receive recovered funds.
+          Enter your 12-word recovery phrase to scan for recoverable balances.
         </Text>
       </Flex>
 
-      <Flex vertical gap={12}>
-        <Flex justify="space-between" align="center">
-          <Text strong>Recovery phrase ({wordCount} words)</Text>
-          <Button type="link" size="small" onClick={onWordCountToggle}>
-            Switch to {wordCount === 12 ? '24' : '12'} words
-          </Button>
-        </Flex>
+      {scanError && (
+        <Alert
+          type="error"
+          showIcon
+          message={scanError}
+          style={{ borderRadius: 8 }}
+        />
+      )}
 
+      <Flex vertical gap={12}>
+        <Text strong>Recovery phrase (12 words)</Text>
         <WordGrid>
-          {words.map((word, index) => (
-            <WordInputWrapper key={index}>
-              <WordNumber>{index + 1}.</WordNumber>
+          {orderedIndices.map((wordIndex, gridPosition) => (
+            <WordInputWrapper key={wordIndex}>
+              <WordNumber>{wordIndex + 1}.</WordNumber>
               <Input
                 ref={(el) => {
-                  inputRefs.current[index] = el;
+                  inputRefs.current[gridPosition] = el;
                 }}
-                value={word}
+                value={words[wordIndex]}
                 onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                  handleWordChange(index, e.target.value)
+                  handleWordChange(wordIndex, e.target.value)
                 }
-                onPaste={(e) => handlePaste(index, e)}
-                onKeyDown={(e) => handleKeyDown(index, e)}
+                onPaste={(e) => handlePaste(wordIndex, e)}
+                onKeyDown={(e) => handleKeyDown(gridPosition, e)}
                 size="small"
                 autoComplete="off"
                 spellCheck={false}
@@ -143,33 +143,6 @@ export const FundRecoverySeedPhrase = ({
         </WordGrid>
       </Flex>
 
-      <Flex vertical gap={8}>
-        <Text strong>Destination address</Text>
-        <Input
-          value={destinationAddress}
-          onChange={(e: ChangeEvent<HTMLInputElement>) =>
-            onDestinationAddressChange(e.target.value)
-          }
-          placeholder="0x..."
-          size="large"
-          status={
-            destinationAddress && !isAddressValid ? 'error' : undefined
-          }
-        />
-        {destinationAddress && !isAddressValid && (
-          <Text type="danger" style={{ fontSize: 12 }}>
-            Please enter a valid EVM address (0x followed by 40 hex characters)
-          </Text>
-        )}
-      </Flex>
-
-      <Alert
-        type="warning"
-        showIcon
-        message="Security notice"
-        description="Your recovery phrase is only held in memory during this session and is never stored on disk or sent to any server other than your local Pearl backend."
-      />
-
       <Button
         type="primary"
         size="large"
@@ -178,9 +151,8 @@ export const FundRecoverySeedPhrase = ({
         loading={isScanning}
         onClick={onScan}
       >
-        Scan for recoverable funds
+        Continue
       </Button>
     </Flex>
   );
 };
-
