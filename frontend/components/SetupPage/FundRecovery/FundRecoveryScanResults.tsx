@@ -1,13 +1,18 @@
+import { WarningOutlined } from '@ant-design/icons';
 import { Alert, Button, Flex, Input, Tag, Typography } from 'antd';
 import Image from 'next/image';
 import { ChangeEvent, useCallback, useMemo } from 'react';
 import styled from 'styled-components';
 
-import { CHAIN_IMAGE_MAP, EvmChainName } from '@/constants/chains';
+import { CHAIN_CONFIG } from '@/config/chains';
+import { TOKEN_CONFIG } from '@/config/tokens';
+import { AddressZero, CHAIN_IMAGE_MAP, EvmChainName } from '@/constants';
+import { Address } from '@/types';
 import {
   ChainAmounts,
   FundRecoveryScanResponse,
 } from '@/types/FundRecovery';
+import { areAddressesEqual, formatUnitsToNumber } from '@/utils';
 
 const { Title, Text } = Typography;
 
@@ -16,18 +21,19 @@ const EVM_ADDRESS_REGEX = /^0x[0-9a-fA-F]{40}$/;
 const isValidEvmAddress = (address: string): boolean =>
   EVM_ADDRESS_REGEX.test(address);
 
-const ChainCard = styled(Flex)`
-  border: 1px solid #f0f0f0;
-  border-radius: 8px;
-  padding: 16px;
-  background: #fafafa;
+const ChainRow = styled(Flex)`
+  padding: 12px 0;
 `;
+
+const TOKEN_DOT_COLORS = ['#e74c3c', '#3498db', '#9b59b6', '#2ecc71', '#f39c12'];
+
+type TokenBalance = { symbol: string; amount: string };
 
 type ChainBalance = {
   chainId: number;
   chainName: string;
   chainImage: string;
-  tokens: { symbol: string; amount: string }[];
+  tokens: TokenBalance[];
   hasInsufficientGas: boolean;
 };
 
@@ -57,14 +63,51 @@ const aggregateChainBalances = (
       }
     }
 
-    const tokens = Object.entries(tokenAggregates)
-      .filter(([, amount]) => amount > 0n)
-      .map(([symbol, amount]) => ({
-        symbol: symbol.startsWith('0x')
-          ? `${symbol.slice(0, 6)}...${symbol.slice(-4)}`
-          : symbol,
-        amount: amount.toString(),
-      }));
+    const tokens: TokenBalance[] = [];
+    for (const [tokenAddress, amount] of Object.entries(tokenAggregates)) {
+      if (amount <= 0n) continue;
+
+      let symbol: string | undefined;
+      let decimals: number = 18;
+
+      if (
+        tokenAddress === AddressZero ||
+        tokenAddress === '0x0000000000000000000000000000000000000000'
+      ) {
+        // Native token
+        const nativeToken =
+          CHAIN_CONFIG[chainId as keyof typeof CHAIN_CONFIG]?.nativeToken;
+        symbol = nativeToken?.symbol;
+        decimals = nativeToken?.decimals ?? 18;
+      } else {
+        // ERC-20 token — search TOKEN_CONFIG for matching address
+        const chainTokens =
+          TOKEN_CONFIG[chainId as keyof typeof TOKEN_CONFIG];
+        if (chainTokens) {
+          const tokenConfig = Object.values(chainTokens).find(
+            (t) => t && areAddressesEqual(t.address, tokenAddress as Address),
+          );
+          if (tokenConfig) {
+            symbol = tokenConfig.symbol;
+            decimals = tokenConfig.decimals;
+          }
+        }
+      }
+
+      // Fallback: show truncated address if symbol not found
+      const displaySymbol =
+        symbol ??
+        (tokenAddress.startsWith('0x')
+          ? `${tokenAddress.slice(0, 6)}...${tokenAddress.slice(-4)}`
+          : tokenAddress);
+
+      const formattedAmount = formatUnitsToNumber(amount, decimals);
+
+      tokens.push({
+        symbol: displaySymbol,
+        amount: formattedAmount.toString(),
+      });
+    }
 
     // Skip chains with no positive balances
     if (tokens.length === 0) continue;
@@ -81,12 +124,12 @@ const aggregateChainBalances = (
   return result;
 };
 
-type ChainBalanceCardProps = {
+type ChainBalanceRowProps = {
   chain: ChainBalance;
 };
 
-const ChainBalanceCard = ({ chain }: ChainBalanceCardProps) => (
-  <ChainCard vertical gap={12}>
+const ChainBalanceRow = ({ chain }: ChainBalanceRowProps) => (
+  <ChainRow vertical gap={12}>
     <Flex align="center" gap={8}>
       {chain.chainImage && (
         <Image
@@ -101,8 +144,18 @@ const ChainBalanceCard = ({ chain }: ChainBalanceCardProps) => (
     </Flex>
 
     <Flex wrap="wrap" gap={6}>
-      {chain.tokens.map((token) => (
-        <Tag key={token.symbol} color="blue">
+      {chain.tokens.map((token, i) => (
+        <Tag key={token.symbol}>
+          <span
+            style={{
+              display: 'inline-block',
+              width: 8,
+              height: 8,
+              borderRadius: '50%',
+              backgroundColor: TOKEN_DOT_COLORS[i % TOKEN_DOT_COLORS.length],
+              marginRight: 4,
+            }}
+          />
           {token.amount} {token.symbol}
         </Tag>
       ))}
@@ -116,7 +169,7 @@ const ChainBalanceCard = ({ chain }: ChainBalanceCardProps) => (
         style={{ fontSize: 12 }}
       />
     )}
-  </ChainCard>
+  </ChainRow>
 );
 
 type FundRecoveryScanResultsProps = {
@@ -156,18 +209,18 @@ export const FundRecoveryScanResults = ({
   return (
     <Flex vertical gap={24}>
       <Flex vertical gap={8}>
-        <Title level={4} className="m-0">
-          Recoverable Balances
+        <Title level={3} className="m-0">
+          Withdraw Funds
         </Title>
         <Text type="secondary">
-          Balances found across supported chains for your recovery phrase.
+          The following funds are available for withdrawal.
         </Text>
       </Flex>
 
       {hasBalances ? (
         <Flex vertical gap={8}>
           {chainBalances.map((chain) => (
-            <ChainBalanceCard key={chain.chainId} chain={chain} />
+            <ChainBalanceRow key={chain.chainId} chain={chain} />
           ))}
         </Flex>
       ) : (
@@ -179,43 +232,55 @@ export const FundRecoveryScanResults = ({
         />
       )}
 
-      <Flex vertical gap={8}>
-        <Text strong>
-          Withdrawal address <Text type="danger">*</Text>
-        </Text>
-        <Input
-          value={destinationAddress}
-          onChange={handleAddressChange}
-          placeholder="0x..."
-          size="large"
-          status={destinationAddress && !isAddressValid ? 'error' : undefined}
-        />
-        {destinationAddress && !isAddressValid && (
-          <Text type="danger" style={{ fontSize: 12 }}>
-            Please enter a valid EVM address (0x followed by 40 hex characters)
-          </Text>
-        )}
+      <Flex gap={8} align="start">
+        <WarningOutlined style={{ color: '#faad14', marginTop: 3 }} />
         <Text type="secondary" style={{ fontSize: 12 }}>
-          Ensure this is an EVM-compatible address you can access on all
-          relevant chains. ENS names aren&apos;t supported.
+          Funds locked in external protocols and small amounts held in your
+          agent&apos;s transaction signing wallet are not included in this
+          withdrawal.
         </Text>
       </Flex>
 
-      <Text type="secondary" style={{ fontSize: 12 }}>
-        By proceeding, all recoverable funds will be sent to the address above.
-        This action cannot be undone.
-      </Text>
-
-      <Button
-        type="primary"
-        size="large"
-        block
-        disabled={!canWithdraw}
-        loading={isExecuting}
-        onClick={onRecover}
+      <div
+        style={{
+          border: '1px solid #f0f0f0',
+          borderRadius: 8,
+          padding: 16,
+          marginTop: 8,
+        }}
       >
-        Withdraw
-      </Button>
+        <Flex vertical gap={8}>
+          <Text strong>
+            Withdrawal address <Text type="danger">*</Text>
+          </Text>
+          <Input
+            value={destinationAddress}
+            onChange={handleAddressChange}
+            placeholder="0x..."
+            status={destinationAddress && !isAddressValid ? 'error' : undefined}
+          />
+          {destinationAddress && !isAddressValid && (
+            <Text type="danger" style={{ fontSize: 12 }}>
+              Please enter a valid EVM address (0x followed by 40 hex
+              characters)
+            </Text>
+          )}
+          <Text type="secondary" style={{ fontSize: 12 }}>
+            Ensure this is an EVM-compatible address you can access on all
+            relevant chains. ENS names aren&apos;t supported.
+          </Text>
+          <Button
+            type="primary"
+            size="large"
+            block
+            disabled={!canWithdraw}
+            loading={isExecuting}
+            onClick={onRecover}
+          >
+            Withdraw
+          </Button>
+        </Flex>
+      </div>
     </Flex>
   );
 };
