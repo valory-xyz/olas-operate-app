@@ -15,6 +15,7 @@ export const SETUP_SCREEN = {
   EarlyAccessOnly: 'EarlyAccessOnly',
   AccountRecovery: 'AccountRecovery',
   RestoreViaBackup: 'RestoreViaBackup',
+  FundRecovery: 'FundRecovery',
 } as const;
 
 export type SetupScreen = (typeof SETUP_SCREEN)[keyof typeof SETUP_SCREEN];

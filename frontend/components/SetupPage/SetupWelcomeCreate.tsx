@@ -114,6 +114,13 @@ export const SetupWelcomeCreate = () => {
         >
           Create account
         </Button>
+        <Button
+          type="link"
+          size="small"
+          onClick={() => goto(SETUP_SCREEN.FundRecovery)}
+        >
+          Recover funds with recovery phrase
+        </Button>
       </Flex>
     </Flex>
   );

@@ -14,6 +14,7 @@ import { SetupBridgeOnboarding } from './Create/SetupBridgeOnboarding/SetupBridg
 import { SetupOnRamp } from './Create/SetupOnRamp/SetupOnRamp';
 import { SetupPassword } from './Create/SetupPassword';
 import { EarlyAccessOnly } from './EarlyAccessOnly';
+import { FundRecovery } from './FundRecovery';
 import { BalanceCheck } from './FundYourAgent/components/BalanceCheck';
 import { ConfirmFunding } from './FundYourAgent/components/ConfirmFunding';
 import { FundYourAgent } from './FundYourAgent/FundYourAgent';
@@ -57,6 +58,7 @@ const SCREEN_WITHOUT_CARDS: SetupScreen[] = [
   SETUP_SCREEN.SetupOnRamp,
   SETUP_SCREEN.SelectStaking,
   SETUP_SCREEN.AccountRecovery,
+  SETUP_SCREEN.FundRecovery,
 ];
 
 export const Setup = () => {
@@ -92,6 +94,8 @@ export const Setup = () => {
         return <EarlyAccessOnly />;
       case SETUP_SCREEN.AccountRecovery:
         return <AccountRecovery />;
+      case SETUP_SCREEN.FundRecovery:
+        return <FundRecovery />;
       default:
         return <UnexpectedError />;
     }

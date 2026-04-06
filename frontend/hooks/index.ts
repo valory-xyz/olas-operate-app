@@ -17,6 +17,8 @@ export * from './useDeployability';
 export * from './useDynamicRefetchInterval';
 export * from './useElectronApi';
 export * from './useFeatureFlag';
+export * from './useFundRecoveryExecute';
+export * from './useFundRecoveryScan';
 export * from './useGetBridgeRequirementsParams';
 export * from './useGetOnRampRequirementsParams';
 export * from './useGetRefillRequirements';
