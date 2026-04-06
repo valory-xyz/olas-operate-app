@@ -1,7 +1,7 @@
 import {
-  CheckCircleOutlined,
+  CheckCircleFilled,
   LoadingOutlined,
-  WarningOutlined,
+  WarningFilled,
 } from '@ant-design/icons';
 import { Button, Flex, Modal, Typography } from 'antd';
 
@@ -43,7 +43,8 @@ export const FundRecoveryResultModal = ({
             Withdrawal in Progress
           </Title>
           <Text type="secondary" style={{ textAlign: 'center' }}>
-            It usually takes a few minutes. Please keep Pearl open.
+            It usually takes a few minutes. Please keep the app open until the
+            process is complete.
           </Text>
         </Flex>
       </Modal>
@@ -54,14 +55,14 @@ export const FundRecoveryResultModal = ({
     return (
       <Modal open={open} footer={null} closable={false} centered width={400}>
         <Flex vertical align="center" gap={16} style={{ padding: '24px 0' }}>
-          <CheckCircleOutlined
+          <CheckCircleFilled
             style={{ fontSize: 48, color: COLOR.SUCCESS }}
           />
           <Title level={4} className="m-0">
             Withdrawal Complete!
           </Title>
           <Text type="secondary" style={{ textAlign: 'center' }}>
-            Your funds have been successfully sent to your destination address.
+            Funds transferred to your external wallet.
           </Text>
           <Button
             type="primary"
@@ -78,12 +79,22 @@ export const FundRecoveryResultModal = ({
 
   if (isError) {
     return (
-      <Modal open={open} footer={null} closable={false} centered width={400}>
+      <Modal
+        open={open}
+        footer={null}
+        centered
+        width={400}
+        onCancel={onTryAgain}
+      >
         <Flex vertical align="center" gap={16} style={{ padding: '24px 0' }}>
-          <WarningOutlined style={{ fontSize: 48, color: COLOR.WARNING }} />
+          <WarningFilled style={{ fontSize: 48, color: '#ff4d4f' }} />
           <Title level={4} className="m-0">
             Withdrawal Failed
           </Title>
+          <Text type="secondary" style={{ textAlign: 'center' }}>
+            Something went wrong with your withdrawal. Please try again or
+            contact Valory support.
+          </Text>
           {isPartialFailure && (
             <Text
               type="secondary"
