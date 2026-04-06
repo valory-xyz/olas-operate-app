@@ -1,3 +1,4 @@
+import { RightOutlined } from '@ant-design/icons';
 import { Button, Typography } from 'antd';
 import { TbFolderOpen } from 'react-icons/tb';
 
@@ -22,13 +23,16 @@ export const RecoverExistingAccountCard = () => {
           Recover an Existing Pearl Account
         </CardTitle>
         <Paragraph className="text-neutral-secondary text-center mb-32">
-          Move your .operate folder to restore a Pearl account on a new device.
+          Your account data is stored locally. If you have it from another
+          machine, you may recover your Pearl account.
         </Paragraph>
         <Button
           onClick={() => goto(SETUP_SCREEN.MigrateOperateFolder)}
-          type="default"
+          type="primary"
           size="large"
           block
+          icon={<RightOutlined />}
+          iconPosition="end"
         >
           View Instructions
         </Button>
