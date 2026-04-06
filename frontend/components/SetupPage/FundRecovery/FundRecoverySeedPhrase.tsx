@@ -90,11 +90,13 @@ export const FundRecoverySeedPhrase = ({
     [],
   );
 
-  // Reorder words for 2-column layout: left column words 1-6, right column words 7-12
-  const orderedIndices = Array.from({ length: WORD_COUNT }, (_, i) => {
-    const half = WORD_COUNT / 2;
-    const col = Math.floor(i / half);
-    const row = i % half;
+  // Build interleaved indices for 2-column layout:
+  // grid position 0 → word 1 (index 0), grid position 1 → word 7 (index 6),
+  // grid position 2 → word 2 (index 1), grid position 3 → word 8 (index 7), etc.
+  const half = WORD_COUNT / 2;
+  const orderedIndices = Array.from({ length: WORD_COUNT }, (_, gridPos) => {
+    const row = Math.floor(gridPos / 2);
+    const col = gridPos % 2;
     return col === 0 ? row : row + half;
   });
 

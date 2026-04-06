@@ -3,11 +3,7 @@ import Image from 'next/image';
 import { ChangeEvent, useCallback, useMemo } from 'react';
 import styled from 'styled-components';
 
-import {
-  CHAIN_IMAGE_MAP,
-  EvmChainIdMap,
-  EvmChainName,
-} from '@/constants/chains';
+import { CHAIN_IMAGE_MAP, EvmChainName } from '@/constants/chains';
 import {
   ChainAmounts,
   FundRecoveryScanResponse,

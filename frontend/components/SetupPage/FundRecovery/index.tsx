@@ -64,6 +64,7 @@ export const FundRecovery = () => {
   }, [runScan, getMnemonic]);
 
   const handleRecover = useCallback(() => {
+    setIsResultModalOpen(true);
     runExecute(
       {
         mnemonic: getMnemonic(),
@@ -71,10 +72,10 @@ export const FundRecovery = () => {
       },
       {
         onSuccess: () => {
-          setIsResultModalOpen(true);
+          // modal is already open; isExecuting will become false, revealing the success variant
         },
         onError: () => {
-          setIsResultModalOpen(true);
+          // modal is already open; isExecuting will become false, revealing the failed variant
         },
       },
     );
@@ -83,7 +84,11 @@ export const FundRecovery = () => {
   const handleTryAgain = useCallback(() => {
     setIsResultModalOpen(false);
     resetExecute();
-  }, [resetExecute]);
+    // Go back to seed phrase so user can re-enter and re-scan
+    setStep('seedPhrase');
+    setScanResult(null);
+    resetScan();
+  }, [resetExecute, resetScan]);
 
   const handleBack = useCallback(() => {
     if (step === 'chainBalances') {
