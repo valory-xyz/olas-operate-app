@@ -52,9 +52,7 @@ export const FundRecoveryResultModal = ({
     : isSuccess
       ? {
           header: (
-            <CheckCircleFilled
-              style={{ fontSize: 48, color: COLOR.SUCCESS }}
-            />
+            <CheckCircleFilled style={{ fontSize: 48, color: COLOR.SUCCESS }} />
           ),
           title: 'Withdrawal Complete!',
           description: 'Funds transferred to your external wallet.',
