@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { renderHook } from '@testing-library/react';
+import { renderHook, waitFor } from '@testing-library/react';
 import { act, createElement, PropsWithChildren } from 'react';
 
 import { useFundRecoveryExecute } from '../../hooks/useFundRecoveryExecute';
@@ -55,9 +55,10 @@ const createWrapper = () => {
   const queryClient = new QueryClient({
     defaultOptions: { mutations: { retry: false } },
   });
-  // eslint-disable-next-line react/display-name
-  return ({ children }: PropsWithChildren) =>
-    createElement(QueryClientProvider, { client: queryClient }, children);
+  function Wrapper({ children }: PropsWithChildren) {
+    return createElement(QueryClientProvider, { client: queryClient }, children);
+  }
+  return Wrapper;
 };
 
 describe('useFundRecoveryExecute', () => {
@@ -82,14 +83,16 @@ describe('useFundRecoveryExecute', () => {
       wrapper: createWrapper(),
     });
 
-    await act(async () => {
+    act(() => {
       result.current.mutate({
         mnemonic: SAMPLE_MNEMONIC,
         destination_address: SAMPLE_DESTINATION,
       });
     });
 
-    expect(result.current.data).toEqual(SAMPLE_SUCCESS_RESPONSE);
+    await waitFor(() => {
+      expect(result.current.data).toEqual(SAMPLE_SUCCESS_RESPONSE);
+    });
     expect(result.current.error).toBeNull();
   });
 
@@ -100,14 +103,16 @@ describe('useFundRecoveryExecute', () => {
       wrapper: createWrapper(),
     });
 
-    await act(async () => {
+    act(() => {
       result.current.mutate({
         mnemonic: SAMPLE_MNEMONIC,
         destination_address: SAMPLE_DESTINATION,
       });
     });
 
-    expect(result.current.data).toEqual(SAMPLE_PARTIAL_RESPONSE);
+    await waitFor(() => {
+      expect(result.current.data).toEqual(SAMPLE_PARTIAL_RESPONSE);
+    });
     expect(result.current.data?.partial_failure).toBe(true);
     expect(result.current.error).toBeNull();
   });
@@ -124,11 +129,13 @@ describe('useFundRecoveryExecute', () => {
       destination_address: SAMPLE_DESTINATION,
     };
 
-    await act(async () => {
+    act(() => {
       result.current.mutate(executeRequest);
     });
 
-    expect(mockExecute).toHaveBeenCalledWith(executeRequest);
+    await waitFor(() => {
+      expect(mockExecute).toHaveBeenCalledWith(executeRequest);
+    });
   });
 
   it('surfaces the error when execute fails', async () => {
@@ -139,14 +146,16 @@ describe('useFundRecoveryExecute', () => {
       wrapper: createWrapper(),
     });
 
-    await act(async () => {
+    act(() => {
       result.current.mutate({
         mnemonic: SAMPLE_MNEMONIC,
         destination_address: SAMPLE_DESTINATION,
       });
     });
 
-    expect(result.current.error).toEqual(executeError);
+    await waitFor(() => {
+      expect(result.current.error).toEqual(executeError);
+    });
     expect(result.current.data).toBeUndefined();
   });
 
@@ -157,14 +166,16 @@ describe('useFundRecoveryExecute', () => {
       wrapper: createWrapper(),
     });
 
-    await act(async () => {
+    act(() => {
       result.current.mutate({
         mnemonic: SAMPLE_MNEMONIC,
         destination_address: SAMPLE_DESTINATION,
       });
     });
 
-    expect(result.current.data).toEqual(SAMPLE_SUCCESS_RESPONSE);
+    await waitFor(() => {
+      expect(result.current.data).toEqual(SAMPLE_SUCCESS_RESPONSE);
+    });
 
     act(() => {
       result.current.reset();

@@ -5,10 +5,9 @@ import { ChangeEvent, useCallback, useMemo } from 'react';
 import styled from 'styled-components';
 
 import { Alert } from '@/components/ui';
-
 import { CHAIN_CONFIG } from '@/config/chains';
 import { TOKEN_CONFIG } from '@/config/tokens';
-import { AddressZero, CHAIN_IMAGE_MAP, EvmChainName } from '@/constants';
+import { AddressZero, CHAIN_IMAGE_MAP, COLOR, EvmChainName } from '@/constants';
 import { Address } from '@/types';
 import {
   ChainAmounts,
@@ -26,7 +25,7 @@ const isValidEvmAddress = (address: string): boolean =>
 const ChainRow = styled(Flex)`
   padding: 12px 0;
   & + & {
-    border-top: 1px solid #f0f0f0;
+    border-top: 1px solid ${COLOR.BORDER_LIGHT};
   }
 `;
 
@@ -238,7 +237,7 @@ export const FundRecoveryScanResults = ({
       )}
 
       <Flex gap={8} align="start">
-        <WarningOutlined style={{ color: '#faad14', marginTop: 3 }} />
+        <WarningOutlined style={{ color: COLOR.ORANGE, marginTop: 3 }} />
         <Text type="secondary" style={{ fontSize: 12 }}>
           Funds locked in external protocols and small amounts held in your
           agent&apos;s transaction signing wallet are not included in this
@@ -248,7 +247,7 @@ export const FundRecoveryScanResults = ({
 
       <div
         style={{
-          border: '1px solid #f0f0f0',
+          border: `1px solid ${COLOR.BORDER_LIGHT}`,
           borderRadius: 8,
           padding: 16,
           marginTop: 8,

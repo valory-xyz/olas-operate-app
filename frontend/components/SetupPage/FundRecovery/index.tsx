@@ -8,6 +8,7 @@ import { useFundRecoveryExecute, useFundRecoveryScan, useSetup } from '@/hooks';
 import { FundRecoveryScanResponse } from '@/types/FundRecovery';
 
 import { BackButton } from '../../ui/BackButton';
+import { SetupCard } from '../../ui/SetupCard';
 import { FundRecoveryResultModal } from './FundRecoveryResultModal';
 import { FundRecoveryScanResults } from './FundRecoveryScanResults';
 import { FundRecoverySeedPhrase } from './FundRecoverySeedPhrase';
@@ -79,6 +80,11 @@ export const FundRecovery = () => {
     );
   }, [runExecute, getMnemonic, destinationAddress]);
 
+  const handleCloseResultModal = useCallback(() => {
+    setIsResultModalOpen(false);
+    resetExecute();
+  }, [resetExecute]);
+
   const handleTryAgain = useCallback(() => {
     setIsResultModalOpen(false);
     resetExecute();
@@ -106,46 +112,49 @@ export const FundRecovery = () => {
   );
 
   return (
-    <Flex vertical style={{ padding: '24px 24px 32px' }}>
-      <Flex align="center" style={{ marginBottom: 16 }}>
-        <BackButton onPrev={handleBack} />
-      </Flex>
+    <SetupCard>
+      <Flex vertical style={{ padding: '24px 24px 32px' }}>
+        <Flex align="center" style={{ marginBottom: 16 }}>
+          <BackButton onPrev={handleBack} />
+        </Flex>
 
-      {step === 'seedPhrase' && (
-        <FundRecoverySeedPhrase
-          words={words}
-          isScanning={isScanning}
-          scanError={scanError}
-          onWordsChange={handleWordsChange}
-          onScan={handleScan}
-        />
-      )}
+        {step === 'seedPhrase' && (
+          <FundRecoverySeedPhrase
+            words={words}
+            isScanning={isScanning}
+            scanError={scanError}
+            onWordsChange={handleWordsChange}
+            onScan={handleScan}
+          />
+        )}
 
-      {step === 'chainBalances' && scanResult && (
-        <FundRecoveryScanResults
-          scanResult={scanResult}
-          destinationAddress={destinationAddress}
+        {step === 'chainBalances' && scanResult && (
+          <FundRecoveryScanResults
+            scanResult={scanResult}
+            destinationAddress={destinationAddress}
+            isExecuting={isExecuting}
+            onDestinationAddressChange={setDestinationAddress}
+            onRecover={handleRecover}
+          />
+        )}
+
+        {step === 'chainBalances' && !scanResult && (
+          <Alert
+            type="warning"
+            showIcon
+            message="No scan data available. Please go back and scan again."
+          />
+        )}
+
+        <FundRecoveryResultModal
+          result={executeResult ?? null}
+          error={executeError}
+          open={isResultModalOpen}
           isExecuting={isExecuting}
-          onDestinationAddressChange={setDestinationAddress}
-          onRecover={handleRecover}
+          onTryAgain={handleTryAgain}
+          onClose={handleCloseResultModal}
         />
-      )}
-
-      {step === 'chainBalances' && !scanResult && (
-        <Alert
-          type="warning"
-          showIcon
-          message="No scan data available. Please go back and scan again."
-        />
-      )}
-
-      <FundRecoveryResultModal
-        result={executeResult ?? null}
-        error={executeError}
-        open={isResultModalOpen}
-        isExecuting={isExecuting}
-        onTryAgain={handleTryAgain}
-      />
-    </Flex>
+      </Flex>
+    </SetupCard>
   );
 };

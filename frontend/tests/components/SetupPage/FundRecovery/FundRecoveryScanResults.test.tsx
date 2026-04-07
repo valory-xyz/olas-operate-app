@@ -170,7 +170,7 @@ describe('FundRecoveryScanResults', () => {
         />,
       );
       expect(
-        screen.getByRole('button', { name: 'Withdraw' }),
+        screen.getByRole('button', { name: /Withdraw/i }),
       ).toBeDisabled();
     });
 

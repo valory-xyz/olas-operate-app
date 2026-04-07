@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { renderHook } from '@testing-library/react';
+import { renderHook, waitFor } from '@testing-library/react';
 import { act, createElement, PropsWithChildren } from 'react';
 
 import { useFundRecoveryScan } from '../../hooks/useFundRecoveryScan';
@@ -45,9 +45,10 @@ const createWrapper = () => {
   const queryClient = new QueryClient({
     defaultOptions: { mutations: { retry: false } },
   });
-  // eslint-disable-next-line react/display-name
-  return ({ children }: PropsWithChildren) =>
-    createElement(QueryClientProvider, { client: queryClient }, children);
+  function Wrapper({ children }: PropsWithChildren) {
+    return createElement(QueryClientProvider, { client: queryClient }, children);
+  }
+  return Wrapper;
 };
 
 describe('useFundRecoveryScan', () => {
@@ -72,11 +73,13 @@ describe('useFundRecoveryScan', () => {
       wrapper: createWrapper(),
     });
 
-    await act(async () => {
+    act(() => {
       result.current.mutate({ mnemonic: SAMPLE_MNEMONIC });
     });
 
-    expect(result.current.data).toEqual(SAMPLE_SCAN_RESPONSE);
+    await waitFor(() => {
+      expect(result.current.data).toEqual(SAMPLE_SCAN_RESPONSE);
+    });
     expect(result.current.error).toBeNull();
   });
 
@@ -87,11 +90,13 @@ describe('useFundRecoveryScan', () => {
       wrapper: createWrapper(),
     });
 
-    await act(async () => {
+    act(() => {
       result.current.mutate({ mnemonic: SAMPLE_MNEMONIC });
     });
 
-    expect(mockScan).toHaveBeenCalledWith({ mnemonic: SAMPLE_MNEMONIC });
+    await waitFor(() => {
+      expect(mockScan).toHaveBeenCalledWith({ mnemonic: SAMPLE_MNEMONIC });
+    });
   });
 
   it('surfaces the error when scan fails', async () => {
@@ -102,11 +107,13 @@ describe('useFundRecoveryScan', () => {
       wrapper: createWrapper(),
     });
 
-    await act(async () => {
+    act(() => {
       result.current.mutate({ mnemonic: 'bad phrase' });
     });
 
-    expect(result.current.error).toEqual(scanError);
+    await waitFor(() => {
+      expect(result.current.error).toEqual(scanError);
+    });
     expect(result.current.data).toBeUndefined();
   });
 
@@ -117,11 +124,13 @@ describe('useFundRecoveryScan', () => {
       wrapper: createWrapper(),
     });
 
-    await act(async () => {
+    act(() => {
       result.current.mutate({ mnemonic: SAMPLE_MNEMONIC });
     });
 
-    expect(result.current.data).toEqual(SAMPLE_SCAN_RESPONSE);
+    await waitFor(() => {
+      expect(result.current.data).toEqual(SAMPLE_SCAN_RESPONSE);
+    });
 
     act(() => {
       result.current.reset();

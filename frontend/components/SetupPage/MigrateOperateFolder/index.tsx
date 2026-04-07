@@ -1,10 +1,11 @@
 import { Button, Flex, Tag, Typography } from 'antd';
-import React from 'react';
+import { FaApple, FaLinux, FaWindows } from 'react-icons/fa';
 
-import { SETUP_SCREEN } from '@/constants';
+import { COLOR, SETUP_SCREEN } from '@/constants';
 import { useSetup } from '@/hooks';
 
 import { BackButton } from '../../ui/BackButton';
+import { SetupCard } from '../../ui/SetupCard';
 
 const { Title, Text } = Typography;
 
@@ -28,15 +29,19 @@ const MigrationSteps = () => (
           </Text>
           <Flex vertical gap={4} style={{ paddingLeft: 8 }}>
             <Flex align="center" gap={8}>
-              <Tag color="blue">MacOS</Tag>
+              <Tag color="blue" icon={<FaApple />}>
+                MacOS
+              </Tag>
               <Text code>~/Users/&lt;username&gt;/.operate</Text>
             </Flex>
             <Flex align="center" gap={8}>
-              <Tag color="blue">Windows</Tag>
+              <Tag color="blue" icon={<FaWindows />}>
+                Windows
+              </Tag>
               <Text code>C:\Users\&lt;username&gt;\.operate</Text>
             </Flex>
             <Flex align="center" gap={8}>
-              <Tag>Linux</Tag>
+              <Tag icon={<FaLinux />}>Linux</Tag>
               <Text code>/home/&lt;username&gt;/.operate</Text>
             </Flex>
           </Flex>
@@ -73,7 +78,7 @@ const WithdrawFundsSection = () => {
   return (
     <div
       style={{
-        border: '1px solid #f0f0f0',
+        border: `1px solid ${COLOR.BORDER_LIGHT}`,
         borderRadius: 8,
         padding: 16,
       }}
@@ -86,6 +91,7 @@ const WithdrawFundsSection = () => {
         </Text>
         <Button
           type="default"
+          style={{ alignSelf: 'flex-start' }}
           onClick={() => goto(SETUP_SCREEN.FundRecovery)}
         >
           Withdraw Funds
@@ -95,22 +101,12 @@ const WithdrawFundsSection = () => {
   );
 };
 
-const cardStyle: React.CSSProperties = {
-  maxWidth: 516,
-  width: '100%',
-  margin: 'auto',
-  borderRadius: 16,
-  background: '#ffffff',
-  boxShadow:
-    '0 74px 21px 0 rgba(170, 193, 203, 0), 0 47px 19px 0 rgba(170, 193, 203, 0.01), 0 26px 16px 0 rgba(170, 193, 203, 0.05), 0 12px 12px 0 rgba(170, 193, 203, 0.09), 0 3px 6px 0 rgba(170, 193, 203, 0.1)',
-};
-
 export const MigrateOperateFolder = () => {
   const { goto } = useSetup();
 
   return (
     <Flex vertical gap={24} style={{ width: '100%' }}>
-      <div style={cardStyle}>
+      <SetupCard>
         <Flex vertical style={{ padding: '24px 24px 32px' }}>
           <Flex align="center" style={{ marginBottom: 16 }}>
             <BackButton onPrev={() => goto(SETUP_SCREEN.AccountRecovery)} />
@@ -131,13 +127,13 @@ export const MigrateOperateFolder = () => {
             <MigrationSteps />
           </Flex>
         </Flex>
-      </div>
+      </SetupCard>
 
-      <div style={cardStyle}>
+      <SetupCard>
         <Flex vertical style={{ padding: '24px 24px 32px' }}>
           <WithdrawFundsSection />
         </Flex>
-      </div>
+      </SetupCard>
     </Flex>
   );
 };

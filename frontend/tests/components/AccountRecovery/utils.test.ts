@@ -142,6 +142,21 @@ describe('getBackupWalletStatus', () => {
     expect(result.areAllBackupOwnersSame).toBe(true);
   });
 
+  it('returns safe defaults when masterSafes is empty', () => {
+    const safes = {
+      [MiddlewareChainMap.GNOSIS]: {
+        [DEFAULT_SAFE_ADDRESS]: {
+          backup_owners: [BACKUP_SIGNER_ADDRESS],
+        },
+      },
+    };
+    const masterSafes: never[] = [];
+    const result = getBackupWalletStatus(safes as never, masterSafes);
+    expect(result.hasBackupWalletsAcrossEveryChain).toBe(false);
+    expect(result.areAllBackupOwnersSame).toBe(false);
+    expect(result.backupAddress).toBeUndefined();
+  });
+
   it('defaults to empty array when backup_owners is undefined', () => {
     const safes = {
       [MiddlewareChainMap.GNOSIS]: {

@@ -7,6 +7,13 @@ import {
   FundRecoveryScanResponse,
 } from '../../../../types/FundRecovery';
 
+/* eslint-disable @typescript-eslint/no-var-requires */
+jest.mock(
+  'styled-components',
+  () => require('../../../mocks/styledComponents').styledComponentsMock,
+);
+/* eslint-enable @typescript-eslint/no-var-requires */
+
 const mockGoto = jest.fn();
 jest.mock('../../../../hooks', () => ({
   useSetup: () => ({ goto: mockGoto }),
@@ -220,9 +227,14 @@ describe('FundRecovery', () => {
   });
 
   describe('execute flow', () => {
+    let mockMutateScanForExecute: jest.Mock;
+    let mockMutateExecuteForExecute: jest.Mock;
+
     beforeEach(() => {
-      const { mockMutateScan } = createDefaultHookMocks();
-      mockMutateScan.mockImplementation((_req: unknown, callbacks: { onSuccess: (data: FundRecoveryScanResponse) => void }) => {
+      const mocks = createDefaultHookMocks();
+      mockMutateScanForExecute = mocks.mockMutateScan;
+      mockMutateExecuteForExecute = mocks.mockMutateExecute;
+      mockMutateScanForExecute.mockImplementation((_req: unknown, callbacks: { onSuccess: (data: FundRecoveryScanResponse) => void }) => {
         callbacks.onSuccess(SAMPLE_SCAN_RESPONSE);
       });
     });
@@ -236,17 +248,11 @@ describe('FundRecovery', () => {
     });
 
     it('calls runExecute mutation when recover is triggered', () => {
-      const { mockMutateExecute } = createDefaultHookMocks();
-      const { mockMutateScan } = createDefaultHookMocks();
-      mockMutateScan.mockImplementation((_req: unknown, callbacks: { onSuccess: (data: FundRecoveryScanResponse) => void }) => {
-        callbacks.onSuccess(SAMPLE_SCAN_RESPONSE);
-      });
-
       render(<FundRecovery />);
       fireEvent.click(screen.getByTestId('scan-btn'));
       fireEvent.click(screen.getByTestId('recover-btn'));
 
-      expect(mockMutateExecute).toHaveBeenCalledTimes(1);
+      expect(mockMutateExecuteForExecute).toHaveBeenCalledTimes(1);
     });
   });
 

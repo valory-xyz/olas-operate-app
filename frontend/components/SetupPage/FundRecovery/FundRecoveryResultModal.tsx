@@ -87,7 +87,7 @@ export const FundRecoveryResultModal = ({
         onCancel={onClose ?? onTryAgain}
         size="medium"
         header={
-          <WarningFilled style={{ fontSize: 48, color: '#ff4d4f' }} />
+          <WarningFilled style={{ fontSize: 48, color: COLOR.ICON_COLOR.DANGER }} />
         }
         title="Withdrawal Failed"
         description={

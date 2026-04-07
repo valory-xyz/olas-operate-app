@@ -1,13 +1,13 @@
 import { Typography } from 'antd';
 import React, { useContext, useMemo } from 'react';
-import styled from 'styled-components';
 
-import { COLOR, SETUP_SCREEN, SetupScreen } from '@/constants';
+import { SETUP_SCREEN, SetupScreen } from '@/constants';
 import { SetupContext } from '@/context/SetupProvider';
 
 import { AccountRecovery } from '../AccountRecovery';
 import { SelectStakingPage } from '../SelectStakingPage';
 import { CardFlex } from '../ui/CardFlex';
+import { SetupCard } from '../ui/SetupCard';
 import { AgentOnboarding } from './AgentOnboarding/AgentOnboarding';
 import { SetupBackupSigner } from './Create/SetupBackupSigner';
 import { SetupBridgeOnboarding } from './Create/SetupBridgeOnboarding/SetupBridgeOnboarding';
@@ -15,11 +15,11 @@ import { SetupOnRamp } from './Create/SetupOnRamp/SetupOnRamp';
 import { SetupPassword } from './Create/SetupPassword';
 import { EarlyAccessOnly } from './EarlyAccessOnly';
 import { FundRecovery } from './FundRecovery';
-import { MigrateOperateFolder } from './MigrateOperateFolder';
 import { BalanceCheck } from './FundYourAgent/components/BalanceCheck';
 import { ConfirmFunding } from './FundYourAgent/components/ConfirmFunding';
 import { FundYourAgent } from './FundYourAgent/FundYourAgent';
 import { TransferFunds } from './FundYourAgent/TransferFunds';
+import { MigrateOperateFolder } from './MigrateOperateFolder';
 import { SetupWelcome } from './SetupWelcome';
 import { SetupYourAgent } from './SetupYourAgent/SetupYourAgent';
 import { SupportButton } from './SupportButton';
@@ -34,19 +34,7 @@ const UnexpectedError = () => (
   </CardFlex>
 );
 
-const SetupCard = styled.div`
-  max-width: 516px;
-  width: 100%;
-  margin: auto;
-  border-radius: 16px;
-  background: ${COLOR.WHITE};
-  box-shadow:
-    0 74px 21px 0 rgba(170, 193, 203, 0),
-    0 47px 19px 0 rgba(170, 193, 203, 0.01),
-    0 26px 16px 0 rgba(170, 193, 203, 0.05),
-    0 12px 12px 0 rgba(170, 193, 203, 0.09),
-    0 3px 6px 0 rgba(170, 193, 203, 0.1);
-`;
+export { SetupCard };
 
 const SCREEN_WITHOUT_CARDS: SetupScreen[] = [
   SETUP_SCREEN.AgentOnboarding,

@@ -109,7 +109,6 @@ export const FundRecoverySeedPhrase = ({
           showIcon
           message="Invalid Secret Recovery Phrase"
           description="Please review your input and try again."
-          style={{ borderRadius: 8 }}
         />
       )}
 
