@@ -17,6 +17,8 @@ import { Address } from '@/types/Address';
 import { CrossChainStakedBalances, WalletBalance } from '@/types/Balance';
 import { areAddressesEqual } from '@/utils';
 
+import { usePageState } from '@/hooks/usePageState';
+
 import { MasterWalletContext } from '../MasterWalletProvider';
 import { OnlineStatusContext } from '../OnlineStatusProvider';
 import { ServicesContext } from '../ServicesProvider';
@@ -57,6 +59,7 @@ export const BalanceContext = createContext<{
 
 export const BalanceProvider = ({ children }: PropsWithChildren) => {
   const { isOnline } = useContext(OnlineStatusContext);
+  const { isUserLoggedIn } = usePageState();
   const { masterWallets } = useContext(MasterWalletContext);
   const { services, serviceWallets, selectedAgentConfig } =
     useContext(ServicesContext);
@@ -82,7 +85,7 @@ export const BalanceProvider = ({ children }: PropsWithChildren) => {
 
       return getCrossChainBalances({ services, masterWallets, serviceWallets });
     },
-    enabled: isOnline && !!masterWallets?.length && !!services,
+    enabled: isOnline && isUserLoggedIn && !!masterWallets?.length && !!services,
     refetchInterval,
   });
 
