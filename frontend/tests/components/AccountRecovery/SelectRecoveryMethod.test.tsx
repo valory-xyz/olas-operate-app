@@ -1,5 +1,4 @@
-import { render, screen } from '@testing-library/react';
-import { fireEvent } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 
 import { SETUP_SCREEN } from '../../../constants';
 import { RECOVERY_STEPS } from '../../../components/AccountRecovery/constants';
@@ -11,16 +10,19 @@ jest.mock('../../../hooks', () => ({
   useSetup: () => ({ goto: mockGoto }),
 }));
 
-jest.mock('../../../components/AccountRecovery/AccountRecoveryProvider', () => ({
-  AccountRecoveryProvider: ({ children }: { children: React.ReactNode }) =>
-    children,
-  useAccountRecoveryContext: () => ({
-    isLoading: false,
-    isRecoveryAvailable: true,
-    currentStep: RECOVERY_STEPS.SelectRecoveryMethod,
-    setCurrentStep: mockSetCurrentStep,
+jest.mock(
+  '../../../components/AccountRecovery/AccountRecoveryProvider',
+  () => ({
+    AccountRecoveryProvider: ({ children }: { children: React.ReactNode }) =>
+      children,
+    useAccountRecoveryContext: () => ({
+      isLoading: false,
+      isRecoveryAvailable: true,
+      currentStep: RECOVERY_STEPS.SelectRecoveryMethod,
+      setCurrentStep: mockSetCurrentStep,
+    }),
   }),
-}));
+);
 
 jest.mock('../../../components/AccountRecovery/components/RecoveryViaBackupWallet', () => ({
   ForgotPasswordCard: ({ isRecoveryAvailable }: { isRecoveryAvailable: boolean }) => (
