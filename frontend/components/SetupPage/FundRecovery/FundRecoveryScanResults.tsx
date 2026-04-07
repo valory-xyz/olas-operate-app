@@ -6,7 +6,7 @@ import styled from 'styled-components';
 
 import { Alert } from '@/components/ui';
 import { CHAIN_CONFIG } from '@/config/chains';
-import { TOKEN_CONFIG } from '@/config/tokens';
+import { TOKEN_CONFIG, TokenSymbolConfigMap } from '@/config/tokens';
 import { AddressZero, CHAIN_IMAGE_MAP, COLOR, EvmChainName } from '@/constants';
 import { Address } from '@/types';
 import { ChainAmounts, FundRecoveryScanResponse } from '@/types/FundRecovery';
@@ -26,15 +26,7 @@ const ChainRow = styled(Flex)`
   }
 `;
 
-const TOKEN_DOT_COLORS = [
-  '#e74c3c',
-  '#3498db',
-  '#9b59b6',
-  '#2ecc71',
-  '#f39c12',
-];
-
-type TokenBalance = { symbol: string; amount: string };
+type TokenBalance = { symbol: string; amount: string; icon?: string };
 
 type ChainBalance = {
   chainId: number;
@@ -110,11 +102,17 @@ const aggregateChainBalances = (
           ? `${tokenAddress.slice(0, 6)}...${tokenAddress.slice(-4)}`
           : tokenAddress);
 
+      const icon = symbol
+        ? TokenSymbolConfigMap[symbol as keyof typeof TokenSymbolConfigMap]
+            ?.image
+        : undefined;
+
       const formattedAmount = formatUnitsToNumber(amount, decimals);
 
       tokens.push({
         symbol: displaySymbol,
         amount: formattedAmount.toString(),
+        icon,
       });
     }
 
@@ -153,18 +151,23 @@ const ChainBalanceRow = ({ chain }: ChainBalanceRowProps) => (
     </Flex>
 
     <Flex wrap="wrap" gap={6}>
-      {chain.tokens.map((token, i) => (
-        <Tag key={token.symbol}>
-          <span
-            style={{
-              display: 'inline-block',
-              width: 8,
-              height: 8,
-              borderRadius: '50%',
-              backgroundColor: TOKEN_DOT_COLORS[i % TOKEN_DOT_COLORS.length],
-              marginRight: 4,
-            }}
-          />
+      {chain.tokens.map((token) => (
+        <Tag
+          key={token.symbol}
+          style={{
+            backgroundColor: COLOR.WHITE,
+            border: `1px solid ${COLOR.BORDER_LIGHT}`,
+          }}
+        >
+          {token.icon && (
+            <Image
+              src={token.icon}
+              alt={token.symbol}
+              width={12}
+              height={12}
+              style={{ borderRadius: '50%', marginRight: 4 }}
+            />
+          )}
           {token.amount} {token.symbol}
         </Tag>
       ))}
@@ -230,7 +233,7 @@ export const FundRecoveryChainBalances = ({
       )}
 
       <Flex gap={8} align="start">
-        <WarningOutlined style={{ color: COLOR.ORANGE, marginTop: 3 }} />
+        <WarningOutlined style={{ marginTop: 3 }} />
         <Text type="secondary" style={{ fontSize: 12 }}>
           Funds locked in external protocols and small amounts held in your
           agent&apos;s transaction signing wallet are not included in this
@@ -261,12 +264,10 @@ export const FundRecoveryWithdrawForm = ({
     [scanResult.balances, scanResult.gas_warning],
   );
 
-  const hasInsufficientGas = chainBalances.some((c) => c.hasInsufficientGas);
   const hasBalances = chainBalances.length > 0;
 
   const isAddressValid = isValidEvmAddress(destinationAddress);
-  const canWithdraw =
-    hasBalances && isAddressValid && !hasInsufficientGas && !isExecuting;
+  const canWithdraw = hasBalances && isAddressValid && !isExecuting;
 
   const handleAddressChange = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {

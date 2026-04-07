@@ -141,7 +141,7 @@ describe('FundRecoveryScanResults', () => {
       expect(screen.getByRole('button', { name: 'Withdraw' })).toBeDisabled();
     });
 
-    it('is disabled when gas is insufficient', () => {
+    it('is enabled when gas is insufficient (backend skips those chains)', () => {
       render(
         <FundRecoveryScanResults
           {...defaultProps}
@@ -149,7 +149,9 @@ describe('FundRecoveryScanResults', () => {
           destinationAddress={VALID_DESTINATION}
         />,
       );
-      expect(screen.getByRole('button', { name: 'Withdraw' })).toBeDisabled();
+      expect(
+        screen.getByRole('button', { name: 'Withdraw' }),
+      ).not.toBeDisabled();
     });
 
     it('is disabled when isExecuting is true', () => {
