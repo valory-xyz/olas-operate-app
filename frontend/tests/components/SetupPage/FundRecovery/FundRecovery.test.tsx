@@ -2,6 +2,8 @@ import { fireEvent, render, screen } from '@testing-library/react';
 
 import { FundRecovery } from '../../../../components/SetupPage/FundRecovery';
 import { SETUP_SCREEN } from '../../../../constants';
+// Import mocked hooks for control
+import { useFundRecoveryExecute, useFundRecoveryScan } from '../../../../hooks';
 import {
   FundRecoveryExecuteResponse,
   FundRecoveryScanResponse,
@@ -21,20 +23,11 @@ jest.mock('../../../../hooks', () => ({
   useFundRecoveryExecute: jest.fn(),
 }));
 
-// Import mocked hooks for control
-import { useFundRecoveryExecute, useFundRecoveryScan } from '../../../../hooks';
-
 const mockUseFundRecoveryScan = useFundRecoveryScan as jest.Mock;
 const mockUseFundRecoveryExecute = useFundRecoveryExecute as jest.Mock;
 
 jest.mock('../../../../components/ui', () => ({
-  Alert: ({
-    message,
-    type,
-  }: {
-    message?: string;
-    type?: string;
-  }) => (
+  Alert: ({ message, type }: { message?: string; type?: string }) => (
     <div data-testid="alert" data-type={type}>
       {message && <span>{message}</span>}
     </div>
@@ -55,10 +48,7 @@ jest.mock(
     }) => (
       <div data-testid="seed-phrase">
         {scanError && <span data-testid="scan-error">scan error</span>}
-        <button
-          data-testid="scan-btn"
-          onClick={onScan}
-        >
+        <button data-testid="scan-btn" onClick={onScan}>
           Scan
         </button>
         <button
@@ -77,25 +67,15 @@ jest.mock(
 jest.mock(
   '../../../../components/SetupPage/FundRecovery/FundRecoveryScanResults',
   () => ({
-    FundRecoveryChainBalances: () => (
-      <div data-testid="chain-balances" />
-    ),
-    FundRecoveryWithdrawForm: ({
-      onRecover,
-    }: {
-      onRecover: () => void;
-    }) => (
+    FundRecoveryChainBalances: () => <div data-testid="chain-balances" />,
+    FundRecoveryWithdrawForm: ({ onRecover }: { onRecover: () => void }) => (
       <div data-testid="scan-results">
         <button data-testid="recover-btn" onClick={onRecover}>
           Recover
         </button>
       </div>
     ),
-    FundRecoveryScanResults: ({
-      onRecover,
-    }: {
-      onRecover: () => void;
-    }) => (
+    FundRecoveryScanResults: ({ onRecover }: { onRecover: () => void }) => (
       <div data-testid="scan-results">
         <button data-testid="recover-btn" onClick={onRecover}>
           Recover
@@ -216,9 +196,14 @@ describe('FundRecovery', () => {
       render(<FundRecovery />);
 
       // Simulate successful scan via onSuccess callback
-      mockMutateScan.mockImplementation((_req: unknown, callbacks: { onSuccess: (data: FundRecoveryScanResponse) => void }) => {
-        callbacks.onSuccess(SAMPLE_SCAN_RESPONSE);
-      });
+      mockMutateScan.mockImplementation(
+        (
+          _req: unknown,
+          callbacks: { onSuccess: (data: FundRecoveryScanResponse) => void },
+        ) => {
+          callbacks.onSuccess(SAMPLE_SCAN_RESPONSE);
+        },
+      );
 
       fireEvent.click(screen.getByTestId('scan-btn'));
 
@@ -230,9 +215,11 @@ describe('FundRecovery', () => {
       const { mockMutateScan } = createDefaultHookMocks();
       render(<FundRecovery />);
 
-      mockMutateScan.mockImplementation((_req: unknown, callbacks: { onError: () => void }) => {
-        callbacks.onError();
-      });
+      mockMutateScan.mockImplementation(
+        (_req: unknown, callbacks: { onError: () => void }) => {
+          callbacks.onError();
+        },
+      );
 
       fireEvent.click(screen.getByTestId('scan-btn'));
 
@@ -248,9 +235,14 @@ describe('FundRecovery', () => {
       const mocks = createDefaultHookMocks();
       mockMutateScanForExecute = mocks.mockMutateScan;
       mockMutateExecuteForExecute = mocks.mockMutateExecute;
-      mockMutateScanForExecute.mockImplementation((_req: unknown, callbacks: { onSuccess: (data: FundRecoveryScanResponse) => void }) => {
-        callbacks.onSuccess(SAMPLE_SCAN_RESPONSE);
-      });
+      mockMutateScanForExecute.mockImplementation(
+        (
+          _req: unknown,
+          callbacks: { onSuccess: (data: FundRecoveryScanResponse) => void },
+        ) => {
+          callbacks.onSuccess(SAMPLE_SCAN_RESPONSE);
+        },
+      );
     });
 
     it('opens the result modal when recover is triggered', () => {
@@ -273,9 +265,14 @@ describe('FundRecovery', () => {
   describe('step navigation', () => {
     it('returns to seed phrase step when back is clicked from scan results', () => {
       const { mockMutateScan } = createDefaultHookMocks();
-      mockMutateScan.mockImplementation((_req: unknown, callbacks: { onSuccess: (data: FundRecoveryScanResponse) => void }) => {
-        callbacks.onSuccess(SAMPLE_SCAN_RESPONSE);
-      });
+      mockMutateScan.mockImplementation(
+        (
+          _req: unknown,
+          callbacks: { onSuccess: (data: FundRecoveryScanResponse) => void },
+        ) => {
+          callbacks.onSuccess(SAMPLE_SCAN_RESPONSE);
+        },
+      );
 
       render(<FundRecovery />);
       fireEvent.click(screen.getByTestId('scan-btn'));

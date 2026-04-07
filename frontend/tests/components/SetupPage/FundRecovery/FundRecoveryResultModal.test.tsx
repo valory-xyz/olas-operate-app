@@ -2,9 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 
 import { FundRecoveryResultModal } from '../../../../components/SetupPage/FundRecovery/FundRecoveryResultModal';
 import { SETUP_SCREEN } from '../../../../constants';
-import {
-  FundRecoveryExecuteResponse,
-} from '../../../../types/FundRecovery';
+import { FundRecoveryExecuteResponse } from '../../../../types/FundRecovery';
 
 const mockGoto = jest.fn();
 jest.mock('../../../../hooks', () => ({
@@ -53,7 +51,8 @@ jest.mock('../../../../components/ui', () => ({
   },
 }));
 
-const DESTINATION_ADDRESS = '0x1234567890AbcdEF1234567890aBcdef12345678' as `0x${string}`;
+const DESTINATION_ADDRESS =
+  '0x1234567890AbcdEF1234567890aBcdef12345678' as `0x${string}`;
 
 const SUCCESS_RESULT: FundRecoveryExecuteResponse = {
   success: true,
@@ -100,7 +99,9 @@ describe('FundRecoveryResultModal', () => {
     it('does not render action buttons while executing', () => {
       render(<FundRecoveryResultModal {...defaultProps} isExecuting={true} />);
       expect(
-        screen.queryByRole('button', { name: /Done|Try Again|Contact Support/i }),
+        screen.queryByRole('button', {
+          name: /Done|Try Again|Contact Support/i,
+        }),
       ).not.toBeInTheDocument();
     });
   });

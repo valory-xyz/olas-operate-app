@@ -113,28 +113,26 @@ describe('FundRecoveryService', () => {
           mockJsonResponse({ error: 'Invalid mnemonic' }, false),
         );
 
-      await expect(FundRecoveryService.scan(SAMPLE_SCAN_REQUEST)).rejects.toThrow(
-        'Invalid mnemonic',
-      );
+      await expect(
+        FundRecoveryService.scan(SAMPLE_SCAN_REQUEST),
+      ).rejects.toThrow('Invalid mnemonic');
     });
 
     it('throws a default message when scan returns non-ok without error field', async () => {
-      jest
-        .spyOn(global, 'fetch')
-        .mockReturnValue(mockJsonResponse({}, false));
+      jest.spyOn(global, 'fetch').mockReturnValue(mockJsonResponse({}, false));
 
-      await expect(FundRecoveryService.scan(SAMPLE_SCAN_REQUEST)).rejects.toThrow(
-        'Failed to scan for recoverable funds',
-      );
+      await expect(
+        FundRecoveryService.scan(SAMPLE_SCAN_REQUEST),
+      ).rejects.toThrow('Failed to scan for recoverable funds');
     });
 
     it('propagates network errors from scan', async () => {
       const networkError = new Error('Network error');
       jest.spyOn(global, 'fetch').mockRejectedValue(networkError);
 
-      await expect(FundRecoveryService.scan(SAMPLE_SCAN_REQUEST)).rejects.toThrow(
-        'Network error',
-      );
+      await expect(
+        FundRecoveryService.scan(SAMPLE_SCAN_REQUEST),
+      ).rejects.toThrow('Network error');
     });
   });
 
@@ -189,9 +187,7 @@ describe('FundRecoveryService', () => {
     });
 
     it('throws a default message when execute returns non-ok without error field', async () => {
-      jest
-        .spyOn(global, 'fetch')
-        .mockReturnValue(mockJsonResponse({}, false));
+      jest.spyOn(global, 'fetch').mockReturnValue(mockJsonResponse({}, false));
 
       await expect(
         FundRecoveryService.execute(SAMPLE_EXECUTE_REQUEST),

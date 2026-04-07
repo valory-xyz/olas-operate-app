@@ -1,9 +1,9 @@
-import { Button, Flex, Tag, Typography } from 'antd';
+import { Button, Flex, Typography } from 'antd';
 import { ReactNode } from 'react';
 import { FaApple, FaLinux, FaWindows } from 'react-icons/fa';
 import styled from 'styled-components';
 
-import { SETUP_SCREEN } from '@/constants';
+import { COLOR, SETUP_SCREEN } from '@/constants';
 import { useSetup } from '@/hooks';
 
 import { BackButton } from '../../ui/BackButton';
@@ -12,9 +12,10 @@ import { SetupCard } from '../../ui/SetupCard';
 const { Title, Text } = Typography;
 
 const OsPathRowContainer = styled(Flex)`
-  background-color: #f5f5f5;
+  background-color: ${COLOR.BORDER_LIGHT};
   border-radius: 6px;
-  padding: 8px 12px;
+  padding: 4px 12px;
+  align-self: flex-start;
 `;
 
 type OsPathRowProps = {
@@ -25,8 +26,15 @@ type OsPathRowProps = {
 
 const OsPathRow = ({ icon, label, path }: OsPathRowProps) => (
   <OsPathRowContainer align="center" gap={8}>
-    <Tag icon={icon}>{label}:</Tag>
-    <Text strong>{path}</Text>
+    <Flex align="center" gap={4} style={{ minWidth: 90 }}>
+      {icon}
+      <Text type="secondary" style={{ fontSize: 13 }}>
+        {label}:
+      </Text>
+    </Flex>
+    <Text strong style={{ fontSize: 13 }}>
+      {path}
+    </Text>
   </OsPathRowContainer>
 );
 

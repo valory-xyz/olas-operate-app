@@ -49,7 +49,9 @@ describe('MigrateOperateFolder', () => {
   it('renders the migration step instructions', () => {
     render(<MigrateOperateFolder />);
     // Step 1
-    expect(screen.getByText('Quit Pearl app on this machine.')).toBeInTheDocument();
+    expect(
+      screen.getByText('Quit Pearl app on this machine.'),
+    ).toBeInTheDocument();
     // Step 4
     expect(
       screen.getByText('Start Pearl and sign in with your original password.'),

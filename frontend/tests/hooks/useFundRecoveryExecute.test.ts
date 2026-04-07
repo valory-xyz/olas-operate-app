@@ -4,9 +4,7 @@ import { act, createElement, PropsWithChildren } from 'react';
 
 import { useFundRecoveryExecute } from '../../hooks/useFundRecoveryExecute';
 import { FundRecoveryService } from '../../service/FundRecovery';
-import {
-  FundRecoveryExecuteResponse,
-} from '../../types/FundRecovery';
+import { FundRecoveryExecuteResponse } from '../../types/FundRecovery';
 
 /* eslint-disable @typescript-eslint/no-var-requires */
 jest.mock(
@@ -56,7 +54,11 @@ const createWrapper = () => {
     defaultOptions: { mutations: { retry: false } },
   });
   function Wrapper({ children }: PropsWithChildren) {
-    return createElement(QueryClientProvider, { client: queryClient }, children);
+    return createElement(
+      QueryClientProvider,
+      { client: queryClient },
+      children,
+    );
   }
   return Wrapper;
 };

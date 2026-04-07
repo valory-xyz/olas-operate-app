@@ -25,7 +25,8 @@ const mockScan = FundRecoveryService.scan as jest.Mock;
 
 const SAMPLE_MNEMONIC =
   'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about';
-const SAMPLE_ADDRESS = '0x1234567890AbcdEF1234567890aBcdef12345678' as `0x${string}`;
+const SAMPLE_ADDRESS =
+  '0x1234567890AbcdEF1234567890aBcdef12345678' as `0x${string}`;
 
 const SAMPLE_SCAN_RESPONSE: FundRecoveryScanResponse = {
   master_eoa_address: SAMPLE_ADDRESS,
@@ -46,7 +47,11 @@ const createWrapper = () => {
     defaultOptions: { mutations: { retry: false } },
   });
   function Wrapper({ children }: PropsWithChildren) {
-    return createElement(QueryClientProvider, { client: queryClient }, children);
+    return createElement(
+      QueryClientProvider,
+      { client: queryClient },
+      children,
+    );
   }
   return Wrapper;
 };

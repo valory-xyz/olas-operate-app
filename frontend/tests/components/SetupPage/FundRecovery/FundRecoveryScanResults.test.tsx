@@ -39,8 +39,10 @@ jest.mock('../../../../constants/providers', () => ({}));
 jest.mock('../../../../config/providers', () => ({}));
 
 const GNOSIS_CHAIN_ID = 100;
-const MASTER_EOA = '0x1234567890AbcdEF1234567890aBcdef12345678' as `0x${string}`;
-const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000' as `0x${string}`;
+const MASTER_EOA =
+  '0x1234567890AbcdEF1234567890aBcdef12345678' as `0x${string}`;
+const ADDRESS_ZERO =
+  '0x0000000000000000000000000000000000000000' as `0x${string}`;
 const VALID_DESTINATION = '0xABcdEFABcdEFabcdEfAbCdefabcdeFABcDEFabCD';
 
 const scanResultWithBalance: FundRecoveryScanResponse = {
@@ -113,14 +115,9 @@ describe('FundRecoveryScanResults', () => {
   describe('Withdraw button disabled state', () => {
     it('is disabled when destination address is empty', () => {
       render(
-        <FundRecoveryScanResults
-          {...defaultProps}
-          destinationAddress=""
-        />,
+        <FundRecoveryScanResults {...defaultProps} destinationAddress="" />,
       );
-      expect(
-        screen.getByRole('button', { name: 'Withdraw' }),
-      ).toBeDisabled();
+      expect(screen.getByRole('button', { name: 'Withdraw' })).toBeDisabled();
     });
 
     it('is disabled when destination address is invalid', () => {
@@ -130,9 +127,7 @@ describe('FundRecoveryScanResults', () => {
           destinationAddress="not-an-address"
         />,
       );
-      expect(
-        screen.getByRole('button', { name: 'Withdraw' }),
-      ).toBeDisabled();
+      expect(screen.getByRole('button', { name: 'Withdraw' })).toBeDisabled();
     });
 
     it('is disabled when there are no balances', () => {
@@ -143,9 +138,7 @@ describe('FundRecoveryScanResults', () => {
           destinationAddress={VALID_DESTINATION}
         />,
       );
-      expect(
-        screen.getByRole('button', { name: 'Withdraw' }),
-      ).toBeDisabled();
+      expect(screen.getByRole('button', { name: 'Withdraw' })).toBeDisabled();
     });
 
     it('is disabled when gas is insufficient', () => {
@@ -156,9 +149,7 @@ describe('FundRecoveryScanResults', () => {
           destinationAddress={VALID_DESTINATION}
         />,
       );
-      expect(
-        screen.getByRole('button', { name: 'Withdraw' }),
-      ).toBeDisabled();
+      expect(screen.getByRole('button', { name: 'Withdraw' })).toBeDisabled();
     });
 
     it('is disabled when isExecuting is true', () => {
@@ -169,9 +160,7 @@ describe('FundRecoveryScanResults', () => {
           isExecuting={true}
         />,
       );
-      expect(
-        screen.getByRole('button', { name: /Withdraw/i }),
-      ).toBeDisabled();
+      expect(screen.getByRole('button', { name: /Withdraw/i })).toBeDisabled();
     });
 
     it('is enabled when address is valid, balances exist, and gas is sufficient', () => {
@@ -210,18 +199,14 @@ describe('FundRecoveryScanResults', () => {
           destinationAddress="0xinvalid"
         />,
       );
-      expect(
-        screen.getByText(/valid EVM address/i),
-      ).toBeInTheDocument();
+      expect(screen.getByText(/valid EVM address/i)).toBeInTheDocument();
     });
 
     it('does not show error for empty address', () => {
       render(
         <FundRecoveryScanResults {...defaultProps} destinationAddress="" />,
       );
-      expect(
-        screen.queryByText(/valid EVM address/i),
-      ).not.toBeInTheDocument();
+      expect(screen.queryByText(/valid EVM address/i)).not.toBeInTheDocument();
     });
   });
 
@@ -239,7 +224,9 @@ describe('FundRecoveryScanResults', () => {
         target: { value: VALID_DESTINATION },
       });
 
-      expect(onDestinationAddressChange).toHaveBeenCalledWith(VALID_DESTINATION);
+      expect(onDestinationAddressChange).toHaveBeenCalledWith(
+        VALID_DESTINATION,
+      );
     });
 
     it('calls onRecover when Withdraw is clicked with valid address', () => {

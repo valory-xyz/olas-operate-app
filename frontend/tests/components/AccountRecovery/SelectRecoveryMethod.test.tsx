@@ -1,7 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 
-import { SETUP_SCREEN } from '../../../constants';
+import { AccountRecovery } from '../../../components/AccountRecovery';
 import { RECOVERY_STEPS } from '../../../components/AccountRecovery/constants';
+import { SETUP_SCREEN } from '../../../constants';
 
 const mockGoto = jest.fn();
 const mockSetCurrentStep = jest.fn();
@@ -24,19 +25,39 @@ jest.mock(
   }),
 );
 
-jest.mock('../../../components/AccountRecovery/components/RecoveryViaBackupWallet', () => ({
-  ForgotPasswordCard: ({ isRecoveryAvailable }: { isRecoveryAvailable: boolean }) => (
-    <div data-testid="forgot-password-card" data-recovery={String(isRecoveryAvailable)}>
-      Forgot Password
-    </div>
-  ),
-}));
+jest.mock(
+  '../../../components/AccountRecovery/components/RecoveryViaBackupWallet',
+  () => ({
+    ForgotPasswordCard: ({
+      isRecoveryAvailable,
+    }: {
+      isRecoveryAvailable: boolean;
+    }) => (
+      <div
+        data-testid="forgot-password-card"
+        data-recovery={String(isRecoveryAvailable)}
+      >
+        Forgot Password
+      </div>
+    ),
+  }),
+);
 
-jest.mock('../../../components/AccountRecovery/components/RecoverExistingAccountCard', () => ({
-  RecoverExistingAccountCard: () => (
-    <div data-testid="recover-existing-card">Recover Existing Account</div>
-  ),
-}));
+jest.mock(
+  '../../../components/AccountRecovery/components/RecoverExistingAccountCard',
+  () => ({
+    RecoverExistingAccountCard: () => (
+      <div data-testid="recover-existing-card">Recover Existing Account</div>
+    ),
+  }),
+);
+
+jest.mock(
+  '../../../components/AccountRecovery/components/RecoveryNotAvailable',
+  () => ({
+    RecoveryNotAvailable: () => <div data-testid="recovery-not-available" />,
+  }),
+);
 
 jest.mock('../../../components/ui', () => ({
   BackButton: ({ onPrev }: { onPrev: () => void }) => (
@@ -44,9 +65,20 @@ jest.mock('../../../components/ui', () => ({
       Back
     </button>
   ),
+  CardFlex: ({
+    children,
+    ...props
+  }: {
+    children: React.ReactNode;
+    [key: string]: unknown;
+  }) => <div {...props}>{children}</div>,
+  CardTitle: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  IconContainer: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
 }));
-
-import { AccountRecovery } from '../../../components/AccountRecovery';
 
 describe('SelectRecoveryMethod', () => {
   beforeEach(() => {

@@ -108,10 +108,14 @@ export const FundRecoverySeedPhrase = ({
           type="error"
           showIcon
           message={
-            <span className="text-sm">
-              Invalid Secret Recovery Phrase. Please review your input and try
-              again.
-            </span>
+            <Flex vertical gap={2}>
+              <Text className="text-sm font-weight-600">
+                Invalid Secret Recovery Phrase
+              </Text>
+              <Text className="text-sm">
+                Please review your input and try again.
+              </Text>
+            </Flex>
           }
         />
       )}
