@@ -1,4 +1,5 @@
 import { Button, Flex, Tag, Typography } from 'antd';
+import React from 'react';
 
 import { SETUP_SCREEN } from '@/constants';
 import { useSetup } from '@/hooks';
@@ -95,30 +96,49 @@ const WithdrawFundsSection = () => {
   );
 };
 
+const cardStyle: React.CSSProperties = {
+  maxWidth: 516,
+  width: '100%',
+  margin: 'auto',
+  borderRadius: 16,
+  background: '#ffffff',
+  boxShadow:
+    '0 74px 21px 0 rgba(170, 193, 203, 0), 0 47px 19px 0 rgba(170, 193, 203, 0.01), 0 26px 16px 0 rgba(170, 193, 203, 0.05), 0 12px 12px 0 rgba(170, 193, 203, 0.09), 0 3px 6px 0 rgba(170, 193, 203, 0.1)',
+};
+
 export const MigrateOperateFolder = () => {
   const { goto } = useSetup();
 
   return (
-    <Flex vertical>
-      <Flex align="center" style={{ marginBottom: 16 }}>
-        <BackButton onPrev={() => goto(SETUP_SCREEN.AccountRecovery)} />
-      </Flex>
+    <Flex vertical gap={24} style={{ width: '100%' }}>
+      <div style={cardStyle}>
+        <Flex vertical style={{ padding: '24px 24px 32px' }}>
+          <Flex align="center" style={{ marginBottom: 16 }}>
+            <BackButton onPrev={() => goto(SETUP_SCREEN.AccountRecovery)} />
+          </Flex>
 
-      <Flex vertical gap={24}>
-        <Flex vertical gap={8}>
-          <Title level={3} className="m-0">
-            Recover an Existing Pearl Account
-          </Title>
-          <Text type="secondary">
-            Your Pearl account lives in a folder called{' '}
-            <Text strong>.operate</Text>. If you have access to it from a
-            previous machine or backup, follow the steps below.
-          </Text>
+          <Flex vertical gap={24}>
+            <Flex vertical gap={8}>
+              <Title level={3} className="m-0">
+                Recover an Existing Pearl Account
+              </Title>
+              <Text type="secondary">
+                Your Pearl account lives in a folder called{' '}
+                <Text strong>.operate</Text>. If you have access to it from a
+                previous machine or backup, follow the steps below.
+              </Text>
+            </Flex>
+
+            <MigrationSteps />
+          </Flex>
         </Flex>
+      </div>
 
-        <MigrationSteps />
-        <WithdrawFundsSection />
-      </Flex>
+      <div style={cardStyle}>
+        <Flex vertical style={{ padding: '24px 24px 32px' }}>
+          <WithdrawFundsSection />
+        </Flex>
+      </div>
     </Flex>
   );
 };

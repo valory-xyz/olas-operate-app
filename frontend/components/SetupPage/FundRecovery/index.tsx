@@ -1,5 +1,7 @@
-import { Alert, Flex } from 'antd';
+import { Flex } from 'antd';
 import { useCallback, useState } from 'react';
+
+import { Alert } from '@/components/ui';
 
 import { SETUP_SCREEN } from '@/constants';
 import { useFundRecoveryExecute, useFundRecoveryScan, useSetup } from '@/hooks';
@@ -104,7 +106,7 @@ export const FundRecovery = () => {
   );
 
   return (
-    <Flex vertical>
+    <Flex vertical style={{ padding: '24px 24px 32px' }}>
       <Flex align="center" style={{ marginBottom: 16 }}>
         <BackButton onPrev={handleBack} />
       </Flex>

@@ -1,8 +1,10 @@
 import { WarningOutlined } from '@ant-design/icons';
-import { Alert, Button, Flex, Input, Tag, Typography } from 'antd';
+import { Button, Flex, Input, Tag, Typography } from 'antd';
 import Image from 'next/image';
 import { ChangeEvent, useCallback, useMemo } from 'react';
 import styled from 'styled-components';
+
+import { Alert } from '@/components/ui';
 
 import { CHAIN_CONFIG } from '@/config/chains';
 import { TOKEN_CONFIG } from '@/config/tokens';
@@ -23,6 +25,9 @@ const isValidEvmAddress = (address: string): boolean =>
 
 const ChainRow = styled(Flex)`
   padding: 12px 0;
+  & + & {
+    border-top: 1px solid #f0f0f0;
+  }
 `;
 
 const TOKEN_DOT_COLORS = ['#e74c3c', '#3498db', '#9b59b6', '#2ecc71', '#f39c12'];
@@ -269,18 +274,19 @@ export const FundRecoveryScanResults = ({
             Ensure this is an EVM-compatible address you can access on all
             relevant chains. ENS names aren&apos;t supported.
           </Text>
-          <Button
-            type="primary"
-            size="large"
-            block
-            disabled={!canWithdraw}
-            loading={isExecuting}
-            onClick={onRecover}
-          >
-            Withdraw
-          </Button>
         </Flex>
       </div>
+
+      <Button
+        type="primary"
+        size="large"
+        block
+        disabled={!canWithdraw}
+        loading={isExecuting}
+        onClick={onRecover}
+      >
+        Withdraw
+      </Button>
     </Flex>
   );
 };

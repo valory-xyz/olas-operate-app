@@ -1,6 +1,8 @@
-import { Alert, Button, Flex, Input, InputRef, Typography } from 'antd';
+import { Button, Flex, Input, InputRef, Typography } from 'antd';
 import { ChangeEvent, ClipboardEvent, useCallback, useRef } from 'react';
 import styled from 'styled-components';
+
+import { Alert } from '@/components/ui';
 
 const { Title, Text } = Typography;
 

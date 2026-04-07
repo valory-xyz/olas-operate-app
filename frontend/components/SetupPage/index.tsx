@@ -59,6 +59,8 @@ const SCREEN_WITHOUT_CARDS: SetupScreen[] = [
   SETUP_SCREEN.SetupOnRamp,
   SETUP_SCREEN.SelectStaking,
   SETUP_SCREEN.AccountRecovery,
+  SETUP_SCREEN.MigrateOperateFolder,
+  SETUP_SCREEN.FundRecovery,
 ];
 
 export const Setup = () => {

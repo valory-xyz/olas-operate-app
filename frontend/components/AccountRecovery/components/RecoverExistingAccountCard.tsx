@@ -22,7 +22,10 @@ export const RecoverExistingAccountCard = () => {
         <CardTitle className="mb-8 text-lg">
           Recover an Existing Pearl Account
         </CardTitle>
-        <Paragraph className="text-neutral-secondary text-center mb-32">
+        <Paragraph
+          className="text-neutral-secondary text-center mb-32"
+          style={{ minHeight: 72 }}
+        >
           Your account data is stored locally. If you have it from another
           machine, you may recover your Pearl account.
         </Paragraph>

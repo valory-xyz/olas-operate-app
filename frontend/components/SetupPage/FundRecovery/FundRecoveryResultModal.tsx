@@ -3,14 +3,15 @@ import {
   LoadingOutlined,
   WarningFilled,
 } from '@ant-design/icons';
-import { Button, Flex, Modal, Typography } from 'antd';
+import { Button, Flex, Typography } from 'antd';
 
+import { Modal } from '@/components/ui';
 import { COLOR, SETUP_SCREEN } from '@/constants';
 import { useSupportModal } from '@/context/SupportModalProvider';
 import { useSetup } from '@/hooks';
 import { FundRecoveryExecuteResponse } from '@/types/FundRecovery';
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 
 type FundRecoveryResultModalProps = {
   result: FundRecoveryExecuteResponse | null;
@@ -18,6 +19,7 @@ type FundRecoveryResultModalProps = {
   open: boolean;
   isExecuting: boolean;
   onTryAgain: () => void;
+  onClose?: () => void;
 };
 
 export const FundRecoveryResultModal = ({
@@ -26,6 +28,7 @@ export const FundRecoveryResultModal = ({
   open,
   isExecuting,
   onTryAgain,
+  onClose,
 }: FundRecoveryResultModalProps) => {
   const { goto } = useSetup();
   const { toggleSupportModal } = useSupportModal();
@@ -36,34 +39,33 @@ export const FundRecoveryResultModal = ({
 
   if (isExecuting) {
     return (
-      <Modal open={open} footer={null} closable={false} centered width={400}>
-        <Flex vertical align="center" gap={16} style={{ padding: '24px 0' }}>
+      <Modal
+        open={open}
+        closable={false}
+        size="medium"
+        header={
           <LoadingOutlined style={{ fontSize: 48, color: COLOR.PRIMARY }} />
-          <Title level={4} className="m-0">
-            Withdrawal in Progress
-          </Title>
-          <Text type="secondary" style={{ textAlign: 'center' }}>
-            It usually takes a few minutes. Please keep the app open until the
-            process is complete.
-          </Text>
-        </Flex>
-      </Modal>
+        }
+        title="Withdrawal in Progress"
+        description="It usually takes a few minutes. Please keep the app open until the process is complete."
+      />
     );
   }
 
   if (isSuccess) {
     return (
-      <Modal open={open} footer={null} closable={false} centered width={400}>
-        <Flex vertical align="center" gap={16} style={{ padding: '24px 0' }}>
+      <Modal
+        open={open}
+        closable={false}
+        size="medium"
+        header={
           <CheckCircleFilled
             style={{ fontSize: 48, color: COLOR.SUCCESS }}
           />
-          <Title level={4} className="m-0">
-            Withdrawal Complete!
-          </Title>
-          <Text type="secondary" style={{ textAlign: 'center' }}>
-            Funds transferred to your external wallet.
-          </Text>
+        }
+        title="Withdrawal Complete!"
+        description="Funds transferred to your external wallet."
+        action={
           <Button
             type="primary"
             size="large"
@@ -72,8 +74,8 @@ export const FundRecoveryResultModal = ({
           >
             Done
           </Button>
-        </Flex>
-      </Modal>
+        }
+      />
     );
   }
 
@@ -81,28 +83,30 @@ export const FundRecoveryResultModal = ({
     return (
       <Modal
         open={open}
-        footer={null}
-        centered
-        width={400}
-        onCancel={onTryAgain}
-      >
-        <Flex vertical align="center" gap={16} style={{ padding: '24px 0' }}>
+        closable
+        onCancel={onClose ?? onTryAgain}
+        size="medium"
+        header={
           <WarningFilled style={{ fontSize: 48, color: '#ff4d4f' }} />
-          <Title level={4} className="m-0">
-            Withdrawal Failed
-          </Title>
-          <Text type="secondary" style={{ textAlign: 'center' }}>
-            Something went wrong with your withdrawal. Please try again or
-            contact Valory support.
-          </Text>
-          {isPartialFailure && (
-            <Text
-              type="secondary"
-              style={{ textAlign: 'center', fontSize: 13 }}
-            >
-              Some funds may have been transferred successfully.
+        }
+        title="Withdrawal Failed"
+        description={
+          <Flex vertical align="center" gap={8}>
+            <Text type="secondary" style={{ textAlign: 'center' }}>
+              Something went wrong with your withdrawal. Please try again or
+              contact Valory support.
             </Text>
-          )}
+            {isPartialFailure && (
+              <Text
+                type="secondary"
+                style={{ textAlign: 'center', fontSize: 13 }}
+              >
+                Some funds may have been transferred successfully.
+              </Text>
+            )}
+          </Flex>
+        }
+        action={
           <Flex vertical gap={8} style={{ width: '100%' }}>
             <Button type="primary" size="large" block onClick={onTryAgain}>
               Try Again
@@ -111,8 +115,8 @@ export const FundRecoveryResultModal = ({
               Contact Support
             </Button>
           </Flex>
-        </Flex>
-      </Modal>
+        }
+      />
     );
   }
 

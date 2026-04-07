@@ -237,13 +237,14 @@ const SetupWelcomeLogin = () => {
           >
             Continue
           </Button>
-          <Flex justify="center" gap={4}>
+          <Flex justify="center" align="center" gap={4}>
             <Text type="secondary" className="text-sm">
               Can&apos;t sign in?
             </Text>
             <Button
               type="link"
               size="small"
+              style={{ padding: 0 }}
               onClick={() => goto(SETUP_SCREEN.AccountRecovery)}
             >
               View recovery options

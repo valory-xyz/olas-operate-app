@@ -25,7 +25,10 @@ export const ForgotPasswordCard = ({
       </IconContainer>
       <div className="recovery-method-card-body">
         <CardTitle className="mb-8 text-lg">Forgot Password</CardTitle>
-        <Paragraph className="text-neutral-secondary text-center mb-32">
+        <Paragraph
+          className="text-neutral-secondary text-center mb-32"
+          style={{ minHeight: 72 }}
+        >
           Reset your password using the backup wallet you set up during Pearl
           sign up.
         </Paragraph>

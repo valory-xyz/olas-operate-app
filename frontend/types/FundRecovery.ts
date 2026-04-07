@@ -37,7 +37,7 @@ export type FundRecoveryExecuteSuccess = {
   success: true;
   partial_failure: false;
   total_funds_moved: ChainAmounts;
-  errors: [];
+  errors: string[];
 };
 
 export type FundRecoveryExecutePartial = {
