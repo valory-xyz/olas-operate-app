@@ -49,8 +49,11 @@ const aggregateChainBalances = (
 
   for (const [chainIdStr, addressMap] of Object.entries(balances)) {
     const chainId = Number(chainIdStr);
-    const chainName =
+    const chainBaseName =
       EvmChainName[chainId as keyof typeof EvmChainName] ?? `Chain ${chainId}`;
+    const chainName = chainBaseName.endsWith(' Chain')
+      ? chainBaseName
+      : `${chainBaseName} Chain`;
     const chainImage =
       CHAIN_IMAGE_MAP[chainId as keyof typeof CHAIN_IMAGE_MAP] ?? '';
 
@@ -169,46 +172,30 @@ const ChainBalanceRow = ({ chain }: ChainBalanceRowProps) => (
       <Alert
         type="warning"
         showIcon
-        message={`Insufficient gas on ${chain.chainName}. Top up native token before withdrawing.`}
-        style={{ fontSize: 12 }}
+        message={
+          <span className="text-sm">
+            Insufficient gas on {chain.chainName}. Top up native token before
+            withdrawing.
+          </span>
+        }
       />
     )}
   </ChainRow>
 );
 
-type FundRecoveryScanResultsProps = {
+type FundRecoveryChainBalancesProps = {
   scanResult: FundRecoveryScanResponse;
-  destinationAddress: string;
-  isExecuting: boolean;
-  onDestinationAddressChange: (address: string) => void;
-  onRecover: () => void;
 };
 
-export const FundRecoveryScanResults = ({
+export const FundRecoveryChainBalances = ({
   scanResult,
-  destinationAddress,
-  isExecuting,
-  onDestinationAddressChange,
-  onRecover,
-}: FundRecoveryScanResultsProps) => {
+}: FundRecoveryChainBalancesProps) => {
   const chainBalances = useMemo(
     () => aggregateChainBalances(scanResult.balances, scanResult.gas_warning),
     [scanResult.balances, scanResult.gas_warning],
   );
 
-  const hasInsufficientGas = chainBalances.some((c) => c.hasInsufficientGas);
   const hasBalances = chainBalances.length > 0;
-
-  const isAddressValid = isValidEvmAddress(destinationAddress);
-  const canWithdraw =
-    hasBalances && isAddressValid && !hasInsufficientGas && !isExecuting;
-
-  const handleAddressChange = useCallback(
-    (e: ChangeEvent<HTMLInputElement>) => {
-      onDestinationAddressChange(e.target.value);
-    },
-    [onDestinationAddressChange],
-  );
 
   return (
     <Flex vertical gap={24}>
@@ -231,8 +218,12 @@ export const FundRecoveryScanResults = ({
         <Alert
           type="info"
           showIcon
-          message="No recoverable balances found"
-          description="There are no non-zero balances associated with this recovery phrase."
+          message={
+            <span className="text-sm">
+              No recoverable balances found. There are no non-zero balances
+              associated with this recovery phrase.
+            </span>
+          }
         />
       )}
 
@@ -244,37 +235,67 @@ export const FundRecoveryScanResults = ({
           withdrawal.
         </Text>
       </Flex>
+    </Flex>
+  );
+};
 
-      <div
-        style={{
-          border: `1px solid ${COLOR.BORDER_LIGHT}`,
-          borderRadius: 8,
-          padding: 16,
-          marginTop: 8,
-        }}
-      >
-        <Flex vertical gap={8}>
-          <Text strong>
-            Withdrawal address <Text type="danger">*</Text>
+type FundRecoveryWithdrawFormProps = {
+  scanResult: FundRecoveryScanResponse;
+  destinationAddress: string;
+  isExecuting: boolean;
+  onDestinationAddressChange: (address: string) => void;
+  onRecover: () => void;
+};
+
+export const FundRecoveryWithdrawForm = ({
+  scanResult,
+  destinationAddress,
+  isExecuting,
+  onDestinationAddressChange,
+  onRecover,
+}: FundRecoveryWithdrawFormProps) => {
+  const chainBalances = useMemo(
+    () => aggregateChainBalances(scanResult.balances, scanResult.gas_warning),
+    [scanResult.balances, scanResult.gas_warning],
+  );
+
+  const hasInsufficientGas = chainBalances.some((c) => c.hasInsufficientGas);
+  const hasBalances = chainBalances.length > 0;
+
+  const isAddressValid = isValidEvmAddress(destinationAddress);
+  const canWithdraw =
+    hasBalances && isAddressValid && !hasInsufficientGas && !isExecuting;
+
+  const handleAddressChange = useCallback(
+    (e: ChangeEvent<HTMLInputElement>) => {
+      onDestinationAddressChange(e.target.value);
+    },
+    [onDestinationAddressChange],
+  );
+
+  return (
+    <Flex vertical gap={16}>
+      <Flex vertical gap={8}>
+        <Text strong>
+          Withdrawal address <Text type="danger">*</Text>
+        </Text>
+        <Input
+          value={destinationAddress}
+          onChange={handleAddressChange}
+          placeholder="0x..."
+          status={destinationAddress && !isAddressValid ? 'error' : undefined}
+        />
+        {destinationAddress && !isAddressValid && (
+          <Text type="danger" style={{ fontSize: 12 }}>
+            Please enter a valid EVM address (0x followed by 40 hex
+            characters)
           </Text>
-          <Input
-            value={destinationAddress}
-            onChange={handleAddressChange}
-            placeholder="0x..."
-            status={destinationAddress && !isAddressValid ? 'error' : undefined}
-          />
-          {destinationAddress && !isAddressValid && (
-            <Text type="danger" style={{ fontSize: 12 }}>
-              Please enter a valid EVM address (0x followed by 40 hex
-              characters)
-            </Text>
-          )}
-          <Text type="secondary" style={{ fontSize: 12 }}>
-            Ensure this is an EVM-compatible address you can access on all
-            relevant chains. ENS names aren&apos;t supported.
-          </Text>
-        </Flex>
-      </div>
+        )}
+        <Text type="secondary" style={{ fontSize: 12 }}>
+          Ensure this is an EVM-compatible address you can access on all
+          relevant chains. ENS names aren&apos;t supported.
+        </Text>
+      </Flex>
 
       <Button
         type="primary"
@@ -289,3 +310,25 @@ export const FundRecoveryScanResults = ({
     </Flex>
   );
 };
+
+/**
+ * @deprecated Use FundRecoveryChainBalances + FundRecoveryWithdrawForm separately
+ */
+export const FundRecoveryScanResults = ({
+  scanResult,
+  destinationAddress,
+  isExecuting,
+  onDestinationAddressChange,
+  onRecover,
+}: FundRecoveryWithdrawFormProps & FundRecoveryChainBalancesProps) => (
+  <Flex vertical gap={24}>
+    <FundRecoveryChainBalances scanResult={scanResult} />
+    <FundRecoveryWithdrawForm
+      scanResult={scanResult}
+      destinationAddress={destinationAddress}
+      isExecuting={isExecuting}
+      onDestinationAddressChange={onDestinationAddressChange}
+      onRecover={onRecover}
+    />
+  </Flex>
+);

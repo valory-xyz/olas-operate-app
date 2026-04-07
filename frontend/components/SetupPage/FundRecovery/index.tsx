@@ -10,7 +10,10 @@ import { FundRecoveryScanResponse } from '@/types/FundRecovery';
 import { BackButton } from '../../ui/BackButton';
 import { SetupCard } from '../../ui/SetupCard';
 import { FundRecoveryResultModal } from './FundRecoveryResultModal';
-import { FundRecoveryScanResults } from './FundRecoveryScanResults';
+import {
+  FundRecoveryChainBalances,
+  FundRecoveryWithdrawForm,
+} from './FundRecoveryScanResults';
 import { FundRecoverySeedPhrase } from './FundRecoverySeedPhrase';
 
 type WizardStep = 'seedPhrase' | 'chainBalances';
@@ -96,6 +99,7 @@ export const FundRecovery = () => {
     if (step === 'chainBalances') {
       setStep('seedPhrase');
       setScanResult(null);
+      setDestinationAddress('');
       resetScan();
     } else {
       goto(SETUP_SCREEN.MigrateOperateFolder);
@@ -111,6 +115,53 @@ export const FundRecovery = () => {
     [scanError],
   );
 
+  if (step === 'chainBalances') {
+    return (
+      <Flex vertical gap={24} style={{ width: '100%' }}>
+        <SetupCard>
+          <Flex vertical style={{ padding: '24px 24px 32px' }}>
+            <Flex align="center" style={{ marginBottom: 16 }}>
+              <BackButton onPrev={handleBack} />
+            </Flex>
+
+            {scanResult ? (
+              <FundRecoveryChainBalances scanResult={scanResult} />
+            ) : (
+              <Alert
+                type="warning"
+                showIcon
+                message="No scan data available. Please go back and scan again."
+              />
+            )}
+          </Flex>
+        </SetupCard>
+
+        {scanResult && (
+          <SetupCard>
+            <Flex vertical style={{ padding: '24px 24px 32px' }}>
+              <FundRecoveryWithdrawForm
+                scanResult={scanResult}
+                destinationAddress={destinationAddress}
+                isExecuting={isExecuting}
+                onDestinationAddressChange={setDestinationAddress}
+                onRecover={handleRecover}
+              />
+            </Flex>
+          </SetupCard>
+        )}
+
+        <FundRecoveryResultModal
+          result={executeResult ?? null}
+          error={executeError}
+          open={isResultModalOpen}
+          isExecuting={isExecuting}
+          onTryAgain={handleTryAgain}
+          onClose={handleCloseResultModal}
+        />
+      </Flex>
+    );
+  }
+
   return (
     <SetupCard>
       <Flex vertical style={{ padding: '24px 24px 32px' }}>
@@ -118,33 +169,13 @@ export const FundRecovery = () => {
           <BackButton onPrev={handleBack} />
         </Flex>
 
-        {step === 'seedPhrase' && (
-          <FundRecoverySeedPhrase
-            words={words}
-            isScanning={isScanning}
-            scanError={scanError}
-            onWordsChange={handleWordsChange}
-            onScan={handleScan}
-          />
-        )}
-
-        {step === 'chainBalances' && scanResult && (
-          <FundRecoveryScanResults
-            scanResult={scanResult}
-            destinationAddress={destinationAddress}
-            isExecuting={isExecuting}
-            onDestinationAddressChange={setDestinationAddress}
-            onRecover={handleRecover}
-          />
-        )}
-
-        {step === 'chainBalances' && !scanResult && (
-          <Alert
-            type="warning"
-            showIcon
-            message="No scan data available. Please go back and scan again."
-          />
-        )}
+        <FundRecoverySeedPhrase
+          words={words}
+          isScanning={isScanning}
+          scanError={scanError}
+          onWordsChange={handleWordsChange}
+          onScan={handleScan}
+        />
 
         <FundRecoveryResultModal
           result={executeResult ?? null}

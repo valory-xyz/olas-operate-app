@@ -35,7 +35,9 @@ export const FundRecoveryResultModal = ({
 
   const isSuccess = result?.success === true && result.partial_failure === false;
   const isPartialFailure = result?.partial_failure === true;
-  const isError = (!!error && !result) || isPartialFailure;
+  const isResultError =
+    result !== null && result !== undefined && !isSuccess && !isPartialFailure;
+  const isError = !!error || isPartialFailure || isResultError;
 
   if (isExecuting) {
     return (

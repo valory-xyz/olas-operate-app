@@ -32,7 +32,7 @@ export const FundRecoverySeedPhrase = ({
   const inputRefs = useRef<(InputRef | null)[]>([]);
 
   const allWordsFilled = words.every((w) => w.trim().length > 0);
-  const canScan = allWordsFilled;
+  const canScan = allWordsFilled && !isScanning;
 
   const handleWordChange = useCallback(
     (index: number, value: string) => {
@@ -107,8 +107,12 @@ export const FundRecoverySeedPhrase = ({
         <Alert
           type="error"
           showIcon
-          message="Invalid Secret Recovery Phrase"
-          description="Please review your input and try again."
+          message={
+            <span className="text-sm">
+              Invalid Secret Recovery Phrase. Please review your input and try
+              again.
+            </span>
+          }
         />
       )}
 
