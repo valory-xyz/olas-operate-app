@@ -42,7 +42,7 @@ type ChainBalance = {
 
 const aggregateChainBalances = (
   balances: ChainAmounts,
-  gasWarnings: Array<{ chain_id: number; message: string }>,
+  gasWarning: Record<string, { insufficient: boolean }>,
 ): ChainBalance[] => {
   const result: ChainBalance[] = [];
 
@@ -121,7 +121,7 @@ const aggregateChainBalances = (
       chainName,
       chainImage,
       tokens,
-      hasInsufficientGas: gasWarnings.some((w) => w.chain_id === chainId),
+      hasInsufficientGas: gasWarning[chainIdStr]?.insufficient === true,
     });
   }
 
@@ -193,8 +193,8 @@ export const FundRecoveryChainBalances = ({
   scanResult,
 }: FundRecoveryChainBalancesProps) => {
   const chainBalances = useMemo(
-    () => aggregateChainBalances(scanResult.balances, scanResult.gas_warnings),
-    [scanResult.balances, scanResult.gas_warnings],
+    () => aggregateChainBalances(scanResult.balances, scanResult.gas_warning),
+    [scanResult.balances, scanResult.gas_warning],
   );
 
   const hasBalances = chainBalances.length > 0;
@@ -257,8 +257,8 @@ export const FundRecoveryWithdrawForm = ({
   onRecover,
 }: FundRecoveryWithdrawFormProps) => {
   const chainBalances = useMemo(
-    () => aggregateChainBalances(scanResult.balances, scanResult.gas_warnings),
-    [scanResult.balances, scanResult.gas_warnings],
+    () => aggregateChainBalances(scanResult.balances, scanResult.gas_warning),
+    [scanResult.balances, scanResult.gas_warning],
   );
 
   const hasBalances = chainBalances.length > 0;

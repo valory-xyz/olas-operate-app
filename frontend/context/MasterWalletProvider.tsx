@@ -23,6 +23,7 @@ import { MiddlewareWalletResponse } from '@/types';
 import { asEvmChainId } from '@/utils/middlewareHelpers';
 
 import { OnlineStatusContext } from './OnlineStatusProvider';
+import { usePageState } from '@/hooks/usePageState';
 
 type MasterWalletContext = {
   masterEoa?: MasterEoa;
@@ -66,6 +67,7 @@ const transformMiddlewareWalletResponse = (
 
 export const MasterWalletProvider = ({ children }: PropsWithChildren) => {
   const { isOnline } = useContext(OnlineStatusContext);
+  const { isUserLoggedIn } = usePageState();
 
   const {
     data: masterWallets,
@@ -74,7 +76,8 @@ export const MasterWalletProvider = ({ children }: PropsWithChildren) => {
   } = useQuery({
     queryKey: REACT_QUERY_KEYS.WALLETS_KEY,
     queryFn: ({ signal }) => WalletService.getWallets(signal),
-    refetchInterval: isOnline ? FIVE_SECONDS_INTERVAL : false,
+    enabled: isOnline && isUserLoggedIn,
+    refetchInterval: isOnline && isUserLoggedIn ? FIVE_SECONDS_INTERVAL : false,
     select: (data) =>
       transformMiddlewareWalletResponse(data).filter(
         (wallet) =>

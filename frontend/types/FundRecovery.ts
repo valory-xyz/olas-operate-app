@@ -11,7 +11,6 @@ export type ChainAmounts = Record<
 
 export type FundRecoveryScanRequest = {
   mnemonic: string;
-  destination?: string;
 };
 
 export type FundRecoveryServiceInfo = {
@@ -22,20 +21,31 @@ export type FundRecoveryServiceInfo = {
 };
 
 export type FundRecoveryScanResponse = {
+  master_eoa_address: string;
   balances: ChainAmounts;
   services: FundRecoveryServiceInfo[];
-  gas_warnings: Array<{ chain_id: number; message: string }>;
+  gas_warning: Record<string, { insufficient: boolean }>;
 };
 
 export type FundRecoveryExecuteRequest = {
   mnemonic: string;
-  destination: string;
+  destination_address: string;
 };
 
-export type FundRecoveryExecuteResponse = {
-  success?: boolean;
-  partial_failure: boolean;
+export type FundRecoveryExecuteSuccess = {
+  success: true;
+  partial_failure: false;
   total_funds_moved: ChainAmounts;
-  services_recovered: FundRecoveryServiceInfo[];
-  errors?: string[];
+  errors: string[];
 };
+
+export type FundRecoveryExecutePartial = {
+  success: false;
+  partial_failure: true;
+  total_funds_moved: ChainAmounts;
+  errors: string[];
+};
+
+export type FundRecoveryExecuteResponse =
+  | FundRecoveryExecuteSuccess
+  | FundRecoveryExecutePartial;

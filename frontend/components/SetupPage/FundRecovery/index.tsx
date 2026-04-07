@@ -69,7 +69,7 @@ export const FundRecovery = () => {
     setIsResultModalOpen(true);
     runExecute({
       mnemonic: getMnemonic(),
-      destination: destinationAddress,
+      destination_address: destinationAddress,
     });
   }, [runExecute, getMnemonic, destinationAddress]);
 
