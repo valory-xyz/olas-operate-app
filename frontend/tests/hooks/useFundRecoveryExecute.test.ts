@@ -181,7 +181,9 @@ describe('useFundRecoveryExecute', () => {
       result.current.reset();
     });
 
-    expect(result.current.data).toBeUndefined();
-    expect(result.current.error).toBeNull();
+    await waitFor(() => {
+      expect(result.current.data).toBeUndefined();
+      expect(result.current.error).toBeNull();
+    });
   });
 });
