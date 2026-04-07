@@ -64,7 +64,7 @@ export const UpdateAvailableModal = () => {
             type="primary"
             onClick={onDownload}
           >
-            Download on olas.network
+            Download on pearl.you
           </Button>
         </Flex>
       }
