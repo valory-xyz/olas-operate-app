@@ -15,7 +15,6 @@ const OsPathRowContainer = styled(Flex)`
   background-color: ${COLOR.BORDER_LIGHT};
   border-radius: 6px;
   padding: 4px 12px;
-  align-self: flex-start;
 `;
 
 type OsPathRowProps = {
