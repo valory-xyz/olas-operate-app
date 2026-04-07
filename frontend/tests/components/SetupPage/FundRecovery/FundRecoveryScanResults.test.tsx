@@ -46,7 +46,6 @@ const ADDRESS_ZERO =
 const VALID_DESTINATION = '0xABcdEFABcdEFabcdEfAbCdefabcdeFABcDEFabCD';
 
 const scanResultWithBalance: FundRecoveryScanResponse = {
-  master_eoa_address: MASTER_EOA,
   balances: {
     [String(GNOSIS_CHAIN_ID)]: {
       [MASTER_EOA]: {
@@ -55,11 +54,10 @@ const scanResultWithBalance: FundRecoveryScanResponse = {
     },
   },
   services: [],
-  gas_warning: {},
+  gas_warnings: [],
 };
 
 const scanResultWithGasWarning: FundRecoveryScanResponse = {
-  master_eoa_address: MASTER_EOA,
   balances: {
     [String(GNOSIS_CHAIN_ID)]: {
       [MASTER_EOA]: {
@@ -68,16 +66,13 @@ const scanResultWithGasWarning: FundRecoveryScanResponse = {
     },
   },
   services: [],
-  gas_warning: {
-    [String(GNOSIS_CHAIN_ID)]: { insufficient: true },
-  },
+  gas_warnings: [{ chain_id: GNOSIS_CHAIN_ID, message: 'Insufficient gas' }],
 };
 
 const scanResultEmpty: FundRecoveryScanResponse = {
-  master_eoa_address: MASTER_EOA,
   balances: {},
   services: [],
-  gas_warning: {},
+  gas_warnings: [],
 };
 
 const defaultProps = {

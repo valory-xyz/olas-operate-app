@@ -8,6 +8,16 @@ const { Title, Text } = Typography;
 
 const WORD_COUNT = 12;
 
+// Build interleaved indices for 2-column layout:
+// grid position 0 → word 1 (index 0), grid position 1 → word 7 (index 6),
+// grid position 2 → word 2 (index 1), grid position 3 → word 8 (index 7), etc.
+const HALF = WORD_COUNT / 2;
+const ORDERED_INDICES = Array.from({ length: WORD_COUNT }, (_, gridPos) => {
+  const row = Math.floor(gridPos / 2);
+  const col = gridPos % 2;
+  return col === 0 ? row : row + HALF;
+});
+
 const WordGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -80,16 +90,6 @@ export const FundRecoverySeedPhrase = ({
     [],
   );
 
-  // Build interleaved indices for 2-column layout:
-  // grid position 0 → word 1 (index 0), grid position 1 → word 7 (index 6),
-  // grid position 2 → word 2 (index 1), grid position 3 → word 8 (index 7), etc.
-  const half = WORD_COUNT / 2;
-  const orderedIndices = Array.from({ length: WORD_COUNT }, (_, gridPos) => {
-    const row = Math.floor(gridPos / 2);
-    const col = gridPos % 2;
-    return col === 0 ? row : row + half;
-  });
-
   return (
     <Flex vertical gap={24}>
       <Flex vertical gap={8}>
@@ -121,7 +121,7 @@ export const FundRecoverySeedPhrase = ({
       )}
 
       <WordGrid>
-        {orderedIndices.map((wordIndex, gridPosition) => (
+        {ORDERED_INDICES.map((wordIndex, gridPosition) => (
           <Input
             key={wordIndex}
             ref={(el) => {
