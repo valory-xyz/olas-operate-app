@@ -1,13 +1,34 @@
 import { Button, Flex, Tag, Typography } from 'antd';
+import { ReactNode } from 'react';
 import { FaApple, FaLinux, FaWindows } from 'react-icons/fa';
+import styled from 'styled-components';
 
-import { COLOR, SETUP_SCREEN } from '@/constants';
+import { SETUP_SCREEN } from '@/constants';
 import { useSetup } from '@/hooks';
 
 import { BackButton } from '../../ui/BackButton';
 import { SetupCard } from '../../ui/SetupCard';
 
 const { Title, Text } = Typography;
+
+const OsPathRowContainer = styled(Flex)`
+  background-color: #f5f5f5;
+  border-radius: 6px;
+  padding: 8px 12px;
+`;
+
+type OsPathRowProps = {
+  icon: ReactNode;
+  label: string;
+  path: string;
+};
+
+const OsPathRow = ({ icon, label, path }: OsPathRowProps) => (
+  <OsPathRowContainer align="center" gap={8}>
+    <Tag icon={icon}>{label}:</Tag>
+    <Text strong>{path}</Text>
+  </OsPathRowContainer>
+);
 
 const MigrationSteps = () => (
   <Flex vertical gap={16}>
@@ -28,22 +49,21 @@ const MigrationSteps = () => (
             Locate the .operate folder on your previous machine or backup.
           </Text>
           <Flex vertical gap={4} style={{ paddingLeft: 8 }}>
-            <Flex align="center" gap={8}>
-              <Tag color="blue" icon={<FaApple />}>
-                MacOS
-              </Tag>
-              <Text code>~/Users/&lt;username&gt;/.operate</Text>
-            </Flex>
-            <Flex align="center" gap={8}>
-              <Tag color="blue" icon={<FaWindows />}>
-                Windows
-              </Tag>
-              <Text code>C:\Users\&lt;username&gt;\.operate</Text>
-            </Flex>
-            <Flex align="center" gap={8}>
-              <Tag icon={<FaLinux />}>Linux</Tag>
-              <Text code>/home/&lt;username&gt;/.operate</Text>
-            </Flex>
+            <OsPathRow
+              icon={<FaApple />}
+              label="MacOS"
+              path="~/Users/<username>/.operate"
+            />
+            <OsPathRow
+              icon={<FaWindows />}
+              label="Windows"
+              path="C:\Users\<username>\.operate"
+            />
+            <OsPathRow
+              icon={<FaLinux />}
+              label="Linux"
+              path="/home/<username>/.operate"
+            />
           </Flex>
           <Text type="secondary" style={{ fontSize: 12 }}>
             .operate folder is hidden by default on MacOS and Linux. To unhide,
@@ -76,28 +96,20 @@ const WithdrawFundsSection = () => {
   const { goto } = useSetup();
 
   return (
-    <div
-      style={{
-        border: `1px solid ${COLOR.BORDER_LIGHT}`,
-        borderRadius: 8,
-        padding: 16,
-      }}
-    >
-      <Flex vertical gap={8}>
-        <Text strong>Lost your .operate folder?</Text>
-        <Text type="secondary">
-          You can still withdraw part of your funds using your secret recovery
-          phrase.
-        </Text>
-        <Button
-          type="default"
-          style={{ alignSelf: 'flex-start' }}
-          onClick={() => goto(SETUP_SCREEN.FundRecovery)}
-        >
-          Withdraw Funds
-        </Button>
-      </Flex>
-    </div>
+    <Flex vertical gap={8}>
+      <Text strong>Lost your .operate folder?</Text>
+      <Text type="secondary">
+        You can still withdraw part of your funds using your secret recovery
+        phrase.
+      </Text>
+      <Button
+        type="default"
+        style={{ alignSelf: 'flex-start' }}
+        onClick={() => goto(SETUP_SCREEN.FundRecovery)}
+      >
+        Withdraw Funds
+      </Button>
+    </Flex>
   );
 };
 
