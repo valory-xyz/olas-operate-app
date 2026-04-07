@@ -48,8 +48,3 @@ export const ForgotPasswordCard = ({
     </RecoveryMethodCard>
   );
 };
-
-/**
- * @deprecated Use ForgotPasswordCard instead
- */
-export const RecoveryViaBackupWallet = ForgotPasswordCard;

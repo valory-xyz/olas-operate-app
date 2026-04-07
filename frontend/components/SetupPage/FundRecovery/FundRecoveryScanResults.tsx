@@ -310,24 +310,3 @@ export const FundRecoveryWithdrawForm = ({
   );
 };
 
-/**
- * @deprecated Use FundRecoveryChainBalances + FundRecoveryWithdrawForm separately
- */
-export const FundRecoveryScanResults = ({
-  scanResult,
-  destinationAddress,
-  isExecuting,
-  onDestinationAddressChange,
-  onRecover,
-}: FundRecoveryWithdrawFormProps & FundRecoveryChainBalancesProps) => (
-  <Flex vertical gap={24}>
-    <FundRecoveryChainBalances scanResult={scanResult} />
-    <FundRecoveryWithdrawForm
-      scanResult={scanResult}
-      destinationAddress={destinationAddress}
-      isExecuting={isExecuting}
-      onDestinationAddressChange={onDestinationAddressChange}
-      onRecover={onRecover}
-    />
-  </Flex>
-);

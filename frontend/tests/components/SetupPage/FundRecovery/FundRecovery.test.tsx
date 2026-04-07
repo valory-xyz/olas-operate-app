@@ -75,13 +75,6 @@ jest.mock(
         </button>
       </div>
     ),
-    FundRecoveryScanResults: ({ onRecover }: { onRecover: () => void }) => (
-      <div data-testid="scan-results">
-        <button data-testid="recover-btn" onClick={onRecover}>
-          Recover
-        </button>
-      </div>
-    ),
   }),
 );
 
