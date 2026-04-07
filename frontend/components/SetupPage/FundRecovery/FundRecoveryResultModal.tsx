@@ -33,7 +33,8 @@ export const FundRecoveryResultModal = ({
   const { goto } = useSetup();
   const { toggleSupportModal } = useSupportModal();
 
-  const isSuccess = result?.success === true && result.partial_failure === false;
+  const isSuccess =
+    result?.success === true && result.partial_failure === false;
   const isPartialFailure = result?.partial_failure === true;
   const isError = !!error || isPartialFailure;
 

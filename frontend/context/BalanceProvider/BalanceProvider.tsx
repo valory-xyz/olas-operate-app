@@ -13,11 +13,10 @@ import {
 
 import { TokenSymbolMap } from '@/config/tokens';
 import { EvmChainId, FIFTEEN_SECONDS_INTERVAL } from '@/constants';
+import { usePageState } from '@/hooks/usePageState';
 import { Address } from '@/types/Address';
 import { CrossChainStakedBalances, WalletBalance } from '@/types/Balance';
 import { areAddressesEqual } from '@/utils';
-
-import { usePageState } from '@/hooks/usePageState';
 
 import { MasterWalletContext } from '../MasterWalletProvider';
 import { OnlineStatusContext } from '../OnlineStatusProvider';
@@ -85,7 +84,8 @@ export const BalanceProvider = ({ children }: PropsWithChildren) => {
 
       return getCrossChainBalances({ services, masterWallets, serviceWallets });
     },
-    enabled: isOnline && isUserLoggedIn && !!masterWallets?.length && !!services,
+    enabled:
+      isOnline && isUserLoggedIn && !!masterWallets?.length && !!services,
     refetchInterval,
   });
 
