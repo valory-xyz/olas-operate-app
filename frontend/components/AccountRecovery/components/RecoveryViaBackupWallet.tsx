@@ -1,5 +1,5 @@
 import { Button, Typography } from 'antd';
-import { TbWallet } from 'react-icons/tb';
+import { TbShieldLock } from 'react-icons/tb';
 
 import { COLOR } from '@/constants';
 
@@ -21,7 +21,7 @@ export const ForgotPasswordCard = ({
   return (
     <RecoveryMethodCard>
       <IconContainer>
-        <TbWallet size={20} fontSize={30} color={COLOR.PRIMARY} />
+        <TbShieldLock size={20} fontSize={30} color={COLOR.PRIMARY} />
       </IconContainer>
       <div className="recovery-method-card-body">
         <CardTitle className="mb-8 text-lg">Forgot Password</CardTitle>
