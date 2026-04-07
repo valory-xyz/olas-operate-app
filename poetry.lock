@@ -2299,34 +2299,38 @@ nicer-shell = ["ipython"]
 
 [[package]]
 name = "olas-operate-middleware"
-version = "0.15.4"
+version = "0.15.6"
 description = ""
 optional = false
 python-versions = "<3.15,>=3.10"
 groups = ["main"]
-files = [
-    {file = "olas_operate_middleware-0.15.4-py3-none-any.whl", hash = "sha256:d94961e418e091dd35f70b207a38a8fde838db0f4ffbaf8a6f5eb6eb71af92d7"},
-    {file = "olas_operate_middleware-0.15.4.tar.gz", hash = "sha256:00963023448f23d8ffb0baa21675c44756108f1fd8e1b1e3bbf260559f7fd6c3"},
-]
+files = []
+develop = false
 
 [package.dependencies]
-argon2-cffi = "23.1.0"
-clea = "0.1.0rc4"
-cryptography = ">=46.0.3,<47.0.0"
-cytoolz = "0.12.3"
-deepdiff = ">=8.6.1,<9.0.0"
+argon2-cffi = "==23.1.0"
+clea = "==0.1.0rc4"
+cryptography = "^46.0.3"
+cytoolz = "==0.12.3"
+deepdiff = "^8.6.1"
 fastapi = "0.110.3"
-halo = "0.0.31"
-multiaddr = "0.0.9"
-open-aea-cli-ipfs = ">=2.1.0,<3.0.0"
-open-aea-ledger-cosmos = ">=2.1.0,<3.0.0"
-open-aea-ledger-ethereum = ">=2.1.0,<3.0.0"
-open-aea-ledger-ethereum-flashbots = ">=2.1.0,<3.0.0"
-open-autonomy = ">=0.21.13,<0.22.0"
-psutil = ">=5.9.8,<6.0.0"
-pyinstaller = ">=6.8.0,<7.0.0"
-requests-mock = ">=1.12.1,<2.0.0"
-uvicorn = "0.27.0"
+halo = "==0.0.31"
+multiaddr = "==0.0.9"
+open-aea-cli-ipfs = "^2.1.0"
+open-aea-ledger-cosmos = "^2.1.0"
+open-aea-ledger-ethereum = "^2.1.0"
+open-aea-ledger-ethereum-flashbots = "^2.1.0"
+open-autonomy = "^0.21.13"
+psutil = "^5.9.8"
+pyinstaller = "^6.8.0"
+requests-mock = "^1.12.1"
+uvicorn = "==0.27.0"
+
+[package.source]
+type = "git"
+url = "https://github.com/valory-xyz/olas-operate-middleware.git"
+reference = "a6377a9db4c7068a02be40cb13222c68d239cd0e"
+resolved_reference = "a6377a9db4c7068a02be40cb13222c68d239cd0e"
 
 [[package]]
 name = "open-aea"
@@ -3248,7 +3252,7 @@ description = "Python for Window Extensions"
 optional = false
 python-versions = "*"
 groups = ["main"]
-markers = "platform_system == \"Windows\" or sys_platform == \"win32\""
+markers = "sys_platform == \"win32\" or platform_system == \"Windows\""
 files = [
     {file = "pywin32-311-cp310-cp310-win32.whl", hash = "sha256:d03ff496d2a0cd4a5893504789d4a15399133fe82517455e78bad62efbb7f0a3"},
     {file = "pywin32-311-cp310-cp310-win_amd64.whl", hash = "sha256:797c2772017851984b97180b0bebe4b620bb86328e8a884bb626156295a63b3b"},
@@ -4263,4 +4267,4 @@ propcache = ">=0.2.1"
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.14,<3.15"
-content-hash = "0482d69a8444c0a1bc996e074e504092ed94c673ab06893b92512646ad4ca48c"
+content-hash = "4785ef6b2dc69394ade0dfd78a4360fcd4ab4f5ce04cbbb5ba0b492ad22d6ada"
