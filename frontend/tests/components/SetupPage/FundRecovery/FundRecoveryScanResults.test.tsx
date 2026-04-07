@@ -203,11 +203,7 @@ describe('FundRecoveryChainBalances', () => {
 
   describe('empty balances', () => {
     it('shows the "no recoverable balances" alert when balances are empty', () => {
-      render(
-        <FundRecoveryChainBalances
-          chainBalances={chainBalancesEmpty}
-        />,
-      );
+      render(<FundRecoveryChainBalances chainBalances={chainBalancesEmpty} />);
       expect(screen.getByTestId('alert')).toBeInTheDocument();
       expect(
         screen.getByText(/No recoverable balances found/i),
@@ -372,4 +368,3 @@ describe('FundRecoveryWithdrawForm', () => {
     });
   });
 });
-

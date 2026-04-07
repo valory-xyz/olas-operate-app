@@ -185,4 +185,50 @@ describe('FundRecoverySeedPhrase', () => {
       });
     });
   });
+
+  describe('handleKeyDown — focus advancement', () => {
+    it('advances focus to the next input when Space is pressed', () => {
+      render(<FundRecoverySeedPhrase {...defaultProps} />);
+      const inputs = screen.getAllByRole('textbox');
+
+      // Focus first input and press Space
+      inputs[0].focus();
+      fireEvent.keyDown(inputs[0], { key: ' ' });
+
+      // The second input should be focused (index 1 in grid)
+      expect(document.activeElement).toBe(inputs[1]);
+    });
+
+    it('advances focus to the next input when Enter is pressed', () => {
+      render(<FundRecoverySeedPhrase {...defaultProps} />);
+      const inputs = screen.getAllByRole('textbox');
+
+      inputs[0].focus();
+      fireEvent.keyDown(inputs[0], { key: 'Enter' });
+
+      expect(document.activeElement).toBe(inputs[1]);
+    });
+
+    it('does not throw when Space is pressed on the last input', () => {
+      render(<FundRecoverySeedPhrase {...defaultProps} />);
+      const inputs = screen.getAllByRole('textbox');
+      const lastInput = inputs[inputs.length - 1];
+
+      lastInput.focus();
+      expect(() => {
+        fireEvent.keyDown(lastInput, { key: ' ' });
+      }).not.toThrow();
+    });
+
+    it('does not throw when Enter is pressed on the last input', () => {
+      render(<FundRecoverySeedPhrase {...defaultProps} />);
+      const inputs = screen.getAllByRole('textbox');
+      const lastInput = inputs[inputs.length - 1];
+
+      lastInput.focus();
+      expect(() => {
+        fireEvent.keyDown(lastInput, { key: 'Enter' });
+      }).not.toThrow();
+    });
+  });
 });
