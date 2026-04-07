@@ -67,20 +67,10 @@ export const FundRecovery = () => {
 
   const handleRecover = useCallback(() => {
     setIsResultModalOpen(true);
-    runExecute(
-      {
-        mnemonic: getMnemonic(),
-        destination_address: destinationAddress,
-      },
-      {
-        onSuccess: () => {
-          // modal is already open; isExecuting will become false, revealing the success variant
-        },
-        onError: () => {
-          // modal is already open; isExecuting will become false, revealing the failed variant
-        },
-      },
-    );
+    runExecute({
+      mnemonic: getMnemonic(),
+      destination: destinationAddress,
+    });
   }, [runExecute, getMnemonic, destinationAddress]);
 
   const handleCloseResultModal = useCallback(() => {

@@ -34,8 +34,6 @@ const UnexpectedError = () => (
   </CardFlex>
 );
 
-export { SetupCard };
-
 const SCREEN_WITHOUT_CARDS: SetupScreen[] = [
   SETUP_SCREEN.AgentOnboarding,
   SETUP_SCREEN.SetupYourAgent,

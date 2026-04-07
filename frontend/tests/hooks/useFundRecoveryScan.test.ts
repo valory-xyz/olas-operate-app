@@ -29,7 +29,6 @@ const SAMPLE_ADDRESS =
   '0x1234567890AbcdEF1234567890aBcdef12345678' as `0x${string}`;
 
 const SAMPLE_SCAN_RESPONSE: FundRecoveryScanResponse = {
-  master_eoa_address: SAMPLE_ADDRESS,
   balances: {
     '100': {
       [SAMPLE_ADDRESS]: {
@@ -39,7 +38,7 @@ const SAMPLE_SCAN_RESPONSE: FundRecoveryScanResponse = {
     },
   },
   services: [],
-  gas_warning: {},
+  gas_warnings: [],
 };
 
 const createWrapper = () => {

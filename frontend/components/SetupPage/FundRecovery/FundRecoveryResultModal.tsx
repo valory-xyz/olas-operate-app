@@ -33,12 +33,9 @@ export const FundRecoveryResultModal = ({
   const { goto } = useSetup();
   const { toggleSupportModal } = useSupportModal();
 
-  const isSuccess =
-    result?.success === true && result.partial_failure === false;
-  const isPartialFailure = result?.partial_failure === true;
-  const isResultError =
-    result !== null && result !== undefined && !isSuccess && !isPartialFailure;
-  const isError = !!error || isPartialFailure || isResultError;
+  const isSuccess = !!result && !result.partial_failure;
+  const isPartialFailure = !!result && result.partial_failure;
+  const isError = !!error || isPartialFailure;
 
   if (isExecuting) {
     return (
@@ -95,15 +92,12 @@ export const FundRecoveryResultModal = ({
         title="Withdrawal Failed"
         description={
           <Flex vertical align="center" gap={8}>
-            <Text type="secondary" style={{ textAlign: 'center' }}>
+            <Text type="secondary" className="text-center">
               Something went wrong with your withdrawal. Please try again or
               contact Valory support.
             </Text>
             {isPartialFailure && (
-              <Text
-                type="secondary"
-                style={{ textAlign: 'center', fontSize: 13 }}
-              >
+              <Text type="secondary" className="text-center text-sm">
                 Some funds may have been transferred successfully.
               </Text>
             )}

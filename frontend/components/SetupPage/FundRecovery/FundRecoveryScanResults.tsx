@@ -10,7 +10,11 @@ import { TOKEN_CONFIG, TokenSymbolConfigMap } from '@/config/tokens';
 import { AddressZero, CHAIN_IMAGE_MAP, COLOR, EvmChainName } from '@/constants';
 import { Address } from '@/types';
 import { ChainAmounts, FundRecoveryScanResponse } from '@/types/FundRecovery';
-import { areAddressesEqual, formatUnitsToNumber } from '@/utils';
+import {
+  areAddressesEqual,
+  formatUnitsToNumber,
+  truncateAddress,
+} from '@/utils';
 
 const { Title, Text } = Typography;
 
@@ -38,7 +42,7 @@ type ChainBalance = {
 
 const aggregateChainBalances = (
   balances: ChainAmounts,
-  gasWarning: Record<string, { insufficient: boolean }>,
+  gasWarnings: Array<{ chain_id: number; message: string }>,
 ): ChainBalance[] => {
   const result: ChainBalance[] = [];
 
@@ -72,10 +76,7 @@ const aggregateChainBalances = (
       let symbol: string | undefined;
       let decimals: number = 18;
 
-      if (
-        tokenAddress === AddressZero ||
-        tokenAddress === '0x0000000000000000000000000000000000000000'
-      ) {
+      if (tokenAddress === AddressZero) {
         // Native token
         const nativeToken =
           CHAIN_CONFIG[chainId as keyof typeof CHAIN_CONFIG]?.nativeToken;
@@ -96,11 +97,7 @@ const aggregateChainBalances = (
       }
 
       // Fallback: show truncated address if symbol not found
-      const displaySymbol =
-        symbol ??
-        (tokenAddress.startsWith('0x')
-          ? `${tokenAddress.slice(0, 6)}...${tokenAddress.slice(-4)}`
-          : tokenAddress);
+      const displaySymbol = symbol ?? truncateAddress(tokenAddress as Address);
 
       const icon = symbol
         ? TokenSymbolConfigMap[symbol as keyof typeof TokenSymbolConfigMap]
@@ -124,7 +121,7 @@ const aggregateChainBalances = (
       chainName,
       chainImage,
       tokens,
-      hasInsufficientGas: gasWarning[chainIdStr]?.insufficient === true,
+      hasInsufficientGas: gasWarnings.some((w) => w.chain_id === chainId),
     });
   }
 
@@ -196,8 +193,8 @@ export const FundRecoveryChainBalances = ({
   scanResult,
 }: FundRecoveryChainBalancesProps) => {
   const chainBalances = useMemo(
-    () => aggregateChainBalances(scanResult.balances, scanResult.gas_warning),
-    [scanResult.balances, scanResult.gas_warning],
+    () => aggregateChainBalances(scanResult.balances, scanResult.gas_warnings),
+    [scanResult.balances, scanResult.gas_warnings],
   );
 
   const hasBalances = chainBalances.length > 0;
@@ -260,8 +257,8 @@ export const FundRecoveryWithdrawForm = ({
   onRecover,
 }: FundRecoveryWithdrawFormProps) => {
   const chainBalances = useMemo(
-    () => aggregateChainBalances(scanResult.balances, scanResult.gas_warning),
-    [scanResult.balances, scanResult.gas_warning],
+    () => aggregateChainBalances(scanResult.balances, scanResult.gas_warnings),
+    [scanResult.balances, scanResult.gas_warnings],
   );
 
   const hasBalances = chainBalances.length > 0;

@@ -114,17 +114,15 @@ jest.mock('../../../../components/ui/BackButton', () => ({
 }));
 
 const SAMPLE_SCAN_RESPONSE: FundRecoveryScanResponse = {
-  master_eoa_address: '0x1234567890AbcdEF1234567890aBcdef12345678',
   balances: {},
   services: [],
-  gas_warning: {},
+  gas_warnings: [],
 };
 
 const _SAMPLE_EXECUTE_RESPONSE: FundRecoveryExecuteResponse = {
-  success: true,
   partial_failure: false,
   total_funds_moved: {},
-  errors: [],
+  services_recovered: [],
 };
 
 const createDefaultHookMocks = () => {
