@@ -65,6 +65,7 @@ const SUCCESS_RESULT: FundRecoveryExecuteResponse = {
       },
     },
   },
+  services_recovered: [],
   errors: [],
 };
 
@@ -72,6 +73,7 @@ const PARTIAL_FAILURE_RESULT: FundRecoveryExecuteResponse = {
   success: false,
   partial_failure: true,
   total_funds_moved: {},
+  services_recovered: [],
   errors: ['Chain 100: transfer failed'],
 };
 

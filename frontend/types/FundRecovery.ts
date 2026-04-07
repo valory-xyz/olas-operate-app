@@ -33,7 +33,9 @@ export type FundRecoveryExecuteRequest = {
 };
 
 export type FundRecoveryExecuteResponse = {
+  success?: boolean;
   partial_failure: boolean;
   total_funds_moved: ChainAmounts;
   services_recovered: FundRecoveryServiceInfo[];
+  errors?: string[];
 };
