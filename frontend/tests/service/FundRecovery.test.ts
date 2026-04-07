@@ -29,10 +29,11 @@ const SAMPLE_SCAN_REQUEST: FundRecoveryScanRequest = {
 
 const SAMPLE_EXECUTE_REQUEST: FundRecoveryExecuteRequest = {
   mnemonic: SAMPLE_MNEMONIC,
-  destination: SAMPLE_DESTINATION,
+  destination_address: SAMPLE_DESTINATION,
 };
 
 const SAMPLE_SCAN_RESPONSE: FundRecoveryScanResponse = {
+  master_eoa_address: SAMPLE_DESTINATION,
   balances: {
     '100': {
       [SAMPLE_DESTINATION as `0x${string}`]: {
@@ -42,10 +43,11 @@ const SAMPLE_SCAN_RESPONSE: FundRecoveryScanResponse = {
     },
   },
   services: [],
-  gas_warnings: [],
+  gas_warning: {},
 };
 
 const SAMPLE_EXECUTE_SUCCESS: FundRecoveryExecuteResponse = {
+  success: true,
   partial_failure: false,
   total_funds_moved: {
     '100': {
@@ -55,7 +57,7 @@ const SAMPLE_EXECUTE_SUCCESS: FundRecoveryExecuteResponse = {
       },
     },
   },
-  services_recovered: [],
+  errors: [],
 };
 
 beforeEach(() => {

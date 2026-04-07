@@ -18,12 +18,12 @@ import {
   WALLET_OWNER,
   WALLET_TYPE,
 } from '@/constants';
+import { usePageState } from '@/hooks/usePageState';
 import { WalletService } from '@/service/Wallet';
 import { MiddlewareWalletResponse } from '@/types';
 import { asEvmChainId } from '@/utils/middlewareHelpers';
 
 import { OnlineStatusContext } from './OnlineStatusProvider';
-import { usePageState } from '@/hooks/usePageState';
 
 type MasterWalletContext = {
   masterEoa?: MasterEoa;

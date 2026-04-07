@@ -1,6 +1,10 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 
-import { FundRecoveryScanResults } from '../../../../components/SetupPage/FundRecovery/FundRecoveryScanResults';
+import {
+  aggregateChainBalances,
+  FundRecoveryChainBalances,
+  FundRecoveryWithdrawForm,
+} from '../../../../components/SetupPage/FundRecovery/FundRecoveryScanResults';
 import { FundRecoveryScanResponse } from '../../../../types/FundRecovery';
 
 /* eslint-disable @typescript-eslint/no-var-requires */
@@ -78,32 +82,161 @@ const scanResultEmpty: FundRecoveryScanResponse = {
   gas_warning: {},
 };
 
-const defaultProps = {
-  scanResult: scanResultWithBalance,
+const chainBalancesWithBalance = aggregateChainBalances(
+  scanResultWithBalance.balances,
+  scanResultWithBalance.gas_warning,
+);
+
+const chainBalancesWithGasWarning = aggregateChainBalances(
+  scanResultWithGasWarning.balances,
+  scanResultWithGasWarning.gas_warning,
+);
+
+const chainBalancesEmpty = aggregateChainBalances(
+  scanResultEmpty.balances,
+  scanResultEmpty.gas_warning,
+);
+
+const defaultChainBalancesProps = {
+  chainBalances: chainBalancesWithBalance,
+};
+
+const defaultWithdrawFormProps = {
+  chainBalances: chainBalancesWithBalance,
   destinationAddress: '',
   isExecuting: false,
   onDestinationAddressChange: jest.fn(),
   onRecover: jest.fn(),
 };
 
-describe('FundRecoveryScanResults', () => {
+describe('aggregateChainBalances', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('silently skips unparseable amount strings (BigInt parse error catch)', () => {
+    const balances = {
+      [String(GNOSIS_CHAIN_ID)]: {
+        [MASTER_EOA]: {
+          [ADDRESS_ZERO]: 'abc', // unparseable
+        },
+      },
+    };
+    const result = aggregateChainBalances(balances, {});
+    // Chain with only unparseable amounts produces no tokens, so chain is excluded
+    expect(result).toHaveLength(0);
+  });
+
+  it('uses native token symbol and decimals from CHAIN_CONFIG for AddressZero', () => {
+    const result = aggregateChainBalances(
+      scanResultWithBalance.balances,
+      scanResultWithBalance.gas_warning,
+    );
+    // Gnosis chain (100) should return a chain entry
+    expect(result.length).toBeGreaterThanOrEqual(1);
+    const gnosisEntry = result.find((c) => c.chainId === GNOSIS_CHAIN_ID);
+    expect(gnosisEntry).toBeDefined();
+    // The token symbol should be defined (native token from CHAIN_CONFIG)
+    expect(gnosisEntry!.tokens[0].symbol).toBeTruthy();
+    // Should NOT be a truncated address fallback (i.e., not contain '...')
+    expect(gnosisEntry!.tokens[0].symbol).not.toMatch(/0x[0-9a-f]{4}\.\.\./i);
+  });
+
+  it('falls back to truncated address as symbol for unknown token address', () => {
+    const unknownTokenAddress =
+      '0xDeAdBeEf00000000000000000000000000000001' as `0x${string}`;
+    const balances = {
+      [String(GNOSIS_CHAIN_ID)]: {
+        [MASTER_EOA]: {
+          [unknownTokenAddress]: '1000000000000000000',
+        },
+      },
+    };
+    const result = aggregateChainBalances(balances, {});
+    expect(result.length).toBeGreaterThanOrEqual(1);
+    const gnosisEntry = result.find((c) => c.chainId === GNOSIS_CHAIN_ID);
+    expect(gnosisEntry).toBeDefined();
+    // Symbol should be a truncated address (contains ellipsis)
+    expect(gnosisEntry!.tokens[0].symbol).toMatch(/\.\.\./);
+  });
+
+  it('falls back to "Chain {id}" name for unknown chain ID', () => {
+    const unknownChainId = 99999;
+    const balances = {
+      [String(unknownChainId)]: {
+        [MASTER_EOA]: {
+          [ADDRESS_ZERO]: '1000000000000000000',
+        },
+      },
+    };
+    const result = aggregateChainBalances(balances, {});
+    expect(result.length).toBeGreaterThanOrEqual(1);
+    const entry = result.find((c) => c.chainId === unknownChainId);
+    expect(entry).toBeDefined();
+    expect(entry!.chainName).toContain('99999');
+  });
+
+  it('excludes chains where all token amounts are zero', () => {
+    const balances = {
+      [String(GNOSIS_CHAIN_ID)]: {
+        [MASTER_EOA]: {
+          [ADDRESS_ZERO]: '0',
+        },
+      },
+    };
+    const result = aggregateChainBalances(balances, {});
+    expect(result).toHaveLength(0);
+  });
+});
+
+describe('FundRecoveryChainBalances', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
   describe('initial rendering', () => {
     it('renders the title "Withdraw Funds"', () => {
-      render(<FundRecoveryScanResults {...defaultProps} />);
+      render(<FundRecoveryChainBalances {...defaultChainBalancesProps} />);
       expect(screen.getByText('Withdraw Funds')).toBeInTheDocument();
     });
+  });
 
+  describe('empty balances', () => {
+    it('shows the "no recoverable balances" alert when balances are empty', () => {
+      render(<FundRecoveryChainBalances chainBalances={chainBalancesEmpty} />);
+      expect(screen.getByTestId('alert')).toBeInTheDocument();
+      expect(
+        screen.getByText(/No recoverable balances found/i),
+      ).toBeInTheDocument();
+    });
+  });
+
+  describe('gas warning', () => {
+    it('shows gas warning alert when a chain has insufficient gas', () => {
+      render(
+        <FundRecoveryChainBalances
+          chainBalances={chainBalancesWithGasWarning}
+        />,
+      );
+      expect(screen.getByTestId('alert')).toBeInTheDocument();
+      expect(screen.getByText(/Insufficient gas/i)).toBeInTheDocument();
+    });
+  });
+});
+
+describe('FundRecoveryWithdrawForm', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  describe('initial rendering', () => {
     it('renders the withdrawal address input', () => {
-      render(<FundRecoveryScanResults {...defaultProps} />);
+      render(<FundRecoveryWithdrawForm {...defaultWithdrawFormProps} />);
       expect(screen.getByPlaceholderText('0x...')).toBeInTheDocument();
     });
 
     it('renders the Withdraw button', () => {
-      render(<FundRecoveryScanResults {...defaultProps} />);
+      render(<FundRecoveryWithdrawForm {...defaultWithdrawFormProps} />);
       expect(
         screen.getByRole('button', { name: 'Withdraw' }),
       ).toBeInTheDocument();
@@ -113,15 +246,18 @@ describe('FundRecoveryScanResults', () => {
   describe('Withdraw button disabled state', () => {
     it('is disabled when destination address is empty', () => {
       render(
-        <FundRecoveryScanResults {...defaultProps} destinationAddress="" />,
+        <FundRecoveryWithdrawForm
+          {...defaultWithdrawFormProps}
+          destinationAddress=""
+        />,
       );
       expect(screen.getByRole('button', { name: 'Withdraw' })).toBeDisabled();
     });
 
     it('is disabled when destination address is invalid', () => {
       render(
-        <FundRecoveryScanResults
-          {...defaultProps}
+        <FundRecoveryWithdrawForm
+          {...defaultWithdrawFormProps}
           destinationAddress="not-an-address"
         />,
       );
@@ -130,9 +266,9 @@ describe('FundRecoveryScanResults', () => {
 
     it('is disabled when there are no balances', () => {
       render(
-        <FundRecoveryScanResults
-          {...defaultProps}
-          scanResult={scanResultEmpty}
+        <FundRecoveryWithdrawForm
+          {...defaultWithdrawFormProps}
+          chainBalances={chainBalancesEmpty}
           destinationAddress={VALID_DESTINATION}
         />,
       );
@@ -141,9 +277,9 @@ describe('FundRecoveryScanResults', () => {
 
     it('is enabled when gas is insufficient (backend skips those chains)', () => {
       render(
-        <FundRecoveryScanResults
-          {...defaultProps}
-          scanResult={scanResultWithGasWarning}
+        <FundRecoveryWithdrawForm
+          {...defaultWithdrawFormProps}
+          chainBalances={chainBalancesWithGasWarning}
           destinationAddress={VALID_DESTINATION}
         />,
       );
@@ -154,8 +290,8 @@ describe('FundRecoveryScanResults', () => {
 
     it('is disabled when isExecuting is true', () => {
       render(
-        <FundRecoveryScanResults
-          {...defaultProps}
+        <FundRecoveryWithdrawForm
+          {...defaultWithdrawFormProps}
           destinationAddress={VALID_DESTINATION}
           isExecuting={true}
         />,
@@ -165,8 +301,8 @@ describe('FundRecoveryScanResults', () => {
 
     it('is enabled when address is valid, balances exist, and gas is sufficient', () => {
       render(
-        <FundRecoveryScanResults
-          {...defaultProps}
+        <FundRecoveryWithdrawForm
+          {...defaultWithdrawFormProps}
           destinationAddress={VALID_DESTINATION}
         />,
       );
@@ -176,26 +312,11 @@ describe('FundRecoveryScanResults', () => {
     });
   });
 
-  describe('empty balances', () => {
-    it('shows the "no recoverable balances" alert when balances are empty', () => {
-      render(
-        <FundRecoveryScanResults
-          {...defaultProps}
-          scanResult={scanResultEmpty}
-        />,
-      );
-      expect(screen.getByTestId('alert')).toBeInTheDocument();
-      expect(
-        screen.getByText(/No recoverable balances found/i),
-      ).toBeInTheDocument();
-    });
-  });
-
   describe('address validation', () => {
     it('shows an error message for an invalid address after input', () => {
       render(
-        <FundRecoveryScanResults
-          {...defaultProps}
+        <FundRecoveryWithdrawForm
+          {...defaultWithdrawFormProps}
           destinationAddress="0xinvalid"
         />,
       );
@@ -204,7 +325,10 @@ describe('FundRecoveryScanResults', () => {
 
     it('does not show error for empty address', () => {
       render(
-        <FundRecoveryScanResults {...defaultProps} destinationAddress="" />,
+        <FundRecoveryWithdrawForm
+          {...defaultWithdrawFormProps}
+          destinationAddress=""
+        />,
       );
       expect(screen.queryByText(/valid EVM address/i)).not.toBeInTheDocument();
     });
@@ -214,8 +338,8 @@ describe('FundRecoveryScanResults', () => {
     it('calls onDestinationAddressChange when address input changes', () => {
       const onDestinationAddressChange = jest.fn();
       render(
-        <FundRecoveryScanResults
-          {...defaultProps}
+        <FundRecoveryWithdrawForm
+          {...defaultWithdrawFormProps}
           onDestinationAddressChange={onDestinationAddressChange}
         />,
       );
@@ -232,8 +356,8 @@ describe('FundRecoveryScanResults', () => {
     it('calls onRecover when Withdraw is clicked with valid address', () => {
       const onRecover = jest.fn();
       render(
-        <FundRecoveryScanResults
-          {...defaultProps}
+        <FundRecoveryWithdrawForm
+          {...defaultWithdrawFormProps}
           destinationAddress={VALID_DESTINATION}
           onRecover={onRecover}
         />,

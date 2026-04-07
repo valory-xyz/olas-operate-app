@@ -65,7 +65,6 @@ const SUCCESS_RESULT: FundRecoveryExecuteResponse = {
       },
     },
   },
-  services_recovered: [],
   errors: [],
 };
 
@@ -73,7 +72,6 @@ const PARTIAL_FAILURE_RESULT: FundRecoveryExecuteResponse = {
   success: false,
   partial_failure: true,
   total_funds_moved: {},
-  services_recovered: [],
   errors: ['Chain 100: transfer failed'],
 };
 
@@ -248,6 +246,42 @@ describe('FundRecoveryResultModal', () => {
       // Modal may still render if open=true but content is null
       // The component should return null when not executing and no result/error
       expect(screen.queryByTestId('modal-title')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('onClose ?? onTryAgain fallback', () => {
+    it('calls onTryAgain when X is clicked and onClose is not provided', () => {
+      const onTryAgain = jest.fn();
+      render(
+        <FundRecoveryResultModal
+          result={null}
+          error={new Error('Network error')}
+          open={true}
+          isExecuting={false}
+          onTryAgain={onTryAgain}
+          // onClose intentionally omitted
+        />,
+      );
+      fireEvent.click(screen.getByTestId('modal-close'));
+      expect(onTryAgain).toHaveBeenCalledTimes(1);
+    });
+
+    it('calls onClose (not onTryAgain) when X is clicked and onClose is provided', () => {
+      const onTryAgain = jest.fn();
+      const onClose = jest.fn();
+      render(
+        <FundRecoveryResultModal
+          result={null}
+          error={new Error('Network error')}
+          open={true}
+          isExecuting={false}
+          onTryAgain={onTryAgain}
+          onClose={onClose}
+        />,
+      );
+      fireEvent.click(screen.getByTestId('modal-close'));
+      expect(onClose).toHaveBeenCalledTimes(1);
+      expect(onTryAgain).not.toHaveBeenCalled();
     });
   });
 });

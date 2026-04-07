@@ -1,5 +1,5 @@
 import { Flex } from 'antd';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { Alert } from '@/components/ui';
 import { SETUP_SCREEN } from '@/constants';
@@ -10,6 +10,7 @@ import { BackButton } from '../../ui/BackButton';
 import { SetupCard } from '../../ui/SetupCard';
 import { FundRecoveryResultModal } from './FundRecoveryResultModal';
 import {
+  aggregateChainBalances,
   FundRecoveryChainBalances,
   FundRecoveryWithdrawForm,
 } from './FundRecoveryScanResults';
@@ -46,6 +47,14 @@ export const FundRecovery = () => {
     error: executeError,
     reset: resetExecute,
   } = useFundRecoveryExecute();
+
+  const chainBalances = useMemo(
+    () =>
+      scanResult
+        ? aggregateChainBalances(scanResult.balances, scanResult.gas_warning)
+        : [],
+    [scanResult],
+  );
 
   const getMnemonic = useCallback(() => words.join(' ').trim(), [words]);
 
@@ -115,7 +124,7 @@ export const FundRecovery = () => {
             </Flex>
 
             {scanResult ? (
-              <FundRecoveryChainBalances scanResult={scanResult} />
+              <FundRecoveryChainBalances chainBalances={chainBalances} />
             ) : (
               <Alert
                 type="warning"
@@ -130,7 +139,7 @@ export const FundRecovery = () => {
           <SetupCard>
             <Flex vertical style={{ padding: '24px 24px 32px' }}>
               <FundRecoveryWithdrawForm
-                scanResult={scanResult}
+                chainBalances={chainBalances}
                 destinationAddress={destinationAddress}
                 isExecuting={isExecuting}
                 onDestinationAddressChange={setDestinationAddress}

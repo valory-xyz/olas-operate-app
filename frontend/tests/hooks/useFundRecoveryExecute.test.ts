@@ -29,6 +29,7 @@ const SAMPLE_DESTINATION =
   '0x1234567890AbcdEF1234567890aBcdef12345678' as `0x${string}`;
 
 const SAMPLE_SUCCESS_RESPONSE: FundRecoveryExecuteResponse = {
+  success: true,
   partial_failure: false,
   total_funds_moved: {
     '100': {
@@ -38,13 +39,14 @@ const SAMPLE_SUCCESS_RESPONSE: FundRecoveryExecuteResponse = {
       },
     },
   },
-  services_recovered: [],
+  errors: [],
 };
 
 const SAMPLE_PARTIAL_RESPONSE: FundRecoveryExecuteResponse = {
+  success: false,
   partial_failure: true,
   total_funds_moved: {},
-  services_recovered: [],
+  errors: [],
 };
 
 const createWrapper = () => {
@@ -86,7 +88,7 @@ describe('useFundRecoveryExecute', () => {
     act(() => {
       result.current.mutate({
         mnemonic: SAMPLE_MNEMONIC,
-        destination: SAMPLE_DESTINATION,
+        destination_address: SAMPLE_DESTINATION,
       });
     });
 
@@ -106,7 +108,7 @@ describe('useFundRecoveryExecute', () => {
     act(() => {
       result.current.mutate({
         mnemonic: SAMPLE_MNEMONIC,
-        destination: SAMPLE_DESTINATION,
+        destination_address: SAMPLE_DESTINATION,
       });
     });
 
@@ -126,7 +128,7 @@ describe('useFundRecoveryExecute', () => {
 
     const executeRequest = {
       mnemonic: SAMPLE_MNEMONIC,
-      destination: SAMPLE_DESTINATION,
+      destination_address: SAMPLE_DESTINATION,
     };
 
     act(() => {
@@ -149,7 +151,7 @@ describe('useFundRecoveryExecute', () => {
     act(() => {
       result.current.mutate({
         mnemonic: SAMPLE_MNEMONIC,
-        destination: SAMPLE_DESTINATION,
+        destination_address: SAMPLE_DESTINATION,
       });
     });
 
@@ -169,7 +171,7 @@ describe('useFundRecoveryExecute', () => {
     act(() => {
       result.current.mutate({
         mnemonic: SAMPLE_MNEMONIC,
-        destination: SAMPLE_DESTINATION,
+        destination_address: SAMPLE_DESTINATION,
       });
     });
 
