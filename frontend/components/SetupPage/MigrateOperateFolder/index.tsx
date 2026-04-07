@@ -76,7 +76,6 @@ const WithdrawFundsSection = () => {
         border: '1px solid #f0f0f0',
         borderRadius: 8,
         padding: 16,
-        marginTop: 24,
       }}
     >
       <Flex vertical gap={8}>
