@@ -9,10 +9,7 @@ import { CHAIN_CONFIG } from '@/config/chains';
 import { TOKEN_CONFIG } from '@/config/tokens';
 import { AddressZero, CHAIN_IMAGE_MAP, COLOR, EvmChainName } from '@/constants';
 import { Address } from '@/types';
-import {
-  ChainAmounts,
-  FundRecoveryScanResponse,
-} from '@/types/FundRecovery';
+import { ChainAmounts, FundRecoveryScanResponse } from '@/types/FundRecovery';
 import { areAddressesEqual, formatUnitsToNumber } from '@/utils';
 
 const { Title, Text } = Typography;
@@ -29,7 +26,13 @@ const ChainRow = styled(Flex)`
   }
 `;
 
-const TOKEN_DOT_COLORS = ['#e74c3c', '#3498db', '#9b59b6', '#2ecc71', '#f39c12'];
+const TOKEN_DOT_COLORS = [
+  '#e74c3c',
+  '#3498db',
+  '#9b59b6',
+  '#2ecc71',
+  '#f39c12',
+];
 
 type TokenBalance = { symbol: string; amount: string };
 
@@ -88,8 +91,7 @@ const aggregateChainBalances = (
         decimals = nativeToken?.decimals ?? 18;
       } else {
         // ERC-20 token — search TOKEN_CONFIG for matching address
-        const chainTokens =
-          TOKEN_CONFIG[chainId as keyof typeof TOKEN_CONFIG];
+        const chainTokens = TOKEN_CONFIG[chainId as keyof typeof TOKEN_CONFIG];
         if (chainTokens) {
           const tokenConfig = Object.values(chainTokens).find(
             (t) => t && areAddressesEqual(t.address, tokenAddress as Address),
@@ -287,8 +289,7 @@ export const FundRecoveryWithdrawForm = ({
         />
         {destinationAddress && !isAddressValid && (
           <Text type="danger" style={{ fontSize: 12 }}>
-            Please enter a valid EVM address (0x followed by 40 hex
-            characters)
+            Please enter a valid EVM address (0x followed by 40 hex characters)
           </Text>
         )}
         <Text type="secondary" style={{ fontSize: 12 }}>

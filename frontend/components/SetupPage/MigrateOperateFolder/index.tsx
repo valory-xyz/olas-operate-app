@@ -67,8 +67,8 @@ const MigrationSteps = () => (
           </Flex>
           <Text type="secondary" style={{ fontSize: 12 }}>
             .operate folder is hidden by default on MacOS and Linux. To unhide,
-            press <Text strong>Cmd+Shift+.</Text> / (
-            <Text strong>Ctrl+H</Text> on Linux)
+            press <Text strong>Cmd+Shift+.</Text> / (<Text strong>Ctrl+H</Text>{' '}
+            on Linux)
           </Text>
         </Flex>
       </Flex>

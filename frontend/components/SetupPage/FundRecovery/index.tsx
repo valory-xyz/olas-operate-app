@@ -2,7 +2,6 @@ import { Flex } from 'antd';
 import { useCallback, useState } from 'react';
 
 import { Alert } from '@/components/ui';
-
 import { SETUP_SCREEN } from '@/constants';
 import { useFundRecoveryExecute, useFundRecoveryScan, useSetup } from '@/hooks';
 import { FundRecoveryScanResponse } from '@/types/FundRecovery';
@@ -28,8 +27,9 @@ export const FundRecovery = () => {
   const [destinationAddress, setDestinationAddress] = useState('');
 
   const [step, setStep] = useState<WizardStep>('seedPhrase');
-  const [scanResult, setScanResult] =
-    useState<FundRecoveryScanResponse | null>(null);
+  const [scanResult, setScanResult] = useState<FundRecoveryScanResponse | null>(
+    null,
+  );
   const [scanError, setScanError] = useState(false);
   const [isResultModalOpen, setIsResultModalOpen] = useState(false);
 

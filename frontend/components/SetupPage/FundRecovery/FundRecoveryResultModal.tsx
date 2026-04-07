@@ -33,7 +33,8 @@ export const FundRecoveryResultModal = ({
   const { goto } = useSetup();
   const { toggleSupportModal } = useSupportModal();
 
-  const isSuccess = result?.success === true && result.partial_failure === false;
+  const isSuccess =
+    result?.success === true && result.partial_failure === false;
   const isPartialFailure = result?.partial_failure === true;
   const isResultError =
     result !== null && result !== undefined && !isSuccess && !isPartialFailure;
@@ -61,9 +62,7 @@ export const FundRecoveryResultModal = ({
         closable={false}
         size="medium"
         header={
-          <CheckCircleFilled
-            style={{ fontSize: 48, color: COLOR.SUCCESS }}
-          />
+          <CheckCircleFilled style={{ fontSize: 48, color: COLOR.SUCCESS }} />
         }
         title="Withdrawal Complete!"
         description="Funds transferred to your external wallet."
@@ -89,7 +88,9 @@ export const FundRecoveryResultModal = ({
         onCancel={onClose ?? onTryAgain}
         size="medium"
         header={
-          <WarningFilled style={{ fontSize: 48, color: COLOR.ICON_COLOR.DANGER }} />
+          <WarningFilled
+            style={{ fontSize: 48, color: COLOR.ICON_COLOR.DANGER }}
+          />
         }
         title="Withdrawal Failed"
         description={
