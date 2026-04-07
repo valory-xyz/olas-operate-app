@@ -77,6 +77,20 @@ jest.mock(
 jest.mock(
   '../../../../components/SetupPage/FundRecovery/FundRecoveryScanResults',
   () => ({
+    FundRecoveryChainBalances: () => (
+      <div data-testid="chain-balances" />
+    ),
+    FundRecoveryWithdrawForm: ({
+      onRecover,
+    }: {
+      onRecover: () => void;
+    }) => (
+      <div data-testid="scan-results">
+        <button data-testid="recover-btn" onClick={onRecover}>
+          Recover
+        </button>
+      </div>
+    ),
     FundRecoveryScanResults: ({
       onRecover,
     }: {
@@ -126,7 +140,7 @@ const SAMPLE_SCAN_RESPONSE: FundRecoveryScanResponse = {
   gas_warning: {},
 };
 
-const SAMPLE_EXECUTE_RESPONSE: FundRecoveryExecuteResponse = {
+const _SAMPLE_EXECUTE_RESPONSE: FundRecoveryExecuteResponse = {
   success: true,
   partial_failure: false,
   total_funds_moved: {},

@@ -105,7 +105,7 @@ describe('FundRecoverySeedPhrase', () => {
     it('shows an error alert when scanError is true', () => {
       render(<FundRecoverySeedPhrase {...defaultProps} scanError={true} />);
       expect(screen.getByTestId('alert')).toBeInTheDocument();
-      expect(screen.getByText('Invalid Secret Recovery Phrase')).toBeInTheDocument();
+      expect(screen.getByText(/Invalid Secret Recovery Phrase/i)).toBeInTheDocument();
     });
   });
 

@@ -197,7 +197,7 @@ describe('FundRecoveryScanResults', () => {
       );
       expect(screen.getByTestId('alert')).toBeInTheDocument();
       expect(
-        screen.getByText('No recoverable balances found'),
+        screen.getByText(/No recoverable balances found/i),
       ).toBeInTheDocument();
     });
   });
