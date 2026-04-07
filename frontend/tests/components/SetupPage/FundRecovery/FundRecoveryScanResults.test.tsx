@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 
 import {
+  aggregateChainBalances,
   FundRecoveryChainBalances,
   FundRecoveryWithdrawForm,
 } from '../../../../components/SetupPage/FundRecovery/FundRecoveryScanResults';
@@ -81,17 +82,112 @@ const scanResultEmpty: FundRecoveryScanResponse = {
   gas_warning: {},
 };
 
+const chainBalancesWithBalance = aggregateChainBalances(
+  scanResultWithBalance.balances,
+  scanResultWithBalance.gas_warning,
+);
+
+const chainBalancesWithGasWarning = aggregateChainBalances(
+  scanResultWithGasWarning.balances,
+  scanResultWithGasWarning.gas_warning,
+);
+
+const chainBalancesEmpty = aggregateChainBalances(
+  scanResultEmpty.balances,
+  scanResultEmpty.gas_warning,
+);
+
 const defaultChainBalancesProps = {
-  scanResult: scanResultWithBalance,
+  chainBalances: chainBalancesWithBalance,
 };
 
 const defaultWithdrawFormProps = {
-  scanResult: scanResultWithBalance,
+  chainBalances: chainBalancesWithBalance,
   destinationAddress: '',
   isExecuting: false,
   onDestinationAddressChange: jest.fn(),
   onRecover: jest.fn(),
 };
+
+describe('aggregateChainBalances', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('silently skips unparseable amount strings (BigInt parse error catch)', () => {
+    const balances = {
+      [String(GNOSIS_CHAIN_ID)]: {
+        [MASTER_EOA]: {
+          [ADDRESS_ZERO]: 'abc', // unparseable
+        },
+      },
+    };
+    const result = aggregateChainBalances(balances, {});
+    // Chain with only unparseable amounts produces no tokens, so chain is excluded
+    expect(result).toHaveLength(0);
+  });
+
+  it('uses native token symbol and decimals from CHAIN_CONFIG for AddressZero', () => {
+    const result = aggregateChainBalances(
+      scanResultWithBalance.balances,
+      scanResultWithBalance.gas_warning,
+    );
+    // Gnosis chain (100) should return a chain entry
+    expect(result.length).toBeGreaterThanOrEqual(1);
+    const gnosisEntry = result.find((c) => c.chainId === GNOSIS_CHAIN_ID);
+    expect(gnosisEntry).toBeDefined();
+    // The token symbol should be defined (native token from CHAIN_CONFIG)
+    expect(gnosisEntry!.tokens[0].symbol).toBeTruthy();
+    // Should NOT be a truncated address fallback (i.e., not contain '...')
+    expect(gnosisEntry!.tokens[0].symbol).not.toMatch(/0x[0-9a-f]{4}\.\.\./i);
+  });
+
+  it('falls back to truncated address as symbol for unknown token address', () => {
+    const unknownTokenAddress =
+      '0xDeAdBeEf00000000000000000000000000000001' as `0x${string}`;
+    const balances = {
+      [String(GNOSIS_CHAIN_ID)]: {
+        [MASTER_EOA]: {
+          [unknownTokenAddress]: '1000000000000000000',
+        },
+      },
+    };
+    const result = aggregateChainBalances(balances, {});
+    expect(result.length).toBeGreaterThanOrEqual(1);
+    const gnosisEntry = result.find((c) => c.chainId === GNOSIS_CHAIN_ID);
+    expect(gnosisEntry).toBeDefined();
+    // Symbol should be a truncated address (contains ellipsis)
+    expect(gnosisEntry!.tokens[0].symbol).toMatch(/\.\.\./);
+  });
+
+  it('falls back to "Chain {id}" name for unknown chain ID', () => {
+    const unknownChainId = 99999;
+    const balances = {
+      [String(unknownChainId)]: {
+        [MASTER_EOA]: {
+          [ADDRESS_ZERO]: '1000000000000000000',
+        },
+      },
+    };
+    const result = aggregateChainBalances(balances, {});
+    expect(result.length).toBeGreaterThanOrEqual(1);
+    const entry = result.find((c) => c.chainId === unknownChainId);
+    expect(entry).toBeDefined();
+    expect(entry!.chainName).toContain('99999');
+  });
+
+  it('excludes chains where all token amounts are zero', () => {
+    const balances = {
+      [String(GNOSIS_CHAIN_ID)]: {
+        [MASTER_EOA]: {
+          [ADDRESS_ZERO]: '0',
+        },
+      },
+    };
+    const result = aggregateChainBalances(balances, {});
+    expect(result).toHaveLength(0);
+  });
+});
 
 describe('FundRecoveryChainBalances', () => {
   beforeEach(() => {
@@ -109,8 +205,7 @@ describe('FundRecoveryChainBalances', () => {
     it('shows the "no recoverable balances" alert when balances are empty', () => {
       render(
         <FundRecoveryChainBalances
-          {...defaultChainBalancesProps}
-          scanResult={scanResultEmpty}
+          chainBalances={chainBalancesEmpty}
         />,
       );
       expect(screen.getByTestId('alert')).toBeInTheDocument();
@@ -124,8 +219,7 @@ describe('FundRecoveryChainBalances', () => {
     it('shows gas warning alert when a chain has insufficient gas', () => {
       render(
         <FundRecoveryChainBalances
-          {...defaultChainBalancesProps}
-          scanResult={scanResultWithGasWarning}
+          chainBalances={chainBalancesWithGasWarning}
         />,
       );
       expect(screen.getByTestId('alert')).toBeInTheDocument();
@@ -178,7 +272,7 @@ describe('FundRecoveryWithdrawForm', () => {
       render(
         <FundRecoveryWithdrawForm
           {...defaultWithdrawFormProps}
-          scanResult={scanResultEmpty}
+          chainBalances={chainBalancesEmpty}
           destinationAddress={VALID_DESTINATION}
         />,
       );
@@ -189,7 +283,7 @@ describe('FundRecoveryWithdrawForm', () => {
       render(
         <FundRecoveryWithdrawForm
           {...defaultWithdrawFormProps}
-          scanResult={scanResultWithGasWarning}
+          chainBalances={chainBalancesWithGasWarning}
           destinationAddress={VALID_DESTINATION}
         />,
       );
@@ -278,3 +372,4 @@ describe('FundRecoveryWithdrawForm', () => {
     });
   });
 });
+

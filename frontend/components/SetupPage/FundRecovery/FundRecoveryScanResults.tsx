@@ -1,7 +1,7 @@
 import { WarningOutlined } from '@ant-design/icons';
 import { Button, Flex, Input, Tag, Typography } from 'antd';
 import Image from 'next/image';
-import { ChangeEvent, useCallback, useMemo } from 'react';
+import { ChangeEvent, useCallback } from 'react';
 import styled from 'styled-components';
 
 import { Alert } from '@/components/ui';
@@ -9,7 +9,7 @@ import { CHAIN_CONFIG } from '@/config/chains';
 import { TOKEN_CONFIG, TokenSymbolConfigMap } from '@/config/tokens';
 import { AddressZero, CHAIN_IMAGE_MAP, COLOR, EvmChainName } from '@/constants';
 import { Address } from '@/types';
-import { ChainAmounts, FundRecoveryScanResponse } from '@/types/FundRecovery';
+import { ChainAmounts } from '@/types/FundRecovery';
 import {
   areAddressesEqual,
   formatUnitsToNumber,
@@ -32,7 +32,7 @@ const ChainRow = styled(Flex)`
 
 type TokenBalance = { symbol: string; amount: string; icon?: string };
 
-type ChainBalance = {
+export type ChainBalance = {
   chainId: number;
   chainName: string;
   chainImage: string;
@@ -40,7 +40,7 @@ type ChainBalance = {
   hasInsufficientGas: boolean;
 };
 
-const aggregateChainBalances = (
+export const aggregateChainBalances = (
   balances: ChainAmounts,
   gasWarning: Record<string, { insufficient: boolean }>,
 ): ChainBalance[] => {
@@ -186,17 +186,12 @@ const ChainBalanceRow = ({ chain }: ChainBalanceRowProps) => (
 );
 
 type FundRecoveryChainBalancesProps = {
-  scanResult: FundRecoveryScanResponse;
+  chainBalances: ChainBalance[];
 };
 
 export const FundRecoveryChainBalances = ({
-  scanResult,
+  chainBalances,
 }: FundRecoveryChainBalancesProps) => {
-  const chainBalances = useMemo(
-    () => aggregateChainBalances(scanResult.balances, scanResult.gas_warning),
-    [scanResult.balances, scanResult.gas_warning],
-  );
-
   const hasBalances = chainBalances.length > 0;
 
   return (
@@ -242,7 +237,7 @@ export const FundRecoveryChainBalances = ({
 };
 
 type FundRecoveryWithdrawFormProps = {
-  scanResult: FundRecoveryScanResponse;
+  chainBalances: ChainBalance[];
   destinationAddress: string;
   isExecuting: boolean;
   onDestinationAddressChange: (address: string) => void;
@@ -250,17 +245,12 @@ type FundRecoveryWithdrawFormProps = {
 };
 
 export const FundRecoveryWithdrawForm = ({
-  scanResult,
+  chainBalances,
   destinationAddress,
   isExecuting,
   onDestinationAddressChange,
   onRecover,
 }: FundRecoveryWithdrawFormProps) => {
-  const chainBalances = useMemo(
-    () => aggregateChainBalances(scanResult.balances, scanResult.gas_warning),
-    [scanResult.balances, scanResult.gas_warning],
-  );
-
   const hasBalances = chainBalances.length > 0;
 
   const isAddressValid = isValidEvmAddress(destinationAddress);
@@ -309,4 +299,3 @@ export const FundRecoveryWithdrawForm = ({
     </Flex>
   );
 };
-
