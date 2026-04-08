@@ -176,7 +176,11 @@ export const FundRecovery = () => {
               <Text className="text-sm">
                 You are about to withdraw all recoverable funds to:
               </Text>
-              <Text strong className="text-sm" style={{ wordBreak: 'break-all' }}>
+              <Text
+                strong
+                className="text-sm"
+                style={{ wordBreak: 'break-all' }}
+              >
                 {destinationAddress}
               </Text>
               <Text type="secondary" className="text-sm">

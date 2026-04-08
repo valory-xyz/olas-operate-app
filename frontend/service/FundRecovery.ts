@@ -18,7 +18,8 @@ const scan = async (
     const text = await res.text();
     let errorMsg: string;
     try {
-      errorMsg = JSON.parse(text)?.error ?? 'Failed to scan for recoverable funds';
+      errorMsg =
+        JSON.parse(text)?.error ?? 'Failed to scan for recoverable funds';
     } catch {
       errorMsg = 'Failed to scan for recoverable funds';
     }

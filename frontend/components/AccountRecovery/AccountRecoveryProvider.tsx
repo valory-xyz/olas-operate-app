@@ -143,7 +143,8 @@ export const AccountRecoveryProvider = ({
       queryKey: REACT_QUERY_KEYS.EXTENDED_WALLET_KEY,
       queryFn: async ({ signal }) =>
         await RecoveryService.getExtendedWallet(signal),
-      enabled: !canFetchRecoveryFundingRequirements && isOnline && isUserLoggedIn,
+      enabled:
+        !canFetchRecoveryFundingRequirements && isOnline && isUserLoggedIn,
       select: (data) => data[0],
       refetchOnWindowFocus: false,
       refetchOnReconnect: false,

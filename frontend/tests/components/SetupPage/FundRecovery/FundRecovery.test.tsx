@@ -274,7 +274,9 @@ describe('FundRecovery', () => {
       render(<FundRecovery />);
       fireEvent.click(screen.getByTestId('scan-btn'));
       fireEvent.click(screen.getByTestId('recover-btn'));
-      fireEvent.click(screen.getByRole('button', { name: 'Confirm Withdrawal' }));
+      fireEvent.click(
+        screen.getByRole('button', { name: 'Confirm Withdrawal' }),
+      );
 
       expect(screen.getByTestId('result-modal')).toBeInTheDocument();
     });
@@ -283,7 +285,9 @@ describe('FundRecovery', () => {
       render(<FundRecovery />);
       fireEvent.click(screen.getByTestId('scan-btn'));
       fireEvent.click(screen.getByTestId('recover-btn'));
-      fireEvent.click(screen.getByRole('button', { name: 'Confirm Withdrawal' }));
+      fireEvent.click(
+        screen.getByRole('button', { name: 'Confirm Withdrawal' }),
+      );
 
       expect(mockMutateExecuteForExecute).toHaveBeenCalledTimes(1);
     });
@@ -331,7 +335,9 @@ describe('FundRecovery', () => {
       // Open confirmation modal
       fireEvent.click(screen.getByTestId('recover-btn'));
       // Confirm to open result modal
-      fireEvent.click(screen.getByRole('button', { name: 'Confirm Withdrawal' }));
+      fireEvent.click(
+        screen.getByRole('button', { name: 'Confirm Withdrawal' }),
+      );
       expect(screen.getByTestId('result-modal')).toBeInTheDocument();
 
       // Click Try Again
@@ -371,7 +377,9 @@ describe('FundRecovery', () => {
       render(<FundRecovery />);
       fireEvent.click(screen.getByTestId('scan-btn'));
       fireEvent.click(screen.getByTestId('recover-btn'));
-      fireEvent.click(screen.getByRole('button', { name: 'Confirm Withdrawal' }));
+      fireEvent.click(
+        screen.getByRole('button', { name: 'Confirm Withdrawal' }),
+      );
 
       expect(screen.getByTestId('result-modal')).toBeInTheDocument();
 

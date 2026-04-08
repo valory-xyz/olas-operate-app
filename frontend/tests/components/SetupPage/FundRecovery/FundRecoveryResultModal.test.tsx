@@ -106,7 +106,13 @@ describe('FundRecoveryResultModal', () => {
     });
 
     it('renders a close button while executing', () => {
-      render(<FundRecoveryResultModal {...defaultProps} isExecuting={true} onClose={jest.fn()} />);
+      render(
+        <FundRecoveryResultModal
+          {...defaultProps}
+          isExecuting={true}
+          onClose={jest.fn()}
+        />,
+      );
       expect(screen.getByTestId('modal-close')).toBeInTheDocument();
     });
   });
@@ -232,7 +238,9 @@ describe('FundRecoveryResultModal', () => {
           isExecuting={false}
         />,
       );
-      expect(screen.getByText(/Chain 100: transfer failed/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/Chain 100: transfer failed/i),
+      ).toBeInTheDocument();
     });
   });
 

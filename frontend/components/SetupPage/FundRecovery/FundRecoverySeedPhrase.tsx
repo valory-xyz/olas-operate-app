@@ -73,7 +73,10 @@ export const FundRecoverySeedPhrase = ({
         onWordsChange(updated);
 
         // Focus the next unfilled input after paste
-        const targetWordIndex = Math.min(index + pastedWords.length, WORD_COUNT - 1);
+        const targetWordIndex = Math.min(
+          index + pastedWords.length,
+          WORD_COUNT - 1,
+        );
         const targetGridPos = ORDERED_INDICES.indexOf(targetWordIndex);
         if (targetGridPos >= 0) inputRefs.current[targetGridPos]?.focus();
       }

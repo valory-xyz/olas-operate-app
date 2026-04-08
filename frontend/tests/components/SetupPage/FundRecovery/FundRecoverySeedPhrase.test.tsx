@@ -30,7 +30,8 @@ jest.mock('ethers', () => ({
   ethers: {
     utils: {
       isValidMnemonic: jest.fn((phrase: string) => {
-        const VALID = 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about';
+        const VALID =
+          'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about';
         return phrase.trim() === VALID;
       }),
     },
