@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { act } from 'react';
 
 // --- Import under test ---
@@ -15,16 +15,25 @@ jest.mock(
 
 const mockStoreGet = jest.fn();
 const mockStoreSet = jest.fn();
-const mockUseElectronApi = jest.fn();
-jest.mock('../../../../hooks', () => ({
-  useElectronApi: (...args: unknown[]) => mockUseElectronApi(...args),
-}));
+const mockDownloadUpdate = jest.fn();
+const mockCancelDownload = jest.fn();
+const mockQuitAndInstall = jest.fn();
+const mockOnDownloadProgress = jest.fn();
+const mockOnUpdateDownloaded = jest.fn();
+const mockOnUpdateError = jest.fn();
 
-// useToggle mock — we control the open state and capture toggleOpen calls
-let mockOpen: boolean;
-const mockToggleOpen = jest.fn();
-jest.mock('usehooks-ts', () => ({
-  useToggle: jest.fn(() => [mockOpen, mockToggleOpen]),
+jest.mock('../../../../hooks', () => ({
+  useElectronApi: () => ({
+    store: { get: mockStoreGet, set: mockStoreSet },
+    updates: {
+      downloadUpdate: mockDownloadUpdate,
+      cancelDownload: mockCancelDownload,
+      quitAndInstall: mockQuitAndInstall,
+      onDownloadProgress: mockOnDownloadProgress,
+      onUpdateDownloaded: mockOnUpdateDownloaded,
+      onUpdateError: mockOnUpdateError,
+    },
+  }),
 }));
 
 jest.mock('next/image', () => {
@@ -36,19 +45,33 @@ jest.mock('next/image', () => {
   return { __esModule: true, default: MockImage };
 });
 
+jest.mock('react-markdown', () => {
+  const MockMarkdown = ({ children }: { children: string }) => (
+    <div data-testid="markdown">{children}</div>
+  );
+  MockMarkdown.displayName = 'MockMarkdown';
+  return { __esModule: true, default: MockMarkdown };
+});
+
 jest.mock('../../../../components/ui', () => ({
   Modal: (props: {
-    title: string;
-    description: string;
-    footer: React.ReactNode;
-    header: React.ReactNode;
-    onCancel: () => void;
+    title?: string;
+    description?: React.ReactNode;
+    header?: React.ReactNode;
+    onCancel?: () => void;
+    open?: boolean;
+    children?: React.ReactNode;
   }) => (
     <div data-testid="modal">
-      <div data-testid="modal-header">{props.header}</div>
-      <div data-testid="modal-title">{props.title}</div>
-      <div data-testid="modal-description">{props.description}</div>
-      <div data-testid="modal-footer">{props.footer}</div>
+      {props.header && (
+        <div data-testid="modal-header">{props.header}</div>
+      )}
+      {props.title && (
+        <div data-testid="modal-title">{props.title}</div>
+      )}
+      {props.description && (
+        <div data-testid="modal-description">{props.description}</div>
+      )}
     </div>
   ),
 }));
@@ -56,7 +79,7 @@ jest.mock('../../../../components/ui', () => ({
 // --- Helpers ---
 
 const defaultAppStatusOutdated = {
-  data: { isOutdated: true, latestTag: 'v2.0.0' },
+  data: { isOutdated: true, latestTag: 'v2.0.0', releaseNotes: null },
   isFetched: true,
 };
 
@@ -67,114 +90,63 @@ describe('UpdateAvailableModal', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockOpen = false;
     mockStoreGet.mockResolvedValue(undefined);
     mockUseAppStatus.mockReturnValue(defaultAppStatusOutdated);
-    mockUseElectronApi.mockReturnValue({
-      store: { get: mockStoreGet, set: mockStoreSet },
-    });
+    mockDownloadUpdate.mockResolvedValue(undefined);
+    mockQuitAndInstall.mockResolvedValue(undefined);
     windowOpenSpy = jest.spyOn(window, 'open').mockImplementation(() => null);
+    // Default: all listeners return cleanup fns
+    mockOnDownloadProgress.mockReturnValue(() => {});
+    mockOnUpdateDownloaded.mockReturnValue(() => {});
+    mockOnUpdateError.mockReturnValue(() => {});
   });
 
   afterEach(() => {
     windowOpenSpy.mockRestore();
   });
 
-  describe('returns null when modal is not open', () => {
-    it('renders nothing when open is false', () => {
-      mockOpen = false;
-      const { container } = render(<UpdateAvailableModal />);
+  describe('returns null when not open', () => {
+    it('renders nothing when isOpen is false', () => {
+      const { container } = render(
+        <UpdateAvailableModal isOpen={false} onClose={() => {}} />,
+      );
       expect(container.innerHTML).toBe('');
     });
   });
 
-  describe('useEffect logic', () => {
+  describe('auto-open useEffect', () => {
     it('does nothing when isFetched is false', async () => {
       mockUseAppStatus.mockReturnValue({
-        data: { isOutdated: true, latestTag: 'v2.0.0' },
+        data: { isOutdated: true, latestTag: 'v2.0.0', releaseNotes: null },
         isFetched: false,
       });
 
       await act(async () => {
-        render(<UpdateAvailableModal />);
+        render(<UpdateAvailableModal isOpen={false} onClose={() => {}} />);
       });
 
       expect(mockStoreGet).not.toHaveBeenCalled();
-      expect(mockToggleOpen).not.toHaveBeenCalled();
-    });
-
-    it('does nothing when latestTag is null', async () => {
-      mockUseAppStatus.mockReturnValue({
-        data: { isOutdated: true, latestTag: null },
-        isFetched: true,
-      });
-
-      await act(async () => {
-        render(<UpdateAvailableModal />);
-      });
-
-      expect(mockStoreGet).not.toHaveBeenCalled();
-      expect(mockToggleOpen).not.toHaveBeenCalled();
     });
 
     it('does nothing when data.isOutdated is false', async () => {
       mockUseAppStatus.mockReturnValue({
-        data: { isOutdated: false, latestTag: 'v2.0.0' },
+        data: { isOutdated: false, latestTag: 'v2.0.0', releaseNotes: null },
         isFetched: true,
       });
 
       await act(async () => {
-        render(<UpdateAvailableModal />);
+        render(<UpdateAvailableModal isOpen={false} onClose={() => {}} />);
       });
 
       expect(mockStoreGet).not.toHaveBeenCalled();
-      expect(mockToggleOpen).not.toHaveBeenCalled();
     });
 
-    it('does nothing when store.get is not available', async () => {
-      mockUseElectronApi.mockReturnValue({
-        store: { get: undefined, set: undefined },
-      });
-
+    it('reads store when update is available', async () => {
       await act(async () => {
-        render(<UpdateAvailableModal />);
-      });
-
-      expect(mockStoreGet).not.toHaveBeenCalled();
-      expect(mockToggleOpen).not.toHaveBeenCalled();
-    });
-
-    it('opens modal when store returns a different dismissed version', async () => {
-      mockStoreGet.mockResolvedValue('v1.0.0'); // different from v2.0.0
-
-      await act(async () => {
-        render(<UpdateAvailableModal />);
+        render(<UpdateAvailableModal isOpen={false} onClose={() => {}} />);
       });
 
       expect(mockStoreGet).toHaveBeenCalledWith('updateAvailableKnownVersion');
-      expect(mockToggleOpen).toHaveBeenCalled();
-    });
-
-    it('opens modal when store returns undefined (never dismissed)', async () => {
-      mockStoreGet.mockResolvedValue(undefined);
-
-      await act(async () => {
-        render(<UpdateAvailableModal />);
-      });
-
-      expect(mockStoreGet).toHaveBeenCalledWith('updateAvailableKnownVersion');
-      expect(mockToggleOpen).toHaveBeenCalled();
-    });
-
-    it('does NOT open modal when store returns the same version as latestTag', async () => {
-      mockStoreGet.mockResolvedValue('v2.0.0'); // same as latestTag
-
-      await act(async () => {
-        render(<UpdateAvailableModal />);
-      });
-
-      expect(mockStoreGet).toHaveBeenCalledWith('updateAvailableKnownVersion');
-      expect(mockToggleOpen).not.toHaveBeenCalled();
     });
 
     it('logs console.error when store.get rejects', async () => {
@@ -186,7 +158,7 @@ describe('UpdateAvailableModal', () => {
         .mockImplementation(() => {});
 
       await act(async () => {
-        render(<UpdateAvailableModal />);
+        render(<UpdateAvailableModal isOpen={false} onClose={() => {}} />);
       });
 
       expect(consoleSpy).toHaveBeenCalledWith(
@@ -198,56 +170,92 @@ describe('UpdateAvailableModal', () => {
     });
   });
 
-  describe('render when open', () => {
-    beforeEach(() => {
-      mockOpen = true;
+  describe('IPC listener registration and cleanup', () => {
+    it('registers onDownloadProgress, onUpdateDownloaded, and onUpdateError listeners on mount', () => {
+      render(<UpdateAvailableModal isOpen={true} onClose={() => {}} />);
+
+      expect(mockOnDownloadProgress).toHaveBeenCalledTimes(1);
+      expect(mockOnUpdateDownloaded).toHaveBeenCalledTimes(1);
+      expect(mockOnUpdateError).toHaveBeenCalledTimes(1);
     });
 
-    it('renders modal with "Update Available" title', () => {
-      render(<UpdateAvailableModal />);
-      expect(screen.getByTestId('modal')).toBeInTheDocument();
+    it('calls cleanup functions on unmount', () => {
+      const cleanupProgress = jest.fn();
+      const cleanupDownloaded = jest.fn();
+      const cleanupError = jest.fn();
+      mockOnDownloadProgress.mockReturnValue(cleanupProgress);
+      mockOnUpdateDownloaded.mockReturnValue(cleanupDownloaded);
+      mockOnUpdateError.mockReturnValue(cleanupError);
+
+      const { unmount } = render(
+        <UpdateAvailableModal isOpen={true} onClose={() => {}} />,
+      );
+
+      unmount();
+
+      expect(cleanupProgress).toHaveBeenCalledTimes(1);
+      expect(cleanupDownloaded).toHaveBeenCalledTimes(1);
+      expect(cleanupError).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('available state', () => {
+    it('renders Update Available title', () => {
+      render(<UpdateAvailableModal isOpen={true} onClose={() => {}} />);
       expect(screen.getByTestId('modal-title')).toHaveTextContent(
         'Update Available',
       );
     });
 
-    it('renders "Update Later" button', () => {
-      render(<UpdateAvailableModal />);
+    it('renders Pearl image', () => {
+      render(<UpdateAvailableModal isOpen={true} onClose={() => {}} />);
+      expect(screen.getByAltText('Pearl')).toBeInTheDocument();
+    });
+
+    it('renders Update Later button', () => {
+      render(<UpdateAvailableModal isOpen={true} onClose={() => {}} />);
       expect(
         screen.getByRole('button', { name: 'Update Later' }),
       ).toBeInTheDocument();
     });
 
-    it('renders "Download on pearl.you" button', () => {
-      render(<UpdateAvailableModal />);
+    it('renders Update & Relaunch button', () => {
+      render(<UpdateAvailableModal isOpen={true} onClose={() => {}} />);
       expect(
-        screen.getByRole('button', { name: 'Download on pearl.you' }),
+        screen.getByRole('button', { name: 'Update & Relaunch' }),
       ).toBeInTheDocument();
     });
 
-    it('renders Pearl image with correct attributes', () => {
-      render(<UpdateAvailableModal />);
-      const img = screen.getByAltText('Pearl');
-      expect(img).toHaveAttribute('src', '/pearl-with-gradient.png');
-      expect(img).toHaveAttribute('width', '40');
-      expect(img).toHaveAttribute('height', '40');
+    it('renders release notes accordion when releaseNotes is provided', () => {
+      mockUseAppStatus.mockReturnValue({
+        data: {
+          isOutdated: true,
+          latestTag: 'v2.0.0',
+          releaseNotes: '## Changelog\n- New feature',
+        },
+        isFetched: true,
+      });
+
+      render(<UpdateAvailableModal isOpen={true} onClose={() => {}} />);
+
+      expect(
+        screen.getByText("What's new in this version"),
+      ).toBeInTheDocument();
     });
 
-    it('renders description text', () => {
-      render(<UpdateAvailableModal />);
-      expect(screen.getByTestId('modal-description')).toHaveTextContent(
-        'An updated version of Pearl just released.',
-      );
+    it('does not render accordion when releaseNotes is null', () => {
+      render(<UpdateAvailableModal isOpen={true} onClose={() => {}} />);
+
+      expect(
+        screen.queryByText("What's new in this version"),
+      ).not.toBeInTheDocument();
     });
   });
 
-  describe('onUpdateLater', () => {
-    beforeEach(() => {
-      mockOpen = true;
-    });
-
-    it('calls store.set with latestTag and toggles modal closed', () => {
-      render(<UpdateAvailableModal />);
+  describe('Update Later button', () => {
+    it('calls store.set with latestTag and onClose', () => {
+      const mockOnClose = jest.fn();
+      render(<UpdateAvailableModal isOpen={true} onClose={mockOnClose} />);
 
       fireEvent.click(screen.getByRole('button', { name: 'Update Later' }));
 
@@ -255,38 +263,175 @@ describe('UpdateAvailableModal', () => {
         'updateAvailableKnownVersion',
         'v2.0.0',
       );
-      expect(mockToggleOpen).toHaveBeenCalled();
-    });
-
-    it('does not call store.set when latestTag is null', () => {
-      mockUseAppStatus.mockReturnValue({
-        data: { isOutdated: true, latestTag: null },
-        isFetched: true,
-      });
-
-      render(<UpdateAvailableModal />);
-
-      fireEvent.click(screen.getByRole('button', { name: 'Update Later' }));
-
-      expect(mockStoreSet).not.toHaveBeenCalled();
-      expect(mockToggleOpen).toHaveBeenCalled();
+      expect(mockOnClose).toHaveBeenCalledTimes(1);
     });
   });
 
-  describe('onDownload', () => {
-    beforeEach(() => {
-      mockOpen = true;
+  describe('Update & Relaunch button', () => {
+    it('calls downloadUpdate and transitions to downloading state', async () => {
+      render(<UpdateAvailableModal isOpen={true} onClose={() => {}} />);
+
+      fireEvent.click(screen.getByRole('button', { name: 'Update & Relaunch' }));
+
+      expect(mockDownloadUpdate).toHaveBeenCalledTimes(1);
+      await waitFor(() => {
+        expect(screen.getByTestId('modal-title')).toHaveTextContent(
+          'Downloading Update',
+        );
+      });
+    });
+  });
+
+  describe('downloading state', () => {
+    it('renders Downloading Update title after clicking Update & Relaunch', async () => {
+      render(<UpdateAvailableModal isOpen={true} onClose={() => {}} />);
+      fireEvent.click(screen.getByRole('button', { name: 'Update & Relaunch' }));
+
+      await waitFor(() => {
+        expect(screen.getByTestId('modal-title')).toHaveTextContent(
+          'Downloading Update',
+        );
+      });
     });
 
-    it('calls window.open with DOWNLOAD_URL and toggles modal closed', () => {
-      render(<UpdateAvailableModal />);
+    it('renders Cancel button in downloading state', async () => {
+      render(<UpdateAvailableModal isOpen={true} onClose={() => {}} />);
+      fireEvent.click(screen.getByRole('button', { name: 'Update & Relaunch' }));
+
+      await waitFor(() => {
+        expect(
+          screen.getByRole('button', { name: 'Cancel' }),
+        ).toBeInTheDocument();
+      });
+    });
+
+    it('clicking Cancel calls cancelDownload and returns to available state', async () => {
+      render(<UpdateAvailableModal isOpen={true} onClose={() => {}} />);
+      fireEvent.click(screen.getByRole('button', { name: 'Update & Relaunch' }));
+
+      await waitFor(() =>
+        screen.getByRole('button', { name: 'Cancel' }),
+      );
+
+      fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+
+      expect(mockCancelDownload).toHaveBeenCalledTimes(1);
+      await waitFor(() => {
+        expect(screen.getByTestId('modal-title')).toHaveTextContent(
+          'Update Available',
+        );
+      });
+    });
+
+    it('calls quitAndInstall when onUpdateDownloaded fires', async () => {
+      let capturedDownloadedCb: (() => void) | null = null;
+      mockOnUpdateDownloaded.mockImplementation((cb: () => void) => {
+        capturedDownloadedCb = cb;
+        return () => {};
+      });
+
+      render(<UpdateAvailableModal isOpen={true} onClose={() => {}} />);
+      fireEvent.click(screen.getByRole('button', { name: 'Update & Relaunch' }));
+
+      await act(async () => {
+        capturedDownloadedCb?.();
+      });
+
+      expect(mockQuitAndInstall).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('failed state', () => {
+    it('transitions to failed state when onUpdateError fires', async () => {
+      let capturedErrorCb: (() => void) | null = null;
+      mockOnUpdateError.mockImplementation((cb: () => void) => {
+        capturedErrorCb = cb;
+        return () => {};
+      });
+
+      render(<UpdateAvailableModal isOpen={true} onClose={() => {}} />);
+      fireEvent.click(screen.getByRole('button', { name: 'Update & Relaunch' }));
+
+      await act(async () => {
+        capturedErrorCb?.();
+      });
+
+      await waitFor(() => {
+        expect(screen.getByTestId('modal-title')).toHaveTextContent(
+          'Download Failed',
+        );
+      });
+    });
+
+    it('renders Try Again button in failed state', async () => {
+      let capturedErrorCb: (() => void) | null = null;
+      mockOnUpdateError.mockImplementation((cb: () => void) => {
+        capturedErrorCb = cb;
+        return () => {};
+      });
+
+      render(<UpdateAvailableModal isOpen={true} onClose={() => {}} />);
+      fireEvent.click(screen.getByRole('button', { name: 'Update & Relaunch' }));
+
+      await act(async () => {
+        capturedErrorCb?.();
+      });
+
+      await waitFor(() =>
+        screen.getByRole('button', { name: 'Try Again' }),
+      );
+      expect(screen.getByRole('button', { name: 'Try Again' })).toBeInTheDocument();
+    });
+
+    it('Try Again re-invokes downloadUpdate and returns to downloading state', async () => {
+      let capturedErrorCb: (() => void) | null = null;
+      mockOnUpdateError.mockImplementation((cb: () => void) => {
+        capturedErrorCb = cb;
+        return () => {};
+      });
+
+      render(<UpdateAvailableModal isOpen={true} onClose={() => {}} />);
+      fireEvent.click(screen.getByRole('button', { name: 'Update & Relaunch' }));
+
+      await act(async () => {
+        capturedErrorCb?.();
+      });
+
+      await waitFor(() => screen.getByRole('button', { name: 'Try Again' }));
+
+      fireEvent.click(screen.getByRole('button', { name: 'Try Again' }));
+
+      expect(mockDownloadUpdate).toHaveBeenCalledTimes(2);
+      await waitFor(() => {
+        expect(screen.getByTestId('modal-title')).toHaveTextContent(
+          'Downloading Update',
+        );
+      });
+    });
+
+    it('renders DOWNLOAD_URL fallback button in failed state', async () => {
+      let capturedErrorCb: (() => void) | null = null;
+      mockOnUpdateError.mockImplementation((cb: () => void) => {
+        capturedErrorCb = cb;
+        return () => {};
+      });
+
+      render(<UpdateAvailableModal isOpen={true} onClose={() => {}} />);
+      fireEvent.click(screen.getByRole('button', { name: 'Update & Relaunch' }));
+
+      await act(async () => {
+        capturedErrorCb?.();
+      });
+
+      await waitFor(() =>
+        screen.getByRole('button', { name: 'Download from pearl.you' }),
+      );
 
       fireEvent.click(
-        screen.getByRole('button', { name: 'Download on pearl.you' }),
+        screen.getByRole('button', { name: 'Download from pearl.you' }),
       );
 
       expect(windowOpenSpy).toHaveBeenCalledWith(DOWNLOAD_URL, '_blank');
-      expect(mockToggleOpen).toHaveBeenCalled();
     });
   });
 });

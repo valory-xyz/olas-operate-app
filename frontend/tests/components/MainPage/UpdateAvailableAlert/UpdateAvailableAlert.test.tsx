@@ -1,8 +1,7 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 
 // --- Import under test ---
 import { UpdateAvailableAlert } from '../../../../components/MainPage/UpdateAvailableAlert/UpdateAvailableAlert';
-import { DOWNLOAD_URL } from '../../../../constants/urls';
 
 // --- Mocks ---
 
@@ -13,17 +12,11 @@ jest.mock(
   () => ({ useAppStatus: (...args: unknown[]) => mockUseAppStatus(...args) }),
 );
 
-jest.mock('../../../../components/ui', () => ({
-  Alert: (props: { message: React.ReactNode; type: string }) => (
-    <div data-testid="alert" data-type={props.type}>
-      {props.message}
-    </div>
-  ),
-}));
-
 // --- Tests ---
 
 describe('UpdateAvailableAlert', () => {
+  const mockOnOpen = jest.fn();
+
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -42,7 +35,7 @@ describe('UpdateAvailableAlert', () => {
         .spyOn(console, 'error')
         .mockImplementation(() => {});
 
-      const { container } = render(<UpdateAvailableAlert />);
+      const { container } = render(<UpdateAvailableAlert onOpen={mockOnOpen} />);
 
       expect(container.innerHTML).toBe('');
       expect(consoleSpy).toHaveBeenCalledWith(
@@ -61,7 +54,7 @@ describe('UpdateAvailableAlert', () => {
         error: null,
       });
 
-      const { container } = render(<UpdateAvailableAlert />);
+      const { container } = render(<UpdateAvailableAlert onOpen={mockOnOpen} />);
       expect(container.innerHTML).toBe('');
     });
 
@@ -73,52 +66,47 @@ describe('UpdateAvailableAlert', () => {
         error: null,
       });
 
-      const { container } = render(<UpdateAvailableAlert />);
+      const { container } = render(<UpdateAvailableAlert onOpen={mockOnOpen} />);
       expect(container.innerHTML).toBe('');
     });
 
     it("shouldn't show alert when data.isOutdated is false", () => {
       mockUseAppStatus.mockReturnValue({
-        data: { isOutdated: false, latestTag: 'v1.0.0' },
+        data: { isOutdated: false, latestTag: 'v1.0.0', releaseNotes: null },
         isFetched: true,
         isError: false,
         error: null,
       });
 
-      const { container } = render(<UpdateAvailableAlert />);
+      const { container } = render(<UpdateAvailableAlert onOpen={mockOnOpen} />);
       expect(container.innerHTML).toBe('');
     });
   });
 
-  describe('renders alert when update is available', () => {
+  describe('renders card when update is available', () => {
     beforeEach(() => {
       mockUseAppStatus.mockReturnValue({
-        data: { isOutdated: true, latestTag: 'v2.0.0' },
+        data: { isOutdated: true, latestTag: 'v2.0.0', releaseNotes: null },
         isFetched: true,
         isError: false,
         error: null,
       });
     });
 
-    it('renders Alert with "Pearl Update Available" text', () => {
-      render(<UpdateAvailableAlert />);
-
-      expect(screen.getByTestId('alert')).toBeInTheDocument();
-      expect(screen.getByText('Pearl Update Available')).toBeInTheDocument();
+    it('renders "Update Pearl Now" text', () => {
+      render(<UpdateAvailableAlert onOpen={mockOnOpen} />);
+      expect(screen.getByText('Update Pearl Now')).toBeInTheDocument();
     });
 
-    it('renders download link with DOWNLOAD_URL href', () => {
-      render(<UpdateAvailableAlert />);
-
-      const link = screen.getByRole('link', { name: /download/i });
-      expect(link).toHaveAttribute('href', DOWNLOAD_URL);
+    it('renders a button (not a static link)', () => {
+      render(<UpdateAvailableAlert onOpen={mockOnOpen} />);
+      expect(screen.getByRole('button')).toBeInTheDocument();
     });
 
-    it('renders download link with target="_blank"', () => {
-      render(<UpdateAvailableAlert />);
-
-      const link = screen.getByRole('link', { name: /download/i });
-      expect(link).toHaveAttribute('target', '_blank');
+    it('calls onOpen when clicked', () => {
+      render(<UpdateAvailableAlert onOpen={mockOnOpen} />);
+      fireEvent.click(screen.getByRole('button'));
+      expect(mockOnOpen).toHaveBeenCalledTimes(1);
     });
   });
 });
