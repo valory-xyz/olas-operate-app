@@ -1,20 +1,20 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from "@testing-library/react";
 
-import { FundRecoveryResultModal } from '../../../../components/SetupPage/FundRecovery/FundRecoveryResultModal';
-import { SETUP_SCREEN } from '../../../../constants';
-import { FundRecoveryExecuteResponse } from '../../../../types/FundRecovery';
+import { FundRecoveryResultModal } from "../../../../components/SetupPage/FundRecovery/FundRecoveryResultModal";
+import { SETUP_SCREEN } from "../../../../constants";
+import { FundRecoveryExecuteResponse } from "../../../../types/FundRecovery";
 
 const mockGoto = jest.fn();
-jest.mock('../../../../hooks', () => ({
+jest.mock("../../../../hooks", () => ({
   useSetup: () => ({ goto: mockGoto }),
 }));
 
 const mockToggleSupportModal = jest.fn();
-jest.mock('../../../../context/SupportModalProvider', () => ({
+jest.mock("../../../../context/SupportModalProvider", () => ({
   useSupportModal: () => ({ toggleSupportModal: mockToggleSupportModal }),
 }));
 
-jest.mock('../../../../components/ui', () => ({
+jest.mock("../../../../components/ui", () => ({
   Modal: ({
     open,
     title,
@@ -52,16 +52,16 @@ jest.mock('../../../../components/ui', () => ({
 }));
 
 const DESTINATION_ADDRESS =
-  '0x1234567890AbcdEF1234567890aBcdef12345678' as `0x${string}`;
+  "0x1234567890AbcdEF1234567890aBcdef12345678" as `0x${string}`;
 
 const SUCCESS_RESULT: FundRecoveryExecuteResponse = {
   success: true,
   partial_failure: false,
   total_funds_moved: {
-    '100': {
+    "100": {
       [DESTINATION_ADDRESS]: {
-        ['0x0000000000000000000000000000000000000000' as `0x${string}`]:
-          '1000000000000000000',
+        ["0x0000000000000000000000000000000000000000" as `0x${string}`]:
+          "1000000000000000000",
       },
     },
   },
@@ -72,7 +72,7 @@ const PARTIAL_FAILURE_RESULT: FundRecoveryExecuteResponse = {
   success: false,
   partial_failure: true,
   total_funds_moved: {},
-  errors: ['Chain 100: transfer failed'],
+  errors: ["Chain 100: transfer failed"],
 };
 
 const defaultProps = {
@@ -84,34 +84,40 @@ const defaultProps = {
   onClose: jest.fn(),
 };
 
-describe('FundRecoveryResultModal', () => {
+describe("FundRecoveryResultModal", () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  describe('when isExecuting is true', () => {
+  describe("when isExecuting is true", () => {
     it('renders the "Withdrawal in Progress" modal', () => {
       render(<FundRecoveryResultModal {...defaultProps} isExecuting={true} />);
-      expect(screen.getByTestId('modal')).toBeInTheDocument();
-      expect(screen.getByText('Withdrawal in Progress')).toBeInTheDocument();
+      expect(screen.getByTestId("modal")).toBeInTheDocument();
+      expect(screen.getByText("Withdrawal in Progress")).toBeInTheDocument();
     });
 
-    it('does not render action buttons while executing', () => {
+    it("does not render action buttons while executing", () => {
       render(<FundRecoveryResultModal {...defaultProps} isExecuting={true} />);
       expect(
-        screen.queryByRole('button', {
+        screen.queryByRole("button", {
           name: /Done|Try Again|Contact Support/i,
         }),
       ).not.toBeInTheDocument();
     });
 
-    it('renders a close button while executing', () => {
-      render(<FundRecoveryResultModal {...defaultProps} isExecuting={true} onClose={jest.fn()} />);
-      expect(screen.getByTestId('modal-close')).toBeInTheDocument();
+    it("renders a close button while executing", () => {
+      render(
+        <FundRecoveryResultModal
+          {...defaultProps}
+          isExecuting={true}
+          onClose={jest.fn()}
+        />,
+      );
+      expect(screen.getByTestId("modal-close")).toBeInTheDocument();
     });
   });
 
-  describe('when result is successful', () => {
+  describe("when result is successful", () => {
     it('renders the "Withdrawal Complete!" modal', () => {
       render(
         <FundRecoveryResultModal
@@ -120,10 +126,10 @@ describe('FundRecoveryResultModal', () => {
           isExecuting={false}
         />,
       );
-      expect(screen.getByText('Withdrawal Complete!')).toBeInTheDocument();
+      expect(screen.getByText("Withdrawal Complete!")).toBeInTheDocument();
     });
 
-    it('renders the Done button', () => {
+    it("renders the Done button", () => {
       render(
         <FundRecoveryResultModal
           {...defaultProps}
@@ -131,10 +137,10 @@ describe('FundRecoveryResultModal', () => {
           isExecuting={false}
         />,
       );
-      expect(screen.getByRole('button', { name: 'Done' })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Done" })).toBeInTheDocument();
     });
 
-    it('navigates to Welcome screen when Done is clicked', () => {
+    it("navigates to Welcome screen when Done is clicked", () => {
       render(
         <FundRecoveryResultModal
           {...defaultProps}
@@ -142,64 +148,64 @@ describe('FundRecoveryResultModal', () => {
           isExecuting={false}
         />,
       );
-      fireEvent.click(screen.getByRole('button', { name: 'Done' }));
+      fireEvent.click(screen.getByRole("button", { name: "Done" }));
       expect(mockGoto).toHaveBeenCalledWith(SETUP_SCREEN.Welcome);
     });
   });
 
-  describe('when there is an error', () => {
+  describe("when there is an error", () => {
     it('renders the "Withdrawal Failed" modal on network error', () => {
       render(
         <FundRecoveryResultModal
           {...defaultProps}
-          error={new Error('Network error')}
+          error={new Error("Network error")}
           isExecuting={false}
         />,
       );
-      expect(screen.getByText('Withdrawal Failed')).toBeInTheDocument();
+      expect(screen.getByText("Withdrawal Failed")).toBeInTheDocument();
     });
 
-    it('renders the Try Again button', () => {
+    it("renders the Try Again button", () => {
       render(
         <FundRecoveryResultModal
           {...defaultProps}
-          error={new Error('Network error')}
+          error={new Error("Network error")}
           isExecuting={false}
         />,
       );
       expect(
-        screen.getByRole('button', { name: 'Try Again' }),
+        screen.getByRole("button", { name: "Try Again" }),
       ).toBeInTheDocument();
     });
 
-    it('calls onTryAgain when Try Again is clicked', () => {
+    it("calls onTryAgain when Try Again is clicked", () => {
       const onTryAgain = jest.fn();
       render(
         <FundRecoveryResultModal
           {...defaultProps}
-          error={new Error('Network error')}
+          error={new Error("Network error")}
           isExecuting={false}
           onTryAgain={onTryAgain}
         />,
       );
-      fireEvent.click(screen.getByRole('button', { name: 'Try Again' }));
+      fireEvent.click(screen.getByRole("button", { name: "Try Again" }));
       expect(onTryAgain).toHaveBeenCalledTimes(1);
     });
 
-    it('calls toggleSupportModal when Contact Support is clicked', () => {
+    it("calls toggleSupportModal when Contact Support is clicked", () => {
       render(
         <FundRecoveryResultModal
           {...defaultProps}
-          error={new Error('Network error')}
+          error={new Error("Network error")}
           isExecuting={false}
         />,
       );
-      fireEvent.click(screen.getByRole('button', { name: 'Contact Support' }));
+      fireEvent.click(screen.getByRole("button", { name: "Contact Support" }));
       expect(mockToggleSupportModal).toHaveBeenCalledTimes(1);
     });
   });
 
-  describe('when result is partial failure', () => {
+  describe("when result is partial failure", () => {
     it('renders the "Withdrawal Failed" modal for partial failure', () => {
       render(
         <FundRecoveryResultModal
@@ -208,10 +214,10 @@ describe('FundRecoveryResultModal', () => {
           isExecuting={false}
         />,
       );
-      expect(screen.getByText('Withdrawal Failed')).toBeInTheDocument();
+      expect(screen.getByText("Withdrawal Failed")).toBeInTheDocument();
     });
 
-    it('shows partial failure message', () => {
+    it("shows partial failure message", () => {
       render(
         <FundRecoveryResultModal
           {...defaultProps}
@@ -224,7 +230,7 @@ describe('FundRecoveryResultModal', () => {
       ).toBeInTheDocument();
     });
 
-    it('shows individual error messages from result.errors', () => {
+    it("shows individual error messages from result.errors", () => {
       render(
         <FundRecoveryResultModal
           {...defaultProps}
@@ -232,12 +238,14 @@ describe('FundRecoveryResultModal', () => {
           isExecuting={false}
         />,
       );
-      expect(screen.getByText(/Chain 100: transfer failed/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/Chain 100: transfer failed/i),
+      ).toBeInTheDocument();
     });
   });
 
-  describe('when modal is closed (open=false)', () => {
-    it('renders nothing when open is false', () => {
+  describe("when modal is closed (open=false)", () => {
+    it("renders nothing when open is false", () => {
       render(
         <FundRecoveryResultModal
           {...defaultProps}
@@ -245,12 +253,12 @@ describe('FundRecoveryResultModal', () => {
           isExecuting={true}
         />,
       );
-      expect(screen.queryByTestId('modal')).not.toBeInTheDocument();
+      expect(screen.queryByTestId("modal")).not.toBeInTheDocument();
     });
   });
 
-  describe('when result is null and no error', () => {
-    it('renders nothing (idle state)', () => {
+  describe("when result is null and no error", () => {
+    it("renders nothing (idle state)", () => {
       render(
         <FundRecoveryResultModal
           {...defaultProps}
@@ -261,41 +269,41 @@ describe('FundRecoveryResultModal', () => {
       );
       // Modal may still render if open=true but content is null
       // The component should return null when not executing and no result/error
-      expect(screen.queryByTestId('modal-title')).not.toBeInTheDocument();
+      expect(screen.queryByTestId("modal-title")).not.toBeInTheDocument();
     });
   });
 
-  describe('onClose ?? onTryAgain fallback', () => {
-    it('calls onTryAgain when X is clicked and onClose is not provided', () => {
+  describe("onClose ?? onTryAgain fallback", () => {
+    it("calls onTryAgain when X is clicked and onClose is not provided", () => {
       const onTryAgain = jest.fn();
       render(
         <FundRecoveryResultModal
           result={null}
-          error={new Error('Network error')}
+          error={new Error("Network error")}
           open={true}
           isExecuting={false}
           onTryAgain={onTryAgain}
           // onClose intentionally omitted
         />,
       );
-      fireEvent.click(screen.getByTestId('modal-close'));
+      fireEvent.click(screen.getByTestId("modal-close"));
       expect(onTryAgain).toHaveBeenCalledTimes(1);
     });
 
-    it('calls onClose (not onTryAgain) when X is clicked and onClose is provided', () => {
+    it("calls onClose (not onTryAgain) when X is clicked and onClose is provided", () => {
       const onTryAgain = jest.fn();
       const onClose = jest.fn();
       render(
         <FundRecoveryResultModal
           result={null}
-          error={new Error('Network error')}
+          error={new Error("Network error")}
           open={true}
           isExecuting={false}
           onTryAgain={onTryAgain}
           onClose={onClose}
         />,
       );
-      fireEvent.click(screen.getByTestId('modal-close'));
+      fireEvent.click(screen.getByTestId("modal-close"));
       expect(onClose).toHaveBeenCalledTimes(1);
       expect(onTryAgain).not.toHaveBeenCalled();
     });

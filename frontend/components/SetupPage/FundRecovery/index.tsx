@@ -1,35 +1,35 @@
-import { Button, Flex, Typography } from 'antd';
-import { useCallback, useMemo, useState } from 'react';
+import { Button, Flex, Typography } from "antd";
+import { useCallback, useMemo, useState } from "react";
 
-import { Alert, Modal } from '@/components/ui';
-import { SETUP_SCREEN } from '@/constants';
-import { useFundRecoveryExecute, useFundRecoveryScan, useSetup } from '@/hooks';
-import { FundRecoveryScanResponse } from '@/types/FundRecovery';
+import { Alert, Modal } from "@/components/ui";
+import { SETUP_SCREEN } from "@/constants";
+import { useFundRecoveryExecute, useFundRecoveryScan, useSetup } from "@/hooks";
+import { FundRecoveryScanResponse } from "@/types/FundRecovery";
 
-import { BackButton } from '../../ui/BackButton';
-import { SetupCard } from '../../ui/SetupCard';
-import { FundRecoveryResultModal } from './FundRecoveryResultModal';
+import { BackButton } from "../../ui/BackButton";
+import { SetupCard } from "../../ui/SetupCard";
+import { FundRecoveryResultModal } from "./FundRecoveryResultModal";
 import {
   aggregateChainBalances,
   FundRecoveryChainBalances,
   FundRecoveryWithdrawForm,
-} from './FundRecoveryScanResults';
-import { FundRecoverySeedPhrase } from './FundRecoverySeedPhrase';
+} from "./FundRecoveryScanResults";
+import { FundRecoverySeedPhrase } from "./FundRecoverySeedPhrase";
 
 const { Text } = Typography;
 
-type WizardStep = 'seedPhrase' | 'chainBalances';
+type WizardStep = "seedPhrase" | "chainBalances";
 
-const createEmptyWords = (): string[] => Array.from({ length: 12 }, () => '');
+const createEmptyWords = (): string[] => Array.from({ length: 12 }, () => "");
 
 export const FundRecovery = () => {
   const { goto } = useSetup();
 
   // Seed phrase state — held only in React component state, never persisted
   const [words, setWords] = useState<string[]>(createEmptyWords());
-  const [destinationAddress, setDestinationAddress] = useState('');
+  const [destinationAddress, setDestinationAddress] = useState("");
 
-  const [step, setStep] = useState<WizardStep>('seedPhrase');
+  const [step, setStep] = useState<WizardStep>("seedPhrase");
   const [scanResult, setScanResult] = useState<FundRecoveryScanResponse | null>(
     null,
   );
@@ -59,7 +59,7 @@ export const FundRecovery = () => {
     [scanResult],
   );
 
-  const getMnemonic = useCallback(() => words.join(' ').trim(), [words]);
+  const getMnemonic = useCallback(() => words.join(" ").trim(), [words]);
 
   const handleScan = useCallback(() => {
     setScanError(false);
@@ -68,7 +68,7 @@ export const FundRecovery = () => {
       {
         onSuccess: (data) => {
           setScanResult(data);
-          setStep('chainBalances');
+          setStep("chainBalances");
         },
         onError: () => {
           setScanError(true);
@@ -111,10 +111,10 @@ export const FundRecovery = () => {
   }, [resetExecute, runExecute, getMnemonic, destinationAddress]);
 
   const handleBack = useCallback(() => {
-    if (step === 'chainBalances') {
-      setStep('seedPhrase');
+    if (step === "chainBalances") {
+      setStep("seedPhrase");
       setScanResult(null);
-      setDestinationAddress('');
+      setDestinationAddress("");
       resetScan();
     } else {
       goto(SETUP_SCREEN.MigrateOperateFolder);
@@ -130,11 +130,11 @@ export const FundRecovery = () => {
     [scanError],
   );
 
-  if (step === 'chainBalances') {
+  if (step === "chainBalances") {
     return (
-      <Flex vertical gap={24} style={{ width: '100%' }}>
+      <Flex vertical gap={24} style={{ width: "100%" }}>
         <SetupCard>
-          <Flex vertical style={{ padding: '24px 24px 32px' }}>
+          <Flex vertical style={{ padding: "24px 24px 32px" }}>
             <Flex align="center" style={{ marginBottom: 16 }}>
               <BackButton onPrev={handleBack} />
             </Flex>
@@ -153,7 +153,7 @@ export const FundRecovery = () => {
 
         {scanResult && (
           <SetupCard>
-            <Flex vertical style={{ padding: '24px 24px 32px' }}>
+            <Flex vertical style={{ padding: "24px 24px 32px" }}>
               <FundRecoveryWithdrawForm
                 chainBalances={chainBalances}
                 destinationAddress={destinationAddress}
@@ -176,7 +176,11 @@ export const FundRecovery = () => {
               <Text className="text-sm">
                 You are about to withdraw all recoverable funds to:
               </Text>
-              <Text strong className="text-sm" style={{ wordBreak: 'break-all' }}>
+              <Text
+                strong
+                className="text-sm"
+                style={{ wordBreak: "break-all" }}
+              >
                 {destinationAddress}
               </Text>
               <Text type="secondary" className="text-sm">
@@ -186,7 +190,7 @@ export const FundRecovery = () => {
             </Flex>
           }
           action={
-            <Flex vertical gap={8} style={{ width: '100%' }}>
+            <Flex vertical gap={8} style={{ width: "100%" }}>
               <Button
                 type="primary"
                 size="large"
@@ -216,7 +220,7 @@ export const FundRecovery = () => {
 
   return (
     <SetupCard>
-      <Flex vertical style={{ padding: '24px 24px 32px' }}>
+      <Flex vertical style={{ padding: "24px 24px 32px" }}>
         <Flex align="center" style={{ marginBottom: 16 }}>
           <BackButton onPrev={handleBack} />
         </Flex>

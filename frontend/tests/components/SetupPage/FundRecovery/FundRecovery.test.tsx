@@ -1,23 +1,23 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from "@testing-library/react";
 
-import { FundRecovery } from '../../../../components/SetupPage/FundRecovery';
-import { SETUP_SCREEN } from '../../../../constants';
+import { FundRecovery } from "../../../../components/SetupPage/FundRecovery";
+import { SETUP_SCREEN } from "../../../../constants";
 // Import mocked hooks for control
-import { useFundRecoveryExecute, useFundRecoveryScan } from '../../../../hooks';
+import { useFundRecoveryExecute, useFundRecoveryScan } from "../../../../hooks";
 import {
   FundRecoveryExecuteResponse,
   FundRecoveryScanResponse,
-} from '../../../../types/FundRecovery';
+} from "../../../../types/FundRecovery";
 
 /* eslint-disable @typescript-eslint/no-var-requires */
 jest.mock(
-  'styled-components',
-  () => require('../../../mocks/styledComponents').styledComponentsMock,
+  "styled-components",
+  () => require("../../../mocks/styledComponents").styledComponentsMock,
 );
 /* eslint-enable @typescript-eslint/no-var-requires */
 
 const mockGoto = jest.fn();
-jest.mock('../../../../hooks', () => ({
+jest.mock("../../../../hooks", () => ({
   useSetup: () => ({ goto: mockGoto }),
   useFundRecoveryScan: jest.fn(),
   useFundRecoveryExecute: jest.fn(),
@@ -26,7 +26,7 @@ jest.mock('../../../../hooks', () => ({
 const mockUseFundRecoveryScan = useFundRecoveryScan as jest.Mock;
 const mockUseFundRecoveryExecute = useFundRecoveryExecute as jest.Mock;
 
-jest.mock('../../../../components/ui', () => ({
+jest.mock("../../../../components/ui", () => ({
   Alert: ({ message, type }: { message?: string; type?: string }) => (
     <div data-testid="alert" data-type={type}>
       {message && <span>{message}</span>}
@@ -57,7 +57,7 @@ jest.mock('../../../../components/ui', () => ({
 }));
 
 jest.mock(
-  '../../../../components/SetupPage/FundRecovery/FundRecoverySeedPhrase',
+  "../../../../components/SetupPage/FundRecovery/FundRecoverySeedPhrase",
   () => ({
     FundRecoverySeedPhrase: ({
       onScan,
@@ -76,7 +76,7 @@ jest.mock(
         <button
           data-testid="change-words-btn"
           onClick={() =>
-            onWordsChange(Array.from({ length: 12 }, () => 'word'))
+            onWordsChange(Array.from({ length: 12 }, () => "word"))
           }
         >
           Fill words
@@ -87,7 +87,7 @@ jest.mock(
 );
 
 jest.mock(
-  '../../../../components/SetupPage/FundRecovery/FundRecoveryScanResults',
+  "../../../../components/SetupPage/FundRecovery/FundRecoveryScanResults",
   () => ({
     aggregateChainBalances: jest.fn(() => []),
     FundRecoveryChainBalances: () => <div data-testid="chain-balances" />,
@@ -102,7 +102,7 @@ jest.mock(
 );
 
 jest.mock(
-  '../../../../components/SetupPage/FundRecovery/FundRecoveryResultModal',
+  "../../../../components/SetupPage/FundRecovery/FundRecoveryResultModal",
   () => ({
     FundRecoveryResultModal: ({
       open,
@@ -121,7 +121,7 @@ jest.mock(
   }),
 );
 
-jest.mock('../../../../components/ui/BackButton', () => ({
+jest.mock("../../../../components/ui/BackButton", () => ({
   BackButton: ({ onPrev }: { onPrev: () => void }) => (
     <button data-testid="back-btn" onClick={onPrev}>
       Back
@@ -130,7 +130,7 @@ jest.mock('../../../../components/ui/BackButton', () => ({
 }));
 
 const SAMPLE_SCAN_RESPONSE: FundRecoveryScanResponse = {
-  master_eoa_address: '0x1234567890abcdef1234567890abcdef12345678',
+  master_eoa_address: "0x1234567890abcdef1234567890abcdef12345678",
   balances: {},
   services: [],
   gas_warning: {},
@@ -171,43 +171,43 @@ const createDefaultHookMocks = () => {
   };
 };
 
-describe('FundRecovery', () => {
+describe("FundRecovery", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     createDefaultHookMocks();
   });
 
-  describe('initial rendering (seedPhrase step)', () => {
-    it('renders the seed phrase component on initial load', () => {
+  describe("initial rendering (seedPhrase step)", () => {
+    it("renders the seed phrase component on initial load", () => {
       render(<FundRecovery />);
-      expect(screen.getByTestId('seed-phrase')).toBeInTheDocument();
-      expect(screen.queryByTestId('scan-results')).not.toBeInTheDocument();
+      expect(screen.getByTestId("seed-phrase")).toBeInTheDocument();
+      expect(screen.queryByTestId("scan-results")).not.toBeInTheDocument();
     });
 
-    it('renders the back button', () => {
+    it("renders the back button", () => {
       render(<FundRecovery />);
-      expect(screen.getByTestId('back-btn')).toBeInTheDocument();
+      expect(screen.getByTestId("back-btn")).toBeInTheDocument();
     });
   });
 
-  describe('back navigation', () => {
-    it('navigates to MigrateOperateFolder when Back is clicked from seed phrase step', () => {
+  describe("back navigation", () => {
+    it("navigates to MigrateOperateFolder when Back is clicked from seed phrase step", () => {
       render(<FundRecovery />);
-      fireEvent.click(screen.getByTestId('back-btn'));
+      fireEvent.click(screen.getByTestId("back-btn"));
       expect(mockGoto).toHaveBeenCalledWith(SETUP_SCREEN.MigrateOperateFolder);
     });
   });
 
-  describe('scan flow', () => {
-    it('calls runScan mutation when scan is triggered', () => {
+  describe("scan flow", () => {
+    it("calls runScan mutation when scan is triggered", () => {
       const { mockMutateScan } = createDefaultHookMocks();
       render(<FundRecovery />);
 
-      fireEvent.click(screen.getByTestId('scan-btn'));
+      fireEvent.click(screen.getByTestId("scan-btn"));
       expect(mockMutateScan).toHaveBeenCalledTimes(1);
     });
 
-    it('transitions to chain balances step after successful scan', () => {
+    it("transitions to chain balances step after successful scan", () => {
       const { mockMutateScan } = createDefaultHookMocks();
       render(<FundRecovery />);
 
@@ -221,13 +221,13 @@ describe('FundRecovery', () => {
         },
       );
 
-      fireEvent.click(screen.getByTestId('scan-btn'));
+      fireEvent.click(screen.getByTestId("scan-btn"));
 
-      expect(screen.getByTestId('scan-results')).toBeInTheDocument();
-      expect(screen.queryByTestId('seed-phrase')).not.toBeInTheDocument();
+      expect(screen.getByTestId("scan-results")).toBeInTheDocument();
+      expect(screen.queryByTestId("seed-phrase")).not.toBeInTheDocument();
     });
 
-    it('shows scan error when scan fails', () => {
+    it("shows scan error when scan fails", () => {
       const { mockMutateScan } = createDefaultHookMocks();
       render(<FundRecovery />);
 
@@ -237,13 +237,13 @@ describe('FundRecovery', () => {
         },
       );
 
-      fireEvent.click(screen.getByTestId('scan-btn'));
+      fireEvent.click(screen.getByTestId("scan-btn"));
 
-      expect(screen.getByTestId('scan-error')).toBeInTheDocument();
+      expect(screen.getByTestId("scan-error")).toBeInTheDocument();
     });
   });
 
-  describe('execute flow', () => {
+  describe("execute flow", () => {
     let mockMutateScanForExecute: jest.Mock;
     let mockMutateExecuteForExecute: jest.Mock;
 
@@ -261,36 +261,40 @@ describe('FundRecovery', () => {
       );
     });
 
-    it('opens the confirmation modal when recover is triggered', () => {
+    it("opens the confirmation modal when recover is triggered", () => {
       render(<FundRecovery />);
-      fireEvent.click(screen.getByTestId('scan-btn'));
-      fireEvent.click(screen.getByTestId('recover-btn'));
+      fireEvent.click(screen.getByTestId("scan-btn"));
+      fireEvent.click(screen.getByTestId("recover-btn"));
 
-      expect(screen.getByTestId('confirmation-modal')).toBeInTheDocument();
-      expect(screen.queryByTestId('result-modal')).not.toBeInTheDocument();
+      expect(screen.getByTestId("confirmation-modal")).toBeInTheDocument();
+      expect(screen.queryByTestId("result-modal")).not.toBeInTheDocument();
     });
 
-    it('opens the result modal after confirmation', () => {
+    it("opens the result modal after confirmation", () => {
       render(<FundRecovery />);
-      fireEvent.click(screen.getByTestId('scan-btn'));
-      fireEvent.click(screen.getByTestId('recover-btn'));
-      fireEvent.click(screen.getByRole('button', { name: 'Confirm Withdrawal' }));
+      fireEvent.click(screen.getByTestId("scan-btn"));
+      fireEvent.click(screen.getByTestId("recover-btn"));
+      fireEvent.click(
+        screen.getByRole("button", { name: "Confirm Withdrawal" }),
+      );
 
-      expect(screen.getByTestId('result-modal')).toBeInTheDocument();
+      expect(screen.getByTestId("result-modal")).toBeInTheDocument();
     });
 
-    it('calls runExecute mutation after confirmation', () => {
+    it("calls runExecute mutation after confirmation", () => {
       render(<FundRecovery />);
-      fireEvent.click(screen.getByTestId('scan-btn'));
-      fireEvent.click(screen.getByTestId('recover-btn'));
-      fireEvent.click(screen.getByRole('button', { name: 'Confirm Withdrawal' }));
+      fireEvent.click(screen.getByTestId("scan-btn"));
+      fireEvent.click(screen.getByTestId("recover-btn"));
+      fireEvent.click(
+        screen.getByRole("button", { name: "Confirm Withdrawal" }),
+      );
 
       expect(mockMutateExecuteForExecute).toHaveBeenCalledTimes(1);
     });
   });
 
-  describe('step navigation', () => {
-    it('returns to seed phrase step when back is clicked from scan results', () => {
+  describe("step navigation", () => {
+    it("returns to seed phrase step when back is clicked from scan results", () => {
       const { mockMutateScan } = createDefaultHookMocks();
       mockMutateScan.mockImplementation(
         (
@@ -302,18 +306,18 @@ describe('FundRecovery', () => {
       );
 
       render(<FundRecovery />);
-      fireEvent.click(screen.getByTestId('scan-btn'));
+      fireEvent.click(screen.getByTestId("scan-btn"));
 
-      expect(screen.getByTestId('scan-results')).toBeInTheDocument();
+      expect(screen.getByTestId("scan-results")).toBeInTheDocument();
 
-      fireEvent.click(screen.getByTestId('back-btn'));
-      expect(screen.getByTestId('seed-phrase')).toBeInTheDocument();
-      expect(screen.queryByTestId('scan-results')).not.toBeInTheDocument();
+      fireEvent.click(screen.getByTestId("back-btn"));
+      expect(screen.getByTestId("seed-phrase")).toBeInTheDocument();
+      expect(screen.queryByTestId("scan-results")).not.toBeInTheDocument();
     });
   });
 
-  describe('handleTryAgain', () => {
-    it('resets execute state and re-fires execute when Try Again is clicked', () => {
+  describe("handleTryAgain", () => {
+    it("resets execute state and re-fires execute when Try Again is clicked", () => {
       const { mockMutateScan, mockMutateExecute, mockResetExecute } =
         createDefaultHookMocks();
       mockMutateScan.mockImplementation(
@@ -327,15 +331,17 @@ describe('FundRecovery', () => {
 
       render(<FundRecovery />);
       // Navigate to chainBalances step
-      fireEvent.click(screen.getByTestId('scan-btn'));
+      fireEvent.click(screen.getByTestId("scan-btn"));
       // Open confirmation modal
-      fireEvent.click(screen.getByTestId('recover-btn'));
+      fireEvent.click(screen.getByTestId("recover-btn"));
       // Confirm to open result modal
-      fireEvent.click(screen.getByRole('button', { name: 'Confirm Withdrawal' }));
-      expect(screen.getByTestId('result-modal')).toBeInTheDocument();
+      fireEvent.click(
+        screen.getByRole("button", { name: "Confirm Withdrawal" }),
+      );
+      expect(screen.getByTestId("result-modal")).toBeInTheDocument();
 
       // Click Try Again
-      fireEvent.click(screen.getByTestId('try-again-btn'));
+      fireEvent.click(screen.getByTestId("try-again-btn"));
 
       // resetExecute should have been called
       expect(mockResetExecute).toHaveBeenCalled();
@@ -344,8 +350,8 @@ describe('FundRecovery', () => {
     });
   });
 
-  describe('handleCloseResultModal', () => {
-    it('closes the modal without re-firing execute when close is triggered', () => {
+  describe("handleCloseResultModal", () => {
+    it("closes the modal without re-firing execute when close is triggered", () => {
       const { mockMutateScan, mockMutateExecute, mockResetExecute } =
         createDefaultHookMocks();
       mockMutateScan.mockImplementation(
@@ -369,11 +375,13 @@ describe('FundRecovery', () => {
         });
 
       render(<FundRecovery />);
-      fireEvent.click(screen.getByTestId('scan-btn'));
-      fireEvent.click(screen.getByTestId('recover-btn'));
-      fireEvent.click(screen.getByRole('button', { name: 'Confirm Withdrawal' }));
+      fireEvent.click(screen.getByTestId("scan-btn"));
+      fireEvent.click(screen.getByTestId("recover-btn"));
+      fireEvent.click(
+        screen.getByRole("button", { name: "Confirm Withdrawal" }),
+      );
 
-      expect(screen.getByTestId('result-modal')).toBeInTheDocument();
+      expect(screen.getByTestId("result-modal")).toBeInTheDocument();
 
       // The modal mock only exposes Try Again; closing is handled internally.
       // Verify resetExecute is NOT called via try-again when we only opened the modal.
@@ -383,8 +391,8 @@ describe('FundRecovery', () => {
     });
   });
 
-  describe('handleWordsChange — scanError clear path', () => {
-    it('clears scanError when user changes a word after a failed scan', () => {
+  describe("handleWordsChange — scanError clear path", () => {
+    it("clears scanError when user changes a word after a failed scan", () => {
       const { mockMutateScan } = createDefaultHookMocks();
       mockMutateScan.mockImplementation(
         (_req: unknown, callbacks: { onError: () => void }) => {
@@ -395,12 +403,12 @@ describe('FundRecovery', () => {
       render(<FundRecovery />);
 
       // Trigger a failed scan to set scanError=true
-      fireEvent.click(screen.getByTestId('scan-btn'));
-      expect(screen.getByTestId('scan-error')).toBeInTheDocument();
+      fireEvent.click(screen.getByTestId("scan-btn"));
+      expect(screen.getByTestId("scan-error")).toBeInTheDocument();
 
       // Change a word — should clear the scan error
-      fireEvent.click(screen.getByTestId('change-words-btn'));
-      expect(screen.queryByTestId('scan-error')).not.toBeInTheDocument();
+      fireEvent.click(screen.getByTestId("change-words-btn"));
+      expect(screen.queryByTestId("scan-error")).not.toBeInTheDocument();
     });
   });
 });
