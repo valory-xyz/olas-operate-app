@@ -102,7 +102,9 @@ type ElectronApiContextProps = {
     onUpdateAvailable?: (
       cb: (info: { version: string; releaseNotes: string | null }) => void,
     ) => () => void;
-    onDownloadProgress?: (cb: (progress: { percent: number }) => void) => () => void;
+    onDownloadProgress?: (
+      cb: (progress: { percent: number }) => void,
+    ) => () => void;
     onUpdateDownloaded?: (cb: () => void) => () => void;
     onUpdateError?: (cb: (err: { message: string }) => void) => () => void;
   };
@@ -241,9 +243,15 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
           downloadUpdate: getElectronApiFunction('updates.downloadUpdate'),
           cancelDownload: getElectronApiFunction('updates.cancelDownload'),
           quitAndInstall: getElectronApiFunction('updates.quitAndInstall'),
-          onUpdateAvailable: getElectronApiFunction('updates.onUpdateAvailable'),
-          onDownloadProgress: getElectronApiFunction('updates.onDownloadProgress'),
-          onUpdateDownloaded: getElectronApiFunction('updates.onUpdateDownloaded'),
+          onUpdateAvailable: getElectronApiFunction(
+            'updates.onUpdateAvailable',
+          ),
+          onDownloadProgress: getElectronApiFunction(
+            'updates.onDownloadProgress',
+          ),
+          onUpdateDownloaded: getElectronApiFunction(
+            'updates.onUpdateDownloaded',
+          ),
           onUpdateError: getElectronApiFunction('updates.onUpdateError'),
         },
       }}
