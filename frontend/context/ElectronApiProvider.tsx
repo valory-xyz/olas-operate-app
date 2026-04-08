@@ -3,16 +3,17 @@ import { createContext, PropsWithChildren } from 'react';
 
 import { StoreService } from '@/service/StoreService';
 import { Address } from '@/types/Address';
-import { ElectronStore, ElectronTrayIconStatus } from '@/types/ElectronApi';
+import {
+  ElectronStore,
+  ElectronTrayIconStatus,
+  PearlStore,
+} from '@/types/ElectronApi';
 import {
   SwapOwnerTransactionFailure,
   SwapOwnerTransactionSuccess,
 } from '@/types/Recovery';
 
-import {
-  emitPearlStoreDelete,
-  emitPearlStoreSet,
-} from './pearlStoreEventBus';
+import { emitPearlStoreDelete, emitPearlStoreSet } from './pearlStoreEventBus';
 
 // Keys that remain in the Electron store (OS app-data). All other keys are
 // backend-bound (persisted in .operate/pearl_store.json via HTTP API).
@@ -51,11 +52,11 @@ type ElectronApiContextProps = {
   notifyAgentRunning?: () => void;
   showNotification?: (title: string, body?: string) => void;
   saveLogs?: (data: {
-    store?: ElectronStore;
+    store?: PearlStore;
     debugData?: Record<string, unknown>;
   }) => Promise<{ success: true; dirPath: string } | { success?: false }>;
   saveLogsForSupport?: (data: {
-    store?: ElectronStore;
+    store?: PearlStore;
     debugData?: Record<string, unknown>;
   }) => Promise<
     { success: true; filePath: string; fileName: string } | { success?: false }
@@ -190,12 +191,11 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
           get: getElectronApiFunction('store.get'),
           set: (key: string, value: unknown) => {
             if (ELECTRON_NATIVE_KEYS.has(key.split('.')[0])) {
-              return (
-                getElectronApiFunction('store.set') as (
-                  k: string,
-                  v: unknown,
-                ) => Promise<void>
-              )(key, value);
+              const fn = getElectronApiFunction('store.set') as unknown as (
+                k: string,
+                v: unknown,
+              ) => Promise<void>;
+              return fn(key, value);
             }
             // Backend-bound key: persist to .operate/pearl_store.json and update React state.
             emitPearlStoreSet(key, value);
@@ -203,11 +203,10 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
           },
           delete: (key: string) => {
             if (ELECTRON_NATIVE_KEYS.has(key.split('.')[0])) {
-              return (
-                getElectronApiFunction('store.delete') as (
-                  k: string,
-                ) => Promise<void>
-              )(key);
+              const fn = getElectronApiFunction('store.delete') as unknown as (
+                k: string,
+              ) => Promise<void>;
+              return fn(key);
             }
             // Backend-bound key: remove from .operate/pearl_store.json and update React state.
             emitPearlStoreDelete(key);
