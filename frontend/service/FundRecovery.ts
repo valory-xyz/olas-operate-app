@@ -1,16 +1,16 @@
-import { BACKEND_URL, CONTENT_TYPE_JSON_UTF8 } from "@/constants";
+import { BACKEND_URL, CONTENT_TYPE_JSON_UTF8 } from '@/constants';
 import {
   FundRecoveryExecuteRequest,
   FundRecoveryExecuteResponse,
   FundRecoveryScanRequest,
   FundRecoveryScanResponse,
-} from "@/types/FundRecovery";
+} from '@/types/FundRecovery';
 
 const scan = async (
   request: FundRecoveryScanRequest,
 ): Promise<FundRecoveryScanResponse> =>
   fetch(`${BACKEND_URL}/fund_recovery/scan`, {
-    method: "POST",
+    method: 'POST',
     headers: { ...CONTENT_TYPE_JSON_UTF8 },
     body: JSON.stringify(request),
   }).then(async (res) => {
@@ -19,9 +19,9 @@ const scan = async (
     let errorMsg: string;
     try {
       errorMsg =
-        JSON.parse(text)?.error ?? "Failed to scan for recoverable funds";
+        JSON.parse(text)?.error ?? 'Failed to scan for recoverable funds';
     } catch {
-      errorMsg = "Failed to scan for recoverable funds";
+      errorMsg = 'Failed to scan for recoverable funds';
     }
     throw new Error(errorMsg);
   });
@@ -30,7 +30,7 @@ const execute = async (
   request: FundRecoveryExecuteRequest,
 ): Promise<FundRecoveryExecuteResponse> =>
   fetch(`${BACKEND_URL}/fund_recovery/execute`, {
-    method: "POST",
+    method: 'POST',
     headers: { ...CONTENT_TYPE_JSON_UTF8 },
     body: JSON.stringify(request),
   }).then(async (res) => {
@@ -38,9 +38,9 @@ const execute = async (
     const text = await res.text();
     let errorMsg: string;
     try {
-      errorMsg = JSON.parse(text)?.error ?? "Failed to execute fund recovery";
+      errorMsg = JSON.parse(text)?.error ?? 'Failed to execute fund recovery';
     } catch {
-      errorMsg = "Failed to execute fund recovery";
+      errorMsg = 'Failed to execute fund recovery';
     }
     throw new Error(errorMsg);
   });

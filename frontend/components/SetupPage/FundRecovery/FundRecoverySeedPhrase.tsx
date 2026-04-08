@@ -1,9 +1,9 @@
-import { Button, Flex, Input, InputRef, Typography } from "antd";
-import { ethers } from "ethers";
-import { ChangeEvent, ClipboardEvent, useCallback, useRef } from "react";
-import styled from "styled-components";
+import { Button, Flex, Input, InputRef, Typography } from 'antd';
+import { ethers } from 'ethers';
+import { ChangeEvent, ClipboardEvent, useCallback, useRef } from 'react';
+import styled from 'styled-components';
 
-import { Alert } from "@/components/ui";
+import { Alert } from '@/components/ui';
 
 const { Title, Text } = Typography;
 
@@ -44,7 +44,7 @@ export const FundRecoverySeedPhrase = ({
 
   const allWordsFilled = words.every((w) => w.trim().length > 0);
   const isMnemonicValid =
-    allWordsFilled && ethers.utils.isValidMnemonic(words.join(" "));
+    allWordsFilled && ethers.utils.isValidMnemonic(words.join(' '));
   const canScan = isMnemonicValid && !isScanning;
 
   const handleWordChange = useCallback(
@@ -58,7 +58,7 @@ export const FundRecoverySeedPhrase = ({
 
   const handlePaste = useCallback(
     (index: number, e: ClipboardEvent<HTMLInputElement>) => {
-      const pasted = e.clipboardData.getData("text");
+      const pasted = e.clipboardData.getData('text');
       const pastedWords = pasted.trim().split(/\s+/);
 
       if (pastedWords.length > 1) {
@@ -86,7 +86,7 @@ export const FundRecoverySeedPhrase = ({
 
   const handleKeyDown = useCallback(
     (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === " " || e.key === "Enter") {
+      if (e.key === ' ' || e.key === 'Enter') {
         e.preventDefault();
         const next = index + 1;
         if (next < WORD_COUNT) {

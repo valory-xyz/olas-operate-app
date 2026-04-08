@@ -1,5 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
-import { isEmpty, keys } from "lodash";
+import { useQuery } from '@tanstack/react-query';
+import { isEmpty, keys } from 'lodash';
 import {
   createContext,
   ReactNode,
@@ -7,26 +7,26 @@ import {
   useContext,
   useMemo,
   useState,
-} from "react";
+} from 'react';
 
 import {
   FIFTEEN_SECONDS_INTERVAL,
   REACT_QUERY_KEYS,
   SETUP_SCREEN,
   SupportedMiddlewareChain,
-} from "@/constants";
-import { useOnlineStatus } from "@/context/OnlineStatusProvider";
-import { useMasterWalletContext, usePageState, useSetup } from "@/hooks";
-import { RecoveryService } from "@/service/Recovery";
-import { Address } from "@/types";
-import { SwapSafeTransaction } from "@/types/Recovery";
+} from '@/constants';
+import { useOnlineStatus } from '@/context/OnlineStatusProvider';
+import { useMasterWalletContext, usePageState, useSetup } from '@/hooks';
+import { RecoveryService } from '@/service/Recovery';
+import { Address } from '@/types';
+import { SwapSafeTransaction } from '@/types/Recovery';
 
-import { TokenRequirementsRow } from "../ui";
-import { RECOVERY_STEPS, RecoverySteps } from "./constants";
+import { TokenRequirementsRow } from '../ui';
+import { RECOVERY_STEPS, RecoverySteps } from './constants';
 import {
   getBackupWalletStatus,
   parseRecoveryFundingRequirements,
-} from "./utils";
+} from './utils';
 
 const useRecoveryNavigation = (
   currentStep: RecoverySteps,
@@ -261,7 +261,7 @@ export const useAccountRecoveryContext = () => {
   const context = useContext(AccountRecoveryContext);
   if (!context) {
     throw new Error(
-      "useAccountRecoveryContext must be used within a AccountRecoveryProvider",
+      'useAccountRecoveryContext must be used within a AccountRecoveryProvider',
     );
   }
   return context;
