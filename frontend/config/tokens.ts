@@ -117,6 +117,12 @@ export const GNOSIS_TOKEN_CONFIG: ChainTokenConfig = {
     tokenType: TokenType.Erc20,
     symbol: TokenSymbolMap['USDC.e'],
   },
+  [TokenSymbolMap.USDC]: {
+    address: '0xDDAfbb505ad214D7b80b1f830fcCc89B60fb7A83',
+    decimals: 6,
+    tokenType: TokenType.Erc20,
+    symbol: TokenSymbolMap.USDC,
+  },
 } as const;
 
 const BASE_TOKEN_CONFIG: ChainTokenConfig = {
