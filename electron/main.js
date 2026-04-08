@@ -66,6 +66,7 @@ const { isPortAvailable, findAvailablePort } = require('./ports');
 const { setupStoreIpc } = require('./store');
 const { logger } = require('./logger');
 const { PearlTray } = require('./components/PearlTray');
+const { autoUpdater } = require('./update');
 
 const { pki } = require('node-forge');
 
@@ -913,6 +914,47 @@ process.on('uncaughtException', (error) => {
 // OPEN PATH
 ipcMain.on('open-path', (_, filePath) => {
   shell.openPath(filePath);
+});
+
+// OTA UPDATE IPC HANDLERS
+autoUpdater.on('update-available', (info) => {
+  mainWindow?.webContents.send('update-available', {
+    version: info.version,
+    releaseNotes: info.releaseNotes ?? null,
+  });
+});
+
+autoUpdater.on('download-progress', (progress) => {
+  mainWindow?.webContents.send('update-download-progress', {
+    percent: progress.percent,
+  });
+});
+
+autoUpdater.on('update-downloaded', () => {
+  mainWindow?.webContents.send('update-downloaded');
+});
+
+autoUpdater.on('error', (err) => {
+  mainWindow?.webContents.send('update-error', { message: err.message });
+});
+
+ipcMain.handle('update-check', () => {
+  return autoUpdater.checkForUpdates();
+});
+
+ipcMain.handle('update-download', () => {
+  return autoUpdater.downloadUpdate();
+});
+
+ipcMain.handle('update-cancel', () => {
+  autoUpdater.cancelDownload();
+});
+
+ipcMain.handle('update-quit-and-install', async () => {
+  if (operateDaemonPid) {
+    await killProcesses(operateDaemonPid);
+  }
+  autoUpdater.quitAndInstall();
 });
 
 /**
