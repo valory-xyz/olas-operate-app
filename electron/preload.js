@@ -38,6 +38,35 @@ const termsAndConditionsWindow = {
   show: (hash) => ipcRenderer.invoke('terms-window-show', hash),
 };
 
+/** IPC methods for OTA updates */
+const updates = {
+  checkForUpdates: () => ipcRenderer.invoke('update-check'),
+  downloadUpdate: () => ipcRenderer.invoke('update-download'),
+  cancelDownload: () => ipcRenderer.invoke('update-cancel'),
+  quitAndInstall: () => ipcRenderer.invoke('update-quit-and-install'),
+  onUpdateAvailable: (cb) => {
+    const handler = (_event, info) => cb(info);
+    ipcRenderer.on('update-available', handler);
+    return () => ipcRenderer.removeListener('update-available', handler);
+  },
+  onDownloadProgress: (cb) => {
+    const handler = (_event, progress) => cb(progress);
+    ipcRenderer.on('update-download-progress', handler);
+    return () =>
+      ipcRenderer.removeListener('update-download-progress', handler);
+  },
+  onUpdateDownloaded: (cb) => {
+    const handler = () => cb();
+    ipcRenderer.on('update-downloaded', handler);
+    return () => ipcRenderer.removeListener('update-downloaded', handler);
+  },
+  onUpdateError: (cb) => {
+    const handler = (_event, err) => cb(err);
+    ipcRenderer.on('update-error', handler);
+    return () => ipcRenderer.removeListener('update-error', handler);
+  },
+};
+
 contextBridge.exposeInMainWorld('electronAPI', {
   setIsAppLoaded: (isAppLoaded) =>
     ipcRenderer.send('is-app-loaded', isAppLoaded),
@@ -78,4 +107,5 @@ contextBridge.exposeInMainWorld('electronAPI', {
   logEvent: (message) => ipcRenderer.invoke('log-event', message),
   nextLogError: (error, errorInfo) =>
     ipcRenderer.invoke('next-log-error', error, errorInfo),
+  updates,
 });
