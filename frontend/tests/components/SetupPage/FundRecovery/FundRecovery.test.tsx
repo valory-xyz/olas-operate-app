@@ -32,6 +32,28 @@ jest.mock('../../../../components/ui', () => ({
       {message && <span>{message}</span>}
     </div>
   ),
+  Modal: ({
+    open,
+    title,
+    action,
+    onCancel,
+  }: {
+    open: boolean;
+    title?: string;
+    action?: React.ReactNode;
+    onCancel?: () => void;
+  }) =>
+    open ? (
+      <div data-testid="confirmation-modal">
+        {title && <div>{title}</div>}
+        {action && <div data-testid="modal-action">{action}</div>}
+        {onCancel && (
+          <button data-testid="modal-cancel" onClick={onCancel}>
+            Cancel
+          </button>
+        )}
+      </div>
+    ) : null,
 }));
 
 jest.mock(
@@ -239,18 +261,29 @@ describe('FundRecovery', () => {
       );
     });
 
-    it('opens the result modal when recover is triggered', () => {
+    it('opens the confirmation modal when recover is triggered', () => {
       render(<FundRecovery />);
       fireEvent.click(screen.getByTestId('scan-btn'));
       fireEvent.click(screen.getByTestId('recover-btn'));
+
+      expect(screen.getByTestId('confirmation-modal')).toBeInTheDocument();
+      expect(screen.queryByTestId('result-modal')).not.toBeInTheDocument();
+    });
+
+    it('opens the result modal after confirmation', () => {
+      render(<FundRecovery />);
+      fireEvent.click(screen.getByTestId('scan-btn'));
+      fireEvent.click(screen.getByTestId('recover-btn'));
+      fireEvent.click(screen.getByRole('button', { name: 'Confirm Withdrawal' }));
 
       expect(screen.getByTestId('result-modal')).toBeInTheDocument();
     });
 
-    it('calls runExecute mutation when recover is triggered', () => {
+    it('calls runExecute mutation after confirmation', () => {
       render(<FundRecovery />);
       fireEvent.click(screen.getByTestId('scan-btn'));
       fireEvent.click(screen.getByTestId('recover-btn'));
+      fireEvent.click(screen.getByRole('button', { name: 'Confirm Withdrawal' }));
 
       expect(mockMutateExecuteForExecute).toHaveBeenCalledTimes(1);
     });
@@ -295,8 +328,10 @@ describe('FundRecovery', () => {
       render(<FundRecovery />);
       // Navigate to chainBalances step
       fireEvent.click(screen.getByTestId('scan-btn'));
-      // Open result modal
+      // Open confirmation modal
       fireEvent.click(screen.getByTestId('recover-btn'));
+      // Confirm to open result modal
+      fireEvent.click(screen.getByRole('button', { name: 'Confirm Withdrawal' }));
       expect(screen.getByTestId('result-modal')).toBeInTheDocument();
 
       // Click Try Again
@@ -336,6 +371,7 @@ describe('FundRecovery', () => {
       render(<FundRecovery />);
       fireEvent.click(screen.getByTestId('scan-btn'));
       fireEvent.click(screen.getByTestId('recover-btn'));
+      fireEvent.click(screen.getByRole('button', { name: 'Confirm Withdrawal' }));
 
       expect(screen.getByTestId('result-modal')).toBeInTheDocument();
 

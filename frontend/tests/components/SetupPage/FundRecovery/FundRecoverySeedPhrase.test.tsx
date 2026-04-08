@@ -26,6 +26,17 @@ jest.mock('../../../../components/ui', () => ({
   ),
 }));
 
+jest.mock('ethers', () => ({
+  ethers: {
+    utils: {
+      isValidMnemonic: jest.fn((phrase: string) => {
+        const VALID = 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about';
+        return phrase.trim() === VALID;
+      }),
+    },
+  },
+}));
+
 const EMPTY_WORDS = Array.from({ length: 12 }, () => '');
 const VALID_WORDS = [
   'abandon',
@@ -93,6 +104,12 @@ describe('FundRecoverySeedPhrase', () => {
       expect(
         screen.getByRole('button', { name: 'Continue' }),
       ).not.toBeDisabled();
+    });
+
+    it('is disabled when all words are filled but mnemonic is invalid', () => {
+      const invalidWords = Array.from({ length: 12 }, () => 'notaword');
+      render(<FundRecoverySeedPhrase {...defaultProps} words={invalidWords} />);
+      expect(screen.getByRole('button', { name: 'Continue' })).toBeDisabled();
     });
   });
 

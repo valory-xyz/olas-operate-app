@@ -1,5 +1,6 @@
 import { WarningOutlined } from '@ant-design/icons';
 import { Button, Flex, Input, Tag, Typography } from 'antd';
+import { getAddress } from 'ethers/lib/utils';
 import Image from 'next/image';
 import { ChangeEvent, useCallback } from 'react';
 import styled from 'styled-components';
@@ -18,10 +19,14 @@ import {
 
 const { Title, Text } = Typography;
 
-const EVM_ADDRESS_REGEX = /^0x[0-9a-fA-F]{40}$/;
-
-const isValidEvmAddress = (address: string): boolean =>
-  EVM_ADDRESS_REGEX.test(address);
+const isValidEvmAddress = (address: string): boolean => {
+  try {
+    getAddress(address);
+    return true;
+  } catch {
+    return false;
+  }
+};
 
 const ChainRow = styled(Flex)`
   padding: 12px 0;

@@ -104,6 +104,11 @@ describe('FundRecoveryResultModal', () => {
         }),
       ).not.toBeInTheDocument();
     });
+
+    it('renders a close button while executing', () => {
+      render(<FundRecoveryResultModal {...defaultProps} isExecuting={true} onClose={jest.fn()} />);
+      expect(screen.getByTestId('modal-close')).toBeInTheDocument();
+    });
   });
 
   describe('when result is successful', () => {
@@ -217,6 +222,17 @@ describe('FundRecoveryResultModal', () => {
       expect(
         screen.getByText(/Some funds may have been transferred/i),
       ).toBeInTheDocument();
+    });
+
+    it('shows individual error messages from result.errors', () => {
+      render(
+        <FundRecoveryResultModal
+          {...defaultProps}
+          result={PARTIAL_FAILURE_RESULT}
+          isExecuting={false}
+        />,
+      );
+      expect(screen.getByText(/Chain 100: transfer failed/i)).toBeInTheDocument();
     });
   });
 

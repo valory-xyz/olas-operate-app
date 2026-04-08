@@ -1,7 +1,7 @@
-import { Flex } from 'antd';
+import { Button, Flex, Typography } from 'antd';
 import { useCallback, useMemo, useState } from 'react';
 
-import { Alert } from '@/components/ui';
+import { Alert, Modal } from '@/components/ui';
 import { SETUP_SCREEN } from '@/constants';
 import { useFundRecoveryExecute, useFundRecoveryScan, useSetup } from '@/hooks';
 import { FundRecoveryScanResponse } from '@/types/FundRecovery';
@@ -15,6 +15,8 @@ import {
   FundRecoveryWithdrawForm,
 } from './FundRecoveryScanResults';
 import { FundRecoverySeedPhrase } from './FundRecoverySeedPhrase';
+
+const { Text } = Typography;
 
 type WizardStep = 'seedPhrase' | 'chainBalances';
 
@@ -33,6 +35,7 @@ export const FundRecovery = () => {
   );
   const [scanError, setScanError] = useState(false);
   const [isResultModalOpen, setIsResultModalOpen] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
 
   const {
     mutate: runScan,
@@ -74,13 +77,22 @@ export const FundRecovery = () => {
     );
   }, [runScan, getMnemonic]);
 
-  const handleRecover = useCallback(() => {
+  const handleWithdrawClick = useCallback(() => {
+    setShowConfirmation(true);
+  }, []);
+
+  const handleConfirmWithdraw = useCallback(() => {
+    setShowConfirmation(false);
     setIsResultModalOpen(true);
     runExecute({
       mnemonic: getMnemonic(),
       destination_address: destinationAddress,
     });
   }, [runExecute, getMnemonic, destinationAddress]);
+
+  const handleCancelConfirm = useCallback(() => {
+    setShowConfirmation(false);
+  }, []);
 
   const handleCloseResultModal = useCallback(() => {
     setIsResultModalOpen(false);
@@ -90,9 +102,13 @@ export const FundRecovery = () => {
   const handleTryAgain = useCallback(() => {
     setIsResultModalOpen(false);
     resetExecute();
-    // Re-fire execute immediately
-    handleRecover();
-  }, [resetExecute, handleRecover]);
+    // Re-fire execute immediately without showing confirmation again
+    setIsResultModalOpen(true);
+    runExecute({
+      mnemonic: getMnemonic(),
+      destination_address: destinationAddress,
+    });
+  }, [resetExecute, runExecute, getMnemonic, destinationAddress]);
 
   const handleBack = useCallback(() => {
     if (step === 'chainBalances') {
@@ -143,11 +159,48 @@ export const FundRecovery = () => {
                 destinationAddress={destinationAddress}
                 isExecuting={isExecuting}
                 onDestinationAddressChange={setDestinationAddress}
-                onRecover={handleRecover}
+                onRecover={handleWithdrawClick}
               />
             </Flex>
           </SetupCard>
         )}
+
+        <Modal
+          open={showConfirmation}
+          closable
+          onCancel={handleCancelConfirm}
+          size="small"
+          title="Confirm Withdrawal"
+          description={
+            <Flex vertical gap={8}>
+              <Text className="text-sm">
+                You are about to withdraw all recoverable funds to:
+              </Text>
+              <Text strong className="text-sm" style={{ wordBreak: 'break-all' }}>
+                {destinationAddress}
+              </Text>
+              <Text type="secondary" className="text-sm">
+                This action is irreversible. Please verify the address is
+                correct.
+              </Text>
+            </Flex>
+          }
+          action={
+            <Flex vertical gap={8} style={{ width: '100%' }}>
+              <Button
+                type="primary"
+                size="large"
+                block
+                onClick={handleConfirmWithdraw}
+              >
+                Confirm Withdrawal
+              </Button>
+              <Button size="large" block onClick={handleCancelConfirm}>
+                Cancel
+              </Button>
+            </Flex>
+          }
+        />
 
         <FundRecoveryResultModal
           result={executeResult ?? null}
@@ -174,15 +227,6 @@ export const FundRecovery = () => {
           scanError={scanError}
           onWordsChange={handleWordsChange}
           onScan={handleScan}
-        />
-
-        <FundRecoveryResultModal
-          result={executeResult ?? null}
-          error={executeError}
-          open={isResultModalOpen}
-          isExecuting={isExecuting}
-          onTryAgain={handleTryAgain}
-          onClose={handleCloseResultModal}
         />
       </Flex>
     </SetupCard>
