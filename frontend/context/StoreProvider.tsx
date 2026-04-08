@@ -38,7 +38,11 @@ const BACKEND_BOUND_KEYS: string[] = [
 ];
 
 /** Apply a dot-notation key write to a store object, returning a new object. */
-const applyNestedSet = (store: PearlStore, key: string, value: unknown): PearlStore => {
+const applyNestedSet = (
+  store: PearlStore,
+  key: string,
+  value: unknown,
+): PearlStore => {
   const parts = key.split('.');
   if (parts.length === 1) {
     return { ...store, [key]: value };
@@ -122,6 +126,10 @@ export const StoreProvider = ({ children }: PropsWithChildren) => {
         ),
       )
         .then(() => store.set!('hasMigratedToBackendStore', true))
+        .then(() =>
+          // Refresh storeState from the now-populated pearl_store.json.
+          StoreService.getStore().then((data) => setStoreState(data)),
+        )
         .catch(console.error);
     });
   }, [store]);
