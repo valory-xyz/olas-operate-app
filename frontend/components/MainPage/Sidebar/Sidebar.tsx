@@ -32,6 +32,7 @@ import {
   useAgentRunning,
   useAllInstancesRewardStatus,
   useBalanceAndRefillRequirementsContext,
+  useElectronApi,
   useIsInitiallyFunded,
   useMasterWalletContext,
   usePageState,
@@ -48,6 +49,7 @@ import { BackupSeedPhraseAlert } from '../BackupSeedPhraseAlert';
 import { useSidebarAgents } from '../hooks/useSidebarAgents';
 import { UpdateAvailableAlert } from '../UpdateAvailableAlert/UpdateAvailableAlert';
 import { UpdateAvailableModal } from '../UpdateAvailableAlert/UpdateAvailableModal';
+import { useAppStatus } from '../UpdateAvailableAlert/useAppStatus';
 import { AgentTreeMenu } from './AgentTreeMenu';
 import { ArchiveAgentModal } from './ArchiveAgentModal';
 import { AutoRunControl } from './AutoRunControl';
@@ -153,6 +155,36 @@ export const Sidebar = () => {
   const { fade, ref: scrollAreaRef } = useListFade();
 
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+  const { store } = useElectronApi();
+  const { data: appStatusData, isFetched: appStatusFetched } = useAppStatus();
+
+  // Auto-open update modal when a new version is detected and not already dismissed
+  useEffect(() => {
+    if (
+      !appStatusFetched ||
+      !appStatusData?.isOutdated ||
+      !appStatusData?.latestTag
+    )
+      return;
+    if (!store?.get) return;
+
+    const latestTag = appStatusData.latestTag;
+    store
+      .get('updateAvailableKnownVersion')
+      .then((dismissedFor) => {
+        if (dismissedFor !== latestTag) {
+          setIsUpdateModalOpen(true);
+        }
+      })
+      .catch((error) => {
+        console.error('Failed to check update availability:', error);
+      });
+  }, [
+    appStatusFetched,
+    appStatusData?.isOutdated,
+    appStatusData?.latestTag,
+    store,
+  ]);
 
   const {
     pendingArchiveInstanceId,

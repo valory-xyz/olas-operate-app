@@ -26,26 +26,17 @@ export const UpdateAvailableModal = ({
   const [modalState, setModalState] = useState<ModalState>('available');
   const [downloadPercent, setDownloadPercent] = useState(0);
 
-  const { data, isFetched } = useAppStatus();
+  const { data } = useAppStatus();
   const latestTag = data?.latestTag;
   const releaseNotes = data?.releaseNotes;
 
-  // Auto-open when a new version is detected and not already dismissed
+  // Reset to available state each time the modal is opened
   useEffect(() => {
-    if (!isFetched || !latestTag || !data?.isOutdated) return;
-    if (!store?.get) return;
-
-    store
-      .get('updateAvailableKnownVersion')
-      .then((dismissedFor) => {
-        if (dismissedFor !== latestTag) {
-          setModalState('available');
-        }
-      })
-      .catch((error) => {
-        console.error('Failed to check update availability:', error);
-      });
-  }, [isFetched, latestTag, data?.isOutdated, store]);
+    if (isOpen) {
+      setModalState('available');
+      setDownloadPercent(0);
+    }
+  }, [isOpen]);
 
   // Register IPC listeners for download progress / completion / error
   useEffect(() => {
