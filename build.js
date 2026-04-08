@@ -49,6 +49,10 @@ const main = async () => {
             target: 'dmg',
             arch: [process.env.ARCH], // ARCH env is set during release CI
           },
+          {
+            target: 'zip',
+            arch: [process.env.ARCH],
+          },
         ],
         publish: publishOptions,
         category: 'public.app-category.utilities',
