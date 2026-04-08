@@ -46,7 +46,7 @@ export const FundRecoveryResultModal = ({
         title: 'Withdrawal in Progress',
         description:
           'It usually takes a few minutes. Please keep the app open until the process is complete.',
-        closable: false,
+        closable: true,
         action: null,
       }
     : isSuccess
@@ -83,9 +83,24 @@ export const FundRecoveryResultModal = ({
                   contact Valory support.
                 </Text>
                 {isPartialFailure && (
-                  <Text type="secondary" className="text-center text-sm">
-                    Some funds may have been transferred successfully.
-                  </Text>
+                  <Flex vertical gap={4} align="center">
+                    <Text type="secondary" className="text-center text-sm">
+                      Some funds may have been transferred successfully.
+                    </Text>
+                    {result?.errors && result.errors.length > 0 && (
+                      <Flex vertical gap={2}>
+                        {result.errors.map((err, i) => (
+                          <Text key={i} type="danger" className="text-sm">
+                            &bull; {err}
+                          </Text>
+                        ))}
+                      </Flex>
+                    )}
+                    <Text type="secondary" className="text-center text-sm">
+                      If the failure was due to insufficient gas, please top up
+                      the native token on the affected chain before retrying.
+                    </Text>
+                  </Flex>
                 )}
               </Flex>
             ),
