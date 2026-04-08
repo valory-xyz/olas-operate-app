@@ -16,6 +16,7 @@ const mockJsonResponse = (body: unknown, ok = true) =>
     ok,
     status: ok ? 200 : 400,
     json: () => Promise.resolve(body),
+    text: () => Promise.resolve(JSON.stringify(body)),
   } as Response);
 
 const SAMPLE_MNEMONIC =
