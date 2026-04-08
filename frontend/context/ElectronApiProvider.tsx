@@ -1,12 +1,26 @@
 import { get } from 'lodash';
 import { createContext, PropsWithChildren } from 'react';
 
+import { StoreService } from '@/service/StoreService';
 import { Address } from '@/types/Address';
 import { ElectronStore, ElectronTrayIconStatus } from '@/types/ElectronApi';
 import {
   SwapOwnerTransactionFailure,
   SwapOwnerTransactionSuccess,
 } from '@/types/Recovery';
+
+import {
+  emitPearlStoreDelete,
+  emitPearlStoreSet,
+} from './pearlStoreEventBus';
+
+// Keys that remain in the Electron store (OS app-data). All other keys are
+// backend-bound (persisted in .operate/pearl_store.json via HTTP API).
+const ELECTRON_NATIVE_KEYS = new Set([
+  'environmentName',
+  'knownVersion',
+  'hasMigratedToBackendStore',
+]);
 
 type ElectronApiContextProps = {
   getAppVersion?: () => Promise<string>;
@@ -174,8 +188,31 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
         store: {
           store: getElectronApiFunction('store.store'),
           get: getElectronApiFunction('store.get'),
-          set: getElectronApiFunction('store.set'),
-          delete: getElectronApiFunction('store.delete'),
+          set: (key: string, value: unknown) => {
+            if (ELECTRON_NATIVE_KEYS.has(key.split('.')[0])) {
+              return (
+                getElectronApiFunction('store.set') as (
+                  k: string,
+                  v: unknown,
+                ) => Promise<void>
+              )(key, value);
+            }
+            // Backend-bound key: persist to .operate/pearl_store.json and update React state.
+            emitPearlStoreSet(key, value);
+            return StoreService.setStoreKey(key, value);
+          },
+          delete: (key: string) => {
+            if (ELECTRON_NATIVE_KEYS.has(key.split('.')[0])) {
+              return (
+                getElectronApiFunction('store.delete') as (
+                  k: string,
+                ) => Promise<void>
+              )(key);
+            }
+            // Backend-bound key: remove from .operate/pearl_store.json and update React state.
+            emitPearlStoreDelete(key);
+            return StoreService.deleteStoreKey(key);
+          },
           clear: getElectronApiFunction('store.clear'),
         },
         showNotification: getElectronApiFunction('showNotification'),

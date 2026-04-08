@@ -1,6 +1,6 @@
 import { ACTIVE_AGENTS } from '@/config/agents';
 import { MiddlewareServiceResponse } from '@/types';
-import { ElectronStore } from '@/types/ElectronApi';
+import { PearlStore } from '@/types/ElectronApi';
 
 type IsInitialFundedWrite = {
   storeKey: string;
@@ -18,7 +18,7 @@ export const migrateIsInitialFunded = ({
   storeState,
   services,
 }: {
-  storeState: ElectronStore;
+  storeState: PearlStore;
   services: MiddlewareServiceResponse[];
 }): IsInitialFundedWrite[] => {
   const writes: IsInitialFundedWrite[] = [];

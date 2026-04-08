@@ -1,31 +1,24 @@
-import { useCallback } from 'react';
-
-import { useElectronApi } from './useElectronApi';
-import { useStore } from './useStore';
+import { useCallback, useState } from 'react';
 
 /**
- * Hook to check if mnemonic exists for the user.
+ * Hook to track whether a mnemonic exists for the current user session.
  *
- * This hook stores the state in the electron store when we detect
- * whether the mnemonic exists or not.
- *
- * @returns Object with mnemonicExists (boolean | undefined) and setMnemonicExists function
+ * Backed by React state only — `mnemonicExists` is not persisted to any store.
+ * Login handlers set it to true; an app restart clears it (re-login required).
+ * Consumers that render conditionally on this value already handle `undefined`
+ * gracefully (they return null when the value is falsy).
  */
 export const useMnemonicExists = () => {
-  const { store } = useElectronApi();
-  const { storeState } = useStore();
-
-  const mnemonicExists = storeState?.mnemonicExists;
-
-  const setMnemonicExists = useCallback(
-    (exists: boolean) => {
-      store?.set?.('mnemonicExists', exists);
-    },
-    [store],
+  const [mnemonicExists, setMnemonicExists] = useState<boolean | undefined>(
+    undefined,
   );
+
+  const handleSetMnemonicExists = useCallback((exists: boolean) => {
+    setMnemonicExists(exists);
+  }, []);
 
   return {
     mnemonicExists,
-    setMnemonicExists,
+    setMnemonicExists: handleSetMnemonicExists,
   };
 };
