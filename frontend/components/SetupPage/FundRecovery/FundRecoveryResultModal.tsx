@@ -62,6 +62,7 @@ export const FundRecoveryResultModal = ({
               type="primary"
               size="large"
               block
+              style={{ marginTop: 16 }}
               onClick={() => goto(SETUP_SCREEN.Welcome)}
             >
               Done
@@ -106,7 +107,7 @@ export const FundRecoveryResultModal = ({
             ),
             closable: true,
             action: (
-              <Flex vertical gap={8} style={{ width: '100%' }}>
+              <Flex vertical gap={8} style={{ width: '100%', marginTop: 16 }}>
                 <Button type="primary" size="large" block onClick={onTryAgain}>
                   Try Again
                 </Button>

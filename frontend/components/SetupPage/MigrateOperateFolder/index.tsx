@@ -12,9 +12,9 @@ import { SetupCard } from '../../ui/SetupCard';
 const { Title, Text } = Typography;
 
 const OsPathRowContainer = styled(Flex)`
-  background-color: ${COLOR.BORDER_LIGHT};
+  background-color: ${COLOR.GRAY_4};
   border-radius: 6px;
-  padding: 4px 12px;
+  padding: 6px 12px;
 `;
 
 type OsPathRowProps = {
@@ -27,11 +27,11 @@ const OsPathRow = ({ icon, label, path }: OsPathRowProps) => (
   <OsPathRowContainer align="center" gap={8}>
     <Flex align="center" gap={4} style={{ minWidth: 90 }}>
       {icon}
-      <Text type="secondary" style={{ fontSize: 13 }}>
+      <Text type="secondary" className="text-sm">
         {label}:
       </Text>
     </Flex>
-    <Text strong style={{ fontSize: 13 }}>
+    <Text strong className="text-sm">
       {path}
     </Text>
   </OsPathRowContainer>
@@ -39,23 +39,23 @@ const OsPathRow = ({ icon, label, path }: OsPathRowProps) => (
 
 const MigrationSteps = () => (
   <Flex vertical gap={16}>
-    <Flex vertical gap={12}>
-      <Flex gap={12}>
-        <Text strong style={{ minWidth: 20 }}>
-          1.
-        </Text>
-        <Text>Quit Pearl app on this machine.</Text>
-      </Flex>
+    <Flex>
+      <Text strong style={{ minWidth: 20 }}>
+        1.
+      </Text>
+      <Text>Quit Pearl app on this machine.</Text>
+    </Flex>
 
-      <Flex gap={12}>
-        <Text strong style={{ minWidth: 20 }}>
-          2.
+    <Flex>
+      <Text strong style={{ minWidth: 20 }}>
+        2.
+      </Text>
+      <Flex vertical gap={8}>
+        <Text>
+          Locate the .operate folder on your previous machine or backup.
         </Text>
-        <Flex vertical gap={8}>
-          <Text>
-            Locate the .operate folder on your previous machine or backup.
-          </Text>
-          <Flex vertical gap={4} style={{ paddingLeft: 8 }}>
+        <Flex vertical gap={8} style={{ marginLeft: -20 }}>
+          <Flex vertical gap={4}>
             <OsPathRow
               icon={<FaApple />}
               label="MacOS"
@@ -72,29 +72,36 @@ const MigrationSteps = () => (
               path="/home/<username>/.operate"
             />
           </Flex>
-          <Text type="secondary" style={{ fontSize: 12 }}>
+          <Text type="secondary" className="text-sm">
             .operate folder is hidden by default on MacOS and Linux. To unhide,
-            press <Text strong>Cmd+Shift+.</Text> / (<Text strong>Ctrl+H</Text>{' '}
-            on Linux)
+            press{' '}
+            <Text strong className="text-sm">
+              `Cmd+Shift+.`
+            </Text>{' '}
+            (`
+            <Text strong className="text-sm">
+              Ctrl+H
+            </Text>
+            ` on Linux)
           </Text>
         </Flex>
       </Flex>
+    </Flex>
 
-      <Flex gap={12}>
-        <Text strong style={{ minWidth: 20 }}>
-          3.
-        </Text>
-        <Text>
-          Place it on this machine to the same directory as specified above.
-        </Text>
-      </Flex>
+    <Flex>
+      <Text strong style={{ minWidth: 20 }}>
+        3.
+      </Text>
+      <Text>
+        Place it on this machine to the same directory as specified above.
+      </Text>
+    </Flex>
 
-      <Flex gap={12}>
-        <Text strong style={{ minWidth: 20 }}>
-          4.
-        </Text>
-        <Text>Start Pearl and sign in with your original password.</Text>
-      </Flex>
+    <Flex>
+      <Text strong style={{ minWidth: 20 }}>
+        4.
+      </Text>
+      <Text>Start Pearl and sign in with your original password.</Text>
     </Flex>
   </Flex>
 );
@@ -103,9 +110,11 @@ const WithdrawFundsSection = () => {
   const { goto } = useSetup();
 
   return (
-    <Flex vertical gap={8}>
-      <Text strong>Lost your .operate folder?</Text>
-      <Text type="secondary">
+    <Flex vertical gap={12}>
+      <Title level={5} className="m-0">
+        Lost your .operate folder?
+      </Title>
+      <Text type="secondary" className="text-sm">
         You can still withdraw part of your funds using your secret recovery
         phrase.
       </Text>
@@ -125,7 +134,7 @@ export const MigrateOperateFolder = () => {
 
   return (
     <Flex vertical gap={24} style={{ width: '100%' }}>
-      <SetupCard>
+      <SetupCard $maxWidth={586}>
         <Flex vertical style={{ padding: '24px 24px 32px' }}>
           <Flex align="center" style={{ marginBottom: 16 }}>
             <BackButton onPrev={() => goto(SETUP_SCREEN.AccountRecovery)} />
@@ -148,7 +157,7 @@ export const MigrateOperateFolder = () => {
         </Flex>
       </SetupCard>
 
-      <SetupCard>
+      <SetupCard $maxWidth={586}>
         <Flex vertical style={{ padding: '24px 24px 32px' }}>
           <WithdrawFundsSection />
         </Flex>

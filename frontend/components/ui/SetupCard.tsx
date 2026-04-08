@@ -2,8 +2,8 @@ import styled from 'styled-components';
 
 import { COLOR } from '@/constants';
 
-export const SetupCard = styled.div`
-  max-width: 516px;
+export const SetupCard = styled.div<{ $maxWidth?: number }>`
+  max-width: ${({ $maxWidth }) => ($maxWidth ? `${$maxWidth}px` : '516px')};
   width: 100%;
   margin: auto;
   border-radius: 16px;

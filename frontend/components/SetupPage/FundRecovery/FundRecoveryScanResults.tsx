@@ -29,15 +29,14 @@ const isValidEvmAddress = (address: string): boolean => {
 };
 
 const ChainRow = styled(Flex)`
-  padding: 12px 0;
-  & + & {
-    border-top: 1px solid ${COLOR.BORDER_LIGHT};
-  }
+  padding: 12px 16px;
+  background-color: ${COLOR.BACKGROUND};
+  border-radius: 6px;
 `;
 
 type TokenBalance = { symbol: string; amount: string; icon?: string };
 
-export type ChainBalance = {
+type ChainBalance = {
   chainId: number;
   chainName: string;
   chainImage: string;
@@ -138,7 +137,7 @@ type ChainBalanceRowProps = {
 };
 
 const ChainBalanceRow = ({ chain }: ChainBalanceRowProps) => (
-  <ChainRow vertical gap={12}>
+  <ChainRow vertical gap={10}>
     <Flex align="center" gap={8}>
       {chain.chainImage && (
         <Image
@@ -149,7 +148,7 @@ const ChainBalanceRow = ({ chain }: ChainBalanceRowProps) => (
           style={{ borderRadius: '50%' }}
         />
       )}
-      <Text strong>{chain.chainName}</Text>
+      <Text>{chain.chainName}</Text>
     </Flex>
 
     <Flex wrap="wrap" gap={6}>
@@ -158,7 +157,7 @@ const ChainBalanceRow = ({ chain }: ChainBalanceRowProps) => (
           key={token.symbol}
           style={{
             backgroundColor: COLOR.WHITE,
-            border: `1px solid ${COLOR.BORDER_LIGHT}`,
+            border: `1px solid ${COLOR.BORDER_GRAY}`,
           }}
         >
           {token.icon && (
@@ -211,7 +210,7 @@ export const FundRecoveryChainBalances = ({
       </Flex>
 
       {hasBalances ? (
-        <Flex vertical gap={8}>
+        <Flex vertical gap={12}>
           {chainBalances.map((chain) => (
             <ChainBalanceRow key={chain.chainId} chain={chain} />
           ))}
@@ -229,9 +228,9 @@ export const FundRecoveryChainBalances = ({
         />
       )}
 
-      <Flex gap={8} align="start">
-        <WarningOutlined style={{ marginTop: 3 }} />
-        <Text type="secondary" style={{ fontSize: 12 }}>
+      <Flex gap={8} align="start" className="text-neutral-tertiary">
+        <WarningOutlined />
+        <Text type="secondary" className="text-xs">
           Funds locked in external protocols and small amounts held in your
           agent&apos;s transaction signing wallet are not included in this
           withdrawal.
@@ -271,8 +270,11 @@ export const FundRecoveryWithdrawForm = ({
   return (
     <Flex vertical gap={16}>
       <Flex vertical gap={8}>
-        <Text strong>
-          Withdrawal address <Text type="danger">*</Text>
+        <Text className="text-sm text-neutral-tertiary">
+          Withdrawal address{' '}
+          <Text type="danger" className="text-sm">
+            *
+          </Text>
         </Text>
         <Input
           value={destinationAddress}
