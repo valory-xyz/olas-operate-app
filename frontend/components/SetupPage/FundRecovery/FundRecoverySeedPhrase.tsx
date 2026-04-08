@@ -1,4 +1,5 @@
 import { Button, Flex, Input, InputRef, Typography } from 'antd';
+import { ethers } from 'ethers';
 import { ChangeEvent, ClipboardEvent, useCallback, useRef } from 'react';
 import styled from 'styled-components';
 
@@ -42,7 +43,9 @@ export const FundRecoverySeedPhrase = ({
   const inputRefs = useRef<(InputRef | null)[]>([]);
 
   const allWordsFilled = words.every((w) => w.trim().length > 0);
-  const canScan = allWordsFilled && !isScanning;
+  const isMnemonicValid =
+    allWordsFilled && ethers.utils.isValidMnemonic(words.join(' '));
+  const canScan = isMnemonicValid && !isScanning;
 
   const handleWordChange = useCallback(
     (index: number, value: string) => {
@@ -70,8 +73,9 @@ export const FundRecoverySeedPhrase = ({
         onWordsChange(updated);
 
         // Focus the next unfilled input after paste
-        const nextIndex = Math.min(index + pastedWords.length, WORD_COUNT - 1);
-        inputRefs.current[nextIndex]?.focus();
+        const targetWordIndex = Math.min(index + pastedWords.length, WORD_COUNT - 1);
+        const targetGridPos = ORDERED_INDICES.indexOf(targetWordIndex);
+        if (targetGridPos >= 0) inputRefs.current[targetGridPos]?.focus();
       }
     },
     [words, onWordsChange],
@@ -144,6 +148,18 @@ export const FundRecoverySeedPhrase = ({
         ))}
       </WordGrid>
 
+      {allWordsFilled && !isMnemonicValid && (
+        <Alert
+          type="error"
+          showIcon
+          message={
+            <span className="text-sm">
+              Invalid recovery phrase. Please check each word and try again.
+            </span>
+          }
+        />
+      )}
+
       <Button
         type="primary"
         size="large"
@@ -154,6 +170,12 @@ export const FundRecoverySeedPhrase = ({
       >
         Continue
       </Button>
+
+      {isScanning && (
+        <Text type="secondary" className="text-sm text-center">
+          Scanning chains for recoverable funds… this may take a moment.
+        </Text>
+      )}
     </Flex>
   );
 };
