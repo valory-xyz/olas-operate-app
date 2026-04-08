@@ -4,24 +4,15 @@ const logger = require('./logger');
 
 const updateOptions = {
   ...publishOptions,
-  // token is not required for macUpdater as repo is public, should overwrite it to undefined
-  token: undefined,
   channels: ['latest', 'beta', 'alpha'],
 };
 
-const macUpdater = new electronUpdater.MacUpdater({
-  ...updateOptions,
-});
+const autoUpdater = electronUpdater.autoUpdater;
 
-macUpdater.setFeedURL({ ...updateOptions });
+autoUpdater.setFeedURL({ ...updateOptions });
 
-macUpdater.autoDownload = false;
-macUpdater.autoInstallOnAppQuit = false;
-macUpdater.logger = logger;
+autoUpdater.autoDownload = false;
+autoUpdater.autoInstallOnAppQuit = true;
+autoUpdater.logger = logger;
 
-// UPDATER EVENTS
-macUpdater.on('update-downloaded', () => {
-  macUpdater.quitAndInstall();
-});
-
-module.exports = { macUpdater };
+module.exports = { autoUpdater };
