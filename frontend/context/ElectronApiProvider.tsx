@@ -94,6 +94,18 @@ type ElectronApiContextProps = {
   };
   logEvent?: (message: string) => void;
   nextLogError?: (error: Error, errorInfo: unknown) => void;
+  updates?: {
+    checkForUpdates?: () => Promise<unknown>;
+    downloadUpdate?: () => Promise<void>;
+    cancelDownload?: () => void;
+    quitAndInstall?: () => Promise<void>;
+    onUpdateAvailable?: (
+      cb: (info: { version: string; releaseNotes: string | null }) => void,
+    ) => () => void;
+    onDownloadProgress?: (cb: (progress: { percent: number }) => void) => () => void;
+    onUpdateDownloaded?: (cb: () => void) => () => void;
+    onUpdateError?: (cb: (err: { message: string }) => void) => () => void;
+  };
 };
 
 export const ElectronApiContext = createContext<ElectronApiContextProps>({
@@ -141,6 +153,16 @@ export const ElectronApiContext = createContext<ElectronApiContextProps>({
   },
   logEvent: () => {},
   nextLogError: () => {},
+  updates: {
+    checkForUpdates: async () => {},
+    downloadUpdate: async () => {},
+    cancelDownload: () => {},
+    quitAndInstall: async () => {},
+    onUpdateAvailable: () => () => {},
+    onDownloadProgress: () => () => {},
+    onUpdateDownloaded: () => () => {},
+    onUpdateError: () => () => {},
+  },
 });
 
 export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
@@ -214,6 +236,16 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
         },
         logEvent: getElectronApiFunction('logEvent'),
         nextLogError: getElectronApiFunction('nextLogError'),
+        updates: {
+          checkForUpdates: getElectronApiFunction('updates.checkForUpdates'),
+          downloadUpdate: getElectronApiFunction('updates.downloadUpdate'),
+          cancelDownload: getElectronApiFunction('updates.cancelDownload'),
+          quitAndInstall: getElectronApiFunction('updates.quitAndInstall'),
+          onUpdateAvailable: getElectronApiFunction('updates.onUpdateAvailable'),
+          onDownloadProgress: getElectronApiFunction('updates.onDownloadProgress'),
+          onUpdateDownloaded: getElectronApiFunction('updates.onUpdateDownloaded'),
+          onUpdateError: getElectronApiFunction('updates.onUpdateError'),
+        },
       }}
     >
       {children}
