@@ -13,11 +13,16 @@ const scan = async (
     method: 'POST',
     headers: { ...CONTENT_TYPE_JSON_UTF8 },
     body: JSON.stringify(request),
-  }).then((res) => {
+  }).then(async (res) => {
     if (res.ok) return res.json();
-    return res.json().then((data) => {
-      throw new Error(data?.error ?? 'Failed to scan for recoverable funds');
-    });
+    const text = await res.text();
+    let errorMsg: string;
+    try {
+      errorMsg = JSON.parse(text)?.error ?? 'Failed to scan for recoverable funds';
+    } catch {
+      errorMsg = 'Failed to scan for recoverable funds';
+    }
+    throw new Error(errorMsg);
   });
 
 const execute = async (
@@ -27,11 +32,16 @@ const execute = async (
     method: 'POST',
     headers: { ...CONTENT_TYPE_JSON_UTF8 },
     body: JSON.stringify(request),
-  }).then((res) => {
+  }).then(async (res) => {
     if (res.ok) return res.json();
-    return res.json().then((data) => {
-      throw new Error(data?.error ?? 'Failed to execute fund recovery');
-    });
+    const text = await res.text();
+    let errorMsg: string;
+    try {
+      errorMsg = JSON.parse(text)?.error ?? 'Failed to execute fund recovery';
+    } catch {
+      errorMsg = 'Failed to execute fund recovery';
+    }
+    throw new Error(errorMsg);
   });
 
 export const FundRecoveryService = {
