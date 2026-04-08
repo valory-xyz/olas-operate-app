@@ -9,7 +9,7 @@ import {
   Typography,
 } from 'antd';
 import Image from 'next/image';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   TbHelpSquareRounded,
   TbPlus,
@@ -151,6 +151,8 @@ export const Sidebar = () => {
   } = useServices();
   const { isLoading: isMasterWalletLoading } = useMasterWalletContext();
   const { fade, ref: scrollAreaRef } = useListFade();
+
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
 
   const {
     pendingArchiveInstanceId,
@@ -348,8 +350,11 @@ export const Sidebar = () => {
 
           <div className="p-16">
             <BackupSeedPhraseAlert />
-            <UpdateAvailableAlert />
-            <UpdateAvailableModal />
+            <UpdateAvailableAlert onOpen={() => setIsUpdateModalOpen(true)} />
+            <UpdateAvailableModal
+              isOpen={isUpdateModalOpen}
+              onClose={() => setIsUpdateModalOpen(false)}
+            />
 
             <Menu
               selectedKeys={selectedBottomMenuKey}
