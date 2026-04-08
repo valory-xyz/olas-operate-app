@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { act } from 'react';
 
 // --- Import under test ---
@@ -13,7 +13,6 @@ jest.mock(
   () => ({ useAppStatus: (...args: unknown[]) => mockUseAppStatus(...args) }),
 );
 
-const mockStoreGet = jest.fn();
 const mockStoreSet = jest.fn();
 const mockDownloadUpdate = jest.fn();
 const mockCancelDownload = jest.fn();
@@ -24,7 +23,7 @@ const mockOnUpdateError = jest.fn();
 
 jest.mock('../../../../hooks', () => ({
   useElectronApi: () => ({
-    store: { get: mockStoreGet, set: mockStoreSet },
+    store: { set: mockStoreSet },
     updates: {
       downloadUpdate: mockDownloadUpdate,
       cancelDownload: mockCancelDownload,
@@ -63,12 +62,8 @@ jest.mock('../../../../components/ui', () => ({
     children?: React.ReactNode;
   }) => (
     <div data-testid="modal">
-      {props.header && (
-        <div data-testid="modal-header">{props.header}</div>
-      )}
-      {props.title && (
-        <div data-testid="modal-title">{props.title}</div>
-      )}
+      {props.header && <div data-testid="modal-header">{props.header}</div>}
+      {props.title && <div data-testid="modal-title">{props.title}</div>}
       {props.description && (
         <div data-testid="modal-description">{props.description}</div>
       )}
@@ -90,7 +85,6 @@ describe('UpdateAvailableModal', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockStoreGet.mockResolvedValue(undefined);
     mockUseAppStatus.mockReturnValue(defaultAppStatusOutdated);
     mockDownloadUpdate.mockResolvedValue(undefined);
     mockQuitAndInstall.mockResolvedValue(undefined);
@@ -111,62 +105,6 @@ describe('UpdateAvailableModal', () => {
         <UpdateAvailableModal isOpen={false} onClose={() => {}} />,
       );
       expect(container.innerHTML).toBe('');
-    });
-  });
-
-  describe('auto-open useEffect', () => {
-    it('does nothing when isFetched is false', async () => {
-      mockUseAppStatus.mockReturnValue({
-        data: { isOutdated: true, latestTag: 'v2.0.0', releaseNotes: null },
-        isFetched: false,
-      });
-
-      await act(async () => {
-        render(<UpdateAvailableModal isOpen={false} onClose={() => {}} />);
-      });
-
-      expect(mockStoreGet).not.toHaveBeenCalled();
-    });
-
-    it('does nothing when data.isOutdated is false', async () => {
-      mockUseAppStatus.mockReturnValue({
-        data: { isOutdated: false, latestTag: 'v2.0.0', releaseNotes: null },
-        isFetched: true,
-      });
-
-      await act(async () => {
-        render(<UpdateAvailableModal isOpen={false} onClose={() => {}} />);
-      });
-
-      expect(mockStoreGet).not.toHaveBeenCalled();
-    });
-
-    it('reads store when update is available', async () => {
-      await act(async () => {
-        render(<UpdateAvailableModal isOpen={false} onClose={() => {}} />);
-      });
-
-      expect(mockStoreGet).toHaveBeenCalledWith('updateAvailableKnownVersion');
-    });
-
-    it('logs console.error when store.get rejects', async () => {
-      const storeError = new Error('store read failure');
-      mockStoreGet.mockRejectedValue(storeError);
-
-      const consoleSpy = jest
-        .spyOn(console, 'error')
-        .mockImplementation(() => {});
-
-      await act(async () => {
-        render(<UpdateAvailableModal isOpen={false} onClose={() => {}} />);
-      });
-
-      expect(consoleSpy).toHaveBeenCalledWith(
-        'Failed to check update availability:',
-        storeError,
-      );
-
-      consoleSpy.mockRestore();
     });
   });
 
@@ -271,56 +209,65 @@ describe('UpdateAvailableModal', () => {
     it('calls downloadUpdate and transitions to downloading state', async () => {
       render(<UpdateAvailableModal isOpen={true} onClose={() => {}} />);
 
-      fireEvent.click(screen.getByRole('button', { name: 'Update & Relaunch' }));
-
-      expect(mockDownloadUpdate).toHaveBeenCalledTimes(1);
-      await waitFor(() => {
-        expect(screen.getByTestId('modal-title')).toHaveTextContent(
-          'Downloading Update',
+      await act(async () => {
+        fireEvent.click(
+          screen.getByRole('button', { name: 'Update & Relaunch' }),
         );
       });
+
+      expect(mockDownloadUpdate).toHaveBeenCalledTimes(1);
+      expect(screen.getByTestId('modal-title')).toHaveTextContent(
+        'Downloading Update',
+      );
     });
   });
 
   describe('downloading state', () => {
     it('renders Downloading Update title after clicking Update & Relaunch', async () => {
       render(<UpdateAvailableModal isOpen={true} onClose={() => {}} />);
-      fireEvent.click(screen.getByRole('button', { name: 'Update & Relaunch' }));
 
-      await waitFor(() => {
-        expect(screen.getByTestId('modal-title')).toHaveTextContent(
-          'Downloading Update',
+      await act(async () => {
+        fireEvent.click(
+          screen.getByRole('button', { name: 'Update & Relaunch' }),
         );
       });
+
+      expect(screen.getByTestId('modal-title')).toHaveTextContent(
+        'Downloading Update',
+      );
     });
 
     it('renders Cancel button in downloading state', async () => {
       render(<UpdateAvailableModal isOpen={true} onClose={() => {}} />);
-      fireEvent.click(screen.getByRole('button', { name: 'Update & Relaunch' }));
 
-      await waitFor(() => {
-        expect(
-          screen.getByRole('button', { name: 'Cancel' }),
-        ).toBeInTheDocument();
+      await act(async () => {
+        fireEvent.click(
+          screen.getByRole('button', { name: 'Update & Relaunch' }),
+        );
       });
+
+      expect(
+        screen.getByRole('button', { name: 'Cancel' }),
+      ).toBeInTheDocument();
     });
 
     it('clicking Cancel calls cancelDownload and returns to available state', async () => {
       render(<UpdateAvailableModal isOpen={true} onClose={() => {}} />);
-      fireEvent.click(screen.getByRole('button', { name: 'Update & Relaunch' }));
 
-      await waitFor(() =>
-        screen.getByRole('button', { name: 'Cancel' }),
-      );
-
-      fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
-
-      expect(mockCancelDownload).toHaveBeenCalledTimes(1);
-      await waitFor(() => {
-        expect(screen.getByTestId('modal-title')).toHaveTextContent(
-          'Update Available',
+      await act(async () => {
+        fireEvent.click(
+          screen.getByRole('button', { name: 'Update & Relaunch' }),
         );
       });
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+      });
+
+      expect(mockCancelDownload).toHaveBeenCalledTimes(1);
+      expect(screen.getByTestId('modal-title')).toHaveTextContent(
+        'Update Available',
+      );
     });
 
     it('calls quitAndInstall when onUpdateDownloaded fires', async () => {
@@ -331,7 +278,12 @@ describe('UpdateAvailableModal', () => {
       });
 
       render(<UpdateAvailableModal isOpen={true} onClose={() => {}} />);
-      fireEvent.click(screen.getByRole('button', { name: 'Update & Relaunch' }));
+
+      await act(async () => {
+        fireEvent.click(
+          screen.getByRole('button', { name: 'Update & Relaunch' }),
+        );
+      });
 
       await act(async () => {
         capturedDownloadedCb?.();
@@ -342,7 +294,7 @@ describe('UpdateAvailableModal', () => {
   });
 
   describe('failed state', () => {
-    it('transitions to failed state when onUpdateError fires', async () => {
+    const renderAndTriggerError = async () => {
       let capturedErrorCb: (() => void) | null = null;
       mockOnUpdateError.mockImplementation((cb: () => void) => {
         capturedErrorCb = cb;
@@ -350,82 +302,49 @@ describe('UpdateAvailableModal', () => {
       });
 
       render(<UpdateAvailableModal isOpen={true} onClose={() => {}} />);
-      fireEvent.click(screen.getByRole('button', { name: 'Update & Relaunch' }));
+
+      await act(async () => {
+        fireEvent.click(
+          screen.getByRole('button', { name: 'Update & Relaunch' }),
+        );
+      });
 
       await act(async () => {
         capturedErrorCb?.();
       });
+    };
 
-      await waitFor(() => {
-        expect(screen.getByTestId('modal-title')).toHaveTextContent(
-          'Download Failed',
-        );
-      });
+    it('transitions to failed state when onUpdateError fires', async () => {
+      await renderAndTriggerError();
+
+      expect(screen.getByTestId('modal-title')).toHaveTextContent(
+        'Download Failed',
+      );
     });
 
     it('renders Try Again button in failed state', async () => {
-      let capturedErrorCb: (() => void) | null = null;
-      mockOnUpdateError.mockImplementation((cb: () => void) => {
-        capturedErrorCb = cb;
-        return () => {};
-      });
+      await renderAndTriggerError();
 
-      render(<UpdateAvailableModal isOpen={true} onClose={() => {}} />);
-      fireEvent.click(screen.getByRole('button', { name: 'Update & Relaunch' }));
-
-      await act(async () => {
-        capturedErrorCb?.();
-      });
-
-      await waitFor(() =>
+      expect(
         screen.getByRole('button', { name: 'Try Again' }),
-      );
-      expect(screen.getByRole('button', { name: 'Try Again' })).toBeInTheDocument();
+      ).toBeInTheDocument();
     });
 
     it('Try Again re-invokes downloadUpdate and returns to downloading state', async () => {
-      let capturedErrorCb: (() => void) | null = null;
-      mockOnUpdateError.mockImplementation((cb: () => void) => {
-        capturedErrorCb = cb;
-        return () => {};
-      });
-
-      render(<UpdateAvailableModal isOpen={true} onClose={() => {}} />);
-      fireEvent.click(screen.getByRole('button', { name: 'Update & Relaunch' }));
+      await renderAndTriggerError();
 
       await act(async () => {
-        capturedErrorCb?.();
+        fireEvent.click(screen.getByRole('button', { name: 'Try Again' }));
       });
-
-      await waitFor(() => screen.getByRole('button', { name: 'Try Again' }));
-
-      fireEvent.click(screen.getByRole('button', { name: 'Try Again' }));
 
       expect(mockDownloadUpdate).toHaveBeenCalledTimes(2);
-      await waitFor(() => {
-        expect(screen.getByTestId('modal-title')).toHaveTextContent(
-          'Downloading Update',
-        );
-      });
+      expect(screen.getByTestId('modal-title')).toHaveTextContent(
+        'Downloading Update',
+      );
     });
 
     it('renders DOWNLOAD_URL fallback button in failed state', async () => {
-      let capturedErrorCb: (() => void) | null = null;
-      mockOnUpdateError.mockImplementation((cb: () => void) => {
-        capturedErrorCb = cb;
-        return () => {};
-      });
-
-      render(<UpdateAvailableModal isOpen={true} onClose={() => {}} />);
-      fireEvent.click(screen.getByRole('button', { name: 'Update & Relaunch' }));
-
-      await act(async () => {
-        capturedErrorCb?.();
-      });
-
-      await waitFor(() =>
-        screen.getByRole('button', { name: 'Download from pearl.you' }),
-      );
+      await renderAndTriggerError();
 
       fireEvent.click(
         screen.getByRole('button', { name: 'Download from pearl.you' }),

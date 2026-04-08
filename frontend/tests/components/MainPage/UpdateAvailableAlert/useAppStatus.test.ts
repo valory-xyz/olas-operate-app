@@ -47,7 +47,9 @@ jest.mock('@tanstack/react-query', () => ({
 describe('useAppStatus', () => {
   // Import after mocks are set up
   /* eslint-disable @typescript-eslint/no-var-requires */
-  const { useAppStatus } = require('../../../../components/MainPage/UpdateAvailableAlert/useAppStatus');
+  const {
+    useAppStatus,
+  } = require('../../../../components/MainPage/UpdateAvailableAlert/useAppStatus');
   /* eslint-enable @typescript-eslint/no-var-requires */
 
   beforeEach(() => {
@@ -108,7 +110,9 @@ describe('useAppStatus', () => {
         },
       }));
 
-      const { useAppStatus: freshUseAppStatus } = require('../../../../components/MainPage/UpdateAvailableAlert/useAppStatus');
+      const {
+        useAppStatus: freshUseAppStatus,
+      } = require('../../../../components/MainPage/UpdateAvailableAlert/useAppStatus');
       /* eslint-enable @typescript-eslint/no-var-requires */
 
       renderHook(() => freshUseAppStatus());
@@ -119,7 +123,9 @@ describe('useAppStatus', () => {
     });
 
     it('resolves with isOutdated=true when onUpdateAvailable fires before checkForUpdates resolves', async () => {
-      let capturedCb: ((info: { version: string; releaseNotes: string }) => void) | null = null;
+      let capturedCb:
+        | ((info: { version: string; releaseNotes: string }) => void)
+        | null = null;
       mockOnUpdateAvailable.mockImplementation(
         (cb: (info: { version: string; releaseNotes: string }) => void) => {
           capturedCb = cb;
@@ -134,7 +140,10 @@ describe('useAppStatus', () => {
       const promise = capturedConfig!.queryFn();
 
       // Simulate update-available event firing
-      capturedCb!({ version: 'v2.0.0', releaseNotes: '## New features\n- OTA' });
+      capturedCb!({
+        version: 'v2.0.0',
+        releaseNotes: '## New features\n- OTA',
+      });
 
       const result = await promise;
       expect(result).toEqual({
@@ -200,7 +209,9 @@ describe('useAppStatus', () => {
     });
 
     it('includes releaseNotes=null when releaseNotes is not a string', async () => {
-      let capturedCb: ((info: { version: string; releaseNotes: unknown }) => void) | null = null;
+      let capturedCb:
+        | ((info: { version: string; releaseNotes: unknown }) => void)
+        | null = null;
       mockOnUpdateAvailable.mockImplementation(
         (cb: (info: { version: string; releaseNotes: unknown }) => void) => {
           capturedCb = cb;

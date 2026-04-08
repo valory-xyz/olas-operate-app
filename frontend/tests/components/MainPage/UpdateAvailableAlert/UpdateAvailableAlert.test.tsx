@@ -35,7 +35,9 @@ describe('UpdateAvailableAlert', () => {
         .spyOn(console, 'error')
         .mockImplementation(() => {});
 
-      const { container } = render(<UpdateAvailableAlert onOpen={mockOnOpen} />);
+      const { container } = render(
+        <UpdateAvailableAlert onOpen={mockOnOpen} />,
+      );
 
       expect(container.innerHTML).toBe('');
       expect(consoleSpy).toHaveBeenCalledWith(
@@ -54,7 +56,9 @@ describe('UpdateAvailableAlert', () => {
         error: null,
       });
 
-      const { container } = render(<UpdateAvailableAlert onOpen={mockOnOpen} />);
+      const { container } = render(
+        <UpdateAvailableAlert onOpen={mockOnOpen} />,
+      );
       expect(container.innerHTML).toBe('');
     });
 
@@ -66,7 +70,9 @@ describe('UpdateAvailableAlert', () => {
         error: null,
       });
 
-      const { container } = render(<UpdateAvailableAlert onOpen={mockOnOpen} />);
+      const { container } = render(
+        <UpdateAvailableAlert onOpen={mockOnOpen} />,
+      );
       expect(container.innerHTML).toBe('');
     });
 
@@ -78,7 +84,9 @@ describe('UpdateAvailableAlert', () => {
         error: null,
       });
 
-      const { container } = render(<UpdateAvailableAlert onOpen={mockOnOpen} />);
+      const { container } = render(
+        <UpdateAvailableAlert onOpen={mockOnOpen} />,
+      );
       expect(container.innerHTML).toBe('');
     });
   });
