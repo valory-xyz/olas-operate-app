@@ -164,7 +164,9 @@ export const Sidebar = () => {
   const { getAppVersion } = useElectronApi();
   const [appVersion, setAppVersion] = useState<string>();
   useEffect(() => {
-    getAppVersion?.().then(setAppVersion).catch(() => {});
+    getAppVersion?.()
+      .then(setAppVersion)
+      .catch(() => {});
   }, [getAppVersion]);
 
   const {
@@ -379,7 +381,12 @@ export const Sidebar = () => {
             {appVersion && (
               <Text
                 type="secondary"
-                style={{ fontSize: 11, display: 'block', textAlign: 'center', marginTop: 8 }}
+                style={{
+                  fontSize: 11,
+                  display: 'block',
+                  textAlign: 'center',
+                  marginTop: 8,
+                }}
               >
                 v{appVersion}
               </Text>
