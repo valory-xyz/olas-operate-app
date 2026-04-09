@@ -38,8 +38,8 @@ const termsAndConditionsWindow = {
   show: (hash) => ipcRenderer.invoke('terms-window-show', hash),
 };
 
-/** IPC methods for OTA updates */
-const autoUpdater = {
+/** IPC bridge for OTA updates (distinct from the electron-updater instance in electron/update.js) */
+const updates = {
   checkForUpdates: () => ipcRenderer.invoke('update-check'),
   downloadUpdate: () => ipcRenderer.invoke('update-download'),
   cancelDownload: () => ipcRenderer.invoke('update-cancel'),
@@ -112,5 +112,5 @@ contextBridge.exposeInMainWorld('electronAPI', {
   logEvent: (message) => ipcRenderer.invoke('log-event', message),
   nextLogError: (error, errorInfo) =>
     ipcRenderer.invoke('next-log-error', error, errorInfo),
-  autoUpdater,
+  updates,
 });

@@ -10,17 +10,17 @@ type useAppStatusResult = {
 };
 
 export const useAppStatus = () => {
-  const { autoUpdater } = useElectronApi();
+  const { updates } = useElectronApi();
 
   return useQuery<useAppStatusResult, Error>({
     queryKey: REACT_QUERY_KEYS.IS_PEARL_OUTDATED_KEY,
     queryFn: ({ signal }): Promise<useAppStatusResult> => {
       if (
-        !autoUpdater?.checkForUpdates ||
-        !autoUpdater?.onUpdateAvailable ||
-        !autoUpdater?.onUpdateNotAvailable
+        !updates?.checkForUpdates ||
+        !updates?.onUpdateAvailable ||
+        !updates?.onUpdateNotAvailable
       ) {
-        return Promise.reject(new Error('autoUpdater API is not available'));
+        return Promise.reject(new Error('updates API is not available'));
       }
 
       return new Promise<useAppStatusResult>((resolve, reject) => {
@@ -31,7 +31,7 @@ export const useAppStatus = () => {
           cleanupNotAvailable?.();
         }
 
-        const cleanupAvailable = autoUpdater.onUpdateAvailable!((info) => {
+        const cleanupAvailable = updates.onUpdateAvailable!((info) => {
           if (settled) return;
           settled = true;
           cleanup();
@@ -43,14 +43,14 @@ export const useAppStatus = () => {
           });
         });
 
-        const cleanupNotAvailable = autoUpdater.onUpdateNotAvailable!(() => {
+        const cleanupNotAvailable = updates.onUpdateNotAvailable!(() => {
           if (settled) return;
           settled = true;
           cleanup();
           resolve({ isOutdated: false, latestTag: null, releaseNotes: null });
         });
 
-        autoUpdater.checkForUpdates!().catch((err: Error) => {
+        updates.checkForUpdates!().catch((err: Error) => {
           if (settled) return;
           settled = true;
           cleanup();

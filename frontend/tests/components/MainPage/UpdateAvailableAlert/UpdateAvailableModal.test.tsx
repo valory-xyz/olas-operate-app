@@ -24,7 +24,7 @@ const mockOnUpdateError = jest.fn();
 jest.mock('../../../../hooks', () => ({
   useElectronApi: () => ({
     store: { set: mockStoreSet },
-    autoUpdater: {
+    updates: {
       downloadUpdate: mockDownloadUpdate,
       cancelDownload: mockCancelDownload,
       quitAndInstall: mockQuitAndInstall,
