@@ -21,8 +21,6 @@ type UpdateAvailableModalProps = {
   onClose: () => void;
 };
 
-// -- Styled components --
-
 const AccordionContainer = styled.div`
   background: #f4f7fa;
   border: 1px solid #eaedf1;
@@ -105,8 +103,6 @@ const CloseButton = styled.button`
   }
 `;
 
-// -- Sub-components --
-
 const ReleaseNotesAccordion = ({ releaseNotes }: { releaseNotes: string }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -129,8 +125,6 @@ const ReleaseNotesAccordion = ({ releaseNotes }: { releaseNotes: string }) => {
   );
 };
 
-// -- Modal styles (bypass custom Modal, use AntdModal directly) --
-
 const MODAL_WIDTH = 450;
 const MODAL_STYLES = {
   content: {
@@ -139,8 +133,6 @@ const MODAL_STYLES = {
     position: 'relative' as const,
   },
 };
-
-// -- Main component --
 
 export const UpdateAvailableModal = ({
   isOpen,
@@ -163,7 +155,6 @@ export const UpdateAvailableModal = ({
     if (!autoUpdater) return;
 
     const cleanupProgress = autoUpdater.onDownloadProgress?.(() => {
-      // Progress tracking available if needed in future
     });
 
     const cleanupDownloaded = autoUpdater.onUpdateDownloaded?.(() => {
@@ -205,7 +196,6 @@ export const UpdateAvailableModal = ({
 
   if (!isOpen) return null;
 
-  // Downloading state
   if (modalState === 'downloading') {
     return (
       <AntdModal
@@ -241,7 +231,6 @@ export const UpdateAvailableModal = ({
     );
   }
 
-  // Failed state
   if (modalState === 'failed') {
     return (
       <AntdModal
@@ -298,7 +287,6 @@ export const UpdateAvailableModal = ({
     );
   }
 
-  // Available state
   return (
     <AntdModal
       open
@@ -312,7 +300,6 @@ export const UpdateAvailableModal = ({
         <PiX size={20} />
       </CloseButton>
       <Flex vertical gap={24}>
-        {/* Text section: icon, title, subtitle, accordion */}
         <Flex vertical gap={16}>
           <Image
             src="/pearl-with-gradient.png"
@@ -333,7 +320,6 @@ export const UpdateAvailableModal = ({
           )}
         </Flex>
 
-        {/* Buttons */}
         <Flex gap={12} justify="flex-end">
           <Button size="large" onClick={onUpdateLater}>
             Update Later
