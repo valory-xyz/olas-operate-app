@@ -25,15 +25,13 @@ export const useAppStatus = () => {
 
       return new Promise<useAppStatusResult>((resolve, reject) => {
         let settled = false;
-        let cleanupAvailable: (() => void) | undefined;
-        let cleanupNotAvailable: (() => void) | undefined;
 
-        const cleanup = () => {
+        function cleanup() {
           cleanupAvailable?.();
           cleanupNotAvailable?.();
-        };
+        }
 
-        cleanupAvailable = updates.onUpdateAvailable!((info) => {
+        const cleanupAvailable = updates.onUpdateAvailable!((info) => {
           if (settled) return;
           settled = true;
           cleanup();
@@ -45,7 +43,7 @@ export const useAppStatus = () => {
           });
         });
 
-        cleanupNotAvailable = updates.onUpdateNotAvailable!(() => {
+        const cleanupNotAvailable = updates.onUpdateNotAvailable!(() => {
           if (settled) return;
           settled = true;
           cleanup();
