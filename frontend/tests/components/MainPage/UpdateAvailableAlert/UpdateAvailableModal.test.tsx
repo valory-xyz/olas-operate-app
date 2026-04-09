@@ -218,10 +218,10 @@ describe('UpdateAvailableModal', () => {
       ).toBeInTheDocument();
     });
 
-    it('renders "Download on olas.network" button', () => {
+    it('renders "Download on pearl.you" button', () => {
       render(<UpdateAvailableModal />);
       expect(
-        screen.getByRole('button', { name: 'Download on olas.network' }),
+        screen.getByRole('button', { name: 'Download on pearl.you' }),
       ).toBeInTheDocument();
     });
 
@@ -282,7 +282,7 @@ describe('UpdateAvailableModal', () => {
       render(<UpdateAvailableModal />);
 
       fireEvent.click(
-        screen.getByRole('button', { name: 'Download on olas.network' }),
+        screen.getByRole('button', { name: 'Download on pearl.you' }),
       );
 
       expect(windowOpenSpy).toHaveBeenCalledWith(DOWNLOAD_URL, '_blank');
