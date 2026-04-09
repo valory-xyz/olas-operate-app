@@ -71,7 +71,7 @@ export const UpdateAvailableModal = ({
   const onUpdateAndRelaunch = useCallback(() => {
     setModalState('downloading');
     setDownloadPercent(0);
-    updates?.downloadUpdate?.();
+    updates?.downloadUpdate?.().catch(() => setModalState('failed'));
   }, [updates]);
 
   const onCancelDownload = useCallback(() => {
@@ -82,7 +82,7 @@ export const UpdateAvailableModal = ({
   const onTryAgain = useCallback(() => {
     setModalState('downloading');
     setDownloadPercent(0);
-    updates?.downloadUpdate?.();
+    updates?.downloadUpdate?.().catch(() => setModalState('failed'));
   }, [updates]);
 
   if (!isOpen) return null;

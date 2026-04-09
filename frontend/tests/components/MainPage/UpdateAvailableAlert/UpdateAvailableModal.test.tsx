@@ -220,6 +220,22 @@ describe('UpdateAvailableModal', () => {
         'Downloading Update',
       );
     });
+
+    it('transitions to failed state when downloadUpdate rejects', async () => {
+      mockDownloadUpdate.mockRejectedValue(new Error('IPC error'));
+
+      render(<UpdateAvailableModal isOpen={true} onClose={() => {}} />);
+
+      await act(async () => {
+        fireEvent.click(
+          screen.getByRole('button', { name: 'Update & Relaunch' }),
+        );
+      });
+
+      expect(screen.getByTestId('modal-title')).toHaveTextContent(
+        'Download Failed',
+      );
+    });
   });
 
   describe('downloading state', () => {
@@ -340,6 +356,20 @@ describe('UpdateAvailableModal', () => {
       expect(mockDownloadUpdate).toHaveBeenCalledTimes(2);
       expect(screen.getByTestId('modal-title')).toHaveTextContent(
         'Downloading Update',
+      );
+    });
+
+    it('stays in failed state when Try Again downloadUpdate rejects', async () => {
+      await renderAndTriggerError();
+
+      mockDownloadUpdate.mockRejectedValue(new Error('IPC error'));
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: 'Try Again' }));
+      });
+
+      expect(screen.getByTestId('modal-title')).toHaveTextContent(
+        'Download Failed',
       );
     });
 
