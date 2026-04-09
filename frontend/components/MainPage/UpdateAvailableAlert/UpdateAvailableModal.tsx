@@ -22,8 +22,8 @@ type UpdateAvailableModalProps = {
 };
 
 const AccordionContainer = styled.div`
-  background: #f4f7fa;
-  border: 1px solid #eaedf1;
+  background: ${COLOR.BACKGROUND};
+  border: 1px solid ${COLOR.GRAY_4};
   border-radius: 10px;
   overflow: hidden;
 `;
@@ -38,7 +38,7 @@ const AccordionHeader = styled.button`
   border: none;
   cursor: pointer;
   font-size: 14px;
-  color: #363f49;
+  color: ${COLOR.TEXT_NEUTRAL_SECONDARY};
   text-align: left;
 `;
 
@@ -64,13 +64,13 @@ const AccordionContent = styled.div`
   p {
     font-size: 14px;
     line-height: 20px;
-    color: #363f49;
+    color: ${COLOR.TEXT_NEUTRAL_SECONDARY};
     margin: 0 0 4px;
   }
   ul {
     font-size: 14px;
     line-height: 20px;
-    color: #363f49;
+    color: ${COLOR.TEXT_NEUTRAL_SECONDARY};
     margin: 0;
     padding-left: 20px;
     list-style: disc;
@@ -96,10 +96,10 @@ const CloseButton = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #363f49;
+  color: ${COLOR.TEXT_NEUTRAL_SECONDARY};
 
   &:hover {
-    background: #f4f7fa;
+    background: ${COLOR.BACKGROUND};
   }
 `;
 
@@ -110,9 +110,9 @@ const ReleaseNotesAccordion = ({ releaseNotes }: { releaseNotes: string }) => {
     <AccordionContainer>
       <AccordionHeader onClick={() => setIsExpanded((prev) => !prev)}>
         {isExpanded ? (
-          <PiCaretDownBold size={14} color="#363f49" />
+          <PiCaretDownBold size={14} color={COLOR.TEXT_NEUTRAL_SECONDARY} />
         ) : (
-          <PiCaretRightBold size={14} color="#363f49" />
+          <PiCaretRightBold size={14} color={COLOR.TEXT_NEUTRAL_SECONDARY} />
         )}
         What&apos;s new in this version
       </AccordionHeader>
@@ -138,7 +138,7 @@ export const UpdateAvailableModal = ({
   isOpen,
   onClose,
 }: UpdateAvailableModalProps) => {
-  const { store, autoUpdater } = useElectronApi();
+  const { store, updates } = useElectronApi();
   const [modalState, setModalState] = useState<ModalState>('available');
 
   const { data } = useAppStatus();
@@ -152,15 +152,15 @@ export const UpdateAvailableModal = ({
   }, [isOpen]);
 
   useEffect(() => {
-    if (!autoUpdater) return;
+    if (!updates) return;
 
-    const cleanupProgress = autoUpdater.onDownloadProgress?.(() => {});
+    const cleanupProgress = updates.onDownloadProgress?.(() => {});
 
-    const cleanupDownloaded = autoUpdater.onUpdateDownloaded?.(() => {
-      autoUpdater.quitAndInstall?.();
+    const cleanupDownloaded = updates.onUpdateDownloaded?.(() => {
+      updates.quitAndInstall?.();
     });
 
-    const cleanupError = autoUpdater.onUpdateError?.((err) => {
+    const cleanupError = updates.onUpdateError?.((err) => {
       console.error(err.message);
       setModalState('failed');
     });
@@ -179,20 +179,15 @@ export const UpdateAvailableModal = ({
     onClose();
   }, [latestTag, store, onClose]);
 
-  const onUpdateAndRelaunch = useCallback(() => {
+  const startDownload = useCallback(() => {
     setModalState('downloading');
-    autoUpdater?.downloadUpdate?.().catch(() => setModalState('failed'));
-  }, [autoUpdater]);
+    updates?.downloadUpdate?.().catch(() => setModalState('failed'));
+  }, [updates]);
 
   const onCancelDownload = useCallback(() => {
-    autoUpdater?.cancelDownload?.();
+    updates?.cancelDownload?.();
     setModalState('available');
-  }, [autoUpdater]);
-
-  const onTryAgain = useCallback(() => {
-    setModalState('downloading');
-    autoUpdater?.downloadUpdate?.().catch(() => setModalState('failed'));
-  }, [autoUpdater]);
+  }, [updates]);
 
   if (!isOpen) return null;
 
@@ -214,11 +209,11 @@ export const UpdateAvailableModal = ({
             gap={12}
             style={{ textAlign: 'center' }}
           >
-            <Text strong style={{ fontSize: 20, color: '#1f2229' }}>
+            <Text strong style={{ fontSize: 20, color: COLOR.TEXT }}>
               Downloading Update
             </Text>
             <Text
-              style={{ fontSize: 16, lineHeight: '24px', color: '#363f49' }}
+              style={{ fontSize: 16, lineHeight: '24px', color: COLOR.TEXT_NEUTRAL_SECONDARY }}
             >
               Keep Pearl open until the download finishes.
             </Text>
@@ -252,11 +247,11 @@ export const UpdateAvailableModal = ({
             gap={12}
             style={{ textAlign: 'center' }}
           >
-            <Text strong style={{ fontSize: 20, color: '#1f2229' }}>
+            <Text strong style={{ fontSize: 20, color: COLOR.TEXT }}>
               Download Failed
             </Text>
             <Text
-              style={{ fontSize: 16, lineHeight: '24px', color: '#363f49' }}
+              style={{ fontSize: 16, lineHeight: '24px', color: COLOR.TEXT_NEUTRAL_SECONDARY }}
             >
               Something went wrong. Please try again or download Pearl from the
               official website.
@@ -267,7 +262,7 @@ export const UpdateAvailableModal = ({
               block
               size="large"
               type="primary"
-              onClick={onTryAgain}
+              onClick={startDownload}
               style={{ background: COLOR.PURPLE }}
             >
               Try Again
@@ -327,7 +322,7 @@ export const UpdateAvailableModal = ({
           <Button
             size="large"
             type="primary"
-            onClick={onUpdateAndRelaunch}
+            onClick={startDownload}
             style={{ background: COLOR.PURPLE }}
           >
             Update &amp; Relaunch
