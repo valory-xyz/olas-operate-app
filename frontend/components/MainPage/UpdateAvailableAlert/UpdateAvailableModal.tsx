@@ -160,7 +160,8 @@ export const UpdateAvailableModal = ({
       autoUpdater.quitAndInstall?.();
     });
 
-    const cleanupError = autoUpdater.onUpdateError?.(() => {
+    const cleanupError = autoUpdater.onUpdateError?.((err) => {
+      console.error(err.message);
       setModalState('failed');
     });
 
