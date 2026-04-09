@@ -34,7 +34,12 @@ export const useAutoOpenUpdateModal = () => {
       .catch((error) => {
         console.error('Failed to check update availability:', error);
       });
-  }, [appStatusFetched, appStatusData?.isOutdated, appStatusData?.latestTag, store]);
+  }, [
+    appStatusFetched,
+    appStatusData?.isOutdated,
+    appStatusData?.latestTag,
+    store,
+  ]);
 
   return {
     isOpen,
