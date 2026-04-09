@@ -169,11 +169,15 @@ export const ElectronApiContext = createContext<ElectronApiContextProps>({
   },
 });
 
-const getElectronApiFunction = (functionNameInWindow: string) => {
+const getElectronApiFunction = (
+  functionNameInWindow: string,
+  silent = false,
+) => {
   if (typeof window === 'undefined') return;
 
   const fn = get(window, `electronAPI.${functionNameInWindow}`);
   if (!fn || typeof fn !== 'function') {
+    if (silent) return undefined;
     throw new Error(
       `Function ${functionNameInWindow} not found in window.electronAPI`,
     );
@@ -243,22 +247,39 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
         autoUpdater: {
           checkForUpdates: getElectronApiFunction(
             'autoUpdater.checkForUpdates',
+            true,
           ),
-          downloadUpdate: getElectronApiFunction('autoUpdater.downloadUpdate'),
-          cancelDownload: getElectronApiFunction('autoUpdater.cancelDownload'),
-          quitAndInstall: getElectronApiFunction('autoUpdater.quitAndInstall'),
+          downloadUpdate: getElectronApiFunction(
+            'autoUpdater.downloadUpdate',
+            true,
+          ),
+          cancelDownload: getElectronApiFunction(
+            'autoUpdater.cancelDownload',
+            true,
+          ),
+          quitAndInstall: getElectronApiFunction(
+            'autoUpdater.quitAndInstall',
+            true,
+          ),
           onUpdateAvailable: getElectronApiFunction(
             'autoUpdater.onUpdateAvailable',
+            true,
           ),
           onDownloadProgress: getElectronApiFunction(
             'autoUpdater.onDownloadProgress',
+            true,
           ),
           onUpdateDownloaded: getElectronApiFunction(
             'autoUpdater.onUpdateDownloaded',
+            true,
           ),
-          onUpdateError: getElectronApiFunction('autoUpdater.onUpdateError'),
+          onUpdateError: getElectronApiFunction(
+            'autoUpdater.onUpdateError',
+            true,
+          ),
           onUpdateNotAvailable: getElectronApiFunction(
             'autoUpdater.onUpdateNotAvailable',
+            true,
           ),
         },
       }}
