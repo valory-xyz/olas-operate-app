@@ -8,6 +8,13 @@ The user will provide a functional requirement or bug description. Your job is t
 
 ---
 
+## Prerequisites — Before You Start
+
+1. **If the feature has UI: designs must be available.** Design images, Figma links, or a filled Per-Screen Visual Spec (section 8) must exist. If not available, STOP and ask for them — do not plan UI without designs. Guessing layout, text, and component props causes the majority of implementation issues.
+2. **If the feature has backend endpoints: their status must be clear.** Are they already built? Being built by the middleware team? In scope for this ticket? If unclear, ask before planning the frontend around an API that may not exist.
+
+---
+
 ## Output Structure (required for every requirement)
 
 ### 1. Context
