@@ -9,7 +9,7 @@ import {
   Typography,
 } from 'antd';
 import Image from 'next/image';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import {
   TbHelpSquareRounded,
   TbPlus,
@@ -32,7 +32,6 @@ import {
   useAgentRunning,
   useAllInstancesRewardStatus,
   useBalanceAndRefillRequirementsContext,
-  useElectronApi,
   useIsInitiallyFunded,
   useMasterWalletContext,
   usePageState,
@@ -49,10 +48,10 @@ import { BackupSeedPhraseAlert } from '../BackupSeedPhraseAlert';
 import { useSidebarAgents } from '../hooks/useSidebarAgents';
 import { UpdateAvailableAlert } from '../UpdateAvailableAlert/UpdateAvailableAlert';
 import { UpdateAvailableModal } from '../UpdateAvailableAlert/UpdateAvailableModal';
-import { useAppStatus } from '../UpdateAvailableAlert/useAppStatus';
 import { AgentTreeMenu } from './AgentTreeMenu';
 import { ArchiveAgentModal } from './ArchiveAgentModal';
 import { AutoRunControl } from './AutoRunControl';
+import { useAutoOpenUpdateModal } from './hooks/useAutoOpenUpdateModal';
 import { useListFade } from './hooks/useListFade';
 import { SidebarAgentGroup } from './types';
 
@@ -154,37 +153,11 @@ export const Sidebar = () => {
   const { isLoading: isMasterWalletLoading } = useMasterWalletContext();
   const { fade, ref: scrollAreaRef } = useListFade();
 
-  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
-  const { store } = useElectronApi();
-  const { data: appStatusData, isFetched: appStatusFetched } = useAppStatus();
-
-  // Auto-open update modal when a new version is detected and not already dismissed
-  useEffect(() => {
-    if (
-      !appStatusFetched ||
-      !appStatusData?.isOutdated ||
-      !appStatusData?.latestTag
-    )
-      return;
-    if (!store?.get) return;
-
-    const latestTag = appStatusData.latestTag;
-    store
-      .get('updateAvailableKnownVersion')
-      .then((dismissedFor) => {
-        if (dismissedFor !== latestTag) {
-          setIsUpdateModalOpen(true);
-        }
-      })
-      .catch((error) => {
-        console.error('Failed to check update availability:', error);
-      });
-  }, [
-    appStatusFetched,
-    appStatusData?.isOutdated,
-    appStatusData?.latestTag,
-    store,
-  ]);
+  const {
+    isOpen: isUpdateModalOpen,
+    open: openUpdateModal,
+    close: closeUpdateModal,
+  } = useAutoOpenUpdateModal();
 
   const {
     pendingArchiveInstanceId,
@@ -382,10 +355,10 @@ export const Sidebar = () => {
 
           <div className="p-16">
             <BackupSeedPhraseAlert />
-            <UpdateAvailableAlert onOpen={() => setIsUpdateModalOpen(true)} />
+            <UpdateAvailableAlert onOpen={openUpdateModal} />
             <UpdateAvailableModal
               isOpen={isUpdateModalOpen}
-              onClose={() => setIsUpdateModalOpen(false)}
+              onClose={closeUpdateModal}
             />
 
             <Menu
