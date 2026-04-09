@@ -198,6 +198,17 @@ export const OPTIMISM_TOKEN_CONFIG: ChainTokenConfig = {
     decimals: 6,
     address: '0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85',
   },
+  /**
+   * @warning USDC.e (bridged USDC) is a special case, it has 6 decimals, not 18.
+   * @link https://optimistic.etherscan.io/token/0x7F5c764cBc14f9669B88837ca1490cCa17c31607
+   * @note When parsing or formatting units, use `decimals` (6) instead of the standard `ether` sizing (10^18).
+   */
+  [TokenSymbolMap['USDC.e']]: {
+    tokenType: TokenType.Erc20,
+    symbol: TokenSymbolMap['USDC.e'],
+    decimals: 6,
+    address: '0x7F5c764cBc14f9669B88837ca1490cCa17c31607',
+  },
 };
 
 export const POLYGON_TOKEN_CONFIG: ChainTokenConfig = {
