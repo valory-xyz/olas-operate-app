@@ -52,23 +52,9 @@ jest.mock('react-markdown', () => {
   return { __esModule: true, default: MockMarkdown };
 });
 
-jest.mock('../../../../components/ui', () => ({
-  Modal: (props: {
-    title?: string;
-    description?: React.ReactNode;
-    header?: React.ReactNode;
-    onCancel?: () => void;
-    open?: boolean;
-    children?: React.ReactNode;
-  }) => (
-    <div data-testid="modal">
-      {props.header && <div data-testid="modal-header">{props.header}</div>}
-      {props.title && <div data-testid="modal-title">{props.title}</div>}
-      {props.description && (
-        <div data-testid="modal-description">{props.description}</div>
-      )}
-    </div>
-  ),
+jest.mock('../../../../components/custom-icons', () => ({
+  LoadingOutlined: () => <div data-testid="loading-icon" />,
+  WarningOutlined: () => <div data-testid="warning-icon" />,
 }));
 
 // --- Helpers ---
@@ -140,9 +126,7 @@ describe('UpdateAvailableModal', () => {
   describe('available state', () => {
     it('renders Update Available title', () => {
       render(<UpdateAvailableModal isOpen={true} onClose={() => {}} />);
-      expect(screen.getByTestId('modal-title')).toHaveTextContent(
-        'Update Available',
-      );
+      expect(screen.getByText('Update Available')).toBeInTheDocument();
     });
 
     it('renders Pearl image', () => {
@@ -216,9 +200,7 @@ describe('UpdateAvailableModal', () => {
       });
 
       expect(mockDownloadUpdate).toHaveBeenCalledTimes(1);
-      expect(screen.getByTestId('modal-title')).toHaveTextContent(
-        'Downloading Update',
-      );
+      expect(screen.getByText('Downloading Update')).toBeInTheDocument();
     });
 
     it('transitions to failed state when downloadUpdate rejects', async () => {
@@ -232,9 +214,7 @@ describe('UpdateAvailableModal', () => {
         );
       });
 
-      expect(screen.getByTestId('modal-title')).toHaveTextContent(
-        'Download Failed',
-      );
+      expect(screen.getByText('Download Failed')).toBeInTheDocument();
     });
   });
 
@@ -248,9 +228,7 @@ describe('UpdateAvailableModal', () => {
         );
       });
 
-      expect(screen.getByTestId('modal-title')).toHaveTextContent(
-        'Downloading Update',
-      );
+      expect(screen.getByText('Downloading Update')).toBeInTheDocument();
     });
 
     it('renders Cancel button in downloading state', async () => {
@@ -281,9 +259,7 @@ describe('UpdateAvailableModal', () => {
       });
 
       expect(mockCancelDownload).toHaveBeenCalledTimes(1);
-      expect(screen.getByTestId('modal-title')).toHaveTextContent(
-        'Update Available',
-      );
+      expect(screen.getByText('Update Available')).toBeInTheDocument();
     });
 
     it('calls quitAndInstall when onUpdateDownloaded fires', async () => {
@@ -333,9 +309,7 @@ describe('UpdateAvailableModal', () => {
     it('transitions to failed state when onUpdateError fires', async () => {
       await renderAndTriggerError();
 
-      expect(screen.getByTestId('modal-title')).toHaveTextContent(
-        'Download Failed',
-      );
+      expect(screen.getByText('Download Failed')).toBeInTheDocument();
     });
 
     it('renders Try Again button in failed state', async () => {
@@ -354,9 +328,7 @@ describe('UpdateAvailableModal', () => {
       });
 
       expect(mockDownloadUpdate).toHaveBeenCalledTimes(2);
-      expect(screen.getByTestId('modal-title')).toHaveTextContent(
-        'Downloading Update',
-      );
+      expect(screen.getByText('Downloading Update')).toBeInTheDocument();
     });
 
     it('stays in failed state when Try Again downloadUpdate rejects', async () => {
@@ -368,9 +340,7 @@ describe('UpdateAvailableModal', () => {
         fireEvent.click(screen.getByRole('button', { name: 'Try Again' }));
       });
 
-      expect(screen.getByTestId('modal-title')).toHaveTextContent(
-        'Download Failed',
-      );
+      expect(screen.getByText('Download Failed')).toBeInTheDocument();
     });
 
     it('renders DOWNLOAD_URL fallback button in failed state', async () => {

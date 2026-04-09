@@ -18,18 +18,16 @@ const CardButton = styled.button`
   border-radius: 8px;
   padding: 12px;
   cursor: pointer;
-  background: rgba(245, 237, 252, 0.2);
+  background: ${COLOR.PURPLE_LIGHT_3};
   text-align: left;
-  transition:
-    background 0.15s,
-    transform 0.1s;
+  transition: background 0.15s;
 
   &:hover {
     background: ${COLOR.PURPLE_LIGHT_4};
   }
 
   &:active {
-    background: #e2caf6;
+    background: ${COLOR.PURPLE_LIGHT_4};
   }
 `;
 
@@ -49,7 +47,7 @@ export const UpdateAvailableAlert = ({ onOpen }: UpdateAvailableAlertProps) => {
     <CardButton onClick={onOpen} className="mb-16">
       <Flex align="center" gap={10}>
         <TbDownload fontSize={20} color={COLOR.PURPLE} />
-        <Text style={{ color: COLOR.PURPLE, fontWeight: 500 }}>
+        <Text style={{ color: COLOR.PURPLE, fontWeight: 500, fontSize: 14 }}>
           Update Pearl Now
         </Text>
       </Flex>
