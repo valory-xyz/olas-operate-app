@@ -44,13 +44,9 @@ jest.mock('next/image', () => {
   return { __esModule: true, default: MockImage };
 });
 
-jest.mock('react-markdown', () => {
-  const MockMarkdown = ({ children }: { children: string }) => (
-    <div data-testid="markdown">{children}</div>
-  );
-  MockMarkdown.displayName = 'MockMarkdown';
-  return { __esModule: true, default: MockMarkdown };
-});
+jest.mock('../../../../utils/sanitizeHtml', () => ({
+  sanitizeReleaseNotes: (html: string) => html,
+}));
 
 jest.mock('../../../../components/custom-icons', () => ({
   LoadingOutlined: () => <div data-testid="loading-icon" />,

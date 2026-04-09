@@ -11,3 +11,8 @@ export function sanitizeHtml(dirty: string): string {
     ALLOWED_ATTR: [],
   });
 }
+
+export function sanitizeReleaseNotes(dirty: string): string {
+  if (!dirty) return '';
+  return DOMPurify.sanitize(dirty);
+}

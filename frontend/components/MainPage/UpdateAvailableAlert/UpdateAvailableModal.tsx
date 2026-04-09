@@ -2,13 +2,13 @@ import { Button, Flex, Modal as AntdModal, Typography } from 'antd';
 import Image from 'next/image';
 import { useCallback, useEffect, useState } from 'react';
 import { PiCaretDownBold, PiCaretRightBold, PiX } from 'react-icons/pi';
-import ReactMarkdown from 'react-markdown';
 import styled from 'styled-components';
 
 import { LoadingOutlined, WarningOutlined } from '@/components/custom-icons';
 import { COLOR } from '@/constants';
 import { DOWNLOAD_URL } from '@/constants/urls';
 import { useElectronApi } from '@/hooks';
+import { sanitizeReleaseNotes } from '@/utils/sanitizeHtml';
 
 import { useAppStatus } from './useAppStatus';
 
@@ -117,9 +117,11 @@ const ReleaseNotesAccordion = ({ releaseNotes }: { releaseNotes: string }) => {
         What&apos;s new in this version
       </AccordionHeader>
       {isExpanded && (
-        <AccordionContent>
-          <ReactMarkdown>{releaseNotes}</ReactMarkdown>
-        </AccordionContent>
+        <AccordionContent
+          dangerouslySetInnerHTML={{
+            __html: sanitizeReleaseNotes(releaseNotes),
+          }}
+        />
       )}
     </AccordionContainer>
   );
