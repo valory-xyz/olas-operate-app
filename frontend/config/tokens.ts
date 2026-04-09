@@ -117,6 +117,12 @@ export const GNOSIS_TOKEN_CONFIG: ChainTokenConfig = {
     tokenType: TokenType.Erc20,
     symbol: TokenSymbolMap['USDC.e'],
   },
+  [TokenSymbolMap.USDC]: {
+    address: '0xDDAfbb505ad214D7b80b1f830fcCc89B60fb7A83',
+    decimals: 6,
+    tokenType: TokenType.Erc20,
+    symbol: TokenSymbolMap.USDC,
+  },
 } as const;
 
 const BASE_TOKEN_CONFIG: ChainTokenConfig = {
@@ -191,6 +197,17 @@ export const OPTIMISM_TOKEN_CONFIG: ChainTokenConfig = {
     symbol: TokenSymbolMap.USDC,
     decimals: 6,
     address: '0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85',
+  },
+  /**
+   * @warning USDC.e (bridged USDC) is a special case, it has 6 decimals, not 18.
+   * @link https://optimistic.etherscan.io/token/0x7F5c764cBc14f9669B88837ca1490cCa17c31607
+   * @note When parsing or formatting units, use `decimals` (6) instead of the standard `ether` sizing (10^18).
+   */
+  [TokenSymbolMap['USDC.e']]: {
+    tokenType: TokenType.Erc20,
+    symbol: TokenSymbolMap['USDC.e'],
+    decimals: 6,
+    address: '0x7F5c764cBc14f9669B88837ca1490cCa17c31607',
   },
 };
 
