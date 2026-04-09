@@ -213,7 +213,11 @@ export const UpdateAvailableModal = ({
               Downloading Update
             </Text>
             <Text
-              style={{ fontSize: 16, lineHeight: '24px', color: COLOR.TEXT_NEUTRAL_SECONDARY }}
+              style={{
+                fontSize: 16,
+                lineHeight: '24px',
+                color: COLOR.TEXT_NEUTRAL_SECONDARY,
+              }}
             >
               Keep Pearl open until the download finishes.
             </Text>
@@ -251,7 +255,11 @@ export const UpdateAvailableModal = ({
               Download Failed
             </Text>
             <Text
-              style={{ fontSize: 16, lineHeight: '24px', color: COLOR.TEXT_NEUTRAL_SECONDARY }}
+              style={{
+                fontSize: 16,
+                lineHeight: '24px',
+                color: COLOR.TEXT_NEUTRAL_SECONDARY,
+              }}
             >
               Something went wrong. Please try again or download Pearl from the
               official website.

@@ -274,10 +274,7 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
             'updates.onUpdateDownloaded',
             true,
           ),
-          onUpdateError: getElectronApiFunction(
-            'updates.onUpdateError',
-            true,
-          ),
+          onUpdateError: getElectronApiFunction('updates.onUpdateError', true),
           onUpdateNotAvailable: getElectronApiFunction(
             'updates.onUpdateNotAvailable',
             true,
