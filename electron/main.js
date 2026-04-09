@@ -938,8 +938,12 @@ autoUpdater.on('error', (err) => {
   mainWindow?.webContents.send('update-error', { message: err.message });
 });
 
-ipcMain.handle('update-check', () => {
-  return autoUpdater.checkForUpdates();
+let cancellationToken = null;
+
+ipcMain.handle('update-check', async () => {
+  const result = await autoUpdater.checkForUpdates();
+  cancellationToken = result?.cancellationToken ?? null;
+  return result;
 });
 
 ipcMain.handle('update-download', () => {
@@ -947,7 +951,8 @@ ipcMain.handle('update-download', () => {
 });
 
 ipcMain.handle('update-cancel', () => {
-  autoUpdater.cancelDownload();
+  cancellationToken?.cancel();
+  cancellationToken = null;
 });
 
 ipcMain.handle('update-quit-and-install', async () => {
