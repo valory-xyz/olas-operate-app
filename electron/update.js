@@ -4,7 +4,7 @@ const logger = require('./logger');
 
 const updateOptions = {
   ...publishOptions,
-  channels: ['latest', 'beta', 'alpha'],
+  channels: ['latest'],
 };
 
 const autoUpdater = electronUpdater.autoUpdater;

@@ -1,6 +1,6 @@
 import { Button, Collapse, Flex, Progress, Spin, Typography } from 'antd';
 import Image from 'next/image';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 
 import { Modal } from '@/components/ui';
@@ -22,7 +22,9 @@ export const UpdateAvailableModal = ({
   isOpen,
   onClose,
 }: UpdateAvailableModalProps) => {
-  const { store, updates } = useElectronApi();
+  const { store, autoUpdater } = useElectronApi();
+  // Capture on mount; the IPC functions from the preload bridge never change.
+  const autoUpdaterRef = useRef(autoUpdater);
   const [modalState, setModalState] = useState<ModalState>('available');
   const [downloadPercent, setDownloadPercent] = useState(0);
 
@@ -38,19 +40,21 @@ export const UpdateAvailableModal = ({
     }
   }, [isOpen]);
 
-  // Register IPC listeners for download progress / completion / error
+  // Register IPC listeners once on mount. The ref holds the stable preload
+  // functions so the effect does not need autoUpdater in its dependency array.
   useEffect(() => {
-    if (!updates) return;
+    const api = autoUpdaterRef.current;
+    if (!api) return;
 
-    const cleanupProgress = updates.onDownloadProgress?.((progress) => {
+    const cleanupProgress = api.onDownloadProgress?.((progress) => {
       setDownloadPercent(Math.round(progress.percent));
     });
 
-    const cleanupDownloaded = updates.onUpdateDownloaded?.(() => {
-      updates.quitAndInstall?.();
+    const cleanupDownloaded = api.onUpdateDownloaded?.(() => {
+      api.quitAndInstall?.();
     });
 
-    const cleanupError = updates.onUpdateError?.(() => {
+    const cleanupError = api.onUpdateError?.(() => {
       setModalState('failed');
     });
 
@@ -59,7 +63,7 @@ export const UpdateAvailableModal = ({
       cleanupDownloaded?.();
       cleanupError?.();
     };
-  }, [updates]);
+  }, []);
 
   const onUpdateLater = useCallback(() => {
     if (latestTag && store?.set) {
@@ -71,19 +75,19 @@ export const UpdateAvailableModal = ({
   const onUpdateAndRelaunch = useCallback(() => {
     setModalState('downloading');
     setDownloadPercent(0);
-    updates?.downloadUpdate?.().catch(() => setModalState('failed'));
-  }, [updates]);
+    autoUpdater?.downloadUpdate?.().catch(() => setModalState('failed'));
+  }, [autoUpdater]);
 
   const onCancelDownload = useCallback(() => {
-    updates?.cancelDownload?.();
+    autoUpdater?.cancelDownload?.();
     setModalState('available');
-  }, [updates]);
+  }, [autoUpdater]);
 
   const onTryAgain = useCallback(() => {
     setModalState('downloading');
     setDownloadPercent(0);
-    updates?.downloadUpdate?.().catch(() => setModalState('failed'));
-  }, [updates]);
+    autoUpdater?.downloadUpdate?.().catch(() => setModalState('failed'));
+  }, [autoUpdater]);
 
   if (!isOpen) return null;
 

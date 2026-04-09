@@ -19,7 +19,7 @@ const mockOnUpdateNotAvailable = jest.fn();
 
 jest.mock('../../../../hooks', () => ({
   useElectronApi: () => ({
-    updates: {
+    autoUpdater: {
       checkForUpdates: mockCheckForUpdates,
       onUpdateAvailable: mockOnUpdateAvailable,
       onUpdateNotAvailable: mockOnUpdateNotAvailable,
@@ -102,7 +102,7 @@ describe('useAppStatus', () => {
       jest.doMock('../../../../constants/providers', () => ({}));
       jest.doMock('../../../../config/providers', () => ({ providers: [] }));
       jest.doMock('../../../../hooks', () => ({
-        useElectronApi: () => ({ updates: undefined }),
+        useElectronApi: () => ({ autoUpdater: undefined }),
       }));
 
       let innerCapturedConfig: CapturedConfig | null = null;
@@ -121,7 +121,7 @@ describe('useAppStatus', () => {
       renderHook(() => freshUseAppStatus());
 
       await expect(innerCapturedConfig!.queryFn()).rejects.toThrow(
-        'updates API is not available',
+        'autoUpdater API is not available',
       );
     });
 
