@@ -154,8 +154,7 @@ export const UpdateAvailableModal = ({
   useEffect(() => {
     if (!autoUpdater) return;
 
-    const cleanupProgress = autoUpdater.onDownloadProgress?.(() => {
-    });
+    const cleanupProgress = autoUpdater.onDownloadProgress?.(() => {});
 
     const cleanupDownloaded = autoUpdater.onUpdateDownloaded?.(() => {
       autoUpdater.quitAndInstall?.();
