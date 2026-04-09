@@ -14,18 +14,29 @@ export const useAppStatus = () => {
 
   return useQuery<useAppStatusResult, Error>({
     queryKey: REACT_QUERY_KEYS.IS_PEARL_OUTDATED_KEY,
-    queryFn: (): Promise<useAppStatusResult> => {
-      if (!updates?.checkForUpdates || !updates?.onUpdateAvailable) {
+    queryFn: ({ signal }): Promise<useAppStatusResult> => {
+      if (
+        !updates?.checkForUpdates ||
+        !updates?.onUpdateAvailable ||
+        !updates?.onUpdateNotAvailable
+      ) {
         return Promise.reject(new Error('updates API is not available'));
       }
 
       return new Promise<useAppStatusResult>((resolve, reject) => {
         let settled = false;
+        let cleanupAvailable: (() => void) | undefined;
+        let cleanupNotAvailable: (() => void) | undefined;
 
-        const cleanupAvailable = updates.onUpdateAvailable!((info) => {
+        const cleanup = () => {
+          cleanupAvailable?.();
+          cleanupNotAvailable?.();
+        };
+
+        cleanupAvailable = updates.onUpdateAvailable!((info) => {
           if (settled) return;
           settled = true;
-          cleanupAvailable?.();
+          cleanup();
           resolve({
             isOutdated: true,
             latestTag: info.version,
@@ -34,19 +45,26 @@ export const useAppStatus = () => {
           });
         });
 
-        updates.checkForUpdates!()
-          .then(() => {
-            if (settled) return;
-            settled = true;
-            cleanupAvailable?.();
-            resolve({ isOutdated: false, latestTag: null, releaseNotes: null });
-          })
-          .catch((err: Error) => {
-            if (settled) return;
-            settled = true;
-            cleanupAvailable?.();
-            reject(err);
-          });
+        cleanupNotAvailable = updates.onUpdateNotAvailable!(() => {
+          if (settled) return;
+          settled = true;
+          cleanup();
+          resolve({ isOutdated: false, latestTag: null, releaseNotes: null });
+        });
+
+        updates.checkForUpdates!().catch((err: Error) => {
+          if (settled) return;
+          settled = true;
+          cleanup();
+          reject(err);
+        });
+
+        signal?.addEventListener('abort', () => {
+          if (settled) return;
+          settled = true;
+          cleanup();
+          reject(new DOMException('Aborted', 'AbortError'));
+        });
       });
     },
     refetchInterval: SIXTY_MINUTE_INTERVAL,

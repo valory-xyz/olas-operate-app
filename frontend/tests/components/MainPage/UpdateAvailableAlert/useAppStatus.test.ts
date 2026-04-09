@@ -15,12 +15,14 @@ jest.mock('../../../../config/providers', () => ({ providers: [] }));
 
 const mockCheckForUpdates = jest.fn();
 const mockOnUpdateAvailable = jest.fn();
+const mockOnUpdateNotAvailable = jest.fn();
 
 jest.mock('../../../../hooks', () => ({
   useElectronApi: () => ({
     updates: {
       checkForUpdates: mockCheckForUpdates,
       onUpdateAvailable: mockOnUpdateAvailable,
+      onUpdateNotAvailable: mockOnUpdateNotAvailable,
     },
   }),
 }));
@@ -28,7 +30,7 @@ jest.mock('../../../../hooks', () => ({
 // Capture useQuery config to test query options without running real queries
 type CapturedConfig = {
   queryKey: unknown[];
-  queryFn: () => Promise<unknown>;
+  queryFn: (ctx?: { signal?: AbortSignal }) => Promise<unknown>;
   refetchInterval: number;
   refetchOnWindowFocus: boolean;
 };
@@ -55,8 +57,9 @@ describe('useAppStatus', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     capturedConfig = null;
-    // Default: onUpdateAvailable returns a cleanup fn, checkForUpdates never resolves
+    // Default: listeners return cleanup fns, checkForUpdates never resolves
     mockOnUpdateAvailable.mockReturnValue(() => {});
+    mockOnUpdateNotAvailable.mockReturnValue(() => {});
     mockCheckForUpdates.mockReturnValue(new Promise(() => {}));
   });
 
@@ -122,7 +125,7 @@ describe('useAppStatus', () => {
       );
     });
 
-    it('resolves with isOutdated=true when onUpdateAvailable fires before checkForUpdates resolves', async () => {
+    it('resolves with isOutdated=true when onUpdateAvailable fires', async () => {
       let capturedCb:
         | ((info: { version: string; releaseNotes: string }) => void)
         | null = null;
@@ -132,7 +135,6 @@ describe('useAppStatus', () => {
           return () => {};
         },
       );
-      // checkForUpdates resolves only after the event fires
       mockCheckForUpdates.mockReturnValue(new Promise(() => {}));
 
       renderHook(() => useAppStatus());
@@ -153,13 +155,21 @@ describe('useAppStatus', () => {
       });
     });
 
-    it('resolves with isOutdated=false when checkForUpdates resolves and no update-available fired', async () => {
-      mockOnUpdateAvailable.mockReturnValue(() => {});
-      mockCheckForUpdates.mockResolvedValue(null);
+    it('resolves with isOutdated=false when onUpdateNotAvailable fires', async () => {
+      let capturedNotAvailableCb: (() => void) | null = null;
+      mockOnUpdateNotAvailable.mockImplementation((cb: () => void) => {
+        capturedNotAvailableCb = cb;
+        return () => {};
+      });
+      mockCheckForUpdates.mockReturnValue(new Promise(() => {}));
 
       renderHook(() => useAppStatus());
 
-      const result = await capturedConfig!.queryFn();
+      const promise = capturedConfig!.queryFn();
+
+      capturedNotAvailableCb!();
+
+      const result = await promise;
       expect(result).toEqual({
         isOutdated: false,
         latestTag: null,
@@ -167,8 +177,9 @@ describe('useAppStatus', () => {
       });
     });
 
-    it('rejects when checkForUpdates throws and no update-available fired', async () => {
+    it('rejects when checkForUpdates throws and no event has fired', async () => {
       mockOnUpdateAvailable.mockReturnValue(() => {});
+      mockOnUpdateNotAvailable.mockReturnValue(() => {});
       mockCheckForUpdates.mockRejectedValue(new Error('network error'));
 
       renderHook(() => useAppStatus());
@@ -177,35 +188,78 @@ describe('useAppStatus', () => {
     });
 
     it('calls checkForUpdates', async () => {
-      mockCheckForUpdates.mockResolvedValue(null);
+      let capturedNotAvailableCb: (() => void) | null = null;
+      mockOnUpdateNotAvailable.mockImplementation((cb: () => void) => {
+        capturedNotAvailableCb = cb;
+        return () => {};
+      });
+      mockCheckForUpdates.mockReturnValue(new Promise(() => {}));
 
       renderHook(() => useAppStatus());
 
-      await capturedConfig!.queryFn();
+      const promise = capturedConfig!.queryFn();
+      capturedNotAvailableCb!();
+      await promise;
 
       expect(mockCheckForUpdates).toHaveBeenCalledTimes(1);
     });
 
-    it('registers onUpdateAvailable listener', async () => {
-      mockCheckForUpdates.mockResolvedValue(null);
+    it('registers onUpdateAvailable and onUpdateNotAvailable listeners', async () => {
+      let capturedNotAvailableCb: (() => void) | null = null;
+      mockOnUpdateNotAvailable.mockImplementation((cb: () => void) => {
+        capturedNotAvailableCb = cb;
+        return () => {};
+      });
+      mockCheckForUpdates.mockReturnValue(new Promise(() => {}));
 
       renderHook(() => useAppStatus());
 
-      await capturedConfig!.queryFn();
+      const promise = capturedConfig!.queryFn();
+      capturedNotAvailableCb!();
+      await promise;
 
       expect(mockOnUpdateAvailable).toHaveBeenCalledTimes(1);
+      expect(mockOnUpdateNotAvailable).toHaveBeenCalledTimes(1);
     });
 
-    it('calls onUpdateAvailable cleanup after checkForUpdates resolves', async () => {
-      const mockCleanup = jest.fn();
-      mockOnUpdateAvailable.mockReturnValue(mockCleanup);
-      mockCheckForUpdates.mockResolvedValue(null);
+    it('calls cleanup functions after onUpdateNotAvailable fires', async () => {
+      const mockAvailableCleanup = jest.fn();
+      const mockNotAvailableCleanup = jest.fn();
+      mockOnUpdateAvailable.mockReturnValue(mockAvailableCleanup);
+      let capturedNotAvailableCb: (() => void) | null = null;
+      mockOnUpdateNotAvailable.mockImplementation((cb: () => void) => {
+        capturedNotAvailableCb = cb;
+        return mockNotAvailableCleanup;
+      });
+      mockCheckForUpdates.mockReturnValue(new Promise(() => {}));
 
       renderHook(() => useAppStatus());
 
-      await capturedConfig!.queryFn();
+      const promise = capturedConfig!.queryFn();
+      capturedNotAvailableCb!();
+      await promise;
 
-      expect(mockCleanup).toHaveBeenCalledTimes(1);
+      expect(mockAvailableCleanup).toHaveBeenCalledTimes(1);
+      expect(mockNotAvailableCleanup).toHaveBeenCalledTimes(1);
+    });
+
+    it('rejects and cleans up listeners when AbortSignal fires', async () => {
+      const mockAvailableCleanup = jest.fn();
+      const mockNotAvailableCleanup = jest.fn();
+      mockOnUpdateAvailable.mockReturnValue(mockAvailableCleanup);
+      mockOnUpdateNotAvailable.mockReturnValue(mockNotAvailableCleanup);
+      mockCheckForUpdates.mockReturnValue(new Promise(() => {}));
+
+      renderHook(() => useAppStatus());
+
+      const controller = new AbortController();
+      const promise = capturedConfig!.queryFn({ signal: controller.signal });
+
+      controller.abort();
+
+      await expect(promise).rejects.toThrow('Aborted');
+      expect(mockAvailableCleanup).toHaveBeenCalledTimes(1);
+      expect(mockNotAvailableCleanup).toHaveBeenCalledTimes(1);
     });
 
     it('includes releaseNotes=null when releaseNotes is not a string', async () => {

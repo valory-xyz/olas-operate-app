@@ -65,6 +65,11 @@ const updates = {
     ipcRenderer.on('update-error', handler);
     return () => ipcRenderer.removeListener('update-error', handler);
   },
+  onUpdateNotAvailable: (cb) => {
+    const handler = () => cb();
+    ipcRenderer.on('update-not-available', handler);
+    return () => ipcRenderer.removeListener('update-not-available', handler);
+  },
 };
 
 contextBridge.exposeInMainWorld('electronAPI', {

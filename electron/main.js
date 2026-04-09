@@ -924,6 +924,10 @@ autoUpdater.on('update-available', (info) => {
   });
 });
 
+autoUpdater.on('update-not-available', () => {
+  mainWindow?.webContents.send('update-not-available');
+});
+
 autoUpdater.on('download-progress', (progress) => {
   mainWindow?.webContents.send('update-download-progress', {
     percent: progress.percent,

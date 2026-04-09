@@ -1,5 +1,5 @@
 import { get } from 'lodash';
-import { createContext, PropsWithChildren } from 'react';
+import { createContext, PropsWithChildren, useMemo } from 'react';
 
 import { Address } from '@/types/Address';
 import { ElectronStore, ElectronTrayIconStatus } from '@/types/ElectronApi';
@@ -107,6 +107,7 @@ type ElectronApiContextProps = {
     ) => () => void;
     onUpdateDownloaded?: (cb: () => void) => () => void;
     onUpdateError?: (cb: (err: { message: string }) => void) => () => void;
+    onUpdateNotAvailable?: (cb: () => void) => () => void;
   };
 };
 
@@ -164,22 +165,43 @@ export const ElectronApiContext = createContext<ElectronApiContextProps>({
     onDownloadProgress: () => () => {},
     onUpdateDownloaded: () => () => {},
     onUpdateError: () => () => {},
+    onUpdateNotAvailable: () => () => {},
   },
 });
 
+const getElectronApiFunction = (functionNameInWindow: string) => {
+  if (typeof window === 'undefined') return;
+
+  const fn = get(window, `electronAPI.${functionNameInWindow}`);
+  if (!fn || typeof fn !== 'function') {
+    throw new Error(
+      `Function ${functionNameInWindow} not found in window.electronAPI`,
+    );
+  }
+
+  return fn;
+};
+
 export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
-  const getElectronApiFunction = (functionNameInWindow: string) => {
-    if (typeof window === 'undefined') return;
-
-    const fn = get(window, `electronAPI.${functionNameInWindow}`);
-    if (!fn || typeof fn !== 'function') {
-      throw new Error(
-        `Function ${functionNameInWindow} not found in window.electronAPI`,
-      );
-    }
-
-    return fn;
-  };
+  // Memoized so the object reference is stable across re-renders; without this
+  // any useEffect that lists `updates` as a dependency would re-run on every
+  // render and re-register IPC listeners unnecessarily.
+  const updatesApi = useMemo(
+    () => ({
+      checkForUpdates: getElectronApiFunction('updates.checkForUpdates'),
+      downloadUpdate: getElectronApiFunction('updates.downloadUpdate'),
+      cancelDownload: getElectronApiFunction('updates.cancelDownload'),
+      quitAndInstall: getElectronApiFunction('updates.quitAndInstall'),
+      onUpdateAvailable: getElectronApiFunction('updates.onUpdateAvailable'),
+      onDownloadProgress: getElectronApiFunction('updates.onDownloadProgress'),
+      onUpdateDownloaded: getElectronApiFunction('updates.onUpdateDownloaded'),
+      onUpdateError: getElectronApiFunction('updates.onUpdateError'),
+      onUpdateNotAvailable: getElectronApiFunction(
+        'updates.onUpdateNotAvailable',
+      ),
+    }),
+    [],
+  );
 
   return (
     <ElectronApiContext.Provider
@@ -238,22 +260,7 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
         },
         logEvent: getElectronApiFunction('logEvent'),
         nextLogError: getElectronApiFunction('nextLogError'),
-        updates: {
-          checkForUpdates: getElectronApiFunction('updates.checkForUpdates'),
-          downloadUpdate: getElectronApiFunction('updates.downloadUpdate'),
-          cancelDownload: getElectronApiFunction('updates.cancelDownload'),
-          quitAndInstall: getElectronApiFunction('updates.quitAndInstall'),
-          onUpdateAvailable: getElectronApiFunction(
-            'updates.onUpdateAvailable',
-          ),
-          onDownloadProgress: getElectronApiFunction(
-            'updates.onDownloadProgress',
-          ),
-          onUpdateDownloaded: getElectronApiFunction(
-            'updates.onUpdateDownloaded',
-          ),
-          onUpdateError: getElectronApiFunction('updates.onUpdateError'),
-        },
+        updates: updatesApi,
       }}
     >
       {children}
