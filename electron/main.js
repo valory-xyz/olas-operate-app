@@ -67,6 +67,7 @@ const { setupStoreIpc } = require('./store');
 const { logger } = require('./logger');
 const { PearlTray } = require('./components/PearlTray');
 const { autoUpdater } = require('./update');
+const { CancellationToken } = require('electron-updater');
 
 const { pki } = require('node-forge');
 
@@ -942,21 +943,20 @@ autoUpdater.on('error', (err) => {
   mainWindow?.webContents.send('update-error', { message: err.message });
 });
 
-let cancellationToken = null;
+let downloadCancellationToken = null;
 
 ipcMain.handle('update-check', async () => {
-  const result = await autoUpdater.checkForUpdates();
-  cancellationToken = result?.cancellationToken ?? null;
-  return result;
+  return autoUpdater.checkForUpdates();
 });
 
 ipcMain.handle('update-download', () => {
-  return autoUpdater.downloadUpdate();
+  downloadCancellationToken = new CancellationToken();
+  return autoUpdater.downloadUpdate(downloadCancellationToken);
 });
 
 ipcMain.handle('update-cancel', () => {
-  cancellationToken?.cancel();
-  cancellationToken = null;
+  downloadCancellationToken?.cancel();
+  downloadCancellationToken = null;
 });
 
 ipcMain.handle('update-quit-and-install', async () => {
