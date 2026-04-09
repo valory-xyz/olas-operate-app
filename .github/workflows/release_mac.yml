@@ -323,3 +323,84 @@ jobs:
           export GITHUB_REF_NAME="${RELEASE_TAG}"
           export GITHUB_REF="refs/tags/${RELEASE_TAG}"
           node build.js
+
+      - name: Save latest-mac.yml as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: latest-mac-yml-${{ env.OS_ARCH }}
+          path: dist/latest-mac.yml
+          if-no-files-found: warn
+
+  merge-latest-mac-yml:
+    needs: [build-release]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download arm64 yml
+        uses: actions/download-artifact@v4
+        with:
+          name: latest-mac-yml-arm64
+          path: yml-arm64
+        continue-on-error: true
+
+      - name: Download x64 yml
+        uses: actions/download-artifact@v4
+        with:
+          name: latest-mac-yml-x64
+          path: yml-x64
+        continue-on-error: true
+
+      - name: Merge latest-mac.yml
+        run: |
+          # Use whichever yml exists as the base, merge the other's files entries
+          python3 << 'PYEOF'
+          import yaml, glob, os
+
+          all_files = []
+          version = None
+          release_date = None
+
+          for pattern in ['yml-arm64/latest-mac.yml', 'yml-x64/latest-mac.yml']:
+              for path in glob.glob(pattern):
+                  with open(path) as f:
+                      data = yaml.safe_load(f)
+                  if data is None:
+                      continue
+                  version = data.get('version', version)
+                  release_date = data.get('releaseDate', release_date)
+                  for entry in data.get('files', []):
+                      if entry not in all_files:
+                          all_files.append(entry)
+
+          if not version or not all_files:
+              print("WARNING: Could not merge, missing data")
+              exit(0)
+
+          # Use arm64 as the default path/sha512 if available
+          arm64_entry = next((f for f in all_files if 'arm64' in f.get('url', '')), all_files[0])
+
+          merged = {
+              'version': version,
+              'files': all_files,
+              'path': arm64_entry['url'],
+              'sha512': arm64_entry['sha512'],
+              'releaseDate': release_date,
+          }
+
+          with open('latest-mac.yml', 'w') as f:
+              yaml.dump(merged, f, default_flow_style=False, sort_keys=False)
+
+          print("Merged latest-mac.yml:")
+          with open('latest-mac.yml') as f:
+              print(f.read())
+          PYEOF
+
+      - name: Upload merged latest-mac.yml to release
+        if: hashFiles('latest-mac.yml') != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ inputs.tag }}"
+          # Delete the stale yml from the release
+          gh release delete-asset "$TAG" latest-mac.yml --yes 2>/dev/null || true
+          # Upload the merged yml
+          gh release upload "$TAG" latest-mac.yml --clobber
