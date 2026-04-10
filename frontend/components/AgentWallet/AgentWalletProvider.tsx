@@ -4,6 +4,7 @@ import {
   ReactNode,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
 } from 'react';
@@ -56,8 +57,13 @@ const AgentWalletContext = createContext<{
 });
 
 export const AgentWalletProvider = ({ children }: { children: ReactNode }) => {
-  const { navParams } = usePageState();
+  const { navParams, clearNavParams } = usePageState();
   const params = navParams as AgentWalletNavParams;
+
+  // Clear navParams after consuming them on mount
+  useEffect(() => {
+    clearNavParams();
+  }, [clearNavParams]);
 
   const {
     isLoading: isServicesLoading,

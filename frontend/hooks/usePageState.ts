@@ -14,5 +14,8 @@ export const usePageState = () => {
     },
     [setPageState, setNavParams],
   );
-  return { goto, ...pageStateRest };
+
+  const clearNavParams = useCallback(() => setNavParams({}), [setNavParams]);
+
+  return { goto, clearNavParams, ...pageStateRest };
 };
