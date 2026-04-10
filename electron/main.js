@@ -998,6 +998,8 @@ ipcMain.handle('update-quit-and-install', async () => {
   if (operateDaemonPid) {
     await killProcesses(operateDaemonPid);
   }
+  // Allow the app to quit — the before-quit handler blocks quit unless this is set
+  appRealClose = true;
   autoUpdater.quitAndInstall();
 });
 
