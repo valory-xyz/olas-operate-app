@@ -139,7 +139,7 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
   const { store } = useElectronApi();
   const { paused, setPaused, togglePaused } = usePause();
   const { storeState } = useStore();
-  const { pageState } = usePageState();
+  const { pageState, isUserLoggedIn } = usePageState();
   const serviceRefetchInterval = useDynamicRefetchInterval(
     FIVE_SECONDS_INTERVAL,
   );
@@ -196,7 +196,7 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
   } = useQuery<MiddlewareServiceResponse[]>({
     queryKey: REACT_QUERY_KEYS.SERVICES_KEY,
     queryFn: ({ signal }) => ServicesService.getServices(signal),
-    enabled: isOnline && !paused,
+    enabled: isOnline && !paused && isUserLoggedIn,
     refetchInterval: serviceRefetchInterval,
     refetchIntervalInBackground: true,
   });
@@ -208,7 +208,7 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
     queryKey: REACT_QUERY_KEYS.SERVICES_VALIDATION_STATUS_KEY,
     queryFn: ({ signal }) =>
       ServicesService.getServicesValidationStatus(signal),
-    enabled: isOnline && !paused,
+    enabled: isOnline && !paused && isUserLoggedIn,
     refetchInterval: FIFTEEN_SECONDS_INTERVAL,
   });
 
