@@ -104,7 +104,12 @@ type ElectronApiContextProps = {
       cb: (info: { version: string; releaseNotes: string | null }) => void,
     ) => () => void;
     onDownloadProgress?: (
-      cb: (progress: { percent: number }) => void,
+      cb: (progress: {
+        percent: number;
+        transferred: number;
+        total: number;
+        bytesPerSecond: number;
+      }) => void,
     ) => () => void;
     onUpdateDownloaded?: (cb: () => void) => () => void;
     onUpdateError?: (cb: (err: { message: string }) => void) => () => void;
