@@ -39,7 +39,7 @@ const mockUseRewardContext = useRewardContext as jest.Mock;
 const mockUseAvailableAgentAssets = useAvailableAgentAssets as jest.Mock;
 const mockUsePageState = usePageState as jest.Mock;
 
-const setupDefaultMocks = (navParams: Record<string, unknown> = {}) => {
+const createWrapper = (navParams: Record<string, unknown> = {}) => {
   mockUsePageState.mockReturnValue({ navParams });
   mockUseServices.mockReturnValue({
     isLoading: false,
@@ -54,9 +54,7 @@ const setupDefaultMocks = (navParams: Record<string, unknown> = {}) => {
     accruedServiceStakingRewards: 0,
   });
   mockUseAvailableAgentAssets.mockReturnValue({ availableAssets: [] });
-};
 
-const createWrapper = () => {
   const Wrapper = ({ children }: PropsWithChildren) =>
     createElement(AgentWalletProvider, null, children);
   return Wrapper;
@@ -68,8 +66,6 @@ describe('AgentWalletProvider', () => {
   });
 
   it('initializes walletStep to AGENT_WALLET_SCREEN when navParams has no initialStep', () => {
-    setupDefaultMocks({});
-
     const { result } = renderHook(() => useAgentWallet(), {
       wrapper: createWrapper(),
     });
@@ -78,18 +74,14 @@ describe('AgentWalletProvider', () => {
   });
 
   it('initializes walletStep to initialStep from navParams', () => {
-    setupDefaultMocks({ initialStep: STEPS.FUND_AGENT });
-
     const { result } = renderHook(() => useAgentWallet(), {
-      wrapper: createWrapper(),
+      wrapper: createWrapper({ initialStep: STEPS.FUND_AGENT }),
     });
 
     expect(result.current.walletStep).toBe(STEPS.FUND_AGENT);
   });
 
   it('initializes fundInitialValues to {} when navParams has no initialFundValues', () => {
-    setupDefaultMocks({});
-
     const { result } = renderHook(() => useAgentWallet(), {
       wrapper: createWrapper(),
     });
@@ -99,10 +91,9 @@ describe('AgentWalletProvider', () => {
 
   it('initializes fundInitialValues from navParams initialFundValues', () => {
     const initialFundValues = { '0xTokenAddress': '1000000000000000000' };
-    setupDefaultMocks({ initialFundValues });
 
     const { result } = renderHook(() => useAgentWallet(), {
-      wrapper: createWrapper(),
+      wrapper: createWrapper({ initialFundValues }),
     });
 
     expect(result.current.fundInitialValues).toEqual(initialFundValues);
@@ -110,13 +101,9 @@ describe('AgentWalletProvider', () => {
 
   it('initializes both walletStep and fundInitialValues from navParams', () => {
     const initialFundValues = { '0xTokenAddress': '500000000000000000' };
-    setupDefaultMocks({
-      initialStep: STEPS.FUND_AGENT,
-      initialFundValues,
-    });
 
     const { result } = renderHook(() => useAgentWallet(), {
-      wrapper: createWrapper(),
+      wrapper: createWrapper({ initialStep: STEPS.FUND_AGENT, initialFundValues }),
     });
 
     expect(result.current.walletStep).toBe(STEPS.FUND_AGENT);

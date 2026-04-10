@@ -59,6 +59,7 @@ describe('usePageState', () => {
 
     expect(mockSetPageState).toHaveBeenCalledTimes(1);
     expect(mockSetPageState).toHaveBeenCalledWith(PAGES.Main);
+    expect(mockSetNavParams).toHaveBeenCalledWith({});
   });
 
   it('goto stores params in navParams when provided', () => {
