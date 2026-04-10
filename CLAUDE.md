@@ -222,17 +222,17 @@ When you fix an issue in one file, **grep ALL files in your feature for the same
 
 The following components have custom wrappers in `frontend/components/ui/`. **Always import from `@/components/ui`, never from `antd`:**
 
-| Component | Custom wrapper provides |
-|-----------|----------------------|
-| `Alert` | App color scheme via `.custom-alert--{type}` CSS classes (primary/info/warning/error/success), custom icons |
-| `Modal` | Structured layout with `header`, `title`, `description`, `action` props; three sizes (small/medium/large); consistent padding/centering |
-| `Table` | Custom header/body styling, rounded corners |
-| `Collapse` | Custom spacing, expand icon sizing |
-| `Divider` | Margin reset, custom border color |
-| `Progress` | Border radius for progress bars |
-| `Segmented` | Custom styling with activeIconColored prop |
-| `Steps` | Styled wrapper |
-| `SetupCard` | White card container with max-width 516px, shadow, border-radius 16px — used for all setup flow screens |
+| Component | Source | Custom wrapper provides |
+|-----------|--------|----------------------|
+| `Alert` | `frontend/components/ui/Alert.tsx` | App color scheme via `.custom-alert--{type}` CSS classes (primary/info/warning/error/success), custom icons |
+| `Modal` | `frontend/components/ui/Modal.tsx` | Structured layout with `header`, `title`, `description`, `action` props; three sizes (small/medium/large); consistent padding/centering |
+| `Table` | `frontend/components/ui/Table.tsx` | Custom header/body styling, rounded corners |
+| `Collapse` | `frontend/components/ui/Collapse.tsx` | Custom spacing, expand icon sizing |
+| `Divider` | `frontend/components/ui/Divider.tsx` | Margin reset, custom border color |
+| `Progress` | `frontend/components/ui/Progress.tsx` | Border radius for progress bars |
+| `Segmented` | `frontend/components/ui/Segmented.tsx` | Custom styling with activeIconColored prop |
+| `Steps` | `frontend/components/ui/Steps.tsx` | Styled wrapper |
+| `SetupCard` | `frontend/components/ui/SetupCard.tsx` | White card container with max-width 516px, shadow, border-radius 16px — used for all setup flow screens |
 
 Any component NOT listed above (e.g., `Button`, `Flex`, `Input`, `Typography`, `Form`, `Tag`) should be imported directly from `antd`. When in doubt, check `frontend/components/ui/index.ts` for the current list.
 

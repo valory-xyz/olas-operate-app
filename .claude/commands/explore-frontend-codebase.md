@@ -91,7 +91,9 @@ Tags/badges: [style, content format]
 
 ### 9. Phased Execution Order *(required for features touching 4+ files)*
 
-Break the implementation into phases with review gates **within a single PR/branch**. Each phase is a coherent unit (1 screen or 1 layer) that can be reviewed before moving on. The PR is created after all phases are complete.
+Define the phases here so the coding agent knows what to build in what order. CLAUDE.md's "Workflow Commands" tells the coder to work in phases — this section defines those phases.
+
+Each phase is a coherent unit (1 screen or 1 layer) within a single PR/branch. The PR is created after all phases are complete.
 
 ```
 Phase 1: [scope — e.g., "Navigation entry points + tests"] (files: X, Y, Z, tests/X.test, tests/Y.test)
