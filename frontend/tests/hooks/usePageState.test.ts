@@ -66,7 +66,10 @@ describe('usePageState', () => {
       wrapper: createWrapper(),
     });
 
-    const params = { initialStep: 'FUND_AGENT', initialFundValues: { '0xabc': '1000' } };
+    const params = {
+      initialStep: 'FUND_AGENT',
+      initialFundValues: { '0xabc': '1000' },
+    };
     act(() => {
       result.current.goto(PAGES.Main, params);
     });

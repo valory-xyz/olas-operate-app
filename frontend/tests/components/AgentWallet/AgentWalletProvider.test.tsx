@@ -1,7 +1,10 @@
 import { renderHook } from '@testing-library/react';
 import { createElement, PropsWithChildren } from 'react';
 
-import { AgentWalletProvider, useAgentWallet } from '../../../components/AgentWallet/AgentWalletProvider';
+import {
+  AgentWalletProvider,
+  useAgentWallet,
+} from '../../../components/AgentWallet/AgentWalletProvider';
 import { STEPS } from '../../../components/AgentWallet/types';
 import {
   useAvailableAgentAssets,
