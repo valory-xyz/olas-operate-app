@@ -103,7 +103,10 @@ describe('AgentWalletProvider', () => {
     const initialFundValues = { '0xTokenAddress': '500000000000000000' };
 
     const { result } = renderHook(() => useAgentWallet(), {
-      wrapper: createWrapper({ initialStep: STEPS.FUND_AGENT, initialFundValues }),
+      wrapper: createWrapper({
+        initialStep: STEPS.FUND_AGENT,
+        initialFundValues,
+      }),
     });
 
     expect(result.current.walletStep).toBe(STEPS.FUND_AGENT);
