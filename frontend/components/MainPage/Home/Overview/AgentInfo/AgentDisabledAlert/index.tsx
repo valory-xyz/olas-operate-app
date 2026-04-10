@@ -1,10 +1,12 @@
 import { ReactNode, useMemo } from 'react';
 
 import { AgentLowBalanceAlert } from '@/components/AgentLowBalanceAlert';
+import { STEPS } from '@/components/AgentWallet/types';
 import { ContentTransition, useContentTransitionValue } from '@/components/ui';
 import { PAGES } from '@/constants';
 import {
   useActiveStakingContractDetails,
+  useAgentFundingRequests,
   useAgentRunning,
   useIsAgentGeoRestricted,
   useIsInitiallyFunded,
@@ -25,6 +27,7 @@ import { UnfinishedSetupAlert } from './UnfinishedSetupAlert';
 export const AgentDisabledAlert = () => {
   const { goto } = usePageState();
   const { selectedAgentConfig, selectedAgentType } = useServices();
+  const { agentTokenRequirements } = useAgentFundingRequests();
   const {
     isSelectedStakingContractDetailsLoading,
     isAgentEvicted,
@@ -90,12 +93,20 @@ export const AgentDisabledAlert = () => {
       key: 'low-balance',
       content: (
         <>
-          <AgentLowBalanceAlert onFund={() => goto(PAGES.AgentWallet)} />
+          <AgentLowBalanceAlert
+            onFund={() =>
+              goto(PAGES.AgentWallet, {
+                initialStep: STEPS.FUND_AGENT,
+                initialFundValues: agentTokenRequirements ?? {},
+              })
+            }
+          />
           <MasterEoaLowBalanceAlert />
         </>
       ),
     };
   }, [
+    agentTokenRequirements,
     goto,
     hasEnoughServiceSlots,
     isAgentEvicted,
