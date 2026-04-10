@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { PiCaretDownBold, PiCaretRightBold, PiX } from 'react-icons/pi';
 import styled from 'styled-components';
 
-import { LoadingOutlined, WarningOutlined } from '@/components/custom-icons';
+import { WarningOutlined } from '@/components/custom-icons';
 import { COLOR } from '@/constants';
 import { DOWNLOAD_URL } from '@/constants/urls';
 import { useElectronApi } from '@/hooks';
@@ -15,6 +15,35 @@ import { useAppStatus } from './useAppStatus';
 const { Text } = Typography;
 
 type ModalState = 'available' | 'downloading' | 'failed';
+
+type DownloadProgress = {
+  percent: number;
+  transferred: number;
+  total: number;
+  bytesPerSecond: number;
+};
+
+const formatBytes = (bytes: number): string =>
+  `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+
+const formatTimeLeft = (seconds: number): string =>
+  seconds >= 60
+    ? `\u2248${Math.ceil(seconds / 60)} min left`
+    : `\u2248${Math.ceil(seconds)}s left`;
+
+const getProgressDetails = (progress: DownloadProgress | null) => {
+  if (!progress || progress.total <= 0) return { percent: 0 };
+  return {
+    percent: progress.percent,
+    sizeLabel: `${formatBytes(progress.transferred)} / ${formatBytes(progress.total)}`,
+    timeLabel:
+      progress.bytesPerSecond > 0
+        ? formatTimeLeft(
+            (progress.total - progress.transferred) / progress.bytesPerSecond,
+          )
+        : undefined,
+  };
+};
 
 type UpdateAvailableModalProps = {
   isOpen: boolean;
@@ -127,6 +156,21 @@ const ReleaseNotesAccordion = ({ releaseNotes }: { releaseNotes: string }) => {
   );
 };
 
+const ProgressBarTrack = styled.div`
+  width: 100%;
+  height: 8px;
+  background: ${COLOR.GRAY_4};
+  border-radius: 2px;
+  overflow: hidden;
+`;
+
+const ProgressBarFill = styled.div<{ $percent: number }>`
+  height: 100%;
+  width: ${({ $percent }) => $percent}%;
+  background: ${COLOR.PURPLE};
+  transition: width 0.3s ease;
+`;
+
 const MODAL_WIDTH = 450;
 const MODAL_STYLES = {
   content: {
@@ -142,6 +186,7 @@ export const UpdateAvailableModal = ({
 }: UpdateAvailableModalProps) => {
   const { store, updates } = useElectronApi();
   const [modalState, setModalState] = useState<ModalState>('available');
+  const [progress, setProgress] = useState<DownloadProgress | null>(null);
 
   const { data } = useAppStatus();
   const latestTag = data?.latestTag;
@@ -150,13 +195,14 @@ export const UpdateAvailableModal = ({
   useEffect(() => {
     if (isOpen) {
       setModalState('available');
+      setProgress(null);
     }
   }, [isOpen]);
 
   useEffect(() => {
     if (!updates) return;
 
-    const cleanupProgress = updates.onDownloadProgress?.(() => {});
+    const cleanupProgress = updates.onDownloadProgress?.(setProgress);
 
     const cleanupDownloaded = updates.onUpdateDownloaded?.(() => {
       updates.quitAndInstall?.();
@@ -194,6 +240,8 @@ export const UpdateAvailableModal = ({
   if (!isOpen) return null;
 
   if (modalState === 'downloading') {
+    const { percent, sizeLabel, timeLabel } = getProgressDetails(progress);
+
     return (
       <AntdModal
         open
@@ -203,14 +251,11 @@ export const UpdateAvailableModal = ({
         width={MODAL_WIDTH}
         styles={{ content: MODAL_STYLES.content }}
       >
-        <Flex vertical align="center" gap={32}>
-          <LoadingOutlined />
-          <Flex
-            vertical
-            align="center"
-            gap={12}
-            style={{ textAlign: 'center' }}
-          >
+        <CloseButton onClick={onCancelDownload}>
+          <PiX size={20} />
+        </CloseButton>
+        <Flex vertical gap={24}>
+          <Flex vertical gap={12}>
             <Text strong style={{ fontSize: 20, color: COLOR.TEXT }}>
               Downloading Update
             </Text>
@@ -224,9 +269,35 @@ export const UpdateAvailableModal = ({
               Keep Pearl open until the download finishes.
             </Text>
           </Flex>
-          <Button block size="large" onClick={onCancelDownload}>
-            Cancel
-          </Button>
+          <Flex vertical gap={8}>
+            <Flex justify="space-between">
+              {sizeLabel && (
+                <Text
+                  style={{
+                    fontSize: 14,
+                    lineHeight: '20px',
+                    color: COLOR.TEXT_NEUTRAL_TERTIARY,
+                  }}
+                >
+                  {sizeLabel}
+                </Text>
+              )}
+              {timeLabel && (
+                <Text
+                  style={{
+                    fontSize: 14,
+                    lineHeight: '20px',
+                    color: COLOR.TEXT_NEUTRAL_TERTIARY,
+                  }}
+                >
+                  {timeLabel}
+                </Text>
+              )}
+            </Flex>
+            <ProgressBarTrack>
+              <ProgressBarFill $percent={percent} />
+            </ProgressBarTrack>
+          </Flex>
         </Flex>
       </AntdModal>
     );
