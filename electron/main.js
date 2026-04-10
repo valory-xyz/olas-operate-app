@@ -918,14 +918,29 @@ ipcMain.on('open-path', (_, filePath) => {
 });
 
 // OTA UPDATE IPC HANDLERS
+const { autoUpdater: nativeUpdater } = require('electron');
+let squirrelReady = false;
+
+// Listen on the native Electron autoUpdater for Squirrel completion (macOS)
+nativeUpdater.on('update-downloaded', () => {
+  logger.electron('[OTA] Native Squirrel update-downloaded');
+  squirrelReady = true;
+});
+
+nativeUpdater.on('error', (err) => {
+  logger.electron(`[OTA] Native updater error: ${err.message}`);
+});
+
 autoUpdater.on('update-available', (info) => {
+  logger.electron(`[OTA] Update available: ${info.version}`);
   mainWindow?.webContents.send('update-available', {
     version: info.version,
-    releaseNotes: info.releaseNotes ?? null,
+    releaseNotes: typeof info.releaseNotes === 'string' ? info.releaseNotes : null,
   });
 });
 
 autoUpdater.on('update-not-available', () => {
+  logger.electron('[OTA] No update available');
   mainWindow?.webContents.send('update-not-available');
 });
 
@@ -936,30 +951,50 @@ autoUpdater.on('download-progress', (progress) => {
 });
 
 autoUpdater.on('update-downloaded', () => {
-  mainWindow?.webContents.send('update-downloaded');
+  logger.electron(`[OTA] electron-updater update-downloaded (squirrelReady=${squirrelReady})`);
+  if (process.platform === 'darwin') {
+    // On macOS, wait for Squirrel to finish before notifying renderer
+    if (squirrelReady) {
+      logger.electron('[OTA] Squirrel already ready, notifying renderer');
+      mainWindow?.webContents.send('update-downloaded');
+    } else {
+      logger.electron('[OTA] Waiting for Squirrel to finish...');
+      nativeUpdater.on('update-downloaded', () => {
+        logger.electron('[OTA] Squirrel finished, notifying renderer');
+        mainWindow?.webContents.send('update-downloaded');
+      });
+    }
+  } else {
+    mainWindow?.webContents.send('update-downloaded');
+  }
 });
 
 autoUpdater.on('error', (err) => {
+  logger.electron(`[OTA] Error: ${err.message}`);
   mainWindow?.webContents.send('update-error', { message: err.message });
 });
 
 let downloadCancellationToken = null;
 
 ipcMain.handle('update-check', async () => {
+  logger.electron('[OTA] Checking for updates...');
   return autoUpdater.checkForUpdates();
 });
 
 ipcMain.handle('update-download', () => {
+  logger.electron('[OTA] Starting download...');
   downloadCancellationToken = new CancellationToken();
   return autoUpdater.downloadUpdate(downloadCancellationToken);
 });
 
 ipcMain.handle('update-cancel', () => {
+  logger.electron('[OTA] Cancelling download');
   downloadCancellationToken?.cancel();
   downloadCancellationToken = null;
 });
 
 ipcMain.handle('update-quit-and-install', async () => {
+  logger.electron(`[OTA] quitAndInstall called (squirrelReady=${squirrelReady})`);
   if (operateDaemonPid) {
     await killProcesses(operateDaemonPid);
   }
