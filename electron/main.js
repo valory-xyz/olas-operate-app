@@ -934,11 +934,28 @@ nativeUpdater.on('error', (err) => {
   logger.electron(`[OTA] Native updater error: ${err.message}`);
 });
 
-autoUpdater.on('update-available', (info) => {
+autoUpdater.on('update-available', async (info) => {
   logger.electron(`[OTA] Update available: ${info.version}`);
+  // electron-updater's GitHubProvider has a bug where releaseNotes come from
+  // the wrong Atom feed entry when allowPrerelease is true. Fetch directly
+  // from the GitHub API to get the correct release notes for this version.
+  let releaseNotes = null;
+  try {
+    const tag = `v${info.version}`;
+    const res = await fetch(
+      `https://api.github.com/repos/valory-xyz/olas-operate-app/releases/tags/${tag}`,
+      { headers: { Accept: 'application/vnd.github.v3.html+json' } },
+    );
+    if (res.ok) {
+      const data = await res.json();
+      releaseNotes = data.body_html || data.body || null;
+    }
+  } catch (e) {
+    logger.electron(`[OTA] Failed to fetch release notes: ${e.message}`);
+  }
   mainWindow?.webContents.send('update-available', {
     version: info.version,
-    releaseNotes: typeof info.releaseNotes === 'string' ? info.releaseNotes : null,
+    releaseNotes,
   });
 });
 

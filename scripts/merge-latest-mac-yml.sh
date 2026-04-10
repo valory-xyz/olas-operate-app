@@ -18,14 +18,19 @@ if [ ! -f "$ARM64_YML" ] && [ ! -f "$X64_YML" ]; then
   exit 1
 fi
 
-# If only one exists, use it directly
+# Strip releaseNotes so electron-updater reads them from GitHub Atom feed instead
+strip_release_notes() {
+  sed '/^releaseNotes:/,/^[a-zA-Z]/{ /^releaseNotes:/d; /^[a-zA-Z]/!d; }' "$1"
+}
+
+# If only one exists, use it directly (strip releaseNotes)
 if [ ! -f "$ARM64_YML" ]; then
-  cp "$X64_YML" "$OUTPUT"
+  strip_release_notes "$X64_YML" > "$OUTPUT"
   echo "Only x64 yml found, using as-is"
   exit 0
 fi
 if [ ! -f "$X64_YML" ]; then
-  cp "$ARM64_YML" "$OUTPUT"
+  strip_release_notes "$ARM64_YML" > "$OUTPUT"
   echo "Only arm64 yml found, using as-is"
   exit 0
 fi
