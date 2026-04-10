@@ -47,8 +47,41 @@ jobs:
       tag: ${{ needs.calculate-version.outputs.new_tag }}
     secrets: inherit
 
+  merge-latest-mac-yml:
+    needs: [calculate-version, run-release]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.calculate-version.outputs.new_tag }}
+
+      - name: Download arm64 yml
+        uses: actions/download-artifact@v4
+        with:
+          name: latest-mac-yml-arm64
+          path: yml-arm64
+        continue-on-error: true
+
+      - name: Download x64 yml
+        uses: actions/download-artifact@v4
+        with:
+          name: latest-mac-yml-x64
+          path: yml-x64
+        continue-on-error: true
+
+      - name: Merge latest-mac.yml
+        run: bash scripts/merge-latest-mac-yml.sh yml-arm64/latest-mac.yml yml-x64/latest-mac.yml latest-mac.yml
+
+      - name: Upload merged latest-mac.yml to release
+        if: hashFiles('latest-mac.yml') != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release delete-asset "${{ needs.calculate-version.outputs.new_tag }}" latest-mac.yml --yes 2>/dev/null || true
+          gh release upload "${{ needs.calculate-version.outputs.new_tag }}" latest-mac.yml --clobber
+
   summary:
-    needs: [calculate-version, run-release, run-release-win, run-release-linux]
+    needs: [calculate-version, run-release, run-release-win, run-release-linux, merge-latest-mac-yml]
     runs-on: ubuntu-latest
     steps:
       - name: Create summary
