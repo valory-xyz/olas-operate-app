@@ -258,6 +258,15 @@ textarea.ant-input {
     border-color: #FFD6DA;
     background-color: #FFEBEC;
     color: #F00014;
+
+    .ant-alert-icon {
+      color: #F00014;
+    }
+
+    .ant-alert-message,
+    .ant-alert-description {
+      color: #F00014;
+    }
   }
 
   &--success {
