@@ -1,8 +1,9 @@
-# Pre-Implementation Check
+---
+name: pre-implementation-check
+description: Codebase discovery checklist before writing frontend code. Use when starting a new feature, screen, or component. Reads UI wrappers, colors, SCSS, hooks, services, and test factories.
+---
 
 **MANDATORY before writing ANY frontend code.** CLAUDE.md requires this — see "Workflow Commands" section.
-
----
 
 ## Step 1: Review the UI component library
 
