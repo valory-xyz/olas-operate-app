@@ -21,6 +21,7 @@ export * from './Progress';
 export * from './RequiredMark';
 export * from './RequiredTokenList';
 export * from './Segmented';
+export * from './SetupCard';
 export * from './Steps';
 export * from './styles';
 export * from './Table';

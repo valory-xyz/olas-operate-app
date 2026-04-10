@@ -88,6 +88,14 @@ jest.mock('../../../components/AccountRecovery', () => ({
   AccountRecovery: () => <div data-testid="account-recovery" />,
 }));
 
+jest.mock('../../../components/SetupPage/MigrateOperateFolder', () => ({
+  MigrateOperateFolder: () => <div data-testid="migrate-operate-folder" />,
+}));
+
+jest.mock('../../../components/SetupPage/FundRecovery', () => ({
+  FundRecovery: () => <div data-testid="fund-recovery" />,
+}));
+
 jest.mock('../../../components/SetupPage/SupportButton', () => ({
   SupportButton: () => <div data-testid="support-button" />,
 }));
@@ -222,6 +230,16 @@ describe('Setup (SetupPage entry)', () => {
         state: SETUP_SCREEN.AccountRecovery,
         expectedTestId: 'account-recovery',
       },
+      {
+        screenKey: 'MigrateOperateFolder',
+        state: SETUP_SCREEN.MigrateOperateFolder,
+        expectedTestId: 'migrate-operate-folder',
+      },
+      {
+        screenKey: 'FundRecovery',
+        state: SETUP_SCREEN.FundRecovery,
+        expectedTestId: 'fund-recovery',
+      },
     ];
 
     it.each(screenTestCases)(
@@ -294,6 +312,11 @@ describe('Setup (SetupPage entry)', () => {
       { screenKey: 'SetupOnRamp', state: SETUP_SCREEN.SetupOnRamp },
       { screenKey: 'SelectStaking', state: SETUP_SCREEN.SelectStaking },
       { screenKey: 'AccountRecovery', state: SETUP_SCREEN.AccountRecovery },
+      {
+        screenKey: 'MigrateOperateFolder',
+        state: SETUP_SCREEN.MigrateOperateFolder,
+      },
+      { screenKey: 'FundRecovery', state: SETUP_SCREEN.FundRecovery },
     ];
 
     it.each(screensWithCard)(

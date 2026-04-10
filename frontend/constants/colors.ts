@@ -15,6 +15,7 @@ export const COLOR = {
   WHITE: '#ffffff',
   BLACK: '#000000',
   BORDER_GRAY: '#DFE5EE',
+  BORDER_LIGHT: '#f0f0f0',
   BROWN: '#873800',
   TEXT: '#1f2229',
   TEXT_LIGHT: '#606F85',

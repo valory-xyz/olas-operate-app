@@ -34,6 +34,15 @@ export const getBackupWalletStatus = (
     owners: string[];
   }[] = [];
 
+  // Empty backupList means no safes were found — recovery is unavailable
+  if (masterSafes.length === 0) {
+    return {
+      hasBackupWalletsAcrossEveryChain: false,
+      areAllBackupOwnersSame: false,
+      backupAddress: undefined,
+    };
+  }
+
   for (const { address: untypedAddress, evmChainId } of masterSafes) {
     const masterSafeAddress = untypedAddress as Address;
     const chain = asMiddlewareChain(evmChainId);

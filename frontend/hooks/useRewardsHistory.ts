@@ -202,6 +202,7 @@ const useServiceRewardsHistory = (
     },
     enabled: !!serviceId,
     refetchInterval: ONE_DAY_IN_MS,
+    staleTime: ONE_DAY_IN_MS,
   });
 };
 

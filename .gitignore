@@ -58,3 +58,6 @@ logs/
 
 # tests
 frontend/coverage
+
+# local plans
+/plans/
