@@ -252,6 +252,7 @@ async function stopBackend() {
 }
 
 async function beforeQuit(event) {
+  logger.electron(`[OTA] beforeQuit called (appRealClose=${appRealClose}, isBeforeQuitting=${isBeforeQuitting})`);
   if (typeof event.preventDefault === 'function' && !appRealClose) {
     event.preventDefault();
     logger.electron('onquit event.preventDefault');
@@ -264,6 +265,7 @@ async function beforeQuit(event) {
   tray?.destroy();
   splashWindow?.destroy();
   mainWindow?.destroy();
+  logger.electron('[OTA] Windows destroyed');
 
   logger.electron('Stop backend gracefully:');
   await stopBackend();
@@ -485,6 +487,7 @@ const createMainWindow = async () => {
   });
 
   mainWindow.on('close', function (event) {
+    if (appRealClose) return; // Allow close during OTA update or real quit
     event.preventDefault();
     mainWindow.hide();
   });
@@ -998,9 +1001,15 @@ ipcMain.handle('update-quit-and-install', async () => {
   if (operateDaemonPid) {
     await killProcesses(operateDaemonPid);
   }
-  // Allow the app to quit — the before-quit handler blocks quit unless this is set
+  // Allow the app to quit — the before-quit and mainWindow close handlers check this
   appRealClose = true;
+  logger.electron('[OTA] appRealClose set to true, calling autoUpdater.quitAndInstall()');
   autoUpdater.quitAndInstall();
+  // Fallback: if quitAndInstall doesn't exit within 5s, force exit
+  setTimeout(() => {
+    logger.electron('[OTA] Fallback: quitAndInstall did not exit, forcing app.exit(0)');
+    app.exit(0);
+  }, 5000);
 });
 
 /**
