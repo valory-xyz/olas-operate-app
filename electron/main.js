@@ -999,7 +999,11 @@ ipcMain.handle('update-cancel', () => {
 ipcMain.handle('update-quit-and-install', async () => {
   logger.electron(`[OTA] quitAndInstall called (squirrelReady=${squirrelReady})`);
   if (operateDaemonPid) {
-    await killProcesses(operateDaemonPid);
+    try {
+      await killProcesses(operateDaemonPid);
+    } catch (e) {
+      logger.electron(`[OTA] killProcesses error (non-fatal): ${JSON.stringify(e)}`);
+    }
   }
   // Allow the app to quit — the before-quit and mainWindow close handlers check this
   appRealClose = true;

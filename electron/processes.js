@@ -35,7 +35,7 @@ function killProcesses(pid) {
         });
       }
 
-      if (errors.length === 0) {
+      if (errors.length > 0) {
         reject(errors);
       } else resolve();
     });
