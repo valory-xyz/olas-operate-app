@@ -22,7 +22,10 @@ export const AddressLink = ({
   middlewareChain,
 }: AddressLinkProps) => {
   if (!address) return null;
-  if (!middlewareChain) return null;
+
+  if (!middlewareChain) {
+    return <span>{prefix ?? truncateAddress(address)}</span>;
+  }
 
   return (
     <a
