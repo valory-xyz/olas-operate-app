@@ -132,11 +132,7 @@ export const BackupWalletSection = () => {
           <Button style={{ alignSelf: 'flex-start' }} onClick={openSync}>
             Sync Now
           </Button>
-          <Button
-            type="link"
-            style={{ alignSelf: 'flex-start' }}
-            onClick={openUpdatePassword}
-          >
+          <Button className="w-fit text-sm" onClick={openUpdatePassword}>
             Update Backup Wallet
           </Button>
         </CardSection>
@@ -170,10 +166,7 @@ export const BackupWalletSection = () => {
           </Flex>
         </Flex>
         {canonicalAddress && (
-          <Button
-            style={{ alignSelf: 'flex-start' }}
-            onClick={openUpdatePassword}
-          >
+          <Button className="w-fit text-sm" onClick={openUpdatePassword}>
             Update Backup Wallet
           </Button>
         )}

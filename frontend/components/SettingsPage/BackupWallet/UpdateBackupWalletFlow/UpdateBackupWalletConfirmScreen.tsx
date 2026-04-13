@@ -2,6 +2,7 @@ import { Button, Card, Flex, Typography } from 'antd';
 import { useState } from 'react';
 
 import { AddressLink, Alert, BackButton, cardStyles } from '@/components/ui';
+import { COLOR } from '@/constants';
 import { SettingsScreenMap } from '@/constants/screen';
 import {
   useApplyBackupOwner,
@@ -53,19 +54,41 @@ export const UpdateBackupWalletConfirmScreen = () => {
             <Title level={4} className="m-0">
               Confirm Backup Wallet Update
             </Title>
-            <Flex vertical gap={8}>
-              <Text type="secondary" className="text-sm">
-                Current backup wallet:
-              </Text>
-              {currentAddress ? (
-                <AddressLink address={currentAddress as Address} />
-              ) : (
-                <Text>—</Text>
-              )}
-              <Text type="secondary" className="text-sm">
-                New backup wallet:
-              </Text>
-              {newAddress && <AddressLink address={newAddress} />}
+            <Flex vertical gap={16}>
+              <Flex vertical gap={4}>
+                <Text type="secondary" className="text-sm">
+                  Current backup wallet:
+                </Text>
+                <Flex
+                  align="center"
+                  style={{
+                    padding: '8px 12px',
+                    border: `1px solid ${COLOR.BORDER_GRAY}`,
+                    borderRadius: 8,
+                  }}
+                >
+                  {currentAddress ? (
+                    <AddressLink address={currentAddress as Address} />
+                  ) : (
+                    <Text>—</Text>
+                  )}
+                </Flex>
+              </Flex>
+              <Flex vertical gap={4}>
+                <Text type="secondary" className="text-sm">
+                  New backup wallet:
+                </Text>
+                <Flex
+                  align="center"
+                  style={{
+                    padding: '8px 12px',
+                    border: `1px solid ${COLOR.BORDER_GRAY}`,
+                    borderRadius: 8,
+                  }}
+                >
+                  {newAddress && <AddressLink address={newAddress} />}
+                </Flex>
+              </Flex>
             </Flex>
             <Alert
               type="warning"
@@ -95,7 +118,6 @@ export const UpdateBackupWalletConfirmScreen = () => {
         <UpdateBackupWalletResultModal
           status={resultStatus}
           onDone={handleDone}
-          onRetry={() => setResultStatus('idle')}
         />
       )}
     </>
