@@ -18,6 +18,28 @@ describe('SettingsProvider', () => {
     expect(result.current.screen).toBe(SettingsScreenMap.Main);
   });
 
+  it('goto changes the screen to AddBackupWalletMethod', () => {
+    const { result } = renderHook(() => useContext(SettingsContext), {
+      wrapper,
+    });
+
+    act(() => {
+      result.current.goto(SettingsScreenMap.AddBackupWalletMethod);
+    });
+    expect(result.current.screen).toBe(SettingsScreenMap.AddBackupWalletMethod);
+  });
+
+  it('goto changes the screen to AddBackupWalletManual', () => {
+    const { result } = renderHook(() => useContext(SettingsContext), {
+      wrapper,
+    });
+
+    act(() => {
+      result.current.goto(SettingsScreenMap.AddBackupWalletManual);
+    });
+    expect(result.current.screen).toBe(SettingsScreenMap.AddBackupWalletManual);
+  });
+
   it('goto changes the screen to UpdateBackupWalletMethod', () => {
     const { result } = renderHook(() => useContext(SettingsContext), {
       wrapper,

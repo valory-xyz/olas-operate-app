@@ -1,11 +1,8 @@
-import { Button, Flex, Typography } from 'antd';
-import { TbWallet } from 'react-icons/tb';
+import { LuWallet } from 'react-icons/lu';
 
 import { Alert } from '@/components/ui';
 import { PAGES } from '@/constants';
 import { useBackupOwnerStatus, usePageState } from '@/hooks';
-
-const { Text } = Typography;
 
 export const BackupWalletAlert = () => {
   const { goto: gotoPage } = usePageState();
@@ -22,25 +19,12 @@ export const BackupWalletAlert = () => {
   return (
     <Alert
       type="warning"
+      message={isAddAlert ? 'Add backup wallet' : 'Sync backup wallet'}
+      onClick={() => gotoPage(PAGES.Settings)}
+      showIcon
+      customIcon={<LuWallet />}
       className="mt-auto mb-16"
-      message={
-        <Flex vertical gap={10}>
-          <TbWallet fontSize={20} />
-          <Text className="text-sm">
-            {isAddAlert
-              ? 'Add backup wallet to keep your funds safe.'
-              : 'Sync backup wallet across all chains.'}
-          </Text>
-          <Button
-            type="default"
-            size="small"
-            className="w-fit"
-            onClick={() => gotoPage(PAGES.Settings)}
-          >
-            {isAddAlert ? 'Add Backup Wallet' : 'Sync Backup Wallet'}
-          </Button>
-        </Flex>
-      }
+      style={{ alignItems: 'center', cursor: 'pointer' }}
     />
   );
 };

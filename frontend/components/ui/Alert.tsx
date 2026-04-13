@@ -4,6 +4,7 @@ import {
   WarningOutlined,
 } from '@ant-design/icons';
 import { Alert as AlertAntd, AlertProps as AntdAlertProps } from 'antd';
+import { ReactNode } from 'react';
 
 type AlertType = 'primary' | 'info' | 'warning' | 'error' | 'success';
 
@@ -20,6 +21,7 @@ type AlertProps = {
   fullWidth?: boolean;
   centered?: boolean;
   className?: string;
+  customIcon?: ReactNode;
 } & Omit<AntdAlertProps, 'type'>;
 
 function getAlertClassName(
@@ -49,7 +51,7 @@ export const Alert = ({
   <AlertAntd
     type={type === 'primary' ? undefined : type}
     className={getAlertClassName(type, fullWidth, centered, className)}
-    icon={rest.showIcon ? icons[type] : undefined}
+    icon={rest.showIcon ? rest.customIcon || icons[type] : undefined}
     {...rest}
   />
 );

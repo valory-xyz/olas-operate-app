@@ -34,6 +34,18 @@ jest.mock('../../../components/SettingsPage/BackupWallet', () => ({
 }));
 
 jest.mock(
+  '../../../components/SettingsPage/BackupWallet/AddBackupWalletFlow',
+  () => ({
+    AddBackupWalletMethodScreen: () => (
+      <div data-testid="add-backup-wallet-method-screen" />
+    ),
+    AddBackupWalletManualScreen: () => (
+      <div data-testid="add-backup-wallet-manual-screen" />
+    ),
+  }),
+);
+
+jest.mock(
   '../../../components/SettingsPage/BackupWallet/UpdateBackupWalletFlow',
   () => ({
     UpdateBackupWalletMethodScreen: () => (
@@ -130,6 +142,24 @@ describe('Settings (SettingsPage entry)', () => {
       render(<Settings />);
       expect(screen.getByText('Settings')).toBeInTheDocument();
       expect(screen.getByText('Password')).toBeInTheDocument();
+    });
+
+    it('renders AddBackupWalletMethodScreen when screen is AddBackupWalletMethod', () => {
+      setupDefaults({ screen: SettingsScreenMap.AddBackupWalletMethod });
+      render(<Settings />);
+      expect(
+        screen.getByTestId('add-backup-wallet-method-screen'),
+      ).toBeInTheDocument();
+      expect(screen.queryByText('Settings')).not.toBeInTheDocument();
+    });
+
+    it('renders AddBackupWalletManualScreen when screen is AddBackupWalletManual', () => {
+      setupDefaults({ screen: SettingsScreenMap.AddBackupWalletManual });
+      render(<Settings />);
+      expect(
+        screen.getByTestId('add-backup-wallet-manual-screen'),
+      ).toBeInTheDocument();
+      expect(screen.queryByText('Settings')).not.toBeInTheDocument();
     });
 
     it('renders UpdateBackupWalletMethodScreen when screen is UpdateBackupWalletMethod', () => {

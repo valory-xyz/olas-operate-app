@@ -14,6 +14,10 @@ import {
 
 import { BackupWalletSection } from './BackupWallet';
 import {
+  AddBackupWalletManualScreen,
+  AddBackupWalletMethodScreen,
+} from './BackupWallet/AddBackupWalletFlow';
+import {
   UpdateBackupWalletConfirmScreen,
   UpdateBackupWalletManualScreen,
   UpdateBackupWalletMethodScreen,
@@ -145,6 +149,10 @@ export const Settings = () => {
     switch (screen) {
       case SettingsScreenMap.Main:
         return <SettingsMain />;
+      case SettingsScreenMap.AddBackupWalletMethod:
+        return <AddBackupWalletMethodScreen />;
+      case SettingsScreenMap.AddBackupWalletManual:
+        return <AddBackupWalletManualScreen />;
       case SettingsScreenMap.UpdateBackupWalletMethod:
         return <UpdateBackupWalletMethodScreen />;
       case SettingsScreenMap.UpdateBackupWalletManual:
