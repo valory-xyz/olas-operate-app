@@ -33,6 +33,31 @@ jest.mock('../../../components/SettingsPage/BackupWallet', () => ({
   BackupWalletSection: () => <div data-testid="backup-wallet-section" />,
 }));
 
+jest.mock(
+  '../../../components/SettingsPage/BackupWallet/UpdateBackupWalletFlow',
+  () => ({
+    UpdateBackupWalletMethodScreen: () => (
+      <div data-testid="update-backup-wallet-method-screen" />
+    ),
+    UpdateBackupWalletManualScreen: () => (
+      <div data-testid="update-backup-wallet-manual-screen" />
+    ),
+    UpdateBackupWalletConfirmScreen: () => (
+      <div data-testid="update-backup-wallet-confirm-screen" />
+    ),
+    UpdateBackupWalletPasswordModal: () => null,
+    UpdateBackupWalletProvider: ({ children }: { children: React.ReactNode }) =>
+      children,
+    useUpdateBackupWallet: jest.fn(() => ({
+      newAddress: null,
+      setNewAddress: jest.fn(),
+      sameAddressError: false,
+      setSameAddressError: jest.fn(),
+      resetFlow: jest.fn(),
+    })),
+  }),
+);
+
 jest.mock('../../../components/ui', () => ({
   Alert: (props: { type: string; message: string; showIcon?: boolean }) => (
     <div
@@ -85,7 +110,7 @@ const setupDefaults = (
     isBackedUp = false,
   } = overrides;
 
-  mockUseSettings.mockReturnValue({ screen });
+  mockUseSettings.mockReturnValue({ screen, goto: jest.fn() });
   mockUseMnemonicExists.mockReturnValue({ mnemonicExists });
   mockUseRecoveryPhraseBackup.mockReturnValue({ isBackedUp });
 };
@@ -105,6 +130,30 @@ describe('Settings (SettingsPage entry)', () => {
       render(<Settings />);
       expect(screen.getByText('Settings')).toBeInTheDocument();
       expect(screen.getByText('Password')).toBeInTheDocument();
+    });
+
+    it('renders UpdateBackupWalletMethodScreen when screen is UpdateBackupWalletMethod', () => {
+      setupDefaults({ screen: SettingsScreenMap.UpdateBackupWalletMethod });
+      render(<Settings />);
+      expect(
+        screen.getByTestId('update-backup-wallet-method-screen'),
+      ).toBeInTheDocument();
+    });
+
+    it('renders UpdateBackupWalletManualScreen when screen is UpdateBackupWalletManual', () => {
+      setupDefaults({ screen: SettingsScreenMap.UpdateBackupWalletManual });
+      render(<Settings />);
+      expect(
+        screen.getByTestId('update-backup-wallet-manual-screen'),
+      ).toBeInTheDocument();
+    });
+
+    it('renders UpdateBackupWalletConfirmScreen when screen is UpdateBackupWalletConfirm', () => {
+      setupDefaults({ screen: SettingsScreenMap.UpdateBackupWalletConfirm });
+      render(<Settings />);
+      expect(
+        screen.getByTestId('update-backup-wallet-confirm-screen'),
+      ).toBeInTheDocument();
     });
 
     it('renders null for an unknown screen value', () => {
@@ -186,8 +235,15 @@ describe('Settings (SettingsPage entry)', () => {
   });
 
   describe('SettingsScreenMap constant', () => {
-    it('exports Main as the only screen', () => {
-      expect(SettingsScreenMap).toEqual({ Main: 'Main' });
+    it('exports all expected screens', () => {
+      expect(SettingsScreenMap).toEqual({
+        Main: 'Main',
+        AddBackupWalletMethod: 'AddBackupWalletMethod',
+        AddBackupWalletManual: 'AddBackupWalletManual',
+        UpdateBackupWalletMethod: 'UpdateBackupWalletMethod',
+        UpdateBackupWalletManual: 'UpdateBackupWalletManual',
+        UpdateBackupWalletConfirm: 'UpdateBackupWalletConfirm',
+      });
     });
   });
 });

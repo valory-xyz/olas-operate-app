@@ -1,6 +1,7 @@
 import { Button, Flex } from 'antd';
 import { useEffect, useState } from 'react';
 
+import { SuccessOutlined, WarningOutlined } from '@/components/custom-icons';
 import { LoadingSpinner, Modal } from '@/components/ui';
 import { useSupportModal } from '@/context/SupportModalProvider';
 import { useSyncBackupOwner } from '@/hooks';
@@ -59,6 +60,7 @@ export const SyncBackupWalletModal = ({
         size="medium"
         closable
         onCancel={onClose}
+        header={<SuccessOutlined />}
         title="Backup Wallet Synced!"
         description="Your backup wallet has been successfully synced."
         action={
@@ -76,11 +78,14 @@ export const SyncBackupWalletModal = ({
       size="medium"
       closable
       onCancel={onClose}
+      header={<WarningOutlined />}
       title="Backup Wallet Sync Failed"
       description="Please try again or contact the Valory support."
       action={
-        <Flex gap={8} className="mt-16">
-          <Button onClick={handleRetry}>Try Again</Button>
+        <Flex vertical gap={8} align="center" className="mt-16">
+          <Button type="primary" onClick={handleRetry}>
+            Try Again
+          </Button>
           <Button type="link" onClick={toggleSupportModal}>
             Contact Support
           </Button>
