@@ -62,6 +62,7 @@ Examine the most recent timestamps across the log files. The goal is to focus on
 - Read the **last 100 lines** of `electron.log` and `cli*.log` to find the newest timestamp.
 - Compute the cutoff: `newest_timestamp - 48 hours`.
 - All analysis below should focus on entries at or after this cutoff.
+- **CRITICAL: Strictly enforce the date filter.** Log files often contain months of history. When grepping for patterns (e.g. `epoch expired`, `not healthy`, error messages), ALWAYS filter by the 48-hour window. Do NOT report issues whose evidence falls entirely outside the window — those are historical, likely already resolved, and will mislead the diagnosis. If a pattern spans both old and recent dates, only cite the recent occurrences.
 - State the detected date range clearly at the top of your output.
 
 ---
@@ -112,6 +113,7 @@ Look for these event categories and note their timestamps:
 - **Stale data**: `autorun: balances stale`, `autorun: triggering refetch`
 - **Watchdog / rotation**: `autorun: rotate_begin` every ~4200s with a single configured agent is **expected behaviour** — watchdog fires, stays on same agent, not a bug
 - **Sleep/wake**: any sleep-detection messages (elapsed > expected + 30s triggers bail-out and safety-net reschedule)
+- **Epoch stuck (persistent)**: `epoch expired, stale isEligibleForRewards=true overridden to false` repeating every 2 minutes for hours/days. This means the on-chain `tsCheckpoint` is not advancing despite the agent running. Cross-reference with `sc-{uuid}_agent.log` to check if `ts_checkpoint` reads return the same value across all checkpoint calls — if so, the checkpoint is a silent no-op (see Step 3f).
 - **Backend errors**: `ECONNREFUSED`, `Failed to fetch`, `Backend not running`
 
 ### 3b. `next.log` — Frontend Errors
@@ -151,7 +153,7 @@ This is the primary source for backend API debugging. Look for:
 - **`GET /api/v2/service/{id}/funding_requirements` returning 500** — almost always caused by `min_staking_deposit` being `None` in `funding_manager.py` (staking contract can't be resolved, e.g. after `.operate` folder move or staking program change). Frontend effect: `canStartSelectedAgent = false` → button greyed out with "Low balance" reason even when funds are present. File: `operate/services/funding_manager.py`.
 
 **Staking / rewards**:
-- `[WARNING] No staking contract found for the current_staking_program=None. Not claiming the rewards.` — staking program reference lost when service stopped; rewards accumulate in Safe but are not swept to master wallet. Not a crash but funds silently stay in Safe.
+- `[WARNING] No staking contract found for the current_staking_program=None. Not claiming the rewards.` — **this is EXPECTED and NORMAL** when the service's hash or staking program has been recently updated. The old staking program reference is intentionally cleared during the update. Do NOT flag this as a bug or root cause. It is part of normal service lifecycle during updates. Only flag it if there is evidence the service has NOT been recently updated (no hash change, no staking program change in `debug_data.json` hash_history).
 
 **Note**: Routine lines to skip — `200 OK` HTTP responses, `[INFO] Computing protocol asset requirements`, `Successfully added` package lines during agent setup.
 
@@ -197,6 +199,14 @@ For each service log file:
 - Look for skill/behaviour failures
 - Look for transaction failures or RPC errors
 - Note any repeated error patterns
+
+**Checkpoint loop with no state change (stuck epoch)**:
+- Agent enters `call_checkpoint_round` repeatedly at period 0, each cycle: `Checkpoint reached! Preparing checkpoint tx..` → `Event.SETTLE` → tx submitted → `CHECKPOINT_TX_EXECUTED` → immediately re-enters `call_checkpoint_round`.
+- **Diagnosis**: grep for `Calling method ts_checkpoint` and check the `body={'data': <value>}` across all reads. If `tsCheckpoint` is the **same value** across every read (e.g. 9 reads all returning `1774985691`), the checkpoint calls are **silent no-ops** — the Safe reports `ExecutionSuccess` but the staking contract doesn't update state. Confirm by checking tx receipts: if the receipt contains only the Safe's `ExecutionSuccess` event (`0x442e715f...`) and **zero events from the staking contract**, the inner call returned early without modifying state.
+- **Root cause**: rewards pool is 0/empty on the staking contract — checkpoint has nothing to distribute so it returns early. This is the most common cause of the stuck checkpoint loop.
+- **Secondary effects**: the tight checkpoint loop burns gas. The agent may then fail with `insufficient funds for gas * price + value` on subsequent operations (e.g. USDC swap: `USDC balance (715) < 200000, swapping ETH to 250000 USDC...` → gas error). Gas depletion is the **symptom**, not the root cause.
+- **`Incorrect number of contents` errors** (`Expected 3. Found 4` and `Expected 1. Found 2`) appear during `validate_transaction_round` and `post_tx_settlement_round` on every checkpoint cycle. These are benign protocol message mismatches and do NOT cause the stuck checkpoint.
+- **electron.log correlation**: `epoch expired, stale isEligibleForRewards=true overridden to false` repeating every 2 minutes for hours/days confirms the epoch is stuck. Check when the first `epoch expired` message appeared and compare to the `tsCheckpoint` value (convert Unix timestamp) to confirm the epoch end time matches.
 
 **Polystrat-specific patterns**:
 - `position.get("conditionId")` crash where `position` is a `str` — caused by `data-api.polymarket.com` read timeout returning a raw string instead of JSON. Entire agent loop crashes with `HTTP Client/Server has shutdown`. AutoRun correctly detects and restarts — the bug is a missing type check in agent code (`polymarket_reedem.py:136`), not a Pearl issue.
@@ -289,12 +299,16 @@ Use this section to quickly match symptoms to root causes before diving into the
 | Symptom | Likely Cause | Where to Look |
 |---------|-------------|---------------|
 | Button greyed out, "Low balance" reason, but funds present | `funding_requirements` API returning 500; `min_staking_deposit=None` in backend | `cli*.log` for `500` on `/api/v2/service/{id}/funding_requirements` |
-| Rewards accumulating in Safe, not swept to master wallet | `current_staking_program=None` after service stop | `cli*.log` for `No staking contract found for the current_staking_program=None` |
+| `current_staking_program=None` warning in cli logs | **EXPECTED** — service hash or staking program was recently updated; old reference intentionally cleared. NOT a bug. | `cli*.log` — only investigate further if `debug_data.json` `hash_history` shows NO recent update |
 | Polystrat crashes with `HTTP Client/Server has shutdown` | `position.get("conditionId")` type error after polymarket API timeout | `sc-{uuid}_agent.log` for `conditionId` / `polymarket_reedem.py` |
 | Polystrat running but not trading | Geo-block from Polymarket | `sc-{uuid}_agent.log` for `Trading restricted in your region` |
 | AutoRun watchdog fires every ~70min, same agent restarts | Only one agent configured — expected watchdog rotation | `electron.log` for `autorun: rotate_begin` with no queue advancement |
 | Agent not starting, AutoRun shows `agent_blocked` | Low balance, eviction, or staking slot unavailable | `cli*.log` `allow_start_agent`, `isAgentEvicted` signals |
 | Agent not starting, AutoRun shows `infra_failed` | Transient network/timeout — queue does not advance | `cli*.log` for timeouts or connection errors around the same timestamp |
+| Epoch clock shows 00:00:00 (frozen countdown) | Staking contract rewards pool is 0 → checkpoint no-op → `tsCheckpoint` never advances | `electron.log` for persistent `epoch expired` messages; `sc-{uuid}_agent.log` for identical `ts_checkpoint` values across reads |
+| Agent stuck in `call_checkpoint_round` loop at period 0 | Rewards pool empty — checkpoint returns early, `tsCheckpoint` unchanged despite `ExecutionSuccess` on Safe | `sc-{uuid}_agent.log`: grep `Calling method ts_checkpoint` — same `body={'data': N}` on every read |
+| Agent gas depleted after checkpoint loop | Secondary effect of stuck checkpoint: tight loop burns gas on useless txs; agent then fails USDC swap or next checkpoint | `sc-{uuid}_agent.log` for `insufficient funds for gas * price + value` after repeated `CHECKPOINT_TX_EXECUTED` |
+| CORS errors on `funding_requirements` / backend API + 500 | Agent requesting incorrect address (not a frontend CORS config issue). Fix is in agent code, not Pearl CORS headers | Browser console for `Access-Control-Allow-Origin` errors paired with `net::ERR_FAILED 500`; the 500 causes missing CORS headers on the error response |
 
 ### Frontend "Start" Button Greyed Out — Triage Order
 

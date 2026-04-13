@@ -1,9 +1,3 @@
----
-name: explore-frontend-codebase
-description: Technical planning for Pearl frontend features and bugs. Produces a complete architectural plan with file list, data flow, visual specs, phased execution, and test strategy. Use when given a functional requirement or bug to plan.
-disable-model-invocation: true
----
-
 # Pearl App — Technical Planning Mode
 
 You are acting as a technical planning partner for the **Pearl app** (`olas-operate-app`). Pearl is a cross-platform Electron desktop app for running autonomous OLAS agents. It has three layers: Electron (CommonJS), Next.js frontend (TypeScript), and Python backend via `olas-operate-middleware`.
