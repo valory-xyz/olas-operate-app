@@ -5,6 +5,7 @@ import { SETUP_SCREEN } from '@/constants';
 import { COLOR } from '@/constants/colors';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { useSetup } from '@/hooks/useSetup';
+import { Address } from '@/types/Address';
 
 import { useWeb3AuthBackupWallet } from './useWeb3AuthBackupWallet';
 
@@ -12,6 +13,7 @@ const { Text } = Typography;
 
 type BackupWalletWeb3AuthProps = {
   onSetUpManuallyClick: () => void;
+  onFinish?: (address: Address) => void;
 };
 
 const Web3AuthCaption = () => {
@@ -35,11 +37,16 @@ const Web3AuthCaption = () => {
 
 export const BackupWalletWeb3Auth = ({
   onSetUpManuallyClick,
+  onFinish,
 }: BackupWalletWeb3AuthProps) => {
   const { goto } = useSetup();
 
-  const handleWeb3AuthSetupFinish = () => {
-    goto(SETUP_SCREEN.AgentOnboarding);
+  const handleWeb3AuthSetupFinish = (address: Address) => {
+    if (onFinish) {
+      onFinish(address);
+    } else {
+      goto(SETUP_SCREEN.AgentOnboarding);
+    }
   };
 
   const { openWeb3AuthModel } = useWeb3AuthBackupWallet({
