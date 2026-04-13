@@ -45,6 +45,7 @@ import {
 } from '@/utils';
 
 import { BackupSeedPhraseAlert } from '../BackupSeedPhraseAlert';
+import { BackupWalletAlert } from './BackupWalletAlert';
 import { useSidebarAgents } from '../hooks/useSidebarAgents';
 import { UpdateAvailableAlert } from '../UpdateAvailableAlert/UpdateAvailableAlert';
 import { UpdateAvailableModal } from '../UpdateAvailableAlert/UpdateAvailableModal';
@@ -348,6 +349,7 @@ export const Sidebar = () => {
 
           <div className="p-16">
             <BackupSeedPhraseAlert />
+            <BackupWalletAlert />
             <UpdateAvailableAlert />
             <UpdateAvailableModal />
 
