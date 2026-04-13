@@ -95,7 +95,7 @@ type ElectronApiContextProps = {
   logEvent?: (message: string) => void;
   nextLogError?: (error: Error, errorInfo: unknown) => void;
   /** IPC bridge for OTA updates — distinct from the electron-updater instance in electron/update.js */
-  updates?: {
+  autoUpdater?: {
     checkForUpdates?: () => Promise<unknown>;
     downloadUpdate?: () => Promise<void>;
     cancelDownload?: () => void;
@@ -162,7 +162,7 @@ export const ElectronApiContext = createContext<ElectronApiContextProps>({
   },
   logEvent: () => {},
   nextLogError: () => {},
-  updates: {
+  autoUpdater: {
     checkForUpdates: async () => {},
     downloadUpdate: async () => {},
     cancelDownload: () => {},
@@ -250,38 +250,41 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
         },
         logEvent: getElectronApiFunction('logEvent'),
         nextLogError: getElectronApiFunction('nextLogError'),
-        updates: {
+        autoUpdater: {
           checkForUpdates: getElectronApiFunction(
-            'updates.checkForUpdates',
+            'autoUpdater.checkForUpdates',
             true,
           ),
           downloadUpdate: getElectronApiFunction(
-            'updates.downloadUpdate',
+            'autoUpdater.downloadUpdate',
             true,
           ),
           cancelDownload: getElectronApiFunction(
-            'updates.cancelDownload',
+            'autoUpdater.cancelDownload',
             true,
           ),
           quitAndInstall: getElectronApiFunction(
-            'updates.quitAndInstall',
+            'autoUpdater.quitAndInstall',
             true,
           ),
           onUpdateAvailable: getElectronApiFunction(
-            'updates.onUpdateAvailable',
+            'autoUpdater.onUpdateAvailable',
             true,
           ),
           onDownloadProgress: getElectronApiFunction(
-            'updates.onDownloadProgress',
+            'autoUpdater.onDownloadProgress',
             true,
           ),
           onUpdateDownloaded: getElectronApiFunction(
-            'updates.onUpdateDownloaded',
+            'autoUpdater.onUpdateDownloaded',
             true,
           ),
-          onUpdateError: getElectronApiFunction('updates.onUpdateError', true),
+          onUpdateError: getElectronApiFunction(
+            'autoUpdater.onUpdateError',
+            true,
+          ),
           onUpdateNotAvailable: getElectronApiFunction(
-            'updates.onUpdateNotAvailable',
+            'autoUpdater.onUpdateNotAvailable',
             true,
           ),
         },

@@ -19,7 +19,7 @@ const mockOnUpdateNotAvailable = jest.fn();
 
 jest.mock('../../../../hooks', () => ({
   useElectronApi: () => ({
-    updates: {
+    autoUpdater: {
       checkForUpdates: mockCheckForUpdates,
       onUpdateAvailable: mockOnUpdateAvailable,
       onUpdateNotAvailable: mockOnUpdateNotAvailable,

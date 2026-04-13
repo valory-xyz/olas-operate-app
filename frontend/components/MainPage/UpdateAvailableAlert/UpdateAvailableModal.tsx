@@ -184,7 +184,7 @@ export const UpdateAvailableModal = ({
   isOpen,
   onClose,
 }: UpdateAvailableModalProps) => {
-  const { store, updates } = useElectronApi();
+  const { store, autoUpdater } = useElectronApi();
   const [modalState, setModalState] = useState<ModalState>('available');
   const [progress, setProgress] = useState<DownloadProgress | null>(null);
 
@@ -200,15 +200,15 @@ export const UpdateAvailableModal = ({
   }, [isOpen]);
 
   useEffect(() => {
-    if (!updates) return;
+    if (!autoUpdater) return;
 
-    const cleanupProgress = updates.onDownloadProgress?.(setProgress);
+    const cleanupProgress = autoUpdater.onDownloadProgress?.(setProgress);
 
-    const cleanupDownloaded = updates.onUpdateDownloaded?.(() => {
-      updates.quitAndInstall?.();
+    const cleanupDownloaded = autoUpdater.onUpdateDownloaded?.(() => {
+      autoUpdater.quitAndInstall?.();
     });
 
-    const cleanupError = updates.onUpdateError?.((err) => {
+    const cleanupError = autoUpdater.onUpdateError?.((err) => {
       console.error(err.message);
       setModalState('failed');
     });
@@ -229,13 +229,13 @@ export const UpdateAvailableModal = ({
 
   const startDownload = useCallback(() => {
     setModalState('downloading');
-    updates?.downloadUpdate?.().catch(() => setModalState('failed'));
-  }, [updates]);
+    autoUpdater?.downloadUpdate?.().catch(() => setModalState('failed'));
+  }, [autoUpdater]);
 
   const onCancelDownload = useCallback(() => {
-    updates?.cancelDownload?.();
+    autoUpdater?.cancelDownload?.();
     setModalState('available');
-  }, [updates]);
+  }, [autoUpdater]);
 
   if (!isOpen) return null;
 
