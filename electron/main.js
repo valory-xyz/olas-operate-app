@@ -982,7 +982,7 @@ autoUpdater.on('update-downloaded', () => {
       mainWindow?.webContents.send('update-downloaded');
     } else {
       logger.electron('[OTA] Waiting for Squirrel to finish...');
-      nativeUpdater.on('update-downloaded', () => {
+      nativeUpdater.once('update-downloaded', () => {
         logger.electron('[OTA] Squirrel finished, notifying renderer');
         mainWindow?.webContents.send('update-downloaded');
       });
