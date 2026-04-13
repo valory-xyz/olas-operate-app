@@ -13,6 +13,12 @@ import {
 } from '@/hooks';
 
 import { BackupWalletSection } from './BackupWallet';
+import {
+  UpdateBackupWalletConfirmScreen,
+  UpdateBackupWalletManualScreen,
+  UpdateBackupWalletMethodScreen,
+  UpdateBackupWalletProvider,
+} from './BackupWallet/UpdateBackupWalletFlow';
 import { RecoveryModal } from './RecoveryModal';
 import { SettingsDrawer } from './SettingsDrawer';
 
@@ -139,10 +145,18 @@ export const Settings = () => {
     switch (screen) {
       case SettingsScreenMap.Main:
         return <SettingsMain />;
+      case SettingsScreenMap.UpdateBackupWalletMethod:
+        return <UpdateBackupWalletMethodScreen />;
+      case SettingsScreenMap.UpdateBackupWalletManual:
+        return <UpdateBackupWalletManualScreen />;
+      case SettingsScreenMap.UpdateBackupWalletConfirm:
+        return <UpdateBackupWalletConfirmScreen />;
       default:
         return null;
     }
   }, [screen]);
 
-  return settingsScreen;
+  return (
+    <UpdateBackupWalletProvider>{settingsScreen}</UpdateBackupWalletProvider>
+  );
 };

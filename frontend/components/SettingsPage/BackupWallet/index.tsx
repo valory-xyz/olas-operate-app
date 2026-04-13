@@ -14,7 +14,7 @@ import { Address } from '@/types/Address';
 
 import { AddBackupWalletFlow } from './AddBackupWalletFlow';
 import { SyncBackupWalletModal } from './SyncBackupWalletModal';
-import { UpdateBackupWalletFlow } from './UpdateBackupWalletFlow';
+import { UpdateBackupWalletPasswordModal } from './UpdateBackupWalletFlow';
 
 const { Text } = Typography;
 
@@ -26,9 +26,9 @@ export const BackupWalletSection = () => {
     setFalse: closeAdd,
   } = useBoolean(false);
   const {
-    value: isUpdateOpen,
-    setTrue: openUpdate,
-    setFalse: closeUpdate,
+    value: isUpdatePasswordOpen,
+    setTrue: openUpdatePassword,
+    setFalse: closeUpdatePassword,
   } = useBoolean(false);
   const {
     value: isSyncOpen,
@@ -60,8 +60,17 @@ export const BackupWalletSection = () => {
           <Alert
             type="warning"
             showIcon
-            message="Your funds are at risk!"
-            description="Add a backup wallet to allow you to retrieve funds if you lose your password and seed phrase."
+            message={
+              <Flex vertical gap={4}>
+                <Text className="text-sm font-weight-600">
+                  Your funds are at risk!
+                </Text>
+                <Text className="text-sm">
+                  Add a backup wallet to allow you to retrieve funds if you lose
+                  your password and seed phrase.
+                </Text>
+              </Flex>
+            }
           />
           <Button
             type="primary"
@@ -97,8 +106,17 @@ export const BackupWalletSection = () => {
           <Alert
             type="warning"
             showIcon
-            message="Backup Wallet Out of Sync"
-            description="Your backup wallet isn't applied across all chains. Sync now to apply it everywhere."
+            message={
+              <Flex vertical gap={4}>
+                <Text className="text-sm font-weight-600">
+                  Backup Wallet Out of Sync
+                </Text>
+                <Text className="text-sm">
+                  Your backup wallet isn&apos;t applied across all chains. Sync
+                  now to apply it everywhere.
+                </Text>
+              </Flex>
+            }
           />
           <Button style={{ alignSelf: 'flex-start' }} onClick={openSync}>
             Sync Now
@@ -106,14 +124,17 @@ export const BackupWalletSection = () => {
           <Button
             type="link"
             style={{ alignSelf: 'flex-start' }}
-            onClick={openUpdate}
+            onClick={openUpdatePassword}
           >
             Update Backup Wallet
           </Button>
         </CardSection>
 
         <SyncBackupWalletModal open={isSyncOpen} onClose={closeSync} />
-        <UpdateBackupWalletFlow open={isUpdateOpen} onClose={closeUpdate} />
+        <UpdateBackupWalletPasswordModal
+          open={isUpdatePasswordOpen}
+          onClose={closeUpdatePassword}
+        />
       </>
     );
   }
@@ -138,13 +159,19 @@ export const BackupWalletSection = () => {
           </Flex>
         </Flex>
         {canonicalAddress && (
-          <Button style={{ alignSelf: 'flex-start' }} onClick={openUpdate}>
+          <Button
+            style={{ alignSelf: 'flex-start' }}
+            onClick={openUpdatePassword}
+          >
             Update Backup Wallet
           </Button>
         )}
       </CardSection>
 
-      <UpdateBackupWalletFlow open={isUpdateOpen} onClose={closeUpdate} />
+      <UpdateBackupWalletPasswordModal
+        open={isUpdatePasswordOpen}
+        onClose={closeUpdatePassword}
+      />
     </>
   );
 };
