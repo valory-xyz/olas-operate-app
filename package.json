@@ -1,5 +1,8 @@
 {
   "author": "Valory AG",
+  "resolutions": {
+    "dayjs": "1.11.13"
+  },
   "dependencies": {
     "@ant-design/cssinjs": "^1.24.0",
     "@ant-design/icons": "^5.3.0",
