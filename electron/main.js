@@ -66,8 +66,7 @@ const { isPortAvailable, findAvailablePort } = require('./ports');
 const { setupStoreIpc } = require('./store');
 const { logger } = require('./logger');
 const { PearlTray } = require('./components/PearlTray');
-const { autoUpdater } = require('./update');
-const { CancellationToken } = require('electron-updater');
+const { registerAutoUpdaterHandlers } = require('./autoUpdater');
 
 const { pki } = require('node-forge');
 
@@ -920,120 +919,13 @@ ipcMain.on('open-path', (_, filePath) => {
   shell.openPath(filePath);
 });
 
-// OTA UPDATE IPC HANDLERS
-const { autoUpdater: nativeUpdater } = require('electron');
-let squirrelReady = false;
-
-// Listen on the native Electron autoUpdater for Squirrel completion (macOS)
-nativeUpdater.on('update-downloaded', () => {
-  logger.electron('[OTA] Native Squirrel update-downloaded');
-  squirrelReady = true;
-});
-
-nativeUpdater.on('error', (err) => {
-  logger.electron(`[OTA] Native updater error: ${err.message}`);
-});
-
-autoUpdater.on('update-available', async (info) => {
-  logger.electron(`[OTA] Update available: ${info.version}`);
-  // electron-updater's GitHubProvider has a bug where releaseNotes come from
-  // the wrong Atom feed entry when allowPrerelease is true. Fetch directly
-  // from the GitHub API to get the correct release notes for this version.
-  let releaseNotes = null;
-  try {
-    const tag = `v${info.version}`;
-    const res = await fetch(
-      `https://api.github.com/repos/valory-xyz/olas-operate-app/releases/tags/${tag}`,
-      { headers: { Accept: 'application/vnd.github.v3.html+json' } },
-    );
-    if (res.ok) {
-      const data = await res.json();
-      releaseNotes = data.body_html || data.body || null;
-    }
-  } catch (e) {
-    logger.electron(`[OTA] Failed to fetch release notes: ${e.message}`);
-  }
-  mainWindow?.webContents.send('update-available', {
-    version: info.version,
-    releaseNotes,
-  });
-});
-
-autoUpdater.on('update-not-available', () => {
-  logger.electron('[OTA] No update available');
-  mainWindow?.webContents.send('update-not-available');
-});
-
-autoUpdater.on('download-progress', (progress) => {
-  mainWindow?.webContents.send('update-download-progress', {
-    percent: progress.percent,
-    transferred: progress.transferred,
-    total: progress.total,
-    bytesPerSecond: progress.bytesPerSecond,
-  });
-});
-
-autoUpdater.on('update-downloaded', () => {
-  logger.electron(`[OTA] electron-updater update-downloaded (squirrelReady=${squirrelReady})`);
-  if (process.platform === 'darwin') {
-    // On macOS, wait for Squirrel to finish before notifying renderer
-    if (squirrelReady) {
-      logger.electron('[OTA] Squirrel already ready, notifying renderer');
-      mainWindow?.webContents.send('update-downloaded');
-    } else {
-      logger.electron('[OTA] Waiting for Squirrel to finish...');
-      nativeUpdater.once('update-downloaded', () => {
-        logger.electron('[OTA] Squirrel finished, notifying renderer');
-        mainWindow?.webContents.send('update-downloaded');
-      });
-    }
-  } else {
-    mainWindow?.webContents.send('update-downloaded');
-  }
-});
-
-autoUpdater.on('error', (err) => {
-  logger.electron(`[OTA] Error: ${err.message}`);
-  mainWindow?.webContents.send('update-error', { message: err.message });
-});
-
-let downloadCancellationToken = null;
-
-ipcMain.handle('update-check', async () => {
-  logger.electron('[OTA] Checking for updates...');
-  return autoUpdater.checkForUpdates();
-});
-
-ipcMain.handle('update-download', () => {
-  logger.electron('[OTA] Starting download...');
-  downloadCancellationToken = new CancellationToken();
-  return autoUpdater.downloadUpdate(downloadCancellationToken);
-});
-
-ipcMain.handle('update-cancel', () => {
-  logger.electron('[OTA] Cancelling download');
-  downloadCancellationToken?.cancel();
-  downloadCancellationToken = null;
-});
-
-ipcMain.handle('update-quit-and-install', async () => {
-  logger.electron(`[OTA] quitAndInstall called (squirrelReady=${squirrelReady})`);
-  if (operateDaemonPid) {
-    try {
-      await killProcesses(operateDaemonPid);
-    } catch (e) {
-      logger.electron(`[OTA] killProcesses error (non-fatal): ${JSON.stringify(e)}`);
-    }
-  }
-  // Allow the app to quit — the before-quit and mainWindow close handlers check this
-  appRealClose = true;
-  logger.electron('[OTA] appRealClose set to true, calling autoUpdater.quitAndInstall()');
-  autoUpdater.quitAndInstall();
-  // Fallback: if quitAndInstall doesn't exit within 5s, force exit
-  setTimeout(() => {
-    logger.electron('[OTA] Fallback: quitAndInstall did not exit, forcing app.exit(0)');
-    app.exit(0);
-  }, 5000);
+registerAutoUpdaterHandlers({
+  getMainWindow: () => mainWindow,
+  setAppRealClose: (value) => {
+    appRealClose = value;
+  },
+  getOperateDaemonPid: () => operateDaemonPid,
+  killProcesses,
 });
 
 /**

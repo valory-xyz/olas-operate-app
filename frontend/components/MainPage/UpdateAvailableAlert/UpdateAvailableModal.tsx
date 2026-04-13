@@ -72,7 +72,7 @@ const AccordionHeader = styled.button`
 `;
 
 const AccordionContent = styled.div`
-  background: white;
+  background: ${COLOR.WHITE};
   padding: 16px;
   max-height: 240px;
   overflow-y: auto;
