@@ -25,9 +25,7 @@ export const UpdateBackupWalletContext =
     resetFlow: () => {},
   });
 
-export const UpdateBackupWalletProvider = ({
-  children,
-}: PropsWithChildren) => {
+export const UpdateBackupWalletProvider = ({ children }: PropsWithChildren) => {
   const [newAddress, setNewAddress] = useState<Address | null>(null);
   const [sameAddressError, setSameAddressError] = useState(false);
 

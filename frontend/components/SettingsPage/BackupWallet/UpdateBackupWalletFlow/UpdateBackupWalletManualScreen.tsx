@@ -1,4 +1,12 @@
-import { Button, Card, Flex, Form, FormItemProps, Input, Typography } from 'antd';
+import {
+  Button,
+  Card,
+  Flex,
+  Form,
+  FormItemProps,
+  Input,
+  Typography,
+} from 'antd';
 import { getAddress } from 'ethers/lib/utils';
 
 import { Alert, BackButton, cardStyles } from '@/components/ui';

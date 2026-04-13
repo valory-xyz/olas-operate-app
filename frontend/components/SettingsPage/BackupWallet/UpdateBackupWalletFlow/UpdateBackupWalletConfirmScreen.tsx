@@ -3,7 +3,11 @@ import { useState } from 'react';
 
 import { AddressLink, Alert, BackButton, cardStyles } from '@/components/ui';
 import { SettingsScreenMap } from '@/constants/screen';
-import { useApplyBackupOwner, useBackupOwnerStatus, useSettings } from '@/hooks';
+import {
+  useApplyBackupOwner,
+  useBackupOwnerStatus,
+  useSettings,
+} from '@/hooks';
 import { Address } from '@/types/Address';
 
 import { useUpdateBackupWallet } from './UpdateBackupWalletContext';
