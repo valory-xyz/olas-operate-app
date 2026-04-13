@@ -61,9 +61,6 @@ const main = async () => {
         gatekeeperAssess: false,
         entitlements: 'electron/entitlements.mac.plist',
         entitlementsInherit: 'electron/entitlements.mac.plist',
-        notarize: {
-          teamId: process.env.APPLE_TEAM_ID,
-        },
         signIgnore: [
           '.*/_internal/.*',
           '.*/bins/middleware/pearl.*'
