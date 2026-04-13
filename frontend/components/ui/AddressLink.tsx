@@ -10,7 +10,7 @@ import { truncateAddress } from '@/utils';
 
 type AddressLinkProps = {
   address: Address;
-  middlewareChain: SupportedMiddlewareChain;
+  middlewareChain?: SupportedMiddlewareChain;
   prefix?: ReactNode;
   hideLinkArrow?: boolean;
 };
