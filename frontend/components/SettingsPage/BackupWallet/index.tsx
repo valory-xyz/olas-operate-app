@@ -122,8 +122,7 @@ export const BackupWalletSection = () => {
             Sync Now
           </Button>
           <Button
-            type="link"
-            style={{ alignSelf: 'flex-start' }}
+            className="w-fit text-sm"
             onClick={openUpdatePassword}
           >
             Update Backup Wallet
@@ -160,7 +159,7 @@ export const BackupWalletSection = () => {
         </Flex>
         {canonicalAddress && (
           <Button
-            style={{ alignSelf: 'flex-start' }}
+            className="w-fit text-sm"
             onClick={openUpdatePassword}
           >
             Update Backup Wallet

@@ -1,4 +1,5 @@
 import { Button, Flex } from 'antd';
+import { useState } from 'react';
 
 import { SuccessOutlined, WarningOutlined } from '@/components/custom-icons';
 import { LoadingSpinner, Modal } from '@/components/ui';
@@ -10,27 +11,35 @@ type ResultStatus = 'idle' | 'in_progress' | 'success' | 'failure';
 type UpdateBackupWalletResultModalProps = {
   status: ResultStatus;
   onDone: () => void;
-  onRetry: () => void;
 };
 
 export const UpdateBackupWalletResultModal = ({
   status,
   onDone,
-  onRetry,
 }: UpdateBackupWalletResultModalProps) => {
   const { mutateAsync: syncBackupOwner } = useSyncBackupOwner();
   const { toggleSupportModal } = useSupportModal();
+  const [internalStatus, setInternalStatus] = useState<ResultStatus>('idle');
+
+  // Use internal status if retrying, otherwise use parent status
+  const activeStatus = internalStatus !== 'idle' ? internalStatus : status;
 
   const handleRetry = async () => {
-    onRetry();
+    setInternalStatus('in_progress');
     try {
       await syncBackupOwner();
+      setInternalStatus('success');
     } catch {
-      // failure handled by parent
+      setInternalStatus('failure');
     }
   };
 
-  if (status === 'in_progress') {
+  const handleDone = () => {
+    setInternalStatus('idle');
+    onDone();
+  };
+
+  if (activeStatus === 'in_progress') {
     return (
       <Modal
         open
@@ -43,18 +52,18 @@ export const UpdateBackupWalletResultModal = ({
     );
   }
 
-  if (status === 'success') {
+  if (activeStatus === 'success') {
     return (
       <Modal
         open
         size="medium"
         closable
-        onCancel={onDone}
+        onCancel={handleDone}
         header={<SuccessOutlined />}
         title="Backup Wallet Updated!"
         description="Your backup wallet has been successfully updated."
         action={
-          <Button type="primary" onClick={onDone} className="mt-16">
+          <Button type="primary" onClick={handleDone} className="mt-16">
             Done
           </Button>
         }
@@ -62,13 +71,13 @@ export const UpdateBackupWalletResultModal = ({
     );
   }
 
-  if (status === 'failure') {
+  if (activeStatus === 'failure') {
     return (
       <Modal
         open
         size="medium"
         closable
-        onCancel={onDone}
+        onCancel={handleDone}
         header={<WarningOutlined />}
         title="Backup Wallet Update Failed"
         description="Please try again or contact the Valory support."
