@@ -2,7 +2,12 @@ import { Button, Flex, Tag, Typography } from 'antd';
 import { TbWallet } from 'react-icons/tb';
 import { useBoolean } from 'usehooks-ts';
 
-import { AddressLink, Alert, CardSection, IconContainer } from '@/components/ui';
+import {
+  AddressLink,
+  Alert,
+  CardSection,
+  IconContainer,
+} from '@/components/ui';
 import { COLOR } from '@/constants';
 import { useBackupOwnerStatus } from '@/hooks';
 import { Address } from '@/types/Address';
@@ -95,10 +100,7 @@ export const BackupWalletSection = () => {
             message="Backup Wallet Out of Sync"
             description="Your backup wallet isn't applied across all chains. Sync now to apply it everywhere."
           />
-          <Button
-            style={{ alignSelf: 'flex-start' }}
-            onClick={openSync}
-          >
+          <Button style={{ alignSelf: 'flex-start' }} onClick={openSync}>
             Sync Now
           </Button>
           <Button
@@ -136,10 +138,7 @@ export const BackupWalletSection = () => {
           </Flex>
         </Flex>
         {canonicalAddress && (
-          <Button
-            style={{ alignSelf: 'flex-start' }}
-            onClick={openUpdate}
-          >
+          <Button style={{ alignSelf: 'flex-start' }} onClick={openUpdate}>
             Update Backup Wallet
           </Button>
         )}

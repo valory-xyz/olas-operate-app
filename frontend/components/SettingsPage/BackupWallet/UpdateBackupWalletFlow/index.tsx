@@ -1,23 +1,16 @@
-import {
-  Button,
-  Flex,
-  Form,
-  FormItemProps,
-  Input,
-  Typography,
-} from 'antd';
+import { Button, Flex, Form, FormItemProps, Input, Typography } from 'antd';
 import { getAddress } from 'ethers/lib/utils';
 import { useState } from 'react';
 
-import { AddressLink, Alert, LoadingSpinner, Modal } from '@/components/ui';
 import { BackupWalletWeb3Auth } from '@/components/SetupPage/Create/SetupBackupSigner/BackupWalletWeb3Auth';
+import { AddressLink, Alert, LoadingSpinner, Modal } from '@/components/ui';
+import { useSupportModal } from '@/context/SupportModalProvider';
 import {
   useApplyBackupOwner,
   useBackupOwnerStatus,
   useSyncBackupOwner,
   useValidatePassword,
 } from '@/hooks';
-import { useSupportModal } from '@/context/SupportModalProvider';
 import { Address } from '@/types/Address';
 
 const { Text } = Typography;
@@ -186,11 +179,7 @@ export const UpdateBackupWalletFlow = ({
               </Form.Item>
               <Flex gap={8} justify="flex-end">
                 <Button onClick={handleClose}>Cancel</Button>
-                <Button
-                  type="primary"
-                  htmlType="submit"
-                  loading={isValidating}
-                >
+                <Button type="primary" htmlType="submit" loading={isValidating}>
                   Continue
                 </Button>
               </Flex>

@@ -1,17 +1,11 @@
-import {
-  Button,
-  Flex,
-  Form,
-  FormItemProps,
-  Input,
-} from 'antd';
+import { Button, Flex, Form, FormItemProps, Input } from 'antd';
 import { getAddress } from 'ethers/lib/utils';
 import { useState } from 'react';
 
-import { Alert, LoadingSpinner, Modal } from '@/components/ui';
 import { BackupWalletWeb3Auth } from '@/components/SetupPage/Create/SetupBackupSigner/BackupWalletWeb3Auth';
-import { useApplyBackupOwner } from '@/hooks';
+import { Alert, LoadingSpinner, Modal } from '@/components/ui';
 import { useSupportModal } from '@/context/SupportModalProvider';
+import { useApplyBackupOwner } from '@/hooks';
 import { Address } from '@/types/Address';
 
 type AddStep = 'METHOD' | 'MANUAL' | 'IN_PROGRESS' | 'SUCCESS' | 'FAILURE';

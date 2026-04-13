@@ -8,13 +8,19 @@ export type ApplyBackupOwnerRequest = {
 
 export type ApplyBackupOwnerResponse = {
   canonical_backup_owner: string;
-  results: Record<string, { updated: boolean; safe: string; error: string | null }>;
+  results: Record<
+    string,
+    { updated: boolean; safe: string; error: string | null }
+  >;
   all_succeeded: boolean;
 };
 
 export type SyncBackupOwnerResponse = {
   canonical_backup_owner: string;
-  results: Record<string, { synced: boolean; safe: string; error: string | null; reason?: string }>;
+  results: Record<
+    string,
+    { synced: boolean; safe: string; error: string | null; reason?: string }
+  >;
   all_succeeded: boolean;
 };
 

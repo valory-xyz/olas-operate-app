@@ -1,18 +1,9 @@
 import { Button, Card, Flex, Typography } from 'antd';
 import { useMemo } from 'react';
-import {
-  TbFileText,
-  TbShieldHalfFilled,
-  TbShieldLock,
-} from 'react-icons/tb';
+import { TbFileText, TbShieldHalfFilled, TbShieldLock } from 'react-icons/tb';
 import { useBoolean } from 'usehooks-ts';
 
-import {
-  Alert,
-  CardSection,
-  cardStyles,
-  IconContainer,
-} from '@/components/ui';
+import { Alert, CardSection, cardStyles, IconContainer } from '@/components/ui';
 import { COLOR } from '@/constants';
 import { SettingsScreenMap } from '@/constants/screen';
 import {
@@ -117,12 +108,7 @@ const SettingsMain = () => {
         Settings
       </Title>
       <Card styles={{ body: { paddingTop: 0, paddingBottom: 0 } }}>
-        <CardSection
-          $padding="24px"
-          $borderBottom
-          align="center"
-          gap={16}
-        >
+        <CardSection $padding="24px" $borderBottom align="center" gap={16}>
           <IconContainer>
             <TbShieldLock size={20} color={COLOR.TEXT_NEUTRAL_TERTIARY} />
           </IconContainer>

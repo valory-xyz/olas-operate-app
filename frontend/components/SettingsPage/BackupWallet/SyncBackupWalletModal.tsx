@@ -2,8 +2,8 @@ import { Button, Flex } from 'antd';
 import { useEffect, useState } from 'react';
 
 import { LoadingSpinner, Modal } from '@/components/ui';
-import { useSyncBackupOwner } from '@/hooks';
 import { useSupportModal } from '@/context/SupportModalProvider';
+import { useSyncBackupOwner } from '@/hooks';
 
 type SyncStep = 'IN_PROGRESS' | 'SUCCESS' | 'FAILURE';
 

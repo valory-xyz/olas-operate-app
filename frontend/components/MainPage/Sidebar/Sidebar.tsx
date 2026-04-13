@@ -45,13 +45,13 @@ import {
 } from '@/utils';
 
 import { BackupSeedPhraseAlert } from '../BackupSeedPhraseAlert';
-import { BackupWalletAlert } from './BackupWalletAlert';
 import { useSidebarAgents } from '../hooks/useSidebarAgents';
 import { UpdateAvailableAlert } from '../UpdateAvailableAlert/UpdateAvailableAlert';
 import { UpdateAvailableModal } from '../UpdateAvailableAlert/UpdateAvailableModal';
 import { AgentTreeMenu } from './AgentTreeMenu';
 import { ArchiveAgentModal } from './ArchiveAgentModal';
 import { AutoRunControl } from './AutoRunControl';
+import { BackupWalletAlert } from './BackupWalletAlert';
 import { useListFade } from './hooks/useListFade';
 import { SidebarAgentGroup } from './types';
 
