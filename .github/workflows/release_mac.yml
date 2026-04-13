@@ -15,7 +15,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [macos-15, macos-15-large]
+        os: [macos-15-large, macos-15-large]
 
     steps:
       - uses: actions/checkout@v4
@@ -107,7 +107,7 @@ jobs:
     strategy:
       matrix:
         env: [production]
-        os: [macos-15, macos-15-large]
+        os: [macos-15-large, macos-15-large]
 
     steps:
       - uses: actions/checkout@v4
