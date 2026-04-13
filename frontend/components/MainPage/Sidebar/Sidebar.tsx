@@ -9,7 +9,7 @@ import {
   Typography,
 } from 'antd';
 import Image from 'next/image';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   TbHelpSquareRounded,
   TbPlus,
@@ -32,6 +32,7 @@ import {
   useAgentRunning,
   useAllInstancesRewardStatus,
   useBalanceAndRefillRequirementsContext,
+  useElectronApi,
   useIsInitiallyFunded,
   useMasterWalletContext,
   usePageState,
@@ -158,6 +159,14 @@ export const Sidebar = () => {
     open: openUpdateModal,
     close: closeUpdateModal,
   } = useAutoOpenUpdateModal();
+
+  const { getAppVersion } = useElectronApi();
+  const [appVersion, setAppVersion] = useState<string>();
+  useEffect(() => {
+    getAppVersion?.()
+      .then(setAppVersion)
+      .catch(() => {});
+  }, [getAppVersion]);
 
   const {
     pendingArchiveInstanceId,
@@ -368,6 +377,19 @@ export const Sidebar = () => {
               onClick={handleBottomMenuClick}
               items={bottomMenuItems}
             />
+            {appVersion && (
+              <Text
+                type="secondary"
+                style={{
+                  fontSize: 11,
+                  display: 'block',
+                  textAlign: 'center',
+                  marginTop: 8,
+                }}
+              >
+                v{appVersion}
+              </Text>
+            )}
           </div>
         </Flex>
       </Sider>
