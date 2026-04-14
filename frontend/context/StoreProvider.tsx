@@ -111,21 +111,23 @@ export const StoreProvider = ({ children }: PropsWithChildren) => {
   // One-time migration: copy backend-bound keys from Electron store to pearl_store.json.
   // Gated by `hasMigratedToBackendStore` flag so it only runs once per installation.
   useEffect(() => {
-    if (!store?.get || !store?.set) return;
+    const storeGet = store?.get;
+    const storeSet = store?.set;
+    if (!storeGet || !storeSet) return;
 
-    store.get('hasMigratedToBackendStore').then((alreadyMigrated) => {
+    storeGet('hasMigratedToBackendStore').then((alreadyMigrated) => {
       if (alreadyMigrated) return;
 
       Promise.all(
         BACKEND_BOUND_KEYS.map((key) =>
-          store.get(key).then((value) =>
+          storeGet(key).then((value) =>
             value !== undefined && value !== null
               ? StoreService.setStoreKey(key, value)
               : Promise.resolve(),
           ),
         ),
       )
-        .then(() => store.set('hasMigratedToBackendStore', true))
+        .then(() => storeSet('hasMigratedToBackendStore', true))
         .then(() =>
           // Refresh storeState from the now-populated pearl_store.json.
           StoreService.getStore().then((data) => setStoreState(data)),

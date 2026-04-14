@@ -6,9 +6,8 @@ import { useMnemonicExists } from '../../hooks/useMnemonicExists';
 
 // Minimal SharedContext wrapper that provides real useState-backed mnemonicExists
 // so multiple hook instances share the same value through the same context provider.
-const makeWrapper =
-  () =>
-  ({ children }: PropsWithChildren) => {
+const makeWrapper = () => {
+  const Wrapper = ({ children }: PropsWithChildren) => {
     // Use the default context values from SharedContext for baseline;
     // callers can override by wrapping with a custom Provider value.
     return createElement(
@@ -23,6 +22,8 @@ const makeWrapper =
       children,
     );
   };
+  return Wrapper;
+};
 
 describe('useMnemonicExists', () => {
   it('returns undefined for mnemonicExists when context provides undefined', () => {

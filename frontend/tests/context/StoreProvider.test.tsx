@@ -28,14 +28,15 @@ const mockGetStore = StoreService.getStore as jest.Mock;
  * Wraps StoreProvider with an ElectronApiContext that reports
  * hasMigratedToBackendStore=true so the one-time migration effect is a no-op.
  */
-const makeWrapper =
-  (electronValue?: object) =>
-  ({ children }: PropsWithChildren) => {
+const makeWrapper = (electronValue?: object) => {
+  const Wrapper = ({ children }: PropsWithChildren) => {
     const defaultElectron = {
       store: {
         get: jest.fn().mockImplementation((key: string) =>
           // Already migrated — skip the migration branch
-          Promise.resolve(key === 'hasMigratedToBackendStore' ? true : undefined),
+          Promise.resolve(
+            key === 'hasMigratedToBackendStore' ? true : undefined,
+          ),
         ),
         set: jest.fn().mockResolvedValue(undefined),
       },
@@ -46,6 +47,8 @@ const makeWrapper =
       createElement(StoreProvider, null, children),
     );
   };
+  return Wrapper;
+};
 
 describe('StoreProvider', () => {
   beforeEach(() => {
