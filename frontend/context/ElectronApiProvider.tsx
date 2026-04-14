@@ -14,15 +14,7 @@ import {
 } from '@/types/Recovery';
 
 import { emitPearlStoreDelete, emitPearlStoreSet } from './pearlStoreEventBus';
-
-// Keys that remain in the Electron store (OS app-data). All other keys are
-// backend-bound (persisted in .operate/pearl_store.json via HTTP API).
-const ELECTRON_NATIVE_KEYS = new Set([
-  'environmentName',
-  'knownVersion',
-  'hasMigratedToBackendStore',
-  'updateAvailableKnownVersion',
-]);
+import { BACKEND_BOUND_KEYS, ELECTRON_NATIVE_KEYS } from './pearlStoreKeys';
 
 type ElectronApiContextProps = {
   getAppVersion?: () => Promise<string>;
@@ -189,6 +181,9 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
         },
         store: {
           store: getElectronApiFunction('store.store'),
+          // NOTE: store.get reads from the Electron store only (OS app-data).
+          // Backend-bound keys (agent settings, autoRun, etc.) are NOT available
+          // here — use useStore() for pearl store data instead.
           get: getElectronApiFunction('store.get'),
           set: (key: string, value: unknown) => {
             if (ELECTRON_NATIVE_KEYS.has(key.split('.')[0])) {
@@ -200,7 +195,9 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
             }
             // Backend-bound key: persist to .operate/pearl_store.json and update React state.
             emitPearlStoreSet(key, value);
-            return StoreService.setStoreKey(key, value);
+            return StoreService.setStoreKey(key, value).catch((error) => {
+              console.error(`Failed to persist store key '${key}':`, error);
+            });
           },
           delete: (key: string) => {
             if (ELECTRON_NATIVE_KEYS.has(key.split('.')[0])) {
@@ -211,9 +208,24 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
             }
             // Backend-bound key: remove from .operate/pearl_store.json and update React state.
             emitPearlStoreDelete(key);
-            return StoreService.deleteStoreKey(key);
+            return StoreService.deleteStoreKey(key).catch((error) => {
+              console.error(`Failed to delete store key '${key}':`, error);
+            });
           },
-          clear: getElectronApiFunction('store.clear'),
+          clear: () => {
+            // Clear Electron-native keys via IPC.
+            const clearFn = getElectronApiFunction(
+              'store.clear',
+            ) as unknown as () => Promise<void>;
+            // Clear backend-bound keys from pearl_store.json.
+            const backendDeletes = BACKEND_BOUND_KEYS.map((key) => {
+              emitPearlStoreDelete(key);
+              return StoreService.deleteStoreKey(key);
+            });
+            return Promise.all([clearFn(), ...backendDeletes]).then(
+              () => undefined,
+            );
+          },
         },
         showNotification: getElectronApiFunction('showNotification'),
         saveLogs: getElectronApiFunction('saveLogs'),

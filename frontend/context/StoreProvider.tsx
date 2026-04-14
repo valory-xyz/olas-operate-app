@@ -3,6 +3,7 @@ import {
   PropsWithChildren,
   useContext,
   useEffect,
+  useRef,
   useState,
 } from 'react';
 
@@ -14,28 +15,11 @@ import {
   registerPearlStoreDeleteHandler,
   registerPearlStoreSetHandler,
 } from './pearlStoreEventBus';
+import { BACKEND_BOUND_KEYS } from './pearlStoreKeys';
 
 export const StoreContext = createContext<{ storeState?: PearlStore }>({
   storeState: undefined,
 });
-
-// Backend-bound keys that must be migrated from Electron store to pearl_store.json.
-const BACKEND_BOUND_KEYS: string[] = [
-  'trader',
-  'memeooorr',
-  'modius',
-  'optimus',
-  'pett_ai',
-  'polymarket_trader',
-  'firstStakingRewardAchieved',
-  'lastSelectedServiceConfigId',
-  'lastSelectedAgentType',
-  'archivedAgents',
-  'archivedInstances',
-  'lastProvidedBackupWallet',
-  'autoRun',
-  'recoveryPhraseBackedUp',
-];
 
 /** Apply a dot-notation key write to a store object, returning a new object. */
 const applyNestedSet = (
@@ -78,35 +62,104 @@ const applyNestedDelete = (store: PearlStore, key: string): PearlStore => {
   };
 };
 
+type PendingOp =
+  | { type: 'set'; key: string; value: unknown }
+  | { type: 'delete'; key: string };
+
+const HYDRATION_RETRY_DELAY_MS = 3000;
+const HYDRATION_MAX_RETRIES = 3;
+
 export const StoreProvider = ({ children }: PropsWithChildren) => {
   const { store } = useContext(ElectronApiContext);
   const [storeState, setStoreState] = useState<PearlStore>();
+  const hydrationAttempted = useRef(false);
+
+  // Queue for writes that arrive before hydration completes.
+  // Once storeState is set, the queue is drained and all pending ops are applied.
+  const pendingOpsRef = useRef<PendingOp[]>([]);
+  const isHydratedRef = useRef(false);
+
+  // Apply a store operation or queue it if hydration hasn't completed yet.
+  const applyOrQueue = useRef({
+    set: (key: string, value: unknown) => {
+      if (isHydratedRef.current) {
+        setStoreState((prev) =>
+          prev === undefined ? prev : applyNestedSet(prev, key, value),
+        );
+      } else {
+        pendingOpsRef.current.push({ type: 'set', key, value });
+      }
+    },
+    delete: (key: string) => {
+      if (isHydratedRef.current) {
+        setStoreState((prev) =>
+          prev === undefined ? prev : applyNestedDelete(prev, key),
+        );
+      } else {
+        pendingOpsRef.current.push({ type: 'delete', key });
+      }
+    },
+  }).current;
+
+  // Drain pending operations after hydration, applying them on top of the
+  // freshly loaded store state so no writes are lost.
+  const drainPendingOps = (baseState: PearlStore): PearlStore => {
+    let state = baseState;
+    for (const op of pendingOpsRef.current) {
+      if (op.type === 'set') {
+        state = applyNestedSet(state, op.key, op.value);
+      } else {
+        state = applyNestedDelete(state, op.key);
+      }
+    }
+    pendingOpsRef.current = [];
+    return state;
+  };
 
   // Register event bus handlers so ElectronApiProvider can push writes here.
   useEffect(() => {
-    registerPearlStoreSetHandler((key, value) => {
-      setStoreState((prev) =>
-        prev === undefined ? prev : applyNestedSet(prev, key, value),
-      );
-    });
-    registerPearlStoreDeleteHandler((key) => {
-      setStoreState((prev) =>
-        prev === undefined ? prev : applyNestedDelete(prev, key),
-      );
-    });
-  }, []);
+    registerPearlStoreSetHandler(applyOrQueue.set);
+    registerPearlStoreDeleteHandler(applyOrQueue.delete);
+  }, [applyOrQueue]);
 
   // Load initial store state from the backend HTTP API (on mount only).
   // No polling — all writes originate in the frontend so state stays in sync.
+  // Retries up to HYDRATION_MAX_RETRIES times on failure to avoid permanently
+  // stuck state when the backend is briefly unavailable.
   useEffect(() => {
-    if (storeState) return;
+    if (hydrationAttempted.current) return;
+    hydrationAttempted.current = true;
 
-    StoreService.getStore()
-      .then((data) =>
-        setStoreState((prev) => (prev === undefined ? data : prev)),
-      )
-      .catch(console.error);
-  }, [storeState]);
+    let cancelled = false;
+    let retryTimeout: ReturnType<typeof setTimeout>;
+
+    const attemptHydration = (retriesLeft: number) => {
+      StoreService.getStore()
+        .then((data) => {
+          if (cancelled) return;
+          // Drain any writes that arrived before hydration completed.
+          const finalState = drainPendingOps(data);
+          isHydratedRef.current = true;
+          setStoreState(finalState);
+        })
+        .catch((error) => {
+          console.error('Failed to hydrate pearl store:', error);
+          if (!cancelled && retriesLeft > 0) {
+            retryTimeout = setTimeout(
+              () => attemptHydration(retriesLeft - 1),
+              HYDRATION_RETRY_DELAY_MS,
+            );
+          }
+        });
+    };
+
+    attemptHydration(HYDRATION_MAX_RETRIES);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(retryTimeout);
+    };
+  }, []);
 
   // One-time migration: copy backend-bound keys from Electron store to pearl_store.json.
   // Gated by `hasMigratedToBackendStore` flag so it only runs once per installation.
@@ -130,7 +183,11 @@ export const StoreProvider = ({ children }: PropsWithChildren) => {
         .then(() => storeSet('hasMigratedToBackendStore', true))
         .then(() =>
           // Refresh storeState from the now-populated pearl_store.json.
-          StoreService.getStore().then((data) => setStoreState(data)),
+          StoreService.getStore().then((data) => {
+            const finalState = drainPendingOps(data);
+            isHydratedRef.current = true;
+            setStoreState(finalState);
+          }),
         )
         .catch(console.error);
     });
