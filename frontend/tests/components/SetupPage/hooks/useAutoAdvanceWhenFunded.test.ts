@@ -40,7 +40,7 @@ describe('useAutoAdvanceWhenFunded', () => {
     jest.clearAllMocks();
     mockUseSetup.mockReturnValue({
       goto: mockGoto,
-    } as ReturnType<typeof useSetup>);
+    } as unknown as ReturnType<typeof useSetup>);
   });
 
   // -------------------------------------------------------------------------

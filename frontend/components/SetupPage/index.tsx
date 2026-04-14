@@ -4,8 +4,6 @@ import React, { useContext, useMemo } from 'react';
 import { SETUP_SCREEN, SetupScreen } from '@/constants';
 import { SetupContext } from '@/context/SetupProvider';
 
-import { useAutoAdvanceWhenFunded } from './hooks/useAutoAdvanceWhenFunded';
-
 import { AccountRecovery } from '../AccountRecovery';
 import { SelectStakingPage } from '../SelectStakingPage';
 import { CardFlex } from '../ui/CardFlex';
@@ -21,6 +19,7 @@ import { BalanceCheck } from './FundYourAgent/components/BalanceCheck';
 import { ConfirmFunding } from './FundYourAgent/components/ConfirmFunding';
 import { FundYourAgent } from './FundYourAgent/FundYourAgent';
 import { TransferFunds } from './FundYourAgent/TransferFunds';
+import { useAutoAdvanceWhenFunded } from './hooks/useAutoAdvanceWhenFunded';
 import { MigrateOperateFolder } from './MigrateOperateFolder';
 import { SetupWelcome } from './SetupWelcome';
 import { SetupYourAgent } from './SetupYourAgent/SetupYourAgent';
