@@ -42,7 +42,7 @@ type ResultStatus = 'idle' | 'in_progress' | 'success' | 'failure';
 export const UpdateBackupWalletConfirmScreen = () => {
   const { goto } = useSettings();
   const { backupOwnerStatus } = useBackupOwnerStatus();
-  const { newAddress, resetFlow } = useUpdateBackupWallet();
+  const { newAddress, password, resetFlow } = useUpdateBackupWallet();
   const { mutateAsync: applyBackupOwner } = useApplyBackupOwner();
   const [resultStatus, setResultStatus] = useState<ResultStatus>('idle');
 
@@ -52,7 +52,10 @@ export const UpdateBackupWalletConfirmScreen = () => {
     if (!newAddress) return;
     setResultStatus('in_progress');
     try {
-      await applyBackupOwner({ backup_owner: newAddress });
+      await applyBackupOwner({
+        backup_owner: newAddress,
+        password: password ?? undefined,
+      });
       setResultStatus('success');
     } catch {
       setResultStatus('failure');

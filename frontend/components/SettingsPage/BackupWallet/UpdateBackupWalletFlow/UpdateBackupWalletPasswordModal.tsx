@@ -5,6 +5,8 @@ import { Alert, Modal } from '@/components/ui';
 import { SettingsScreenMap } from '@/constants/screen';
 import { useSettings, useValidatePassword } from '@/hooks';
 
+import { useUpdateBackupWallet } from './UpdateBackupWalletContext';
+
 type UpdateBackupWalletPasswordModalProps = {
   open: boolean;
   onClose: () => void;
@@ -15,6 +17,7 @@ export const UpdateBackupWalletPasswordModal = ({
   onClose,
 }: UpdateBackupWalletPasswordModalProps) => {
   const { goto } = useSettings();
+  const { setPassword } = useUpdateBackupWallet();
   const { isLoading: isValidating, validatePassword } = useValidatePassword();
   const [passwordError, setPasswordError] = useState(false);
   const [form] = Form.useForm();
@@ -29,6 +32,7 @@ export const UpdateBackupWalletPasswordModal = ({
     setPasswordError(false);
     const isValid = await validatePassword(values.password);
     if (isValid) {
+      setPassword(values.password);
       form.resetFields();
       onClose();
       goto(SettingsScreenMap.UpdateBackupWalletMethod);

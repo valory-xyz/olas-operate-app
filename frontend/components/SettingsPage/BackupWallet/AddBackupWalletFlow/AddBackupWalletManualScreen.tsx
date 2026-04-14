@@ -1,17 +1,9 @@
-import {
-  Button,
-  Card,
-  Flex,
-  Form,
-  FormItemProps,
-  Input,
-  Typography,
-} from 'antd';
+import { Button, Card, Flex, Form, Input, Typography } from 'antd';
 import { getAddress } from 'ethers/lib/utils';
 import { useState } from 'react';
 
 import { BackButton, cardStyles } from '@/components/ui';
-import { COLOR } from '@/constants';
+import { BACKUP_WALLET_FIELD_RULES, COLOR } from '@/constants';
 import { SettingsScreenMap } from '@/constants/screen';
 import { useApplyBackupOwner, useSettings } from '@/hooks';
 import { Address } from '@/types/Address';
@@ -23,17 +15,6 @@ import {
 
 const { Title, Text } = Typography;
 
-const invalidAddressMessage = 'Please input a valid backup wallet address!';
-const walletFieldRules: FormItemProps['rules'] = [
-  {
-    required: true,
-    len: 42,
-    pattern: /^0x[a-fA-F0-9]{40}$/,
-    type: 'string',
-    message: invalidAddressMessage,
-  },
-];
-
 export const AddBackupWalletManualScreen = () => {
   const { goto } = useSettings();
   const [form] = Form.useForm();
@@ -43,14 +24,7 @@ export const AddBackupWalletManualScreen = () => {
   const handleSubmit = async (values: { 'backup-signer': string }) => {
     const checksummedAddress = getAddress(
       values['backup-signer'].toLowerCase(),
-    ) as Address | null;
-
-    if (!checksummedAddress) {
-      form.setFields([
-        { name: 'backup-signer', errors: [invalidAddressMessage] },
-      ]);
-      return;
-    }
+    ) as Address;
 
     setStatus('in_progress');
     try {
@@ -84,7 +58,7 @@ export const AddBackupWalletManualScreen = () => {
             <Form.Item
               name="backup-signer"
               label="Enter Backup Wallet Address"
-              rules={walletFieldRules}
+              rules={BACKUP_WALLET_FIELD_RULES}
               required
             >
               <Input size="large" placeholder="0x..." />

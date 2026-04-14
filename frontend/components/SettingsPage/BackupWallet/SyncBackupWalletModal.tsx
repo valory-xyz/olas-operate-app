@@ -1,5 +1,5 @@
 import { Button, Flex } from 'antd';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { SuccessOutlined, WarningOutlined } from '@/components/custom-icons';
 import { LoadingSpinner, Modal } from '@/components/ui';
@@ -19,6 +19,8 @@ export const SyncBackupWalletModal = ({
 }: SyncBackupWalletModalProps) => {
   const [step, setStep] = useState<SyncStep>('IN_PROGRESS');
   const { mutateAsync: syncBackupOwner } = useSyncBackupOwner();
+  const syncBackupOwnerRef = useRef(syncBackupOwner);
+  syncBackupOwnerRef.current = syncBackupOwner;
   const { toggleSupportModal } = useSupportModal();
 
   useEffect(() => {
@@ -26,14 +28,14 @@ export const SyncBackupWalletModal = ({
 
     setStep('IN_PROGRESS');
 
-    syncBackupOwner()
+    syncBackupOwnerRef.current()
       .then(() => setStep('SUCCESS'))
       .catch(() => setStep('FAILURE'));
-  }, [open, syncBackupOwner]);
+  }, [open]);
 
   const handleRetry = () => {
     setStep('IN_PROGRESS');
-    syncBackupOwner()
+    syncBackupOwnerRef.current()
       .then(() => setStep('SUCCESS'))
       .catch(() => setStep('FAILURE'));
   };
