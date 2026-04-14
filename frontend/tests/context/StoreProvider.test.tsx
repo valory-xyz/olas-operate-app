@@ -1,149 +1,128 @@
 import { renderHook, waitFor } from '@testing-library/react';
-import { act, createElement, PropsWithChildren, useContext } from 'react';
+import { createElement, PropsWithChildren, useContext } from 'react';
 
 import { ElectronApiContext } from '../../context/ElectronApiProvider';
 import { StoreContext, StoreProvider } from '../../context/StoreProvider';
-import type { ElectronStore } from '../../types/ElectronApi';
+import { StoreService } from '../../service/StoreService';
+import type { PearlStore } from '../../types/ElectronApi';
+
+jest.mock('../../service/StoreService', () => ({
+  StoreService: {
+    getStore: jest.fn(),
+    setStoreKey: jest.fn(),
+    deleteStoreKey: jest.fn(),
+  },
+}));
+
+// Mock the event bus to prevent module-level singleton side-effects between tests.
+jest.mock('../../context/pearlStoreEventBus', () => ({
+  registerPearlStoreSetHandler: jest.fn(),
+  registerPearlStoreDeleteHandler: jest.fn(),
+  emitPearlStoreSet: jest.fn(),
+  emitPearlStoreDelete: jest.fn(),
+}));
+
+const mockGetStore = StoreService.getStore as jest.Mock;
+
+/**
+ * Wraps StoreProvider with an ElectronApiContext that reports
+ * hasMigratedToBackendStore=true so the one-time migration effect is a no-op.
+ */
+const makeWrapper =
+  (electronValue?: object) =>
+  ({ children }: PropsWithChildren) => {
+    const defaultElectron = {
+      store: {
+        get: jest.fn().mockImplementation((key: string) =>
+          // Already migrated — skip the migration branch
+          Promise.resolve(key === 'hasMigratedToBackendStore' ? true : undefined),
+        ),
+        set: jest.fn().mockResolvedValue(undefined),
+      },
+    };
+    return createElement(
+      ElectronApiContext.Provider,
+      { value: electronValue ?? defaultElectron },
+      createElement(StoreProvider, null, children),
+    );
+  };
 
 describe('StoreProvider', () => {
-  it('loads initial store state from store.store()', async () => {
-    const mockStoreData: ElectronStore = {
-      environmentName: 'test-env',
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('loads initial store state from StoreService.getStore()', async () => {
+    const mockStoreData: PearlStore = {
+      firstStakingRewardAchieved: true,
+      lastSelectedServiceConfigId: 'trader-1',
     };
-    const mockStoreStore = jest.fn().mockResolvedValue(mockStoreData);
-    const mockIpcRendererOn = jest.fn().mockReturnValue(jest.fn());
+    mockGetStore.mockResolvedValue(mockStoreData);
 
-    const electronContextValue = {
-      store: { store: mockStoreStore },
-      ipcRenderer: { on: mockIpcRendererOn },
-    };
-
-    const wrapper = ({ children }: PropsWithChildren) =>
-      createElement(
-        ElectronApiContext.Provider,
-        { value: electronContextValue },
-        createElement(StoreProvider, null, children),
-      );
-
-    const { result } = renderHook(() => useContext(StoreContext), { wrapper });
+    const { result } = renderHook(() => useContext(StoreContext), {
+      wrapper: makeWrapper(),
+    });
 
     await waitFor(() => {
       expect(result.current.storeState).toEqual(mockStoreData);
     });
 
-    expect(mockStoreStore).toHaveBeenCalled();
-    expect(mockIpcRendererOn).toHaveBeenCalledWith(
-      'store-changed',
-      expect.any(Function),
-    );
+    expect(mockGetStore).toHaveBeenCalled();
   });
 
-  it('updates store state when store-changed IPC event fires', async () => {
-    const initialData: ElectronStore = { environmentName: 'initial' };
-    const updatedData: ElectronStore = { environmentName: 'updated' };
+  it('provides undefined storeState before StoreService.getStore() resolves', () => {
+    // Never resolves during this test
+    mockGetStore.mockReturnValue(new Promise(() => {}));
 
-    const mockStoreStore = jest.fn().mockResolvedValue(initialData);
-    let storeChangedCallback: (data: unknown) => void = () => {};
-
-    const mockIpcRendererOn = jest.fn(
-      (channel: string, fn: (data: unknown) => void) => {
-        if (channel === 'store-changed') {
-          storeChangedCallback = fn;
-        }
-        return jest.fn(); // unsubscribe
-      },
-    );
-
-    const electronContextValue = {
-      store: { store: mockStoreStore },
-      ipcRenderer: { on: mockIpcRendererOn },
-    };
-
-    const wrapper = ({ children }: PropsWithChildren) =>
-      createElement(
-        ElectronApiContext.Provider,
-        { value: electronContextValue },
-        createElement(StoreProvider, null, children),
-      );
-
-    const { result } = renderHook(() => useContext(StoreContext), { wrapper });
-
-    // Wait for initial load
-    await waitFor(() => {
-      expect(result.current.storeState).toEqual(initialData);
+    const { result } = renderHook(() => useContext(StoreContext), {
+      wrapper: makeWrapper(),
     });
-
-    // Simulate store-changed IPC event (preload strips native event, passes payload directly)
-    act(() => {
-      storeChangedCallback(updatedData);
-    });
-
-    expect(result.current.storeState).toEqual(updatedData);
-  });
-
-  it('handles undefined store and ipcRenderer gracefully', async () => {
-    const electronContextValue = {
-      store: undefined,
-      ipcRenderer: undefined,
-    };
-
-    const wrapper = ({ children }: PropsWithChildren) =>
-      createElement(
-        ElectronApiContext.Provider,
-        { value: electronContextValue },
-        createElement(StoreProvider, null, children),
-      );
-
-    const { result } = renderHook(() => useContext(StoreContext), { wrapper });
-
-    // Store state should remain undefined since store.store() cannot be called
-    expect(result.current.storeState).toBeUndefined();
-  });
-
-  it('provides undefined storeState by default when no initial data', () => {
-    const electronContextValue = {};
-
-    const wrapper = ({ children }: PropsWithChildren) =>
-      createElement(
-        ElectronApiContext.Provider,
-        { value: electronContextValue },
-        createElement(StoreProvider, null, children),
-      );
-
-    const { result } = renderHook(() => useContext(StoreContext), { wrapper });
 
     expect(result.current.storeState).toBeUndefined();
   });
 
-  it('catches store.store() rejection and logs to console.error', async () => {
+  it('catches StoreService.getStore() rejection and logs to console.error', async () => {
     const storeError = new Error('store unavailable');
-    const mockStoreStore = jest.fn().mockRejectedValue(storeError);
-    const mockIpcRendererOn = jest.fn().mockReturnValue(jest.fn());
+    mockGetStore.mockRejectedValue(storeError);
 
     const consoleSpy = jest
       .spyOn(console, 'error')
       .mockImplementation(() => {});
 
-    const electronContextValue = {
-      store: { store: mockStoreStore },
-      ipcRenderer: { on: mockIpcRendererOn },
-    };
-
-    const wrapper = ({ children }: PropsWithChildren) =>
-      createElement(
-        ElectronApiContext.Provider,
-        { value: electronContextValue },
-        createElement(StoreProvider, null, children),
-      );
-
-    const { result } = renderHook(() => useContext(StoreContext), { wrapper });
+    const { result } = renderHook(() => useContext(StoreContext), {
+      wrapper: makeWrapper(),
+    });
 
     await waitFor(() => {
       expect(consoleSpy).toHaveBeenCalledWith(storeError);
     });
 
-    // storeState remains undefined since store.store() rejected
     expect(result.current.storeState).toBeUndefined();
     consoleSpy.mockRestore();
+  });
+
+  it('provides empty storeState when StoreService.getStore() returns {}', async () => {
+    mockGetStore.mockResolvedValue({});
+
+    const { result } = renderHook(() => useContext(StoreContext), {
+      wrapper: makeWrapper(),
+    });
+
+    await waitFor(() => {
+      expect(result.current.storeState).toEqual({});
+    });
+  });
+
+  it('handles undefined store gracefully (no migration attempted)', async () => {
+    mockGetStore.mockResolvedValue({});
+
+    const { result } = renderHook(() => useContext(StoreContext), {
+      wrapper: makeWrapper({ store: undefined }),
+    });
+
+    // storeState should still load from StoreService.getStore()
+    await waitFor(() => {
+      expect(result.current.storeState).toEqual({});
+    });
   });
 });

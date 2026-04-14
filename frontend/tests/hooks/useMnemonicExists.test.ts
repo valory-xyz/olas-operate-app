@@ -2,78 +2,56 @@ import { renderHook } from '@testing-library/react';
 import { act } from 'react';
 
 import { useMnemonicExists } from '../../hooks/useMnemonicExists';
-import { useStore } from '../../hooks/useStore';
-
-const mockStoreSet = jest.fn();
-
-jest.mock('../../hooks/useElectronApi', () => ({
-  useElectronApi: () => ({
-    store: { set: mockStoreSet },
-  }),
-}));
-
-jest.mock('../../hooks/useStore', () => ({
-  useStore: jest.fn(),
-}));
-
-const mockUseStore = useStore as jest.Mock;
 
 describe('useMnemonicExists', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
-  it('returns mnemonicExists from store state', () => {
-    mockUseStore.mockReturnValue({
-      storeState: { mnemonicExists: true },
-    });
-
-    const { result } = renderHook(() => useMnemonicExists());
-    expect(result.current.mnemonicExists).toBe(true);
-  });
-
-  it('returns undefined when storeState has no mnemonicExists', () => {
-    mockUseStore.mockReturnValue({ storeState: {} });
-
+  it('returns undefined for mnemonicExists on initial render', () => {
     const { result } = renderHook(() => useMnemonicExists());
     expect(result.current.mnemonicExists).toBeUndefined();
   });
 
-  it('returns undefined when storeState is undefined', () => {
-    mockUseStore.mockReturnValue({ storeState: undefined });
-
+  it('updates mnemonicExists to true when setMnemonicExists(true) is called', () => {
     const { result } = renderHook(() => useMnemonicExists());
-    expect(result.current.mnemonicExists).toBeUndefined();
-  });
 
-  it('calls store.set with true when setMnemonicExists(true) is called', () => {
-    mockUseStore.mockReturnValue({ storeState: {} });
-
-    const { result } = renderHook(() => useMnemonicExists());
     act(() => {
       result.current.setMnemonicExists(true);
     });
-    expect(mockStoreSet).toHaveBeenCalledWith('mnemonicExists', true);
+
+    expect(result.current.mnemonicExists).toBe(true);
   });
 
-  it('calls store.set with false when setMnemonicExists(false) is called', () => {
-    mockUseStore.mockReturnValue({
-      storeState: { mnemonicExists: true },
-    });
-
+  it('updates mnemonicExists to false when setMnemonicExists(false) is called', () => {
     const { result } = renderHook(() => useMnemonicExists());
+
     act(() => {
       result.current.setMnemonicExists(false);
     });
-    expect(mockStoreSet).toHaveBeenCalledWith('mnemonicExists', false);
+
+    expect(result.current.mnemonicExists).toBe(false);
   });
 
-  it('returns false when storeState.mnemonicExists is false', () => {
-    mockUseStore.mockReturnValue({
-      storeState: { mnemonicExists: false },
-    });
-
+  it('transitions from true to false when setMnemonicExists is called again', () => {
     const { result } = renderHook(() => useMnemonicExists());
+
+    act(() => {
+      result.current.setMnemonicExists(true);
+    });
+    expect(result.current.mnemonicExists).toBe(true);
+
+    act(() => {
+      result.current.setMnemonicExists(false);
+    });
     expect(result.current.mnemonicExists).toBe(false);
+  });
+
+  it('is not backed by any store — value resets on re-mount', () => {
+    const { result: result1 } = renderHook(() => useMnemonicExists());
+    act(() => {
+      result1.current.setMnemonicExists(true);
+    });
+    expect(result1.current.mnemonicExists).toBe(true);
+
+    // Fresh mount simulates app restart: state is not persisted
+    const { result: result2 } = renderHook(() => useMnemonicExists());
+    expect(result2.current.mnemonicExists).toBeUndefined();
   });
 });
