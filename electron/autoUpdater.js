@@ -8,6 +8,7 @@ const QUIT_AND_INSTALL_FALLBACK_MS = 5000;
 
 let squirrelReady = false;
 let downloadCancellationToken = null;
+let pendingSquirrelListener = null;
 
 const registerAutoUpdaterHandlers = ({
   getMainWindow,
@@ -75,14 +76,21 @@ const registerAutoUpdaterHandlers = ({
         send('update-downloaded');
       } else {
         logger.electron('[OTA] Waiting for Squirrel to finish...');
-        // Remove any previous listener before adding a new one to prevent
-        // accumulation if electron-updater fires update-downloaded multiple times.
-        nativeUpdater.removeAllListeners('update-downloaded');
-        nativeUpdater.once('update-downloaded', () => {
-          squirrelReady = true;
+        // Remove only our previously-registered fallback listener (if any) —
+        // must NOT use removeAllListeners, which would also strip the
+        // module-scope nativeUpdater.on('update-downloaded', …) tracker above.
+        if (pendingSquirrelListener) {
+          nativeUpdater.removeListener(
+            'update-downloaded',
+            pendingSquirrelListener,
+          );
+        }
+        pendingSquirrelListener = () => {
+          pendingSquirrelListener = null;
           logger.electron('[OTA] Squirrel finished, notifying renderer');
           send('update-downloaded');
-        });
+        };
+        nativeUpdater.once('update-downloaded', pendingSquirrelListener);
       }
     } else {
       send('update-downloaded');

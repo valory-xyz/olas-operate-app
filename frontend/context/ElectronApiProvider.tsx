@@ -1,5 +1,5 @@
 import { get } from 'lodash';
-import { createContext, PropsWithChildren } from 'react';
+import { createContext, PropsWithChildren, useMemo } from 'react';
 
 import { Address } from '@/types/Address';
 import { ElectronStore, ElectronTrayIconStatus } from '@/types/ElectronApi';
@@ -193,6 +193,48 @@ const getElectronApiFunction = (
 };
 
 export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
+  // Stabilize autoUpdater so consumers with useEffect([autoUpdater]) don't
+  // tear down and re-register IPC listeners on every parent render
+  // (UpdateAvailableModal would otherwise drop progress events mid-download).
+  const autoUpdater = useMemo<ElectronApiContextProps['autoUpdater']>(
+    () => ({
+      checkForUpdates: getElectronApiFunction(
+        'autoUpdater.checkForUpdates',
+        true,
+      ),
+      downloadUpdate: getElectronApiFunction(
+        'autoUpdater.downloadUpdate',
+        true,
+      ),
+      cancelDownload: getElectronApiFunction(
+        'autoUpdater.cancelDownload',
+        true,
+      ),
+      quitAndInstall: getElectronApiFunction(
+        'autoUpdater.quitAndInstall',
+        true,
+      ),
+      onUpdateAvailable: getElectronApiFunction(
+        'autoUpdater.onUpdateAvailable',
+        true,
+      ),
+      onDownloadProgress: getElectronApiFunction(
+        'autoUpdater.onDownloadProgress',
+        true,
+      ),
+      onUpdateDownloaded: getElectronApiFunction(
+        'autoUpdater.onUpdateDownloaded',
+        true,
+      ),
+      onUpdateError: getElectronApiFunction('autoUpdater.onUpdateError', true),
+      onUpdateNotAvailable: getElectronApiFunction(
+        'autoUpdater.onUpdateNotAvailable',
+        true,
+      ),
+    }),
+    [],
+  );
+
   return (
     <ElectronApiContext.Provider
       value={{
@@ -250,44 +292,7 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
         },
         logEvent: getElectronApiFunction('logEvent'),
         nextLogError: getElectronApiFunction('nextLogError'),
-        autoUpdater: {
-          checkForUpdates: getElectronApiFunction(
-            'autoUpdater.checkForUpdates',
-            true,
-          ),
-          downloadUpdate: getElectronApiFunction(
-            'autoUpdater.downloadUpdate',
-            true,
-          ),
-          cancelDownload: getElectronApiFunction(
-            'autoUpdater.cancelDownload',
-            true,
-          ),
-          quitAndInstall: getElectronApiFunction(
-            'autoUpdater.quitAndInstall',
-            true,
-          ),
-          onUpdateAvailable: getElectronApiFunction(
-            'autoUpdater.onUpdateAvailable',
-            true,
-          ),
-          onDownloadProgress: getElectronApiFunction(
-            'autoUpdater.onDownloadProgress',
-            true,
-          ),
-          onUpdateDownloaded: getElectronApiFunction(
-            'autoUpdater.onUpdateDownloaded',
-            true,
-          ),
-          onUpdateError: getElectronApiFunction(
-            'autoUpdater.onUpdateError',
-            true,
-          ),
-          onUpdateNotAvailable: getElectronApiFunction(
-            'autoUpdater.onUpdateNotAvailable',
-            true,
-          ),
-        },
+        autoUpdater,
       }}
     >
       {children}

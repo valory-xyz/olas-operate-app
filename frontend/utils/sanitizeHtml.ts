@@ -12,6 +12,13 @@ export function sanitizeHtml(dirty: string): string {
   });
 }
 
+// Force links opened in a new tab to be safe against tabnabbing.
+DOMPurify.addHook('afterSanitizeAttributes', (node) => {
+  if (node.tagName === 'A' && node.getAttribute('target') === '_blank') {
+    node.setAttribute('rel', 'noopener noreferrer');
+  }
+});
+
 export function sanitizeReleaseNotes(dirty: string): string {
   if (!dirty) return '';
   return DOMPurify.sanitize(dirty, {
@@ -31,6 +38,6 @@ export function sanitizeReleaseNotes(dirty: string): string {
       'br',
       'code',
     ],
-    ALLOWED_ATTR: ['href', 'target'],
+    ALLOWED_ATTR: ['href', 'target', 'rel'],
   });
 }
