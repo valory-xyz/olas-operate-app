@@ -104,7 +104,7 @@ describe('StoreProvider', () => {
 
     await waitFor(() => {
       expect(consoleSpy).toHaveBeenCalledWith(
-        'Failed to hydrate pearl store:',
+        '[StoreProvider] Hydration attempt 1 failed:',
         storeError,
       );
     });
@@ -158,7 +158,7 @@ describe('StoreProvider', () => {
     // First attempt fails
     await waitFor(() => {
       expect(consoleSpy).toHaveBeenCalledWith(
-        'Failed to hydrate pearl store:',
+        '[StoreProvider] Hydration attempt 1 failed:',
         storeError,
       );
     });

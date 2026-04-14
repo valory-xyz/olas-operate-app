@@ -165,6 +165,13 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
     return fn;
   };
 
+  const logStoreEvent = (msg: string) => {
+    const fn = getElectronApiFunction('logEvent') as
+      | ((m: string) => void)
+      | undefined;
+    fn?.(`pearl_store: ${msg}`);
+  };
+
   return (
     <ElectronApiContext.Provider
       value={{
@@ -196,6 +203,7 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
             // Backend-bound key: persist to .operate/pearl_store.json and update React state.
             emitPearlStoreSet(key, value);
             return StoreService.setStoreKey(key, value).catch((error) => {
+              logStoreEvent(`Failed to persist key '${key}': ${error}`);
               console.error(`Failed to persist store key '${key}':`, error);
             });
           },
@@ -209,6 +217,7 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
             // Backend-bound key: remove from .operate/pearl_store.json and update React state.
             emitPearlStoreDelete(key);
             return StoreService.deleteStoreKey(key).catch((error) => {
+              logStoreEvent(`Failed to delete key '${key}': ${error}`);
               console.error(`Failed to delete store key '${key}':`, error);
             });
           },
@@ -222,9 +231,12 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
               emitPearlStoreDelete(key);
               return StoreService.deleteStoreKey(key);
             });
-            return Promise.all([clearFn(), ...backendDeletes]).then(
-              () => undefined,
-            );
+            return Promise.all([clearFn(), ...backendDeletes])
+              .then(() => {})
+              .catch((error) => {
+                logStoreEvent(`Failed to clear store: ${error}`);
+                console.error('Failed to clear store:', error);
+              });
           },
         },
         showNotification: getElectronApiFunction('showNotification'),

@@ -69,10 +69,17 @@ type PendingOp =
 const HYDRATION_RETRY_DELAY_MS = 3000;
 const HYDRATION_MAX_RETRIES = 3;
 
+const LOG_PREFIX = 'pearl_store:';
+
 export const StoreProvider = ({ children }: PropsWithChildren) => {
-  const { store } = useContext(ElectronApiContext);
+  const { store, logEvent } = useContext(ElectronApiContext);
   const [storeState, setStoreState] = useState<PearlStore>();
   const hydrationAttempted = useRef(false);
+
+  // Stable ref so async callbacks can log without stale closures.
+  const logRef = useRef(logEvent);
+  logRef.current = logEvent;
+  const log = (msg: string) => logRef.current?.(`${LOG_PREFIX} ${msg}`);
 
   // Queue for writes that arrive before hydration completes.
   // Once storeState is set, the queue is drained and all pending ops are applied.
@@ -134,20 +141,30 @@ export const StoreProvider = ({ children }: PropsWithChildren) => {
     let retryTimeout: ReturnType<typeof setTimeout>;
 
     const attemptHydration = (retriesLeft: number) => {
+      const attempt = HYDRATION_MAX_RETRIES - retriesLeft + 1;
       StoreService.getStore()
         .then((data) => {
           if (cancelled) return;
-          // Drain any writes that arrived before hydration completed.
           const finalState = drainPendingOps(data);
           isHydratedRef.current = true;
           setStoreState(finalState);
+          log(`Hydrated on attempt ${attempt}`);
         })
         .catch((error) => {
-          console.error('Failed to hydrate pearl store:', error);
+          log(`Hydration attempt ${attempt} failed: ${error}`);
+          console.error(
+            `[StoreProvider] Hydration attempt ${attempt} failed:`,
+            error,
+          );
           if (!cancelled && retriesLeft > 0) {
             retryTimeout = setTimeout(
               () => attemptHydration(retriesLeft - 1),
               HYDRATION_RETRY_DELAY_MS,
+            );
+          } else if (!cancelled) {
+            log('Hydration failed after all retries');
+            console.error(
+              '[StoreProvider] Hydration failed after all retries. Store will be unavailable.',
             );
           }
         });
@@ -168,29 +185,36 @@ export const StoreProvider = ({ children }: PropsWithChildren) => {
     const storeSet = store?.set;
     if (!storeGet || !storeSet) return;
 
-    storeGet('hasMigratedToBackendStore').then((alreadyMigrated) => {
-      if (alreadyMigrated) return;
+    storeGet('hasMigratedToBackendStore')
+      .then((alreadyMigrated) => {
+        if (alreadyMigrated) return;
 
-      Promise.all(
-        BACKEND_BOUND_KEYS.map((key) =>
-          storeGet(key).then((value) =>
-            value !== undefined && value !== null
-              ? StoreService.setStoreKey(key, value)
-              : Promise.resolve(),
+        log('Starting one-time migration to pearl_store.json');
+
+        return Promise.all(
+          BACKEND_BOUND_KEYS.map((key) =>
+            storeGet(key).then((value) =>
+              value !== undefined && value !== null
+                ? StoreService.setStoreKey(key, value)
+                : Promise.resolve(),
+            ),
           ),
-        ),
-      )
-        .then(() => storeSet('hasMigratedToBackendStore', true))
-        .then(() =>
-          // Refresh storeState from the now-populated pearl_store.json.
-          StoreService.getStore().then((data) => {
-            const finalState = drainPendingOps(data);
-            isHydratedRef.current = true;
-            setStoreState(finalState);
-          }),
         )
-        .catch(console.error);
-    });
+          .then(() => storeSet('hasMigratedToBackendStore', true))
+          .then(() =>
+            // Refresh storeState from the now-populated pearl_store.json.
+            StoreService.getStore().then((data) => {
+              const finalState = drainPendingOps(data);
+              isHydratedRef.current = true;
+              setStoreState(finalState);
+              log('Migration complete');
+            }),
+          );
+      })
+      .catch((error) => {
+        log(`Migration failed: ${error}`);
+        console.error('[StoreProvider] Migration failed:', error);
+      });
   }, [store]);
 
   return (

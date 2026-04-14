@@ -10,8 +10,16 @@ const getStore = async (): Promise<PearlStore> =>
     method: 'GET',
     headers: { ...CONTENT_TYPE_JSON_UTF8 },
   }).then((response) => {
-    if (response.ok) return response.json().then((json) => json.data ?? {});
-    throw new Error('Failed to fetch pearl store');
+    if (!response.ok) {
+      throw new Error(`Failed to fetch pearl store (HTTP ${response.status})`);
+    }
+    return response.json().then((json) => {
+      const data = json.data ?? {};
+      if (typeof data !== 'object' || data === null || Array.isArray(data)) {
+        throw new Error('Pearl store data is not a valid object');
+      }
+      return data as PearlStore;
+    });
   });
 
 /**
@@ -24,7 +32,11 @@ const setStoreKey = async (key: string, value: unknown): Promise<void> =>
     body: JSON.stringify({ key, value }),
     headers: { ...CONTENT_TYPE_JSON_UTF8 },
   }).then((response) => {
-    if (!response.ok) throw new Error(`Failed to set store key: ${key}`);
+    if (!response.ok) {
+      throw new Error(
+        `Failed to set store key '${key}' (HTTP ${response.status})`,
+      );
+    }
   });
 
 /**
@@ -36,7 +48,11 @@ const deleteStoreKey = async (key: string): Promise<void> =>
     method: 'DELETE',
     headers: { ...CONTENT_TYPE_JSON_UTF8 },
   }).then((response) => {
-    if (!response.ok) throw new Error(`Failed to delete store key: ${key}`);
+    if (!response.ok) {
+      throw new Error(
+        `Failed to delete store key '${key}' (HTTP ${response.status})`,
+      );
+    }
   });
 
 export const StoreService = {
