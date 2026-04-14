@@ -11,7 +11,11 @@ const getStore = async (): Promise<PearlStore> =>
   fetch(`${BACKEND_URL}/store`, {
     method: 'GET',
     headers: { ...CONTENT_TYPE_JSON_UTF8 },
-  }).then((response) => {
+  }).then(async (response) => {
+    // Store not created yet or corrupted — treat as empty.
+    if (response.status === 404 || response.status === 204) {
+      return {} as PearlStore;
+    }
     if (response.status === 500) {
       console.error(
         'Pearl store may be corrupted (HTTP 500), falling back to empty store',
@@ -21,16 +25,25 @@ const getStore = async (): Promise<PearlStore> =>
     if (!response.ok) {
       throw new Error(`Failed to fetch pearl store (HTTP ${response.status})`);
     }
-    return response.json().then((json) => {
-      const data = json.data ?? {};
-      if (typeof data !== 'object' || data === null || Array.isArray(data)) {
-        console.error(
-          'Pearl store data is not a valid object, falling back to empty store',
-        );
-        return {} as PearlStore;
-      }
-      return data as PearlStore;
-    });
+
+    let json: { data?: unknown };
+    try {
+      json = await response.json();
+    } catch {
+      console.error(
+        'Pearl store response is not valid JSON, falling back to empty store',
+      );
+      return {} as PearlStore;
+    }
+
+    const data = json.data ?? {};
+    if (typeof data !== 'object' || data === null || Array.isArray(data)) {
+      console.error(
+        'Pearl store data is not a valid object, falling back to empty store',
+      );
+      return {} as PearlStore;
+    }
+    return data as PearlStore;
   });
 
 /**

@@ -124,9 +124,14 @@ export const StoreProvider = ({ children }: PropsWithChildren) => {
   };
 
   // Register event bus handlers so ElectronApiProvider can push writes here.
+  // Cleanup on unmount to prevent stale state updates.
   useEffect(() => {
     registerPearlStoreSetHandler(applyOrQueue.set);
     registerPearlStoreDeleteHandler(applyOrQueue.delete);
+    return () => {
+      registerPearlStoreSetHandler(() => {});
+      registerPearlStoreDeleteHandler(() => {});
+    };
   }, [applyOrQueue]);
 
   // Load initial store state from the backend HTTP API (on mount only).

@@ -58,6 +58,24 @@ describe('StoreService', () => {
       expect(result).toEqual({});
     });
 
+    it('returns empty object on HTTP 404 (store not created yet)', async () => {
+      jest
+        .spyOn(global, 'fetch')
+        .mockReturnValue(mockJsonResponse({}, false, 404));
+
+      const result = await StoreService.getStore();
+      expect(result).toEqual({});
+    });
+
+    it('returns empty object on HTTP 204 (empty response)', async () => {
+      jest
+        .spyOn(global, 'fetch')
+        .mockReturnValue(mockJsonResponse({}, false, 204));
+
+      const result = await StoreService.getStore();
+      expect(result).toEqual({});
+    });
+
     it('falls back to empty object on HTTP 500 (corrupted store)', async () => {
       const consoleSpy = jest
         .spyOn(console, 'error')
@@ -85,6 +103,29 @@ describe('StoreService', () => {
       await expect(StoreService.getStore()).rejects.toThrow(
         'Failed to fetch pearl store (HTTP 503)',
       );
+    });
+
+    it('falls back to empty object when response body is not valid JSON', async () => {
+      const consoleSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
+
+      jest.spyOn(global, 'fetch').mockReturnValue(
+        Promise.resolve({
+          ok: true,
+          status: 200,
+          json: () => Promise.reject(new SyntaxError('Unexpected token')),
+        } as Response),
+      );
+
+      const result = await StoreService.getStore();
+
+      expect(result).toEqual({});
+      expect(consoleSpy).toHaveBeenCalledWith(
+        'Pearl store response is not valid JSON, falling back to empty store',
+      );
+
+      consoleSpy.mockRestore();
     });
 
     it('falls back to empty object when data is not an object', async () => {
