@@ -489,7 +489,7 @@ const createMainWindow = async () => {
 
   try {
     logger.electron('Setting up store IPC');
-    setupStoreIpc(ipcMain, mainWindow);
+    setupStoreIpc(ipcMain);
   } catch (e) {
     logger.electron(`Store IPC failed: ${stringifyJson(e)}`);
   }

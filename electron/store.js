@@ -15,7 +15,7 @@ const schema = {
 
 /**
  * Sets up the IPC communication and initializes the Electron store.
- * @param {Electron.IpcMain} ipcMain - The IPC channel for communication.
+ * @param {Electron.IpcMain} ipcMain - The IPC main channel for communication.
  */
 const setupStoreIpc = (ipcMain) => {
   const store = new Store({ schema });
