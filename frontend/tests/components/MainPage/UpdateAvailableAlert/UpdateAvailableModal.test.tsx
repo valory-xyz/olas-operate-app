@@ -227,7 +227,7 @@ describe('UpdateAvailableModal', () => {
       expect(screen.getByText('Downloading Update')).toBeInTheDocument();
     });
 
-    it('renders Cancel button in downloading state', async () => {
+    it('renders cancel (close) button in downloading state', async () => {
       render(<UpdateAvailableModal isOpen={true} onClose={() => {}} />);
 
       await act(async () => {
@@ -236,12 +236,12 @@ describe('UpdateAvailableModal', () => {
         );
       });
 
-      expect(
-        screen.getByRole('button', { name: 'Cancel' }),
-      ).toBeInTheDocument();
+      // Downloading state shows the progress UI and an icon-only close button.
+      // It is the only button in the dialog.
+      expect(screen.getAllByRole('button')).toHaveLength(1);
     });
 
-    it('clicking Cancel calls cancelDownload and returns to available state', async () => {
+    it('clicking close calls cancelDownload and returns to available state', async () => {
       render(<UpdateAvailableModal isOpen={true} onClose={() => {}} />);
 
       await act(async () => {
@@ -251,7 +251,7 @@ describe('UpdateAvailableModal', () => {
       });
 
       await act(async () => {
-        fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+        fireEvent.click(screen.getAllByRole('button')[0]);
       });
 
       expect(mockCancelDownload).toHaveBeenCalledTimes(1);
@@ -283,11 +283,16 @@ describe('UpdateAvailableModal', () => {
 
   describe('failed state', () => {
     const renderAndTriggerError = async () => {
-      let capturedErrorCb: (() => void) | null = null;
-      mockOnUpdateError.mockImplementation((cb: () => void) => {
+      let capturedErrorCb: ((err: Error) => void) | null = null;
+      mockOnUpdateError.mockImplementation((cb: (err: Error) => void) => {
         capturedErrorCb = cb;
         return () => {};
       });
+
+      // Silence the console.error emitted by the component's error handler.
+      const consoleErrorSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
 
       render(<UpdateAvailableModal isOpen={true} onClose={() => {}} />);
 
@@ -298,8 +303,10 @@ describe('UpdateAvailableModal', () => {
       });
 
       await act(async () => {
-        capturedErrorCb?.();
+        capturedErrorCb?.(new Error('download failed'));
       });
+
+      consoleErrorSpy.mockRestore();
     };
 
     it('transitions to failed state when onUpdateError fires', async () => {
