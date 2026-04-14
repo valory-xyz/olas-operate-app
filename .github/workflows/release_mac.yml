@@ -297,6 +297,12 @@ jobs:
           GH_TOKEN: ${{ secrets.github_token }}
           GITHUB_TOKEN: ${{ secrets.github_token }}
           PUBLISH_FOR_PULL_REQUEST: true
+          # When the workflow is triggered by a pull_request event (e.g. the
+          # "Release to production" label flow), electron-builder detects the
+          # PR context via GITHUB_BASE_REF and skips code signing by default
+          # (see app-builder-lib's macCodeSign.isSignAllowed). Opt in explicitly
+          # so label-triggered releases are signed and notarized.
+          CSC_FOR_PULL_REQUEST: true
           RELEASE_TAG: ${{ inputs.tag }}
           NODE_ENV: ${{ matrix.env }}
           ARCH: ${{ env.OS_ARCH }}
