@@ -1,15 +1,13 @@
-import { Button, Card, Flex, Form, Input, Typography } from 'antd';
-import { getAddress } from 'ethers/lib/utils';
+import { Button, Card, Flex, Form, Input, Typography } from "antd";
+import { getAddress } from "ethers/lib/utils";
 
-import { Alert, BackButton, cardStyles } from '@/components/ui';
-import {
-  BACKUP_WALLET_FIELD_RULES,
-} from '@/constants';
-import { SettingsScreenMap } from '@/constants/screen';
-import { useBackupOwnerStatus, useSettings } from '@/hooks';
-import { Address } from '@/types/Address';
+import { Alert, BackButton, cardStyles } from "@/components/ui";
+import { BACKUP_WALLET_FIELD_RULES } from "@/constants";
+import { SettingsScreenMap } from "@/constants/screen";
+import { useBackupOwnerStatus, useSettings } from "@/hooks";
+import { Address } from "@/types/Address";
 
-import { useUpdateBackupWallet } from './UpdateBackupWalletContext';
+import { useUpdateBackupWallet } from "./UpdateBackupWalletContext";
 
 const { Title, Text } = Typography;
 
@@ -22,9 +20,9 @@ export const UpdateBackupWalletManualScreen = () => {
 
   const currentAddress = backupOwnerStatus?.canonical_backup_owner ?? null;
 
-  const handleManualSubmit = (values: { 'backup-signer': string }) => {
+  const handleManualSubmit = (values: { "backup-signer": string }) => {
     const checksummedAddress = getAddress(
-      values['backup-signer'].toLowerCase(),
+      values["backup-signer"].toLowerCase(),
     ) as Address;
 
     if (

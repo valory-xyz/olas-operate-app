@@ -1,11 +1,11 @@
-import { Button, Flex, Form, Input } from 'antd';
-import { useState } from 'react';
+import { Button, Flex, Form, Input } from "antd";
+import { useState } from "react";
 
-import { Alert, Modal } from '@/components/ui';
-import { SettingsScreenMap } from '@/constants/screen';
-import { useSettings, useValidatePassword } from '@/hooks';
+import { Alert, Modal } from "@/components/ui";
+import { SettingsScreenMap } from "@/constants/screen";
+import { useSettings, useValidatePassword } from "@/hooks";
 
-import { useUpdateBackupWallet } from './UpdateBackupWalletContext';
+import { useUpdateBackupWallet } from "./UpdateBackupWalletContext";
 
 type UpdateBackupWalletPasswordModalProps = {
   open: boolean;
@@ -64,7 +64,7 @@ export const UpdateBackupWalletPasswordModal = ({
               label="Enter password"
               name="password"
               rules={[
-                { required: true, message: 'Please enter your password' },
+                { required: true, message: "Please enter your password" },
               ]}
             >
               <Input.Password size="large" disabled={isValidating} />

@@ -4,9 +4,9 @@ import {
   useCallback,
   useContext,
   useState,
-} from 'react';
+} from "react";
 
-import { Address } from '@/types/Address';
+import { Address } from "@/types/Address";
 
 type UpdateBackupWalletContextType = {
   newAddress: Address | null;

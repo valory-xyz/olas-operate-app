@@ -1,11 +1,11 @@
-import { useQuery } from '@tanstack/react-query';
-import { useContext } from 'react';
+import { useQuery } from "@tanstack/react-query";
+import { useContext } from "react";
 
-import { REACT_QUERY_KEYS } from '@/constants';
-import { OnlineStatusContext } from '@/context/OnlineStatusProvider';
-import { BackupWalletService } from '@/service/BackupWalletService';
+import { REACT_QUERY_KEYS } from "@/constants";
+import { OnlineStatusContext } from "@/context/OnlineStatusProvider";
+import { BackupWalletService } from "@/service/BackupWalletService";
 
-import { usePageState } from './usePageState';
+import { usePageState } from "./usePageState";
 
 export const useBackupOwnerStatus = () => {
   const { isOnline } = useContext(OnlineStatusContext);

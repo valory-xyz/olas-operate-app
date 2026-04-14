@@ -1,10 +1,10 @@
-import { LuWallet } from 'react-icons/lu';
-import { useBoolean } from 'usehooks-ts';
+import { LuWallet } from "react-icons/lu";
+import { useBoolean } from "usehooks-ts";
 
-import { Alert } from '@/components/ui';
-import { PAGES } from '@/constants';
-import { SyncBackupWalletModal } from '@/components/SettingsPage/BackupWallet/SyncBackupWalletModal';
-import { useBackupOwnerStatus, usePageState } from '@/hooks';
+import { SyncBackupWalletModal } from "@/components/SettingsPage/BackupWallet/SyncBackupWalletModal";
+import { Alert } from "@/components/ui";
+import { PAGES } from "@/constants";
+import { useBackupOwnerStatus, usePageState } from "@/hooks";
 
 export const BackupWalletAlert = () => {
   const { goto: gotoPage } = usePageState();
@@ -32,7 +32,7 @@ export const BackupWalletAlert = () => {
         showIcon
         customIcon={<LuWallet />}
         className="mt-auto mb-16"
-        style={{ alignItems: 'center', cursor: 'pointer' }}
+        style={{ alignItems: "center", cursor: "pointer" }}
       />
     );
   }
@@ -46,7 +46,7 @@ export const BackupWalletAlert = () => {
         showIcon
         customIcon={<LuWallet />}
         className="mt-auto mb-16"
-        style={{ alignItems: 'center', cursor: 'pointer' }}
+        style={{ alignItems: "center", cursor: "pointer" }}
       />
       <SyncBackupWalletModal open={isSyncOpen} onClose={closeSync} />
     </>

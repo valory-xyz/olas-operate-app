@@ -1,21 +1,17 @@
-import { Button, Card, Flex, Form, Input, Typography } from 'antd';
-import { getAddress } from 'ethers/lib/utils';
-import { useState } from 'react';
+import { Button, Card, Flex, Form, Input, Typography } from "antd";
+import { getAddress } from "ethers/lib/utils";
+import { useState } from "react";
 
-import { BackButton, cardStyles } from '@/components/ui';
-import {
-  BACKUP_WALLET_FIELD_RULES,
-  BACKUP_WALLET_INVALID_ADDRESS_MESSAGE,
-  COLOR,
-} from '@/constants';
-import { SettingsScreenMap } from '@/constants/screen';
-import { useApplyBackupOwner, useSettings } from '@/hooks';
-import { Address } from '@/types/Address';
+import { BackButton, cardStyles } from "@/components/ui";
+import { BACKUP_WALLET_FIELD_RULES, COLOR } from "@/constants";
+import { SettingsScreenMap } from "@/constants/screen";
+import { useApplyBackupOwner, useSettings } from "@/hooks";
+import { Address } from "@/types/Address";
 
 import {
   AddBackupWalletResultModal,
   AddBackupWalletStatus,
-} from './AddBackupWalletResultModal';
+} from "./AddBackupWalletResultModal";
 
 const { Title, Text } = Typography;
 
@@ -23,29 +19,29 @@ export const AddBackupWalletManualScreen = () => {
   const { goto } = useSettings();
   const [form] = Form.useForm();
   const { mutateAsync: applyBackupOwner } = useApplyBackupOwner();
-  const [status, setStatus] = useState<AddBackupWalletStatus>('idle');
+  const [status, setStatus] = useState<AddBackupWalletStatus>("idle");
 
-  const handleSubmit = async (values: { 'backup-signer': string }) => {
+  const handleSubmit = async (values: { "backup-signer": string }) => {
     const checksummedAddress = getAddress(
-      values['backup-signer'].toLowerCase(),
+      values["backup-signer"].toLowerCase(),
     ) as Address;
 
-    setStatus('in_progress');
+    setStatus("in_progress");
     try {
       await applyBackupOwner({ backup_owner: checksummedAddress });
-      setStatus('success');
+      setStatus("success");
     } catch {
-      setStatus('failure');
+      setStatus("failure");
     }
   };
 
   const handleDone = () => {
-    setStatus('idle');
+    setStatus("idle");
     goto(SettingsScreenMap.Main);
   };
 
   const handleRetry = () => {
-    setStatus('idle');
+    setStatus("idle");
   };
 
   return (

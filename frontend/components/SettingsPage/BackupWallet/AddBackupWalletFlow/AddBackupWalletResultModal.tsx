@@ -1,14 +1,14 @@
-import { Button, Flex } from 'antd';
+import { Button, Flex } from "antd";
 
-import { SuccessOutlined, WarningOutlined } from '@/components/custom-icons';
-import { LoadingSpinner, Modal } from '@/components/ui';
-import { useSupportModal } from '@/context/SupportModalProvider';
+import { SuccessOutlined, WarningOutlined } from "@/components/custom-icons";
+import { LoadingSpinner, Modal } from "@/components/ui";
+import { useSupportModal } from "@/context/SupportModalProvider";
 
 export type AddBackupWalletStatus =
-  | 'idle'
-  | 'in_progress'
-  | 'success'
-  | 'failure';
+  | "idle"
+  | "in_progress"
+  | "success"
+  | "failure";
 
 type AddBackupWalletResultModalProps = {
   status: AddBackupWalletStatus;
@@ -23,9 +23,9 @@ export const AddBackupWalletResultModal = ({
 }: AddBackupWalletResultModalProps) => {
   const { toggleSupportModal } = useSupportModal();
 
-  if (status === 'idle') return null;
+  if (status === "idle") return null;
 
-  if (status === 'in_progress') {
+  if (status === "in_progress") {
     return (
       <Modal
         open
@@ -38,7 +38,7 @@ export const AddBackupWalletResultModal = ({
     );
   }
 
-  if (status === 'success') {
+  if (status === "success") {
     return (
       <Modal
         open

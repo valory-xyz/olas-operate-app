@@ -1,41 +1,41 @@
-import { Card, Flex, Typography } from 'antd';
-import { useState } from 'react';
+import { Card, Flex, Typography } from "antd";
+import { useState } from "react";
 
-import { BackupWalletWeb3Auth } from '@/components/SetupPage/Create/SetupBackupSigner/BackupWalletWeb3Auth';
-import { BackButton, cardStyles } from '@/components/ui';
-import { SettingsScreenMap } from '@/constants/screen';
-import { useApplyBackupOwner, useSettings } from '@/hooks';
-import { Address } from '@/types/Address';
+import { BackupWalletWeb3Auth } from "@/components/SetupPage/Create/SetupBackupSigner/BackupWalletWeb3Auth";
+import { BackButton, cardStyles } from "@/components/ui";
+import { SettingsScreenMap } from "@/constants/screen";
+import { useApplyBackupOwner, useSettings } from "@/hooks";
+import { Address } from "@/types/Address";
 
 import {
   AddBackupWalletResultModal,
   AddBackupWalletStatus,
-} from './AddBackupWalletResultModal';
+} from "./AddBackupWalletResultModal";
 
 const { Title, Text } = Typography;
 
 export const AddBackupWalletMethodScreen = () => {
   const { goto } = useSettings();
   const { mutateAsync: applyBackupOwner } = useApplyBackupOwner();
-  const [status, setStatus] = useState<AddBackupWalletStatus>('idle');
+  const [status, setStatus] = useState<AddBackupWalletStatus>("idle");
 
   const handleWeb3AuthFinish = async (address: Address) => {
-    setStatus('in_progress');
+    setStatus("in_progress");
     try {
       await applyBackupOwner({ backup_owner: address });
-      setStatus('success');
+      setStatus("success");
     } catch {
-      setStatus('failure');
+      setStatus("failure");
     }
   };
 
   const handleDone = () => {
-    setStatus('idle');
+    setStatus("idle");
     goto(SettingsScreenMap.Main);
   };
 
   const handleRetry = () => {
-    setStatus('idle');
+    setStatus("idle");
   };
 
   return (
