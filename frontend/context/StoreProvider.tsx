@@ -118,14 +118,14 @@ export const StoreProvider = ({ children }: PropsWithChildren) => {
 
       Promise.all(
         BACKEND_BOUND_KEYS.map((key) =>
-          store.get!(key).then((value) =>
+          store.get(key).then((value) =>
             value !== undefined && value !== null
               ? StoreService.setStoreKey(key, value)
               : Promise.resolve(),
           ),
         ),
       )
-        .then(() => store.set!('hasMigratedToBackendStore', true))
+        .then(() => store.set('hasMigratedToBackendStore', true))
         .then(() =>
           // Refresh storeState from the now-populated pearl_store.json.
           StoreService.getStore().then((data) => setStoreState(data)),

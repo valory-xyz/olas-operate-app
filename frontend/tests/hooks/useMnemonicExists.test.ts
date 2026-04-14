@@ -1,57 +1,102 @@
 import { renderHook } from '@testing-library/react';
-import { act } from 'react';
+import { act, createElement, PropsWithChildren } from 'react';
 
+import { SharedContext } from '../../context/SharedProvider/SharedProvider';
 import { useMnemonicExists } from '../../hooks/useMnemonicExists';
 
+// Minimal SharedContext wrapper that provides real useState-backed mnemonicExists
+// so multiple hook instances share the same value through the same context provider.
+const makeWrapper =
+  () =>
+  ({ children }: PropsWithChildren) => {
+    // Use the default context values from SharedContext for baseline;
+    // callers can override by wrapping with a custom Provider value.
+    return createElement(
+      SharedContext.Provider,
+      {
+        value: {
+          isAgentsFunFieldUpdateRequired: false,
+          mnemonicExists: undefined,
+          setMnemonicExists: () => {},
+        },
+      },
+      children,
+    );
+  };
+
 describe('useMnemonicExists', () => {
-  it('returns undefined for mnemonicExists on initial render', () => {
-    const { result } = renderHook(() => useMnemonicExists());
+  it('returns undefined for mnemonicExists when context provides undefined', () => {
+    const { result } = renderHook(() => useMnemonicExists(), {
+      wrapper: makeWrapper(),
+    });
     expect(result.current.mnemonicExists).toBeUndefined();
   });
 
-  it('updates mnemonicExists to true when setMnemonicExists(true) is called', () => {
-    const { result } = renderHook(() => useMnemonicExists());
-
-    act(() => {
-      result.current.setMnemonicExists(true);
+  it('reflects mnemonicExists value provided by SharedContext', () => {
+    const { result } = renderHook(() => useMnemonicExists(), {
+      wrapper: ({ children }: PropsWithChildren) =>
+        createElement(
+          SharedContext.Provider,
+          {
+            value: {
+              isAgentsFunFieldUpdateRequired: false,
+              mnemonicExists: true,
+              setMnemonicExists: () => {},
+            },
+          },
+          children,
+        ),
     });
 
     expect(result.current.mnemonicExists).toBe(true);
   });
 
-  it('updates mnemonicExists to false when setMnemonicExists(false) is called', () => {
-    const { result } = renderHook(() => useMnemonicExists());
-
-    act(() => {
-      result.current.setMnemonicExists(false);
+  it('calls setMnemonicExists from context when invoked', () => {
+    const mockSetMnemonicExists = jest.fn();
+    const { result } = renderHook(() => useMnemonicExists(), {
+      wrapper: ({ children }: PropsWithChildren) =>
+        createElement(
+          SharedContext.Provider,
+          {
+            value: {
+              isAgentsFunFieldUpdateRequired: false,
+              mnemonicExists: undefined,
+              setMnemonicExists: mockSetMnemonicExists,
+            },
+          },
+          children,
+        ),
     });
-
-    expect(result.current.mnemonicExists).toBe(false);
-  });
-
-  it('transitions from true to false when setMnemonicExists is called again', () => {
-    const { result } = renderHook(() => useMnemonicExists());
 
     act(() => {
       result.current.setMnemonicExists(true);
     });
-    expect(result.current.mnemonicExists).toBe(true);
 
-    act(() => {
-      result.current.setMnemonicExists(false);
-    });
-    expect(result.current.mnemonicExists).toBe(false);
+    expect(mockSetMnemonicExists).toHaveBeenCalledWith(true);
   });
 
-  it('is not backed by any store — value resets on re-mount', () => {
-    const { result: result1 } = renderHook(() => useMnemonicExists());
-    act(() => {
-      result1.current.setMnemonicExists(true);
+  it('is not backed by any store — value resets on re-mount with fresh provider', () => {
+    // First mount: context provides true
+    const { result: result1 } = renderHook(() => useMnemonicExists(), {
+      wrapper: ({ children }: PropsWithChildren) =>
+        createElement(
+          SharedContext.Provider,
+          {
+            value: {
+              isAgentsFunFieldUpdateRequired: false,
+              mnemonicExists: true,
+              setMnemonicExists: () => {},
+            },
+          },
+          children,
+        ),
     });
     expect(result1.current.mnemonicExists).toBe(true);
 
-    // Fresh mount simulates app restart: state is not persisted
-    const { result: result2 } = renderHook(() => useMnemonicExists());
+    // Fresh mount simulates app restart: new provider starts with undefined
+    const { result: result2 } = renderHook(() => useMnemonicExists(), {
+      wrapper: makeWrapper(),
+    });
     expect(result2.current.mnemonicExists).toBeUndefined();
   });
 });
