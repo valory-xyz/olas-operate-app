@@ -18,26 +18,38 @@ function killProcesses(pid) {
       const pidsToKill = children.map((p) => p.PID);
       logger.electron('Pids to kill ' + JSON.stringify(pidsToKill));
 
+      if (pidsToKill.length === 0) {
+        resolve();
+        return;
+      }
+
       const killCommand = isWindows ? windowsKillCommand : unixKillCommand;
 
-      let errors = [];
+      const errors = [];
+      let pending = pidsToKill.length;
+
       for (const pid of pidsToKill) {
         logger.electron('killing: ' + pid);
         exec(`${killCommand} ${pid}`, (err) => {
-          err && logger.electron(`error killing pid ${pid}`);
-          err && logger.electron(JSON.stringify(err, null, 2));
-          if (
-            err?.message?.includes(isWindows ? 'not found' : 'No such process')
-          ) {
-            return; // Ignore errors for processes that are already dead
+          if (err) {
+            logger.electron(`error killing pid ${pid}`);
+            logger.electron(JSON.stringify(err, null, 2));
+            if (
+              !err.message?.includes(isWindows ? 'not found' : 'No such process')
+            ) {
+              errors.push(err);
+            }
           }
-          errors.push(err);
+          pending--;
+          if (pending === 0) {
+            if (errors.length > 0) {
+              reject(errors);
+            } else {
+              resolve();
+            }
+          }
         });
       }
-
-      if (errors.length > 0) {
-        reject(errors);
-      } else resolve();
     });
   });
 }
