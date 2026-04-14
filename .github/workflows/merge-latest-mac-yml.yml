@@ -45,6 +45,12 @@ jobs:
         if: hashFiles('latest-mac.yml') != ''
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ inputs.tag }}
         run: |
-          gh release delete-asset "${{ inputs.tag }}" latest-mac.yml --yes 2>/dev/null || true
-          gh release upload "${{ inputs.tag }}" latest-mac.yml --clobber
+          # The signing workflow tags the commit with a `-signed` suffix for
+          # audit purposes (e.g. v1.5.0-signed), but electron-builder publishes
+          # the GitHub Release at the unsuffixed tag (v1.5.0). Strip the suffix
+          # so the release asset is uploaded to the correct release.
+          RELEASE_TAG="${TAG%-signed}"
+          gh release delete-asset "$RELEASE_TAG" latest-mac.yml --yes 2>/dev/null || true
+          gh release upload "$RELEASE_TAG" latest-mac.yml --clobber
