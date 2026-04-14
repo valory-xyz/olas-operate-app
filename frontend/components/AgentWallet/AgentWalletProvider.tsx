@@ -60,11 +60,6 @@ export const AgentWalletProvider = ({ children }: { children: ReactNode }) => {
   const { navParams, clearNavParams } = usePageState();
   const params = navParams as AgentWalletNavParams;
 
-  // Clear navParams after consuming them on mount
-  useEffect(() => {
-    clearNavParams();
-  }, [clearNavParams]);
-
   const {
     isLoading: isServicesLoading,
     selectedAgentConfig,
@@ -85,6 +80,11 @@ export const AgentWalletProvider = ({ children }: { children: ReactNode }) => {
   const [walletStep, setWalletStep] = useState<ValueOf<typeof STEPS>>(
     params.initialStep ?? STEPS.AGENT_WALLET_SCREEN,
   );
+
+  // Clear navParams after consuming them on mount
+  useEffect(() => {
+    clearNavParams();
+  }, [clearNavParams]);
 
   const agent = ACTIVE_AGENTS.find(
     ([, agentConfig]) =>
