@@ -25,7 +25,7 @@ const BABYDEGEN_COMMON_TEMPLATE: Pick<
     repository: {
       owner: 'valory-xyz',
       name: 'optimus',
-      version: 'v0.7.2',
+      version: 'v0.7.3',
     },
   },
 };
