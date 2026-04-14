@@ -330,4 +330,3 @@ jobs:
           name: latest-mac-yml-${{ env.OS_ARCH }}
           path: dist/latest-mac.yml
           if-no-files-found: warn
-
