@@ -28,14 +28,16 @@ export const SyncBackupWalletModal = ({
 
     setStep('IN_PROGRESS');
 
-    syncBackupOwnerRef.current()
+    syncBackupOwnerRef
+      .current()
       .then(() => setStep('SUCCESS'))
       .catch(() => setStep('FAILURE'));
   }, [open]);
 
   const handleRetry = () => {
     setStep('IN_PROGRESS');
-    syncBackupOwnerRef.current()
+    syncBackupOwnerRef
+      .current()
       .then(() => setStep('SUCCESS'))
       .catch(() => setStep('FAILURE'));
   };
