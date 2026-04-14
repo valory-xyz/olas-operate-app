@@ -149,8 +149,7 @@ export const FundYourAgent = () => {
     resetTokenRequirements,
   } = useGetRefillRequirements();
 
-  const areTokenRequirementsLoading =
-    isLoading || tokenRequirements.length === 0;
+  const areTokenRequirementsLoading = isLoading;
 
   return (
     <FundingContainer vertical>
