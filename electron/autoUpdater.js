@@ -43,7 +43,10 @@ const registerAutoUpdaterHandlers = ({
       );
       if (res.ok) {
         const data = await res.json();
-        releaseNotes = data.body_html || data.body || null;
+        // The renderer injects this via dangerouslySetInnerHTML, so only
+        // accept the HTML-rendered form. Never fall back to data.body
+        // (raw markdown), which would be rendered as literal text.
+        releaseNotes = data.body_html || null;
       }
     } catch (e) {
       logger.electron(`[OTA] Failed to fetch release notes: ${e.message}`);
