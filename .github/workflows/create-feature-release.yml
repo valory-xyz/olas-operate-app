@@ -47,8 +47,15 @@ jobs:
       tag: ${{ needs.calculate-version.outputs.new_tag }}
     secrets: inherit
 
+  merge-latest-mac-yml:
+    needs: [calculate-version, run-release]
+    uses: ./.github/workflows/merge-latest-mac-yml.yml
+    with:
+      tag: ${{ needs.calculate-version.outputs.new_tag }}
+    secrets: inherit
+
   summary:
-    needs: [calculate-version, run-release, run-release-win, run-release-linux]
+    needs: [calculate-version, run-release, run-release-win, run-release-linux, merge-latest-mac-yml]
     runs-on: ubuntu-latest
     steps:
       - name: Create summary
