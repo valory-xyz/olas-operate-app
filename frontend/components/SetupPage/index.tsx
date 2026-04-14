@@ -4,6 +4,8 @@ import React, { useContext, useMemo } from 'react';
 import { SETUP_SCREEN, SetupScreen } from '@/constants';
 import { SetupContext } from '@/context/SetupProvider';
 
+import { useAutoAdvanceWhenFunded } from './hooks/useAutoAdvanceWhenFunded';
+
 import { AccountRecovery } from '../AccountRecovery';
 import { SelectStakingPage } from '../SelectStakingPage';
 import { CardFlex } from '../ui/CardFlex';
@@ -51,6 +53,8 @@ const SCREEN_WITHOUT_CARDS: SetupScreen[] = [
 
 export const Setup = () => {
   const { setupObject } = useContext(SetupContext);
+
+  useAutoAdvanceWhenFunded(setupObject.state);
 
   const setupScreen = useMemo(() => {
     switch (setupObject.state) {
