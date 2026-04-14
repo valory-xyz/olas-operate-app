@@ -91,7 +91,7 @@ describe('useAppStatus', () => {
   });
 
   describe('queryFn', () => {
-    it('rejects when updates API is not available', async () => {
+    it('rejects when autoUpdater API is not available', async () => {
       jest.resetModules();
 
       /* eslint-disable @typescript-eslint/no-var-requires */
@@ -102,7 +102,7 @@ describe('useAppStatus', () => {
       jest.doMock('../../../../constants/providers', () => ({}));
       jest.doMock('../../../../config/providers', () => ({ providers: [] }));
       jest.doMock('../../../../hooks', () => ({
-        useElectronApi: () => ({ updates: undefined }),
+        useElectronApi: () => ({ autoUpdater: undefined }),
       }));
 
       let innerCapturedConfig: CapturedConfig | null = null;
@@ -121,7 +121,7 @@ describe('useAppStatus', () => {
       renderHook(() => freshUseAppStatus());
 
       await expect(innerCapturedConfig!.queryFn()).rejects.toThrow(
-        'updates API is not available',
+        'autoUpdater API is not available',
       );
     });
 

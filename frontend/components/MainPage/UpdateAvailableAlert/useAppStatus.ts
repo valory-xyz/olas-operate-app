@@ -14,7 +14,8 @@ export const useAppStatus = () => {
 
   return useQuery<useAppStatusResult, Error>({
     queryKey: REACT_QUERY_KEYS.IS_PEARL_OUTDATED_KEY,
-    queryFn: ({ signal }): Promise<useAppStatusResult> => {
+    queryFn: (ctx): Promise<useAppStatusResult> => {
+      const signal = ctx?.signal;
       if (
         !autoUpdater?.checkForUpdates ||
         !autoUpdater?.onUpdateAvailable ||

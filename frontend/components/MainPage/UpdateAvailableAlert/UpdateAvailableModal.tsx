@@ -237,12 +237,14 @@ export const UpdateAvailableModal = ({
   }, [latestTag, store, onClose]);
 
   const startDownload = useCallback(() => {
+    setProgress(null);
     setModalState('downloading');
     autoUpdater?.downloadUpdate?.().catch(() => setModalState('failed'));
   }, [autoUpdater]);
 
   const onCancelDownload = useCallback(() => {
     autoUpdater?.cancelDownload?.();
+    setProgress(null);
     setModalState('available');
   }, [autoUpdater]);
 
