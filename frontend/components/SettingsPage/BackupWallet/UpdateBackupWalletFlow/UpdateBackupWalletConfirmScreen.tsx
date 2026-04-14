@@ -1,9 +1,8 @@
-import { Button, Card, Flex, message, Typography } from 'antd';
+import { Button, Card, Flex, Input, message, Typography } from 'antd';
 import { useCallback, useState } from 'react';
 import { TbCopy } from 'react-icons/tb';
 
 import { Alert, BackButton, cardStyles } from '@/components/ui';
-import { COLOR } from '@/constants';
 import { SettingsScreenMap } from '@/constants/screen';
 import {
   useApplyBackupOwner,
@@ -23,26 +22,18 @@ const AddressBox = ({ address }: { address: string }) => {
   }, [address]);
 
   return (
-    <Flex
-      align="center"
-      justify="space-between"
-      style={{
-        padding: '8px 12px',
-        border: `1px solid ${COLOR.BORDER_GRAY}`,
-        borderRadius: 8,
-      }}
-    >
-      <Text className="text-sm" style={{ wordBreak: 'break-all' }}>
-        {address}
-      </Text>
-      <Button
-        type="text"
-        size="small"
-        icon={<TbCopy />}
-        onClick={handleCopy}
-        style={{ flexShrink: 0, marginLeft: 8 }}
-      />
-    </Flex>
+    <Input
+      readOnly
+      value={address}
+      suffix={
+        <Button
+          type="text"
+          size="small"
+          icon={<TbCopy />}
+          onClick={handleCopy}
+        />
+      }
+    />
   );
 };
 
