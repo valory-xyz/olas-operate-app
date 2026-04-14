@@ -49,7 +49,13 @@ export const AddBackupWalletResultModal = ({
         title="Backup Wallet Added!"
         description="Your backup wallet has been successfully added."
         action={
-          <Button type="primary" onClick={onDone} className="mt-16">
+          <Button
+            type="primary"
+            block
+            size="large"
+            onClick={onDone}
+            className="mt-32"
+          >
             Done
           </Button>
         }

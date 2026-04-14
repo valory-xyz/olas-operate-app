@@ -63,7 +63,13 @@ export const UpdateBackupWalletResultModal = ({
         title="Backup Wallet Updated!"
         description="Your backup wallet has been successfully updated."
         action={
-          <Button type="primary" onClick={handleDone} className="mt-16">
+          <Button
+            type="primary"
+            block
+            size="large"
+            onClick={handleDone}
+            className="mt-32"
+          >
             Done
           </Button>
         }

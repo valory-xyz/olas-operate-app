@@ -1,4 +1,4 @@
-import { Button, Flex, Tag, Typography } from 'antd';
+import { Button, Flex, Typography } from 'antd';
 import { TbWallet } from 'react-icons/tb';
 import { useBoolean } from 'usehooks-ts';
 
@@ -107,10 +107,9 @@ export const BackupWalletSection = () => {
               <TbWallet size={20} color={COLOR.TEXT_NEUTRAL_TERTIARY} />
             </IconContainer>
             <Flex vertical gap={6}>
-              <Flex align="center" gap={8} className="my-6">
+              <div className="my-6">
                 <Text strong>Backup Wallet</Text>
-                <Tag color="warning">Out of Sync</Tag>
-              </Flex>
+              </div>
               <AddressLink address={canonicalAddress as Address} />
             </Flex>
           </Flex>
@@ -126,12 +125,12 @@ export const BackupWalletSection = () => {
                   Your backup wallet isn&apos;t applied across all chains. Sync
                   now to apply it everywhere.
                 </Text>
+                <Button className="w-fit text-sm mt-6" onClick={openSync}>
+                  Sync Now
+                </Button>
               </Flex>
             }
           />
-          <Button style={{ alignSelf: 'flex-start' }} onClick={openSync}>
-            Sync Now
-          </Button>
           <Button className="w-fit text-sm" onClick={openUpdatePassword}>
             Update Backup Wallet
           </Button>

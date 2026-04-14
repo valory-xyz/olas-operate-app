@@ -1,7 +1,8 @@
-import { Button, Card, Flex, Typography } from 'antd';
-import { useState } from 'react';
+import { Button, Card, Flex, message, Typography } from 'antd';
+import { useCallback, useState } from 'react';
+import { TbCopy } from 'react-icons/tb';
 
-import { AddressLink, Alert, BackButton, cardStyles } from '@/components/ui';
+import { Alert, BackButton, cardStyles } from '@/components/ui';
 import { COLOR } from '@/constants';
 import { SettingsScreenMap } from '@/constants/screen';
 import {
@@ -9,12 +10,41 @@ import {
   useBackupOwnerStatus,
   useSettings,
 } from '@/hooks';
-import { Address } from '@/types/Address';
+import { copyToClipboard } from '@/utils';
 
 import { useUpdateBackupWallet } from './UpdateBackupWalletContext';
 import { UpdateBackupWalletResultModal } from './UpdateBackupWalletResultModal';
 
 const { Title, Text } = Typography;
+
+const AddressBox = ({ address }: { address: string }) => {
+  const handleCopy = useCallback(() => {
+    copyToClipboard(address).then(() => message.success('Address copied!'));
+  }, [address]);
+
+  return (
+    <Flex
+      align="center"
+      justify="space-between"
+      style={{
+        padding: '8px 12px',
+        border: `1px solid ${COLOR.BORDER_GRAY}`,
+        borderRadius: 8,
+      }}
+    >
+      <Text className="text-sm" style={{ wordBreak: 'break-all' }}>
+        {address}
+      </Text>
+      <Button
+        type="text"
+        size="small"
+        icon={<TbCopy />}
+        onClick={handleCopy}
+        style={{ flexShrink: 0, marginLeft: 8 }}
+      />
+    </Flex>
+  );
+};
 
 type ResultStatus = 'idle' | 'in_progress' | 'success' | 'failure';
 
@@ -59,35 +89,17 @@ export const UpdateBackupWalletConfirmScreen = () => {
                 <Text type="secondary" className="text-sm">
                   Current backup wallet:
                 </Text>
-                <Flex
-                  align="center"
-                  style={{
-                    padding: '8px 12px',
-                    border: `1px solid ${COLOR.BORDER_GRAY}`,
-                    borderRadius: 8,
-                  }}
-                >
-                  {currentAddress ? (
-                    <AddressLink address={currentAddress as Address} />
-                  ) : (
-                    <Text>—</Text>
-                  )}
-                </Flex>
+                {currentAddress ? (
+                  <AddressBox address={currentAddress} />
+                ) : (
+                  <Text>—</Text>
+                )}
               </Flex>
               <Flex vertical gap={4}>
                 <Text type="secondary" className="text-sm">
                   New backup wallet:
                 </Text>
-                <Flex
-                  align="center"
-                  style={{
-                    padding: '8px 12px',
-                    border: `1px solid ${COLOR.BORDER_GRAY}`,
-                    borderRadius: 8,
-                  }}
-                >
-                  {newAddress && <AddressLink address={newAddress} />}
-                </Flex>
+                {newAddress && <AddressBox address={newAddress} />}
               </Flex>
             </Flex>
             <Alert
