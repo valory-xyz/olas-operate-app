@@ -188,6 +188,138 @@ To test with a custom service hash:
 - All agents communicate through the Python middleware layer
 - Services interact with blockchain via ethers.js (v5.8.0)
 
+## Frontend Coding Conventions
+
+**CRITICAL: Read this section before writing ANY frontend code. These rules are non-negotiable.**
+
+### Before You Code — Discovery Checklist
+
+Before writing a single line of code for any frontend feature, complete these steps:
+
+1. **Read `frontend/components/ui/index.ts`** — know every custom UI wrapper that exists. Never import a component directly from `antd` if a custom wrapper exists in `@/components/ui`.
+2. **Read `frontend/constants/colors.ts`** — know every `COLOR.*` constant. Never hardcode hex color values.
+3. **Read `frontend/styles/globals.scss`** — know what utility classes and Ant Design overrides exist. Check for custom CSS classes before adding inline style overrides.
+4. **Read one existing similar screen** — if building a setup screen, read another setup screen first. If building a modal, read how existing modals work. Match the patterns exactly.
+5. **Read `frontend/tests/helpers/factories.ts`** — know what test factories exist before creating inline mock data.
+
+### Workflow Commands
+
+**These are not optional. They are part of the standard coding workflow.**
+
+1. **Before coding:** Run `/pre-implementation-check` and report findings. Do not write code until the report is acknowledged.
+2. **During coding:** After modifying any `.tsx`/`.ts` file, run `yarn lint:frontend --fix` immediately. Do not accumulate lint errors.
+3. **After each phase:** Run `/review-implementation` and fix ALL issues found. Do not present code with known issues.
+4. **For features touching 4+ files:** Work in phases — implement one screen + its tests, run `/review-implementation`, get review, then proceed to next screen. Never build all screens at once.
+
+### Fix Globally, Not Locally
+
+When you fix an issue in one file, **grep ALL files in your feature for the same pattern.** Examples:
+- Fixed wrong `Alert` import in file A? Check files B, C, D for the same wrong import.
+- Replaced a hardcoded color in file A? Search all your files for other hardcoded colors.
+- Changed a heading level in one screen? Check all other screens for consistency.
+
+### Component Imports — Use Custom Wrappers
+
+The following components have custom wrappers in `frontend/components/ui/`. **Always import from `@/components/ui`, never from `antd`:**
+
+| Component | Source | Custom wrapper provides |
+|-----------|--------|----------------------|
+| `Alert` | `frontend/components/ui/Alert.tsx` | App color scheme via `.custom-alert--{type}` CSS classes (primary/info/warning/error/success), custom icons |
+| `Modal` | `frontend/components/ui/Modal.tsx` | Structured layout with `header`, `title`, `description`, `action` props; three sizes (small/medium/large); consistent padding/centering |
+| `Table` | `frontend/components/ui/Table.tsx` | Custom header/body styling, rounded corners |
+| `Collapse` | `frontend/components/ui/Collapse.tsx` | Custom spacing, expand icon sizing |
+| `Divider` | `frontend/components/ui/Divider.tsx` | Margin reset, custom border color |
+| `Progress` | `frontend/components/ui/Progress.tsx` | Border radius for progress bars |
+| `Segmented` | `frontend/components/ui/Segmented.tsx` | Custom styling with activeIconColored prop |
+| `Steps` | `frontend/components/ui/Steps.tsx` | Styled wrapper |
+| `SetupCard` | `frontend/components/ui/SetupCard.tsx` | White card container with max-width 516px, shadow, border-radius 16px — used for all setup flow screens |
+
+Any component NOT listed above (e.g., `Button`, `Flex`, `Input`, `Typography`, `Form`, `Tag`) should be imported directly from `antd`. When in doubt, check `frontend/components/ui/index.ts` for the current list.
+
+### Colors — Use Constants
+
+**Never hardcode hex colors.** Always read `frontend/constants/colors.ts` and use `COLOR.*` constants (`import { COLOR } from '@/constants'`). If a color doesn't exist, add it to `colors.ts` first — don't hardcode it inline.
+
+### Styling Patterns
+
+The codebase uses three styling approaches in this priority order:
+
+1. **`styled-components`** — for reusable styled wrappers. Define in the same file as the component. Use transient props (`$propName`) to avoid passing to DOM.
+2. **SCSS utility classes from `globals.scss`** — for spacing, typography, layout. Apply via `className`. Examples: `m-0`, `mt-12`, `mb-8`, `text-sm`, `text-center`, `text-neutral-secondary`, `flex`, `w-full`.
+3. **Inline `style={{ }}`** — only for truly dynamic values or one-off overrides. Never for repeated patterns.
+
+**Never:**
+- Duplicate existing styled components (e.g., don't recreate `SetupCard` styles as an inline object)
+- Use inline styles for colors that exist in `COLOR.*`
+- Add `borderRadius: 8` or similar when the custom component handles its own styling
+
+### Design-to-Code Rules
+
+When implementing from a design spec or Figma:
+- **Copy text verbatim.** Never paraphrase, shorten, or "improve" design text. If the design says "Enter the 12-word recovery phrase of the lost Pearl account", that is what the code must render — not "Enter your recovery phrase".
+- **Match exact props.** If the design shows a large heading, use `level={3}`. If it shows a standard input, don't add `size="small"`. If it shows a ghost button, use `type="default"` not `type="primary"`.
+- **Match layout structure.** If the design shows two separate cards, render two `<SetupCard>` components with a gap — not one card with a divider. If it shows borderless rows, don't add `border` and `background`.
+- **Match button width.** If the design shows a compact left-aligned button, add `style={{ alignSelf: 'flex-start' }}`. Don't let `Flex vertical` stretch it to full width.
+
+### Service Pattern
+
+Services use a static object pattern with fetch-based API calls:
+
+```typescript
+const scanFunds = async (request: ScanRequest): Promise<ScanResponse> =>
+  fetch(`${BACKEND_URL}/fund_recovery/scan`, {
+    method: 'POST',
+    headers: { ...CONTENT_TYPE_JSON_UTF8 },
+    body: JSON.stringify(request),
+  }).then(async (res) => {
+    if (res.ok) return res.json();
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error ?? 'Operation failed');
+  });
+
+export const FundRecoveryService = { scanFunds, executeFunds };
+```
+
+### Hook Pattern
+
+Hooks wrap React Query mutations/queries or context access:
+
+```typescript
+// Mutation hook
+export const useFundRecoveryScan = () => {
+  return useMutation({
+    mutationFn: FundRecoveryService.scan,
+  });
+};
+
+// Context hook
+export const useSetup = () => useContext(SetupContext);
+```
+
+### Test Pattern
+
+Tests use factories from `frontend/tests/helpers/`:
+- `factories.ts` — mock data (`makeService()`, `makeMasterEoa()`, etc.)
+- `contextDefaults.ts` — default context values (`createStakingProgramContextValue()`)
+- `queryClient.ts` — test QueryClient (`createTestQueryClient()`, `createQueryClientWrapper()`)
+
+Mock pattern:
+```typescript
+/* eslint-disable @typescript-eslint/no-var-requires */
+jest.mock('ethers-multicall', () => require('../mocks/ethersMulticall').ethersMulticallMock);
+/* eslint-enable @typescript-eslint/no-var-requires */
+jest.mock('../../constants/providers', () => ({}));
+```
+
+Always pair `eslint-disable` with `eslint-enable` in test files.
+
+### Import Conventions
+
+- Use `@/` alias for cross-directory imports: `import { COLOR } from '@/constants'`
+- Use relative paths within the same directory: `import { SubComponent } from './SubComponent'`
+- Barrel exports exist for: `@/components/ui`, `@/hooks`, `@/constants`, `@/types`
+- Import order (enforced by `simple-import-sort`): external packages → `@/` aliases → relative paths
+
 ## Code Style
 - Never use `// eslint-disable-next-line`. Fix the code instead.
 

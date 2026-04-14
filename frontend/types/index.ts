@@ -8,6 +8,7 @@ export * from './Bridge';
 export * from './ElectronApi';
 export * from './Epoch';
 export * from './Funding';
+export * from './FundRecovery';
 export * from './Service';
 export * from './Util';
 export * from './Wallet';

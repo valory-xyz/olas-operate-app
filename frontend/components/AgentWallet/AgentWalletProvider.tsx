@@ -4,6 +4,7 @@ import {
   ReactNode,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
 } from 'react';
@@ -13,6 +14,7 @@ import { EvmChainId } from '@/constants/chains';
 import {
   useAvailableAgentAssets,
   useBalanceContext,
+  usePageState,
   useRewardContext,
   useService,
   useServices,
@@ -22,6 +24,11 @@ import { Nullable, Optional, ValueOf } from '@/types/Util';
 import { AvailableAsset } from '@/types/Wallet';
 
 import { STEPS, TransactionHistory } from './types';
+
+type AgentWalletNavParams = {
+  initialStep?: ValueOf<typeof STEPS>;
+  initialFundValues?: TokenBalanceRecord;
+};
 
 const AgentWalletContext = createContext<{
   walletStep: ValueOf<typeof STEPS>;
@@ -50,6 +57,9 @@ const AgentWalletContext = createContext<{
 });
 
 export const AgentWalletProvider = ({ children }: { children: ReactNode }) => {
+  const { navParams, clearNavParams } = usePageState();
+  const params = navParams as AgentWalletNavParams;
+
   const {
     isLoading: isServicesLoading,
     selectedAgentConfig,
@@ -62,14 +72,19 @@ export const AgentWalletProvider = ({ children }: { children: ReactNode }) => {
     useRewardContext();
   const { availableAssets } = useAvailableAgentAssets();
   const [fundInitialValues, setFundInitialValues] =
-    useState<TokenBalanceRecord>({});
+    useState<TokenBalanceRecord>(params.initialFundValues ?? {});
 
   const { evmHomeChainId: walletChainId } = selectedAgentConfig;
 
   // wallet chain ID
   const [walletStep, setWalletStep] = useState<ValueOf<typeof STEPS>>(
-    STEPS.AGENT_WALLET_SCREEN,
+    params.initialStep ?? STEPS.AGENT_WALLET_SCREEN,
   );
+
+  // Clear navParams after consuming them on mount
+  useEffect(() => {
+    clearNavParams();
+  }, [clearNavParams]);
 
   const agent = ACTIVE_AGENTS.find(
     ([, agentConfig]) =>

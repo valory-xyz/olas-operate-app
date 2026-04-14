@@ -1,5 +1,5 @@
 import { get } from 'lodash';
-import { createContext, PropsWithChildren } from 'react';
+import { createContext, PropsWithChildren, useMemo } from 'react';
 
 import { StoreService } from '@/service/StoreService';
 import { Address } from '@/types/Address';
@@ -102,6 +102,27 @@ type ElectronApiContextProps = {
   };
   logEvent?: (message: string) => void;
   nextLogError?: (error: Error, errorInfo: unknown) => void;
+  /** IPC bridge for OTA updates — distinct from the electron-updater instance in electron/update.js */
+  autoUpdater?: {
+    checkForUpdates?: () => Promise<unknown>;
+    downloadUpdate?: () => Promise<void>;
+    cancelDownload?: () => void;
+    quitAndInstall?: () => Promise<void>;
+    onUpdateAvailable?: (
+      cb: (info: { version: string; releaseNotes: string | null }) => void,
+    ) => () => void;
+    onDownloadProgress?: (
+      cb: (progress: {
+        percent: number;
+        transferred: number;
+        total: number;
+        bytesPerSecond: number;
+      }) => void,
+    ) => () => void;
+    onUpdateDownloaded?: (cb: () => void) => () => void;
+    onUpdateError?: (cb: (err: { message: string }) => void) => () => void;
+    onUpdateNotAvailable?: (cb: () => void) => () => void;
+  };
 };
 
 export const ElectronApiContext = createContext<ElectronApiContextProps>({
@@ -149,21 +170,78 @@ export const ElectronApiContext = createContext<ElectronApiContextProps>({
   },
   logEvent: () => {},
   nextLogError: () => {},
+  autoUpdater: {
+    checkForUpdates: async () => {},
+    downloadUpdate: async () => {},
+    cancelDownload: () => {},
+    quitAndInstall: async () => {},
+    onUpdateAvailable: () => () => {},
+    onDownloadProgress: () => () => {},
+    onUpdateDownloaded: () => () => {},
+    onUpdateError: () => () => {},
+    onUpdateNotAvailable: () => () => {},
+  },
 });
 
+const getElectronApiFunction = (
+  functionNameInWindow: string,
+  silent = false,
+) => {
+  if (typeof window === 'undefined') return;
+
+  const fn = get(window, `electronAPI.${functionNameInWindow}`);
+  if (!fn || typeof fn !== 'function') {
+    if (silent) return undefined;
+    throw new Error(
+      `Function ${functionNameInWindow} not found in window.electronAPI`,
+    );
+  }
+
+  return fn;
+};
+
 export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
-  const getElectronApiFunction = (functionNameInWindow: string) => {
-    if (typeof window === 'undefined') return;
-
-    const fn = get(window, `electronAPI.${functionNameInWindow}`);
-    if (!fn || typeof fn !== 'function') {
-      throw new Error(
-        `Function ${functionNameInWindow} not found in window.electronAPI`,
-      );
-    }
-
-    return fn;
-  };
+  // Stabilize autoUpdater so consumers with useEffect([autoUpdater]) don't
+  // tear down and re-register IPC listeners on every parent render
+  // (UpdateAvailableModal would otherwise drop progress events mid-download).
+  const autoUpdater = useMemo<ElectronApiContextProps['autoUpdater']>(
+    () => ({
+      checkForUpdates: getElectronApiFunction(
+        'autoUpdater.checkForUpdates',
+        true,
+      ),
+      downloadUpdate: getElectronApiFunction(
+        'autoUpdater.downloadUpdate',
+        true,
+      ),
+      cancelDownload: getElectronApiFunction(
+        'autoUpdater.cancelDownload',
+        true,
+      ),
+      quitAndInstall: getElectronApiFunction(
+        'autoUpdater.quitAndInstall',
+        true,
+      ),
+      onUpdateAvailable: getElectronApiFunction(
+        'autoUpdater.onUpdateAvailable',
+        true,
+      ),
+      onDownloadProgress: getElectronApiFunction(
+        'autoUpdater.onDownloadProgress',
+        true,
+      ),
+      onUpdateDownloaded: getElectronApiFunction(
+        'autoUpdater.onUpdateDownloaded',
+        true,
+      ),
+      onUpdateError: getElectronApiFunction('autoUpdater.onUpdateError', true),
+      onUpdateNotAvailable: getElectronApiFunction(
+        'autoUpdater.onUpdateNotAvailable',
+        true,
+      ),
+    }),
+    [],
+  );
 
   const logStoreEvent = (msg: string) => {
     const fn = getElectronApiFunction('logEvent') as
@@ -275,6 +353,7 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
         },
         logEvent: getElectronApiFunction('logEvent'),
         nextLogError: getElectronApiFunction('nextLogError'),
+        autoUpdater,
       }}
     >
       {children}

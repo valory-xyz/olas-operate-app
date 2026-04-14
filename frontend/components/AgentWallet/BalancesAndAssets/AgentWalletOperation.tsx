@@ -6,12 +6,15 @@ import { Alert, BackButton, CardFlex, Tooltip } from '@/components/ui';
 import { PAGES } from '@/constants';
 import {
   useActiveStakingContractDetails,
+  useAgentFundingRequests,
   useFeatureFlag,
   usePageState,
   useService,
   useServices,
   useStakingContractCountdown,
 } from '@/hooks';
+
+import { useAgentWallet } from '../AgentWalletProvider';
 
 const { Text, Title } = Typography;
 
@@ -60,6 +63,8 @@ export const AgentWalletOperation = ({
   onFundAgent,
 }: AgentWalletOperationProps) => {
   const isWithdrawFeatureEnabled = useFeatureFlag('withdraw-funds');
+  const { agentTokenRequirements } = useAgentFundingRequests();
+  const { setFundInitialValues } = useAgentWallet();
   const { selectedService } = useServices();
   const { service, serviceEoa } = useService(
     selectedService?.service_config_id,
@@ -110,7 +115,14 @@ export const AgentWalletOperation = ({
       </Flex>
 
       {withdrawDisabledAlert}
-      <AgentLowBalanceAlert onFund={onFundAgent} needInitialValues />
+      <AgentLowBalanceAlert
+        onFund={() => {
+          if (agentTokenRequirements) {
+            setFundInitialValues(agentTokenRequirements);
+          }
+          onFundAgent();
+        }}
+      />
     </CardFlex>
   );
 };
