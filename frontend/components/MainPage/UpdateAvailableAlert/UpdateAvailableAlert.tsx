@@ -1,13 +1,37 @@
-import { Flex } from 'antd';
-import { FiArrowUpRight } from 'react-icons/fi';
+import { Flex, Typography } from 'antd';
 import { TbDownload } from 'react-icons/tb';
+import styled from 'styled-components';
 
-import { Alert } from '@/components/ui';
-import { COLOR, DOWNLOAD_URL } from '@/constants';
+import { COLOR } from '@/constants';
 
 import { useAppStatus } from './useAppStatus';
 
-export const UpdateAvailableAlert = () => {
+const { Text } = Typography;
+
+type UpdateAvailableAlertProps = {
+  onOpen: () => void;
+};
+
+const CardButton = styled.button`
+  width: 100%;
+  border: none;
+  border-radius: 8px;
+  padding: 12px;
+  cursor: pointer;
+  background: ${COLOR.PURPLE_LIGHT_3};
+  text-align: left;
+  transition: background 0.15s;
+
+  &:hover {
+    background: ${COLOR.PURPLE_LIGHT_4};
+  }
+
+  &:active {
+    background: ${COLOR.PURPLE_LIGHT_4};
+  }
+`;
+
+export const UpdateAvailableAlert = ({ onOpen }: UpdateAvailableAlertProps) => {
   const { data, isFetched, isError, error } = useAppStatus();
 
   if (isError) {
@@ -20,23 +44,13 @@ export const UpdateAvailableAlert = () => {
   }
 
   return (
-    <Alert
-      type="info"
-      className="mt-auto mb-16 text-sm"
-      message={
-        <Flex vertical gap={2}>
-          <TbDownload
-            fontSize={20}
-            className="mb-4"
-            color={COLOR.ICON_COLOR.INFO}
-          />
-          <span>Pearl Update Available</span>
-          <a href={DOWNLOAD_URL} target="_blank">
-            Download{' '}
-            <FiArrowUpRight fontSize={20} style={{ marginBottom: -4 }} />
-          </a>
-        </Flex>
-      }
-    />
+    <CardButton onClick={onOpen} className="mb-16">
+      <Flex align="center" gap={10}>
+        <TbDownload fontSize={20} color={COLOR.PURPLE} />
+        <Text style={{ color: COLOR.PURPLE, fontWeight: 500, fontSize: 14 }}>
+          Update Pearl Now
+        </Text>
+      </Flex>
+    </CardButton>
   );
 };

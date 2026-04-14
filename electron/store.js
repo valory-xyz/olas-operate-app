@@ -20,6 +20,7 @@ const schema = {
   lastSelectedAgentType: { type: 'string', default: 'trader' },
   lastSelectedServiceConfigId: { type: 'string', default: '' },
   knownVersion: { type: 'string', default: '' },
+  updateAvailableKnownVersion: { type: 'string', default: '' },
 
   // First time user settings
   firstStakingRewardAchieved: { type: 'boolean', default: false },

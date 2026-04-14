@@ -128,6 +128,17 @@ jest.mock('../../../../components/MainPage/hooks/useSidebarAgents', () => ({
   }),
 }));
 
+jest.mock(
+  '../../../../components/MainPage/Sidebar/hooks/useAutoOpenUpdateModal',
+  () => ({
+    useAutoOpenUpdateModal: () => ({
+      isOpen: false,
+      open: jest.fn(),
+      close: jest.fn(),
+    }),
+  }),
+);
+
 const mockServiceWithConfig = (
   serviceConfigId: string,
   servicePublicId: string,
