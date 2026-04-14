@@ -3,20 +3,31 @@ import { PearlStore } from '@/types/ElectronApi';
 
 /**
  * Gets the full pearl store from the backend.
- * Returns {} if the store file does not exist yet on the backend.
+ * Returns {} if the store file does not exist yet, is corrupted (500),
+ * or contains invalid data. The store holds frontend preferences only —
+ * falling back to empty is safe (user re-does setup, no data loss).
  */
 const getStore = async (): Promise<PearlStore> =>
   fetch(`${BACKEND_URL}/store`, {
     method: 'GET',
     headers: { ...CONTENT_TYPE_JSON_UTF8 },
   }).then((response) => {
+    if (response.status === 500) {
+      console.error(
+        'Pearl store may be corrupted (HTTP 500), falling back to empty store',
+      );
+      return {} as PearlStore;
+    }
     if (!response.ok) {
       throw new Error(`Failed to fetch pearl store (HTTP ${response.status})`);
     }
     return response.json().then((json) => {
       const data = json.data ?? {};
       if (typeof data !== 'object' || data === null || Array.isArray(data)) {
-        throw new Error('Pearl store data is not a valid object');
+        console.error(
+          'Pearl store data is not a valid object, falling back to empty store',
+        );
+        return {} as PearlStore;
       }
       return data as PearlStore;
     });
