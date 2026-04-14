@@ -1,12 +1,12 @@
-import { Card, Flex, Typography } from "antd";
+import { Card, Flex, Typography } from 'antd';
 
-import { BackupWalletWeb3Auth } from "@/components/SetupPage/Create/SetupBackupSigner/BackupWalletWeb3Auth";
-import { Alert, BackButton, cardStyles } from "@/components/ui";
-import { SettingsScreenMap } from "@/constants/screen";
-import { useBackupOwnerStatus, useSettings } from "@/hooks";
-import { Address } from "@/types/Address";
+import { BackupWalletWeb3Auth } from '@/components/SetupPage/Create/SetupBackupSigner/BackupWalletWeb3Auth';
+import { Alert, BackButton, cardStyles } from '@/components/ui';
+import { SettingsScreenMap } from '@/constants/screen';
+import { useBackupOwnerStatus, useSettings } from '@/hooks';
+import { Address } from '@/types/Address';
 
-import { useUpdateBackupWallet } from "./UpdateBackupWalletContext";
+import { useUpdateBackupWallet } from './UpdateBackupWalletContext';
 
 const { Title, Text } = Typography;
 

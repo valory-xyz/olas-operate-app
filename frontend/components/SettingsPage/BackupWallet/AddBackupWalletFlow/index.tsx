@@ -1,2 +1,2 @@
-export { AddBackupWalletManualScreen } from "./AddBackupWalletManualScreen";
-export { AddBackupWalletMethodScreen } from "./AddBackupWalletMethodScreen";
+export { AddBackupWalletManualScreen } from './AddBackupWalletManualScreen';
+export { AddBackupWalletMethodScreen } from './AddBackupWalletMethodScreen';

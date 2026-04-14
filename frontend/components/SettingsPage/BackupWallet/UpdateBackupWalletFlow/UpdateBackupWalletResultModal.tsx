@@ -1,12 +1,12 @@
-import { Button, Flex } from "antd";
-import { useState } from "react";
+import { Button, Flex } from 'antd';
+import { useState } from 'react';
 
-import { SuccessOutlined, WarningOutlined } from "@/components/custom-icons";
-import { LoadingSpinner, Modal } from "@/components/ui";
-import { useSupportModal } from "@/context/SupportModalProvider";
-import { useSyncBackupOwner } from "@/hooks";
+import { SuccessOutlined, WarningOutlined } from '@/components/custom-icons';
+import { LoadingSpinner, Modal } from '@/components/ui';
+import { useSupportModal } from '@/context/SupportModalProvider';
+import { useSyncBackupOwner } from '@/hooks';
 
-type ResultStatus = "idle" | "in_progress" | "success" | "failure";
+type ResultStatus = 'idle' | 'in_progress' | 'success' | 'failure';
 
 type UpdateBackupWalletResultModalProps = {
   status: ResultStatus;
@@ -19,27 +19,27 @@ export const UpdateBackupWalletResultModal = ({
 }: UpdateBackupWalletResultModalProps) => {
   const { mutateAsync: syncBackupOwner } = useSyncBackupOwner();
   const { toggleSupportModal } = useSupportModal();
-  const [internalStatus, setInternalStatus] = useState<ResultStatus>("idle");
+  const [internalStatus, setInternalStatus] = useState<ResultStatus>('idle');
 
   // Use internal status if retrying, otherwise use parent status
-  const activeStatus = internalStatus !== "idle" ? internalStatus : status;
+  const activeStatus = internalStatus !== 'idle' ? internalStatus : status;
 
   const handleRetry = async () => {
-    setInternalStatus("in_progress");
+    setInternalStatus('in_progress');
     try {
       await syncBackupOwner();
-      setInternalStatus("success");
+      setInternalStatus('success');
     } catch {
-      setInternalStatus("failure");
+      setInternalStatus('failure');
     }
   };
 
   const handleDone = () => {
-    setInternalStatus("idle");
+    setInternalStatus('idle');
     onDone();
   };
 
-  if (activeStatus === "in_progress") {
+  if (activeStatus === 'in_progress') {
     return (
       <Modal
         open
@@ -52,7 +52,7 @@ export const UpdateBackupWalletResultModal = ({
     );
   }
 
-  if (activeStatus === "success") {
+  if (activeStatus === 'success') {
     return (
       <Modal
         open
@@ -71,7 +71,7 @@ export const UpdateBackupWalletResultModal = ({
     );
   }
 
-  if (activeStatus === "failure") {
+  if (activeStatus === 'failure') {
     return (
       <Modal
         open

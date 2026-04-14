@@ -1,20 +1,20 @@
-import { Button, Flex, Tag, Typography } from "antd";
-import { TbWallet } from "react-icons/tb";
-import { useBoolean } from "usehooks-ts";
+import { Button, Flex, Tag, Typography } from 'antd';
+import { TbWallet } from 'react-icons/tb';
+import { useBoolean } from 'usehooks-ts';
 
 import {
   AddressLink,
   Alert,
   CardSection,
   IconContainer,
-} from "@/components/ui";
-import { COLOR } from "@/constants";
-import { SettingsScreenMap } from "@/constants/screen";
-import { useBackupOwnerStatus, useSettings } from "@/hooks";
-import { Address } from "@/types/Address";
+} from '@/components/ui';
+import { COLOR } from '@/constants';
+import { SettingsScreenMap } from '@/constants/screen';
+import { useBackupOwnerStatus, useSettings } from '@/hooks';
+import { Address } from '@/types/Address';
 
-import { SyncBackupWalletModal } from "./SyncBackupWalletModal";
-import { UpdateBackupWalletPasswordModal } from "./UpdateBackupWalletFlow";
+import { SyncBackupWalletModal } from './SyncBackupWalletModal';
+import { UpdateBackupWalletPasswordModal } from './UpdateBackupWalletFlow';
 
 const { Text } = Typography;
 
@@ -129,7 +129,7 @@ export const BackupWalletSection = () => {
               </Flex>
             }
           />
-          <Button style={{ alignSelf: "flex-start" }} onClick={openSync}>
+          <Button style={{ alignSelf: 'flex-start' }} onClick={openSync}>
             Sync Now
           </Button>
           <Button className="w-fit text-sm" onClick={openUpdatePassword}>

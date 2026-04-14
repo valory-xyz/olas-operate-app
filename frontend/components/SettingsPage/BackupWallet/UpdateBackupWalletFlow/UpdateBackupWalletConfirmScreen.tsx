@@ -1,43 +1,43 @@
-import { Button, Card, Flex, Typography } from "antd";
-import { useState } from "react";
+import { Button, Card, Flex, Typography } from 'antd';
+import { useState } from 'react';
 
-import { AddressLink, Alert, BackButton, cardStyles } from "@/components/ui";
-import { COLOR } from "@/constants";
-import { SettingsScreenMap } from "@/constants/screen";
+import { AddressLink, Alert, BackButton, cardStyles } from '@/components/ui';
+import { COLOR } from '@/constants';
+import { SettingsScreenMap } from '@/constants/screen';
 import {
   useApplyBackupOwner,
   useBackupOwnerStatus,
   useSettings,
-} from "@/hooks";
-import { Address } from "@/types/Address";
+} from '@/hooks';
+import { Address } from '@/types/Address';
 
-import { useUpdateBackupWallet } from "./UpdateBackupWalletContext";
-import { UpdateBackupWalletResultModal } from "./UpdateBackupWalletResultModal";
+import { useUpdateBackupWallet } from './UpdateBackupWalletContext';
+import { UpdateBackupWalletResultModal } from './UpdateBackupWalletResultModal';
 
 const { Title, Text } = Typography;
 
-type ResultStatus = "idle" | "in_progress" | "success" | "failure";
+type ResultStatus = 'idle' | 'in_progress' | 'success' | 'failure';
 
 export const UpdateBackupWalletConfirmScreen = () => {
   const { goto } = useSettings();
   const { backupOwnerStatus } = useBackupOwnerStatus();
   const { newAddress, password, resetFlow } = useUpdateBackupWallet();
   const { mutateAsync: applyBackupOwner } = useApplyBackupOwner();
-  const [resultStatus, setResultStatus] = useState<ResultStatus>("idle");
+  const [resultStatus, setResultStatus] = useState<ResultStatus>('idle');
 
   const currentAddress = backupOwnerStatus?.canonical_backup_owner ?? null;
 
   const handleConfirm = async () => {
     if (!newAddress) return;
-    setResultStatus("in_progress");
+    setResultStatus('in_progress');
     try {
       await applyBackupOwner({
         backup_owner: newAddress,
         password: password ?? undefined,
       });
-      setResultStatus("success");
+      setResultStatus('success');
     } catch {
-      setResultStatus("failure");
+      setResultStatus('failure');
     }
   };
 
@@ -65,7 +65,7 @@ export const UpdateBackupWalletConfirmScreen = () => {
                 <Flex
                   align="center"
                   style={{
-                    padding: "8px 12px",
+                    padding: '8px 12px',
                     border: `1px solid ${COLOR.BORDER_GRAY}`,
                     borderRadius: 8,
                   }}
@@ -84,7 +84,7 @@ export const UpdateBackupWalletConfirmScreen = () => {
                 <Flex
                   align="center"
                   style={{
-                    padding: "8px 12px",
+                    padding: '8px 12px',
                     border: `1px solid ${COLOR.BORDER_GRAY}`,
                     borderRadius: 8,
                   }}
@@ -117,7 +117,7 @@ export const UpdateBackupWalletConfirmScreen = () => {
         </Card>
       </Flex>
 
-      {resultStatus !== "idle" && (
+      {resultStatus !== 'idle' && (
         <UpdateBackupWalletResultModal
           status={resultStatus}
           onDone={handleDone}
