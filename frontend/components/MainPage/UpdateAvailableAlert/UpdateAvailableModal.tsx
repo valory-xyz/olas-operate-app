@@ -1,6 +1,6 @@
 import { Button, Flex, Modal as AntdModal, Typography } from 'antd';
 import Image from 'next/image';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { PiCaretDownBold, PiCaretRightBold, PiX } from 'react-icons/pi';
 import styled from 'styled-components';
 
@@ -82,7 +82,7 @@ const AccordionContent = styled.div`
   h3 {
     font-size: 14px;
     font-weight: 500;
-    color: black;
+    color: ${COLOR.TEXT};
     margin: 8px 0 4px;
   }
   h1:first-child,
@@ -108,7 +108,7 @@ const AccordionContent = styled.div`
     margin-bottom: 4px;
   }
   li strong {
-    color: black;
+    color: ${COLOR.TEXT};
     font-weight: 500;
   }
 `;
@@ -188,6 +188,13 @@ export const UpdateAvailableModal = ({
   const [modalState, setModalState] = useState<ModalState>('available');
   const [progress, setProgress] = useState<DownloadProgress | null>(null);
 
+  // Keep a ref so the onUpdateDownloaded callback can read the latest modal state
+  // without being stale (avoids quitAndInstall firing after the user cancels).
+  const modalStateRef = useRef<ModalState>(modalState);
+  useEffect(() => {
+    modalStateRef.current = modalState;
+  }, [modalState]);
+
   const { data } = useAppStatus();
   const latestTag = data?.latestTag;
   const releaseNotes = data?.releaseNotes;
@@ -205,6 +212,8 @@ export const UpdateAvailableModal = ({
     const cleanupProgress = autoUpdater.onDownloadProgress?.(setProgress);
 
     const cleanupDownloaded = autoUpdater.onUpdateDownloaded?.(() => {
+      // Only quit-and-install if the download was not cancelled by the user.
+      if (modalStateRef.current !== 'downloading') return;
       autoUpdater.quitAndInstall?.();
     });
 
@@ -218,7 +227,7 @@ export const UpdateAvailableModal = ({
       cleanupDownloaded?.();
       cleanupError?.();
     };
-  }, []);
+  }, [autoUpdater]);
 
   const onUpdateLater = useCallback(() => {
     if (latestTag && store?.set) {

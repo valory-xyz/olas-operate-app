@@ -27,9 +27,19 @@ export const useAppStatus = () => {
         let settled = false;
 
         function cleanup() {
+          clearTimeout(timeoutId);
           cleanupAvailable?.();
           cleanupNotAvailable?.();
         }
+
+        // Timeout: reject if neither update-available nor update-not-available
+        // fires within 30 seconds (e.g. silent network failure in electron-updater).
+        const timeoutId = setTimeout(() => {
+          if (settled) return;
+          settled = true;
+          cleanup();
+          reject(new Error('Update check timed out'));
+        }, 30_000);
 
         const cleanupAvailable = autoUpdater.onUpdateAvailable!((info) => {
           if (settled) return;
@@ -66,6 +76,7 @@ export const useAppStatus = () => {
       });
     },
     refetchInterval: SIXTY_MINUTE_INTERVAL,
+    staleTime: SIXTY_MINUTE_INTERVAL,
     refetchOnWindowFocus: false,
   });
 };

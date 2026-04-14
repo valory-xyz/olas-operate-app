@@ -75,7 +75,11 @@ const registerAutoUpdaterHandlers = ({
         send('update-downloaded');
       } else {
         logger.electron('[OTA] Waiting for Squirrel to finish...');
+        // Remove any previous listener before adding a new one to prevent
+        // accumulation if electron-updater fires update-downloaded multiple times.
+        nativeUpdater.removeAllListeners('update-downloaded');
         nativeUpdater.once('update-downloaded', () => {
+          squirrelReady = true;
           logger.electron('[OTA] Squirrel finished, notifying renderer');
           send('update-downloaded');
         });
@@ -89,6 +93,13 @@ const registerAutoUpdaterHandlers = ({
     logger.electron(`[OTA] Error: ${err.message}`);
     send('update-error', { message: err.message });
   });
+
+  // Remove any pre-existing handlers to avoid duplicate registration errors
+  // (e.g. during dev hot-reload where this module may be re-evaluated).
+  ipcMain.removeHandler('update-check');
+  ipcMain.removeHandler('update-download');
+  ipcMain.removeHandler('update-cancel');
+  ipcMain.removeHandler('update-quit-and-install');
 
   ipcMain.handle('update-check', async () => {
     logger.electron('[OTA] Checking for updates...');
