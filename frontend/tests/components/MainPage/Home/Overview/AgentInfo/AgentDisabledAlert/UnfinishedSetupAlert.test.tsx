@@ -45,13 +45,13 @@ describe('UnfinishedSetupAlert', () => {
     jest.clearAllMocks();
   });
 
-  it('disables the Complete Setup button when setupState is detecting', () => {
+  it('shows the Complete Setup button in a loading state when setupState is detecting', () => {
     render(
       <UnfinishedSetupAlert {...makeProps({ setupState: 'detecting' })} />,
     );
     expect(
-      screen.getByRole('button', { name: 'Complete Setup' }),
-    ).toBeDisabled();
+      document.querySelector('button.ant-btn-loading'),
+    ).toBeInTheDocument();
   });
 
   it('enables the Complete Setup button when setupState is not detecting', () => {

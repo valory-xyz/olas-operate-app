@@ -47,7 +47,7 @@ export const UnfinishedSetupAlert = ({
           <Button
             size="small"
             onClick={handleCompleteSetup}
-            disabled={setupState === 'detecting'}
+            loading={setupState === 'detecting'}
           >
             Complete Setup
           </Button>
