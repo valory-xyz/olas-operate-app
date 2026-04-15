@@ -132,6 +132,7 @@ export const useCompleteAgentSetup = (): UseCompleteAgentSetupReturn => {
     hasAttemptedCreation.current = false;
     setModalToShow('finishing');
     createMasterSafe();
+    hasAttemptedCreation.current = true;
   }, [createMasterSafe]);
 
   const handleContactSupport = useCallback(() => {
