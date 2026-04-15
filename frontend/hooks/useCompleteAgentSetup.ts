@@ -24,6 +24,7 @@ export type UseCompleteAgentSetupReturn = {
   handleCompleteSetup: () => void;
   modalToShow: ModalToShow;
   shouldNavigateToFundYourAgent: boolean;
+  resetShouldNavigate: () => void;
   handleTryAgain: () => void;
   handleContactSupport: () => void;
 };
@@ -42,7 +43,8 @@ const allRequirementsMet = (
       (balance) => balance.symbol === requirement.symbol,
     );
     return (
-      walletBalance !== undefined && walletBalance.balance >= requirement.amount
+      walletBalance !== undefined &&
+      Number(walletBalance.balanceString ?? '0') >= requirement.amount
     );
   });
 };
@@ -135,6 +137,10 @@ export const useCompleteAgentSetup = (): UseCompleteAgentSetupReturn => {
     hasAttemptedCreation.current = true;
   }, [createMasterSafe]);
 
+  const resetShouldNavigate = useCallback(() => {
+    setShouldNavigateToFundYourAgent(false);
+  }, []);
+
   const handleContactSupport = useCallback(() => {
     toggleSupportModal();
   }, [toggleSupportModal]);
@@ -144,6 +150,7 @@ export const useCompleteAgentSetup = (): UseCompleteAgentSetupReturn => {
     handleCompleteSetup,
     modalToShow,
     shouldNavigateToFundYourAgent,
+    resetShouldNavigate,
     handleTryAgain,
     handleContactSupport,
   };

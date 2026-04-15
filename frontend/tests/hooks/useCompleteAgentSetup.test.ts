@@ -8,7 +8,10 @@ import { useMasterSafeCreationAndTransfer } from '../../hooks/useMasterSafeCreat
 import { useServices } from '../../hooks/useServices';
 import { useMasterWalletContext } from '../../hooks/useWallet';
 import {
-  DEFAULT_EOA_ADDRESS,
+  makeOlasBalance,
+  makeOlasRequirement,
+  makeUsdceBalance,
+  makeUsdceRequirement,
   POLYGON_SAFE_ADDRESS,
 } from '../helpers/factories';
 
@@ -50,34 +53,6 @@ const mockToggleSupportModal = jest.fn();
 const mockCreateMasterSafe = jest.fn();
 
 const POLYGON_CHAIN_ID = EvmChainIdMap.Polygon;
-
-const makeOlasRequirement = () => ({
-  symbol: 'OLAS',
-  amount: 100,
-  iconSrc: '/tokens/olas-icon.png',
-});
-
-const makeUsdceRequirement = () => ({
-  symbol: 'USDC.e',
-  amount: 50,
-  iconSrc: '/tokens/usdc-icon.png',
-});
-
-const makeOlasBalance = (balance: number) => ({
-  walletAddress: DEFAULT_EOA_ADDRESS,
-  evmChainId: POLYGON_CHAIN_ID,
-  symbol: 'OLAS',
-  isNative: false,
-  balance,
-});
-
-const makeUsdceBalance = (balance: number) => ({
-  walletAddress: DEFAULT_EOA_ADDRESS,
-  evmChainId: POLYGON_CHAIN_ID,
-  symbol: 'USDC.e',
-  isNative: false,
-  balance,
-});
 
 const setupMocks = ({
   isLoading = false,
@@ -235,6 +210,19 @@ describe('useCompleteAgentSetup', () => {
         result.current.handleCompleteSetup();
       });
       expect(result.current.shouldNavigateToFundYourAgent).toBe(true);
+    });
+
+    it('resets shouldNavigateToFundYourAgent to false after resetShouldNavigate', () => {
+      setupMocks({ masterSafeAddress: null, eoaBalances: [] });
+      const { result } = renderHook(() => useCompleteAgentSetup());
+      act(() => {
+        result.current.handleCompleteSetup();
+      });
+      expect(result.current.shouldNavigateToFundYourAgent).toBe(true);
+      act(() => {
+        result.current.resetShouldNavigate();
+      });
+      expect(result.current.shouldNavigateToFundYourAgent).toBe(false);
     });
   });
 
