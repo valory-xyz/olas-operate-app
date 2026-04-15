@@ -14,6 +14,7 @@ const { Text } = Typography;
 type BackupWalletWeb3AuthProps = {
   onSetUpManuallyClick: () => void;
   onFinish?: (address: Address) => void;
+  showSuccessMessage?: boolean;
 };
 
 const Web3AuthCaption = () => {
@@ -38,6 +39,7 @@ const Web3AuthCaption = () => {
 export const BackupWalletWeb3Auth = ({
   onSetUpManuallyClick,
   onFinish,
+  showSuccessMessage = true,
 }: BackupWalletWeb3AuthProps) => {
   const { goto } = useSetup();
 
@@ -51,6 +53,7 @@ export const BackupWalletWeb3Auth = ({
 
   const { openWeb3AuthModel } = useWeb3AuthBackupWallet({
     onFinish: handleWeb3AuthSetupFinish,
+    showSuccessMessage,
   });
 
   return (

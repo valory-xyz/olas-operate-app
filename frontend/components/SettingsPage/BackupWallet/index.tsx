@@ -162,13 +162,13 @@ export const BackupWalletSection = () => {
             ) : (
               <Text type="secondary">—</Text>
             )}
+            {canonicalAddress && (
+              <Button className="w-fit text-sm" onClick={openUpdatePassword}>
+                Update Backup Wallet
+              </Button>
+            )}
           </Flex>
         </Flex>
-        {canonicalAddress && (
-          <Button className="w-fit text-sm" onClick={openUpdatePassword}>
-            Update Backup Wallet
-          </Button>
-        )}
       </CardSection>
 
       <UpdateBackupWalletPasswordModal

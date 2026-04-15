@@ -55,6 +55,7 @@ export const AddBackupWalletMethodScreen = () => {
               goto(SettingsScreenMap.AddBackupWalletManual)
             }
             onFinish={handleWeb3AuthFinish}
+            showSuccessMessage={false}
           />
         </Flex>
       </Card>
