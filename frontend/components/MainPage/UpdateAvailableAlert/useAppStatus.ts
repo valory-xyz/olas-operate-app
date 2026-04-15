@@ -1,61 +1,84 @@
 import { useQuery } from '@tanstack/react-query';
-import semver from 'semver';
 
-import {
-  FIVE_MINUTE_INTERVAL,
-  GITHUB_API_LATEST_RELEASE,
-  REACT_QUERY_KEYS,
-} from '@/constants';
+import { REACT_QUERY_KEYS, SIXTY_MINUTE_INTERVAL } from '@/constants';
 import { useElectronApi } from '@/hooks';
-
-export enum SemverComparisonResult {
-  OUTDATED = -1,
-  EQUAL = 0,
-  UPDATED = 1,
-}
 
 type useAppStatusResult = {
   isOutdated: boolean;
   latestTag: string | null;
+  releaseNotes: string | null;
 };
 
 export const useAppStatus = () => {
-  const { getAppVersion } = useElectronApi();
+  const { autoUpdater } = useElectronApi();
 
   return useQuery<useAppStatusResult, Error>({
     queryKey: REACT_QUERY_KEYS.IS_PEARL_OUTDATED_KEY,
-    queryFn: async (): Promise<useAppStatusResult> => {
-      if (!getAppVersion) {
-        throw new Error('getAppVersion is not available');
+    queryFn: (ctx): Promise<useAppStatusResult> => {
+      const signal = ctx?.signal;
+      if (
+        !autoUpdater?.checkForUpdates ||
+        !autoUpdater?.onUpdateAvailable ||
+        !autoUpdater?.onUpdateNotAvailable
+      ) {
+        return Promise.reject(new Error('autoUpdater API is not available'));
       }
 
-      const appVersion = await getAppVersion();
-      if (!appVersion) throw new Error('App version is undefined');
+      return new Promise<useAppStatusResult>((resolve, reject) => {
+        let settled = false;
 
-      const response = await fetch(GITHUB_API_LATEST_RELEASE);
-      if (!response.ok) {
-        throw new Error('Failed to fetch latest release');
-      }
+        function cleanup() {
+          clearTimeout(timeoutId);
+          cleanupAvailable?.();
+          cleanupNotAvailable?.();
+        }
 
-      const data = await response.json();
-      const latestTag: string = data.tag_name;
-      const latestVersion = semver.parse(latestTag);
-      const currentVersion = semver.parse(appVersion);
+        // Timeout: reject if neither update-available nor update-not-available
+        // fires within 30 seconds (e.g. silent network failure in electron-updater).
+        const timeoutId = setTimeout(() => {
+          if (settled) return;
+          settled = true;
+          cleanup();
+          reject(new Error('Update check timed out'));
+        }, 30_000);
 
-      if (!latestVersion || !currentVersion) {
-        throw new Error('Failed to parse semver');
-      }
+        const cleanupAvailable = autoUpdater.onUpdateAvailable!((info) => {
+          if (settled) return;
+          settled = true;
+          cleanup();
+          resolve({
+            isOutdated: true,
+            latestTag: info.version,
+            releaseNotes:
+              typeof info.releaseNotes === 'string' ? info.releaseNotes : null,
+          });
+        });
 
-      const isOutdated =
-        semver.compare(appVersion, latestVersion) ===
-        SemverComparisonResult.OUTDATED;
+        const cleanupNotAvailable = autoUpdater.onUpdateNotAvailable!(() => {
+          if (settled) return;
+          settled = true;
+          cleanup();
+          resolve({ isOutdated: false, latestTag: null, releaseNotes: null });
+        });
 
-      return {
-        isOutdated,
-        latestTag,
-      };
+        autoUpdater.checkForUpdates!().catch((err: Error) => {
+          if (settled) return;
+          settled = true;
+          cleanup();
+          reject(err);
+        });
+
+        signal?.addEventListener('abort', () => {
+          if (settled) return;
+          settled = true;
+          cleanup();
+          reject(new DOMException('Aborted', 'AbortError'));
+        });
+      });
     },
-    refetchInterval: FIVE_MINUTE_INTERVAL,
+    refetchInterval: SIXTY_MINUTE_INTERVAL,
+    refetchIntervalInBackground: true,
+    staleTime: SIXTY_MINUTE_INTERVAL,
     refetchOnWindowFocus: false,
   });
 };

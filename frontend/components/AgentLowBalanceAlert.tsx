@@ -1,7 +1,5 @@
 import { Button, Typography } from 'antd';
 
-// TODO: move to shared hooks
-import { useAgentWallet } from '@/components/AgentWallet';
 import { Alert } from '@/components/ui';
 import { useAgentFundingRequests } from '@/hooks';
 
@@ -9,27 +7,11 @@ const { Text } = Typography;
 
 type AgentLowBalanceAlertProps = {
   onFund: () => void;
-  needInitialValues?: boolean;
 };
 
-export const AgentLowBalanceAlert = ({
-  onFund,
-  needInitialValues,
-}: AgentLowBalanceAlertProps) => {
-  const {
-    isAgentBalanceLow,
-    agentTokenRequirements,
-    agentTokenRequirementsFormatted,
-  } = useAgentFundingRequests();
-
-  const { setFundInitialValues } = useAgentWallet();
-
-  const handleFundClick = () => {
-    if (needInitialValues && agentTokenRequirements) {
-      setFundInitialValues(agentTokenRequirements);
-    }
-    onFund();
-  };
+export const AgentLowBalanceAlert = ({ onFund }: AgentLowBalanceAlertProps) => {
+  const { isAgentBalanceLow, agentTokenRequirementsFormatted } =
+    useAgentFundingRequests();
 
   if (!isAgentBalanceLow) return null;
 
@@ -51,7 +33,7 @@ export const AgentLowBalanceAlert = ({
             perform on-chain activity and meet staking requirements.
           </Text>
           <br />
-          <Button onClick={handleFundClick} size="small" className="mt-8">
+          <Button onClick={onFund} size="small" className="mt-8">
             Fund Agent
           </Button>
         </>
