@@ -169,7 +169,7 @@ const RecoveryProcessInProgress = () => (
 
 const ErrorMessages = ['does not exist', 'file does not exist', 'not exist'];
 
-const SetupWelcomeLogin = () => {
+export const SetupWelcomeLogin = () => {
   const [form] = Form.useForm();
   const message = useMessageApi();
   const { goto } = useSetup();
