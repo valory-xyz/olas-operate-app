@@ -105,7 +105,6 @@ export const useCompleteAgentSetup = (): UseCompleteAgentSetupReturn => {
     evmHomeChainId,
   ]);
 
-  // Derive authoritative success/failure state from data, mirroring TransferFunds.tsx
   const isSafeCreated = isMasterWalletFetched
     ? !isNil(getMasterSafeOf?.(evmHomeChainId)) ||
       creationAndTransferDetails?.safeCreationDetails?.isSafeCreated
