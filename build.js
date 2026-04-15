@@ -49,10 +49,6 @@ const main = async () => {
             target: 'dmg',
             arch: [process.env.ARCH], // ARCH env is set during release CI
           },
-          {
-            target: 'zip',
-            arch: [process.env.ARCH],
-          },
         ],
         publish: publishOptions,
         category: 'public.app-category.utilities',
@@ -65,17 +61,6 @@ const main = async () => {
           '.*/_internal/.*',
           '.*/bins/middleware/pearl.*'
         ],
-      },
-      dmg: {
-        // Explicit DMG filesystem size to avoid "No space left on device"
-        // during dmgbuild's ditto copy. The default auto-sizing underestimates
-        // for apps containing sparse files (e.g. pyinstaller-packaged Python
-        // binaries), causing ditto to silently truncate the Electron Framework
-        // binary and producing a DMG Gatekeeper rejects with "no usable
-        // signature". See electron-userland/electron-builder#8223. Output DMG
-        // is still compressed via default UDZO format — shrink=true (default)
-        // reduces the final artifact after packaging.
-        size: '2g',
       },
     },
   });
