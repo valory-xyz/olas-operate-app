@@ -73,10 +73,6 @@ export const AgentDisabledAlert = () => {
       return { key: 'under-construction', content: <UnderConstructionAlert /> };
     }
 
-    if (isAnotherAgentRunning) {
-      return { key: 'another-running', content: <AgentRunningAlert /> };
-    }
-
     // The "store" is `undefined` during updates, hence waiting till we get the correct value from the store.
     if (isInitialFunded === false) {
       return {
@@ -90,6 +86,10 @@ export const AgentDisabledAlert = () => {
           />
         ),
       };
+    }
+
+    if (isAnotherAgentRunning) {
+      return { key: 'another-running', content: <AgentRunningAlert /> };
     }
 
     if (selectedStakingProgramMeta && selectedStakingProgramMeta.deprecated) {
