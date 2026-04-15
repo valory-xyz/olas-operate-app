@@ -286,6 +286,7 @@ describe('useCompleteAgentSetup', () => {
         creationAndTransferDetails: {
           safeCreationDetails: {
             isSafeCreated: false,
+            txnLink: null,
             status: 'error',
           },
           transferDetails: {
@@ -303,6 +304,7 @@ describe('useCompleteAgentSetup', () => {
         creationAndTransferDetails: {
           safeCreationDetails: {
             isSafeCreated: true,
+            txnLink: null,
             status: 'finish',
           },
           transferDetails: {
@@ -324,6 +326,7 @@ describe('useCompleteAgentSetup', () => {
         creationAndTransferDetails: {
           safeCreationDetails: {
             isSafeCreated: true,
+            txnLink: null,
             status: 'finish',
           },
           transferDetails: {
@@ -375,7 +378,7 @@ describe('useCompleteAgentSetup', () => {
         isLoadingMasterSafeCreation: false,
         isErrorMasterSafeCreation: false,
         creationAndTransferDetails: {
-          safeCreationDetails: { isSafeCreated: true, status: 'finish' },
+          safeCreationDetails: { isSafeCreated: true, txnLink: null, status: 'finish' },
           transferDetails: { isTransferComplete: true, transfers: [] },
         },
       });
