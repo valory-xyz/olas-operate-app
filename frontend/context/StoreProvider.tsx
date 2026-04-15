@@ -211,19 +211,18 @@ export const StoreProvider = ({ children }: PropsWithChildren) => {
   }, []);
 
   // Migration: copy backend-bound keys from Electron store to pearl_store.json.
-  // Runs when the backend store is empty but Electron store has data — handles
-  // both first upgrade and .operate folder swaps on the same machine.
+  // Runs when the Electron store has keys that the backend store is missing.
+  // Handles first upgrade, .operate folder swaps, and partial migrations.
+  const migrationAttempted = useRef(false);
   useEffect(() => {
     const storeGet = store?.get;
-    const storeSet = store?.set;
-    if (!storeGet || !storeSet) return;
-    // Wait for hydration to complete so we can check if backend store is empty.
+    if (!storeGet) return;
     if (!isHydratedRef.current) return;
+    if (migrationAttempted.current) return;
+    migrationAttempted.current = true;
 
-    // If backend already has data, no migration needed.
-    if (storeState && Object.keys(storeState).length > 0) return;
-
-    // Check if Electron store has any backend-bound keys worth migrating.
+    // Read all backend-bound keys from Electron store, then migrate any
+    // that are present in Electron but missing from the backend store.
     Promise.all(
       BACKEND_BOUND_KEYS.map((key) =>
         storeGet(key).then((value) => ({ key, value })),
@@ -231,21 +230,25 @@ export const StoreProvider = ({ children }: PropsWithChildren) => {
     )
       .then((entries) => {
         const toMigrate = entries.filter(
-          ({ value }) => value !== undefined && value !== null,
+          ({ key, value }) =>
+            value !== undefined &&
+            value !== null &&
+            (storeState as Record<string, unknown>)?.[key] === undefined,
         );
         if (toMigrate.length === 0) {
-          log('No Electron store data to migrate');
+          log('No Electron store keys to migrate');
           return;
         }
 
-        log('Starting migration to pearl_store.json');
+        log(
+          `Migrating ${toMigrate.length} keys: ${toMigrate.map((e) => e.key).join(', ')}`,
+        );
 
         return Promise.all(
           toMigrate.map(({ key, value }) =>
             StoreService.setStoreKey(key, value),
           ),
         ).then(() =>
-          // Refresh storeState from the now-populated pearl_store.json.
           StoreService.getStore().then((data) => {
             const finalState = drainPendingOps(data);
             isHydratedRef.current = true;
