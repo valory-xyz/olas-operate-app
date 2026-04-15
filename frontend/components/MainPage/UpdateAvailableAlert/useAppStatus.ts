@@ -77,6 +77,7 @@ export const useAppStatus = () => {
       });
     },
     refetchInterval: SIXTY_MINUTE_INTERVAL,
+    refetchIntervalInBackground: true,
     staleTime: SIXTY_MINUTE_INTERVAL,
     refetchOnWindowFocus: false,
   });
