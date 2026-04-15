@@ -282,6 +282,41 @@ describe('useCompleteAgentSetup', () => {
       expect(result.current.modalToShow).toBe('complete');
     });
 
+    it('does not re-fire mutation when handleCompleteSetup is called after post-success transition to readyToComplete', () => {
+      // Initial state: Safe not yet deployed, EOA funded — triggers needsSafeCreation
+      setupMocks({
+        masterSafeAddress: null,
+        eoaBalances: [makeOlasBalance(100), makeUsdceBalance(50)],
+        isSuccessMasterSafeCreation: false,
+      });
+      const { result, rerender } = renderHook(() => useCompleteAgentSetup());
+
+      // First call fires the mutation
+      act(() => {
+        result.current.handleCompleteSetup();
+      });
+      expect(result.current.setupState).toBe('needsSafeCreation');
+      expect(mockCreateMasterSafe).toHaveBeenCalledTimes(1);
+
+      // Simulate post-success: Safe is now deployed + funded, mutation isSuccess = true
+      setupMocks({
+        masterSafeAddress: POLYGON_SAFE_ADDRESS,
+        safeBalances: [makeOlasBalance(100), makeUsdceBalance(50)],
+        isSuccessMasterSafeCreation: true,
+      });
+      rerender();
+
+      expect(result.current.setupState).toBe('readyToComplete');
+      expect(result.current.modalToShow).toBe('complete');
+
+      // Calling handleCompleteSetup again must NOT re-fire the mutation
+      act(() => {
+        result.current.handleCompleteSetup();
+      });
+      expect(mockCreateMasterSafe).toHaveBeenCalledTimes(1);
+      expect(result.current.modalToShow).toBe('complete');
+    });
+
     it('sets modalToShow to failed on mutation error', () => {
       setupMocks({ isErrorMasterSafeCreation: true });
       const { result } = renderHook(() => useCompleteAgentSetup());
