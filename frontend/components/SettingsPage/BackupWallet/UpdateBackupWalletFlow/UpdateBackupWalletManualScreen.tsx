@@ -21,9 +21,17 @@ export const UpdateBackupWalletManualScreen = () => {
   const currentAddress = backupOwnerStatus?.canonical_backup_owner ?? null;
 
   const handleManualSubmit = (values: { 'backup-signer': string }) => {
-    const checksummedAddress = getAddress(
-      values['backup-signer'].toLowerCase(),
-    ) as Address;
+    let checksummedAddress: Address;
+    try {
+      checksummedAddress = getAddress(
+        values['backup-signer'].toLowerCase(),
+      ) as Address;
+    } catch {
+      form.setFields([
+        { name: 'backup-signer', errors: ['Invalid Ethereum address'] },
+      ]);
+      return;
+    }
 
     if (
       currentAddress &&

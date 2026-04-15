@@ -22,9 +22,17 @@ export const AddBackupWalletManualScreen = () => {
   const [status, setStatus] = useState<AddBackupWalletStatus>('idle');
 
   const handleSubmit = async (values: { 'backup-signer': string }) => {
-    const checksummedAddress = getAddress(
-      values['backup-signer'].toLowerCase(),
-    ) as Address;
+    let checksummedAddress: Address;
+    try {
+      checksummedAddress = getAddress(
+        values['backup-signer'].toLowerCase(),
+      ) as Address;
+    } catch {
+      form.setFields([
+        { name: 'backup-signer', errors: ['Invalid Ethereum address'] },
+      ]);
+      return;
+    }
 
     setStatus('in_progress');
     try {
