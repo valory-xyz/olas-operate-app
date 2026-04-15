@@ -378,7 +378,11 @@ describe('useCompleteAgentSetup', () => {
         isLoadingMasterSafeCreation: false,
         isErrorMasterSafeCreation: false,
         creationAndTransferDetails: {
-          safeCreationDetails: { isSafeCreated: true, txnLink: null, status: 'finish' },
+          safeCreationDetails: {
+            isSafeCreated: true,
+            txnLink: null,
+            status: 'finish',
+          },
           transferDetails: { isTransferComplete: true, transfers: [] },
         },
       });
