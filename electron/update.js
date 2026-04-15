@@ -1,27 +1,22 @@
 const { publishOptions } = require('./constants');
 const electronUpdater = require('electron-updater');
-const logger = require('./logger');
+const { logger } = require('./logger');
 
 const updateOptions = {
   ...publishOptions,
-  // token is not required for macUpdater as repo is public, should overwrite it to undefined
-  token: undefined,
-  channels: ['latest', 'beta', 'alpha'],
+  channels: ['latest'],
 };
 
-const macUpdater = new electronUpdater.MacUpdater({
-  ...updateOptions,
-});
+const autoUpdater = electronUpdater.autoUpdater;
 
-macUpdater.setFeedURL({ ...updateOptions });
+autoUpdater.setFeedURL({ ...updateOptions });
 
-macUpdater.autoDownload = false;
-macUpdater.autoInstallOnAppQuit = false;
-macUpdater.logger = logger;
+autoUpdater.autoDownload = false;
+autoUpdater.autoInstallOnAppQuit = true;
+// Always download the full zip. The differential/blockmap path causes
+// the progress bar to report the diff size first, then jump to the full
+// size when it falls back — confusing and a frequent source of bugs.
+autoUpdater.disableDifferentialDownload = true;
+autoUpdater.logger = logger;
 
-// UPDATER EVENTS
-macUpdater.on('update-downloaded', () => {
-  macUpdater.quitAndInstall();
-});
-
-module.exports = { macUpdater };
+module.exports = { autoUpdater };

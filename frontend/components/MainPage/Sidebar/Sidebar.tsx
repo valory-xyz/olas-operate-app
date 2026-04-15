@@ -51,6 +51,7 @@ import { UpdateAvailableModal } from '../UpdateAvailableAlert/UpdateAvailableMod
 import { AgentTreeMenu } from './AgentTreeMenu';
 import { ArchiveAgentModal } from './ArchiveAgentModal';
 import { AutoRunControl } from './AutoRunControl';
+import { useAutoOpenUpdateModal } from './hooks/useAutoOpenUpdateModal';
 import { useListFade } from './hooks/useListFade';
 import { SidebarAgentGroup } from './types';
 
@@ -151,6 +152,12 @@ export const Sidebar = () => {
   } = useServices();
   const { isLoading: isMasterWalletLoading } = useMasterWalletContext();
   const { fade, ref: scrollAreaRef } = useListFade();
+
+  const {
+    isOpen: isUpdateModalOpen,
+    open: openUpdateModal,
+    close: closeUpdateModal,
+  } = useAutoOpenUpdateModal();
 
   const {
     pendingArchiveInstanceId,
@@ -348,8 +355,11 @@ export const Sidebar = () => {
 
           <div className="p-16">
             <BackupSeedPhraseAlert />
-            <UpdateAvailableAlert />
-            <UpdateAvailableModal />
+            <UpdateAvailableAlert onOpen={openUpdateModal} />
+            <UpdateAvailableModal
+              isOpen={isUpdateModalOpen}
+              onClose={closeUpdateModal}
+            />
 
             <Menu
               selectedKeys={selectedBottomMenuKey}

@@ -50,6 +50,7 @@ const main = async () => {
             arch: [process.env.ARCH || 'x64'],
           }
         ],
+        publish: publishOptions,
         category: 'Utility',
         icon: 'electron/assets/icons',
         maintainer: 'Valory',

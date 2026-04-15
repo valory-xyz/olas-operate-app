@@ -1,10 +1,6 @@
 import { renderHook } from '@testing-library/react';
 
-import {
-  FIVE_MINUTE_INTERVAL,
-  GITHUB_API_LATEST_RELEASE,
-  REACT_QUERY_KEYS,
-} from '../../../../constants';
+import { REACT_QUERY_KEYS, SIXTY_MINUTE_INTERVAL } from '../../../../constants';
 
 // --- Mocks ---
 
@@ -17,16 +13,24 @@ jest.mock(
 jest.mock('../../../../constants/providers', () => ({}));
 jest.mock('../../../../config/providers', () => ({ providers: [] }));
 
-const mockGetAppVersion = jest.fn();
+const mockCheckForUpdates = jest.fn();
+const mockOnUpdateAvailable = jest.fn();
+const mockOnUpdateNotAvailable = jest.fn();
 
 jest.mock('../../../../hooks', () => ({
-  useElectronApi: () => ({ getAppVersion: mockGetAppVersion }),
+  useElectronApi: () => ({
+    autoUpdater: {
+      checkForUpdates: mockCheckForUpdates,
+      onUpdateAvailable: mockOnUpdateAvailable,
+      onUpdateNotAvailable: mockOnUpdateNotAvailable,
+    },
+  }),
 }));
 
 // Capture useQuery config to test query options without running real queries
 type CapturedConfig = {
   queryKey: unknown[];
-  queryFn: () => Promise<unknown>;
+  queryFn: (ctx?: { signal?: AbortSignal }) => Promise<unknown>;
   refetchInterval: number;
   refetchOnWindowFocus: boolean;
 };
@@ -40,10 +44,6 @@ jest.mock('@tanstack/react-query', () => ({
   },
 }));
 
-// Mock global fetch
-const mockFetch = jest.fn();
-global.fetch = mockFetch;
-
 // --- Tests ---
 
 describe('useAppStatus', () => {
@@ -51,31 +51,20 @@ describe('useAppStatus', () => {
   /* eslint-disable @typescript-eslint/no-var-requires */
   const {
     useAppStatus,
-    SemverComparisonResult,
   } = require('../../../../components/MainPage/UpdateAvailableAlert/useAppStatus');
   /* eslint-enable @typescript-eslint/no-var-requires */
 
   beforeEach(() => {
     jest.clearAllMocks();
     capturedConfig = null;
+    // Default: listeners return cleanup fns, checkForUpdates never resolves
+    mockOnUpdateAvailable.mockReturnValue(() => {});
+    mockOnUpdateNotAvailable.mockReturnValue(() => {});
+    mockCheckForUpdates.mockReturnValue(new Promise(() => {}));
   });
 
   afterEach(() => {
     jest.restoreAllMocks();
-  });
-
-  describe('SemverComparisonResult enum', () => {
-    it('has OUTDATED = -1', () => {
-      expect(SemverComparisonResult.OUTDATED).toBe(-1);
-    });
-
-    it('has EQUAL = 0', () => {
-      expect(SemverComparisonResult.EQUAL).toBe(0);
-    });
-
-    it('has UPDATED = 1', () => {
-      expect(SemverComparisonResult.UPDATED).toBe(1);
-    });
   });
 
   describe('query config', () => {
@@ -88,10 +77,10 @@ describe('useAppStatus', () => {
       );
     });
 
-    it('sets refetchInterval to FIVE_MINUTE_INTERVAL', () => {
+    it('sets refetchInterval to SIXTY_MINUTE_INTERVAL', () => {
       renderHook(() => useAppStatus());
 
-      expect(capturedConfig!.refetchInterval).toBe(FIVE_MINUTE_INTERVAL);
+      expect(capturedConfig!.refetchInterval).toBe(SIXTY_MINUTE_INTERVAL);
     });
 
     it('sets refetchOnWindowFocus to false', () => {
@@ -102,11 +91,9 @@ describe('useAppStatus', () => {
   });
 
   describe('queryFn', () => {
-    it('throws when getAppVersion is undefined', async () => {
-      // Need to re-require the module to pick up the new mock
+    it('rejects when autoUpdater API is not available', async () => {
       jest.resetModules();
 
-      // Re-setup the mocks after resetModules
       /* eslint-disable @typescript-eslint/no-var-requires */
       jest.doMock(
         'ethers-multicall',
@@ -115,7 +102,7 @@ describe('useAppStatus', () => {
       jest.doMock('../../../../constants/providers', () => ({}));
       jest.doMock('../../../../config/providers', () => ({ providers: [] }));
       jest.doMock('../../../../hooks', () => ({
-        useElectronApi: () => ({ getAppVersion: undefined }),
+        useElectronApi: () => ({ autoUpdater: undefined }),
       }));
 
       let innerCapturedConfig: CapturedConfig | null = null;
@@ -134,148 +121,170 @@ describe('useAppStatus', () => {
       renderHook(() => freshUseAppStatus());
 
       await expect(innerCapturedConfig!.queryFn()).rejects.toThrow(
-        'getAppVersion is not available',
+        'autoUpdater API is not available',
       );
     });
 
-    it('throws when appVersion is undefined', async () => {
-      mockGetAppVersion.mockResolvedValue(undefined);
+    it('resolves with isOutdated=true when onUpdateAvailable fires', async () => {
+      let capturedCb:
+        | ((info: { version: string; releaseNotes: string }) => void)
+        | null = null;
+      mockOnUpdateAvailable.mockImplementation(
+        (cb: (info: { version: string; releaseNotes: string }) => void) => {
+          capturedCb = cb;
+          return () => {};
+        },
+      );
+      mockCheckForUpdates.mockReturnValue(new Promise(() => {}));
 
       renderHook(() => useAppStatus());
 
-      await expect(capturedConfig!.queryFn()).rejects.toThrow(
-        'App version is undefined',
-      );
-    });
+      const promise = capturedConfig!.queryFn();
 
-    it('throws when fetch response is not ok', async () => {
-      mockGetAppVersion.mockResolvedValue('1.0.0');
-      mockFetch.mockResolvedValue({ ok: false });
-
-      renderHook(() => useAppStatus());
-
-      await expect(capturedConfig!.queryFn()).rejects.toThrow(
-        'Failed to fetch latest release',
-      );
-      expect(mockFetch).toHaveBeenCalledWith(GITHUB_API_LATEST_RELEASE);
-    });
-
-    it('throws when semver cannot parse the latest tag', async () => {
-      mockGetAppVersion.mockResolvedValue('1.0.0');
-      mockFetch.mockResolvedValue({
-        ok: true,
-        json: async () => ({ tag_name: 'not-a-valid-semver' }),
+      // Simulate update-available event firing
+      capturedCb!({
+        version: 'v2.0.0',
+        releaseNotes: '## New features\n- OTA',
       });
 
-      renderHook(() => useAppStatus());
-
-      await expect(capturedConfig!.queryFn()).rejects.toThrow(
-        'Failed to parse semver',
-      );
-    });
-
-    it('throws when semver cannot parse the current version', async () => {
-      mockGetAppVersion.mockResolvedValue('not-valid');
-      mockFetch.mockResolvedValue({
-        ok: true,
-        json: async () => ({ tag_name: 'v1.2.0' }),
-      });
-
-      renderHook(() => useAppStatus());
-
-      await expect(capturedConfig!.queryFn()).rejects.toThrow(
-        'Failed to parse semver',
-      );
-    });
-
-    it('returns isOutdated=true when current version < latest version', async () => {
-      mockGetAppVersion.mockResolvedValue('1.0.0');
-      mockFetch.mockResolvedValue({
-        ok: true,
-        json: async () => ({ tag_name: 'v2.0.0' }),
-      });
-
-      renderHook(() => useAppStatus());
-
-      const result = await capturedConfig!.queryFn();
+      const result = await promise;
       expect(result).toEqual({
         isOutdated: true,
         latestTag: 'v2.0.0',
+        releaseNotes: '## New features\n- OTA',
       });
     });
 
-    it('returns isOutdated=false when current version = latest version', async () => {
-      mockGetAppVersion.mockResolvedValue('1.0.0');
-      mockFetch.mockResolvedValue({
-        ok: true,
-        json: async () => ({ tag_name: 'v1.0.0' }),
+    it('resolves with isOutdated=false when onUpdateNotAvailable fires', async () => {
+      let capturedNotAvailableCb: (() => void) | null = null;
+      mockOnUpdateNotAvailable.mockImplementation((cb: () => void) => {
+        capturedNotAvailableCb = cb;
+        return () => {};
       });
+      mockCheckForUpdates.mockReturnValue(new Promise(() => {}));
 
       renderHook(() => useAppStatus());
 
-      const result = await capturedConfig!.queryFn();
+      const promise = capturedConfig!.queryFn();
+
+      capturedNotAvailableCb!();
+
+      const result = await promise;
       expect(result).toEqual({
         isOutdated: false,
-        latestTag: 'v1.0.0',
+        latestTag: null,
+        releaseNotes: null,
       });
     });
 
-    it('returns isOutdated=false when current version > latest version', async () => {
-      mockGetAppVersion.mockResolvedValue('3.0.0');
-      mockFetch.mockResolvedValue({
-        ok: true,
-        json: async () => ({ tag_name: 'v2.0.0' }),
-      });
+    it('rejects when checkForUpdates throws and no event has fired', async () => {
+      mockOnUpdateAvailable.mockReturnValue(() => {});
+      mockOnUpdateNotAvailable.mockReturnValue(() => {});
+      mockCheckForUpdates.mockRejectedValue(new Error('network error'));
 
       renderHook(() => useAppStatus());
 
-      const result = await capturedConfig!.queryFn();
-      expect(result).toEqual({
-        isOutdated: false,
-        latestTag: 'v2.0.0',
-      });
+      await expect(capturedConfig!.queryFn()).rejects.toThrow('network error');
     });
 
-    it('returns the latestTag from the GitHub API response', async () => {
-      mockGetAppVersion.mockResolvedValue('1.0.0');
-      mockFetch.mockResolvedValue({
-        ok: true,
-        json: async () => ({ tag_name: 'v1.5.3' }),
+    it('calls checkForUpdates', async () => {
+      let capturedNotAvailableCb: (() => void) | null = null;
+      mockOnUpdateNotAvailable.mockImplementation((cb: () => void) => {
+        capturedNotAvailableCb = cb;
+        return () => {};
       });
+      mockCheckForUpdates.mockReturnValue(new Promise(() => {}));
 
       renderHook(() => useAppStatus());
 
-      const result = await capturedConfig!.queryFn();
-      expect(result).toHaveProperty('latestTag', 'v1.5.3');
+      const promise = capturedConfig!.queryFn();
+      capturedNotAvailableCb!();
+      await promise;
+
+      expect(mockCheckForUpdates).toHaveBeenCalledTimes(1);
     });
 
-    it('fetches from GITHUB_API_LATEST_RELEASE URL', async () => {
-      mockGetAppVersion.mockResolvedValue('1.0.0');
-      mockFetch.mockResolvedValue({
-        ok: true,
-        json: async () => ({ tag_name: 'v1.0.0' }),
+    it('registers onUpdateAvailable and onUpdateNotAvailable listeners', async () => {
+      let capturedNotAvailableCb: (() => void) | null = null;
+      mockOnUpdateNotAvailable.mockImplementation((cb: () => void) => {
+        capturedNotAvailableCb = cb;
+        return () => {};
       });
+      mockCheckForUpdates.mockReturnValue(new Promise(() => {}));
 
       renderHook(() => useAppStatus());
 
-      await capturedConfig!.queryFn();
-      expect(mockFetch).toHaveBeenCalledTimes(1);
-      expect(mockFetch).toHaveBeenCalledWith(GITHUB_API_LATEST_RELEASE);
+      const promise = capturedConfig!.queryFn();
+      capturedNotAvailableCb!();
+      await promise;
+
+      expect(mockOnUpdateAvailable).toHaveBeenCalledTimes(1);
+      expect(mockOnUpdateNotAvailable).toHaveBeenCalledTimes(1);
     });
 
-    it('handles pre-release versions correctly', async () => {
-      mockGetAppVersion.mockResolvedValue('1.0.0-rc.1');
-      mockFetch.mockResolvedValue({
-        ok: true,
-        json: async () => ({ tag_name: 'v1.0.0' }),
+    it('calls cleanup functions after onUpdateNotAvailable fires', async () => {
+      const mockAvailableCleanup = jest.fn();
+      const mockNotAvailableCleanup = jest.fn();
+      mockOnUpdateAvailable.mockReturnValue(mockAvailableCleanup);
+      let capturedNotAvailableCb: (() => void) | null = null;
+      mockOnUpdateNotAvailable.mockImplementation((cb: () => void) => {
+        capturedNotAvailableCb = cb;
+        return mockNotAvailableCleanup;
       });
+      mockCheckForUpdates.mockReturnValue(new Promise(() => {}));
 
       renderHook(() => useAppStatus());
 
-      const result = await capturedConfig!.queryFn();
+      const promise = capturedConfig!.queryFn();
+      capturedNotAvailableCb!();
+      await promise;
+
+      expect(mockAvailableCleanup).toHaveBeenCalledTimes(1);
+      expect(mockNotAvailableCleanup).toHaveBeenCalledTimes(1);
+    });
+
+    it('rejects and cleans up listeners when AbortSignal fires', async () => {
+      const mockAvailableCleanup = jest.fn();
+      const mockNotAvailableCleanup = jest.fn();
+      mockOnUpdateAvailable.mockReturnValue(mockAvailableCleanup);
+      mockOnUpdateNotAvailable.mockReturnValue(mockNotAvailableCleanup);
+      mockCheckForUpdates.mockReturnValue(new Promise(() => {}));
+
+      renderHook(() => useAppStatus());
+
+      const controller = new AbortController();
+      const promise = capturedConfig!.queryFn({ signal: controller.signal });
+
+      controller.abort();
+
+      await expect(promise).rejects.toThrow('Aborted');
+      expect(mockAvailableCleanup).toHaveBeenCalledTimes(1);
+      expect(mockNotAvailableCleanup).toHaveBeenCalledTimes(1);
+    });
+
+    it('includes releaseNotes=null when releaseNotes is not a string', async () => {
+      let capturedCb:
+        | ((info: { version: string; releaseNotes: unknown }) => void)
+        | null = null;
+      mockOnUpdateAvailable.mockImplementation(
+        (cb: (info: { version: string; releaseNotes: unknown }) => void) => {
+          capturedCb = cb;
+          return () => {};
+        },
+      );
+      mockCheckForUpdates.mockReturnValue(new Promise(() => {}));
+
+      renderHook(() => useAppStatus());
+
+      const promise = capturedConfig!.queryFn();
+
+      capturedCb!({ version: 'v2.0.0', releaseNotes: null });
+
+      const result = await promise;
       expect(result).toEqual({
         isOutdated: true,
-        latestTag: 'v1.0.0',
+        latestTag: 'v2.0.0',
+        releaseNotes: null,
       });
     });
   });
