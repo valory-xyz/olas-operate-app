@@ -9,18 +9,17 @@ type AgentSettings = {
   isInitialFundedLegacy?: boolean;
 };
 
-export type ElectronStore = {
-  // Global settings
-  environmentName?: string;
+/**
+ * Backend-sourced persistent store shape, backed by .operate/pearl_store.json.
+ * This travels with the .operate folder, surviving machine migrations.
+ */
+export type PearlStore = {
+  // First time user settings
+  firstStakingRewardAchieved?: boolean;
+
   /** @deprecated Use `lastSelectedServiceConfigId` instead. Kept for one-time migration only. */
   lastSelectedAgentType?: AgentType;
   lastSelectedServiceConfigId?: string;
-  knownVersion?: string;
-
-  // First time user settings
-  firstStakingRewardAchieved?: boolean;
-  recoveryPhraseBackedUp?: boolean;
-  mnemonicExists?: boolean;
 
   // Each agent has its own settings
   [AgentMap.PredictTrader]?: AgentSettings;
@@ -29,6 +28,7 @@ export type ElectronStore = {
   [AgentMap.Optimus]?: AgentSettings;
   [AgentMap.PettAi]?: AgentSettings;
   [AgentMap.Polystrat]?: AgentSettings;
+
   autoRun?: {
     enabled?: boolean;
     /**
@@ -47,14 +47,31 @@ export type ElectronStore = {
     /** Instances explicitly excluded from auto-run by the user, keyed by serviceConfigId. */
     userExcludedAgentInstances?: string[];
   };
+
   lastProvidedBackupWallet?: {
     address: Nullable<string>;
     type: BackupWalletType;
   };
+
   /** @deprecated Use `archivedInstances` instead. Kept for one-time migration. */
   archivedAgents?: AgentType[];
   /** serviceConfigIds of archived instances (hidden from sidebar, restorable). */
   archivedInstances?: string[];
+
+  recoveryPhraseBackedUp?: boolean;
+};
+
+/**
+ * Electron-native store shape — lives in the OS app-data directory.
+ * Only fields that are genuinely Electron-specific belong here.
+ */
+export type ElectronStore = {
+  environmentName?: string;
+  knownVersion?: string;
+  /** Set to true after the one-time migration from Electron store to pearl_store.json. */
+  hasMigratedToBackendStore?: boolean;
+  /** Stores the latest app version for which the "update available" modal was dismissed. */
+  updateAvailableKnownVersion?: string;
 };
 
 export type ElectronTrayIconStatus =
