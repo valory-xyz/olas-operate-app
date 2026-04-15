@@ -54,23 +54,9 @@ const mockCreateMasterSafe = jest.fn();
 
 const POLYGON_CHAIN_ID = EvmChainIdMap.Polygon;
 
-type CreationAndTransferDetails =
-  | {
-      safeCreationDetails?: {
-        isSafeCreated?: boolean;
-        status?: 'finish' | 'error';
-        txnLink?: string | null;
-      };
-      transferDetails?: {
-        isTransferComplete?: boolean;
-        transfers?: Array<{
-          symbol: string;
-          status: string;
-          txnLink: string | null;
-        }>;
-      };
-    }
-  | undefined;
+type CreationAndTransferDetails = ReturnType<
+  typeof useMasterSafeCreationAndTransfer
+>['data'];
 
 const setupMocks = ({
   isLoading = false,
