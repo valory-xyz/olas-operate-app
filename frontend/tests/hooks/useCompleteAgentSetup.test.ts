@@ -255,7 +255,7 @@ describe('useCompleteAgentSetup', () => {
       expect(mockCreateMasterSafe).toHaveBeenCalledTimes(2);
     });
 
-    it('allows retrying after handleTryAgain resets hasAttemptedCreation', () => {
+    it('re-arms the guard after handleTryAgain so a subsequent click does not re-fire the mutation', () => {
       setupMocks({
         masterSafeAddress: null,
         eoaBalances: [makeOlasBalance(100), makeUsdceBalance(50)],
@@ -270,7 +270,9 @@ describe('useCompleteAgentSetup', () => {
       act(() => {
         result.current.handleCompleteSetup();
       });
-      expect(mockCreateMasterSafe).toHaveBeenCalledTimes(3);
+      // handleCompleteSetup + handleTryAgain each fire once; the third
+      // handleCompleteSetup is blocked by the re-armed hasAttemptedCreation ref.
+      expect(mockCreateMasterSafe).toHaveBeenCalledTimes(2);
     });
   });
 
@@ -286,8 +288,8 @@ describe('useCompleteAgentSetup', () => {
         creationAndTransferDetails: {
           safeCreationDetails: {
             isSafeCreated: false,
-            txnLink: null,
             status: 'error',
+            txnLink: null,
           },
           transferDetails: {
             isTransferComplete: false,
@@ -304,8 +306,8 @@ describe('useCompleteAgentSetup', () => {
         creationAndTransferDetails: {
           safeCreationDetails: {
             isSafeCreated: true,
-            txnLink: null,
             status: 'finish',
+            txnLink: null,
           },
           transferDetails: {
             isTransferComplete: false,
@@ -326,8 +328,8 @@ describe('useCompleteAgentSetup', () => {
         creationAndTransferDetails: {
           safeCreationDetails: {
             isSafeCreated: true,
-            txnLink: null,
             status: 'finish',
+            txnLink: null,
           },
           transferDetails: {
             isTransferComplete: true,
@@ -380,8 +382,8 @@ describe('useCompleteAgentSetup', () => {
         creationAndTransferDetails: {
           safeCreationDetails: {
             isSafeCreated: true,
-            txnLink: null,
             status: 'finish',
+            txnLink: null,
           },
           transferDetails: { isTransferComplete: true, transfers: [] },
         },
@@ -416,6 +418,24 @@ describe('useCompleteAgentSetup', () => {
         result.current.handleContactSupport();
       });
       expect(mockToggleSupportModal).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('dismissModal', () => {
+    it('clears modalToShow back to null', () => {
+      setupMocks({
+        masterSafeAddress: POLYGON_SAFE_ADDRESS,
+        safeBalances: [makeOlasBalance(100), makeUsdceBalance(50)],
+      });
+      const { result } = renderHook(() => useCompleteAgentSetup());
+      act(() => {
+        result.current.handleCompleteSetup();
+      });
+      expect(result.current.modalToShow).toBe('setupComplete');
+      act(() => {
+        result.current.dismissModal();
+      });
+      expect(result.current.modalToShow).toBeNull();
     });
   });
 });

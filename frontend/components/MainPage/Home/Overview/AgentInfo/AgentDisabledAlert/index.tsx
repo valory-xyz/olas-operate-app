@@ -2,12 +2,19 @@ import { ReactNode, useMemo } from 'react';
 
 import { AgentLowBalanceAlert } from '@/components/AgentLowBalanceAlert';
 import { STEPS } from '@/components/AgentWallet/types';
-import { ContentTransition, useContentTransitionValue } from '@/components/ui';
+import {
+  AgentSetupCompleteModal,
+  ContentTransition,
+  FinishingSetupModal,
+  MasterSafeCreationFailedModal,
+  useContentTransitionValue,
+} from '@/components/ui';
 import { PAGES } from '@/constants';
 import {
   useActiveStakingContractDetails,
   useAgentFundingRequests,
   useAgentRunning,
+  useCompleteAgentSetup,
   useIsAgentGeoRestricted,
   useIsInitiallyFunded,
   usePageState,
@@ -38,6 +45,16 @@ export const AgentDisabledAlert = () => {
   const { isInitialFunded } = useIsInitiallyFunded();
   const { isAnotherAgentRunning } = useAgentRunning();
   const { selectedStakingProgramMeta } = useStakingProgram();
+  const {
+    setupState,
+    handleCompleteSetup,
+    modalToShow,
+    shouldNavigateToFundYourAgent,
+    resetShouldNavigate,
+    dismissModal,
+    handleTryAgain,
+    handleContactSupport,
+  } = useCompleteAgentSetup();
 
   const { isAgentGeoRestricted } = useIsAgentGeoRestricted({
     agentType: selectedAgentType,
@@ -62,7 +79,17 @@ export const AgentDisabledAlert = () => {
 
     // The "store" is `undefined` during updates, hence waiting till we get the correct value from the store.
     if (isInitialFunded === false) {
-      return { key: 'unfinished-setup', content: <UnfinishedSetupAlert /> };
+      return {
+        key: 'unfinished-setup',
+        content: (
+          <UnfinishedSetupAlert
+            setupState={setupState}
+            handleCompleteSetup={handleCompleteSetup}
+            shouldNavigateToFundYourAgent={shouldNavigateToFundYourAgent}
+            resetShouldNavigate={resetShouldNavigate}
+          />
+        ),
+      };
     }
 
     if (selectedStakingProgramMeta && selectedStakingProgramMeta.deprecated) {
@@ -107,6 +134,10 @@ export const AgentDisabledAlert = () => {
     };
   }, [
     agentTokenRequirements,
+    setupState,
+    handleCompleteSetup,
+    shouldNavigateToFundYourAgent,
+    resetShouldNavigate,
     goto,
     hasEnoughServiceSlots,
     isAgentEvicted,
@@ -126,13 +157,26 @@ export const AgentDisabledAlert = () => {
   const { key, content } = useContentTransitionValue(alertResult);
 
   return (
-    <ContentTransition
-      animationKey={key}
-      initialY={0}
-      exitY={0}
-      initialAnimation={false}
-    >
-      {content}
-    </ContentTransition>
+    <>
+      <ContentTransition
+        animationKey={key}
+        initialY={0}
+        exitY={0}
+        initialAnimation={false}
+      >
+        {content}
+      </ContentTransition>
+
+      {modalToShow === 'creatingSafe' && <FinishingSetupModal />}
+      {modalToShow === 'setupComplete' && (
+        <AgentSetupCompleteModal onDismiss={dismissModal} />
+      )}
+      {modalToShow === 'safeCreationFailed' && (
+        <MasterSafeCreationFailedModal
+          onTryAgain={handleTryAgain}
+          onContactSupport={handleContactSupport}
+        />
+      )}
+    </>
   );
 };

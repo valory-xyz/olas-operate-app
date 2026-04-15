@@ -31,6 +31,7 @@ export type UseCompleteAgentSetupReturn = {
   modalToShow: ModalToShow;
   shouldNavigateToFundYourAgent: boolean;
   resetShouldNavigate: () => void;
+  dismissModal: () => void;
   handleTryAgain: () => void;
   handleContactSupport: () => void;
 };
@@ -178,6 +179,10 @@ export const useCompleteAgentSetup = (): UseCompleteAgentSetupReturn => {
     setShouldNavigateToFundYourAgent(false);
   }, []);
 
+  const dismissModal = useCallback(() => {
+    setModalToShow(null);
+  }, []);
+
   const handleContactSupport = useCallback(() => {
     toggleSupportModal();
   }, [toggleSupportModal]);
@@ -188,6 +193,7 @@ export const useCompleteAgentSetup = (): UseCompleteAgentSetupReturn => {
     modalToShow,
     shouldNavigateToFundYourAgent,
     resetShouldNavigate,
+    dismissModal,
     handleTryAgain,
     handleContactSupport,
   };

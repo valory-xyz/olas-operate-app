@@ -24,7 +24,12 @@ import {
 import { AgentsFunFormValues } from '@/components/SetupPage/SetupYourAgent/AgentsFunAgentForm/types';
 import { RequiredMark } from '@/components/ui';
 import { SETUP_SCREEN } from '@/constants';
-import { useServices, useSetup, useStakingProgram } from '@/hooks';
+import {
+  useIsInitiallyFunded,
+  useServices,
+  useSetup,
+  useStakingProgram,
+} from '@/hooks';
 import { ServiceTemplate } from '@/types';
 import { onDummyServiceCreation } from '@/utils/service';
 
@@ -48,6 +53,7 @@ export const AgentsFunAgentFormContent = ({
   const { defaultStakingProgramId } = useStakingProgram();
   const { refetch: refetchServices, updateSelectedServiceConfigId } =
     useServices();
+  const { markServiceAsNotInitiallyFunded } = useIsInitiallyFunded();
 
   const [form] = Form.useForm<AgentsFunFormValues>();
 
@@ -110,6 +116,7 @@ export const AgentsFunAgentFormContent = ({
           defaultStakingProgramId,
           overriddenServiceConfig,
         );
+        markServiceAsNotInitiallyFunded(newService.service_config_id);
 
         // Refetch so the new service is in the list, then select it
         await refetchServices?.();
