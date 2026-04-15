@@ -54,14 +54,28 @@ const mockCreateMasterSafe = jest.fn();
 
 const POLYGON_CHAIN_ID = EvmChainIdMap.Polygon;
 
+type CreationAndTransferDetails = {
+  safeCreationDetails?: {
+    isSafeCreated?: boolean;
+    status?: 'finish' | 'error';
+    txnLink?: string | null;
+  };
+  transferDetails?: {
+    isTransferComplete?: boolean;
+    transfers?: Array<{ symbol: string; status: string; txnLink: string | null }>;
+  };
+} | undefined;
+
 const setupMocks = ({
   isLoading = false,
   masterSafeAddress = null as string | null,
+  isMasterWalletFetched = true,
   safeBalances = [] as ReturnType<typeof makeOlasBalance>[],
   eoaBalances = [] as ReturnType<typeof makeOlasBalance>[],
   totalTokenRequirements = [makeOlasRequirement(), makeUsdceRequirement()],
-  isSuccessMasterSafeCreation = false,
+  isLoadingMasterSafeCreation = false,
   isErrorMasterSafeCreation = false,
+  creationAndTransferDetails = undefined as CreationAndTransferDetails,
 } = {}) => {
   const getMasterSafeOf = jest
     .fn()
@@ -73,7 +87,10 @@ const setupMocks = ({
   const getMasterSafeBalancesOf = jest.fn().mockReturnValue(safeBalances);
   const getMasterEoaBalancesOf = jest.fn().mockReturnValue(eoaBalances);
 
-  (useMasterWalletContext as jest.Mock).mockReturnValue({ getMasterSafeOf });
+  (useMasterWalletContext as jest.Mock).mockReturnValue({
+    getMasterSafeOf,
+    isFetched: isMasterWalletFetched,
+  });
   (useServices as jest.Mock).mockReturnValue({
     selectedAgentConfig: { evmHomeChainId: POLYGON_CHAIN_ID },
   });
@@ -87,14 +104,16 @@ const setupMocks = ({
   });
   (useMasterSafeCreationAndTransfer as jest.Mock).mockReturnValue({
     mutate: mockCreateMasterSafe,
-    isSuccess: isSuccessMasterSafeCreation,
+    isPending: isLoadingMasterSafeCreation,
     isError: isErrorMasterSafeCreation,
+    data: creationAndTransferDetails,
   });
 };
 
 describe('useCompleteAgentSetup', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.useRealTimers();
     mockCreateMasterSafe.mockReset();
   });
 
@@ -264,18 +283,90 @@ describe('useCompleteAgentSetup', () => {
   });
 
   describe('mutation outcome effects', () => {
-    it('sets modalToShow to setupComplete on mutation success', () => {
-      setupMocks({ isSuccessMasterSafeCreation: true });
+    it('sets modalToShow to safeCreationFailed on network/transport error (isError)', () => {
+      setupMocks({ isErrorMasterSafeCreation: true });
       const { result } = renderHook(() => useCompleteAgentSetup());
-      expect(result.current.modalToShow).toBe('setupComplete');
+      expect(result.current.modalToShow).toBe('safeCreationFailed');
     });
 
-    it('does not re-fire mutation when handleCompleteSetup is called after post-success transition to readyToComplete', () => {
+    it('sets modalToShow to safeCreationFailed when backend reports safeCreationDetails.status === error', () => {
+      setupMocks({
+        creationAndTransferDetails: {
+          safeCreationDetails: {
+            isSafeCreated: false,
+            status: 'error',
+          },
+          transferDetails: {
+            isTransferComplete: false,
+            transfers: [],
+          },
+        },
+      });
+      const { result } = renderHook(() => useCompleteAgentSetup());
+      expect(result.current.modalToShow).toBe('safeCreationFailed');
+    });
+
+    it('sets modalToShow to safeCreationFailed on partial transfer failure', () => {
+      setupMocks({
+        creationAndTransferDetails: {
+          safeCreationDetails: {
+            isSafeCreated: true,
+            status: 'finish',
+          },
+          transferDetails: {
+            isTransferComplete: false,
+            transfers: [
+              { symbol: 'OLAS', status: 'error', txnLink: null },
+            ],
+          },
+        },
+      });
+      const { result } = renderHook(() => useCompleteAgentSetup());
+      expect(result.current.modalToShow).toBe('safeCreationFailed');
+    });
+
+    it('sets modalToShow to setupComplete after delay when isSafeCreated and isTransferComplete', async () => {
+      jest.useFakeTimers();
+
+      setupMocks({
+        masterSafeAddress: POLYGON_SAFE_ADDRESS,
+        isMasterWalletFetched: true,
+        creationAndTransferDetails: {
+          safeCreationDetails: {
+            isSafeCreated: true,
+            status: 'finish',
+          },
+          transferDetails: {
+            isTransferComplete: true,
+            transfers: [],
+          },
+        },
+      });
+
+      const { result } = renderHook(() => useCompleteAgentSetup());
+
+      // Modal should not be set yet (delay pending)
+      expect(result.current.modalToShow).toBeNull();
+
+      await act(async () => {
+        jest.advanceTimersByTime(250);
+        await Promise.resolve();
+      });
+
+      expect(result.current.modalToShow).toBe('setupComplete');
+
+      jest.useRealTimers();
+    });
+
+    it('does not re-fire mutation when handleCompleteSetup is called after post-success transition to readyToComplete', async () => {
+      jest.useFakeTimers();
+
       // Initial state: Safe not yet deployed, EOA funded — triggers needsSafeCreation
       setupMocks({
         masterSafeAddress: null,
         eoaBalances: [makeOlasBalance(100), makeUsdceBalance(50)],
-        isSuccessMasterSafeCreation: false,
+        isLoadingMasterSafeCreation: false,
+        isErrorMasterSafeCreation: false,
       });
       const { result, rerender } = renderHook(() => useCompleteAgentSetup());
 
@@ -286,15 +377,27 @@ describe('useCompleteAgentSetup', () => {
       expect(result.current.setupState).toBe('needsSafeCreation');
       expect(mockCreateMasterSafe).toHaveBeenCalledTimes(1);
 
-      // Simulate post-success: Safe is now deployed + funded, mutation isSuccess = true
+      // Simulate post-success: Safe is now deployed + funded, mutation data shows full success
       setupMocks({
         masterSafeAddress: POLYGON_SAFE_ADDRESS,
+        isMasterWalletFetched: true,
         safeBalances: [makeOlasBalance(100), makeUsdceBalance(50)],
-        isSuccessMasterSafeCreation: true,
+        isLoadingMasterSafeCreation: false,
+        isErrorMasterSafeCreation: false,
+        creationAndTransferDetails: {
+          safeCreationDetails: { isSafeCreated: true, status: 'finish' },
+          transferDetails: { isTransferComplete: true, transfers: [] },
+        },
       });
       rerender();
 
       expect(result.current.setupState).toBe('readyToComplete');
+
+      await act(async () => {
+        jest.advanceTimersByTime(250);
+        await Promise.resolve();
+      });
+
       expect(result.current.modalToShow).toBe('setupComplete');
 
       // Calling handleCompleteSetup again must NOT re-fire the mutation
@@ -303,12 +406,8 @@ describe('useCompleteAgentSetup', () => {
       });
       expect(mockCreateMasterSafe).toHaveBeenCalledTimes(1);
       expect(result.current.modalToShow).toBe('setupComplete');
-    });
 
-    it('sets modalToShow to safeCreationFailed on mutation error', () => {
-      setupMocks({ isErrorMasterSafeCreation: true });
-      const { result } = renderHook(() => useCompleteAgentSetup());
-      expect(result.current.modalToShow).toBe('safeCreationFailed');
+      jest.useRealTimers();
     });
   });
 

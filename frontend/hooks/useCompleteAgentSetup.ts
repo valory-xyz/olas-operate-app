@@ -1,9 +1,11 @@
+import { isNil } from 'lodash';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { TokenSymbol } from '@/config/tokens';
 import { useSupportModal } from '@/context/SupportModalProvider';
 import { TokenRequirement } from '@/types';
 import { WalletBalance } from '@/types/Balance';
+import { delayInSeconds } from '@/utils';
 
 import { useGetRefillRequirements } from './useGetRefillRequirements';
 import { useMasterBalances } from './useMasterBalances';
@@ -54,7 +56,8 @@ const allRequirementsMet = (
 };
 
 export const useCompleteAgentSetup = (): UseCompleteAgentSetupReturn => {
-  const { getMasterSafeOf } = useMasterWalletContext();
+  const { getMasterSafeOf, isFetched: isMasterWalletFetched } =
+    useMasterWalletContext();
   const { selectedAgentConfig } = useServices();
   const { totalTokenRequirements, isLoading } = useGetRefillRequirements();
   const { getMasterSafeBalancesOf, getMasterEoaBalancesOf } =
@@ -75,8 +78,9 @@ export const useCompleteAgentSetup = (): UseCompleteAgentSetupReturn => {
 
   const {
     mutate: createMasterSafe,
-    isSuccess: isSuccessMasterSafeCreation,
+    isPending: isLoadingMasterSafeCreation,
     isError: isErrorMasterSafeCreation,
+    data: creationAndTransferDetails,
   } = useMasterSafeCreationAndTransfer(tokenSymbols);
 
   const setupState: SetupState = useMemo(() => {
@@ -101,19 +105,49 @@ export const useCompleteAgentSetup = (): UseCompleteAgentSetupReturn => {
     evmHomeChainId,
   ]);
 
-  // Handle mutation success
-  useEffect(() => {
-    if (isSuccessMasterSafeCreation) {
-      setModalToShow('setupComplete');
-    }
-  }, [isSuccessMasterSafeCreation]);
+  // Derive authoritative success/failure state from data, mirroring TransferFunds.tsx
+  const isSafeCreated = isMasterWalletFetched
+    ? !isNil(getMasterSafeOf?.(evmHomeChainId)) ||
+      creationAndTransferDetails?.safeCreationDetails?.isSafeCreated
+    : false;
 
-  // Handle mutation failure
+  const isTransferComplete =
+    creationAndTransferDetails?.transferDetails?.isTransferComplete;
+
+  const hasSafeCreationFailure =
+    isErrorMasterSafeCreation ||
+    creationAndTransferDetails?.safeCreationDetails?.status === 'error';
+
+  const hasTransferFailure = Boolean(
+    creationAndTransferDetails?.safeCreationDetails?.isSafeCreated &&
+      !creationAndTransferDetails?.transferDetails?.isTransferComplete &&
+      creationAndTransferDetails?.transferDetails?.transfers?.some(
+        (t) => t.status === 'error',
+      ),
+  );
+
+  const shouldShowFailureModal = hasSafeCreationFailure || hasTransferFailure;
+
+  // Handle backend-reported or network-level failures
   useEffect(() => {
-    if (isErrorMasterSafeCreation) {
-      setModalToShow('safeCreationFailed');
-    }
-  }, [isErrorMasterSafeCreation]);
+    if (!shouldShowFailureModal) return;
+    setModalToShow('safeCreationFailed');
+  }, [shouldShowFailureModal]);
+
+  // Show setup complete modal once safe is created and transfer is done
+  useEffect(() => {
+    if (isLoadingMasterSafeCreation) return;
+    if (isErrorMasterSafeCreation) return;
+    if (!isSafeCreated) return;
+    if (!isTransferComplete) return;
+
+    delayInSeconds(0.25).then(() => setModalToShow('setupComplete'));
+  }, [
+    isLoadingMasterSafeCreation,
+    isErrorMasterSafeCreation,
+    isSafeCreated,
+    isTransferComplete,
+  ]);
 
   const handleCompleteSetup = useCallback(() => {
     switch (setupState) {
