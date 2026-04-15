@@ -46,10 +46,12 @@ type ElectronApiContextProps = {
   showNotification?: (title: string, body?: string) => void;
   saveLogs?: (data: {
     store?: PearlStore;
+    electronStore?: ElectronStore;
     debugData?: Record<string, unknown>;
   }) => Promise<{ success: true; dirPath: string } | { success?: false }>;
   saveLogsForSupport?: (data: {
     store?: PearlStore;
+    electronStore?: ElectronStore;
     debugData?: Record<string, unknown>;
   }) => Promise<
     { success: true; filePath: string; fileName: string } | { success?: false }
