@@ -165,7 +165,7 @@ describe('useCompleteAgentSetup', () => {
       expect(mockCreateMasterSafe).not.toHaveBeenCalled();
     });
 
-    it('sets modalToShow to complete for readyToComplete', () => {
+    it('sets modalToShow to setupComplete for readyToComplete', () => {
       setupMocks({
         masterSafeAddress: POLYGON_SAFE_ADDRESS,
         safeBalances: [makeOlasBalance(100), makeUsdceBalance(50)],
@@ -174,10 +174,10 @@ describe('useCompleteAgentSetup', () => {
       act(() => {
         result.current.handleCompleteSetup();
       });
-      expect(result.current.modalToShow).toBe('complete');
+      expect(result.current.modalToShow).toBe('setupComplete');
     });
 
-    it('sets modalToShow to finishing and calls createMasterSafe for needsSafeCreation', () => {
+    it('sets modalToShow to creatingSafe and calls createMasterSafe for needsSafeCreation', () => {
       setupMocks({
         masterSafeAddress: null,
         eoaBalances: [makeOlasBalance(100), makeUsdceBalance(50)],
@@ -186,7 +186,7 @@ describe('useCompleteAgentSetup', () => {
       act(() => {
         result.current.handleCompleteSetup();
       });
-      expect(result.current.modalToShow).toBe('finishing');
+      expect(result.current.modalToShow).toBe('creatingSafe');
       expect(mockCreateMasterSafe).toHaveBeenCalledTimes(1);
     });
 
@@ -240,7 +240,7 @@ describe('useCompleteAgentSetup', () => {
       act(() => {
         result.current.handleTryAgain();
       });
-      expect(result.current.modalToShow).toBe('finishing');
+      expect(result.current.modalToShow).toBe('creatingSafe');
       expect(mockCreateMasterSafe).toHaveBeenCalledTimes(2);
     });
 
@@ -264,10 +264,10 @@ describe('useCompleteAgentSetup', () => {
   });
 
   describe('mutation outcome effects', () => {
-    it('sets modalToShow to complete on mutation success', () => {
+    it('sets modalToShow to setupComplete on mutation success', () => {
       setupMocks({ isSuccessMasterSafeCreation: true });
       const { result } = renderHook(() => useCompleteAgentSetup());
-      expect(result.current.modalToShow).toBe('complete');
+      expect(result.current.modalToShow).toBe('setupComplete');
     });
 
     it('does not re-fire mutation when handleCompleteSetup is called after post-success transition to readyToComplete', () => {
@@ -295,20 +295,20 @@ describe('useCompleteAgentSetup', () => {
       rerender();
 
       expect(result.current.setupState).toBe('readyToComplete');
-      expect(result.current.modalToShow).toBe('complete');
+      expect(result.current.modalToShow).toBe('setupComplete');
 
       // Calling handleCompleteSetup again must NOT re-fire the mutation
       act(() => {
         result.current.handleCompleteSetup();
       });
       expect(mockCreateMasterSafe).toHaveBeenCalledTimes(1);
-      expect(result.current.modalToShow).toBe('complete');
+      expect(result.current.modalToShow).toBe('setupComplete');
     });
 
-    it('sets modalToShow to failed on mutation error', () => {
+    it('sets modalToShow to safeCreationFailed on mutation error', () => {
       setupMocks({ isErrorMasterSafeCreation: true });
       const { result } = renderHook(() => useCompleteAgentSetup());
-      expect(result.current.modalToShow).toBe('failed');
+      expect(result.current.modalToShow).toBe('safeCreationFailed');
     });
   });
 

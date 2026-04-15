@@ -17,7 +17,7 @@ export type SetupState =
   | 'needsSafeCreation' // EOA funded, Safe pending
   | 'needsFunding'; // insufficient funds anywhere
 
-export type ModalToShow = 'finishing' | 'complete' | 'failed' | null;
+export type ModalToShow = 'creatingSafe' | 'setupComplete' | 'safeCreationFailed' | null;
 
 export type UseCompleteAgentSetupReturn = {
   setupState: SetupState;
@@ -100,14 +100,14 @@ export const useCompleteAgentSetup = (): UseCompleteAgentSetupReturn => {
   // Handle mutation success
   useEffect(() => {
     if (isSuccessMasterSafeCreation) {
-      setModalToShow('complete');
+      setModalToShow('setupComplete');
     }
   }, [isSuccessMasterSafeCreation]);
 
   // Handle mutation failure
   useEffect(() => {
     if (isErrorMasterSafeCreation) {
-      setModalToShow('failed');
+      setModalToShow('safeCreationFailed');
     }
   }, [isErrorMasterSafeCreation]);
 
@@ -116,12 +116,12 @@ export const useCompleteAgentSetup = (): UseCompleteAgentSetupReturn => {
       case 'detecting':
         return; // no-op; button is disabled anyway
       case 'readyToComplete':
-        setModalToShow('complete');
+        setModalToShow('setupComplete');
         return;
       case 'needsSafeCreation':
         if (hasAttemptedCreation.current) return;
         hasAttemptedCreation.current = true;
-        setModalToShow('finishing');
+        setModalToShow('creatingSafe');
         createMasterSafe();
         return;
       case 'needsFunding':
@@ -132,7 +132,7 @@ export const useCompleteAgentSetup = (): UseCompleteAgentSetupReturn => {
 
   const handleTryAgain = useCallback(() => {
     hasAttemptedCreation.current = false;
-    setModalToShow('finishing');
+    setModalToShow('creatingSafe');
     createMasterSafe();
     hasAttemptedCreation.current = true;
   }, [createMasterSafe]);
