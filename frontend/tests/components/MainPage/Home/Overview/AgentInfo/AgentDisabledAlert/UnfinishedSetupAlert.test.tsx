@@ -1,8 +1,9 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 
-import { PAGES, SETUP_SCREEN } from '../../../../../../../constants';
 import { UnfinishedSetupAlert } from '../../../../../../../components/MainPage/Home/Overview/AgentInfo/AgentDisabledAlert/UnfinishedSetupAlert';
+import { PAGES, SETUP_SCREEN } from '../../../../../../../constants';
+import { useCompleteAgentSetup } from '../../../../../../../hooks';
 
 // ---------------------------------------------------------------------------
 // Mock navigation hooks
@@ -44,11 +45,6 @@ jest.mock('../../../../../../../components/ui', () => ({
 }));
 
 // ---------------------------------------------------------------------------
-// Import after mocks
-// ---------------------------------------------------------------------------
-import { useCompleteAgentSetup } from '../../../../../../../hooks';
-
-// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 const mockHandleCompleteSetup = jest.fn();
@@ -56,7 +52,9 @@ const mockResetShouldNavigate = jest.fn();
 const mockHandleTryAgain = jest.fn();
 const mockHandleContactSupport = jest.fn();
 
-const setupHookMock = (overrides: Partial<ReturnType<typeof useCompleteAgentSetup>> = {}) => {
+const setupHookMock = (
+  overrides: Partial<ReturnType<typeof useCompleteAgentSetup>> = {},
+) => {
   (useCompleteAgentSetup as jest.Mock).mockReturnValue({
     setupState: 'needsFunding',
     handleCompleteSetup: mockHandleCompleteSetup,

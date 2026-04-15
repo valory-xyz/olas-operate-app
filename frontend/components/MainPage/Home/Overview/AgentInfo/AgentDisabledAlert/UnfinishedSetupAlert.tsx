@@ -42,7 +42,9 @@ export const UnfinishedSetupAlert = () => {
         type="error"
         message={
           <>
-            <Text className="text-sm font-weight-500">Complete Agent Setup</Text>
+            <Text className="text-sm font-weight-500">
+              Complete Agent Setup
+            </Text>
             <Text className="text-sm flex mt-4 mb-8">
               Setup is nearly done. Fund the agent so it has what it needs to
               start working.

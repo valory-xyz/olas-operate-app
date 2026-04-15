@@ -17,7 +17,11 @@ export type SetupState =
   | 'needsSafeCreation' // EOA funded, Safe pending
   | 'needsFunding'; // insufficient funds anywhere
 
-export type ModalToShow = 'creatingSafe' | 'setupComplete' | 'safeCreationFailed' | null;
+export type ModalToShow =
+  | 'creatingSafe'
+  | 'setupComplete'
+  | 'safeCreationFailed'
+  | null;
 
 export type UseCompleteAgentSetupReturn = {
   setupState: SetupState;
