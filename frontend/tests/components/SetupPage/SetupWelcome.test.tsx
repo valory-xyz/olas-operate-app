@@ -1,10 +1,13 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import React from 'react';
 
+// Import after mocks
+import { SetupWelcomeLogin } from '../../../components/SetupPage/SetupWelcome';
 import { AccountService } from '../../../service/Account';
 import { WalletService } from '../../../service/Wallet';
 
 // ---------------------------------------------------------------------------
-// Module mocks — must come before the component import
+// Module mocks
 // ---------------------------------------------------------------------------
 
 /* eslint-disable @typescript-eslint/no-var-requires */
@@ -12,16 +15,15 @@ jest.mock(
   'styled-components',
   () => require('../../mocks/styledComponents').styledComponentsMock,
 );
-/* eslint-enable @typescript-eslint/no-var-requires */
 
 jest.mock('../../../constants/providers', () => ({}));
 jest.mock('../../../config/providers', () => ({ providers: [] }));
 
 // Stub antd so no ESM imports are triggered
 jest.mock('antd', () => {
-  const React = require('react');
+  const R = require('react');
 
-  const Button = React.forwardRef(
+  const Button = R.forwardRef(
     (
       {
         children,
@@ -38,7 +40,7 @@ jest.mock('antd', () => {
       },
       ref: React.Ref<HTMLButtonElement>,
     ) =>
-      React.createElement(
+      R.createElement(
         'button',
         {
           ref,
@@ -53,12 +55,12 @@ jest.mock('antd', () => {
   Button.displayName = 'Button';
 
   const Input = {
-    Password: React.forwardRef(
+    Password: R.forwardRef(
       (
         props: { size?: string; onChange?: (e: unknown) => void },
         ref: React.Ref<HTMLInputElement>,
       ) =>
-        React.createElement('input', {
+        R.createElement('input', {
           ref,
           type: 'password',
           role: 'textbox',
@@ -68,45 +70,69 @@ jest.mock('antd', () => {
   };
   Input.Password.displayName = 'Input.Password';
 
-  const Form = ({ children, onFinish, layout }: { children?: React.ReactNode; onFinish?: (values: unknown) => void; layout?: string }) =>
-    React.createElement('form', { onSubmit: (e: React.FormEvent) => { e.preventDefault(); onFinish?.({ password: 'test-password' }); } }, children);
+  const Form = ({
+    children,
+    onFinish,
+  }: {
+    children?: React.ReactNode;
+    onFinish?: (values: unknown) => void;
+    layout?: string;
+  }) =>
+    R.createElement(
+      'form',
+      {
+        onSubmit: (e: React.FormEvent) => {
+          e.preventDefault();
+          onFinish?.({ password: 'test-password' });
+        },
+      },
+      children,
+    );
   Form.useForm = () => [{ resetFields: jest.fn(), getFieldValue: jest.fn() }];
-  Form.Item = ({ children, name }: { children?: React.ReactNode; name?: string }) =>
-    React.createElement('div', { 'data-form-item': name }, children);
+  Form.Item = ({
+    children,
+    name,
+  }: {
+    children?: React.ReactNode;
+    name?: string;
+  }) => R.createElement('div', { 'data-form-item': name }, children);
 
   const Flex = ({ children }: { children?: React.ReactNode }) =>
-    React.createElement('div', null, children);
+    R.createElement('div', null, children);
 
   const Typography = {
-    Title: ({ children, level }: { children?: React.ReactNode; level?: number }) =>
-      React.createElement(`h${level ?? 1}`, null, children),
+    Title: ({
+      children,
+      level,
+    }: {
+      children?: React.ReactNode;
+      level?: number;
+    }) => R.createElement(`h${level ?? 1}`, null, children),
     Text: ({ children, type }: { children?: React.ReactNode; type?: string }) =>
-      React.createElement('span', { 'data-text-type': type }, children),
+      R.createElement('span', { 'data-text-type': type }, children),
   };
 
-  const Spin = () => React.createElement('span', { 'aria-label': 'loading' }, 'Loading...');
+  const Spin = () =>
+    R.createElement('span', { 'aria-label': 'loading' }, 'Loading...');
   const Card = ({ children }: { children?: React.ReactNode }) =>
-    React.createElement('div', null, children);
+    R.createElement('div', null, children);
 
   return { Button, Input, Form, Flex, Typography, Spin, Card };
 });
 
-// Stub the FormFlex / ui components
 jest.mock('../../../components/ui/FormFlex', () => {
-  const React = require('react');
+  const R = require('react');
   return {
     FormFlex: ({
       children,
       onFinish,
-      form,
-      layout,
     }: {
       children?: React.ReactNode;
       onFinish?: (values: unknown) => void;
       form?: unknown;
       layout?: string;
     }) =>
-      React.createElement(
+      R.createElement(
         'form',
         {
           'data-testid': 'login-form',
@@ -121,25 +147,22 @@ jest.mock('../../../components/ui/FormFlex', () => {
 });
 
 jest.mock('../../../components/ui/Typography', () => ({
-  FormLabel: ({ children }: { children?: React.ReactNode }) => {
-    const React = require('react');
-    return React.createElement('label', null, children);
-  },
+  FormLabel: ({ children }: { children?: React.ReactNode }) =>
+    require('react').createElement('label', null, children),
 }));
 
 jest.mock('../../../components/SetupPage/SetupWelcomeCreate', () => ({
-  SetupWelcomeCreate: () => {
-    const React = require('react');
-    return React.createElement('div', { 'data-testid': 'setup-welcome-create' });
-  },
+  SetupWelcomeCreate: () =>
+    require('react').createElement('div', {
+      'data-testid': 'setup-welcome-create',
+    }),
 }));
 
 jest.mock('../../../components/ui', () => ({
-  ContentTransition: ({ children }: { children?: React.ReactNode }) => {
-    const React = require('react');
-    return React.createElement('div', null, children);
-  },
+  ContentTransition: ({ children }: { children?: React.ReactNode }) =>
+    require('react').createElement('div', null, children),
 }));
+/* eslint-enable @typescript-eslint/no-var-requires */
 
 // ---------------------------------------------------------------------------
 // Service mocks
@@ -201,15 +224,13 @@ jest.mock('../../../utils', () => ({
   ),
 }));
 
-// Import after mocks
-import { SetupWelcomeLogin } from '../../../components/SetupPage/SetupWelcome';
-
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
 const mockLoginAccount = AccountService.loginAccount as jest.Mock;
-const mockGetRecoverySeedPhrase = WalletService.getRecoverySeedPhrase as jest.Mock;
+const mockGetRecoverySeedPhrase =
+  WalletService.getRecoverySeedPhrase as jest.Mock;
 
 /**
  * Set hooks so isApplicationReady stays false after login resolves,
@@ -255,19 +276,19 @@ describe('SetupWelcomeLogin', () => {
 
       renderSetupWelcomeLogin();
 
-      // Verify button starts as not-loading (not disabled)
+      // Button starts enabled
       const button = screen.getByRole('button', { name: /continue/i });
       expect(button).not.toBeDisabled();
 
       // Submit the form
       fireEvent.submit(screen.getByTestId('login-form'));
 
-      // Error message should be shown
+      // Error message shown
       await waitFor(() => {
         expect(mockMessageError).toHaveBeenCalledWith('Wrong password');
       });
 
-      // Button should be re-activated after catch block runs
+      // Button re-activated by catch block
       await waitFor(() => {
         const btn = screen.getByRole('button', { name: /continue/i });
         expect(btn).not.toBeDisabled();
@@ -290,7 +311,6 @@ describe('SetupWelcomeLogin', () => {
 
   describe('success path — button stays in loading state', () => {
     it('keeps the button disabled after handleLogin resolves on success', async () => {
-      // Login and wallet calls succeed
       mockLoginAccount.mockResolvedValue({ message: 'ok' });
 
       renderSetupWelcomeLogin();
@@ -303,17 +323,15 @@ describe('SetupWelcomeLogin', () => {
       // Submit the form
       fireEvent.submit(screen.getByTestId('login-form'));
 
-      // Wait for setUserLoggedIn to be called — this means handleLogin has
-      // completed the success path (setCanNavigate + setUserLoggedIn called).
+      // Wait for setUserLoggedIn — handleLogin success path complete.
       await waitFor(() => {
         expect(mockSetUserLoggedIn).toHaveBeenCalledTimes(1);
       });
 
-      // The button must remain disabled: setIsLoggingIn(false) must NOT have
-      // been called via the finally block. It will only be called by
-      // useSetupNavigation when isApplicationReady becomes true.
-      // When loading=true the antd Button renders its loading content, so
-      // query by type rather than name.
+      // Button must remain disabled: the finally block was removed so
+      // setIsLoggingIn(false) is NOT called here. useSetupNavigation will
+      // call it only when isApplicationReady becomes true.
+      // When loading=true the Button renders "Loading..." so query by type.
       const submitButton = screen
         .getAllByRole('button')
         .find((btn) => btn.getAttribute('type') === 'submit');
