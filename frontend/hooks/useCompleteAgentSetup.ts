@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { TokenSymbol } from '@/config/tokens';
 import { useSupportModal } from '@/context/SupportModalProvider';
@@ -95,14 +95,15 @@ export const useCompleteAgentSetup = (): UseCompleteAgentSetupReturn => {
     evmHomeChainId,
   ]);
 
-  // Handle mutation outcomes
-  useMemo(() => {
+  // Handle mutation success
+  useEffect(() => {
     if (isSuccessMasterSafeCreation) {
       setModalToShow('complete');
     }
   }, [isSuccessMasterSafeCreation]);
 
-  useMemo(() => {
+  // Handle mutation failure
+  useEffect(() => {
     if (isErrorMasterSafeCreation) {
       setModalToShow('failed');
     }
@@ -128,8 +129,8 @@ export const useCompleteAgentSetup = (): UseCompleteAgentSetupReturn => {
   }, [setupState, createMasterSafe]);
 
   const handleTryAgain = useCallback(() => {
-    setModalToShow(null);
     hasAttemptedCreation.current = false;
+    setModalToShow('finishing');
     createMasterSafe();
   }, [createMasterSafe]);
 
