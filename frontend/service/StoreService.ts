@@ -12,14 +12,8 @@ const getStore = async (): Promise<PearlStore> =>
     method: 'GET',
     headers: { ...CONTENT_TYPE_JSON_UTF8 },
   }).then(async (response) => {
-    // Store not created yet or corrupted — treat as empty.
+    // Store not created yet — treat as empty.
     if (response.status === 404 || response.status === 204) {
-      return {} as PearlStore;
-    }
-    if (response.status === 500) {
-      console.error(
-        'Pearl store may be corrupted (HTTP 500), falling back to empty store',
-      );
       return {} as PearlStore;
     }
     if (!response.ok) {
@@ -30,18 +24,12 @@ const getStore = async (): Promise<PearlStore> =>
     try {
       json = await response.json();
     } catch {
-      console.error(
-        'Pearl store response is not valid JSON, falling back to empty store',
-      );
-      return {} as PearlStore;
+      throw new Error('Pearl store response is not valid JSON');
     }
 
     const data = json.data ?? {};
     if (typeof data !== 'object' || data === null || Array.isArray(data)) {
-      console.error(
-        'Pearl store data is not a valid object, falling back to empty store',
-      );
-      return {} as PearlStore;
+      throw new Error('Pearl store data is not a valid object');
     }
     return data as PearlStore;
   });

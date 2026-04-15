@@ -7,8 +7,6 @@ const Store = require('electron-store');
 const schema = {
   environmentName: { type: 'string', default: '' },
   knownVersion: { type: 'string', default: '' },
-  // Set to true once backend-bound keys have been migrated to pearl_store.json.
-  hasMigratedToBackendStore: { type: 'boolean', default: false },
   // Stores the latest app version for which the "update available" modal was dismissed.
   updateAvailableKnownVersion: { type: 'string', default: '' },
 };

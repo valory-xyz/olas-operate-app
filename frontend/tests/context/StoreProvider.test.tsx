@@ -31,19 +31,14 @@ const mockRegisterSet = registerPearlStoreSetHandler as jest.Mock;
 const mockRegisterDelete = registerPearlStoreDeleteHandler as jest.Mock;
 
 /**
- * Wraps StoreProvider with an ElectronApiContext that reports
- * hasMigratedToBackendStore=true so the one-time migration effect is a no-op.
+ * Wraps StoreProvider with an ElectronApiContext.
+ * Migration is a no-op when getStore returns non-empty data (most tests).
  */
 const makeWrapper = (electronValue?: object) => {
   const Wrapper = ({ children }: PropsWithChildren) => {
     const defaultElectron = {
       store: {
-        get: jest.fn().mockImplementation((key: string) =>
-          // Already migrated — skip the migration branch
-          Promise.resolve(
-            key === 'hasMigratedToBackendStore' ? true : undefined,
-          ),
-        ),
+        get: jest.fn().mockResolvedValue(undefined),
         set: jest.fn().mockResolvedValue(undefined),
       },
     };
@@ -202,10 +197,12 @@ describe('StoreProvider', () => {
       expect(mockGetStore).toHaveBeenCalledTimes(4);
     });
 
-    // No more retries — stays undefined
+    // No more retries — falls back to empty store
+    await waitFor(() => {
+      expect(result.current.storeState).toEqual({});
+    });
     jest.advanceTimersByTime(10000);
     expect(mockGetStore).toHaveBeenCalledTimes(4);
-    expect(result.current.storeState).toBeUndefined();
 
     consoleSpy.mockRestore();
     jest.useRealTimers();

@@ -68,8 +68,6 @@ export type PearlStore = {
 export type ElectronStore = {
   environmentName?: string;
   knownVersion?: string;
-  /** Set to true after the one-time migration from Electron store to pearl_store.json. */
-  hasMigratedToBackendStore?: boolean;
   /** Stores the latest app version for which the "update available" modal was dismissed. */
   updateAvailableKnownVersion?: string;
 };

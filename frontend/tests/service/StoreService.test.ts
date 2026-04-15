@@ -76,26 +76,17 @@ describe('StoreService', () => {
       expect(result).toEqual({});
     });
 
-    it('falls back to empty object on HTTP 500 (corrupted store)', async () => {
-      const consoleSpy = jest
-        .spyOn(console, 'error')
-        .mockImplementation(() => {});
-
+    it('throws on HTTP 500 (corrupted store)', async () => {
       jest
         .spyOn(global, 'fetch')
         .mockReturnValue(mockJsonResponse({}, false, 500));
 
-      const result = await StoreService.getStore();
-
-      expect(result).toEqual({});
-      expect(consoleSpy).toHaveBeenCalledWith(
-        'Pearl store may be corrupted (HTTP 500), falling back to empty store',
+      await expect(StoreService.getStore()).rejects.toThrow(
+        'Failed to fetch pearl store (HTTP 500)',
       );
-
-      consoleSpy.mockRestore();
     });
 
-    it('throws on non-500 error responses', async () => {
+    it('throws on other error responses', async () => {
       jest
         .spyOn(global, 'fetch')
         .mockReturnValue(mockJsonResponse({}, false, 503));
@@ -105,11 +96,7 @@ describe('StoreService', () => {
       );
     });
 
-    it('falls back to empty object when response body is not valid JSON', async () => {
-      const consoleSpy = jest
-        .spyOn(console, 'error')
-        .mockImplementation(() => {});
-
+    it('throws when response body is not valid JSON', async () => {
       jest.spyOn(global, 'fetch').mockReturnValue(
         Promise.resolve({
           ok: true,
@@ -118,49 +105,29 @@ describe('StoreService', () => {
         } as Response),
       );
 
-      const result = await StoreService.getStore();
-
-      expect(result).toEqual({});
-      expect(consoleSpy).toHaveBeenCalledWith(
-        'Pearl store response is not valid JSON, falling back to empty store',
+      await expect(StoreService.getStore()).rejects.toThrow(
+        'Pearl store response is not valid JSON',
       );
-
-      consoleSpy.mockRestore();
     });
 
-    it('falls back to empty object when data is not an object', async () => {
-      const consoleSpy = jest
-        .spyOn(console, 'error')
-        .mockImplementation(() => {});
-
+    it('throws when data is not an object', async () => {
       jest
         .spyOn(global, 'fetch')
         .mockReturnValue(mockJsonResponse({ data: 'corrupted' }));
 
-      const result = await StoreService.getStore();
-
-      expect(result).toEqual({});
-      expect(consoleSpy).toHaveBeenCalledWith(
-        'Pearl store data is not a valid object, falling back to empty store',
+      await expect(StoreService.getStore()).rejects.toThrow(
+        'Pearl store data is not a valid object',
       );
-
-      consoleSpy.mockRestore();
     });
 
-    it('falls back to empty object when data is an array', async () => {
-      const consoleSpy = jest
-        .spyOn(console, 'error')
-        .mockImplementation(() => {});
-
+    it('throws when data is an array', async () => {
       jest
         .spyOn(global, 'fetch')
         .mockReturnValue(mockJsonResponse({ data: [1, 2, 3] }));
 
-      const result = await StoreService.getStore();
-
-      expect(result).toEqual({});
-
-      consoleSpy.mockRestore();
+      await expect(StoreService.getStore()).rejects.toThrow(
+        'Pearl store data is not a valid object',
+      );
     });
   });
 

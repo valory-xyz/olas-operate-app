@@ -153,24 +153,51 @@ export const StoreProvider = ({ children }: PropsWithChildren) => {
           const finalState = drainPendingOps(data);
           isHydratedRef.current = true;
           setStoreState(finalState);
-          log(`Hydrated on attempt ${attempt}`);
+
+          const keyCount = Object.keys(finalState).length;
+          if (keyCount === 0) {
+            log(`Hydrated on attempt ${attempt} (empty store)`);
+          } else {
+            log(`Hydrated on attempt ${attempt} (${keyCount} keys)`);
+          }
         })
         .catch((error) => {
-          log(`Hydration attempt ${attempt} failed: ${error}`);
+          const msg = error instanceof Error ? error.message : String(error);
+          log(`Hydration attempt ${attempt} failed: ${msg}`);
           console.error(
             `[StoreProvider] Hydration attempt ${attempt} failed:`,
             error,
           );
+
+          // Data corruption errors (500, bad JSON) won't recover on retry —
+          // fall back to empty store immediately so the app is usable.
+          const isCorrupt =
+            msg.includes('HTTP 500') ||
+            msg.includes('not valid JSON') ||
+            msg.includes('not a valid object');
+          if (!cancelled && isCorrupt) {
+            log('Store appears corrupt, falling back to empty store');
+            const finalState = drainPendingOps({});
+            isHydratedRef.current = true;
+            setStoreState(finalState);
+            return;
+          }
+
           if (!cancelled && retriesLeft > 0) {
             retryTimeout = setTimeout(
               () => attemptHydration(retriesLeft - 1),
               HYDRATION_RETRY_DELAY_MS,
             );
           } else if (!cancelled) {
-            log('Hydration failed after all retries');
-            console.error(
-              '[StoreProvider] Hydration failed after all retries. Store will be unavailable.',
+            log(
+              'Hydration failed after all retries, falling back to empty store',
             );
+            console.error(
+              '[StoreProvider] Hydration failed after all retries.',
+            );
+            const finalState = drainPendingOps({});
+            isHydratedRef.current = true;
+            setStoreState(finalState);
           }
         });
     };
@@ -183,44 +210,55 @@ export const StoreProvider = ({ children }: PropsWithChildren) => {
     };
   }, []);
 
-  // One-time migration: copy backend-bound keys from Electron store to pearl_store.json.
-  // Gated by `hasMigratedToBackendStore` flag so it only runs once per installation.
+  // Migration: copy backend-bound keys from Electron store to pearl_store.json.
+  // Runs when the backend store is empty but Electron store has data — handles
+  // both first upgrade and .operate folder swaps on the same machine.
   useEffect(() => {
     const storeGet = store?.get;
     const storeSet = store?.set;
     if (!storeGet || !storeSet) return;
+    // Wait for hydration to complete so we can check if backend store is empty.
+    if (!isHydratedRef.current) return;
 
-    storeGet('hasMigratedToBackendStore')
-      .then((alreadyMigrated) => {
-        if (alreadyMigrated) return;
+    // If backend already has data, no migration needed.
+    if (storeState && Object.keys(storeState).length > 0) return;
 
-        log('Starting one-time migration to pearl_store.json');
+    // Check if Electron store has any backend-bound keys worth migrating.
+    Promise.all(
+      BACKEND_BOUND_KEYS.map((key) =>
+        storeGet(key).then((value) => ({ key, value })),
+      ),
+    )
+      .then((entries) => {
+        const toMigrate = entries.filter(
+          ({ value }) => value !== undefined && value !== null,
+        );
+        if (toMigrate.length === 0) {
+          log('No Electron store data to migrate');
+          return;
+        }
+
+        log('Starting migration to pearl_store.json');
 
         return Promise.all(
-          BACKEND_BOUND_KEYS.map((key) =>
-            storeGet(key).then((value) =>
-              value !== undefined && value !== null
-                ? StoreService.setStoreKey(key, value)
-                : Promise.resolve(),
-            ),
+          toMigrate.map(({ key, value }) =>
+            StoreService.setStoreKey(key, value),
           ),
-        )
-          .then(() => storeSet('hasMigratedToBackendStore', true))
-          .then(() =>
-            // Refresh storeState from the now-populated pearl_store.json.
-            StoreService.getStore().then((data) => {
-              const finalState = drainPendingOps(data);
-              isHydratedRef.current = true;
-              setStoreState(finalState);
-              log('Migration complete');
-            }),
-          );
+        ).then(() =>
+          // Refresh storeState from the now-populated pearl_store.json.
+          StoreService.getStore().then((data) => {
+            const finalState = drainPendingOps(data);
+            isHydratedRef.current = true;
+            setStoreState(finalState);
+            log('Migration complete');
+          }),
+        );
       })
       .catch((error) => {
         log(`Migration failed: ${error}`);
         console.error('[StoreProvider] Migration failed:', error);
       });
-  }, [store]);
+  }, [store, storeState]);
 
   return (
     <StoreContext.Provider value={{ storeState }}>

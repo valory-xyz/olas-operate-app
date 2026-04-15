@@ -7,7 +7,6 @@ import type { PearlStore } from '@/types/ElectronApi';
 export const ELECTRON_NATIVE_KEYS = new Set([
   'environmentName',
   'knownVersion',
-  'hasMigratedToBackendStore',
   'updateAvailableKnownVersion',
 ]);
 
