@@ -46,12 +46,13 @@ export const Alert = ({
   fullWidth,
   centered,
   className,
+  customIcon,
   ...rest
 }: AlertProps) => (
   <AlertAntd
     type={type === 'primary' ? undefined : type}
     className={getAlertClassName(type, fullWidth, centered, className)}
-    icon={rest.showIcon ? rest.customIcon || icons[type] : undefined}
+    icon={rest.showIcon ? customIcon || icons[type] : undefined}
     {...rest}
   />
 );
