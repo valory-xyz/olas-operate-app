@@ -105,9 +105,9 @@ describe('fetchAgentStakingRewardsInfo', () => {
     const error = new Error('network failure');
     mockGetAgentStakingRewardsInfo.mockRejectedValue(error);
 
-    await expect(
-      fetchAgentStakingRewardsInfo(defaultParams),
-    ).rejects.toThrow('network failure');
+    await expect(fetchAgentStakingRewardsInfo(defaultParams)).rejects.toThrow(
+      'network failure',
+    );
   });
 
   it('throws when response fails Zod validation', async () => {
