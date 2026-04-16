@@ -6,7 +6,7 @@ import { LoadingSpinner, Modal } from '@/components/ui';
 import { useSupportModal } from '@/context/SupportModalProvider';
 import { useSyncBackupOwner } from '@/hooks';
 
-type SyncStep = 'IN_PROGRESS' | 'SUCCESS' | 'FAILURE';
+type SyncStep = 'in_progress' | 'success' | 'failure';
 
 type SyncBackupWalletModalProps = {
   open: boolean;
@@ -17,7 +17,7 @@ export const SyncBackupWalletModal = ({
   open,
   onClose,
 }: SyncBackupWalletModalProps) => {
-  const [step, setStep] = useState<SyncStep>('IN_PROGRESS');
+  const [step, setStep] = useState<SyncStep>('in_progress');
   const { mutateAsync: syncBackupOwner } = useSyncBackupOwner();
   const syncBackupOwnerRef = useRef(syncBackupOwner);
   syncBackupOwnerRef.current = syncBackupOwner;
@@ -26,25 +26,25 @@ export const SyncBackupWalletModal = ({
   useEffect(() => {
     if (!open) return;
 
-    setStep('IN_PROGRESS');
+    setStep('in_progress');
 
     syncBackupOwnerRef
       .current()
-      .then(() => setStep('SUCCESS'))
-      .catch(() => setStep('FAILURE'));
+      .then(() => setStep('success'))
+      .catch(() => setStep('failure'));
   }, [open]);
 
   const handleRetry = () => {
-    setStep('IN_PROGRESS');
+    setStep('in_progress');
     syncBackupOwnerRef
       .current()
-      .then(() => setStep('SUCCESS'))
-      .catch(() => setStep('FAILURE'));
+      .then(() => setStep('success'))
+      .catch(() => setStep('failure'));
   };
 
   if (!open) return null;
 
-  if (step === 'IN_PROGRESS') {
+  if (step === 'in_progress') {
     return (
       <Modal
         open={open}
@@ -57,7 +57,7 @@ export const SyncBackupWalletModal = ({
     );
   }
 
-  if (step === 'SUCCESS') {
+  if (step === 'success') {
     return (
       <Modal
         open={open}

@@ -157,16 +157,10 @@ export const BackupWalletSection = () => {
             <div className="my-6">
               <Text strong>Backup Wallet</Text>
             </div>
-            {canonicalAddress ? (
-              <AddressLink address={canonicalAddress as Address} />
-            ) : (
-              <Text type="secondary">—</Text>
-            )}
-            {canonicalAddress && (
-              <Button className="w-fit text-sm" onClick={openUpdatePassword}>
-                Update Backup Wallet
-              </Button>
-            )}
+            <AddressLink address={canonicalAddress as Address} />
+            <Button className="w-fit text-sm" onClick={openUpdatePassword}>
+              Update Backup Wallet
+            </Button>
           </Flex>
         </Flex>
       </CardSection>

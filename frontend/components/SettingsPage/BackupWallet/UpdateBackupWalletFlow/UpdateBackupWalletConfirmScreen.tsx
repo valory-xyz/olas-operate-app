@@ -108,11 +108,16 @@ export const UpdateBackupWalletConfirmScreen = () => {
             />
             <Flex gap={8} justify="flex-end">
               <Button
+                disabled={resultStatus === 'in_progress'}
                 onClick={() => goto(SettingsScreenMap.UpdateBackupWalletMethod)}
               >
                 Cancel
               </Button>
-              <Button type="primary" onClick={handleConfirm}>
+              <Button
+                type="primary"
+                loading={resultStatus === 'in_progress'}
+                onClick={handleConfirm}
+              >
                 Update Backup Wallet
               </Button>
             </Flex>

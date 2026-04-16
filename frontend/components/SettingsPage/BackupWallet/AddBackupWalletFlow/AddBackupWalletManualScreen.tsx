@@ -3,7 +3,7 @@ import { getAddress } from 'ethers/lib/utils';
 import { useState } from 'react';
 
 import { BackButton, cardStyles } from '@/components/ui';
-import { BACKUP_WALLET_FIELD_RULES, COLOR } from '@/constants';
+import { BACKUP_WALLET_FIELD_RULES } from '@/constants';
 import { SettingsScreenMap } from '@/constants/screen';
 import { useApplyBackupOwner, useSettings } from '@/hooks';
 import { Address } from '@/types/Address';
@@ -69,19 +69,25 @@ export const AddBackupWalletManualScreen = () => {
               rules={BACKUP_WALLET_FIELD_RULES}
               required
             >
-              <Input size="large" placeholder="0x..." />
+              <Input
+                size="large"
+                placeholder="0x..."
+                disabled={status === 'in_progress'}
+              />
             </Form.Item>
-            <Button type="primary" size="large" block htmlType="submit">
+            <Button
+              type="primary"
+              size="large"
+              block
+              htmlType="submit"
+              loading={status === 'in_progress'}
+            >
               Add Backup Wallet
             </Button>
           </Form>
         </Flex>
       </Card>
-      <Text
-        type="secondary"
-        className="text-sm"
-        style={{ color: COLOR.TEXT_NEUTRAL_TERTIARY }}
-      >
+      <Text type="secondary" className="text-sm text-center">
         Keep your backup wallet secure. If you lose both your password and
         backup wallet, you&apos;ll lose access to Pearl — permanently.
       </Text>
