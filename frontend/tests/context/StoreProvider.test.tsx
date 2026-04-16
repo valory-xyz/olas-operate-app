@@ -368,7 +368,7 @@ describe('StoreProvider', () => {
       });
     });
 
-    it('phase 2: repairs autoRun.enabled when Electron=true but backend=false', async () => {
+    it('phase 2: repairs autoRun.enabled via dot-notation when Electron=true but backend=false', async () => {
       mockGetStore
         .mockResolvedValueOnce({ autoRun: { enabled: false } })
         .mockResolvedValueOnce({ autoRun: { enabled: true } });
@@ -383,10 +383,48 @@ describe('StoreProvider', () => {
         expect(result.current.storeState?.autoRun?.enabled).toBe(true);
       });
 
-      expect(mockSetStoreKey).toHaveBeenCalledWith('autoRun', {
-        enabled: true,
-        isInitialized: true,
+      // Must use dot-notation, NOT overwrite the entire autoRun object
+      expect(mockSetStoreKey).toHaveBeenCalledWith('autoRun.enabled', true);
+    });
+
+    it('phase 2: preserves backend autoRun fields that Electron lacks', async () => {
+      // Backend has includedAgentInstances that Electron doesn't know about
+      mockGetStore
+        .mockResolvedValueOnce({
+          autoRun: {
+            enabled: false,
+            isInitialized: true,
+            includedAgentInstances: [{ serviceConfigId: 'svc-1', order: 0 }],
+            userExcludedAgentInstances: ['svc-2'],
+          },
+        })
+        .mockResolvedValueOnce({
+          autoRun: {
+            enabled: true,
+            isInitialized: true,
+            includedAgentInstances: [{ serviceConfigId: 'svc-1', order: 0 }],
+            userExcludedAgentInstances: ['svc-2'],
+          },
+        });
+
+      const { result } = renderHook(() => useContext(StoreContext), {
+        wrapper: makeMigrationWrapper({
+          // Electron has old shape without multi-instance fields
+          autoRun: { enabled: true, isInitialized: true },
+        }),
       });
+
+      await waitFor(() => {
+        expect(result.current.storeState?.autoRun?.enabled).toBe(true);
+      });
+
+      // Dot-notation write — backend's includedAgentInstances and
+      // userExcludedAgentInstances are NOT overwritten
+      expect(mockSetStoreKey).toHaveBeenCalledWith('autoRun.enabled', true);
+      expect(mockSetStoreKey).not.toHaveBeenCalledWith(
+        'autoRun',
+        expect.anything(),
+      );
     });
 
     it('phase 2: does NOT touch autoRun when values already match', async () => {
@@ -407,6 +445,95 @@ describe('StoreProvider', () => {
           expect.anything(),
         );
       });
+    });
+
+    it('sets pearlStoreMigrationComplete flag after phase 1', async () => {
+      mockGetStore.mockResolvedValue({});
+
+      const storeSet = jest.fn().mockResolvedValue(undefined);
+      const Wrapper = ({ children }: PropsWithChildren) => {
+        const electron = {
+          store: {
+            get: jest
+              .fn()
+              .mockImplementation((key: string) =>
+                Promise.resolve(
+                  key === 'trader'
+                    ? { isInitialFunded: {} }
+                    : key === 'autoRun'
+                      ? { enabled: false }
+                      : undefined,
+                ),
+              ),
+            set: storeSet,
+          },
+        };
+        return createElement(
+          ElectronApiContext.Provider,
+          { value: electron },
+          createElement(StoreProvider, null, children),
+        );
+      };
+
+      renderHook(() => useContext(StoreContext), { wrapper: Wrapper });
+
+      await waitFor(() => {
+        expect(storeSet).toHaveBeenCalledWith(
+          'pearlStoreMigrationComplete',
+          true,
+        );
+        expect(storeSet).toHaveBeenCalledWith(
+          'pearlStoreAutoRunRepaired',
+          true,
+        );
+      });
+    });
+
+    it('does not set migration flag when setStoreKey fails (re-migrates next launch)', async () => {
+      mockGetStore.mockResolvedValue({});
+      mockSetStoreKey.mockRejectedValue(new Error('write failed'));
+
+      const storeSet = jest.fn().mockResolvedValue(undefined);
+      const consoleSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
+
+      const Wrapper = ({ children }: PropsWithChildren) => {
+        const electron = {
+          store: {
+            get: jest
+              .fn()
+              .mockImplementation((key: string) =>
+                Promise.resolve(
+                  key === 'trader' ? { isInitialFunded: {} } : undefined,
+                ),
+              ),
+            set: storeSet,
+          },
+        };
+        return createElement(
+          ElectronApiContext.Provider,
+          { value: electron },
+          createElement(StoreProvider, null, children),
+        );
+      };
+
+      renderHook(() => useContext(StoreContext), { wrapper: Wrapper });
+
+      await waitFor(() => {
+        expect(consoleSpy).toHaveBeenCalledWith(
+          '[StoreProvider] Migration failed:',
+          expect.any(Error),
+        );
+      });
+
+      // Flag should NOT be set — migration will retry on next launch
+      expect(storeSet).not.toHaveBeenCalledWith(
+        'pearlStoreMigrationComplete',
+        true,
+      );
+
+      consoleSpy.mockRestore();
     });
 
     it('skips both phases when flags are already set', async () => {

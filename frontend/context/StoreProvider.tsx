@@ -160,6 +160,7 @@ export const StoreProvider = ({ children }: PropsWithChildren) => {
           isHydratedRef.current = true;
           setStoreState(finalState);
 
+          // Report raw backend key count (before draining pending ops).
           const keyCount = Object.keys(data).length;
           if (keyCount === 0) {
             log(`Hydrated on attempt ${attempt} (empty store)`);
@@ -247,6 +248,11 @@ export const StoreProvider = ({ children }: PropsWithChildren) => {
       storeGet('pearlStoreAutoRunRepaired'),
     ])
       .then(async ([migrationDone, autoRunRepaired]) => {
+        if (migrationDone && autoRunRepaired) {
+          log('Migration already complete (flags set)');
+          return;
+        }
+
         let didWrite = false;
 
         // Phase 1: Copy missing keys from Electron → backend
@@ -294,23 +300,20 @@ export const StoreProvider = ({ children }: PropsWithChildren) => {
             !backendAutoRun.enabled
           ) {
             log('Repairing autoRun.enabled (was lost during migration)');
-            await StoreService.setStoreKey('autoRun', electronAutoRun);
+            // Use dot-notation to set only the enabled flag — preserves any
+            // backend-side fields (includedAgentInstances, etc.) that may
+            // have been written after the race.
+            await StoreService.setStoreKey('autoRun.enabled', true);
             didWrite = true;
           }
 
           await storeSet('pearlStoreAutoRunRepaired', true);
         }
 
-        if (migrationDone && autoRunRepaired) {
-          log('Migration already complete (flags set)');
-          return;
-        }
-
         // Refresh storeState from backend if any writes were made
         if (didWrite) {
           const data = await StoreService.getStore();
           const finalState = drainPendingOps(data);
-          isHydratedRef.current = true;
           setStoreState(finalState);
         }
 
