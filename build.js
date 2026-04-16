@@ -71,10 +71,7 @@ const main = async () => {
         // during dmgbuild's ditto copy. The default auto-sizing underestimates
         // for apps containing sparse files (e.g. pyinstaller-packaged Python
         // binaries), causing ditto to silently truncate the Electron Framework
-        // binary and producing a DMG Gatekeeper rejects with "no usable
-        // signature". See electron-userland/electron-builder#8223. Output DMG
-        // is still compressed via default UDZO format — shrink=true (default)
-        // reduces the final artifact after packaging.
+        // binary. See electron-userland/electron-builder#8223.
         size: '2g',
       },
     },

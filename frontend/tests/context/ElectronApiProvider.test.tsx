@@ -6,6 +6,31 @@ import {
   ElectronApiContext,
   ElectronApiProvider,
 } from '../../context/ElectronApiProvider';
+import {
+  emitPearlStoreDelete,
+  emitPearlStoreSet,
+} from '../../context/pearlStoreEventBus';
+import { StoreService } from '../../service/StoreService';
+
+// Mock StoreService and event bus — store.set/delete/clear now route through these.
+jest.mock('../../service/StoreService', () => ({
+  StoreService: {
+    getStore: jest.fn(),
+    setStoreKey: jest.fn().mockResolvedValue(undefined),
+    deleteStoreKey: jest.fn().mockResolvedValue(undefined),
+  },
+}));
+jest.mock('../../context/pearlStoreEventBus', () => ({
+  registerPearlStoreSetHandler: jest.fn(),
+  registerPearlStoreDeleteHandler: jest.fn(),
+  emitPearlStoreSet: jest.fn(),
+  emitPearlStoreDelete: jest.fn(),
+}));
+
+const mockSetStoreKey = StoreService.setStoreKey as jest.Mock;
+const mockDeleteStoreKey = StoreService.deleteStoreKey as jest.Mock;
+const mockEmitPearlStoreSet = emitPearlStoreSet as jest.Mock;
+const mockEmitPearlStoreDelete = emitPearlStoreDelete as jest.Mock;
 
 const buildMockElectronApi = () => ({
   getAppVersion: jest.fn(),
@@ -56,6 +81,15 @@ const buildMockElectronApi = () => ({
   nextLogError: jest.fn(),
 });
 
+// store.set, store.delete, and store.clear are now wrapper functions that route
+// between Electron IPC and backend HTTP, so they won't be strict-equal to the
+// mock functions. These paths are tested separately below.
+const OVERRIDDEN_STORE_PATHS = new Set([
+  'store.set',
+  'store.delete',
+  'store.clear',
+]);
+
 /** Recursively collect all dot-paths to leaf (function) values. */
 const getLeafPaths = (obj: Record<string, unknown>, prefix = ''): string[] => {
   const paths: string[] = [];
@@ -97,8 +131,16 @@ describe('ElectronApiProvider', () => {
       wrapper,
     });
 
-    for (const dotPath of ALL_FUNCTION_PATHS) {
+    // Passthrough functions should be strict-equal to the mock.
+    const passthroughPaths = ALL_FUNCTION_PATHS.filter(
+      (p) => !OVERRIDDEN_STORE_PATHS.has(p),
+    );
+    for (const dotPath of passthroughPaths) {
       expect(get(result.current, dotPath)).toBe(get(mockApi, dotPath));
+    }
+    // Overridden functions should still be callable functions.
+    for (const dotPath of OVERRIDDEN_STORE_PATHS) {
+      expect(typeof get(result.current, dotPath)).toBe('function');
     }
   });
 
@@ -116,7 +158,11 @@ describe('ElectronApiProvider', () => {
     consoleSpy.mockRestore();
   });
 
-  it.each(ALL_FUNCTION_PATHS.map((p) => ({ dotPath: p })))(
+  it.each(
+    ALL_FUNCTION_PATHS.filter((p) => !OVERRIDDEN_STORE_PATHS.has(p)).map(
+      (p) => ({ dotPath: p }),
+    ),
+  )(
     'throws when $dotPath is removed from window.electronAPI',
     ({ dotPath }) => {
       const partialApi = buildMockElectronApi();
@@ -134,4 +180,154 @@ describe('ElectronApiProvider', () => {
       consoleSpy.mockRestore();
     },
   );
+
+  describe('store.set routing', () => {
+    const setupProvider = () => {
+      const mockApi = buildMockElectronApi();
+      mockApi.store.set.mockResolvedValue(undefined);
+      (window as unknown as Record<string, unknown>).electronAPI = mockApi;
+
+      const { result } = renderHook(() => useContext(ElectronApiContext), {
+        wrapper: ({ children }: PropsWithChildren) =>
+          createElement(ElectronApiProvider, null, children),
+      });
+      return { result, mockApi };
+    };
+
+    it('routes Electron-native keys to IPC', async () => {
+      const { result, mockApi } = setupProvider();
+
+      await result.current.store?.set?.('environmentName', 'staging');
+
+      expect(mockApi.store.set).toHaveBeenCalledWith(
+        'environmentName',
+        'staging',
+      );
+      expect(mockEmitPearlStoreSet).not.toHaveBeenCalled();
+    });
+
+    it('routes backend-bound keys to StoreService and event bus', async () => {
+      const { result, mockApi } = setupProvider();
+
+      await result.current.store?.set?.('trader.isInitialFunded', {
+        'svc-1': true,
+      });
+
+      expect(mockApi.store.set).not.toHaveBeenCalled();
+      expect(mockEmitPearlStoreSet).toHaveBeenCalledWith(
+        'trader.isInitialFunded',
+        { 'svc-1': true },
+      );
+      expect(mockSetStoreKey).toHaveBeenCalledWith('trader.isInitialFunded', {
+        'svc-1': true,
+      });
+    });
+
+    it('logs error when backend write fails', async () => {
+      const { result } = setupProvider();
+      const writeError = new Error('network error');
+      mockSetStoreKey.mockRejectedValueOnce(writeError);
+
+      const consoleSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
+
+      await result.current.store?.set?.('autoRun', { enabled: true });
+
+      expect(consoleSpy).toHaveBeenCalledWith(
+        "Failed to persist store key 'autoRun':",
+        writeError,
+      );
+
+      consoleSpy.mockRestore();
+    });
+  });
+
+  describe('store.delete routing', () => {
+    const setupProvider = () => {
+      const mockApi = buildMockElectronApi();
+      mockApi.store.delete.mockResolvedValue(undefined);
+      (window as unknown as Record<string, unknown>).electronAPI = mockApi;
+
+      const { result } = renderHook(() => useContext(ElectronApiContext), {
+        wrapper: ({ children }: PropsWithChildren) =>
+          createElement(ElectronApiProvider, null, children),
+      });
+      return { result, mockApi };
+    };
+
+    it('routes Electron-native keys to IPC', async () => {
+      const { result, mockApi } = setupProvider();
+
+      await result.current.store?.delete?.('knownVersion');
+
+      expect(mockApi.store.delete).toHaveBeenCalledWith('knownVersion');
+      expect(mockEmitPearlStoreDelete).not.toHaveBeenCalled();
+    });
+
+    it('routes backend-bound keys to StoreService and event bus', async () => {
+      const { result, mockApi } = setupProvider();
+
+      await result.current.store?.delete?.('lastSelectedServiceConfigId');
+
+      expect(mockApi.store.delete).not.toHaveBeenCalled();
+      expect(mockEmitPearlStoreDelete).toHaveBeenCalledWith(
+        'lastSelectedServiceConfigId',
+      );
+      expect(mockDeleteStoreKey).toHaveBeenCalledWith(
+        'lastSelectedServiceConfigId',
+      );
+    });
+
+    it('logs error when backend delete fails', async () => {
+      const { result } = setupProvider();
+      const deleteError = new Error('network error');
+      mockDeleteStoreKey.mockRejectedValueOnce(deleteError);
+
+      const consoleSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
+
+      await result.current.store?.delete?.('autoRun');
+
+      expect(consoleSpy).toHaveBeenCalledWith(
+        "Failed to delete store key 'autoRun':",
+        deleteError,
+      );
+
+      consoleSpy.mockRestore();
+    });
+  });
+
+  describe('store.clear', () => {
+    it('clears both Electron-native and backend-bound keys', async () => {
+      const mockApi = buildMockElectronApi();
+      mockApi.store.clear.mockResolvedValue(undefined);
+      (window as unknown as Record<string, unknown>).electronAPI = mockApi;
+
+      mockDeleteStoreKey.mockResolvedValue(undefined);
+
+      const { result } = renderHook(() => useContext(ElectronApiContext), {
+        wrapper: ({ children }: PropsWithChildren) =>
+          createElement(ElectronApiProvider, null, children),
+      });
+
+      await result.current.store?.clear?.();
+
+      // Electron-native keys cleared via IPC
+      expect(mockApi.store.clear).toHaveBeenCalled();
+
+      // Backend-bound keys deleted individually
+      expect(mockDeleteStoreKey).toHaveBeenCalled();
+      expect(mockEmitPearlStoreDelete).toHaveBeenCalled();
+
+      // Verify at least some known backend-bound keys are deleted
+      const deletedKeys = mockDeleteStoreKey.mock.calls.map(
+        (call: unknown[]) => call[0],
+      );
+      expect(deletedKeys).toContain('trader');
+      expect(deletedKeys).toContain('autoRun');
+      expect(deletedKeys).toContain('lastSelectedServiceConfigId');
+    });
+  });
 });

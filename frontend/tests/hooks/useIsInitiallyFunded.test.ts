@@ -3,7 +3,7 @@ import { act } from 'react';
 
 import { AgentMap } from '../../constants/agent';
 import { useIsInitiallyFunded } from '../../hooks/useIsInitiallyFunded';
-import { ElectronStore } from '../../types/ElectronApi';
+import { PearlStore } from '../../types/ElectronApi';
 import {
   DEFAULT_SERVICE_CONFIG_ID,
   MOCK_SERVICE_CONFIG_ID_2,
@@ -47,7 +47,7 @@ describe('useIsInitiallyFunded', () => {
 
   describe('reading (per-service record)', () => {
     it('returns true when the selected service is funded', () => {
-      const storeState: Partial<ElectronStore> = {
+      const storeState: Partial<PearlStore> = {
         [AgentMap.PredictTrader]: {
           isInitialFunded: { [DEFAULT_SERVICE_CONFIG_ID]: true },
         },
@@ -59,7 +59,7 @@ describe('useIsInitiallyFunded', () => {
     });
 
     it('returns false when the selected service is not funded', () => {
-      const storeState: Partial<ElectronStore> = {
+      const storeState: Partial<PearlStore> = {
         [AgentMap.PredictTrader]: {
           isInitialFunded: { [DEFAULT_SERVICE_CONFIG_ID]: false },
         },
@@ -71,7 +71,7 @@ describe('useIsInitiallyFunded', () => {
     });
 
     it('returns false when the selected service is not in the record (not yet funded)', () => {
-      const storeState: Partial<ElectronStore> = {
+      const storeState: Partial<PearlStore> = {
         [AgentMap.PredictTrader]: {
           isInitialFunded: { [MOCK_SERVICE_CONFIG_ID_2]: true },
         },
@@ -87,7 +87,7 @@ describe('useIsInitiallyFunded', () => {
         selectedAgentType: AgentMap.PredictTrader,
         selectedServiceConfigId: null,
       });
-      const storeState: Partial<ElectronStore> = {
+      const storeState: Partial<PearlStore> = {
         [AgentMap.PredictTrader]: {
           isInitialFunded: { [DEFAULT_SERVICE_CONFIG_ID]: true },
         },
@@ -101,7 +101,7 @@ describe('useIsInitiallyFunded', () => {
 
   describe('reading (legacy boolean — treated as unmigrated)', () => {
     it('returns undefined for legacy isInitialFunded=true (awaiting migration)', () => {
-      const storeState: Partial<ElectronStore> = {
+      const storeState: Partial<PearlStore> = {
         [AgentMap.PredictTrader]: { isInitialFunded: true },
       };
       mockUseStore.mockReturnValue({ storeState });
@@ -111,7 +111,7 @@ describe('useIsInitiallyFunded', () => {
     });
 
     it('returns undefined for legacy isInitialFunded=false (awaiting migration)', () => {
-      const storeState: Partial<ElectronStore> = {
+      const storeState: Partial<PearlStore> = {
         [AgentMap.PredictTrader]: { isInitialFunded: false },
       };
       mockUseStore.mockReturnValue({ storeState });
@@ -143,7 +143,7 @@ describe('useIsInitiallyFunded', () => {
         selectedAgentType: AgentMap.AgentsFun,
         selectedServiceConfigId: MOCK_SERVICE_CONFIG_ID_2,
       });
-      const storeState: Partial<ElectronStore> = {
+      const storeState: Partial<PearlStore> = {
         [AgentMap.AgentsFun]: {
           isInitialFunded: { [MOCK_SERVICE_CONFIG_ID_2]: true },
         },
@@ -174,7 +174,7 @@ describe('useIsInitiallyFunded', () => {
     });
 
     it('preserves existing entries when writing', () => {
-      const storeState: Partial<ElectronStore> = {
+      const storeState: Partial<PearlStore> = {
         [AgentMap.PredictTrader]: {
           isInitialFunded: { [MOCK_SERVICE_CONFIG_ID_2]: true },
         },
