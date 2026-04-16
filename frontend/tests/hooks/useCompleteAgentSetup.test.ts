@@ -43,13 +43,14 @@ jest.mock('../../hooks/useMasterSafeCreationAndTransfer', () => ({
   useMasterSafeCreationAndTransfer: jest.fn(),
 }));
 
+const mockToggleSupportModal = jest.fn();
+
 jest.mock('../../context/SupportModalProvider', () => ({
   useSupportModal: jest.fn(() => ({
     toggleSupportModal: mockToggleSupportModal,
   })),
 }));
 
-const mockToggleSupportModal = jest.fn();
 const mockCreateMasterSafe = jest.fn();
 
 const POLYGON_CHAIN_ID = EvmChainIdMap.Polygon;
@@ -60,6 +61,7 @@ type CreationAndTransferDetails = ReturnType<
 
 const setupMocks = ({
   isLoading = false,
+  isBalancesLoaded = true,
   masterSafeAddress = null as string | null,
   isMasterWalletFetched = true,
   safeBalances = [] as ReturnType<typeof makeOlasBalance>[],
@@ -93,6 +95,7 @@ const setupMocks = ({
   (useMasterBalances as jest.Mock).mockReturnValue({
     getMasterSafeBalancesOf,
     getMasterEoaBalancesOf,
+    isLoaded: isBalancesLoaded,
   });
   (useMasterSafeCreationAndTransfer as jest.Mock).mockReturnValue({
     mutate: mockCreateMasterSafe,
@@ -112,6 +115,12 @@ describe('useCompleteAgentSetup', () => {
   describe('setupState derivation', () => {
     it('returns detecting when isLoading is true', () => {
       setupMocks({ isLoading: true });
+      const { result } = renderHook(() => useCompleteAgentSetup());
+      expect(result.current.setupState).toBe('detecting');
+    });
+
+    it('returns detecting when balance data is not yet loaded', () => {
+      setupMocks({ isBalancesLoaded: false });
       const { result } = renderHook(() => useCompleteAgentSetup());
       expect(result.current.setupState).toBe('detecting');
     });

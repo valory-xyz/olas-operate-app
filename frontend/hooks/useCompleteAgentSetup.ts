@@ -61,8 +61,11 @@ export const useCompleteAgentSetup = (): UseCompleteAgentSetupReturn => {
     useMasterWalletContext();
   const { selectedAgentConfig } = useServices();
   const { totalTokenRequirements, isLoading } = useGetRefillRequirements();
-  const { getMasterSafeBalancesOf, getMasterEoaBalancesOf } =
-    useMasterBalances();
+  const {
+    getMasterSafeBalancesOf,
+    getMasterEoaBalancesOf,
+    isLoaded: isBalancesLoaded,
+  } = useMasterBalances();
   const { toggleSupportModal } = useSupportModal();
 
   const { evmHomeChainId } = selectedAgentConfig;
@@ -85,7 +88,7 @@ export const useCompleteAgentSetup = (): UseCompleteAgentSetupReturn => {
   } = useMasterSafeCreationAndTransfer(tokenSymbols);
 
   const setupState: SetupState = useMemo(() => {
-    if (isLoading) return 'detecting';
+    if (isLoading || !isBalancesLoaded) return 'detecting';
     const masterSafe = getMasterSafeOf?.(evmHomeChainId);
     if (masterSafe) {
       const safeBalances = getMasterSafeBalancesOf(evmHomeChainId);
@@ -99,6 +102,7 @@ export const useCompleteAgentSetup = (): UseCompleteAgentSetupReturn => {
     return 'needsFunding';
   }, [
     isLoading,
+    isBalancesLoaded,
     getMasterSafeOf,
     getMasterSafeBalancesOf,
     getMasterEoaBalancesOf,
