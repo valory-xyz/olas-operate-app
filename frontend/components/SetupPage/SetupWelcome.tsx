@@ -1,5 +1,4 @@
 import { Button, Card, Flex, Form, Input, Spin, Typography } from 'antd';
-import { isNil } from 'lodash';
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -9,13 +8,14 @@ import {
   useBackupSigner,
   useBalanceContext,
   useElectronApi,
-  useMasterBalances,
+  useIsInitiallyFunded,
   useMnemonicExists,
   useOnlineStatusContext,
   usePageState,
   useServices,
   useSetup,
   useSharedContext,
+  useStore,
 } from '@/hooks';
 import { AccountService } from '@/service/Account';
 import { WalletService } from '@/service/Wallet';
@@ -46,8 +46,9 @@ const useSetupNavigation = ({
     services,
     isFetched: isServicesFetched,
   } = useServices();
-  const { getMasterEoaNativeBalanceOf, isLoaded } = useMasterBalances();
+  const { isInitialFunded } = useIsInitiallyFunded();
   const backupSignerAddress = useBackupSigner();
+  const { storeState } = useStore();
 
   const selectedServiceOrAgentChainId = selectedService?.home_chain
     ? asEvmChainId(selectedService?.home_chain)
@@ -67,11 +68,15 @@ const useSetupNavigation = ({
   }, [isServicesFetched, services, selectedService, selectedAgentConfig]);
 
   const isApplicationReady = useMemo(() => {
-    if (!isOnline || !canNavigate || !isServicesFetched || !isLoaded)
+    if (
+      !isOnline ||
+      !canNavigate ||
+      !isServicesFetched ||
+      storeState === undefined
+    )
       return false;
-
     return true;
-  }, [canNavigate, isLoaded, isOnline, isServicesFetched]);
+  }, [canNavigate, isOnline, isServicesFetched, storeState]);
 
   const isBackupWalletNotSet = useMemo(() => {
     // If no services are created and backup wallet is not set as well.
@@ -105,19 +110,18 @@ const useSetupNavigation = ({
       return;
     }
 
-    // If no balance is loaded, redirect to setup screen
-    if (isNil(getMasterEoaNativeBalanceOf(selectedServiceOrAgentChainId))) {
+    if (isInitialFunded === false) {
       goto(SETUP_SCREEN.FundYourAgent);
       return;
     }
 
     gotoPage(PAGES.Main);
   }, [
-    getMasterEoaNativeBalanceOf,
     goto,
     gotoPage,
     isApplicationReady,
     isBackupWalletNotSet,
+    isInitialFunded,
     isServiceCreatedForAgent,
     selectedAgentConfig,
     selectedServiceOrAgentChainId,
@@ -169,7 +173,7 @@ const RecoveryProcessInProgress = () => (
 
 const ErrorMessages = ['does not exist', 'file does not exist', 'not exist'];
 
-const SetupWelcomeLogin = () => {
+export const SetupWelcomeLogin = () => {
   const [form] = Form.useForm();
   const message = useMessageApi();
   const { goto } = useSetup();
@@ -206,7 +210,6 @@ const SetupWelcomeLogin = () => {
         setUserLoggedIn();
       } catch (e) {
         message.error(getErrorMessage(e));
-      } finally {
         setIsLoggingIn(false);
       }
     },
