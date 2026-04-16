@@ -12,7 +12,7 @@ export const useApplyBackupOwner = () => {
   return useMutation({
     mutationFn: (request: ApplyBackupOwnerRequest) =>
       BackupWalletService.applyBackupOwner(request),
-    onSuccess: () => {
+    onSettled: () => {
       queryClient.invalidateQueries({
         queryKey: REACT_QUERY_KEYS.BACKUP_OWNER_STATUS_KEY,
       });

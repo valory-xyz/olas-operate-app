@@ -124,6 +124,12 @@ export const UpdateBackupWalletConfirmScreen = () => {
         <UpdateBackupWalletResultModal
           status={resultStatus}
           onDone={handleDone}
+          onRetry={async () => {
+            await applyBackupOwner({
+              backup_owner: newAddress!,
+              password: password ?? undefined,
+            });
+          }}
         />
       )}
     </>

@@ -49,9 +49,18 @@ const applyBackupOwner = async (
       ...(request.password ? { password: request.password } : {}),
     }),
   }).then(async (res) => {
-    if (res.ok) return res.json();
-    const errorData = await res.json().catch(() => ({}));
-    throw new Error(errorData.error ?? 'Failed to apply backup owner');
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      throw new Error(errorData.error ?? 'Failed to apply backup owner');
+    }
+    const data: ApplyBackupOwnerResponse = await res.json();
+    if (!data.all_succeeded) {
+      const failed = data.results.filter((r) => !r.updated).map((r) => r.chain);
+      throw new Error(
+        `Backup owner update failed on chains: ${failed.join(', ')}`,
+      );
+    }
+    return data;
   });
 
 const syncBackupOwner = async (): Promise<SyncBackupOwnerResponse> =>
@@ -60,9 +69,18 @@ const syncBackupOwner = async (): Promise<SyncBackupOwnerResponse> =>
     headers: { ...CONTENT_TYPE_JSON_UTF8 },
     body: JSON.stringify({}),
   }).then(async (res) => {
-    if (res.ok) return res.json();
-    const errorData = await res.json().catch(() => ({}));
-    throw new Error(errorData.error ?? 'Failed to sync backup owner');
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      throw new Error(errorData.error ?? 'Failed to sync backup owner');
+    }
+    const data: SyncBackupOwnerResponse = await res.json();
+    if (!data.all_succeeded) {
+      const failed = data.results.filter((r) => !r.updated).map((r) => r.chain);
+      throw new Error(
+        `Backup owner sync failed on chains: ${failed.join(', ')}`,
+      );
+    }
+    return data;
   });
 
 export const BackupWalletService = {

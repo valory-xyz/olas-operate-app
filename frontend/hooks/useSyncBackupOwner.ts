@@ -8,7 +8,7 @@ export const useSyncBackupOwner = () => {
 
   return useMutation({
     mutationFn: BackupWalletService.syncBackupOwner,
-    onSuccess: () => {
+    onSettled: () => {
       queryClient.invalidateQueries({
         queryKey: REACT_QUERY_KEYS.BACKUP_OWNER_STATUS_KEY,
       });

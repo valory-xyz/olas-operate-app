@@ -4,30 +4,29 @@ import { useState } from 'react';
 import { SuccessOutlined, WarningOutlined } from '@/components/custom-icons';
 import { LoadingSpinner, Modal } from '@/components/ui';
 import { useSupportModal } from '@/context/SupportModalProvider';
-import { useSyncBackupOwner } from '@/hooks';
 
 type ResultStatus = 'idle' | 'in_progress' | 'success' | 'failure';
 
 type UpdateBackupWalletResultModalProps = {
   status: ResultStatus;
   onDone: () => void;
+  onRetry: () => Promise<void>;
 };
 
 export const UpdateBackupWalletResultModal = ({
   status,
   onDone,
+  onRetry,
 }: UpdateBackupWalletResultModalProps) => {
-  const { mutateAsync: syncBackupOwner } = useSyncBackupOwner();
   const { toggleSupportModal } = useSupportModal();
   const [internalStatus, setInternalStatus] = useState<ResultStatus>('idle');
 
-  // Use internal status if retrying, otherwise use parent status
   const activeStatus = internalStatus !== 'idle' ? internalStatus : status;
 
   const handleRetry = async () => {
     setInternalStatus('in_progress');
     try {
-      await syncBackupOwner();
+      await onRetry();
       setInternalStatus('success');
     } catch {
       setInternalStatus('failure');
