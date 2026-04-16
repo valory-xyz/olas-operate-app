@@ -139,17 +139,14 @@ const useStakingContractDetailsByStakingProgram = ({
         );
       }
 
-      return Promise.allSettled(promises).then((results) => {
-        const [stakingContractDetails, serviceStakingDetails] = results;
-        return {
-          ...(stakingContractDetails?.status === 'fulfilled'
-            ? (stakingContractDetails.value as StakingContractDetails)
+      return Promise.all(promises).then(
+        ([stakingContractDetails, serviceStakingDetails]) => ({
+          ...(stakingContractDetails as StakingContractDetails),
+          ...(serviceStakingDetails
+            ? (serviceStakingDetails as ServiceStakingDetails)
             : {}),
-          ...(serviceStakingDetails?.status === 'fulfilled'
-            ? (serviceStakingDetails.value as ServiceStakingDetails)
-            : {}),
-        };
-      });
+        }),
+      );
     },
     enabled: !isPaused && !!stakingProgramId,
     refetchInterval: isPaused ? false : refetchInterval,
