@@ -54,8 +54,6 @@ export const createStakingRewardsQuery = ({
         stakingProgramId: stakingProgramId!,
         multisig: multisig! as Address,
         agentConfig,
-        onError: (error) =>
-          console.error('Error getting staking rewards info', error),
       });
     },
     enabled:
