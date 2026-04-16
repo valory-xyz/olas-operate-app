@@ -195,6 +195,7 @@ const mockUseOnlineStatusContext = jest.fn();
 const mockUseServices = jest.fn();
 const mockUseBackupSigner = jest.fn();
 const mockUseIsInitiallyFunded = jest.fn();
+const mockUseStore = jest.fn();
 
 jest.mock('../../../hooks', () => ({
   useSetup: jest.fn(() => ({ goto: mockGoto })),
@@ -212,6 +213,7 @@ jest.mock('../../../hooks', () => ({
   useBackupSigner: (...args: unknown[]) => mockUseBackupSigner(...args),
   useIsInitiallyFunded: (...args: unknown[]) =>
     mockUseIsInitiallyFunded(...args),
+  useStore: (...args: unknown[]) => mockUseStore(...args),
 }));
 
 jest.mock('../../../context/MessageProvider', () => ({
@@ -252,6 +254,7 @@ const setupHooksApplicationNotReady = () => {
   });
   mockUseBackupSigner.mockReturnValue(undefined);
   mockUseIsInitiallyFunded.mockReturnValue({ isInitialFunded: false });
+  mockUseStore.mockReturnValue({ storeState: {} });
 };
 
 /**
@@ -273,6 +276,7 @@ const setupHooksInitialFunded = () => {
   });
   mockUseBackupSigner.mockReturnValue('0xbackup');
   mockUseIsInitiallyFunded.mockReturnValue({ isInitialFunded: true });
+  mockUseStore.mockReturnValue({ storeState: {} });
 };
 
 /**
@@ -294,6 +298,7 @@ const setupHooksNotInitialFunded = () => {
   });
   mockUseBackupSigner.mockReturnValue('0xbackup');
   mockUseIsInitiallyFunded.mockReturnValue({ isInitialFunded: false });
+  mockUseStore.mockReturnValue({ storeState: {} });
 };
 
 /**
@@ -316,6 +321,30 @@ const setupHooksInitialFundedUndefined = () => {
   });
   mockUseBackupSigner.mockReturnValue('0xbackup');
   mockUseIsInitiallyFunded.mockReturnValue({ isInitialFunded: undefined });
+  mockUseStore.mockReturnValue({ storeState: {} });
+};
+
+/**
+ * Set hooks so the pearl store has not finished hydrating (storeState=undefined).
+ * Even if canNavigate=true and isServicesFetched=true, isApplicationReady must
+ * stay false — closing the cold-boot race where isInitialFunded reads stale data.
+ */
+const setupHooksStoreNotHydrated = () => {
+  mockUseOnlineStatusContext.mockReturnValue({ isOnline: true });
+  mockUseServices.mockReturnValue({
+    selectedService: { home_chain: 100, service_config_id: 'cfg-1' },
+    selectedAgentConfig: {
+      evmHomeChainId: 100,
+      servicePublicId: 'test-public-id',
+      middlewareHomeChainId: 100,
+      isAgentEnabled: true,
+    },
+    services: [{ service_public_id: 'test-public-id', home_chain: 100 }],
+    isFetched: true,
+  });
+  mockUseBackupSigner.mockReturnValue('0xbackup');
+  mockUseIsInitiallyFunded.mockReturnValue({ isInitialFunded: undefined });
+  mockUseStore.mockReturnValue({ storeState: undefined });
 };
 
 const renderSetupWelcomeLogin = () => render(<SetupWelcomeLogin />);
@@ -497,6 +526,26 @@ describe('SetupWelcomeLogin', () => {
       expect(mockGoto).not.toHaveBeenCalledWith(
         expect.stringContaining('FundYourAgent'),
       );
+    });
+  });
+
+  describe('store hydration gate', () => {
+    it('does not navigate when storeState is undefined (pearl store not yet hydrated)', async () => {
+      setupHooksStoreNotHydrated();
+      mockLoginAccount.mockResolvedValue({ message: 'ok' });
+
+      renderSetupWelcomeLogin();
+      fireEvent.submit(screen.getByTestId('login-form'));
+
+      await waitFor(() => {
+        expect(mockSetUserLoggedIn).toHaveBeenCalledTimes(1);
+      });
+
+      // isApplicationReady is false because storeState === undefined,
+      // so no navigation should fire even though canNavigate=true and
+      // isServicesFetched=true.
+      expect(mockGotoPage).not.toHaveBeenCalled();
+      expect(mockGoto).not.toHaveBeenCalled();
     });
   });
 });

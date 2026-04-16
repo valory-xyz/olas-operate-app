@@ -15,6 +15,7 @@ import {
   useServices,
   useSetup,
   useSharedContext,
+  useStore,
 } from '@/hooks';
 import { AccountService } from '@/service/Account';
 import { WalletService } from '@/service/Wallet';
@@ -47,6 +48,7 @@ const useSetupNavigation = ({
   } = useServices();
   const { isInitialFunded } = useIsInitiallyFunded();
   const backupSignerAddress = useBackupSigner();
+  const { storeState } = useStore();
 
   const selectedServiceOrAgentChainId = selectedService?.home_chain
     ? asEvmChainId(selectedService?.home_chain)
@@ -66,9 +68,9 @@ const useSetupNavigation = ({
   }, [isServicesFetched, services, selectedService, selectedAgentConfig]);
 
   const isApplicationReady = useMemo(() => {
-    if (!isOnline || !canNavigate || !isServicesFetched) return false;
+    if (!isOnline || !canNavigate || !isServicesFetched || storeState === undefined) return false;
     return true;
-  }, [canNavigate, isOnline, isServicesFetched]);
+  }, [canNavigate, isOnline, isServicesFetched, storeState]);
 
   const isBackupWalletNotSet = useMemo(() => {
     // If no services are created and backup wallet is not set as well.
