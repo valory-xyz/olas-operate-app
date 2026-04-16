@@ -8,6 +8,8 @@ export const ELECTRON_NATIVE_KEYS = new Set([
   'environmentName',
   'knownVersion',
   'updateAvailableKnownVersion',
+  'pearlStoreMigrationComplete',
+  'pearlStoreAutoRunRepaired',
 ]);
 
 /**

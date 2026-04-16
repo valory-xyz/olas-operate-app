@@ -14,6 +14,11 @@ const schema = {
   knownVersion: { type: 'string', default: '' },
   // Stores the latest app version for which the "update available" modal was dismissed.
   updateAvailableKnownVersion: { type: 'string', default: '' },
+  // Set to true once the authoritative Electron→pearl_store migration is done.
+  // Must be in the schema so electron-store persists it.
+  pearlStoreMigrationComplete: { type: 'boolean', default: false },
+  // Set to true once the autoRun.enabled repair has been checked.
+  pearlStoreAutoRunRepaired: { type: 'boolean', default: false },
 };
 
 /**
