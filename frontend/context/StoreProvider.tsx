@@ -86,6 +86,11 @@ export const StoreProvider = ({ children }: PropsWithChildren) => {
   const pendingOpsRef = useRef<PendingOp[]>([]);
   const isHydratedRef = useRef(false);
 
+  // Snapshot of backend store at hydration time — used by migration to decide
+  // which keys are missing. Must NOT reflect post-hydration writes from other
+  // hooks (e.g. useAutoRunStore), otherwise migration skips keys it should copy.
+  const hydrationSnapshotRef = useRef<PearlStore>({});
+
   // Apply a store operation or queue it if hydration hasn't completed yet.
   const applyOrQueue = useRef({
     set: (key: string, value: unknown) => {
@@ -150,11 +155,12 @@ export const StoreProvider = ({ children }: PropsWithChildren) => {
       StoreService.getStore()
         .then((data) => {
           if (cancelled) return;
+          hydrationSnapshotRef.current = data;
           const finalState = drainPendingOps(data);
           isHydratedRef.current = true;
           setStoreState(finalState);
 
-          const keyCount = Object.keys(finalState).length;
+          const keyCount = Object.keys(data).length;
           if (keyCount === 0) {
             log(`Hydrated on attempt ${attempt} (empty store)`);
           } else {
@@ -213,6 +219,8 @@ export const StoreProvider = ({ children }: PropsWithChildren) => {
   // Migration: copy backend-bound keys from Electron store to pearl_store.json.
   // Runs when the Electron store has keys that the backend store is missing.
   // Handles first upgrade, .operate folder swaps, and partial migrations.
+  // Compares against the hydration snapshot (not live storeState) to avoid
+  // races with hooks that write defaults before migration runs.
   const migrationAttempted = useRef(false);
   useEffect(() => {
     const storeGet = store?.get;
@@ -221,8 +229,10 @@ export const StoreProvider = ({ children }: PropsWithChildren) => {
     if (migrationAttempted.current) return;
     migrationAttempted.current = true;
 
+    const snapshot = hydrationSnapshotRef.current;
+
     // Read all backend-bound keys from Electron store, then migrate any
-    // that are present in Electron but missing from the backend store.
+    // that are present in Electron but missing from the hydration snapshot.
     Promise.all(
       BACKEND_BOUND_KEYS.map((key) =>
         storeGet(key).then((value) => ({ key, value })),
@@ -233,7 +243,7 @@ export const StoreProvider = ({ children }: PropsWithChildren) => {
           ({ key, value }) =>
             value !== undefined &&
             value !== null &&
-            (storeState as Record<string, unknown>)?.[key] === undefined,
+            (snapshot as Record<string, unknown>)[key] === undefined,
         );
         if (toMigrate.length === 0) {
           log('No Electron store keys to migrate');
