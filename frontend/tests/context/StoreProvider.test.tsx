@@ -350,7 +350,7 @@ describe('StoreProvider', () => {
         autoRun: { enabled: true },
       });
 
-      renderHook(() => useContext(StoreContext), {
+      const { result } = renderHook(() => useContext(StoreContext), {
         wrapper: makeMigrationWrapper({
           // Electron has DIFFERENT trader value (old boolean format)
           trader: { isInitialFunded: true },
@@ -359,13 +359,16 @@ describe('StoreProvider', () => {
         }),
       });
 
-      // Wait for migration to complete
+      // Wait for hydration + migration to complete
       await waitFor(() => {
-        expect(mockSetStoreKey).not.toHaveBeenCalledWith(
-          'trader',
-          expect.anything(),
-        );
+        expect(result.current.storeState).toBeDefined();
       });
+
+      // THEN assert trader was never written (backend already had it)
+      expect(mockSetStoreKey).not.toHaveBeenCalledWith(
+        'trader',
+        expect.anything(),
+      );
     });
 
     it('phase 2: repairs autoRun.enabled via dot-notation when Electron=true but backend=false', async () => {
@@ -432,19 +435,27 @@ describe('StoreProvider', () => {
         autoRun: { enabled: true, isInitialized: true },
       });
 
-      renderHook(() => useContext(StoreContext), {
+      const { result } = renderHook(() => useContext(StoreContext), {
         wrapper: makeMigrationWrapper({
           autoRun: { enabled: true, isInitialized: true },
           pearlStoreAutoRunRepaired: true,
         }),
       });
 
+      // Wait for hydration + migration to complete
       await waitFor(() => {
-        expect(mockSetStoreKey).not.toHaveBeenCalledWith(
-          'autoRun',
-          expect.anything(),
-        );
+        expect(result.current.storeState).toBeDefined();
       });
+
+      // THEN assert autoRun was never written
+      expect(mockSetStoreKey).not.toHaveBeenCalledWith(
+        'autoRun',
+        expect.anything(),
+      );
+      expect(mockSetStoreKey).not.toHaveBeenCalledWith(
+        'autoRun.enabled',
+        expect.anything(),
+      );
     });
 
     it('sets pearlStoreMigrationComplete flag after phase 1', async () => {
@@ -494,9 +505,6 @@ describe('StoreProvider', () => {
       mockSetStoreKey.mockRejectedValue(new Error('write failed'));
 
       const storeSet = jest.fn().mockResolvedValue(undefined);
-      const consoleSpy = jest
-        .spyOn(console, 'error')
-        .mockImplementation(() => {});
 
       const Wrapper = ({ children }: PropsWithChildren) => {
         const electron = {
@@ -520,35 +528,39 @@ describe('StoreProvider', () => {
 
       renderHook(() => useContext(StoreContext), { wrapper: Wrapper });
 
+      // Wait for migration to complete (allSettled doesn't throw)
       await waitFor(() => {
-        expect(consoleSpy).toHaveBeenCalledWith(
-          '[StoreProvider] Migration failed:',
-          expect.any(Error),
+        // autoRunRepaired flag is set (Phase 2 succeeds independently)
+        expect(storeSet).toHaveBeenCalledWith(
+          'pearlStoreAutoRunRepaired',
+          true,
         );
       });
 
-      // Flag should NOT be set — migration will retry on next launch
+      // Migration flag should NOT be set — partial failure retries next launch
       expect(storeSet).not.toHaveBeenCalledWith(
         'pearlStoreMigrationComplete',
         true,
       );
-
-      consoleSpy.mockRestore();
     });
 
     it('skips both phases when flags are already set', async () => {
       mockGetStore.mockResolvedValue({ autoRun: { enabled: false } });
 
-      renderHook(() => useContext(StoreContext), {
+      const { result } = renderHook(() => useContext(StoreContext), {
         wrapper: makeMigrationWrapper({
           pearlStoreMigrationComplete: true,
           pearlStoreAutoRunRepaired: true,
         }),
       });
 
+      // Wait for hydration to complete
       await waitFor(() => {
-        expect(mockSetStoreKey).not.toHaveBeenCalled();
+        expect(result.current.storeState).toBeDefined();
       });
+
+      // THEN assert no backend writes happened
+      expect(mockSetStoreKey).not.toHaveBeenCalled();
     });
   });
 });

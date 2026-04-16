@@ -270,21 +270,50 @@ export const StoreProvider = ({ children }: PropsWithChildren) => {
               (snapshot as Record<string, unknown>)[key] === undefined,
           );
 
+          let allMigrationWritesSucceeded = true;
+
           if (toMigrate.length > 0) {
             log(
               `Migrating ${toMigrate.length} keys: ${toMigrate.map((e) => e.key).join(', ')}`,
             );
-            await Promise.all(
+
+            const results = await Promise.allSettled(
               toMigrate.map(({ key, value }) =>
                 StoreService.setStoreKey(key, value),
               ),
             );
-            didWrite = true;
+
+            const successfulWrites = results.filter(
+              (result) => result.status === 'fulfilled',
+            ).length;
+            const failedKeys = results
+              .map((result, index) =>
+                result.status === 'rejected'
+                  ? toMigrate[index]?.key
+                  : undefined,
+              )
+              .filter((key): key is keyof PearlStore => key !== undefined);
+
+            if (successfulWrites > 0) {
+              didWrite = true;
+            }
+
+            allMigrationWritesSucceeded = failedKeys.length === 0;
+
+            if (!allMigrationWritesSucceeded) {
+              log(
+                `Migration partially failed for keys: ${failedKeys.join(', ')}`,
+              );
+            }
           } else {
             log('No Electron store keys to migrate');
           }
 
-          await storeSet('pearlStoreMigrationComplete', true);
+          // Only set the flag when all writes succeeded — partial failures
+          // will re-migrate the missing keys on next launch.
+          if (allMigrationWritesSucceeded) {
+            await storeSet('pearlStoreMigrationComplete', true);
+          }
         }
 
         // Phase 2: Repair autoRun if Electron had enabled=true but backend has enabled=false
