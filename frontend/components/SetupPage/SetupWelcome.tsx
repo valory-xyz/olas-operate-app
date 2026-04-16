@@ -9,6 +9,7 @@ import {
   useBackupSigner,
   useBalanceContext,
   useElectronApi,
+  useIsInitiallyFunded,
   useMasterBalances,
   useMnemonicExists,
   useOnlineStatusContext,
@@ -47,6 +48,7 @@ const useSetupNavigation = ({
     isFetched: isServicesFetched,
   } = useServices();
   const { getMasterEoaNativeBalanceOf, isLoaded } = useMasterBalances();
+  const { isInitialFunded } = useIsInitiallyFunded();
   const backupSignerAddress = useBackupSigner();
 
   const selectedServiceOrAgentChainId = selectedService?.home_chain
@@ -67,11 +69,14 @@ const useSetupNavigation = ({
   }, [isServicesFetched, services, selectedService, selectedAgentConfig]);
 
   const isApplicationReady = useMemo(() => {
-    if (!isOnline || !canNavigate || !isServicesFetched || !isLoaded)
-      return false;
-
-    return true;
-  }, [canNavigate, isLoaded, isOnline, isServicesFetched]);
+    if (!isOnline || !canNavigate || !isServicesFetched) return false;
+    // Fast path for returning users: store is hydrated and user has funded
+    // before. Balance fetch continues in background; Main handles low-balance.
+    if (isInitialFunded === true) return true;
+    // Slow path for first-time users: wait for balance to load so we can
+    // determine the correct setup screen to route to.
+    return isLoaded;
+  }, [canNavigate, isInitialFunded, isLoaded, isOnline, isServicesFetched]);
 
   const isBackupWalletNotSet = useMemo(() => {
     // If no services are created and backup wallet is not set as well.
@@ -105,7 +110,14 @@ const useSetupNavigation = ({
       return;
     }
 
-    // If no balance is loaded, redirect to setup screen
+    // Returning users go directly to Main. The balance fetch continues in the
+    // background; Main's existing low-balance alerts cover the interim state.
+    if (isInitialFunded) {
+      gotoPage(PAGES.Main);
+      return;
+    }
+
+    // First-time user: balance must be loaded to determine funding status.
     if (isNil(getMasterEoaNativeBalanceOf(selectedServiceOrAgentChainId))) {
       goto(SETUP_SCREEN.FundYourAgent);
       return;
@@ -118,6 +130,7 @@ const useSetupNavigation = ({
     gotoPage,
     isApplicationReady,
     isBackupWalletNotSet,
+    isInitialFunded,
     isServiceCreatedForAgent,
     selectedAgentConfig,
     selectedServiceOrAgentChainId,
