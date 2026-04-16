@@ -68,7 +68,13 @@ const useSetupNavigation = ({
   }, [isServicesFetched, services, selectedService, selectedAgentConfig]);
 
   const isApplicationReady = useMemo(() => {
-    if (!isOnline || !canNavigate || !isServicesFetched || storeState === undefined) return false;
+    if (
+      !isOnline ||
+      !canNavigate ||
+      !isServicesFetched ||
+      storeState === undefined
+    )
+      return false;
     return true;
   }, [canNavigate, isOnline, isServicesFetched, storeState]);
 
