@@ -121,7 +121,7 @@ describe('useActiveStakingContractDetails', () => {
       expect(result.current.isAgentEvicted).toBe(false);
       expect(result.current.isServiceStaked).toBe(false);
       expect(result.current.hasEnoughServiceSlots).toBeNull();
-      // isRewardsAvailable is false ((undefined ?? 0) > 0 === false), so false && null short-circuits to false
+      // isRewardsAvailable is false because (undefined ?? 0) > 0 evaluates to false, so false && null short-circuits to false
       expect(result.current.hasEnoughRewardsAndSlots).toBe(false);
       expect(result.current.isServiceStakedForMinimumDuration).toBe(false);
       expect(result.current.evictionExpiresAt).toBe(0);
