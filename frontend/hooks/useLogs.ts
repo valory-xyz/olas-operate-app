@@ -1,10 +1,13 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { WALLET_TYPE } from '@/constants';
+import { ELECTRON_NATIVE_KEYS } from '@/context/pearlStoreKeys';
 import { Address } from '@/types/Address';
+import { ElectronStore } from '@/types/ElectronApi';
 import { Service } from '@/types/Service';
 
 import { useBalanceContext } from './useBalanceContext';
+import { useElectronApi } from './useElectronApi';
 import { useMultisigs } from './useMultisig';
 import { useServices } from './useServices';
 import { useStore } from './useStore';
@@ -97,8 +100,35 @@ const useServicesLogs = () => {
   };
 };
 
+/** Read Electron-native keys (environmentName, knownVersion, etc.) via IPC. */
+const useElectronStoreLogs = () => {
+  const { store } = useElectronApi();
+  const [electronStoreData, setElectronStoreData] = useState<ElectronStore>();
+
+  useEffect(() => {
+    const storeGet = store?.get;
+    if (!storeGet) return;
+
+    const keys = Array.from(ELECTRON_NATIVE_KEYS);
+    Promise.all(keys.map((key) => storeGet(key).then((v) => [key, v]))).then(
+      (entries) => {
+        const data: Record<string, unknown> = {};
+        for (const [key, value] of entries) {
+          if (value !== undefined && value !== null && value !== '') {
+            data[key as string] = value;
+          }
+        }
+        setElectronStoreData(data as ElectronStore);
+      },
+    );
+  }, [store]);
+
+  return electronStoreData;
+};
+
 export const useLogs = () => {
   const { storeState } = useStore();
+  const electronStoreData = useElectronStoreLogs();
 
   const { isLoaded: isServicesLoaded, data: services } = useServicesLogs();
   const { isLoaded: isBalancesLoaded, data: balances } = useBalancesLogs();
@@ -107,6 +137,7 @@ export const useLogs = () => {
   const logs = useMemo(() => {
     return {
       store: storeState,
+      electronStore: electronStoreData,
       debugData: {
         services: isServicesLoaded ? services : null,
         addresses: isAddressesLoaded ? addresses : null,
@@ -114,6 +145,7 @@ export const useLogs = () => {
       },
     };
   }, [
+    electronStoreData,
     isAddressesLoaded,
     isBalancesLoaded,
     isServicesLoaded,

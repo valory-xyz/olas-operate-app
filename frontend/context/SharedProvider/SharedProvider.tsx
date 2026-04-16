@@ -15,7 +15,9 @@ export const SharedContext = createContext<{
   isAccountRecoveryStatusLoading?: boolean;
   hasActiveRecoverySwap?: boolean;
 
-  // others
+  // session state (cleared on app restart)
+  mnemonicExists: boolean | undefined;
+  setMnemonicExists: (exists: boolean) => void;
 }>({
   // agent specific checks
   isAgentsFunFieldUpdateRequired: false,
@@ -24,7 +26,9 @@ export const SharedContext = createContext<{
   isAccountRecoveryStatusLoading: true,
   hasActiveRecoverySwap: false,
 
-  // others
+  // session state (cleared on app restart)
+  mnemonicExists: undefined,
+  setMnemonicExists: () => {},
 });
 
 /**
@@ -35,6 +39,11 @@ export const SharedContext = createContext<{
  */
 export const SharedProvider = ({ children }: PropsWithChildren) => {
   const { isOnline } = useOnlineStatus();
+
+  // session state — not persisted, cleared on app restart
+  const [mnemonicExists, setMnemonicExists] = useState<boolean | undefined>(
+    undefined,
+  );
 
   // agent specific checks
   const { selectedAgentType, selectedService } = useServices();
@@ -87,7 +96,9 @@ export const SharedProvider = ({ children }: PropsWithChildren) => {
         isAccountRecoveryStatusLoading,
         hasActiveRecoverySwap,
 
-        // others
+        // session state (cleared on app restart)
+        mnemonicExists,
+        setMnemonicExists,
       }}
     >
       {children}
