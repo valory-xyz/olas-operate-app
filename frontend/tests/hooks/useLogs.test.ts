@@ -98,7 +98,7 @@ describe('useLogs', () => {
   });
 
   it('returns store state in logs.store', () => {
-    const storeState = { lastSelectedAgentType: 'trader', knownVersion: '1.0' };
+    const storeState = { lastSelectedAgentType: 'trader' };
     createDefaultMocks({ storeState });
     const { result } = renderHook(() => useLogs());
     expect(result.current.store).toBe(storeState);

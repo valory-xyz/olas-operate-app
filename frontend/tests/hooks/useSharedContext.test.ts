@@ -31,6 +31,8 @@ describe('useSharedContext', () => {
       isAgentsFunFieldUpdateRequired: false,
       isAccountRecoveryStatusLoading: false,
       hasActiveRecoverySwap: false,
+      mnemonicExists: undefined,
+      setMnemonicExists: () => {},
     };
 
     const wrapper = ({ children }: PropsWithChildren) =>
