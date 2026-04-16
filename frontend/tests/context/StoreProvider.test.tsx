@@ -38,7 +38,15 @@ const makeWrapper = (electronValue?: object) => {
   const Wrapper = ({ children }: PropsWithChildren) => {
     const defaultElectron = {
       store: {
-        get: jest.fn().mockResolvedValue(undefined),
+        get: jest.fn().mockImplementation((key: string) =>
+          // Migration already done — skip in most tests
+          Promise.resolve(
+            key === 'pearlStoreMigrationComplete' ||
+              key === 'pearlStoreAutoRunRepaired'
+              ? true
+              : undefined,
+          ),
+        ),
         set: jest.fn().mockResolvedValue(undefined),
       },
     };
@@ -274,6 +282,145 @@ describe('StoreProvider', () => {
     await waitFor(() => {
       expect(result.current.storeState).toEqual({
         lastSelectedServiceConfigId: 'svc-1',
+      });
+    });
+  });
+
+  describe('migration', () => {
+    const mockSetStoreKey = StoreService.setStoreKey as jest.Mock;
+
+    /** Wrapper where migration flags are NOT set and Electron store returns given data. */
+    const makeMigrationWrapper = (electronData: Record<string, unknown>) => {
+      const Wrapper = ({ children }: PropsWithChildren) => {
+        const electron = {
+          store: {
+            get: jest
+              .fn()
+              .mockImplementation((key: string) =>
+                Promise.resolve(electronData[key]),
+              ),
+            set: jest.fn().mockResolvedValue(undefined),
+          },
+        };
+        return createElement(
+          ElectronApiContext.Provider,
+          { value: electron },
+          createElement(StoreProvider, null, children),
+        );
+      };
+      return Wrapper;
+    };
+
+    beforeEach(() => {
+      mockSetStoreKey.mockResolvedValue(undefined);
+    });
+
+    it('phase 1: copies missing keys from Electron to backend', async () => {
+      // Backend has autoRun only; Electron has autoRun + trader
+      mockGetStore
+        .mockResolvedValueOnce({ autoRun: { enabled: false } })
+        .mockResolvedValueOnce({
+          autoRun: { enabled: true },
+          trader: { isInitialFunded: { 'svc-1': true } },
+        });
+
+      const { result } = renderHook(() => useContext(StoreContext), {
+        wrapper: makeMigrationWrapper({
+          autoRun: { enabled: true },
+          trader: { isInitialFunded: { 'svc-1': true } },
+        }),
+      });
+
+      await waitFor(() => {
+        expect(result.current.storeState?.trader).toEqual({
+          isInitialFunded: { 'svc-1': true },
+        });
+      });
+
+      // trader was missing from backend → should be migrated
+      expect(mockSetStoreKey).toHaveBeenCalledWith('trader', {
+        isInitialFunded: { 'svc-1': true },
+      });
+    });
+
+    it('phase 1: does NOT overwrite existing backend keys', async () => {
+      // Backend already has trader with correct data
+      mockGetStore.mockResolvedValue({
+        trader: { isInitialFunded: { 'svc-1': true } },
+        autoRun: { enabled: true },
+      });
+
+      renderHook(() => useContext(StoreContext), {
+        wrapper: makeMigrationWrapper({
+          // Electron has DIFFERENT trader value (old boolean format)
+          trader: { isInitialFunded: true },
+          autoRun: { enabled: true },
+          pearlStoreAutoRunRepaired: true,
+        }),
+      });
+
+      // Wait for migration to complete
+      await waitFor(() => {
+        expect(mockSetStoreKey).not.toHaveBeenCalledWith(
+          'trader',
+          expect.anything(),
+        );
+      });
+    });
+
+    it('phase 2: repairs autoRun.enabled when Electron=true but backend=false', async () => {
+      mockGetStore
+        .mockResolvedValueOnce({ autoRun: { enabled: false } })
+        .mockResolvedValueOnce({ autoRun: { enabled: true } });
+
+      const { result } = renderHook(() => useContext(StoreContext), {
+        wrapper: makeMigrationWrapper({
+          autoRun: { enabled: true, isInitialized: true },
+        }),
+      });
+
+      await waitFor(() => {
+        expect(result.current.storeState?.autoRun?.enabled).toBe(true);
+      });
+
+      expect(mockSetStoreKey).toHaveBeenCalledWith('autoRun', {
+        enabled: true,
+        isInitialized: true,
+      });
+    });
+
+    it('phase 2: does NOT touch autoRun when values already match', async () => {
+      mockGetStore.mockResolvedValue({
+        autoRun: { enabled: true, isInitialized: true },
+      });
+
+      renderHook(() => useContext(StoreContext), {
+        wrapper: makeMigrationWrapper({
+          autoRun: { enabled: true, isInitialized: true },
+          pearlStoreAutoRunRepaired: true,
+        }),
+      });
+
+      await waitFor(() => {
+        expect(mockSetStoreKey).not.toHaveBeenCalledWith(
+          'autoRun',
+          expect.anything(),
+        );
+      });
+    });
+
+    it('skips both phases when flags are already set', async () => {
+      mockGetStore.mockResolvedValue({ autoRun: { enabled: false } });
+
+      renderHook(() => useContext(StoreContext), {
+        wrapper: makeMigrationWrapper({
+          pearlStoreMigrationComplete: true,
+          pearlStoreAutoRunRepaired: true,
+        }),
+      });
+
+      await waitFor(() => {
+        expect(mockSetStoreKey).not.toHaveBeenCalled();
       });
     });
   });
