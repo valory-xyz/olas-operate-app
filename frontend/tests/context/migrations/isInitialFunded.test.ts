@@ -1,7 +1,8 @@
 import { AGENT_CONFIG } from '../../../config/agents';
 import { AgentMap } from '../../../constants/agent';
 import { migrateIsInitialFunded } from '../../../context/migrations/isInitialFunded';
-import { ElectronStore, MiddlewareServiceResponse } from '../../../types';
+import { MiddlewareServiceResponse } from '../../../types';
+import { PearlStore } from '../../../types/ElectronApi';
 import {
   DEFAULT_SERVICE_CONFIG_ID,
   makeAgentService,
@@ -25,7 +26,7 @@ const serviceFor = (
 describe('migrateIsInitialFunded', () => {
   it('converts boolean true to per-service record and preserves legacy', () => {
     const service = serviceFor(AgentMap.PredictTrader);
-    const storeState: ElectronStore = {
+    const storeState: PearlStore = {
       [AgentMap.PredictTrader]: { isInitialFunded: true },
     };
 
@@ -48,7 +49,7 @@ describe('migrateIsInitialFunded', () => {
 
   it('converts boolean false to per-service record and preserves legacy', () => {
     const service = serviceFor(AgentMap.PredictTrader);
-    const storeState: ElectronStore = {
+    const storeState: PearlStore = {
       [AgentMap.PredictTrader]: { isInitialFunded: false },
     };
 
@@ -71,7 +72,7 @@ describe('migrateIsInitialFunded', () => {
 
   it('skips agent types already migrated (record value)', () => {
     const service = serviceFor(AgentMap.PredictTrader);
-    const storeState: ElectronStore = {
+    const storeState: PearlStore = {
       [AgentMap.PredictTrader]: {
         isInitialFunded: { [DEFAULT_SERVICE_CONFIG_ID]: true },
       },
@@ -87,7 +88,7 @@ describe('migrateIsInitialFunded', () => {
 
   it('skips agent types with no settings in store', () => {
     const service = serviceFor(AgentMap.PredictTrader);
-    const storeState: ElectronStore = {};
+    const storeState: PearlStore = {};
 
     const writes = migrateIsInitialFunded({
       storeState,
@@ -101,7 +102,7 @@ describe('migrateIsInitialFunded', () => {
     const optimusService = serviceFor(AgentMap.Optimus, {
       service_config_id: MOCK_SERVICE_CONFIG_ID_2,
     });
-    const storeState: ElectronStore = {
+    const storeState: PearlStore = {
       [AgentMap.PredictTrader]: { isInitialFunded: true },
     };
 
@@ -127,7 +128,7 @@ describe('migrateIsInitialFunded', () => {
     const optimusService = serviceFor(AgentMap.Optimus, {
       service_config_id: MOCK_SERVICE_CONFIG_ID_2,
     });
-    const storeState: ElectronStore = {
+    const storeState: PearlStore = {
       [AgentMap.PredictTrader]: { isInitialFunded: true },
       [AgentMap.Optimus]: { isInitialFunded: false },
     };
@@ -166,7 +167,7 @@ describe('migrateIsInitialFunded', () => {
     const optimusService = serviceFor(AgentMap.Optimus, {
       service_config_id: MOCK_SERVICE_CONFIG_ID_2,
     });
-    const storeState: ElectronStore = {
+    const storeState: PearlStore = {
       [AgentMap.PredictTrader]: { isInitialFunded: true },
       [AgentMap.Optimus]: {
         isInitialFunded: { [MOCK_SERVICE_CONFIG_ID_2]: true },

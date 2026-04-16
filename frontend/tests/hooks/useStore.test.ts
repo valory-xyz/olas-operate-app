@@ -4,17 +4,14 @@ import { createElement, PropsWithChildren } from 'react';
 import { AgentMap } from '../../constants/agent';
 import { StoreContext } from '../../context/StoreProvider';
 import { useStore } from '../../hooks/useStore';
-import { ElectronStore } from '../../types/ElectronApi';
+import { PearlStore } from '../../types/ElectronApi';
 import { BACKUP_SIGNER_ADDRESS } from '../helpers/factories';
 
-const mockStoreState: ElectronStore = {
-  environmentName: 'production',
+const mockStoreState: PearlStore = {
   lastSelectedAgentType: AgentMap.PredictTrader,
-  knownVersion: '1.4.5',
 
   firstStakingRewardAchieved: true,
   recoveryPhraseBackedUp: true,
-  mnemonicExists: true,
 
   [AgentMap.PredictTrader]: {
     isInitialFunded: true,
@@ -47,11 +44,9 @@ describe('useStore', () => {
     const { result } = renderHook(() => useStore(), { wrapper });
 
     expect(result.current.storeState).toBe(mockStoreState);
-    expect(result.current.storeState?.environmentName).toBe('production');
     expect(result.current.storeState?.lastSelectedAgentType).toBe(
       AgentMap.PredictTrader,
     );
-    expect(result.current.storeState?.knownVersion).toBe('1.4.5');
     expect(result.current.storeState?.firstStakingRewardAchieved).toBe(true);
     expect(result.current.storeState?.recoveryPhraseBackedUp).toBe(true);
     expect(

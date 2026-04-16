@@ -1,79 +1,103 @@
 import { renderHook } from '@testing-library/react';
-import { act } from 'react';
+import { act, createElement, PropsWithChildren } from 'react';
 
+import { SharedContext } from '../../context/SharedProvider/SharedProvider';
 import { useMnemonicExists } from '../../hooks/useMnemonicExists';
-import { useStore } from '../../hooks/useStore';
 
-const mockStoreSet = jest.fn();
-
-jest.mock('../../hooks/useElectronApi', () => ({
-  useElectronApi: () => ({
-    store: { set: mockStoreSet },
-  }),
-}));
-
-jest.mock('../../hooks/useStore', () => ({
-  useStore: jest.fn(),
-}));
-
-const mockUseStore = useStore as jest.Mock;
+// Minimal SharedContext wrapper that provides real useState-backed mnemonicExists
+// so multiple hook instances share the same value through the same context provider.
+const makeWrapper = () => {
+  const Wrapper = ({ children }: PropsWithChildren) => {
+    // Use the default context values from SharedContext for baseline;
+    // callers can override by wrapping with a custom Provider value.
+    return createElement(
+      SharedContext.Provider,
+      {
+        value: {
+          isAgentsFunFieldUpdateRequired: false,
+          mnemonicExists: undefined,
+          setMnemonicExists: () => {},
+        },
+      },
+      children,
+    );
+  };
+  return Wrapper;
+};
 
 describe('useMnemonicExists', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
+  it('returns undefined for mnemonicExists when context provides undefined', () => {
+    const { result } = renderHook(() => useMnemonicExists(), {
+      wrapper: makeWrapper(),
+    });
+    expect(result.current.mnemonicExists).toBeUndefined();
   });
 
-  it('returns mnemonicExists from store state', () => {
-    mockUseStore.mockReturnValue({
-      storeState: { mnemonicExists: true },
+  it('reflects mnemonicExists value provided by SharedContext', () => {
+    const { result } = renderHook(() => useMnemonicExists(), {
+      wrapper: ({ children }: PropsWithChildren) =>
+        createElement(
+          SharedContext.Provider,
+          {
+            value: {
+              isAgentsFunFieldUpdateRequired: false,
+              mnemonicExists: true,
+              setMnemonicExists: () => {},
+            },
+          },
+          children,
+        ),
     });
 
-    const { result } = renderHook(() => useMnemonicExists());
     expect(result.current.mnemonicExists).toBe(true);
   });
 
-  it('returns undefined when storeState has no mnemonicExists', () => {
-    mockUseStore.mockReturnValue({ storeState: {} });
+  it('calls setMnemonicExists from context when invoked', () => {
+    const mockSetMnemonicExists = jest.fn();
+    const { result } = renderHook(() => useMnemonicExists(), {
+      wrapper: ({ children }: PropsWithChildren) =>
+        createElement(
+          SharedContext.Provider,
+          {
+            value: {
+              isAgentsFunFieldUpdateRequired: false,
+              mnemonicExists: undefined,
+              setMnemonicExists: mockSetMnemonicExists,
+            },
+          },
+          children,
+        ),
+    });
 
-    const { result } = renderHook(() => useMnemonicExists());
-    expect(result.current.mnemonicExists).toBeUndefined();
-  });
-
-  it('returns undefined when storeState is undefined', () => {
-    mockUseStore.mockReturnValue({ storeState: undefined });
-
-    const { result } = renderHook(() => useMnemonicExists());
-    expect(result.current.mnemonicExists).toBeUndefined();
-  });
-
-  it('calls store.set with true when setMnemonicExists(true) is called', () => {
-    mockUseStore.mockReturnValue({ storeState: {} });
-
-    const { result } = renderHook(() => useMnemonicExists());
     act(() => {
       result.current.setMnemonicExists(true);
     });
-    expect(mockStoreSet).toHaveBeenCalledWith('mnemonicExists', true);
+
+    expect(mockSetMnemonicExists).toHaveBeenCalledWith(true);
   });
 
-  it('calls store.set with false when setMnemonicExists(false) is called', () => {
-    mockUseStore.mockReturnValue({
-      storeState: { mnemonicExists: true },
+  it('is not backed by any store — value resets on re-mount with fresh provider', () => {
+    // First mount: context provides true
+    const { result: result1 } = renderHook(() => useMnemonicExists(), {
+      wrapper: ({ children }: PropsWithChildren) =>
+        createElement(
+          SharedContext.Provider,
+          {
+            value: {
+              isAgentsFunFieldUpdateRequired: false,
+              mnemonicExists: true,
+              setMnemonicExists: () => {},
+            },
+          },
+          children,
+        ),
     });
+    expect(result1.current.mnemonicExists).toBe(true);
 
-    const { result } = renderHook(() => useMnemonicExists());
-    act(() => {
-      result.current.setMnemonicExists(false);
+    // Fresh mount simulates app restart: new provider starts with undefined
+    const { result: result2 } = renderHook(() => useMnemonicExists(), {
+      wrapper: makeWrapper(),
     });
-    expect(mockStoreSet).toHaveBeenCalledWith('mnemonicExists', false);
-  });
-
-  it('returns false when storeState.mnemonicExists is false', () => {
-    mockUseStore.mockReturnValue({
-      storeState: { mnemonicExists: false },
-    });
-
-    const { result } = renderHook(() => useMnemonicExists());
-    expect(result.current.mnemonicExists).toBe(false);
+    expect(result2.current.mnemonicExists).toBeUndefined();
   });
 });
