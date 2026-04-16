@@ -121,7 +121,7 @@ describe('useActiveStakingContractDetails', () => {
       expect(result.current.isAgentEvicted).toBe(false);
       expect(result.current.isServiceStaked).toBe(false);
       expect(result.current.hasEnoughServiceSlots).toBeNull();
-      // isRewardsAvailable is false (undefined ?? (0 > 0)), so false && null short-circuits to false
+      // isRewardsAvailable is false ((undefined ?? 0) > 0 === false), so false && null short-circuits to false
       expect(result.current.hasEnoughRewardsAndSlots).toBe(false);
       expect(result.current.isServiceStakedForMinimumDuration).toBe(false);
       expect(result.current.evictionExpiresAt).toBe(0);
@@ -220,22 +220,10 @@ describe('useActiveStakingContractDetails', () => {
     });
   });
 
-  // ---- isRewardsAvailable (operator precedence bug) ----
+  // ---- isRewardsAvailable ----
 
   describe('isRewardsAvailable', () => {
-    /**
-     * KNOWN BUG: `availableRewards ?? 0 > 0` is parsed as
-     * `availableRewards ?? (0 > 0)` due to operator precedence.
-     * This means:
-     *  - When availableRewards is defined (even 0), the result is the
-     *    raw availableRewards value (truthy for any non-zero, but also
-     *    returns 0 which is falsy when availableRewards === 0).
-     *  - When availableRewards is undefined/null, the result is `false`
-     *    (the fallback `0 > 0`).
-     *
-     * The intended expression was likely `(availableRewards ?? 0) > 0`.
-     */
-    it('is truthy when availableRewards > 0 (bug: returns raw number)', () => {
+    it('is true when availableRewards > 0', () => {
       const wrapper = makeWrapper({
         selectedStakingContractDetails: {
           ...makeStakingContractDetails({ availableRewards: 10 }),
@@ -245,11 +233,10 @@ describe('useActiveStakingContractDetails', () => {
       const { result } = renderHook(() => useActiveStakingContractDetails(), {
         wrapper,
       });
-      // Bug: returns the raw number 10 (truthy), not boolean true
-      expect(result.current.isRewardsAvailable).toBe(10);
+      expect(result.current.isRewardsAvailable).toBe(true);
     });
 
-    it('is falsy when availableRewards is 0 (bug makes this accidentally correct)', () => {
+    it('is false when availableRewards is 0', () => {
       const wrapper = makeWrapper({
         selectedStakingContractDetails: {
           ...makeStakingContractDetails({ availableRewards: 0 }),
@@ -259,11 +246,10 @@ describe('useActiveStakingContractDetails', () => {
       const { result } = renderHook(() => useActiveStakingContractDetails(), {
         wrapper,
       });
-      // Bug: returns 0 (falsy) — same outcome as intended `(0 ?? 0) > 0 === false`
-      expect(result.current.isRewardsAvailable).toBe(0);
+      expect(result.current.isRewardsAvailable).toBe(false);
     });
 
-    it('is false when availableRewards is undefined (fallback is 0 > 0)', () => {
+    it('is false when availableRewards is undefined (fallback is 0)', () => {
       const wrapper = makeWrapper({
         selectedStakingContractDetails: {
           ...makeServiceStakingDetails(),
@@ -275,7 +261,7 @@ describe('useActiveStakingContractDetails', () => {
       const { result } = renderHook(() => useActiveStakingContractDetails(), {
         wrapper,
       });
-      // undefined ?? (0 > 0) === false
+      // (undefined ?? 0) > 0 === false
       expect(result.current.isRewardsAvailable).toBe(false);
     });
   });
@@ -696,12 +682,8 @@ describe('useStakingContractDetails', () => {
     });
   });
 
-  describe('isRewardsAvailable (same precedence bug)', () => {
-    /**
-     * Same `availableRewards ?? 0 > 0` precedence bug as in
-     * useActiveStakingContractDetails — see comments there.
-     */
-    it('is truthy when availableRewards > 0 (returns raw number)', () => {
+  describe('isRewardsAvailable', () => {
+    it('is true when availableRewards > 0', () => {
       const wrapper = makeWrapper({
         allStakingContractDetailsRecord: {
           [DEFAULT_STAKING_PROGRAM_ID]: makeStakingContractDetails({
@@ -713,10 +695,10 @@ describe('useStakingContractDetails', () => {
         () => useStakingContractDetails(DEFAULT_STAKING_PROGRAM_ID),
         { wrapper },
       );
-      expect(result.current.isRewardsAvailable).toBe(5);
+      expect(result.current.isRewardsAvailable).toBe(true);
     });
 
-    it('is falsy when availableRewards is 0', () => {
+    it('is false when availableRewards is 0', () => {
       const wrapper = makeWrapper({
         allStakingContractDetailsRecord: {
           [DEFAULT_STAKING_PROGRAM_ID]: makeStakingContractDetails({
@@ -728,7 +710,7 @@ describe('useStakingContractDetails', () => {
         () => useStakingContractDetails(DEFAULT_STAKING_PROGRAM_ID),
         { wrapper },
       );
-      expect(result.current.isRewardsAvailable).toBe(0);
+      expect(result.current.isRewardsAvailable).toBe(false);
     });
   });
 

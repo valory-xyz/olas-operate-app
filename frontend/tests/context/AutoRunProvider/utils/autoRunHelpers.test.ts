@@ -339,13 +339,8 @@ describe('refreshRewardsEligibility', () => {
     );
   });
 
-  it('calls onRewardsFetchError when onError callback fires', async () => {
-    mockFetchRewards.mockImplementation(async ({ onError }) => {
-      onError?.(new Error('RPC timeout'));
-      return null as unknown as Awaited<
-        ReturnType<typeof fetchAgentStakingRewardsInfo>
-      >;
-    });
+  it('calls onRewardsFetchError when fetchAgentStakingRewardsInfo throws', async () => {
+    mockFetchRewards.mockRejectedValue(new Error('RPC timeout'));
     const onRewardsFetchError = jest.fn();
     const params = makeParams({ onRewardsFetchError });
     await refreshRewardsEligibility(params);

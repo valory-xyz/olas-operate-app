@@ -101,42 +101,21 @@ describe('fetchAgentStakingRewardsInfo', () => {
     expect(result?.tsCheckpoint).toBe(DEFAULT_TS_CHECKPOINT);
   });
 
-  it('returns null and calls onError when serviceApi throws', async () => {
+  it('throws when serviceApi throws', async () => {
     const error = new Error('network failure');
     mockGetAgentStakingRewardsInfo.mockRejectedValue(error);
-    const onError = jest.fn();
 
-    const result = await fetchAgentStakingRewardsInfo({
-      ...defaultParams,
-      onError,
-    });
-
-    expect(result).toBeNull();
-    expect(onError).toHaveBeenCalledTimes(1);
-    expect(onError).toHaveBeenCalledWith(error);
+    await expect(
+      fetchAgentStakingRewardsInfo(defaultParams),
+    ).rejects.toThrow('network failure');
   });
 
-  it('returns null without crashing when onError is not provided and serviceApi throws', async () => {
-    mockGetAgentStakingRewardsInfo.mockRejectedValue(
-      new Error('network failure'),
-    );
-
-    const result = await fetchAgentStakingRewardsInfo(defaultParams);
-    expect(result).toBeNull();
-  });
-
-  it('returns null and calls onError when response fails Zod validation', async () => {
+  it('throws when response fails Zod validation', async () => {
     const invalidResponse = { serviceInfo: 'not-an-array' };
     mockGetAgentStakingRewardsInfo.mockResolvedValue(invalidResponse);
-    const onError = jest.fn();
 
-    const result = await fetchAgentStakingRewardsInfo({
-      ...defaultParams,
-      onError,
-    });
-
-    expect(result).toBeNull();
-    expect(onError).toHaveBeenCalledTimes(1);
-    expect(onError.mock.calls[0][0]).toBeInstanceOf(ZodError);
+    await expect(
+      fetchAgentStakingRewardsInfo(defaultParams),
+    ).rejects.toBeInstanceOf(ZodError);
   });
 });
