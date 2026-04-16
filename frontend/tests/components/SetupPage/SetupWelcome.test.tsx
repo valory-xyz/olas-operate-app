@@ -275,6 +275,49 @@ const setupHooksInitialFunded = () => {
   mockUseIsInitiallyFunded.mockReturnValue({ isInitialFunded: true });
 };
 
+/**
+ * Set hooks so isApplicationReady becomes true and isInitialFunded=false
+ * so the effect redirects to FundYourAgent.
+ */
+const setupHooksNotInitialFunded = () => {
+  mockUseOnlineStatusContext.mockReturnValue({ isOnline: true });
+  mockUseServices.mockReturnValue({
+    selectedService: { home_chain: 100, service_config_id: 'cfg-1' },
+    selectedAgentConfig: {
+      evmHomeChainId: 100,
+      servicePublicId: 'test-public-id',
+      middlewareHomeChainId: 100,
+      isAgentEnabled: true,
+    },
+    services: [{ service_public_id: 'test-public-id', home_chain: 100 }],
+    isFetched: true,
+  });
+  mockUseBackupSigner.mockReturnValue('0xbackup');
+  mockUseIsInitiallyFunded.mockReturnValue({ isInitialFunded: false });
+};
+
+/**
+ * Set hooks so isApplicationReady becomes true and isInitialFunded=undefined
+ * (store still hydrating / legacy unmigrated boolean / no selectedServiceConfigId).
+ * Should fall through to Main, not redirect to FundYourAgent.
+ */
+const setupHooksInitialFundedUndefined = () => {
+  mockUseOnlineStatusContext.mockReturnValue({ isOnline: true });
+  mockUseServices.mockReturnValue({
+    selectedService: { home_chain: 100, service_config_id: 'cfg-1' },
+    selectedAgentConfig: {
+      evmHomeChainId: 100,
+      servicePublicId: 'test-public-id',
+      middlewareHomeChainId: 100,
+      isAgentEnabled: true,
+    },
+    services: [{ service_public_id: 'test-public-id', home_chain: 100 }],
+    isFetched: true,
+  });
+  mockUseBackupSigner.mockReturnValue('0xbackup');
+  mockUseIsInitiallyFunded.mockReturnValue({ isInitialFunded: undefined });
+};
+
 const renderSetupWelcomeLogin = () => render(<SetupWelcomeLogin />);
 
 // ---------------------------------------------------------------------------
@@ -405,6 +448,50 @@ describe('SetupWelcomeLogin', () => {
 
       await waitFor(() => {
         expect(mockGotoPage).toHaveBeenCalled();
+      });
+
+      expect(mockGoto).not.toHaveBeenCalledWith(
+        expect.stringContaining('FundYourAgent'),
+      );
+    });
+
+    it('redirects to FundYourAgent when isInitialFunded is false', async () => {
+      setupHooksNotInitialFunded();
+      mockLoginAccount.mockResolvedValue({ message: 'ok' });
+
+      renderSetupWelcomeLogin();
+      fireEvent.submit(screen.getByTestId('login-form'));
+
+      await waitFor(() => {
+        expect(mockSetUserLoggedIn).toHaveBeenCalledTimes(1);
+      });
+
+      await waitFor(() => {
+        expect(mockGoto).toHaveBeenCalledWith(
+          expect.stringContaining('FundYourAgent'),
+        );
+      });
+
+      expect(mockGotoPage).not.toHaveBeenCalledWith(
+        expect.stringContaining('Main'),
+      );
+    });
+
+    it('falls through to Main when isInitialFunded is undefined (store hydrating / legacy)', async () => {
+      setupHooksInitialFundedUndefined();
+      mockLoginAccount.mockResolvedValue({ message: 'ok' });
+
+      renderSetupWelcomeLogin();
+      fireEvent.submit(screen.getByTestId('login-form'));
+
+      await waitFor(() => {
+        expect(mockSetUserLoggedIn).toHaveBeenCalledTimes(1);
+      });
+
+      await waitFor(() => {
+        expect(mockGotoPage).toHaveBeenCalledWith(
+          expect.stringContaining('Main'),
+        );
       });
 
       expect(mockGoto).not.toHaveBeenCalledWith(

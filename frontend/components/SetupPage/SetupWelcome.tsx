@@ -102,7 +102,7 @@ const useSetupNavigation = ({
       return;
     }
 
-    if (!isInitialFunded) {
+    if (isInitialFunded === false) {
       goto(SETUP_SCREEN.FundYourAgent);
       return;
     }
