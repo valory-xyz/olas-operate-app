@@ -204,9 +204,6 @@ export const SetupWelcomeLogin = () => {
         message.error(getErrorMessage(e));
         setIsLoggingIn(false);
       }
-      // Note: setIsLoggingIn(false) on the success path is handled by
-      // useSetupNavigation (line 83) — it fires when isApplicationReady
-      // becomes true, keeping the button in loading state until navigation.
     },
     [updateBalances, setUserLoggedIn, message, setMnemonicExists],
   );
