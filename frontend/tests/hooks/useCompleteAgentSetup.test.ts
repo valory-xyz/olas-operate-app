@@ -1,6 +1,8 @@
 import { act, renderHook } from '@testing-library/react';
 
 import { EvmChainIdMap } from '../../constants/chains';
+import { PAGES } from '../../constants/pages';
+import { SETUP_SCREEN } from '../../constants/setupScreen';
 import { useCompleteAgentSetup } from '../../hooks/useCompleteAgentSetup';
 import { useGetRefillRequirements } from '../../hooks/useGetRefillRequirements';
 import { useMasterBalances } from '../../hooks/useMasterBalances';
@@ -49,6 +51,17 @@ jest.mock('../../context/SupportModalProvider', () => ({
   useSupportModal: jest.fn(() => ({
     toggleSupportModal: mockToggleSupportModal,
   })),
+}));
+
+const mockGoto = jest.fn();
+const mockGotoSetup = jest.fn();
+
+jest.mock('../../hooks/usePageState', () => ({
+  usePageState: jest.fn(() => ({ goto: mockGoto })),
+}));
+
+jest.mock('../../hooks/useSetup', () => ({
+  useSetup: jest.fn(() => ({ goto: mockGotoSetup })),
 }));
 
 const mockCreateMasterSafe = jest.fn();
@@ -210,39 +223,27 @@ describe('useCompleteAgentSetup', () => {
       expect(mockCreateMasterSafe).toHaveBeenCalledTimes(1);
     });
 
-    it('guards against double mutation via hasAttemptedCreation', () => {
+    it('does not fire createMasterSafe while mutation is already in flight (isPending guard)', () => {
       setupMocks({
         masterSafeAddress: null,
         eoaBalances: [makeOlasBalance(100), makeUsdceBalance(50)],
+        isLoadingMasterSafeCreation: true,
       });
       const { result } = renderHook(() => useCompleteAgentSetup());
       act(() => {
         result.current.handleCompleteSetup();
-        result.current.handleCompleteSetup();
       });
-      expect(mockCreateMasterSafe).toHaveBeenCalledTimes(1);
+      expect(mockCreateMasterSafe).not.toHaveBeenCalled();
     });
 
-    it('sets shouldNavigateToFundYourAgent to true for needsFunding', () => {
+    it('navigates to FundYourAgent setup screen for needsFunding', () => {
       setupMocks({ masterSafeAddress: null, eoaBalances: [] });
       const { result } = renderHook(() => useCompleteAgentSetup());
       act(() => {
         result.current.handleCompleteSetup();
       });
-      expect(result.current.shouldNavigateToFundYourAgent).toBe(true);
-    });
-
-    it('resets shouldNavigateToFundYourAgent to false after resetShouldNavigate', () => {
-      setupMocks({ masterSafeAddress: null, eoaBalances: [] });
-      const { result } = renderHook(() => useCompleteAgentSetup());
-      act(() => {
-        result.current.handleCompleteSetup();
-      });
-      expect(result.current.shouldNavigateToFundYourAgent).toBe(true);
-      act(() => {
-        result.current.resetShouldNavigate();
-      });
-      expect(result.current.shouldNavigateToFundYourAgent).toBe(false);
+      expect(mockGotoSetup).toHaveBeenCalledWith(SETUP_SCREEN.FundYourAgent);
+      expect(mockGoto).toHaveBeenCalledWith(PAGES.Setup);
     });
   });
 
@@ -261,26 +262,6 @@ describe('useCompleteAgentSetup', () => {
         result.current.handleTryAgain();
       });
       expect(result.current.modalToShow).toBe('creatingSafe');
-      expect(mockCreateMasterSafe).toHaveBeenCalledTimes(2);
-    });
-
-    it('re-arms the guard after handleTryAgain so a subsequent click does not re-fire the mutation', () => {
-      setupMocks({
-        masterSafeAddress: null,
-        eoaBalances: [makeOlasBalance(100), makeUsdceBalance(50)],
-      });
-      const { result } = renderHook(() => useCompleteAgentSetup());
-      act(() => {
-        result.current.handleCompleteSetup();
-      });
-      act(() => {
-        result.current.handleTryAgain();
-      });
-      act(() => {
-        result.current.handleCompleteSetup();
-      });
-      // handleCompleteSetup + handleTryAgain each fire once; the third
-      // handleCompleteSetup is blocked by the re-armed hasAttemptedCreation ref.
       expect(mockCreateMasterSafe).toHaveBeenCalledTimes(2);
     });
   });

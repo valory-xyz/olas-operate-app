@@ -17,7 +17,7 @@ type AgentSetupCompleteModalProps = {
 
 export const AgentSetupCompleteModal = ({
   onDismiss,
-}: AgentSetupCompleteModalProps = {}) => {
+}: AgentSetupCompleteModalProps) => {
   const { goto } = usePageState();
   const { setIsInitiallyFunded } = useIsInitiallyFunded();
 

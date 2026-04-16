@@ -1,7 +1,8 @@
 import { isNil } from 'lodash';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { TokenSymbol } from '@/config/tokens';
+import { PAGES, SETUP_SCREEN } from '@/constants';
 import { useSupportModal } from '@/context/SupportModalProvider';
 import { TokenRequirement } from '@/types';
 import { WalletBalance } from '@/types/Balance';
@@ -10,7 +11,9 @@ import { delayInSeconds } from '@/utils';
 import { useGetRefillRequirements } from './useGetRefillRequirements';
 import { useMasterBalances } from './useMasterBalances';
 import { useMasterSafeCreationAndTransfer } from './useMasterSafeCreationAndTransfer';
+import { usePageState } from './usePageState';
 import { useServices } from './useServices';
+import { useSetup } from './useSetup';
 import { useMasterWalletContext } from './useWallet';
 
 export type SetupState =
@@ -29,8 +32,6 @@ export type UseCompleteAgentSetupReturn = {
   setupState: SetupState;
   handleCompleteSetup: () => void;
   modalToShow: ModalToShow;
-  shouldNavigateToFundYourAgent: boolean;
-  resetShouldNavigate: () => void;
   dismissModal: () => void;
   handleTryAgain: () => void;
   handleContactSupport: () => void;
@@ -67,13 +68,12 @@ export const useCompleteAgentSetup = (): UseCompleteAgentSetupReturn => {
     isLoaded: isBalancesLoaded,
   } = useMasterBalances();
   const { toggleSupportModal } = useSupportModal();
+  const { goto } = usePageState();
+  const { goto: gotoSetup } = useSetup();
 
   const { evmHomeChainId } = selectedAgentConfig;
 
   const [modalToShow, setModalToShow] = useState<ModalToShow>(null);
-  const [shouldNavigateToFundYourAgent, setShouldNavigateToFundYourAgent] =
-    useState(false);
-  const hasAttemptedCreation = useRef(false);
 
   const tokenSymbols = useMemo(
     () => totalTokenRequirements.map((r) => r.symbol as TokenSymbol),
@@ -161,27 +161,27 @@ export const useCompleteAgentSetup = (): UseCompleteAgentSetupReturn => {
         setModalToShow('setupComplete');
         return;
       case 'needsSafeCreation':
-        if (hasAttemptedCreation.current) return;
-        hasAttemptedCreation.current = true;
+        if (isLoadingMasterSafeCreation) return;
         setModalToShow('creatingSafe');
         createMasterSafe();
         return;
       case 'needsFunding':
-        setShouldNavigateToFundYourAgent(true);
+        gotoSetup(SETUP_SCREEN.FundYourAgent);
+        goto(PAGES.Setup);
         return;
     }
-  }, [setupState, createMasterSafe]);
+  }, [
+    setupState,
+    createMasterSafe,
+    isLoadingMasterSafeCreation,
+    goto,
+    gotoSetup,
+  ]);
 
   const handleTryAgain = useCallback(() => {
-    hasAttemptedCreation.current = false;
     setModalToShow('creatingSafe');
     createMasterSafe();
-    hasAttemptedCreation.current = true;
   }, [createMasterSafe]);
-
-  const resetShouldNavigate = useCallback(() => {
-    setShouldNavigateToFundYourAgent(false);
-  }, []);
 
   const dismissModal = useCallback(() => {
     setModalToShow(null);
@@ -195,8 +195,6 @@ export const useCompleteAgentSetup = (): UseCompleteAgentSetupReturn => {
     setupState,
     handleCompleteSetup,
     modalToShow,
-    shouldNavigateToFundYourAgent,
-    resetShouldNavigate,
     dismissModal,
     handleTryAgain,
     handleContactSupport,

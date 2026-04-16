@@ -2,18 +2,6 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 
 import { UnfinishedSetupAlert } from '../../../../../../../components/MainPage/Home/Overview/AgentInfo/AgentDisabledAlert/UnfinishedSetupAlert';
-import { PAGES, SETUP_SCREEN } from '../../../../../../../constants';
-
-// ---------------------------------------------------------------------------
-// Mock navigation hooks
-// ---------------------------------------------------------------------------
-const mockGoto = jest.fn();
-const mockGotoSetup = jest.fn();
-
-jest.mock('../../../../../../../hooks', () => ({
-  usePageState: () => ({ goto: mockGoto }),
-  useSetup: () => ({ goto: mockGotoSetup }),
-}));
 
 // ---------------------------------------------------------------------------
 // Mock UI components
@@ -28,15 +16,12 @@ jest.mock('../../../../../../../components/ui', () => ({
 // Helpers
 // ---------------------------------------------------------------------------
 const mockHandleCompleteSetup = jest.fn();
-const mockResetShouldNavigate = jest.fn();
 
 const makeProps = (
   overrides: Partial<React.ComponentProps<typeof UnfinishedSetupAlert>> = {},
 ) => ({
   setupState: 'needsFunding' as const,
   handleCompleteSetup: mockHandleCompleteSetup,
-  shouldNavigateToFundYourAgent: false,
-  resetShouldNavigate: mockResetShouldNavigate,
   ...overrides,
 });
 
@@ -49,8 +34,9 @@ describe('UnfinishedSetupAlert', () => {
     render(
       <UnfinishedSetupAlert {...makeProps({ setupState: 'detecting' })} />,
     );
+    // AntD Button with loading=true prefixes the accessible name with "loading"
     expect(
-      document.querySelector('button.ant-btn-loading'),
+      screen.getByRole('button', { name: /loading.*Complete Setup/i }),
     ).toBeInTheDocument();
   });
 
@@ -67,27 +53,5 @@ describe('UnfinishedSetupAlert', () => {
     render(<UnfinishedSetupAlert {...makeProps()} />);
     fireEvent.click(screen.getByRole('button', { name: 'Complete Setup' }));
     expect(mockHandleCompleteSetup).toHaveBeenCalledTimes(1);
-  });
-
-  it('navigates to FundYourAgent and calls resetShouldNavigate when shouldNavigateToFundYourAgent is true', () => {
-    render(
-      <UnfinishedSetupAlert
-        {...makeProps({ shouldNavigateToFundYourAgent: true })}
-      />,
-    );
-    expect(mockGotoSetup).toHaveBeenCalledWith(SETUP_SCREEN.FundYourAgent);
-    expect(mockGoto).toHaveBeenCalledWith(PAGES.Setup);
-    expect(mockResetShouldNavigate).toHaveBeenCalledTimes(1);
-  });
-
-  it('does not navigate when shouldNavigateToFundYourAgent is false', () => {
-    render(
-      <UnfinishedSetupAlert
-        {...makeProps({ shouldNavigateToFundYourAgent: false })}
-      />,
-    );
-    expect(mockGotoSetup).not.toHaveBeenCalled();
-    expect(mockGoto).not.toHaveBeenCalled();
-    expect(mockResetShouldNavigate).not.toHaveBeenCalled();
   });
 });

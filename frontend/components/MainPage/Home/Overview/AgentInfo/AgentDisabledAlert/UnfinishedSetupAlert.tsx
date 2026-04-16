@@ -1,9 +1,6 @@
 import { Button, Typography } from 'antd';
-import { useEffect } from 'react';
 
 import { Alert } from '@/components/ui';
-import { PAGES, SETUP_SCREEN } from '@/constants';
-import { usePageState, useSetup } from '@/hooks';
 import { SetupState } from '@/hooks/useCompleteAgentSetup';
 
 const { Text } = Typography;
@@ -11,27 +8,12 @@ const { Text } = Typography;
 type UnfinishedSetupAlertProps = {
   setupState: SetupState;
   handleCompleteSetup: () => void;
-  shouldNavigateToFundYourAgent: boolean;
-  resetShouldNavigate: () => void;
 };
 
 export const UnfinishedSetupAlert = ({
   setupState,
   handleCompleteSetup,
-  shouldNavigateToFundYourAgent,
-  resetShouldNavigate,
 }: UnfinishedSetupAlertProps) => {
-  const { goto } = usePageState();
-  const { goto: gotoSetup } = useSetup();
-
-  useEffect(() => {
-    if (shouldNavigateToFundYourAgent) {
-      gotoSetup(SETUP_SCREEN.FundYourAgent);
-      goto(PAGES.Setup);
-      resetShouldNavigate();
-    }
-  }, [shouldNavigateToFundYourAgent, gotoSetup, goto, resetShouldNavigate]);
-
   return (
     <Alert
       showIcon

@@ -49,8 +49,6 @@ export const AgentDisabledAlert = () => {
     setupState,
     handleCompleteSetup,
     modalToShow,
-    shouldNavigateToFundYourAgent,
-    resetShouldNavigate,
     dismissModal,
     handleTryAgain,
     handleContactSupport,
@@ -81,8 +79,6 @@ export const AgentDisabledAlert = () => {
           <UnfinishedSetupAlert
             setupState={setupState}
             handleCompleteSetup={handleCompleteSetup}
-            shouldNavigateToFundYourAgent={shouldNavigateToFundYourAgent}
-            resetShouldNavigate={resetShouldNavigate}
           />
         ),
       };
@@ -136,8 +132,6 @@ export const AgentDisabledAlert = () => {
     agentTokenRequirements,
     setupState,
     handleCompleteSetup,
-    shouldNavigateToFundYourAgent,
-    resetShouldNavigate,
     goto,
     hasEnoughServiceSlots,
     isAgentEvicted,
