@@ -1,5 +1,4 @@
 import { Button, Card, Flex, Form, Input, Spin, Typography } from 'antd';
-import { isNil } from 'lodash';
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -10,7 +9,6 @@ import {
   useBalanceContext,
   useElectronApi,
   useIsInitiallyFunded,
-  useMasterBalances,
   useMnemonicExists,
   useOnlineStatusContext,
   usePageState,
@@ -47,7 +45,6 @@ const useSetupNavigation = ({
     services,
     isFetched: isServicesFetched,
   } = useServices();
-  const { getMasterEoaNativeBalanceOf, isLoaded } = useMasterBalances();
   const { isInitialFunded } = useIsInitiallyFunded();
   const backupSignerAddress = useBackupSigner();
 
@@ -70,13 +67,8 @@ const useSetupNavigation = ({
 
   const isApplicationReady = useMemo(() => {
     if (!isOnline || !canNavigate || !isServicesFetched) return false;
-    // Fast path for returning users: store is hydrated and user has funded
-    // before. Balance fetch continues in background; Main handles low-balance.
-    if (isInitialFunded === true) return true;
-    // Slow path for first-time users: wait for balance to load so we can
-    // determine the correct setup screen to route to.
-    return isLoaded;
-  }, [canNavigate, isInitialFunded, isLoaded, isOnline, isServicesFetched]);
+    return true;
+  }, [canNavigate, isOnline, isServicesFetched]);
 
   const isBackupWalletNotSet = useMemo(() => {
     // If no services are created and backup wallet is not set as well.
@@ -110,22 +102,13 @@ const useSetupNavigation = ({
       return;
     }
 
-    // Returning users go directly to Main. The balance fetch continues in the
-    // background; Main's existing low-balance alerts cover the interim state.
-    if (isInitialFunded) {
-      gotoPage(PAGES.Main);
-      return;
-    }
-
-    // First-time user: balance must be loaded to determine funding status.
-    if (isNil(getMasterEoaNativeBalanceOf(selectedServiceOrAgentChainId))) {
+    if (!isInitialFunded) {
       goto(SETUP_SCREEN.FundYourAgent);
       return;
     }
 
     gotoPage(PAGES.Main);
   }, [
-    getMasterEoaNativeBalanceOf,
     goto,
     gotoPage,
     isApplicationReady,

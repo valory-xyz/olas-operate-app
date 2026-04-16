@@ -193,7 +193,6 @@ const mockMessageError = jest.fn();
 
 const mockUseOnlineStatusContext = jest.fn();
 const mockUseServices = jest.fn();
-const mockUseMasterBalances = jest.fn();
 const mockUseBackupSigner = jest.fn();
 const mockUseIsInitiallyFunded = jest.fn();
 
@@ -210,7 +209,6 @@ jest.mock('../../../hooks', () => ({
   useOnlineStatusContext: (...args: unknown[]) =>
     mockUseOnlineStatusContext(...args),
   useServices: (...args: unknown[]) => mockUseServices(...args),
-  useMasterBalances: (...args: unknown[]) => mockUseMasterBalances(...args),
   useBackupSigner: (...args: unknown[]) => mockUseBackupSigner(...args),
   useIsInitiallyFunded: (...args: unknown[]) =>
     mockUseIsInitiallyFunded(...args),
@@ -238,7 +236,7 @@ const mockGetRecoverySeedPhrase =
 /**
  * Set hooks so isApplicationReady stays false after login resolves,
  * meaning useSetupNavigation's navigation effect will NOT fire.
- * isFetched=false keeps isApplicationReady = false regardless of isInitialFunded.
+ * isFetched=false keeps isApplicationReady = false.
  */
 const setupHooksApplicationNotReady = () => {
   mockUseOnlineStatusContext.mockReturnValue({ isOnline: true });
@@ -252,19 +250,15 @@ const setupHooksApplicationNotReady = () => {
     services: [],
     isFetched: false,
   });
-  mockUseMasterBalances.mockReturnValue({
-    getMasterEoaNativeBalanceOf: jest.fn(() => null),
-    isLoaded: false,
-  });
   mockUseBackupSigner.mockReturnValue(undefined);
   mockUseIsInitiallyFunded.mockReturnValue({ isInitialFunded: false });
 };
 
 /**
- * Set hooks so isApplicationReady becomes true via the fast path
- * (isInitialFunded=true, isServicesFetched=true), skipping the balance wait.
+ * Set hooks so isApplicationReady becomes true (isServicesFetched=true)
+ * and isInitialFunded=true so the effect navigates directly to Main.
  */
-const setupHooksFastPath = () => {
+const setupHooksInitialFunded = () => {
   mockUseOnlineStatusContext.mockReturnValue({ isOnline: true });
   mockUseServices.mockReturnValue({
     selectedService: { home_chain: 100, service_config_id: 'cfg-1' },
@@ -276,10 +270,6 @@ const setupHooksFastPath = () => {
     },
     services: [{ service_public_id: 'test-public-id', home_chain: 100 }],
     isFetched: true,
-  });
-  mockUseMasterBalances.mockReturnValue({
-    getMasterEoaNativeBalanceOf: jest.fn(() => null),
-    isLoaded: false, // balances not yet loaded — tests the fast path
   });
   mockUseBackupSigner.mockReturnValue('0xbackup');
   mockUseIsInitiallyFunded.mockReturnValue({ isInitialFunded: true });
@@ -382,21 +372,19 @@ describe('SetupWelcomeLogin', () => {
     });
   });
 
-  describe('fast path — isInitialFunded skips balance wait', () => {
-    it('navigates to Main without waiting for balances when isInitialFunded is true', async () => {
-      setupHooksFastPath();
+  describe('isInitialFunded routing', () => {
+    it('navigates to Main when isInitialFunded is true', async () => {
+      setupHooksInitialFunded();
       mockLoginAccount.mockResolvedValue({ message: 'ok' });
 
       renderSetupWelcomeLogin();
 
-      // Trigger the navigation effect by simulating canNavigate=true via login
       fireEvent.submit(screen.getByTestId('login-form'));
 
       await waitFor(() => {
         expect(mockSetUserLoggedIn).toHaveBeenCalledTimes(1);
       });
 
-      // isLoaded is false but isInitialFunded is true — should navigate to Main
       await waitFor(() => {
         expect(mockGotoPage).toHaveBeenCalledWith(
           expect.stringContaining('Main'),
@@ -404,8 +392,8 @@ describe('SetupWelcomeLogin', () => {
       });
     });
 
-    it('does not route to FundYourAgent when isInitialFunded is true even if balance is nil', async () => {
-      setupHooksFastPath();
+    it('does not route to FundYourAgent when isInitialFunded is true', async () => {
+      setupHooksInitialFunded();
       mockLoginAccount.mockResolvedValue({ message: 'ok' });
 
       renderSetupWelcomeLogin();
