@@ -316,7 +316,11 @@ export const StoreProvider = ({ children }: PropsWithChildren) => {
           }
         }
 
-        // Phase 2: Repair autoRun if Electron had enabled=true but backend has enabled=false
+        // Phase 2: Repair autoRun if Electron had enabled=true but backend has enabled=false.
+        // Tradeoff: if a user saw the race-bug disable their autoRun and intentionally
+        // left it off, this one-shot repair will re-enable it. We accept this because
+        // the common case is "user wants it restored" and there's no way to distinguish
+        // "user accepted the bug" from "user didn't notice." Flag prevents re-run.
         if (!autoRunRepaired) {
           const electronAutoRun = (await storeGet('autoRun')) as
             | Record<string, unknown>
