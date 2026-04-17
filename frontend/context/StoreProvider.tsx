@@ -349,7 +349,8 @@ export const StoreProvider = ({ children }: PropsWithChildren) => {
         log('Migration complete');
       })
       .catch((error) => {
-        log(`Migration failed: ${error}`);
+        const msg = error instanceof Error ? error.message : String(error);
+        log(`Migration failed: ${msg}`);
         console.error('[StoreProvider] Migration failed:', error);
       });
   }, [store, storeState]);
