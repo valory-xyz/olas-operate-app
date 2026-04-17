@@ -62,7 +62,6 @@ jobs:
         # Runs Snyk Open Source (SCA) analysis and uploads result to Snyk.
       - name: Snyk Open Source monitor
         run: snyk monitor --all-projects
-        continue-on-error: true
 
       # Disabled because this repo does not use IaC or Docker yet
 
