@@ -51,7 +51,7 @@ leak_report
 
 # logs
 *.log
-logs/
+/.logs/
 
 # custom script for development
 .scripts/
@@ -60,4 +60,4 @@ logs/
 frontend/coverage
 
 # local plans
-/plans/
+/.plans/

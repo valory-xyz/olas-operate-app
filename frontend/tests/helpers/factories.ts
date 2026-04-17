@@ -28,7 +28,9 @@ import {
   StakingRewardsInfo,
   StakingState,
 } from '../../types/Autonolas';
+import { WalletBalance } from '../../types/Balance';
 import { MiddlewareServiceResponse, Service } from '../../types/Service';
+import { TokenRequirement } from '../../types/Wallet';
 
 export const INVALID_CHAIN_ID = 999 as EvmChainId;
 
@@ -444,6 +446,38 @@ export const makeAutoRunAgentMeta = (
   stakingProgramId: DEFAULT_STAKING_PROGRAM_ID,
   multisig: MOCK_MULTISIG_ADDRESS,
   serviceNftTokenId: DEFAULT_SERVICE_NFT_TOKEN_ID,
+});
+
+// --- Complete agent setup factories ---
+
+export const makeOlasRequirement = (): TokenRequirement => ({
+  symbol: 'OLAS',
+  amount: 100,
+  iconSrc: '/tokens/olas-icon.png',
+});
+
+export const makeUsdceRequirement = (): TokenRequirement => ({
+  symbol: 'USDC.e',
+  amount: 50,
+  iconSrc: '/tokens/usdc-icon.png',
+});
+
+export const makeOlasBalance = (balance: number): WalletBalance => ({
+  walletAddress: DEFAULT_EOA_ADDRESS,
+  evmChainId: EvmChainIdMap.Polygon,
+  symbol: 'OLAS',
+  isNative: false,
+  balance,
+  balanceString: String(balance),
+});
+
+export const makeUsdceBalance = (balance: number): WalletBalance => ({
+  walletAddress: DEFAULT_EOA_ADDRESS,
+  evmChainId: EvmChainIdMap.Polygon,
+  symbol: 'USDC.e',
+  isNative: false,
+  balance,
+  balanceString: String(balance),
 });
 
 // --- Achievement factories ---
