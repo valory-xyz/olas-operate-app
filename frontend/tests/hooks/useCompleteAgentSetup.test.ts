@@ -138,10 +138,28 @@ describe('useCompleteAgentSetup', () => {
       expect(result.current.setupState).toBe('detecting');
     });
 
-    it('returns needsFunding when requirements are empty', () => {
-      setupMocks({ totalTokenRequirements: [] });
+    it('returns needsSafeCreation when requirements are empty and Safe is null (vacuous truth)', () => {
+      setupMocks({ totalTokenRequirements: [], masterSafeAddress: null });
       const { result } = renderHook(() => useCompleteAgentSetup());
-      expect(result.current.setupState).toBe('needsFunding');
+      expect(result.current.setupState).toBe('needsSafeCreation');
+    });
+
+    it('returns readyToComplete when requirements are empty and Safe is deployed (vacuous truth)', () => {
+      setupMocks({
+        totalTokenRequirements: [],
+        masterSafeAddress: POLYGON_SAFE_ADDRESS,
+      });
+      const { result } = renderHook(() => useCompleteAgentSetup());
+      expect(result.current.setupState).toBe('readyToComplete');
+    });
+
+    it('returns detecting when enabled is false, regardless of data readiness', () => {
+      setupMocks({
+        masterSafeAddress: POLYGON_SAFE_ADDRESS,
+        safeBalances: [makeOlasBalance(100), makeUsdceBalance(50)],
+      });
+      const { result } = renderHook(() => useCompleteAgentSetup(false));
+      expect(result.current.setupState).toBe('detecting');
     });
 
     it('returns readyToComplete when Safe is deployed and fully funded', () => {
@@ -341,6 +359,52 @@ describe('useCompleteAgentSetup', () => {
       expect(result.current.modalToShow).toBe('setupComplete');
 
       jest.useRealTimers();
+    });
+
+    it('does not set setupComplete when the component unmounts before the delay fires', () => {
+      jest.useFakeTimers();
+
+      setupMocks({
+        masterSafeAddress: POLYGON_SAFE_ADDRESS,
+        isMasterWalletFetched: true,
+        creationAndTransferDetails: {
+          safeCreationDetails: {
+            isSafeCreated: true,
+            status: 'finish',
+            txnLink: null,
+          },
+          transferDetails: {
+            isTransferComplete: true,
+            transfers: [],
+          },
+        },
+      });
+
+      const { result, unmount } = renderHook(() => useCompleteAgentSetup());
+      expect(result.current.modalToShow).toBeNull();
+
+      unmount();
+
+      // Advancing time after unmount must not throw or attempt a state update
+      expect(() => jest.advanceTimersByTime(500)).not.toThrow();
+
+      jest.useRealTimers();
+    });
+
+    it('clears safeCreationFailed modal when shouldShowFailureModal flips back to false', () => {
+      setupMocks({ isErrorMasterSafeCreation: true });
+      const { result, rerender } = renderHook(() => useCompleteAgentSetup());
+      expect(result.current.modalToShow).toBe('safeCreationFailed');
+
+      // External state recovers — e.g. refetch shows Safe was created after all
+      setupMocks({
+        masterSafeAddress: POLYGON_SAFE_ADDRESS,
+        safeBalances: [makeOlasBalance(100), makeUsdceBalance(50)],
+        isErrorMasterSafeCreation: false,
+      });
+      rerender();
+
+      expect(result.current.modalToShow).toBeNull();
     });
 
     it('does not re-fire mutation when handleCompleteSetup is called after post-success transition to readyToComplete', async () => {

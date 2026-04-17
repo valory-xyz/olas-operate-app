@@ -52,7 +52,7 @@ export const AgentDisabledAlert = () => {
     dismissModal,
     handleTryAgain,
     handleContactSupport,
-  } = useCompleteAgentSetup();
+  } = useCompleteAgentSetup(isInitialFunded === false);
 
   const { isAgentGeoRestricted } = useIsAgentGeoRestricted({
     agentType: selectedAgentType,

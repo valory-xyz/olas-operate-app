@@ -6,7 +6,6 @@ import { PAGES, SETUP_SCREEN } from '@/constants';
 import { useSupportModal } from '@/context/SupportModalProvider';
 import { TokenRequirement } from '@/types';
 import { WalletBalance } from '@/types/Balance';
-import { delayInSeconds } from '@/utils';
 
 import { useGetRefillRequirements } from './useGetRefillRequirements';
 import { useMasterBalances } from './useMasterBalances';
@@ -37,15 +36,11 @@ export type UseCompleteAgentSetupReturn = {
   handleContactSupport: () => void;
 };
 
-/**
- * Returns `true` if all requirements are satisfied by the provided balances.
- * Returns `false` if requirements is empty (no requirements means nothing is satisfied).
- */
 const allRequirementsMet = (
   balances: WalletBalance[],
   requirements: TokenRequirement[],
 ): boolean => {
-  if (requirements.length === 0) return false;
+  if (requirements.length === 0) return true;
   return requirements.every((requirement) => {
     const walletBalance = balances.find(
       (balance) => balance.symbol === requirement.symbol,
@@ -57,7 +52,9 @@ const allRequirementsMet = (
   });
 };
 
-export const useCompleteAgentSetup = (): UseCompleteAgentSetupReturn => {
+export const useCompleteAgentSetup = (
+  enabled: boolean = true,
+): UseCompleteAgentSetupReturn => {
   const { getMasterSafeOf, isFetched: isMasterWalletFetched } =
     useMasterWalletContext();
   const { selectedAgentConfig } = useServices();
@@ -88,6 +85,7 @@ export const useCompleteAgentSetup = (): UseCompleteAgentSetupReturn => {
   } = useMasterSafeCreationAndTransfer(tokenSymbols);
 
   const setupState: SetupState = useMemo(() => {
+    if (!enabled) return 'detecting';
     if (isLoading || !isBalancesLoaded) return 'detecting';
     const masterSafe = getMasterSafeOf?.(evmHomeChainId);
     if (masterSafe) {
@@ -101,6 +99,7 @@ export const useCompleteAgentSetup = (): UseCompleteAgentSetupReturn => {
     }
     return 'needsFunding';
   }, [
+    enabled,
     isLoading,
     isBalancesLoaded,
     getMasterSafeOf,
@@ -132,21 +131,31 @@ export const useCompleteAgentSetup = (): UseCompleteAgentSetupReturn => {
 
   const shouldShowFailureModal = hasSafeCreationFailure || hasTransferFailure;
 
-  // Handle backend-reported or network-level failures
+  // Handle backend-reported or network-level failures.
+  // Clear the failure modal if the condition resolves (e.g. retry succeeds or
+  // external state refetch shows the Safe was created after all) so a stale
+  // failure modal doesn't persist.
   useEffect(() => {
-    if (!shouldShowFailureModal) return;
-    setModalToShow('safeCreationFailed');
-  }, [shouldShowFailureModal]);
+    if (!enabled) return;
+    if (shouldShowFailureModal) {
+      setModalToShow('safeCreationFailed');
+    } else {
+      setModalToShow((prev) => (prev === 'safeCreationFailed' ? null : prev));
+    }
+  }, [enabled, shouldShowFailureModal]);
 
   // Show setup complete modal once safe is created and transfer is done
   useEffect(() => {
+    if (!enabled) return;
     if (isLoadingMasterSafeCreation) return;
     if (isErrorMasterSafeCreation) return;
     if (!isSafeCreated) return;
     if (!isTransferComplete) return;
 
-    delayInSeconds(0.25).then(() => setModalToShow('setupComplete'));
+    const timeoutId = setTimeout(() => setModalToShow('setupComplete'), 250);
+    return () => clearTimeout(timeoutId);
   }, [
+    enabled,
     isLoadingMasterSafeCreation,
     isErrorMasterSafeCreation,
     isSafeCreated,
