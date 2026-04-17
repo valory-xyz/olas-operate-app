@@ -417,6 +417,7 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
   // Also migrates to the new store fields, in case they have the deprecated
   // `lastSelectedAgentType` field in their electron store.
   useEffect(() => {
+    if (storeState === undefined) return; // Wait for store hydration
     if (isNilOrEmpty(services)) return;
     if (pendingAgentType) return;
 

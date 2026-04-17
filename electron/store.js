@@ -4,11 +4,21 @@ const Store = require('electron-store');
 // All other persistence (agent settings, auto-run, backup wallet, etc.) lives in
 // .operate/pearl_store.json served by the backend HTTP API, so it migrates with
 // the .operate folder when a user moves to a new machine.
+//
+// Legacy keys (trader, autoRun, etc.) are NOT in this schema but are still readable
+// via store.get() — electron-store returns existing values for keys not in the schema.
+// The frontend migration in StoreProvider reads them on first launch and copies to
+// pearl_store.json.
 const schema = {
   environmentName: { type: 'string', default: '' },
   knownVersion: { type: 'string', default: '' },
   // Stores the latest app version for which the "update available" modal was dismissed.
   updateAvailableKnownVersion: { type: 'string', default: '' },
+  // Set to true once the authoritative Electron→pearl_store migration is done.
+  // Must be in the schema so electron-store persists it.
+  pearlStoreMigrationComplete: { type: 'boolean', default: false },
+  // Set to true once the autoRun.enabled repair has been checked.
+  pearlStoreAutoRunRepaired: { type: 'boolean', default: false },
 };
 
 /**

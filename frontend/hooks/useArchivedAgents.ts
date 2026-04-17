@@ -28,6 +28,7 @@ export const useArchivedAgents = () => {
   // One-time migration: expand legacy archivedAgents → archivedInstances
   useEffect(() => {
     if (hasMigrated.current) return;
+    if (storeState === undefined) return; // Wait for store hydration
     if (!services || services.length === 0) return;
 
     const legacyArchived = storeState?.archivedAgents;
