@@ -359,6 +359,11 @@ export const StoreProvider = ({ children }: PropsWithChildren) => {
       });
   }, [store, storeState]);
 
+  // Block rendering until the store has hydrated. This prevents child hooks
+  // (e.g. useAutoRunStore) from reading default values and writing them back
+  // to the backend, overwriting the user's real settings.
+  if (storeState === undefined) return null;
+
   return (
     <StoreContext.Provider value={{ storeState }}>
       {children}

@@ -82,18 +82,26 @@ describe('StoreProvider', () => {
     expect(mockGetStore).toHaveBeenCalled();
   });
 
-  it('provides undefined storeState before StoreService.getStore() resolves', () => {
+  it('blocks children until StoreService.getStore() resolves', () => {
     // Never resolves during this test
     mockGetStore.mockReturnValue(new Promise(() => {}));
 
-    const { result } = renderHook(() => useContext(StoreContext), {
-      wrapper: makeWrapper(),
-    });
+    let rendered = false;
+    renderHook(
+      () => {
+        rendered = true;
+        return useContext(StoreContext);
+      },
+      { wrapper: makeWrapper() },
+    );
 
-    expect(result.current.storeState).toBeUndefined();
+    // Provider returns null before hydration — children do not render
+    expect(rendered).toBe(false);
   });
 
-  it('catches StoreService.getStore() rejection and logs to console.error', async () => {
+  it('catches StoreService.getStore() rejection and falls back to empty store', async () => {
+    jest.useFakeTimers();
+
     const storeError = new Error('store unavailable');
     mockGetStore.mockRejectedValue(storeError);
 
@@ -105,15 +113,26 @@ describe('StoreProvider', () => {
       wrapper: makeWrapper(),
     });
 
+    // Exhaust all retries
+    for (let i = 0; i < 3; i++) {
+      await waitFor(() => {
+        expect(mockGetStore).toHaveBeenCalledTimes(i + 1);
+      });
+      jest.advanceTimersByTime(3000);
+    }
+
+    // After all retries, falls back to empty store
     await waitFor(() => {
-      expect(consoleSpy).toHaveBeenCalledWith(
-        '[StoreProvider] Hydration attempt 1 failed:',
-        storeError,
-      );
+      expect(result.current.storeState).toEqual({});
     });
 
-    expect(result.current.storeState).toBeUndefined();
+    expect(consoleSpy).toHaveBeenCalledWith(
+      '[StoreProvider] Hydration attempt 1 failed:',
+      storeError,
+    );
+
     consoleSpy.mockRestore();
+    jest.useRealTimers();
   });
 
   it('provides empty storeState when StoreService.getStore() returns {}', async () => {
@@ -165,7 +184,6 @@ describe('StoreProvider', () => {
         storeError,
       );
     });
-    expect(result.current.storeState).toBeUndefined();
 
     // Advance past retry delay (3 seconds)
     jest.advanceTimersByTime(3000);
@@ -229,18 +247,12 @@ describe('StoreProvider', () => {
       wrapper: makeWrapper(),
     });
 
-    // storeState is undefined — hydration hasn't resolved yet.
-    expect(result.current.storeState).toBeUndefined();
-
     // Simulate a write arriving before hydration via the registered event bus handler.
     const setHandler = mockRegisterSet.mock.calls[0][0] as (
       key: string,
       value: unknown,
     ) => void;
     setHandler('autoRun', { enabled: true });
-
-    // storeState is still undefined — write was queued, not dropped.
-    expect(result.current.storeState).toBeUndefined();
 
     // Now resolve hydration with backend data.
     resolveGetStore({ firstStakingRewardAchieved: true });
