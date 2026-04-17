@@ -1,5 +1,5 @@
 import { Button, Card, Flex, Input, message, Typography } from 'antd';
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { TbCopy } from 'react-icons/tb';
 
 import { Alert, BackButton, cardStyles } from '@/components/ui';
@@ -42,19 +42,22 @@ type ResultStatus = 'idle' | 'in_progress' | 'success' | 'failure';
 export const UpdateBackupWalletConfirmScreen = () => {
   const { goto } = useSettings();
   const { backupOwnerStatus } = useBackupOwnerStatus();
-  const { newAddress, password, resetFlow } = useUpdateBackupWallet();
+  const { newAddress, password, setPassword, resetFlow } =
+    useUpdateBackupWallet();
   const { mutateAsync: applyBackupOwner } = useApplyBackupOwner();
   const [resultStatus, setResultStatus] = useState<ResultStatus>('idle');
+  const savedPasswordRef = useRef(password);
 
   const currentAddress = backupOwnerStatus?.canonical_backup_owner ?? null;
 
   const handleConfirm = async () => {
     if (!newAddress) return;
     setResultStatus('in_progress');
+    setPassword(null);
     try {
       await applyBackupOwner({
         backup_owner: newAddress,
-        password: password ?? undefined,
+        password: savedPasswordRef.current ?? undefined,
       });
       setResultStatus('success');
     } catch {
@@ -132,7 +135,7 @@ export const UpdateBackupWalletConfirmScreen = () => {
           onRetry={async () => {
             await applyBackupOwner({
               backup_owner: newAddress!,
-              password: password ?? undefined,
+              password: savedPasswordRef.current ?? undefined,
             });
           }}
         />

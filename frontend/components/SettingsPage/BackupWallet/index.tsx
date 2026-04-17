@@ -20,7 +20,7 @@ const { Text } = Typography;
 
 export const BackupWalletSection = () => {
   const { goto } = useSettings();
-  const { backupOwnerStatus } = useBackupOwnerStatus();
+  const { backupOwnerStatus, isError, refetch } = useBackupOwnerStatus();
   const {
     value: isUpdatePasswordOpen,
     setTrue: openUpdatePassword,
@@ -48,7 +48,13 @@ export const BackupWalletSection = () => {
             <div className="my-6">
               <Text strong>Backup Wallet</Text>
             </div>
-            <Text type="secondary">&mdash;</Text>
+            {isError ? (
+              <Button className="w-fit text-sm" onClick={() => refetch()}>
+                Failed to load. Retry
+              </Button>
+            ) : (
+              <Text type="secondary">&mdash;</Text>
+            )}
           </Flex>
         </Flex>
       </CardSection>
