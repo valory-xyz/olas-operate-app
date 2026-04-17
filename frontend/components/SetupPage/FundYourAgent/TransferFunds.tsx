@@ -1,16 +1,16 @@
-import { Button, Flex, Spin, Typography } from 'antd';
+import { Flex, Typography } from 'antd';
 import { isNil } from 'lodash';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useUnmount } from 'usehooks-ts';
 
-import { LoadingOutlined, WarningOutlined } from '@/components/custom-icons';
 import {
   AgentSetupCompleteModal,
   Alert,
   BackButton,
   CardFlex,
+  FinishingSetupModal,
   FundingDescription,
-  Modal,
+  MasterSafeCreationFailedModal,
   TokenRequirementsTable,
 } from '@/components/ui';
 import { TokenSymbol } from '@/config/tokens';
@@ -27,39 +27,6 @@ import { delayInSeconds } from '@/utils';
 import { useTokensFundingStatus } from './hooks/useTokensFundingStatus';
 
 const { Text, Title } = Typography;
-
-const FinishingSetupModal = () => (
-  <Modal
-    header={<Spin indicator={<LoadingOutlined />} size="large" />}
-    title="Finishing Setup"
-    description="It usually takes a few minutes. Please keep the app open until the process is complete."
-  />
-);
-
-type MasterSafeCreationFailedModalProps = {
-  onTryAgain: () => void;
-  onContactSupport: () => void;
-};
-const MasterSafeCreationFailedModal = ({
-  onTryAgain,
-  onContactSupport,
-}: MasterSafeCreationFailedModalProps) => (
-  <Modal
-    header={<WarningOutlined />}
-    title="Master Safe Creation Failed"
-    description="Please try again in a few minutes."
-    action={
-      <Flex gap={16} vertical className="mt-24 w-full">
-        <Button onClick={onTryAgain} type="primary" block size="large">
-          Try Again
-        </Button>
-        <Button onClick={onContactSupport} type="default" block size="large">
-          Contact Support
-        </Button>
-      </Flex>
-    }
-  />
-);
 
 export const TransferFunds = () => {
   const { goto: gotoSetup } = useSetup();
