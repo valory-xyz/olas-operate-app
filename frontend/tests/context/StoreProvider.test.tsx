@@ -82,21 +82,15 @@ describe('StoreProvider', () => {
     expect(mockGetStore).toHaveBeenCalled();
   });
 
-  it('blocks children until StoreService.getStore() resolves', () => {
+  it('provides undefined storeState before StoreService.getStore() resolves', () => {
     // Never resolves during this test
     mockGetStore.mockReturnValue(new Promise(() => {}));
 
-    let rendered = false;
-    renderHook(
-      () => {
-        rendered = true;
-        return useContext(StoreContext);
-      },
-      { wrapper: makeWrapper() },
-    );
+    const { result } = renderHook(() => useContext(StoreContext), {
+      wrapper: makeWrapper(),
+    });
 
-    // Provider returns null before hydration — children do not render
-    expect(rendered).toBe(false);
+    expect(result.current.storeState).toBeUndefined();
   });
 
   it('catches StoreService.getStore() rejection and falls back to empty store', async () => {
