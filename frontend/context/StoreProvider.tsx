@@ -86,6 +86,11 @@ export const StoreProvider = ({ children }: PropsWithChildren) => {
   const pendingOpsRef = useRef<PendingOp[]>([]);
   const isHydratedRef = useRef(false);
 
+  // Snapshot of backend store at hydration time — used by migration to decide
+  // which keys are missing. Must NOT reflect post-hydration writes from other
+  // hooks (e.g. useAutoRunStore), otherwise migration skips keys it should copy.
+  const hydrationSnapshotRef = useRef<PearlStore>({});
+
   // Apply a store operation or queue it if hydration hasn't completed yet.
   const applyOrQueue = useRef({
     set: (key: string, value: unknown) => {
@@ -150,11 +155,13 @@ export const StoreProvider = ({ children }: PropsWithChildren) => {
       StoreService.getStore()
         .then((data) => {
           if (cancelled) return;
+          hydrationSnapshotRef.current = data;
           const finalState = drainPendingOps(data);
           isHydratedRef.current = true;
           setStoreState(finalState);
 
-          const keyCount = Object.keys(finalState).length;
+          // Report raw backend key count (before draining pending ops).
+          const keyCount = Object.keys(data).length;
           if (keyCount === 0) {
             log(`Hydrated on attempt ${attempt} (empty store)`);
           } else {
@@ -211,54 +218,143 @@ export const StoreProvider = ({ children }: PropsWithChildren) => {
   }, []);
 
   // Migration: copy backend-bound keys from Electron store to pearl_store.json.
-  // Runs when the Electron store has keys that the backend store is missing.
-  // Handles first upgrade, .operate folder swaps, and partial migrations.
+  //
+  // Two phases, each gated by its own persistent flag in the Electron store:
+  //
+  // Phase 1 (pearlStoreMigrationComplete): Copy any Electron store key that is
+  //   MISSING from the backend. Safe — never overwrites existing backend data.
+  //   Handles first upgrade and partial migrations.
+  //
+  // Phase 2 (pearlStoreAutoRunRepaired): One-time repair for users hit by the
+  //   autoRun race bug where useAutoRunStore wrote {enabled: false} before
+  //   migration could copy the real value. If Electron has autoRun.enabled=true
+  //   but backend has autoRun.enabled=false, overwrite backend with Electron.
+  //
+  // Both phases compare against hydrationSnapshotRef (not live storeState) to
+  // avoid races with hooks that write during initialization.
   const migrationAttempted = useRef(false);
   useEffect(() => {
     const storeGet = store?.get;
-    if (!storeGet) return;
+    const storeSet = store?.set;
+    if (!storeGet || !storeSet) return;
     if (!isHydratedRef.current) return;
     if (migrationAttempted.current) return;
     migrationAttempted.current = true;
 
-    // Read all backend-bound keys from Electron store, then migrate any
-    // that are present in Electron but missing from the backend store.
-    Promise.all(
-      BACKEND_BOUND_KEYS.map((key) =>
-        storeGet(key).then((value) => ({ key, value })),
-      ),
-    )
-      .then((entries) => {
-        const toMigrate = entries.filter(
-          ({ key, value }) =>
-            value !== undefined &&
-            value !== null &&
-            (storeState as Record<string, unknown>)?.[key] === undefined,
-        );
-        if (toMigrate.length === 0) {
-          log('No Electron store keys to migrate');
+    const snapshot = hydrationSnapshotRef.current;
+
+    Promise.all([
+      storeGet('pearlStoreMigrationComplete'),
+      storeGet('pearlStoreAutoRunRepaired'),
+    ])
+      .then(async ([migrationDone, autoRunRepaired]) => {
+        if (migrationDone && autoRunRepaired) {
+          log('Migration already complete (flags set)');
           return;
         }
 
-        log(
-          `Migrating ${toMigrate.length} keys: ${toMigrate.map((e) => e.key).join(', ')}`,
-        );
+        let didWrite = false;
 
-        return Promise.all(
-          toMigrate.map(({ key, value }) =>
-            StoreService.setStoreKey(key, value),
-          ),
-        ).then(() =>
-          StoreService.getStore().then((data) => {
-            const finalState = drainPendingOps(data);
-            isHydratedRef.current = true;
-            setStoreState(finalState);
-            log('Migration complete');
-          }),
-        );
+        // Phase 1: Copy missing keys from Electron → backend
+        if (!migrationDone) {
+          const entries = await Promise.all(
+            BACKEND_BOUND_KEYS.map((key) =>
+              storeGet(key).then((value) => ({ key, value })),
+            ),
+          );
+
+          const toMigrate = entries.filter(
+            ({ key, value }) =>
+              value !== undefined &&
+              value !== null &&
+              (snapshot as Record<string, unknown>)[key] === undefined,
+          );
+
+          let allMigrationWritesSucceeded = true;
+
+          if (toMigrate.length > 0) {
+            log(
+              `Migrating ${toMigrate.length} keys: ${toMigrate.map((e) => e.key).join(', ')}`,
+            );
+
+            const results = await Promise.allSettled(
+              toMigrate.map(({ key, value }) =>
+                StoreService.setStoreKey(key, value),
+              ),
+            );
+
+            const successfulWrites = results.filter(
+              (result) => result.status === 'fulfilled',
+            ).length;
+            const failedKeys = results
+              .map((result, index) =>
+                result.status === 'rejected'
+                  ? toMigrate[index]?.key
+                  : undefined,
+              )
+              .filter((key): key is keyof PearlStore => key !== undefined);
+
+            if (successfulWrites > 0) {
+              didWrite = true;
+            }
+
+            allMigrationWritesSucceeded = failedKeys.length === 0;
+
+            if (!allMigrationWritesSucceeded) {
+              log(
+                `Migration partially failed for keys: ${failedKeys.join(', ')}`,
+              );
+            }
+          } else {
+            log('No Electron store keys to migrate');
+          }
+
+          // Only set the flag when all writes succeeded — partial failures
+          // will re-migrate the missing keys on next launch.
+          if (allMigrationWritesSucceeded) {
+            await storeSet('pearlStoreMigrationComplete', true);
+          }
+        }
+
+        // Phase 2: Repair autoRun if Electron had enabled=true but backend has enabled=false.
+        // Tradeoff: if a user saw the race-bug disable their autoRun and intentionally
+        // left it off, this one-shot repair will re-enable it. We accept this because
+        // the common case is "user wants it restored" and there's no way to distinguish
+        // "user accepted the bug" from "user didn't notice." Flag prevents re-run.
+        if (!autoRunRepaired) {
+          const electronAutoRun = (await storeGet('autoRun')) as
+            | Record<string, unknown>
+            | undefined;
+          const backendAutoRun = snapshot.autoRun;
+
+          if (
+            electronAutoRun?.enabled === true &&
+            backendAutoRun &&
+            !backendAutoRun.enabled
+          ) {
+            log('Repairing autoRun.enabled (was lost during migration)');
+            // Use dot-notation to set only the enabled flag — preserves any
+            // backend-side fields (includedAgentInstances, etc.) that may
+            // have been written after the race.
+            await StoreService.setStoreKey('autoRun.enabled', true);
+            didWrite = true;
+          }
+
+          await storeSet('pearlStoreAutoRunRepaired', true);
+        }
+
+        // Refresh storeState from backend if any writes were made
+        if (didWrite) {
+          const data = await StoreService.getStore();
+          const finalState = drainPendingOps(data);
+          setStoreState(finalState);
+        }
+
+        log('Migration complete');
       })
       .catch((error) => {
-        log(`Migration failed: ${error}`);
+        const msg = error instanceof Error ? error.message : String(error);
+        log(`Migration failed: ${msg}`);
         console.error('[StoreProvider] Migration failed:', error);
       });
   }, [store, storeState]);

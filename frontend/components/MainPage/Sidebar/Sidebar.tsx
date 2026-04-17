@@ -32,7 +32,6 @@ import {
   useAgentRunning,
   useAllInstancesRewardStatus,
   useBalanceAndRefillRequirementsContext,
-  useIsInitiallyFunded,
   useMasterWalletContext,
   usePageState,
   useServices,
@@ -148,7 +147,6 @@ export const Sidebar = () => {
     isLoading,
     selectedServiceConfigId,
     updateSelectedServiceConfigId,
-    getAgentTypeFromService,
   } = useServices();
   const { isLoading: isMasterWalletLoading } = useMasterWalletContext();
   const { fade, ref: scrollAreaRef } = useListFade();
@@ -253,30 +251,12 @@ export const Sidebar = () => {
     updateSelectedServiceConfigId,
   ]);
 
-  const { isInstanceInitiallyFunded } = useIsInitiallyFunded();
-
   const handleInstanceSelect = useCallback(
     (serviceConfigId: string) => {
       updateSelectedServiceConfigId(serviceConfigId);
-
-      const agentType = getAgentTypeFromService(serviceConfigId);
-      if (
-        !agentType ||
-        !isInstanceInitiallyFunded(serviceConfigId, agentType)
-      ) {
-        gotoPage(PAGES.Setup);
-        gotoSetup(SETUP_SCREEN.FundYourAgent);
-      } else {
-        gotoPage(PAGES.Main);
-      }
+      gotoPage(PAGES.Main);
     },
-    [
-      updateSelectedServiceConfigId,
-      gotoPage,
-      gotoSetup,
-      getAgentTypeFromService,
-      isInstanceInitiallyFunded,
-    ],
+    [updateSelectedServiceConfigId, gotoPage],
   );
 
   const handleBottomMenuClick = useCallback<NonNullable<MenuProps['onClick']>>(

@@ -1,20 +1,19 @@
 import { Button, Typography } from 'antd';
 
 import { Alert } from '@/components/ui';
-import { PAGES, SETUP_SCREEN } from '@/constants';
-import { usePageState, useSetup } from '@/hooks';
+import { SetupState } from '@/hooks/useCompleteAgentSetup';
 
 const { Text } = Typography;
 
-export const UnfinishedSetupAlert = () => {
-  const { goto } = usePageState();
-  const { goto: gotoSetup } = useSetup();
+type UnfinishedSetupAlertProps = {
+  setupState: SetupState;
+  handleCompleteSetup: () => void;
+};
 
-  const handleCompleteSetup = () => {
-    gotoSetup(SETUP_SCREEN.FundYourAgent);
-    goto(PAGES.Setup);
-  };
-
+export const UnfinishedSetupAlert = ({
+  setupState,
+  handleCompleteSetup,
+}: UnfinishedSetupAlertProps) => {
   return (
     <Alert
       showIcon
@@ -27,7 +26,11 @@ export const UnfinishedSetupAlert = () => {
             Setup is nearly done. Fund the agent so it has what it needs to
             start working.
           </Text>
-          <Button size="small" onClick={handleCompleteSetup}>
+          <Button
+            size="small"
+            onClick={handleCompleteSetup}
+            loading={setupState === 'detecting'}
+          >
             Complete Setup
           </Button>
         </>

@@ -60,6 +60,7 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
   const configuredAgents = useConfiguredAgents(services);
 
   const {
+    storeLoaded,
     enabled,
     includedInstances,
     isInitialized,
@@ -177,7 +178,9 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
   ]);
 
   // Seed the included list once from eligible instances. After that, empty is intentional.
+  // Must wait for storeLoaded so we read the real isInitialized value, not the default.
   useEffect(() => {
+    if (!storeLoaded) return;
     if (!services) return;
     if (isInitialized) return;
     if (eligibleInstances.length === 0) return;
@@ -187,7 +190,7 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
       order: index,
     }));
     updateAutoRun({ includedInstances: instances, isInitialized: true });
-  }, [eligibleInstances, isInitialized, services, updateAutoRun]);
+  }, [storeLoaded, eligibleInstances, isInitialized, services, updateAutoRun]);
 
   // Auto-append newly onboarded instances unless explicitly excluded by the user.
   useEffect(() => {

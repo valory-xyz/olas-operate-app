@@ -37,6 +37,25 @@ export const useIsInitiallyFunded = () => {
     storeState,
   ]);
 
+  /**
+   * Mark a freshly created service as not initially funded so downstream
+   * `isInitialFunded === false` checks (e.g. UnfinishedSetupAlert visibility)
+   * are truthy instead of undefined.
+   */
+  const markServiceAsNotInitiallyFunded = useCallback(
+    (serviceConfigId: string) => {
+      const current = storeState?.[selectedAgentType]?.isInitialFunded;
+      const existing =
+        typeof current === 'object' && current !== null ? current : {};
+
+      electronApi.store?.set?.(`${selectedAgentType}.isInitialFunded`, {
+        ...existing,
+        [serviceConfigId]: false,
+      });
+    },
+    [electronApi.store, selectedAgentType, storeState],
+  );
+
   /** Check if a specific instance is initially funded */
   const isInstanceInitiallyFunded = useCallback(
     (serviceConfigId: string, agentType: typeof selectedAgentType) => {
@@ -52,6 +71,7 @@ export const useIsInitiallyFunded = () => {
   return {
     isInitialFunded,
     setIsInitiallyFunded,
+    markServiceAsNotInitiallyFunded,
     isInstanceInitiallyFunded,
   };
 };

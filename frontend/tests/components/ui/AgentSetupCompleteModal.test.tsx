@@ -29,17 +29,26 @@ jest.mock('../../../components/ui/Modal', () => ({
     title,
     description,
     action,
+    closable,
+    onCancel,
   }: {
     header: React.ReactNode;
     title: string;
     description: string;
     action: React.ReactNode;
+    closable?: boolean;
+    onCancel?: () => void;
   }) => (
-    <div data-testid="modal">
+    <div data-testid="modal" data-closable={closable ? 'true' : 'false'}>
       <div data-testid="modal-header">{header}</div>
       <div data-testid="modal-title">{title}</div>
       <div data-testid="modal-description">{description}</div>
       <div data-testid="modal-action">{action}</div>
+      {closable && (
+        <button data-testid="modal-cancel" onClick={onCancel}>
+          close
+        </button>
+      )}
     </div>
   ),
 }));
@@ -69,10 +78,36 @@ describe('AgentSetupCompleteModal', () => {
     expect(mockSetIsInitiallyFunded).toHaveBeenCalledTimes(1);
   });
 
-  it('navigates to Main page when View Agent button is clicked', () => {
+  it('navigates to Main when View Agent is clicked', () => {
     render(<AgentSetupCompleteModal />);
-    const button = screen.getByRole('button', { name: 'View Agent' });
-    fireEvent.click(button);
+    fireEvent.click(screen.getByRole('button', { name: 'View Agent' }));
     expect(mockGoto).toHaveBeenCalledWith(PAGES.Main);
+  });
+
+  it('also calls onDismiss when View Agent is clicked, if provided', () => {
+    const mockOnDismiss = jest.fn();
+    render(<AgentSetupCompleteModal onDismiss={mockOnDismiss} />);
+    fireEvent.click(screen.getByRole('button', { name: 'View Agent' }));
+    expect(mockGoto).toHaveBeenCalledWith(PAGES.Main);
+    expect(mockOnDismiss).toHaveBeenCalledTimes(1);
+  });
+
+  it('is not closable by default', () => {
+    render(<AgentSetupCompleteModal />);
+    expect(screen.getByTestId('modal')).toHaveAttribute(
+      'data-closable',
+      'false',
+    );
+  });
+
+  it('is closable when onDismiss is provided, and the close action fires onDismiss', () => {
+    const mockOnDismiss = jest.fn();
+    render(<AgentSetupCompleteModal onDismiss={mockOnDismiss} />);
+    expect(screen.getByTestId('modal')).toHaveAttribute(
+      'data-closable',
+      'true',
+    );
+    fireEvent.click(screen.getByTestId('modal-cancel'));
+    expect(mockOnDismiss).toHaveBeenCalledTimes(1);
   });
 });
