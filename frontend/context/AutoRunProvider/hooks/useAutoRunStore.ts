@@ -33,6 +33,10 @@ export const useAutoRunStore = () => {
   const autoRunRef = useRef(DEFAULT_AUTO_RUN);
   const hasMigratedRef = useRef(false);
 
+  // Only read from storeState after hydration (storeState is defined).
+  // Before hydration, autoRunRef keeps DEFAULT_AUTO_RUN with isInitialized=false,
+  // but storeLoaded=false prevents any write-back that would overwrite real data.
+  const storeLoaded = storeState !== undefined;
   const autoRun = storeState?.autoRun;
   if (autoRun) {
     // Always read from the current store fields
@@ -111,6 +115,7 @@ export const useAutoRunStore = () => {
   );
 
   return {
+    storeLoaded,
     enabled,
     includedInstances,
     isInitialized,
