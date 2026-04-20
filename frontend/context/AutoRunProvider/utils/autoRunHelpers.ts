@@ -117,10 +117,6 @@ export const refreshRewardsEligibility = async ({
       serviceNftTokenId: meta.serviceNftTokenId,
       stakingProgramId: meta.stakingProgramId,
       agentConfig: meta.agentConfig,
-      onError: (error) => {
-        onRewardsFetchError?.();
-        logMessage(`rewards fetch error: ${serviceConfigId}: ${error}`);
-      },
     });
     if (!response) return;
 
@@ -139,8 +135,9 @@ export const refreshRewardsEligibility = async ({
       setRewardSnapshot(serviceConfigId, eligible);
       return eligible;
     }
-  } catch {
-    // fetchAgentStakingRewardsInfo routes errors to onError and returns null.
+  } catch (error) {
+    onRewardsFetchError?.();
+    logMessage(`rewards fetch error: ${serviceConfigId}: ${error}`);
   }
 };
 

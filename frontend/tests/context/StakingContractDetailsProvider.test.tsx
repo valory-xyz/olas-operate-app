@@ -83,7 +83,6 @@ type UseQueriesConfig = {
     queryFn: () => Promise<unknown>;
     refetchInterval?: (query: unknown) => number | false;
     refetchIntervalInBackground?: boolean;
-    onError?: (error: Error) => void;
   }>;
 };
 
@@ -355,7 +354,7 @@ describe('StakingContractDetailsProvider', () => {
       });
     });
 
-    it('skips entries where useQueries status is error', () => {
+    it('skips entries where useQueries is error and has no previous data', () => {
       const details1 = makeStakingContractDetails();
       const consoleSpy = jest
         .spyOn(console, 'error')
@@ -375,6 +374,36 @@ describe('StakingContractDetailsProvider', () => {
       const { result } = renderProvider();
       expect(result.current.allStakingContractDetailsRecord).toEqual({
         [DEFAULT_STAKING_PROGRAM_ID]: details1,
+      });
+      expect(consoleSpy).toHaveBeenCalled();
+
+      consoleSpy.mockRestore();
+    });
+
+    it('retains last-known-good data when useQueries is error after a prior success', () => {
+      const details1 = makeStakingContractDetails();
+      const details2 = makeStakingContractDetails({ apy: 42 });
+      const consoleSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
+
+      // React Query keeps `data` on error — the aggregator must include it.
+      setupMocks({
+        useQueriesReturn: [
+          { status: 'success', data: details1, isSuccess: true },
+          {
+            status: 'error',
+            data: details2,
+            isSuccess: false,
+            error: new Error('transient RPC failure'),
+          },
+        ],
+      });
+
+      const { result } = renderProvider();
+      expect(result.current.allStakingContractDetailsRecord).toEqual({
+        [DEFAULT_STAKING_PROGRAM_ID]: details1,
+        [SECOND_STAKING_PROGRAM_ID]: details2,
       });
       expect(consoleSpy).toHaveBeenCalled();
 
@@ -550,23 +579,40 @@ describe('StakingContractDetailsProvider', () => {
         });
       });
 
-      it('returns only service staking details when contract details fail', async () => {
-        const serviceDetails = makeServiceStakingDetails();
+      it('throws when contract details fail so React Query retains previousData', async () => {
         mockGetStakingContractDetails.mockRejectedValue(
           new Error('contract fetch failed'),
         );
-        mockGetServiceStakingDetails.mockResolvedValue(serviceDetails);
+        mockGetServiceStakingDetails.mockResolvedValue(
+          makeServiceStakingDetails(),
+        );
 
         setupMocks({ serviceNftTokenId: DEFAULT_SERVICE_NFT_TOKEN_ID });
         renderProvider();
 
-        const result = await capturedUseQueryConfig!.queryFn();
-        expect(result).toEqual({ ...serviceDetails });
+        await expect(capturedUseQueryConfig!.queryFn()).rejects.toThrow(
+          'contract fetch failed',
+        );
       });
 
-      it('returns only contract details when service staking fails', async () => {
-        const contractDetails = makeStakingContractDetails();
-        mockGetStakingContractDetails.mockResolvedValue(contractDetails);
+      it('throws when contract details resolve to undefined so React Query retains previousData', async () => {
+        mockGetStakingContractDetails.mockResolvedValue(undefined);
+        mockGetServiceStakingDetails.mockResolvedValue(
+          makeServiceStakingDetails(),
+        );
+
+        setupMocks({ serviceNftTokenId: DEFAULT_SERVICE_NFT_TOKEN_ID });
+        renderProvider();
+
+        await expect(capturedUseQueryConfig!.queryFn()).rejects.toThrow(
+          /returned undefined/,
+        );
+      });
+
+      it('throws when service staking fails so React Query retains previousData', async () => {
+        mockGetStakingContractDetails.mockResolvedValue(
+          makeStakingContractDetails(),
+        );
         mockGetServiceStakingDetails.mockRejectedValue(
           new Error('service staking fetch failed'),
         );
@@ -574,8 +620,9 @@ describe('StakingContractDetailsProvider', () => {
         setupMocks({ serviceNftTokenId: DEFAULT_SERVICE_NFT_TOKEN_ID });
         renderProvider();
 
-        const result = await capturedUseQueryConfig!.queryFn();
-        expect(result).toEqual({ ...contractDetails });
+        await expect(capturedUseQueryConfig!.queryFn()).rejects.toThrow(
+          'service staking fetch failed',
+        );
       });
 
       it('skips getServiceStakingDetails when serviceNftTokenId is invalid (-1)', async () => {
@@ -626,28 +673,6 @@ describe('StakingContractDetailsProvider', () => {
           DEFAULT_STAKING_PROGRAM_ID,
           EVM_CHAIN_ID,
         );
-      });
-
-      it('logs error via onError callback', () => {
-        const consoleSpy = jest
-          .spyOn(console, 'error')
-          .mockImplementation(() => {});
-
-        setupMocks();
-        renderProvider();
-
-        const onError = capturedUseQueriesConfig!.queries[0].onError;
-        expect(onError).toBeDefined();
-
-        const testError = new Error('staking fetch failed');
-        onError!(testError);
-
-        expect(consoleSpy).toHaveBeenCalledWith(
-          `Error fetching staking details for ${DEFAULT_STAKING_PROGRAM_ID}:`,
-          testError,
-        );
-
-        consoleSpy.mockRestore();
       });
 
       it('stops refetching on success', () => {
