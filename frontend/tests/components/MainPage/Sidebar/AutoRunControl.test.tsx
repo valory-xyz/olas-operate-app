@@ -167,6 +167,7 @@ type SetupOptions = {
   excludedInstances?: string[];
   eligibilityByInstance?: Record<string, { canRun: boolean; reason?: string }>;
   isToggling?: boolean;
+  isRotationStalled?: boolean;
   runningServiceConfigId?: string | null;
   isServiceTransitioning?: boolean;
   selectedServiceConfigId?: string | undefined;
@@ -183,6 +184,7 @@ const defaultSetup = (overrides: SetupOptions = {}) => {
     excludedInstances = ['sc-memeooorr-1'],
     eligibilityByInstance = {},
     isToggling = false,
+    isRotationStalled = false,
     runningServiceConfigId = null,
     isServiceTransitioning = false,
     selectedServiceConfigId = 'sc-trader-1',
@@ -202,6 +204,7 @@ const defaultSetup = (overrides: SetupOptions = {}) => {
     excludedInstances,
     eligibilityByInstance,
     isToggling,
+    isRotationStalled,
     setEnabled: mockSetEnabled,
     includeInstance: mockIncludeInstance,
     excludeInstance: mockExcludeInstance,
@@ -418,6 +421,33 @@ describe('AutoRunControl', () => {
         .querySelector('button')!;
 
       expect(button).toBeDisabled();
+    });
+  });
+
+  // -----------------------------------------------------------------------
+  // Rotation stall warning
+  // -----------------------------------------------------------------------
+
+  describe('rotation stall warning', () => {
+    it('renders the stall warning when enabled and isRotationStalled are both true', () => {
+      defaultSetup({ enabled: true, isRotationStalled: true });
+      render(<AutoRunControl />);
+      expect(screen.getByText('Rotation stalled')).toBeInTheDocument();
+      expect(
+        screen.getByText(/All alternate agents appear earned or unavailable\./),
+      ).toBeInTheDocument();
+    });
+
+    it('does NOT render the stall warning when isRotationStalled is false', () => {
+      defaultSetup({ enabled: true, isRotationStalled: false });
+      render(<AutoRunControl />);
+      expect(screen.queryByText('Rotation stalled')).not.toBeInTheDocument();
+    });
+
+    it('does NOT render the stall warning when auto-run is disabled even if stalled', () => {
+      defaultSetup({ enabled: false, isRotationStalled: true });
+      render(<AutoRunControl />);
+      expect(screen.queryByText('Rotation stalled')).not.toBeInTheDocument();
     });
   });
 });

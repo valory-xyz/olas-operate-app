@@ -110,6 +110,21 @@ export const SCAN_ELIGIBLE_DELAY_SECONDS = 30 * 60; // 30 minutes
 export const SCAN_LOADING_RETRY_SECONDS = 30; // 30 seconds
 
 /**
+ * Delay (in seconds) before a second rewards-fetch attempt when the first
+ * attempt returns null (transient RPC failure). Short by design to keep
+ * rotation responsive while avoiding hammering the endpoint.
+ */
+export const REWARDS_RETRY_DELAY_SECONDS = 3; // 3 seconds
+
+/**
+ * Number of consecutive rewards-triggered rotation blocks (where every
+ * alternate is confirmed earned) before the UI surfaces a stall warning.
+ * Paired with `SCAN_BLOCKED_DELAY_SECONDS` (600s): threshold=2 → warning
+ * appears after ~20 min of consecutive blocks.
+ */
+export const ROTATION_BLOCK_STALL_THRESHOLD = 2;
+
+/**
  * Maximum time (in seconds) to wait for sidebar selection to match a candidate.
  * Example: scanner picks `trader` and waits until UI selection + details are ready.
  */

@@ -10,12 +10,14 @@ import {
 } from '../../../helpers/factories';
 
 // Mock sub-hooks since this is a composition hook
+const mockUseAutoRunStartOperations = jest.fn().mockReturnValue({
+  startAgentWithRetries: jest.fn().mockResolvedValue({ status: 'started' }),
+});
 jest.mock(
   '../../../../context/AutoRunProvider/hooks/useAutoRunStartOperations',
   () => ({
-    useAutoRunStartOperations: jest.fn().mockReturnValue({
-      startAgentWithRetries: jest.fn().mockResolvedValue({ status: 'started' }),
-    }),
+    useAutoRunStartOperations: (...args: unknown[]) =>
+      mockUseAutoRunStartOperations(...args),
   }),
 );
 jest.mock(
@@ -148,6 +150,77 @@ describe('useAutoRunOperations', () => {
           logMessage: params.logMessage,
         }),
       );
+    });
+
+    it('passes lastStartedAtRef and runningServiceConfigIdRef to the helper', async () => {
+      const params = makeHookParams();
+      const { result } = renderHook(() => useAutoRunOperations(params));
+
+      await act(async () => {
+        await result.current.refreshRewardsEligibility(
+          DEFAULT_SERVICE_CONFIG_ID,
+        );
+      });
+
+      expect(mockRefreshRewardsEligibilityHelper).toHaveBeenCalledWith(
+        expect.objectContaining({
+          lastStartedAtRef: expect.objectContaining({
+            current: expect.any(Object),
+          }),
+          runningServiceConfigIdRef: params.runningServiceConfigIdRef,
+        }),
+      );
+    });
+
+    it('wrapped onAutoRunInstanceStarted updates lastStartedAtRef AND forwards to caller callback', async () => {
+      // Fix depends on onAutoRunInstanceStarted being wrapped so lastStartedAtRef
+      // is populated on successful starts. Without this, the stale-true override
+      // always sees 0 and degenerates into "override everything to false".
+      const params = makeHookParams();
+      renderHook(() => useAutoRunOperations(params));
+
+      // Grab the wrapped callback that useAutoRunOperations passed to
+      // useAutoRunStartOperations — this is the version that updates the ref.
+      const startOperationsArgs =
+        mockUseAutoRunStartOperations.mock.calls.at(-1)?.[0];
+      const wrappedOnStarted = startOperationsArgs?.onAutoRunInstanceStarted as
+        | ((serviceConfigId: string) => void)
+        | undefined;
+      expect(typeof wrappedOnStarted).toBe('function');
+
+      const beforeMs = Date.now();
+      await act(async () => {
+        wrappedOnStarted?.(DEFAULT_SERVICE_CONFIG_ID);
+      });
+      const afterMs = Date.now();
+
+      // Caller's original callback still fires.
+      expect(params.onAutoRunInstanceStarted).toHaveBeenCalledWith(
+        DEFAULT_SERVICE_CONFIG_ID,
+      );
+
+      // Inspect the ref via a follow-up refreshRewardsEligibility call.
+      mockRefreshRewardsEligibilityHelper.mockClear();
+      const { result } = renderHook(() => useAutoRunOperations(params));
+      // Re-wire: trigger the wrapped callback on the fresh hook too so the ref
+      // has a value to inspect in the subsequent helper call.
+      const latestArgs = mockUseAutoRunStartOperations.mock.calls.at(-1)?.[0];
+      (latestArgs?.onAutoRunInstanceStarted as (id: string) => void)?.(
+        DEFAULT_SERVICE_CONFIG_ID,
+      );
+      await act(async () => {
+        await result.current.refreshRewardsEligibility(
+          DEFAULT_SERVICE_CONFIG_ID,
+        );
+      });
+
+      const helperArgs =
+        mockRefreshRewardsEligibilityHelper.mock.calls.at(-1)?.[0];
+      const writtenTs =
+        helperArgs?.lastStartedAtRef?.current?.[DEFAULT_SERVICE_CONFIG_ID];
+      expect(typeof writtenTs).toBe('number');
+      expect(writtenTs).toBeGreaterThanOrEqual(beforeMs);
+      expect(writtenTs).toBeLessThanOrEqual(afterMs + 200);
     });
 
     it('calls recordMetric on rewards fetch error via onRewardsFetchError callback', async () => {

@@ -417,6 +417,236 @@ describe('refreshRewardsEligibility', () => {
     const result = await refreshRewardsEligibility(params);
     expect(result).toBeUndefined();
   });
+
+  describe('RPC retry on transient failure (Change 3)', () => {
+    it('retries once and returns value when second attempt succeeds', async () => {
+      mockFetchRewards
+        .mockRejectedValueOnce(new Error('transient RPC'))
+        .mockResolvedValueOnce({
+          isEligibleForRewards: true,
+        } as Awaited<ReturnType<typeof fetchAgentStakingRewardsInfo>>);
+      const onRewardsFetchError = jest.fn();
+      const logMessage = jest.fn();
+      const params = makeParams({ onRewardsFetchError, logMessage });
+
+      const result = await refreshRewardsEligibility(params);
+
+      expect(result).toBe(true);
+      expect(mockFetchRewards).toHaveBeenCalledTimes(2);
+      // Success on retry clears the prior error — no metric or log fired.
+      expect(onRewardsFetchError).not.toHaveBeenCalled();
+      expect(logMessage).not.toHaveBeenCalledWith(
+        expect.stringContaining('rewards fetch error'),
+      );
+    });
+
+    it('fires onRewardsFetchError exactly once when both attempts fail', async () => {
+      mockFetchRewards.mockRejectedValue(new Error('persistent RPC'));
+      const onRewardsFetchError = jest.fn();
+      const params = makeParams({ onRewardsFetchError });
+
+      await refreshRewardsEligibility(params);
+
+      expect(mockFetchRewards).toHaveBeenCalledTimes(2);
+      expect(onRewardsFetchError).toHaveBeenCalledTimes(1);
+    });
+
+    it('bails without retry when sleepAwareDelay returns false', async () => {
+      mockFetchRewards.mockResolvedValueOnce(null);
+      mockSleepAwareDelay.mockResolvedValueOnce(false);
+      const onRewardsFetchError = jest.fn();
+      const params = makeParams({ onRewardsFetchError });
+
+      const result = await refreshRewardsEligibility(params);
+
+      expect(result).toBeUndefined();
+      // Only the first attempt ran; retry was skipped because wait was interrupted.
+      expect(mockFetchRewards).toHaveBeenCalledTimes(1);
+      expect(onRewardsFetchError).not.toHaveBeenCalled();
+    });
+
+    it('retries when first attempt returns null', async () => {
+      mockFetchRewards.mockResolvedValueOnce(null).mockResolvedValueOnce({
+        isEligibleForRewards: false,
+      } as Awaited<ReturnType<typeof fetchAgentStakingRewardsInfo>>);
+      const params = makeParams();
+
+      const result = await refreshRewardsEligibility(params);
+
+      expect(result).toBe(false);
+      expect(mockFetchRewards).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe('stale-true local-activity override (Change 4)', () => {
+    const now = Math.floor(Date.now() / 1000);
+    const tsCheckpointRecent = now - 50; // 50s ago
+
+    it('overrides stale true to false when idle agent predates last checkpoint', async () => {
+      mockFetchRewards.mockResolvedValue({
+        isEligibleForRewards: true,
+        livenessPeriod: 3600,
+        tsCheckpoint: tsCheckpointRecent,
+      } as unknown as Awaited<ReturnType<typeof fetchAgentStakingRewardsInfo>>);
+      const setRewardSnapshot = jest.fn();
+      const logMessage = jest.fn();
+      const params = makeParams({
+        // Idle alternate — not currently running.
+        runningServiceConfigIdRef: { current: 'sc-other' },
+        // Last started long before the checkpoint — stale-true case.
+        lastStartedAtRef: {
+          current: {
+            [DEFAULT_SERVICE_CONFIG_ID]: (tsCheckpointRecent - 100) * 1000,
+          },
+        },
+        setRewardSnapshot,
+        logMessage,
+      });
+
+      const result = await refreshRewardsEligibility(params);
+
+      expect(result).toBe(false);
+      expect(setRewardSnapshot).toHaveBeenCalledWith(
+        DEFAULT_SERVICE_CONFIG_ID,
+        false,
+      );
+      expect(logMessage).toHaveBeenCalledWith(
+        expect.stringContaining(
+          'stale isEligibleForRewards=true — last local start predates epoch checkpoint',
+        ),
+      );
+    });
+
+    it('does NOT override when the target is the currently-running agent', async () => {
+      // Running agent just earned legitimately — its true must pass through
+      // unchanged so the rotation trigger fires on the false→true transition.
+      mockFetchRewards.mockResolvedValue({
+        isEligibleForRewards: true,
+        livenessPeriod: 3600,
+        tsCheckpoint: tsCheckpointRecent,
+      } as unknown as Awaited<ReturnType<typeof fetchAgentStakingRewardsInfo>>);
+      const setRewardSnapshot = jest.fn();
+      const params = makeParams({
+        runningServiceConfigIdRef: { current: DEFAULT_SERVICE_CONFIG_ID },
+        lastStartedAtRef: {
+          // Started well before checkpoint (would otherwise match the override).
+          current: {
+            [DEFAULT_SERVICE_CONFIG_ID]: (tsCheckpointRecent - 100) * 1000,
+          },
+        },
+        setRewardSnapshot,
+      });
+
+      const result = await refreshRewardsEligibility(params);
+
+      expect(result).toBe(true);
+      expect(setRewardSnapshot).toHaveBeenCalledWith(
+        DEFAULT_SERVICE_CONFIG_ID,
+        true,
+      );
+    });
+
+    it('does NOT override when lastStartedAt is at or after tsCheckpoint', async () => {
+      mockFetchRewards.mockResolvedValue({
+        isEligibleForRewards: true,
+        livenessPeriod: 3600,
+        tsCheckpoint: tsCheckpointRecent,
+      } as unknown as Awaited<ReturnType<typeof fetchAgentStakingRewardsInfo>>);
+      const params = makeParams({
+        runningServiceConfigIdRef: { current: 'sc-other' },
+        lastStartedAtRef: {
+          // Started AFTER last checkpoint — its true reflects current-epoch activity.
+          current: {
+            [DEFAULT_SERVICE_CONFIG_ID]: (tsCheckpointRecent + 10) * 1000,
+          },
+        },
+      });
+
+      const result = await refreshRewardsEligibility(params);
+      expect(result).toBe(true);
+    });
+
+    it('does NOT override when refs are not provided (backward compat)', async () => {
+      // Legacy callers that don't plumb the new refs still get the old behavior.
+      mockFetchRewards.mockResolvedValue({
+        isEligibleForRewards: true,
+        livenessPeriod: 3600,
+        tsCheckpoint: tsCheckpointRecent,
+      } as unknown as Awaited<ReturnType<typeof fetchAgentStakingRewardsInfo>>);
+      const params = makeParams();
+
+      const result = await refreshRewardsEligibility(params);
+      expect(result).toBe(true);
+    });
+
+    it('boundary: tsCheckpoint=0 does NOT trigger the stale-true override path', async () => {
+      // tsCheckpointMs = 0; any `lastStartedAt >= 0` so `lastStartedAt < 0` is
+      // never true → override never applied. (Another safeguard — epoch-expired
+      // — may still set eligible=false; this test specifically asserts that the
+      // stale-true override *code path* did not fire.)
+      mockFetchRewards.mockResolvedValue({
+        isEligibleForRewards: true,
+        livenessPeriod: 3600,
+        tsCheckpoint: 0,
+      } as unknown as Awaited<ReturnType<typeof fetchAgentStakingRewardsInfo>>);
+      const logMessage = jest.fn();
+      const params = makeParams({
+        runningServiceConfigIdRef: { current: 'sc-other' },
+        lastStartedAtRef: {
+          current: { [DEFAULT_SERVICE_CONFIG_ID]: Date.now() },
+        },
+        logMessage,
+      });
+
+      await refreshRewardsEligibility(params);
+      expect(logMessage).not.toHaveBeenCalledWith(
+        expect.stringContaining(
+          'stale isEligibleForRewards=true — last local start predates epoch checkpoint',
+        ),
+      );
+    });
+
+    it('boundary: lastStartedAt=0 AND tsCheckpoint=0 does NOT trigger the override (0 < 0 is false)', async () => {
+      mockFetchRewards.mockResolvedValue({
+        isEligibleForRewards: true,
+        livenessPeriod: 3600,
+        tsCheckpoint: 0,
+      } as unknown as Awaited<ReturnType<typeof fetchAgentStakingRewardsInfo>>);
+      const logMessage = jest.fn();
+      const params = makeParams({
+        runningServiceConfigIdRef: { current: 'sc-other' },
+        lastStartedAtRef: { current: {} },
+        logMessage,
+      });
+
+      await refreshRewardsEligibility(params);
+      expect(logMessage).not.toHaveBeenCalledWith(
+        expect.stringContaining(
+          'stale isEligibleForRewards=true — last local start predates epoch checkpoint',
+        ),
+      );
+    });
+
+    it('applies override regardless of epoch-expiry path (both safeguards may fire)', async () => {
+      // Epoch expired safeguard fires first (sets eligible=false). Local-activity
+      // override is a no-op here because eligible is already false.
+      const ancient = now - 10000;
+      mockFetchRewards.mockResolvedValue({
+        isEligibleForRewards: true,
+        livenessPeriod: 100,
+        tsCheckpoint: ancient,
+      } as unknown as Awaited<ReturnType<typeof fetchAgentStakingRewardsInfo>>);
+      const params = makeParams({
+        runningServiceConfigIdRef: { current: 'sc-other' },
+        lastStartedAtRef: {
+          current: { [DEFAULT_SERVICE_CONFIG_ID]: (ancient - 100) * 1000 },
+        },
+      });
+
+      const result = await refreshRewardsEligibility(params);
+      expect(result).toBe(false);
+    });
+  });
 });
 
 describe('waitForEligibilityReadyHelper', () => {

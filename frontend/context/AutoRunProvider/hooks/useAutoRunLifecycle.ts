@@ -1,4 +1,10 @@
-import { MutableRefObject, useCallback, useEffect, useRef } from 'react';
+import {
+  MutableRefObject,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 
 import { AgentType } from '@/constants';
 import { sleepAwareDelay } from '@/utils/delay';
@@ -9,6 +15,7 @@ import {
   AutoRunLifecycleMetric,
   COOLDOWN_SECONDS,
   REWARDS_POLL_SECONDS,
+  ROTATION_BLOCK_STALL_THRESHOLD,
   RUNNING_AGENT_MAX_RUNTIME_SECONDS,
   RUNNING_AGENT_WATCHDOG_CHECK_SECONDS,
   SCAN_BLOCKED_DELAY_SECONDS,
@@ -87,11 +94,17 @@ export const useAutoRunLifecycle = ({
   const runningSinceRef = useRef<number | null>(null);
   // Sequence for correlation IDs across rotation/watchdog cycles.
   const rotationCycleSeqRef = useRef(0);
+  // Stall tracking: counts consecutive rewards-triggered rotation blocks where
+  // every alternate was confirmed earned. Surfaces as `isRotationStalled` for the UI.
+  const consecutiveRotationBlocksRef = useRef(0);
+  const [isRotationStalled, setIsRotationStalled] = useState(false);
 
-  // Clear stop-timeout backoff state whenever auto-run is disabled.
+  // Clear stop-timeout backoff state and stall indicator whenever auto-run is disabled.
   useEffect(() => {
     if (!enabled) {
       stopRetryBackoffUntilRef.current = {};
+      consecutiveRotationBlocksRef.current = 0;
+      setIsRotationStalled(false);
     }
   }, [enabled, stopRetryBackoffUntilRef]);
 
@@ -130,7 +143,10 @@ export const useAutoRunLifecycle = ({
         `cycle=${cycleId} trigger=${trigger} phase=rotate_begin current=${currentServiceConfigId} force=${Boolean(options?.force)}`,
       );
       // Rotation policy:
-      // 1) If all other instances are already earned/unknown -> keep current running.
+      // 1) Only block rotation when every alternate is CONFIRMED earned (true).
+      //    Unknown (undefined) is forwarded to scanAndStartNext, whose scanner
+      //    path treats unknown leniently. Blocking on unknown would deadlock
+      //    when an alternate's rewards fetch fails transiently.
       // 2) Otherwise stop current, cool down, and scan from next.
       const otherInstances = orderedIncludedInstances.filter(
         (id) => id !== currentServiceConfigId,
@@ -146,26 +162,45 @@ export const useAutoRunLifecycle = ({
       const rewardStates = otherInstances.map(
         (id, index) => refreshed[index] ?? getRewardSnapshot(id),
       );
+      const rewardStatesLabel = otherInstances
+        .map(
+          (id, index) =>
+            `${id}=${rewardStates[index] === undefined ? 'unknown' : String(rewardStates[index])}`,
+        )
+        .join(', ');
 
-      // If all other instances are either earned (true) or unknown (undefined),
-      // keep the current instance running and retry rotation after a delay.
-      const allEarnedOrUnknown = rewardStates.every((state) => state !== false);
-      if (allEarnedOrUnknown) {
+      const allConfirmedEarned = rewardStates.every((state) => state === true);
+      if (allConfirmedEarned) {
+        // Track consecutive blocks for the stall indicator. Non-force path only —
+        // watchdog force cycles don't count because they fire on runtime, not on rewards.
+        if (!options?.force) {
+          consecutiveRotationBlocksRef.current += 1;
+          if (
+            consecutiveRotationBlocksRef.current >=
+            ROTATION_BLOCK_STALL_THRESHOLD
+          ) {
+            setIsRotationStalled(true);
+          }
+        }
         if (options?.force) {
           // Watchdog force mode should not stop the current instance when there is
           // no known alternative candidate. Doing so would create idle time.
           logVerbose(
-            `cycle=${cycleId} trigger=${trigger} phase=no_alternative current=${currentServiceConfigId} rescan=${SCAN_BLOCKED_DELAY_SECONDS}s`,
+            `cycle=${cycleId} trigger=${trigger} phase=no_alternative current=${currentServiceConfigId} rewards=[${rewardStatesLabel}] rescan=${SCAN_BLOCKED_DELAY_SECONDS}s`,
           );
           scheduleNextScan(SCAN_BLOCKED_DELAY_SECONDS);
           return;
         }
         logVerbose(
-          `all other instances earned or unknown, keeping ${currentServiceConfigId} running, rescan in ${SCAN_ELIGIBLE_DELAY_SECONDS}s`,
+          `all other instances earned, keeping ${currentServiceConfigId} running, rewards=[${rewardStatesLabel}], rescan in ${SCAN_BLOCKED_DELAY_SECONDS}s`,
         );
-        scheduleNextScan(SCAN_ELIGIBLE_DELAY_SECONDS);
+        scheduleNextScan(SCAN_BLOCKED_DELAY_SECONDS);
         return;
       }
+
+      // Rotation is proceeding — reset the stall counter and indicator.
+      consecutiveRotationBlocksRef.current = 0;
+      setIsRotationStalled(false);
 
       if (!enabledRef.current) return;
 
@@ -450,5 +485,6 @@ export const useAutoRunLifecycle = ({
 
   return {
     stopCurrentRunningAgent,
+    isRotationStalled,
   };
 };

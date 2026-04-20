@@ -36,6 +36,7 @@ const AutoRunContext = createContext<AutoRunContextType>({
   excludedInstances: [],
   isToggling: false,
   eligibilityByInstance: {},
+  isRotationStalled: false,
   setEnabled: () => {},
   includeInstance: () => {},
   excludeInstance: () => {},
@@ -114,21 +115,22 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
     useSelectedEligibility({ canCreateSafeForChain });
 
   // Auto-run controller runs the orchestration loop.
-  const { stopRunningAgent, runningAgentType } = useAutoRunController({
-    enabled,
-    orderedIncludedInstances,
-    configuredAgents,
-    selectedAgentType,
-    selectedServiceConfigId: selectedService?.service_config_id ?? null,
-    isSelectedAgentDetailsLoading,
-    getSelectedEligibility,
-    canCreateSafeForChain,
-    createSafeIfNeeded,
-    showNotification,
-    onAutoRunStartStateChange: (isStarting) => {
-      setIsStarting(isStarting);
-    },
-  });
+  const { stopRunningAgent, runningAgentType, isRotationStalled } =
+    useAutoRunController({
+      enabled,
+      orderedIncludedInstances,
+      configuredAgents,
+      selectedAgentType,
+      selectedServiceConfigId: selectedService?.service_config_id ?? null,
+      isSelectedAgentDetailsLoading,
+      getSelectedEligibility,
+      canCreateSafeForChain,
+      createSafeIfNeeded,
+      showNotification,
+      onAutoRunStartStateChange: (isStarting) => {
+        setIsStarting(isStarting);
+      },
+    });
 
   // Local state to track whether we're in the middle of a start/stop operation,
   // which is used to disable UI controls and prevent concurrent operations.
@@ -377,6 +379,7 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
       excludedInstances,
       isToggling,
       eligibilityByInstance,
+      isRotationStalled,
       setEnabled,
       includeInstance,
       excludeInstance,
@@ -388,6 +391,7 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
       excludeInstance,
       includeInstance,
       includedInstancesSorted,
+      isRotationStalled,
       isToggling,
       setEnabled,
     ],

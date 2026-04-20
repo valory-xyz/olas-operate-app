@@ -15,6 +15,7 @@ import {
   ELIGIBILITY_LOADING_REASON,
   ELIGIBILITY_REASON,
   REWARDS_POLL_SECONDS,
+  REWARDS_RETRY_DELAY_SECONDS,
 } from '../constants';
 import { AgentMeta } from '../types';
 
@@ -64,17 +65,33 @@ export const formatEligibilityReason = (eligibility: {
 
 /**
  * Fetch staking reward eligibility for an instance, throttled per serviceConfigId.
- *  * @returns
+ *
+ * Retries once on transient RPC failure (null response) before marking the
+ * snapshot as unknown. `onRewardsFetchError` fires only on the final failure
+ * so the health-summary metric doesn't double-count a single transient blip.
+ *
+ * When `lastStartedAtRef` and `runningServiceConfigIdRef` are provided and the
+ * target is NOT the currently-running agent, a stale on-chain
+ * `isEligibleForRewards=true` is overridden to `false` if the service has not
+ * been started locally since the last on-chain checkpoint. This addresses the
+ * deadlock where an idle alternate keeps reporting `true` indefinitely because
+ * its nonce delta from a prior active run persists on-chain. The running agent
+ * is excluded from this override because its signal is what triggers rotation.
+ *
+ * @returns
  * - true      – agent has earned its staking rewards for the current epoch
  * - false     – agent has not yet earned rewards
  * - undefined  – instance not found in configuredAgents, missing required staking
- *               data (multisig / serviceNftTokenId / stakingProgramId), or
- *               the API call failed
+ *               data (multisig / serviceNftTokenId / stakingProgramId), the API
+ *               call failed on both attempts, or the wait between retries was
+ *               interrupted by disable / sleep-wake drift
  */
 export const refreshRewardsEligibility = async ({
   serviceConfigId,
   configuredAgents,
   lastRewardsFetchRef,
+  lastStartedAtRef,
+  runningServiceConfigIdRef,
   getRewardSnapshot,
   setRewardSnapshot,
   logMessage,
@@ -83,6 +100,8 @@ export const refreshRewardsEligibility = async ({
   serviceConfigId: string;
   configuredAgents: AgentMeta[];
   lastRewardsFetchRef: MutableRefObject<Partial<Record<string, number>>>;
+  lastStartedAtRef?: MutableRefObject<Partial<Record<string, number>>>;
+  runningServiceConfigIdRef?: MutableRefObject<string | null>;
   getRewardSnapshot: (serviceConfigId: string) => boolean | undefined;
   setRewardSnapshot: (
     serviceConfigId: string,
@@ -110,34 +129,86 @@ export const refreshRewardsEligibility = async ({
     return;
   }
 
+  // Retry once on transient failure. `fetchAgentStakingRewardsInfo` throws on
+  // RPC errors and returns null when data is missing; both warrant a retry.
+  // Metric + log fire only on the final failure so a single transient blip
+  // doesn't double-count.
+  let response: StakingRewardsInfo | null = null;
+  let lastError: unknown;
   try {
-    const response = await fetchAgentStakingRewardsInfo({
+    response = await fetchAgentStakingRewardsInfo({
       chainId: meta.chainId,
       multisig: meta.multisig,
       serviceNftTokenId: meta.serviceNftTokenId,
       stakingProgramId: meta.stakingProgramId,
       agentConfig: meta.agentConfig,
     });
-    if (!response) return;
-
-    const epochExpired = isStakingEpochExpired(response);
-    if (epochExpired && response.isEligibleForRewards) {
-      logMessage(
-        `${serviceConfigId}: epoch expired, stale isEligibleForRewards=true overridden to false so agent runs and triggers on-chain checkpoint`,
-      );
-    }
-    // isEligibleForRewards=true → agent already earned this epoch → auto-run SKIPS it.
-    // isEligibleForRewards=false → agent hasn't earned yet → auto-run STARTS it.
-    // Epoch expired but checkpoint not yet called: true is stale, override to false so
-    // auto-run starts the agent and triggers the on-chain checkpoint for the new epoch.
-    const eligible = epochExpired ? false : response.isEligibleForRewards;
-    if (typeof eligible === 'boolean') {
-      setRewardSnapshot(serviceConfigId, eligible);
-      return eligible;
-    }
   } catch (error) {
-    onRewardsFetchError?.();
-    logMessage(`rewards fetch error: ${serviceConfigId}: ${error}`);
+    lastError = error;
+  }
+  if (!response) {
+    const waitOk = await sleepAwareDelay(REWARDS_RETRY_DELAY_SECONDS);
+    // Bail if auto-run was disabled mid-wait — avoids firing a stray retry
+    // after the user turned AutoRun off.
+    if (!waitOk) return;
+    try {
+      response = await fetchAgentStakingRewardsInfo({
+        chainId: meta.chainId,
+        multisig: meta.multisig,
+        serviceNftTokenId: meta.serviceNftTokenId,
+        stakingProgramId: meta.stakingProgramId,
+        agentConfig: meta.agentConfig,
+      });
+      // Success on retry — clear the prior error so we don't log it.
+      lastError = undefined;
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  if (!response) {
+    if (lastError !== undefined) {
+      onRewardsFetchError?.();
+      logMessage(`rewards fetch error: ${serviceConfigId}: ${lastError}`);
+    }
+    return;
+  }
+
+  const epochExpired = isStakingEpochExpired(response);
+  if (epochExpired && response.isEligibleForRewards) {
+    logMessage(
+      `${serviceConfigId}: epoch expired, stale isEligibleForRewards=true overridden to false so agent runs and triggers on-chain checkpoint`,
+    );
+  }
+  // isEligibleForRewards=true → agent already earned this epoch → auto-run SKIPS it.
+  // isEligibleForRewards=false → agent hasn't earned yet → auto-run STARTS it.
+  // Epoch expired but checkpoint not yet called: true is stale, override to false so
+  // auto-run starts the agent and triggers the on-chain checkpoint for the new epoch.
+  let eligible = epochExpired ? false : response.isEligibleForRewards;
+
+  // Stale-true override: when an idle alternate reports `true` but has not run
+  // locally since the staking pool's last checkpoint, its `true` is residue
+  // from a prior active run — not a current-epoch earn. Override to `false` so
+  // rotation can proceed. Skipped for the currently-running agent because its
+  // signal is what triggers rotation (`false → true` transition).
+  if (
+    eligible === true &&
+    lastStartedAtRef &&
+    runningServiceConfigIdRef &&
+    runningServiceConfigIdRef.current !== serviceConfigId
+  ) {
+    const lastStartedAt = lastStartedAtRef.current[serviceConfigId] ?? 0;
+    const tsCheckpointMs = (response.tsCheckpoint ?? 0) * 1000;
+    if (lastStartedAt < tsCheckpointMs) {
+      logMessage(
+        `${serviceConfigId}: stale isEligibleForRewards=true — last local start predates epoch checkpoint, overriding to false`,
+      );
+      eligible = false;
+    }
+  }
+
+  if (typeof eligible === 'boolean') {
+    setRewardSnapshot(serviceConfigId, eligible);
+    return eligible;
   }
 };
 
