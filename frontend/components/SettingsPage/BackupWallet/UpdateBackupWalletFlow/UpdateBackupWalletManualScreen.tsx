@@ -78,6 +78,7 @@ export const UpdateBackupWalletManualScreen = () => {
               name="backup-signer"
               label="Enter Backup Wallet Address"
               rules={BACKUP_WALLET_FIELD_RULES}
+              required
             >
               <Input size="large" placeholder="0x..." />
             </Form.Item>

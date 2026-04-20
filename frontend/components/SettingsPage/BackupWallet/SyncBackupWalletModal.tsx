@@ -68,7 +68,13 @@ export const SyncBackupWalletModal = ({
         title="Backup Wallet Synced!"
         description="Your backup wallet has been successfully synced."
         action={
-          <Button type="primary" block onClick={onClose} className="mt-32">
+          <Button
+            type="primary"
+            block
+            size="large"
+            onClick={onClose}
+            className="mt-32"
+          >
             Done
           </Button>
         }
