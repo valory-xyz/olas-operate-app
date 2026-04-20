@@ -1,10 +1,4 @@
-import {
-  MutableRefObject,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
+import { MutableRefObject, useCallback, useEffect, useRef } from 'react';
 
 import { AgentType } from '@/constants';
 import { sleepAwareDelay } from '@/utils/delay';
@@ -15,7 +9,6 @@ import {
   AutoRunLifecycleMetric,
   COOLDOWN_SECONDS,
   REWARDS_POLL_SECONDS,
-  ROTATION_BLOCK_STALL_THRESHOLD,
   RUNNING_AGENT_MAX_RUNTIME_SECONDS,
   RUNNING_AGENT_WATCHDOG_CHECK_SECONDS,
   SCAN_BLOCKED_DELAY_SECONDS,
@@ -94,17 +87,11 @@ export const useAutoRunLifecycle = ({
   const runningSinceRef = useRef<number | null>(null);
   // Sequence for correlation IDs across rotation/watchdog cycles.
   const rotationCycleSeqRef = useRef(0);
-  // Stall tracking: counts consecutive rewards-triggered rotation blocks where
-  // every alternate was confirmed earned. Surfaces as `isRotationStalled` for the UI.
-  const consecutiveRotationBlocksRef = useRef(0);
-  const [isRotationStalled, setIsRotationStalled] = useState(false);
 
-  // Clear stop-timeout backoff state and stall indicator whenever auto-run is disabled.
+  // Clear stop-timeout backoff state whenever auto-run is disabled.
   useEffect(() => {
     if (!enabled) {
       stopRetryBackoffUntilRef.current = {};
-      consecutiveRotationBlocksRef.current = 0;
-      setIsRotationStalled(false);
     }
   }, [enabled, stopRetryBackoffUntilRef]);
 
@@ -171,17 +158,6 @@ export const useAutoRunLifecycle = ({
 
       const allConfirmedEarned = rewardStates.every((state) => state === true);
       if (allConfirmedEarned) {
-        // Track consecutive blocks for the stall indicator. Non-force path only —
-        // watchdog force cycles don't count because they fire on runtime, not on rewards.
-        if (!options?.force) {
-          consecutiveRotationBlocksRef.current += 1;
-          if (
-            consecutiveRotationBlocksRef.current >=
-            ROTATION_BLOCK_STALL_THRESHOLD
-          ) {
-            setIsRotationStalled(true);
-          }
-        }
         if (options?.force) {
           // Watchdog force mode should not stop the current instance when there is
           // no known alternative candidate. Doing so would create idle time.
@@ -197,10 +173,6 @@ export const useAutoRunLifecycle = ({
         scheduleNextScan(SCAN_BLOCKED_DELAY_SECONDS);
         return;
       }
-
-      // Rotation is proceeding — reset the stall counter and indicator.
-      consecutiveRotationBlocksRef.current = 0;
-      setIsRotationStalled(false);
 
       if (!enabledRef.current) return;
 
@@ -485,6 +457,5 @@ export const useAutoRunLifecycle = ({
 
   return {
     stopCurrentRunningAgent,
-    isRotationStalled,
   };
 };

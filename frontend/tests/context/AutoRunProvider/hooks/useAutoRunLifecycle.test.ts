@@ -5,7 +5,6 @@ import { AgentMap, AgentType } from '../../../../constants/agent';
 import {
   AUTO_RUN_HEALTH_METRIC,
   COOLDOWN_SECONDS,
-  ROTATION_BLOCK_STALL_THRESHOLD,
   RUNNING_AGENT_MAX_RUNTIME_SECONDS,
   RUNNING_AGENT_WATCHDOG_CHECK_SECONDS,
   SCAN_BLOCKED_DELAY_SECONDS,
@@ -287,94 +286,6 @@ describe('useAutoRunLifecycle', () => {
       expect(params.scheduleNextScan).toHaveBeenCalledWith(
         SCAN_BLOCKED_DELAY_SECONDS,
       );
-    });
-
-    it('surfaces isRotationStalled after consecutive rewards-block cycles', async () => {
-      const makeStallParams = () => {
-        const lastRewardsEligibilityRef = {
-          current: {
-            [scTrader]: false,
-          } as Partial<Record<string, boolean | undefined>>,
-        };
-        return makeHookParams({
-          enabled: true,
-          enabledRef: { current: true },
-          runningAgentType: AgentMap.PredictTrader,
-          runningServiceConfigId: scTrader,
-          runningAgentTypeRef: { current: AgentMap.PredictTrader },
-          runningServiceConfigIdRef: { current: scTrader },
-          lastRewardsEligibilityRef,
-          refreshRewardsEligibility: jest.fn().mockResolvedValue(true),
-          getRewardSnapshot: jest.fn().mockReturnValue(true),
-        });
-      };
-
-      const { result, rerender } = renderHook(
-        (props: ReturnType<typeof makeStallParams>) =>
-          useAutoRunLifecycle(props),
-        { initialProps: makeStallParams() },
-      );
-
-      // Flush first rotation cycle (consecutive block #1).
-      await act(async () => {
-        await new Promise((r) => setTimeout(r, 0));
-      });
-
-      // First block below threshold — no stall yet (threshold is 2).
-      expect(result.current.isRotationStalled).toBe(false);
-
-      // Second cycle — re-render with a fresh running instance reference to
-      // trigger the rewards rotation effect again; runner stays the same.
-      rerender(makeStallParams());
-      await act(async () => {
-        await new Promise((r) => setTimeout(r, 0));
-      });
-
-      // After ROTATION_BLOCK_STALL_THRESHOLD consecutive blocks (2), stall fires.
-      expect(ROTATION_BLOCK_STALL_THRESHOLD).toBeGreaterThanOrEqual(2);
-      expect(result.current.isRotationStalled).toBe(true);
-    });
-
-    it('resets isRotationStalled when auto-run is disabled', async () => {
-      const makeParams = (enabled: boolean) => {
-        const lastRewardsEligibilityRef = {
-          current: {
-            [scTrader]: false,
-          } as Partial<Record<string, boolean | undefined>>,
-        };
-        return makeHookParams({
-          enabled,
-          enabledRef: { current: enabled },
-          runningAgentType: AgentMap.PredictTrader,
-          runningServiceConfigId: scTrader,
-          runningAgentTypeRef: { current: AgentMap.PredictTrader },
-          runningServiceConfigIdRef: { current: scTrader },
-          lastRewardsEligibilityRef,
-          refreshRewardsEligibility: jest.fn().mockResolvedValue(true),
-          getRewardSnapshot: jest.fn().mockReturnValue(true),
-        });
-      };
-
-      const { result, rerender } = renderHook(
-        (props: ReturnType<typeof makeParams>) => useAutoRunLifecycle(props),
-        { initialProps: makeParams(true) },
-      );
-
-      await act(async () => {
-        await new Promise((r) => setTimeout(r, 0));
-      });
-      rerender(makeParams(true));
-      await act(async () => {
-        await new Promise((r) => setTimeout(r, 0));
-      });
-      expect(result.current.isRotationStalled).toBe(true);
-
-      // Disable — the `!enabled` effect should clear the stall indicator.
-      rerender(makeParams(false));
-      await act(async () => {
-        await new Promise((r) => setTimeout(r, 0));
-      });
-      expect(result.current.isRotationStalled).toBe(false);
     });
 
     it('scans after successful stop and cooldown', async () => {

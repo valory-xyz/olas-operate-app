@@ -53,12 +53,6 @@ export type AutoRunContextType = {
    *  }
    */
   eligibilityByInstance: Partial<Record<string, Eligibility>>;
-  /**
-   * True when AutoRun has been blocked on rewards rotation for several
-   * consecutive cycles because every alternate appears earned. Surfaces a
-   * UI warning so the user knows rotation is stuck.
-   */
-  isRotationStalled: boolean;
   setEnabled: (enabled: boolean) => void;
   includeInstance: (serviceConfigId: string) => void;
   excludeInstance: (serviceConfigId: string) => void;

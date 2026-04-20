@@ -257,7 +257,7 @@ export const useAutoRunController = ({
     logMessage,
   });
 
-  const { stopCurrentRunningAgent, isRotationStalled } = useAutoRunLifecycle({
+  const { stopCurrentRunningAgent } = useAutoRunLifecycle({
     enabled,
     runningAgentType,
     runningServiceConfigId,
@@ -284,6 +284,5 @@ export const useAutoRunController = ({
   return {
     stopRunningAgent: stopCurrentRunningAgent,
     runningAgentType,
-    isRotationStalled,
   };
 };
