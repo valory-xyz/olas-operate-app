@@ -13,7 +13,7 @@ const { Title, Text } = Typography;
 export const UpdateBackupWalletMethodScreen = () => {
   const { goto } = useSettings();
   const { backupOwnerStatus } = useBackupOwnerStatus();
-  const { setNewAddress, sameAddressError, setSameAddressError } =
+  const { setNewAddress, sameAddressError, setSameAddressError, resetFlow } =
     useUpdateBackupWallet();
 
   const currentAddress = backupOwnerStatus?.canonical_backup_owner ?? null;
@@ -35,7 +35,12 @@ export const UpdateBackupWalletMethodScreen = () => {
     <Flex style={cardStyles} vertical gap={32}>
       <Card styles={{ body: { padding: 24 } }}>
         <Flex vertical gap={16}>
-          <BackButton onPrev={() => goto(SettingsScreenMap.Main)} />
+          <BackButton
+            onPrev={() => {
+              resetFlow();
+              goto(SettingsScreenMap.Main);
+            }}
+          />
           <Title level={4} className="m-0">
             Update Backup Wallet
           </Title>

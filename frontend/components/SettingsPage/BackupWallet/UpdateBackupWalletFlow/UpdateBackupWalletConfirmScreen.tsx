@@ -70,14 +70,17 @@ export const UpdateBackupWalletConfirmScreen = () => {
     goto(SettingsScreenMap.Main);
   };
 
+  const handleCancelOrBack = () => {
+    resetFlow();
+    goto(SettingsScreenMap.UpdateBackupWalletMethod);
+  };
+
   return (
     <>
       <Flex style={cardStyles} vertical gap={32}>
         <Card styles={{ body: { padding: 24 } }}>
           <Flex vertical gap={16}>
-            <BackButton
-              onPrev={() => goto(SettingsScreenMap.UpdateBackupWalletMethod)}
-            />
+            <BackButton onPrev={handleCancelOrBack} />
             <Title level={4} className="m-0">
               Confirm Backup Wallet Update
             </Title>
@@ -112,7 +115,7 @@ export const UpdateBackupWalletConfirmScreen = () => {
             <Flex gap={8} justify="flex-end">
               <Button
                 disabled={resultStatus === 'in_progress'}
-                onClick={() => goto(SettingsScreenMap.UpdateBackupWalletMethod)}
+                onClick={handleCancelOrBack}
               >
                 Cancel
               </Button>
