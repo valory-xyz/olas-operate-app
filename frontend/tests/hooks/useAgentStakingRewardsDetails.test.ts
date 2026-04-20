@@ -202,31 +202,16 @@ describe('createStakingRewardsQuery', () => {
           stakingProgramId: DEFAULT_STAKING_PROGRAM_ID,
           multisig: MOCK_MULTISIG_ADDRESS,
           agentConfig: traderConfig,
-          onError: expect.any(Function),
         }),
       );
     });
 
-    it('onError callback logs to console.error', async () => {
-      mockFetchRewards.mockImplementation(
-        ({ onError }: { onError: (e: Error) => void }) => {
-          onError(new Error('test-error'));
-          return null;
-        },
-      );
-
-      const consoleSpy = jest
-        .spyOn(console, 'error')
-        .mockImplementation(() => {});
+    it('propagates throw from fetchAgentStakingRewardsInfo to the caller', async () => {
+      const error = new Error('RPC timeout');
+      mockFetchRewards.mockRejectedValue(error);
 
       const { queryFn } = createStakingRewardsQuery(baseParams);
-      await queryFn();
-
-      expect(consoleSpy).toHaveBeenCalledWith(
-        'Error getting staking rewards info',
-        expect.any(Error),
-      );
-      consoleSpy.mockRestore();
+      await expect(queryFn()).rejects.toThrow('RPC timeout');
     });
   });
 });

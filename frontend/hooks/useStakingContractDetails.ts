@@ -34,7 +34,7 @@ export const useActiveStakingContractDetails = () => {
   const isServiceStaked =
     !!serviceStakingStartTime && serviceStakingState === StakingState.Staked;
 
-  const isRewardsAvailable = availableRewards ?? 0 > 0;
+  const isRewardsAvailable = (availableRewards ?? 0) > 0;
 
   const hasEnoughServiceSlots =
     isNil(serviceIds) || isNil(maxNumServices)
@@ -99,7 +99,7 @@ export const useStakingContractDetails = (
   const { serviceIds, maxNumServices, availableRewards } =
     stakingContractInfo ?? {};
 
-  const isRewardsAvailable = availableRewards ?? 0 > 0;
+  const isRewardsAvailable = (availableRewards ?? 0) > 0;
 
   const hasEnoughServiceSlots =
     !isNil(serviceIds) &&
