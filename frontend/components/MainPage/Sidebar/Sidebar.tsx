@@ -50,6 +50,7 @@ import { UpdateAvailableModal } from '../UpdateAvailableAlert/UpdateAvailableMod
 import { AgentTreeMenu } from './AgentTreeMenu';
 import { ArchiveAgentModal } from './ArchiveAgentModal';
 import { AutoRunControl } from './AutoRunControl';
+import { BackupWalletAlert } from './BackupWalletAlert';
 import { useAutoOpenUpdateModal } from './hooks/useAutoOpenUpdateModal';
 import { useListFade } from './hooks/useListFade';
 import { SidebarAgentGroup } from './types';
@@ -335,6 +336,7 @@ export const Sidebar = () => {
 
           <div className="p-16">
             <BackupSeedPhraseAlert />
+            <BackupWalletAlert />
             <UpdateAvailableAlert onOpen={openUpdateModal} />
             <UpdateAvailableModal
               isOpen={isUpdateModalOpen}
