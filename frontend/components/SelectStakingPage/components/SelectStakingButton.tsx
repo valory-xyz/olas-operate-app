@@ -5,6 +5,7 @@ import { useBoolean } from 'usehooks-ts';
 import { SETUP_SCREEN, SetupScreen, StakingProgramId } from '@/constants';
 import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
 import {
+  useIsInitiallyFunded,
   useMasterBalances,
   useServices,
   useSetup,
@@ -69,6 +70,7 @@ export const SelectStakingButton = ({
   } = useServices();
   const { getMasterSafeBalancesOf, getMasterEoaBalancesOf } =
     useMasterBalances();
+  const { markServiceAsNotInitiallyFunded } = useIsInitiallyFunded();
 
   const walletBalances = useMemo(() => {
     const chainId = selectedAgentConfig.evmHomeChainId;
@@ -132,6 +134,7 @@ export const SelectStakingButton = ({
             serviceTemplate,
           );
           newServiceConfigId = newService.service_config_id;
+          markServiceAsNotInitiallyFunded(newServiceConfigId);
         } catch (error) {
           console.error(error);
           message.error(
