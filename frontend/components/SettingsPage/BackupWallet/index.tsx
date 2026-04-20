@@ -9,18 +9,22 @@ import {
   IconContainer,
 } from '@/components/ui';
 import { COLOR } from '@/constants';
-import { SettingsScreenMap } from '@/constants/screen';
-import { useBackupOwnerStatus, useSettings } from '@/hooks';
+import { useBackupOwnerStatus } from '@/hooks';
 import { Address } from '@/types/Address';
 
+import { AddBackupWalletPasswordModal } from './AddBackupWalletFlow';
 import { SyncBackupWalletModal } from './SyncBackupWalletModal';
 import { UpdateBackupWalletPasswordModal } from './UpdateBackupWalletFlow';
 
 const { Text } = Typography;
 
 export const BackupWalletSection = () => {
-  const { goto } = useSettings();
   const { backupOwnerStatus, isError, refetch } = useBackupOwnerStatus();
+  const {
+    value: isAddPasswordOpen,
+    setTrue: openAddPassword,
+    setFalse: closeAddPassword,
+  } = useBoolean(false);
   const {
     value: isUpdatePasswordOpen,
     setTrue: openUpdatePassword,
@@ -64,42 +68,49 @@ export const BackupWalletSection = () => {
   // State A: no backup wallet
   if (canonicalAddress === null) {
     return (
-      <CardSection $padding="24px" $borderBottom vertical gap={12}>
-        <Flex gap={16}>
-          <IconContainer>
-            <TbWallet size={20} color={COLOR.TEXT_NEUTRAL_TERTIARY} />
-          </IconContainer>
-          <Flex vertical gap={6}>
-            <div className="my-6">
-              <Text strong>Backup Wallet</Text>
-            </div>
-            <Text style={{ color: COLOR.TEXT_NEUTRAL_TERTIARY }}>
-              No backup wallet added.
-            </Text>
-          </Flex>
-        </Flex>
-        <Alert
-          type="warning"
-          showIcon
-          message={
-            <Flex vertical gap={4}>
-              <Text className="text-sm font-weight-600">
-                Your funds are at risk!
+      <>
+        <CardSection $padding="24px" $borderBottom vertical gap={12}>
+          <Flex gap={16}>
+            <IconContainer>
+              <TbWallet size={20} color={COLOR.TEXT_NEUTRAL_TERTIARY} />
+            </IconContainer>
+            <Flex vertical gap={6}>
+              <div className="my-6">
+                <Text strong>Backup Wallet</Text>
+              </div>
+              <Text style={{ color: COLOR.TEXT_NEUTRAL_TERTIARY }}>
+                No backup wallet added.
               </Text>
-              <Text className="text-sm">
-                Add a backup wallet to allow you to retrieve funds if you lose
-                your password and seed phrase.
-              </Text>
-              <Button
-                className="w-fit text-sm mt-6"
-                onClick={() => goto(SettingsScreenMap.AddBackupWalletMethod)}
-              >
-                Add Backup Wallet
-              </Button>
             </Flex>
-          }
+          </Flex>
+          <Alert
+            type="warning"
+            showIcon
+            message={
+              <Flex vertical gap={4}>
+                <Text className="text-sm font-weight-600">
+                  Your funds are at risk!
+                </Text>
+                <Text className="text-sm">
+                  Add a backup wallet to allow you to retrieve funds if you lose
+                  your password and seed phrase.
+                </Text>
+                <Button
+                  className="w-fit text-sm mt-6"
+                  onClick={openAddPassword}
+                >
+                  Add Backup Wallet
+                </Button>
+              </Flex>
+            }
+          />
+        </CardSection>
+
+        <AddBackupWalletPasswordModal
+          open={isAddPasswordOpen}
+          onClose={closeAddPassword}
         />
-      </CardSection>
+      </>
     );
   }
 

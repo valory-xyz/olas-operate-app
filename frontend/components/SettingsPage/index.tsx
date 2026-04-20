@@ -16,6 +16,7 @@ import { BackupWalletSection } from './BackupWallet';
 import {
   AddBackupWalletManualScreen,
   AddBackupWalletMethodScreen,
+  AddBackupWalletProvider,
 } from './BackupWallet/AddBackupWalletFlow';
 import {
   UpdateBackupWalletConfirmScreen,
@@ -165,6 +166,8 @@ export const Settings = () => {
   }, [screen]);
 
   return (
-    <UpdateBackupWalletProvider>{settingsScreen}</UpdateBackupWalletProvider>
+    <AddBackupWalletProvider>
+      <UpdateBackupWalletProvider>{settingsScreen}</UpdateBackupWalletProvider>
+    </AddBackupWalletProvider>
   );
 };

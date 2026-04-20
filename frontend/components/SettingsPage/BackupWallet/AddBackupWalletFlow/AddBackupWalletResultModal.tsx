@@ -1,4 +1,5 @@
 import { Button, Flex } from 'antd';
+import { useState } from 'react';
 
 import { SuccessOutlined, WarningOutlined } from '@/components/custom-icons';
 import { LoadingSpinner, Modal } from '@/components/ui';
@@ -13,7 +14,7 @@ export type AddBackupWalletStatus =
 type AddBackupWalletResultModalProps = {
   status: AddBackupWalletStatus;
   onDone: () => void;
-  onRetry: () => void;
+  onRetry: () => Promise<void>;
 };
 
 export const AddBackupWalletResultModal = ({
@@ -22,10 +23,29 @@ export const AddBackupWalletResultModal = ({
   onRetry,
 }: AddBackupWalletResultModalProps) => {
   const { toggleSupportModal } = useSupportModal();
+  const [internalStatus, setInternalStatus] =
+    useState<AddBackupWalletStatus>('idle');
 
-  if (status === 'idle') return null;
+  const activeStatus = internalStatus !== 'idle' ? internalStatus : status;
 
-  if (status === 'in_progress') {
+  const handleRetry = async () => {
+    setInternalStatus('in_progress');
+    try {
+      await onRetry();
+      setInternalStatus('success');
+    } catch {
+      setInternalStatus('failure');
+    }
+  };
+
+  const handleDone = () => {
+    setInternalStatus('idle');
+    onDone();
+  };
+
+  if (activeStatus === 'idle') return null;
+
+  if (activeStatus === 'in_progress') {
     return (
       <Modal
         open
@@ -38,13 +58,13 @@ export const AddBackupWalletResultModal = ({
     );
   }
 
-  if (status === 'success') {
+  if (activeStatus === 'success') {
     return (
       <Modal
         open
         size="medium"
         closable
-        onCancel={onDone}
+        onCancel={handleDone}
         header={<SuccessOutlined />}
         title="Backup Wallet Added!"
         description="Your backup wallet has been successfully added."
@@ -53,7 +73,7 @@ export const AddBackupWalletResultModal = ({
             type="primary"
             block
             size="large"
-            onClick={onDone}
+            onClick={handleDone}
             className="mt-32"
           >
             Done
@@ -68,13 +88,13 @@ export const AddBackupWalletResultModal = ({
       open
       size="medium"
       closable
-      onCancel={onDone}
+      onCancel={handleDone}
       header={<WarningOutlined />}
       title="Backup Wallet Not Added"
       description="Please try again or contact the Valory support."
       action={
         <Flex vertical gap={8} align="center" className="mt-16">
-          <Button type="primary" onClick={onRetry}>
+          <Button type="primary" onClick={handleRetry}>
             Try Again
           </Button>
           <Button type="link" onClick={toggleSupportModal}>

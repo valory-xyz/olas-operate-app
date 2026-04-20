@@ -42,6 +42,9 @@ jest.mock(
     AddBackupWalletManualScreen: () => (
       <div data-testid="add-backup-wallet-manual-screen" />
     ),
+    AddBackupWalletPasswordModal: () => null,
+    AddBackupWalletProvider: ({ children }: { children: React.ReactNode }) =>
+      children,
   }),
 );
 

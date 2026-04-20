@@ -1,5 +1,5 @@
 import { Card, Flex, Typography } from 'antd';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 import { BackupWalletWeb3Auth } from '@/components/SetupPage/Create/SetupBackupSigner/BackupWalletWeb3Auth';
 import { BackButton, cardStyles } from '@/components/ui';
@@ -7,6 +7,7 @@ import { SettingsScreenMap } from '@/constants/screen';
 import { useApplyBackupOwner, useSettings } from '@/hooks';
 import { Address } from '@/types/Address';
 
+import { useAddBackupWallet } from './AddBackupWalletContext';
 import {
   AddBackupWalletResultModal,
   AddBackupWalletStatus,
@@ -16,13 +17,21 @@ const { Title, Text } = Typography;
 
 export const AddBackupWalletMethodScreen = () => {
   const { goto } = useSettings();
+  const { password, setPassword, resetFlow } = useAddBackupWallet();
   const { mutateAsync: applyBackupOwner } = useApplyBackupOwner();
   const [status, setStatus] = useState<AddBackupWalletStatus>('idle');
+  const savedPasswordRef = useRef(password);
+  const savedAddressRef = useRef<Address | null>(null);
 
-  const handleWeb3AuthFinish = async (address: Address) => {
+  const applyAddress = async (address: Address) => {
+    savedAddressRef.current = address;
     setStatus('in_progress');
+    setPassword(null);
     try {
-      await applyBackupOwner({ backup_owner: address });
+      await applyBackupOwner({
+        backup_owner: address,
+        password: savedPasswordRef.current ?? undefined,
+      });
       setStatus('success');
     } catch {
       setStatus('failure');
@@ -31,18 +40,20 @@ export const AddBackupWalletMethodScreen = () => {
 
   const handleDone = () => {
     setStatus('idle');
+    resetFlow();
     goto(SettingsScreenMap.Main);
   };
 
-  const handleRetry = () => {
-    setStatus('idle');
+  const handleBack = () => {
+    resetFlow();
+    goto(SettingsScreenMap.Main);
   };
 
   return (
     <Flex style={cardStyles} vertical gap={32}>
       <Card styles={{ body: { padding: 24 } }}>
         <Flex vertical gap={16}>
-          <BackButton onPrev={() => goto(SettingsScreenMap.Main)} />
+          <BackButton onPrev={handleBack} />
           <Title level={4} className="m-0">
             Set Up Backup Wallet
           </Title>
@@ -54,7 +65,7 @@ export const AddBackupWalletMethodScreen = () => {
             onSetUpManuallyClick={() =>
               goto(SettingsScreenMap.AddBackupWalletManual)
             }
-            onFinish={handleWeb3AuthFinish}
+            onFinish={applyAddress}
             showSuccessMessage={false}
           />
         </Flex>
@@ -63,7 +74,13 @@ export const AddBackupWalletMethodScreen = () => {
       <AddBackupWalletResultModal
         status={status}
         onDone={handleDone}
-        onRetry={handleRetry}
+        onRetry={async () => {
+          if (!savedAddressRef.current) return;
+          await applyBackupOwner({
+            backup_owner: savedAddressRef.current,
+            password: savedPasswordRef.current ?? undefined,
+          });
+        }}
       />
     </Flex>
   );

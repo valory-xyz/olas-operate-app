@@ -9,11 +9,25 @@ import { SettingsScreenMap } from '../../../../../constants/screen';
 
 const mockGoto = jest.fn();
 const mockApplyBackupOwner = jest.fn();
+const mockSetPassword = jest.fn();
+const mockResetFlow = jest.fn();
+const mockPassword: string | null = 'test-password';
 
 jest.mock('../../../../../hooks', () => ({
   useApplyBackupOwner: () => ({ mutateAsync: mockApplyBackupOwner }),
   useSettings: () => ({ goto: mockGoto }),
 }));
+
+jest.mock(
+  '../../../../../components/SettingsPage/BackupWallet/AddBackupWalletFlow/AddBackupWalletContext',
+  () => ({
+    useAddBackupWallet: () => ({
+      password: mockPassword,
+      setPassword: mockSetPassword,
+      resetFlow: mockResetFlow,
+    }),
+  }),
+);
 
 jest.mock(
   '../../../../../components/SettingsPage/BackupWallet/AddBackupWalletFlow/AddBackupWalletResultModal',
@@ -86,13 +100,15 @@ describe('AddBackupWalletManualScreen', () => {
     expect(mockApplyBackupOwner).not.toHaveBeenCalled();
   });
 
-  it('calls applyBackupOwner with checksummed valid address', async () => {
+  it('calls applyBackupOwner with checksummed valid address and password from context', async () => {
     mockApplyBackupOwner.mockResolvedValue({});
     render(<AddBackupWalletManualScreen />);
     fillAndSubmit(VALID);
     await waitFor(() => expect(mockApplyBackupOwner).toHaveBeenCalled());
     const arg = mockApplyBackupOwner.mock.calls[0][0];
     expect(arg.backup_owner.toLowerCase()).toBe(VALID.toLowerCase());
+    expect(arg.password).toBe('test-password');
+    expect(mockSetPassword).toHaveBeenCalledWith(null);
   });
 
   it('shows in_progress status after valid submit', async () => {

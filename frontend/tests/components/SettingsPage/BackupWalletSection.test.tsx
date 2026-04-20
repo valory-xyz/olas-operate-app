@@ -42,6 +42,15 @@ jest.mock(
   }),
 );
 
+jest.mock(
+  '../../../components/SettingsPage/BackupWallet/AddBackupWalletFlow',
+  () => ({
+    AddBackupWalletPasswordModal: () => null,
+    AddBackupWalletProvider: ({ children }: { children: React.ReactNode }) =>
+      children,
+  }),
+);
+
 jest.mock('../../../components/ui', () => ({
   AddressLink: ({ address }: { address: string }) => (
     <span data-testid="address-link">{address}</span>
