@@ -20,6 +20,7 @@ export * from './useElectronApi';
 export * from './useFeatureFlag';
 export * from './useFundRecoveryExecute';
 export * from './useFundRecoveryScan';
+export * from './useFundingEligibleServices';
 export * from './useGetBridgeRequirementsParams';
 export * from './useGetOnRampRequirementsParams';
 export * from './useGetRefillRequirements';
