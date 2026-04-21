@@ -2399,8 +2399,8 @@ uvicorn = "==0.27.0"
 [package.source]
 type = "git"
 url = "https://github.com/valory-xyz/olas-operate-middleware.git"
-reference = "fc26e805db6f7202a85778edeb9b2c6db658b4ce"
-resolved_reference = "fc26e805db6f7202a85778edeb9b2c6db658b4ce"
+reference = "c3a2b2eab93d8837bf8d01e88fe8d56fa0ef2084"
+resolved_reference = "c3a2b2eab93d8837bf8d01e88fe8d56fa0ef2084"
 
 [[package]]
 name = "open-aea"
@@ -4337,4 +4337,4 @@ propcache = ">=0.2.1"
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.14,<3.15"
-content-hash = "66d9bba337cf01ff816dffe061240dccce0caa8095eba4ce5ff9394ea3ee5dcd"
+content-hash = "7664aa8966ee04f4e2727bd2c828d7c048a393088b4fc83b7c989bf7c0d42809"
