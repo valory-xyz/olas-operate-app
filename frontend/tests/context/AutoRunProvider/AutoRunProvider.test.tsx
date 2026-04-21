@@ -16,6 +16,7 @@ import {
 
 // --- Mutable mock state ---
 const mockAutoRunStore = {
+  storeLoaded: true,
   enabled: false,
   includedInstances: [] as IncludedAgentInstance[],
   isInitialized: false,
@@ -126,6 +127,7 @@ describe('AutoRunProvider', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers();
+    mockAutoRunStore.storeLoaded = true;
     mockAutoRunStore.enabled = false;
     mockAutoRunStore.includedInstances = [];
     mockAutoRunStore.isInitialized = false;
