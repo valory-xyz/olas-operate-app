@@ -54,7 +54,13 @@ export const BackupWalletManual = ({ onFinish }: BackupWalletManualProps) => {
     }
   };
 
-  const { openWeb3AuthModel } = useWeb3AuthBackupWallet({ onFinish });
+  // Suppress the hook's automatic success toast: onFinish runs an async apply
+  // and shows its own error toast on failure. Firing a generic success toast
+  // first would contradict the error toast if apply fails.
+  const { openWeb3AuthModel } = useWeb3AuthBackupWallet({
+    onFinish,
+    showSuccessMessage: false,
+  });
 
   return (
     <>

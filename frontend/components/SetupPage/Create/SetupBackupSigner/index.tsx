@@ -52,6 +52,10 @@ export const SetupBackupSigner = () => {
           <BackupWalletWeb3Auth
             onSetUpManuallyClick={() => setBackupWalletType('manual')}
             onFinish={handleBackupFinish}
+            // The apply happens asynchronously inside onFinish. If it fails we
+            // show an error toast; suppress the always-fires "success" toast
+            // so the user never sees a success+error pair in sequence.
+            showSuccessMessage={false}
           />
         )}
         {backupWalletType === 'manual' && (
