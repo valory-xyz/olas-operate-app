@@ -834,8 +834,13 @@ def run_stoppable_main() -> None:
     if os.name != "nt":
         os.setpgrp()
 
-    q: multiprocessing.Queue = multiprocessing.Queue()
-    p = multiprocessing.Process(target=run_app_in_subprocess, args=(q,))
+    context = (
+        multiprocessing.get_context("fork")
+        if os.name != "nt"
+        else multiprocessing.get_context()
+    )
+    q: multiprocessing.Queue = context.Queue()
+    p = context.Process(target=run_app_in_subprocess, args=(q,))
     p.start()
     # wait for stop marker
     atexit.register(p.terminate)
