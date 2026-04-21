@@ -96,7 +96,7 @@ const setupMocks = (
   } as unknown as ReturnType<typeof useOnRampContext>);
 
   mockUseMasterWalletContext.mockReturnValue({
-    masterEoa: overrides.masterEoa ?? makeMasterEoa(),
+    masterEoa: 'masterEoa' in overrides ? overrides.masterEoa : makeMasterEoa(),
   } as unknown as ReturnType<typeof useMasterWalletContext>);
 
   return { updateIsBuyCryptoBtnLoading, showFn, termsShowFn };
@@ -265,8 +265,27 @@ describe('useBuyCryptoStep', () => {
         await onClick();
       });
 
-      expect(showFn).toHaveBeenCalledWith(18.17, 'base', 'ETH');
+      expect(showFn).toHaveBeenCalledWith(
+        18.17,
+        'base',
+        'ETH',
+        makeMasterEoa().address,
+      );
       expect(updateIsBuyCryptoBtnLoading).toHaveBeenCalledWith(true);
+    });
+
+    it('early-returns when masterEoa is undefined', async () => {
+      const showFn = jest.fn();
+      setupMocks({ onRampWindowShow: showFn, masterEoa: undefined });
+      const { result } = renderHook(() => useBuyCryptoStep());
+      const buyButtonElement = result.current.subSteps[1].description;
+      const onClick = (
+        buyButtonElement as { props: { onClick: () => Promise<void> } }
+      ).props.onClick;
+      await act(async () => {
+        await onClick();
+      });
+      expect(showFn).not.toHaveBeenCalled();
     });
 
     it('early-returns when onRampWindow.show is undefined', async () => {
