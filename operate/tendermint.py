@@ -20,7 +20,6 @@
 """Tendermint manager."""
 import atexit
 import contextlib
-import inspect
 import json
 import logging
 import multiprocessing
@@ -33,21 +32,21 @@ import stat
 import subprocess  # nosec:
 import sys
 import traceback
-from http import HTTPStatus
 from logging import Logger
 from pathlib import Path
 from threading import Event, Thread
 from time import sleep
 from typing import Any, Callable, Dict, List, Optional, Tuple, cast
+from xml.sax import handler
 
 import requests
 from flask import Flask, Response, jsonify, request
 from werkzeug.exceptions import InternalServerError, NotFound
+import ctypes
 
 ENCODING = "utf-8"
 DEFAULT_LOG_FILE = "com.log"
 DEFAULT_TENDERMINT_LOG_FILE = "tendermint.log"
-DEFAULT_TIMEOUT = 30
 
 CONFIG_OVERRIDE = [
     ("fast_sync = true", "fast_sync = false"),
@@ -68,36 +67,6 @@ logging.basicConfig(
     level=logging.DEBUG,
     format="%(asctime)s %(levelname)s %(name)s %(threadName)s : %(message)s",  # noqa : W1309
 )
-
-
-def _collect_process_debug_context() -> Dict[str, Any]:
-    """Collect process-boundary debug context for frozen helper launches."""
-    return {
-        "pid": os.getpid(),
-        "ppid": os.getppid(),
-        "argv": list(sys.argv),
-        "executable": sys.executable,
-        "is_frozen": bool(getattr(sys, "frozen", False)),
-        "meipass": getattr(sys, "_MEIPASS", None),
-        "mp_main_flag": os.environ.get("__MP_MAIN__"),
-    }
-
-
-def _log_process_debug_event(event: str) -> None:
-    """Emit a single structured diagnostic event for helper launch tracing."""
-    context = _collect_process_debug_context()
-    print(json.dumps({"tm_debug_event": event, **context}, sort_keys=True), flush=True)
-
-
-def _should_skip_main_entry(argv: Optional[List[str]] = None) -> bool:
-    """Return whether this process is a multiprocessing bootstrap helper."""
-    arguments = list(sys.argv if argv is None else argv)
-    joined = " ".join(arguments)
-    bootstrap_markers = (
-        "from multiprocessing.forkserver import main",
-        "from multiprocessing.resource_tracker import main",
-    )
-    return any(marker in joined for marker in bootstrap_markers)
 
 
 class StoppableThread(
@@ -298,8 +267,6 @@ class TendermintNode:
 
     def _start_monitoring_thread(self) -> None:
         """Start a monitoring thread."""
-        if self._monitoring is not None and self._monitoring.is_alive():
-            return
         self._monitoring = StoppableThread(target=self._monitor_tendermint_process)
         self._monitoring.start()
 
@@ -325,7 +292,7 @@ class TendermintNode:
         self._process = None
         self.log("Tendermint process stopped\n")
 
-    def _win_stop_tm(self) -> None:  # pragma: no cover
+    def _win_stop_tm(self) -> None:
         """Stop a Tendermint node process on Windows."""
         os.kill(self._process.pid, signal.CTRL_C_EVENT)  # type: ignore  # pylint: disable=no-member
         try:
@@ -505,15 +472,7 @@ class PeriodDumper:
         self.dump_dir = Path(dump_dir or "/tm_state")
 
         if self.dump_dir.is_dir():
-            rmtree_kwargs: Dict[str, Callable] = {}
-            if "onexc" in inspect.signature(shutil.rmtree).parameters:
-                rmtree_kwargs["onexc"] = self.readonly_handler
-            else:
-                # Keep compatibility with Python versions where only `onerror` exists.
-                rmtree_kwargs["onerror"] = self.readonly_handler
-            cast(Callable[..., None], shutil.rmtree)(
-                str(self.dump_dir), **rmtree_kwargs
-            )
+            shutil.rmtree(str(self.dump_dir), onerror=self.readonly_handler)
         self.dump_dir.mkdir(exist_ok=True)
 
     @staticmethod
@@ -525,7 +484,7 @@ class PeriodDumper:
             os.chmod(path, stat.S_IWRITE)
             func(path)
         except (FileNotFoundError, OSError):
-            pass
+            return
 
     def dump_period(self) -> None:
         """Dump tendermint run data for replay"""
@@ -583,7 +542,7 @@ def create_app(  # pylint: disable=too-many-statements
             )
             priv_key_data = json.loads(priv_key_file.read_text(encoding=ENCODING))
             del priv_key_data["priv_key"]
-            status = requests.get(TM_STATUS_ENDPOINT, timeout=DEFAULT_TIMEOUT).json()
+            status = requests.get(TM_STATUS_ENDPOINT).json()
             priv_key_data["peer_id"] = status["result"]["node_info"]["id"]
             return {
                 "params": priv_key_data,
@@ -628,21 +587,14 @@ def create_app(  # pylint: disable=too-many-statements
     @app.route("/gentle_reset")
     def gentle_reset() -> Tuple[Any, int]:
         """Reset the tendermint node gently."""
-        _log_process_debug_event("gentle_reset")
         if app._is_on_exit:  # pylint: disable=protected-access
             raise RuntimeError("server exit now")
         try:
             tendermint_node.stop()
             tendermint_node.start()
-            return (
-                jsonify({"message": "Reset successful.", "status": True}),
-                HTTPStatus.OK,
-            )
+            return jsonify({"message": "Reset successful.", "status": True}), 200
         except Exception as e:  # pylint: disable=W0703
-            return (
-                jsonify({"message": f"Reset failed: {e}", "status": False}),
-                HTTPStatus.OK,
-            )
+            return jsonify({"message": f"Reset failed: {e}", "status": False}), 200
 
     @app.route("/app_hash")
     def app_hash() -> Tuple[Any, int]:
@@ -652,7 +604,7 @@ def create_app(  # pylint: disable=too-many-statements
             endpoint = f"{tendermint_params.rpc_laddr.replace('tcp', 'http').replace(non_routable, loopback)}/block"
             height = request.args.get("height")
             params = {"height": height} if height is not None else None
-            res = requests.get(endpoint, params, timeout=DEFAULT_TIMEOUT)
+            res = requests.get(endpoint, params)
             app_hash_ = res.json()["result"]["block"]["header"]["app_hash"]
             return jsonify({"app_hash": app_hash_}), res.status_code
         except Exception as e:  # pylint: disable=W0703
@@ -664,7 +616,6 @@ def create_app(  # pylint: disable=too-many-statements
     @app.route("/hard_reset")
     def hard_reset() -> Tuple[Any, int]:
         """Reset the node forcefully, and prune the blocks"""
-        _log_process_debug_event("hard_reset")
         if app._is_on_exit:  # pylint: disable=protected-access
             raise RuntimeError("server exit now")
         try:
@@ -684,53 +635,40 @@ def create_app(  # pylint: disable=too-many-statements
                 request.args.get("period_count", "0"),
             )
             tendermint_node.start()
-            return (
-                jsonify({"message": "Reset successful.", "status": True}),
-                HTTPStatus.OK,
-            )
+            return jsonify({"message": "Reset successful.", "status": True}), 200
         except Exception as e:  # pylint: disable=W0703
-            return (
-                jsonify({"message": f"Reset failed: {e}", "status": False}),
-                HTTPStatus.OK,
-            )
+            return jsonify({"message": f"Reset failed: {e}", "status": False}), 200
 
-    @app.errorhandler(HTTPStatus.NOT_FOUND)  # type: ignore
+    @app.errorhandler(404)  # type: ignore
     def handle_notfound(e: NotFound) -> Response:
         """Handle server error."""
         cast(logging.Logger, app.logger).info(e)  # pylint: disable=E
-        return Response(
-            "Not Found", status=HTTPStatus.NOT_FOUND, mimetype="application/json"
-        )
+        return Response("Not Found", status=404, mimetype="application/json")
 
-    @app.errorhandler(HTTPStatus.INTERNAL_SERVER_ERROR)  # type: ignore
+    @app.errorhandler(500)  # type: ignore
     def handle_server_error(e: InternalServerError) -> Response:
         """Handle server error."""
         cast(logging.Logger, app.logger).info(e)  # pylint: disable=E
-        return Response(
-            "Error Closing Node",
-            status=HTTPStatus.INTERNAL_SERVER_ERROR,
-            mimetype="application/json",
-        )
+        return Response("Error Closing Node", status=500, mimetype="application/json")
 
     return app, tendermint_node
 
 
-def create_server() -> Any:  # pragma: no cover
+def create_server() -> Any:
     """Function to retrieve just the app to be used by flask entry point."""
     flask_app, _ = create_app()
     return flask_app
 
 
-def run_app_in_subprocess(q: multiprocessing.Queue) -> None:  # pragma: no cover
+def run_app_in_subprocess(q: multiprocessing.Queue) -> None:
     """Run flask app in a subprocess to kill it when needed."""
-    _log_process_debug_event("run_app_in_subprocess")
     print("app in subprocess")
+    
     app, tendermint_node = create_app()
     atexit.register(tendermint_node.stop)
     @app.route("/exit")
     def handle_server_exit() -> Response:
         """Handle server exit."""
-        _log_process_debug_event("exit")
         app._is_on_exit = True  # pylint: disable=protected-access
         try:
             tendermint_node.stop()
@@ -829,7 +767,6 @@ class WinHelper:
 
 def run_stoppable_main() -> None:
     """Main to spawn flask in a subprocess."""
-    _log_process_debug_event("run_stoppable_main")
     print("run stoppable main!")
     if os.name != "nt":
         os.setpgrp()
@@ -848,29 +785,23 @@ def run_stoppable_main() -> None:
         q.get(block=True)
         sleep(1)
     finally:
-        with contextlib.suppress(Exception):
-            q.close()
-            q.join_thread()
         p.terminate()
         with contextlib.suppress(Exception):
             p.join(timeout=10)
             p.terminate()
 
 
-def main() -> None:  # pragma: no cover
+def main() -> None:
     """Main entrance."""
-    _log_process_debug_event("main")
     app = create_server()
     app.run(host="localhost", port=8080)
 
 
-if __name__ == "__main__":  # pragma: no cover
+if __name__ == "__main__":
     # Start the Flask server programmatically
-    _log_process_debug_event("module_entry")
 
     with contextlib.suppress(Exception):
         # support for pyinstaller multiprocessing
         multiprocessing.freeze_support()
 
-    if not _should_skip_main_entry():
-        run_stoppable_main()
+    run_stoppable_main()
