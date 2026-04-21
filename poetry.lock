@@ -2390,7 +2390,7 @@ open-aea-cli-ipfs = "^2.1.0"
 open-aea-ledger-cosmos = "^2.1.0"
 open-aea-ledger-ethereum = "^2.1.0"
 open-aea-ledger-ethereum-flashbots = "^2.1.0"
-open-autonomy = "^0.21.13"
+open-autonomy = {version = "^0.21.13", extras = ["cli"]}
 psutil = "^5.9.8"
 pyinstaller = "^6.8.0"
 requests-mock = "^1.12.1"
@@ -2399,8 +2399,8 @@ uvicorn = "==0.27.0"
 [package.source]
 type = "git"
 url = "https://github.com/valory-xyz/olas-operate-middleware.git"
-reference = "5c20167afa9a4e9b4a0ccccb803ee6ee0851760d"
-resolved_reference = "5c20167afa9a4e9b4a0ccccb803ee6ee0851760d"
+reference = "34c5dec08678aba0a25e6bff695d6133cf141242"
+resolved_reference = "34c5dec08678aba0a25e6bff695d6133cf141242"
 
 [[package]]
 name = "open-aea"
@@ -4337,4 +4337,4 @@ propcache = ">=0.2.1"
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.14,<3.15"
-content-hash = "38ec34ea498b63b5387de6396c041ef3d272fbb2b2b11e793492983f34cc6b18"
+content-hash = "c4c7ecc199e82427f7d9aa84a6293f617a14833405c8504cb347d3885d7ff702"
