@@ -20,10 +20,7 @@ import {
   SIXTY_MINUTE_INTERVAL,
   THIRTY_SECONDS_INTERVAL,
 } from '@/constants';
-import {
-  useDynamicRefetchInterval,
-  useMasterWalletContext,
-} from '@/hooks';
+import { useDynamicRefetchInterval, useMasterWalletContext } from '@/hooks';
 import { useFundingEligibleServices } from '@/hooks/useFundingEligibleServices';
 import { useOnlineStatusContext } from '@/hooks/useOnlineStatus';
 import { usePageState } from '@/hooks/usePageState';

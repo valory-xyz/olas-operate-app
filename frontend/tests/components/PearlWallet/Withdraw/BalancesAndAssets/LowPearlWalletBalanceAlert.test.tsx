@@ -1,8 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
-import { EvmChainIdMap } from '../../../../../constants/chains';
 import { LowPearlWalletBalanceAlert } from '../../../../../components/PearlWallet/Withdraw/BalancesAndAssets/LowPearlWalletBalanceAlert';
+import { EvmChainIdMap } from '../../../../../constants/chains';
 import {
   DEFAULT_SAFE_ADDRESS,
   DEFAULT_SERVICE_CONFIG_ID,
@@ -24,9 +24,7 @@ jest.mock('../../../../../components/ui', () => ({
 }));
 
 jest.mock('antd', () => ({
-  Flex: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
+  Flex: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   Typography: {
     Text: ({ children }: { children: React.ReactNode }) => (
       <span>{children}</span>

@@ -37,9 +37,7 @@ describe('useFundingEligibleServices', () => {
 
     mockUseServices.mockReturnValue({
       getServiceConfigIdsOf: (chainId: number) =>
-        chainId === EvmChainIdMap.Gnosis
-          ? [DEFAULT_SERVICE_CONFIG_ID]
-          : [],
+        chainId === EvmChainIdMap.Gnosis ? [DEFAULT_SERVICE_CONFIG_ID] : [],
       getAgentTypeFromService: (serviceConfigId: string | null | undefined) =>
         serviceConfigId === DEFAULT_SERVICE_CONFIG_ID
           ? AgentMap.PredictTrader
