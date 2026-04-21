@@ -89,6 +89,17 @@ def _log_process_debug_event(event: str) -> None:
     print(json.dumps({"tm_debug_event": event, **context}, sort_keys=True), flush=True)
 
 
+def _should_skip_main_entry(argv: Optional[List[str]] = None) -> bool:
+    """Return whether this process is a multiprocessing bootstrap helper."""
+    arguments = list(sys.argv if argv is None else argv)
+    joined = " ".join(arguments)
+    bootstrap_markers = (
+        "from multiprocessing.forkserver import main",
+        "from multiprocessing.resource_tracker import main",
+    )
+    return any(marker in joined for marker in bootstrap_markers)
+
+
 class StoppableThread(
     Thread,
 ):
@@ -861,4 +872,5 @@ if __name__ == "__main__":  # pragma: no cover
         # support for pyinstaller multiprocessing
         multiprocessing.freeze_support()
 
-    run_stoppable_main()
+    if not _should_skip_main_entry():
+        run_stoppable_main()
