@@ -13,7 +13,6 @@ import {
   useRef,
 } from 'react';
 
-import { ACTIVE_AGENTS } from '@/config/agents';
 import {
   EvmChainId,
   MiddlewareDeploymentStatusMap,
@@ -24,8 +23,8 @@ import {
 import {
   useDynamicRefetchInterval,
   useMasterWalletContext,
-  useStore,
 } from '@/hooks';
+import { useFundingEligibleServices } from '@/hooks/useFundingEligibleServices';
 import { useOnlineStatusContext } from '@/hooks/useOnlineStatus';
 import { usePageState } from '@/hooks/usePageState';
 import { useRewardContext } from '@/hooks/useRewardContext';
@@ -43,7 +42,6 @@ import {
   BACKOFF_STEPS,
   getExponentialInterval,
 } from '@/utils';
-import { isServiceOfAgent } from '@/utils/service';
 
 export const BalancesAndRefillRequirementsProviderContext = createContext<{
   isBalancesAndFundingRequirementsLoading: boolean;
@@ -178,7 +176,6 @@ export const BalancesAndRefillRequirementsProvider = ({
   children,
 }: PropsWithChildren) => {
   const queryClient = useQueryClient();
-  const { storeState } = useStore();
   const { isOnline } = useOnlineStatusContext();
   const { isUserLoggedIn } = usePageState();
   const { masterSafes } = useMasterWalletContext();
@@ -188,6 +185,7 @@ export const BalancesAndRefillRequirementsProvider = ({
     selectedAgentConfig,
     availableServiceConfigIds,
   } = useServices();
+  const { isFundingEligible } = useFundingEligibleServices();
   const { isEligibleForRewards } = useRewardContext();
   const configId = selectedService?.service_config_id;
   const chainId = selectedAgentConfig.evmHomeChainId;
@@ -328,35 +326,19 @@ export const BalancesAndRefillRequirementsProvider = ({
     if (isEmpty(services)) return false;
     if (isEmpty(balancesAndFundingRequirementsForAllServices)) return false;
 
-    // Check if any agent requires a refill on any chain
+    // Only consider refill required for services that are active, initially
+    // funded, and not archived — ghost and archived services are excluded.
     return entries(balancesAndFundingRequirementsForAllServices)
-      .map(([serviceConfigId, data]) => {
-        const currentService = services?.find(
-          (service) => service.service_config_id === serviceConfigId,
-        );
-        if (!currentService) return false;
-
-        const agentEntry = ACTIVE_AGENTS.find(([, config]) =>
-          isServiceOfAgent(currentService, config),
-        );
-        if (!agentEntry) return false;
-
-        const agentType = agentEntry[0];
-
-        // Check if initial funding is done for this service instance
-        // and only then consider refill requirement
-        const stored = storeState?.[agentType]?.isInitialFunded;
-        const isInitiallyFunded =
-          typeof stored === 'object' && !!stored?.[serviceConfigId];
-
-        return data.is_refill_required && isInitiallyFunded;
-      })
-      .some((isRefillRequired) => isRefillRequired);
+      .map(
+        ([serviceConfigId, data]) =>
+          data.is_refill_required && isFundingEligible(serviceConfigId),
+      )
+      .some(Boolean);
   }, [
     balancesAndFundingRequirementsForAllServices,
     masterSafes,
-    storeState,
     services,
+    isFundingEligible,
   ]);
 
   const refetch = useCallback(async () => {
