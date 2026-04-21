@@ -12,8 +12,8 @@ import {
 import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
 import { FIVE_SECONDS_INTERVAL, REACT_QUERY_KEYS } from '@/constants';
 import { useElectronApi, useServices, useStore } from '@/hooks';
-import { useDynamicRefetchInterval } from '@/hooks/useDynamicRefetchInterval';
 import { useAgentStakingRewardsDetails } from '@/hooks/useAgentStakingRewardsDetails';
+import { useDynamicRefetchInterval } from '@/hooks/useDynamicRefetchInterval';
 import { Nullable, StakingRewardsInfo } from '@/types';
 
 import { OnlineStatusContext } from './OnlineStatusProvider';

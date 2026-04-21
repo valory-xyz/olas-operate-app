@@ -430,7 +430,9 @@ describe('RewardProvider', () => {
 
       expect(capturedAvailableRewardsQueryConfig!.refetchInterval).toBe(9999);
 
-      useDynamicRefetchInterval.mockImplementation((interval: number) => interval);
+      useDynamicRefetchInterval.mockImplementation(
+        (interval: number) => interval,
+      );
     });
   });
 
