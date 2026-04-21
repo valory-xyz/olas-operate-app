@@ -4,6 +4,7 @@ export * from './useAgentFundingRequests';
 export * from './useAgentRunning';
 export * from './useAgentStakingRewardsDetails';
 export * from './useAllInstancesRewardStatus';
+export * from './useApplyBackupDuringSetup';
 export * from './useApplyBackupOwner';
 export * from './useArchivedAgents';
 export * from './useAvailableAgentAssets';

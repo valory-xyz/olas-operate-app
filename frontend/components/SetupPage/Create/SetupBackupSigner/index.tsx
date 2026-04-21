@@ -1,8 +1,13 @@
 import { Flex, Typography } from 'antd';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { CardFlex } from '@/components/ui';
+import { SETUP_SCREEN } from '@/constants';
+import { useMessageApi } from '@/context/MessageProvider';
+import { useApplyBackupDuringSetup, useSetup } from '@/hooks';
+import { Address } from '@/types/Address';
 import { BackupWalletType } from '@/types/BackupWallet';
+import { getErrorMessage } from '@/utils';
 
 import { SetupCreateHeader } from '../SetupCreateHeader';
 import { BackupWalletManual } from './BackupWalletManual';
@@ -13,6 +18,25 @@ const { Title, Text } = Typography;
 export const SetupBackupSigner = () => {
   const [backupWalletType, setBackupWalletType] =
     useState<BackupWalletType>('web3auth');
+  const { goto } = useSetup();
+  const applyBackupDuringSetup = useApplyBackupDuringSetup();
+  const message = useMessageApi();
+
+  const handleBackupFinish = useCallback(
+    async (address: Address) => {
+      try {
+        await applyBackupDuringSetup(address);
+      } catch (e: unknown) {
+        // Don't block onboarding — backend startup auto-migration writes
+        // canonical_backup_owner once Safes deploy. User will land in State A
+        // until then, and in State B once auto-migration completes.
+        message.error(getErrorMessage(e));
+      } finally {
+        goto(SETUP_SCREEN.AgentOnboarding);
+      }
+    },
+    [applyBackupDuringSetup, goto, message],
+  );
 
   return (
     <CardFlex $noBorder>
@@ -27,9 +51,12 @@ export const SetupBackupSigner = () => {
         {backupWalletType === 'web3auth' && (
           <BackupWalletWeb3Auth
             onSetUpManuallyClick={() => setBackupWalletType('manual')}
+            onFinish={handleBackupFinish}
           />
         )}
-        {backupWalletType === 'manual' && <BackupWalletManual />}
+        {backupWalletType === 'manual' && (
+          <BackupWalletManual onFinish={handleBackupFinish} />
+        )}
       </Flex>
     </CardFlex>
   );
