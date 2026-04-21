@@ -179,7 +179,7 @@ describe('useAutoRunLifecycle', () => {
       expect(params.stopAgentWithRecovery).not.toHaveBeenCalled();
     });
 
-    it('keeps running agent when all others earned and schedules eligible delay', async () => {
+    it('keeps running agent when all others confirmed earned and schedules eligible delay', async () => {
       const lastRewardsEligibilityRef = {
         current: {
           [scTrader]: false,
@@ -206,6 +206,45 @@ describe('useAutoRunLifecycle', () => {
         SCAN_ELIGIBLE_DELAY_SECONDS,
       );
       expect(params.stopAgentWithRecovery).not.toHaveBeenCalled();
+    });
+
+    it('proceeds with rotation when alternate rewards state is unknown (undefined)', async () => {
+      // Stale-true override forwards unknown to scanner; rotation proceeds rather
+      // than blocking. This is the fix to the original deadlock where undefined
+      // was treated as earned.
+      const lastRewardsEligibilityRef = {
+        current: {
+          [scTrader]: false,
+        } as Partial<Record<string, boolean | undefined>>,
+      };
+      const params = makeHookParams({
+        enabled: true,
+        enabledRef: { current: true },
+        runningAgentType: AgentMap.PredictTrader,
+        runningServiceConfigId: scTrader,
+        runningAgentTypeRef: { current: AgentMap.PredictTrader },
+        runningServiceConfigIdRef: { current: scTrader },
+        lastRewardsEligibilityRef,
+        refreshRewardsEligibility: jest
+          .fn()
+          .mockImplementation(async (id: string) =>
+            id === scTrader ? true : undefined,
+          ),
+        getRewardSnapshot: jest
+          .fn()
+          .mockImplementation((id: string) =>
+            id === scTrader ? false : undefined,
+          ),
+        stopAgentWithRecovery: jest.fn().mockResolvedValue(true),
+      });
+
+      renderHook(() => useAutoRunLifecycle(params));
+      await act(async () => {
+        await new Promise((r) => setTimeout(r, 0));
+      });
+
+      expect(params.stopAgentWithRecovery).toHaveBeenCalledWith(scTrader);
+      expect(params.scanAndStartNext).toHaveBeenCalledWith(scTrader);
     });
 
     it('resets rewards guard and sets backoff on stop failure', async () => {
