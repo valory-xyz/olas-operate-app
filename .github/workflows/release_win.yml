@@ -39,7 +39,7 @@ jobs:
       - uses: actions/setup-python@v5
         id: setup-python
         with:
-          python-version: "3.14"
+          python-version: "3.14.3"
 
       - name: Add Python to PATH
         run: |
