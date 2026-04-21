@@ -12,11 +12,12 @@ type FetchAgentStakingRewardsInfoParams = {
   multisig: string;
   serviceNftTokenId: number;
   agentConfig: AgentConfig;
-  onError?: (error: unknown) => void;
 };
 
 /**
  * Shared staking rewards fetcher used by React Query hooks and auto-run runtime.
+ * Throws on RPC or validation errors so React Query retains previousData instead
+ * of overwriting it with null on transient failures.
  */
 export const fetchAgentStakingRewardsInfo = async ({
   chainId,
@@ -24,22 +25,16 @@ export const fetchAgentStakingRewardsInfo = async ({
   multisig,
   serviceNftTokenId,
   agentConfig,
-  onError,
 }: FetchAgentStakingRewardsInfoParams): Promise<StakingRewardsInfo | null> => {
   if (!stakingProgramId) return null;
 
-  try {
-    const response = await agentConfig.serviceApi.getAgentStakingRewardsInfo({
-      agentMultisigAddress: multisig as Address,
-      serviceId: serviceNftTokenId,
-      stakingProgramId,
-      chainId,
-    });
+  const response = await agentConfig.serviceApi.getAgentStakingRewardsInfo({
+    agentMultisigAddress: multisig as Address,
+    serviceId: serviceNftTokenId,
+    stakingProgramId,
+    chainId,
+  });
 
-    if (!response) return null;
-    return StakingRewardsInfoSchema.parse(response);
-  } catch (error) {
-    onError?.(error);
-    return null;
-  }
+  if (!response) return null;
+  return StakingRewardsInfoSchema.parse(response);
 };
