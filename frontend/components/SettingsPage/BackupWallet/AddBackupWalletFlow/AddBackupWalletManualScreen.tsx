@@ -19,11 +19,16 @@ const { Title, Text } = Typography;
 export const AddBackupWalletManualScreen = () => {
   const { goto } = useSettings();
   const [form] = Form.useForm();
+  const addressValue = Form.useWatch('backup-signer', form) as
+    | string
+    | undefined;
   const { password, setPassword, resetFlow } = useAddBackupWallet();
   const { mutateAsync: applyBackupOwner } = useApplyBackupOwner();
   const [status, setStatus] = useState<AddBackupWalletStatus>('idle');
   const savedPasswordRef = useRef(password);
   const savedAddressRef = useRef<Address | null>(null);
+
+  const isAddressEmpty = !addressValue || addressValue.trim().length === 0;
 
   const handleSubmit = async (values: { 'backup-signer': string }) => {
     let checksummedAddress: Address;
@@ -90,6 +95,7 @@ export const AddBackupWalletManualScreen = () => {
               block
               htmlType="submit"
               loading={status === 'in_progress'}
+              disabled={isAddressEmpty}
             >
               Add Backup Wallet
             </Button>

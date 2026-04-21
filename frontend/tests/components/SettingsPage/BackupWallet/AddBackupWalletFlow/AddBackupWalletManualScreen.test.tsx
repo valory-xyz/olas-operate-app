@@ -81,6 +81,23 @@ describe('AddBackupWalletManualScreen', () => {
     ).toBeInTheDocument();
   });
 
+  it('submit button is disabled when address input is empty and enabled when filled', () => {
+    render(<AddBackupWalletManualScreen />);
+    const button = screen.getByRole('button', { name: /Add Backup Wallet/i });
+
+    expect(button).toBeDisabled();
+
+    fireEvent.change(screen.getByPlaceholderText('0x...'), {
+      target: { value: '0x123' },
+    });
+    expect(button).not.toBeDisabled();
+
+    fireEvent.change(screen.getByPlaceholderText('0x...'), {
+      target: { value: '   ' },
+    });
+    expect(button).toBeDisabled();
+  });
+
   it('Back button navigates to method screen', () => {
     render(<AddBackupWalletManualScreen />);
     fireEvent.click(screen.getByTestId('back'));

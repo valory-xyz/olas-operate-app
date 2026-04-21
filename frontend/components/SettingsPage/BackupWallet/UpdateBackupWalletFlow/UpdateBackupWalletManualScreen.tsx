@@ -17,8 +17,12 @@ export const UpdateBackupWalletManualScreen = () => {
   const { setNewAddress, sameAddressError, setSameAddressError } =
     useUpdateBackupWallet();
   const [form] = Form.useForm();
+  const addressValue = Form.useWatch('backup-signer', form) as
+    | string
+    | undefined;
 
   const currentAddress = backupOwnerStatus?.canonical_backup_owner ?? null;
+  const isAddressEmpty = !addressValue || addressValue.trim().length === 0;
 
   const handleManualSubmit = (values: { 'backup-signer': string }) => {
     let checksummedAddress: Address;
@@ -82,7 +86,13 @@ export const UpdateBackupWalletManualScreen = () => {
             >
               <Input size="large" placeholder="0x..." />
             </Form.Item>
-            <Button type="primary" size="large" block htmlType="submit">
+            <Button
+              type="primary"
+              size="large"
+              block
+              htmlType="submit"
+              disabled={isAddressEmpty}
+            >
               Continue
             </Button>
           </Form>

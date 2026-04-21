@@ -87,6 +87,18 @@ describe('UpdateBackupWalletManualScreen', () => {
     ).toBeInTheDocument();
   });
 
+  it('Continue button is disabled when address input is empty', () => {
+    render(<UpdateBackupWalletManualScreen />);
+    const button = screen.getByRole('button', { name: /Continue/i });
+
+    expect(button).toBeDisabled();
+
+    fireEvent.change(screen.getByPlaceholderText('0x...'), {
+      target: { value: '0x123' },
+    });
+    expect(button).not.toBeDisabled();
+  });
+
   it('Back button navigates to update method screen', () => {
     render(<UpdateBackupWalletManualScreen />);
     fireEvent.click(screen.getByTestId('back'));
