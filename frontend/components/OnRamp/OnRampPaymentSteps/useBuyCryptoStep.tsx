@@ -40,8 +40,14 @@ export const useBuyCryptoStep = () => {
     if (!usdAmountToPay) return;
     if (!networkName) return;
     if (!cryptoCurrencyCode) return;
+    if (!masterEoa?.address) return;
 
-    onRampWindow.show(usdAmountToPay, networkName, cryptoCurrencyCode);
+    onRampWindow.show(
+      usdAmountToPay,
+      networkName,
+      cryptoCurrencyCode,
+      masterEoa.address,
+    );
     await delayInSeconds(1);
     updateIsBuyCryptoBtnLoading(true);
   }, [
@@ -49,6 +55,7 @@ export const useBuyCryptoStep = () => {
     usdAmountToPay,
     networkName,
     cryptoCurrencyCode,
+    masterEoa,
     updateIsBuyCryptoBtnLoading,
   ]);
 

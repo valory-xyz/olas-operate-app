@@ -2,8 +2,7 @@ import { render } from '@testing-library/react';
 import { createElement } from 'react';
 
 import { useElectronApi } from '../../../hooks/useElectronApi';
-import { useMasterWalletContext } from '../../../hooks/useWallet';
-import { DEFAULT_EOA_ADDRESS, makeMasterEoa } from '../../helpers/factories';
+import { DEFAULT_EOA_ADDRESS } from '../../helpers/factories';
 
 // ---------------------------------------------------------------------------
 // Module mocks
@@ -25,9 +24,6 @@ jest.mock('../../../constants/urls', () => ({
 jest.mock('../../../hooks/useElectronApi', () => ({
   useElectronApi: jest.fn(),
 }));
-jest.mock('../../../hooks/useWallet', () => ({
-  useMasterWalletContext: jest.fn(),
-}));
 jest.mock('../../../utils/delay', () => ({
   delayInSeconds: jest.fn(() => Promise.resolve()),
 }));
@@ -45,8 +41,6 @@ jest.mock('next/image', () => ({
 const mockUseElectronApi = useElectronApi as jest.MockedFunction<
   typeof useElectronApi
 >;
-const mockUseMasterWalletContext =
-  useMasterWalletContext as jest.MockedFunction<typeof useMasterWalletContext>;
 
 // ---------------------------------------------------------------------------
 // Import after mocks
@@ -63,15 +57,11 @@ const {
 // Helpers
 // ---------------------------------------------------------------------------
 
-const setupMocks = (masterEoa = makeMasterEoa()) => {
+const setupMocks = () => {
   mockUseElectronApi.mockReturnValue({
     onRampWindow: { close: jest.fn(), transactionFailure: jest.fn() },
     logEvent: jest.fn(),
   } as unknown as ReturnType<typeof useElectronApi>);
-
-  mockUseMasterWalletContext.mockReturnValue({
-    masterEoa,
-  } as unknown as ReturnType<typeof useMasterWalletContext>);
 };
 
 // ---------------------------------------------------------------------------
@@ -92,6 +82,7 @@ describe('OnRampIframe', () => {
           usdAmountToPay: 18.17,
           networkName: 'base',
           cryptoCurrencyCode: 'ETH',
+          walletAddress: DEFAULT_EOA_ADDRESS,
         }),
       );
 
@@ -110,54 +101,6 @@ describe('OnRampIframe', () => {
       expect(url.searchParams.get('hideMenu')).toBe('true');
     });
 
-    it('renders spinner when masterEoa is missing', () => {
-      setupMocks(undefined as never);
-      mockUseMasterWalletContext.mockReturnValue({
-        masterEoa: undefined,
-      } as unknown as ReturnType<typeof useMasterWalletContext>);
-
-      render(
-        createElement(OnRampIframe, {
-          usdAmountToPay: 10,
-          networkName: 'base',
-          cryptoCurrencyCode: 'ETH',
-        }),
-      );
-
-      const iframe = document.querySelector('iframe');
-      expect(iframe).toBeNull();
-      // Ant Spin renders with .ant-spin class
-      expect(document.querySelector('.ant-spin')).not.toBeNull();
-    });
-
-    it('renders spinner when networkName is missing', () => {
-      setupMocks();
-
-      render(
-        createElement(OnRampIframe, {
-          usdAmountToPay: 10,
-          networkName: undefined,
-          cryptoCurrencyCode: 'ETH',
-        }),
-      );
-
-      expect(document.querySelector('iframe')).toBeNull();
-    });
-
-    it('renders spinner when cryptoCurrencyCode is missing', () => {
-      setupMocks();
-
-      render(
-        createElement(OnRampIframe, {
-          usdAmountToPay: 10,
-          networkName: 'base',
-          cryptoCurrencyCode: undefined,
-        }),
-      );
-
-      expect(document.querySelector('iframe')).toBeNull();
-    });
-
     it('uses correct URL for Polygon (POL)', () => {
       setupMocks();
 
@@ -166,6 +109,7 @@ describe('OnRampIframe', () => {
           usdAmountToPay: 25,
           networkName: 'polygon',
           cryptoCurrencyCode: 'POL',
+          walletAddress: DEFAULT_EOA_ADDRESS,
         }),
       );
 
@@ -184,18 +128,13 @@ describe('OnRampIframe', () => {
         onRampWindow: { close: closeFn, transactionFailure: jest.fn() },
         logEvent: jest.fn(),
       } as unknown as ReturnType<typeof useElectronApi>);
-      setupMocks();
-      // Re-mock to use our closeFn
-      mockUseElectronApi.mockReturnValue({
-        onRampWindow: { close: closeFn, transactionFailure: jest.fn() },
-        logEvent: jest.fn(),
-      } as unknown as ReturnType<typeof useElectronApi>);
 
       render(
         createElement(OnRampIframe, {
           usdAmountToPay: 10,
           networkName: 'base',
           cryptoCurrencyCode: 'ETH',
+          walletAddress: DEFAULT_EOA_ADDRESS,
         }),
       );
 
@@ -220,15 +159,13 @@ describe('OnRampIframe', () => {
         onRampWindow: { close: closeFn, transactionFailure: jest.fn() },
         logEvent: jest.fn(),
       } as unknown as ReturnType<typeof useElectronApi>);
-      mockUseMasterWalletContext.mockReturnValue({
-        masterEoa: makeMasterEoa(),
-      } as unknown as ReturnType<typeof useMasterWalletContext>);
 
       render(
         createElement(OnRampIframe, {
           usdAmountToPay: 10,
           networkName: 'base',
           cryptoCurrencyCode: 'ETH',
+          walletAddress: DEFAULT_EOA_ADDRESS,
         }),
       );
 
@@ -248,15 +185,13 @@ describe('OnRampIframe', () => {
         onRampWindow: { close: closeFn, transactionFailure: jest.fn() },
         logEvent: jest.fn(),
       } as unknown as ReturnType<typeof useElectronApi>);
-      mockUseMasterWalletContext.mockReturnValue({
-        masterEoa: makeMasterEoa(),
-      } as unknown as ReturnType<typeof useMasterWalletContext>);
 
       render(
         createElement(OnRampIframe, {
           usdAmountToPay: 10,
           networkName: 'base',
           cryptoCurrencyCode: 'ETH',
+          walletAddress: DEFAULT_EOA_ADDRESS,
         }),
       );
 
@@ -276,15 +211,13 @@ describe('OnRampIframe', () => {
         onRampWindow: { close: closeFn, transactionFailure: jest.fn() },
         logEvent: jest.fn(),
       } as unknown as ReturnType<typeof useElectronApi>);
-      mockUseMasterWalletContext.mockReturnValue({
-        masterEoa: makeMasterEoa(),
-      } as unknown as ReturnType<typeof useMasterWalletContext>);
 
       render(
         createElement(OnRampIframe, {
           usdAmountToPay: 10,
           networkName: 'base',
           cryptoCurrencyCode: 'ETH',
+          walletAddress: DEFAULT_EOA_ADDRESS,
         }),
       );
 
@@ -310,15 +243,13 @@ describe('OnRampIframe', () => {
         },
         logEvent: jest.fn(),
       } as unknown as ReturnType<typeof useElectronApi>);
-      mockUseMasterWalletContext.mockReturnValue({
-        masterEoa: makeMasterEoa(),
-      } as unknown as ReturnType<typeof useMasterWalletContext>);
 
       render(
         createElement(OnRampIframe, {
           usdAmountToPay: 10,
           networkName: 'base',
           cryptoCurrencyCode: 'ETH',
+          walletAddress: DEFAULT_EOA_ADDRESS,
         }),
       );
 

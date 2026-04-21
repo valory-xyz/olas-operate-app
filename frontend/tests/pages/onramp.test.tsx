@@ -1,6 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import { useRouter } from 'next/router';
 
+import { DEFAULT_EOA_ADDRESS } from '../helpers/factories';
+
 jest.mock('next/router', () => ({
   useRouter: jest.fn(),
 }));
@@ -10,15 +12,18 @@ jest.mock('../../components/OnRampIframe/OnRampIframe', () => ({
     usdAmountToPay,
     networkName,
     cryptoCurrencyCode,
+    walletAddress,
   }: {
     usdAmountToPay: number;
-    networkName?: string;
-    cryptoCurrencyCode?: string;
+    networkName: string;
+    cryptoCurrencyCode: string;
+    walletAddress: string;
   }) => (
     <div data-testid="onramp-iframe">
       <span data-testid="amount">{usdAmountToPay}</span>
       <span data-testid="network">{networkName}</span>
       <span data-testid="crypto">{cryptoCurrencyCode}</span>
+      <span data-testid="wallet">{walletAddress}</span>
     </div>
   ),
 }));
@@ -45,7 +50,11 @@ describe('OnRamp page', () => {
 
   it('returns null when amount is missing', () => {
     mockUseRouter.mockReturnValue({
-      query: { networkName: 'ethereum', cryptoCurrencyCode: 'USDC' },
+      query: {
+        networkName: 'ethereum',
+        cryptoCurrencyCode: 'USDC',
+        walletAddress: DEFAULT_EOA_ADDRESS,
+      },
     } as unknown as ReturnType<typeof useRouter>);
 
     const { container } = render(<OnRamp />);
@@ -54,7 +63,11 @@ describe('OnRamp page', () => {
 
   it('returns null when networkName is missing', () => {
     mockUseRouter.mockReturnValue({
-      query: { amount: '100', cryptoCurrencyCode: 'USDC' },
+      query: {
+        amount: '100',
+        cryptoCurrencyCode: 'USDC',
+        walletAddress: DEFAULT_EOA_ADDRESS,
+      },
     } as unknown as ReturnType<typeof useRouter>);
 
     const { container } = render(<OnRamp />);
@@ -63,7 +76,24 @@ describe('OnRamp page', () => {
 
   it('returns null when cryptoCurrencyCode is missing', () => {
     mockUseRouter.mockReturnValue({
-      query: { amount: '100', networkName: 'ethereum' },
+      query: {
+        amount: '100',
+        networkName: 'ethereum',
+        walletAddress: DEFAULT_EOA_ADDRESS,
+      },
+    } as unknown as ReturnType<typeof useRouter>);
+
+    const { container } = render(<OnRamp />);
+    expect(container.innerHTML).toBe('');
+  });
+
+  it('returns null when walletAddress is missing', () => {
+    mockUseRouter.mockReturnValue({
+      query: {
+        amount: '100',
+        networkName: 'ethereum',
+        cryptoCurrencyCode: 'USDC',
+      },
     } as unknown as ReturnType<typeof useRouter>);
 
     const { container } = render(<OnRamp />);
@@ -76,6 +106,7 @@ describe('OnRamp page', () => {
         amount: '0',
         networkName: 'ethereum',
         cryptoCurrencyCode: 'USDC',
+        walletAddress: DEFAULT_EOA_ADDRESS,
       },
     } as unknown as ReturnType<typeof useRouter>);
 
@@ -89,6 +120,7 @@ describe('OnRamp page', () => {
         amount: '100',
         networkName: ['ethereum', 'polygon'],
         cryptoCurrencyCode: 'USDC',
+        walletAddress: DEFAULT_EOA_ADDRESS,
       },
     } as unknown as ReturnType<typeof useRouter>);
 
@@ -102,6 +134,21 @@ describe('OnRamp page', () => {
         amount: '100',
         networkName: 'ethereum',
         cryptoCurrencyCode: ['USDC', 'ETH'],
+        walletAddress: DEFAULT_EOA_ADDRESS,
+      },
+    } as unknown as ReturnType<typeof useRouter>);
+
+    const { container } = render(<OnRamp />);
+    expect(container.innerHTML).toBe('');
+  });
+
+  it('returns null when walletAddress is an array', () => {
+    mockUseRouter.mockReturnValue({
+      query: {
+        amount: '100',
+        networkName: 'ethereum',
+        cryptoCurrencyCode: 'USDC',
+        walletAddress: [DEFAULT_EOA_ADDRESS, DEFAULT_EOA_ADDRESS],
       },
     } as unknown as ReturnType<typeof useRouter>);
 
@@ -115,6 +162,7 @@ describe('OnRamp page', () => {
         amount: '50.5',
         networkName: 'ethereum',
         cryptoCurrencyCode: 'USDC',
+        walletAddress: DEFAULT_EOA_ADDRESS,
       },
     } as unknown as ReturnType<typeof useRouter>);
 
@@ -123,6 +171,7 @@ describe('OnRamp page', () => {
     expect(screen.getByTestId('amount')).toHaveTextContent('50.5');
     expect(screen.getByTestId('network')).toHaveTextContent('ethereum');
     expect(screen.getByTestId('crypto')).toHaveTextContent('USDC');
+    expect(screen.getByTestId('wallet')).toHaveTextContent(DEFAULT_EOA_ADDRESS);
   });
 
   it('converts amount string to number correctly', () => {
@@ -131,6 +180,7 @@ describe('OnRamp page', () => {
         amount: '123.45',
         networkName: 'gnosis',
         cryptoCurrencyCode: 'XDAI',
+        walletAddress: DEFAULT_EOA_ADDRESS,
       },
     } as unknown as ReturnType<typeof useRouter>);
 

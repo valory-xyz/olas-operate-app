@@ -580,6 +580,7 @@ const createOnRampWindow = async (
   amountToPay,
   networkName,
   cryptoCurrencyCode,
+  walletAddress,
 ) => {
   const existingWindow = getOnRampWindow();
   if (!existingWindow || existingWindow.isDestroyed()) {
@@ -619,6 +620,9 @@ const createOnRampWindow = async (
     }
     if (cryptoCurrencyCode) {
       onRampQuery.append('cryptoCurrencyCode', cryptoCurrencyCode);
+    }
+    if (walletAddress) {
+      onRampQuery.append('walletAddress', walletAddress);
     }
     const onRampUrl = `${nextUrl()}/onramp?${onRampQuery.toString()}`;
     logger.electron(`OnRamp URL: ${onRampUrl}`);
@@ -944,13 +948,16 @@ ipcMain.handle('next-log-error', (_event, error, errorInfo) => {
  */
 ipcMain.handle(
   'onramp-window-show',
-  (_event, amountToPay, networkName, cryptoCurrencyCode) => {
+  (_event, amountToPay, networkName, cryptoCurrencyCode, walletAddress) => {
     logger.electron('onramp-window-show');
 
     if (!getOnRampWindow() || getOnRampWindow().isDestroyed()) {
-      createOnRampWindow(amountToPay, networkName, cryptoCurrencyCode)?.then(
-        (window) => window.show(),
-      );
+      createOnRampWindow(
+        amountToPay,
+        networkName,
+        cryptoCurrencyCode,
+        walletAddress,
+      )?.then((window) => window.show());
     } else {
       getOnRampWindow()?.show();
     }

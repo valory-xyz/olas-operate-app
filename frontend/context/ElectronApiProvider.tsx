@@ -72,6 +72,7 @@ type ElectronApiContextProps = {
       amountToPay: number,
       networkName: string,
       cryptoCurrencyCode: string,
+      walletAddress: string,
     ) => void;
     close?: () => void;
     /**
