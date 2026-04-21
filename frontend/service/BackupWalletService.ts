@@ -30,6 +30,31 @@ export type SyncBackupOwnerResponse = {
   all_succeeded: boolean;
 };
 
+// PARTIAL_FAILURE  — HTTP 200 with all_succeeded:false. Backend has stored
+//   canonical_backup_owner; some chains are out of sync. Recovery: call sync.
+// ALREADY_LINKED   — HTTP 400 "Wallet Already Linked". Canonical matches the
+//   requested address from a prior call. Same recovery: call sync (it means
+//   canonical is stored but chains may still be out of sync).
+// NETWORK_ERROR    — HTTP 5xx / fetch rejection / any other 4xx. Canonical
+//   was NOT stored. Recovery: retry apply.
+export type BackupWalletErrorCode =
+  | 'PARTIAL_FAILURE'
+  | 'ALREADY_LINKED'
+  | 'NETWORK_ERROR';
+
+export class BackupWalletError extends Error {
+  constructor(
+    message: string,
+    public readonly code: BackupWalletErrorCode,
+    public readonly failedChains?: string[],
+  ) {
+    super(message);
+    this.name = 'BackupWalletError';
+  }
+}
+
+const ALREADY_LINKED_MESSAGE = 'Wallet Already Linked';
+
 const getBackupOwnerStatus = async (): Promise<BackupOwnerStatus> =>
   fetch(`${BACKEND_URL}/wallet/safe/backup_owner/status`).then(async (res) => {
     if (res.ok) return res.json();
@@ -51,13 +76,21 @@ const applyBackupOwner = async (
   }).then(async (res) => {
     if (!res.ok) {
       const errorData = await res.json().catch(() => ({}));
-      throw new Error(errorData.error ?? 'Failed to apply backup owner');
+      const message = errorData.error ?? 'Failed to apply backup owner';
+      if (message === ALREADY_LINKED_MESSAGE) {
+        throw new BackupWalletError(message, 'ALREADY_LINKED');
+      }
+      throw new BackupWalletError(message, 'NETWORK_ERROR');
     }
     const data: ApplyBackupOwnerResponse = await res.json();
     if (!data.all_succeeded) {
-      const failed = data.results.filter((r) => !r.updated).map((r) => r.chain);
-      throw new Error(
-        `Backup owner update failed on chains: ${failed.join(', ')}`,
+      const failedChains = data.results
+        .filter((r) => !r.updated)
+        .map((r) => r.chain);
+      throw new BackupWalletError(
+        `Backup owner update failed on chains: ${failedChains.join(', ')}`,
+        'PARTIAL_FAILURE',
+        failedChains,
       );
     }
     return data;
@@ -71,13 +104,20 @@ const syncBackupOwner = async (): Promise<SyncBackupOwnerResponse> =>
   }).then(async (res) => {
     if (!res.ok) {
       const errorData = await res.json().catch(() => ({}));
-      throw new Error(errorData.error ?? 'Failed to sync backup owner');
+      throw new BackupWalletError(
+        errorData.error ?? 'Failed to sync backup owner',
+        'NETWORK_ERROR',
+      );
     }
     const data: SyncBackupOwnerResponse = await res.json();
     if (!data.all_succeeded) {
-      const failed = data.results.filter((r) => !r.updated).map((r) => r.chain);
-      throw new Error(
-        `Backup owner sync failed on chains: ${failed.join(', ')}`,
+      const failedChains = data.results
+        .filter((r) => !r.updated)
+        .map((r) => r.chain);
+      throw new BackupWalletError(
+        `Backup owner sync failed on chains: ${failedChains.join(', ')}`,
+        'PARTIAL_FAILURE',
+        failedChains,
       );
     }
     return data;

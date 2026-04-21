@@ -1,4 +1,7 @@
-import { BackupWalletService } from '../../service/BackupWalletService';
+import {
+  BackupWalletError,
+  BackupWalletService,
+} from '../../service/BackupWalletService';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -67,7 +70,7 @@ describe('BackupWalletService.applyBackupOwner', () => {
     expect(result).toEqual(body);
   });
 
-  it('throws when all_succeeded is false (partial failure)', async () => {
+  it('throws PARTIAL_FAILURE with failed chains when all_succeeded is false', async () => {
     const body = {
       canonical_backup_owner: '0xABC',
       results: [
@@ -80,10 +83,15 @@ describe('BackupWalletService.applyBackupOwner', () => {
 
     await expect(
       BackupWalletService.applyBackupOwner({ backup_owner: '0xABC' }),
-    ).rejects.toThrow('Backup owner update failed on chains: base');
+    ).rejects.toMatchObject({
+      name: 'BackupWalletError',
+      code: 'PARTIAL_FAILURE',
+      failedChains: ['base'],
+      message: 'Backup owner update failed on chains: base',
+    });
   });
 
-  it('throws when all chains fail', async () => {
+  it('throws PARTIAL_FAILURE listing every failed chain', async () => {
     const body = {
       canonical_backup_owner: '0xABC',
       results: [
@@ -96,10 +104,13 @@ describe('BackupWalletService.applyBackupOwner', () => {
 
     await expect(
       BackupWalletService.applyBackupOwner({ backup_owner: '0xABC' }),
-    ).rejects.toThrow('Backup owner update failed on chains: gnosis, base');
+    ).rejects.toMatchObject({
+      code: 'PARTIAL_FAILURE',
+      failedChains: ['gnosis', 'base'],
+    });
   });
 
-  it('throws on HTTP error with error message', async () => {
+  it('throws ALREADY_LINKED on 400 "Wallet Already Linked"', async () => {
     mockFetch({
       ok: false,
       status: 400,
@@ -108,10 +119,14 @@ describe('BackupWalletService.applyBackupOwner', () => {
 
     await expect(
       BackupWalletService.applyBackupOwner({ backup_owner: '0xABC' }),
-    ).rejects.toThrow('Wallet Already Linked');
+    ).rejects.toMatchObject({
+      name: 'BackupWalletError',
+      code: 'ALREADY_LINKED',
+      message: 'Wallet Already Linked',
+    });
   });
 
-  it('throws on HTTP 401 with password error', async () => {
+  it('throws NETWORK_ERROR on 401 with password error', async () => {
     mockFetch({
       ok: false,
       status: 401,
@@ -123,7 +138,22 @@ describe('BackupWalletService.applyBackupOwner', () => {
         backup_owner: '0xABC',
         password: 'wrong',
       }),
-    ).rejects.toThrow('Password is not valid.');
+    ).rejects.toMatchObject({
+      code: 'NETWORK_ERROR',
+      message: 'Password is not valid.',
+    });
+  });
+
+  it('throws BackupWalletError instances (not plain Error)', async () => {
+    mockFetch({
+      ok: false,
+      status: 500,
+      body: { error: 'Internal server error' },
+    });
+
+    await expect(
+      BackupWalletService.applyBackupOwner({ backup_owner: '0xABC' }),
+    ).rejects.toBeInstanceOf(BackupWalletError);
   });
 
   it('sends chain:all and password in request body', async () => {
@@ -182,7 +212,7 @@ describe('BackupWalletService.syncBackupOwner', () => {
     expect(result).toEqual(body);
   });
 
-  it('throws when all_succeeded is false (partial failure)', async () => {
+  it('throws PARTIAL_FAILURE with failed chains when all_succeeded is false', async () => {
     const body = {
       canonical_backup_owner: '0xABC',
       results: [
@@ -193,20 +223,24 @@ describe('BackupWalletService.syncBackupOwner', () => {
     };
     mockFetch({ ok: true, body });
 
-    await expect(BackupWalletService.syncBackupOwner()).rejects.toThrow(
-      'Backup owner sync failed on chains: ethereum',
-    );
+    await expect(BackupWalletService.syncBackupOwner()).rejects.toMatchObject({
+      name: 'BackupWalletError',
+      code: 'PARTIAL_FAILURE',
+      failedChains: ['ethereum'],
+      message: 'Backup owner sync failed on chains: ethereum',
+    });
   });
 
-  it('throws on HTTP 400 when no canonical set', async () => {
+  it('throws NETWORK_ERROR on HTTP 400 when no canonical set', async () => {
     mockFetch({
       ok: false,
       status: 400,
       body: { error: 'No canonical backup owner is set.' },
     });
 
-    await expect(BackupWalletService.syncBackupOwner()).rejects.toThrow(
-      'No canonical backup owner is set.',
-    );
+    await expect(BackupWalletService.syncBackupOwner()).rejects.toMatchObject({
+      code: 'NETWORK_ERROR',
+      message: 'No canonical backup owner is set.',
+    });
   });
 });

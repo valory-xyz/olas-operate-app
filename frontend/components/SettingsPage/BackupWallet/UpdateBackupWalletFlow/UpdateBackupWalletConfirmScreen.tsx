@@ -8,7 +8,9 @@ import {
   useApplyBackupOwner,
   useBackupOwnerStatus,
   useSettings,
+  useSyncBackupOwner,
 } from '@/hooks';
+import { BackupWalletError } from '@/service/BackupWalletService';
 import { copyToClipboard } from '@/utils';
 
 import { useUpdateBackupWallet } from './UpdateBackupWalletContext';
@@ -45,7 +47,16 @@ export const UpdateBackupWalletConfirmScreen = () => {
   const { newAddress, password, setPassword, resetFlow } =
     useUpdateBackupWallet();
   const { mutateAsync: applyBackupOwner } = useApplyBackupOwner();
+  const { mutateAsync: syncBackupOwner } = useSyncBackupOwner();
   const [resultStatus, setResultStatus] = useState<ResultStatus>('idle');
+  // Tracks the last apply/sync failure so retry can branch:
+  //   PARTIAL_FAILURE / ALREADY_LINKED → canonical is stored server-side,
+  //   retry must call sync to propagate to failed chains. Re-applying would
+  //   hit the backend "Wallet Already Linked" 400 and loop forever.
+  //   NETWORK_ERROR / other → canonical not stored, retry apply.
+  const [lastErrorCode, setLastErrorCode] = useState<
+    BackupWalletError['code'] | null
+  >(null);
   const savedPasswordRef = useRef(password);
 
   const currentAddress = backupOwnerStatus?.canonical_backup_owner ?? null;
@@ -53,6 +64,7 @@ export const UpdateBackupWalletConfirmScreen = () => {
   const handleConfirm = async () => {
     if (!newAddress) return;
     setResultStatus('in_progress');
+    setLastErrorCode(null);
     setPassword(null);
     try {
       await applyBackupOwner({
@@ -60,8 +72,37 @@ export const UpdateBackupWalletConfirmScreen = () => {
         password: savedPasswordRef.current ?? undefined,
       });
       setResultStatus('success');
-    } catch {
+    } catch (error) {
+      if (error instanceof BackupWalletError) setLastErrorCode(error.code);
       setResultStatus('failure');
+    }
+  };
+
+  const handleRetry = async () => {
+    if (
+      lastErrorCode === 'PARTIAL_FAILURE' ||
+      lastErrorCode === 'ALREADY_LINKED'
+    ) {
+      try {
+        await syncBackupOwner();
+        setLastErrorCode(null);
+      } catch (error) {
+        if (error instanceof BackupWalletError) setLastErrorCode(error.code);
+        throw error;
+      }
+      return;
+    }
+
+    if (!newAddress) throw new Error('Missing new address');
+    try {
+      await applyBackupOwner({
+        backup_owner: newAddress,
+        password: savedPasswordRef.current ?? undefined,
+      });
+      setLastErrorCode(null);
+    } catch (error) {
+      if (error instanceof BackupWalletError) setLastErrorCode(error.code);
+      throw error;
     }
   };
 
@@ -135,12 +176,7 @@ export const UpdateBackupWalletConfirmScreen = () => {
         <UpdateBackupWalletResultModal
           status={resultStatus}
           onDone={handleDone}
-          onRetry={async () => {
-            await applyBackupOwner({
-              backup_owner: newAddress!,
-              password: savedPasswordRef.current ?? undefined,
-            });
-          }}
+          onRetry={handleRetry}
         />
       )}
     </>
