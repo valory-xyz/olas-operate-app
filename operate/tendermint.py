@@ -18,6 +18,7 @@
 # ------------------------------------------------------------------------------
 
 """Tendermint manager."""
+
 import atexit
 import contextlib
 import inspect
@@ -260,7 +261,7 @@ class TendermintNode:
             return
         cmd = self.params.build_node_command(debug)
         kwargs = self.params.get_node_command_kwargs()
-        
+
         if os.name != "nt":
             kwargs.update(dict(preexec_fn=os.setpgrp))
 
@@ -271,9 +272,8 @@ class TendermintNode:
             )
         )
         if os.name == "nt":
-            self._wh = WinHelper()
+            self._wh = WinHelper()  # pylint: disable=attribute-defined-outside-init
             self._wh.assign_to_job(self._process.pid)
-        
 
         self.log("Tendermint process started\n")
 
@@ -705,6 +705,7 @@ def run_app_in_subprocess(q: multiprocessing.Queue) -> None:  # pragma: no cover
     print("app in subprocess")
     app, tendermint_node = create_app()
     atexit.register(tendermint_node.stop)
+
     @app.route("/exit")
     def handle_server_exit() -> Response:
         """Handle server exit."""
@@ -719,26 +720,37 @@ def run_app_in_subprocess(q: multiprocessing.Queue) -> None:  # pragma: no cover
 
 
 class WinHelper:
-    def __init__(self):
+    """Helper class to manage Job Objects on Windows, which allow us to kill the Tendermint process and all its children when the main process is killed."""
+
+    def __init__(self) -> None:
+        """Initialize the Job Object and assign the current process to it."""
         self.job = self.create_job_object()
 
     @staticmethod
-    def get_proc_handler(pid):
+    def get_proc_handler(pid: int) -> Any:
+        """Get process handler for a given pid."""
 
-        import ctypes.wintypes
+        import ctypes.wintypes  # pylint: disable=import-outside-toplevel
 
-        kernel32 = ctypes.windll.kernel32
+        kernel32 = ctypes.windll.kernel32  # type: ignore[attr-defined]
         PROCESS_ALL_ACCESS = 0x1F0FFF
 
         return kernel32.OpenProcess(PROCESS_ALL_ACCESS, False, pid)
 
     @staticmethod
-    def create_job_object():
-        import ctypes.wintypes
-        from ctypes import wintypes
-        kernel32 = ctypes.windll.kernel32
-        import ctypes
+    def create_job_object() -> Any:
+        """Create a Job Object and set it to kill all child processes when the main process is killed."""
+        import ctypes.wintypes  # pylint: disable=import-outside-toplevel
+        from ctypes import (  # pylint: disable=import-outside-toplevel,reimported  # noqa: I001
+            wintypes,
+        )
+
+        kernel32 = ctypes.windll.kernel32  # type: ignore[attr-defined]
+        import ctypes  # pylint: disable=import-outside-toplevel,reimported
+
         class JOBOBJECT_BASIC_LIMIT_INFORMATION(ctypes.Structure):
+            """Basic limit information for a Job Object, which includes the limits on user time, working set size, and process count, as well as flags that specify the behavior of the Job Object."""
+
             _fields_ = [
                 ("PerProcessUserTimeLimit", wintypes.LARGE_INTEGER),
                 ("PerJobUserTimeLimit", wintypes.LARGE_INTEGER),
@@ -752,6 +764,8 @@ class WinHelper:
             ]
 
         class IO_COUNTERS(ctypes.Structure):
+            """I/O counters for a Job Object, which include the counts of read, write, and other operations, as well as the counts of bytes transferred for each type of operation."""
+
             _fields_ = [
                 ("ReadOperationCount", ctypes.c_ulonglong),
                 ("WriteOperationCount", ctypes.c_ulonglong),
@@ -762,6 +776,8 @@ class WinHelper:
             ]
 
         class JOBOBJECT_EXTENDED_LIMIT_INFORMATION(ctypes.Structure):
+            """Extended limit information for a Job Object, which includes the basic limit information as well as additional limits on process memory usage and job memory usage."""
+
             _fields_ = [
                 ("BasicLimitInformation", JOBOBJECT_BASIC_LIMIT_INFORMATION),
                 ("IoInfo", IO_COUNTERS),
@@ -771,37 +787,37 @@ class WinHelper:
                 ("PeakJobMemoryUsed", ctypes.c_size_t),
             ]
 
-
         # Создаем Job Object
         job = kernel32.CreateJobObjectW(None, None)
         if not job:
-            raise ctypes.WinError()
+            raise ctypes.WinError()  # type: ignore[attr-defined]
 
         # Настраиваем автоматическое завершение процессов при закрытии Job
         info = JOBOBJECT_EXTENDED_LIMIT_INFORMATION()
-        info.BasicLimitInformation.LimitFlags = 0x2000  # JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE
+        info.BasicLimitInformation.LimitFlags = (
+            0x2000  # JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE
+        )
 
         if not kernel32.SetInformationJobObject(
             job,
             9,  # JobObjectExtendedLimitInformation
             ctypes.byref(info),
-            ctypes.sizeof(info)
+            ctypes.sizeof(info),
         ):
             kernel32.CloseHandle(job)
-            raise ctypes.WinError()
+            raise ctypes.WinError()  # type: ignore[attr-defined]
 
         return job
 
+    def assign_to_job(self, pid: int) -> None:
+        """Assign a process to the Job Object to ensure it gets killed when the main process is killed."""
+        import ctypes.wintypes  # pylint: disable=import-outside-toplevel
 
-    def assign_to_job(self, pid):
-        import ctypes.wintypes
-
-        kernel32 = ctypes.windll.kernel32
+        kernel32 = ctypes.windll.kernel32  # type: ignore[attr-defined]
         job = self.job
         handle = self.get_proc_handler(pid)
         if not kernel32.AssignProcessToJobObject(job, handle):
-            raise ctypes.WinError()
-
+            raise ctypes.WinError()  # type: ignore[attr-defined]
 
 
 def run_stoppable_main() -> None:
@@ -823,7 +839,7 @@ def run_stoppable_main() -> None:
 
     if os.name == "nt":
         win_helper = WinHelper()
-        win_helper.assign_to_job(p.pid)
+        win_helper.assign_to_job(p.pid)  # type: ignore[arg-type]
 
     try:
         q.get(block=True)
