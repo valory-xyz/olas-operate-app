@@ -113,15 +113,20 @@ The application uses a multi-layered communication architecture:
 
 ### Service Templates & Agents
 
-Service configurations are defined in `frontend/constants/serviceTemplates.ts`:
-- Each service template has a `hash`, `name`, `description`, and versioning
-- Agent types currently shipped: `PredictTrader`, `Modius`, `Optimus`, `AgentsFun`, `PettAi`, `Polystrat` (chain: Polygon, prediction-markets category)
-- Chain-specific configurations in `configurations` object (funding requirements, staking programs, NFTs)
-- See `docs/agent-integration-checklist.md` for the full agent-integration flow (agent repo → on-chain → middleware → Pearl frontend)
+Service configurations live in the `frontend/constants/serviceTemplates/` directory:
+- `serviceTemplates.ts` — combined `SERVICE_TEMPLATES` array (plus templates that don't warrant their own per-agent file, e.g. `AGENTS_FUN_COMMON_TEMPLATE`)
+- `service/` — per-agent template files (currently `service/babydegen.ts` holds `MODIUS_SERVICE_TEMPLATE` and `OPTIMUS_SERVICE_TEMPLATE`; `service/trader.ts` holds `PREDICT_SERVICE_TEMPLATE` and `PREDICT_POLYMARKET_SERVICE_TEMPLATE`)
+- `index.ts` — barrel export
+- `constants.ts` — shared constants (e.g. `KPI_DESC_PREFIX`)
+
+Each service template has a `hash`, `name`, `description`, and versioning.
+- Agent types currently shipped: `PredictTrader`, `Modius`, `Optimus`, `AgentsFun`, `PettAi`, `Polystrat` (chain: Polygon, prediction-markets category).
+- Chain-specific configurations in `configurations` object (funding requirements, staking programs, NFTs).
+- See `docs/agent-integration-checklist.md` for the full agent-integration flow (agent repo → on-chain → middleware → Pearl frontend).
 
 **When modifying service templates:**
-1. Update `hash` in `frontend/constants/serviceTemplates.ts`
-2. Update corresponding `service_version` and `agent_release.repository.version`
+1. Update `hash` in the correct per-agent file (e.g. `frontend/constants/serviceTemplates/service/babydegen.ts` for Modius/Optimus, `service/trader.ts` for PredictTrader/Polystrat), or in `serviceTemplates.ts` for templates that live there (AgentsFun, etc.)
+2. Update corresponding `service_version` and `agent_release.repository.version` in the same file
 3. Run `scripts/js/check_service_templates.ts` to validate
 4. Ensure agent is enabled in `frontend/config/agents.ts` with `isAgentEnabled: true`
 
@@ -165,13 +170,13 @@ Platform-specific builds:
 - Electron child windows (on-ramp, web3auth, T&C): `electron/windows/`
 - System tray component: `electron/components/PearlTray.js`
 - Frontend entry: `frontend/pages/_app.tsx`
-- Service definitions: `frontend/constants/serviceTemplates.ts`
+- Service definitions: `frontend/constants/serviceTemplates/` (directory — main array in `serviceTemplates.ts`, per-agent templates under `service/`)
 - Agent configs: `frontend/config/agents.ts`
 - Chain configs: `frontend/constants/chains.ts`
 - Token configs: `frontend/config/tokens.ts`
 - Staking programs: `frontend/constants/stakingProgram.ts`
 - Feature docs: `docs/features/` (17 files — start here before touching a feature)
-- AutoRun internals (hook hierarchy, timing constants, guard refs, start-status codes): `frontend/context/AutoRunProvider/docs/auto-run.md` — read this before changing anything under `frontend/context/AutoRunProvider/`
+- AutoRun internals (hook hierarchy, timing constants, guard refs, start-status codes): `docs/features/autorun.md` — read this before changing anything under `frontend/context/AutoRunProvider/`
 - Agent integration guide: `docs/agent-integration-checklist.md`
 - Dev setup guides: `docs/dev/`
 - Frontend test plan: `frontend/tests/TEST_PLAN.md`
@@ -196,7 +201,7 @@ chore: bump version to 1.1.9-rc2 [skip release]
 ## Testing Locally
 
 To test with a custom service hash:
-1. Update hash in `frontend/constants/serviceTemplates.ts`
+1. Update hash in the per-agent file inside `frontend/constants/serviceTemplates/` (e.g. `service/babydegen.ts` for Modius/Optimus, `service/trader.ts` for PredictTrader/Polystrat, or `serviceTemplates.ts` for AgentsFun)
 2. Validate with `scripts/js/check_service_templates.ts`
 3. Enable in `frontend/config/agents.ts`
 4. Restart development server

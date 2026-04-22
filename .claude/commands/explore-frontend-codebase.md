@@ -53,10 +53,12 @@ For each required change:
 - Which frontend files are blocked until this lands
 
 ### 6. Electron IPC / Store Changes *(skip if not applicable)*
-- New store keys → schema addition in `electron/store.js` with default value + migration if upgrading existing keys
-- New IPC request-response → handler in `electron/main.js` + `ipcRenderer.invoke` in `electron/preload.js`
-- New IPC fire-and-forget → `ipcRenderer.send` in `electron/preload.js` + `ipcMain.on` in `electron/main.js`
-- **Store write path:** `useElectronApi()` → `store.set(key, value)` → IPC → `electron/main.js` → `electron-store`. `StoreProvider` is read-only (subscribes to `store-changed`, surfaces state). Never bypass IPC to write to the store from the renderer.
+- **New Electron-native key** (OS app-data, e.g. `environmentName`, upgrade markers) → add to the schema in `electron/store.js` **and** to `ELECTRON_NATIVE_KEYS` in `frontend/context/pearlStoreKeys.ts`. These are the only keys that live in `electron-store`.
+- **New backend-bound key** (per-agent settings, auto-run, wallet flags, etc.) → add to `BACKEND_BOUND_KEYS` in `frontend/context/pearlStoreKeys.ts` and to the `PearlStore` type in `frontend/types/ElectronApi.ts`. The Python backend persists these in `.operate/pearl_store.json` and serves them via the HTTP `/store` endpoint — no `electron/store.js` change needed.
+- New IPC request-response → handler in `electron/main.js` + `ipcRenderer.invoke` in `electron/preload.js`.
+- New IPC fire-and-forget → `ipcRenderer.send` in `electron/preload.js` + `ipcMain.on` in `electron/main.js`.
+- **Store read path:** `StoreProvider` hydrates once on mount via `StoreService.getStore()` (HTTP to backend `/store`), then subscribes to local writes via `pearlStoreEventBus`. It does **not** listen for a `store-changed` IPC broadcast (that channel does not exist). Components read through `useStore()` → `storeState`.
+- **Store write path:** call `useElectronApi()` → `store.set(key, value)` from the renderer; `ElectronApiProvider` routes the write to either Electron IPC or backend `StoreService.setStoreKey` depending on whether the key is in `ELECTRON_NATIVE_KEYS` or `BACKEND_BOUND_KEYS`, and also pushes the new value into `pearlStoreEventBus` so `StoreProvider` updates in-memory state immediately. Never bypass this path.
 
 ### 7. Implementation Approach
 Lead with the single recommended approach. If alternatives exist, footnote only:
@@ -120,7 +122,7 @@ Rules:
 - [ ] All timing/delay constants in relevant `constants.ts` — no inline numbers
 - [ ] Middleware API changes flagged as blocker with full contract spec above
 - [ ] New service template → update hash + `service_version` + run `scripts/js/check_service_templates.ts`
-- [ ] New agent → add to `frontend/config/agents.ts` with `isAgentEnabled: true` and add store key in `electron/store.js`
+- [ ] New agent → add to `frontend/config/agents.ts` with `isAgentEnabled: true`, register the agent's store namespace in `BACKEND_BOUND_KEYS` in `frontend/context/pearlStoreKeys.ts`, and extend the `PearlStore` type. **Do NOT add per-agent keys to `electron/store.js`** — those live in the backend `pearl_store.json`, not Electron-store.
 - [ ] All components use custom wrappers from `@/components/ui` where available (Alert, Modal, SetupCard, etc.)
 - [ ] All colors use `COLOR.*` constants from `@/constants` — no hardcoded hex values
 - [ ] Run `/pre-implementation-check` before coding; run `/review-implementation` after each phase
