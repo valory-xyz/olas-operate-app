@@ -15,10 +15,10 @@ The frontend is embedded in Electron via Next.js, and communicates with the Pyth
 ## Development Commands
 
 **Prerequisites:**
-- Node.js 20+ (see `.nvmrc`)
+- Node.js 22.18+ (see `.nvmrc`, enforced by `engines` in `package.json`)
 - Yarn 1.22.0+
-- Python 3.14
-- Poetry 2.3.2
+- Python 3.14 (see `pyproject.toml`: `>=3.14,<3.15`)
+- Poetry 2.3.2+
 
 ### Installation
 
@@ -94,27 +94,30 @@ When adding or reviewing frontend tests, use `frontend/tests/TEST_PLAN.md` as th
 
 The application uses a multi-layered communication architecture:
 
-1. **Frontend → Electron**: IPC via `contextBridge` (see `electron/preload.js`)
-   - Store operations: `electronAPI.store.{get,set,delete,clear}`
-   - Window controls: `electronAPI.{closeApp,minimizeApp,setTrayIcon}`
+1. **Frontend → Electron**: IPC via `contextBridge` (see `electron/preload.js` — treat that file as the source of truth for the API surface). Broad groupings:
+   - Store operations: `electronAPI.store.{store,get,set,delete,clear}`
+   - Window controls: `electronAPI.{closeApp,minimizeApp,setTrayIcon,setIsAppLoaded}`
    - Notifications: `electronAPI.showNotification`
-   - Logging: `electronAPI.{saveLogs,logEvent}`
+   - Logging / support: `electronAPI.{saveLogs,saveLogsForSupport,cleanupSupportLogs,logEvent,nextLogError,readFile,openPath,getAppVersion}`
+   - Managed child windows: `electronAPI.{onRampWindow,web3AuthWindow,web3AuthSwapOwnerWindow,termsAndConditionsWindow}` (each window has its own `show`/`close` + result callbacks)
+   - In-app auto-updater: `electronAPI.autoUpdater.{checkForUpdates,downloadUpdate,cancelDownload,quitAndInstall,onUpdateAvailable,onDownloadProgress,onUpdateDownloaded,onUpdateError,onUpdateNotAvailable}`
+   - Raw IPC escape hatch: `electronAPI.ipcRenderer.{send,on,invoke,removeListener}` — used sparingly; prefer the named APIs above.
 
 2. **Electron → Python Backend**: Spawned child process communication
-   - Backend runs via `poetry run python -m operate.cli daemon`
-   - HTTP API communication (likely via localhost)
+   - Backend runs via `poetry run python -m operate.cli daemon` in dev; in packaged builds, via the PyInstaller executable in `electron/bins/middleware/`.
+   - HTTP API over localhost (self-signed cert). Frontend services in `frontend/service/` hit this API directly.
 
 3. **Frontend State Management**:
-   - React Context providers in `/frontend/context/`
-   - Key providers: `ServicesProvider`, `BalanceProvider`, `StakingContractDetailsProvider`
-   - Electron store persistence via `electron-store` (`electron/store.js`)
+   - React Context providers in `/frontend/context/` (one provider per folder). A non-exhaustive list of load-bearing providers: `ServicesProvider`, `BalanceProvider`, `StakingContractDetailsProvider`, `StakingProgramProvider`, `MasterWalletProvider`, `PearlWalletProvider`, `RewardProvider`, `SetupProvider`, `SettingsProvider`, `StoreProvider`, `PageStateProvider`, `OnRampProvider`, `OnlineStatusProvider`, `MessageProvider`, `SupportModalProvider`, `ElectronApiProvider`, `AutoRunProvider`, `BalancesAndRefillRequirementsProvider`. Read `frontend/context/` before assuming a provider doesn't exist.
+   - Electron-native persistence via `electron-store` (`electron/store.js`) — see "Electron Store Schema" below. All other state (agent settings, auto-run, backup wallet, etc.) is persisted by the Python backend in `.operate/pearl_store.json` and accessed via HTTP.
 
 ### Service Templates & Agents
 
 Service configurations are defined in `frontend/constants/serviceTemplates.ts`:
 - Each service template has a `hash`, `name`, `description`, and versioning
-- Multiple agent types: `PredictTrader`, `Modius`, `Optimus`, `AgentsFun`, `PettAi`
+- Agent types currently shipped: `PredictTrader`, `Modius`, `Optimus`, `AgentsFun`, `PettAi`, `Polystrat` (chain: Polygon, prediction-markets category)
 - Chain-specific configurations in `configurations` object (funding requirements, staking programs, NFTs)
+- See `docs/agent-integration-checklist.md` for the full agent-integration flow (agent repo → on-chain → middleware → Pearl frontend)
 
 **When modifying service templates:**
 1. Update `hash` in `frontend/constants/serviceTemplates.ts`
@@ -124,36 +127,54 @@ Service configurations are defined in `frontend/constants/serviceTemplates.ts`:
 
 ### Electron Store Schema
 
-The application uses `electron-store` for persistent state (`electron/store.js`):
-- Global settings: `environmentName`, `lastSelectedAgentType`, `knownVersion`
-- Per-agent settings: `trader`, `memeooorr`, `modius`, `optimus`, `pett_ai`
-- Each agent tracks: `isInitialFunded`, `isProfileWarningDisplayed`
-- Store changes broadcast to renderer via `store-changed` IPC event
+`electron/store.js` is now **Electron-native state only** — the schema is deliberately minimal:
+- `environmentName` — dev/prod/tenderly environment marker.
+- `knownVersion` — last app version the user ran (for upgrade detection).
+- `updateAvailableKnownVersion` — version for which the "update available" modal was dismissed.
+- `pearlStoreMigrationComplete` — set true once the Electron→`pearl_store.json` migration has run.
+- `pearlStoreAutoRunRepaired` — set true once the one-shot `autoRun.enabled` repair has been checked.
+
+**Everything else — per-agent settings (`trader`, `modius`, `optimus`, `pett_ai`, `memeooorr`, `polystrat`), `autoRun.*`, backup-wallet state, `lastSelectedAgentType`, etc. — lives in `.operate/pearl_store.json`** served by the Python backend. This moved so that store contents travel with the user's `.operate/` folder across machines. Legacy keys are still readable via `store.get()` (electron-store tolerates out-of-schema reads), and `StoreProvider` migrates them to the backend on first launch.
+
+IPC handles: `store`, `store-get`, `store-set`, `store-delete`, `store-clear`. No `store-changed` broadcast is implemented — components observe backend store changes via React Query / providers.
 
 ### Python Backend
 
-- Entry point: `operate/pearl.py` (PyInstaller executable)
-- Uses `olas-operate-middleware` (v0.14.5) as main dependency
-- Built with PyInstaller for distribution (see `build_pearl.sh`)
-- Includes Tendermint binary for consensus
+- The top-level `/operate/` folder is a **thin shim** — just `pearl.py` (PyInstaller entry point) and `tendermint.py` (Tendermint binary manager). There is no `__init__.py`; the real backend lives in `olas-operate-middleware`.
+- `olas-operate-middleware` is **git-revision-pinned** in `pyproject.toml` (look for the `rev = "..."` hash), not a semver release. Every pin bump can change API response shapes — see "Backend Contract Types — Verify Against Installed Source" below. The installed source sits under `~/Library/Caches/pypoetry/virtualenvs/olas-operate-app-*/lib/python3.14/site-packages/operate/`.
+- Dev entry: `poetry run python -m operate.cli daemon` (the `operate.cli` module comes from the middleware package).
+- Packaged entry: PyInstaller executable in `electron/bins/middleware/`, built from `operate/pearl.py` via `build_pearl.sh`.
+- Includes Tendermint binary for consensus (downloaded at build time).
 
 ### Build Process
 
 Platform-specific builds:
-- **macOS**: `build_pearl.sh` (ARM64 & x64)
-- **Windows**: `Makefile` (see `make build`)
-- PyInstaller creates standalone executables in `electron/bins/middleware/`
-- Frontend built with environment-specific RPC endpoints
+- **macOS**: `build_pearl.sh` + `build.js` — ARM64 & x64 via `electron-builder`, notarized.
+- **Windows**: `Makefile` (`make build`) + `build-win.js` / `build-win-tenderly.js`.
+- **Linux**: `build-linux.js` (exists and is used by CI — Linux is a first-class target, not an afterthought).
+- PyInstaller creates standalone executables in `electron/bins/middleware/`.
+- Frontend built with environment-specific RPC endpoints; `build:frontend` copies `frontend/.next` → `electron/.next` and `frontend/public` → `electron/public`.
+- Test/staging variant: `build.tester.js`.
 
 ## Key File Locations
 
 - Main Electron entry: `electron/main.js`
+- Electron preload (IPC surface): `electron/preload.js`
+- Electron store (native schema): `electron/store.js`
+- Electron feature modules (e.g. logs): `electron/features/`
+- Electron child windows (on-ramp, web3auth, T&C): `electron/windows/`
+- System tray component: `electron/components/PearlTray.js`
 - Frontend entry: `frontend/pages/_app.tsx`
 - Service definitions: `frontend/constants/serviceTemplates.ts`
 - Agent configs: `frontend/config/agents.ts`
 - Chain configs: `frontend/constants/chains.ts`
 - Token configs: `frontend/config/tokens.ts`
 - Staking programs: `frontend/constants/stakingProgram.ts`
+- Feature docs: `docs/features/` (17 files — start here before touching a feature)
+- AutoRun internals (hook hierarchy, timing constants, guard refs, start-status codes): `frontend/context/AutoRunProvider/docs/auto-run.md` — read this before changing anything under `frontend/context/AutoRunProvider/`
+- Agent integration guide: `docs/agent-integration-checklist.md`
+- Dev setup guides: `docs/dev/`
+- Frontend test plan: `frontend/tests/TEST_PLAN.md`
 
 ## Commit Conventions
 
@@ -208,8 +229,9 @@ Before writing a single line of code for any frontend feature, complete these st
 
 1. **Before coding:** Run `/pre-implementation-check` and report findings. Do not write code until the report is acknowledged.
 2. **During coding:** After modifying any `.tsx`/`.ts` file, run `yarn lint:frontend --fix` immediately. Do not accumulate lint errors.
-3. **After each phase:** Run `/review-implementation` and fix ALL issues found. Do not present code with known issues.
-4. **For features touching 4+ files:** Work in phases — implement one screen + its tests, run `/review-implementation`, get review, then proceed to next screen. Never build all screens at once.
+3. **Tests track the code, always.** Every source file you modify must have its test file updated in the **same** change — do not ship a code change and defer its test update. If a file has no tests yet, add one; don't treat "no existing tests" as a license to skip.
+4. **After each phase:** Run `/review-implementation` and fix ALL issues found. Do not present code with known issues.
+5. **For features touching 4+ files:** Work in phases — implement one screen + its tests, run `/review-implementation`, get review, then proceed to next screen. Never build all screens at once.
 
 ### Fix Globally, Not Locally
 
@@ -220,7 +242,9 @@ When you fix an issue in one file, **grep ALL files in your feature for the same
 
 ### Component Imports — Use Custom Wrappers
 
-The following components have custom wrappers in `frontend/components/ui/`. **Always import from `@/components/ui`, never from `antd`:**
+`frontend/components/ui/` re-exports app-branded wrappers AND app-specific composite components. **The barrel at `frontend/components/ui/index.ts` is the authoritative list — read it before every feature.** Always import from `@/components/ui`, never from `antd`, when a wrapper exists.
+
+Direct Ant Design overrides (same name as the antd component — using the antd import is a bug):
 
 | Component | Source | Custom wrapper provides |
 |-----------|--------|----------------------|
@@ -232,9 +256,11 @@ The following components have custom wrappers in `frontend/components/ui/`. **Al
 | `Progress` | `frontend/components/ui/Progress.tsx` | Border radius for progress bars |
 | `Segmented` | `frontend/components/ui/Segmented.tsx` | Custom styling with activeIconColored prop |
 | `Steps` | `frontend/components/ui/Steps.tsx` | Styled wrapper |
-| `SetupCard` | `frontend/components/ui/SetupCard.tsx` | White card container with max-width 516px, shadow, border-radius 16px — used for all setup flow screens |
+| `Typography` | `frontend/components/ui/Typography.tsx` | App-themed Title/Text/Paragraph defaults |
 
-Any component NOT listed above (e.g., `Button`, `Flex`, `Input`, `Typography`, `Form`, `Tag`) should be imported directly from `antd`. When in doubt, check `frontend/components/ui/index.ts` for the current list.
+App-specific composites (also re-exported from `@/components/ui`) include `SetupCard`, `CardFlex`, `CardSection`, `MainContentContainer`, `BackButton`, `CopyAddress`, `AddressLink`, `FormFlex`, `NumberInput`, `RequiredMark`, `LoadingSpinner`, `IconContainer`, `TokenAmountInput`, `TokenRequirementsTable`, `TokenRequirementsDisplay`, `RequiredTokenList`, `FundingDescription`, `FundsAreSafeMessage`, `WalletTransferDirection`, `TransactionSteps`, `AgentSetupCompleteModal`, `FinishingSetupModal`, `MasterSafeCreationFailedModal`, plus `animations`, `forms`, `styles`, and `tooltips` sub-barrels. Before building a new widget, grep `frontend/components/ui/index.ts` — it is common for the thing you want to already exist.
+
+Components with NO custom wrapper (e.g., `Button`, `Flex`, `Input`, `Form`, `Tag`) should be imported directly from `antd`.
 
 ### Colors — Use Constants
 
@@ -260,6 +286,26 @@ When implementing from a design spec or Figma:
 - **Match exact props.** If the design shows a large heading, use `level={3}`. If it shows a standard input, don't add `size="small"`. If it shows a ghost button, use `type="default"` not `type="primary"`.
 - **Match layout structure.** If the design shows two separate cards, render two `<SetupCard>` components with a gap — not one card with a divider. If it shows borderless rows, don't add `border` and `background`.
 - **Match button width.** If the design shows a compact left-aligned button, add `style={{ alignSelf: 'flex-start' }}`. Don't let `Flex vertical` stretch it to full width.
+
+### Backend Contract Types — Verify Against Installed Source, Not Docs
+
+**TypeScript types for backend responses must match what the middleware actually returns, not what a design doc / audit / scoping spec *said* it should return.** Design docs describe the scoped intent; implementation can drift (renamed fields, added fields, reshaped payloads). Drift is silent because TypeScript's structural typing only validates fields you *use* — a wrongly-typed field no one reads is a ticking bomb.
+
+**Before writing or updating a TypeScript type that represents a backend response:**
+
+1. Find the installed Python source at `~/Library/Caches/pypoetry/virtualenvs/olas-operate-app-*/lib/python*/site-packages/operate/`.
+2. Grep for the endpoint handler and read the exact `return` dict / `JSONResponse` body.
+3. Copy field names character-by-character. Don't paraphrase, don't rely on the audit.
+4. If there's a wallet/status method that constructs part of the response (e.g. `backup_owner_status` in `operate/wallet/master.py`), read that too — the API handler often just forwards its return value.
+
+**On every `olas-operate-middleware` pin bump in `pyproject.toml`**, re-verify response shapes for every endpoint we call, not just that routes still exist. A route can exist with a different return shape.
+
+**When a feature depends on an unreleased backend PR:** treat any audit / scoping doc you wrote as *history*. Always re-read the installed source after every pin update. Do NOT assume the audit reflects the shipped code.
+
+**Red flags that a contract mismatch is lurking:**
+- A response field in our type that no component reads.
+- A test fixture that constructs a response from scratch (vs. replaying a real backend response).
+- A type you haven't re-checked since the middleware pin was last bumped.
 
 ### Service Pattern
 
@@ -299,9 +345,10 @@ export const useSetup = () => useContext(SetupContext);
 ### Test Pattern
 
 Tests use factories from `frontend/tests/helpers/`:
-- `factories.ts` — mock data (`makeService()`, `makeMasterEoa()`, etc.)
-- `contextDefaults.ts` — default context values (`createStakingProgramContextValue()`)
+- `factories.ts` — mock data (`makeService()`, `makeMasterEoa()`, staking factories, etc.)
+- `contextDefaults.ts` — default context values (`createStakingProgramContextValue()`, etc.)
 - `queryClient.ts` — test QueryClient (`createTestQueryClient()`, `createQueryClientWrapper()`)
+- `autoRunMocks.ts` — AutoRun-specific provider/hook mocks (use these in any test that mounts a component depending on `AutoRunProvider`)
 
 Mock pattern:
 ```typescript
