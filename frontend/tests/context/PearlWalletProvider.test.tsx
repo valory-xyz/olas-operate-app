@@ -101,7 +101,8 @@ const mockGetFundingEligibleServiceConfigIdsOf = jest.fn(() => []);
 const mockIsFundingEligible = jest.fn(() => true);
 jest.mock('../../hooks/useFundingEligibleServices', () => ({
   useFundingEligibleServices: () => ({
-    getFundingEligibleServiceConfigIdsOf: mockGetFundingEligibleServiceConfigIdsOf,
+    getFundingEligibleServiceConfigIdsOf:
+      mockGetFundingEligibleServiceConfigIdsOf,
     isFundingEligible: mockIsFundingEligible,
   }),
 }));
