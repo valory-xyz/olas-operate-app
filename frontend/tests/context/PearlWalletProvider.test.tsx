@@ -97,7 +97,7 @@ jest.mock('../../utils', () => ({
   isValidServiceId: jest.fn(() => false),
 }));
 
-const mockGetFundingEligibleServiceConfigIdsOf = jest.fn(() => []);
+const mockGetFundingEligibleServiceConfigIdsOf = jest.fn((): string[] => []);
 const mockIsFundingEligible = jest.fn(() => true);
 jest.mock('../../hooks/useFundingEligibleServices', () => ({
   useFundingEligibleServices: () => ({
