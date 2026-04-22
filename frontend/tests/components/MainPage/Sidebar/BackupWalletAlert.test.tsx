@@ -47,6 +47,7 @@ const makeStatus = (
   canonical_backup_owner: null,
   all_chains_synced: true,
   any_backup_missing: false,
+  existing_backup_on_any_chain: false,
   chains: [],
   chains_without_safe: [],
   ...overrides,
