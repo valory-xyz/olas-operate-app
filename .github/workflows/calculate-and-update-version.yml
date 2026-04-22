@@ -163,7 +163,7 @@ jobs:
             # Production release: no RC number
             TAG_SUFFIX="-signed"
             COMMIT_SUFFIX="[skip release]"
-            DELETE_EXISTING_TAG="false"
+            DELETE_EXISTING_TAG="true"
             TAG_MESSAGE_PREFIX="Production Release"
             NEW_VERSION="$BASE_VERSION"
             NEW_TAG="v$NEW_VERSION$TAG_SUFFIX"
