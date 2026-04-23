@@ -197,6 +197,18 @@ describe('getFromToken', () => {
     expect(result).toBe(ethereumUsdcAddress);
   });
 
+  it('resolves pUSD on Polygon → USDC on Ethereum (bridge route for Polymarket)', () => {
+    const polygonPusdAddress = POLYGON_TOKEN_CONFIG.pUSD!.address! as Address;
+    const ethereumUsdcAddress = ETHEREUM_TOKEN_CONFIG.USDC!.address! as Address;
+
+    const result = getFromToken(
+      polygonPusdAddress,
+      ETHEREUM_TOKEN_CONFIG,
+      POLYGON_TOKEN_CONFIG,
+    );
+    expect(result).toBe(ethereumUsdcAddress);
+  });
+
   it('throws when destination token address is not found in destination chain config', () => {
     const unknownAddress = UNKNOWN_TOKEN_ADDRESS;
 

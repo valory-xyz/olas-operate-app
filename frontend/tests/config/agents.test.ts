@@ -113,8 +113,8 @@ describe('defensive guard: getOptimusUsdcConfig throws when USDC config is missi
   });
 });
 
-describe('defensive guard: getPolystratUsdceConfig throws when USDC.e config is missing', () => {
-  it('throws "Polystrat USDC.e config not found"', () => {
+describe('defensive guard: getPolystratPusdConfig throws when pUSD config is missing', () => {
+  it('throws "Polystrat pUSD config not found"', () => {
     expect(() => {
       jest.isolateModules(() => {
         jest.mock('../../config/tokens', () => {
@@ -126,6 +126,6 @@ describe('defensive guard: getPolystratUsdceConfig throws when USDC.e config is 
         });
         require('../../config/agents');
       });
-    }).toThrow('Polystrat USDC.e config not found');
+    }).toThrow('Polystrat pUSD config not found');
   });
 });
