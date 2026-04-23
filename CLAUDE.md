@@ -101,7 +101,7 @@ IPC handles: `store`, `store-get`, `store-set`, `store-delete`, `store-clear`. N
 - Chain configs: `frontend/constants/chains.ts`
 - Token configs: `frontend/config/tokens.ts`
 - Staking programs: `frontend/constants/stakingProgram.ts`
-- Feature docs: `docs/features/` (17 files — start here before touching a feature)
+- Feature docs: `docs/features/` (18 files — start here before touching a feature)
 - AutoRun internals (hook hierarchy, timing constants, guard refs, start-status codes): `docs/features/autorun.md`
 - Agent integration guide: `docs/agent-integration-checklist.md`
 - Dev setup guides: `docs/dev/`

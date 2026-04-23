@@ -93,7 +93,7 @@ Tags/badges: [style, content format]
 
 ### 9. Phased Execution Order *(required for features touching 4+ files)*
 
-Define the phases here so the coding agent knows what to build in what order. CLAUDE.md's "Workflow Commands" tells the coder to work in phases — this section defines those phases.
+Define the phases here so the coding agent knows what to build in what order. CLAUDE.md's "Workflow" section (under Frontend Coding Conventions) tells the coder to work in phases — this section defines those phases.
 
 Each phase is a coherent unit (1 screen or 1 layer) within a single PR/branch. The PR is created after all phases are complete.
 
