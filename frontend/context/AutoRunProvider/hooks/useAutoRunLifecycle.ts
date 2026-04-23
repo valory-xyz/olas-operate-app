@@ -130,7 +130,10 @@ export const useAutoRunLifecycle = ({
         `cycle=${cycleId} trigger=${trigger} phase=rotate_begin current=${currentServiceConfigId} force=${Boolean(options?.force)}`,
       );
       // Rotation policy:
-      // 1) If all other instances are already earned/unknown -> keep current running.
+      // 1) Only block rotation when every alternate is CONFIRMED earned (true).
+      //    Unknown (undefined) is forwarded to scanAndStartNext, whose scanner
+      //    path treats unknown leniently. Blocking on unknown would deadlock
+      //    when an alternate's rewards fetch fails transiently.
       // 2) Otherwise stop current, cool down, and scan from next.
       const otherInstances = orderedIncludedInstances.filter(
         (id) => id !== currentServiceConfigId,
@@ -146,22 +149,32 @@ export const useAutoRunLifecycle = ({
       const rewardStates = otherInstances.map(
         (id, index) => refreshed[index] ?? getRewardSnapshot(id),
       );
+      const rewardStatesLabel = otherInstances
+        .map(
+          (id, index) =>
+            `${id}=${rewardStates[index] === undefined ? 'unknown' : String(rewardStates[index])}`,
+        )
+        .join(', ');
 
-      // If all other instances are either earned (true) or unknown (undefined),
-      // keep the current instance running and retry rotation after a delay.
-      const allEarnedOrUnknown = rewardStates.every((state) => state !== false);
-      if (allEarnedOrUnknown) {
+      const allConfirmedEarned = rewardStates.every((state) => state === true);
+      if (allConfirmedEarned) {
         if (options?.force) {
           // Watchdog force mode should not stop the current instance when there is
           // no known alternative candidate. Doing so would create idle time.
+          // Uses the shorter BLOCKED delay because the watchdog fired on runtime,
+          // which is a stronger signal that we want to recheck rotation soon.
           logVerbose(
-            `cycle=${cycleId} trigger=${trigger} phase=no_alternative current=${currentServiceConfigId} rescan=${SCAN_BLOCKED_DELAY_SECONDS}s`,
+            `cycle=${cycleId} trigger=${trigger} phase=no_alternative current=${currentServiceConfigId} rewards=[${rewardStatesLabel}] rescan=${SCAN_BLOCKED_DELAY_SECONDS}s`,
           );
           scheduleNextScan(SCAN_BLOCKED_DELAY_SECONDS);
           return;
         }
+        // All alternates legitimately earned this epoch — wait for the next
+        // epoch before rechecking. The stale-`true` deadlock is handled at the
+        // fetch layer by the local-activity override in `refreshRewardsEligibility`,
+        // so reaching this branch means the alternates are genuinely freshly earned.
         logVerbose(
-          `all other instances earned or unknown, keeping ${currentServiceConfigId} running, rescan in ${SCAN_ELIGIBLE_DELAY_SECONDS}s`,
+          `all other instances earned, keeping ${currentServiceConfigId} running, rewards=[${rewardStatesLabel}], rescan in ${SCAN_ELIGIBLE_DELAY_SECONDS}s`,
         );
         scheduleNextScan(SCAN_ELIGIBLE_DELAY_SECONDS);
         return;
