@@ -15,6 +15,8 @@ export const TokenSymbolMap = {
   WXDAI: 'WXDAI',
   POL: 'POL',
   'USDC.e': 'USDC.e',
+  /** pUSD: Polymarket USD stablecoin on Polygon (replaces USDC.e for Polystrat) */
+  pUSD: 'pUSD',
 } as const;
 
 export type TokenSymbol = keyof typeof TokenSymbolMap;
@@ -27,6 +29,7 @@ export const TokenSymbolConfigMap: Record<TokenSymbol, { image: string }> = {
   [TokenSymbolMap.WXDAI]: { image: '/tokens/wxdai-icon.png' },
   [TokenSymbolMap.POL]: { image: '/tokens/pol-icon.png' },
   [TokenSymbolMap['USDC.e']]: { image: '/tokens/usdc-icon.png' },
+  [TokenSymbolMap.pUSD]: { image: '/tokens/pusd-icon.png' },
 } as const;
 
 export enum TokenType {
@@ -234,6 +237,18 @@ export const POLYGON_TOKEN_CONFIG: ChainTokenConfig = {
     symbol: TokenSymbolMap['USDC.e'],
     decimals: 6,
     address: '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174',
+  },
+  /**
+   * @note pUSD: Polymarket USD stablecoin on Polygon. Replaced USDC.e for Polystrat
+   * as part of Polymarket's API v2 migration.
+   * @warning pUSD has 6 decimals, not 18.
+   * @link https://polygonscan.com/address/0xC011a7E12a19f7B1f670d46F03B03f3342E82DFB
+   */
+  [TokenSymbolMap.pUSD]: {
+    tokenType: TokenType.Erc20,
+    symbol: TokenSymbolMap.pUSD,
+    decimals: 6,
+    address: '0xC011a7E12a19f7B1f670d46F03B03f3342E82DFB',
   },
 };
 
