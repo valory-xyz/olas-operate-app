@@ -169,7 +169,9 @@ Platform-specific builds:
 - Electron feature modules (e.g. logs): `electron/features/`
 - Electron child windows (on-ramp, web3auth, T&C): `electron/windows/`
 - System tray component: `electron/components/PearlTray.js`
-- Frontend entry: `frontend/pages/_app.tsx`
+- Frontend entry: `frontend/pages/_app.tsx` (plus `index.tsx`, `onramp.tsx`, `web3auth.tsx`, `web3auth-swap-owner.tsx` — the last two are lightweight wrappers for Electron child windows)
+- Components: `frontend/components/` — large (~29 top-level folders). Grouping: **shared UI** (`ui/`), **page/flow components** (`SetupPage/`, `MainPage/`, `SelectStakingPage/`, `SettingsPage/`, `UpdateAgentPage/`, `PearlWallet/`, `PearlDeposit/`, `AccountRecovery/`), **agent-specific** (`AgentStaking/`, `AgentWallet/`, `AgentForms/`, `AgentIntroduction/`, `AgentLowBalanceAlert/`, `AgentNft/`), **flows** (`Bridge/`, `OnRamp/`, `OnRampIframe/`, `Web3AuthIframe/`, `FundPearlWallet/`, `ConfirmSwitch/`), **modals/alerts** (`AchievementModal/`, `SupportModal/`, `ErrorBoundary/`), **utilities** (`ExportLogsButton/`, `Layout/`, `Pages/`, `custom-icons/`). Always grep before creating a new top-level folder.
+- Domain types: `frontend/types/` (17 files — `Address.ts`, `Agent.ts`, `Autonolas.ts`, `BackupWallet.ts`, `Balance.ts`, `Bridge.ts`, `ElectronApi.ts`, `Epoch.ts`, `FundRecovery.ts`, `Funding.ts`, `Recovery.ts`, `Service.ts`, `Wallet.ts`, etc.). `Autonolas.ts` is the staking/rewards type hub; `ElectronApi.ts` defines `PearlStore`.
 - Service definitions: `frontend/constants/serviceTemplates/` (directory — main array in `serviceTemplates.ts`, per-agent templates under `service/`)
 - Agent configs: `frontend/config/agents.ts`
 - Chain configs: `frontend/constants/chains.ts`
@@ -271,6 +273,14 @@ Components with NO custom wrapper (e.g., `Button`, `Flex`, `Input`, `Form`, `Tag
 
 **Never hardcode hex colors.** Always read `frontend/constants/colors.ts` and use `COLOR.*` constants (`import { COLOR } from '@/constants'`). If a color doesn't exist, add it to `colors.ts` first — don't hardcode it inline.
 
+`COLOR` exports both flat brand/neutral constants (e.g. `COLOR.PRIMARY`, `COLOR.WHITE`) and nested semantic groups:
+- `COLOR.TEXT_COLOR.{SUCCESS,WARNING,ERROR}.DEFAULT` for status text
+- `COLOR.BG.{SUCCESS,WARNING,ERROR}` for status background fills
+- `COLOR.BORDER_COLOR.{SUCCESS,WARNING,ERROR}` for status borders
+- `COLOR.ICON_COLOR.{...}` for icon tints
+
+Prefer the semantic group (`COLOR.TEXT_COLOR.SUCCESS.DEFAULT`) over a flat alias when you're expressing intent (this is a success state), not a specific hue.
+
 ### Styling Patterns
 
 The codebase uses three styling approaches in this priority order:
@@ -314,22 +324,33 @@ When implementing from a design spec or Figma:
 
 ### Service Pattern
 
-Services use a static object pattern with fetch-based API calls:
+Services use a static object pattern with fetch-based API calls. Based on [frontend/service/FundRecovery.ts](frontend/service/FundRecovery.ts):
 
 ```typescript
-const scanFunds = async (request: ScanRequest): Promise<ScanResponse> =>
+const scan = async (
+  request: FundRecoveryScanRequest,
+): Promise<FundRecoveryScanResponse> =>
   fetch(`${BACKEND_URL}/fund_recovery/scan`, {
     method: 'POST',
     headers: { ...CONTENT_TYPE_JSON_UTF8 },
     body: JSON.stringify(request),
   }).then(async (res) => {
     if (res.ok) return res.json();
-    const errorData = await res.json().catch(() => ({}));
-    throw new Error(errorData.error ?? 'Operation failed');
+    const text = await res.text();
+    let errorMsg: string;
+    try {
+      errorMsg =
+        JSON.parse(text)?.error ?? 'Failed to scan for recoverable funds';
+    } catch {
+      errorMsg = 'Failed to scan for recoverable funds';
+    }
+    throw new Error(errorMsg);
   });
 
-export const FundRecoveryService = { scanFunds, executeFunds };
+export const FundRecoveryService = { scan, execute };
 ```
+
+Note the error handling: read response as text first, then try to parse JSON for an `error` field, fall back to a service-specific default message if parsing fails. Using `res.json()` directly on a failed response would throw when the backend returns a plain-text 5xx body.
 
 ### Hook Pattern
 
