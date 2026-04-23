@@ -24,7 +24,10 @@ export const FundPearlWallet = () => {
   const { masterEoaGasRequirement } = useMasterBalances();
   const { masterEoa } = useMasterWalletContext();
 
-  // Capture the prefill on mount so clearing navParams doesn't drop the override.
+  // Order matters: the `useState` initialiser reads navParams on first render,
+  // then the `useEffect` below clears navParams. If these are reordered (or if
+  // anyone adds an early `if (!masterEoa) return null` before the hooks), the
+  // prefill will be lost. The hook order is load-bearing — do not move.
   const [prefillAmountWei] = useState<number | string | undefined>(
     () => (navParams as PrefillNavParams).prefillAmountWei,
   );

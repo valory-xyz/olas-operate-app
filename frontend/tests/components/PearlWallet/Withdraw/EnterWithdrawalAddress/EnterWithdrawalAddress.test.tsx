@@ -64,37 +64,24 @@ jest.mock('antd', () => {
   };
 });
 
-jest.mock('../../../../../components/ui', () => ({
-  CardFlex: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  cardStyles: {},
-  InsufficientSignerGasModal: ({
-    caseType,
-    chain,
-    prefillAmountWei,
-    onFund,
-    onClose,
-  }: {
-    caseType: string;
-    chain: string;
-    prefillAmountWei: number | string;
-    onFund: () => void;
-    onClose: () => void;
-  }) => (
-    <div data-testid="insufficient-gas-modal">
-      <span data-testid="gas-modal-case">{caseType}</span>
-      <span data-testid="gas-modal-chain">{chain}</span>
-      <span data-testid="gas-modal-amount">{String(prefillAmountWei)}</span>
-      <button data-testid="gas-modal-fund" onClick={onFund}>
-        Fund
-      </button>
-      <button data-testid="gas-modal-close" onClick={onClose}>
-        Close
-      </button>
-    </div>
-  ),
-}));
+/* eslint-disable @typescript-eslint/no-var-requires */
+jest.mock('../../../../../components/ui', () => {
+  const {
+    insufficientGasModalMock,
+  } = require('../../../../helpers/insufficientGasModalMock');
+  const {
+    useInsufficientGasModal,
+  } = require('../../../../../components/ui/useInsufficientGasModal');
+  return {
+    CardFlex: ({ children }: { children: React.ReactNode }) => (
+      <div>{children}</div>
+    ),
+    cardStyles: {},
+    InsufficientSignerGasModal: insufficientGasModalMock,
+    useInsufficientGasModal,
+  };
+});
+/* eslint-enable @typescript-eslint/no-var-requires */
 
 jest.mock('../../../../../components/custom-icons', () => ({
   LoadingOutlined: () => <span data-testid="loading-icon" />,

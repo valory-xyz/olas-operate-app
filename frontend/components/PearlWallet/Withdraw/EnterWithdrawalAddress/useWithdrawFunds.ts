@@ -110,7 +110,13 @@ const formatWithdrawAssets = (
   );
 
 /**
- * API call to withdraw funds
+ * API call to withdraw funds.
+ *
+ * On a non-OK response, throws the parsed JSON error body (or `{}` if the
+ * body isn't JSON). Callers that care about the `INSUFFICIENT_SIGNER_GAS`
+ * branch should narrow via `isInsufficientGasError(err)` from `@/constants`.
+ *
+ * @throws InsufficientGasErrorBody | Record<string, unknown>
  */
 const withdrawFunds = async (
   request: WithdrawalRequest,

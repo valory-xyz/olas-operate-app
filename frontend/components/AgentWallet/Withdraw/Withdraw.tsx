@@ -6,8 +6,12 @@ import {
   SuccessOutlined,
   WarningOutlined,
 } from '@/components/custom-icons';
-import { cardStyles, InsufficientSignerGasModal } from '@/components/ui';
-import { AddressZero, isInsufficientGasError, PAGES } from '@/constants';
+import {
+  cardStyles,
+  InsufficientSignerGasModal,
+  useInsufficientGasModal,
+} from '@/components/ui';
+import { AddressZero, PAGES } from '@/constants';
 import { useSupportModal } from '@/context/SupportModalProvider';
 import { usePageState } from '@/hooks';
 
@@ -113,16 +117,27 @@ export const Withdraw = ({ onBack }: EnterWithdrawalAddressProps) => {
     onWithdrawFunds();
   }, [onWithdrawFunds]);
 
-  const gasError = isError && isInsufficientGasError(error) ? error : null;
+  const closeWithdrawModal = useCallback(
+    () => setWithdrawModalVisible(false),
+    [],
+  );
 
-  const handleFundAgent = useCallback(() => {
-    if (!gasError) return;
-    setFundInitialValues({
-      [AddressZero]: String(gasError.prefill_amount_wei),
-    });
-    setWithdrawModalVisible(false);
-    updateStep(STEPS.FUND_AGENT);
-  }, [gasError, setFundInitialValues, updateStep]);
+  const gasModalProps = useInsufficientGasModal({
+    isError,
+    error,
+    caseType: 'agent-withdraw',
+    onFund: (gasError) => {
+      // `prefill_amount_wei` is always the native gas token (backend contract:
+      // it's looked up from DEFAULT_EOA_TOPUPS[chain][ZERO_ADDRESS]), so key
+      // it by AddressZero — FundAgent maps AddressZero → the chain's native
+      // symbol automatically via TOKEN_CONFIG.
+      setFundInitialValues({
+        [AddressZero]: String(gasError.prefill_amount_wei),
+      });
+      updateStep(STEPS.FUND_AGENT);
+    },
+    onClose: closeWithdrawModal,
+  });
 
   return (
     <Flex gap={16} vertical style={cardStyles}>
@@ -132,14 +147,8 @@ export const Withdraw = ({ onBack }: EnterWithdrawalAddressProps) => {
       />
 
       {isWithdrawModalVisible &&
-        (gasError ? (
-          <InsufficientSignerGasModal
-            caseType="agent-withdraw"
-            chain={gasError.chain}
-            prefillAmountWei={gasError.prefill_amount_wei}
-            onFund={handleFundAgent}
-            onClose={() => setWithdrawModalVisible(false)}
-          />
+        (gasModalProps ? (
+          <InsufficientSignerGasModal {...gasModalProps} />
         ) : (
           <Modal
             onCancel={

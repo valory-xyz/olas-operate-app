@@ -8,15 +8,13 @@ import {
   SuccessOutlined,
   WarningOutlined,
 } from '@/components/custom-icons';
-import { InsufficientSignerGasModal } from '@/components/ui';
+import {
+  InsufficientSignerGasModal,
+  useInsufficientGasModal,
+} from '@/components/ui';
 import { CardFlex } from '@/components/ui/CardFlex';
 import { TOKEN_CONFIG, TokenSymbol } from '@/config/tokens';
-import {
-  AddressZero,
-  isInsufficientGasError,
-  MiddlewareChain,
-  PAGES,
-} from '@/constants';
+import { AddressZero, MiddlewareChain, PAGES } from '@/constants';
 import { useSupportModal } from '@/context/SupportModalProvider';
 import {
   useAgentFundingRequests,
@@ -274,15 +272,17 @@ export const ConfirmTransfer = ({
     if (isSuccess) onSuccess?.();
   }, [isSuccess, onSuccess]);
 
-  const gasError = isError && isInsufficientGasError(error) ? error : null;
-
-  const handleFundPearlWallet = useCallback(() => {
-    if (!gasError) return;
-    setIsTransferStateModalVisible(false);
-    goto(PAGES.FundPearlWallet, {
-      prefillAmountWei: gasError.prefill_amount_wei,
-    });
-  }, [gasError, goto]);
+  const gasModalProps = useInsufficientGasModal({
+    isError,
+    error,
+    caseType: 'fund-agent',
+    onFund: (gasError) => {
+      goto(PAGES.FundPearlWallet, {
+        prefillAmountWei: gasError.prefill_amount_wei,
+      });
+    },
+    onClose: handleClose,
+  });
 
   const canConfirmTransfer = useMemo(() => {
     if (!serviceSafe) return false;
@@ -307,14 +307,8 @@ export const ConfirmTransfer = ({
       </Button>
 
       {isTransferStateModalVisible &&
-        (gasError ? (
-          <InsufficientSignerGasModal
-            caseType="fund-agent"
-            chain={gasError.chain}
-            prefillAmountWei={gasError.prefill_amount_wei}
-            onFund={handleFundPearlWallet}
-            onClose={handleClose}
-          />
+        (gasModalProps ? (
+          <InsufficientSignerGasModal {...gasModalProps} />
         ) : (
           <Modal
             onCancel={isLoading ? undefined : handleClose}

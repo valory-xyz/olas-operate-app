@@ -52,7 +52,7 @@ const renderModal = (
     <InsufficientSignerGasModal
       caseType={overrides.caseType ?? 'agent-withdraw'}
       chain={overrides.chain ?? MiddlewareChainMap.GNOSIS}
-      prefillAmountWei={overrides.prefillAmountWei ?? 750_000_000_000_000_000}
+      prefillAmountWei={overrides.prefillAmountWei ?? '750000000000000000'}
       onFund={onFund}
       onClose={onClose}
     />,
@@ -78,7 +78,7 @@ describe('InsufficientSignerGasModal', () => {
     renderModal({
       caseType: 'pearl-withdraw',
       chain: MiddlewareChainMap.OPTIMISM,
-      prefillAmountWei: 2_500_000_000_000_000,
+      prefillAmountWei: '2500000000000000',
     });
     expect(screen.getByTestId('modal-title')).toHaveTextContent(
       'Withdrawal Failed: Insufficient Balance',
@@ -95,7 +95,7 @@ describe('InsufficientSignerGasModal', () => {
     renderModal({
       caseType: 'fund-agent',
       chain: MiddlewareChainMap.POLYGON,
-      prefillAmountWei: 8_000_000_000_000_000_000,
+      prefillAmountWei: '8000000000000000000',
     });
     expect(screen.getByTestId('modal-title')).toHaveTextContent(
       'Transfer Failed: Insufficient Balance',
@@ -133,5 +133,17 @@ describe('InsufficientSignerGasModal', () => {
   it('renders the warning icon in the header', () => {
     renderModal();
     expect(screen.getByTestId('warning-icon')).toBeInTheDocument();
+  });
+
+  it('falls back to an empty symbol when the chain is unknown (defensive guard)', () => {
+    renderModal({ chain: 'neptune-chain-that-does-not-exist' });
+    // Modal should still render; symbol degrades to empty string (DOM
+    // collapses the resulting double-space, so assert on the known chunks).
+    const description = screen.getByTestId('modal-description');
+    expect(description).toHaveTextContent('Fund your agent wallet');
+    expect(description).toHaveTextContent('0.75');
+    expect(description).toHaveTextContent('to cover gas fees.');
+    expect(description).not.toHaveTextContent('XDAI');
+    expect(description).not.toHaveTextContent('ETH');
   });
 });

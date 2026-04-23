@@ -11,8 +11,9 @@ import {
   CardFlex,
   cardStyles,
   InsufficientSignerGasModal,
+  useInsufficientGasModal,
 } from '@/components/ui';
-import { isInsufficientGasError, PAGES } from '@/constants';
+import { PAGES } from '@/constants';
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import { useMessageApi } from '@/context/MessageProvider';
 import { usePearlWallet } from '@/context/PearlWalletProvider';
@@ -192,15 +193,22 @@ export const EnterWithdrawalAddress = ({
     onAuthorizeWithdrawal(withdrawalAddress, password);
   }, [onAuthorizeWithdrawal, withdrawalAddress, password]);
 
-  const gasError = isError && isInsufficientGasError(error) ? error : null;
+  const closePasswordModal = useCallback(
+    () => setIsPasswordModalOpen(false),
+    [],
+  );
 
-  const handleFundPearlWallet = useCallback(() => {
-    if (!gasError) return;
-    setIsPasswordModalOpen(false);
-    goto(PAGES.FundPearlWallet, {
-      prefillAmountWei: gasError.prefill_amount_wei,
-    });
-  }, [gasError, goto]);
+  const gasModalProps = useInsufficientGasModal({
+    isError,
+    error,
+    caseType: 'pearl-withdraw',
+    onFund: (gasError) => {
+      goto(PAGES.FundPearlWallet, {
+        prefillAmountWei: gasError.prefill_amount_wei,
+      });
+    },
+    onClose: closePasswordModal,
+  });
 
   const hasApiNotTriggered = ![isLoading, isError, isSuccess].some(Boolean);
   const canCloseModal = isError || !hasApiNotTriggered;
@@ -215,14 +223,8 @@ export const EnterWithdrawalAddress = ({
       />
 
       {isPasswordModalOpen &&
-        (gasError ? (
-          <InsufficientSignerGasModal
-            caseType="pearl-withdraw"
-            chain={gasError.chain}
-            prefillAmountWei={gasError.prefill_amount_wei}
-            onFund={handleFundPearlWallet}
-            onClose={() => setIsPasswordModalOpen(false)}
-          />
+        (gasModalProps ? (
+          <InsufficientSignerGasModal {...gasModalProps} />
         ) : (
           <Modal
             title={hasApiNotTriggered ? 'Authorize Withdrawal' : null}

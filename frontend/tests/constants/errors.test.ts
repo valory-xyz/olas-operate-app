@@ -16,19 +16,21 @@ describe('isInsufficientGasError', () => {
   ): unknown => ({
     error_code: ERROR_CODE.INSUFFICIENT_SIGNER_GAS,
     chain: 'gnosis',
-    prefill_amount_wei: 750_000_000_000_000_000,
+    // String is the realistic wire format (see factories.ts); number is also
+    // accepted by the guard for backward-compatibility.
+    prefill_amount_wei: '750000000000000000',
     ...overrides,
   });
 
-  it('returns true for a valid structured error body', () => {
+  it('returns true for a valid structured error body (default: string prefill)', () => {
     expect(isInsufficientGasError(makeValid())).toBe(true);
   });
 
-  it('accepts prefill_amount_wei as a string', () => {
+  it('accepts prefill_amount_wei as a number (legacy/fallback)', () => {
+    // Use a value below Number.MAX_SAFE_INTEGER to avoid literal-precision
+    // warnings — the guard itself doesn't care about precision, only type.
     expect(
-      isInsufficientGasError(
-        makeValid({ prefill_amount_wei: '750000000000000000' }),
-      ),
+      isInsufficientGasError(makeValid({ prefill_amount_wei: 1_000_000 })),
     ).toBe(true);
   });
 
@@ -36,7 +38,7 @@ describe('isInsufficientGasError', () => {
     expect(
       isInsufficientGasError({
         chain: 'gnosis',
-        prefill_amount_wei: 750_000_000_000_000_000,
+        prefill_amount_wei: '750000000000000000',
       }),
     ).toBe(false);
   });

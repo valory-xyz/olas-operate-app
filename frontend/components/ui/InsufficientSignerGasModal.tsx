@@ -1,4 +1,5 @@
 import { Button } from 'antd';
+import { useMemo } from 'react';
 
 import { WarningOutlined } from '@/components/custom-icons';
 import { asEvmChainDetails } from '@/utils/middlewareHelpers';
@@ -32,7 +33,7 @@ const COPY: Record<
   },
 };
 
-type InsufficientSignerGasModalProps = {
+export type InsufficientSignerGasModalProps = {
   caseType: InsufficientSignerGasCase;
   chain: string;
   prefillAmountWei: number | string;
@@ -48,7 +49,18 @@ export const InsufficientSignerGasModal = ({
   onClose,
 }: InsufficientSignerGasModalProps) => {
   const { title, walletLabel, ctaLabel } = COPY[caseType];
-  const nativeSymbol = asEvmChainDetails(chain).symbol;
+
+  // Defensive: `asEvmChainDetails` throws on unknown / unsupported chain
+  // strings. Fall back to an empty symbol so the modal still renders if the
+  // backend ever returns a chain the frontend doesn't recognise.
+  const nativeSymbol = useMemo(() => {
+    try {
+      return asEvmChainDetails(chain).symbol;
+    } catch {
+      return '';
+    }
+  }, [chain]);
+
   const amount = formatUnitsToNumber(String(prefillAmountWei), 18, 6);
 
   return (
