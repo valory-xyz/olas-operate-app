@@ -8,14 +8,21 @@ import {
   SuccessOutlined,
   WarningOutlined,
 } from '@/components/custom-icons';
+import { InsufficientSignerGasModal } from '@/components/ui';
 import { CardFlex } from '@/components/ui/CardFlex';
 import { TOKEN_CONFIG, TokenSymbol } from '@/config/tokens';
-import { AddressZero, MiddlewareChain } from '@/constants';
+import {
+  AddressZero,
+  isInsufficientGasError,
+  MiddlewareChain,
+  PAGES,
+} from '@/constants';
 import { useSupportModal } from '@/context/SupportModalProvider';
 import {
   useAgentFundingRequests,
   useBalanceAndRefillRequirementsContext,
   useBalanceContext,
+  usePageState,
   useService,
   useServices,
 } from '@/hooks';
@@ -107,7 +114,11 @@ const useConfirmTransfer = () => {
   const { selectedService } = useServices();
   const { refetch } = useBalanceAndRefillRequirementsContext();
   const { updateBalances } = useBalanceContext();
-  const { isPending, isSuccess, isError, mutateAsync } = useMutation({
+  const { isPending, isSuccess, isError, error, mutateAsync } = useMutation<
+    void,
+    unknown,
+    ChainFunds
+  >({
     mutationFn: async (funds: ChainFunds) => {
       if (!selectedService) throw new Error('No service selected');
 
@@ -125,14 +136,14 @@ const useConfirmTransfer = () => {
     async (fundsToPass: ChainFunds) => {
       try {
         await mutateAsync(fundsToPass);
-      } catch (error) {
-        console.error(error);
+      } catch (caughtError) {
+        console.error(caughtError);
       }
     },
     [mutateAsync],
   );
 
-  return { onFundAgent, isLoading: isPending, isSuccess, isError };
+  return { onFundAgent, isLoading: isPending, isSuccess, isError, error };
 };
 
 type ConfirmTransferProps = {
@@ -220,8 +231,10 @@ export const ConfirmTransfer = ({
   const { serviceSafes, serviceEoa } = useService(
     selectedService?.service_config_id,
   );
-  const { onFundAgent, isLoading, isSuccess, isError } = useConfirmTransfer();
+  const { onFundAgent, isLoading, isSuccess, isError, error } =
+    useConfirmTransfer();
   const { eoaTokenRequirements } = useAgentFundingRequests();
+  const { goto } = usePageState();
 
   const [isTransferStateModalVisible, setIsTransferStateModalVisible] =
     useState(false);
@@ -261,6 +274,16 @@ export const ConfirmTransfer = ({
     if (isSuccess) onSuccess?.();
   }, [isSuccess, onSuccess]);
 
+  const gasError = isError && isInsufficientGasError(error) ? error : null;
+
+  const handleFundPearlWallet = useCallback(() => {
+    if (!gasError) return;
+    setIsTransferStateModalVisible(false);
+    goto(PAGES.FundPearlWallet, {
+      prefillAmountWei: gasError.prefill_amount_wei,
+    });
+  }, [gasError, goto]);
+
   const canConfirmTransfer = useMemo(() => {
     if (!serviceSafe) return false;
     if (isEmpty(fundsToTransfer)) return false;
@@ -283,24 +306,33 @@ export const ConfirmTransfer = ({
         Confirm Transfer
       </Button>
 
-      {isTransferStateModalVisible && (
-        <Modal
-          onCancel={isLoading ? undefined : handleClose}
-          closable={!isLoading}
-          open
-          width={436}
-          title={null}
-          footer={null}
-        >
-          {isError ? (
-            <TransferFailed onTryAgain={handleConfirmTransfer} />
-          ) : isSuccess ? (
-            <TransferComplete onClose={handleClose} />
-          ) : (
-            <TransferInProgress />
-          )}
-        </Modal>
-      )}
+      {isTransferStateModalVisible &&
+        (gasError ? (
+          <InsufficientSignerGasModal
+            caseType="fund-agent"
+            chain={gasError.chain}
+            prefillAmountWei={gasError.prefill_amount_wei}
+            onFund={handleFundPearlWallet}
+            onClose={handleClose}
+          />
+        ) : (
+          <Modal
+            onCancel={isLoading ? undefined : handleClose}
+            closable={!isLoading}
+            open
+            width={436}
+            title={null}
+            footer={null}
+          >
+            {isError ? (
+              <TransferFailed onTryAgain={handleConfirmTransfer} />
+            ) : isSuccess ? (
+              <TransferComplete onClose={handleClose} />
+            ) : (
+              <TransferInProgress />
+            )}
+          </Modal>
+        ))}
     </CardFlex>
   );
 };
