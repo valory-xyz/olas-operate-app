@@ -16,12 +16,12 @@ import {
   useAvailableAssets,
   useBalanceAndRefillRequirementsContext,
   useBalanceContext,
+  useFundingEligibleServices,
   useMasterWalletContext,
   usePageState,
   useService,
   useServices,
 } from '@/hooks';
-import { useFundingEligibleServices } from '@/hooks/useFundingEligibleServices';
 import {
   Address,
   AvailableAsset,

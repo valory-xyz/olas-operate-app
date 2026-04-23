@@ -50,6 +50,9 @@ jest.mock(
 );
 /* eslint-enable @typescript-eslint/no-var-requires */
 
+const mockGetFundingEligibleServiceConfigIdsOf = jest.fn((): string[] => []);
+const mockIsFundingEligible = jest.fn(() => true);
+
 jest.mock('../../hooks', () => ({
   useAvailableAssets: jest.fn(() => ({
     isLoading: false,
@@ -62,6 +65,11 @@ jest.mock('../../hooks', () => ({
     isLoading: false,
     getStakedOlasBalanceOf: jest.fn(() => 0),
   })),
+  useFundingEligibleServices: () => ({
+    getFundingEligibleServiceConfigIdsOf:
+      mockGetFundingEligibleServiceConfigIdsOf,
+    isFundingEligible: mockIsFundingEligible,
+  }),
   useMasterWalletContext: jest.fn(() => ({
     masterSafes: [],
   })),
@@ -95,16 +103,6 @@ jest.mock('../../components/PearlWallet/utils', () => ({
 jest.mock('../../utils', () => ({
   generateAgentName: jest.fn(() => 'Agent Name'),
   isValidServiceId: jest.fn(() => false),
-}));
-
-const mockGetFundingEligibleServiceConfigIdsOf = jest.fn((): string[] => []);
-const mockIsFundingEligible = jest.fn(() => true);
-jest.mock('../../hooks/useFundingEligibleServices', () => ({
-  useFundingEligibleServices: () => ({
-    getFundingEligibleServiceConfigIdsOf:
-      mockGetFundingEligibleServiceConfigIdsOf,
-    isFundingEligible: mockIsFundingEligible,
-  }),
 }));
 
 const mockUseServices = useServices as jest.Mock;

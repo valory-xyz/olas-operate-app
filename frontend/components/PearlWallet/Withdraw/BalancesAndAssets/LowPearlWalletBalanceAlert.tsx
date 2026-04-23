@@ -6,9 +6,9 @@ import { UNICODE_SYMBOLS } from '@/constants';
 import { usePearlWallet } from '@/context/PearlWalletProvider';
 import {
   useBalanceAndRefillRequirementsContext,
+  useFundingEligibleServices,
   useMasterWalletContext,
 } from '@/hooks';
-import { useFundingEligibleServices } from '@/hooks/useFundingEligibleServices';
 import { tokenBalancesToSentence } from '@/utils';
 
 import { WalletChain } from '../../types';

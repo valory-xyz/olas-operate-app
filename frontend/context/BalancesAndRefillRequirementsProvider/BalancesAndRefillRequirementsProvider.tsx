@@ -20,8 +20,11 @@ import {
   SIXTY_MINUTE_INTERVAL,
   THIRTY_SECONDS_INTERVAL,
 } from '@/constants';
-import { useDynamicRefetchInterval, useMasterWalletContext } from '@/hooks';
-import { useFundingEligibleServices } from '@/hooks/useFundingEligibleServices';
+import {
+  useDynamicRefetchInterval,
+  useFundingEligibleServices,
+  useMasterWalletContext,
+} from '@/hooks';
 import { useOnlineStatusContext } from '@/hooks/useOnlineStatus';
 import { usePageState } from '@/hooks/usePageState';
 import { useRewardContext } from '@/hooks/useRewardContext';
@@ -325,12 +328,10 @@ export const BalancesAndRefillRequirementsProvider = ({
 
     // Only consider refill required for services that are active, initially
     // funded, and not archived — ghost and archived services are excluded.
-    return entries(balancesAndFundingRequirementsForAllServices)
-      .map(
-        ([serviceConfigId, data]) =>
-          data.is_refill_required && isFundingEligible(serviceConfigId),
-      )
-      .some(Boolean);
+    return entries(balancesAndFundingRequirementsForAllServices).some(
+      ([serviceConfigId, data]) =>
+        data.is_refill_required && isFundingEligible(serviceConfigId),
+    );
   }, [
     balancesAndFundingRequirementsForAllServices,
     masterSafes,

@@ -73,16 +73,11 @@ jest.mock('../../../hooks/useOnlineStatus', () => ({
   useOnlineStatusContext: () => mockUseOnlineStatusContext(),
 }));
 
-const mockUseStore = jest.fn();
+const mockUseFundingEligibleServices = jest.fn();
 jest.mock('../../../hooks', () => ({
   useDynamicRefetchInterval: jest.fn((interval: number | false) => interval),
-  useMasterWalletContext: () => mockUseMasterWalletContext(),
-  useStore: () => mockUseStore(),
-}));
-
-const mockUseFundingEligibleServices = jest.fn();
-jest.mock('../../../hooks/useFundingEligibleServices', () => ({
   useFundingEligibleServices: () => mockUseFundingEligibleServices(),
+  useMasterWalletContext: () => mockUseMasterWalletContext(),
 }));
 
 // --- helpers ---
@@ -181,7 +176,6 @@ type SetupOptions = {
   selectedService?: Service;
   masterSafes?: ReturnType<typeof makeMasterSafe>[];
   isEligibleForRewards?: boolean;
-  storeState?: Record<string, unknown>;
   availableServiceConfigIds?: {
     configId: string;
     chainId: number;
@@ -197,11 +191,6 @@ const setup = (options: SetupOptions = {}) => {
     selectedService = defaultService,
     masterSafes = [makeMasterSafe(EvmChainIdMap.Gnosis)],
     isEligibleForRewards = true,
-    storeState = {
-      [AgentMap.PredictTrader]: {
-        isInitialFunded: { [DEFAULT_SERVICE_CONFIG_ID]: true },
-      },
-    },
     availableServiceConfigIds = [
       { configId: DEFAULT_SERVICE_CONFIG_ID, chainId: EvmChainIdMap.Gnosis },
     ],
@@ -217,7 +206,6 @@ const setup = (options: SetupOptions = {}) => {
   });
   mockUseMasterWalletContext.mockReturnValue({ masterSafes });
   mockUseRewardContext.mockReturnValue({ isEligibleForRewards });
-  mockUseStore.mockReturnValue({ storeState });
 
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false, gcTime: 0 } },
@@ -249,7 +237,6 @@ const setupWithConsumer = (
     selectedService = defaultService,
     masterSafes = [makeMasterSafe(EvmChainIdMap.Gnosis)],
     isEligibleForRewards = true,
-    storeState = {},
     availableServiceConfigIds = [
       { configId: DEFAULT_SERVICE_CONFIG_ID, chainId: EvmChainIdMap.Gnosis },
     ],
@@ -265,7 +252,6 @@ const setupWithConsumer = (
   });
   mockUseMasterWalletContext.mockReturnValue({ masterSafes });
   mockUseRewardContext.mockReturnValue({ isEligibleForRewards });
-  mockUseStore.mockReturnValue({ storeState });
 
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false, gcTime: 0 } },

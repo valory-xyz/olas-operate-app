@@ -12,9 +12,16 @@ import { useServices } from './useServices';
  * Pearl Wallet funding-need calculations.
  *
  * A service is eligible iff:
- *   1. It maps to a known agent type (not unknown/construction)
+ *   1. It maps to an enabled agent type via `getAgentTypeFromService`
+ *      (services that do not resolve to an agent in `ACTIVE_AGENTS` return null)
  *   2. The user has not archived it
  *   3. The user completed initial funding for it (isInitialFunded === true)
+ *
+ * `isFundingEligible` is the load-bearing check for arbitrary service IDs
+ * (e.g. IDs supplied by the middleware). `getFundingEligibleServiceConfigIdsOf`
+ * pre-filters through `getServiceConfigIdsOf`, so it already excludes
+ * archived/disabled agents via `availableServiceConfigIds` — the eligibility
+ * predicate there effectively narrows to the funded-only subset.
  */
 export const useFundingEligibleServices = () => {
   const { getServiceConfigIdsOf, getAgentTypeFromService } = useServices();

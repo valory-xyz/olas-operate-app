@@ -39,15 +39,12 @@ jest.mock('../../../../../context/PearlWalletProvider', () => ({
 
 const mockUseBalanceAndRefillRequirementsContext = jest.fn();
 const mockUseMasterWalletContext = jest.fn();
+const mockUseFundingEligibleServices = jest.fn();
 jest.mock('../../../../../hooks', () => ({
   useBalanceAndRefillRequirementsContext: () =>
     mockUseBalanceAndRefillRequirementsContext(),
-  useMasterWalletContext: () => mockUseMasterWalletContext(),
-}));
-
-const mockUseFundingEligibleServices = jest.fn();
-jest.mock('../../../../../hooks/useFundingEligibleServices', () => ({
   useFundingEligibleServices: () => mockUseFundingEligibleServices(),
+  useMasterWalletContext: () => mockUseMasterWalletContext(),
 }));
 
 const mockGetInitialDepositForMasterSafe = jest.fn();
