@@ -217,12 +217,12 @@ const withdrawBalance = async ({
         method: 'POST',
         headers: { ...CONTENT_TYPE_JSON_UTF8 },
       },
-    ).then((response) => {
+    ).then(async (response) => {
       if (response.ok) {
-        resolve(response.json());
-      } else {
-        reject('Failed to withdraw balance.');
+        resolve(await response.json());
+        return;
       }
+      reject(await response.json().catch(() => ({})));
     }),
   );
 

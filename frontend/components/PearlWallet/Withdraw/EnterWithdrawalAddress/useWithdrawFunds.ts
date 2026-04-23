@@ -119,16 +119,12 @@ const withdrawFunds = async (
     method: 'POST',
     headers: { ...CONTENT_TYPE_JSON_UTF8 },
     body: JSON.stringify(request),
-  })
-    .then((response) => {
-      if (response.ok) {
-        return response.json();
-      }
-      throw new Error('Failed to withdraw funds');
-    })
-    .catch((error) => {
-      throw error;
-    });
+  }).then(async (response) => {
+    if (response.ok) {
+      return response.json();
+    }
+    throw await response.json().catch(() => ({}));
+  });
 
 /**
  * Hook to handle withdrawal of funds

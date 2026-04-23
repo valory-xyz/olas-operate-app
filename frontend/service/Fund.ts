@@ -31,12 +31,12 @@ const fundAgent = async ({
       body: JSON.stringify(funds),
       headers: { ...CONTENT_TYPE_JSON_UTF8 },
     }).then(
-      (response) => {
+      async (response) => {
         if (response.ok) {
-          resolve(response.json());
-        } else {
-          reject('Failed to fund agent');
+          resolve(await response.json());
+          return;
         }
+        reject(await response.json().catch(() => ({})));
       },
       (error) => reject(error),
     ),

@@ -14,6 +14,7 @@ export * from './forms';
 export * from './FundingDescription';
 export * from './FundsAreSafeMessage';
 export * from './IconContainer';
+export * from './InsufficientSignerGasModal';
 export * from './LoadingSpinner';
 export * from './MainContentContainer';
 export * from './MasterSafeCreationFailedModal';

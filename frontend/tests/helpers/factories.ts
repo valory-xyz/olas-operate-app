@@ -8,6 +8,7 @@ import {
   SupportedMiddlewareChain,
 } from '../../constants/chains';
 import { MiddlewareDeploymentStatusMap } from '../../constants/deployment';
+import { ERROR_CODE, InsufficientGasErrorBody } from '../../constants/errors';
 import {
   STAKING_PROGRAM_IDS,
   StakingProgramId,
@@ -521,5 +522,15 @@ export const makePolystratPayoutAchievement = (
     },
   },
   serviceConfigId: DEFAULT_SERVICE_CONFIG_ID,
+  ...overrides,
+});
+
+export const makeInsufficientGasError = (
+  overrides: Partial<InsufficientGasErrorBody> = {},
+): InsufficientGasErrorBody => ({
+  error: 'Insufficient funds to cover gas fees',
+  error_code: ERROR_CODE.INSUFFICIENT_SIGNER_GAS,
+  chain: MiddlewareChainMap.GNOSIS,
+  prefill_amount_wei: 750_000_000_000_000_000,
   ...overrides,
 });

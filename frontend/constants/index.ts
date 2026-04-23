@@ -7,6 +7,7 @@ export * from './contract';
 export * from './deployment';
 export * from './env';
 export * from './envVariables';
+export * from './errors';
 export * from './headers';
 export * from './intervals';
 export * from './onramp';
