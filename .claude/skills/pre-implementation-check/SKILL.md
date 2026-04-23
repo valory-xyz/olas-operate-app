@@ -51,7 +51,16 @@ Read `frontend/tests/helpers/factories.ts` and `frontend/tests/helpers/contextDe
 
 Never create inline mock data if a factory exists for that shape.
 
-## Step 7: Report findings — GATE
+## Step 7: Design fidelity rules (applies during coding from a design)
+
+When implementing from a design spec or Figma, these rules are invariant — the coding agent cannot interpret Figma images reliably and must treat the design as the spec.
+
+- **Copy text verbatim.** Never paraphrase, shorten, or "improve" design text. If the design says "Enter the 12-word recovery phrase of the lost Pearl account", that is what the code must render — not "Enter your recovery phrase".
+- **Match exact props.** Large heading → `level={3}`. Standard input → no `size="small"`. Ghost button → `type="default"`, not `type="primary"`.
+- **Match layout structure.** Two separate cards → two `<SetupCard>` with a gap, not one card with a divider. Borderless rows → don't add `border` and `background`.
+- **Match button width.** Compact left-aligned button → `style={{ alignSelf: 'flex-start' }}`. Don't let `Flex vertical` stretch it to full width.
+
+## Step 8: Report findings — GATE
 
 Before writing any code, output this report:
 
