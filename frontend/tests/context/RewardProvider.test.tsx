@@ -29,6 +29,9 @@ jest.mock(
 /* eslint-enable @typescript-eslint/no-var-requires */
 jest.mock('../../constants/providers', () => ({}));
 jest.mock('../../config/providers', () => ({}));
+jest.mock('../../hooks/useDynamicRefetchInterval', () => ({
+  useDynamicRefetchInterval: jest.fn((interval: number) => interval),
+}));
 
 // ── Hook & query mocks ───────────────────────────────────────────────
 
@@ -67,6 +70,7 @@ let capturedAvailableRewardsQueryConfig:
       queryFn: () => Promise<unknown>;
       enabled?: boolean;
       refetchInterval?: number | false;
+      refetchIntervalInBackground?: boolean;
     }
   | undefined;
 
@@ -403,6 +407,32 @@ describe('RewardProvider', () => {
       expect(result.current.isAvailableRewardsForEpochLoading).toBe(false);
       expect(result.current.stakingRewardsDetails).toBeNull();
       expect(result.current.updateRewards).toBeInstanceOf(Function);
+    });
+  });
+
+  describe('useAvailableRewardsForEpoch — polling config', () => {
+    it('refetchIntervalInBackground is true', () => {
+      setupMocks();
+      renderRewardContext();
+      expect(
+        capturedAvailableRewardsQueryConfig!.refetchIntervalInBackground,
+      ).toBe(true);
+    });
+
+    it('uses dynamic refetch interval — sentinel 9999', () => {
+      const { useDynamicRefetchInterval } = jest.requireMock(
+        '../../hooks/useDynamicRefetchInterval',
+      ) as { useDynamicRefetchInterval: jest.Mock };
+      useDynamicRefetchInterval.mockReturnValue(9999);
+
+      setupMocks();
+      renderRewardContext();
+
+      expect(capturedAvailableRewardsQueryConfig!.refetchInterval).toBe(9999);
+
+      useDynamicRefetchInterval.mockImplementation(
+        (interval: number) => interval,
+      );
     });
   });
 

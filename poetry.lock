@@ -2369,13 +2369,15 @@ nicer-shell = ["ipython"]
 
 [[package]]
 name = "olas-operate-middleware"
-version = "0.15.9"
+version = "0.15.10"
 description = ""
 optional = false
 python-versions = "<3.15,>=3.10"
 groups = ["main"]
-files = []
-develop = false
+files = [
+    {file = "olas_operate_middleware-0.15.10-py3-none-any.whl", hash = "sha256:28b560afdf0f02f30f8c89e77ad020dfdd8c72423e3589d1e14878634644d317"},
+    {file = "olas_operate_middleware-0.15.10.tar.gz", hash = "sha256:9ff13381cb6d627e6cb2badd06d1aadd08fe5aebcf6e1143a9b2df4a0e1066e1"},
+]
 
 [package.dependencies]
 argon2-cffi = "==23.1.0"
@@ -4337,4 +4339,4 @@ propcache = ">=0.2.1"
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.14,<3.15"
-content-hash = "6cb4ad92825e1d8c0ef99ad7e6c2731317000f0a3d6b25a2092982139610c47b"
+content-hash = "a9a262c584cefba0608d434427610e04381fb412b048efe9c00b64fcb4259e8d"

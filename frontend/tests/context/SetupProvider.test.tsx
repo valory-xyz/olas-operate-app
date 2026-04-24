@@ -53,4 +53,35 @@ describe('SetupProvider', () => {
       }),
     ).not.toThrow();
   });
+
+  describe('password', () => {
+    it('initial password is null', () => {
+      const { result } = renderHook(() => useContext(SetupContext), {
+        wrapper,
+      });
+      expect(result.current.password).toBeNull();
+    });
+
+    it('setPassword stores and clears the password', () => {
+      const { result } = renderHook(() => useContext(SetupContext), {
+        wrapper,
+      });
+
+      act(() => {
+        result.current.setPassword('hunter2');
+      });
+      expect(result.current.password).toBe('hunter2');
+
+      act(() => {
+        result.current.setPassword(null);
+      });
+      expect(result.current.password).toBeNull();
+    });
+
+    it('default context setPassword is a no-op', () => {
+      const { result } = renderHook(() => useContext(SetupContext));
+      expect(() => result.current.setPassword('anything')).not.toThrow();
+      expect(result.current.password).toBeNull();
+    });
+  });
 });
