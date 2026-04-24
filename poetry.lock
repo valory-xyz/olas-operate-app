@@ -2369,22 +2369,22 @@ nicer-shell = ["ipython"]
 
 [[package]]
 name = "olas-operate-middleware"
-version = "0.15.9"
+version = "0.15.10"
 description = ""
 optional = false
 python-versions = "<3.15,>=3.10"
 groups = ["main"]
 files = [
-    {file = "olas_operate_middleware-0.15.9-py3-none-any.whl", hash = "sha256:733537916666b4136a235e392d02657c43b00e48739ed6c5cc3c8826817f8298"},
-    {file = "olas_operate_middleware-0.15.9.tar.gz", hash = "sha256:989105ab4cff0c2cb154facfb93e95bb418419ff9a546ec3698e6e24a4034389"},
+    {file = "olas_operate_middleware-0.15.10-py3-none-any.whl", hash = "sha256:28b560afdf0f02f30f8c89e77ad020dfdd8c72423e3589d1e14878634644d317"},
+    {file = "olas_operate_middleware-0.15.10.tar.gz", hash = "sha256:9ff13381cb6d627e6cb2badd06d1aadd08fe5aebcf6e1143a9b2df4a0e1066e1"},
 ]
 
 [package.dependencies]
-argon2-cffi = "==23.1.0"
-clea = "==0.1.0rc4"
-cryptography = "^46.0.3"
-cytoolz = "<1.2.0,>=1.0.0"
-deepdiff = "^8.6.1"
+argon2-cffi = "23.1.0"
+clea = "0.1.0rc4"
+cryptography = ">=46.0.3,<47.0.0"
+cytoolz = ">=1.0.0,<1.2.0"
+deepdiff = ">=8.6.1,<9.0.0"
 fastapi = "0.110.3"
 halo = "0.0.31"
 multiaddr = "0.0.9"
@@ -3318,7 +3318,7 @@ description = "Python for Window Extensions"
 optional = false
 python-versions = "*"
 groups = ["main"]
-markers = "sys_platform == \"win32\" or platform_system == \"Windows\""
+markers = "platform_system == \"Windows\" or sys_platform == \"win32\""
 files = [
     {file = "pywin32-311-cp310-cp310-win32.whl", hash = "sha256:d03ff496d2a0cd4a5893504789d4a15399133fe82517455e78bad62efbb7f0a3"},
     {file = "pywin32-311-cp310-cp310-win_amd64.whl", hash = "sha256:797c2772017851984b97180b0bebe4b620bb86328e8a884bb626156295a63b3b"},
@@ -4333,4 +4333,4 @@ propcache = ">=0.2.1"
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.14,<3.15"
-content-hash = "6e66b9854857809fe5e26169e77bb921644e90c651b60af31b108391ba4e736e"
+content-hash = "a9a262c584cefba0608d434427610e04381fb412b048efe9c00b64fcb4259e8d"
