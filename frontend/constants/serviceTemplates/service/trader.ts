@@ -179,11 +179,11 @@ export const PREDICT_POLYMARKET_SERVICE_TEMPLATE: ServiceTemplate = {
           agent: parseEther(30),
           safe: parseEther(40),
         },
-        [POLYGON_TOKEN_CONFIG[TokenSymbolMap['USDC.e']]?.address as string]: {
+        [POLYGON_TOKEN_CONFIG[TokenSymbolMap['pUSD']]?.address as string]: {
           agent: '0',
           safe: parseUnits(
             65,
-            POLYGON_TOKEN_CONFIG[TokenSymbolMap['USDC.e']]?.decimals,
+            POLYGON_TOKEN_CONFIG[TokenSymbolMap['pUSD']]?.decimals,
           ),
         },
       },

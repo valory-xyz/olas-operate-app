@@ -3,7 +3,9 @@ import {
   AGENT_CONFIG,
   AVAILABLE_FOR_ADDING_AGENTS,
 } from '../../config/agents';
+import { TokenSymbolMap } from '../../config/tokens';
 import { AgentMap } from '../../constants/agent';
+import { EvmChainIdMap } from '../../constants/chains';
 
 describe('AGENT_CONFIG', () => {
   it('has an entry for every agent type', () => {
@@ -58,6 +60,14 @@ describe('AGENT_CONFIG', () => {
         }
       }
     }
+  });
+
+  it('Polystrat additionalRequirements surfaces pUSD safe amount from service template', () => {
+    const polystratRequirements =
+      AGENT_CONFIG[AgentMap.Polystrat].additionalRequirements;
+    expect(
+      polystratRequirements?.[EvmChainIdMap.Polygon]?.[TokenSymbolMap.pUSD],
+    ).toBe(65);
   });
 });
 
