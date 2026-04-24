@@ -15,7 +15,6 @@ export const TokenSymbolMap = {
   WXDAI: 'WXDAI',
   POL: 'POL',
   'USDC.e': 'USDC.e',
-  /** pUSD: Polymarket USD stablecoin on Polygon (replaces USDC.e for Polystrat) */
   pUSD: 'pUSD',
 } as const;
 
@@ -239,8 +238,7 @@ export const POLYGON_TOKEN_CONFIG: ChainTokenConfig = {
     address: '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174',
   },
   /**
-   * @note pUSD: Polymarket USD stablecoin on Polygon. Replaced USDC.e for Polystrat
-   * as part of Polymarket's API v2 migration.
+   * @note pUSD: Polymarket USD stablecoin on Polygon.
    * @warning pUSD has 6 decimals, not 18.
    * @link https://polygonscan.com/address/0xC011a7E12a19f7B1f670d46F03B03f3342E82DFB
    */
