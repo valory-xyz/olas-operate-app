@@ -66,6 +66,7 @@ export const createStakingRewardsQuery = ({
       ? (refetchInterval ?? FIVE_SECONDS_INTERVAL)
       : false) as number | false,
     refetchOnWindowFocus: false,
+    refetchIntervalInBackground: true,
   };
 };
 

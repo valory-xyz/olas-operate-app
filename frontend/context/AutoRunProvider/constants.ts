@@ -110,6 +110,13 @@ export const SCAN_ELIGIBLE_DELAY_SECONDS = 30 * 60; // 30 minutes
 export const SCAN_LOADING_RETRY_SECONDS = 30; // 30 seconds
 
 /**
+ * Delay (in seconds) before a second rewards-fetch attempt when the first
+ * attempt returns null (transient RPC failure). Short by design to keep
+ * rotation responsive while avoiding hammering the endpoint.
+ */
+export const REWARDS_RETRY_DELAY_SECONDS = 3; // 3 seconds
+
+/**
  * Maximum time (in seconds) to wait for sidebar selection to match a candidate.
  * Example: scanner picks `trader` and waits until UI selection + details are ready.
  */
