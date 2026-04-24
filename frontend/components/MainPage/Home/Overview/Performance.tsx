@@ -5,11 +5,21 @@ import { useMemo } from 'react';
 import styled from 'styled-components';
 
 import { Alert, CardFlex, InfoTooltip, Tooltip } from '@/components/ui';
-import { COLOR, FIVE_MINUTE_INTERVAL, REACT_QUERY_KEYS } from '@/constants';
+import {
+  AgentMap,
+  COLOR,
+  FIVE_MINUTE_INTERVAL,
+  REACT_QUERY_KEYS,
+} from '@/constants';
 import { useService, useServices } from '@/hooks';
 import { ServicesService } from '@/service/Services';
 import { Optional } from '@/types/Util';
-import { asEvmChainId, getTimeAgo, sanitizeHtml } from '@/utils';
+import {
+  asEvmChainId,
+  formatToShortDateTime,
+  getTimeAgo,
+  sanitizeHtml,
+} from '@/utils';
 
 const { Text, Title } = Typography;
 
@@ -67,6 +77,29 @@ const AgentBehaviorContainer = styled.div`
   background-color: ${COLOR.GRAY_1};
   border-radius: 10px;
 `;
+
+const PolystratMetricsUnavailableAlert = ({
+  timestamp,
+}: {
+  timestamp: number | null;
+}) => (
+  <Alert
+    message={
+      <Text className="text-sm">
+        {timestamp !== null && (
+          <div className="font-weight-500 mb-4">
+            Last updated {formatToShortDateTime(timestamp * 1000)}
+          </div>
+        )}
+        Performance and activity stats are temporarily not updating after a
+        recent Polymarket protocol upgrade. Your agent works as usual.
+      </Text>
+    }
+    type="info"
+    showIcon
+    className="text-sm"
+  />
+);
 
 /**
  * Hook to get the agent performance data
@@ -134,8 +167,11 @@ export const Performance = ({
   hasVisitedProfile = false,
 }: PerformanceProps) => {
   const { data: agentPerformance, isLoading } = useAgentPerformance();
-  const { selectedService, selectedAgentConfig } = useServices();
+  const { selectedService, selectedAgentConfig, selectedAgentType } =
+    useServices();
   const { isServiceActive } = useService(selectedService?.service_config_id);
+
+  const isPolystrat = selectedAgentType === AgentMap.Polystrat;
 
   const sortedMetrics = useMemo(() => {
     if (!agentPerformance?.metrics) return [];
@@ -165,35 +201,47 @@ export const Performance = ({
             <Flex justify="center" className="mt-24">
               <Spin />
             </Flex>
-          ) : shouldShowOpenProfileAlert ? (
-            <RequiresProfileOpenAlert
-              title={
-                selectedAgentConfig.needsOpenProfileEachAgentRunAlert.title
-              }
-              message={
-                selectedAgentConfig.needsOpenProfileEachAgentRunAlert.message
-              }
-            />
-          ) : sortedMetrics.length === 0 ? (
-            <NoMetricsAlert />
           ) : (
             <>
-              {!isServiceActive && agentPerformance?.timestamp && (
-                <MetricsCapturedTimestampAlert
-                  timestamp={agentPerformance.timestamp}
+              {isPolystrat && (
+                <PolystratMetricsUnavailableAlert
+                  timestamp={agentPerformance?.timestamp ?? null}
                 />
               )}
-              <Row gutter={[16, 16]}>
-                {sortedMetrics.map((metric) => (
-                  <Col span={12} key={metric.name}>
-                    <AgentMetric
-                      name={metric.name}
-                      value={metric.value}
-                      description={metric.description}
-                    />
-                  </Col>
-                ))}
-              </Row>
+              {shouldShowOpenProfileAlert ? (
+                <RequiresProfileOpenAlert
+                  title={
+                    selectedAgentConfig.needsOpenProfileEachAgentRunAlert.title
+                  }
+                  message={
+                    selectedAgentConfig.needsOpenProfileEachAgentRunAlert
+                      .message
+                  }
+                />
+              ) : sortedMetrics.length === 0 ? (
+                <NoMetricsAlert />
+              ) : (
+                <>
+                  {!isPolystrat &&
+                    !isServiceActive &&
+                    agentPerformance?.timestamp && (
+                      <MetricsCapturedTimestampAlert
+                        timestamp={agentPerformance.timestamp}
+                      />
+                    )}
+                  <Row gutter={[16, 16]}>
+                    {sortedMetrics.map((metric) => (
+                      <Col span={12} key={metric.name}>
+                        <AgentMetric
+                          name={metric.name}
+                          value={metric.value}
+                          description={metric.description}
+                        />
+                      </Col>
+                    ))}
+                  </Row>
+                </>
+              )}
             </>
           )}
           {agentBehavior && (
