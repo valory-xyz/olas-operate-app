@@ -250,45 +250,32 @@ const OnRampMethod = ({ chainId, onSelect }: OnRampMethodProps) => {
           </Paragraph>
         </Flex>
 
-        {IS_TRANSAK_UNAVAILABLE ? (
-          <Alert
-            type="warning"
-            showIcon
-            message="Service is temporarily unavailable."
-            className="text-sm"
-          />
-        ) : (
-          <Flex vertical gap={8}>
-            <Paragraph className="m-0" type="secondary">
-              Estimated to pay
-            </Paragraph>
-            <YouPayContainer vertical gap={12}>
-              {isLoading ? (
-                <Skeleton.Input
-                  size="small"
-                  active
-                  style={{ width: '120px', height: '22px' }}
-                />
-              ) : isBuyDisabled ? (
-                <Text type="danger">Unable to calculate</Text>
-              ) : (
-                <Text>
-                  ~${totalFiatDetails?.fiatAmount?.toFixed(2) ?? '0.00'}
-                </Text>
-              )}
-              <Text className="text-sm text-neutral-tertiary" type="secondary">
-                Powered by Transak. Funds may take up to 10 minutes to be
-                available.
+        <Flex vertical gap={8}>
+          <Paragraph className="m-0" type="secondary">
+            Estimated to pay
+          </Paragraph>
+          <YouPayContainer vertical gap={12}>
+            {isLoading ? (
+              <Skeleton.Input
+                size="small"
+                active
+                style={{ width: '120px', height: '22px' }}
+              />
+            ) : isBuyDisabled ? (
+              <Text type="danger">Unable to calculate</Text>
+            ) : (
+              <Text>
+                ~${totalFiatDetails?.fiatAmount?.toFixed(2) ?? '0.00'}
               </Text>
-            </YouPayContainer>
-          </Flex>
-        )}
+            )}
+            <Text className="text-sm text-neutral-tertiary" type="secondary">
+              Powered by Transak. Funds may take up to 10 minutes to be
+              available.
+            </Text>
+          </YouPayContainer>
+        </Flex>
 
-        {IS_TRANSAK_UNAVAILABLE ? (
-          <Button size="large" className="mt-auto" disabled>
-            Buy Crypto with USD
-          </Button>
-        ) : isFiatAmountTooLow ? (
+        {isFiatAmountTooLow ? (
           <Alert
             message={`The minimum value of crypto to buy with your credit card is $${MIN_ONRAMP_AMOUNT}.`}
             type="info"
