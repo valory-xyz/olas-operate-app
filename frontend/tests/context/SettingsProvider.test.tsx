@@ -18,13 +18,79 @@ describe('SettingsProvider', () => {
     expect(result.current.screen).toBe(SettingsScreenMap.Main);
   });
 
-  it('goto changes the screen value', () => {
+  it('goto changes the screen to AddBackupWalletMethod', () => {
     const { result } = renderHook(() => useContext(SettingsContext), {
       wrapper,
     });
 
-    // SettingsScreenMap only has "Main" currently, but goto accepts any SettingsScreen
-    // We can still test that goto works by calling it with "Main" again or casting
+    act(() => {
+      result.current.goto(SettingsScreenMap.AddBackupWalletMethod);
+    });
+    expect(result.current.screen).toBe(SettingsScreenMap.AddBackupWalletMethod);
+  });
+
+  it('goto changes the screen to AddBackupWalletManual', () => {
+    const { result } = renderHook(() => useContext(SettingsContext), {
+      wrapper,
+    });
+
+    act(() => {
+      result.current.goto(SettingsScreenMap.AddBackupWalletManual);
+    });
+    expect(result.current.screen).toBe(SettingsScreenMap.AddBackupWalletManual);
+  });
+
+  it('goto changes the screen to UpdateBackupWalletMethod', () => {
+    const { result } = renderHook(() => useContext(SettingsContext), {
+      wrapper,
+    });
+
+    act(() => {
+      result.current.goto(SettingsScreenMap.UpdateBackupWalletMethod);
+    });
+    expect(result.current.screen).toBe(
+      SettingsScreenMap.UpdateBackupWalletMethod,
+    );
+  });
+
+  it('goto changes the screen to UpdateBackupWalletManual', () => {
+    const { result } = renderHook(() => useContext(SettingsContext), {
+      wrapper,
+    });
+
+    act(() => {
+      result.current.goto(SettingsScreenMap.UpdateBackupWalletManual);
+    });
+    expect(result.current.screen).toBe(
+      SettingsScreenMap.UpdateBackupWalletManual,
+    );
+  });
+
+  it('goto changes the screen to UpdateBackupWalletConfirm', () => {
+    const { result } = renderHook(() => useContext(SettingsContext), {
+      wrapper,
+    });
+
+    act(() => {
+      result.current.goto(SettingsScreenMap.UpdateBackupWalletConfirm);
+    });
+    expect(result.current.screen).toBe(
+      SettingsScreenMap.UpdateBackupWalletConfirm,
+    );
+  });
+
+  it('goto changes the screen value back to Main', () => {
+    const { result } = renderHook(() => useContext(SettingsContext), {
+      wrapper,
+    });
+
+    act(() => {
+      result.current.goto(SettingsScreenMap.UpdateBackupWalletMethod);
+    });
+    expect(result.current.screen).toBe(
+      SettingsScreenMap.UpdateBackupWalletMethod,
+    );
+
     act(() => {
       result.current.goto(SettingsScreenMap.Main);
     });

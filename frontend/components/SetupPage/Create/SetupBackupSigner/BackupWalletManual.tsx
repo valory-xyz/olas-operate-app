@@ -1,9 +1,10 @@
 import { Button, Flex, Form, FormItemProps, Input, Typography } from 'antd';
 import { getAddress } from 'ethers/lib/utils';
+import { useState } from 'react';
 import { RiAppleFill, RiGoogleFill } from 'react-icons/ri';
 
 import { FormFlex } from '@/components/ui';
-import { COLOR, SETUP_SCREEN } from '@/constants';
+import { COLOR } from '@/constants';
 import { useSetup } from '@/hooks/useSetup';
 import { Address } from '@/types/Address';
 
@@ -22,34 +23,43 @@ const walletFieldRules: FormItemProps['rules'] = [
   },
 ];
 
-export const BackupWalletManual = () => {
-  const { goto, setBackupSigner } = useSetup();
+type BackupWalletManualProps = {
+  onFinish: (address: Address) => void | Promise<void>;
+};
+
+export const BackupWalletManual = ({ onFinish }: BackupWalletManualProps) => {
+  const { setBackupSigner } = useSetup();
   const [form] = Form.useForm();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleFinish = (values: { 'backup-signer': string }) => {
-    // important to lowercase the address before check summing, invalid checksums will
-    // return null if invalid, ethers type is incorrect.
-    const checksummedAddress = getAddress(
-      values['backup-signer'].toLowerCase(),
-    ) as Address | null;
-
-    // If the address is invalid, show an error message
-    if (!checksummedAddress) {
-      return form.setFields([
+  const handleFinish = async (values: { 'backup-signer': string }) => {
+    let checksummedAddress: Address;
+    try {
+      checksummedAddress = getAddress(
+        values['backup-signer'].toLowerCase(),
+      ) as Address;
+    } catch {
+      form.setFields([
         { name: 'backup-signer', errors: [invalidAddressMessage] },
       ]);
+      return;
     }
 
     setBackupSigner({ address: checksummedAddress, type: 'manual' });
-    goto(SETUP_SCREEN.AgentOnboarding);
+    setIsSubmitting(true);
+    try {
+      await onFinish(checksummedAddress);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleWeb3AuthSetupFinish = () => {
-    goto(SETUP_SCREEN.AgentOnboarding);
-  };
-
+  // Suppress the hook's automatic success toast: onFinish runs an async apply
+  // and shows its own error toast on failure. Firing a generic success toast
+  // first would contradict the error toast if apply fails.
   const { openWeb3AuthModel } = useWeb3AuthBackupWallet({
-    onFinish: handleWeb3AuthSetupFinish,
+    onFinish,
+    showSuccessMessage: false,
   });
 
   return (
@@ -60,14 +70,28 @@ export const BackupWalletManual = () => {
           label="Enter Backup Wallet Address"
           rules={walletFieldRules}
         >
-          <Input size="large" placeholder="e.g. 0x12345...54321" />
+          <Input
+            size="large"
+            placeholder="e.g. 0x12345...54321"
+            disabled={isSubmitting}
+          />
         </Form.Item>
-        <Button type="primary" size="large" htmlType="submit">
+        <Button
+          type="primary"
+          size="large"
+          htmlType="submit"
+          loading={isSubmitting}
+        >
           Continue
         </Button>
       </FormFlex>
 
-      <Button type="link" size="large" onClick={openWeb3AuthModel}>
+      <Button
+        type="link"
+        size="large"
+        onClick={openWeb3AuthModel}
+        disabled={isSubmitting}
+      >
         <Flex justify="center" align="center">
           Set Up Wallet with&nbsp;
           <RiGoogleFill fill={COLOR.PRIMARY} />
