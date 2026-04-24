@@ -2,37 +2,20 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { act } from 'react';
 
 import { Settings } from '../../../components/SettingsPage';
-import { NA } from '../../../constants';
-import { EvmChainIdMap, MiddlewareChainMap } from '../../../constants/chains';
 import { SettingsScreen, SettingsScreenMap } from '../../../constants/screen';
 import {
-  useFeatureFlag,
-  useMasterWalletContext,
   useMnemonicExists,
-  useMultisig,
   useRecoveryPhraseBackup,
-  useServices,
   useSettings,
 } from '../../../hooks';
-import {
-  BACKUP_SIGNER_ADDRESS,
-  DEFAULT_EOA_ADDRESS,
-  DEFAULT_SAFE_ADDRESS,
-  makeMasterEoa,
-  makeMasterSafe,
-} from '../../helpers/factories';
 
 // ---------------------------------------------------------------------------
 // Module mocks
 // ---------------------------------------------------------------------------
 
 jest.mock('../../../hooks', () => ({
-  useFeatureFlag: jest.fn(),
-  useMasterWalletContext: jest.fn(),
   useMnemonicExists: jest.fn(),
-  useMultisig: jest.fn(),
   useRecoveryPhraseBackup: jest.fn(),
-  useServices: jest.fn(),
   useSettings: jest.fn(),
 }));
 
@@ -46,18 +29,51 @@ jest.mock('../../../components/SettingsPage/SettingsDrawer', () => ({
     props.isDrawerOpen ? <div data-testid="settings-drawer" /> : null,
 }));
 
-jest.mock('../../../components/SettingsPage/YourFundsAtRiskAlert', () => ({
-  YourFundsAtRiskAlert: () => <div data-testid="funds-at-risk-alert" />,
+jest.mock('../../../components/SettingsPage/BackupWallet', () => ({
+  BackupWalletSection: () => <div data-testid="backup-wallet-section" />,
 }));
 
+jest.mock(
+  '../../../components/SettingsPage/BackupWallet/AddBackupWalletFlow',
+  () => ({
+    AddBackupWalletMethodScreen: () => (
+      <div data-testid="add-backup-wallet-method-screen" />
+    ),
+    AddBackupWalletManualScreen: () => (
+      <div data-testid="add-backup-wallet-manual-screen" />
+    ),
+    AddBackupWalletPasswordModal: () => null,
+    AddBackupWalletProvider: ({ children }: { children: React.ReactNode }) =>
+      children,
+  }),
+);
+
+jest.mock(
+  '../../../components/SettingsPage/BackupWallet/UpdateBackupWalletFlow',
+  () => ({
+    UpdateBackupWalletMethodScreen: () => (
+      <div data-testid="update-backup-wallet-method-screen" />
+    ),
+    UpdateBackupWalletManualScreen: () => (
+      <div data-testid="update-backup-wallet-manual-screen" />
+    ),
+    UpdateBackupWalletConfirmScreen: () => (
+      <div data-testid="update-backup-wallet-confirm-screen" />
+    ),
+    UpdateBackupWalletPasswordModal: () => null,
+    UpdateBackupWalletProvider: ({ children }: { children: React.ReactNode }) =>
+      children,
+    useUpdateBackupWallet: jest.fn(() => ({
+      newAddress: null,
+      setNewAddress: jest.fn(),
+      sameAddressError: false,
+      setSameAddressError: jest.fn(),
+      resetFlow: jest.fn(),
+    })),
+  }),
+);
+
 jest.mock('../../../components/ui', () => ({
-  AddressLink: (props: { address: string; middlewareChain: string }) => (
-    <div
-      data-testid="address-link"
-      data-address={props.address}
-      data-chain={props.middlewareChain}
-    />
-  ),
   Alert: (props: { type: string; message: string; showIcon?: boolean }) => (
     <div
       data-testid="alert"
@@ -88,26 +104,8 @@ jest.mock(
 // ---------------------------------------------------------------------------
 
 const mockUseSettings = useSettings as jest.Mock;
-const mockUseFeatureFlag = useFeatureFlag as jest.Mock;
-const mockUseServices = useServices as jest.Mock;
-const mockUseMasterWalletContext = useMasterWalletContext as jest.Mock;
-const mockUseMultisig = useMultisig as jest.Mock;
 const mockUseMnemonicExists = useMnemonicExists as jest.Mock;
 const mockUseRecoveryPhraseBackup = useRecoveryPhraseBackup as jest.Mock;
-
-// ---------------------------------------------------------------------------
-// Shared fixtures
-// ---------------------------------------------------------------------------
-
-const mockSelectedAgentConfig = {
-  evmHomeChainId: EvmChainIdMap.Gnosis,
-  middlewareHomeChainId: MiddlewareChainMap.GNOSIS,
-};
-
-const mockMasterSafe = makeMasterSafe(
-  EvmChainIdMap.Gnosis,
-  DEFAULT_SAFE_ADDRESS,
-);
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -117,37 +115,17 @@ const mockMasterSafe = makeMasterSafe(
 const setupDefaults = (
   overrides: {
     screen?: SettingsScreen | string;
-    isBackupViaSafeEnabled?: boolean;
-    masterSafes?: ReturnType<typeof makeMasterSafe>[] | undefined;
-    isWalletsLoading?: boolean;
-    owners?: string[] | null | undefined;
-    ownersIsFetched?: boolean;
     mnemonicExists?: boolean;
     isBackedUp?: boolean;
   } = {},
 ) => {
   const {
     screen = SettingsScreenMap.Main,
-    isBackupViaSafeEnabled = true,
-    masterSafes = [mockMasterSafe],
-    isWalletsLoading = false,
-    owners = [DEFAULT_EOA_ADDRESS, BACKUP_SIGNER_ADDRESS],
-    ownersIsFetched = true,
     mnemonicExists = true,
     isBackedUp = false,
   } = overrides;
 
-  mockUseSettings.mockReturnValue({ screen });
-  mockUseFeatureFlag.mockReturnValue(isBackupViaSafeEnabled);
-  mockUseServices.mockReturnValue({
-    selectedAgentConfig: mockSelectedAgentConfig,
-  });
-  mockUseMasterWalletContext.mockReturnValue({
-    masterEoa: makeMasterEoa(DEFAULT_EOA_ADDRESS),
-    masterSafes,
-    isLoading: isWalletsLoading,
-  });
-  mockUseMultisig.mockReturnValue({ owners, ownersIsFetched });
+  mockUseSettings.mockReturnValue({ screen, goto: jest.fn() });
   mockUseMnemonicExists.mockReturnValue({ mnemonicExists });
   mockUseRecoveryPhraseBackup.mockReturnValue({ isBackedUp });
 };
@@ -169,6 +147,48 @@ describe('Settings (SettingsPage entry)', () => {
       expect(screen.getByText('Password')).toBeInTheDocument();
     });
 
+    it('renders AddBackupWalletMethodScreen when screen is AddBackupWalletMethod', () => {
+      setupDefaults({ screen: SettingsScreenMap.AddBackupWalletMethod });
+      render(<Settings />);
+      expect(
+        screen.getByTestId('add-backup-wallet-method-screen'),
+      ).toBeInTheDocument();
+      expect(screen.queryByText('Settings')).not.toBeInTheDocument();
+    });
+
+    it('renders AddBackupWalletManualScreen when screen is AddBackupWalletManual', () => {
+      setupDefaults({ screen: SettingsScreenMap.AddBackupWalletManual });
+      render(<Settings />);
+      expect(
+        screen.getByTestId('add-backup-wallet-manual-screen'),
+      ).toBeInTheDocument();
+      expect(screen.queryByText('Settings')).not.toBeInTheDocument();
+    });
+
+    it('renders UpdateBackupWalletMethodScreen when screen is UpdateBackupWalletMethod', () => {
+      setupDefaults({ screen: SettingsScreenMap.UpdateBackupWalletMethod });
+      render(<Settings />);
+      expect(
+        screen.getByTestId('update-backup-wallet-method-screen'),
+      ).toBeInTheDocument();
+    });
+
+    it('renders UpdateBackupWalletManualScreen when screen is UpdateBackupWalletManual', () => {
+      setupDefaults({ screen: SettingsScreenMap.UpdateBackupWalletManual });
+      render(<Settings />);
+      expect(
+        screen.getByTestId('update-backup-wallet-manual-screen'),
+      ).toBeInTheDocument();
+    });
+
+    it('renders UpdateBackupWalletConfirmScreen when screen is UpdateBackupWalletConfirm', () => {
+      setupDefaults({ screen: SettingsScreenMap.UpdateBackupWalletConfirm });
+      render(<Settings />);
+      expect(
+        screen.getByTestId('update-backup-wallet-confirm-screen'),
+      ).toBeInTheDocument();
+    });
+
     it('renders null for an unknown screen value', () => {
       setupDefaults({ screen: 'UnknownScreen' as SettingsScreen });
       const { container } = render(<Settings />);
@@ -176,166 +196,11 @@ describe('Settings (SettingsPage entry)', () => {
     });
   });
 
-  describe('backup wallet display logic', () => {
-    it('shows N/A when not loading and no masterSafe', () => {
-      setupDefaults({
-        masterSafes: [],
-        isWalletsLoading: false,
-        ownersIsFetched: true,
-        owners: null,
-      });
+  describe('BackupWalletSection', () => {
+    it('renders BackupWalletSection', () => {
+      setupDefaults();
       render(<Settings />);
-      expect(screen.getByText(NA)).toBeInTheDocument();
-    });
-
-    it('shows skeleton when owners are not yet fetched', () => {
-      setupDefaults({
-        ownersIsFetched: false,
-        owners: undefined,
-      });
-      render(<Settings />);
-      // Ant Design Skeleton.Input renders with class ant-skeleton
-      const skeleton = document.querySelector('.ant-skeleton');
-      expect(skeleton).toBeInTheDocument();
-    });
-
-    it('shows "No backup wallet added." when ownersIsFetched but no backup address', () => {
-      setupDefaults({
-        owners: [DEFAULT_EOA_ADDRESS],
-        ownersIsFetched: true,
-      });
-      render(<Settings />);
-      expect(screen.getByText('No backup wallet added.')).toBeInTheDocument();
-    });
-
-    it('shows AddressLink when a backup address exists', () => {
-      setupDefaults({
-        owners: [DEFAULT_EOA_ADDRESS, BACKUP_SIGNER_ADDRESS],
-        ownersIsFetched: true,
-      });
-      render(<Settings />);
-      const addressLink = screen.getByTestId('address-link');
-      expect(addressLink).toBeInTheDocument();
-      expect(addressLink).toHaveAttribute(
-        'data-address',
-        BACKUP_SIGNER_ADDRESS,
-      );
-      expect(addressLink).toHaveAttribute(
-        'data-chain',
-        MiddlewareChainMap.GNOSIS,
-      );
-    });
-
-    it('hides wallet section when backup-via-safe is disabled and no backup address', () => {
-      setupDefaults({
-        isBackupViaSafeEnabled: false,
-        owners: [DEFAULT_EOA_ADDRESS],
-        ownersIsFetched: true,
-      });
-      render(<Settings />);
-      expect(screen.queryByText('Backup Wallet')).not.toBeInTheDocument();
-    });
-
-    it('shows wallet section when backup-via-safe is enabled even without backup address', () => {
-      setupDefaults({
-        isBackupViaSafeEnabled: true,
-        owners: [DEFAULT_EOA_ADDRESS],
-        ownersIsFetched: true,
-      });
-      render(<Settings />);
-      expect(screen.getByText('Backup Wallet')).toBeInTheDocument();
-    });
-
-    it('shows wallet section when backup-via-safe is disabled but backup address exists', () => {
-      setupDefaults({
-        isBackupViaSafeEnabled: false,
-        owners: [DEFAULT_EOA_ADDRESS, BACKUP_SIGNER_ADDRESS],
-        ownersIsFetched: true,
-      });
-      render(<Settings />);
-      expect(screen.getByText('Backup Wallet')).toBeInTheDocument();
-    });
-  });
-
-  describe('masterSafeBackupAddresses derivation', () => {
-    it('filters out the masterEoa address (case-insensitive)', () => {
-      const mixedCaseEoa =
-        DEFAULT_EOA_ADDRESS.toUpperCase() as typeof DEFAULT_EOA_ADDRESS;
-      mockUseMasterWalletContext.mockReturnValue({
-        masterEoa: makeMasterEoa(mixedCaseEoa),
-        masterSafes: [mockMasterSafe],
-        isLoading: false,
-      });
-      setupDefaults({
-        owners: [
-          DEFAULT_EOA_ADDRESS.toLowerCase() as typeof DEFAULT_EOA_ADDRESS,
-          BACKUP_SIGNER_ADDRESS,
-        ],
-        ownersIsFetched: true,
-      });
-      // Re-set masterEoa after setupDefaults since it overrides
-      mockUseMasterWalletContext.mockReturnValue({
-        masterEoa: makeMasterEoa(mixedCaseEoa),
-        masterSafes: [mockMasterSafe],
-        isLoading: false,
-      });
-      render(<Settings />);
-      const addressLink = screen.getByTestId('address-link');
-      expect(addressLink).toHaveAttribute(
-        'data-address',
-        BACKUP_SIGNER_ADDRESS,
-      );
-    });
-
-    it('results in empty backup addresses when owners only contains masterEoa', () => {
-      setupDefaults({
-        owners: [DEFAULT_EOA_ADDRESS],
-        ownersIsFetched: true,
-      });
-      render(<Settings />);
-      expect(screen.getByText('No backup wallet added.')).toBeInTheDocument();
-    });
-
-    it('results in empty backup addresses when owners is empty', () => {
-      setupDefaults({
-        owners: [],
-        ownersIsFetched: true,
-      });
-      render(<Settings />);
-      expect(screen.getByText('No backup wallet added.')).toBeInTheDocument();
-    });
-  });
-
-  describe('YourFundsAtRiskAlert', () => {
-    it('is shown when ownersIsFetched and no backup address', () => {
-      setupDefaults({
-        owners: [DEFAULT_EOA_ADDRESS],
-        ownersIsFetched: true,
-      });
-      render(<Settings />);
-      expect(screen.getByTestId('funds-at-risk-alert')).toBeInTheDocument();
-    });
-
-    it('is not shown when a backup address exists', () => {
-      setupDefaults({
-        owners: [DEFAULT_EOA_ADDRESS, BACKUP_SIGNER_ADDRESS],
-        ownersIsFetched: true,
-      });
-      render(<Settings />);
-      expect(
-        screen.queryByTestId('funds-at-risk-alert'),
-      ).not.toBeInTheDocument();
-    });
-
-    it('is not shown when owners are not yet fetched', () => {
-      setupDefaults({
-        ownersIsFetched: false,
-        owners: undefined,
-      });
-      render(<Settings />);
-      expect(
-        screen.queryByTestId('funds-at-risk-alert'),
-      ).not.toBeInTheDocument();
+      expect(screen.getByTestId('backup-wallet-section')).toBeInTheDocument();
     });
   });
 
@@ -402,26 +267,16 @@ describe('Settings (SettingsPage entry)', () => {
     });
   });
 
-  describe('masterSafeBackupAddresses when masterEoa is undefined', () => {
-    it('treats backup addresses as undefined and shows fallback text', () => {
-      setupDefaults({ ownersIsFetched: true, owners: [BACKUP_SIGNER_ADDRESS] });
-      mockUseMasterWalletContext.mockReturnValue({
-        masterEoa: undefined,
-        masterSafes: [mockMasterSafe],
-        isLoading: false,
-      });
-      render(<Settings />);
-      // When masterEoa is undefined, masterSafeBackupAddresses returns undefined
-      // from the early return at line 137, masterSafeBackupAddress is also undefined,
-      // and walletBackup renders "No backup wallet added." (not the AddressLink)
-      expect(screen.getByText('No backup wallet added.')).toBeInTheDocument();
-      expect(screen.queryByTestId('address-link')).not.toBeInTheDocument();
-    });
-  });
-
   describe('SettingsScreenMap constant', () => {
-    it('exports Main as the only screen', () => {
-      expect(SettingsScreenMap).toEqual({ Main: 'Main' });
+    it('exports all expected screens', () => {
+      expect(SettingsScreenMap).toEqual({
+        Main: 'Main',
+        AddBackupWalletMethod: 'AddBackupWalletMethod',
+        AddBackupWalletManual: 'AddBackupWalletManual',
+        UpdateBackupWalletMethod: 'UpdateBackupWalletMethod',
+        UpdateBackupWalletManual: 'UpdateBackupWalletManual',
+        UpdateBackupWalletConfirm: 'UpdateBackupWalletConfirm',
+      });
     });
   });
 });

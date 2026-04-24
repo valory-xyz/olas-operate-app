@@ -261,6 +261,26 @@ When implementing from a design spec or Figma:
 - **Match layout structure.** If the design shows two separate cards, render two `<SetupCard>` components with a gap — not one card with a divider. If it shows borderless rows, don't add `border` and `background`.
 - **Match button width.** If the design shows a compact left-aligned button, add `style={{ alignSelf: 'flex-start' }}`. Don't let `Flex vertical` stretch it to full width.
 
+### Backend Contract Types — Verify Against Installed Source, Not Docs
+
+**TypeScript types for backend responses must match what the middleware actually returns, not what a design doc / audit / scoping spec *said* it should return.** Design docs describe the scoped intent; implementation can drift (renamed fields, added fields, reshaped payloads). Drift is silent because TypeScript's structural typing only validates fields you *use* — a wrongly-typed field no one reads is a ticking bomb.
+
+**Before writing or updating a TypeScript type that represents a backend response:**
+
+1. Find the installed Python source at `~/Library/Caches/pypoetry/virtualenvs/olas-operate-app-*/lib/python*/site-packages/operate/`.
+2. Grep for the endpoint handler and read the exact `return` dict / `JSONResponse` body.
+3. Copy field names character-by-character. Don't paraphrase, don't rely on the audit.
+4. If there's a wallet/status method that constructs part of the response (e.g. `backup_owner_status` in `operate/wallet/master.py`), read that too — the API handler often just forwards its return value.
+
+**On every `olas-operate-middleware` pin bump in `pyproject.toml`**, re-verify response shapes for every endpoint we call, not just that routes still exist. A route can exist with a different return shape.
+
+**When a feature depends on an unreleased backend PR:** treat any audit / scoping doc you wrote as *history*. Always re-read the installed source after every pin update. Do NOT assume the audit reflects the shipped code.
+
+**Red flags that a contract mismatch is lurking:**
+- A response field in our type that no component reads.
+- A test fixture that constructs a response from scratch (vs. replaying a real backend response).
+- A type you haven't re-checked since the middleware pin was last bumped.
+
 ### Service Pattern
 
 Services use a static object pattern with fetch-based API calls:
