@@ -368,10 +368,12 @@ export const SelectPaymentMethod = ({ onBack }: { onBack: () => void }) => {
       </Title>
 
       <Flex gap={24}>
-        <OnRampMethod
-          chainId={chainId}
-          onSelect={() => setPaymentMethod('ONRAMP')}
-        />
+        {!IS_TRANSAK_UNAVAILABLE && (
+          <OnRampMethod
+            chainId={chainId}
+            onSelect={() => setPaymentMethod('ONRAMP')}
+          />
+        )}
         <TransferMethod
           chainId={chainId}
           onSelect={() => setPaymentMethod('TRANSFER')}
