@@ -683,7 +683,9 @@ describe('useAvailableAgentAssets', () => {
       const pusdAsset = result.current.availableAssets.find(
         (a) => a.symbol === TokenSymbolMap.pUSD,
       );
-      expect(pusdAsset?.amount).toBe(safePusdBalance.balance + eoaPusdBalance.balance);
+      expect(pusdAsset?.amount).toBe(
+        safePusdBalance.balance + eoaPusdBalance.balance,
+      );
     });
   });
 
