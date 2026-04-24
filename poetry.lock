@@ -2369,7 +2369,7 @@ nicer-shell = ["ipython"]
 
 [[package]]
 name = "olas-operate-middleware"
-version = "0.15.11"
+version = "0.15.9"
 description = ""
 optional = false
 python-versions = "<3.15,>=3.10"
