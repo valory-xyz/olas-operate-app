@@ -255,7 +255,7 @@ const OnRampMethod = ({ chainId, onSelect }: OnRampMethodProps) => {
             type="warning"
             showIcon
             message="Service is temporarily unavailable."
-            className="text-sm mt-auto"
+            className="text-sm"
           />
         ) : (
           <Flex vertical gap={8}>
