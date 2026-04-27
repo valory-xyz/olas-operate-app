@@ -86,6 +86,24 @@ const eoaUsdceBalance: WalletBalance = {
   balanceString: '30.0',
 };
 
+const safePusdBalance: WalletBalance = {
+  walletAddress: DEFAULT_SAFE_ADDRESS,
+  evmChainId: EvmChainIdMap.Polygon,
+  symbol: TokenSymbolMap.pUSD,
+  isNative: false,
+  balance: 50.0,
+  balanceString: '50.0',
+};
+
+const eoaPusdBalance: WalletBalance = {
+  walletAddress: AGENT_KEY_ADDRESS,
+  evmChainId: EvmChainIdMap.Polygon,
+  symbol: TokenSymbolMap.pUSD,
+  isNative: false,
+  balance: 30.0,
+  balanceString: '30.0',
+};
+
 // --- Mock setup helper ---
 
 type SetupMocksOptions = {
@@ -634,6 +652,40 @@ describe('useAvailableAgentAssets', () => {
       const { result } = renderHook(() => useAvailableAgentAssets());
       // XDAI + OLAS + WXDAI + USDC.e = 4
       expect(result.current.availableAssets).toHaveLength(4);
+    });
+  });
+
+  describe('Polygon / Polystrat (pUSD)', () => {
+    beforeEach(() => {
+      setupMocks({
+        evmHomeChainId: EvmChainIdMap.Polygon,
+        middlewareHomeChainId: MiddlewareChainMap.POLYGON,
+        erc20Tokens: [TokenSymbolMap.USDC, TokenSymbolMap.pUSD],
+        serviceSafeErc20Balances: [safePusdBalance],
+        serviceEoaErc20Balances: [eoaPusdBalance],
+      });
+    });
+
+    it('includes pUSD in availableAssets', () => {
+      const { result } = renderHook(() => useAvailableAgentAssets());
+      const symbols = result.current.availableAssets.map((a) => a.symbol);
+      expect(symbols).toContain(TokenSymbolMap.pUSD);
+    });
+
+    it('does not include USDC.e in availableAssets (regression guard)', () => {
+      const { result } = renderHook(() => useAvailableAgentAssets());
+      const symbols = result.current.availableAssets.map((a) => a.symbol);
+      expect(symbols).not.toContain(TokenSymbolMap['USDC.e']);
+    });
+
+    it('sums service safe and EOA ERC20 balances for pUSD', () => {
+      const { result } = renderHook(() => useAvailableAgentAssets());
+      const pusdAsset = result.current.availableAssets.find(
+        (a) => a.symbol === TokenSymbolMap.pUSD,
+      );
+      expect(pusdAsset?.amount).toBe(
+        safePusdBalance.balance + eoaPusdBalance.balance,
+      );
     });
   });
 

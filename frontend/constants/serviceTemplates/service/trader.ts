@@ -151,14 +151,14 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
 } as const;
 
 export const PREDICT_POLYMARKET_SERVICE_TEMPLATE: ServiceTemplate = {
-  hash: 'bafybeichhdcb76gqtjw3kucrnxvc5cwrj7xyn6dthqphaqgzk4x54b66sm',
-  service_version: 'v0.34.0-rc1',
+  hash: 'bafybeicewr36eycfxfage6onhdh46w2y37hw3bdwktohajrvhl4bkwgvmm',
+  service_version: 'v0.35.0-rc2',
   agent_release: {
     is_aea: true,
     repository: {
       owner: 'valory-xyz',
       name: 'trader',
-      version: 'v0.34.0-rc1',
+      version: 'v0.35.0-rc2',
     },
   },
   agentType: AgentMap.Polystrat,
@@ -179,11 +179,11 @@ export const PREDICT_POLYMARKET_SERVICE_TEMPLATE: ServiceTemplate = {
           agent: parseEther(30),
           safe: parseEther(40),
         },
-        [POLYGON_TOKEN_CONFIG[TokenSymbolMap['USDC.e']]?.address as string]: {
+        [POLYGON_TOKEN_CONFIG[TokenSymbolMap['pUSD']]?.address as string]: {
           agent: '0',
           safe: parseUnits(
             65,
-            POLYGON_TOKEN_CONFIG[TokenSymbolMap['USDC.e']]?.decimals,
+            POLYGON_TOKEN_CONFIG[TokenSymbolMap['pUSD']]?.decimals,
           ),
         },
       },

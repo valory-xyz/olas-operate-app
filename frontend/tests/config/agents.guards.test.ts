@@ -2,7 +2,7 @@
  * Tests for the defensive guards in config/agents.ts.
  *
  * Three private helpers — getModiusUsdcConfig, getOptimusUsdcConfig, and
- * getPolystratUsdceConfig — have two guarded paths each:
+ * getPolystratPusdConfig — have two guarded paths each:
  *
  * 1. Throw path: if the token config is missing entirely (USDC removed from
  *    TOKEN_CONFIG), throw with a descriptive message instead of computing NaN.
@@ -67,9 +67,9 @@ describe('config/agents defensive guards — throw paths', () => {
     });
   });
 
-  it('throws "Polystrat USDC.e config not found" when USDC.e is absent from POLYGON_TOKEN_CONFIG', () => {
+  it('throws "Polystrat pUSD config not found" when pUSD is absent from POLYGON_TOKEN_CONFIG', () => {
     jest.isolateModules(() => {
-      // Remove USDC.e from Polygon token config to trigger the Polystrat guard
+      // Remove pUSD from Polygon token config to trigger the Polystrat guard
       jest.mock('../../config/tokens', () => {
         const actual = jest.requireActual(
           '../../config/tokens',
@@ -78,7 +78,7 @@ describe('config/agents defensive guards — throw paths', () => {
       });
       // eslint-disable-next-line @typescript-eslint/no-var-requires
       expect(() => require('../../config/agents')).toThrow(
-        'Polystrat USDC.e config not found',
+        'Polystrat pUSD config not found',
       );
     });
   });
@@ -128,7 +128,7 @@ describe('config/agents || 0 fallback — missing fund_requirements', () => {
       // AgentMap.Polystrat = 'polymarket_trader'
       const polystratRequirements = AGENT_CONFIG.polymarket_trader
         .additionalRequirements as AdditionalRequirements;
-      expect(polystratRequirements[137]['USDC.e']).toBe(0);
+      expect(polystratRequirements[137]['pUSD']).toBe(0);
     });
   });
 });
