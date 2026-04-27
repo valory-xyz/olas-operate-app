@@ -155,6 +155,7 @@ export const Withdraw = ({ onBack }: EnterWithdrawalAddressProps) => {
               isLoading ? undefined : () => setWithdrawModalVisible(false)
             }
             closable={!isLoading}
+            centered
             open
             width={436}
             title={null}

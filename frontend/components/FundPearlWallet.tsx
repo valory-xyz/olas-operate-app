@@ -37,20 +37,20 @@ export const FundPearlWallet = () => {
   }, [clearNavParams]);
 
   const homeChainId = selectedAgentConfig.evmHomeChainId;
-  const symbol = CHAIN_CONFIG[homeChainId].nativeToken.symbol;
+  const { symbol, decimals } = CHAIN_CONFIG[homeChainId].nativeToken;
 
   const tokenAndDepositedAmounts = useMemo<AvailableAsset[]>(() => {
     if (prefillAmountWei !== undefined) {
       return [
         {
           symbol,
-          amount: formatUnitsToNumber(String(prefillAmountWei), 18, 6),
+          amount: formatUnitsToNumber(String(prefillAmountWei), decimals, 6),
         },
       ];
     }
     if (!masterEoaGasRequirement) return [];
     return [{ symbol, amount: masterEoaGasRequirement }];
-  }, [prefillAmountWei, masterEoaGasRequirement, symbol]);
+  }, [prefillAmountWei, masterEoaGasRequirement, symbol, decimals]);
 
   if (!masterEoa) return null;
 

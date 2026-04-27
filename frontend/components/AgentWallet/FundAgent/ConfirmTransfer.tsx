@@ -313,6 +313,7 @@ export const ConfirmTransfer = ({
           <Modal
             onCancel={isLoading ? undefined : handleClose}
             closable={!isLoading}
+            centered
             open
             width={436}
             title={null}

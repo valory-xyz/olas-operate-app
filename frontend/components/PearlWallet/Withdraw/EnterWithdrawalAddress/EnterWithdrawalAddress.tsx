@@ -232,6 +232,7 @@ export const EnterWithdrawalAddress = ({
               canCloseModal ? () => setIsPasswordModalOpen(false) : undefined
             }
             closable={canCloseModal}
+            centered
             open
             width={436}
             footer={null}

@@ -7,6 +7,14 @@ import {
 } from '../../../components/ui/InsufficientSignerGasModal';
 import { MiddlewareChainMap } from '../../../constants/chains';
 
+/* eslint-disable @typescript-eslint/no-var-requires */
+jest.mock(
+  'ethers-multicall',
+  () => require('../../mocks/ethersMulticall').ethersMulticallMock,
+);
+/* eslint-enable @typescript-eslint/no-var-requires */
+jest.mock('../../../constants/providers', () => ({}));
+
 jest.mock('../../../components/ui/Modal', () => ({
   Modal: ({
     header,
