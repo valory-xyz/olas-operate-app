@@ -216,22 +216,17 @@ const withdrawBalance = async ({
   serviceConfigId,
 }: {
   serviceConfigId: ServiceConfigId;
-}): Promise<{ error: Nullable<string> }> =>
-  new Promise((resolve, reject) =>
-    fetch(
-      `${BACKEND_URL_V2}/service/${serviceConfigId}/terminate_and_withdraw`,
-      {
-        method: 'POST',
-        headers: { ...CONTENT_TYPE_JSON_UTF8 },
-      },
-    ).then(async (response) => {
-      if (response.ok) {
-        resolve(await response.json());
-        return;
-      }
-      reject(await response.json().catch(() => ({})));
-    }),
+}): Promise<{ error: Nullable<string> }> => {
+  const response = await fetch(
+    `${BACKEND_URL_V2}/service/${serviceConfigId}/terminate_and_withdraw`,
+    {
+      method: 'POST',
+      headers: { ...CONTENT_TYPE_JSON_UTF8 },
+    },
   );
+  if (response.ok) return response.json();
+  throw await response.json().catch(() => ({}));
+};
 
 /**
  * To get the agent performance statistics of a service

@@ -31,23 +31,18 @@ const fundAgent = async ({
 }: {
   funds: ChainFunds;
   serviceConfigId: ServiceConfigId;
-}): Promise<{ error: string | null }> =>
-  new Promise((resolve, reject) =>
-    fetch(`${BACKEND_URL_V2}/service/${serviceConfigId}/fund`, {
+}): Promise<{ error: string | null }> => {
+  const response = await fetch(
+    `${BACKEND_URL_V2}/service/${serviceConfigId}/fund`,
+    {
       method: 'POST',
       body: JSON.stringify(funds),
       headers: { ...CONTENT_TYPE_JSON_UTF8 },
-    }).then(
-      async (response) => {
-        if (response.ok) {
-          resolve(await response.json());
-          return;
-        }
-        reject(await response.json().catch(() => ({})));
-      },
-      (error) => reject(error),
-    ),
+    },
   );
+  if (response.ok) return response.json();
+  throw await response.json().catch(() => ({}));
+};
 
 export const FundService = {
   fundAgent,
