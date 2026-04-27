@@ -146,4 +146,19 @@ describe('InsufficientSignerGasModal', () => {
     expect(description).not.toHaveTextContent('XDAI');
     expect(description).not.toHaveTextContent('ETH');
   });
+
+  it('renders without crashing when prefillAmountWei is zero (malformed-response defensive case)', () => {
+    renderModal({ prefillAmountWei: '0' });
+    const description = screen.getByTestId('modal-description');
+    expect(description).toHaveTextContent('at least 0 XDAI');
+  });
+
+  it('renders without crashing when prefillAmountWei is a very-small-magnitude value', () => {
+    // 1 wei on Gnosis → rounds to 0 at 6dp precision; should still render.
+    renderModal({ prefillAmountWei: '1' });
+    expect(screen.getByTestId('modal-description')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Fund Agent' }),
+    ).toBeInTheDocument();
+  });
 });

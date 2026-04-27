@@ -94,4 +94,53 @@ describe('useInsufficientGasModal', () => {
 
     expect(onClose).toHaveBeenCalledTimes(1);
   });
+
+  it('flips to null when mutation retries (isError resets to false)', () => {
+    const initialProps: { isError: boolean; error: unknown } = {
+      isError: true,
+      error: makeInsufficientGasError(),
+    };
+    const { result, rerender } = renderHook(
+      ({ isError, error }: { isError: boolean; error: unknown }) =>
+        useInsufficientGasModal({
+          isError,
+          error,
+          caseType: 'agent-withdraw',
+          onFund: jest.fn(),
+          onClose: jest.fn(),
+        }),
+      { initialProps },
+    );
+    expect(result.current).not.toBeNull();
+
+    // Simulate mutation retry: state machine resets to pending
+    rerender({ isError: false, error: undefined });
+    expect(result.current).toBeNull();
+  });
+
+  it('returns null when error_code is a typo (e.g. lowercase)', () => {
+    const { result } = renderHook(() =>
+      useInsufficientGasModal({
+        isError: true,
+        error: { error_code: 'insufficient_signer_gas', chain: 'gnosis' },
+        caseType: 'agent-withdraw',
+        onFund: jest.fn(),
+        onClose: jest.fn(),
+      }),
+    );
+    expect(result.current).toBeNull();
+  });
+
+  it('returns null for an empty-object rejection (malformed backend body)', () => {
+    const { result } = renderHook(() =>
+      useInsufficientGasModal({
+        isError: true,
+        error: {},
+        caseType: 'agent-withdraw',
+        onFund: jest.fn(),
+        onClose: jest.fn(),
+      }),
+    );
+    expect(result.current).toBeNull();
+  });
 });
