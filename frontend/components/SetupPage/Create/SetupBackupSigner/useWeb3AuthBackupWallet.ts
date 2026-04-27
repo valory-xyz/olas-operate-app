@@ -4,15 +4,21 @@ import { useEffect, useRef } from 'react';
 import { useElectronApi, useSetup } from '@/hooks';
 import { Address } from '@/types/Address';
 
+type UseWeb3AuthBackupWalletOptions = {
+  onFinish: (backupWallet: Address) => void;
+  showSuccessMessage?: boolean;
+};
+
 export const useWeb3AuthBackupWallet = ({
   onFinish,
-}: {
-  onFinish: (backupWallet: Address) => void;
-}) => {
+  showSuccessMessage = true,
+}: UseWeb3AuthBackupWalletOptions) => {
   const { ipcRenderer, web3AuthWindow } = useElectronApi();
   const { setBackupSigner } = useSetup();
 
   const isAddressReceived = useRef(false);
+  const onFinishRef = useRef(onFinish);
+  onFinishRef.current = onFinish;
 
   const openWeb3AuthModel = () => {
     if (!web3AuthWindow?.show) return;
@@ -29,8 +35,10 @@ export const useWeb3AuthBackupWallet = ({
       isAddressReceived.current = true;
       web3AuthWindow?.close?.();
       setBackupSigner({ address: backupWallet, type: 'web3auth' });
-      onFinish(backupWallet);
-      message.success('Backup wallet successfully set');
+      onFinishRef.current(backupWallet);
+      if (showSuccessMessage) {
+        message.success('Backup wallet successfully set');
+      }
     };
 
     ipcRenderer?.on?.('web3auth-address-received', handleSaveWeb3AuthAddress);
@@ -40,7 +48,7 @@ export const useWeb3AuthBackupWallet = ({
         handleSaveWeb3AuthAddress,
       );
     };
-  });
+  }, [ipcRenderer, web3AuthWindow, setBackupSigner, showSuccessMessage]);
 
   return { openWeb3AuthModel };
 };

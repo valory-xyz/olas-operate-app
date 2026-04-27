@@ -174,6 +174,13 @@ describe('createStakingRewardsQuery', () => {
     expect(refetchOnWindowFocus).toBe(false);
   });
 
+  // -- refetchIntervalInBackground ----------------------------------------
+  it('refetchIntervalInBackground is always true', () => {
+    const { refetchIntervalInBackground } =
+      createStakingRewardsQuery(baseParams);
+    expect(refetchIntervalInBackground).toBe(true);
+  });
+
   // -- queryFn ------------------------------------------------------------
   describe('queryFn', () => {
     it('returns null when staking program does not exist', async () => {

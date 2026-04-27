@@ -21,6 +21,11 @@ type SetupObjectType = {
 type SetupContextType = {
   setupObject: SetupObjectType;
   setSetupObject: Dispatch<SetStateAction<SetupObjectType>>;
+  // Password captured in SetupPassword and consumed by the backup-wallet
+  // eager-write call (useApplyBackupDuringSetup). Held only for the duration
+  // of onboarding; cleared as soon as it's used.
+  password: string | null;
+  setPassword: (password: string | null) => void;
 };
 
 export const SetupContext = createContext<SetupContextType>({
@@ -30,6 +35,8 @@ export const SetupContext = createContext<SetupContextType>({
     backupSigner: undefined,
   },
   setSetupObject: () => {},
+  password: null,
+  setPassword: () => {},
 });
 
 export const SetupProvider = ({ children }: PropsWithChildren) => {
@@ -38,9 +45,12 @@ export const SetupProvider = ({ children }: PropsWithChildren) => {
     prevState: null,
     backupSigner: undefined,
   });
+  const [password, setPassword] = useState<string | null>(null);
 
   return (
-    <SetupContext.Provider value={{ setupObject, setSetupObject }}>
+    <SetupContext.Provider
+      value={{ setupObject, setSetupObject, password, setPassword }}
+    >
       {children}
     </SetupContext.Provider>
   );

@@ -13,6 +13,7 @@ import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
 import { FIVE_SECONDS_INTERVAL, REACT_QUERY_KEYS } from '@/constants';
 import { useElectronApi, useServices, useStore } from '@/hooks';
 import { useAgentStakingRewardsDetails } from '@/hooks/useAgentStakingRewardsDetails';
+import { useDynamicRefetchInterval } from '@/hooks/useDynamicRefetchInterval';
 import { Nullable, StakingRewardsInfo } from '@/types';
 
 import { OnlineStatusContext } from './OnlineStatusProvider';
@@ -55,6 +56,8 @@ const useAvailableRewardsForEpoch = () => {
     !!selectedStakingProgramId &&
     !!STAKING_PROGRAMS[currentChainId]?.[selectedStakingProgramId];
 
+  const refetchInterval = useDynamicRefetchInterval(FIVE_SECONDS_INTERVAL);
+
   return useQuery({
     queryKey: REACT_QUERY_KEYS.AVAILABLE_REWARDS_FOR_EPOCH_KEY(
       currentChainId,
@@ -69,7 +72,8 @@ const useAvailableRewardsForEpoch = () => {
       );
     },
     enabled: !!isOnline && !!serviceConfigId && hasStakingProgram,
-    refetchInterval: isOnline ? FIVE_SECONDS_INTERVAL : false,
+    refetchInterval: isOnline ? refetchInterval : false,
+    refetchIntervalInBackground: true,
   });
 };
 
