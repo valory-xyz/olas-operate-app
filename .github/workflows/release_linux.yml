@@ -95,14 +95,16 @@ jobs:
   # Jobs for production, running separately for x64 and arm64
   build-release:
     needs: [build-pyinstaller]
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.runner }}
     strategy:
       matrix:
         include:
           - os_arch: x64
             env: production
+            runner: ubuntu-latest
           - os_arch: arm64
             env: production
+            runner: ubuntu-latest-arm64
 
     steps:
       - uses: actions/checkout@v4
