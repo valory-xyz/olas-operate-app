@@ -6,7 +6,7 @@ You are auditing the AutoRun feature in the Pearl frontend codebase (olas-operat
 - If `$ARGUMENTS` is blank or `code`, run **Part B (Code Audit)** only.
 - If `$ARGUMENTS` starts with `logs`, run **Part A (Runtime Diagnosis)** only on the path that follows.
 
-Full reference: `frontend/context/AutoRunProvider/docs/auto-run.md`
+Full reference: `docs/features/autorun.md`
 Source: `frontend/context/AutoRunProvider/`
 
 ---
