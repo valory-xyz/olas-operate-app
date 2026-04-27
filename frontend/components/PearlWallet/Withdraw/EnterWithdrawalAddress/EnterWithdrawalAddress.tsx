@@ -7,11 +7,18 @@ import {
   SuccessOutlined,
   WarningOutlined,
 } from '@/components/custom-icons';
-import { CardFlex, cardStyles } from '@/components/ui';
+import {
+  CardFlex,
+  cardStyles,
+  InsufficientSignerGasModal,
+  useInsufficientGasModal,
+} from '@/components/ui';
+import { PAGES } from '@/constants';
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import { useMessageApi } from '@/context/MessageProvider';
 import { usePearlWallet } from '@/context/PearlWalletProvider';
 import { useSupportModal } from '@/context/SupportModalProvider';
+import { usePageState } from '@/hooks';
 
 import { ChainAndAmountOverview } from './ChainAndAmountOverview';
 import { EnterPasswordBeforeWithdrawal } from './EnterPasswordBeforeWithdrawal';
@@ -154,8 +161,15 @@ export const EnterWithdrawalAddress = ({
 }: EnterWithdrawalAddressProps) => {
   const message = useMessageApi();
   const { onReset } = usePearlWallet();
-  const { isLoading, isError, isSuccess, txnHashes, onAuthorizeWithdrawal } =
-    useWithdrawFunds();
+  const { goto } = usePageState();
+  const {
+    isLoading,
+    isError,
+    isSuccess,
+    error,
+    txnHashes,
+    onAuthorizeWithdrawal,
+  } = useWithdrawFunds();
 
   const [withdrawalAddress, setWithdrawalAddress] = useState('');
   const [password, setPassword] = useState('');
@@ -179,6 +193,23 @@ export const EnterWithdrawalAddress = ({
     onAuthorizeWithdrawal(withdrawalAddress, password);
   }, [onAuthorizeWithdrawal, withdrawalAddress, password]);
 
+  const closePasswordModal = useCallback(
+    () => setIsPasswordModalOpen(false),
+    [],
+  );
+
+  const gasModalProps = useInsufficientGasModal({
+    isError,
+    error,
+    caseType: 'pearl-withdraw',
+    onFund: (gasError) => {
+      goto(PAGES.FundPearlWallet, {
+        prefillAmountWei: gasError.prefill_amount_wei,
+      });
+    },
+    onClose: closePasswordModal,
+  });
+
   const hasApiNotTriggered = ![isLoading, isError, isSuccess].some(Boolean);
   const canCloseModal = isError || !hasApiNotTriggered;
 
@@ -191,39 +222,42 @@ export const EnterWithdrawalAddress = ({
         onContinue={handleContinue}
       />
 
-      {isPasswordModalOpen && (
-        <Modal
-          title={hasApiNotTriggered ? 'Authorize Withdrawal' : null}
-          onCancel={
-            canCloseModal ? () => setIsPasswordModalOpen(false) : undefined
-          }
-          closable={canCloseModal}
-          open
-          width={436}
-          footer={null}
-          styles={
-            hasApiNotTriggered
-              ? { header: { marginBottom: 16 } }
-              : { content: { padding: '32px' } }
-          }
-        >
-          {isLoading ? (
-            <WithdrawalInProgress />
-          ) : isError ? (
-            <WithdrawalFailed onTryAgain={handleWithdraw} />
-          ) : isSuccess ? (
-            <WithdrawalComplete transactions={txnHashes} onClose={onReset} />
-          ) : (
-            <EnterPasswordBeforeWithdrawal
-              password={password}
-              onPasswordChange={setPassword}
-              isSubmitDisabled={!password || isLoading || isSuccess}
-              onWithdrawalFunds={handleWithdraw}
-              onCancel={() => setIsPasswordModalOpen(false)}
-            />
-          )}
-        </Modal>
-      )}
+      {isPasswordModalOpen &&
+        (gasModalProps ? (
+          <InsufficientSignerGasModal {...gasModalProps} />
+        ) : (
+          <Modal
+            title={hasApiNotTriggered ? 'Authorize Withdrawal' : null}
+            onCancel={
+              canCloseModal ? () => setIsPasswordModalOpen(false) : undefined
+            }
+            closable={canCloseModal}
+            open
+            width={436}
+            footer={null}
+            styles={
+              hasApiNotTriggered
+                ? { header: { marginBottom: 16 } }
+                : { content: { padding: '32px' } }
+            }
+          >
+            {isLoading ? (
+              <WithdrawalInProgress />
+            ) : isError ? (
+              <WithdrawalFailed onTryAgain={handleWithdraw} />
+            ) : isSuccess ? (
+              <WithdrawalComplete transactions={txnHashes} onClose={onReset} />
+            ) : (
+              <EnterPasswordBeforeWithdrawal
+                password={password}
+                onPasswordChange={setPassword}
+                isSubmitDisabled={!password || isLoading || isSuccess}
+                onWithdrawalFunds={handleWithdraw}
+                onCancel={() => setIsPasswordModalOpen(false)}
+              />
+            )}
+          </Modal>
+        ))}
     </Flex>
   );
 };

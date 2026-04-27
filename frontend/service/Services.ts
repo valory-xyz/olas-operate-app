@@ -203,7 +203,14 @@ const getDeployment = async ({
   });
 
 /**
- * Withdraws the balance of a service
+ * Withdraws the balance of a service.
+ *
+ * On a non-OK response, rejects with the parsed JSON error body (or `{}`
+ * if the body isn't JSON). Callers that care about the
+ * `INSUFFICIENT_SIGNER_GAS` branch should narrow the rejection via
+ * `isInsufficientGasError(err)` from `@/constants`.
+ *
+ * @throws InsufficientGasErrorBody | Record<string, unknown>
  */
 const withdrawBalance = async ({
   serviceConfigId,
@@ -217,12 +224,12 @@ const withdrawBalance = async ({
         method: 'POST',
         headers: { ...CONTENT_TYPE_JSON_UTF8 },
       },
-    ).then((response) => {
+    ).then(async (response) => {
       if (response.ok) {
-        resolve(response.json());
-      } else {
-        reject('Failed to withdraw balance.');
+        resolve(await response.json());
+        return;
       }
+      reject(await response.json().catch(() => ({})));
     }),
   );
 

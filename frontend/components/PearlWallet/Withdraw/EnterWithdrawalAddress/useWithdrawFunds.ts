@@ -110,7 +110,13 @@ const formatWithdrawAssets = (
   );
 
 /**
- * API call to withdraw funds
+ * API call to withdraw funds.
+ *
+ * On a non-OK response, throws the parsed JSON error body (or `{}` if the
+ * body isn't JSON). Callers that care about the `INSUFFICIENT_SIGNER_GAS`
+ * branch should narrow via `isInsufficientGasError(err)` from `@/constants`.
+ *
+ * @throws InsufficientGasErrorBody | Record<string, unknown>
  */
 const withdrawFunds = async (
   request: WithdrawalRequest,
@@ -119,16 +125,12 @@ const withdrawFunds = async (
     method: 'POST',
     headers: { ...CONTENT_TYPE_JSON_UTF8 },
     body: JSON.stringify(request),
-  })
-    .then((response) => {
-      if (response.ok) {
-        return response.json();
-      }
-      throw new Error('Failed to withdraw funds');
-    })
-    .catch((error) => {
-      throw error;
-    });
+  }).then(async (response) => {
+    if (response.ok) {
+      return response.json();
+    }
+    throw await response.json().catch(() => ({}));
+  });
 
 /**
  * Hook to handle withdrawal of funds
@@ -137,14 +139,11 @@ export const useWithdrawFunds = () => {
   const { walletChainId, amountsToWithdraw, availableAssets } =
     usePearlWallet();
 
-  const { isPending, isSuccess, isError, data, mutateAsync } = useMutation<
-    WithdrawalResponse,
-    unknown,
-    WithdrawalRequest
-  >({
-    mutationFn: async (withdrawalRequest) =>
-      await withdrawFunds(withdrawalRequest),
-  });
+  const { isPending, isSuccess, isError, error, data, mutateAsync } =
+    useMutation<WithdrawalResponse, unknown, WithdrawalRequest>({
+      mutationFn: async (withdrawalRequest) =>
+        await withdrawFunds(withdrawalRequest),
+    });
 
   const onAuthorizeWithdrawal = useCallback(
     async (withdrawAddress: string, password: string) => {
@@ -167,8 +166,8 @@ export const useWithdrawFunds = () => {
       try {
         const response = await mutateAsync(request);
         return response;
-      } catch (error) {
-        console.error(error);
+      } catch (caughtError) {
+        console.error(caughtError);
       }
     },
     [walletChainId, amountsToWithdraw, mutateAsync, availableAssets],
@@ -195,6 +194,7 @@ export const useWithdrawFunds = () => {
     isLoading: isPending,
     isSuccess,
     isError,
+    error,
     txnHashes,
     onAuthorizeWithdrawal,
   };
