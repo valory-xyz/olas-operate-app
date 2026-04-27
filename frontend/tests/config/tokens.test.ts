@@ -33,7 +33,7 @@ jest.mock(
 const EVM_ADDRESS_PATTERN = /^0x[0-9a-fA-F]{40}$/;
 
 describe('TokenSymbolMap', () => {
-  it('defines ETH, OLAS, USDC, XDAI, WXDAI, POL, and USDC.e', () => {
+  it('defines ETH, OLAS, USDC, XDAI, WXDAI, POL, USDC.e, and pUSD', () => {
     expect(TokenSymbolMap.ETH).toBe('ETH');
     expect(TokenSymbolMap.OLAS).toBe('OLAS');
     expect(TokenSymbolMap.USDC).toBe('USDC');
@@ -41,10 +41,11 @@ describe('TokenSymbolMap', () => {
     expect(TokenSymbolMap.WXDAI).toBe('WXDAI');
     expect(TokenSymbolMap.POL).toBe('POL');
     expect(TokenSymbolMap['USDC.e']).toBe('USDC.e');
+    expect(TokenSymbolMap.pUSD).toBe('pUSD');
   });
 
-  it('covers exactly 7 token symbols', () => {
-    expect(Object.keys(TokenSymbolMap)).toHaveLength(7);
+  it('covers exactly 8 token symbols', () => {
+    expect(Object.keys(TokenSymbolMap)).toHaveLength(8);
   });
 });
 
@@ -242,6 +243,25 @@ describe('TOKEN_CONFIG — per-chain data integrity', () => {
       expect(
         TOKEN_CONFIG[EvmChainIdMap.Polygon][TokenSymbolMap['USDC.e']]?.decimals,
       ).toBe(6);
+    });
+
+    it('pUSD on Polygon has address 0xC011a7E12a19f7B1f670d46F03B03f3342E82DFB', () => {
+      const pusd = TOKEN_CONFIG[EvmChainIdMap.Polygon][TokenSymbolMap.pUSD] as {
+        address: string;
+      };
+      expect(pusd?.address).toBe('0xC011a7E12a19f7B1f670d46F03B03f3342E82DFB');
+    });
+
+    it('pUSD on Polygon is 6 decimals (not 18)', () => {
+      expect(
+        TOKEN_CONFIG[EvmChainIdMap.Polygon][TokenSymbolMap.pUSD]?.decimals,
+      ).toBe(6);
+    });
+
+    it('pUSD on Polygon is an ERC20 token', () => {
+      expect(
+        TOKEN_CONFIG[EvmChainIdMap.Polygon][TokenSymbolMap.pUSD]?.tokenType,
+      ).toBe(TokenType.Erc20);
     });
   });
 });

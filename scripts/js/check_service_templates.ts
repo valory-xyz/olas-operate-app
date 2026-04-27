@@ -7,13 +7,22 @@ function logError(msg: string) {
   hasErrors = true;
 }
 
-async function checkUrl(url: string): Promise<boolean> {
-  try {
-    const response = await fetch(url, { method: 'HEAD' });
-    return response.ok;
-  } catch {
-    return false;
+async function checkUrl(url: string, retries = 3, delayMs = 2000): Promise<boolean> {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 15000);
+      const response = await fetch(url, { method: 'HEAD', signal: controller.signal });
+      clearTimeout(timeout);
+      if (response.ok) return true;
+    } catch {
+      // ignore — retry below
+    }
+    if (attempt < retries) {
+      await new Promise((resolve) => setTimeout(resolve, delayMs * attempt));
+    }
   }
+  return false;
 }
 
 async function checkServiceTemplates(): Promise<void> {
