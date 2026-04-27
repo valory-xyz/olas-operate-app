@@ -22,7 +22,7 @@ jobs:
           - os_arch: x64
             runner: ubuntu-latest
           - os_arch: arm64
-            runner: ubuntu-24.04-arm
+            runner: ubuntu-22.04-arm  # to support older GLIBC_2.36 on Raspberry Pi OS
 
     steps:
       - uses: actions/checkout@v4
@@ -104,7 +104,7 @@ jobs:
             runner: ubuntu-latest
           - os_arch: arm64
             env: production
-            runner: ubuntu-latest-arm64
+            runner: ubuntu-22.04-arm64
 
     steps:
       - uses: actions/checkout@v4
