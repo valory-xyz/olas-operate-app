@@ -40,10 +40,13 @@ const createSetupWrapper = (initialStoreState = {}) => {
       prevState: null,
       backupSigner: undefined,
     });
+    const [password, setPassword] = useState<string | null>(null);
 
     return createElement(
       SetupContext.Provider,
-      { value: { setupObject, setSetupObject } as never },
+      {
+        value: { setupObject, setSetupObject, password, setPassword } as never,
+      },
       children,
     );
   };
@@ -202,5 +205,37 @@ describe('useSetup', () => {
     expect(result.current).toHaveProperty('prevState');
     expect(result.current).toHaveProperty('goto');
     expect(result.current).toHaveProperty('setBackupSigner');
+  });
+
+  describe('password', () => {
+    it('exposes password from SetupContext (initially null)', () => {
+      const wrapper = createSetupWrapper();
+      const { result } = renderHook(() => useSetup(), { wrapper });
+
+      expect(result.current.password).toBeNull();
+    });
+
+    it('setPassword updates the exposed password', () => {
+      const wrapper = createSetupWrapper();
+      const { result } = renderHook(() => useSetup(), { wrapper });
+
+      act(() => {
+        result.current.setPassword('hunter2');
+      });
+      expect(result.current.password).toBe('hunter2');
+    });
+
+    it('setPassword(null) clears the password', () => {
+      const wrapper = createSetupWrapper();
+      const { result } = renderHook(() => useSetup(), { wrapper });
+
+      act(() => {
+        result.current.setPassword('hunter2');
+      });
+      act(() => {
+        result.current.setPassword(null);
+      });
+      expect(result.current.password).toBeNull();
+    });
   });
 });
