@@ -157,7 +157,9 @@ describe('BalanceProvider', () => {
         0,
       );
       expect(
-        result.current.getStakedOlasBalanceByServiceId(DEFAULT_SERVICE_CONFIG_ID),
+        result.current.getStakedOlasBalanceByServiceId(
+          DEFAULT_SERVICE_CONFIG_ID,
+        ),
       ).toBe(0);
     });
   });
@@ -665,7 +667,9 @@ describe('BalanceProvider', () => {
         expect(result.current.isLoaded).toBe(true);
       });
       expect(
-        result.current.getStakedOlasBalanceByServiceId(DEFAULT_SERVICE_CONFIG_ID),
+        result.current.getStakedOlasBalanceByServiceId(
+          DEFAULT_SERVICE_CONFIG_ID,
+        ),
       ).toBe(30);
     });
 
@@ -699,11 +703,15 @@ describe('BalanceProvider', () => {
       });
       // Only the target service's balance: 10+20 = 30
       expect(
-        result.current.getStakedOlasBalanceByServiceId(DEFAULT_SERVICE_CONFIG_ID),
+        result.current.getStakedOlasBalanceByServiceId(
+          DEFAULT_SERVICE_CONFIG_ID,
+        ),
       ).toBe(30);
       // Sibling independently returns its own balance: 100+200 = 300
       expect(
-        result.current.getStakedOlasBalanceByServiceId(SIBLING_SERVICE_CONFIG_ID),
+        result.current.getStakedOlasBalanceByServiceId(
+          SIBLING_SERVICE_CONFIG_ID,
+        ),
       ).toBe(300);
     });
 
@@ -735,7 +743,9 @@ describe('BalanceProvider', () => {
       });
       // Single service: per-service sum equals chain-wide sum
       expect(
-        result.current.getStakedOlasBalanceByServiceId(DEFAULT_SERVICE_CONFIG_ID),
+        result.current.getStakedOlasBalanceByServiceId(
+          DEFAULT_SERVICE_CONFIG_ID,
+        ),
       ).toBe(40);
       expect(result.current.totalStakedOlasBalance).toBe(40);
     });
