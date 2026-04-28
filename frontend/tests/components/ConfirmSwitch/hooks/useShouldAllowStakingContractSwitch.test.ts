@@ -10,9 +10,11 @@ import { useMasterBalances } from '../../../../hooks/useMasterBalances';
 import { useServices } from '../../../../hooks/useServices';
 import { useStakingProgram } from '../../../../hooks/useStakingProgram';
 import {
+  DEFAULT_SERVICE_CONFIG_ID,
   DEFAULT_SERVICE_NFT_TOKEN_ID,
   makeChainConfig,
   makeService,
+  MOCK_SERVICE_CONFIG_ID_3,
 } from '../../../helpers/factories';
 
 const MOCK_STAKING_PROGRAM_ID = 'mock_staking_program';
@@ -75,7 +77,7 @@ const setupMocks = ({
   mockUseBalanceContext.mockReturnValue({
     isLoaded: isBalanceLoaded,
     getStakedOlasBalanceByServiceId: jest.fn(() => stakedOlasBalance ?? 0),
-  } as ReturnType<typeof useBalanceContext>);
+  } as unknown as ReturnType<typeof useBalanceContext>);
 
   const getMasterSafeOlasBalanceOfInStr = jest.fn(() => safeOlasBalanceStr);
   mockUseMasterBalances.mockReturnValue({
@@ -169,6 +171,54 @@ describe('useShouldAllowStakingContractSwitch', () => {
         useShouldAllowStakingContractSwitch(),
       );
       expect(result.current.totalOlas).toBe(50);
+    });
+
+    // Regression: OPE-1511 — when two services exist on the same chain, the
+    // hook must pass the selected service's config id to the per-service
+    // helper so that only the selected service's stake is counted (sibling
+    // services on the same chain must not inflate totalOlas).
+    it('passes selected service config id to getStakedOlasBalanceByServiceId (OPE-1511)', () => {
+      const targetService = makeService({
+        service_config_id: DEFAULT_SERVICE_CONFIG_ID,
+        chain_configs: makeChainConfig(MiddlewareChainMap.GNOSIS, {
+          token: DEFAULT_SERVICE_NFT_TOKEN_ID,
+        }),
+      });
+      const stakeByServiceId = jest.fn((serviceId?: string) =>
+        serviceId === DEFAULT_SERVICE_CONFIG_ID
+          ? 10
+          : serviceId === MOCK_SERVICE_CONFIG_ID_3
+            ? 999
+            : 0,
+      );
+
+      mockUseBalanceContext.mockReturnValue({
+        isLoaded: true,
+        getStakedOlasBalanceByServiceId: stakeByServiceId,
+      } as unknown as ReturnType<typeof useBalanceContext>);
+      mockUseMasterBalances.mockReturnValue({
+        getMasterSafeOlasBalanceOfInStr: jest.fn(() => '20'),
+      } as unknown as ReturnType<typeof useMasterBalances>);
+      mockUseStakingProgram.mockReturnValue({
+        stakingProgramIdToMigrateTo: MOCK_STAKING_PROGRAM_ID,
+      } as unknown as ReturnType<typeof useStakingProgram>);
+      mockUseServices.mockReturnValue({
+        selectedAgentConfig: { evmHomeChainId: EvmChainIdMap.Gnosis },
+        selectedService: targetService,
+        isFetched: true,
+      } as unknown as ReturnType<typeof useServices>);
+
+      const { result } = renderHook(() =>
+        useShouldAllowStakingContractSwitch(),
+      );
+
+      expect(stakeByServiceId).toHaveBeenCalledWith(DEFAULT_SERVICE_CONFIG_ID);
+      expect(stakeByServiceId).not.toHaveBeenCalledWith(
+        MOCK_SERVICE_CONFIG_ID_3,
+      );
+      // totalOlas reflects target's stake (10) + safe balance (20), not the
+      // sibling's 999.
+      expect(result.current.totalOlas).toBe(30);
     });
   });
 
