@@ -36,6 +36,8 @@ export const BalanceContext = createContext<{
   totalStakedOlasBalance?: number;
   /** Get staked olas balance of a specific agent wallet address */
   getStakedOlasBalanceOf: (walletAddress: Address) => number;
+  /** Get staked olas balance of a specific service by service config id */
+  getStakedOlasBalanceByServiceId: (serviceId?: string) => number;
   /** @deprecated not used */
   lowBalances?: {
     serviceConfigId: string;
@@ -52,6 +54,7 @@ export const BalanceContext = createContext<{
   isLoaded: false,
   updateBalances: async () => {},
   getStakedOlasBalanceOf: () => 0,
+  getStakedOlasBalanceByServiceId: () => 0,
   isPaused: false,
   setIsPaused: () => {},
 });
@@ -149,6 +152,16 @@ export const BalanceProvider = ({ children }: PropsWithChildren) => {
     [stakedBalances],
   );
 
+  const getStakedOlasBalanceByServiceId = useCallback(
+    (serviceId?: string) => {
+      if (!serviceId) return 0;
+      return stakedBalances
+        .filter(({ serviceId: id }) => id === serviceId)
+        .reduce((acc, b) => acc + b.olasBondBalance + b.olasDepositBalance, 0);
+    },
+    [stakedBalances],
+  );
+
   const updateBalances = useCallback(async () => {
     await refetch();
   }, [refetch]);
@@ -163,6 +176,7 @@ export const BalanceProvider = ({ children }: PropsWithChildren) => {
         totalEthBalance,
         totalStakedOlasBalance,
         getStakedOlasBalanceOf,
+        getStakedOlasBalanceByServiceId,
         isPaused,
         setIsPaused,
         updateBalances,
