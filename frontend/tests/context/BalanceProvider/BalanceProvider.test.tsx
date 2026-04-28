@@ -156,6 +156,9 @@ describe('BalanceProvider', () => {
       expect(result.current.getStakedOlasBalanceOf(DEFAULT_EOA_ADDRESS)).toBe(
         0,
       );
+      expect(
+        result.current.getStakedOlasBalanceByServiceId(DEFAULT_SERVICE_CONFIG_ID),
+      ).toBe(0);
     });
   });
 
@@ -621,6 +624,120 @@ describe('BalanceProvider', () => {
       expect(result.current.getStakedOlasBalanceOf('' as `0x${string}`)).toBe(
         0,
       );
+    });
+  });
+
+  describe('getStakedOlasBalanceByServiceId', () => {
+    it('returns 0 for undefined serviceId', async () => {
+      mockGetCrossChainBalances.mockResolvedValue({
+        walletBalances: [],
+        stakedBalances: [makeStakedBalance()],
+      });
+
+      const { result } = renderHook(() => useContext(BalanceContext), {
+        wrapper: createWrapper(),
+      });
+
+      await waitFor(() => {
+        expect(result.current.isLoaded).toBe(true);
+      });
+      expect(result.current.getStakedOlasBalanceByServiceId(undefined)).toBe(0);
+    });
+
+    it('returns sum of bond + deposit for matching serviceId', async () => {
+      const stakedBalances = [
+        makeStakedBalance({
+          serviceId: DEFAULT_SERVICE_CONFIG_ID,
+          olasBondBalance: 10,
+          olasDepositBalance: 20,
+        }),
+      ];
+      mockGetCrossChainBalances.mockResolvedValue({
+        walletBalances: [],
+        stakedBalances,
+      });
+
+      const { result } = renderHook(() => useContext(BalanceContext), {
+        wrapper: createWrapper(),
+      });
+
+      await waitFor(() => {
+        expect(result.current.isLoaded).toBe(true);
+      });
+      expect(
+        result.current.getStakedOlasBalanceByServiceId(DEFAULT_SERVICE_CONFIG_ID),
+      ).toBe(30);
+    });
+
+    it('excludes sibling service on same chain', async () => {
+      const SIBLING_SERVICE_CONFIG_ID = 'sc-sibling-11223344-5566-7788-99aa';
+      const stakedBalances = [
+        makeStakedBalance({
+          serviceId: DEFAULT_SERVICE_CONFIG_ID,
+          evmChainId: EvmChainIdMap.Gnosis,
+          olasBondBalance: 10,
+          olasDepositBalance: 20,
+        }),
+        makeStakedBalance({
+          serviceId: SIBLING_SERVICE_CONFIG_ID,
+          evmChainId: EvmChainIdMap.Gnosis,
+          olasBondBalance: 100,
+          olasDepositBalance: 200,
+        }),
+      ];
+      mockGetCrossChainBalances.mockResolvedValue({
+        walletBalances: [],
+        stakedBalances,
+      });
+
+      const { result } = renderHook(() => useContext(BalanceContext), {
+        wrapper: createWrapper(),
+      });
+
+      await waitFor(() => {
+        expect(result.current.isLoaded).toBe(true);
+      });
+      // Only the target service's balance: 10+20 = 30
+      expect(
+        result.current.getStakedOlasBalanceByServiceId(DEFAULT_SERVICE_CONFIG_ID),
+      ).toBe(30);
+      // Sibling independently returns its own balance: 100+200 = 300
+      expect(
+        result.current.getStakedOlasBalanceByServiceId(SIBLING_SERVICE_CONFIG_ID),
+      ).toBe(300);
+    });
+
+    it('returns same value as totalStakedOlasBalance when only one service is on chain', async () => {
+      const stakedBalances = [
+        makeStakedBalance({
+          serviceId: DEFAULT_SERVICE_CONFIG_ID,
+          evmChainId: EvmChainIdMap.Gnosis,
+          olasBondBalance: 15,
+          olasDepositBalance: 25,
+        }),
+      ];
+      mockGetCrossChainBalances.mockResolvedValue({
+        walletBalances: [],
+        stakedBalances,
+      });
+
+      const { result } = renderHook(() => useContext(BalanceContext), {
+        wrapper: createWrapper({
+          selectedAgentConfig: {
+            ...defaultAgentConfig,
+            evmHomeChainId: EvmChainIdMap.Gnosis,
+          },
+        }),
+      });
+
+      await waitFor(() => {
+        expect(result.current.isLoaded).toBe(true);
+      });
+      // Single service: per-service sum equals chain-wide sum
+      expect(
+        result.current.getStakedOlasBalanceByServiceId(DEFAULT_SERVICE_CONFIG_ID),
+      ).toBe(40);
+      expect(result.current.totalStakedOlasBalance).toBe(40);
     });
   });
 
