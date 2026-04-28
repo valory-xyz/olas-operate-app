@@ -43,7 +43,7 @@ Each phase has corresponding feature documentation in `docs/features/`. **Always
 | 5 | `funding-and-refill.md` |
 | 6 | `bridging.md`, `on-ramping.md`, `funding-and-refill.md` |
 | 7 | `deployability-and-lifecycle.md`, `achievements.md`, `agent-settings.md`, `services.md`, `account.md` |
-| 8 | [`frontend/context/AutoRunProvider/docs/auto-run.md`](../context/AutoRunProvider/docs/auto-run.md) |
+| 8 | [`docs/features/autorun.md`](../../docs/features/autorun.md) |
 | 9 | (none — static data) |
 | 10 | (refer to phase-specific docs for the feature each component belongs to) |
 
@@ -500,7 +500,7 @@ AutoRunProvider.tsx
 - ✅ `context/AutoRunProvider/hooks/useAutoRunController.test.ts` — 6 tests: returns, delegation, health stats reset, health summary interval, interval cleanup
 - ✅ `context/AutoRunProvider/AutoRunProvider.test.tsx` — 13 tests: context values, seeding (2), setEnabled (3), includeAgent (3), excludeAgent (2), eligibilityByAgent (2)
 
-**Reference:** See [`frontend/context/AutoRunProvider/docs/auto-run.md`](../../context/AutoRunProvider/docs/auto-run.md) for documented bugs fixed, edge cases, and design decisions.
+**Reference:** See [`docs/features/autorun.md`](../../docs/features/autorun.md) for documented bugs fixed, edge cases, and design decisions.
 
 ---
 

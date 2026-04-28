@@ -2,7 +2,7 @@ You are performing an agent integration audit for the Pearl frontend codebase (o
 
 The agent type key to audit is: **$ARGUMENTS**
 
-If no argument is provided, ask the user: "Please provide the agent type key (e.g. `polymarket_trader`). This is the snake_case key used in the `AgentMap` enum."
+If no argument is provided, ask the user: "Please provide the agent type key (e.g. `polymarket_trader` — the key for the Polystrat agent). This is the snake_case value from the `AgentMap` enum in `frontend/constants/agent.ts`, not the display name. Known keys today: `trader` (PredictTrader), `memeooorr` (AgentsFun), `modius` (Modius), `optimus` (Optimus), `pett_ai` (PettAi), `polymarket_trader` (Polystrat)."
 
 ---
 
@@ -56,9 +56,9 @@ File: `frontend/constants/serviceTemplates/serviceTemplates.ts`
 ## Section 4 — Agent service class
 
 Directory: `frontend/service/agents/`
-- Check whether a file exists for `$ARGUMENTS` (e.g. `{AgentName}.ts`).
-- Read the file. Confirm it extends `StakedAgentService` and implements: `getAgentStakingRewardsInfo()`, `getAvailableRewardsForEpoch()`, `getServiceStakingDetails()`, `getStakingContractDetails()`.
-- Confirm `defaultStakingProgramId` is set to one of the staking program IDs added in Section 2.
+- Check whether a file exists for `$ARGUMENTS`. The filename usually uses the PascalCase display name (not the snake_case agent key), e.g. `PredictTrader.ts`, `Modius.ts`, `PettAi.ts`, `Polystrat.ts`. **Watch for exceptions:** `AgentMap.AgentsFun` → `AgentsFunBase.ts` (with `shared-services/AgentsFun.ts` providing the actual class), and `AgentMap.Optimus` → `Optimism.ts` (filename is the chain, not the agent). If you cannot find a file by the obvious name, grep `frontend/service/agents/` for a class that `extends StakedAgentService` and references the agent's key.
+- Read the file. Confirm it declares `export abstract class {AgentName}Service extends StakedAgentService` and implements the five abstract methods from `StakedAgentService`: `getAgentStakingRewardsInfo()`, `getAvailableRewardsForEpoch()`, `getServiceStakingDetails()`, `getStakingContractDetails()`, `getInstance()`.
+- Note: `defaultStakingProgramId` lives on the agent config in `frontend/config/agents.ts` (covered in Section 5), **not** on the service class.
 
 ---
 
@@ -76,7 +76,7 @@ File: `frontend/config/agents.ts`
 
 File: `frontend/hooks/useFeatureFlag.ts`
 - Check whether the agent's `AgentMap` key has an entry in `FEATURES_CONFIG`.
-- Confirm all six flags are set (not undefined): `withdraw-funds`, `staking-contract-section`, `backup-via-safe`, `bridge-onboarding`, `bridge-add-funds`, `on-ramp`.
+- Confirm all four flags are set (boolean, not undefined): `withdraw-funds`, `backup-via-safe`, `bridge-onboarding`, `on-ramp`. (If the canonical flag list in the `FeatureFlagsSchema` enum has grown since this command was last updated, cross-check there and audit whatever enum currently defines — the audit should reflect the live schema.)
 
 ---
 

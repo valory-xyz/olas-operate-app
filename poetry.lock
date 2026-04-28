@@ -2374,8 +2374,10 @@ description = ""
 optional = false
 python-versions = "<3.15,>=3.10"
 groups = ["main"]
-files = []
-develop = false
+files = [
+    {file = "olas_operate_middleware-0.15.12-py3-none-any.whl", hash = "sha256:38ef4ad650496b84d4bd0654723e285db28d01814d27096d9335e1a437c1e894"},
+    {file = "olas_operate_middleware-0.15.12.tar.gz", hash = "sha256:b08fd91eced9527059c275c5ec524cc94ebabd8affc68e892f18c282a0545964"},
+]
 
 [package.dependencies]
 argon2-cffi = "==23.1.0"
@@ -4337,4 +4339,4 @@ propcache = ">=0.2.1"
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.14,<3.15"
-content-hash = "25785b4932d230a1bc47b8fb9a5e7e6dea13af7902c0860b51c1023598a5a835"
+content-hash = "f5749ec3f3b826d806cdf15f8a3fc4cbde0e7c814ffe042f55c62cf12a079cc8"

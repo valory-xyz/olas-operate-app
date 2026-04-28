@@ -60,24 +60,22 @@ const getOptimusUsdcConfig = () => {
   return Number(formatUnits(usdcSafeRequirement, optimusUsdcConfig.decimals));
 };
 
-const getPolystratUsdceConfig = () => {
+const getPolystratPusdConfig = () => {
   const polystratFundRequirements =
     PREDICT_POLYMARKET_SERVICE_TEMPLATE.configurations[
       MiddlewareChainMap.POLYGON
     ]?.fund_requirements;
-  const polystratUsdceConfig = POLYGON_TOKEN_CONFIG[TokenSymbolMap['USDC.e']];
+  const polystratPusdConfig = POLYGON_TOKEN_CONFIG[TokenSymbolMap.pUSD];
 
-  if (!polystratUsdceConfig) {
-    throw new Error('Polystrat USDC.e config not found');
+  if (!polystratPusdConfig) {
+    throw new Error('Polystrat pUSD config not found');
   }
 
-  const usdceSafeRequirement =
-    polystratFundRequirements?.[polystratUsdceConfig.address as Address]
-      ?.safe || 0;
+  const pusdSafeRequirement =
+    polystratFundRequirements?.[polystratPusdConfig.address as Address]?.safe ||
+    0;
 
-  return Number(
-    formatUnits(usdceSafeRequirement, polystratUsdceConfig.decimals),
-  );
+  return Number(formatUnits(pusdSafeRequirement, polystratPusdConfig.decimals));
 };
 
 export const AGENT_CONFIG: {
@@ -113,7 +111,7 @@ export const AGENT_CONFIG: {
     agentIds: [86],
     additionalRequirements: {
       [EvmChainIdMap.Polygon]: {
-        [TokenSymbolMap['USDC.e']]: getPolystratUsdceConfig(),
+        [TokenSymbolMap.pUSD]: getPolystratPusdConfig(),
       },
     },
     defaultStakingProgramId: STAKING_PROGRAM_IDS.PolygonBeta1,
@@ -127,7 +125,7 @@ export const AGENT_CONFIG: {
       'Trade sizes adapt to market conditions and agent confidence.',
     servicePublicId: 'valory/polymarket_trader:0.1.0',
     isGeoLocationRestricted: true,
-    erc20Tokens: [TokenSymbolMap.USDC, TokenSymbolMap['USDC.e']],
+    erc20Tokens: [TokenSymbolMap.USDC, TokenSymbolMap.pUSD],
   },
   [AgentMap.Optimus]: {
     isAgentEnabled: true,

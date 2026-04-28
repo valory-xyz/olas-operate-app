@@ -3,7 +3,9 @@ import {
   AGENT_CONFIG,
   AVAILABLE_FOR_ADDING_AGENTS,
 } from '../../config/agents';
+import { TokenSymbolMap } from '../../config/tokens';
 import { AgentMap } from '../../constants/agent';
+import { EvmChainIdMap } from '../../constants/chains';
 
 describe('AGENT_CONFIG', () => {
   it('has an entry for every agent type', () => {
@@ -59,6 +61,14 @@ describe('AGENT_CONFIG', () => {
       }
     }
   });
+
+  it('Polystrat additionalRequirements surfaces pUSD safe amount from service template', () => {
+    const polystratRequirements =
+      AGENT_CONFIG[AgentMap.Polystrat].additionalRequirements;
+    expect(
+      polystratRequirements?.[EvmChainIdMap.Polygon]?.[TokenSymbolMap.pUSD],
+    ).toBe(65);
+  });
 });
 
 describe('ACTIVE_AGENTS', () => {
@@ -113,8 +123,8 @@ describe('defensive guard: getOptimusUsdcConfig throws when USDC config is missi
   });
 });
 
-describe('defensive guard: getPolystratUsdceConfig throws when USDC.e config is missing', () => {
-  it('throws "Polystrat USDC.e config not found"', () => {
+describe('defensive guard: getPolystratPusdConfig throws when pUSD config is missing', () => {
+  it('throws "Polystrat pUSD config not found"', () => {
     expect(() => {
       jest.isolateModules(() => {
         jest.mock('../../config/tokens', () => {
@@ -126,6 +136,6 @@ describe('defensive guard: getPolystratUsdceConfig throws when USDC.e config is 
         });
         require('../../config/agents');
       });
-    }).toThrow('Polystrat USDC.e config not found');
+    }).toThrow('Polystrat pUSD config not found');
   });
 });

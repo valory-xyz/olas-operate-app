@@ -3,7 +3,7 @@ name: review-implementation
 description: Post-implementation self-review checklist. Use after completing a coding phase to audit imports, styling, design compliance, and test coverage before requesting human review.
 ---
 
-**MANDATORY after each phase of a frontend feature.** CLAUDE.md requires this — see "Workflow Commands" section.
+**MANDATORY after each phase of a frontend feature.** CLAUDE.md requires this — see the "Workflow" section under Frontend Coding Conventions.
 
 Fix ALL issues found — do not present code with known issues.
 
