@@ -8,10 +8,7 @@ import {
   SuccessOutlined,
   WarningOutlined,
 } from '@/components/custom-icons';
-import {
-  InsufficientSignerGasModal,
-  useInsufficientGasModal,
-} from '@/components/ui';
+import { InsufficientSignerGasModal } from '@/components/ui';
 import { CardFlex } from '@/components/ui/CardFlex';
 import { TOKEN_CONFIG, TokenSymbol } from '@/config/tokens';
 import { AddressZero, MiddlewareChain, PAGES } from '@/constants';
@@ -20,6 +17,7 @@ import {
   useAgentFundingRequests,
   useBalanceAndRefillRequirementsContext,
   useBalanceContext,
+  useInsufficientGasModal,
   usePageState,
   useService,
   useServices,
@@ -112,23 +110,20 @@ const useConfirmTransfer = () => {
   const { selectedService } = useServices();
   const { refetch } = useBalanceAndRefillRequirementsContext();
   const { updateBalances } = useBalanceContext();
-  const { isPending, isSuccess, isError, error, mutateAsync } = useMutation<
-    void,
-    unknown,
-    ChainFunds
-  >({
-    mutationFn: async (funds: ChainFunds) => {
-      if (!selectedService) throw new Error('No service selected');
+  const { isPending, isSuccess, isError, error, mutateAsync, reset } =
+    useMutation<void, unknown, ChainFunds>({
+      mutationFn: async (funds: ChainFunds) => {
+        if (!selectedService) throw new Error('No service selected');
 
-      const serviceConfigId = selectedService.service_config_id;
-      await FundService.fundAgent({ funds, serviceConfigId });
-    },
-    onSuccess: () => {
-      // Refetch funding requirements and wallet balances because balances are changed
-      refetch();
-      updateBalances();
-    },
-  });
+        const serviceConfigId = selectedService.service_config_id;
+        await FundService.fundAgent({ funds, serviceConfigId });
+      },
+      onSuccess: () => {
+        // Refetch funding requirements and wallet balances because balances are changed
+        refetch();
+        updateBalances();
+      },
+    });
 
   const onFundAgent = useCallback(
     async (fundsToPass: ChainFunds) => {
@@ -141,7 +136,14 @@ const useConfirmTransfer = () => {
     [mutateAsync],
   );
 
-  return { onFundAgent, isLoading: isPending, isSuccess, isError, error };
+  return {
+    onFundAgent,
+    isLoading: isPending,
+    isSuccess,
+    isError,
+    error,
+    resetMutation: reset,
+  };
 };
 
 type ConfirmTransferProps = {
@@ -229,7 +231,7 @@ export const ConfirmTransfer = ({
   const { serviceSafes, serviceEoa } = useService(
     selectedService?.service_config_id,
   );
-  const { onFundAgent, isLoading, isSuccess, isError, error } =
+  const { onFundAgent, isLoading, isSuccess, isError, error, resetMutation } =
     useConfirmTransfer();
   const { eoaTokenRequirements } = useAgentFundingRequests();
   const { goto } = usePageState();
@@ -272,6 +274,14 @@ export const ConfirmTransfer = ({
     if (isSuccess) onSuccess?.();
   }, [isSuccess, onSuccess]);
 
+  // Separate dismiss handler for the gas modal: closes the host modal but
+  // never invokes onSuccess (gas-error and isSuccess are mutually exclusive
+  // today, but coupling them via `handleClose` is a future-bug trap).
+  const dismissGasErrorModal = useCallback(
+    () => setIsTransferStateModalVisible(false),
+    [],
+  );
+
   const gasModalProps = useInsufficientGasModal({
     isError,
     error,
@@ -281,7 +291,8 @@ export const ConfirmTransfer = ({
         prefillAmountWei: gasError.prefill_amount_wei,
       });
     },
-    onClose: handleClose,
+    onClose: dismissGasErrorModal,
+    resetMutation,
   });
 
   const canConfirmTransfer = useMemo(() => {

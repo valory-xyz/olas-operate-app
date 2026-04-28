@@ -49,7 +49,7 @@ const renderModal = (
   overrides: Partial<{
     caseType: InsufficientSignerGasCase;
     chain: string;
-    prefillAmountWei: number | string;
+    prefillAmountWei: string;
     onFund: () => void;
     onClose: () => void;
   }> = {},
@@ -143,17 +143,9 @@ describe('InsufficientSignerGasModal', () => {
     expect(screen.getByTestId('warning-icon')).toBeInTheDocument();
   });
 
-  it('falls back to an empty symbol when the chain is unknown (defensive guard)', () => {
-    renderModal({ chain: 'neptune-chain-that-does-not-exist' });
-    // Modal should still render; symbol degrades to empty string (DOM
-    // collapses the resulting double-space, so assert on the known chunks).
-    const description = screen.getByTestId('modal-description');
-    expect(description).toHaveTextContent('Fund your agent wallet');
-    expect(description).toHaveTextContent('0.75');
-    expect(description).toHaveTextContent('to cover gas fees.');
-    expect(description).not.toHaveTextContent('XDAI');
-    expect(description).not.toHaveTextContent('ETH');
-  });
+  // NOTE: chain-validation is now performed by `useInsufficientGasModal` —
+  // unsupported chains never reach this component. See
+  // `tests/hooks/useInsufficientGasModal.test.ts` for that coverage.
 
   it('renders without crashing when prefillAmountWei is zero (malformed-response defensive case)', () => {
     renderModal({ prefillAmountWei: '0' });

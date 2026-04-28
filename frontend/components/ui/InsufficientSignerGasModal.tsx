@@ -1,5 +1,4 @@
 import { Button } from 'antd';
-import { useMemo } from 'react';
 
 import { WarningOutlined } from '@/components/custom-icons';
 import { CHAIN_CONFIG } from '@/config/chains';
@@ -37,11 +36,17 @@ const COPY: Record<
 export type InsufficientSignerGasModalProps = {
   caseType: InsufficientSignerGasCase;
   chain: string;
-  prefillAmountWei: number | string;
+  prefillAmountWei: string;
   onFund: () => void;
   onClose: () => void;
 };
 
+/**
+ * Caller-facing contract: `chain` MUST be a supported chain string (one
+ * `asEvmChainId` accepts). The host's `useInsufficientGasModal` hook is
+ * responsible for filtering unsupported chains so the modal can resolve
+ * symbol + decimals unconditionally.
+ */
 export const InsufficientSignerGasModal = ({
   caseType,
   chain,
@@ -50,23 +55,9 @@ export const InsufficientSignerGasModal = ({
   onClose,
 }: InsufficientSignerGasModalProps) => {
   const { title, walletLabel, ctaLabel } = COPY[caseType];
-
-  // Resolve native-token symbol + decimals from the chain string so we
-  // don't hardcode 18 (in case a future supported chain ships a non-18
-  // native). Defensive: `asEvmChainId` throws on unknown / unsupported
-  // chains — fall back to safe defaults so the modal still renders.
-  const { nativeSymbol, decimals } = useMemo(() => {
-    try {
-      const evmChainId = asEvmChainId(chain);
-      const { symbol, decimals: nativeDecimals } =
-        CHAIN_CONFIG[evmChainId].nativeToken;
-      return { nativeSymbol: symbol, decimals: nativeDecimals };
-    } catch {
-      return { nativeSymbol: '', decimals: 18 };
-    }
-  }, [chain]);
-
-  const amount = formatUnitsToNumber(String(prefillAmountWei), decimals, 6);
+  const { symbol: nativeSymbol, decimals } =
+    CHAIN_CONFIG[asEvmChainId(chain)].nativeToken;
+  const amount = formatUnitsToNumber(prefillAmountWei, decimals, 6);
 
   return (
     <Modal

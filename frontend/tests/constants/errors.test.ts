@@ -22,16 +22,16 @@ describe('isInsufficientGasError', () => {
     ...overrides,
   });
 
-  it('returns true for a valid structured error body (default: string prefill)', () => {
+  it('returns true for a valid structured error body', () => {
     expect(isInsufficientGasError(makeValid())).toBe(true);
   });
 
-  it('accepts prefill_amount_wei as a number (legacy/fallback)', () => {
-    // Use a value below Number.MAX_SAFE_INTEGER to avoid literal-precision
-    // warnings — the guard itself doesn't care about precision, only type.
+  it('returns false when prefill_amount_wei is a number (precision was already lost at JSON.parse)', () => {
     expect(
-      isInsufficientGasError(makeValid({ prefill_amount_wei: 1_000_000 })),
-    ).toBe(true);
+      isInsufficientGasError(
+        makeValid({ prefill_amount_wei: 1_000_000 as unknown as string }),
+      ),
+    ).toBe(false);
   });
 
   it('returns false when error_code is missing', () => {

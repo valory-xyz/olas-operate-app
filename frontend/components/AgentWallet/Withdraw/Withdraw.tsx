@@ -6,14 +6,10 @@ import {
   SuccessOutlined,
   WarningOutlined,
 } from '@/components/custom-icons';
-import {
-  cardStyles,
-  InsufficientSignerGasModal,
-  useInsufficientGasModal,
-} from '@/components/ui';
+import { cardStyles, InsufficientSignerGasModal } from '@/components/ui';
 import { AddressZero, PAGES } from '@/constants';
 import { useSupportModal } from '@/context/SupportModalProvider';
-import { usePageState } from '@/hooks';
+import { useInsufficientGasModal, usePageState } from '@/hooks';
 
 import { useAgentWallet } from '../AgentWalletProvider';
 import { STEPS } from '../types';
@@ -106,8 +102,14 @@ const WithdrawalFailed = ({ onTryAgain }: WithdrawalFailedProps) => {
 type EnterWithdrawalAddressProps = { onBack: () => void };
 
 export const Withdraw = ({ onBack }: EnterWithdrawalAddressProps) => {
-  const { isLoading, isError, isSuccess, error, onWithdrawFunds } =
-    useWithdrawFunds();
+  const {
+    isLoading,
+    isError,
+    isSuccess,
+    error,
+    onWithdrawFunds,
+    resetMutation,
+  } = useWithdrawFunds();
   const { setFundInitialValues, updateStep } = useAgentWallet();
 
   const [isWithdrawModalVisible, setWithdrawModalVisible] = useState(false);
@@ -131,12 +133,11 @@ export const Withdraw = ({ onBack }: EnterWithdrawalAddressProps) => {
       // it's looked up from DEFAULT_EOA_TOPUPS[chain][ZERO_ADDRESS]), so key
       // it by AddressZero — FundAgent maps AddressZero → the chain's native
       // symbol automatically via TOKEN_CONFIG.
-      setFundInitialValues({
-        [AddressZero]: String(gasError.prefill_amount_wei),
-      });
+      setFundInitialValues({ [AddressZero]: gasError.prefill_amount_wei });
       updateStep(STEPS.FUND_AGENT);
     },
     onClose: closeWithdrawModal,
+    resetMutation,
   });
 
   return (

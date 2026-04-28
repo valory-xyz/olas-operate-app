@@ -11,14 +11,13 @@ import {
   CardFlex,
   cardStyles,
   InsufficientSignerGasModal,
-  useInsufficientGasModal,
 } from '@/components/ui';
 import { PAGES } from '@/constants';
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import { useMessageApi } from '@/context/MessageProvider';
 import { usePearlWallet } from '@/context/PearlWalletProvider';
 import { useSupportModal } from '@/context/SupportModalProvider';
-import { usePageState } from '@/hooks';
+import { useInsufficientGasModal, usePageState } from '@/hooks';
 
 import { ChainAndAmountOverview } from './ChainAndAmountOverview';
 import { EnterPasswordBeforeWithdrawal } from './EnterPasswordBeforeWithdrawal';
@@ -169,6 +168,7 @@ export const EnterWithdrawalAddress = ({
     error,
     txnHashes,
     onAuthorizeWithdrawal,
+    resetMutation,
   } = useWithdrawFunds();
 
   const [withdrawalAddress, setWithdrawalAddress] = useState('');
@@ -208,6 +208,7 @@ export const EnterWithdrawalAddress = ({
       });
     },
     onClose: closePasswordModal,
+    resetMutation,
   });
 
   const hasApiNotTriggered = ![isLoading, isError, isSuccess].some(Boolean);

@@ -528,11 +528,8 @@ export const makePolystratPayoutAchievement = (
 export const makeInsufficientGasError = (
   overrides: Partial<InsufficientGasErrorBody> = {},
 ): InsufficientGasErrorBody => ({
-  error: 'Insufficient funds to cover gas fees',
   error_code: ERROR_CODE.INSUFFICIENT_SIGNER_GAS,
   chain: MiddlewareChainMap.GNOSIS,
-  // String (not number) — `prefill_amount_wei` is serialized by the backend
-  // as a decimal string to preserve precision beyond JS Number.MAX_SAFE_INTEGER.
   prefill_amount_wei: '750000000000000000',
   ...overrides,
 });

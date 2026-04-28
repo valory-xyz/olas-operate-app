@@ -139,7 +139,7 @@ export const useWithdrawFunds = () => {
   const { walletChainId, amountsToWithdraw, availableAssets } =
     usePearlWallet();
 
-  const { isPending, isSuccess, isError, error, data, mutateAsync } =
+  const { isPending, isSuccess, isError, error, data, mutateAsync, reset } =
     useMutation<WithdrawalResponse, unknown, WithdrawalRequest>({
       mutationFn: async (withdrawalRequest) =>
         await withdrawFunds(withdrawalRequest),
@@ -197,5 +197,6 @@ export const useWithdrawFunds = () => {
     error,
     txnHashes,
     onAuthorizeWithdrawal,
+    resetMutation: reset,
   };
 };

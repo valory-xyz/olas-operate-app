@@ -27,14 +27,18 @@ import {
   makeInsufficientGasError,
 } from '../../../helpers/factories';
 
+/* eslint-disable @typescript-eslint/no-var-requires */
 jest.mock('../../../../hooks', () => ({
   useAgentFundingRequests: jest.fn(),
   useBalanceAndRefillRequirementsContext: jest.fn(),
   useBalanceContext: jest.fn(),
+  useInsufficientGasModal: require('../../../../hooks/useInsufficientGasModal')
+    .useInsufficientGasModal,
   usePageState: jest.fn(),
   useService: jest.fn(),
   useServices: jest.fn(),
 }));
+/* eslint-enable @typescript-eslint/no-var-requires */
 
 jest.mock('../../../../service/Fund', () => ({
   FundService: { fundAgent: jest.fn() },
@@ -64,13 +68,7 @@ jest.mock('../../../../components/ui', () => {
   const {
     insufficientGasModalMock,
   } = require('../../../helpers/insufficientGasModalMock');
-  const {
-    useInsufficientGasModal,
-  } = require('../../../../components/ui/useInsufficientGasModal');
-  return {
-    InsufficientSignerGasModal: insufficientGasModalMock,
-    useInsufficientGasModal,
-  };
+  return { InsufficientSignerGasModal: insufficientGasModalMock };
 });
 /* eslint-enable @typescript-eslint/no-var-requires */
 
@@ -184,7 +182,7 @@ describe('ConfirmTransfer (Case 3 — Fund Agent)', () => {
   it('navigates to FundPearlWallet with prefillAmountWei when Fund CTA is clicked', async () => {
     const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
     mockFundAgent.mockRejectedValue(
-      makeInsufficientGasError({ prefill_amount_wei: 2_500_000_000_000_000 }),
+      makeInsufficientGasError({ prefill_amount_wei: '2500000000000000' }),
     );
 
     renderComponent();
@@ -196,7 +194,7 @@ describe('ConfirmTransfer (Case 3 — Fund Agent)', () => {
     fireEvent.click(screen.getByTestId('gas-modal-fund'));
 
     expect(mockGoto).toHaveBeenCalledWith(PAGES.FundPearlWallet, {
-      prefillAmountWei: 2_500_000_000_000_000,
+      prefillAmountWei: '2500000000000000',
     });
     consoleSpy.mockRestore();
   });

@@ -5,7 +5,7 @@ import { useAgentWallet } from '../../../../components/AgentWallet/AgentWalletPr
 import { STEPS } from '../../../../components/AgentWallet/types';
 import { useWithdrawFunds } from '../../../../components/AgentWallet/Withdraw/useWithdrawFunds';
 import { Withdraw } from '../../../../components/AgentWallet/Withdraw/Withdraw';
-import { AddressZero } from '../../../../constants/address';
+import { AddressZero } from '../../../../constants';
 import { makeInsufficientGasError } from '../../../helpers/factories';
 
 jest.mock(
@@ -28,9 +28,13 @@ jest.mock(
 jest.mock('../../../../context/SupportModalProvider', () => ({
   useSupportModal: () => ({ toggleSupportModal: jest.fn() }),
 }));
+/* eslint-disable @typescript-eslint/no-var-requires */
 jest.mock('../../../../hooks', () => ({
   usePageState: () => ({ goto: jest.fn() }),
+  useInsufficientGasModal: require('../../../../hooks/useInsufficientGasModal')
+    .useInsufficientGasModal,
 }));
+/* eslint-enable @typescript-eslint/no-var-requires */
 
 jest.mock('antd', () => {
   const antd = jest.requireActual('antd');
@@ -52,13 +56,9 @@ jest.mock('../../../../components/ui', () => {
   const {
     insufficientGasModalMock,
   } = require('../../../helpers/insufficientGasModalMock');
-  const {
-    useInsufficientGasModal,
-  } = require('../../../../components/ui/useInsufficientGasModal');
   return {
     cardStyles: {},
     InsufficientSignerGasModal: insufficientGasModalMock,
-    useInsufficientGasModal,
   };
 });
 /* eslint-enable @typescript-eslint/no-var-requires */
@@ -141,7 +141,7 @@ describe('Withdraw (AgentWallet)', () => {
       isError: true,
       isSuccess: false,
       error: makeInsufficientGasError({
-        prefill_amount_wei: 2_500_000_000_000_000,
+        prefill_amount_wei: '2500000000000000',
       }),
       onWithdrawFunds: jest.fn(),
     });

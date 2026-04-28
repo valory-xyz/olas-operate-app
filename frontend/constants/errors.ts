@@ -5,8 +5,11 @@ export const ERROR_CODE = {
 export type InsufficientGasErrorBody = {
   error_code: typeof ERROR_CODE.INSUFFICIENT_SIGNER_GAS;
   chain: string;
-  prefill_amount_wei: number | string;
-  error?: string;
+  // Always a decimal string — backend serialises this way to preserve
+  // precision beyond Number.MAX_SAFE_INTEGER (e.g. Polygon's 8×10^18 wei).
+  // Accepting a JSON number here would already have lost precision at
+  // JSON.parse time, so we reject non-string values defensively.
+  prefill_amount_wei: string;
 };
 
 export const isInsufficientGasError = (
@@ -17,7 +20,6 @@ export const isInsufficientGasError = (
   return (
     maybe.error_code === ERROR_CODE.INSUFFICIENT_SIGNER_GAS &&
     typeof maybe.chain === 'string' &&
-    (typeof maybe.prefill_amount_wei === 'number' ||
-      typeof maybe.prefill_amount_wei === 'string')
+    typeof maybe.prefill_amount_wei === 'string'
   );
 };

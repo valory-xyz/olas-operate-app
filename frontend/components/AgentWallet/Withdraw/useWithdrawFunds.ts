@@ -11,21 +11,18 @@ import { ServicesService } from '@/service/Services';
 export const useWithdrawFunds = () => {
   const { selectedService } = useServices();
 
-  const { isPending, isSuccess, isError, error, mutateAsync } = useMutation<
-    void,
-    unknown,
-    void
-  >({
-    mutationFn: async () => {
-      if (!selectedService?.service_config_id) {
-        throw new Error('Service config ID not found');
-      }
+  const { isPending, isSuccess, isError, error, mutateAsync, reset } =
+    useMutation<void, unknown, void>({
+      mutationFn: async () => {
+        if (!selectedService?.service_config_id) {
+          throw new Error('Service config ID not found');
+        }
 
-      await ServicesService.withdrawBalance({
-        serviceConfigId: selectedService.service_config_id,
-      });
-    },
-  });
+        await ServicesService.withdrawBalance({
+          serviceConfigId: selectedService.service_config_id,
+        });
+      },
+    });
 
   const onWithdrawFunds = useCallback(async () => {
     try {
@@ -41,5 +38,6 @@ export const useWithdrawFunds = () => {
     isError,
     error,
     onWithdrawFunds,
+    resetMutation: reset,
   };
 };

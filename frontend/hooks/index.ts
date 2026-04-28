@@ -24,6 +24,7 @@ export * from './useGetBridgeRequirementsParams';
 export * from './useGetOnRampRequirementsParams';
 export * from './useGetRefillRequirements';
 export * from './useInitialFundingRequirements';
+export * from './useInsufficientGasModal';
 export * from './useIsAgentGeoRestricted';
 export * from './useIsInitiallyFunded';
 export * from './useLogs';

@@ -1,7 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 
-import { useInsufficientGasModal } from '../../../components/ui/useInsufficientGasModal';
-import { makeInsufficientGasError } from '../../helpers/factories';
+import { useInsufficientGasModal } from '../../hooks/useInsufficientGasModal';
+import { makeInsufficientGasError } from '../helpers/factories';
 
 describe('useInsufficientGasModal', () => {
   it('returns null when isError is false', () => {
@@ -142,5 +142,99 @@ describe('useInsufficientGasModal', () => {
       }),
     );
     expect(result.current).toBeNull();
+  });
+
+  it('returns null when the backend chain is unknown (host falls back to generic modal)', () => {
+    const { result } = renderHook(() =>
+      useInsufficientGasModal({
+        isError: true,
+        error: makeInsufficientGasError({ chain: 'neptune' }),
+        caseType: 'agent-withdraw',
+        onFund: jest.fn(),
+        onClose: jest.fn(),
+      }),
+    );
+    expect(result.current).toBeNull();
+  });
+
+  it('returns null when prefill_amount_wei arrives as a JSON number (precision rejected)', () => {
+    const { result } = renderHook(() =>
+      useInsufficientGasModal({
+        isError: true,
+        // Backend contract requires string; a number rejection means precision
+        // was already lost at JSON.parse time.
+        error: {
+          ...makeInsufficientGasError(),
+          prefill_amount_wei: 750_000_000_000_000_000 as unknown as string,
+        },
+        caseType: 'agent-withdraw',
+        onFund: jest.fn(),
+        onClose: jest.fn(),
+      }),
+    );
+    expect(result.current).toBeNull();
+  });
+
+  it('calls resetMutation on dismiss so the next attempt starts clean', () => {
+    const onClose = jest.fn();
+    const resetMutation = jest.fn();
+    const { result } = renderHook(() =>
+      useInsufficientGasModal({
+        isError: true,
+        error: makeInsufficientGasError(),
+        caseType: 'pearl-withdraw',
+        onFund: jest.fn(),
+        onClose,
+        resetMutation,
+      }),
+    );
+
+    act(() => {
+      result.current?.onClose();
+    });
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(resetMutation).toHaveBeenCalledTimes(1);
+  });
+
+  it('also calls resetMutation when the Fund CTA is clicked', () => {
+    const onFund = jest.fn();
+    const resetMutation = jest.fn();
+    const { result } = renderHook(() =>
+      useInsufficientGasModal({
+        isError: true,
+        error: makeInsufficientGasError(),
+        caseType: 'pearl-withdraw',
+        onFund,
+        onClose: jest.fn(),
+        resetMutation,
+      }),
+    );
+
+    act(() => {
+      result.current?.onFund();
+    });
+
+    expect(resetMutation).toHaveBeenCalledTimes(1);
+    expect(onFund).toHaveBeenCalledTimes(1);
+  });
+
+  it('is a no-op when resetMutation is omitted (backwards-compat)', () => {
+    const onClose = jest.fn();
+    const { result } = renderHook(() =>
+      useInsufficientGasModal({
+        isError: true,
+        error: makeInsufficientGasError(),
+        caseType: 'agent-withdraw',
+        onFund: jest.fn(),
+        onClose,
+      }),
+    );
+
+    act(() => {
+      result.current?.onClose();
+    });
+
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 });

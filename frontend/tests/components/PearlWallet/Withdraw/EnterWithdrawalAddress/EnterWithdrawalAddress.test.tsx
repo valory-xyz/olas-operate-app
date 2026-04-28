@@ -34,9 +34,14 @@ jest.mock(
 );
 
 const mockGoto = jest.fn();
+/* eslint-disable @typescript-eslint/no-var-requires */
 jest.mock('../../../../../hooks', () => ({
   usePageState: () => ({ goto: mockGoto }),
+  useInsufficientGasModal:
+    require('../../../../../hooks/useInsufficientGasModal')
+      .useInsufficientGasModal,
 }));
+/* eslint-enable @typescript-eslint/no-var-requires */
 
 jest.mock('../../../../../context/MessageProvider', () => ({
   useMessageApi: () => ({ error: jest.fn() }),
@@ -69,16 +74,12 @@ jest.mock('../../../../../components/ui', () => {
   const {
     insufficientGasModalMock,
   } = require('../../../../helpers/insufficientGasModalMock');
-  const {
-    useInsufficientGasModal,
-  } = require('../../../../../components/ui/useInsufficientGasModal');
   return {
     CardFlex: ({ children }: { children: React.ReactNode }) => (
       <div>{children}</div>
     ),
     cardStyles: {},
     InsufficientSignerGasModal: insufficientGasModalMock,
-    useInsufficientGasModal,
   };
 });
 /* eslint-enable @typescript-eslint/no-var-requires */
@@ -165,7 +166,7 @@ describe('EnterWithdrawalAddress', () => {
       isError: true,
       isSuccess: false,
       error: makeInsufficientGasError({
-        prefill_amount_wei: 2_500_000_000_000_000,
+        prefill_amount_wei: '2500000000000000',
       }),
       txnHashes: [],
       onAuthorizeWithdrawal: jest.fn(),
@@ -176,7 +177,7 @@ describe('EnterWithdrawalAddress', () => {
     fireEvent.click(screen.getByTestId('gas-modal-fund'));
 
     expect(mockGoto).toHaveBeenCalledWith(PAGES.FundPearlWallet, {
-      prefillAmountWei: 2_500_000_000_000_000,
+      prefillAmountWei: '2500000000000000',
     });
   });
 

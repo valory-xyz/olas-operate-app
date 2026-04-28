@@ -66,25 +66,25 @@ describe('FundPearlWallet', () => {
   });
 
   it('uses navParams.prefillAmountWei when present (Gnosis: 0.75 xDAI)', () => {
-    mockNavParams = { prefillAmountWei: 750_000_000_000_000_000 };
+    mockNavParams = { prefillAmountWei: '750000000000000000' };
     render(<FundPearlWallet />);
     expect(screen.getByTestId('token-XDAI')).toHaveTextContent('0.75');
   });
 
-  it('accepts prefillAmountWei as a string', () => {
+  it('handles smaller prefill values correctly (e.g. 0.0025 ETH-equivalent)', () => {
     mockNavParams = { prefillAmountWei: '2500000000000000' };
     render(<FundPearlWallet />);
     expect(screen.getByTestId('token-XDAI')).toHaveTextContent('0.0025');
   });
 
   it('clears navParams on mount so subsequent navigations without params do not inherit the override', () => {
-    mockNavParams = { prefillAmountWei: 750_000_000_000_000_000 };
+    mockNavParams = { prefillAmountWei: '750000000000000000' };
     render(<FundPearlWallet />);
     expect(mockClearNavParams).toHaveBeenCalled();
   });
 
   it('retains the captured prefill amount even after navParams are cleared', () => {
-    mockNavParams = { prefillAmountWei: 750_000_000_000_000_000 };
+    mockNavParams = { prefillAmountWei: '750000000000000000' };
     const { rerender } = render(<FundPearlWallet />);
     // Simulate navParams being cleared after useEffect runs
     mockNavParams = {};
