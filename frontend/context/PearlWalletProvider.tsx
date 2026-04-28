@@ -16,6 +16,7 @@ import {
   useAvailableAssets,
   useBalanceAndRefillRequirementsContext,
   useBalanceContext,
+  useFundingEligibleServices,
   useMasterWalletContext,
   usePageState,
   useService,
@@ -129,8 +130,8 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
     selectedService,
     services,
     availableServiceConfigIds,
-    getServiceConfigIdsOf,
   } = useServices();
+  const { getFundingEligibleServiceConfigIdsOf } = useFundingEligibleServices();
   const { isLoaded, getServiceSafeOf, getAgentTypeOf } = useService(
     selectedService?.service_config_id,
   );
@@ -199,7 +200,7 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
     const defaultRequirementDepositValues = getInitialDepositForMasterSafe(
       walletChainId,
       masterSafeAddress,
-      getServiceConfigIdsOf(walletChainId),
+      getFundingEligibleServiceConfigIdsOf(walletChainId),
       getRefillRequirementsOf,
     );
 
@@ -210,7 +211,7 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
   }, [
     walletChainId,
     masterSafeAddress,
-    getServiceConfigIdsOf,
+    getFundingEligibleServiceConfigIdsOf,
     getRefillRequirementsOf,
   ]);
 
