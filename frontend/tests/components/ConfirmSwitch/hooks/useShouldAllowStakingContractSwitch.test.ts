@@ -55,7 +55,7 @@ const mockUseStakingProgram = useStakingProgram as jest.MockedFunction<
 
 type MockOverrides = {
   isBalanceLoaded?: boolean;
-  totalStakedOlasBalance?: number | undefined;
+  stakedOlasBalance?: number | undefined;
   safeOlasBalanceStr?: string | undefined;
   stakingProgramIdToMigrateTo?: string;
   isFetched?: boolean;
@@ -65,7 +65,7 @@ type MockOverrides = {
 
 const setupMocks = ({
   isBalanceLoaded = true,
-  totalStakedOlasBalance = 0,
+  stakedOlasBalance = 0,
   safeOlasBalanceStr = '0',
   stakingProgramIdToMigrateTo = MOCK_STAKING_PROGRAM_ID,
   isFetched = true,
@@ -74,7 +74,7 @@ const setupMocks = ({
 }: MockOverrides = {}) => {
   mockUseBalanceContext.mockReturnValue({
     isLoaded: isBalanceLoaded,
-    totalStakedOlasBalance,
+    getStakedOlasBalanceByServiceId: jest.fn(() => stakedOlasBalance ?? 0),
   } as ReturnType<typeof useBalanceContext>);
 
   const getMasterSafeOlasBalanceOfInStr = jest.fn(() => safeOlasBalanceStr);
@@ -121,7 +121,7 @@ describe('useShouldAllowStakingContractSwitch', () => {
     });
 
     it('returns parsed balance when balance is loaded', () => {
-      setupMocks({ safeOlasBalanceStr: '42', totalStakedOlasBalance: 0 });
+      setupMocks({ safeOlasBalanceStr: '42', stakedOlasBalance: 0 });
       const { result } = renderHook(() =>
         useShouldAllowStakingContractSwitch(),
       );
@@ -131,7 +131,7 @@ describe('useShouldAllowStakingContractSwitch', () => {
     it('returns 0 when getMasterSafeOlasBalanceOfInStr returns empty string', () => {
       setupMocks({
         safeOlasBalanceStr: '',
-        totalStakedOlasBalance: 0,
+        stakedOlasBalance: 0,
       });
       const { result } = renderHook(() =>
         useShouldAllowStakingContractSwitch(),
@@ -142,7 +142,7 @@ describe('useShouldAllowStakingContractSwitch', () => {
     it('returns 0 when getMasterSafeOlasBalanceOfInStr returns undefined', () => {
       setupMocks({
         safeOlasBalanceStr: undefined,
-        totalStakedOlasBalance: 0,
+        stakedOlasBalance: 0,
       });
       const { result } = renderHook(() =>
         useShouldAllowStakingContractSwitch(),
@@ -152,18 +152,18 @@ describe('useShouldAllowStakingContractSwitch', () => {
   });
 
   describe('totalOlas', () => {
-    it('sums safeOlasBalance and totalStakedOlasBalance', () => {
-      setupMocks({ safeOlasBalanceStr: '30', totalStakedOlasBalance: 70 });
+    it('sums safeOlasBalance and staked service balance', () => {
+      setupMocks({ safeOlasBalanceStr: '30', stakedOlasBalance: 70 });
       const { result } = renderHook(() =>
         useShouldAllowStakingContractSwitch(),
       );
       expect(result.current.totalOlas).toBe(100);
     });
 
-    it('handles null totalStakedOlasBalance by treating it as 0', () => {
+    it('uses only safeOlasBalance when service has no staked OLAS', () => {
       setupMocks({
         safeOlasBalanceStr: '50',
-        totalStakedOlasBalance: undefined,
+        stakedOlasBalance: undefined,
       });
       const { result } = renderHook(() =>
         useShouldAllowStakingContractSwitch(),
@@ -174,7 +174,7 @@ describe('useShouldAllowStakingContractSwitch', () => {
 
   describe('olasRequiredToMigrate', () => {
     it('returns deficit when totalOlas is less than minimum', () => {
-      setupMocks({ safeOlasBalanceStr: '30', totalStakedOlasBalance: 10 });
+      setupMocks({ safeOlasBalanceStr: '30', stakedOlasBalance: 10 });
       const { result } = renderHook(() =>
         useShouldAllowStakingContractSwitch(),
       );
@@ -183,7 +183,7 @@ describe('useShouldAllowStakingContractSwitch', () => {
     });
 
     it('clamps to 0 when totalOlas exceeds minimum', () => {
-      setupMocks({ safeOlasBalanceStr: '80', totalStakedOlasBalance: 50 });
+      setupMocks({ safeOlasBalanceStr: '80', stakedOlasBalance: 50 });
       const { result } = renderHook(() =>
         useShouldAllowStakingContractSwitch(),
       );
@@ -191,7 +191,7 @@ describe('useShouldAllowStakingContractSwitch', () => {
     });
 
     it('returns 0 when totalOlas equals minimum exactly', () => {
-      setupMocks({ safeOlasBalanceStr: '60', totalStakedOlasBalance: 40 });
+      setupMocks({ safeOlasBalanceStr: '60', stakedOlasBalance: 40 });
       const { result } = renderHook(() =>
         useShouldAllowStakingContractSwitch(),
       );
@@ -206,7 +206,7 @@ describe('useShouldAllowStakingContractSwitch', () => {
       setupMocks({
         isFetched: false,
         safeOlasBalanceStr: '0',
-        totalStakedOlasBalance: 0,
+        stakedOlasBalance: 0,
       });
       const { result } = renderHook(() =>
         useShouldAllowStakingContractSwitch(),
@@ -220,7 +220,7 @@ describe('useShouldAllowStakingContractSwitch', () => {
       setupMocks({
         selectedService: undefined,
         safeOlasBalanceStr: '50',
-        totalStakedOlasBalance: 0,
+        stakedOlasBalance: 0,
       });
       const { result } = renderHook(() =>
         useShouldAllowStakingContractSwitch(),
@@ -232,7 +232,7 @@ describe('useShouldAllowStakingContractSwitch', () => {
       setupMocks({
         serviceToken: 0,
         safeOlasBalanceStr: '50',
-        totalStakedOlasBalance: 0,
+        stakedOlasBalance: 0,
       });
       const { result } = renderHook(() =>
         useShouldAllowStakingContractSwitch(),
@@ -245,7 +245,7 @@ describe('useShouldAllowStakingContractSwitch', () => {
       setupMocks({
         serviceToken: -1,
         safeOlasBalanceStr: '50',
-        totalStakedOlasBalance: 0,
+        stakedOlasBalance: 0,
       });
       const { result } = renderHook(() =>
         useShouldAllowStakingContractSwitch(),
@@ -257,7 +257,7 @@ describe('useShouldAllowStakingContractSwitch', () => {
       setupMocks({
         serviceToken: DEFAULT_SERVICE_NFT_TOKEN_ID,
         safeOlasBalanceStr: '0',
-        totalStakedOlasBalance: 150,
+        stakedOlasBalance: 150,
       });
       const { result } = renderHook(() =>
         useShouldAllowStakingContractSwitch(),
@@ -273,7 +273,7 @@ describe('useShouldAllowStakingContractSwitch', () => {
         setupMocks({
           serviceToken: 0,
           safeOlasBalanceStr: '99',
-          totalStakedOlasBalance: 0,
+          stakedOlasBalance: 0,
         });
         const { result } = renderHook(() =>
           useShouldAllowStakingContractSwitch(),
@@ -285,7 +285,7 @@ describe('useShouldAllowStakingContractSwitch', () => {
         setupMocks({
           serviceToken: 0,
           safeOlasBalanceStr: '100',
-          totalStakedOlasBalance: 0,
+          stakedOlasBalance: 0,
         });
         const { result } = renderHook(() =>
           useShouldAllowStakingContractSwitch(),
@@ -297,7 +297,7 @@ describe('useShouldAllowStakingContractSwitch', () => {
         setupMocks({
           serviceToken: 0,
           safeOlasBalanceStr: '200',
-          totalStakedOlasBalance: 0,
+          stakedOlasBalance: 0,
         });
         const { result } = renderHook(() =>
           useShouldAllowStakingContractSwitch(),
@@ -310,7 +310,7 @@ describe('useShouldAllowStakingContractSwitch', () => {
         setupMocks({
           serviceToken: 0,
           safeOlasBalanceStr: '50',
-          totalStakedOlasBalance: 100,
+          stakedOlasBalance: 100,
         });
         const { result } = renderHook(() =>
           useShouldAllowStakingContractSwitch(),
@@ -324,7 +324,7 @@ describe('useShouldAllowStakingContractSwitch', () => {
         setupMocks({
           serviceToken: DEFAULT_SERVICE_NFT_TOKEN_ID,
           safeOlasBalanceStr: '60',
-          totalStakedOlasBalance: 40,
+          stakedOlasBalance: 40,
         });
         const { result } = renderHook(() =>
           useShouldAllowStakingContractSwitch(),
@@ -336,7 +336,7 @@ describe('useShouldAllowStakingContractSwitch', () => {
         setupMocks({
           serviceToken: DEFAULT_SERVICE_NFT_TOKEN_ID,
           safeOlasBalanceStr: '80',
-          totalStakedOlasBalance: 80,
+          stakedOlasBalance: 80,
         });
         const { result } = renderHook(() =>
           useShouldAllowStakingContractSwitch(),
@@ -348,7 +348,7 @@ describe('useShouldAllowStakingContractSwitch', () => {
         setupMocks({
           serviceToken: DEFAULT_SERVICE_NFT_TOKEN_ID,
           safeOlasBalanceStr: '30',
-          totalStakedOlasBalance: 20,
+          stakedOlasBalance: 20,
         });
         const { result } = renderHook(() =>
           useShouldAllowStakingContractSwitch(),
@@ -357,11 +357,11 @@ describe('useShouldAllowStakingContractSwitch', () => {
       });
 
       it('considers staked balance for non-first-deploy check', () => {
-        // safeOlasBalance=10 but totalStakedOlasBalance=90, totalOlas=100 >= minimum
+        // safeOlasBalance=10 but stakedOlasBalance=90, totalOlas=100 >= minimum
         setupMocks({
           serviceToken: DEFAULT_SERVICE_NFT_TOKEN_ID,
           safeOlasBalanceStr: '10',
-          totalStakedOlasBalance: 90,
+          stakedOlasBalance: 90,
         });
         const { result } = renderHook(() =>
           useShouldAllowStakingContractSwitch(),
@@ -377,7 +377,7 @@ describe('useShouldAllowStakingContractSwitch', () => {
       setupMocks({
         selectedService: service,
         safeOlasBalanceStr: '50',
-        totalStakedOlasBalance: 0,
+        stakedOlasBalance: 0,
       });
       const { result } = renderHook(() =>
         useShouldAllowStakingContractSwitch(),
@@ -391,7 +391,7 @@ describe('useShouldAllowStakingContractSwitch', () => {
       setupMocks({
         selectedService: service,
         safeOlasBalanceStr: '50',
-        totalStakedOlasBalance: 0,
+        stakedOlasBalance: 0,
       });
       const { result } = renderHook(() =>
         useShouldAllowStakingContractSwitch(),
@@ -417,7 +417,7 @@ describe('useShouldAllowStakingContractSwitch', () => {
       setupMocks({
         selectedService: service,
         safeOlasBalanceStr: '50',
-        totalStakedOlasBalance: 0,
+        stakedOlasBalance: 0,
       });
       const { result } = renderHook(() =>
         useShouldAllowStakingContractSwitch(),
@@ -431,7 +431,7 @@ describe('useShouldAllowStakingContractSwitch', () => {
       setupMocks({
         serviceToken: DEFAULT_SERVICE_NFT_TOKEN_ID,
         safeOlasBalanceStr: '75',
-        totalStakedOlasBalance: 10,
+        stakedOlasBalance: 10,
       });
       const { result } = renderHook(() =>
         useShouldAllowStakingContractSwitch(),

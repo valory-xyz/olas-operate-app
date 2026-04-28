@@ -9,7 +9,7 @@ import { BackButton, CardFlex, Divider, Tooltip } from '@/components/ui';
 import { CHAIN_CONFIG } from '@/config/chains';
 import { TokenSymbolConfigMap } from '@/config/tokens';
 import { COLOR } from '@/constants';
-import { useBalanceContext } from '@/hooks';
+import { useBalanceContext, useServices } from '@/hooks';
 import { formatNumber } from '@/utils';
 
 import { useAgentWallet } from '../AgentWalletProvider';
@@ -119,8 +119,9 @@ const AssetsFromAgentWallet = () => {
 };
 
 const AssetsFromStakingContract = () => {
-  const { isLoading: isBalanceLoading, totalStakedOlasBalance } =
+  const { isLoading: isBalanceLoading, getStakedOlasBalanceByServiceId } =
     useBalanceContext();
+  const { selectedService } = useServices();
 
   return (
     <Flex vertical gap={8}>
@@ -136,7 +137,15 @@ const AssetsFromStakingContract = () => {
           {isBalanceLoading ? (
             <Skeleton.Input active size="small" style={{ width: 80 }} />
           ) : (
-            <Text>{formatNumber(totalStakedOlasBalance, 4)} OLAS</Text>
+            <Text>
+              {formatNumber(
+                getStakedOlasBalanceByServiceId(
+                  selectedService?.service_config_id,
+                ),
+                4,
+              )}{' '}
+              OLAS
+            </Text>
           )}
         </Flex>
 
