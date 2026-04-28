@@ -104,7 +104,7 @@ jobs:
             runner: ubuntu-latest
           - os_arch: arm64
             env: production
-            runner: ubuntu-22.04-arm64
+            runner: ubuntu-22.04-arm
 
     steps:
       - uses: actions/checkout@v4
