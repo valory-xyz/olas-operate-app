@@ -2369,7 +2369,7 @@ nicer-shell = ["ipython"]
 
 [[package]]
 name = "olas-operate-middleware"
-version = "0.15.11"
+version = "0.15.12"
 description = ""
 optional = false
 python-versions = "<3.15,>=3.10"
@@ -2399,8 +2399,8 @@ uvicorn = "==0.27.0"
 [package.source]
 type = "git"
 url = "https://github.com/valory-xyz/olas-operate-middleware.git"
-reference = "fcae46fbbbe3de8015dc9149289de87e9392464e"
-resolved_reference = "fcae46fbbbe3de8015dc9149289de87e9392464e"
+reference = "d960abfc10780928dc8b0a6e9c533f0626f734b5"
+resolved_reference = "d960abfc10780928dc8b0a6e9c533f0626f734b5"
 
 [[package]]
 name = "open-aea"
@@ -4337,4 +4337,4 @@ propcache = ">=0.2.1"
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.14,<3.15"
-content-hash = "537db17d3b27aac3310435bea286fb28ef61861b90aee0ed25dcc64375229418"
+content-hash = "071716571c90876971c4006c64b81ac8e5d0c1785d59d9af8d6c5139797756af"
