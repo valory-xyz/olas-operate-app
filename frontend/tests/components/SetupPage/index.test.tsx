@@ -142,6 +142,8 @@ const renderWithState = (state: SetupScreen | string) => {
           prevState: null,
         },
         setSetupObject: jest.fn(),
+        password: null,
+        setPassword: jest.fn(),
       }}
     >
       <Setup />

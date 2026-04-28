@@ -12,8 +12,9 @@ import {
   Divider,
   TokenAmountInput,
 } from '@/components/ui';
-import { TOKEN_CONFIG, TokenSymbol } from '@/config/tokens';
+import { TOKEN_CONFIG, TokenSymbol, TokenSymbolMap } from '@/config/tokens';
 import { AddressZero, PAGES } from '@/constants';
+import { EvmChainIdMap } from '@/constants/chains';
 import { useAvailableAssets, usePageState, useServices } from '@/hooks';
 import { TokenAmountDetails, TokenAmounts } from '@/types/Wallet';
 import { formatUnitsToNumber } from '@/utils';
@@ -93,6 +94,18 @@ const useFundAgent = () => {
     });
   const { fundInitialValues, setFundInitialValues } = useAgentWallet();
 
+  // Polystrat (Polygon) migrated from USDC.e to pUSD; hide USDC.e from the
+  // Fund Agent inputs so users don't fund a token the agent no longer uses.
+  const filteredAvailableAssets = useMemo(
+    () =>
+      selectedAgentConfig.evmHomeChainId === EvmChainIdMap.Polygon
+        ? availableAssets.filter(
+            ({ symbol }) => symbol !== TokenSymbolMap['USDC.e'],
+          )
+        : availableAssets,
+    [availableAssets, selectedAgentConfig.evmHomeChainId],
+  );
+
   const [amountsToFund, setAmountsToFund] = useState<TokenAmounts>({});
 
   const onAmountChange = useCallback(
@@ -143,7 +156,7 @@ const useFundAgent = () => {
 
   return {
     isLoading: isAvailableAssetsLoading,
-    availableAssets,
+    availableAssets: filteredAvailableAssets,
     amountsToFund,
     onAmountChange,
   };

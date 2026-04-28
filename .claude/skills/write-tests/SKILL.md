@@ -42,7 +42,7 @@ Mirror the source path under `frontend/tests/`:
 ## Before writing any test
 
 1. **Read the source file** completely — understand every branch, edge case, and dependency
-2. **Read the feature doc** for the file's domain (see the "Feature documentation reference" table in `frontend/tests/TEST_PLAN.md`). Feature docs live in `docs/features/` and describe runtime behavior, state transitions, failure modes, and test-relevant notes. For auto-run files, read `frontend/context/AutoRunProvider/docs/auto-run.md` instead.
+2. **Read the feature doc** for the file's domain (see the "Feature documentation reference" table in `frontend/tests/TEST_PLAN.md`). Feature docs live in `docs/features/` and describe runtime behavior, state transitions, failure modes, and test-relevant notes. For auto-run files, the corresponding doc is `docs/features/autorun.md`.
 3. **Follow cross-references** — if the feature doc delegates contract details to another doc (e.g., on-ramping.md references bridging.md and funding-and-refill.md for shared API shapes; deployability-and-lifecycle.md references services.md for stop/withdraw error behavior), read those referenced docs too. The delegated details affect mocking and assertions.
 4. **Read the types/interfaces** it imports — know the shape of inputs and outputs
 5. **Trace dependencies** — identify which hooks, contexts, or services it calls
