@@ -28,6 +28,7 @@ import {
   makeMasterSafe,
   makeService,
   MOCK_MULTISIG_ADDRESS,
+  MOCK_SERVICE_CONFIG_ID_3,
   SECOND_SAFE_ADDRESS,
 } from '../../helpers/factories';
 import { createTestQueryClient } from '../../helpers/queryClient';
@@ -674,7 +675,6 @@ describe('BalanceProvider', () => {
     });
 
     it('excludes sibling service on same chain', async () => {
-      const SIBLING_SERVICE_CONFIG_ID = 'sc-sibling-11223344-5566-7788-99aa';
       const stakedBalances = [
         makeStakedBalance({
           serviceId: DEFAULT_SERVICE_CONFIG_ID,
@@ -683,7 +683,7 @@ describe('BalanceProvider', () => {
           olasDepositBalance: 20,
         }),
         makeStakedBalance({
-          serviceId: SIBLING_SERVICE_CONFIG_ID,
+          serviceId: MOCK_SERVICE_CONFIG_ID_3,
           evmChainId: EvmChainIdMap.Gnosis,
           olasBondBalance: 100,
           olasDepositBalance: 200,
@@ -710,7 +710,7 @@ describe('BalanceProvider', () => {
       // Sibling independently returns its own balance: 100+200 = 300
       expect(
         result.current.getStakedOlasBalanceByServiceId(
-          SIBLING_SERVICE_CONFIG_ID,
+          MOCK_SERVICE_CONFIG_ID_3,
         ),
       ).toBe(300);
     });
@@ -730,12 +730,7 @@ describe('BalanceProvider', () => {
       });
 
       const { result } = renderHook(() => useContext(BalanceContext), {
-        wrapper: createWrapper({
-          selectedAgentConfig: {
-            ...defaultAgentConfig,
-            evmHomeChainId: EvmChainIdMap.Gnosis,
-          },
-        }),
+        wrapper: createWrapper(),
       });
 
       await waitFor(() => {
