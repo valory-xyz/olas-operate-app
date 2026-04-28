@@ -11,6 +11,12 @@ import {
 export const MIN_ONRAMP_AMOUNT = 5;
 
 /**
+ * Transak on-ramp is temporarily unavailable.
+ * Set to false to re-enable on-ramping when Transak is restored.
+ */
+export const IS_TRANSAK_UNAVAILABLE = true;
+
+/**
  * Map of middleware chains to EVM chain IDs for on-ramp purposes.
  * For example, If the agent is on Gnosis, the on-ramp will be done on Optimism.
  */

@@ -5,6 +5,7 @@ import styled from 'styled-components';
 import {
   AddressZero,
   COLOR,
+  IS_TRANSAK_UNAVAILABLE,
   MIN_ONRAMP_AMOUNT,
   ON_RAMP_CHAIN_MAP,
   SETUP_SCREEN,
@@ -132,14 +133,27 @@ export const OnRampMethodCard = () => {
           Pay in fiat by using your credit or debit card — perfect for speed and
           ease!
         </Paragraph>
-        <TokenRequirements
-          fiatAmount={totalFiatDetails?.fiatAmount ?? 0}
-          isLoading={isLoading}
-          hasError={hasNativeTokenError}
-          fundType="onRamp"
-        />
+        {IS_TRANSAK_UNAVAILABLE ? (
+          <Alert
+            type="warning"
+            showIcon
+            message="Service is temporarily unavailable."
+            className="text-sm"
+          />
+        ) : (
+          <TokenRequirements
+            fiatAmount={totalFiatDetails?.fiatAmount ?? 0}
+            isLoading={isLoading}
+            hasError={hasNativeTokenError}
+            fundType="onRamp"
+          />
+        )}
       </div>
-      {isFiatAmountTooLow ? (
+      {IS_TRANSAK_UNAVAILABLE ? (
+        <Button type="primary" size="large" className="mt-auto" disabled>
+          Buy Crypto with USD
+        </Button>
+      ) : isFiatAmountTooLow ? (
         <Alert
           message={`The minimum value of crypto to buy with your credit card is $${MIN_ONRAMP_AMOUNT}.`}
           type="info"

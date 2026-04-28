@@ -71,14 +71,16 @@ describe('AddressLink', () => {
     expect(container.innerHTML).toBe('');
   });
 
-  it('returns null when middlewareChain is empty/falsy', () => {
-    const { container } = render(
+  it('renders truncated address as plain text when middlewareChain is empty/falsy', () => {
+    render(
       <AddressLink
         address={DEFAULT_EOA_ADDRESS}
         middlewareChain={'' as typeof MiddlewareChainMap.GNOSIS}
       />,
     );
-    expect(container.innerHTML).toBe('');
+    expect(
+      screen.getByText(truncateAddress(DEFAULT_EOA_ADDRESS)),
+    ).toBeInTheDocument();
   });
 
   it.each([

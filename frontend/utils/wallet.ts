@@ -20,6 +20,7 @@ import { formatNumber } from './numberFormatters';
  */
 const BRIDGED_TOKEN_SOURCE_MAP: Partial<Record<TokenSymbol, TokenSymbol>> = {
   'USDC.e': 'USDC',
+  pUSD: 'USDC',
 };
 
 /**

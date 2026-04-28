@@ -1,6 +1,7 @@
 export * from './achievement';
 export * from './address';
 export * from './agent';
+export * from './backupWallet';
 export * from './chains';
 export * from './colors';
 export * from './contract';

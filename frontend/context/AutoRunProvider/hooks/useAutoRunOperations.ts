@@ -72,6 +72,10 @@ export const useAutoRunOperations = ({
   const skipNotifiedRef = useRef<Partial<Record<string, string>>>({});
   // Throttle rewards fetch per instance to avoid spamming the API.
   const lastRewardsFetchRef = useRef<Partial<Record<string, number>>>({});
+  // Track when each instance was last started via AutoRun in this session.
+  // Used by refreshRewardsEligibilityHelper to detect stale on-chain
+  // `isEligibleForRewards=true` that persists from a prior active run.
+  const lastStartedAtRef = useRef<Partial<Record<string, number>>>({});
 
   useEffect(() => {
     if (!enabled) {
@@ -79,12 +83,24 @@ export const useAutoRunOperations = ({
     }
   }, [enabled]);
 
+  // Wrap the caller's optional start callback so lastStartedAtRef is updated
+  // on every successful AutoRun start. Caller's callback still fires after.
+  const wrappedOnAutoRunInstanceStarted = useCallback(
+    (serviceConfigId: string) => {
+      lastStartedAtRef.current[serviceConfigId] = Date.now();
+      onAutoRunInstanceStarted?.(serviceConfigId);
+    },
+    [onAutoRunInstanceStarted],
+  );
+
   const refreshRewardsEligibility = useCallback(
     (serviceConfigId: string) =>
       refreshRewardsEligibilityHelper({
         serviceConfigId,
         configuredAgents,
         lastRewardsFetchRef,
+        lastStartedAtRef,
+        runningServiceConfigIdRef,
         getRewardSnapshot,
         setRewardSnapshot,
         logMessage,
@@ -96,6 +112,7 @@ export const useAutoRunOperations = ({
       getRewardSnapshot,
       logMessage,
       recordMetric,
+      runningServiceConfigIdRef,
       setRewardSnapshot,
     ],
   );
@@ -124,7 +141,7 @@ export const useAutoRunOperations = ({
     startService,
     waitForBalancesReady,
     waitForRunningInstance,
-    onAutoRunInstanceStarted,
+    onAutoRunInstanceStarted: wrappedOnAutoRunInstanceStarted,
     onAutoRunStartStateChange,
     showNotification,
     recordMetric,
