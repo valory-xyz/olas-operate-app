@@ -85,6 +85,7 @@ When adding or reviewing frontend tests, use `frontend/tests/TEST_PLAN.md` as th
 - Reuse `frontend/tests/helpers/factories.ts` first. If a default already exists there, do not repeat it in the test body; override only the field required for the case.
 - If a suite needs a local helper, keep it as a thin wrapper over a shared factory rather than a second fixture system.
 - Split coverage by ownership: providers cover query wiring, polling, refetch, and merge behavior; hooks cover derivation; components cover rendering and user interaction with mocked hooks/providers.
+- **For mutation-driven UIs (`useMutation` / any state that persists across renders): test state *transitions*, not just states.** If the user's retry entrypoint doesn't re-fire `mutateAsync` (e.g. a multi-step modal whose first step opens the second without firing the mutation), expose `mutation.reset` and call it on every dismiss path — otherwise stale error state leaks into the next attempt and re-renders the wrong modal. Always cover the full trigger → error → dismiss → re-trigger sequence with a test that asserts the dismiss path resets state.
 - If the same payload shape appears in two suites, promote it into `frontend/tests/helpers/factories.ts` before adding more inline literals.
 - For Phase 4 staking/rewards work, start with the shared staking factories (`makeStakingContractDetails`, `makeServiceStakingDetails`, `makeRawStakingRewardsInfo`, `makeStakingRewardsInfo`, `makeRewardsHistoryEntry`, `makeRewardsHistoryServiceResponse`) and follow the staged execution order in `frontend/tests/TEST_PLAN.md` rather than attempting the entire phase in one pass.
 
@@ -217,6 +218,10 @@ When you fix an issue in one file, **grep ALL files in your feature for the same
 - Fixed wrong `Alert` import in file A? Check files B, C, D for the same wrong import.
 - Replaced a hardcoded color in file A? Search all your files for other hardcoded colors.
 - Changed a heading level in one screen? Check all other screens for consistency.
+
+**Touched-file ownership.** When you edit an existing file (even one outside your feature scope, e.g. adding `centered` to a pre-existing antd `Modal`), you inherit responsibility for its surrounding patterns. If you spot an unrelated convention violation while editing:
+- **Small fix (1–3 lines, no new abstractions):** do it in scope.
+- **Refactor (different abstraction, multi-file impact, redesign):** flag it in the PR description as out-of-scope follow-up — silently leaving it tacitly endorses the violation.
 
 ### Component Imports — Use Custom Wrappers
 
