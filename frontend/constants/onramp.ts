@@ -12,13 +12,6 @@ import {
  */
 export const MIN_ONRAMP_AMOUNT = 5;
 
-/**
- * Transak on-ramp temporary disable flag.
- * Removed in Phase 2 along with the wrapper conditionals in
- * OnRampMethodCard and SelectPaymentMethod.
- */
-export const IS_TRANSAK_UNAVAILABLE = true;
-
 export type OnRampChainConfig = {
   chain: EvmChainId;
   /**

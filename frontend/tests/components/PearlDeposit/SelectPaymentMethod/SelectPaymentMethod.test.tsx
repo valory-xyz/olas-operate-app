@@ -218,8 +218,7 @@ describe('SelectPaymentMethod', () => {
     expect(screen.getByText('Bridge Crypto from Ethereum')).toBeInTheDocument();
     expect(mockUpdateNetworkConfig).toHaveBeenCalledWith({
       networkId: EvmChainIdMap.Base,
-      networkName: 'base',
-      cryptoCurrencyCode: 'ETH',
+      moonpayCurrencyCode: 'eth_base',
       selectedChainId: EvmChainIdMap.Gnosis,
     });
   });

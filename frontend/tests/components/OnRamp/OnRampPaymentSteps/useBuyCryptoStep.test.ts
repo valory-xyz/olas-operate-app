@@ -157,10 +157,10 @@ describe('useBuyCryptoStep', () => {
   });
 
   describe('step title', () => {
-    it('always returns "Buy crypto on Transak"', () => {
+    it('always returns "Buy crypto on MoonPay"', () => {
       setupMocks();
       const { result } = renderHook(() => useBuyCryptoStep());
-      expect(result.current.title).toBe('Buy crypto on Transak');
+      expect(result.current.title).toBe('Buy crypto on MoonPay');
     });
   });
 
@@ -228,7 +228,7 @@ describe('useBuyCryptoStep', () => {
   });
 
   describe('openTerms', () => {
-    it('calls termsAndConditionsWindow.show with transak-terms', async () => {
+    it('calls termsAndConditionsWindow.show with moonpay-terms', async () => {
       const termsShowFn = jest.fn();
       setupMocks({ termsAndConditionsWindowShow: termsShowFn });
 
@@ -311,7 +311,7 @@ describe('useBuyCryptoStep', () => {
   });
 
   describe('openTerms invocation', () => {
-    it('calls termsAndConditionsWindow.show("transak-terms") via OnRampAgreement link', async () => {
+    it('calls termsAndConditionsWindow.show("moonpay-terms") via OnRampAgreement link', async () => {
       const termsShowFn = jest.fn();
       setupMocks({ termsAndConditionsWindowShow: termsShowFn });
       const { result } = renderHook(() => useBuyCryptoStep());
@@ -326,7 +326,7 @@ describe('useBuyCryptoStep', () => {
         await onClick();
       });
 
-      expect(termsShowFn).toHaveBeenCalledWith('transak-terms');
+      expect(termsShowFn).toHaveBeenCalledWith('moonpay-terms');
     });
   });
 });

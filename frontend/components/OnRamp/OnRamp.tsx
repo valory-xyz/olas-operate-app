@@ -74,7 +74,7 @@ const OnBack = ({ handleBack }: OnBackProps) => {
         >
           If your credit/debit card payment has been successfully initiated, do
           not leave this page until the process is complete. Funds may take up
-          to 10 minutes to be available.
+          to 30 minutes to be available.
         </Modal>
       )}
     </>
@@ -105,7 +105,7 @@ export const OnRamp = ({
         </Title>
         <Text type="secondary" className="mb-24">
           Use your credit or debit card to buy crypto effortlessly - powered by
-          Transak.
+          MoonPay.
         </Text>
 
         <KeepOpenAlert />

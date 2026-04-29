@@ -150,7 +150,6 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
   // check if the user has received funds after on-ramping
   useEffect(() => {
     if (!nativeAmountToPay) return;
-    if (!usdAmountToPay) return;
     if (isOnRampingStepCompleted) return;
     if (!networkId) return;
     if (initialBalanceRef.current === null) return; // Need initial balance first
@@ -186,7 +185,6 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
     onRampWindow,
     isOnRampingStepCompleted,
     getMasterSafeNativeBalanceOf,
-    usdAmountToPay,
   ]);
 
   // Function to set the native token amount to pay for on-ramping

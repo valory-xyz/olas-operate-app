@@ -15,7 +15,6 @@ import {
   AddressZero,
   COLOR,
   EvmChainId,
-  IS_TRANSAK_UNAVAILABLE,
   MIN_ONRAMP_AMOUNT,
   ON_RAMP_CHAIN_MAP,
 } from '@/constants';
@@ -273,7 +272,7 @@ const OnRampMethod = ({ chainId, onSelect }: OnRampMethodProps) => {
               </Text>
             )}
             <Text className="text-sm text-neutral-tertiary" type="secondary">
-              Powered by Transak. Funds may take up to 10 minutes to be
+              Powered by MoonPay. Funds may take up to 30 minutes to be
               available.
             </Text>
           </YouPayContainer>
@@ -359,12 +358,10 @@ export const SelectPaymentMethod = ({ onBack }: { onBack: () => void }) => {
       </Title>
 
       <Flex gap={24}>
-        {!IS_TRANSAK_UNAVAILABLE && (
-          <OnRampMethod
-            chainId={chainId}
-            onSelect={() => setPaymentMethod('ONRAMP')}
-          />
-        )}
+        <OnRampMethod
+          chainId={chainId}
+          onSelect={() => setPaymentMethod('ONRAMP')}
+        />
         <TransferMethod
           chainId={chainId}
           onSelect={() => setPaymentMethod('TRANSFER')}

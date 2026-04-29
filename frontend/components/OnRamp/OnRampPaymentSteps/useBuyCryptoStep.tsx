@@ -13,7 +13,7 @@ const OnRampAgreement = ({ onClick }: { onClick?: () => void }) => (
   <Flex vertical gap={8}>
     <Text className="text-sm text-neutral-tertiary">
       Once your card payment has been successfully initiated, funds may take up
-      to 10 minutes to be available.
+      to 30 minutes to be available.
     </Text>
     <Text className="text-sm text-neutral-tertiary">
       By proceeding, you agree to the service&apos;s&nbsp;
@@ -55,7 +55,7 @@ export const useBuyCryptoStep = () => {
   const cannotBuyCrypto = !masterEoa?.address || !usdAmountToPay;
 
   const openTerms = useCallback(async () => {
-    termsAndConditionsWindow?.show?.('transak-terms');
+    termsAndConditionsWindow?.show?.('moonpay-terms');
   }, [termsAndConditionsWindow]);
 
   const buyCryptoStep = useMemo<TransactionStep>(() => {
@@ -68,7 +68,7 @@ export const useBuyCryptoStep = () => {
 
     return {
       status,
-      title: 'Buy crypto on Transak',
+      title: 'Buy crypto on MoonPay',
       subSteps: isOnRampingStepCompleted
         ? [{ description: 'Funds received by the agent.' }]
         : [
