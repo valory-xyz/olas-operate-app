@@ -71,7 +71,7 @@ jobs:
           poetry run pyinstaller operate/tendermint.py --onefile
           cp dist/tendermint dist/tendermint_bin
 
-          poetry run pyinstaller --collect-data eth_account --collect-all aea --collect-all autonomy --collect-all operate --collect-all aea_ledger_ethereum --collect-all aea_ledger_cosmos --hidden-import aea_ledger_ethereum --hidden-import aea_ledger_cosmos operate/pearl.py --onedir --name pearl_${{ env.OS_ARCH }}
+          poetry run pyinstaller --collect-data eth_account --collect-all aea --collect-all autonomy --collect-all operate --collect-all aea_ledger_ethereum --collect-all aea_ledger_cosmos --collect-all aea_ledger_ethereum_flashbots --hidden-import aea_ledger_ethereum --hidden-import aea_ledger_cosmos --hidden-import aea_ledger_ethereum_flashbots operate/pearl.py --onedir --name pearl_${{ env.OS_ARCH }}
 
       # Package middleware with tar to preserve signatures and extended attributes
       - name: Package middleware with tar
