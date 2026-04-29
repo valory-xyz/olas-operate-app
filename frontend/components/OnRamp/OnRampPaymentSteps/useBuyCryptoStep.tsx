@@ -31,24 +31,24 @@ export const useBuyCryptoStep = () => {
     updateIsBuyCryptoBtnLoading,
     isTransactionSuccessfulButFundsNotReceived,
     isOnRampingStepCompleted,
-    networkName,
-    cryptoCurrencyCode,
+    moonpayCurrencyCode,
   } = useOnRampContext();
 
   const handleBuyCrypto = useCallback(async () => {
     if (!onRampWindow?.show) return;
     if (!usdAmountToPay) return;
-    if (!networkName) return;
-    if (!cryptoCurrencyCode) return;
+    if (!moonpayCurrencyCode) return;
 
-    onRampWindow.show(usdAmountToPay, networkName, cryptoCurrencyCode);
+    // TODO Phase 3: onRampWindow.show signature drops networkName; pass
+    // (nativeAmountToPay.toFixed(6), moonpayCurrencyCode) once Electron
+    // preload + main are updated.
+    onRampWindow.show(usdAmountToPay, '', moonpayCurrencyCode);
     await delayInSeconds(1);
     updateIsBuyCryptoBtnLoading(true);
   }, [
     onRampWindow,
     usdAmountToPay,
-    networkName,
-    cryptoCurrencyCode,
+    moonpayCurrencyCode,
     updateIsBuyCryptoBtnLoading,
   ]);
 

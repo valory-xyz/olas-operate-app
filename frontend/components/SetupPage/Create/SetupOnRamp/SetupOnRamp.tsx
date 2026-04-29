@@ -11,7 +11,11 @@ export const SetupOnRamp = () => {
 
   // Calculate onRampChainId based on agent's home chain
   const agentChainName = asMiddlewareChain(selectedAgentConfig.evmHomeChainId);
-  const onRampChainId = ON_RAMP_CHAIN_MAP[agentChainName].chain;
+  const chainConfig = ON_RAMP_CHAIN_MAP[agentChainName];
+  if (!chainConfig) {
+    throw new Error(`No on-ramp config for chain ${agentChainName}`);
+  }
+  const onRampChainId = chainConfig.chain;
 
   // Get requirements params function (use 'to' direction for on-ramping)
   const getOnRampRequirementsParams = useGetBridgeRequirementsParams(

@@ -17,8 +17,7 @@ const ETH_RECEIVED_THRESHOLD = 0.9;
 
 export const OnRampContext = createContext<{
   networkId: OnRampNetworkConfig['networkId'];
-  networkName: OnRampNetworkConfig['networkName'];
-  cryptoCurrencyCode: OnRampNetworkConfig['cryptoCurrencyCode'];
+  moonpayCurrencyCode: OnRampNetworkConfig['moonpayCurrencyCode'];
   /**
    * Chain to which the funds are being transferred. It can have two cases:
    * 1. Onboarding: homeChainId of the selected agent
@@ -47,8 +46,7 @@ export const OnRampContext = createContext<{
   updateIsSwappingStepCompleted: (completed: boolean) => void;
 }>({
   networkId: null,
-  networkName: null,
-  cryptoCurrencyCode: null,
+  moonpayCurrencyCode: null,
   selectedChainId: null,
   updateNetworkConfig: () => {},
   resetOnRampState: () => {},
@@ -112,8 +110,7 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
 
   const [networkConfig, setNetworkConfig] = useState<OnRampNetworkConfig>({
     networkId: null,
-    networkName: null,
-    cryptoCurrencyCode: null,
+    moonpayCurrencyCode: null,
     selectedChainId: null,
   });
 
@@ -130,8 +127,7 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
   const isTransactionSuccessfulButFundsNotReceived =
     isOnRampingTransactionSuccessful && !hasFundsReceivedAfterOnRamp;
 
-  const { networkId, networkName, cryptoCurrencyCode, selectedChainId } =
-    networkConfig;
+  const { networkId, moonpayCurrencyCode, selectedChainId } = networkConfig;
 
   // Store initial balance when on-ramp requirements are calculated
   // This happens early when nativeAmountToPay is first set, before user clicks "Buy Crypto"
@@ -291,10 +287,8 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
 
         /** Network id to on-ramp */
         networkId,
-        /** Network name to on-ramp */
-        networkName,
-        /** Crypto currency code to on-ramp */
-        cryptoCurrencyCode,
+        /** MoonPay currency code (e.g. 'eth_base', 'pol') */
+        moonpayCurrencyCode,
         /** Chain to which the funds are eventually transferred */
         selectedChainId,
         /** Function to update the network config */

@@ -6,42 +6,55 @@ import {
 } from './chains';
 
 /**
- * Minimum amount in USD required for on-ramping with credit/debit card
+ * Minimum amount in USD required for on-ramping with credit/debit card.
+ * MoonPay region-specific minimums (e.g. AMOUNT_TOO_LOW) are surfaced
+ * by pearl-api's /api/moonpay/quote response.
  */
 export const MIN_ONRAMP_AMOUNT = 5;
 
 /**
- * Transak on-ramp is temporarily unavailable.
- * Set to false to re-enable on-ramping when Transak is restored.
+ * Transak on-ramp temporary disable flag.
+ * Removed in Phase 2 along with the wrapper conditionals in
+ * OnRampMethodCard and SelectPaymentMethod.
  */
 export const IS_TRANSAK_UNAVAILABLE = true;
 
+export type OnRampChainConfig = {
+  chain: EvmChainId;
+  /**
+   * MoonPay currency code — verify against
+   * https://api.moonpay.com/v3/currencies (Phase 0 step 1).
+   * Working assumptions: 'eth_base' for ETH on Base, 'pol' for POL on Polygon.
+   */
+  moonpayCurrencyCode: string;
+};
+
 /**
- * Map of middleware chains to EVM chain IDs for on-ramp purposes.
- * For example, If the agent is on Gnosis, the on-ramp will be done on Optimism.
+ * Map of middleware chains to their on-ramp routing.
+ * MoonPay on-ramps land funds on `chain`; Relay then bridges/swaps to the
+ * agent's home chain via the existing useSwapFundsStep flow.
+ *
+ * - Base / Optimism / Gnosis: on-ramp to ETH on Base; Relay handles the rest
+ * - Polygon: on-ramp to POL on Polygon directly
+ * - Mode: not supported (Modius on-ramp feature flag is disabled)
  */
-export const ON_RAMP_CHAIN_MAP: Record<
-  SupportedMiddlewareChain,
-  { chain: EvmChainId; cryptoCurrency: 'ETH' | 'POL' }
+export const ON_RAMP_CHAIN_MAP: Partial<
+  Record<SupportedMiddlewareChain, OnRampChainConfig>
 > = {
   [SupportedMiddlewareChainMap.gnosis]: {
     chain: EvmChainIdMap.Base,
-    cryptoCurrency: 'ETH',
+    moonpayCurrencyCode: 'eth_base',
   },
   [SupportedMiddlewareChainMap.optimism]: {
-    chain: EvmChainIdMap.Optimism,
-    cryptoCurrency: 'ETH',
+    chain: EvmChainIdMap.Base,
+    moonpayCurrencyCode: 'eth_base',
   },
   [SupportedMiddlewareChainMap.base]: {
     chain: EvmChainIdMap.Base,
-    cryptoCurrency: 'ETH',
-  },
-  [SupportedMiddlewareChainMap.mode]: {
-    chain: EvmChainIdMap.Optimism,
-    cryptoCurrency: 'ETH',
+    moonpayCurrencyCode: 'eth_base',
   },
   [SupportedMiddlewareChainMap.polygon]: {
     chain: EvmChainIdMap.Polygon,
-    cryptoCurrency: 'POL',
+    moonpayCurrencyCode: 'pol',
   },
 };

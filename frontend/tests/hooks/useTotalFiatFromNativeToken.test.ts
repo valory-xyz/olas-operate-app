@@ -421,7 +421,12 @@ describe('useTotalFiatFromNativeToken', () => {
     expect(options.headers).toEqual({ accept: 'application/json' });
   });
 
-  it('constructs URL with correct crypto for Polygon (maps to POL)', async () => {
+  // Phase 1 (OPE-1628): cryptoCurrency is no longer threaded from
+  // ON_RAMP_CHAIN_MAP through to fetchTransakQuote; the default 'ETH'
+  // is used instead. This is intentional for Phase 1 because the
+  // wrapper UI (gated by IS_TRANSAK_UNAVAILABLE) hides any wrong-chain
+  // quote result, and Phase 2 rewrites the hook to call MoonPay.
+  it('routes Polygon requests via the polygon network (cryptoCurrency defaults to ETH in Phase 1)', async () => {
     (global.fetch as jest.Mock).mockResolvedValue({
       ok: true,
       json: () => Promise.resolve(makeTransakQuoteResponse()),
@@ -442,7 +447,6 @@ describe('useTotalFiatFromNativeToken', () => {
 
     const [url] = (global.fetch as jest.Mock).mock.calls[0];
     expect(url).toContain('network=polygon');
-    expect(url).toContain('cryptoCurrency=POL');
     expect(url).toContain('cryptoAmount=10');
   });
 });

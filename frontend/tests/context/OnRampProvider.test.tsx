@@ -96,8 +96,7 @@ describe('OnRampProvider', () => {
       );
       expect(result.current.isSwappingFundsStepCompleted).toBe(false);
       expect(result.current.networkId).toBeNull();
-      expect(result.current.networkName).toBeNull();
-      expect(result.current.cryptoCurrencyCode).toBeNull();
+      expect(result.current.moonpayCurrencyCode).toBeNull();
       expect(result.current.selectedChainId).toBeNull();
     });
   });
@@ -132,14 +131,12 @@ describe('OnRampProvider', () => {
       act(() =>
         result.current.updateNetworkConfig({
           networkId: CHAIN_ID,
-          networkName: 'Base',
-          cryptoCurrencyCode: 'ETH',
+          moonpayCurrencyCode: 'eth_base',
           selectedChainId: CHAIN_ID,
         }),
       );
       expect(result.current.networkId).toBe(CHAIN_ID);
-      expect(result.current.networkName).toBe('Base');
-      expect(result.current.cryptoCurrencyCode).toBe('ETH');
+      expect(result.current.moonpayCurrencyCode).toBe('eth_base');
       expect(result.current.selectedChainId).toBe(CHAIN_ID);
     });
 
@@ -160,8 +157,7 @@ describe('OnRampProvider', () => {
       act(() =>
         result.current.updateNetworkConfig({
           networkId: CHAIN_ID,
-          networkName: 'Base',
-          cryptoCurrencyCode: 'ETH',
+          moonpayCurrencyCode: 'eth_base',
           selectedChainId: CHAIN_ID,
         }),
       );
@@ -182,8 +178,7 @@ describe('OnRampProvider', () => {
       act(() =>
         result.current.updateNetworkConfig({
           networkId: CHAIN_ID,
-          networkName: 'Base',
-          cryptoCurrencyCode: 'ETH',
+          moonpayCurrencyCode: 'eth_base',
           selectedChainId: CHAIN_ID,
         }),
       );
@@ -216,8 +211,7 @@ describe('OnRampProvider', () => {
       act(() =>
         result.current.updateNetworkConfig({
           networkId: CHAIN_ID,
-          networkName: 'Base',
-          cryptoCurrencyCode: 'ETH',
+          moonpayCurrencyCode: 'eth_base',
           selectedChainId: CHAIN_ID,
         }),
       );
@@ -244,8 +238,7 @@ describe('OnRampProvider', () => {
       act(() =>
         result.current.updateNetworkConfig({
           networkId: CHAIN_ID,
-          networkName: 'Base',
-          cryptoCurrencyCode: 'ETH',
+          moonpayCurrencyCode: 'eth_base',
           selectedChainId: CHAIN_ID,
         }),
       );
@@ -277,8 +270,7 @@ describe('OnRampProvider', () => {
       act(() =>
         hook.result.current.updateNetworkConfig({
           networkId: CHAIN_ID,
-          networkName: 'Base',
-          cryptoCurrencyCode: 'ETH',
+          moonpayCurrencyCode: 'eth_base',
           selectedChainId: CHAIN_ID,
         }),
       );
@@ -350,8 +342,7 @@ describe('OnRampProvider', () => {
       act(() =>
         hook.result.current.updateNetworkConfig({
           networkId: CHAIN_ID,
-          networkName: 'Base',
-          cryptoCurrencyCode: 'ETH',
+          moonpayCurrencyCode: 'eth_base',
           selectedChainId: CHAIN_ID,
         }),
       );
@@ -410,8 +401,7 @@ describe('OnRampProvider', () => {
       act(() =>
         hook.result.current.updateNetworkConfig({
           networkId: CHAIN_ID,
-          networkName: 'Base',
-          cryptoCurrencyCode: 'ETH',
+          moonpayCurrencyCode: 'eth_base',
           selectedChainId: CHAIN_ID,
         }),
       );
@@ -443,8 +433,7 @@ describe('OnRampProvider', () => {
       act(() =>
         hook.result.current.updateNetworkConfig({
           networkId: CHAIN_ID,
-          networkName: 'Base',
-          cryptoCurrencyCode: 'ETH',
+          moonpayCurrencyCode: 'eth_base',
           selectedChainId: CHAIN_ID,
         }),
       );
@@ -559,8 +548,7 @@ describe('OnRampProvider', () => {
       act(() => {
         result.current.updateNetworkConfig({
           networkId: CHAIN_ID,
-          networkName: 'Base',
-          cryptoCurrencyCode: 'ETH',
+          moonpayCurrencyCode: 'eth_base',
           selectedChainId: CHAIN_ID,
         });
         result.current.updateNativeTotalAmountRequired(5.0);
@@ -570,7 +558,7 @@ describe('OnRampProvider', () => {
 
       // networkConfig is NOT reset
       expect(result.current.networkId).toBe(CHAIN_ID);
-      expect(result.current.networkName).toBe('Base');
+      expect(result.current.moonpayCurrencyCode).toBe('eth_base');
       // nativeTotalAmountRequired is NOT reset
       expect(result.current.nativeTotalAmountRequired).toBe(5.0);
     });

@@ -150,6 +150,18 @@ describe('static URL constants', () => {
     );
   });
 
+  it('MOONPAY_SIGN_URL is derived from PEARL_API_URL', () => {
+    expect(urls.MOONPAY_SIGN_URL).toBe(
+      'https://pearl-api.olas.network/api/moonpay/sign',
+    );
+  });
+
+  it('MOONPAY_QUOTE_URL is derived from PEARL_API_URL', () => {
+    expect(urls.MOONPAY_QUOTE_URL).toBe(
+      'https://pearl-api.olas.network/api/moonpay/quote',
+    );
+  });
+
   it('GITHUB_API_LATEST_RELEASE points to the correct repo', () => {
     expect(urls.GITHUB_API_LATEST_RELEASE).toBe(
       'https://api.github.com/repos/valory-xyz/olas-operate-app/releases/latest',

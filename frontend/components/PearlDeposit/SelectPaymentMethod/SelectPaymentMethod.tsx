@@ -145,20 +145,22 @@ const OnRampMethod = ({ chainId, onSelect }: OnRampMethodProps) => {
   const { amountsToDeposit } = usePearlWallet();
   const { updateNetworkConfig } = useOnRampContext();
   const chainName = asMiddlewareChain(chainId);
-  const onRampChainId = ON_RAMP_CHAIN_MAP[chainName].chain;
+  const chainConfig = ON_RAMP_CHAIN_MAP[chainName];
+  // Fall back to the wallet chain when no on-ramp config exists; the
+  // component returns null below in that case, so the hooks never produce
+  // user-visible state from the fallback.
+  const onRampChainId = chainConfig?.chain ?? chainId;
 
   // Set network config early so that getBridgeParamsExceptNativeToken works correctly
   useEffect(() => {
-    const toChain = asMiddlewareChain(onRampChainId);
-    const chainDetails = asEvmChainDetails(toChain);
+    if (!chainConfig) return;
 
     updateNetworkConfig({
       networkId: onRampChainId,
-      networkName: chainDetails.name,
-      cryptoCurrencyCode: chainDetails.symbol,
+      moonpayCurrencyCode: chainConfig.moonpayCurrencyCode,
       selectedChainId: chainId,
     });
-  }, [chainId, onRampChainId, updateNetworkConfig]);
+  }, [chainId, chainConfig, onRampChainId, updateNetworkConfig]);
 
   // Get on-ramp requirements params based on user-provided amounts
   const getOnRampRequirementsParams =
@@ -239,6 +241,8 @@ const OnRampMethod = ({ chainId, onSelect }: OnRampMethodProps) => {
     isBuyDisabled,
   ]);
 
+  if (!chainConfig) return null;
+
   return (
     <SelectPaymentMethodCard>
       <Flex vertical gap={32} flex="auto">
@@ -316,7 +320,7 @@ export const SelectPaymentMethod = ({ onBack }: { onBack: () => void }) => {
   const onRampChainId = useMemo(() => {
     if (!chainId) return null;
     const middlewareChain = asMiddlewareChain(chainId);
-    return ON_RAMP_CHAIN_MAP[middlewareChain].chain;
+    return ON_RAMP_CHAIN_MAP[middlewareChain]?.chain ?? null;
   }, [chainId]);
 
   // If no chain is selected, we cannot proceed.

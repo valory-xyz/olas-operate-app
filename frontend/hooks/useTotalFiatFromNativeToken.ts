@@ -114,8 +114,10 @@ export const useTotalFiatFromNativeToken = ({
   const selectedChainName = asMiddlewareChain(
     ensureRequired(selectedChainId, "Chain ID can't be empty"),
   );
-  const { chain, cryptoCurrency } = ON_RAMP_CHAIN_MAP[selectedChainName];
-  const fromChain = asMiddlewareChain(chain);
+  const chainConfig = ON_RAMP_CHAIN_MAP[selectedChainName];
+  const fromChain = chainConfig
+    ? asMiddlewareChain(chainConfig.chain)
+    : selectedChainName;
 
   return useQuery({
     queryKey: REACT_QUERY_KEYS.ON_RAMP_QUOTE_KEY(fromChain, nativeTokenAmount!),
@@ -125,7 +127,6 @@ export const useTotalFiatFromNativeToken = ({
           {
             network: fromChain,
             amount: nativeTokenAmount!,
-            cryptoCurrency,
           },
           signal,
         );
@@ -152,6 +153,6 @@ export const useTotalFiatFromNativeToken = ({
         nativeAmountToDisplay,
       };
     },
-    enabled: !skip && !!fromChain && !!nativeTokenAmount,
+    enabled: !skip && !!chainConfig && !!fromChain && !!nativeTokenAmount,
   });
 };
