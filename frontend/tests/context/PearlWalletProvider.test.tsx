@@ -50,6 +50,9 @@ jest.mock(
 );
 /* eslint-enable @typescript-eslint/no-var-requires */
 
+const mockGetFundingEligibleServiceConfigIdsOf = jest.fn((): string[] => []);
+const mockIsFundingEligible = jest.fn(() => true);
+
 jest.mock('../../hooks', () => ({
   useAvailableAssets: jest.fn(() => ({
     isLoading: false,
@@ -62,6 +65,11 @@ jest.mock('../../hooks', () => ({
     isLoading: false,
     getStakedOlasBalanceOf: jest.fn(() => 0),
   })),
+  useFundingEligibleServices: () => ({
+    getFundingEligibleServiceConfigIdsOf:
+      mockGetFundingEligibleServiceConfigIdsOf,
+    isFundingEligible: mockIsFundingEligible,
+  }),
   useMasterWalletContext: jest.fn(() => ({
     masterSafes: [],
   })),
@@ -122,6 +130,7 @@ describe('PearlWalletProvider', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockGetFundingEligibleServiceConfigIdsOf.mockReturnValue([]);
 
     mockUseServices.mockReturnValue({
       isLoading: false,
@@ -1231,7 +1240,7 @@ describe('PearlWalletProvider', () => {
     });
 
     it('calls getInitialDepositForMasterSafe with correct arguments', () => {
-      const mockGetServiceConfigIdsOf = jest.fn(() => [
+      mockGetFundingEligibleServiceConfigIdsOf.mockReturnValue([
         DEFAULT_SERVICE_CONFIG_ID,
       ]);
       const mockGetRefillRequirementsOf = jest.fn();
@@ -1240,19 +1249,6 @@ describe('PearlWalletProvider', () => {
         masterSafes: [
           { evmChainId: EvmChainIdMap.Gnosis, address: DEFAULT_SAFE_ADDRESS },
         ],
-      });
-
-      mockUseServices.mockReturnValue({
-        isLoading: false,
-        selectedAgentConfig: {
-          evmHomeChainId: EvmChainIdMap.Gnosis,
-          middlewareHomeChainId: MiddlewareChainMap.GNOSIS,
-          displayName: 'Omenstrat',
-        },
-        selectedService: null,
-        services: [],
-        availableServiceConfigIds: [],
-        getServiceConfigIdsOf: mockGetServiceConfigIdsOf,
       });
 
       mockUseBalanceAndRefillRequirementsContext.mockReturnValue({
@@ -1316,6 +1312,36 @@ describe('PearlWalletProvider', () => {
 
       expect(result.current.amountsToDeposit).toEqual({});
       expect(result.current.defaultRequirementDepositValues).toEqual({});
+    });
+
+    it('excludes ineligible (archived) services from deposit pre-fill', () => {
+      // Simulate an archived service: getFundingEligibleServiceConfigIdsOf
+      // filters it out and returns an empty list.
+      mockGetFundingEligibleServiceConfigIdsOf.mockReturnValue([]);
+      const mockGetRefillRequirementsOf = jest.fn();
+
+      mockUseMasterWalletContext.mockReturnValue({
+        masterSafes: [
+          { evmChainId: EvmChainIdMap.Gnosis, address: DEFAULT_SAFE_ADDRESS },
+        ],
+      });
+
+      mockUseBalanceAndRefillRequirementsContext.mockReturnValue({
+        getRefillRequirementsOf: mockGetRefillRequirementsOf,
+      });
+
+      const { result } = renderHook(() => usePearlWallet(), { wrapper });
+
+      act(() => {
+        result.current.initializeDepositAmounts();
+      });
+
+      expect(mockGetInitialDepositForMasterSafe).toHaveBeenCalledWith(
+        EvmChainIdMap.Gnosis,
+        DEFAULT_SAFE_ADDRESS,
+        [],
+        mockGetRefillRequirementsOf,
+      );
     });
   });
 
