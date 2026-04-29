@@ -16,8 +16,6 @@ describe('isInsufficientGasError', () => {
   ): unknown => ({
     error_code: ERROR_CODE.INSUFFICIENT_SIGNER_GAS,
     chain: 'gnosis',
-    // String is the realistic wire format (see factories.ts); number is also
-    // accepted by the guard for backward-compatibility.
     prefill_amount_wei: '750000000000000000',
     ...overrides,
   });
