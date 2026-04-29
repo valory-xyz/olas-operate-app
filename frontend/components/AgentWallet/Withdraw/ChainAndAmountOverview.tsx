@@ -119,9 +119,10 @@ const AssetsFromAgentWallet = () => {
 };
 
 const AssetsFromStakingContract = () => {
-  const { isLoading: isBalanceLoading, getStakedOlasBalanceByServiceId } =
+  const { isLoading: isBalanceLoading, getStakedOlasBalanceByServiceConfigId } =
     useBalanceContext();
   const { selectedService } = useServices();
+  const isReady = !isBalanceLoading && !!selectedService?.service_config_id;
 
   return (
     <Flex vertical gap={8}>
@@ -134,18 +135,18 @@ const AssetsFromStakingContract = () => {
             width={20}
             height={20}
           />
-          {isBalanceLoading ? (
-            <Skeleton.Input active size="small" style={{ width: 80 }} />
-          ) : (
+          {isReady ? (
             <Text>
               {formatNumber(
-                getStakedOlasBalanceByServiceId(
-                  selectedService?.service_config_id,
+                getStakedOlasBalanceByServiceConfigId(
+                  selectedService.service_config_id,
                 ),
                 4,
               )}{' '}
               OLAS
             </Text>
+          ) : (
+            <Skeleton.Input active size="small" style={{ width: 80 }} />
           )}
         </Flex>
 

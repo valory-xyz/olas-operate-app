@@ -12,7 +12,7 @@ import {
 import { asMiddlewareChain, isValidServiceId } from '@/utils';
 
 export const useShouldAllowStakingContractSwitch = () => {
-  const { isLoaded: isBalanceLoaded, getStakedOlasBalanceByServiceId } =
+  const { isLoaded: isBalanceLoaded, getStakedOlasBalanceByServiceConfigId } =
     useBalanceContext();
   const { getMasterSafeOlasBalanceOfInStr } = useMasterBalances();
   const { stakingProgramIdToMigrateTo } = useStakingProgram();
@@ -35,9 +35,16 @@ export const useShouldAllowStakingContractSwitch = () => {
     return Number(getMasterSafeOlasBalanceOfInStr(homeChainId) || '0');
   }, [homeChainId, isBalanceLoaded, getMasterSafeOlasBalanceOfInStr]);
 
-  const stakedOlasBalance = getStakedOlasBalanceByServiceId(
+  const stakedOlasBalance = useMemo(() => {
+    if (!isBalanceLoaded) return 0;
+    return getStakedOlasBalanceByServiceConfigId(
+      selectedService?.service_config_id,
+    );
+  }, [
+    isBalanceLoaded,
+    getStakedOlasBalanceByServiceConfigId,
     selectedService?.service_config_id,
-  );
+  ]);
   const totalOlas = safeOlasBalance + stakedOlasBalance;
   const hasEnoughOlasToMigrate = totalOlas >= minimumOlasRequiredToMigrate;
   const olasRequiredToMigrate = Math.max(

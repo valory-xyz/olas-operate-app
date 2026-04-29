@@ -71,7 +71,7 @@ const makeWalletBalance = (
 const makeStakedBalance = (
   overrides: Partial<CrossChainStakedBalances[number]> = {},
 ): CrossChainStakedBalances[number] => ({
-  serviceId: DEFAULT_SERVICE_CONFIG_ID,
+  serviceConfigId: DEFAULT_SERVICE_CONFIG_ID,
   evmChainId: EvmChainIdMap.Gnosis,
   olasBondBalance: 10,
   olasDepositBalance: 20,
@@ -158,7 +158,7 @@ describe('BalanceProvider', () => {
         0,
       );
       expect(
-        result.current.getStakedOlasBalanceByServiceId(
+        result.current.getStakedOlasBalanceByServiceConfigId(
           DEFAULT_SERVICE_CONFIG_ID,
         ),
       ).toBe(0);
@@ -630,8 +630,8 @@ describe('BalanceProvider', () => {
     });
   });
 
-  describe('getStakedOlasBalanceByServiceId', () => {
-    it('returns 0 for undefined serviceId', async () => {
+  describe('getStakedOlasBalanceByServiceConfigId', () => {
+    it('returns 0 for undefined serviceConfigId', async () => {
       mockGetCrossChainBalances.mockResolvedValue({
         walletBalances: [],
         stakedBalances: [makeStakedBalance()],
@@ -644,13 +644,15 @@ describe('BalanceProvider', () => {
       await waitFor(() => {
         expect(result.current.isLoaded).toBe(true);
       });
-      expect(result.current.getStakedOlasBalanceByServiceId(undefined)).toBe(0);
+      expect(
+        result.current.getStakedOlasBalanceByServiceConfigId(undefined),
+      ).toBe(0);
     });
 
-    it('returns sum of bond + deposit for matching serviceId', async () => {
+    it('returns sum of bond + deposit for matching serviceConfigId', async () => {
       const stakedBalances = [
         makeStakedBalance({
-          serviceId: DEFAULT_SERVICE_CONFIG_ID,
+          serviceConfigId: DEFAULT_SERVICE_CONFIG_ID,
           olasBondBalance: 10,
           olasDepositBalance: 20,
         }),
@@ -668,7 +670,7 @@ describe('BalanceProvider', () => {
         expect(result.current.isLoaded).toBe(true);
       });
       expect(
-        result.current.getStakedOlasBalanceByServiceId(
+        result.current.getStakedOlasBalanceByServiceConfigId(
           DEFAULT_SERVICE_CONFIG_ID,
         ),
       ).toBe(30);
@@ -677,13 +679,13 @@ describe('BalanceProvider', () => {
     it('excludes sibling service on same chain', async () => {
       const stakedBalances = [
         makeStakedBalance({
-          serviceId: DEFAULT_SERVICE_CONFIG_ID,
+          serviceConfigId: DEFAULT_SERVICE_CONFIG_ID,
           evmChainId: EvmChainIdMap.Gnosis,
           olasBondBalance: 10,
           olasDepositBalance: 20,
         }),
         makeStakedBalance({
-          serviceId: MOCK_SERVICE_CONFIG_ID_3,
+          serviceConfigId: MOCK_SERVICE_CONFIG_ID_3,
           evmChainId: EvmChainIdMap.Gnosis,
           olasBondBalance: 100,
           olasDepositBalance: 200,
@@ -703,13 +705,13 @@ describe('BalanceProvider', () => {
       });
       // Only the target service's balance: 10+20 = 30
       expect(
-        result.current.getStakedOlasBalanceByServiceId(
+        result.current.getStakedOlasBalanceByServiceConfigId(
           DEFAULT_SERVICE_CONFIG_ID,
         ),
       ).toBe(30);
       // Sibling independently returns its own balance: 100+200 = 300
       expect(
-        result.current.getStakedOlasBalanceByServiceId(
+        result.current.getStakedOlasBalanceByServiceConfigId(
           MOCK_SERVICE_CONFIG_ID_3,
         ),
       ).toBe(300);
@@ -718,7 +720,7 @@ describe('BalanceProvider', () => {
     it('returns same value as totalStakedOlasBalance when only one service is on chain', async () => {
       const stakedBalances = [
         makeStakedBalance({
-          serviceId: DEFAULT_SERVICE_CONFIG_ID,
+          serviceConfigId: DEFAULT_SERVICE_CONFIG_ID,
           evmChainId: EvmChainIdMap.Gnosis,
           olasBondBalance: 15,
           olasDepositBalance: 25,
@@ -738,7 +740,7 @@ describe('BalanceProvider', () => {
       });
       // Single service: per-service sum equals chain-wide sum
       expect(
-        result.current.getStakedOlasBalanceByServiceId(
+        result.current.getStakedOlasBalanceByServiceConfigId(
           DEFAULT_SERVICE_CONFIG_ID,
         ),
       ).toBe(40);

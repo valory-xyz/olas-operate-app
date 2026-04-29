@@ -89,7 +89,7 @@ const createDefaultMocks = (overrides: Partial<typeof DEFAULTS> = {}) => {
     totalOlasBalance: opts.totalOlasBalance,
     totalStakedOlasBalance: opts.totalStakedOlasBalance,
     walletBalances: opts.walletBalances,
-    getStakedOlasBalanceByServiceId: jest.fn(() => 0),
+    getStakedOlasBalanceByServiceConfigId: jest.fn(() => 0),
   });
 };
 

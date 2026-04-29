@@ -33,11 +33,18 @@ export const BalanceContext = createContext<{
   stakedBalances?: CrossChainStakedBalances;
   totalOlasBalance?: number;
   totalEthBalance?: number;
+  /**
+   * Chain-wide staked OLAS aggregate. Sums every service on the selected
+   * agent's home chain — NOT scoped to the selected service.
+   * @deprecated For per-service displays (e.g. switch eligibility, withdraw
+   * review), use {@link getStakedOlasBalanceByServiceConfigId} instead.
+   * Retained for telemetry-only consumption in `useLogs`.
+   */
   totalStakedOlasBalance?: number;
   /** Get staked olas balance of a specific agent wallet address */
   getStakedOlasBalanceOf: (walletAddress: Address) => number;
   /** Get staked olas balance of a specific service by service config id */
-  getStakedOlasBalanceByServiceId: (serviceId?: string) => number;
+  getStakedOlasBalanceByServiceConfigId: (serviceConfigId?: string) => number;
   /** @deprecated not used */
   lowBalances?: {
     serviceConfigId: string;
@@ -54,7 +61,7 @@ export const BalanceContext = createContext<{
   isLoaded: false,
   updateBalances: async () => {},
   getStakedOlasBalanceOf: () => 0,
-  getStakedOlasBalanceByServiceId: () => 0,
+  getStakedOlasBalanceByServiceConfigId: () => 0,
   isPaused: false,
   setIsPaused: () => {},
 });
@@ -152,11 +159,14 @@ export const BalanceProvider = ({ children }: PropsWithChildren) => {
     [stakedBalances],
   );
 
-  const getStakedOlasBalanceByServiceId = useCallback(
-    (serviceId?: string) => {
-      if (!serviceId) return 0;
+  // Filters by `serviceConfigId` only (no chain filter). Safe because
+  // `service_config_id` is unique across all chains, so a single id can match
+  // at most one entry in `stakedBalances`.
+  const getStakedOlasBalanceByServiceConfigId = useCallback(
+    (serviceConfigId?: string) => {
+      if (!serviceConfigId) return 0;
       return stakedBalances
-        .filter(({ serviceId: id }) => id === serviceId)
+        .filter(({ serviceConfigId: id }) => id === serviceConfigId)
         .reduce((acc, b) => acc + b.olasBondBalance + b.olasDepositBalance, 0);
     },
     [stakedBalances],
@@ -176,7 +186,7 @@ export const BalanceProvider = ({ children }: PropsWithChildren) => {
         totalEthBalance,
         totalStakedOlasBalance,
         getStakedOlasBalanceOf,
-        getStakedOlasBalanceByServiceId,
+        getStakedOlasBalanceByServiceConfigId,
         isPaused,
         setIsPaused,
         updateBalances,

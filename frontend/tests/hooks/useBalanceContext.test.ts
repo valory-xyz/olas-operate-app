@@ -28,7 +28,7 @@ describe('useBalanceContext', () => {
       totalEthBalance: 5,
       totalStakedOlasBalance: 50,
       getStakedOlasBalanceOf: jest.fn().mockReturnValue(25),
-      getStakedOlasBalanceByServiceId: jest.fn().mockReturnValue(25),
+      getStakedOlasBalanceByServiceConfigId: jest.fn().mockReturnValue(25),
       isPaused: false,
     };
 
@@ -65,9 +65,11 @@ describe('useBalanceContext', () => {
     expect(result.current.getStakedOlasBalanceOf(DEFAULT_EOA_ADDRESS)).toBe(0);
   });
 
-  it('returns getStakedOlasBalanceByServiceId that defaults to 0 when no provider wraps the hook', () => {
+  it('returns getStakedOlasBalanceByServiceConfigId that defaults to 0 when no provider wraps the hook', () => {
     const { result } = renderHook(() => useBalanceContext());
-    expect(result.current.getStakedOlasBalanceByServiceId('sc-any-id')).toBe(0);
+    expect(
+      result.current.getStakedOlasBalanceByServiceConfigId('sc-any-id'),
+    ).toBe(0);
   });
 
   it('exposes updateBalances as a callable async function', async () => {
@@ -78,7 +80,7 @@ describe('useBalanceContext', () => {
       updateBalances: mockUpdateBalances,
       setIsPaused: jest.fn(),
       getStakedOlasBalanceOf: jest.fn(),
-      getStakedOlasBalanceByServiceId: jest.fn(),
+      getStakedOlasBalanceByServiceConfigId: jest.fn(),
       isPaused: false,
     };
 

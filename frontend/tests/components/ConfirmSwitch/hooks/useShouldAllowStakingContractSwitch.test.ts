@@ -76,7 +76,9 @@ const setupMocks = ({
 }: MockOverrides = {}) => {
   mockUseBalanceContext.mockReturnValue({
     isLoaded: isBalanceLoaded,
-    getStakedOlasBalanceByServiceId: jest.fn(() => stakedOlasBalance ?? 0),
+    getStakedOlasBalanceByServiceConfigId: jest.fn(
+      () => stakedOlasBalance ?? 0,
+    ),
   } as unknown as ReturnType<typeof useBalanceContext>);
 
   const getMasterSafeOlasBalanceOfInStr = jest.fn(() => safeOlasBalanceStr);
@@ -173,28 +175,28 @@ describe('useShouldAllowStakingContractSwitch', () => {
       expect(result.current.totalOlas).toBe(50);
     });
 
-    // Regression: OPE-1511 — when two services exist on the same chain, the
-    // hook must pass the selected service's config id to the per-service
-    // helper so that only the selected service's stake is counted (sibling
-    // services on the same chain must not inflate totalOlas).
-    it('passes selected service config id to getStakedOlasBalanceByServiceId (OPE-1511)', () => {
+    // when two services exist on the same chain, only
+    // the selected service's stake must contribute to totalOlas. The sibling's
+    // stake on the same chain must not leak in.
+    it('uses only selected service stake — sibling on same chain is excluded (OPE-1511)', () => {
       const targetService = makeService({
         service_config_id: DEFAULT_SERVICE_CONFIG_ID,
         chain_configs: makeChainConfig(MiddlewareChainMap.GNOSIS, {
           token: DEFAULT_SERVICE_NFT_TOKEN_ID,
         }),
       });
-      const stakeByServiceId = jest.fn((serviceId?: string) =>
-        serviceId === DEFAULT_SERVICE_CONFIG_ID
-          ? 10
-          : serviceId === MOCK_SERVICE_CONFIG_ID_3
-            ? 999
-            : 0,
-      );
+      const stakeByServiceConfigId: Record<string, number> = {
+        [DEFAULT_SERVICE_CONFIG_ID]: 10,
+        [MOCK_SERVICE_CONFIG_ID_3]: 999,
+      };
+      const stakeFn = jest.fn((configId?: string): number => {
+        if (!configId) return 0;
+        return stakeByServiceConfigId[configId] ?? 0;
+      });
 
       mockUseBalanceContext.mockReturnValue({
         isLoaded: true,
-        getStakedOlasBalanceByServiceId: stakeByServiceId,
+        getStakedOlasBalanceByServiceConfigId: stakeFn,
       } as unknown as ReturnType<typeof useBalanceContext>);
       mockUseMasterBalances.mockReturnValue({
         getMasterSafeOlasBalanceOfInStr: jest.fn(() => '20'),
@@ -212,10 +214,6 @@ describe('useShouldAllowStakingContractSwitch', () => {
         useShouldAllowStakingContractSwitch(),
       );
 
-      expect(stakeByServiceId).toHaveBeenCalledWith(DEFAULT_SERVICE_CONFIG_ID);
-      expect(stakeByServiceId).not.toHaveBeenCalledWith(
-        MOCK_SERVICE_CONFIG_ID_3,
-      );
       // totalOlas reflects target's stake (10) + safe balance (20), not the
       // sibling's 999.
       expect(result.current.totalOlas).toBe(30);
