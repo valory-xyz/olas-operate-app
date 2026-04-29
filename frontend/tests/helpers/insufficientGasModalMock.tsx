@@ -18,7 +18,7 @@ import React from 'react';
 type InsufficientGasModalMockProps = {
   caseType: string;
   chain: string;
-  prefillAmountWei: number | string;
+  prefillAmountWei: string;
   onFund: () => void;
   onClose: () => void;
 };
@@ -33,7 +33,7 @@ export const insufficientGasModalMock = ({
   <div data-testid="insufficient-gas-modal">
     <span data-testid="gas-modal-case">{caseType}</span>
     <span data-testid="gas-modal-chain">{chain}</span>
-    <span data-testid="gas-modal-amount">{String(prefillAmountWei)}</span>
+    <span data-testid="gas-modal-amount">{prefillAmountWei}</span>
     <button data-testid="gas-modal-fund" onClick={onFund}>
       Fund
     </button>

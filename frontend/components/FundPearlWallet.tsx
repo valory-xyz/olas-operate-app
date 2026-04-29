@@ -16,7 +16,11 @@ import {
 } from '@/utils/middlewareHelpers';
 import { formatUnitsToNumber } from '@/utils/numberFormatters';
 
-type PrefillNavParams = { prefillAmountWei?: string };
+const readPrefillAmountWei = (params: unknown): string | undefined => {
+  if (!params || typeof params !== 'object') return undefined;
+  const value = (params as Record<string, unknown>).prefillAmountWei;
+  return typeof value === 'string' ? value : undefined;
+};
 
 export const FundPearlWallet = () => {
   const { goto, navParams, clearNavParams } = usePageState();
@@ -24,8 +28,8 @@ export const FundPearlWallet = () => {
   const { masterEoaGasRequirement } = useMasterBalances();
   const { masterEoa } = useMasterWalletContext();
 
-  const [prefillAmountWei] = useState<string | undefined>(
-    () => (navParams as PrefillNavParams).prefillAmountWei,
+  const [prefillAmountWei] = useState<string | undefined>(() =>
+    readPrefillAmountWei(navParams),
   );
 
   useEffect(() => {
