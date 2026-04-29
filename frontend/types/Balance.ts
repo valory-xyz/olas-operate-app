@@ -19,7 +19,7 @@ export type WalletBalance = {
 };
 
 export type CrossChainStakedBalances = Array<{
-  serviceId: string;
+  serviceConfigId: string;
   evmChainId: number;
   olasBondBalance: number;
   olasDepositBalance: number;

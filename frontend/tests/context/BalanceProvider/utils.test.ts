@@ -474,7 +474,7 @@ describe('getCrossChainBalances', () => {
       expect(result.stakedBalances).toHaveLength(1);
       expect(result.stakedBalances[0].olasBondBalance).toBe(10);
       expect(result.stakedBalances[0].olasDepositBalance).toBe(20);
-      expect(result.stakedBalances[0].serviceId).toBe(
+      expect(result.stakedBalances[0].serviceConfigId).toBe(
         DEFAULT_SERVICE_CONFIG_ID,
       );
     });
@@ -822,10 +822,10 @@ describe('getCrossChainBalances', () => {
       expect(result.stakedBalances).toHaveLength(2);
 
       const gnosisStaked = result.stakedBalances.find(
-        (s) => s.serviceId === DEFAULT_SERVICE_CONFIG_ID,
+        (s) => s.serviceConfigId === DEFAULT_SERVICE_CONFIG_ID,
       );
       const baseStaked = result.stakedBalances.find(
-        (s) => s.serviceId === SECOND_CONFIG_ID,
+        (s) => s.serviceConfigId === SECOND_CONFIG_ID,
       );
 
       expect(gnosisStaked).toBeDefined();
