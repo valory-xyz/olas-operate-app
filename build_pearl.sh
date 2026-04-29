@@ -38,8 +38,10 @@ poetry run pyinstaller \
     --collect-all operate \
     --collect-all aea_ledger_ethereum \
     --collect-all aea_ledger_cosmos \
+    --collect-all aea_ledger_ethereum_flashbots \
     --hidden-import aea_ledger_ethereum \
     --hidden-import aea_ledger_cosmos \
+    --hidden-import aea_ledger_ethereum_flashbots \
     operate/pearl.py \
     --add-binary ${BIN_DIR}/aea_bin_x64:. \
     --add-binary ${BIN_DIR}/aea_bin_arm64:. \
