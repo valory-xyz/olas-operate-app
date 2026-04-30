@@ -63,7 +63,7 @@ const {
 const setupMocks = (
   overrides: {
     isBuyCryptoBtnLoading?: boolean;
-    usdAmountToPay?: number | null;
+    nativeAmountToPay?: number | null;
     isTransactionSuccessfulButFundsNotReceived?: boolean;
     isOnRampingStepCompleted?: boolean;
     moonpayCurrencyCode?: string | null;
@@ -83,8 +83,8 @@ const setupMocks = (
 
   mockUseOnRampContext.mockReturnValue({
     isBuyCryptoBtnLoading: overrides.isBuyCryptoBtnLoading ?? false,
-    usdAmountToPay:
-      'usdAmountToPay' in overrides ? overrides.usdAmountToPay : 18.17,
+    nativeAmountToPay:
+      'nativeAmountToPay' in overrides ? overrides.nativeAmountToPay : 0.005,
     updateIsBuyCryptoBtnLoading,
     isTransactionSuccessfulButFundsNotReceived:
       overrides.isTransactionSuccessfulButFundsNotReceived ?? false,
@@ -192,8 +192,8 @@ describe('useBuyCryptoStep', () => {
       expect(result.current.subSteps).toHaveLength(2);
     });
 
-    it('is true when usdAmountToPay is null', () => {
-      setupMocks({ usdAmountToPay: null });
+    it('is true when nativeAmountToPay is null', () => {
+      setupMocks({ nativeAmountToPay: null });
       const { result } = renderHook(() => useBuyCryptoStep());
       expect(result.current.subSteps).toHaveLength(2);
     });
@@ -213,8 +213,8 @@ describe('useBuyCryptoStep', () => {
       expect(result.current.status).toBe('wait');
     });
 
-    it('does not call show when usdAmountToPay is null', () => {
-      const { showFn } = setupMocks({ usdAmountToPay: null });
+    it('does not call show when nativeAmountToPay is null', () => {
+      const { showFn } = setupMocks({ nativeAmountToPay: null });
       renderHook(() => useBuyCryptoStep());
       // handleBuyCrypto has early returns for missing values
       expect(showFn).not.toHaveBeenCalled();
@@ -240,11 +240,11 @@ describe('useBuyCryptoStep', () => {
   });
 
   describe('handleBuyCrypto invocation', () => {
-    it('calls onRampWindow.show and updateIsBuyCryptoBtnLoading when all params present', async () => {
+    it('calls onRampWindow.show with toFixed(6) native amount + currency code', async () => {
       const showFn = jest.fn();
       const { updateIsBuyCryptoBtnLoading } = setupMocks({
         onRampWindowShow: showFn,
-        usdAmountToPay: 18.17,
+        nativeAmountToPay: 0.005,
         moonpayCurrencyCode: 'eth_base',
       });
       const { result } = renderHook(() => useBuyCryptoStep());
@@ -258,9 +258,9 @@ describe('useBuyCryptoStep', () => {
         await onClick();
       });
 
-      // Phase 1: networkName arg is an empty placeholder; Phase 3 drops it
-      // entirely once the Electron preload + main signatures are updated.
-      expect(showFn).toHaveBeenCalledWith(18.17, '', 'eth_base');
+      // Native amount is fixed-decimal-formatted to 6 places to avoid float
+      // artifacts (e.g. 0.020000000000000004) hitting MoonPay validation.
+      expect(showFn).toHaveBeenCalledWith('0.005000', 'eth_base');
       expect(updateIsBuyCryptoBtnLoading).toHaveBeenCalledWith(true);
     });
 
@@ -281,9 +281,9 @@ describe('useBuyCryptoStep', () => {
       expect(updateIsBuyCryptoBtnLoading).not.toHaveBeenCalled();
     });
 
-    it('early-returns when usdAmountToPay is null', async () => {
+    it('early-returns when nativeAmountToPay is null', async () => {
       const showFn = jest.fn();
-      setupMocks({ onRampWindowShow: showFn, usdAmountToPay: null });
+      setupMocks({ onRampWindowShow: showFn, nativeAmountToPay: null });
       const { result } = renderHook(() => useBuyCryptoStep());
       const buyButtonElement = result.current.subSteps[1].description;
       const onClick = (

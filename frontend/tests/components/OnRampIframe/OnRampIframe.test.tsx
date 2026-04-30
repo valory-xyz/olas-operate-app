@@ -1,9 +1,10 @@
-import { render } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { createElement } from 'react';
 
 import { useElectronApi } from '../../../hooks/useElectronApi';
 import { useMasterWalletContext } from '../../../hooks/useWallet';
-import { DEFAULT_EOA_ADDRESS, makeMasterEoa } from '../../helpers/factories';
+import { MoonPayService } from '../../../service/MoonPay';
+import { makeMasterEoa } from '../../helpers/factories';
 
 // ---------------------------------------------------------------------------
 // Module mocks
@@ -18,10 +19,6 @@ jest.mock(
 jest.mock('../../../constants/providers', () => ({}));
 jest.mock('../../../config/providers', () => ({ providers: [] }));
 
-jest.mock('../../../constants/urls', () => ({
-  ON_RAMP_GATEWAY_URL: 'https://mock-transak.com/',
-}));
-
 jest.mock('../../../hooks/useElectronApi', () => ({
   useElectronApi: jest.fn(),
 }));
@@ -32,10 +29,29 @@ jest.mock('../../../utils/delay', () => ({
   delayInSeconds: jest.fn(() => Promise.resolve()),
 }));
 
-// Mock next/image
-jest.mock('next/image', () => ({
-  __esModule: true,
-  default: (props: Record<string, unknown>) => createElement('img', props),
+jest.mock('../../../service/MoonPay', () => ({
+  MoonPayService: {
+    getSignedUrl: jest.fn(),
+    getBuyQuote: jest.fn(),
+  },
+}));
+
+// The @/components/ui barrel pulls in tooltip → antd ESM modules that the
+// Jest transform doesn't handle. Stub Alert directly so the iframe under
+// test can resolve without triggering the antd ESM path.
+jest.mock('../../../components/ui', () => ({
+  Alert: ({
+    message,
+    description,
+  }: {
+    message: string;
+    description?: string;
+  }) => (
+    <div data-testid="error-alert">
+      <span>{message}</span>
+      {description && <span data-testid="error-detail">{description}</span>}
+    </div>
+  ),
 }));
 
 // ---------------------------------------------------------------------------
@@ -47,6 +63,9 @@ const mockUseElectronApi = useElectronApi as jest.MockedFunction<
 >;
 const mockUseMasterWalletContext =
   useMasterWalletContext as jest.MockedFunction<typeof useMasterWalletContext>;
+const mockGetSignedUrl = MoonPayService.getSignedUrl as jest.MockedFunction<
+  typeof MoonPayService.getSignedUrl
+>;
 
 // ---------------------------------------------------------------------------
 // Import after mocks
@@ -63,15 +82,59 @@ const {
 // Helpers
 // ---------------------------------------------------------------------------
 
-const setupMocks = (masterEoa = makeMasterEoa()) => {
+const SIGNED_URL = 'https://buy.moonpay.com?apiKey=pk_test&signature=sig';
+const MOONPAY_ORIGIN = 'https://buy.moonpay.com';
+
+const setupMocks = (
+  overrides: {
+    masterEoa?: ReturnType<typeof makeMasterEoa>;
+    closeFn?: jest.Mock;
+    transactionFailureFn?: jest.Mock;
+    logEventFn?: jest.Mock;
+  } = {},
+) => {
+  const closeFn = overrides.closeFn ?? jest.fn();
+  const transactionFailureFn = overrides.transactionFailureFn ?? jest.fn();
+  const logEventFn = overrides.logEventFn ?? jest.fn();
+
   mockUseElectronApi.mockReturnValue({
-    onRampWindow: { close: jest.fn(), transactionFailure: jest.fn() },
-    logEvent: jest.fn(),
+    onRampWindow: {
+      close: closeFn,
+      transactionFailure: transactionFailureFn,
+    },
+    logEvent: logEventFn,
   } as unknown as ReturnType<typeof useElectronApi>);
 
   mockUseMasterWalletContext.mockReturnValue({
-    masterEoa,
+    masterEoa: 'masterEoa' in overrides ? overrides.masterEoa : makeMasterEoa(),
   } as unknown as ReturnType<typeof useMasterWalletContext>);
+
+  return { closeFn, transactionFailureFn, logEventFn };
+};
+
+const renderIframe = (
+  props: { nativeAmount?: string; currencyCode?: string } = {},
+) =>
+  render(
+    createElement(OnRampIframe, {
+      nativeAmount: props.nativeAmount ?? '0.050000',
+      currencyCode: props.currencyCode ?? 'eth_base',
+    }),
+  );
+
+// Dispatch a postMessage that mimics MoonPay's wire format. The handler
+// requires a matching origin AND source identity.
+const dispatchMoonPayEvent = (
+  iframe: HTMLIFrameElement | null,
+  event_id: string,
+  origin = MOONPAY_ORIGIN,
+) => {
+  const event = new MessageEvent('message', {
+    source: iframe?.contentWindow,
+    origin,
+    data: { event_id },
+  });
+  window.dispatchEvent(event);
 };
 
 // ---------------------------------------------------------------------------
@@ -83,259 +146,164 @@ describe('OnRampIframe', () => {
     jest.clearAllMocks();
   });
 
-  describe('URL construction', () => {
-    it('builds correct Transak URL with all params', () => {
+  describe('signed-URL fetch lifecycle', () => {
+    it('renders <Spin /> while fetching the signed URL', () => {
       setupMocks();
+      mockGetSignedUrl.mockReturnValue(new Promise(() => {})); // never resolves
 
-      render(
-        createElement(OnRampIframe, {
-          usdAmountToPay: 18.17,
-          networkName: 'base',
-          cryptoCurrencyCode: 'ETH',
-        }),
-      );
+      renderIframe();
 
-      const iframe = document.querySelector('iframe');
-      expect(iframe).not.toBeNull();
-
-      const url = new URL(iframe!.src);
-      expect(url.origin).toBe('https://mock-transak.com');
-      expect(url.searchParams.get('productsAvailed')).toBe('BUY');
-      expect(url.searchParams.get('paymentMethod')).toBe('credit_debit_card');
-      expect(url.searchParams.get('network')).toBe('base');
-      expect(url.searchParams.get('cryptoCurrencyCode')).toBe('ETH');
-      expect(url.searchParams.get('fiatCurrency')).toBe('USD');
-      expect(url.searchParams.get('fiatAmount')).toBe('18.17');
-      expect(url.searchParams.get('walletAddress')).toBe(DEFAULT_EOA_ADDRESS);
-      expect(url.searchParams.get('hideMenu')).toBe('true');
-    });
-
-    it('renders spinner when masterEoa is missing', () => {
-      setupMocks(undefined as never);
-      mockUseMasterWalletContext.mockReturnValue({
-        masterEoa: undefined,
-      } as unknown as ReturnType<typeof useMasterWalletContext>);
-
-      render(
-        createElement(OnRampIframe, {
-          usdAmountToPay: 10,
-          networkName: 'base',
-          cryptoCurrencyCode: 'ETH',
-        }),
-      );
-
-      const iframe = document.querySelector('iframe');
-      expect(iframe).toBeNull();
-      // Ant Spin renders with .ant-spin class
       expect(document.querySelector('.ant-spin')).not.toBeNull();
-    });
-
-    it('renders spinner when networkName is missing', () => {
-      setupMocks();
-
-      render(
-        createElement(OnRampIframe, {
-          usdAmountToPay: 10,
-          networkName: undefined,
-          cryptoCurrencyCode: 'ETH',
-        }),
-      );
-
       expect(document.querySelector('iframe')).toBeNull();
     });
 
-    it('renders spinner when cryptoCurrencyCode is missing', () => {
+    it('renders the iframe with the signed URL on success', async () => {
       setupMocks();
+      mockGetSignedUrl.mockResolvedValue({ success: true, url: SIGNED_URL });
 
-      render(
-        createElement(OnRampIframe, {
-          usdAmountToPay: 10,
-          networkName: 'base',
-          cryptoCurrencyCode: undefined,
-        }),
-      );
+      renderIframe();
 
+      await waitFor(() => {
+        const iframe = document.querySelector('iframe');
+        expect(iframe).not.toBeNull();
+        // jsdom normalises the URL (adds trailing `/` after the host); use
+        // includes-style assertions on the signature + apiKey instead of
+        // strict equality.
+        expect(iframe?.src).toContain('buy.moonpay.com');
+        expect(iframe?.src).toContain('apiKey=pk_test');
+        expect(iframe?.src).toContain('signature=sig');
+        expect(iframe?.id).toBe('moonpay-iframe');
+      });
+    });
+
+    it('passes nativeAmount + currencyCode + walletAddress to MoonPayService', async () => {
+      setupMocks();
+      mockGetSignedUrl.mockResolvedValue({ success: true, url: SIGNED_URL });
+
+      renderIframe({ nativeAmount: '0.123456', currencyCode: 'pol' });
+
+      await waitFor(() => {
+        expect(mockGetSignedUrl).toHaveBeenCalledWith({
+          nativeAmount: '0.123456',
+          currencyCode: 'pol',
+          walletAddress: makeMasterEoa().address,
+        });
+      });
+    });
+
+    it('renders error Alert + Retry button when signing fails', async () => {
+      setupMocks();
+      mockGetSignedUrl.mockResolvedValue({
+        success: false,
+        error: 'INVALID_AMOUNT',
+      });
+
+      renderIframe();
+
+      await waitFor(() => {
+        expect(
+          screen.getByText('Failed to load MoonPay. Please try again.'),
+        ).toBeInTheDocument();
+      });
+      expect(
+        screen.getByRole('button', { name: /Retry/i }),
+      ).toBeInTheDocument();
       expect(document.querySelector('iframe')).toBeNull();
     });
 
-    it('uses correct URL for Polygon (POL)', () => {
+    it('re-fetches the signed URL when Retry is clicked', async () => {
       setupMocks();
+      mockGetSignedUrl
+        .mockResolvedValueOnce({ success: false, error: 'NET' })
+        .mockResolvedValueOnce({ success: true, url: SIGNED_URL });
 
-      render(
-        createElement(OnRampIframe, {
-          usdAmountToPay: 25,
-          networkName: 'polygon',
-          cryptoCurrencyCode: 'POL',
-        }),
-      );
+      renderIframe();
 
-      const iframe = document.querySelector('iframe');
-      const url = new URL(iframe!.src);
-      expect(url.searchParams.get('network')).toBe('polygon');
-      expect(url.searchParams.get('cryptoCurrencyCode')).toBe('POL');
-      expect(url.searchParams.get('fiatAmount')).toBe('25');
+      await waitFor(() => {
+        expect(
+          screen.getByRole('button', { name: /Retry/i }),
+        ).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByRole('button', { name: /Retry/i }));
+
+      await waitFor(() => {
+        const iframe = document.querySelector('iframe');
+        expect(iframe?.src).toContain('signature=sig');
+      });
+      expect(mockGetSignedUrl).toHaveBeenCalledTimes(2);
+    });
+
+    it('does not fetch when masterEoa is missing', () => {
+      setupMocks({
+        masterEoa: undefined as unknown as ReturnType<typeof makeMasterEoa>,
+      });
+
+      renderIframe();
+
+      expect(mockGetSignedUrl).not.toHaveBeenCalled();
     });
   });
 
-  describe('iframe event handling', () => {
-    it('closes window on TRANSAK_WIDGET_CLOSE event', () => {
-      const closeFn = jest.fn();
-      mockUseElectronApi.mockReturnValue({
-        onRampWindow: { close: closeFn, transactionFailure: jest.fn() },
-        logEvent: jest.fn(),
-      } as unknown as ReturnType<typeof useElectronApi>);
-      setupMocks();
-      // Re-mock to use our closeFn
-      mockUseElectronApi.mockReturnValue({
-        onRampWindow: { close: closeFn, transactionFailure: jest.fn() },
-        logEvent: jest.fn(),
-      } as unknown as ReturnType<typeof useElectronApi>);
-
-      render(
-        createElement(OnRampIframe, {
-          usdAmountToPay: 10,
-          networkName: 'base',
-          cryptoCurrencyCode: 'ETH',
-        }),
-      );
-
-      const iframe = document.querySelector('iframe');
-
-      // Simulate message from iframe
-      const event = new MessageEvent('message', {
-        source: iframe?.contentWindow,
-        data: {
-          event_id: 'TRANSAK_WIDGET_CLOSE',
-          data: {},
-        },
+  describe('postMessage event handling — origin + source guards', () => {
+    const setupRendered = async () => {
+      const mocks = setupMocks();
+      mockGetSignedUrl.mockResolvedValue({ success: true, url: SIGNED_URL });
+      renderIframe();
+      await waitFor(() => {
+        expect(document.querySelector('iframe')).not.toBeNull();
       });
-      window.dispatchEvent(event);
+      return { ...mocks, iframe: document.querySelector('iframe') };
+    };
 
-      expect(closeFn).toHaveBeenCalled();
+    it('closes the window on widget-close event from MoonPay origin', async () => {
+      const { closeFn, iframe } = await setupRendered();
+      dispatchMoonPayEvent(iframe, 'CLOSE_WIDGET');
+      expect(closeFn).toHaveBeenCalledTimes(1);
     });
 
-    it('ignores message events with no data', () => {
-      const closeFn = jest.fn();
-      mockUseElectronApi.mockReturnValue({
-        onRampWindow: { close: closeFn, transactionFailure: jest.fn() },
-        logEvent: jest.fn(),
-      } as unknown as ReturnType<typeof useElectronApi>);
-      mockUseMasterWalletContext.mockReturnValue({
-        masterEoa: makeMasterEoa(),
-      } as unknown as ReturnType<typeof useMasterWalletContext>);
+    it('calls transactionFailure on transaction-failed event (after delay)', async () => {
+      const { transactionFailureFn, iframe } = await setupRendered();
+      dispatchMoonPayEvent(iframe, 'TRANSACTION_FAILED');
+      await Promise.resolve(); // delayInSeconds is mocked to resolve immediately
+      expect(transactionFailureFn).toHaveBeenCalledTimes(1);
+    });
 
-      render(
-        createElement(OnRampIframe, {
-          usdAmountToPay: 10,
-          networkName: 'base',
-          cryptoCurrencyCode: 'ETH',
-        }),
-      );
-
-      const iframe = document.querySelector('iframe');
-      const event = new MessageEvent('message', {
-        source: iframe?.contentWindow,
-        data: undefined,
-      });
-      window.dispatchEvent(event);
-
+    it('rejects events whose origin is not in the MoonPay allowlist', async () => {
+      const { closeFn, iframe } = await setupRendered();
+      dispatchMoonPayEvent(iframe, 'CLOSE_WIDGET', 'https://attacker.example');
       expect(closeFn).not.toHaveBeenCalled();
     });
 
-    it('ignores message events with data but no event_id', () => {
-      const closeFn = jest.fn();
-      mockUseElectronApi.mockReturnValue({
-        onRampWindow: { close: closeFn, transactionFailure: jest.fn() },
-        logEvent: jest.fn(),
-      } as unknown as ReturnType<typeof useElectronApi>);
-      mockUseMasterWalletContext.mockReturnValue({
-        masterEoa: makeMasterEoa(),
-      } as unknown as ReturnType<typeof useMasterWalletContext>);
+    it('rejects events whose source is not the MoonPay iframe', async () => {
+      const { closeFn } = await setupRendered();
+      // Source is the window itself, not the iframe contentWindow
+      const event = new MessageEvent('message', {
+        source: window,
+        origin: MOONPAY_ORIGIN,
+        data: { event_id: 'CLOSE_WIDGET' },
+      });
+      window.dispatchEvent(event);
+      expect(closeFn).not.toHaveBeenCalled();
+    });
 
-      render(
-        createElement(OnRampIframe, {
-          usdAmountToPay: 10,
-          networkName: 'base',
-          cryptoCurrencyCode: 'ETH',
-        }),
-      );
-
-      const iframe = document.querySelector('iframe');
+    it('ignores events with no event_id / type', async () => {
+      const { closeFn, iframe } = await setupRendered();
       const event = new MessageEvent('message', {
         source: iframe?.contentWindow,
+        origin: MOONPAY_ORIGIN,
         data: { someOther: 'field' },
       });
       window.dispatchEvent(event);
-
       expect(closeFn).not.toHaveBeenCalled();
     });
 
-    it('ignores message events from other sources', () => {
-      const closeFn = jest.fn();
-      mockUseElectronApi.mockReturnValue({
-        onRampWindow: { close: closeFn, transactionFailure: jest.fn() },
-        logEvent: jest.fn(),
-      } as unknown as ReturnType<typeof useElectronApi>);
-      mockUseMasterWalletContext.mockReturnValue({
-        masterEoa: makeMasterEoa(),
-      } as unknown as ReturnType<typeof useMasterWalletContext>);
-
-      render(
-        createElement(OnRampIframe, {
-          usdAmountToPay: 10,
-          networkName: 'base',
-          cryptoCurrencyCode: 'ETH',
-        }),
+    it('logs the event_id via logEvent for observability', async () => {
+      const { logEventFn, iframe } = await setupRendered();
+      dispatchMoonPayEvent(iframe, 'CLOSE_WIDGET');
+      expect(logEventFn).toHaveBeenCalledWith(
+        expect.stringContaining('CLOSE_WIDGET'),
       );
-
-      // Simulate message from a different source (not the iframe)
-      const event = new MessageEvent('message', {
-        source: window,
-        data: {
-          event_id: 'TRANSAK_WIDGET_CLOSE',
-          data: {},
-        },
-      });
-      window.dispatchEvent(event);
-
-      expect(closeFn).not.toHaveBeenCalled();
-    });
-
-    it('calls transactionFailure after delay on TRANSAK_ORDER_FAILED event', async () => {
-      const transactionFailureFn = jest.fn();
-      mockUseElectronApi.mockReturnValue({
-        onRampWindow: {
-          close: jest.fn(),
-          transactionFailure: transactionFailureFn,
-        },
-        logEvent: jest.fn(),
-      } as unknown as ReturnType<typeof useElectronApi>);
-      mockUseMasterWalletContext.mockReturnValue({
-        masterEoa: makeMasterEoa(),
-      } as unknown as ReturnType<typeof useMasterWalletContext>);
-
-      render(
-        createElement(OnRampIframe, {
-          usdAmountToPay: 10,
-          networkName: 'base',
-          cryptoCurrencyCode: 'ETH',
-        }),
-      );
-
-      const iframe = document.querySelector('iframe');
-      const event = new MessageEvent('message', {
-        source: iframe?.contentWindow,
-        data: {
-          event_id: 'TRANSAK_ORDER_FAILED',
-          data: {},
-        },
-      });
-      window.dispatchEvent(event);
-
-      // delayInSeconds is mocked to resolve immediately
-      await Promise.resolve();
-
-      expect(transactionFailureFn).toHaveBeenCalledTimes(1);
     });
   });
 });

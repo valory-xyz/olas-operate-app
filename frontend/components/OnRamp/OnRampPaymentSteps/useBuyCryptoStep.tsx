@@ -27,7 +27,7 @@ export const useBuyCryptoStep = () => {
   const { masterEoa } = useMasterWalletContext();
   const {
     isBuyCryptoBtnLoading,
-    usdAmountToPay,
+    nativeAmountToPay,
     updateIsBuyCryptoBtnLoading,
     isTransactionSuccessfulButFundsNotReceived,
     isOnRampingStepCompleted,
@@ -36,23 +36,20 @@ export const useBuyCryptoStep = () => {
 
   const handleBuyCrypto = useCallback(async () => {
     if (!onRampWindow?.show) return;
-    if (!usdAmountToPay) return;
+    if (!nativeAmountToPay) return;
     if (!moonpayCurrencyCode) return;
 
-    // TODO Phase 3: onRampWindow.show signature drops networkName; pass
-    // (nativeAmountToPay.toFixed(6), moonpayCurrencyCode) once Electron
-    // preload + main are updated.
-    onRampWindow.show(usdAmountToPay, '', moonpayCurrencyCode);
+    onRampWindow.show(nativeAmountToPay.toFixed(6), moonpayCurrencyCode);
     await delayInSeconds(1);
     updateIsBuyCryptoBtnLoading(true);
   }, [
     onRampWindow,
-    usdAmountToPay,
+    nativeAmountToPay,
     moonpayCurrencyCode,
     updateIsBuyCryptoBtnLoading,
   ]);
 
-  const cannotBuyCrypto = !masterEoa?.address || !usdAmountToPay;
+  const cannotBuyCrypto = !masterEoa?.address || !nativeAmountToPay;
 
   const openTerms = useCallback(async () => {
     termsAndConditionsWindow?.show?.('moonpay-terms');

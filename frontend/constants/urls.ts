@@ -87,9 +87,6 @@ export const BLOCKSCOUT_URL_BY_MIDDLEWARE_CHAIN: Record<
   [MiddlewareChainMap.POLYGON]: 'https://polygon.blockscout.com',
 };
 
-// on-ramp
-export const ON_RAMP_GATEWAY_URL = `https://proxy.transak.${process.env.NODE_ENV === 'production' ? '' : 'staging.'}autonolas.tech/`;
-
 // pearl-api url
 export const PEARL_API_URL = 'https://pearl-api.olas.network';
 

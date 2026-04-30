@@ -1,59 +1,114 @@
-import { Flex, Spin } from 'antd';
-import { useEffect, useMemo, useRef } from 'react';
+import { Button, Flex, Spin } from 'antd';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { APP_HEIGHT, APP_WIDTH, ON_RAMP_GATEWAY_URL } from '@/constants';
+import { Alert } from '@/components/ui';
+import { APP_HEIGHT, APP_WIDTH } from '@/constants';
 import { useElectronApi, useMasterWalletContext } from '@/hooks';
+import { MoonPayService } from '@/service/MoonPay';
 import { delayInSeconds } from '@/utils/delay';
 
-type TransakEvent = {
-  event: string;
+/**
+ * MoonPay widget origins allowlisted for postMessage events.
+ * Production: https://buy.moonpay.com. Sandbox URL is the same family — when
+ * pearl-api routes the signing request to MoonPay sandbox the widget is
+ * served from buy-sandbox.moonpay.com (TODO Phase 0 step 4: confirm exact
+ * sandbox host with infra/POC playback).
+ */
+const MOONPAY_ALLOWED_ORIGINS = [
+  'https://buy.moonpay.com',
+  'https://buy-sandbox.moonpay.com',
+];
+
+/**
+ * postMessage event_id strings emitted by the MoonPay widget.
+ *
+ * MoonPay does not publicly document the raw-iframe wire format — these are
+ * captured from VLOP-58 POC playback and treated as a project-internal
+ * contract. TODO Phase 0 step 4: confirm exact strings (likely
+ * `'CLOSE_WIDGET' | 'TRANSACTION_FAILED' | 'TRANSACTION_COMPLETED'` per the
+ * SDK's `onClose / onTransactionCreated / onTransactionCompleted` callbacks).
+ */
+const MOONPAY_EVENT_IDS = {
+  close: 'CLOSE_WIDGET',
+  failed: 'TRANSACTION_FAILED',
+  completed: 'TRANSACTION_COMPLETED',
+} as const;
+
+type MoonPayEvent = {
   data: {
-    event_id:
-      | 'TRANSAK_WIDGET_CLOSE'
-      | 'TRANSAK_WIDGET_INITIALISED'
-      | 'TRANSAK_ORDER_SUCCESSFUL'
-      | 'TRANSAK_ORDER_FAILED';
-    data: unknown;
+    type?: string;
+    event_id?: string;
+    [key: string]: unknown;
   };
 };
 
+const FAILURE_DELAY_SECONDS = 3;
+
 type OnRampIframeProps = {
-  usdAmountToPay: number;
-  networkName?: string;
-  cryptoCurrencyCode?: string;
+  /** Locked native crypto amount, formatted as `toFixed(6)`. */
+  nativeAmount: string;
+  /** MoonPay currency code (e.g. `eth_base`, `pol`). */
+  currencyCode: string;
 };
 
 export const OnRampIframe = ({
-  usdAmountToPay,
-  networkName,
-  cryptoCurrencyCode,
+  nativeAmount,
+  currencyCode,
 }: OnRampIframeProps) => {
   const { onRampWindow, logEvent } = useElectronApi();
   const { masterEoa } = useMasterWalletContext();
 
   const ref = useRef<HTMLIFrameElement>(null);
 
+  const [signedUrl, setSignedUrl] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchSignedUrl = useCallback(async () => {
+    if (!masterEoa?.address) return;
+
+    setIsLoading(true);
+    setError(null);
+
+    const result = await MoonPayService.getSignedUrl({
+      nativeAmount,
+      currencyCode,
+      walletAddress: masterEoa.address,
+    });
+
+    if (result.success) {
+      setSignedUrl(result.url);
+    } else {
+      setError(result.error);
+    }
+    setIsLoading(false);
+  }, [masterEoa, nativeAmount, currencyCode]);
+
+  useEffect(() => {
+    fetchSignedUrl();
+  }, [fetchSignedUrl]);
+
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
-      const transakIframe = ref.current?.contentWindow;
-      if (event.source !== transakIframe) return;
+      // Defence-in-depth: origin allowlist + source identity check. Either
+      // alone is bypassable; together they reject any nested or cross-origin
+      // spoofed event.
+      if (!MOONPAY_ALLOWED_ORIGINS.includes(event.origin)) return;
+      if (event.source !== ref.current?.contentWindow) return;
 
-      const eventDetails = event as unknown as TransakEvent;
-      if (!eventDetails.data) return;
-      if (!eventDetails.data.event_id) return;
+      const eventDetails = event as unknown as MoonPayEvent;
+      const eventId = eventDetails.data?.event_id ?? eventDetails.data?.type;
+      if (!eventId) return;
 
-      // To get all the events and log them
-      logEvent?.(
-        `Transak event: ${JSON.stringify(eventDetails.data.event_id)}`,
-      );
+      logEvent?.(`MoonPay event: ${JSON.stringify(eventId)}`);
 
-      if (eventDetails.data.event_id === 'TRANSAK_WIDGET_CLOSE') {
+      if (eventId === MOONPAY_EVENT_IDS.close) {
         onRampWindow?.close?.();
+        return;
       }
 
-      // Close the on-ramp window if the transaction fails
-      if (eventDetails.data.event_id === 'TRANSAK_ORDER_FAILED') {
-        delayInSeconds(3).then(() => {
+      if (eventId === MOONPAY_EVENT_IDS.failed) {
+        delayInSeconds(FAILURE_DELAY_SECONDS).then(() => {
           onRampWindow?.transactionFailure?.();
         });
       }
@@ -63,46 +118,39 @@ export const OnRampIframe = ({
     return () => window.removeEventListener('message', handleMessage);
   }, [logEvent, onRampWindow]);
 
-  const onRampUrl = useMemo(() => {
-    if (!masterEoa?.address) return;
-    if (!networkName || !cryptoCurrencyCode) return;
-
-    const url = new URL(ON_RAMP_GATEWAY_URL);
-    url.searchParams.set('productsAvailed', 'BUY');
-    url.searchParams.set('paymentMethod', 'credit_debit_card');
-    url.searchParams.set('network', networkName);
-    url.searchParams.set('cryptoCurrencyCode', cryptoCurrencyCode);
-    url.searchParams.set('fiatCurrency', 'USD');
-    url.searchParams.set('fiatAmount', String(usdAmountToPay));
-    // Note: "from" address should always be mEOA for bridging
-    // so we should on-ramp to mEOA only
-    url.searchParams.set('walletAddress', masterEoa.address);
-    url.searchParams.set('hideMenu', 'true');
-
-    return url.toString();
-  }, [masterEoa, networkName, cryptoCurrencyCode, usdAmountToPay]);
-
   return (
     <Flex
       justify="center"
       align="center"
       vertical
+      gap={16}
       style={{
         overflow: 'hidden',
         height: `calc(${APP_HEIGHT}px - 45px)`,
         width: APP_WIDTH,
+        padding: error ? 24 : 0,
       }}
     >
-      {onRampUrl ? (
+      {isLoading && <Spin />}
+      {!isLoading && error && (
+        <>
+          <Alert
+            type="error"
+            showIcon
+            message="Failed to load MoonPay. Please try again."
+            description={error}
+          />
+          <Button onClick={fetchSignedUrl}>Retry</Button>
+        </>
+      )}
+      {!isLoading && !error && signedUrl && (
         <iframe
-          src={onRampUrl}
+          src={signedUrl}
           ref={ref}
-          id="transak-iframe"
+          id="moonpay-iframe"
           style={{ width: '100%', height: '100%', border: 'none' }}
           allow="camera;microphone;payment"
         />
-      ) : (
-        <Spin />
       )}
     </Flex>
   );
