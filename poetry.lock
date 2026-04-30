@@ -2369,34 +2369,40 @@ nicer-shell = ["ipython"]
 
 [[package]]
 name = "olas-operate-middleware"
-version = "0.15.12"
+version = "0.15.15"
 description = ""
 optional = false
 python-versions = "<3.15,>=3.10"
 groups = ["main"]
 files = [
-    {file = "olas_operate_middleware-0.15.12-py3-none-any.whl", hash = "sha256:38ef4ad650496b84d4bd0654723e285db28d01814d27096d9335e1a437c1e894"},
-    {file = "olas_operate_middleware-0.15.12.tar.gz", hash = "sha256:b08fd91eced9527059c275c5ec524cc94ebabd8affc68e892f18c282a0545964"},
+    {file = "olas_operate_middleware-0.15.15-py3-none-any.whl", hash = "sha256:d41f833c4740303da9ef2c589fd5776d99246a8689fbb029dc4a37f056442ce2"},
+    {file = "olas_operate_middleware-0.15.15.tar.gz", hash = "sha256:63501cccba7f5f83105cec4460db4f0ae7db7fada42c557c5c667737f1fe8a7b"},
 ]
 
 [package.dependencies]
+aiohttp = ">=3.10,<4.0"
 argon2-cffi = "23.1.0"
 clea = "0.1.0rc4"
 cryptography = ">=46.0.3,<47.0.0"
 cytoolz = ">=1.0.0,<1.2.0"
 deepdiff = ">=8.6.1,<9.0.0"
 fastapi = "0.110.3"
+flask = ">=3.0,<4.0"
 halo = "0.0.31"
+hexbytes = ">=1.2,<2.0"
 multiaddr = "0.0.9"
 open-aea-cli-ipfs = ">=2.1.0,<3.0.0"
 open-aea-ledger-cosmos = ">=2.1.0,<3.0.0"
 open-aea-ledger-ethereum = ">=2.1.0,<3.0.0"
 open-aea-ledger-ethereum-flashbots = ">=2.1.0,<3.0.0"
-open-autonomy = {version = ">=0.21.13,<0.22.0", extras = ["cli"]}
+open-autonomy = {version = ">=0.21.13,<0.22.0", extras = ["cli", "docker"]}
 psutil = ">=5.9.8,<6.0.0"
 pyinstaller = ">=6.8.0,<7.0.0"
+requests = ">=2.32,<3.0"
 requests-mock = ">=1.12.1,<2.0.0"
+typing_extensions = ">=4.12,<5.0"
 uvicorn = "0.27.0"
+werkzeug = ">=3.0,<4.0"
 
 [[package]]
 name = "open-aea"
@@ -4171,14 +4177,14 @@ files = [
 
 [[package]]
 name = "werkzeug"
-version = "3.1.6"
+version = "3.1.8"
 description = "The comprehensive WSGI web application library."
 optional = false
 python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "werkzeug-3.1.6-py3-none-any.whl", hash = "sha256:7ddf3357bb9564e407607f988f683d72038551200c704012bb9a4c523d42f131"},
-    {file = "werkzeug-3.1.6.tar.gz", hash = "sha256:210c6bede5a420a913956b4791a7f4d6843a43b6fcee4dfa08a65e93007d0d25"},
+    {file = "werkzeug-3.1.8-py3-none-any.whl", hash = "sha256:63a77fb8892bf28ebc3178683445222aa500e48ebad5ec77b0ad80f8726b1f50"},
+    {file = "werkzeug-3.1.8.tar.gz", hash = "sha256:9bad61a4268dac112f1c5cd4630a56ede601b6ed420300677a869083d70a4c44"},
 ]
 
 [package.dependencies]
@@ -4333,4 +4339,4 @@ propcache = ">=0.2.1"
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.14,<3.15"
-content-hash = "f5749ec3f3b826d806cdf15f8a3fc4cbde0e7c814ffe042f55c62cf12a079cc8"
+content-hash = "d1e97bd1e409b80af9ad2c72c78d8c5724e79ef6f15f5d9c8981f2d48284c32e"

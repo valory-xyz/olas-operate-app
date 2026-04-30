@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "olas-operate-app"
-version = "1.5.9"
+version = "1.6.0"
 description = ""
 authors = ["David Vilela <dvilelaf@gmail.com>", "Viraj Patel <vptl185@gmail.com>"]
 readme = "README.md"
@@ -10,7 +10,12 @@ include = []
 
 [tool.poetry.dependencies]
 python = ">=3.14,<3.15"
-olas-operate-middleware = "0.15.12"
+olas-operate-middleware = "0.15.15"
+open-autonomy = {version = "0.21.13", extras = ["cli", "docker"]}
+open-aea-ledger-cosmos = "2.1.0"
+open-aea-ledger-ethereum = "2.1.0"
+open-aea-ledger-ethereum-flashbots = "2.1.0"
+open-aea-cli-ipfs = "2.1.0"
 
 [build-system]
 requires = ["poetry-core"]

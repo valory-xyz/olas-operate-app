@@ -15,7 +15,14 @@ on:
 jobs:
   # PyInstaller job for both x64 and arm64 binaries
   build-pyinstaller:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      matrix:
+        include:
+          - os_arch: x64
+            runner: ubuntu-latest
+          - os_arch: arm64
+            runner: ubuntu-22.04-arm  # to support older GLIBC_2.36 on Raspberry Pi OS
 
     steps:
       - uses: actions/checkout@v4
@@ -42,7 +49,7 @@ jobs:
       # Set OS_ARCH env
       - name: Set architecture environment variable
         run: |
-          echo "OS_ARCH=x64" >> $GITHUB_ENV; 
+          echo "OS_ARCH=${{ matrix.os_arch }}" >> $GITHUB_ENV
 
       # Cache Poetry dependencies with unique key for each environment and architecture
       - name: Cache Poetry dependencies
@@ -84,15 +91,20 @@ jobs:
         with:
           name: tendermint_linux_${{ env.OS_ARCH }}
           path: dist/tendermint_bin
-      
 
   # Jobs for production, running separately for x64 and arm64
   build-release:
     needs: [build-pyinstaller]
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.runner }}
     strategy:
       matrix:
-        env: [production]
+        include:
+          - os_arch: x64
+            env: production
+            runner: ubuntu-latest
+          - os_arch: arm64
+            env: production
+            runner: ubuntu-22.04-arm
 
     steps:
       - uses: actions/checkout@v4
@@ -108,7 +120,7 @@ jobs:
       - name: Add Python to PATH
         run: |
           echo "${{ steps.setup-python.outputs.python-path }}" >> $GITHUB_PATH
-      
+
       - uses: actions/setup-node@v4
         with:
           node-version: "22.18"
@@ -117,43 +129,36 @@ jobs:
       # Configure Yarn network settings for timeout, retries, and reduced concurrency
       - name: Configure Yarn network settings
         run: |
-              yarn config set network-timeout 60000         # Set network timeout to 1 minute
-              yarn config set network-retries 10             # Retry up to 10 times
-              yarn config set network-concurrency 2          # Reduce concurrency to 2 connections
-    
+          yarn config set network-timeout 60000         # Set network timeout to 1 minute
+          yarn config set network-retries 10             # Retry up to 10 times
+          yarn config set network-concurrency 2          # Reduce concurrency to 2 connections
+
       # Set OS_ARCH env
       - name: Set architecture environment variable
         run: |
-          echo "OS_ARCH=x64" >> $GITHUB_ENV; 
+          echo "OS_ARCH=${{ matrix.os_arch }}" >> $GITHUB_ENV
       # Download the appropriate architecture artifact (tar.gz)
       - name: Download middleware binary for architecture
         uses: actions/download-artifact@v4
         with:
           name: middleware_linux_${{ env.OS_ARCH }}
           path: .
-      
+
       # Extract middleware from tar (preserves signatures and extended attributes)
       - name: Extract middleware from tar
         run: |
           tar -xzf pearl_${{ env.OS_ARCH }}.tar.gz
           mkdir -p electron/bins
           mv pearl_${{ env.OS_ARCH }} electron/bins/middleware
-      
-      - name: Download tendermint binary for architecture
-        uses: actions/download-artifact@v4
-        with:
-          name: tendermint_linux_${{ env.OS_ARCH }}
-          path: electron/bins/
-      
-      # Configure Yarn network settings for timeout, retries, and reduced concurrency
-      - name: Configure Yarn network settings
-        run: |
-            ls electron/bins/
 
       # Set Tendermint download URL based on architecture
       - name: Set Tendermint download URL
         run: |
-          echo "TM_DOWNLOAD_URL=https://github.com/tendermint/tendermint/releases/download/v0.34.19/tendermint_0.34.19_linux_amd64.tar.gz" >> $GITHUB_ENV
+          if [ "${{ env.OS_ARCH }}" = "x64" ]; then
+            echo "TM_DOWNLOAD_URL=https://github.com/tendermint/tendermint/releases/download/v0.34.19/tendermint_0.34.19_linux_amd64.tar.gz" >> $GITHUB_ENV
+          else
+            echo "TM_DOWNLOAD_URL=https://github.com/tendermint/tendermint/releases/download/v0.34.19/tendermint_0.34.19_linux_arm64.tar.gz" >> $GITHUB_ENV
+          fi
 
       # Cache Tendermint binary
       - name: Cache Tendermint binary
@@ -178,9 +183,14 @@ jobs:
         run: |
           cp tendermint_binary/tendermint electron/bins/tendermint
           chmod +x electron/bins/tendermint
-      
-      
-          # Copy tendermint binaries into middleware directory
+
+      - name: Download tendermint binary for architecture
+        uses: actions/download-artifact@v4
+        with:
+          name: tendermint_linux_${{ env.OS_ARCH }}
+          path: electron/bins/
+
+      # Copy tendermint binaries into middleware directory
       - name: Copy tendermint binaries to middleware
         run: |
           cp electron/bins/tendermint electron/bins/middleware/tendermint
@@ -188,12 +198,13 @@ jobs:
           chmod +x electron/bins/middleware/tendermint
           chmod +x electron/bins/middleware/tendermint_bin
 
-
       # Add execution permissions to the binaries
       - name: Add exec permissions
         run: |
           chmod +x electron/bins/tendermint
           chmod +x electron/bins/middleware/pearl_*
+          chmod +x electron/bins/middleware/tendermint
+          chmod +x electron/bins/middleware/tendermint_bin
 
       # Cache electron-builder downloads
       - name: Restore electron-builder cache
@@ -248,7 +259,7 @@ jobs:
       - name: Build frontend for production
         run: yarn build:frontend
         env:
-          NODE_ENV: ${{ matrix.env }}          
+          NODE_ENV: ${{ matrix.env }}
           IS_STAGING: ${{ github.ref != 'refs/heads/main' && 'true' || 'false' }}
           OPTIMISM_RPC: https://rpc-gate.autonolas.tech/optimism-rpc/
           BASE_RPC: https://rpc-gate.autonolas.tech/base-rpc/
