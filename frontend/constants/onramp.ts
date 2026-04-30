@@ -15,9 +15,11 @@ export const MIN_ONRAMP_AMOUNT = 5;
 export type OnRampChainConfig = {
   chain: EvmChainId;
   /**
-   * MoonPay currency code — verify against
-   * https://api.moonpay.com/v3/currencies (Phase 0 step 1).
-   * Working assumptions: 'eth_base' for ETH on Base, 'pol' for POL on Polygon.
+   * MoonPay currency code — verified against: https://api.moonpay.com/v3/currencies
+   * - 'eth_base' for ETH on Base (network: base, chainId 8453)
+   * - 'pol_polygon' for POL on Polygon (network: polygon, chainId 137)
+   * Note: 'eth_optimism' is currently `Suspended`; no Gnosis entry exists.
+   * Optimism and Gnosis on-ramp via Base + Relay bridge.
    */
   moonpayCurrencyCode: string;
 };
@@ -48,6 +50,6 @@ export const ON_RAMP_CHAIN_MAP: Partial<
   },
   [SupportedMiddlewareChainMap.polygon]: {
     chain: EvmChainIdMap.Polygon,
-    moonpayCurrencyCode: 'pol',
+    moonpayCurrencyCode: 'pol_polygon',
   },
 };

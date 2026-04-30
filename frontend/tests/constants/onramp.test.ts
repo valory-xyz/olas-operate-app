@@ -105,11 +105,11 @@ describe('ON_RAMP_CHAIN_MAP', () => {
       ).toBe(EvmChainIdMap.Polygon);
     });
 
-    it('uses pol as the MoonPay currency code for polygon on-ramp (not eth_base)', () => {
+    it('uses pol_polygon as the MoonPay currency code for polygon on-ramp (not eth_base)', () => {
       expect(
         ON_RAMP_CHAIN_MAP[SupportedMiddlewareChainMap.polygon]
           ?.moonpayCurrencyCode,
-      ).toBe('pol');
+      ).toBe('pol_polygon');
     });
   });
 
@@ -117,7 +117,7 @@ describe('ON_RAMP_CHAIN_MAP', () => {
     for (const [, entry] of Object.entries(ON_RAMP_CHAIN_MAP)) {
       if (!entry) continue;
       expect(typeof entry.chain).toBe('number');
-      expect(['eth_base', 'pol']).toContain(entry.moonpayCurrencyCode);
+      expect(['eth_base', 'pol_polygon']).toContain(entry.moonpayCurrencyCode);
     }
   });
 });

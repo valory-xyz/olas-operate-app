@@ -285,7 +285,7 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
 
         /** Network id to on-ramp */
         networkId,
-        /** MoonPay currency code (e.g. 'eth_base', 'pol') */
+        /** MoonPay currency code (e.g. 'eth_base', 'pol_polygon') */
         moonpayCurrencyCode,
         /** Chain to which the funds are eventually transferred */
         selectedChainId,
