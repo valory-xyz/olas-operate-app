@@ -38,14 +38,20 @@ export const useBuyCryptoStep = () => {
     if (!onRampWindow?.show) return;
     if (!nativeAmountToPay) return;
     if (!moonpayCurrencyCode) return;
+    if (!masterEoa?.address) return;
 
-    onRampWindow.show(nativeAmountToPay.toFixed(6), moonpayCurrencyCode);
+    onRampWindow.show(
+      nativeAmountToPay.toFixed(6),
+      moonpayCurrencyCode,
+      masterEoa.address,
+    );
     await delayInSeconds(1);
     updateIsBuyCryptoBtnLoading(true);
   }, [
     onRampWindow,
     nativeAmountToPay,
     moonpayCurrencyCode,
+    masterEoa,
     updateIsBuyCryptoBtnLoading,
   ]);
 

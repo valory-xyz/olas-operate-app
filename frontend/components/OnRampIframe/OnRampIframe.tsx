@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Alert } from '@/components/ui';
 import { APP_HEIGHT, APP_WIDTH } from '@/constants';
-import { useElectronApi, useMasterWalletContext } from '@/hooks';
+import { useElectronApi } from '@/hooks';
 import { MoonPayService } from '@/service/MoonPay';
 import { delayInSeconds } from '@/utils/delay';
 
@@ -47,16 +47,22 @@ const FAILURE_DELAY_SECONDS = 3;
 type OnRampIframeProps = {
   /** Locked native crypto amount, formatted as `toFixed(6)`. */
   nativeAmount: string;
-  /** MoonPay currency code (e.g. `eth_base`, `pol`). */
+  /** MoonPay currency code (e.g. `eth_base`, `pol_polygon`). */
   currencyCode: string;
+  /**
+   * Master EOA address — receives the on-ramped funds. Forwarded from the
+   * parent window because the child window's MasterWalletProvider doesn't
+   * hydrate (gated on isUserLoggedIn, which is false in the child tree).
+   */
+  walletAddress: string;
 };
 
 export const OnRampIframe = ({
   nativeAmount,
   currencyCode,
+  walletAddress,
 }: OnRampIframeProps) => {
   const { onRampWindow, logEvent } = useElectronApi();
-  const { masterEoa } = useMasterWalletContext();
 
   const ref = useRef<HTMLIFrameElement>(null);
 
@@ -65,15 +71,13 @@ export const OnRampIframe = ({
   const [error, setError] = useState<string | null>(null);
 
   const fetchSignedUrl = useCallback(async () => {
-    if (!masterEoa?.address) return;
-
     setIsLoading(true);
     setError(null);
 
     const result = await MoonPayService.getSignedUrl({
       nativeAmount,
       currencyCode,
-      walletAddress: masterEoa.address,
+      walletAddress,
     });
 
     if (result.success) {
@@ -82,7 +86,7 @@ export const OnRampIframe = ({
       setError(result.error);
     }
     setIsLoading(false);
-  }, [masterEoa, nativeAmount, currencyCode]);
+  }, [walletAddress, nativeAmount, currencyCode]);
 
   useEffect(() => {
     fetchSignedUrl();

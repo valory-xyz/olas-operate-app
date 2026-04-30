@@ -2,8 +2,13 @@ const { contextBridge, ipcRenderer } = require('electron/renderer');
 
 /** IPC methods for the MoonPay on-ramp window */
 const onRampWindow = {
-  show: (nativeAmount, currencyCode) =>
-    ipcRenderer.invoke('onramp-window-show', nativeAmount, currencyCode),
+  show: (nativeAmount, currencyCode, walletAddress) =>
+    ipcRenderer.invoke(
+      'onramp-window-show',
+      nativeAmount,
+      currencyCode,
+      walletAddress,
+    ),
   close: () => ipcRenderer.invoke('onramp-window-close'),
   transactionSuccess: () => ipcRenderer.invoke('onramp-transaction-success'),
   transactionFailure: () => ipcRenderer.invoke('onramp-transaction-failure'),

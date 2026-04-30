@@ -2,9 +2,8 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { createElement } from 'react';
 
 import { useElectronApi } from '../../../hooks/useElectronApi';
-import { useMasterWalletContext } from '../../../hooks/useWallet';
 import { MoonPayService } from '../../../service/MoonPay';
-import { makeMasterEoa } from '../../helpers/factories';
+import { DEFAULT_EOA_ADDRESS } from '../../helpers/factories';
 
 // ---------------------------------------------------------------------------
 // Module mocks
@@ -21,9 +20,6 @@ jest.mock('../../../config/providers', () => ({ providers: [] }));
 
 jest.mock('../../../hooks/useElectronApi', () => ({
   useElectronApi: jest.fn(),
-}));
-jest.mock('../../../hooks/useWallet', () => ({
-  useMasterWalletContext: jest.fn(),
 }));
 jest.mock('../../../utils/delay', () => ({
   delayInSeconds: jest.fn(() => Promise.resolve()),
@@ -61,8 +57,6 @@ jest.mock('../../../components/ui', () => ({
 const mockUseElectronApi = useElectronApi as jest.MockedFunction<
   typeof useElectronApi
 >;
-const mockUseMasterWalletContext =
-  useMasterWalletContext as jest.MockedFunction<typeof useMasterWalletContext>;
 const mockGetSignedUrl = MoonPayService.getSignedUrl as jest.MockedFunction<
   typeof MoonPayService.getSignedUrl
 >;
@@ -87,7 +81,6 @@ const MOONPAY_ORIGIN = 'https://buy.moonpay.com';
 
 const setupMocks = (
   overrides: {
-    masterEoa?: ReturnType<typeof makeMasterEoa>;
     closeFn?: jest.Mock;
     transactionFailureFn?: jest.Mock;
     logEventFn?: jest.Mock;
@@ -105,20 +98,21 @@ const setupMocks = (
     logEvent: logEventFn,
   } as unknown as ReturnType<typeof useElectronApi>);
 
-  mockUseMasterWalletContext.mockReturnValue({
-    masterEoa: 'masterEoa' in overrides ? overrides.masterEoa : makeMasterEoa(),
-  } as unknown as ReturnType<typeof useMasterWalletContext>);
-
   return { closeFn, transactionFailureFn, logEventFn };
 };
 
 const renderIframe = (
-  props: { nativeAmount?: string; currencyCode?: string } = {},
+  props: {
+    nativeAmount?: string;
+    currencyCode?: string;
+    walletAddress?: string;
+  } = {},
 ) =>
   render(
     createElement(OnRampIframe, {
       nativeAmount: props.nativeAmount ?? '0.050000',
       currencyCode: props.currencyCode ?? 'eth_base',
+      walletAddress: props.walletAddress ?? DEFAULT_EOA_ADDRESS,
     }),
   );
 
@@ -180,13 +174,17 @@ describe('OnRampIframe', () => {
       setupMocks();
       mockGetSignedUrl.mockResolvedValue({ success: true, url: SIGNED_URL });
 
-      renderIframe({ nativeAmount: '0.123456', currencyCode: 'pol' });
+      renderIframe({
+        nativeAmount: '0.123456',
+        currencyCode: 'pol_polygon',
+        walletAddress: DEFAULT_EOA_ADDRESS,
+      });
 
       await waitFor(() => {
         expect(mockGetSignedUrl).toHaveBeenCalledWith({
           nativeAmount: '0.123456',
-          currencyCode: 'pol',
-          walletAddress: makeMasterEoa().address,
+          currencyCode: 'pol_polygon',
+          walletAddress: DEFAULT_EOA_ADDRESS,
         });
       });
     });
@@ -232,16 +230,6 @@ describe('OnRampIframe', () => {
         expect(iframe?.src).toContain('signature=sig');
       });
       expect(mockGetSignedUrl).toHaveBeenCalledTimes(2);
-    });
-
-    it('does not fetch when masterEoa is missing', () => {
-      setupMocks({
-        masterEoa: undefined as unknown as ReturnType<typeof makeMasterEoa>,
-      });
-
-      renderIframe();
-
-      expect(mockGetSignedUrl).not.toHaveBeenCalled();
     });
   });
 

@@ -96,7 +96,7 @@ const setupMocks = (
   } as unknown as ReturnType<typeof useOnRampContext>);
 
   mockUseMasterWalletContext.mockReturnValue({
-    masterEoa: overrides.masterEoa ?? makeMasterEoa(),
+    masterEoa: 'masterEoa' in overrides ? overrides.masterEoa : makeMasterEoa(),
   } as unknown as ReturnType<typeof useMasterWalletContext>);
 
   return { updateIsBuyCryptoBtnLoading, showFn, termsShowFn };
@@ -240,12 +240,14 @@ describe('useBuyCryptoStep', () => {
   });
 
   describe('handleBuyCrypto invocation', () => {
-    it('calls onRampWindow.show with toFixed(6) native amount + currency code', async () => {
+    it('calls onRampWindow.show with toFixed(6) native amount, currency code, and master EOA address', async () => {
       const showFn = jest.fn();
+      const masterEoa = makeMasterEoa();
       const { updateIsBuyCryptoBtnLoading } = setupMocks({
         onRampWindowShow: showFn,
         nativeAmountToPay: 0.005,
         moonpayCurrencyCode: 'eth_base',
+        masterEoa,
       });
       const { result } = renderHook(() => useBuyCryptoStep());
 
@@ -260,8 +262,29 @@ describe('useBuyCryptoStep', () => {
 
       // Native amount is fixed-decimal-formatted to 6 places to avoid float
       // artifacts (e.g. 0.020000000000000004) hitting MoonPay validation.
-      expect(showFn).toHaveBeenCalledWith('0.005000', 'eth_base');
+      // walletAddress is forwarded to the child Electron window because its
+      // MasterWalletProvider doesn't hydrate (gated on isUserLoggedIn=false).
+      expect(showFn).toHaveBeenCalledWith(
+        '0.005000',
+        'eth_base',
+        masterEoa.address,
+      );
       expect(updateIsBuyCryptoBtnLoading).toHaveBeenCalledWith(true);
+    });
+
+    it('does not call show when masterEoa.address is missing', async () => {
+      const { showFn } = setupMocks({
+        masterEoa: undefined,
+      });
+      const { result } = renderHook(() => useBuyCryptoStep());
+      const buyButtonElement = result.current.subSteps[1].description;
+      const onClick = (
+        buyButtonElement as { props: { onClick: () => Promise<void> } }
+      ).props.onClick;
+      await act(async () => {
+        await onClick();
+      });
+      expect(showFn).not.toHaveBeenCalled();
     });
 
     it('early-returns when onRampWindow.show is undefined', async () => {

@@ -576,7 +576,11 @@ function createAndLoadSslCertificate() {
  * Create the on-ramping window for displaying the MoonPay iframe.
  */
 /** @type {()=>Promise<BrowserWindow|undefined>} */
-const createOnRampWindow = async (nativeAmount, currencyCode) => {
+const createOnRampWindow = async (
+  nativeAmount,
+  currencyCode,
+  walletAddress,
+) => {
   const existingWindow = getOnRampWindow();
   if (!existingWindow || existingWindow.isDestroyed()) {
     const { width, height: onRampHeight } = getWindowDimensions(APP_WIDTH, 700);
@@ -605,15 +609,21 @@ const createOnRampWindow = async (nativeAmount, currencyCode) => {
       return { action: 'deny' };
     });
 
-    // Query string passes the locked native crypto amount + MoonPay
-    // currency code to the Next.js /onramp page, which fetches a signed
-    // MoonPay URL via pearl-api before mounting the iframe.
+    // Query string passes the locked native crypto amount, MoonPay
+    // currency code, and master EOA wallet address to the Next.js /onramp
+    // page, which fetches a signed MoonPay URL via pearl-api before mounting
+    // the iframe. walletAddress is forwarded from the parent because the
+    // child window's React tree starts with isUserLoggedIn=false, so its
+    // MasterWalletProvider never hydrates.
     const onRampQuery = new URLSearchParams();
     if (nativeAmount) {
       onRampQuery.append('nativeAmount', nativeAmount.toString());
     }
     if (currencyCode) {
       onRampQuery.append('currencyCode', currencyCode);
+    }
+    if (walletAddress) {
+      onRampQuery.append('walletAddress', walletAddress);
     }
     const onRampUrl = `${nextUrl()}/onramp?${onRampQuery.toString()}`;
     logger.electron(`OnRamp URL: ${onRampUrl}`);
@@ -939,12 +949,12 @@ ipcMain.handle('next-log-error', (_event, error, errorInfo) => {
  */
 ipcMain.handle(
   'onramp-window-show',
-  (_event, nativeAmount, currencyCode) => {
+  (_event, nativeAmount, currencyCode, walletAddress) => {
     logger.electron('onramp-window-show');
 
     if (!getOnRampWindow() || getOnRampWindow().isDestroyed()) {
-      createOnRampWindow(nativeAmount, currencyCode)?.then((window) =>
-        window.show(),
+      createOnRampWindow(nativeAmount, currencyCode, walletAddress)?.then(
+        (window) => window.show(),
       );
     } else {
       getOnRampWindow()?.show();
