@@ -583,7 +583,7 @@ describe('refreshRewardsEligibility', () => {
       // tsCheckpointMs = 0; any `lastStartedAt >= 0` so `lastStartedAt < 0` is
       // never true → override never applied. (Another safeguard — epoch-expired
       // — may still set eligible=false; this test specifically asserts that the
-      // stale-true override *code path* did not fire.)
+      // stale-true override *code path* did not fire)
       mockFetchRewards.mockResolvedValue({
         isEligibleForRewards: true,
         livenessPeriod: 3600,
