@@ -11,14 +11,14 @@ import { X402_ENABLED_FLAGS } from '../../x402';
 import { KPI_DESC_PREFIX } from '../constants';
 
 export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
-  hash: 'bafybeiba4pkryaopr7cerlholkkjqlyiiyqvwttujdzqcj63wrqw3t2esq',
-  service_version: 'v0.33.5-rc2',
+  hash: 'bafybeigsxpqbxurlpsuvvj4dqtv76bixiss3rluo3nnng7dcwkqyqzrmkq',
+  service_version: 'v0.35.2-rc2',
   agent_release: {
     is_aea: true,
     repository: {
       owner: 'valory-xyz',
       name: 'trader',
-      version: 'v0.33.5-rc2',
+      version: 'v0.35.2-rc2',
     },
   },
   agentType: AgentMap.PredictTrader,
@@ -151,14 +151,14 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
 } as const;
 
 export const PREDICT_POLYMARKET_SERVICE_TEMPLATE: ServiceTemplate = {
-  hash: 'bafybeif3of7kbgcsudc3h5qsnjpfd27vqt3abzhpe7h6uh6i4hu54n5joe',
-  service_version: 'v0.35.0-rc4',
+  hash: 'bafybeib5ozyv23u3khya2tqvyqb4elt6ceh6jzaallo23jslopeatf24cy',
+  service_version: 'v0.35.2-rc2',
   agent_release: {
     is_aea: true,
     repository: {
       owner: 'valory-xyz',
       name: 'trader',
-      version: 'v0.35.0-rc4',
+      version: 'v0.35.2-rc2',
     },
   },
   agentType: AgentMap.Polystrat,
@@ -272,7 +272,7 @@ export const PREDICT_POLYMARKET_SERVICE_TEMPLATE: ServiceTemplate = {
       name: 'Irrelevant tools',
       description: '',
       value:
-        '["native-transfer","prediction-online-lite","claude-prediction-online-lite","prediction-online-sme-lite","prediction-request-reasoning-lite","prediction-request-reasoning-claude-lite","prediction-offline-sme","deepmind-optimization","deepmind-optimization-strong","openai-gpt-3.5-turbo","openai-gpt-3.5-turbo-instruct","openai-gpt-4","openai-text-davinci-002","openai-text-davinci-003","prediction-online-sum-url-content","prediction-online-summarized-info","stabilityai-stable-diffusion-512-v2-1","stabilityai-stable-diffusion-768-v2-1","stabilityai-stable-diffusion-v1-5","stabilityai-stable-diffusion-xl-beta-v2-2-2","prediction-url-cot-claude","prediction-url-cot","resolve-market-reasoning-gpt-4.1","resolve-market-jury-v1","echo","profit_pulse","prediction_request_reasoning-claude","prediction_request_reasoning-5.2.mini","prediction_request_reasoning","prediction-online-sme","claude-prediction-online","prediction-request-rag","prediction-offline","claude-prediction-offline","prediction-request-rag-claude","prediction-online","prediction-request-reasoning-claude"]',
+        '["native-transfer","prediction-online-lite","claude-prediction-online-lite","prediction-online-sme-lite","prediction-request-reasoning-lite","prediction-request-reasoning-claude-lite","prediction-offline-sme","deepmind-optimization","deepmind-optimization-strong","openai-gpt-3.5-turbo","openai-gpt-3.5-turbo-instruct","openai-gpt-4","openai-text-davinci-002","openai-text-davinci-003","prediction-online-sum-url-content","prediction-online-summarized-info","stabilityai-stable-diffusion-512-v2-1","stabilityai-stable-diffusion-768-v2-1","stabilityai-stable-diffusion-v1-5","stabilityai-stable-diffusion-xl-beta-v2-2-2","prediction-url-cot-claude","prediction-url-cot","resolve-market-reasoning-gpt-4.1","resolve-market-jury-v1","echo","profit_pulse","prediction_request_reasoning-claude","prediction_request_reasoning-5.2.mini","prediction_request_reasoning","prediction-online-sme","claude-prediction-online","prediction-request-rag","prediction-offline","claude-prediction-offline","prediction-request-rag-claude","prediction-online","prediction-request-reasoning-claude","prediction-request-reasoning"]',
       provision_type: EnvProvisionType.FIXED,
     },
     GENAI_API_KEY: {

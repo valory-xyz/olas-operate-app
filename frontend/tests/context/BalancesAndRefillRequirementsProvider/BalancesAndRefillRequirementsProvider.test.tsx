@@ -73,11 +73,11 @@ jest.mock('../../../hooks/useOnlineStatus', () => ({
   useOnlineStatusContext: () => mockUseOnlineStatusContext(),
 }));
 
-const mockUseStore = jest.fn();
+const mockUseFundingEligibleServices = jest.fn();
 jest.mock('../../../hooks', () => ({
   useDynamicRefetchInterval: jest.fn((interval: number | false) => interval),
+  useFundingEligibleServices: () => mockUseFundingEligibleServices(),
   useMasterWalletContext: () => mockUseMasterWalletContext(),
-  useStore: () => mockUseStore(),
 }));
 
 // --- helpers ---
@@ -176,7 +176,6 @@ type SetupOptions = {
   selectedService?: Service;
   masterSafes?: ReturnType<typeof makeMasterSafe>[];
   isEligibleForRewards?: boolean;
-  storeState?: Record<string, unknown>;
   availableServiceConfigIds?: {
     configId: string;
     chainId: number;
@@ -192,11 +191,6 @@ const setup = (options: SetupOptions = {}) => {
     selectedService = defaultService,
     masterSafes = [makeMasterSafe(EvmChainIdMap.Gnosis)],
     isEligibleForRewards = true,
-    storeState = {
-      [AgentMap.PredictTrader]: {
-        isInitialFunded: { [DEFAULT_SERVICE_CONFIG_ID]: true },
-      },
-    },
     availableServiceConfigIds = [
       { configId: DEFAULT_SERVICE_CONFIG_ID, chainId: EvmChainIdMap.Gnosis },
     ],
@@ -212,7 +206,6 @@ const setup = (options: SetupOptions = {}) => {
   });
   mockUseMasterWalletContext.mockReturnValue({ masterSafes });
   mockUseRewardContext.mockReturnValue({ isEligibleForRewards });
-  mockUseStore.mockReturnValue({ storeState });
 
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false, gcTime: 0 } },
@@ -244,7 +237,6 @@ const setupWithConsumer = (
     selectedService = defaultService,
     masterSafes = [makeMasterSafe(EvmChainIdMap.Gnosis)],
     isEligibleForRewards = true,
-    storeState = {},
     availableServiceConfigIds = [
       { configId: DEFAULT_SERVICE_CONFIG_ID, chainId: EvmChainIdMap.Gnosis },
     ],
@@ -260,7 +252,6 @@ const setupWithConsumer = (
   });
   mockUseMasterWalletContext.mockReturnValue({ masterSafes });
   mockUseRewardContext.mockReturnValue({ isEligibleForRewards });
-  mockUseStore.mockReturnValue({ storeState });
 
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false, gcTime: 0 } },
@@ -285,6 +276,10 @@ describe('BalancesAndRefillRequirementsProvider', () => {
     );
     mockGetAllBalancesAndFundingRequirements.mockResolvedValue({
       [DEFAULT_SERVICE_CONFIG_ID]: makeBalancesAndFundingRequirements(),
+    });
+    // Default: all services are funding-eligible so existing tests remain green
+    mockUseFundingEligibleServices.mockReturnValue({
+      isFundingEligible: () => true,
     });
   });
 
@@ -674,11 +669,14 @@ describe('BalancesAndRefillRequirementsProvider', () => {
       expect(ctx.isPearlWalletRefillRequired).toBe(false);
     });
 
-    it('is true when service refill is required AND isInitialFunded is true', async () => {
+    it('is true when service refill is required AND isFundingEligible is true', async () => {
       mockGetAllBalancesAndFundingRequirements.mockResolvedValue({
         [DEFAULT_SERVICE_CONFIG_ID]: makeBalancesAndFundingRequirements({
           is_refill_required: true,
         }),
+      });
+      mockUseFundingEligibleServices.mockReturnValue({
+        isFundingEligible: () => true,
       });
 
       const { container } = setup({
@@ -692,11 +690,6 @@ describe('BalancesAndRefillRequirementsProvider', () => {
             deploymentStatus: MiddlewareDeploymentStatusMap.DEPLOYED,
           },
         ],
-        storeState: {
-          [AgentMap.PredictTrader]: {
-            isInitialFunded: { [DEFAULT_SERVICE_CONFIG_ID]: true },
-          },
-        },
       });
 
       await waitFor(() => {
@@ -705,11 +698,14 @@ describe('BalancesAndRefillRequirementsProvider', () => {
       });
     });
 
-    it('is false when refill required but isInitialFunded is false', async () => {
+    it('is false when refill required but isFundingEligible is false (ghost service)', async () => {
       mockGetAllBalancesAndFundingRequirements.mockResolvedValue({
         [DEFAULT_SERVICE_CONFIG_ID]: makeBalancesAndFundingRequirements({
           is_refill_required: true,
         }),
+      });
+      mockUseFundingEligibleServices.mockReturnValue({
+        isFundingEligible: () => false,
       });
 
       const { container } = setup({
@@ -723,11 +719,6 @@ describe('BalancesAndRefillRequirementsProvider', () => {
             deploymentStatus: MiddlewareDeploymentStatusMap.DEPLOYED,
           },
         ],
-        storeState: {
-          [AgentMap.PredictTrader]: {
-            isInitialFunded: { [DEFAULT_SERVICE_CONFIG_ID]: false },
-          },
-        },
       });
 
       await waitFor(() => {
@@ -736,11 +727,14 @@ describe('BalancesAndRefillRequirementsProvider', () => {
       });
     });
 
-    it('is false when is_refill_required is false even if isInitialFunded', async () => {
+    it('is false when is_refill_required is false even if isFundingEligible is true', async () => {
       mockGetAllBalancesAndFundingRequirements.mockResolvedValue({
         [DEFAULT_SERVICE_CONFIG_ID]: makeBalancesAndFundingRequirements({
           is_refill_required: false,
         }),
+      });
+      mockUseFundingEligibleServices.mockReturnValue({
+        isFundingEligible: () => true,
       });
 
       const { container } = setup({
@@ -754,11 +748,35 @@ describe('BalancesAndRefillRequirementsProvider', () => {
             deploymentStatus: MiddlewareDeploymentStatusMap.DEPLOYED,
           },
         ],
-        storeState: {
-          [AgentMap.PredictTrader]: {
-            isInitialFunded: { [DEFAULT_SERVICE_CONFIG_ID]: true },
+      });
+
+      await waitFor(() => {
+        const ctx = parseContext(container);
+        expect(ctx.isPearlWalletRefillRequired).toBe(false);
+      });
+    });
+
+    it('is false when service is archived even if is_refill_required is true', async () => {
+      mockGetAllBalancesAndFundingRequirements.mockResolvedValue({
+        [DEFAULT_SERVICE_CONFIG_ID]: makeBalancesAndFundingRequirements({
+          is_refill_required: true,
+        }),
+      });
+      mockUseFundingEligibleServices.mockReturnValue({
+        isFundingEligible: () => false,
+      });
+
+      const { container } = setup({
+        services: [
+          {
+            ...makeService({
+              service_config_id: DEFAULT_SERVICE_CONFIG_ID,
+              service_public_id: SERVICE_PUBLIC_ID_MAP.TRADER,
+              home_chain: MiddlewareChainMap.GNOSIS,
+            }),
+            deploymentStatus: MiddlewareDeploymentStatusMap.DEPLOYED,
           },
-        },
+        ],
       });
 
       await waitFor(() => {

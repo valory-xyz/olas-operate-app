@@ -138,6 +138,7 @@ const binaryPaths = {
     x64: 'bins/middleware/pearl_win.exe',
   },
   linux: {
+    arm64: 'bins/middleware/pearl_arm64',
     x64: 'bins/middleware/pearl_x64',
   },
 };
