@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { TransferCryptoFromExternalWallet } from '@/components/PearlWallet';
 import { CHAIN_CONFIG } from '@/config/chains';
@@ -10,21 +10,47 @@ import {
   useServices,
 } from '@/hooks';
 import { AvailableAsset } from '@/types/Wallet';
-import { asEvmChainDetails, asMiddlewareChain } from '@/utils';
+import {
+  asEvmChainDetails,
+  asMiddlewareChain,
+} from '@/utils/middlewareHelpers';
+import { formatUnitsToNumber } from '@/utils/numberFormatters';
+
+const readPrefillAmountWei = (params: unknown): string | undefined => {
+  if (!params || typeof params !== 'object') return undefined;
+  const value = (params as Record<string, unknown>).prefillAmountWei;
+  return typeof value === 'string' ? value : undefined;
+};
 
 export const FundPearlWallet = () => {
-  const { goto } = usePageState();
+  const { goto, navParams, clearNavParams } = usePageState();
   const { selectedAgentConfig } = useServices();
   const { masterEoaGasRequirement } = useMasterBalances();
   const { masterEoa } = useMasterWalletContext();
 
+  const [prefillAmountWei] = useState<string | undefined>(() =>
+    readPrefillAmountWei(navParams),
+  );
+
+  useEffect(() => {
+    clearNavParams();
+  }, [clearNavParams]);
+
   const homeChainId = selectedAgentConfig.evmHomeChainId;
-  const symbol = CHAIN_CONFIG[homeChainId].nativeToken.symbol;
+  const { symbol, decimals } = CHAIN_CONFIG[homeChainId].nativeToken;
 
   const tokenAndDepositedAmounts = useMemo<AvailableAsset[]>(() => {
+    if (prefillAmountWei !== undefined) {
+      return [
+        {
+          symbol,
+          amount: formatUnitsToNumber(prefillAmountWei, decimals, 6),
+        },
+      ];
+    }
     if (!masterEoaGasRequirement) return [];
     return [{ symbol, amount: masterEoaGasRequirement }];
-  }, [masterEoaGasRequirement, symbol]);
+  }, [prefillAmountWei, masterEoaGasRequirement, symbol, decimals]);
 
   if (!masterEoa) return null;
 

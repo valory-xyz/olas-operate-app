@@ -29,6 +29,7 @@ export * from './useGetOnRampRequirementsParams';
 export * from './useGetRefillRequirements';
 export * from './useGlobalErrorHandlers';
 export * from './useInitialFundingRequirements';
+export * from './useInsufficientGasModal';
 export * from './useIsAgentGeoRestricted';
 export * from './useIsInitiallyFunded';
 export * from './useLogs';

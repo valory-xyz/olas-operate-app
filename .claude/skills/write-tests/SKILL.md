@@ -178,6 +178,67 @@ describe('useHookUnderTest', () => {
 - **Use descriptive variable names in assertions**, not inline expected values. 
 - **Test names should describe behavior**, not implementation. 
 
+### Mock setup DRY (same rule as factories)
+
+If three test files have a near-identical `jest.mock('@/components/ui', ...)` (or `jest.mock('@/hooks', ...)`) block, that's a duplication smell — same as inline payload literals.
+
+- **Promote to a shared helper in `frontend/tests/helpers/`** when the same shape appears in two suites. Example: `tests/helpers/insufficientGasModalMock.tsx` exports a single mock component the three host tests import.
+- **Failure mode if you don't:** when the host adds a new UI import in the future, the manual mock returns `undefined` for that export, surfacing as a confusing test failure or — worse — a silent pass that masks a regression.
+- **For partial mocks where you want to override one export but keep the rest real,** use `require()` of the **submodule** (not the barrel — barrels can re-trigger circular imports):
+  ```typescript
+  jest.mock('../../../../hooks', () => ({
+    usePageState: () => ({ goto: mockGoto }),
+    useInsufficientGasModal:
+      require('../../../../hooks/useInsufficientGasModal').useInsufficientGasModal,
+  }));
+  ```
+  This loads only the hook's own file (which has narrow imports), not the whole `@/hooks` barrel (which pulls in the broader project graph).
+
+### Mutation lifecycle (test transitions, not just frames)
+
+The most common bug class missed by single-frame tests: **mutation state persists across renders**. TanStack Query's `useMutation` only resets `error`/`data`/`isError` when `mutateAsync` fires (or `mutation.reset()` is called explicitly). If a component has multiple user entrypoints and only one of them re-fires the mutation, stale error state leaks into the others.
+
+For every component that consumes `useMutation` (or any state machine that survives across user actions):
+
+- **Test the transition, not just the frame.** A test that asserts "given mutation in error state, gas modal renders" is incomplete on its own. Pair it with: "after dismissing the modal, re-triggering the flow renders the clean state." If the component exposes a `reset` callback to the consumer, mock it and assert it fires on every dismiss path.
+- **Walk every entrypoint that reaches the mutation.** Multi-step flows (address → password → confirm; review → confirm → approve) have an entrypoint that opens the next step **without** firing `mutateAsync`. The dismiss → re-open path through that entrypoint is a time bomb. Write a test that proves it isn't.
+- **Map the state machine before writing tests.** `idle → pending → success | error → dismiss → idle` (or back to `pending` on retry). Every edge needs an assertion. The dismiss → retry edge is where bugs live.
+- **Asymmetry smell:** if cases 1, 2, 3 of a feature look symmetric in the JSX but each has a different number of clicks before the mutation fires, the case with the most clicks-before-mutation is the bug. Write a test per case, don't generalise.
+
+Concrete pattern (caught a real bug in OPE-1513):
+
+```typescript
+// Component calls mutation.reset() on dismiss so the next attempt
+// starts clean. Assert that callback fires on every dismiss path.
+it('resets the mutation when the gas modal is dismissed', () => {
+  const reset = jest.fn();
+  mockUseWithdrawFunds.mockReturnValue({
+    isError: true,
+    error: makeInsufficientGasError(),
+    resetMutation: reset,
+    onAuthorizeWithdrawal: jest.fn(),
+    txnHashes: [],
+  });
+
+  render(<EnterWithdrawalAddress onBack={jest.fn()} />);
+  openPasswordModal();
+  fireEvent.click(screen.getByTestId('gas-modal-close'));
+
+  expect(reset).toHaveBeenCalledTimes(1);
+});
+
+// Even better: write a sequence test that simulates two user attempts.
+it('returns to clean password input after dismissing a gas error', () => {
+  // ... render in error state ...
+  // ... click dismiss ...
+  // ... mock returns to clean state (resetMutation effect simulated) ...
+  // ... click Continue ...
+  // ... assert password input renders, not gas modal ...
+});
+```
+
+If you can't point to a test that asserts the *transition* (not just the *state*), the suite isn't done — even when every assertion is green.
+
 ## Backend API reference
 
 When testing service files (`service/Account.ts`, `service/Wallet.ts`, `service/Services.ts`, `service/Balance.ts`, `service/Bridge.ts`, `service/Fund.ts`, etc.), consult the upstream middleware API docs at https://github.com/valory-xyz/olas-operate-middleware/blob/main/docs/api.md for:
