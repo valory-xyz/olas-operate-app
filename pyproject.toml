@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "olas-operate-app"
-version = "1.6.0-rc2"
+version = "1.6.0-rc3"
 description = ""
 authors = ["David Vilela <dvilelaf@gmail.com>", "Viraj Patel <vptl185@gmail.com>"]
 readme = "README.md"
@@ -10,7 +10,7 @@ include = []
 
 [tool.poetry.dependencies]
 python = ">=3.14,<3.15"
-olas-operate-middleware = {git = "https://github.com/valory-xyz/olas-operate-middleware.git", rev = "b2991d3d2da9c91bf733ec41cdb82f672796f0dd"}
+olas-operate-middleware = {git = "https://github.com/valory-xyz/olas-operate-middleware.git", rev = "cef715d4e043cac5f341b721b022b7f00a0f4074"}
 open-autonomy = {version = "0.21.13", extras = ["cli", "docker"]}
 open-aea-ledger-cosmos = "2.1.0"
 open-aea-ledger-ethereum = "2.1.0"
