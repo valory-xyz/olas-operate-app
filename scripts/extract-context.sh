@@ -311,9 +311,11 @@ parse_services_json() {
 import sys, json
 d = json.load(sys.stdin)
 svcs = d.get('services', {})
-# Normalise: may be {'services': [...]} or [...]
+# Normalise: may be {'services': [...]} or [...] or null/'undefined'
 if isinstance(svcs, dict):
     svcs = svcs.get('services', [])
+if not isinstance(svcs, list):
+    svcs = []
 print(json.dumps(svcs))
 "
 }
@@ -322,7 +324,10 @@ parse_addresses_json() {
   zip_read "debug_data.json" | python3 -c "
 import sys, json
 d = json.load(sys.stdin)
-print(json.dumps(d.get('addresses', [])))
+addrs = d.get('addresses', [])
+if not isinstance(addrs, list):
+    addrs = []
+print(json.dumps(addrs))
 "
 }
 
@@ -399,12 +404,17 @@ master_safes = []
 master_safe_backups = []
 
 for entry in addrs:
-    if 'masterEoa' in entry:
-        master_eoa = entry['masterEoa'].get('address')
-    if 'masterSafe' in entry:
-        master_safes = entry['masterSafe']
-    if 'masterSafeBackups' in entry:
-        master_safe_backups = entry['masterSafeBackups']
+    if not isinstance(entry, dict):
+        continue
+    eoa = entry.get('masterEoa')
+    if isinstance(eoa, dict):
+        master_eoa = eoa.get('address')
+    safes = entry.get('masterSafe')
+    if isinstance(safes, list):
+        master_safes = safes
+    backups = entry.get('masterSafeBackups')
+    if isinstance(backups, list):
+        master_safe_backups = backups
 
 print('=== Master Wallet ===')
 print()
@@ -632,7 +642,7 @@ cmd_balances() {
   printf '\n'
 
   # Parse and display recent token transfers
-  printf '%s\n' "${tokentx_raw}" | ADDRESS_LOWER="${address,,}" python3 -c "
+  printf '%s\n' "${tokentx_raw}" | ADDRESS_LOWER="${address}" python3 -c "
 import sys, json
 import os
 from collections import defaultdict
@@ -778,7 +788,7 @@ cmd_tx_history() {
   printf 'Blocks:     %s  →  %s\n\n' "${start_block}" "${end_block}"
 
   # Parse and display normal txs
-  printf '%s\n' "${txlist_raw}" | ADDRESS_LOWER="${address,,}" python3 -c "
+  printf '%s\n' "${txlist_raw}" | ADDRESS_LOWER="${address}" python3 -c "
 import sys, json
 import os
 
@@ -818,7 +828,7 @@ else:
   printf '\n'
 
   # Parse and display token transfers
-  printf '%s\n' "${tokentx_raw}" | ADDRESS_LOWER="${address,,}" python3 -c "
+  printf '%s\n' "${tokentx_raw}" | ADDRESS_LOWER="${address}" python3 -c "
 import sys, json
 import os
 
