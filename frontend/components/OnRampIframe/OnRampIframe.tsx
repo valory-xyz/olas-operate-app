@@ -1,48 +1,9 @@
 import { Button, Flex, Spin } from 'antd';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { Alert } from '@/components/ui';
 import { APP_HEIGHT, APP_WIDTH } from '@/constants';
-import { useElectronApi } from '@/hooks';
 import { MoonPayService } from '@/service/MoonPay';
-import { delayInSeconds } from '@/utils/delay';
-
-/**
- * MoonPay widget origins allowlisted for postMessage events.
- * Production: https://buy.moonpay.com. Sandbox URL is the same family — when
- * pearl-api routes the signing request to MoonPay sandbox the widget is
- * served from buy-sandbox.moonpay.com (TODO Phase 0 step 4: confirm exact
- * sandbox host with infra/POC playback).
- */
-const MOONPAY_ALLOWED_ORIGINS = [
-  'https://buy.moonpay.com',
-  'https://buy-sandbox.moonpay.com',
-];
-
-/**
- * postMessage event_id strings emitted by the MoonPay widget.
- *
- * MoonPay does not publicly document the raw-iframe wire format — these are
- * captured from VLOP-58 POC playback and treated as a project-internal
- * contract. TODO Phase 0 step 4: confirm exact strings (likely
- * `'CLOSE_WIDGET' | 'TRANSACTION_FAILED' | 'TRANSACTION_COMPLETED'` per the
- * SDK's `onClose / onTransactionCreated / onTransactionCompleted` callbacks).
- */
-const MOONPAY_EVENT_IDS = {
-  close: 'CLOSE_WIDGET',
-  failed: 'TRANSACTION_FAILED',
-  completed: 'TRANSACTION_COMPLETED',
-} as const;
-
-type MoonPayEvent = {
-  data: {
-    type?: string;
-    event_id?: string;
-    [key: string]: unknown;
-  };
-};
-
-const FAILURE_DELAY_SECONDS = 3;
 
 type OnRampIframeProps = {
   /** Locked native crypto amount, formatted as `toFixed(6)`. */
@@ -57,15 +18,27 @@ type OnRampIframeProps = {
   walletAddress: string;
 };
 
+/**
+ * Embeds the MoonPay buy widget as a raw iframe pointed at a server-signed URL.
+ *
+ * Lifecycle:
+ * - Cancel: handled by Pearl's WindowControls close button (top-right X) which
+ *   calls `electronAPI.onRampWindow.close()` directly.
+ * - Success: detected by OnRampProvider's balance-polling effect on the master
+ *   EOA's native balance — auto-closes the window when ≥90% of nativeAmount is
+ *   received on the configured chain.
+ * - Failure: user sees MoonPay's error UI in-widget and closes manually via
+ *   Pearl's X. The `onramp-window-did-close` IPC resets loading state.
+ *
+ * MoonPay's raw-iframe wire format is undocumented and unreliable; we
+ * intentionally do not listen to postMessage events from the iframe. See
+ * tests/components/OnRampIframe/OnRampIframe.test.tsx for the contract.
+ */
 export const OnRampIframe = ({
   nativeAmount,
   currencyCode,
   walletAddress,
 }: OnRampIframeProps) => {
-  const { onRampWindow, logEvent } = useElectronApi();
-
-  const ref = useRef<HTMLIFrameElement>(null);
-
   const [signedUrl, setSignedUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -91,36 +64,6 @@ export const OnRampIframe = ({
   useEffect(() => {
     fetchSignedUrl();
   }, [fetchSignedUrl]);
-
-  useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
-      // Defence-in-depth: origin allowlist + source identity check. Either
-      // alone is bypassable; together they reject any nested or cross-origin
-      // spoofed event.
-      if (!MOONPAY_ALLOWED_ORIGINS.includes(event.origin)) return;
-      if (event.source !== ref.current?.contentWindow) return;
-
-      const eventDetails = event as unknown as MoonPayEvent;
-      const eventId = eventDetails.data?.event_id ?? eventDetails.data?.type;
-      if (!eventId) return;
-
-      logEvent?.(`MoonPay event: ${JSON.stringify(eventId)}`);
-
-      if (eventId === MOONPAY_EVENT_IDS.close) {
-        onRampWindow?.close?.();
-        return;
-      }
-
-      if (eventId === MOONPAY_EVENT_IDS.failed) {
-        delayInSeconds(FAILURE_DELAY_SECONDS).then(() => {
-          onRampWindow?.transactionFailure?.();
-        });
-      }
-    };
-
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
-  }, [logEvent, onRampWindow]);
 
   return (
     <Flex
@@ -150,7 +93,6 @@ export const OnRampIframe = ({
       {!isLoading && !error && signedUrl && (
         <iframe
           src={signedUrl}
-          ref={ref}
           id="moonpay-iframe"
           style={{ width: '100%', height: '100%', border: 'none' }}
           allow="camera;microphone;payment"

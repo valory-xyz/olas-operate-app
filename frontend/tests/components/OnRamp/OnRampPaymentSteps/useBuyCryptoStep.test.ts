@@ -64,6 +64,7 @@ const setupMocks = (
   overrides: {
     isBuyCryptoBtnLoading?: boolean;
     nativeAmountToPay?: number | null;
+    usdAmountToPay?: number | null;
     isTransactionSuccessfulButFundsNotReceived?: boolean;
     isOnRampingStepCompleted?: boolean;
     moonpayCurrencyCode?: string | null;
@@ -85,6 +86,8 @@ const setupMocks = (
     isBuyCryptoBtnLoading: overrides.isBuyCryptoBtnLoading ?? false,
     nativeAmountToPay:
       'nativeAmountToPay' in overrides ? overrides.nativeAmountToPay : 0.005,
+    usdAmountToPay:
+      'usdAmountToPay' in overrides ? overrides.usdAmountToPay : 25,
     updateIsBuyCryptoBtnLoading,
     isTransactionSuccessfulButFundsNotReceived:
       overrides.isTransactionSuccessfulButFundsNotReceived ?? false,
@@ -197,6 +200,12 @@ describe('useBuyCryptoStep', () => {
       const { result } = renderHook(() => useBuyCryptoStep());
       expect(result.current.subSteps).toHaveLength(2);
     });
+
+    it('is true when usdAmountToPay is null (fiat quote still loading)', () => {
+      setupMocks({ usdAmountToPay: null });
+      const { result } = renderHook(() => useBuyCryptoStep());
+      expect(result.current.subSteps).toHaveLength(2);
+    });
   });
 
   describe('handleBuyCrypto', () => {
@@ -222,6 +231,12 @@ describe('useBuyCryptoStep', () => {
 
     it('does not call show when moonpayCurrencyCode is null', () => {
       const { showFn } = setupMocks({ moonpayCurrencyCode: null });
+      renderHook(() => useBuyCryptoStep());
+      expect(showFn).not.toHaveBeenCalled();
+    });
+
+    it('does not call show when usdAmountToPay is null (fiat quote still loading)', () => {
+      const { showFn } = setupMocks({ usdAmountToPay: null });
       renderHook(() => useBuyCryptoStep());
       expect(showFn).not.toHaveBeenCalled();
     });

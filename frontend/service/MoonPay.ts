@@ -4,7 +4,7 @@ import { parseApiError } from '@/utils';
 type GetSignedUrlParams = {
   /** Native crypto amount, formatted as `toFixed(6)` to avoid float artifacts. */
   nativeAmount: string;
-  /** MoonPay currency code (e.g. `eth_base`, `pol`). */
+  /** MoonPay currency code (e.g. `eth_base`, `pol_polygon`). */
   currencyCode: string;
   /** Master EOA address — receives the on-ramped funds. */
   walletAddress: string;
@@ -46,7 +46,7 @@ const getSignedUrl = async (
 };
 
 type GetBuyQuoteParams = {
-  /** MoonPay currency code (e.g. `eth_base`, `pol`). */
+  /** MoonPay currency code (e.g. `eth_base`, `pol_polygon`). */
   currencyCode: string;
   /** Native crypto amount the user wants to buy. */
   quoteCurrencyAmount: number;

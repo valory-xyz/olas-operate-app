@@ -1,7 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { createElement } from 'react';
 
-import { useElectronApi } from '../../../hooks/useElectronApi';
 import { MoonPayService } from '../../../service/MoonPay';
 import { DEFAULT_EOA_ADDRESS } from '../../helpers/factories';
 
@@ -18,13 +17,6 @@ jest.mock(
 jest.mock('../../../constants/providers', () => ({}));
 jest.mock('../../../config/providers', () => ({ providers: [] }));
 
-jest.mock('../../../hooks/useElectronApi', () => ({
-  useElectronApi: jest.fn(),
-}));
-jest.mock('../../../utils/delay', () => ({
-  delayInSeconds: jest.fn(() => Promise.resolve()),
-}));
-
 jest.mock('../../../service/MoonPay', () => ({
   MoonPayService: {
     getSignedUrl: jest.fn(),
@@ -33,8 +25,7 @@ jest.mock('../../../service/MoonPay', () => ({
 }));
 
 // The @/components/ui barrel pulls in tooltip → antd ESM modules that the
-// Jest transform doesn't handle. Stub Alert directly so the iframe under
-// test can resolve without triggering the antd ESM path.
+// Jest transform doesn't handle. Stub Alert directly.
 jest.mock('../../../components/ui', () => ({
   Alert: ({
     message,
@@ -54,9 +45,6 @@ jest.mock('../../../components/ui', () => ({
 // Typed mock accessors
 // ---------------------------------------------------------------------------
 
-const mockUseElectronApi = useElectronApi as jest.MockedFunction<
-  typeof useElectronApi
->;
 const mockGetSignedUrl = MoonPayService.getSignedUrl as jest.MockedFunction<
   typeof MoonPayService.getSignedUrl
 >;
@@ -77,29 +65,6 @@ const {
 // ---------------------------------------------------------------------------
 
 const SIGNED_URL = 'https://buy.moonpay.com?apiKey=pk_test&signature=sig';
-const MOONPAY_ORIGIN = 'https://buy.moonpay.com';
-
-const setupMocks = (
-  overrides: {
-    closeFn?: jest.Mock;
-    transactionFailureFn?: jest.Mock;
-    logEventFn?: jest.Mock;
-  } = {},
-) => {
-  const closeFn = overrides.closeFn ?? jest.fn();
-  const transactionFailureFn = overrides.transactionFailureFn ?? jest.fn();
-  const logEventFn = overrides.logEventFn ?? jest.fn();
-
-  mockUseElectronApi.mockReturnValue({
-    onRampWindow: {
-      close: closeFn,
-      transactionFailure: transactionFailureFn,
-    },
-    logEvent: logEventFn,
-  } as unknown as ReturnType<typeof useElectronApi>);
-
-  return { closeFn, transactionFailureFn, logEventFn };
-};
 
 const renderIframe = (
   props: {
@@ -116,21 +81,6 @@ const renderIframe = (
     }),
   );
 
-// Dispatch a postMessage that mimics MoonPay's wire format. The handler
-// requires a matching origin AND source identity.
-const dispatchMoonPayEvent = (
-  iframe: HTMLIFrameElement | null,
-  event_id: string,
-  origin = MOONPAY_ORIGIN,
-) => {
-  const event = new MessageEvent('message', {
-    source: iframe?.contentWindow,
-    origin,
-    data: { event_id },
-  });
-  window.dispatchEvent(event);
-};
-
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
@@ -142,7 +92,6 @@ describe('OnRampIframe', () => {
 
   describe('signed-URL fetch lifecycle', () => {
     it('renders <Spin /> while fetching the signed URL', () => {
-      setupMocks();
       mockGetSignedUrl.mockReturnValue(new Promise(() => {})); // never resolves
 
       renderIframe();
@@ -152,7 +101,6 @@ describe('OnRampIframe', () => {
     });
 
     it('renders the iframe with the signed URL on success', async () => {
-      setupMocks();
       mockGetSignedUrl.mockResolvedValue({ success: true, url: SIGNED_URL });
 
       renderIframe();
@@ -171,7 +119,6 @@ describe('OnRampIframe', () => {
     });
 
     it('passes nativeAmount + currencyCode + walletAddress to MoonPayService', async () => {
-      setupMocks();
       mockGetSignedUrl.mockResolvedValue({ success: true, url: SIGNED_URL });
 
       renderIframe({
@@ -190,7 +137,6 @@ describe('OnRampIframe', () => {
     });
 
     it('renders error Alert + Retry button when signing fails', async () => {
-      setupMocks();
       mockGetSignedUrl.mockResolvedValue({
         success: false,
         error: 'INVALID_AMOUNT',
@@ -210,7 +156,6 @@ describe('OnRampIframe', () => {
     });
 
     it('re-fetches the signed URL when Retry is clicked', async () => {
-      setupMocks();
       mockGetSignedUrl
         .mockResolvedValueOnce({ success: false, error: 'NET' })
         .mockResolvedValueOnce({ success: true, url: SIGNED_URL });
@@ -230,68 +175,6 @@ describe('OnRampIframe', () => {
         expect(iframe?.src).toContain('signature=sig');
       });
       expect(mockGetSignedUrl).toHaveBeenCalledTimes(2);
-    });
-  });
-
-  describe('postMessage event handling — origin + source guards', () => {
-    const setupRendered = async () => {
-      const mocks = setupMocks();
-      mockGetSignedUrl.mockResolvedValue({ success: true, url: SIGNED_URL });
-      renderIframe();
-      await waitFor(() => {
-        expect(document.querySelector('iframe')).not.toBeNull();
-      });
-      return { ...mocks, iframe: document.querySelector('iframe') };
-    };
-
-    it('closes the window on widget-close event from MoonPay origin', async () => {
-      const { closeFn, iframe } = await setupRendered();
-      dispatchMoonPayEvent(iframe, 'CLOSE_WIDGET');
-      expect(closeFn).toHaveBeenCalledTimes(1);
-    });
-
-    it('calls transactionFailure on transaction-failed event (after delay)', async () => {
-      const { transactionFailureFn, iframe } = await setupRendered();
-      dispatchMoonPayEvent(iframe, 'TRANSACTION_FAILED');
-      await Promise.resolve(); // delayInSeconds is mocked to resolve immediately
-      expect(transactionFailureFn).toHaveBeenCalledTimes(1);
-    });
-
-    it('rejects events whose origin is not in the MoonPay allowlist', async () => {
-      const { closeFn, iframe } = await setupRendered();
-      dispatchMoonPayEvent(iframe, 'CLOSE_WIDGET', 'https://attacker.example');
-      expect(closeFn).not.toHaveBeenCalled();
-    });
-
-    it('rejects events whose source is not the MoonPay iframe', async () => {
-      const { closeFn } = await setupRendered();
-      // Source is the window itself, not the iframe contentWindow
-      const event = new MessageEvent('message', {
-        source: window,
-        origin: MOONPAY_ORIGIN,
-        data: { event_id: 'CLOSE_WIDGET' },
-      });
-      window.dispatchEvent(event);
-      expect(closeFn).not.toHaveBeenCalled();
-    });
-
-    it('ignores events with no event_id / type', async () => {
-      const { closeFn, iframe } = await setupRendered();
-      const event = new MessageEvent('message', {
-        source: iframe?.contentWindow,
-        origin: MOONPAY_ORIGIN,
-        data: { someOther: 'field' },
-      });
-      window.dispatchEvent(event);
-      expect(closeFn).not.toHaveBeenCalled();
-    });
-
-    it('logs the event_id via logEvent for observability', async () => {
-      const { logEventFn, iframe } = await setupRendered();
-      dispatchMoonPayEvent(iframe, 'CLOSE_WIDGET');
-      expect(logEventFn).toHaveBeenCalledWith(
-        expect.stringContaining('CLOSE_WIDGET'),
-      );
     });
   });
 });

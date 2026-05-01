@@ -28,6 +28,7 @@ export const useBuyCryptoStep = () => {
   const {
     isBuyCryptoBtnLoading,
     nativeAmountToPay,
+    usdAmountToPay,
     updateIsBuyCryptoBtnLoading,
     isTransactionSuccessfulButFundsNotReceived,
     isOnRampingStepCompleted,
@@ -37,6 +38,7 @@ export const useBuyCryptoStep = () => {
   const handleBuyCrypto = useCallback(async () => {
     if (!onRampWindow?.show) return;
     if (!nativeAmountToPay) return;
+    if (!usdAmountToPay) return;
     if (!moonpayCurrencyCode) return;
     if (!masterEoa?.address) return;
 
@@ -50,12 +52,14 @@ export const useBuyCryptoStep = () => {
   }, [
     onRampWindow,
     nativeAmountToPay,
+    usdAmountToPay,
     moonpayCurrencyCode,
     masterEoa,
     updateIsBuyCryptoBtnLoading,
   ]);
 
-  const cannotBuyCrypto = !masterEoa?.address || !nativeAmountToPay;
+  const cannotBuyCrypto =
+    !masterEoa?.address || !nativeAmountToPay || !usdAmountToPay;
 
   const openTerms = useCallback(async () => {
     termsAndConditionsWindow?.show?.('moonpay-terms');
