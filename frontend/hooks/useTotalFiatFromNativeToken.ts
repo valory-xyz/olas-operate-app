@@ -8,21 +8,23 @@ import { ensureRequired, Nullable } from '@/types';
 import { asMiddlewareChain } from '@/utils';
 
 /**
- * Adds a buffer to the total fiat amount calculated from the native token
- * amount to account for price fluctuations during the on-ramp process.
+ * Adds a buffer (in USD) to the agent-required native amount so the user has
+ * slippage headroom for the post-on-ramp Relay swap/bridge. Without this, a
+ * Relay quote that drifts between fetch-time and execution-time could deliver
+ * fewer agent-required tokens than the agent needs.
  */
 const ON_RAMP_FIAT_BUFFER_USD = 5;
 
 type UseTotalFiatFromNativeTokenProps = {
   nativeTokenAmount?: number;
-  nativeAmountToPay?: Nullable<number>;
+  nativeAmount?: Nullable<number>;
   selectedChainId: OnRampNetworkConfig['selectedChainId'];
   skip?: boolean;
 };
 
 export const useTotalFiatFromNativeToken = ({
   nativeTokenAmount,
-  nativeAmountToPay,
+  nativeAmount,
   selectedChainId,
   skip = false,
 }: UseTotalFiatFromNativeTokenProps) => {
@@ -37,36 +39,34 @@ export const useTotalFiatFromNativeToken = ({
   return useQuery({
     queryKey: REACT_QUERY_KEYS.ON_RAMP_QUOTE_KEY(fromChain, nativeTokenAmount!),
     queryFn: async () => {
-      const result = await MoonPayService.getBuyQuote({
+      const baseNative = (nativeAmount ?? nativeTokenAmount)!;
+
+      // Original quote: un-buffered native — to learn the conversionRate so we
+      // can size the native-side buffer in fiat-equivalent terms.
+      const originalQuote = await MoonPayService.getBuyQuote({
         currencyCode: chainConfig!.moonpayCurrencyCode,
         quoteCurrencyAmount: nativeTokenAmount!,
       });
-
-      if (!result.success) {
-        throw new Error(result.error);
-      }
-
-      return result.quote;
-    },
-    select: (data) => {
-      // Buffer math: add $5 to the fiat estimate, and add the equivalent
-      // native amount (using conversionRate) to nativeAmountToPay so the
-      // user receives ~$5 of headroom for slippage.
+      if (!originalQuote.success) throw new Error(originalQuote.error);
       const bufferedNative =
-        (nativeAmountToPay ?? 0) +
-        ON_RAMP_FIAT_BUFFER_USD / data.conversionRate;
+        baseNative +
+        ON_RAMP_FIAT_BUFFER_USD / originalQuote.quote.conversionRate;
 
-      return {
-        // round avoids 15.38 + 5 = 20.380000000000003 issues
-        fiatAmount: round(data.baseCurrencyAmount + ON_RAMP_FIAT_BUFFER_USD, 2),
-        /**
-         * JUST TO DISPLAY TO THE USER
-         * the buffered native amount is shown in the on-ramp UI so the user
-         * sees the same amount they will pay in MoonPay.
-         */
-        nativeAmountToDisplay: bufferedNative,
-      };
+      // Second quote: buffered native — gives us the exact fee-included fiat
+      // (totalAmount) that MoonPay will charge for the buffered amount.
+      // Using two quotes (instead of computing totalAmount + $5)
+      const bufferedQuote = await MoonPayService.getBuyQuote({
+        currencyCode: chainConfig!.moonpayCurrencyCode,
+        quoteCurrencyAmount: bufferedNative,
+      });
+      if (!bufferedQuote.success) throw new Error(bufferedQuote.error);
+
+      return { quote: bufferedQuote.quote, bufferedNative };
     },
+    select: (data) => ({
+      fiatAmount: round(data.quote.totalAmount, 2),
+      nativeAmountToDisplay: data.bufferedNative,
+    }),
     enabled: !skip && !!chainConfig && !!fromChain && !!nativeTokenAmount,
   });
 };

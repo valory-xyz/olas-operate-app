@@ -30,7 +30,7 @@ export const useTotalNativeTokenRequired = (
   mode: 'onboard' | 'deposit' = 'onboard',
 ) => {
   const {
-    updateNativeAmountToPay,
+    updateNativeAmount,
     updateNativeTotalAmountRequired,
     isOnRampingTransactionSuccessful,
     isBuyCryptoBtnLoading,
@@ -188,11 +188,11 @@ export const useTotalNativeTokenRequired = (
     if (!totalNativeTokens) return;
     if (shouldFreezeTotals) return;
 
-    updateNativeAmountToPay(totalNativeTokens.totalNativeTokenToPay);
+    updateNativeAmount(totalNativeTokens.totalNativeTokenToPay);
     updateNativeTotalAmountRequired(totalNativeTokens.totalNativeTokenRequired);
   }, [
     shouldFreezeTotals,
-    updateNativeAmountToPay,
+    updateNativeAmount,
     totalNativeTokens,
     updateNativeTotalAmountRequired,
   ]);

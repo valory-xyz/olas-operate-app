@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { Alert } from '@/components/ui';
 import { APP_HEIGHT, APP_WIDTH } from '@/constants';
+import { useElectronApi } from '@/hooks';
 import { MoonPayService } from '@/service/MoonPay';
 
 type OnRampIframeProps = {
@@ -39,13 +40,15 @@ export const OnRampIframe = ({
   currencyCode,
   walletAddress,
 }: OnRampIframeProps) => {
+  const { logEvent } = useElectronApi();
+
   const [signedUrl, setSignedUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [hasError, setHasError] = useState(false);
 
   const fetchSignedUrl = useCallback(async () => {
     setIsLoading(true);
-    setError(null);
+    setHasError(false);
 
     const result = await MoonPayService.getSignedUrl({
       nativeAmount,
@@ -56,10 +59,16 @@ export const OnRampIframe = ({
     if (result.success) {
       setSignedUrl(result.url);
     } else {
-      setError(result.error);
+      logEvent?.(`OnRampIframe getSignedUrl failed: ${result.error}`);
+      setHasError(true);
     }
     setIsLoading(false);
-  }, [walletAddress, nativeAmount, currencyCode]);
+  }, [walletAddress, nativeAmount, currencyCode, logEvent]);
+
+  const handleIframeError = useCallback(() => {
+    logEvent?.('OnRampIframe iframe failed to load');
+    setHasError(true);
+  }, [logEvent]);
 
   useEffect(() => {
     fetchSignedUrl();
@@ -75,27 +84,27 @@ export const OnRampIframe = ({
         overflow: 'hidden',
         height: `calc(${APP_HEIGHT}px - 45px)`,
         width: APP_WIDTH,
-        padding: error ? 24 : 0,
+        padding: hasError ? 24 : 0,
       }}
     >
       {isLoading && <Spin />}
-      {!isLoading && error && (
+      {!isLoading && hasError && (
         <>
           <Alert
             type="error"
             showIcon
             message="Failed to load MoonPay. Please try again."
-            description={error}
           />
           <Button onClick={fetchSignedUrl}>Retry</Button>
         </>
       )}
-      {!isLoading && !error && signedUrl && (
+      {!isLoading && !hasError && signedUrl && (
         <iframe
           src={signedUrl}
           id="moonpay-iframe"
           style={{ width: '100%', height: '100%', border: 'none' }}
           allow="camera;microphone;payment"
+          onError={handleIframeError}
         />
       )}
     </Flex>

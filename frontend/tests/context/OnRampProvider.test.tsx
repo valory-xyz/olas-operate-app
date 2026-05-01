@@ -85,7 +85,7 @@ describe('OnRampProvider', () => {
     it('provides default values (all null/false)', () => {
       const { result } = renderHook(useOnRamp, { wrapper });
 
-      expect(result.current.nativeAmountToPay).toBeNull();
+      expect(result.current.nativeAmount).toBeNull();
       expect(result.current.nativeTotalAmountRequired).toBeNull();
       expect(result.current.usdAmountToPay).toBeNull();
       expect(result.current.isBuyCryptoBtnLoading).toBe(false);
@@ -102,10 +102,10 @@ describe('OnRampProvider', () => {
   });
 
   describe('state updates', () => {
-    it('updateNativeAmountToPay updates nativeAmountToPay', () => {
+    it('updateNativeAmount updates nativeAmount', () => {
       const { result } = renderHook(useOnRamp, { wrapper });
-      act(() => result.current.updateNativeAmountToPay(1.5));
-      expect(result.current.nativeAmountToPay).toBe(1.5);
+      act(() => result.current.updateNativeAmount(1.5));
+      expect(result.current.nativeAmount).toBe(1.5);
     });
 
     it('updateNativeTotalAmountRequired updates nativeTotalAmountRequired', () => {
@@ -148,7 +148,7 @@ describe('OnRampProvider', () => {
   });
 
   describe('initial balance capture', () => {
-    it('captures initial balance when nativeAmountToPay first set', () => {
+    it('captures initial balance when nativeAmount first set', () => {
       mockGetMasterEoaNativeBalanceOf.mockReturnValue('5.0');
 
       const { result } = renderHook(useOnRamp, { wrapper });
@@ -162,8 +162,8 @@ describe('OnRampProvider', () => {
         }),
       );
 
-      // Set nativeAmountToPay to trigger the initial balance capture
-      act(() => result.current.updateNativeAmountToPay(1.0));
+      // Set nativeAmount to trigger the initial balance capture
+      act(() => result.current.updateNativeAmount(1.0));
 
       // The effect should have called getMasterEoaNativeBalanceOf
       expect(mockGetMasterEoaNativeBalanceOf).toHaveBeenCalledWith(CHAIN_ID);
@@ -182,7 +182,7 @@ describe('OnRampProvider', () => {
           selectedChainId: CHAIN_ID,
         }),
       );
-      act(() => result.current.updateNativeAmountToPay(1.0));
+      act(() => result.current.updateNativeAmount(1.0));
       act(() => result.current.updateUsdAmountToPay(3000));
 
       // Now change the balance mock to a much higher value ("100.0").
@@ -202,7 +202,7 @@ describe('OnRampProvider', () => {
       expect(result.current.isOnRampingStepCompleted).toBe(true);
     });
 
-    it('does not re-capture initial balance when nativeAmountToPay changes', () => {
+    it('does not re-capture initial balance when nativeAmount changes', () => {
       // First capture: balance = '5.0'
       mockGetMasterEoaNativeBalanceOf.mockReturnValue('5.0');
 
@@ -215,12 +215,12 @@ describe('OnRampProvider', () => {
           selectedChainId: CHAIN_ID,
         }),
       );
-      act(() => result.current.updateNativeAmountToPay(1.0));
+      act(() => result.current.updateNativeAmount(1.0));
 
-      // Ref is now '5.0'. Change nativeAmountToPay to trigger the effect
+      // Ref is now '5.0'. Change nativeAmount to trigger the effect
       // to re-run — but the ref guard (line 141) should prevent re-capture.
       mockGetMasterEoaNativeBalanceOf.mockReturnValue('99.0');
-      act(() => result.current.updateNativeAmountToPay(2.0));
+      act(() => result.current.updateNativeAmount(2.0));
       act(() => result.current.updateUsdAmountToPay(3000));
 
       // If the ref was re-captured as '99.0', the increase from 99 to 99
@@ -242,7 +242,7 @@ describe('OnRampProvider', () => {
           selectedChainId: CHAIN_ID,
         }),
       );
-      act(() => result.current.updateNativeAmountToPay(1.0));
+      act(() => result.current.updateNativeAmount(1.0));
 
       // Even with falsy balance, the ref is set to '0' — subsequent balance
       // checks can compare against this baseline.
@@ -255,7 +255,7 @@ describe('OnRampProvider', () => {
     /**
      * Sets up state for fund receipt detection tests:
      * - Sets network config
-     * - Sets nativeAmountToPay and usdAmountToPay
+     * - Sets nativeAmount and usdAmountToPay
      * - Captures initial balance via the first effect
      */
     const setupFundDetection = (
@@ -274,11 +274,11 @@ describe('OnRampProvider', () => {
           selectedChainId: CHAIN_ID,
         }),
       );
-      act(() => hook.result.current.updateNativeAmountToPay(nativeAmount));
+      act(() => hook.result.current.updateNativeAmount(nativeAmount));
       act(() => hook.result.current.updateUsdAmountToPay(3000));
     };
 
-    it('detects fund receipt when balance increases by >= 90% of nativeAmountToPay', () => {
+    it('detects fund receipt when balance increases by >= 90% of nativeAmount', () => {
       const hook = renderHook(useOnRamp, { wrapper });
 
       // Initial balance: "1.0" (1 unit). Need 1.0 more.
@@ -323,10 +323,10 @@ describe('OnRampProvider', () => {
       expect(mockOnRampWindowClose).toHaveBeenCalledTimes(1);
     });
 
-    it('does not check when initialBalanceRef is null (no nativeAmountToPay set)', () => {
+    it('does not check when initialBalanceRef is null (no nativeAmount set)', () => {
       const hook = renderHook(useOnRamp, { wrapper });
 
-      // Only set usdAmountToPay, not nativeAmountToPay — initialBalanceRef stays null
+      // Only set usdAmountToPay, not nativeAmount — initialBalanceRef stays null
       act(() => hook.result.current.updateUsdAmountToPay(100));
       mockGetMasterEoaNativeBalanceOf.mockReturnValue('5.0');
       hook.rerender();
@@ -346,7 +346,7 @@ describe('OnRampProvider', () => {
           selectedChainId: CHAIN_ID,
         }),
       );
-      act(() => hook.result.current.updateNativeAmountToPay(1.0));
+      act(() => hook.result.current.updateNativeAmount(1.0));
       act(() => hook.result.current.updateUsdAmountToPay(3000));
 
       // Now getMasterEoaNativeBalanceOf returns undefined (falsy currentBalance)
@@ -362,7 +362,7 @@ describe('OnRampProvider', () => {
       const hook = renderHook(useOnRamp, { wrapper });
 
       // Set amounts but no network config (networkId stays null)
-      act(() => hook.result.current.updateNativeAmountToPay(1.0));
+      act(() => hook.result.current.updateNativeAmount(1.0));
       act(() => hook.result.current.updateUsdAmountToPay(3000));
 
       mockGetMasterEoaNativeBalanceOf.mockReturnValue('5.0');
@@ -405,7 +405,7 @@ describe('OnRampProvider', () => {
           selectedChainId: CHAIN_ID,
         }),
       );
-      act(() => hook.result.current.updateNativeAmountToPay(1.0));
+      act(() => hook.result.current.updateNativeAmount(1.0));
       act(() => hook.result.current.updateUsdAmountToPay(3000));
 
       // Both flags false initially
@@ -437,7 +437,7 @@ describe('OnRampProvider', () => {
           selectedChainId: CHAIN_ID,
         }),
       );
-      act(() => hook.result.current.updateNativeAmountToPay(1.0));
+      act(() => hook.result.current.updateNativeAmount(1.0));
       act(() => hook.result.current.updateUsdAmountToPay(3000));
 
       mockGetMasterEoaNativeBalanceOf.mockReturnValue('1.0');
@@ -526,7 +526,7 @@ describe('OnRampProvider', () => {
 
       // Set various state
       act(() => {
-        result.current.updateNativeAmountToPay(1.0);
+        result.current.updateNativeAmount(1.0);
         result.current.updateUsdAmountToPay(3000);
         result.current.updateIsBuyCryptoBtnLoading(true);
         result.current.updateIsSwappingStepCompleted(true);
@@ -535,7 +535,7 @@ describe('OnRampProvider', () => {
       // Reset
       act(() => result.current.resetOnRampState());
 
-      expect(result.current.nativeAmountToPay).toBeNull();
+      expect(result.current.nativeAmount).toBeNull();
       expect(result.current.usdAmountToPay).toBeNull();
       expect(result.current.isBuyCryptoBtnLoading).toBe(false);
       expect(result.current.isOnRampingTransactionSuccessful).toBe(false);
@@ -570,10 +570,10 @@ describe('OnRampProvider', () => {
 
       // Set some state
       act(() => {
-        result.current.updateNativeAmountToPay(2.0);
+        result.current.updateNativeAmount(2.0);
         result.current.updateUsdAmountToPay(6000);
       });
-      expect(result.current.nativeAmountToPay).toBe(2.0);
+      expect(result.current.nativeAmount).toBe(2.0);
 
       // Simulate navigation to Main page and rerender same hook
       mockPageState.mockReturnValue(PAGES.Main);
@@ -582,7 +582,7 @@ describe('OnRampProvider', () => {
       // Advance timers by 1 second to trigger the auto-reset
       act(() => jest.advanceTimersByTime(1000));
 
-      expect(result.current.nativeAmountToPay).toBeNull();
+      expect(result.current.nativeAmount).toBeNull();
       expect(result.current.usdAmountToPay).toBeNull();
       expect(result.current.isBuyCryptoBtnLoading).toBe(false);
     });
@@ -591,7 +591,7 @@ describe('OnRampProvider', () => {
       mockPageState.mockReturnValue(PAGES.Setup);
       const { result, rerender } = renderHook(useOnRamp, { wrapper });
 
-      act(() => result.current.updateNativeAmountToPay(2.0));
+      act(() => result.current.updateNativeAmount(2.0));
 
       // Navigate to Settings (not Main)
       mockPageState.mockReturnValue(PAGES.Settings);
@@ -600,7 +600,7 @@ describe('OnRampProvider', () => {
       act(() => jest.advanceTimersByTime(2000));
 
       // State should not be reset
-      expect(result.current.nativeAmountToPay).toBe(2.0);
+      expect(result.current.nativeAmount).toBe(2.0);
     });
   });
 
@@ -608,11 +608,11 @@ describe('OnRampProvider', () => {
     it('provides default no-op context values when used without provider', () => {
       const { result } = renderHook(useOnRamp);
 
-      expect(result.current.nativeAmountToPay).toBeNull();
+      expect(result.current.nativeAmount).toBeNull();
       expect(result.current.networkId).toBeNull();
       expect(result.current.isBuyCryptoBtnLoading).toBe(false);
       expect(result.current.isOnRampingStepCompleted).toBe(false);
-      expect(typeof result.current.updateNativeAmountToPay).toBe('function');
+      expect(typeof result.current.updateNativeAmount).toBe('function');
       expect(typeof result.current.resetOnRampState).toBe('function');
     });
   });

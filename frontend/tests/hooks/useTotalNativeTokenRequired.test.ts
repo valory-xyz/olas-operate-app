@@ -30,7 +30,7 @@ const mockUpdateNativeTotalAmountRequired = jest.fn();
 
 jest.mock('../../hooks/useOnRampContext', () => ({
   useOnRampContext: jest.fn(() => ({
-    updateNativeAmountToPay: mockUpdateNativeAmountToPay,
+    updateNativeAmount: mockUpdateNativeAmountToPay,
     updateNativeTotalAmountRequired: mockUpdateNativeTotalAmountRequired,
     isOnRampingTransactionSuccessful: false,
     isBuyCryptoBtnLoading: false,
@@ -198,7 +198,7 @@ const setupOnRampContext = (
   overrides: Partial<ReturnType<typeof useOnRampContext>> = {},
 ) => {
   mockedUseOnRampContext.mockReturnValue({
-    updateNativeAmountToPay: mockUpdateNativeAmountToPay,
+    updateNativeAmount: mockUpdateNativeAmountToPay,
     updateNativeTotalAmountRequired: mockUpdateNativeTotalAmountRequired,
     isOnRampingTransactionSuccessful: false,
     isBuyCryptoBtnLoading: false,
@@ -568,7 +568,7 @@ describe('useTotalNativeTokenRequired', () => {
       expect(result.current.totalNativeToken).toBe(9);
     });
 
-    it('does NOT call updateNativeAmountToPay while frozen', () => {
+    it('does NOT call updateNativeAmount while frozen', () => {
       setupBridgeQuery({
         bridgeFundingRequirements: makeBridgeFundingRequirements({
           balance: '0',
@@ -600,7 +600,7 @@ describe('useTotalNativeTokenRequired', () => {
   // -------------------------------------------------------------------------
 
   describe('context updates', () => {
-    it('calls updateNativeAmountToPay with totalNativeTokenToPay', () => {
+    it('calls updateNativeAmount with totalNativeTokenToPay', () => {
       setupBridgeQuery({
         bridgeFundingRequirements: makeBridgeFundingRequirements({
           refillRequirement: NON_NATIVE_BRIDGE_REQUIREMENT,

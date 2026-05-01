@@ -63,7 +63,7 @@ const {
 const setupMocks = (
   overrides: {
     isBuyCryptoBtnLoading?: boolean;
-    nativeAmountToPay?: number | null;
+    nativeAmountWithBuffer?: number | null;
     usdAmountToPay?: number | null;
     isTransactionSuccessfulButFundsNotReceived?: boolean;
     isOnRampingStepCompleted?: boolean;
@@ -84,8 +84,10 @@ const setupMocks = (
 
   mockUseOnRampContext.mockReturnValue({
     isBuyCryptoBtnLoading: overrides.isBuyCryptoBtnLoading ?? false,
-    nativeAmountToPay:
-      'nativeAmountToPay' in overrides ? overrides.nativeAmountToPay : 0.005,
+    nativeAmountWithBuffer:
+      'nativeAmountWithBuffer' in overrides
+        ? overrides.nativeAmountWithBuffer
+        : 0.005,
     usdAmountToPay:
       'usdAmountToPay' in overrides ? overrides.usdAmountToPay : 25,
     updateIsBuyCryptoBtnLoading,
@@ -195,8 +197,8 @@ describe('useBuyCryptoStep', () => {
       expect(result.current.subSteps).toHaveLength(2);
     });
 
-    it('is true when nativeAmountToPay is null', () => {
-      setupMocks({ nativeAmountToPay: null });
+    it('is true when nativeAmountWithBuffer is null', () => {
+      setupMocks({ nativeAmountWithBuffer: null });
       const { result } = renderHook(() => useBuyCryptoStep());
       expect(result.current.subSteps).toHaveLength(2);
     });
@@ -222,8 +224,8 @@ describe('useBuyCryptoStep', () => {
       expect(result.current.status).toBe('wait');
     });
 
-    it('does not call show when nativeAmountToPay is null', () => {
-      const { showFn } = setupMocks({ nativeAmountToPay: null });
+    it('does not call show when nativeAmountWithBuffer is null', () => {
+      const { showFn } = setupMocks({ nativeAmountWithBuffer: null });
       renderHook(() => useBuyCryptoStep());
       // handleBuyCrypto has early returns for missing values
       expect(showFn).not.toHaveBeenCalled();
@@ -255,12 +257,14 @@ describe('useBuyCryptoStep', () => {
   });
 
   describe('handleBuyCrypto invocation', () => {
-    it('calls onRampWindow.show with toFixed(6) native amount, currency code, and master EOA address', async () => {
+    it('calls onRampWindow.show with toFixed(6) buffered native, currency code, and master EOA address', async () => {
       const showFn = jest.fn();
       const masterEoa = makeMasterEoa();
       const { updateIsBuyCryptoBtnLoading } = setupMocks({
         onRampWindowShow: showFn,
-        nativeAmountToPay: 0.005,
+        // nativeAmountWithBuffer = buffered native (= agent-required + $5 cushion).
+        // PayingReceivingTable populates this from the fiat-quote hook.
+        nativeAmountWithBuffer: 0.005,
         moonpayCurrencyCode: 'eth_base',
         masterEoa,
       });
@@ -275,9 +279,9 @@ describe('useBuyCryptoStep', () => {
         await onClick();
       });
 
-      // Native amount is fixed-decimal-formatted to 6 places to avoid float
-      // artifacts (e.g. 0.020000000000000004) hitting MoonPay validation.
-      // walletAddress is forwarded to the child Electron window because its
+      // The IPC sends the buffered native (toFixed(6)) so MoonPay locks the
+      // same amount the user saw in the "You Pay" preview — display matches
+      // actual charge. walletAddress is forwarded because the child window's
       // MasterWalletProvider doesn't hydrate (gated on isUserLoggedIn=false).
       expect(showFn).toHaveBeenCalledWith(
         '0.005000',
@@ -319,9 +323,23 @@ describe('useBuyCryptoStep', () => {
       expect(updateIsBuyCryptoBtnLoading).not.toHaveBeenCalled();
     });
 
-    it('early-returns when nativeAmountToPay is null', async () => {
+    it('early-returns when nativeAmountWithBuffer is null', async () => {
       const showFn = jest.fn();
-      setupMocks({ onRampWindowShow: showFn, nativeAmountToPay: null });
+      setupMocks({ onRampWindowShow: showFn, nativeAmountWithBuffer: null });
+      const { result } = renderHook(() => useBuyCryptoStep());
+      const buyButtonElement = result.current.subSteps[1].description;
+      const onClick = (
+        buyButtonElement as { props: { onClick: () => Promise<void> } }
+      ).props.onClick;
+      await act(async () => {
+        await onClick();
+      });
+      expect(showFn).not.toHaveBeenCalled();
+    });
+
+    it('early-returns when nativeAmountWithBuffer rounds to 0 at toFixed(6)', async () => {
+      const showFn = jest.fn();
+      setupMocks({ onRampWindowShow: showFn, nativeAmountWithBuffer: 4e-7 });
       const { result } = renderHook(() => useBuyCryptoStep());
       const buyButtonElement = result.current.subSteps[1].description;
       const onClick = (

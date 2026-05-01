@@ -1,6 +1,8 @@
 import { MOONPAY_QUOTE_URL, MOONPAY_SIGN_URL } from '@/constants';
 import { parseApiError } from '@/utils';
 
+const REQUEST_TIMEOUT_MS = 30_000;
+
 type GetSignedUrlParams = {
   /** Native crypto amount, formatted as `toFixed(6)` to avoid float artifacts. */
   nativeAmount: string;
@@ -29,13 +31,19 @@ const getSignedUrl = async (
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(params),
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     });
 
     if (!response.ok) {
       await parseApiError(response, SIGN_URL_ERROR);
     }
 
-    const data: { url: string } = await response.json();
+    let data: { url: string };
+    try {
+      data = await response.json();
+    } catch {
+      throw new Error(SIGN_URL_ERROR);
+    }
     return { success: true, url: data.url };
   } catch (error) {
     return {
@@ -86,13 +94,19 @@ const getBuyQuote = async (
     const response = await fetch(url.toString(), {
       method: 'GET',
       headers: { Accept: 'application/json' },
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     });
 
     if (!response.ok) {
       await parseApiError(response, QUOTE_ERROR);
     }
 
-    const data: MoonPayBuyQuote = await response.json();
+    let data: MoonPayBuyQuote;
+    try {
+      data = await response.json();
+    } catch {
+      throw new Error(QUOTE_ERROR);
+    }
     return { success: true, quote: data };
   } catch (error) {
     return {

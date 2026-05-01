@@ -49,6 +49,26 @@ const makeMoonPayQuoteResponse = (
   conversionRate: overrides.conversionRate ?? 2310.0,
 });
 
+/**
+ * Sets up the fetch mock to return two MoonPay quote responses in sequence —
+ * one for the un-buffered query (returns conversionRate), one for the buffered
+ * query (returns totalAmount the user is actually charged).
+ */
+const mockTwoQuoteResponses = (
+  first: ReturnType<typeof makeMoonPayQuoteResponse>,
+  second: ReturnType<typeof makeMoonPayQuoteResponse>,
+) => {
+  (global.fetch as jest.Mock)
+    .mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve(first),
+    })
+    .mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve(second),
+    });
+};
+
 // ---------------------------------------------------------------------------
 // Import after mocks
 // ---------------------------------------------------------------------------
@@ -146,16 +166,25 @@ describe('useTotalFiatFromNativeToken', () => {
   });
 
   // -------------------------------------------------------------------------
-  // Successful fetch — transforms response with $5 fiat buffer
+  // Successful fetch — two quotes; fiatAmount = second.totalAmount
   // -------------------------------------------------------------------------
 
-  it('fetches MoonPay quote and applies $5 fiat buffer to baseCurrencyAmount', async () => {
-    const quoteResponse = makeMoonPayQuoteResponse();
-
-    (global.fetch as jest.Mock).mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve(quoteResponse),
-    });
+  it('issues two quote calls and returns totalAmount from the buffered (second) quote', async () => {
+    // First quote (un-buffered): just for conversionRate.
+    // Second quote (buffered): provides the fee-included totalAmount the user
+    // is actually charged. Display reads from this second response directly.
+    mockTwoQuoteResponses(
+      makeMoonPayQuoteResponse({
+        baseCurrencyAmount: 13.17,
+        totalAmount: 14.17,
+        conversionRate: 2310,
+      }),
+      makeMoonPayQuoteResponse({
+        baseCurrencyAmount: 18.45,
+        totalAmount: 19.85,
+        conversionRate: 2310,
+      }),
+    );
 
     const { result } = renderHook(
       () =>
@@ -170,21 +199,16 @@ describe('useTotalFiatFromNativeToken', () => {
       expect(result.current.isSuccess).toBe(true);
     });
 
-    // fiatAmount = round(13.17 + 5, 2) = 18.17
-    expect(result.current.data?.fiatAmount).toBe(18.17);
-    expect(global.fetch).toHaveBeenCalledTimes(1);
+    expect(global.fetch).toHaveBeenCalledTimes(2);
+    // fiatAmount comes from the buffered (second) quote's totalAmount.
+    expect(result.current.data?.fiatAmount).toBe(19.85);
   });
 
-  it('rounds fiatAmount to 2 decimal places', async () => {
-    // 8.336 + 5 = 13.336, round(13.336, 2) = 13.34
-    const quoteResponse = makeMoonPayQuoteResponse({
-      baseCurrencyAmount: 8.336,
-    });
-
-    (global.fetch as jest.Mock).mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve(quoteResponse),
-    });
+  it('rounds fiatAmount (totalAmount) to 2 decimal places', async () => {
+    mockTwoQuoteResponses(
+      makeMoonPayQuoteResponse(),
+      makeMoonPayQuoteResponse({ totalAmount: 13.336 }),
+    );
 
     const { result } = renderHook(
       () =>
@@ -199,59 +223,27 @@ describe('useTotalFiatFromNativeToken', () => {
       expect(result.current.isSuccess).toBe(true);
     });
 
+    // round(13.336, 2) = 13.34
     expect(result.current.data?.fiatAmount).toBe(13.34);
   });
 
-  it('ignores totalAmount returned by the API (only baseCurrencyAmount drives display)', async () => {
-    // baseCurrencyAmount=10, totalAmount=15 (fees-inclusive). Display reads
-    // baseCurrencyAmount + buffer, not totalAmount.
-    const quoteResponse = makeMoonPayQuoteResponse({
-      baseCurrencyAmount: 10,
-      totalAmount: 15,
-    });
+  // -------------------------------------------------------------------------
+  // nativeAmountToDisplay — buffered native via $5 / conversionRate
+  // -------------------------------------------------------------------------
 
-    (global.fetch as jest.Mock).mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve(quoteResponse),
-    });
-
-    const { result } = renderHook(
-      () =>
-        useTotalFiatFromNativeToken({
-          nativeTokenAmount: 0.005,
-          selectedChainId: EvmChainIdMap.Gnosis,
-        }),
-      { wrapper: createWrapper() },
+  it('computes nativeAmountToDisplay = nativeAmount + ($5 / conversionRate from first quote)', async () => {
+    // conversionRate (from first quote) = 2500 → buffer = 5/2500 = 0.002
+    // nativeAmount = 1 → display = 1 + 0.002 = 1.002
+    mockTwoQuoteResponses(
+      makeMoonPayQuoteResponse({ conversionRate: 2500 }),
+      makeMoonPayQuoteResponse({ conversionRate: 2500 }),
     );
-
-    await waitFor(() => {
-      expect(result.current.isSuccess).toBe(true);
-    });
-
-    // 10 + 5 = 15 (matches totalAmount by coincidence; this asserts the
-    // buffer math, not totalAmount being read)
-    expect(result.current.data?.fiatAmount).toBe(15);
-  });
-
-  // -------------------------------------------------------------------------
-  // nativeAmountToDisplay — buffer math via conversionRate
-  // -------------------------------------------------------------------------
-
-  it('computes nativeAmountToDisplay via $5 / conversionRate when nativeAmountToPay is provided', async () => {
-    // conversionRate=2500 → buffer in native = 5/2500 = 0.002
-    // nativeAmountToPay=1 → 1 + 0.002 = 1.002
-    const quoteResponse = makeMoonPayQuoteResponse({ conversionRate: 2500 });
-
-    (global.fetch as jest.Mock).mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve(quoteResponse),
-    });
 
     const { result } = renderHook(
       () =>
         useTotalFiatFromNativeToken({
           nativeTokenAmount: 1,
-          nativeAmountToPay: 1,
+          nativeAmount: 1,
           selectedChainId: EvmChainIdMap.Base,
         }),
       { wrapper: createWrapper() },
@@ -264,19 +256,18 @@ describe('useTotalFiatFromNativeToken', () => {
     expect(result.current.data?.nativeAmountToDisplay).toBe(1.002);
   });
 
-  it('uses 0 for nativeAmountToPay when not provided (defaults via ??)', async () => {
-    // nativeAmountToPay defaults to 0; nativeAmountToDisplay = 0 + 5/2500 = 0.002
-    const quoteResponse = makeMoonPayQuoteResponse({ conversionRate: 2500 });
-
-    (global.fetch as jest.Mock).mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve(quoteResponse),
-    });
+  it('falls back to nativeTokenAmount when nativeAmount is omitted', async () => {
+    // No nativeAmount → fall back to nativeTokenAmount as the buffer base.
+    // conversionRate=2500 → 0.5 + 5/2500 = 0.502
+    mockTwoQuoteResponses(
+      makeMoonPayQuoteResponse({ conversionRate: 2500 }),
+      makeMoonPayQuoteResponse({ conversionRate: 2500 }),
+    );
 
     const { result } = renderHook(
       () =>
         useTotalFiatFromNativeToken({
-          nativeTokenAmount: 1,
+          nativeTokenAmount: 0.5,
           selectedChainId: EvmChainIdMap.Base,
         }),
       { wrapper: createWrapper() },
@@ -286,15 +277,42 @@ describe('useTotalFiatFromNativeToken', () => {
       expect(result.current.isSuccess).toBe(true);
     });
 
-    expect(result.current.data?.nativeAmountToDisplay).toBe(0.002);
+    expect(result.current.data?.nativeAmountToDisplay).toBe(0.502);
+  });
+
+  it('passes the buffered native amount as quoteCurrencyAmount on the second quote call', async () => {
+    // First quote returns conversionRate=2500 → buffer = 0.002
+    // Second quote should be called with nativeTokenAmount + 0.002 = 1.002
+    mockTwoQuoteResponses(
+      makeMoonPayQuoteResponse({ conversionRate: 2500 }),
+      makeMoonPayQuoteResponse({ conversionRate: 2500 }),
+    );
+
+    renderHook(
+      () =>
+        useTotalFiatFromNativeToken({
+          nativeTokenAmount: 1,
+          selectedChainId: EvmChainIdMap.Base,
+        }),
+      { wrapper: createWrapper() },
+    );
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledTimes(2);
+    });
+
+    const [firstUrl] = (global.fetch as jest.Mock).mock.calls[0];
+    const [secondUrl] = (global.fetch as jest.Mock).mock.calls[1];
+    expect(firstUrl).toContain('quoteCurrencyAmount=1');
+    expect(secondUrl).toContain('quoteCurrencyAmount=1.002');
   });
 
   // -------------------------------------------------------------------------
   // Fetch error handling
   // -------------------------------------------------------------------------
 
-  it('enters error state when fetch returns non-ok response with parsed error', async () => {
-    (global.fetch as jest.Mock).mockResolvedValue({
+  it('errors out when the first (un-buffered) quote fails', async () => {
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
       ok: false,
       status: 400,
       json: () => Promise.resolve({ error: 'AMOUNT_TOO_LOW' }),
@@ -315,10 +333,41 @@ describe('useTotalFiatFromNativeToken', () => {
 
     expect(result.current.error).toBeInstanceOf(Error);
     expect((result.current.error as Error).message).toBe('AMOUNT_TOO_LOW');
+    // Second call never fires because the first threw.
+    expect(global.fetch).toHaveBeenCalledTimes(1);
   });
 
-  it('enters error state with fallback message when fetch returns non-ok with no body', async () => {
-    (global.fetch as jest.Mock).mockResolvedValue({
+  it('errors out when the second (buffered) quote fails', async () => {
+    (global.fetch as jest.Mock)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(makeMoonPayQuoteResponse()),
+      })
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        json: () => Promise.resolve({ error: 'AMOUNT_TOO_HIGH' }),
+      });
+
+    const { result } = renderHook(
+      () =>
+        useTotalFiatFromNativeToken({
+          nativeTokenAmount: 1,
+          selectedChainId: EvmChainIdMap.Gnosis,
+        }),
+      { wrapper: createWrapper() },
+    );
+
+    await waitFor(() => {
+      expect(result.current.isError).toBe(true);
+    });
+
+    expect((result.current.error as Error).message).toBe('AMOUNT_TOO_HIGH');
+    expect(global.fetch).toHaveBeenCalledTimes(2);
+  });
+
+  it('falls back to default error message when fetch returns non-ok with no body', async () => {
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
       ok: false,
       status: 500,
       json: () => Promise.resolve({}),
@@ -342,8 +391,10 @@ describe('useTotalFiatFromNativeToken', () => {
     );
   });
 
-  it('enters error state when fetch rejects', async () => {
-    (global.fetch as jest.Mock).mockRejectedValue(new Error('Network error'));
+  it('errors out when fetch rejects on the first quote', async () => {
+    (global.fetch as jest.Mock).mockRejectedValueOnce(
+      new Error('Network error'),
+    );
 
     const { result } = renderHook(
       () =>
@@ -366,10 +417,10 @@ describe('useTotalFiatFromNativeToken', () => {
   // -------------------------------------------------------------------------
 
   it('hits MOONPAY_QUOTE_URL with eth_base + amount for Gnosis (routes via Base)', async () => {
-    (global.fetch as jest.Mock).mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve(makeMoonPayQuoteResponse()),
-    });
+    mockTwoQuoteResponses(
+      makeMoonPayQuoteResponse(),
+      makeMoonPayQuoteResponse(),
+    );
 
     renderHook(
       () =>
@@ -381,22 +432,22 @@ describe('useTotalFiatFromNativeToken', () => {
     );
 
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledTimes(1);
+      expect(global.fetch).toHaveBeenCalledTimes(2);
     });
 
-    const [url, options] = (global.fetch as jest.Mock).mock.calls[0];
-    expect(url).toContain('https://mock-pearl-api/api/moonpay/quote?');
-    expect(url).toContain('currencyCode=eth_base');
-    expect(url).toContain('quoteCurrencyAmount=0.00570193');
+    const [firstUrl, options] = (global.fetch as jest.Mock).mock.calls[0];
+    expect(firstUrl).toContain('https://mock-pearl-api/api/moonpay/quote?');
+    expect(firstUrl).toContain('currencyCode=eth_base');
+    expect(firstUrl).toContain('quoteCurrencyAmount=0.00570193');
     expect(options.method).toBe('GET');
     expect(options.headers).toEqual({ Accept: 'application/json' });
   });
 
-  it('hits MOONPAY_QUOTE_URL with pol + amount for Polygon', async () => {
-    (global.fetch as jest.Mock).mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve(makeMoonPayQuoteResponse()),
-    });
+  it('hits MOONPAY_QUOTE_URL with pol_polygon + amount for Polygon', async () => {
+    mockTwoQuoteResponses(
+      makeMoonPayQuoteResponse(),
+      makeMoonPayQuoteResponse(),
+    );
 
     renderHook(
       () =>
@@ -408,11 +459,11 @@ describe('useTotalFiatFromNativeToken', () => {
     );
 
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledTimes(1);
+      expect(global.fetch).toHaveBeenCalledTimes(2);
     });
 
-    const [url] = (global.fetch as jest.Mock).mock.calls[0];
-    expect(url).toContain('currencyCode=pol');
-    expect(url).toContain('quoteCurrencyAmount=10');
+    const [firstUrl] = (global.fetch as jest.Mock).mock.calls[0];
+    expect(firstUrl).toContain('currencyCode=pol_polygon');
+    expect(firstUrl).toContain('quoteCurrencyAmount=10');
   });
 });

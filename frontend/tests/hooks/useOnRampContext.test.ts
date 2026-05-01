@@ -40,9 +40,9 @@ describe('useOnRampContext', () => {
 
     const { result } = renderHook(() => useOnRampContext(), { wrapper });
 
-    expect(result.current.nativeAmountToPay).toBeNull();
+    expect(result.current.nativeAmount).toBeNull();
     expect(result.current.isBuyCryptoBtnLoading).toBe(false);
-    expect(typeof result.current.updateNativeAmountToPay).toBe('function');
+    expect(typeof result.current.updateNativeAmount).toBe('function');
     expect(typeof result.current.resetOnRampState).toBe('function');
   });
 
@@ -54,9 +54,9 @@ describe('useOnRampContext', () => {
     // context values (no wrapping provider needed).
     const { result } = renderHook(() => useOnRampContext());
 
-    expect(result.current.nativeAmountToPay).toBeNull();
+    expect(result.current.nativeAmount).toBeNull();
     expect(result.current.networkId).toBeNull();
-    expect(typeof result.current.updateNativeAmountToPay).toBe('function');
+    expect(typeof result.current.updateNativeAmount).toBe('function');
     expect(typeof result.current.resetOnRampState).toBe('function');
   });
 
@@ -67,8 +67,8 @@ describe('useOnRampContext', () => {
     const { result } = renderHook(() => useOnRampContext(), { wrapper });
 
     const expectedKeys = [
-      'nativeAmountToPay',
-      'updateNativeAmountToPay',
+      'nativeAmount',
+      'updateNativeAmount',
       'nativeTotalAmountRequired',
       'updateNativeTotalAmountRequired',
       'usdAmountToPay',

@@ -5,7 +5,6 @@ import { TransactionStep } from '@/components/ui/TransactionSteps';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { useOnRampContext } from '@/hooks/useOnRampContext';
 import { useMasterWalletContext } from '@/hooks/useWallet';
-import { delayInSeconds } from '@/utils/delay';
 
 const { Text } = Typography;
 
@@ -27,7 +26,7 @@ export const useBuyCryptoStep = () => {
   const { masterEoa } = useMasterWalletContext();
   const {
     isBuyCryptoBtnLoading,
-    nativeAmountToPay,
+    nativeAmountWithBuffer,
     usdAmountToPay,
     updateIsBuyCryptoBtnLoading,
     isTransactionSuccessfulButFundsNotReceived,
@@ -35,23 +34,23 @@ export const useBuyCryptoStep = () => {
     moonpayCurrencyCode,
   } = useOnRampContext();
 
+  // nativeAmountWithBuffer is the buffered native (= agent-required + $5-worth-
+  // of-native slippage cushion).
   const handleBuyCrypto = useCallback(async () => {
     if (!onRampWindow?.show) return;
-    if (!nativeAmountToPay) return;
+    if (!nativeAmountWithBuffer) return;
     if (!usdAmountToPay) return;
     if (!moonpayCurrencyCode) return;
     if (!masterEoa?.address) return;
 
-    onRampWindow.show(
-      nativeAmountToPay.toFixed(6),
-      moonpayCurrencyCode,
-      masterEoa.address,
-    );
-    await delayInSeconds(1);
+    const formattedAmount = nativeAmountWithBuffer.toFixed(6);
+    if (Number(formattedAmount) === 0) return;
+
     updateIsBuyCryptoBtnLoading(true);
+    onRampWindow.show(formattedAmount, moonpayCurrencyCode, masterEoa.address);
   }, [
     onRampWindow,
-    nativeAmountToPay,
+    nativeAmountWithBuffer,
     usdAmountToPay,
     moonpayCurrencyCode,
     masterEoa,
@@ -59,7 +58,7 @@ export const useBuyCryptoStep = () => {
   ]);
 
   const cannotBuyCrypto =
-    !masterEoa?.address || !nativeAmountToPay || !usdAmountToPay;
+    !masterEoa?.address || !nativeAmountWithBuffer || !usdAmountToPay;
 
   const openTerms = useCallback(async () => {
     termsAndConditionsWindow?.show?.('moonpay-terms');

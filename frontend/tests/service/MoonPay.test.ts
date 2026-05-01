@@ -100,6 +100,21 @@ describe('MoonPayService.getSignedUrl', () => {
 
     expect(result).toEqual({ success: false, error: 'Network error' });
   });
+
+  it('returns the fallback error when 200 body is non-JSON (no SyntaxError leak)', async () => {
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      json: () => Promise.reject(new SyntaxError('Unexpected token <')),
+    });
+
+    const result = await MoonPayService.getSignedUrl({
+      nativeAmount: '0.05',
+      currencyCode: 'eth_base',
+      walletAddress: '0xabc',
+    });
+
+    expect(result).toEqual({ success: false, error: 'Failed to load MoonPay' });
+  });
 });
 
 describe('MoonPayService.getBuyQuote', () => {
@@ -132,10 +147,13 @@ describe('MoonPayService.getBuyQuote', () => {
     expect(url).toContain('https://mock-pearl-api/api/moonpay/quote?');
     expect(url).toContain('currencyCode=eth_base');
     expect(url).toContain('quoteCurrencyAmount=0.005');
-    expect(options).toEqual({
-      method: 'GET',
-      headers: { Accept: 'application/json' },
-    });
+    expect(options).toEqual(
+      expect.objectContaining({
+        method: 'GET',
+        headers: { Accept: 'application/json' },
+        signal: expect.any(AbortSignal),
+      }),
+    );
     expect(result).toEqual({
       success: true,
       quote: {
@@ -203,5 +221,22 @@ describe('MoonPayService.getBuyQuote', () => {
     });
 
     expect(result).toEqual({ success: false, error: 'Network error' });
+  });
+
+  it('returns the fallback error when 200 body is non-JSON (no SyntaxError leak)', async () => {
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      json: () => Promise.reject(new SyntaxError('Unexpected token <')),
+    });
+
+    const result = await MoonPayService.getBuyQuote({
+      currencyCode: 'eth_base',
+      quoteCurrencyAmount: 0.005,
+    });
+
+    expect(result).toEqual({
+      success: false,
+      error: 'Failed to fetch MoonPay quote',
+    });
   });
 });
