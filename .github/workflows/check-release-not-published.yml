@@ -1,0 +1,57 @@
+# Reusable: fails if `release_tag` already exists on GitHub as a published
+# (non-draft) release. Used by flows that delete-and-recreate a tag
+# (production-release, create-feature-release with action=override) — in
+# those flows, reattaching the tag would silently overwrite the existing
+# release contents and could strip its "Latest" marker.
+
+name: Check release not published
+
+on:
+  workflow_call:
+    inputs:
+      release_tag:
+        description: "GitHub Release tag to check (no -signed suffix; e.g. v1.5.0)"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail if release is already published
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          # Capture stdout and stderr separately so we can distinguish
+          # "release not found" from transient gh errors (auth, network, rate limit).
+          set +e
+          STDOUT=$(gh release view "$RELEASE_TAG" \
+            --repo "${{ github.repository }}" \
+            --json isDraft \
+            --jq '.isDraft' 2> /tmp/gh_stderr)
+          RC=$?
+          STDERR=$(cat /tmp/gh_stderr)
+          set -e
+
+          if [ $RC -eq 0 ]; then
+            if [ "$STDOUT" = "false" ]; then
+              echo "::error::Release $RELEASE_TAG is already published. Refusing to overwrite — that would replace the existing GitHub Release and could strip its Latest marker."
+              echo "::error::Bump the version before re-running."
+              exit 1
+            fi
+            echo "Release $RELEASE_TAG exists as a draft — safe to overwrite."
+            exit 0
+          fi
+
+          if echo "$STDERR" | grep -qiE 'release not found|not found'; then
+            echo "No existing release for $RELEASE_TAG — safe to create."
+            exit 0
+          fi
+
+          echo "::error::gh release view failed for $RELEASE_TAG (exit $RC):"
+          echo "$STDERR"
+          exit 1

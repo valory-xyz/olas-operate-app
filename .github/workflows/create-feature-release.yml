@@ -19,7 +19,40 @@ on:
         default: 'new'
 
 jobs:
+  # Override deletes-and-recreates the tag at v$(package.json version), which
+  # reattaches it to a new commit and lets electron-builder rewrite the
+  # corresponding GitHub Release. If that release was already published it
+  # would be silently overwritten — including its Latest marker. Compute the
+  # release tag from package.json on the target branch so the guard can
+  # short-circuit before any destructive work.
+  compute-release-tag:
+    if: inputs.action == 'override'
+    runs-on: ubuntu-latest
+    outputs:
+      release_tag: ${{ steps.compute-tag.outputs.release_tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch }}
+
+      - name: Compute release tag from package.json
+        id: compute-tag
+        run: |
+          PACKAGE_VERSION=$(node -p "require('./package.json').version")
+          echo "release_tag=v${PACKAGE_VERSION}" | tee -a $GITHUB_OUTPUT
+
+  check-release-not-published:
+    if: inputs.action == 'override'
+    needs: compute-release-tag
+    uses: ./.github/workflows/check-release-not-published.yml
+    with:
+      release_tag: ${{ needs.compute-release-tag.outputs.release_tag }}
+    secrets: inherit
+
   calculate-version:
+    needs: check-release-not-published
+    # Run on success of the guard, or when the guard is skipped (action=new).
+    if: ${{ always() && (needs.check-release-not-published.result == 'success' || needs.check-release-not-published.result == 'skipped') }}
     uses: ./.github/workflows/calculate-and-update-version.yml
     with:
       branch: ${{ inputs.branch }}
