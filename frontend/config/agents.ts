@@ -103,6 +103,7 @@ export const AGENT_CONFIG: {
   },
   [AgentMap.Polystrat]: {
     isAgentEnabled: true,
+    isAddingNewBlocked: true,
     requiresSetup: true,
     isX402Enabled: X402_ENABLED_FLAGS[AgentMap.Polystrat],
     name: 'Polystrat',
