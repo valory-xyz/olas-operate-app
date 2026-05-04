@@ -223,6 +223,9 @@ export const AgentOnboarding = () => {
     if (currentAgentConfig.isUnderConstruction) {
       return false;
     }
+    if (currentAgentConfig.isAddingNewBlocked) {
+      return false;
+    }
     return true;
   }, [selectedAgent, isAgentGeoRestricted]);
 
