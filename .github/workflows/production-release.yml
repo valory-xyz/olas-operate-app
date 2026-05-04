@@ -1,7 +1,10 @@
 # push to release/* branch
 #        │
 #        ▼
-# check-release-not-published  (guard: fail if vX.Y.Z-signed release is already published)
+# compute-release-tag  (extract release_tag=vX.Y.Z from branch name)
+#        │
+#        ▼
+# check-release-not-published  (guard: fail if vX.Y.Z release is already published)
 #        │
 #        ▼
 # calculate-version  (create/overwrite vX.Y.Z-signed tag on branch HEAD)
@@ -31,12 +34,12 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  check-release-not-published:
+  compute-release-tag:
     # Avoid looping on commits created by the action itself.
     if: ${{ github.actor != 'github-actions[bot]' && !contains(github.event.head_commit.message, '[skip release]') }}
     runs-on: ubuntu-latest
     outputs:
-      tag: ${{ steps.compute-tag.outputs.tag }}
+      release_tag: ${{ steps.compute-tag.outputs.release_tag }}
     steps:
       - name: Compute expected production tag from branch
         id: compute-tag
@@ -45,55 +48,19 @@ jobs:
           if [[ "$BRANCH" =~ (release/)?v?([0-9]+\.[0-9]+\.[0-9]+) ]]; then
             BASE_VERSION="${BASH_REMATCH[2]}"
             # Git tag is vX.Y.Z-signed (for audit); electron-builder publishes
-            # the GitHub Release at the unsuffixed vX.Y.Z. Expose both.
-            echo "tag=v${BASE_VERSION}-signed" | tee -a $GITHUB_OUTPUT
+            # the GitHub Release at the unsuffixed vX.Y.Z.
             echo "release_tag=v${BASE_VERSION}" | tee -a $GITHUB_OUTPUT
           else
             echo "::error::Failed to extract version from branch: $BRANCH"
             exit 1
           fi
 
-      - name: Fail if release is already published (guard against accidental overwrites)
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          RELEASE_TAG="${{ steps.compute-tag.outputs.release_tag }}"
-
-          # Capture stdout and stderr separately so we can distinguish
-          # "release not found" from transient gh errors (auth, network, rate limit).
-          set +e
-          STDOUT=$(gh release view "$RELEASE_TAG" \
-            --repo "${{ github.repository }}" \
-            --json isDraft \
-            --jq '.isDraft' 2> /tmp/gh_stderr)
-          RC=$?
-          STDERR=$(cat /tmp/gh_stderr)
-          set -e
-
-          if [ $RC -eq 0 ]; then
-            if [ "$STDOUT" = "false" ]; then
-              echo "::error::Release $RELEASE_TAG is already published. Refusing to overwrite."
-              echo "::error::Bump the version on the release branch (e.g. release/v1.5.4) before pushing again."
-              exit 1
-            fi
-            echo "Release $RELEASE_TAG exists as a draft — safe to overwrite."
-            exit 0
-          fi
-
-          # Non-zero: treat "release not found" as a safe proceed, everything else as hard fail.
-          if echo "$STDERR" | grep -qiE 'release not found|not found'; then
-            echo "No existing release for $RELEASE_TAG — safe to create."
-            exit 0
-          fi
-
-          echo "::error::gh release view failed for $RELEASE_TAG (exit $RC):"
-          echo "$STDERR"
-          exit 1
-
-      - name: Log tag summary
-        run: |
-          echo "Git tag: ${{ steps.compute-tag.outputs.tag }}"
-          echo "GitHub Release tag: ${{ steps.compute-tag.outputs.release_tag }}"
+  check-release-not-published:
+    needs: compute-release-tag
+    uses: ./.github/workflows/check-release-not-published.yml
+    with:
+      release_tag: ${{ needs.compute-release-tag.outputs.release_tag }}
+    secrets: inherit
 
   calculate-version:
     needs: check-release-not-published
