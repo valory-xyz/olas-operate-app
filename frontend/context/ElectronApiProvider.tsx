@@ -69,9 +69,9 @@ type ElectronApiContextProps = {
   openPath?: (filePath: string) => void;
   onRampWindow?: {
     show?: (
-      amountToPay: number,
-      networkName: string,
-      cryptoCurrencyCode: string,
+      nativeAmount: string,
+      currencyCode: string,
+      walletAddress: string,
     ) => void;
     close?: () => void;
     /**

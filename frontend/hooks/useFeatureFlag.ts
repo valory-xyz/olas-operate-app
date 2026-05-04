@@ -46,7 +46,7 @@ const FEATURES_CONFIG = FeaturesConfigSchema.parse({
     'withdraw-funds': true,
     'backup-via-safe': false, // temporarily hidden until mode is available on safe https://app.safe.global/new-safe/create
     'bridge-onboarding': true,
-    'on-ramp': true,
+    'on-ramp': false, // OPE-1628: Mode chain not supported on MoonPay; on-ramp disabled for Modius
   },
   [AgentMap.Optimus]: {
     'withdraw-funds': true,

@@ -101,6 +101,7 @@ const {
 /* eslint-enable @typescript-eslint/no-var-requires */
 
 const mockUpdateUsdAmountToPay = jest.fn();
+const mockUpdateNativeAmountWithBuffer = jest.fn();
 const mockOnRetry = jest.fn();
 const mockGetOnRampRequirementsParams = jest.fn().mockReturnValue(null);
 
@@ -128,8 +129,9 @@ const setupMocks = (
       overrides.isTransactionSuccessfulButFundsNotReceived ?? false,
     isBuyCryptoBtnLoading: overrides.isBuyCryptoBtnLoading ?? false,
     usdAmountToPay: 12.34,
-    nativeAmountToPay: 0.45,
+    nativeAmount: 0.45,
     updateUsdAmountToPay: mockUpdateUsdAmountToPay,
+    updateNativeAmountWithBuffer: mockUpdateNativeAmountWithBuffer,
   });
 
   mockUseTotalNativeTokenRequired.mockReturnValue({
@@ -197,7 +199,7 @@ describe('PayingReceivingTable', () => {
     expect(mockUpdateUsdAmountToPay).toHaveBeenCalledWith(12.34);
     expect(mockUseTotalFiatFromNativeToken).toHaveBeenCalledWith({
       nativeTokenAmount: 0.45,
-      nativeAmountToPay: 0.45,
+      nativeAmount: 0.45,
       selectedChainId: EvmChainIdMap.Gnosis,
       skip: false,
     });
@@ -241,8 +243,9 @@ describe('PayingReceivingTable', () => {
       isTransactionSuccessfulButFundsNotReceived: false,
       isBuyCryptoBtnLoading: false,
       usdAmountToPay: null,
-      nativeAmountToPay: 0.45,
+      nativeAmount: 0.45,
       updateUsdAmountToPay: mockUpdateUsdAmountToPay,
+      updateNativeAmountWithBuffer: mockUpdateNativeAmountWithBuffer,
     });
 
     render(

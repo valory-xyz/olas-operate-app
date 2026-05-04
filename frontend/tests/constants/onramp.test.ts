@@ -1,12 +1,14 @@
 /**
  * Tests for on-ramp chain routing constants.
  *
- * ON_RAMP_CHAIN_MAP determines which EVM chain and crypto currency the user
+ * ON_RAMP_CHAIN_MAP determines which EVM chain and MoonPay currency the user
  * buys when on-ramping for a given agent home chain. Wrong entries here cause
  * users to receive funds on the wrong chain — a critical user-facing bug.
  *
- * Key design rule: Gnosis and Mode agents both on-ramp via Optimism/Base ETH
- * (not their home chain), because Gnosis/Mode don't support direct fiat on-ramps.
+ * Key design rule (post-OPE-1628): Gnosis, Optimism and Base agents all on-ramp
+ * via Base ETH; Polygon agents on-ramp directly to POL on Polygon. Mode is no
+ * longer supported (Modius on-ramp feature flag is disabled in
+ * useFeatureFlag.ts).
  */
 
 import {
@@ -26,93 +28,96 @@ describe('MIN_ONRAMP_AMOUNT', () => {
 });
 
 describe('ON_RAMP_CHAIN_MAP', () => {
-  it('covers all 5 supported middleware chains', () => {
-    const supportedChains = Object.values(SupportedMiddlewareChainMap);
-    for (const chain of supportedChains) {
+  it('covers gnosis, optimism, base, and polygon — but NOT mode', () => {
+    const expected = [
+      SupportedMiddlewareChainMap.gnosis,
+      SupportedMiddlewareChainMap.optimism,
+      SupportedMiddlewareChainMap.base,
+      SupportedMiddlewareChainMap.polygon,
+    ];
+    for (const chain of expected) {
       expect(ON_RAMP_CHAIN_MAP[chain]).toBeDefined();
     }
+    expect(ON_RAMP_CHAIN_MAP[SupportedMiddlewareChainMap.mode]).toBeUndefined();
   });
 
-  it('covers exactly 5 entries — one per supported middleware chain', () => {
-    expect(Object.keys(ON_RAMP_CHAIN_MAP)).toHaveLength(5);
+  it('has exactly 4 entries (mode excluded)', () => {
+    expect(Object.keys(ON_RAMP_CHAIN_MAP)).toHaveLength(4);
   });
 
   describe('gnosis chain routing', () => {
     it('routes gnosis agents to Base for on-ramp (gnosis has no direct fiat ramp)', () => {
-      expect(ON_RAMP_CHAIN_MAP[SupportedMiddlewareChainMap.gnosis].chain).toBe(
+      expect(ON_RAMP_CHAIN_MAP[SupportedMiddlewareChainMap.gnosis]?.chain).toBe(
         EvmChainIdMap.Base,
       );
     });
 
-    it('uses ETH as the crypto currency for gnosis on-ramp', () => {
+    it('uses eth_base as the MoonPay currency code for gnosis on-ramp', () => {
       expect(
-        ON_RAMP_CHAIN_MAP[SupportedMiddlewareChainMap.gnosis].cryptoCurrency,
-      ).toBe('ETH');
+        ON_RAMP_CHAIN_MAP[SupportedMiddlewareChainMap.gnosis]
+          ?.moonpayCurrencyCode,
+      ).toBe('eth_base');
     });
   });
 
   describe('optimism chain routing', () => {
-    it('routes optimism agents to Optimism for on-ramp', () => {
+    it('routes optimism agents to Base for on-ramp (Relay bridges Base→Optimism)', () => {
       expect(
-        ON_RAMP_CHAIN_MAP[SupportedMiddlewareChainMap.optimism].chain,
-      ).toBe(EvmChainIdMap.Optimism);
+        ON_RAMP_CHAIN_MAP[SupportedMiddlewareChainMap.optimism]?.chain,
+      ).toBe(EvmChainIdMap.Base);
     });
 
-    it('uses ETH as the crypto currency for optimism on-ramp', () => {
+    it('uses eth_base as the MoonPay currency code for optimism on-ramp', () => {
       expect(
-        ON_RAMP_CHAIN_MAP[SupportedMiddlewareChainMap.optimism].cryptoCurrency,
-      ).toBe('ETH');
+        ON_RAMP_CHAIN_MAP[SupportedMiddlewareChainMap.optimism]
+          ?.moonpayCurrencyCode,
+      ).toBe('eth_base');
     });
   });
 
   describe('base chain routing', () => {
     it('routes base agents to Base for on-ramp', () => {
-      expect(ON_RAMP_CHAIN_MAP[SupportedMiddlewareChainMap.base].chain).toBe(
+      expect(ON_RAMP_CHAIN_MAP[SupportedMiddlewareChainMap.base]?.chain).toBe(
         EvmChainIdMap.Base,
       );
     });
 
-    it('uses ETH as the crypto currency for base on-ramp', () => {
+    it('uses eth_base as the MoonPay currency code for base on-ramp', () => {
       expect(
-        ON_RAMP_CHAIN_MAP[SupportedMiddlewareChainMap.base].cryptoCurrency,
-      ).toBe('ETH');
+        ON_RAMP_CHAIN_MAP[SupportedMiddlewareChainMap.base]
+          ?.moonpayCurrencyCode,
+      ).toBe('eth_base');
     });
   });
 
   describe('mode chain routing', () => {
-    it('routes mode agents to Optimism for on-ramp (mode has no direct fiat ramp)', () => {
-      // Mode agents on-ramp via Optimism, then bridge to Mode
-      expect(ON_RAMP_CHAIN_MAP[SupportedMiddlewareChainMap.mode].chain).toBe(
-        EvmChainIdMap.Optimism,
-      );
-    });
-
-    it('uses ETH as the crypto currency for mode on-ramp', () => {
+    it('is no longer supported — Modius on-ramp feature flag handles disablement', () => {
       expect(
-        ON_RAMP_CHAIN_MAP[SupportedMiddlewareChainMap.mode].cryptoCurrency,
-      ).toBe('ETH');
+        ON_RAMP_CHAIN_MAP[SupportedMiddlewareChainMap.mode],
+      ).toBeUndefined();
     });
   });
 
   describe('polygon chain routing', () => {
     it('routes polygon agents to Polygon for on-ramp', () => {
-      expect(ON_RAMP_CHAIN_MAP[SupportedMiddlewareChainMap.polygon].chain).toBe(
-        EvmChainIdMap.Polygon,
-      );
+      expect(
+        ON_RAMP_CHAIN_MAP[SupportedMiddlewareChainMap.polygon]?.chain,
+      ).toBe(EvmChainIdMap.Polygon);
     });
 
-    it('uses POL as the crypto currency for polygon on-ramp (not ETH)', () => {
-      // Polygon uses its own native token POL, not ETH
+    it('uses pol_polygon as the MoonPay currency code for polygon on-ramp (not eth_base)', () => {
       expect(
-        ON_RAMP_CHAIN_MAP[SupportedMiddlewareChainMap.polygon].cryptoCurrency,
-      ).toBe('POL');
+        ON_RAMP_CHAIN_MAP[SupportedMiddlewareChainMap.polygon]
+          ?.moonpayCurrencyCode,
+      ).toBe('pol_polygon');
     });
   });
 
-  it('each entry has exactly the required shape: chain and cryptoCurrency', () => {
+  it('each entry has exactly the required shape: chain and moonpayCurrencyCode', () => {
     for (const [, entry] of Object.entries(ON_RAMP_CHAIN_MAP)) {
+      if (!entry) continue;
       expect(typeof entry.chain).toBe('number');
-      expect(['ETH', 'POL']).toContain(entry.cryptoCurrency);
+      expect(['eth_base', 'pol_polygon']).toContain(entry.moonpayCurrencyCode);
     }
   });
 });

@@ -126,9 +126,9 @@ describe('useFeatureFlag', () => {
         expect(result.current).toBe(true);
       });
 
-      it('returns true for on-ramp', () => {
+      it('returns false for on-ramp (Mode chain not supported on MoonPay)', () => {
         const { result } = renderHook(() => useFeatureFlag('on-ramp'));
-        expect(result.current).toBe(true);
+        expect(result.current).toBe(false);
       });
     });
   });
@@ -151,7 +151,7 @@ describe('useFeatureFlag', () => {
       expect(result.current).toEqual([true, true, true, true]);
     });
 
-    it('returns array with false for Modius backup-via-safe', () => {
+    it('returns array reflecting Modius disablement (backup-via-safe + on-ramp)', () => {
       mockUseServices.mockReturnValue({
         selectedAgentType: AgentMap.Modius,
       });
@@ -165,7 +165,7 @@ describe('useFeatureFlag', () => {
         ]),
       );
 
-      expect(result.current).toEqual([true, false, true, true]);
+      expect(result.current).toEqual([true, false, true, false]);
     });
 
     it('returns single-element array for array with one flag', () => {

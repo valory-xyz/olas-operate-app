@@ -2,156 +2,71 @@ import { useQuery } from '@tanstack/react-query';
 import { round } from 'lodash';
 
 import { OnRampNetworkConfig } from '@/components/OnRamp';
-import { TokenSymbol } from '@/config/tokens';
-import {
-  ON_RAMP_CHAIN_MAP,
-  REACT_QUERY_KEYS,
-  SupportedMiddlewareChain,
-} from '@/constants';
-import { ON_RAMP_GATEWAY_URL } from '@/constants/urls';
+import { ON_RAMP_CHAIN_MAP, REACT_QUERY_KEYS } from '@/constants';
+import { MoonPayService } from '@/service/MoonPay';
 import { ensureRequired, Nullable } from '@/types';
 import { asMiddlewareChain } from '@/utils';
 
 /**
- * Adds a buffer to the total fiat amount calculated from the native token amount
- * to account for price fluctuations during the on-ramp process.
+ * Adds a buffer (in USD) to the agent-required native amount so the user has
+ * slippage headroom for the post-on-ramp Relay swap/bridge. Without this, a
+ * Relay quote that drifts between fetch-time and execution-time could deliver
+ * fewer agent-required tokens than the agent needs.
  */
 const ON_RAMP_FIAT_BUFFER_USD = 5;
 
-// function to calculate buffered ETH amount based on the fiat buffer
-// eg., if fiat buffer is $3, and 1 ETH = $1500, then buffered ETH = (3 / 1500) = 0.002 ETH
-const getEthWithBuffer = (
-  ethAmount: number,
-  fiatAmount: number,
-  cryptoAmount: number,
-) => {
-  if (!fiatAmount) {
-    return ethAmount;
-  }
-  const bufferedEth = (cryptoAmount / fiatAmount) * ON_RAMP_FIAT_BUFFER_USD;
-  return ethAmount + bufferedEth;
-};
-
-type FeeBreakdownItem = {
-  name: string;
-  value: number;
-  id: string;
-  ids: string[];
-};
-
-type Quote = {
-  quoteId: string;
-  conversionPrice: number;
-  marketConversionPrice: number;
-  slippage: number;
-  fiatCurrency: string;
-  cryptoCurrency: string;
-  paymentMethod: string;
-  fiatAmount: number;
-  cryptoAmount: number;
-  isBuyOrSell: 'BUY' | 'SELL';
-  network: string;
-  feeDecimal: number;
-  totalFee: number;
-  feeBreakdown: FeeBreakdownItem[];
-  nonce: number;
-  cryptoLiquidityProvider: string;
-  notes: string[];
-};
-
-const transakPriceUrl = `${ON_RAMP_GATEWAY_URL}price-quote`;
-
-type FetchTransakQuoteParams = {
-  network: SupportedMiddlewareChain;
-  amount: number | string;
-  cryptoCurrency?: TokenSymbol;
-};
-
-const fetchTransakQuote = async (
-  { network, amount, cryptoCurrency = 'ETH' }: FetchTransakQuoteParams,
-  signal: AbortSignal,
-): Promise<{ response: Quote }> => {
-  const options = {
-    method: 'GET',
-    headers: { accept: 'application/json' },
-    signal,
-  };
-
-  const params = new URLSearchParams({
-    fiatCurrency: 'USD',
-    cryptoCurrency,
-    isBuyOrSell: 'BUY',
-    network,
-    paymentMethod: 'credit_debit_card',
-    cryptoAmount: amount.toString(),
-  });
-
-  const response = await fetch(
-    `${transakPriceUrl}?${params.toString()}`,
-    options,
-  );
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch Transak quote: ${response.status}`);
-  }
-
-  return response.json();
-};
-
 type UseTotalFiatFromNativeTokenProps = {
   nativeTokenAmount?: number;
-  nativeAmountToPay?: Nullable<number>;
+  nativeAmount?: Nullable<number>;
   selectedChainId: OnRampNetworkConfig['selectedChainId'];
   skip?: boolean;
 };
 
 export const useTotalFiatFromNativeToken = ({
   nativeTokenAmount,
-  nativeAmountToPay,
+  nativeAmount,
   selectedChainId,
   skip = false,
 }: UseTotalFiatFromNativeTokenProps) => {
   const selectedChainName = asMiddlewareChain(
     ensureRequired(selectedChainId, "Chain ID can't be empty"),
   );
-  const { chain, cryptoCurrency } = ON_RAMP_CHAIN_MAP[selectedChainName];
-  const fromChain = asMiddlewareChain(chain);
+  const chainConfig = ON_RAMP_CHAIN_MAP[selectedChainName];
+  const fromChain = chainConfig
+    ? asMiddlewareChain(chainConfig.chain)
+    : selectedChainName;
 
   return useQuery({
     queryKey: REACT_QUERY_KEYS.ON_RAMP_QUOTE_KEY(fromChain, nativeTokenAmount!),
-    queryFn: async ({ signal }) => {
-      try {
-        const { response } = await fetchTransakQuote(
-          {
-            network: fromChain,
-            amount: nativeTokenAmount!,
-            cryptoCurrency,
-          },
-          signal,
-        );
-        return response;
-      } catch (error) {
-        console.error('Error fetching Transak quote', error);
-        throw error;
-      }
-    },
-    select: (data) => {
-      const nativeAmountToDisplay = getEthWithBuffer(
-        nativeAmountToPay ?? 0,
-        data.fiatAmount,
-        data.cryptoAmount,
-      );
+    queryFn: async () => {
+      const baseNative = (nativeAmount ?? nativeTokenAmount)!;
 
-      return {
-        // round is used to avoid 15.38 + 3 = 18.380000000000003 issues
-        fiatAmount: round(data.fiatAmount + ON_RAMP_FIAT_BUFFER_USD, 2),
-        /**
-         * JUST TO DISPLAY TO THE USER
-         * calculate the buffered ETH amount to display to the user during the on-ramp process.
-         */
-        nativeAmountToDisplay,
-      };
+      // Original quote: un-buffered native — to learn the conversionRate so we
+      // can size the native-side buffer in fiat-equivalent terms.
+      const originalQuote = await MoonPayService.getBuyQuote({
+        currencyCode: chainConfig!.moonpayCurrencyCode,
+        quoteCurrencyAmount: nativeTokenAmount!,
+      });
+      if (!originalQuote.success) throw new Error(originalQuote.error);
+      const bufferedNative =
+        baseNative +
+        ON_RAMP_FIAT_BUFFER_USD / originalQuote.quote.conversionRate;
+
+      // Second quote: buffered native — gives us the exact fee-included fiat
+      // (totalAmount) that MoonPay will charge for the buffered amount.
+      // Using two quotes (instead of computing totalAmount + $5)
+      const bufferedQuote = await MoonPayService.getBuyQuote({
+        currencyCode: chainConfig!.moonpayCurrencyCode,
+        quoteCurrencyAmount: bufferedNative,
+      });
+      if (!bufferedQuote.success) throw new Error(bufferedQuote.error);
+
+      return { quote: bufferedQuote.quote, bufferedNative };
     },
-    enabled: !skip && !!fromChain && !!nativeTokenAmount,
+    select: (data) => ({
+      fiatAmount: round(data.quote.totalAmount, 2),
+      nativeAmountToDisplay: data.bufferedNative,
+    }),
+    enabled: !skip && !!chainConfig && !!fromChain && !!nativeTokenAmount,
   });
 };

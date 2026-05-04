@@ -77,11 +77,11 @@ const RequirementsForOnRamp = ({ fiatAmount }: { fiatAmount: string }) => (
       <Text className="text-neutral-tertiary" style={{ fontSize: 14 }}>
         The service is provided by{' '}
         <a
-          href="https://transak.com/"
+          href="https://www.moonpay.com/"
           target="_blank"
           rel="noopener noreferrer"
         >
-          Transak
+          MoonPay
         </a>
         .
       </Text>

@@ -87,11 +87,12 @@ export const BLOCKSCOUT_URL_BY_MIDDLEWARE_CHAIN: Record<
   [MiddlewareChainMap.POLYGON]: 'https://polygon.blockscout.com',
 };
 
-// on-ramp
-export const ON_RAMP_GATEWAY_URL = `https://proxy.transak.${process.env.NODE_ENV === 'production' ? '' : 'staging.'}autonolas.tech/`;
-
 // pearl-api url
 export const PEARL_API_URL = 'https://pearl-api.olas.network';
+
+// MoonPay on-ramp (pearl-api proxies signing + buy quotes)
+export const MOONPAY_SIGN_URL = `${PEARL_API_URL}/api/moonpay/sign`;
+export const MOONPAY_QUOTE_URL = `${PEARL_API_URL}/api/moonpay/quote`;
 
 // web3auth
 const WEB3AUTH_GATEWAY_URL = `${PEARL_API_URL}/web3auth`;

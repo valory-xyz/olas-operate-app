@@ -152,8 +152,9 @@ export const PayingReceivingTable = ({
     isTransactionSuccessfulButFundsNotReceived,
     isBuyCryptoBtnLoading,
     usdAmountToPay,
-    nativeAmountToPay,
+    nativeAmount,
     updateUsdAmountToPay,
+    updateNativeAmountWithBuffer,
   } = useOnRampContext();
 
   if (!selectedChainId) {
@@ -175,7 +176,7 @@ export const PayingReceivingTable = ({
   const { isLoading: isFiatLoading, data: totalFiatDetails } =
     useTotalFiatFromNativeToken({
       nativeTokenAmount: hasNativeTokenError ? undefined : totalNativeToken,
-      nativeAmountToPay,
+      nativeAmount,
       selectedChainId,
       // Skip price-quote API call if on-ramping step is already completed
       skip:
@@ -210,8 +211,12 @@ export const PayingReceivingTable = ({
 
     if (isReceivingAmountLoading || hasNativeTokenError) {
       updateUsdAmountToPay(null);
+      updateNativeAmountWithBuffer(null);
     } else if (totalFiatDetails?.fiatAmount) {
       updateUsdAmountToPay(totalFiatDetails.fiatAmount);
+      updateNativeAmountWithBuffer(
+        totalFiatDetails.nativeAmountToDisplay ?? null,
+      );
     }
   }, [
     isTransactionSuccessfulButFundsNotReceived,
@@ -221,6 +226,7 @@ export const PayingReceivingTable = ({
     hasNativeTokenError,
     totalFiatDetails,
     updateUsdAmountToPay,
+    updateNativeAmountWithBuffer,
   ]);
 
   const totalEthAmountToDisplay = useMemo(() => {

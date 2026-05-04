@@ -5,7 +5,6 @@ import styled from 'styled-components';
 import {
   AddressZero,
   COLOR,
-  IS_TRANSAK_UNAVAILABLE,
   MIN_ONRAMP_AMOUNT,
   ON_RAMP_CHAIN_MAP,
   SETUP_SCREEN,
@@ -18,10 +17,7 @@ import {
   useTotalFiatFromNativeToken,
   useTotalNativeTokenRequired,
 } from '@/hooks';
-import {
-  asEvmChainDetails,
-  asMiddlewareChain,
-} from '@/utils/middlewareHelpers';
+import { asMiddlewareChain } from '@/utils/middlewareHelpers';
 
 import { Alert, CardFlex, CardTitle, TokenRequirements } from '../../../ui';
 
@@ -43,38 +39,29 @@ const useOnRampNetworkConfig = () => {
   const { selectedAgentConfig } = useServices();
   const { updateNetworkConfig } = useOnRampContext();
 
-  const { selectedChainId, networkId, networkName, cryptoCurrencyCode } =
-    useMemo(() => {
-      const selectedChainId = selectedAgentConfig.evmHomeChainId;
-      const fromChainName = asMiddlewareChain(selectedChainId);
-      const networkId = ON_RAMP_CHAIN_MAP[fromChainName];
-      const chainDetails = asEvmChainDetails(
-        asMiddlewareChain(networkId.chain),
-      );
-      return {
-        selectedChainId,
-        networkId,
-        networkName: chainDetails.name,
-        cryptoCurrencyCode: chainDetails.symbol,
-      };
-    }, [selectedAgentConfig]);
+  const { selectedChainId, networkId, moonpayCurrencyCode } = useMemo(() => {
+    const selectedChainId = selectedAgentConfig.evmHomeChainId;
+    const fromChainName = asMiddlewareChain(selectedChainId);
+    const chainConfig = ON_RAMP_CHAIN_MAP[fromChainName];
+    if (!chainConfig) {
+      throw new Error(`No on-ramp config for chain ${fromChainName}`);
+    }
+    return {
+      selectedChainId,
+      networkId: chainConfig,
+      moonpayCurrencyCode: chainConfig.moonpayCurrencyCode,
+    };
+  }, [selectedAgentConfig]);
 
   useEffect(() => {
     updateNetworkConfig({
       networkId: networkId.chain,
-      networkName,
-      cryptoCurrencyCode,
+      moonpayCurrencyCode,
       selectedChainId,
     });
-  }, [
-    updateNetworkConfig,
-    networkId,
-    networkName,
-    cryptoCurrencyCode,
-    selectedChainId,
-  ]);
+  }, [updateNetworkConfig, networkId, moonpayCurrencyCode, selectedChainId]);
 
-  return { selectedChainId, networkId, networkName, cryptoCurrencyCode };
+  return { selectedChainId, networkId, moonpayCurrencyCode };
 };
 
 export const OnRampMethodCard = () => {
@@ -133,27 +120,14 @@ export const OnRampMethodCard = () => {
           Pay in fiat by using your credit or debit card — perfect for speed and
           ease!
         </Paragraph>
-        {IS_TRANSAK_UNAVAILABLE ? (
-          <Alert
-            type="warning"
-            showIcon
-            message="Service is temporarily unavailable."
-            className="text-sm"
-          />
-        ) : (
-          <TokenRequirements
-            fiatAmount={totalFiatDetails?.fiatAmount ?? 0}
-            isLoading={isLoading}
-            hasError={hasNativeTokenError}
-            fundType="onRamp"
-          />
-        )}
+        <TokenRequirements
+          fiatAmount={totalFiatDetails?.fiatAmount ?? 0}
+          isLoading={isLoading}
+          hasError={hasNativeTokenError}
+          fundType="onRamp"
+        />
       </div>
-      {IS_TRANSAK_UNAVAILABLE ? (
-        <Button type="primary" size="large" className="mt-auto" disabled>
-          Buy Crypto with USD
-        </Button>
-      ) : isFiatAmountTooLow ? (
+      {isFiatAmountTooLow ? (
         <Alert
           message={`The minimum value of crypto to buy with your credit card is $${MIN_ONRAMP_AMOUNT}.`}
           type="info"

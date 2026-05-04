@@ -15,7 +15,6 @@ export type GetOnRampRequirementsParams = (
 
 export type OnRampNetworkConfig = {
   networkId: Nullable<EvmChainId>;
-  networkName: Nullable<string>;
-  cryptoCurrencyCode: Nullable<string>;
+  moonpayCurrencyCode: Nullable<string>;
   selectedChainId: Nullable<EvmChainId>;
 };

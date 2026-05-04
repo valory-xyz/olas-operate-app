@@ -63,11 +63,11 @@ const {
 const setupMocks = (
   overrides: {
     isBuyCryptoBtnLoading?: boolean;
+    nativeAmountWithBuffer?: number | null;
     usdAmountToPay?: number | null;
     isTransactionSuccessfulButFundsNotReceived?: boolean;
     isOnRampingStepCompleted?: boolean;
-    networkName?: string | null;
-    cryptoCurrencyCode?: string | null;
+    moonpayCurrencyCode?: string | null;
     masterEoa?: ReturnType<typeof makeMasterEoa> | undefined;
     onRampWindowShow?: jest.Mock | undefined;
     termsAndConditionsWindowShow?: jest.Mock | undefined;
@@ -84,19 +84,24 @@ const setupMocks = (
 
   mockUseOnRampContext.mockReturnValue({
     isBuyCryptoBtnLoading: overrides.isBuyCryptoBtnLoading ?? false,
+    nativeAmountWithBuffer:
+      'nativeAmountWithBuffer' in overrides
+        ? overrides.nativeAmountWithBuffer
+        : 0.005,
     usdAmountToPay:
-      'usdAmountToPay' in overrides ? overrides.usdAmountToPay : 18.17,
+      'usdAmountToPay' in overrides ? overrides.usdAmountToPay : 25,
     updateIsBuyCryptoBtnLoading,
     isTransactionSuccessfulButFundsNotReceived:
       overrides.isTransactionSuccessfulButFundsNotReceived ?? false,
     isOnRampingStepCompleted: overrides.isOnRampingStepCompleted ?? false,
-    networkName: 'networkName' in overrides ? overrides.networkName : 'base',
-    cryptoCurrencyCode:
-      'cryptoCurrencyCode' in overrides ? overrides.cryptoCurrencyCode : 'ETH',
+    moonpayCurrencyCode:
+      'moonpayCurrencyCode' in overrides
+        ? overrides.moonpayCurrencyCode
+        : 'eth_base',
   } as unknown as ReturnType<typeof useOnRampContext>);
 
   mockUseMasterWalletContext.mockReturnValue({
-    masterEoa: overrides.masterEoa ?? makeMasterEoa(),
+    masterEoa: 'masterEoa' in overrides ? overrides.masterEoa : makeMasterEoa(),
   } as unknown as ReturnType<typeof useMasterWalletContext>);
 
   return { updateIsBuyCryptoBtnLoading, showFn, termsShowFn };
@@ -157,10 +162,10 @@ describe('useBuyCryptoStep', () => {
   });
 
   describe('step title', () => {
-    it('always returns "Buy crypto on Transak"', () => {
+    it('always returns "Buy crypto on MoonPay"', () => {
       setupMocks();
       const { result } = renderHook(() => useBuyCryptoStep());
-      expect(result.current.title).toBe('Buy crypto on Transak');
+      expect(result.current.title).toBe('Buy crypto on MoonPay');
     });
   });
 
@@ -192,7 +197,13 @@ describe('useBuyCryptoStep', () => {
       expect(result.current.subSteps).toHaveLength(2);
     });
 
-    it('is true when usdAmountToPay is null', () => {
+    it('is true when nativeAmountWithBuffer is null', () => {
+      setupMocks({ nativeAmountWithBuffer: null });
+      const { result } = renderHook(() => useBuyCryptoStep());
+      expect(result.current.subSteps).toHaveLength(2);
+    });
+
+    it('is true when usdAmountToPay is null (fiat quote still loading)', () => {
       setupMocks({ usdAmountToPay: null });
       const { result } = renderHook(() => useBuyCryptoStep());
       expect(result.current.subSteps).toHaveLength(2);
@@ -213,28 +224,28 @@ describe('useBuyCryptoStep', () => {
       expect(result.current.status).toBe('wait');
     });
 
-    it('does not call show when usdAmountToPay is null', () => {
-      const { showFn } = setupMocks({ usdAmountToPay: null });
+    it('does not call show when nativeAmountWithBuffer is null', () => {
+      const { showFn } = setupMocks({ nativeAmountWithBuffer: null });
       renderHook(() => useBuyCryptoStep());
       // handleBuyCrypto has early returns for missing values
       expect(showFn).not.toHaveBeenCalled();
     });
 
-    it('does not call show when networkName is null', () => {
-      const { showFn } = setupMocks({ networkName: null });
+    it('does not call show when moonpayCurrencyCode is null', () => {
+      const { showFn } = setupMocks({ moonpayCurrencyCode: null });
       renderHook(() => useBuyCryptoStep());
       expect(showFn).not.toHaveBeenCalled();
     });
 
-    it('does not call show when cryptoCurrencyCode is null', () => {
-      const { showFn } = setupMocks({ cryptoCurrencyCode: null });
+    it('does not call show when usdAmountToPay is null (fiat quote still loading)', () => {
+      const { showFn } = setupMocks({ usdAmountToPay: null });
       renderHook(() => useBuyCryptoStep());
       expect(showFn).not.toHaveBeenCalled();
     });
   });
 
   describe('openTerms', () => {
-    it('calls termsAndConditionsWindow.show with transak-terms', async () => {
+    it('calls termsAndConditionsWindow.show with moonpay-terms', async () => {
       const termsShowFn = jest.fn();
       setupMocks({ termsAndConditionsWindowShow: termsShowFn });
 
@@ -246,13 +257,16 @@ describe('useBuyCryptoStep', () => {
   });
 
   describe('handleBuyCrypto invocation', () => {
-    it('calls onRampWindow.show and updateIsBuyCryptoBtnLoading when all params present', async () => {
+    it('calls onRampWindow.show with toFixed(6) buffered native, currency code, and master EOA address', async () => {
       const showFn = jest.fn();
+      const masterEoa = makeMasterEoa();
       const { updateIsBuyCryptoBtnLoading } = setupMocks({
         onRampWindowShow: showFn,
-        usdAmountToPay: 18.17,
-        networkName: 'base',
-        cryptoCurrencyCode: 'ETH',
+        // nativeAmountWithBuffer = buffered native (= agent-required + $5 cushion).
+        // PayingReceivingTable populates this from the fiat-quote hook.
+        nativeAmountWithBuffer: 0.005,
+        moonpayCurrencyCode: 'eth_base',
+        masterEoa,
       });
       const { result } = renderHook(() => useBuyCryptoStep());
 
@@ -265,8 +279,31 @@ describe('useBuyCryptoStep', () => {
         await onClick();
       });
 
-      expect(showFn).toHaveBeenCalledWith(18.17, 'base', 'ETH');
+      // The IPC sends the buffered native (toFixed(6)) so MoonPay locks the
+      // same amount the user saw in the "You Pay" preview — display matches
+      // actual charge. walletAddress is forwarded because the child window's
+      // MasterWalletProvider doesn't hydrate (gated on isUserLoggedIn=false).
+      expect(showFn).toHaveBeenCalledWith(
+        '0.005000',
+        'eth_base',
+        masterEoa.address,
+      );
       expect(updateIsBuyCryptoBtnLoading).toHaveBeenCalledWith(true);
+    });
+
+    it('does not call show when masterEoa.address is missing', async () => {
+      const { showFn } = setupMocks({
+        masterEoa: undefined,
+      });
+      const { result } = renderHook(() => useBuyCryptoStep());
+      const buyButtonElement = result.current.subSteps[1].description;
+      const onClick = (
+        buyButtonElement as { props: { onClick: () => Promise<void> } }
+      ).props.onClick;
+      await act(async () => {
+        await onClick();
+      });
+      expect(showFn).not.toHaveBeenCalled();
     });
 
     it('early-returns when onRampWindow.show is undefined', async () => {
@@ -286,9 +323,9 @@ describe('useBuyCryptoStep', () => {
       expect(updateIsBuyCryptoBtnLoading).not.toHaveBeenCalled();
     });
 
-    it('early-returns when usdAmountToPay is null', async () => {
+    it('early-returns when nativeAmountWithBuffer is null', async () => {
       const showFn = jest.fn();
-      setupMocks({ onRampWindowShow: showFn, usdAmountToPay: null });
+      setupMocks({ onRampWindowShow: showFn, nativeAmountWithBuffer: null });
       const { result } = renderHook(() => useBuyCryptoStep());
       const buyButtonElement = result.current.subSteps[1].description;
       const onClick = (
@@ -300,9 +337,9 @@ describe('useBuyCryptoStep', () => {
       expect(showFn).not.toHaveBeenCalled();
     });
 
-    it('early-returns when networkName is null', async () => {
+    it('early-returns when nativeAmountWithBuffer rounds to 0 at toFixed(6)', async () => {
       const showFn = jest.fn();
-      setupMocks({ onRampWindowShow: showFn, networkName: null });
+      setupMocks({ onRampWindowShow: showFn, nativeAmountWithBuffer: 4e-7 });
       const { result } = renderHook(() => useBuyCryptoStep());
       const buyButtonElement = result.current.subSteps[1].description;
       const onClick = (
@@ -314,9 +351,9 @@ describe('useBuyCryptoStep', () => {
       expect(showFn).not.toHaveBeenCalled();
     });
 
-    it('early-returns when cryptoCurrencyCode is null', async () => {
+    it('early-returns when moonpayCurrencyCode is null', async () => {
       const showFn = jest.fn();
-      setupMocks({ onRampWindowShow: showFn, cryptoCurrencyCode: null });
+      setupMocks({ onRampWindowShow: showFn, moonpayCurrencyCode: null });
       const { result } = renderHook(() => useBuyCryptoStep());
       const buyButtonElement = result.current.subSteps[1].description;
       const onClick = (
@@ -330,7 +367,7 @@ describe('useBuyCryptoStep', () => {
   });
 
   describe('openTerms invocation', () => {
-    it('calls termsAndConditionsWindow.show("transak-terms") via OnRampAgreement link', async () => {
+    it('calls termsAndConditionsWindow.show("moonpay-terms") via OnRampAgreement link', async () => {
       const termsShowFn = jest.fn();
       setupMocks({ termsAndConditionsWindowShow: termsShowFn });
       const { result } = renderHook(() => useBuyCryptoStep());
@@ -345,7 +382,7 @@ describe('useBuyCryptoStep', () => {
         await onClick();
       });
 
-      expect(termsShowFn).toHaveBeenCalledWith('transak-terms');
+      expect(termsShowFn).toHaveBeenCalledWith('moonpay-terms');
     });
   });
 });

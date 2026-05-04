@@ -5,7 +5,6 @@ import { TransactionStep } from '@/components/ui/TransactionSteps';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { useOnRampContext } from '@/hooks/useOnRampContext';
 import { useMasterWalletContext } from '@/hooks/useWallet';
-import { delayInSeconds } from '@/utils/delay';
 
 const { Text } = Typography;
 
@@ -13,7 +12,7 @@ const OnRampAgreement = ({ onClick }: { onClick?: () => void }) => (
   <Flex vertical gap={8}>
     <Text className="text-sm text-neutral-tertiary">
       Once your card payment has been successfully initiated, funds may take up
-      to 10 minutes to be available.
+      to 30 minutes to be available.
     </Text>
     <Text className="text-sm text-neutral-tertiary">
       By proceeding, you agree to the service&apos;s&nbsp;
@@ -27,35 +26,42 @@ export const useBuyCryptoStep = () => {
   const { masterEoa } = useMasterWalletContext();
   const {
     isBuyCryptoBtnLoading,
+    nativeAmountWithBuffer,
     usdAmountToPay,
     updateIsBuyCryptoBtnLoading,
     isTransactionSuccessfulButFundsNotReceived,
     isOnRampingStepCompleted,
-    networkName,
-    cryptoCurrencyCode,
+    moonpayCurrencyCode,
   } = useOnRampContext();
 
+  // nativeAmountWithBuffer is the buffered native (= agent-required + $5-worth-
+  // of-native slippage cushion).
   const handleBuyCrypto = useCallback(async () => {
     if (!onRampWindow?.show) return;
+    if (!nativeAmountWithBuffer) return;
     if (!usdAmountToPay) return;
-    if (!networkName) return;
-    if (!cryptoCurrencyCode) return;
+    if (!moonpayCurrencyCode) return;
+    if (!masterEoa?.address) return;
 
-    onRampWindow.show(usdAmountToPay, networkName, cryptoCurrencyCode);
-    await delayInSeconds(1);
+    const formattedAmount = nativeAmountWithBuffer.toFixed(6);
+    if (Number(formattedAmount) === 0) return;
+
     updateIsBuyCryptoBtnLoading(true);
+    onRampWindow.show(formattedAmount, moonpayCurrencyCode, masterEoa.address);
   }, [
     onRampWindow,
+    nativeAmountWithBuffer,
     usdAmountToPay,
-    networkName,
-    cryptoCurrencyCode,
+    moonpayCurrencyCode,
+    masterEoa,
     updateIsBuyCryptoBtnLoading,
   ]);
 
-  const cannotBuyCrypto = !masterEoa?.address || !usdAmountToPay;
+  const cannotBuyCrypto =
+    !masterEoa?.address || !nativeAmountWithBuffer || !usdAmountToPay;
 
   const openTerms = useCallback(async () => {
-    termsAndConditionsWindow?.show?.('transak-terms');
+    termsAndConditionsWindow?.show?.('moonpay-terms');
   }, [termsAndConditionsWindow]);
 
   const buyCryptoStep = useMemo<TransactionStep>(() => {
@@ -68,7 +74,7 @@ export const useBuyCryptoStep = () => {
 
     return {
       status,
-      title: 'Buy crypto on Transak',
+      title: 'Buy crypto on MoonPay',
       subSteps: isOnRampingStepCompleted
         ? [{ description: 'Funds received by the agent.' }]
         : [

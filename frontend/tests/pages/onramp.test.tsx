@@ -1,24 +1,26 @@
 import { render, screen } from '@testing-library/react';
 import { useRouter } from 'next/router';
 
+import { DEFAULT_EOA_ADDRESS } from '../helpers/factories';
+
 jest.mock('next/router', () => ({
   useRouter: jest.fn(),
 }));
 
 jest.mock('../../components/OnRampIframe/OnRampIframe', () => ({
   OnRampIframe: ({
-    usdAmountToPay,
-    networkName,
-    cryptoCurrencyCode,
+    nativeAmount,
+    currencyCode,
+    walletAddress,
   }: {
-    usdAmountToPay: number;
-    networkName?: string;
-    cryptoCurrencyCode?: string;
+    nativeAmount: string;
+    currencyCode: string;
+    walletAddress: string;
   }) => (
     <div data-testid="onramp-iframe">
-      <span data-testid="amount">{usdAmountToPay}</span>
-      <span data-testid="network">{networkName}</span>
-      <span data-testid="crypto">{cryptoCurrencyCode}</span>
+      <span data-testid="native-amount">{nativeAmount}</span>
+      <span data-testid="currency-code">{currencyCode}</span>
+      <span data-testid="wallet-address">{walletAddress}</span>
     </div>
   ),
 }));
@@ -26,8 +28,10 @@ jest.mock('../../components/OnRampIframe/OnRampIframe', () => ({
 const mockUseRouter = useRouter as jest.MockedFunction<typeof useRouter>;
 
 // Must import after mocks are set up
-// eslint-disable-next-line @typescript-eslint/no-var-requires
+/* eslint-disable @typescript-eslint/no-var-requires */
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const { default: OnRamp } = require('../../pages/onramp');
+/* eslint-enable @typescript-eslint/no-var-requires */
 
 describe('OnRamp page', () => {
   beforeEach(() => {
@@ -43,39 +47,11 @@ describe('OnRamp page', () => {
     expect(container.innerHTML).toBe('');
   });
 
-  it('returns null when amount is missing', () => {
-    mockUseRouter.mockReturnValue({
-      query: { networkName: 'ethereum', cryptoCurrencyCode: 'USDC' },
-    } as unknown as ReturnType<typeof useRouter>);
-
-    const { container } = render(<OnRamp />);
-    expect(container.innerHTML).toBe('');
-  });
-
-  it('returns null when networkName is missing', () => {
-    mockUseRouter.mockReturnValue({
-      query: { amount: '100', cryptoCurrencyCode: 'USDC' },
-    } as unknown as ReturnType<typeof useRouter>);
-
-    const { container } = render(<OnRamp />);
-    expect(container.innerHTML).toBe('');
-  });
-
-  it('returns null when cryptoCurrencyCode is missing', () => {
-    mockUseRouter.mockReturnValue({
-      query: { amount: '100', networkName: 'ethereum' },
-    } as unknown as ReturnType<typeof useRouter>);
-
-    const { container } = render(<OnRamp />);
-    expect(container.innerHTML).toBe('');
-  });
-
-  it('returns null when amount is 0 (falsy)', () => {
+  it('returns null when nativeAmount is missing', () => {
     mockUseRouter.mockReturnValue({
       query: {
-        amount: '0',
-        networkName: 'ethereum',
-        cryptoCurrencyCode: 'USDC',
+        currencyCode: 'eth_base',
+        walletAddress: DEFAULT_EOA_ADDRESS,
       },
     } as unknown as ReturnType<typeof useRouter>);
 
@@ -83,12 +59,11 @@ describe('OnRamp page', () => {
     expect(container.innerHTML).toBe('');
   });
 
-  it('returns null when networkName is an array', () => {
+  it('returns null when currencyCode is missing', () => {
     mockUseRouter.mockReturnValue({
       query: {
-        amount: '100',
-        networkName: ['ethereum', 'polygon'],
-        cryptoCurrencyCode: 'USDC',
+        nativeAmount: '0.050000',
+        walletAddress: DEFAULT_EOA_ADDRESS,
       },
     } as unknown as ReturnType<typeof useRouter>);
 
@@ -96,12 +71,21 @@ describe('OnRamp page', () => {
     expect(container.innerHTML).toBe('');
   });
 
-  it('returns null when cryptoCurrencyCode is an array', () => {
+  it('returns null when walletAddress is missing', () => {
+    mockUseRouter.mockReturnValue({
+      query: { nativeAmount: '0.050000', currencyCode: 'eth_base' },
+    } as unknown as ReturnType<typeof useRouter>);
+
+    const { container } = render(<OnRamp />);
+    expect(container.innerHTML).toBe('');
+  });
+
+  it('returns null when nativeAmount is empty string (falsy)', () => {
     mockUseRouter.mockReturnValue({
       query: {
-        amount: '100',
-        networkName: 'ethereum',
-        cryptoCurrencyCode: ['USDC', 'ETH'],
+        nativeAmount: '',
+        currencyCode: 'eth_base',
+        walletAddress: DEFAULT_EOA_ADDRESS,
       },
     } as unknown as ReturnType<typeof useRouter>);
 
@@ -109,32 +93,77 @@ describe('OnRamp page', () => {
     expect(container.innerHTML).toBe('');
   });
 
-  it('renders OnRampIframe with correct props when all params present', () => {
+  it('returns null when nativeAmount is an array (typeof !== string)', () => {
     mockUseRouter.mockReturnValue({
       query: {
-        amount: '50.5',
-        networkName: 'ethereum',
-        cryptoCurrencyCode: 'USDC',
+        nativeAmount: ['0.050000', '0.10'],
+        currencyCode: 'eth_base',
+        walletAddress: DEFAULT_EOA_ADDRESS,
+      },
+    } as unknown as ReturnType<typeof useRouter>);
+
+    const { container } = render(<OnRamp />);
+    expect(container.innerHTML).toBe('');
+  });
+
+  it('returns null when currencyCode is an array', () => {
+    mockUseRouter.mockReturnValue({
+      query: {
+        nativeAmount: '0.050000',
+        currencyCode: ['eth_base', 'pol_polygon'],
+        walletAddress: DEFAULT_EOA_ADDRESS,
+      },
+    } as unknown as ReturnType<typeof useRouter>);
+
+    const { container } = render(<OnRamp />);
+    expect(container.innerHTML).toBe('');
+  });
+
+  it('returns null when walletAddress is an array', () => {
+    mockUseRouter.mockReturnValue({
+      query: {
+        nativeAmount: '0.050000',
+        currencyCode: 'eth_base',
+        walletAddress: [DEFAULT_EOA_ADDRESS, DEFAULT_EOA_ADDRESS],
+      },
+    } as unknown as ReturnType<typeof useRouter>);
+
+    const { container } = render(<OnRamp />);
+    expect(container.innerHTML).toBe('');
+  });
+
+  it('renders OnRampIframe with all three query params', () => {
+    mockUseRouter.mockReturnValue({
+      query: {
+        nativeAmount: '0.050000',
+        currencyCode: 'eth_base',
+        walletAddress: DEFAULT_EOA_ADDRESS,
       },
     } as unknown as ReturnType<typeof useRouter>);
 
     render(<OnRamp />);
     expect(screen.getByTestId('onramp-iframe')).toBeInTheDocument();
-    expect(screen.getByTestId('amount')).toHaveTextContent('50.5');
-    expect(screen.getByTestId('network')).toHaveTextContent('ethereum');
-    expect(screen.getByTestId('crypto')).toHaveTextContent('USDC');
+    expect(screen.getByTestId('native-amount')).toHaveTextContent('0.050000');
+    expect(screen.getByTestId('currency-code')).toHaveTextContent('eth_base');
+    expect(screen.getByTestId('wallet-address')).toHaveTextContent(
+      DEFAULT_EOA_ADDRESS,
+    );
   });
 
-  it('converts amount string to number correctly', () => {
+  it('passes the nativeAmount through verbatim (no Number() cast)', () => {
     mockUseRouter.mockReturnValue({
       query: {
-        amount: '123.45',
-        networkName: 'gnosis',
-        cryptoCurrencyCode: 'XDAI',
+        nativeAmount: '12.345678',
+        currencyCode: 'pol_polygon',
+        walletAddress: DEFAULT_EOA_ADDRESS,
       },
     } as unknown as ReturnType<typeof useRouter>);
 
     render(<OnRamp />);
-    expect(screen.getByTestId('amount')).toHaveTextContent('123.45');
+    // Ensure precision is preserved exactly as a string — no float rounding.
+    expect(screen.getByTestId('native-amount')).toHaveTextContent('12.345678');
+    expect(screen.getByTestId('currency-code')).toHaveTextContent(
+      'pol_polygon',
+    );
   });
 });

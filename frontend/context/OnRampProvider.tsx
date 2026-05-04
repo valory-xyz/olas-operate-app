@@ -17,8 +17,7 @@ const ETH_RECEIVED_THRESHOLD = 0.9;
 
 export const OnRampContext = createContext<{
   networkId: OnRampNetworkConfig['networkId'];
-  networkName: OnRampNetworkConfig['networkName'];
-  cryptoCurrencyCode: OnRampNetworkConfig['cryptoCurrencyCode'];
+  moonpayCurrencyCode: OnRampNetworkConfig['moonpayCurrencyCode'];
   /**
    * Chain to which the funds are being transferred. It can have two cases:
    * 1. Onboarding: homeChainId of the selected agent
@@ -28,8 +27,13 @@ export const OnRampContext = createContext<{
   updateNetworkConfig: (config: OnRampNetworkConfig) => void;
   resetOnRampState: () => void;
 
-  nativeAmountToPay: Nullable<number>;
-  updateNativeAmountToPay: (amount: Nullable<number>) => void;
+  nativeAmount: Nullable<number>;
+  updateNativeAmount: (amount: Nullable<number>) => void;
+  /**
+   * Buffered native amount (= agent-required + $5-worth-of-native slippage cushion).
+   */
+  nativeAmountWithBuffer: Nullable<number>;
+  updateNativeAmountWithBuffer: (amount: Nullable<number>) => void;
   nativeTotalAmountRequired: Nullable<number>;
   updateNativeTotalAmountRequired: (amount: Nullable<number>) => void;
   usdAmountToPay: Nullable<number>;
@@ -47,14 +51,15 @@ export const OnRampContext = createContext<{
   updateIsSwappingStepCompleted: (completed: boolean) => void;
 }>({
   networkId: null,
-  networkName: null,
-  cryptoCurrencyCode: null,
+  moonpayCurrencyCode: null,
   selectedChainId: null,
   updateNetworkConfig: () => {},
   resetOnRampState: () => {},
 
-  nativeAmountToPay: null,
-  updateNativeAmountToPay: () => {},
+  nativeAmount: null,
+  updateNativeAmount: () => {},
+  nativeAmountWithBuffer: null,
+  updateNativeAmountWithBuffer: () => {},
   nativeTotalAmountRequired: null,
   updateNativeTotalAmountRequired: () => {},
   usdAmountToPay: null,
@@ -79,7 +84,8 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
     useMasterBalances();
 
   // State to track the amount of native tokens (e.g., ETH, POL, etc.) to pay for on-ramping and the USD equivalent
-  const [nativeAmountToPay, setNativeAmountToPay] =
+  const [nativeAmount, setNativeAmountToPay] = useState<Nullable<number>>(null);
+  const [nativeAmountWithBuffer, setNativeAmountToBuy] =
     useState<Nullable<number>>(null);
   const [nativeTotalAmountRequired, setNativeTotalAmountRequired] =
     useState<Nullable<number>>(null);
@@ -112,8 +118,7 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
 
   const [networkConfig, setNetworkConfig] = useState<OnRampNetworkConfig>({
     networkId: null,
-    networkName: null,
-    cryptoCurrencyCode: null,
+    moonpayCurrencyCode: null,
     selectedChainId: null,
   });
 
@@ -130,13 +135,12 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
   const isTransactionSuccessfulButFundsNotReceived =
     isOnRampingTransactionSuccessful && !hasFundsReceivedAfterOnRamp;
 
-  const { networkId, networkName, cryptoCurrencyCode, selectedChainId } =
-    networkConfig;
+  const { networkId, moonpayCurrencyCode, selectedChainId } = networkConfig;
 
   // Store initial balance when on-ramp requirements are calculated
-  // This happens early when nativeAmountToPay is first set, before user clicks "Buy Crypto"
+  // This happens early when nativeAmount is first set, before user clicks "Buy Crypto"
   useEffect(() => {
-    if (!nativeAmountToPay) return;
+    if (!nativeAmount) return;
     if (!networkId) return;
     if (initialBalanceRef.current !== null) return;
 
@@ -145,7 +149,7 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
 
     initialBalanceRef.current = balance || '0';
   }, [
-    nativeAmountToPay,
+    nativeAmount,
     networkId,
     getMasterSafeNativeBalanceOf,
     getMasterEoaNativeBalanceOf,
@@ -153,8 +157,7 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
 
   // check if the user has received funds after on-ramping
   useEffect(() => {
-    if (!nativeAmountToPay) return;
-    if (!usdAmountToPay) return;
+    if (!nativeAmount) return;
     if (isOnRampingStepCompleted) return;
     if (!networkId) return;
     if (initialBalanceRef.current === null) return; // Need initial balance first
@@ -164,9 +167,7 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
     if (!currentBalance) return;
 
     // Calculate the expected increase in balance (90% threshold)
-    const thresholdAmount = (
-      nativeAmountToPay * ETH_RECEIVED_THRESHOLD
-    ).toFixed(18);
+    const thresholdAmount = (nativeAmount * ETH_RECEIVED_THRESHOLD).toFixed(18);
 
     // Calculate the actual increase in balance
     const balanceBeforeOnRamp = BigInt(parseEther(initialBalanceRef.current));
@@ -183,20 +184,27 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
       onRampWindow?.close?.();
     }
   }, [
-    nativeAmountToPay,
+    nativeAmount,
     networkId,
     getMasterEoaNativeBalanceOf,
     updateIsBuyCryptoBtnLoading,
     onRampWindow,
     isOnRampingStepCompleted,
     getMasterSafeNativeBalanceOf,
-    usdAmountToPay,
   ]);
 
   // Function to set the native token amount to pay for on-ramping
-  const updateNativeAmountToPay = useCallback((amount: Nullable<number>) => {
+  const updateNativeAmount = useCallback((amount: Nullable<number>) => {
     setNativeAmountToPay(amount);
   }, []);
+
+  // Function to set the buffered native amount actually requested from MoonPay
+  const updateNativeAmountWithBuffer = useCallback(
+    (amount: Nullable<number>) => {
+      setNativeAmountToBuy(amount);
+    },
+    [],
+  );
 
   // Function to set the total native token amount required for on-ramping
   // (including what could possibly be on the balance + newly requested remaining amount to pay)
@@ -252,6 +260,7 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
 
   const resetOnRampState = useCallback(() => {
     setNativeAmountToPay(null);
+    setNativeAmountToBuy(null);
     setUsdAmountToPay(null);
     setIsBuyCryptoBtnLoading(false);
     setIsOnRampingTransactionSuccessful(false);
@@ -271,8 +280,10 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
   return (
     <OnRampContext.Provider
       value={{
-        nativeAmountToPay,
-        updateNativeAmountToPay,
+        nativeAmount,
+        updateNativeAmount,
+        nativeAmountWithBuffer,
+        updateNativeAmountWithBuffer,
         nativeTotalAmountRequired,
         updateNativeTotalAmountRequired,
         usdAmountToPay,
@@ -291,10 +302,8 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
 
         /** Network id to on-ramp */
         networkId,
-        /** Network name to on-ramp */
-        networkName,
-        /** Crypto currency code to on-ramp */
-        cryptoCurrencyCode,
+        /** MoonPay currency code (e.g. 'eth_base', 'pol_polygon') */
+        moonpayCurrencyCode,
         /** Chain to which the funds are eventually transferred */
         selectedChainId,
         /** Function to update the network config */

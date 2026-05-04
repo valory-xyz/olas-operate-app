@@ -2,10 +2,8 @@
  * Tests for URL constants.
  *
  * Several URLs are environment-dependent: BACKEND_URL and BACKEND_URL_V2 use
- * port 8765 in production and 8000 in development. ON_RAMP_GATEWAY_URL uses
- * a staging subdomain in non-production environments. Getting these wrong
- * causes backend connectivity failures or on-ramp routing to the wrong
- * environment.
+ * port 8765 in production and 8000 in development. Getting these wrong
+ * causes backend connectivity failures.
  *
  * Static URLs are validated to ensure they start with https:// and follow
  * the expected structure (correct host, path format).
@@ -78,36 +76,6 @@ describe('BACKEND_URL_V2 — environment-dependent port', () => {
   });
 });
 
-describe('ON_RAMP_GATEWAY_URL — environment-dependent subdomain', () => {
-  const originalNodeEnv = process.env.NODE_ENV;
-
-  afterEach(() => {
-    Object.assign(process.env, { NODE_ENV: originalNodeEnv });
-    jest.resetModules();
-  });
-
-  it('uses the production domain (no staging subdomain) in production', () => {
-    Object.assign(process.env, { NODE_ENV: 'production' });
-    jest.resetModules();
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const { ON_RAMP_GATEWAY_URL } = require('../../constants/urls');
-    // Production: staging subdomain is empty string → no staging
-    expect(ON_RAMP_GATEWAY_URL).toBe('https://proxy.transak.autonolas.tech/');
-    expect(ON_RAMP_GATEWAY_URL).not.toContain('staging');
-  });
-
-  it('uses the staging domain in development', () => {
-    Object.assign(process.env, { NODE_ENV: 'development' });
-    jest.resetModules();
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const { ON_RAMP_GATEWAY_URL } = require('../../constants/urls');
-    expect(ON_RAMP_GATEWAY_URL).toBe(
-      'https://proxy.transak.staging.autonolas.tech/',
-    );
-    expect(ON_RAMP_GATEWAY_URL).toContain('staging');
-  });
-});
-
 // ─── Static URLs ─────────────────────────────────────────────────────────────
 
 describe('static URL constants', () => {
@@ -147,6 +115,18 @@ describe('static URL constants', () => {
   it('GEO_ELIGIBILITY_API_URL is derived from PEARL_API_URL', () => {
     expect(urls.GEO_ELIGIBILITY_API_URL).toBe(
       'https://pearl-api.olas.network/api/geo/agent-eligibility',
+    );
+  });
+
+  it('MOONPAY_SIGN_URL is derived from PEARL_API_URL', () => {
+    expect(urls.MOONPAY_SIGN_URL).toBe(
+      'https://pearl-api.olas.network/api/moonpay/sign',
+    );
+  });
+
+  it('MOONPAY_QUOTE_URL is derived from PEARL_API_URL', () => {
+    expect(urls.MOONPAY_QUOTE_URL).toBe(
+      'https://pearl-api.olas.network/api/moonpay/quote',
     );
   });
 

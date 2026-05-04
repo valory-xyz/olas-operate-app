@@ -574,19 +574,19 @@ function createAndLoadSslCertificate() {
 }
 
 /**
- * Create the on-ramping window for displaying transak iframe
+ * Create the on-ramping window for displaying the MoonPay iframe.
  */
 /** @type {()=>Promise<BrowserWindow|undefined>} */
 const createOnRampWindow = async (
-  amountToPay,
-  networkName,
-  cryptoCurrencyCode,
+  nativeAmount,
+  currencyCode,
+  walletAddress,
 ) => {
   const existingWindow = getOnRampWindow();
   if (!existingWindow || existingWindow.isDestroyed()) {
     const { width, height: onRampHeight } = getWindowDimensions(APP_WIDTH, 700);
     onRampWindow = new BrowserWindow({
-      title: 'Buy Crypto on Transak',
+      title: 'Buy Crypto',
       resizable: false,
       draggable: true,
       frame: false,
@@ -610,16 +610,21 @@ const createOnRampWindow = async (
       return { action: 'deny' };
     });
 
-    // query parameters for the on-ramp URL
+    // Query string passes the locked native crypto amount, MoonPay
+    // currency code, and master EOA wallet address to the Next.js /onramp
+    // page, which fetches a signed MoonPay URL via pearl-api before mounting
+    // the iframe. walletAddress is forwarded from the parent because the
+    // child window's React tree starts with isUserLoggedIn=false, so its
+    // MasterWalletProvider never hydrates.
     const onRampQuery = new URLSearchParams();
-    if (amountToPay) {
-      onRampQuery.append('amount', amountToPay.toString());
+    if (nativeAmount) {
+      onRampQuery.append('nativeAmount', nativeAmount.toString());
     }
-    if (networkName) {
-      onRampQuery.append('networkName', networkName);
+    if (currencyCode) {
+      onRampQuery.append('currencyCode', currencyCode);
     }
-    if (cryptoCurrencyCode) {
-      onRampQuery.append('cryptoCurrencyCode', cryptoCurrencyCode);
+    if (walletAddress) {
+      onRampQuery.append('walletAddress', walletAddress);
     }
     const onRampUrl = `${nextUrl()}/onramp?${onRampQuery.toString()}`;
     logger.electron(`OnRamp URL: ${onRampUrl}`);
@@ -945,11 +950,11 @@ ipcMain.handle('next-log-error', (_event, error, errorInfo) => {
  */
 ipcMain.handle(
   'onramp-window-show',
-  (_event, amountToPay, networkName, cryptoCurrencyCode) => {
+  (_event, nativeAmount, currencyCode, walletAddress) => {
     logger.electron('onramp-window-show');
 
     if (!getOnRampWindow() || getOnRampWindow().isDestroyed()) {
-      createOnRampWindow(amountToPay, networkName, cryptoCurrencyCode)?.then(
+      createOnRampWindow(nativeAmount, currencyCode, walletAddress)?.then(
         (window) => window.show(),
       );
     } else {

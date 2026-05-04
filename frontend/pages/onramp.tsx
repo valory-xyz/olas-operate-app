@@ -5,20 +5,17 @@ import { OnRampIframe } from '@/components/OnRampIframe/OnRampIframe';
 export default function OnRamp() {
   const router = useRouter();
 
-  const { amount, networkName, cryptoCurrencyCode } = router.query;
-  const amountToPay = amount ? Number(amount) : undefined;
-  const network = networkName ? networkName : undefined;
-  const cryptoCurrency = cryptoCurrencyCode ? cryptoCurrencyCode : undefined;
+  const { nativeAmount, currencyCode, walletAddress } = router.query;
 
-  if (!amountToPay || !network || !cryptoCurrency) return null;
-  if (typeof network !== 'string') return null;
-  if (typeof cryptoCurrency !== 'string') return null;
+  if (typeof nativeAmount !== 'string' || !nativeAmount) return null;
+  if (typeof currencyCode !== 'string' || !currencyCode) return null;
+  if (typeof walletAddress !== 'string' || !walletAddress) return null;
 
   return (
     <OnRampIframe
-      usdAmountToPay={amountToPay}
-      networkName={network}
-      cryptoCurrencyCode={cryptoCurrency}
+      nativeAmount={nativeAmount}
+      currencyCode={currencyCode}
+      walletAddress={walletAddress}
     />
   );
 }
