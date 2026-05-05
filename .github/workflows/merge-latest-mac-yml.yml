@@ -1,0 +1,56 @@
+# Reusable: merges the per-arch latest-mac.yml artifacts uploaded by
+# release_mac.yml into a single latest-mac.yml and replaces the asset on
+# the release. Without this, each arch's mac runner overwrites the other's
+# latest-mac.yml on the release — breaking OTA for whichever arch runs first.
+
+name: Merge latest-mac.yml
+
+on:
+  workflow_call:
+    inputs:
+      tag:
+        description: 'Release tag whose latest-mac.yml should be replaced'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  merge:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag }}
+
+      - name: Download arm64 yml
+        uses: actions/download-artifact@v4
+        with:
+          name: latest-mac-yml-arm64
+          path: yml-arm64
+        continue-on-error: true
+
+      - name: Download x64 yml
+        uses: actions/download-artifact@v4
+        with:
+          name: latest-mac-yml-x64
+          path: yml-x64
+        continue-on-error: true
+
+      - name: Merge latest-mac.yml
+        run: bash scripts/merge-latest-mac-yml.sh yml-arm64/latest-mac.yml yml-x64/latest-mac.yml latest-mac.yml
+
+      - name: Upload merged latest-mac.yml to release
+        if: hashFiles('latest-mac.yml') != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          # The signing workflow tags the commit with a `-signed` suffix for
+          # audit purposes (e.g. v1.5.0-signed), but electron-builder publishes
+          # the GitHub Release at the unsuffixed tag (v1.5.0). Strip the suffix
+          # so the release asset is uploaded to the correct release.
+          RELEASE_TAG="${TAG%-signed}"
+          gh release delete-asset "$RELEASE_TAG" latest-mac.yml --yes 2>/dev/null || true
+          gh release upload "$RELEASE_TAG" latest-mac.yml --clobber

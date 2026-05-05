@@ -2,22 +2,34 @@ import { TokenSymbol } from '@/config/tokens';
 import { EvmChainId, MiddlewareChain } from '@/constants';
 
 import { Address } from './Address';
-import { AddressTxnRecord } from './Records';
 import { Nullable } from './Util';
+
+export type AddressTxnRecord = Record<Address, `0x${string}`>;
+
+export type SafeCreationStatus =
+  | 'SAFE_CREATION_FAILED'
+  | 'SAFE_CREATED_TRANSFER_FAILED'
+  | 'SAFE_EXISTS_TRANSFER_FAILED'
+  | 'SAFE_CREATED_TRANSFER_COMPLETED'
+  | 'SAFE_EXISTS_ALREADY_FUNDED';
 
 export type SafeCreationResponse = {
   safe: Address;
-  message: string;
   create_tx: string;
   transfer_txs: AddressTxnRecord;
+  transfer_errors: AddressTxnRecord;
+  message: string;
+  status: SafeCreationStatus;
 };
 
 export type AvailableAsset = {
   address?: string;
   symbol: TokenSymbol;
-  /** @deprecated Use `amountString` instead for accurate representation */
   amount: number;
-  amountString?: string;
+  /**
+   * String representation of amount to avoid precision issues
+   */
+  amountInStr?: string;
 };
 
 export type StakedAsset = {

@@ -4,7 +4,12 @@ import { useUnmount } from 'usehooks-ts';
 
 import { RequiredMark } from '@/components/ui/RequiredMark';
 import { SETUP_SCREEN } from '@/constants';
-import { useServices, useSetup, useStakingProgram } from '@/hooks';
+import {
+  useIsInitiallyFunded,
+  useServices,
+  useSetup,
+  useStakingProgram,
+} from '@/hooks';
 import { ServiceTemplate } from '@/types';
 import { onDummyServiceCreation } from '@/utils/service';
 
@@ -46,7 +51,9 @@ const OptimusAgentFormContent = ({
   const [form] = Form.useForm<OptimusFieldValues>();
   const { goto } = useSetup();
   const { defaultStakingProgramId } = useStakingProgram();
-  const { refetch: refetchServices } = useServices();
+  const { refetch: refetchServices, updateSelectedServiceConfigId } =
+    useServices();
+  const { markServiceAsNotInitiallyFunded } = useIsInitiallyFunded();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const {
@@ -98,13 +105,15 @@ const OptimusAgentFormContent = ({
           },
         };
 
-        await onDummyServiceCreation(
+        const newService = await onDummyServiceCreation(
           defaultStakingProgramId,
           overriddenServiceConfig,
         );
+        markServiceAsNotInitiallyFunded(newService.service_config_id);
 
-        // fetch services to update the state after service creation
+        // Refetch so the new service is in the list, then select it
         await refetchServices?.();
+        updateSelectedServiceConfigId(newService.service_config_id);
 
         message.success('Agent setup complete');
 
@@ -123,6 +132,7 @@ const OptimusAgentFormContent = ({
       serviceTemplate,
       validateForm,
       updateSubmitButtonText,
+      updateSelectedServiceConfigId,
       refetchServices,
       goto,
     ],

@@ -12,9 +12,9 @@ import {
 import { ApproveWithBackupWallet } from './components/ApproveWithBackupWallet/ApproveWithBackupWallet';
 import { CreateNewPassword } from './components/CreateNewPassword';
 import { FundYourBackupWallet } from './components/FundYourBackupWallet';
+import { RecoverExistingAccountCard } from './components/RecoverExistingAccountCard';
 import { RecoveryNotAvailable } from './components/RecoveryNotAvailable';
-import { RecoveryViaBackupWallet } from './components/RecoveryViaBackupWallet';
-import { RecoveryViaSecretRecoveryPhrase } from './components/RecoveryViaSecretRecoveryPhrase';
+import { ForgotPasswordCard } from './components/RecoveryViaBackupWallet';
 import { RECOVERY_STEPS } from './constants';
 import { RecoveryMethodCard } from './styles';
 
@@ -30,6 +30,7 @@ const Loader = () => (
 
 const SelectRecoveryMethod = () => {
   const { goto } = useSetup();
+  const { isRecoveryAvailable } = useAccountRecoveryContext();
 
   return (
     <Flex align="center" vertical>
@@ -39,16 +40,16 @@ const SelectRecoveryMethod = () => {
         }}
       />
       <Title level={3} className="mt-12">
-        Select Recovery Method
+        Select Recovery Option
       </Title>
       <Text type="secondary">
-        Pearl can’t recover your password. Select the recovery method to restore
-        access.
+        Pearl can&apos;t recover your password. Choose how to restore access or
+        withdraw your funds.
       </Text>
 
       <Flex gap={24} style={{ marginTop: 56 }}>
-        <RecoveryViaBackupWallet />
-        <RecoveryViaSecretRecoveryPhrase />
+        <ForgotPasswordCard isRecoveryAvailable={isRecoveryAvailable} />
+        <RecoverExistingAccountCard />
       </Flex>
     </Flex>
   );
@@ -74,6 +75,12 @@ const AccountRecoveryInner = () => {
   }, [currentStep]);
 
   if (isLoading) return <Loader />;
+
+  // Always show SelectRecoveryMethod at step 1 so that "Recover an Existing
+  // Pearl Account" remains accessible even on fresh installs (no account).
+  // The isRecoveryAvailable gate is handled inside ForgotPasswordCard instead.
+  if (currentStep === RECOVERY_STEPS.SelectRecoveryMethod) return currentView;
+
   if (!isRecoveryAvailable) return <RecoveryNotAvailable />;
   return currentView;
 };

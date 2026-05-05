@@ -1,4 +1,9 @@
-import { EvmChainId, EvmChainIdMap } from '@/constants/chains';
+import {
+  AllEvmChainId,
+  AllEvmChainIdMap,
+  EvmChainId,
+  EvmChainIdMap,
+} from '@/constants/chains';
 import { Address } from '@/types/Address';
 
 export const TokenSymbolMap = {
@@ -8,6 +13,9 @@ export const TokenSymbolMap = {
   XDAI: 'XDAI',
   /** WXDAI: Token used for making bets in predict agent */
   WXDAI: 'WXDAI',
+  POL: 'POL',
+  'USDC.e': 'USDC.e',
+  pUSD: 'pUSD',
 } as const;
 
 export type TokenSymbol = keyof typeof TokenSymbolMap;
@@ -18,6 +26,9 @@ export const TokenSymbolConfigMap: Record<TokenSymbol, { image: string }> = {
   [TokenSymbolMap.OLAS]: { image: '/tokens/olas-icon.png' },
   [TokenSymbolMap.USDC]: { image: '/tokens/usdc-icon.png' },
   [TokenSymbolMap.WXDAI]: { image: '/tokens/wxdai-icon.png' },
+  [TokenSymbolMap.POL]: { image: '/tokens/pol-icon.png' },
+  [TokenSymbolMap['USDC.e']]: { image: '/tokens/usdc-icon.png' },
+  [TokenSymbolMap.pUSD]: { image: '/tokens/pusd-icon.png' },
 } as const;
 
 export enum TokenType {
@@ -79,7 +90,7 @@ export const ETHEREUM_TOKEN_CONFIG: ChainTokenConfig = {
   },
 } as const;
 
-const GNOSIS_TOKEN_CONFIG: ChainTokenConfig = {
+export const GNOSIS_TOKEN_CONFIG: ChainTokenConfig = {
   [TokenSymbolMap.XDAI]: {
     decimals: 18,
     tokenType: TokenType.NativeGas,
@@ -97,6 +108,23 @@ const GNOSIS_TOKEN_CONFIG: ChainTokenConfig = {
     tokenType: TokenType.Wrapped,
     symbol: TokenSymbolMap.WXDAI,
   },
+  /**
+   * @warning USDC.e (bridged USDC) is a special case, it has 6 decimals, not 18.
+   * @link https://gnosisscan.io/token/0x2a22f9c3b484c3629090feed35f17ff8f88f76f0
+   * @note When parsing or formatting units, use `decimals` (6) instead of the standard `ether` sizing (10^18).
+   */
+  [TokenSymbolMap['USDC.e']]: {
+    address: '0x2a22f9c3b484c3629090FeED35F17Ff8F88f76F0',
+    decimals: 6,
+    tokenType: TokenType.Erc20,
+    symbol: TokenSymbolMap['USDC.e'],
+  },
+  [TokenSymbolMap.USDC]: {
+    address: '0xDDAfbb505ad214D7b80b1f830fcCc89B60fb7A83',
+    decimals: 6,
+    tokenType: TokenType.Erc20,
+    symbol: TokenSymbolMap.USDC,
+  },
 } as const;
 
 const BASE_TOKEN_CONFIG: ChainTokenConfig = {
@@ -110,6 +138,17 @@ const BASE_TOKEN_CONFIG: ChainTokenConfig = {
     decimals: 18,
     tokenType: TokenType.Erc20,
     symbol: TokenSymbolMap.OLAS,
+  },
+  /**
+   * @warning USDC is a special case, it has 6 decimals, not 18.
+   * @link https://basescan.org/token/0x833589fcd6edb6e08f4c7c32d4f71b54bda02913
+   * @note When parsing or formatting units, use `decimals` (6) instead of the standard `ether` sizing (10^18).
+   */
+  [TokenSymbolMap.USDC]: {
+    address: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+    decimals: 6,
+    tokenType: TokenType.Erc20,
+    symbol: TokenSymbolMap.USDC,
   },
 } as const;
 
@@ -161,18 +200,70 @@ export const OPTIMISM_TOKEN_CONFIG: ChainTokenConfig = {
     decimals: 6,
     address: '0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85',
   },
+  /**
+   * @warning USDC.e (bridged USDC) is a special case, it has 6 decimals, not 18.
+   * @link https://optimistic.etherscan.io/token/0x7F5c764cBc14f9669B88837ca1490cCa17c31607
+   * @note When parsing or formatting units, use `decimals` (6) instead of the standard `ether` sizing (10^18).
+   */
+  [TokenSymbolMap['USDC.e']]: {
+    tokenType: TokenType.Erc20,
+    symbol: TokenSymbolMap['USDC.e'],
+    decimals: 6,
+    address: '0x7F5c764cBc14f9669B88837ca1490cCa17c31607',
+  },
 };
 
-/**
- * TODO:
- * 1. combine EvmChainIdMap and AllEvmChainId into one thing to avoid confusion
- * 2. include ethereum config into this and make it so balances are not requested for it
- */
+export const POLYGON_TOKEN_CONFIG: ChainTokenConfig = {
+  [TokenSymbolMap.POL]: {
+    tokenType: TokenType.NativeGas,
+    symbol: TokenSymbolMap.POL,
+    decimals: 18,
+  },
+  [TokenSymbolMap.OLAS]: {
+    tokenType: TokenType.Erc20,
+    symbol: TokenSymbolMap.OLAS,
+    decimals: 18,
+    address: '0xFEF5d947472e72Efbb2E388c730B7428406F2F95',
+  },
+  [TokenSymbolMap.USDC]: {
+    tokenType: TokenType.Erc20,
+    symbol: TokenSymbolMap.USDC,
+    decimals: 6,
+    address: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359',
+  },
+  [TokenSymbolMap['USDC.e']]: {
+    tokenType: TokenType.Erc20,
+    symbol: TokenSymbolMap['USDC.e'],
+    decimals: 6,
+    address: '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174',
+  },
+  /**
+   * @note pUSD: Polymarket USD stablecoin on Polygon.
+   * @warning pUSD has 6 decimals, not 18.
+   * @link https://polygonscan.com/address/0xC011a7E12a19f7B1f670d46F03B03f3342E82DFB
+   */
+  [TokenSymbolMap.pUSD]: {
+    tokenType: TokenType.Erc20,
+    symbol: TokenSymbolMap.pUSD,
+    decimals: 6,
+    address: '0xC011a7E12a19f7B1f670d46F03B03f3342E82DFB',
+  },
+};
+
+// TODO
+// 1. combine EvmChainIdMap and AllEvmChainId into one thing to avoid confusion
+// 2. include ethereum config into this and make it so balances are not requested for it
 export const TOKEN_CONFIG: Record<EvmChainId, ChainTokenConfig> = {
   [EvmChainIdMap.Gnosis]: GNOSIS_TOKEN_CONFIG,
   [EvmChainIdMap.Base]: BASE_TOKEN_CONFIG,
   [EvmChainIdMap.Mode]: MODE_TOKEN_CONFIG,
   [EvmChainIdMap.Optimism]: OPTIMISM_TOKEN_CONFIG,
+  [EvmChainIdMap.Polygon]: POLYGON_TOKEN_CONFIG,
+} as const;
+
+export const ALL_TOKEN_CONFIG: Record<AllEvmChainId, ChainTokenConfig> = {
+  [AllEvmChainIdMap.Ethereum]: ETHEREUM_TOKEN_CONFIG,
+  ...TOKEN_CONFIG,
 } as const;
 
 type ChainErc20TokenConfig = {

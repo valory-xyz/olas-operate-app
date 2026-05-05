@@ -81,8 +81,8 @@ export const getCrossChainWalletBalances = async (
         const isErc20 = tokenType === TokenType.Erc20;
         const isWrappedToken = tokenType === TokenType.Wrapped;
 
+        // get native balances for all relevant wallets
         if (isNative) {
-          // get native balances for all relevant wallets
           const nativeBalancePromises =
             connectedWallets.map<Promise<BigNumberish> | null>(
               ({ address: walletAddress }) => {
@@ -139,6 +139,7 @@ export const getCrossChainWalletBalances = async (
               symbol: tokenSymbol,
               isNative: false,
               isWrappedToken,
+              /** @deprecated Use balanceString instead */
               balance: Number(formatUnits(erc20Balances[index], decimals)),
               balanceString: formatUnits(erc20Balances[index], decimals),
             }),
@@ -190,7 +191,7 @@ const getCrossChainStakedBalances = async (
     );
 
     return {
-      serviceId: serviceConfigId,
+      serviceConfigId,
       chainId: middlewareChain,
       ...registryInfo,
     };
@@ -207,9 +208,10 @@ const getCrossChainStakedBalances = async (
     const value = res.value;
     if (!value) return;
 
-    const { serviceId, chainId, depositValue, bondValue, serviceState } = value;
+    const { serviceConfigId, chainId, depositValue, bondValue, serviceState } =
+      value;
     result.push({
-      serviceId,
+      serviceConfigId,
       evmChainId: asEvmChainId(chainId),
       ...correctBondDepositByServiceState({
         olasBondBalance: bondValue,

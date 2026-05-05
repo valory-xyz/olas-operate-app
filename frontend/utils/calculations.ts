@@ -32,7 +32,8 @@ export const sumBigNumbers = (
   values: string[],
   decimals: number = 18,
 ): string => {
-  const total = values.reduce((acc, val) => {
+  const filteredValues = values.filter((val) => !!val);
+  const total = filteredValues.reduce((acc, val) => {
     return acc.add(ethers.utils.parseUnits(val, decimals));
   }, ethers.BigNumber.from(0));
   return ethers.utils.formatUnits(total, decimals);

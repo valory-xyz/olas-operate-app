@@ -6,7 +6,6 @@ import {
   SupportedMiddlewareChain,
 } from '@/constants';
 import {
-  Address,
   AgentPerformance,
   DeepPartial,
   MiddlewareServiceResponse,
@@ -204,31 +203,30 @@ const getDeployment = async ({
   });
 
 /**
- * Withdraws the balance of a service
+ * Withdraws the balance of a service.
+ *
+ * On a non-OK response, rejects with the parsed JSON error body (or `{}`
+ * if the body isn't JSON). Callers that care about the
+ * `INSUFFICIENT_SIGNER_GAS` branch should narrow the rejection via
+ * `isInsufficientGasError(err)` from `@/constants`.
+ *
+ * @throws InsufficientGasErrorBody | Record<string, unknown>
  */
 const withdrawBalance = async ({
-  withdrawAddress,
   serviceConfigId,
 }: {
-  withdrawAddress: Address;
   serviceConfigId: ServiceConfigId;
-}): Promise<{ error: Nullable<string> }> =>
-  new Promise((resolve, reject) =>
-    fetch(
-      `${BACKEND_URL_V2}/service/${serviceConfigId}/terminate_and_withdraw`,
-      {
-        method: 'POST',
-        body: JSON.stringify({ withdrawal_address: withdrawAddress }),
-        headers: { ...CONTENT_TYPE_JSON_UTF8 },
-      },
-    ).then((response) => {
-      if (response.ok) {
-        resolve(response.json());
-      } else {
-        reject('Failed to withdraw balance.');
-      }
-    }),
+}): Promise<{ error: Nullable<string> }> => {
+  const response = await fetch(
+    `${BACKEND_URL_V2}/service/${serviceConfigId}/terminate_and_withdraw`,
+    {
+      method: 'POST',
+      headers: { ...CONTENT_TYPE_JSON_UTF8 },
+    },
   );
+  if (response.ok) return response.json();
+  throw await response.json().catch(() => ({}));
+};
 
 /**
  * To get the agent performance statistics of a service

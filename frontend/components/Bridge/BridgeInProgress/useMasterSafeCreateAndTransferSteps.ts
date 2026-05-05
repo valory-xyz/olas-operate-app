@@ -32,7 +32,7 @@ export const useMasterSafeCreateAndTransferSteps = ({
   const {
     isPending: isLoadingMasterSafeCreation,
     isError: isErrorMasterSafeCreation,
-    data: masterSafeDetails,
+    data: creationAndTransferDetails,
     mutateAsync: createMasterSafe,
   } = useMasterSafeCreationAndTransfer(symbols);
   const { getMasterSafeOf, isFetched: isMasterWalletFetched } =
@@ -45,11 +45,13 @@ export const useMasterSafeCreateAndTransferSteps = ({
     ? !isNil(getMasterSafeOf?.(selectedAgentConfig.evmHomeChainId))
     : false;
 
+  const isMasterSafeCreated =
+    creationAndTransferDetails?.safeCreationDetails?.isSafeCreated;
   const isSafeCreated = isMasterWalletFetched
-    ? hasMasterSafe || masterSafeDetails?.isSafeCreated
+    ? hasMasterSafe || isMasterSafeCreated
     : false;
   const isTransferCompleted =
-    masterSafeDetails?.masterSafeTransferStatus === 'FINISHED';
+    creationAndTransferDetails?.transferDetails?.isTransferComplete;
   const shouldCreateMasterSafe = canCreateMasterSafeAndTransferRef.current;
 
   useEffect(() => {
@@ -83,7 +85,7 @@ export const useMasterSafeCreateAndTransferSteps = ({
     // if master safe creation is in progress or if it has failed, do not create master safe.
     if (isLoadingMasterSafeCreation) return;
     if (isErrorMasterSafeCreation) return;
-    if (masterSafeDetails?.isSafeCreated) return;
+    if (isSafeCreated) return;
 
     createMasterSafe();
   }, [
@@ -94,7 +96,7 @@ export const useMasterSafeCreateAndTransferSteps = ({
     isMasterWalletFetched,
     isLoadingMasterSafeCreation,
     isErrorMasterSafeCreation,
-    masterSafeDetails?.isSafeCreated,
+    isSafeCreated,
     createMasterSafe,
     shouldCreateMasterSafe,
   ]);
@@ -107,7 +109,7 @@ export const useMasterSafeCreateAndTransferSteps = ({
       if (isBridging || !isBridgingCompleted) return 'wait';
       if (isErrorMasterSafeCreation) return 'error';
       if (isLoadingMasterSafeCreation) return 'process';
-      if (isSafeCreated) return 'finish';
+      if (isSafeCreated || isTransferCompleted) return 'finish';
       return 'process';
     })();
 
@@ -115,7 +117,8 @@ export const useMasterSafeCreateAndTransferSteps = ({
       status: currentMasterSafeCreationStatus,
       subSteps: [
         {
-          txnLink: null, // BE to be updated to return the txn link
+          txnLink:
+            creationAndTransferDetails?.safeCreationDetails?.txnLink || null,
           onRetry: createMasterSafe,
           onRetryProps: {
             isLoading: currentMasterSafeCreationStatus === 'process',
@@ -132,6 +135,8 @@ export const useMasterSafeCreateAndTransferSteps = ({
     isErrorMasterSafeCreation,
     isLoadingMasterSafeCreation,
     isSafeCreated,
+    isTransferCompleted,
+    creationAndTransferDetails?.safeCreationDetails?.txnLink,
   ]);
 
   const masterSafeTransferDetails = useMemo(() => {
@@ -147,7 +152,9 @@ export const useMasterSafeCreateAndTransferSteps = ({
 
     return {
       status: currentMasterSafeStatus,
-      subSteps: (masterSafeDetails?.transfers || []).map((transfer) => ({
+      subSteps: (
+        creationAndTransferDetails?.transferDetails?.transfers || []
+      ).map((transfer) => ({
         ...transfer,
         onRetry: createMasterSafe,
         onRetryProps: {
@@ -158,7 +165,7 @@ export const useMasterSafeCreateAndTransferSteps = ({
   }, [
     shouldCreateMasterSafe,
     masterSafeCreationDetails,
-    masterSafeDetails?.transfers,
+    creationAndTransferDetails?.transferDetails?.transfers,
     isRefillRequired,
     isErrorMasterSafeCreation,
     isBridging,

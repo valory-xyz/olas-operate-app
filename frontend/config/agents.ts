@@ -11,11 +11,13 @@ import {
   MODIUS_SERVICE_TEMPLATE,
   OPTIMUS_SERVICE_TEMPLATE,
 } from '@/constants/serviceTemplates';
+import { PREDICT_POLYMARKET_SERVICE_TEMPLATE } from '@/constants/serviceTemplates/service/trader';
 import { X402_ENABLED_FLAGS } from '@/constants/x402';
 import { AgentsFunBaseService } from '@/service/agents/AgentsFunBase';
 import { ModiusService } from '@/service/agents/Modius';
 import { OptimismService } from '@/service/agents/Optimism';
 import { PettAiService } from '@/service/agents/PettAi';
+import { Polystrat } from '@/service/agents/Polystrat';
 import { PredictTraderService } from '@/service/agents/PredictTrader';
 import { Address } from '@/types/Address';
 import { AgentConfig } from '@/types/Agent';
@@ -23,6 +25,7 @@ import { AgentConfig } from '@/types/Agent';
 import {
   MODE_TOKEN_CONFIG,
   OPTIMISM_TOKEN_CONFIG,
+  POLYGON_TOKEN_CONFIG,
   TokenSymbolMap,
 } from './tokens';
 
@@ -57,6 +60,24 @@ const getOptimusUsdcConfig = () => {
   return Number(formatUnits(usdcSafeRequirement, optimusUsdcConfig.decimals));
 };
 
+const getPolystratPusdConfig = () => {
+  const polystratFundRequirements =
+    PREDICT_POLYMARKET_SERVICE_TEMPLATE.configurations[
+      MiddlewareChainMap.POLYGON
+    ]?.fund_requirements;
+  const polystratPusdConfig = POLYGON_TOKEN_CONFIG[TokenSymbolMap.pUSD];
+
+  if (!polystratPusdConfig) {
+    throw new Error('Polystrat pUSD config not found');
+  }
+
+  const pusdSafeRequirement =
+    polystratFundRequirements?.[polystratPusdConfig.address as Address]?.safe ||
+    0;
+
+  return Number(formatUnits(pusdSafeRequirement, polystratPusdConfig.decimals));
+};
+
 export const AGENT_CONFIG: {
   [key in AgentType]: AgentConfig;
 } = {
@@ -70,18 +91,47 @@ export const AGENT_CONFIG: {
     agentIds: [14, 25],
     defaultStakingProgramId: STAKING_PROGRAM_IDS.PearlBetaMechMarketplace3,
     serviceApi: PredictTraderService,
-    displayName: 'Prediction Trader',
+    displayName: 'Omenstrat',
     description: 'Participates in prediction markets.',
     hasExternalFunds: false,
     doesChatUiRequireApiKey: true,
     category: 'Prediction Markets',
     defaultBehavior:
-      'Adopting a conservative strategy with small, high-confidence bets.',
+      'Adopting a conservative strategy with small, high-confidence trades.',
     servicePublicId: 'valory/trader_pearl:0.1.0',
+    erc20Tokens: [TokenSymbolMap['USDC.e'], TokenSymbolMap.WXDAI],
+  },
+  [AgentMap.Polystrat]: {
+    isAgentEnabled: true,
+    isAddingNewBlocked: true,
+    requiresSetup: true,
+    isX402Enabled: X402_ENABLED_FLAGS[AgentMap.Polystrat],
+    name: 'Polystrat',
+    evmHomeChainId: EvmChainIdMap.Polygon,
+    middlewareHomeChainId: MiddlewareChainMap.POLYGON,
+    agentIds: [86],
+    additionalRequirements: {
+      [EvmChainIdMap.Polygon]: {
+        [TokenSymbolMap.pUSD]: getPolystratPusdConfig(),
+      },
+    },
+    defaultStakingProgramId: STAKING_PROGRAM_IDS.PolygonBeta1,
+    serviceApi: Polystrat,
+    displayName: 'Polystrat',
+    description: 'Participates in prediction markets on Polymarket.',
+    hasExternalFunds: false,
+    doesChatUiRequireApiKey: true,
+    category: 'Prediction Markets',
+    defaultBehavior:
+      'Trade sizes adapt to market conditions and agent confidence.',
+    servicePublicId: 'valory/polymarket_trader:0.1.0',
+    isGeoLocationRestricted: true,
+    erc20Tokens: [TokenSymbolMap.USDC, TokenSymbolMap.pUSD],
   },
   [AgentMap.Optimus]: {
     isAgentEnabled: true,
     isComingSoon: false,
+    isAddingNewBlocked: true,
     requiresSetup: true,
     isX402Enabled: X402_ENABLED_FLAGS[AgentMap.Optimus],
     name: 'Optimus agent',
@@ -97,18 +147,20 @@ export const AGENT_CONFIG: {
     serviceApi: OptimismService,
     displayName: 'Optimus',
     description:
-      'Invests crypto assets on your behalf and grows your portfolio on Optimus network.',
+      'Invests crypto assets for you and grows your portfolio on Optimus network.',
     hasExternalFunds: true,
     doesChatUiRequireApiKey: true,
     category: 'DeFi',
     defaultBehavior:
       'Conservative volatile exposure across DEXs and lending markets with advanced functionalities enabled.',
     servicePublicId: 'valory/optimus:0.1.0',
+    erc20Tokens: [TokenSymbolMap.USDC],
   },
   [AgentMap.AgentsFun]: {
     isAgentEnabled: true,
     isUnderConstruction: false,
     isComingSoon: false,
+    isAddingNewBlocked: true,
     requiresSetup: true,
     isX402Enabled: X402_ENABLED_FLAGS[AgentMap.AgentsFun],
     name: 'Agents.fun',
@@ -124,6 +176,7 @@ export const AGENT_CONFIG: {
     doesChatUiRequireApiKey: false,
     defaultBehavior: 'Autonomously posts to X based on the provided persona.',
     servicePublicId: 'dvilela/memeooorr:0.1.0',
+    erc20Tokens: [TokenSymbolMap.USDC],
   },
   [AgentMap.Modius]: {
     isAgentEnabled: true,
@@ -142,13 +195,14 @@ export const AGENT_CONFIG: {
     serviceApi: ModiusService,
     displayName: 'Modius',
     description:
-      'Invests crypto assets on your behalf and grows your portfolio on Mode network.',
+      'Invests crypto assets for you and grows your portfolio on Mode network.',
     hasExternalFunds: true,
     doesChatUiRequireApiKey: true,
     category: 'DeFi',
     defaultBehavior:
       'Conservative volatile exposure across DEXs and lending markets with advanced functionalities enabled.',
     servicePublicId: 'valory/optimus:0.1.0',
+    erc20Tokens: [TokenSymbolMap.USDC],
   },
   [AgentMap.PettAi]: {
     isAgentEnabled: true,
@@ -180,7 +234,7 @@ export const AGENT_CONFIG: {
 
 export const ACTIVE_AGENTS = entries(AGENT_CONFIG).filter(([, agentConfig]) => {
   return !!agentConfig.isAgentEnabled;
-});
+}) as [AgentType, AgentConfig][];
 
 export const AVAILABLE_FOR_ADDING_AGENTS = ACTIVE_AGENTS.filter(
   ([, agentConfig]) => !agentConfig.isUnderConstruction,

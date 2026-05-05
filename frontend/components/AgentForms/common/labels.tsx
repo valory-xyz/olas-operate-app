@@ -1,6 +1,7 @@
 import { Flex, Typography } from 'antd';
 import { LuInfo } from 'react-icons/lu';
 
+import { Alert } from '@/components/ui';
 import { FormLabel } from '@/components/ui/Typography';
 import { UNICODE_SYMBOLS } from '@/constants/symbols';
 import {
@@ -8,6 +9,7 @@ import {
   GEMINI_API_URL,
   OPEN_AI_API_URL,
   X_ACCOUNT_API_TOKENS_GUIDE_URL,
+  X_DEVELOPER_CONSOLE_URL,
 } from '@/constants/urls';
 
 const { Text, Title } = Typography;
@@ -167,6 +169,32 @@ export const XAccountApiTokensSubHeader = ({
       X account API tokens enable your agent to view X and interact with other
       agents.
     </Text>
+    {isSetupPage && (
+      <Alert
+        type="info"
+        showIcon
+        className="rounded-12 mt-12"
+        message={
+          <Flex justify="space-between" gap={4} vertical>
+            <Text className="text-sm font-weight-500">
+              X API requires a paid plan
+            </Text>
+            <Text className="text-sm">
+              To generate these keys, you need to purchase X API credits on X
+              Developer Console.
+            </Text>
+            <a
+              target="_blank"
+              rel="noopener noreferrer"
+              href={X_DEVELOPER_CONSOLE_URL}
+              className="text-sm mt-8"
+            >
+              Visit X Developer Console&nbsp;{UNICODE_SYMBOLS.EXTERNAL_LINK}
+            </a>
+          </Flex>
+        }
+      />
+    )}
   </Flex>
 );
 

@@ -6,7 +6,7 @@ import styled from 'styled-components';
 
 import { Table } from '@/components/ui';
 import {
-  ChainImageMap,
+  CHAIN_IMAGE_MAP,
   COLOR,
   NA,
   SupportedMiddlewareChain,
@@ -94,7 +94,7 @@ const getColumns = (
       width: '20%',
       render: (chainName: SupportedMiddlewareChain) => {
         const chainId = asEvmChainId(chainName);
-        const chainImageSrc = chainId ? ChainImageMap[chainId] : undefined;
+        const chainImageSrc = chainId ? CHAIN_IMAGE_MAP[chainId] : undefined;
         if (!chainImageSrc) return NA;
 
         const chainDisplayName = asEvmChainDetails(chainName).displayName;

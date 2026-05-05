@@ -1,7 +1,6 @@
-import { Flex } from 'antd';
 import { useCallback, useMemo } from 'react';
 
-import { MAIN_CONTENT_MAX_WIDTH } from '@/constants';
+import { MainContentContainer } from '@/components/ui';
 
 import { AgentWalletProvider, useAgentWallet } from './AgentWalletProvider';
 import { BalancesAndAssets } from './BalancesAndAssets/BalancesAndAssets';
@@ -64,8 +63,8 @@ const AgentWalletContent = () => {
 
 export const AgentWallet = () => (
   <AgentWalletProvider>
-    <Flex vertical style={{ width: MAIN_CONTENT_MAX_WIDTH, margin: '0 auto' }}>
+    <MainContentContainer vertical>
       <AgentWalletContent />
-    </Flex>
+    </MainContentContainer>
   </AgentWalletProvider>
 );

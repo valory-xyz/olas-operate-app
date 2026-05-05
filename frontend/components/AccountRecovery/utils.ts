@@ -4,7 +4,7 @@ import { CHAIN_CONFIG } from '@/config/chains';
 import { TOKEN_CONFIG } from '@/config/tokens';
 import {
   AddressZero,
-  ChainImageMap,
+  CHAIN_IMAGE_MAP,
   EvmChainId,
   SupportedMiddlewareChain,
 } from '@/constants';
@@ -33,6 +33,15 @@ export const getBackupWalletStatus = (
     address: Address;
     owners: string[];
   }[] = [];
+
+  // Empty backupList means no safes were found — recovery is unavailable
+  if (masterSafes.length === 0) {
+    return {
+      hasBackupWalletsAcrossEveryChain: false,
+      areAllBackupOwnersSame: false,
+      backupAddress: undefined,
+    };
+  }
 
   for (const { address: untypedAddress, evmChainId } of masterSafes) {
     const masterSafeAddress = untypedAddress as Address;
@@ -115,13 +124,13 @@ export const parseRecoveryFundingRequirements = (
           chainName: chain,
           symbol,
           totalAmount: Number(
-            formatUnitsToNumber(String(totalAmount ?? 0), decimals),
+            formatUnitsToNumber(BigInt(totalAmount ?? 0), decimals),
           ),
           pendingAmount: Number(
-            formatUnitsToNumber(String(refillAmount), decimals),
+            formatUnitsToNumber(BigInt(refillAmount), decimals),
           ),
-          iconSrc: ChainImageMap[evmChainId],
-          areFundsReceived: refillAmount === 0,
+          iconSrc: CHAIN_IMAGE_MAP[evmChainId],
+          areFundsReceived: BigInt(refillAmount) === 0n,
         });
       }
     }

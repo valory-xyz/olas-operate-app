@@ -26,6 +26,12 @@ type Mechs = {
       contract: MulticallContract;
     };
   };
+  [EvmChainIdMap.Polygon]: {
+    [mechType: string]: {
+      name: string;
+      contract: MulticallContract;
+    };
+  };
 };
 
 export const MECHS: Mechs = {
@@ -61,6 +67,17 @@ export const MECHS: Mechs = {
       name: 'Mech Marketplace',
       contract: new MulticallContract(
         '0xf24eE42edA0fc9b33B7D41B06Ee8ccD2Ef7C5020',
+        MECH_MARKETPLACE_V2_ABI.filter(
+          (abi) => (abi as JsonFragment).type === 'function',
+        ) as JsonFragment[],
+      ),
+    },
+  },
+  [EvmChainIdMap.Polygon]: {
+    [MechType.MarketplaceV2]: {
+      name: 'Mech Marketplace',
+      contract: new MulticallContract(
+        '0x343F2B005cF6D70bA610CD9F1F1927049414B582',
         MECH_MARKETPLACE_V2_ABI.filter(
           (abi) => (abi as JsonFragment).type === 'function',
         ) as JsonFragment[],

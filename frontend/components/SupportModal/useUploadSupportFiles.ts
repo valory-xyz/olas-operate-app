@@ -2,15 +2,30 @@ import { message, UploadFile } from 'antd';
 import { isNil } from 'lodash';
 import { useCallback } from 'react';
 
+import { useFallbackLogs } from '@/components/SupportModal/useFallbackLogs';
 import { useElectronApi, useLogs } from '@/hooks';
 import { SupportService } from '@/service/Support';
 import { Nullable } from '@/types';
 
 import { FileDetails, formatAttachments } from './utils';
 
-export const useUploadSupportFiles = () => {
-  const logs = useLogs();
+type UseUploadSupportFilesProps = {
+  /**
+   * When true, uses fallback logs that fetch data directly via API instead of
+   * relying on context providers. Can be used for cases when the context
+   * providers are not available, eg: ErrorBoundary.
+   */
+  shouldUseFallbackLogs?: boolean;
+};
+
+export const useUploadSupportFiles = ({
+  shouldUseFallbackLogs = false,
+}: UseUploadSupportFilesProps) => {
+  const mainLogs = useLogs();
+  const fallbackLogs = useFallbackLogs();
   const { saveLogsForSupport, readFile } = useElectronApi();
+
+  const logs = shouldUseFallbackLogs ? fallbackLogs : mainLogs;
 
   const loadLogsFile = useCallback(async (): Promise<Nullable<FileDetails>> => {
     if (!logs || !saveLogsForSupport || !readFile) return null;

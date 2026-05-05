@@ -2,7 +2,6 @@
  * Chain configurations
  * - add new chains to the CHAIN_CONFIGS object
  */
-import { TokenSymbolMap } from '@/config/tokens';
 import {
   EvmChainId,
   EvmChainIdMap,
@@ -11,7 +10,7 @@ import {
 } from '@/constants/chains';
 import { parseEther } from '@/utils';
 
-import { TOKEN_CONFIG, TokenConfig } from './tokens';
+import { TOKEN_CONFIG, TokenConfig, TokenSymbolMap } from './tokens';
 
 type HttpUrl = `http${'s' | ''}://${string}`;
 
@@ -21,8 +20,6 @@ export type ChainConfig = {
   evmChainId: EvmChainId;
   middlewareChain: MiddlewareChain;
   rpc: HttpUrl;
-  color: `#${string}`;
-  // TODO: the values are hardcoded, should be fetched from the backend
   /**
    * Least amount of native token required to create a Safe in wei
    * @example for gnosis chain, 1.5 XDAI is required to create a Safe.
@@ -40,7 +37,6 @@ const GNOSIS_CHAIN_CONFIG: ChainConfig = {
   middlewareChain: MiddlewareChainMap.GNOSIS,
   rpc: process.env.GNOSIS_RPC as HttpUrl,
   safeCreationThreshold: BigInt(parseEther(1.5)),
-  color: '#04795B0F',
 } as const;
 
 const BASE_CHAIN_CONFIG: ChainConfig = {
@@ -52,7 +48,6 @@ const BASE_CHAIN_CONFIG: ChainConfig = {
   middlewareChain: MiddlewareChainMap.BASE,
   rpc: process.env.BASE_RPC as HttpUrl,
   safeCreationThreshold: BigInt(parseEther(0.005)),
-  color: '#0052FF12',
 } as const;
 
 const MODE_CHAIN_CONFIG: ChainConfig = {
@@ -64,7 +59,6 @@ const MODE_CHAIN_CONFIG: ChainConfig = {
   middlewareChain: MiddlewareChainMap.MODE,
   rpc: process.env.MODE_RPC as HttpUrl,
   safeCreationThreshold: BigInt(parseEther(0.0005)),
-  color: '#DFFE0029',
 } as const;
 
 const OPTIMISM_CHAIN_CONFIG: ChainConfig = {
@@ -76,7 +70,17 @@ const OPTIMISM_CHAIN_CONFIG: ChainConfig = {
   middlewareChain: MiddlewareChainMap.OPTIMISM,
   rpc: process.env.OPTIMISM_RPC as HttpUrl,
   safeCreationThreshold: BigInt(parseEther(0.005)),
-  color: '#FF042012',
+} as const;
+
+const POLYGON_CHAIN_CONFIG: ChainConfig = {
+  evmChainId: EvmChainIdMap.Polygon,
+  name: 'Polygon',
+  nativeToken: TOKEN_CONFIG[EvmChainIdMap.Polygon][
+    TokenSymbolMap.POL
+  ] as TokenConfig,
+  middlewareChain: MiddlewareChainMap.POLYGON,
+  rpc: process.env.POLYGON_RPC as HttpUrl,
+  safeCreationThreshold: BigInt(parseEther(16)),
 } as const;
 
 export const CHAIN_CONFIG: {
@@ -86,4 +90,5 @@ export const CHAIN_CONFIG: {
   [EvmChainIdMap.Gnosis]: GNOSIS_CHAIN_CONFIG,
   [EvmChainIdMap.Mode]: MODE_CHAIN_CONFIG,
   [EvmChainIdMap.Optimism]: OPTIMISM_CHAIN_CONFIG,
+  [EvmChainIdMap.Polygon]: POLYGON_CHAIN_CONFIG,
 } as const;

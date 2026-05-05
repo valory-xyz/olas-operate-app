@@ -16,21 +16,10 @@ import { useServices } from './useServices';
 export const useServiceBalances = (serviceConfigId: string | undefined) => {
   const { selectedAgentConfig } = useServices();
 
-  const { agentAddresses, serviceSafes, serviceEoa } =
-    useService(serviceConfigId);
-  const { walletBalances, stakedBalances, isLoading } = useBalanceContext();
+  const { serviceSafes, serviceEoa } = useService(serviceConfigId);
+  const { walletBalances, isLoading } = useBalanceContext();
 
   const evmHomeChainId = selectedAgentConfig?.evmHomeChainId;
-
-  /**
-   * Staked balances, only relevant to safes
-   */
-  const serviceStakedBalances = useMemo(() => {
-    if (!stakedBalances) return;
-    return stakedBalances.filter(({ walletAddress }) =>
-      agentAddresses.includes(walletAddress),
-    );
-  }, [agentAddresses, stakedBalances]);
 
   /**
    * Cross-chain unstaked balances in service safes
@@ -54,32 +43,6 @@ export const useServiceBalances = (serviceConfigId: string | undefined) => {
         areAddressesEqual(balance.walletAddress, serviceEoa?.address),
       ),
     [serviceEoa?.address, walletBalances],
-  );
-
-  /**
-   * Balances i.e. native, erc20, etc
-   * Across all service wallets, including eoa
-   * @note NOT STAKED BALANCES
-   */
-  const serviceWalletBalances = useMemo<Optional<WalletBalance[]>>(() => {
-    let result;
-    if (serviceSafeBalances || serviceEoaBalances) {
-      result = [...(serviceSafeBalances || []), ...(serviceEoaBalances || [])];
-    }
-    return result;
-  }, [serviceEoaBalances, serviceSafeBalances]);
-
-  /**
-   * Native service safe
-   * @example XDAI on gnosis
-   */
-  const serviceSafeNative = useMemo(
-    () =>
-      serviceSafeBalances?.find(
-        ({ isNative, evmChainId }) =>
-          isNative && evmChainId === selectedAgentConfig.evmHomeChainId,
-      ),
-    [serviceSafeBalances, selectedAgentConfig],
   );
 
   const serviceSafeNativeBalances = useMemo(() => {
@@ -110,6 +73,18 @@ export const useServiceBalances = (serviceConfigId: string | undefined) => {
     [serviceEoaBalances, evmHomeChainId],
   );
 
+  /** service eoa ERC20 balances for current chain (excluding OLAS) */
+  const serviceEoaErc20Balances = useMemo(
+    () =>
+      serviceEoaBalances?.filter(
+        ({ isNative, symbol, evmChainId }) =>
+          !isNative &&
+          symbol !== TokenSymbolMap.OLAS &&
+          evmChainId === evmHomeChainId,
+      ),
+    [serviceEoaBalances, evmHomeChainId],
+  );
+
   /** claimed OLAS */
   const serviceSafeOlas = useMemo(
     () =>
@@ -121,15 +96,12 @@ export const useServiceBalances = (serviceConfigId: string | undefined) => {
   );
 
   return {
-    serviceWalletBalances,
-    serviceStakedBalances,
     serviceSafeBalances,
     serviceSafeOlas,
-    serviceEoaBalances,
-    serviceSafeNative,
     serviceSafeNativeBalances,
     serviceSafeErc20Balances,
     serviceEoaNativeBalance,
+    serviceEoaErc20Balances,
     isLoading,
   };
 };

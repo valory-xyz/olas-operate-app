@@ -1,0 +1,534 @@
+# Auto-Run Feature Reference
+
+Single source of truth for the auto-run agent rotation feature.
+Covers architecture, configuration, behavior, edge cases, and bugs fixed.
+
+---
+
+## 1. Architecture
+
+### File Structure
+
+```
+frontend/context/AutoRunProvider/
+  AutoRunProvider.tsx          — React context provider; wires hooks, exposes state/actions to UI
+  constants.ts                 — Shared status enums and core auto-run timing constants
+  types.ts                     — Shared TypeScript types (AgentMeta, AutoRunContextType, etc.)
+  hooks/
+    useAutoRunController.ts    — Composition root; wires signals + operations + scanner + lifecycle
+    useAutoRunSignals.ts       — Shared refs, wait helpers, scan scheduling
+    useAutoRunOperations.ts    — Thin composition hook for start/stop/rewards operations
+    useAutoRunStartOperations.ts — Guarded start flow with retries (eligibility verified by scanner before call)
+    useAutoRunStopOperations.ts  — Stop flow with deployment confirmation + recovery retries
+    useAutoRunScanner.ts       — Queue traversal, candidate selection, startSelectedAgentIfEligible
+    useAutoRunLifecycle.ts     — Effects: rotation on rewards, rewards polling, startup/resume, watchdog
+    useAutoRunVerboseLogger.ts — Verbose log gate utility (tied to AUTO_RUN_VERBOSE_LOGS)
+    useAutoRunStore.ts         — Electron store persistence (enabled, includedAgents, userExcludedAgents)
+    useConfiguredAgents.ts     — Derives AgentMeta[] from services
+    useLogAutoRunEvent.ts      — Prefixed logging utility
+    useSelectedEligibility.ts  — Eligibility for the currently selected agent
+    useSafeEligibility.ts      — Safe creation checks
+  utils/
+    autoRunHelpers.ts          — refreshRewardsEligibility, fetchDeployabilityForAgent, formatEligibilityReason, isOnlyLoadingReason, waitForEligibilityReadyHelper
+    utils.ts                   — getAgentDisplayName, notifySkipped, notifyStartFailed, list utilities
+```
+
+### Data Flow
+
+```
+AutoRunProvider
+  └─ useAutoRunController (composition root)
+       ├─ useAutoRunSignals      → refs, wait loops, scheduleNextScan
+       ├─ useAutoRunOperations   → startAgentWithRetries, stopAgentWithRecovery
+       │   ├─ useAutoRunStartOperations  → guarded start with retries + eligibility gates
+       │   └─ useAutoRunStopOperations   → stop + deployment polling + bounded recovery
+       ├─ useAutoRunScanner      → scanAndStartNext, startSelectedAgentIfEligible
+       └─ useAutoRunLifecycle    → rotation effect, rewards poll, startup/resume, watchdog
+```
+
+### Key Refs
+
+| Ref | Purpose |
+|-----|---------|
+| `enabledRef` | Live auto-run enabled state for async loops |
+| `runningAgentTypeRef` | Currently running agent type (from react-query polling) |
+| `runningServiceConfigIdRef` | Currently running instance's serviceConfigId |
+| `lastRewardsEligibilityRef` | Per-instance previous rewards state; guards duplicate rotation triggers |
+| `isRotatingRef` | Prevents overlapping rotation/startup flows |
+| `wasAutoRunEnabledRef` | Distinguishes first enable from agent-stopped-while-enabled |
+| `stopRetryBackoffUntilRef` | Per-instance exponential backoff after stop timeout |
+| `scanTimeoutRef` | Pending `scheduleNextScan` timer |
+| `balanceLastUpdatedRef` | Tracks when balance data was last refreshed |
+| `didLogStaleRef` | Deduplicates "balances stale" log messages |
+| `skipNotifiedRef` | Per-instance+reason notification dedup; cleared on disable |
+| `runningSinceRef` | Timestamp when current instance started; used by runtime watchdog |
+| `rotationCycleSeqRef` | Sequence counter for cycle correlation IDs in verbose logs |
+| `startOperationSeqRef` | Op-id sequence for structured start phase logs |
+| `stopOperationSeqRef` | Op-id sequence for structured stop phase logs |
+
+---
+
+## 2. Configuration Constants
+
+Note: timing constants are centralized in `constants.ts` to avoid duplicate knobs.
+
+| Constant | Value | Purpose |
+|----------|-------|---------|
+| `AUTO_RUN_START_DELAY_SECONDS` | 30s | Delay before starting after first enable (gives user time to configure) |
+| `AUTO_RUN_VERBOSE_LOGS` | true | Gates high-volume diagnostic logs; set to true while actively debugging incidents |
+| `COOLDOWN_SECONDS` | 20s | Delay after stop before starting next instance |
+| `RUNNING_AGENT_MAX_RUNTIME_SECONDS` | 70min | Watchdog threshold for maximum continuous runtime per instance |
+| `RUNNING_AGENT_WATCHDOG_CHECK_SECONDS` | 5min | Watchdog check cadence |
+| `HEALTH_SUMMARY_INTERVAL_SECONDS` | 15min | Aggregated auto-run health log cadence (error/success counters); only emitted when `AUTO_RUN_VERBOSE_LOGS=true` |
+| `RETRY_BACKOFF_SECONDS` | [30, 60, 120] | Progressive backoff between start retries |
+| `REWARDS_POLL_SECONDS` | 120s | How often to poll rewards for the running instance |
+| `SCAN_BLOCKED_DELAY_SECONDS` | 10min | Rescan delay when instances are blocked (low balance, evicted, etc.) |
+| `SCAN_ELIGIBLE_DELAY_SECONDS` | 30min | Rescan delay when all instances have earned rewards |
+| `SCAN_LOADING_RETRY_SECONDS` | 30s | Rescan delay on transient loading states |
+| `START_TIMEOUT_SECONDS` | 900s (15min) | How long to wait for DEPLOYED status after start; also used as stop-confirmation timeout |
+| `STOP_REQUEST_TIMEOUT_SECONDS` | 300s (5min) | Timeout for stop request API call (separate from stop confirmation polling) |
+| `STOP_RECOVERY_MAX_ATTEMPTS` | 3 | Bounded stop retries per rotation |
+| `STOP_RECOVERY_RETRY_SECONDS` | 60s | Delay between stop recovery attempts |
+| `AGENT_SELECTION_WAIT_TIMEOUT_SECONDS` | 60s | Hard timeout for UI selection to match requested instance |
+| `REWARDS_WAIT_TIMEOUT_SECONDS` | 20s | Hard timeout for rewards snapshot to arrive |
+| `DISABLE_RACE_STOP_CHECK_INTERVAL_MS` | 10s | Poll cadence when checking for an instance that started during a concurrent disable |
+| `DISABLE_RACE_STOP_MAX_CHECKS` | 90 | Max follow-up checks (90 × 10s = 15min window) before giving up on the disable-race guard |
+| `SLEEP_DRIFT_THRESHOLD_MS` | 30s | Max allowed clock drift before treating as sleep/wake |
+| `AGENT_SELECTION_WAIT_TIMEOUT_SECONDS * 3` | 180s (3min) | Derived balances wait timeout |
+| `REWARDS_POLL_SECONDS * 1000` | 120s | Derived balance staleness threshold |
+
+---
+
+## 3. Core Flows
+
+### 3.1 First Enable
+
+1. User toggles auto-run ON.
+2. `useAutoRunLifecycle` startup effect fires. `wasEnabled = false` (first enable).
+3. Wait `AUTO_RUN_START_DELAY_SECONDS` (30s) to let user adjust agent list.
+4. Try `startSelectedAgentIfEligible` — checks rewards, eligibility, balances for the currently selected agent.
+5. If selected can run → start it. If not → `scanAndStartNext` iterates the included queue.
+
+### 3.2 Rotation on Rewards
+
+1. `REWARDS_POLL_SECONDS` interval calls `refreshRewardsEligibility(runningServiceConfigId)`.
+2. Snapshot update bumps `rewardsTick` → rotation effect fires.
+3. Effect detects `false → true` transition via `lastRewardsEligibilityRef` guard.
+4. `rotateToNext(currentServiceConfigId)`:
+   a. Refresh rewards for all other instances.
+   b. If all earned/unknown → keep current, rescan in 30min.
+   c. Otherwise → `stopAgentWithRecovery` → reset `lastRewardsEligibilityRef[current]` → cooldown → `scanAndStartNext`.
+
+Note: Resetting `lastRewardsEligibilityRef` on successful stop is critical — without it the guard stays `true` from the current epoch and permanently blocks rotation in all future epochs when this instance runs again.
+
+### 3.3 Resume After Stop (Sleep/Wake, Backend Crash)
+
+1. Agent stops while auto-run is enabled → `runningAgentType` becomes null.
+2. Startup effect fires with `wasEnabled = true`.
+3. Cooldown (`COOLDOWN_SECONDS` = 20s).
+4. Try `startSelectedAgentIfEligible` — this prioritizes the currently selected agent (usually the previously-running one because selection is persisted).
+5. If it can still run → restart it. If not → `scanAndStartNext`.
+
+### 3.4 Disable
+
+1. `setEnabled(false)` → `enabledRef.current = false` + `stopRunningAgent()`.
+2. All wait loops check `enabledRef.current` and exit early.
+3. `stopAgentWithRecovery` runs to completion (does NOT check `enabledRef` — intentional, stop must finish).
+4. Scan timers cleared.
+
+### 3.5 Long-Running Agent Watchdog
+
+1. While auto-run is enabled and an agent is running, watchdog checks runtime every 5 minutes.
+2. If the same agent has been running for more than 70 minutes continuously, watchdog attempts forced `rotateToNext` (ignores the normal "all others earned/unknown" keep-running optimization).
+3. In force mode, if all other agents are earned/unknown (no known alternative), current agent is kept running and watchdog retries later (no stop-to-idle).
+4. If rotate/recovery fails, scanner fallback is scheduled with blocked delay.
+
+### 3.6 Observability
+
+1. When `AUTO_RUN_VERBOSE_LOGS=true`, start/stop operations emit structured phase logs with operation ids:
+`start_prepare`, `start_request`, `start_confirm`, `stop_request`, `stop_confirm`, `stop_retry`.
+2. When `AUTO_RUN_VERBOSE_LOGS=true`, rotation and watchdog flows emit cycle correlation ids:
+`cycle=<id> trigger=<rewards|watchdog> phase=<...>`.
+3. When `AUTO_RUN_VERBOSE_LOGS=true`, every 15 minutes (while auto-run is enabled), a health summary log is emitted with counters:
+`startErrors`, `stopTimeouts`, `rewardsErrors`, `eligibilityTimeouts`, `rotationsSucceeded`.
+
+---
+
+## 4. Wait Loop Guardrails
+
+All waits are guarded by `enabledRef.current`, `sleepAwareDelay()`, and hard timeouts:
+
+| Wait Function | Hard Timeout | Sleep Detection | Exits on Disable |
+|---------------|:---:|:---:|:---:|
+| `waitForAgentSelection` | 60s (`AGENT_SELECTION_WAIT_TIMEOUT_SECONDS`) | Yes | Yes |
+| `waitForBalancesReady` | 180s (`AGENT_SELECTION_WAIT_TIMEOUT_SECONDS * 3`) | Yes | Yes |
+| `waitForRunningAgent` | 900s (`START_TIMEOUT_SECONDS`) | Yes | Yes |
+| `waitForStoppedDeployment` | 900s (`START_TIMEOUT_SECONDS`) | Yes | No (stop must finish) |
+| `waitForRewardsEligibility` | 20s (`REWARDS_WAIT_TIMEOUT_SECONDS`) | Yes | Yes |
+| `waitForEligibilityReady` | 60s (`AGENT_SELECTION_WAIT_TIMEOUT_SECONDS * 1000`) | Yes | Yes |
+
+**No wait can block indefinitely.** Every wait has a hard timeout that returns `false` (or `undefined` for rewards), allowing the caller to reschedule or bail.
+
+---
+
+## 5. Start Attempt Result Handling
+
+`startAgentWithRetries` returns a structured `AutoRunStartResult`:
+
+| Status | Meaning | Scanner Response |
+|--------|---------|-----------------|
+| `started` | Agent deployed and running | Done |
+| `agent_blocked` | Deterministic blocker (low balance, evicted, etc.) | Skip with notification, advance queue |
+| `infra_failed` | Transient failure (RPC/network/timeout) | Mark `hasInfraFailed`, continue scan to try remaining candidates; schedule short rescan if all fail |
+| `aborted` | Auto-run disabled or sleep detected | Stop processing |
+
+The `infra_failed` handling prevents the scanner from permanently rotating the selected agent on a transient failure. Remaining candidates in the current scan cycle are still tried (they may have different staking contracts and sufficient balance), but the selected agent is not replaced as the preferred choice.
+
+---
+
+## 6. Stop Recovery
+
+`stopAgentWithRecovery` uses bounded retries:
+
+1. Call `ServicesService.stopDeployment()` (with 300s HTTP timeout via `withTimeout`).
+2. Poll `ServicesService.getDeployment()` (with 15s per-request timeout) until status is not `DEPLOYED/DEPLOYING/STOPPING`, up to `START_TIMEOUT_SECONDS`.
+3. Fallback: check `runningAgentTypeRef.current !== agentType`.
+4. If failed → wait `STOP_RECOVERY_RETRY_SECONDS`, retry.
+5. Max `STOP_RECOVERY_MAX_ATTEMPTS` attempts.
+
+On final failure in `rotateToNext`:
+- Reset `lastRewardsEligibilityRef[agent]` to `undefined` (prevents permanent rotation blockage).
+- Set `stopRetryBackoffUntilRef[agent]` to suppress immediate re-trigger from rewards poll.
+- Schedule rescan in `SCAN_BLOCKED_DELAY_SECONDS` (10min).
+
+---
+
+## 7. Sleep/Wake Detection
+
+### Mechanism
+`sleepAwareDelay(seconds)` in `frontend/utils/delay.ts`:
+- Records `Date.now()` before setTimeout.
+- After setTimeout resolves, checks if `elapsed > expected + 30s`.
+- Returns `false` on drift (sleep detected), `true` on normal completion.
+
+### Coverage
+Every delay and poll interval in auto-run uses `sleepAwareDelay`. On `false`:
+- Wait functions return `false` / `undefined`.
+- Callers bail out of the current flow.
+- Safety net in startup effect's `.finally()` detects "flow interrupted before scan" and schedules a rescan.
+
+### Stale Balance Detection
+`balanceLastUpdatedRef` tracks when balance data was last refreshed. If older than 120s, `waitForBalancesReady` triggers a refetch and waits for fresh data before proceeding.
+
+---
+
+## 8. Eligibility Normalization
+
+`normalizeEligibility` handles two special cases:
+
+1. **"Another agent running"** → Treated as transient Loading (not a skip). This avoids false skip notifications during rotation transitions.
+2. **"Loading: Balances" with live balances ready** → Overridden to `{ canRun: true }`. Catches stale render where deployability says Loading but balances context is already resolved.
+
+---
+
+## 9. Notification Deduplication
+
+- **Skip notifications** (`notifySkipOnce`): Stored per `agentType + reason` in `skipNotifiedRef`. Same reason fires only once while auto-run stays enabled. Cleared on disable.
+- **Loading reasons** are never notified (passed as structured loading flag).
+- **"balances stale" log**: `didLogStaleRef` logs once per staleness window; resets when balance data actually changes.
+
+---
+
+## 10. Scenarios and Expected Behavior
+
+### Happy Path
+
+| # | Scenario | Expected | Implementation |
+|---|----------|----------|----------------|
+| 1 | Enable with 1 eligible agent | Starts immediately | `startSelectedAgentIfEligible` → start |
+| 2 | 3 eligible agents | Start selected → rotate on rewards → rotate → 30min cooldown → repeat | Follows included order, rotates on rewards |
+| 3 | Enable while agent already running | No new start; wait for rewards | `if (runningAgentType) return` guard |
+| 4 | Disable while running | Stop agent; switch shows loading | `setEnabled(false)` → `stopRunningAgent()` |
+
+### Rotation
+
+| # | Scenario | Expected | Implementation |
+|---|----------|----------|----------------|
+| 5 | Agent earns rewards | Stop → cooldown → start next | `false→true` transition triggers `rotateToNext` |
+| 6 | Agent already earned before enable | Skip, move to next | Rewards snapshot check before start |
+| 7 | All agents earned | Keep current running, rescan in 30min | `allEarnedOrUnknown` → `SCAN_ELIGIBLE_DELAY_SECONDS` |
+| 7a | Epoch expired (clock = 0), all agents show `isEligibleForRewards = true` from old epoch, no agent running | Treat as not-yet-earned and start next agent to trigger on-chain checkpoint | `epochExpired` check in `refreshRewardsEligibility` (fresh chain data) + separate `isEpochExpired` flag passed to `useAutoRunSignals` where `!isEligibleForRewards \|\| isEpochExpired` is evaluated at the snapshot write |
+
+### Blocked Agents
+
+| # | Scenario | Expected | Implementation |
+|---|----------|----------|----------------|
+| 8 | Low balance | Skip with notification (once) | `notifySkipOnce` + `hasBlocked` |
+| 9 | Evicted | Skip with notification | Via deployability |
+| 10 | Region restricted | Skip with notification | Via deployability |
+| 11 | No slots | Skip with notification | Via deployability |
+| 12 | Under construction | Skip with notification | Via deployability |
+
+### Loading States (No Skip Notification)
+
+| # | Scenario | Expected | Implementation |
+|---|----------|----------|----------------|
+| 13 | Balances loading | Do not notify skip; wait/defer with timeout | `waitForBalancesReady` with hard timeout |
+| 14 | Safe data loading | Do not notify skip; wait/defer with timeout | Treated as Loading |
+| 15 | Staking/Geo loading | Do not notify skip; wait/defer with timeout | Treated as Loading |
+| 16 | Services loading | Do not notify skip; wait/defer with timeout | Treated as Loading |
+
+### Inclusion/Exclusion
+
+| # | Scenario | Expected | Implementation |
+|---|----------|----------|----------------|
+| 17 | Decommissioned agent | Auto-excluded, cannot add | Filtered by `getEligibleAgentTypes` |
+| 18 | User excludes agent | Moves to excluded list | `userExcludedAgents` in store |
+| 19 | User re-includes agent | Reappears in included list | Appends with next order index |
+| 20 | Order persists after restart | Same included order | Electron store persistence |
+| 21 | Empty included list | Fallback to all eligible | `getOrderedIncludedAgentTypes` returns `eligibleAgentTypes` |
+
+### Failure Handling
+
+| # | Scenario | Expected | Implementation |
+|---|----------|----------|----------------|
+| 22 | Start fails (transient) | Retry with backoff; on final failure return `INFRA_FAILED`; try remaining scan candidates, then schedule short rescan | `startAgentWithRetries` → `INFRA_FAILED` → scanner continues to next candidates → `SCAN_LOADING_RETRY_SECONDS` rescan if all fail |
+| 23 | Stop fails | Bounded retries; reset rewards guard; schedule rescan | `stopAgentWithRecovery` + guard reset + `SCAN_BLOCKED_DELAY_SECONDS` |
+| 24 | Disable during stop recovery | Stop recovery runs to completion | `waitForStoppedDeployment` does not check `enabledRef` |
+| 25 | Rewards API fails (RPC error) | Log error, continue | Returns `undefined`; treated as "not yet earned" |
+| 26 | Eligibility stuck loading | 60s timeout, then rescan in 30s or advance to next candidate | `waitForEligibilityReady` timeout → scanner continues |
+
+### Infinite Loop Guards
+
+| # | Scenario | Expected | Implementation |
+|---|----------|----------|----------------|
+| 27 | Single agent earns (no others) | Keep running, rescan 30min | `otherAgents.length === 0` → `SCAN_ELIGIBLE_DELAY_SECONDS` |
+| 28 | STOPPING race | Treat as transient Loading | `ANOTHER_AGENT_RUNNING` normalized to Loading |
+| 29 | Disabled during waits | Exit early | All waits check `enabledRef.current` |
+| 30 | Disabled during retries | Stop retrying | `enabledRef.current` checked each iteration |
+
+### Sleep/Wake Recovery
+
+| # | Scenario | Expected | Implementation |
+|---|----------|----------|----------------|
+| 31 | Sleep during delay | Detect drift, abort, safety net reschedules | `sleepAwareDelay` returns `false` |
+| 32 | Sleep during wait loop | Detect drift via polling delay | `sleepAwareDelay` in poll loops |
+| 33 | Stale balances after wake | Refetch before proceeding | `balanceLastUpdatedRef` freshness check |
+| 34 | Sleep during retry backoff | Abort retries | `sleepAwareDelay` returns `false` |
+| 35 | Resume previously-running agent | Try same agent first, then scan | `startSelectedAgentIfEligible` before `scanAndStartNext` |
+| 36 | Resume agent that earned during sleep | Falls through to scan | Rewards snapshot check returns `true` → `false` |
+
+### Stop Timeout Recovery
+
+| # | Scenario | Expected | Implementation |
+|---|----------|----------|----------------|
+| 37 | Stop timeout — auto-run recovers | Reset rewards guard + schedule rescan 10min | `lastRewardsEligibilityRef` reset + `scheduleNextScan` |
+| 38 | Stop timeout — no immediate re-trigger | Backoff prevents rewards poll from re-triggering immediately | `stopRetryBackoffUntilRef` checked **before** `lastRewardsEligibilityRef` is updated, preventing the guard from being overwritten to `true` during the window |
+
+### Stale Balance Log Dedup
+
+| # | Scenario | Expected | Implementation |
+|---|----------|----------|----------------|
+| 39 | Balances stale log spam | Log once per staleness window | `didLogStaleRef` resets on balance data change |
+
+---
+
+## 11. Go/No-Go Checklist
+
+### A. Must-Pass (Release Blockers)
+
+1. Enable auto-run with eligible agent → agent starts within timeout.
+2. Toggle OFF → running agent stops.
+3. Running agent earns rewards → stops → next eligible starts.
+4. Loading states never show skip notification.
+5. Never runs more than one agent concurrently.
+6. Inclusion order and exclusions persist across restart.
+
+### B. Stability (Release Blockers)
+
+7. No infinite waits — all waits have hard timeouts.
+8. Start failures retry same agent; do not advance queue on transient errors.
+9. Stop failures use bounded recovery; manual disable does not exit stop early.
+10. Sleep/wake: no chaotic cycling; stale delays abort; orchestration restarts with fresh state.
+
+### C. UX (Strongly Recommended)
+
+11. Toggle shows loading state during start/stop.
+12. Skip notifications only for real blockers (not Loading states).
+13. Manual sidebar navigation works while auto-run runs.
+14. UI page never switches during a scan cycle (background mode).
+
+**Go** if all A + B pass and no critical UX issues. **No-Go** if any A or B fails.
+
+---
+
+## 12. Known Gaps
+
+- Backend start can hang beyond `waitForRunningAgent` timeout if `startService()` itself hangs (mitigated by `withTimeout` wrapping the call at 15min).
+- Rewards eligibility is selection-driven; polling via `setInterval` is a workaround.
+- `rotateToNext`: if `currentMeta` is not found (agent removed from config mid-rotation), returns without scheduling rescan. Low probability; rewards poll will re-trigger within 120s.
+
+---
+
+## 13. Fixed Bugs
+
+### P0 — Stop timeout causes permanent auto-run deadlock
+- **Root cause**: Stop timeout in `rotateToNext` returned without scheduling rescan. `lastRewardsEligibilityRef[agent]` stayed `true`, blocking all future rotation triggers permanently. Root cause of all "stuck agent" reports.
+- **Fix**: Reset rewards guard + schedule `SCAN_BLOCKED_DELAY_SECONDS` rescan + `stopRetryBackoffUntilRef` prevents immediate re-trigger loop.
+
+### P0 — Transient start failures rotated queue to wrong agent
+- **Root cause**: Scanner treated all failures (including `Failed to fetch`) as blocked and advanced queue, causing permanent rotation to the wrong agent on transient errors.
+- **Fix**: Structured `AutoRunStartResult` with `infra_failed` status; scanner marks `hasInfraFailed` and continues to remaining candidates rather than treating transient failures as permanent blockers.
+
+### P1 — `infra_failed` caused infinite single-agent retry loop, other candidates never tried
+- **Root cause**: Two compounding bugs: (1) `scanAndStartNext` returned early on `INFRA_FAILED` instead of continuing to try remaining candidates; (2) `startSelectedAgentIfEligible` scheduled a blind 30s rescan of the same failing agent on `INFRA_FAILED` instead of scanning other candidates. In practice: if memeooorr failed due to insufficient staking balance, optimus and trader were never tried even though they might have different staking contracts and sufficient balance. The system retried the same agent every 30s indefinitely.
+- **Fix**: (1) `scanAndStartNext` now uses `hasInfraFailed = true` + `continue` on `INFRA_FAILED`, visiting all remaining candidates before scheduling rescan; (2) `startSelectedAgentIfEligible` now calls `await scanAndStartNext(selectedAgentType)` on `INFRA_FAILED` (passing selected as `startFrom` so other agents are tried first), then returns `true` to prevent lifecycle double-invocation.
+
+### P0 — Stop recovery lacked bounded retries
+- **Root cause**: Single stop attempt relied on derived running-agent signal; backend hiccups caused instability.
+- **Fix**: `stopAgentWithRecovery` with bounded attempts + deployment-status polling + per-request timeouts.
+
+### P1 — Sleep/wake causes chaotic agent cycling
+- **Root cause**: `Date.now()` jumps after sleep; all delays expire instantly; stale balance data causes wrong decisions.
+- **Fix**: `sleepAwareDelay()` detects drift; `balanceLastUpdatedRef` tracks freshness; safety net in `.finally()` reschedules on interrupted flow.
+
+### P1 — Start retries could stall on repeated "attempt 1" after interruptions
+- **Root cause**: backoff sleep interruption could return `aborted` while auto-run was still enabled, so orchestration restarted from scratch and repeatedly logged `start timeout ... (attempt 1)`.
+- **Fix**: interrupted retry backoff now returns `infra_failed` when still enabled, forcing a controlled rescan path instead of silent restart.
+
+### P1 — Safety net could over-schedule scans
+- **Root cause**: lifecycle safety net scheduled a retry even when scanner had already scheduled one, causing churn after sleep/wake.
+- **Fix**: safety net now checks `hasScheduledScan()` before scheduling a fallback timer.
+
+### P2 — Sleep/wake starts wrong agent instead of resuming
+- **Root cause**: `wasEnabled=true` path went straight to `scanAndStartNext` without trying the currently selected agent first.
+- **Fix**: `startSelectedAgentIfEligible` is called first; this usually resumes the previously-running agent when selection has remained/persisted.
+
+### P1 — `waitForRewardsEligibility` missing `enabledRef` guard
+- **Fix**: Added `enabledRef.current` to while condition; exits immediately on disable.
+
+### P1 — `skipNotifiedRef` never cleared
+- **Fix**: Reset on disable so notifications fire correctly on re-enable.
+
+### P2 — `rotateToNext` stops agent when disabled mid-rotation
+- **Fix**: Added `enabledRef.current` check before `stopAgent()`.
+
+### P2 — `waitForRunningAgent` lacked `enabledRef` guard
+- **Fix**: Added `enabledRef.current` to loop condition.
+
+### P3 — Rotation effect race on `isRotatingRef`
+- **Fix**: Set `isRotatingRef.current = true` before first await.
+
+### Code — Balances stale log spam
+- **Fix**: `didLogStaleRef` deduplicates; resets on balance data change.
+
+### P0 — Stop-timeout deadlock regression (`lastRewardsEligibilityRef` overwritten during backoff)
+- **Root cause**: In `checkRewardsAndRotate`, the `lastRewardsEligibilityRef` guard was updated *before* the `stopRetryBackoffUntilRef` check. During the 10-minute backoff window after a stop timeout, the rewards poll would fire, the guard would be overwritten to `true`, and when the backoff later expired `previousEligibility === true` would permanently block all future rotation triggers — a silent regression of the original P0 deadlock.
+- **Fix**: Moved the `stopRetryBackoffUntilRef` check to *before* `lastRewardsEligibilityRef.current[currentType] = snapshot`. The guard is only written after confirming the backoff has expired, so it remains `undefined` during the window and allows re-triggering once the backoff clears.
+
+### P1 — `rotateToNext` exception leaves rotation permanently deadlocked
+- **Root cause**: The `catch` block in `checkRewardsAndRotate` only logged the error. If an exception was thrown after the guard had already been set to `true`, `previousEligibility === true` would block all future rotation attempts and no recovery rescan was scheduled.
+- **Fix**: The catch block now resets `lastRewardsEligibilityRef.current[currentType] = undefined` and calls `scheduleNextScan(SCAN_BLOCKED_DELAY_SECONDS)` so the system self-heals within 10 minutes. Added `scheduleNextScan` to the rotation effect's dependency array.
+
+### P1 — Disable-during-start race: agent starts but is never stopped
+- **Root cause**: `setEnabled(false)` calls `stopRunningAgent()` synchronously, but `runningAgentType` (React state) may still be `null` at that moment if the backend-reported running state hasn't been picked up by the polling interval yet. The narrow window: `startService` completes → user calls disable → stop is called with `runningAgentType = null` → polling later reports the agent as running but no further stop is attempted.
+- **Fix**: Added a `useEffect` in `AutoRunProvider` that watches `(enabled, runningAgentType, isStopping)`. When auto-run is disabled but an agent appears as running and no stop is already in progress, the effect triggers a stop. `runningAgentType` is now exposed from `useAutoRunController` for this purpose.
+
+### P0 — Watchdog rotation exception leaves rewards guard permanently set, causing deadlock
+- **Root cause**: The watchdog catch block logged the error and scheduled a rescan but did **not** reset `lastRewardsEligibilityRef.current[agentType]`. Scenario: agent A runs 1.5h → rewards flip true → `checkRewardsAndRotate` detects true, sets guard to `true`, calls `rotateToNext` → all other agents earned/unknown → returns early keeping A running (guard stays `true`). Subsequent polls see `previousEligibility === true` and bail — correct during this epoch. 1.5 hours later the watchdog fires, `rotateToNext(force: true)` is called, but `refreshRewardsEligibility` (inside `Promise.all`) throws a network error → catch block does not reset guard → `lastRewardsEligibilityRef[A]` remains `true` → all future rewards polls blocked permanently — deadlock.
+- **Fix**: Watchdog catch block now resets `lastRewardsEligibilityRef.current[currentType] = undefined`, mirroring the same fix already present in `checkRewardsAndRotate`'s catch block. Added `lastRewardsEligibilityRef` to the watchdog effect's dependency array for consistency.
+
+### P1 — Agents permanently stuck after epoch expires (epoch clock = 0)
+- **Root cause**: When the staking epoch expires (`nowInSeconds - tsCheckpoint >= livenessPeriod`) but no `checkpoint()` has been called on-chain, every agent that ran in the previous epoch retains `isEligibleForRewards = true`. Auto-run's scanner skips every candidate (`candidateEligibility === true`) and schedules a 30-min rescan. Since no agent is running to trigger `checkpoint()`, `tsCheckpoint` never advances, `isEligibleForRewards` stays `true` for all, and the system stays stuck indefinitely. The epoch clock UI shows 0 / "Soon".
+- **Fix**: Two-layer check using `isEligibleForRewards` and `isEpochExpired` as separate concerns — `isEligibleForRewards` is not mutated (it remains valid business data: the agent did earn in the previous epoch). (1) `refreshRewardsEligibility` in `autoRunHelpers.ts` computes `epochExpired` from the fresh chain response and writes `false` to the snapshot when the epoch has expired, regardless of `isEligibleForRewards`; (2) `useAutoRunController` computes a separate `isEpochExpired: boolean` flag (from `stakingRewardsDetails`) and passes it alongside the raw `isEligibleForRewards` to `useAutoRunSignals`, which applies `isEpochExpired ? false : isEligibleForRewards` at the snapshot write — preventing the RewardProvider's 5s poll from overwriting the corrected snapshot with stale `true`. Both layers evaluate `!isEligibleForRewards || isEpochExpired` to decide whether an agent should run.
+
+### P1 — Scanner switches agent screen during Setup/wallet/staking flows
+- **Root cause**: Auto-run scanner calls `updateAgentType()` during candidate evaluation regardless of which page the user is on. When the user was on `PAGES.Setup` (e.g. `SETUP_SCREEN.FundYourAgent` for agents.fun) or any non-Main page (AgentWallet, PearlWallet, AgentStaking, etc.), the scanner silently switched `selectedAgentType`, changing the visible content mid-flow. Reported as "funding page switched to Omenstrat" while setting up agents.fun.
+- **Initial fix**: `canSwitchAgentRef` guard — fully removed in the follow-up background-mode fix below.
+
+### P1 — Auto-run scanner switches visible agent page during each scan cycle
+- **Root cause**: `scanAndStartNext` called `updateSelectedServiceConfigId(candidate)` for every candidate to make `getSelectedEligibility()` (which reads selection-keyed `selectedStakingContractDetails`) return data for that candidate. This meant the visible agent page switched up to N times per scan cycle (once per included agent). Users saw the sidebar and staking/balance UI jump repeatedly while auto-run was running in the background.
+- **Fix**: `fetchDeployabilityForAgent(agentMeta, ctx)` added to `autoRunHelpers.ts`. It calls `agentMeta.agentConfig.serviceApi.getStakingContractDetails()` and `getServiceStakingDetails()` directly — the same endpoints as `StakingContractDetailsProvider` but without requiring a UI selection switch. `scanAndStartNext` now calls `getDeployabilityForAgent(candidateMeta)` per candidate instead of switching selection and waiting. `startAgentWithRetries` pre-start eligibility block removed (scanner verified it). `onAutoRunInstanceStarted` no longer calls `updateSelectedServiceConfigId` after start. Result: the visible page never changes during a scan cycle. Log: `"scan complete: no agent started (loading=..., blocked=..., eligible=..., infraFailed=...)"` — unaffected.
+
+### P1 — `lastRewardsEligibilityRef` not reset on successful rotation → agents blocked in all future epochs
+- **Root cause**: In `rotateToNext`, after `stopAgentWithRecovery` succeeds, the comment said "reset rewards guard and stop backoff state" but the code only reset `stopRetryBackoffUntilRef`. `lastRewardsEligibilityRef.current[A]` stayed `true` from the rotation that just completed. When A ran again in any subsequent epoch and earned rewards, `checkRewardsAndRotate` read `previousEligibility === true` (stale from epoch 1) and returned early without rotating — permanently. The 70-min watchdog was the only escape.
+- **Fix**: `lastRewardsEligibilityRef.current[currentServiceConfigId] = undefined` added immediately after a successful stop in `rotateToNext`, before the cooldown delay. Mirrors the reset already present on stop failure and in both catch blocks.
+
+### Code — `waitForEligibilityReady` extracted to shared utility
+- Identical 60s-timeout polling loop existed in both `useAutoRunScanner` and `useAutoRunStartOperations`. Extracted to `waitForEligibilityReadyHelper` in `utils/autoRunHelpers.ts`; both hooks delegate to it via `useCallback`.
+
+### Code — Magic numbers replaced with named constants
+- `SCAN_LOADING_RETRY_SECONDS = 30` replaces hardcoded `scheduleNextScan(30)`.
+
+### Code — Dead code removed
+- `if (!stopRunningAgent) return` was unreachable.
+
+---
+
+## 14. Utilities
+
+### `sleepAwareDelay(seconds)` — `frontend/utils/delay.ts`
+Returns `Promise<boolean>`. `true` = normal completion. `false` = sleep/wake detected (elapsed > expected + 30s). All async delays in auto-run use this.
+
+### `withTimeout(operation, timeoutMs, createTimeoutError)` — `frontend/utils/delay.ts`
+Races an operation against a timeout. Used to wrap `startService()` (15min) and `stopDeployment()` (5min) calls so they cannot hang indefinitely. Does not cancel the underlying operation.
+
+### `refreshRewardsEligibility(params)` — `utils/autoRunHelpers.ts`
+Fetches staking rewards info from the chain. Throttled per agent (max once per `REWARDS_POLL_SECONDS`). Returns `true` (earned), `false` (not earned), or `undefined` (error/missing data). When the epoch has expired, always returns `false` regardless of `isEligibleForRewards` (stale data guard).
+
+### `isStakingEpochExpired({ livenessPeriod, tsCheckpoint })` — `utils/autoRunHelpers.ts`
+Returns `true` when `nowInSeconds - tsCheckpoint >= livenessPeriod` (epoch timer elapsed but `checkpoint()` not yet called). Used in two places: inside `refreshRewardsEligibility` (fresh chain data), and in `useAutoRunController` to compute `isEpochExpired` passed to `useAutoRunSignals`. Does not modify `isEligibleForRewards`.
+
+### `normalizeEligibility(eligibility)` — `utils/autoRunHelpers.ts`
+Converts transient states ("Another agent running", stale "Loading: Balances") into consistent signals for the scanner to act on.
+
+### `waitForEligibilityReadyHelper(params)` — `utils/autoRunHelpers.ts`
+Shared eligibility-wait implementation. Polls every 2s until eligibility leaves `LOADING` state. Returns `false` on disable, sleep detection, or 60s hard timeout. Used by `useAutoRunScanner` (for `startSelectedAgentIfEligible`) via `useCallback` wrapper.
+
+### `fetchDeployabilityForAgent(agentMeta, ctx)` — `utils/autoRunHelpers.ts`
+Checks whether a candidate agent is deployable without switching the UI selection. Mirrors `useDeployability` but fetches staking state directly via `agentMeta.agentConfig.serviceApi` (same pattern as `fetchAgentStakingRewardsInfo`). Called by `scanAndStartNext` for each candidate so the visible page never changes during a scan cycle.
+
+Returns `{ canRun: true }`, `{ canRun: false, isTransient: true }` (transient/loading — short retry), or `{ canRun: false }` (deterministic block). Checks in order: safe readiness, `isUnderConstruction`, geo restriction, another agent running, on-chain slots/staking state (via `getStakingContractDetails` + `getServiceStakingDetails`), initial funding, balance sufficiency. API errors return `isTransient: true` (scanner uses short retry rather than treating as permanent block).
+
+---
+
+## 15. Log Messages Reference
+
+All auto-run logs are prefixed with `autorun::`.
+
+| Log | Meaning | Severity |
+|-----|---------|----------|
+| `rotation triggered: X earned rewards` | Rewards transition detected, rotation starting | Normal |
+| `stop timeout for X, aborting rotation` | All stop attempts exhausted | Warning |
+| `reset rewards guard for X, scheduling rescan in Ns` | Recovery from stop timeout | Warning |
+| `all other agents earned or unknown, keeping X running, rescan in Ns` | No viable rotation target | Normal |
+| `scan complete: no agent started (loading=, blocked=, eligible=), rescan in Ns` | Full scan found nothing to start | Normal |
+| `safety net: flow interrupted before scan, retrying in Ns` | Sleep/wake bail-out recovery | Warning |
+| `start timeout for X (attempt N)` | Start attempt timed out waiting for DEPLOYED | Warning |
+| `start error for X: ...` | Start threw an exception (e.g., Failed to fetch) | Warning |
+| `start failed for X` | All retries exhausted | Error |
+| `skip X: reason` | Agent skipped with notification | Normal |
+| `balances stale, triggering refetch` | Balance data older than 120s | Normal |
+| `balances refetch failed: ...` | Refetch threw an error | Warning |
+| `rewards fetch error: X: ...` | RPC error fetching rewards | Warning |
+| `rewards eligibility timeout: X, proceeding without it` | Rewards snapshot never arrived in 20s | Warning |
+| `eligibility wait timeout` | Eligibility stuck in Loading for 60s | Warning |
+| `selection wait timeout: X` | UI selection didn't match in 60s | Warning |
+| `balances wait timeout` | Balances not ready after 3min | Warning |
+| `stop status check failed for X: ...` | Deployment status poll error | Warning |
+| `stop retry for X (N/M) in Ns` | Stop recovery retry | Warning |
+| `rotation error: ...` | Uncaught error in rotation effect | Error |
+
+---
+
+## 16. Notes for Future Unit Tests
+
+- Mock `getSelectedEligibility` states (Loading / Low balance / Evicted / Eligible).
+- Mock rewards snapshots (`undefined` / `false` / `true`).
+- Verify rotation triggers only on `false → true` transition.
+- Verify no notifications for Loading reasons.
+- Verify no infinite loops (all waits have hard timeouts).
+- Verify sleep/wake detection aborts in-flight waits and delays.
+- Verify stop timeout resets rewards guard and schedules rescan.
+- Verify `infra_failed` does not advance scanner queue.
+- Verify concurrent stop calls (disable + rotation) don't crash.

@@ -1,0 +1,341 @@
+import { useCallback, useEffect, useRef, useState } from 'react';
+
+import { AgentType } from '@/constants';
+import { useBalanceAndRefillRequirementsContext } from '@/hooks';
+import { sleepAwareDelay } from '@/utils/delay';
+
+import {
+  AGENT_SELECTION_WAIT_TIMEOUT_SECONDS,
+  REWARDS_POLL_SECONDS,
+  REWARDS_WAIT_TIMEOUT_SECONDS,
+} from '../constants';
+
+const BALANCES_WAIT_TIMEOUT_SECONDS = AGENT_SELECTION_WAIT_TIMEOUT_SECONDS * 3;
+const BALANCE_STALENESS_MS = REWARDS_POLL_SECONDS * 1000;
+
+type UseAutoRunSignalsParams = {
+  enabled: boolean;
+  runningAgentType: AgentType | null;
+  runningServiceConfigId: string | null;
+  isSelectedAgentDetailsLoading: boolean;
+  isEligibleForRewards: boolean | undefined;
+  /** Whether the staking epoch has expired without a checkpoint being called. */
+  isEpochExpired: boolean;
+  selectedAgentType: AgentType;
+  selectedServiceConfigId: string | null;
+  logMessage: (message: string) => void;
+};
+
+/**
+ * Runtime signal hub for auto-run.
+ *
+ * This hook keeps mutable refs in sync with the latest UI/network state so
+ * long-running async loops can read fresh values without stale-closure bugs.
+ *
+ * Example:
+ * Scanner selects instance `sc-aaa` → waits for selection/balances/rewards →
+ * this hook provides those waits and snapshot reads.
+ */
+export const useAutoRunSignals = ({
+  enabled,
+  runningAgentType,
+  runningServiceConfigId,
+  isSelectedAgentDetailsLoading,
+  isEligibleForRewards,
+  isEpochExpired,
+  selectedAgentType,
+  selectedServiceConfigId,
+  logMessage,
+}: UseAutoRunSignalsParams) => {
+  const {
+    isBalancesAndFundingRequirementsLoadingForAllServices,
+    isBalancesAndFundingRequirementsReadyForAllServices,
+    refetch,
+  } = useBalanceAndRefillRequirementsContext();
+
+  // NOTE: refs are intentionally used here so async loops can always read the latest
+  // values even if React re-renders while a wait loop is in progress.
+  const enabledRef = useRef(enabled);
+  const runningAgentTypeRef = useRef(runningAgentType);
+  const runningServiceConfigIdRef = useRef(runningServiceConfigId);
+  const isSelectedAgentDetailsLoadingRef = useRef(
+    isSelectedAgentDetailsLoading,
+  );
+  const selectedAgentTypeRef = useRef(selectedAgentType);
+  const selectedServiceConfigIdRef = useRef(selectedServiceConfigId);
+  const balancesLoadingRef = useRef(
+    isBalancesAndFundingRequirementsLoadingForAllServices,
+  );
+  const balancesReadyRef = useRef(
+    isBalancesAndFundingRequirementsReadyForAllServices,
+  );
+  const isRefetchingBalancesRef = useRef(false);
+  // Latest rewards snapshot per instance; updated by RewardProvider.
+  const rewardSnapshotRef = useRef<
+    Partial<Record<string, boolean | undefined>>
+  >({});
+  // Track the previous rewards state to detect transitions.
+  const lastRewardsEligibilityRef = useRef<
+    Partial<Record<string, boolean | undefined>>
+  >({});
+  // Timer + tick pair used for delayed re-scans.
+  // Scheduling sets a timeout; when it fires we bump scanTick to trigger effects.
+  const scanTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [scanTick, setScanTick] = useState(0);
+  const [rewardsTick, setRewardsTick] = useState(0);
+
+  // Keep the enabled ref fresh and clear any scheduled scan on disable.
+  useEffect(() => {
+    enabledRef.current = enabled;
+    if (!enabled && scanTimeoutRef.current) {
+      clearTimeout(scanTimeoutRef.current);
+      scanTimeoutRef.current = null;
+    }
+  }, [enabled]);
+
+  // Keep refs aligned with latest render values.
+  useEffect(() => {
+    runningAgentTypeRef.current = runningAgentType;
+  }, [runningAgentType]);
+  useEffect(() => {
+    runningServiceConfigIdRef.current = runningServiceConfigId;
+  }, [runningServiceConfigId]);
+  useEffect(() => {
+    isSelectedAgentDetailsLoadingRef.current = isSelectedAgentDetailsLoading;
+  }, [isSelectedAgentDetailsLoading]);
+  useEffect(() => {
+    balancesReadyRef.current =
+      isBalancesAndFundingRequirementsReadyForAllServices;
+  }, [isBalancesAndFundingRequirementsReadyForAllServices]);
+  useEffect(() => {
+    balancesLoadingRef.current =
+      isBalancesAndFundingRequirementsLoadingForAllServices;
+  }, [isBalancesAndFundingRequirementsLoadingForAllServices]);
+  useEffect(() => {
+    selectedAgentTypeRef.current = selectedAgentType;
+  }, [selectedAgentType]);
+  useEffect(() => {
+    selectedServiceConfigIdRef.current = selectedServiceConfigId;
+  }, [selectedServiceConfigId]);
+
+  // Update rewards snapshot for the selected instance (RewardProvider is selection-driven).
+  // isEligibleForRewards=true means the instance earned rewards in the current epoch.
+  // However if the epoch has already expired (clock = 0, checkpoint not yet called),
+  // that value is stale — the instance needs to run in the new epoch to trigger checkpoint.
+  // We check both conditions separately rather than modifying the business value itself.
+  useEffect(() => {
+    if (!selectedServiceConfigId) return;
+    const effectiveEligibility = isEpochExpired ? false : isEligibleForRewards;
+    rewardSnapshotRef.current[selectedServiceConfigId] = effectiveEligibility;
+    setRewardsTick((value) => value + 1);
+  }, [isEligibleForRewards, isEpochExpired, selectedServiceConfigId]);
+
+  // Cleanup pending scan timer on unmount.
+  useEffect(() => {
+    return () => {
+      if (scanTimeoutRef.current) {
+        clearTimeout(scanTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Wait until UI selection and selected service details match the requested instance.
+  // Example: scanner requested `sc-aaa`; this blocks until UI state is actually on `sc-aaa`.
+  const waitForInstanceSelection = useCallback(
+    async (serviceConfigId: string) => {
+      const startedAt = Date.now();
+      while (enabledRef.current) {
+        const isSelected =
+          !isSelectedAgentDetailsLoadingRef.current &&
+          selectedServiceConfigIdRef.current === serviceConfigId;
+        if (isSelected) {
+          return true;
+        }
+        if (
+          Date.now() - startedAt >
+          AGENT_SELECTION_WAIT_TIMEOUT_SECONDS * 1000
+        ) {
+          logMessage(`selection wait timeout: ${serviceConfigId}`);
+          return false;
+        }
+        const ok = await sleepAwareDelay(2);
+        if (!ok) return false;
+      }
+      return false;
+    },
+    [logMessage],
+  );
+
+  // Track when balance data was last updated to detect stale data after sleep/wake.
+  const balanceLastUpdatedRef = useRef(Date.now());
+  useEffect(() => {
+    balanceLastUpdatedRef.current = Date.now();
+  }, [isBalancesAndFundingRequirementsReadyForAllServices]);
+
+  // Wait until balances are ready, with periodic refetches on long waits.
+  // After sleep/wake the balance ref may still be `true` from before sleep,
+  // so we also check freshness before accepting the cached value.
+  const didLogStaleRef = useRef(false);
+
+  // Reset the stale log flag when balance data actually updates.
+  useEffect(() => {
+    didLogStaleRef.current = false;
+  }, [isBalancesAndFundingRequirementsReadyForAllServices]);
+
+  const waitForBalancesReady = useCallback(async () => {
+    const isFresh = () =>
+      Date.now() - balanceLastUpdatedRef.current < BALANCE_STALENESS_MS;
+    const startedAt = Date.now();
+
+    if (balancesReadyRef.current && !balancesLoadingRef.current && isFresh()) {
+      return true;
+    }
+
+    // If balances are stale (e.g. laptop slept), force a refetch once.
+    if (!isFresh()) {
+      if (!didLogStaleRef.current) {
+        logMessage('balances stale, triggering refetch');
+        didLogStaleRef.current = true;
+      }
+      if (!isRefetchingBalancesRef.current) {
+        isRefetchingBalancesRef.current = true;
+        refetch()
+          .then(() => {
+            balanceLastUpdatedRef.current = Date.now();
+          })
+          .catch((error) => {
+            logMessage(`balances refetch failed: ${error}`);
+          })
+          .finally(() => {
+            isRefetchingBalancesRef.current = false;
+          });
+      }
+    }
+
+    while (enabledRef.current) {
+      if (
+        balancesReadyRef.current &&
+        !balancesLoadingRef.current &&
+        isFresh()
+      ) {
+        return true;
+      }
+      const ok = await sleepAwareDelay(2);
+      if (!ok) return false;
+      const now = Date.now();
+      if (now - startedAt > BALANCES_WAIT_TIMEOUT_SECONDS * 1000) {
+        logMessage('balances wait timeout');
+        return false;
+      }
+    }
+    return false;
+  }, [logMessage, refetch]);
+
+  // Wait for rewards eligibility to be populated for a given instance.
+  const waitForRewardsEligibility = useCallback(
+    // RewardProvider is selection-driven, so snapshot may be undefined briefly
+    // right after switching candidates.
+    async (serviceConfigId: string) => {
+      const startedAt = Date.now();
+      while (
+        rewardSnapshotRef.current[serviceConfigId] === undefined &&
+        enabledRef.current
+      ) {
+        if (Date.now() - startedAt > REWARDS_WAIT_TIMEOUT_SECONDS * 1000) {
+          logMessage(
+            `rewards eligibility timeout: ${serviceConfigId}, proceeding without it`,
+          );
+          return undefined;
+        }
+        const ok = await sleepAwareDelay(2);
+        if (!ok) return undefined;
+      }
+      const value = rewardSnapshotRef.current[serviceConfigId];
+      return value;
+    },
+    [logMessage],
+  );
+
+  // Reset rewards snapshot so downstream waits don't use stale values.
+  const markRewardSnapshotPending = useCallback((serviceConfigId: string) => {
+    rewardSnapshotRef.current[serviceConfigId] = undefined;
+    setRewardsTick((value) => value + 1);
+  }, []);
+
+  const getRewardSnapshot = useCallback(
+    (serviceConfigId: string) => rewardSnapshotRef.current[serviceConfigId],
+    [],
+  );
+
+  const setRewardSnapshot = useCallback(
+    (serviceConfigId: string, value: boolean | undefined) => {
+      rewardSnapshotRef.current[serviceConfigId] = value;
+      setRewardsTick((current) => current + 1);
+    },
+    [],
+  );
+
+  const getBalancesStatus = useCallback(
+    () => ({
+      ready: balancesReadyRef.current,
+      loading: balancesLoadingRef.current,
+    }),
+    [],
+  );
+
+  // Wait until the running service config ID matches the requested one.
+  const waitForRunningInstance = useCallback(
+    async (serviceConfigId: string, timeoutSeconds: number) => {
+      const startedAt = Date.now();
+      while (
+        enabledRef.current &&
+        Date.now() - startedAt < timeoutSeconds * 1000
+      ) {
+        if (runningServiceConfigIdRef.current === serviceConfigId) return true;
+        const ok = await sleepAwareDelay(5);
+        if (!ok) return false;
+      }
+      if (enabledRef.current) logMessage(`running timeout: ${serviceConfigId}`);
+      return false;
+    },
+    [logMessage],
+  );
+
+  // Schedule a delayed scan and bump the tick when it fires.
+  const scheduleNextScan = useCallback((delaySeconds: number) => {
+    // Re-arm scan timer on each schedule call so only the latest schedule wins.
+    if (!enabledRef.current) return;
+    if (scanTimeoutRef.current) {
+      clearTimeout(scanTimeoutRef.current);
+    }
+    scanTimeoutRef.current = setTimeout(() => {
+      scanTimeoutRef.current = null;
+      setScanTick((value) => value + 1);
+    }, delaySeconds * 1000);
+  }, []);
+
+  const hasScheduledScan = useCallback(
+    () => scanTimeoutRef.current !== null,
+    [],
+  );
+
+  return {
+    enabledRef,
+    runningAgentTypeRef,
+    runningServiceConfigIdRef,
+    rewardSnapshotRef,
+    lastRewardsEligibilityRef,
+    scanTick,
+    rewardsTick,
+    scheduleNextScan,
+    hasScheduledScan,
+    waitForInstanceSelection,
+    waitForBalancesReady,
+    waitForRewardsEligibility,
+    waitForRunningInstance,
+    markRewardSnapshotPending,
+    getRewardSnapshot,
+    setRewardSnapshot,
+    getBalancesStatus,
+  };
+};

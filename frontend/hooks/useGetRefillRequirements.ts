@@ -1,4 +1,4 @@
-import { isEmpty } from 'lodash';
+import { compact } from 'lodash';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
@@ -43,10 +43,8 @@ const getTokensDetailsForFunding = (
   requirementsPerToken: { [tokenAddress: Address]: bigint },
   chainConfig: ChainTokenConfig,
 ) => {
-  const currentTokenRequirements: TokenRequirement[] = Object.entries(
-    requirementsPerToken,
-  )
-    .map(([tokenAddress, amount]) => {
+  const currentTokenRequirements: TokenRequirement[] = compact(
+    Object.entries(requirementsPerToken).map(([tokenAddress, amount]) => {
       const { symbol, decimals, iconSrc } = getTokenMeta(
         tokenAddress as Address,
         chainConfig,
@@ -60,24 +58,22 @@ const getTokensDetailsForFunding = (
           iconSrc: ICON_OVERRIDES[symbol] || iconSrc,
         };
       }
-    })
-    .filter(Boolean) as TokenRequirement[];
+    }),
+  ) satisfies TokenRequirement[];
 
   return currentTokenRequirements.sort((a, b) => b.amount - a.amount);
 };
 
 type UseGetRefillRequirementsReturn = {
   /**
-   * Total token requirements, doesn't consider the eoa balances. This is what we show on the
-   * funding cards (fund your agent screen)
+   * Total token requirements — the full amount needed regardless of current balances.
    */
   totalTokenRequirements: TokenRequirement[];
   /**
-   * Initial token requirements, calculated when the funds are requested for the first time,
-   * considers the eoa balances. This is the actual funds that user has to send in order to meet the
-   * initial funding requirements.
+   * Refill token requirements — the actual shortfall (total minus current balances).
+   * This is what should be shown on the funding cards.
    */
-  initialTokenRequirements: TokenRequirement[];
+  refillTokenRequirements: TokenRequirement[];
   isLoading: boolean;
   resetTokenRequirements: () => void;
 };
@@ -121,12 +117,12 @@ export const useGetRefillRequirements = (): UseGetRefillRequirementsReturn => {
     getMasterSafeOf,
     isFetched: isMasterWalletsFetched,
   } = useMasterWalletContext();
-  const { selectedAgentConfig, selectedAgentType } = useServices();
+  const { selectedAgentConfig, selectedServiceConfigId } = useServices();
 
-  const [initialTokenRequirements, setInitialTokenRequirements] = useState<
+  const [totalTokenRequirements, setTotalTokenRequirements] = useState<
     TokenRequirement[] | null
   >(null);
-  const [totalTokenRequirements, setTotalTokenRequirements] = useState<
+  const [refillTokenRequirements, setRefillTokenRequirements] = useState<
     TokenRequirement[] | null
   >(null);
 
@@ -136,27 +132,26 @@ export const useGetRefillRequirements = (): UseGetRefillRequirementsReturn => {
   );
 
   const getRequirementsPerToken = useCallback(
-    (
-      requirements: AddressBalanceRecord | MasterSafeBalanceRecord | undefined,
-    ) => {
+    (requirements?: AddressBalanceRecord | MasterSafeBalanceRecord) => {
       if (
         isBalancesAndFundingRequirementsLoading ||
         !requirements ||
         !masterEoa ||
         !isMasterWalletsFetched
-      )
-        return [];
+      ) {
+        return null;
+      }
 
+      const chainConfig = TOKEN_CONFIG[selectedAgentConfig.evmHomeChainId];
+
+      // master safe requirements
+      const masterSafePlaceholder = (requirements as MasterSafeBalanceRecord)?.[
+        MASTER_SAFE_REFILL_PLACEHOLDER
+      ];
       const masterSafeRequirements = masterSafe
         ? (requirements as AddressBalanceRecord)?.[masterSafe.address]
-        : (requirements as MasterSafeBalanceRecord)?.[
-            MASTER_SAFE_REFILL_PLACEHOLDER
-          ];
-
+        : masterSafePlaceholder;
       if (!masterSafeRequirements) return [];
-
-      const { evmHomeChainId } = selectedAgentConfig;
-      const chainConfig = TOKEN_CONFIG[evmHomeChainId];
 
       // Refill requirements for masterEOA
       const masterEoaRequirementAmount = (requirements as AddressBalanceRecord)[
@@ -200,43 +195,38 @@ export const useGetRefillRequirements = (): UseGetRefillRequirementsReturn => {
   const resetTokenRequirements = useCallback(
     (resetCache = true) => {
       setTotalTokenRequirements(null);
-      setInitialTokenRequirements(null);
+      setRefillTokenRequirements(null);
       if (resetCache) resetQueryCache?.();
     },
     [resetQueryCache],
   );
 
   /**
-   * @important Reset the token requirements when the selected agent type changes.
+   * @important Reset the token requirements when the selected service changes.
    */
   useEffect(() => {
     resetTokenRequirements(false);
-  }, [selectedAgentType, resetTokenRequirements]);
-
-  const currentTokenRequirements = useMemo(() => {
-    return getRequirementsPerToken(refillRequirements);
-  }, [getRequirementsPerToken, refillRequirements]);
-
-  // Capture the initial token requirements once, when they are first available
-  useEffect(() => {
-    if (!initialTokenRequirements && currentTokenRequirements.length) {
-      setInitialTokenRequirements(currentTokenRequirements);
-    }
-  }, [currentTokenRequirements, initialTokenRequirements]);
+  }, [selectedServiceConfigId, resetTokenRequirements]);
 
   // Get the total token requirements
   useEffect(() => {
-    if (isEmpty(totalTokenRequirements)) {
+    if (totalTokenRequirements === null) {
       setTotalTokenRequirements(getRequirementsPerToken(totalRequirements));
     }
   }, [totalRequirements, getRequirementsPerToken, totalTokenRequirements]);
 
+  // Get the refill token requirements
+  useEffect(() => {
+    if (refillTokenRequirements === null) {
+      setRefillTokenRequirements(getRequirementsPerToken(refillRequirements));
+    }
+  }, [refillRequirements, getRequirementsPerToken, refillTokenRequirements]);
+
   return {
     isLoading:
       isBalancesAndFundingRequirementsLoading || !totalTokenRequirements,
-    initialTokenRequirements:
-      initialTokenRequirements ?? currentTokenRequirements,
     totalTokenRequirements: totalTokenRequirements || [],
+    refillTokenRequirements: refillTokenRequirements || [],
     resetTokenRequirements,
   };
 };

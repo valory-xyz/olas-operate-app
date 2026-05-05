@@ -7,13 +7,22 @@ function logError(msg: string) {
   hasErrors = true;
 }
 
-async function checkUrl(url: string): Promise<boolean> {
-  try {
-    const response = await fetch(url, { method: 'HEAD' });
-    return response.ok;
-  } catch {
-    return false;
+async function checkUrl(url: string, retries = 3, delayMs = 2000): Promise<boolean> {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 15000);
+      const response = await fetch(url, { method: 'HEAD', signal: controller.signal });
+      clearTimeout(timeout);
+      if (response.ok) return true;
+    } catch {
+      // ignore — retry below
+    }
+    if (attempt < retries) {
+      await new Promise((resolve) => setTimeout(resolve, delayMs * attempt));
+    }
   }
+  return false;
 }
 
 async function checkServiceTemplates(): Promise<void> {
@@ -21,7 +30,7 @@ async function checkServiceTemplates(): Promise<void> {
     console.log(''); // Empty line for separation
 
     const { agent_release, hash, service_version, name } = template;
-    const { owner, name: repoName, version } = agent_release.repository;
+    let { owner, name: repoName, version } = agent_release.repository;
 
     console.log(`Checking template: ${name}`);
 
@@ -36,6 +45,8 @@ async function checkServiceTemplates(): Promise<void> {
     const releaseUrls = [
       `https://github.com/${owner}/${repoName}/releases/download/${version}/agent_runner_macos_arm64`,
       `https://github.com/${owner}/${repoName}/releases/download/${version}/agent_runner_macos_x64`,
+      `https://github.com/${owner}/${repoName}/releases/download/${version}/agent_runner_linux_arm64`,
+      `https://github.com/${owner}/${repoName}/releases/download/${version}/agent_runner_linux_x64`,
       `https://github.com/${owner}/${repoName}/releases/download/${version}/agent_runner_windows_x64.exe`,
     ];
 

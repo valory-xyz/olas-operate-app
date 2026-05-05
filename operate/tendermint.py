@@ -18,8 +18,10 @@
 # ------------------------------------------------------------------------------
 
 """Tendermint manager."""
+
 import atexit
 import contextlib
+import inspect
 import json
 import logging
 import multiprocessing
@@ -32,21 +34,21 @@ import stat
 import subprocess  # nosec:
 import sys
 import traceback
+from http import HTTPStatus
 from logging import Logger
 from pathlib import Path
 from threading import Event, Thread
 from time import sleep
 from typing import Any, Callable, Dict, List, Optional, Tuple, cast
-from xml.sax import handler
 
 import requests
 from flask import Flask, Response, jsonify, request
 from werkzeug.exceptions import InternalServerError, NotFound
-import ctypes
 
 ENCODING = "utf-8"
 DEFAULT_LOG_FILE = "com.log"
 DEFAULT_TENDERMINT_LOG_FILE = "tendermint.log"
+DEFAULT_TIMEOUT = 30
 
 CONFIG_OVERRIDE = [
     ("fast_sync = true", "fast_sync = false"),
@@ -67,6 +69,17 @@ logging.basicConfig(
     level=logging.DEBUG,
     format="%(asctime)s %(levelname)s %(name)s %(threadName)s : %(message)s",  # noqa : W1309
 )
+
+
+def _should_skip_main_entry(argv: Optional[List[str]] = None) -> bool:
+    """Return whether this process is a multiprocessing bootstrap helper."""
+    arguments = list(sys.argv if argv is None else argv)
+    joined = " ".join(arguments)
+    bootstrap_markers = (
+        "from multiprocessing.forkserver import main",
+        "from multiprocessing.resource_tracker import main",
+    )
+    return any(marker in joined for marker in bootstrap_markers)
 
 
 class StoppableThread(
@@ -248,7 +261,7 @@ class TendermintNode:
             return
         cmd = self.params.build_node_command(debug)
         kwargs = self.params.get_node_command_kwargs()
-        
+
         if os.name != "nt":
             kwargs.update(dict(preexec_fn=os.setpgrp))
 
@@ -259,14 +272,15 @@ class TendermintNode:
             )
         )
         if os.name == "nt":
-            self._wh = WinHelper()
+            self._wh = WinHelper()  # pylint: disable=attribute-defined-outside-init
             self._wh.assign_to_job(self._process.pid)
-        
 
         self.log("Tendermint process started\n")
 
     def _start_monitoring_thread(self) -> None:
         """Start a monitoring thread."""
+        if self._monitoring is not None and self._monitoring.is_alive():
+            return
         self._monitoring = StoppableThread(target=self._monitor_tendermint_process)
         self._monitoring.start()
 
@@ -292,7 +306,7 @@ class TendermintNode:
         self._process = None
         self.log("Tendermint process stopped\n")
 
-    def _win_stop_tm(self) -> None:
+    def _win_stop_tm(self) -> None:  # pragma: no cover
         """Stop a Tendermint node process on Windows."""
         os.kill(self._process.pid, signal.CTRL_C_EVENT)  # type: ignore  # pylint: disable=no-member
         try:
@@ -472,7 +486,15 @@ class PeriodDumper:
         self.dump_dir = Path(dump_dir or "/tm_state")
 
         if self.dump_dir.is_dir():
-            shutil.rmtree(str(self.dump_dir), onerror=self.readonly_handler)
+            rmtree_kwargs: Dict[str, Callable] = {}
+            if "onexc" in inspect.signature(shutil.rmtree).parameters:
+                rmtree_kwargs["onexc"] = self.readonly_handler
+            else:
+                # Keep compatibility with Python versions where only `onerror` exists.
+                rmtree_kwargs["onerror"] = self.readonly_handler
+            cast(Callable[..., None], shutil.rmtree)(
+                str(self.dump_dir), **rmtree_kwargs
+            )
         self.dump_dir.mkdir(exist_ok=True)
 
     @staticmethod
@@ -484,7 +506,7 @@ class PeriodDumper:
             os.chmod(path, stat.S_IWRITE)
             func(path)
         except (FileNotFoundError, OSError):
-            return
+            pass
 
     def dump_period(self) -> None:
         """Dump tendermint run data for replay"""
@@ -542,7 +564,7 @@ def create_app(  # pylint: disable=too-many-statements
             )
             priv_key_data = json.loads(priv_key_file.read_text(encoding=ENCODING))
             del priv_key_data["priv_key"]
-            status = requests.get(TM_STATUS_ENDPOINT).json()
+            status = requests.get(TM_STATUS_ENDPOINT, timeout=DEFAULT_TIMEOUT).json()
             priv_key_data["peer_id"] = status["result"]["node_info"]["id"]
             return {
                 "params": priv_key_data,
@@ -592,9 +614,15 @@ def create_app(  # pylint: disable=too-many-statements
         try:
             tendermint_node.stop()
             tendermint_node.start()
-            return jsonify({"message": "Reset successful.", "status": True}), 200
+            return (
+                jsonify({"message": "Reset successful.", "status": True}),
+                HTTPStatus.OK,
+            )
         except Exception as e:  # pylint: disable=W0703
-            return jsonify({"message": f"Reset failed: {e}", "status": False}), 200
+            return (
+                jsonify({"message": f"Reset failed: {e}", "status": False}),
+                HTTPStatus.OK,
+            )
 
     @app.route("/app_hash")
     def app_hash() -> Tuple[Any, int]:
@@ -604,7 +632,7 @@ def create_app(  # pylint: disable=too-many-statements
             endpoint = f"{tendermint_params.rpc_laddr.replace('tcp', 'http').replace(non_routable, loopback)}/block"
             height = request.args.get("height")
             params = {"height": height} if height is not None else None
-            res = requests.get(endpoint, params)
+            res = requests.get(endpoint, params, timeout=DEFAULT_TIMEOUT)
             app_hash_ = res.json()["result"]["block"]["header"]["app_hash"]
             return jsonify({"app_hash": app_hash_}), res.status_code
         except Exception as e:  # pylint: disable=W0703
@@ -635,37 +663,49 @@ def create_app(  # pylint: disable=too-many-statements
                 request.args.get("period_count", "0"),
             )
             tendermint_node.start()
-            return jsonify({"message": "Reset successful.", "status": True}), 200
+            return (
+                jsonify({"message": "Reset successful.", "status": True}),
+                HTTPStatus.OK,
+            )
         except Exception as e:  # pylint: disable=W0703
-            return jsonify({"message": f"Reset failed: {e}", "status": False}), 200
+            return (
+                jsonify({"message": f"Reset failed: {e}", "status": False}),
+                HTTPStatus.OK,
+            )
 
-    @app.errorhandler(404)  # type: ignore
+    @app.errorhandler(HTTPStatus.NOT_FOUND)  # type: ignore
     def handle_notfound(e: NotFound) -> Response:
         """Handle server error."""
         cast(logging.Logger, app.logger).info(e)  # pylint: disable=E
-        return Response("Not Found", status=404, mimetype="application/json")
+        return Response(
+            "Not Found", status=HTTPStatus.NOT_FOUND, mimetype="application/json"
+        )
 
-    @app.errorhandler(500)  # type: ignore
+    @app.errorhandler(HTTPStatus.INTERNAL_SERVER_ERROR)  # type: ignore
     def handle_server_error(e: InternalServerError) -> Response:
         """Handle server error."""
         cast(logging.Logger, app.logger).info(e)  # pylint: disable=E
-        return Response("Error Closing Node", status=500, mimetype="application/json")
+        return Response(
+            "Error Closing Node",
+            status=HTTPStatus.INTERNAL_SERVER_ERROR,
+            mimetype="application/json",
+        )
 
     return app, tendermint_node
 
 
-def create_server() -> Any:
+def create_server() -> Any:  # pragma: no cover
     """Function to retrieve just the app to be used by flask entry point."""
     flask_app, _ = create_app()
     return flask_app
 
 
-def run_app_in_subprocess(q: multiprocessing.Queue) -> None:
+def run_app_in_subprocess(q: multiprocessing.Queue) -> None:  # pragma: no cover
     """Run flask app in a subprocess to kill it when needed."""
     print("app in subprocess")
-    
     app, tendermint_node = create_app()
     atexit.register(tendermint_node.stop)
+
     @app.route("/exit")
     def handle_server_exit() -> Response:
         """Handle server exit."""
@@ -680,26 +720,37 @@ def run_app_in_subprocess(q: multiprocessing.Queue) -> None:
 
 
 class WinHelper:
-    def __init__(self):
+    """Helper class to manage Job Objects on Windows, which allow us to kill the Tendermint process and all its children when the main process is killed."""
+
+    def __init__(self) -> None:
+        """Initialize the Job Object and assign the current process to it."""
         self.job = self.create_job_object()
 
     @staticmethod
-    def get_proc_handler(pid):
+    def get_proc_handler(pid: int) -> Any:
+        """Get process handler for a given pid."""
 
-        import ctypes.wintypes
+        import ctypes.wintypes  # pylint: disable=import-outside-toplevel
 
-        kernel32 = ctypes.windll.kernel32
+        kernel32 = ctypes.windll.kernel32  # type: ignore[attr-defined]
         PROCESS_ALL_ACCESS = 0x1F0FFF
 
         return kernel32.OpenProcess(PROCESS_ALL_ACCESS, False, pid)
 
     @staticmethod
-    def create_job_object():
-        import ctypes.wintypes
-        from ctypes import wintypes
-        kernel32 = ctypes.windll.kernel32
-        import ctypes
+    def create_job_object() -> Any:
+        """Create a Job Object and set it to kill all child processes when the main process is killed."""
+        import ctypes.wintypes  # pylint: disable=import-outside-toplevel
+        from ctypes import (  # pylint: disable=import-outside-toplevel,reimported  # noqa: I001
+            wintypes,
+        )
+
+        kernel32 = ctypes.windll.kernel32  # type: ignore[attr-defined]
+        import ctypes  # pylint: disable=import-outside-toplevel,reimported
+
         class JOBOBJECT_BASIC_LIMIT_INFORMATION(ctypes.Structure):
+            """Basic limit information for a Job Object, which includes the limits on user time, working set size, and process count, as well as flags that specify the behavior of the Job Object."""
+
             _fields_ = [
                 ("PerProcessUserTimeLimit", wintypes.LARGE_INTEGER),
                 ("PerJobUserTimeLimit", wintypes.LARGE_INTEGER),
@@ -713,6 +764,8 @@ class WinHelper:
             ]
 
         class IO_COUNTERS(ctypes.Structure):
+            """I/O counters for a Job Object, which include the counts of read, write, and other operations, as well as the counts of bytes transferred for each type of operation."""
+
             _fields_ = [
                 ("ReadOperationCount", ctypes.c_ulonglong),
                 ("WriteOperationCount", ctypes.c_ulonglong),
@@ -723,6 +776,8 @@ class WinHelper:
             ]
 
         class JOBOBJECT_EXTENDED_LIMIT_INFORMATION(ctypes.Structure):
+            """Extended limit information for a Job Object, which includes the basic limit information as well as additional limits on process memory usage and job memory usage."""
+
             _fields_ = [
                 ("BasicLimitInformation", JOBOBJECT_BASIC_LIMIT_INFORMATION),
                 ("IoInfo", IO_COUNTERS),
@@ -732,37 +787,37 @@ class WinHelper:
                 ("PeakJobMemoryUsed", ctypes.c_size_t),
             ]
 
-
         # Создаем Job Object
         job = kernel32.CreateJobObjectW(None, None)
         if not job:
-            raise ctypes.WinError()
+            raise ctypes.WinError()  # type: ignore[attr-defined]
 
         # Настраиваем автоматическое завершение процессов при закрытии Job
         info = JOBOBJECT_EXTENDED_LIMIT_INFORMATION()
-        info.BasicLimitInformation.LimitFlags = 0x2000  # JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE
+        info.BasicLimitInformation.LimitFlags = (
+            0x2000  # JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE
+        )
 
         if not kernel32.SetInformationJobObject(
             job,
             9,  # JobObjectExtendedLimitInformation
             ctypes.byref(info),
-            ctypes.sizeof(info)
+            ctypes.sizeof(info),
         ):
             kernel32.CloseHandle(job)
-            raise ctypes.WinError()
+            raise ctypes.WinError()  # type: ignore[attr-defined]
 
         return job
 
+    def assign_to_job(self, pid: int) -> None:
+        """Assign a process to the Job Object to ensure it gets killed when the main process is killed."""
+        import ctypes.wintypes  # pylint: disable=import-outside-toplevel
 
-    def assign_to_job(self, pid):
-        import ctypes.wintypes
-
-        kernel32 = ctypes.windll.kernel32
+        kernel32 = ctypes.windll.kernel32  # type: ignore[attr-defined]
         job = self.job
         handle = self.get_proc_handler(pid)
         if not kernel32.AssignProcessToJobObject(job, handle):
-            raise ctypes.WinError()
-
+            raise ctypes.WinError()  # type: ignore[attr-defined]
 
 
 def run_stoppable_main() -> None:
@@ -771,37 +826,46 @@ def run_stoppable_main() -> None:
     if os.name != "nt":
         os.setpgrp()
 
-    q: multiprocessing.Queue = multiprocessing.Queue()
-    p = multiprocessing.Process(target=run_app_in_subprocess, args=(q,))
+    context = (
+        multiprocessing.get_context("fork")
+        if os.name != "nt"
+        else multiprocessing.get_context()
+    )
+    q: multiprocessing.Queue = context.Queue()
+    p = context.Process(target=run_app_in_subprocess, args=(q,))
     p.start()
     # wait for stop marker
     atexit.register(p.terminate)
 
     if os.name == "nt":
         win_helper = WinHelper()
-        win_helper.assign_to_job(p.pid)
+        win_helper.assign_to_job(p.pid)  # type: ignore[arg-type]
 
     try:
         q.get(block=True)
         sleep(1)
     finally:
+        with contextlib.suppress(Exception):
+            q.close()
+            q.join_thread()
         p.terminate()
         with contextlib.suppress(Exception):
             p.join(timeout=10)
             p.terminate()
 
 
-def main() -> None:
+def main() -> None:  # pragma: no cover
     """Main entrance."""
     app = create_server()
     app.run(host="localhost", port=8080)
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     # Start the Flask server programmatically
 
     with contextlib.suppress(Exception):
         # support for pyinstaller multiprocessing
         multiprocessing.freeze_support()
 
-    run_stoppable_main()
+    if not _should_skip_main_entry():
+        run_stoppable_main()

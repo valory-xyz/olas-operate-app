@@ -14,23 +14,26 @@ import { ONE_MINUTE_INTERVAL } from '@/constants/intervals';
 type PageStateContextType = {
   pageState: Pages;
   setPageState: Dispatch<SetStateAction<Pages>>;
+  navParams: Record<string, unknown>;
+  setNavParams: Dispatch<SetStateAction<Record<string, unknown>>>;
   isPageLoadedAndOneMinutePassed: boolean;
   isUserLoggedIn: boolean;
   setUserLoggedIn: () => void;
-  setUserLogout: () => void;
 };
 
 export const PageStateContext = createContext<PageStateContextType>({
   pageState: PAGES.Setup,
   setPageState: () => {},
+  navParams: {},
+  setNavParams: () => {},
   isPageLoadedAndOneMinutePassed: false,
   isUserLoggedIn: false,
   setUserLoggedIn: () => {},
-  setUserLogout: () => {},
 });
 
 export const PageStateProvider = ({ children }: PropsWithChildren) => {
   const [pageState, setPageState] = useState<Pages>(PAGES.Setup);
+  const [navParams, setNavParams] = useState<Record<string, unknown>>({});
   const [isPageLoadedAndOneMinutePassed, setIsPageLoadedAndOneMinutePassed] =
     useState(false);
   const [isUserLoggedIn, setIsUserLoggedIn] = useState(false);
@@ -49,21 +52,18 @@ export const PageStateProvider = ({ children }: PropsWithChildren) => {
     setIsUserLoggedIn(true);
   }, []);
 
-  const setUserLogout = useCallback(() => {
-    setIsUserLoggedIn(false);
-  }, []);
-
   return (
     <PageStateContext.Provider
       value={{
         // User login state
         isUserLoggedIn,
         setUserLoggedIn,
-        setUserLogout,
 
         // Page state
         pageState,
         setPageState,
+        navParams,
+        setNavParams,
         isPageLoadedAndOneMinutePassed,
       }}
     >

@@ -2,8 +2,16 @@ import { Button, Typography } from 'antd';
 import { useEffect, useMemo } from 'react';
 import styled from 'styled-components';
 
-import { COLOR, onRampChainMap, SETUP_SCREEN } from '@/constants';
 import {
+  AddressZero,
+  COLOR,
+  IS_TRANSAK_UNAVAILABLE,
+  MIN_ONRAMP_AMOUNT,
+  ON_RAMP_CHAIN_MAP,
+  SETUP_SCREEN,
+} from '@/constants';
+import {
+  useGetBridgeRequirementsParams,
   useOnRampContext,
   useServices,
   useSetup,
@@ -15,8 +23,7 @@ import {
   asMiddlewareChain,
 } from '@/utils/middlewareHelpers';
 
-import { Alert, CardFlex, CardTitle } from '../../../ui';
-import { TokenRequirements } from './TokensRequirements';
+import { Alert, CardFlex, CardTitle, TokenRequirements } from '../../../ui';
 
 const OnRampMethodCardCard = styled(CardFlex)`
   width: 370px;
@@ -26,8 +33,6 @@ const OnRampMethodCardCard = styled(CardFlex)`
     height: 100%;
   }
 `;
-
-const MIN_ONRAMP_AMOUNT = 5;
 
 const { Paragraph } = Typography;
 
@@ -42,8 +47,10 @@ const useOnRampNetworkConfig = () => {
     useMemo(() => {
       const selectedChainId = selectedAgentConfig.evmHomeChainId;
       const fromChainName = asMiddlewareChain(selectedChainId);
-      const networkId = onRampChainMap[fromChainName];
-      const chainDetails = asEvmChainDetails(asMiddlewareChain(networkId));
+      const networkId = ON_RAMP_CHAIN_MAP[fromChainName];
+      const chainDetails = asEvmChainDetails(
+        asMiddlewareChain(networkId.chain),
+      );
       return {
         selectedChainId,
         networkId,
@@ -54,7 +61,7 @@ const useOnRampNetworkConfig = () => {
 
   useEffect(() => {
     updateNetworkConfig({
-      networkId,
+      networkId: networkId.chain,
       networkName,
       cryptoCurrencyCode,
       selectedChainId,
@@ -74,12 +81,24 @@ export const OnRampMethodCard = () => {
   const { goto } = useSetup();
   const { selectedChainId, networkId } = useOnRampNetworkConfig();
 
+  // Get requirements params function (use 'to' direction for on-ramping)
+  const getOnRampRequirementsParams = useGetBridgeRequirementsParams(
+    networkId.chain,
+    AddressZero,
+    'to',
+  );
+
   const {
     isLoading: isNativeTokenLoading,
     hasError: hasNativeTokenError,
     totalNativeToken,
-  } = useTotalNativeTokenRequired(networkId, 'onboarding');
-  const { isLoading: isFiatLoading, data: fiatAmount } =
+  } = useTotalNativeTokenRequired(
+    networkId.chain,
+    selectedChainId,
+    getOnRampRequirementsParams,
+    'onboard',
+  );
+  const { isLoading: isFiatLoading, data: totalFiatDetails } =
     useTotalFiatFromNativeToken({
       nativeTokenAmount: hasNativeTokenError ? undefined : totalNativeToken,
       selectedChainId,
@@ -89,10 +108,22 @@ export const OnRampMethodCard = () => {
   const isFiatAmountTooLow = useMemo(() => {
     if (isLoading) return false;
     if (isNativeTokenLoading) return false;
+    if (hasNativeTokenError) return false;
     if (totalNativeToken === 0) return true;
-    if (fiatAmount && fiatAmount < MIN_ONRAMP_AMOUNT) return true;
+    if (
+      totalFiatDetails?.fiatAmount &&
+      totalFiatDetails.fiatAmount < MIN_ONRAMP_AMOUNT
+    ) {
+      return true;
+    }
     return false;
-  }, [fiatAmount, isLoading, isNativeTokenLoading, totalNativeToken]);
+  }, [
+    totalFiatDetails,
+    isLoading,
+    isNativeTokenLoading,
+    totalNativeToken,
+    hasNativeTokenError,
+  ]);
 
   return (
     <OnRampMethodCardCard>
@@ -102,14 +133,27 @@ export const OnRampMethodCard = () => {
           Pay in fiat by using your credit or debit card — perfect for speed and
           ease!
         </Paragraph>
-        <TokenRequirements
-          fiatAmount={fiatAmount ?? 0}
-          isLoading={isLoading}
-          hasError={hasNativeTokenError}
-          fundType="onRamp"
-        />
+        {IS_TRANSAK_UNAVAILABLE ? (
+          <Alert
+            type="warning"
+            showIcon
+            message="Service is temporarily unavailable."
+            className="text-sm"
+          />
+        ) : (
+          <TokenRequirements
+            fiatAmount={totalFiatDetails?.fiatAmount ?? 0}
+            isLoading={isLoading}
+            hasError={hasNativeTokenError}
+            fundType="onRamp"
+          />
+        )}
       </div>
-      {isFiatAmountTooLow ? (
+      {IS_TRANSAK_UNAVAILABLE ? (
+        <Button type="primary" size="large" className="mt-auto" disabled>
+          Buy Crypto with USD
+        </Button>
+      ) : isFiatAmountTooLow ? (
         <Alert
           message={`The minimum value of crypto to buy with your credit card is $${MIN_ONRAMP_AMOUNT}.`}
           type="info"
@@ -120,6 +164,7 @@ export const OnRampMethodCard = () => {
         <Button
           type="primary"
           size="large"
+          className="mt-auto"
           onClick={() => goto(SETUP_SCREEN.SetupOnRamp)}
           disabled={isLoading || hasNativeTokenError}
         >

@@ -8,10 +8,11 @@ import {
   OptimismStakingProgramId,
 } from '@/constants';
 import { Address } from '@/types';
+import { deriveStakingProgramId } from '@/utils';
 
 import { OPTIMISM_STAKING_PROGRAMS_ACTIVITY_CHECKERS } from '../activityCheckers';
 import { TokenSymbolMap } from '../tokens';
-import { StakingProgramConfig } from '.';
+import type { StakingProgramConfig } from '.';
 
 export const OPTIMISM_STAKING_PROGRAMS_CONTRACT_ADDRESSES: Record<
   OptimismStakingProgramId,
@@ -47,6 +48,11 @@ export const OPTIMISM_STAKING_PROGRAMS: {
       ],
       STAKING_TOKEN_PROXY_ABI,
     ),
+    id: deriveStakingProgramId(
+      OPTIMISM_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        OPTIMISM_STAKING_PROGRAM_IDS.OptimusAlpha2
+      ],
+    ),
   },
   [OPTIMISM_STAKING_PROGRAM_IDS.OptimusAlpha3]: {
     chainId: EvmChainIdMap.Optimism,
@@ -69,6 +75,11 @@ export const OPTIMISM_STAKING_PROGRAMS: {
       ],
       STAKING_TOKEN_PROXY_ABI,
     ),
+    id: deriveStakingProgramId(
+      OPTIMISM_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        OPTIMISM_STAKING_PROGRAM_IDS.OptimusAlpha3
+      ],
+    ),
   },
   [OPTIMISM_STAKING_PROGRAM_IDS.OptimusAlpha4]: {
     chainId: EvmChainIdMap.Optimism,
@@ -90,6 +101,11 @@ export const OPTIMISM_STAKING_PROGRAMS: {
         OPTIMISM_STAKING_PROGRAM_IDS.OptimusAlpha4
       ],
       STAKING_TOKEN_PROXY_ABI,
+    ),
+    id: deriveStakingProgramId(
+      OPTIMISM_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        OPTIMISM_STAKING_PROGRAM_IDS.OptimusAlpha4
+      ],
     ),
   },
 };

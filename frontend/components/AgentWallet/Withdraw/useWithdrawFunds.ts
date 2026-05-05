@@ -1,7 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 
-import { useMasterWalletContext, useServices } from '@/hooks';
+import { useServices } from '@/hooks';
 import { ServicesService } from '@/service/Services';
 
 /**
@@ -9,39 +9,26 @@ import { ServicesService } from '@/service/Services';
  * to the master safe.
  */
 export const useWithdrawFunds = () => {
-  const { selectedAgentConfig, selectedService } = useServices();
-  const { masterSafes } = useMasterWalletContext();
+  const { selectedService } = useServices();
 
-  const evmHomeChainId = selectedAgentConfig?.evmHomeChainId;
-  const masterSafeAddress = useMemo(() => {
-    const safe = masterSafes?.find(
-      ({ evmChainId }) => evmChainId === evmHomeChainId,
-    );
-    return safe?.address;
-  }, [masterSafes, evmHomeChainId]);
+  const { isPending, isSuccess, isError, error, mutateAsync, reset } =
+    useMutation<void, unknown, void>({
+      mutationFn: async () => {
+        if (!selectedService?.service_config_id) {
+          throw new Error('Service config ID not found');
+        }
 
-  const { isPending, isSuccess, isError, mutateAsync } = useMutation({
-    mutationFn: async () => {
-      if (!masterSafeAddress) {
-        throw new Error('Master Safe address not found');
-      }
-
-      if (!selectedService?.service_config_id) {
-        throw new Error('Service config ID not found');
-      }
-
-      await ServicesService.withdrawBalance({
-        withdrawAddress: masterSafeAddress,
-        serviceConfigId: selectedService.service_config_id,
-      });
-    },
-  });
+        await ServicesService.withdrawBalance({
+          serviceConfigId: selectedService.service_config_id,
+        });
+      },
+    });
 
   const onWithdrawFunds = useCallback(async () => {
     try {
       await mutateAsync();
-    } catch (error) {
-      console.error(error);
+    } catch (caughtError) {
+      console.error(caughtError);
     }
   }, [mutateAsync]);
 
@@ -49,6 +36,8 @@ export const useWithdrawFunds = () => {
     isLoading: isPending,
     isSuccess,
     isError,
+    error,
     onWithdrawFunds,
+    resetMutation: reset,
   };
 };

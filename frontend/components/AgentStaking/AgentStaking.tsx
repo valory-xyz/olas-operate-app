@@ -4,12 +4,18 @@ import { useState } from 'react';
 import { TbFileText, TbHistory } from 'react-icons/tb';
 
 import { FireV1 } from '@/components/custom-icons';
-import { BackButton, CardFlex, InfoTooltip, Segmented } from '@/components/ui';
-import { MAIN_CONTENT_MAX_WIDTH, PAGES } from '@/constants';
+import {
+  BackButton,
+  CardFlex,
+  InfoTooltip,
+  MainContentContainer,
+  Segmented,
+} from '@/components/ui';
+import { PAGES } from '@/constants';
 import {
   usePageState,
   useRewardContext,
-  useServiceOnlyRewardsHistory,
+  useRewardsHistory,
   useStakingDetails,
 } from '@/hooks';
 
@@ -23,8 +29,8 @@ const StatsSkeleton = () => <Skeleton.Input active size="small" />;
 const StakingStats = () => {
   const { optimisticStreak, isStreakLoading } = useStakingDetails();
   const { isEligibleForRewards } = useRewardContext();
-  const { isLoading: isTotalRewardsLoading } = useServiceOnlyRewardsHistory();
-  const { totalRewards } = useServiceOnlyRewardsHistory();
+  const { isLoading: isTotalRewardsLoading, totalRewards } =
+    useRewardsHistory();
 
   const isFlameActive = optimisticStreak > 0 && isEligibleForRewards;
 
@@ -114,7 +120,7 @@ export const AgentStaking = () => {
     useState<SelectionTabsProps['currentTab']>('StakingContract');
 
   return (
-    <Flex vertical style={{ width: MAIN_CONTENT_MAX_WIDTH, margin: '0 auto' }}>
+    <MainContentContainer vertical>
       <BackButton onPrev={() => goto(PAGES.Main)} />
       <Title level={3} className="mt-12 mb-32">
         Agent Staking
@@ -125,6 +131,6 @@ export const AgentStaking = () => {
 
       {currentTab === 'StakingContract' && <StakingContractDetails />}
       {currentTab === 'RewardsHistory' && <RewardsHistory />}
-    </Flex>
+    </MainContentContainer>
   );
 };

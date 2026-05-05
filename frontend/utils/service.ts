@@ -1,13 +1,41 @@
 import { isEmpty, isEqual } from 'lodash';
 
-import { AgentMap, AgentType, StakingProgramId } from '@/constants';
+import { AgentMap, AgentType, EvmChainId, StakingProgramId } from '@/constants';
 import { EnvProvisionMap } from '@/constants/envVariables';
 import {
   KPI_DESC_PREFIX,
   SERVICE_TEMPLATES,
 } from '@/constants/serviceTemplates';
 import { ServicesService } from '@/service/Services';
-import { Address, DeepPartial, Service, ServiceTemplate } from '@/types';
+import {
+  Address,
+  AgentConfig,
+  DeepPartial,
+  Maybe,
+  MiddlewareServiceResponse,
+  Service,
+  ServiceTemplate,
+} from '@/types';
+
+import { generateAgentName } from './generateAgentName';
+
+/**
+ * Returns the creation timestamp of a service from its hash_history.
+ * The smallest key in hash_history represents the first block (creation).
+ * Returns Infinity if hash_history is empty or missing.
+ */
+export const getServiceCreationTime = (
+  service: MiddlewareServiceResponse,
+): number => {
+  const keys = Object.keys(service.hash_history || {}).map(Number);
+  return keys.length > 0 ? Math.min(...keys) : Infinity;
+};
+
+/** Sort comparator: services created first come first. */
+export const sortByCreationTime = (
+  a: MiddlewareServiceResponse,
+  b: MiddlewareServiceResponse,
+): number => getServiceCreationTime(a) - getServiceCreationTime(b);
 
 export const updateServiceIfNeeded = async (
   service: Service,
@@ -122,7 +150,7 @@ export const onDummyServiceCreation = async (
   stakingProgramId: StakingProgramId,
   serviceTemplateConfig: ServiceTemplate,
 ) => {
-  await ServicesService.createService({
+  return ServicesService.createService({
     serviceTemplate: serviceTemplateConfig,
     deploy: true,
     stakingProgramId,
@@ -136,4 +164,33 @@ export const isValidServiceId = (
   token: number | null | undefined | -1,
 ): token is number => {
   return typeof token === 'number' && token !== -1 && token !== 0;
+};
+
+/** Checks if a service belongs to a given agent config */
+export const isServiceOfAgent = (
+  service: Service | MiddlewareServiceResponse,
+  config: AgentConfig,
+): boolean =>
+  service.service_public_id === config.servicePublicId &&
+  service.home_chain === config.middlewareHomeChainId;
+
+/**
+ * Get display name for a service instance.
+ * Falls back to "My `agentName`" if the instance isn't deployed yet.
+ */
+export const getServiceInstanceName = (
+  service: Maybe<Service>,
+  displayName: string,
+  evmHomeChainId: EvmChainId,
+): string => {
+  const homeChain = service?.home_chain;
+  const tokenId = homeChain
+    ? service?.chain_configs[homeChain]?.chain_data?.token
+    : undefined;
+
+  if (isValidServiceId(tokenId)) {
+    return generateAgentName(evmHomeChainId, tokenId);
+  }
+
+  return `My ${displayName}`;
 };

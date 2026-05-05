@@ -3,7 +3,8 @@ ef9ec7a111816282b6185e8268a460d02329fbe4:api.md:generic-api-key:37
 88115a38d3843d0f233f234816229de495bc6ece:templates/trader.yaml:generic-api-key:13
 0a426251fedb8b55111455e35bffd661f4489541:backend/test.py:generic-api-key:13
 daf41a143aa8c483db584ba1e7222e8eafec1d3b:backend/controller.py:generic-api-key:201
-af77e930289cbc87987567bff0efc25936484df2:backend/controller.py:generic-api-key:354b04972639d66053109596d3b73a1d91688964ebb:electron/constants/publishOptions.js:github-fine-grained-pat:3
+af77e930289cbc87987567bff0efc25936484df2:backend/controller.py:generic-api-key:354
+b04972639d66053109596d3b73a1d91688964ebb:electron/constants/publishOptions.js:github-fine-grained-pat:3
 b04972639d66053109596d3b73a1d91688964ebb:electron/constants/publishOptions.js:github-fine-grained-pat:3
 af77e930289cbc87987567bff0efc25936484df2:backend/controller.py:generic-api-key:354
 109e5e452b22cade347872b3a6c7dfb8822131d8:frontend/components/SetupPage/Create/SetupOnRamp/PayingReceivingTable/useTotalFiatFromNativeToken.ts:generic-api-key:8
@@ -11,3 +12,5 @@ af77e930289cbc87987567bff0efc25936484df2:backend/controller.py:generic-api-key:3
 6f85db13b048497b7dd735d65017fbd4d714424b:frontend/components/OnRampWidget/OnRampWidget.tsx:generic-api-key:12
 c6c3f9c18019fce5346bbab76fa505595e7327a3:TEST_ZENDESK.md:generic-api-key:13
 c6c3f9c18019fce5346bbab76fa505595e7327a3:TEST_ZENDESK.md:generic-api-key:71
+abcadd92ae3603d63cebf2e8f6143361be280abd:frontend/tests/components/AgentForms/common/validations.test.ts:generic-api-key:8
+0ed5fa92bcc856f41f23d526a024262c4c48f99f:frontend/tests/components/AgentForms/common/validations.test.ts:generic-api-key:8

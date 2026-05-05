@@ -6,11 +6,13 @@ import {
   SuccessOutlined,
   WarningOutlined,
 } from '@/components/custom-icons';
-import { cardStyles } from '@/components/ui';
-import { PAGES } from '@/constants';
+import { cardStyles, InsufficientSignerGasModal } from '@/components/ui';
+import { AddressZero, PAGES } from '@/constants';
 import { useSupportModal } from '@/context/SupportModalProvider';
-import { usePageState } from '@/hooks';
+import { useInsufficientGasModal, usePageState } from '@/hooks';
 
+import { useAgentWallet } from '../AgentWalletProvider';
+import { STEPS } from '../types';
 import { ChainAndAmountOverview } from './ChainAndAmountOverview';
 import { useWithdrawFunds } from './useWithdrawFunds';
 
@@ -100,7 +102,15 @@ const WithdrawalFailed = ({ onTryAgain }: WithdrawalFailedProps) => {
 type EnterWithdrawalAddressProps = { onBack: () => void };
 
 export const Withdraw = ({ onBack }: EnterWithdrawalAddressProps) => {
-  const { isLoading, isError, isSuccess, onWithdrawFunds } = useWithdrawFunds();
+  const {
+    isLoading,
+    isError,
+    isSuccess,
+    error,
+    onWithdrawFunds,
+    resetMutation,
+  } = useWithdrawFunds();
+  const { setFundInitialValues, updateStep } = useAgentWallet();
 
   const [isWithdrawModalVisible, setWithdrawModalVisible] = useState(false);
 
@@ -109,6 +119,27 @@ export const Withdraw = ({ onBack }: EnterWithdrawalAddressProps) => {
     onWithdrawFunds();
   }, [onWithdrawFunds]);
 
+  const closeWithdrawModal = useCallback(
+    () => setWithdrawModalVisible(false),
+    [],
+  );
+
+  const gasModalProps = useInsufficientGasModal({
+    isError,
+    error,
+    caseType: 'agent-withdraw',
+    onFund: (gasError) => {
+      // `prefill_amount_wei` is always the native gas token (backend contract:
+      // it's looked up from DEFAULT_EOA_TOPUPS[chain][ZERO_ADDRESS]), so key
+      // it by AddressZero — FundAgent maps AddressZero → the chain's native
+      // symbol automatically via TOKEN_CONFIG.
+      setFundInitialValues({ [AddressZero]: gasError.prefill_amount_wei });
+      updateStep(STEPS.FUND_AGENT);
+    },
+    onClose: closeWithdrawModal,
+    resetMutation,
+  });
+
   return (
     <Flex gap={16} vertical style={cardStyles}>
       <ChainAndAmountOverview
@@ -116,26 +147,30 @@ export const Withdraw = ({ onBack }: EnterWithdrawalAddressProps) => {
         onWithdraw={handleWithdrawFunds}
       />
 
-      {isWithdrawModalVisible && (
-        <Modal
-          onCancel={
-            isLoading ? undefined : () => setWithdrawModalVisible(false)
-          }
-          closable={!isLoading}
-          open
-          width={436}
-          title={null}
-          footer={null}
-        >
-          {isError ? (
-            <WithdrawalFailed onTryAgain={handleWithdrawFunds} />
-          ) : isSuccess ? (
-            <WithdrawalComplete />
-          ) : (
-            <WithdrawalInProgress />
-          )}
-        </Modal>
-      )}
+      {isWithdrawModalVisible &&
+        (gasModalProps ? (
+          <InsufficientSignerGasModal {...gasModalProps} />
+        ) : (
+          <Modal
+            onCancel={
+              isLoading ? undefined : () => setWithdrawModalVisible(false)
+            }
+            closable={!isLoading}
+            centered
+            open
+            width={436}
+            title={null}
+            footer={null}
+          >
+            {isError ? (
+              <WithdrawalFailed onTryAgain={handleWithdrawFunds} />
+            ) : isSuccess ? (
+              <WithdrawalComplete />
+            ) : (
+              <WithdrawalInProgress />
+            )}
+          </Modal>
+        ))}
     </Flex>
   );
 };

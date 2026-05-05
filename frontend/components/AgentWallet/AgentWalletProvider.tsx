@@ -4,6 +4,7 @@ import {
   ReactNode,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
 } from 'react';
@@ -13,6 +14,7 @@ import { EvmChainId } from '@/constants/chains';
 import {
   useAvailableAgentAssets,
   useBalanceContext,
+  usePageState,
   useRewardContext,
   useService,
   useServices,
@@ -20,9 +22,13 @@ import {
 import { TokenBalanceRecord } from '@/types';
 import { Nullable, Optional, ValueOf } from '@/types/Util';
 import { AvailableAsset } from '@/types/Wallet';
-import { generateName } from '@/utils/agentName';
 
 import { STEPS, TransactionHistory } from './types';
+
+type AgentWalletNavParams = {
+  initialStep?: ValueOf<typeof STEPS>;
+  initialFundValues?: TokenBalanceRecord;
+};
 
 const AgentWalletContext = createContext<{
   walletStep: ValueOf<typeof STEPS>;
@@ -30,7 +36,7 @@ const AgentWalletContext = createContext<{
   isLoading: boolean;
   walletChainId: Nullable<EvmChainId>;
   transactionHistory: TransactionHistory[];
-  agentName: Nullable<string>;
+  agentName: string;
   agentImgSrc: Nullable<string>;
   stakingRewards: number;
   availableAssets: AvailableAsset[];
@@ -42,7 +48,7 @@ const AgentWalletContext = createContext<{
   isLoading: false,
   walletChainId: null,
   transactionHistory: [],
-  agentName: null,
+  agentName: '',
   agentImgSrc: null,
   stakingRewards: 0,
   availableAssets: [],
@@ -51,27 +57,34 @@ const AgentWalletContext = createContext<{
 });
 
 export const AgentWalletProvider = ({ children }: { children: ReactNode }) => {
+  const { navParams, clearNavParams } = usePageState();
+  const params = navParams as AgentWalletNavParams;
+
   const {
     isLoading: isServicesLoading,
     selectedAgentConfig,
     selectedService,
+    selectedAgentNameOrFallback,
   } = useServices();
-  const { isLoaded, serviceSafes } = useService(
-    selectedService?.service_config_id,
-  );
+  const { isLoaded } = useService(selectedService?.service_config_id);
   const { isLoading: isBalanceLoading } = useBalanceContext();
   const { availableRewardsForEpochEth, accruedServiceStakingRewards } =
     useRewardContext();
   const { availableAssets } = useAvailableAgentAssets();
   const [fundInitialValues, setFundInitialValues] =
-    useState<TokenBalanceRecord>({});
+    useState<TokenBalanceRecord>(params.initialFundValues ?? {});
 
   const { evmHomeChainId: walletChainId } = selectedAgentConfig;
 
   // wallet chain ID
   const [walletStep, setWalletStep] = useState<ValueOf<typeof STEPS>>(
-    STEPS.AGENT_WALLET_SCREEN,
+    params.initialStep ?? STEPS.AGENT_WALLET_SCREEN,
   );
+
+  // Clear navParams after consuming them on mount
+  useEffect(() => {
+    clearNavParams();
+  }, [clearNavParams]);
 
   const agent = ACTIVE_AGENTS.find(
     ([, agentConfig]) =>
@@ -79,12 +92,6 @@ export const AgentWalletProvider = ({ children }: { children: ReactNode }) => {
       agentConfig.middlewareHomeChainId === selectedService?.home_chain,
   );
   const agentType = agent ? agent[0] : null;
-
-  // agent safe
-  const serviceSafe = useMemo(
-    () => serviceSafes?.find(({ evmChainId }) => evmChainId === walletChainId),
-    [serviceSafes, walletChainId],
-  );
 
   // rewards not yet claimed from staking contract
   const stakingRewards = useMemo(() => {
@@ -111,7 +118,7 @@ export const AgentWalletProvider = ({ children }: { children: ReactNode }) => {
         isLoading: isServicesLoading || !isLoaded || isBalanceLoading,
         walletChainId,
         transactionHistory: [],
-        agentName: generateName(serviceSafe?.address),
+        agentName: selectedAgentNameOrFallback,
         agentImgSrc: agentType ? `/agent-${agentType}-icon.png` : null,
         stakingRewards,
         availableAssets,

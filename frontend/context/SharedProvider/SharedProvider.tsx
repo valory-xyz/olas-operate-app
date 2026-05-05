@@ -1,12 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import {
-  createContext,
-  PropsWithChildren,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
+import { createContext, PropsWithChildren, useEffect, useState } from 'react';
 
 import { AgentMap, REACT_QUERY_KEYS } from '@/constants';
 import { useServices } from '@/hooks/useServices';
@@ -15,9 +8,6 @@ import { RecoveryService } from '@/service/Recovery';
 import { useOnlineStatus } from '../OnlineStatusProvider';
 
 export const SharedContext = createContext<{
-  hasMainOlasBalanceAnimatedOnLoad: boolean;
-  setMainOlasBalanceAnimated: (value: boolean) => void;
-
   // agent specific checks
   isAgentsFunFieldUpdateRequired: boolean;
 
@@ -25,11 +15,10 @@ export const SharedContext = createContext<{
   isAccountRecoveryStatusLoading?: boolean;
   hasActiveRecoverySwap?: boolean;
 
-  // others
+  // session state (cleared on app restart)
+  mnemonicExists: boolean | undefined;
+  setMnemonicExists: (exists: boolean) => void;
 }>({
-  hasMainOlasBalanceAnimatedOnLoad: false,
-  setMainOlasBalanceAnimated: () => {},
-
   // agent specific checks
   isAgentsFunFieldUpdateRequired: false,
 
@@ -37,24 +26,24 @@ export const SharedContext = createContext<{
   isAccountRecoveryStatusLoading: true,
   hasActiveRecoverySwap: false,
 
-  // others
+  // session state (cleared on app restart)
+  mnemonicExists: undefined,
+  setMnemonicExists: () => {},
 });
 
 /**
  * Shared provider to provide shared context to all components in the app.
  * @example
- * - Track the main OLAS balance animation state & mount state.
  * - Track the onboarding step of the user (independent of the agent).
  * - Track the healthcheck alert shown to the user (so that they are not shown again).
  */
 export const SharedProvider = ({ children }: PropsWithChildren) => {
   const { isOnline } = useOnlineStatus();
 
-  // state to track the main OLAS balance animation state & mount state
-  const hasAnimatedRef = useRef(false);
-  const setMainOlasBalanceAnimated = useCallback((value: boolean) => {
-    hasAnimatedRef.current = value;
-  }, []);
+  // session state — not persisted, cleared on app restart
+  const [mnemonicExists, setMnemonicExists] = useState<boolean | undefined>(
+    undefined,
+  );
 
   // agent specific checks
   const { selectedAgentType, selectedService } = useServices();
@@ -100,9 +89,6 @@ export const SharedProvider = ({ children }: PropsWithChildren) => {
   return (
     <SharedContext.Provider
       value={{
-        hasMainOlasBalanceAnimatedOnLoad: hasAnimatedRef.current,
-        setMainOlasBalanceAnimated,
-
         // agent specific checks
         isAgentsFunFieldUpdateRequired,
 
@@ -110,7 +96,9 @@ export const SharedProvider = ({ children }: PropsWithChildren) => {
         isAccountRecoveryStatusLoading,
         hasActiveRecoverySwap,
 
-        // others
+        // session state (cleared on app restart)
+        mnemonicExists,
+        setMnemonicExists,
       }}
     >
       {children}

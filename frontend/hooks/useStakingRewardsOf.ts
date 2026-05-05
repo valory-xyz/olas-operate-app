@@ -3,7 +3,7 @@ import { isNil } from 'lodash';
 import { useContext, useMemo } from 'react';
 
 import { ACTIVE_AGENTS, AGENT_CONFIG } from '@/config/agents';
-import { AgentType, EvmChainId, FIVE_SECONDS_INTERVAL } from '@/constants';
+import { EvmChainId, FIVE_SECONDS_INTERVAL } from '@/constants';
 import { OnlineStatusContext } from '@/context/OnlineStatusProvider';
 import { assertRequired } from '@/types/Util';
 import { sumBigNumbers } from '@/utils/calculations';
@@ -44,7 +44,7 @@ export const useStakingRewardsOf = (chainId: EvmChainId) => {
           agentConfig.servicePublicId === service.service_public_id,
       );
       assertRequired(agent, 'Agent not found for the given service.');
-      const agentType = agent[0] as AgentType;
+      const agentType = agent[0];
 
       const chainConfigs = service.chain_configs;
       const chainDetails = isNil(chainConfigs)

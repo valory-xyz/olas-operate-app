@@ -12,8 +12,9 @@ import {
   Divider,
   TokenAmountInput,
 } from '@/components/ui';
-import { TOKEN_CONFIG, TokenSymbol } from '@/config/tokens';
+import { TOKEN_CONFIG, TokenSymbol, TokenSymbolMap } from '@/config/tokens';
 import { AddressZero, PAGES } from '@/constants';
+import { EvmChainIdMap } from '@/constants/chains';
 import { useAvailableAssets, usePageState, useServices } from '@/hooks';
 import { TokenAmountDetails, TokenAmounts } from '@/types/Wallet';
 import { formatUnitsToNumber } from '@/utils';
@@ -59,7 +60,7 @@ const PearlWalletToAgentWallet = () => {
         <ArrowRightOutlined style={{ fontSize: 12 }} />
         <Flex gap={8} align="center">
           <Text type="secondary">To</Text>{' '}
-          {agentName && agentImgSrc && (
+          {agentImgSrc && (
             <Image src={agentImgSrc} alt={agentName} width={28} height={28} />
           )}
           <Text className="font-weight-500">{agentName}</Text>
@@ -92,6 +93,18 @@ const useFundAgent = () => {
       includeMasterEoa: false,
     });
   const { fundInitialValues, setFundInitialValues } = useAgentWallet();
+
+  // Polystrat (Polygon) migrated from USDC.e to pUSD; hide USDC.e from the
+  // Fund Agent inputs so users don't fund a token the agent no longer uses.
+  const filteredAvailableAssets = useMemo(
+    () =>
+      selectedAgentConfig.evmHomeChainId === EvmChainIdMap.Polygon
+        ? availableAssets.filter(
+            ({ symbol }) => symbol !== TokenSymbolMap['USDC.e'],
+          )
+        : availableAssets,
+    [availableAssets, selectedAgentConfig.evmHomeChainId],
+  );
 
   const [amountsToFund, setAmountsToFund] = useState<TokenAmounts>({});
 
@@ -143,7 +156,7 @@ const useFundAgent = () => {
 
   return {
     isLoading: isAvailableAssetsLoading,
-    availableAssets,
+    availableAssets: filteredAvailableAssets,
     amountsToFund,
     onAmountChange,
   };
@@ -203,6 +216,7 @@ export const FundAgent = ({ onBack }: { onBack: () => void }) => {
       <ConfirmTransfer
         canTransfer={canTransfer}
         fundsToTransfer={amountsToFund}
+        onSuccess={onBack}
       />
     </Flex>
   );

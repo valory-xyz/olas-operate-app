@@ -9,7 +9,8 @@ import { useElectronApi } from './useElectronApi';
 import { useStore } from './useStore';
 
 export const useSetup = () => {
-  const { setupObject, setSetupObject } = useContext(SetupContext);
+  const { setupObject, setSetupObject, password, setPassword } =
+    useContext(SetupContext);
   const { store } = useElectronApi();
   const { storeState } = useStore();
 
@@ -46,5 +47,7 @@ export const useSetup = () => {
     ...setupObject,
     setBackupSigner,
     goto,
+    password,
+    setPassword,
   };
 };

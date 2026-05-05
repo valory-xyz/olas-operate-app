@@ -8,6 +8,7 @@ import { useEffect, useState } from 'react';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { Layout } from '@/components/Layout';
 import { mainTheme } from '@/constants';
+import { AutoRunProvider } from '@/context/AutoRunProvider/AutoRunProvider';
 import { BalanceProvider } from '@/context/BalanceProvider/BalanceProvider';
 import { BalancesAndRefillRequirementsProvider } from '@/context/BalancesAndRefillRequirementsProvider/BalancesAndRefillRequirementsProvider';
 import { ElectronApiProvider } from '@/context/ElectronApiProvider';
@@ -25,10 +26,7 @@ import { SharedProvider } from '@/context/SharedProvider/SharedProvider';
 import { StakingContractDetailsProvider } from '@/context/StakingContractDetailsProvider';
 import { StakingProgramProvider } from '@/context/StakingProgramProvider';
 import { StoreProvider } from '@/context/StoreProvider';
-import {
-  SupportModalProvider,
-  useSupportModal,
-} from '@/context/SupportModalProvider';
+import { SupportModalProvider } from '@/context/SupportModalProvider';
 import { useElectronApi } from '@/hooks/useElectronApi';
 import { useGlobalErrorHandlers } from '@/hooks/useGlobalErrorHandlers';
 
@@ -38,7 +36,6 @@ function App({ Component, pageProps }: AppProps) {
   const [isMounted, setIsMounted] = useState(false);
 
   const { nextLogError } = useElectronApi();
-  const { toggleSupportModal } = useSupportModal();
 
   useGlobalErrorHandlers(nextLogError);
 
@@ -47,10 +44,7 @@ function App({ Component, pageProps }: AppProps) {
   }, []);
 
   return (
-    <ErrorBoundary
-      logger={nextLogError}
-      toggleSupportModal={toggleSupportModal}
-    >
+    <ErrorBoundary logger={nextLogError}>
       <OnlineStatusProvider>
         <StoreProvider>
           <PageStateProvider>
@@ -61,23 +55,27 @@ function App({ Component, pageProps }: AppProps) {
                     <RewardProvider>
                       <BalanceProvider>
                         <BalancesAndRefillRequirementsProvider>
-                          <SetupProvider>
-                            <SettingsProvider>
-                              <MessageProvider>
-                                <SharedProvider>
-                                  <OnRampProvider>
-                                    <PearlWalletProvider>
-                                      {isMounted ? (
-                                        <Layout>
-                                          <Component {...pageProps} />
-                                        </Layout>
-                                      ) : null}
-                                    </PearlWalletProvider>
-                                  </OnRampProvider>
-                                </SharedProvider>
-                              </MessageProvider>
-                            </SettingsProvider>
-                          </SetupProvider>
+                          <AutoRunProvider>
+                            <SetupProvider>
+                              <SettingsProvider>
+                                <MessageProvider>
+                                  <SharedProvider>
+                                    <OnRampProvider>
+                                      <PearlWalletProvider>
+                                        <SupportModalProvider>
+                                          {isMounted ? (
+                                            <Layout>
+                                              <Component {...pageProps} />
+                                            </Layout>
+                                          ) : null}
+                                        </SupportModalProvider>
+                                      </PearlWalletProvider>
+                                    </OnRampProvider>
+                                  </SharedProvider>
+                                </MessageProvider>
+                              </SettingsProvider>
+                            </SetupProvider>
+                          </AutoRunProvider>
                         </BalancesAndRefillRequirementsProvider>
                       </BalanceProvider>
                     </RewardProvider>
@@ -97,9 +95,7 @@ export default function AppRoot(props: AppProps) {
     <ElectronApiProvider>
       <QueryClientProvider client={queryClient}>
         <ConfigProvider theme={mainTheme}>
-          <SupportModalProvider>
-            <App {...props} />
-          </SupportModalProvider>
+          <App {...props} />
         </ConfigProvider>
       </QueryClientProvider>
     </ElectronApiProvider>

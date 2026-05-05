@@ -4,13 +4,18 @@ import { Pages } from '@/constants';
 import { PageStateContext } from '@/context/PageStateProvider';
 
 export const usePageState = () => {
-  const pageState = useContext(PageStateContext);
+  const { setNavParams, ...pageStateRest } = useContext(PageStateContext);
+  const { setPageState } = pageStateRest;
 
   const goto = useCallback(
-    (state: Pages) => {
-      pageState.setPageState(state);
+    (state: Pages, params?: Record<string, unknown>) => {
+      setNavParams(params ?? {});
+      setPageState(state);
     },
-    [pageState],
+    [setPageState, setNavParams],
   );
-  return { goto, ...pageState };
+
+  const clearNavParams = useCallback(() => setNavParams({}), [setNavParams]);
+
+  return { goto, clearNavParams, ...pageStateRest };
 };

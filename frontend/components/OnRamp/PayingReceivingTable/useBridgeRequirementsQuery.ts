@@ -1,21 +1,22 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { AddressZero } from '@/constants/address';
+import { THIRTY_SECONDS_INTERVAL } from '@/constants';
 import { EvmChainId } from '@/constants/chains';
 import {
   useBalanceAndRefillRequirementsContext,
   useBridgeRefillRequirements,
-  useGetBridgeRequirementsParams,
 } from '@/hooks';
 import { delayInSeconds } from '@/utils/delay';
 
 import { useBridgeRequirementsUtils } from '../hooks/useBridgeRequirementsUtils';
+import { GetOnRampRequirementsParams } from '../types';
 
 type UseBridgeRequirementsQueryParams = {
   onRampChainId: EvmChainId;
+  getOnRampRequirementsParams: GetOnRampRequirementsParams;
   enabled: boolean;
   stopPollingCondition: boolean;
-  queryKeySuffix?: string;
+  queryKeySuffix: string;
 };
 
 /**
@@ -24,6 +25,7 @@ type UseBridgeRequirementsQueryParams = {
  */
 export const useBridgeRequirementsQuery = ({
   onRampChainId,
+  getOnRampRequirementsParams,
   enabled = true,
   stopPollingCondition,
   queryKeySuffix,
@@ -49,32 +51,28 @@ export const useBridgeRequirementsQuery = ({
   ] = useState(enabled);
   const [isManuallyRefetching, setIsManuallyRefetching] = useState(false);
 
-  // TODO: Add a new hook in case of depositing that calculated the params from the user provided inputs
-  const getBridgeRequirementsParams = useGetBridgeRequirementsParams(
-    onRampChainId,
-    AddressZero,
-    'to',
-  );
-
   const bridgeParams = useMemo(() => {
-    if (!getBridgeRequirementsParams) return null;
-    return getBridgeRequirementsParams(isForceUpdate);
-  }, [isForceUpdate, getBridgeRequirementsParams]);
+    if (!getOnRampRequirementsParams) return null;
+    return getOnRampRequirementsParams(isForceUpdate);
+  }, [isForceUpdate, getOnRampRequirementsParams]);
 
-  const bridgeParamsExceptNativeToken =
-    getBridgeParamsExceptNativeToken(bridgeParams);
+  const bridgeParamsExceptNativeToken = useMemo(
+    () => getBridgeParamsExceptNativeToken(bridgeParams),
+    [getBridgeParamsExceptNativeToken, bridgeParams],
+  );
 
   const {
     data: bridgeFundingRequirements,
     isLoading: isBridgeRefillRequirementsLoading,
     isError: isBridgeRefillRequirementsError,
     refetch: refetchBridgeRefillRequirements,
-  } = useBridgeRefillRequirements(
-    bridgeParamsExceptNativeToken,
-    canPollForBridgeRefillRequirements && !stopPollingCondition,
+  } = useBridgeRefillRequirements({
+    params: bridgeParamsExceptNativeToken,
+    canPoll: canPollForBridgeRefillRequirements && !stopPollingCondition,
     enabled,
     queryKeySuffix,
-  );
+    pollingInterval: THIRTY_SECONDS_INTERVAL,
+  });
 
   // fetch bridge refill requirements manually on mount
   useEffect(() => {

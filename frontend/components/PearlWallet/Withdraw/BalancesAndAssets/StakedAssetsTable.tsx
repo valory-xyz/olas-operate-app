@@ -103,10 +103,7 @@ export const StakedAssetsTable = () => {
     const rows: StakedAssetRow[] = [];
     stakedAssets.forEach((asset) => {
       rows.push(asset);
-      rows.push({
-        ...asset,
-        isNftRow: true,
-      });
+      rows.push({ ...asset, isNftRow: true });
     });
     return rows;
   }, [stakedAssets]);

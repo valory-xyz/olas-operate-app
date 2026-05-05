@@ -3,21 +3,17 @@ import {
   PropsWithChildren,
   useCallback,
   useEffect,
+  useRef,
   useState,
 } from 'react';
 
 import type { OnRampNetworkConfig } from '@/components/OnRamp';
 import { PAGES } from '@/constants';
-import {
-  useElectronApi,
-  useMasterBalances,
-  useMasterWalletContext,
-  usePageState,
-} from '@/hooks';
+import { useElectronApi, useMasterBalances, usePageState } from '@/hooks';
 import { Nullable } from '@/types';
-import { delayInSeconds } from '@/utils';
+import { delayInSeconds, parseEther } from '@/utils';
 
-const ETH_RECEIVED_THRESHOLD = 0.95;
+const ETH_RECEIVED_THRESHOLD = 0.9;
 
 export const OnRampContext = createContext<{
   networkId: OnRampNetworkConfig['networkId'];
@@ -32,10 +28,10 @@ export const OnRampContext = createContext<{
   updateNetworkConfig: (config: OnRampNetworkConfig) => void;
   resetOnRampState: () => void;
 
-  ethAmountToPay: Nullable<number>;
-  updateEthAmountToPay: (amount: Nullable<number>) => void;
-  ethTotalAmountRequired: Nullable<number>;
-  updateEthTotalAmountRequired: (amount: Nullable<number>) => void;
+  nativeAmountToPay: Nullable<number>;
+  updateNativeAmountToPay: (amount: Nullable<number>) => void;
+  nativeTotalAmountRequired: Nullable<number>;
+  updateNativeTotalAmountRequired: (amount: Nullable<number>) => void;
   usdAmountToPay: Nullable<number>;
   updateUsdAmountToPay: (amount: Nullable<number>) => void;
   isBuyCryptoBtnLoading: boolean;
@@ -57,10 +53,10 @@ export const OnRampContext = createContext<{
   updateNetworkConfig: () => {},
   resetOnRampState: () => {},
 
-  ethAmountToPay: null,
-  updateEthAmountToPay: () => {},
-  ethTotalAmountRequired: null,
-  updateEthTotalAmountRequired: () => {},
+  nativeAmountToPay: null,
+  updateNativeAmountToPay: () => {},
+  nativeTotalAmountRequired: null,
+  updateNativeTotalAmountRequired: () => {},
   usdAmountToPay: null,
   updateUsdAmountToPay: () => {},
   isBuyCryptoBtnLoading: false,
@@ -81,12 +77,11 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
   const { pageState } = usePageState();
   const { getMasterEoaNativeBalanceOf, getMasterSafeNativeBalanceOf } =
     useMasterBalances();
-  const { getMasterSafeOf, isFetched: isMasterWalletFetched } =
-    useMasterWalletContext();
 
-  // State to track the amount of ETH to pay for on-ramping and the USD equivalent
-  const [ethAmountToPay, setEthAmountToPay] = useState<Nullable<number>>(null);
-  const [ethTotalAmountRequired, setEthTotalAmountRequired] =
+  // State to track the amount of native tokens (e.g., ETH, POL, etc.) to pay for on-ramping and the USD equivalent
+  const [nativeAmountToPay, setNativeAmountToPay] =
+    useState<Nullable<number>>(null);
+  const [nativeTotalAmountRequired, setNativeTotalAmountRequired] =
     useState<Nullable<number>>(null);
   const [usdAmountToPay, setUsdAmountToPay] = useState<Nullable<number>>(null);
 
@@ -106,6 +101,10 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
   // State to track if the swapping step is completed
   const [isSwappingFundsStepCompleted, setIsSwappingStepCompleted] =
     useState(false);
+
+  // Ref to store the initial balance when on-ramping starts
+  // Used to calculate if balance increased by the expected amount
+  const initialBalanceRef = useRef<string | null>(null);
 
   const updateIsBuyCryptoBtnLoading = useCallback((loading: boolean) => {
     setIsBuyCryptoBtnLoading(loading);
@@ -134,26 +133,48 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
   const { networkId, networkName, cryptoCurrencyCode, selectedChainId } =
     networkConfig;
 
-  // check if the user has received funds after on-ramping to the master EOA
+  // Store initial balance when on-ramp requirements are calculated
+  // This happens early when nativeAmountToPay is first set, before user clicks "Buy Crypto"
   useEffect(() => {
-    if (!ethTotalAmountRequired) return;
+    if (!nativeAmountToPay) return;
+    if (!networkId) return;
+    if (initialBalanceRef.current !== null) return;
+
+    // Get the EOA balance of the network to on-ramp
+    const balance = getMasterEoaNativeBalanceOf(networkId);
+
+    initialBalanceRef.current = balance || '0';
+  }, [
+    nativeAmountToPay,
+    networkId,
+    getMasterSafeNativeBalanceOf,
+    getMasterEoaNativeBalanceOf,
+  ]);
+
+  // check if the user has received funds after on-ramping
+  useEffect(() => {
+    if (!nativeAmountToPay) return;
     if (!usdAmountToPay) return;
     if (isOnRampingStepCompleted) return;
-    if (!isMasterWalletFetched) return;
     if (!networkId) return;
+    if (initialBalanceRef.current === null) return; // Need initial balance first
 
-    // Get the master safe (in case it exists) or master EOA balance of the network to on-ramp
-    const hasMasterSafe = getMasterSafeOf?.(networkId);
-    const balance = hasMasterSafe
-      ? Number(
-          getMasterSafeNativeBalanceOf(networkId)?.[0]?.balanceString ?? '0',
-        )
-      : getMasterEoaNativeBalanceOf(networkId);
-    if (!balance) return;
+    // Get the master EOA balance of the network to on-ramp
+    const currentBalance = getMasterEoaNativeBalanceOf(networkId);
+    if (!currentBalance) return;
 
-    // If the balance is greater than or equal to 90% of the ETH amount to pay,
-    // considering that the user has received the funds after on-ramping.
-    if (balance >= ethTotalAmountRequired * ETH_RECEIVED_THRESHOLD) {
+    // Calculate the expected increase in balance (90% threshold)
+    const thresholdAmount = (
+      nativeAmountToPay * ETH_RECEIVED_THRESHOLD
+    ).toFixed(18);
+
+    // Calculate the actual increase in balance
+    const balanceBeforeOnRamp = BigInt(parseEther(initialBalanceRef.current));
+    const balanceAfterOnRamp = BigInt(parseEther(currentBalance.toString()));
+    const balanceIncrease = balanceAfterOnRamp - balanceBeforeOnRamp;
+
+    // Check if balance increased by at least the threshold amount
+    if (balanceIncrease >= BigInt(parseEther(thresholdAmount))) {
       updateIsBuyCryptoBtnLoading(false);
       setHasFundsReceivedAfterOnRamp(true);
       setIsOnRampingTransactionSuccessful(true);
@@ -162,28 +183,26 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
       onRampWindow?.close?.();
     }
   }, [
-    ethTotalAmountRequired,
+    nativeAmountToPay,
     networkId,
     getMasterEoaNativeBalanceOf,
     updateIsBuyCryptoBtnLoading,
     onRampWindow,
     isOnRampingStepCompleted,
-    isMasterWalletFetched,
-    getMasterSafeOf,
     getMasterSafeNativeBalanceOf,
     usdAmountToPay,
   ]);
 
-  // Function to set the ETH amount to pay for on-ramping
-  const updateEthAmountToPay = useCallback((amount: Nullable<number>) => {
-    setEthAmountToPay(amount);
+  // Function to set the native token amount to pay for on-ramping
+  const updateNativeAmountToPay = useCallback((amount: Nullable<number>) => {
+    setNativeAmountToPay(amount);
   }, []);
 
-  // Function to set the total ETH amount required for on-ramping
+  // Function to set the total native token amount required for on-ramping
   // (including what could possibly be on the balance + newly requested remaining amount to pay)
-  const updateEthTotalAmountRequired = useCallback(
+  const updateNativeTotalAmountRequired = useCallback(
     (amount: Nullable<number>) => {
-      setEthTotalAmountRequired(amount);
+      setNativeTotalAmountRequired(amount);
     },
     [],
   );
@@ -232,12 +251,13 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
   }, [ipcRenderer]);
 
   const resetOnRampState = useCallback(() => {
-    setEthAmountToPay(null);
+    setNativeAmountToPay(null);
     setUsdAmountToPay(null);
     setIsBuyCryptoBtnLoading(false);
     setIsOnRampingTransactionSuccessful(false);
     setHasFundsReceivedAfterOnRamp(false);
     setIsSwappingStepCompleted(false);
+    initialBalanceRef.current = null;
   }, []);
 
   // Reset the on-ramp state when navigating to the main page
@@ -251,10 +271,10 @@ export const OnRampProvider = ({ children }: PropsWithChildren) => {
   return (
     <OnRampContext.Provider
       value={{
-        ethAmountToPay,
-        updateEthAmountToPay,
-        ethTotalAmountRequired,
-        updateEthTotalAmountRequired,
+        nativeAmountToPay,
+        updateNativeAmountToPay,
+        nativeTotalAmountRequired,
+        updateNativeTotalAmountRequired,
         usdAmountToPay,
         updateUsdAmountToPay,
         isBuyCryptoBtnLoading,

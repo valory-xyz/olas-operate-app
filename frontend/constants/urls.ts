@@ -26,19 +26,20 @@ export const REWARDS_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN: Record<
   [EvmChainIdMap.Base]: 'https://staking-base.subgraph.autonolas.tech',
   [EvmChainIdMap.Mode]: 'https://staking-mode.subgraph.autonolas.tech',
   [EvmChainIdMap.Optimism]: 'https://staking-optimism.subgraph.autonolas.tech',
+  [EvmChainIdMap.Polygon]: 'https://staking-polygon.subgraph.autonolas.tech',
 };
 
-// discord
-export const SUPPORT_URL: Url =
-  'https://discord.com/channels/899649805582737479/1244588374736502847';
-export const COMMUNITY_ASSISTANCE_URL: Url =
-  'https://discord.com/channels/899649805582737479/1335000001797034044';
+// telegram
+export const SUPPORT_URL: Url = 'https://t.me/olaschat';
 
 // github
 export const GITHUB_API_LATEST_RELEASE: Url =
   'https://api.github.com/repos/valory-xyz/olas-operate-app/releases/latest';
 export const GITHUB_API_RELEASES: Url =
   'https://github.com/valory-xyz/olas-operate-app/releases';
+
+// ipfs
+export const IPFS_GATEWAY_URL: Url = 'https://gateway.autonolas.tech/ipfs/';
 
 // others
 export const COINGECKO_URL: string = 'https://www.coingecko.com';
@@ -49,6 +50,7 @@ export const OPEN_AI_API_URL: string =
   'https://help.openai.com/en/articles/4936850-where-do-i-find-my-openai-api-key';
 export const X_ACCOUNT_API_TOKENS_GUIDE_URL: Url =
   'https://github.com/dvilelaf/meme-ooorr/blob/main/docs/twitter_dev_account.md';
+export const X_DEVELOPER_CONSOLE_URL: Url = 'https://console.x.ai/';
 
 export const WEB3AUTH_URL: Url = 'https://web3auth.io';
 export const WEB3AUTH_TERMS_AND_CONDITIONS_URL: Url = `${WEB3AUTH_URL}/docs/legal/terms-and-conditions`;
@@ -61,6 +63,7 @@ const GNOSIS_EXPLORER_URL: Url = 'https://gnosisscan.io';
 const BASE_EXPLORER_URL: Url = 'https://basescan.org';
 const MODE_EXPLORER_URL: Url = 'https://modescan.io';
 const OPTIMISM_EXPLORER_URL: Url = 'https://optimistic.etherscan.io';
+const POLYGON_EXPLORER_URL: Url = 'https://polygonscan.com';
 
 export const EXPLORER_URL_BY_MIDDLEWARE_CHAIN: Record<
   SupportedMiddlewareChain,
@@ -70,6 +73,7 @@ export const EXPLORER_URL_BY_MIDDLEWARE_CHAIN: Record<
   [MiddlewareChainMap.BASE]: BASE_EXPLORER_URL,
   [MiddlewareChainMap.MODE]: MODE_EXPLORER_URL,
   [MiddlewareChainMap.OPTIMISM]: OPTIMISM_EXPLORER_URL,
+  [MiddlewareChainMap.POLYGON]: POLYGON_EXPLORER_URL,
 };
 
 export const BLOCKSCOUT_URL_BY_MIDDLEWARE_CHAIN: Record<
@@ -80,22 +84,7 @@ export const BLOCKSCOUT_URL_BY_MIDDLEWARE_CHAIN: Record<
   [MiddlewareChainMap.BASE]: 'https://base.blockscout.com',
   [MiddlewareChainMap.MODE]: 'https://explorer.mode.network',
   [MiddlewareChainMap.OPTIMISM]: 'https://optimism.blockscout.com',
-};
-
-// swap URLs
-const COW_SWAP_GNOSIS_XDAI_OLAS_URL: Url =
-  'https://swap.cow.fi/#/100/swap/WXDAI/OLAS';
-const SWAP_BASE_URL: Url = 'https://balancer.fi/swap/base/ETH/OLAS';
-const SWAP_MODE_URL: Url =
-  'https://balancer.fi/swap/mode/0xd988097fb8612cc24eec14542bc03424c656005f/0xcfd1d50ce23c46d3cf6407487b2f8934e96dc8f9';
-const SWAP_OPTIMISM_URL: Url =
-  'https://balancer.fi/pools/optimism/v2/0x5bb3e58887264b667f915130fd04bbb56116c27800020000000000000000012a';
-
-export const SWAP_URL_BY_EVM_CHAIN: Record<EvmChainId, Url> = {
-  [EvmChainIdMap.Gnosis]: COW_SWAP_GNOSIS_XDAI_OLAS_URL,
-  [EvmChainIdMap.Base]: SWAP_BASE_URL,
-  [EvmChainIdMap.Mode]: SWAP_MODE_URL,
-  [EvmChainIdMap.Optimism]: SWAP_OPTIMISM_URL,
+  [MiddlewareChainMap.POLYGON]: 'https://polygon.blockscout.com',
 };
 
 // on-ramp
@@ -111,3 +100,16 @@ export const WEB3AUTH_SWAP_OWNER_URL = `${WEB3AUTH_GATEWAY_URL}/swap-owner-sessi
 
 // support API
 export const SUPPORT_API_URL = `${PEARL_API_URL}/api/zendesk`;
+
+// geo eligibility
+export const GEO_ELIGIBILITY_API_URL = `${PEARL_API_URL}/api/geo/agent-eligibility`;
+export const GEO_ELIGIBILITY_DOCS_URL =
+  'https://docs.polymarket.com/polymarket-learn/FAQ/geoblocking#close-only-countries';
+export const POLYMARKET_DEPOSIT_WALLET_MIGRATION_URL: Url =
+  'https://docs.polymarket.com/trading/deposit-wallet-migration';
+
+// Predict website
+export const PREDICT_WEBSITE_URL = 'https://predict.olas.network';
+
+// Govern app
+export const GOVERN_APP_URL = 'https://govern.olas.network';

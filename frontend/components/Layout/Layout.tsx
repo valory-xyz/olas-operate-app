@@ -4,7 +4,6 @@ import { PropsWithChildren, useEffect, useMemo, useRef } from 'react';
 import styled, { css } from 'styled-components';
 
 import {
-  APP_HEIGHT,
   APP_WIDTH,
   COLOR,
   PAGES,
@@ -37,7 +36,6 @@ const Container = styled.div<{ $blur: boolean }>`
   height: 100vh;
   width: 100vw;
   max-width: ${APP_WIDTH}px;
-  max-height: ${APP_HEIGHT}px;
   background-color: ${COLOR.GRAY_1};
   border-radius: 8px;
 
@@ -81,7 +79,7 @@ const Body = styled.div<{ $hasPadding?: boolean }>`
   flex-direction: column;
   overflow-y: auto;
   padding: ${(props) => (props.$hasPadding ? '48px 0' : undefined)};
-  height: ${APP_HEIGHT}px;
+  height: 100vh;
 `;
 
 export const Layout = ({ children }: PropsWithChildren) => {

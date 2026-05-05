@@ -1,4 +1,4 @@
-import { Safe } from '@/constants';
+import { AgentType, Safe } from '@/constants';
 import { BridgeRefillRequirementsRequest } from '@/types/Bridge';
 import { Maybe } from '@/types/Util';
 
@@ -8,8 +8,6 @@ export const REACT_QUERY_KEYS = {
   // services
   SERVICES_KEY: ['services'] as const,
   SERVICES_VALIDATION_STATUS_KEY: ['servicesValidationStatus'] as const,
-  SERVICE_DEPLOYMENT_STATUS_KEY: (serviceConfigId: Maybe<string>) =>
-    ['serviceStatus', serviceConfigId ?? ''] as const,
   ALL_SERVICE_DEPLOYMENTS_KEY: ['allServiceDeployments'] as const,
 
   // staking programs
@@ -63,11 +61,8 @@ export const REACT_QUERY_KEYS = {
       serviceConfigId,
       stakingProgramId,
     ] as const,
-  REWARDS_HISTORY_KEY: (
-    chainId: number,
-    serviceId: number,
-    filterQueryByServiceId: boolean,
-  ) => ['rewardsHistory', chainId, serviceId, filterQueryByServiceId] as const,
+  REWARDS_HISTORY_KEY: (chainId: number, serviceId: number) =>
+    ['rewardsHistory', chainId, serviceId] as const,
 
   // multisigs
   MULTISIG_GET_OWNERS_KEY: (multisig: Safe) =>
@@ -117,8 +112,22 @@ export const REACT_QUERY_KEYS = {
   // latest release
   LATEST_RELEASE_TAG_KEY: ['latestReleaseTag'] as const,
 
+  // settings drawer
+  SETTINGS_KEY: ['settings'] as const,
+
   // recovery
   EXTENDED_WALLET_KEY: ['extendedWallet'] as const,
   RECOVERY_STATUS_KEY: ['recoveryStatus'] as const,
   RECOVERY_FUNDING_REQUIREMENTS_KEY: ['recoveryFundingRequirements'] as const,
+
+  // geo eligibility
+  GEO_ELIGIBILITY_KEY: (agentType?: AgentType) =>
+    ['geoEligibility', agentType] as const,
+
+  // achievements
+  ACHIEVEMENTS_KEY: (serviceConfigId: Maybe<string>) =>
+    ['achievements', serviceConfigId] as const,
+
+  // backup owner
+  BACKUP_OWNER_STATUS_KEY: ['backupOwnerStatus'] as const,
 } as const;

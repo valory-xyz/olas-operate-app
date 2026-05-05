@@ -25,7 +25,6 @@ import {
   asAllMiddlewareChain,
   asEvmChainId,
   getFromToken,
-  numberToPlainString,
 } from '@/utils';
 
 type TransferDirection = 'to' | 'from';
@@ -73,14 +72,17 @@ const useCombineNativeTokenRequirements = (
         refillRequirements as AddressBalanceRecord
       )[masterEoa.address]?.[AddressZero];
 
+      // Refill requirements for masterSafe (placeholder)
+      const masterSafePlaceholder = (
+        refillRequirements as MasterSafeBalanceRecord
+      )?.[MASTER_SAFE_REFILL_PLACEHOLDER];
+
       // Refill requirements for masterSafe
       // uses actual safe address if available, otherwise fallback to placeholder
       const safeRequirementAmount = (
         masterSafe
           ? (refillRequirements as AddressBalanceRecord)?.[masterSafe.address]
-          : (refillRequirements as MasterSafeBalanceRecord)?.[
-              MASTER_SAFE_REFILL_PLACEHOLDER
-            ]
+          : masterSafePlaceholder
       )?.[AddressZero];
 
       if (!masterEoaRequirementAmount) return;
@@ -131,8 +133,8 @@ export const useGetBridgeRequirementsParams = (
       ? ETHEREUM_TOKEN_CONFIG
       : TOKEN_CONFIG[fromChainId as EvmChainId];
   const toMiddlewareChain = selectedAgentConfig.middlewareHomeChainId;
-  const fromAddress =
-    getMasterSafeOf?.(fromChainId as EvmChainId)?.address ?? masterEoa?.address;
+  // Note: "from" address should always be mEOA for bridging
+  const fromAddress = masterEoa?.address;
   const toAddress = masterSafe?.address ?? masterEoa?.address;
 
   return useCallback(
@@ -158,19 +160,19 @@ export const useGetBridgeRequirementsParams = (
           continue;
         }
 
-        for (const [tokenAddress, amount] of Object.entries(
+        for (const [untypedTokenAddress, amount] of Object.entries(
           tokensWithRequirements,
         )) {
-          if (!isAddress(tokenAddress)) continue;
+          if (!isAddress(untypedTokenAddress)) continue;
           if (BigInt(amount) === 0n) continue;
 
+          const tokenAddress = untypedTokenAddress as Address;
           const fromToken =
             defaultFromToken ||
             getFromToken(tokenAddress, fromChainConfig, toChainConfig);
 
           const fromChain = asAllMiddlewareChain(fromChainId);
           const toChain = toMiddlewareChain;
-          const toToken = tokenAddress as Address;
 
           const existingRequest = bridgeRequests.find(
             (req) =>
@@ -179,7 +181,7 @@ export const useGetBridgeRequirementsParams = (
               areAddressesEqual(req.from.address, fromAddress) &&
               areAddressesEqual(req.to.address, toAddress) &&
               areAddressesEqual(req.from.token, fromToken) &&
-              areAddressesEqual(req.to.token, toToken),
+              areAddressesEqual(req.to.token, tokenAddress),
           );
 
           if (existingRequest) {
@@ -196,8 +198,8 @@ export const useGetBridgeRequirementsParams = (
               to: {
                 chain: toChain,
                 address: toAddress,
-                token: toToken,
-                amount: numberToPlainString(amount),
+                token: tokenAddress,
+                amount,
               },
             });
           }
@@ -220,8 +222,8 @@ export const useGetBridgeRequirementsParams = (
       defaultFromToken,
       isBalancesAndFundingRequirementsLoading,
       toMiddlewareChain,
-      getUpdatedBridgeRequirementsParams,
       masterSafe,
+      getUpdatedBridgeRequirementsParams,
     ],
   );
 };

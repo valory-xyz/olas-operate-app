@@ -1,33 +1,54 @@
-import { Button, Card, Flex, Skeleton, Typography } from 'antd';
-import { isEmpty, isNil } from 'lodash';
+import { Button, Card, Flex, Typography } from 'antd';
 import { useMemo } from 'react';
-import { TbShieldHalfFilled, TbShieldLock, TbWallet } from 'react-icons/tb';
+import { TbFileText, TbShieldHalfFilled, TbShieldLock } from 'react-icons/tb';
 import { useBoolean } from 'usehooks-ts';
 
-import {
-  AddressLink,
-  Alert,
-  CardSection,
-  cardStyles,
-  IconContainer,
-} from '@/components/ui';
-import { COLOR, NA } from '@/constants';
+import { Alert, CardSection, cardStyles, IconContainer } from '@/components/ui';
+import { COLOR } from '@/constants';
 import { SettingsScreenMap } from '@/constants/screen';
 import {
-  useFeatureFlag,
-  useMasterWalletContext,
   useMnemonicExists,
-  useMultisig,
   useRecoveryPhraseBackup,
-  useServices,
   useSettings,
 } from '@/hooks';
-import { Address, Optional } from '@/types';
 
+import { BackupWalletSection } from './BackupWallet';
+import {
+  AddBackupWalletManualScreen,
+  AddBackupWalletMethodScreen,
+  AddBackupWalletProvider,
+} from './BackupWallet/AddBackupWalletFlow';
+import {
+  UpdateBackupWalletConfirmScreen,
+  UpdateBackupWalletManualScreen,
+  UpdateBackupWalletMethodScreen,
+  UpdateBackupWalletProvider,
+} from './BackupWallet/UpdateBackupWalletFlow';
 import { RecoveryModal } from './RecoveryModal';
-import { YourFundsAtRiskAlert } from './YourFundsAtRiskAlert';
+import { SettingsDrawer } from './SettingsDrawer';
 
 const { Text, Paragraph, Title } = Typography;
+
+const DefaultSettingsSection = ({ openDrawer }: { openDrawer: () => void }) => (
+  <CardSection $padding="24px">
+    <Flex gap={16}>
+      <IconContainer>
+        <TbFileText size={20} color={COLOR.TEXT_NEUTRAL_TERTIARY} />
+      </IconContainer>
+      <Flex vertical>
+        <Text strong className="my-6">
+          Default Settings
+        </Text>
+        <Text type="secondary" className="text-sm mb-16">
+          Predefined system values, for reference only.
+        </Text>
+        <Button className="w-max text-sm" onClick={openDrawer}>
+          View Default Settings
+        </Button>
+      </Flex>
+    </Flex>
+  </CardSection>
+);
 
 const SecretRecoveryPhraseSetting = () => {
   const { isBackedUp } = useRecoveryPhraseBackup();
@@ -43,7 +64,7 @@ const SecretRecoveryPhraseSetting = () => {
 
   return (
     <>
-      <CardSection $padding="24px" vertical gap={8}>
+      <CardSection $padding="24px" $borderTop vertical gap={8}>
         <Flex gap={16}>
           <IconContainer $borderWidth={2}>
             <TbShieldHalfFilled
@@ -70,8 +91,7 @@ const SecretRecoveryPhraseSetting = () => {
                 className="text-sm"
               />
               <Button
-                type="default"
-                className="w-fit"
+                className="w-fit text-sm"
                 onClick={() => showRecoveryModal()}
               >
                 Reveal Recovery Phrase
@@ -87,62 +107,11 @@ const SecretRecoveryPhraseSetting = () => {
 };
 
 const SettingsMain = () => {
-  const isBackupViaSafeEnabled = useFeatureFlag('backup-via-safe');
-  const { selectedAgentConfig } = useServices();
   const {
-    masterEoa,
-    masterSafes,
-    isLoading: isWalletsLoading,
-  } = useMasterWalletContext();
-
-  const masterSafe = masterSafes?.find(
-    ({ evmChainId: chainId }) => selectedAgentConfig.evmHomeChainId === chainId,
-  );
-
-  const { owners, ownersIsFetched } = useMultisig(masterSafe);
-
-  const masterSafeBackupAddresses = useMemo<Optional<Address[]>>(() => {
-    if (!ownersIsFetched) return;
-    if (!masterEoa) return;
-    if (isNil(owners) || isEmpty(owners)) return [];
-
-    // TODO: handle edge cases where there are multiple owners due to middleware failure,
-    // or user interaction via safe.global
-    return owners.filter(
-      (owner) => owner.toLowerCase() !== masterEoa.address.toLowerCase(),
-    );
-  }, [ownersIsFetched, owners, masterEoa]);
-
-  const masterSafeBackupAddress = useMemo<Optional<Address>>(() => {
-    if (isNil(masterSafeBackupAddresses)) return;
-
-    return masterSafeBackupAddresses[0];
-  }, [masterSafeBackupAddresses]);
-
-  const walletBackup = useMemo(() => {
-    if (!isWalletsLoading && !masterSafe) {
-      return <Text type="secondary">{NA}</Text>;
-    }
-    if (!ownersIsFetched) return <Skeleton.Input />;
-    if (!masterSafeBackupAddress) {
-      return <Text type="secondary">No backup wallet added.</Text>;
-    }
-
-    return (
-      <AddressLink
-        address={masterSafeBackupAddress}
-        middlewareChain={selectedAgentConfig.middlewareHomeChainId}
-      />
-    );
-  }, [
-    isWalletsLoading,
-    masterSafe,
-    masterSafeBackupAddress,
-    ownersIsFetched,
-    selectedAgentConfig.middlewareHomeChainId,
-  ]);
-
-  const hideWallet = !isBackupViaSafeEnabled && !masterSafeBackupAddress;
+    value: isDrawerOpen,
+    setTrue: openDrawer,
+    setFalse: closeDrawer,
+  } = useBoolean(false);
 
   return (
     <Flex style={cardStyles} vertical gap={32}>
@@ -150,18 +119,9 @@ const SettingsMain = () => {
         Settings
       </Title>
       <Card styles={{ body: { paddingTop: 0, paddingBottom: 0 } }}>
-        <CardSection
-          $padding="24px"
-          $borderBottom={!hideWallet}
-          align="center"
-          gap={16}
-        >
+        <CardSection $padding="24px" $borderBottom align="center" gap={16}>
           <IconContainer>
-            <TbShieldLock
-              size={20}
-              fontSize={30}
-              color={COLOR.TEXT_NEUTRAL_TERTIARY}
-            />
+            <TbShieldLock size={20} color={COLOR.TEXT_NEUTRAL_TERTIARY} />
           </IconContainer>
           <Flex vertical gap={6}>
             <div className="my-6">
@@ -174,32 +134,12 @@ const SettingsMain = () => {
           </Flex>
         </CardSection>
 
-        {hideWallet ? null : (
-          <CardSection $padding="24px" $borderBottom vertical>
-            <Flex gap={16}>
-              <IconContainer>
-                <TbWallet
-                  size={20}
-                  fontSize={30}
-                  color={COLOR.TEXT_NEUTRAL_TERTIARY}
-                />
-              </IconContainer>
-              <Flex vertical gap={6}>
-                <div className="my-6">
-                  <Text strong>Backup Wallet</Text>
-                </div>
-                {walletBackup}
-              </Flex>
-            </Flex>
+        <BackupWalletSection />
 
-            {ownersIsFetched && !masterSafeBackupAddress && (
-              <YourFundsAtRiskAlert />
-            )}
-          </CardSection>
-        )}
-
+        <DefaultSettingsSection openDrawer={openDrawer} />
         <SecretRecoveryPhraseSetting />
       </Card>
+      <SettingsDrawer isDrawerOpen={isDrawerOpen} onClose={closeDrawer} />
     </Flex>
   );
 };
@@ -210,10 +150,24 @@ export const Settings = () => {
     switch (screen) {
       case SettingsScreenMap.Main:
         return <SettingsMain />;
+      case SettingsScreenMap.AddBackupWalletMethod:
+        return <AddBackupWalletMethodScreen />;
+      case SettingsScreenMap.AddBackupWalletManual:
+        return <AddBackupWalletManualScreen />;
+      case SettingsScreenMap.UpdateBackupWalletMethod:
+        return <UpdateBackupWalletMethodScreen />;
+      case SettingsScreenMap.UpdateBackupWalletManual:
+        return <UpdateBackupWalletManualScreen />;
+      case SettingsScreenMap.UpdateBackupWalletConfirm:
+        return <UpdateBackupWalletConfirmScreen />;
       default:
         return null;
     }
   }, [screen]);
 
-  return settingsScreen;
+  return (
+    <AddBackupWalletProvider>
+      <UpdateBackupWalletProvider>{settingsScreen}</UpdateBackupWalletProvider>
+    </AddBackupWalletProvider>
+  );
 };

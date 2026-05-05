@@ -19,7 +19,7 @@ body {
   border-radius: 8px;
   user-select: none;
   scroll-behavior: smooth;
-  overflow: hidden;
+  overflow-y: auto;
 }
 
 button,
@@ -258,6 +258,15 @@ textarea.ant-input {
     border-color: #FFD6DA;
     background-color: #FFEBEC;
     color: #F00014;
+
+    .ant-alert-icon {
+      color: #F00014;
+    }
+
+    .ant-alert-message,
+    .ant-alert-description {
+      color: #F00014;
+    }
   }
 
   &--success {
@@ -310,6 +319,10 @@ textarea.ant-input {
   display: flex;
 }
 
+.flex-col {
+  flex-direction: column;
+}
+
 .flex-auto {
   flex: auto;
 }
@@ -328,6 +341,10 @@ textarea.ant-input {
 
 .align-center {
   align-items: center;
+}
+
+.gap-6 {
+  gap: 6px !important;
 }
 
 .m-0 {
@@ -366,6 +383,10 @@ textarea.ant-input {
   margin-top: -4px !important;
 }
 
+.mt-6 {
+  margin-top: 6px !important;
+}
+
 .mt-12 {
   margin-top: 12px !important;
 }
@@ -382,6 +403,10 @@ textarea.ant-input {
   margin-bottom: 0px !important;
 }
 
+.mb-2 {
+  margin-bottom: 2px !important;
+}
+
 .mb-4 {
   margin-bottom: 4px !important;
 }
@@ -396,6 +421,10 @@ textarea.ant-input {
 
 .mb-16 {
   margin-bottom: 16px !important;
+}
+
+.mb-20 {
+  margin-bottom: 20px !important;
 }
 
 .mb-24 {
@@ -558,6 +587,10 @@ textarea.ant-input {
   padding-bottom: 4px !important;
 }
 
+.pb-24 {
+  padding-bottom: 24px !important;
+}
+
 .pb-32 {
   padding-bottom: 32px !important;
 }
@@ -565,6 +598,11 @@ textarea.ant-input {
 .mx-auto {
   margin-left: auto !important;
   margin-right: auto !important;
+}
+
+.mx-16 {
+  margin-left: 16px !important;
+  margin-right: 16px !important;
 }
 
 .mr-4 {
@@ -611,6 +649,10 @@ textarea.ant-input {
 
 .text-xs {
   font-size: 12px !important;
+}
+
+.text-xxs {
+  font-size: 10px !important;
 }
 
 // text align

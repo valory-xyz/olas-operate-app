@@ -1,28 +1,57 @@
-import { Button, Flex, Typography } from 'antd';
-import { isEmpty } from 'lodash';
-import Image from 'next/image';
+import { Button, Flex, Spin, Typography } from 'antd';
 import { useCallback, useMemo, useState } from 'react';
-import { LuConstruction } from 'react-icons/lu';
+import { LuArchive } from 'react-icons/lu';
+import { TbPlus } from 'react-icons/tb';
 import styled from 'styled-components';
 
 import { AgentIntroduction } from '@/components/AgentIntroduction';
-import { BackButton } from '@/components/ui';
-import { ACTIVE_AGENTS, AGENT_CONFIG } from '@/config/agents';
+import { Segmented } from '@/components/ui';
+import { BackButton } from '@/components/ui/BackButton';
+import { AGENT_CONFIG } from '@/config/agents';
 import { AgentType, COLOR, PAGES, SETUP_SCREEN } from '@/constants';
-import { usePageState, useServices, useSetup } from '@/hooks';
-import { AgentConfig, Optional } from '@/types';
+import {
+  useArchivedAgents,
+  useIsAgentGeoRestricted,
+  usePageState,
+  useServices,
+  useSetup,
+} from '@/hooks';
+import { Optional } from '@/types';
+import { isNonEmpty } from '@/utils';
 
 import { FundingRequirementStep } from './FundingRequirementStep';
+import { RestrictedRegion } from './RestrictedRegion';
+import { AGENT_TAB, SelectAgent } from './SelectAgent';
+import { findUndeployedInstance } from './utils';
 
 const { Text, Title } = Typography;
 
+type AgentTab = (typeof AGENT_TAB)[keyof typeof AGENT_TAB];
+
+const OPTIONS = [
+  {
+    label: 'New agents',
+    value: AGENT_TAB.New,
+    icon: <TbPlus />,
+  },
+  {
+    label: 'Archived agents',
+    value: AGENT_TAB.Archived,
+    icon: <LuArchive />,
+  },
+];
+
+const AgentOnboardingContainer = styled(Flex)`
+  margin: 0 auto;
+`;
+
 const Container = styled(Flex)`
   width: 840px;
-  margin: 16px auto 0 auto;
-  border-radius: 8px;
+  border-radius: 16px;
   background-color: ${COLOR.WHITE};
   .agent-selection-left-content {
     width: 380px;
+    padding: 16px 0;
     border-right: 1px solid ${COLOR.GRAY_4};
   }
   .agent-selection-right-content {
@@ -32,99 +61,109 @@ const Container = styled(Flex)`
   }
 `;
 
-const AgentSelectionContainer = styled(Flex)<{ active?: boolean }>`
-  padding: 12px 24px;
-  cursor: pointer;
-  background-color: ${({ active }) => (active ? COLOR.GRAY_1 : COLOR.WHITE)};
-  border-bottom: 1px solid ${COLOR.GRAY_4};
-  border-left: 1px solid ${COLOR.WHITE};
-  &:hover {
-    background-color: ${COLOR.GRAY_1};
-  }
-`;
-
-const UnderConstructionIcon = styled(LuConstruction)`
-  padding: 6px;
-  border-radius: 8px;
-  color: ${COLOR.TEXT_COLOR.WARNING.DEFAULT};
-  background-color: ${COLOR.BG.WARNING.DEFAULT};
-`;
-
 const SelectYourAgent = ({ canGoBack }: { canGoBack: boolean }) => {
   const { goto } = usePageState();
   return (
-    <Flex
-      vertical
-      gap={16}
-      className="p-24"
-      style={{ borderBottom: `1px solid ${COLOR.GRAY_4}` }}
-    >
+    <Flex vertical gap={12}>
       {canGoBack && <BackButton onPrev={() => goto(PAGES.Main)} />}
       <Title level={3} className="m-0">
-        Select your agent
+        Select Agent
       </Title>
-      <Text type="secondary">Review and select the AI agent you like.</Text>
+      <Text type="secondary">
+        Review and select the AI agent you&apos;d like to add or restore.
+      </Text>
     </Flex>
   );
 };
 
-type SelectYourAgentListProps = {
-  onSelectYourAgent: (agentType: AgentType) => void;
-  selectedAgent?: AgentType;
-};
+type BlockButtonProps = { text: string; onClick: () => void };
+const BlockButton = ({ text, onClick }: BlockButtonProps) => (
+  <Button onClick={onClick} type="primary" block size="large">
+    {text}
+  </Button>
+);
 
-const SelectYourAgentList = ({
-  onSelectYourAgent,
-  selectedAgent,
-}: SelectYourAgentListProps) => {
-  const { services } = useServices();
-  const agents = useMemo(() => {
-    const isNotInServices = ([, agentConfig]: [string, AgentConfig]) =>
-      !services?.some(
-        ({ service_public_id, home_chain }) =>
-          service_public_id === agentConfig.servicePublicId &&
-          home_chain === agentConfig.middlewareHomeChainId,
-      );
+const GeoLocationRestrictionLoading = () => (
+  <Flex
+    align="center"
+    justify="center"
+    style={{ width: '100%', height: '100%' }}
+  >
+    <Spin />
+  </Flex>
+);
 
-    return (
-      ACTIVE_AGENTS.filter(isNotInServices)
-        // put all under construction in the end
-        .sort(([_, agentConfig]) => (agentConfig.isUnderConstruction ? 1 : -1))
-    );
-  }, [services]);
-
-  return agents.map(([agentType, agentConfig]) => (
-    <AgentSelectionContainer
-      key={agentType}
-      active={selectedAgent === agentType}
-      onClick={() => onSelectYourAgent(agentType as AgentType)}
-      gap={12}
-      align="center"
-    >
-      <Image
-        src={`/agent-${agentType}-icon.png`}
-        alt={`${agentConfig.displayName} icon`}
-        width={36}
-        height={36}
-        style={{ borderRadius: 8, border: `1px solid ${COLOR.GRAY_3}` }}
-      />
-      <Text>{agentConfig.displayName}</Text>
-      {agentConfig.isUnderConstruction && <UnderConstructionIcon />}
-    </AgentSelectionContainer>
-  ));
-};
+const GeoLocationRestrictionCouldNotLoad = () => (
+  <Flex
+    vertical
+    align="center"
+    justify="center"
+    gap={16}
+    className="p-24 text-center"
+  >
+    <Title level={4} className="m-0">
+      Something went wrong
+    </Title>
+    <Text className="text-neutral-tertiary">
+      Something went wrong while checking your region eligibility. Please try
+      again.
+    </Text>
+  </Flex>
+);
 
 /**
  * Display the onboarding of the selected agent.
  */
 export const AgentOnboarding = () => {
   const { goto } = useSetup();
-  const { updateAgentType, services } = useServices();
+  const { goto: gotoPage } = usePageState();
+  const {
+    services,
+    selectAgentTypeForSetup,
+    updateSelectedServiceConfigId,
+    getAgentTypeFromService,
+  } = useServices();
+  const { archivedInstances, unarchiveInstance } = useArchivedAgents();
+
   const [selectedAgent, setSelectedAgent] = useState<Optional<AgentType>>();
+  const [selectedArchivedInstanceId, setSelectedArchivedInstanceId] =
+    useState<Optional<string>>();
+  const [activeTab, setActiveTab] = useState<AgentTab>(AGENT_TAB.New);
+
+  // Derive agentType for the selected archived instance (for AgentIntroduction)
+  const selectedArchivedAgentType = useMemo<Optional<AgentType>>(() => {
+    if (!selectedArchivedInstanceId) return undefined;
+    return getAgentTypeFromService(selectedArchivedInstanceId) ?? undefined;
+  }, [selectedArchivedInstanceId, getAgentTypeFromService]);
+
+  const selectedAgentConfig = selectedAgent
+    ? AGENT_CONFIG[selectedAgent]
+    : undefined;
+
+  const { isAgentGeoRestricted, isGeoLoading, isGeoError } =
+    useIsAgentGeoRestricted({
+      agentType: selectedAgent,
+      agentConfig: selectedAgentConfig,
+    });
 
   const handleAgentSelect = useCallback(() => {
     if (!selectedAgent) return;
     const currentAgentConfig = AGENT_CONFIG[selectedAgent];
+
+    // If an undeployed instance exists, select it, instead of
+    // letting the user create another new instance
+    if (services) {
+      const undeployed = findUndeployedInstance(selectedAgent, services);
+      const isArchived = undeployed
+        ? archivedInstances.includes(undeployed.service_config_id)
+        : false;
+
+      if (undeployed && !isArchived) {
+        updateSelectedServiceConfigId(undeployed.service_config_id);
+        gotoPage(PAGES.Main);
+        return;
+      }
+    }
 
     // if agent is "coming soon" should be redirected to EARLY ACCESS PAGE
     if (currentAgentConfig.isComingSoon) {
@@ -139,54 +178,153 @@ export const AgentOnboarding = () => {
     } else {
       goto(SETUP_SCREEN.SelectStaking);
     }
-  }, [goto, selectedAgent]);
+  }, [
+    archivedInstances,
+    goto,
+    gotoPage,
+    selectedAgent,
+    services,
+    updateSelectedServiceConfigId,
+  ]);
 
   const handleSelectYourAgent = useCallback(
     (agentType: AgentType) => {
-      updateAgentType(agentType);
+      selectAgentTypeForSetup(agentType);
       setSelectedAgent(agentType);
     },
-    [updateAgentType],
+    [selectAgentTypeForSetup],
   );
 
-  const canSelectAgent = selectedAgent
-    ? !AGENT_CONFIG[selectedAgent].isUnderConstruction
-    : false;
+  const handleSelectArchivedInstance = useCallback(
+    (serviceConfigId: string) => {
+      setSelectedArchivedInstanceId(serviceConfigId);
+    },
+    [],
+  );
 
-  return (
-    <Container>
-      <Flex vertical className="agent-selection-left-content">
-        <SelectYourAgent canGoBack={!isEmpty(services)} />
-        <SelectYourAgentList
-          onSelectYourAgent={handleSelectYourAgent}
-          selectedAgent={selectedAgent}
-        />
-      </Flex>
+  const handleRestoreInstance = useCallback(() => {
+    if (!selectedArchivedInstanceId) return;
+    unarchiveInstance(selectedArchivedInstanceId);
+    updateSelectedServiceConfigId(selectedArchivedInstanceId);
+    setTimeout(() => gotoPage(PAGES.Main), 300);
+  }, [
+    gotoPage,
+    selectedArchivedInstanceId,
+    unarchiveInstance,
+    updateSelectedServiceConfigId,
+  ]);
 
-      <Flex className="agent-selection-right-content">
+  const canSelectAgent = useMemo(() => {
+    if (!selectedAgent) return false;
+    const currentAgentConfig = AGENT_CONFIG[selectedAgent];
+    if (currentAgentConfig.isGeoLocationRestricted && isAgentGeoRestricted) {
+      return false;
+    }
+    if (currentAgentConfig.isUnderConstruction) {
+      return false;
+    }
+    if (currentAgentConfig.isAddingNewBlocked) {
+      return false;
+    }
+    return true;
+  }, [selectedAgent, isAgentGeoRestricted]);
+
+  const rightPanelContent = useMemo(() => {
+    if (activeTab === AGENT_TAB.Archived) {
+      return (
         <AgentIntroduction
-          agentType={selectedAgent}
-          renderFundingRequirements={(desc) =>
-            selectedAgent ? (
-              <FundingRequirementStep agentType={selectedAgent} desc={desc} />
-            ) : null
-          }
+          agentType={selectedArchivedAgentType}
           renderAgentSelection={
-            canSelectAgent
+            selectedArchivedInstanceId
               ? () => (
-                  <Button
-                    onClick={handleAgentSelect}
-                    type="primary"
-                    block
-                    size="large"
-                  >
-                    Select Agent
-                  </Button>
+                  <BlockButton
+                    text="Restore Agent"
+                    onClick={handleRestoreInstance}
+                  />
                 )
               : undefined
           }
         />
-      </Flex>
-    </Container>
+      );
+    }
+
+    if (isGeoLoading && selectedAgentConfig?.isGeoLocationRestricted) {
+      return <GeoLocationRestrictionLoading />;
+    }
+    if (isGeoError) {
+      return <GeoLocationRestrictionCouldNotLoad />;
+    }
+    if (isAgentGeoRestricted) {
+      return <RestrictedRegion />;
+    }
+
+    return (
+      <AgentIntroduction
+        agentType={selectedAgent}
+        renderFundingRequirements={(desc) =>
+          selectedAgent ? (
+            <FundingRequirementStep agentType={selectedAgent} desc={desc} />
+          ) : null
+        }
+        renderAgentSelection={
+          canSelectAgent
+            ? () => (
+                <BlockButton text="Select Agent" onClick={handleAgentSelect} />
+              )
+            : undefined
+        }
+      />
+    );
+  }, [
+    activeTab,
+    canSelectAgent,
+    handleAgentSelect,
+    handleRestoreInstance,
+    isAgentGeoRestricted,
+    isGeoError,
+    isGeoLoading,
+    selectedAgent,
+    selectedAgentConfig?.isGeoLocationRestricted,
+    selectedArchivedAgentType,
+    selectedArchivedInstanceId,
+  ]);
+
+  return (
+    <>
+      <AgentOnboardingContainer vertical gap={24}>
+        <SelectYourAgent canGoBack={isNonEmpty(services)} />
+
+        {archivedInstances.length > 0 && (
+          <Flex style={{ borderBottom: `1px solid ${COLOR.GRAY_4}` }}>
+            <Segmented
+              options={OPTIONS}
+              value={activeTab}
+              onChange={(val) => {
+                setActiveTab(val as AgentTab);
+                setSelectedAgent(undefined);
+                setSelectedArchivedInstanceId(undefined);
+              }}
+              size="large"
+            />
+          </Flex>
+        )}
+
+        <Container>
+          <Flex vertical className="agent-selection-left-content">
+            <SelectAgent
+              onSelectYourAgent={handleSelectYourAgent}
+              onSelectArchivedInstance={handleSelectArchivedInstance}
+              selectedAgent={selectedAgent}
+              selectedArchivedInstance={selectedArchivedInstanceId}
+              activeTab={activeTab}
+            />
+          </Flex>
+
+          <Flex className="agent-selection-right-content">
+            {rightPanelContent}
+          </Flex>
+        </Container>
+      </AgentOnboardingContainer>
+    </>
   );
 };

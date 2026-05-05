@@ -34,16 +34,10 @@ const getNativeInitialGasRequirement = (
 ): bigint => {
   const fundRequirements = config?.fund_requirements;
 
-  if (!fundRequirements) {
-    return 0n;
-  }
-
+  if (!fundRequirements) return 0n;
   const nativeRequirements = fundRequirements[constants.AddressZero as Address];
 
-  if (!nativeRequirements) {
-    return 0n;
-  }
-
+  if (!nativeRequirements) return 0n;
   const combinedRequirement =
     BigInt(nativeRequirements.safe || 0) +
     BigInt(nativeRequirements.agent || 0);
@@ -94,7 +88,10 @@ export const useInitialFundingRequirements = (agentType: AgentType) => {
 
         if (!stakingProgramId) return;
 
-        // Total native token requirement = initial gas estimate + safe creation threshold
+        // Total native token requirement =
+        // initial gas estimate +
+        // safe creation threshold +
+        // agent deployment gas requirement
         const nativeTokenSymbol = getNativeTokenSymbol(evmChainId);
         const nativeTokenConfig =
           NATIVE_TOKEN_CONFIG[evmChainId]?.[nativeTokenSymbol];

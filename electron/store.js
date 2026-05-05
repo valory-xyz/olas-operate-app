@@ -1,94 +1,32 @@
 const Store = require('electron-store');
 
-const defaultInitialAgentSettings = {
-  isInitialFunded: false,
-  isProfileWarningDisplayed: false,
-};
-
-// Schema for validating store data
+// Schema for validating store data — only Electron-native fields belong here.
+// All other persistence (agent settings, auto-run, backup wallet, etc.) lives in
+// .operate/pearl_store.json served by the backend HTTP API, so it migrates with
+// the .operate folder when a user moves to a new machine.
+//
+// Legacy keys (trader, autoRun, etc.) are NOT in this schema but are still readable
+// via store.get() — electron-store returns existing values for keys not in the schema.
+// The frontend migration in StoreProvider reads them on first launch and copies to
+// pearl_store.json.
 const schema = {
-  // Global settings
   environmentName: { type: 'string', default: '' },
-  lastSelectedAgentType: { type: 'string', default: 'trader' },
   knownVersion: { type: 'string', default: '' },
-
-  // First time user settings
-  firstStakingRewardAchieved: { type: 'boolean', default: false },
-  firstRewardNotificationShown: { type: 'boolean', default: false },
-  agentEvictionAlertShown: { type: 'boolean', default: false },
-
-  // Each agent has its own settings
-  trader: {
-    type: 'object',
-    default: defaultInitialAgentSettings,
-  },
-  memeooorr: { type: 'object', default: defaultInitialAgentSettings },
-  modius: {
-    type: 'object',
-    default: defaultInitialAgentSettings,
-  },
-  optimus: {
-    type: 'object',
-    default: defaultInitialAgentSettings,
-  },
-  pett_ai: {
-    type: 'object',
-    default: defaultInitialAgentSettings,
-  },
-  lastProvidedBackupWallet: {
-    type: 'object',
-    default: { address: null, type: 'manual' },
-  },
+  // Stores the latest app version for which the "update available" modal was dismissed.
+  updateAvailableKnownVersion: { type: 'string', default: '' },
+  // Set to true once the authoritative Electron→pearl_store migration is done.
+  // Must be in the schema so electron-store persists it.
+  pearlStoreMigrationComplete: { type: 'boolean', default: false },
+  // Set to true once the autoRun.enabled repair has been checked.
+  pearlStoreAutoRunRepaired: { type: 'boolean', default: false },
 };
 
 /**
- * Sets up the IPC communication and initializes the Electron store with default values and schema.
- * @param {Electron.IpcMain} ipcMain - The IPC channel for communication.
- * @param {Electron.BrowserWindow} mainWindow - The main Electron browser window.
+ * Sets up the IPC communication and initializes the Electron store.
+ * @param {Electron.IpcMain} ipcMain - The IPC main channel for communication.
  */
-const setupStoreIpc = (ipcMain, mainWindow) => {
+const setupStoreIpc = (ipcMain) => {
   const store = new Store({ schema });
-
-  /**
-   * agent: trader Migration
-   *
-   * Initially the store was setup with only trader agent settings.
-   * The following code migrates the old store to the new store schema.
-   */
-  const traderAgent = store.get('trader') || {};
-
-  if (store.has('isInitialFunded')) {
-    store.set('trader', {
-      ...traderAgent,
-      isInitialFunded: store.get('isInitialFunded') || false,
-    });
-    store.delete('isInitialFunded');
-  } else if (store.has('isInitialFunded_trader')) {
-    store.set('trader', {
-      ...traderAgent,
-      isInitialFunded: store.get('isInitialFunded_trader') || false,
-    });
-    store.delete('isInitialFunded_trader');
-  }
-
-  /**
-   * agent: agentsFun Migration
-   */
-  if (store.has('isInitialFunded_memeooorr')) {
-    const agentsFunAgent = store.get('memeooorr') || {};
-    store.set('memeooorr', {
-      ...agentsFunAgent,
-      isInitialFunded: store.get('isInitialFunded_memeooorr') || false,
-    });
-    store.delete('isInitialFunded_memeooorr');
-  }
-
-  // Notify renderer process when store changes
-  store.onDidAnyChange((data) => {
-    if (mainWindow?.webContents) {
-      mainWindow.webContents.send('store-changed', data);
-    }
-  });
 
   // exposed to electron browser window
   ipcMain.handle('store', () => store.store);

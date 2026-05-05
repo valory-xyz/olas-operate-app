@@ -4,6 +4,7 @@ export const PAGES = {
   AgentStaking: 'AgentStaking',
   Settings: 'Settings',
   HelpAndSupport: 'HelpAndSupport',
+  ReleaseNotes: 'ReleaseNotes',
   PearlWallet: 'PearlWallet',
   AgentWallet: 'AgentWallet',
   UpdateAgentTemplate: 'UpdateAgentTemplate',

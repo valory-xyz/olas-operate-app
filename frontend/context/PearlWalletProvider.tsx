@@ -11,17 +11,12 @@ import {
 import { ACTIVE_AGENTS } from '@/config/agents';
 import { CHAIN_CONFIG } from '@/config/chains';
 import { TokenSymbol } from '@/config/tokens';
-import {
-  AgentType,
-  EvmChainId,
-  type EvmChainName,
-  MasterSafe,
-  PAGES,
-} from '@/constants';
+import { EvmChainId, type EvmChainName, MasterSafe, PAGES } from '@/constants';
 import {
   useAvailableAssets,
   useBalanceAndRefillRequirementsContext,
   useBalanceContext,
+  useFundingEligibleServices,
   useMasterWalletContext,
   usePageState,
   useService,
@@ -29,7 +24,6 @@ import {
 } from '@/hooks';
 import {
   Address,
-  AgentConfig,
   AvailableAsset,
   MiddlewareServiceResponse,
   Nullable,
@@ -40,7 +34,8 @@ import {
   TokenBalanceRecord,
   ValueOf,
 } from '@/types';
-import { generateName } from '@/utils';
+import { generateAgentName, isValidServiceId } from '@/utils';
+import { asMiddlewareChain } from '@/utils/middlewareHelpers';
 
 import { STEPS, WalletChain } from '../components/PearlWallet/types';
 import { getInitialDepositForMasterSafe } from '../components/PearlWallet/utils';
@@ -68,7 +63,7 @@ const getChainList = (services?: MiddlewareServiceResponse[]) => {
     );
     if (!agent) return;
 
-    const [, agentConfig] = agent as [AgentType, AgentConfig];
+    const [, agentConfig] = agent;
     if (!agentConfig.evmHomeChainId) return;
 
     const chainId = agentConfig.evmHomeChainId;
@@ -103,6 +98,7 @@ const PearlWalletContext = createContext<{
     details: TokenAmountDetails,
   ) => void;
   updateAmountsToDeposit: (amounts: TokenAmounts) => void;
+  initializeDepositAmounts: () => void;
   onReset: (canNavigateOnReset?: boolean) => void;
   /** Initial values for funding agent wallet based on refill requirements */
   defaultRequirementDepositValues: Optional<TokenBalanceRecord>;
@@ -122,6 +118,7 @@ const PearlWalletContext = createContext<{
   amountsToDeposit: {},
   onDepositAmountChange: () => {},
   updateAmountsToDeposit: () => {},
+  initializeDepositAmounts: () => {},
   onReset: () => {},
   defaultRequirementDepositValues: {},
 });
@@ -133,8 +130,8 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
     selectedService,
     services,
     availableServiceConfigIds,
-    getServiceConfigIdsOf,
   } = useServices();
+  const { getFundingEligibleServiceConfigIdsOf } = useFundingEligibleServices();
   const { isLoaded, getServiceSafeOf, getAgentTypeOf } = useService(
     selectedService?.service_config_id,
   );
@@ -156,10 +153,33 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
   const [defaultRequirementDepositValues, setDefaultDepositValues] =
     useState<TokenBalanceRecord>({});
 
-  // Update chain id when switching between agents
+  const getServiceTokenId = useCallback(
+    (chainId: EvmChainId, configId: string) => {
+      const chainName = asMiddlewareChain(chainId);
+      const service = services?.find(
+        (entry) =>
+          entry.service_config_id === configId &&
+          entry.home_chain === chainName,
+      );
+
+      const tokenId = service?.chain_configs?.[chainName]?.chain_data?.token;
+      return tokenId;
+    },
+    [services],
+  );
+
+  // Keep wallet chain stable while user is actively on Pearl Wallet screens.
+  // Auto-run can rotate selected agents in the background; that should not
+  // force-switch the segmented chain tab while the user is viewing wallets.
   useEffect(() => {
+    if (
+      pageState === PAGES.PearlWallet ||
+      pageState === PAGES.FundPearlWallet
+    ) {
+      return;
+    }
     setWalletChainId(selectedAgentConfig.evmHomeChainId);
-  }, [selectedAgentConfig.evmHomeChainId]);
+  }, [pageState, selectedAgentConfig.evmHomeChainId]);
 
   const { isLoading: isAvailableAssetsLoading, availableAssets } =
     useAvailableAssets(walletChainId, {
@@ -173,14 +193,14 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
     [masterSafes, walletChainId],
   );
 
-  // Set initial deposit amounts if refill requirements is requested
-  useEffect(() => {
+  // Function to manually initialize deposit amounts based on refill requirements
+  const initializeDepositAmounts = useCallback(() => {
     if (!masterSafeAddress) return;
 
     const defaultRequirementDepositValues = getInitialDepositForMasterSafe(
       walletChainId,
       masterSafeAddress,
-      getServiceConfigIdsOf(walletChainId),
+      getFundingEligibleServiceConfigIdsOf(walletChainId),
       getRefillRequirementsOf,
     );
 
@@ -189,10 +209,10 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
     setDefaultDepositValues(defaultRequirementDepositValues);
     setAmountsToDeposit(defaultRequirementDepositValues);
   }, [
-    getRefillRequirementsOf,
     walletChainId,
     masterSafeAddress,
-    getServiceConfigIdsOf,
+    getFundingEligibleServiceConfigIdsOf,
+    getRefillRequirementsOf,
   ]);
 
   // list of unique chains where the user has services
@@ -206,8 +226,12 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
 
     return configIds.map(({ configId, chainId }) => {
       const agentSafe = getServiceSafeOf?.(walletChainId, configId)?.address;
-      const agentName = generateName(agentSafe) ?? 'Agent';
+      const tokenId = getServiceTokenId(chainId, configId);
+      const agentName = isValidServiceId(tokenId)
+        ? generateAgentName(chainId, tokenId)
+        : `My ${selectedAgentConfig.displayName}`;
       const agentType = getAgentTypeOf(walletChainId, configId);
+
       return {
         chainId,
         configId,
@@ -222,7 +246,9 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
     walletChainId,
     getServiceSafeOf,
     getAgentTypeOf,
+    getServiceTokenId,
     getStakedOlasBalanceOf,
+    selectedAgentConfig.displayName,
   ]);
 
   const updateStep = useCallback(
@@ -307,6 +333,7 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
         amountsToDeposit,
         onDepositAmountChange,
         updateAmountsToDeposit,
+        initializeDepositAmounts,
         onReset,
 
         // Initial values for funding agent wallet

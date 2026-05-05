@@ -147,7 +147,6 @@ export abstract class PredictTraderService extends StakedAgentService {
   /**
    * Get service details by it's NftTokenId on a provided staking contract
    */
-
   static getServiceStakingDetails = async (
     serviceNftTokenId: number,
     stakingProgramId: StakingProgramId,
@@ -224,7 +223,6 @@ export abstract class PredictTraderService extends StakedAgentService {
     const rewardsPerYear = rewardsPerSecond.mul(ONE_YEAR);
 
     let apy = 0;
-
     if (rewardsPerSecond.gt(0) && minStakingDeposit.gt(0)) {
       apy =
         Number(rewardsPerYear.mul(100).div(minStakingDeposit)) /

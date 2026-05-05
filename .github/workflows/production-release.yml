@@ -1,15 +1,22 @@
 # push to release/* branch
 #        │
 #        ▼
-# calculate-version  (create next prod version)
+# compute-release-tag  (extract release_tag=vX.Y.Z from branch name)
 #        │
-#        ├─► run-release      (Mac/Linux)
-#        │       uses release.yml
-#        │       gets tag = new_tag
+#        ▼
+# check-release-not-published  (guard: fail if vX.Y.Z release is already published)
 #        │
-#        └─► run-release-win  (Windows)
+#        ▼
+# calculate-version  (create/overwrite vX.Y.Z-signed tag on branch HEAD)
+#        │
+#        ├─► run-release      (Mac)
+#        │       uses release_mac.yml
+#        │
+#        ├─► run-release-linux
+#        │       uses release_linux.yml
+#        │
+#        └─► run-release-win
 #                uses release_win.yml
-#                gets tag = new_tag
 
 name: Production Release
 
@@ -27,34 +34,72 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  calculate-version:
+  compute-release-tag:
     # Avoid looping on commits created by the action itself.
     if: ${{ github.actor != 'github-actions[bot]' && !contains(github.event.head_commit.message, '[skip release]') }}
+    runs-on: ubuntu-latest
+    outputs:
+      release_tag: ${{ steps.compute-tag.outputs.release_tag }}
+    steps:
+      - name: Compute expected production tag from branch
+        id: compute-tag
+        run: |
+          BRANCH="${GITHUB_REF_NAME}"
+          if [[ "$BRANCH" =~ (release/)?v?([0-9]+\.[0-9]+\.[0-9]+) ]]; then
+            BASE_VERSION="${BASH_REMATCH[2]}"
+            # Git tag is vX.Y.Z-signed (for audit); electron-builder publishes
+            # the GitHub Release at the unsuffixed vX.Y.Z.
+            echo "release_tag=v${BASE_VERSION}" | tee -a $GITHUB_OUTPUT
+          else
+            echo "::error::Failed to extract version from branch: $BRANCH"
+            exit 1
+          fi
+
+  check-release-not-published:
+    needs: compute-release-tag
+    uses: ./.github/workflows/check-release-not-published.yml
+    with:
+      release_tag: ${{ needs.compute-release-tag.outputs.release_tag }}
+    secrets: inherit
+
+  calculate-version:
+    needs: check-release-not-published
     uses: ./.github/workflows/calculate-and-update-version.yml
     with:
-      version_strategy: production-rc
+      version_strategy: production-release
       base_version_from_branch: true
     secrets: inherit
 
   run-release:
     needs: calculate-version
-    if: ${{ github.actor != 'github-actions[bot]' && !contains(github.event.head_commit.message, '[skip release]') }}
-    uses: ./.github/workflows/release.yml
+    uses: ./.github/workflows/release_mac.yml
+    with:
+      tag: ${{ needs.calculate-version.outputs.new_tag }}
+    secrets: inherit
+
+  run-release-linux:
+    needs: calculate-version
+    uses: ./.github/workflows/release_linux.yml
     with:
       tag: ${{ needs.calculate-version.outputs.new_tag }}
     secrets: inherit
 
   run-release-win:
     needs: calculate-version
-    if: ${{ github.actor != 'github-actions[bot]' && !contains(github.event.head_commit.message, '[skip release]') }}
     uses: ./.github/workflows/release_win.yml
     with:
       tag: ${{ needs.calculate-version.outputs.new_tag }}
     secrets: inherit
 
+  merge-latest-mac-yml:
+    needs: [calculate-version, run-release]
+    uses: ./.github/workflows/merge-latest-mac-yml.yml
+    with:
+      tag: ${{ needs.calculate-version.outputs.new_tag }}
+    secrets: inherit
+
   summary:
-    needs: [calculate-version, run-release, run-release-win]
-    if: ${{ github.actor != 'github-actions[bot]' && !contains(github.event.head_commit.message, '[skip release]') }}
+    needs: [calculate-version, run-release, run-release-win, run-release-linux, merge-latest-mac-yml]
     runs-on: ubuntu-latest
     steps:
       - name: Create summary

@@ -1,7 +1,7 @@
-import { Flex } from 'antd';
 import { useCallback, useMemo } from 'react';
 import { useUnmount } from 'usehooks-ts';
 
+import { MainContentContainer } from '@/components/ui';
 import { MAIN_CONTENT_MAX_WIDTH } from '@/constants';
 import { usePearlWallet } from '@/context/PearlWalletProvider';
 
@@ -77,14 +77,11 @@ export const PearlWallet = () => {
   });
 
   return (
-    <Flex
+    <MainContentContainer
       vertical
-      style={{
-        width: step === STEPS.DEPOSIT ? undefined : MAIN_CONTENT_MAX_WIDTH,
-        margin: '0 auto',
-      }}
+      $width={step === STEPS.DEPOSIT ? undefined : MAIN_CONTENT_MAX_WIDTH}
     >
       <PearlWalletContent />
-    </Flex>
+    </MainContentContainer>
   );
 };

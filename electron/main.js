@@ -36,7 +36,10 @@ const {
   ipcMain,
   shell,
   systemPreferences,
+  nativeImage,
+  screen,
 } = require('electron');
+
 const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
@@ -45,6 +48,9 @@ const next = require('next/dist/server/next');
 const http = require('http');
 
 const { setupDarwin, setupUbuntu, setupWindows, Env } = require('./install');
+
+const iconPath = path.join(__dirname, 'assets/icons/512x512.png');
+const appIcon = nativeImage.createFromPath(iconPath);
 
 const {
   paths,
@@ -60,6 +66,7 @@ const { isPortAvailable, findAvailablePort } = require('./ports');
 const { setupStoreIpc } = require('./store');
 const { logger } = require('./logger');
 const { PearlTray } = require('./components/PearlTray');
+const { registerAutoUpdaterHandlers } = require('./autoUpdater');
 
 const { pki } = require('node-forge');
 
@@ -129,6 +136,10 @@ const binaryPaths = {
   },
   win32: {
     x64: 'bins/middleware/pearl_win.exe',
+  },
+  linux: {
+    arm64: 'bins/middleware/pearl_arm64',
+    x64: 'bins/middleware/pearl_x64',
   },
 };
 
@@ -241,6 +252,7 @@ async function stopBackend() {
 }
 
 async function beforeQuit(event) {
+  logger.electron(`[OTA] beforeQuit called (appRealClose=${appRealClose}, isBeforeQuitting=${isBeforeQuitting})`);
   if (typeof event.preventDefault === 'function' && !appRealClose) {
     event.preventDefault();
     logger.electron('onquit event.preventDefault');
@@ -253,6 +265,7 @@ async function beforeQuit(event) {
   tray?.destroy();
   splashWindow?.destroy();
   mainWindow?.destroy();
+  logger.electron('[OTA] Windows destroyed');
 
   logger.electron('Stop backend gracefully:');
   await stopBackend();
@@ -321,13 +334,43 @@ const APP_WIDTH = 1320;
 const APP_HEIGHT = 796;
 
 /**
+ * Margin (px) kept on each side of the window when the screen is smaller than
+ * APP_WIDTH x APP_HEIGHT, so the window doesn't fill the entire display.
+ * Has no effect on screens large enough to fit the default window size.
+ */
+const SCREEN_EDGE_MARGIN = 20;
+
+/**
+ * Returns window dimensions capped to the primary display's work area.
+ * On screens smaller than the desired size the window is shrunk to fit
+ * with a small margin around it, so content remains reachable via internal
+ * scrolling instead of being clipped off-screen.
+ *
+ * @param {number} [desiredWidth=APP_WIDTH]
+ * @param {number} [desiredHeight=APP_HEIGHT]
+ */
+const getWindowDimensions = (
+  desiredWidth = APP_WIDTH,
+  desiredHeight = APP_HEIGHT,
+) => {
+  const { width: screenWidth, height: screenHeight } =
+    screen.getPrimaryDisplay().workAreaSize;
+  return {
+    width: Math.min(desiredWidth, screenWidth - SCREEN_EDGE_MARGIN * 2),
+    height: Math.min(desiredHeight, screenHeight - SCREEN_EDGE_MARGIN * 2),
+  };
+};
+
+/**
  * Creates the splash window
  */
 const createSplashWindow = () => {
+  const { width, height } = getWindowDimensions();
   /** @type {Electron.BrowserWindow} */
   splashWindow = new BrowserWindow({
-    width: APP_WIDTH,
-    height: APP_HEIGHT,
+    width,
+    icon: appIcon,
+    height,
     resizable: false,
     show: true,
     title: 'Pearl',
@@ -345,17 +388,19 @@ const createSplashWindow = () => {
  */
 const createMainWindow = async () => {
   if (mainWindow) return;
+  const { width, height } = getWindowDimensions();
   mainWindow = new BrowserWindow({
     title: 'Pearl',
+    icon: appIcon,
     resizable: false,
     draggable: true,
     frame: false,
     transparent: true,
     fullscreenable: false,
     maximizable: false,
-    width: APP_WIDTH,
-    maxWidth: APP_WIDTH,
-    height: APP_HEIGHT,
+    width,
+    maxWidth: width,
+    height,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -395,9 +440,22 @@ const createMainWindow = async () => {
 
   ipcMain.handle('app-version', () => app.getVersion());
 
-  mainWindow.webContents.on('did-fail-load', () => {
-    mainWindow.webContents.reloadIgnoringCache();
-  });
+  mainWindow.webContents.on(
+    'did-fail-load',
+    (_event, errorCode, errorDescription, validatedURL, isMainFrame) => {
+      if (isMainFrame) {
+        mainWindow.webContents.reloadIgnoringCache();
+        return;
+      }
+
+      // subframe failures are expected due to the nature of the app
+      // (loading external content in iframes), but we don't want to reload
+      // the entire window in those cases.
+      logger.electron(
+        `Subframe failed to load (${errorCode}): ${errorDescription} at ${validatedURL}`,
+      );
+    },
+  );
 
   mainWindow.webContents.on('ready-to-show', () => {
     mainWindow.show();
@@ -429,13 +487,14 @@ const createMainWindow = async () => {
   });
 
   mainWindow.on('close', function (event) {
+    if (appRealClose) return; // Allow close during OTA update or real quit
     event.preventDefault();
     mainWindow.hide();
   });
 
   try {
     logger.electron('Setting up store IPC');
-    setupStoreIpc(ipcMain, mainWindow);
+    setupStoreIpc(ipcMain);
   } catch (e) {
     logger.electron(`Store IPC failed: ${stringifyJson(e)}`);
   }
@@ -523,7 +582,9 @@ const createOnRampWindow = async (
   networkName,
   cryptoCurrencyCode,
 ) => {
-  if (!getOnRampWindow() || getOnRampWindow().isDestroyed) {
+  const existingWindow = getOnRampWindow();
+  if (!existingWindow || existingWindow.isDestroyed()) {
+    const { width, height: onRampHeight } = getWindowDimensions(APP_WIDTH, 700);
     onRampWindow = new BrowserWindow({
       title: 'Buy Crypto on Transak',
       resizable: false,
@@ -533,8 +594,8 @@ const createOnRampWindow = async (
       fullscreenable: false,
       maximizable: false,
       closable: false,
-      width: APP_WIDTH,
-      height: 700,
+      width,
+      height: onRampHeight,
       media: true,
       webPreferences: {
         nodeIntegration: false,
@@ -614,12 +675,9 @@ async function launchDaemon() {
     if (platform === 'darwin') {
       removeQuarantine(binPath);
     }
-
+    logger.electron(`middleware bin path: ${binPath}`);
     operateDaemon = spawn(
-      path.join(
-        process.resourcesPath,
-        binaryPaths[platform][process.arch.toString()],
-      ),
+      binPath,
       [
         'daemon',
         `--port=${appConfig.ports.prod.operate}`,
@@ -860,6 +918,15 @@ process.on('uncaughtException', (error) => {
 // OPEN PATH
 ipcMain.on('open-path', (_, filePath) => {
   shell.openPath(filePath);
+});
+
+registerAutoUpdaterHandlers({
+  getMainWindow: () => mainWindow,
+  setAppRealClose: (value) => {
+    appRealClose = value;
+  },
+  getOperateDaemonPid: () => operateDaemonPid,
+  killProcesses,
 });
 
 /**

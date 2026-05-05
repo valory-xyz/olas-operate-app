@@ -12,7 +12,7 @@ jobs:
       # Node.js (for package scripts)
       - uses: actions/setup-node@v4
         with:
-          node-version: "20.x"
+          node-version: "22.18"
 
       # Configure Yarn network settings for timeout, retries, and reduced concurrency
       - name: Configure Yarn network settings
@@ -24,11 +24,11 @@ jobs:
       # Python
       - uses: actions/setup-python@v4
         with:
-          python-version: "3.10"
+          python-version: "3.14"
 
       - uses: snok/install-poetry@v1
         with:
-          version: "1.8.5"
+          version: "2.3.2"
           virtualenvs-create: true
           virtualenvs-in-project: false
           virtualenvs-path: ~/my-custom-path

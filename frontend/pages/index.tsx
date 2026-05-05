@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react';
 
-import { Main } from '@/components/MainPageV1';
+import { Main } from '@/components/MainPage';
 import { Setup } from '@/components/SetupPage';
 import { PAGES } from '@/constants';
 import { useElectronApi, usePageState } from '@/hooks';

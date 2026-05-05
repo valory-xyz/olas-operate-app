@@ -1,5 +1,4 @@
 import { Button, Card, Flex, Form, Input, Spin, Typography } from 'antd';
-import { isNil } from 'lodash';
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -9,18 +8,20 @@ import {
   useBackupSigner,
   useBalanceContext,
   useElectronApi,
-  useMasterBalances,
+  useIsInitiallyFunded,
   useMnemonicExists,
   useOnlineStatusContext,
   usePageState,
   useServices,
   useSetup,
   useSharedContext,
+  useStore,
 } from '@/hooks';
 import { AccountService } from '@/service/Account';
 import { WalletService } from '@/service/Wallet';
 import { asEvmChainId, getErrorMessage } from '@/utils';
 
+import { ContentTransition } from '../ui';
 import { FormFlex } from '../ui/FormFlex';
 import { FormLabel } from '../ui/Typography';
 import { SetupWelcomeCreate } from './SetupWelcomeCreate';
@@ -45,8 +46,9 @@ const useSetupNavigation = ({
     services,
     isFetched: isServicesFetched,
   } = useServices();
-  const { getMasterEoaNativeBalanceOf, isLoaded } = useMasterBalances();
+  const { isInitialFunded } = useIsInitiallyFunded();
   const backupSignerAddress = useBackupSigner();
+  const { storeState } = useStore();
 
   const selectedServiceOrAgentChainId = selectedService?.home_chain
     ? asEvmChainId(selectedService?.home_chain)
@@ -66,11 +68,15 @@ const useSetupNavigation = ({
   }, [isServicesFetched, services, selectedService, selectedAgentConfig]);
 
   const isApplicationReady = useMemo(() => {
-    if (!isOnline || !canNavigate || !isServicesFetched || !isLoaded)
+    if (
+      !isOnline ||
+      !canNavigate ||
+      !isServicesFetched ||
+      storeState === undefined
+    )
       return false;
-
     return true;
-  }, [canNavigate, isLoaded, isOnline, isServicesFetched]);
+  }, [canNavigate, isOnline, isServicesFetched, storeState]);
 
   const isBackupWalletNotSet = useMemo(() => {
     // If no services are created and backup wallet is not set as well.
@@ -104,19 +110,18 @@ const useSetupNavigation = ({
       return;
     }
 
-    // If no balance is loaded, redirect to setup screen
-    if (isNil(getMasterEoaNativeBalanceOf(selectedServiceOrAgentChainId))) {
+    if (isInitialFunded === false) {
       goto(SETUP_SCREEN.FundYourAgent);
       return;
     }
 
     gotoPage(PAGES.Main);
   }, [
-    getMasterEoaNativeBalanceOf,
     goto,
     gotoPage,
     isApplicationReady,
     isBackupWalletNotSet,
+    isInitialFunded,
     isServiceCreatedForAgent,
     selectedAgentConfig,
     selectedServiceOrAgentChainId,
@@ -168,7 +173,7 @@ const RecoveryProcessInProgress = () => (
 
 const ErrorMessages = ['does not exist', 'file does not exist', 'not exist'];
 
-const SetupWelcomeLogin = () => {
+export const SetupWelcomeLogin = () => {
   const [form] = Form.useForm();
   const message = useMessageApi();
   const { goto } = useSetup();
@@ -205,7 +210,6 @@ const SetupWelcomeLogin = () => {
         setUserLoggedIn();
       } catch (e) {
         message.error(getErrorMessage(e));
-      } finally {
         setIsLoggingIn(false);
       }
     },
@@ -236,14 +240,19 @@ const SetupWelcomeLogin = () => {
           >
             Continue
           </Button>
-          <Button
-            type="link"
-            target="_blank"
-            size="small"
-            onClick={() => goto(SETUP_SCREEN.AccountRecovery)}
-          >
-            Forgot password?
-          </Button>
+          <Flex justify="center" align="center" gap={4}>
+            <Text type="secondary" className="text-sm">
+              Can&apos;t sign in?
+            </Text>
+            <Button
+              type="link"
+              size="small"
+              style={{ padding: 0 }}
+              onClick={() => goto(SETUP_SCREEN.AccountRecovery)}
+            >
+              View recovery options
+            </Button>
+          </Flex>
         </Flex>
       </FormFlex>
     </Flex>
@@ -257,7 +266,9 @@ export const SetupWelcome = () => {
   const electronApi = useElectronApi();
   const { isAccountRecoveryStatusLoading, hasActiveRecoverySwap } =
     useSharedContext();
-  const [isSetup, setIsSetup] = useState<MiddlewareAccountIsSetup | null>(null);
+  const [isSetup, setIsSetup] = useState<MiddlewareAccountIsSetup>(
+    MiddlewareAccountIsSetup.Loading,
+  );
   const [hasCheckedAccount, setHasCheckedAccount] = useState(false);
 
   useEffect(() => {
@@ -268,10 +279,7 @@ export const SetupWelcome = () => {
     }
 
     // If already checked or determined the setup state, don't check again
-    if (
-      hasCheckedAccount ||
-      (isSetup !== null && isSetup !== MiddlewareAccountIsSetup.Loading)
-    ) {
+    if (hasCheckedAccount || isSetup !== MiddlewareAccountIsSetup.Loading) {
       return;
     }
 
@@ -342,7 +350,9 @@ export const SetupWelcome = () => {
           height={64}
         />
       </Flex>
-      {welcomeScreen}
+      <ContentTransition animationKey={isSetup} initialY={0} exitY={0}>
+        {welcomeScreen}
+      </ContentTransition>
     </Card>
   );
 };

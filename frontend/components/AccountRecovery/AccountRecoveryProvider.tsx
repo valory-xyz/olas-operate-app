@@ -16,7 +16,7 @@ import {
   SupportedMiddlewareChain,
 } from '@/constants';
 import { useOnlineStatus } from '@/context/OnlineStatusProvider';
-import { useMasterWalletContext, useSetup } from '@/hooks';
+import { useMasterWalletContext, usePageState, useSetup } from '@/hooks';
 import { RecoveryService } from '@/service/Recovery';
 import { Address } from '@/types';
 import { SwapSafeTransaction } from '@/types/Recovery';
@@ -120,6 +120,7 @@ export const AccountRecoveryProvider = ({
   children: ReactNode;
 }) => {
   const { isOnline } = useOnlineStatus();
+  const { isUserLoggedIn } = usePageState();
   const { masterSafes, isLoading: isMasterWalletLoading } =
     useMasterWalletContext();
 
@@ -142,7 +143,8 @@ export const AccountRecoveryProvider = ({
       queryKey: REACT_QUERY_KEYS.EXTENDED_WALLET_KEY,
       queryFn: async ({ signal }) =>
         await RecoveryService.getExtendedWallet(signal),
-      enabled: !canFetchRecoveryFundingRequirements && isOnline,
+      enabled:
+        !canFetchRecoveryFundingRequirements && isOnline && isUserLoggedIn,
       select: (data) => data[0],
       refetchOnWindowFocus: false,
       refetchOnReconnect: false,
@@ -157,7 +159,7 @@ export const AccountRecoveryProvider = ({
     queryKey: REACT_QUERY_KEYS.RECOVERY_FUNDING_REQUIREMENTS_KEY,
     queryFn: async ({ signal }) =>
       await RecoveryService.getRecoveryFundingRequirements(signal),
-    enabled: canFetchRecoveryFundingRequirements && isOnline,
+    enabled: canFetchRecoveryFundingRequirements && isOnline && isUserLoggedIn,
     refetchInterval: canFetchRecoveryFundingRequirements
       ? FIFTEEN_SECONDS_INTERVAL
       : false,

@@ -1,5 +1,10 @@
-import { isNil } from 'lodash';
-import { createContext, PropsWithChildren, useEffect, useState } from 'react';
+import {
+  createContext,
+  PropsWithChildren,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 
 import { StakingProgramId } from '@/constants';
 import { useActiveStakingProgramId, useServices } from '@/hooks';
@@ -15,12 +20,14 @@ export const StakingProgramContext = createContext<{
   setStakingProgramIdToMigrateTo: (
     stakingProgramId: Nullable<StakingProgramId>,
   ) => void;
+  stakingProgramIdByServiceConfigId: Map<string, Nullable<StakingProgramId>>;
 }>({
   isActiveStakingProgramLoaded: false,
   selectedStakingProgramId: null,
   setDefaultStakingProgramId: () => {},
   stakingProgramIdToMigrateTo: null,
   setStakingProgramIdToMigrateTo: () => {},
+  stakingProgramIdByServiceConfigId: new Map(),
 });
 
 /**
@@ -33,7 +40,7 @@ export const StakingProgramContext = createContext<{
  * even if deployment is still in progress
  */
 export const StakingProgramProvider = ({ children }: PropsWithChildren) => {
-  const { selectedService, selectedAgentConfig } = useServices();
+  const { selectedService, selectedAgentConfig, services } = useServices();
 
   const [defaultStakingProgramId, setDefaultStakingProgramId] = useState(
     selectedAgentConfig.defaultStakingProgramId,
@@ -46,25 +53,48 @@ export const StakingProgramProvider = ({ children }: PropsWithChildren) => {
     setDefaultStakingProgramId(selectedAgentConfig.defaultStakingProgramId);
   }, [selectedAgentConfig]);
 
-  const serviceNftTokenId = isNil(selectedService?.chain_configs)
-    ? null
-    : selectedService.chain_configs?.[selectedService?.home_chain]?.chain_data
-        ?.token;
-
-  const { isLoading, data: activeStakingProgramId } = useActiveStakingProgramId(
-    serviceNftTokenId,
-    selectedAgentConfig,
-  );
+  const { isLoading, data: activeStakingProgramId } =
+    useActiveStakingProgramId(selectedAgentConfig);
   // Determine the staking program ID in the following order:
   // 1) On-chain value (where the user actually staked)
   // 2) If not available, use the selected service (can be updated during migration)
   // 3) Fall back to the default config value
-  const selectedStakingProgramId = isLoading
-    ? null
-    : activeStakingProgramId ||
+  const selectedStakingProgramId = useMemo(() => {
+    if (isLoading) return null;
+
+    const serviceSelectedStakingProgramId =
       selectedService?.chain_configs?.[selectedService?.home_chain]?.chain_data
-        .user_params.staking_program_id ||
-      defaultStakingProgramId;
+        ?.user_params?.staking_program_id;
+
+    return (
+      activeStakingProgramId ||
+      serviceSelectedStakingProgramId ||
+      defaultStakingProgramId
+    );
+  }, [
+    isLoading,
+    activeStakingProgramId,
+    selectedService,
+    defaultStakingProgramId,
+  ]);
+
+  // NOTE: this map uses only the service-stored staking_program_id, not the
+  // three-tier fallback (subgraph → service-stored → default) used by
+  // selectedStakingProgramId. During a staking migration the value may lag the
+  // on-chain subgraph-confirmed program by one poll cycle, but this is
+  // acceptable for the reward-dot use case (a transient visual lag is
+  // preferable to the extra complexity of per-instance subgraph lookups).
+  const stakingProgramIdByServiceConfigId = useMemo(() => {
+    const map = new Map<string, Nullable<StakingProgramId>>();
+    if (!services) return map;
+    for (const service of services) {
+      const stakingProgramId =
+        service.chain_configs?.[service.home_chain]?.chain_data?.user_params
+          ?.staking_program_id ?? null;
+      map.set(service.service_config_id, stakingProgramId);
+    }
+    return map;
+  }, [services]);
 
   return (
     <StakingProgramContext.Provider
@@ -76,6 +106,7 @@ export const StakingProgramProvider = ({ children }: PropsWithChildren) => {
         setDefaultStakingProgramId,
         stakingProgramIdToMigrateTo,
         setStakingProgramIdToMigrateTo,
+        stakingProgramIdByServiceConfigId,
       }}
     >
       {children}

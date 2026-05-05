@@ -1,9 +1,9 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 
+import { GetOnRampRequirementsParams } from '@/components/OnRamp/types';
 import { AddressZero } from '@/constants/address';
-import { EvmChainId, onRampChainMap } from '@/constants/chains';
+import { EvmChainId } from '@/constants/chains';
 import { useOnRampContext } from '@/hooks/useOnRampContext';
-import { useServices } from '@/hooks/useServices';
 import { useMasterWalletContext } from '@/hooks/useWallet';
 import { asMiddlewareChain } from '@/utils/middlewareHelpers';
 import { formatUnitsToNumber } from '@/utils/numberFormatters';
@@ -16,22 +16,34 @@ import { useBridgeRequirementsQuery } from '../components/OnRamp/PayingReceiving
  *
  * Example: For Optimus, we require 0.01 ETH, 16 USDC, 100 OLAS.
  * So, total ETH required = 0.01 ETH + 16 USDC in ETH + 100 OLAS in ETH.
+ *
+ * @param onRampChainId - The chain ID where on-ramping occurs
+ * @param toChainId - The destination chain ID where funds will be sent
+ * @param getOnRampRequirementsParams - Function to get on-ramp requirements
+ * @param mode - Calculation mode: 'onboard' for new agents (uses refill requirements),
+ *               'deposit' for existing wallets (uses total requirements)
  */
 export const useTotalNativeTokenRequired = (
   onRampChainId: EvmChainId,
-  queryKey: 'preview' | 'onboarding' = 'onboarding',
+  toChainId: EvmChainId,
+  getOnRampRequirementsParams: GetOnRampRequirementsParams,
+  mode: 'onboard' | 'deposit' = 'onboard',
 ) => {
   const {
-    updateEthAmountToPay,
-    updateEthTotalAmountRequired,
+    updateNativeAmountToPay,
+    updateNativeTotalAmountRequired,
     isOnRampingTransactionSuccessful,
+    isBuyCryptoBtnLoading,
   } = useOnRampContext();
-  const { selectedAgentConfig } = useServices();
-  const {
-    masterEoa,
-    getMasterSafeOf,
-    isFetched: isMasterWalletFetched,
-  } = useMasterWalletContext();
+  const { masterEoa, isFetched: isMasterWalletFetched } =
+    useMasterWalletContext();
+
+  // Ref to store frozen totalNativeTokens once step 1 completes
+  // This prevents recalculation when bridge requirements update after onramping success
+  const frozenTotalNativeTokensRef = useRef<{
+    totalNativeTokenToPay: number;
+    totalNativeTokenRequired: number;
+  } | null>(null);
 
   const {
     isLoading,
@@ -42,10 +54,27 @@ export const useTotalNativeTokenRequired = (
     onRetry,
   } = useBridgeRequirementsQuery({
     onRampChainId,
+    getOnRampRequirementsParams,
     enabled: !isOnRampingTransactionSuccessful,
     stopPollingCondition: isOnRampingTransactionSuccessful,
-    queryKeySuffix: queryKey,
+    queryKeySuffix: mode,
   });
+
+  /**
+   * Calculate native token amount needed from direct requirements (not from bridging)
+   *
+   * When the source chain (where user is on-ramping) matches the destination chain:
+   *   - We need to include the native token amount in our total calculation.
+   *   - This amount won't go through bridging since it's already on the correct chain.
+   *
+   * Example: For Optimus on Optimism
+   *   - We need 0.01 ETH for agent operation.
+   *   - Since on-ramping is already on Optimism, this ETH will be directly funded.
+   *   - We add this to our total required amount (separate from bridge calculations)
+   */
+  const nativeTokenAmount = bridgeParams?.bridge_requests.find(
+    (request) => request.to.token === AddressZero,
+  )?.to.amount;
 
   /**
    * Calculates the total native token required for the bridge.
@@ -54,58 +83,60 @@ export const useTotalNativeTokenRequired = (
    * - OLAS_in_ETH = 16 USDC bridged to ETH
    * - USDC_in_ETH = 100 OLAS bridged to ETH
    * Total native token required = 0.01 ETH + OLAS_in_ETH + USDC_in_ETH
+   *
+   * Note: Once step 1 (onramping) is complete, we freeze this calculation
+   * to prevent redundant price-quote API calls from bridge requirement updates.
    */
-  const totalNativeTokens = useMemo(() => {
-    if (!bridgeParams) return;
+  const shouldFreezeTotals =
+    isBuyCryptoBtnLoading || isOnRampingTransactionSuccessful;
+
+  const computedTotalNativeTokens = useMemo(() => {
     if (!bridgeFundingRequirements) return;
     if (!masterEoa?.address) return;
     if (!isMasterWalletFetched) return;
 
-    // "TO" chain, where we will bridge on-ramped funds to
-    const agentChainName = asMiddlewareChain(
-      selectedAgentConfig.evmHomeChainId,
-    );
-    // "FROM" chain for bridging, the chain we will on-ramp funds to
-    const onRampNetworkName = asMiddlewareChain(onRampChainMap[agentChainName]);
+    // "FROM" chain - where we will on-ramp funds (source)
+    const onRampNetworkName = asMiddlewareChain(onRampChainId);
+    // Note: "from" address should always be mEOA for bridging
+    // so we should on-ramp to mEOA only
+    const onRampDestinationAddress = masterEoa.address;
 
-    const destinationAddress =
-      getMasterSafeOf?.(onRampChainMap[agentChainName])?.address ||
-      masterEoa.address;
+    // "TO" chain - where we will send the on-ramped funds (destination)
+    const toChainName = asMiddlewareChain(toChainId);
 
-    /**
-     * Calculate native token amount needed from direct requirements (not from bridging)
-     *
-     * When the source chain (where user is on-ramping) matches the destination chain:
-     *   - We need to include the native token amount in our total calculation.
-     *   - This amount won't go through bridging since it's already on the correct chain.
-     *
-     * Example: For Optimus on Optimism
-     *   - We need 0.01 ETH for agent operation.
-     *   - Since on-ramping is already on Optimism, this ETH will be directly funded.
-     *   - We add this to our total required amount (separate from bridge calculations)
-     */
-    const nativeTokenAmount = bridgeParams.bridge_requests.find(
-      (request) => request.to.token === AddressZero,
-    )?.to.amount;
     const nativeTokenFromBridgeParams =
-      agentChainName === onRampNetworkName ? nativeTokenAmount : 0;
+      toChainName === onRampNetworkName ? nativeTokenAmount : 0;
 
-    // Remaining token from the bridge quote.
-    // e.g, For optimus, OLAS and USDC are bridged to ETH
-    const bridgeRefillRequirements =
-      bridgeFundingRequirements.bridge_refill_requirements[onRampNetworkName];
-    const nativeBridgeRefillRequirements =
-      bridgeRefillRequirements?.[destinationAddress]?.[AddressZero];
+    // Select requirements based on mode:
+    // - onboard mode: Amount needed to top up (uses refill requirements)
+    // - deposit mode: Full amount required (uses total requirements)
+    //
+    // TODO: reconsider this approach and split the hook into two for different purposes
+    // we ideally not pass the "mode" to avoid many if/else branches
+    const bridgeRequirements =
+      mode === 'deposit'
+        ? bridgeFundingRequirements.bridge_total_requirements[onRampNetworkName]
+        : bridgeFundingRequirements.bridge_refill_requirements[
+            onRampNetworkName
+          ];
+
+    const bridgeRequirementsOfNonNativeTokens =
+      bridgeRequirements?.[onRampDestinationAddress]?.[AddressZero];
+
     // Existing balance of native token on the source chain will be also used for bridging
     const bridgeBalance = bridgeFundingRequirements.balances[onRampNetworkName];
-    const nativeBalance = bridgeBalance?.[destinationAddress]?.[AddressZero];
+    const nativeBalance =
+      bridgeBalance?.[onRampDestinationAddress]?.[AddressZero];
 
-    if (!nativeBridgeRefillRequirements) return;
+    // Return early only if both non-native token requirements AND native token params are missing
+    if (!bridgeRequirementsOfNonNativeTokens && !nativeTokenFromBridgeParams)
+      return;
 
     // e.g, For optimus, addition of (ETH required) + (OLAS and USDC bridged to ETH)
     // + existing balance in case we already have another agent on this chain
+    // Note: Handle case where only native token is deposited (bridgeRequirementsOfNonNativeTokens is undefined)
     const totalNativeTokenToPay =
-      BigInt(nativeBridgeRefillRequirements) +
+      BigInt(bridgeRequirementsOfNonNativeTokens || 0) +
       BigInt(nativeTokenFromBridgeParams || 0);
     // All the above + existing balance in case we already have another agent on this chain
     // and some native tokens are there
@@ -121,26 +152,49 @@ export const useTotalNativeTokenRequired = (
         : 0,
     };
   }, [
-    bridgeParams,
+    mode,
+    nativeTokenAmount,
     bridgeFundingRequirements,
     masterEoa,
     isMasterWalletFetched,
-    selectedAgentConfig.evmHomeChainId,
-    getMasterSafeOf,
+    onRampChainId,
+    toChainId,
   ]);
+
+  const totalNativeTokens = useMemo(() => {
+    if (shouldFreezeTotals && frozenTotalNativeTokensRef.current) {
+      return frozenTotalNativeTokensRef.current;
+    }
+    return computedTotalNativeTokens;
+  }, [computedTotalNativeTokens, shouldFreezeTotals]);
+
+  // Freeze totals once the user initiates on-ramping or once it succeeds
+  useEffect(() => {
+    if (!shouldFreezeTotals) return;
+    if (!computedTotalNativeTokens) return;
+    if (frozenTotalNativeTokensRef.current) return;
+    frozenTotalNativeTokensRef.current = computedTotalNativeTokens;
+  }, [computedTotalNativeTokens, shouldFreezeTotals]);
+
+  // Reset frozen ref when starting a new onramp flow
+  useEffect(() => {
+    if (!shouldFreezeTotals) {
+      frozenTotalNativeTokensRef.current = null;
+    }
+  }, [shouldFreezeTotals]);
 
   // Update the ETH amount to pay in the on-ramp context
   useEffect(() => {
     if (!totalNativeTokens) return;
-    if (isOnRampingTransactionSuccessful) return;
+    if (shouldFreezeTotals) return;
 
-    updateEthAmountToPay(totalNativeTokens.totalNativeTokenToPay);
-    updateEthTotalAmountRequired(totalNativeTokens.totalNativeTokenRequired);
+    updateNativeAmountToPay(totalNativeTokens.totalNativeTokenToPay);
+    updateNativeTotalAmountRequired(totalNativeTokens.totalNativeTokenRequired);
   }, [
-    isOnRampingTransactionSuccessful,
-    updateEthAmountToPay,
+    shouldFreezeTotals,
+    updateNativeAmountToPay,
     totalNativeTokens,
-    updateEthTotalAmountRequired,
+    updateNativeTotalAmountRequired,
   ]);
 
   return {

@@ -10,7 +10,7 @@ import { WalletService } from '@/service/Wallet';
 import { getErrorMessage } from '@/utils';
 
 export const SetupPassword = () => {
-  const { goto } = useSetup();
+  const { goto, setPassword } = useSetup();
   const { setUserLoggedIn } = usePageState();
   const { setMnemonicExists } = useMnemonicExists();
   const [form] = Form.useForm<{ password: string; terms: boolean }>();
@@ -41,6 +41,10 @@ export const SetupPassword = () => {
         // Mnemonic is always created for new accounts
         setMnemonicExists(true);
         setUserLoggedIn();
+        // Hold the password in setup context so the backup-wallet step can
+        // eager-write canonical_backup_owner right after the user picks an
+        // address. Cleared by useApplyBackupDuringSetup once applied.
+        setPassword(password);
         goto(SETUP_SCREEN.SetupBackupSigner);
       })
       .catch((e: unknown) => {

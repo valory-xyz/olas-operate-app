@@ -4,22 +4,22 @@ import { BackupWalletType } from './BackupWallet';
 import { Nullable } from './Util';
 
 type AgentSettings = {
-  isInitialFunded: boolean;
-  isProfileWarningDisplayed: boolean;
+  isInitialFunded: boolean | Record<string, boolean>;
+  /** @deprecated Preserved during migration from boolean → per-service record. */
+  isInitialFundedLegacy?: boolean;
 };
 
-export type ElectronStore = {
-  // Global settings
-  environmentName?: string;
-  lastSelectedAgentType?: AgentType;
-  knownVersion?: string;
-
+/**
+ * Backend-sourced persistent store shape, backed by .operate/pearl_store.json.
+ * This travels with the .operate folder, surviving machine migrations.
+ */
+export type PearlStore = {
   // First time user settings
   firstStakingRewardAchieved?: boolean;
-  firstRewardNotificationShown?: boolean;
-  agentEvictionAlertShown?: boolean;
-  recoveryPhraseBackedUp?: boolean;
-  mnemonicExists?: boolean;
+
+  /** @deprecated Use `lastSelectedServiceConfigId` instead. Kept for one-time migration only. */
+  lastSelectedAgentType?: AgentType;
+  lastSelectedServiceConfigId?: string;
 
   // Each agent has its own settings
   [AgentMap.PredictTrader]?: AgentSettings;
@@ -27,10 +27,49 @@ export type ElectronStore = {
   [AgentMap.Modius]?: AgentSettings;
   [AgentMap.Optimus]?: AgentSettings;
   [AgentMap.PettAi]?: AgentSettings;
+  [AgentMap.Polystrat]?: AgentSettings;
+
+  autoRun?: {
+    enabled?: boolean;
+    /**
+     * Legacy inclusion list, keyed by AgentType.
+     * @deprecated Use `includedAgentInstances` instead.
+     */
+    includedAgents?: { agentType: AgentType; order: number }[];
+    /** Instances included in auto-run rotation, keyed by serviceConfigId. */
+    includedAgentInstances?: { serviceConfigId: string; order: number }[];
+    isInitialized?: boolean;
+    /**
+     * Legacy exclusion list, keyed by AgentType.
+     * @deprecated Use `userExcludedAgentInstances` instead.
+     */
+    userExcludedAgents?: AgentType[];
+    /** Instances explicitly excluded from auto-run by the user, keyed by serviceConfigId. */
+    userExcludedAgentInstances?: string[];
+  };
+
   lastProvidedBackupWallet?: {
     address: Nullable<string>;
     type: BackupWalletType;
   };
+
+  /** @deprecated Use `archivedInstances` instead. Kept for one-time migration. */
+  archivedAgents?: AgentType[];
+  /** serviceConfigIds of archived instances (hidden from sidebar, restorable). */
+  archivedInstances?: string[];
+
+  recoveryPhraseBackedUp?: boolean;
+};
+
+/**
+ * Electron-native store shape — lives in the OS app-data directory.
+ * Only fields that are genuinely Electron-specific belong here.
+ */
+export type ElectronStore = {
+  environmentName?: string;
+  knownVersion?: string;
+  /** Stores the latest app version for which the "update available" modal was dismissed. */
+  updateAvailableKnownVersion?: string;
 };
 
 export type ElectronTrayIconStatus =

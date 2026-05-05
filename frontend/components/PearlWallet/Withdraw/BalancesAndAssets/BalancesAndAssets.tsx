@@ -12,7 +12,8 @@ import {
 } from '@/components/ui';
 import { COLOR } from '@/constants';
 import { usePearlWallet } from '@/context/PearlWalletProvider';
-import { useMasterWalletContext, useServices } from '@/hooks';
+import { useMasterWalletContext } from '@/hooks';
+import { asMiddlewareChain } from '@/utils';
 
 import { AvailableAssetsTable } from './AvailableAssetsTable';
 import { LowPearlWalletBalanceAlert } from './LowPearlWalletBalanceAlert';
@@ -22,9 +23,9 @@ const { Text, Title } = Typography;
 
 const AvailableAssetsTooltip = () => {
   const { masterEoa, getMasterSafeOf } = useMasterWalletContext();
-  const { selectedAgentConfig } = useServices();
+  const { walletChainId } = usePearlWallet();
   const masterSafe = getMasterSafeOf
-    ? getMasterSafeOf(selectedAgentConfig.evmHomeChainId)
+    ? getMasterSafeOf(walletChainId!)
     : undefined;
 
   return (
@@ -32,7 +33,7 @@ const AvailableAssetsTooltip = () => {
       type="pearl"
       eoaAddress={masterEoa?.address}
       safeAddress={masterSafe?.address}
-      middlewareHomeChainId={selectedAgentConfig.middlewareHomeChainId}
+      middlewareHomeChainId={asMiddlewareChain(walletChainId!)}
     />
   );
 };

@@ -3,37 +3,37 @@ import { Contract as MulticallContract } from 'ethers-multicall';
 import { STAKING_TOKEN_PROXY_ABI } from '@/abis/stakingTokenProxy';
 import { AgentMap, EvmChainIdMap, STAKING_PROGRAM_IDS } from '@/constants';
 import { Address } from '@/types';
+import { deriveStakingProgramId } from '@/utils';
 
 import { BASE_STAKING_PROGRAMS_ACTIVITY_CHECKERS } from '../activityCheckers';
 import { MECHS, MechType } from '../mechs';
 import { TokenSymbolMap } from '../tokens';
-import { StakingProgramMap } from '.';
+import type { StakingProgramMap } from '.';
 
-export const BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES: Record<string, Address> =
-  {
-    [STAKING_PROGRAM_IDS.MemeBaseAlpha2]:
-      '0xc653622FD75026a020995a1d8c8651316cBBc4dA',
-    [STAKING_PROGRAM_IDS.MemeBaseBeta]:
-      '0x6011E09e7c095e76980b22498d69dF18EB62BeD8',
-    [STAKING_PROGRAM_IDS.MemeBaseBeta2]:
-      '0xfb7669c3AdF673b3A545Fa5acd987dbfdA805e22',
-    [STAKING_PROGRAM_IDS.MemeBaseBeta3]:
-      '0xCA61633b03c54F64b6A7F1f9A9C0A6Feb231Cc4D',
-    [STAKING_PROGRAM_IDS.AgentsFun1]:
-      '0x2585e63df7BD9De8e058884D496658a030b5c6ce',
-    [STAKING_PROGRAM_IDS.AgentsFun2]:
-      '0x26FA75ef9Ccaa60E58260226A71e9d07564C01bF',
-    [STAKING_PROGRAM_IDS.AgentsFun3]:
-      '0x4D4233EBF0473Ca8f34d105A6256A2389176F0Ce',
-    [STAKING_PROGRAM_IDS.PettAiAgent]:
-      '0x31183503be52391844594b4B587F0e764eB3956E',
-    [STAKING_PROGRAM_IDS.PettAiAgent2]:
-      '0xEA15F76D7316B09b3f89613e32d3B780619d61e2',
-    [STAKING_PROGRAM_IDS.PettAiAgent3]:
-      '0xFA0ca3935758cB81D35A8F1395b9Eb5a596ce301',
-    [STAKING_PROGRAM_IDS.PettAiAgent4]:
-      '0x00D544c10BDC0E9b0a71CeAF52C1342BB8f21c1D',
-  };
+const BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES: Record<string, Address> = {
+  [STAKING_PROGRAM_IDS.MemeBaseAlpha2]:
+    '0xc653622FD75026a020995a1d8c8651316cBBc4dA',
+  [STAKING_PROGRAM_IDS.MemeBaseBeta]:
+    '0x6011E09e7c095e76980b22498d69dF18EB62BeD8',
+  [STAKING_PROGRAM_IDS.MemeBaseBeta2]:
+    '0xfb7669c3AdF673b3A545Fa5acd987dbfdA805e22',
+  [STAKING_PROGRAM_IDS.MemeBaseBeta3]:
+    '0xCA61633b03c54F64b6A7F1f9A9C0A6Feb231Cc4D',
+  [STAKING_PROGRAM_IDS.AgentsFun1]:
+    '0x2585e63df7BD9De8e058884D496658a030b5c6ce',
+  [STAKING_PROGRAM_IDS.AgentsFun2]:
+    '0x26FA75ef9Ccaa60E58260226A71e9d07564C01bF',
+  [STAKING_PROGRAM_IDS.AgentsFun3]:
+    '0x4D4233EBF0473Ca8f34d105A6256A2389176F0Ce',
+  [STAKING_PROGRAM_IDS.PettAiAgent]:
+    '0x31183503be52391844594b4B587F0e764eB3956E',
+  [STAKING_PROGRAM_IDS.PettAiAgent2]:
+    '0xEA15F76D7316B09b3f89613e32d3B780619d61e2',
+  [STAKING_PROGRAM_IDS.PettAiAgent3]:
+    '0xFA0ca3935758cB81D35A8F1395b9Eb5a596ce301',
+  [STAKING_PROGRAM_IDS.PettAiAgent4]:
+    '0x00D544c10BDC0E9b0a71CeAF52C1342BB8f21c1D',
+};
 
 export const BASE_STAKING_PROGRAMS: StakingProgramMap = {
   [STAKING_PROGRAM_IDS.MemeBaseAlpha2]: {
@@ -58,6 +58,11 @@ export const BASE_STAKING_PROGRAMS: StakingProgramMap = {
       ],
       STAKING_TOKEN_PROXY_ABI,
     ),
+    id: deriveStakingProgramId(
+      BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.MemeBaseAlpha2
+      ],
+    ),
   },
   [STAKING_PROGRAM_IDS.MemeBaseBeta]: {
     deprecated: true,
@@ -78,6 +83,11 @@ export const BASE_STAKING_PROGRAMS: StakingProgramMap = {
         STAKING_PROGRAM_IDS.MemeBaseBeta
       ],
       STAKING_TOKEN_PROXY_ABI,
+    ),
+    id: deriveStakingProgramId(
+      BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.MemeBaseBeta
+      ],
     ),
   },
   [STAKING_PROGRAM_IDS.MemeBaseBeta2]: {
@@ -102,6 +112,11 @@ export const BASE_STAKING_PROGRAMS: StakingProgramMap = {
       ],
       STAKING_TOKEN_PROXY_ABI,
     ),
+    id: deriveStakingProgramId(
+      BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.MemeBaseBeta2
+      ],
+    ),
   },
   [STAKING_PROGRAM_IDS.MemeBaseBeta3]: {
     deprecated: true,
@@ -125,6 +140,11 @@ export const BASE_STAKING_PROGRAMS: StakingProgramMap = {
       ],
       STAKING_TOKEN_PROXY_ABI,
     ),
+    id: deriveStakingProgramId(
+      BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.MemeBaseBeta3
+      ],
+    ),
   },
   [STAKING_PROGRAM_IDS.AgentsFun1]: {
     chainId: EvmChainIdMap.Base,
@@ -142,6 +162,9 @@ export const BASE_STAKING_PROGRAMS: StakingProgramMap = {
     contract: new MulticallContract(
       BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[STAKING_PROGRAM_IDS.AgentsFun1],
       STAKING_TOKEN_PROXY_ABI,
+    ),
+    id: deriveStakingProgramId(
+      BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[STAKING_PROGRAM_IDS.AgentsFun1],
     ),
   },
   [STAKING_PROGRAM_IDS.AgentsFun2]: {
@@ -161,6 +184,9 @@ export const BASE_STAKING_PROGRAMS: StakingProgramMap = {
       BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[STAKING_PROGRAM_IDS.AgentsFun2],
       STAKING_TOKEN_PROXY_ABI,
     ),
+    id: deriveStakingProgramId(
+      BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[STAKING_PROGRAM_IDS.AgentsFun2],
+    ),
   },
   [STAKING_PROGRAM_IDS.AgentsFun3]: {
     chainId: EvmChainIdMap.Base,
@@ -179,6 +205,9 @@ export const BASE_STAKING_PROGRAMS: StakingProgramMap = {
       BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[STAKING_PROGRAM_IDS.AgentsFun3],
       STAKING_TOKEN_PROXY_ABI,
     ),
+    id: deriveStakingProgramId(
+      BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[STAKING_PROGRAM_IDS.AgentsFun3],
+    ),
   },
   [STAKING_PROGRAM_IDS.PettAiAgent]: {
     deprecated: true,
@@ -195,6 +224,9 @@ export const BASE_STAKING_PROGRAMS: StakingProgramMap = {
     contract: new MulticallContract(
       BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[STAKING_PROGRAM_IDS.PettAiAgent],
       STAKING_TOKEN_PROXY_ABI,
+    ),
+    id: deriveStakingProgramId(
+      BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[STAKING_PROGRAM_IDS.PettAiAgent],
     ),
   },
   [STAKING_PROGRAM_IDS.PettAiAgent2]: {
@@ -217,6 +249,11 @@ export const BASE_STAKING_PROGRAMS: StakingProgramMap = {
       ],
       STAKING_TOKEN_PROXY_ABI,
     ),
+    id: deriveStakingProgramId(
+      BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.PettAiAgent2
+      ],
+    ),
   },
   [STAKING_PROGRAM_IDS.PettAiAgent3]: {
     chainId: EvmChainIdMap.Base,
@@ -237,6 +274,11 @@ export const BASE_STAKING_PROGRAMS: StakingProgramMap = {
       ],
       STAKING_TOKEN_PROXY_ABI,
     ),
+    id: deriveStakingProgramId(
+      BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.PettAiAgent3
+      ],
+    ),
   },
   [STAKING_PROGRAM_IDS.PettAiAgent4]: {
     chainId: EvmChainIdMap.Base,
@@ -256,6 +298,11 @@ export const BASE_STAKING_PROGRAMS: StakingProgramMap = {
         STAKING_PROGRAM_IDS.PettAiAgent4
       ],
       STAKING_TOKEN_PROXY_ABI,
+    ),
+    id: deriveStakingProgramId(
+      BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.PettAiAgent4
+      ],
     ),
   },
 };

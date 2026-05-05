@@ -52,12 +52,6 @@ const useAllStakingContractDetails = () => {
           programId as StakingProgramId,
           evmHomeChainId,
         ),
-      onError: (error: Error) => {
-        console.error(
-          `Error fetching staking details for ${programId}:`,
-          error,
-        );
-      },
       refetchInterval: (
         query: Query<Optional<StakingContractDetails>, Error>,
       ) => {
@@ -72,15 +66,16 @@ const useAllStakingContractDetails = () => {
     })),
   });
 
-  // Aggregate results into a record
+  // Aggregate results into a record. Use query.data (not query.status) so that
+  // a query currently in an error state after a prior success still contributes
+  // its last-known-good data — preventing UI flicker on transient RPC failures.
   const allStakingContractDetailsRecord = allStakingProgramIds.reduce(
     (record, programId, index) => {
       const query = queryResults[index];
-      if (query.status === 'success') {
-        if (query.data) {
-          record[programId] = query.data;
-        }
-      } else if (query.status === 'error') {
+      if (query.data) {
+        record[programId] = query.data;
+      }
+      if (query.status === 'error') {
         console.error(query.error);
       }
       return record;
@@ -139,17 +134,24 @@ const useStakingContractDetailsByStakingProgram = ({
         );
       }
 
-      return Promise.allSettled(promises).then((results) => {
-        const [stakingContractDetails, serviceStakingDetails] = results;
-        return {
-          ...(stakingContractDetails?.status === 'fulfilled'
-            ? (stakingContractDetails.value as StakingContractDetails)
-            : {}),
-          ...(serviceStakingDetails?.status === 'fulfilled'
-            ? (serviceStakingDetails.value as ServiceStakingDetails)
-            : {}),
-        };
-      });
+      return Promise.all(promises).then(
+        ([stakingContractDetails, serviceStakingDetails]) => {
+          // Throw when contract details resolve to undefined (e.g. missing
+          // staking program / chain config) so React Query treats it as an
+          // error and keeps previousData instead of overwriting with {}.
+          if (!stakingContractDetails) {
+            throw new Error(
+              `getStakingContractDetails returned undefined for program ${stakingProgramId}`,
+            );
+          }
+          return {
+            ...(stakingContractDetails as StakingContractDetails),
+            ...(serviceStakingDetails
+              ? (serviceStakingDetails as ServiceStakingDetails)
+              : {}),
+          };
+        },
+      );
     },
     enabled: !isPaused && !!stakingProgramId,
     refetchInterval: isPaused ? false : refetchInterval,

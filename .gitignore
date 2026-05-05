@@ -11,6 +11,7 @@ frontend/node_modules
 frontend/.next/
 frontend/out/
 frontend/.swc/
+*.tsbuildinfo
 
 # production
 frontend/build
@@ -50,6 +51,13 @@ leak_report
 
 # logs
 *.log
+/.logs/
 
 # custom script for development
 .scripts/
+
+# tests
+frontend/coverage
+
+# local plans
+/.plans/

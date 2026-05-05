@@ -106,11 +106,19 @@ function prepareLogsForDebug(data, forSupport = false) {
   const osInfoFilePath = path.join(paths.osPearlTempDir, 'os_info.txt');
   fs.writeFileSync(osInfoFilePath, osInfo);
 
-  // Persistent store
+  // Pearl store (backend-persisted, lives in .operate/pearl_store.json)
   if (data.store) {
     sanitizeLogs({
-      name: 'store.txt',
+      name: 'pearl_store.json',
       data: JSON.stringify(data.store, null, 2),
+    });
+  }
+
+  // Electron store (OS app-data, Electron-native keys only)
+  if (data.electronStore) {
+    sanitizeLogs({
+      name: 'electron_store.json',
+      data: JSON.stringify(data.electronStore, null, 2),
     });
   }
 

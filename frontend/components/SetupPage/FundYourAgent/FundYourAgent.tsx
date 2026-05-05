@@ -2,8 +2,18 @@ import { Button, Flex, Typography } from 'antd';
 import { ReactNode } from 'react';
 import styled from 'styled-components';
 
-import { BackButton, CardFlex, CardTitle } from '@/components/ui';
-import { COLOR, EvmChainName, SETUP_SCREEN } from '@/constants';
+import {
+  BackButton,
+  CardFlex,
+  CardTitle,
+  TokenRequirements,
+} from '@/components/ui';
+import {
+  ANTD_BREAKPOINTS,
+  COLOR,
+  EvmChainName,
+  SETUP_SCREEN,
+} from '@/constants';
 import {
   useFeatureFlag,
   useGetRefillRequirements,
@@ -13,9 +23,20 @@ import {
 import { TokenRequirement } from '@/types';
 
 import { OnRampMethodCard } from './components/OnRampMethodCard';
-import { TokenRequirements } from './components/TokensRequirements';
 
 const { Text, Title, Paragraph } = Typography;
+
+const FundingContainer = styled(Flex)`
+  padding: 0 80px;
+
+  @media (max-width: ${ANTD_BREAKPOINTS.xl}px) {
+    padding: 0 24px;
+  }
+
+  @media (max-width: ${ANTD_BREAKPOINTS.md}px) {
+    padding: 0 8px;
+  }
+`;
 
 const FundMethodCard = styled(CardFlex)`
   width: 370px;
@@ -66,6 +87,7 @@ const TransferTokens = ({
       </div>
       <Button
         size="large"
+        className="mt-auto"
         onClick={() => goto(SETUP_SCREEN.TransferFunds)}
         disabled={isBalancesAndFundingRequirementsLoading}
       >
@@ -91,10 +113,11 @@ const BridgeTokens = ({
           expensive.
         </CardDescription>
         <TokenRequirements
+          fundType="bridge"
           tokenRequirements={tokenRequirements}
           chainName={chainName}
           isLoading={isBalancesAndFundingRequirementsLoading}
-          fundType="bridge"
+          title="Estimated to pay"
         />
       </div>
       <Button
@@ -121,7 +144,7 @@ export const FundYourAgent = () => {
   const { evmHomeChainId } = selectedAgentConfig;
   const chainName = EvmChainName[evmHomeChainId];
   const {
-    totalTokenRequirements: tokenRequirements,
+    refillTokenRequirements: tokenRequirements,
     isLoading,
     resetTokenRequirements,
   } = useGetRefillRequirements();
@@ -130,21 +153,23 @@ export const FundYourAgent = () => {
     isLoading || tokenRequirements.length === 0;
 
   return (
-    <Flex align="center" vertical>
-      <BackButton
-        onPrev={() => {
-          resetTokenRequirements();
-          goto(SETUP_SCREEN.SelectStaking);
-        }}
-      />
-      <Title level={3} className="mt-12">
-        Fund your {selectedAgentConfig.displayName}
-      </Title>
-      <Text type="secondary">
-        Select the payment method that suits you best.
-      </Text>
+    <FundingContainer vertical>
+      <Flex vertical>
+        <BackButton
+          onPrev={() => {
+            resetTokenRequirements();
+            goto(SETUP_SCREEN.SelectStaking);
+          }}
+        />
+        <Title level={3} className="mt-12">
+          Fund your {selectedAgentConfig.displayName}
+        </Title>
+        <Text className="text-neutral-secondary">
+          Select the payment method that suits you best.
+        </Text>
+      </Flex>
 
-      <Flex gap={24} style={{ marginTop: 56 }}>
+      <Flex gap={24} style={{ marginTop: 32 }}>
         {isOnRampEnabled && <OnRampMethodCard />}
         <TransferTokens
           chainName={chainName}
@@ -161,6 +186,6 @@ export const FundYourAgent = () => {
           />
         )}
       </Flex>
-    </Flex>
+    </FundingContainer>
   );
 };

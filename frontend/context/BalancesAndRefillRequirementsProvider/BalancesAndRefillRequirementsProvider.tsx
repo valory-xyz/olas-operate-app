@@ -13,9 +13,7 @@ import {
   useRef,
 } from 'react';
 
-import { ACTIVE_AGENTS } from '@/config/agents';
 import {
-  AgentType,
   EvmChainId,
   MiddlewareDeploymentStatusMap,
   REACT_QUERY_KEYS,
@@ -24,14 +22,14 @@ import {
 } from '@/constants';
 import {
   useDynamicRefetchInterval,
+  useFundingEligibleServices,
   useMasterWalletContext,
-  useStore,
 } from '@/hooks';
 import { useOnlineStatusContext } from '@/hooks/useOnlineStatus';
 import { usePageState } from '@/hooks/usePageState';
 import { useRewardContext } from '@/hooks/useRewardContext';
 import { useServices } from '@/hooks/useServices';
-import { BalanceService } from '@/service/balances';
+import { BalanceService } from '@/service/Balance';
 import {
   AddressBalanceRecord,
   BalancesAndFundingRequirements,
@@ -47,7 +45,9 @@ import {
 
 export const BalancesAndRefillRequirementsProviderContext = createContext<{
   isBalancesAndFundingRequirementsLoading: boolean;
-  balances: Optional<AddressBalanceRecord>;
+  isBalancesAndFundingRequirementsLoadingForAllServices: boolean;
+  isBalancesAndFundingRequirementsReadyForAllServices: boolean;
+  isBalancesAndFundingRequirementsEnabledForAllServices: boolean;
   refillRequirements: Optional<AddressBalanceRecord | MasterSafeBalanceRecord>;
   getRefillRequirementsOf: (
     chainId: EvmChainId,
@@ -71,10 +71,14 @@ export const BalancesAndRefillRequirementsProviderContext = createContext<{
   refetchForSelectedAgent: () => Promise<
     QueryObserverResult<BalancesAndFundingRequirements, Error>
   >;
+  allowStartAgentByServiceConfigId: (serviceConfigId?: string) => boolean;
+  hasBalancesForServiceConfigId: (serviceConfigId?: string) => boolean;
   resetQueryCache: () => void;
 }>({
   isBalancesAndFundingRequirementsLoading: false,
-  balances: undefined,
+  isBalancesAndFundingRequirementsLoadingForAllServices: false,
+  isBalancesAndFundingRequirementsReadyForAllServices: false,
+  isBalancesAndFundingRequirementsEnabledForAllServices: false,
   refillRequirements: undefined,
   getRefillRequirementsOf: () => null,
   totalRequirements: undefined,
@@ -95,6 +99,8 @@ export const BalancesAndRefillRequirementsProviderContext = createContext<{
     Promise.resolve(
       {} as QueryObserverResult<BalancesAndFundingRequirements, Error>,
     ),
+  allowStartAgentByServiceConfigId: () => false,
+  hasBalancesForServiceConfigId: () => false,
   resetQueryCache: () => {},
 });
 
@@ -170,7 +176,6 @@ export const BalancesAndRefillRequirementsProvider = ({
   children,
 }: PropsWithChildren) => {
   const queryClient = useQueryClient();
-  const { storeState } = useStore();
   const { isOnline } = useOnlineStatusContext();
   const { isUserLoggedIn } = usePageState();
   const { masterSafes } = useMasterWalletContext();
@@ -180,6 +185,7 @@ export const BalancesAndRefillRequirementsProvider = ({
     selectedAgentConfig,
     availableServiceConfigIds,
   } = useServices();
+  const { isFundingEligible } = useFundingEligibleServices();
   const { isEligibleForRewards } = useRewardContext();
   const configId = selectedService?.service_config_id;
   const chainId = selectedAgentConfig.evmHomeChainId;
@@ -239,16 +245,8 @@ export const BalancesAndRefillRequirementsProvider = ({
     enabled: !!serviceConfigIds.length && isUserLoggedIn && isOnline,
     refetchInterval,
   });
-
-  const balances = useMemo(() => {
-    if (isBalancesAndFundingRequirementsLoading) return;
-    if (!balancesAndFundingRequirements) return;
-    return balancesAndFundingRequirements.balances[asMiddlewareChain(chainId)];
-  }, [
-    isBalancesAndFundingRequirementsLoading,
-    chainId,
-    balancesAndFundingRequirements,
-  ]);
+  const isBalancesAndFundingRequirementsEnabledForAllServices =
+    !!serviceConfigIds.length && isUserLoggedIn && isOnline;
 
   const getRefillRequirementsOf = useCallback(
     <T extends AddressBalanceRecord | MasterSafeBalanceRecord>(
@@ -328,35 +326,17 @@ export const BalancesAndRefillRequirementsProvider = ({
     if (isEmpty(services)) return false;
     if (isEmpty(balancesAndFundingRequirementsForAllServices)) return false;
 
-    // Check if any agent requires a refill on any chain
-    return entries(balancesAndFundingRequirementsForAllServices)
-      .map(([serviceConfigId, data]) => {
-        const currentService = services?.find(
-          (service) => service.service_config_id === serviceConfigId,
-        );
-        if (!currentService) return false;
-
-        const agentConfig = ACTIVE_AGENTS.find(
-          ([, agentConfig]) =>
-            agentConfig.servicePublicId === currentService?.service_public_id &&
-            agentConfig.middlewareHomeChainId === currentService?.home_chain,
-        );
-        if (!agentConfig) return false;
-
-        const agentType = agentConfig[0] as AgentType;
-
-        // Check if initial funding is done for this agent
-        // and only then consider refill requirement
-        return (
-          data.is_refill_required && !!storeState?.[agentType]?.isInitialFunded
-        );
-      })
-      .some((isRefillRequired) => isRefillRequired);
+    // Only consider refill required for services that are active, initially
+    // funded, and not archived — ghost and archived services are excluded.
+    return entries(balancesAndFundingRequirementsForAllServices).some(
+      ([serviceConfigId, data]) =>
+        data.is_refill_required && isFundingEligible(serviceConfigId),
+    );
   }, [
     balancesAndFundingRequirementsForAllServices,
     masterSafes,
-    storeState,
     services,
+    isFundingEligible,
   ]);
 
   const refetch = useCallback(async () => {
@@ -369,19 +349,44 @@ export const BalancesAndRefillRequirementsProvider = ({
     refetchBalancesAndFundingRequirementsForAllServices,
   ]);
 
+  const allowStartAgentByServiceConfigId = useCallback(
+    (serviceConfigId?: string) => {
+      if (!serviceConfigId) return false;
+      if (!balancesAndFundingRequirementsForAllServices) return false;
+      return (
+        balancesAndFundingRequirementsForAllServices?.[serviceConfigId]
+          ?.allow_start_agent || false
+      );
+    },
+    [balancesAndFundingRequirementsForAllServices],
+  );
+
+  const hasBalancesForServiceConfigId = useCallback(
+    (serviceConfigId?: string) => {
+      if (!serviceConfigId) return false;
+      if (!balancesAndFundingRequirementsForAllServices) return false;
+      return !!balancesAndFundingRequirementsForAllServices[serviceConfigId];
+    },
+    [balancesAndFundingRequirementsForAllServices],
+  );
+
   return (
     <BalancesAndRefillRequirementsProviderContext.Provider
       value={{
         isBalancesAndFundingRequirementsLoading,
+        isBalancesAndFundingRequirementsLoadingForAllServices,
+        isBalancesAndFundingRequirementsReadyForAllServices:
+          isBalancesAndFundingRequirementsEnabledForAllServices &&
+          !isBalancesAndFundingRequirementsLoadingForAllServices,
+        isBalancesAndFundingRequirementsEnabledForAllServices,
         refillRequirements,
         getRefillRequirementsOf,
-        balances,
         totalRequirements,
         agentFundingRequests,
         canStartAgent:
           balancesAndFundingRequirements?.allow_start_agent || false,
         isRefillRequired:
-          balancesAndFundingRequirements?.is_refill_required || true,
+          balancesAndFundingRequirements?.is_refill_required ?? true,
         isAgentFundingRequestsStale:
           balancesAndFundingRequirements?.agent_funding_in_progress ||
           balancesAndFundingRequirements?.agent_funding_requests_cooldown ||
@@ -389,6 +394,8 @@ export const BalancesAndRefillRequirementsProvider = ({
         isPearlWalletRefillRequired,
         refetch,
         refetchForSelectedAgent: refetchBalancesAndFundingRequirements,
+        allowStartAgentByServiceConfigId,
+        hasBalancesForServiceConfigId,
         resetQueryCache,
       }}
     >

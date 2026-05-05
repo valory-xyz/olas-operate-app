@@ -1,5 +1,6 @@
 import { TokenSymbol } from '@/config/tokens';
 import {
+  AgentType,
   EvmChainId,
   MiddlewareDeploymentStatus,
   StakingProgramId,
@@ -16,20 +17,24 @@ type ServiceApi =
   | typeof OptimismService
   | typeof AgentsFunBaseService;
 
+type NeedsOpenProfileEachAgentRun = {
+  /** Whether the agent requires opening profile first before showing performance metrics */
+  needsOpenProfileEachAgentRun: true;
+  /** Custom message to show when agent requires to open profile after run */
+  needsOpenProfileEachAgentRunAlert: {
+    title: string;
+    message: string;
+  };
+};
+
+type DoesNotNeedOpenProfileEachAgentRun = {
+  needsOpenProfileEachAgentRun?: undefined;
+  needsOpenProfileEachAgentRunAlert?: never;
+};
+
 type needsOpenProfileEachAgentRun =
-  | {
-      /** Whether the agent requires opening profile first before showing performance metrics */
-      needsOpenProfileEachAgentRun: true;
-      /** Custom message to show when agent requires to open profile after run */
-      needsOpenProfileEachAgentRunAlert: {
-        title: string;
-        message: string;
-      };
-    }
-  | {
-      needsOpenProfileEachAgentRun?: undefined;
-      needsOpenProfileEachAgentRunAlert?: never;
-    };
+  | NeedsOpenProfileEachAgentRun
+  | DoesNotNeedOpenProfileEachAgentRun;
 
 export type AgentConfig = {
   name: string;
@@ -45,6 +50,11 @@ export type AgentConfig = {
   description: string;
   /** Adds under construction tab above card */
   isUnderConstruction?: boolean;
+  /**
+   * Blocks creation of new instances while keeping existing instances fully
+   * functional (sidebar, staking, auto-run continue working).
+   */
+  isAddingNewBlocked?: boolean;
   /** Whether the agent is enabled and can be shown in the UI */
   isAgentEnabled: boolean;
   /** If agent is enabled but not yet available to use */
@@ -71,6 +81,10 @@ export type AgentConfig = {
    */
   defaultBehavior?: string;
   servicePublicId: string;
+  /** Whether the agent is geo-location restricted */
+  isGeoLocationRestricted?: boolean;
+  /** ERC20 tokens (beyond native + OLAS) to display and track for this agent */
+  erc20Tokens?: TokenSymbol[];
 } & needsOpenProfileEachAgentRun;
 
 type AgentPerformanceMetric = {
@@ -117,4 +131,11 @@ export type ServiceDeployment = {
   status: MiddlewareDeploymentStatus;
   nodes: DeployedNodes;
   healthcheck: AgentHealthCheck;
+};
+
+export type AgentInstance = {
+  serviceConfigId: string;
+  name: string;
+  tokenId?: number;
+  agentType: AgentType;
 };
