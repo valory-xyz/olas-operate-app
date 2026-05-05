@@ -7,6 +7,7 @@ import {
   DEFAULT_EOA_ADDRESS,
   DEFAULT_SAFE_ADDRESS,
   DEFAULT_SERVICE_CONFIG_ID,
+  makeInsufficientGasError,
 } from '../helpers/factories';
 
 const mockJsonResponse = (body: unknown, ok = true) =>
@@ -83,17 +84,35 @@ describe('FundService', () => {
       );
     });
 
-    it('rejects with "Failed to fund agent" when response is not ok', async () => {
+    it('rejects with the parsed error body on non-ok response', async () => {
+      const errorBody = makeInsufficientGasError();
       jest
         .spyOn(global, 'fetch')
-        .mockReturnValue(mockJsonResponse(null, false));
+        .mockReturnValue(mockJsonResponse(errorBody, false));
 
       await expect(
         FundService.fundAgent({
           funds: sampleFunds,
           serviceConfigId: DEFAULT_SERVICE_CONFIG_ID,
         }),
-      ).rejects.toBe('Failed to fund agent');
+      ).rejects.toEqual(errorBody);
+    });
+
+    it('rejects with an empty object when the error body is not JSON', async () => {
+      jest.spyOn(global, 'fetch').mockReturnValue(
+        Promise.resolve({
+          ok: false,
+          status: 500,
+          json: () => Promise.reject(new Error('not json')),
+        } as unknown as Response),
+      );
+
+      await expect(
+        FundService.fundAgent({
+          funds: sampleFunds,
+          serviceConfigId: DEFAULT_SERVICE_CONFIG_ID,
+        }),
+      ).rejects.toEqual({});
     });
 
     it('rejects when fetch throws a network error', async () => {

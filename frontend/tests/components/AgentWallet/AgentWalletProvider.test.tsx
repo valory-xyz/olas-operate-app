@@ -40,7 +40,7 @@ const mockUseAvailableAgentAssets = useAvailableAgentAssets as jest.Mock;
 const mockUsePageState = usePageState as jest.Mock;
 
 const createWrapper = (navParams: Record<string, unknown> = {}) => {
-  mockUsePageState.mockReturnValue({ navParams });
+  mockUsePageState.mockReturnValue({ navParams, clearNavParams: jest.fn() });
   mockUseServices.mockReturnValue({
     isLoading: false,
     selectedAgentConfig: { evmHomeChainId: 100 },

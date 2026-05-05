@@ -12,7 +12,10 @@ import { BACKEND_URL_V2 } from '../../constants/urls';
 import { ServicesService } from '../../service/Services';
 import { ServiceTemplate } from '../../types/Service';
 import { asEvmChainId } from '../../utils/middlewareHelpers';
-import { DEFAULT_SERVICE_CONFIG_ID } from '../helpers/factories';
+import {
+  DEFAULT_SERVICE_CONFIG_ID,
+  makeInsufficientGasError,
+} from '../helpers/factories';
 
 /* eslint-disable @typescript-eslint/no-var-requires */
 jest.mock(
@@ -604,29 +607,33 @@ describe('ServicesService', () => {
       );
     });
 
-    it('rejects with a plain string (not an Error object) on non-ok response', async () => {
+    it('rejects with the parsed error body on non-ok response', async () => {
+      const errorBody = makeInsufficientGasError();
       jest
         .spyOn(global, 'fetch')
-        .mockReturnValue(mockJsonResponse({}, false, 500));
-
-      const rejection = ServicesService.withdrawBalance({
-        serviceConfigId: DEFAULT_SERVICE_CONFIG_ID,
-      });
-
-      // Must be a plain string, not an Error instance
-      await expect(rejection).rejects.toBe('Failed to withdraw balance.');
-    });
-
-    it('rejects and does not resolve when response is not ok', async () => {
-      jest
-        .spyOn(global, 'fetch')
-        .mockReturnValue(mockJsonResponse({}, false, 400));
+        .mockReturnValue(mockJsonResponse(errorBody, false, 400));
 
       await expect(
         ServicesService.withdrawBalance({
           serviceConfigId: DEFAULT_SERVICE_CONFIG_ID,
         }),
-      ).rejects.toBe('Failed to withdraw balance.');
+      ).rejects.toEqual(errorBody);
+    });
+
+    it('rejects with an empty object when the error body is not JSON', async () => {
+      jest.spyOn(global, 'fetch').mockReturnValue(
+        Promise.resolve({
+          ok: false,
+          status: 500,
+          json: () => Promise.reject(new Error('not json')),
+        } as unknown as Response),
+      );
+
+      await expect(
+        ServicesService.withdrawBalance({
+          serviceConfigId: DEFAULT_SERVICE_CONFIG_ID,
+        }),
+      ).rejects.toEqual({});
     });
   });
 

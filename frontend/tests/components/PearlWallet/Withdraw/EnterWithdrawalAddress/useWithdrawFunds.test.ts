@@ -12,6 +12,7 @@ import { EvmChainIdMap } from '../../../../../constants/chains';
 import { usePearlWallet } from '../../../../../context/PearlWalletProvider';
 import {
   BACKUP_SIGNER_ADDRESS,
+  makeInsufficientGasError,
   MOCK_TX_HASH_1,
   MOCK_TX_HASH_2,
 } from '../../../../helpers/factories';
@@ -246,6 +247,7 @@ describe('useWithdrawFunds (PearlWallet)', () => {
     (global.fetch as jest.Mock).mockResolvedValue({
       ok: false,
       status: 500,
+      json: async () => ({}),
     });
 
     const { result } = renderHook(() => useWithdrawFunds(), {
@@ -261,6 +263,40 @@ describe('useWithdrawFunds (PearlWallet)', () => {
       expect(result.current.isError).toBe(true);
     });
 
+    consoleSpy.mockRestore();
+  });
+
+  it('surfaces the structured error body when the backend returns INSUFFICIENT_SIGNER_GAS', async () => {
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+    const errorBody = makeInsufficientGasError();
+
+    mockUsePearlWallet.mockReturnValue({
+      walletChainId: EvmChainIdMap.Gnosis,
+      amountsToWithdraw: {
+        [TokenSymbolMap.XDAI]: { amount: 1 },
+      },
+      availableAssets: [],
+    });
+
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: false,
+      status: 400,
+      json: async () => errorBody,
+    });
+
+    const { result } = renderHook(() => useWithdrawFunds(), {
+      wrapper: createWrapper(),
+    });
+    await act(async () => {
+      await result.current.onAuthorizeWithdrawal(
+        BACKUP_SIGNER_ADDRESS,
+        'password123',
+      );
+    });
+    await waitFor(() => {
+      expect(result.current.isError).toBe(true);
+    });
+    expect(result.current.error).toEqual(errorBody);
     consoleSpy.mockRestore();
   });
 

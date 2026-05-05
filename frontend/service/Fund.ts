@@ -17,6 +17,13 @@ export type ChainFunds = Partial<{
 
 /**
  * Fund an agent by sending funds to its service safe.
+ *
+ * On a non-OK response, rejects with the parsed JSON error body (or `{}`
+ * if the body isn't JSON). Callers that care about the
+ * `INSUFFICIENT_SIGNER_GAS` branch should narrow the rejection via
+ * `isInsufficientGasError(err)` from `@/constants`.
+ *
+ * @throws InsufficientGasErrorBody | Record<string, unknown>
  */
 const fundAgent = async ({
   funds,
@@ -24,23 +31,18 @@ const fundAgent = async ({
 }: {
   funds: ChainFunds;
   serviceConfigId: ServiceConfigId;
-}): Promise<{ error: string | null }> =>
-  new Promise((resolve, reject) =>
-    fetch(`${BACKEND_URL_V2}/service/${serviceConfigId}/fund`, {
+}): Promise<{ error: string | null }> => {
+  const response = await fetch(
+    `${BACKEND_URL_V2}/service/${serviceConfigId}/fund`,
+    {
       method: 'POST',
       body: JSON.stringify(funds),
       headers: { ...CONTENT_TYPE_JSON_UTF8 },
-    }).then(
-      (response) => {
-        if (response.ok) {
-          resolve(response.json());
-        } else {
-          reject('Failed to fund agent');
-        }
-      },
-      (error) => reject(error),
-    ),
+    },
   );
+  if (response.ok) return response.json();
+  throw await response.json().catch(() => ({}));
+};
 
 export const FundService = {
   fundAgent,

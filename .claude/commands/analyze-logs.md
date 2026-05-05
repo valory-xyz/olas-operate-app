@@ -19,6 +19,8 @@ Check whether `$ARGUMENTS` ends in `.zip` or whether the user has attached / men
 
 4. **If no zip is involved**, skip this step entirely.
 
+> **Optional helper:** `scripts/extract-context.sh` can pull structured context (services, master wallet, log summary, os info, on-chain balances, tx history) directly from the zip without extracting it. Run `scripts/extract-context.sh --help` for the full reference.
+
 ---
 
 ## Invocation Scenarios

@@ -64,6 +64,7 @@ jest.mock('../../hooks', () => ({
   useBalanceContext: jest.fn(() => ({
     isLoading: false,
     getStakedOlasBalanceOf: jest.fn(() => 0),
+    getStakedOlasBalanceByServiceConfigId: jest.fn(() => 0),
   })),
   useFundingEligibleServices: () => ({
     getFundingEligibleServiceConfigIdsOf:
@@ -163,6 +164,7 @@ describe('PearlWalletProvider', () => {
     mockUseBalanceContext.mockReturnValue({
       isLoading: false,
       getStakedOlasBalanceOf: jest.fn(() => 0),
+      getStakedOlasBalanceByServiceConfigId: jest.fn(() => 0),
     });
 
     mockUseAvailableAssets.mockReturnValue({
@@ -628,6 +630,7 @@ describe('PearlWalletProvider', () => {
       mockUseBalanceContext.mockReturnValue({
         isLoading: false,
         getStakedOlasBalanceOf: mockGetStakedOlasBalanceOf,
+        getStakedOlasBalanceByServiceConfigId: jest.fn(() => 0),
       });
 
       mockUseServices.mockReturnValue({
@@ -678,6 +681,7 @@ describe('PearlWalletProvider', () => {
       mockUseBalanceContext.mockReturnValue({
         isLoading: false,
         getStakedOlasBalanceOf: jest.fn(() => 100),
+        getStakedOlasBalanceByServiceConfigId: jest.fn(() => 0),
       });
 
       mockUseServices.mockReturnValue({
@@ -762,6 +766,7 @@ describe('PearlWalletProvider', () => {
       mockUseBalanceContext.mockReturnValue({
         isLoading: false,
         getStakedOlasBalanceOf: jest.fn(() => null),
+        getStakedOlasBalanceByServiceConfigId: jest.fn(() => 0),
       });
 
       mockUseServices.mockReturnValue({
@@ -801,6 +806,7 @@ describe('PearlWalletProvider', () => {
       mockUseBalanceContext.mockReturnValue({
         isLoading: false,
         getStakedOlasBalanceOf: jest.fn(() => 10),
+        getStakedOlasBalanceByServiceConfigId: jest.fn(() => 0),
       });
 
       mockUseServices.mockReturnValue({
@@ -1053,6 +1059,7 @@ describe('PearlWalletProvider', () => {
       mockUseBalanceContext.mockReturnValue({
         isLoading: true,
         getStakedOlasBalanceOf: jest.fn(() => 0),
+        getStakedOlasBalanceByServiceConfigId: jest.fn(() => 0),
       });
 
       const { result } = renderHook(() => usePearlWallet(), { wrapper });

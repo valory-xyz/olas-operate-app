@@ -191,7 +191,7 @@ const getCrossChainStakedBalances = async (
     );
 
     return {
-      serviceId: serviceConfigId,
+      serviceConfigId,
       chainId: middlewareChain,
       ...registryInfo,
     };
@@ -208,9 +208,10 @@ const getCrossChainStakedBalances = async (
     const value = res.value;
     if (!value) return;
 
-    const { serviceId, chainId, depositValue, bondValue, serviceState } = value;
+    const { serviceConfigId, chainId, depositValue, bondValue, serviceState } =
+      value;
     result.push({
-      serviceId,
+      serviceConfigId,
       evmChainId: asEvmChainId(chainId),
       ...correctBondDepositByServiceState({
         olasBondBalance: bondValue,
