@@ -131,6 +131,7 @@ export const AGENT_CONFIG: {
   [AgentMap.Optimus]: {
     isAgentEnabled: true,
     isComingSoon: false,
+    isAddingNewBlocked: true,
     requiresSetup: true,
     isX402Enabled: X402_ENABLED_FLAGS[AgentMap.Optimus],
     name: 'Optimus agent',
@@ -159,6 +160,7 @@ export const AGENT_CONFIG: {
     isAgentEnabled: true,
     isUnderConstruction: false,
     isComingSoon: false,
+    isAddingNewBlocked: true,
     requiresSetup: true,
     isX402Enabled: X402_ENABLED_FLAGS[AgentMap.AgentsFun],
     name: 'Agents.fun',
