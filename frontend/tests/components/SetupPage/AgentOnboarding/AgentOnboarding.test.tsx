@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 
 import { AgentOnboarding } from '../../../../components/SetupPage/AgentOnboarding/AgentOnboarding';
 
@@ -32,12 +32,17 @@ jest.mock('../../../../config/agents', () => ({
       isX402Enabled: false,
       isUnderConstruction: false,
       isGeoLocationRestricted: false,
+      isAddingNewBlocked: false,
     },
   },
 }));
 
 jest.mock('../../../../components/AgentIntroduction', () => ({
-  AgentIntroduction: () => <div data-testid="agent-introduction" />,
+  AgentIntroduction: ({
+    renderAgentSelection,
+  }: {
+    renderAgentSelection?: () => React.ReactNode;
+  }) => <div data-testid="agent-introduction">{renderAgentSelection?.()}</div>,
 }));
 
 jest.mock('../../../../components/ui', () => ({
@@ -73,8 +78,24 @@ jest.mock(
       New: 'new',
       Archived: 'archived',
     },
-    SelectAgent: ({ activeTab }: { activeTab: string }) => (
-      <div data-testid="select-agent-active-tab">{activeTab}</div>
+    SelectAgent: ({
+      activeTab,
+      onSelectYourAgent,
+    }: {
+      activeTab: string;
+      onSelectYourAgent?: (agentType: string) => void;
+    }) => (
+      <div>
+        <div data-testid="select-agent-active-tab">{activeTab}</div>
+        {onSelectYourAgent && (
+          <button
+            data-testid="mock-select-trader"
+            onClick={() => onSelectYourAgent('trader')}
+          >
+            Mock Select Trader
+          </button>
+        )}
+      </div>
     ),
   }),
 );
@@ -115,5 +136,19 @@ describe('AgentOnboarding', () => {
     expect(screen.getByTestId('select-agent-active-tab')).toHaveTextContent(
       'new',
     );
+  });
+
+  it('hides "Select Agent" button when selected agent has isAddingNewBlocked true', () => {
+    const { AGENT_CONFIG } = jest.requireMock('../../../../config/agents');
+    AGENT_CONFIG.trader.isAddingNewBlocked = true;
+
+    render(<AgentOnboarding />);
+    fireEvent.click(screen.getByTestId('mock-select-trader'));
+
+    expect(
+      screen.queryByRole('button', { name: 'Select Agent' }),
+    ).not.toBeInTheDocument();
+
+    AGENT_CONFIG.trader.isAddingNewBlocked = false;
   });
 });

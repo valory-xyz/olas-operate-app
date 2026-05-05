@@ -87,6 +87,13 @@ describe('AVAILABLE_FOR_ADDING_AGENTS', () => {
     );
     expect(AVAILABLE_FOR_ADDING_AGENTS).toEqual(expected);
   });
+
+  it('includes agents with isAddingNewBlocked (they occupy a slot but block new creation, not listing)', () => {
+    const blocked = AVAILABLE_FOR_ADDING_AGENTS.filter(
+      ([, config]) => config.isAddingNewBlocked,
+    );
+    expect(blocked.length).toBeGreaterThan(0);
+  });
 });
 
 describe('defensive guard: getModiusUsdcConfig throws when USDC config is missing', () => {
