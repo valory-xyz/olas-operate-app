@@ -105,6 +105,8 @@ export const SUPPORT_API_URL = `${PEARL_API_URL}/api/zendesk`;
 export const GEO_ELIGIBILITY_API_URL = `${PEARL_API_URL}/api/geo/agent-eligibility`;
 export const GEO_ELIGIBILITY_DOCS_URL =
   'https://docs.polymarket.com/polymarket-learn/FAQ/geoblocking#close-only-countries';
+export const POLYMARKET_DEPOSIT_WALLET_MIGRATION_URL: Url =
+  'https://docs.polymarket.com/trading/deposit-wallet-migration';
 
 // Predict website
 export const PREDICT_WEBSITE_URL = 'https://predict.olas.network';
