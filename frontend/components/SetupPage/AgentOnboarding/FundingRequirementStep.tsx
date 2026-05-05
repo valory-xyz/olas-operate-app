@@ -41,50 +41,40 @@ const UnderConstructionAlert = () => (
   />
 );
 
-const PolystratMaintenanceAlert = () => (
+const MaintenanceAlert = ({
+  agentName,
+  reason,
+  url,
+}: {
+  agentName: string;
+  reason?: string;
+  url?: string;
+}) => (
   <Alert
     type="warning"
     fullWidth={false}
     showIcon
     className="rounded-12"
     message={
-      <Flex gap={8} vertical>
-        <Text className="text-sm font-weight-500">
-          Polystrat is currently unavailable
-        </Text>
-        <Text className="text-sm">
-          New Polystrat agents cannot be created at this time due to recent
-          Polymarket protocol updates. Existing agents continue to run as usual.
-        </Text>
-        <Link
-          href={POLYMARKET_DEPOSIT_WALLET_MIGRATION_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-primary text-sm"
-        >
-          See more here
-          <span className="text-xxs ml-4">{UNICODE_SYMBOLS.EXTERNAL_LINK}</span>
-        </Link>
-      </Flex>
-    }
-  />
-);
-
-const MaintenanceAlert = ({ agentName }: { agentName: string }) => (
-  <Alert
-    type="warning"
-    fullWidth={false}
-    showIcon
-    className="rounded-12"
-    message={
-      <Flex gap={4} vertical>
+      <Flex gap={url ? 8 : 4} vertical>
         <Text className="text-sm font-weight-500">
           {agentName} is currently unavailable
         </Text>
         <Text className="text-sm">
-          New {agentName} agents cannot be created at this time. Existing agents
-          continue to run as usual.
+          New {agentName} agents cannot be created at this time
+          {reason && ` ${reason}`}. Existing agents continue to run as usual.
         </Text>
+        {url && (
+          <Link
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary text-sm"
+          >
+            See more here
+            <span className="text-xxs ml-4">{UNICODE_SYMBOLS.EXTERNAL_LINK}</span>
+          </Link>
+        )}
       </Flex>
     }
   />
@@ -263,11 +253,19 @@ export const FundingRequirementStep = ({
   const blockingAlert = isUnderConstruction ? (
     <UnderConstructionAlert />
   ) : isAddingNewBlocked ? (
-    agentType === AgentMap.Polystrat ? (
-      <PolystratMaintenanceAlert />
-    ) : (
-      <MaintenanceAlert agentName={agentName} />
-    )
+    <MaintenanceAlert
+      agentName={agentName}
+      reason={
+        agentType === AgentMap.Polystrat
+          ? 'due to recent Polymarket protocol updates'
+          : undefined
+      }
+      url={
+        agentType === AgentMap.Polystrat
+          ? POLYMARKET_DEPOSIT_WALLET_MIGRATION_URL
+          : undefined
+      }
+    />
   ) : null;
 
   return (
