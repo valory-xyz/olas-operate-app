@@ -22,48 +22,61 @@ jobs:
   # Override deletes-and-recreates the tag at v$(package.json version), which
   # reattaches it to a new commit and lets electron-builder rewrite the
   # corresponding GitHub Release. If that release was already published it
-  # would be silently overwritten — including its Latest marker. Compute the
-  # release tag from package.json on the target branch so the guard can
-  # short-circuit before any destructive work.
-  compute-release-tag:
-    if: inputs.action == 'override'
+  # would be silently overwritten — including its Latest marker. The guard
+  # always runs so downstream jobs don't need `always()` (which propagates
+  # "skipped ancestor" status and silently skips dependents); the actual
+  # check is gated on action=override at the step level.
+  guard-release-not-published:
     runs-on: ubuntu-latest
-    outputs:
-      release_tag: ${{ steps.compute-tag.outputs.release_tag }}
     steps:
-      - uses: actions/checkout@v4
+      - if: inputs.action == 'override'
+        uses: actions/checkout@v4
         with:
           ref: ${{ inputs.branch }}
 
-      - name: Compute release tag from package.json
-        id: compute-tag
+      - if: inputs.action == 'override'
+        name: Fail if release tag is already published
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           PACKAGE_VERSION=$(node -p "require('./package.json').version")
-          echo "release_tag=v${PACKAGE_VERSION}" | tee -a $GITHUB_OUTPUT
+          RELEASE_TAG="v${PACKAGE_VERSION}"
 
-  check-release-not-published:
-    if: inputs.action == 'override'
-    needs: compute-release-tag
-    uses: ./.github/workflows/check-release-not-published.yml
-    with:
-      release_tag: ${{ needs.compute-release-tag.outputs.release_tag }}
-    secrets: inherit
+          # Capture stdout and stderr separately so we can distinguish
+          # "release not found" from transient gh errors (auth, network, rate limit).
+          set +e
+          STDOUT=$(gh release view "$RELEASE_TAG" \
+            --repo "${{ github.repository }}" \
+            --json isDraft \
+            --jq '.isDraft' 2> /tmp/gh_stderr)
+          RC=$?
+          STDERR=$(cat /tmp/gh_stderr)
+          set -e
+
+          if [ $RC -eq 0 ]; then
+            if [ "$STDOUT" = "false" ]; then
+              echo "::error::Release $RELEASE_TAG is already published. Refusing to overwrite — that would replace the existing GitHub Release and could strip its Latest marker."
+              echo "::error::Bump the version before re-running."
+              exit 1
+            fi
+            echo "Release $RELEASE_TAG exists as a draft — safe to overwrite."
+            exit 0
+          fi
+
+          # Match only the specific "release not found" wording from `gh`
+          # so unrelated 404-style errors (auth, repo not found, rate limit)
+          # don't get treated as "safe to create".
+          if echo "$STDERR" | grep -qi 'release not found'; then
+            echo "No existing release for $RELEASE_TAG — safe to create."
+            exit 0
+          fi
+
+          echo "::error::gh release view failed for $RELEASE_TAG (exit $RC):"
+          echo "$STDERR"
+          exit 1
 
   calculate-version:
-    needs: [compute-release-tag, check-release-not-published]
-    # On `action=override`: both the tag computation and the guard must
-    # succeed — if either fails, the destructive override path must not
-    # proceed. On `action=new`: both jobs are skipped (their own `if`
-    # gates them on override), so allow that combination through.
-    if: >-
-      ${{ always() && (
-        (inputs.action == 'override'
-          && needs.compute-release-tag.result == 'success'
-          && needs.check-release-not-published.result == 'success')
-        || (inputs.action == 'new'
-          && needs.compute-release-tag.result == 'skipped'
-          && needs.check-release-not-published.result == 'skipped')
-      ) }}
+    needs: guard-release-not-published
     uses: ./.github/workflows/calculate-and-update-version.yml
     with:
       branch: ${{ inputs.branch }}
