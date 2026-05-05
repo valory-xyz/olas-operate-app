@@ -72,17 +72,18 @@ const SelectYourAgentList = ({
   const { getInstancesOfAgentType } = useServices();
 
   const agents = useMemo(() => {
+    const isBlocked = (config: AgentConfig) =>
+      !!config.isUnderConstruction || !!config.isAddingNewBlocked;
     return (
       [...ACTIVE_AGENTS]
-        // Sorted with under-construction at the end
+        // Sorted with under-construction / adding-blocked agents at the end
         .sort(
           (
             [, agentA]: [string, AgentConfig],
             [, agentB]: [string, AgentConfig],
           ) => {
-            if (agentA.isUnderConstruction === agentB.isUnderConstruction)
-              return 0;
-            return agentA.isUnderConstruction ? 1 : -1;
+            if (isBlocked(agentA) === isBlocked(agentB)) return 0;
+            return isBlocked(agentA) ? 1 : -1;
           },
         )
     );
@@ -110,7 +111,8 @@ const SelectYourAgentList = ({
             />
             <Text style={{ flex: 1 }}>{agentConfig.displayName}</Text>
             <InstanceCount count={instanceCount} />
-            {agentConfig.isUnderConstruction && <UnderConstructionIcon />}
+            {(agentConfig.isUnderConstruction ||
+              agentConfig.isAddingNewBlocked) && <UnderConstructionIcon />}
           </AgentSelectionContainer>
         );
       })}

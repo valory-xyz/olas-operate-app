@@ -14,6 +14,7 @@ import {
   AgentMap,
   AgentType,
   COLOR,
+  POLYMARKET_DEPOSIT_WALLET_MIGRATION_URL,
   UNICODE_SYMBOLS,
   X_DEVELOPER_CONSOLE_URL,
 } from '@/constants';
@@ -35,6 +36,32 @@ const UnderConstructionAlert = () => (
           The agent is unavailable due to technical issues for an unspecified
           time.
         </Text>
+      </Flex>
+    }
+  />
+);
+
+const DepositWalletMigrationAlert = () => (
+  <Alert
+    type="warning"
+    fullWidth={false}
+    showIcon
+    className="rounded-12"
+    message={
+      <Flex gap={8} vertical>
+        <Text className="text-sm">
+          Due to the Deposit Wallet Migration on Polymarket, creation of new
+          accounts is temporarily unavailable.
+        </Text>
+        <Link
+          href={POLYMARKET_DEPOSIT_WALLET_MIGRATION_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-primary text-sm"
+        >
+          See more here
+          <span className="text-xxs ml-4">{UNICODE_SYMBOLS.EXTERNAL_LINK}</span>
+        </Link>
       </Flex>
     }
   />
@@ -206,8 +233,15 @@ export const FundingRequirementStep = ({
     middlewareHomeChainId,
     category,
     isUnderConstruction,
+    isAddingNewBlocked,
   } = AGENT_CONFIG[agentType];
   const { name, displayName } = asEvmChainDetails(middlewareHomeChainId);
+
+  const blockingAlert = isUnderConstruction ? (
+    <UnderConstructionAlert />
+  ) : isAddingNewBlocked ? (
+    <DepositWalletMigrationAlert />
+  ) : null;
 
   return (
     <IntroductionAnimatedContainer>
@@ -218,10 +252,8 @@ export const FundingRequirementStep = ({
           category={category}
           desc={desc}
         />
-        {isUnderConstruction ? (
-          <div style={{ marginBottom: 300 }}>
-            <UnderConstructionAlert />
-          </div>
+        {blockingAlert ? (
+          <div style={{ marginBottom: 300 }}>{blockingAlert}</div>
         ) : (
           <>
             <OperatingChain chainName={name} chainDisplayName={displayName} />

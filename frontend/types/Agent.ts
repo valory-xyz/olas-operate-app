@@ -50,6 +50,11 @@ export type AgentConfig = {
   description: string;
   /** Adds under construction tab above card */
   isUnderConstruction?: boolean;
+  /**
+   * Blocks creation of new instances while keeping existing instances fully
+   * functional (sidebar, staking, auto-run continue working).
+   */
+  isAddingNewBlocked?: boolean;
   /** Whether the agent is enabled and can be shown in the UI */
   isAgentEnabled: boolean;
   /** If agent is enabled but not yet available to use */
