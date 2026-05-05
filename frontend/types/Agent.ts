@@ -55,6 +55,11 @@ export type AgentConfig = {
    * functional (sidebar, staking, auto-run continue working).
    */
   isAddingNewBlocked?: boolean;
+  /**
+   * Per-agent maintenance message shown in FundingRequirementStep when
+   * isAddingNewBlocked is true. Both fields must be set together.
+   */
+  maintenanceMessage?: { title: string; description: string };
   /** Whether the agent is enabled and can be shown in the UI */
   isAgentEnabled: boolean;
   /** If agent is enabled but not yet available to use */
