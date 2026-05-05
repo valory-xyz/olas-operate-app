@@ -72,7 +72,9 @@ const MaintenanceAlert = ({
             className="text-primary text-sm"
           >
             See more here
-            <span className="text-xxs ml-4">{UNICODE_SYMBOLS.EXTERNAL_LINK}</span>
+            <span className="text-xxs ml-4">
+              {UNICODE_SYMBOLS.EXTERNAL_LINK}
+            </span>
           </Link>
         )}
       </Flex>
