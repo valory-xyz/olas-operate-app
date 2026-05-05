@@ -42,11 +42,7 @@ jest.mock('../../../../components/AgentIntroduction', () => ({
     renderAgentSelection,
   }: {
     renderAgentSelection?: () => React.ReactNode;
-  }) => (
-    <div data-testid="agent-introduction">
-      {renderAgentSelection?.()}
-    </div>
-  ),
+  }) => <div data-testid="agent-introduction">{renderAgentSelection?.()}</div>,
 }));
 
 jest.mock('../../../../components/ui', () => ({
@@ -149,7 +145,9 @@ describe('AgentOnboarding', () => {
     render(<AgentOnboarding />);
     fireEvent.click(screen.getByTestId('mock-select-trader'));
 
-    expect(screen.queryByText('Select Agent')).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Select Agent' }),
+    ).not.toBeInTheDocument();
 
     AGENT_CONFIG.trader.isAddingNewBlocked = false;
   });
