@@ -16,7 +16,7 @@ import {
   SupportedMiddlewareChain,
 } from '@/constants';
 import { useOnlineStatus } from '@/context/OnlineStatusProvider';
-import { useMasterWalletContext, usePageState, useSetup } from '@/hooks';
+import { useMasterWalletContext, useSetup, useStore } from '@/hooks';
 import { RecoveryService } from '@/service/Recovery';
 import { Address } from '@/types';
 import { SwapSafeTransaction } from '@/types/Recovery';
@@ -120,9 +120,15 @@ export const AccountRecoveryProvider = ({
   children: ReactNode;
 }) => {
   const { isOnline } = useOnlineStatus();
-  const { isUserLoggedIn } = usePageState();
+  const { storeState } = useStore();
   const { masterSafes, isLoading: isMasterWalletLoading } =
     useMasterWalletContext();
+
+  // Recovery uses Web3Auth re-login to swap the safe owner. Manual EOA backups
+  // can't take this path — those users have to swap the owner themselves with
+  // their EOA's private key (RecoverExistingAccountCard covers that flow).
+  const isWeb3AuthBackup =
+    storeState?.lastProvidedBackupWallet?.type === 'web3auth';
 
   const [currentStep, setCurrentStep] = useState<RecoverySteps>(
     RECOVERY_STEPS.SelectRecoveryMethod,
@@ -158,7 +164,7 @@ export const AccountRecoveryProvider = ({
     queryKey: REACT_QUERY_KEYS.RECOVERY_FUNDING_REQUIREMENTS_KEY,
     queryFn: async ({ signal }) =>
       await RecoveryService.getRecoveryFundingRequirements(signal),
-    enabled: canFetchRecoveryFundingRequirements && isOnline && isUserLoggedIn,
+    enabled: canFetchRecoveryFundingRequirements && isOnline,
     refetchInterval: canFetchRecoveryFundingRequirements
       ? FIFTEEN_SECONDS_INTERVAL
       : false,
@@ -188,6 +194,7 @@ export const AccountRecoveryProvider = ({
   }, [recoveryFundingRequirements]);
 
   const isRecoveryAvailable = !!(
+    isWeb3AuthBackup &&
     backupWalletDetails?.areAllBackupOwnersSame &&
     backupWalletDetails?.hasBackupWalletsAcrossEveryChain
   );
