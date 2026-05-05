@@ -50,9 +50,20 @@ jobs:
     secrets: inherit
 
   calculate-version:
-    needs: check-release-not-published
-    # Run on success of the guard, or when the guard is skipped (action=new).
-    if: ${{ always() && (needs.check-release-not-published.result == 'success' || needs.check-release-not-published.result == 'skipped') }}
+    needs: [compute-release-tag, check-release-not-published]
+    # On `action=override`: both the tag computation and the guard must
+    # succeed — if either fails, the destructive override path must not
+    # proceed. On `action=new`: both jobs are skipped (their own `if`
+    # gates them on override), so allow that combination through.
+    if: >-
+      ${{ always() && (
+        (inputs.action == 'override'
+          && needs.compute-release-tag.result == 'success'
+          && needs.check-release-not-published.result == 'success')
+        || (inputs.action == 'new'
+          && needs.compute-release-tag.result == 'skipped'
+          && needs.check-release-not-published.result == 'skipped')
+      ) }}
     uses: ./.github/workflows/calculate-and-update-version.yml
     with:
       branch: ${{ inputs.branch }}

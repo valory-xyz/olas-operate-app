@@ -47,7 +47,10 @@ jobs:
             exit 0
           fi
 
-          if echo "$STDERR" | grep -qiE 'release not found|not found'; then
+          # Match only the specific "release not found" wording from `gh`
+          # so unrelated 404-style errors (auth, repo not found, rate limit)
+          # don't get treated as "safe to create".
+          if echo "$STDERR" | grep -qi 'release not found'; then
             echo "No existing release for $RELEASE_TAG — safe to create."
             exit 0
           fi
