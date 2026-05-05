@@ -104,6 +104,11 @@ export const AGENT_CONFIG: {
   [AgentMap.Polystrat]: {
     isAgentEnabled: true,
     isAddingNewBlocked: true,
+    maintenanceMessage: {
+      title: 'Agent Under Maintenance',
+      description:
+        'Creating new agents is unavailable due to recent Polymarket protocol updates for an unspecified time. Existing Polystrat agents are being maintained as usual.',
+    },
     requiresSetup: true,
     isX402Enabled: X402_ENABLED_FLAGS[AgentMap.Polystrat],
     name: 'Polystrat',
@@ -131,6 +136,12 @@ export const AGENT_CONFIG: {
   [AgentMap.Optimus]: {
     isAgentEnabled: true,
     isComingSoon: false,
+    isAddingNewBlocked: true,
+    maintenanceMessage: {
+      title: 'Agent Under Maintenance',
+      description:
+        'Creating new agents is unavailable for an unspecified time. Existing Optimus agents are being maintained as usual.',
+    },
     requiresSetup: true,
     isX402Enabled: X402_ENABLED_FLAGS[AgentMap.Optimus],
     name: 'Optimus agent',
@@ -159,6 +170,12 @@ export const AGENT_CONFIG: {
     isAgentEnabled: true,
     isUnderConstruction: false,
     isComingSoon: false,
+    isAddingNewBlocked: true,
+    maintenanceMessage: {
+      title: 'Agent Under Maintenance',
+      description:
+        'Creating new agents is unavailable for an unspecified time. Existing Agents.fun agents are being maintained as usual.',
+    },
     requiresSetup: true,
     isX402Enabled: X402_ENABLED_FLAGS[AgentMap.AgentsFun],
     name: 'Agents.fun',
