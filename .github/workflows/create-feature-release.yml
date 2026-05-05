@@ -70,8 +70,14 @@ jobs:
       version_strategy: ${{ inputs.action == 'new' && 'increment' || 'override' }}
     secrets: inherit
 
+  # `calculate-version` uses `if: always() && ...` so it can run when its
+  # guards are skipped (action=new). GitHub Actions propagates that "skipped
+  # ancestor" through the implicit `success()` default of dependents — they
+  # silently skip even though `calculate-version` itself succeeded. Each
+  # release job below must therefore opt back in explicitly.
   run-release:
     needs: calculate-version
+    if: ${{ needs.calculate-version.result == 'success' }}
     uses: ./.github/workflows/release_mac.yml
     with:
       tag: ${{ needs.calculate-version.outputs.new_tag }}
@@ -79,6 +85,7 @@ jobs:
 
   run-release-win:
     needs: calculate-version
+    if: ${{ needs.calculate-version.result == 'success' }}
     uses: ./.github/workflows/release_win.yml
     with:
       tag: ${{ needs.calculate-version.outputs.new_tag }}
@@ -86,6 +93,7 @@ jobs:
 
   run-release-linux:
     needs: calculate-version
+    if: ${{ needs.calculate-version.result == 'success' }}
     uses: ./.github/workflows/release_linux.yml
     with:
       tag: ${{ needs.calculate-version.outputs.new_tag }}
@@ -93,6 +101,7 @@ jobs:
 
   merge-latest-mac-yml:
     needs: [calculate-version, run-release]
+    if: ${{ needs.calculate-version.result == 'success' && needs.run-release.result == 'success' }}
     uses: ./.github/workflows/merge-latest-mac-yml.yml
     with:
       tag: ${{ needs.calculate-version.outputs.new_tag }}
@@ -100,6 +109,12 @@ jobs:
 
   summary:
     needs: [calculate-version, run-release, run-release-win, run-release-linux, merge-latest-mac-yml]
+    if: >-
+      ${{ needs.calculate-version.result == 'success'
+        && needs.run-release.result == 'success'
+        && needs.run-release-win.result == 'success'
+        && needs.run-release-linux.result == 'success'
+        && needs.merge-latest-mac-yml.result == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - name: Create summary
