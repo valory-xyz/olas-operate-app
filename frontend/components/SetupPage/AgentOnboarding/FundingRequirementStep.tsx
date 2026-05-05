@@ -14,7 +14,6 @@ import {
   AgentMap,
   AgentType,
   COLOR,
-  POLYMARKET_DEPOSIT_WALLET_MIGRATION_URL,
   UNICODE_SYMBOLS,
   X_DEVELOPER_CONSOLE_URL,
 } from '@/constants';
@@ -41,27 +40,17 @@ const UnderConstructionAlert = () => (
   />
 );
 
-const DepositWalletMigrationAlert = () => (
+type MaintenanceAlertProps = { title: string; description: string };
+const MaintenanceAlert = ({ title, description }: MaintenanceAlertProps) => (
   <Alert
     type="warning"
     fullWidth={false}
     showIcon
     className="rounded-12"
     message={
-      <Flex gap={8} vertical>
-        <Text className="text-sm">
-          Due to the Deposit Wallet Migration on Polymarket, creation of new
-          accounts is temporarily unavailable.
-        </Text>
-        <Link
-          href={POLYMARKET_DEPOSIT_WALLET_MIGRATION_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-primary text-sm"
-        >
-          See more here
-          <span className="text-xxs ml-4">{UNICODE_SYMBOLS.EXTERNAL_LINK}</span>
-        </Link>
+      <Flex gap={4} vertical>
+        <Text className="text-sm font-weight-500">{title}</Text>
+        <Text className="text-sm">{description}</Text>
       </Flex>
     }
   />
@@ -234,13 +223,17 @@ export const FundingRequirementStep = ({
     category,
     isUnderConstruction,
     isAddingNewBlocked,
+    maintenanceMessage,
   } = AGENT_CONFIG[agentType];
   const { name, displayName } = asEvmChainDetails(middlewareHomeChainId);
 
   const blockingAlert = isUnderConstruction ? (
     <UnderConstructionAlert />
-  ) : isAddingNewBlocked ? (
-    <DepositWalletMigrationAlert />
+  ) : isAddingNewBlocked && maintenanceMessage ? (
+    <MaintenanceAlert
+      title={maintenanceMessage.title}
+      description={maintenanceMessage.description}
+    />
   ) : null;
 
   return (
