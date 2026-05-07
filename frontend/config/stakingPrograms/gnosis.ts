@@ -34,6 +34,14 @@ const GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES: Record<string, Address> = {
     '0x9D00A0551F20979080d3762005C9B74D7Aa77b85',
   [STAKING_PROGRAM_IDS.PearlBetaMechMarketplace4]:
     '0xE2f80659dB1069f3B6a08af1A62064190c119543',
+  [STAKING_PROGRAM_IDS.PearlBetaMechMarketplace5]:
+    '0x536D04dBD9A2310152a0D2d8D18daDFCA8Bb26b0',
+  [STAKING_PROGRAM_IDS.PearlBetaMechMarketplace6]:
+    '0xac3Ed39D18d9C951BD2e7F0024114849C0a25295',
+  [STAKING_PROGRAM_IDS.PearlBetaMechMarketplace7]:
+    '0xB2303F9913f11131A74F4b05099Ced2043cc72C4',
+  [STAKING_PROGRAM_IDS.PearlBetaMechMarketplace8]:
+    '0x12bdd401Ac300482f4017C64c6c930ee40424c08',
 } as const;
 
 export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
@@ -370,6 +378,122 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
     id: deriveStakingProgramId(
       GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
         STAKING_PROGRAM_IDS.PearlBetaMechMarketplace4
+      ],
+    ),
+  },
+  [STAKING_PROGRAM_IDS.PearlBetaMechMarketplace5]: {
+    chainId: EvmChainIdMap.Gnosis,
+    name: 'Pearl Beta Mech Marketplace V',
+    agentsSupported: [AgentMap.PredictTrader],
+    stakingRequirements: {
+      [TokenSymbolMap.OLAS]: 10000,
+    },
+    mechType: MechType.MarketplaceV2,
+    mech: MECHS[EvmChainIdMap.Gnosis][MechType.MarketplaceV2].contract,
+    activityChecker:
+      GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS[
+        STAKING_PROGRAM_IDS.PearlBetaMechMarketplace5
+      ],
+    address:
+      GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.PearlBetaMechMarketplace5
+      ],
+    contract: new MulticallContract(
+      GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.PearlBetaMechMarketplace5
+      ],
+      STAKING_TOKEN_PROXY_ABI,
+    ),
+    id: deriveStakingProgramId(
+      GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.PearlBetaMechMarketplace5
+      ],
+    ),
+  },
+  [STAKING_PROGRAM_IDS.PearlBetaMechMarketplace6]: {
+    chainId: EvmChainIdMap.Gnosis,
+    name: 'Pearl Beta Mech Marketplace VI',
+    agentsSupported: [AgentMap.PredictTrader],
+    stakingRequirements: {
+      [TokenSymbolMap.OLAS]: 10000,
+    },
+    mechType: MechType.MarketplaceV2,
+    mech: MECHS[EvmChainIdMap.Gnosis][MechType.MarketplaceV2].contract,
+    activityChecker:
+      GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS[
+        STAKING_PROGRAM_IDS.PearlBetaMechMarketplace6
+      ],
+    address:
+      GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.PearlBetaMechMarketplace6
+      ],
+    contract: new MulticallContract(
+      GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.PearlBetaMechMarketplace6
+      ],
+      STAKING_TOKEN_PROXY_ABI,
+    ),
+    id: deriveStakingProgramId(
+      GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.PearlBetaMechMarketplace6
+      ],
+    ),
+  },
+  [STAKING_PROGRAM_IDS.PearlBetaMechMarketplace7]: {
+    chainId: EvmChainIdMap.Gnosis,
+    name: 'Pearl Beta Mech Marketplace VII',
+    agentsSupported: [AgentMap.PredictTrader],
+    stakingRequirements: {
+      [TokenSymbolMap.OLAS]: 10000,
+    },
+    mechType: MechType.MarketplaceV2,
+    mech: MECHS[EvmChainIdMap.Gnosis][MechType.MarketplaceV2].contract,
+    activityChecker:
+      GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS[
+        STAKING_PROGRAM_IDS.PearlBetaMechMarketplace7
+      ],
+    address:
+      GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.PearlBetaMechMarketplace7
+      ],
+    contract: new MulticallContract(
+      GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.PearlBetaMechMarketplace7
+      ],
+      STAKING_TOKEN_PROXY_ABI,
+    ),
+    id: deriveStakingProgramId(
+      GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.PearlBetaMechMarketplace7
+      ],
+    ),
+  },
+  [STAKING_PROGRAM_IDS.PearlBetaMechMarketplace8]: {
+    chainId: EvmChainIdMap.Gnosis,
+    name: 'Pearl Beta Mech Marketplace VIII',
+    agentsSupported: [AgentMap.PredictTrader],
+    stakingRequirements: {
+      [TokenSymbolMap.OLAS]: 5000,
+    },
+    mechType: MechType.MarketplaceV2,
+    mech: MECHS[EvmChainIdMap.Gnosis][MechType.MarketplaceV2].contract,
+    activityChecker:
+      GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS[
+        STAKING_PROGRAM_IDS.PearlBetaMechMarketplace8
+      ],
+    address:
+      GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.PearlBetaMechMarketplace8
+      ],
+    contract: new MulticallContract(
+      GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.PearlBetaMechMarketplace8
+      ],
+      STAKING_TOKEN_PROXY_ABI,
+    ),
+    id: deriveStakingProgramId(
+      GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.PearlBetaMechMarketplace8
       ],
     ),
   },
