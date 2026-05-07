@@ -6,7 +6,6 @@ import { PAGES, SETUP_SCREEN } from '@/constants';
 import { useMessageApi } from '@/context/MessageProvider';
 import {
   useBackupSigner,
-  useBalanceContext,
   useElectronApi,
   useIsInitiallyFunded,
   useMnemonicExists,
@@ -180,8 +179,6 @@ export const SetupWelcomeLogin = () => {
   const { setUserLoggedIn } = usePageState();
   const { setMnemonicExists } = useMnemonicExists();
 
-  const { updateBalances } = useBalanceContext();
-
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [canNavigate, setCanNavigate] = useState(false);
   useSetupNavigation({ canNavigate, setIsLoggingIn });
@@ -192,20 +189,19 @@ export const SetupWelcomeLogin = () => {
       try {
         await AccountService.loginAccount(password);
 
-        try {
-          await WalletService.getRecoverySeedPhrase(password);
-          setMnemonicExists(true);
-        } catch (e: unknown) {
-          const errorMsg = getErrorMessage(e, '').toLowerCase();
-          if (
-            errorMsg.includes('mnemonic') &&
-            ErrorMessages.some((message) => errorMsg.includes(message))
-          ) {
-            setMnemonicExists(false);
-          }
-        }
+        // Fire-and-forget: probes whether a mnemonic exists
+        WalletService.getRecoverySeedPhrase(password)
+          .then(() => setMnemonicExists(true))
+          .catch((e: unknown) => {
+            const errorMsg = getErrorMessage(e, '').toLowerCase();
+            if (
+              errorMsg.includes('mnemonic') &&
+              ErrorMessages.some((m) => errorMsg.includes(m))
+            ) {
+              setMnemonicExists(false);
+            }
+          });
 
-        await updateBalances();
         setCanNavigate(true);
         setUserLoggedIn();
       } catch (e) {
@@ -213,7 +209,7 @@ export const SetupWelcomeLogin = () => {
         setIsLoggingIn(false);
       }
     },
-    [updateBalances, setUserLoggedIn, message, setMnemonicExists],
+    [setUserLoggedIn, message, setMnemonicExists],
   );
 
   return (

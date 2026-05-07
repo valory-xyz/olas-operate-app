@@ -188,7 +188,6 @@ const mockGoto = jest.fn();
 const mockGotoPage = jest.fn();
 const mockSetUserLoggedIn = jest.fn();
 const mockSetMnemonicExists = jest.fn();
-const mockUpdateBalances = jest.fn();
 const mockMessageError = jest.fn();
 
 const mockUseOnlineStatusContext = jest.fn();
@@ -206,7 +205,6 @@ jest.mock('../../../hooks', () => ({
   useMnemonicExists: jest.fn(() => ({
     setMnemonicExists: mockSetMnemonicExists,
   })),
-  useBalanceContext: jest.fn(() => ({ updateBalances: mockUpdateBalances })),
   useOnlineStatusContext: (...args: unknown[]) =>
     mockUseOnlineStatusContext(...args),
   useServices: (...args: unknown[]) => mockUseServices(...args),
@@ -357,7 +355,6 @@ describe('SetupWelcomeLogin', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     setupHooksApplicationNotReady();
-    mockUpdateBalances.mockResolvedValue(undefined);
     mockGetRecoverySeedPhrase.mockResolvedValue(undefined);
   });
 
@@ -441,6 +438,58 @@ describe('SetupWelcomeLogin', () => {
       });
 
       expect(mockMessageError).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('mnemonic probe is fire-and-forget (does not block login)', () => {
+    it('logs the user in before getRecoverySeedPhrase resolves', async () => {
+      mockLoginAccount.mockResolvedValue({ message: 'ok' });
+
+      // Mnemonic probe never resolves during the test — login must not wait.
+      let resolveMnemonic: (value: unknown) => void = () => {};
+      mockGetRecoverySeedPhrase.mockReturnValue(
+        new Promise((resolve) => {
+          resolveMnemonic = resolve;
+        }),
+      );
+
+      renderSetupWelcomeLogin();
+      fireEvent.submit(screen.getByTestId('login-form'));
+
+      await waitFor(() => {
+        expect(mockSetUserLoggedIn).toHaveBeenCalledTimes(1);
+      });
+
+      // setMnemonicExists must NOT have been called yet — probe is still pending.
+      expect(mockSetMnemonicExists).not.toHaveBeenCalled();
+
+      // Allow the mnemonic promise to resolve so React acts on it before the
+      // test harness tears down (avoids unhandled-promise warnings).
+      resolveMnemonic(undefined);
+      await waitFor(() => {
+        expect(mockSetMnemonicExists).toHaveBeenCalledWith(true);
+      });
+    });
+
+    it('still logs the user in when getRecoverySeedPhrase rejects', async () => {
+      mockLoginAccount.mockResolvedValue({ message: 'ok' });
+      mockGetRecoverySeedPhrase.mockRejectedValue(
+        new Error('Mnemonic file does not exist'),
+      );
+
+      renderSetupWelcomeLogin();
+      fireEvent.submit(screen.getByTestId('login-form'));
+
+      await waitFor(() => {
+        expect(mockSetUserLoggedIn).toHaveBeenCalledTimes(1);
+      });
+
+      // Login error message must NOT fire — mnemonic probe failures are silent.
+      expect(mockMessageError).not.toHaveBeenCalled();
+
+      await waitFor(() => {
+        expect(mockSetMnemonicExists).toHaveBeenCalledWith(false);
+      });
     });
   });
 
