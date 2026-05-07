@@ -161,7 +161,7 @@ describe('GNOSIS_STAKING_PROGRAMS', () => {
       expect(program.name).toBe('Pearl Beta Mech Marketplace V');
       expect(program.stakingRequirements['OLAS']).toBe(10000);
       expect(program.address).toBe(
-        '0x536d04dbd9a2310152a0d2d8d18dadfca8bb26b0',
+        '0x536D04dBD9A2310152a0D2d8D18daDFCA8Bb26b0',
       );
     });
 
@@ -171,7 +171,7 @@ describe('GNOSIS_STAKING_PROGRAMS', () => {
       expect(program.name).toBe('Pearl Beta Mech Marketplace VI');
       expect(program.stakingRequirements['OLAS']).toBe(10000);
       expect(program.address).toBe(
-        '0xac3ed39d18d9c951bd2e7f0024114849c0a25295',
+        '0xac3Ed39D18d9C951BD2e7F0024114849C0a25295',
       );
     });
 
@@ -181,7 +181,7 @@ describe('GNOSIS_STAKING_PROGRAMS', () => {
       expect(program.name).toBe('Pearl Beta Mech Marketplace VII');
       expect(program.stakingRequirements['OLAS']).toBe(10000);
       expect(program.address).toBe(
-        '0xb2303f9913f11131a74f4b05099ced2043cc72c4',
+        '0xB2303F9913f11131A74F4b05099Ced2043cc72C4',
       );
     });
 
@@ -191,7 +191,7 @@ describe('GNOSIS_STAKING_PROGRAMS', () => {
       expect(program.name).toBe('Pearl Beta Mech Marketplace VIII');
       expect(program.stakingRequirements['OLAS']).toBe(5000);
       expect(program.address).toBe(
-        '0x12bdd401ac300482f4017c64c6c930ee40424c08',
+        '0x12bdd401Ac300482f4017C64c6c930ee40424c08',
       );
     });
 
