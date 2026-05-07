@@ -88,6 +88,22 @@ export const GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS: Record<
     getRequesterActivityCheckerContract(
       '0xd1185503F457c6234FAAf34436f9AB18948AA71B',
     ),
+  [STAKING_PROGRAM_IDS.PearlBetaMechMarketplace5]:
+    getRequesterActivityCheckerContract(
+      '0x72C7A5E1b684966C3326c86A7D27c7C570Cc4DAC',
+    ),
+  [STAKING_PROGRAM_IDS.PearlBetaMechMarketplace6]:
+    getRequesterActivityCheckerContract(
+      '0x72C7A5E1b684966C3326c86A7D27c7C570Cc4DAC',
+    ),
+  [STAKING_PROGRAM_IDS.PearlBetaMechMarketplace7]:
+    getRequesterActivityCheckerContract(
+      '0x72C7A5E1b684966C3326c86A7D27c7C570Cc4DAC',
+    ),
+  [STAKING_PROGRAM_IDS.PearlBetaMechMarketplace8]:
+    getRequesterActivityCheckerContract(
+      '0x95b37c45BADAf4668c18d00501948196761736b1',
+    ),
 } as const;
 
 export const BASE_STAKING_PROGRAMS_ACTIVITY_CHECKERS: Record<

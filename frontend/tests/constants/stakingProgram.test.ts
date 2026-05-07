@@ -68,6 +68,30 @@ describe('STAKING_PROGRAM_IDS', () => {
         'pearl_beta_mech_marketplace_4',
       );
     });
+
+    it('PearlBetaMechMarketplace5 resolves to "pearl_beta_mech_marketplace_5"', () => {
+      expect(STAKING_PROGRAM_IDS.PearlBetaMechMarketplace5).toBe(
+        'pearl_beta_mech_marketplace_5',
+      );
+    });
+
+    it('PearlBetaMechMarketplace6 resolves to "pearl_beta_mech_marketplace_6"', () => {
+      expect(STAKING_PROGRAM_IDS.PearlBetaMechMarketplace6).toBe(
+        'pearl_beta_mech_marketplace_6',
+      );
+    });
+
+    it('PearlBetaMechMarketplace7 resolves to "pearl_beta_mech_marketplace_7"', () => {
+      expect(STAKING_PROGRAM_IDS.PearlBetaMechMarketplace7).toBe(
+        'pearl_beta_mech_marketplace_7',
+      );
+    });
+
+    it('PearlBetaMechMarketplace8 resolves to "pearl_beta_mech_marketplace_8"', () => {
+      expect(STAKING_PROGRAM_IDS.PearlBetaMechMarketplace8).toBe(
+        'pearl_beta_mech_marketplace_8',
+      );
+    });
   });
 
   describe('Base programs', () => {
@@ -176,9 +200,9 @@ describe('STAKING_PROGRAM_IDS', () => {
   });
 
   describe('completeness and uniqueness', () => {
-    it('covers exactly 34 staking programs across all chains', () => {
-      // Chain totals: 12 Gnosis + 11 Base + 5 Mode + 3 Optimism + 3 Polygon = 34
-      expect(Object.keys(STAKING_PROGRAM_IDS)).toHaveLength(34);
+    it('covers exactly 38 staking programs across all chains', () => {
+      // Chain totals: 16 Gnosis + 11 Base + 5 Mode + 3 Optimism + 3 Polygon = 38
+      expect(Object.keys(STAKING_PROGRAM_IDS)).toHaveLength(38);
     });
 
     it('has no duplicate ID strings (each program has a unique registry key)', () => {
