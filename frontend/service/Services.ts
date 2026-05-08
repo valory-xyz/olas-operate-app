@@ -138,6 +138,29 @@ const updateService = async ({
   });
 
 /**
+ * PUT a service — non-partial update. Unlike `updateService` (PATCH), the
+ * middleware fully replaces fields present in the body instead of merging
+ * them.
+ */
+const putService = async ({
+  partialServiceTemplate,
+  serviceConfigId,
+}: {
+  partialServiceTemplate: DeepPartial<ServiceTemplate>;
+  serviceConfigId: string;
+}): Promise<MiddlewareServiceResponse> =>
+  fetch(`${BACKEND_URL_V2}/service/${serviceConfigId}`, {
+    method: 'PUT',
+    body: JSON.stringify({ ...partialServiceTemplate }),
+    headers: { ...CONTENT_TYPE_JSON_UTF8 },
+  }).then((response) => {
+    if (response.ok) {
+      return response.json();
+    }
+    throw new Error('Failed to PUT service');
+  });
+
+/**
  * Starts a service
  * @param serviceTemplate
  * @returns Promise<Service>
@@ -253,6 +276,7 @@ export const ServicesService = {
   startService,
   createService,
   updateService,
+  putService,
   stopDeployment,
   withdrawBalance,
   getAgentPerformance,

@@ -16,7 +16,11 @@ import {
   MOCK_INSTANCE_ADDRESS,
   MOCK_MULTISIG_ADDRESS,
 } from '../helpers/factories';
-import { mockCreateService, mockUpdateService } from '../mocks/servicesService';
+import {
+  mockCreateService,
+  mockPutService,
+  mockUpdateService,
+} from '../mocks/servicesService';
 
 /* eslint-disable @typescript-eslint/no-var-requires */
 jest.mock(
@@ -275,6 +279,66 @@ describe('updateServiceIfNeeded', () => {
     await updateServiceIfNeeded(service, AgentMap.AgentsFun);
 
     expect(mockUpdateService).not.toHaveBeenCalled();
+  });
+
+  it('replaces env_variables via PUT when the service has stale keys not in template', async () => {
+    const service = createService({
+      env_variables: {
+        RESET_PAUSE_DURATION: { value: '300' },
+        STORE_PATH: { value: 'persistent_data/' },
+        PERSONA: { value: '' },
+        REMOVED_VARIABLE: { value: 'legacy' },
+      },
+    });
+
+    await updateServiceIfNeeded(service, AgentMap.AgentsFun);
+
+    expect(mockUpdateService).not.toHaveBeenCalled();
+    expect(mockPutService).toHaveBeenCalledWith({
+      serviceConfigId: SERVICE_CONFIG_ID,
+      partialServiceTemplate: {
+        env_variables: {
+          RESET_PAUSE_DURATION: {
+            name: 'Reset pause duration',
+            description: '',
+            value: '300',
+            provision_type: 'fixed',
+          },
+          STORE_PATH: {
+            name: 'Store path',
+            description: '',
+            value: 'persistent_data/',
+            provision_type: 'computed',
+          },
+          PERSONA: {
+            name: 'Persona description',
+            description: '',
+            value: '',
+            provision_type: 'user',
+          },
+        },
+      },
+    });
+  });
+
+  it('omits env_variables from the PATCH body when stale keys exist alongside other changes', async () => {
+    const service = createService({
+      hash: 'bafybeiold000000000000000000000000000000000000000000000000000',
+      env_variables: {
+        RESET_PAUSE_DURATION: { value: '60' },
+        STORE_PATH: { value: 'persistent_data/' },
+        PERSONA: { value: '' },
+        REMOVED_VARIABLE: { value: 'legacy' },
+      },
+    });
+
+    await updateServiceIfNeeded(service, AgentMap.AgentsFun);
+
+    expect(mockUpdateService).toHaveBeenCalledWith({
+      serviceConfigId: SERVICE_CONFIG_ID,
+      partialServiceTemplate: { hash: TEMPLATE_HASH },
+    });
+    expect(mockPutService).toHaveBeenCalledTimes(1);
   });
 
   it('updates fund requirements when they differ', async () => {
