@@ -24,7 +24,7 @@ jest.mock(
 const EVM_ADDRESS_PATTERN = /^0x[0-9a-fA-F]{40}$/;
 
 describe('GNOSIS_STAKING_PROGRAMS', () => {
-  it('covers all 12 Gnosis staking program IDs', () => {
+  it('covers all 16 Gnosis staking program IDs', () => {
     const expectedIds = [
       STAKING_PROGRAM_IDS.PearlAlpha,
       STAKING_PROGRAM_IDS.PearlBeta,
@@ -38,11 +38,15 @@ describe('GNOSIS_STAKING_PROGRAMS', () => {
       STAKING_PROGRAM_IDS.PearlBetaMechMarketplace2,
       STAKING_PROGRAM_IDS.PearlBetaMechMarketplace3,
       STAKING_PROGRAM_IDS.PearlBetaMechMarketplace4,
+      STAKING_PROGRAM_IDS.PearlBetaMechMarketplace5,
+      STAKING_PROGRAM_IDS.PearlBetaMechMarketplace6,
+      STAKING_PROGRAM_IDS.PearlBetaMechMarketplace7,
+      STAKING_PROGRAM_IDS.PearlBetaMechMarketplace8,
     ];
     for (const id of expectedIds) {
       expect(GNOSIS_STAKING_PROGRAMS[id]).toBeDefined();
     }
-    expect(Object.keys(GNOSIS_STAKING_PROGRAMS)).toHaveLength(12);
+    expect(Object.keys(GNOSIS_STAKING_PROGRAMS)).toHaveLength(16);
   });
 
   it('all programs are on Gnosis chain (chainId 100)', () => {
@@ -114,13 +118,17 @@ describe('GNOSIS_STAKING_PROGRAMS', () => {
       }
     });
 
-    it('PearlBetaMechMarketplace1 through 4 include active (non-deprecated) programs', () => {
+    it('PearlBetaMechMarketplace1 through 8 include active (non-deprecated) programs', () => {
       // These are the current generation programs users should migrate to
       const activeKeys = [
         STAKING_PROGRAM_IDS.PearlBetaMechMarketplace1,
         STAKING_PROGRAM_IDS.PearlBetaMechMarketplace2,
         STAKING_PROGRAM_IDS.PearlBetaMechMarketplace3,
         STAKING_PROGRAM_IDS.PearlBetaMechMarketplace4,
+        STAKING_PROGRAM_IDS.PearlBetaMechMarketplace5,
+        STAKING_PROGRAM_IDS.PearlBetaMechMarketplace6,
+        STAKING_PROGRAM_IDS.PearlBetaMechMarketplace7,
+        STAKING_PROGRAM_IDS.PearlBetaMechMarketplace8,
       ];
       // At least one should NOT be deprecated
       const hasNonDeprecated = activeKeys.some(
@@ -145,6 +153,46 @@ describe('GNOSIS_STAKING_PROGRAMS', () => {
       const program =
         GNOSIS_STAKING_PROGRAMS[STAKING_PROGRAM_IDS.PearlBetaMechMarketplace4];
       expect(program.name).toBe('Pearl Beta Mech Marketplace IV');
+    });
+
+    it('PearlBetaMechMarketplace5 requires 10000 OLAS', () => {
+      const program =
+        GNOSIS_STAKING_PROGRAMS[STAKING_PROGRAM_IDS.PearlBetaMechMarketplace5];
+      expect(program.name).toBe('Pearl Beta Mech Marketplace V');
+      expect(program.stakingRequirements['OLAS']).toBe(10000);
+      expect(program.address).toBe(
+        '0x536D04dBD9A2310152a0D2d8D18daDFCA8Bb26b0',
+      );
+    });
+
+    it('PearlBetaMechMarketplace6 requires 10000 OLAS', () => {
+      const program =
+        GNOSIS_STAKING_PROGRAMS[STAKING_PROGRAM_IDS.PearlBetaMechMarketplace6];
+      expect(program.name).toBe('Pearl Beta Mech Marketplace VI');
+      expect(program.stakingRequirements['OLAS']).toBe(10000);
+      expect(program.address).toBe(
+        '0xac3Ed39D18d9C951BD2e7F0024114849C0a25295',
+      );
+    });
+
+    it('PearlBetaMechMarketplace7 requires 10000 OLAS', () => {
+      const program =
+        GNOSIS_STAKING_PROGRAMS[STAKING_PROGRAM_IDS.PearlBetaMechMarketplace7];
+      expect(program.name).toBe('Pearl Beta Mech Marketplace VII');
+      expect(program.stakingRequirements['OLAS']).toBe(10000);
+      expect(program.address).toBe(
+        '0xB2303F9913f11131A74F4b05099Ced2043cc72C4',
+      );
+    });
+
+    it('PearlBetaMechMarketplace8 requires 5000 OLAS', () => {
+      const program =
+        GNOSIS_STAKING_PROGRAMS[STAKING_PROGRAM_IDS.PearlBetaMechMarketplace8];
+      expect(program.name).toBe('Pearl Beta Mech Marketplace VIII');
+      expect(program.stakingRequirements['OLAS']).toBe(5000);
+      expect(program.address).toBe(
+        '0x12bdd401Ac300482f4017C64c6c930ee40424c08',
+      );
     });
 
     it('PearlAlpha address is 0xEE9F19b5DF06c7E8Bfc7B28745dcf944C504198A', () => {
