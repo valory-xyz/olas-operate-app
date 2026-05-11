@@ -86,11 +86,7 @@
     "start:frontend": "cd frontend && yarn start",
     "test:frontend": "cd frontend && yarn test"
   },
-<<<<<<< rajatverma/ope-1654-redeem-mode-for-polystratomenstrat
   "version": "1.6.4-rc18",
-=======
-  "version": "1.6.4-rc16",
->>>>>>> staging
   "engine": {
     "node": "22.18",
     "yarn": ">=1.22.0",
