@@ -78,4 +78,8 @@ export const STAKING_PROGRAM_IDS = {
   ...POLYGON_STAKING_PROGRAM_IDS,
 } as const;
 
-export type StakingProgramId = ValueOf<typeof STAKING_PROGRAM_IDS>;
+const NO_STAKING_PROGRAM_ID = 'no_staking';
+
+export type StakingProgramId =
+  | ValueOf<typeof STAKING_PROGRAM_IDS>
+  | typeof NO_STAKING_PROGRAM_ID;

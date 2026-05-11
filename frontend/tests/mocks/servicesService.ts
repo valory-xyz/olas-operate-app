@@ -1,4 +1,5 @@
 export const mockUpdateService = jest.fn();
+export const mockPutService = jest.fn();
 export const mockCreateService = jest.fn();
 export const mockGetService = jest.fn();
 export const mockGetServices = jest.fn();
@@ -9,6 +10,7 @@ export const mockDeleteService = jest.fn();
 export const servicesServiceMock = {
   ServicesService: {
     updateService: mockUpdateService,
+    putService: mockPutService,
     createService: mockCreateService,
     getService: mockGetService,
     getServices: mockGetServices,

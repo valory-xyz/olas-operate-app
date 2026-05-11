@@ -1,8 +1,9 @@
 import { isNil } from 'lodash';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
 import { TokenSymbol } from '@/config/tokens';
 import { PAGES, SETUP_SCREEN } from '@/constants';
+import { StakingProgramContext } from '@/context/StakingProgramProvider';
 import { useSupportModal } from '@/context/SupportModalProvider';
 import { TokenRequirement } from '@/types';
 import { WalletBalance } from '@/types/Balance';
@@ -17,6 +18,7 @@ import { useMasterWalletContext } from './useWallet';
 
 export type SetupState =
   | 'detecting' // query in flight; button disabled
+  | 'invalid_contract' // user selected an incompatible staking contract
   | 'readyToComplete' // Safe deployed + funded
   | 'needsSafeCreation' // EOA funded, Safe pending
   | 'needsFunding'; // insufficient funds anywhere
@@ -67,6 +69,7 @@ export const useCompleteAgentSetup = (
   const { toggleSupportModal } = useSupportModal();
   const { goto } = usePageState();
   const { goto: gotoSetup } = useSetup();
+  const { selectedStakingProgramId } = useContext(StakingProgramContext);
 
   const { evmHomeChainId } = selectedAgentConfig;
 
@@ -90,6 +93,7 @@ export const useCompleteAgentSetup = (
     const masterSafe = getMasterSafeOf?.(evmHomeChainId);
     if (masterSafe) {
       const safeBalances = getMasterSafeBalancesOf(evmHomeChainId);
+      if (selectedStakingProgramId === 'no_staking') return 'invalid_contract';
       if (allRequirementsMet(safeBalances, totalTokenRequirements))
         return 'readyToComplete';
     } else {
@@ -103,10 +107,11 @@ export const useCompleteAgentSetup = (
     isLoading,
     isBalancesLoaded,
     getMasterSafeOf,
-    getMasterSafeBalancesOf,
-    getMasterEoaBalancesOf,
-    totalTokenRequirements,
     evmHomeChainId,
+    getMasterSafeBalancesOf,
+    selectedStakingProgramId,
+    totalTokenRequirements,
+    getMasterEoaBalancesOf,
   ]);
 
   const isSafeCreated = isMasterWalletFetched
@@ -166,6 +171,10 @@ export const useCompleteAgentSetup = (
     switch (setupState) {
       case 'detecting':
         return; // no-op; button is disabled anyway
+      case 'invalid_contract':
+        gotoSetup(SETUP_SCREEN.SelectStaking);
+        goto(PAGES.Setup);
+        return;
       case 'readyToComplete':
         setModalToShow('setupComplete');
         return;
