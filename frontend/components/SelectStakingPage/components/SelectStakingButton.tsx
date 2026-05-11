@@ -1,18 +1,17 @@
 import { Button, message } from 'antd';
-import { useMemo } from 'react';
 import { useBoolean } from 'usehooks-ts';
 
 import { SETUP_SCREEN, SetupScreen, StakingProgramId } from '@/constants';
 import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
 import {
   useIsInitiallyFunded,
-  useMasterBalances,
   useServices,
   useSetup,
   useStakingProgram,
+  useWalletContribution,
 } from '@/hooks';
 import { BalanceService } from '@/service/Balance';
-import { WalletBalance } from '@/types';
+import { TokenRequirement } from '@/types';
 import { onDummyServiceCreation, updateServiceIfNeeded } from '@/utils';
 
 import { useCanMigrate } from '../hooks/useCanMigrate';
@@ -20,7 +19,7 @@ import { useCanMigrate } from '../hooks/useCanMigrate';
 /** Determines which funding screen to route to after staking selection */
 const resolveFundingRoute = async (
   serviceConfigId: string,
-  walletBalances: WalletBalance[],
+  walletContributions: TokenRequirement[],
 ): Promise<SetupScreen> => {
   const controller = new AbortController();
   const { is_refill_required, allow_start_agent } =
@@ -33,7 +32,7 @@ const resolveFundingRoute = async (
     return SETUP_SCREEN.ConfirmFunding;
   }
 
-  if (walletBalances.some((b) => b.balance > 0)) {
+  if (walletContributions.length > 0) {
     return SETUP_SCREEN.BalanceCheck;
   }
 
@@ -63,26 +62,13 @@ export const SelectStakingButton = ({
   const {
     selectedService,
     selectedAgentType,
-    selectedAgentConfig,
     isLoading: isServicesLoading,
     refetch: refetchServices,
     updateSelectedServiceConfigId,
   } = useServices();
-  const { getMasterSafeBalancesOf, getMasterEoaBalancesOf } =
-    useMasterBalances();
   const { markServiceAsNotInitiallyFunded } = useIsInitiallyFunded();
+  const { walletContributions } = useWalletContribution();
 
-  const walletBalances = useMemo(() => {
-    const chainId = selectedAgentConfig.evmHomeChainId;
-    const safeBalances = getMasterSafeBalancesOf(chainId);
-    return safeBalances.length > 0
-      ? safeBalances
-      : getMasterEoaBalancesOf(chainId);
-  }, [
-    selectedAgentConfig.evmHomeChainId,
-    getMasterSafeBalancesOf,
-    getMasterEoaBalancesOf,
-  ]);
   const { buttonText, canMigrate } = useCanMigrate({
     stakingProgramId,
     isCurrentStakingProgram,
@@ -163,7 +149,10 @@ export const SelectStakingButton = ({
         return;
       }
 
-      const route = await resolveFundingRoute(serviceConfigId, walletBalances);
+      const route = await resolveFundingRoute(
+        serviceConfigId,
+        walletContributions,
+      );
       gotoSetup(route);
     } finally {
       stopLoading();
