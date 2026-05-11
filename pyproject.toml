@@ -11,11 +11,10 @@ include = []
 [tool.poetry.dependencies]
 python = ">=3.14,<3.15"
 olas-operate-middleware = "0.15.17"
-open-autonomy = {version = "0.21.13", extras = ["cli", "docker"]}
-open-aea-ledger-cosmos = "2.1.0"
-open-aea-ledger-ethereum = "2.1.0"
-open-aea-ledger-ethereum-flashbots = "2.1.0"
-open-aea-cli-ipfs = "2.1.0"
+open-autonomy = {version = "0.21.21", extras = ["cli", "docker"]}
+open-aea-ledger-cosmos = "2.2.5"
+open-aea-ledger-ethereum = "2.2.5"
+open-aea-cli-ipfs = "2.2.5"
 
 [build-system]
 requires = ["poetry-core"]
