@@ -11,17 +11,24 @@ jest.mock('../../../hooks', () => ({
   useSetup: () => ({ goto: mockGoto }),
 }));
 
+// Default mock — overridden per test when needed via mockContextValue
+const defaultContext = {
+  isLoading: false,
+  isRecoveryAvailable: true,
+  currentStep: RECOVERY_STEPS.SelectRecoveryMethod,
+  setCurrentStep: mockSetCurrentStep,
+  selectedResetMethod: undefined,
+  setSelectedResetMethod: jest.fn(),
+};
+
+let mockContextValue = { ...defaultContext };
+
 jest.mock(
   '../../../components/AccountRecovery/AccountRecoveryProvider',
   () => ({
     AccountRecoveryProvider: ({ children }: { children: React.ReactNode }) =>
       children,
-    useAccountRecoveryContext: () => ({
-      isLoading: false,
-      isRecoveryAvailable: true,
-      currentStep: RECOVERY_STEPS.SelectRecoveryMethod,
-      setCurrentStep: mockSetCurrentStep,
-    }),
+    useAccountRecoveryContext: () => mockContextValue,
   }),
 );
 
@@ -83,6 +90,7 @@ jest.mock('../../../components/ui', () => ({
 describe('SelectRecoveryMethod', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockContextValue = { ...defaultContext };
   });
 
   it('renders the "Select Recovery Option" title', () => {
@@ -112,5 +120,64 @@ describe('SelectRecoveryMethod', () => {
     render(<AccountRecovery />);
     fireEvent.click(screen.getByTestId('back-btn'));
     expect(mockGoto).toHaveBeenCalledWith(SETUP_SCREEN.Welcome);
+  });
+});
+
+describe('AccountRecovery guard', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockContextValue = { ...defaultContext };
+  });
+
+  it('shows RecoveryNotAvailable when recovery is not available and method is not SRP', () => {
+    mockContextValue = {
+      ...defaultContext,
+      isRecoveryAvailable: false,
+      currentStep: RECOVERY_STEPS.CreateNewPassword,
+      selectedResetMethod: undefined,
+    };
+
+    render(<AccountRecovery />);
+    expect(screen.getByTestId('recovery-not-available')).toBeInTheDocument();
+  });
+
+  it('shows RecoveryNotAvailable for backup-wallet method when recovery is not available', () => {
+    mockContextValue = {
+      ...defaultContext,
+      isRecoveryAvailable: false,
+      currentStep: RECOVERY_STEPS.CreateNewPassword,
+      selectedResetMethod: 'BackupWallet',
+    };
+
+    render(<AccountRecovery />);
+    expect(screen.getByTestId('recovery-not-available')).toBeInTheDocument();
+  });
+
+  it('bypasses RecoveryNotAvailable guard for SRP method even when recovery is not available', () => {
+    mockContextValue = {
+      ...defaultContext,
+      isRecoveryAvailable: false,
+      currentStep: RECOVERY_STEPS.EnterSecretRecoveryPhrase,
+      selectedResetMethod: 'SRP',
+    };
+
+    render(<AccountRecovery />);
+    expect(
+      screen.queryByTestId('recovery-not-available'),
+    ).not.toBeInTheDocument();
+  });
+
+  it('always shows SelectRecoveryMethod at the first step regardless of recovery availability', () => {
+    mockContextValue = {
+      ...defaultContext,
+      isRecoveryAvailable: false,
+      currentStep: RECOVERY_STEPS.SelectRecoveryMethod,
+    };
+
+    render(<AccountRecovery />);
+    expect(screen.getByText('Select Recovery Option')).toBeInTheDocument();
+    expect(
+      screen.queryByTestId('recovery-not-available'),
+    ).not.toBeInTheDocument();
   });
 });

@@ -2,7 +2,6 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { act } from 'react';
 
 import { UpdatePasswordScreen } from '../../../../components/SettingsPage/UpdatePassword';
-import { PAGES, SETUP_SCREEN } from '../../../../constants';
 import { ERROR_CODE } from '../../../../constants/errors';
 import { SettingsScreenMap } from '../../../../constants/screen';
 
@@ -11,8 +10,7 @@ import { SettingsScreenMap } from '../../../../constants/screen';
 // ---------------------------------------------------------------------------
 
 const mockGoto = jest.fn();
-const mockSetupGoto = jest.fn();
-const mockPageGoto = jest.fn();
+const mockEnterAccountRecovery = jest.fn();
 const mockSuccess = jest.fn();
 const mockError = jest.fn();
 
@@ -21,8 +19,7 @@ jest.mock('../../../../hooks', () => ({
     screen: SettingsScreenMap.UpdatePassword,
     goto: mockGoto,
   }),
-  useSetup: () => ({ goto: mockSetupGoto }),
-  usePageState: () => ({ goto: mockPageGoto }),
+  useEnterAccountRecoveryFromMain: () => mockEnterAccountRecovery,
 }));
 
 jest.mock('../../../../context/MessageProvider', () => ({
@@ -259,8 +256,7 @@ describe('UpdatePasswordScreen', () => {
     it('navigates to AccountRecovery on "Forgot your password?" click', () => {
       render(<UpdatePasswordScreen />);
       fireEvent.click(screen.getByText('Forgot your password?'));
-      expect(mockSetupGoto).toHaveBeenCalledWith(SETUP_SCREEN.AccountRecovery);
-      expect(mockPageGoto).toHaveBeenCalledWith(PAGES.Setup);
+      expect(mockEnterAccountRecovery).toHaveBeenCalled();
     });
   });
 });
