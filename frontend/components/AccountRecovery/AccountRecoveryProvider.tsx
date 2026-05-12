@@ -44,6 +44,9 @@ const useRecoveryNavigation = (
   const onNext = useCallback(() => {
     switch (currentStep) {
       case RECOVERY_STEPS.SelectRecoveryMethod:
+        updateCurrentStep(RECOVERY_STEPS.SelectPasswordResetOption);
+        break;
+      case RECOVERY_STEPS.SelectPasswordResetOption:
         if (selectedResetMethod === RESET_METHOD.SRP) {
           updateCurrentStep(RECOVERY_STEPS.EnterSecretRecoveryPhrase);
         } else {
@@ -74,9 +77,13 @@ const useRecoveryNavigation = (
 
   const onPrev = useCallback(() => {
     switch (currentStep) {
+      case RECOVERY_STEPS.SelectPasswordResetOption:
+        clearSelectedResetMethod();
+        updateCurrentStep(RECOVERY_STEPS.SelectRecoveryMethod);
+        break;
       // Backup-wallet path
       case RECOVERY_STEPS.CreateNewPassword:
-        updateCurrentStep(RECOVERY_STEPS.SelectRecoveryMethod);
+        updateCurrentStep(RECOVERY_STEPS.SelectPasswordResetOption);
         break;
       case RECOVERY_STEPS.FundYourBackupWallet:
         updateCurrentStep(RECOVERY_STEPS.CreateNewPassword);
@@ -87,7 +94,7 @@ const useRecoveryNavigation = (
       // SRP path
       case RECOVERY_STEPS.EnterSecretRecoveryPhrase:
         clearSelectedResetMethod();
-        updateCurrentStep(RECOVERY_STEPS.SelectRecoveryMethod);
+        updateCurrentStep(RECOVERY_STEPS.SelectPasswordResetOption);
         break;
       case RECOVERY_STEPS.SetNewPasswordViaSRP:
         updateCurrentStep(RECOVERY_STEPS.EnterSecretRecoveryPhrase);

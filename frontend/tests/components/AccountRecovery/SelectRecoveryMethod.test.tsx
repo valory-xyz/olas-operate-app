@@ -35,17 +35,17 @@ jest.mock(
 jest.mock(
   '../../../components/AccountRecovery/components/RecoveryViaBackupWallet',
   () => ({
-    ForgotPasswordCard: ({
-      isRecoveryAvailable,
-    }: {
-      isRecoveryAvailable: boolean;
-    }) => (
-      <div
-        data-testid="forgot-password-card"
-        data-recovery={String(isRecoveryAvailable)}
-      >
-        Forgot Password
-      </div>
+    ForgotPasswordCard: () => (
+      <div data-testid="forgot-password-card">Forgot Password</div>
+    ),
+  }),
+);
+
+jest.mock(
+  '../../../components/AccountRecovery/components/SelectPasswordResetOption',
+  () => ({
+    SelectPasswordResetOption: () => (
+      <div data-testid="select-reset-option">Select Reset Option</div>
     ),
   }),
 );
@@ -108,12 +108,9 @@ describe('SelectRecoveryMethod', () => {
     expect(screen.getByTestId('recover-existing-card')).toBeInTheDocument();
   });
 
-  it('passes isRecoveryAvailable to ForgotPasswordCard', () => {
+  it('always renders the ForgotPasswordCard CTA', () => {
     render(<AccountRecovery />);
-    expect(screen.getByTestId('forgot-password-card')).toHaveAttribute(
-      'data-recovery',
-      'true',
-    );
+    expect(screen.getByTestId('forgot-password-card')).toBeInTheDocument();
   });
 
   it('navigates to Welcome screen when Back is clicked', () => {
@@ -176,6 +173,20 @@ describe('AccountRecovery guard', () => {
 
     render(<AccountRecovery />);
     expect(screen.getByText('Select Recovery Option')).toBeInTheDocument();
+    expect(
+      screen.queryByTestId('recovery-not-available'),
+    ).not.toBeInTheDocument();
+  });
+
+  it('always shows SelectPasswordResetOption regardless of recovery availability', () => {
+    mockContextValue = {
+      ...defaultContext,
+      isRecoveryAvailable: false,
+      currentStep: RECOVERY_STEPS.SelectPasswordResetOption,
+    };
+
+    render(<AccountRecovery />);
+    expect(screen.getByText('Select Reset Method')).toBeInTheDocument();
     expect(
       screen.queryByTestId('recovery-not-available'),
     ).not.toBeInTheDocument();

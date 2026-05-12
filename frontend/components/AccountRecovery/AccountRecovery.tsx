@@ -15,6 +15,7 @@ import { FundYourBackupWallet } from './components/FundYourBackupWallet';
 import { RecoverExistingAccountCard } from './components/RecoverExistingAccountCard';
 import { RecoveryNotAvailable } from './components/RecoveryNotAvailable';
 import { ForgotPasswordCard } from './components/RecoveryViaBackupWallet';
+import { SelectPasswordResetOption } from './components/SelectPasswordResetOption';
 import { RECOVERY_STEPS, RESET_METHOD } from './constants';
 import { RecoveryMethodCard } from './styles';
 
@@ -30,7 +31,6 @@ const Loader = () => (
 
 const SelectRecoveryMethod = () => {
   const { goto } = useSetup();
-  const { isRecoveryAvailable } = useAccountRecoveryContext();
 
   return (
     <Flex align="center" vertical>
@@ -48,8 +48,28 @@ const SelectRecoveryMethod = () => {
       </Text>
 
       <Flex gap={24} style={{ marginTop: 56 }}>
-        <ForgotPasswordCard isRecoveryAvailable={isRecoveryAvailable} />
+        <ForgotPasswordCard />
         <RecoverExistingAccountCard />
+      </Flex>
+    </Flex>
+  );
+};
+
+const SelectPasswordResetOptionStep = () => {
+  const { onPrev } = useAccountRecoveryContext();
+
+  return (
+    <Flex align="center" vertical>
+      <BackButton onPrev={onPrev} />
+      <Title level={3} className="mt-12">
+        Select Reset Method
+      </Title>
+      <Text type="secondary">
+        Choose how you&apos;d like to reset your password.
+      </Text>
+
+      <Flex gap={24} style={{ marginTop: 56 }}>
+        <SelectPasswordResetOption />
       </Flex>
     </Flex>
   );
@@ -63,6 +83,8 @@ const AccountRecoveryInner = () => {
     switch (currentStep) {
       case RECOVERY_STEPS.SelectRecoveryMethod:
         return <SelectRecoveryMethod />;
+      case RECOVERY_STEPS.SelectPasswordResetOption:
+        return <SelectPasswordResetOptionStep />;
       // Backup-wallet path
       case RECOVERY_STEPS.CreateNewPassword:
         return <CreateNewPassword />;
@@ -80,10 +102,14 @@ const AccountRecoveryInner = () => {
 
   if (isLoading) return <Loader />;
 
-  // Always show SelectRecoveryMethod at step 1 so that "Recover an Existing
-  // Pearl Account" remains accessible even on fresh installs (no account).
-  // The isRecoveryAvailable gate is handled inside ForgotPasswordCard instead.
-  if (currentStep === RECOVERY_STEPS.SelectRecoveryMethod) return currentView;
+  // Always show SelectRecoveryMethod and SelectPasswordResetOption without
+  // the recovery guard — the availability check is handled inside the
+  // SelectPasswordResetOption screen (backup wallet card disabled state).
+  if (
+    currentStep === RECOVERY_STEPS.SelectRecoveryMethod ||
+    currentStep === RECOVERY_STEPS.SelectPasswordResetOption
+  )
+    return currentView;
 
   // SRP path bypasses the backup-wallet availability check — it uses the
   // mnemonic directly and does not require a Web3Auth backup wallet.

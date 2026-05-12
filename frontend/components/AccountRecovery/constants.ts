@@ -1,5 +1,6 @@
 export const RECOVERY_STEPS = {
   SelectRecoveryMethod: 'SelectRecoveryMethod',
+  SelectPasswordResetOption: 'SelectPasswordResetOption',
   // Backup-wallet path
   CreateNewPassword: 'CreateNewPassword',
   FundYourBackupWallet: 'FundYourBackupWallet',
