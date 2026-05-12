@@ -72,7 +72,7 @@ export const AgentDisabledAlert = () => {
     }
 
     // The "store" is `undefined` during updates, hence waiting till we get the correct value from the store.
-    if (isInitialFunded === false) {
+    if (!isInitialFunded) {
       return {
         key: 'unfinished-setup',
         content: (

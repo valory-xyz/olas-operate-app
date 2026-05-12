@@ -86,7 +86,12 @@ export const StakingContractDetails = () => {
   } = stakingContractInfo || {};
   const { currentEpochLifetime } = useStakingDetails();
 
-  if (!stakingContractInfo || !selectedStakingProgramMeta) return null;
+  if (!stakingContractInfo || !selectedStakingProgramMeta)
+    return (
+      <Flex justify="center" align="center" className="mt-32 mb-32">
+        <Text>Staking contract details are not available.</Text>
+      </Flex>
+    );
   return (
     <Flex vertical gap={12}>
       <Flex justify="space-between" align="center">

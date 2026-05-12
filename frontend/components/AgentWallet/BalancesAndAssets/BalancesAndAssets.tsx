@@ -76,15 +76,16 @@ const SomeFundsMaybeLockedModal = ({
       width={612}
     >
       <Flex vertical gap={8} className="mb-32 mt-12">
-        <Text>Your agent may have funds in external smart contracts.</Text>
         <Text>
-          Pearl doesn’t have access to those funds — you need to initiate their
-          withdrawal by instructing the agent to do so via the Agent Profile
-          page.
+          Your agent may have funds locked in external smart contracts.
         </Text>
         <Text>
-          Make sure to check your agent has withdrawn all its funds before
-          proceeding.
+          Pearl can’t access or withdraw these funds for you. To retrieve them,
+          go to the Agent Profile page and withdraw from those contracts.
+        </Text>
+        <Text>
+          Before you proceed, confirm your agent has withdrawn all funds from
+          external smart contracts.
         </Text>
       </Flex>
       <Flex gap={8}>
