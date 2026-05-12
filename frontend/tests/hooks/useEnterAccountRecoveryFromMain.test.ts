@@ -73,5 +73,4 @@ describe('useEnterAccountRecoveryFromMain', () => {
     // usePageState.goto sets the page to Setup
     expect(setPageState).toHaveBeenCalledWith(PAGES.Setup);
   });
-
 });
