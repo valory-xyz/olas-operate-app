@@ -22,7 +22,7 @@ import { Address } from '@/types';
 import { SwapSafeTransaction } from '@/types/Recovery';
 
 import { TokenRequirementsRow } from '../ui';
-import { RECOVERY_STEPS, RecoverySteps } from './constants';
+import { RECOVERY_STEPS, RESET_METHOD, RecoverySteps, ResetMethod } from './constants';
 import {
   getBackupWalletStatus,
   parseRecoveryFundingRequirements,
@@ -31,14 +31,21 @@ import {
 const useRecoveryNavigation = (
   currentStep: RecoverySteps,
   updateCurrentStep: (state: RecoverySteps) => void,
+  selectedResetMethod: ResetMethod | undefined,
+  clearSelectedResetMethod: () => void,
 ) => {
   const { goto } = useSetup();
 
   const onNext = useCallback(() => {
     switch (currentStep) {
       case RECOVERY_STEPS.SelectRecoveryMethod:
-        updateCurrentStep(RECOVERY_STEPS.CreateNewPassword);
+        if (selectedResetMethod === RESET_METHOD.SRP) {
+          updateCurrentStep(RECOVERY_STEPS.EnterSecretRecoveryPhrase);
+        } else {
+          updateCurrentStep(RECOVERY_STEPS.CreateNewPassword);
+        }
         break;
+      // Backup-wallet path
       case RECOVERY_STEPS.CreateNewPassword:
         updateCurrentStep(RECOVERY_STEPS.FundYourBackupWallet);
         break;
@@ -48,13 +55,21 @@ const useRecoveryNavigation = (
       case RECOVERY_STEPS.ApproveWithBackupWallet:
         goto(SETUP_SCREEN.Welcome);
         break;
+      // SRP path
+      case RECOVERY_STEPS.EnterSecretRecoveryPhrase:
+        updateCurrentStep(RECOVERY_STEPS.SetNewPasswordViaSRP);
+        break;
+      case RECOVERY_STEPS.SetNewPasswordViaSRP:
+        goto(SETUP_SCREEN.Welcome);
+        break;
       default:
         break;
     }
-  }, [updateCurrentStep, goto, currentStep]);
+  }, [updateCurrentStep, goto, currentStep, selectedResetMethod]);
 
   const onPrev = useCallback(() => {
     switch (currentStep) {
+      // Backup-wallet path
       case RECOVERY_STEPS.CreateNewPassword:
         updateCurrentStep(RECOVERY_STEPS.SelectRecoveryMethod);
         break;
@@ -64,10 +79,18 @@ const useRecoveryNavigation = (
       case RECOVERY_STEPS.ApproveWithBackupWallet:
         updateCurrentStep(RECOVERY_STEPS.FundYourBackupWallet);
         break;
+      // SRP path
+      case RECOVERY_STEPS.EnterSecretRecoveryPhrase:
+        clearSelectedResetMethod();
+        updateCurrentStep(RECOVERY_STEPS.SelectRecoveryMethod);
+        break;
+      case RECOVERY_STEPS.SetNewPasswordViaSRP:
+        updateCurrentStep(RECOVERY_STEPS.EnterSecretRecoveryPhrase);
+        break;
       default:
         break;
     }
-  }, [currentStep, updateCurrentStep]);
+  }, [currentStep, updateCurrentStep, clearSelectedResetMethod]);
 
   return { onNext, onPrev };
 };
@@ -80,7 +103,6 @@ const AccountRecoveryContext = createContext<{
   hasBackupWalletsAcrossEveryChain: boolean;
   /** Indicates if all backup owners are the same across chains */
   areAllBackupOwnersSame: boolean;
-  /** Current step in the account recovery flow */
   /** Address of the backup wallet used for recovery */
   backupWalletAddress?: Address;
   /** New master EOA address set during recovery */
@@ -96,6 +118,10 @@ const AccountRecoveryContext = createContext<{
   /** Total safe swaps required for recovery */
   safeSwapTransactions: SwapSafeTransaction[];
 
+  // Reset method selection (backup-wallet vs SRP)
+  selectedResetMethod?: ResetMethod;
+  setSelectedResetMethod: (method: ResetMethod) => void;
+
   // Navigation
   currentStep: RecoverySteps;
   onNext: () => void;
@@ -110,6 +136,7 @@ const AccountRecoveryContext = createContext<{
   isRecoveryFundingListLoading: false,
   recoveryFundingList: [],
   safeSwapTransactions: [],
+  setSelectedResetMethod: () => {},
   onNext: () => {},
   onPrev: () => {},
 });
@@ -133,11 +160,20 @@ export const AccountRecoveryProvider = ({
   const [currentStep, setCurrentStep] = useState<RecoverySteps>(
     RECOVERY_STEPS.SelectRecoveryMethod,
   );
+  const [selectedResetMethod, setSelectedResetMethod] = useState<
+    ResetMethod | undefined
+  >();
   const [newMasterEoaAddress, setNewMasterEoaAddress] = useState<Address>();
   const [oldMasterEoaAddress, setOldMasterEoaAddress] = useState<Address>();
+  const clearSelectedResetMethod = useCallback(
+    () => setSelectedResetMethod(undefined),
+    [],
+  );
   const { onNext, onPrev } = useRecoveryNavigation(
     currentStep,
     useCallback((step: RecoverySteps) => setCurrentStep(step), []),
+    selectedResetMethod,
+    clearSelectedResetMethod,
   );
 
   const canFetchRecoveryFundingRequirements =
@@ -253,6 +289,8 @@ export const AccountRecoveryProvider = ({
         isRecoveryFundingListLoading: isRecoveryFundingRequirementsLoading,
         recoveryFundingList,
         safeSwapTransactions,
+        selectedResetMethod,
+        setSelectedResetMethod,
         updateNewMasterEoaAddress,
         onNext,
         onPrev,
