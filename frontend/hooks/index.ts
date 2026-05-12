@@ -20,6 +20,7 @@ export * from './useCompleteAgentSetup';
 export * from './useDeployability';
 export * from './useDynamicRefetchInterval';
 export * from './useElectronApi';
+export * from './useEnterAccountRecoveryFromMain';
 export * from './useFeatureFlag';
 export * from './useFundingEligibleServices';
 export * from './useFundRecoveryExecute';
