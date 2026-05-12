@@ -121,7 +121,7 @@ const SettingsMain = () => {
         Settings
       </Title>
       <Card styles={{ body: { paddingTop: 0, paddingBottom: 0 } }}>
-        <CardSection $padding="24px" $borderBottom gap={16}>
+        <CardSection $padding="24px" $borderBottom align="flex-start" gap={16}>
           <IconContainer>
             <TbShieldLock size={20} color={COLOR.TEXT_NEUTRAL_TERTIARY} />
           </IconContainer>
@@ -131,15 +131,13 @@ const SettingsMain = () => {
                 Password
               </Paragraph>
             </div>
-            <Flex justify="space-between" align="center">
-              <Text style={{ lineHeight: 1 }}>••••••••••••••••••••</Text>
-              <Button
-                className="text-sm"
-                onClick={() => goto(SettingsScreenMap.UpdatePassword)}
-              >
-                Update Password
-              </Button>
-            </Flex>
+            <Text style={{ lineHeight: 1 }}>••••••••••••••••••••</Text>
+            <Button
+              className="text-sm w-fit mt-12"
+              onClick={() => goto(SettingsScreenMap.UpdatePassword)}
+            >
+              Update Password
+            </Button>
           </Flex>
         </CardSection>
 
