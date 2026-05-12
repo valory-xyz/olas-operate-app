@@ -12,11 +12,11 @@ import {
   RequiredMark,
 } from '@/components/ui';
 import { PasswordStrength } from '@/components/ui/forms';
-import { COLOR, PAGES, SETUP_SCREEN } from '@/constants';
+import { COLOR } from '@/constants';
 import { ERROR_CODE } from '@/constants/errors';
 import { SettingsScreenMap } from '@/constants/screen';
 import { useMessageApi } from '@/context/MessageProvider';
-import { usePageState, useSettings, useSetup } from '@/hooks';
+import { useEnterAccountRecoveryFromMain, useSettings } from '@/hooks';
 import { AccountService } from '@/service/Account';
 
 const { Title, Text } = Typography;
@@ -30,8 +30,7 @@ type UpdatePasswordFormValues = {
 export const UpdatePasswordScreen = () => {
   const [form] = Form.useForm<UpdatePasswordFormValues>();
   const { goto } = useSettings();
-  const { goto: gotoSetup } = useSetup();
-  const { goto: gotoPage } = usePageState();
+  const enterAccountRecovery = useEnterAccountRecoveryFromMain();
   const messageApi = useMessageApi();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -120,10 +119,7 @@ export const UpdatePasswordScreen = () => {
                   type="link"
                   className="text-sm w-fit p-0"
                   style={{ height: 'auto' }}
-                  onClick={() => {
-                    gotoSetup(SETUP_SCREEN.AccountRecovery);
-                    gotoPage(PAGES.Setup);
-                  }}
+                  onClick={enterAccountRecovery}
                 >
                   Forgot your password?
                 </Button>
