@@ -8,31 +8,59 @@ import {
   useServices,
   useSetup,
   useStakingProgram,
-  useWalletContribution,
 } from '@/hooks';
 import { BalanceService } from '@/service/Balance';
-import { TokenRequirement } from '@/types';
+import { AddressBalanceRecord, BalancesAndFundingRequirements } from '@/types';
+import { Address } from '@/types/Address';
 import { onDummyServiceCreation, updateServiceIfNeeded } from '@/utils';
 
 import { useCanMigrate } from '../hooks/useCanMigrate';
 
+/**
+ * Returns true if any required token has a non-zero balance in the same
+ * wallet. Derived from the freshly fetched funding-requirements response so
+ * the routing decision is not subject to stale React state for the previous
+ * service config.
+ */
+const hasWalletContribution = (
+  balances: BalancesAndFundingRequirements['balances'],
+  totalRequirements: BalancesAndFundingRequirements['total_requirements'],
+): boolean =>
+  Object.entries(totalRequirements).some(([chain, addrMap]) => {
+    const chainBalances = balances?.[chain as keyof typeof balances] as
+      | AddressBalanceRecord
+      | undefined;
+    return Object.entries(addrMap as AddressBalanceRecord).some(
+      ([addr, tokenMap]) =>
+        Object.entries(tokenMap).some(([tokenAddr, required]) => {
+          if (BigInt(required) === 0n) return false;
+          const bal =
+            chainBalances?.[addr as Address]?.[tokenAddr as Address] ?? '0';
+          return BigInt(bal) > 0n;
+        }),
+    );
+  });
+
 /** Determines which funding screen to route to after staking selection */
 const resolveFundingRoute = async (
   serviceConfigId: string,
-  walletContributions: TokenRequirement[],
 ): Promise<SetupScreen> => {
   const controller = new AbortController();
-  const { is_refill_required, allow_start_agent } =
-    await BalanceService.getBalancesAndFundingRequirements({
-      serviceConfigId,
-      signal: controller.signal,
-    });
+  const {
+    balances,
+    total_requirements,
+    is_refill_required,
+    allow_start_agent,
+  } = await BalanceService.getBalancesAndFundingRequirements({
+    serviceConfigId,
+    signal: controller.signal,
+  });
 
   if (!is_refill_required && allow_start_agent) {
     return SETUP_SCREEN.ConfirmFunding;
   }
 
-  if (walletContributions.length > 0) {
+  if (hasWalletContribution(balances, total_requirements)) {
     return SETUP_SCREEN.BalanceCheck;
   }
 
@@ -67,7 +95,6 @@ export const SelectStakingButton = ({
     updateSelectedServiceConfigId,
   } = useServices();
   const { markServiceAsNotInitiallyFunded } = useIsInitiallyFunded();
-  const { walletContributions } = useWalletContribution();
 
   const { buttonText, canMigrate } = useCanMigrate({
     stakingProgramId,
@@ -149,10 +176,7 @@ export const SelectStakingButton = ({
         return;
       }
 
-      const route = await resolveFundingRoute(
-        serviceConfigId,
-        walletContributions,
-      );
+      const route = await resolveFundingRoute(serviceConfigId);
       gotoSetup(route);
     } finally {
       stopLoading();
