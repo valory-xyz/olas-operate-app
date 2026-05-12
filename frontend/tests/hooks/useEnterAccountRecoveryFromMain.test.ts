@@ -1,8 +1,8 @@
 import { renderHook } from '@testing-library/react';
 import { act } from 'react';
 
-import { useEnterAccountRecoveryFromMain } from '../../hooks/useEnterAccountRecoveryFromMain';
 import { PAGES, SETUP_SCREEN } from '../../constants';
+import { useEnterAccountRecoveryFromMain } from '../../hooks/useEnterAccountRecoveryFromMain';
 
 const mockSetupGoto = jest.fn();
 const mockPageGoto = jest.fn();
