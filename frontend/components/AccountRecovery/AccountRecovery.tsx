@@ -87,10 +87,7 @@ const AccountRecoveryInner = () => {
 
   // SRP path bypasses the backup-wallet availability check — it uses the
   // mnemonic directly and does not require a Web3Auth backup wallet.
-  if (
-    selectedResetMethod !== RESET_METHOD.SRP &&
-    !isRecoveryAvailable
-  ) {
+  if (selectedResetMethod !== RESET_METHOD.SRP && !isRecoveryAvailable) {
     return <RecoveryNotAvailable />;
   }
 

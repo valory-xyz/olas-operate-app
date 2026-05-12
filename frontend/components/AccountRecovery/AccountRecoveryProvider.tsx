@@ -22,7 +22,12 @@ import { Address } from '@/types';
 import { SwapSafeTransaction } from '@/types/Recovery';
 
 import { TokenRequirementsRow } from '../ui';
-import { RECOVERY_STEPS, RESET_METHOD, RecoverySteps, ResetMethod } from './constants';
+import {
+  RECOVERY_STEPS,
+  RecoverySteps,
+  RESET_METHOD,
+  ResetMethod,
+} from './constants';
 import {
   getBackupWalletStatus,
   parseRecoveryFundingRequirements,
