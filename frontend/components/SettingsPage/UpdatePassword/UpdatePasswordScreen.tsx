@@ -43,12 +43,15 @@ export const UpdatePasswordScreen = () => {
     !!newPassword &&
     newPassword.length >= 8 &&
     /^[\x20-\x7E]*$/.test(newPassword);
-  const passwordsMatch =
-    !!newPassword && !!confirmNewPassword && newPassword === confirmNewPassword;
-  const passwordsMismatch =
-    !!newPassword && !!confirmNewPassword && newPassword !== confirmNewPassword;
+  const passwordsState: 'match' | 'mismatch' | null =
+    !newPassword || !confirmNewPassword
+      ? null
+      : newPassword === confirmNewPassword
+        ? 'match'
+        : 'mismatch';
 
-  const isFormValid = !!currentPassword && isNewPasswordValid && passwordsMatch;
+  const isFormValid =
+    !!currentPassword && isNewPasswordValid && passwordsState === 'match';
 
   const handleSubmit = async (values: UpdatePasswordFormValues) => {
     setIsSubmitting(true);
@@ -148,7 +151,7 @@ export const UpdatePasswordScreen = () => {
               <Input.Password
                 size="large"
                 maxLength={64}
-                status={passwordsMismatch ? 'error' : undefined}
+                status={passwordsState === 'mismatch' ? 'error' : undefined}
               />
             </Form.Item>
 
@@ -157,7 +160,7 @@ export const UpdatePasswordScreen = () => {
               label={<FormLabel>Confirm new password</FormLabel>}
               rules={[{ required: true }]}
               help={
-                passwordsMatch ? (
+                passwordsState === 'match' ? (
                   <Flex align="center" gap={6} className="mt-6">
                     <LuCircleCheck
                       style={{ color: COLOR.TEXT_COLOR.SUCCESS.DEFAULT }}
@@ -169,7 +172,7 @@ export const UpdatePasswordScreen = () => {
                       Passwords match
                     </Text>
                   </Flex>
-                ) : passwordsMismatch ? (
+                ) : passwordsState === 'mismatch' ? (
                   <Flex align="center" gap={6} className="mt-6">
                     <LuTriangleAlert
                       style={{ color: COLOR.TEXT_COLOR.ERROR.DEFAULT }}
@@ -189,7 +192,7 @@ export const UpdatePasswordScreen = () => {
               <Input.Password
                 size="large"
                 maxLength={64}
-                status={passwordsMismatch ? 'error' : undefined}
+                status={passwordsState === 'mismatch' ? 'error' : undefined}
               />
             </Form.Item>
 
