@@ -15,7 +15,7 @@ import { FundYourBackupWallet } from './components/FundYourBackupWallet';
 import { RecoverExistingAccountCard } from './components/RecoverExistingAccountCard';
 import { RecoveryNotAvailable } from './components/RecoveryNotAvailable';
 import { ForgotPasswordCard } from './components/RecoveryViaBackupWallet';
-import { RECOVERY_STEPS } from './constants';
+import { RECOVERY_STEPS, RESET_METHOD } from './constants';
 import { RecoveryMethodCard } from './styles';
 
 const { Text, Title } = Typography;
@@ -56,19 +56,23 @@ const SelectRecoveryMethod = () => {
 };
 
 const AccountRecoveryInner = () => {
-  const { isLoading, isRecoveryAvailable, currentStep } =
+  const { isLoading, isRecoveryAvailable, currentStep, selectedResetMethod } =
     useAccountRecoveryContext();
 
   const currentView = useMemo(() => {
     switch (currentStep) {
       case RECOVERY_STEPS.SelectRecoveryMethod:
         return <SelectRecoveryMethod />;
+      // Backup-wallet path
       case RECOVERY_STEPS.CreateNewPassword:
         return <CreateNewPassword />;
       case RECOVERY_STEPS.FundYourBackupWallet:
         return <FundYourBackupWallet />;
       case RECOVERY_STEPS.ApproveWithBackupWallet:
         return <ApproveWithBackupWallet />;
+      // SRP path — placeholder until Phase 4 adds the screen components
+      case RECOVERY_STEPS.EnterSecretRecoveryPhrase:
+      case RECOVERY_STEPS.SetNewPasswordViaSRP:
       default:
         return <SelectRecoveryMethod />;
     }
@@ -81,7 +85,15 @@ const AccountRecoveryInner = () => {
   // The isRecoveryAvailable gate is handled inside ForgotPasswordCard instead.
   if (currentStep === RECOVERY_STEPS.SelectRecoveryMethod) return currentView;
 
-  if (!isRecoveryAvailable) return <RecoveryNotAvailable />;
+  // SRP path bypasses the backup-wallet availability check — it uses the
+  // mnemonic directly and does not require a Web3Auth backup wallet.
+  if (
+    selectedResetMethod !== RESET_METHOD.SRP &&
+    !isRecoveryAvailable
+  ) {
+    return <RecoveryNotAvailable />;
+  }
+
   return currentView;
 };
 
