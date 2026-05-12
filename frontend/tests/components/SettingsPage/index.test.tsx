@@ -19,6 +19,10 @@ jest.mock('../../../hooks', () => ({
   useSettings: jest.fn(),
 }));
 
+jest.mock('../../../components/SettingsPage/UpdatePassword', () => ({
+  UpdatePasswordScreen: () => <div data-testid="update-password-screen" />,
+}));
+
 jest.mock('../../../components/SettingsPage/RecoveryModal', () => ({
   RecoveryModal: (props: { open: boolean }) =>
     props.open ? <div data-testid="recovery-modal" /> : null,
@@ -189,6 +193,13 @@ describe('Settings (SettingsPage entry)', () => {
       ).toBeInTheDocument();
     });
 
+    it('renders UpdatePasswordScreen when screen is UpdatePassword', () => {
+      setupDefaults({ screen: SettingsScreenMap.UpdatePassword });
+      render(<Settings />);
+      expect(screen.getByTestId('update-password-screen')).toBeInTheDocument();
+      expect(screen.queryByText('Settings')).not.toBeInTheDocument();
+    });
+
     it('renders null for an unknown screen value', () => {
       setupDefaults({ screen: 'UnknownScreen' as SettingsScreen });
       const { container } = render(<Settings />);
@@ -267,6 +278,30 @@ describe('Settings (SettingsPage entry)', () => {
     });
   });
 
+  describe('Password section', () => {
+    it('renders "Update Password" button on main settings', () => {
+      setupDefaults();
+      render(<Settings />);
+      expect(screen.getByText('Update Password')).toBeInTheDocument();
+    });
+
+    it('navigates to UpdatePassword screen when "Update Password" is clicked', () => {
+      const mockGoto = jest.fn();
+      mockUseSettings.mockReturnValue({
+        screen: SettingsScreenMap.Main,
+        goto: mockGoto,
+      });
+      mockUseMnemonicExists.mockReturnValue({ mnemonicExists: true });
+      mockUseRecoveryPhraseBackup.mockReturnValue({ isBackedUp: false });
+
+      render(<Settings />);
+      act(() => {
+        fireEvent.click(screen.getByText('Update Password'));
+      });
+      expect(mockGoto).toHaveBeenCalledWith(SettingsScreenMap.UpdatePassword);
+    });
+  });
+
   describe('SettingsScreenMap constant', () => {
     it('exports all expected screens', () => {
       expect(SettingsScreenMap).toEqual({
@@ -276,6 +311,7 @@ describe('Settings (SettingsPage entry)', () => {
         UpdateBackupWalletMethod: 'UpdateBackupWalletMethod',
         UpdateBackupWalletManual: 'UpdateBackupWalletManual',
         UpdateBackupWalletConfirm: 'UpdateBackupWalletConfirm',
+        UpdatePassword: 'UpdatePassword',
       });
     });
   });
