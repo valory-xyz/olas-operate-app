@@ -20,7 +20,7 @@ jest.mock(
   () => require('../../../mocks/styledComponents').styledComponentsMock,
 );
 /* eslint-enable @typescript-eslint/no-var-requires */
-jest.mock('../../../../constants/providers', () => ({}));
+jest.mock('../../../../constants/providers', () => ({ PROVIDERS: {} }));
 jest.mock('../../../../config/providers', () => ({}));
 
 jest.mock('next/image', () => ({
@@ -214,7 +214,9 @@ describe('AgentTreeMenu', () => {
       />,
     );
 
-    expect(screen.queryByRole('img')).not.toBeInTheDocument();
+    expect(
+      screen.queryByLabelText(/rewards earned this cycle/i),
+    ).not.toBeInTheDocument();
   });
 
   it('does not show reward dot for a running instance', () => {
@@ -234,8 +236,10 @@ describe('AgentTreeMenu', () => {
       />,
     );
 
-    // PulseDot (role="status") should be shown, no RewardDot (role="img")
+    // PulseDot (role="status") should be shown; RewardDot (aria-label "*rewards earned this cycle*") should not.
     expect(screen.getByRole('status')).toBeInTheDocument();
-    expect(screen.queryByRole('img')).not.toBeInTheDocument();
+    expect(
+      screen.queryByLabelText(/rewards earned this cycle/i),
+    ).not.toBeInTheDocument();
   });
 });

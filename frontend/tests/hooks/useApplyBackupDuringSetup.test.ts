@@ -9,7 +9,7 @@ import {
 } from '../../service/BackupWalletService';
 import { Address } from '../../types/Address';
 
-jest.mock('../../constants/providers', () => ({}));
+jest.mock('../../constants/providers', () => ({ PROVIDERS: {} }));
 
 const mockApplyBackupOwner = jest.fn();
 const mockSetPassword = jest.fn();

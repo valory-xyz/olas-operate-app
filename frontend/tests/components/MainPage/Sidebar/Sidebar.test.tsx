@@ -24,7 +24,7 @@ jest.mock(
   () => require('../../../mocks/styledComponents').styledComponentsMock,
 );
 /* eslint-enable @typescript-eslint/no-var-requires */
-jest.mock('../../../../constants/providers', () => ({}));
+jest.mock('../../../../constants/providers', () => ({ PROVIDERS: {} }));
 jest.mock('../../../../config/providers', () => ({}));
 
 jest.mock('next/image', () => ({
@@ -67,6 +67,8 @@ jest.mock('../../../../hooks', () => ({
   useIsInitiallyFunded: () => ({
     isInstanceInitiallyFunded: mockIsInstanceInitiallyFunded,
   }),
+  useAllInstancesRewardStatus: () => new Map(),
+  useBackupOwnerStatus: () => ({}),
 }));
 
 const mockUseServices = jest.fn();

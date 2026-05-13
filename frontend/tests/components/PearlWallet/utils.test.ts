@@ -13,7 +13,7 @@ jest.mock(
   'ethers-multicall',
   () => require('../../mocks/ethersMulticall').ethersMulticallMock,
 );
-jest.mock('../../../constants/providers', () => ({}));
+jest.mock('../../../constants/providers', () => ({ PROVIDERS: {} }));
 
 // Dynamically import after mocks are in place
 const { getInitialDepositForMasterSafe } =
