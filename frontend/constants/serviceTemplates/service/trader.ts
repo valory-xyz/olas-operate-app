@@ -11,7 +11,7 @@ import { X402_ENABLED_FLAGS } from '../../x402';
 import { KPI_DESC_PREFIX } from '../constants';
 
 export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
-  hash: 'bafybeia7tgq2u4care2tifsjuaufnrffs675xbt3egnjpeeduo2ok4d6vi',
+  hash: 'bafybeicqaleelkv63fmgfdi4zh3ux3mquzcuo5lascjqei57vcrnqovy6m',
   service_version: 'v0.38.0-rc1',
   agent_release: {
     is_aea: true,
@@ -30,7 +30,7 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
   configurations: {
     [MiddlewareChainMap.GNOSIS]: {
       staking_program_id: STAKING_PROGRAM_IDS.PearlBetaMechMarketplace3, // default, may be overwritten
-      nft: 'bafybeicqaleelkv63fmgfdi4zh3ux3mquzcuo5lascjqei57vcrnqovy6m',
+      nft: 'bafybeig64atqaladigoc3ds4arltdu63wkdrk3gesjfvnfdmz35amv7faq',
       rpc: '', // overwritten
       agent_id: 14,
       cost_of_bond: parseEther(20),
