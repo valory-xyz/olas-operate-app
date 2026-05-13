@@ -1,7 +1,12 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 
 import { AccountRecovery } from '../../../components/AccountRecovery';
-import { RECOVERY_STEPS } from '../../../components/AccountRecovery/constants';
+import {
+  RECOVERY_STEPS,
+  RecoverySteps,
+  RESET_METHOD,
+  ResetMethod,
+} from '../../../components/AccountRecovery/constants';
 import { SETUP_SCREEN } from '../../../constants';
 
 const mockGoto = jest.fn();
@@ -12,7 +17,14 @@ jest.mock('../../../hooks', () => ({
 }));
 
 // Default mock — overridden per test when needed via mockContextValue
-const defaultContext = {
+const defaultContext: {
+  isLoading: boolean;
+  isRecoveryAvailable: boolean;
+  currentStep: RecoverySteps;
+  setCurrentStep: jest.Mock;
+  selectedResetMethod: ResetMethod | undefined;
+  setSelectedResetMethod: jest.Mock;
+} = {
   isLoading: false,
   isRecoveryAvailable: true,
   currentStep: RECOVERY_STEPS.SelectRecoveryMethod,
@@ -143,7 +155,7 @@ describe('AccountRecovery guard', () => {
       ...defaultContext,
       isRecoveryAvailable: false,
       currentStep: RECOVERY_STEPS.CreateNewPassword,
-      selectedResetMethod: 'BackupWallet',
+      selectedResetMethod: RESET_METHOD.BackupWallet,
     };
 
     render(<AccountRecovery />);
@@ -155,7 +167,7 @@ describe('AccountRecovery guard', () => {
       ...defaultContext,
       isRecoveryAvailable: false,
       currentStep: RECOVERY_STEPS.EnterSecretRecoveryPhrase,
-      selectedResetMethod: 'SRP',
+      selectedResetMethod: RESET_METHOD.SRP,
     };
 
     render(<AccountRecovery />);
