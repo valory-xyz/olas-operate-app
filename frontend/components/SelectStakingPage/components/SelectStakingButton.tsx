@@ -1,39 +1,66 @@
 import { Button, message } from 'antd';
-import { useMemo } from 'react';
 import { useBoolean } from 'usehooks-ts';
 
 import { SETUP_SCREEN, SetupScreen, StakingProgramId } from '@/constants';
 import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
 import {
   useIsInitiallyFunded,
-  useMasterBalances,
   useServices,
   useSetup,
   useStakingProgram,
 } from '@/hooks';
 import { BalanceService } from '@/service/Balance';
-import { WalletBalance } from '@/types';
+import { AddressBalanceRecord, BalancesAndFundingRequirements } from '@/types';
+import { Address } from '@/types/Address';
 import { onDummyServiceCreation, updateServiceIfNeeded } from '@/utils';
 
 import { useCanMigrate } from '../hooks/useCanMigrate';
 
+/**
+ * Returns true if any required token has a non-zero balance in the same
+ * wallet. Derived from the freshly fetched funding-requirements response so
+ * the routing decision is not subject to stale React state for the previous
+ * service config.
+ */
+const hasWalletContribution = (
+  balances: BalancesAndFundingRequirements['balances'],
+  totalRequirements: BalancesAndFundingRequirements['total_requirements'],
+): boolean =>
+  Object.entries(totalRequirements).some(([chain, addrMap]) => {
+    const chainBalances = balances?.[chain as keyof typeof balances] as
+      | AddressBalanceRecord
+      | undefined;
+    return Object.entries(addrMap as AddressBalanceRecord).some(
+      ([addr, tokenMap]) =>
+        Object.entries(tokenMap).some(([tokenAddr, required]) => {
+          if (BigInt(required) === 0n) return false;
+          const bal =
+            chainBalances?.[addr as Address]?.[tokenAddr as Address] ?? '0';
+          return BigInt(bal) > 0n;
+        }),
+    );
+  });
+
 /** Determines which funding screen to route to after staking selection */
 const resolveFundingRoute = async (
   serviceConfigId: string,
-  walletBalances: WalletBalance[],
 ): Promise<SetupScreen> => {
   const controller = new AbortController();
-  const { is_refill_required, allow_start_agent } =
-    await BalanceService.getBalancesAndFundingRequirements({
-      serviceConfigId,
-      signal: controller.signal,
-    });
+  const {
+    balances,
+    total_requirements,
+    is_refill_required,
+    allow_start_agent,
+  } = await BalanceService.getBalancesAndFundingRequirements({
+    serviceConfigId,
+    signal: controller.signal,
+  });
 
   if (!is_refill_required && allow_start_agent) {
     return SETUP_SCREEN.ConfirmFunding;
   }
 
-  if (walletBalances.some((b) => b.balance > 0)) {
+  if (hasWalletContribution(balances, total_requirements)) {
     return SETUP_SCREEN.BalanceCheck;
   }
 
@@ -63,26 +90,12 @@ export const SelectStakingButton = ({
   const {
     selectedService,
     selectedAgentType,
-    selectedAgentConfig,
     isLoading: isServicesLoading,
     refetch: refetchServices,
     updateSelectedServiceConfigId,
   } = useServices();
-  const { getMasterSafeBalancesOf, getMasterEoaBalancesOf } =
-    useMasterBalances();
   const { markServiceAsNotInitiallyFunded } = useIsInitiallyFunded();
 
-  const walletBalances = useMemo(() => {
-    const chainId = selectedAgentConfig.evmHomeChainId;
-    const safeBalances = getMasterSafeBalancesOf(chainId);
-    return safeBalances.length > 0
-      ? safeBalances
-      : getMasterEoaBalancesOf(chainId);
-  }, [
-    selectedAgentConfig.evmHomeChainId,
-    getMasterSafeBalancesOf,
-    getMasterEoaBalancesOf,
-  ]);
   const { buttonText, canMigrate } = useCanMigrate({
     stakingProgramId,
     isCurrentStakingProgram,
@@ -163,7 +176,7 @@ export const SelectStakingButton = ({
         return;
       }
 
-      const route = await resolveFundingRoute(serviceConfigId, walletBalances);
+      const route = await resolveFundingRoute(serviceConfigId);
       gotoSetup(route);
     } finally {
       stopLoading();
