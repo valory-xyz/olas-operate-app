@@ -1,21 +1,22 @@
 import { useMutation } from '@tanstack/react-query';
-import { Button, Flex, Form, Input, Typography } from 'antd';
+import { Button, Flex, Form, Typography } from 'antd';
 import { useCallback, useState } from 'react';
-import { LuCircleCheck, LuTriangleAlert } from 'react-icons/lu';
 import styled from 'styled-components';
-import zxcvbn from 'zxcvbn';
 
 import { SuccessOutlined, WarningOutlined } from '@/components/custom-icons';
 import {
   Alert,
   BackButton,
   CardFlex,
-  FormLabel,
   Modal,
   RequiredMark,
 } from '@/components/ui';
-import { PasswordStrength } from '@/components/ui/forms';
-import { COLOR, PAGES, SETUP_SCREEN } from '@/constants';
+import {
+  PASSWORD_REQUIREMENTS_MESSAGE,
+  PasswordSetupFields,
+  usePasswordSetupValidity,
+} from '@/components/ui/forms';
+import { PAGES, SETUP_SCREEN } from '@/constants';
 import { ERROR_CODE } from '@/constants/errors';
 import { useSupportModal } from '@/context/SupportModalProvider';
 import { usePageState, useSetup } from '@/hooks';
@@ -97,21 +98,7 @@ export const SetNewPasswordViaSRP = () => {
   }, [isUserLoggedIn, gotoPage, gotoSetup]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const newPassword = Form.useWatch('newPassword', form);
-  const confirmNewPassword = Form.useWatch('confirmNewPassword', form);
-
-  const isNewPasswordValid =
-    !!newPassword &&
-    newPassword.length >= 8 &&
-    /^[\x20-\x7E]*$/.test(newPassword);
-  const passwordsState: 'match' | 'mismatch' | null =
-    !newPassword || !confirmNewPassword
-      ? null
-      : newPassword === confirmNewPassword
-        ? 'match'
-        : 'mismatch';
-
-  const isFormValid = isNewPasswordValid && passwordsState === 'match';
+  const { isValid: isFormValid } = usePasswordSetupValidity(form);
 
   const { mutateAsync: resetAccount } = useMutation({
     mutationFn: async ({
@@ -171,7 +158,7 @@ export const SetNewPasswordViaSRP = () => {
       <Alert
         type="info"
         showIcon
-        message="Your password must be at least 8 characters long. Use a mix of letters, numbers, and symbols."
+        message={PASSWORD_REQUIREMENTS_MESSAGE}
         className="text-sm"
       />
 
@@ -183,78 +170,7 @@ export const SetNewPasswordViaSRP = () => {
         requiredMark={RequiredMark}
       >
         <Flex vertical gap={24}>
-          <Form.Item
-            name="newPassword"
-            label={<FormLabel>New password</FormLabel>}
-            rules={[
-              { required: true, message: 'Please input a password.' },
-              {
-                validator: (_, value) => {
-                  if (!value) return Promise.resolve();
-                  if (!/^[\x20-\x7E]*$/.test(value)) {
-                    return Promise.reject(
-                      new Error('Password must only contain ASCII characters.'),
-                    );
-                  }
-                  return Promise.resolve();
-                },
-              },
-            ]}
-            help={
-              isNewPasswordValid ? (
-                <div className="mt-6">
-                  <PasswordStrength score={zxcvbn(newPassword).score} />
-                </div>
-              ) : null
-            }
-            labelCol={{ style: { paddingBottom: 4 } }}
-            style={{ marginBottom: 0 }}
-          >
-            <Input.Password size="large" maxLength={64} />
-          </Form.Item>
-
-          <Form.Item
-            name="confirmNewPassword"
-            label={<FormLabel>Confirm new password</FormLabel>}
-            rules={[
-              { required: true, message: 'Please confirm your password.' },
-            ]}
-            help={
-              passwordsState === 'match' ? (
-                <Flex align="center" gap={6} className="mt-6">
-                  <LuCircleCheck
-                    style={{ color: COLOR.TEXT_COLOR.SUCCESS.DEFAULT }}
-                  />
-                  <Text
-                    style={{ color: COLOR.TEXT_COLOR.SUCCESS.DEFAULT }}
-                    className="text-sm"
-                  >
-                    Passwords match
-                  </Text>
-                </Flex>
-              ) : passwordsState === 'mismatch' ? (
-                <Flex align="center" gap={6} className="mt-6">
-                  <LuTriangleAlert
-                    style={{ color: COLOR.TEXT_COLOR.ERROR.DEFAULT }}
-                  />
-                  <Text
-                    style={{ color: COLOR.TEXT_COLOR.ERROR.DEFAULT }}
-                    className="text-sm"
-                  >
-                    Passwords don&apos;t match
-                  </Text>
-                </Flex>
-              ) : null
-            }
-            labelCol={{ style: { paddingBottom: 4 } }}
-            style={{ marginBottom: 0 }}
-          >
-            <Input.Password
-              size="large"
-              maxLength={64}
-              status={passwordsState === 'mismatch' ? 'error' : undefined}
-            />
-          </Form.Item>
+          <PasswordSetupFields />
 
           <Form.Item style={{ marginBottom: 0 }}>
             <Flex gap={12}>

@@ -91,11 +91,15 @@ jest.mock('../../../components/ui', () => ({
   RequiredMark: undefined,
 }));
 
-jest.mock('../../../components/ui/forms', () => ({
-  PasswordStrength: ({ score }: { score: number }) => (
-    <div data-testid="password-strength">Score: {score}</div>
-  ),
-}));
+jest.mock('../../../components/ui/forms', () => {
+  const actual = jest.requireActual('../../../components/ui/forms');
+  return {
+    ...actual,
+    PasswordStrength: ({ score }: { score: number }) => (
+      <div data-testid="password-strength">Score: {score}</div>
+    ),
+  };
+});
 
 const renderComponent = () =>
   render(<SetNewPasswordViaSRP />, {

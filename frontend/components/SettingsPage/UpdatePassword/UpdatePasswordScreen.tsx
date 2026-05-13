@@ -1,7 +1,5 @@
 import { Button, Flex, Form, Input, Typography } from 'antd';
 import { useState } from 'react';
-import { LuCircleCheck, LuTriangleAlert } from 'react-icons/lu';
-import zxcvbn from 'zxcvbn';
 
 import {
   Alert,
@@ -11,8 +9,12 @@ import {
   FormLabel,
   RequiredMark,
 } from '@/components/ui';
-import { PasswordStrength } from '@/components/ui/forms';
-import { COLOR, PAGES, SETUP_SCREEN } from '@/constants';
+import {
+  PASSWORD_REQUIREMENTS_MESSAGE,
+  PasswordSetupFields,
+  usePasswordSetupValidity,
+} from '@/components/ui/forms';
+import { PAGES, SETUP_SCREEN } from '@/constants';
 import { ERROR_CODE } from '@/constants/errors';
 import { SettingsScreenMap } from '@/constants/screen';
 import { useMessageApi } from '@/context/MessageProvider';
@@ -36,22 +38,8 @@ export const UpdatePasswordScreen = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const currentPassword = Form.useWatch('currentPassword', form);
-  const newPassword = Form.useWatch('newPassword', form);
-  const confirmNewPassword = Form.useWatch('confirmNewPassword', form);
-
-  const isNewPasswordValid =
-    !!newPassword &&
-    newPassword.length >= 8 &&
-    /^[\x20-\x7E]*$/.test(newPassword);
-  const passwordsState: 'match' | 'mismatch' | null =
-    !newPassword || !confirmNewPassword
-      ? null
-      : newPassword === confirmNewPassword
-        ? 'match'
-        : 'mismatch';
-
-  const isFormValid =
-    !!currentPassword && isNewPasswordValid && passwordsState === 'match';
+  const { isValid: passwordsValid } = usePasswordSetupValidity(form);
+  const isFormValid = !!currentPassword && passwordsValid;
 
   const handleSubmit = async (values: UpdatePasswordFormValues) => {
     setIsSubmitting(true);
@@ -99,7 +87,7 @@ export const UpdatePasswordScreen = () => {
         <Alert
           type="info"
           showIcon
-          message="Your password must be at least 8 characters long. Use a mix of letters, numbers, and symbols."
+          message={PASSWORD_REQUIREMENTS_MESSAGE}
           className="text-sm"
         />
 
@@ -134,67 +122,7 @@ export const UpdatePasswordScreen = () => {
               <Input.Password size="large" maxLength={64} />
             </Form.Item>
 
-            <Form.Item
-              name="newPassword"
-              label={<FormLabel>New password</FormLabel>}
-              rules={[{ required: true }]}
-              help={
-                isNewPasswordValid ? (
-                  <div className="mt-6">
-                    <PasswordStrength score={zxcvbn(newPassword).score} />
-                  </div>
-                ) : null
-              }
-              labelCol={{ style: { paddingBottom: 4 } }}
-              style={{ marginBottom: 0 }}
-            >
-              <Input.Password
-                size="large"
-                maxLength={64}
-                status={passwordsState === 'mismatch' ? 'error' : undefined}
-              />
-            </Form.Item>
-
-            <Form.Item
-              name="confirmNewPassword"
-              label={<FormLabel>Confirm new password</FormLabel>}
-              rules={[{ required: true }]}
-              help={
-                passwordsState === 'match' ? (
-                  <Flex align="center" gap={6} className="mt-6">
-                    <LuCircleCheck
-                      style={{ color: COLOR.TEXT_COLOR.SUCCESS.DEFAULT }}
-                    />
-                    <Text
-                      style={{ color: COLOR.TEXT_COLOR.SUCCESS.DEFAULT }}
-                      className="text-sm"
-                    >
-                      Passwords match
-                    </Text>
-                  </Flex>
-                ) : passwordsState === 'mismatch' ? (
-                  <Flex align="center" gap={6} className="mt-6">
-                    <LuTriangleAlert
-                      style={{ color: COLOR.TEXT_COLOR.ERROR.DEFAULT }}
-                    />
-                    <Text
-                      style={{ color: COLOR.TEXT_COLOR.ERROR.DEFAULT }}
-                      className="text-sm"
-                    >
-                      Passwords don&apos;t match
-                    </Text>
-                  </Flex>
-                ) : null
-              }
-              labelCol={{ style: { paddingBottom: 4 } }}
-              style={{ marginBottom: 0 }}
-            >
-              <Input.Password
-                size="large"
-                maxLength={64}
-                status={passwordsState === 'mismatch' ? 'error' : undefined}
-              />
-            </Form.Item>
+            <PasswordSetupFields />
 
             <Form.Item style={{ marginBottom: 0 }}>
               <Button

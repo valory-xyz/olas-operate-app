@@ -56,11 +56,15 @@ jest.mock('../../../../components/ui', () => ({
   RequiredMark: (label: React.ReactNode) => label,
 }));
 
-jest.mock('../../../../components/ui/forms', () => ({
-  PasswordStrength: (props: { score: number }) => (
-    <div data-testid="password-strength" data-score={props.score} />
-  ),
-}));
+jest.mock('../../../../components/ui/forms', () => {
+  const actual = jest.requireActual('../../../../components/ui/forms');
+  return {
+    ...actual,
+    PasswordStrength: (props: { score: number }) => (
+      <div data-testid="password-strength" data-score={props.score} />
+    ),
+  };
+});
 
 jest.mock('zxcvbn', () => ({
   __esModule: true,
@@ -176,7 +180,7 @@ describe('UpdatePasswordScreen', () => {
       await act(async () => {
         fillField('New password', 'validpass');
       });
-      expect(screen.getByTestId('password-strength')).toBeInTheDocument();
+      expect(screen.getByText(/Password strength:/)).toBeInTheDocument();
     });
   });
 
