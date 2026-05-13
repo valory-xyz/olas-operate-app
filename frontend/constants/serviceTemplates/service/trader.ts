@@ -11,7 +11,7 @@ import { X402_ENABLED_FLAGS } from '../../x402';
 import { KPI_DESC_PREFIX } from '../constants';
 
 export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
-  hash: 'bafybeiaxlrbad4qc72vmqvzslcr3x2cygs622zyjywa7v3lzz3pmceurau',
+  hash: 'bafybeia7tgq2u4care2tifsjuaufnrffs675xbt3egnjpeeduo2ok4d6vi',
   service_version: 'v0.37.0-rc1',
   agent_release: {
     is_aea: true,
@@ -121,13 +121,6 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
       value: 'benchmarks/',
       provision_type: EnvProvisionType.COMPUTED,
     },
-    IRRELEVANT_TOOLS: {
-      name: 'Irrelevant tools',
-      description: '',
-      value:
-        '["native-transfer","prediction-online-lite","claude-prediction-online-lite","prediction-online-sme-lite","prediction-request-reasoning-lite","prediction-request-reasoning-claude-lite","prediction-offline-sme","deepmind-optimization","deepmind-optimization-strong","openai-gpt-3.5-turbo","openai-gpt-3.5-turbo-instruct","openai-gpt-4","openai-gpt-4o-2024-08-06","openai-text-davinci-002","openai-text-davinci-003","prediction-online-sum-url-content","prediction-online-summarized-info","stabilityai-stable-diffusion-512-v2-1","stabilityai-stable-diffusion-768-v2-1","stabilityai-stable-diffusion-v1-5","stabilityai-stable-diffusion-xl-beta-v2-2-2","prediction-url-cot-claude","prediction-url-cot","resolve-market-reasoning-gpt-4.1","resolve-market-jury-v1","gemini-2.5-flash","anthropic-claude-opus-4-5-latest","echo","profit_pulse","claude-prediction-online","claude-prediction-offline","prediction-request-rag-claude","prediction-online-sme","prediction_request_reasoning-claude","prediction_request_reasoning-5.2.mini","prediction_request_reasoning","prediction-request-reasoning","prediction-request-rag","prediction-online","nephyr_risk_mech","nephyr_weather_mech","nephyr_wallets_mech","nephyr_backtest_mech","openai-gpt-4.1-2025-04-14"]',
-      provision_type: EnvProvisionType.FIXED,
-    },
     GENAI_API_KEY: {
       name: 'Gemini API Key',
       description: 'Gemini api key to allow the agent to use Gemini',
@@ -151,7 +144,7 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
 } as const;
 
 export const PREDICT_POLYMARKET_SERVICE_TEMPLATE: ServiceTemplate = {
-  hash: 'bafybeie7xyefp6ncipi746qtckb7svhsgecjnkmaggvopv452yhtgfnrpe',
+  hash: 'bafybeigdfaporeg7ltoacy7jesxcbpxelmqmcmi6fr2fh5f6dyfgz5bloe',
   service_version: 'v0.36.0-rc2',
   agent_release: {
     is_aea: true,
@@ -267,13 +260,6 @@ export const PREDICT_POLYMARKET_SERVICE_TEMPLATE: ServiceTemplate = {
       description: '',
       value: 'benchmarks/',
       provision_type: EnvProvisionType.COMPUTED,
-    },
-    IRRELEVANT_TOOLS: {
-      name: 'Irrelevant tools',
-      description: '',
-      value:
-        '["native-transfer","prediction-online-lite","claude-prediction-online-lite","prediction-online-sme-lite","prediction-request-reasoning-lite","prediction-request-reasoning-claude-lite","prediction-offline-sme","deepmind-optimization","deepmind-optimization-strong","openai-gpt-3.5-turbo","openai-gpt-3.5-turbo-instruct","openai-gpt-4","openai-text-davinci-002","openai-text-davinci-003","prediction-online-sum-url-content","prediction-online-summarized-info","stabilityai-stable-diffusion-512-v2-1","stabilityai-stable-diffusion-768-v2-1","stabilityai-stable-diffusion-v1-5","stabilityai-stable-diffusion-xl-beta-v2-2-2","prediction-url-cot-claude","prediction-url-cot","resolve-market-reasoning-gpt-4.1","resolve-market-jury-v1","echo","profit_pulse","prediction_request_reasoning-claude","prediction_request_reasoning-5.2.mini","prediction_request_reasoning","prediction-online-sme","claude-prediction-online","prediction-request-rag","prediction-offline","claude-prediction-offline","prediction-request-rag-claude","prediction-online","prediction-request-reasoning-claude","prediction-request-reasoning"]',
-      provision_type: EnvProvisionType.FIXED,
     },
     GENAI_API_KEY: {
       name: 'Gemini API Key',
