@@ -102,20 +102,8 @@ describe('EnterSecretRecoveryPhrase', () => {
     render(<EnterSecretRecoveryPhrase />);
     const inputs = screen.getAllByRole('textbox');
 
-    // The grid uses interleaved indices (2-column layout), so input order
-    // in the DOM is: word 1, word 7, word 2, word 8, ..., word 6, word 12.
-    // We need to fill by the grid position -> word index mapping.
-    const HALF = 6;
-    const orderedIndices = Array.from({ length: 12 }, (_, gridPos) => {
-      const row = Math.floor(gridPos / 2);
-      const col = gridPos % 2;
-      return col === 0 ? row : row + HALF;
-    });
-
-    orderedIndices.forEach((wordIndex, gridPos) => {
-      fireEvent.change(inputs[gridPos], {
-        target: { value: VALID_WORDS[wordIndex] },
-      });
+    VALID_WORDS.forEach((word, i) => {
+      fireEvent.change(inputs[i], { target: { value: word } });
     });
 
     const button = screen.getByRole('button', { name: 'Continue' });
@@ -126,17 +114,8 @@ describe('EnterSecretRecoveryPhrase', () => {
     render(<EnterSecretRecoveryPhrase />);
     const inputs = screen.getAllByRole('textbox');
 
-    const HALF = 6;
-    const orderedIndices = Array.from({ length: 12 }, (_, gridPos) => {
-      const row = Math.floor(gridPos / 2);
-      const col = gridPos % 2;
-      return col === 0 ? row : row + HALF;
-    });
-
-    orderedIndices.forEach((wordIndex, gridPos) => {
-      fireEvent.change(inputs[gridPos], {
-        target: { value: VALID_WORDS[wordIndex] },
-      });
+    VALID_WORDS.forEach((word, i) => {
+      fireEvent.change(inputs[i], { target: { value: word } });
     });
 
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }));

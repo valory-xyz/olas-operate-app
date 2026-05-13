@@ -16,16 +16,8 @@ import { useAccountRecoveryContext } from '../AccountRecoveryProvider';
 const { Title, Text } = Typography;
 
 const WORD_COUNT = 12;
-
-// Build interleaved indices for 2-column layout:
-// grid position 0 -> word 1 (index 0), grid position 1 -> word 7 (index 6),
-// grid position 2 -> word 2 (index 1), grid position 3 -> word 8 (index 7), etc.
-const HALF = WORD_COUNT / 2;
-const ORDERED_INDICES = Array.from({ length: WORD_COUNT }, (_, gridPos) => {
-  const row = Math.floor(gridPos / 2);
-  const col = gridPos % 2;
-  return col === 0 ? row : row + HALF;
-});
+const COLUMN_COUNT = 2;
+const ROW_COUNT = WORD_COUNT / COLUMN_COUNT;
 
 const FormCard = styled.div`
   width: 600px;
@@ -34,7 +26,9 @@ const FormCard = styled.div`
 
 const WordGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(${COLUMN_COUNT}, 1fr);
+  grid-template-rows: repeat(${ROW_COUNT}, auto);
+  grid-auto-flow: column;
   gap: 16px;
 `;
 
@@ -78,22 +72,21 @@ export const EnterSecretRecoveryPhrase = () => {
         if (srpError) setSrpError(undefined);
 
         // Focus the next unfilled input after paste
-        const targetWordIndex = Math.min(
+        const targetIndex = Math.min(
           index + pastedWords.length,
           WORD_COUNT - 1,
         );
-        const targetGridPos = ORDERED_INDICES.indexOf(targetWordIndex);
-        if (targetGridPos >= 0) inputRefs.current[targetGridPos]?.focus();
+        inputRefs.current[targetIndex]?.focus();
       }
     },
     [words, srpError, setSrpError],
   );
 
   const handleKeyDown = useCallback(
-    (gridPosition: number, e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === ' ' || e.key === 'Enter') {
-        e.preventDefault();
-        const next = gridPosition + 1;
+    (index: number, event: React.KeyboardEvent<HTMLInputElement>) => {
+      if (event.key === ' ' || event.key === 'Enter') {
+        event.preventDefault();
+        const next = index + 1;
         if (next < WORD_COUNT) {
           inputRefs.current[next]?.focus();
         }
@@ -145,13 +138,13 @@ export const EnterSecretRecoveryPhrase = () => {
         )}
 
         <WordGrid>
-          {ORDERED_INDICES.map((wordIndex, gridPosition) => (
+          {words.map((value, wordIndex) => (
             <Input
               key={wordIndex}
               ref={(el) => {
-                inputRefs.current[gridPosition] = el;
+                inputRefs.current[wordIndex] = el;
               }}
-              value={words[wordIndex]}
+              value={value}
               size="large"
               prefix={
                 <Text type="secondary" style={{ fontSize: 16 }}>
@@ -162,7 +155,7 @@ export const EnterSecretRecoveryPhrase = () => {
                 handleWordChange(wordIndex, e.target.value)
               }
               onPaste={(e) => handlePaste(wordIndex, e)}
-              onKeyDown={(e) => handleKeyDown(gridPosition, e)}
+              onKeyDown={(e) => handleKeyDown(wordIndex, e)}
               autoComplete="off"
               spellCheck={false}
             />

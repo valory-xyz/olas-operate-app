@@ -74,7 +74,7 @@ const BackupWalletCard = () => {
             className="flex align-center text-neutral-tertiary text-sm mb-0 justify-center"
             style={{ height: 40 }}
           >
-            No backup wallet set up.
+            No backup wallet found. Set up a backup wallet first.
           </Paragraph>
         )}
       </div>

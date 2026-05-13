@@ -81,7 +81,9 @@ describe('SelectPasswordResetOption', () => {
       isRecoveryAvailable: false,
     };
     render(<SelectPasswordResetOption />);
-    expect(screen.getByText('No backup wallet set up.')).toBeInTheDocument();
+    expect(
+      screen.getByText('No backup wallet found. Set up a backup wallet first.'),
+    ).toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: 'Reset via Backup Wallet' }),
     ).not.toBeInTheDocument();
