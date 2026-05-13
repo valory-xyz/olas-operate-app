@@ -6,6 +6,7 @@ import { ERROR_CODE } from '../../../constants/errors';
 import { createQueryClientWrapper } from '../../helpers/queryClient';
 
 const mockOnPrev = jest.fn();
+const mockSetSrpMnemonic = jest.fn();
 const mockSetSrpError = jest.fn();
 const mockGotoPage = jest.fn();
 const mockGotoSetup = jest.fn();
@@ -20,6 +21,7 @@ jest.mock(
     useAccountRecoveryContext: () => ({
       srpMnemonic:
         'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about',
+      setSrpMnemonic: mockSetSrpMnemonic,
       setSrpError: mockSetSrpError,
       onPrev: mockOnPrev,
     }),
@@ -286,9 +288,11 @@ describe('SetNewPasswordViaSRP', () => {
     expect(mockGotoPage).toHaveBeenCalledWith('Main');
   });
 
-  it('sets srpError and calls onPrev on MSG_INVALID_MNEMONIC error', async () => {
+  it('sets srpError and calls onPrev when backend rejects the mnemonic', async () => {
     mockResetAccountWithMnemonic.mockRejectedValue(
-      new Error(ERROR_CODE.MSG_INVALID_MNEMONIC),
+      new Error(
+        `Failed to update password: ${ERROR_CODE.MSG_INVALID_MNEMONIC}`,
+      ),
     );
     renderComponent();
 

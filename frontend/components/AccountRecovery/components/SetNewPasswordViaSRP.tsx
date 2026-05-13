@@ -1,4 +1,3 @@
-import { useMutation } from '@tanstack/react-query';
 import { Button, Flex, Form, Typography } from 'antd';
 import { useCallback, useState } from 'react';
 import styled from 'styled-components';
@@ -60,7 +59,7 @@ const PasswordResetFailedModal = ({
   <Modal
     header={<WarningOutlined />}
     title="Password Update Failed"
-    description="Please try again or contact the Valory support."
+    description="Please try again or contact Valory support."
     action={
       <Flex vertical gap={12} className="mt-24" style={{ width: '100%' }}>
         <Button type="primary" size="large" block onClick={onTryAgain}>
@@ -84,41 +83,35 @@ export const SetNewPasswordViaSRP = () => {
   const { isUserLoggedIn, goto: gotoPage } = usePageState();
   const { goto: gotoSetup } = useSetup();
   const { toggleSupportModal } = useSupportModal();
-  const { srpMnemonic, setSrpError, onPrev } = useAccountRecoveryContext();
+  const { srpMnemonic, setSrpMnemonic, setSrpError, onPrev } =
+    useAccountRecoveryContext();
   const [resultModal, setResultModal] = useState<'success' | 'error' | null>(
     null,
   );
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const exitFlow = useCallback(() => {
+    // Clear the in-memory mnemonic and any banner state
+    setSrpMnemonic(undefined);
+    setSrpError(undefined);
     if (isUserLoggedIn) {
       gotoPage(PAGES.Main);
     } else {
       gotoSetup(SETUP_SCREEN.Welcome);
     }
-  }, [isUserLoggedIn, gotoPage, gotoSetup]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  }, [isUserLoggedIn, gotoPage, gotoSetup, setSrpMnemonic, setSrpError]);
 
   const { isValid: isFormValid } = usePasswordSetupValidity(form);
-
-  const { mutateAsync: resetAccount } = useMutation({
-    mutationFn: async ({
-      mnemonic,
-      password,
-    }: {
-      mnemonic: string;
-      password: string;
-    }) => AccountService.resetAccountWithMnemonic(mnemonic, password),
-  });
 
   const handleSubmit = useCallback(
     async (values: SetNewPasswordFormValues) => {
       if (!srpMnemonic) return;
       setIsSubmitting(true);
       try {
-        await resetAccount({
-          mnemonic: srpMnemonic,
-          password: values.newPassword,
-        });
+        await AccountService.resetAccountWithMnemonic(
+          srpMnemonic,
+          values.newPassword,
+        );
 
         setResultModal('success');
       } catch (error) {
@@ -137,7 +130,7 @@ export const SetNewPasswordViaSRP = () => {
         setIsSubmitting(false);
       }
     },
-    [srpMnemonic, onPrev, resetAccount, setSrpError],
+    [srpMnemonic, onPrev, setSrpError],
   );
 
   return (

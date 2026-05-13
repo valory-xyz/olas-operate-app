@@ -40,9 +40,11 @@ export const EnterSecretRecoveryPhrase = () => {
   const [words, setWords] = useState<string[]>(emptyWords);
   const inputRefs = useRef<(InputRef | null)[]>([]);
 
-  const allWordsFilled = words.every((w) => w.trim().length > 0);
+  const normalizedWords = words.map((w) => w.trim().toLowerCase());
+  const normalizedMnemonic = normalizedWords.join(' ');
+  const allWordsFilled = normalizedWords.every((w) => w.length > 0);
   const isMnemonicValid =
-    allWordsFilled && ethers.utils.isValidMnemonic(words.join(' '));
+    allWordsFilled && ethers.utils.isValidMnemonic(normalizedMnemonic);
 
   const handleWordChange = useCallback(
     (index: number, value: string) => {
@@ -61,9 +63,13 @@ export const EnterSecretRecoveryPhrase = () => {
 
       if (pastedWords.length > 1) {
         e.preventDefault();
+        // A full-phrase paste (12 words) overwrites the whole grid from
+        // index 0 regardless of which input has focus — otherwise pasting
+        // into input N would silently drop the last N words.
+        const startIndex = pastedWords.length === WORD_COUNT ? 0 : index;
         const updated = [...words];
         pastedWords.forEach((word, i) => {
-          const targetIndex = index + i;
+          const targetIndex = startIndex + i;
           if (targetIndex < WORD_COUNT) {
             updated[targetIndex] = word;
           }
@@ -73,7 +79,7 @@ export const EnterSecretRecoveryPhrase = () => {
 
         // Focus the next unfilled input after paste
         const targetIndex = Math.min(
-          index + pastedWords.length,
+          startIndex + pastedWords.length,
           WORD_COUNT - 1,
         );
         inputRefs.current[targetIndex]?.focus();
@@ -97,9 +103,9 @@ export const EnterSecretRecoveryPhrase = () => {
 
   const handleContinue = useCallback(() => {
     if (!isMnemonicValid) return;
-    setSrpMnemonic(words.join(' '));
+    setSrpMnemonic(normalizedMnemonic);
     onNext();
-  }, [isMnemonicValid, words, setSrpMnemonic, onNext]);
+  }, [isMnemonicValid, normalizedMnemonic, setSrpMnemonic, onNext]);
 
   const showInvalidAlert = !!srpError || (allWordsFilled && !isMnemonicValid);
 

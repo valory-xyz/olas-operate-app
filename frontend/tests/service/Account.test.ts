@@ -192,15 +192,17 @@ describe('AccountService', () => {
       });
     });
 
-    it('throws MSG_INVALID_MNEMONIC error from backend', async () => {
-      const errorBody = mockJsonErrorBody('MSG_INVALID_MNEMONIC');
+    it('throws the wrapped invalid-mnemonic error from backend', async () => {
+      const errorBody = mockJsonErrorBody(
+        'Failed to update password: Seed phrase is not valid.',
+      );
       jest
         .spyOn(global, 'fetch')
         .mockReturnValue(mockJsonResponse(errorBody, false, 400));
 
       await expect(
         AccountService.resetAccountWithMnemonic(mnemonic, 'newpass456'),
-      ).rejects.toThrow('MSG_INVALID_MNEMONIC');
+      ).rejects.toThrow('Seed phrase is not valid.');
     });
 
     it('throws fallback message when response body is unparseable', async () => {

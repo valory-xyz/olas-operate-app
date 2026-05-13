@@ -208,9 +208,11 @@ describe('UpdatePasswordScreen', () => {
       });
     });
 
-    it('shows field error on MSG_INVALID_PASSWORD', async () => {
+    it('shows field error when backend rejects the current password', async () => {
       AccountService.updateAccount.mockRejectedValue(
-        new Error(ERROR_CODE.MSG_INVALID_PASSWORD),
+        new Error(
+          `Failed to update password: ${ERROR_CODE.MSG_INVALID_PASSWORD}`,
+        ),
       );
 
       render(<UpdatePasswordScreen />);

@@ -10,6 +10,10 @@ import { PasswordStrength } from './PasswordForm';
 
 const { Text } = Typography;
 
+const NEW_PASSWORD_FIELD = 'newPassword';
+const CONFIRM_PASSWORD_FIELD = 'confirmNewPassword';
+const MIN_PASSWORD_LENGTH = 8;
+
 export const PASSWORD_REQUIREMENTS_MESSAGE =
   'Your password must be at least 8 characters long. Use a mix of letters, numbers, and symbols.';
 
@@ -25,6 +29,20 @@ export const passwordAsciiRule: Rule = {
   },
 };
 
+const newPasswordMinLengthRule: Rule = {
+  min: MIN_PASSWORD_LENGTH,
+  message: `Password must be at least ${MIN_PASSWORD_LENGTH} characters.`,
+};
+
+const confirmPasswordMatchRule: Rule = ({ getFieldValue }) => ({
+  validator: (_rule, value) => {
+    if (!value || value === getFieldValue(NEW_PASSWORD_FIELD)) {
+      return Promise.resolve();
+    }
+    return Promise.reject(new Error("Passwords don't match."));
+  },
+});
+
 type PasswordsState = 'match' | 'mismatch' | null;
 
 type PasswordValidity = {
@@ -34,7 +52,9 @@ type PasswordValidity = {
 };
 
 const isAsciiAndLongEnough = (value: string | undefined) =>
-  !!value && value.length >= 8 && /^[\x20-\x7E]*$/.test(value);
+  !!value &&
+  value.length >= MIN_PASSWORD_LENGTH &&
+  /^[\x20-\x7E]*$/.test(value);
 
 const derivePasswordsState = (
   newPassword: string | undefined,
@@ -46,16 +66,14 @@ const derivePasswordsState = (
 
 /**
  * Derives the shared new-password + confirm-new-password validity for the
- * parent's CTA-gating. The companion <PasswordSetupFields /> renders the inputs.
+ * parent's CTA-gating. The companion <PasswordSetupFields /> renders the
+ * inputs under the canonical field names `newPassword` / `confirmNewPassword`.
  */
 export const usePasswordSetupValidity = (
   form: FormInstance,
-  fieldNames?: { newPassword?: string; confirmPassword?: string },
 ): PasswordValidity => {
-  const newName = fieldNames?.newPassword ?? 'newPassword';
-  const confirmName = fieldNames?.confirmPassword ?? 'confirmNewPassword';
-  const newPassword = Form.useWatch(newName, form);
-  const confirmNewPassword = Form.useWatch(confirmName, form);
+  const newPassword = Form.useWatch(NEW_PASSWORD_FIELD, form);
+  const confirmNewPassword = Form.useWatch(CONFIRM_PASSWORD_FIELD, form);
 
   const passwordsState = derivePasswordsState(newPassword, confirmNewPassword);
   const isValid =
@@ -64,23 +82,16 @@ export const usePasswordSetupValidity = (
   return { isValid, passwordsState, newPassword };
 };
 
-type PasswordSetupFieldsProps = {
-  newPasswordName?: string;
-  confirmPasswordName?: string;
-};
-
 /**
  * Shared "New password + Confirm new password" fields used by Settings'
  * UpdatePasswordScreen and the SRP-recovery SetNewPasswordViaSRP. Renders
  * the inputs, strength indicator, match/mismatch caption, and error-border
- * on mismatch.
+ * on mismatch. Validation rules are enforced both via the CTA disabled
+ * state and via antd Form rules so programmatic submits can't bypass them.
  */
-export const PasswordSetupFields = ({
-  newPasswordName = 'newPassword',
-  confirmPasswordName = 'confirmNewPassword',
-}: PasswordSetupFieldsProps) => {
-  const newPassword = Form.useWatch(newPasswordName);
-  const confirmNewPassword = Form.useWatch(confirmPasswordName);
+export const PasswordSetupFields = () => {
+  const newPassword = Form.useWatch(NEW_PASSWORD_FIELD);
+  const confirmNewPassword = Form.useWatch(CONFIRM_PASSWORD_FIELD);
 
   const isNewPasswordValid = isAsciiAndLongEnough(newPassword);
   const passwordsState = derivePasswordsState(newPassword, confirmNewPassword);
@@ -88,10 +99,11 @@ export const PasswordSetupFields = ({
   return (
     <>
       <Form.Item
-        name={newPasswordName}
+        name={NEW_PASSWORD_FIELD}
         label={<FormLabel>New password</FormLabel>}
         rules={[
           { required: true, message: 'Please input a password.' },
+          newPasswordMinLengthRule,
           passwordAsciiRule,
         ]}
         help={
@@ -108,9 +120,14 @@ export const PasswordSetupFields = ({
       </Form.Item>
 
       <Form.Item
-        name={confirmPasswordName}
+        name={CONFIRM_PASSWORD_FIELD}
         label={<FormLabel>Confirm new password</FormLabel>}
-        rules={[{ required: true, message: 'Please confirm your password.' }]}
+        dependencies={[NEW_PASSWORD_FIELD]}
+        rules={[
+          { required: true, message: 'Please confirm your password.' },
+          passwordAsciiRule,
+          confirmPasswordMatchRule,
+        ]}
         help={
           passwordsState === 'match' ? (
             <Flex align="center" gap={6} className="mt-6">
