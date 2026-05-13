@@ -12,13 +12,13 @@ import { KPI_DESC_PREFIX } from '../constants';
 
 export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
   hash: 'bafybeia7tgq2u4care2tifsjuaufnrffs675xbt3egnjpeeduo2ok4d6vi',
-  service_version: 'v0.37.0-rc1',
+  service_version: 'v0.38.0-rc1',
   agent_release: {
     is_aea: true,
     repository: {
       owner: 'valory-xyz',
       name: 'trader',
-      version: 'v0.37.0-rc1',
+      version: 'v0.38.0-rc1',
     },
   },
   agentType: AgentMap.PredictTrader,
@@ -30,7 +30,7 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
   configurations: {
     [MiddlewareChainMap.GNOSIS]: {
       staking_program_id: STAKING_PROGRAM_IDS.PearlBetaMechMarketplace3, // default, may be overwritten
-      nft: 'bafybeig64atqaladigoc3ds4arltdu63wkdrk3gesjfvnfdmz35amv7faq',
+      nft: 'bafybeicqaleelkv63fmgfdi4zh3ux3mquzcuo5lascjqei57vcrnqovy6m',
       rpc: '', // overwritten
       agent_id: 14,
       cost_of_bond: parseEther(20),
@@ -144,14 +144,14 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
 } as const;
 
 export const PREDICT_POLYMARKET_SERVICE_TEMPLATE: ServiceTemplate = {
-  hash: 'bafybeigdfaporeg7ltoacy7jesxcbpxelmqmcmi6fr2fh5f6dyfgz5bloe',
-  service_version: 'v0.36.0-rc2',
+  hash: 'bafybeiewekj6bj2rtgcd7yudleckyrzpi7qtng2sbsxb6sobajjhdisfum',
+  service_version: 'v0.38.0-rc1',
   agent_release: {
     is_aea: true,
     repository: {
       owner: 'valory-xyz',
       name: 'trader',
-      version: 'v0.36.0-rc2',
+      version: 'v0.38.0-rc1',
     },
   },
   agentType: AgentMap.Polystrat,
