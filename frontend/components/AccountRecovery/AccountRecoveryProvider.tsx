@@ -134,6 +134,14 @@ const AccountRecoveryContext = createContext<{
   selectedResetMethod?: ResetMethod;
   setSelectedResetMethod: (method: ResetMethod) => void;
 
+  // SRP path state
+  /** The 12-word mnemonic entered by the user (lives only in memory) */
+  srpMnemonic?: string;
+  setSrpMnemonic: (mnemonic: string | undefined) => void;
+  /** Error message from SRP validation (e.g. invalid mnemonic) */
+  srpError?: string;
+  setSrpError: (error: string | undefined) => void;
+
   // Navigation
   currentStep: RecoverySteps;
   onNext: () => void;
@@ -149,6 +157,8 @@ const AccountRecoveryContext = createContext<{
   recoveryFundingList: [],
   safeSwapTransactions: [],
   setSelectedResetMethod: () => {},
+  setSrpMnemonic: () => {},
+  setSrpError: () => {},
   onNext: () => {},
   onPrev: () => {},
 });
@@ -177,6 +187,8 @@ export const AccountRecoveryProvider = ({
   >();
   const [newMasterEoaAddress, setNewMasterEoaAddress] = useState<Address>();
   const [oldMasterEoaAddress, setOldMasterEoaAddress] = useState<Address>();
+  const [srpMnemonic, setSrpMnemonic] = useState<string | undefined>();
+  const [srpError, setSrpError] = useState<string | undefined>();
   const clearSelectedResetMethod = useCallback(
     () => setSelectedResetMethod(undefined),
     [],
@@ -303,6 +315,10 @@ export const AccountRecoveryProvider = ({
         safeSwapTransactions,
         selectedResetMethod,
         setSelectedResetMethod,
+        srpMnemonic,
+        setSrpMnemonic,
+        srpError,
+        setSrpError,
         updateNewMasterEoaAddress,
         onNext,
         onPrev,
