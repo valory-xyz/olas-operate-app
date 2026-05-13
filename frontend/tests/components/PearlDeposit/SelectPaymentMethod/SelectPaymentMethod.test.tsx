@@ -7,8 +7,15 @@ import {
 } from '../../../../constants/chains';
 import { MIN_ONRAMP_AMOUNT } from '../../../../constants/onramp';
 
-jest.mock('../../../../constants/providers', () => ({}));
+jest.mock('../../../../constants/providers', () => ({ PROVIDERS: {} }));
 jest.mock('../../../../config/providers', () => ({ providers: [] }));
+
+// IS_TRANSAK_UNAVAILABLE is currently true in production (on-ramp disabled);
+// these tests cover the on-ramp UI, so we force it to false here.
+jest.mock('../../../../constants/onramp', () => {
+  const actual = jest.requireActual('../../../../constants/onramp');
+  return { ...actual, IS_TRANSAK_UNAVAILABLE: false };
+});
 
 jest.mock('next/image', () => ({
   __esModule: true,

@@ -3,7 +3,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { UpdateBackupWalletConfirmScreen } from '../../../../../components/SettingsPage/BackupWallet/UpdateBackupWalletFlow/UpdateBackupWalletConfirmScreen';
 import { BackupWalletError } from '../../../../../service/BackupWalletService';
 
-jest.mock('../../../../../constants/providers', () => ({}));
+jest.mock('../../../../../constants/providers', () => ({ PROVIDERS: {} }));
 
 // ---------------------------------------------------------------------------
 // Mocks

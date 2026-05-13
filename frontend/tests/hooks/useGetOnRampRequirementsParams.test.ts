@@ -21,7 +21,7 @@ jest.mock('ethers-multicall', () => ({
   Provider: jest.fn().mockImplementation(() => ({})),
   Contract: jest.fn().mockImplementation(() => ({})),
 }));
-jest.mock('../../constants/providers', () => ({}));
+jest.mock('../../constants/providers', () => ({ PROVIDERS: {} }));
 jest.mock('../../config/providers', () => ({ providers: [] }));
 
 jest.mock('../../context/PearlWalletProvider', () => ({

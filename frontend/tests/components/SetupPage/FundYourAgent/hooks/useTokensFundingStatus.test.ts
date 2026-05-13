@@ -10,7 +10,7 @@ import { TokenRequirement } from '../../../../../types';
 import { DEFAULT_EOA_ADDRESS } from '../../../../helpers/factories';
 
 jest.mock('ethers-multicall', () => ({ Contract: jest.fn() }));
-jest.mock('../../../../../constants/providers', () => ({}));
+jest.mock('../../../../../constants/providers', () => ({ PROVIDERS: {} }));
 jest.mock('../../../../../config/providers', () => ({ providers: [] }));
 
 jest.mock('../../../../../hooks/useGetRefillRequirements', () => ({
