@@ -2487,35 +2487,38 @@ description = ""
 optional = false
 python-versions = "<3.15,>=3.10"
 groups = ["main"]
-files = [
-    {file = "olas_operate_middleware-0.15.18-py3-none-any.whl", hash = "sha256:c6e04c400f237299829b5a20f0b8a75f619e9474e266e2780b423da94fae1f28"},
-    {file = "olas_operate_middleware-0.15.18.tar.gz", hash = "sha256:988648c1243918bf3b1bcc75c142f2e8f5e237d6f98973b15aa9720bdd6e22fc"},
-]
+files = []
+develop = false
 
 [package.dependencies]
-aiohttp = ">=3.10,<4.0"
-argon2-cffi = "23.1.0"
-clea = "0.1.0rc4"
-cryptography = ">=46.0.3,<47.0.0"
-cytoolz = ">=1.0.0,<1.2.0"
-deepdiff = ">=8.6.1,<9.0.0"
+aiohttp = "^3.10"
+argon2-cffi = "==23.1.0"
+clea = "==0.1.0rc4"
+cryptography = "^46.0.3"
+cytoolz = "<1.2.0,>=1.0.0"
+deepdiff = "^8.6.1"
 fastapi = "0.110.3"
-flask = ">=3.0,<4.0"
-halo = "0.0.31"
-hexbytes = ">=1.2,<2.0"
-multiaddr = "0.0.9"
-open-aea-cli-ipfs = ">=2.1.0,<3.0.0"
-open-aea-ledger-cosmos = ">=2.1.0,<3.0.0"
-open-aea-ledger-ethereum = ">=2.1.0,<3.0.0"
-open-aea-ledger-ethereum-flashbots = ">=2.1.0,<3.0.0"
-open-autonomy = {version = ">=0.21.13,<0.22.0", extras = ["cli", "docker"]}
-psutil = ">=5.9.8,<6.0.0"
-pyinstaller = ">=6.8.0,<7.0.0"
-requests = ">=2.32,<3.0"
-requests-mock = ">=1.12.1,<2.0.0"
-typing_extensions = ">=4.12,<5.0"
-uvicorn = "0.27.0"
-werkzeug = ">=3.0,<4.0"
+flask = "^3.0"
+halo = "==0.0.31"
+hexbytes = "^1.2"
+multiaddr = "==0.0.9"
+open-aea-cli-ipfs = "^2.2.5"
+open-aea-ledger-cosmos = "^2.2.5"
+open-aea-ledger-ethereum = "^2.2.5"
+open-autonomy = {version = "^0.21.21", extras = ["cli", "docker"]}
+psutil = "^5.9.8"
+pyinstaller = "^6.8.0"
+requests = "^2.32"
+requests-mock = "^1.12.1"
+typing_extensions = "^4.12"
+uvicorn = "==0.27.0"
+werkzeug = "^3.0"
+
+[package.source]
+type = "git"
+url = "https://github.com/valory-xyz/olas-operate-middleware.git"
+reference = "1fd50277508ebaeb496e3e6618caac8845643725"
+resolved_reference = "1fd50277508ebaeb496e3e6618caac8845643725"
 
 [[package]]
 name = "open-aea"
@@ -2563,21 +2566,6 @@ open-aea = ">=2.0.0,<3.0.0"
 test-tools = ["pytest (>=7.0,<10)"]
 
 [[package]]
-name = "open-aea-flashbots"
-version = "2.1.0"
-description = ""
-optional = false
-python-versions = "<4.0,>=3.10"
-groups = ["main"]
-files = [
-    {file = "open_aea_flashbots-2.1.0-py3-none-any.whl", hash = "sha256:4ce58aa721fb58ca1da97e5f135218c2451922847f1b707412357cf2ff7eefb2"},
-    {file = "open_aea_flashbots-2.1.0.tar.gz", hash = "sha256:65a4e39615d59f96c8d6254cc6f7f9568f3e0253c66da8ff9042b1f51c80e494"},
-]
-
-[package.dependencies]
-web3 = ">=7,<8"
-
-[[package]]
 name = "open-aea-ledger-cosmos"
 version = "2.2.5"
 description = "Python package wrapping the public and private key cryptography and ledger api of Cosmos."
@@ -2617,22 +2605,6 @@ web3 = ">=7.0.0,<8"
 
 [package.extras]
 test-tools = ["docker (==7.1.0)", "pytest (>=7.0,<10)"]
-
-[[package]]
-name = "open-aea-ledger-ethereum-flashbots"
-version = "2.2.0"
-description = "Python package extending the default open-aea ethereum ledger plugin to add support for flashbots."
-optional = false
-python-versions = "<3.15,>=3.10"
-groups = ["main"]
-files = [
-    {file = "open_aea_ledger_ethereum_flashbots-2.2.0-py3-none-any.whl", hash = "sha256:be89c84a7fd5b44dc5992e54525a044fe09849c2084e51a9abfa6b13574df6e3"},
-    {file = "open_aea_ledger_ethereum_flashbots-2.2.0.tar.gz", hash = "sha256:427fcf2911bd3d95df3de2a76fb147a87c8f1cd8f383b0498143a11de25e2d22"},
-]
-
-[package.dependencies]
-open-aea-flashbots = ">=2.0.0,<3.0.0"
-open-aea-ledger-ethereum = ">=2.2.0,<2.3.0"
 
 [[package]]
 name = "open-aea-ledger-solana"
@@ -4434,4 +4406,4 @@ propcache = ">=0.2.1"
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.14,<3.15"
-content-hash = "388d00fc73c4a3be5f5653759342055ceaa43cc0bb5f72833abbb8b35d3c33ca"
+content-hash = "995051c04bc69cc22bc293331b240e7b7c69c5ac34ea187dc67fd65f32e7b76e"
