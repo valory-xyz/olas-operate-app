@@ -11,11 +11,13 @@ import {
 } from './AccountRecoveryProvider';
 import { ApproveWithBackupWallet } from './components/ApproveWithBackupWallet/ApproveWithBackupWallet';
 import { CreateNewPassword } from './components/CreateNewPassword';
+import { EnterSecretRecoveryPhrase } from './components/EnterSecretRecoveryPhrase';
 import { FundYourBackupWallet } from './components/FundYourBackupWallet';
 import { RecoverExistingAccountCard } from './components/RecoverExistingAccountCard';
 import { RecoveryNotAvailable } from './components/RecoveryNotAvailable';
 import { ForgotPasswordCard } from './components/RecoveryViaBackupWallet';
 import { SelectPasswordResetOption } from './components/SelectPasswordResetOption';
+import { SetNewPasswordViaSRP } from './components/SetNewPasswordViaSRP';
 import { RECOVERY_STEPS, RESET_METHOD } from './constants';
 import { RecoveryMethodCard } from './styles';
 
@@ -92,9 +94,11 @@ const AccountRecoveryInner = () => {
         return <FundYourBackupWallet />;
       case RECOVERY_STEPS.ApproveWithBackupWallet:
         return <ApproveWithBackupWallet />;
-      // SRP path — placeholder until Phase 4 adds the screen components
+      // SRP path
       case RECOVERY_STEPS.EnterSecretRecoveryPhrase:
+        return <EnterSecretRecoveryPhrase />;
       case RECOVERY_STEPS.SetNewPasswordViaSRP:
+        return <SetNewPasswordViaSRP />;
       default:
         return <SelectRecoveryMethod />;
     }

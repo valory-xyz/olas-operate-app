@@ -78,6 +78,24 @@ jest.mock(
   }),
 );
 
+jest.mock(
+  '../../../components/AccountRecovery/components/EnterSecretRecoveryPhrase',
+  () => ({
+    EnterSecretRecoveryPhrase: () => (
+      <div data-testid="enter-srp">Enter SRP</div>
+    ),
+  }),
+);
+
+jest.mock(
+  '../../../components/AccountRecovery/components/SetNewPasswordViaSRP',
+  () => ({
+    SetNewPasswordViaSRP: () => (
+      <div data-testid="set-new-password-srp">Set New Password via SRP</div>
+    ),
+  }),
+);
+
 jest.mock('../../../components/ui', () => ({
   BackButton: ({ onPrev }: { onPrev: () => void }) => (
     <button data-testid="back-btn" onClick={onPrev}>
