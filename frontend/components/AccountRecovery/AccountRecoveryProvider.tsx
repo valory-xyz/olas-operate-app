@@ -36,7 +36,6 @@ import {
 const useRecoveryNavigation = (
   currentStep: RecoverySteps,
   updateCurrentStep: (state: RecoverySteps) => void,
-  selectedResetMethod: ResetMethod | undefined,
   clearSelectedResetMethod: () => void,
 ) => {
   const { goto } = useSetup();
@@ -46,13 +45,8 @@ const useRecoveryNavigation = (
       case RECOVERY_STEPS.SelectRecoveryMethod:
         updateCurrentStep(RECOVERY_STEPS.SelectPasswordResetOption);
         break;
-      case RECOVERY_STEPS.SelectPasswordResetOption:
-        if (selectedResetMethod === RESET_METHOD.SRP) {
-          updateCurrentStep(RECOVERY_STEPS.EnterSecretRecoveryPhrase);
-        } else {
-          updateCurrentStep(RECOVERY_STEPS.CreateNewPassword);
-        }
-        break;
+      // SelectPasswordResetOption uses selectResetMethodAndProceed instead
+      // of onNext to avoid stale-closure reads of selectedResetMethod.
       // Backup-wallet path
       case RECOVERY_STEPS.CreateNewPassword:
         updateCurrentStep(RECOVERY_STEPS.FundYourBackupWallet);
@@ -73,7 +67,7 @@ const useRecoveryNavigation = (
       default:
         break;
     }
-  }, [updateCurrentStep, goto, currentStep, selectedResetMethod]);
+  }, [updateCurrentStep, goto, currentStep]);
 
   const onPrev = useCallback(() => {
     switch (currentStep) {
@@ -133,6 +127,12 @@ const AccountRecoveryContext = createContext<{
   // Reset method selection (backup-wallet vs SRP)
   selectedResetMethod?: ResetMethod;
   setSelectedResetMethod: (method: ResetMethod) => void;
+  /**
+   * Atomic action used by the picker screen: sets the chosen method and
+   * navigates to the corresponding next step in the same React tick to avoid
+   * stale-closure reads of selectedResetMethod inside onNext.
+   */
+  selectResetMethodAndProceed: (method: ResetMethod) => void;
 
   // SRP path state
   /** The 12-word mnemonic entered by the user (lives only in memory) */
@@ -157,6 +157,7 @@ const AccountRecoveryContext = createContext<{
   recoveryFundingList: [],
   safeSwapTransactions: [],
   setSelectedResetMethod: () => {},
+  selectResetMethodAndProceed: () => {},
   setSrpMnemonic: () => {},
   setSrpError: () => {},
   onNext: () => {},
@@ -193,10 +194,17 @@ export const AccountRecoveryProvider = ({
     () => setSelectedResetMethod(undefined),
     [],
   );
+  const selectResetMethodAndProceed = useCallback((method: ResetMethod) => {
+    setSelectedResetMethod(method);
+    setCurrentStep(
+      method === RESET_METHOD.SRP
+        ? RECOVERY_STEPS.EnterSecretRecoveryPhrase
+        : RECOVERY_STEPS.CreateNewPassword,
+    );
+  }, []);
   const { onNext, onPrev } = useRecoveryNavigation(
     currentStep,
     useCallback((step: RecoverySteps) => setCurrentStep(step), []),
-    selectedResetMethod,
     clearSelectedResetMethod,
   );
 
@@ -314,6 +322,7 @@ export const AccountRecoveryProvider = ({
         recoveryFundingList,
         safeSwapTransactions,
         selectedResetMethod,
+        selectResetMethodAndProceed,
         setSelectedResetMethod,
         srpMnemonic,
         setSrpMnemonic,

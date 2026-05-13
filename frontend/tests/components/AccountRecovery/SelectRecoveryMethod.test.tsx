@@ -216,7 +216,9 @@ describe('AccountRecovery guard', () => {
     };
 
     render(<AccountRecovery />);
-    expect(screen.getByText('Select Reset Method')).toBeInTheDocument();
+    expect(
+      screen.getByText('Select Password Reset Option'),
+    ).toBeInTheDocument();
     expect(
       screen.queryByTestId('recovery-not-available'),
     ).not.toBeInTheDocument();

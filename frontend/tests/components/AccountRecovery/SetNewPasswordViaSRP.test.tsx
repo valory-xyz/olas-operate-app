@@ -1,14 +1,15 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 
 import { SetNewPasswordViaSRP } from '../../../components/AccountRecovery/components/SetNewPasswordViaSRP';
+import { SETUP_SCREEN } from '../../../constants';
 import { ERROR_CODE } from '../../../constants/errors';
 import { createQueryClientWrapper } from '../../helpers/queryClient';
 
-const mockOnNext = jest.fn();
 const mockOnPrev = jest.fn();
 const mockSetSrpError = jest.fn();
 const mockGotoPage = jest.fn();
-const mockMessageError = jest.fn();
+const mockGotoSetup = jest.fn();
+const mockToggleSupportModal = jest.fn();
 const mockResetAccountWithMnemonic = jest.fn();
 
 let mockIsUserLoggedIn = false;
@@ -20,7 +21,6 @@ jest.mock(
       srpMnemonic:
         'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about',
       setSrpError: mockSetSrpError,
-      onNext: mockOnNext,
       onPrev: mockOnPrev,
     }),
   }),
@@ -31,10 +31,11 @@ jest.mock('../../../hooks', () => ({
     isUserLoggedIn: mockIsUserLoggedIn,
     goto: mockGotoPage,
   }),
+  useSetup: () => ({ goto: mockGotoSetup }),
 }));
 
-jest.mock('../../../context/MessageProvider', () => ({
-  useMessageApi: () => ({ error: mockMessageError }),
+jest.mock('../../../context/SupportModalProvider', () => ({
+  useSupportModal: () => ({ toggleSupportModal: mockToggleSupportModal }),
 }));
 
 jest.mock('../../../service/Account', () => ({
@@ -72,6 +73,21 @@ jest.mock('../../../components/ui', () => ({
   FormLabel: ({ children }: { children: React.ReactNode }) => (
     <label>{children}</label>
   ),
+  Modal: ({
+    title,
+    description,
+    action,
+  }: {
+    title?: string;
+    description?: React.ReactNode;
+    action?: React.ReactNode;
+  }) => (
+    <div role="dialog">
+      {title && <h3>{title}</h3>}
+      <div>{description}</div>
+      {action}
+    </div>
+  ),
   RequiredMark: undefined,
 }));
 
@@ -107,7 +123,7 @@ describe('SetNewPasswordViaSRP', () => {
 
   it('disables submit button when form is empty', () => {
     renderComponent();
-    const button = screen.getByRole('button', { name: 'Reset Password' });
+    const button = screen.getByRole('button', { name: 'Confirm Password' });
     expect(button).toBeDisabled();
   });
 
@@ -122,7 +138,7 @@ describe('SetNewPasswordViaSRP', () => {
     });
 
     await waitFor(() => {
-      const button = screen.getByRole('button', { name: 'Reset Password' });
+      const button = screen.getByRole('button', { name: 'Confirm Password' });
       expect(button).not.toBeDisabled();
     });
   });
@@ -163,7 +179,7 @@ describe('SetNewPasswordViaSRP', () => {
     expect(mockOnPrev).toHaveBeenCalled();
   });
 
-  it('calls resetAccountWithMnemonic and onNext on success (not logged in)', async () => {
+  it('shows success modal on resetAccountWithMnemonic success', async () => {
     mockIsUserLoggedIn = false;
     renderComponent();
 
@@ -176,23 +192,55 @@ describe('SetNewPasswordViaSRP', () => {
 
     await waitFor(() => {
       expect(
-        screen.getByRole('button', { name: 'Reset Password' }),
+        screen.getByRole('button', { name: 'Confirm Password' }),
       ).not.toBeDisabled();
     });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Reset Password' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm Password' }));
 
     await waitFor(() => {
       expect(mockResetAccountWithMnemonic).toHaveBeenCalledWith(
         'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about',
         'ValidPass1!',
       );
-      expect(mockOnNext).toHaveBeenCalled();
-      expect(mockGotoPage).not.toHaveBeenCalled();
+      expect(
+        screen.getByText('New Password Set Successfully!'),
+      ).toBeInTheDocument();
     });
+    // Navigation does not happen until the user clicks "Done"
+    expect(mockGotoSetup).not.toHaveBeenCalled();
+    expect(mockGotoPage).not.toHaveBeenCalled();
   });
 
-  it('calls gotoPage(Main) on success when user is logged in', async () => {
+  it('Done on success modal navigates to Welcome (not logged in)', async () => {
+    mockIsUserLoggedIn = false;
+    renderComponent();
+
+    fireEvent.change(screen.getByLabelText('New password'), {
+      target: { value: 'ValidPass1!' },
+    });
+    fireEvent.change(screen.getByLabelText('Confirm new password'), {
+      target: { value: 'ValidPass1!' },
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole('button', { name: 'Confirm Password' }),
+      ).not.toBeDisabled();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm Password' }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Done' })).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Done' }));
+    expect(mockGotoSetup).toHaveBeenCalledWith(SETUP_SCREEN.Welcome);
+    expect(mockGotoPage).not.toHaveBeenCalled();
+  });
+
+  it('Done on success modal navigates to Main when user is logged in', async () => {
     mockIsUserLoggedIn = true;
     renderComponent();
 
@@ -205,16 +253,33 @@ describe('SetNewPasswordViaSRP', () => {
 
     await waitFor(() => {
       expect(
-        screen.getByRole('button', { name: 'Reset Password' }),
+        screen.getByRole('button', { name: 'Confirm Password' }),
       ).not.toBeDisabled();
     });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Reset Password' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm Password' }));
 
     await waitFor(() => {
-      expect(mockGotoPage).toHaveBeenCalledWith('Main');
-      expect(mockOnNext).not.toHaveBeenCalled();
+      expect(screen.getByRole('button', { name: 'Done' })).toBeInTheDocument();
     });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Done' }));
+    expect(mockGotoPage).toHaveBeenCalledWith('Main');
+    expect(mockGotoSetup).not.toHaveBeenCalled();
+  });
+
+  it('renders a Cancel button that exits the flow (not logged in → Welcome)', () => {
+    mockIsUserLoggedIn = false;
+    renderComponent();
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect(mockGotoSetup).toHaveBeenCalledWith(SETUP_SCREEN.Welcome);
+  });
+
+  it('Cancel button routes logged-in users back to Main', () => {
+    mockIsUserLoggedIn = true;
+    renderComponent();
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect(mockGotoPage).toHaveBeenCalledWith('Main');
   });
 
   it('sets srpError and calls onPrev on MSG_INVALID_MNEMONIC error', async () => {
@@ -232,11 +297,11 @@ describe('SetNewPasswordViaSRP', () => {
 
     await waitFor(() => {
       expect(
-        screen.getByRole('button', { name: 'Reset Password' }),
+        screen.getByRole('button', { name: 'Confirm Password' }),
       ).not.toBeDisabled();
     });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Reset Password' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm Password' }));
 
     await waitFor(() => {
       expect(mockSetSrpError).toHaveBeenCalledWith(
@@ -246,7 +311,7 @@ describe('SetNewPasswordViaSRP', () => {
     });
   });
 
-  it('shows error message via messageApi for other errors', async () => {
+  it('shows error modal on non-MSG_INVALID_MNEMONIC failure', async () => {
     mockResetAccountWithMnemonic.mockRejectedValue(
       new Error('Network failure'),
     );
@@ -261,16 +326,81 @@ describe('SetNewPasswordViaSRP', () => {
 
     await waitFor(() => {
       expect(
-        screen.getByRole('button', { name: 'Reset Password' }),
+        screen.getByRole('button', { name: 'Confirm Password' }),
       ).not.toBeDisabled();
     });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Reset Password' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm Password' }));
 
     await waitFor(() => {
-      expect(mockMessageError).toHaveBeenCalledWith('Network failure');
-      expect(mockSetSrpError).not.toHaveBeenCalled();
-      expect(mockOnPrev).not.toHaveBeenCalled();
+      expect(screen.getByText('Password Update Failed')).toBeInTheDocument();
     });
+    expect(mockSetSrpError).not.toHaveBeenCalled();
+    expect(mockOnPrev).not.toHaveBeenCalled();
+  });
+
+  it('Try Again on error modal closes the modal and keeps the form', async () => {
+    mockResetAccountWithMnemonic.mockRejectedValue(
+      new Error('Network failure'),
+    );
+    renderComponent();
+
+    fireEvent.change(screen.getByLabelText('New password'), {
+      target: { value: 'ValidPass1!' },
+    });
+    fireEvent.change(screen.getByLabelText('Confirm new password'), {
+      target: { value: 'ValidPass1!' },
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole('button', { name: 'Confirm Password' }),
+      ).not.toBeDisabled();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm Password' }));
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole('button', { name: 'Try Again' }),
+      ).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Try Again' }));
+    expect(
+      screen.queryByText('Password Update Failed'),
+    ).not.toBeInTheDocument();
+    expect(mockToggleSupportModal).not.toHaveBeenCalled();
+  });
+
+  it('Contact Support on error modal opens the support modal', async () => {
+    mockResetAccountWithMnemonic.mockRejectedValue(
+      new Error('Network failure'),
+    );
+    renderComponent();
+
+    fireEvent.change(screen.getByLabelText('New password'), {
+      target: { value: 'ValidPass1!' },
+    });
+    fireEvent.change(screen.getByLabelText('Confirm new password'), {
+      target: { value: 'ValidPass1!' },
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole('button', { name: 'Confirm Password' }),
+      ).not.toBeDisabled();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm Password' }));
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole('button', { name: 'Contact Support' }),
+      ).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Contact Support' }));
+    expect(mockToggleSupportModal).toHaveBeenCalled();
   });
 });

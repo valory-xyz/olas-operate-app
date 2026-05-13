@@ -27,10 +27,15 @@ const ORDERED_INDICES = Array.from({ length: WORD_COUNT }, (_, gridPos) => {
   return col === 0 ? row : row + HALF;
 });
 
+const FormCard = styled.div`
+  width: 600px;
+  margin: auto;
+`;
+
 const WordGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
+  gap: 16px;
 `;
 
 const emptyWords = () => Array.from({ length: WORD_COUNT }, () => '');
@@ -103,79 +108,77 @@ export const EnterSecretRecoveryPhrase = () => {
     onNext();
   }, [isMnemonicValid, words, setSrpMnemonic, onNext]);
 
+  const showInvalidAlert = !!srpError || (allWordsFilled && !isMnemonicValid);
+
   return (
-    <CardFlex $gap={16} $padding="24px 32px" $noBorder>
-      <BackButton onPrev={onPrev} />
+    <FormCard>
+      <CardFlex $gap={24} $padding="32px" $noBorder>
+        <Flex vertical gap={16}>
+          <BackButton onPrev={onPrev} />
+          <Flex vertical gap={12}>
+            <Title level={3} className="m-0">
+              Enter Secret Recovery Phrase
+            </Title>
+            <Text className="text-neutral-secondary">
+              Enter the 12-word recovery phrase of your Pearl account to reset
+              password. Pearl neither stores nor has access to your secret
+              recovery phrase.
+            </Text>
+          </Flex>
+        </Flex>
 
-      <Flex vertical gap={8}>
-        <Title level={3} className="m-0">
-          Enter Secret Recovery Phrase
-        </Title>
-        <Text className="text-neutral-secondary">
-          Enter the 12-word secret recovery phrase for your Pearl account.
-        </Text>
-      </Flex>
-
-      {srpError && (
-        <Alert
-          type="error"
-          showIcon
-          message={
-            <Flex vertical gap={2}>
-              <Text className="text-sm font-weight-600">
-                Invalid Secret Recovery Phrase
-              </Text>
-              <Text className="text-sm">{srpError}</Text>
-            </Flex>
-          }
-        />
-      )}
-
-      <WordGrid>
-        {ORDERED_INDICES.map((wordIndex, gridPosition) => (
-          <Input
-            key={wordIndex}
-            ref={(el) => {
-              inputRefs.current[gridPosition] = el;
-            }}
-            value={words[wordIndex]}
-            prefix={
-              <Text type="secondary" style={{ fontSize: 12 }}>
-                {wordIndex + 1}.
-              </Text>
+        {showInvalidAlert && (
+          <Alert
+            type="error"
+            showIcon
+            message={
+              <Flex vertical gap={2}>
+                <Text className="text-sm font-weight-600">
+                  Invalid Secret Recovery Phrase
+                </Text>
+                <Text className="text-sm">
+                  {srpError ?? 'Please review your input and try again.'}
+                </Text>
+              </Flex>
             }
-            onChange={(e: ChangeEvent<HTMLInputElement>) =>
-              handleWordChange(wordIndex, e.target.value)
-            }
-            onPaste={(e) => handlePaste(wordIndex, e)}
-            onKeyDown={(e) => handleKeyDown(gridPosition, e)}
-            autoComplete="off"
-            spellCheck={false}
           />
-        ))}
-      </WordGrid>
+        )}
 
-      {allWordsFilled && !isMnemonicValid && (
-        <Alert
-          type="error"
-          showIcon
-          message={
-            <span className="text-sm">
-              Invalid recovery phrase. Please check each word and try again.
-            </span>
-          }
-        />
-      )}
+        <WordGrid>
+          {ORDERED_INDICES.map((wordIndex, gridPosition) => (
+            <Input
+              key={wordIndex}
+              ref={(el) => {
+                inputRefs.current[gridPosition] = el;
+              }}
+              value={words[wordIndex]}
+              size="large"
+              prefix={
+                <Text type="secondary" style={{ fontSize: 16 }}>
+                  {wordIndex + 1}.
+                </Text>
+              }
+              onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                handleWordChange(wordIndex, e.target.value)
+              }
+              onPaste={(e) => handlePaste(wordIndex, e)}
+              onKeyDown={(e) => handleKeyDown(gridPosition, e)}
+              autoComplete="off"
+              spellCheck={false}
+            />
+          ))}
+        </WordGrid>
 
-      <Button
-        type="primary"
-        size="large"
-        block
-        disabled={!isMnemonicValid}
-        onClick={handleContinue}
-      >
-        Continue
-      </Button>
-    </CardFlex>
+        <Button
+          type="primary"
+          size="large"
+          block
+          disabled={!isMnemonicValid}
+          onClick={handleContinue}
+        >
+          Continue
+        </Button>
+      </CardFlex>
+    </FormCard>
   );
 };

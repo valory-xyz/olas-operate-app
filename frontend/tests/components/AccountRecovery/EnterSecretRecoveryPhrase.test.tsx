@@ -81,7 +81,7 @@ describe('EnterSecretRecoveryPhrase', () => {
     ).toBeInTheDocument();
     expect(
       screen.getByText(
-        'Enter the 12-word secret recovery phrase for your Pearl account.',
+        /Enter the 12-word recovery phrase of your Pearl account to reset password/,
       ),
     ).toBeInTheDocument();
   });
@@ -175,7 +175,7 @@ describe('EnterSecretRecoveryPhrase', () => {
     expect(mockSetSrpError).toHaveBeenCalledWith(undefined);
   });
 
-  it('shows inline invalid phrase alert when all words are filled but mnemonic is invalid', () => {
+  it('shows invalid phrase alert when all words are filled but mnemonic is invalid', () => {
     render(<EnterSecretRecoveryPhrase />);
     const inputs = screen.getAllByRole('textbox');
 
@@ -190,9 +190,10 @@ describe('EnterSecretRecoveryPhrase', () => {
     ).toBe(false);
 
     expect(
-      screen.getByText(
-        'Invalid recovery phrase. Please check each word and try again.',
-      ),
+      screen.getByText('Invalid Secret Recovery Phrase'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('Please review your input and try again.'),
     ).toBeInTheDocument();
   });
 

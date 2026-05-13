@@ -2,25 +2,76 @@ import { useMutation } from '@tanstack/react-query';
 import { Button, Flex, Form, Input, Typography } from 'antd';
 import { useCallback, useState } from 'react';
 import { LuCircleCheck, LuTriangleAlert } from 'react-icons/lu';
+import styled from 'styled-components';
 import zxcvbn from 'zxcvbn';
 
+import { SuccessOutlined, WarningOutlined } from '@/components/custom-icons';
 import {
   Alert,
   BackButton,
   CardFlex,
   FormLabel,
+  Modal,
   RequiredMark,
 } from '@/components/ui';
 import { PasswordStrength } from '@/components/ui/forms';
-import { COLOR, PAGES } from '@/constants';
+import { COLOR, PAGES, SETUP_SCREEN } from '@/constants';
 import { ERROR_CODE } from '@/constants/errors';
-import { useMessageApi } from '@/context/MessageProvider';
-import { usePageState } from '@/hooks';
+import { useSupportModal } from '@/context/SupportModalProvider';
+import { usePageState, useSetup } from '@/hooks';
 import { AccountService } from '@/service/Account';
 
 import { useAccountRecoveryContext } from '../AccountRecoveryProvider';
 
 const { Title, Text } = Typography;
+
+const StyledCardFlex = styled(CardFlex)`
+  max-width: 516px;
+  margin: auto;
+`;
+
+const PasswordResetSuccessModal = ({ onDone }: { onDone: () => void }) => (
+  <Modal
+    header={<SuccessOutlined />}
+    title="New Password Set Successfully!"
+    description="You can now access your Pearl account with the new password."
+    action={
+      <Button
+        type="primary"
+        size="large"
+        block
+        className="mt-24"
+        onClick={onDone}
+      >
+        Done
+      </Button>
+    }
+  />
+);
+
+const PasswordResetFailedModal = ({
+  onTryAgain,
+  onContactSupport,
+}: {
+  onTryAgain: () => void;
+  onContactSupport: () => void;
+}) => (
+  <Modal
+    header={<WarningOutlined />}
+    title="Password Update Failed"
+    description="Please try again or contact the Valory support."
+    action={
+      <Flex vertical gap={12} className="mt-24" style={{ width: '100%' }}>
+        <Button type="primary" size="large" block onClick={onTryAgain}>
+          Try Again
+        </Button>
+        <Button size="large" block onClick={onContactSupport}>
+          Contact Support
+        </Button>
+      </Flex>
+    }
+  />
+);
 
 type SetNewPasswordFormValues = {
   newPassword: string;
@@ -29,10 +80,21 @@ type SetNewPasswordFormValues = {
 
 export const SetNewPasswordViaSRP = () => {
   const [form] = Form.useForm<SetNewPasswordFormValues>();
-  const messageApi = useMessageApi();
   const { isUserLoggedIn, goto: gotoPage } = usePageState();
-  const { srpMnemonic, setSrpError, onNext, onPrev } =
-    useAccountRecoveryContext();
+  const { goto: gotoSetup } = useSetup();
+  const { toggleSupportModal } = useSupportModal();
+  const { srpMnemonic, setSrpError, onPrev } = useAccountRecoveryContext();
+  const [resultModal, setResultModal] = useState<'success' | 'error' | null>(
+    null,
+  );
+
+  const exitFlow = useCallback(() => {
+    if (isUserLoggedIn) {
+      gotoPage(PAGES.Main);
+    } else {
+      gotoSetup(SETUP_SCREEN.Welcome);
+    }
+  }, [isUserLoggedIn, gotoPage, gotoSetup]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const newPassword = Form.useWatch('newPassword', form);
@@ -71,11 +133,7 @@ export const SetNewPasswordViaSRP = () => {
           password: values.newPassword,
         });
 
-        if (isUserLoggedIn) {
-          gotoPage(PAGES.Main);
-        } else {
-          onNext();
-        }
+        setResultModal('success');
       } catch (error) {
         const message =
           error instanceof Error
@@ -86,26 +144,17 @@ export const SetNewPasswordViaSRP = () => {
           setSrpError('Please review your input and try again.');
           onPrev();
         } else {
-          messageApi.error(message);
+          setResultModal('error');
         }
       } finally {
         setIsSubmitting(false);
       }
     },
-    [
-      srpMnemonic,
-      isUserLoggedIn,
-      gotoPage,
-      onNext,
-      onPrev,
-      resetAccount,
-      setSrpError,
-      messageApi,
-    ],
+    [srpMnemonic, onPrev, resetAccount, setSrpError],
   );
 
   return (
-    <CardFlex $gap={24} $padding="24px 32px" $noBorder>
+    <StyledCardFlex $gap={24} $noBorder>
       <Flex vertical gap={16}>
         <BackButton onPrev={onPrev} />
         <Flex vertical gap={12}>
@@ -113,7 +162,8 @@ export const SetNewPasswordViaSRP = () => {
             Set New Password
           </Title>
           <Text className="text-neutral-secondary">
-            Choose a new password for your Pearl account.
+            You will use this password to sign in to your Pearl account after
+            the recovery process.
           </Text>
         </Flex>
       </Flex>
@@ -207,19 +257,43 @@ export const SetNewPasswordViaSRP = () => {
           </Form.Item>
 
           <Form.Item style={{ marginBottom: 0 }}>
-            <Button
-              size="large"
-              type="primary"
-              htmlType="submit"
-              disabled={!isFormValid}
-              loading={isSubmitting}
-              style={{ width: '100%' }}
-            >
-              Reset Password
-            </Button>
+            <Flex gap={12}>
+              <Button size="large" onClick={exitFlow}>
+                Cancel
+              </Button>
+              <Button
+                size="large"
+                type="primary"
+                htmlType="submit"
+                disabled={!isFormValid}
+                loading={isSubmitting}
+                style={{ flex: 1 }}
+              >
+                Confirm Password
+              </Button>
+            </Flex>
           </Form.Item>
         </Flex>
       </Form>
-    </CardFlex>
+
+      {resultModal === 'success' && (
+        <PasswordResetSuccessModal
+          onDone={() => {
+            setResultModal(null);
+            exitFlow();
+          }}
+        />
+      )}
+
+      {resultModal === 'error' && (
+        <PasswordResetFailedModal
+          onTryAgain={() => setResultModal(null)}
+          onContactSupport={() => {
+            setResultModal(null);
+            toggleSupportModal();
+          }}
+        />
+      )}
+    </StyledCardFlex>
   );
 };

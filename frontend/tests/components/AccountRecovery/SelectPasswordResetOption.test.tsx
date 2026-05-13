@@ -3,13 +3,11 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { SelectPasswordResetOption } from '../../../components/AccountRecovery/components/SelectPasswordResetOption';
 import { RESET_METHOD } from '../../../components/AccountRecovery/constants';
 
-const mockOnNext = jest.fn();
-const mockSetSelectedResetMethod = jest.fn();
+const mockSelectResetMethodAndProceed = jest.fn();
 
 let mockContextValue: {
   isRecoveryAvailable: boolean;
-  setSelectedResetMethod: jest.Mock;
-  onNext: jest.Mock;
+  selectResetMethodAndProceed: jest.Mock;
 };
 
 jest.mock(
@@ -47,56 +45,59 @@ describe('SelectPasswordResetOption', () => {
     jest.clearAllMocks();
     mockContextValue = {
       isRecoveryAvailable: true,
-      setSelectedResetMethod: mockSetSelectedResetMethod,
-      onNext: mockOnNext,
+      selectResetMethodAndProceed: mockSelectResetMethodAndProceed,
     };
   });
 
-  it('renders both SRP and Backup Wallet cards', () => {
+  it('renders both SRP and Backup Wallet card titles', () => {
     render(<SelectPasswordResetOption />);
-    expect(screen.getByText('Reset via Recovery Phrase')).toBeInTheDocument();
-    expect(screen.getByText('Reset via Backup Wallet')).toBeInTheDocument();
+    expect(screen.getByText('Via Secret Recovery Phrase')).toBeInTheDocument();
+    expect(screen.getByText('Via Backup Wallet')).toBeInTheDocument();
   });
 
-  it('calls setSelectedResetMethod with SRP and onNext when SRP card is clicked', () => {
+  it('proceeds with SRP when "Reset via Recovery Phrase" is clicked', () => {
     render(<SelectPasswordResetOption />);
-    const buttons = screen.getAllByRole('button', { name: 'Continue' });
-    fireEvent.click(buttons[0]);
-    expect(mockSetSelectedResetMethod).toHaveBeenCalledWith(RESET_METHOD.SRP);
-    expect(mockOnNext).toHaveBeenCalled();
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Reset via Recovery Phrase' }),
+    );
+    expect(mockSelectResetMethodAndProceed).toHaveBeenCalledWith(
+      RESET_METHOD.SRP,
+    );
   });
 
-  it('calls setSelectedResetMethod with BackupWallet and onNext when Backup Wallet card is clicked', () => {
+  it('proceeds with BackupWallet when "Reset via Backup Wallet" is clicked', () => {
     render(<SelectPasswordResetOption />);
-    const buttons = screen.getAllByRole('button', { name: 'Continue' });
-    fireEvent.click(buttons[1]);
-    expect(mockSetSelectedResetMethod).toHaveBeenCalledWith(
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Reset via Backup Wallet' }),
+    );
+    expect(mockSelectResetMethodAndProceed).toHaveBeenCalledWith(
       RESET_METHOD.BackupWallet,
     );
-    expect(mockOnNext).toHaveBeenCalled();
   });
 
-  it('shows disabled state for Backup Wallet when recovery is not available', () => {
+  it('hides the Backup Wallet CTA when recovery is not available', () => {
     mockContextValue = {
       ...mockContextValue,
       isRecoveryAvailable: false,
     };
     render(<SelectPasswordResetOption />);
     expect(screen.getByText('No backup wallet set up.')).toBeInTheDocument();
-    // Only the SRP Continue button should exist
-    const buttons = screen.getAllByRole('button', { name: 'Continue' });
-    expect(buttons).toHaveLength(1);
+    expect(
+      screen.queryByRole('button', { name: 'Reset via Backup Wallet' }),
+    ).not.toBeInTheDocument();
   });
 
-  it('renders SRP card Continue button when recovery is not available', () => {
+  it('keeps the SRP CTA available when recovery is not available', () => {
     mockContextValue = {
       ...mockContextValue,
       isRecoveryAvailable: false,
     };
     render(<SelectPasswordResetOption />);
-    const srpButton = screen.getByRole('button', { name: 'Continue' });
-    fireEvent.click(srpButton);
-    expect(mockSetSelectedResetMethod).toHaveBeenCalledWith(RESET_METHOD.SRP);
-    expect(mockOnNext).toHaveBeenCalled();
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Reset via Recovery Phrase' }),
+    );
+    expect(mockSelectResetMethodAndProceed).toHaveBeenCalledWith(
+      RESET_METHOD.SRP,
+    );
   });
 });

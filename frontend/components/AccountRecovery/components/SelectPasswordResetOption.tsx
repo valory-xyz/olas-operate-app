@@ -1,5 +1,5 @@
 import { Button, Typography } from 'antd';
-import { TbKey, TbWallet } from 'react-icons/tb';
+import { TbCreditCard, TbWallet } from 'react-icons/tb';
 
 import { COLOR } from '@/constants';
 
@@ -11,33 +11,31 @@ import { RecoveryMethodCard } from '../styles';
 const { Paragraph } = Typography;
 
 const SrpCard = () => {
-  const { setSelectedResetMethod, onNext } = useAccountRecoveryContext();
+  const { selectResetMethodAndProceed } = useAccountRecoveryContext();
 
   return (
     <RecoveryMethodCard>
       <IconContainer>
-        <TbKey size={20} fontSize={30} color={COLOR.PRIMARY} />
+        <TbCreditCard size={20} fontSize={30} color={COLOR.PRIMARY} />
       </IconContainer>
       <div className="recovery-method-card-body">
         <CardTitle className="mb-8 text-lg">
-          Reset via Recovery Phrase
+          Via Secret Recovery Phrase
         </CardTitle>
         <Paragraph
           className="text-neutral-secondary text-center mt-16"
           style={{ minHeight: 72 }}
         >
-          Use your 12-word secret recovery phrase to reset your password.
+          Enter the secret recovery phrase you&apos;ve received during Pearl
+          sign up.
         </Paragraph>
         <Button
-          onClick={() => {
-            setSelectedResetMethod(RESET_METHOD.SRP);
-            onNext();
-          }}
+          onClick={() => selectResetMethodAndProceed(RESET_METHOD.SRP)}
           type="primary"
           size="large"
           block
         >
-          Continue
+          Reset via Recovery Phrase
         </Button>
       </div>
     </RecoveryMethodCard>
@@ -45,7 +43,7 @@ const SrpCard = () => {
 };
 
 const BackupWalletCard = () => {
-  const { isRecoveryAvailable, setSelectedResetMethod, onNext } =
+  const { isRecoveryAvailable, selectResetMethodAndProceed } =
     useAccountRecoveryContext();
 
   return (
@@ -54,25 +52,22 @@ const BackupWalletCard = () => {
         <TbWallet size={20} fontSize={30} color={COLOR.PRIMARY} />
       </IconContainer>
       <div className="recovery-method-card-body">
-        <CardTitle className="mb-8 text-lg">Reset via Backup Wallet</CardTitle>
+        <CardTitle className="mb-8 text-lg">Via Backup Wallet</CardTitle>
         <Paragraph
           className="text-neutral-secondary text-center mt-16"
           style={{ minHeight: 72 }}
         >
-          Use the backup wallet you set up during Pearl sign up to reset your
-          password.
+          Reset with the backup wallet you&apos;ve set up during Pearl sign up.
         </Paragraph>
         {isRecoveryAvailable ? (
           <Button
-            onClick={() => {
-              setSelectedResetMethod(RESET_METHOD.BackupWallet);
-              onNext();
-            }}
-            type="primary"
+            onClick={() =>
+              selectResetMethodAndProceed(RESET_METHOD.BackupWallet)
+            }
             size="large"
             block
           >
-            Continue
+            Reset via Backup Wallet
           </Button>
         ) : (
           <Paragraph

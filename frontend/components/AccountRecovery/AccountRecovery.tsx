@@ -64,10 +64,11 @@ const SelectPasswordResetOptionStep = () => {
     <Flex align="center" vertical>
       <BackButton onPrev={onPrev} />
       <Title level={3} className="mt-12">
-        Select Reset Method
+        Select Password Reset Option
       </Title>
       <Text type="secondary">
-        Choose how you&apos;d like to reset your password.
+        You can restore access to your account via the seed phrase or the backup
+        wallet.
       </Text>
 
       <Flex gap={24} style={{ marginTop: 56 }}>
