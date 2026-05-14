@@ -97,8 +97,12 @@ export const UpdatePasswordScreen = () => {
           onFinish={handleSubmit}
           onValuesChange={(changed) => {
             // antd doesn't auto-clear errors set via form.setFields; do it
-            // ourselves when the user retypes the rejected field.
-            if ('currentPassword' in changed) {
+            // ourselves when the user retypes the rejected field. Guarded so
+            // we only re-render when there's actually an error to clear.
+            if (
+              'currentPassword' in changed &&
+              form.getFieldError('currentPassword').length > 0
+            ) {
               form.setFields([{ name: 'currentPassword', errors: [] }]);
             }
           }}

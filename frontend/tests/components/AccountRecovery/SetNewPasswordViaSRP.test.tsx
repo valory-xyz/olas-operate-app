@@ -3,7 +3,6 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { SetNewPasswordViaSRP } from '../../../components/AccountRecovery/components/SetNewPasswordViaSRP';
 import { SETUP_SCREEN } from '../../../constants';
 import { ERROR_CODE } from '../../../constants/errors';
-import { createQueryClientWrapper } from '../../helpers/queryClient';
 
 const mockOnPrev = jest.fn();
 const mockSetSrpMnemonic = jest.fn();
@@ -103,10 +102,7 @@ jest.mock('../../../components/ui/forms', () => {
   };
 });
 
-const renderComponent = () =>
-  render(<SetNewPasswordViaSRP />, {
-    wrapper: createQueryClientWrapper(),
-  });
+const renderComponent = () => render(<SetNewPasswordViaSRP />);
 
 describe('SetNewPasswordViaSRP', () => {
   beforeEach(() => {
@@ -179,9 +175,10 @@ describe('SetNewPasswordViaSRP', () => {
     });
   });
 
-  it('calls onPrev when Back button is clicked', () => {
+  it('clears the mnemonic and calls onPrev when Back is clicked', () => {
     renderComponent();
     fireEvent.click(screen.getByTestId('back-btn'));
+    expect(mockSetSrpMnemonic).toHaveBeenCalledWith(undefined);
     expect(mockOnPrev).toHaveBeenCalled();
   });
 
@@ -244,6 +241,8 @@ describe('SetNewPasswordViaSRP', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Done' }));
     expect(mockGotoSetup).toHaveBeenCalledWith(SETUP_SCREEN.Welcome);
     expect(mockGotoPage).not.toHaveBeenCalled();
+    expect(mockSetSrpMnemonic).toHaveBeenCalledWith(undefined);
+    expect(mockSetSrpError).toHaveBeenCalledWith(undefined);
   });
 
   it('Done on success modal navigates to Main when user is logged in', async () => {
@@ -279,6 +278,8 @@ describe('SetNewPasswordViaSRP', () => {
     renderComponent();
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
     expect(mockGotoSetup).toHaveBeenCalledWith(SETUP_SCREEN.Welcome);
+    expect(mockSetSrpMnemonic).toHaveBeenCalledWith(undefined);
+    expect(mockSetSrpError).toHaveBeenCalledWith(undefined);
   });
 
   it('Cancel button routes logged-in users back to Main', () => {

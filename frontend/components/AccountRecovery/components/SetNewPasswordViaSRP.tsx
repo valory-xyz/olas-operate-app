@@ -101,6 +101,14 @@ export const SetNewPasswordViaSRP = () => {
     }
   }, [isUserLoggedIn, gotoPage, gotoSetup, setSrpMnemonic, setSrpError]);
 
+  // Back navigation within the recovery flow — drop the in-memory mnemonic
+  // for the same security reason as exitFlow. srpError is left to the caller
+  // (the invalid-mnemonic path intentionally sets it for the SRP banner).
+  const goBack = useCallback(() => {
+    setSrpMnemonic(undefined);
+    onPrev();
+  }, [setSrpMnemonic, onPrev]);
+
   const { isValid: isFormValid } = usePasswordSetupValidity(form);
 
   const handleSubmit = useCallback(
@@ -122,7 +130,7 @@ export const SetNewPasswordViaSRP = () => {
 
         if (message.includes(ERROR_CODE.MSG_INVALID_MNEMONIC)) {
           setSrpError('Please review your input and try again.');
-          onPrev();
+          goBack();
         } else {
           setResultModal('error');
         }
@@ -130,13 +138,13 @@ export const SetNewPasswordViaSRP = () => {
         setIsSubmitting(false);
       }
     },
-    [srpMnemonic, onPrev, setSrpError],
+    [srpMnemonic, goBack, setSrpError],
   );
 
   return (
     <StyledCardFlex $gap={24} $noBorder>
       <Flex vertical gap={16}>
-        <BackButton onPrev={onPrev} />
+        <BackButton onPrev={goBack} />
         <Flex vertical gap={12}>
           <Title level={3} className="m-0">
             Set New Password
