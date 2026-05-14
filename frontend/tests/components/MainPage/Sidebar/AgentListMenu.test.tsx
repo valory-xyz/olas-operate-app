@@ -6,7 +6,7 @@ import { AgentType, Pages } from '../../../../constants';
 import { AgentMap } from '../../../../constants/agent';
 import { useAgentRunning } from '../../../../hooks';
 
-jest.mock('../../../../constants/providers', () => ({}));
+jest.mock('../../../../constants/providers', () => ({ PROVIDERS: {} }));
 
 /* eslint-disable @typescript-eslint/no-var-requires */
 jest.mock(

@@ -3,7 +3,7 @@ import { getAddress } from 'ethers/lib/utils';
 
 import { BackupWalletManual } from '../../../../../components/SetupPage/Create/SetupBackupSigner/BackupWalletManual';
 
-jest.mock('../../../../../constants/providers', () => ({}));
+jest.mock('../../../../../constants/providers', () => ({ PROVIDERS: {} }));
 
 // ---------------------------------------------------------------------------
 // Mocks

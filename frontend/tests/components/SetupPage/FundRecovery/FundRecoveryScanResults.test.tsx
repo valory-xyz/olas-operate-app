@@ -39,7 +39,7 @@ jest.mock('../../../../components/ui', () => ({
 }));
 
 // Providers and chains mocks
-jest.mock('../../../../constants/providers', () => ({}));
+jest.mock('../../../../constants/providers', () => ({ PROVIDERS: {} }));
 jest.mock('../../../../config/providers', () => ({}));
 
 const GNOSIS_CHAIN_ID = 100;

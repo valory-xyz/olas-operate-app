@@ -3,7 +3,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { SetupBackupSigner } from '../../../../../components/SetupPage/Create/SetupBackupSigner';
 import { SETUP_SCREEN } from '../../../../../constants/setupScreen';
 
-jest.mock('../../../../../constants/providers', () => ({}));
+jest.mock('../../../../../constants/providers', () => ({ PROVIDERS: {} }));
 
 // ---------------------------------------------------------------------------
 // Mocks
