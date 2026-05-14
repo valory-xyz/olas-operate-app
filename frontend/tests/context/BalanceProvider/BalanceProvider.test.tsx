@@ -13,6 +13,7 @@ import {
 } from '../../../context/BalanceProvider/BalanceProvider';
 import { MasterWalletContext } from '../../../context/MasterWalletProvider';
 import { OnlineStatusContext } from '../../../context/OnlineStatusProvider';
+import { PageStateContext } from '../../../context/PageStateProvider';
 import { ServicesContext } from '../../../context/ServicesProvider';
 import { AgentConfig } from '../../../types/Agent';
 import {
@@ -38,7 +39,7 @@ jest.mock(
   'ethers-multicall',
   () => require('../../mocks/ethersMulticall').ethersMulticallMock,
 );
-jest.mock('../../../constants/providers', () => ({}));
+jest.mock('../../../constants/providers', () => ({ PROVIDERS: {} }));
 /* eslint-enable @typescript-eslint/no-var-requires */
 
 const mockGetCrossChainBalances = jest.fn();
@@ -81,13 +82,18 @@ const makeStakedBalance = (
 
 type WrapperOptions = {
   isOnline?: boolean;
+  isUserLoggedIn?: boolean;
   masterWallets?: MasterWallet[] | null;
   services?: MiddlewareServiceResponse[] | null;
   selectedAgentConfig?: AgentConfig;
 };
 
 const createWrapper = (options: WrapperOptions = {}) => {
-  const { isOnline = true, selectedAgentConfig = defaultAgentConfig } = options;
+  const {
+    isOnline = true,
+    isUserLoggedIn = true,
+    selectedAgentConfig = defaultAgentConfig,
+  } = options;
   const masterWallets =
     options.masterWallets === null
       ? undefined
@@ -103,35 +109,47 @@ const createWrapper = (options: WrapperOptions = {}) => {
   return ({ children }: PropsWithChildren) => (
     <QueryClientProvider client={queryClient}>
       <OnlineStatusContext.Provider value={{ isOnline }}>
-        <MasterWalletContext.Provider value={{ masterWallets }}>
-          <ServicesContext.Provider
-            value={{
-              services,
-              selectedAgentConfig,
-              serviceWallets: undefined as AgentWallet[] | undefined,
-              availableServiceConfigIds: [],
-              getServiceConfigIdsOf: () => [],
-              getAgentTypeFromService: () => null,
-              getServiceConfigIdFromAgentType: () => null,
-              getInstancesOfAgentType: () => [],
-              isSelectedServiceDeploymentStatusLoading: false,
-              selectedAgentType: AgentMap.PredictTrader,
-              selectedAgentName: null,
-              selectedAgentNameOrFallback: 'My agent',
-              selectedServiceConfigId: null,
-              deploymentDetails: undefined,
-              updateAgentType: jest.fn(),
-              selectAgentTypeForSetup: jest.fn(),
-              updateSelectedServiceConfigId: jest.fn(),
-              overrideSelectedServiceStatus: jest.fn(),
-              paused: false,
-              setPaused: jest.fn(),
-              togglePaused: jest.fn(),
-            }}
-          >
-            <BalanceProvider>{children}</BalanceProvider>
-          </ServicesContext.Provider>
-        </MasterWalletContext.Provider>
+        <PageStateContext.Provider
+          value={
+            {
+              isUserLoggedIn,
+              pageState: 0,
+              setPageState: jest.fn(),
+              setNavParams: jest.fn(),
+              setIsUserLoggedIn: jest.fn(),
+            } as unknown as React.ContextType<typeof PageStateContext>
+          }
+        >
+          <MasterWalletContext.Provider value={{ masterWallets }}>
+            <ServicesContext.Provider
+              value={{
+                services,
+                selectedAgentConfig,
+                serviceWallets: undefined as AgentWallet[] | undefined,
+                availableServiceConfigIds: [],
+                getServiceConfigIdsOf: () => [],
+                getAgentTypeFromService: () => null,
+                getServiceConfigIdFromAgentType: () => null,
+                getInstancesOfAgentType: () => [],
+                isSelectedServiceDeploymentStatusLoading: false,
+                selectedAgentType: AgentMap.PredictTrader,
+                selectedAgentName: null,
+                selectedAgentNameOrFallback: 'My agent',
+                selectedServiceConfigId: null,
+                deploymentDetails: undefined,
+                updateAgentType: jest.fn(),
+                selectAgentTypeForSetup: jest.fn(),
+                updateSelectedServiceConfigId: jest.fn(),
+                overrideSelectedServiceStatus: jest.fn(),
+                paused: false,
+                setPaused: jest.fn(),
+                togglePaused: jest.fn(),
+              }}
+            >
+              <BalanceProvider>{children}</BalanceProvider>
+            </ServicesContext.Provider>
+          </MasterWalletContext.Provider>
+        </PageStateContext.Provider>
       </OnlineStatusContext.Provider>
     </QueryClientProvider>
   );

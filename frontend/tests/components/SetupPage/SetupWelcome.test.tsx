@@ -16,7 +16,7 @@ jest.mock(
   () => require('../../mocks/styledComponents').styledComponentsMock,
 );
 
-jest.mock('../../../constants/providers', () => ({}));
+jest.mock('../../../constants/providers', () => ({ PROVIDERS: {} }));
 jest.mock('../../../config/providers', () => ({ providers: [] }));
 
 // Stub antd so no ESM imports are triggered

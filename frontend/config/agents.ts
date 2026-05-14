@@ -93,7 +93,7 @@ export const AGENT_CONFIG: {
     serviceApi: PredictTraderService,
     displayName: 'Omenstrat',
     description: 'Participates in prediction markets.',
-    hasExternalFunds: false,
+    hasExternalFunds: true,
     doesChatUiRequireApiKey: true,
     category: 'Prediction Markets',
     defaultBehavior:

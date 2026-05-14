@@ -19,7 +19,7 @@ jest.mock(
   () => require('../mocks/ethersMulticall').ethersMulticallMock,
 );
 /* eslint-enable @typescript-eslint/no-var-requires */
-jest.mock('../../constants/providers', () => ({}));
+jest.mock('../../constants/providers', () => ({ PROVIDERS: {} }));
 
 const MOCK_QUOTE_ID = 'rb-36c6cbe0-1841-4de3-b9f6-873305a833f5';
 
