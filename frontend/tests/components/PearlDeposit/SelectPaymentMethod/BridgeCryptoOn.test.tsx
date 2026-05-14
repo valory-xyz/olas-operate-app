@@ -14,7 +14,7 @@ import {
   makeMasterSafe,
 } from '../../../helpers/factories';
 
-jest.mock('../../../../constants/providers', () => ({}));
+jest.mock('../../../../constants/providers', () => ({ PROVIDERS: {} }));
 jest.mock('../../../../config/providers', () => ({ providers: [] }));
 
 const mockUsePearlWallet = jest.fn();

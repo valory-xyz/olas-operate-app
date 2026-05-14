@@ -1,0 +1,147 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main, staging]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  backend:
+    name: Backend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.18"
+
+      - name: Configure Yarn network settings
+        run: |
+          yarn config set network-timeout 60000
+          yarn config set network-retries 10
+          yarn config set network-concurrency 2
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.14"
+
+      - uses: snok/install-poetry@v1
+        with:
+          version: "2.3.2"
+          virtualenvs-create: true
+          virtualenvs-in-project: false
+          virtualenvs-path: ~/my-custom-path
+          installer-parallel: true
+
+      - run: yarn install:backend
+
+  frontend:
+    name: Frontend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.18"
+
+      - name: Ensure root yarn.lock exists and is valid
+        run: |
+          if [ ! -f "yarn.lock" ]; then
+            echo "Error: Missing root yarn.lock."
+            echo "Run 'yarn install' and commit the generated lockfile."
+            exit 1
+          fi
+
+          if [ ! -s "yarn.lock" ]; then
+            echo "Error: Root yarn.lock exists but is empty."
+            exit 1
+          fi
+
+          yarn install --immutable
+
+      - name: Ensure frontend yarn.lock exists and is valid
+        run: |
+          if [ ! -f "frontend/yarn.lock" ]; then
+            echo "Error: Missing frontend/yarn.lock."
+            echo "Run 'cd frontend && yarn install' and commit the generated lockfile."
+            exit 1
+          fi
+
+          if [ ! -s "frontend/yarn.lock" ]; then
+            echo "Error: frontend/yarn.lock exists but is empty."
+            exit 1
+          fi
+
+          cd frontend
+          yarn install --immutable
+
+      - name: Configure Yarn network settings
+        run: |
+          yarn config set network-timeout 60000
+          yarn config set network-retries 10
+          yarn config set network-concurrency 2
+
+      - name: Install dependencies
+        run: yarn install:frontend
+
+      - name: Lint & Typecheck
+        run: yarn quality-check:frontend
+
+      - name: Check service templates
+        run: cd frontend && npx tsx ../scripts/js/check_service_templates.ts
+
+  frontend-tests:
+    name: Frontend Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.18"
+
+      - name: Install dependencies
+        run: yarn install:frontend
+
+      - name: Run tests
+        run: yarn test:frontend
+
+  gitleaks:
+    name: Gitleaks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v3
+        with:
+          go-version: "1.17.7"
+      - name: Install and run gitleaks
+        run: |
+          wget https://github.com/zricethezav/gitleaks/releases/download/v8.10.1/gitleaks_8.10.1_linux_x64.tar.gz
+          tar -xzf gitleaks_8.10.1_linux_x64.tar.gz
+          sudo install gitleaks /usr/bin
+          gitleaks detect --report-format json --report-path leak_report -v
+
+  all-checks-passed:
+    name: All checks passed
+    needs: [backend, frontend, frontend-tests, gitleaks]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify all required checks succeeded
+        run: |
+          if [[ "${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || contains(needs.*.result, 'skipped') }}" == "true" ]]; then
+            echo "One or more required checks did not succeed."
+            echo "Results: ${{ toJson(needs) }}"
+            exit 1
+          fi

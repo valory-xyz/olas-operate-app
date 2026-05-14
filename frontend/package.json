@@ -23,7 +23,8 @@
     "semver": "^7.6.3",
     "styled-components": "^6.1.8",
     "usehooks-ts": "^2.14.0",
-    "zod": "^3.23.8"
+    "zod": "^3.23.8",
+    "zxcvbn": "^4.4.2"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.4.2",

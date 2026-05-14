@@ -14,6 +14,12 @@ const config: Config = {
   setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
   roots: ['<rootDir>/tests'],
   testMatch: ['<rootDir>/tests/**/*.test.{ts,tsx}'],
+  // Redirect antd's ESM build (antd/es/*) to its CommonJS build (antd/lib/*)
+  // so Jest can require() them. next/jest's default transformIgnorePatterns
+  // excludes node_modules, so antd/es files would otherwise hit Jest as raw ESM.
+  moduleNameMapper: {
+    '^antd/es/(.*)$': 'antd/lib/$1',
+  },
   collectCoverageFrom: [
     '**/*.{ts,tsx}',
     '!**/*.d.ts',

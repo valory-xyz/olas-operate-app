@@ -29,7 +29,7 @@ jest.mock(
   () => require('../mocks/onlineStatus').onlineStatusProviderMock,
 );
 /* eslint-enable @typescript-eslint/no-var-requires */
-jest.mock('../../constants/providers', () => ({}));
+jest.mock('../../constants/providers', () => ({ PROVIDERS: {} }));
 
 jest.mock('../../hooks/useServices', () => ({
   useServices: jest.fn(),

@@ -3,7 +3,7 @@ import { createElement } from 'react';
 
 import { MiddlewareChain, MiddlewareChainMap } from '../../../constants/chains';
 
-jest.mock('../../../constants/providers', () => ({}));
+jest.mock('../../../constants/providers', () => ({ PROVIDERS: {} }));
 jest.mock('../../../config/providers', () => ({ providers: [] }));
 
 jest.mock('antd', () => {

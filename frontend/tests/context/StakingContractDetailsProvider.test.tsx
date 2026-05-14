@@ -30,7 +30,7 @@ jest.mock(
   () => require('../mocks/ethersMulticall').ethersMulticallMock,
 );
 /* eslint-enable @typescript-eslint/no-var-requires */
-jest.mock('../../constants/providers', () => ({}));
+jest.mock('../../constants/providers', () => ({ PROVIDERS: {} }));
 jest.mock('../../config/providers', () => ({}));
 
 // ── Hook mocks ────────────────────────────────────────────────────────
