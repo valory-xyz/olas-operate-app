@@ -25,7 +25,7 @@ jest.mock(
   () => require('../../mocks/ethersMulticall').ethersMulticallMock,
 );
 /* eslint-enable @typescript-eslint/no-var-requires */
-jest.mock('../../../constants/providers', () => ({}));
+jest.mock('../../../constants/providers', () => ({ PROVIDERS: {} }));
 
 describe('getBackupWalletStatus', () => {
   it('returns hasBackupWalletsAcrossEveryChain=true when all chains have backup owners', () => {

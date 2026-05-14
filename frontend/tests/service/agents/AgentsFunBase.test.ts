@@ -15,7 +15,7 @@ jest.mock(
   'ethers-multicall',
   () => require('../../mocks/ethersMulticall').ethersMulticallMock,
 );
-jest.mock('../../../constants/providers', () => ({}));
+jest.mock('../../../constants/providers', () => ({ PROVIDERS: {} }));
 
 // Mock AgentsFunService — the parent class that AgentsFunBaseService delegates to
 jest.mock('../../../service/agents/shared-services/AgentsFun', () => ({
