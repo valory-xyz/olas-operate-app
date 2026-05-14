@@ -107,12 +107,6 @@ jest.mock('antd', () => {
   };
 });
 
-// Suppress antd Image preview warnings
-jest.mock('antd/es/image', () => {
-  const actual = jest.requireActual('antd');
-  return actual.Image;
-});
-
 // Mock next/image
 jest.mock('next/image', () => {
   const MockImage = (props: Record<string, unknown>) => (

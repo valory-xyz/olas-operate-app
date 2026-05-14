@@ -28,7 +28,7 @@ import {
 
 /* eslint-disable @typescript-eslint/no-var-requires */
 jest.mock('ethers-multicall', () => ({ Contract: jest.fn() }));
-jest.mock('../../../constants/providers', () => ({}));
+jest.mock('../../../constants/providers', () => ({ PROVIDERS: {} }));
 jest.mock('../../../config/providers', () => ({ providers: [] }));
 /* eslint-enable @typescript-eslint/no-var-requires */
 

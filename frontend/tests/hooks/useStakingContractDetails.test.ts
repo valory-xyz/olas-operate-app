@@ -3,6 +3,7 @@ import { createElement, PropsWithChildren } from 'react';
 
 import { StakingProgramId } from '../../constants/stakingProgram';
 import { StakingContractDetailsContext } from '../../context/StakingContractDetailsProvider';
+import { StakingProgramContext } from '../../context/StakingProgramProvider';
 import {
   useActiveStakingContractDetails,
   useStakingContractContext,
@@ -38,32 +39,53 @@ type ContextValue = {
   >;
   isAllStakingContractDetailsRecordLoaded?: boolean;
   isPaused?: boolean;
+  selectedStakingProgramId?: StakingProgramId | null;
 };
 
 /**
- * Builds a React wrapper that provides StakingContractDetailsContext
- * with the given (partial) value merged over sensible defaults.
+ * Builds a React wrapper that provides both StakingContractDetailsContext
+ * and StakingProgramContext. selectedStakingProgramId defaults to a valid
+ * program ID so isServiceStakedForMinimumDuration exercises its full logic;
+ * tests that want the no_staking short-circuit can pass null explicitly.
  */
 function makeWrapper(overrides: ContextValue = {}) {
+  const selectedStakingProgramId =
+    'selectedStakingProgramId' in overrides
+      ? (overrides.selectedStakingProgramId ?? null)
+      : DEFAULT_STAKING_PROGRAM_ID;
+
   const Wrapper = ({ children }: PropsWithChildren) =>
     createElement(
-      StakingContractDetailsContext.Provider,
+      StakingProgramContext.Provider,
       {
         value: {
-          selectedStakingContractDetails:
-            overrides.selectedStakingContractDetails ?? null,
-          isSelectedStakingContractDetailsLoading:
-            overrides.isSelectedStakingContractDetailsLoading ?? false,
-          allStakingContractDetailsRecord:
-            overrides.allStakingContractDetailsRecord,
-          isAllStakingContractDetailsRecordLoaded:
-            overrides.isAllStakingContractDetailsRecordLoaded ?? false,
-          refetchSelectedStakingContractDetails: async () => {},
-          isPaused: overrides.isPaused ?? false,
-          setIsPaused: () => {},
+          selectedStakingProgramId,
+          setDefaultStakingProgramId: () => {},
+          isActiveStakingProgramLoaded: true,
+          stakingProgramIdToMigrateTo: null,
+          setStakingProgramIdToMigrateTo: () => {},
+          stakingProgramIdByServiceConfigId: new Map(),
         },
       },
-      children,
+      createElement(
+        StakingContractDetailsContext.Provider,
+        {
+          value: {
+            selectedStakingContractDetails:
+              overrides.selectedStakingContractDetails ?? null,
+            isSelectedStakingContractDetailsLoading:
+              overrides.isSelectedStakingContractDetailsLoading ?? false,
+            allStakingContractDetailsRecord:
+              overrides.allStakingContractDetailsRecord,
+            isAllStakingContractDetailsRecordLoaded:
+              overrides.isAllStakingContractDetailsRecordLoaded ?? false,
+            refetchSelectedStakingContractDetails: async () => {},
+            isPaused: overrides.isPaused ?? false,
+            setIsPaused: () => {},
+          },
+        },
+        children,
+      ),
     );
   return Wrapper;
 }

@@ -36,7 +36,7 @@ jest.mock('ethers-multicall', () => ({
   })),
 }));
 
-jest.mock('../../../constants/providers', () => ({}));
+jest.mock('../../../constants/providers', () => ({ PROVIDERS: {} }));
 
 jest.mock('../../../service/agents/shared-services/StakedAgentService', () => ({
   StakedAgentService: {
