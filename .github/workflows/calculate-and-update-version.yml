@@ -27,6 +27,7 @@ on:
 
 permissions:
   contents: write
+  actions: write # required to re-dispatch PR checks for the version-bump commit
 
 jobs:
   calculate-and-update-version:
@@ -267,10 +268,12 @@ jobs:
           fi
 
       - name: Commit and push version update
+        id: commit
         run: |
           git add package.json pyproject.toml poetry.lock
           if git diff --staged --quiet; then
             echo "No version file changes detected — skipping commit."
+            echo "pushed=false" >> "$GITHUB_OUTPUT"
           else
             COMMIT_MSG="chore: bump version to ${{ steps.calculate-version.outputs.new_version }}"
             COMMIT_SUFFIX="${{ steps.calculate-version.outputs.commit_suffix }}"
@@ -278,7 +281,7 @@ jobs:
               COMMIT_MSG="$COMMIT_MSG $COMMIT_SUFFIX"
             fi
             git commit -m "$COMMIT_MSG"
-            
+
             # Determine branch to push to
             if [ -n "${{ inputs.branch }}" ]; then
               PUSH_BRANCH="${{ inputs.branch }}"
@@ -286,7 +289,29 @@ jobs:
               PUSH_BRANCH="${GITHUB_REF_NAME}"
             fi
             git push origin "$PUSH_BRANCH"
+            echo "pushed=true" >> "$GITHUB_OUTPUT"
+            echo "push_branch=$PUSH_BRANCH" >> "$GITHUB_OUTPUT"
           fi
+
+      # The version-bump commit above is pushed with GITHUB_TOKEN, and GitHub
+      # deliberately does not start push/pull_request workflow runs for commits
+      # made by GITHUB_TOKEN. That leaves the release PR's head commit without
+      # the "All checks passed" CI check — the only check main's branch
+      # protection requires — so the merge stays blocked. The one documented
+      # exception is workflow_dispatch: GITHUB_TOKEN *can* start those runs, so
+      # re-dispatch CI against the freshly pushed branch. It attaches check runs
+      # to the new HEAD commit, satisfying the required status check. Non-fatal:
+      # if a release branch predates the workflow_dispatch trigger, fall back to
+      # a manual re-trigger.
+      - name: Re-trigger CI for the version-bump commit
+        if: steps.commit.outputs.pushed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PUSH_BRANCH="${{ steps.commit.outputs.push_branch }}"
+          echo "Dispatching CI on $PUSH_BRANCH"
+          gh workflow run ci.yml --ref "$PUSH_BRANCH" \
+            || echo "::warning::Could not dispatch CI on $PUSH_BRANCH — re-trigger checks manually."
 
       - name: Create and push tag
         run: |
