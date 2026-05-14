@@ -1,0 +1,53 @@
+# CODEOWNERS — supply-chain-relevant paths
+#
+# Owners listed here are auto-requested as reviewers on matching paths.
+# Enforcement requires "Require review from Code Owners" in branch protection
+# (Settings → Branches → main); without that toggle this file is decorative.
+#
+# Precedence: last matching pattern wins. The backend/infrastructure block at
+# the bottom of this file deliberately overrides earlier rules for shell
+# scripts, /operate/, /electron/, /scripts/, the Python toolchain pins, and
+# the build-orchestration JS files.
+#
+# See SECURITY.md and SUPPLY-CHAIN-SECURITY.md (added in PR 3) for the policy
+# these owners gate.
+
+# ── Default owner for the whole repo (catches frontend code, docs, configs) ──
+*                                @mohandast52 @Tanya-atatakai @rajat2502
+
+# ── CI / supply-chain infrastructure ──────────────────────────────────────────
+/.github/                        @mohandast52 @Tanya-atatakai @rajat2502
+/.supply-chain/                  @mohandast52 @Tanya-atatakai @rajat2502
+/frontend/.supply-chain/         @mohandast52 @Tanya-atatakai @rajat2502
+/frontend/scripts/               @mohandast52 @Tanya-atatakai @rajat2502
+
+# ── Frontend / Node dependency and toolchain pins ─────────────────────────────
+/package.json                    @mohandast52 @Tanya-atatakai @rajat2502
+/yarn.lock                       @mohandast52 @Tanya-atatakai @rajat2502
+/frontend/package.json           @mohandast52 @Tanya-atatakai @rajat2502
+/frontend/yarn.lock              @mohandast52 @Tanya-atatakai @rajat2502
+/.npmrc                          @mohandast52 @Tanya-atatakai @rajat2502
+/frontend/.npmrc                 @mohandast52 @Tanya-atatakai @rajat2502
+/.nvmrc                          @mohandast52 @Tanya-atatakai @rajat2502
+
+# ── Security policy and ownership ─────────────────────────────────────────────
+/SECURITY.md                     @mohandast52 @Tanya-atatakai @rajat2502
+/SUPPLY-CHAIN-SECURITY.md        @mohandast52 @Tanya-atatakai @rajat2502
+/.github/CODEOWNERS              @mohandast52 @Tanya-atatakai @rajat2502
+
+# ── Backend / infrastructure ownership ────────────────────────────────────────
+# Last-match-wins: these rules override every earlier section for the matched
+# paths. *.sh matches shell scripts anywhere in the tree (build_pearl.sh,
+# download_binaries.sh, scripts/*.sh, electron/*.sh, etc.).
+/pyproject.toml                  @OjusWiZard @rajat2502
+/poetry.lock                     @OjusWiZard @rajat2502
+/operate/                        @OjusWiZard @rajat2502
+/electron/                       @OjusWiZard @rajat2502
+/scripts/                        @OjusWiZard @rajat2502
+/build.js                        @OjusWiZard @rajat2502
+/build-linux.js                  @OjusWiZard @rajat2502
+/build-win.js                    @OjusWiZard @rajat2502
+/build-win-tenderly.js           @OjusWiZard @rajat2502
+/build.tester.js                 @OjusWiZard @rajat2502
+/customSign.js                   @OjusWiZard @rajat2502
+*.sh                             @OjusWiZard @rajat2502
