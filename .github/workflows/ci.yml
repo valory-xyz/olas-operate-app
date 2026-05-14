@@ -26,7 +26,11 @@ jobs:
       - name: Activate pinned Yarn via Corepack
         run: |
           corepack enable
-          corepack prepare yarn@1.22.22 --activate
+          # Read the full integrity-verified spec from package.json so corepack
+          # checks the sha512 hash. Plain `corepack prepare yarn@1.22.22 --activate`
+          # downloads from npm without verifying against the hash.
+          PM_SPEC=$(node -p "require('./package.json').packageManager")
+          corepack prepare "$PM_SPEC" --activate
 
       - name: Verify Yarn version
         run: |
@@ -66,12 +70,22 @@ jobs:
       - name: Activate pinned Yarn via Corepack
         run: |
           corepack enable
-          corepack prepare yarn@1.22.22 --activate
+          # Read the full integrity-verified spec from package.json so corepack
+          # checks the sha512 hash. Plain `corepack prepare yarn@1.22.22 --activate`
+          # downloads from npm without verifying against the hash.
+          PM_SPEC=$(node -p "require('./package.json').packageManager")
+          corepack prepare "$PM_SPEC" --activate
 
       - name: Verify Yarn version
         run: |
           yarn --version
           test "$(yarn --version)" = "1.22.22" || (echo "::error::Yarn version mismatch" && exit 1)
+
+      - name: Configure Yarn network settings
+        run: |
+          yarn config set network-timeout 60000
+          yarn config set network-retries 10
+          yarn config set network-concurrency 2
 
       - name: Ensure root yarn.lock exists and is valid
         run: |
@@ -86,7 +100,7 @@ jobs:
             exit 1
           fi
 
-          yarn install --immutable
+          yarn install --frozen-lockfile
 
       - name: Ensure frontend yarn.lock exists and is valid
         run: |
@@ -102,16 +116,7 @@ jobs:
           fi
 
           cd frontend
-          yarn install --immutable
-
-      - name: Configure Yarn network settings
-        run: |
-          yarn config set network-timeout 60000
-          yarn config set network-retries 10
-          yarn config set network-concurrency 2
-
-      - name: Install dependencies
-        run: yarn install:frontend
+          yarn install --frozen-lockfile
 
       - name: Lint & Typecheck
         run: yarn quality-check:frontend
@@ -132,7 +137,11 @@ jobs:
       - name: Activate pinned Yarn via Corepack
         run: |
           corepack enable
-          corepack prepare yarn@1.22.22 --activate
+          # Read the full integrity-verified spec from package.json so corepack
+          # checks the sha512 hash. Plain `corepack prepare yarn@1.22.22 --activate`
+          # downloads from npm without verifying against the hash.
+          PM_SPEC=$(node -p "require('./package.json').packageManager")
+          corepack prepare "$PM_SPEC" --activate
 
       - name: Verify Yarn version
         run: |
@@ -180,7 +189,16 @@ jobs:
       - name: Activate pinned Yarn via Corepack
         run: |
           corepack enable
-          corepack prepare yarn@1.22.22 --activate
+          # Read the full integrity-verified spec from package.json so corepack
+          # checks the sha512 hash. Plain `corepack prepare yarn@1.22.22 --activate`
+          # downloads from npm without verifying against the hash.
+          PM_SPEC=$(node -p "require('./package.json').packageManager")
+          corepack prepare "$PM_SPEC" --activate
+
+      - name: Verify Yarn version
+        run: |
+          yarn --version
+          test "$(yarn --version)" = "1.22.22" || (echo "::error::Yarn version mismatch" && exit 1)
 
       - name: Check root deps are exact-pinned
         run: yarn deps:check-pinned
@@ -198,11 +216,14 @@ jobs:
         with:
           node-version-file: .nvmrc
 
+      # Pin lockfile-lint version explicitly so a compromise of the npm-published
+      # tool can't silently land via `npx @latest`. Bump together with any
+      # deps-check-pinned coverage updates.
       - name: Lint root yarn.lock
-        run: npx -y lockfile-lint --path yarn.lock --type yarn --validate-https --allowed-hosts yarn npm --empty-hostname false
+        run: npx -y lockfile-lint@5.0.0 --path yarn.lock --type yarn --validate-https --allowed-hosts yarn npm --empty-hostname false
 
       - name: Lint frontend yarn.lock
-        run: npx -y lockfile-lint --path frontend/yarn.lock --type yarn --validate-https --allowed-hosts yarn npm --empty-hostname false
+        run: npx -y lockfile-lint@5.0.0 --path frontend/yarn.lock --type yarn --validate-https --allowed-hosts yarn npm --empty-hostname false
 
   all-checks-passed:
     name: All checks passed

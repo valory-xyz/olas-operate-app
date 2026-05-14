@@ -142,7 +142,11 @@ jobs:
       - name: Activate pinned Yarn via Corepack
         run: |
           corepack enable
-          corepack prepare yarn@1.22.22 --activate
+          # Read the full integrity-verified spec from package.json so corepack
+          # checks the sha512 hash. Plain `corepack prepare yarn@1.22.22 --activate`
+          # downloads from npm without verifying against the hash.
+          PM_SPEC=$(node -p "require('./package.json').packageManager")
+          corepack prepare "$PM_SPEC" --activate
 
       - name: Verify Yarn version
         run: |
