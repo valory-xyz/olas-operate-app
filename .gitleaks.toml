@@ -534,6 +534,18 @@ regex = '''(?i)((key|api|token|secret|password)[a-z0-9_ .\-,]{0,25})(=|>|:=|\|\|
 entropy = 3.7
 secretGroup = 4
 
+  # Pearl frontend TypeScript: camelCase identifier strings (enum
+  # values, React component names, React Query keys, form field names)
+  # trip this rule because their identifiers contain substrings like
+  # "Token", "Key", "Password" and their values have entropy ≥ 3.7.
+  # They are not real secrets. Real secret-pattern rules (AWS, GitHub
+  # PAT, Slack, etc.) above this rule still fire on these paths.
+  [rules.allowlist]
+  description = "Pearl frontend TypeScript — camelCase identifier strings are not secrets"
+  paths = [
+    '''^frontend/.+\.(ts|tsx)$''',
+  ]
+
 [allowlist]
 description = "allowlist"
 regexTarget = "match"

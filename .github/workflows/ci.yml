@@ -17,11 +17,25 @@ jobs:
     name: Backend
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: "22.18"
+
+      - name: Activate pinned Yarn via Corepack
+        run: |
+          corepack enable
+          # Read the full integrity-verified spec from package.json so corepack
+          # checks the sha512 hash. Plain `corepack prepare yarn@1.22.22 --activate`
+          # downloads from npm without verifying against the hash.
+          PM_SPEC=$(node -p "require('./package.json').packageManager")
+          corepack prepare "$PM_SPEC" --activate
+
+      - name: Verify Yarn version
+        run: |
+          yarn --version
+          test "$(yarn --version)" = "1.22.22" || (echo "::error::Yarn version mismatch" && exit 1)
 
       - name: Configure Yarn network settings
         run: |
@@ -29,11 +43,11 @@ jobs:
           yarn config set network-retries 10
           yarn config set network-concurrency 2
 
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@7f4fc3e22c37d6ff65e88745f38bd3157c663f7c # v4.9.1
         with:
           python-version: "3.14"
 
-      - uses: snok/install-poetry@v1
+      - uses: snok/install-poetry@76e04a911780d5b312d89783f7b1cd627778900a # v1.4.1
         with:
           version: "2.3.2"
           virtualenvs-create: true
@@ -47,11 +61,31 @@ jobs:
     name: Frontend
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: "22.18"
+
+      - name: Activate pinned Yarn via Corepack
+        run: |
+          corepack enable
+          # Read the full integrity-verified spec from package.json so corepack
+          # checks the sha512 hash. Plain `corepack prepare yarn@1.22.22 --activate`
+          # downloads from npm without verifying against the hash.
+          PM_SPEC=$(node -p "require('./package.json').packageManager")
+          corepack prepare "$PM_SPEC" --activate
+
+      - name: Verify Yarn version
+        run: |
+          yarn --version
+          test "$(yarn --version)" = "1.22.22" || (echo "::error::Yarn version mismatch" && exit 1)
+
+      - name: Configure Yarn network settings
+        run: |
+          yarn config set network-timeout 60000
+          yarn config set network-retries 10
+          yarn config set network-concurrency 2
 
       - name: Ensure root yarn.lock exists and is valid
         run: |
@@ -66,7 +100,7 @@ jobs:
             exit 1
           fi
 
-          yarn install --immutable
+          yarn install --frozen-lockfile
 
       - name: Ensure frontend yarn.lock exists and is valid
         run: |
@@ -82,16 +116,7 @@ jobs:
           fi
 
           cd frontend
-          yarn install --immutable
-
-      - name: Configure Yarn network settings
-        run: |
-          yarn config set network-timeout 60000
-          yarn config set network-retries 10
-          yarn config set network-concurrency 2
-
-      - name: Install dependencies
-        run: yarn install:frontend
+          yarn install --frozen-lockfile
 
       - name: Lint & Typecheck
         run: yarn quality-check:frontend
@@ -103,11 +128,25 @@ jobs:
     name: Frontend Tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: "22.18"
+
+      - name: Activate pinned Yarn via Corepack
+        run: |
+          corepack enable
+          # Read the full integrity-verified spec from package.json so corepack
+          # checks the sha512 hash. Plain `corepack prepare yarn@1.22.22 --activate`
+          # downloads from npm without verifying against the hash.
+          PM_SPEC=$(node -p "require('./package.json').packageManager")
+          corepack prepare "$PM_SPEC" --activate
+
+      - name: Verify Yarn version
+        run: |
+          yarn --version
+          test "$(yarn --version)" = "1.22.22" || (echo "::error::Yarn version mismatch" && exit 1)
 
       - name: Install dependencies
         run: yarn install:frontend
@@ -119,22 +158,76 @@ jobs:
     name: Gitleaks
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           fetch-depth: 0
-      - uses: actions/setup-go@v3
-        with:
-          go-version: "1.17.7"
       - name: Install and run gitleaks
+        env:
+          GITLEAKS_VERSION: 8.30.1
+          # Verify against the published sha256 on the release page so a swapped
+          # tarball is rejected. Update both fields together when bumping.
+          GITLEAKS_LINUX_X64_SHA256: 551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
         run: |
-          wget https://github.com/zricethezav/gitleaks/releases/download/v8.10.1/gitleaks_8.10.1_linux_x64.tar.gz
-          tar -xzf gitleaks_8.10.1_linux_x64.tar.gz
+          set -euo pipefail
+          TARBALL="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          wget --quiet "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/${TARBALL}"
+          echo "${GITLEAKS_LINUX_X64_SHA256}  ${TARBALL}" | sha256sum -c -
+          tar -xzf "${TARBALL}"
           sudo install gitleaks /usr/bin
           gitleaks detect --report-format json --report-path leak_report -v
 
+  deps-check-pinned:
+    name: Deps pinned (both trees)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version-file: .nvmrc
+
+      - name: Activate pinned Yarn via Corepack
+        run: |
+          corepack enable
+          # Read the full integrity-verified spec from package.json so corepack
+          # checks the sha512 hash. Plain `corepack prepare yarn@1.22.22 --activate`
+          # downloads from npm without verifying against the hash.
+          PM_SPEC=$(node -p "require('./package.json').packageManager")
+          corepack prepare "$PM_SPEC" --activate
+
+      - name: Verify Yarn version
+        run: |
+          yarn --version
+          test "$(yarn --version)" = "1.22.22" || (echo "::error::Yarn version mismatch" && exit 1)
+
+      - name: Check root deps are exact-pinned
+        run: yarn deps:check-pinned
+
+      - name: Check frontend deps are exact-pinned
+        run: cd frontend && yarn deps:check-pinned
+
+  lockfile-lint:
+    name: lockfile-lint (both trees)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version-file: .nvmrc
+
+      # Pin lockfile-lint version explicitly so a compromise of the npm-published
+      # tool can't silently land via `npx @latest`. Bump together with any
+      # deps-check-pinned coverage updates.
+      - name: Lint root yarn.lock
+        run: npx -y lockfile-lint@5.0.0 --path yarn.lock --type yarn --validate-https --allowed-hosts yarn npm --empty-hostname false
+
+      - name: Lint frontend yarn.lock
+        run: npx -y lockfile-lint@5.0.0 --path frontend/yarn.lock --type yarn --validate-https --allowed-hosts yarn npm --empty-hostname false
+
   all-checks-passed:
     name: All checks passed
-    needs: [backend, frontend, frontend-tests, gitleaks]
+    needs: [backend, frontend, frontend-tests, gitleaks, deps-check-pinned, lockfile-lint]
     if: always()
     runs-on: ubuntu-latest
     steps:

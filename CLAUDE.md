@@ -42,7 +42,8 @@ The application uses a multi-layered communication architecture:
 
 2. **Electron → Python Backend**: Spawned child process communication
    - Dev: `poetry run python -m operate.cli daemon`. Packaged: PyInstaller executable in `electron/bins/middleware/`.
-   - HTTP API over localhost (self-signed cert). Frontend services in `frontend/service/` hit this API directly.
+   - HTTPS over localhost:8765 with a self-signed cert generated at `~/.operate/ssl/{cert,key}.pem` on first launch (see `electron/utils/certificate.js`). Frontend services in `frontend/service/` hit this API directly.
+   - 50+ FastAPI endpoints, mostly under `/api/v2/*` for services and `/api/*` for account/wallet/bridge/recovery/store.
 
 3. **Frontend State Management**:
    - React Context providers in `/frontend/context/` (one provider per folder). Non-exhaustive list of load-bearing providers: `ServicesProvider`, `BalanceProvider`, `StakingContractDetailsProvider`, `StakingProgramProvider`, `MasterWalletProvider`, `PearlWalletProvider`, `RewardProvider`, `SetupProvider`, `SettingsProvider`, `StoreProvider`, `PageStateProvider`, `OnRampProvider`, `OnlineStatusProvider`, `MessageProvider`, `SupportModalProvider`, `ElectronApiProvider`, `AutoRunProvider`, `BalancesAndRefillRequirementsProvider`. Read `frontend/context/` before assuming a provider doesn't exist.
@@ -94,7 +95,7 @@ IPC handles: `store`, `store-get`, `store-set`, `store-delete`, `store-clear`. N
 - Electron child windows (on-ramp, web3auth, T&C): `electron/windows/`
 - System tray component: `electron/components/PearlTray.js`
 - Frontend entry: `frontend/pages/_app.tsx` (plus `index.tsx`, `onramp.tsx`, `web3auth.tsx`, `web3auth-swap-owner.tsx` — last two are Electron child-window wrappers)
-- Components: `frontend/components/` — ~29 top-level folders grouped into **shared UI** (`ui/`), **page/flow** (`SetupPage/`, `MainPage/`, `SelectStakingPage/`, `SettingsPage/`, `UpdateAgentPage/`, `PearlWallet/`, `PearlDeposit/`, `AccountRecovery/`), **agent-specific** (`AgentStaking/`, `AgentWallet/`, `AgentForms/`, `AgentIntroduction/`, `AgentLowBalanceAlert/`, `AgentNft/`), **flows** (`Bridge/`, `OnRamp/`, `OnRampIframe/`, `Web3AuthIframe/`, `FundPearlWallet/`, `ConfirmSwitch/`), **modals/alerts** (`AchievementModal/`, `SupportModal/`, `ErrorBoundary/`), **utilities** (`ExportLogsButton/`, `Layout/`, `Pages/`, `custom-icons/`). Grep before creating a new top-level folder.
+- Components: `frontend/components/` — mix of folders and top-level `.tsx` files, grouped into **shared UI** (`ui/`), **page/flow** folders (`SetupPage/`, `MainPage/`, `SelectStakingPage/`, `SettingsPage/`, `UpdateAgentPage/`, `PearlWallet/`, `PearlDeposit/`, `AccountRecovery/`), **agent-specific** (`AgentStaking/`, `AgentWallet/`, `AgentForms/`, `AgentIntroduction/`, plus single-file `AgentLowBalanceAlert.tsx`, `AgentNft.tsx`, `StakingContractCard.tsx`), **flows** (`Bridge/`, `OnRamp/`, `OnRampIframe/`, `Web3AuthIframe/`, `ConfirmSwitch/`, plus `FundPearlWallet.tsx`), **modals/alerts** (`AchievementModal/`, `SupportModal/`, `ErrorBoundary/`), **utilities** (`Layout/`, `Pages/`, `custom-icons/`, plus `ExportLogsButton.tsx`). Grep before creating a new top-level folder or file.
 - Domain types: `frontend/types/` (17 files — `Autonolas.ts` is staking/rewards hub; `ElectronApi.ts` defines `PearlStore`)
 - Service definitions: `frontend/constants/serviceTemplates/` (directory)
 - Agent configs: `frontend/config/agents.ts`
@@ -103,9 +104,11 @@ IPC handles: `store`, `store-get`, `store-set`, `store-delete`, `store-clear`. N
 - Staking programs: `frontend/constants/stakingProgram.ts`
 - Feature docs: `docs/features/` (18 files — start here before touching a feature)
 - AutoRun internals (hook hierarchy, timing constants, guard refs, start-status codes): `docs/features/autorun.md`
+- Multi-instance agents implementation plan (in-flight; migrates selection from `lastSelectedAgentType` → `lastSelectedServiceConfigId` and `isInitialFunded` boolean → per-service map): `docs/features/multi-instance-agents.md`
 - Agent integration guide: `docs/agent-integration-checklist.md`
 - Dev setup guides: `docs/dev/`
-- Frontend test plan: `frontend/tests/TEST_PLAN.md`
+- Frontend test plan: `frontend/tests/TEST_PLAN.md` (phases 0–8 complete; phases 9–10 outstanding)
+- Unified CI workflow (backend + frontend lint/typecheck/tests + gitleaks): `.github/workflows/ci.yml`
 
 ## Commit Conventions
 
@@ -203,7 +206,7 @@ When adding or reviewing frontend tests, use `frontend/tests/TEST_PLAN.md` as th
 - Split by ownership: providers cover query wiring/polling/refetch/merge; hooks cover derivation; components cover rendering and interaction with mocked hooks/providers.
 - **For mutation-driven UIs (`useMutation` / any state that persists across renders): test state *transitions*, not just states.** If the user's retry entrypoint doesn't re-fire `mutateAsync` (e.g. a multi-step modal whose first step opens the second without firing the mutation), expose `mutation.reset` and call it on every dismiss path — otherwise stale error state leaks into the next attempt and re-renders the wrong modal. Always cover the full trigger → error → dismiss → re-trigger sequence with a test that asserts the dismiss path resets state.
 - If the same payload shape appears in two suites, promote to `factories.ts` before adding more inline literals.
-- For Phase 4 staking/rewards work, start with the shared staking factories (`makeStakingContractDetails`, `makeServiceStakingDetails`, `makeRawStakingRewardsInfo`, `makeStakingRewardsInfo`, `makeRewardsHistoryEntry`, `makeRewardsHistoryServiceResponse`) and follow the staged execution order in `TEST_PLAN.md`.
+- For staking/rewards work, use the shared staking factories (`makeStakingContractDetails`, `makeServiceStakingDetails`, `makeRawStakingRewardsInfo`, `makeStakingRewardsInfo`, `makeRewardsHistoryEntry`, `makeRewardsHistoryServiceResponse`).
 
 ### Import conventions
 
