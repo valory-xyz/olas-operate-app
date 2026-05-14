@@ -1,0 +1,14 @@
+{
+  "_doc": "Allowlist for yarn audit high/critical advisories in the FRONTEND tree that cannot be fixed in the current branch. Every entry needs a reason and a review date. See SUPPLY-CHAIN-SECURITY.md (added in Phase 4) and CONTRIBUTING.md ('Supply-chain checks').",
+  "_keep_when_empty": "Do NOT delete this file when entries: [] is empty. The empty file is the running assertion of 'audit gate exists AND zero current debt' — it pre-paves the schema for the next suppression, preserves git history of past suppressions, keeps the CODEOWNERS-routed surface, and lets the cross-repo tracker distinguish 'clean gate' (count=0) from 'wrapper pattern not in use' (no file at all). Burn down ENTRIES; keep the FILE.",
+  "_fields": {
+    "id": "npm advisory numeric ID (from `yarn audit --json` advisory.id) — REQUIRED, used for matching",
+    "ghsa": "GitHub Security Advisory ID (e.g., GHSA-xxxx-xxxx-xxxx) — for humans, not used for matching",
+    "package": "package name — for humans",
+    "severity": "advisory severity (high|critical) — for humans",
+    "reason": "why the advisory is allowlisted — upstream has no fix, major-version bump deferred, not on a reachable code path, etc.",
+    "added": "YYYY-MM-DD when the entry was added — REQUIRED",
+    "review": "YYYY-MM-DD by which the entry must be re-evaluated — REQUIRED. An expired entry prints a CI warning but does not fail the job."
+  },
+  "entries": []
+}

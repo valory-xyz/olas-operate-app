@@ -67,6 +67,7 @@
   "scripts": {
     "audit:install-hooks": "node scripts/audit-install-hooks.mjs",
     "audit:install-hooks:update": "node scripts/audit-install-hooks.mjs --update",
+    "audit:prod": "node scripts/audit.mjs",
     "dev": "next dev",
     "deps:check-pinned": "node ../scripts/check-deps-pinned.mjs",
     "build": "bash -c \"GNOSIS_RPC=$GNOSIS_RPC BASE_RPC=$BASE_RPC OPTIMISM_RPC=$OPTIMISM_RPC ETHEREUM_RPC=$ETHEREUM_RPC MODE_RPC=$MODE_RPC CELO_RPC=$CELO_RPC POLYGON_RPC=$POLYGON_RPC NODE_ENV=production next build\"",
