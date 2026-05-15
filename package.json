@@ -75,6 +75,7 @@
   "scripts": {
     "audit:install-hooks": "node scripts/audit-install-hooks.mjs",
     "audit:install-hooks:update": "node scripts/audit-install-hooks.mjs --update",
+    "audit:prod": "node scripts/audit.mjs",
     "build:frontend": "cd frontend && yarn build && rm -rf ../electron/.next && cp -r .next ../electron/.next && rm -rf ../electron/public && cp -r public ../electron/public",
     "deps:check-pinned": "node scripts/check-deps-pinned.mjs",
     "build:pearl": "sh build_pearl.sh",
