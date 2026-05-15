@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 /**
  * Run `yarn audit --groups dependencies` and fail on high/critical
- * advisories in the production tree — unless the advisory is listed in
- * .supply-chain/audit-allowlist.json with a reason and review date.
+ * advisories in the production dependencies — unless the advisory is
+ * listed in .supply-chain/audit-allowlist.json with a reason and
+ * review date.
  *
  * Necessary because the stock Yarn 1.x `yarn audit` has no suppression
  * mechanism and its exit code is a severity bitmask, not a threshold —
@@ -49,6 +50,11 @@ function loadAllowlist() {
   return data;
 }
 
+// Bound the subprocess so a hung npm registry can't pin the CI job at
+// the workflow-level timeout. 5 min is well above the typical 30s yarn
+// audit while still failing fast on a registry outage.
+const AUDIT_TIMEOUT_MS = 5 * 60 * 1000;
+
 function runYarnAudit() {
   return new Promise((resolvePromise) => {
     // `shell: true` is required on Windows so the `yarn.cmd` shim in
@@ -60,9 +66,21 @@ function runYarnAudit() {
     });
     let stdout = '';
     let stderr = '';
+    let timedOut = false;
+    const timer = setTimeout(() => {
+      timedOut = true;
+      child.kill('SIGKILL');
+    }, AUDIT_TIMEOUT_MS);
     child.stdout.on('data', (d) => (stdout += d));
     child.stderr.on('data', (d) => (stderr += d));
-    child.on('close', (code) => resolvePromise({ stdout, stderr, code }));
+    child.on('close', (code) => {
+      clearTimeout(timer);
+      if (timedOut) {
+        console.error(`::error::yarn audit timed out after ${AUDIT_TIMEOUT_MS / 1000}s (npm registry likely unresponsive).`);
+        process.exit(2);
+      }
+      resolvePromise({ stdout, stderr, code });
+    });
   });
 }
 
