@@ -1,0 +1,17 @@
+# .supply-chain/install-hooks.allowlist
+#
+# Every package in node_modules that declares a non-trivial
+# preinstall / install / postinstall script. Regenerate with
+# `yarn audit:install-hooks:update` after any dependency change.
+# CI runs the same script without --update and fails if this
+# file drifts from the tree.
+#
+# Each entry has an inline comment naming WHAT the hook does and
+# WHY it is safe to run on a contributor machine. A bare
+# "package  # ?" is a TODO, not justification.
+
+@parcel/watcher  # native fs-watcher prebuild fallback (sass>chokidar transitive); compiles a small N-API binding from source if no prebuilt is shipped for the platform
+classic-level  # node-gyp-build for the LevelDB C++ binding (hardhat>@nomicfoundation>ethereumjs-blockchain>level>classic-level — dev-only, never reached by the Electron runtime)
+electron  # postinstall downloads the Electron binary tarball for the current platform (direct devDep — required for `yarn dev` and electron-builder)
+keccak  # node-gyp-build for the Keccak hash native binding (ethereum-cryptography>keccak + hardhat>keccak — used by ethers v5 for blockchain hashing; install falls back to JS via `|| exit 0` if compile fails)
+secp256k1  # node-gyp-build for the secp256k1 ECC signing binding (ethereum-cryptography>secp256k1 — used by ethers for transaction signing; install falls back to JS via `|| exit 0` if compile fails)

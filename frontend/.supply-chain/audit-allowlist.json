@@ -1,0 +1,61 @@
+{
+  "_doc": "Allowlist for yarn audit high/critical advisories in the FRONTEND tree that cannot be fixed in the current branch. Every entry needs a reason and a review date. See SUPPLY-CHAIN-SECURITY.md (added in Phase 4) and CONTRIBUTING.md ('Supply-chain checks').",
+  "_keep_when_empty": "Do NOT delete this file when entries: [] is empty. The empty file is the running assertion of 'audit gate exists AND zero current debt' — it pre-paves the schema for the next suppression, preserves git history of past suppressions, keeps the CODEOWNERS-routed surface, and lets the cross-repo tracker distinguish 'clean gate' (count=0) from 'wrapper pattern not in use' (no file at all). Burn down ENTRIES; keep the FILE.",
+  "_fields": {
+    "id": "npm advisory numeric ID (from `yarn audit --json` advisory.id) — REQUIRED, used for matching",
+    "ghsa": "GitHub Security Advisory ID (e.g., GHSA-xxxx-xxxx-xxxx) — for humans, not used for matching",
+    "package": "package name — for humans",
+    "severity": "advisory severity (high|critical) — for humans",
+    "reason": "why the advisory is allowlisted — upstream has no fix, major-version bump deferred, not on a reachable code path, etc.",
+    "added": "YYYY-MM-DD when the entry was added — REQUIRED",
+    "review": "YYYY-MM-DD by which the entry must be re-evaluated — REQUIRED. An expired entry prints a CI warning but does not fail the job."
+  },
+  "_residual_group_doc": "All five entries below are Next.js 14.x advisories cleared from PR #1961 (Phase 0). Fix versions require Next 15.0.8+ / 15.5.15+ / 15.5.16+; a 14 → 15 migration is a dedicated separate PR. Justification for allowlisting rather than bumping: Pearl runs Next.js as a build-time static React bundler. Electron serves frontend/.next as static HTML/JS via its protocol handler — no Next runtime server, no API routes (frontend/pages/api/ does not exist), no getServerSideProps, no middleware.ts. Therefore RSC DoS, WebSocket SSRF, and middleware/i18n bypass cannot fire on Pearl's actual runtime path. If Pearl ever grows server-side Next code (an API route, getServerSideProps, or middleware), re-evaluate every entry below — the 'not reachable' premise becomes false the moment any of those exist.",
+  "entries": [
+    {
+      "id": 1112653,
+      "ghsa": "GHSA-h25m-26qc-wcjf",
+      "package": "next",
+      "severity": "high",
+      "reason": "Next.js HTTP request deserialization can lead to DoS when using insecure React Server Components. Vulnerable range >=13.0.0 <15.0.8. Fix requires Next 15.x major bump (deferred to dedicated migration PR). Not reachable: Pearl has no RSC components — frontend/.next is static-bundled and served by Electron's protocol handler, not by Next's server.",
+      "added": "2026-05-15",
+      "review": "2026-08-15"
+    },
+    {
+      "id": 1116376,
+      "ghsa": "GHSA-q4gf-8mx6-v5v3",
+      "package": "next",
+      "severity": "high",
+      "reason": "Next.js DoS with Server Components. Vulnerable range >=13.0.0 <15.5.15. Fix requires Next 15.x (deferred). Not reachable: Pearl has no Server Components — static-bundled only.",
+      "added": "2026-05-15",
+      "review": "2026-08-15"
+    },
+    {
+      "id": 1117931,
+      "ghsa": "GHSA-8h8q-6873-q5fj",
+      "package": "next",
+      "severity": "high",
+      "reason": "Next.js DoS with Server Components (second advisory, same class). Vulnerable range >=13.0.0 <15.5.16. Fix requires Next 15.x (deferred). Not reachable: same justification as 1116376.",
+      "added": "2026-05-15",
+      "review": "2026-08-15"
+    },
+    {
+      "id": 1118954,
+      "ghsa": "GHSA-c4j6-fc7j-m34r",
+      "package": "next",
+      "severity": "high",
+      "reason": "Next.js SSRF via WebSocket upgrades. Vulnerable range >=13.4.13 <15.5.16. Fix requires Next 15.x (deferred). Not reachable: no Next runtime server in Pearl, so no WebSocket upgrade path exists. Electron uses its own session/protocol handler, not Next's HTTP layer.",
+      "added": "2026-05-15",
+      "review": "2026-08-15"
+    },
+    {
+      "id": 1118962,
+      "ghsa": "GHSA-36qx-fr4f-26g5",
+      "package": "next",
+      "severity": "high",
+      "reason": "Next.js Pages Router middleware / i18n proxy bypass. Vulnerable range >=12.2.0 <15.5.16. Fix requires Next 15.x (deferred). Not reachable: Pearl has no middleware.ts and no i18n routing in next.config.mjs — the bypass path doesn't exist in the tree.",
+      "added": "2026-05-15",
+      "review": "2026-08-15"
+    }
+  ]
+}
