@@ -117,6 +117,34 @@ Types:
   ```
 2. **Test on multiple platforms** if applicable
 
+### Supply-chain checks — install-hook gate
+
+CI maintains a per-tree allowlist of every dependency that declares a non-trivial `preinstall` / `install` / `postinstall` script. Adding a new dependency — or bumping an existing one to a version whose maintainer introduced a new install hook — will trip the gate until the new package is reviewed and added to the allowlist.
+
+This is distinct from `.npmrc`'s `ignore-scripts=true` (which *prevents execution*); the install-hook gate *detects new additions* so a transitive package quietly gaining a `postinstall` in its latest version fails CI rather than running silently on a contributor machine.
+
+To regenerate the allowlist after an intentional dep change:
+
+```bash
+# Root tree
+yarn install
+yarn audit:install-hooks:update
+git add .supply-chain/install-hooks.allowlist
+
+# Frontend tree
+cd frontend && yarn install && yarn audit:install-hooks:update
+git add .supply-chain/install-hooks.allowlist
+```
+
+Then **edit the inline comment on each new entry** in the regenerated `.supply-chain/install-hooks.allowlist` to answer "what does this hook do, and why is it safe to run on a contributor machine?" — a bare `package  # ?` will pass the script's parse but fails the review intent. Examples in the checked-in file show the expected level of detail (e.g. `keccak  # node-gyp-build for the Keccak hash native binding ...`).
+
+To reproduce CI locally:
+
+```bash
+yarn audit:install-hooks
+cd frontend && yarn audit:install-hooks
+```
+
 ### PR Review Process
 
 1. **Automated checks** run on CI/CD
