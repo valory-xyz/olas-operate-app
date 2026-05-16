@@ -33,7 +33,6 @@ import signal
 import stat
 import subprocess  # nosec:
 import sys
-import traceback
 from http import HTTPStatus
 from logging import Logger
 from pathlib import Path
@@ -572,7 +571,10 @@ def create_app(  # pylint: disable=too-many-statements
                 "error": None,
             }
         except (FileNotFoundError, json.JSONDecodeError):
-            return {"params": {}, "status": False, "error": traceback.format_exc()}
+            cast(logging.Logger, app.logger).exception(  # pylint: disable=no-member
+                "Failed to read tendermint params."
+            )
+            return {"params": {}, "status": False, "error": "Failed to read tendermint params."}
 
     @app.post("/params")
     def update_params() -> Dict:
@@ -604,7 +606,10 @@ def create_app(  # pylint: disable=too-many-statements
 
             return {"status": True, "error": None}
         except (FileNotFoundError, json.JSONDecodeError, PermissionError):
-            return {"status": False, "error": traceback.format_exc()}
+            cast(logging.Logger, app.logger).exception(  # pylint: disable=no-member
+                "Failed to update tendermint params."
+            )
+            return {"status": False, "error": "Failed to update tendermint params."}
 
     @app.route("/gentle_reset")
     def gentle_reset() -> Tuple[Any, int]:
@@ -618,9 +623,12 @@ def create_app(  # pylint: disable=too-many-statements
                 jsonify({"message": "Reset successful.", "status": True}),
                 HTTPStatus.OK,
             )
-        except Exception as e:  # pylint: disable=W0703
+        except Exception:  # pylint: disable=W0703
+            cast(logging.Logger, app.logger).exception(  # pylint: disable=no-member
+                "Gentle reset failed."
+            )
             return (
-                jsonify({"message": f"Reset failed: {e}", "status": False}),
+                jsonify({"message": "Reset failed.", "status": False}),
                 HTTPStatus.OK,
             )
 
@@ -635,9 +643,12 @@ def create_app(  # pylint: disable=too-many-statements
             res = requests.get(endpoint, params, timeout=DEFAULT_TIMEOUT)
             app_hash_ = res.json()["result"]["block"]["header"]["app_hash"]
             return jsonify({"app_hash": app_hash_}), res.status_code
-        except Exception as e:  # pylint: disable=W0703
+        except Exception:  # pylint: disable=W0703
+            cast(logging.Logger, app.logger).exception(  # pylint: disable=no-member
+                "Could not get the app hash."
+            )
             return (
-                jsonify({"error": f"Could not get the app hash: {str(e)}"}),
+                jsonify({"error": "Could not get the app hash."}),
                 200,
             )
 
@@ -667,9 +678,12 @@ def create_app(  # pylint: disable=too-many-statements
                 jsonify({"message": "Reset successful.", "status": True}),
                 HTTPStatus.OK,
             )
-        except Exception as e:  # pylint: disable=W0703
+        except Exception:  # pylint: disable=W0703
+            cast(logging.Logger, app.logger).exception(  # pylint: disable=no-member
+                "Hard reset failed."
+            )
             return (
-                jsonify({"message": f"Reset failed: {e}", "status": False}),
+                jsonify({"message": "Reset failed.", "status": False}),
                 HTTPStatus.OK,
             )
 
