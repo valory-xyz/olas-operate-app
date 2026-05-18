@@ -4,19 +4,25 @@ import { act } from 'react';
 import { Settings } from '../../../components/SettingsPage';
 import { SettingsScreen, SettingsScreenMap } from '../../../constants/screen';
 import {
+  useElectronApi,
   useMnemonicExists,
   useRecoveryPhraseBackup,
   useSettings,
+  useStore,
 } from '../../../hooks';
 
 // ---------------------------------------------------------------------------
 // Module mocks
 // ---------------------------------------------------------------------------
 
+const mockStoreSet = jest.fn();
+
 jest.mock('../../../hooks', () => ({
+  useElectronApi: jest.fn(),
   useMnemonicExists: jest.fn(),
   useRecoveryPhraseBackup: jest.fn(),
   useSettings: jest.fn(),
+  useStore: jest.fn(),
 }));
 
 jest.mock('../../../components/SettingsPage/UpdatePassword', () => ({
@@ -110,6 +116,8 @@ jest.mock(
 const mockUseSettings = useSettings as jest.Mock;
 const mockUseMnemonicExists = useMnemonicExists as jest.Mock;
 const mockUseRecoveryPhraseBackup = useRecoveryPhraseBackup as jest.Mock;
+const mockUseElectronApi = useElectronApi as jest.Mock;
+const mockUseStore = useStore as jest.Mock;
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -121,17 +129,23 @@ const setupDefaults = (
     screen?: SettingsScreen | string;
     mnemonicExists?: boolean;
     isBackedUp?: boolean;
+    keepDeviceAwake?: boolean;
   } = {},
 ) => {
   const {
     screen = SettingsScreenMap.Main,
     mnemonicExists = true,
     isBackedUp = false,
+    keepDeviceAwake = false,
   } = overrides;
 
   mockUseSettings.mockReturnValue({ screen, goto: jest.fn() });
   mockUseMnemonicExists.mockReturnValue({ mnemonicExists });
   mockUseRecoveryPhraseBackup.mockReturnValue({ isBackedUp });
+  mockUseElectronApi.mockReturnValue({ store: { set: mockStoreSet } });
+  mockUseStore.mockReturnValue({
+    storeState: { keepDeviceAwake },
+  });
 };
 
 // ---------------------------------------------------------------------------
@@ -299,6 +313,51 @@ describe('Settings (SettingsPage entry)', () => {
         fireEvent.click(screen.getByText('Update Password'));
       });
       expect(mockGoto).toHaveBeenCalledWith(SettingsScreenMap.UpdatePassword);
+    });
+  });
+
+  describe('KeepDeviceAwakeSetting', () => {
+    it('renders toggle unchecked when keepDeviceAwake is undefined', () => {
+      mockUseStore.mockReturnValue({ storeState: {} });
+      setupDefaults();
+      mockUseStore.mockReturnValue({ storeState: {} });
+      render(<Settings />);
+      expect(screen.getByText('Keep Device Awake')).toBeInTheDocument();
+      expect(screen.getByRole('switch')).not.toBeChecked();
+    });
+
+    it('renders toggle checked when keepDeviceAwake is true', () => {
+      setupDefaults({ keepDeviceAwake: true });
+      render(<Settings />);
+      expect(screen.getByRole('switch')).toBeChecked();
+    });
+
+    it('calls store.set with true when toggled on', () => {
+      setupDefaults({ keepDeviceAwake: false });
+      render(<Settings />);
+      act(() => {
+        fireEvent.click(screen.getByRole('switch'));
+      });
+      expect(mockStoreSet).toHaveBeenCalledWith('keepDeviceAwake', true);
+    });
+
+    it('calls store.set with false when toggled off', () => {
+      setupDefaults({ keepDeviceAwake: true });
+      render(<Settings />);
+      act(() => {
+        fireEvent.click(screen.getByRole('switch'));
+      });
+      expect(mockStoreSet).toHaveBeenCalledWith('keepDeviceAwake', false);
+    });
+
+    it('always shows the disclaimer text regardless of toggle state', () => {
+      setupDefaults({ keepDeviceAwake: false });
+      render(<Settings />);
+      expect(
+        screen.getByText(
+          "Your device won't sleep while auto-run is active. This may increase battery usage on laptops.",
+        ),
+      ).toBeInTheDocument();
     });
   });
 
