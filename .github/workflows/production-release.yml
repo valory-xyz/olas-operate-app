@@ -27,7 +27,6 @@ on:
 
 permissions:
   contents: write
-  actions: write # required by calculate-and-update-version.yml to re-dispatch CI for the version-bump commit
 
 # Prevent multiple release builds running at the same time for the same branch
 concurrency:
