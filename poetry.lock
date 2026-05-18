@@ -3992,6 +3992,21 @@ files = [
 attrs = "*"
 
 [[package]]
+name = "sumtypes"
+version = "0.1a6"
+description = "Algebraic types for Python (notably providing Sum Types, aka Tagged Unions)"
+optional = false
+python-versions = "*"
+groups = ["main"]
+files = [
+    {file = "sumtypes-0.1a6-py2.py3-none-any.whl", hash = "sha256:3e9d71322dd927d25d935072f8be7daec655ea292fd392359a5bb2c1e53dfdc3"},
+    {file = "sumtypes-0.1a6.tar.gz", hash = "sha256:1a6ff095e06a1885f340ddab803e0f38e3f9bed81f9090164ca9682e04e96b43"},
+]
+
+[package.dependencies]
+attrs = "*"
+
+[[package]]
 name = "termcolor"
 version = "3.3.0"
 description = "ANSI color formatting for output in terminal"
