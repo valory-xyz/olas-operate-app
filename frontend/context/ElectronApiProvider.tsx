@@ -203,6 +203,19 @@ const getElectronApiFunction = (
 };
 
 export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
+  // Stabilize ipcRenderer so consumers with useEffect([…, ipcRenderer]) don't
+  // fire spurious cleanup→body cycles on every parent re-render (e.g.
+  // useWakeLock would flap wake-lock-stop → wake-lock-start each render).
+  const ipcRenderer = useMemo<ElectronApiContextProps['ipcRenderer']>(
+    () => ({
+      send: getElectronApiFunction('ipcRenderer.send'),
+      on: getElectronApiFunction('ipcRenderer.on'),
+      invoke: getElectronApiFunction('ipcRenderer.invoke'),
+      removeListener: getElectronApiFunction('ipcRenderer.removeListener'),
+    }),
+    [],
+  );
+
   // Stabilize autoUpdater so consumers with useEffect([autoUpdater]) don't
   // tear down and re-register IPC listeners on every parent render
   // (UpdateAvailableModal would otherwise drop progress events mid-download).
@@ -260,12 +273,7 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
         closeApp: getElectronApiFunction('closeApp'),
         minimizeApp: getElectronApiFunction('minimizeApp'),
         setTrayIcon: getElectronApiFunction('setTrayIcon'),
-        ipcRenderer: {
-          send: getElectronApiFunction('ipcRenderer.send'),
-          on: getElectronApiFunction('ipcRenderer.on'),
-          invoke: getElectronApiFunction('ipcRenderer.invoke'),
-          removeListener: getElectronApiFunction('ipcRenderer.removeListener'),
-        },
+        ipcRenderer,
         store: {
           store: getElectronApiFunction('store.store'),
           // NOTE: store.get reads from the Electron store only (OS app-data).

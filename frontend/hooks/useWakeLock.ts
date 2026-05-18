@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 import { useElectronApi } from './useElectronApi';
 import { useStore } from './useStore';
@@ -11,7 +11,9 @@ import { useStore } from './useStore';
  * - `keepDeviceAwake` (user toggle in settings)
  *
  * Effect body calls wake-lock-start when shouldLock is true.
- * Cleanup always calls wake-lock-stop — handles transitions and unmount.
+ * Cleanup calls wake-lock-stop only when a lock was previously started,
+ * avoiding a needless IPC round-trip on initial mount or when shouldLock
+ * was always false.
  */
 export const useWakeLock = (enabled: boolean) => {
   const { ipcRenderer } = useElectronApi();
@@ -19,14 +21,19 @@ export const useWakeLock = (enabled: boolean) => {
 
   const keepDeviceAwake = !!storeState?.keepDeviceAwake;
   const shouldLock = keepDeviceAwake && enabled;
+  const wasLockedRef = useRef(false);
 
   useEffect(() => {
     if (shouldLock) {
       ipcRenderer?.invoke?.('wake-lock-start', undefined);
+      wasLockedRef.current = true;
     }
 
     return () => {
-      ipcRenderer?.invoke?.('wake-lock-stop', undefined);
+      if (wasLockedRef.current) {
+        ipcRenderer?.invoke?.('wake-lock-stop', undefined);
+        wasLockedRef.current = false;
+      }
     };
   }, [shouldLock, ipcRenderer]);
 };
