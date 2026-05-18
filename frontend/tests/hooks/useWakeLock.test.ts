@@ -29,7 +29,7 @@ describe('useWakeLock', () => {
 
     renderHook(() => useWakeLock(true));
 
-    expect(mockInvoke).toHaveBeenCalledWith('wake-lock-start');
+    expect(mockInvoke).toHaveBeenCalledWith('wake-lock-start', undefined);
   });
 
   it('does not call wake-lock-start when enabled=true but keepDeviceAwake=false', () => {
@@ -39,7 +39,7 @@ describe('useWakeLock', () => {
 
     renderHook(() => useWakeLock(true));
 
-    expect(mockInvoke).not.toHaveBeenCalledWith('wake-lock-start');
+    expect(mockInvoke).not.toHaveBeenCalledWith('wake-lock-start', undefined);
   });
 
   it('does not call wake-lock-start when keepDeviceAwake=true but enabled=false', () => {
@@ -49,7 +49,7 @@ describe('useWakeLock', () => {
 
     renderHook(() => useWakeLock(false));
 
-    expect(mockInvoke).not.toHaveBeenCalledWith('wake-lock-start');
+    expect(mockInvoke).not.toHaveBeenCalledWith('wake-lock-start', undefined);
   });
 
   it('calls wake-lock-stop on cleanup when enabled flips to false', () => {
@@ -67,7 +67,7 @@ describe('useWakeLock', () => {
     // Flip enabled to false — effect cleanup should call wake-lock-stop
     rerender({ enabled: false });
 
-    expect(mockInvoke).toHaveBeenCalledWith('wake-lock-stop');
+    expect(mockInvoke).toHaveBeenCalledWith('wake-lock-stop', undefined);
   });
 
   it('calls wake-lock-stop on cleanup when keepDeviceAwake flips to false', () => {
@@ -86,7 +86,7 @@ describe('useWakeLock', () => {
 
     rerender();
 
-    expect(mockInvoke).toHaveBeenCalledWith('wake-lock-stop');
+    expect(mockInvoke).toHaveBeenCalledWith('wake-lock-stop', undefined);
   });
 
   it('calls wake-lock-stop on unmount', () => {
@@ -99,6 +99,6 @@ describe('useWakeLock', () => {
     mockInvoke.mockClear();
     unmount();
 
-    expect(mockInvoke).toHaveBeenCalledWith('wake-lock-stop');
+    expect(mockInvoke).toHaveBeenCalledWith('wake-lock-stop', undefined);
   });
 });

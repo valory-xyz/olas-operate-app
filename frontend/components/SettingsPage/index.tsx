@@ -130,9 +130,7 @@ const KeepDeviceAwakeSetting = () => {
             <Text strong>Keep Device Awake</Text>
             <Switch
               checked={keepDeviceAwake}
-              onChange={(checked) =>
-                store?.set?.('keepDeviceAwake', checked)
-              }
+              onChange={(checked) => store?.set?.('keepDeviceAwake', checked)}
               size="small"
             />
           </Flex>

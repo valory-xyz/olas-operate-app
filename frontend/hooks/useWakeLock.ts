@@ -22,11 +22,11 @@ export const useWakeLock = (enabled: boolean) => {
 
   useEffect(() => {
     if (shouldLock) {
-      ipcRenderer?.invoke('wake-lock-start');
+      ipcRenderer?.invoke?.('wake-lock-start', undefined);
     }
 
     return () => {
-      ipcRenderer?.invoke('wake-lock-stop');
+      ipcRenderer?.invoke?.('wake-lock-stop', undefined);
     };
   }, [shouldLock, ipcRenderer]);
 };
