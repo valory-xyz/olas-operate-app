@@ -117,6 +117,59 @@ Types:
   ```
 2. **Test on multiple platforms** if applicable
 
+### Supply-chain checks
+
+Two CI gates protect the dep tree. Both run on every PR; both block merge.
+
+#### Audit gate — high/critical CVE detection
+
+A blocking `yarn audit` gate runs against both `package.json` trees (root and `frontend/`). Adding a new dependency or bumping an existing one will trip the gate if the change pulls in (directly or transitively) a known high- or critical-severity npm advisory. To clear the gate, in order of preference:
+
+1. **Wait for the upstream fix.** If a patched version exists, bump the offending direct dep — or add an exact-version `resolutions` entry if it's only reachable transitively. This is always the right first answer.
+2. **Bump to a fixed version.** Update `package.json` (with an exact pin) so the resolved version sits in the `patched_versions` range from the advisory.
+3. **Pin a transitive via Yarn `resolutions`.** Add the safe version to `resolutions` in the affected tree's `package.json`.
+4. **Allowlist the advisory.** Only when the above are infeasible. Add an entry to `.supply-chain/audit-allowlist.json` (root) or `frontend/.supply-chain/audit-allowlist.json` (frontend). Every entry requires `id`, `reason`, `added` (YYYY-MM-DD), and `review` (YYYY-MM-DD, 90 days out from `added`). Expired `review` dates emit a `::warning::` in CI but don't fail the job — they're your reminder to re-justify.
+
+To reproduce CI behaviour locally:
+
+```bash
+# Root tree
+yarn audit:prod
+
+# Frontend tree
+cd frontend && yarn audit:prod
+```
+
+Both calls share the same wrapper (`scripts/audit.mjs` is duplicated under `frontend/scripts/audit.mjs` so each tree can be audited from its own working directory). Each consults the allowlist sitting next to it.
+
+#### Install-hook gate — new postinstall detection
+
+A separate per-tree allowlist tracks every dependency that declares a non-trivial `preinstall` / `install` / `postinstall` script. Adding a new dependency — or bumping an existing one to a version whose maintainer introduced a new install hook — will trip the gate until the new package is reviewed and added to the allowlist.
+
+This is distinct from `.npmrc`'s `ignore-scripts=true` (which *prevents execution*); the install-hook gate *detects new additions* so a transitive package quietly gaining a `postinstall` in its latest version fails CI rather than running silently on a contributor machine.
+
+To regenerate the allowlist after an intentional dep change:
+
+```bash
+# Root tree
+yarn install
+yarn audit:install-hooks:update
+git add .supply-chain/install-hooks.allowlist
+
+# Frontend tree
+cd frontend && yarn install && yarn audit:install-hooks:update
+git add .supply-chain/install-hooks.allowlist
+```
+
+Then **edit the inline comment on each new entry** in the regenerated `.supply-chain/install-hooks.allowlist` to answer "what does this hook do, and why is it safe to run on a contributor machine?" — a bare `package  # ?` will pass the script's parse but fails the review intent. Examples in the checked-in file show the expected level of detail (e.g. `keccak  # node-gyp-build for the Keccak hash native binding ...`).
+
+To reproduce CI locally:
+
+```bash
+yarn audit:install-hooks
+cd frontend && yarn audit:install-hooks
+```
+
 ### PR Review Process
 
 1. **Automated checks** run on CI/CD

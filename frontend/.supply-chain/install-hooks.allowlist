@@ -1,0 +1,14 @@
+# .supply-chain/install-hooks.allowlist
+#
+# Every package in node_modules that declares a non-trivial
+# preinstall / install / postinstall script. Regenerate with
+# `yarn audit:install-hooks:update` after any dependency change.
+# CI runs the same script without --update and fails if this
+# file drifts from the tree.
+#
+# Each entry has an inline comment naming WHAT the hook does and
+# WHY it is safe to run on a contributor machine. A bare
+# "package  # ?" is a TODO, not justification.
+
+@parcel/watcher  # native fs-watcher prebuild fallback (sass>chokidar transitive); compiles a small N-API binding from source if no prebuilt is shipped for the platform
+unrs-resolver  # napi-postinstall stub that prints a platform-mismatch warning if the prebuilt binary's triple doesn't match the host (eslint-config-next>eslint-import-resolver-typescript>unrs-resolver — runs once at install, no network or file mutation beyond stdout)
