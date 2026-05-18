@@ -1,0 +1,1 @@
+export { UpdatePasswordScreen } from './UpdatePasswordScreen';

@@ -38,7 +38,7 @@ const SetupPasswordTitle = ({ title }: { title: string }) => (
   </Flex>
 );
 
-const PasswordStrength = ({ score }: { score: number }) => {
+export const PasswordStrength = ({ score }: { score: number }) => {
   return (
     <Text style={{ color: COLOR.GRAY_2 }}>
       Password strength:{' '}

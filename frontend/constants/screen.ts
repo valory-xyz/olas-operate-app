@@ -5,6 +5,7 @@ export const SettingsScreenMap = {
   UpdateBackupWalletMethod: 'UpdateBackupWalletMethod',
   UpdateBackupWalletManual: 'UpdateBackupWalletManual',
   UpdateBackupWalletConfirm: 'UpdateBackupWalletConfirm',
+  UpdatePassword: 'UpdatePassword',
 } as const;
 
 export type SettingsScreen = keyof typeof SettingsScreenMap;
