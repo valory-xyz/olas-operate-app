@@ -1041,13 +1041,20 @@ ipcMain.handle('wake-lock-start', () => {
   // Release any existing blocker before starting a new one to prevent ID leaks
   if (wakeLockId !== null && powerSaveBlocker.isStarted(wakeLockId)) {
     powerSaveBlocker.stop(wakeLockId);
+    logger.electron(`[wake-lock] released stale blocker id=${wakeLockId}`);
   }
   wakeLockId = powerSaveBlocker.start('prevent-app-suspension');
+  logger.electron(
+    `[wake-lock] started: id=${wakeLockId}, mode='prevent-app-suspension'`,
+  );
 });
 
 ipcMain.handle('wake-lock-stop', () => {
   if (wakeLockId !== null && powerSaveBlocker.isStarted(wakeLockId)) {
     powerSaveBlocker.stop(wakeLockId);
+    logger.electron(`[wake-lock] stopped: id=${wakeLockId}`);
+  } else {
+    logger.electron('[wake-lock] stop requested but no active blocker');
   }
   wakeLockId = null;
 });

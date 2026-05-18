@@ -1,10 +1,10 @@
 import { Button, Card, Flex, Switch, Typography } from 'antd';
 import { useMemo } from 'react';
 import {
-  TbBolt,
   TbFileText,
   TbShieldHalfFilled,
   TbShieldLock,
+  TbSunHigh,
 } from 'react-icons/tb';
 import { useBoolean } from 'usehooks-ts';
 
@@ -123,7 +123,7 @@ const KeepDeviceAwakeSetting = () => {
     <CardSection $padding="24px" $borderTop vertical gap={8}>
       <Flex gap={16}>
         <IconContainer>
-          <TbBolt size={20} color={COLOR.TEXT_NEUTRAL_TERTIARY} />
+          <TbSunHigh size={20} color={COLOR.TEXT_NEUTRAL_TERTIARY} />
         </IconContainer>
         <Flex vertical gap={12}>
           <Flex justify="space-between" align="center">
