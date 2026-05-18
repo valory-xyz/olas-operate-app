@@ -38,7 +38,7 @@ import { UpdatePasswordScreen } from './UpdatePassword';
 const { Text, Paragraph, Title } = Typography;
 
 const DefaultSettingsSection = ({ openDrawer }: { openDrawer: () => void }) => (
-  <CardSection $padding="24px">
+  <CardSection $padding="24px" $borderTop>
     <Flex gap={16}>
       <IconContainer>
         <TbFileText size={20} color={COLOR.TEXT_NEUTRAL_TERTIARY} />
@@ -120,7 +120,7 @@ const KeepDeviceAwakeSetting = () => {
   const keepDeviceAwake = !!storeState?.keepDeviceAwake;
 
   return (
-    <CardSection $padding="24px" $borderTop vertical gap={8}>
+    <CardSection $padding="24px" vertical gap={8}>
       <Flex gap={16}>
         <IconContainer>
           <TbSunHigh size={20} color={COLOR.TEXT_NEUTRAL_TERTIARY} />
@@ -180,8 +180,8 @@ const SettingsMain = () => {
 
         <BackupWalletSection />
 
-        <DefaultSettingsSection openDrawer={openDrawer} />
         <KeepDeviceAwakeSetting />
+        <DefaultSettingsSection openDrawer={openDrawer} />
         <SecretRecoveryPhraseSetting />
       </Card>
       <SettingsDrawer isDrawerOpen={isDrawerOpen} onClose={closeDrawer} />
