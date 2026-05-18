@@ -56,9 +56,27 @@ const loginAccount = (password: string) =>
     response.ok ? response.json() : parseApiError(response, 'Failed to login'),
   );
 
+/**
+ * Resets user's password using the Secret Recovery Phrase (mnemonic)
+ */
+const resetAccountWithMnemonic = (mnemonic: string, newPassword: string) =>
+  fetch(`${BACKEND_URL}/account`, {
+    method: 'PUT',
+    headers: { ...CONTENT_TYPE_JSON_UTF8 },
+    body: JSON.stringify({
+      mnemonic,
+      new_password: newPassword,
+    }),
+  }).then((response) =>
+    response.ok
+      ? response.json()
+      : parseApiError(response, 'Failed to reset account password'),
+  );
+
 export const AccountService = {
   getAccount,
   createAccount,
   updateAccount,
   loginAccount,
+  resetAccountWithMnemonic,
 };

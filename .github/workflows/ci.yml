@@ -4,7 +4,6 @@ on:
   pull_request:
   push:
     branches: [main, staging]
-  workflow_dispatch: # lets the release workflow re-trigger CI on GITHUB_TOKEN-pushed version-bump commits
 
 permissions:
   contents: read

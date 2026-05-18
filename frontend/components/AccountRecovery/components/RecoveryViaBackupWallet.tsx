@@ -9,13 +9,7 @@ import { RecoveryMethodCard } from '../styles';
 
 const { Paragraph } = Typography;
 
-type ForgotPasswordCardProps = {
-  isRecoveryAvailable: boolean;
-};
-
-export const ForgotPasswordCard = ({
-  isRecoveryAvailable,
-}: ForgotPasswordCardProps) => {
+export const ForgotPasswordCard = () => {
   const { onNext } = useAccountRecoveryContext();
 
   return (
@@ -29,21 +23,12 @@ export const ForgotPasswordCard = ({
           className="text-neutral-secondary text-center mt-16"
           style={{ minHeight: 72 }}
         >
-          Reset your password using the backup wallet you set up during Pearl
-          sign up.
+          Reset your password using the secret recovery phrase or the backup
+          wallet.
         </Paragraph>
-        {isRecoveryAvailable ? (
-          <Button onClick={onNext} type="primary" size="large" block>
-            Reset Password
-          </Button>
-        ) : (
-          <Paragraph
-            className="flex align-center text-neutral-tertiary text-sm mb-0 justify-center"
-            style={{ height: 40 }}
-          >
-            No backup wallet found. Set up a backup wallet first.
-          </Paragraph>
-        )}
+        <Button onClick={onNext} type="primary" size="large" block>
+          Reset Password
+        </Button>
       </div>
     </RecoveryMethodCard>
   );
