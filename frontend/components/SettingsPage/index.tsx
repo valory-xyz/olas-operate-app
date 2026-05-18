@@ -126,18 +126,20 @@ const KeepDeviceAwakeSetting = () => {
           <TbSunHigh size={20} color={COLOR.TEXT_NEUTRAL_TERTIARY} />
         </IconContainer>
         <Flex vertical gap={12}>
-          <Flex justify="space-between" align="center">
-            <Text strong>Keep Device Awake</Text>
+          <Text strong>Keep Device Awake</Text>
+          <Text className="text-sm text-neutral-secondary">
+            Your device stays awake while auto-run is active. On laptops,
+            closing the lid may still trigger sleep, and battery use may be
+            higher.
+          </Text>
+          <Flex align="center" gap={8}>
             <Switch
               checked={keepDeviceAwake}
               onChange={(checked) => store?.set?.('keepDeviceAwake', checked)}
               size="small"
             />
+            <Text className="text-sm">{keepDeviceAwake ? 'On' : 'Off'}</Text>
           </Flex>
-          <Text className="text-sm text-neutral-secondary">
-            Your device won&apos;t sleep while auto-run is active. This may
-            increase battery usage on laptops.
-          </Text>
         </Flex>
       </Flex>
     </CardSection>

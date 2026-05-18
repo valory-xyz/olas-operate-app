@@ -354,9 +354,21 @@ describe('Settings (SettingsPage entry)', () => {
       render(<Settings />);
       expect(
         screen.getByText(
-          "Your device won't sleep while auto-run is active. This may increase battery usage on laptops.",
+          'Your device stays awake while auto-run is active. On laptops, closing the lid may still trigger sleep, and battery use may be higher.',
         ),
       ).toBeInTheDocument();
+    });
+
+    it('shows "Off" label when toggle is unchecked', () => {
+      setupDefaults({ keepDeviceAwake: false });
+      render(<Settings />);
+      expect(screen.getByText('Off')).toBeInTheDocument();
+    });
+
+    it('shows "On" label when toggle is checked', () => {
+      setupDefaults({ keepDeviceAwake: true });
+      render(<Settings />);
+      expect(screen.getByText('On')).toBeInTheDocument();
     });
   });
 
