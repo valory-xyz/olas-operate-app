@@ -318,7 +318,6 @@ describe('Settings (SettingsPage entry)', () => {
 
   describe('KeepDeviceAwakeSetting', () => {
     it('renders toggle unchecked when keepDeviceAwake is undefined', () => {
-      mockUseStore.mockReturnValue({ storeState: {} });
       setupDefaults();
       mockUseStore.mockReturnValue({ storeState: {} });
       render(<Settings />);
