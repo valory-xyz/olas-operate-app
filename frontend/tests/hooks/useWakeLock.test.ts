@@ -1,7 +1,7 @@
 import { renderHook } from '@testing-library/react';
 
-import { useWakeLock } from '../../hooks/useWakeLock';
 import { useStore } from '../../hooks/useStore';
+import { useWakeLock } from '../../hooks/useWakeLock';
 
 const mockInvoke = jest.fn();
 
