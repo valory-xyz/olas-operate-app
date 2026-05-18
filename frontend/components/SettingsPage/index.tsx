@@ -1,15 +1,22 @@
-import { Button, Card, Flex, Typography } from 'antd';
+import { Button, Card, Flex, Switch, Typography } from 'antd';
 import { useMemo } from 'react';
-import { TbFileText, TbShieldHalfFilled, TbShieldLock } from 'react-icons/tb';
+import {
+  TbBolt,
+  TbFileText,
+  TbShieldHalfFilled,
+  TbShieldLock,
+} from 'react-icons/tb';
 import { useBoolean } from 'usehooks-ts';
 
 import { Alert, CardSection, cardStyles, IconContainer } from '@/components/ui';
 import { COLOR } from '@/constants';
 import { SettingsScreenMap } from '@/constants/screen';
 import {
+  useElectronApi,
   useMnemonicExists,
   useRecoveryPhraseBackup,
   useSettings,
+  useStore,
 } from '@/hooks';
 
 import { BackupWalletSection } from './BackupWallet';
@@ -107,6 +114,38 @@ const SecretRecoveryPhraseSetting = () => {
   );
 };
 
+const KeepDeviceAwakeSetting = () => {
+  const { store } = useElectronApi();
+  const { storeState } = useStore();
+  const keepDeviceAwake = !!storeState?.keepDeviceAwake;
+
+  return (
+    <CardSection $padding="24px" $borderTop vertical gap={8}>
+      <Flex gap={16}>
+        <IconContainer>
+          <TbBolt size={20} color={COLOR.TEXT_NEUTRAL_TERTIARY} />
+        </IconContainer>
+        <Flex vertical gap={12}>
+          <Flex justify="space-between" align="center">
+            <Text strong>Keep Device Awake</Text>
+            <Switch
+              checked={keepDeviceAwake}
+              onChange={(checked) =>
+                store?.set?.('keepDeviceAwake', checked)
+              }
+              size="small"
+            />
+          </Flex>
+          <Text className="text-sm text-neutral-secondary">
+            Your device won&apos;t sleep while auto-run is active. This may
+            increase battery usage on laptops.
+          </Text>
+        </Flex>
+      </Flex>
+    </CardSection>
+  );
+};
+
 const SettingsMain = () => {
   const { goto } = useSettings();
   const {
@@ -144,6 +183,7 @@ const SettingsMain = () => {
         <BackupWalletSection />
 
         <DefaultSettingsSection openDrawer={openDrawer} />
+        <KeepDeviceAwakeSetting />
         <SecretRecoveryPhraseSetting />
       </Card>
       <SettingsDrawer isDrawerOpen={isDrawerOpen} onClose={closeDrawer} />
