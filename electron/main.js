@@ -38,6 +38,7 @@ const {
   systemPreferences,
   nativeImage,
   screen,
+  powerSaveBlocker,
 } = require('electron');
 
 const { spawn } = require('child_process');
@@ -172,6 +173,11 @@ const getOnRampWindow = () => onRampWindow;
 
 /** @type {Electron.Tray | null} */
 let tray = null;
+
+// Tracks the active powerSaveBlocker ID; null when no blocker is active.
+// Uses 'prevent-app-suspension' to prevent system/CPU sleep while allowing
+// the display to dim — appropriate for long-running background agent work.
+let wakeLockId = null;
 
 // Used in production and development
 let operateDaemon;
@@ -1027,3 +1033,21 @@ ipcMain.handle('web3auth-swap-owner-failure', (_event, result) =>
 ipcMain.handle('terms-window-show', (_event, hash) =>
   handleTermsAndConditionsWindowShow(hash),
 );
+
+/**
+ * Wake lock handlers — prevent OS sleep while auto-run agents are active.
+ */
+ipcMain.handle('wake-lock-start', () => {
+  // Release any existing blocker before starting a new one to prevent ID leaks
+  if (wakeLockId !== null && powerSaveBlocker.isStarted(wakeLockId)) {
+    powerSaveBlocker.stop(wakeLockId);
+  }
+  wakeLockId = powerSaveBlocker.start('prevent-app-suspension');
+});
+
+ipcMain.handle('wake-lock-stop', () => {
+  if (wakeLockId !== null && powerSaveBlocker.isStarted(wakeLockId)) {
+    powerSaveBlocker.stop(wakeLockId);
+  }
+  wakeLockId = null;
+});
