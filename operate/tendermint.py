@@ -538,6 +538,17 @@ def create_app(  # pylint: disable=too-many-statements
     )
 
     app = Flask(__name__)  # pylint: disable=redefined-outer-name
+    # Route app.logger to stderr so exception logs land in the parent process's
+    # tm.log (deployment_runner pipes this subprocess's stderr there); without
+    # this they'd go to com.log, which isn't collected for support bundles.
+    _stderr_handler = logging.StreamHandler(sys.stderr)
+    _stderr_handler.setFormatter(
+        logging.Formatter(
+            "%(asctime)s %(levelname)s %(name)s %(threadName)s : %(message)s"
+        )
+    )
+    app.logger.addHandler(_stderr_handler)  # pylint: disable=no-member
+    app.logger.setLevel(logging.DEBUG)  # pylint: disable=no-member
     app._is_on_exit = (  # pylint: disable=protected-access
         False  # ugly but better than global ver
     )
@@ -571,7 +582,7 @@ def create_app(  # pylint: disable=too-many-statements
                 "error": None,
             }
         except (FileNotFoundError, json.JSONDecodeError):
-            cast(logging.Logger, app.logger).exception(  # pylint: disable=no-member
+            app.logger.exception(  # pylint: disable=no-member
                 "Failed to read tendermint params."
             )
             return {"params": {}, "status": False, "error": "Failed to read tendermint params."}
@@ -582,16 +593,16 @@ def create_app(  # pylint: disable=too-many-statements
 
         try:
             data: Dict = json.loads(request.get_data().decode(ENCODING))
-            cast(logging.Logger, app.logger).debug(  # pylint: disable=no-member
+            app.logger.debug(  # pylint: disable=no-member
                 f"Data update requested with data={data}"
             )
 
-            cast(logging.Logger, app.logger).info(  # pylint: disable=no-member
+            app.logger.info(  # pylint: disable=no-member
                 "Updating genesis config."
             )
             update_genesis_config(data=data)
 
-            cast(logging.Logger, app.logger).info(  # pylint: disable=no-member
+            app.logger.info(  # pylint: disable=no-member
                 "Updating peristent peers."
             )
             config_path = Path(os.environ["TMHOME"]) / "config" / "config.toml"
@@ -606,7 +617,7 @@ def create_app(  # pylint: disable=too-many-statements
 
             return {"status": True, "error": None}
         except (FileNotFoundError, json.JSONDecodeError, PermissionError):
-            cast(logging.Logger, app.logger).exception(  # pylint: disable=no-member
+            app.logger.exception(  # pylint: disable=no-member
                 "Failed to update tendermint params."
             )
             return {"status": False, "error": "Failed to update tendermint params."}
@@ -624,7 +635,7 @@ def create_app(  # pylint: disable=too-many-statements
                 HTTPStatus.OK,
             )
         except Exception:  # pylint: disable=W0703
-            cast(logging.Logger, app.logger).exception(  # pylint: disable=no-member
+            app.logger.exception(  # pylint: disable=no-member
                 "Gentle reset failed."
             )
             return (
@@ -644,7 +655,7 @@ def create_app(  # pylint: disable=too-many-statements
             app_hash_ = res.json()["result"]["block"]["header"]["app_hash"]
             return jsonify({"app_hash": app_hash_}), res.status_code
         except Exception:  # pylint: disable=W0703
-            cast(logging.Logger, app.logger).exception(  # pylint: disable=no-member
+            app.logger.exception(  # pylint: disable=no-member
                 "Could not get the app hash."
             )
             return (
@@ -679,7 +690,7 @@ def create_app(  # pylint: disable=too-many-statements
                 HTTPStatus.OK,
             )
         except Exception:  # pylint: disable=W0703
-            cast(logging.Logger, app.logger).exception(  # pylint: disable=no-member
+            app.logger.exception(  # pylint: disable=no-member
                 "Hard reset failed."
             )
             return (
@@ -690,7 +701,7 @@ def create_app(  # pylint: disable=too-many-statements
     @app.errorhandler(HTTPStatus.NOT_FOUND)  # type: ignore
     def handle_notfound(e: NotFound) -> Response:
         """Handle server error."""
-        cast(logging.Logger, app.logger).info(e)  # pylint: disable=E
+        app.logger.info(e)  # pylint: disable=E
         return Response(
             "Not Found", status=HTTPStatus.NOT_FOUND, mimetype="application/json"
         )
@@ -698,7 +709,7 @@ def create_app(  # pylint: disable=too-many-statements
     @app.errorhandler(HTTPStatus.INTERNAL_SERVER_ERROR)  # type: ignore
     def handle_server_error(e: InternalServerError) -> Response:
         """Handle server error."""
-        cast(logging.Logger, app.logger).info(e)  # pylint: disable=E
+        app.logger.info(e)  # pylint: disable=E
         return Response(
             "Error Closing Node",
             status=HTTPStatus.INTERNAL_SERVER_ERROR,
