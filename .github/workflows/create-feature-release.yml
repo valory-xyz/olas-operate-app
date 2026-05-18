@@ -1,6 +1,7 @@
 name: Create Feature Release
 permissions:
   contents: write
+  actions: write # required by calculate-and-update-version.yml to re-dispatch CI for the version-bump commit
 
 on:
   workflow_dispatch:
