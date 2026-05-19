@@ -2497,14 +2497,14 @@ nicer-shell = ["ipython"]
 
 [[package]]
 name = "olas-operate-middleware"
-version = "0.15.21"
+version = "0.15.22"
 description = ""
 optional = false
 python-versions = "<3.15,>=3.10"
 groups = ["main"]
 files = [
-    {file = "olas_operate_middleware-0.15.21-py3-none-any.whl", hash = "sha256:3004aec9f7eabba0aafe8884133df1e53c0bc9513fb20b9a1d17c3ccd49e6ea8"},
-    {file = "olas_operate_middleware-0.15.21.tar.gz", hash = "sha256:f0ed6fbcdb87b9e20c43b4fcc8daec1b70cb8bb0d432d243d0a3c390762f355a"},
+    {file = "olas_operate_middleware-0.15.22-py3-none-any.whl", hash = "sha256:ad70310803ace0d8274a9b711912bd5b04956434f9134b842c3547a844fc563d"},
+    {file = "olas_operate_middleware-0.15.22.tar.gz", hash = "sha256:bc8dd34e695ea1aa8e5398e0fa652caf1fdf1206db82e455bd1cd2e340344a59"},
 ]
 
 [package.dependencies]
@@ -3992,21 +3992,6 @@ files = [
 attrs = "*"
 
 [[package]]
-name = "sumtypes"
-version = "0.1a6"
-description = "Algebraic types for Python (notably providing Sum Types, aka Tagged Unions)"
-optional = false
-python-versions = "*"
-groups = ["main"]
-files = [
-    {file = "sumtypes-0.1a6-py2.py3-none-any.whl", hash = "sha256:3e9d71322dd927d25d935072f8be7daec655ea292fd392359a5bb2c1e53dfdc3"},
-    {file = "sumtypes-0.1a6.tar.gz", hash = "sha256:1a6ff095e06a1885f340ddab803e0f38e3f9bed81f9090164ca9682e04e96b43"},
-]
-
-[package.dependencies]
-attrs = "*"
-
-[[package]]
 name = "termcolor"
 version = "3.3.0"
 description = "ANSI color formatting for output in terminal"
@@ -4431,4 +4416,4 @@ propcache = ">=0.2.1"
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.14,<3.15"
-content-hash = "fe7b13c20d538c3678a88e734ac66281e972ac338311eec82da1290aedc8e4b9"
+content-hash = "f87f2bcb035a55bd35ccd10e8d5ebbe916d03ddd6957491bc0470e52b594ef20"
