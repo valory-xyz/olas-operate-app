@@ -38,6 +38,12 @@ const termsAndConditionsWindow = {
   show: (hash) => ipcRenderer.invoke('terms-window-show', hash),
 };
 
+/** IPC methods for OS wake-lock — keeps the device awake during auto-run. */
+const wakeLock = {
+  start: () => ipcRenderer.invoke('wake-lock-start'),
+  stop: () => ipcRenderer.invoke('wake-lock-stop'),
+};
+
 /** IPC bridge for OTA updates (distinct from the electron-updater instance in electron/update.js) */
 const autoUpdater = {
   checkForUpdates: () => ipcRenderer.invoke('update-check'),
@@ -109,6 +115,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   web3AuthWindow,
   web3AuthSwapOwnerWindow,
   termsAndConditionsWindow,
+  wakeLock,
   logEvent: (message) => ipcRenderer.invoke('log-event', message),
   nextLogError: (error, errorInfo) =>
     ipcRenderer.invoke('next-log-error', error, errorInfo),

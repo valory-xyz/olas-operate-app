@@ -3,11 +3,12 @@ import { renderHook } from '@testing-library/react';
 import { useStore } from '../../hooks/useStore';
 import { useWakeLock } from '../../hooks/useWakeLock';
 
-const mockInvoke = jest.fn();
+const mockStart = jest.fn();
+const mockStop = jest.fn();
 
 jest.mock('../../hooks/useElectronApi', () => ({
   useElectronApi: () => ({
-    ipcRenderer: { invoke: mockInvoke },
+    wakeLock: { start: mockStart, stop: mockStop },
   }),
 }));
 
@@ -22,70 +23,106 @@ describe('useWakeLock', () => {
     jest.clearAllMocks();
   });
 
-  it('calls wake-lock-start when enabled=true and keepDeviceAwake=true', () => {
+  it('calls wakeLock.start when enabled=true and keepDeviceAwake=true', () => {
     mockUseStore.mockReturnValue({
       storeState: { keepDeviceAwake: true },
     });
 
     renderHook(() => useWakeLock(true));
 
-    expect(mockInvoke).toHaveBeenCalledWith('wake-lock-start', undefined);
+    expect(mockStart).toHaveBeenCalledTimes(1);
+    expect(mockStop).not.toHaveBeenCalled();
   });
 
-  it('does not call wake-lock-start when enabled=true but keepDeviceAwake=false', () => {
+  it('does not call wakeLock.start when enabled=true but keepDeviceAwake=false', () => {
     mockUseStore.mockReturnValue({
       storeState: { keepDeviceAwake: false },
     });
 
     const { unmount } = renderHook(() => useWakeLock(true));
 
-    expect(mockInvoke).not.toHaveBeenCalledWith('wake-lock-start', undefined);
+    expect(mockStart).not.toHaveBeenCalled();
 
     // Cleanup should also not call stop since lock was never started
     unmount();
-    expect(mockInvoke).not.toHaveBeenCalledWith('wake-lock-stop', undefined);
+    expect(mockStop).not.toHaveBeenCalled();
   });
 
-  it('does not call wake-lock-start when keepDeviceAwake=true but enabled=false', () => {
+  it('does not call wakeLock.start when keepDeviceAwake=true but enabled=false', () => {
     mockUseStore.mockReturnValue({
       storeState: { keepDeviceAwake: true },
     });
 
     const { unmount } = renderHook(() => useWakeLock(false));
 
-    expect(mockInvoke).not.toHaveBeenCalledWith('wake-lock-start', undefined);
+    expect(mockStart).not.toHaveBeenCalled();
 
     // Cleanup should also not call stop since lock was never started
     unmount();
-    expect(mockInvoke).not.toHaveBeenCalledWith('wake-lock-stop', undefined);
+    expect(mockStop).not.toHaveBeenCalled();
   });
 
-  it('calls wake-lock-stop on cleanup when enabled flips to false', () => {
+  it('calls wakeLock.start when shouldLock flips false → true via enabled', () => {
     mockUseStore.mockReturnValue({
       storeState: { keepDeviceAwake: true },
     });
 
-    const { rerender, unmount } = renderHook(
-      ({ enabled }) => useWakeLock(enabled),
-      { initialProps: { enabled: true } },
-    );
+    const { rerender } = renderHook(({ enabled }) => useWakeLock(enabled), {
+      initialProps: { enabled: false },
+    });
 
-    mockInvoke.mockClear();
+    expect(mockStart).not.toHaveBeenCalled();
 
-    // Flip enabled to false — effect cleanup should call wake-lock-stop
-    rerender({ enabled: false });
+    // Flip enabled to true — effect should fire start
+    rerender({ enabled: true });
 
-    expect(mockInvoke).toHaveBeenCalledWith('wake-lock-stop', undefined);
+    expect(mockStart).toHaveBeenCalledTimes(1);
   });
 
-  it('calls wake-lock-stop on cleanup when keepDeviceAwake flips to false', () => {
+  it('calls wakeLock.start when shouldLock flips false → true via keepDeviceAwake', () => {
+    mockUseStore.mockReturnValue({
+      storeState: { keepDeviceAwake: false },
+    });
+
+    const { rerender } = renderHook(() => useWakeLock(true));
+
+    expect(mockStart).not.toHaveBeenCalled();
+
+    // Flip keepDeviceAwake to true
+    mockUseStore.mockReturnValue({
+      storeState: { keepDeviceAwake: true },
+    });
+
+    rerender();
+
+    expect(mockStart).toHaveBeenCalledTimes(1);
+  });
+
+  it('calls wakeLock.stop on cleanup when enabled flips to false', () => {
+    mockUseStore.mockReturnValue({
+      storeState: { keepDeviceAwake: true },
+    });
+
+    const { rerender } = renderHook(({ enabled }) => useWakeLock(enabled), {
+      initialProps: { enabled: true },
+    });
+
+    mockStop.mockClear();
+
+    // Flip enabled to false — effect cleanup should call stop
+    rerender({ enabled: false });
+
+    expect(mockStop).toHaveBeenCalledTimes(1);
+  });
+
+  it('calls wakeLock.stop on cleanup when keepDeviceAwake flips to false', () => {
     mockUseStore.mockReturnValue({
       storeState: { keepDeviceAwake: true },
     });
 
     const { rerender } = renderHook(() => useWakeLock(true));
 
-    mockInvoke.mockClear();
+    mockStop.mockClear();
 
     // Flip keepDeviceAwake to false
     mockUseStore.mockReturnValue({
@@ -94,19 +131,19 @@ describe('useWakeLock', () => {
 
     rerender();
 
-    expect(mockInvoke).toHaveBeenCalledWith('wake-lock-stop', undefined);
+    expect(mockStop).toHaveBeenCalledTimes(1);
   });
 
-  it('calls wake-lock-stop on unmount', () => {
+  it('calls wakeLock.stop on unmount', () => {
     mockUseStore.mockReturnValue({
       storeState: { keepDeviceAwake: true },
     });
 
     const { unmount } = renderHook(() => useWakeLock(true));
 
-    mockInvoke.mockClear();
+    mockStop.mockClear();
     unmount();
 
-    expect(mockInvoke).toHaveBeenCalledWith('wake-lock-stop', undefined);
+    expect(mockStop).toHaveBeenCalledTimes(1);
   });
 });

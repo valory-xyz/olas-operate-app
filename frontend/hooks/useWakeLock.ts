@@ -16,7 +16,7 @@ import { useStore } from './useStore';
  * was always false.
  */
 export const useWakeLock = (enabled: boolean) => {
-  const { ipcRenderer } = useElectronApi();
+  const { wakeLock } = useElectronApi();
   const { storeState } = useStore();
 
   const keepDeviceAwake = !!storeState?.keepDeviceAwake;
@@ -25,15 +25,15 @@ export const useWakeLock = (enabled: boolean) => {
 
   useEffect(() => {
     if (shouldLock) {
-      ipcRenderer?.invoke?.('wake-lock-start', undefined);
+      wakeLock?.start?.();
       wasLockedRef.current = true;
     }
 
     return () => {
       if (wasLockedRef.current) {
-        ipcRenderer?.invoke?.('wake-lock-stop', undefined);
+        wakeLock?.stop?.();
         wasLockedRef.current = false;
       }
     };
-  }, [shouldLock, ipcRenderer]);
+  }, [shouldLock, wakeLock]);
 };

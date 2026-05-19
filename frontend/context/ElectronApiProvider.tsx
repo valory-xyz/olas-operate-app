@@ -104,6 +104,11 @@ type ElectronApiContextProps = {
   };
   logEvent?: (message: string) => void;
   nextLogError?: (error: Error, errorInfo: unknown) => void;
+  /** IPC bridge for the OS wake-lock — used by useWakeLock during auto-run. */
+  wakeLock?: {
+    start?: () => Promise<void>;
+    stop?: () => Promise<void>;
+  };
   /** IPC bridge for OTA updates — distinct from the electron-updater instance in electron/update.js */
   autoUpdater?: {
     checkForUpdates?: () => Promise<unknown>;
@@ -172,6 +177,10 @@ export const ElectronApiContext = createContext<ElectronApiContextProps>({
   },
   logEvent: () => {},
   nextLogError: () => {},
+  wakeLock: {
+    start: async () => {},
+    stop: async () => {},
+  },
   autoUpdater: {
     checkForUpdates: async () => {},
     downloadUpdate: async () => {},
@@ -212,6 +221,16 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
       on: getElectronApiFunction('ipcRenderer.on'),
       invoke: getElectronApiFunction('ipcRenderer.invoke'),
       removeListener: getElectronApiFunction('ipcRenderer.removeListener'),
+    }),
+    [],
+  );
+
+  // Same stability rationale as ipcRenderer above — keeps useWakeLock's
+  // effect from flapping on parent re-renders.
+  const wakeLock = useMemo<ElectronApiContextProps['wakeLock']>(
+    () => ({
+      start: getElectronApiFunction('wakeLock.start', true),
+      stop: getElectronApiFunction('wakeLock.stop', true),
     }),
     [],
   );
@@ -363,6 +382,7 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
         },
         logEvent: getElectronApiFunction('logEvent'),
         nextLogError: getElectronApiFunction('nextLogError'),
+        wakeLock,
         autoUpdater,
       }}
     >
