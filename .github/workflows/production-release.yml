@@ -1,13 +1,19 @@
-# push to release/* branch
+# Triggered by: a release/* → main pull request being merged.
+#
+# The build only runs after main has the code, so the review on the release-branch PR (enforced
+# by main's branch protection) is the gate that controls what ships.
+#
+# Flow:
+# PR merged into main from release/vX.Y.Z
 #        │
 #        ▼
-# compute-release-tag  (extract release_tag=vX.Y.Z from branch name)
+# compute-release-tag  (read version from package.json on the merge commit)
 #        │
 #        ▼
 # check-release-not-published  (guard: fail if vX.Y.Z release is already published)
 #        │
 #        ▼
-# calculate-version  (create/overwrite vX.Y.Z-signed tag on branch HEAD)
+# create-signed-tag  (push vX.Y.Z-signed tag on the merge commit)
 #        │
 #        ├─► run-release      (Mac)
 #        │       uses release_mac.yml
@@ -21,39 +27,49 @@
 name: Production Release
 
 on:
-  push:
-    branches:
-      - "release/*"
+  pull_request:
+    types: [closed]
+    branches: [main]
 
 permissions:
   contents: write
 
-# Prevent multiple release builds running at the same time for the same branch
+# Each release PR has a unique number, so concurrent releases for different
+# PRs run independently. Re-runs for the same PR queue rather than cancel.
 concurrency:
-  group: production-release-${{ github.ref }}
+  group: production-release-${{ github.event.pull_request.number }}
   cancel-in-progress: false
 
 jobs:
   compute-release-tag:
-    # Avoid looping on commits created by the action itself.
-    if: ${{ github.actor != 'github-actions[bot]' && !contains(github.event.head_commit.message, '[skip release]') }}
+    # Only act on merged (not just closed) PRs whose source branch is release/*.
+    # Hotfixes follow the same pattern — branch named release/vX.Y.Z.
+    if: >
+      github.event.pull_request.merged == true &&
+      startsWith(github.event.pull_request.head.ref, 'release/')
     runs-on: ubuntu-latest
     outputs:
       release_tag: ${{ steps.compute-tag.outputs.release_tag }}
+      signed_tag: ${{ steps.compute-tag.outputs.signed_tag }}
+      merge_sha: ${{ steps.compute-tag.outputs.merge_sha }}
     steps:
-      - name: Compute expected production tag from branch
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+          fetch-depth: 0
+
+      - name: Read version from merged package.json
         id: compute-tag
         run: |
-          BRANCH="${GITHUB_REF_NAME}"
-          if [[ "$BRANCH" =~ (release/)?v?([0-9]+\.[0-9]+\.[0-9]+) ]]; then
-            BASE_VERSION="${BASH_REMATCH[2]}"
-            # Git tag is vX.Y.Z-signed (for audit); electron-builder publishes
-            # the GitHub Release at the unsuffixed vX.Y.Z.
-            echo "release_tag=v${BASE_VERSION}" | tee -a $GITHUB_OUTPUT
-          else
-            echo "::error::Failed to extract version from branch: $BRANCH"
-            exit 1
-          fi
+          # The version bump is set on the release branch by bump-release-version.yml
+          # before the PR is opened, and lands on main as part of the merged diff.
+          # CI just reads what's there.
+          VERSION=$(node -p "require('./package.json').version")
+          # Git tag is vX.Y.Z-signed (for audit); electron-builder publishes
+          # the GitHub Release at the unsuffixed vX.Y.Z.
+          echo "release_tag=v${VERSION}" | tee -a "$GITHUB_OUTPUT"
+          echo "signed_tag=v${VERSION}-signed" | tee -a "$GITHUB_OUTPUT"
+          echo "merge_sha=${{ github.event.pull_request.merge_commit_sha }}" | tee -a "$GITHUB_OUTPUT"
 
   check-release-not-published:
     needs: compute-release-tag
@@ -62,48 +78,73 @@ jobs:
       release_tag: ${{ needs.compute-release-tag.outputs.release_tag }}
     secrets: inherit
 
-  calculate-version:
-    needs: check-release-not-published
-    uses: ./.github/workflows/calculate-and-update-version.yml
-    with:
-      version_strategy: production-release
-      base_version_from_branch: true
-    secrets: inherit
+  create-signed-tag:
+    needs: [compute-release-tag, check-release-not-published]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ needs.compute-release-tag.outputs.merge_sha }}
+          fetch-depth: 0
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Create and push -signed tag on the merge commit
+        run: |
+          SIGNED_TAG="${{ needs.compute-release-tag.outputs.signed_tag }}"
+          # Idempotency: if the workflow is re-run (e.g. cancelled and restarted
+          # before the build jobs ran), recreate the tag cleanly. A tag whose
+          # release has already been published is rejected upstream by
+          # check-release-not-published.yml.
+          git tag -d "$SIGNED_TAG" 2>/dev/null || true
+          git push origin --delete "$SIGNED_TAG" 2>/dev/null || true
+          git tag -a "$SIGNED_TAG" -m "Production Release $SIGNED_TAG"
+          git push origin "$SIGNED_TAG"
 
   run-release:
-    needs: calculate-version
+    needs: [compute-release-tag, create-signed-tag]
     uses: ./.github/workflows/release_mac.yml
     with:
-      tag: ${{ needs.calculate-version.outputs.new_tag }}
+      tag: ${{ needs.compute-release-tag.outputs.signed_tag }}
     secrets: inherit
 
   run-release-linux:
-    needs: calculate-version
+    needs: [compute-release-tag, create-signed-tag]
     uses: ./.github/workflows/release_linux.yml
     with:
-      tag: ${{ needs.calculate-version.outputs.new_tag }}
+      tag: ${{ needs.compute-release-tag.outputs.signed_tag }}
     secrets: inherit
 
   run-release-win:
-    needs: calculate-version
+    needs: [compute-release-tag, create-signed-tag]
     uses: ./.github/workflows/release_win.yml
     with:
-      tag: ${{ needs.calculate-version.outputs.new_tag }}
+      tag: ${{ needs.compute-release-tag.outputs.signed_tag }}
     secrets: inherit
 
   merge-latest-mac-yml:
-    needs: [calculate-version, run-release]
+    needs: [compute-release-tag, run-release]
     uses: ./.github/workflows/merge-latest-mac-yml.yml
     with:
-      tag: ${{ needs.calculate-version.outputs.new_tag }}
+      tag: ${{ needs.compute-release-tag.outputs.signed_tag }}
     secrets: inherit
 
   summary:
-    needs: [calculate-version, run-release, run-release-win, run-release-linux, merge-latest-mac-yml]
+    needs: [compute-release-tag, run-release, run-release-win, run-release-linux, merge-latest-mac-yml]
     runs-on: ubuntu-latest
     steps:
       - name: Create summary
         run: |
           echo "## Release Created Successfully :rocket:" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Tag:** ${{ needs.calculate-version.outputs.new_tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Tag:** ${{ needs.compute-release-tag.outputs.signed_tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "**PR:** #${{ github.event.pull_request.number }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "The draft GitHub Release for **${{ needs.compute-release-tag.outputs.release_tag }}** is ready." >> $GITHUB_STEP_SUMMARY
+          echo "QA: please test the installers on macOS / Windows / Linux." >> $GITHUB_STEP_SUMMARY
+          echo "Once QA passes, click **Publish** on the draft release in GitHub." >> $GITHUB_STEP_SUMMARY
