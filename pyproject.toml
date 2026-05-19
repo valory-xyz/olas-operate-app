@@ -10,7 +10,7 @@ include = []
 
 [tool.poetry.dependencies]
 python = ">=3.14,<3.15"
-olas-operate-middleware = {git = "https://github.com/valory-xyz/olas-operate-middleware.git", rev = "b6fc563018387cb47b633e2290034eaf8fc4b268"}
+olas-operate-middleware = "0.15.22"
 open-autonomy = {version = "0.21.21", extras = ["cli", "docker"]}
 open-aea-ledger-cosmos = "2.2.5"
 open-aea-ledger-ethereum = "2.2.5"
