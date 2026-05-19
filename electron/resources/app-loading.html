@@ -77,8 +77,7 @@
   </body>
 
   <script>
-    const { ipcRenderer } = require("electron");
-    ipcRenderer.on("response", (event, arg) => {
+    window.splashApi.onResponse((arg) => {
       if (typeof arg === "string") {
         if (arg.includes("Installing")) {
           document.getElementById("text").innerHTML =
@@ -91,7 +90,7 @@
       }
     });
 
-    ipcRenderer.send("check", "Starting check...");
+    window.splashApi.sendCheck("Starting check...");
   </script>
 
 </html>
