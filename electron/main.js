@@ -382,8 +382,10 @@ const createSplashWindow = () => {
     title: 'Pearl',
     frame: false,
     webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false,
+      nodeIntegration: false,
+      contextIsolation: true,
+      sandbox: true,
+      preload: path.join(__dirname, 'preload-splash.js'),
     },
   });
   splashWindow.loadURL('file://' + __dirname + '/resources/app-loading.html');
