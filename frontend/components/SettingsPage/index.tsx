@@ -26,6 +26,7 @@ import {
 } from './BackupWallet/UpdateBackupWalletFlow';
 import { RecoveryModal } from './RecoveryModal';
 import { SettingsDrawer } from './SettingsDrawer';
+import { UpdatePasswordScreen } from './UpdatePassword';
 
 const { Text, Paragraph, Title } = Typography;
 
@@ -107,6 +108,7 @@ const SecretRecoveryPhraseSetting = () => {
 };
 
 const SettingsMain = () => {
+  const { goto } = useSettings();
   const {
     value: isDrawerOpen,
     setTrue: openDrawer,
@@ -119,18 +121,23 @@ const SettingsMain = () => {
         Settings
       </Title>
       <Card styles={{ body: { paddingTop: 0, paddingBottom: 0 } }}>
-        <CardSection $padding="24px" $borderBottom align="center" gap={16}>
+        <CardSection $padding="24px" $borderBottom align="flex-start" gap={16}>
           <IconContainer>
             <TbShieldLock size={20} color={COLOR.TEXT_NEUTRAL_TERTIARY} />
           </IconContainer>
-          <Flex vertical gap={6}>
+          <Flex vertical gap={6} flex={1}>
             <div className="my-6">
               <Paragraph strong className="mb-0">
                 Password
               </Paragraph>
             </div>
-
             <Text style={{ lineHeight: 1 }}>••••••••••••••••••••</Text>
+            <Button
+              className="text-sm w-fit mt-12"
+              onClick={() => goto(SettingsScreenMap.UpdatePassword)}
+            >
+              Update Password
+            </Button>
           </Flex>
         </CardSection>
 
@@ -160,6 +167,8 @@ export const Settings = () => {
         return <UpdateBackupWalletManualScreen />;
       case SettingsScreenMap.UpdateBackupWalletConfirm:
         return <UpdateBackupWalletConfirmScreen />;
+      case SettingsScreenMap.UpdatePassword:
+        return <UpdatePasswordScreen />;
       default:
         return null;
     }

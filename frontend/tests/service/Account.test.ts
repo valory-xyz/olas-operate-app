@@ -167,6 +167,59 @@ describe('AccountService', () => {
     });
   });
 
+  describe('resetAccountWithMnemonic', () => {
+    const mnemonic =
+      'word1 word2 word3 word4 word5 word6 word7 word8 word9 word10 word11 word12';
+
+    it('sends mnemonic and new password and returns response on success', async () => {
+      const responseBody = { message: 'Password reset' };
+      jest
+        .spyOn(global, 'fetch')
+        .mockReturnValue(mockJsonResponse(responseBody));
+
+      const result = await AccountService.resetAccountWithMnemonic(
+        mnemonic,
+        'newpass456',
+      );
+      expect(result).toEqual(responseBody);
+      expect(fetch).toHaveBeenCalledWith(`${BACKEND_URL}/account`, {
+        method: 'PUT',
+        headers: expectedHeaders,
+        body: JSON.stringify({
+          mnemonic,
+          new_password: 'newpass456',
+        }),
+      });
+    });
+
+    it('throws the wrapped invalid-mnemonic error from backend', async () => {
+      const errorBody = mockJsonErrorBody(
+        'Failed to update password: Seed phrase is not valid.',
+      );
+      jest
+        .spyOn(global, 'fetch')
+        .mockReturnValue(mockJsonResponse(errorBody, false, 400));
+
+      await expect(
+        AccountService.resetAccountWithMnemonic(mnemonic, 'newpass456'),
+      ).rejects.toThrow('Seed phrase is not valid.');
+    });
+
+    it('throws fallback message when response body is unparseable', async () => {
+      jest.spyOn(global, 'fetch').mockReturnValue(
+        Promise.resolve({
+          ok: false,
+          status: 500,
+          json: () => Promise.reject(new Error('invalid json')),
+        } as Response),
+      );
+
+      await expect(
+        AccountService.resetAccountWithMnemonic(mnemonic, 'newpass456'),
+      ).rejects.toThrow('Failed to reset account password');
+    });
+  });
+
   describe('loginAccount', () => {
     it('returns response on success', async () => {
       const responseBody = { message: 'Login successful' };

@@ -1,5 +1,10 @@
 export const ERROR_CODE = {
   INSUFFICIENT_SIGNER_GAS: 'INSUFFICIENT_SIGNER_GAS',
+  // Substrings of the wrapped backend error returned from PUT /api/account.
+  // Middleware emits "Failed to update password: <literal>", so checks
+  // should use Error#message.includes(...) — not equality.
+  MSG_INVALID_PASSWORD: 'Password is not valid.',
+  MSG_INVALID_MNEMONIC: 'Seed phrase is not valid.',
 } as const;
 
 export type InsufficientGasErrorBody = {
