@@ -2502,8 +2502,10 @@ description = ""
 optional = false
 python-versions = "<3.15,>=3.10"
 groups = ["main"]
-files = []
-develop = false
+files = [
+    {file = "olas_operate_middleware-0.15.22-py3-none-any.whl", hash = "sha256:ad70310803ace0d8274a9b711912bd5b04956434f9134b842c3547a844fc563d"},
+    {file = "olas_operate_middleware-0.15.22.tar.gz", hash = "sha256:bc8dd34e695ea1aa8e5398e0fa652caf1fdf1206db82e455bd1cd2e340344a59"},
+]
 
 [package.dependencies]
 aiohttp = "^3.13.4"
@@ -4420,4 +4422,4 @@ propcache = ">=0.2.1"
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.14,<3.15"
-content-hash = "42070bd993cb7ad521c4e6bd2e63a1fd66c3303340ff3f36f21f0c2bac64f9e2"
+content-hash = "f87f2bcb035a55bd35ccd10e8d5ebbe916d03ddd6957491bc0470e52b594ef20"

@@ -173,6 +173,22 @@ export const SetNewPasswordViaSRP = () => {
         <Flex vertical gap={24}>
           <PasswordSetupFields />
 
+          <Alert
+            type="warning"
+            showIcon
+            message={
+              <Flex vertical gap={2}>
+                <Text className="text-sm font-weight-600">
+                  Full agent recovery may take up to 3 days
+                </Text>
+                <Text className="text-sm">
+                  Some agents may not run or earn rewards as expected in the
+                  meantime.
+                </Text>
+              </Flex>
+            }
+          />
+
           <Form.Item style={{ marginBottom: 0 }}>
             <Flex gap={12}>
               <Button size="large" onClick={exitFlow}>
