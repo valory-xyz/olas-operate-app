@@ -49,17 +49,14 @@ jest.mock('../../../service/Account', () => ({
 jest.mock('../../../components/ui', () => ({
   Alert: ({
     message,
-    description,
     type,
   }: {
     message: React.ReactNode;
-    description?: React.ReactNode;
     type: string;
     showIcon?: boolean;
   }) => (
     <div data-testid={`alert-${type}`} role="alert">
-      <span>{message}</span>
-      {description && <span>{description}</span>}
+      <div>{message}</div>
     </div>
   ),
   BackButton: ({ onPrev }: { onPrev: () => void }) => (
