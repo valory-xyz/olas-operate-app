@@ -1,0 +1,77 @@
+# Publishes a draft GitHub Release to the public — the only sanctioned way to
+# ship a production release.
+#
+# The release version is read from package.json on `main` — no manual input.
+#
+# The `publish` job is gated by the `production-publish` environment (1 required
+# reviewer, "Prevent self-review" on), so every publish needs a second person's
+# approval; the triggerer cannot approve their own run.
+#
+# Publishing creates the `vX.Y.Z` git tag. The tag ruleset that restricts `v*`
+# creation lists the valory-coding-agent App as its only bypass actor, so an
+# App token is the only identity that can create a release tag
+
+name: Publish release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  # Ungated: resolves which release to publish so the version is visible on the
+  # run page before a reviewer approves the gated job below.
+  resolve:
+    runs-on: ubuntu-latest
+    outputs:
+      release_tag: ${{ steps.version.outputs.release_tag }}
+    steps:
+      - name: Check out main
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: main
+          fetch-depth: 1
+
+      - name: Read release version from package.json on main
+        id: version
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "Release version on main: $VERSION"
+          echo "release_tag=v${VERSION}" | tee -a "$GITHUB_OUTPUT"
+
+  publish:
+    needs: resolve
+    runs-on: ubuntu-latest
+    environment: production-publish
+    steps:
+      - name: Mint valory-coding-agent App token
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - name: Verify the target release exists and is still a draft
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          RELEASE_TAG: ${{ needs.resolve.outputs.release_tag }}
+        run: |
+          IS_DRAFT=$(gh release view "$RELEASE_TAG" \
+            --repo "${{ github.repository }}" --json isDraft --jq .isDraft 2>/dev/null || echo "missing")
+          if [ "$IS_DRAFT" = "missing" ]; then
+            echo "::error::No release found for $RELEASE_TAG — nothing to publish."
+            exit 1
+          fi
+          if [ "$IS_DRAFT" != "true" ]; then
+            echo "::error::$RELEASE_TAG is already published — refusing to act."
+            exit 1
+          fi
+
+      - name: Publish the draft release
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          RELEASE_TAG: ${{ needs.resolve.outputs.release_tag }}
+        run: |
+          gh release edit "$RELEASE_TAG" --draft=false --repo "${{ github.repository }}"
+          echo "Published $RELEASE_TAG — users receive it on the next auto-update check."
