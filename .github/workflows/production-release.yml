@@ -33,6 +33,7 @@ on:
 
 permissions:
   contents: write
+  actions: write # required by calculate-and-update-version.yml to re-dispatch CI for the version-bump commit
 
 # Each release PR has a unique number, so concurrent releases for different
 # PRs run independently. Re-runs for the same PR queue rather than cancel.
