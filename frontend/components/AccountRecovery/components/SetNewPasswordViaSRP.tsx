@@ -176,8 +176,17 @@ export const SetNewPasswordViaSRP = () => {
           <Alert
             type="warning"
             showIcon
-            message="Full agent recovery may take up to 3 days"
-            description="Some agents may not run or earn rewards as expected in the meantime."
+            message={
+              <Flex vertical gap={2}>
+                <Text className="text-sm font-weight-600">
+                  Full agent recovery may take up to 3 days
+                </Text>
+                <Text className="text-sm">
+                  Some agents may not run or earn rewards as expected in the
+                  meantime.
+                </Text>
+              </Flex>
+            }
           />
 
           <Form.Item style={{ marginBottom: 0 }}>
