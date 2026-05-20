@@ -25,13 +25,13 @@ ARCH=$(uname -m)
 
 mkdir -p $BIN_DIR
 
-poetry install
+uv sync --frozen
 
 # Tendermint (собираем, но не копируем - используется отдельно)
-poetry run pyinstaller operate/tendermint.py --onedir --name tendermint_${ARCH}
+uv run pyinstaller operate/tendermint.py --onedir --name tendermint_${ARCH}
 
 # Pearl - собираем во временную папку dist/
-poetry run pyinstaller \
+uv run pyinstaller \
     --collect-data eth_account \
     --collect-all aea \
     --collect-all autonomy \

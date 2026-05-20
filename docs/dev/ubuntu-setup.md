@@ -41,13 +41,13 @@ sudo apt install python3.14
 sudo apt install pipx
 ```
 
-## 7. Poetry
+## 7. uv
 
 ```bash
-pipx install poetry==2.3.2
+curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
-If prompted to add the `poetry` command to your shell's config file, accept the prompt.
+If the installer prompts you to add `uv` to your shell config, accept the prompt.
 
 ### Installing project dependencies
 

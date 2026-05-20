@@ -14,13 +14,13 @@ endef
 
 ./dist/tendermint_win: ./electron/bins/ ./operate/
 	pwd
-	poetry install --no-root && poetry run pyinstaller operate/tendermint.py --onefile --name tendermint_win
+	uv sync --frozen && uv run pyinstaller operate/tendermint.py --onefile --name tendermint_win
 	ls -l dist
 
 
 ./dist/pearl_win: ./operate/ ./dist/tendermint_win
 	pwd
-	poetry install --no-root && poetry run pyinstaller --collect-data eth_account --collect-all aea --collect-all coincurve --collect-all autonomy --collect-all operate --collect-all aea_ledger_ethereum --collect-all aea_ledger_cosmos --hidden-import aea_ledger_ethereum --hidden-import aea_ledger_cosmos operate/pearl.py --onedir --name pearl_win
+	uv sync --frozen && uv run pyinstaller --collect-data eth_account --collect-all aea --collect-all coincurve --collect-all autonomy --collect-all operate --collect-all aea_ledger_ethereum --collect-all aea_ledger_cosmos --hidden-import aea_ledger_ethereum --hidden-import aea_ledger_cosmos operate/pearl.py --onedir --name pearl_win
 
 
 ./electron/bins/tendermint.exe: ./electron/bins/

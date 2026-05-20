@@ -43,9 +43,11 @@ jobs:
         with:
           python-version: "3.14"
 
-      - name: Install Poetry
+      - name: Install uv
         if: steps.check.outputs.exists == 'true'
-        run: python -m pip install --upgrade pip poetry
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.11.15"
 
       - name: Configure git identity
         if: steps.check.outputs.exists == 'true'
@@ -56,16 +58,16 @@ jobs:
       - name: Bump MW pin to released version
         if: steps.check.outputs.exists == 'true'
         run: |
-          poetry add "olas-operate-middleware==${{ github.event.client_payload.version }}"
-          git diff pyproject.toml poetry.lock || true
+          uv add "olas-operate-middleware==${{ github.event.client_payload.version }}"
+          git diff pyproject.toml uv.lock || true
 
       - name: Commit and push if changed
         if: steps.check.outputs.exists == 'true'
         run: |
-          if git diff --quiet pyproject.toml poetry.lock; then
-            echo "No change to pyproject.toml or poetry.lock; nothing to commit."
+          if git diff --quiet pyproject.toml uv.lock; then
+            echo "No change to pyproject.toml or uv.lock; nothing to commit."
             exit 0
           fi
-          git add pyproject.toml poetry.lock
+          git add pyproject.toml uv.lock
           git commit -m "chore: bump olas-operate-middleware to ${{ github.event.client_payload.version }}"
           git push origin "${{ matrix.branch }}"

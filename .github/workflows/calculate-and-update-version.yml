@@ -71,13 +71,10 @@ jobs:
         with:
           python-version: "3.14"
 
-      - name: Setup Poetry
-        uses: snok/install-poetry@76e04a911780d5b312d89783f7b1cd627778900a # v1.4.1
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v6
         with:
-          version: "2.3.2"
-          virtualenvs-create: true
-          virtualenvs-in-project: true
-          installer-parallel: true
+          version: "0.11.15"
 
       - name: Configure Git
         run: |
@@ -269,8 +266,8 @@ jobs:
 
           echo "Latest commit hash: $COMMIT_HASH"
 
-          # Update pyproject.toml using poetry add
-          poetry add "git+https://github.com/valory-xyz/olas-operate-middleware.git@$COMMIT_HASH"
+          # Update pyproject.toml using uv add
+          uv add "olas-operate-middleware @ git+https://github.com/valory-xyz/olas-operate-middleware.git@$COMMIT_HASH"
 
           echo "Updated pyproject.toml to use middleware commit: $COMMIT_HASH"
 
@@ -287,7 +284,7 @@ jobs:
 
       - name: Commit and push version update
         run: |
-          git add package.json pyproject.toml poetry.lock
+          git add package.json pyproject.toml uv.lock
           if git diff --staged --quiet; then
             echo "No version file changes detected — skipping commit."
           else

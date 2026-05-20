@@ -56,14 +56,14 @@ choco install python3.14
 python3.14 -m pip install pipx
 ```
 
-## 7. Poetry
+## 7. uv
 
 ```powershell
 # run as administrator
-pipx install poetry==2.3.2
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
 ```
 
-If prompted to add `poetry` to your PATH, follow the prompt.
+If prompted to add `uv` to your PATH, follow the prompt.
 
 ### Installing project dependencies
 
@@ -72,7 +72,6 @@ The Electron app, the NextJS frontend, and the Python backend.
 
 ```powershell
 # run from the project root
-poetry shell
 yarn install-deps
 ```
 

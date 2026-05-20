@@ -59,13 +59,19 @@ brew install python@3.14
 brew install pipx
 ```
 
-## 7. Poetry
+## 7. uv
 
 ```bash
-pipx install poetry==2.3.2
+brew install uv
 ```
 
-If prompted to add the `poetry` command to your shell's config file, accept the prompt.
+Or, with the official installer:
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+If the installer prompts you to add `uv` to your shell config, accept the prompt.
 
 ### Installing project dependencies
 

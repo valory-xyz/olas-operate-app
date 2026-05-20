@@ -47,13 +47,9 @@ jobs:
         with:
           python-version: "3.14"
 
-      - uses: snok/install-poetry@76e04a911780d5b312d89783f7b1cd627778900a # v1.4.1
+      - uses: astral-sh/setup-uv@v6
         with:
-          version: "2.3.2"
-          virtualenvs-create: true
-          virtualenvs-in-project: false
-          virtualenvs-path: ~/my-custom-path
-          installer-parallel: true
+          version: "0.11.15"
 
       - run: yarn install:backend
 
