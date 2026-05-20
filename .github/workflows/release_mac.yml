@@ -32,7 +32,6 @@ jobs:
         with:
           python-version: "3.14"
 
-      # Install uv (replaces Poetry); --frozen sync below pins to uv.lock
       - name: Install uv
         uses: astral-sh/setup-uv@v6
         with:

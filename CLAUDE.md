@@ -8,13 +8,13 @@ Pearl is a cross-platform Electron desktop application for running autonomous ag
 
 1. **Electron App** (CommonJS) — `/electron/`
 2. **Next.js Frontend** (TypeScript) — `/frontend/`
-3. **Python Backend** (Poetry) — `/operate/`
+3. **Python Backend** (uv) — `/operate/`
 
 The frontend is embedded in Electron via Next.js; they communicate with the Python backend through IPC channels and local HTTP.
 
 ## Development Commands
 
-**Prerequisites:** Node.js 22.18+ (`.nvmrc`), Yarn 1.22+, Python 3.14 (`pyproject.toml`: `>=3.14,<3.15`), Poetry 2.3.2+.
+**Prerequisites:** Node.js 22.18+ (`.nvmrc`), Yarn 1.22+, Python 3.14 (`pyproject.toml`: `>=3.14,<3.15`), uv 0.11.15+.
 
 Common commands (full list in `package.json` scripts):
 - `yarn install-deps` — installs all three layers
