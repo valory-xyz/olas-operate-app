@@ -57,12 +57,27 @@ jobs:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           RELEASE_TAG: ${{ needs.resolve.outputs.release_tag }}
         run: |
+          # Capture stdout and stderr separately so a transient gh failure
+          # (auth, rate limit, network) is not misreported as "release missing".
+          set +e
           IS_DRAFT=$(gh release view "$RELEASE_TAG" \
-            --repo "${{ github.repository }}" --json isDraft --jq .isDraft 2>/dev/null || echo "missing")
-          if [ "$IS_DRAFT" = "missing" ]; then
-            echo "::error::No release found for $RELEASE_TAG — nothing to publish."
+            --repo "${{ github.repository }}" --json isDraft --jq .isDraft 2> /tmp/gh_stderr)
+          RC=$?
+          STDERR=$(cat /tmp/gh_stderr)
+          set -e
+
+          if [ $RC -ne 0 ]; then
+            # Treat as "missing" only when gh says exactly that; any other
+            # failure (auth, rate limit, network) must surface as a real error.
+            if echo "$STDERR" | grep -qi 'release not found'; then
+              echo "::error::No release found for $RELEASE_TAG — nothing to publish."
+            else
+              echo "::error::gh release view failed for $RELEASE_TAG (exit $RC):"
+              echo "$STDERR"
+            fi
             exit 1
           fi
+
           if [ "$IS_DRAFT" != "true" ]; then
             echo "::error::$RELEASE_TAG is already published — refusing to act."
             exit 1
