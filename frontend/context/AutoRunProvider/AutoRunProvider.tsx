@@ -8,7 +8,12 @@ import {
   useState,
 } from 'react';
 
-import { useArchivedAgents, useElectronApi, useServices } from '@/hooks';
+import {
+  useArchivedAgents,
+  useElectronApi,
+  useServices,
+  useWakeLock,
+} from '@/hooks';
 
 import {
   DISABLE_RACE_STOP_CHECK_INTERVAL_MS,
@@ -67,6 +72,9 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
     userExcludedInstances,
     updateAutoRun,
   } = useAutoRunStore();
+
+  // Prevent OS sleep while auto-run is active and user has opted in.
+  useWakeLock(enabled);
 
   const configuredInstances = useMemo(
     () => configuredAgents.map((agent) => agent.serviceConfigId),
