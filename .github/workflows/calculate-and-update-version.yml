@@ -236,7 +236,13 @@ jobs:
             echo "package.json version is already $NEW_VERSION, skipping update"
           fi
 
+      # POETRY_SYSTEM_GIT_CLIENT makes Poetry resolve git dependencies with the
+      # system `git` binary instead of its bundled dulwich client, which crashes
+      # while enumerating the olas-operate-middleware repo's tags.
+      # Remove once the uv migration (PR #1982) lands and replaces `poetry add`.
       - name: Check middleware branch and update dependency
+        env:
+          POETRY_SYSTEM_GIT_CLIENT: "true"
         run: |
           BRANCH="${{ inputs.branch }}"
 
