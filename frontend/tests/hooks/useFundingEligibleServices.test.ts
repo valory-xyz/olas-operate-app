@@ -15,7 +15,7 @@ jest.mock(
   () => require('../mocks/ethersMulticall').ethersMulticallMock,
 );
 /* eslint-enable @typescript-eslint/no-var-requires */
-jest.mock('../../constants/providers', () => ({}));
+jest.mock('../../constants/providers', () => ({ PROVIDERS: {} }));
 
 const mockUseServices = jest.fn();
 const mockUseIsInitiallyFunded = jest.fn();

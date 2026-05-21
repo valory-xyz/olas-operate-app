@@ -30,7 +30,6 @@ export const RecoverExistingAccountCard = () => {
         </Paragraph>
         <Button
           onClick={() => goto(SETUP_SCREEN.MigrateOperateFolder)}
-          type="primary"
           size="large"
           block
         >

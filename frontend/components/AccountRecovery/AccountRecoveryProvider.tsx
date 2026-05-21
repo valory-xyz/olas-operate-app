@@ -22,7 +22,12 @@ import { Address } from '@/types';
 import { SwapSafeTransaction } from '@/types/Recovery';
 
 import { TokenRequirementsRow } from '../ui';
-import { RECOVERY_STEPS, RecoverySteps } from './constants';
+import {
+  RECOVERY_STEPS,
+  RecoverySteps,
+  RESET_METHOD,
+  ResetMethod,
+} from './constants';
 import {
   getBackupWalletStatus,
   parseRecoveryFundingRequirements,
@@ -31,14 +36,18 @@ import {
 const useRecoveryNavigation = (
   currentStep: RecoverySteps,
   updateCurrentStep: (state: RecoverySteps) => void,
+  clearSelectedResetMethod: () => void,
 ) => {
   const { goto } = useSetup();
 
   const onNext = useCallback(() => {
     switch (currentStep) {
       case RECOVERY_STEPS.SelectRecoveryMethod:
-        updateCurrentStep(RECOVERY_STEPS.CreateNewPassword);
+        updateCurrentStep(RECOVERY_STEPS.SelectPasswordResetOption);
         break;
+      // SelectPasswordResetOption uses selectResetMethodAndProceed instead
+      // of onNext to avoid stale-closure reads of selectedResetMethod.
+      // Backup-wallet path
       case RECOVERY_STEPS.CreateNewPassword:
         updateCurrentStep(RECOVERY_STEPS.FundYourBackupWallet);
         break;
@@ -48,6 +57,13 @@ const useRecoveryNavigation = (
       case RECOVERY_STEPS.ApproveWithBackupWallet:
         goto(SETUP_SCREEN.Welcome);
         break;
+      // SRP path
+      case RECOVERY_STEPS.EnterSecretRecoveryPhrase:
+        updateCurrentStep(RECOVERY_STEPS.SetNewPasswordViaSRP);
+        break;
+      case RECOVERY_STEPS.SetNewPasswordViaSRP:
+        goto(SETUP_SCREEN.Welcome);
+        break;
       default:
         break;
     }
@@ -55,8 +71,13 @@ const useRecoveryNavigation = (
 
   const onPrev = useCallback(() => {
     switch (currentStep) {
-      case RECOVERY_STEPS.CreateNewPassword:
+      case RECOVERY_STEPS.SelectPasswordResetOption:
+        clearSelectedResetMethod();
         updateCurrentStep(RECOVERY_STEPS.SelectRecoveryMethod);
+        break;
+      // Backup-wallet path
+      case RECOVERY_STEPS.CreateNewPassword:
+        updateCurrentStep(RECOVERY_STEPS.SelectPasswordResetOption);
         break;
       case RECOVERY_STEPS.FundYourBackupWallet:
         updateCurrentStep(RECOVERY_STEPS.CreateNewPassword);
@@ -64,10 +85,18 @@ const useRecoveryNavigation = (
       case RECOVERY_STEPS.ApproveWithBackupWallet:
         updateCurrentStep(RECOVERY_STEPS.FundYourBackupWallet);
         break;
+      // SRP path
+      case RECOVERY_STEPS.EnterSecretRecoveryPhrase:
+        clearSelectedResetMethod();
+        updateCurrentStep(RECOVERY_STEPS.SelectPasswordResetOption);
+        break;
+      case RECOVERY_STEPS.SetNewPasswordViaSRP:
+        updateCurrentStep(RECOVERY_STEPS.EnterSecretRecoveryPhrase);
+        break;
       default:
         break;
     }
-  }, [currentStep, updateCurrentStep]);
+  }, [currentStep, updateCurrentStep, clearSelectedResetMethod]);
 
   return { onNext, onPrev };
 };
@@ -80,7 +109,6 @@ const AccountRecoveryContext = createContext<{
   hasBackupWalletsAcrossEveryChain: boolean;
   /** Indicates if all backup owners are the same across chains */
   areAllBackupOwnersSame: boolean;
-  /** Current step in the account recovery flow */
   /** Address of the backup wallet used for recovery */
   backupWalletAddress?: Address;
   /** New master EOA address set during recovery */
@@ -96,6 +124,24 @@ const AccountRecoveryContext = createContext<{
   /** Total safe swaps required for recovery */
   safeSwapTransactions: SwapSafeTransaction[];
 
+  // Reset method selection (backup-wallet vs SRP)
+  selectedResetMethod?: ResetMethod;
+  setSelectedResetMethod: (method: ResetMethod) => void;
+  /**
+   * Atomic action used by the picker screen: sets the chosen method and
+   * navigates to the corresponding next step in the same React tick to avoid
+   * stale-closure reads of selectedResetMethod inside onNext.
+   */
+  selectResetMethodAndProceed: (method: ResetMethod) => void;
+
+  // SRP path state
+  /** The 12-word mnemonic entered by the user (lives only in memory) */
+  srpMnemonic?: string;
+  setSrpMnemonic: (mnemonic: string | undefined) => void;
+  /** Error message from SRP validation (e.g. invalid mnemonic) */
+  srpError?: string;
+  setSrpError: (error: string | undefined) => void;
+
   // Navigation
   currentStep: RecoverySteps;
   onNext: () => void;
@@ -110,6 +156,10 @@ const AccountRecoveryContext = createContext<{
   isRecoveryFundingListLoading: false,
   recoveryFundingList: [],
   safeSwapTransactions: [],
+  setSelectedResetMethod: () => {},
+  selectResetMethodAndProceed: () => {},
+  setSrpMnemonic: () => {},
+  setSrpError: () => {},
   onNext: () => {},
   onPrev: () => {},
 });
@@ -133,11 +183,29 @@ export const AccountRecoveryProvider = ({
   const [currentStep, setCurrentStep] = useState<RecoverySteps>(
     RECOVERY_STEPS.SelectRecoveryMethod,
   );
+  const [selectedResetMethod, setSelectedResetMethod] = useState<
+    ResetMethod | undefined
+  >();
   const [newMasterEoaAddress, setNewMasterEoaAddress] = useState<Address>();
   const [oldMasterEoaAddress, setOldMasterEoaAddress] = useState<Address>();
+  const [srpMnemonic, setSrpMnemonic] = useState<string | undefined>();
+  const [srpError, setSrpError] = useState<string | undefined>();
+  const clearSelectedResetMethod = useCallback(
+    () => setSelectedResetMethod(undefined),
+    [],
+  );
+  const selectResetMethodAndProceed = useCallback((method: ResetMethod) => {
+    setSelectedResetMethod(method);
+    setCurrentStep(
+      method === RESET_METHOD.SRP
+        ? RECOVERY_STEPS.EnterSecretRecoveryPhrase
+        : RECOVERY_STEPS.CreateNewPassword,
+    );
+  }, []);
   const { onNext, onPrev } = useRecoveryNavigation(
     currentStep,
     useCallback((step: RecoverySteps) => setCurrentStep(step), []),
+    clearSelectedResetMethod,
   );
 
   const canFetchRecoveryFundingRequirements =
@@ -253,6 +321,13 @@ export const AccountRecoveryProvider = ({
         isRecoveryFundingListLoading: isRecoveryFundingRequirementsLoading,
         recoveryFundingList,
         safeSwapTransactions,
+        selectedResetMethod,
+        selectResetMethodAndProceed,
+        setSelectedResetMethod,
+        srpMnemonic,
+        setSrpMnemonic,
+        srpError,
+        setSrpError,
         updateNewMasterEoaAddress,
         onNext,
         onPrev,

@@ -9,6 +9,9 @@ on:
         required: true
         type: string
 
+permissions:
+  contents: read
+
 jobs:
   # PyInstaller job for both x64 and arm64 binaries
   build-macos-pyinstaller:
@@ -18,20 +21,20 @@ jobs:
         os: [macos-15, macos-15-large]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           ref: ${{ inputs.tag }}
           fetch-depth: 0
 
       # Set up Python with setup-python action and add it to PATH
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         id: setup-python
         with:
           python-version: "3.14"
 
       # Install Poetry and its dependencies
       - name: Install and configure Poetry
-        uses: snok/install-poetry@v1
+        uses: snok/install-poetry@76e04a911780d5b312d89783f7b1cd627778900a # v1.4.1
         with:
           version: "2.3.2"
           virtualenvs-create: true
@@ -50,7 +53,7 @@ jobs:
 
       # Cache Poetry dependencies with unique key for each environment and architecture
       - name: Cache Poetry dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: |
             ~/.cache/pypoetry
@@ -70,7 +73,7 @@ jobs:
           poetry run pyinstaller operate/tendermint.py --onefile
           cp dist/tendermint dist/tendermint_bin
 
-          poetry run pyinstaller --collect-data eth_account --collect-all aea --collect-all autonomy --collect-all operate --collect-all aea_ledger_ethereum --collect-all aea_ledger_cosmos --collect-all aea_ledger_ethereum_flashbots --hidden-import aea_ledger_ethereum --hidden-import aea_ledger_cosmos --hidden-import aea_ledger_ethereum_flashbots operate/pearl.py --onedir --name pearl_${{ env.OS_ARCH }}
+          poetry run pyinstaller --collect-data eth_account --collect-all aea --collect-all autonomy --collect-all operate --collect-all aea_ledger_ethereum --collect-all aea_ledger_cosmos --hidden-import aea_ledger_ethereum --hidden-import aea_ledger_cosmos operate/pearl.py --onedir --name pearl_${{ env.OS_ARCH }}
 
       - name: Sign PyInstaller binaries
         env:
@@ -88,13 +91,13 @@ jobs:
           cd ..
 
       - name: Upload middleware artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: middleware_${{ env.OS_ARCH }}
           path: dist/pearl_${{ env.OS_ARCH }}.tar.gz
 
       - name: Upload Tendermint artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: tendermint_${{ env.OS_ARCH }}
           path: dist/tendermint_bin
@@ -104,18 +107,20 @@ jobs:
   build-release:
     needs: [build-macos-pyinstaller]
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: write
     strategy:
       matrix:
         env: [production]
         os: [macos-15, macos-15-large]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           ref: ${{ inputs.tag }}
           fetch-depth: 0
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         id: setup-python
         with:
           python-version: "3.14"
@@ -129,10 +134,24 @@ jobs:
             echo "$(dirname "$PYTHON_PATH")" >> $GITHUB_PATH
           fi
       
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
         with:
           node-version: "22.18"
           registry-url: "https://registry.npmjs.org"
+
+      - name: Activate pinned Yarn via Corepack
+        run: |
+          corepack enable
+          # Read the full integrity-verified spec from package.json so corepack
+          # checks the sha512 hash. Plain `corepack prepare yarn@1.22.22 --activate`
+          # downloads from npm without verifying against the hash.
+          PM_SPEC=$(node -p "require('./package.json').packageManager")
+          corepack prepare "$PM_SPEC" --activate
+
+      - name: Verify Yarn version
+        run: |
+          yarn --version
+          test "$(yarn --version)" = "1.22.22" || (echo "::error::Yarn version mismatch" && exit 1)
 
       # Configure Yarn network settings for timeout, retries, and reduced concurrency
       - name: Configure Yarn network settings
@@ -151,7 +170,7 @@ jobs:
           fi
       # Download the appropriate architecture artifact (tar.gz)
       - name: Download middleware binary for architecture
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           name: middleware_${{ env.OS_ARCH }}
           path: .
@@ -164,7 +183,7 @@ jobs:
           mv pearl_${{ env.OS_ARCH }} electron/bins/middleware
       
       - name: Download tendermint binary for architecture
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           name: tendermint_${{ env.OS_ARCH }}
           path: electron/bins/
@@ -186,7 +205,7 @@ jobs:
       # Cache Tendermint binary
       - name: Cache Tendermint binary
         id: cache-tendermint
-        uses: actions/cache@v3
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: tendermint_binary/
           key: tendermint-v0.34.19-${{ runner.os }}-${{ env.OS_ARCH }}
@@ -226,7 +245,7 @@ jobs:
       # Cache electron-builder downloads
       - name: Restore electron-builder cache
         id: cache-electron-builder
-        uses: actions/cache@v3
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: ~/.cache/electron-builder
           key: electron-builder-cache-${{ runner.os }}-${{ env.OS_ARCH }}-${{ matrix.env }}-${{ hashFiles('yarn.lock') }}
@@ -234,7 +253,7 @@ jobs:
       # Cache electron node_modules with unique key for each environment and architecture
       - name: Restore electron node_modules cache
         id: cache-electron-node-modules
-        uses: actions/cache@v3
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: node_modules
           key: electron-node-modules-v2-${{ runner.os }}-${{ env.OS_ARCH }}-${{ matrix.env }}-${{ hashFiles('yarn.lock', '.github/workflows/release.yml') }}
@@ -262,7 +281,7 @@ jobs:
       # Cache frontend node_modules with unique key for each environment and architecture
       - name: Restore frontend node_modules cache
         id: cache-frontend-node-modules
-        uses: actions/cache@v3
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: frontend/node_modules
           key: frontend-node-modules-${{ runner.os }}-${{ env.OS_ARCH }}-${{ matrix.env }}-${{ hashFiles('frontend/yarn.lock') }}
@@ -331,7 +350,7 @@ jobs:
           node build.js
 
       - name: Save latest-mac.yml as artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: latest-mac-yml-${{ env.OS_ARCH }}
           path: dist/latest-mac.yml

@@ -95,7 +95,15 @@ export const updateServiceIfNeeded = async (
     },
   );
 
-  if (!isEmpty(envVariablesToUpdate)) {
+  // Detect env vars present on the service but no longer in the template.
+  // PATCH merges env_variables and cannot remove keys — handle these via PUT below.
+  const hasStaleEnvVariables = Object.keys(service.env_variables).some(
+    (key) => !(key in serviceTemplate.env_variables),
+  );
+
+  // When a PUT replacement is needed, skip env_variables in the PATCH body —
+  // the PUT below sends the full template set, which subsumes additions/updates.
+  if (!isEmpty(envVariablesToUpdate) && !hasStaleEnvVariables) {
     partialServiceTemplate.env_variables = envVariablesToUpdate;
   }
 
@@ -138,12 +146,21 @@ export const updateServiceIfNeeded = async (
     };
   }
 
-  if (isEmpty(partialServiceTemplate)) return;
+  if (!isEmpty(partialServiceTemplate)) {
+    await ServicesService.updateService({
+      serviceConfigId: service.service_config_id,
+      partialServiceTemplate,
+    });
+  }
 
-  await ServicesService.updateService({
-    serviceConfigId: service.service_config_id,
-    partialServiceTemplate,
-  });
+  if (hasStaleEnvVariables) {
+    await ServicesService.putService({
+      serviceConfigId: service.service_config_id,
+      partialServiceTemplate: {
+        env_variables: serviceTemplate.env_variables,
+      },
+    });
+  }
 };
 
 export const onDummyServiceCreation = async (

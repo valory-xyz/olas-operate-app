@@ -23,7 +23,7 @@ jest.mock(
   () => require('../mocks/ethersMulticall').ethersMulticallMock,
 );
 /* eslint-enable @typescript-eslint/no-var-requires */
-jest.mock('../../constants/providers', () => ({}));
+jest.mock('../../constants/providers', () => ({ PROVIDERS: {} }));
 
 const mockJsonResponse = (body: unknown, ok = true, status = 200) =>
   Promise.resolve({

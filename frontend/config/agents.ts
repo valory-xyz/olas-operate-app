@@ -93,7 +93,7 @@ export const AGENT_CONFIG: {
     serviceApi: PredictTraderService,
     displayName: 'Omenstrat',
     description: 'Participates in prediction markets.',
-    hasExternalFunds: false,
+    hasExternalFunds: true,
     doesChatUiRequireApiKey: true,
     category: 'Prediction Markets',
     defaultBehavior:
@@ -119,7 +119,7 @@ export const AGENT_CONFIG: {
     serviceApi: Polystrat,
     displayName: 'Polystrat',
     description: 'Participates in prediction markets on Polymarket.',
-    hasExternalFunds: false,
+    hasExternalFunds: true,
     doesChatUiRequireApiKey: true,
     category: 'Prediction Markets',
     defaultBehavior:

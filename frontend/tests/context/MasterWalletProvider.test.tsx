@@ -23,7 +23,7 @@ jest.mock(
   'ethers-multicall',
   () => require('../mocks/ethersMulticall').ethersMulticallMock,
 );
-jest.mock('../../constants/providers', () => ({}));
+jest.mock('../../constants/providers', () => ({ PROVIDERS: {} }));
 
 jest.mock('../../service/Wallet', () => ({
   WalletService: {
@@ -196,19 +196,20 @@ describe('MasterWalletProvider', () => {
     expect(result.current.getMasterSafeOf).toBeUndefined();
   });
 
-  it('disables refetch interval when offline', async () => {
+  it('disables the wallet query when offline', async () => {
     mockGetWallets.mockResolvedValue([makeWalletResponse()]);
 
     const { result } = renderHook(() => useContext(MasterWalletContext), {
       wrapper: createWrapper({ isOnline: false }),
     });
 
-    // Should still fetch initially, but refetchInterval is false
+    // Source uses `enabled: isOnline`, so the query never fires while offline
+    // and the derived wallet fields stay undefined.
     await waitFor(() => {
-      expect(result.current.masterEoa).toBeDefined();
+      expect(mockGetWallets).not.toHaveBeenCalled();
     });
-    // Verify data still loads (query is not disabled, only refetch interval is false)
-    expect(result.current.masterEoa?.address).toBe(DEFAULT_EOA_ADDRESS);
+    expect(result.current.masterEoa).toBeUndefined();
+    expect(result.current.masterSafes).toBeUndefined();
   });
 
   it('returns masterWallets including both EOA and safes', async () => {

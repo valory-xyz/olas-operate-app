@@ -1,0 +1,31 @@
+# Triggered when a release/* branch receives a push. Runs the same
+# calculate-and-update-version.yml job — but it only bumps package.json and
+# pyproject.toml on the release branch and creates the -signed tag. The actual
+# build is triggered separately by production-release.yml when the release-branch
+# PR merges into main.
+#
+# Result: the version bump lands in the diff that the team reviews on the
+# release-branch → main PR, so the bump is visible to reviewers without
+# requiring anyone to edit version files by hand.
+
+name: Bump release version
+
+on:
+  push:
+    branches:
+      - "release/*"
+
+permissions:
+  contents: write
+
+jobs:
+  bump:
+    # Don't loop on the bot's own bump commit. calculate-and-update-version.yml
+    # writes "chore: bump version to X.Y.Z [skip release]" — the [skip release]
+    # marker is what stops this workflow re-firing on its own push.
+    if: ${{ !contains(github.event.head_commit.message, '[skip release]') }}
+    uses: ./.github/workflows/calculate-and-update-version.yml
+    with:
+      version_strategy: production-release
+      base_version_from_branch: true
+    secrets: inherit

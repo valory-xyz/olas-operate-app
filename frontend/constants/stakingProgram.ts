@@ -13,6 +13,10 @@ const GNOSIS_STAKING_PROGRAM_IDS = {
   PearlBetaMechMarketplace2: 'pearl_beta_mech_marketplace_2',
   PearlBetaMechMarketplace3: 'pearl_beta_mech_marketplace_3',
   PearlBetaMechMarketplace4: 'pearl_beta_mech_marketplace_4',
+  PearlBetaMechMarketplace5: 'pearl_beta_mech_marketplace_5',
+  PearlBetaMechMarketplace6: 'pearl_beta_mech_marketplace_6',
+  PearlBetaMechMarketplace7: 'pearl_beta_mech_marketplace_7',
+  PearlBetaMechMarketplace8: 'pearl_beta_mech_marketplace_8',
 } as const;
 
 const BASE_STAKING_PROGRAM_IDS = {
@@ -74,4 +78,8 @@ export const STAKING_PROGRAM_IDS = {
   ...POLYGON_STAKING_PROGRAM_IDS,
 } as const;
 
-export type StakingProgramId = ValueOf<typeof STAKING_PROGRAM_IDS>;
+const NO_STAKING_PROGRAM_ID = 'no_staking';
+
+export type StakingProgramId =
+  | ValueOf<typeof STAKING_PROGRAM_IDS>
+  | typeof NO_STAKING_PROGRAM_ID;

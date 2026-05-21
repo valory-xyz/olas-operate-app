@@ -9,7 +9,7 @@ import { DEFAULT_EOA_ADDRESS } from '../../helpers/factories';
 // ---------------------------------------------------------------------------
 // Module mocks
 // ---------------------------------------------------------------------------
-jest.mock('../../../constants/providers', () => ({}));
+jest.mock('../../../constants/providers', () => ({ PROVIDERS: {} }));
 jest.mock('../../../config/providers', () => ({ providers: [] }));
 
 /* eslint-disable @typescript-eslint/no-var-requires */

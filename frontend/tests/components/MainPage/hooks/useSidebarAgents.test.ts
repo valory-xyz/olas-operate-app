@@ -11,7 +11,7 @@ import {
   useStore,
 } from '../../../../hooks';
 
-jest.mock('../../../../constants/providers', () => ({}));
+jest.mock('../../../../constants/providers', () => ({ PROVIDERS: {} }));
 
 jest.mock('../../../../utils', () => ({
   getServiceInstanceName: (_service: unknown, displayName: string) =>

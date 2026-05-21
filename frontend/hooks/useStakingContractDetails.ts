@@ -3,6 +3,7 @@ import { useContext } from 'react';
 
 import { StakingProgramId } from '@/constants';
 import { StakingContractDetailsContext } from '@/context/StakingContractDetailsProvider';
+import { StakingProgramContext } from '@/context/StakingProgramProvider';
 import { Maybe, StakingState } from '@/types';
 
 export const useStakingContractContext = () =>
@@ -19,6 +20,7 @@ export const useActiveStakingContractDetails = () => {
     selectedStakingContractDetails,
     isSelectedStakingContractDetailsLoading,
   } = useStakingContractContext();
+  const { selectedStakingProgramId } = useContext(StakingProgramContext);
 
   const {
     serviceStakingState,
@@ -56,6 +58,13 @@ export const useActiveStakingContractDetails = () => {
    *
    */
   const isServiceStakedForMinimumDuration = (() => {
+    if (
+      isNil(selectedStakingProgramId) ||
+      selectedStakingProgramId === 'no_staking'
+    ) {
+      return true;
+    }
+
     if (isNil(serviceStakingStartTime) || isNil(minimumStakingDuration)) {
       return false;
     }

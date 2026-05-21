@@ -39,6 +39,10 @@ describe('GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS', () => {
     'PearlBetaMechMarketplace2',
     'PearlBetaMechMarketplace3',
     'PearlBetaMechMarketplace4',
+    'PearlBetaMechMarketplace5',
+    'PearlBetaMechMarketplace6',
+    'PearlBetaMechMarketplace7',
+    'PearlBetaMechMarketplace8',
   ] as const;
 
   it('has an activity checker for every Gnosis staking program', () => {
@@ -50,9 +54,9 @@ describe('GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS', () => {
     }
   });
 
-  it('covers exactly 12 Gnosis staking programs', () => {
+  it('covers exactly 16 Gnosis staking programs', () => {
     expect(Object.keys(GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS)).toHaveLength(
-      12,
+      16,
     );
   });
 });
@@ -161,7 +165,7 @@ describe('cross-chain completeness', () => {
       Object.keys(POLYGON_STAKING_PROGRAMS_ACTIVITY_CHECKERS).length;
 
     const totalPrograms = Object.keys(STAKING_PROGRAM_IDS).length;
-    // 12 + 11 + 5 + 3 + 3 = 34 (matches STAKING_PROGRAM_IDS count)
+    // 16 + 11 + 5 + 3 + 3 = 38 (matches STAKING_PROGRAM_IDS count)
     expect(totalCheckers).toBe(totalPrograms);
   });
 });
