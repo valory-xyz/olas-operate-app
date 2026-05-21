@@ -97,6 +97,11 @@ jobs:
           path: ~/my-custom-path
           key: middleware-venv-${{ runner.os }}-${{ matrix.arch }}-${{ matrix.env }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
           
+      # olas-operate-middleware has test-fixture paths long enough to exceed the
+      # Windows 260-char MAX_PATH once Poetry clones it into the venv's src dir.
+      - name: Enable Git long paths (Windows MAX_PATH workaround)
+        run: git config --global core.longpaths true
+
       - name: Install Poetry dependencies (if venv cache miss)
         if: steps.cache-middleware-venv.outputs.cache-hit != 'true'
         run: yarn install:backend
