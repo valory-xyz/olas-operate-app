@@ -56,7 +56,7 @@ jest.mock('../../../components/ui', () => ({
     showIcon?: boolean;
   }) => (
     <div data-testid={`alert-${type}`} role="alert">
-      {message}
+      <div>{message}</div>
     </div>
   ),
   BackButton: ({ onPrev }: { onPrev: () => void }) => (
@@ -411,5 +411,28 @@ describe('SetNewPasswordViaSRP', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Contact Support' }));
     expect(mockToggleSupportModal).toHaveBeenCalled();
+  });
+
+  it('renders the agent recovery cooldown warning banner', () => {
+    renderComponent();
+    expect(screen.getByTestId('alert-warning')).toBeInTheDocument();
+    expect(
+      screen.getByText('Full agent recovery may take up to 3 days'),
+    ).toBeInTheDocument();
+  });
+
+  it('renders both the password requirements alert and the recovery cooldown warning', () => {
+    renderComponent();
+    expect(screen.getByTestId('alert-info')).toBeInTheDocument();
+    expect(screen.getByTestId('alert-warning')).toBeInTheDocument();
+  });
+
+  it('renders the cooldown warning description text', () => {
+    renderComponent();
+    expect(
+      screen.getByText(
+        'Some agents may not run or earn rewards as expected in the meantime.',
+      ),
+    ).toBeInTheDocument();
   });
 });
