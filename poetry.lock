@@ -2502,10 +2502,8 @@ description = ""
 optional = false
 python-versions = "<3.15,>=3.10"
 groups = ["main"]
-files = [
-    {file = "olas_operate_middleware-0.15.23-py3-none-any.whl", hash = "sha256:ceb014fd86c106ff19f27f9daa71295d003d44279729e776476e069369e2a5ad"},
-    {file = "olas_operate_middleware-0.15.23.tar.gz", hash = "sha256:3775c13983a4b6f27a8f0b1027bd97a18b3b7396d3c313e45f70403ce53afe7f"},
-]
+files = []
+develop = false
 
 [package.dependencies]
 aiohttp = ">=3.13.4,<4"
@@ -2525,9 +2523,15 @@ open-autonomy = {version = ">=0.21.21,<0.22", extras = ["cli", "docker"]}
 psutil = ">=5.9.8,<6"
 pyinstaller = ">=6.8.0,<7"
 requests = ">=2.32,<3"
-typing-extensions = ">=4.12,<5"
+typing_extensions = ">=4.12,<5"
 uvicorn = ">=0.30"
 werkzeug = ">=3.0,<4"
+
+[package.source]
+type = "git"
+url = "https://github.com/valory-xyz/olas-operate-middleware.git"
+reference = "c40e3c33f529a9af77c7a1c3a17cfbaf70df424e"
+resolved_reference = "c40e3c33f529a9af77c7a1c3a17cfbaf70df424e"
 
 [[package]]
 name = "open-aea"
@@ -4397,4 +4401,4 @@ propcache = ">=0.2.1"
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.14,<3.15"
-content-hash = "2f56168681105bd676d0404fe01f8f1b0369c0b33f6e99316dbcb009824d8985"
+content-hash = "2628d85a3d3ecfc0a39401a0068f11966b0cb3a2d673977d361cce69f4ddd86f"
