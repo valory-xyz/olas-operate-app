@@ -12,6 +12,12 @@ on:
         required: true
         type: string
 
+# POETRY_SYSTEM_GIT_CLIENT makes Poetry resolve git deps via the system `git`
+# binary instead of its bundled dulwich client, which crashes enumerating the
+# olas-operate-middleware repo's tags. Remove once uv migration (PR #1982) lands.
+env:
+  POETRY_SYSTEM_GIT_CLIENT: "true"
+
 jobs:
   # PyInstaller job for both x64 and arm64 binaries
   build-pyinstaller:
