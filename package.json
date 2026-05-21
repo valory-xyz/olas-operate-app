@@ -2,7 +2,7 @@
   "author": "Valory AG",
   "resolutions": {
     "**/conf/ajv": "8.18.0",
-    "@xmldom/xmldom": "0.9.10",
+    "@xmldom/xmldom": "0.8.13",
     "bn.js": "5.2.3",
     "cookie": "0.7.0",
     "dayjs": "1.11.13",
