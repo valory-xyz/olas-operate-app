@@ -6,6 +6,7 @@
     "next/core-web-vitals",
     "plugin:prettier/recommended"
   ],
+  "ignorePatterns": ["next-env.d.ts"],
   "globals": {
     "JSX": true,
     "React": true
