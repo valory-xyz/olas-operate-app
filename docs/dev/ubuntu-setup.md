@@ -12,14 +12,14 @@ curl https://raw.githubusercontent.com/creationix/nvm/master/install.sh | bash
 source ~/.bashrc
 ```
 
-## 3. Node.js
+## 2. Node.js
 
 ```bash
 nvm install
 nvm use
 ```
 
-## 4. Yarn
+## 3. Yarn
 
 Yarn is the package manager used for dependency management of the Electron app and NextJS frontend.
 
@@ -27,7 +27,7 @@ Yarn is the package manager used for dependency management of the Electron app a
 npm install --global yarn
 ```
 
-## 5. Python
+## 4. Python
 
 Use Python 3.14 for the project.
 
@@ -35,19 +35,13 @@ Use Python 3.14 for the project.
 sudo apt install python3.14
 ```
 
-## 6. Pipx
+## 5. uv
 
 ```bash
-sudo apt install pipx
+curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
-## 7. Poetry
-
-```bash
-pipx install poetry==2.3.2
-```
-
-If prompted to add the `poetry` command to your shell's config file, accept the prompt.
+If the installer prompts you to add `uv` to your shell config, accept the prompt.
 
 ### Installing project dependencies
 
