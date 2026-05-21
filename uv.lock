@@ -1230,7 +1230,7 @@ wheels = [
 
 [[package]]
 name = "olas-operate-app"
-version = "1.6.16"
+version = "1.6.17"
 source = { virtual = "." }
 dependencies = [
     { name = "olas-operate-middleware" },
@@ -1242,7 +1242,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "olas-operate-middleware", specifier = "==0.15.22" },
+    { name = "olas-operate-middleware", specifier = "==0.15.23" },
     { name = "open-aea-cli-ipfs", specifier = "==2.2.5" },
     { name = "open-aea-ledger-cosmos", specifier = "==2.2.5" },
     { name = "open-aea-ledger-ethereum", specifier = "==2.2.5" },
@@ -1251,7 +1251,7 @@ requires-dist = [
 
 [[package]]
 name = "olas-operate-middleware"
-version = "0.15.22"
+version = "0.15.23"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiohttp" },
@@ -1271,14 +1271,13 @@ dependencies = [
     { name = "psutil" },
     { name = "pyinstaller" },
     { name = "requests" },
-    { name = "requests-mock" },
     { name = "typing-extensions" },
     { name = "uvicorn" },
     { name = "werkzeug" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/4f/bd/36d5b3ea7b7a01755014e318605d7100094f5bdb8caa6139e248b1b39790/olas_operate_middleware-0.15.22.tar.gz", hash = "sha256:bc8dd34e695ea1aa8e5398e0fa652caf1fdf1206db82e455bd1cd2e340344a59", size = 266568, upload-time = "2026-05-19T15:37:02.698Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/6b/af/5b1049fc4133913ab56ce3527c1179e3579a7d3bd8331c75e9e7d9cab1f6/olas_operate_middleware-0.15.23.tar.gz", hash = "sha256:3775c13983a4b6f27a8f0b1027bd97a18b3b7396d3c313e45f70403ce53afe7f", size = 267121, upload-time = "2026-05-20T15:26:50.158Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/4e/d7/8c80dbde6378403704720535ff1d434dcaed173587fa24bc10801f8df254/olas_operate_middleware-0.15.22-py3-none-any.whl", hash = "sha256:ad70310803ace0d8274a9b711912bd5b04956434f9134b842c3547a844fc563d", size = 327235, upload-time = "2026-05-19T15:37:01.034Z" },
+    { url = "https://files.pythonhosted.org/packages/48/b8/61e4341c12fa9369006b15ba3f3b726fca210cb340d5e7f5cb53a9f1cf2d/olas_operate_middleware-0.15.23-py3-none-any.whl", hash = "sha256:ceb014fd86c106ff19f27f9daa71295d003d44279729e776476e069369e2a5ad", size = 323578, upload-time = "2026-05-20T15:26:48.402Z" },
 ]
 
 [[package]]
@@ -1905,18 +1904,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/ac/c3/e2a2b89f2d3e2179abd6d00ebd70bff6273f37fb3e0cc209f48b39d00cbf/requests-2.34.2.tar.gz", hash = "sha256:f288924cae4e29463698d6d60bc6a4da69c89185ad1e0bcc4104f584e960b9ed", size = 142856, upload-time = "2026-05-14T19:25:27.735Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/a0/f4/c67b0b3f1b9245e8d266f0f112c500d50e5b4e83cb6f3b71b6528104182a/requests-2.34.2-py3-none-any.whl", hash = "sha256:2a0d60c172f83ac6ab31e4554906c0f3b3588d37b5cb939b1c061f4907e278e0", size = 73075, upload-time = "2026-05-14T19:25:26.443Z" },
-]
-
-[[package]]
-name = "requests-mock"
-version = "1.12.1"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "requests" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/92/32/587625f91f9a0a3d84688bf9cfc4b2480a7e8ec327cefd0ff2ac891fd2cf/requests-mock-1.12.1.tar.gz", hash = "sha256:e9e12e333b525156e82a3c852f22016b9158220d2f47454de9cae8a77d371401", size = 60901, upload-time = "2024-03-29T03:54:29.446Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/97/ec/889fbc557727da0c34a33850950310240f2040f3b1955175fdb2b36a8910/requests_mock-1.12.1-py2.py3-none-any.whl", hash = "sha256:b1e37054004cdd5e56c84454cc7df12b25f90f382159087f4b6915aaeef39563", size = 27695, upload-time = "2024-03-29T03:54:27.64Z" },
 ]
 
 [[package]]

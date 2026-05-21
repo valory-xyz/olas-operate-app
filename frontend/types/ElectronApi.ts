@@ -59,6 +59,9 @@ export type PearlStore = {
   archivedInstances?: string[];
 
   recoveryPhraseBackedUp?: boolean;
+
+  /** When true (and auto-run is enabled), prevents the OS from sleeping. */
+  keepDeviceAwake?: boolean;
 };
 
 /**
