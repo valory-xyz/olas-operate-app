@@ -49,13 +49,13 @@ jobs:
           fi
 
       - name: Install dependencies
-        # `uv lock --check` first so a PR that edits pyproject.toml
-        # without regenerating uv.lock fails the release fast, rather
-        # than silently installing the stale lock.
+        # `uv sync --locked` does `uv lock --check` + install in one
+        # step, so a PR that edits pyproject.toml without regenerating
+        # uv.lock fails the release fast instead of silently
+        # installing the stale lock.
         run: |
           export SDKROOT=$(xcrun --show-sdk-path)
-          uv lock --check
-          uv sync --frozen
+          uv sync --locked
 
       - name: Build with PyInstaller
         # `uv run --frozen` so the build never re-locks / mutates

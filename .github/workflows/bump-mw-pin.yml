@@ -57,7 +57,14 @@ jobs:
 
       - name: Bump MW pin to released version
         if: steps.check.outputs.exists == 'true'
+        # `calculate-and-update-version.yml` writes a
+        # `[tool.uv.sources]` git entry when pinning to an rc; `uv add
+        # "<pkg>==X.Y.Z"` does NOT strip that source, so the git rev
+        # keeps overriding the version pin. Explicit `uv remove` first
+        # drops the source, then the versioned `uv add` reintroduces
+        # the package as a plain version pin.
         run: |
+          uv remove olas-operate-middleware
           uv add "olas-operate-middleware==${{ github.event.client_payload.version }}"
           git diff pyproject.toml uv.lock || true
 

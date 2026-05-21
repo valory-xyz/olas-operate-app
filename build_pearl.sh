@@ -25,7 +25,7 @@ ARCH=$(uname -m)
 
 mkdir -p $BIN_DIR
 
-uv sync --frozen
+uv sync --locked
 
 # Tendermint (собираем, но не копируем - используется отдельно)
 uv run --frozen pyinstaller operate/tendermint.py --onedir --name tendermint_${ARCH}
