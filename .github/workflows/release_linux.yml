@@ -37,7 +37,7 @@ jobs:
           python-version: "3.14"
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
         with:
           version: "0.11.15"
           enable-cache: true
@@ -49,14 +49,22 @@ jobs:
           echo "OS_ARCH=${{ matrix.os_arch }}" >> $GITHUB_ENV
 
       - name: Install dependencies
-        run: uv sync --frozen
+        # `uv lock --check` first so a PR that edits pyproject.toml
+        # without regenerating uv.lock fails the release fast, rather
+        # than silently installing the stale lock.
+        run: |
+          uv lock --check
+          uv sync --frozen
 
       - name: Build with PyInstaller
+        # `uv run --frozen` so the build never re-locks / mutates
+        # uv.lock between sync and pyinstaller, keeping the release
+        # deterministic.
         run: |
-          uv run pyinstaller operate/tendermint.py --onefile
+          uv run --frozen pyinstaller operate/tendermint.py --onefile
           cp dist/tendermint dist/tendermint_bin
 
-          uv run pyinstaller --collect-data eth_account --collect-all aea --collect-all autonomy --collect-all operate --collect-all aea_ledger_ethereum --collect-all aea_ledger_cosmos --hidden-import aea_ledger_ethereum --hidden-import aea_ledger_cosmos operate/pearl.py --onedir --name pearl_${{ env.OS_ARCH }}
+          uv run --frozen pyinstaller --collect-data eth_account --collect-all aea --collect-all autonomy --collect-all operate --collect-all aea_ledger_ethereum --collect-all aea_ledger_cosmos --hidden-import aea_ledger_ethereum --hidden-import aea_ledger_cosmos operate/pearl.py --onedir --name pearl_${{ env.OS_ARCH }}
 
       # Package middleware with tar to preserve signatures and extended attributes
       - name: Package middleware with tar

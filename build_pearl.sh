@@ -28,10 +28,10 @@ mkdir -p $BIN_DIR
 uv sync --frozen
 
 # Tendermint (собираем, но не копируем - используется отдельно)
-uv run pyinstaller operate/tendermint.py --onedir --name tendermint_${ARCH}
+uv run --frozen pyinstaller operate/tendermint.py --onedir --name tendermint_${ARCH}
 
 # Pearl - собираем во временную папку dist/
-uv run pyinstaller \
+uv run --frozen pyinstaller \
     --collect-data eth_account \
     --collect-all aea \
     --collect-all autonomy \

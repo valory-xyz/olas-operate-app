@@ -74,7 +74,7 @@ jobs:
           yarn config set network-concurrency 2          # Reduce concurrency to 2 connections
           
       - name: Install uv
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
         with:
           version: "0.11.15"
           enable-cache: true

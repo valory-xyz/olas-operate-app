@@ -35,13 +35,7 @@ Use Python 3.14 for the project.
 sudo apt install python3.14
 ```
 
-## 6. Pipx
-
-```bash
-sudo apt install pipx
-```
-
-## 7. uv
+## 6. uv
 
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh

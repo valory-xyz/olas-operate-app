@@ -76,7 +76,7 @@ IPC handles: `store`, `store-get`, `store-set`, `store-delete`, `store-clear`. N
 ### Python Backend
 
 - `/operate/` is a **thin shim** — `pearl.py` (PyInstaller entry) and `tendermint.py` (Tendermint binary manager). No `__init__.py`; the real backend lives in `olas-operate-middleware`.
-- `olas-operate-middleware` is **git-revision-pinned** in `pyproject.toml` (not semver). Every pin bump can change API response shapes — see Backend Contract Types below. Installed source: `.venv/lib/python3.14/site-packages/operate/`.
+- `olas-operate-middleware` is **version-pinned** in `pyproject.toml` (`==0.15.22` on `main`). Workflows occasionally swap that for a `git+https://github.com/valory-xyz/olas-operate-middleware.git@<sha>` revision pin during rc cycles (see `.github/workflows/calculate-and-update-version.yml`), but the steady-state pin is an exact PyPI release. Every pin bump can change API response shapes — see Backend Contract Types below. Installed source: `.venv/lib/python3.14/site-packages/operate/`.
 - Dev entry: `uv run python -m operate.cli daemon`. Packaged: PyInstaller executable in `electron/bins/middleware/`, built from `operate/pearl.py` via `build_pearl.sh`. Includes Tendermint binary for consensus.
 
 ### Build Process

@@ -86,7 +86,7 @@
     "dev:hardhat": "hardhat node",
     "download-binaries": "sh download_binaries.sh",
     "install-deps": "yarn install --frozen-lockfile && yarn install:backend && yarn install:frontend",
-    "install:backend": "uv sync --frozen",
+    "install:backend": "uv lock --check && uv sync --frozen",
     "install:frontend": "cd frontend && yarn install --frozen-lockfile",
     "lint:frontend": "cd frontend && yarn lint",
     "typequality-check:frontend": "cd frontend && yarn typecheck",

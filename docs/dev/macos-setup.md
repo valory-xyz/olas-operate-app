@@ -53,13 +53,7 @@ Use Python 3.14 for the project.
 brew install python@3.14
 ```
 
-## 6. Pipx
-
-```bash
-brew install pipx
-```
-
-## 7. uv
+## 6. uv
 
 ```bash
 brew install uv

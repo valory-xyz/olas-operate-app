@@ -49,14 +49,7 @@ npm install --global yarn
 choco install python3.14
 ```
 
-## 6. Pipx
-
-```powershell
-# run as administrator
-python3.14 -m pip install pipx
-```
-
-## 7. uv
+## 6. uv
 
 ```powershell
 # run as administrator
