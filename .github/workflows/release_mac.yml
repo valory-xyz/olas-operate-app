@@ -58,14 +58,15 @@ jobs:
           uv sync --locked
 
       - name: Build with PyInstaller
-        # `uv run --frozen` so the build never re-locks / mutates
-        # uv.lock between sync and pyinstaller, keeping the release
-        # deterministic.
+        # `uv run --locked` re-asserts uv.lock matches pyproject.toml
+        # before exec, for consistency with `uv sync --locked` above.
+        # No-op when sync just succeeded, but defensive if the steps
+        # are ever separated.
         run: |
-          uv run --frozen pyinstaller operate/tendermint.py --onefile
+          uv run --locked pyinstaller operate/tendermint.py --onefile
           cp dist/tendermint dist/tendermint_bin
 
-          uv run --frozen pyinstaller --collect-data eth_account --collect-all aea --collect-all autonomy --collect-all operate --collect-all aea_ledger_ethereum --collect-all aea_ledger_cosmos --hidden-import aea_ledger_ethereum --hidden-import aea_ledger_cosmos operate/pearl.py --onedir --name pearl_${{ env.OS_ARCH }}
+          uv run --locked pyinstaller --collect-data eth_account --collect-all aea --collect-all autonomy --collect-all operate --collect-all aea_ledger_ethereum --collect-all aea_ledger_cosmos --hidden-import aea_ledger_ethereum --hidden-import aea_ledger_cosmos operate/pearl.py --onedir --name pearl_${{ env.OS_ARCH }}
 
       - name: Sign PyInstaller binaries
         env:
