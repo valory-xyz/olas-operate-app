@@ -71,6 +71,12 @@
     "ts-node": "10.9.2",
     "typescript": "5.3.3"
   },
+  "engineStrict": true,
+  "engines": {
+    "node": ">=22.18",
+    "npm": "please-use-yarn",
+    "yarn": "1.x"
+  },
   "name": "olas-operate-app",
   "private": true,
   "scripts": {
