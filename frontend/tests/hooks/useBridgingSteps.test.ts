@@ -761,6 +761,7 @@ describe('useBridgingSteps', () => {
       ['QUOTE_DONE' as QuoteStatus],
       ['CREATED' as QuoteStatus],
       ['QUOTE_FAILED' as QuoteStatus],
+      ['EXECUTION_UNKNOWN' as QuoteStatus],
     ])(
       'maps %s to process status (default, via status poll)',
       (quoteStatus) => {
