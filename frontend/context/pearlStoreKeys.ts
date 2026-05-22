@@ -31,4 +31,5 @@ export const BACKEND_BOUND_KEYS: (keyof PearlStore)[] = [
   'lastProvidedBackupWallet',
   'autoRun',
   'recoveryPhraseBackedUp',
+  'keepDeviceAwake',
 ];

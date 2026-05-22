@@ -38,6 +38,7 @@ const {
   systemPreferences,
   nativeImage,
   screen,
+  powerSaveBlocker,
 } = require('electron');
 
 const { spawn } = require('child_process');
@@ -172,6 +173,11 @@ const getOnRampWindow = () => onRampWindow;
 
 /** @type {Electron.Tray | null} */
 let tray = null;
+
+// Tracks the active powerSaveBlocker ID; null when no blocker is active.
+// Uses 'prevent-app-suspension' to prevent system/CPU sleep while allowing
+// the display to dim — appropriate for long-running background agent work.
+let wakeLockId = null;
 
 // Used in production and development
 let operateDaemon;
@@ -713,7 +719,7 @@ async function launchDaemon() {
 async function launchDaemonDev() {
   const { keyPath, certPath } = createAndLoadSslCertificate();
   const check = new Promise(function (resolve, _reject) {
-    operateDaemon = spawn('poetry', [
+    operateDaemon = spawn('uv', [
       'run',
       'operate',
       'daemon',
@@ -1029,3 +1035,28 @@ ipcMain.handle('web3auth-swap-owner-failure', (_event, result) =>
 ipcMain.handle('terms-window-show', (_event, hash) =>
   handleTermsAndConditionsWindowShow(hash),
 );
+
+/**
+ * Wake lock handlers — prevent OS sleep while auto-run agents are active.
+ */
+ipcMain.handle('wake-lock-start', () => {
+  // Release any existing blocker before starting a new one to prevent ID leaks
+  if (wakeLockId !== null && powerSaveBlocker.isStarted(wakeLockId)) {
+    powerSaveBlocker.stop(wakeLockId);
+    logger.electron(`[wake-lock] released stale blocker id=${wakeLockId}`);
+  }
+  wakeLockId = powerSaveBlocker.start('prevent-app-suspension');
+  logger.electron(
+    `[wake-lock] started: id=${wakeLockId}, mode='prevent-app-suspension'`,
+  );
+});
+
+ipcMain.handle('wake-lock-stop', () => {
+  if (wakeLockId !== null && powerSaveBlocker.isStarted(wakeLockId)) {
+    powerSaveBlocker.stop(wakeLockId);
+    logger.electron(`[wake-lock] stopped: id=${wakeLockId}`);
+  } else {
+    logger.electron('[wake-lock] stop requested but no active blocker');
+  }
+  wakeLockId = null;
+});

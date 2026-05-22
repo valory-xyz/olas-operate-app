@@ -62,6 +62,7 @@ jest.mock('../../../hooks', () => ({
     unarchiveInstance: jest.fn(),
   }),
   usePageState: jest.fn().mockReturnValue({ pageState: 'Main' }),
+  useWakeLock: jest.fn(),
 }));
 
 jest.mock('../../../context/AutoRunProvider/hooks/useAutoRunStore', () => ({
@@ -112,8 +113,11 @@ const { useSelectedEligibility } = jest.requireMock(
 const { useAutoRunController } = jest.requireMock(
   '../../../context/AutoRunProvider/hooks/useAutoRunController',
 ) as { useAutoRunController: jest.Mock };
-const { useServices } = jest.requireMock('../../../hooks') as {
+const { useServices, useWakeLock: mockUseWakeLock } = jest.requireMock(
+  '../../../hooks',
+) as {
   useServices: jest.Mock;
+  useWakeLock: jest.Mock;
 };
 
 const scTrader = DEFAULT_SERVICE_CONFIG_ID;
@@ -193,6 +197,41 @@ describe('AutoRunProvider', () => {
     expect(typeof result.current.setEnabled).toBe('function');
     expect(typeof result.current.includeInstance).toBe('function');
     expect(typeof result.current.excludeInstance).toBe('function');
+  });
+
+  describe('useWakeLock integration', () => {
+    it('passes enabled=false to useWakeLock when auto-run is disabled', () => {
+      mockAutoRunStore.enabled = false;
+      useAutoRunStore.mockImplementation(() => ({ ...mockAutoRunStore }));
+
+      renderHook(() => useAutoRunContext(), { wrapper });
+
+      expect(mockUseWakeLock).toHaveBeenCalledWith(false);
+    });
+
+    it('passes enabled=true to useWakeLock when auto-run is enabled', () => {
+      mockAutoRunStore.enabled = true;
+      useAutoRunStore.mockImplementation(() => ({ ...mockAutoRunStore }));
+
+      renderHook(() => useAutoRunContext(), { wrapper });
+
+      expect(mockUseWakeLock).toHaveBeenCalledWith(true);
+    });
+
+    it('updates useWakeLock when enabled toggles', () => {
+      mockAutoRunStore.enabled = true;
+      useAutoRunStore.mockImplementation(() => ({ ...mockAutoRunStore }));
+
+      const { rerender } = renderHook(() => useAutoRunContext(), { wrapper });
+
+      expect(mockUseWakeLock).toHaveBeenLastCalledWith(true);
+
+      mockAutoRunStore.enabled = false;
+      useAutoRunStore.mockImplementation(() => ({ ...mockAutoRunStore }));
+      rerender();
+
+      expect(mockUseWakeLock).toHaveBeenLastCalledWith(false);
+    });
   });
 
   describe('seeding', () => {

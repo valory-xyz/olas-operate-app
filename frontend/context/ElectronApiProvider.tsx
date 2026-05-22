@@ -104,6 +104,11 @@ type ElectronApiContextProps = {
   };
   logEvent?: (message: string) => void;
   nextLogError?: (error: Error, errorInfo: unknown) => void;
+  /** IPC bridge for the OS wake-lock — used by useWakeLock during auto-run. */
+  wakeLock?: {
+    start?: () => Promise<void>;
+    stop?: () => Promise<void>;
+  };
   /** IPC bridge for OTA updates — distinct from the electron-updater instance in electron/update.js */
   autoUpdater?: {
     checkForUpdates?: () => Promise<unknown>;
@@ -172,6 +177,10 @@ export const ElectronApiContext = createContext<ElectronApiContextProps>({
   },
   logEvent: () => {},
   nextLogError: () => {},
+  wakeLock: {
+    start: async () => {},
+    stop: async () => {},
+  },
   autoUpdater: {
     checkForUpdates: async () => {},
     downloadUpdate: async () => {},
@@ -203,6 +212,29 @@ const getElectronApiFunction = (
 };
 
 export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
+  // Stabilize ipcRenderer so consumers with useEffect([…, ipcRenderer]) don't
+  // fire spurious cleanup→body cycles on every parent re-render (e.g.
+  // useWakeLock would flap wake-lock-stop → wake-lock-start each render).
+  const ipcRenderer = useMemo<ElectronApiContextProps['ipcRenderer']>(
+    () => ({
+      send: getElectronApiFunction('ipcRenderer.send'),
+      on: getElectronApiFunction('ipcRenderer.on'),
+      invoke: getElectronApiFunction('ipcRenderer.invoke'),
+      removeListener: getElectronApiFunction('ipcRenderer.removeListener'),
+    }),
+    [],
+  );
+
+  // Same stability rationale as ipcRenderer above — keeps useWakeLock's
+  // effect from flapping on parent re-renders.
+  const wakeLock = useMemo<ElectronApiContextProps['wakeLock']>(
+    () => ({
+      start: getElectronApiFunction('wakeLock.start', true),
+      stop: getElectronApiFunction('wakeLock.stop', true),
+    }),
+    [],
+  );
+
   // Stabilize autoUpdater so consumers with useEffect([autoUpdater]) don't
   // tear down and re-register IPC listeners on every parent render
   // (UpdateAvailableModal would otherwise drop progress events mid-download).
@@ -260,12 +292,7 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
         closeApp: getElectronApiFunction('closeApp'),
         minimizeApp: getElectronApiFunction('minimizeApp'),
         setTrayIcon: getElectronApiFunction('setTrayIcon'),
-        ipcRenderer: {
-          send: getElectronApiFunction('ipcRenderer.send'),
-          on: getElectronApiFunction('ipcRenderer.on'),
-          invoke: getElectronApiFunction('ipcRenderer.invoke'),
-          removeListener: getElectronApiFunction('ipcRenderer.removeListener'),
-        },
+        ipcRenderer,
         store: {
           store: getElectronApiFunction('store.store'),
           // NOTE: store.get reads from the Electron store only (OS app-data).
@@ -355,6 +382,7 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
         },
         logEvent: getElectronApiFunction('logEvent'),
         nextLogError: getElectronApiFunction('nextLogError'),
+        wakeLock,
         autoUpdater,
       }}
     >

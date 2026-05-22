@@ -1,15 +1,22 @@
-import { Button, Card, Flex, Typography } from 'antd';
+import { Button, Card, Flex, Switch, Typography } from 'antd';
 import { useMemo } from 'react';
-import { TbFileText, TbShieldHalfFilled, TbShieldLock } from 'react-icons/tb';
+import {
+  TbFileText,
+  TbShieldHalfFilled,
+  TbShieldLock,
+  TbSunHigh,
+} from 'react-icons/tb';
 import { useBoolean } from 'usehooks-ts';
 
 import { Alert, CardSection, cardStyles, IconContainer } from '@/components/ui';
 import { COLOR } from '@/constants';
 import { SettingsScreenMap } from '@/constants/screen';
 import {
+  useElectronApi,
   useMnemonicExists,
   useRecoveryPhraseBackup,
   useSettings,
+  useStore,
 } from '@/hooks';
 
 import { BackupWalletSection } from './BackupWallet';
@@ -31,7 +38,7 @@ import { UpdatePasswordScreen } from './UpdatePassword';
 const { Text, Paragraph, Title } = Typography;
 
 const DefaultSettingsSection = ({ openDrawer }: { openDrawer: () => void }) => (
-  <CardSection $padding="24px">
+  <CardSection $padding="24px" $borderTop>
     <Flex gap={16}>
       <IconContainer>
         <TbFileText size={20} color={COLOR.TEXT_NEUTRAL_TERTIARY} />
@@ -107,6 +114,38 @@ const SecretRecoveryPhraseSetting = () => {
   );
 };
 
+const KeepDeviceAwakeSetting = () => {
+  const { store } = useElectronApi();
+  const { storeState } = useStore();
+  const keepDeviceAwake = !!storeState?.keepDeviceAwake;
+
+  return (
+    <CardSection $padding="24px" vertical gap={8}>
+      <Flex gap={16}>
+        <IconContainer>
+          <TbSunHigh size={20} color={COLOR.TEXT_NEUTRAL_TERTIARY} />
+        </IconContainer>
+        <Flex vertical gap={12}>
+          <Text strong>Keep Device Awake</Text>
+          <Text className="text-sm text-neutral-secondary">
+            Your device stays awake while auto-run is active. On laptops,
+            closing the lid may still trigger sleep, and battery use may be
+            higher.
+          </Text>
+          <Flex align="center" gap={8}>
+            <Switch
+              checked={keepDeviceAwake}
+              onChange={(checked) => store?.set?.('keepDeviceAwake', checked)}
+              size="small"
+            />
+            <Text className="text-sm">{keepDeviceAwake ? 'On' : 'Off'}</Text>
+          </Flex>
+        </Flex>
+      </Flex>
+    </CardSection>
+  );
+};
+
 const SettingsMain = () => {
   const { goto } = useSettings();
   const {
@@ -143,6 +182,7 @@ const SettingsMain = () => {
 
         <BackupWalletSection />
 
+        <KeepDeviceAwakeSetting />
         <DefaultSettingsSection openDrawer={openDrawer} />
         <SecretRecoveryPhraseSetting />
       </Card>
