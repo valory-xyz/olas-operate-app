@@ -719,7 +719,7 @@ async function launchDaemon() {
 async function launchDaemonDev() {
   const { keyPath, certPath } = createAndLoadSslCertificate();
   const check = new Promise(function (resolve, _reject) {
-    operateDaemon = spawn('poetry', [
+    operateDaemon = spawn('uv', [
       'run',
       'operate',
       'daemon',

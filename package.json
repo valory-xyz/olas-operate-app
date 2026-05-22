@@ -1,12 +1,22 @@
 {
   "author": "Valory AG",
   "resolutions": {
+    "**/conf/ajv": "8.18.0",
+    "@xmldom/xmldom": "0.8.13",
+    "bn.js": "5.2.3",
+    "cookie": "0.7.0",
     "dayjs": "1.11.13",
     "fast-uri": "3.1.2",
+    "flatted": "3.4.2",
+    "follow-redirects": "1.16.0",
     "immutable": "5.1.5",
     "lodash": "4.18.1",
     "node-gyp": "12.3.0",
-    "picomatch": "2.3.2"
+    "picomatch": "2.3.2",
+    "postcss": "8.5.10",
+    "serialize-javascript": "7.0.5",
+    "tmp": "0.2.4",
+    "ws": "8.20.1"
   },
   "dependencies": {
     "@ant-design/cssinjs": "1.24.0",
@@ -17,7 +27,7 @@
     "antd": "5.27.4",
     "child_process": "1.0.2",
     "cross-env": "7.0.3",
-    "dompurify": "3.2.7",
+    "dompurify": "3.4.0",
     "dotenv": "16.6.1",
     "electron-log": "5.4.3",
     "electron-store": "8.2.0",
@@ -68,7 +78,7 @@
   "engines": {
     "node": ">=22.18",
     "npm": "please-use-yarn",
-    "yarn": ">=1.22.0"
+    "yarn": "1.x"
   },
   "main": "electron/main.js",
   "name": "olas-operate-app",
@@ -81,12 +91,12 @@
     "deps:check-pinned": "node scripts/check-deps-pinned.mjs",
     "build:pearl": "sh build_pearl.sh",
     "dev": "dotenv -e .env -- electron .",
-    "dev:backend": "poetry run python -m operate.cli daemon",
+    "dev:backend": "uv run python -m operate.cli daemon",
     "dev:frontend": "cd frontend && yarn dev",
     "dev:hardhat": "hardhat node",
     "download-binaries": "sh download_binaries.sh",
     "install-deps": "yarn install --frozen-lockfile && yarn install:backend && yarn install:frontend",
-    "install:backend": "poetry install --no-root",
+    "install:backend": "uv sync --locked",
     "install:frontend": "cd frontend && yarn install --frozen-lockfile",
     "lint:frontend": "cd frontend && yarn lint",
     "typequality-check:frontend": "cd frontend && yarn typecheck",
@@ -96,10 +106,5 @@
     "test:frontend": "cd frontend && yarn test"
   },
   "version": "1.6.12-rc23",
-  "engine": {
-    "node": "22.18",
-    "yarn": ">=1.22.0",
-    "npm": "please-use-yarn"
-  },
   "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
 }
