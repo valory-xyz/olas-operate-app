@@ -282,6 +282,10 @@ jobs:
           CURRENT_VERSION=$(grep -E '^version = ' pyproject.toml | sed -E 's/^version = "(.+)"/\1/')
           if [ "$CURRENT_VERSION" != "$NEW_VERSION" ]; then
             sed -i -E "s/^version = \".*\"/version = \"$NEW_VERSION\"/" pyproject.toml
+            # uv.lock records the project's own version, so a sed bump
+            # without re-locking leaves uv.lock stale and breaks the
+            # next `uv sync --locked` in CI / release jobs.
+            uv lock
             echo "Updated pyproject.toml version from $CURRENT_VERSION to $NEW_VERSION"
           else
             echo "pyproject.toml version is already $NEW_VERSION, skipping update"

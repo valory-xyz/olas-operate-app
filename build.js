@@ -72,7 +72,14 @@ const main = async () => {
         // for apps containing sparse files (e.g. pyinstaller-packaged Python
         // binaries), causing ditto to silently truncate the Electron Framework
         // binary. See electron-userland/electron-builder#8223.
-        size: '2g',
+        //
+        // Bumped 2g -> 4g for the Next 15 upgrade: the larger Next runtime +
+        // sharp/libvips native libs grew the bundle past what 2g held, so ditto
+        // silently truncated `Electron Framework` again — the .dmg shipped a
+        // bundle missing that binary, crashing at launch with a DYLD
+        // "Library not loaded: @rpath/Electron Framework.framework/Electron
+        // Framework" error (the .zip artifact was unaffected). 4g restores headroom.
+        size: '4g',
       },
     },
   });
