@@ -1,5 +1,6 @@
 import { ArrowRightOutlined } from '@ant-design/icons';
 import { Button, Flex, Modal, Skeleton, Typography } from 'antd';
+import { ethers } from 'ethers';
 import { entries, floor, isNil } from 'lodash';
 import Image from 'next/image';
 import { useCallback, useMemo, useState } from 'react';
@@ -16,7 +17,7 @@ import { TOKEN_CONFIG, TokenSymbol } from '@/config/tokens';
 import { AddressZero } from '@/constants';
 import { useInsufficientGasModal, useServices } from '@/hooks';
 import { WithdrawSafeRequestAmounts } from '@/types';
-import { asEvmChainId, formatUnitsToNumber, parseUnits } from '@/utils';
+import { asEvmChainId, parseUnits } from '@/utils';
 
 import { useAgentWallet } from '../AgentWalletProvider';
 import { STEPS } from '../types';
@@ -109,9 +110,10 @@ const useWithdrawableTokens = () => {
       .map(([tokenAddress, weiStr]) => {
         const meta = addressToMeta[tokenAddress.toLowerCase()];
         if (!meta) return null;
-        const withdrawableAmount = formatUnitsToNumber(
-          weiStr,
-          meta.decimals,
+        // Use floor (not ceil) so the displayed max never exceeds
+        // the actual on-chain withdrawable amount in wei.
+        const withdrawableAmount = floor(
+          parseFloat(ethers.utils.formatUnits(weiStr, meta.decimals)),
           DECIMAL_PLACES,
         );
         return {
