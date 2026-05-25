@@ -11,4 +11,5 @@
 # "package  # ?" is a TODO, not justification.
 
 @parcel/watcher  # native fs-watcher prebuild fallback (sass>chokidar transitive); compiles a small N-API binding from source if no prebuilt is shipped for the platform
+sharp  # libvips-backed image optimizer that Next.js 15 ships as a direct dep for next/image; install/check.js looks for a prebuilt binary for the current platform/libc and falls back to building from source if missing — no network beyond the prebuild fetch
 unrs-resolver  # napi-postinstall stub that prints a platform-mismatch warning if the prebuilt binary's triple doesn't match the host (eslint-config-next>eslint-import-resolver-typescript>unrs-resolver — runs once at install, no network or file mutation beyond stdout)
