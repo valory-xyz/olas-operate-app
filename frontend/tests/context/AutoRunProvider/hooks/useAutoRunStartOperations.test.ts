@@ -3,8 +3,10 @@ import { act } from 'react';
 
 import { AGENT_CONFIG } from '../../../../config/agents';
 import { AgentMap } from '../../../../constants/agent';
+import { MiddlewareDeploymentStatusMap } from '../../../../constants/deployment';
 import { AUTO_RUN_START_STATUS } from '../../../../context/AutoRunProvider/constants';
 import { useAutoRunStartOperations } from '../../../../context/AutoRunProvider/hooks/useAutoRunStartOperations';
+import { ServicesService } from '../../../../service/Services';
 import * as delayModule from '../../../../utils/delay';
 import {
   DEFAULT_SERVICE_CONFIG_ID,
@@ -16,6 +18,14 @@ jest.mock('../../../../utils/delay', () =>
   require('../../../helpers/autoRunMocks').delayMockFactoryWithTimeout(),
 );
 
+jest.mock('../../../../service/Services', () => ({
+  ServicesService: {
+    getDeployment: jest.fn(),
+  },
+}));
+
+const mockGetDeployment = ServicesService.getDeployment as jest.Mock;
+
 const mockSleepAwareDelay = delayModule.sleepAwareDelay as jest.Mock;
 const mockWithTimeout = delayModule.withTimeout as jest.Mock;
 
@@ -23,7 +33,6 @@ const makeHookParams = (
   overrides: Partial<Parameters<typeof useAutoRunStartOperations>[0]> = {},
 ) => ({
   enabledRef: { current: true },
-  runningServiceConfigIdRef: { current: null as string | null },
   configuredAgents: [
     makeAutoRunAgentMeta(
       AgentMap.PredictTrader,
@@ -48,6 +57,10 @@ describe('useAutoRunStartOperations', () => {
     jest.clearAllMocks();
     mockSleepAwareDelay.mockResolvedValue(true);
     mockWithTimeout.mockImplementation((promise: Promise<unknown>) => promise);
+    // Default: deployment not active (BUILT) → forces a real start
+    mockGetDeployment.mockResolvedValue({
+      status: MiddlewareDeploymentStatusMap.BUILT,
+    });
   });
 
   it('returns ABORTED when disabled before start', async () => {
@@ -109,10 +122,11 @@ describe('useAutoRunStartOperations', () => {
     expect(params.onAutoRunStartStateChange).toHaveBeenCalledWith(true);
   });
 
-  it('returns STARTED immediately when already running', async () => {
-    const params = makeHookParams({
-      runningServiceConfigIdRef: { current: DEFAULT_SERVICE_CONFIG_ID },
+  it('returns STARTED immediately when deployment is genuinely active (DEPLOYED)', async () => {
+    mockGetDeployment.mockResolvedValue({
+      status: MiddlewareDeploymentStatusMap.DEPLOYED,
     });
+    const params = makeHookParams();
     const { result } = renderHook(() => useAutoRunStartOperations(params));
 
     let startResult: { status: string } | undefined;
@@ -123,6 +137,9 @@ describe('useAutoRunStartOperations', () => {
     });
     expect(startResult?.status).toBe(AUTO_RUN_START_STATUS.STARTED);
     expect(params.startService).not.toHaveBeenCalled();
+    expect(params.onAutoRunInstanceStarted).toHaveBeenCalledWith(
+      DEFAULT_SERVICE_CONFIG_ID,
+    );
   });
 
   it('returns INFRA_FAILED after all retries exhausted', async () => {
@@ -240,5 +257,76 @@ describe('useAutoRunStartOperations', () => {
       );
     });
     expect(startResult?.status).toBe(AUTO_RUN_START_STATUS.ABORTED);
+  });
+
+  describe('deployment liveness check (OPE-1741 regression)', () => {
+    it('falls through to real start when getDeployment returns BUILT (agent stopped)', async () => {
+      mockGetDeployment.mockResolvedValue({
+        status: MiddlewareDeploymentStatusMap.BUILT,
+      });
+      const params = makeHookParams();
+      const { result } = renderHook(() => useAutoRunStartOperations(params));
+
+      let startResult: { status: string } | undefined;
+      await act(async () => {
+        startResult = await result.current.startAgentWithRetries(
+          DEFAULT_SERVICE_CONFIG_ID,
+        );
+      });
+      expect(startResult?.status).toBe(AUTO_RUN_START_STATUS.STARTED);
+      expect(params.startService).toHaveBeenCalled();
+    });
+
+    it('short-circuits when getDeployment confirms DEPLOYED', async () => {
+      mockGetDeployment.mockResolvedValue({
+        status: MiddlewareDeploymentStatusMap.DEPLOYED,
+      });
+      const params = makeHookParams();
+      const { result } = renderHook(() => useAutoRunStartOperations(params));
+
+      let startResult: { status: string } | undefined;
+      await act(async () => {
+        startResult = await result.current.startAgentWithRetries(
+          DEFAULT_SERVICE_CONFIG_ID,
+        );
+      });
+      expect(startResult?.status).toBe(AUTO_RUN_START_STATUS.STARTED);
+      expect(params.startService).not.toHaveBeenCalled();
+      expect(params.onAutoRunInstanceStarted).toHaveBeenCalledWith(
+        DEFAULT_SERVICE_CONFIG_ID,
+      );
+    });
+
+    it('falls through to real start when getDeployment throws (network error)', async () => {
+      mockGetDeployment.mockRejectedValue(new Error('Network error'));
+      const params = makeHookParams();
+      const { result } = renderHook(() => useAutoRunStartOperations(params));
+
+      let startResult: { status: string } | undefined;
+      await act(async () => {
+        startResult = await result.current.startAgentWithRetries(
+          DEFAULT_SERVICE_CONFIG_ID,
+        );
+      });
+      expect(startResult?.status).toBe(AUTO_RUN_START_STATUS.STARTED);
+      expect(params.startService).toHaveBeenCalled();
+    });
+
+    it('short-circuits when getDeployment confirms DEPLOYING (transitional active state)', async () => {
+      mockGetDeployment.mockResolvedValue({
+        status: MiddlewareDeploymentStatusMap.DEPLOYING,
+      });
+      const params = makeHookParams();
+      const { result } = renderHook(() => useAutoRunStartOperations(params));
+
+      let startResult: { status: string } | undefined;
+      await act(async () => {
+        startResult = await result.current.startAgentWithRetries(
+          DEFAULT_SERVICE_CONFIG_ID,
+        );
+      });
+      expect(startResult?.status).toBe(AUTO_RUN_START_STATUS.STARTED);
+      expect(params.startService).not.toHaveBeenCalled();
+    });
   });
 });
