@@ -40,7 +40,7 @@
 # paths. *.sh matches shell scripts anywhere in the tree (build_pearl.sh,
 # download_binaries.sh, scripts/*.sh, electron/*.sh, etc.).
 /pyproject.toml                  @OjusWiZard @rajat2502
-/poetry.lock                     @OjusWiZard @rajat2502
+/uv.lock                         @OjusWiZard @rajat2502
 /operate/                        @OjusWiZard @rajat2502
 /electron/                       @OjusWiZard @rajat2502
 /scripts/                        @OjusWiZard @rajat2502

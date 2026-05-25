@@ -1,21 +1,27 @@
-[tool.poetry]
+[project]
 name = "olas-operate-app"
 version = "1.6.12-rc25"
 description = ""
-authors = ["David Vilela <dvilelaf@gmail.com>", "Viraj Patel <vptl185@gmail.com>"]
+authors = [
+    { name = "David Vilela", email = "dvilelaf@gmail.com" },
+    { name = "Viraj Patel", email = "vptl185@gmail.com" },
+]
+requires-python = ">=3.14,<3.15"
 readme = "README.md"
-package-mode = false
-packages = []
-include = []
+dependencies = [
+    "olas-operate-middleware==0.15.23",
+    "open-autonomy[cli, docker]==0.21.21",
+    "open-aea-ledger-cosmos==2.2.5",
+    "open-aea-ledger-ethereum==2.2.5",
+    "open-aea-cli-ipfs==2.2.5",
+]
 
-[tool.poetry.dependencies]
-python = ">=3.14,<3.15"
-olas-operate-middleware = "0.15.23"
-open-autonomy = {version = "0.21.21", extras = ["cli", "docker"]}
-open-aea-ledger-cosmos = "2.2.5"
-open-aea-ledger-ethereum = "2.2.5"
-open-aea-cli-ipfs = "2.2.5"
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+[tool.uv]
+package = false
+# Force uv to use the `actions/setup-python` (or system) CPython
+# rather than its own python-build-standalone download, so the
+# interpreter bundled into the `pearl_*` / `tendermint` PyInstaller
+# release artifacts stays under `setup-python@v6`'s control (same
+# provenance we had under Poetry). Drop this only if we want to
+# opt every release into uv-managed interpreters.
+python-preference = "only-system"
