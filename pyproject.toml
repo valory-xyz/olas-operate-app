@@ -14,8 +14,10 @@ dependencies = [
     "open-aea-ledger-cosmos==2.2.5",
     "open-aea-ledger-ethereum==2.2.5",
     "open-aea-cli-ipfs==2.2.5",
-    "pyinstaller>=6.20.0",
 ]
+
+[dependency-groups]
+dev = ["pyinstaller==6.20.0"]
 
 [tool.uv]
 package = false

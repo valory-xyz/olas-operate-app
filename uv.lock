@@ -1205,6 +1205,10 @@ dependencies = [
     { name = "open-aea-ledger-cosmos" },
     { name = "open-aea-ledger-ethereum" },
     { name = "open-autonomy", extra = ["cli", "docker"] },
+]
+
+[package.dev-dependencies]
+dev = [
     { name = "pyinstaller" },
 ]
 
@@ -1215,8 +1219,10 @@ requires-dist = [
     { name = "open-aea-ledger-cosmos", specifier = "==2.2.5" },
     { name = "open-aea-ledger-ethereum", specifier = "==2.2.5" },
     { name = "open-autonomy", extras = ["cli", "docker"], specifier = "==0.21.21" },
-    { name = "pyinstaller", specifier = ">=6.20.0" },
 ]
+
+[package.metadata.requires-dev]
+dev = [{ name = "pyinstaller", specifier = "==6.20.0" }]
 
 [[package]]
 name = "olas-operate-middleware"
