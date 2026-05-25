@@ -5,6 +5,7 @@ import { MainContentContainer } from '@/components/ui';
 import { AgentWalletProvider, useAgentWallet } from './AgentWalletProvider';
 import { BalancesAndAssets } from './BalancesAndAssets/BalancesAndAssets';
 import { FundAgent } from './FundAgent/FundAgent';
+import { PartialWithdrawScreen } from './PartialWithdraw';
 import { STEPS } from './types';
 import { Withdraw } from './Withdraw/Withdraw';
 
@@ -52,7 +53,7 @@ const AgentWalletContent = () => {
       case STEPS.WITHDRAW_FROM_AGENT_WALLET:
         return <Withdraw onBack={handleBack} />;
       case STEPS.PARTIAL_WITHDRAW_FROM_AGENT_WALLET:
-        return <div>Partial Withdraw Coming Soon</div>;
+        return <PartialWithdrawScreen onBack={handleBack} />;
       case STEPS.FUND_AGENT:
         return <FundAgent onBack={handleBack} />;
       default:

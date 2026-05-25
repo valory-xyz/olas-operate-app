@@ -73,3 +73,24 @@ export type MiddlewareWalletResponse = {
   };
   safe_nonce: number;
 };
+
+/**
+ * Response from GET /service/:id/safe_withdrawable_balance.
+ * Keyed by middleware chain name, each entry contains token addresses mapped
+ * to their withdrawable amount (wei string) and the gas reserve for native.
+ */
+export type SafeWithdrawableBalanceByChain = {
+  withdrawable_amounts: Record<string, string>;
+  gas_reserve: string;
+};
+
+export type SafeWithdrawableBalanceResponse = Record<
+  string,
+  SafeWithdrawableBalanceByChain
+>;
+
+/**
+ * Request body for POST /service/:id/withdraw_safe — the `amounts` field.
+ * Keyed by middleware chain name → token address → wei string.
+ */
+export type WithdrawSafeRequestAmounts = Record<string, Record<string, string>>;
