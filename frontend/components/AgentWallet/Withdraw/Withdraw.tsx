@@ -173,7 +173,10 @@ export const Withdraw = ({ onBack }: EnterWithdrawalAddressProps) => {
             ) : isSuccess ? (
               <WithdrawalComplete />
             ) : (
-              <WithdrawalInProgress />
+              <WithdrawalInProgress
+                title="Agent Decommission in Progress"
+                subtitle="It usually takes 3-4 minutes."
+              />
             )}
           </Modal>
         ))}

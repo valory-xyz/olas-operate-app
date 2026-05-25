@@ -6,12 +6,13 @@ import { ServicesService } from '@/service/Services';
 
 /**
  * Fetches the withdrawable balance for the selected service's safe.
+ * Exposes `refetch` so consumers can wire a "Retry" CTA after a failed fetch.
  */
 export const useSafeWithdrawableBalance = () => {
   const { selectedService } = useServices();
   const serviceConfigId = selectedService?.service_config_id;
 
-  const { data, isLoading, isError } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: REACT_QUERY_KEYS.SAFE_WITHDRAWABLE_BALANCE_KEY(
       serviceConfigId ?? '',
     ),
@@ -22,5 +23,5 @@ export const useSafeWithdrawableBalance = () => {
     enabled: !!serviceConfigId,
   });
 
-  return { data, isLoading, isError };
+  return { data, isLoading, isError, refetch };
 };

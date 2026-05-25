@@ -1,10 +1,11 @@
 import { ArrowRightOutlined } from '@ant-design/icons';
 import { Button, Flex, Modal, Skeleton, Typography } from 'antd';
 import { ethers } from 'ethers';
-import { entries, floor, isNil } from 'lodash';
+import { floor, isNil } from 'lodash';
 import Image from 'next/image';
 import { useCallback, useMemo, useState } from 'react';
 
+import { WarningOutlined } from '@/components/custom-icons';
 import {
   BackButton,
   CardFlex,
@@ -15,9 +16,13 @@ import {
 } from '@/components/ui';
 import { TOKEN_CONFIG, TokenSymbol } from '@/config/tokens';
 import { AddressZero } from '@/constants';
-import { useInsufficientGasModal, useServices } from '@/hooks';
-import { WithdrawSafeRequestAmounts } from '@/types';
-import { asEvmChainId, parseUnits } from '@/utils';
+import {
+  useAvailableAgentAssets,
+  useInsufficientGasModal,
+  useServices,
+} from '@/hooks';
+import { Address, WithdrawSafeRequestAmounts } from '@/types';
+import { asEvmChainDetails, asEvmChainId, parseUnits } from '@/utils';
 
 import { useAgentWallet } from '../AgentWalletProvider';
 import { STEPS } from '../types';
@@ -39,7 +44,8 @@ const PartialWithdrawTitle = () => (
       Withdraw from Agent Wallet
     </Title>
     <Text className="text-neutral-tertiary">
-      Enter the token amounts you want to withdraw to your Pearl Wallet.
+      Enter the token amounts you want to withdraw from the agent to your Pearl
+      Wallet.
     </Text>
   </Flex>
 );
@@ -68,71 +74,120 @@ const AgentWalletToPearlWallet = () => {
   );
 };
 
+type WithdrawableToken = {
+  symbol: TokenSymbol;
+  decimals: number;
+  /** Lower-cased token address used to key into the API response. Native = AddressZero. */
+  address: string;
+  withdrawableAmount: number;
+  isNative: boolean;
+};
+
 /**
- * Converts the backend's withdrawable-balance response (keyed by middleware
- * chain + token address → wei string) into a list of
- * `{ symbol, decimals, address, withdrawableAmount }` entries suitable for
- * rendering `TokenAmountInput` rows.
+ * Joins the front-end "Available Assets" ordering (from `useAvailableAgentAssets`)
+ * with the backend's per-token withdrawable amounts. The returned list is in
+ * the same order as the main-screen Available Assets table; tokens absent from
+ * the API response are shown with `withdrawableAmount = 0`.
  */
 const useWithdrawableTokens = () => {
   const { selectedAgentConfig } = useServices();
-  const { data, isLoading } = useSafeWithdrawableBalance();
+  const { availableAssets } = useAvailableAgentAssets();
+  const { data, isLoading, isError, refetch } = useSafeWithdrawableBalance();
 
-  const tokens = useMemo(() => {
-    if (!data) return [];
+  const { middlewareHomeChainId } = selectedAgentConfig;
+  const nativeSymbol = asEvmChainDetails(middlewareHomeChainId).symbol;
+  const chainData = data?.[middlewareHomeChainId];
 
-    const { middlewareHomeChainId } = selectedAgentConfig;
-    const chainData = data[middlewareHomeChainId];
+  const tokens = useMemo<WithdrawableToken[]>(() => {
     if (!chainData) return [];
 
-    const evmChainId = asEvmChainId(middlewareHomeChainId);
-    const chainTokenConfig = TOKEN_CONFIG[evmChainId];
+    const chainTokenConfig = TOKEN_CONFIG[asEvmChainId(middlewareHomeChainId)];
 
-    // Build a lookup: lowercase address → { symbol, decimals, address }
-    const addressToMeta = Object.entries(chainTokenConfig).reduce(
-      (acc, [symbol, config]) => {
-        const address =
-          'address' in config && config.address ? config.address : AddressZero;
-        acc[address.toLowerCase()] = {
-          symbol: symbol as TokenSymbol,
+    // Lowercased lookup: token address (or AddressZero for native) → wei string
+    const weiByAddress: Record<string, string> = {};
+    for (const [addr, wei] of Object.entries(chainData.withdrawable_amounts)) {
+      weiByAddress[addr.toLowerCase()] = wei;
+    }
+
+    return availableAssets.flatMap<WithdrawableToken>((asset) => {
+      const config = chainTokenConfig[asset.symbol];
+      if (!config) return [];
+
+      const isNative = !asset.address;
+      const lookupAddress = (asset.address ?? AddressZero).toLowerCase();
+      const wei = weiByAddress[lookupAddress];
+      // Floor (not ceil) so the displayed max never exceeds the actual
+      // on-chain withdrawable amount in wei.
+      const withdrawableAmount = wei
+        ? floor(
+            parseFloat(ethers.utils.formatUnits(wei, config.decimals)),
+            DECIMAL_PLACES,
+          )
+        : 0;
+
+      return [
+        {
+          symbol: asset.symbol,
           decimals: config.decimals,
-          address,
-        };
-        return acc;
-      },
-      {} as Record<
-        string,
-        { symbol: TokenSymbol; decimals: number; address: string }
-      >,
-    );
-
-    return entries(chainData.withdrawable_amounts)
-      .map(([tokenAddress, weiStr]) => {
-        const meta = addressToMeta[tokenAddress.toLowerCase()];
-        if (!meta) return null;
-        // Use floor (not ceil) so the displayed max never exceeds
-        // the actual on-chain withdrawable amount in wei.
-        const withdrawableAmount = floor(
-          parseFloat(ethers.utils.formatUnits(weiStr, meta.decimals)),
-          DECIMAL_PLACES,
-        );
-        return {
-          symbol: meta.symbol,
-          decimals: meta.decimals,
-          address: meta.address,
+          address: lookupAddress,
           withdrawableAmount,
-        };
-      })
-      .filter(Boolean) as {
-      symbol: TokenSymbol;
-      decimals: number;
-      address: string;
-      withdrawableAmount: number;
-    }[];
-  }, [data, selectedAgentConfig]);
+          isNative,
+        },
+      ];
+    });
+  }, [availableAssets, chainData, middlewareHomeChainId]);
 
-  return { tokens, isLoading };
+  const gasReserveDisplay = useMemo(() => {
+    if (!chainData?.gas_reserve) return null;
+    const nativeConfig =
+      TOKEN_CONFIG[asEvmChainId(middlewareHomeChainId)][nativeSymbol];
+    if (!nativeConfig) return null;
+    return floor(
+      parseFloat(
+        ethers.utils.formatUnits(chainData.gas_reserve, nativeConfig.decimals),
+      ),
+      DECIMAL_PLACES,
+    );
+  }, [chainData, middlewareHomeChainId, nativeSymbol]);
+
+  return {
+    tokens,
+    gasReserveDisplay,
+    nativeSymbol,
+    isLoading,
+    isError,
+    refetch,
+  };
 };
+
+type WithdrawableBalanceErrorProps = {
+  onRetry: () => void;
+  onBack: () => void;
+};
+const WithdrawableBalanceError = ({
+  onRetry,
+  onBack,
+}: WithdrawableBalanceErrorProps) => (
+  <Flex gap={16} vertical align="center" className="w-full text-center">
+    <WarningOutlined />
+    <Flex gap={8} vertical>
+      <Text className="font-weight-500">
+        Couldn&apos;t load withdrawable balance
+      </Text>
+      <Text className="text-neutral-tertiary">
+        Please check your connection and try again.
+      </Text>
+    </Flex>
+    <Flex gap={8} className="w-full" vertical>
+      <Button type="primary" block size="large" onClick={onRetry}>
+        Retry
+      </Button>
+      <Button block size="large" onClick={onBack}>
+        Back
+      </Button>
+    </Flex>
+  </Flex>
+);
 
 type PartialWithdrawAmounts = Record<TokenSymbol, number>;
 
@@ -142,7 +197,14 @@ export const PartialWithdrawScreen = ({
   onBack,
 }: PartialWithdrawScreenProps) => {
   const { selectedAgentConfig } = useServices();
-  const { tokens, isLoading: isBalanceLoading } = useWithdrawableTokens();
+  const {
+    tokens,
+    gasReserveDisplay,
+    nativeSymbol,
+    isLoading: isBalanceLoading,
+    isError: isBalanceError,
+    refetch: refetchBalance,
+  } = useWithdrawableTokens();
   const {
     isLoading: isMutating,
     isError,
@@ -182,14 +244,15 @@ export const PartialWithdrawScreen = ({
     [tokens, amounts],
   );
 
-  const canWithdraw = hasAnyAmount && !hasOverage;
+  const canWithdraw =
+    !isBalanceLoading && !isBalanceError && hasAnyAmount && !hasOverage;
 
   const handleWithdraw = useCallback(() => {
     const { middlewareHomeChainId } = selectedAgentConfig;
     const chainTokenConfig = TOKEN_CONFIG[asEvmChainId(middlewareHomeChainId)];
 
-    // Build the request: { chain: { tokenAddress: weiString } }
-    const chainAmounts: Record<string, string> = {};
+    // Build the request: { chain: { tokenAddress: weiString } } — omit zeros.
+    const chainAmounts: Record<Address, string> = {};
     for (const token of tokens) {
       const entered = amounts[token.symbol] ?? 0;
       if (entered <= 0) continue;
@@ -199,7 +262,7 @@ export const PartialWithdrawScreen = ({
         floor(entered, DECIMAL_PLACES).toString(),
         config.decimals,
       );
-      chainAmounts[token.address] = weiStr;
+      chainAmounts[token.address as Address] = weiStr;
     }
 
     const requestAmounts: WithdrawSafeRequestAmounts = {
@@ -210,7 +273,13 @@ export const PartialWithdrawScreen = ({
     onPartialWithdraw(requestAmounts);
   }, [selectedAgentConfig, tokens, amounts, onPartialWithdraw]);
 
-  const closeModal = useCallback(() => setModalVisible(false), []);
+  // Closing the modal must reset the mutation so a subsequent attempt
+  // starts from a clean isLoading/isError/isSuccess state — without this,
+  // stale error state leaks into the next render of the modal.
+  const closeModal = useCallback(() => {
+    setModalVisible(false);
+    resetMutation();
+  }, [resetMutation]);
 
   const gasModalProps = useInsufficientGasModal({
     isError,
@@ -224,6 +293,14 @@ export const PartialWithdrawScreen = ({
     resetMutation,
   });
 
+  const gasReserveTooltip =
+    gasReserveDisplay !== null ? (
+      <Text className="text-sm">
+        A {gasReserveDisplay} {nativeSymbol} gas reserve keeps your agent
+        running. It&apos;s released when you decommission your agent.
+      </Text>
+    ) : null;
+
   return (
     <Flex gap={16} vertical style={cardStyles}>
       <CardFlex $noBorder $padding="32px" className="w-full">
@@ -234,40 +311,58 @@ export const PartialWithdrawScreen = ({
           </Flex>
           <AgentWalletToPearlWallet />
 
-          <Flex justify="space-between" align="center" vertical gap={16}>
-            {isBalanceLoading ? (
-              <Skeleton active paragraph={{ rows: 3 }} />
-            ) : (
-              tokens.map((token) => {
-                const entered = amounts[token.symbol] ?? 0;
-                const hasError =
-                  entered > 0 && entered > token.withdrawableAmount;
+          {isBalanceError ? (
+            <WithdrawableBalanceError
+              onRetry={() => refetchBalance()}
+              onBack={onBack}
+            />
+          ) : (
+            <Flex justify="space-between" align="center" vertical gap={16}>
+              {isBalanceLoading ? (
+                <Skeleton active paragraph={{ rows: 3 }} />
+              ) : (
+                tokens.map((token) => {
+                  const entered = amounts[token.symbol] ?? 0;
+                  const hasError =
+                    entered > 0 && entered > token.withdrawableAmount;
 
-                return (
-                  <Flex key={token.symbol} gap={8} vertical className="w-full">
-                    <TokenAmountInput
-                      tokenSymbol={token.symbol}
-                      value={entered}
-                      maxAmount={token.withdrawableAmount}
-                      totalAmount={token.withdrawableAmount}
-                      onChange={(v) => handleAmountChange(token.symbol, v)}
-                      hasError={hasError}
-                    />
-                  </Flex>
-                );
-              })
-            )}
-          </Flex>
+                  return (
+                    <Flex
+                      key={token.symbol}
+                      gap={8}
+                      vertical
+                      className="w-full"
+                    >
+                      <TokenAmountInput
+                        tokenSymbol={token.symbol}
+                        value={entered}
+                        maxAmount={token.withdrawableAmount}
+                        totalAmount={token.withdrawableAmount}
+                        onChange={(v) => handleAmountChange(token.symbol, v)}
+                        hasError={hasError}
+                        showQuickSelects
+                        tooltipInfo={
+                          token.isNative ? gasReserveTooltip : undefined
+                        }
+                      />
+                    </Flex>
+                  );
+                })
+              )}
+            </Flex>
+          )}
 
-          <Button
-            type="primary"
-            block
-            size="large"
-            disabled={!canWithdraw}
-            onClick={handleWithdraw}
-          >
-            Withdraw
-          </Button>
+          {!isBalanceError && (
+            <Button
+              type="primary"
+              block
+              size="large"
+              disabled={!canWithdraw}
+              onClick={handleWithdraw}
+            >
+              Withdraw
+            </Button>
+          )}
         </Flex>
       </CardFlex>
 

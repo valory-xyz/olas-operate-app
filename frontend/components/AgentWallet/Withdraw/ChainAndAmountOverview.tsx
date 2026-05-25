@@ -44,12 +44,12 @@ const AssetsFromStakingContractTitle = () => (
 const WithdrawalAddressTitle = () => (
   <Flex vertical justify="space-between" gap={12}>
     <Title level={4} className="m-0">
-      Withdraw from Agent Wallet
+      Decommission Agent
     </Title>
     <Text>
-      Review the assets you’ll receive to your Pearl Wallet. Withdrawing these
-      funds will disable your agent, and it will not be able to run again until
-      you refund it.
+      Your OLAS will be unstaked and the agent’s funds will return to your Pearl
+      Wallet. To run the agent again, you’ll need to fund it. Review the assets
+      that will be moved to your Pearl Wallet.
     </Text>
   </Flex>
 );

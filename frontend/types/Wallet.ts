@@ -80,17 +80,18 @@ export type MiddlewareWalletResponse = {
  * to their withdrawable amount (wei string) and the gas reserve for native.
  */
 export type SafeWithdrawableBalanceByChain = {
-  withdrawable_amounts: Record<string, string>;
+  withdrawable_amounts: Record<Address, string>;
   gas_reserve: string;
 };
 
-export type SafeWithdrawableBalanceResponse = Record<
-  string,
-  SafeWithdrawableBalanceByChain
+export type SafeWithdrawableBalanceResponse = Partial<
+  Record<MiddlewareChain, SafeWithdrawableBalanceByChain>
 >;
 
 /**
  * Request body for POST /service/:id/withdraw_safe — the `amounts` field.
  * Keyed by middleware chain name → token address → wei string.
  */
-export type WithdrawSafeRequestAmounts = Record<string, Record<string, string>>;
+export type WithdrawSafeRequestAmounts = Partial<
+  Record<MiddlewareChain, Record<Address, string>>
+>;
