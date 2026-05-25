@@ -1,6 +1,7 @@
 import { MutableRefObject, useCallback, useRef } from 'react';
 
-import { AgentType } from '@/constants';
+import { AgentType, isActiveDeploymentStatus } from '@/constants';
+import { ServicesService } from '@/service/Services';
 import { sleepAwareDelay, withTimeout } from '@/utils/delay';
 
 import {
@@ -14,9 +15,10 @@ import {
 import { AgentMeta } from '../types';
 import { getInstanceDisplayNames, notifyStartFailed } from '../utils/utils';
 
+const DEPLOYMENT_CHECK_TIMEOUT_MS = 15_000; // 15 seconds
+
 type UseAutoRunStartOperationsParams = {
   enabledRef: MutableRefObject<boolean>;
-  runningServiceConfigIdRef: MutableRefObject<string | null>;
   configuredAgents: AgentMeta[];
   createSafeIfNeeded: (meta: AgentMeta) => Promise<void>;
   startService: (params: {
@@ -41,7 +43,6 @@ type UseAutoRunStartOperationsParams = {
 
 export const useAutoRunStartOperations = ({
   enabledRef,
-  runningServiceConfigIdRef,
   configuredAgents,
   createSafeIfNeeded,
   startService,
@@ -95,12 +96,37 @@ export const useAutoRunStartOperations = ({
           if (!enabledRef.current) {
             return { status: AUTO_RUN_START_STATUS.ABORTED };
           }
-          if (runningServiceConfigIdRef.current === serviceConfigId) {
-            logVerbose(
-              `op=${opId} phase=start_confirm status=already_running service=${meta.serviceConfigId} agent=${meta.agentType}`,
+          // Cross-check real deployment status instead of trusting the cached ref.
+          // The ref can be stale after a watchdog rotation stop, causing a
+          // deadlock where the scheduler believes a dead agent is still running.
+          try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(
+              () => controller.abort(),
+              DEPLOYMENT_CHECK_TIMEOUT_MS,
             );
-            onAutoRunInstanceStarted?.(serviceConfigId);
-            return { status: AUTO_RUN_START_STATUS.STARTED };
+            try {
+              const deployment = await ServicesService.getDeployment({
+                serviceConfigId,
+                signal: controller.signal,
+              });
+              if (isActiveDeploymentStatus(deployment?.status)) {
+                logVerbose(
+                  `op=${opId} phase=start_confirm status=already_running service=${meta.serviceConfigId} agent=${meta.agentType}`,
+                );
+                onAutoRunInstanceStarted?.(serviceConfigId);
+                return { status: AUTO_RUN_START_STATUS.STARTED };
+              }
+            } finally {
+              clearTimeout(timeoutId);
+            }
+          } catch {
+            // GET failure (timeout/network) → treat as "not running" and
+            // fall through to real start. Middleware start rejects cleanly
+            // if a concurrent process moved the deployment to DEPLOYED.
+            logVerbose(
+              `op=${opId} phase=start_liveness_check status=error service=${meta.serviceConfigId} agent=${meta.agentType} — falling through to real start`,
+            );
           }
           try {
             logVerbose(
@@ -182,7 +208,6 @@ export const useAutoRunStartOperations = ({
     },
     [
       enabledRef,
-      runningServiceConfigIdRef,
       configuredAgents,
       waitForBalancesReady,
       waitForRunningInstance,
