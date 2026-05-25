@@ -1,8 +1,7 @@
 import { Button, Flex, Typography } from 'antd';
-import { useMemo } from 'react';
 
 import { AgentLowBalanceAlert } from '@/components/AgentLowBalanceAlert';
-import { Alert, BackButton, CardFlex, Tooltip } from '@/components/ui';
+import { BackButton, CardFlex, Tooltip } from '@/components/ui';
 import { PAGES } from '@/constants';
 import {
   useActiveStakingContractDetails,
@@ -11,12 +10,12 @@ import {
   usePageState,
   useService,
   useServices,
-  useStakingContractCountdown,
 } from '@/hooks';
 
 import { useAgentWallet } from '../AgentWalletProvider';
+import { AgentWalletOverflowMenu } from './AgentWalletOverflowMenu';
 
-const { Text, Title } = Typography;
+const { Title } = Typography;
 
 const AgentWalletTitle = () => {
   const { goto } = usePageState();
@@ -30,37 +29,16 @@ const AgentWalletTitle = () => {
   );
 };
 
-type MinimumDurationOfStakingAlertProps = {
-  countdown: string;
-};
-const MinimumDurationOfStakingAlert = ({
-  countdown,
-}: MinimumDurationOfStakingAlertProps) => (
-  <Alert
-    message={
-      <Text className="text-sm">
-        <span className="font-weight-600">
-          Withdrawals Temporarily Unavailable
-        </span>{' '}
-        <br />
-        Your agent hasn&apos;t reached the minimum duration of staking.
-        You&apos;ll be able to withdraw in {countdown}.
-      </Text>
-    }
-    type="warning"
-    showIcon
-    className="mt-16 text-sm"
-  />
-);
-
 type AgentWalletOperationProps = {
   onWithdraw: () => void;
   onFundAgent: () => void;
+  onDecommission: () => void;
 };
 
 export const AgentWalletOperation = ({
   onWithdraw,
   onFundAgent,
+  onDecommission,
 }: AgentWalletOperationProps) => {
   const isWithdrawFeatureEnabled = useFeatureFlag('withdraw-funds');
   const { agentTokenRequirements } = useAgentFundingRequests();
@@ -71,31 +49,21 @@ export const AgentWalletOperation = ({
   );
   const { isServiceStakedForMinimumDuration, selectedStakingContractDetails } =
     useActiveStakingContractDetails();
-  const { countdownDisplay } = useStakingContractCountdown(
-    selectedStakingContractDetails,
-  );
 
-  const isWithdrawDisabled =
-    !isWithdrawFeatureEnabled || !service || !isServiceStakedForMinimumDuration;
-
-  const withdrawDisabledAlert = useMemo(() => {
-    if (!isWithdrawFeatureEnabled) return null;
-    if (!countdownDisplay) return null;
-    if (!isServiceStakedForMinimumDuration) {
-      return <MinimumDurationOfStakingAlert countdown={countdownDisplay} />;
-    }
-    return null;
-  }, [
-    isWithdrawFeatureEnabled,
-    countdownDisplay,
-    isServiceStakedForMinimumDuration,
-  ]);
+  const isWithdrawDisabled = !isWithdrawFeatureEnabled || !service;
 
   return (
     <CardFlex $noBorder>
       <Flex justify="space-between" align="end">
         <AgentWalletTitle />
-        <Flex gap={8}>
+        <Flex gap={8} align="center">
+          <AgentWalletOverflowMenu
+            onDecommission={onDecommission}
+            isServiceStakedForMinimumDuration={
+              isServiceStakedForMinimumDuration
+            }
+            selectedStakingContractDetails={selectedStakingContractDetails}
+          />
           {isWithdrawFeatureEnabled ? (
             <Button disabled={isWithdrawDisabled} onClick={onWithdraw}>
               Withdraw
@@ -114,7 +82,6 @@ export const AgentWalletOperation = ({
         </Flex>
       </Flex>
 
-      {withdrawDisabledAlert}
       <AgentLowBalanceAlert
         onFund={() => {
           if (agentTokenRequirements) {

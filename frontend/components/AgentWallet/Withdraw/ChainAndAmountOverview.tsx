@@ -186,7 +186,7 @@ export const ChainAndAmountOverview = ({
         </Flex>
 
         <Button type="primary" onClick={onWithdraw} block size="large">
-          Withdraw
+          Withdraw &amp; Decommission Agent
         </Button>
       </Flex>
     </CardFlex>

@@ -18,23 +18,29 @@ import { useWithdrawFunds } from './useWithdrawFunds';
 
 const { Title, Text } = Typography;
 
-const WithdrawalInProgress = () => (
+type WithdrawalInProgressProps = {
+  title?: string;
+  subtitle?: string;
+};
+
+export const WithdrawalInProgress = ({
+  title = 'Withdrawal in Progress',
+  subtitle = 'It usually takes 1-2 minutes.',
+}: WithdrawalInProgressProps) => (
   <Flex gap={32} vertical>
     <Flex align="center" justify="center">
       <LoadingOutlined />
     </Flex>
     <Flex gap={12} vertical align="center" className="text-center">
       <Title level={4} className="m-0">
-        Withdrawal in Progress
+        {title}
       </Title>
-      <Text className="text-neutral-tertiary">
-        It usually takes 1-2 minutes.
-      </Text>
+      <Text className="text-neutral-tertiary">{subtitle}</Text>
     </Flex>
   </Flex>
 );
 
-const WithdrawalComplete = () => {
+export const WithdrawalComplete = () => {
   const { goto } = usePageState();
   return (
     <Flex gap={32} vertical>
@@ -64,7 +70,7 @@ const WithdrawalComplete = () => {
 };
 
 type WithdrawalFailedProps = { onTryAgain: () => void };
-const WithdrawalFailed = ({ onTryAgain }: WithdrawalFailedProps) => {
+export const WithdrawalFailed = ({ onTryAgain }: WithdrawalFailedProps) => {
   const { toggleSupportModal } = useSupportModal();
 
   const openSupportModal = () => {

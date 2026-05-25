@@ -100,18 +100,20 @@ const SomeFundsMaybeLockedModal = ({
 };
 
 type BalancesAndAssetsProps = {
-  onLockedFundsWithdrawn: () => void;
+  onPartialWithdraw: () => void;
+  onDecommissionConfirmed: () => void;
   onFundAgent: () => void;
 };
 
 export const BalancesAndAssets = ({
   onFundAgent,
-  onLockedFundsWithdrawn,
+  onPartialWithdraw,
+  onDecommissionConfirmed,
 }: BalancesAndAssetsProps) => {
   const [isWithdrawModalVisible, setWithdrawModalVisible] = useState(false);
   const { selectedAgentConfig } = useServices();
 
-  const handleWithdraw = () => {
+  const handleDecommission = () => {
     const hasExternalFunds = selectedAgentConfig?.hasExternalFunds;
 
     if (hasExternalFunds) {
@@ -119,14 +121,15 @@ export const BalancesAndAssets = ({
       return;
     }
 
-    onLockedFundsWithdrawn();
+    onDecommissionConfirmed();
   };
 
   return (
     <Flex vertical gap={32}>
       <AgentWalletOperation
-        onWithdraw={handleWithdraw}
+        onWithdraw={onPartialWithdraw}
         onFundAgent={onFundAgent}
+        onDecommission={handleDecommission}
       />
       <AvailableAssets />
       {/* <TransactionHistory /> */}
@@ -136,7 +139,7 @@ export const BalancesAndAssets = ({
           onCancel={() => setWithdrawModalVisible(false)}
           onNext={() => {
             setWithdrawModalVisible(false);
-            onLockedFundsWithdrawn();
+            onDecommissionConfirmed();
           }}
         />
       )}
