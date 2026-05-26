@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { AgentType } from '@/constants';
+import { AgentType, isActiveDeploymentStatus } from '@/constants';
 import { useBalanceAndRefillRequirementsContext } from '@/hooks';
+import { ServicesService } from '@/service/Services';
 import { sleepAwareDelay } from '@/utils/delay';
 
 import {
   AGENT_SELECTION_WAIT_TIMEOUT_SECONDS,
+  DEPLOYMENT_CHECK_TIMEOUT_MS,
   REWARDS_POLL_SECONDS,
   REWARDS_WAIT_TIMEOUT_SECONDS,
 } from '../constants';
@@ -283,15 +285,41 @@ export const useAutoRunSignals = ({
     [],
   );
 
-  // Wait until the running service config ID matches the requested one.
+  // Wait until the deployment for `serviceConfigId` reaches an active state.
+  // Probes the backend directly instead of trusting `runningServiceConfigIdRef`,
+  // because the ref is mirrored via React-Query polling and can lag the just-
+  // started agent by several seconds — long enough to time out a rotation and
+  // mask success as `start_confirm status=timeout`. Mirrors the stop-step
+  // pattern in `useAutoRunStopOperations.waitForStoppedDeployment`.
   const waitForRunningInstance = useCallback(
     async (serviceConfigId: string, timeoutSeconds: number) => {
+      const getDeploymentWithTimeout = async () => {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(
+          () => controller.abort(),
+          DEPLOYMENT_CHECK_TIMEOUT_MS,
+        );
+        try {
+          return await ServicesService.getDeployment({
+            serviceConfigId,
+            signal: controller.signal,
+          });
+        } finally {
+          clearTimeout(timeoutId);
+        }
+      };
+
       const startedAt = Date.now();
       while (
         enabledRef.current &&
         Date.now() - startedAt < timeoutSeconds * 1000
       ) {
-        if (runningServiceConfigIdRef.current === serviceConfigId) return true;
+        try {
+          const deployment = await getDeploymentWithTimeout();
+          if (isActiveDeploymentStatus(deployment?.status)) return true;
+        } catch {
+          // Transient probe failure — keep polling within the outer budget.
+        }
         const ok = await sleepAwareDelay(5);
         if (!ok) return false;
       }
