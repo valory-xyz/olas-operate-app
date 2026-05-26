@@ -17,7 +17,7 @@ Pearl is a cross-platform desktop application for running autonomous agents powe
 
 - **Electron App** (CommonJS): Main desktop application wrapper
 - **Next.js Frontend** (TypeScript): React-based user interface
-- **Python Backend** (Poetry): Middleware and agent operations (separate repo)
+- **Python Backend** (uv): Middleware and agent operations (separate repo)
 
 ## Getting Started
 

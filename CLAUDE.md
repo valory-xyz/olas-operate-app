@@ -8,13 +8,13 @@ Pearl is a cross-platform Electron desktop application for running autonomous ag
 
 1. **Electron App** (CommonJS) — `/electron/`
 2. **Next.js Frontend** (TypeScript) — `/frontend/`
-3. **Python Backend** (Poetry) — `/operate/`
+3. **Python Backend** (uv) — `/operate/`
 
 The frontend is embedded in Electron via Next.js; they communicate with the Python backend through IPC channels and local HTTP.
 
 ## Development Commands
 
-**Prerequisites:** Node.js 22.18+ (`.nvmrc`), Yarn 1.22+, Python 3.14 (`pyproject.toml`: `>=3.14,<3.15`), Poetry 2.3.2+.
+**Prerequisites:** Node.js 22.18+ (`.nvmrc`), Yarn 1.22+, Python 3.14 (`pyproject.toml`: `>=3.14,<3.15`), uv 0.11.15+.
 
 Common commands (full list in `package.json` scripts):
 - `yarn install-deps` — installs all three layers
@@ -41,7 +41,7 @@ The application uses a multi-layered communication architecture:
    - Raw IPC escape hatch: `electronAPI.ipcRenderer.{send,on,invoke,removeListener}` — used sparingly; prefer the named APIs.
 
 2. **Electron → Python Backend**: Spawned child process communication
-   - Dev: `poetry run python -m operate.cli daemon`. Packaged: PyInstaller executable in `electron/bins/middleware/`.
+   - Dev: `uv run python -m operate.cli daemon`. Packaged: PyInstaller executable in `electron/bins/middleware/`.
    - HTTPS over localhost:8765 with a self-signed cert generated at `~/.operate/ssl/{cert,key}.pem` on first launch (see `electron/utils/certificate.js`). Frontend services in `frontend/service/` hit this API directly.
    - 50+ FastAPI endpoints, mostly under `/api/v2/*` for services and `/api/*` for account/wallet/bridge/recovery/store.
 
@@ -76,8 +76,8 @@ IPC handles: `store`, `store-get`, `store-set`, `store-delete`, `store-clear`. N
 ### Python Backend
 
 - `/operate/` is a **thin shim** — `pearl.py` (PyInstaller entry) and `tendermint.py` (Tendermint binary manager). No `__init__.py`; the real backend lives in `olas-operate-middleware`.
-- `olas-operate-middleware` is **git-revision-pinned** in `pyproject.toml` (not semver). Every pin bump can change API response shapes — see Backend Contract Types below. Installed source: `~/Library/Caches/pypoetry/virtualenvs/olas-operate-app-*/lib/python3.14/site-packages/operate/`.
-- Dev entry: `poetry run python -m operate.cli daemon`. Packaged: PyInstaller executable in `electron/bins/middleware/`, built from `operate/pearl.py` via `build_pearl.sh`. Includes Tendermint binary for consensus.
+- `olas-operate-middleware` is **version-pinned** in `pyproject.toml` (`==0.15.22` on `main`). Workflows occasionally swap that for a `git+https://github.com/valory-xyz/olas-operate-middleware.git@<sha>` revision pin during rc cycles (see `.github/workflows/calculate-and-update-version.yml`), but the steady-state pin is an exact PyPI release. Every pin bump can change API response shapes — see Backend Contract Types below. Installed source: `.venv/lib/python3.14/site-packages/operate/`.
+- Dev entry: `uv run python -m operate.cli daemon`. Packaged: PyInstaller executable in `electron/bins/middleware/`, built from `operate/pearl.py` via `build_pearl.sh`. Includes Tendermint binary for consensus.
 
 ### Build Process
 
@@ -185,7 +185,7 @@ Never duplicate styles from `@/components/ui` components (don't recreate `SetupC
 TypeScript types for backend responses must match what the middleware actually returns, **not what a design doc / scoping spec said**. Implementation drifts (renamed fields, reshaped payloads), and TypeScript's structural typing silently accepts mismatches in fields nobody reads — a ticking bomb.
 
 Before writing or updating a backend-response type:
-1. Open installed source at `~/Library/Caches/pypoetry/virtualenvs/olas-operate-app-*/lib/python*/site-packages/operate/`.
+1. Open installed source at `.venv/lib/python*/site-packages/operate/`.
 2. Find the endpoint handler; read the exact `return` / `JSONResponse` body; copy field names character-by-character.
 3. If the handler forwards a helper method's return (e.g. `backup_owner_status` in `operate/wallet/master.py`), read that too.
 

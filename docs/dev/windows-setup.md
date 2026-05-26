@@ -49,21 +49,14 @@ npm install --global yarn
 choco install python3.14
 ```
 
-## 6. Pipx
+## 6. uv
 
 ```powershell
 # run as administrator
-python3.14 -m pip install pipx
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
 ```
 
-## 7. Poetry
-
-```powershell
-# run as administrator
-pipx install poetry==2.3.2
-```
-
-If prompted to add `poetry` to your PATH, follow the prompt.
+If prompted to add `uv` to your PATH, follow the prompt.
 
 ### Installing project dependencies
 
@@ -72,7 +65,6 @@ The Electron app, the NextJS frontend, and the Python backend.
 
 ```powershell
 # run from the project root
-poetry shell
 yarn install-deps
 ```
 

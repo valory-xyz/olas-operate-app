@@ -71,13 +71,10 @@ jobs:
         with:
           python-version: "3.14"
 
-      - name: Setup Poetry
-        uses: snok/install-poetry@76e04a911780d5b312d89783f7b1cd627778900a # v1.4.1
+      - name: Setup uv
+        uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
         with:
-          version: "2.3.2"
-          virtualenvs-create: true
-          virtualenvs-in-project: true
-          installer-parallel: true
+          version: "0.11.15"
 
       - name: Configure Git
         run: |
@@ -269,8 +266,13 @@ jobs:
 
           echo "Latest commit hash: $COMMIT_HASH"
 
-          # Update pyproject.toml using poetry add
-          poetry add "git+https://github.com/valory-xyz/olas-operate-middleware.git@$COMMIT_HASH"
+          # Update pyproject.toml using uv add. Note that this writes
+          # a persistent `[tool.uv.sources]` git entry under the
+          # `olas-operate-middleware` key. `bump-mw-pin.yml` is
+          # responsible for explicitly `uv remove`-ing that entry
+          # before re-adding a versioned pin — `uv add ==<ver>` alone
+          # does NOT strip a previously-added source.
+          uv add "olas-operate-middleware @ git+https://github.com/valory-xyz/olas-operate-middleware.git@$COMMIT_HASH"
 
           echo "Updated pyproject.toml to use middleware commit: $COMMIT_HASH"
 
@@ -280,6 +282,10 @@ jobs:
           CURRENT_VERSION=$(grep -E '^version = ' pyproject.toml | sed -E 's/^version = "(.+)"/\1/')
           if [ "$CURRENT_VERSION" != "$NEW_VERSION" ]; then
             sed -i -E "s/^version = \".*\"/version = \"$NEW_VERSION\"/" pyproject.toml
+            # uv.lock records the project's own version, so a sed bump
+            # without re-locking leaves uv.lock stale and breaks the
+            # next `uv sync --locked` in CI / release jobs.
+            uv lock
             echo "Updated pyproject.toml version from $CURRENT_VERSION to $NEW_VERSION"
           else
             echo "pyproject.toml version is already $NEW_VERSION, skipping update"
@@ -287,7 +293,7 @@ jobs:
 
       - name: Commit and push version update
         run: |
-          git add package.json pyproject.toml poetry.lock
+          git add package.json pyproject.toml uv.lock
           if git diff --staged --quiet; then
             echo "No version file changes detected — skipping commit."
           else
