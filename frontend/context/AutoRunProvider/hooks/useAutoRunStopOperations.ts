@@ -7,12 +7,12 @@ import { sleepAwareDelay, withTimeout } from '@/utils/delay';
 import {
   AUTO_RUN_HEALTH_METRIC,
   AutoRunHealthMetricNoRotation,
-  DEPLOYMENT_CHECK_TIMEOUT_MS,
   START_TIMEOUT_SECONDS,
   STOP_RECOVERY_MAX_ATTEMPTS,
   STOP_RECOVERY_RETRY_SECONDS,
   STOP_REQUEST_TIMEOUT_SECONDS,
 } from '../constants';
+import { probeDeploymentStatus } from '../utils/probeDeployment';
 
 type UseAutoRunStopOperationsParams = {
   runningServiceConfigIdRef: MutableRefObject<string | null>;
@@ -36,30 +36,17 @@ export const useAutoRunStopOperations = ({
       opId: string,
       attempt: number,
     ) => {
-      const getDeploymentWithTimeout = async () => {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(
-          () => controller.abort(),
-          DEPLOYMENT_CHECK_TIMEOUT_MS,
-        );
-        try {
-          return await ServicesService.getDeployment({
-            serviceConfigId,
-            signal: controller.signal,
-          });
-        } finally {
-          clearTimeout(timeoutId);
-        }
-      };
-
       const startedAt = Date.now();
       let checks = 0;
       let lastStatus: unknown = undefined;
       while (Date.now() - startedAt < timeoutSeconds * 1000) {
         try {
-          const deployment = await getDeploymentWithTimeout();
+          const deployment = await probeDeploymentStatus(serviceConfigId);
           checks += 1;
           lastStatus = deployment?.status;
+          // Note: still checks `isActiveDeploymentStatus` (which includes
+          // STOPPING) — we want to wait until the deployment has actually
+          // left the STOPPING state, i.e. reached BUILT/STOPPED.
           if (!isActiveDeploymentStatus(deployment?.status)) {
             return {
               stopped: true,

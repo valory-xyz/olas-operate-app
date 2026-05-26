@@ -328,5 +328,26 @@ describe('useAutoRunStartOperations', () => {
       expect(startResult?.status).toBe(AUTO_RUN_START_STATUS.STARTED);
       expect(params.startService).not.toHaveBeenCalled();
     });
+
+    it('falls through to real start when getDeployment returns STOPPING (mid-stop is not running)', async () => {
+      // Defends against a narrower variant of the same wedge: if a stop
+      // is in flight when the start step probes, the deployment reads
+      // STOPPING. Treating that as already-running would skip the start
+      // POST entirely and leave nothing running once the stop completes.
+      mockGetDeployment.mockResolvedValue({
+        status: MiddlewareDeploymentStatusMap.STOPPING,
+      });
+      const params = makeHookParams();
+      const { result } = renderHook(() => useAutoRunStartOperations(params));
+
+      let startResult: { status: string } | undefined;
+      await act(async () => {
+        startResult = await result.current.startAgentWithRetries(
+          DEFAULT_SERVICE_CONFIG_ID,
+        );
+      });
+      expect(startResult?.status).toBe(AUTO_RUN_START_STATUS.STARTED);
+      expect(params.startService).toHaveBeenCalled();
+    });
   });
 });

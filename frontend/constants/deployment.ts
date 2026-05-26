@@ -30,12 +30,31 @@ const TRANSITIONING_DEPLOYMENT_STATUSES: readonly MiddlewareDeploymentStatus[] =
     MiddlewareDeploymentStatusMap.STOPPING,
   ] as const;
 
+/**
+ * Deployment statuses where the service is actually running (or coming up).
+ * Excludes STOPPING because a service mid-stop is no longer eligible to be
+ * treated as "already running" — issuing a start in that window would race
+ * the in-flight stop. Used by auto-run start/wait paths; for the UI's
+ * "is anything active right now?" question use `isActiveDeploymentStatus`.
+ */
+const RUNNING_DEPLOYMENT_STATUSES: readonly MiddlewareDeploymentStatus[] = [
+  MiddlewareDeploymentStatusMap.DEPLOYED,
+  MiddlewareDeploymentStatusMap.DEPLOYING,
+] as const;
+
 export const isActiveDeploymentStatus = (
   status?: MiddlewareDeploymentStatus | null,
 ): status is MiddlewareDeploymentStatus =>
   status !== undefined &&
   status !== null &&
   ACTIVE_DEPLOYMENT_STATUSES.includes(status);
+
+export const isRunningDeploymentStatus = (
+  status?: MiddlewareDeploymentStatus | null,
+): status is MiddlewareDeploymentStatus =>
+  status !== undefined &&
+  status !== null &&
+  RUNNING_DEPLOYMENT_STATUSES.includes(status);
 
 export const isTransitioningDeploymentStatus = (
   status?: MiddlewareDeploymentStatus | null,

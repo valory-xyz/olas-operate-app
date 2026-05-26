@@ -520,6 +520,32 @@ describe('useAutoRunSignals', () => {
       expect(ok).toBe(true);
     });
 
+    it('does NOT treat STOPPING as running (a deployment mid-stop has not satisfied the start request)', async () => {
+      // Time out the outer loop deterministically so the test finishes
+      // without polling for the full timeoutSeconds budget.
+      const realDateNow = Date.now;
+      let elapsed = 0;
+      Date.now = jest.fn(() => {
+        elapsed += 11_000;
+        return realDateNow() + elapsed;
+      });
+      mockGetDeployment.mockResolvedValue({
+        status: MiddlewareDeploymentStatusMap.STOPPING,
+      });
+      const params = makeHookParams();
+      const { result } = renderHook(() => useAutoRunSignals(params));
+
+      let ok: boolean | undefined;
+      await act(async () => {
+        ok = await result.current.waitForRunningInstance(
+          DEFAULT_SERVICE_CONFIG_ID,
+          10,
+        );
+      });
+      expect(ok).toBe(false);
+      Date.now = realDateNow;
+    });
+
     it('returns true even when runningServiceConfigId ref points at a different agent (stale-ref regression)', async () => {
       // Simulates the rotation case from the second user bundle: ref still
       // points at the old agent, but the backend has the freshly-started

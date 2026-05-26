@@ -1,7 +1,6 @@
 import { MutableRefObject, useCallback, useRef } from 'react';
 
-import { AgentType, isActiveDeploymentStatus } from '@/constants';
-import { ServicesService } from '@/service/Services';
+import { AgentType, isRunningDeploymentStatus } from '@/constants';
 import { sleepAwareDelay, withTimeout } from '@/utils/delay';
 
 import {
@@ -9,11 +8,11 @@ import {
   AUTO_RUN_START_STATUS,
   AutoRunHealthMetricNoRotation,
   AutoRunStartResult,
-  DEPLOYMENT_CHECK_TIMEOUT_MS,
   RETRY_BACKOFF_SECONDS,
   START_TIMEOUT_SECONDS,
 } from '../constants';
 import { AgentMeta } from '../types';
+import { probeDeploymentStatus } from '../utils/probeDeployment';
 import { getInstanceDisplayNames, notifyStartFailed } from '../utils/utils';
 
 type UseAutoRunStartOperationsParams = {
@@ -95,29 +94,22 @@ export const useAutoRunStartOperations = ({
           if (!enabledRef.current) {
             return { status: AUTO_RUN_START_STATUS.ABORTED };
           }
-          // Cross-check real deployment status instead of trusting the cached ref.
-          // The ref can be stale after a watchdog rotation stop, causing a
-          // deadlock where the scheduler believes a dead agent is still running.
+          // Cross-check real deployment status instead of trusting the cached
+          // ref. The ref can be stale after a watchdog rotation stop, causing
+          // a deadlock where the scheduler believes a dead agent is still
+          // running. Note: short-circuits only on DEPLOYED/DEPLOYING — a
+          // STOPPING deployment is *not* eligible to be treated as
+          // already-running because a start in that window would race the
+          // in-flight stop; falling through lets the existing retry/backoff
+          // loop probe again once the stop completes.
           try {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(
-              () => controller.abort(),
-              DEPLOYMENT_CHECK_TIMEOUT_MS,
-            );
-            try {
-              const deployment = await ServicesService.getDeployment({
-                serviceConfigId,
-                signal: controller.signal,
-              });
-              if (isActiveDeploymentStatus(deployment?.status)) {
-                logVerbose(
-                  `op=${opId} phase=start_confirm status=already_running service=${meta.serviceConfigId} agent=${meta.agentType}`,
-                );
-                onAutoRunInstanceStarted?.(serviceConfigId);
-                return { status: AUTO_RUN_START_STATUS.STARTED };
-              }
-            } finally {
-              clearTimeout(timeoutId);
+            const deployment = await probeDeploymentStatus(serviceConfigId);
+            if (isRunningDeploymentStatus(deployment?.status)) {
+              logVerbose(
+                `op=${opId} phase=start_confirm status=already_running service=${meta.serviceConfigId} agent=${meta.agentType}`,
+              );
+              onAutoRunInstanceStarted?.(serviceConfigId);
+              return { status: AUTO_RUN_START_STATUS.STARTED };
             }
           } catch (error) {
             // GET failure (timeout/network) → treat as "not running" and
