@@ -341,14 +341,17 @@ export const PartialWithdrawScreen = ({
                   return (
                     <Flex
                       key={token.symbol}
-                      gap={8}
+                      gap={4}
                       vertical
                       className="w-full"
                     >
                       <TokenAmountInput
                         tokenSymbol={token.symbol}
                         value={entered}
-                        maxAmount={token.withdrawableAmount}
+                        // No `maxAmount` — let the user type over-balance
+                        // so the Figma error state renders ("Not enough
+                        // funds on Agent Wallet balance."). Submit is
+                        // gated by `canWithdraw` instead.
                         totalAmount={token.withdrawableAmount}
                         onChange={(v) => handleAmountChange(token.symbol, v)}
                         hasError={hasError}
@@ -357,6 +360,11 @@ export const PartialWithdrawScreen = ({
                           token.isNative ? gasReserveTooltip : undefined
                         }
                       />
+                      {hasError && (
+                        <Text type="danger" className="text-sm">
+                          Not enough funds on Agent Wallet balance.
+                        </Text>
+                      )}
                     </Flex>
                   );
                 })
