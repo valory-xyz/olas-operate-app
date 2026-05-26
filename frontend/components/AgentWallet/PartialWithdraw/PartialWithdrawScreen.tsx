@@ -3,7 +3,7 @@ import { Button, Flex, Modal, Skeleton, Typography } from 'antd';
 import { ethers } from 'ethers';
 import { floor, isNil } from 'lodash';
 import Image from 'next/image';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { WarningOutlined } from '@/components/custom-icons';
 import {
@@ -245,7 +245,19 @@ export const PartialWithdrawScreen = ({
   );
 
   const canWithdraw =
-    !isBalanceLoading && !isBalanceError && hasAnyAmount && !hasOverage;
+    !isBalanceLoading &&
+    !isBalanceError &&
+    !isMutating &&
+    hasAnyAmount &&
+    !hasOverage;
+
+  // After a successful withdrawal the on-chain balance drops; if we keep the
+  // user's old entries in state the form would re-render with red over-budget
+  // errors against the freshly-refetched withdrawable amounts. Clear them so
+  // the user lands back on a clean form when they dismiss the success modal.
+  useEffect(() => {
+    if (isSuccess) setAmounts({} as PartialWithdrawAmounts);
+  }, [isSuccess]);
 
   const handleWithdraw = useCallback(() => {
     const { middlewareHomeChainId } = selectedAgentConfig;

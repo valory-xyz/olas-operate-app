@@ -284,4 +284,31 @@ describe('PartialWithdrawScreen', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Try Again' }));
     expect(resetMutation).toHaveBeenCalled();
   });
+
+  it('disables Withdraw while a mutation is in flight', () => {
+    setUpHookMocks({ isMutating: true });
+    render(<PartialWithdrawScreen onBack={onBack} />);
+    const inputs = screen.getAllByRole('spinbutton');
+    fireEvent.change(inputs[1], { target: { value: '5' } });
+    expect(screen.getByRole('button', { name: 'Withdraw' })).toBeDisabled();
+  });
+
+  it('clears entered amounts after a successful withdrawal', () => {
+    // Render the form with a non-zero amount staged in the native row,
+    // then re-render with isSuccess=true to drive the post-success effect.
+    const { rerender } = render(<PartialWithdrawScreen onBack={onBack} />);
+    const inputs = screen.getAllByRole('spinbutton');
+    fireEvent.change(inputs[1], { target: { value: '5' } });
+    expect((inputs[1] as HTMLInputElement).value).toBe('5');
+
+    setUpHookMocks({ isSuccess: true });
+    rerender(<PartialWithdrawScreen onBack={onBack} />);
+
+    // The native-row input is back to its zero/initial state — without
+    // this reset the user would see "Not enough funds" red borders against
+    // the freshly-refetched (lower) withdrawable amounts. Antd's controlled
+    // NumberInput renders `0` (not "") when the bound state is missing.
+    const inputsAfter = screen.getAllByRole('spinbutton');
+    expect((inputsAfter[1] as HTMLInputElement).value).toBe('0');
+  });
 });
