@@ -9,13 +9,12 @@ import {
   AUTO_RUN_START_STATUS,
   AutoRunHealthMetricNoRotation,
   AutoRunStartResult,
+  DEPLOYMENT_CHECK_TIMEOUT_MS,
   RETRY_BACKOFF_SECONDS,
   START_TIMEOUT_SECONDS,
 } from '../constants';
 import { AgentMeta } from '../types';
 import { getInstanceDisplayNames, notifyStartFailed } from '../utils/utils';
-
-const DEPLOYMENT_CHECK_TIMEOUT_MS = 15_000; // 15 seconds
 
 type UseAutoRunStartOperationsParams = {
   enabledRef: MutableRefObject<boolean>;
@@ -120,12 +119,12 @@ export const useAutoRunStartOperations = ({
             } finally {
               clearTimeout(timeoutId);
             }
-          } catch {
+          } catch (error) {
             // GET failure (timeout/network) → treat as "not running" and
             // fall through to real start. Middleware start rejects cleanly
             // if a concurrent process moved the deployment to DEPLOYED.
             logVerbose(
-              `op=${opId} phase=start_liveness_check status=error service=${meta.serviceConfigId} agent=${meta.agentType} — falling through to real start`,
+              `op=${opId} phase=start_liveness_check status=error service=${meta.serviceConfigId} agent=${meta.agentType} error=${error} — falling through to real start`,
             );
           }
           try {

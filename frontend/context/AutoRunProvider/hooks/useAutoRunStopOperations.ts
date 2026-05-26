@@ -7,13 +7,12 @@ import { sleepAwareDelay, withTimeout } from '@/utils/delay';
 import {
   AUTO_RUN_HEALTH_METRIC,
   AutoRunHealthMetricNoRotation,
+  DEPLOYMENT_CHECK_TIMEOUT_MS,
   START_TIMEOUT_SECONDS,
   STOP_RECOVERY_MAX_ATTEMPTS,
   STOP_RECOVERY_RETRY_SECONDS,
   STOP_REQUEST_TIMEOUT_SECONDS,
 } from '../constants';
-
-const DEPLOYMENT_CHECK_TIMEOUT_MS = 15_000; // 15 seconds
 
 type UseAutoRunStopOperationsParams = {
   runningServiceConfigIdRef: MutableRefObject<string | null>;
