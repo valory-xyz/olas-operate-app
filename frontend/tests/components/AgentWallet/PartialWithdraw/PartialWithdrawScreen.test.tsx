@@ -80,10 +80,9 @@ const onBack = jest.fn();
 const gnosisResponse = {
   [MiddlewareChainMap.GNOSIS]: {
     withdrawable_amounts: {
-      '0x0000000000000000000000000000000000000000': '40000000000000000000', // 40 XDAI
+      '0x0000000000000000000000000000000000000000': '40000000000000000000', // 40 XDAI (fully withdrawable — Safe doesn't pay its own gas)
       '0xe91d153e0b41518a2ce8dd3d7944fa863463a97d': '40000000000000000000', // WXDAI
     },
-    gas_reserve: '750000000000000000', // 0.75 XDAI
   },
 };
 
@@ -185,26 +184,19 @@ describe('PartialWithdrawScreen', () => {
     expect(tokenLabels[2]).toHaveTextContent('WXDAI');
   });
 
-  it('shows the gas-reserve info icon only on the native row', () => {
+  it('does not render an info-icon tooltip on any row (backend no longer returns a gas reserve — Safes do not pay their own gas)', () => {
     const { container } = render(<PartialWithdrawScreen onBack={onBack} />);
 
-    // Each TokenAmountInput renders one balance-row container. The info
-    // icon (tooltipInfo) is conditionally rendered — only the native row
-    // (XDAI) should have it. AvailableAssets order = [OLAS, XDAI, WXDAI],
-    // so the second balance-row owns the info icon.
+    // Each TokenAmountInput renders one balance-row container.  Since the
+    // gas_reserve field was dropped in olas-operate-middleware#449, the
+    // FE no longer renders any conditional info icon — every row should
+    // have only the wallet icon (1 svg).
     const balanceRows = container.querySelectorAll('.token-value-and-helper');
     expect(balanceRows.length).toBe(3);
-    // tb-info-circle renders as an svg with class containing "react-icon"
-    // or via the lucide/tabler icon prefix; either way, only the native
-    // row has any svg in its left-hand "wallet + balance + tooltip" group.
-    const infoIconCounts = Array.from(balanceRows).map(
+    const iconCounts = Array.from(balanceRows).map(
       (row) => row.querySelectorAll('svg').length,
     );
-    // First (OLAS): wallet icon only → 1. Native (XDAI): wallet + info → 2.
-    // WXDAI: wallet icon only → 1.
-    expect(infoIconCounts[0]).toBe(1);
-    expect(infoIconCounts[1]).toBe(2);
-    expect(infoIconCounts[2]).toBe(1);
+    expect(iconCounts).toEqual([1, 1, 1]);
   });
 
   it('disables the Withdraw button when all amounts are zero', () => {

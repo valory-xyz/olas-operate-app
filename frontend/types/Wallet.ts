@@ -77,11 +77,11 @@ export type MiddlewareWalletResponse = {
 /**
  * Response from GET /service/:id/safe_withdrawable_balance.
  * Keyed by middleware chain name, each entry contains token addresses mapped
- * to their withdrawable amount (wei string) and the gas reserve for native.
+ * to their withdrawable amount (wei string). Native balance is fully
+ * withdrawable — Safes do not pay their own gas; the signer EOA does.
  */
 export type SafeWithdrawableBalanceByChain = {
   withdrawable_amounts: Record<Address, string>;
-  gas_reserve: string;
 };
 
 export type SafeWithdrawableBalanceResponse = Partial<

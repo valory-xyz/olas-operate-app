@@ -22,7 +22,7 @@ import {
   useServices,
 } from '@/hooks';
 import { Address, WithdrawSafeRequestAmounts } from '@/types';
-import { asEvmChainDetails, asEvmChainId, parseUnits } from '@/utils';
+import { asEvmChainId, parseUnits } from '@/utils';
 
 import { useAgentWallet } from '../AgentWalletProvider';
 import { STEPS } from '../types';
@@ -80,7 +80,6 @@ type WithdrawableToken = {
   /** Lower-cased token address used to key into the API response. Native = AddressZero. */
   address: string;
   withdrawableAmount: number;
-  isNative: boolean;
 };
 
 /**
@@ -95,7 +94,6 @@ const useWithdrawableTokens = () => {
   const { data, isLoading, isError, refetch } = useSafeWithdrawableBalance();
 
   const { middlewareHomeChainId } = selectedAgentConfig;
-  const nativeSymbol = asEvmChainDetails(middlewareHomeChainId).symbol;
   const chainData = data?.[middlewareHomeChainId];
 
   const tokens = useMemo<WithdrawableToken[]>(() => {
@@ -113,7 +111,6 @@ const useWithdrawableTokens = () => {
       const config = chainTokenConfig[asset.symbol];
       if (!config) return [];
 
-      const isNative = !asset.address;
       const lookupAddress = (asset.address ?? AddressZero).toLowerCase();
       const wei = weiByAddress[lookupAddress];
       // Floor (not ceil) so the displayed max never exceeds the actual
@@ -131,29 +128,13 @@ const useWithdrawableTokens = () => {
           decimals: config.decimals,
           address: lookupAddress,
           withdrawableAmount,
-          isNative,
         },
       ];
     });
   }, [availableAssets, chainData, middlewareHomeChainId]);
 
-  const gasReserveDisplay = useMemo(() => {
-    if (!chainData?.gas_reserve) return null;
-    const nativeConfig =
-      TOKEN_CONFIG[asEvmChainId(middlewareHomeChainId)][nativeSymbol];
-    if (!nativeConfig) return null;
-    return floor(
-      parseFloat(
-        ethers.utils.formatUnits(chainData.gas_reserve, nativeConfig.decimals),
-      ),
-      DECIMAL_PLACES,
-    );
-  }, [chainData, middlewareHomeChainId, nativeSymbol]);
-
   return {
     tokens,
-    gasReserveDisplay,
-    nativeSymbol,
     isLoading,
     isError,
     refetch,
@@ -199,8 +180,6 @@ export const PartialWithdrawScreen = ({
   const { selectedAgentConfig } = useServices();
   const {
     tokens,
-    gasReserveDisplay,
-    nativeSymbol,
     isLoading: isBalanceLoading,
     isError: isBalanceError,
     refetch: refetchBalance,
@@ -305,14 +284,6 @@ export const PartialWithdrawScreen = ({
     resetMutation,
   });
 
-  const gasReserveTooltip =
-    gasReserveDisplay !== null ? (
-      <Text className="text-sm">
-        A {gasReserveDisplay} {nativeSymbol} gas reserve keeps your agent
-        running. It&apos;s released when you decommission your agent.
-      </Text>
-    ) : null;
-
   return (
     <Flex gap={16} vertical style={cardStyles}>
       <CardFlex $noBorder $padding="32px" className="w-full">
@@ -353,9 +324,6 @@ export const PartialWithdrawScreen = ({
                         onChange={(v) => handleAmountChange(token.symbol, v)}
                         hasError={hasError}
                         showQuickSelects
-                        tooltipInfo={
-                          token.isNative ? gasReserveTooltip : undefined
-                        }
                       />
                     </Flex>
                   );
