@@ -214,21 +214,12 @@ export const PartialWithdrawScreen = ({
     [amounts],
   );
 
-  const hasOverage = useMemo(
-    () =>
-      tokens.some((token) => {
-        const entered = amounts[token.symbol] ?? 0;
-        return entered > token.withdrawableAmount;
-      }),
-    [tokens, amounts],
-  );
-
+  // No overage check: <TokenAmountInput max={withdrawableAmount}> clamps
+  // user input via antd's NumberInput, so amounts[symbol] can never exceed
+  // withdrawableAmount. The Withdraw button only needs the positive-amount
+  // and not-busy guards.
   const canWithdraw =
-    !isBalanceLoading &&
-    !isBalanceError &&
-    !isMutating &&
-    hasAnyAmount &&
-    !hasOverage;
+    !isBalanceLoading && !isBalanceError && !isMutating && hasAnyAmount;
 
   // After a successful withdrawal the on-chain balance drops; if we keep the
   // user's old entries in state the form would re-render with red over-budget
@@ -249,10 +240,14 @@ export const PartialWithdrawScreen = ({
       if (entered <= 0) continue;
       const config = chainTokenConfig[token.symbol];
       if (!config) continue;
-      const weiStr = parseUnits(
-        floor(entered, DECIMAL_PLACES).toString(),
-        config.decimals,
+      // Floor to the lower of DECIMAL_PLACES (display precision) and the
+      // token's own decimals — ethers.parseUnits throws if the fractional
+      // part has more digits than the token supports (e.g. USDC has 6).
+      const flooredEntered = floor(
+        entered,
+        Math.min(DECIMAL_PLACES, config.decimals),
       );
+      const weiStr = parseUnits(flooredEntered.toString(), config.decimals);
       chainAmounts[token.address as Address] = weiStr;
     }
 
@@ -272,6 +267,9 @@ export const PartialWithdrawScreen = ({
     resetMutation();
   }, [resetMutation]);
 
+  // `resetMutation` is intentionally NOT passed here — `closeModal`
+  // already calls it on every dismiss path, so passing it again would
+  // make the hook reset twice.
   const gasModalProps = useInsufficientGasModal({
     isError,
     error,
@@ -281,7 +279,6 @@ export const PartialWithdrawScreen = ({
       updateStep(STEPS.FUND_AGENT);
     },
     onClose: closeModal,
-    resetMutation,
   });
 
   return (
@@ -306,9 +303,6 @@ export const PartialWithdrawScreen = ({
               ) : (
                 tokens.map((token) => {
                   const entered = amounts[token.symbol] ?? 0;
-                  const hasError =
-                    entered > 0 && entered > token.withdrawableAmount;
-
                   return (
                     <Flex
                       key={token.symbol}
@@ -322,7 +316,6 @@ export const PartialWithdrawScreen = ({
                         maxAmount={token.withdrawableAmount}
                         totalAmount={token.withdrawableAmount}
                         onChange={(v) => handleAmountChange(token.symbol, v)}
-                        hasError={hasError}
                         showQuickSelects
                       />
                     </Flex>
