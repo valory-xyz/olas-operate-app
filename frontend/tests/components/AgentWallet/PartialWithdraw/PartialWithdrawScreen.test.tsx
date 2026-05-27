@@ -253,9 +253,13 @@ describe('PartialWithdrawScreen', () => {
     expect(setFundInitialValues).toHaveBeenCalled();
   });
 
-  // The critical CLAUDE.md rule: mutation.reset must fire on every dismiss
-  // path so that a re-trigger doesn't render stale error state.
-  it('trigger → error → dismiss → re-trigger sequence calls resetMutation on dismiss', () => {
+  // Try Again is the user-facing retry on the WithdrawalFailed modal —
+  // it must explicitly reset the mutation before re-firing so the modal
+  // does not flash the stale "Failed" state during the retry. The
+  // closeModal dismiss path (X / outside-click) is handled by useMutation
+  // itself — calling mutateAsync transitions the mutation back to
+  // 'pending' synchronously, so no stale isError ever renders.
+  it('Try Again invokes resetMutation before re-firing the mutation', () => {
     setUpHookMocks({ isError: true });
     render(<PartialWithdrawScreen onBack={onBack} />);
 
@@ -263,18 +267,9 @@ describe('PartialWithdrawScreen', () => {
     fireEvent.change(inputs[1], { target: { value: '5' } });
     fireEvent.click(screen.getByRole('button', { name: 'Withdraw' }));
 
-    // Click the support-button instead so we get to test Contact Support too
-    // — Try Again already covered above; here we dismiss via Contact Support
-    // (which opens the support modal but should still reset the mutation
-    // through closeModal eventually). Simulate the close by clicking outside
-    // the modal — antd Modal's onCancel.
-    // Easier: simulate a key event on the wrapper.
-    // For the antd Modal mock, we don't get the close button. Test the
-    // reset hook on success path instead — closeModal is exercised by the
-    // success modal navigation, which we can't fire here. Cover Try Again
-    // instead since it explicitly invokes resetMutation.
     fireEvent.click(screen.getByRole('button', { name: 'Try Again' }));
     expect(resetMutation).toHaveBeenCalled();
+    expect(onPartialWithdraw).toHaveBeenCalled();
   });
 
   it('disables Withdraw while a mutation is in flight', () => {

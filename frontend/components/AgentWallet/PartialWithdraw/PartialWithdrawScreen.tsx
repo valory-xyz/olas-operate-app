@@ -259,17 +259,15 @@ export const PartialWithdrawScreen = ({
     onPartialWithdraw(requestAmounts);
   }, [selectedAgentConfig, tokens, amounts, onPartialWithdraw]);
 
-  // Closing the modal must reset the mutation so a subsequent attempt
-  // starts from a clean isLoading/isError/isSuccess state — without this,
-  // stale error state leaks into the next render of the modal.
-  const closeModal = useCallback(() => {
-    setModalVisible(false);
-    resetMutation();
-  }, [resetMutation]);
+  // Minimal close handler — matches the Withdraw.tsx / ConfirmTransfer.tsx
+  // sibling convention. The mutation reset is wired through
+  // `useInsufficientGasModal`'s `resetMutation` arg below (for the gas
+  // modal's dismiss path) and through `Try Again`'s explicit call (for
+  // the generic failure path). A re-trigger via the Withdraw button
+  // calls `mutateAsync`, which synchronously transitions the mutation
+  // back to `pending` — no stale `isError` visible.
+  const closeModal = useCallback(() => setModalVisible(false), []);
 
-  // `resetMutation` is intentionally NOT passed here — `closeModal`
-  // already calls it on every dismiss path, so passing it again would
-  // make the hook reset twice.
   const gasModalProps = useInsufficientGasModal({
     isError,
     error,
@@ -279,6 +277,7 @@ export const PartialWithdrawScreen = ({
       updateStep(STEPS.FUND_AGENT);
     },
     onClose: closeModal,
+    resetMutation,
   });
 
   return (

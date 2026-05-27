@@ -4,6 +4,7 @@ import { act, createElement, PropsWithChildren } from 'react';
 
 import { usePartialWithdraw } from '../../../../components/AgentWallet/PartialWithdraw/usePartialWithdraw';
 import { REACT_QUERY_KEYS } from '../../../../constants';
+import { MiddlewareChainMap } from '../../../../constants/chains';
 import { useServices } from '../../../../hooks';
 import { ServicesService } from '../../../../service/Services';
 import {
@@ -41,7 +42,7 @@ const createWrapper = () => {
 };
 
 const amounts = {
-  gnosis: {
+  [MiddlewareChainMap.GNOSIS]: {
     ['0x0000000000000000000000000000000000000000' as `0x${string}`]: '1',
   },
 } as const;
