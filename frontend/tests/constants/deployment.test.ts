@@ -9,6 +9,7 @@
 
 import {
   isActiveDeploymentStatus,
+  isRunningDeploymentStatus,
   isTransitioningDeploymentStatus,
   MiddlewareDeploymentStatusMap,
 } from '../../constants/deployment';
@@ -151,6 +152,66 @@ describe('isTransitioningDeploymentStatus', () => {
 
   it('returns false for null', () => {
     expect(isTransitioningDeploymentStatus(null)).toBe(false);
+  });
+});
+
+describe('isRunningDeploymentStatus', () => {
+  /**
+   * A service is "running" when it is DEPLOYED or DEPLOYING — i.e. a start
+   * request is in-flight or has completed. STOPPING is *not* running: a
+   * deployment mid-stop should not be claimed as already-running by the
+   * start path, because issuing a fresh start in that window would race
+   * the in-flight stop.
+   */
+
+  it('returns true for DEPLOYED', () => {
+    expect(
+      isRunningDeploymentStatus(MiddlewareDeploymentStatusMap.DEPLOYED),
+    ).toBe(true);
+  });
+
+  it('returns true for DEPLOYING', () => {
+    expect(
+      isRunningDeploymentStatus(MiddlewareDeploymentStatusMap.DEPLOYING),
+    ).toBe(true);
+  });
+
+  it('returns false for STOPPING (mid-stop is not running)', () => {
+    expect(
+      isRunningDeploymentStatus(MiddlewareDeploymentStatusMap.STOPPING),
+    ).toBe(false);
+  });
+
+  it('returns false for CREATED', () => {
+    expect(
+      isRunningDeploymentStatus(MiddlewareDeploymentStatusMap.CREATED),
+    ).toBe(false);
+  });
+
+  it('returns false for BUILT', () => {
+    expect(isRunningDeploymentStatus(MiddlewareDeploymentStatusMap.BUILT)).toBe(
+      false,
+    );
+  });
+
+  it('returns false for STOPPED', () => {
+    expect(
+      isRunningDeploymentStatus(MiddlewareDeploymentStatusMap.STOPPED),
+    ).toBe(false);
+  });
+
+  it('returns false for DELETED', () => {
+    expect(
+      isRunningDeploymentStatus(MiddlewareDeploymentStatusMap.DELETED),
+    ).toBe(false);
+  });
+
+  it('returns false for undefined', () => {
+    expect(isRunningDeploymentStatus(undefined)).toBe(false);
+  });
+
+  it('returns false for null', () => {
+    expect(isRunningDeploymentStatus(null)).toBe(false);
   });
 });
 

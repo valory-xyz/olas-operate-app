@@ -135,7 +135,6 @@ export const useAutoRunOperations = ({
 
   const { startAgentWithRetries } = useAutoRunStartOperations({
     enabledRef,
-    runningServiceConfigIdRef,
     configuredAgents,
     createSafeIfNeeded,
     startService,

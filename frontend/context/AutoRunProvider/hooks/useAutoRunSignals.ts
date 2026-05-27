@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { AgentType } from '@/constants';
+import { AgentType, isRunningDeploymentStatus } from '@/constants';
 import { useBalanceAndRefillRequirementsContext } from '@/hooks';
 import { sleepAwareDelay } from '@/utils/delay';
 
@@ -9,6 +9,7 @@ import {
   REWARDS_POLL_SECONDS,
   REWARDS_WAIT_TIMEOUT_SECONDS,
 } from '../constants';
+import { probeDeploymentStatus } from '../utils/probeDeployment';
 
 const BALANCES_WAIT_TIMEOUT_SECONDS = AGENT_SELECTION_WAIT_TIMEOUT_SECONDS * 3;
 const BALANCE_STALENESS_MS = REWARDS_POLL_SECONDS * 1000;
@@ -283,7 +284,13 @@ export const useAutoRunSignals = ({
     [],
   );
 
-  // Wait until the running service config ID matches the requested one.
+  // Wait until the deployment for `serviceConfigId` reaches a running state
+  // (DEPLOYED or DEPLOYING). Probes the backend directly instead of trusting
+  // `runningServiceConfigIdRef`, because the ref is mirrored via React-Query
+  // polling and can lag the just-started agent by several seconds — long
+  // enough to time out a rotation and mask success as
+  // `start_confirm status=timeout`. Note: STOPPING is *not* treated as
+  // running here — a deployment mid-stop hasn't fulfilled the start request.
   const waitForRunningInstance = useCallback(
     async (serviceConfigId: string, timeoutSeconds: number) => {
       const startedAt = Date.now();
@@ -291,7 +298,12 @@ export const useAutoRunSignals = ({
         enabledRef.current &&
         Date.now() - startedAt < timeoutSeconds * 1000
       ) {
-        if (runningServiceConfigIdRef.current === serviceConfigId) return true;
+        try {
+          const deployment = await probeDeploymentStatus(serviceConfigId);
+          if (isRunningDeploymentStatus(deployment?.status)) return true;
+        } catch {
+          // Transient probe failure — keep polling within the outer budget.
+        }
         const ok = await sleepAwareDelay(5);
         if (!ok) return false;
       }
