@@ -29,6 +29,13 @@ export const REWARDS_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN: Record<
   [EvmChainIdMap.Polygon]: 'https://staking-polygon.subgraph.autonolas.tech',
 };
 
+// pearl-transactions subgraph — URLs filled in once Studio deployments exist
+// (subgraph PR: https://github.com/valory-xyz/autonolas-subgraph-studio/pull/129).
+// Networks shipped in v1: Gnosis, Polygon, Optimism, Base. Mode is deprecated.
+export const TRANSACTION_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN: Partial<
+  Record<EvmChainId, Url>
+> = {};
+
 // telegram
 export const SUPPORT_URL: Url = 'https://t.me/olaschat';
 

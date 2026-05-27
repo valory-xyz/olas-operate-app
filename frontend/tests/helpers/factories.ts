@@ -31,6 +31,13 @@ import {
 } from '../../types/Autonolas';
 import { WalletBalance } from '../../types/Balance';
 import { MiddlewareServiceResponse, Service } from '../../types/Service';
+import {
+  AgentFundingEvent,
+  FundsMovement,
+  MasterSafeEntity,
+  SubgraphMeta,
+  TransactionHistoryResponse,
+} from '../../types/TransactionHistory';
 import { TokenRequirement } from '../../types/Wallet';
 
 export const INVALID_CHAIN_ID = 999 as EvmChainId;
@@ -531,5 +538,89 @@ export const makeInsufficientGasError = (
   error_code: ERROR_CODE.INSUFFICIENT_SIGNER_GAS,
   chain: MiddlewareChainMap.GNOSIS,
   prefill_amount_wei: '750000000000000000',
+  ...overrides,
+});
+
+// --- Transaction history factories (VLOP-73) ---
+
+export const MOCK_OLAS_TOKEN_ADDRESS: Address =
+  '0xcE11e14225575945b8E6Dc0D4F2dD4C570f79d9f';
+export const MOCK_USDC_E_TOKEN_ADDRESS: Address =
+  '0x2a22f9c3b484c3629090FeED35F17Ff8F88f76F0';
+
+export const makeFundsMovement = (
+  overrides: Partial<FundsMovement> = {},
+): FundsMovement => ({
+  id: `${MOCK_TX_HASH_1}-0`,
+  category: 'MASTER_FUNDING_IN',
+  source: 'RAW_TRANSFER',
+  token: null,
+  amount: '1000000000000000000',
+  from: DEFAULT_EOA_ADDRESS,
+  to: DEFAULT_SAFE_ADDRESS,
+  blockTimestamp: `${DEFAULT_TS_CHECKPOINT}`,
+  transactionHash: MOCK_TX_HASH_1,
+  agentSafe: null,
+  ...overrides,
+});
+
+export const makeAgentFundingEvent = (
+  overrides: Partial<AgentFundingEvent> = {},
+): AgentFundingEvent => {
+  const txHash = overrides.txHash ?? MOCK_TX_HASH_2;
+  return {
+    id: `${txHash}-${DEFAULT_SAFE_ADDRESS}-42`.toLowerCase(),
+    txHash,
+    blockTimestamp: `${DEFAULT_TS_CHECKPOINT}`,
+    totalNativeAmount: '0',
+    totalOlasAmount: '0',
+    agentSafe: {
+      id: MOCK_MULTISIG_ADDRESS,
+      service: { id: '42', agentIds: [25] },
+    },
+    transfers: [
+      makeFundsMovement({
+        id: `${txHash}-0`,
+        category: 'MASTER_TO_AGENT',
+        token: MOCK_USDC_E_TOKEN_ADDRESS,
+        amount: '5000000',
+        from: DEFAULT_SAFE_ADDRESS,
+        to: MOCK_MULTISIG_ADDRESS,
+        transactionHash: txHash,
+        agentSafe: {
+          id: MOCK_MULTISIG_ADDRESS,
+          service: { id: '42', agentIds: [25] },
+        },
+      }),
+    ],
+    ...overrides,
+  };
+};
+
+export const makeMasterSafeEntity = (
+  overrides: Partial<MasterSafeEntity> = {},
+): MasterSafeEntity => ({
+  id: DEFAULT_SAFE_ADDRESS,
+  masterEoa: DEFAULT_EOA_ADDRESS,
+  owners: [DEFAULT_EOA_ADDRESS, BACKUP_SIGNER_ADDRESS],
+  threshold: '1',
+  ...overrides,
+});
+
+export const makeSubgraphMeta = (
+  overrides: Partial<SubgraphMeta> = {},
+): SubgraphMeta => ({
+  block: { number: 35_000_000, timestamp: DEFAULT_TS_CHECKPOINT },
+  hasIndexingErrors: false,
+  ...overrides,
+});
+
+export const makeTransactionHistoryResponse = (
+  overrides: Partial<TransactionHistoryResponse> = {},
+): TransactionHistoryResponse => ({
+  masterSafe: makeMasterSafeEntity(),
+  fundsMovements: [],
+  agentFundingEvents: [],
+  _meta: makeSubgraphMeta(),
   ...overrides,
 });
