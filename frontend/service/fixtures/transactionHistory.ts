@@ -15,10 +15,11 @@ import {
   TransactionHistoryResponse,
 } from '@/types/TransactionHistory';
 
+const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000' as Address;
 const MASTER_EOA = '0x1234567890aBcdef1234567890ABcDeF12345678' as Address;
 const AGENT_SAFE = '0x2222222222222222222222222222222222222222' as Address;
 const AGENT_EOA = '0x1111111111111111111111111111111111111111' as Address;
-const STAKING_PROXY = '0x3333333333333333333333333333333333333333' as Address;
+const SRTU_CONTRACT = '0x9999999999999999999999999999999999999999' as Address;
 const EXTERNAL_ADDRESS =
   '0xcccccccccccccccccccccccccccccccccccccccc' as Address;
 
@@ -266,9 +267,11 @@ export const TRANSACTION_HISTORY_FIXTURE = (
     fundsMovements: [
       ...externalWithdrawal,
       ...agentWithdrawal,
-      // Unstake — Rev. 2 schema emits SERVICE_BOND_REFUND twice (terminate +
-      // unbond). Frontend groups by (txHash, category) so these collapse
-      // into a single "<agent> unstake" UI row with two transfers.
+      // Unstake — SRTU emits TokenRefund twice per cycle (terminate + unbond).
+      // Frontend groups by (txHash, category) so these collapse into a single
+      // "<agent> unstake" UI row with two transfers. Subgraph handler reads
+      // from/to from the SRTU TokenRefund event: refunded OLAS leaves the
+      // SRTU contract and lands at the Master Safe.
       baseFundsMovement({
         id: movementId(tx3),
         category: 'SERVICE_BOND_REFUND',
@@ -276,7 +279,7 @@ export const TRANSACTION_HISTORY_FIXTURE = (
         bondType: 'SECURITY_DEPOSIT',
         token: tokens.olas,
         amount: e18('2500'),
-        from: lowerSafe,
+        from: SRTU_CONTRACT,
         to: lowerSafe,
         blockTimestamp: t(9_000),
         transactionHash: tx3,
@@ -289,14 +292,15 @@ export const TRANSACTION_HISTORY_FIXTURE = (
         bondType: 'AGENT_BOND',
         token: tokens.olas,
         amount: e18('2500'),
-        from: lowerSafe,
+        from: SRTU_CONTRACT,
         to: lowerSafe,
         blockTimestamp: t(9_000),
         transactionHash: tx3,
         agentSafe: AGENT_SAFE_REF,
       }),
-      // Stake — Rev. 2 schema emits SERVICE_BOND_DEPOSIT twice (activate +
-      // register). Collapses to a single "<agent> stake" UI row.
+      // Stake — SRTU emits TokenDeposit twice per cycle (activate + register).
+      // OLAS leaves the Master Safe and is held by the SRTU contract; the
+      // staking proxy takes custody of the NFT separately.
       baseFundsMovement({
         id: movementId(tx4),
         category: 'SERVICE_BOND_DEPOSIT',
@@ -305,7 +309,7 @@ export const TRANSACTION_HISTORY_FIXTURE = (
         token: tokens.olas,
         amount: e18('2500'),
         from: lowerSafe,
-        to: STAKING_PROXY,
+        to: SRTU_CONTRACT,
         blockTimestamp: t(8_000),
         transactionHash: tx4,
         agentSafe: AGENT_SAFE_REF,
@@ -318,7 +322,7 @@ export const TRANSACTION_HISTORY_FIXTURE = (
         token: tokens.olas,
         amount: e18('2500'),
         from: lowerSafe,
-        to: STAKING_PROXY,
+        to: SRTU_CONTRACT,
         blockTimestamp: t(8_000),
         transactionHash: tx4,
         agentSafe: AGENT_SAFE_REF,
@@ -368,13 +372,21 @@ export const TRANSACTION_HISTORY_FIXTURE = (
         blockTimestamp: t(1_000),
         transactionHash: tx11,
       }),
+      // "Setup complete" — synthetic baseline emitted by getOrCreateMasterSafe.
+      // Subgraph PR #133 ships §6.2 option 2 (eth_call baseline): at first
+      // sighting of a Master Safe the handler queries OLAS.balanceOf(masterSafe)
+      // and emits ONE row with token=OLAS, source=SEMANTIC. Native baseline is
+      // not addressable from AS mappings (documented honest limit). The
+      // backdated `createWithContext` path (option 1) that would capture the
+      // actual user funding tx with the original token + amount remains
+      // open — see subgraph PR #129 Open Q #6.
       baseFundsMovement({
-        id: movementId(tx12),
+        id: `safe-deployed-setup:${lowerSafe}`,
         category: 'SAFE_SETUP_TRANSFER',
-        source: 'RAW_TRANSFER',
-        token: tokens.native,
-        amount: e18('30'),
-        from: MASTER_EOA,
+        source: 'SEMANTIC',
+        token: tokens.olas,
+        amount: e18('100'),
+        from: ZERO_ADDRESS,
         to: lowerSafe,
         blockTimestamp: t(0),
         transactionHash: tx12,
