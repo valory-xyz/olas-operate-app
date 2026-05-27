@@ -27,6 +27,7 @@ describe('getTransactionRowLabel', () => {
   const fixed: Array<[FundsCategory, string]> = [
     ['SAFE_DEPLOYED', 'Setup complete'],
     ['SAFE_SETUP_TRANSFER', 'Setup complete'],
+    ['OPENING_BALANCE', 'Opening balance'],
     ['MASTER_FUNDING_IN', 'Deposit'],
     ['MASTER_WITHDRAWAL', 'Withdraw to external wallet'],
   ];

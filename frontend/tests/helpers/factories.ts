@@ -604,6 +604,8 @@ export const makeMasterSafeEntity = (
   masterEoa: DEFAULT_EOA_ADDRESS,
   owners: [DEFAULT_EOA_ADDRESS, BACKUP_SIGNER_ADDRESS],
   threshold: '1',
+  historyFloorBlock: '34999999',
+  historyFloorTimestamp: `${DEFAULT_TS_CHECKPOINT}`,
   ...overrides,
 });
 

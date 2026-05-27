@@ -4,6 +4,12 @@ import { Address } from './Address';
 
 export const FUNDS_CATEGORY = {
   SAFE_DEPLOYED: 'SAFE_DEPLOYED',
+  // Rev. 4 — synthetic snapshot rows emitted at first sighting of a Master
+  // Safe. One per tracked ERC-20 (eth_call balanceOf at the discovery block)
+  // plus a zero-amount native marker. Anchored by MasterSafe.historyFloor*.
+  OPENING_BALANCE: 'OPENING_BALANCE',
+  // Rev. 4 narrowed semantics — first LIVE Master EOA → Master Safe inbound
+  // hop AFTER OPENING_BALANCE. Fires at most once per Master Safe.
   SAFE_SETUP_TRANSFER: 'SAFE_SETUP_TRANSFER',
   // Rev. 2 (subgraph PR #129) — typed bond ledger from SRTU
   // TokenDeposit/TokenRefund events. Each fires twice per stake / unstake
@@ -25,6 +31,7 @@ export const FUNDS_CATEGORY = {
 
 export const FundsCategorySchema = z.enum([
   FUNDS_CATEGORY.SAFE_DEPLOYED,
+  FUNDS_CATEGORY.OPENING_BALANCE,
   FUNDS_CATEGORY.SAFE_SETUP_TRANSFER,
   FUNDS_CATEGORY.SERVICE_BOND_DEPOSIT,
   FUNDS_CATEGORY.SERVICE_BOND_REFUND,
@@ -91,6 +98,10 @@ export const MasterSafeEntitySchema = z.object({
   masterEoa: z.string(),
   owners: z.array(z.string()),
   threshold: z.string(),
+  // Rev. 4 anchor fields — consumer wallet UI renders a literal
+  // "History starts here" divider above the OPENING_BALANCE rows.
+  historyFloorBlock: z.string(),
+  historyFloorTimestamp: z.string(),
 });
 export type MasterSafeEntity = z.infer<typeof MasterSafeEntitySchema>;
 

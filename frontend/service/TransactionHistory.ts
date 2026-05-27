@@ -17,12 +17,15 @@ const FETCH_TRANSACTION_HISTORY_QUERY = gql`
       masterEoa
       owners
       threshold
+      historyFloorBlock
+      historyFloorTimestamp
     }
     fundsMovements(
       where: {
         masterSafe: $masterSafe
         category_in: [
           SAFE_DEPLOYED
+          OPENING_BALANCE
           SAFE_SETUP_TRANSFER
           SERVICE_BOND_DEPOSIT
           SERVICE_BOND_REFUND

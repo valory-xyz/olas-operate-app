@@ -257,12 +257,20 @@ export const TRANSACTION_HISTORY_FIXTURE = (
     transfers: [fundingTransfer(txId, timestampOffset)],
   });
 
+  // Rev. 4 anchor — UI uses historyFloorBlock/Timestamp to render the
+  // "History starts here" divider above OPENING_BALANCE rows. Set equal
+  // to the oldest fundsMovement timestamp in the fixture.
+  const historyFloorTimestamp = t(0);
+  const historyFloorBlock = '34999999';
+
   return {
     masterSafe: {
       id: lowerSafe,
       masterEoa: MASTER_EOA.toLowerCase(),
       owners: [MASTER_EOA.toLowerCase()],
       threshold: '1',
+      historyFloorBlock,
+      historyFloorTimestamp,
     },
     fundsMovements: [
       ...externalWithdrawal,
@@ -372,20 +380,43 @@ export const TRANSACTION_HISTORY_FIXTURE = (
         blockTimestamp: t(1_000),
         transactionHash: tx11,
       }),
-      // "Setup complete" — synthetic baseline emitted by getOrCreateMasterSafe.
-      // Subgraph PR #133 ships §6.2 option 2 (eth_call baseline): at first
-      // sighting of a Master Safe the handler queries OLAS.balanceOf(masterSafe)
-      // and emits ONE row with token=OLAS, source=SEMANTIC. Native baseline is
-      // not addressable from AS mappings (documented honest limit). The
-      // backdated `createWithContext` path (option 1) that would capture the
-      // actual user funding tx with the original token + amount remains
-      // open — see subgraph PR #129 Open Q #6.
+      // Rev. 4 — synthetic OPENING_BALANCE snapshot at first sighting.
+      // Subgraph emits one row per tracked ERC-20 (eth_call balanceOf) plus
+      // a zero-amount native marker row (native EOA→Safe transfers emit no
+      // log, so the native baseline is unrecoverable; the marker exists so
+      // the UI can annotate "native pre-discovery balance unknown").
       baseFundsMovement({
-        id: `safe-deployed-setup:${lowerSafe}`,
-        category: 'SAFE_SETUP_TRANSFER',
+        id: `opening-balance-olas:${lowerSafe}`,
+        category: 'OPENING_BALANCE',
         source: 'SEMANTIC',
         token: tokens.olas,
         amount: e18('100'),
+        from: ZERO_ADDRESS,
+        to: lowerSafe,
+        blockTimestamp: t(0),
+        transactionHash: tx12,
+      }),
+      ...(tokens.wrappedNative
+        ? [
+            baseFundsMovement({
+              id: `opening-balance-wrapped:${lowerSafe}`,
+              category: 'OPENING_BALANCE',
+              source: 'SEMANTIC',
+              token: tokens.wrappedNative,
+              amount: e18('5'),
+              from: ZERO_ADDRESS,
+              to: lowerSafe,
+              blockTimestamp: t(0),
+              transactionHash: tx12,
+            }),
+          ]
+        : []),
+      baseFundsMovement({
+        id: `opening-balance-native:${lowerSafe}`,
+        category: 'OPENING_BALANCE',
+        source: 'SEMANTIC',
+        token: tokens.native,
+        amount: '0',
         from: ZERO_ADDRESS,
         to: lowerSafe,
         blockTimestamp: t(0),

@@ -28,6 +28,7 @@ const directionFor = (
 ): TransferDirection => {
   if (category === FUNDS_CATEGORY.MASTER_FUNDING_IN) return 'in';
   if (category === FUNDS_CATEGORY.SAFE_SETUP_TRANSFER) return 'in';
+  if (category === FUNDS_CATEGORY.OPENING_BALANCE) return 'in';
   if (category === FUNDS_CATEGORY.AGENT_TO_MASTER) return 'in';
   if (category === FUNDS_CATEGORY.SERVICE_BOND_REFUND) return 'in';
   if (category === FUNDS_CATEGORY.UNSTAKE_REWARD) return 'in';
