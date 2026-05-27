@@ -59,7 +59,7 @@
   "devDependencies": {
     "@electron/notarize": "2.5.0",
     "dotenv-cli": "7.4.4",
-    "electron": "33.4.11",
+    "electron": "41.7.0",
     "electron-builder": "26.8.2",
     "electron-builder-sandbox-fix": "1.1.1",
     "electron-context-menu": "4.1.1",
