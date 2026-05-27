@@ -155,6 +155,13 @@ export const STOP_RECOVERY_RETRY_SECONDS = 60; // 1 minute
 export const STOP_REQUEST_TIMEOUT_SECONDS = 300; // 5 minutes
 
 /**
+ * Maximum time (in ms) for a single `GET /deployment` probe used by stop-
+ * confirmation polling and the start-step liveness check. Kept short so a
+ * hung backend can't stall a rotation cycle.
+ */
+export const DEPLOYMENT_CHECK_TIMEOUT_MS = 15_000; // 15 seconds
+
+/**
  * How long (in ms) to wait between each follow-up check during the
  * disable-during-start race guard in AutoRunProvider.
  * Example: disable is called while a start is in-flight → poll every 10 s
