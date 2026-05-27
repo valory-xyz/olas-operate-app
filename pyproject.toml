@@ -13,7 +13,7 @@ dependencies = [
     "open-aea-ledger-cosmos==2.2.5",
     "open-aea-ledger-ethereum==2.2.5",
     "open-aea-cli-ipfs==2.2.5",
-    "olas-operate-middleware==0.15.24",
+    "olas-operate-middleware @ git+https://github.com/valory-xyz/olas-operate-middleware.git@a8f5f676b4cd4f325909421209977451adc4d617",
 ]
 
 [dependency-groups]
