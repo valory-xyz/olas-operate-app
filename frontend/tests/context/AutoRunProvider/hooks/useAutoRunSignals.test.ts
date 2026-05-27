@@ -2,6 +2,7 @@ import { renderHook } from '@testing-library/react';
 import { act } from 'react';
 
 import { AgentMap, AgentType } from '../../../../constants/agent';
+import { MiddlewareDeploymentStatusMap } from '../../../../constants/deployment';
 import {
   AGENT_SELECTION_WAIT_TIMEOUT_SECONDS,
   REWARDS_POLL_SECONDS,
@@ -9,6 +10,7 @@ import {
 } from '../../../../context/AutoRunProvider/constants';
 import { useAutoRunSignals } from '../../../../context/AutoRunProvider/hooks/useAutoRunSignals';
 import { useBalanceAndRefillRequirementsContext } from '../../../../hooks';
+import { ServicesService } from '../../../../service/Services';
 import * as delayModule from '../../../../utils/delay';
 import { DEFAULT_SERVICE_CONFIG_ID } from '../../../helpers/factories';
 
@@ -22,12 +24,18 @@ jest.mock('../../../../utils/delay', () =>
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   require('../../../helpers/autoRunMocks').delayMockFactory(),
 );
+jest.mock('../../../../service/Services', () => ({
+  ServicesService: {
+    getDeployment: jest.fn(),
+  },
+}));
 
 const mockUseBalanceContext =
   useBalanceAndRefillRequirementsContext as jest.MockedFunction<
     typeof useBalanceAndRefillRequirementsContext
   >;
 const mockSleepAwareDelay = delayModule.sleepAwareDelay as jest.Mock;
+const mockGetDeployment = ServicesService.getDeployment as jest.Mock;
 
 const makeHookParams = (
   overrides: Partial<Parameters<typeof useAutoRunSignals>[0]> = {},
@@ -54,6 +62,10 @@ describe('useAutoRunSignals', () => {
       refetch: jest.fn().mockResolvedValue(undefined),
     } as unknown as ReturnType<typeof useBalanceAndRefillRequirementsContext>);
     mockSleepAwareDelay.mockResolvedValue(true);
+    // Default: deployment not active — individual tests override per case.
+    mockGetDeployment.mockResolvedValue({
+      status: MiddlewareDeploymentStatusMap.BUILT,
+    });
   });
 
   afterEach(() => {
@@ -471,9 +483,78 @@ describe('useAutoRunSignals', () => {
   });
 
   describe('waitForRunningInstance', () => {
-    it('returns true when instance matches immediately', async () => {
+    it('returns true when deployment is active immediately', async () => {
+      mockGetDeployment.mockResolvedValue({
+        status: MiddlewareDeploymentStatusMap.DEPLOYED,
+      });
+      const params = makeHookParams();
+      const { result } = renderHook(() => useAutoRunSignals(params));
+
+      let ok: boolean | undefined;
+      await act(async () => {
+        ok = await result.current.waitForRunningInstance(
+          DEFAULT_SERVICE_CONFIG_ID,
+          10,
+        );
+      });
+      expect(ok).toBe(true);
+      expect(mockGetDeployment).toHaveBeenCalledWith(
+        expect.objectContaining({ serviceConfigId: DEFAULT_SERVICE_CONFIG_ID }),
+      );
+    });
+
+    it('returns true when deployment reports a transitional active state (DEPLOYING)', async () => {
+      mockGetDeployment.mockResolvedValue({
+        status: MiddlewareDeploymentStatusMap.DEPLOYING,
+      });
+      const params = makeHookParams();
+      const { result } = renderHook(() => useAutoRunSignals(params));
+
+      let ok: boolean | undefined;
+      await act(async () => {
+        ok = await result.current.waitForRunningInstance(
+          DEFAULT_SERVICE_CONFIG_ID,
+          10,
+        );
+      });
+      expect(ok).toBe(true);
+    });
+
+    it('does NOT treat STOPPING as running (a deployment mid-stop has not satisfied the start request)', async () => {
+      // Time out the outer loop deterministically so the test finishes
+      // without polling for the full timeoutSeconds budget.
+      const realDateNow = Date.now;
+      let elapsed = 0;
+      Date.now = jest.fn(() => {
+        elapsed += 11_000;
+        return realDateNow() + elapsed;
+      });
+      mockGetDeployment.mockResolvedValue({
+        status: MiddlewareDeploymentStatusMap.STOPPING,
+      });
+      const params = makeHookParams();
+      const { result } = renderHook(() => useAutoRunSignals(params));
+
+      let ok: boolean | undefined;
+      await act(async () => {
+        ok = await result.current.waitForRunningInstance(
+          DEFAULT_SERVICE_CONFIG_ID,
+          10,
+        );
+      });
+      expect(ok).toBe(false);
+      Date.now = realDateNow;
+    });
+
+    it('returns true even when runningServiceConfigId ref points at a different agent (stale-ref regression)', async () => {
+      // Simulates the rotation case from the second user bundle: ref still
+      // points at the old agent, but the backend has the freshly-started
+      // agent in an active state. Previously this returned false (timeout).
+      mockGetDeployment.mockResolvedValue({
+        status: MiddlewareDeploymentStatusMap.DEPLOYED,
+      });
       const params = makeHookParams({
-        runningServiceConfigId: DEFAULT_SERVICE_CONFIG_ID,
+        runningServiceConfigId: 'sc-some-other-agent',
       });
       const { result } = renderHook(() => useAutoRunSignals(params));
 
@@ -489,7 +570,7 @@ describe('useAutoRunSignals', () => {
 
     it('returns false when sleep/wake interrupts', async () => {
       mockSleepAwareDelay.mockResolvedValue(false);
-      const params = makeHookParams({ runningServiceConfigId: null });
+      const params = makeHookParams();
       const { result } = renderHook(() => useAutoRunSignals(params));
 
       let ok: boolean | undefined;
@@ -502,12 +583,9 @@ describe('useAutoRunSignals', () => {
       expect(ok).toBe(false);
     });
 
-    it('returns false and logs timeout when instance never matches', async () => {
+    it('returns false and logs timeout when deployment never reaches active', async () => {
       const logMessage = jest.fn();
-      const params = makeHookParams({
-        runningServiceConfigId: null,
-        logMessage,
-      });
+      const params = makeHookParams({ logMessage });
       const realDateNow = Date.now;
       let elapsed = 0;
       Date.now = jest.fn(() => {
@@ -529,6 +607,26 @@ describe('useAutoRunSignals', () => {
         `running timeout: ${DEFAULT_SERVICE_CONFIG_ID}`,
       );
       Date.now = realDateNow;
+    });
+
+    it('keeps polling when getDeployment throws transiently, returns true once active', async () => {
+      mockGetDeployment
+        .mockRejectedValueOnce(new Error('network blip'))
+        .mockResolvedValueOnce({
+          status: MiddlewareDeploymentStatusMap.DEPLOYED,
+        });
+      const params = makeHookParams();
+      const { result } = renderHook(() => useAutoRunSignals(params));
+
+      let ok: boolean | undefined;
+      await act(async () => {
+        ok = await result.current.waitForRunningInstance(
+          DEFAULT_SERVICE_CONFIG_ID,
+          10,
+        );
+      });
+      expect(ok).toBe(true);
+      expect(mockGetDeployment).toHaveBeenCalledTimes(2);
     });
   });
 
