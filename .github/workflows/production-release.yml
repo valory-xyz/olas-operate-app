@@ -107,22 +107,29 @@ jobs:
           git tag -a "$SIGNED_TAG" -m "Production Release $SIGNED_TAG"
           git push origin "$SIGNED_TAG"
 
-  run-release:
+  ensure-draft-release:
     needs: [compute-release-tag, create-signed-tag]
+    uses: ./.github/workflows/ensure-draft-release.yml
+    with:
+      release_tag: ${{ needs.compute-release-tag.outputs.release_tag }}
+    secrets: inherit
+
+  run-release:
+    needs: [compute-release-tag, create-signed-tag, ensure-draft-release]
     uses: ./.github/workflows/release_mac.yml
     with:
       tag: ${{ needs.compute-release-tag.outputs.signed_tag }}
     secrets: inherit
 
   run-release-linux:
-    needs: [compute-release-tag, create-signed-tag]
+    needs: [compute-release-tag, create-signed-tag, ensure-draft-release]
     uses: ./.github/workflows/release_linux.yml
     with:
       tag: ${{ needs.compute-release-tag.outputs.signed_tag }}
     secrets: inherit
 
   run-release-win:
-    needs: [compute-release-tag, create-signed-tag]
+    needs: [compute-release-tag, create-signed-tag, ensure-draft-release]
     uses: ./.github/workflows/release_win.yml
     with:
       tag: ${{ needs.compute-release-tag.outputs.signed_tag }}

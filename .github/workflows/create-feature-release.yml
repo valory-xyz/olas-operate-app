@@ -83,22 +83,29 @@ jobs:
       version_strategy: ${{ inputs.action == 'new' && 'increment' || 'override' }}
     secrets: inherit
 
-  run-release:
+  ensure-draft-release:
     needs: calculate-version
+    uses: ./.github/workflows/ensure-draft-release.yml
+    with:
+      release_tag: ${{ needs.calculate-version.outputs.new_tag }}
+    secrets: inherit
+
+  run-release:
+    needs: [calculate-version, ensure-draft-release]
     uses: ./.github/workflows/release_mac.yml
     with:
       tag: ${{ needs.calculate-version.outputs.new_tag }}
     secrets: inherit
 
   run-release-win:
-    needs: calculate-version
+    needs: [calculate-version, ensure-draft-release]
     uses: ./.github/workflows/release_win.yml
     with:
       tag: ${{ needs.calculate-version.outputs.new_tag }}
     secrets: inherit
 
   run-release-linux:
-    needs: calculate-version
+    needs: [calculate-version, ensure-draft-release]
     uses: ./.github/workflows/release_linux.yml
     with:
       tag: ${{ needs.calculate-version.outputs.new_tag }}
