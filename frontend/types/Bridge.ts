@@ -30,7 +30,8 @@ export type QuoteStatus =
   | 'QUOTE_FAILED'
   | 'EXECUTION_PENDING'
   | 'EXECUTION_DONE'
-  | 'EXECUTION_FAILED';
+  | 'EXECUTION_FAILED'
+  | 'EXECUTION_UNKNOWN';
 
 type BridgeFrom = {
   chain: MiddlewareChain;
