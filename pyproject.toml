@@ -13,7 +13,7 @@ dependencies = [
     "open-aea-ledger-cosmos==2.2.5",
     "open-aea-ledger-ethereum==2.2.5",
     "open-aea-cli-ipfs==2.2.5",
-    "olas-operate-middleware",
+    "olas-operate-middleware==0.15.25",
 ]
 
 [dependency-groups]
@@ -28,6 +28,3 @@ package = false
 # provenance we had under Poetry). Drop this only if we want to
 # opt every release into uv-managed interpreters.
 python-preference = "only-system"
-
-[tool.uv.sources]
-olas-operate-middleware = { git = "https://github.com/valory-xyz/olas-operate-middleware.git", rev = "a8f5f676b4cd4f325909421209977451adc4d617" }
