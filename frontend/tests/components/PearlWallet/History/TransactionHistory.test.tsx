@@ -159,4 +159,35 @@ describe('TransactionHistory section', () => {
     expect(screen.getByText('Deposit')).toBeInTheDocument();
     expect(screen.getByText('+10.00')).toBeInTheDocument();
   });
+
+  it('renders the native OPENING_BALANCE row as "unknown" instead of "+0.00"', () => {
+    mockUseTransactionHistory.mockReturnValue({
+      rows: [
+        {
+          id: 'opening',
+          category: 'OPENING_BALANCE',
+          blockTimestamp: 1_720_000_000,
+          transactionHash: MOCK_TX_HASH_1,
+          agentSafeAddress: null,
+          agentInstanceAddress: null,
+          transfers: [
+            {
+              tokenAddress: null,
+              amount: '0',
+              direction: 'in' as const,
+            },
+          ],
+        },
+      ],
+      meta: { block: { number: 1 }, hasIndexingErrors: false },
+      isFetched: true,
+      isLoading: false,
+      isError: false,
+    });
+
+    render(<TransactionHistory />);
+    expect(screen.getByText('Opening balance')).toBeInTheDocument();
+    expect(screen.getByText('unknown')).toBeInTheDocument();
+    expect(screen.queryByText('+0.00')).not.toBeInTheDocument();
+  });
 });

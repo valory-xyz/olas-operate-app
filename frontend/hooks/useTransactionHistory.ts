@@ -62,8 +62,20 @@ const groupMovementsByTxAndCategory = (
     const key = `${movement.transactionHash}::${movement.category}`;
     const existing = byKey.get(key);
     const transfer = toTransfer(movement, masterSafe);
+    // For MASTER_TO_AGENT rows that land outside an AgentFundingEvent (e.g.
+    // a one-off native gas top-up to the Agent EOA), detect the recipient
+    // role so the UI can render "Allocated for execution costs" instead of
+    // "Fund <agent>". The check mirrors fundingEventToRow.
+    const agentSafeId = movement.agentSafe?.id.toLowerCase();
+    const isAgentEoaRecipient =
+      movement.category === FUNDS_CATEGORY.MASTER_TO_AGENT &&
+      !!agentSafeId &&
+      movement.to.toLowerCase() !== agentSafeId;
     if (existing) {
       existing.transfers.push(transfer);
+      if (isAgentEoaRecipient && !existing.agentInstanceAddress) {
+        existing.agentInstanceAddress = movement.to as Address;
+      }
       continue;
     }
     byKey.set(key, {
@@ -72,7 +84,9 @@ const groupMovementsByTxAndCategory = (
       blockTimestamp: Number(movement.blockTimestamp),
       transactionHash: movement.transactionHash,
       agentSafeAddress: (movement.agentSafe?.id as Address | null) ?? null,
-      agentInstanceAddress: null,
+      agentInstanceAddress: isAgentEoaRecipient
+        ? (movement.to as Address)
+        : null,
       transfers: [transfer],
     });
   }

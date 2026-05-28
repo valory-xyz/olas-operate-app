@@ -190,6 +190,52 @@ describe('buildTransactionHistoryRows', () => {
     expect(rows[0].id).toBe(makeAgentFundingEvent({ txHash: fundingTx }).id);
   });
 
+  it('flags Agent EOA recipients on STANDALONE MASTER_TO_AGENT rows', () => {
+    // Native gas top-up to the Agent EOA that lands outside an
+    // AgentFundingEvent. The row must surface agentInstanceAddress so the
+    // UI renders "Allocated for execution costs".
+    const data = makeTransactionHistoryResponse({
+      fundsMovements: [
+        makeFundsMovement({
+          category: 'MASTER_TO_AGENT',
+          token: null,
+          amount: '1',
+          from: DEFAULT_SAFE_ADDRESS,
+          to: MOCK_INSTANCE_ADDRESS,
+          transactionHash: MOCK_TX_HASH_1,
+          agentSafe: {
+            id: MOCK_MULTISIG_ADDRESS,
+            service: { id: '42', agentIds: [25] },
+          },
+        }),
+      ],
+    });
+
+    const rows = buildTransactionHistoryRows(data, DEFAULT_SAFE_ADDRESS);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].agentInstanceAddress).toBe(MOCK_INSTANCE_ADDRESS);
+    expect(rows[0].agentSafeAddress).toBe(MOCK_MULTISIG_ADDRESS);
+  });
+
+  it('does NOT flag Agent EOA on standalone MASTER_TO_AGENT when recipient IS the AgentSafe', () => {
+    const data = makeTransactionHistoryResponse({
+      fundsMovements: [
+        makeFundsMovement({
+          category: 'MASTER_TO_AGENT',
+          to: MOCK_MULTISIG_ADDRESS,
+          transactionHash: MOCK_TX_HASH_1,
+          agentSafe: {
+            id: MOCK_MULTISIG_ADDRESS,
+            service: { id: '42', agentIds: [25] },
+          },
+        }),
+      ],
+    });
+
+    const rows = buildTransactionHistoryRows(data, DEFAULT_SAFE_ADDRESS);
+    expect(rows[0].agentInstanceAddress).toBeNull();
+  });
+
   it('flags Agent EOA recipients in AgentFundingEvent rows', () => {
     const fundingTx = MOCK_TX_HASH_3;
     const data = makeTransactionHistoryResponse({

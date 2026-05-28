@@ -11,7 +11,10 @@ import {
 } from '@/constants';
 import { EvmChainId } from '@/constants/chains';
 import { Address } from '@/types/Address';
-import { TransactionHistoryRow as TransactionHistoryRowType } from '@/types/TransactionHistory';
+import {
+  FUNDS_CATEGORY,
+  TransactionHistoryRow as TransactionHistoryRowType,
+} from '@/types/TransactionHistory';
 import { asMiddlewareChain } from '@/utils/middlewareHelpers';
 import { balanceFormat, formatUnitsToNumber } from '@/utils/numberFormatters';
 import { truncateAddress } from '@/utils/truncate';
@@ -128,6 +131,22 @@ export const TransactionHistoryRow = ({
 
       <AmountColumn>
         {row.transfers.map((transfer, i) => {
+          // Subgraph emits OPENING_BALANCE with token=null + amount=0 as a
+          // placeholder for the user's pre-discovery native balance (which is
+          // genuinely unrecoverable from on-chain events). Render "unknown"
+          // instead of "+0.00" so we don't imply the balance was actually 0.
+          const isNativeOpeningBalance =
+            row.category === FUNDS_CATEGORY.OPENING_BALANCE &&
+            transfer.tokenAddress == null &&
+            transfer.amount === '0';
+          if (isNativeOpeningBalance) {
+            return (
+              <Text key={i} className="text-neutral-tertiary text-base">
+                unknown
+              </Text>
+            );
+          }
+
           const tokenInfo = resolveToken(chainId, transfer.tokenAddress);
           const amountNumber = formatUnitsToNumber(
             transfer.amount,
