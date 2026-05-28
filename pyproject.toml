@@ -1,6 +1,6 @@
 [project]
 name = "olas-operate-app"
-version = "1.6.20"
+version = "1.6.21"
 description = ""
 authors = [
     { name = "David Vilela", email = "dvilelaf@gmail.com" },
@@ -13,7 +13,7 @@ dependencies = [
     "open-aea-ledger-cosmos==2.2.5",
     "open-aea-ledger-ethereum==2.2.5",
     "open-aea-cli-ipfs==2.2.5",
-    "olas-operate-middleware==0.15.24",
+    "olas-operate-middleware==0.15.25",
 ]
 
 [dependency-groups]
