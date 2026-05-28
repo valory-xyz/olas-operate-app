@@ -130,4 +130,8 @@ export const REACT_QUERY_KEYS = {
 
   // backup owner
   BACKUP_OWNER_STATUS_KEY: ['backupOwnerStatus'] as const,
+
+  // agent wallet partial withdrawal
+  SAFE_WITHDRAWABLE_BALANCE_KEY: (serviceConfigId: string) =>
+    ['safeWithdrawableBalance', serviceConfigId] as const,
 } as const;
