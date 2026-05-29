@@ -94,7 +94,7 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
     TOOLS_ACCURACY_HASH: {
       name: 'Tools accuracy hash',
       description: '',
-      value: 'QmWgsqncF22hPLNTyWtDzVoKPJ9gmgR1jcuLL5t31xyzzr',
+      value: 'Qmc3vbrQLVSmrm7Cn9Za5EnpQphm3DJH8SaR2RLf7cz5XV',
       provision_type: EnvProvisionType.FIXED,
     },
     ACC_INFO_FIELDS_REQUESTS: {
@@ -234,7 +234,7 @@ export const PREDICT_POLYMARKET_SERVICE_TEMPLATE: ServiceTemplate = {
     TOOLS_ACCURACY_HASH: {
       name: 'Tools accuracy hash',
       description: '',
-      value: 'QmdNF1cidJASsVKSnbvSSmZLLaYfBPixBzpT4Pw3ZvmYTu',
+      value: 'QmSf7SHsZYoSyYJqzesR8frVRqZy4Nx1JbNya6BPCQmTUL',
       provision_type: EnvProvisionType.FIXED,
     },
     ACC_INFO_FIELDS_REQUESTS: {
