@@ -10,10 +10,12 @@ import {
   DeepPartial,
   MiddlewareServiceResponse,
   Nullable,
+  SafeWithdrawableBalanceResponse,
   ServiceConfigId,
   ServiceDeployment,
   ServiceTemplate,
   ServiceValidationResponse,
+  WithdrawSafeRequestAmounts,
 } from '@/types';
 import { asEvmChainId } from '@/utils';
 
@@ -267,6 +269,44 @@ const getAgentPerformance = async ({
     throw new Error('Failed to fetch agent performance');
   });
 
+/**
+ * Gets the withdrawable balance for the service safe (per chain).
+ */
+const getSafeWithdrawableBalance = async ({
+  serviceConfigId,
+}: {
+  serviceConfigId: ServiceConfigId;
+}): Promise<SafeWithdrawableBalanceResponse> =>
+  fetch(
+    `${BACKEND_URL_V2}/service/${serviceConfigId}/safe_withdrawable_balance`,
+    {
+      method: 'GET',
+      headers: { ...CONTENT_TYPE_JSON_UTF8 },
+    },
+  ).then(async (response) => {
+    if (response.ok) return response.json();
+    throw await response.json().catch(() => ({}));
+  });
+
+/**
+ * Performs a partial withdrawal from the service safe to the master safe.
+ */
+const withdrawSafe = async ({
+  serviceConfigId,
+  amounts,
+}: {
+  serviceConfigId: ServiceConfigId;
+  amounts: WithdrawSafeRequestAmounts;
+}): Promise<{ error: Nullable<string>; message: string }> =>
+  fetch(`${BACKEND_URL_V2}/service/${serviceConfigId}/withdraw_safe`, {
+    method: 'POST',
+    body: JSON.stringify({ amounts }),
+    headers: { ...CONTENT_TYPE_JSON_UTF8 },
+  }).then(async (response) => {
+    if (response.ok) return response.json();
+    throw await response.json().catch(() => ({}));
+  });
+
 export const ServicesService = {
   getService,
   getServices,
@@ -280,4 +320,6 @@ export const ServicesService = {
   stopDeployment,
   withdrawBalance,
   getAgentPerformance,
+  getSafeWithdrawableBalance,
+  withdrawSafe,
 };

@@ -69,11 +69,12 @@ const SomeFundsMaybeLockedModal = ({
   return (
     <Modal
       open
-      title="Some funds may be locked"
+      title="Some Funds May Be Locked"
       onCancel={onCancel}
       footer={null}
       centered
-      width={612}
+      width={400}
+      closable
     >
       <Flex vertical gap={8} className="mb-32 mt-12">
         <Text>
@@ -88,11 +89,20 @@ const SomeFundsMaybeLockedModal = ({
           external smart contracts.
         </Text>
       </Flex>
-      <Flex gap={8}>
-        <Button onClick={onCancel}>Cancel</Button>
-        <Button onClick={onNext}>I’ve Withdrawn Locked Funds</Button>
-        <Button onClick={() => goto(PAGES.Main)} type="primary">
+      <Flex vertical gap={8}>
+        <Button
+          onClick={() => goto(PAGES.Main)}
+          type="primary"
+          block
+          size="large"
+        >
           Withdraw Locked Funds
+        </Button>
+        <Button onClick={onNext} block size="large">
+          I’ve Withdrawn Locked Funds
+        </Button>
+        <Button onClick={onCancel} block size="large">
+          Cancel
         </Button>
       </Flex>
     </Modal>
@@ -100,18 +110,20 @@ const SomeFundsMaybeLockedModal = ({
 };
 
 type BalancesAndAssetsProps = {
-  onLockedFundsWithdrawn: () => void;
+  onPartialWithdraw: () => void;
+  onDecommissionConfirmed: () => void;
   onFundAgent: () => void;
 };
 
 export const BalancesAndAssets = ({
   onFundAgent,
-  onLockedFundsWithdrawn,
+  onPartialWithdraw,
+  onDecommissionConfirmed,
 }: BalancesAndAssetsProps) => {
   const [isWithdrawModalVisible, setWithdrawModalVisible] = useState(false);
   const { selectedAgentConfig } = useServices();
 
-  const handleWithdraw = () => {
+  const handleDecommission = () => {
     const hasExternalFunds = selectedAgentConfig?.hasExternalFunds;
 
     if (hasExternalFunds) {
@@ -119,14 +131,15 @@ export const BalancesAndAssets = ({
       return;
     }
 
-    onLockedFundsWithdrawn();
+    onDecommissionConfirmed();
   };
 
   return (
     <Flex vertical gap={32}>
       <AgentWalletOperation
-        onWithdraw={handleWithdraw}
+        onWithdraw={onPartialWithdraw}
         onFundAgent={onFundAgent}
+        onDecommission={handleDecommission}
       />
       <AvailableAssets />
       {/* <TransactionHistory /> */}
@@ -136,7 +149,7 @@ export const BalancesAndAssets = ({
           onCancel={() => setWithdrawModalVisible(false)}
           onNext={() => {
             setWithdrawModalVisible(false);
-            onLockedFundsWithdrawn();
+            onDecommissionConfirmed();
           }}
         />
       )}
