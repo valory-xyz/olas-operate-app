@@ -1,6 +1,6 @@
 [project]
 name = "olas-operate-app"
-version = "1.6.23-rc1"
+version = "1.6.23-rc2"
 description = ""
 authors = [
     { name = "David Vilela", email = "dvilelaf@gmail.com" },
@@ -34,4 +34,4 @@ python-preference = "only-system"
 # this block once the middleware ships a versioned release containing
 # https://github.com/valory-xyz/olas-operate-middleware/pull/445.
 [tool.uv.sources]
-olas-operate-middleware = { git = "https://github.com/valory-xyz/olas-operate-middleware.git", rev = "c40e3c33f529a9af77c7a1c3a17cfbaf70df424e" }
+olas-operate-middleware = { git = "https://github.com/valory-xyz/olas-operate-middleware.git", rev = "832a751bc004fdb2b2be58cd634bec2153e31702" }
