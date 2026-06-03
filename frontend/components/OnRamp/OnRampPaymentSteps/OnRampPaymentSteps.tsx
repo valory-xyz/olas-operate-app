@@ -1,10 +1,16 @@
+import { useQueryClient } from '@tanstack/react-query';
 import compact from 'lodash/compact';
 import { useEffect, useState } from 'react';
 
 import { AgentSetupCompleteModal } from '@/components/ui/AgentSetupCompleteModal';
+import { InsufficientSignerGasModal } from '@/components/ui/InsufficientSignerGasModal';
 import { TransactionSteps } from '@/components/ui/TransactionSteps';
 import { EvmChainId } from '@/constants/chains';
+import { PAGES } from '@/constants/pages';
+import { REACT_QUERY_KEYS } from '@/constants/reactQueryKeys';
+import { useInsufficientGasModal } from '@/hooks/useInsufficientGasModal';
 import { useOnRampContext } from '@/hooks/useOnRampContext';
+import { usePageState } from '@/hooks/usePageState';
 
 import { GetOnRampRequirementsParams, OnRampMode } from '../types';
 import { useBuyCryptoStep } from './useBuyCryptoStep';
@@ -37,12 +43,37 @@ export const OnRampPaymentSteps = ({
   // step 1: Buy crypto
   const buyCryptoStep = useBuyCryptoStep();
 
+  const { goto } = usePageState();
+  const queryClient = useQueryClient();
+  const [isGasModalDismissed, setIsGasModalDismissed] = useState(false);
+
   // step 2: Swap funds
   const {
     tokensToBeTransferred,
     tokensToBeBridged,
     step: swapStep,
+    quoteId,
+    isBridgeExecuteError,
+    bridgeExecuteError,
   } = useSwapFundsStep(onRampChainId, getOnRampRequirementsParams);
+
+  const gasModalProps = useInsufficientGasModal({
+    isError: isBridgeExecuteError && !isGasModalDismissed,
+    error: bridgeExecuteError,
+    caseType: 'bridge',
+    onFund: (gasError) => {
+      goto(PAGES.FundPearlWallet, {
+        prefillAmountWei: gasError.prefill_amount_wei,
+      });
+    },
+    onClose: () => setIsGasModalDismissed(true),
+    resetMutation: () => {
+      if (!quoteId) return;
+      queryClient.removeQueries({
+        queryKey: REACT_QUERY_KEYS.BRIDGE_EXECUTE_KEY(quoteId),
+      });
+    },
+  });
 
   // step 3 & 4: Create Master Safe and transfer funds
   const {
@@ -100,6 +131,7 @@ export const OnRampPaymentSteps = ({
         // same as we do it with for depositing with showOnRampCompleteModal
         mode === 'onboard' && isSetupCompleted && <AgentSetupCompleteModal />
       }
+      {gasModalProps && <InsufficientSignerGasModal {...gasModalProps} />}
     </>
   );
 };

@@ -26,7 +26,13 @@ const getBridgeRefillRequirements = async (
   });
 
 /**
- * Execute bridge for the provided quote bundle id
+ * Execute bridge for the provided quote bundle id.
+ *
+ * On a non-OK response, throws the parsed JSON error body (or `{}` if the
+ * body isn't JSON). Callers that care about the `INSUFFICIENT_SIGNER_GAS`
+ * branch should narrow via `isInsufficientGasError(err)` from `@/constants`.
+ *
+ * @throws InsufficientGasErrorBody | Record<string, unknown>
  */
 const executeBridge = async (
   id: string,
@@ -37,11 +43,9 @@ const executeBridge = async (
     headers: { ...CONTENT_TYPE_JSON_UTF8 },
     body: JSON.stringify({ id }),
     signal,
-  }).then((response) => {
+  }).then(async (response) => {
     if (response.ok) return response.json();
-    throw new Error(
-      `Failed to execute bridge quote for the following quote id: ${id}`,
-    );
+    throw await response.json().catch(() => ({}));
   });
 
 /**

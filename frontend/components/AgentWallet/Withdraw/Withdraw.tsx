@@ -116,7 +116,8 @@ export const Withdraw = ({ onBack }: EnterWithdrawalAddressProps) => {
     onWithdrawFunds,
     resetMutation,
   } = useWithdrawFunds();
-  const { setFundInitialValues, updateStep } = useAgentWallet();
+  const { setFundInitialValues, setFundEntrySource, updateStep } =
+    useAgentWallet();
 
   const [isWithdrawModalVisible, setWithdrawModalVisible] = useState(false);
 
@@ -140,6 +141,10 @@ export const Withdraw = ({ onBack }: EnterWithdrawalAddressProps) => {
       // it by AddressZero — FundAgent maps AddressZero → the chain's native
       // symbol automatically via TOKEN_CONFIG.
       setFundInitialValues({ [AddressZero]: gasError.prefill_amount_wei });
+      // The withdrawal signer is the AgentEOA. Force all native gas to the
+      // EOA in the Fund Agent flow rather than letting the EOA-vs-Safe split
+      // route it to the Safe based on a stale eoaTokenRequirements poll.
+      setFundEntrySource('gas-error');
       updateStep(STEPS.FUND_AGENT);
     },
     onClose: closeWithdrawModal,

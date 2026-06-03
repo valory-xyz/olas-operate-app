@@ -192,7 +192,8 @@ export const PartialWithdrawScreen = ({
     onPartialWithdraw,
     resetMutation,
   } = usePartialWithdraw();
-  const { setFundInitialValues, updateStep } = useAgentWallet();
+  const { setFundInitialValues, setFundEntrySource, updateStep } =
+    useAgentWallet();
 
   const [amounts, setAmounts] = useState<PartialWithdrawAmounts>(
     {} as PartialWithdrawAmounts,
@@ -274,6 +275,10 @@ export const PartialWithdrawScreen = ({
     caseType: 'agent-withdraw',
     onFund: (gasError) => {
       setFundInitialValues({ [AddressZero]: gasError.prefill_amount_wei });
+      // Partial-withdraw signer is the AgentEOA. Force all native gas to the
+      // EOA in the Fund Agent flow rather than letting the EOA-vs-Safe split
+      // route it to the Safe based on a stale eoaTokenRequirements poll.
+      setFundEntrySource('gas-error');
       updateStep(STEPS.FUND_AGENT);
     },
     onClose: closeModal,

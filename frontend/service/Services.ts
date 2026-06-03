@@ -163,9 +163,13 @@ const putService = async ({
   });
 
 /**
- * Starts a service
- * @param serviceTemplate
- * @returns Promise<Service>
+ * Starts a service.
+ *
+ * On a non-OK response, throws the parsed JSON error body (or `{}` if the
+ * body isn't JSON). Callers that care about the `INSUFFICIENT_SIGNER_GAS`
+ * branch should narrow via `isInsufficientGasError(err)` from `@/constants`.
+ *
+ * @throws InsufficientGasErrorBody | Record<string, unknown>
  */
 const startService = async (
   serviceConfigId: string,
@@ -173,11 +177,11 @@ const startService = async (
   fetch(`${BACKEND_URL_V2}/service/${serviceConfigId}`, {
     method: 'POST',
     headers: { ...CONTENT_TYPE_JSON_UTF8 },
-  }).then((response) => {
+  }).then(async (response) => {
     if (response.ok) {
       return response.json();
     }
-    throw new Error('Failed to start the service');
+    throw await response.json().catch(() => ({}));
   });
 
 const stopDeployment = async (

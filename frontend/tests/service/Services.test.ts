@@ -457,14 +457,19 @@ describe('ServicesService', () => {
       );
     });
 
-    it('throws error on non-ok response', async () => {
+    it('rejects with the parsed JSON body when response is not ok', async () => {
+      const errorBody = {
+        error_code: 'INSUFFICIENT_SIGNER_GAS',
+        chain: 'gnosis',
+        prefill_amount_wei: '750000000000000000',
+      };
       jest
         .spyOn(global, 'fetch')
-        .mockReturnValue(mockJsonResponse({}, false, 500));
+        .mockReturnValue(mockJsonResponse(errorBody, false, 400));
 
       await expect(
         ServicesService.startService(DEFAULT_SERVICE_CONFIG_ID),
-      ).rejects.toThrow('Failed to start the service');
+      ).rejects.toEqual(errorBody);
     });
   });
 

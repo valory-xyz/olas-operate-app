@@ -10,7 +10,9 @@ import { Modal } from './Modal';
 export type InsufficientSignerGasCase =
   | 'agent-withdraw'
   | 'pearl-withdraw'
-  | 'fund-agent';
+  | 'fund-agent'
+  | 'start-service'
+  | 'bridge';
 
 const COPY: Record<
   InsufficientSignerGasCase,
@@ -30,6 +32,16 @@ const COPY: Record<
     title: 'Transfer Failed: Insufficient Balance',
     walletLabel: 'Pearl wallet',
     ctaLabel: 'Fund Agent',
+  },
+  'start-service': {
+    title: "Couldn't Start Agent: Insufficient Balance",
+    walletLabel: 'agent wallet',
+    ctaLabel: 'Fund Agent',
+  },
+  bridge: {
+    title: 'Bridging Failed: Insufficient Balance',
+    walletLabel: 'Pearl wallet',
+    ctaLabel: 'Fund Pearl Wallet',
   },
 };
 

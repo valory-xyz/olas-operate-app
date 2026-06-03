@@ -61,6 +61,7 @@ export const useBridgingSteps = (
     isLoading: isBridgeExecuteLoading,
     isFetching: isBridgeExecuteFetching,
     isError: isBridgeExecuteError,
+    error: bridgeExecuteError,
     data: bridgeExecuteData,
   } = useQuery({
     queryKey: REACT_QUERY_KEYS.BRIDGE_EXECUTE_KEY(quoteId!),
@@ -201,5 +202,9 @@ export const useBridgingSteps = (
     isBridgingFailed,
     isBridgingCompleted,
     bridgeStatus,
+    /** Rejection body from `/bridge/execute` when the query fails. May be an
+     * `InsufficientGasErrorBody` — host should narrow via `isInsufficientGasError`. */
+    bridgeExecuteError,
+    isBridgeExecuteError,
   };
 };

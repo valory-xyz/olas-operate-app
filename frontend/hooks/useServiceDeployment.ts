@@ -1,8 +1,9 @@
 import { message } from 'antd';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { MasterEoa, MasterSafe, PAGES } from '@/constants';
 import { MiddlewareDeploymentStatusMap } from '@/constants/deployment';
+import { isInsufficientGasError } from '@/constants/errors';
 import { useBalanceContext } from '@/hooks/useBalanceContext';
 import { useDeployability } from '@/hooks/useDeployability';
 import { useElectronApi } from '@/hooks/useElectronApi';
@@ -137,12 +138,21 @@ export const useServiceDeployment = () => {
     updateBalances,
   ]);
 
+  // Surface the start-failure error (if any) so a host can render the
+  // InsufficientSignerGasModal when the error is an INSUFFICIENT_SIGNER_GAS
+  // body. We track this outside react-query because handleStart is a plain
+  // callback and existing callers (and tests) rely on its imperative shape.
+  const [startError, setStartError] = useState<unknown>(null);
+  const isStartError = startError !== null;
+  const resetStart = useCallback(() => setStartError(null), []);
+
   const handleStart = useCallback(async () => {
     if (!masterWallets?.[0]) return;
     if (!selectedStakingProgramId) {
       throw new Error('Staking program ID required');
     }
 
+    setStartError(null);
     pauseAllPolling();
     overrideSelectedServiceStatus(MiddlewareDeploymentStatusMap.DEPLOYING);
 
@@ -164,7 +174,15 @@ export const useServiceDeployment = () => {
       });
     } catch (error) {
       console.error('Error during start:', error);
-      showNotification?.('An error occurred while starting. Please try again.');
+      // For non-gas errors, surface a generic toast. Gas errors are surfaced
+      // via the InsufficientSignerGasModal on the host (AgentNotRunningButton)
+      // — a toast on top would duplicate the signal.
+      if (!isInsufficientGasError(error)) {
+        showNotification?.(
+          'An error occurred while starting. Please try again.',
+        );
+      }
+      setStartError(error);
       overrideSelectedServiceStatus(null);
       resumeAllPolling();
       throw error;
@@ -199,5 +217,12 @@ export const useServiceDeployment = () => {
     startService,
   ]);
 
-  return { isLoading, isDeployable, handleStart };
+  return {
+    isLoading,
+    isDeployable,
+    handleStart,
+    isStartError,
+    startError,
+    resetStart,
+  };
 };

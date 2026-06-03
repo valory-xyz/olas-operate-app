@@ -32,6 +32,8 @@ import { bigintMin } from '@/utils';
 import { asEvmChainId } from '@/utils/middlewareHelpers';
 import { parseUnits } from '@/utils/numberFormatters';
 
+import { useAgentWallet } from '../AgentWalletProvider';
+
 const { Title, Text } = Typography;
 
 const TransferInProgress = () => (
@@ -110,6 +112,7 @@ const useConfirmTransfer = () => {
   const { selectedService } = useServices();
   const { refetch } = useBalanceAndRefillRequirementsContext();
   const { updateBalances } = useBalanceContext();
+  const { setFundEntrySource } = useAgentWallet();
   const { isPending, isSuccess, isError, error, mutateAsync, reset } =
     useMutation<void, unknown, ChainFunds>({
       mutationFn: async (funds: ChainFunds) => {
@@ -119,6 +122,9 @@ const useConfirmTransfer = () => {
         await FundService.fundAgent({ funds, serviceConfigId });
       },
       onSuccess: () => {
+        // Gas-error entry has been satisfied; future entries (e.g. via
+        // AgentLowBalanceAlert) should use the default EOA-vs-Safe split.
+        setFundEntrySource('normal');
         // Refetch funding requirements and wallet balances because balances are changed
         refetch();
         updateBalances();
@@ -157,19 +163,26 @@ type ConfirmTransferProps = {
  *
  * Converts user-entered amounts into keyed by token address amounts, allocating funds
  * to the service EOA first to cover its requirements, and sending any remainder to safe.
+ *
+ * When `forceEoaOnly` is true, native gas (AddressZero) bypasses the EOA-vs-Safe split
+ * and routes 100% to the EOA — used when the user entered this flow from an
+ * INSUFFICIENT_SIGNER_GAS modal where the EOA is the wallet that needs funding.
+ * ERC20 amounts still follow the regular split.
  */
-const prepareAgentFundsForTransfer = ({
+export const prepareAgentFundsForTransfer = ({
   fundsToTransfer,
   middlewareHomeChainId,
   serviceSafe,
   serviceEoa,
   eoaTokenRequirements,
+  forceEoaOnly = false,
 }: {
   fundsToTransfer: TokenAmounts;
   middlewareHomeChainId: MiddlewareChain;
   serviceSafe: { address: Address };
   serviceEoa: { address: Address };
   eoaTokenRequirements: Maybe<TokenBalanceRecord>;
+  forceEoaOnly?: boolean;
 }): ChainFunds => {
   const chainTokenConfig = TOKEN_CONFIG[asEvmChainId(middlewareHomeChainId)];
   const tokenAmountsByAddress: TokenAmountMap = {};
@@ -193,11 +206,19 @@ const prepareAgentFundsForTransfer = ({
   const agentFunds: Record<Address, TokenAmountMap> = {};
 
   Object.entries(tokenAmountsByAddress).forEach(([tokenAddress, amount]) => {
+    const amountBigInt = BigInt(amount);
+
+    // Gas-error entry: route all native gas to the EOA regardless of the
+    // polled eoaTokenRequirements (which may report 0 if the EOA is fine
+    // for "normal operation" but not for the specific failed transaction).
+    if (forceEoaOnly && tokenAddress === AddressZero) {
+      set(agentFunds, `${eoaAddress}.${tokenAddress}`, amountBigInt.toString());
+      return;
+    }
+
     const requiredForEoa = BigInt(
       (eoaTokenRequirements?.[tokenAddress as Address] as string) || '0',
     );
-
-    const amountBigInt = BigInt(amount);
     const allocateToEoa = bigintMin(amountBigInt, requiredForEoa);
 
     if (allocateToEoa > 0n) {
@@ -234,6 +255,7 @@ export const ConfirmTransfer = ({
   const { onFundAgent, isLoading, isSuccess, isError, error, resetMutation } =
     useConfirmTransfer();
   const { eoaTokenRequirements } = useAgentFundingRequests();
+  const { fundEntrySource } = useAgentWallet();
   const { goto } = usePageState();
 
   const [isTransferStateModalVisible, setIsTransferStateModalVisible] =
@@ -256,6 +278,7 @@ export const ConfirmTransfer = ({
       serviceSafe,
       serviceEoa,
       eoaTokenRequirements,
+      forceEoaOnly: fundEntrySource === 'gas-error',
     });
 
     setIsTransferStateModalVisible(true);
@@ -267,6 +290,7 @@ export const ConfirmTransfer = ({
     serviceSafe,
     serviceEoa,
     eoaTokenRequirements,
+    fundEntrySource,
   ]);
 
   const handleClose = useCallback(() => {
