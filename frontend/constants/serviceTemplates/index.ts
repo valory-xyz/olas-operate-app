@@ -1,3 +1,4 @@
+export { AGENT_UI_RELEASES, type AgentUiRelease } from './agentUiReleases';
 export { KPI_DESC_PREFIX } from './constants';
 export {
   MODIUS_SERVICE_TEMPLATE,
