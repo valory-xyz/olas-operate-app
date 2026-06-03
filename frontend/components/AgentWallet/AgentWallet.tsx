@@ -5,6 +5,7 @@ import { MainContentContainer } from '@/components/ui';
 import { AgentWalletProvider, useAgentWallet } from './AgentWalletProvider';
 import { BalancesAndAssets } from './BalancesAndAssets/BalancesAndAssets';
 import { FundAgent } from './FundAgent/FundAgent';
+import { PartialWithdrawScreen } from './PartialWithdraw';
 import { STEPS } from './types';
 import { Withdraw } from './Withdraw/Withdraw';
 
@@ -14,19 +15,18 @@ import { Withdraw } from './Withdraw/Withdraw';
 const AgentWalletContent = () => {
   const { walletStep: step, updateStep } = useAgentWallet();
 
-  const handleNext = useCallback(() => {
-    switch (step) {
-      case STEPS.AGENT_WALLET_SCREEN:
-        updateStep(STEPS.WITHDRAW_FROM_AGENT_WALLET);
-        break;
-      default:
-        break;
-    }
-  }, [step, updateStep]);
+  const handleDecommissionConfirmed = useCallback(() => {
+    updateStep(STEPS.WITHDRAW_FROM_AGENT_WALLET);
+  }, [updateStep]);
+
+  const handlePartialWithdraw = useCallback(() => {
+    updateStep(STEPS.PARTIAL_WITHDRAW_FROM_AGENT_WALLET);
+  }, [updateStep]);
 
   const handleBack = useCallback(() => {
     switch (step) {
       case STEPS.WITHDRAW_FROM_AGENT_WALLET:
+      case STEPS.PARTIAL_WITHDRAW_FROM_AGENT_WALLET:
       case STEPS.FUND_AGENT:
         updateStep(STEPS.AGENT_WALLET_SCREEN);
         break;
@@ -45,18 +45,27 @@ const AgentWalletContent = () => {
       case STEPS.AGENT_WALLET_SCREEN:
         return (
           <BalancesAndAssets
-            onLockedFundsWithdrawn={handleNext}
+            onPartialWithdraw={handlePartialWithdraw}
+            onDecommissionConfirmed={handleDecommissionConfirmed}
             onFundAgent={onFundAgent}
           />
         );
       case STEPS.WITHDRAW_FROM_AGENT_WALLET:
         return <Withdraw onBack={handleBack} />;
+      case STEPS.PARTIAL_WITHDRAW_FROM_AGENT_WALLET:
+        return <PartialWithdrawScreen onBack={handleBack} />;
       case STEPS.FUND_AGENT:
         return <FundAgent onBack={handleBack} />;
       default:
         throw new Error('Invalid step');
     }
-  }, [step, handleBack, handleNext, onFundAgent]);
+  }, [
+    step,
+    handleBack,
+    handleDecommissionConfirmed,
+    handlePartialWithdraw,
+    onFundAgent,
+  ]);
 
   return content;
 };

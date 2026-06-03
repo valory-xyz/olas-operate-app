@@ -176,7 +176,7 @@ describe('Withdraw (AgentWallet)', () => {
     expect(updateStep).not.toHaveBeenCalled();
   });
 
-  it('renders the loading state while the mutation is pending', () => {
+  it('renders the decommission-flow loading copy while the mutation is pending', () => {
     mockUseWithdrawFunds.mockReturnValue({
       isLoading: true,
       isError: false,
@@ -188,7 +188,13 @@ describe('Withdraw (AgentWallet)', () => {
     render(<Withdraw onBack={jest.fn()} />);
     fireEvent.click(screen.getByTestId('withdraw-button'));
 
-    expect(screen.getByText('Withdrawal in Progress')).toBeInTheDocument();
+    // Decommission flow uses 3-4 minute copy; partial-withdraw uses 1-2.
+    expect(
+      screen.getByText('Agent Decommission in Progress'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('It usually takes 3-4 minutes.'),
+    ).toBeInTheDocument();
     expect(
       screen.queryByTestId('insufficient-gas-modal'),
     ).not.toBeInTheDocument();
