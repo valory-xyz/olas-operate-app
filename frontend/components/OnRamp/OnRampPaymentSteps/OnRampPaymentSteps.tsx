@@ -45,6 +45,12 @@ export const OnRampPaymentSteps = ({
 
   const { goto } = usePageState();
   const queryClient = useQueryClient();
+  // Set to true on first dismiss and intentionally never reset for the
+  // component's lifetime — same rationale as `BridgeInProgress`:
+  // bridge-execute is a `useQuery` and reopening the modal on every refetch
+  // of the same cached gas error is the wrong UX. The bridging-step retry
+  // CTA (NEED_REFILL outcome) is the recovery path; a fresh gas error after
+  // remount would re-show the modal as expected.
   const [isGasModalDismissed, setIsGasModalDismissed] = useState(false);
 
   // step 2: Swap funds

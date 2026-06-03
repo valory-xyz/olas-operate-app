@@ -165,11 +165,16 @@ const putService = async ({
 /**
  * Starts a service.
  *
- * On a non-OK response, throws the parsed JSON error body (or `{}` if the
- * body isn't JSON). Callers that care about the `INSUFFICIENT_SIGNER_GAS`
- * branch should narrow via `isInsufficientGasError(err)` from `@/constants`.
+ * On a non-OK response, throws an Error whose `.message` is the backend's
+ * error string (or a generic fallback) and which has the full parsed JSON
+ * body merged onto it as own properties — so:
+ *   - `${err}` / log lines stay diagnosable (was `[object Object]` when we
+ *     threw the body directly; AutoRun's `useAutoRunStartOperations`
+ *     stringifies the error into its `lastInfraError` reason).
+ *   - `isInsufficientGasError(err)` still narrows (the Error is
+ *     `typeof 'object'` with `error_code`/`chain`/`prefill_amount_wei`).
  *
- * @throws InsufficientGasErrorBody | Record<string, unknown>
+ * @throws Error & Partial<InsufficientGasErrorBody>
  */
 const startService = async (
   serviceConfigId: string,
@@ -181,7 +186,12 @@ const startService = async (
     if (response.ok) {
       return response.json();
     }
-    throw await response.json().catch(() => ({}));
+    const body = await response.json().catch(() => ({}));
+    const err = new Error(
+      (body as { error?: string })?.error || 'Failed to start the service',
+    );
+    Object.assign(err, body);
+    throw err;
   });
 
 const stopDeployment = async (

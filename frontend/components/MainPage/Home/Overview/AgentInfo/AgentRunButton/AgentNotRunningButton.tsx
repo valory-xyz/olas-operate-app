@@ -36,8 +36,10 @@ export const AgentNotRunningButton = () => {
         initialFundEntrySource: 'gas-error',
       });
     },
+    // Dismissal clears `startError` → `isStartError` flips to false → the
+    // modal narrows out on the next render. No separate UI-only dismiss
+    // flag to manage, so `resetMutation` would be a no-op duplicate here.
     onClose: resetStart,
-    resetMutation: resetStart,
   });
 
   const onStart = async () => {

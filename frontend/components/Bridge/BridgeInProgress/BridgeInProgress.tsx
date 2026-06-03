@@ -58,6 +58,14 @@ export const BridgeInProgress = ({
   const symbols = transfers.map((transfer) => transfer.toSymbol);
 
   const [isBridgeRetrying, setIsBridgeRetrying] = useState(false);
+  // Set to true on first dismiss and intentionally never reset for the
+  // component's lifetime. The bridge-execute is a `useQuery`, so dismissing
+  // alone (without this flag) would trigger an immediate refetch — the same
+  // gas error would land in cache and re-open the modal on the next render.
+  // Recovery for the user is via the bridging-step retry CTA (which routes
+  // to NEED_REFILL), not by re-rendering this modal. A genuinely-new gas
+  // error on a follow-up bridge attempt is reachable by remounting (e.g.
+  // navigating away and back, which is the natural retry path).
   const [isGasModalDismissed, setIsGasModalDismissed] = useState(false);
   const refetchBridgeExecute = useRetryBridge();
 
