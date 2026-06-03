@@ -574,10 +574,6 @@ export const makeAgentFundingEvent = (
     blockTimestamp: `${DEFAULT_TS_CHECKPOINT}`,
     totalNativeAmount: '0',
     totalOlasAmount: '0',
-    agentSafe: {
-      id: MOCK_MULTISIG_ADDRESS,
-      service: { id: '42', agentIds: [25] },
-    },
     transfers: [
       makeFundsMovement({
         id: `${txHash}-0`,

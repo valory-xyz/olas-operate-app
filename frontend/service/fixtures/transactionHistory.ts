@@ -253,7 +253,6 @@ export const TRANSACTION_HISTORY_FIXTURE = (
     blockTimestamp: t(timestampOffset),
     totalNativeAmount: '0',
     totalOlasAmount: '0',
-    agentSafe: AGENT_SAFE_REF,
     transfers: [fundingTransfer(txId, timestampOffset)],
   });
 

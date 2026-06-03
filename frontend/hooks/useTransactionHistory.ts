@@ -87,6 +87,8 @@ const groupMovementsByTxAndCategory = (
       agentInstanceAddress: isAgentEoaRecipient
         ? (movement.to as Address)
         : null,
+      agentIds: movement.agentSafe?.service?.agentIds ?? null,
+      serviceId: movement.agentSafe?.service?.id ?? null,
       transfers: [transfer],
     });
   }
@@ -97,23 +99,40 @@ const fundingEventToRow = (
   event: AgentFundingEvent,
   masterSafe: string,
 ): TransactionHistoryRow => {
+  // The agent safe (and its service) ride on the transfers; use the first
+  // that carries them.
+  const agentSafeId =
+    event.transfers.map((t) => t.agentSafe?.id).find(Boolean) ?? null;
+  const agentSafeAddrLc = agentSafeId ? agentSafeId.toLowerCase() : null;
+  const svc = event.transfers.map((t) => t.agentSafe?.service).find(Boolean);
+
   // If any transfer recipient is an EOA-style address (not the AgentSafe),
   // surface it so the UI can label as "Allocated for execution costs".
-  const agentSafeAddr = event.agentSafe.id.toLowerCase();
-  const eoaTransfer = event.transfers.find(
-    (t) => t.to.toLowerCase() !== agentSafeAddr,
-  );
+  const eoaTransfer = agentSafeAddrLc
+    ? event.transfers.find((t) => t.to.toLowerCase() !== agentSafeAddrLc)
+    : undefined;
 
   return {
     id: event.id,
     category: FUNDS_CATEGORY.MASTER_TO_AGENT,
     blockTimestamp: Number(event.blockTimestamp),
     transactionHash: event.txHash,
-    agentSafeAddress: event.agentSafe.id as Address,
+    agentSafeAddress: (agentSafeId as Address | null) ?? null,
     agentInstanceAddress: (eoaTransfer?.to as Address | undefined) ?? null,
+    agentIds: svc?.agentIds ?? null,
+    serviceId: svc?.id ?? null,
     transfers: event.transfers.map((t) => toTransfer(t, masterSafe)),
   };
 };
+
+// "Setup complete" / opening-balance rows are hidden for now — we can't yet
+// populate opening balances (Path A needs an archive RPC at historyFloorBlock).
+// Re-enable these categories once that's handled.
+const HIDDEN_CATEGORIES = new Set<FundsMovement['category']>([
+  FUNDS_CATEGORY.SAFE_DEPLOYED,
+  FUNDS_CATEGORY.SAFE_SETUP_TRANSFER,
+  FUNDS_CATEGORY.OPENING_BALANCE,
+]);
 
 export const buildTransactionHistoryRows = (
   data: TransactionHistoryResponse,
@@ -123,10 +142,13 @@ export const buildTransactionHistoryRows = (
     data.agentFundingEvents.map((e) => e.txHash.toLowerCase()),
   );
 
-  // Drop standalone movements that belong to an AgentFundingEvent — they're
-  // already represented by the aggregated row.
+  // Drop standalone movements that belong to an AgentFundingEvent (already
+  // represented by the aggregated row) or that are currently-hidden setup /
+  // opening-balance rows.
   const standaloneMovements = data.fundsMovements.filter(
-    (m) => !fundingEventTxHashes.has(m.transactionHash.toLowerCase()),
+    (m) =>
+      !fundingEventTxHashes.has(m.transactionHash.toLowerCase()) &&
+      !HIDDEN_CATEGORIES.has(m.category),
   );
 
   const standaloneRows = groupMovementsByTxAndCategory(

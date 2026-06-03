@@ -6,7 +6,6 @@ import { Alert, CardFlex, InfoTooltip } from '@/components/ui';
 import { COLOR } from '@/constants';
 import { usePearlWallet } from '@/context/PearlWalletProvider';
 import { useTransactionHistory } from '@/hooks/useTransactionHistory';
-import { FUNDS_CATEGORY } from '@/types/TransactionHistory';
 
 import { TransactionHistoryRow } from './TransactionHistoryRow';
 
@@ -45,22 +44,9 @@ const CenteredPad = styled(Flex).attrs({
   padding: 32px 24px;
 `;
 
-const HistoryFloorDivider = styled(Flex).attrs({ align: 'center', gap: 8 })`
-  padding: 12px 0;
-  color: ${COLOR.TEXT_NEUTRAL_TERTIARY};
-  font-size: 12px;
-
-  &::before,
-  &::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: ${COLOR.GRAY_3};
-  }
-`;
-
 export const TransactionHistory = () => {
   const { walletChainId, masterSafeAddress } = usePearlWallet();
+
   const chainId = walletChainId ?? undefined;
   const { rows, meta, isFetched, isLoading, isError } = useTransactionHistory({
     chainId,
@@ -106,25 +92,9 @@ export const TransactionHistory = () => {
         ) : null}
 
         {isFetched && rows.length > 0
-          ? (() => {
-              // Find the boundary between live tx rows and the OPENING_BALANCE
-              // snapshot rows at the bottom of the chronological list — render
-              // a "History starts here" divider in between.
-              const firstOpeningBalanceIndex = rows.findIndex(
-                (r) => r.category === FUNDS_CATEGORY.OPENING_BALANCE,
-              );
-              return rows.map((row, i) => (
-                <span key={row.id}>
-                  {i === firstOpeningBalanceIndex &&
-                  firstOpeningBalanceIndex > 0 ? (
-                    <HistoryFloorDivider>
-                      History starts here
-                    </HistoryFloorDivider>
-                  ) : null}
-                  <TransactionHistoryRow row={row} chainId={chainId} />
-                </span>
-              ));
-            })()
+          ? rows.map((row) => (
+              <TransactionHistoryRow key={row.id} row={row} chainId={chainId} />
+            ))
           : null}
       </CardFlex>
     </Flex>

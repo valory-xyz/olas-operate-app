@@ -88,7 +88,6 @@ export const AgentFundingEventSchema = z.object({
   blockTimestamp: z.string(),
   totalNativeAmount: z.string(),
   totalOlasAmount: z.string(),
-  agentSafe: AgentSafeRefSchema,
   transfers: z.array(FundsMovementSchema),
 });
 export type AgentFundingEvent = z.infer<typeof AgentFundingEventSchema>;
@@ -139,5 +138,10 @@ export type TransactionHistoryRow = {
   transactionHash: string;
   agentSafeAddress: Address | null;
   agentInstanceAddress: Address | null;
+  // Canonical on-chain agent ids + service id for this row's agent, carried
+  // from the subgraph so the agent can be resolved by id (and the nickname
+  // generated) even when the service isn't loaded locally.
+  agentIds?: number[] | null;
+  serviceId?: string | null;
   transfers: TransactionHistoryTransfer[];
 };

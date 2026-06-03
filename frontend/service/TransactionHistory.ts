@@ -24,9 +24,6 @@ const FETCH_TRANSACTION_HISTORY_QUERY = gql`
       where: {
         masterSafe: $masterSafe
         category_in: [
-          SAFE_DEPLOYED
-          OPENING_BALANCE
-          SAFE_SETUP_TRANSFER
           SERVICE_BOND_DEPOSIT
           SERVICE_BOND_REFUND
           MASTER_FUNDING_IN
@@ -69,13 +66,6 @@ const FETCH_TRANSACTION_HISTORY_QUERY = gql`
       blockTimestamp
       totalNativeAmount
       totalOlasAmount
-      agentSafe {
-        id
-        service {
-          id
-          agentIds
-        }
-      }
       transfers {
         id
         category

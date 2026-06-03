@@ -15,18 +15,22 @@ jest.mock('graphql-request', () => ({
 }));
 
 describe('TransactionHistoryService.get', () => {
-  afterEach(() => {
-    jest.clearAllMocks();
-    // Reset URL overrides between tests
-    for (const key of Object.keys(
-      TRANSACTION_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN,
-    )) {
+  // Each test controls the URL map explicitly — clear it before and after so a
+  // populated default (or a leftover from another test) can't leak in.
+  const clearUrls = () => {
+    for (const key of Object.keys(TRANSACTION_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN)) {
       delete TRANSACTION_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN[
         Number(
           key,
         ) as keyof typeof TRANSACTION_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN
       ];
     }
+  };
+
+  beforeEach(clearUrls);
+  afterEach(() => {
+    jest.clearAllMocks();
+    clearUrls();
   });
 
   describe('when subgraph URL is not configured', () => {

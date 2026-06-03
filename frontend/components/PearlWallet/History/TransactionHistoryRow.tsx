@@ -11,14 +11,13 @@ import {
 } from '@/constants';
 import { EvmChainId } from '@/constants/chains';
 import { Address } from '@/types/Address';
-import {
-  FUNDS_CATEGORY,
-  TransactionHistoryRow as TransactionHistoryRowType,
-} from '@/types/TransactionHistory';
+import { TransactionHistoryRow as TransactionHistoryRowType } from '@/types/TransactionHistory';
+import { generateAgentName } from '@/utils/generateAgentName';
 import { asMiddlewareChain } from '@/utils/middlewareHelpers';
 import { balanceFormat, formatUnitsToNumber } from '@/utils/numberFormatters';
 import { truncateAddress } from '@/utils/truncate';
 
+import { agentDisplayNameByAgentIds } from './agentByAgentId';
 import { getTransactionRowLabel } from './labels';
 import { resolveToken } from './tokenLookup';
 import { TransactionRowIcon } from './TransactionRowIcon';
@@ -92,7 +91,18 @@ export const TransactionHistoryRow = ({
     [lookupAgent, row.agentSafeAddress],
   );
 
-  const label = getTransactionRowLabel(row, agent?.displayName ?? null);
+  // Prefer the locally-loaded service (gives the user's own nickname); fall
+  // back to resolving the agent by its canonical agentId + deterministic
+  // nickname from the serviceId, so any service resolves from subgraph data.
+  const displayName =
+    agent?.displayName ?? agentDisplayNameByAgentIds(row.agentIds);
+  const nickname =
+    agent?.nickname ??
+    (chainId && row.serviceId
+      ? generateAgentName(chainId, Number(row.serviceId))
+      : null);
+
+  const label = getTransactionRowLabel(row, displayName);
 
   const explorerUrl = chainId
     ? `${EXPLORER_URL_BY_MIDDLEWARE_CHAIN[asMiddlewareChain(chainId)]}/tx/${row.transactionHash}`
@@ -105,7 +115,7 @@ export const TransactionHistoryRow = ({
         <Flex vertical gap={2} style={{ minWidth: 0 }}>
           <Flex gap={12} align="center" wrap="wrap" style={{ minHeight: 28 }}>
             <Text className="text-base text-neutral-primary">{label}</Text>
-            {agent?.nickname ? <AgentTag>{agent.nickname}</AgentTag> : null}
+            {nickname ? <AgentTag>{nickname}</AgentTag> : null}
           </Flex>
           <Flex gap={4} align="center" className="text-xs">
             <Text className="text-xs text-neutral-tertiary">
@@ -131,22 +141,6 @@ export const TransactionHistoryRow = ({
 
       <AmountColumn>
         {row.transfers.map((transfer, i) => {
-          // Subgraph emits OPENING_BALANCE with token=null + amount=0 as a
-          // placeholder for the user's pre-discovery native balance (which is
-          // genuinely unrecoverable from on-chain events). Render "unknown"
-          // instead of "+0.00" so we don't imply the balance was actually 0.
-          const isNativeOpeningBalance =
-            row.category === FUNDS_CATEGORY.OPENING_BALANCE &&
-            transfer.tokenAddress == null &&
-            transfer.amount === '0';
-          if (isNativeOpeningBalance) {
-            return (
-              <Text key={i} className="text-neutral-tertiary text-base">
-                unknown
-              </Text>
-            );
-          }
-
           const tokenInfo = resolveToken(chainId, transfer.tokenAddress);
           const amountNumber = formatUnitsToNumber(
             transfer.amount,

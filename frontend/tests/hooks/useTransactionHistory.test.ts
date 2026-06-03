@@ -86,7 +86,7 @@ describe('buildTransactionHistoryRows', () => {
         }),
         makeFundsMovement({
           id: 'm-1',
-          category: 'SAFE_DEPLOYED',
+          category: 'MASTER_WITHDRAWAL',
           transactionHash: MOCK_TX_HASH_1,
           blockTimestamp: '100',
         }),
@@ -95,7 +95,7 @@ describe('buildTransactionHistoryRows', () => {
 
     const rows = buildTransactionHistoryRows(data, DEFAULT_SAFE_ADDRESS);
     expect(rows.map((r) => r.category).sort()).toEqual([
-      'SAFE_DEPLOYED',
+      'MASTER_WITHDRAWAL',
       'SERVICE_BOND_DEPOSIT',
     ]);
   });
@@ -146,6 +146,10 @@ describe('buildTransactionHistoryRows', () => {
               to: MOCK_MULTISIG_ADDRESS,
               transactionHash: fundingTx,
               blockTimestamp: '200',
+              agentSafe: {
+                id: MOCK_MULTISIG_ADDRESS,
+                service: { id: '42', agentIds: [25] },
+              },
             }),
             makeFundsMovement({
               id: `${fundingTx}-1`,
@@ -250,6 +254,10 @@ describe('buildTransactionHistoryRows', () => {
               from: DEFAULT_SAFE_ADDRESS,
               to: MOCK_INSTANCE_ADDRESS,
               transactionHash: fundingTx,
+              agentSafe: {
+                id: MOCK_MULTISIG_ADDRESS,
+                service: { id: '42', agentIds: [25] },
+              },
             }),
           ],
         }),
