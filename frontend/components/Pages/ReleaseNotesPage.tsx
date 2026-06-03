@@ -13,7 +13,10 @@ import {
   IPFS_GATEWAY_URL,
   PAGES,
 } from '@/constants';
-import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
+import {
+  AGENT_UI_RELEASES,
+  SERVICE_TEMPLATES,
+} from '@/constants/serviceTemplates';
 import { useElectronApi, usePageState, useServices } from '@/hooks';
 
 import { BackButton, cardStyles } from '../ui';
@@ -22,8 +25,11 @@ const { Title, Text } = Typography;
 
 const ReleaseNotesGrid = styled.div`
   display: grid;
-  grid-template-columns: 1fr auto auto;
-  align-items: center;
+  grid-template-columns: minmax(96px, 1fr) auto auto;
+  // Stretch cells to the full row height so each cell's bottom border meets at
+  // the same line — the version cell is taller (two stacked badges) than the
+  // name/hash cells, and centering would leave the dividers misaligned.
+  align-items: stretch;
 `;
 
 const cellBase = css<{ $hasBorder?: boolean; $justifyContent?: string }>`
@@ -31,7 +37,7 @@ const cellBase = css<{ $hasBorder?: boolean; $justifyContent?: string }>`
   align-items: center;
   justify-content: ${({ $justifyContent }) => $justifyContent || 'flex-start'};
   min-height: 60px;
-  padding: 12px 16px;
+  padding: 12px 14px;
   ${({ $hasBorder }) =>
     $hasBorder ? `border-bottom: 1px solid ${COLOR.BORDER_GRAY};` : ''}
 `;
@@ -39,6 +45,14 @@ const cellBase = css<{ $hasBorder?: boolean; $justifyContent?: string }>`
 const NameCell = styled.div<{ $hasBorder?: boolean }>`
   ${cellBase}
   gap: 12px;
+  min-width: 0;
+`;
+
+// Keep agent names breaking only on whitespace (never mid-word) so a narrow
+// window wraps "PettBro by Pett.ai" cleanly instead of shattering "Omenstrat".
+const AgentName = styled(Text)`
+  word-break: keep-all;
+  overflow-wrap: normal;
 `;
 
 const ActionCell = styled.div<{
@@ -86,6 +100,51 @@ const VersionBadge = ({ href, version }: { href: string; version: string }) => (
     </a>
   </Tooltip>
 );
+
+// Each row keeps its label and badge together (e.g. "Agent  v0.38.7-rc1"), and
+// the rows are right-aligned so the badges sit flush against the right edge.
+const VersionStack = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+`;
+
+const VersionRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+
+const VersionLabel = styled(Text)`
+  white-space: nowrap;
+`;
+
+const LabeledVersion = ({
+  label,
+  href,
+  version,
+}: {
+  label: string;
+  href: string;
+  version: string;
+}) => (
+  <VersionRow>
+    <VersionLabel type="secondary" className="text-sm">
+      {label}
+    </VersionLabel>
+    <VersionBadge href={href} version={version} />
+  </VersionRow>
+);
+
+/**
+ * Trims a release tag to its semver core for display, e.g.
+ * `v0.1.20-omenstrat-trader` → `v0.1.20`. The market suffix is redundant with
+ * the agent's own row, and dropping it keeps the badge narrow. The full tag is
+ * still used for the release link.
+ */
+const toDisplayVersion = (tag: string) =>
+  tag.match(/^v?\d+\.\d+\.\d+/)?.[0] ?? tag;
 
 const AgentHashLink = ({ href }: { href: string }) => (
   <AgentHashAnchor href={href} target="_blank" rel="noopener noreferrer">
@@ -139,6 +198,7 @@ export const ReleaseNotesPage = () => {
       if (!agent) return [];
       const { displayName } = agent[1];
       const { owner, name, version } = template.agent_release.repository;
+      const uiRelease = AGENT_UI_RELEASES[template.agentType];
       return [
         {
           agentType: template.agentType,
@@ -146,6 +206,10 @@ export const ReleaseNotesPage = () => {
           releaseUrl: `https://github.com/${owner}/${name}/releases/tag/${version}`,
           ipfsUrl: `${IPFS_GATEWAY_URL}${template.hash}`,
           version,
+          uiVersion: uiRelease ? toDisplayVersion(uiRelease.version) : null,
+          uiReleaseUrl: uiRelease
+            ? `https://github.com/${uiRelease.owner}/${uiRelease.name}/releases/tag/${uiRelease.version}`
+            : null,
         },
       ];
     });
@@ -178,7 +242,10 @@ export const ReleaseNotesPage = () => {
 
               <ActionCell $hasBorder={agentRows.length > 0} />
 
-              <ActionCell $hasBorder={agentRows.length > 0}>
+              <ActionCell
+                $hasBorder={agentRows.length > 0}
+                $justifyContent="flex-end"
+              >
                 <VersionBadge
                   href={`${GITHUB_API_RELEASES}/tag/v${latestTag}`}
                   version={`v${latestTag}`}
@@ -190,7 +257,15 @@ export const ReleaseNotesPage = () => {
           {/* Agent rows */}
           {agentRows.map(
             (
-              { agentType, displayName, releaseUrl, ipfsUrl, version },
+              {
+                agentType,
+                displayName,
+                releaseUrl,
+                ipfsUrl,
+                version,
+                uiVersion,
+                uiReleaseUrl,
+              },
               index,
             ) => {
               const hasBorder = index < agentRows.length - 1;
@@ -205,7 +280,7 @@ export const ReleaseNotesPage = () => {
                         height={32}
                       />
                     </AgentIconWrapper>
-                    <Text strong>{displayName}</Text>
+                    <AgentName strong>{displayName}</AgentName>
                   </NameCell>
 
                   <ActionCell $hasBorder={hasBorder}>
@@ -213,7 +288,22 @@ export const ReleaseNotesPage = () => {
                   </ActionCell>
 
                   <ActionCell $hasBorder={hasBorder} $justifyContent="flex-end">
-                    <VersionBadge href={releaseUrl} version={version} />
+                    {uiVersion && uiReleaseUrl ? (
+                      <VersionStack>
+                        <LabeledVersion
+                          label="Agent"
+                          href={releaseUrl}
+                          version={version}
+                        />
+                        <LabeledVersion
+                          label="Agent UI"
+                          href={uiReleaseUrl}
+                          version={uiVersion}
+                        />
+                      </VersionStack>
+                    ) : (
+                      <VersionBadge href={releaseUrl} version={version} />
+                    )}
                   </ActionCell>
                 </Row>
               );
