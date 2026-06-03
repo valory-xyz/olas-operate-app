@@ -28,3 +28,10 @@ package = false
 # provenance we had under Poetry). Drop this only if we want to
 # opt every release into uv-managed interpreters.
 python-preference = "only-system"
+
+# Override the PyPI middleware pin to the OPE-1617 PR #445 head while QA
+# validates the structured INSUFFICIENT_SIGNER_GAS error contract. Drop
+# this block once the middleware ships a versioned release containing
+# https://github.com/valory-xyz/olas-operate-middleware/pull/445.
+[tool.uv.sources]
+olas-operate-middleware = { git = "https://github.com/valory-xyz/olas-operate-middleware.git", rev = "c40e3c33f529a9af77c7a1c3a17cfbaf70df424e" }
