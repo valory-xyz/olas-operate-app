@@ -216,15 +216,6 @@ wheels = [
 ]
 
 [[package]]
-name = "base58"
-version = "2.1.1"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/7f/45/8ae61209bb9015f516102fa559a2914178da1d5868428bd86a1b4421141d/base58-2.1.1.tar.gz", hash = "sha256:c5d0cb3f5b6e81e8e35da5754388ddcc6d0d14b6c6a132cb93d69ed580a7278c", size = 6528, upload-time = "2021-10-30T22:12:17.858Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/4a/45/ec96b29162a402fc4c1c5512d114d7b3787b9d1c2ec241d9568b4816ee23/base58-2.1.1-py3-none-any.whl", hash = "sha256:11a36f4d3ce51dfc1043f3218591ac4eb1ceb172919cebe05b52a5bcc8d245c2", size = 5621, upload-time = "2021-10-30T22:12:16.658Z" },
-]
-
-[[package]]
 name = "based58"
 version = "0.1.1"
 source = { registry = "https://pypi.org/simple" }
@@ -1160,21 +1151,6 @@ wheels = [
 ]
 
 [[package]]
-name = "multiaddr"
-version = "0.0.9"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "base58" },
-    { name = "netaddr" },
-    { name = "six" },
-    { name = "varint" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/12/f4/fa5353022ad8e0fd364bfa8b474f9562c36ce1305fad31fe52b849e30795/multiaddr-0.0.9.tar.gz", hash = "sha256:30b2695189edc3d5b90f1c303abb8f02d963a3a4edf2e7178b975eb417ab0ecf", size = 24726, upload-time = "2019-12-23T07:06:21.146Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/51/59/df732566d951c33f00a4022fc5bf9c5d1661b1c2cdaf56e75a1a5fa8f829/multiaddr-0.0.9-py2.py3-none-any.whl", hash = "sha256:5c0f862cbcf19aada2a899f80ef896ddb2e85614e0c8f04dd287c06c69dac95b", size = 16281, upload-time = "2019-12-23T07:06:18.915Z" },
-]
-
-[[package]]
 name = "multidict"
 version = "6.7.1"
 source = { registry = "https://pypi.org/simple" }
@@ -1220,17 +1196,8 @@ wheels = [
 ]
 
 [[package]]
-name = "netaddr"
-version = "1.3.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/54/90/188b2a69654f27b221fba92fda7217778208532c962509e959a9cee5229d/netaddr-1.3.0.tar.gz", hash = "sha256:5c3c3d9895b551b763779ba7db7a03487dc1f8e3b385af819af341ae9ef6e48a", size = 2260504, upload-time = "2024-05-28T21:30:37.743Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/12/cc/f4fe2c7ce68b92cbf5b2d379ca366e1edae38cccaad00f69f529b460c3ef/netaddr-1.3.0-py3-none-any.whl", hash = "sha256:c2c6a8ebe5554ce33b7d5b3a306b71bbb373e000bbbf2350dd5213cc56e3dbbe", size = 2262023, upload-time = "2024-05-28T21:30:34.191Z" },
-]
-
-[[package]]
 name = "olas-operate-app"
-version = "1.6.23rc5"
+version = "1.6.23rc6"
 source = { virtual = "." }
 dependencies = [
     { name = "olas-operate-middleware" },
@@ -1247,7 +1214,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "olas-operate-middleware", git = "https://github.com/valory-xyz/olas-operate-middleware.git?rev=832a751bc004fdb2b2be58cd634bec2153e31702" },
+    { name = "olas-operate-middleware", git = "https://github.com/valory-xyz/olas-operate-middleware.git?rev=e2d037ce6e76d576d1480f5aeb7e720afeba2833" },
     { name = "open-aea-cli-ipfs", specifier = "==2.2.5" },
     { name = "open-aea-ledger-cosmos", specifier = "==2.2.5" },
     { name = "open-aea-ledger-ethereum", specifier = "==2.2.5" },
@@ -1259,27 +1226,23 @@ dev = [{ name = "pyinstaller", specifier = "==6.20.0" }]
 
 [[package]]
 name = "olas-operate-middleware"
-version = "0.15.24"
-source = { git = "https://github.com/valory-xyz/olas-operate-middleware.git?rev=832a751bc004fdb2b2be58cd634bec2153e31702#832a751bc004fdb2b2be58cd634bec2153e31702" }
+version = "0.15.27"
+source = { git = "https://github.com/valory-xyz/olas-operate-middleware.git?rev=e2d037ce6e76d576d1480f5aeb7e720afeba2833#e2d037ce6e76d576d1480f5aeb7e720afeba2833" }
 dependencies = [
     { name = "aiohttp" },
     { name = "argon2-cffi" },
     { name = "clea" },
     { name = "cryptography" },
-    { name = "cytoolz" },
     { name = "deepdiff" },
     { name = "fastapi" },
     { name = "flask" },
     { name = "halo" },
-    { name = "multiaddr" },
     { name = "open-aea-cli-ipfs" },
     { name = "open-aea-ledger-cosmos" },
     { name = "open-aea-ledger-ethereum" },
     { name = "open-autonomy", extra = ["cli", "docker"] },
     { name = "psutil" },
-    { name = "pyinstaller" },
     { name = "requests" },
-    { name = "typing-extensions" },
     { name = "uvicorn" },
     { name = "werkzeug" },
 ]
@@ -2136,12 +2099,6 @@ sdist = { url = "https://files.pythonhosted.org/packages/e6/bf/f6544ba992ddb9a60
 wheels = [
     { url = "https://files.pythonhosted.org/packages/01/be/72532be3da7acc5fdfbccdb95215cd04f995a0886532a5b423f929cda4cc/uvicorn-0.48.0-py3-none-any.whl", hash = "sha256:48097851328b87ec36117d3d575234519eb58c2b22d79666e9bbc6c49a761dad", size = 71410, upload-time = "2026-05-24T12:08:40.258Z" },
 ]
-
-[[package]]
-name = "varint"
-version = "1.0.2"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/a8/fe/1ea0ba0896dfa47186692655b86db3214c4b7c9e0e76c7b1dc257d101ab1/varint-1.0.2.tar.gz", hash = "sha256:a6ecc02377ac5ee9d65a6a8ad45c9ff1dac8ccee19400a5950fb51d594214ca5", size = 1886, upload-time = "2016-02-24T20:42:38.5Z" }
 
 [[package]]
 name = "virtualenv"
