@@ -159,5 +159,4 @@ describe('TransactionHistory section', () => {
     expect(screen.getByText('Deposit')).toBeInTheDocument();
     expect(screen.getByText('+10.00')).toBeInTheDocument();
   });
-
 });
