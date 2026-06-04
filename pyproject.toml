@@ -13,7 +13,7 @@ dependencies = [
     "open-aea-ledger-cosmos==2.2.5",
     "open-aea-ledger-ethereum==2.2.5",
     "open-aea-cli-ipfs==2.2.5",
-    "olas-operate-middleware==0.15.26",
+    "olas-operate-middleware==0.15.27",
 ]
 
 [dependency-groups]
@@ -28,10 +28,3 @@ package = false
 # provenance we had under Poetry). Drop this only if we want to
 # opt every release into uv-managed interpreters.
 python-preference = "only-system"
-
-# Override the PyPI middleware pin to the OPE-1617 PR #445 head while QA
-# validates the structured INSUFFICIENT_SIGNER_GAS error contract. Drop
-# this block once the middleware ships a versioned release containing
-# https://github.com/valory-xyz/olas-operate-middleware/pull/445.
-[tool.uv.sources]
-olas-operate-middleware = { git = "https://github.com/valory-xyz/olas-operate-middleware.git", rev = "e2d037ce6e76d576d1480f5aeb7e720afeba2833" }
