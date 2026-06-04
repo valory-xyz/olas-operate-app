@@ -1,0 +1,46 @@
+import { fireEvent, render, screen } from '@testing-library/react';
+import React from 'react';
+
+import { AgentDeprecationAlert } from '../../../../../../components/MainPage/Home/Overview/AgentInfo/AgentDeprecationAlert';
+
+// ---------------------------------------------------------------------------
+// Mocks
+// ---------------------------------------------------------------------------
+jest.mock('../../../../../../components/ui', () => ({
+  Alert: ({ message }: { message: React.ReactNode }) => (
+    <div data-testid="alert">{message}</div>
+  ),
+}));
+
+const mockGoto = jest.fn();
+jest.mock('../../../../../../hooks', () => ({
+  usePageState: () => ({ goto: mockGoto }),
+}));
+
+describe('AgentDeprecationAlert', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('renders the shutdown message with the provided date', () => {
+    render(<AgentDeprecationAlert shutdownDate="June 15, 2026" />);
+    expect(
+      screen.getByText(
+        /PettBro is being phased out and will be disabled on June 15, 2026/,
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('renders the Withdraw button', () => {
+    render(<AgentDeprecationAlert shutdownDate="June 15, 2026" />);
+    expect(
+      screen.getByRole('button', { name: 'Withdraw' }),
+    ).toBeInTheDocument();
+  });
+
+  it('navigates to AgentWallet page when Withdraw is clicked', () => {
+    render(<AgentDeprecationAlert shutdownDate="June 15, 2026" />);
+    fireEvent.click(screen.getByRole('button', { name: 'Withdraw' }));
+    expect(mockGoto).toHaveBeenCalledWith('AgentWallet');
+  });
+});
