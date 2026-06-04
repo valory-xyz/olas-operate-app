@@ -25,9 +25,18 @@ import { AvailableAsset } from '@/types/Wallet';
 
 import { STEPS, TransactionHistory } from './types';
 
+/**
+ * `gas-error`: user entered the Fund Agent flow from an INSUFFICIENT_SIGNER_GAS
+ * modal. Native-gas funds must route 100% to the AgentEOA, not the Safe — see
+ * `prepareAgentFundsForTransfer` in `ConfirmTransfer.tsx`. Reset to `normal`
+ * once consumed (successful fund) or on dismiss.
+ */
+export type FundEntrySource = 'normal' | 'gas-error';
+
 type AgentWalletNavParams = {
   initialStep?: ValueOf<typeof STEPS>;
   initialFundValues?: TokenBalanceRecord;
+  initialFundEntrySource?: FundEntrySource;
 };
 
 const AgentWalletContext = createContext<{
@@ -42,6 +51,8 @@ const AgentWalletContext = createContext<{
   availableAssets: AvailableAsset[];
   fundInitialValues: Optional<TokenBalanceRecord>;
   setFundInitialValues: (values: TokenBalanceRecord) => void;
+  fundEntrySource: FundEntrySource;
+  setFundEntrySource: (source: FundEntrySource) => void;
 }>({
   walletStep: STEPS.AGENT_WALLET_SCREEN,
   updateStep: () => {},
@@ -54,6 +65,8 @@ const AgentWalletContext = createContext<{
   availableAssets: [],
   fundInitialValues: {},
   setFundInitialValues: () => {},
+  fundEntrySource: 'normal',
+  setFundEntrySource: () => {},
 });
 
 export const AgentWalletProvider = ({ children }: { children: ReactNode }) => {
@@ -73,6 +86,9 @@ export const AgentWalletProvider = ({ children }: { children: ReactNode }) => {
   const { availableAssets } = useAvailableAgentAssets();
   const [fundInitialValues, setFundInitialValues] =
     useState<TokenBalanceRecord>(params.initialFundValues ?? {});
+  const [fundEntrySource, setFundEntrySource] = useState<FundEntrySource>(
+    params.initialFundEntrySource ?? 'normal',
+  );
 
   const { evmHomeChainId: walletChainId } = selectedAgentConfig;
 
@@ -105,6 +121,12 @@ export const AgentWalletProvider = ({ children }: { children: ReactNode }) => {
 
   const updateStep = useCallback(
     (newStep: ValueOf<typeof STEPS>) => {
+      // Stepping away from FUND_AGENT clears the gas-error source so a
+      // subsequent normal entry (e.g. via AgentLowBalanceAlert) doesn't
+      // inherit the force-EOA routing.
+      if (newStep !== STEPS.FUND_AGENT) {
+        setFundEntrySource('normal');
+      }
       setWalletStep(newStep);
     },
     [setWalletStep],
@@ -126,6 +148,8 @@ export const AgentWalletProvider = ({ children }: { children: ReactNode }) => {
         // Initial values for funding agent wallet
         fundInitialValues,
         setFundInitialValues,
+        fundEntrySource,
+        setFundEntrySource,
       }}
     >
       {children}
