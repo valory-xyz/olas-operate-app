@@ -75,11 +75,13 @@ const mockUseAgentWallet = useAgentWallet as jest.Mock;
 describe('Withdraw (AgentWallet)', () => {
   const setFundInitialValues = jest.fn();
   const updateStep = jest.fn();
+  const setFundEntrySource = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
     mockUseAgentWallet.mockReturnValue({
       setFundInitialValues,
+      setFundEntrySource,
       updateStep,
     });
     mockUseWithdrawFunds.mockReturnValue({
@@ -153,6 +155,7 @@ describe('Withdraw (AgentWallet)', () => {
     expect(setFundInitialValues).toHaveBeenCalledWith({
       [AddressZero]: '2500000000000000',
     });
+    expect(setFundEntrySource).toHaveBeenCalledWith('gas-error');
     expect(updateStep).toHaveBeenCalledWith(STEPS.FUND_AGENT);
   });
 
@@ -173,6 +176,7 @@ describe('Withdraw (AgentWallet)', () => {
       screen.queryByTestId('insufficient-gas-modal'),
     ).not.toBeInTheDocument();
     expect(setFundInitialValues).not.toHaveBeenCalled();
+    expect(setFundEntrySource).not.toHaveBeenCalled();
     expect(updateStep).not.toHaveBeenCalled();
   });
 

@@ -185,6 +185,8 @@ const setupMocks = (overrides: SetupOverrides = {}) => {
     isBridgingFailed: overrides.isBridgingFailed ?? false,
     isBridging: overrides.isBridging ?? false,
     bridgeStatus: overrides.bridgeStatus,
+    isBridgeExecuteError: false,
+    bridgeExecuteError: null,
   });
 
   return { updateIsSwappingStepCompleted, refetchBridgeRefillRequirements };
@@ -1104,6 +1106,8 @@ function setupMocksWithoutBridgeUtils(overrides: SetupOverrides) {
     isBridgingFailed: overrides.isBridgingFailed ?? false,
     isBridging: overrides.isBridging ?? false,
     bridgeStatus: overrides.bridgeStatus,
+    isBridgeExecuteError: false,
+    bridgeExecuteError: null,
   });
 
   return { updateIsSwappingStepCompleted, refetchBridgeRefillRequirements };

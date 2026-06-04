@@ -450,6 +450,40 @@ describe('useServiceDeployment', () => {
           }),
         ).rejects.toThrow('Start failed');
       });
+
+      it('exposes the gas error via startError WITHOUT firing the generic toast', async () => {
+        // INSUFFICIENT_SIGNER_GAS rejections are surfaced via the modal at
+        // the host (AgentNotRunningButton) — duplicating with a toast would
+        // confuse the user. Asserts both branches of the toast guard at once.
+        const gasError = Object.assign(new Error('Insufficient gas'), {
+          error_code: 'INSUFFICIENT_SIGNER_GAS',
+          chain: 'gnosis',
+          prefill_amount_wei: '750000000000000000',
+        });
+        mockStartServiceFn.mockRejectedValue(gasError);
+
+        const { result } = renderHook(() => useServiceDeployment());
+        // Catch the rejection inside `act` so React flushes the state
+        // update (setStartError) before we read `result.current` below.
+        let caught: unknown;
+        await act(async () => {
+          try {
+            await result.current.handleStart();
+          } catch (e) {
+            caught = e;
+          }
+        });
+        expect(caught).toBe(gasError);
+
+        expect(mockShowNotification).not.toHaveBeenCalled();
+        expect(result.current.isStartError).toBe(true);
+        expect(result.current.startError).toBe(gasError);
+
+        // resetStart clears both flag and stored error.
+        act(() => result.current.resetStart());
+        expect(result.current.isStartError).toBe(false);
+        expect(result.current.startError).toBeNull();
+      });
     });
 
     describe('state update error handling', () => {
