@@ -172,6 +172,7 @@ export const AgentInfo = () => {
           <AgentDisabledAlert />
           {selectedAgentConfig.shutdownDate && (
             <AgentDeprecationAlert
+              agentName={selectedAgentConfig.displayName}
               shutdownDate={selectedAgentConfig.shutdownDate}
             />
           )}
