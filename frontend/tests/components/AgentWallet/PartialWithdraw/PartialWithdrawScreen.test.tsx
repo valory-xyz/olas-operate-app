@@ -75,6 +75,7 @@ const onPartialWithdraw = jest.fn();
 const resetMutation = jest.fn();
 const setFundInitialValues = jest.fn();
 const updateStep = jest.fn();
+const setFundEntrySource = jest.fn();
 const onBack = jest.fn();
 
 const gnosisResponse = {
@@ -133,7 +134,11 @@ const setUpHookMocks = (
 describe('PartialWithdrawScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockUseAgentWallet.mockReturnValue({ setFundInitialValues, updateStep });
+    mockUseAgentWallet.mockReturnValue({
+      setFundInitialValues,
+      setFundEntrySource,
+      updateStep,
+    });
     mockUseServices.mockReturnValue({
       selectedAgentConfig: {
         evmHomeChainId: 100,
@@ -251,6 +256,7 @@ describe('PartialWithdrawScreen', () => {
     fireEvent.click(screen.getByTestId('gas-modal-fund'));
     expect(updateStep).toHaveBeenCalledWith(STEPS.FUND_AGENT);
     expect(setFundInitialValues).toHaveBeenCalled();
+    expect(setFundEntrySource).toHaveBeenCalledWith('gas-error');
   });
 
   // Try Again is the user-facing retry on the WithdrawalFailed modal —

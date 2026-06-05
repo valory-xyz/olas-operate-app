@@ -37,6 +37,35 @@ jest.mock('../../../../components/ui', () => ({
     createElement('div', { 'data-testid': 'alert' }, message),
   CardFlex: ({ children }: { children: React.ReactNode }) =>
     createElement('div', null, children),
+  InsufficientSignerGasModal: (props: {
+    caseType: string;
+    onFund: () => void;
+    onClose: () => void;
+  }) =>
+    createElement(
+      'div',
+      { 'data-testid': 'insufficient-gas-modal' },
+      createElement(
+        'span',
+        { 'data-testid': 'gas-modal-case' },
+        props.caseType,
+      ),
+      createElement('button', {
+        'data-testid': 'gas-modal-fund',
+        onClick: props.onFund,
+      }),
+      createElement('button', {
+        'data-testid': 'gas-modal-close',
+        onClick: props.onClose,
+      }),
+    ),
+}));
+
+// Stub useQueryClient — BridgeInProgress only uses queryClient.removeQueries
+// inside the gas-modal reset callback, which doesn't fire in these tests.
+const mockRemoveQueries = jest.fn();
+jest.mock('@tanstack/react-query', () => ({
+  useQueryClient: () => ({ removeQueries: mockRemoveQueries }),
 }));
 
 // Mock BridgeTransferFlow
@@ -68,9 +97,12 @@ jest.mock(
 // Mock hooks
 const mockUseBridgingSteps = jest.fn();
 const mockUsePageState = jest.fn();
+const mockUseInsufficientGasModal = jest.fn();
 jest.mock('../../../../hooks', () => ({
   useBridgingSteps: (...args: unknown[]) => mockUseBridgingSteps(...args),
   usePageState: () => mockUsePageState(),
+  useInsufficientGasModal: (...args: unknown[]) =>
+    mockUseInsufficientGasModal(...args),
 }));
 
 const mockUseMasterSafeCreateAndTransferSteps = jest.fn();
@@ -131,6 +163,8 @@ type BridgingStepsReturn = {
   isBridgingFailed: boolean;
   isBridgingCompleted: boolean;
   bridgeStatus: BridgeStatuses | null;
+  isBridgeExecuteError: boolean;
+  bridgeExecuteError: unknown;
 };
 
 type MasterSafeStepsReturn = {
@@ -157,6 +191,8 @@ const defaultBridging: BridgingStepsReturn = {
   isBridgingFailed: false,
   isBridgingCompleted: false,
   bridgeStatus: null,
+  isBridgeExecuteError: false,
+  bridgeExecuteError: null,
 };
 
 const defaultMasterSafe: MasterSafeStepsReturn = {
@@ -183,6 +219,9 @@ const setupMocks = (
   });
   mockUsePageState.mockReturnValue({ goto: jest.fn() });
   mockRefetchBridgeExecute.mockResolvedValue(undefined);
+  // Default: the gas modal is not shown. Individual tests can override to
+  // assert the gas-modal path.
+  mockUseInsufficientGasModal.mockReturnValue(null);
 };
 
 const defaultProps: BridgeInProgressProps = {
@@ -569,6 +608,56 @@ describe('BridgeInProgress', () => {
       // The callback should forward to onBridgeRetryOutcome
       callbackArg('NEED_REFILL');
       expect(onBridgeRetryOutcome).toHaveBeenCalledWith('NEED_REFILL');
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // InsufficientSignerGasModal hosting
+  // -------------------------------------------------------------------------
+  describe('insufficient-gas modal', () => {
+    it('renders the modal when useInsufficientGasModal returns props', () => {
+      setupMocks({ bridging: { isBridgeExecuteError: true } });
+      const onFund = jest.fn();
+      const onClose = jest.fn();
+      mockUseInsufficientGasModal.mockReturnValue({
+        caseType: 'bridge',
+        chain: 'ethereum',
+        prefillAmountWei: '1000000000000000000',
+        onFund,
+        onClose,
+      });
+
+      renderComponent();
+      expect(screen.getByTestId('insufficient-gas-modal')).toBeInTheDocument();
+      expect(screen.getByTestId('gas-modal-case')).toHaveTextContent('bridge');
+    });
+
+    it('forwards `bridge` caseType + bridgeExecuteError into useInsufficientGasModal', () => {
+      const bridgeExecuteError = {
+        error_code: 'INSUFFICIENT_SIGNER_GAS',
+        chain: 'ethereum',
+        prefill_amount_wei: '1000000000000000000',
+      };
+      setupMocks({
+        bridging: { isBridgeExecuteError: true, bridgeExecuteError },
+      });
+      renderComponent();
+
+      const lastCall = mockUseInsufficientGasModal.mock.calls.at(-1)!;
+      expect(lastCall[0]).toMatchObject({
+        caseType: 'bridge',
+        error: bridgeExecuteError,
+        isError: true,
+      });
+    });
+
+    it('does not render the modal when the gas hook returns null', () => {
+      setupMocks();
+      mockUseInsufficientGasModal.mockReturnValue(null);
+      renderComponent();
+      expect(
+        screen.queryByTestId('insufficient-gas-modal'),
+      ).not.toBeInTheDocument();
     });
   });
 });

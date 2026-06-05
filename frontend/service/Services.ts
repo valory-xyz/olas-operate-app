@@ -163,9 +163,18 @@ const putService = async ({
   });
 
 /**
- * Starts a service
- * @param serviceTemplate
- * @returns Promise<Service>
+ * Starts a service.
+ *
+ * On a non-OK response, throws an Error whose `.message` is the backend's
+ * error string (or a generic fallback) and which has the full parsed JSON
+ * body merged onto it as own properties — so:
+ *   - `${err}` / log lines stay diagnosable (was `[object Object]` when we
+ *     threw the body directly; AutoRun's `useAutoRunStartOperations`
+ *     stringifies the error into its `lastInfraError` reason).
+ *   - `isInsufficientGasError(err)` still narrows (the Error is
+ *     `typeof 'object'` with `error_code`/`chain`/`prefill_amount_wei`).
+ *
+ * @throws Error & Partial<InsufficientGasErrorBody>
  */
 const startService = async (
   serviceConfigId: string,
@@ -173,11 +182,16 @@ const startService = async (
   fetch(`${BACKEND_URL_V2}/service/${serviceConfigId}`, {
     method: 'POST',
     headers: { ...CONTENT_TYPE_JSON_UTF8 },
-  }).then((response) => {
+  }).then(async (response) => {
     if (response.ok) {
       return response.json();
     }
-    throw new Error('Failed to start the service');
+    const body = await response.json().catch(() => ({}));
+    const err = new Error(
+      (body as { error?: string })?.error || 'Failed to start the service',
+    );
+    Object.assign(err, body);
+    throw err;
   });
 
 const stopDeployment = async (

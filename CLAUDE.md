@@ -22,7 +22,7 @@ Common commands (full list in `package.json` scripts):
 - `yarn dev:frontend` — frontend only (port 3000)
 - `yarn dev:backend` — Python middleware
 - `yarn dev:hardhat` — local Hardhat node
-- `yarn test:frontend`, `yarn lint:frontend [--fix]`, `yarn quality-check:frontend`
+- `yarn test:frontend`, `yarn lint:frontend`, `yarn quality-check:frontend` (lint+typecheck), `yarn typequality-check:frontend` (typecheck only). For autofix, run `cd frontend && yarn lint:fix` — the root `lint:frontend` script doesn't forward `--fix`.
 - `yarn build:frontend`, `yarn build:pearl` (full app via `build_pearl.sh`), `yarn download-binaries`
 
 ## Architecture Details
@@ -37,6 +37,7 @@ The application uses a multi-layered communication architecture:
    - Notifications: `electronAPI.showNotification`
    - Logging / support: `electronAPI.{saveLogs,saveLogsForSupport,cleanupSupportLogs,logEvent,nextLogError,readFile,openPath,getAppVersion}`
    - Managed child windows: `electronAPI.{onRampWindow,web3AuthWindow,web3AuthSwapOwnerWindow,termsAndConditionsWindow}` (each window has `show`/`close` + result callbacks)
+   - OS wake-lock (keeps device awake during AutoRun): `electronAPI.wakeLock.{start,stop}`
    - In-app auto-updater: `electronAPI.autoUpdater.{checkForUpdates,downloadUpdate,cancelDownload,quitAndInstall,onUpdateAvailable,onDownloadProgress,onUpdateDownloaded,onUpdateError,onUpdateNotAvailable}`
    - Raw IPC escape hatch: `electronAPI.ipcRenderer.{send,on,invoke,removeListener}` — used sparingly; prefer the named APIs.
 
@@ -46,14 +47,15 @@ The application uses a multi-layered communication architecture:
    - 50+ FastAPI endpoints, mostly under `/api/v2/*` for services and `/api/*` for account/wallet/bridge/recovery/store.
 
 3. **Frontend State Management**:
-   - React Context providers in `/frontend/context/` (one provider per folder). Non-exhaustive list of load-bearing providers: `ServicesProvider`, `BalanceProvider`, `StakingContractDetailsProvider`, `StakingProgramProvider`, `MasterWalletProvider`, `PearlWalletProvider`, `RewardProvider`, `SetupProvider`, `SettingsProvider`, `StoreProvider`, `PageStateProvider`, `OnRampProvider`, `OnlineStatusProvider`, `MessageProvider`, `SupportModalProvider`, `ElectronApiProvider`, `AutoRunProvider`, `BalancesAndRefillRequirementsProvider`. Read `frontend/context/` before assuming a provider doesn't exist.
+   - React Context providers in `/frontend/context/` (one provider per folder). Non-exhaustive list of load-bearing providers: `ServicesProvider`, `BalanceProvider`, `StakingContractDetailsProvider`, `StakingProgramProvider`, `MasterWalletProvider`, `PearlWalletProvider`, `RewardProvider`, `SetupProvider`, `SettingsProvider`, `StoreProvider`, `PageStateProvider`, `OnRampProvider`, `OnlineStatusProvider`, `MessageProvider`, `SupportModalProvider`, `ElectronApiProvider`, `AutoRunProvider`, `BalancesAndRefillRequirementsProvider`, `SharedProvider`. Read `frontend/context/` before assuming a provider doesn't exist.
    - Electron-native persistence via `electron-store` (`electron/store.js`) — see Electron Store Schema below. All other state lives in `.operate/pearl_store.json` served by the Python backend.
 
 ### Service Templates & Agents
 
 Service configurations live in the `frontend/constants/serviceTemplates/` directory:
-- `serviceTemplates.ts` — combined `SERVICE_TEMPLATES` array (plus templates without their own file, e.g. `AGENTS_FUN_COMMON_TEMPLATE`)
+- `serviceTemplates.ts` — combined `SERVICE_TEMPLATES` array (plus templates without their own file, e.g. `AGENTS_FUN_COMMON_TEMPLATE`, `PETT_AI_SERVICE_TEMPLATE`)
 - `service/` — per-agent template files (`service/babydegen.ts` holds Modius/Optimus; `service/trader.ts` holds PredictTrader/Polystrat)
+- `agentUiReleases.ts` — `AGENT_UI_RELEASES` list shown on the Release Notes page
 - `index.ts` — barrel; `constants.ts` — shared constants
 
 Each service template has a `hash`, `name`, `description`, and versioning. Agents currently shipped: `PredictTrader`, `Modius`, `Optimus`, `AgentsFun`, `PettAi`, `Polystrat`. Chain-specific config (funding requirements, staking programs, NFTs) is in the template's `configurations` object. See `docs/agent-integration-checklist.md` for full agent-integration flow.
@@ -76,7 +78,7 @@ IPC handles: `store`, `store-get`, `store-set`, `store-delete`, `store-clear`. N
 ### Python Backend
 
 - `/operate/` is a **thin shim** — `pearl.py` (PyInstaller entry) and `tendermint.py` (Tendermint binary manager). No `__init__.py`; the real backend lives in `olas-operate-middleware`.
-- `olas-operate-middleware` is **version-pinned** in `pyproject.toml` (`==0.15.22` on `main`). Workflows occasionally swap that for a `git+https://github.com/valory-xyz/olas-operate-middleware.git@<sha>` revision pin during rc cycles (see `.github/workflows/calculate-and-update-version.yml`), but the steady-state pin is an exact PyPI release. Every pin bump can change API response shapes — see Backend Contract Types below. Installed source: `.venv/lib/python3.14/site-packages/operate/`.
+- `olas-operate-middleware` is **version-pinned** in `pyproject.toml` (`==0.15.25` on `main` — re-check the pin before relying on this). Workflows occasionally swap that for a `git+https://github.com/valory-xyz/olas-operate-middleware.git@<sha>` revision pin during rc cycles (see `.github/workflows/calculate-and-update-version.yml`), but the steady-state pin is an exact PyPI release. Every pin bump can change API response shapes — see Backend Contract Types below. Installed source: `.venv/lib/python3.14/site-packages/operate/`.
 - Dev entry: `uv run python -m operate.cli daemon`. Packaged: PyInstaller executable in `electron/bins/middleware/`, built from `operate/pearl.py` via `build_pearl.sh`. Includes Tendermint binary for consensus.
 
 ### Build Process
@@ -134,7 +136,7 @@ To test with a custom service hash: update the hash in the per-agent file under 
 
 ### Workflow
 
-Run `/pre-implementation-check` before writing frontend code. Run `/review-implementation` after each phase. Update tests in the same change as the source file — never defer. For features touching 4+ files, work in phases with `/review-implementation` between them. Run `yarn lint:frontend --fix` after every edit; don't accumulate lint errors.
+Run `/pre-implementation-check` before writing frontend code. Run `/review-implementation` after each phase. Update tests in the same change as the source file — never defer. For features touching 4+ files, work in phases with `/review-implementation` between them. Run `cd frontend && yarn lint:fix` after every edit; don't accumulate lint errors.
 
 ### Fix globally
 
