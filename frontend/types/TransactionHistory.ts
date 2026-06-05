@@ -79,6 +79,10 @@ export const FundsMovementSchema = z.object({
   blockTimestamp: z.string(),
   transactionHash: z.string(),
   agentSafe: AgentSafeRefSchema.nullable(),
+  // Direct service link. SERVICE_BOND_* rows carry it even when `agentSafe`
+  // is null (a stake/genesis deposit is booked before the agent multisig
+  // exists), so the agent display name resolves from `service.agentIds`.
+  service: ServiceRefSchema.nullable().optional(),
 });
 export type FundsMovement = z.infer<typeof FundsMovementSchema>;
 

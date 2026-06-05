@@ -87,8 +87,15 @@ const groupMovementsByTxAndCategory = (
       agentInstanceAddress: isAgentEoaRecipient
         ? (movement.to as Address)
         : null,
-      agentIds: movement.agentSafe?.service?.agentIds ?? null,
-      serviceId: movement.agentSafe?.service?.id ?? null,
+      // Prefer the agentSafe→service link; fall back to the row's direct
+      // service (SERVICE_BOND_* stake rows are booked before the agent
+      // multisig exists, so agentSafe is null but `service` carries agentIds).
+      agentIds:
+        movement.agentSafe?.service?.agentIds ??
+        movement.service?.agentIds ??
+        null,
+      serviceId:
+        movement.agentSafe?.service?.id ?? movement.service?.id ?? null,
       transfers: [transfer],
     });
   }
@@ -104,7 +111,9 @@ const fundingEventToRow = (
   const agentSafeId =
     event.transfers.map((t) => t.agentSafe?.id).find(Boolean) ?? null;
   const agentSafeAddrLc = agentSafeId ? agentSafeId.toLowerCase() : null;
-  const svc = event.transfers.map((t) => t.agentSafe?.service).find(Boolean);
+  const svc =
+    event.transfers.map((t) => t.agentSafe?.service).find(Boolean) ??
+    event.transfers.map((t) => t.service).find(Boolean);
 
   // If any transfer recipient is an EOA-style address (not the AgentSafe),
   // surface it so the UI can label as "Allocated for execution costs".

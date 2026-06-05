@@ -53,6 +53,10 @@ const FETCH_TRANSACTION_HISTORY_QUERY = gql`
           agentIds
         }
       }
+      service {
+        id
+        agentIds
+      }
     }
     agentFundingEvents(
       where: { masterSafe: $masterSafe }
@@ -83,6 +87,10 @@ const FETCH_TRANSACTION_HISTORY_QUERY = gql`
             id
             agentIds
           }
+        }
+        service {
+          id
+          agentIds
         }
       }
     }
