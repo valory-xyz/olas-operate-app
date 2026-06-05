@@ -316,6 +316,60 @@ jobs:
       - name: Lint frontend yarn.lock
         run: npx -y lockfile-lint@5.0.0 --path frontend/yarn.lock --type yarn --validate-https --allowed-hosts yarn npm --empty-hostname false
 
+  license-check:
+    # License allowlist gate, mirroring the backend's tomte [Licenses]
+    # under liccheck PARANOID. Unlike `audit` (which reads yarn.lock
+    # directly and skips install for defense-in-depth), this job MUST
+    # install — license-checker-rseidelsohn walks node_modules and
+    # reads LICENSE files. We pass --ignore-scripts so postinstall
+    # hooks still cannot execute during the gate; LICENSE files are
+    # unpacked from tarballs regardless of script execution.
+    #
+    # Rollout: NOT in `all-checks-passed.needs` — this job reports,
+    # it does not block merges. Flipping to required is a maintainer's
+    # later action (add to `needs:` here + branch protection).
+    name: License allowlist gate (both trees)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version-file: .nvmrc
+
+      - name: Activate pinned Yarn via Corepack
+        run: |
+          corepack enable
+          # Read the full integrity-verified spec from package.json so corepack
+          # checks the sha512 hash. Plain `corepack prepare yarn@1.22.22 --activate`
+          # downloads from npm without verifying against the hash.
+          PM_SPEC=$(node -p "require('./package.json').packageManager")
+          corepack prepare "$PM_SPEC" --activate
+
+      - name: Verify Yarn version
+        run: |
+          yarn --version
+          test "$(yarn --version)" = "1.22.22" || (echo "::error::Yarn version mismatch" && exit 1)
+
+      - name: Configure Yarn network settings
+        run: |
+          yarn config set network-timeout 60000
+          yarn config set network-retries 10
+          yarn config set network-concurrency 2
+
+      - name: Install root (lifecycle scripts skipped)
+        run: yarn install --frozen-lockfile --ignore-scripts
+
+      - name: License check (root tree)
+        run: yarn license-check
+
+      - name: Install frontend (lifecycle scripts skipped)
+        run: cd frontend && yarn install --frozen-lockfile --ignore-scripts
+
+      - name: License check (frontend tree)
+        run: cd frontend && yarn license-check
+
   all-checks-passed:
     name: All checks passed
     needs: [backend, frontend, frontend-tests, gitleaks, deps-check-pinned, lockfile-lint, audit, install-hooks-root, install-hooks-frontend]
