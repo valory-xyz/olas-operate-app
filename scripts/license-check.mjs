@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /**
- * License allowlist gate for the ROOT tree. Mirrors the backend's
- * tomte/configs/tox.ini [Licenses] block run by liccheck under PARANOID:
- * every PRODUCTION dependency's license must be in the allowlist, resolved
- * by a `licenseOverrides` entry, or exempted (by exact NAME for general
+ * License allowlist gate. Mirrors the backend's tomte/configs/tox.ini
+ * [Licenses] block run by liccheck under PARANOID: every PRODUCTION
+ * dependency's license must be in the allowlist, resolved by a
+ * `licenseOverrides` entry, or exempted (by exact NAME for general
  * packages, by NARROW PREFIX only for publisher-controlled platform-binary
  * families). UNKNOWN / unlisted licenses FAIL — they are resolved, not
  * silenced.
@@ -18,12 +18,13 @@
  * string in its package.json as UNKNOWN. The rseidelsohn fork reads
  * LICENSE files for those, giving a real classification surface.
  *
+ * Shared across both yarn trees: root runs it directly, frontend invokes
+ * `node ../scripts/license-check.mjs` from its own working directory. Each
+ * tree reads its own `.supply-chain/license-allowlist.json` (resolved
+ * against `process.cwd()`). Same pattern as `scripts/check-deps-pinned.mjs`.
+ *
  * See SUPPLY-CHAIN-SECURITY.md (to be added in Phase 4) and
  * CONTRIBUTING.md ("Supply-chain checks") for the contributor workflow.
- *
- * Wrapper is duplicated under frontend/scripts/license-check.mjs — keep
- * the two files in sync. Each reads its own tree's
- * .supply-chain/license-allowlist.json.
  */
 
 import { readFileSync, existsSync } from 'node:fs';
