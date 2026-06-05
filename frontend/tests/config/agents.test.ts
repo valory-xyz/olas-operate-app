@@ -96,6 +96,30 @@ describe('AVAILABLE_FOR_ADDING_AGENTS', () => {
   });
 });
 
+describe('PettAi creation blocking and deprecation', () => {
+  it('has isAddingNewBlocked set to true', () => {
+    expect(AGENT_CONFIG[AgentMap.PettAi].isAddingNewBlocked).toBe(true);
+  });
+
+  it('has shutdownDate set to June 15, 2026', () => {
+    expect(AGENT_CONFIG[AgentMap.PettAi].shutdownDate).toBe('June 15, 2026');
+  });
+
+  it('PettAi still appears in ACTIVE_AGENTS', () => {
+    const pettAiEntry = ACTIVE_AGENTS.find(
+      ([agentType]) => agentType === AgentMap.PettAi,
+    );
+    expect(pettAiEntry).toBeDefined();
+  });
+
+  it('PettAi appears in AVAILABLE_FOR_ADDING_AGENTS (isAddingNewBlocked does not filter from list)', () => {
+    const pettAiEntry = AVAILABLE_FOR_ADDING_AGENTS.find(
+      ([agentType]) => agentType === AgentMap.PettAi,
+    );
+    expect(pettAiEntry).toBeDefined();
+  });
+});
+
 describe('defensive guard: getModiusUsdcConfig throws when USDC config is missing', () => {
   it('throws "Modius USDC config not found"', () => {
     expect(() => {
