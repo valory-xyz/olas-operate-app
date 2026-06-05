@@ -13,7 +13,7 @@
  * generate considerable transitive-license noise, so they are not scanned.
  * Override via `"scope": "all"` in the config if a future need arises.
  *
- * Necessary because npm has no native license-policy gate, and
+ * Necessary because npm has no native enforcement gate for license policy.
  * `license-checker` (the original) reports any package without an SPDX
  * string in its package.json as UNKNOWN. The rseidelsohn fork reads
  * LICENSE files for those, giving a real classification surface.
@@ -22,20 +22,24 @@
  * `node ../scripts/license-check.mjs` from its own working directory. Each
  * tree reads its own `.supply-chain/license-allowlist.json` (resolved
  * against `process.cwd()`). Same pattern as `scripts/check-deps-pinned.mjs`.
- *
- * See SUPPLY-CHAIN-SECURITY.md (to be added in Phase 4) and
- * CONTRIBUTING.md ("Supply-chain checks") for the contributor workflow.
  */
 
 import { readFileSync, existsSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { resolve, relative } from 'node:path';
 import { createRequire } from 'node:module';
+
+import { normalize, evalExpr } from './license-check.lib.mjs';
 
 const require = createRequire(import.meta.url);
 const checker = require('license-checker-rseidelsohn');
 
 const ROOT = resolve('.');
 const ALLOWLIST_PATH = resolve(ROOT, '.supply-chain/license-allowlist.json');
+
+// Bound the checker so a stuck node_modules walk (broken symlink loop,
+// filesystem hiccup) can't pin the CI job to the workflow-level timeout.
+// 5 min mirrors the bound in scripts/audit.mjs.
+const CHECKER_TIMEOUT_MS = 5 * 60 * 1000;
 const SELF_PKG = (() => {
   try {
     const pkg = JSON.parse(readFileSync(resolve(ROOT, 'package.json'), 'utf8'));
@@ -79,82 +83,6 @@ function loadAllowlist() {
   return data;
 }
 
-// Aliases for npm-ecosystem license strings that mean an SPDX identifier
-// but don't match it character-for-character. Lower-cased on both sides.
-const NORMALIZE = new Map([
-  ['apache2', 'Apache-2.0'],
-  ['apache 2.0', 'Apache-2.0'],
-  ['apache license 2.0', 'Apache-2.0'],
-  ['apache license, version 2.0', 'Apache-2.0'],
-  ['apache license version 2.0', 'Apache-2.0'],
-  ['apache software license', 'Apache-2.0'],
-  ['expat', 'MIT'],
-  ['mit license', 'MIT'],
-  ['new bsd', 'BSD-3-Clause'],
-  ['(new) bsd', 'BSD-3-Clause'],
-  ['simplified bsd', 'BSD-2-Clause'],
-  ['3-clause bsd', 'BSD-3-Clause'],
-  ['bsd 3-clause', 'BSD-3-Clause'],
-]);
-
-function normalize(token) {
-  // Strip surrounding parens AND the trailing `*` that license-checker-rseidelsohn
-  // appends when the SPDX was inferred from the LICENSE file rather than declared
-  // in package.json. Lookup must succeed on `MIT*` the same as on `MIT`.
-  const t = String(token)
-    .replace(/^[()]+|[()]+$/g, '')
-    .replace(/\*+$/, '')
-    .trim();
-  return NORMALIZE.get(t.toLowerCase()) || t;
-}
-
-/**
- * Evaluate an SPDX-ish license expression against the allow/deny lists.
- * Returns 'allowed' | 'unauthorized' | 'unknown'.
- *
- * SPDX precedence: AND binds tighter than OR. `A AND B OR C` === `(A AND B) OR C`.
- * Splitting on OR at the top level naturally respects this (recursion handles AND
- * inside each disjunct).
- *
- * - Array of strings → npm legacy OR (any allowed → allowed; all unauthorized → unauthorized).
- * - String with " OR " → SPDX OR.
- * - String with " AND " → SPDX AND.
- * - Plain string → look up directly (after normalization, incl. `*` strip).
- */
-function evalExpr(raw, allowedSet, unauthorizedSet) {
-  if (raw == null) return 'unknown';
-
-  if (Array.isArray(raw)) {
-    const parts = raw.map(normalize);
-    if (parts.some((p) => allowedSet.has(p))) return 'allowed';
-    if (parts.length && parts.every((p) => unauthorizedSet.has(p))) return 'unauthorized';
-    return 'unknown';
-  }
-
-  const s = String(raw).trim();
-  if (!s || /^UNKNOWN$/i.test(s) || /^UNLICENSED$/i.test(s) || /^Custom:/i.test(s)) return 'unknown';
-
-  const inner = s.replace(/^\((.*)\)$/, '$1');
-
-  if (/\sOR\s/i.test(inner)) {
-    const parts = inner.split(/\sOR\s/i).map((p) => evalExpr(p, allowedSet, unauthorizedSet));
-    if (parts.some((p) => p === 'allowed')) return 'allowed';
-    if (parts.every((p) => p === 'unauthorized')) return 'unauthorized';
-    return 'unknown';
-  }
-  if (/\sAND\s/i.test(inner)) {
-    const parts = inner.split(/\sAND\s/i).map((p) => evalExpr(p, allowedSet, unauthorizedSet));
-    if (parts.some((p) => p === 'unauthorized')) return 'unauthorized';
-    if (parts.every((p) => p === 'allowed')) return 'allowed';
-    return 'unknown';
-  }
-
-  const t = normalize(inner);
-  if (allowedSet.has(t)) return 'allowed';
-  if (unauthorizedSet.has(t)) return 'unauthorized';
-  return 'unknown';
-}
-
 const allowlist = loadAllowlist();
 const allowedSet = new Set(allowlist.allowedSpdx || []);
 const unauthorizedSet = new Set(allowlist.unauthorizedSpdx || []);
@@ -162,7 +90,11 @@ const overrideByName = new Map();
 for (const e of allowlist.licenseOverrides || []) overrideByName.set(e.package, e);
 const exemptByName = new Map();
 for (const e of allowlist.exemptions || []) exemptByName.set(e.package, e);
-const exemptPrefixes = allowlist.exemptionPrefixes || [];
+// Most-specific-wins: sort by prefix length desc so a future `@img/sharp-` entry
+// resolves before `@img/`. Without this, ordering is implicit and easy to get wrong.
+const exemptPrefixes = [...(allowlist.exemptionPrefixes || [])].sort(
+  (a, b) => b.prefix.length - a.prefix.length,
+);
 
 const scope = allowlist.scope || 'production';
 if (scope !== 'production' && scope !== 'all') {
@@ -173,7 +105,15 @@ if (scope !== 'production' && scope !== 'all') {
 const initOpts = { start: ROOT, excludePrivatePackages: true };
 if (scope === 'production') initOpts.production = true;
 
+const timeoutHandle = setTimeout(() => {
+  console.error(
+    `::error::license-checker did not finish within ${CHECKER_TIMEOUT_MS / 1000}s — aborting.`,
+  );
+  process.exit(2);
+}, CHECKER_TIMEOUT_MS);
+
 checker.init(initOpts, (err, report) => {
+  clearTimeout(timeoutHandle);
   if (err) {
     console.error('::error::license-checker failed to scan the dependency tree:', err.message || err);
     process.exit(2);
@@ -198,7 +138,7 @@ checker.init(initOpts, (err, report) => {
     const ex = exemptByName.get(name);
     if (ex) {
       matchedNames.add(name);
-      exempted.push({ name, pkgVersion, declared: info.licenses, entry: ex, via: 'name' });
+      exempted.push({ name, pkgVersion, declared: info.licenses, entry: ex });
       if (ex.review && ex.review < today) expired.push({ kind: 'exemption', name, entry: ex });
       continue;
     }
@@ -233,13 +173,16 @@ checker.init(initOpts, (err, report) => {
       continue;
     }
 
+    // Relative path keeps CI logs portable across runners (no leaked /home/runner/work/…
+    // or local /Users/<name>/ paths) without losing locality info for debugging.
+    const relPath = info.path ? relative(ROOT, info.path) || info.path : '';
     violations.push({
       name,
       pkgVersion,
       declared: info.licenses,
       effective,
       cls,
-      path: info.path,
+      path: relPath,
       repository: info.repository,
     });
   }

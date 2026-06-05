@@ -361,6 +361,13 @@ jobs:
       - name: Install root (lifecycle scripts skipped)
         run: yarn install --frozen-lockfile --ignore-scripts
 
+      - name: Unit tests for license-check helpers
+        # Pure-function tests for normalize() / evalExpr() in
+        # scripts/license-check.lib.mjs. No deps beyond node:test (built-in
+        # since Node 18). Runs once; the script is shared across both trees
+        # so testing once is sufficient.
+        run: yarn test:license-check
+
       - name: License check (root tree)
         run: yarn license-check
 
