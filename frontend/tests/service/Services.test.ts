@@ -457,14 +457,39 @@ describe('ServicesService', () => {
       );
     });
 
-    it('throws error on non-ok response', async () => {
+    it('rejects with an Error whose message + properties carry the JSON body', async () => {
+      const errorBody = {
+        error: 'Service start failed due to insufficient funds.',
+        error_code: 'INSUFFICIENT_SIGNER_GAS',
+        chain: 'gnosis',
+        prefill_amount_wei: '750000000000000000',
+      };
+      jest
+        .spyOn(global, 'fetch')
+        .mockReturnValue(mockJsonResponse(errorBody, false, 400));
+
+      const err = (await ServicesService.startService(
+        DEFAULT_SERVICE_CONFIG_ID,
+      ).catch((e) => e)) as Error & typeof errorBody;
+      expect(err).toBeInstanceOf(Error);
+      // .message is the backend's error string (so AutoRun's
+      // `lastInfraError = `${error}`` stays diagnosable).
+      expect(err.message).toBe(errorBody.error);
+      // Body fields are merged so `isInsufficientGasError` still narrows.
+      expect(err.error_code).toBe('INSUFFICIENT_SIGNER_GAS');
+      expect(err.chain).toBe('gnosis');
+      expect(err.prefill_amount_wei).toBe('750000000000000000');
+    });
+
+    it('falls back to a generic message when the error body has no `error` field', async () => {
       jest
         .spyOn(global, 'fetch')
         .mockReturnValue(mockJsonResponse({}, false, 500));
-
-      await expect(
-        ServicesService.startService(DEFAULT_SERVICE_CONFIG_ID),
-      ).rejects.toThrow('Failed to start the service');
+      const err = (await ServicesService.startService(
+        DEFAULT_SERVICE_CONFIG_ID,
+      ).catch((e) => e)) as Error;
+      expect(err).toBeInstanceOf(Error);
+      expect(err.message).toBe('Failed to start the service');
     });
   });
 

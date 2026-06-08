@@ -1,0 +1,92 @@
+{
+  "_doc": "License allowlist for the ROOT tree, mirroring the backend tomte/configs/tox.ini [Licenses] block (liccheck PARANOID posture). Every PRODUCTION dependency's license must match `allowedSpdx`, be resolved by `licenseOverrides`, or be exempted (by exact NAME, or by narrow PREFIX for publisher-controlled platform-binary families). Unknown or unlisted licenses FAIL — they are resolved, not silenced. See scripts/license-check.mjs and CONTRIBUTING.md ('Supply-chain checks').",
+  "_keep_when_empty": "Do NOT delete this file when overrides/exemptions are empty. Empty arrays are the running assertion of 'license gate exists AND zero current debt' — pre-paves the schema, preserves git history of past resolutions, keeps the CODEOWNERS-routed surface, and lets cross-repo tooling distinguish 'clean gate' (count=0) from 'not in use' (no file).",
+  "_fields": {
+    "scope": "'production' (default) or 'all'. 'production' mirrors the backend liccheck running against `tomte freeze-dependencies` — devDeps don't ship and generate considerable transitive-license noise.",
+    "allowedSpdx": "SPDX identifiers (plus npm-ecosystem aliases like 'Apache2', 'Apache 2.0') that pass the gate. Mirror tomte [Licenses] authorized_licenses verbatim where it applies to npm. Additions beyond tomte (e.g. OFL-1.1 for @fontsource fonts, Artistic-2.0 for transitive dev tooling) are explicit extensions.",
+    "unauthorizedSpdx": "SPDX identifiers that ALWAYS fail, regardless of override or exemption. Mirror tomte unauthorized_licenses verbatim. Default-deny via PARANOID covers anything not on either list; this array is reserved for licenses we want to call out by name.",
+    "licenseOverrides": "Package whose declared license is wrong (UNKNOWN, malformed, or the package.json field disagrees with the LICENSE file). Each entry RESOLVES the license to a specific SPDX value — these are CORRECTIONS, not policy exceptions. Never used to silence a real copyleft. Fields: package (exact name), spdx (resolved SPDX), reason, added (YYYY-MM-DD), review (YYYY-MM-DD).",
+    "exemptions": "Packages allowed despite their license being on `unauthorizedSpdx` or otherwise unresolved. Exact NAME match, version-agnostic. Fields: package (exact name), spdx, reason, added (YYYY-MM-DD), review (YYYY-MM-DD).",
+    "exemptionPrefixes": "Narrow prefix exemptions for publisher-controlled npm scopes with a uniform license stance (e.g. @img/sharp-libvips-* platform binaries, all LGPL-3.0-or-later, all published by the sharp team). NEVER use for general namespaces like @types/, where each sub-package is independently licensed by its author. Each entry needs the same justification fields as `exemptions[]`, keyed by `prefix` instead of `package`."
+  },
+  "scope": "production",
+  "allowedSpdx": [
+    "MIT",
+    "MIT-0",
+    "ISC",
+    "Apache-2.0",
+    "Apache 2.0",
+    "Apache2",
+    "Apache License 2.0",
+    "BSD",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "0BSD",
+    "Modified BSD",
+    "MPL-2.0",
+    "MPL 2.0",
+    "LGPL",
+    "LGPL-2.1",
+    "LGPL-2.1+",
+    "LGPL-2.1-only",
+    "LGPL-2.1-or-later",
+    "LGPLv2.1",
+    "LGPLv2.1+",
+    "BlueOak-1.0.0",
+    "CC0-1.0",
+    "Unlicense",
+    "WTFPL",
+    "Zlib",
+    "Python-2.0",
+    "PSF",
+    "PSF-2.0",
+    "Public Domain",
+    "HPND",
+    "OFL-1.1",
+    "CC-BY-4.0",
+    "CC-BY-3.0",
+    "CC-BY-3.0-US",
+    "Artistic-2.0"
+  ],
+  "unauthorizedSpdx": [
+    "MPL-1.1",
+    "MPL 1.1",
+    "GPL-2.0",
+    "GPLv2",
+    "GPL-3.0",
+    "GPL-3.0+",
+    "GPL-3.0-only",
+    "GPL-3.0-or-later",
+    "GPLv3",
+    "GPLv3+",
+    "LGPL-3.0",
+    "LGPL-3.0-only",
+    "LGPL-3.0-or-later",
+    "LGPLv3",
+    "AGPL-1.0",
+    "AGPL-3.0",
+    "AGPL-3.0-only",
+    "AGPL-3.0-or-later"
+  ],
+  "licenseOverrides": [
+    {
+      "package": "map-stream",
+      "spdx": "MIT",
+      "reason": "Declared license is UNKNOWN; LICENCE file at node_modules/map-stream/LICENCE is verbatim MIT (Dominic Tarr 2011). CORRECTION, not policy exception — PARANOID resolves rather than silences.",
+      "parents": ["ps-tree > event-stream > map-stream"],
+      "added": "2026-06-05",
+      "review": "2027-06-05"
+    }
+  ],
+  "exemptions": [],
+  "exemptionPrefixes": [
+    {
+      "prefix": "@img/sharp-libvips-",
+      "spdx": "LGPL-3.0-or-later",
+      "reason": "Platform-specific libvips native binaries that Next.js next/image loads at request time (dynamically linked, not statically combined with our JS). Package name varies by OS/arch (linux-x64, darwin-arm64, etc.), so an exact-name list would be non-deterministic across CI and local dev. `@img` is a publisher-controlled npm scope with a uniform license stance (the sharp team's native binaries), which is the only situation where a prefix exemption is appropriate.",
+      "parents": ["next > sharp"],
+      "added": "2026-06-05",
+      "review": "2027-06-05"
+    }
+  ]
+}

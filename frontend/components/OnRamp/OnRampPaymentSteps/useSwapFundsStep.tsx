@@ -138,6 +138,11 @@ type SwapFundsStep = {
   tokensToBeTransferred: TokenSymbol[];
   tokensToBeBridged: TokenSymbol[];
   step: TransactionStep;
+  /** Quote id used by the host to invalidate the bridge-execute query on retry. */
+  quoteId?: string;
+  /** Forwarded from `useBridgingSteps` so the host can render an InsufficientSignerGasModal. */
+  isBridgeExecuteError: boolean;
+  bridgeExecuteError: unknown;
 };
 
 const EMPTY_STATE: SwapFundsStep = {
@@ -148,6 +153,8 @@ const EMPTY_STATE: SwapFundsStep = {
     title: TITLE,
     subSteps: [],
   },
+  isBridgeExecuteError: false,
+  bridgeExecuteError: null,
 };
 
 const PROCESS_STATE: SwapFundsStep = {
@@ -158,11 +165,15 @@ const PROCESS_STATE: SwapFundsStep = {
     title: TITLE,
     subSteps: [{ description: 'Sending transaction...' }],
   },
+  isBridgeExecuteError: false,
+  bridgeExecuteError: null,
 };
 
 const getQuoteFailedErrorState = (onRetry: () => void): SwapFundsStep => ({
   tokensToBeTransferred: [],
   tokensToBeBridged: [],
+  isBridgeExecuteError: false,
+  bridgeExecuteError: null,
   step: {
     status: 'error',
     title: TITLE,
@@ -213,8 +224,14 @@ export const useSwapFundsStep = (
     return bridgeFundingRequirements.id;
   }, [isLoading, isOnRampingStepCompleted, bridgeFundingRequirements]);
 
-  const { isBridgingCompleted, isBridgingFailed, isBridging, bridgeStatus } =
-    useBridgingSteps(tokensToBeBridged, quoteId);
+  const {
+    isBridgingCompleted,
+    isBridgingFailed,
+    isBridging,
+    bridgeStatus,
+    isBridgeExecuteError,
+    bridgeExecuteError,
+  } = useBridgingSteps(tokensToBeBridged, quoteId);
 
   // If the swap step is already completed, we do not swap funds again
   useEffect(() => {
@@ -262,16 +279,31 @@ export const useSwapFundsStep = (
 
   if (!isSwappingFundsStepCompleted) {
     if (isLoading || isBridging) {
-      return { ...PROCESS_STATE, tokensToBeBridged };
+      return {
+        ...PROCESS_STATE,
+        tokensToBeBridged,
+        quoteId,
+        isBridgeExecuteError,
+        bridgeExecuteError,
+      };
     }
     if (hasError) {
-      return { ...getQuoteFailedErrorState(onRetry), tokensToBeBridged };
+      return {
+        ...getQuoteFailedErrorState(onRetry),
+        tokensToBeBridged,
+        quoteId,
+        isBridgeExecuteError,
+        bridgeExecuteError,
+      };
     }
   }
 
   return {
     tokensToBeTransferred,
     tokensToBeBridged,
+    quoteId,
+    isBridgeExecuteError,
+    bridgeExecuteError,
     step: {
       status: bridgeStepStatus,
       title: TITLE,
