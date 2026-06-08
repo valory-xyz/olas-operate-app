@@ -10,7 +10,7 @@ import { MECHS, MechType } from '../mechs';
 import { TokenSymbolMap } from '../tokens';
 import type { StakingProgramMap } from '.';
 
-const BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES: Record<string, Address> = {
+export const BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES: Record<string, Address> = {
   [STAKING_PROGRAM_IDS.MemeBaseAlpha2]:
     '0xc653622FD75026a020995a1d8c8651316cBBc4dA',
   [STAKING_PROGRAM_IDS.MemeBaseBeta]:
@@ -33,6 +33,8 @@ const BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES: Record<string, Address> = {
     '0xFA0ca3935758cB81D35A8F1395b9Eb5a596ce301',
   [STAKING_PROGRAM_IDS.PettAiAgent4]:
     '0x00D544c10BDC0E9b0a71CeAF52C1342BB8f21c1D',
+  [STAKING_PROGRAM_IDS.BasiusAlpha1]:
+    '0x0000000000000000000000000000000000000001', // placeholder — update to real Base staking contract address before launch
 };
 
 export const BASE_STAKING_PROGRAMS: StakingProgramMap = {
@@ -302,6 +304,33 @@ export const BASE_STAKING_PROGRAMS: StakingProgramMap = {
     id: deriveStakingProgramId(
       BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
         STAKING_PROGRAM_IDS.PettAiAgent4
+      ],
+    ),
+  },
+  [STAKING_PROGRAM_IDS.BasiusAlpha1]: {
+    chainId: EvmChainIdMap.Base,
+    name: 'Basius Alpha I',
+    agentsSupported: [AgentMap.Basius],
+    stakingRequirements: {
+      [TokenSymbolMap.OLAS]: 100,
+    },
+    activityChecker:
+      BASE_STAKING_PROGRAMS_ACTIVITY_CHECKERS[
+        STAKING_PROGRAM_IDS.BasiusAlpha1
+      ],
+    address:
+      BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.BasiusAlpha1
+      ],
+    contract: new MulticallContract(
+      BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.BasiusAlpha1
+      ],
+      STAKING_TOKEN_PROXY_ABI,
+    ),
+    id: deriveStakingProgramId(
+      BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.BasiusAlpha1
       ],
     ),
   },
