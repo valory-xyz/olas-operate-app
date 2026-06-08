@@ -23,6 +23,16 @@ const NoMetricsAlert = () => (
   />
 );
 
+const MetricsUnavailableAlert = () => (
+  <Alert
+    message="Performance metrics aren't available in this app version"
+    type="info"
+    centered
+    showIcon
+    className="text-sm"
+  />
+);
+
 type RequiresProfileOpenAlertProps = {
   title: string;
   message: string;
@@ -161,7 +171,9 @@ export const Performance = ({
 
       <CardFlex $noBorder>
         <Flex vertical gap={24}>
-          {isLoading ? (
+          {selectedAgentConfig.arePerformanceMetricsUnavailable ? (
+            <MetricsUnavailableAlert />
+          ) : isLoading ? (
             <Flex justify="center" className="mt-24">
               <Spin />
             </Flex>

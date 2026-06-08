@@ -85,6 +85,13 @@ export type AgentConfig = {
   servicePublicId: string;
   /** Whether the agent is geo-location restricted */
   isGeoLocationRestricted?: boolean;
+  /**
+   * Temporarily hides performance metrics and shows an
+   * "unavailable in this app version" banner instead. Set while the agent's
+   * subgraph is not yet indexed (e.g. Polystrat on the new Safe structure);
+   * remove or set to false to restore the metrics view.
+   */
+  arePerformanceMetricsUnavailable?: boolean;
   /** ERC20 tokens (beyond native + OLAS) to display and track for this agent */
   erc20Tokens?: TokenSymbol[];
 } & needsOpenProfileEachAgentRun;
