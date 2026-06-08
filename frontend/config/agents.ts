@@ -97,7 +97,7 @@ const getPolystratPusdConfig = () => {
 };
 
 export const AGENT_CONFIG: {
-  [key in AgentType]: AgentConfig;
+  [_key in AgentType]: AgentConfig;
 } = {
   [AgentMap.PredictTrader]: {
     isAgentEnabled: true,
