@@ -13,15 +13,16 @@ import { BABYDEGEN_COMMON_TEMPLATE } from './babydegen';
 
 export const BASIUS_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentMap.Basius,
-  name: 'Optimus - Base',
-  description: `${KPI_DESC_PREFIX} Optimus service deployment on Base network`,
+  name: 'Basius',
+  description: `${KPI_DESC_PREFIX} Basius service deployment on Base network`,
   image:
     'https://gateway.autonolas.tech/ipfs/bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
   home_chain: MiddlewareChainMap.BASE,
   configurations: {
     [MiddlewareChainMap.BASE]: {
       staking_program_id: STAKING_PROGRAM_IDS.BasiusAlpha1, // default, may be overwritten
-      nft: 'bafybeiafjcy63arqkfqbtjqpzxyeia2tscpbyradb4zlpzhgc3xymwmmtu',
+      // TODO(basius): replace with real NFT IPFS hash before launch
+      nft: 'bafybeibasiusnftplaceholdertobereplacedbeforelaunchxxxxxxxx',
       rpc: '', // overwritten
       agent_id: 0, // placeholder — update to real on-chain agent ID before launch
       cost_of_bond: parseEther(20),
@@ -40,6 +41,10 @@ export const BASIUS_SERVICE_TEMPLATE: ServiceTemplate = {
       },
     },
   },
+  // TODO(basius): confirm with agent team whether SELECTED_STRATEGIES and
+  // ALLOWED_CHAINS env vars are needed on Base. Currently mirrors Optimus
+  // (which omits them); Modius requires both. If Base needs them, add as
+  // FIXED env vars matching Modius's pattern.
   env_variables: {
     BASE_LEDGER_RPC: {
       name: 'Base ledger RPC',
