@@ -9,22 +9,7 @@ import { MiddlewareChainMap } from '../../chains';
 import { STAKING_PROGRAM_IDS } from '../../stakingProgram';
 import { X402_ENABLED_FLAGS } from '../../x402';
 import { KPI_DESC_PREFIX } from '../constants';
-
-const BABYDEGEN_COMMON_TEMPLATE: Pick<
-  ServiceTemplate,
-  'hash' | 'service_version' | 'agent_release'
-> = {
-  hash: 'bafybeigc77ps4pbrbjjeyeipe5gk4zp66sv2rlvgead2ccaxejqqzjlkx4',
-  service_version: 'v0.10.1',
-  agent_release: {
-    is_aea: true,
-    repository: {
-      owner: 'valory-xyz',
-      name: 'optimus',
-      version: 'v0.10.1',
-    },
-  },
-};
+import { BABYDEGEN_COMMON_TEMPLATE } from './babydegen';
 
 export const BASIUS_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentMap.Basius,

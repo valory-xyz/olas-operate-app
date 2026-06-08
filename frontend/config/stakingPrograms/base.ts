@@ -10,7 +10,7 @@ import { MECHS, MechType } from '../mechs';
 import { TokenSymbolMap } from '../tokens';
 import type { StakingProgramMap } from '.';
 
-export const BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES: Record<string, Address> = {
+const BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES: Record<string, Address> = {
   [STAKING_PROGRAM_IDS.MemeBaseAlpha2]:
     '0xc653622FD75026a020995a1d8c8651316cBBc4dA',
   [STAKING_PROGRAM_IDS.MemeBaseBeta]:
