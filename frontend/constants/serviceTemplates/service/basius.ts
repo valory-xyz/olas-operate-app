@@ -24,7 +24,8 @@ export const BASIUS_SERVICE_TEMPLATE: ServiceTemplate = {
       // TODO(basius): replace with real NFT IPFS hash before launch
       nft: 'bafybeibasiusnftplaceholdertobereplacedbeforelaunchxxxxxxxx',
       rpc: '', // overwritten
-      agent_id: 0, // placeholder — update to real on-chain agent ID before launch
+      // TODO(basius): replace with real on-chain agent ID (Olas Registry mint on Base) before launch
+      agent_id: 0,
       cost_of_bond: parseEther(20),
       fund_requirements: {
         [ethers.constants.AddressZero]: {

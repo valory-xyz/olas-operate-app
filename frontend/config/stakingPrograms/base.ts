@@ -33,8 +33,9 @@ const BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES: Record<string, Address> = {
     '0xFA0ca3935758cB81D35A8F1395b9Eb5a596ce301',
   [STAKING_PROGRAM_IDS.PettAiAgent4]:
     '0x00D544c10BDC0E9b0a71CeAF52C1342BB8f21c1D',
+  // TODO(basius): replace with real Base staking contract address before launch
   [STAKING_PROGRAM_IDS.BasiusAlpha1]:
-    '0x0000000000000000000000000000000000000001', // placeholder — update to real Base staking contract address before launch
+    '0x0000000000000000000000000000000000000001',
 };
 
 export const BASE_STAKING_PROGRAMS: StakingProgramMap = {

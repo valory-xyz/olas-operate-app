@@ -143,8 +143,9 @@ export const BASE_STAKING_PROGRAMS_ACTIVITY_CHECKERS: Record<
   [STAKING_PROGRAM_IDS.PettAiAgent4]: getPetActivityCheckerContract(
     '0x7aD8E6032849Edd8bF742E459722Ee8B10e2cCFc',
   ),
+  // TODO(basius): replace with real Base activity checker contract address before launch
   [STAKING_PROGRAM_IDS.BasiusAlpha1]: getStakingActivityCheckerContract(
-    '0x0000000000000000000000000000000000000001', // placeholder — update to real Base activity checker address before launch
+    '0x0000000000000000000000000000000000000001',
   ),
 } as const;
 

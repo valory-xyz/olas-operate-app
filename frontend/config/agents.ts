@@ -183,7 +183,8 @@ export const AGENT_CONFIG: {
     name: 'Basius agent',
     evmHomeChainId: EvmChainIdMap.Base,
     middlewareHomeChainId: MiddlewareChainMap.BASE,
-    agentIds: [0], // placeholder — update to real on-chain agent ID before launch
+    // TODO(basius): replace with real on-chain agent ID (Olas Registry mint on Base) before launch
+    agentIds: [0],
     additionalRequirements: {
       [EvmChainIdMap.Base]: {
         [TokenSymbolMap.USDC]: getBasiusUsdcConfig(),

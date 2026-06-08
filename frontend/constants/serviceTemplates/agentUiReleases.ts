@@ -48,6 +48,11 @@ export const AGENT_UI_RELEASES: Partial<Record<AgentType, AgentUiRelease>> = {
   [AgentMap.Basius]: {
     owner: 'valory-xyz',
     name: AGENT_UI_MONOREPO,
+    // TODO(basius): replace with Basius-specific release tag (e.g. v0.1.X-basius)
+    // once the agent-ui-monorepo PR adding basius support is merged and a tag
+    // is cut. Currently falls back to Optimus's tag — works because Basius
+    // shares the same babydegen-ui app, but the Release Notes page (OPE-1709)
+    // will incorrectly show 'v0.1.9-optimus' under Basius until fixed.
     version: 'v0.1.9-optimus',
   },
   [AgentMap.AgentsFun]: {
