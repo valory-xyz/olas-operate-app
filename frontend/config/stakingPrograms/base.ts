@@ -315,9 +315,7 @@ export const BASE_STAKING_PROGRAMS: StakingProgramMap = {
       [TokenSymbolMap.OLAS]: 100,
     },
     activityChecker:
-      BASE_STAKING_PROGRAMS_ACTIVITY_CHECKERS[
-        STAKING_PROGRAM_IDS.BasiusAlpha1
-      ],
+      BASE_STAKING_PROGRAMS_ACTIVITY_CHECKERS[STAKING_PROGRAM_IDS.BasiusAlpha1],
     address:
       BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
         STAKING_PROGRAM_IDS.BasiusAlpha1

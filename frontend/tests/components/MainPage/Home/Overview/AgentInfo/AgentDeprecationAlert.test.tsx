@@ -1,8 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 
-import { AgentDeprecationAlert } from '../../../../../../components/MainPage/Home/Overview/AgentInfo/AgentDeprecationAlert';
 import { STEPS } from '../../../../../../components/AgentWallet/types';
+import { AgentDeprecationAlert } from '../../../../../../components/MainPage/Home/Overview/AgentInfo/AgentDeprecationAlert';
 import { PAGES } from '../../../../../../constants';
 
 // ---------------------------------------------------------------------------

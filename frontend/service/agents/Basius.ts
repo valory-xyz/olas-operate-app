@@ -164,8 +164,7 @@ export abstract class BasiusService extends StakedAgentService {
   ): Promise<StakingContractDetails | undefined> => {
     const { multicallProvider } = PROVIDERS[chainId];
 
-    const stakingTokenProxy =
-      BASE_STAKING_PROGRAMS[stakingProgramId]?.contract;
+    const stakingTokenProxy = BASE_STAKING_PROGRAMS[stakingProgramId]?.contract;
     if (!stakingTokenProxy) return;
 
     const contractCalls = [

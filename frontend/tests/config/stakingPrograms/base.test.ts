@@ -155,8 +155,7 @@ describe('BASE_STAKING_PROGRAMS', () => {
 
   describe('Basius programs', () => {
     it('BasiusAlpha1 supports only Basius agent', () => {
-      const program =
-        BASE_STAKING_PROGRAMS[STAKING_PROGRAM_IDS.BasiusAlpha1];
+      const program = BASE_STAKING_PROGRAMS[STAKING_PROGRAM_IDS.BasiusAlpha1];
       expect(program.agentsSupported).toContain(AgentMap.Basius);
       expect(program.agentsSupported).not.toContain(AgentMap.AgentsFun);
       expect(program.agentsSupported).not.toContain(AgentMap.PettAi);
