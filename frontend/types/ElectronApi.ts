@@ -26,6 +26,7 @@ export type PearlStore = {
   [AgentMap.AgentsFun]?: AgentSettings;
   [AgentMap.Modius]?: AgentSettings;
   [AgentMap.Optimus]?: AgentSettings;
+  [AgentMap.Basius]?: AgentSettings;
   [AgentMap.PettAi]?: AgentSettings;
   [AgentMap.Polystrat]?: AgentSettings;
 
