@@ -18,8 +18,8 @@ export const AgentDecommissionedAlert = () => {
       message={
         <Flex align="center" gap={4}>
           <Text className="text-sm">
-            PettBro agent has been phased out and is no longer supported. You can
-            still withdraw funds from your Agent Wallet.
+            PettBro agent has been phased out and is no longer supported. You
+            can still withdraw funds from your Agent Wallet.
           </Text>
           <Button
             onClick={() =>

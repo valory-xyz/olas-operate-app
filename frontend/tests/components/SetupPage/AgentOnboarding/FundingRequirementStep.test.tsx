@@ -1,6 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
+// Import after mocks are set up (Jest hoists jest.mock calls)
+import { FundingRequirementStep } from '../../../../components/SetupPage/AgentOnboarding/FundingRequirementStep';
 import { AgentType } from '../../../../constants/agent';
 
 // ---------------------------------------------------------------------------
@@ -60,9 +62,6 @@ jest.mock('../../../../config/agents', () => ({
     },
   },
 }));
-
-// Import after mocks are set up (Jest hoists jest.mock calls)
-import { FundingRequirementStep } from '../../../../components/SetupPage/AgentOnboarding/FundingRequirementStep';
 
 describe('FundingRequirementStep — MaintenanceAlert', () => {
   beforeEach(() => {
