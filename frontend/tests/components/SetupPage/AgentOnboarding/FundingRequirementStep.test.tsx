@@ -66,6 +66,9 @@ jest.mock('../../../../config/agents', () => ({
 describe('FundingRequirementStep — MaintenanceAlert', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // Reset mutated mock state so tests don't leak into each other
+    const { AGENT_CONFIG } = jest.requireMock('../../../../config/agents');
+    AGENT_CONFIG.pett_ai.isDecommissioned = false;
   });
 
   it('shows "Existing agents continue to run as usual." when agent is not decommissioned', () => {
