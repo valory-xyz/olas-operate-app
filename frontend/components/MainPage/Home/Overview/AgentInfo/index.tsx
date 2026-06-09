@@ -14,6 +14,7 @@ import { useAutoRunContext } from '@/context/AutoRunProvider';
 import { usePageState, useServices } from '@/hooks';
 
 import { AgentActivity } from './AgentActivity';
+import { AgentDecommissionedAlert } from './AgentDecommissionedAlert';
 import { AgentDeprecationAlert } from './AgentDeprecationAlert';
 import { AgentDisabledAlert } from './AgentDisabledAlert';
 import { AgentRunButton } from './AgentRunButton';
@@ -169,12 +170,18 @@ export const AgentInfo = () => {
               {isAutoRunEnabled ? <AutoRunAlert /> : <AgentRunButton />}
             </Flex>
           </Flex>
-          <AgentDisabledAlert />
-          {selectedAgentConfig.shutdownDate && (
-            <AgentDeprecationAlert
-              agentName={selectedAgentConfig.displayName}
-              shutdownDate={selectedAgentConfig.shutdownDate}
-            />
+          {selectedAgentConfig.isDecommissioned ? (
+            <AgentDecommissionedAlert />
+          ) : (
+            <>
+              <AgentDisabledAlert />
+              {selectedAgentConfig.shutdownDate && (
+                <AgentDeprecationAlert
+                  agentName={selectedAgentConfig.displayName}
+                  shutdownDate={selectedAgentConfig.shutdownDate}
+                />
+              )}
+            </>
           )}
         </AgentInfoContainer>
       </CardFlex>
