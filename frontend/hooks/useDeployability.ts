@@ -114,6 +114,12 @@ export const useDeployability = ({
     loadingReasons.length > 0 ? loadingReasons.join(', ') : undefined;
 
   return useMemo(() => {
+    // Decommissioned agents can never run — short-circuit before loading checks
+    // so the button is never transiently shown as "Loading".
+    if (selectedAgentConfig.isDecommissioned) {
+      return { isLoading: false, canRun: false, reason: 'Decommissioned' };
+    }
+
     if (safeEligibility && !safeEligibility.ok && !safeEligibility.isLoading) {
       return {
         isLoading,
@@ -192,6 +198,7 @@ export const useDeployability = ({
     isLoading,
     isServiceStaked,
     safeEligibility,
+    selectedAgentConfig.isDecommissioned,
     selectedAgentConfig.isGeoLocationRestricted,
     selectedAgentConfig.isUnderConstruction,
     loadingReason,
