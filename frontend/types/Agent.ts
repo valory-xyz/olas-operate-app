@@ -55,8 +55,6 @@ export type AgentConfig = {
    * functional (sidebar, staking, auto-run continue working).
    */
   isAddingNewBlocked?: boolean;
-  /** Human-readable shutdown date for deprecation banner, e.g. 'June 15, 2026' */
-  shutdownDate?: string;
   /** Blocks all running, auto-run, and creation; shows permanent phased-out alert */
   isDecommissioned?: boolean;
   /** Whether the agent is enabled and can be shown in the UI */

@@ -15,7 +15,6 @@ import { usePageState, useServices } from '@/hooks';
 
 import { AgentActivity } from './AgentActivity';
 import { AgentDecommissionedAlert } from './AgentDecommissionedAlert';
-import { AgentDeprecationAlert } from './AgentDeprecationAlert';
 import { AgentDisabledAlert } from './AgentDisabledAlert';
 import { AgentRunButton } from './AgentRunButton';
 
@@ -171,17 +170,11 @@ export const AgentInfo = () => {
             </Flex>
           </Flex>
           {selectedAgentConfig.isDecommissioned ? (
-            <AgentDecommissionedAlert />
+            <AgentDecommissionedAlert
+              agentName={selectedAgentConfig.displayName}
+            />
           ) : (
-            <>
-              <AgentDisabledAlert />
-              {selectedAgentConfig.shutdownDate && (
-                <AgentDeprecationAlert
-                  agentName={selectedAgentConfig.displayName}
-                  shutdownDate={selectedAgentConfig.shutdownDate}
-                />
-              )}
-            </>
+            <AgentDisabledAlert />
           )}
         </AgentInfoContainer>
       </CardFlex>

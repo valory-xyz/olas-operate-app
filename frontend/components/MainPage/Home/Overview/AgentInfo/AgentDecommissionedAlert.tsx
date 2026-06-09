@@ -7,7 +7,11 @@ import { usePageState } from '@/hooks';
 
 const { Text } = Typography;
 
-export const AgentDecommissionedAlert = () => {
+export const AgentDecommissionedAlert = ({
+  agentName,
+}: {
+  agentName: string;
+}) => {
   const { goto } = usePageState();
 
   return (
@@ -18,8 +22,8 @@ export const AgentDecommissionedAlert = () => {
       message={
         <Flex align="center" gap={4}>
           <Text className="text-sm">
-            PettBro agent has been phased out and is no longer supported. You
-            can still withdraw funds from your Agent Wallet.
+            {agentName} has been phased out and is no longer supported. You can
+            still withdraw funds from your Agent Wallet.
           </Text>
           <Button
             onClick={() =>

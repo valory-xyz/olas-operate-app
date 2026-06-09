@@ -24,24 +24,24 @@ describe('AgentDecommissionedAlert', () => {
     jest.clearAllMocks();
   });
 
-  it('renders the phased-out message', () => {
-    render(<AgentDecommissionedAlert />);
+  it('renders the phased-out message with the provided agent name', () => {
+    render(<AgentDecommissionedAlert agentName="PettBro by Pett.ai" />);
     expect(
       screen.getByText(
-        /PettBro agent has been phased out and is no longer supported\. You can still withdraw funds from your Agent Wallet\./,
+        /PettBro by Pett\.ai has been phased out and is no longer supported\. You can still withdraw funds from your Agent Wallet\./,
       ),
     ).toBeInTheDocument();
   });
 
   it('renders the Withdraw button', () => {
-    render(<AgentDecommissionedAlert />);
+    render(<AgentDecommissionedAlert agentName="PettBro by Pett.ai" />);
     expect(
       screen.getByRole('button', { name: 'Withdraw' }),
     ).toBeInTheDocument();
   });
 
   it('navigates to AgentWallet with WITHDRAW_FROM_AGENT_WALLET step on click', () => {
-    render(<AgentDecommissionedAlert />);
+    render(<AgentDecommissionedAlert agentName="PettBro by Pett.ai" />);
     fireEvent.click(screen.getByRole('button', { name: 'Withdraw' }));
     expect(mockGoto).toHaveBeenCalledWith(PAGES.AgentWallet, {
       initialStep: STEPS.WITHDRAW_FROM_AGENT_WALLET,

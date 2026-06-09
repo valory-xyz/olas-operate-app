@@ -101,10 +101,6 @@ describe('PettAi creation blocking and deprecation', () => {
     expect(AGENT_CONFIG[AgentMap.PettAi].isAddingNewBlocked).toBe(true);
   });
 
-  it('has shutdownDate set to June 15, 2026', () => {
-    expect(AGENT_CONFIG[AgentMap.PettAi].shutdownDate).toBe('June 15, 2026');
-  });
-
   it('PettAi still appears in ACTIVE_AGENTS', () => {
     const pettAiEntry = ACTIVE_AGENTS.find(
       ([agentType]) => agentType === AgentMap.PettAi,
