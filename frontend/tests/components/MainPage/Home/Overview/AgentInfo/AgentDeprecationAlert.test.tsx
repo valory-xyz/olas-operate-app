@@ -27,13 +27,13 @@ describe('AgentDeprecationAlert', () => {
   it('renders the shutdown message with the provided date and agent name', () => {
     render(
       <AgentDeprecationAlert
-        agentName="PettBro by Pett.ai"
-        shutdownDate="June 15, 2026"
+        agentName="TestAgent"
+        shutdownDate="December 31, 2030"
       />,
     );
     expect(
       screen.getByText(
-        /PettBro by Pett.ai is being phased out and will be disabled on June 15, 2026/,
+        /TestAgent is being phased out and will be disabled on December 31, 2030/,
       ),
     ).toBeInTheDocument();
   });
@@ -41,8 +41,8 @@ describe('AgentDeprecationAlert', () => {
   it('renders the Withdraw button', () => {
     render(
       <AgentDeprecationAlert
-        agentName="PettBro by Pett.ai"
-        shutdownDate="June 15, 2026"
+        agentName="TestAgent"
+        shutdownDate="December 31, 2030"
       />,
     );
     expect(
@@ -53,8 +53,8 @@ describe('AgentDeprecationAlert', () => {
   it('navigates to AgentWallet page with withdraw step when Withdraw is clicked', () => {
     render(
       <AgentDeprecationAlert
-        agentName="PettBro by Pett.ai"
-        shutdownDate="June 15, 2026"
+        agentName="TestAgent"
+        shutdownDate="December 31, 2030"
       />,
     );
     fireEvent.click(screen.getByRole('button', { name: 'Withdraw' }));
