@@ -102,7 +102,7 @@ export const BASIUS_ONBOARDING_STEPS: OnboardingStep[] = [
   },
   {
     title: 'Your AI portfolio manager',
-    desc: 'Basius collects real-time market data from CoinGecko and autonomously manages your investments using Balancer, Sturdy and Uniswap. Requires ETH and USDC on Base as initial investments.',
+    desc: 'Basius collects real-time market data from CoinGecko and autonomously manages your investments using Aerodrome on Base. Requires ETH and USDC on Base as initial investments.',
     imgSrc: 'introduction/setup-agent-basius-1',
   },
   {

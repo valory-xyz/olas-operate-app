@@ -42,10 +42,12 @@ export const BASIUS_SERVICE_TEMPLATE: ServiceTemplate = {
       },
     },
   },
-  // TODO(basius): confirm with agent team whether SELECTED_STRATEGIES and
-  // ALLOWED_CHAINS env vars are needed on Base. Currently mirrors Optimus
-  // (which omits them); Modius requires both. If Base needs them, add as
-  // FIXED env vars matching Modius's pattern.
+  // Env-var set matches Optimus 1:1 (no SELECTED_STRATEGIES, no ALLOWED_CHAINS).
+  // Confirmed by the Optimus-vs-Basius config-differences doc: "Basius is
+  // Optimus pointed at Base, so all cross-cutting machinery is reused as is,
+  // with no chain-specific forks." Chain-specific DEX/asset config (Aerodrome
+  // contracts, whitelisted tokens) is loaded by the agent runtime from the
+  // skill.yaml on the agent side, not via Pearl env vars.
   env_variables: {
     BASE_LEDGER_RPC: {
       name: 'Base ledger RPC',
