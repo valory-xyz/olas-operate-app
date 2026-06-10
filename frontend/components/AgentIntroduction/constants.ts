@@ -101,13 +101,13 @@ export const BASIUS_ONBOARDING_STEPS: OnboardingStep[] = [
     desc: 'An autonomous AI agent that is designed to streamline your DeFi experience by intelligently managing your assets on Base.',
   },
   {
-    title: 'Your AI portfolio manager',
-    desc: 'Basius collects real-time market data from CoinGecko and autonomously manages your investments using Aerodrome on Base. Requires ETH and USDC on Base as initial investments.',
+    title: 'Your AI Portfolio Manager',
+    desc: 'Basius collects real-time market data from CoinGecko and autonomously manages your investments using Aerodrome — delivering hands-free portfolio growth.',
     imgSrc: 'introduction/setup-agent-basius-1',
   },
   {
-    title: 'Choose the best strategy',
-    desc: 'Basius learns autonomously, adapts to changing market conditions, and selects the best next strategy to invest for you.',
+    title: 'Choose the Best Strategy',
+    desc: 'Basius learns autonomously, adapts to changing market conditions, and selects the best next strategy to invest on your behalf.',
     imgSrc: 'introduction/setup-agent-basius-2',
   },
 ] as const;

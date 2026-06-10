@@ -192,9 +192,9 @@ export const AGENT_CONFIG: {
     },
     defaultStakingProgramId: STAKING_PROGRAM_IDS.BasiusAlpha1,
     serviceApi: BasiusService,
-    displayName: 'Basius',
+    displayName: 'Basius Agent',
     description:
-      'Invests crypto assets for you and grows your portfolio on Base network.',
+      'An autonomous AI agent that intelligently manages your DeFi assets on Base.',
     hasExternalFunds: true,
     doesChatUiRequireApiKey: true,
     category: 'DeFi',
