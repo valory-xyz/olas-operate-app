@@ -7,12 +7,10 @@ import { usePageState } from '@/hooks';
 
 const { Text } = Typography;
 
-export const AgentDeprecationAlert = ({
+export const AgentDecommissionedAlert = ({
   agentName,
-  shutdownDate,
 }: {
   agentName: string;
-  shutdownDate: string;
 }) => {
   const { goto } = usePageState();
 
@@ -24,8 +22,8 @@ export const AgentDeprecationAlert = ({
       message={
         <Flex align="center" gap={4}>
           <Text className="text-sm">
-            {agentName} is being phased out and will be disabled on{' '}
-            {shutdownDate}. You can withdraw funds from the Agent Wallet.
+            {agentName} has been phased out and is no longer supported. You can
+            still withdraw funds from your Agent Wallet.
           </Text>
           <Button
             onClick={() =>

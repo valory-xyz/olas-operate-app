@@ -255,6 +255,24 @@ describe('getDecommissionedInstances', () => {
     ]);
   });
 
+  it('returns serviceConfigIds of agents that are decommissioned', () => {
+    const agents = [
+      {
+        ...makeAutoRunAgentMeta(
+          AgentMap.PredictTrader,
+          AGENT_CONFIG[AgentMap.PredictTrader],
+        ),
+        agentConfig: {
+          ...AGENT_CONFIG[AgentMap.PredictTrader],
+          isDecommissioned: true,
+        },
+      },
+    ];
+    expect(getDecommissionedInstances(agents)).toEqual([
+      DEFAULT_SERVICE_CONFIG_ID,
+    ]);
+  });
+
   it('returns serviceConfigIds of agents that are not enabled', () => {
     const agents = [
       {

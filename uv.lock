@@ -1197,7 +1197,7 @@ wheels = [
 
 [[package]]
 name = "olas-operate-app"
-version = "1.6.23rc9"
+version = "1.6.23rc12"
 source = { virtual = "." }
 dependencies = [
     { name = "olas-operate-middleware" },

@@ -295,6 +295,44 @@ describe('useDeployability', () => {
     });
   });
 
+  describe('decommissioned (branch — before loading)', () => {
+    it('returns canRun=false and isLoading=false regardless of loading state', () => {
+      setupDefaults({ services: { isLoading: true } });
+      mockUseServices.mockReturnValue({
+        ...defaultServices,
+        isLoading: true,
+        selectedAgentConfig: {
+          ...defaultServices.selectedAgentConfig,
+          isDecommissioned: true,
+        },
+      } as unknown as ReturnType<typeof useServices>);
+      const { result } = renderHook(() => useDeployability());
+      expect(result.current.canRun).toBe(false);
+      expect(result.current.isLoading).toBe(false);
+      expect(result.current.reason).toBe('Decommissioned');
+    });
+
+    it('takes priority over safeEligibility failure', () => {
+      mockUseServices.mockReturnValue({
+        ...defaultServices,
+        selectedAgentConfig: {
+          ...defaultServices.selectedAgentConfig,
+          isDecommissioned: true,
+        },
+      } as unknown as ReturnType<typeof useServices>);
+      const { result } = renderHook(() =>
+        useDeployability({
+          safeEligibility: {
+            ok: false,
+            reason: 'Safe check failed',
+            isLoading: false,
+          },
+        }),
+      );
+      expect(result.current.reason).toBe('Decommissioned');
+    });
+  });
+
   describe('under construction (branch 3)', () => {
     it('returns canRun=false with "Under construction" reason', () => {
       setupDefaults();

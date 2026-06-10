@@ -45,10 +45,12 @@ const MaintenanceAlert = ({
   agentName,
   reason,
   url,
+  isDecommissioned,
 }: {
   agentName: string;
   reason?: string;
   url?: string;
+  isDecommissioned?: boolean;
 }) => (
   <Alert
     type="warning"
@@ -62,7 +64,8 @@ const MaintenanceAlert = ({
         </Text>
         <Text className="text-sm">
           New {agentName} agents cannot be created at this time
-          {reason && ` ${reason}`}. Existing agents continue to run as usual.
+          {reason && ` ${reason}`}.
+          {!isDecommissioned && ' Existing agents continue to run as usual.'}
         </Text>
         {url && (
           <Link
@@ -249,6 +252,7 @@ export const FundingRequirementStep = ({
     category,
     isUnderConstruction,
     isAddingNewBlocked,
+    isDecommissioned,
   } = AGENT_CONFIG[agentType];
   const { name, displayName } = asEvmChainDetails(middlewareHomeChainId);
 
@@ -267,6 +271,7 @@ export const FundingRequirementStep = ({
           ? POLYMARKET_DEPOSIT_WALLET_MIGRATION_URL
           : undefined
       }
+      isDecommissioned={isDecommissioned}
     />
   ) : null;
 
