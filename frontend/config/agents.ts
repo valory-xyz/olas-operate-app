@@ -103,7 +103,6 @@ export const AGENT_CONFIG: {
   },
   [AgentMap.Polystrat]: {
     isAgentEnabled: true,
-    isAddingNewBlocked: true,
     requiresSetup: true,
     isX402Enabled: X402_ENABLED_FLAGS[AgentMap.Polystrat],
     name: 'Polystrat',
@@ -126,6 +125,7 @@ export const AGENT_CONFIG: {
       'Trade sizes adapt to market conditions and agent confidence.',
     servicePublicId: 'valory/polymarket_trader:0.1.0',
     isGeoLocationRestricted: true,
+    arePerformanceMetricsUnavailable: true,
     erc20Tokens: [TokenSymbolMap.USDC, TokenSymbolMap.pUSD],
   },
   [AgentMap.Optimus]: {
@@ -206,8 +206,8 @@ export const AGENT_CONFIG: {
   },
   [AgentMap.PettAi]: {
     isAgentEnabled: true,
-    isUnderConstruction: false,
-    isComingSoon: false,
+    isAddingNewBlocked: true,
+    shutdownDate: 'June 15, 2026',
     requiresSetup: false,
     isX402Enabled: X402_ENABLED_FLAGS[AgentMap.PettAi],
     name: 'Pett.ai',

@@ -67,6 +67,24 @@ jest.mock('../../../../components/ui/AgentSetupCompleteModal', () => ({
     createElement('div', { 'data-testid': 'setup-complete-modal' }),
 }));
 
+// OnRampPaymentSteps mounts an InsufficientSignerGasModal driven by
+// useInsufficientGasModal. These existing tests don't exercise the gas-error
+// path — return null so the modal never mounts, and stub the supporting
+// react-query / page-state / ui imports so they don't fail at import time.
+jest.mock('../../../../hooks/useInsufficientGasModal', () => ({
+  useInsufficientGasModal: () => null,
+}));
+jest.mock('../../../../hooks/usePageState', () => ({
+  usePageState: () => ({ goto: jest.fn() }),
+}));
+jest.mock('../../../../components/ui/InsufficientSignerGasModal', () => ({
+  InsufficientSignerGasModal: () =>
+    createElement('div', { 'data-testid': 'insufficient-gas-modal' }),
+}));
+jest.mock('@tanstack/react-query', () => ({
+  useQueryClient: () => ({ removeQueries: jest.fn() }),
+}));
+
 // ---------------------------------------------------------------------------
 // Import after mocks
 // ---------------------------------------------------------------------------

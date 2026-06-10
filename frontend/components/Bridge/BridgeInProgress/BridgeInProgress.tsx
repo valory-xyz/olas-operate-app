@@ -1,8 +1,14 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { Flex, Typography } from 'antd';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { Alert, CardFlex } from '@/components/ui';
-import { useBridgingSteps, usePageState } from '@/hooks';
+import { Alert, CardFlex, InsufficientSignerGasModal } from '@/components/ui';
+import { PAGES, REACT_QUERY_KEYS } from '@/constants';
+import {
+  useBridgingSteps,
+  useInsufficientGasModal,
+  usePageState,
+} from '@/hooks';
 import {
   BridgingStepStatus,
   CrossChainTransferDetails,
@@ -48,13 +54,48 @@ export const BridgeInProgress = ({
   mode = 'deposit',
 }: BridgeInProgressProps) => {
   const { goto } = usePageState();
+  const queryClient = useQueryClient();
   const symbols = transfers.map((transfer) => transfer.toSymbol);
 
   const [isBridgeRetrying, setIsBridgeRetrying] = useState(false);
+  // Set to true on first dismiss and intentionally never reset for the
+  // component's lifetime. The bridge-execute is a `useQuery`, so dismissing
+  // alone (without this flag) would trigger an immediate refetch — the same
+  // gas error would land in cache and re-open the modal on the next render.
+  // Recovery for the user is via the bridging-step retry CTA (which routes
+  // to NEED_REFILL), not by re-rendering this modal. A genuinely-new gas
+  // error on a follow-up bridge attempt is reachable by remounting (e.g.
+  // navigating away and back, which is the natural retry path).
+  const [isGasModalDismissed, setIsGasModalDismissed] = useState(false);
   const refetchBridgeExecute = useRetryBridge();
 
-  const { isBridging, isBridgingFailed, isBridgingCompleted, bridgeStatus } =
-    useBridgingSteps(symbols, quoteId);
+  const {
+    isBridging,
+    isBridgingFailed,
+    isBridgingCompleted,
+    bridgeStatus,
+    isBridgeExecuteError,
+    bridgeExecuteError,
+  } = useBridgingSteps(symbols, quoteId);
+
+  const gasModalProps = useInsufficientGasModal({
+    isError: isBridgeExecuteError && !isGasModalDismissed,
+    error: bridgeExecuteError,
+    caseType: 'bridge',
+    onFund: (gasError) => {
+      goto(PAGES.FundPearlWallet, {
+        prefillAmountWei: gasError.prefill_amount_wei,
+      });
+    },
+    onClose: () => setIsGasModalDismissed(true),
+    // The bridge execute is a useQuery, not a mutation. Removing it from the
+    // cache lets a retry refetch cleanly without re-rendering the modal on
+    // stale error state.
+    resetMutation: () =>
+      queryClient.removeQueries({
+        queryKey: REACT_QUERY_KEYS.BRIDGE_EXECUTE_KEY(quoteId),
+      }),
+  });
 
   const isRefillRequired = bridgeRetryOutcome === 'NEED_REFILL';
 
@@ -188,6 +229,7 @@ export const BridgeInProgress = ({
           />
         )}
       </CardFlex>
+      {gasModalProps && <InsufficientSignerGasModal {...gasModalProps} />}
     </Flex>
   );
 };

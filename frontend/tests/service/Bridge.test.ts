@@ -187,13 +187,18 @@ describe('BridgeService', () => {
       });
     });
 
-    it('throws an error when response is not ok', async () => {
+    it('rejects with the parsed JSON body when response is not ok', async () => {
+      const errorBody = {
+        error_code: 'INSUFFICIENT_SIGNER_GAS',
+        chain: 'ethereum',
+        prefill_amount_wei: '1000000000000000000',
+      };
       jest
         .spyOn(global, 'fetch')
-        .mockReturnValue(mockJsonResponse({}, false, 500));
+        .mockReturnValue(mockJsonResponse(errorBody, false, 400));
 
-      await expect(BridgeService.executeBridge(MOCK_QUOTE_ID)).rejects.toThrow(
-        `Failed to execute bridge quote for the following quote id: ${MOCK_QUOTE_ID}`,
+      await expect(BridgeService.executeBridge(MOCK_QUOTE_ID)).rejects.toEqual(
+        errorBody,
       );
     });
 
