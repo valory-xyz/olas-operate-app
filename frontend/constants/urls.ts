@@ -36,7 +36,8 @@ export const REWARDS_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN: Record<
 export const TRANSACTION_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN: Partial<
   Record<EvmChainId, Url>
 > = {
-  [EvmChainIdMap.Gnosis]: undefined,
+  [EvmChainIdMap.Gnosis]:
+    'https://transactions-gnosis.subgraph.autonolas.tech/',
   [EvmChainIdMap.Polygon]: undefined,
   [EvmChainIdMap.Optimism]: undefined,
   [EvmChainIdMap.Base]: undefined,
