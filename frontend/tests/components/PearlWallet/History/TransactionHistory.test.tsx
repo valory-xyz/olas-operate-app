@@ -76,10 +76,10 @@ describe('TransactionHistory section', () => {
     ).toBeInTheDocument();
   });
 
-  it('renders the stale-data banner when the subgraph reports indexing errors', () => {
+  it('hides the data-delay banner when there are no transactions', () => {
     mockUseTransactionHistory.mockReturnValue({
       rows: [],
-      meta: { block: { number: 1 }, hasIndexingErrors: true },
+      meta: { block: { number: 1 }, hasIndexingErrors: false },
       isFetched: true,
       isLoading: false,
       isError: false,
@@ -87,13 +87,8 @@ describe('TransactionHistory section', () => {
 
     render(<TransactionHistory />);
     expect(
-      screen.getByText('Recent transactions may not appear yet'),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        'Wallet operations work normally. This usually resolves on its own.',
-      ),
-    ).toBeInTheDocument();
+      screen.queryByText('Recent transactions may not appear yet'),
+    ).not.toBeInTheDocument();
   });
 
   it('renders the loading state when isLoading and not yet fetched', () => {
@@ -158,6 +153,10 @@ describe('TransactionHistory section', () => {
     render(<TransactionHistory />);
     expect(screen.getByText('Deposit')).toBeInTheDocument();
     expect(screen.getByText('+10.00')).toBeInTheDocument();
+    // The data-delay banner shows alongside actual history.
+    expect(
+      screen.getByText('Recent transactions may not appear yet'),
+    ).toBeInTheDocument();
   });
 
   it('pages rows client-side via a "Load more" button', () => {

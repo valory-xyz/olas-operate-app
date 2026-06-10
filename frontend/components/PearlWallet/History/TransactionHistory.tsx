@@ -45,6 +45,19 @@ const CenteredPad = styled(Flex).attrs({
   padding: 32px 24px;
 `;
 
+const DataDelayAlert = styled(Alert)`
+  .ant-alert-message {
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 20px;
+  }
+  .ant-alert-description {
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 20px;
+  }
+`;
+
 // Rows are fetched up-front (see useTransactionHistory.getAll) and paged
 // client-side: show PAGE_SIZE at a time, reveal more on demand.
 const PAGE_SIZE = 10;
@@ -53,7 +66,7 @@ export const TransactionHistory = () => {
   const { walletChainId, masterSafeAddress } = usePearlWallet();
 
   const chainId = walletChainId ?? undefined;
-  const { rows, meta, isFetched, isLoading, isError, isUnavailable } =
+  const { rows, isFetched, isLoading, isError, isUnavailable } =
     useTransactionHistory({
       chainId,
       masterSafe: masterSafeAddress ?? undefined,
@@ -68,7 +81,6 @@ export const TransactionHistory = () => {
   // Don't render the section pre-Safe — VLOP-73 acceptance criterion.
   if (!masterSafeAddress) return null;
 
-  const isStale = meta?.hasIndexingErrors ?? false;
   const visibleRows = rows.slice(0, visibleCount);
   const hasMore = rows.length > visibleCount;
 
@@ -76,8 +88,11 @@ export const TransactionHistory = () => {
     <Flex vertical gap={12}>
       <SectionHeader />
       <CardFlex $noBorder $padding="16px">
-        {isStale ? (
-          <Alert
+        {/* Standing notice that the subgraph can lag the chain head, so recent
+            transactions may not be indexed yet. Only shown alongside actual
+            history — not in the loading / error / empty / unavailable states. */}
+        {isFetched && rows.length > 0 ? (
+          <DataDelayAlert
             type="warning"
             showIcon
             message="Recent transactions may not appear yet"
