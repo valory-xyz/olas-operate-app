@@ -4,6 +4,7 @@ import { TransactionHistoryService } from '../../service/TransactionHistory';
 import { Address } from '../../types/Address';
 import {
   DEFAULT_SAFE_ADDRESS,
+  makeFundsMovement,
   makeTransactionHistoryResponse,
 } from '../helpers/factories';
 
@@ -36,17 +37,15 @@ describe('TransactionHistoryService.get', () => {
   });
 
   describe('when subgraph URL is not configured', () => {
-    it('returns the local fixture and never calls graphql-request', async () => {
-      const result = await TransactionHistoryService.get({
-        chainId: EvmChainIdMap.Gnosis,
-        masterSafe: DEFAULT_SAFE_ADDRESS,
-      });
+    it('throws and never calls graphql-request', async () => {
+      await expect(
+        TransactionHistoryService.get({
+          chainId: EvmChainIdMap.Gnosis,
+          masterSafe: DEFAULT_SAFE_ADDRESS,
+        }),
+      ).rejects.toThrow('No transaction-history subgraph configured');
 
       expect(mockGraphqlRequest).not.toHaveBeenCalled();
-      expect(result.masterSafe?.id).toBe(DEFAULT_SAFE_ADDRESS.toLowerCase());
-      expect(result.fundsMovements.length).toBeGreaterThan(0);
-      expect(result.agentFundingEvents.length).toBeGreaterThan(0);
-      expect(result._meta?.hasIndexingErrors).toBe(false);
     });
   });
 
@@ -149,5 +148,90 @@ describe('TransactionHistoryService.get', () => {
 
     const [, , variables] = mockGraphqlRequest.mock.calls[0];
     expect(variables.masterSafe).toBe(checksummed.toLowerCase());
+  });
+});
+
+describe('TransactionHistoryService.getAll', () => {
+  const URL = 'https://pearl-transactions.subgraph.example';
+  const clearUrls = () => {
+    for (const key of Object.keys(
+      TRANSACTION_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN,
+    )) {
+      delete TRANSACTION_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN[
+        Number(
+          key,
+        ) as keyof typeof TRANSACTION_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN
+      ];
+    }
+  };
+
+  beforeEach(() => {
+    clearUrls();
+    TRANSACTION_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN[EvmChainIdMap.Gnosis] = URL;
+  });
+  afterEach(() => {
+    jest.clearAllMocks();
+    clearUrls();
+  });
+
+  it('makes a single request when the first page is short', async () => {
+    mockGraphqlRequest.mockResolvedValueOnce(
+      makeTransactionHistoryResponse({
+        fundsMovements: [makeFundsMovement()],
+        agentFundingEvents: [],
+      }),
+    );
+
+    const res = await TransactionHistoryService.getAll({
+      chainId: EvmChainIdMap.Gnosis,
+      masterSafe: DEFAULT_SAFE_ADDRESS,
+    });
+
+    expect(mockGraphqlRequest).toHaveBeenCalledTimes(1);
+    expect(res.fundsMovements).toHaveLength(1);
+    expect(mockGraphqlRequest.mock.calls[0][2]).toEqual({
+      masterSafe: DEFAULT_SAFE_ADDRESS.toLowerCase(),
+      first: 1000,
+      skip: 0,
+    });
+  });
+
+  it('caps at a single 1000-row page (does not fetch beyond the cap)', async () => {
+    // A full page (== PAGE_SIZE) signals more data exists, but the cap
+    // (MAX_PAGES = 1) means we must NOT fetch a second page.
+    const fullPage = Array.from({ length: 1000 }, (_, i) =>
+      makeFundsMovement({ id: `0xpage0-${i}` }),
+    );
+    mockGraphqlRequest.mockResolvedValueOnce(
+      makeTransactionHistoryResponse({
+        fundsMovements: fullPage,
+        agentFundingEvents: [],
+      }),
+    );
+
+    const res = await TransactionHistoryService.getAll({
+      chainId: EvmChainIdMap.Gnosis,
+      masterSafe: DEFAULT_SAFE_ADDRESS,
+    });
+
+    expect(mockGraphqlRequest).toHaveBeenCalledTimes(1);
+    expect(res.fundsMovements).toHaveLength(1000);
+    expect(mockGraphqlRequest.mock.calls[0][2]).toEqual({
+      masterSafe: DEFAULT_SAFE_ADDRESS.toLowerCase(),
+      first: 1000,
+      skip: 0,
+    });
+  });
+
+  it('throws when no subgraph URL is configured', async () => {
+    clearUrls();
+    await expect(
+      TransactionHistoryService.getAll({
+        chainId: EvmChainIdMap.Gnosis,
+        masterSafe: DEFAULT_SAFE_ADDRESS,
+      }),
+    ).rejects.toThrow('No transaction-history subgraph configured');
+
+    expect(mockGraphqlRequest).not.toHaveBeenCalled();
   });
 });

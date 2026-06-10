@@ -1,6 +1,7 @@
 import { renderHook, waitFor } from '@testing-library/react';
 
 import { EvmChainIdMap } from '../../constants/chains';
+import { TRANSACTION_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN } from '../../constants/urls';
 import {
   buildTransactionHistoryRows,
   useTransactionHistory,
@@ -23,10 +24,10 @@ import {
 import { createQueryClientWrapper } from '../helpers/queryClient';
 
 jest.mock('../../service/TransactionHistory', () => ({
-  TransactionHistoryService: { get: jest.fn() },
+  TransactionHistoryService: { get: jest.fn(), getAll: jest.fn() },
 }));
 
-const mockedGet = TransactionHistoryService.get as jest.Mock;
+const mockedGet = TransactionHistoryService.getAll as jest.Mock;
 
 describe('buildTransactionHistoryRows', () => {
   it('returns an empty list for an empty response', () => {
@@ -315,11 +316,50 @@ describe('buildTransactionHistoryRows', () => {
     expect(byCategory.AGENT_TO_MASTER.transfers[0].direction).toBe('in');
     expect(byCategory.SERVICE_BOND_DEPOSIT.transfers[0].direction).toBe('out');
   });
+
+  it('hides OLAS agent→master reward sweeps but keeps native agent→master', () => {
+    const OLAS_GNOSIS = '0xce11e14225575945b8e6dc0d4f2dd4c570f79d9f';
+    const data = makeTransactionHistoryResponse({
+      fundsMovements: [
+        makeFundsMovement({
+          id: 'reward-sweep',
+          category: 'AGENT_TO_MASTER',
+          token: OLAS_GNOSIS,
+          transactionHash: MOCK_TX_HASH_1,
+        }),
+        makeFundsMovement({
+          id: 'native-return',
+          category: 'AGENT_TO_MASTER',
+          token: null,
+          transactionHash: MOCK_TX_HASH_2,
+        }),
+      ],
+      agentFundingEvents: [],
+    });
+
+    const rows = buildTransactionHistoryRows(
+      data,
+      DEFAULT_SAFE_ADDRESS,
+      EvmChainIdMap.Gnosis,
+    );
+
+    // The OLAS reward sweep is dropped; the native agent→master return is kept.
+    expect(rows).toHaveLength(1);
+    expect(rows[0].category).toBe('AGENT_TO_MASTER');
+    expect(rows[0].transactionHash).toBe(MOCK_TX_HASH_2);
+  });
 });
 
 describe('useTransactionHistory', () => {
   beforeEach(() => {
     mockedGet.mockReset();
+    // The hook only fetches when a subgraph URL exists for the chain.
+    TRANSACTION_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN[EvmChainIdMap.Gnosis] =
+      'https://pearl-transactions.subgraph.example';
+  });
+
+  afterEach(() => {
+    delete TRANSACTION_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN[EvmChainIdMap.Gnosis];
   });
 
   it('does not fetch when chainId or masterSafe is missing', async () => {
@@ -336,6 +376,24 @@ describe('useTransactionHistory', () => {
     expect(mockedGet).not.toHaveBeenCalled();
     expect(result.current.rows).toEqual([]);
     expect(result.current.isFetched).toBe(false);
+  });
+
+  it('reports isUnavailable when the chain has no subgraph URL', async () => {
+    delete TRANSACTION_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN[EvmChainIdMap.Gnosis];
+
+    const wrapper = createQueryClientWrapper();
+    const { result } = renderHook(
+      () =>
+        useTransactionHistory({
+          chainId: EvmChainIdMap.Gnosis,
+          masterSafe: DEFAULT_SAFE_ADDRESS,
+        }),
+      { wrapper },
+    );
+
+    expect(result.current.isUnavailable).toBe(true);
+    expect(mockedGet).not.toHaveBeenCalled();
+    expect(result.current.rows).toEqual([]);
   });
 
   it('returns parsed rows when fetched', async () => {

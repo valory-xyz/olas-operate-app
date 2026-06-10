@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 
 import { TransactionHistory } from '../../../../components/PearlWallet/History/TransactionHistory';
@@ -158,5 +158,46 @@ describe('TransactionHistory section', () => {
     render(<TransactionHistory />);
     expect(screen.getByText('Deposit')).toBeInTheDocument();
     expect(screen.getByText('+10.00')).toBeInTheDocument();
+  });
+
+  it('pages rows client-side via a "Load more" button', () => {
+    const rows = Array.from({ length: 15 }, (_, i) => ({
+      id: `row-${i}`,
+      category: 'MASTER_FUNDING_IN' as const,
+      blockTimestamp: 1_720_000_000 - i,
+      transactionHash: MOCK_TX_HASH_1,
+      agentSafeAddress: null,
+      agentInstanceAddress: null,
+      transfers: [
+        {
+          tokenAddress: null,
+          amount: '10000000000000000000',
+          direction: 'in' as const,
+        },
+      ],
+    }));
+
+    mockUseTransactionHistory.mockReturnValue({
+      rows,
+      meta: { block: { number: 1 }, hasIndexingErrors: false },
+      isFetched: true,
+      isLoading: false,
+      isError: false,
+      isUnavailable: false,
+    });
+
+    render(<TransactionHistory />);
+
+    // First page shows 10 of 15, with a "Load more" affordance.
+    expect(screen.getAllByTestId('row-icon')).toHaveLength(10);
+    const loadMore = screen.getByRole('button', { name: 'Load more' });
+
+    fireEvent.click(loadMore);
+
+    // All 15 now visible; the button is gone.
+    expect(screen.getAllByTestId('row-icon')).toHaveLength(15);
+    expect(
+      screen.queryByRole('button', { name: 'Load more' }),
+    ).not.toBeInTheDocument();
   });
 });

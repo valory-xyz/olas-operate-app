@@ -8,8 +8,6 @@ import {
   TransactionHistoryResponseSchema,
 } from '@/types/TransactionHistory';
 
-import { TRANSACTION_HISTORY_FIXTURE } from './fixtures/transactionHistory';
-
 const FETCH_TRANSACTION_HISTORY_QUERY = gql`
   query GetTransactionHistory($masterSafe: Bytes!, $first: Int!, $skip: Int!) {
     masterSafe(id: $masterSafe) {
@@ -120,13 +118,9 @@ const get = async ({
   skip = 0,
 }: GetTransactionHistoryParams): Promise<TransactionHistoryResponse> => {
   const url = TRANSACTION_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN[chainId];
-
-  // TODO(VLOP-73): once pearl-transactions Studio deployments exist, drop the
-  // fixture path and rely on the live subgraph. See PR #129 in
-  // valory-xyz/autonolas-subgraph-studio.
   if (!url) {
-    return TransactionHistoryResponseSchema.parse(
-      TRANSACTION_HISTORY_FIXTURE(masterSafe, chainId),
+    throw new Error(
+      `No transaction-history subgraph configured for chain ${chainId}`,
     );
   }
 
@@ -139,4 +133,64 @@ const get = async ({
   return TransactionHistoryResponseSchema.parse(raw);
 };
 
-export const TransactionHistoryService = { get };
+// The Graph caps `first` at 1000. We fetch a single 1000-row page per list for
+// now — plenty for the 10-at-a-time view and bounds gateway cost. Older history
+// beyond 1000 raw movements is dropped (a warn fires); the real fix (server-side
+// filtering of reward sweeps + pagination) is a subgraph follow-up. getAll keeps
+// the page loop so the cap is a one-line bump (MAX_PAGES) once that lands.
+const PAGE_SIZE = 1000;
+const MAX_PAGES = 1;
+
+const getAll = async ({
+  chainId,
+  masterSafe,
+}: Pick<
+  GetTransactionHistoryParams,
+  'chainId' | 'masterSafe'
+>): Promise<TransactionHistoryResponse> => {
+  // Defensive: the hook only enables the query when a URL exists for the chain.
+  if (!TRANSACTION_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN[chainId]) {
+    throw new Error(
+      `No transaction-history subgraph configured for chain ${chainId}`,
+    );
+  }
+
+  let base: TransactionHistoryResponse | null = null;
+  const fundsMovements: TransactionHistoryResponse['fundsMovements'] = [];
+  const agentFundingEvents: TransactionHistoryResponse['agentFundingEvents'] =
+    [];
+
+  for (let page = 0; page < MAX_PAGES; page += 1) {
+    const res = await get({
+      chainId,
+      masterSafe,
+      first: PAGE_SIZE,
+      skip: page * PAGE_SIZE,
+    });
+
+    // Singular fields (masterSafe, _meta) come from the first page.
+    if (!base) base = res;
+    fundsMovements.push(...res.fundsMovements);
+    agentFundingEvents.push(...res.agentFundingEvents);
+
+    const exhausted =
+      res.fundsMovements.length < PAGE_SIZE &&
+      res.agentFundingEvents.length < PAGE_SIZE;
+    if (exhausted) break;
+
+    if (page === MAX_PAGES - 1) {
+      // eslint-disable-next-line no-console
+      console.warn(
+        `[TransactionHistory] hit the ${MAX_PAGES * PAGE_SIZE}-row pagination cap for ${masterSafe}; older history may be truncated.`,
+      );
+    }
+  }
+
+  return {
+    ...(base as TransactionHistoryResponse),
+    fundsMovements,
+    agentFundingEvents,
+  };
+};
+
+export const TransactionHistoryService = { get, getAll };

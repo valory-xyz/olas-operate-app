@@ -1,9 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
+import { TOKEN_CONFIG, TokenSymbolMap } from '@/config/tokens';
 import { REACT_QUERY_KEYS } from '@/constants';
 import { EvmChainId } from '@/constants/chains';
-import { THIRTY_SECONDS_INTERVAL } from '@/constants/intervals';
+import { FIFTEEN_MINUTE_INTERVAL } from '@/constants/intervals';
+import { TRANSACTION_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN } from '@/constants/urls';
 import { TransactionHistoryService } from '@/service/TransactionHistory';
 import { Address } from '@/types/Address';
 import {
@@ -143,21 +145,40 @@ const HIDDEN_CATEGORIES = new Set<FundsMovement['category']>([
   FUNDS_CATEGORY.OPENING_BALANCE,
 ]);
 
+// Staking-reward sweeps surface as OLAS AGENT_TO_MASTER transfers (the agent
+// returning reward OLAS to the master). They flood the history and aren't user
+// actions, so hide them for now.
+// NOTE: this also hides any *genuine* OLAS agent→master transfer — separating
+// reward sweeps from genuine returns needs reward attribution in the subgraph
+// (tracked as a follow-up). Native / non-OLAS agent→master transfers are kept.
+const isOlasAgentToMaster = (
+  movement: FundsMovement,
+  chainId: EvmChainId | undefined,
+): boolean => {
+  if (movement.category !== FUNDS_CATEGORY.AGENT_TO_MASTER) return false;
+  const olasAddress =
+    chainId &&
+    TOKEN_CONFIG[chainId]?.[TokenSymbolMap.OLAS]?.address?.toLowerCase();
+  return !!olasAddress && movement.token?.toLowerCase() === olasAddress;
+};
+
 export const buildTransactionHistoryRows = (
   data: TransactionHistoryResponse,
   masterSafe: Address,
+  chainId?: EvmChainId,
 ): TransactionHistoryRow[] => {
   const fundingEventTxHashes = new Set(
     data.agentFundingEvents.map((e) => e.txHash.toLowerCase()),
   );
 
   // Drop standalone movements that belong to an AgentFundingEvent (already
-  // represented by the aggregated row) or that are currently-hidden setup /
-  // opening-balance rows.
+  // represented by the aggregated row), currently-hidden setup / opening-balance
+  // rows, or OLAS reward sweeps (agent → master).
   const standaloneMovements = data.fundsMovements.filter(
     (m) =>
       !fundingEventTxHashes.has(m.transactionHash.toLowerCase()) &&
-      !HIDDEN_CATEGORIES.has(m.category),
+      !HIDDEN_CATEGORIES.has(m.category) &&
+      !isOlasAgentToMaster(m, chainId),
   );
 
   const standaloneRows = groupMovementsByTxAndCategory(
@@ -177,7 +198,13 @@ export const useTransactionHistory = ({
   chainId,
   masterSafe,
 }: UseTransactionHistoryArgs) => {
-  const enabled = Boolean(chainId && masterSafe);
+  // No subgraph URL for this chain yet → there's no data source to query, so
+  // surface a distinct "not available" state instead of fetching.
+  const hasSubgraphUrl = Boolean(
+    chainId && TRANSACTION_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN[chainId],
+  );
+  const enabled = Boolean(chainId && masterSafe && hasSubgraphUrl);
+  const isUnavailable = Boolean(chainId && masterSafe && !hasSubgraphUrl);
 
   const query = useQuery({
     queryKey:
@@ -185,18 +212,20 @@ export const useTransactionHistory = ({
         ? REACT_QUERY_KEYS.TRANSACTION_HISTORY_KEY(chainId, masterSafe)
         : ['transactionHistory', 'disabled'],
     queryFn: () =>
-      TransactionHistoryService.get({
+      TransactionHistoryService.getAll({
         chainId: chainId!,
         masterSafe: masterSafe!,
       }),
     enabled,
-    refetchInterval: THIRTY_SECONDS_INTERVAL,
+    // History is append-mostly and the gateway bills per query, so poll
+    // infrequently; window-focus refetch keeps it reasonably fresh.
+    refetchInterval: FIFTEEN_MINUTE_INTERVAL,
   });
 
   const rows = useMemo(() => {
     if (!query.data || !masterSafe) return [];
-    return buildTransactionHistoryRows(query.data, masterSafe);
-  }, [query.data, masterSafe]);
+    return buildTransactionHistoryRows(query.data, masterSafe, chainId);
+  }, [query.data, masterSafe, chainId]);
 
   return {
     rows,
@@ -205,6 +234,7 @@ export const useTransactionHistory = ({
     isLoading: query.isLoading,
     isFetched: query.isFetched,
     isError: query.isError,
+    isUnavailable,
     refetch: query.refetch,
   };
 };

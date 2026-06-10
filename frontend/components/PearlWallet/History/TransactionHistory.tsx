@@ -1,5 +1,6 @@
 import { HistoryOutlined } from '@ant-design/icons';
-import { Flex, Spin, Typography } from 'antd';
+import { Button, Flex, Spin, Typography } from 'antd';
+import { useEffect, useState } from 'react';
 import styled from 'styled-components';
 
 import { Alert, CardFlex, InfoTooltip } from '@/components/ui';
@@ -44,19 +45,32 @@ const CenteredPad = styled(Flex).attrs({
   padding: 32px 24px;
 `;
 
+// Rows are fetched up-front (see useTransactionHistory.getAll) and paged
+// client-side: show PAGE_SIZE at a time, reveal more on demand.
+const PAGE_SIZE = 10;
+
 export const TransactionHistory = () => {
   const { walletChainId, masterSafeAddress } = usePearlWallet();
 
   const chainId = walletChainId ?? undefined;
-  const { rows, meta, isFetched, isLoading, isError } = useTransactionHistory({
-    chainId,
-    masterSafe: masterSafeAddress ?? undefined,
-  });
+  const { rows, meta, isFetched, isLoading, isError, isUnavailable } =
+    useTransactionHistory({
+      chainId,
+      masterSafe: masterSafeAddress ?? undefined,
+    });
+
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  // Reset paging back to the first page when the wallet (chain / safe) changes.
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [chainId, masterSafeAddress]);
 
   // Don't render the section pre-Safe — VLOP-73 acceptance criterion.
   if (!masterSafeAddress) return null;
 
   const isStale = meta?.hasIndexingErrors ?? false;
+  const visibleRows = rows.slice(0, visibleCount);
+  const hasMore = rows.length > visibleCount;
 
   return (
     <Flex vertical gap={12}>
@@ -78,6 +92,15 @@ export const TransactionHistory = () => {
           </CenteredPad>
         ) : null}
 
+        {isUnavailable ? (
+          <EmptyState>
+            <HistoryOutlined style={{ fontSize: 24 }} />
+            <Text type="secondary">
+              Transaction history is not available on this network yet.
+            </Text>
+          </EmptyState>
+        ) : null}
+
         {isError ? (
           <CenteredPad>
             <Text type="secondary">Error loading transaction history.</Text>
@@ -91,11 +114,23 @@ export const TransactionHistory = () => {
           </EmptyState>
         ) : null}
 
-        {isFetched && rows.length > 0
-          ? rows.map((row) => (
+        {isFetched && rows.length > 0 ? (
+          <>
+            {visibleRows.map((row) => (
               <TransactionHistoryRow key={row.id} row={row} chainId={chainId} />
-            ))
-          : null}
+            ))}
+            {hasMore ? (
+              <Flex justify="center" style={{ marginTop: 8 }}>
+                <Button
+                  type="link"
+                  onClick={() => setVisibleCount((count) => count + PAGE_SIZE)}
+                >
+                  Load more
+                </Button>
+              </Flex>
+            ) : null}
+          </>
+        ) : null}
       </CardFlex>
     </Flex>
   );
