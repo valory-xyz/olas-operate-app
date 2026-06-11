@@ -4,7 +4,10 @@ import { useMemo } from 'react';
 import { TOKEN_CONFIG, TokenSymbolMap } from '@/config/tokens';
 import { REACT_QUERY_KEYS } from '@/constants';
 import { EvmChainId } from '@/constants/chains';
-import { FIFTEEN_MINUTE_INTERVAL } from '@/constants/intervals';
+import {
+  FIFTEEN_MINUTE_INTERVAL,
+  TWELVE_HOURS_IN_SECONDS,
+} from '@/constants/intervals';
 import { TRANSACTION_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN } from '@/constants/urls';
 import { TransactionHistoryService } from '@/service/TransactionHistory';
 import { Address } from '@/types/Address';
@@ -227,10 +230,18 @@ export const useTransactionHistory = ({
     return buildTransactionHistoryRows(query.data, masterSafe, chainId);
   }, [query.data, masterSafe, chainId]);
 
+  const isDataDelayed = useMemo(() => {
+    const indexedAt = query.data?._meta?.block?.timestamp;
+    if (!indexedAt) return false;
+    const nowSeconds = Math.floor(Date.now() / 1000);
+    return nowSeconds - Number(indexedAt) >= TWELVE_HOURS_IN_SECONDS;
+  }, [query.data]);
+
   return {
     rows,
     meta: query.data?._meta ?? null,
     masterSafeEntity: query.data?.masterSafe ?? null,
+    isDataDelayed,
     isLoading: query.isLoading,
     isFetched: query.isFetched,
     isError: query.isError,

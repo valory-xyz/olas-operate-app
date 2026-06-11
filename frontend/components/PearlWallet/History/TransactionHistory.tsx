@@ -66,7 +66,7 @@ export const TransactionHistory = () => {
   const { walletChainId, masterSafeAddress } = usePearlWallet();
 
   const chainId = walletChainId ?? undefined;
-  const { rows, isFetched, isLoading, isError, isUnavailable } =
+  const { rows, isFetched, isLoading, isError, isUnavailable, isDataDelayed } =
     useTransactionHistory({
       chainId,
       masterSafe: masterSafeAddress ?? undefined,
@@ -88,10 +88,12 @@ export const TransactionHistory = () => {
     <Flex vertical gap={12}>
       <SectionHeader />
       <CardFlex $noBorder $padding="16px">
-        {/* Standing notice that the subgraph can lag the chain head, so recent
-            transactions may not be indexed yet. Only shown alongside actual
-            history — not in the loading / error / empty / unavailable states. */}
-        {isFetched && rows.length > 0 ? (
+        {/* Notice that the subgraph is lagging the chain head (≥12h behind),
+            so recent transactions may not be indexed yet. Gated on real lag so
+            it clears on its own once indexing catches up; only shown alongside
+            actual history — not in the loading / error / empty / unavailable
+            states. */}
+        {isFetched && rows.length > 0 && isDataDelayed ? (
           <DataDelayAlert
             type="warning"
             showIcon

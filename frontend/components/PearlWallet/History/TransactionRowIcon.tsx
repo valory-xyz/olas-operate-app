@@ -35,24 +35,19 @@ const Circle = styled.span<{ $background: string; $color: string }>`
   font-size: 14px;
 `;
 
-type Direction = 'in' | 'out';
+type Palette = { background: string; color: string };
 
-const DIRECTION_BY_CATEGORY: Record<FundsCategory, Direction> = {
-  [FUNDS_CATEGORY.SAFE_DEPLOYED]: 'in',
-  [FUNDS_CATEGORY.OPENING_BALANCE]: 'in',
-  [FUNDS_CATEGORY.SAFE_SETUP_TRANSFER]: 'in',
-  [FUNDS_CATEGORY.MASTER_FUNDING_IN]: 'in',
-  [FUNDS_CATEGORY.AGENT_TO_MASTER]: 'in',
-  [FUNDS_CATEGORY.SERVICE_BOND_REFUND]: 'in',
-  [FUNDS_CATEGORY.UNSTAKE_REWARD]: 'in',
-  [FUNDS_CATEGORY.STAKING_REWARD_CLAIM]: 'in',
-  [FUNDS_CATEGORY.APP_TO_AGENT]: 'in',
-  [FUNDS_CATEGORY.MASTER_WITHDRAWAL]: 'out',
-  [FUNDS_CATEGORY.MASTER_TO_AGENT]: 'out',
-  [FUNDS_CATEGORY.SERVICE_BOND_DEPOSIT]: 'out',
-  [FUNDS_CATEGORY.AGENT_TO_APP]: 'out',
-  [FUNDS_CATEGORY.SERVICE_EVICTED]: 'out',
-  [FUNDS_CATEGORY.OTHER]: 'out',
+const GREEN_COLORS: Palette = {
+  background: COLOR.BG.SUCCESS.DEFAULT,
+  color: COLOR.TEXT_COLOR.SUCCESS.DEFAULT,
+};
+const PURPLE_COLORS: Palette = {
+  background: COLOR.PURPLE_LIGHT_3,
+  color: COLOR.PURPLE,
+};
+const GRAY_COLORS: Palette = {
+  background: COLOR.GRAY_1,
+  color: COLOR.TEXT_NEUTRAL_SECONDARY,
 };
 
 const INNER_ICON_BY_CATEGORY: Record<FundsCategory, ReactNode> = {
@@ -73,13 +68,25 @@ const INNER_ICON_BY_CATEGORY: Record<FundsCategory, ReactNode> = {
   [FUNDS_CATEGORY.OTHER]: <ArrowUpOutlined />,
 };
 
-const IN_COLORS = {
-  background: COLOR.BG.SUCCESS.DEFAULT,
-  color: COLOR.TEXT_COLOR.SUCCESS.DEFAULT,
-};
-const OUT_COLORS = {
-  background: COLOR.GRAY_1,
-  color: COLOR.TEXT_NEUTRAL_SECONDARY,
+const PALETTE_BY_CATEGORY: Record<FundsCategory, Palette> = {
+  // Green — external funds into the wallet.
+  [FUNDS_CATEGORY.MASTER_FUNDING_IN]: GREEN_COLORS,
+  [FUNDS_CATEGORY.SAFE_SETUP_TRANSFER]: GREEN_COLORS,
+  [FUNDS_CATEGORY.OPENING_BALANCE]: GREEN_COLORS,
+  [FUNDS_CATEGORY.SAFE_DEPLOYED]: GREEN_COLORS,
+  [FUNDS_CATEGORY.STAKING_REWARD_CLAIM]: GREEN_COLORS,
+  [FUNDS_CATEGORY.APP_TO_AGENT]: GREEN_COLORS,
+  // Purple — internal Master ↔ Agent / staking activity.
+  [FUNDS_CATEGORY.AGENT_TO_MASTER]: PURPLE_COLORS,
+  [FUNDS_CATEGORY.MASTER_TO_AGENT]: PURPLE_COLORS,
+  [FUNDS_CATEGORY.SERVICE_BOND_DEPOSIT]: PURPLE_COLORS,
+  [FUNDS_CATEGORY.AGENT_TO_APP]: PURPLE_COLORS,
+  // Gray — exits / unwinds.
+  [FUNDS_CATEGORY.MASTER_WITHDRAWAL]: GRAY_COLORS,
+  [FUNDS_CATEGORY.SERVICE_BOND_REFUND]: GRAY_COLORS,
+  [FUNDS_CATEGORY.UNSTAKE_REWARD]: GRAY_COLORS,
+  [FUNDS_CATEGORY.SERVICE_EVICTED]: GRAY_COLORS,
+  [FUNDS_CATEGORY.OTHER]: GRAY_COLORS,
 };
 
 export const TransactionRowIcon = ({
@@ -87,8 +94,7 @@ export const TransactionRowIcon = ({
 }: {
   category: FundsCategory;
 }) => {
-  const direction = DIRECTION_BY_CATEGORY[category];
-  const palette = direction === 'in' ? IN_COLORS : OUT_COLORS;
+  const palette = PALETTE_BY_CATEGORY[category];
   return (
     <Wrapper>
       <Circle $background={palette.background} $color={palette.color}>

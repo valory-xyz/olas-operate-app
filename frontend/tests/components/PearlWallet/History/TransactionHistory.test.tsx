@@ -148,12 +148,14 @@ describe('TransactionHistory section', () => {
       isFetched: true,
       isLoading: false,
       isError: false,
+      isDataDelayed: true,
     });
 
     render(<TransactionHistory />);
     expect(screen.getByText('Deposit')).toBeInTheDocument();
     expect(screen.getByText('+10.00')).toBeInTheDocument();
-    // The data-delay banner shows alongside actual history.
+    // The data-delay banner shows alongside actual history when the subgraph
+    // is lagging the chain head.
     expect(
       screen.getByText('Recent transactions may not appear yet'),
     ).toBeInTheDocument();

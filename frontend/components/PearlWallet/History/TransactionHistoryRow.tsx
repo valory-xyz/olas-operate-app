@@ -1,16 +1,12 @@
 import { Flex, Tag, Typography } from 'antd';
 import Image from 'next/image';
-import { useMemo } from 'react';
+import { Fragment, useMemo } from 'react';
+import { FiArrowUpRight } from 'react-icons/fi';
 import styled from 'styled-components';
 
 import { TokenSymbolConfigMap } from '@/config/tokens';
-import {
-  COLOR,
-  EXPLORER_URL_BY_MIDDLEWARE_CHAIN,
-  UNICODE_SYMBOLS,
-} from '@/constants';
+import { COLOR, EXPLORER_URL_BY_MIDDLEWARE_CHAIN } from '@/constants';
 import { EvmChainId } from '@/constants/chains';
-import { Address } from '@/types/Address';
 import { TransactionHistoryRow as TransactionHistoryRowType } from '@/types/TransactionHistory';
 import { generateAgentName } from '@/utils/generateAgentName';
 import { asMiddlewareChain } from '@/utils/middlewareHelpers';
@@ -27,7 +23,7 @@ const { Text } = Typography;
 
 const RowContainer = styled.div`
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 24px;
   align-items: flex-start;
   padding: 12px 0;
@@ -38,13 +34,13 @@ const RowContainer = styled.div`
   }
 `;
 
-const AmountColumn = styled(Flex).attrs({ vertical: true, align: 'flex-end' })`
-  gap: 12px;
-  padding: 2px 0;
-`;
-
-const SymbolColumn = styled(Flex).attrs({ vertical: true })`
-  gap: 12px;
+const TransfersGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr minmax(90px, max-content);
+  column-gap: 24px;
+  row-gap: 12px;
+  justify-items: start;
+  align-items: center;
   padding: 2px 0;
 `;
 
@@ -59,10 +55,14 @@ const AgentTag = styled(Tag)`
   line-height: 20px;
 `;
 
-const TxHashLink = styled.a`
-  color: ${COLOR.PRIMARY};
+const TimestampLink = styled.a`
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: inherit;
   &:hover {
-    color: ${COLOR.PURPLE_DARK};
+    color: ${COLOR.PRIMARY};
+    text-decoration: underline;
   }
 `;
 
@@ -118,28 +118,26 @@ export const TransactionHistoryRow = ({
             {nickname ? <AgentTag>{nickname}</AgentTag> : null}
           </Flex>
           <Flex gap={4} align="center" className="text-xs">
-            <Text className="text-xs text-neutral-tertiary">
-              {formatTimestamp(row.blockTimestamp)}
-            </Text>
             {explorerUrl ? (
-              <>
-                <Text className="text-xs text-neutral-tertiary">·</Text>
-                <TxHashLink
-                  href={explorerUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-xs"
-                >
-                  {truncateAddress(row.transactionHash as Address)}{' '}
-                  {UNICODE_SYMBOLS.EXTERNAL_LINK}
-                </TxHashLink>
-              </>
-            ) : null}
+              <TimestampLink
+                href={explorerUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="text-xs text-neutral-tertiary"
+              >
+                {formatTimestamp(row.blockTimestamp)}
+                <FiArrowUpRight size={12} />
+              </TimestampLink>
+            ) : (
+              <Text className="text-xs text-neutral-tertiary">
+                {formatTimestamp(row.blockTimestamp)}
+              </Text>
+            )}
           </Flex>
         </Flex>
       </Flex>
 
-      <AmountColumn>
+      <TransfersGrid>
         {row.transfers.map((transfer, i) => {
           const tokenInfo = resolveToken(chainId, transfer.tokenAddress);
           const amountNumber = formatUnitsToNumber(
@@ -151,18 +149,6 @@ export const TransactionHistoryRow = ({
             transfer.direction === 'in'
               ? 'text-success-default'
               : 'text-neutral-primary';
-          return (
-            <Text key={i} className={`${className} text-base`}>
-              {prefix}
-              {balanceFormat(amountNumber, 2)}
-            </Text>
-          );
-        })}
-      </AmountColumn>
-
-      <SymbolColumn>
-        {row.transfers.map((transfer, i) => {
-          const tokenInfo = resolveToken(chainId, transfer.tokenAddress);
           const symbol =
             tokenInfo?.symbol ??
             (transfer.tokenAddress
@@ -172,15 +158,21 @@ export const TransactionHistoryRow = ({
             ? TokenSymbolConfigMap[tokenInfo.symbol]?.image
             : null;
           return (
-            <Flex key={i} align="center" gap={8}>
-              {iconSrc ? (
-                <Image src={iconSrc} alt={symbol} width={20} height={20} />
-              ) : null}
-              <Text className="text-base text-neutral-primary">{symbol}</Text>
-            </Flex>
+            <Fragment key={i}>
+              <Text className={`${className} text-base`}>
+                {prefix}
+                {balanceFormat(amountNumber, 2)}
+              </Text>
+              <Flex align="center" gap={8}>
+                {iconSrc ? (
+                  <Image src={iconSrc} alt={symbol} width={20} height={20} />
+                ) : null}
+                <Text className="text-base text-neutral-primary">{symbol}</Text>
+              </Flex>
+            </Fragment>
           );
         })}
-      </SymbolColumn>
+      </TransfersGrid>
     </RowContainer>
   );
 };
