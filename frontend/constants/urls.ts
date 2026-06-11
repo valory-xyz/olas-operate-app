@@ -61,7 +61,7 @@ export const PEARL_LICENSE: Url =
 // explorers @note DO NOT END WITH `/`
 const GNOSIS_EXPLORER_URL: Url = 'https://gnosisscan.io';
 const BASE_EXPLORER_URL: Url = 'https://basescan.org';
-const MODE_EXPLORER_URL: Url = 'https://modescan.io';
+const MODE_EXPLORER_URL: Url = 'https://explorer.mode.network';
 const OPTIMISM_EXPLORER_URL: Url = 'https://optimistic.etherscan.io';
 const POLYGON_EXPLORER_URL: Url = 'https://polygonscan.com';
 
