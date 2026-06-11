@@ -356,11 +356,8 @@ export const BASIUS_SERVICE_TEMPLATE: ServiceTemplate = {
         },
         [BASE_TOKEN_CONFIG[TokenSymbolMap.USDC]?.address as string]: {
           agent: '0',
-          // 16 USDC for the initial DeFi position + 14 USDC buffer the agent
-          // runtime swaps to ETH on-demand for Agent EOA gas top-ups (per
-          // agent team, confirmed by Divya 2026-06-11). Safe never holds ETH.
           safe: parseUnits(
-            30,
+            16,
             BASE_TOKEN_CONFIG[TokenSymbolMap.USDC]?.decimals,
           ),
         },
