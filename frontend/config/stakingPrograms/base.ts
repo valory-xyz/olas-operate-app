@@ -312,6 +312,11 @@ export const BASE_STAKING_PROGRAMS: StakingProgramMap = {
     chainId: EvmChainIdMap.Base,
     name: 'Basius Alpha I',
     agentsSupported: [AgentMap.Basius],
+    // TODO(basius): confirm OLAS tier with agent team — design mockup
+    // shows 40 OLAS but Optimus tiers are 100/1000/5000 (no 40). The
+    // displayed value comes from the deployed staking contract's
+    // minStakingDeposit at runtime, so this static fallback only matters
+    // before the real contract address replaces the 0x000…001 placeholder.
     stakingRequirements: {
       [TokenSymbolMap.OLAS]: 100,
     },

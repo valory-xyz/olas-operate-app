@@ -345,8 +345,9 @@ export const BASIUS_SERVICE_TEMPLATE: ServiceTemplate = {
       // TODO(basius): replace with real NFT IPFS hash before launch
       nft: 'bafybeibasiusnftplaceholdertobereplacedbeforelaunchxxxxxxxx',
       rpc: '', // overwritten
-      // TODO(basius): replace with real on-chain agent ID (Olas Registry mint on Base) before launch
-      agent_id: 0,
+      // Olas Registry agent ID 115:
+      // https://marketplace.olas.network/ethereum/ai-agents/115
+      agent_id: 115,
       cost_of_bond: parseEther(20),
       fund_requirements: {
         [ethers.constants.AddressZero]: {
@@ -355,8 +356,11 @@ export const BASIUS_SERVICE_TEMPLATE: ServiceTemplate = {
         },
         [BASE_TOKEN_CONFIG[TokenSymbolMap.USDC]?.address as string]: {
           agent: '0',
+          // 16 USDC for the initial DeFi position + 14 USDC buffer the agent
+          // runtime swaps to ETH on-demand for Agent EOA gas top-ups (per
+          // agent team, confirmed by Divya 2026-06-11). Safe never holds ETH.
           safe: parseUnits(
-            16,
+            30,
             BASE_TOKEN_CONFIG[TokenSymbolMap.USDC]?.decimals,
           ),
         },

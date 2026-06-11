@@ -183,8 +183,9 @@ export const AGENT_CONFIG: {
     name: 'Basius agent',
     evmHomeChainId: EvmChainIdMap.Base,
     middlewareHomeChainId: MiddlewareChainMap.BASE,
-    // TODO(basius): replace with real on-chain agent ID (Olas Registry mint on Base) before launch
-    agentIds: [0],
+    // Olas Registry agent ID 115:
+    // https://marketplace.olas.network/ethereum/ai-agents/115
+    agentIds: [115],
     additionalRequirements: {
       [EvmChainIdMap.Base]: {
         [TokenSymbolMap.USDC]: getBasiusUsdcConfig(),
@@ -192,7 +193,7 @@ export const AGENT_CONFIG: {
     },
     defaultStakingProgramId: STAKING_PROGRAM_IDS.BasiusAlpha1,
     serviceApi: BasiusService,
-    displayName: 'Basius Agent',
+    displayName: 'Basius',
     description:
       'An autonomous AI agent that intelligently manages your DeFi assets on Base.',
     hasExternalFunds: true,
