@@ -265,6 +265,12 @@ describe('EXPLORER_URL_BY_MIDDLEWARE_CHAIN', () => {
       urls.EXPLORER_URL_BY_MIDDLEWARE_CHAIN[MiddlewareChainMap.POLYGON],
     ).toBe('https://polygonscan.com');
   });
+
+  it('Mode explorer is explorer.mode.network', () => {
+    expect(
+      urls.EXPLORER_URL_BY_MIDDLEWARE_CHAIN[MiddlewareChainMap.MODE],
+    ).toBe('https://explorer.mode.network');
+  });
 });
 
 describe('BLOCKSCOUT_URL_BY_MIDDLEWARE_CHAIN', () => {
