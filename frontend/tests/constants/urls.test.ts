@@ -267,9 +267,9 @@ describe('EXPLORER_URL_BY_MIDDLEWARE_CHAIN', () => {
   });
 
   it('Mode explorer is explorer.mode.network', () => {
-    expect(
-      urls.EXPLORER_URL_BY_MIDDLEWARE_CHAIN[MiddlewareChainMap.MODE],
-    ).toBe('https://explorer.mode.network');
+    expect(urls.EXPLORER_URL_BY_MIDDLEWARE_CHAIN[MiddlewareChainMap.MODE]).toBe(
+      'https://explorer.mode.network',
+    );
   });
 });
 
