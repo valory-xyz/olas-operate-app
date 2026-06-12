@@ -4,13 +4,17 @@ import { Fragment, useMemo } from 'react';
 import { FiArrowUpRight } from 'react-icons/fi';
 import styled from 'styled-components';
 
-import { TokenSymbolConfigMap } from '@/config/tokens';
+import { TokenSymbolConfigMap, TokenSymbolMap } from '@/config/tokens';
 import { COLOR, EXPLORER_URL_BY_MIDDLEWARE_CHAIN } from '@/constants';
 import { EvmChainId } from '@/constants/chains';
 import { TransactionHistoryRow as TransactionHistoryRowType } from '@/types/TransactionHistory';
 import { generateAgentName } from '@/utils/generateAgentName';
 import { asMiddlewareChain } from '@/utils/middlewareHelpers';
-import { balanceFormat, formatUnitsToNumber } from '@/utils/numberFormatters';
+import {
+  balanceFormat,
+  formatAmountNormalized,
+  formatUnitsToNumber,
+} from '@/utils/numberFormatters';
 import { truncateAddress } from '@/utils/truncate';
 
 import { agentDisplayNameByAgentIds } from './agentByAgentId';
@@ -140,9 +144,13 @@ export const TransactionHistoryRow = ({
       <TransfersGrid>
         {row.transfers.map((transfer, i) => {
           const tokenInfo = resolveToken(chainId, transfer.tokenAddress);
+          // ETH amounts are often dust-sized (gas top-ups), where the default
+          // 2-decimal rendering collapses to 0.00 — give ETH up to 6 decimals.
+          const isEth = tokenInfo?.symbol === TokenSymbolMap.ETH;
           const amountNumber = formatUnitsToNumber(
             transfer.amount,
             tokenInfo?.decimals ?? 18,
+            isEth ? 6 : 4,
           );
           const prefix = transfer.direction === 'in' ? '+' : '-';
           const className =
@@ -161,7 +169,9 @@ export const TransactionHistoryRow = ({
             <Fragment key={i}>
               <Text className={`${className} text-base`}>
                 {prefix}
-                {balanceFormat(amountNumber, 2)}
+                {isEth
+                  ? formatAmountNormalized(amountNumber, 6)
+                  : balanceFormat(amountNumber, 2)}
               </Text>
               <Flex align="center" gap={8}>
                 {iconSrc ? (

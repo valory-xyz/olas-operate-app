@@ -39,7 +39,8 @@ export const TRANSACTION_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN: Partial<
   [EvmChainIdMap.Gnosis]:
     'https://transactions-gnosis.subgraph.autonolas.tech/',
   [EvmChainIdMap.Polygon]: undefined,
-  [EvmChainIdMap.Optimism]: undefined,
+  [EvmChainIdMap.Optimism]:
+    'https://transactions-optimism.subgraph.autonolas.tech/',
   [EvmChainIdMap.Base]: undefined,
 };
 
