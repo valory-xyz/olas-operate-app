@@ -93,7 +93,15 @@ export const useCompleteAgentSetup = (
     const masterSafe = getMasterSafeOf?.(evmHomeChainId);
     if (masterSafe) {
       const safeBalances = getMasterSafeBalancesOf(evmHomeChainId);
-      if (selectedStakingProgramId === 'no_staking') return 'invalid_contract';
+      // QA build (NEXT_PUBLIC_BASIUS_QA_NO_STAKING=true) intentionally selects
+      // no_staking for Basius until the real staking contract is deployed —
+      // let the setup proceed in that case. Production builds keep the guard.
+      if (
+        selectedStakingProgramId === 'no_staking' &&
+        process.env.NEXT_PUBLIC_BASIUS_QA_NO_STAKING !== 'true'
+      ) {
+        return 'invalid_contract';
+      }
       if (allRequirementsMet(safeBalances, totalTokenRequirements))
         return 'readyToComplete';
     } else {

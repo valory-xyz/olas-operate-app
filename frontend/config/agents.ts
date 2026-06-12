@@ -191,7 +191,17 @@ export const AGENT_CONFIG: {
         [TokenSymbolMap.USDC]: getBasiusUsdcConfig(),
       },
     },
-    defaultStakingProgramId: STAKING_PROGRAM_IDS.BasiusAlpha1,
+    // QA build can opt into a no-staking flow until the real Basius staking
+    // contract is deployed on Base. Set NEXT_PUBLIC_BASIUS_QA_NO_STAKING=true
+    // at build time to skip the on-chain staking call entirely (middleware
+    // supports staking_program_id='no_staking' — see protocol.py:713). The
+    // QA build can fund, deploy and run a Basius service; staking + rewards
+    // paths remain untested until the real contract lands. Default (prod
+    // builds) uses the real BasiusAlpha1 program ID.
+    defaultStakingProgramId:
+      process.env.NEXT_PUBLIC_BASIUS_QA_NO_STAKING === 'true'
+        ? 'no_staking'
+        : STAKING_PROGRAM_IDS.BasiusAlpha1,
     serviceApi: BasiusService,
     displayName: 'Basius',
     description:
