@@ -195,6 +195,29 @@ describe('buildTransactionHistoryRows', () => {
     expect(rows[0].id).toBe(makeAgentFundingEvent({ txHash: fundingTx }).id);
   });
 
+  it('keeps non-MASTER_TO_AGENT movements that share a txHash with an AgentFundingEvent', () => {
+    // A batched tx combining agent funding with a withdrawal: the dedup is
+    // scoped to MASTER_TO_AGENT, so the withdrawal must keep its own row.
+    const fundingTx = MOCK_TX_HASH_2;
+    const data = makeTransactionHistoryResponse({
+      fundsMovements: [
+        makeFundsMovement({
+          id: `${fundingTx}-withdrawal`,
+          category: 'MASTER_WITHDRAWAL',
+          transactionHash: fundingTx,
+        }),
+      ],
+      agentFundingEvents: [makeAgentFundingEvent({ txHash: fundingTx })],
+    });
+
+    const rows = buildTransactionHistoryRows(data, DEFAULT_SAFE_ADDRESS);
+    expect(rows).toHaveLength(2);
+    expect(rows.map((r) => r.category).sort()).toEqual([
+      'MASTER_TO_AGENT',
+      'MASTER_WITHDRAWAL',
+    ]);
+  });
+
   it('flags Agent EOA recipients on STANDALONE MASTER_TO_AGENT rows', () => {
     // Native gas top-up to the Agent EOA that lands outside an
     // AgentFundingEvent. The row must surface agentInstanceAddress so the

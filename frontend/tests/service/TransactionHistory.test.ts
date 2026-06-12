@@ -197,6 +197,9 @@ describe('TransactionHistoryService.getAll', () => {
   });
 
   it('caps at a single 1000-row page (does not fetch beyond the cap)', async () => {
+    const consoleErrorSpy = jest
+      .spyOn(console, 'error')
+      .mockImplementation(() => {});
     // A full page (== PAGE_SIZE) signals more data exists, but the cap
     // (MAX_PAGES = 1) means we must NOT fetch a second page.
     const fullPage = Array.from({ length: 1000 }, (_, i) =>
@@ -221,6 +224,10 @@ describe('TransactionHistoryService.getAll', () => {
       first: 1000,
       skip: 0,
     });
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      expect.stringContaining('pagination cap'),
+    );
+    consoleErrorSpy.mockRestore();
   });
 
   it('throws when no subgraph URL is configured', async () => {

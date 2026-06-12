@@ -174,12 +174,18 @@ export const buildTransactionHistoryRows = (
     data.agentFundingEvents.map((e) => e.txHash.toLowerCase()),
   );
 
-  // Drop standalone movements that belong to an AgentFundingEvent (already
-  // represented by the aggregated row), currently-hidden setup / opening-balance
-  // rows, or OLAS reward sweeps (agent → master).
+  // Drop standalone MASTER_TO_AGENT movements that belong to an
+  // AgentFundingEvent (already represented by the aggregated row),
+  // currently-hidden setup / opening-balance rows, or OLAS reward sweeps
+  // (agent → master). The dedup is scoped to MASTER_TO_AGENT so that other
+  // categories sharing a txHash with a funding event (e.g. a batched
+  // withdrawal) still get their own row.
   const standaloneMovements = data.fundsMovements.filter(
     (m) =>
-      !fundingEventTxHashes.has(m.transactionHash.toLowerCase()) &&
+      !(
+        m.category === FUNDS_CATEGORY.MASTER_TO_AGENT &&
+        fundingEventTxHashes.has(m.transactionHash.toLowerCase())
+      ) &&
       !HIDDEN_CATEGORIES.has(m.category) &&
       !isOlasAgentToMaster(m, chainId),
   );

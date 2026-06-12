@@ -179,8 +179,7 @@ const getAll = async ({
     if (exhausted) break;
 
     if (page === MAX_PAGES - 1) {
-      // eslint-disable-next-line no-console
-      console.warn(
+      console.error(
         `[TransactionHistory] hit the ${MAX_PAGES * PAGE_SIZE}-row pagination cap for ${masterSafe}; older history may be truncated.`,
       );
     }
