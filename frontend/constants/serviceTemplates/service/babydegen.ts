@@ -342,8 +342,7 @@ export const BASIUS_SERVICE_TEMPLATE: ServiceTemplate = {
   configurations: {
     [MiddlewareChainMap.BASE]: {
       staking_program_id: STAKING_PROGRAM_IDS.BasiusAlpha1, // default, may be overwritten
-      // TODO(basius): replace with real NFT IPFS hash before launch
-      nft: 'bafybeibasiusnftplaceholdertobereplacedbeforelaunchxxxxxxxx',
+      nft: 'bafybeih76rsunj3knqrx2n6d2whf576kd6gf67u5j5t6vo4fnvahlw7v5i',
       rpc: '', // overwritten
       // Olas Registry agent ID 115:
       // https://marketplace.olas.network/ethereum/ai-agents/115
