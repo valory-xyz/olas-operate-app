@@ -33,6 +33,9 @@ const BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES: Record<string, Address> = {
     '0xFA0ca3935758cB81D35A8F1395b9Eb5a596ce301',
   [STAKING_PROGRAM_IDS.PettAiAgent4]:
     '0x00D544c10BDC0E9b0a71CeAF52C1342BB8f21c1D',
+  // TODO(basius): replace with real Base staking contract address before launch
+  [STAKING_PROGRAM_IDS.BasiusAlpha1]:
+    '0x0000000000000000000000000000000000000001',
 };
 
 export const BASE_STAKING_PROGRAMS: StakingProgramMap = {
@@ -302,6 +305,36 @@ export const BASE_STAKING_PROGRAMS: StakingProgramMap = {
     id: deriveStakingProgramId(
       BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
         STAKING_PROGRAM_IDS.PettAiAgent4
+      ],
+    ),
+  },
+  [STAKING_PROGRAM_IDS.BasiusAlpha1]: {
+    chainId: EvmChainIdMap.Base,
+    name: 'Basius Alpha I',
+    agentsSupported: [AgentMap.Basius],
+    // TODO(basius): confirm OLAS tier with agent team — design mockup
+    // shows 40 OLAS but Optimus tiers are 100/1000/5000 (no 40). The
+    // displayed value comes from the deployed staking contract's
+    // minStakingDeposit at runtime, so this static fallback only matters
+    // before the real contract address replaces the 0x000…001 placeholder.
+    stakingRequirements: {
+      [TokenSymbolMap.OLAS]: 100,
+    },
+    activityChecker:
+      BASE_STAKING_PROGRAMS_ACTIVITY_CHECKERS[STAKING_PROGRAM_IDS.BasiusAlpha1],
+    address:
+      BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.BasiusAlpha1
+      ],
+    contract: new MulticallContract(
+      BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.BasiusAlpha1
+      ],
+      STAKING_TOKEN_PROXY_ABI,
+    ),
+    id: deriveStakingProgramId(
+      BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.BasiusAlpha1
       ],
     ),
   },

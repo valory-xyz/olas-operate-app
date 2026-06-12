@@ -83,9 +83,9 @@ describe('BASE_STAKING_PROGRAMS_ACTIVITY_CHECKERS', () => {
     }
   });
 
-  it('covers exactly 11 Base staking programs', () => {
+  it('covers exactly 12 Base staking programs', () => {
     expect(Object.keys(BASE_STAKING_PROGRAMS_ACTIVITY_CHECKERS)).toHaveLength(
-      11,
+      12,
     );
   });
 });

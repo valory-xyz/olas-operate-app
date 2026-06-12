@@ -7,6 +7,7 @@ import { COLOR } from '@/constants/colors';
 
 import {
   AGENTS_FUN_ONBOARDING_STEPS,
+  BASIUS_ONBOARDING_STEPS,
   MODIUS_ONBOARDING_STEPS,
   OPTIMUS_ONBOARDING_STEPS,
   PETT_AI_ONBOARDING_STEPS,
@@ -33,6 +34,7 @@ const onboardingStepsMap: Record<AgentType, OnboardingStep[]> = {
   [AgentMap.AgentsFun]: AGENTS_FUN_ONBOARDING_STEPS,
   [AgentMap.Modius]: MODIUS_ONBOARDING_STEPS,
   [AgentMap.Optimus]: OPTIMUS_ONBOARDING_STEPS,
+  [AgentMap.Basius]: BASIUS_ONBOARDING_STEPS,
   [AgentMap.PettAi]: PETT_AI_ONBOARDING_STEPS,
   [AgentMap.Polystrat]: POLYSTRAT_ONBOARDING_STEPS,
 };

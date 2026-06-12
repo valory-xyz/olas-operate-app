@@ -3,6 +3,7 @@ export const AgentMap = {
   AgentsFun: 'memeooorr',
   Modius: 'modius',
   Optimus: 'optimus',
+  Basius: 'basius',
   PettAi: 'pett_ai',
   Polystrat: 'polymarket_trader',
 } as const;

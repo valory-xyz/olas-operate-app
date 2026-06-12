@@ -1,6 +1,7 @@
 import { isNil } from 'lodash';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
+import { BASIUS_QA_NO_STAKING_MODE } from '@/config/agents';
 import { TokenSymbol } from '@/config/tokens';
 import { PAGES, SETUP_SCREEN } from '@/constants';
 import { StakingProgramContext } from '@/context/StakingProgramProvider';
@@ -93,7 +94,15 @@ export const useCompleteAgentSetup = (
     const masterSafe = getMasterSafeOf?.(evmHomeChainId);
     if (masterSafe) {
       const safeBalances = getMasterSafeBalancesOf(evmHomeChainId);
-      if (selectedStakingProgramId === 'no_staking') return 'invalid_contract';
+      // BASIUS_QA_NO_STAKING_MODE (config/agents.ts) intentionally selects
+      // no_staking for Basius until the real staking contract is deployed —
+      // let the setup proceed in that case. Production keeps the guard.
+      if (
+        selectedStakingProgramId === 'no_staking' &&
+        !BASIUS_QA_NO_STAKING_MODE
+      ) {
+        return 'invalid_contract';
+      }
       if (allRequirementsMet(safeBalances, totalTokenRequirements))
         return 'readyToComplete';
     } else {

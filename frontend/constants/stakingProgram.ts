@@ -31,6 +31,7 @@ const BASE_STAKING_PROGRAM_IDS = {
   PettAiAgent2: 'pett_ai_agent_2',
   PettAiAgent3: 'pett_ai_agent_3',
   PettAiAgent4: 'pett_ai_agent_4',
+  BasiusAlpha1: 'basius_alpha_1',
 } as const;
 
 const MODE_STAKING_PROGRAM_IDS = {

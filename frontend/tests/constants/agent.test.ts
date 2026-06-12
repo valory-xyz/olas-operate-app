@@ -30,12 +30,16 @@ describe('AgentMap', () => {
     expect(AgentMap.PettAi).toBe('pett_ai');
   });
 
+  it('maps Basius to the middleware identifier "basius"', () => {
+    expect(AgentMap.Basius).toBe('basius');
+  });
+
   it('maps Polystrat to the middleware identifier "polymarket_trader"', () => {
     expect(AgentMap.Polystrat).toBe('polymarket_trader');
   });
 
-  it('covers exactly 6 agent types', () => {
-    expect(Object.keys(AgentMap)).toHaveLength(6);
+  it('covers exactly 7 agent types', () => {
+    expect(Object.keys(AgentMap)).toHaveLength(7);
   });
 
   it('has no duplicate middleware identifier values', () => {
