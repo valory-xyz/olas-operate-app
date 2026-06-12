@@ -62,6 +62,7 @@ export * from './useStore';
 export * from './useSyncBackupOwner';
 export * from './useTotalFiatFromNativeToken';
 export * from './useTotalNativeTokenRequired';
+export * from './useTransactionHistory';
 export * from './useValidatePassword';
 export * from './useWakeLock';
 export * from './useWallet';

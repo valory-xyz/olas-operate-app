@@ -29,6 +29,20 @@ export const REWARDS_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN: Record<
   [EvmChainIdMap.Polygon]: 'https://staking-polygon.subgraph.autonolas.tech',
 };
 
+// pearl-transactions subgraph URLs, one entry per shipped network (Mode is
+// deprecated). Left undefined until each chain's deployment URL is plugged in;
+// an undefined/absent entry surfaces the "not available on this network yet"
+// state instead of fetching.
+export const TRANSACTION_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN: Partial<
+  Record<EvmChainId, Url>
+> = {
+  [EvmChainIdMap.Gnosis]:
+    'https://transactions-gnosis.subgraph.autonolas.tech/',
+  [EvmChainIdMap.Polygon]: undefined,
+  [EvmChainIdMap.Optimism]: undefined,
+  [EvmChainIdMap.Base]: undefined,
+};
+
 // telegram
 export const SUPPORT_URL: Url = 'https://t.me/olaschat';
 

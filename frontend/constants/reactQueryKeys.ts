@@ -64,6 +64,10 @@ export const REACT_QUERY_KEYS = {
   REWARDS_HISTORY_KEY: (chainId: number, serviceId: number) =>
     ['rewardsHistory', chainId, serviceId] as const,
 
+  // transaction history (pearl-transactions subgraph)
+  TRANSACTION_HISTORY_KEY: (chainId: number, masterSafe: string) =>
+    ['transactionHistory', chainId, masterSafe] as const,
+
   // multisigs
   MULTISIG_GET_OWNERS_KEY: (multisig: Safe) =>
     ['multisig', 'getOwners', multisig.evmChainId, multisig.address] as const,
