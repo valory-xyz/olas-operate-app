@@ -1,6 +1,8 @@
 import { useContext, useMemo } from 'react';
 
+import { BASIUS_QA_NO_STAKING_MODE } from '@/config/agents';
 import { STAKING_PROGRAMS, StakingProgramMap } from '@/config/stakingPrograms';
+import { STAKING_PROGRAM_IDS } from '@/constants';
 import { StakingProgramContext } from '@/context/StakingProgramProvider';
 
 import { useServices } from './useServices';
@@ -23,9 +25,19 @@ export const useStakingProgram = () => {
   const allAvailableStakingPrograms = Object.entries(
     STAKING_PROGRAMS[selectedAgentConfig.evmHomeChainId],
   ).reduce((res, [programId, config]) => {
-    if (config.agentsSupported.includes(selectedAgentType)) {
-      res[programId] = config;
+    if (!config.agentsSupported.includes(selectedAgentType)) return res;
+    // QA build (BASIUS_QA_NO_STAKING_MODE=true): Basius's real staking
+    // program points at a placeholder contract address (0x000…001) with
+    // no on-chain code. Including it would cause every multicall to
+    // BUFFER_OVERRUN and spam the console. Skip it — the QA flow uses
+    // 'no_staking' instead.
+    if (
+      BASIUS_QA_NO_STAKING_MODE &&
+      programId === STAKING_PROGRAM_IDS.BasiusAlpha1
+    ) {
+      return res;
     }
+    res[programId] = config;
     return res;
   }, {} as StakingProgramMap);
 

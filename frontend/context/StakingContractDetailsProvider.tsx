@@ -153,7 +153,11 @@ const useStakingContractDetailsByStakingProgram = ({
         },
       );
     },
-    enabled: !isPaused && !!stakingProgramId,
+    // 'no_staking' has no on-chain contract — disable the query so the
+    // serviceApi.getStakingContractDetails call (which throws when it
+    // returns undefined) doesn't surface a noisy error in the console
+    // for the QA build path.
+    enabled: !isPaused && !!stakingProgramId && stakingProgramId !== 'no_staking',
     refetchInterval: isPaused ? false : refetchInterval,
     refetchIntervalInBackground: !isPaused,
   });
