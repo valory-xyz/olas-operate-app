@@ -157,7 +157,8 @@ const useStakingContractDetailsByStakingProgram = ({
     // serviceApi.getStakingContractDetails call (which throws when it
     // returns undefined) doesn't surface a noisy error in the console
     // for the QA build path.
-    enabled: !isPaused && !!stakingProgramId && stakingProgramId !== 'no_staking',
+    enabled:
+      !isPaused && !!stakingProgramId && stakingProgramId !== 'no_staking',
     refetchInterval: isPaused ? false : refetchInterval,
     refetchIntervalInBackground: !isPaused,
   });
