@@ -10,7 +10,11 @@ import { EvmChainId } from '@/constants/chains';
 import { TransactionHistoryRow as TransactionHistoryRowType } from '@/types/TransactionHistory';
 import { generateAgentName } from '@/utils/generateAgentName';
 import { asMiddlewareChain } from '@/utils/middlewareHelpers';
-import { balanceFormat, formatUnitsToNumber } from '@/utils/numberFormatters';
+import {
+  balanceFormat,
+  formatAmountNormalized,
+  formatUnitsToNumber,
+} from '@/utils/numberFormatters';
 import { truncateAddress } from '@/utils/truncate';
 
 import { agentDisplayNameByAgentIds } from './agentByAgentId';
@@ -165,7 +169,9 @@ export const TransactionHistoryRow = ({
             <Fragment key={i}>
               <Text className={`${className} text-base`}>
                 {prefix}
-                {balanceFormat(amountNumber, isEth ? 6 : 2)}
+                {isEth
+                  ? formatAmountNormalized(amountNumber, 6)
+                  : balanceFormat(amountNumber, 2)}
               </Text>
               <Flex align="center" gap={8}>
                 {iconSrc ? (
