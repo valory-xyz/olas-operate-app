@@ -32,6 +32,20 @@ import {
   TokenSymbolMap,
 } from './tokens';
 
+/**
+ * Temporary QA build flag — when `true`, Basius's `defaultStakingProgramId`
+ * is set to `'no_staking'` so Pearl skips the on-chain staking call. This
+ * unblocks QA testing of the fund / deploy / run / withdraw flows on Base
+ * mainnet while the real Basius staking contract is being prepared.
+ *
+ * Flip to `false` (or remove the conditional in AGENT_CONFIG[Basius])
+ * once the real `BasiusAlpha1` staking contract is deployed and its
+ * address replaces the placeholder in `stakingPrograms/base.ts` and
+ * `activityCheckers.ts`. The release pipeline assumes this is `false`
+ * for production builds.
+ */
+export const BASIUS_QA_NO_STAKING_MODE = true;
+
 const getModiusUsdcConfig = () => {
   const modiusFundRequirements =
     MODIUS_SERVICE_TEMPLATE.configurations[MiddlewareChainMap.MODE]
@@ -191,17 +205,16 @@ export const AGENT_CONFIG: {
         [TokenSymbolMap.USDC]: getBasiusUsdcConfig(),
       },
     },
-    // QA build can opt into a no-staking flow until the real Basius staking
-    // contract is deployed on Base. Set NEXT_PUBLIC_BASIUS_QA_NO_STAKING=true
-    // at build time to skip the on-chain staking call entirely (middleware
-    // supports staking_program_id='no_staking' — see protocol.py:713). The
-    // QA build can fund, deploy and run a Basius service; staking + rewards
-    // paths remain untested until the real contract lands. Default (prod
-    // builds) uses the real BasiusAlpha1 program ID.
-    defaultStakingProgramId:
-      process.env.NEXT_PUBLIC_BASIUS_QA_NO_STAKING === 'true'
-        ? 'no_staking'
-        : STAKING_PROGRAM_IDS.BasiusAlpha1,
+    // TODO(basius): flip BASIUS_QA_NO_STAKING_MODE to `false` (or hard-code
+    // STAKING_PROGRAM_IDS.BasiusAlpha1 here) when the real Basius staking
+    // contract is deployed on Base. While `true`, Pearl sends
+    // staking_program_id='no_staking' so the middleware skips the on-chain
+    // staking call (protocol.py:713). QA can fund / deploy / run / withdraw
+    // without the real contract; the staking + rewards code paths remain
+    // untested until the flag is flipped back.
+    defaultStakingProgramId: BASIUS_QA_NO_STAKING_MODE
+      ? 'no_staking'
+      : STAKING_PROGRAM_IDS.BasiusAlpha1,
     serviceApi: BasiusService,
     displayName: 'Basius',
     description:
