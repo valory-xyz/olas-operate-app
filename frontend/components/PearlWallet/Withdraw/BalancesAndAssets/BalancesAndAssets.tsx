@@ -15,6 +15,7 @@ import { usePearlWallet } from '@/context/PearlWalletProvider';
 import { useMasterWalletContext } from '@/hooks';
 import { asMiddlewareChain } from '@/utils';
 
+import { TransactionHistory } from '../../History';
 import { AvailableAssetsTable } from './AvailableAssetsTable';
 import { LowPearlWalletBalanceAlert } from './LowPearlWalletBalanceAlert';
 import { StakedAssetsTable } from './StakedAssetsTable';
@@ -160,6 +161,7 @@ export const BalancesAndAssets = ({
 
       <AvailableAssets />
       <StakedAssets />
+      <TransactionHistory />
     </Flex>
   );
 };
