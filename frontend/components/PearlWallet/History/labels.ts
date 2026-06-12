@@ -23,8 +23,6 @@ export const getTransactionRowLabel = (
     case FUNDS_CATEGORY.SAFE_DEPLOYED:
     case FUNDS_CATEGORY.SAFE_SETUP_TRANSFER:
       return 'Setup complete';
-    case FUNDS_CATEGORY.OPENING_BALANCE:
-      return 'Opening balance';
     case FUNDS_CATEGORY.MASTER_FUNDING_IN:
       return 'Deposit';
     case FUNDS_CATEGORY.MASTER_WITHDRAWAL:

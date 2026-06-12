@@ -2,12 +2,11 @@ import { z } from 'zod';
 
 import { Address } from './Address';
 
+// Mirrors `enum FundsCategory` in the subgraph's schema.graphql (Rev. 5).
+// NB: no OPENING_BALANCE — the subgraph emits no opening-balance row; history
+// simply starts at MasterSafe.historyFloor*.
 export const FUNDS_CATEGORY = {
   SAFE_DEPLOYED: 'SAFE_DEPLOYED',
-  // Still in the subgraph enum, but Rev. 5 emits no opening-balance rows
-  // (history simply starts at MasterSafe.historyFloor*). Kept for schema
-  // parity; the UI hides this category (see useTransactionHistory).
-  OPENING_BALANCE: 'OPENING_BALANCE',
   // First LIVE Master EOA → Master Safe inbound hop after the history
   // floor. Fires at most once per Master Safe.
   SAFE_SETUP_TRANSFER: 'SAFE_SETUP_TRANSFER',
@@ -23,6 +22,10 @@ export const FUNDS_CATEGORY = {
   MASTER_FUNDING_IN: 'MASTER_FUNDING_IN',
   MASTER_TO_AGENT: 'MASTER_TO_AGENT',
   AGENT_TO_MASTER: 'AGENT_TO_MASTER',
+  // NB: the schema on subgraph main also splits an AGENT_OLAS_TO_MASTER
+  // category out of AGENT_TO_MASTER (OLAS reward sweeps). Deliberately not
+  // mirrored here until the live deployment ships it — see
+  // isOlasAgentToMaster in useTransactionHistory for the client-side filter.
   MASTER_WITHDRAWAL: 'MASTER_WITHDRAWAL',
   AGENT_TO_APP: 'AGENT_TO_APP',
   APP_TO_AGENT: 'APP_TO_AGENT',
@@ -31,7 +34,6 @@ export const FUNDS_CATEGORY = {
 
 export const FundsCategorySchema = z.enum([
   FUNDS_CATEGORY.SAFE_DEPLOYED,
-  FUNDS_CATEGORY.OPENING_BALANCE,
   FUNDS_CATEGORY.SAFE_SETUP_TRANSFER,
   FUNDS_CATEGORY.SERVICE_BOND_DEPOSIT,
   FUNDS_CATEGORY.SERVICE_BOND_REFUND,

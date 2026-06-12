@@ -33,7 +33,6 @@ const directionFor = (
 ): TransferDirection => {
   if (category === FUNDS_CATEGORY.MASTER_FUNDING_IN) return 'in';
   if (category === FUNDS_CATEGORY.SAFE_SETUP_TRANSFER) return 'in';
-  if (category === FUNDS_CATEGORY.OPENING_BALANCE) return 'in';
   if (category === FUNDS_CATEGORY.AGENT_TO_MASTER) return 'in';
   if (category === FUNDS_CATEGORY.SERVICE_BOND_REFUND) return 'in';
   if (category === FUNDS_CATEGORY.UNSTAKE_REWARD) return 'in';
@@ -63,6 +62,7 @@ const groupMovementsByTxAndCategory = (
   masterSafe: string,
 ): TransactionHistoryRow[] => {
   const byKey = new Map<string, TransactionHistoryRow>();
+  const keysWithSafeLeg = new Set<string>();
   for (const movement of movements) {
     const key = `${movement.transactionHash}::${movement.category}`;
     const existing = byKey.get(key);
@@ -76,6 +76,13 @@ const groupMovementsByTxAndCategory = (
       movement.category === FUNDS_CATEGORY.MASTER_TO_AGENT &&
       !!agentSafeId &&
       movement.to.toLowerCase() !== agentSafeId;
+    if (
+      movement.category === FUNDS_CATEGORY.MASTER_TO_AGENT &&
+      !!agentSafeId &&
+      movement.to.toLowerCase() === agentSafeId
+    ) {
+      keysWithSafeLeg.add(key);
+    }
     if (existing) {
       existing.transfers.push(transfer);
       if (isAgentEoaRecipient && !existing.agentInstanceAddress) {
@@ -104,6 +111,12 @@ const groupMovementsByTxAndCategory = (
       transfers: [transfer],
     });
   }
+  // Same rule as fundingEventToRow: a Safe leg anywhere in the tx means this
+  // is agent funding ("Fund <agent>"), not an execution-cost top-up.
+  for (const key of keysWithSafeLeg) {
+    const row = byKey.get(key);
+    if (row) row.agentInstanceAddress = null;
+  }
   return Array.from(byKey.values());
 };
 
@@ -120,11 +133,14 @@ const fundingEventToRow = (
     event.transfers.map((t) => t.agentSafe?.service).find(Boolean) ??
     event.transfers.map((t) => t.service).find(Boolean);
 
-  // If any transfer recipient is an EOA-style address (not the AgentSafe),
-  // surface it so the UI can label as "Allocated for execution costs".
-  const eoaTransfer = agentSafeAddrLc
-    ? event.transfers.find((t) => t.to.toLowerCase() !== agentSafeAddrLc)
-    : undefined;
+  // "Allocated for execution costs" applies only when the event funds the
+  // Agent EOA exclusively. The canonical funding tx carries Safe + EOA legs
+  // in one event — that must still read "Fund <agent>", so any Safe leg wins.
+  const eoaTransfer =
+    agentSafeAddrLc &&
+    event.transfers.every((t) => t.to.toLowerCase() !== agentSafeAddrLc)
+      ? event.transfers[0]
+      : undefined;
 
   return {
     id: event.id,
@@ -139,21 +155,22 @@ const fundingEventToRow = (
   };
 };
 
-// "Setup complete" / opening-balance rows are hidden for now — we can't yet
-// populate opening balances (Path A needs an archive RPC at historyFloorBlock).
-// Re-enable these categories once that's handled.
+// "Setup complete" rows are hidden for now — we can't yet populate the
+// opening balance (Path A needs an archive RPC at historyFloorBlock).
+// Defense-in-depth against the query's category_in filter, which already
+// excludes these.
 const HIDDEN_CATEGORIES = new Set<FundsMovement['category']>([
   FUNDS_CATEGORY.SAFE_DEPLOYED,
   FUNDS_CATEGORY.SAFE_SETUP_TRANSFER,
-  FUNDS_CATEGORY.OPENING_BALANCE,
 ]);
 
 // Staking-reward sweeps surface as OLAS AGENT_TO_MASTER transfers (the agent
-// returning reward OLAS to the master). They flood the history and aren't user
-// actions, so hide them for now.
-// NOTE: this also hides any *genuine* OLAS agent→master transfer — separating
-// reward sweeps from genuine returns needs reward attribution in the subgraph
-// (tracked as a follow-up). Native / non-OLAS agent→master transfers are kept.
+// returning reward OLAS to the master). They flood the history and aren't
+// user actions, so hide them client-side. The subgraph on main splits these
+// into a dedicated AGENT_OLAS_TO_MASTER category, but the live deployment
+// doesn't ship that yet — until it does, this filter is the active mechanism.
+// NOTE: it also hides any *genuine* OLAS agent→master transfer; native /
+// non-OLAS agent→master transfers are kept.
 const isOlasAgentToMaster = (
   movement: FundsMovement,
   chainId: EvmChainId | undefined,

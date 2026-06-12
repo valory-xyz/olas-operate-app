@@ -17,7 +17,17 @@ jest.mock('graphql-request', () => ({
 
 describe('TransactionHistoryService.get', () => {
   // Each test controls the URL map explicitly — clear it before and after so a
-  // populated default (or a leftover from another test) can't leak in.
+  // populated default (or a leftover from another test) can't leak in, then
+  // restore the real config once the suite is done.
+  const ORIGINAL_URLS = { ...TRANSACTION_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN };
+
+  afterAll(() => {
+    Object.assign(
+      TRANSACTION_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN,
+      ORIGINAL_URLS,
+    );
+  });
+
   const clearUrls = () => {
     for (const key of Object.keys(
       TRANSACTION_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN,

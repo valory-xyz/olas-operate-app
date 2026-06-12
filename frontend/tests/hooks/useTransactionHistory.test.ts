@@ -292,6 +292,81 @@ describe('buildTransactionHistoryRows', () => {
     expect(rows[0].agentInstanceAddress).toBe(MOCK_INSTANCE_ADDRESS);
   });
 
+  it('does NOT flag Agent EOA on a mixed Safe+EOA funding event', () => {
+    // The canonical Pearl funding tx funds the Agent Safe and the Agent EOA
+    // in one event — it must render "Fund <agent>", not "Allocated for
+    // execution costs", so the EOA flag only applies to EOA-only events.
+    const fundingTx = MOCK_TX_HASH_3;
+    const agentSafe = {
+      id: MOCK_MULTISIG_ADDRESS,
+      service: { id: '42', agentIds: [25] },
+    };
+    const data = makeTransactionHistoryResponse({
+      agentFundingEvents: [
+        makeAgentFundingEvent({
+          txHash: fundingTx,
+          transfers: [
+            makeFundsMovement({
+              id: `${fundingTx}-safe`,
+              category: 'MASTER_TO_AGENT',
+              token: null,
+              amount: '1',
+              from: DEFAULT_SAFE_ADDRESS,
+              to: MOCK_MULTISIG_ADDRESS,
+              transactionHash: fundingTx,
+              agentSafe,
+            }),
+            makeFundsMovement({
+              id: `${fundingTx}-eoa`,
+              category: 'MASTER_TO_AGENT',
+              token: null,
+              amount: '2',
+              from: DEFAULT_SAFE_ADDRESS,
+              to: MOCK_INSTANCE_ADDRESS,
+              transactionHash: fundingTx,
+              agentSafe,
+            }),
+          ],
+        }),
+      ],
+    });
+
+    const rows = buildTransactionHistoryRows(data, DEFAULT_SAFE_ADDRESS);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].agentInstanceAddress).toBeNull();
+    expect(rows[0].agentSafeAddress).toBe(MOCK_MULTISIG_ADDRESS);
+  });
+
+  it('does NOT flag Agent EOA on a mixed Safe+EOA standalone MASTER_TO_AGENT group', () => {
+    const tx = MOCK_TX_HASH_1;
+    const agentSafe = {
+      id: MOCK_MULTISIG_ADDRESS,
+      service: { id: '42', agentIds: [25] },
+    };
+    const data = makeTransactionHistoryResponse({
+      fundsMovements: [
+        makeFundsMovement({
+          id: `${tx}-eoa`,
+          category: 'MASTER_TO_AGENT',
+          to: MOCK_INSTANCE_ADDRESS,
+          transactionHash: tx,
+          agentSafe,
+        }),
+        makeFundsMovement({
+          id: `${tx}-safe`,
+          category: 'MASTER_TO_AGENT',
+          to: MOCK_MULTISIG_ADDRESS,
+          transactionHash: tx,
+          agentSafe,
+        }),
+      ],
+    });
+
+    const rows = buildTransactionHistoryRows(data, DEFAULT_SAFE_ADDRESS);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].agentInstanceAddress).toBeNull();
+  });
+
   it('sorts rows by blockTimestamp descending', () => {
     const data = makeTransactionHistoryResponse({
       fundsMovements: [
@@ -374,6 +449,11 @@ describe('buildTransactionHistoryRows', () => {
 });
 
 describe('useTransactionHistory', () => {
+  // Gnosis ships a real URL in source — snapshot and restore rather than
+  // deleting, so the module-registry copy isn't left missing real config.
+  const ORIGINAL_GNOSIS_URL =
+    TRANSACTION_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN[EvmChainIdMap.Gnosis];
+
   beforeEach(() => {
     mockedGet.mockReset();
     // The hook only fetches when a subgraph URL exists for the chain.
@@ -382,7 +462,8 @@ describe('useTransactionHistory', () => {
   });
 
   afterEach(() => {
-    delete TRANSACTION_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN[EvmChainIdMap.Gnosis];
+    TRANSACTION_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN[EvmChainIdMap.Gnosis] =
+      ORIGINAL_GNOSIS_URL;
   });
 
   it('does not fetch when chainId or masterSafe is missing', async () => {

@@ -99,7 +99,7 @@ export const TransactionHistory = () => {
             showIcon
             message="Recent transactions may not appear yet"
             description="Wallet operations work normally. This usually resolves on its own."
-            style={{ marginBottom: 16 }}
+            className="mb-16"
           />
         ) : null}
 
@@ -137,7 +137,7 @@ export const TransactionHistory = () => {
               <TransactionHistoryRow key={row.id} row={row} chainId={chainId} />
             ))}
             {hasMore ? (
-              <Flex justify="center" style={{ marginTop: 8 }}>
+              <Flex justify="center" className="mt-8">
                 <Button
                   type="link"
                   onClick={() => setVisibleCount((count) => count + PAGE_SIZE)}

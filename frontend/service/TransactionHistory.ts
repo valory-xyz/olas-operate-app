@@ -26,6 +26,7 @@ const FETCH_TRANSACTION_HISTORY_QUERY = gql`
           SERVICE_BOND_REFUND
           MASTER_FUNDING_IN
           AGENT_TO_MASTER
+          MASTER_TO_AGENT
           MASTER_WITHDRAWAL
         ]
       }

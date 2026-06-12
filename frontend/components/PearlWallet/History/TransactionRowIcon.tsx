@@ -6,7 +6,6 @@ import {
   CheckOutlined,
   LockOutlined,
   UnlockOutlined,
-  WalletOutlined,
 } from '@ant-design/icons';
 import { ReactNode } from 'react';
 import styled from 'styled-components';
@@ -52,7 +51,6 @@ const GRAY_COLORS: Palette = {
 
 const INNER_ICON_BY_CATEGORY: Record<FundsCategory, ReactNode> = {
   [FUNDS_CATEGORY.SAFE_DEPLOYED]: <CheckOutlined />,
-  [FUNDS_CATEGORY.OPENING_BALANCE]: <WalletOutlined />,
   [FUNDS_CATEGORY.SAFE_SETUP_TRANSFER]: <ArrowDownOutlined />,
   [FUNDS_CATEGORY.MASTER_FUNDING_IN]: <ArrowDownOutlined />,
   [FUNDS_CATEGORY.AGENT_TO_MASTER]: <ArrowLeftOutlined />,
@@ -72,7 +70,6 @@ const PALETTE_BY_CATEGORY: Record<FundsCategory, Palette> = {
   // Green — external funds into the wallet.
   [FUNDS_CATEGORY.MASTER_FUNDING_IN]: GREEN_COLORS,
   [FUNDS_CATEGORY.SAFE_SETUP_TRANSFER]: GREEN_COLORS,
-  [FUNDS_CATEGORY.OPENING_BALANCE]: GREEN_COLORS,
   [FUNDS_CATEGORY.SAFE_DEPLOYED]: GREEN_COLORS,
   [FUNDS_CATEGORY.STAKING_REWARD_CLAIM]: GREEN_COLORS,
   [FUNDS_CATEGORY.APP_TO_AGENT]: GREEN_COLORS,

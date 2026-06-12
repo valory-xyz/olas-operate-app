@@ -7,6 +7,11 @@ import { AgentType } from '@/constants/agent';
  * agent's name for ANY service straight from subgraph data, without needing
  * the service to be loaded locally (which the multisig-based
  * useAgentLookupBySafe requires).
+ *
+ * Chain-agnostic and first-wins: Optimus and Modius share agentId 40, so 40
+ * resolves to whichever comes first in AGENT_CONFIG (Optimus). Safe today —
+ * Modius is Mode-only and Mode has no transaction-history subgraph. If a
+ * shared-id chain ever gets one, key this map by (chainId, agentId).
  */
 const DISPLAY_NAME_BY_AGENT_ID: Map<number, string> = (() => {
   const map = new Map<number, string>();
