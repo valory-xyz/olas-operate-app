@@ -7,7 +7,10 @@
  */
 
 import { BASE_STAKING_PROGRAMS } from '../../../config/stakingPrograms/base';
-import { AgentMap } from '../../../constants/agent';
+import {
+  AgentMap,
+  BASIUS_QA_NO_STAKING_MODE,
+} from '../../../constants/agent';
 import { EvmChainIdMap } from '../../../constants/chains';
 import { STAKING_PROGRAM_IDS } from '../../../constants/stakingProgram';
 
@@ -21,7 +24,7 @@ jest.mock(
 const EVM_ADDRESS_PATTERN = /^0x[0-9a-fA-F]{40}$/;
 
 describe('BASE_STAKING_PROGRAMS', () => {
-  it('covers all 12 Base staking program IDs', () => {
+  it('covers all expected Base staking program IDs', () => {
     const expectedIds = [
       STAKING_PROGRAM_IDS.MemeBaseAlpha2,
       STAKING_PROGRAM_IDS.MemeBaseBeta,
@@ -34,12 +37,18 @@ describe('BASE_STAKING_PROGRAMS', () => {
       STAKING_PROGRAM_IDS.PettAiAgent2,
       STAKING_PROGRAM_IDS.PettAiAgent3,
       STAKING_PROGRAM_IDS.PettAiAgent4,
-      STAKING_PROGRAM_IDS.BasiusAlpha1,
+      // BasiusAlpha1 is omitted in QA builds (placeholder address would
+      // break multicalls) — see BASIUS_QA_NO_STAKING_MODE in base.ts.
+      ...(BASIUS_QA_NO_STAKING_MODE
+        ? []
+        : [STAKING_PROGRAM_IDS.BasiusAlpha1]),
     ];
     for (const id of expectedIds) {
       expect(BASE_STAKING_PROGRAMS[id]).toBeDefined();
     }
-    expect(Object.keys(BASE_STAKING_PROGRAMS)).toHaveLength(12);
+    expect(Object.keys(BASE_STAKING_PROGRAMS)).toHaveLength(
+      expectedIds.length,
+    );
   });
 
   it('all programs are on Base chain (chainId 8453)', () => {
@@ -153,7 +162,10 @@ describe('BASE_STAKING_PROGRAMS', () => {
     });
   });
 
-  describe('Basius programs', () => {
+  // Skip Basius checks while BASIUS_QA_NO_STAKING_MODE is on — the entry
+  // is intentionally absent from BASE_STAKING_PROGRAMS in that build.
+  const describeBasius = BASIUS_QA_NO_STAKING_MODE ? describe.skip : describe;
+  describeBasius('Basius programs', () => {
     it('BasiusAlpha1 supports only Basius agent', () => {
       const program = BASE_STAKING_PROGRAMS[STAKING_PROGRAM_IDS.BasiusAlpha1];
       expect(program.agentsSupported).toContain(AgentMap.Basius);
