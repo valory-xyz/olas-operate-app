@@ -56,7 +56,9 @@ const getFormattedTokensList = (
  */
 export const useAgentFundingRequests = () => {
   const { selectedAgentConfig, selectedService } = useServices();
-  const { serviceEoa } = useService(selectedService?.service_config_id);
+  const { serviceEoa, serviceSafes } = useService(
+    selectedService?.service_config_id,
+  );
   const { agentFundingRequests, isAgentFundingRequestsStale } =
     useBalanceAndRefillRequirementsContext();
 
@@ -117,11 +119,31 @@ export const useAgentFundingRequests = () => {
     return agentFundingRequests[eoaAddress] || null;
   }, [agentFundingRequests, isAgentFundingRequestsStale, serviceEoa?.address]);
 
+  // Split requirements for Agent Safe wallet (home chain only)
+  const safeTokenRequirements = useMemo(() => {
+    if (!agentFundingRequests) return null;
+    if (isAgentFundingRequestsStale) return null;
+
+    const safeAddress = serviceSafes?.find(
+      ({ evmChainId }) => evmChainId === selectedAgentConfig.evmHomeChainId,
+    )?.address;
+    if (!safeAddress) return null;
+
+    return agentFundingRequests[safeAddress] || null;
+  }, [
+    agentFundingRequests,
+    isAgentFundingRequestsStale,
+    serviceSafes,
+    selectedAgentConfig.evmHomeChainId,
+  ]);
+
   return {
     /** Consolidated requirements per token address: {[tokenAddress]: totalAmount} */
     agentTokenRequirements,
     /** Requirements for service EOA address only: {[tokenAddress]: amount} */
     eoaTokenRequirements,
+    /** Requirements for service Safe address only: {[tokenAddress]: amount} */
+    safeTokenRequirements,
     /** Formatted token requirements: "10 XDAI, 15 USDC and 100 OLAS" */
     agentTokenRequirementsFormatted,
     /** True if any required token amount is above zero, indicating a funding need. */

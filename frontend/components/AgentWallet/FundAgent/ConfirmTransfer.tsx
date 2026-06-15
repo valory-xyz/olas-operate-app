@@ -161,13 +161,21 @@ type ConfirmTransferProps = {
 /**
  * Prepares ChainFunds for a funding request.
  *
- * Converts user-entered amounts into keyed by token address amounts, allocating funds
- * to the service EOA first to cover its requirements, and sending any remainder to safe.
+ * Converts user-entered amounts into amounts keyed by token address, then splits
+ * each token between the service EOA and Safe by their respective requirements:
  *
- * When `forceEoaOnly` is true, native gas (AddressZero) bypasses the EOA-vs-Safe split
- * and routes 100% to the EOA — used when the user entered this flow from an
+ * - The EOA is funded up to its requirement (`eoaTokenRequirements`).
+ * - For native gas (AddressZero): the Safe receives only up to its own
+ *   requirement (`safeTokenRequirements`); any excess goes to the EOA. Only the
+ *   signer EOA spends native gas, so stranding excess native in the Safe leaves
+ *   the signer under-funded (re-triggering the low-balance alert) and surfaces
+ *   the gas as a portfolio asset.
+ * - For ERC20: the remainder beyond the EOA requirement goes to the Safe, the
+ *   agent's operating/investment wallet.
+ *
+ * When `forceEoaOnly` is true, native gas bypasses the Safe entirely and routes
+ * 100% to the EOA — used when the user entered this flow from an
  * INSUFFICIENT_SIGNER_GAS modal where the EOA is the wallet that needs funding.
- * ERC20 amounts still follow the regular split.
  */
 export const prepareAgentFundsForTransfer = ({
   fundsToTransfer,
@@ -175,6 +183,7 @@ export const prepareAgentFundsForTransfer = ({
   serviceSafe,
   serviceEoa,
   eoaTokenRequirements,
+  safeTokenRequirements,
   forceEoaOnly = false,
 }: {
   fundsToTransfer: TokenAmounts;
@@ -182,6 +191,7 @@ export const prepareAgentFundsForTransfer = ({
   serviceSafe: { address: Address };
   serviceEoa: { address: Address };
   eoaTokenRequirements: Maybe<TokenBalanceRecord>;
+  safeTokenRequirements: Maybe<TokenBalanceRecord>;
   forceEoaOnly?: boolean;
 }): ChainFunds => {
   const chainTokenConfig = TOKEN_CONFIG[asEvmChainId(middlewareHomeChainId)];
@@ -201,40 +211,49 @@ export const prepareAgentFundsForTransfer = ({
     }
   });
 
-  // Build agent funds fulfilling EOA requirements first, send remainder to Safe
   const eoaAddress = serviceEoa.address;
+  const safeAddress = serviceSafe.address;
   const agentFunds: Record<Address, TokenAmountMap> = {};
 
-  Object.entries(tokenAmountsByAddress).forEach(([tokenAddress, amount]) => {
-    const amountBigInt = BigInt(amount);
+  Object.entries(tokenAmountsByAddress).forEach(
+    ([untypedTokenAddress, amount]) => {
+      const tokenAddress = untypedTokenAddress as Address;
+      const amountBigInt = BigInt(amount);
+      const isNative = tokenAddress === AddressZero;
 
-    // Gas-error entry: route all native gas to the EOA regardless of the
-    // polled eoaTokenRequirements (which may report 0 if the EOA is fine
-    // for "normal operation" but not for the specific failed transaction).
-    if (forceEoaOnly && tokenAddress === AddressZero) {
-      set(agentFunds, `${eoaAddress}.${tokenAddress}`, amountBigInt.toString());
-      return;
-    }
-
-    const requiredForEoa = BigInt(
-      (eoaTokenRequirements?.[tokenAddress as Address] as string) || '0',
-    );
-    const allocateToEoa = bigintMin(amountBigInt, requiredForEoa);
-
-    if (allocateToEoa > 0n) {
-      set(
-        agentFunds,
-        `${eoaAddress}.${tokenAddress}`,
-        allocateToEoa.toString(),
+      // 1. Fund the EOA up to its own requirement.
+      const requiredForEoa = BigInt(
+        (eoaTokenRequirements?.[tokenAddress] as string) || '0',
       );
-    }
+      const allocateToEoa = bigintMin(amountBigInt, requiredForEoa);
+      const afterEoa = amountBigInt - allocateToEoa;
 
-    const remaining = amountBigInt - allocateToEoa;
-    if (remaining > 0n) {
-      const safeAddress = serviceSafe.address;
-      set(agentFunds, [safeAddress, tokenAddress], remaining.toString());
-    }
-  });
+      // 2. Distribute the remainder.
+      let toEoa = allocateToEoa;
+      let toSafe = 0n;
+
+      if (isNative) {
+        // The Safe receives native only up to its own requirement; the signer
+        // EOA spends all gas, so any excess native belongs there. A gas-error
+        // entry (forceEoaOnly) keeps 100% of native on the EOA.
+        const safeNativeTarget = forceEoaOnly
+          ? 0n
+          : BigInt((safeTokenRequirements?.[tokenAddress] as string) || '0');
+        toSafe = bigintMin(afterEoa, safeNativeTarget);
+        toEoa += afterEoa - toSafe; // native excess → signer EOA
+      } else {
+        // ERC20 remainder (requirement + any excess) goes to the Safe.
+        toSafe = afterEoa;
+      }
+
+      if (toEoa > 0n) {
+        set(agentFunds, [eoaAddress, tokenAddress], toEoa.toString());
+      }
+      if (toSafe > 0n) {
+        set(agentFunds, [safeAddress, tokenAddress], toSafe.toString());
+      }
+    },
+  );
 
   const fundsTo: ChainFunds = {
     [middlewareHomeChainId]: agentFunds,
@@ -254,7 +273,8 @@ export const ConfirmTransfer = ({
   );
   const { onFundAgent, isLoading, isSuccess, isError, error, resetMutation } =
     useConfirmTransfer();
-  const { eoaTokenRequirements } = useAgentFundingRequests();
+  const { eoaTokenRequirements, safeTokenRequirements } =
+    useAgentFundingRequests();
   const { fundEntrySource } = useAgentWallet();
   const { goto } = usePageState();
 
@@ -278,6 +298,7 @@ export const ConfirmTransfer = ({
       serviceSafe,
       serviceEoa,
       eoaTokenRequirements,
+      safeTokenRequirements,
       forceEoaOnly: fundEntrySource === 'gas-error',
     });
 
@@ -290,6 +311,7 @@ export const ConfirmTransfer = ({
     serviceSafe,
     serviceEoa,
     eoaTokenRequirements,
+    safeTokenRequirements,
     fundEntrySource,
   ]);
 

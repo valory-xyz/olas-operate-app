@@ -110,7 +110,10 @@ const setupHappyPath = () => {
     serviceSafes: [{ address: DEFAULT_SAFE_ADDRESS, evmChainId: 100 }],
     serviceEoa: { address: DEFAULT_EOA_ADDRESS },
   });
-  mockUseAgentFundingRequests.mockReturnValue({ eoaTokenRequirements: {} });
+  mockUseAgentFundingRequests.mockReturnValue({
+    eoaTokenRequirements: {},
+    safeTokenRequirements: {},
+  });
   mockUseBalanceAndRefillRequirementsContext.mockReturnValue({
     refetch: jest.fn(),
   });

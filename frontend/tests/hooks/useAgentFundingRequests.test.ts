@@ -62,12 +62,22 @@ const defaultServiceEoa = {
   owner: WALLET_OWNER.Agent as typeof WALLET_OWNER.Agent,
 };
 
+const defaultServiceSafes = [
+  {
+    address: DEFAULT_SAFE_ADDRESS,
+    evmChainId: GNOSIS_CHAIN_ID,
+    type: WALLET_TYPE.Safe as typeof WALLET_TYPE.Safe,
+    owner: WALLET_OWNER.Agent as typeof WALLET_OWNER.Agent,
+  },
+];
+
 type SetupMocksOptions = {
   agentFundingRequests?: AddressBalanceRecord;
   isAgentFundingRequestsStale?: boolean;
   selectedAgentConfig?: ReturnType<typeof useServices>['selectedAgentConfig'];
   selectedService?: ReturnType<typeof useServices>['selectedService'];
   serviceEoa?: typeof defaultServiceEoa | null;
+  serviceSafes?: typeof defaultServiceSafes;
 };
 
 function setupMocks(options: SetupMocksOptions = {}) {
@@ -80,6 +90,8 @@ function setupMocks(options: SetupMocksOptions = {}) {
 
   const serviceEoa =
     'serviceEoa' in options ? options.serviceEoa : defaultServiceEoa;
+  const serviceSafes =
+    'serviceSafes' in options ? options.serviceSafes : defaultServiceSafes;
 
   mockUseBalanceAndRefillRequirementsContext.mockReturnValue({
     agentFundingRequests,
@@ -93,6 +105,7 @@ function setupMocks(options: SetupMocksOptions = {}) {
 
   mockUseService.mockReturnValue({
     serviceEoa,
+    serviceSafes,
   } as ReturnType<typeof useService>);
 }
 
@@ -287,6 +300,71 @@ describe('useAgentFundingRequests', () => {
       const { result } = renderHook(() => useAgentFundingRequests());
 
       expect(result.current.eoaTokenRequirements).toBeNull();
+    });
+  });
+
+  describe('safeTokenRequirements', () => {
+    it('returns requirements for the service Safe address', () => {
+      const safeBalanceRecord = {
+        [AddressZero]: '800',
+        [UNKNOWN_TOKEN_ADDRESS]: '200',
+      };
+      const fundingRequests: AddressBalanceRecord = {
+        [DEFAULT_EOA_ADDRESS]: { [AddressZero]: '500' },
+        [DEFAULT_SAFE_ADDRESS]: safeBalanceRecord,
+      };
+      setupMocks({ agentFundingRequests: fundingRequests });
+
+      const { result } = renderHook(() => useAgentFundingRequests());
+
+      expect(result.current.safeTokenRequirements).toEqual(safeBalanceRecord);
+    });
+
+    it('returns null when there is no service Safe for the home chain', () => {
+      const fundingRequests: AddressBalanceRecord = {
+        [DEFAULT_SAFE_ADDRESS]: { [AddressZero]: '800' },
+      };
+      setupMocks({
+        agentFundingRequests: fundingRequests,
+        serviceSafes: [],
+      });
+
+      const { result } = renderHook(() => useAgentFundingRequests());
+
+      expect(result.current.safeTokenRequirements).toBeNull();
+    });
+
+    it('returns null when the Safe address is not in funding requests', () => {
+      const fundingRequests: AddressBalanceRecord = {
+        [DEFAULT_EOA_ADDRESS]: { [AddressZero]: '500' },
+      };
+      setupMocks({ agentFundingRequests: fundingRequests });
+
+      const { result } = renderHook(() => useAgentFundingRequests());
+
+      expect(result.current.safeTokenRequirements).toBeNull();
+    });
+
+    it('returns null when isAgentFundingRequestsStale is true', () => {
+      const fundingRequests: AddressBalanceRecord = {
+        [DEFAULT_SAFE_ADDRESS]: { [AddressZero]: '800' },
+      };
+      setupMocks({
+        agentFundingRequests: fundingRequests,
+        isAgentFundingRequestsStale: true,
+      });
+
+      const { result } = renderHook(() => useAgentFundingRequests());
+
+      expect(result.current.safeTokenRequirements).toBeNull();
+    });
+
+    it('returns null when agentFundingRequests is undefined', () => {
+      setupMocks({ agentFundingRequests: undefined });
+
+      const { result } = renderHook(() => useAgentFundingRequests());
+
+      expect(result.current.safeTokenRequirements).toBeNull();
     });
   });
 
