@@ -6,7 +6,7 @@ The deployability and lifecycle system determines whether an agent can be starte
 
 The system has four layers:
 
-1. **Deployability check** — `useDeployability` evaluates ~10 conditions to produce a `canRun` boolean with a reason string
+1. **Deployability check** — `useDeployability` evaluates ~11 conditions to produce a `canRun` boolean with a reason string
 2. **Service start** — `useStartService` handles safe creation, service creation/update, and starting the service (shared by manual and auto-run)
 3. **Deployment workflow** — `useServiceDeployment` orchestrates the full manual start flow: polling control, status overrides, state refresh, and error handling
 4. **Stop** — `stopDeployment` stops a running service
@@ -41,7 +41,7 @@ SettingsService (backend config)
 
 ## Source of truth
 
-- `frontend/hooks/useDeployability.ts` — deployability decision tree (~10 branches, returns `canRun` + `reason`)
+- `frontend/hooks/useDeployability.ts` — deployability decision tree (~11 branches, returns `canRun` + `reason`)
 - `frontend/hooks/useStartService.ts` — shared service start logic (safe creation, service create/update, start)
 - `frontend/hooks/useServiceDeployment.ts` — manual deployment workflow (polling control, status overrides, error handling)
 - `frontend/utils/service.ts` — `updateServiceIfNeeded` (hash, env vars, fund requirements, agent release comparison), `isValidServiceId`
@@ -76,7 +76,7 @@ SettingsService (backend config)
 
 ### Deployability result shape
 
-Defined as `DeployabilityResult` in `frontend/hooks/useDeployability.ts`. Fields: `isLoading`, `canRun`, `reason` (why `canRun` is false, e.g., `'Low balance'`, `'Evicted'`), `loadingReason` (comma-separated loading sources).
+Defined as `DeployabilityResult` in `frontend/hooks/useDeployability.ts`. Fields: `isLoading`, `canRun`, `reason` (why `canRun` is false, e.g., `'Phased out'`, `'Under construction'`, `'Low balance'`, `'Evicted'`), `loadingReason` (comma-separated loading sources).
 
 ### SharedProvider context shape
 
@@ -111,37 +111,52 @@ The hook evaluates conditions in priority order. The first failing condition det
 2. Any dependency still loading
    → canRun: false, reason: 'Loading', loadingReason: 'Services, Balances, ...'
 
-3. selectedAgentConfig.isUnderConstruction
+3. selectedAgentConfig.isPhasedOut
+   → canRun: false, reason: 'Phased out'
+
+4. selectedAgentConfig.isUnderConstruction
    → canRun: false, reason: 'Under construction'
 
-4. isGeoLocationRestricted && isAgentGeoRestricted
+5. isGeoLocationRestricted && isAgentGeoRestricted
    → canRun: false, reason: 'Region restricted'
 
-5. isAnotherAgentRunning
+6. isAnotherAgentRunning
    → canRun: false, reason: 'Another agent running'
 
-6. hasEnoughServiceSlots === false && !isServiceStaked
+7. hasEnoughServiceSlots === false && !isServiceStaked
    → canRun: false, reason: 'No available slots'
 
-7. isAgentEvicted && !isEligibleForStaking
+8. isAgentEvicted && !isEligibleForStaking
    → canRun: false, reason: 'Evicted'
 
-8. isAgentsFunFieldUpdateRequired
+9. isAgentsFunFieldUpdateRequired
    → canRun: false, reason: 'Update required'
 
-9. isInitialFunded === false
-   → canRun: false, reason: 'Unfinished setup'
+10. isInitialFunded === false
+    → canRun: false, reason: 'Unfinished setup'
 
-10. !canStartSelectedAgent (from refill requirements)
+11. !canStartSelectedAgent (from refill requirements)
     → canRun: false, reason: 'Low balance'
 
-11. All checks pass
+12. All checks pass
     → canRun: true
 ```
 
 **Loading sources** checked (in order): Offline, Services, Balances (3 sub-checks: not enabled, loading, or no balances for selected agent), Staking, Geo, Safe, Setup (`isInitialFunded === undefined`).
 
 The `safeEligibility` parameter is optional. Currently only auto-run's `useSelectedEligibility` passes it — `useServiceDeployment` calls `useDeployability()` with no argument, so manual deployment is **not** pre-blocked by safe eligibility at this level (safe eligibility is instead checked inside `createSafeIfNeeded` during the start flow). When provided, it's checked first, even before loading state.
+
+### Phased-out agents (terminal retirement)
+
+`AgentConfig.isPhasedOut` marks an agent as permanently retired — existing instances can no longer be run, only their funds withdrawn (set on **Agents.fun**). It is distinct from `isUnderConstruction` (temporary/technical, also hides the staking section) and `shutdownDate` (sunsetting — the agent still runs until the date). Behavior when set:
+
+- **`useDeployability`** returns `canRun: false, reason: 'Phased out'` (step 3 above), disabling the Start button.
+- **Auto-run** excludes the instances two ways: `getDecommissionedInstances` (`AutoRunProvider/utils/utils.ts`) marks them `canRun: false, reason: 'Decommissioned'`, and the scanner's `fetchDeployabilityForAgent` (`autoRunHelpers.ts`) returns `'Phased out'` — kept in parity with `useDeployability`.
+- **Agent page** shows `AgentPhasedOutAlert` ("…has been phased out and is no longer supported. You can still withdraw funds from your Agent Wallet." + Withdraw CTA), rendered as the first/pre-empting branch in `AgentDisabledAlert`.
+- **Select Agent** maintenance alert drops the "Existing agents continue to run as usual." line (`FundingRequirementStep`).
+- **New-epoch notifications** are skipped (`useNotifyOnNewEpoch`).
+
+`isAgentEnabled` and `isAddingNewBlocked` are deliberately kept `true`, so the sidebar entry, the staking section, and balance polling (for the withdraw flow) remain available. A currently-running instance is **not** force-stopped — restart is blocked and the user off-ramps via Withdraw.
 
 ### Service start flow (`useStartService`)
 
@@ -251,7 +266,7 @@ On mount, SharedProvider queries recovery status once (via React Query with `sta
 
 ## Test-relevant notes
 
-- `useDeployability` has ~10 prioritized branches — test each in isolation by mocking all dependencies. Priority order matters: safe eligibility blocks before loading, loading blocks before all runtime checks.
+- `useDeployability` has ~11 prioritized branches — test each in isolation by mocking all dependencies. Priority order matters: safe eligibility blocks before loading, loading blocks before all runtime checks, and `isPhasedOut` blocks before all other config/runtime checks (verify it pre-empts e.g. evicted/low-balance).
 - `useDeployability` loading sources — test each of the 7 loading conditions independently. The `loadingReason` string is comma-separated and reflects which sources are still loading.
 - `useDeployability` balance loading has 3 sub-checks: `!isBalancesAndFundingRequirementsEnabledForAllServices`, `isBalancesAndFundingRequirementsLoadingForAllServices`, and `!hasSelectedAgentBalances`. All three produce `'Balances'` in `loadingReason`.
 - `useDeployability` slot check — verify the `!isNil(hasEnoughServiceSlots)` guard: `undefined` should NOT trigger "No available slots", but `false` should (when not staked).
