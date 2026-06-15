@@ -1,9 +1,9 @@
 import { isNil } from 'lodash';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
-import { BASIUS_QA_NO_STAKING_MODE } from '@/config/agents';
 import { TokenSymbol } from '@/config/tokens';
 import { PAGES, SETUP_SCREEN } from '@/constants';
+import { BASIUS_QA_NO_STAKING_MODE } from '@/constants/agent';
 import { StakingProgramContext } from '@/context/StakingProgramProvider';
 import { useSupportModal } from '@/context/SupportModalProvider';
 import { TokenRequirement } from '@/types';

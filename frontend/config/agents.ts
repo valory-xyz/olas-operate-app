@@ -6,7 +6,11 @@ import {
   MiddlewareChainMap,
   STAKING_PROGRAM_IDS,
 } from '@/constants';
-import { AgentMap, AgentType } from '@/constants/agent';
+import {
+  AgentMap,
+  AgentType,
+  BASIUS_QA_NO_STAKING_MODE,
+} from '@/constants/agent';
 import {
   BASIUS_SERVICE_TEMPLATE,
   MODIUS_SERVICE_TEMPLATE,
@@ -31,20 +35,6 @@ import {
   POLYGON_TOKEN_CONFIG,
   TokenSymbolMap,
 } from './tokens';
-
-/**
- * Temporary QA build flag — when `true`, Basius's `defaultStakingProgramId`
- * is set to `'no_staking'` so Pearl skips the on-chain staking call. This
- * unblocks QA testing of the fund / deploy / run / withdraw flows on Base
- * mainnet while the real Basius staking contract is being prepared.
- *
- * Flip to `false` (or remove the conditional in AGENT_CONFIG[Basius])
- * once the real `BasiusAlpha1` staking contract is deployed and its
- * address replaces the placeholder in `stakingPrograms/base.ts` and
- * `activityCheckers.ts`. The release pipeline assumes this is `false`
- * for production builds.
- */
-export const BASIUS_QA_NO_STAKING_MODE = true;
 
 const getModiusUsdcConfig = () => {
   const modiusFundRequirements =

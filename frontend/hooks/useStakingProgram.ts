@@ -1,8 +1,8 @@
 import { useContext, useMemo } from 'react';
 
-import { BASIUS_QA_NO_STAKING_MODE } from '@/config/agents';
 import { STAKING_PROGRAMS, StakingProgramMap } from '@/config/stakingPrograms';
 import { STAKING_PROGRAM_IDS } from '@/constants';
+import { BASIUS_QA_NO_STAKING_MODE } from '@/constants/agent';
 import { StakingProgramContext } from '@/context/StakingProgramProvider';
 
 import { useServices } from './useServices';
