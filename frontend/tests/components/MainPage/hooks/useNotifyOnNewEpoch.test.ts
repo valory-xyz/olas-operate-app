@@ -75,7 +75,7 @@ const createPassingMockState = () => ({
     isEligibleForRewards: false,
   },
   services: {
-    selectedAgentConfig: { isUnderConstruction: false },
+    selectedAgentConfig: { isUnderConstruction: false, isPhasedOut: false },
     selectedService: { service_config_id: DEFAULT_SERVICE_CONFIG_ID },
   },
   service: {
@@ -166,6 +166,16 @@ describe('useNotifyOnNewEpoch', () => {
     it('does not notify when selectedAgentConfig.isUnderConstruction is true', () => {
       const state = createPassingMockState();
       state.services.selectedAgentConfig.isUnderConstruction = true;
+      applyMocks(state);
+
+      renderHook(() => useNotifyOnNewEpoch());
+
+      expect(mockShowNotification).not.toHaveBeenCalled();
+    });
+
+    it('does not notify when selectedAgentConfig.isPhasedOut is true', () => {
+      const state = createPassingMockState();
+      state.services.selectedAgentConfig.isPhasedOut = true;
       applyMocks(state);
 
       renderHook(() => useNotifyOnNewEpoch());

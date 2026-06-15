@@ -161,6 +161,7 @@ export const AGENT_CONFIG: {
     isUnderConstruction: false,
     isComingSoon: false,
     isAddingNewBlocked: true,
+    isPhasedOut: true,
     requiresSetup: true,
     isX402Enabled: X402_ENABLED_FLAGS[AgentMap.AgentsFun],
     name: 'Agents.fun',
