@@ -161,6 +161,41 @@ describe('TransactionHistory section', () => {
     ).toBeInTheDocument();
   });
 
+  it('renders timestamp with year in transaction row', () => {
+    const movement = makeFundsMovement({
+      category: 'MASTER_FUNDING_IN',
+      amount: '10000000000000000000',
+      transactionHash: MOCK_TX_HASH_1,
+    });
+
+    mockUseTransactionHistory.mockReturnValue({
+      rows: [
+        {
+          id: 'row-year',
+          category: movement.category,
+          blockTimestamp: 1_720_000_000, // Jul 3, 2024
+          transactionHash: movement.transactionHash,
+          agentSafeAddress: null,
+          agentInstanceAddress: null,
+          transfers: [
+            {
+              tokenAddress: null,
+              amount: movement.amount,
+              direction: 'in' as const,
+            },
+          ],
+        },
+      ],
+      meta: { block: { number: 1 }, hasIndexingErrors: false },
+      isFetched: true,
+      isLoading: false,
+      isError: false,
+    });
+
+    render(<TransactionHistory />);
+    expect(screen.getByText(/2024/)).toBeInTheDocument();
+  });
+
   it('pages rows client-side via a "Load more" button', () => {
     const rows = Array.from({ length: 15 }, (_, i) => ({
       id: `row-${i}`,
