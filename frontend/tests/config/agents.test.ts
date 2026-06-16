@@ -47,6 +47,14 @@ describe('AGENT_CONFIG', () => {
     expect(typeof config.requiresSetup).toBe('boolean');
   });
 
+  it.each(
+    Object.entries(AGENT_CONFIG).filter(
+      ([, config]) => 'isPhasedOut' in config,
+    ),
+  )('%s.isPhasedOut is a boolean', (_, config) => {
+    expect(typeof config.isPhasedOut).toBe('boolean');
+  });
+
   it('additionalRequirements values are finite numbers', () => {
     for (const config of Object.values(AGENT_CONFIG)) {
       if (!config.additionalRequirements) continue;
@@ -101,8 +109,8 @@ describe('PettAi creation blocking and deprecation', () => {
     expect(AGENT_CONFIG[AgentMap.PettAi].isAddingNewBlocked).toBe(true);
   });
 
-  it('has shutdownDate set to June 15, 2026', () => {
-    expect(AGENT_CONFIG[AgentMap.PettAi].shutdownDate).toBe('June 15, 2026');
+  it('has no shutdownDate (deprecation banner removed)', () => {
+    expect(AGENT_CONFIG[AgentMap.PettAi].shutdownDate).toBeUndefined();
   });
 
   it('PettAi still appears in ACTIVE_AGENTS', () => {
@@ -117,6 +125,28 @@ describe('PettAi creation blocking and deprecation', () => {
       ([agentType]) => agentType === AgentMap.PettAi,
     );
     expect(pettAiEntry).toBeDefined();
+  });
+});
+
+describe('Agents.fun phase-out', () => {
+  it('is marked phased out', () => {
+    expect(AGENT_CONFIG[AgentMap.AgentsFun].isPhasedOut).toBe(true);
+  });
+
+  it('stays enabled and listed so the sidebar entry and withdraw flow remain reachable', () => {
+    expect(AGENT_CONFIG[AgentMap.AgentsFun].isAgentEnabled).toBe(true);
+    const entry = ACTIVE_AGENTS.find(
+      ([agentType]) => agentType === AgentMap.AgentsFun,
+    );
+    expect(entry).toBeDefined();
+  });
+
+  it('still blocks creation of new instances', () => {
+    expect(AGENT_CONFIG[AgentMap.AgentsFun].isAddingNewBlocked).toBe(true);
+  });
+
+  it('is not under construction (keeps staking section visible)', () => {
+    expect(AGENT_CONFIG[AgentMap.AgentsFun].isUnderConstruction).toBe(false);
   });
 });
 

@@ -54,8 +54,9 @@ export const useNotifyOnNewEpoch = () => {
     // if active staking contract info is still loading
     if (isSelectedStakingContractDetailsLoading) return;
 
-    // if agent config is under construction
+    // if agent config is under construction or phased out
     if (selectedAgentConfig.isUnderConstruction) return;
+    if (selectedAgentConfig.isPhasedOut) return;
 
     // if initial funding is not done
     if (isInitialFunded === false) return;
@@ -97,6 +98,7 @@ export const useNotifyOnNewEpoch = () => {
     epochStatusNotification,
     epoch,
     selectedAgentConfig.isUnderConstruction,
+    selectedAgentConfig.isPhasedOut,
     canStartAgent,
     isBalancesAndFundingRequirementsLoading,
     showNotification,

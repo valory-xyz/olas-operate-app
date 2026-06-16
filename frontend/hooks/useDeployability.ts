@@ -132,6 +132,11 @@ export const useDeployability = ({
       };
     }
 
+    // If the agent has been phased out, it can no longer be run
+    if (selectedAgentConfig.isPhasedOut) {
+      return { isLoading, canRun: false, reason: 'Phased out' };
+    }
+
     // If service is under construction
     if (selectedAgentConfig.isUnderConstruction) {
       return { isLoading, canRun: false, reason: 'Under construction' };
@@ -193,6 +198,7 @@ export const useDeployability = ({
     isServiceStaked,
     safeEligibility,
     selectedAgentConfig.isGeoLocationRestricted,
+    selectedAgentConfig.isPhasedOut,
     selectedAgentConfig.isUnderConstruction,
     loadingReason,
   ]);

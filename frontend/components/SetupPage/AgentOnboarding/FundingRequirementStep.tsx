@@ -45,10 +45,12 @@ const MaintenanceAlert = ({
   agentName,
   reason,
   url,
+  isPhasedOut,
 }: {
   agentName: string;
   reason?: string;
   url?: string;
+  isPhasedOut?: boolean;
 }) => (
   <Alert
     type="warning"
@@ -62,7 +64,10 @@ const MaintenanceAlert = ({
         </Text>
         <Text className="text-sm">
           New {agentName} agents cannot be created at this time
-          {reason && ` ${reason}`}. Existing agents continue to run as usual.
+          {reason && ` ${reason}`}.
+          {/* Phased-out agents no longer run, so omit the "existing agents
+          continue to run" reassurance. */}
+          {!isPhasedOut && ' Existing agents continue to run as usual.'}
         </Text>
         {url && (
           <Link
@@ -249,6 +254,7 @@ export const FundingRequirementStep = ({
     category,
     isUnderConstruction,
     isAddingNewBlocked,
+    isPhasedOut,
   } = AGENT_CONFIG[agentType];
   const { name, displayName } = asEvmChainDetails(middlewareHomeChainId);
 
@@ -257,6 +263,7 @@ export const FundingRequirementStep = ({
   ) : isAddingNewBlocked ? (
     <MaintenanceAlert
       agentName={agentName}
+      isPhasedOut={isPhasedOut}
       reason={
         agentType === AgentMap.Polystrat
           ? 'due to recent Polymarket protocol updates'

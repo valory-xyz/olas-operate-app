@@ -161,6 +161,7 @@ export const AGENT_CONFIG: {
     isUnderConstruction: false,
     isComingSoon: false,
     isAddingNewBlocked: true,
+    isPhasedOut: true,
     requiresSetup: true,
     isX402Enabled: X402_ENABLED_FLAGS[AgentMap.AgentsFun],
     name: 'Agents.fun',
@@ -207,7 +208,6 @@ export const AGENT_CONFIG: {
   [AgentMap.PettAi]: {
     isAgentEnabled: true,
     isAddingNewBlocked: true,
-    shutdownDate: 'June 15, 2026',
     requiresSetup: false,
     isX402Enabled: X402_ENABLED_FLAGS[AgentMap.PettAi],
     name: 'Pett.ai',
