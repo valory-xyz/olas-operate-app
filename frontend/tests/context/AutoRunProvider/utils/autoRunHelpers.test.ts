@@ -872,6 +872,19 @@ describe('fetchDeployabilityForAgent', () => {
     expect(result.reason).toBe('Under construction');
   });
 
+  it('returns canRun=false when agent is phased out', async () => {
+    const meta = {
+      ...makeAgentMeta(),
+      agentConfig: {
+        ...makeAgentMeta().agentConfig,
+        isPhasedOut: true,
+      },
+    };
+    const result = await fetchDeployabilityForAgent(meta, makeCtx());
+    expect(result.canRun).toBe(false);
+    expect(result.reason).toBe('Phased out');
+  });
+
   it('returns canRun=false when agent is geo-restricted', async () => {
     const meta = {
       ...makeAgentMeta(),

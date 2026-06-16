@@ -330,6 +330,10 @@ export const fetchDeployabilityForAgent = async (
   }
 
   // 2. Static agent-config flags (no API needed).
+  if (agentMeta.agentConfig.isPhasedOut) {
+    return { canRun: false, reason: 'Phased out' };
+  }
+
   if (agentMeta.agentConfig.isUnderConstruction) {
     return { canRun: false, reason: 'Under construction' };
   }
