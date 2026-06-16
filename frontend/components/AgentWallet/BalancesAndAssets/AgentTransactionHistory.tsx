@@ -38,7 +38,7 @@ export const AgentTransactionHistory = () => {
       resetKey={`${chainId}:${agentSafe}`}
       tooltip="Recent activity for this agent's wallet on this chain."
       emptyIcon={<InboxOutlined style={{ fontSize: 24 }} />}
-      getRowLabel={(row) => getAgentTransactionRowLabel(row)}
+      getRowLabel={getAgentTransactionRowLabel}
       getRowIconCategory={getAgentIconCategory}
       showAgentTag={false}
     />

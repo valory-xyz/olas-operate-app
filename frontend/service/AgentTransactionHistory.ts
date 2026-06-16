@@ -63,7 +63,7 @@ type GetAgentTransactionHistoryParams = {
   skip?: number;
 };
 
-const DEFAULT_PAGE_SIZE = 1000;
+const DEFAULT_PAGE_SIZE = 100;
 
 const get = async ({
   chainId,
@@ -87,7 +87,11 @@ const get = async ({
   return AgentTransactionHistoryResponseSchema.parse(raw);
 };
 
-// Single 1000-row page for now — same cap/rationale as the master history
+// The Graph caps `first` at 1000. We fetch a single 1000-row page for now —
+// plenty for the 10-at-a-time view and bounds gateway cost. Older history
+// beyond 1000 raw movements is dropped (an error fires); the real fix
+// (server-side filtering + pagination) is a subgraph follow-up. getAll keeps
+// the page loop so the cap is a one-line bump (MAX_PAGES) once that lands.
 const PAGE_SIZE = 1000;
 const MAX_PAGES = 1;
 
@@ -121,8 +125,7 @@ const getAll = async ({
     if (res.fundsMovements.length < PAGE_SIZE) break;
 
     if (page === MAX_PAGES - 1) {
-      // eslint-disable-next-line no-console
-      console.warn(
+      console.error(
         `[AgentTransactionHistory] hit the ${MAX_PAGES * PAGE_SIZE}-row cap for ${agentSafe}; older history may be truncated.`,
       );
     }

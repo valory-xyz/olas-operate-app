@@ -67,6 +67,8 @@ export const REACT_QUERY_KEYS = {
   // transaction history (pearl-transactions subgraph)
   TRANSACTION_HISTORY_KEY: (chainId: number, masterSafe: string) =>
     ['transactionHistory', chainId, masterSafe] as const,
+  AGENT_TRANSACTION_HISTORY_KEY: (chainId: number, agentSafe: string) =>
+    ['agentTransactionHistory', chainId, agentSafe] as const,
 
   // multisigs
   MULTISIG_GET_OWNERS_KEY: (multisig: Safe) =>
