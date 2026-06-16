@@ -163,6 +163,7 @@ export const getDecommissionedInstances = (configuredAgents: AgentMeta[]) =>
     .filter(
       (agent) =>
         agent.agentConfig.isUnderConstruction ||
+        agent.agentConfig.isPhasedOut ||
         agent.agentConfig.isAgentEnabled === false,
     )
     .map((agent) => agent.serviceConfigId);

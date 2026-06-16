@@ -23,6 +23,7 @@ import {
 } from '@/hooks';
 
 import { AgentGeoBlockedAlert } from './AgentGeoBlockedAlert';
+import { AgentPhasedOutAlert } from './AgentPhasedOutAlert';
 import { AgentRunningAlert } from './AgentRunningAlert';
 import { ContractDeprecatedAlert } from './ContractDeprecatedAlert';
 import { EvictedAlert } from './EvictedAlert';
@@ -63,6 +64,16 @@ export const AgentDisabledAlert = () => {
     key: string;
     content: ReactNode;
   }>(() => {
+    // Terminal retirement pre-empts every other disabled-state alert.
+    if (selectedAgentConfig.isPhasedOut) {
+      return {
+        key: 'phased-out',
+        content: (
+          <AgentPhasedOutAlert agentName={selectedAgentConfig.displayName} />
+        ),
+      };
+    }
+
     if (selectedAgentConfig?.isGeoLocationRestricted && isAgentGeoRestricted) {
       return { key: 'geo-blocked', content: <AgentGeoBlockedAlert /> };
     }

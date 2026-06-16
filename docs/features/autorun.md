@@ -488,7 +488,7 @@ Shared eligibility-wait implementation. Polls every 2s until eligibility leaves 
 ### `fetchDeployabilityForAgent(agentMeta, ctx)` — `utils/autoRunHelpers.ts`
 Checks whether a candidate agent is deployable without switching the UI selection. Mirrors `useDeployability` but fetches staking state directly via `agentMeta.agentConfig.serviceApi` (same pattern as `fetchAgentStakingRewardsInfo`). Called by `scanAndStartNext` for each candidate so the visible page never changes during a scan cycle.
 
-Returns `{ canRun: true }`, `{ canRun: false, isTransient: true }` (transient/loading — short retry), or `{ canRun: false }` (deterministic block). Checks in order: safe readiness, `isUnderConstruction`, geo restriction, another agent running, on-chain slots/staking state (via `getStakingContractDetails` + `getServiceStakingDetails`), initial funding, balance sufficiency. API errors return `isTransient: true` (scanner uses short retry rather than treating as permanent block).
+Returns `{ canRun: true }`, `{ canRun: false, isTransient: true }` (transient/loading — short retry), or `{ canRun: false }` (deterministic block). Checks in order: safe readiness, `isPhasedOut`, `isUnderConstruction`, geo restriction, another agent running, on-chain slots/staking state (via `getStakingContractDetails` + `getServiceStakingDetails`), initial funding, balance sufficiency. API errors return `isTransient: true` (scanner uses short retry rather than treating as permanent block). Kept in parity with `useDeployability`.
 
 ---
 

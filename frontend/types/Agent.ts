@@ -57,6 +57,14 @@ export type AgentConfig = {
   isAddingNewBlocked?: boolean;
   /** Human-readable shutdown date for deprecation banner, e.g. 'June 15, 2026' */
   shutdownDate?: string;
+  /**
+   * Terminal retirement. Blocks running existing instances (Start disabled,
+   * excluded from auto-run, no new-epoch nudges) and shows a "phased out — you
+   * can still withdraw" alert. Keep `isAgentEnabled: true` so the instance stays
+   * in the sidebar and the withdraw flow remains reachable. Distinct from
+   * `shutdownDate` (sunsetting — still runs until the date).
+   */
+  isPhasedOut?: boolean;
   /** Whether the agent is enabled and can be shown in the UI */
   isAgentEnabled: boolean;
   /** If agent is enabled but not yet available to use */
