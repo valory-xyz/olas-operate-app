@@ -46,8 +46,15 @@ const TransfersGrid = styled.div`
   grid-template-columns: 1fr minmax(90px, max-content);
   column-gap: 24px;
   row-gap: 12px;
-  justify-items: start;
   align-items: center;
+  /* Amounts (col 1) right-aligned so decimals line up next to the token;
+     token symbol (col 2) stays left-aligned. */
+  & > :nth-child(odd) {
+    justify-self: end;
+  }
+  & > :nth-child(even) {
+    justify-self: start;
+  }
   padding: 2px 0;
 `;
 
@@ -164,12 +171,13 @@ export const TransactionHistoryRow = ({
         {row.transfers.map((transfer, i) => {
           const tokenInfo = resolveToken(chainId, transfer.tokenAddress);
           // ETH amounts are often dust-sized (gas top-ups), where the default
-          // 2-decimal rendering collapses to 0.00 — give ETH up to 6 decimals.
+          // 2-decimal rendering collapses to 0.00 — give ETH up to 5 decimals
+          // (the 6th is sub-cent and has no user value).
           const isEth = tokenInfo?.symbol === TokenSymbolMap.ETH;
           const amountNumber = formatUnitsToNumber(
             transfer.amount,
             tokenInfo?.decimals ?? 18,
-            isEth ? 6 : 4,
+            isEth ? 5 : 4,
           );
           const prefix = transfer.direction === 'in' ? '+' : '-';
           const className =
@@ -189,7 +197,7 @@ export const TransactionHistoryRow = ({
               <Text className={`${className} text-base`}>
                 {prefix}
                 {isEth
-                  ? formatAmountNormalized(amountNumber, 6)
+                  ? formatAmountNormalized(amountNumber, 5)
                   : balanceFormat(amountNumber, 2)}
               </Text>
               <Flex align="center" gap={8}>
