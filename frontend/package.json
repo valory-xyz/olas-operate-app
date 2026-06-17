@@ -1,6 +1,7 @@
 {
   "author": "Valory AG",
   "resolutions": {
+    "@babel/core": "7.29.6",
     "@tootallnate/once": "3.0.1",
     "bn.js": "5.2.3",
     "csstype": "3.1.3",
