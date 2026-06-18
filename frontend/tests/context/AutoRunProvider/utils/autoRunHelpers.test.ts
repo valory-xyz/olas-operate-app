@@ -335,6 +335,21 @@ describe('refreshRewardsEligibility', () => {
     );
   });
 
+  it('logs the decision inputs (activity / target / epochTargetMet) for diagnosis', async () => {
+    mockFetchRewards.mockResolvedValue({
+      isEligibleForRewards: true,
+      activityThisEpoch: 4,
+    } as Awaited<ReturnType<typeof fetchAgentStakingRewardsInfo>>);
+    const logMessage = jest.fn();
+    await refreshRewardsEligibility(makeParams({ logMessage }));
+    expect(logMessage).toHaveBeenCalledWith(
+      expect.stringContaining('activityThisEpoch=4'),
+    );
+    expect(logMessage).toHaveBeenCalledWith(
+      expect.stringContaining('epochTargetMet=true'),
+    );
+  });
+
   it('fetches and returns false when not eligible', async () => {
     mockFetchRewards.mockResolvedValue({
       isEligibleForRewards: false,

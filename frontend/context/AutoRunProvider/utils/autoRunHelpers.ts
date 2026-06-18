@@ -197,6 +197,17 @@ export const refreshRewardsEligibility = async ({
   const epochTargetMet = deriveIsEpochTargetMet(response, activityTarget);
 
   const epochExpired = isStakingEpochExpired(response);
+
+  // Decision inputs — one line per evaluation (throttled to REWARDS_POLL_SECONDS),
+  // so a Pearl log explains exactly why an agent did/didn't rotate, and lets us
+  // cross-check the FE's on-chain count against the agent's own activity logs.
+  logMessage(
+    `${serviceConfigId}: activityThisEpoch=${response.activityThisEpoch} ` +
+      `target=${activityTarget ?? 'on-chain-KPI'} ` +
+      `stakingKpi=${response.isEligibleForRewards} ` +
+      `epochExpired=${epochExpired} → epochTargetMet=${epochTargetMet}`,
+  );
+
   if (epochExpired && epochTargetMet) {
     logMessage(
       `${serviceConfigId}: epoch expired, stale epoch-target-met=true overridden to false so agent runs and triggers on-chain checkpoint`,
