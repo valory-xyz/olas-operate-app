@@ -28,6 +28,16 @@ import {
 
 jest.mock('../../../../utils/stakingRewards', () => ({
   fetchAgentStakingRewardsInfo: jest.fn(),
+  // Legacy programs (used in these tests) have no off-chain target, so the
+  // derived signal falls back to the on-chain staking KPI.
+  getStakingProgramActivityTarget: jest.fn(() => undefined),
+  deriveIsEpochTargetMet: (
+    info: { isEligibleForRewards: boolean; activityThisEpoch: number },
+    activityTarget?: number,
+  ) =>
+    activityTarget === undefined
+      ? info.isEligibleForRewards
+      : info.activityThisEpoch >= activityTarget,
 }));
 
 jest.mock('../../../../utils/delay', () =>
@@ -512,7 +522,7 @@ describe('refreshRewardsEligibility', () => {
       );
       expect(logMessage).toHaveBeenCalledWith(
         expect.stringContaining(
-          'stale isEligibleForRewards=true — last local start predates epoch checkpoint',
+          'stale epoch-target-met=true — last local start predates epoch checkpoint',
         ),
       );
     });

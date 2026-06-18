@@ -12,7 +12,7 @@ export const Streak = () => {
     isStreakError,
     optimisticStreak: rawStreak,
   } = useStakingDetails();
-  const { isEligibleForRewards: rawIsEligible } = useRewardContext();
+  const { isEpochTargetMet: rawIsEligible } = useRewardContext();
   const optimisticStreak = useContentTransitionValue(rawStreak);
   const isEligibleForRewards = useContentTransitionValue(rawIsEligible);
 

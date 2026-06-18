@@ -4,6 +4,7 @@ import React from 'react';
 import { AGENT_CONFIG } from '../../config/agents';
 import { AgentMap } from '../../constants/agent';
 import { MiddlewareChainMap } from '../../constants/chains';
+import { STAKING_PROGRAM_IDS } from '../../constants/stakingProgram';
 import { StakingProgramContext } from '../../context/StakingProgramProvider';
 import { createStakingRewardsQuery } from '../../hooks/useAgentStakingRewardsDetails';
 import { useAllInstancesRewardStatus } from '../../hooks/useAllInstancesRewardStatus';
@@ -285,6 +286,64 @@ describe('useAllInstancesRewardStatus', () => {
 
     expect(result.current.get(DEFAULT_SERVICE_CONFIG_ID)).toBe(true);
     expect(result.current.get(MOCK_SERVICE_CONFIG_ID_2)).toBe(false);
+  });
+
+  describe('decoupled-activity regime (OPE-1803)', () => {
+    const renderForOmenstrat = (
+      data: ReturnType<typeof makeStakingRewardsInfo>,
+    ) => {
+      const service = makeMiddlewareService(MiddlewareChainMap.GNOSIS, {
+        service_config_id: DEFAULT_SERVICE_CONFIG_ID,
+        service_public_id: traderConfig.servicePublicId,
+        home_chain: traderConfig.middlewareHomeChainId,
+        chain_configs: makeChainConfig(traderConfig.middlewareHomeChainId, {
+          multisig: MOCK_MULTISIG_ADDRESS,
+          token: DEFAULT_SERVICE_NFT_TOKEN_ID,
+          staking_program_id: STAKING_PROGRAM_IDS.OmenstratI,
+        }),
+      });
+
+      mockUseServices.mockReturnValue({ services: [service] });
+      mockUseQueries.mockReturnValue([{ isSuccess: true, data }]);
+
+      const stakingMap = new Map([
+        [DEFAULT_SERVICE_CONFIG_ID, STAKING_PROGRAM_IDS.OmenstratI],
+      ]);
+
+      return renderHook(() => useAllInstancesRewardStatus(), {
+        wrapper: ({ children }: { children: React.ReactNode }) =>
+          React.createElement(
+            StakingProgramContext.Provider,
+            {
+              value: {
+                ...baseContextValue,
+                stakingProgramIdByServiceConfigId: stakingMap,
+              },
+            },
+            children,
+          ),
+      });
+    };
+
+    it('is true when on-chain activity reaches the off-chain target (8)', () => {
+      const { result } = renderForOmenstrat(
+        makeStakingRewardsInfo({
+          activityThisEpoch: 8,
+          isEligibleForRewards: true,
+        }),
+      );
+      expect(result.current.get(DEFAULT_SERVICE_CONFIG_ID)).toBe(true);
+    });
+
+    it('is false below the target even when the staking KPI is already met', () => {
+      const { result } = renderForOmenstrat(
+        makeStakingRewardsInfo({
+          activityThisEpoch: 3,
+          isEligibleForRewards: true,
+        }),
+      );
+      expect(result.current.get(DEFAULT_SERVICE_CONFIG_ID)).toBe(false);
+    });
   });
 
   it('skips service and does not crash when asEvmChainId throws for unknown chain', () => {

@@ -6,7 +6,11 @@ import { AgentType, EvmChainId } from '@/constants';
 import { StakingRewardsInfo, StakingState } from '@/types';
 import { sleepAwareDelay } from '@/utils/delay';
 import { isValidServiceId } from '@/utils/service';
-import { fetchAgentStakingRewardsInfo } from '@/utils/stakingRewards';
+import {
+  deriveIsEpochTargetMet,
+  fetchAgentStakingRewardsInfo,
+  getStakingProgramActivityTarget,
+} from '@/utils/stakingRewards';
 
 import {
   AGENT_SELECTION_WAIT_TIMEOUT_SECONDS,
@@ -182,17 +186,27 @@ export const refreshRewardsEligibility = async ({
     return;
   }
 
+  // Regime-aware "epoch work done": decoupled programs compare on-chain activity
+  // to the off-chain target; legacy programs use the on-chain staking KPI. This
+  // is the rotation signal — NOT the raw staking KPI (which clears at ~1 request
+  // on the new contracts and would otherwise rotate the agent almost instantly).
+  const activityTarget = getStakingProgramActivityTarget(
+    meta.chainId,
+    meta.stakingProgramId,
+  );
+  const epochTargetMet = deriveIsEpochTargetMet(response, activityTarget);
+
   const epochExpired = isStakingEpochExpired(response);
-  if (epochExpired && response.isEligibleForRewards) {
+  if (epochExpired && epochTargetMet) {
     logMessage(
-      `${serviceConfigId}: epoch expired, stale isEligibleForRewards=true overridden to false so agent runs and triggers on-chain checkpoint`,
+      `${serviceConfigId}: epoch expired, stale epoch-target-met=true overridden to false so agent runs and triggers on-chain checkpoint`,
     );
   }
-  // isEligibleForRewards=true → agent already earned this epoch → auto-run SKIPS it.
-  // isEligibleForRewards=false → agent hasn't earned yet → auto-run STARTS it.
+  // epochTargetMet=true → agent already did its epoch work → auto-run SKIPS it.
+  // epochTargetMet=false → agent hasn't finished yet → auto-run STARTS it.
   // Epoch expired but checkpoint not yet called: true is stale, override to false so
   // auto-run starts the agent and triggers the on-chain checkpoint for the new epoch.
-  let eligible = epochExpired ? false : response.isEligibleForRewards;
+  let eligible = epochExpired ? false : epochTargetMet;
 
   // Stale-true override: when an idle alternate reports `true` but has not run
   // locally since the staking pool's last checkpoint, its `true` is residue
@@ -209,7 +223,7 @@ export const refreshRewardsEligibility = async ({
     const tsCheckpointMs = (response.tsCheckpoint ?? 0) * 1000;
     if (lastStartedAt < tsCheckpointMs) {
       logMessage(
-        `${serviceConfigId}: stale isEligibleForRewards=true — last local start predates epoch checkpoint, overriding to false`,
+        `${serviceConfigId}: stale epoch-target-met=true — last local start predates epoch checkpoint, overriding to false`,
       );
       eligible = false;
     }

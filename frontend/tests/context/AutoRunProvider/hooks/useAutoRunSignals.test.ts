@@ -44,7 +44,7 @@ const makeHookParams = (
   runningAgentType: null as AgentType | null,
   runningServiceConfigId: null as string | null,
   isSelectedAgentDetailsLoading: false,
-  isEligibleForRewards: undefined as boolean | undefined,
+  isEpochTargetMet: undefined as boolean | undefined,
   isEpochExpired: false,
   selectedAgentType: AgentMap.PredictTrader,
   selectedServiceConfigId: DEFAULT_SERVICE_CONFIG_ID as string | null,
@@ -101,10 +101,10 @@ describe('useAutoRunSignals', () => {
     );
   });
 
-  it('updates reward snapshot when isEligibleForRewards changes', () => {
+  it('updates reward snapshot when isEpochTargetMet changes', () => {
     const params = makeHookParams({
       selectedServiceConfigId: DEFAULT_SERVICE_CONFIG_ID,
-      isEligibleForRewards: false,
+      isEpochTargetMet: false,
     });
     const { result, rerender } = renderHook(
       (props) => useAutoRunSignals(props),
@@ -114,14 +114,14 @@ describe('useAutoRunSignals', () => {
       result.current.rewardSnapshotRef.current[DEFAULT_SERVICE_CONFIG_ID],
     ).toBe(false);
 
-    rerender({ ...params, isEligibleForRewards: true });
+    rerender({ ...params, isEpochTargetMet: true });
     expect(
       result.current.rewardSnapshotRef.current[DEFAULT_SERVICE_CONFIG_ID],
     ).toBe(true);
   });
 
   it('markRewardSnapshotPending sets snapshot to undefined', () => {
-    const params = makeHookParams({ isEligibleForRewards: true });
+    const params = makeHookParams({ isEpochTargetMet: true });
     const { result } = renderHook(() => useAutoRunSignals(params));
     act(() => {
       result.current.markRewardSnapshotPending(DEFAULT_SERVICE_CONFIG_ID);
@@ -132,7 +132,7 @@ describe('useAutoRunSignals', () => {
   });
 
   it('getRewardSnapshot returns the stored value', () => {
-    const params = makeHookParams({ isEligibleForRewards: true });
+    const params = makeHookParams({ isEpochTargetMet: true });
     const { result } = renderHook(() => useAutoRunSignals(params));
     expect(result.current.getRewardSnapshot(DEFAULT_SERVICE_CONFIG_ID)).toBe(
       true,
@@ -408,7 +408,7 @@ describe('useAutoRunSignals', () => {
 
   describe('waitForRewardsEligibility', () => {
     it('returns snapshot value immediately when populated', async () => {
-      const params = makeHookParams({ isEligibleForRewards: true });
+      const params = makeHookParams({ isEpochTargetMet: true });
       const { result } = renderHook(() => useAutoRunSignals(params));
 
       let value: boolean | undefined;
@@ -421,7 +421,7 @@ describe('useAutoRunSignals', () => {
     });
 
     it('returns false snapshot when populated with false', async () => {
-      const params = makeHookParams({ isEligibleForRewards: false });
+      const params = makeHookParams({ isEpochTargetMet: false });
       const { result } = renderHook(() => useAutoRunSignals(params));
 
       let value: boolean | undefined;
@@ -436,7 +436,7 @@ describe('useAutoRunSignals', () => {
     it('returns undefined and logs timeout when snapshot stays undefined', async () => {
       const logMessage = jest.fn();
       const params = makeHookParams({
-        isEligibleForRewards: undefined,
+        isEpochTargetMet: undefined,
         logMessage,
       });
       const { result } = renderHook(() => useAutoRunSignals(params));
@@ -463,7 +463,7 @@ describe('useAutoRunSignals', () => {
     });
 
     it('returns undefined when sleepAwareDelay returns false', async () => {
-      const params = makeHookParams({ isEligibleForRewards: undefined });
+      const params = makeHookParams({ isEpochTargetMet: undefined });
       const { result } = renderHook(() => useAutoRunSignals(params));
 
       act(() => {
@@ -666,10 +666,10 @@ describe('useAutoRunSignals', () => {
   });
 
   describe('isEpochExpired override', () => {
-    it('overrides isEligibleForRewards to false when epoch is expired', () => {
+    it('overrides isEpochTargetMet to false when epoch is expired', () => {
       const params = makeHookParams({
         selectedServiceConfigId: DEFAULT_SERVICE_CONFIG_ID,
-        isEligibleForRewards: true,
+        isEpochTargetMet: true,
         isEpochExpired: true,
       });
       const { result } = renderHook(() => useAutoRunSignals(params));
