@@ -16,7 +16,7 @@ export const useNotifyOnAgentRewards = () => {
   const { selectedService } = useServices();
   const { isEpochTargetMet } = useRewardContext();
 
-  const prevIsEligibleForRewards = useRef<boolean>();
+  const prevIsEpochTargetMet = useRef<boolean>();
 
   // Notify the user when the agent earns rewards
   useEffect(() => {
@@ -34,14 +34,11 @@ export const useNotifyOnAgentRewards = () => {
     if (isEpochTargetMet === undefined) return;
 
     // show notification when agent becomes eligible for rewards
-    if (
-      isEpochTargetMet === true &&
-      prevIsEligibleForRewards.current !== true
-    ) {
+    if (isEpochTargetMet === true && prevIsEpochTargetMet.current !== true) {
       electronApi.showNotification(REWARD_MESSAGE);
     }
 
     // Always update ref to track current state
-    prevIsEligibleForRewards.current = isEpochTargetMet;
+    prevIsEpochTargetMet.current = isEpochTargetMet;
   }, [electronApi, isEpochTargetMet, selectedService?.deploymentStatus]);
 };

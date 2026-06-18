@@ -12,14 +12,14 @@ export const Streak = () => {
     isStreakError,
     optimisticStreak: rawStreak,
   } = useStakingDetails();
-  const { isEpochTargetMet: rawIsEligible } = useRewardContext();
+  const { isEpochTargetMet: rawIsEpochTargetMet } = useRewardContext();
   const optimisticStreak = useContentTransitionValue(rawStreak);
-  const isEligibleForRewards = useContentTransitionValue(rawIsEligible);
+  const isEpochTargetMet = useContentTransitionValue(rawIsEpochTargetMet);
 
   if (isStreakLoading) return <Skeleton.Input active size="small" />;
   if (isStreakError) return NA;
 
-  const isFlameActive = optimisticStreak > 0 && isEligibleForRewards;
+  const isFlameActive = optimisticStreak > 0 && isEpochTargetMet;
 
   return (
     <Flex gap={6} align="center">

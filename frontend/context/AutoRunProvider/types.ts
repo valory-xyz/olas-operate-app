@@ -25,7 +25,6 @@ type Eligibility = {
   canRun: boolean;
   reason?: string;
   loadingReason?: string;
-  isEligibleForRewards?: boolean;
 };
 
 export type AutoRunContextType = {
@@ -44,11 +43,9 @@ export type AutoRunContextType = {
    *    "sc-aa001122-bb33-cc44-dd55-eeff66778899": {
    *      canRun: false,
    *      reason: "Insufficient funds",
-   *      isEligibleForRewards: true,
    *    },
    *    "sc-11223344-5566-7788-99aa-bbccddeeff00": {
    *      canRun: true,
-   *      isEligibleForRewards: false,
    *    },
    *  }
    */

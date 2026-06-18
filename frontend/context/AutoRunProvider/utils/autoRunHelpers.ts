@@ -27,8 +27,8 @@ import { AgentMeta } from '../types';
  * Returns true when the staking epoch has expired but no on-chain checkpoint
  * has been called yet (i.e. livenessPeriod seconds have elapsed since tsCheckpoint).
  *
- * Used to normalize `isEligibleForRewards` to false so auto-run doesn't skip
- * all agents and stall until someone manually triggers the next checkpoint.
+ * Used to normalize the epoch-target-met signal to false so auto-run doesn't
+ * skip all agents and stall until someone manually triggers the next checkpoint.
  */
 export const isStakingEpochExpired = ({
   livenessPeriod,
@@ -76,7 +76,7 @@ export const formatEligibilityReason = (eligibility: {
  *
  * When `lastStartedAtRef` and `runningServiceConfigIdRef` are provided and the
  * target is NOT the currently-running agent, a stale on-chain
- * `isEligibleForRewards=true` is overridden to `false` if the service has not
+ * epoch-target-met=true is overridden to `false` if the service has not
  * been started locally since the last on-chain checkpoint. This addresses the
  * deadlock where an idle alternate keeps reporting `true` indefinitely because
  * its nonce delta from a prior active run persists on-chain. The running agent
