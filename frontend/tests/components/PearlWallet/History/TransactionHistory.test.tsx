@@ -193,7 +193,9 @@ describe('TransactionHistory section', () => {
     });
 
     render(<TransactionHistory />);
-    expect(screen.getByText(/2024/)).toBeInTheDocument();
+    // Verify the timestamp includes the year AND uses "at" (not a comma)
+    // between the date and time, e.g. "Jul 3, 2024 at 9:46 AM".
+    expect(screen.getByText(/2024 at /)).toBeInTheDocument();
   });
 
   it('pages rows client-side via a "Load more" button', () => {

@@ -82,13 +82,30 @@ const TimestampLink = styled.a`
 
 const formatTimestamp = (unixSeconds: number): string => {
   if (!unixSeconds) return '';
-  return new Intl.DateTimeFormat('en-US', {
+  const parts = new Intl.DateTimeFormat('en-US', {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
     hour: 'numeric',
     minute: '2-digit',
-  }).format(new Date(unixSeconds * 1000));
+  }).formatToParts(new Date(unixSeconds * 1000));
+
+  // Intl produces "Apr 29, 2026, 8:10 PM" — replace the comma between
+  // year and hour with " at " to match the design spec.
+  let result = '';
+  for (let i = 0; i < parts.length; i++) {
+    const part = parts[i];
+    if (
+      part.type === 'literal' &&
+      part.value === ', ' &&
+      parts[i - 1]?.type === 'year'
+    ) {
+      result += ' at ';
+    } else {
+      result += part.value;
+    }
+  }
+  return result;
 };
 
 type TransactionHistoryRowProps = {
