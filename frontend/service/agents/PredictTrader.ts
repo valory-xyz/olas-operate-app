@@ -101,12 +101,12 @@ export abstract class PredictTraderService extends StakedAgentService {
       parseFloat(formatEther(`${minStakingDeposit}`)) * 2;
 
     return {
-      // mechRequestCount,
       serviceInfo,
       livenessPeriod,
       livenessRatio,
       rewardsPerSecond,
       isEligibleForRewards,
+      activityThisEpoch: eligibleRequests,
       availableRewardsForEpoch,
       accruedServiceStakingRewards: parseFloat(
         formatEther(`${accruedStakingReward}`),

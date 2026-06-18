@@ -101,12 +101,12 @@ export abstract class Polystrat extends StakedAgentService {
       parseFloat(formatEther(`${minStakingDeposit}`)) * 2;
 
     return {
-      // mechRequestCount,
       serviceInfo,
       livenessPeriod,
       livenessRatio,
       rewardsPerSecond,
       isEligibleForRewards,
+      activityThisEpoch: eligibleRequests,
       availableRewardsForEpoch,
       accruedServiceStakingRewards: parseFloat(
         formatEther(`${accruedStakingReward}`),
