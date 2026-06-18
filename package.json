@@ -16,7 +16,7 @@
     "postcss": "8.5.10",
     "serialize-javascript": "7.0.5",
     "tmp": "0.2.4",
-    "ws": "8.20.1"
+    "ws": "8.21.0"
   },
   "dependencies": {
     "@ant-design/cssinjs": "1.24.0",
