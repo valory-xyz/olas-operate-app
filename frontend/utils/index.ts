@@ -15,6 +15,7 @@ export * from './service';
 export * from './setupMulticall';
 export * from './stakingProgram';
 export * from './time';
+export * from './transactionHistory';
 export * from './truncate';
 export * from './wallet';
 export * from './x';

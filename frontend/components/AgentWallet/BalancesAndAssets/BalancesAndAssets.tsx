@@ -5,6 +5,7 @@ import { CardFlex, WalletsTooltip } from '@/components/ui';
 import { PAGES } from '@/constants';
 import { usePageState, useService, useServices } from '@/hooks';
 
+import { AgentTransactionHistory } from './AgentTransactionHistory';
 import { AgentWalletOperation } from './AgentWalletOperation';
 import { AvailableAssetsTable } from './AvailableAssetsTable';
 
@@ -142,7 +143,7 @@ export const BalancesAndAssets = ({
         onDecommission={handleDecommission}
       />
       <AvailableAssets />
-      {/* <TransactionHistory /> */}
+      <AgentTransactionHistory />
 
       {isWithdrawModalVisible && (
         <SomeFundsMaybeLockedModal

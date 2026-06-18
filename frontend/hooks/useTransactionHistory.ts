@@ -1,13 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
-import { TOKEN_CONFIG, TokenSymbolMap } from '@/config/tokens';
 import { REACT_QUERY_KEYS } from '@/constants';
 import { EvmChainId } from '@/constants/chains';
-import {
-  FIFTEEN_MINUTE_INTERVAL,
-  TWELVE_HOURS_IN_SECONDS,
-} from '@/constants/intervals';
+import { FIFTEEN_MINUTE_INTERVAL } from '@/constants/intervals';
 import { TRANSACTION_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN } from '@/constants/urls';
 import { TransactionHistoryService } from '@/service/TransactionHistory';
 import { Address } from '@/types/Address';
@@ -20,6 +16,7 @@ import {
   TransactionHistoryTransfer,
   TransferDirection,
 } from '@/types/TransactionHistory';
+import { computeIsDataDelayed, isOlasAgentToMaster } from '@/utils';
 
 type UseTransactionHistoryArgs = {
   chainId: EvmChainId | undefined;
@@ -164,24 +161,6 @@ const HIDDEN_CATEGORIES = new Set<FundsMovement['category']>([
   FUNDS_CATEGORY.SAFE_SETUP_TRANSFER,
 ]);
 
-// Staking-reward sweeps surface as OLAS AGENT_TO_MASTER transfers (the agent
-// returning reward OLAS to the master). They flood the history and aren't
-// user actions, so hide them client-side. The subgraph on main splits these
-// into a dedicated AGENT_OLAS_TO_MASTER category, but the live deployment
-// doesn't ship that yet — until it does, this filter is the active mechanism.
-// NOTE: it also hides any *genuine* OLAS agent→master transfer; native /
-// non-OLAS agent→master transfers are kept.
-const isOlasAgentToMaster = (
-  movement: FundsMovement,
-  chainId: EvmChainId | undefined,
-): boolean => {
-  if (movement.category !== FUNDS_CATEGORY.AGENT_TO_MASTER) return false;
-  const olasAddress =
-    chainId &&
-    TOKEN_CONFIG[chainId]?.[TokenSymbolMap.OLAS]?.address?.toLowerCase();
-  return !!olasAddress && movement.token?.toLowerCase() === olasAddress;
-};
-
 export const buildTransactionHistoryRows = (
   data: TransactionHistoryResponse,
   masterSafe: Address,
@@ -253,12 +232,10 @@ export const useTransactionHistory = ({
     return buildTransactionHistoryRows(query.data, masterSafe, chainId);
   }, [query.data, masterSafe, chainId]);
 
-  const isDataDelayed = useMemo(() => {
-    const indexedAt = query.data?._meta?.block?.timestamp;
-    if (!indexedAt) return false;
-    const nowSeconds = Math.floor(Date.now() / 1000);
-    return nowSeconds - Number(indexedAt) >= TWELVE_HOURS_IN_SECONDS;
-  }, [query.data]);
+  const isDataDelayed = useMemo(
+    () => computeIsDataDelayed(query.data?._meta),
+    [query.data],
+  );
 
   return {
     rows,

@@ -7,7 +7,10 @@ import styled from 'styled-components';
 import { TokenSymbolConfigMap, TokenSymbolMap } from '@/config/tokens';
 import { COLOR, EXPLORER_URL_BY_MIDDLEWARE_CHAIN } from '@/constants';
 import { EvmChainId } from '@/constants/chains';
-import { TransactionHistoryRow as TransactionHistoryRowType } from '@/types/TransactionHistory';
+import {
+  FundsCategory,
+  TransactionHistoryRow as TransactionHistoryRowType,
+} from '@/types/TransactionHistory';
 import { generateAgentName } from '@/utils/generateAgentName';
 import { asMiddlewareChain } from '@/utils/middlewareHelpers';
 import {
@@ -43,8 +46,15 @@ const TransfersGrid = styled.div`
   grid-template-columns: 1fr minmax(90px, max-content);
   column-gap: 24px;
   row-gap: 12px;
-  justify-items: start;
   align-items: center;
+  /* Amounts (col 1) right-aligned so decimals line up next to the token;
+     token symbol (col 2) stays left-aligned. */
+  & > :nth-child(odd) {
+    justify-self: end;
+  }
+  & > :nth-child(even) {
+    justify-self: start;
+  }
   padding: 2px 0;
 `;
 
@@ -83,11 +93,27 @@ const formatTimestamp = (unixSeconds: number): string => {
 type TransactionHistoryRowProps = {
   row: TransactionHistoryRowType;
   chainId: EvmChainId | undefined;
+  // Override the row title resolver. Defaults to the master-perspective
+  // labels; the agent wallet passes its own (perspective-flipped) resolver.
+  getLabel?: (
+    row: TransactionHistoryRowType,
+    agentDisplayName: string | null,
+  ) => string;
+  // The agent-name pill is redundant inside the agent's own wallet, so that view hides it.
+  showAgentTag?: boolean;
+  // Override which category drives the icon circle. The icon mapping is
+  // master-perspective; the agent wallet remaps its categories to the
+  // visually-correct icon (e.g. MASTER_TO_AGENT is an inflow there, so it
+  // wants the green "down" icon). Defaults to row.category.
+  iconCategory?: FundsCategory;
 };
 
 export const TransactionHistoryRow = ({
   row,
   chainId,
+  getLabel = getTransactionRowLabel,
+  showAgentTag = true,
+  iconCategory,
 }: TransactionHistoryRowProps) => {
   const lookupAgent = useAgentLookupBySafe();
   const agent = useMemo(
@@ -106,7 +132,7 @@ export const TransactionHistoryRow = ({
       ? generateAgentName(chainId, Number(row.serviceId))
       : null);
 
-  const label = getTransactionRowLabel(row, displayName);
+  const label = getLabel(row, displayName);
 
   const explorerUrl = chainId
     ? `${EXPLORER_URL_BY_MIDDLEWARE_CHAIN[asMiddlewareChain(chainId)]}/tx/${row.transactionHash}`
@@ -115,11 +141,11 @@ export const TransactionHistoryRow = ({
   return (
     <RowContainer>
       <Flex gap={12} align="flex-start">
-        <TransactionRowIcon category={row.category} />
+        <TransactionRowIcon category={iconCategory ?? row.category} />
         <Flex vertical gap={2} style={{ minWidth: 0 }}>
           <Flex gap={12} align="center" wrap="wrap" style={{ minHeight: 28 }}>
             <Text className="text-base text-neutral-primary">{label}</Text>
-            {nickname ? <AgentTag>{nickname}</AgentTag> : null}
+            {showAgentTag && nickname ? <AgentTag>{nickname}</AgentTag> : null}
           </Flex>
           <Flex gap={4} align="center" className="text-xs">
             {explorerUrl ? (
@@ -145,12 +171,13 @@ export const TransactionHistoryRow = ({
         {row.transfers.map((transfer, i) => {
           const tokenInfo = resolveToken(chainId, transfer.tokenAddress);
           // ETH amounts are often dust-sized (gas top-ups), where the default
-          // 2-decimal rendering collapses to 0.00 — give ETH up to 6 decimals.
+          // 2-decimal rendering collapses to 0.00 — give ETH up to 5 decimals
+          // (the 6th is sub-cent and has no user value).
           const isEth = tokenInfo?.symbol === TokenSymbolMap.ETH;
           const amountNumber = formatUnitsToNumber(
             transfer.amount,
             tokenInfo?.decimals ?? 18,
-            isEth ? 6 : 4,
+            isEth ? 5 : 4,
           );
           const prefix = transfer.direction === 'in' ? '+' : '-';
           const className =
@@ -170,7 +197,7 @@ export const TransactionHistoryRow = ({
               <Text className={`${className} text-base`}>
                 {prefix}
                 {isEth
-                  ? formatAmountNormalized(amountNumber, 6)
+                  ? formatAmountNormalized(amountNumber, 5)
                   : balanceFormat(amountNumber, 2)}
               </Text>
               <Flex align="center" gap={8}>
