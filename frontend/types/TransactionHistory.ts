@@ -129,6 +129,14 @@ export type TransactionHistoryResponse = z.infer<
   typeof TransactionHistoryResponseSchema
 >;
 
+export const AgentTransactionHistoryResponseSchema = z.object({
+  fundsMovements: z.array(FundsMovementSchema),
+  _meta: SubgraphMetaSchema.nullable(),
+});
+export type AgentTransactionHistoryResponse = z.infer<
+  typeof AgentTransactionHistoryResponseSchema
+>;
+
 export type TransferDirection = 'in' | 'out';
 
 export type TransactionHistoryTransfer = {
