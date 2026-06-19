@@ -3,7 +3,10 @@ import { ethers } from 'ethers';
 import { formatEther } from 'ethers/lib/utils';
 
 import { EvmChainIdMap } from '../../../constants/chains';
-import { STAKING_PROGRAM_IDS } from '../../../constants/stakingProgram';
+import {
+  STAKING_PROGRAM_IDS,
+  StakingProgramId,
+} from '../../../constants/stakingProgram';
 import { OptimismService } from '../../../service/agents/Optimism';
 import { ONE_YEAR } from '../../../service/agents/shared-services/StakedAgentService';
 import { StakingState } from '../../../types/Autonolas';
@@ -80,8 +83,10 @@ jest.mock('../../../config/stakingPrograms', () => {
           address: stakingAddr1,
           chainId: EvmChainIdMap.Optimism,
         },
-        // New (decoupled-activity) marketplace-regime program.
-        [STAKING_PROGRAM_IDS.OptimusI]: {
+        // Synthetic decoupled-activity marketplace-regime program. The real
+        // OptimusI id is hidden for QA (OPE-1803), but the Optimism reader still
+        // ships its marketplace branch, so we exercise it via a literal id.
+        ['optimus_i']: {
           get activityChecker() {
             return shared.activityChecker;
           },
@@ -286,7 +291,7 @@ describe('OptimismService.getAgentStakingRewardsInfo (marketplace regime)', () =
     OptimismService.getAgentStakingRewardsInfo({
       agentMultisigAddress: MOCK_MULTISIG_ADDRESS,
       serviceId: DEFAULT_SERVICE_NFT_TOKEN_ID,
-      stakingProgramId: STAKING_PROGRAM_IDS.OptimusI,
+      stakingProgramId: 'optimus_i' as StakingProgramId,
       chainId: OPTIMISM,
       ...overrides,
     });

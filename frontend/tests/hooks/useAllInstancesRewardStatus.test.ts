@@ -53,6 +53,10 @@ const mockUseServices = useServices as jest.Mock;
 const mockCreateStakingRewardsQuery = createStakingRewardsQuery as jest.Mock;
 
 const traderConfig = AGENT_CONFIG[AgentMap.PredictTrader];
+// Basius is the only agent still shipping a decoupled-activity contract (the
+// others were hidden for QA, OPE-1803), so the decoupled regime is exercised
+// against Basius/Base below.
+const basiusConfig = AGENT_CONFIG[AgentMap.Basius];
 
 const baseContextValue: React.ContextType<typeof StakingProgramContext> = {
   isActiveStakingProgramLoaded: true,
@@ -289,17 +293,17 @@ describe('useAllInstancesRewardStatus', () => {
   });
 
   describe('decoupled-activity regime (OPE-1803)', () => {
-    const renderForOmenstrat = (
+    const renderForBasius = (
       data: ReturnType<typeof makeStakingRewardsInfo>,
     ) => {
-      const service = makeMiddlewareService(MiddlewareChainMap.GNOSIS, {
+      const service = makeMiddlewareService(MiddlewareChainMap.BASE, {
         service_config_id: DEFAULT_SERVICE_CONFIG_ID,
-        service_public_id: traderConfig.servicePublicId,
-        home_chain: traderConfig.middlewareHomeChainId,
-        chain_configs: makeChainConfig(traderConfig.middlewareHomeChainId, {
+        service_public_id: basiusConfig.servicePublicId,
+        home_chain: basiusConfig.middlewareHomeChainId,
+        chain_configs: makeChainConfig(basiusConfig.middlewareHomeChainId, {
           multisig: MOCK_MULTISIG_ADDRESS,
           token: DEFAULT_SERVICE_NFT_TOKEN_ID,
-          staking_program_id: STAKING_PROGRAM_IDS.OmenstratI,
+          staking_program_id: STAKING_PROGRAM_IDS.BasiusI,
         }),
       });
 
@@ -307,7 +311,7 @@ describe('useAllInstancesRewardStatus', () => {
       mockUseQueries.mockReturnValue([{ isSuccess: true, data }]);
 
       const stakingMap = new Map([
-        [DEFAULT_SERVICE_CONFIG_ID, STAKING_PROGRAM_IDS.OmenstratI],
+        [DEFAULT_SERVICE_CONFIG_ID, STAKING_PROGRAM_IDS.BasiusI],
       ]);
 
       return renderHook(() => useAllInstancesRewardStatus(), {
@@ -325,10 +329,10 @@ describe('useAllInstancesRewardStatus', () => {
       });
     };
 
-    it('is true when on-chain activity reaches the off-chain target (8)', () => {
-      const { result } = renderForOmenstrat(
+    it('is true when on-chain activity reaches the off-chain target (1)', () => {
+      const { result } = renderForBasius(
         makeStakingRewardsInfo({
-          activityThisEpoch: 8,
+          activityThisEpoch: 1,
           isEligibleForRewards: true,
         }),
       );
@@ -336,9 +340,9 @@ describe('useAllInstancesRewardStatus', () => {
     });
 
     it('is false below the target even when the staking KPI is already met', () => {
-      const { result } = renderForOmenstrat(
+      const { result } = renderForBasius(
         makeStakingRewardsInfo({
-          activityThisEpoch: 3,
+          activityThisEpoch: 0,
           isEligibleForRewards: true,
         }),
       );

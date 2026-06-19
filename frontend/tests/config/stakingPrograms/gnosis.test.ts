@@ -24,7 +24,7 @@ jest.mock(
 const EVM_ADDRESS_PATTERN = /^0x[0-9a-fA-F]{40}$/;
 
 describe('GNOSIS_STAKING_PROGRAMS', () => {
-  it('covers all 23 Gnosis staking program IDs (16 legacy + 7 decoupled Omenstrat)', () => {
+  it('covers all 16 Gnosis staking program IDs', () => {
     const expectedIds = [
       STAKING_PROGRAM_IDS.PearlAlpha,
       STAKING_PROGRAM_IDS.PearlBeta,
@@ -42,18 +42,11 @@ describe('GNOSIS_STAKING_PROGRAMS', () => {
       STAKING_PROGRAM_IDS.PearlBetaMechMarketplace6,
       STAKING_PROGRAM_IDS.PearlBetaMechMarketplace7,
       STAKING_PROGRAM_IDS.PearlBetaMechMarketplace8,
-      STAKING_PROGRAM_IDS.OmenstratI,
-      STAKING_PROGRAM_IDS.OmenstratII,
-      STAKING_PROGRAM_IDS.OmenstratIII,
-      STAKING_PROGRAM_IDS.OmenstratIV,
-      STAKING_PROGRAM_IDS.OmenstratV,
-      STAKING_PROGRAM_IDS.OmenstratVI,
-      STAKING_PROGRAM_IDS.OmenstratVII,
     ];
     for (const id of expectedIds) {
       expect(GNOSIS_STAKING_PROGRAMS[id]).toBeDefined();
     }
-    expect(Object.keys(GNOSIS_STAKING_PROGRAMS)).toHaveLength(23);
+    expect(Object.keys(GNOSIS_STAKING_PROGRAMS)).toHaveLength(16);
   });
 
   it('all programs are on Gnosis chain (chainId 100)', () => {
@@ -206,37 +199,6 @@ describe('GNOSIS_STAKING_PROGRAMS', () => {
       expect(
         GNOSIS_STAKING_PROGRAMS[STAKING_PROGRAM_IDS.PearlAlpha].address,
       ).toBe('0xEE9F19b5DF06c7E8Bfc7B28745dcf944C504198A');
-    });
-  });
-
-  describe('decoupled-activity regime (OPE-1803)', () => {
-    const omenstratIds = [
-      STAKING_PROGRAM_IDS.OmenstratI,
-      STAKING_PROGRAM_IDS.OmenstratII,
-      STAKING_PROGRAM_IDS.OmenstratIII,
-      STAKING_PROGRAM_IDS.OmenstratIV,
-      STAKING_PROGRAM_IDS.OmenstratV,
-      STAKING_PROGRAM_IDS.OmenstratVI,
-      STAKING_PROGRAM_IDS.OmenstratVII,
-    ];
-
-    it('all Omenstrat programs carry an off-chain activityTarget of 8', () => {
-      for (const id of omenstratIds) {
-        expect(GNOSIS_STAKING_PROGRAMS[id].activityTarget).toBe(8);
-      }
-    });
-
-    it('all Omenstrat programs are active (not deprecated)', () => {
-      for (const id of omenstratIds) {
-        expect(GNOSIS_STAKING_PROGRAMS[id].deprecated).toBeUndefined();
-      }
-    });
-
-    it('legacy Pearl programs have no activityTarget (on-chain KPI regime)', () => {
-      expect(
-        GNOSIS_STAKING_PROGRAMS[STAKING_PROGRAM_IDS.PearlBetaMechMarketplace8]
-          .activityTarget,
-      ).toBeUndefined();
     });
   });
 });

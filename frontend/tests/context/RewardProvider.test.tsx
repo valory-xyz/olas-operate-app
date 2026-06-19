@@ -112,9 +112,12 @@ jest.mock('../../config/stakingPrograms', () => ({
   STAKING_PROGRAMS: {
     [EvmChainIdMap.Gnosis]: {
       [STAKING_PROGRAM_IDS.PearlBetaMechMarketplace3]: { name: 'test' },
-      // Decoupled-activity program: presence of activityTarget marks the new regime.
-      [STAKING_PROGRAM_IDS.OmenstratI]: {
-        name: 'Omenstrat I',
+      // Synthetic decoupled-activity program (presence of activityTarget marks the
+      // new regime). Uses BasiusI — the only decoupled id still shipping after the
+      // others were hidden for QA (OPE-1803) — under a Gnosis mock purely to
+      // exercise the generic isEpochTargetMet derivation.
+      [STAKING_PROGRAM_IDS.BasiusI]: {
+        name: 'Basius I',
         activityTarget: 8,
       },
     },
@@ -327,9 +330,7 @@ describe('RewardProvider', () => {
           activityThisEpoch: 8,
         }),
       });
-      const { result } = renderWithStakingProgram(
-        STAKING_PROGRAM_IDS.OmenstratI,
-      );
+      const { result } = renderWithStakingProgram(STAKING_PROGRAM_IDS.BasiusI);
       expect(result.current.isEpochTargetMet).toBe(true);
     });
 
@@ -340,9 +341,7 @@ describe('RewardProvider', () => {
           activityThisEpoch: 3,
         }),
       });
-      const { result } = renderWithStakingProgram(
-        STAKING_PROGRAM_IDS.OmenstratI,
-      );
+      const { result } = renderWithStakingProgram(STAKING_PROGRAM_IDS.BasiusI);
       expect(result.current.isEpochTargetMet).toBe(false);
     });
   });

@@ -137,16 +137,12 @@ describe('fetchAgentStakingRewardsInfo', () => {
 
 describe('getStakingProgramActivityTarget', () => {
   it('returns the off-chain target for a decoupled (new-regime) program', () => {
+    // Basius is the only decoupled contract still shipping (Omenstrat/Optimus/
+    // Polystrat were hidden for QA, OPE-1803).
     expect(
       getStakingProgramActivityTarget(
-        EvmChainIdMap.Polygon,
-        STAKING_PROGRAM_IDS.PolystratI,
-      ),
-    ).toBe(8);
-    expect(
-      getStakingProgramActivityTarget(
-        EvmChainIdMap.Optimism,
-        STAKING_PROGRAM_IDS.OptimusI,
+        EvmChainIdMap.Base,
+        STAKING_PROGRAM_IDS.BasiusI,
       ),
     ).toBe(1);
   });

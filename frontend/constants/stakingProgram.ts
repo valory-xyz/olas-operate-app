@@ -18,13 +18,16 @@ const GNOSIS_STAKING_PROGRAM_IDS = {
   PearlBetaMechMarketplace7: 'pearl_beta_mech_marketplace_7',
   PearlBetaMechMarketplace8: 'pearl_beta_mech_marketplace_8',
   // New (decoupled-activity) staking contracts — PredictTrader on Gnosis ("Omenstrat").
-  OmenstratI: 'omenstrat_i',
-  OmenstratII: 'omenstrat_ii',
-  OmenstratIII: 'omenstrat_iii',
-  OmenstratIV: 'omenstrat_iv',
-  OmenstratV: 'omenstrat_v',
-  OmenstratVI: 'omenstrat_vi',
-  OmenstratVII: 'omenstrat_vii',
+  // HIDDEN FOR QA (OPE-1803) — issues on these agents' new contracts. Re-enable by
+  // uncommenting here + the matching address/program entries in gnosis.ts and the
+  // checker entries in activityCheckers.ts.
+  // OmenstratI: 'omenstrat_i',
+  // OmenstratII: 'omenstrat_ii',
+  // OmenstratIII: 'omenstrat_iii',
+  // OmenstratIV: 'omenstrat_iv',
+  // OmenstratV: 'omenstrat_v',
+  // OmenstratVI: 'omenstrat_vi',
+  // OmenstratVII: 'omenstrat_vii',
 } as const;
 
 const BASE_STAKING_PROGRAM_IDS = {
@@ -63,9 +66,12 @@ export const OPTIMISM_STAKING_PROGRAM_IDS = {
   OptimusAlpha3: 'optimus_alpha_3',
   OptimusAlpha4: 'optimus_alpha_4',
   // New (decoupled-activity) staking contracts — Optimus on Optimism.
-  OptimusI: 'optimus_i',
-  OptimusII: 'optimus_ii',
-  OptimusIII: 'optimus_iii',
+  // HIDDEN FOR QA (OPE-1803) — issues on these agents' new contracts. Re-enable by
+  // uncommenting here + the matching address/program entries in optimism.ts and the
+  // checker entries in activityCheckers.ts.
+  // OptimusI: 'optimus_i',
+  // OptimusII: 'optimus_ii',
+  // OptimusIII: 'optimus_iii',
 } as const;
 
 export type OptimismStakingProgramId = ValueOf<
@@ -77,9 +83,12 @@ const POLYGON_STAKING_PROGRAM_IDS = {
   PolygonBeta2: 'polygon_beta_2',
   PolygonBeta3: 'polygon_beta_3', // Note: “Polygon Alpha 3” is a typo in contract setup (in meta data) — the correct name is Polygon Beta 3.
   // New (decoupled-activity) staking contracts — Polystrat on Polygon.
-  PolystratI: 'polystrat_i',
-  PolystratII: 'polystrat_ii',
-  PolystratIII: 'polystrat_iii',
+  // HIDDEN FOR QA (OPE-1803) — issues on these agents' new contracts. Re-enable by
+  // uncommenting here + the matching address/program entries in polygon.ts and the
+  // checker entries in activityCheckers.ts.
+  // PolystratI: 'polystrat_i',
+  // PolystratII: 'polystrat_ii',
+  // PolystratIII: 'polystrat_iii',
 } as const;
 
 export type PolygonStakingProgramId = ValueOf<

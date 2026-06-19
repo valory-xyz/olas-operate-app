@@ -23,19 +23,16 @@ jest.mock(
 const EVM_ADDRESS_PATTERN = /^0x[0-9a-fA-F]{40}$/;
 
 describe('POLYGON_STAKING_PROGRAMS', () => {
-  it('covers all 6 Polygon staking program IDs (legacy PolygonBeta1/2/3 + decoupled PolystratI/II/III)', () => {
+  it('covers all 3 Polygon staking program IDs', () => {
     const expectedIds = [
       STAKING_PROGRAM_IDS.PolygonBeta1,
       STAKING_PROGRAM_IDS.PolygonBeta2,
       STAKING_PROGRAM_IDS.PolygonBeta3,
-      STAKING_PROGRAM_IDS.PolystratI,
-      STAKING_PROGRAM_IDS.PolystratII,
-      STAKING_PROGRAM_IDS.PolystratIII,
     ];
     for (const id of expectedIds) {
       expect(POLYGON_STAKING_PROGRAMS[id]).toBeDefined();
     }
-    expect(Object.keys(POLYGON_STAKING_PROGRAMS)).toHaveLength(6);
+    expect(Object.keys(POLYGON_STAKING_PROGRAMS)).toHaveLength(3);
   });
 
   it('all programs are on Polygon chain (chainId 137)', () => {
@@ -102,51 +99,6 @@ describe('POLYGON_STAKING_PROGRAMS', () => {
         POLYGON_STAKING_PROGRAMS[STAKING_PROGRAM_IDS.PolygonBeta3]
           .stakingRequirements['OLAS'],
       ).toBe(10000);
-    });
-
-    it('PolystratI requires 100 OLAS (entry tier)', () => {
-      expect(
-        POLYGON_STAKING_PROGRAMS[STAKING_PROGRAM_IDS.PolystratI]
-          .stakingRequirements['OLAS'],
-      ).toBe(100);
-    });
-
-    it('PolystratII requires 1000 OLAS (mid tier)', () => {
-      expect(
-        POLYGON_STAKING_PROGRAMS[STAKING_PROGRAM_IDS.PolystratII]
-          .stakingRequirements['OLAS'],
-      ).toBe(1000);
-    });
-
-    it('PolystratIII requires 10000 OLAS (premium tier)', () => {
-      expect(
-        POLYGON_STAKING_PROGRAMS[STAKING_PROGRAM_IDS.PolystratIII]
-          .stakingRequirements['OLAS'],
-      ).toBe(10000);
-    });
-  });
-
-  describe('decoupled-activity regime (OPE-1803)', () => {
-    it('new PolystratI/II/III carry an off-chain activityTarget of 8', () => {
-      const decoupledIds = [
-        STAKING_PROGRAM_IDS.PolystratI,
-        STAKING_PROGRAM_IDS.PolystratII,
-        STAKING_PROGRAM_IDS.PolystratIII,
-      ];
-      for (const id of decoupledIds) {
-        expect(POLYGON_STAKING_PROGRAMS[id].activityTarget).toBe(8);
-      }
-    });
-
-    it('legacy PolygonBeta1/2/3 have no activityTarget (on-chain KPI regime)', () => {
-      const legacyIds = [
-        STAKING_PROGRAM_IDS.PolygonBeta1,
-        STAKING_PROGRAM_IDS.PolygonBeta2,
-        STAKING_PROGRAM_IDS.PolygonBeta3,
-      ];
-      for (const id of legacyIds) {
-        expect(POLYGON_STAKING_PROGRAMS[id].activityTarget).toBeUndefined();
-      }
     });
   });
 
