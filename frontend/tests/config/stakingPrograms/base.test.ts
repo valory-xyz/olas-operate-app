@@ -7,10 +7,7 @@
  */
 
 import { BASE_STAKING_PROGRAMS } from '../../../config/stakingPrograms/base';
-import {
-  AgentMap,
-  BASIUS_QA_NO_STAKING_MODE,
-} from '../../../constants/agent';
+import { AgentMap, BASIUS_QA_NO_STAKING_MODE } from '../../../constants/agent';
 import { EvmChainIdMap } from '../../../constants/chains';
 import { STAKING_PROGRAM_IDS } from '../../../constants/stakingProgram';
 
@@ -39,16 +36,12 @@ describe('BASE_STAKING_PROGRAMS', () => {
       STAKING_PROGRAM_IDS.PettAiAgent4,
       // BasiusAlpha1 is omitted in QA builds (placeholder address would
       // break multicalls) — see BASIUS_QA_NO_STAKING_MODE in base.ts.
-      ...(BASIUS_QA_NO_STAKING_MODE
-        ? []
-        : [STAKING_PROGRAM_IDS.BasiusAlpha1]),
+      ...(BASIUS_QA_NO_STAKING_MODE ? [] : [STAKING_PROGRAM_IDS.BasiusAlpha1]),
     ];
     for (const id of expectedIds) {
       expect(BASE_STAKING_PROGRAMS[id]).toBeDefined();
     }
-    expect(Object.keys(BASE_STAKING_PROGRAMS)).toHaveLength(
-      expectedIds.length,
-    );
+    expect(Object.keys(BASE_STAKING_PROGRAMS)).toHaveLength(expectedIds.length);
   });
 
   it('all programs are on Base chain (chainId 8453)', () => {
