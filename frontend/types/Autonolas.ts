@@ -18,8 +18,10 @@ export const StakingRewardsInfoSchema = z.object({
    * Compared against a staking program's off-chain `activityTarget` to decide
    * "epoch work done" in the decoupled-activity regime (OPE-1803). In the
    * legacy regime this is the same count used to derive `isEligibleForRewards`.
+   * `.finite()` so a degenerate on-chain read (e.g. a missing nonce element →
+   * `NaN`) fails the parse loudly instead of silently reading as "target not met".
    */
-  activityThisEpoch: z.number(),
+  activityThisEpoch: z.number().finite(),
   availableRewardsForEpoch: z.number(),
   /* current epoch rewards */
   accruedServiceStakingRewards: z.number(),

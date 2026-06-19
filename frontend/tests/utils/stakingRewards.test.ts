@@ -123,6 +123,16 @@ describe('fetchAgentStakingRewardsInfo', () => {
       fetchAgentStakingRewardsInfo(defaultParams),
     ).rejects.toBeInstanceOf(ZodError);
   });
+
+  it('rejects a non-finite activityThisEpoch (degenerate on-chain read fails loud)', async () => {
+    mockGetAgentStakingRewardsInfo.mockResolvedValue(
+      makeRawStakingRewardsInfo({ activityThisEpoch: NaN }),
+    );
+
+    await expect(
+      fetchAgentStakingRewardsInfo(defaultParams),
+    ).rejects.toBeInstanceOf(ZodError);
+  });
 });
 
 describe('getStakingProgramActivityTarget', () => {
