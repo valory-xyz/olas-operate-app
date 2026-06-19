@@ -29,7 +29,7 @@ const mockShowNotification = jest.fn();
 const setupMocks = (overrides: {
   showNotification?: jest.Mock | undefined;
   deploymentStatus?: number;
-  isEligibleForRewards?: boolean | undefined;
+  isEpochTargetMet?: boolean | undefined;
 }) => {
   mockUseElectronApi.mockReturnValue({
     showNotification: overrides.showNotification,
@@ -43,7 +43,7 @@ const setupMocks = (overrides: {
   } as ReturnType<typeof useServices>);
 
   mockUseRewardContext.mockReturnValue({
-    isEligibleForRewards: overrides.isEligibleForRewards,
+    isEpochTargetMet: overrides.isEpochTargetMet,
   } as ReturnType<typeof useRewardContext>);
 };
 
@@ -56,7 +56,7 @@ describe('useNotifyOnAgentRewards', () => {
     setupMocks({
       showNotification: undefined,
       deploymentStatus: MiddlewareDeploymentStatusMap.DEPLOYED,
-      isEligibleForRewards: true,
+      isEpochTargetMet: true,
     });
 
     renderHook(() => useNotifyOnAgentRewards());
@@ -67,30 +67,30 @@ describe('useNotifyOnAgentRewards', () => {
     setupMocks({
       showNotification: mockShowNotification,
       deploymentStatus: MiddlewareDeploymentStatusMap.STOPPED,
-      isEligibleForRewards: true,
+      isEpochTargetMet: true,
     });
 
     renderHook(() => useNotifyOnAgentRewards());
     expect(mockShowNotification).not.toHaveBeenCalled();
   });
 
-  it('does not notify when isEligibleForRewards is false', () => {
+  it('does not notify when isEpochTargetMet is false', () => {
     setupMocks({
       showNotification: mockShowNotification,
       deploymentStatus: MiddlewareDeploymentStatusMap.DEPLOYED,
-      isEligibleForRewards: false,
+      isEpochTargetMet: false,
     });
 
     renderHook(() => useNotifyOnAgentRewards());
     expect(mockShowNotification).not.toHaveBeenCalled();
   });
 
-  it('shows notification when isEligibleForRewards transitions from false to true', () => {
+  it('shows notification when isEpochTargetMet transitions from false to true', () => {
     // Start with false
     setupMocks({
       showNotification: mockShowNotification,
       deploymentStatus: MiddlewareDeploymentStatusMap.DEPLOYED,
-      isEligibleForRewards: false,
+      isEpochTargetMet: false,
     });
 
     const { rerender } = renderHook(() => useNotifyOnAgentRewards());
@@ -100,7 +100,7 @@ describe('useNotifyOnAgentRewards', () => {
     setupMocks({
       showNotification: mockShowNotification,
       deploymentStatus: MiddlewareDeploymentStatusMap.DEPLOYED,
-      isEligibleForRewards: true,
+      isEpochTargetMet: true,
     });
 
     rerender();
@@ -111,17 +111,17 @@ describe('useNotifyOnAgentRewards', () => {
     );
   });
 
-  it('does not re-notify when isEligibleForRewards stays true', () => {
+  it('does not re-notify when isEpochTargetMet stays true', () => {
     // First render: transition from undefined to true triggers notification
     setupMocks({
       showNotification: mockShowNotification,
       deploymentStatus: MiddlewareDeploymentStatusMap.DEPLOYED,
-      isEligibleForRewards: true,
+      isEpochTargetMet: true,
     });
 
     const { rerender } = renderHook(() => useNotifyOnAgentRewards());
 
-    // First render: prevRef is undefined, isEligibleForRewards is true → notifies
+    // First render: prevRef is undefined, isEpochTargetMet is true → notifies
     expect(mockShowNotification).toHaveBeenCalledTimes(1);
     mockShowNotification.mockClear();
 
@@ -130,11 +130,11 @@ describe('useNotifyOnAgentRewards', () => {
     expect(mockShowNotification).not.toHaveBeenCalled();
   });
 
-  it('does not notify when isEligibleForRewards is undefined', () => {
+  it('does not notify when isEpochTargetMet is undefined', () => {
     setupMocks({
       showNotification: mockShowNotification,
       deploymentStatus: MiddlewareDeploymentStatusMap.DEPLOYED,
-      isEligibleForRewards: undefined,
+      isEpochTargetMet: undefined,
     });
 
     renderHook(() => useNotifyOnAgentRewards());

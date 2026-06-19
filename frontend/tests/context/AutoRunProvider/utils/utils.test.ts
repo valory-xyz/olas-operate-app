@@ -255,6 +255,24 @@ describe('getDecommissionedInstances', () => {
     ]);
   });
 
+  it('returns serviceConfigIds of agents that are phased out', () => {
+    const agents = [
+      {
+        ...makeAutoRunAgentMeta(
+          AgentMap.AgentsFun,
+          AGENT_CONFIG[AgentMap.AgentsFun],
+        ),
+        agentConfig: {
+          ...AGENT_CONFIG[AgentMap.AgentsFun],
+          isPhasedOut: true,
+        },
+      },
+    ];
+    expect(getDecommissionedInstances(agents)).toEqual([
+      DEFAULT_SERVICE_CONFIG_ID,
+    ]);
+  });
+
   it('returns serviceConfigIds of agents that are not enabled', () => {
     const agents = [
       {

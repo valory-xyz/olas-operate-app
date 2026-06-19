@@ -28,11 +28,11 @@ const StatsSkeleton = () => <Skeleton.Input active size="small" />;
 
 const StakingStats = () => {
   const { optimisticStreak, isStreakLoading } = useStakingDetails();
-  const { isEligibleForRewards } = useRewardContext();
+  const { isEpochTargetMet } = useRewardContext();
   const { isLoading: isTotalRewardsLoading, totalRewards } =
     useRewardsHistory();
 
-  const isFlameActive = optimisticStreak > 0 && isEligibleForRewards;
+  const isFlameActive = optimisticStreak > 0 && isEpochTargetMet;
 
   return (
     <CardFlex $noBorder $newStyles>

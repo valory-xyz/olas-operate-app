@@ -102,6 +102,7 @@ export abstract class BasiusService extends StakedAgentService {
       livenessRatio,
       rewardsPerSecond,
       isEligibleForRewards,
+      activityThisEpoch: eligibleRequests,
       availableRewardsForEpoch,
       accruedServiceStakingRewards: parseFloat(
         formatEther(`${accruedStakingReward}`),

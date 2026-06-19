@@ -9,7 +9,7 @@ import { useRewardsHistory } from './useRewardsHistory';
 export const useStakingDetails = () => {
   const { isLoading: isBalanceLoading } = useBalanceContext();
   const {
-    isEligibleForRewards,
+    isEpochTargetMet,
     stakingRewardsDetails,
     isStakingRewardsDetailsLoading,
   } = useRewardContext();
@@ -19,9 +19,9 @@ export const useStakingDetails = () => {
     isError,
   } = useRewardsHistory();
 
-  // Graph does not account for the current day,
-  // so we need to add 1 to the streak, if the user is eligible for rewards
-  const optimisticStreak = isEligibleForRewards ? streak + 1 : streak;
+  // Graph does not account for the current day, so we add 1 to the streak once
+  // the agent has done its epoch work (target met).
+  const optimisticStreak = isEpochTargetMet ? streak + 1 : streak;
 
   // Calculate the time remaining in the current epoch
   const currentEpochLifetime = useMemo(() => {

@@ -1,0 +1,251 @@
+import { useQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
+
+import { REACT_QUERY_KEYS } from '@/constants';
+import { EvmChainId } from '@/constants/chains';
+import { FIFTEEN_MINUTE_INTERVAL } from '@/constants/intervals';
+import { TRANSACTION_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN } from '@/constants/urls';
+import { TransactionHistoryService } from '@/service/TransactionHistory';
+import { Address } from '@/types/Address';
+import {
+  AgentFundingEvent,
+  FUNDS_CATEGORY,
+  FundsMovement,
+  TransactionHistoryResponse,
+  TransactionHistoryRow,
+  TransactionHistoryTransfer,
+  TransferDirection,
+} from '@/types/TransactionHistory';
+import { computeIsDataDelayed, isOlasAgentToMaster } from '@/utils';
+
+type UseTransactionHistoryArgs = {
+  chainId: EvmChainId | undefined;
+  masterSafe: Address | undefined;
+};
+
+const directionFor = (
+  category: FundsMovement['category'],
+  from: string,
+  masterSafe: string,
+): TransferDirection => {
+  if (category === FUNDS_CATEGORY.MASTER_FUNDING_IN) return 'in';
+  if (category === FUNDS_CATEGORY.SAFE_SETUP_TRANSFER) return 'in';
+  if (category === FUNDS_CATEGORY.AGENT_TO_MASTER) return 'in';
+  if (category === FUNDS_CATEGORY.SERVICE_BOND_REFUND) return 'in';
+  if (category === FUNDS_CATEGORY.UNSTAKE_REWARD) return 'in';
+  if (category === FUNDS_CATEGORY.MASTER_WITHDRAWAL) return 'out';
+  if (category === FUNDS_CATEGORY.SERVICE_BOND_DEPOSIT) return 'out';
+  if (category === FUNDS_CATEGORY.MASTER_TO_AGENT) return 'out';
+  if (category === FUNDS_CATEGORY.SAFE_DEPLOYED) return 'in';
+  return from.toLowerCase() === masterSafe.toLowerCase() ? 'out' : 'in';
+};
+
+const toTransfer = (
+  movement: FundsMovement,
+  masterSafe: string,
+): TransactionHistoryTransfer => ({
+  tokenAddress: (movement.token as Address | null) ?? null,
+  amount: movement.amount,
+  direction: directionFor(movement.category, movement.from, masterSafe),
+});
+
+/**
+ * Group standalone FundsMovements by (txHash + category). Used for multi-token
+ * txs that the subgraph doesn't pre-aggregate (e.g. MASTER_WITHDRAWAL,
+ * AGENT_TO_MASTER reward sweeps).
+ */
+const groupMovementsByTxAndCategory = (
+  movements: FundsMovement[],
+  masterSafe: string,
+): TransactionHistoryRow[] => {
+  const byKey = new Map<string, TransactionHistoryRow>();
+  const keysWithSafeLeg = new Set<string>();
+  for (const movement of movements) {
+    const key = `${movement.transactionHash}::${movement.category}`;
+    const existing = byKey.get(key);
+    const transfer = toTransfer(movement, masterSafe);
+    // For MASTER_TO_AGENT rows that land outside an AgentFundingEvent (e.g.
+    // a one-off native gas top-up to the Agent EOA), detect the recipient
+    // role so the UI can render "Allocated for execution costs" instead of
+    // "Fund <agent>". The check mirrors fundingEventToRow.
+    const agentSafeId = movement.agentSafe?.id.toLowerCase();
+    const isAgentEoaRecipient =
+      movement.category === FUNDS_CATEGORY.MASTER_TO_AGENT &&
+      !!agentSafeId &&
+      movement.to.toLowerCase() !== agentSafeId;
+    if (
+      movement.category === FUNDS_CATEGORY.MASTER_TO_AGENT &&
+      !!agentSafeId &&
+      movement.to.toLowerCase() === agentSafeId
+    ) {
+      keysWithSafeLeg.add(key);
+    }
+    if (existing) {
+      existing.transfers.push(transfer);
+      if (isAgentEoaRecipient && !existing.agentInstanceAddress) {
+        existing.agentInstanceAddress = movement.to as Address;
+      }
+      continue;
+    }
+    byKey.set(key, {
+      id: key,
+      category: movement.category,
+      blockTimestamp: Number(movement.blockTimestamp),
+      transactionHash: movement.transactionHash,
+      agentSafeAddress: (movement.agentSafe?.id as Address | null) ?? null,
+      agentInstanceAddress: isAgentEoaRecipient
+        ? (movement.to as Address)
+        : null,
+      // Prefer the agentSafe→service link; fall back to the row's direct
+      // service (SERVICE_BOND_* stake rows are booked before the agent
+      // multisig exists, so agentSafe is null but `service` carries agentIds).
+      agentIds:
+        movement.agentSafe?.service?.agentIds ??
+        movement.service?.agentIds ??
+        null,
+      serviceId:
+        movement.agentSafe?.service?.id ?? movement.service?.id ?? null,
+      transfers: [transfer],
+    });
+  }
+  // Same rule as fundingEventToRow: a Safe leg anywhere in the tx means this
+  // is agent funding ("Fund <agent>"), not an execution-cost top-up.
+  for (const key of keysWithSafeLeg) {
+    const row = byKey.get(key);
+    if (row) row.agentInstanceAddress = null;
+  }
+  return Array.from(byKey.values());
+};
+
+const fundingEventToRow = (
+  event: AgentFundingEvent,
+  masterSafe: string,
+): TransactionHistoryRow => {
+  // The agent safe (and its service) ride on the transfers; use the first
+  // that carries them.
+  const agentSafeId =
+    event.transfers.map((t) => t.agentSafe?.id).find(Boolean) ?? null;
+  const agentSafeAddrLc = agentSafeId ? agentSafeId.toLowerCase() : null;
+  const svc =
+    event.transfers.map((t) => t.agentSafe?.service).find(Boolean) ??
+    event.transfers.map((t) => t.service).find(Boolean);
+
+  // "Allocated for execution costs" applies only when the event funds the
+  // Agent EOA exclusively. The canonical funding tx carries Safe + EOA legs
+  // in one event — that must still read "Fund <agent>", so any Safe leg wins.
+  const eoaTransfer =
+    agentSafeAddrLc &&
+    event.transfers.every((t) => t.to.toLowerCase() !== agentSafeAddrLc)
+      ? event.transfers[0]
+      : undefined;
+
+  return {
+    id: event.id,
+    category: FUNDS_CATEGORY.MASTER_TO_AGENT,
+    blockTimestamp: Number(event.blockTimestamp),
+    transactionHash: event.txHash,
+    agentSafeAddress: (agentSafeId as Address | null) ?? null,
+    agentInstanceAddress: (eoaTransfer?.to as Address | undefined) ?? null,
+    agentIds: svc?.agentIds ?? null,
+    serviceId: svc?.id ?? null,
+    transfers: event.transfers.map((t) => toTransfer(t, masterSafe)),
+  };
+};
+
+// "Setup complete" rows are hidden for now — we can't yet populate the
+// opening balance (Path A needs an archive RPC at historyFloorBlock).
+// Defense-in-depth against the query's category_in filter, which already
+// excludes these.
+const HIDDEN_CATEGORIES = new Set<FundsMovement['category']>([
+  FUNDS_CATEGORY.SAFE_DEPLOYED,
+  FUNDS_CATEGORY.SAFE_SETUP_TRANSFER,
+]);
+
+export const buildTransactionHistoryRows = (
+  data: TransactionHistoryResponse,
+  masterSafe: Address,
+  chainId?: EvmChainId,
+): TransactionHistoryRow[] => {
+  const fundingEventTxHashes = new Set(
+    data.agentFundingEvents.map((e) => e.txHash.toLowerCase()),
+  );
+
+  // Drop standalone MASTER_TO_AGENT movements that belong to an
+  // AgentFundingEvent (already represented by the aggregated row),
+  // currently-hidden setup / opening-balance rows, or OLAS reward sweeps
+  // (agent → master). The dedup is scoped to MASTER_TO_AGENT so that other
+  // categories sharing a txHash with a funding event (e.g. a batched
+  // withdrawal) still get their own row.
+  const standaloneMovements = data.fundsMovements.filter(
+    (m) =>
+      !(
+        m.category === FUNDS_CATEGORY.MASTER_TO_AGENT &&
+        fundingEventTxHashes.has(m.transactionHash.toLowerCase())
+      ) &&
+      !HIDDEN_CATEGORIES.has(m.category) &&
+      !isOlasAgentToMaster(m, chainId),
+  );
+
+  const standaloneRows = groupMovementsByTxAndCategory(
+    standaloneMovements,
+    masterSafe,
+  );
+  const fundingRows = data.agentFundingEvents.map((event) =>
+    fundingEventToRow(event, masterSafe),
+  );
+
+  return [...standaloneRows, ...fundingRows].sort(
+    (a, b) => b.blockTimestamp - a.blockTimestamp,
+  );
+};
+
+export const useTransactionHistory = ({
+  chainId,
+  masterSafe,
+}: UseTransactionHistoryArgs) => {
+  // No subgraph URL for this chain yet → there's no data source to query, so
+  // surface a distinct "not available" state instead of fetching.
+  const hasSubgraphUrl = Boolean(
+    chainId && TRANSACTION_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN[chainId],
+  );
+  const enabled = Boolean(chainId && masterSafe && hasSubgraphUrl);
+  const isUnavailable = Boolean(chainId && masterSafe && !hasSubgraphUrl);
+
+  const query = useQuery({
+    queryKey:
+      chainId && masterSafe
+        ? REACT_QUERY_KEYS.TRANSACTION_HISTORY_KEY(chainId, masterSafe)
+        : ['transactionHistory', 'disabled'],
+    queryFn: () =>
+      TransactionHistoryService.getAll({
+        chainId: chainId!,
+        masterSafe: masterSafe!,
+      }),
+    enabled,
+    // History is append-mostly and the gateway bills per query, so poll
+    // infrequently; window-focus refetch keeps it reasonably fresh.
+    refetchInterval: FIFTEEN_MINUTE_INTERVAL,
+  });
+
+  const rows = useMemo(() => {
+    if (!query.data || !masterSafe) return [];
+    return buildTransactionHistoryRows(query.data, masterSafe, chainId);
+  }, [query.data, masterSafe, chainId]);
+
+  const isDataDelayed = useMemo(
+    () => computeIsDataDelayed(query.data?._meta),
+    [query.data],
+  );
+
+  return {
+    rows,
+    meta: query.data?._meta ?? null,
+    masterSafeEntity: query.data?.masterSafe ?? null,
+    isDataDelayed,
+    isLoading: query.isLoading,
+    isFetched: query.isFetched,
+    isError: query.isError,
+    isUnavailable,
+    refetch: query.refetch,
+  };
+};

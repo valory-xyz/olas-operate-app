@@ -28,6 +28,16 @@ import {
 
 jest.mock('../../../../utils/stakingRewards', () => ({
   fetchAgentStakingRewardsInfo: jest.fn(),
+  // Legacy programs (used in these tests) have no off-chain target, so the
+  // derived signal falls back to the on-chain staking KPI.
+  getStakingProgramActivityTarget: jest.fn(() => undefined),
+  deriveIsEpochTargetMet: (
+    info: { isEligibleForRewards: boolean; activityThisEpoch: number },
+    activityTarget?: number,
+  ) =>
+    activityTarget === undefined
+      ? info.isEligibleForRewards
+      : info.activityThisEpoch >= activityTarget,
 }));
 
 jest.mock('../../../../utils/delay', () =>
@@ -325,6 +335,21 @@ describe('refreshRewardsEligibility', () => {
     );
   });
 
+  it('logs the decision inputs (activity / target / epochTargetMet) for diagnosis', async () => {
+    mockFetchRewards.mockResolvedValue({
+      isEligibleForRewards: true,
+      activityThisEpoch: 4,
+    } as Awaited<ReturnType<typeof fetchAgentStakingRewardsInfo>>);
+    const logMessage = jest.fn();
+    await refreshRewardsEligibility(makeParams({ logMessage }));
+    expect(logMessage).toHaveBeenCalledWith(
+      expect.stringContaining('activityThisEpoch=4'),
+    );
+    expect(logMessage).toHaveBeenCalledWith(
+      expect.stringContaining('epochTargetMet=true'),
+    );
+  });
+
   it('fetches and returns false when not eligible', async () => {
     mockFetchRewards.mockResolvedValue({
       isEligibleForRewards: false,
@@ -512,7 +537,7 @@ describe('refreshRewardsEligibility', () => {
       );
       expect(logMessage).toHaveBeenCalledWith(
         expect.stringContaining(
-          'stale isEligibleForRewards=true — last local start predates epoch checkpoint',
+          'stale epoch-target-met=true — last local start predates epoch checkpoint',
         ),
       );
     });
@@ -870,6 +895,19 @@ describe('fetchDeployabilityForAgent', () => {
     const result = await fetchDeployabilityForAgent(meta, makeCtx());
     expect(result.canRun).toBe(false);
     expect(result.reason).toBe('Under construction');
+  });
+
+  it('returns canRun=false when agent is phased out', async () => {
+    const meta = {
+      ...makeAgentMeta(),
+      agentConfig: {
+        ...makeAgentMeta().agentConfig,
+        isPhasedOut: true,
+      },
+    };
+    const result = await fetchDeployabilityForAgent(meta, makeCtx());
+    expect(result.canRun).toBe(false);
+    expect(result.reason).toBe('Phased out');
   });
 
   it('returns canRun=false when agent is geo-restricted', async () => {

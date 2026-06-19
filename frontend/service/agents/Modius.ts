@@ -113,6 +113,7 @@ export abstract class ModiusService extends StakedAgentService {
       livenessRatio,
       rewardsPerSecond,
       isEligibleForRewards,
+      activityThisEpoch: eligibleRequests,
       availableRewardsForEpoch,
       accruedServiceStakingRewards: parseFloat(
         formatEther(`${accruedStakingReward}`),

@@ -72,10 +72,10 @@ const createPassingMockState = () => ({
     showNotification: mockShowNotification,
   },
   rewardContext: {
-    isEligibleForRewards: false,
+    isEpochTargetMet: false,
   },
   services: {
-    selectedAgentConfig: { isUnderConstruction: false },
+    selectedAgentConfig: { isUnderConstruction: false, isPhasedOut: false },
     selectedService: { service_config_id: DEFAULT_SERVICE_CONFIG_ID },
   },
   service: {
@@ -173,6 +173,16 @@ describe('useNotifyOnNewEpoch', () => {
       expect(mockShowNotification).not.toHaveBeenCalled();
     });
 
+    it('does not notify when selectedAgentConfig.isPhasedOut is true', () => {
+      const state = createPassingMockState();
+      state.services.selectedAgentConfig.isPhasedOut = true;
+      applyMocks(state);
+
+      renderHook(() => useNotifyOnNewEpoch());
+
+      expect(mockShowNotification).not.toHaveBeenCalled();
+    });
+
     it('does not notify when isInitialFunded is false', () => {
       const state = createPassingMockState();
       state.isInitiallyFunded.isInitialFunded = false;
@@ -215,9 +225,9 @@ describe('useNotifyOnNewEpoch', () => {
       expect(mockShowNotification).not.toHaveBeenCalled();
     });
 
-    it('does not notify when isEligibleForRewards is true', () => {
+    it('does not notify when isEpochTargetMet is true', () => {
       const state = createPassingMockState();
-      state.rewardContext.isEligibleForRewards = true;
+      state.rewardContext.isEpochTargetMet = true;
       applyMocks(state);
 
       renderHook(() => useNotifyOnNewEpoch());

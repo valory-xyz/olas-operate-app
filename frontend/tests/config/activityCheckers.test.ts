@@ -43,6 +43,13 @@ describe('GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS', () => {
     'PearlBetaMechMarketplace6',
     'PearlBetaMechMarketplace7',
     'PearlBetaMechMarketplace8',
+    'OmenstratI',
+    'OmenstratII',
+    'OmenstratIII',
+    'OmenstratIV',
+    'OmenstratV',
+    'OmenstratVI',
+    'OmenstratVII',
   ] as const;
 
   it('has an activity checker for every Gnosis staking program', () => {
@@ -54,9 +61,9 @@ describe('GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS', () => {
     }
   });
 
-  it('covers exactly 16 Gnosis staking programs', () => {
+  it('covers exactly 23 Gnosis staking programs', () => {
     expect(Object.keys(GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS)).toHaveLength(
-      16,
+      23,
     );
   });
 });
@@ -118,6 +125,9 @@ describe('OPTIMISM_STAKING_PROGRAMS_ACTIVITY_CHECKERS', () => {
     'OptimusAlpha2',
     'OptimusAlpha3',
     'OptimusAlpha4',
+    'OptimusI',
+    'OptimusII',
+    'OptimusIII',
   ] as const;
 
   it('has an activity checker for every Optimism staking program', () => {
@@ -129,15 +139,22 @@ describe('OPTIMISM_STAKING_PROGRAMS_ACTIVITY_CHECKERS', () => {
     }
   });
 
-  it('covers exactly 3 Optimism staking programs', () => {
+  it('covers exactly 6 Optimism staking programs', () => {
     expect(
       Object.keys(OPTIMISM_STAKING_PROGRAMS_ACTIVITY_CHECKERS),
-    ).toHaveLength(3);
+    ).toHaveLength(6);
   });
 });
 
 describe('POLYGON_STAKING_PROGRAMS_ACTIVITY_CHECKERS', () => {
-  const polygonIds = ['PolygonBeta1', 'PolygonBeta2', 'PolygonBeta3'] as const;
+  const polygonIds = [
+    'PolygonBeta1',
+    'PolygonBeta2',
+    'PolygonBeta3',
+    'PolystratI',
+    'PolystratII',
+    'PolystratIII',
+  ] as const;
 
   it('has an activity checker for every Polygon staking program', () => {
     for (const idKey of polygonIds) {
@@ -148,10 +165,10 @@ describe('POLYGON_STAKING_PROGRAMS_ACTIVITY_CHECKERS', () => {
     }
   });
 
-  it('covers exactly 3 Polygon staking programs', () => {
+  it('covers exactly 6 Polygon staking programs', () => {
     expect(
       Object.keys(POLYGON_STAKING_PROGRAMS_ACTIVITY_CHECKERS),
-    ).toHaveLength(3);
+    ).toHaveLength(6);
   });
 });
 

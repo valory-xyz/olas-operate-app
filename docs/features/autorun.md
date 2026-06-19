@@ -111,6 +111,8 @@ Note: timing constants are centralized in `constants.ts` to avoid duplicate knob
 
 ### 3.2 Rotation on Rewards
 
+The rotation signal is regime-aware (OPE-1803): `refreshRewardsEligibility` returns "epoch work done", which for new (decoupled-activity) staking contracts is `activityThisEpoch >= activityTarget` and for legacy contracts is the on-chain staking KPI (`isEligibleForRewards`). Both are read on-chain, so it works for stopped candidates too. See `staking-and-rewards.md` → "Decoupled-activity regime".
+
 1. `REWARDS_POLL_SECONDS` interval calls `refreshRewardsEligibility(runningServiceConfigId)`.
 2. Snapshot update bumps `rewardsTick` → rotation effect fires.
 3. Effect detects `false → true` transition via `lastRewardsEligibilityRef` guard.
@@ -488,7 +490,7 @@ Shared eligibility-wait implementation. Polls every 2s until eligibility leaves 
 ### `fetchDeployabilityForAgent(agentMeta, ctx)` — `utils/autoRunHelpers.ts`
 Checks whether a candidate agent is deployable without switching the UI selection. Mirrors `useDeployability` but fetches staking state directly via `agentMeta.agentConfig.serviceApi` (same pattern as `fetchAgentStakingRewardsInfo`). Called by `scanAndStartNext` for each candidate so the visible page never changes during a scan cycle.
 
-Returns `{ canRun: true }`, `{ canRun: false, isTransient: true }` (transient/loading — short retry), or `{ canRun: false }` (deterministic block). Checks in order: safe readiness, `isUnderConstruction`, geo restriction, another agent running, on-chain slots/staking state (via `getStakingContractDetails` + `getServiceStakingDetails`), initial funding, balance sufficiency. API errors return `isTransient: true` (scanner uses short retry rather than treating as permanent block).
+Returns `{ canRun: true }`, `{ canRun: false, isTransient: true }` (transient/loading — short retry), or `{ canRun: false }` (deterministic block). Checks in order: safe readiness, `isPhasedOut`, `isUnderConstruction`, geo restriction, another agent running, on-chain slots/staking state (via `getStakingContractDetails` + `getServiceStakingDetails`), initial funding, balance sufficiency. API errors return `isTransient: true` (scanner uses short retry rather than treating as permanent block). Kept in parity with `useDeployability`.
 
 ---
 

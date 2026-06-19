@@ -295,6 +295,40 @@ describe('useDeployability', () => {
     });
   });
 
+  describe('phased out', () => {
+    it('returns canRun=false with "Phased out" reason', () => {
+      setupDefaults();
+      mockUseServices.mockReturnValue({
+        ...defaultServices,
+        selectedAgentConfig: {
+          ...defaultServices.selectedAgentConfig,
+          isPhasedOut: true,
+        },
+      } as unknown as ReturnType<typeof useServices>);
+      const { result } = renderHook(() => useDeployability());
+      expect(result.current.canRun).toBe(false);
+      expect(result.current.reason).toBe('Phased out');
+    });
+
+    it('takes priority over evicted and low balance', () => {
+      setupDefaults({
+        staking: { isAgentEvicted: true, isEligibleForStaking: false },
+        balance: {
+          allowStartAgentByServiceConfigId: jest.fn().mockReturnValue(false),
+        },
+      });
+      mockUseServices.mockReturnValue({
+        ...defaultServices,
+        selectedAgentConfig: {
+          ...defaultServices.selectedAgentConfig,
+          isPhasedOut: true,
+        },
+      } as unknown as ReturnType<typeof useServices>);
+      const { result } = renderHook(() => useDeployability());
+      expect(result.current.reason).toBe('Phased out');
+    });
+  });
+
   describe('under construction (branch 3)', () => {
     it('returns canRun=false with "Under construction" reason', () => {
       setupDefaults();

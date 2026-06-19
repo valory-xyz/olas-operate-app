@@ -24,7 +24,7 @@ const mockUseRewardsHistory = useRewardsHistory as jest.Mock;
 
 const setupMocks = ({
   isBalanceLoading = false,
-  isEligibleForRewards = false,
+  isEpochTargetMet = false,
   stakingRewardsDetails = null as Record<string, unknown> | null,
   isStakingRewardsDetailsLoading = false,
   latestRewardStreak = 0,
@@ -32,7 +32,7 @@ const setupMocks = ({
   isError = false,
 }: {
   isBalanceLoading?: boolean;
-  isEligibleForRewards?: boolean;
+  isEpochTargetMet?: boolean;
   stakingRewardsDetails?: Record<string, unknown> | null;
   isStakingRewardsDetailsLoading?: boolean;
   latestRewardStreak?: number;
@@ -41,7 +41,7 @@ const setupMocks = ({
 } = {}) => {
   mockUseBalanceContext.mockReturnValue({ isLoading: isBalanceLoading });
   mockUseRewardContext.mockReturnValue({
-    isEligibleForRewards,
+    isEpochTargetMet,
     stakingRewardsDetails,
     isStakingRewardsDetailsLoading,
   });
@@ -59,25 +59,25 @@ describe('useStakingDetails', () => {
 
   describe('optimisticStreak', () => {
     it('returns streak + 1 when eligible for rewards', () => {
-      setupMocks({ isEligibleForRewards: true, latestRewardStreak: 5 });
+      setupMocks({ isEpochTargetMet: true, latestRewardStreak: 5 });
       const { result } = renderHook(() => useStakingDetails());
       expect(result.current.optimisticStreak).toBe(6);
     });
 
     it('returns streak unchanged when not eligible for rewards', () => {
-      setupMocks({ isEligibleForRewards: false, latestRewardStreak: 5 });
+      setupMocks({ isEpochTargetMet: false, latestRewardStreak: 5 });
       const { result } = renderHook(() => useStakingDetails());
       expect(result.current.optimisticStreak).toBe(5);
     });
 
     it('returns 1 when eligible with zero streak', () => {
-      setupMocks({ isEligibleForRewards: true, latestRewardStreak: 0 });
+      setupMocks({ isEpochTargetMet: true, latestRewardStreak: 0 });
       const { result } = renderHook(() => useStakingDetails());
       expect(result.current.optimisticStreak).toBe(1);
     });
 
     it('returns 0 when not eligible with zero streak', () => {
-      setupMocks({ isEligibleForRewards: false, latestRewardStreak: 0 });
+      setupMocks({ isEpochTargetMet: false, latestRewardStreak: 0 });
       const { result } = renderHook(() => useStakingDetails());
       expect(result.current.optimisticStreak).toBe(0);
     });

@@ -1,6 +1,7 @@
 import { ethers } from 'ethers';
 import { formatEther } from 'ethers/lib/utils';
 
+import { MechType } from '@/config/mechs';
 import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
 import { OPTIMISM_STAKING_PROGRAMS } from '@/config/stakingPrograms/optimism';
 import {
@@ -45,8 +46,19 @@ export abstract class OptimismService extends StakedAgentService {
     const stakingProgramConfig = STAKING_PROGRAMS[chainId][stakingProgramId];
     if (!stakingProgramConfig) throw new Error('Staking program not found');
 
-    const { activityChecker, contract: stakingTokenProxyContract } =
-      stakingProgramConfig;
+    const {
+      activityChecker,
+      contract: stakingTokenProxyContract,
+      mech: mechContract,
+      mechType,
+    } = stakingProgramConfig;
+
+    // New (decoupled-activity) Optimus contracts use the mech-marketplace
+    // activity checker: epoch activity is the count of marketplace requests,
+    // read from the mech contract. Legacy contracts count safe multisig nonces
+    // via the activity checker.
+    const isMarketplaceRegime =
+      mechType === MechType.MarketplaceV2 && !!mechContract;
 
     const provider = PROVIDERS[chainId].multicallProvider;
     const contractCalls = [
@@ -57,7 +69,9 @@ export abstract class OptimismService extends StakedAgentService {
       stakingTokenProxyContract.minStakingDeposit(),
       stakingTokenProxyContract.tsCheckpoint(),
       activityChecker.livenessRatio(),
-      activityChecker.getMultisigNonces(agentMultisigAddress),
+      isMarketplaceRegime
+        ? mechContract!.mapRequestCounts(agentMultisigAddress)
+        : activityChecker.getMultisigNonces(agentMultisigAddress),
     ];
     const multicallResponse = await provider.all(contractCalls);
 
@@ -69,11 +83,11 @@ export abstract class OptimismService extends StakedAgentService {
       minStakingDeposit,
       tsCheckpoint,
       livenessRatio,
-      currentMultisigNonces,
+      activityRead,
     ] = multicallResponse;
 
-    const lastMultisigNonces = serviceInfo[2];
-    const isServiceStaked = lastMultisigNonces.length > 0;
+    const lastNonces = serviceInfo[2];
+    const isServiceStaked = lastNonces.length > 0;
 
     // Calculate the number of requests required to be eligible for rewards
     const secondsSinceCheckpoint = getNowInSeconds() - tsCheckpoint;
@@ -82,9 +96,13 @@ export abstract class OptimismService extends StakedAgentService {
       (Math.ceil(effectivePeriod) * livenessRatio) / 1e18 +
       REQUESTS_SAFETY_MARGIN;
 
-    // Determine how many requests the service has handled since last checkpoint
+    // Requests handled since last checkpoint. Marketplace regime compares the
+    // mech request counter against its checkpoint snapshot (serviceInfo[2][1]);
+    // legacy regime compares safe multisig nonces (serviceInfo[2][0]).
     const eligibleRequests = isServiceStaked
-      ? currentMultisigNonces[0] - lastMultisigNonces[0]
+      ? isMarketplaceRegime
+        ? activityRead - lastNonces[1]
+        : activityRead[0] - lastNonces[0]
       : 0;
 
     // Check eligibility for rewards
@@ -108,6 +126,7 @@ export abstract class OptimismService extends StakedAgentService {
       livenessRatio,
       rewardsPerSecond,
       isEligibleForRewards,
+      activityThisEpoch: eligibleRequests,
       availableRewardsForEpoch,
       accruedServiceStakingRewards: parseFloat(
         formatEther(`${accruedStakingReward}`),

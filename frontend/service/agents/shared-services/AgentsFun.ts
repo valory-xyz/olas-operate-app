@@ -81,6 +81,7 @@ export abstract class AgentsFunService extends StakedAgentService {
       (effectivePeriod * livenessRatio) / 1e18 + REQUESTS_SAFETY_MARGIN;
 
     let isEligibleForRewards = false;
+    let eligibleRequests = 0;
 
     if (mechContract) {
       // Define eligibility for rewards in staking contracts based on
@@ -91,8 +92,7 @@ export abstract class AgentsFunService extends StakedAgentService {
       const mechRequestCountOnLastCheckpoint = isServiceStaked
         ? serviceInfo[2][1]
         : 0;
-      const eligibleRequests =
-        mechRequestCount - mechRequestCountOnLastCheckpoint;
+      eligibleRequests = mechRequestCount - mechRequestCountOnLastCheckpoint;
 
       isEligibleForRewards = eligibleRequests >= requiredRequests;
     } else {
@@ -101,7 +101,7 @@ export abstract class AgentsFunService extends StakedAgentService {
       const currentMultisigNonces =
         await activityChecker.getMultisigNonces(agentMultisigAddress);
       const lastMultisigNonces = serviceInfo[2];
-      const eligibleRequests = isServiceStaked
+      eligibleRequests = isServiceStaked
         ? currentMultisigNonces[0] - lastMultisigNonces[0]
         : 0;
 
@@ -124,6 +124,7 @@ export abstract class AgentsFunService extends StakedAgentService {
       livenessRatio,
       rewardsPerSecond,
       isEligibleForRewards,
+      activityThisEpoch: eligibleRequests,
       availableRewardsForEpoch,
       accruedServiceStakingRewards: parseFloat(
         formatEther(`${accruedStakingReward}`),

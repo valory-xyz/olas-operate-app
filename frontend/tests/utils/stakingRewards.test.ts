@@ -1,7 +1,12 @@
 import { ZodError } from 'zod';
 
 import { EvmChainIdMap } from '../../constants/chains';
-import { fetchAgentStakingRewardsInfo } from '../../utils/stakingRewards';
+import { STAKING_PROGRAM_IDS } from '../../constants/stakingProgram';
+import {
+  deriveIsEpochTargetMet,
+  fetchAgentStakingRewardsInfo,
+  getStakingProgramActivityTarget,
+} from '../../utils/stakingRewards';
 import {
   DEFAULT_SERVICE_NFT_TOKEN_ID,
   DEFAULT_STAKING_PROGRAM_ID,
@@ -117,5 +122,88 @@ describe('fetchAgentStakingRewardsInfo', () => {
     await expect(
       fetchAgentStakingRewardsInfo(defaultParams),
     ).rejects.toBeInstanceOf(ZodError);
+  });
+
+  it('rejects a non-finite activityThisEpoch (degenerate on-chain read fails loud)', async () => {
+    mockGetAgentStakingRewardsInfo.mockResolvedValue(
+      makeRawStakingRewardsInfo({ activityThisEpoch: NaN }),
+    );
+
+    await expect(
+      fetchAgentStakingRewardsInfo(defaultParams),
+    ).rejects.toBeInstanceOf(ZodError);
+  });
+});
+
+describe('getStakingProgramActivityTarget', () => {
+  it('returns the off-chain target for a decoupled (new-regime) program', () => {
+    expect(
+      getStakingProgramActivityTarget(
+        EvmChainIdMap.Polygon,
+        STAKING_PROGRAM_IDS.PolystratI,
+      ),
+    ).toBe(8);
+    expect(
+      getStakingProgramActivityTarget(
+        EvmChainIdMap.Optimism,
+        STAKING_PROGRAM_IDS.OptimusI,
+      ),
+    ).toBe(1);
+  });
+
+  it('returns undefined for a legacy program (no off-chain target)', () => {
+    expect(
+      getStakingProgramActivityTarget(
+        EvmChainIdMap.Polygon,
+        STAKING_PROGRAM_IDS.PolygonBeta1,
+      ),
+    ).toBeUndefined();
+  });
+
+  it('returns undefined when stakingProgramId is null', () => {
+    expect(
+      getStakingProgramActivityTarget(EvmChainIdMap.Polygon, null),
+    ).toBeUndefined();
+  });
+});
+
+describe('deriveIsEpochTargetMet', () => {
+  it('legacy regime (no target): mirrors isEligibleForRewards', () => {
+    expect(
+      deriveIsEpochTargetMet(
+        makeStakingRewardsInfo({ isEligibleForRewards: true }),
+        undefined,
+      ),
+    ).toBe(true);
+    expect(
+      deriveIsEpochTargetMet(
+        makeStakingRewardsInfo({ isEligibleForRewards: false }),
+        undefined,
+      ),
+    ).toBe(false);
+  });
+
+  it('decoupled regime: true once on-chain activity reaches the target', () => {
+    expect(
+      deriveIsEpochTargetMet(
+        makeStakingRewardsInfo({
+          activityThisEpoch: 8,
+          isEligibleForRewards: true,
+        }),
+        8,
+      ),
+    ).toBe(true);
+  });
+
+  it('decoupled regime: false while activity is below the target, even when staking KPI is met', () => {
+    expect(
+      deriveIsEpochTargetMet(
+        makeStakingRewardsInfo({
+          activityThisEpoch: 3,
+          isEligibleForRewards: true,
+        }),
+        8,
+      ),
+    ).toBe(false);
   });
 });

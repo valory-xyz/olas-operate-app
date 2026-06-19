@@ -16,6 +16,15 @@ import { POLYGON_STAKING_PROGRAMS } from './polygon';
 export type StakingProgramConfig = {
   chainId: EvmChainId;
   deprecated?: boolean; // hides program from UI unless user is already staked in this program
+  /**
+   * Off-chain per-epoch activity target (mech requests) for the decoupled-activity
+   * staking regime (OPE-1803). Presence marks this program as "new regime": the
+   * agent is "done for the epoch" when its on-chain activity count reaches this
+   * target, rather than when the on-chain staking KPI is met (which is ~1 here).
+   * Absent → legacy regime (eligibility == on-chain staking KPI). Must match the
+   * agent's hardcoded `ACTIVITY_TARGET`.
+   */
+  activityTarget?: number;
   name: string;
   address: Address;
   agentsSupported: AgentType[];

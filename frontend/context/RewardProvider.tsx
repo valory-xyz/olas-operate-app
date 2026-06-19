@@ -15,6 +15,10 @@ import { useElectronApi, useServices, useStore } from '@/hooks';
 import { useAgentStakingRewardsDetails } from '@/hooks/useAgentStakingRewardsDetails';
 import { useDynamicRefetchInterval } from '@/hooks/useDynamicRefetchInterval';
 import { Nullable, StakingRewardsInfo } from '@/types';
+import {
+  deriveIsEpochTargetMet,
+  getStakingProgramActivityTarget,
+} from '@/utils/stakingRewards';
 
 import { OnlineStatusContext } from './OnlineStatusProvider';
 import { StakingProgramContext } from './StakingProgramProvider';
@@ -26,7 +30,14 @@ export const RewardContext = createContext<{
   accruedServiceStakingRewards?: number;
   availableRewardsForEpoch?: bigint | null;
   availableRewardsForEpochEth?: number;
+  /** raw on-chain staking KPI (rewards unlocked) — ~1 request on new contracts */
   isEligibleForRewards?: boolean;
+  /**
+   * Regime-aware "agent has done its epoch work" signal — the cue the reward UI
+   * (banner, streak flame, sidebar dot, notification) and auto-run rotation use.
+   * Decoupled regime: on-chain activity >= off-chain target; legacy: == isEligibleForRewards.
+   */
+  isEpochTargetMet?: boolean;
   optimisticRewardsEarnedForEpoch?: number;
   minimumStakedAmountRequired?: number;
   updateRewards: () => Promise<void>;
@@ -108,27 +119,40 @@ export const RewardProvider = ({ children }: PropsWithChildren) => {
   const accruedServiceStakingRewards =
     stakingRewardsDetails?.accruedServiceStakingRewards;
 
+  // "Epoch work done" — regime-aware. Decoupled programs compare the on-chain
+  // activity count against the off-chain target; legacy programs fall back to
+  // the on-chain staking KPI (so behaviour is unchanged for them).
+  const isEpochTargetMet = useMemo<boolean | undefined>(() => {
+    if (!stakingRewardsDetails) return undefined;
+    const activityTarget = getStakingProgramActivityTarget(
+      currentChainId,
+      selectedStakingProgramId,
+    );
+    return deriveIsEpochTargetMet(stakingRewardsDetails, activityTarget);
+  }, [stakingRewardsDetails, currentChainId, selectedStakingProgramId]);
+
   // available rewards for the current epoch in ETH
   const availableRewardsForEpochEth = useMemo<number | undefined>(() => {
     if (!availableRewardsForEpoch) return;
     return parseFloat(formatUnits(`${availableRewardsForEpoch}`));
   }, [availableRewardsForEpoch]);
 
-  // optimism rewards earned for the current epoch in ETH
+  // optimistic rewards earned for the current epoch in ETH — shown once the
+  // agent has done its epoch work (target met), not merely when staking unlocks.
   const optimisticRewardsEarnedForEpoch = useMemo<number | undefined>(() => {
-    if (!isEligibleForRewards) return;
+    if (!isEpochTargetMet) return;
     if (!availableRewardsForEpochEth) return;
     return availableRewardsForEpochEth;
-  }, [availableRewardsForEpochEth, isEligibleForRewards]);
+  }, [availableRewardsForEpochEth, isEpochTargetMet]);
 
   // store the first staking reward achieved in the store for notification
   useEffect(() => {
-    if (!isEligibleForRewards) return;
+    if (!isEpochTargetMet) return;
     if (storeState?.firstStakingRewardAchieved) return;
     electronApi.store?.set?.('firstStakingRewardAchieved', true);
   }, [
     electronApi.store,
-    isEligibleForRewards,
+    isEpochTargetMet,
     storeState?.firstStakingRewardAchieved,
   ]);
 
@@ -151,6 +175,7 @@ export const RewardProvider = ({ children }: PropsWithChildren) => {
         availableRewardsForEpoch,
         availableRewardsForEpochEth,
         isEligibleForRewards,
+        isEpochTargetMet,
         optimisticRewardsEarnedForEpoch,
 
         // others

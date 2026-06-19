@@ -73,7 +73,7 @@ export const useAutoRunController = ({
   onAutoRunInstanceStarted,
   onAutoRunStartStateChange,
 }: UseAutoRunControllerParams) => {
-  const { isEligibleForRewards, stakingRewardsDetails } = useRewardContext();
+  const { isEpochTargetMet, stakingRewardsDetails } = useRewardContext();
 
   // Tracks whether the staking epoch has expired without a checkpoint
   // being called on-chain yet
@@ -174,7 +174,7 @@ export const useAutoRunController = ({
     runningAgentType,
     runningServiceConfigId,
     isSelectedAgentDetailsLoading,
-    isEligibleForRewards,
+    isEpochTargetMet,
     isEpochExpired,
     selectedAgentType,
     selectedServiceConfigId,
