@@ -93,7 +93,9 @@ export const useCompleteAgentSetup = (
     const masterSafe = getMasterSafeOf?.(evmHomeChainId);
     if (masterSafe) {
       const safeBalances = getMasterSafeBalancesOf(evmHomeChainId);
-      if (selectedStakingProgramId === 'no_staking') return 'invalid_contract';
+      if (selectedStakingProgramId === 'no_staking') {
+        return 'invalid_contract';
+      }
       if (allRequirementsMet(safeBalances, totalTokenRequirements))
         return 'readyToComplete';
     } else {

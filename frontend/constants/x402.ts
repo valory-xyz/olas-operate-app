@@ -13,6 +13,7 @@ export const X402_ENABLED_FLAGS: {
    */
   [AgentMap.AgentsFun]: false,
   [AgentMap.Modius]: true,
+  [AgentMap.Basius]: true,
   [AgentMap.PettAi]: false,
   [AgentMap.Polystrat]: true,
 };

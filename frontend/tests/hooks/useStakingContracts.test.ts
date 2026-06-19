@@ -281,5 +281,28 @@ describe('useStakingContracts', () => {
       const { result } = renderHook(() => useStakingContracts());
       expect(result.current.orderedStakingProgramIds).toEqual([]);
     });
+
+    // Regression: when `availableStakingProgramIds` was an unmemoized
+    // `Object.keys(...).map(...)`, every render produced a fresh array ref,
+    // which forced the downstream `useMemo` to recompute and return a new
+    // `orderedStakingProgramIds` ref every render — defeating memoization for
+    // every consumer. Consumers like `SelectActivityRewardsConfiguration`'s
+    // stable-order effect then fired on every render and (combined with a
+    // permissive guard) hit "Maximum update depth exceeded".
+    it('returns the same orderedStakingProgramIds ref across renders when inputs are stable', () => {
+      setupMocks({
+        isActiveStakingProgramLoaded: true,
+        selectedStakingProgramId: MARKETPLACE_3,
+      });
+
+      const { result, rerender } = renderHook(() => useStakingContracts());
+      const firstRef = result.current.orderedStakingProgramIds;
+
+      rerender();
+      expect(result.current.orderedStakingProgramIds).toBe(firstRef);
+
+      rerender();
+      expect(result.current.orderedStakingProgramIds).toBe(firstRef);
+    });
   });
 });

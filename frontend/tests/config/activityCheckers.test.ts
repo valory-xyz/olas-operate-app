@@ -81,6 +81,9 @@ describe('BASE_STAKING_PROGRAMS_ACTIVITY_CHECKERS', () => {
     'PettAiAgent2',
     'PettAiAgent3',
     'PettAiAgent4',
+    'BasiusI',
+    'BasiusII',
+    'BasiusIII',
   ] as const;
 
   it('has an activity checker for every Base staking program', () => {
@@ -90,9 +93,9 @@ describe('BASE_STAKING_PROGRAMS_ACTIVITY_CHECKERS', () => {
     }
   });
 
-  it('covers exactly 11 Base staking programs', () => {
+  it('covers exactly 14 Base staking programs', () => {
     expect(Object.keys(BASE_STAKING_PROGRAMS_ACTIVITY_CHECKERS)).toHaveLength(
-      11,
+      14,
     );
   });
 });

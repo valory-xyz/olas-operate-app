@@ -78,6 +78,15 @@ export const MECHS: Mechs = {
         ) as JsonFragment[],
       ),
     },
+    [MechType.MarketplaceV2]: {
+      name: 'Mech Marketplace V2',
+      contract: new MulticallContract(
+        '0xf24eE42edA0fc9b33B7D41B06Ee8ccD2Ef7C5020',
+        MECH_MARKETPLACE_V2_ABI.filter(
+          (abi) => (abi as JsonFragment).type === 'function',
+        ) as JsonFragment[],
+      ),
+    },
   },
   [EvmChainIdMap.Polygon]: {
     [MechType.MarketplaceV2]: {

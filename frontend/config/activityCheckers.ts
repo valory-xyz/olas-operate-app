@@ -165,6 +165,16 @@ export const BASE_STAKING_PROGRAMS_ACTIVITY_CHECKERS: Record<
   [STAKING_PROGRAM_IDS.PettAiAgent4]: getPetActivityCheckerContract(
     '0x7aD8E6032849Edd8bF742E459722Ee8B10e2cCFc',
   ),
+  // Basius (decoupled-activity) — shared V2 requester activity checker.
+  [STAKING_PROGRAM_IDS.BasiusI]: getRequesterActivityCheckerContract(
+    '0xE73C4e90983aa65d42b2de968E0C8F25Ced835A8',
+  ),
+  [STAKING_PROGRAM_IDS.BasiusII]: getRequesterActivityCheckerContract(
+    '0xE73C4e90983aa65d42b2de968E0C8F25Ced835A8',
+  ),
+  [STAKING_PROGRAM_IDS.BasiusIII]: getRequesterActivityCheckerContract(
+    '0xE73C4e90983aa65d42b2de968E0C8F25Ced835A8',
+  ),
 } as const;
 
 export const MODE_STAKING_PROGRAMS_ACTIVITY_CHECKERS: Record<

@@ -39,6 +39,10 @@ const BASE_STAKING_PROGRAM_IDS = {
   PettAiAgent2: 'pett_ai_agent_2',
   PettAiAgent3: 'pett_ai_agent_3',
   PettAiAgent4: 'pett_ai_agent_4',
+  // New (decoupled-activity) staking contracts — Basius on Base.
+  BasiusI: 'basius_i',
+  BasiusII: 'basius_ii',
+  BasiusIII: 'basius_iii',
 } as const;
 
 const MODE_STAKING_PROGRAM_IDS = {

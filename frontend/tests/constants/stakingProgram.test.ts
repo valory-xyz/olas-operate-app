@@ -150,6 +150,14 @@ describe('STAKING_PROGRAM_IDS', () => {
     it('PettAiAgent4 resolves to "pett_ai_agent_4"', () => {
       expect(STAKING_PROGRAM_IDS.PettAiAgent4).toBe('pett_ai_agent_4');
     });
+
+    it.each([
+      ['BasiusI', 'basius_i'],
+      ['BasiusII', 'basius_ii'],
+      ['BasiusIII', 'basius_iii'],
+    ] as const)('%s resolves to "%s" (decoupled-activity)', (key, value) => {
+      expect(STAKING_PROGRAM_IDS[key]).toBe(value);
+    });
   });
 
   describe('Mode programs', () => {
@@ -228,10 +236,10 @@ describe('STAKING_PROGRAM_IDS', () => {
   });
 
   describe('completeness and uniqueness', () => {
-    it('covers exactly 51 staking programs across all chains', () => {
-      // Chain totals: 23 Gnosis (16 legacy + 7 Omenstrat) + 11 Base + 5 Mode
-      // + 6 Optimism (3 legacy + 3 Optimus) + 6 Polygon (3 legacy + 3 Polystrat) = 51
-      expect(Object.keys(STAKING_PROGRAM_IDS)).toHaveLength(51);
+    it('covers exactly 54 staking programs across all chains', () => {
+      // Chain totals: 23 Gnosis (16 legacy + 7 Omenstrat) + 14 Base (11 + 3 Basius)
+      // + 5 Mode + 6 Optimism (3 legacy + 3 Optimus) + 6 Polygon (3 legacy + 3 Polystrat) = 54
+      expect(Object.keys(STAKING_PROGRAM_IDS)).toHaveLength(54);
     });
 
     it('has no duplicate ID strings (each program has a unique registry key)', () => {

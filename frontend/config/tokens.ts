@@ -127,7 +127,7 @@ export const GNOSIS_TOKEN_CONFIG: ChainTokenConfig = {
   },
 } as const;
 
-const BASE_TOKEN_CONFIG: ChainTokenConfig = {
+export const BASE_TOKEN_CONFIG: ChainTokenConfig = {
   [TokenSymbolMap.ETH]: {
     tokenType: TokenType.NativeGas,
     decimals: 18,
