@@ -85,28 +85,6 @@ export const StakingContractCard = ({
   const contractDetails = allStakingContractDetailsRecord?.[stakingProgramId];
   const { slotsLeft, totalSlots } = useEachStakingDetails(stakingProgramId);
 
-  // 'no_staking' has no on-chain contract to read APR / slots / OLAS-required
-  // from, so render a minimal informational card and let the user proceed via
-  // renderAction (which still triggers service creation with
-  // staking_program_id='no_staking').
-  if (stakingProgramId === 'no_staking') {
-    return (
-      <ContractCard $noBodyPadding $isView={!renderAction}>
-        <Flex vertical gap={8} className="px-24 py-24">
-          <Title level={3} className="m-0">
-            Staking disabled (QA build)
-          </Title>
-          <Text type="secondary">
-            This build skips on-chain staking so QA can validate the
-            fund/deploy/run/withdraw flow without the live Basius staking
-            contract. Rewards and staking-tier UI are intentionally bypassed.
-          </Text>
-        </Flex>
-        {renderAction?.()}
-      </ContractCard>
-    );
-  }
-
   return (
     <ContractCard $noBodyPadding $isView={!renderAction}>
       <Flex align="center" justify="space-between" className="px-24 py-24">
