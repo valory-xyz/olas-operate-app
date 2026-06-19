@@ -13,6 +13,7 @@ import {
   MOCK_MULTISIG_ADDRESS,
 } from '../../helpers/factories';
 import {
+  createMechContractMock,
   createNonceActivityCheckerMock,
   createStakingContractMock,
 } from '../../mocks/agentServiceMocks';
@@ -27,6 +28,7 @@ var shared: {
   multicallAll: jest.Mock;
   stakingContract: Record<string, jest.Mock>;
   activityChecker: Record<string, jest.Mock>;
+  mechContract: Record<string, jest.Mock>;
 };
 /* eslint-enable no-var */
 
@@ -34,6 +36,7 @@ shared = {
   multicallAll: jest.fn(),
   stakingContract: createStakingContractMock(),
   activityChecker: createNonceActivityCheckerMock(),
+  mechContract: createMechContractMock(),
 };
 
 // ---------------------------------------------------------------------------
@@ -65,6 +68,11 @@ jest.mock('../../../config/stakingPrograms', () => {
   return {
     STAKING_PROGRAMS: {
       [EvmChainIdMap.Base]: {
+        // BasiusI here is mocked as legacy (no mech/mechType) to exercise the
+        // legacy nonce-based code branch in BasiusService. In production all
+        // three Basius programs are configured with MarketplaceV2 + mech (see
+        // BasiusII mock below) — production never hits this branch, but the
+        // code path still exists in BasiusService and we want regression cover.
         [STAKING_PROGRAM_IDS.BasiusI]: {
           get activityChecker() {
             return shared.activityChecker;
@@ -72,6 +80,24 @@ jest.mock('../../../config/stakingPrograms', () => {
           get contract() {
             return shared.stakingContract;
           },
+          address: stakingAddr1,
+          chainId: EvmChainIdMap.Base,
+        },
+        // BasiusII as marketplace-regime — matches production shape (all three
+        // Basius programs ship with MarketplaceV2 mech + Requester V2 checker).
+        // Tests against this mock cover the actual production reward path.
+        [STAKING_PROGRAM_IDS.BasiusII]: {
+          get activityChecker() {
+            return shared.activityChecker;
+          },
+          get contract() {
+            return shared.stakingContract;
+          },
+          get mech() {
+            return shared.mechContract;
+          },
+          mechType: 'mech-marketplace-2v',
+          activityTarget: 1,
           address: stakingAddr1,
           chainId: EvmChainIdMap.Base,
         },
@@ -249,6 +275,86 @@ describe('BasiusService.getAgentStakingRewardsInfo', () => {
       REWARDS_PER_SECOND * (NOW_S - TS_CHECKPOINT),
     );
     expect(result!.availableRewardsForEpoch).toBe(expected);
+  });
+});
+
+// ====================================================================
+// getAgentStakingRewardsInfo — marketplace (decoupled-activity) regime
+// ====================================================================
+// Production Basius (BasiusI / BasiusII / BasiusIII) all run in this regime —
+// MarketplaceV2 mech reads the per-multisig request counter via
+// mapRequestCounts() instead of activityChecker.getMultisigNonces(), and the
+// per-epoch snapshot is at serviceInfo[2][1] (not [2][0]).
+describe('BasiusService.getAgentStakingRewardsInfo (marketplace regime)', () => {
+  const callMarketplace = (overrides: Record<string, unknown> = {}) =>
+    BasiusService.getAgentStakingRewardsInfo({
+      agentMultisigAddress: MOCK_MULTISIG_ADDRESS,
+      serviceId: DEFAULT_SERVICE_NFT_TOKEN_ID,
+      stakingProgramId: STAKING_PROGRAM_IDS.BasiusII,
+      chainId: BASE,
+      ...overrides,
+    });
+
+  const ACCRUED_REWARD = BigInt('1000000000000000000');
+  const MIN_STAKING_DEPOSIT = BigInt('20000000000000000000');
+  const TS_CHECKPOINT = NOW_S - 50_000;
+
+  /**
+   * Marketplace multicall response — last element is the mech request counter
+   * (scalar from mapRequestCounts), and serviceInfo[2][1] is its checkpoint
+   * snapshot. serviceInfo[2] = [safeNonce, mechRequestCheckpoint].
+   */
+  const buildMarketplaceResponse = (
+    mechRequestCount: number,
+    mechCheckpoint = 8,
+  ) => [
+    { 2: [5, mechCheckpoint] },
+    DEFAULT_LIVENESS_PERIOD_S,
+    10,
+    ACCRUED_REWARD,
+    MIN_STAKING_DEPOSIT,
+    TS_CHECKPOINT,
+    0, // livenessRatio → requiredRequests = 1 (just safety margin)
+    mechRequestCount,
+  ];
+
+  it('reads the mech request counter via mapRequestCounts (not getMultisigNonces)', async () => {
+    shared.multicallAll.mockResolvedValueOnce(buildMarketplaceResponse(20));
+
+    await callMarketplace();
+
+    expect(shared.mechContract.mapRequestCounts).toHaveBeenCalledWith(
+      MOCK_MULTISIG_ADDRESS,
+    );
+    expect(shared.activityChecker.getMultisigNonces).not.toHaveBeenCalled();
+  });
+
+  it('surfaces activityThisEpoch as the marketplace request delta (current - checkpoint[1])', async () => {
+    // 20 - 8 = 12 — uses serviceInfo[2][1] as the checkpoint, NOT [2][0]
+    shared.multicallAll.mockResolvedValueOnce(buildMarketplaceResponse(20));
+
+    const result = await callMarketplace();
+
+    expect(result!.activityThisEpoch).toBe(12);
+    expect(result!.isEligibleForRewards).toBe(true);
+  });
+
+  it('returns 0 activity when service is not staked (empty serviceInfo[2])', async () => {
+    shared.multicallAll.mockResolvedValueOnce([
+      { 2: [] },
+      DEFAULT_LIVENESS_PERIOD_S,
+      10,
+      ACCRUED_REWARD,
+      MIN_STAKING_DEPOSIT,
+      TS_CHECKPOINT,
+      0,
+      50,
+    ]);
+
+    const result = await callMarketplace();
+
+    expect(result!.activityThisEpoch).toBe(0);
+    expect(result!.isEligibleForRewards).toBe(false);
   });
 });
 
