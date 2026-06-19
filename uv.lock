@@ -1144,7 +1144,7 @@ wheels = [
 
 [[package]]
 name = "olas-operate-app"
-version = "1.6.27rc13"
+version = "1.6.27rc14"
 source = { virtual = "." }
 dependencies = [
     { name = "olas-operate-middleware" },
@@ -1161,7 +1161,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "olas-operate-middleware", git = "https://github.com/valory-xyz/olas-operate-middleware.git?rev=00b6e401a7c4d9a580c0d3ff2755ff7dfe288039" },
+    { name = "olas-operate-middleware", git = "https://github.com/valory-xyz/olas-operate-middleware.git?rev=e3db312304f991b738843932b1cc5a576455f8b9" },
     { name = "open-aea-cli-ipfs", specifier = "==2.2.8" },
     { name = "open-aea-ledger-cosmos", specifier = "==2.2.8" },
     { name = "open-aea-ledger-ethereum", specifier = "==2.2.8" },
@@ -1174,7 +1174,7 @@ dev = [{ name = "pyinstaller", specifier = "==6.20.0" }]
 [[package]]
 name = "olas-operate-middleware"
 version = "0.15.30"
-source = { git = "https://github.com/valory-xyz/olas-operate-middleware.git?rev=00b6e401a7c4d9a580c0d3ff2755ff7dfe288039#00b6e401a7c4d9a580c0d3ff2755ff7dfe288039" }
+source = { git = "https://github.com/valory-xyz/olas-operate-middleware.git?rev=e3db312304f991b738843932b1cc5a576455f8b9#e3db312304f991b738843932b1cc5a576455f8b9" }
 dependencies = [
     { name = "aiohttp" },
     { name = "argon2-cffi" },
