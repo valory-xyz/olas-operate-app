@@ -35,10 +35,9 @@ export const useCanMigrate = ({
     useService(serviceConfigId);
 
   const { buttonText, canMigrate } = useMemo(() => {
-    // QA build (BASIUS_QA_NO_STAKING_MODE): no contract exists for
-    // 'no_staking', so the slot-availability check below would always fail
-    // (maxSlots = slotsTaken = 0). Short-circuit so the Continue button
-    // stays enabled and lets the user proceed.
+    // No contract exists for 'no_staking', so the slot-availability check
+    // below would always fail (maxSlots = slotsTaken = 0). Short-circuit so
+    // the Continue button stays enabled and lets the user proceed.
     if (stakingProgramId === 'no_staking') {
       return {
         buttonText: MigrateButtonText.SelectContract,

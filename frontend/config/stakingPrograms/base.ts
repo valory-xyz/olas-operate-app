@@ -2,7 +2,6 @@ import { Contract as MulticallContract } from 'ethers-multicall';
 
 import { STAKING_TOKEN_PROXY_ABI } from '@/abis/stakingTokenProxy';
 import { AgentMap, EvmChainIdMap, STAKING_PROGRAM_IDS } from '@/constants';
-import { BASIUS_QA_NO_STAKING_MODE } from '@/constants/agent';
 import { Address } from '@/types';
 import { deriveStakingProgramId } from '@/utils';
 
@@ -34,9 +33,9 @@ const BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES: Record<string, Address> = {
     '0xFA0ca3935758cB81D35A8F1395b9Eb5a596ce301',
   [STAKING_PROGRAM_IDS.PettAiAgent4]:
     '0x00D544c10BDC0E9b0a71CeAF52C1342BB8f21c1D',
-  // TODO(basius): replace with real Base staking contract address before launch
-  [STAKING_PROGRAM_IDS.BasiusAlpha1]:
-    '0x0000000000000000000000000000000000000001',
+  [STAKING_PROGRAM_IDS.BasiusI]: '0x0fB55CEf7B12B76ea52900325461a5443F51B43F',
+  [STAKING_PROGRAM_IDS.BasiusII]: '0x728ca3b024Ba4c273695Df6e45e79DB675B8c756',
+  [STAKING_PROGRAM_IDS.BasiusIII]: '0x9593C4524DF86f46935aa0eC996B4ccBe71c8234',
 };
 
 export const BASE_STAKING_PROGRAMS: StakingProgramMap = {
@@ -309,46 +308,70 @@ export const BASE_STAKING_PROGRAMS: StakingProgramMap = {
       ],
     ),
   },
-  // QA build (BASIUS_QA_NO_STAKING_MODE=true): omit BasiusAlpha1 entirely
-  // because the placeholder address 0x000…001 has no on-chain code. Leaving
-  // it would BUFFER_OVERRUN every multicall in
-  // StakedAgentService.getCurrentStakingProgramByServiceId() — which is
-  // batched per-chain, so a single bad entry breaks rewards lookups for
-  // ALL Base agents (Basius, AgentsFun, PettAi), not just Basius.
-  ...(BASIUS_QA_NO_STAKING_MODE
-    ? {}
-    : {
-        [STAKING_PROGRAM_IDS.BasiusAlpha1]: {
-          chainId: EvmChainIdMap.Base,
-          name: 'Basius Alpha I',
-          agentsSupported: [AgentMap.Basius],
-          // TODO(basius): confirm OLAS tier with agent team — design mockup
-          // shows 40 OLAS but Optimus tiers are 100/1000/5000 (no 40). The
-          // displayed value comes from the deployed staking contract's
-          // minStakingDeposit at runtime, so this static fallback only matters
-          // before the real contract address replaces the 0x000…001 placeholder.
-          stakingRequirements: {
-            [TokenSymbolMap.OLAS]: 100,
-          },
-          activityChecker:
-            BASE_STAKING_PROGRAMS_ACTIVITY_CHECKERS[
-              STAKING_PROGRAM_IDS.BasiusAlpha1
-            ],
-          address:
-            BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
-              STAKING_PROGRAM_IDS.BasiusAlpha1
-            ],
-          contract: new MulticallContract(
-            BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
-              STAKING_PROGRAM_IDS.BasiusAlpha1
-            ],
-            STAKING_TOKEN_PROXY_ABI,
-          ),
-          id: deriveStakingProgramId(
-            BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
-              STAKING_PROGRAM_IDS.BasiusAlpha1
-            ],
-          ),
-        },
-      }),
+  [STAKING_PROGRAM_IDS.BasiusI]: {
+    chainId: EvmChainIdMap.Base,
+    name: 'Basius I',
+    activityTarget: 1,
+    agentsSupported: [AgentMap.Basius],
+    stakingRequirements: {
+      [TokenSymbolMap.OLAS]: 100,
+    },
+    mechType: MechType.MarketplaceV2,
+    mech: MECHS[EvmChainIdMap.Base][MechType.MarketplaceV2].contract,
+    activityChecker:
+      BASE_STAKING_PROGRAMS_ACTIVITY_CHECKERS[STAKING_PROGRAM_IDS.BasiusI],
+    address:
+      BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[STAKING_PROGRAM_IDS.BasiusI],
+    contract: new MulticallContract(
+      BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[STAKING_PROGRAM_IDS.BasiusI],
+      STAKING_TOKEN_PROXY_ABI,
+    ),
+    id: deriveStakingProgramId(
+      BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[STAKING_PROGRAM_IDS.BasiusI],
+    ),
+  },
+  [STAKING_PROGRAM_IDS.BasiusII]: {
+    chainId: EvmChainIdMap.Base,
+    name: 'Basius II',
+    activityTarget: 1,
+    agentsSupported: [AgentMap.Basius],
+    stakingRequirements: {
+      [TokenSymbolMap.OLAS]: 1000,
+    },
+    mechType: MechType.MarketplaceV2,
+    mech: MECHS[EvmChainIdMap.Base][MechType.MarketplaceV2].contract,
+    activityChecker:
+      BASE_STAKING_PROGRAMS_ACTIVITY_CHECKERS[STAKING_PROGRAM_IDS.BasiusII],
+    address:
+      BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[STAKING_PROGRAM_IDS.BasiusII],
+    contract: new MulticallContract(
+      BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[STAKING_PROGRAM_IDS.BasiusII],
+      STAKING_TOKEN_PROXY_ABI,
+    ),
+    id: deriveStakingProgramId(
+      BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[STAKING_PROGRAM_IDS.BasiusII],
+    ),
+  },
+  [STAKING_PROGRAM_IDS.BasiusIII]: {
+    chainId: EvmChainIdMap.Base,
+    name: 'Basius III',
+    activityTarget: 1,
+    agentsSupported: [AgentMap.Basius],
+    stakingRequirements: {
+      [TokenSymbolMap.OLAS]: 5000,
+    },
+    mechType: MechType.MarketplaceV2,
+    mech: MECHS[EvmChainIdMap.Base][MechType.MarketplaceV2].contract,
+    activityChecker:
+      BASE_STAKING_PROGRAMS_ACTIVITY_CHECKERS[STAKING_PROGRAM_IDS.BasiusIII],
+    address:
+      BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[STAKING_PROGRAM_IDS.BasiusIII],
+    contract: new MulticallContract(
+      BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[STAKING_PROGRAM_IDS.BasiusIII],
+      STAKING_TOKEN_PROXY_ABI,
+    ),
+    id: deriveStakingProgramId(
+      BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[STAKING_PROGRAM_IDS.BasiusIII],
+    ),
+  },
 };

@@ -7,7 +7,6 @@ import {
   TokenSymbolMap,
 } from '@/config/tokens';
 import { AgentMap, EnvProvisionMap as EnvProvisionType } from '@/constants';
-import { BASIUS_QA_NO_STAKING_MODE } from '@/constants/agent';
 import { ServiceTemplate } from '@/types';
 import { parseEther, parseUnits } from '@/utils';
 
@@ -342,20 +341,13 @@ export const BASIUS_SERVICE_TEMPLATE: ServiceTemplate = {
   home_chain: MiddlewareChainMap.BASE,
   configurations: {
     [MiddlewareChainMap.BASE]: {
-      staking_program_id: STAKING_PROGRAM_IDS.BasiusAlpha1, // default, may be overwritten
+      staking_program_id: STAKING_PROGRAM_IDS.BasiusI, // default, may be overwritten
       nft: 'bafybeih76rsunj3knqrx2n6d2whf576kd6gf67u5j5t6vo4fnvahlw7v5i',
       rpc: '', // overwritten
       // Olas Registry agent ID 115:
       // https://marketplace.olas.network/ethereum/ai-agents/115
       agent_id: 115,
-      // 20 OLAS bond when staking is live; in QA `no_staking` mode the
-      // middleware (funding_manager.py) reinterprets cost_of_bond as a
-      // native-token requirement on the master safe — for Base that's
-      // 20 ETH bond + 20 ETH security deposit = 40 ETH demanded, which
-      // is absurd for a no-staking test. Set to '0' under QA so the
-      // protocol bonds fall back to MIN_AGENT_BOND/MIN_SECURITY_DEPOSIT
-      // (1 wei each).
-      cost_of_bond: BASIUS_QA_NO_STAKING_MODE ? '0' : parseEther(20),
+      cost_of_bond: parseEther(20),
       fund_requirements: {
         [ethers.constants.AddressZero]: {
           agent: parseEther(0.0002),

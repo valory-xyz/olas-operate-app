@@ -65,7 +65,7 @@ jest.mock('../../../config/stakingPrograms', () => {
   return {
     STAKING_PROGRAMS: {
       [EvmChainIdMap.Base]: {
-        [STAKING_PROGRAM_IDS.BasiusAlpha1]: {
+        [STAKING_PROGRAM_IDS.BasiusI]: {
           get activityChecker() {
             return shared.activityChecker;
           },
@@ -93,7 +93,7 @@ jest.mock('../../../config/stakingPrograms/base', () => {
 
   return {
     BASE_STAKING_PROGRAMS: {
-      [STAKING_PROGRAM_IDS.BasiusAlpha1]: {
+      [STAKING_PROGRAM_IDS.BasiusI]: {
         get contract() {
           return shared.stakingContract;
         },
@@ -108,7 +108,7 @@ jest.mock('../../../config/stakingPrograms/base', () => {
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
-const BASE_PROGRAM = STAKING_PROGRAM_IDS.BasiusAlpha1;
+const BASE_PROGRAM = STAKING_PROGRAM_IDS.BasiusI;
 const BASE = EvmChainIdMap.Base;
 const GNOSIS = EvmChainIdMap.Gnosis;
 const NOW_S = 1_710_100_000;

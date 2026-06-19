@@ -7,7 +7,7 @@
  */
 
 import { BASE_STAKING_PROGRAMS } from '../../../config/stakingPrograms/base';
-import { AgentMap, BASIUS_QA_NO_STAKING_MODE } from '../../../constants/agent';
+import { AgentMap } from '../../../constants/agent';
 import { EvmChainIdMap } from '../../../constants/chains';
 import { STAKING_PROGRAM_IDS } from '../../../constants/stakingProgram';
 
@@ -34,9 +34,9 @@ describe('BASE_STAKING_PROGRAMS', () => {
       STAKING_PROGRAM_IDS.PettAiAgent2,
       STAKING_PROGRAM_IDS.PettAiAgent3,
       STAKING_PROGRAM_IDS.PettAiAgent4,
-      // BasiusAlpha1 is omitted in QA builds (placeholder address would
-      // break multicalls) — see BASIUS_QA_NO_STAKING_MODE in base.ts.
-      ...(BASIUS_QA_NO_STAKING_MODE ? [] : [STAKING_PROGRAM_IDS.BasiusAlpha1]),
+      STAKING_PROGRAM_IDS.BasiusI,
+      STAKING_PROGRAM_IDS.BasiusII,
+      STAKING_PROGRAM_IDS.BasiusIII,
     ];
     for (const id of expectedIds) {
       expect(BASE_STAKING_PROGRAMS[id]).toBeDefined();
@@ -155,21 +155,27 @@ describe('BASE_STAKING_PROGRAMS', () => {
     });
   });
 
-  // Skip Basius checks while BASIUS_QA_NO_STAKING_MODE is on — the entry
-  // is intentionally absent from BASE_STAKING_PROGRAMS in that build.
-  const describeBasius = BASIUS_QA_NO_STAKING_MODE ? describe.skip : describe;
-  describeBasius('Basius programs', () => {
-    it('BasiusAlpha1 supports only Basius agent', () => {
-      const program = BASE_STAKING_PROGRAMS[STAKING_PROGRAM_IDS.BasiusAlpha1];
-      expect(program.agentsSupported).toContain(AgentMap.Basius);
-      expect(program.agentsSupported).not.toContain(AgentMap.AgentsFun);
-      expect(program.agentsSupported).not.toContain(AgentMap.PettAi);
+  describe('Basius programs (decoupled-activity)', () => {
+    const basiusIds = [
+      STAKING_PROGRAM_IDS.BasiusI,
+      STAKING_PROGRAM_IDS.BasiusII,
+      STAKING_PROGRAM_IDS.BasiusIII,
+    ];
+
+    it('support only the Basius agent', () => {
+      for (const id of basiusIds) {
+        const program = BASE_STAKING_PROGRAMS[id];
+        expect(program.agentsSupported).toContain(AgentMap.Basius);
+        expect(program.agentsSupported).not.toContain(AgentMap.AgentsFun);
+        expect(program.agentsSupported).not.toContain(AgentMap.PettAi);
+      }
     });
 
-    it('BasiusAlpha1 is active (not deprecated)', () => {
-      expect(
-        BASE_STAKING_PROGRAMS[STAKING_PROGRAM_IDS.BasiusAlpha1].deprecated,
-      ).toBeUndefined();
+    it('are active (not deprecated) and carry an off-chain activityTarget of 1', () => {
+      for (const id of basiusIds) {
+        expect(BASE_STAKING_PROGRAMS[id].deprecated).toBeUndefined();
+        expect(BASE_STAKING_PROGRAMS[id].activityTarget).toBe(1);
+      }
     });
   });
 

@@ -6,11 +6,7 @@ import {
   MiddlewareChainMap,
   STAKING_PROGRAM_IDS,
 } from '@/constants';
-import {
-  AgentMap,
-  AgentType,
-  BASIUS_QA_NO_STAKING_MODE,
-} from '@/constants/agent';
+import { AgentMap, AgentType } from '@/constants/agent';
 import {
   BASIUS_SERVICE_TEMPLATE,
   MODIUS_SERVICE_TEMPLATE,
@@ -195,16 +191,7 @@ export const AGENT_CONFIG: {
         [TokenSymbolMap.USDC]: getBasiusUsdcConfig(),
       },
     },
-    // TODO(basius): flip BASIUS_QA_NO_STAKING_MODE to `false` (or hard-code
-    // STAKING_PROGRAM_IDS.BasiusAlpha1 here) when the real Basius staking
-    // contract is deployed on Base. While `true`, Pearl sends
-    // staking_program_id='no_staking' so the middleware skips the on-chain
-    // staking call (protocol.py:713). QA can fund / deploy / run / withdraw
-    // without the real contract; the staking + rewards code paths remain
-    // untested until the flag is flipped back.
-    defaultStakingProgramId: BASIUS_QA_NO_STAKING_MODE
-      ? 'no_staking'
-      : STAKING_PROGRAM_IDS.BasiusAlpha1,
+    defaultStakingProgramId: STAKING_PROGRAM_IDS.BasiusI,
     serviceApi: BasiusService,
     displayName: 'Basius',
     description:

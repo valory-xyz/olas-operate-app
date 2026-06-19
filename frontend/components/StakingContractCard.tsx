@@ -85,11 +85,10 @@ export const StakingContractCard = ({
   const contractDetails = allStakingContractDetailsRecord?.[stakingProgramId];
   const { slotsLeft, totalSlots } = useEachStakingDetails(stakingProgramId);
 
-  // QA build path: NEXT_PUBLIC_BASIUS_QA_NO_STAKING=true selects 'no_staking'
-  // as the default for Basius. There's no on-chain contract to read APR /
-  // slots / OLAS-required from, so render a minimal informational card and
-  // let the user proceed via renderAction (which still triggers service
-  // creation with staking_program_id='no_staking').
+  // 'no_staking' has no on-chain contract to read APR / slots / OLAS-required
+  // from, so render a minimal informational card and let the user proceed via
+  // renderAction (which still triggers service creation with
+  // staking_program_id='no_staking').
   if (stakingProgramId === 'no_staking') {
     return (
       <ContractCard $noBodyPadding $isView={!renderAction}>
