@@ -201,7 +201,7 @@ export const AGENT_CONFIG: {
     category: 'DeFi',
     defaultBehavior:
       'Conservative volatile exposure across DEXs and lending markets with advanced functionalities enabled.',
-    servicePublicId: 'valory/optimus:0.1.0',
+    servicePublicId: 'valory/basius:0.1.0',
     erc20Tokens: [TokenSymbolMap.USDC],
   },
   [AgentMap.AgentsFun]: {
