@@ -22,7 +22,7 @@ const BABYDEGEN_COMMON_TEMPLATE: Pick<
   ServiceTemplate,
   'hash' | 'service_version' | 'agent_release'
 > = {
-  hash: 'bafybeigc77ps4pbrbjjeyeipe5gk4zp66sv2rlvgead2ccaxejqqzjlkx4',
+  hash: 'bafybeie2zrvd5mfswtktaagjtvhamnl4lv53hetu6skrzytv73sxn6joie',
   service_version: 'v0.10.1',
   agent_release: {
     is_aea: true,
@@ -40,7 +40,7 @@ const BASIUS_TEMPLATE_RELEASE: Pick<
   ServiceTemplate,
   'hash' | 'service_version' | 'agent_release'
 > = {
-  hash: 'bafybeie2zrvd5mfswtktaagjtvhamnl4lv53hetu6skrzytv73sxn6joie',
+  hash: 'bafybeiehwn2lc773hlwybuo6hwce556pnozk7z7c3cn25reegaefzcaoe4',
   service_version: 'v0.12.0-rc3',
   agent_release: {
     is_aea: true,
@@ -263,13 +263,6 @@ export const OPTIMUS_SERVICE_TEMPLATE: ServiceTemplate = {
       value: '',
       provision_type: EnvProvisionType.COMPUTED,
     },
-    FUND_REQUIREMENTS: {
-      name: 'Fund requirements',
-      description: '',
-      value:
-        '{"optimism":{"agent":{"0x0000000000000000000000000000000000000000":{"topup":200000000000000,"threshold":100000000000000}},"safe":{"0x0000000000000000000000000000000000000000":{"topup":0,"threshold":0}}}}',
-      provision_type: EnvProvisionType.FIXED,
-    },
     STAKING_TOKEN_CONTRACT_ADDRESS: {
       name: 'Staking token contract address',
       description: '',
@@ -409,13 +402,6 @@ export const BASIUS_SERVICE_TEMPLATE: ServiceTemplate = {
       description: '',
       value: '',
       provision_type: EnvProvisionType.COMPUTED,
-    },
-    FUND_REQUIREMENTS: {
-      name: 'Fund requirements',
-      description: '',
-      value:
-        '{"base":{"agent":{"0x0000000000000000000000000000000000000000":{"topup":200000000000000,"threshold":100000000000000}},"safe":{"0x0000000000000000000000000000000000000000":{"topup":0,"threshold":0}}}}',
-      provision_type: EnvProvisionType.FIXED,
     },
     STAKING_TOKEN_CONTRACT_ADDRESS: {
       name: 'Staking token contract address',
