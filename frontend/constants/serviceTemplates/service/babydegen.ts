@@ -263,6 +263,13 @@ export const OPTIMUS_SERVICE_TEMPLATE: ServiceTemplate = {
       value: '',
       provision_type: EnvProvisionType.COMPUTED,
     },
+    FUND_REQUIREMENTS: {
+      name: 'Fund requirements',
+      description: '',
+      value:
+        '{"optimism":{"agent":{"0x0000000000000000000000000000000000000000":{"topup":200000000000000,"threshold":100000000000000}},"safe":{"0x0000000000000000000000000000000000000000":{"topup":0,"threshold":0}}}}',
+      provision_type: EnvProvisionType.FIXED,
+    },
     STAKING_TOKEN_CONTRACT_ADDRESS: {
       name: 'Staking token contract address',
       description: '',
@@ -402,6 +409,13 @@ export const BASIUS_SERVICE_TEMPLATE: ServiceTemplate = {
       description: '',
       value: '',
       provision_type: EnvProvisionType.COMPUTED,
+    },
+    FUND_REQUIREMENTS: {
+      name: 'Fund requirements',
+      description: '',
+      value:
+        '{"base":{"agent":{"0x0000000000000000000000000000000000000000":{"topup":200000000000000,"threshold":100000000000000}},"safe":{"0x0000000000000000000000000000000000000000":{"topup":0,"threshold":0}}}}',
+      provision_type: EnvProvisionType.FIXED,
     },
     STAKING_TOKEN_CONTRACT_ADDRESS: {
       name: 'Staking token contract address',
