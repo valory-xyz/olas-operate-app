@@ -40,14 +40,14 @@ const BASIUS_TEMPLATE_RELEASE: Pick<
   ServiceTemplate,
   'hash' | 'service_version' | 'agent_release'
 > = {
-  hash: 'bafybeigrgrm66iriunfrflz2ybmeg4efmjj2xaiqnwzpo7ygc6dte2tqnm',
-  service_version: 'v0.12.0-rc8',
+  hash: 'bafybeicp74th4cghtcnk4nvdhfnxwodwuuv3vrisk6ijetf7ausk7xsama',
+  service_version: 'v0.12.0-rc9',
   agent_release: {
     is_aea: true,
     repository: {
       owner: 'valory-xyz',
       name: 'optimus',
-      version: 'v0.12.0-rc8',
+      version: 'v0.12.0-rc9',
     },
   },
 };
