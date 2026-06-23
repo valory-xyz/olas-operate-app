@@ -49,7 +49,7 @@
     "semver": "7.7.2",
     "styled-components": "6.1.19",
     "sudo-prompt": "9.2.1",
-    "undici": "7.25.0",
+    "undici": "7.28.0",
     "usehooks-ts": "2.16.0",
     "winston": "3.17.0",
     "zod": "3.25.76",
