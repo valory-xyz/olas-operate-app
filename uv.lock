@@ -1144,7 +1144,7 @@ wheels = [
 
 [[package]]
 name = "olas-operate-app"
-version = "1.6.27rc15"
+version = "1.6.27rc24"
 source = { virtual = "." }
 dependencies = [
     { name = "olas-operate-middleware" },
@@ -1161,7 +1161,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "olas-operate-middleware", specifier = "==0.15.30" },
+    { name = "olas-operate-middleware", specifier = "==0.15.31" },
     { name = "open-aea-cli-ipfs", specifier = "==2.2.8" },
     { name = "open-aea-ledger-cosmos", specifier = "==2.2.8" },
     { name = "open-aea-ledger-ethereum", specifier = "==2.2.8" },
@@ -1173,7 +1173,7 @@ dev = [{ name = "pyinstaller", specifier = "==6.20.0" }]
 
 [[package]]
 name = "olas-operate-middleware"
-version = "0.15.30"
+version = "0.15.31"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiohttp" },
@@ -1193,9 +1193,9 @@ dependencies = [
     { name = "uvicorn" },
     { name = "werkzeug" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/a7/6c/1720b70324001bef77c099762b85dc5f09836fe59814f918b36c4016a7fd/olas_operate_middleware-0.15.30.tar.gz", hash = "sha256:88b8c1a6c8c88a3385a3cdc63354dedb6b1ee7918af3dcb42f11acc1b5ce8856", size = 292297, upload-time = "2026-06-23T10:16:01.539Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/90/85/1061a21bb15bef5b16840cd03cc8ea7970de047cdb5dc38b5e7ad04f8a6e/olas_operate_middleware-0.15.31.tar.gz", hash = "sha256:fc8ab10cea416bc49ef202bc080175e59ff73982a055c74a5daa12eab67db7c9", size = 293905, upload-time = "2026-06-24T14:29:49.978Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/73/ba/fbcd00d4b34ec475315192505e9898f5971e16e72dcb919efe78ae4287cd/olas_operate_middleware-0.15.30-py3-none-any.whl", hash = "sha256:70c6e93a39df0bc8304c134ad788fbf1ef179d907235303109814e3c32ddaf2b", size = 351461, upload-time = "2026-06-23T10:15:59.97Z" },
+    { url = "https://files.pythonhosted.org/packages/fa/37/7a547b2a1ae540670480b018939b244617b9beebcf9f708bfe0d53a621b7/olas_operate_middleware-0.15.31-py3-none-any.whl", hash = "sha256:543313b4fcb06c00e7c5ccb7c7defff74638c493726911b186d8faeb94ae667d", size = 352798, upload-time = "2026-06-24T14:29:48.391Z" },
 ]
 
 [[package]]

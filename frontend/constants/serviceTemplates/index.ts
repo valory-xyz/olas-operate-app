@@ -1,6 +1,7 @@
 export { AGENT_UI_RELEASES, type AgentUiRelease } from './agentUiReleases';
 export { KPI_DESC_PREFIX } from './constants';
 export {
+  BASIUS_SERVICE_TEMPLATE,
   MODIUS_SERVICE_TEMPLATE,
   OPTIMUS_SERVICE_TEMPLATE,
 } from './service/babydegen';

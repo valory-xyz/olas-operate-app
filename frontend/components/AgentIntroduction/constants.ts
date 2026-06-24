@@ -96,6 +96,22 @@ export const PETT_AI_ONBOARDING_STEPS: OnboardingStep[] = [
   },
 ] as const;
 
+export const BASIUS_ONBOARDING_STEPS: OnboardingStep[] = [
+  {
+    desc: 'An autonomous AI agent that is designed to streamline your DeFi experience by intelligently managing your assets on Base.',
+  },
+  {
+    title: 'Your AI Portfolio Manager',
+    desc: 'Basius collects real-time market data from CoinGecko and autonomously manages your investments using Aerodrome — delivering hands-free portfolio growth.',
+    imgSrc: 'introduction/setup-agent-basius-1',
+  },
+  {
+    title: 'Choose the Best Strategy',
+    desc: 'Basius learns autonomously, adapts to changing market conditions, and selects the best next strategy to invest on your behalf.',
+    imgSrc: 'introduction/setup-agent-basius-2',
+  },
+] as const;
+
 export const POLYSTRAT_ONBOARDING_STEPS: OnboardingStep[] = [
   {
     desc: 'Trade Polymarket on autopilot with your customizable, always-on AI agent. Polystrat scans markets in real-time, executes trades on future events for you and collects winnings as the markets resolve.',

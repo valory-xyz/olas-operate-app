@@ -112,6 +112,14 @@ jest.mock('../../config/stakingPrograms', () => ({
   STAKING_PROGRAMS: {
     [EvmChainIdMap.Gnosis]: {
       [STAKING_PROGRAM_IDS.PearlBetaMechMarketplace3]: { name: 'test' },
+      // Synthetic decoupled-activity program (presence of activityTarget marks the
+      // new regime). Uses BasiusI — the only decoupled id still shipping after the
+      // others were hidden for QA (OPE-1803) — under a Gnosis mock purely to
+      // exercise the generic isEpochTargetMet derivation.
+      [STAKING_PROGRAM_IDS.BasiusI]: {
+        name: 'Basius I',
+        activityTarget: 8,
+      },
     },
   },
 }));
@@ -186,6 +194,21 @@ const Wrapper = ({ children }: PropsWithChildren) => (
 
 const renderRewardContext = () =>
   renderHook(() => useContext(RewardContext), { wrapper: Wrapper });
+
+const renderWithStakingProgram = (stakingProgramId: StakingProgramId) =>
+  renderHook(() => useContext(RewardContext), {
+    wrapper: ({ children }: PropsWithChildren) => (
+      <OnlineStatusContext.Provider value={{ isOnline: true }}>
+        <StakingProgramContext.Provider
+          value={createStakingProgramContextValue({
+            selectedStakingProgramId: stakingProgramId,
+          })}
+        >
+          <RewardProvider>{children}</RewardProvider>
+        </StakingProgramContext.Provider>
+      </OnlineStatusContext.Provider>
+    ),
+  });
 
 // ── Tests ─────────────────────────────────────────────────────────────
 
@@ -284,6 +307,42 @@ describe('RewardProvider', () => {
       setupMocks({ availableRewardsForEpoch: undefined });
       const { result } = renderRewardContext();
       expect(result.current.availableRewardsForEpochEth).toBeUndefined();
+    });
+  });
+
+  describe('isEpochTargetMet (decoupled-activity regime, OPE-1803)', () => {
+    it('legacy program: mirrors the on-chain staking KPI, ignoring activity count', () => {
+      setupMocks({
+        stakingRewardsDetails: makeStakingRewardsInfo({
+          isEligibleForRewards: true,
+          activityThisEpoch: 0,
+        }),
+      });
+      // Default wrapper uses a legacy program (no activityTarget).
+      const { result } = renderRewardContext();
+      expect(result.current.isEpochTargetMet).toBe(true);
+    });
+
+    it('decoupled program: true once on-chain activity reaches the target (8)', () => {
+      setupMocks({
+        stakingRewardsDetails: makeStakingRewardsInfo({
+          isEligibleForRewards: true,
+          activityThisEpoch: 8,
+        }),
+      });
+      const { result } = renderWithStakingProgram(STAKING_PROGRAM_IDS.BasiusI);
+      expect(result.current.isEpochTargetMet).toBe(true);
+    });
+
+    it('decoupled program: false below target even when the staking KPI is met', () => {
+      setupMocks({
+        stakingRewardsDetails: makeStakingRewardsInfo({
+          isEligibleForRewards: true,
+          activityThisEpoch: 3,
+        }),
+      });
+      const { result } = renderWithStakingProgram(STAKING_PROGRAM_IDS.BasiusI);
+      expect(result.current.isEpochTargetMet).toBe(false);
     });
   });
 

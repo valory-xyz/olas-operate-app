@@ -1,6 +1,7 @@
 import { ethers } from 'ethers';
 import { formatEther } from 'ethers/lib/utils';
 
+import { MechType } from '@/config/mechs';
 import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
 import { BASE_STAKING_PROGRAMS } from '@/config/stakingPrograms/base';
 import {
@@ -9,33 +10,36 @@ import {
   PROVIDERS,
   StakingProgramId,
 } from '@/constants';
-import { Address } from '@/types';
 import {
+  Address,
   ServiceStakingDetails,
   StakingContractDetails,
   StakingRewardsInfo,
-} from '@/types/Autonolas';
+} from '@/types';
 import { isValidServiceId } from '@/utils';
 
-import { ONE_YEAR, StakedAgentService } from './StakedAgentService';
+import {
+  ONE_YEAR,
+  StakedAgentService,
+} from './shared-services/StakedAgentService';
 
 const REQUESTS_SAFETY_MARGIN = 1;
-export abstract class AgentsFunService extends StakedAgentService {
+
+const getNowInSeconds = () => Math.floor(Date.now() / 1000);
+
+export abstract class BasiusService extends StakedAgentService {
   static getAgentStakingRewardsInfo = async ({
     agentMultisigAddress,
     serviceId,
     stakingProgramId,
-    chainId,
+    chainId = EvmChainIdMap.Base,
   }: {
     agentMultisigAddress: Address;
     serviceId: number;
     stakingProgramId: StakingProgramId;
-    chainId: EvmChainId;
+    chainId?: EvmChainId;
   }): Promise<StakingRewardsInfo | undefined> => {
-    if (!chainId) throw new Error('ChainId is required');
-
     if (!agentMultisigAddress) return;
-    if (!serviceId) return;
     if (!isValidServiceId(serviceId)) return;
 
     const stakingProgramConfig = STAKING_PROGRAMS[chainId][stakingProgramId];
@@ -45,10 +49,17 @@ export abstract class AgentsFunService extends StakedAgentService {
       activityChecker,
       contract: stakingTokenProxyContract,
       mech: mechContract,
+      mechType,
     } = stakingProgramConfig;
 
-    const provider = PROVIDERS[chainId].multicallProvider;
+    // New (decoupled-activity) Basius contracts use the mech-marketplace
+    // activity checker: epoch activity is the count of marketplace requests,
+    // read from the mech contract. Legacy contracts count safe multisig nonces
+    // via the activity checker.
+    const isMarketplaceRegime =
+      mechType === MechType.MarketplaceV2 && !!mechContract;
 
+    const provider = PROVIDERS[chainId].multicallProvider;
     const contractCalls = [
       stakingTokenProxyContract.getServiceInfo(serviceId),
       stakingTokenProxyContract.livenessPeriod(),
@@ -57,6 +68,9 @@ export abstract class AgentsFunService extends StakedAgentService {
       stakingTokenProxyContract.minStakingDeposit(),
       stakingTokenProxyContract.tsCheckpoint(),
       activityChecker.livenessRatio(),
+      isMarketplaceRegime
+        ? mechContract!.mapRequestCounts(agentMultisigAddress)
+        : activityChecker.getMultisigNonces(agentMultisigAddress),
     ];
     const multicallResponse = await provider.all(contractCalls);
 
@@ -68,53 +82,36 @@ export abstract class AgentsFunService extends StakedAgentService {
       minStakingDeposit,
       tsCheckpoint,
       livenessRatio,
+      activityRead,
     ] = multicallResponse;
 
-    const nowInSeconds = Math.floor(Date.now() / 1000);
+    const lastNonces = serviceInfo[2];
+    const isServiceStaked = lastNonces.length > 0;
 
-    const isServiceStaked = serviceInfo[2].length > 0;
-
-    const effectivePeriod = Math.ceil(
-      Math.max(livenessPeriod, nowInSeconds - tsCheckpoint),
-    );
+    const secondsSinceCheckpoint = getNowInSeconds() - tsCheckpoint;
+    const effectivePeriod = Math.max(livenessPeriod, secondsSinceCheckpoint);
     const requiredRequests =
-      (effectivePeriod * livenessRatio) / 1e18 + REQUESTS_SAFETY_MARGIN;
+      (Math.ceil(effectivePeriod) * livenessRatio) / 1e18 +
+      REQUESTS_SAFETY_MARGIN;
 
-    let isEligibleForRewards = false;
-    let eligibleRequests = 0;
+    // Requests handled since last checkpoint. Marketplace regime compares the
+    // mech request counter against its checkpoint snapshot (serviceInfo[2][1]);
+    // legacy regime compares safe multisig nonces (serviceInfo[2][0]).
+    const eligibleRequests = isServiceStaked
+      ? isMarketplaceRegime
+        ? activityRead - lastNonces[1]
+        : activityRead[0] - lastNonces[0]
+      : 0;
 
-    if (mechContract) {
-      // Define eligibility for rewards in staking contracts based on
-      // mechs by checking the number of requests on the mech contract
-      const [mechRequestCount] = await provider.all([
-        mechContract.mapRequestCounts(agentMultisigAddress),
-      ]);
-      const mechRequestCountOnLastCheckpoint = isServiceStaked
-        ? serviceInfo[2][1]
-        : 0;
-      eligibleRequests = mechRequestCount - mechRequestCountOnLastCheckpoint;
+    const isEligibleForRewards = eligibleRequests >= requiredRequests;
 
-      isEligibleForRewards = eligibleRequests >= requiredRequests;
-    } else {
-      // Define eligibility for rewards in legacy staking contracts
-      // by checking the multisig nonces on the activity checker
-      const currentMultisigNonces =
-        await activityChecker.getMultisigNonces(agentMultisigAddress);
-      const lastMultisigNonces = serviceInfo[2];
-      eligibleRequests = isServiceStaked
-        ? currentMultisigNonces[0] - lastMultisigNonces[0]
-        : 0;
-
-      isEligibleForRewards = eligibleRequests >= requiredRequests;
-    }
-
+    const expectedEpochRewards = rewardsPerSecond * livenessPeriod;
+    const lateCheckpointRewards = rewardsPerSecond * secondsSinceCheckpoint;
     const availableRewardsForEpoch = Math.max(
-      rewardsPerSecond * livenessPeriod, // expected rewards for the epoch
-      rewardsPerSecond * (nowInSeconds - tsCheckpoint), // in case of late checkpoint
+      expectedEpochRewards,
+      lateCheckpointRewards,
     );
 
-    // Minimum staked amount is double the minimum staking deposit
-    // (all the bonds must be the same as deposit)
     const minimumStakedAmount =
       parseFloat(formatEther(`${minStakingDeposit}`)) * 2;
 
@@ -131,49 +128,38 @@ export abstract class AgentsFunService extends StakedAgentService {
       ),
       minimumStakedAmount,
       tsCheckpoint,
-    } as StakingRewardsInfo;
+    } satisfies StakingRewardsInfo;
   };
 
   static getAvailableRewardsForEpoch = async (
     stakingProgramId: StakingProgramId,
-    chainId: EvmChainId,
+    chainId: EvmChainId = EvmChainIdMap.Base,
   ): Promise<bigint | undefined> => {
-    if (!chainId) throw new Error('ChainId is required');
-
     const stakingTokenProxy =
       STAKING_PROGRAMS[chainId][stakingProgramId]?.contract;
     if (!stakingTokenProxy) return;
 
     const { multicallProvider } = PROVIDERS[chainId];
-
     const contractCalls = [
       stakingTokenProxy.rewardsPerSecond(),
-      stakingTokenProxy.livenessPeriod(), // epoch length
-      stakingTokenProxy.tsCheckpoint(), // last checkpoint timestamp
+      stakingTokenProxy.livenessPeriod(),
+      stakingTokenProxy.tsCheckpoint(),
     ];
-
     const multicallResponse = await multicallProvider.all(contractCalls);
-    const [rewardsPerSecond, livenessPeriod, tsCheckpoint] = multicallResponse;
-    const nowInSeconds = Math.floor(Date.now() / 1000);
 
-    return BigInt(
-      Math.max(
-        rewardsPerSecond * livenessPeriod, // expected rewards
-        rewardsPerSecond * (nowInSeconds - tsCheckpoint), // incase of late checkpoint
-      ),
-    );
+    const [rewardsPerSecond, livenessPeriod, tsCheckpoint] = multicallResponse;
+    const expectedRewards = rewardsPerSecond * livenessPeriod;
+    const lateCheckpointRewards =
+      rewardsPerSecond * (getNowInSeconds() - tsCheckpoint);
+
+    return BigInt(Math.max(expectedRewards, lateCheckpointRewards));
   };
 
-  /**
-   * Get service details by it's NftTokenId on a provided staking contract
-   */
   static getServiceStakingDetails = async (
     serviceNftTokenId: number,
     stakingProgramId: StakingProgramId,
-    chainId: EvmChainId,
+    chainId: EvmChainId = EvmChainIdMap.Base,
   ): Promise<ServiceStakingDetails> => {
-    if (!chainId) throw new Error('ChainId is required');
-
     const { multicallProvider } = PROVIDERS[chainId];
 
     const { contract: stakingTokenProxy } =
@@ -183,7 +169,6 @@ export abstract class AgentsFunService extends StakedAgentService {
       stakingTokenProxy.getServiceInfo(serviceNftTokenId),
       stakingTokenProxy.getStakingState(serviceNftTokenId),
     ];
-
     const multicallResponse = await multicallProvider.all(contractCalls);
     const [serviceInfo, serviceStakingState] = multicallResponse;
 
@@ -193,25 +178,13 @@ export abstract class AgentsFunService extends StakedAgentService {
     };
   };
 
-  /**
-   * Get staking contract info by staking program name
-   * eg. Alpha, Beta, Beta2
-   */
   static getStakingContractDetails = async (
     stakingProgramId: StakingProgramId,
     chainId: EvmChainId,
   ): Promise<StakingContractDetails | undefined> => {
-    if (!chainId) throw new Error('ChainId is required');
-
     const { multicallProvider } = PROVIDERS[chainId];
 
-    const getStakingTokenConfig = () => {
-      if (chainId === EvmChainIdMap.Base)
-        return BASE_STAKING_PROGRAMS[stakingProgramId];
-      return null;
-    };
-
-    const stakingTokenProxy = getStakingTokenConfig()?.contract;
+    const stakingTokenProxy = BASE_STAKING_PROGRAMS[stakingProgramId]?.contract;
     if (!stakingTokenProxy) return;
 
     const contractCalls = [
@@ -225,7 +198,6 @@ export abstract class AgentsFunService extends StakedAgentService {
       stakingTokenProxy.livenessPeriod(),
       stakingTokenProxy.epochCounter(),
     ];
-
     const multicallResponse = await multicallProvider.all(contractCalls);
 
     const [
@@ -243,29 +215,24 @@ export abstract class AgentsFunService extends StakedAgentService {
     const availableRewards = parseFloat(
       ethers.utils.formatUnits(availableRewardsInBN, 18),
     );
+    const serviceIds: number[] = getServiceIdsInBN.map((id: bigint) =>
+      Number(id),
+    );
+    const maxNumServices: number = maxNumServicesInBN.toNumber();
 
-    const serviceIds = getServiceIdsInBN.map((id: bigint) => id);
-    const maxNumServices = maxNumServicesInBN.toNumber();
-
-    // APY
     const rewardsPerYear = rewardsPerSecond.mul(ONE_YEAR);
 
     let apy = 0;
-
     if (rewardsPerSecond.gt(0) && minStakingDeposit.gt(0)) {
-      apy =
-        Number(rewardsPerYear.mul(100).div(minStakingDeposit)) /
-        (1 + numAgentInstances.toNumber());
+      const annualPercentage = rewardsPerYear.mul(100).div(minStakingDeposit);
+      apy = Number(annualPercentage) / (1 + numAgentInstances.toNumber());
     }
 
-    // Amount of OLAS required for Stake
     const stakeRequiredInWei = minStakingDeposit.add(
       minStakingDeposit.mul(numAgentInstances),
     );
-
     const olasStakeRequired = Number(formatEther(stakeRequiredInWei));
 
-    // Rewards per work period
     const rewardsPerWorkPeriod =
       Number(formatEther(rewardsPerSecond as bigint)) *
       livenessPeriod.toNumber();

@@ -14,9 +14,17 @@ export const useStakingContracts = () => {
     ? selectedStakingProgramId
     : null;
 
-  const availableStakingProgramIds = Object.keys(
-    STAKING_PROGRAMS[evmHomeChainId],
-  ).map((stakingProgramIdKey) => stakingProgramIdKey as StakingProgramId);
+  // Memoize so the array ref is stable across renders — `Object.keys(...).map(...)`
+  // otherwise returns a fresh array every call, defeating downstream `useMemo`
+  // and forcing every consumer effect that lists `orderedStakingProgramIds` in
+  // its deps to fire on every render.
+  const availableStakingProgramIds = useMemo(
+    () =>
+      Object.keys(STAKING_PROGRAMS[evmHomeChainId]).map(
+        (stakingProgramIdKey) => stakingProgramIdKey as StakingProgramId,
+      ),
+    [evmHomeChainId],
+  );
   const orderedStakingProgramIds = useMemo(
     () =>
       availableStakingProgramIds.reduce(

@@ -108,6 +108,7 @@ export abstract class PettAiService extends StakedAgentService {
       livenessRatio,
       rewardsPerSecond,
       isEligibleForRewards,
+      activityThisEpoch: eligibleRequests,
       availableRewardsForEpoch,
       accruedServiceStakingRewards: parseFloat(
         formatEther(`${accruedStakingReward}`),

@@ -21,7 +21,7 @@ jest.mock(
 const EVM_ADDRESS_PATTERN = /^0x[0-9a-fA-F]{40}$/;
 
 describe('BASE_STAKING_PROGRAMS', () => {
-  it('covers all 11 Base staking program IDs', () => {
+  it('covers all expected Base staking program IDs', () => {
     const expectedIds = [
       STAKING_PROGRAM_IDS.MemeBaseAlpha2,
       STAKING_PROGRAM_IDS.MemeBaseBeta,
@@ -34,11 +34,14 @@ describe('BASE_STAKING_PROGRAMS', () => {
       STAKING_PROGRAM_IDS.PettAiAgent2,
       STAKING_PROGRAM_IDS.PettAiAgent3,
       STAKING_PROGRAM_IDS.PettAiAgent4,
+      STAKING_PROGRAM_IDS.BasiusI,
+      STAKING_PROGRAM_IDS.BasiusII,
+      STAKING_PROGRAM_IDS.BasiusIII,
     ];
     for (const id of expectedIds) {
       expect(BASE_STAKING_PROGRAMS[id]).toBeDefined();
     }
-    expect(Object.keys(BASE_STAKING_PROGRAMS)).toHaveLength(11);
+    expect(Object.keys(BASE_STAKING_PROGRAMS)).toHaveLength(expectedIds.length);
   });
 
   it('all programs are on Base chain (chainId 8453)', () => {
@@ -149,6 +152,30 @@ describe('BASE_STAKING_PROGRAMS', () => {
       expect(
         BASE_STAKING_PROGRAMS[STAKING_PROGRAM_IDS.PettAiAgent4].deprecated,
       ).toBeUndefined();
+    });
+  });
+
+  describe('Basius programs (decoupled-activity)', () => {
+    const basiusIds = [
+      STAKING_PROGRAM_IDS.BasiusI,
+      STAKING_PROGRAM_IDS.BasiusII,
+      STAKING_PROGRAM_IDS.BasiusIII,
+    ];
+
+    it('support only the Basius agent', () => {
+      for (const id of basiusIds) {
+        const program = BASE_STAKING_PROGRAMS[id];
+        expect(program.agentsSupported).toContain(AgentMap.Basius);
+        expect(program.agentsSupported).not.toContain(AgentMap.AgentsFun);
+        expect(program.agentsSupported).not.toContain(AgentMap.PettAi);
+      }
+    });
+
+    it('are active (not deprecated) and carry an off-chain activityTarget of 1', () => {
+      for (const id of basiusIds) {
+        expect(BASE_STAKING_PROGRAMS[id].deprecated).toBeUndefined();
+        expect(BASE_STAKING_PROGRAMS[id].activityTarget).toBe(1);
+      }
     });
   });
 

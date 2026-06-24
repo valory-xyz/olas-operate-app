@@ -240,7 +240,7 @@ Two parallel data streams:
 | Staking rewards details | `fetchAgentStakingRewardsInfo()` (multicall) | 5s (dynamic) | online + serviceConfigId + stakingProgram + multisig + valid tokenId |
 | Available rewards for epoch | `serviceApi.getAvailableRewardsForEpoch()` | 5s (fixed) | online + serviceConfigId + stakingProgram |
 
-`optimisticRewardsEarnedForEpoch` equals `availableRewardsForEpochEth` when `isEligibleForRewards` is true, otherwise undefined.
+`optimisticRewardsEarnedForEpoch` equals `availableRewardsForEpochEth` when `isEpochTargetMet` is true (see Decoupled-activity regime below), otherwise undefined.
 
 On first staking reward achievement, `firstStakingRewardAchieved` is persisted to Electron store.
 
@@ -252,6 +252,15 @@ Eligibility is determined on-chain by checking whether the service exceeded the 
 - **Nonce-based** (programs without `mech`): counts multisig nonce increments since last checkpoint
 
 The required activity count is derived from: `(effectivePeriod * livenessRatio) / 1e18 + SAFETY_MARGIN`.
+
+### Decoupled-activity regime (new staking contracts)
+
+Newer staking contracts set the on-chain threshold to ~1 (staking unlocks after a single request) and move the *real* per-epoch target off-chain. Such a program carries an `activityTarget` in its config (`StakingProgramConfig.activityTarget`); its presence is what marks the new regime.
+
+- **Signal source:** every agent reader now surfaces `StakingRewardsInfo.activityThisEpoch` — the raw on-chain request count this epoch (`currentCount − checkpointSnapshot`). `deriveIsEpochTargetMet(info, target)` returns `activityThisEpoch >= target` when a target is set, and falls back to the on-chain KPI (`isEligibleForRewards`) when it isn't — so legacy programs behave exactly as before.
+- **`isEpochTargetMet`** is the single "agent has done its epoch work" signal. `RewardProvider` exposes it for the selected service; `useAllInstancesRewardStatus` computes it per-service for the sidebar. It drives the green idle banner, streak flame, sidebar dot, the earned notification, the optimistic earned amount, and AutoRun rotation. The raw `isEligibleForRewards` is retained only as the documented on-chain KPI.
+- **Derived on-chain**, so it persists across service stop / app restart. The agent healthcheck is deliberately not consumed — the agent computes the same `completed >= target` from the same on-chain values, so reading it would add nothing and would vanish when the agent stops.
+- Phase-1 targets are hardcoded per program (8 for the trader-style agents, 1 for the DeFi agents) and must match each agent's `ACTIVITY_TARGET`.
 
 ### Active contract eligibility (useActiveStakingContractDetails)
 

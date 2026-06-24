@@ -54,6 +54,12 @@ const FEATURES_CONFIG = FeaturesConfigSchema.parse({
     'bridge-onboarding': true,
     'on-ramp': true,
   },
+  [AgentMap.Basius]: {
+    'withdraw-funds': true,
+    'backup-via-safe': true,
+    'bridge-onboarding': true,
+    'on-ramp': true,
+  },
   [AgentMap.PettAi]: {
     'withdraw-funds': true,
     'backup-via-safe': true,

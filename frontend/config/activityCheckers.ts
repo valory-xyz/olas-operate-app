@@ -104,6 +104,29 @@ export const GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS: Record<
     getRequesterActivityCheckerContract(
       '0x95b37c45BADAf4668c18d00501948196761736b1',
     ),
+  // Omenstrat (decoupled-activity) — shared V2 requester activity checker.
+  // HIDDEN FOR QA (OPE-1803) — re-enable with the ids + program entries.
+  // [STAKING_PROGRAM_IDS.OmenstratI]: getRequesterActivityCheckerContract(
+  //   '0x3514EeA47C03dF8d9FdD68A469908755d2870c48',
+  // ),
+  // [STAKING_PROGRAM_IDS.OmenstratII]: getRequesterActivityCheckerContract(
+  //   '0x3514EeA47C03dF8d9FdD68A469908755d2870c48',
+  // ),
+  // [STAKING_PROGRAM_IDS.OmenstratIII]: getRequesterActivityCheckerContract(
+  //   '0x3514EeA47C03dF8d9FdD68A469908755d2870c48',
+  // ),
+  // [STAKING_PROGRAM_IDS.OmenstratIV]: getRequesterActivityCheckerContract(
+  //   '0x3514EeA47C03dF8d9FdD68A469908755d2870c48',
+  // ),
+  // [STAKING_PROGRAM_IDS.OmenstratV]: getRequesterActivityCheckerContract(
+  //   '0x3514EeA47C03dF8d9FdD68A469908755d2870c48',
+  // ),
+  // [STAKING_PROGRAM_IDS.OmenstratVI]: getRequesterActivityCheckerContract(
+  //   '0x3514EeA47C03dF8d9FdD68A469908755d2870c48',
+  // ),
+  // [STAKING_PROGRAM_IDS.OmenstratVII]: getRequesterActivityCheckerContract(
+  //   '0x3514EeA47C03dF8d9FdD68A469908755d2870c48',
+  // ),
 } as const;
 
 export const BASE_STAKING_PROGRAMS_ACTIVITY_CHECKERS: Record<
@@ -143,6 +166,16 @@ export const BASE_STAKING_PROGRAMS_ACTIVITY_CHECKERS: Record<
   [STAKING_PROGRAM_IDS.PettAiAgent4]: getPetActivityCheckerContract(
     '0x7aD8E6032849Edd8bF742E459722Ee8B10e2cCFc',
   ),
+  // Basius (decoupled-activity) — shared V2 requester activity checker.
+  [STAKING_PROGRAM_IDS.BasiusI]: getRequesterActivityCheckerContract(
+    '0xE73C4e90983aa65d42b2de968E0C8F25Ced835A8',
+  ),
+  [STAKING_PROGRAM_IDS.BasiusII]: getRequesterActivityCheckerContract(
+    '0xE73C4e90983aa65d42b2de968E0C8F25Ced835A8',
+  ),
+  [STAKING_PROGRAM_IDS.BasiusIII]: getRequesterActivityCheckerContract(
+    '0xE73C4e90983aa65d42b2de968E0C8F25Ced835A8',
+  ),
 } as const;
 
 export const MODE_STAKING_PROGRAMS_ACTIVITY_CHECKERS: Record<
@@ -179,6 +212,17 @@ export const OPTIMISM_STAKING_PROGRAMS_ACTIVITY_CHECKERS: Record<
   [STAKING_PROGRAM_IDS.OptimusAlpha4]: getStakingActivityCheckerContract(
     '0x7Fd1F4b764fA41d19fe3f63C85d12bf64d2bbf68',
   ),
+  // Optimus (decoupled-activity) — shared V2 requester activity checker.
+  // HIDDEN FOR QA (OPE-1803) — re-enable with the ids + program entries.
+  // [STAKING_PROGRAM_IDS.OptimusI]: getRequesterActivityCheckerContract(
+  //   '0x408dCA2b565f5eC7779C181870feFb51Ed67C3F4',
+  // ),
+  // [STAKING_PROGRAM_IDS.OptimusII]: getRequesterActivityCheckerContract(
+  //   '0x408dCA2b565f5eC7779C181870feFb51Ed67C3F4',
+  // ),
+  // [STAKING_PROGRAM_IDS.OptimusIII]: getRequesterActivityCheckerContract(
+  //   '0x408dCA2b565f5eC7779C181870feFb51Ed67C3F4',
+  // ),
 } as const;
 
 export const POLYGON_STAKING_PROGRAMS_ACTIVITY_CHECKERS: Record<
@@ -194,4 +238,15 @@ export const POLYGON_STAKING_PROGRAMS_ACTIVITY_CHECKERS: Record<
   [STAKING_PROGRAM_IDS.PolygonBeta3]: getRequesterActivityCheckerContract(
     '0x0e998DaAedaCD59ba2F65558a29417b69f05D972',
   ),
+  // Polystrat (decoupled-activity) — shared V2 requester activity checker.
+  // HIDDEN FOR QA (OPE-1803) — re-enable with the ids + program entries.
+  // [STAKING_PROGRAM_IDS.PolystratI]: getRequesterActivityCheckerContract(
+  //   '0x5B70A66fe68c4c86FFd724B58cc56049c70e9D3D',
+  // ),
+  // [STAKING_PROGRAM_IDS.PolystratII]: getRequesterActivityCheckerContract(
+  //   '0x5B70A66fe68c4c86FFd724B58cc56049c70e9D3D',
+  // ),
+  // [STAKING_PROGRAM_IDS.PolystratIII]: getRequesterActivityCheckerContract(
+  //   '0x5B70A66fe68c4c86FFd724B58cc56049c70e9D3D',
+  // ),
 } as const;

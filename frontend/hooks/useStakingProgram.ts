@@ -23,9 +23,8 @@ export const useStakingProgram = () => {
   const allAvailableStakingPrograms = Object.entries(
     STAKING_PROGRAMS[selectedAgentConfig.evmHomeChainId],
   ).reduce((res, [programId, config]) => {
-    if (config.agentsSupported.includes(selectedAgentType)) {
-      res[programId] = config;
-    }
+    if (!config.agentsSupported.includes(selectedAgentType)) return res;
+    res[programId] = config;
     return res;
   }, {} as StakingProgramMap);
 

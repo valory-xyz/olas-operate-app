@@ -42,6 +42,23 @@ const GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES: Record<string, Address> = {
     '0xB2303F9913f11131A74F4b05099Ced2043cc72C4',
   [STAKING_PROGRAM_IDS.PearlBetaMechMarketplace8]:
     '0x12bdd401Ac300482f4017C64c6c930ee40424c08',
+  // HIDDEN FOR QA (OPE-1803) — new Omenstrat (PredictTrader) contracts. Re-enable
+  // with the ids in stakingProgram.ts, the program entries below, and the checker
+  // entries in activityCheckers.ts.
+  // [STAKING_PROGRAM_IDS.OmenstratI]:
+  //   '0x1E215da0541B4a77a66e21F17413A877B84Ab129',
+  // [STAKING_PROGRAM_IDS.OmenstratII]:
+  //   '0xC2BbfC0d2F5a341DcdCc9f3B78FAF7B04f0244ff',
+  // [STAKING_PROGRAM_IDS.OmenstratIII]:
+  //   '0xABD4f159a088E7f18FEE8241cF9367f1d746780f',
+  // [STAKING_PROGRAM_IDS.OmenstratIV]:
+  //   '0xc9940B9dACA9FDf1B0cD6dE8e3D25ddDC8C9fd0D',
+  // [STAKING_PROGRAM_IDS.OmenstratV]:
+  //   '0x93aAA7155942700cad74c250263fB2D0c6F72B27',
+  // [STAKING_PROGRAM_IDS.OmenstratVI]:
+  //   '0xB7ab6F7e6993Df1f0c6A9B177B169Faf4b0C9CCa',
+  // [STAKING_PROGRAM_IDS.OmenstratVII]:
+  //   '0xB801FD1728Eef27418FE03720b1FF3E769F35152',
 } as const;
 
 export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
@@ -497,4 +514,214 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
       ],
     ),
   },
+  /* HIDDEN FOR QA (OPE-1803) — new Omenstrat contracts (decoupled activity).
+     Re-enable by uncommenting the ids in stakingProgram.ts, the address entries
+     above, the checker entries in activityCheckers.ts, and this block.
+  [STAKING_PROGRAM_IDS.OmenstratI]: {
+    chainId: EvmChainIdMap.Gnosis,
+    name: 'Omenstrat I',
+    activityTarget: 8,
+    agentsSupported: [AgentMap.PredictTrader],
+    stakingRequirements: {
+      [TokenSymbolMap.OLAS]: 5000,
+    },
+    mechType: MechType.MarketplaceV2,
+    mech: MECHS[EvmChainIdMap.Gnosis][MechType.MarketplaceV2].contract,
+    activityChecker:
+      GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS[STAKING_PROGRAM_IDS.OmenstratI],
+    address:
+      GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.OmenstratI
+      ],
+    contract: new MulticallContract(
+      GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.OmenstratI
+      ],
+      STAKING_TOKEN_PROXY_ABI,
+    ),
+    id: deriveStakingProgramId(
+      GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.OmenstratI
+      ],
+    ),
+  },
+  [STAKING_PROGRAM_IDS.OmenstratII]: {
+    chainId: EvmChainIdMap.Gnosis,
+    name: 'Omenstrat II',
+    activityTarget: 8,
+    agentsSupported: [AgentMap.PredictTrader],
+    stakingRequirements: {
+      [TokenSymbolMap.OLAS]: 5000,
+    },
+    mechType: MechType.MarketplaceV2,
+    mech: MECHS[EvmChainIdMap.Gnosis][MechType.MarketplaceV2].contract,
+    activityChecker:
+      GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS[
+        STAKING_PROGRAM_IDS.OmenstratII
+      ],
+    address:
+      GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.OmenstratII
+      ],
+    contract: new MulticallContract(
+      GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.OmenstratII
+      ],
+      STAKING_TOKEN_PROXY_ABI,
+    ),
+    id: deriveStakingProgramId(
+      GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.OmenstratII
+      ],
+    ),
+  },
+  [STAKING_PROGRAM_IDS.OmenstratIII]: {
+    chainId: EvmChainIdMap.Gnosis,
+    name: 'Omenstrat III',
+    activityTarget: 8,
+    agentsSupported: [AgentMap.PredictTrader],
+    stakingRequirements: {
+      [TokenSymbolMap.OLAS]: 40,
+    },
+    mechType: MechType.MarketplaceV2,
+    mech: MECHS[EvmChainIdMap.Gnosis][MechType.MarketplaceV2].contract,
+    activityChecker:
+      GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS[
+        STAKING_PROGRAM_IDS.OmenstratIII
+      ],
+    address:
+      GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.OmenstratIII
+      ],
+    contract: new MulticallContract(
+      GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.OmenstratIII
+      ],
+      STAKING_TOKEN_PROXY_ABI,
+    ),
+    id: deriveStakingProgramId(
+      GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.OmenstratIII
+      ],
+    ),
+  },
+  [STAKING_PROGRAM_IDS.OmenstratIV]: {
+    chainId: EvmChainIdMap.Gnosis,
+    name: 'Omenstrat IV',
+    activityTarget: 8,
+    agentsSupported: [AgentMap.PredictTrader],
+    stakingRequirements: {
+      [TokenSymbolMap.OLAS]: 100,
+    },
+    mechType: MechType.MarketplaceV2,
+    mech: MECHS[EvmChainIdMap.Gnosis][MechType.MarketplaceV2].contract,
+    activityChecker:
+      GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS[
+        STAKING_PROGRAM_IDS.OmenstratIV
+      ],
+    address:
+      GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.OmenstratIV
+      ],
+    contract: new MulticallContract(
+      GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.OmenstratIV
+      ],
+      STAKING_TOKEN_PROXY_ABI,
+    ),
+    id: deriveStakingProgramId(
+      GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.OmenstratIV
+      ],
+    ),
+  },
+  [STAKING_PROGRAM_IDS.OmenstratV]: {
+    chainId: EvmChainIdMap.Gnosis,
+    name: 'Omenstrat V',
+    activityTarget: 8,
+    agentsSupported: [AgentMap.PredictTrader],
+    stakingRequirements: {
+      [TokenSymbolMap.OLAS]: 10000,
+    },
+    mechType: MechType.MarketplaceV2,
+    mech: MECHS[EvmChainIdMap.Gnosis][MechType.MarketplaceV2].contract,
+    activityChecker:
+      GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS[STAKING_PROGRAM_IDS.OmenstratV],
+    address:
+      GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.OmenstratV
+      ],
+    contract: new MulticallContract(
+      GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.OmenstratV
+      ],
+      STAKING_TOKEN_PROXY_ABI,
+    ),
+    id: deriveStakingProgramId(
+      GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.OmenstratV
+      ],
+    ),
+  },
+  [STAKING_PROGRAM_IDS.OmenstratVI]: {
+    chainId: EvmChainIdMap.Gnosis,
+    name: 'Omenstrat VI',
+    activityTarget: 8,
+    agentsSupported: [AgentMap.PredictTrader],
+    stakingRequirements: {
+      [TokenSymbolMap.OLAS]: 10000,
+    },
+    mechType: MechType.MarketplaceV2,
+    mech: MECHS[EvmChainIdMap.Gnosis][MechType.MarketplaceV2].contract,
+    activityChecker:
+      GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS[
+        STAKING_PROGRAM_IDS.OmenstratVI
+      ],
+    address:
+      GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.OmenstratVI
+      ],
+    contract: new MulticallContract(
+      GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.OmenstratVI
+      ],
+      STAKING_TOKEN_PROXY_ABI,
+    ),
+    id: deriveStakingProgramId(
+      GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.OmenstratVI
+      ],
+    ),
+  },
+  [STAKING_PROGRAM_IDS.OmenstratVII]: {
+    chainId: EvmChainIdMap.Gnosis,
+    name: 'Omenstrat VII',
+    activityTarget: 8,
+    agentsSupported: [AgentMap.PredictTrader],
+    stakingRequirements: {
+      [TokenSymbolMap.OLAS]: 10000,
+    },
+    mechType: MechType.MarketplaceV2,
+    mech: MECHS[EvmChainIdMap.Gnosis][MechType.MarketplaceV2].contract,
+    activityChecker:
+      GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS[
+        STAKING_PROGRAM_IDS.OmenstratVII
+      ],
+    address:
+      GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.OmenstratVII
+      ],
+    contract: new MulticallContract(
+      GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.OmenstratVII
+      ],
+      STAKING_TOKEN_PROXY_ABI,
+    ),
+    id: deriveStakingProgramId(
+      GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.OmenstratVII
+      ],
+    ),
+  },
+  */
 } as const;
