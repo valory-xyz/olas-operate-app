@@ -15,18 +15,39 @@ import { STAKING_PROGRAM_IDS } from '../../stakingProgram';
 import { X402_ENABLED_FLAGS } from '../../x402';
 import { KPI_DESC_PREFIX } from '../constants';
 
+// Modius + Optimus share this (reverted to the version on `staging`; the new
+// staking contracts for these agents are hidden for now). Basius ships the
+// newer build with its own hash below.
 const BABYDEGEN_COMMON_TEMPLATE: Pick<
   ServiceTemplate,
   'hash' | 'service_version' | 'agent_release'
 > = {
-  hash: 'bafybeie2zrvd5mfswtktaagjtvhamnl4lv53hetu6skrzytv73sxn6joie',
-  service_version: 'v0.12.0-rc3',
+  hash: 'bafybeigjyo22nl622tn5kbntetyr6obbr3rtk2rzfu6zbqh7xaejehanum',
+  service_version: 'v0.12.0-rc11',
   agent_release: {
     is_aea: true,
     repository: {
       owner: 'valory-xyz',
       name: 'optimus',
-      version: 'v0.12.0-rc3',
+      version: 'v0.12.0-rc11',
+    },
+  },
+};
+
+// Basius ships its own (latest) build — kept separate so reverting the shared
+// babydegen hash for Modius/Optimus doesn't drag Basius back.
+const BASIUS_TEMPLATE_RELEASE: Pick<
+  ServiceTemplate,
+  'hash' | 'service_version' | 'agent_release'
+> = {
+  hash: 'bafybeicp74th4cghtcnk4nvdhfnxwodwuuv3vrisk6ijetf7ausk7xsama',
+  service_version: 'v0.12.0-rc11',
+  agent_release: {
+    is_aea: true,
+    repository: {
+      owner: 'valory-xyz',
+      name: 'optimus',
+      version: 'v0.12.0-rc11',
     },
   },
 };
@@ -469,5 +490,5 @@ export const BASIUS_SERVICE_TEMPLATE: ServiceTemplate = {
       provision_type: EnvProvisionType.FIXED,
     },
   },
-  ...BABYDEGEN_COMMON_TEMPLATE,
+  ...BASIUS_TEMPLATE_RELEASE,
 } as const;
