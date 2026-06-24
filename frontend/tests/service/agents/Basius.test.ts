@@ -1,13 +1,9 @@
-/* eslint-disable @typescript-eslint/no-var-requires */
 import { ethers } from 'ethers';
 import { formatEther } from 'ethers/lib/utils';
 
 import { EvmChainIdMap } from '../../../constants/chains';
-import {
-  STAKING_PROGRAM_IDS,
-  StakingProgramId,
-} from '../../../constants/stakingProgram';
-import { OptimismService } from '../../../service/agents/Optimism';
+import { STAKING_PROGRAM_IDS } from '../../../constants/stakingProgram';
+import { BasiusService } from '../../../service/agents/Basius';
 import { ONE_YEAR } from '../../../service/agents/shared-services/StakedAgentService';
 import { StakingState } from '../../../types/Autonolas';
 import {
@@ -24,7 +20,8 @@ import {
 
 // ---------------------------------------------------------------------------
 // Shared mock storage — `var` ensures declaration is hoisted above jest.mock
-// factory execution. Getters inside mock factories defer reads until call-time.
+// factory execution. Getters inside mock factories defer reads until call-time,
+// by which point the assignment below has run.
 // ---------------------------------------------------------------------------
 /* eslint-disable no-var */
 var shared: {
@@ -45,6 +42,7 @@ shared = {
 // ---------------------------------------------------------------------------
 // Module mocks
 // ---------------------------------------------------------------------------
+/* eslint-disable @typescript-eslint/no-var-requires */
 jest.mock(
   'ethers-multicall',
   () => require('../../mocks/ethersMulticall').ethersMulticallMock,
@@ -69,11 +67,13 @@ jest.mock('../../../config/stakingPrograms', () => {
 
   return {
     STAKING_PROGRAMS: {
-      [EvmChainIdMap.Base]: {},
-      [EvmChainIdMap.Gnosis]: {},
-      [EvmChainIdMap.Mode]: {},
-      [EvmChainIdMap.Optimism]: {
-        [STAKING_PROGRAM_IDS.OptimusAlpha2]: {
+      [EvmChainIdMap.Base]: {
+        // BasiusI here is mocked as legacy (no mech/mechType) to exercise the
+        // legacy nonce-based code branch in BasiusService. In production all
+        // three Basius programs are configured with MarketplaceV2 + mech (see
+        // BasiusII mock below) — production never hits this branch, but the
+        // code path still exists in BasiusService and we want regression cover.
+        [STAKING_PROGRAM_IDS.BasiusI]: {
           get activityChecker() {
             return shared.activityChecker;
           },
@@ -81,12 +81,12 @@ jest.mock('../../../config/stakingPrograms', () => {
             return shared.stakingContract;
           },
           address: stakingAddr1,
-          chainId: EvmChainIdMap.Optimism,
+          chainId: EvmChainIdMap.Base,
         },
-        // Synthetic decoupled-activity marketplace-regime program. The real
-        // OptimusI id is hidden for QA (OPE-1803), but the Optimism reader still
-        // ships its marketplace branch, so we exercise it via a literal id.
-        ['optimus_i']: {
+        // BasiusII as marketplace-regime — matches production shape (all three
+        // Basius programs ship with MarketplaceV2 mech + Requester V2 checker).
+        // Tests against this mock cover the actual production reward path.
+        [STAKING_PROGRAM_IDS.BasiusII]: {
           get activityChecker() {
             return shared.activityChecker;
           },
@@ -99,15 +99,18 @@ jest.mock('../../../config/stakingPrograms', () => {
           mechType: 'mech-marketplace-2v',
           activityTarget: 1,
           address: stakingAddr1,
-          chainId: EvmChainIdMap.Optimism,
+          chainId: EvmChainIdMap.Base,
         },
       },
+      [EvmChainIdMap.Gnosis]: {},
+      [EvmChainIdMap.Mode]: {},
+      [EvmChainIdMap.Optimism]: {},
       [EvmChainIdMap.Polygon]: {},
     } as Record<number, Record<string, unknown>>,
   };
 });
 
-jest.mock('../../../config/stakingPrograms/optimism', () => {
+jest.mock('../../../config/stakingPrograms/base', () => {
   const { EvmChainIdMap } = require('../../../constants/chains');
   const { STAKING_PROGRAM_IDS } = require('../../../constants/stakingProgram');
   const {
@@ -115,13 +118,13 @@ jest.mock('../../../config/stakingPrograms/optimism', () => {
   } = require('../../helpers/factories');
 
   return {
-    OPTIMISM_STAKING_PROGRAMS: {
-      [STAKING_PROGRAM_IDS.OptimusAlpha2]: {
+    BASE_STAKING_PROGRAMS: {
+      [STAKING_PROGRAM_IDS.BasiusI]: {
         get contract() {
           return shared.stakingContract;
         },
         address: stakingAddr1,
-        chainId: EvmChainIdMap.Optimism,
+        chainId: EvmChainIdMap.Base,
       },
     },
   };
@@ -131,8 +134,9 @@ jest.mock('../../../config/stakingPrograms/optimism', () => {
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
-const OPTIMISM_PROGRAM = STAKING_PROGRAM_IDS.OptimusAlpha2;
-const OPTIMISM = EvmChainIdMap.Optimism;
+const BASE_PROGRAM = STAKING_PROGRAM_IDS.BasiusI;
+const BASE = EvmChainIdMap.Base;
+const GNOSIS = EvmChainIdMap.Gnosis;
 const NOW_S = 1_710_100_000;
 
 beforeEach(() => {
@@ -143,13 +147,13 @@ beforeEach(() => {
 // ====================================================================
 // getAgentStakingRewardsInfo
 // ====================================================================
-describe('OptimismService.getAgentStakingRewardsInfo', () => {
+describe('BasiusService.getAgentStakingRewardsInfo', () => {
   const callWith = (overrides: Record<string, unknown> = {}) =>
-    OptimismService.getAgentStakingRewardsInfo({
+    BasiusService.getAgentStakingRewardsInfo({
       agentMultisigAddress: MOCK_MULTISIG_ADDRESS,
       serviceId: DEFAULT_SERVICE_NFT_TOKEN_ID,
-      stakingProgramId: OPTIMISM_PROGRAM,
-      chainId: OPTIMISM,
+      stakingProgramId: BASE_PROGRAM,
+      chainId: BASE,
       ...overrides,
     });
 
@@ -158,12 +162,12 @@ describe('OptimismService.getAgentStakingRewardsInfo', () => {
     expect(result).toBeUndefined();
   });
 
-  it('returns undefined when serviceId is 0 (isValidServiceId)', async () => {
+  it('returns undefined when serviceId is 0', async () => {
     const result = await callWith({ serviceId: 0 });
     expect(result).toBeUndefined();
   });
 
-  it('returns undefined when serviceId is -1 (isValidServiceId)', async () => {
+  it('returns undefined when serviceId is -1 (isValidServiceId check)', async () => {
     const result = await callWith({ serviceId: -1 });
     expect(result).toBeUndefined();
   });
@@ -171,14 +175,14 @@ describe('OptimismService.getAgentStakingRewardsInfo', () => {
   it('throws "Staking program not found" when program does not exist', async () => {
     await expect(
       callWith({
-        chainId: EvmChainIdMap.Gnosis,
-        stakingProgramId: OPTIMISM_PROGRAM,
+        chainId: GNOSIS,
+        stakingProgramId: BASE_PROGRAM,
       }),
     ).rejects.toThrow('Staking program not found');
   });
 
   // ----------------------------------------------------------------
-  // Shared fixtures for nonce-based multicall (8 elements, single batch)
+  // Shared fixtures
   // ----------------------------------------------------------------
   const LIVENESS_PERIOD = DEFAULT_LIVENESS_PERIOD_S; // 86400
   const REWARDS_PER_SECOND = 10;
@@ -186,18 +190,18 @@ describe('OptimismService.getAgentStakingRewardsInfo', () => {
   const MIN_STAKING_DEPOSIT = BigInt('20000000000000000000'); // 20 OLAS
   const TS_CHECKPOINT = NOW_S - 50_000;
 
-  // serviceInfo[2] = lastMultisigNonces
-  const serviceInfoStaked = { 2: [5] };
+  const serviceInfoStaked = { 2: [5] }; // [lastNonce]
   const serviceInfoUnstaked = { 2: [] };
 
   /**
-   * Builds the single multicall response (8 elements):
+   * Basius uses a SINGLE multicall batch that includes activityChecker.getMultisigNonces
+   * at position [7]. The response array has 8 elements:
    * [serviceInfo, livenessPeriod, rewardsPerSecond, accruedStakingReward,
    *  minStakingDeposit, tsCheckpoint, livenessRatio, currentMultisigNonces]
    */
-  const buildMulticallResponse = (
+  const buildResponse = (
     livenessRatio: number,
-    currentNonces: number[] = [20],
+    currentNonces: number[],
     serviceInfo: { 2: number[] } = serviceInfoStaked,
   ) => [
     serviceInfo,
@@ -211,8 +215,8 @@ describe('OptimismService.getAgentStakingRewardsInfo', () => {
   ];
 
   it('returns eligible when nonce difference exceeds threshold', async () => {
-    // currentNonces[0]=20 - lastNonces[0]=5 = 15 >= 1 => eligible
-    shared.multicallAll.mockResolvedValueOnce(buildMulticallResponse(0));
+    // currentNonces[0]=20 - lastNonces[0]=5 = 15 >= 1 (REQUESTS_SAFETY_MARGIN) => eligible
+    shared.multicallAll.mockResolvedValueOnce(buildResponse(0, [20]));
 
     const result = await callWith();
 
@@ -220,18 +224,9 @@ describe('OptimismService.getAgentStakingRewardsInfo', () => {
     expect(result!.isEligibleForRewards).toBe(true);
   });
 
-  it('surfaces activityThisEpoch as the on-chain nonce delta (legacy regime)', async () => {
-    // currentNonces[0]=20 - lastNonces[0]=5 = 15
-    shared.multicallAll.mockResolvedValueOnce(buildMulticallResponse(0));
-
-    const result = await callWith();
-
-    expect(result!.activityThisEpoch).toBe(15);
-  });
-
   it('returns not eligible when nonce difference is below threshold', async () => {
     // currentNonces[0]=5 - lastNonces[0]=5 = 0 < 1 => not eligible
-    shared.multicallAll.mockResolvedValueOnce(buildMulticallResponse(0, [5]));
+    shared.multicallAll.mockResolvedValueOnce(buildResponse(0, [5]));
 
     const result = await callWith();
 
@@ -239,10 +234,10 @@ describe('OptimismService.getAgentStakingRewardsInfo', () => {
     expect(result!.isEligibleForRewards).toBe(false);
   });
 
-  it('returns not eligible when service is not staked (empty lastMultisigNonces)', async () => {
+  it('returns not eligible when service is not staked (empty serviceInfo[2])', async () => {
     // isServiceStaked = false => eligibleRequests = 0
     shared.multicallAll.mockResolvedValueOnce(
-      buildMulticallResponse(0, [100], serviceInfoUnstaked),
+      buildResponse(0, [100], serviceInfoUnstaked),
     );
 
     const result = await callWith();
@@ -252,7 +247,7 @@ describe('OptimismService.getAgentStakingRewardsInfo', () => {
   });
 
   it('returns correct accruedServiceStakingRewards', async () => {
-    shared.multicallAll.mockResolvedValueOnce(buildMulticallResponse(0));
+    shared.multicallAll.mockResolvedValueOnce(buildResponse(0, [20]));
 
     const result = await callWith();
 
@@ -261,8 +256,8 @@ describe('OptimismService.getAgentStakingRewardsInfo', () => {
     );
   });
 
-  it('returns minimumStakedAmount as 2x minStakingDeposit (formatted)', async () => {
-    shared.multicallAll.mockResolvedValueOnce(buildMulticallResponse(0));
+  it('returns correct minimumStakedAmount (2x minStakingDeposit)', async () => {
+    shared.multicallAll.mockResolvedValueOnce(buildResponse(0, [20]));
 
     const result = await callWith();
 
@@ -271,7 +266,7 @@ describe('OptimismService.getAgentStakingRewardsInfo', () => {
   });
 
   it('returns correct availableRewardsForEpoch', async () => {
-    shared.multicallAll.mockResolvedValueOnce(buildMulticallResponse(0));
+    shared.multicallAll.mockResolvedValueOnce(buildResponse(0, [20]));
 
     const result = await callWith();
 
@@ -286,13 +281,17 @@ describe('OptimismService.getAgentStakingRewardsInfo', () => {
 // ====================================================================
 // getAgentStakingRewardsInfo — marketplace (decoupled-activity) regime
 // ====================================================================
-describe('OptimismService.getAgentStakingRewardsInfo (marketplace regime)', () => {
+// Production Basius (BasiusI / BasiusII / BasiusIII) all run in this regime —
+// MarketplaceV2 mech reads the per-multisig request counter via
+// mapRequestCounts() instead of activityChecker.getMultisigNonces(), and the
+// per-epoch snapshot is at serviceInfo[2][1] (not [2][0]).
+describe('BasiusService.getAgentStakingRewardsInfo (marketplace regime)', () => {
   const callMarketplace = (overrides: Record<string, unknown> = {}) =>
-    OptimismService.getAgentStakingRewardsInfo({
+    BasiusService.getAgentStakingRewardsInfo({
       agentMultisigAddress: MOCK_MULTISIG_ADDRESS,
       serviceId: DEFAULT_SERVICE_NFT_TOKEN_ID,
-      stakingProgramId: 'optimus_i' as StakingProgramId,
-      chainId: OPTIMISM,
+      stakingProgramId: STAKING_PROGRAM_IDS.BasiusII,
+      chainId: BASE,
       ...overrides,
     });
 
@@ -315,7 +314,7 @@ describe('OptimismService.getAgentStakingRewardsInfo (marketplace regime)', () =
     ACCRUED_REWARD,
     MIN_STAKING_DEPOSIT,
     TS_CHECKPOINT,
-    0, // livenessRatio → requiredRequests = 1
+    0, // livenessRatio → requiredRequests = 1 (just safety margin)
     mechRequestCount,
   ];
 
@@ -331,7 +330,7 @@ describe('OptimismService.getAgentStakingRewardsInfo (marketplace regime)', () =
   });
 
   it('surfaces activityThisEpoch as the marketplace request delta (current - checkpoint[1])', async () => {
-    // 20 - 8 = 12
+    // 20 - 8 = 12 — uses serviceInfo[2][1] as the checkpoint, NOT [2][0]
     shared.multicallAll.mockResolvedValueOnce(buildMarketplaceResponse(20));
 
     const result = await callMarketplace();
@@ -362,11 +361,11 @@ describe('OptimismService.getAgentStakingRewardsInfo (marketplace regime)', () =
 // ====================================================================
 // getAvailableRewardsForEpoch
 // ====================================================================
-describe('OptimismService.getAvailableRewardsForEpoch', () => {
+describe('BasiusService.getAvailableRewardsForEpoch', () => {
   it('returns undefined when contract is not found', async () => {
-    const result = await OptimismService.getAvailableRewardsForEpoch(
-      OPTIMISM_PROGRAM,
-      EvmChainIdMap.Gnosis, // no Optimism program on Gnosis
+    const result = await BasiusService.getAvailableRewardsForEpoch(
+      BASE_PROGRAM,
+      GNOSIS,
     );
     expect(result).toBeUndefined();
   });
@@ -382,9 +381,9 @@ describe('OptimismService.getAvailableRewardsForEpoch', () => {
       tsCheckpoint,
     ]);
 
-    const result = await OptimismService.getAvailableRewardsForEpoch(
-      OPTIMISM_PROGRAM,
-      OPTIMISM,
+    const result = await BasiusService.getAvailableRewardsForEpoch(
+      BASE_PROGRAM,
+      BASE,
     );
 
     const expected = BigInt(
@@ -400,7 +399,7 @@ describe('OptimismService.getAvailableRewardsForEpoch', () => {
 // ====================================================================
 // getServiceStakingDetails
 // ====================================================================
-describe('OptimismService.getServiceStakingDetails', () => {
+describe('BasiusService.getServiceStakingDetails', () => {
   it('returns serviceStakingStartTime and serviceStakingState', async () => {
     const tsStart = makeBN(1_710_000_000);
     const serviceInfo = { tsStart };
@@ -410,10 +409,10 @@ describe('OptimismService.getServiceStakingDetails', () => {
       StakingState.Staked,
     ]);
 
-    const result = await OptimismService.getServiceStakingDetails(
+    const result = await BasiusService.getServiceStakingDetails(
       DEFAULT_SERVICE_NFT_TOKEN_ID,
-      OPTIMISM_PROGRAM,
-      OPTIMISM,
+      BASE_PROGRAM,
+      BASE,
     );
 
     expect(result).toEqual({
@@ -426,11 +425,11 @@ describe('OptimismService.getServiceStakingDetails', () => {
 // ====================================================================
 // getStakingContractDetails
 // ====================================================================
-describe('OptimismService.getStakingContractDetails', () => {
-  it('returns undefined when program not in OPTIMISM_STAKING_PROGRAMS', async () => {
-    const result = await OptimismService.getStakingContractDetails(
+describe('BasiusService.getStakingContractDetails', () => {
+  it('returns undefined when program is not in BASE_STAKING_PROGRAMS', async () => {
+    const result = await BasiusService.getStakingContractDetails(
       STAKING_PROGRAM_IDS.PearlBetaMechMarketplace3,
-      OPTIMISM,
+      BASE,
     );
     expect(result).toBeUndefined();
   });
@@ -439,7 +438,7 @@ describe('OptimismService.getStakingContractDetails', () => {
   // the source calls ethers.utils.formatUnits / formatEther on these values.
   const BN = ethers.BigNumber.from;
 
-  it('returns full details with serviceIds mapped to Number (not BigInt)', async () => {
+  it('returns full details with correct calculations', async () => {
     const availableRewardsWei = BN('5000000000000000000'); // 5 OLAS
     const maxNumServices = BN(10);
     const serviceIds = [BigInt(1), BigInt(2), BigInt(3)];
@@ -462,46 +461,42 @@ describe('OptimismService.getStakingContractDetails', () => {
       epochCounter,
     ]);
 
-    const result = await OptimismService.getStakingContractDetails(
-      OPTIMISM_PROGRAM,
-      OPTIMISM,
+    const result = await BasiusService.getStakingContractDetails(
+      BASE_PROGRAM,
+      BASE,
     );
 
-    expect(result).toBeDefined();
+    if (!result) throw new Error('result should be defined');
 
     // availableRewards = formatUnits(5e18, 18) = 5.0
-    expect(result!.availableRewards).toBe(5.0);
+    expect(result.availableRewards).toBe(5.0);
 
-    // maxNumServices uses raw .toNumber() — no MAX_ALLOWED_SERVICES cap
-    expect(result!.maxNumServices).toBe(10);
+    // maxNumServices — raw .toNumber(), no MAX_ALLOWED_SERVICES cap
+    expect(result.maxNumServices).toBe(10);
 
-    // serviceIds are mapped with Number(id), converting BigInt to Number
-    expect(result!.serviceIds).toEqual([1, 2, 3]);
-    result!.serviceIds.forEach((id) => {
-      expect(typeof id).toBe('number');
-    });
-
-    expect(result!.minimumStakingDuration).toBe(86400);
-    expect(result!.epochCounter).toBe(7);
-    expect(result!.livenessPeriod).toBe(DEFAULT_LIVENESS_PERIOD_S);
+    // serviceIds — BasiusService uses Number() conversion (matches OptimismService, not ModiusService)
+    expect(result.serviceIds).toEqual([1, 2, 3]);
+    expect(result.minimumStakingDuration).toBe(86400);
+    expect(result.epochCounter).toBe(7);
+    expect(result.livenessPeriod).toBe(DEFAULT_LIVENESS_PERIOD_S);
 
     // minStakingDeposit = 100 OLAS formatted
-    expect(result!.minStakingDeposit).toBe(100);
+    expect(result.minStakingDeposit).toBe(100);
 
     // olasStakeRequired = minDeposit + minDeposit * numAgentInstances = 200
-    expect(result!.olasStakeRequired).toBe(200);
+    expect(result.olasStakeRequired).toBe(200);
 
     // APY = rewardsPerYear * 100 / minStakingDeposit / (1 + numAgentInstances)
     const rewardsPerYear = rewardsPerSecond.mul(ONE_YEAR);
     const expectedApy =
       rewardsPerYear.mul(100).div(minStakingDeposit).toNumber() /
       (1 + numAgentInstances.toNumber());
-    expect(result!.apy).toBe(expectedApy);
+    expect(result.apy).toBe(expectedApy);
 
     // rewardsPerWorkPeriod = formatEther(rewardsPerSecond) * livenessPeriod
     const expectedRewardsPerWork =
       Number(formatEther(rewardsPerSecond)) * livenessPeriod.toNumber();
-    expect(result!.rewardsPerWorkPeriod).toBe(expectedRewardsPerWork);
+    expect(result.rewardsPerWorkPeriod).toBe(expectedRewardsPerWork);
   });
 
   it('returns APY of 0 when rewardsPerSecond is 0', async () => {
@@ -517,9 +512,9 @@ describe('OptimismService.getStakingContractDetails', () => {
       BN(0), // epochCounter
     ]);
 
-    const result = await OptimismService.getStakingContractDetails(
-      OPTIMISM_PROGRAM,
-      OPTIMISM,
+    const result = await BasiusService.getStakingContractDetails(
+      BASE_PROGRAM,
+      BASE,
     );
 
     expect(result).toBeDefined();

@@ -346,6 +346,7 @@ type RawStakingRewardsInfo = {
   livenessRatio: RawBigNumber;
   rewardsPerSecond: RawBigNumber;
   isEligibleForRewards: boolean;
+  activityThisEpoch: number;
   availableRewardsForEpoch: number;
   accruedServiceStakingRewards: number;
   minimumStakedAmount: number;
@@ -360,6 +361,7 @@ export const makeRawStakingRewardsInfo = (
   livenessRatio: toHexBigNumber(1),
   rewardsPerSecond: toHexBigNumber(1),
   isEligibleForRewards: true,
+  activityThisEpoch: 1,
   availableRewardsForEpoch: 1,
   accruedServiceStakingRewards: 0.5,
   minimumStakedAmount: 50,
@@ -375,6 +377,7 @@ export const makeStakingRewardsInfo = (
   livenessRatio: toHexBigNumber(1),
   rewardsPerSecond: toHexBigNumber(1),
   isEligibleForRewards: true,
+  activityThisEpoch: 1,
   availableRewardsForEpoch: 1,
   accruedServiceStakingRewards: 0.5,
   minimumStakedAmount: 50,

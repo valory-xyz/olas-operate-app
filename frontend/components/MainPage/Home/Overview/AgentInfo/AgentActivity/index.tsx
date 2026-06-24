@@ -41,7 +41,7 @@ const IdleContent = () => (
 export const AgentActivity = () => {
   const { deploymentDetails, isServiceRunning, isServiceDeploying } =
     useAgentActivity();
-  const { isEligibleForRewards } = useRewardContext();
+  const { isEpochTargetMet } = useRewardContext();
   const {
     value: isModalOpen,
     setTrue: showModal,
@@ -67,7 +67,7 @@ export const AgentActivity = () => {
     }
 
     if (isServiceRunning) {
-      if (isEligibleForRewards) {
+      if (isEpochTargetMet) {
         return { status: 'idle', content: <IdleContent /> };
       }
 
@@ -94,7 +94,7 @@ export const AgentActivity = () => {
 
     return { status: 'not-running', content: 'Agent is not running' };
   }, [
-    isEligibleForRewards,
+    isEpochTargetMet,
     isServiceDeploying,
     isServiceRunning,
     rounds,

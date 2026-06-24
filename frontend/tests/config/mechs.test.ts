@@ -124,7 +124,31 @@ describe('MECHS', () => {
     });
   });
 
-  it('covers exactly 3 chains (Gnosis, Base, Polygon)', () => {
-    expect(Object.keys(MECHS)).toHaveLength(3);
+  describe('Optimism (chain 10)', () => {
+    it('has a MarketplaceV2 mech', () => {
+      expect(
+        MECHS[EvmChainIdMap.Optimism][MechType.MarketplaceV2],
+      ).toBeDefined();
+    });
+
+    it('Optimism MarketplaceV2 mech name is "Mech Marketplace V2"', () => {
+      expect(MECHS[EvmChainIdMap.Optimism][MechType.MarketplaceV2].name).toBe(
+        'Mech Marketplace V2',
+      );
+    });
+
+    it('does NOT have Agent mech', () => {
+      expect(MECHS[EvmChainIdMap.Optimism][MechType.Agent]).toBeUndefined();
+    });
+
+    it('has a contract object', () => {
+      expect(
+        MECHS[EvmChainIdMap.Optimism][MechType.MarketplaceV2].contract,
+      ).toBeDefined();
+    });
+  });
+
+  it('covers exactly 4 chains (Gnosis, Base, Polygon, Optimism)', () => {
+    expect(Object.keys(MECHS)).toHaveLength(4);
   });
 });

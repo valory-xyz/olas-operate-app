@@ -4,6 +4,7 @@ import React from 'react';
 import { AGENT_CONFIG } from '../../config/agents';
 import { AgentMap } from '../../constants/agent';
 import { MiddlewareChainMap } from '../../constants/chains';
+import { STAKING_PROGRAM_IDS } from '../../constants/stakingProgram';
 import { StakingProgramContext } from '../../context/StakingProgramProvider';
 import { createStakingRewardsQuery } from '../../hooks/useAgentStakingRewardsDetails';
 import { useAllInstancesRewardStatus } from '../../hooks/useAllInstancesRewardStatus';
@@ -52,6 +53,10 @@ const mockUseServices = useServices as jest.Mock;
 const mockCreateStakingRewardsQuery = createStakingRewardsQuery as jest.Mock;
 
 const traderConfig = AGENT_CONFIG[AgentMap.PredictTrader];
+// Basius is the only agent still shipping a decoupled-activity contract (the
+// others were hidden for QA, OPE-1803), so the decoupled regime is exercised
+// against Basius/Base below.
+const basiusConfig = AGENT_CONFIG[AgentMap.Basius];
 
 const baseContextValue: React.ContextType<typeof StakingProgramContext> = {
   isActiveStakingProgramLoaded: true,
@@ -285,6 +290,64 @@ describe('useAllInstancesRewardStatus', () => {
 
     expect(result.current.get(DEFAULT_SERVICE_CONFIG_ID)).toBe(true);
     expect(result.current.get(MOCK_SERVICE_CONFIG_ID_2)).toBe(false);
+  });
+
+  describe('decoupled-activity regime (OPE-1803)', () => {
+    const renderForBasius = (
+      data: ReturnType<typeof makeStakingRewardsInfo>,
+    ) => {
+      const service = makeMiddlewareService(MiddlewareChainMap.BASE, {
+        service_config_id: DEFAULT_SERVICE_CONFIG_ID,
+        service_public_id: basiusConfig.servicePublicId,
+        home_chain: basiusConfig.middlewareHomeChainId,
+        chain_configs: makeChainConfig(basiusConfig.middlewareHomeChainId, {
+          multisig: MOCK_MULTISIG_ADDRESS,
+          token: DEFAULT_SERVICE_NFT_TOKEN_ID,
+          staking_program_id: STAKING_PROGRAM_IDS.BasiusI,
+        }),
+      });
+
+      mockUseServices.mockReturnValue({ services: [service] });
+      mockUseQueries.mockReturnValue([{ isSuccess: true, data }]);
+
+      const stakingMap = new Map([
+        [DEFAULT_SERVICE_CONFIG_ID, STAKING_PROGRAM_IDS.BasiusI],
+      ]);
+
+      return renderHook(() => useAllInstancesRewardStatus(), {
+        wrapper: ({ children }: { children: React.ReactNode }) =>
+          React.createElement(
+            StakingProgramContext.Provider,
+            {
+              value: {
+                ...baseContextValue,
+                stakingProgramIdByServiceConfigId: stakingMap,
+              },
+            },
+            children,
+          ),
+      });
+    };
+
+    it('is true when on-chain activity reaches the off-chain target (1)', () => {
+      const { result } = renderForBasius(
+        makeStakingRewardsInfo({
+          activityThisEpoch: 1,
+          isEligibleForRewards: true,
+        }),
+      );
+      expect(result.current.get(DEFAULT_SERVICE_CONFIG_ID)).toBe(true);
+    });
+
+    it('is false below the target even when the staking KPI is already met', () => {
+      const { result } = renderForBasius(
+        makeStakingRewardsInfo({
+          activityThisEpoch: 0,
+          isEligibleForRewards: true,
+        }),
+      );
+      expect(result.current.get(DEFAULT_SERVICE_CONFIG_ID)).toBe(false);
+    });
   });
 
   it('skips service and does not crash when asEvmChainId throws for unknown chain', () => {

@@ -49,7 +49,7 @@
     "semver": "7.7.2",
     "styled-components": "6.1.19",
     "sudo-prompt": "9.2.1",
-    "undici": "7.25.0",
+    "undici": "7.28.0",
     "usehooks-ts": "2.16.0",
     "winston": "3.17.0",
     "zod": "3.25.76",
@@ -108,6 +108,6 @@
     "start:frontend": "cd frontend && yarn start",
     "test:frontend": "cd frontend && yarn test"
   },
-  "version": "1.7.2",
+  "version": "1.8.0",
   "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
 }

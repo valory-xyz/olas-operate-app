@@ -8,12 +8,14 @@ import {
 } from '@/constants';
 import { AgentMap, AgentType } from '@/constants/agent';
 import {
+  BASIUS_SERVICE_TEMPLATE,
   MODIUS_SERVICE_TEMPLATE,
   OPTIMUS_SERVICE_TEMPLATE,
 } from '@/constants/serviceTemplates';
 import { PREDICT_POLYMARKET_SERVICE_TEMPLATE } from '@/constants/serviceTemplates/service/trader';
 import { X402_ENABLED_FLAGS } from '@/constants/x402';
 import { AgentsFunBaseService } from '@/service/agents/AgentsFunBase';
+import { BasiusService } from '@/service/agents/Basius';
 import { ModiusService } from '@/service/agents/Modius';
 import { OptimismService } from '@/service/agents/Optimism';
 import { PettAiService } from '@/service/agents/PettAi';
@@ -23,6 +25,7 @@ import { Address } from '@/types/Address';
 import { AgentConfig } from '@/types/Agent';
 
 import {
+  BASE_TOKEN_CONFIG,
   MODE_TOKEN_CONFIG,
   OPTIMISM_TOKEN_CONFIG,
   POLYGON_TOKEN_CONFIG,
@@ -60,6 +63,21 @@ const getOptimusUsdcConfig = () => {
   return Number(formatUnits(usdcSafeRequirement, optimusUsdcConfig.decimals));
 };
 
+const getBasiusUsdcConfig = () => {
+  const basiusFundRequirements =
+    BASIUS_SERVICE_TEMPLATE.configurations[MiddlewareChainMap.BASE]
+      ?.fund_requirements;
+  const basiusUsdcConfig = BASE_TOKEN_CONFIG[TokenSymbolMap.USDC];
+
+  if (!basiusUsdcConfig) {
+    throw new Error('Basius USDC config not found');
+  }
+
+  const usdcSafeRequirement =
+    basiusFundRequirements?.[basiusUsdcConfig.address as Address]?.safe || 0;
+  return Number(formatUnits(usdcSafeRequirement, basiusUsdcConfig.decimals));
+};
+
 const getPolystratPusdConfig = () => {
   const polystratFundRequirements =
     PREDICT_POLYMARKET_SERVICE_TEMPLATE.configurations[
@@ -79,7 +97,7 @@ const getPolystratPusdConfig = () => {
 };
 
 export const AGENT_CONFIG: {
-  [key in AgentType]: AgentConfig;
+  [_key in AgentType]: AgentConfig;
 } = {
   [AgentMap.PredictTrader]: {
     isAgentEnabled: true,
@@ -154,6 +172,36 @@ export const AGENT_CONFIG: {
     defaultBehavior:
       'Conservative volatile exposure across DEXs and lending markets with advanced functionalities enabled.',
     servicePublicId: 'valory/optimus:0.1.0',
+    erc20Tokens: [TokenSymbolMap.USDC],
+  },
+  [AgentMap.Basius]: {
+    isAgentEnabled: true,
+    isComingSoon: false,
+    isAddingNewBlocked: false,
+    requiresSetup: true,
+    isX402Enabled: X402_ENABLED_FLAGS[AgentMap.Basius],
+    name: 'Basius agent',
+    evmHomeChainId: EvmChainIdMap.Base,
+    middlewareHomeChainId: MiddlewareChainMap.BASE,
+    // Olas Registry agent ID 115:
+    // https://marketplace.olas.network/ethereum/ai-agents/115
+    agentIds: [115],
+    additionalRequirements: {
+      [EvmChainIdMap.Base]: {
+        [TokenSymbolMap.USDC]: getBasiusUsdcConfig(),
+      },
+    },
+    defaultStakingProgramId: STAKING_PROGRAM_IDS.BasiusI,
+    serviceApi: BasiusService,
+    displayName: 'Basius',
+    description:
+      'An autonomous AI agent that intelligently manages your DeFi assets on Base.',
+    hasExternalFunds: true,
+    doesChatUiRequireApiKey: true,
+    category: 'DeFi',
+    defaultBehavior:
+      'Conservative volatile exposure across DEXs and lending markets with advanced functionalities enabled.',
+    servicePublicId: 'valory/basius:0.1.0',
     erc20Tokens: [TokenSymbolMap.USDC],
   },
   [AgentMap.AgentsFun]: {

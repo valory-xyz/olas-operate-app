@@ -1,6 +1,7 @@
 name: Create Feature Release
 permissions:
   contents: write
+  actions: read # guard-ci-passed reads CI workflow runs via the GitHub API
 
 on:
   workflow_dispatch:
@@ -17,6 +18,11 @@ on:
           - new
           - override
         default: 'new'
+      skip_ci_check:
+        description: 'Skip the CI-passed pre-check (emergency only)'
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   # Override deletes-and-recreates the tag at v$(package.json version), which
@@ -75,8 +81,56 @@ jobs:
           echo "$STDERR"
           exit 1
 
+  # Refuse to release a commit whose CI did not pass. The release builds from
+  # the branch HEAD as it stands now, before calculate-and-update-version pushes
+  # the version-bump commit — so we check that exact pre-bump commit. head_sha
+  # for a pull_request CI run is the PR branch head, which equals the branch
+  # HEAD resolved here.
+  guard-ci-passed:
+    runs-on: ubuntu-latest
+    steps:
+      - if: ${{ !inputs.skip_ci_check }}
+        name: Verify CI passed on the release commit
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH: ${{ inputs.branch }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+
+          SHA=$(gh api "repos/${REPO}/commits/${BRANCH}" --jq '.sha')
+          echo "Release branch '${BRANCH}' HEAD: $SHA"
+
+          RUNS=$(gh api \
+            "repos/${REPO}/actions/workflows/ci.yml/runs?head_sha=${SHA}&per_page=100" \
+            --jq '[.workflow_runs[] | {status, conclusion, created_at, html_url}] | sort_by(.created_at) | reverse')
+
+          if [ "$(echo "$RUNS" | jq 'length')" -eq 0 ]; then
+            echo "::error::No CI run found for commit $SHA on branch '${BRANCH}'. CI must run and pass before releasing."
+            exit 1
+          fi
+
+          LATEST=$(echo "$RUNS" | jq -c '.[0]')
+          STATUS=$(echo "$LATEST" | jq -r '.status')
+          CONCLUSION=$(echo "$LATEST" | jq -r '.conclusion')
+          URL=$(echo "$LATEST" | jq -r '.html_url')
+          echo "Latest CI run for $SHA: status=$STATUS conclusion=$CONCLUSION ($URL)"
+
+          if [ "$STATUS" != "completed" ]; then
+            echo "::error::Latest CI run for $SHA is not finished (status=$STATUS). Wait for CI to complete before releasing: $URL"
+            exit 1
+          fi
+          if [ "$CONCLUSION" != "success" ]; then
+            echo "::error::Latest CI run for $SHA did not succeed (conclusion=$CONCLUSION). Fix CI before releasing: $URL"
+            exit 1
+          fi
+          echo "CI passed for $SHA — safe to release."
+
+      - if: ${{ inputs.skip_ci_check }}
+        run: echo "::warning::skip_ci_check enabled — bypassing the CI-passed gate."
+
   calculate-version:
-    needs: guard-release-not-published
+    needs: [guard-release-not-published, guard-ci-passed]
     uses: ./.github/workflows/calculate-and-update-version.yml
     with:
       branch: ${{ inputs.branch }}

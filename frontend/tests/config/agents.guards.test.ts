@@ -67,6 +67,22 @@ describe('config/agents defensive guards — throw paths', () => {
     });
   });
 
+  it('throws "Basius USDC config not found" when USDC is absent from BASE_TOKEN_CONFIG', () => {
+    jest.isolateModules(() => {
+      // Remove USDC from Base token config to trigger the Basius guard
+      jest.mock('../../config/tokens', () => {
+        const actual = jest.requireActual(
+          '../../config/tokens',
+        ) as typeof import('../../config/tokens');
+        return { ...actual, BASE_TOKEN_CONFIG: {} };
+      });
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      expect(() => require('../../config/agents')).toThrow(
+        'Basius USDC config not found',
+      );
+    });
+  });
+
   it('throws "Polystrat pUSD config not found" when pUSD is absent from POLYGON_TOKEN_CONFIG', () => {
     jest.isolateModules(() => {
       // Remove pUSD from Polygon token config to trigger the Polystrat guard
@@ -93,7 +109,7 @@ describe('config/agents || 0 fallback — missing fund_requirements', () => {
    * than undefined.
    *
    * We mock both service template modules to have empty `configurations` so
-   * that all three `|| 0` branches are exercised in a single test.
+   * that all four `|| 0` branches are exercised in a single test.
    */
   it('returns 0 for additionalRequirements when service template has no fund_requirements', () => {
     jest.isolateModules(() => {
@@ -101,6 +117,7 @@ describe('config/agents || 0 fallback — missing fund_requirements', () => {
       // fund_requirements, so modiusFundRequirements / optimusFundRequirements /
       // polystratFundRequirements are all undefined → ?.safe is undefined → || 0.
       jest.mock('../../constants/serviceTemplates', () => ({
+        BASIUS_SERVICE_TEMPLATE: { configurations: {} },
         MODIUS_SERVICE_TEMPLATE: { configurations: {} },
         OPTIMUS_SERVICE_TEMPLATE: { configurations: {} },
       }));
@@ -116,7 +133,7 @@ describe('config/agents || 0 fallback — missing fund_requirements', () => {
       // Type helper: additionalRequirements is indexed by chain then by token symbol
       type AdditionalRequirements = Record<number, Record<string, number>>;
 
-      // All three agents should compute 0 via the || 0 fallback
+      // All four agents should compute 0 via the || 0 fallback
       const modiusRequirements = AGENT_CONFIG.modius
         .additionalRequirements as AdditionalRequirements;
       expect(modiusRequirements[34443].USDC).toBe(0);
@@ -124,6 +141,11 @@ describe('config/agents || 0 fallback — missing fund_requirements', () => {
       const optimusRequirements = AGENT_CONFIG.optimus
         .additionalRequirements as AdditionalRequirements;
       expect(optimusRequirements[10].USDC).toBe(0);
+
+      // AgentMap.Basius = 'basius'
+      const basiusRequirements = AGENT_CONFIG.basius
+        .additionalRequirements as AdditionalRequirements;
+      expect(basiusRequirements[8453].USDC).toBe(0);
 
       // AgentMap.Polystrat = 'polymarket_trader'
       const polystratRequirements = AGENT_CONFIG.polymarket_trader

@@ -119,11 +119,11 @@ export const BalancesAndRefillRequirementsProviderContext = createContext<{
 const useRequirementsFetchInterval = ({
   configId,
   isServiceRunning,
-  isEligibleForRewards,
+  isEpochTargetMet,
 }: {
   configId: Optional<string>;
   isServiceRunning: boolean;
-  isEligibleForRewards: Optional<boolean>;
+  isEpochTargetMet: Optional<boolean>;
 }) => {
   // Exponential backoff for active agent
   const refetchCountRef = useRef(0);
@@ -146,12 +146,12 @@ const useRequirementsFetchInterval = ({
       return THIRTY_SECONDS_INTERVAL;
     }
 
-    if (isServiceRunning && !isEligibleForRewards) {
+    if (isServiceRunning && !isEpochTargetMet) {
       return getExponentialInterval(refetchCountRef.current);
     }
 
     return SIXTY_MINUTE_INTERVAL;
-  }, [isServiceRunning, isEligibleForRewards, configId]);
+  }, [isServiceRunning, isEpochTargetMet, configId]);
 
   const updateRefetchCounter = (data: BalancesAndFundingRequirements) => {
     // Update data stale ref
@@ -159,7 +159,7 @@ const useRequirementsFetchInterval = ({
       data.agent_funding_in_progress || data.agent_funding_requests_cooldown;
 
     // Update backoff counter
-    if (isServiceRunning && !isEligibleForRewards) {
+    if (isServiceRunning && !isEpochTargetMet) {
       refetchCountRef.current = Math.min(
         refetchCountRef.current + 1,
         BACKOFF_STEPS - 1,
@@ -186,7 +186,7 @@ export const BalancesAndRefillRequirementsProvider = ({
     availableServiceConfigIds,
   } = useServices();
   const { isFundingEligible } = useFundingEligibleServices();
-  const { isEligibleForRewards } = useRewardContext();
+  const { isEpochTargetMet } = useRewardContext();
   const configId = selectedService?.service_config_id;
   const chainId = selectedAgentConfig.evmHomeChainId;
 
@@ -198,7 +198,7 @@ export const BalancesAndRefillRequirementsProvider = ({
     useRequirementsFetchInterval({
       configId,
       isServiceRunning,
-      isEligibleForRewards,
+      isEpochTargetMet,
     });
   const refetchInterval = useDynamicRefetchInterval(backoffRefetchInterval);
 
