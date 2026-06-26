@@ -52,6 +52,25 @@ const BASIUS_TEMPLATE_RELEASE: Pick<
   },
 };
 
+// Optimus ships its own build — separated from the shared babydegen hash so
+// Optimism-specific mech config (priority mech 195 on Optimism, prediction-offline
+// tool) doesn't get applied to Modius too.
+const OPTIMUS_TEMPLATE_RELEASE: Pick<
+  ServiceTemplate,
+  'hash' | 'service_version' | 'agent_release'
+> = {
+  hash: 'bafybeieh7ipqea66s2p3km52fwnkeosileg5rqwecmon4azuohwbxvowye',
+  service_version: 'v0.12.0-rc12',
+  agent_release: {
+    is_aea: true,
+    repository: {
+      owner: 'valory-xyz',
+      name: 'optimus',
+      version: 'v0.12.0-rc12',
+    },
+  },
+};
+
 export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentMap.Modius,
   name: 'Optimus',
@@ -350,7 +369,7 @@ export const OPTIMUS_SERVICE_TEMPLATE: ServiceTemplate = {
       provision_type: EnvProvisionType.FIXED,
     },
   },
-  ...BABYDEGEN_COMMON_TEMPLATE,
+  ...OPTIMUS_TEMPLATE_RELEASE,
 } as const;
 
 export const BASIUS_SERVICE_TEMPLATE: ServiceTemplate = {
