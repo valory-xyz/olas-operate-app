@@ -308,8 +308,7 @@ export const OPTIMUS_SERVICE_TEMPLATE: ServiceTemplate = {
     },
     MECH_TOOL: {
       name: 'Mech tool',
-      description:
-        'Tool name requested from mech 195. Bumped to `prediction-offline-v1` because the upstream prediction_request_v1 package renamed all tool names to `*-v1` (see mech 5a557e5b). The previous `prediction-offline` no longer exists in any current mech-predict service.',
+      description: '',
       value: 'prediction-offline-v1',
       provision_type: EnvProvisionType.FIXED,
     },
