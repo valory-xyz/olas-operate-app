@@ -53,8 +53,8 @@ const BASIUS_TEMPLATE_RELEASE: Pick<
 };
 
 // Optimus ships its own build — separated from the shared babydegen hash so
-// Optimism-specific mech config (priority mech 195 on Optimism, prediction-offline
-// tool) doesn't get applied to Modius too.
+// Optimism-specific mech config (priority mech 195 on Optimism,
+// prediction-offline-v1 tool) doesn't get applied to Modius too.
 const OPTIMUS_TEMPLATE_RELEASE: Pick<
   ServiceTemplate,
   'hash' | 'service_version' | 'agent_release'
@@ -304,6 +304,13 @@ export const OPTIMUS_SERVICE_TEMPLATE: ServiceTemplate = {
       name: 'Staking chain',
       description: '',
       value: 'optimism',
+      provision_type: EnvProvisionType.FIXED,
+    },
+    MECH_TOOL: {
+      name: 'Mech tool',
+      description:
+        'Tool name requested from mech 195. Bumped to `prediction-offline-v1` because the upstream prediction_request_v1 package renamed all tool names to `*-v1` (see mech 5a557e5b). The previous `prediction-offline` no longer exists in any current mech-predict service.',
+      value: 'prediction-offline-v1',
       provision_type: EnvProvisionType.FIXED,
     },
     ACTIVITY_CHECKER_CONTRACT_ADDRESS: {
