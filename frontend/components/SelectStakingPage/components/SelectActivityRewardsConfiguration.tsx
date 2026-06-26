@@ -102,10 +102,13 @@ export const SelectActivityRewardsConfiguration = ({
   const { orderedStakingProgramIds } = useStakingContracts();
   const [stableOrder, setStableOrder] = useState<StakingProgramId[]>([]);
 
-  // To ensure the order of staking programs remains stable to prevent unnecessary re-renders of the list.
-  // Reset when the set of IDs changes (e.g. agent switch), not just when the length changes —
-  // two agents can have the same number of programs but completely different IDs,
-  // and a strict subset must also trigger a reset to avoid rendering stale programs.
+  // Keep render order stable across renders. Reset only when the SET of IDs
+  // changes (agent switch / strict subset / superset). Initial population is
+  // covered by `hasNewIds` (empty `stableOrder` makes every incoming id new).
+  // Do NOT add a `!stableOrder.length` guard — when both arrays are empty
+  // (initial loading state) it fires `setStableOrder([])` every render and
+  // produces "Maximum update depth exceeded" because each new `[]` ref
+  // changes the dep and re-triggers the effect.
   useEffect(() => {
     const nextSet = new Set(orderedStakingProgramIds);
     const currentSet = new Set(stableOrder);
@@ -114,7 +117,7 @@ export const SelectActivityRewardsConfiguration = ({
     );
     const hasRemovedIds = stableOrder.some((id) => !nextSet.has(id));
 
-    if (!stableOrder.length || hasNewIds || hasRemovedIds) {
+    if (hasNewIds || hasRemovedIds) {
       setStableOrder(orderedStakingProgramIds);
     }
   }, [orderedStakingProgramIds, stableOrder]);

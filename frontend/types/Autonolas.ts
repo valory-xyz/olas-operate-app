@@ -6,7 +6,6 @@ const zodBigNumber = z.object({
 });
 
 export const StakingRewardsInfoSchema = z.object({
-  // mechRequestCount: z.number(),
   serviceInfo: z.array(z.unknown()),
   /* checkpoint period (in seconds). eg. 86400 */
   livenessPeriod: zodBigNumber,
@@ -14,6 +13,15 @@ export const StakingRewardsInfoSchema = z.object({
   /* rewards per second */
   rewardsPerSecond: zodBigNumber,
   isEligibleForRewards: z.boolean(),
+  /**
+   * Raw on-chain activity count this epoch (requests since last checkpoint).
+   * Compared against a staking program's off-chain `activityTarget` to decide
+   * "epoch work done" in the decoupled-activity regime (OPE-1803). In the
+   * legacy regime this is the same count used to derive `isEligibleForRewards`.
+   * `.finite()` so a degenerate on-chain read (e.g. a missing nonce element →
+   * `NaN`) fails the parse loudly instead of silently reading as "target not met".
+   */
+  activityThisEpoch: z.number().finite(),
   availableRewardsForEpoch: z.number(),
   /* current epoch rewards */
   accruedServiceStakingRewards: z.number(),

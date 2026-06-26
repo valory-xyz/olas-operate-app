@@ -7,6 +7,7 @@ import {
   SupportedMiddlewareChain,
 } from '@/constants';
 import { AgentsFunBaseService } from '@/service/agents/AgentsFunBase';
+import { BasiusService } from '@/service/agents/Basius';
 import { ModiusService } from '@/service/agents/Modius';
 import { OptimismService } from '@/service/agents/Optimism';
 import { PredictTraderService } from '@/service/agents/PredictTrader';
@@ -15,6 +16,7 @@ type ServiceApi =
   | typeof PredictTraderService
   | typeof ModiusService
   | typeof OptimismService
+  | typeof BasiusService
   | typeof AgentsFunBaseService;
 
 type NeedsOpenProfileEachAgentRun = {

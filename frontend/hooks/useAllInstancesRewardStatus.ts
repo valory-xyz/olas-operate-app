@@ -8,6 +8,10 @@ import { OnlineStatusContext } from '@/context/OnlineStatusProvider';
 import { StakingProgramContext } from '@/context/StakingProgramProvider';
 import { asEvmChainId, asMiddlewareChain } from '@/utils/middlewareHelpers';
 import { isServiceOfAgent } from '@/utils/service';
+import {
+  deriveIsEpochTargetMet,
+  getStakingProgramActivityTarget,
+} from '@/utils/stakingRewards';
 
 import { createStakingRewardsQuery } from './useAgentStakingRewardsDetails';
 import { useDynamicRefetchInterval } from './useDynamicRefetchInterval';
@@ -86,7 +90,16 @@ export const useAllInstancesRewardStatus = (): Map<
         result.data !== null &&
         result.data !== undefined
       ) {
-        map.set(detail.serviceConfigId, result.data.isEligibleForRewards);
+        // Regime-aware "earned this epoch": decoupled programs compare on-chain
+        // activity to the off-chain target; legacy programs use the staking KPI.
+        const activityTarget = getStakingProgramActivityTarget(
+          detail.chainId,
+          detail.stakingProgramId,
+        );
+        map.set(
+          detail.serviceConfigId,
+          deriveIsEpochTargetMet(result.data, activityTarget),
+        );
       } else {
         map.set(detail.serviceConfigId, undefined);
       }

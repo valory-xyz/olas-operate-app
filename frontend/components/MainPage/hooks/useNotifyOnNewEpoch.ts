@@ -29,7 +29,7 @@ type EpochStatusNotification = {
 export const useNotifyOnNewEpoch = () => {
   const { enabled } = useAutoRunContext();
   const { showNotification } = useElectronApi();
-  const { isEligibleForRewards } = useRewardContext();
+  const { isEpochTargetMet } = useRewardContext();
   const { isInitialFunded } = useIsInitiallyFunded();
   const { selectedAgentConfig, selectedService } = useServices();
   const { isServiceRunning } = useService(selectedService?.service_config_id);
@@ -73,7 +73,7 @@ export const useNotifyOnNewEpoch = () => {
     if (isServiceRunning) return;
 
     // if current epoch has already earned rewards
-    if (isEligibleForRewards === true) return;
+    if (isEpochTargetMet === true) return;
 
     // If does not have enough balance or funding requirements to start agent
     if (isBalancesAndFundingRequirementsLoading || !canStartAgent) return;
@@ -92,7 +92,7 @@ export const useNotifyOnNewEpoch = () => {
     isAgentEvicted,
     isEligibleForStaking,
     isServiceStaked,
-    isEligibleForRewards,
+    isEpochTargetMet,
     isInitialFunded,
     hasEnoughServiceSlots,
     epochStatusNotification,

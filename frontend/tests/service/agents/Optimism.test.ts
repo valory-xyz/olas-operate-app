@@ -3,7 +3,10 @@ import { ethers } from 'ethers';
 import { formatEther } from 'ethers/lib/utils';
 
 import { EvmChainIdMap } from '../../../constants/chains';
-import { STAKING_PROGRAM_IDS } from '../../../constants/stakingProgram';
+import {
+  STAKING_PROGRAM_IDS,
+  StakingProgramId,
+} from '../../../constants/stakingProgram';
 import { OptimismService } from '../../../service/agents/Optimism';
 import { ONE_YEAR } from '../../../service/agents/shared-services/StakedAgentService';
 import { StakingState } from '../../../types/Autonolas';
@@ -14,6 +17,7 @@ import {
   MOCK_MULTISIG_ADDRESS,
 } from '../../helpers/factories';
 import {
+  createMechContractMock,
   createNonceActivityCheckerMock,
   createStakingContractMock,
 } from '../../mocks/agentServiceMocks';
@@ -27,6 +31,7 @@ var shared: {
   multicallAll: jest.Mock;
   stakingContract: Record<string, jest.Mock>;
   activityChecker: Record<string, jest.Mock>;
+  mechContract: Record<string, jest.Mock>;
 };
 /* eslint-enable no-var */
 
@@ -34,6 +39,7 @@ shared = {
   multicallAll: jest.fn(),
   stakingContract: createStakingContractMock(),
   activityChecker: createNonceActivityCheckerMock(),
+  mechContract: createMechContractMock(),
 };
 
 // ---------------------------------------------------------------------------
@@ -74,6 +80,24 @@ jest.mock('../../../config/stakingPrograms', () => {
           get contract() {
             return shared.stakingContract;
           },
+          address: stakingAddr1,
+          chainId: EvmChainIdMap.Optimism,
+        },
+        // Synthetic decoupled-activity marketplace-regime program. The real
+        // OptimusI id is hidden for QA (OPE-1803), but the Optimism reader still
+        // ships its marketplace branch, so we exercise it via a literal id.
+        ['optimus_i']: {
+          get activityChecker() {
+            return shared.activityChecker;
+          },
+          get contract() {
+            return shared.stakingContract;
+          },
+          get mech() {
+            return shared.mechContract;
+          },
+          mechType: 'mech-marketplace-2v',
+          activityTarget: 1,
           address: stakingAddr1,
           chainId: EvmChainIdMap.Optimism,
         },
@@ -196,6 +220,15 @@ describe('OptimismService.getAgentStakingRewardsInfo', () => {
     expect(result!.isEligibleForRewards).toBe(true);
   });
 
+  it('surfaces activityThisEpoch as the on-chain nonce delta (legacy regime)', async () => {
+    // currentNonces[0]=20 - lastNonces[0]=5 = 15
+    shared.multicallAll.mockResolvedValueOnce(buildMulticallResponse(0));
+
+    const result = await callWith();
+
+    expect(result!.activityThisEpoch).toBe(15);
+  });
+
   it('returns not eligible when nonce difference is below threshold', async () => {
     // currentNonces[0]=5 - lastNonces[0]=5 = 0 < 1 => not eligible
     shared.multicallAll.mockResolvedValueOnce(buildMulticallResponse(0, [5]));
@@ -247,6 +280,82 @@ describe('OptimismService.getAgentStakingRewardsInfo', () => {
       REWARDS_PER_SECOND * (NOW_S - TS_CHECKPOINT),
     );
     expect(result!.availableRewardsForEpoch).toBe(expected);
+  });
+});
+
+// ====================================================================
+// getAgentStakingRewardsInfo — marketplace (decoupled-activity) regime
+// ====================================================================
+describe('OptimismService.getAgentStakingRewardsInfo (marketplace regime)', () => {
+  const callMarketplace = (overrides: Record<string, unknown> = {}) =>
+    OptimismService.getAgentStakingRewardsInfo({
+      agentMultisigAddress: MOCK_MULTISIG_ADDRESS,
+      serviceId: DEFAULT_SERVICE_NFT_TOKEN_ID,
+      stakingProgramId: 'optimus_i' as StakingProgramId,
+      chainId: OPTIMISM,
+      ...overrides,
+    });
+
+  const ACCRUED_REWARD = BigInt('1000000000000000000');
+  const MIN_STAKING_DEPOSIT = BigInt('20000000000000000000');
+  const TS_CHECKPOINT = NOW_S - 50_000;
+
+  /**
+   * Marketplace multicall response — last element is the mech request counter
+   * (scalar from mapRequestCounts), and serviceInfo[2][1] is its checkpoint
+   * snapshot. serviceInfo[2] = [safeNonce, mechRequestCheckpoint].
+   */
+  const buildMarketplaceResponse = (
+    mechRequestCount: number,
+    mechCheckpoint = 8,
+  ) => [
+    { 2: [5, mechCheckpoint] },
+    DEFAULT_LIVENESS_PERIOD_S,
+    10,
+    ACCRUED_REWARD,
+    MIN_STAKING_DEPOSIT,
+    TS_CHECKPOINT,
+    0, // livenessRatio → requiredRequests = 1
+    mechRequestCount,
+  ];
+
+  it('reads the mech request counter via mapRequestCounts (not getMultisigNonces)', async () => {
+    shared.multicallAll.mockResolvedValueOnce(buildMarketplaceResponse(20));
+
+    await callMarketplace();
+
+    expect(shared.mechContract.mapRequestCounts).toHaveBeenCalledWith(
+      MOCK_MULTISIG_ADDRESS,
+    );
+    expect(shared.activityChecker.getMultisigNonces).not.toHaveBeenCalled();
+  });
+
+  it('surfaces activityThisEpoch as the marketplace request delta (current - checkpoint[1])', async () => {
+    // 20 - 8 = 12
+    shared.multicallAll.mockResolvedValueOnce(buildMarketplaceResponse(20));
+
+    const result = await callMarketplace();
+
+    expect(result!.activityThisEpoch).toBe(12);
+    expect(result!.isEligibleForRewards).toBe(true);
+  });
+
+  it('returns 0 activity when service is not staked (empty serviceInfo[2])', async () => {
+    shared.multicallAll.mockResolvedValueOnce([
+      { 2: [] },
+      DEFAULT_LIVENESS_PERIOD_S,
+      10,
+      ACCRUED_REWARD,
+      MIN_STAKING_DEPOSIT,
+      TS_CHECKPOINT,
+      0,
+      50,
+    ]);
+
+    const result = await callMarketplace();
+
+    expect(result!.activityThisEpoch).toBe(0);
+    expect(result!.isEligibleForRewards).toBe(false);
   });
 });
 

@@ -11,7 +11,7 @@ import { DEFAULT_SERVICE_CONFIG_ID } from '../../../helpers/factories';
 
 jest.mock('../../../../hooks', () => ({
   useRewardContext: jest.fn().mockReturnValue({
-    isEligibleForRewards: false,
+    isEpochTargetMet: false,
     stakingRewardsDetails: null,
   }),
   useAgentRunning: jest.fn().mockReturnValue({

@@ -92,6 +92,7 @@ describe('STAKING_PROGRAM_IDS', () => {
         'pearl_beta_mech_marketplace_8',
       );
     });
+    // Omenstrat (decoupled-activity) ids hidden for QA (OPE-1803).
   });
 
   describe('Base programs', () => {
@@ -138,6 +139,14 @@ describe('STAKING_PROGRAM_IDS', () => {
     it('PettAiAgent4 resolves to "pett_ai_agent_4"', () => {
       expect(STAKING_PROGRAM_IDS.PettAiAgent4).toBe('pett_ai_agent_4');
     });
+
+    it.each([
+      ['BasiusI', 'basius_i'],
+      ['BasiusII', 'basius_ii'],
+      ['BasiusIII', 'basius_iii'],
+    ] as const)('%s resolves to "%s" (decoupled-activity)', (key, value) => {
+      expect(STAKING_PROGRAM_IDS[key]).toBe(value);
+    });
   });
 
   describe('Mode programs', () => {
@@ -181,6 +190,7 @@ describe('STAKING_PROGRAM_IDS', () => {
       // OptimusAlpha1 on Optimism was deprecated and intentionally omitted.
       expect(STAKING_PROGRAM_IDS).not.toHaveProperty('OptimusAlpha1');
     });
+    // Optimus (decoupled-activity) ids hidden for QA (OPE-1803).
   });
 
   describe('Polygon programs', () => {
@@ -197,12 +207,15 @@ describe('STAKING_PROGRAM_IDS', () => {
       // the correct identifier is "polygon_beta_3".
       expect(STAKING_PROGRAM_IDS.PolygonBeta3).toBe('polygon_beta_3');
     });
+    // Polystrat (decoupled-activity) ids hidden for QA (OPE-1803).
   });
 
   describe('completeness and uniqueness', () => {
-    it('covers exactly 38 staking programs across all chains', () => {
-      // Chain totals: 16 Gnosis + 11 Base + 5 Mode + 3 Optimism + 3 Polygon = 38
-      expect(Object.keys(STAKING_PROGRAM_IDS)).toHaveLength(38);
+    it('covers exactly 41 staking programs across all chains', () => {
+      // Chain totals: 16 Gnosis + 14 Base (11 + 3 Basius) + 5 Mode + 3 Optimism
+      // + 3 Polygon = 41. Omenstrat/Optimus/Polystrat decoupled ids are hidden
+      // for QA (OPE-1803); only Basius's decoupled ids ship.
+      expect(Object.keys(STAKING_PROGRAM_IDS)).toHaveLength(41);
     });
 
     it('has no duplicate ID strings (each program has a unique registry key)', () => {

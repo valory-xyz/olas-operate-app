@@ -44,14 +44,17 @@ type Months = Array<{
 
 /** Get current epoch details ie, in-progress epoch with accrued rewards */
 const useCurrentEpochDetails = (lastCheckpoint?: Checkpoint) => {
-  const { stakingRewardsDetails, optimisticRewardsEarnedForEpoch } =
-    useRewardContext();
+  const {
+    stakingRewardsDetails,
+    isEpochTargetMet,
+    optimisticRewardsEarnedForEpoch,
+  } = useRewardContext();
 
   return useMemo(() => {
     if (!stakingRewardsDetails || !lastCheckpoint) return;
 
     const { epochLength, epochEndTimeStamp, epoch } = lastCheckpoint;
-    const { tsCheckpoint, isEligibleForRewards } = stakingRewardsDetails;
+    const { tsCheckpoint } = stakingRewardsDetails;
 
     const lastEpochEnd = tsCheckpoint >= epochEndTimeStamp;
     if (!lastEpochEnd) return;
@@ -59,14 +62,19 @@ const useCurrentEpochDetails = (lastCheckpoint?: Checkpoint) => {
     return {
       ...lastCheckpoint,
       blockTimestamp: `${tsCheckpoint + Number(epochLength)}`,
-      earned: isEligibleForRewards,
-      reward: isEligibleForRewards ? optimisticRewardsEarnedForEpoch || 0 : 0,
+      earned: !!isEpochTargetMet,
+      reward: isEpochTargetMet ? optimisticRewardsEarnedForEpoch || 0 : 0,
       epoch: `${Number(epoch) + 1}`,
       epochStartTimeStamp: tsCheckpoint,
       epochEndTimeStamp: tsCheckpoint + Number(epochLength),
       transactionHash: '', // no tx hash for in-progress epoch
     } satisfies Checkpoint;
-  }, [stakingRewardsDetails, lastCheckpoint, optimisticRewardsEarnedForEpoch]);
+  }, [
+    stakingRewardsDetails,
+    isEpochTargetMet,
+    lastCheckpoint,
+    optimisticRewardsEarnedForEpoch,
+  ]);
 };
 
 /** Get checkpoints grouped by months */

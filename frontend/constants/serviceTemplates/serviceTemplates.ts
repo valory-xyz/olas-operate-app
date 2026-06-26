@@ -6,7 +6,11 @@ import { parseEther } from '@/utils';
 
 import { MiddlewareChainMap } from '../chains';
 import { STAKING_PROGRAM_IDS } from '../stakingProgram';
-import { MODIUS_SERVICE_TEMPLATE, OPTIMUS_SERVICE_TEMPLATE } from '.';
+import {
+  BASIUS_SERVICE_TEMPLATE,
+  MODIUS_SERVICE_TEMPLATE,
+  OPTIMUS_SERVICE_TEMPLATE,
+} from '.';
 import { KPI_DESC_PREFIX } from './constants';
 import {
   PREDICT_POLYMARKET_SERVICE_TEMPLATE,
@@ -163,13 +167,13 @@ export const PETT_AI_SERVICE_TEMPLATE: ServiceTemplate = {
   description: 'Pett.ai autonomous agent service for virtual pet management.',
   image:
     'https://gateway.autonolas.tech/ipfs/QmQYDGMg8m91QQkTWSSmANs5tZwKrmvUCawXZfXVVWQPcu',
-  service_version: 'v0.1.11',
+  service_version: 'v0.1.12',
   agent_release: {
     is_aea: false,
     repository: {
       owner: 'valory-xyz',
       name: 'pettai-agent',
-      version: 'v0.1.11',
+      version: 'v0.1.12',
     },
   },
   home_chain: MiddlewareChainMap.BASE,
@@ -234,5 +238,6 @@ export const SERVICE_TEMPLATES: ServiceTemplate[] = [
   AGENTS_FUN_BASE_TEMPLATE,
   MODIUS_SERVICE_TEMPLATE,
   OPTIMUS_SERVICE_TEMPLATE,
+  BASIUS_SERVICE_TEMPLATE,
   PETT_AI_SERVICE_TEMPLATE,
 ] as const;

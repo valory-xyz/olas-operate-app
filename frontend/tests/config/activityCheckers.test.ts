@@ -74,6 +74,9 @@ describe('BASE_STAKING_PROGRAMS_ACTIVITY_CHECKERS', () => {
     'PettAiAgent2',
     'PettAiAgent3',
     'PettAiAgent4',
+    'BasiusI',
+    'BasiusII',
+    'BasiusIII',
   ] as const;
 
   it('has an activity checker for every Base staking program', () => {
@@ -83,9 +86,9 @@ describe('BASE_STAKING_PROGRAMS_ACTIVITY_CHECKERS', () => {
     }
   });
 
-  it('covers exactly 11 Base staking programs', () => {
+  it('covers exactly 14 Base staking programs', () => {
     expect(Object.keys(BASE_STAKING_PROGRAMS_ACTIVITY_CHECKERS)).toHaveLength(
-      11,
+      14,
     );
   });
 });
@@ -165,7 +168,7 @@ describe('cross-chain completeness', () => {
       Object.keys(POLYGON_STAKING_PROGRAMS_ACTIVITY_CHECKERS).length;
 
     const totalPrograms = Object.keys(STAKING_PROGRAM_IDS).length;
-    // 16 + 11 + 5 + 3 + 3 = 38 (matches STAKING_PROGRAM_IDS count)
+    // 16 + 14 + 5 + 3 + 3 = 41 (matches STAKING_PROGRAM_IDS count)
     expect(totalCheckers).toBe(totalPrograms);
   });
 });

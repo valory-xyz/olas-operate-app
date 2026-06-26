@@ -111,6 +111,8 @@ Note: timing constants are centralized in `constants.ts` to avoid duplicate knob
 
 ### 3.2 Rotation on Rewards
 
+The rotation signal is regime-aware (OPE-1803): `refreshRewardsEligibility` returns "epoch work done", which for new (decoupled-activity) staking contracts is `activityThisEpoch >= activityTarget` and for legacy contracts is the on-chain staking KPI (`isEligibleForRewards`). Both are read on-chain, so it works for stopped candidates too. See `staking-and-rewards.md` → "Decoupled-activity regime".
+
 1. `REWARDS_POLL_SECONDS` interval calls `refreshRewardsEligibility(runningServiceConfigId)`.
 2. Snapshot update bumps `rewardsTick` → rotation effect fires.
 3. Effect detects `false → true` transition via `lastRewardsEligibilityRef` guard.

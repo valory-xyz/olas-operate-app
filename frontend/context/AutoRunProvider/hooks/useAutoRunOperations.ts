@@ -73,8 +73,8 @@ export const useAutoRunOperations = ({
   // Throttle rewards fetch per instance to avoid spamming the API.
   const lastRewardsFetchRef = useRef<Partial<Record<string, number>>>({});
   // Track when each instance was last started via AutoRun in this session.
-  // Used by refreshRewardsEligibilityHelper to detect stale on-chain
-  // `isEligibleForRewards=true` that persists from a prior active run.
+  // Used by refreshRewardsEligibilityHelper to detect a stale
+  // `epoch-target-met=true` that persists from a prior active run.
   const lastStartedAtRef = useRef<Partial<Record<string, number>>>({});
 
   useEffect(() => {
