@@ -23,16 +23,19 @@ jest.mock(
 const EVM_ADDRESS_PATTERN = /^0x[0-9a-fA-F]{40}$/;
 
 describe('OPTIMISM_STAKING_PROGRAMS', () => {
-  it('covers all 3 Optimism staking program IDs (OptimusAlpha2/3/4)', () => {
+  it('covers all 6 Optimism staking program IDs (legacy OptimusAlpha2/3/4 + decoupled OptimusI/II/III)', () => {
     const expectedIds = [
       OPTIMISM_STAKING_PROGRAM_IDS.OptimusAlpha2,
       OPTIMISM_STAKING_PROGRAM_IDS.OptimusAlpha3,
       OPTIMISM_STAKING_PROGRAM_IDS.OptimusAlpha4,
+      OPTIMISM_STAKING_PROGRAM_IDS.OptimusI,
+      OPTIMISM_STAKING_PROGRAM_IDS.OptimusII,
+      OPTIMISM_STAKING_PROGRAM_IDS.OptimusIII,
     ];
     for (const id of expectedIds) {
       expect(OPTIMISM_STAKING_PROGRAMS[id]).toBeDefined();
     }
-    expect(Object.keys(OPTIMISM_STAKING_PROGRAMS)).toHaveLength(3);
+    expect(Object.keys(OPTIMISM_STAKING_PROGRAMS)).toHaveLength(6);
   });
 
   it('all programs are on Optimism chain (chainId 10)', () => {
@@ -99,6 +102,51 @@ describe('OPTIMISM_STAKING_PROGRAMS', () => {
         OPTIMISM_STAKING_PROGRAMS[OPTIMISM_STAKING_PROGRAM_IDS.OptimusAlpha4]
           .stakingRequirements['OLAS'],
       ).toBe(5000);
+    });
+
+    it('OptimusI requires 100 OLAS (entry tier)', () => {
+      expect(
+        OPTIMISM_STAKING_PROGRAMS[OPTIMISM_STAKING_PROGRAM_IDS.OptimusI]
+          .stakingRequirements['OLAS'],
+      ).toBe(100);
+    });
+
+    it('OptimusII requires 1000 OLAS (mid tier)', () => {
+      expect(
+        OPTIMISM_STAKING_PROGRAMS[OPTIMISM_STAKING_PROGRAM_IDS.OptimusII]
+          .stakingRequirements['OLAS'],
+      ).toBe(1000);
+    });
+
+    it('OptimusIII requires 5000 OLAS (premium tier)', () => {
+      expect(
+        OPTIMISM_STAKING_PROGRAMS[OPTIMISM_STAKING_PROGRAM_IDS.OptimusIII]
+          .stakingRequirements['OLAS'],
+      ).toBe(5000);
+    });
+  });
+
+  describe('decoupled-activity regime (OPE-1803)', () => {
+    it('new OptimusI/II/III carry an off-chain activityTarget of 1', () => {
+      const decoupledIds = [
+        OPTIMISM_STAKING_PROGRAM_IDS.OptimusI,
+        OPTIMISM_STAKING_PROGRAM_IDS.OptimusII,
+        OPTIMISM_STAKING_PROGRAM_IDS.OptimusIII,
+      ];
+      for (const id of decoupledIds) {
+        expect(OPTIMISM_STAKING_PROGRAMS[id].activityTarget).toBe(1);
+      }
+    });
+
+    it('legacy OptimusAlpha2/3/4 have no activityTarget (on-chain KPI regime)', () => {
+      const legacyIds = [
+        OPTIMISM_STAKING_PROGRAM_IDS.OptimusAlpha2,
+        OPTIMISM_STAKING_PROGRAM_IDS.OptimusAlpha3,
+        OPTIMISM_STAKING_PROGRAM_IDS.OptimusAlpha4,
+      ];
+      for (const id of legacyIds) {
+        expect(OPTIMISM_STAKING_PROGRAMS[id].activityTarget).toBeUndefined();
+      }
     });
   });
 

@@ -11,8 +11,7 @@ import { Address } from '@/types';
 import { deriveStakingProgramId } from '@/utils';
 
 import { OPTIMISM_STAKING_PROGRAMS_ACTIVITY_CHECKERS } from '../activityCheckers';
-// NOTE: re-add `import { MECHS, MechType } from '../mechs';` when re-enabling the
-// hidden Optimus marketplace programs below (OPE-1803).
+import { MECHS, MechType } from '../mechs';
 import { TokenSymbolMap } from '../tokens';
 import type { StakingProgramConfig } from '.';
 
@@ -26,14 +25,12 @@ export const OPTIMISM_STAKING_PROGRAMS_CONTRACT_ADDRESSES: Record<
     '0x0f69f35652B1acdbD769049334f1AC580927E139',
   [OPTIMISM_STAKING_PROGRAM_IDS.OptimusAlpha4]:
     '0x6891Cf116f9a3bDbD1e89413118eF81F69D298C3',
-  // HIDDEN FOR QA (OPE-1803) — new Optimus contracts. Re-enable with the ids in
-  // stakingProgram.ts, the program entries below, and the checker entries.
-  // [OPTIMISM_STAKING_PROGRAM_IDS.OptimusI]:
-  //   '0xCDA7deEf16f6b1BfC1bB5C89B7E4FAa91D9ebF7b',
-  // [OPTIMISM_STAKING_PROGRAM_IDS.OptimusII]:
-  //   '0x746281b8fbDbd008729Dc9382392810F771B1BfD',
-  // [OPTIMISM_STAKING_PROGRAM_IDS.OptimusIII]:
-  //   '0x5a4317A5695aD6E86744eFC824414cF899f07C68',
+  [OPTIMISM_STAKING_PROGRAM_IDS.OptimusI]:
+    '0xCDA7deEf16f6b1BfC1bB5C89B7E4FAa91D9ebF7b',
+  [OPTIMISM_STAKING_PROGRAM_IDS.OptimusII]:
+    '0x746281b8fbDbd008729Dc9382392810F771B1BfD',
+  [OPTIMISM_STAKING_PROGRAM_IDS.OptimusIII]:
+    '0x5a4317A5695aD6E86744eFC824414cF899f07C68',
 };
 
 export const OPTIMISM_STAKING_PROGRAMS: {
@@ -118,9 +115,6 @@ export const OPTIMISM_STAKING_PROGRAMS: {
       ],
     ),
   },
-  /* HIDDEN FOR QA (OPE-1803) — new Optimus contracts (decoupled activity).
-     Re-enable by uncommenting the ids in stakingProgram.ts, the address entries
-     above, the checker entries in activityCheckers.ts, and this block.
   [OPTIMISM_STAKING_PROGRAM_IDS.OptimusI]: {
     chainId: EvmChainIdMap.Optimism,
     name: 'Optimus I',
@@ -205,5 +199,4 @@ export const OPTIMISM_STAKING_PROGRAMS: {
       ],
     ),
   },
-  */
 };

@@ -19,14 +19,12 @@ export const POLYGON_STAKING_PROGRAMS_CONTRACT_ADDRESSES: Record<
     '0x22D58680F643333F93205B956a4Aa1dC203a16Ad',
   [STAKING_PROGRAM_IDS.PolygonBeta3]:
     '0x8887C2852986e7cbaC99B6065fFe53074A6BCC26',
-  // HIDDEN FOR QA (OPE-1803) — new Polystrat contracts. Re-enable with the ids in
-  // stakingProgram.ts, the program entries below, and the checker entries.
-  // [STAKING_PROGRAM_IDS.PolystratI]:
-  //   '0x35C9C87a8caD9B7fd9d367Eb4Fd287365688E000',
-  // [STAKING_PROGRAM_IDS.PolystratII]:
-  //   '0xD7F69649691039E86F15153c7BD567aA0049d122',
-  // [STAKING_PROGRAM_IDS.PolystratIII]:
-  //   '0x7dbF10769CA7528ec9aA440b668C716Caf08e7EA',
+  [STAKING_PROGRAM_IDS.PolystratI]:
+    '0x35C9C87a8caD9B7fd9d367Eb4Fd287365688E000',
+  [STAKING_PROGRAM_IDS.PolystratII]:
+    '0xD7F69649691039E86F15153c7BD567aA0049d122',
+  [STAKING_PROGRAM_IDS.PolystratIII]:
+    '0x7dbF10769CA7528ec9aA440b668C716Caf08e7EA',
 };
 
 export const POLYGON_STAKING_PROGRAMS: StakingProgramMap = {
@@ -117,9 +115,6 @@ export const POLYGON_STAKING_PROGRAMS: StakingProgramMap = {
       ],
     ),
   },
-  /* HIDDEN FOR QA (OPE-1803) — new Polystrat contracts (decoupled activity).
-     Re-enable by uncommenting the ids in stakingProgram.ts, the address entries
-     above, the checker entries in activityCheckers.ts, and this block.
   [STAKING_PROGRAM_IDS.PolystratI]: {
     chainId: EvmChainIdMap.Polygon,
     name: 'Polystrat I',
@@ -210,5 +205,4 @@ export const POLYGON_STAKING_PROGRAMS: StakingProgramMap = {
       ],
     ),
   },
-  */
 };

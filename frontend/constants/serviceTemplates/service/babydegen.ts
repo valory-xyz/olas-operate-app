@@ -40,14 +40,33 @@ const BASIUS_TEMPLATE_RELEASE: Pick<
   ServiceTemplate,
   'hash' | 'service_version' | 'agent_release'
 > = {
-  hash: 'bafybeicp74th4cghtcnk4nvdhfnxwodwuuv3vrisk6ijetf7ausk7xsama',
-  service_version: 'v0.12.0-rc11',
+  hash: 'bafybeieyje3avjjhlk2qtxswu7uvukaqnsvzmlfvgy3qzarxyv3cd6viru',
+  service_version: 'v0.12.2',
   agent_release: {
     is_aea: true,
     repository: {
       owner: 'valory-xyz',
       name: 'optimus',
-      version: 'v0.12.0-rc11',
+      version: 'v0.12.2',
+    },
+  },
+};
+
+// Optimus ships its own build — separated from the shared babydegen hash so
+// Optimism-specific mech config (priority mech 195 on Optimism,
+// prediction-offline-v1 tool) doesn't get applied to Modius too.
+const OPTIMUS_TEMPLATE_RELEASE: Pick<
+  ServiceTemplate,
+  'hash' | 'service_version' | 'agent_release'
+> = {
+  hash: 'bafybeih52axldd5orb2pjavmxb6lxnke4tdggrlqotyk6oam6ipa5zeiyy',
+  service_version: 'v0.12.2',
+  agent_release: {
+    is_aea: true,
+    repository: {
+      owner: 'valory-xyz',
+      name: 'optimus',
+      version: 'v0.12.2',
     },
   },
 };
@@ -287,6 +306,12 @@ export const OPTIMUS_SERVICE_TEMPLATE: ServiceTemplate = {
       value: 'optimism',
       provision_type: EnvProvisionType.FIXED,
     },
+    MECH_TOOL: {
+      name: 'Mech tool',
+      description: '',
+      value: 'prediction-offline-v1',
+      provision_type: EnvProvisionType.FIXED,
+    },
     ACTIVITY_CHECKER_CONTRACT_ADDRESS: {
       name: 'Staking activity checker contract address',
       description: '',
@@ -350,7 +375,7 @@ export const OPTIMUS_SERVICE_TEMPLATE: ServiceTemplate = {
       provision_type: EnvProvisionType.FIXED,
     },
   },
-  ...BABYDEGEN_COMMON_TEMPLATE,
+  ...OPTIMUS_TEMPLATE_RELEASE,
 } as const;
 
 export const BASIUS_SERVICE_TEMPLATE: ServiceTemplate = {
