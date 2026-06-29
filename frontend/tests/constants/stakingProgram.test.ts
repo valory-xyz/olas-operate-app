@@ -92,7 +92,18 @@ describe('STAKING_PROGRAM_IDS', () => {
         'pearl_beta_mech_marketplace_8',
       );
     });
-    // Omenstrat (decoupled-activity) ids hidden for QA (OPE-1803).
+
+    it.each([
+      ['OmenstratI', 'omenstrat_i'],
+      ['OmenstratII', 'omenstrat_ii'],
+      ['OmenstratIII', 'omenstrat_iii'],
+      ['OmenstratIV', 'omenstrat_iv'],
+      ['OmenstratV', 'omenstrat_v'],
+      ['OmenstratVI', 'omenstrat_vi'],
+      ['OmenstratVII', 'omenstrat_vii'],
+    ] as const)('%s resolves to "%s" (decoupled-activity)', (key, value) => {
+      expect(STAKING_PROGRAM_IDS[key]).toBe(value);
+    });
   });
 
   describe('Base programs', () => {
@@ -190,7 +201,14 @@ describe('STAKING_PROGRAM_IDS', () => {
       // OptimusAlpha1 on Optimism was deprecated and intentionally omitted.
       expect(STAKING_PROGRAM_IDS).not.toHaveProperty('OptimusAlpha1');
     });
-    // Optimus (decoupled-activity) ids hidden for QA (OPE-1803).
+
+    it.each([
+      ['OptimusI', 'optimus_i'],
+      ['OptimusII', 'optimus_ii'],
+      ['OptimusIII', 'optimus_iii'],
+    ] as const)('%s resolves to "%s" (decoupled-activity)', (key, value) => {
+      expect(STAKING_PROGRAM_IDS[key]).toBe(value);
+    });
   });
 
   describe('Polygon programs', () => {
@@ -207,15 +225,21 @@ describe('STAKING_PROGRAM_IDS', () => {
       // the correct identifier is "polygon_beta_3".
       expect(STAKING_PROGRAM_IDS.PolygonBeta3).toBe('polygon_beta_3');
     });
-    // Polystrat (decoupled-activity) ids hidden for QA (OPE-1803).
+
+    it.each([
+      ['PolystratI', 'polystrat_i'],
+      ['PolystratII', 'polystrat_ii'],
+      ['PolystratIII', 'polystrat_iii'],
+    ] as const)('%s resolves to "%s" (decoupled-activity)', (key, value) => {
+      expect(STAKING_PROGRAM_IDS[key]).toBe(value);
+    });
   });
 
   describe('completeness and uniqueness', () => {
-    it('covers exactly 41 staking programs across all chains', () => {
-      // Chain totals: 16 Gnosis + 14 Base (11 + 3 Basius) + 5 Mode + 3 Optimism
-      // + 3 Polygon = 41. Omenstrat/Optimus/Polystrat decoupled ids are hidden
-      // for QA (OPE-1803); only Basius's decoupled ids ship.
-      expect(Object.keys(STAKING_PROGRAM_IDS)).toHaveLength(41);
+    it('covers exactly 54 staking programs across all chains', () => {
+      // Chain totals: 23 Gnosis (16 legacy + 7 Omenstrat) + 14 Base (11 + 3 Basius)
+      // + 5 Mode + 6 Optimism (3 legacy + 3 Optimus) + 6 Polygon (3 legacy + 3 Polystrat) = 54
+      expect(Object.keys(STAKING_PROGRAM_IDS)).toHaveLength(54);
     });
 
     it('has no duplicate ID strings (each program has a unique registry key)', () => {
