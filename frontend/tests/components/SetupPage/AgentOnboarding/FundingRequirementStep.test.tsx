@@ -48,9 +48,9 @@ describe('FundingRequirementStep — maintenance alert copy', () => {
   });
 
   it('keeps the "existing agents continue to run" line for a blocked-but-not-phased-out agent', () => {
-    // PettAi blocks new instances (isAddingNewBlocked) but is not phased out —
+    // Optimus blocks new instances (isAddingNewBlocked) but is not phased out —
     // so existing instances still run.
-    render(<FundingRequirementStep agentType={AgentMap.PettAi} />);
+    render(<FundingRequirementStep agentType={AgentMap.Optimus} />);
 
     expect(
       screen.getByText(/cannot be created at this time/),
