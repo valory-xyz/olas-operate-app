@@ -104,16 +104,21 @@ describe('AVAILABLE_FOR_ADDING_AGENTS', () => {
   });
 });
 
-describe('PettAi creation blocking and deprecation', () => {
-  it('has isAddingNewBlocked set to true', () => {
+describe('PettAi phase-out', () => {
+  it('is marked phased out', () => {
+    expect(AGENT_CONFIG[AgentMap.PettAi].isPhasedOut).toBe(true);
+  });
+
+  it('still blocks creation of new instances', () => {
     expect(AGENT_CONFIG[AgentMap.PettAi].isAddingNewBlocked).toBe(true);
   });
 
-  it('has no shutdownDate (deprecation banner removed)', () => {
+  it('has no shutdownDate (superseded by phase-out)', () => {
     expect(AGENT_CONFIG[AgentMap.PettAi].shutdownDate).toBeUndefined();
   });
 
-  it('PettAi still appears in ACTIVE_AGENTS', () => {
+  it('stays enabled and listed so the sidebar entry and withdraw flow remain reachable', () => {
+    expect(AGENT_CONFIG[AgentMap.PettAi].isAgentEnabled).toBe(true);
     const pettAiEntry = ACTIVE_AGENTS.find(
       ([agentType]) => agentType === AgentMap.PettAi,
     );
