@@ -256,6 +256,7 @@ export const AGENT_CONFIG: {
   [AgentMap.PettAi]: {
     isAgentEnabled: true,
     isAddingNewBlocked: true,
+    isPhasedOut: true,
     requiresSetup: false,
     isX402Enabled: X402_ENABLED_FLAGS[AgentMap.PettAi],
     name: 'Pett.ai',
