@@ -11,7 +11,7 @@ import { X402_ENABLED_FLAGS } from '../../x402';
 import { KPI_DESC_PREFIX } from '../constants';
 
 export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
-  hash: 'bafybeif5xjgk4tubgitdgi5mlvq3x3wf62vix337s66vrlmxlvqf7q6ioi',
+  hash: 'bafybeigfo273qta5ofgmidchoy6zy5ai464xi4prydsp4gen2mhgiy7rg4',
   service_version: 'v0.40.1',
   agent_release: {
     is_aea: true,
@@ -144,7 +144,7 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
 } as const;
 
 export const PREDICT_POLYMARKET_SERVICE_TEMPLATE: ServiceTemplate = {
-  hash: 'bafybeihhmwu4mqp5pliriiwepnkfebpy5us3zlsbtcmfwwcm77jtutctde',
+  hash: 'bafybeifdwuq5dlzb4wnwb45h54zo7owlkj6ogrpw74mqnxtdgokiim67t4',
   service_version: 'v0.40.1',
   agent_release: {
     is_aea: true,
