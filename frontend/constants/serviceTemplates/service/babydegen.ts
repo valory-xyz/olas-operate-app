@@ -36,6 +36,13 @@ const BABYDEGEN_COMMON_TEMPLATE: Pick<
 
 // Basius ships its own (latest) build — kept separate so reverting the shared
 // babydegen hash for Modius/Optimus doesn't drag Basius back.
+//
+// TODO(basius-aerodrome-ui): the Aerodrome-branding + msUSD-logo fixes in
+// agent-ui-monorepo#114 are bundled into the `optimus` agent package. Once that
+// UI lands in a new `optimus` release, bump all three fields below to that
+// release (hash = its IPFS hash) and update AGENT_UI_RELEASES in
+// agentUiReleases.ts to the matching `vX.Y-basius` tag. Then run
+// `scripts/js/check_service_templates.ts`.
 const BASIUS_TEMPLATE_RELEASE: Pick<
   ServiceTemplate,
   'hash' | 'service_version' | 'agent_release'

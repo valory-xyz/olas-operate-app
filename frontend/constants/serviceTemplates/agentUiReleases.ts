@@ -48,6 +48,9 @@ export const AGENT_UI_RELEASES: Partial<Record<AgentType, AgentUiRelease>> = {
   [AgentMap.Basius]: {
     owner: 'valory-xyz',
     name: AGENT_UI_MONOREPO,
+    // TODO(basius-aerodrome-ui): bump to the tag that ships agent-ui-monorepo#114
+    // (Aerodrome branding + msUSD logo), in lockstep with BASIUS_TEMPLATE_RELEASE
+    // in service/babydegen.ts.
     version: 'v0.2.0-basius',
   },
   [AgentMap.AgentsFun]: {
