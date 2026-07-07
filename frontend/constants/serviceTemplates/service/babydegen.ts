@@ -40,14 +40,14 @@ const BASIUS_TEMPLATE_RELEASE: Pick<
   ServiceTemplate,
   'hash' | 'service_version' | 'agent_release'
 > = {
-  hash: 'bafybeieyje3avjjhlk2qtxswu7uvukaqnsvzmlfvgy3qzarxyv3cd6viru',
-  service_version: 'v0.12.2',
+  hash: 'bafybeiax2dkm6sw2j2scyd5zjsgufpgvsxtjow6clguz6qrgsizrpb7uqy',
+  service_version: 'v0.12.3',
   agent_release: {
     is_aea: true,
     repository: {
       owner: 'valory-xyz',
       name: 'optimus',
-      version: 'v0.12.2',
+      version: 'v0.12.3',
     },
   },
 };
@@ -59,14 +59,14 @@ const OPTIMUS_TEMPLATE_RELEASE: Pick<
   ServiceTemplate,
   'hash' | 'service_version' | 'agent_release'
 > = {
-  hash: 'bafybeih52axldd5orb2pjavmxb6lxnke4tdggrlqotyk6oam6ipa5zeiyy',
-  service_version: 'v0.12.2',
+  hash: 'bafybeiadfyrrbypfbnfzg4v3fx2yxex6gcj5eqlknsnqfsz2vvp674o5su',
+  service_version: 'v0.12.3',
   agent_release: {
     is_aea: true,
     repository: {
       owner: 'valory-xyz',
       name: 'optimus',
-      version: 'v0.12.2',
+      version: 'v0.12.3',
     },
   },
 };
