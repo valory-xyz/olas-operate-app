@@ -112,6 +112,28 @@ export const BASIUS_ONBOARDING_STEPS: OnboardingStep[] = [
   },
 ] as const;
 
+// TODO(PR2/PR3): replace placeholder copy and images with final Connect assets.
+export const CONNECT_ONBOARDING_STEPS: OnboardingStep[] = [
+  {
+    desc: 'Connect agent powered by a local Claude Code session. [Placeholder copy]',
+  },
+  {
+    title: 'Placeholder step one',
+    desc: 'Placeholder description for the first Connect onboarding step.',
+    imgSrc: 'introduction/setup-agent-connect-1',
+  },
+  {
+    title: 'Placeholder step two',
+    desc: 'Placeholder description for the second Connect onboarding step.',
+    imgSrc: 'introduction/setup-agent-connect-2',
+  },
+  {
+    title: 'Placeholder step three',
+    desc: 'Placeholder description for the third Connect onboarding step.',
+    imgSrc: 'introduction/setup-agent-connect-3',
+  },
+] as const;
+
 export const POLYSTRAT_ONBOARDING_STEPS: OnboardingStep[] = [
   {
     desc: 'Trade Polymarket on autopilot with your customizable, always-on AI agent. Polystrat scans markets in real-time, executes trades on future events for you and collects winnings as the markets resolve.',

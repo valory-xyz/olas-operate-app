@@ -1,5 +1,6 @@
-import { Flex, Tag, Typography } from 'antd';
+import { Flex, Select, Tag, Typography } from 'antd';
 import Image from 'next/image';
+import { useMemo } from 'react';
 import { TbCreditCardFilled } from 'react-icons/tb';
 
 import { IntroductionAnimatedContainer } from '@/components/AgentIntroduction';
@@ -13,13 +14,24 @@ import {
 import {
   AgentMap,
   AgentType,
+  CHAIN_IMAGE_MAP,
   COLOR,
+  EvmChainId,
+  EvmChainIdMap,
+  EvmChainName,
   POLYMARKET_DEPOSIT_WALLET_MIGRATION_URL,
   UNICODE_SYMBOLS,
   X_DEVELOPER_CONSOLE_URL,
 } from '@/constants';
-import { useInitialFundingRequirements } from '@/hooks';
-import { asEvmChainDetails } from '@/utils';
+import { useInitialFundingRequirements, useServices } from '@/hooks';
+import { asEvmChainDetails, asEvmChainId, matchesAgentConfig } from '@/utils';
+
+/** Chains offered for Connect, in display order. */
+const CONNECT_CHAIN_OPTIONS: EvmChainId[] = [
+  EvmChainIdMap.Polygon,
+  EvmChainIdMap.Base,
+  EvmChainIdMap.Gnosis,
+];
 
 const { Text, Title, Link } = Typography;
 
@@ -182,16 +194,87 @@ const MinimumStakingRequirements = ({
   );
 };
 
+/**
+ * Operating-chain selector for Connect (multi-chain, one instance per chain).
+ * Rendered in place of the static `OperatingChain` display. Chains that already
+ * have a Connect instance are disabled ("Already added").
+ */
+type ConnectChainSelectProps = {
+  selectedChain?: EvmChainId;
+  onSelectChain?: (chain: EvmChainId) => void;
+};
+const ConnectChainSelect = ({
+  selectedChain,
+  onSelectChain,
+}: ConnectChainSelectProps) => {
+  const { services } = useServices();
+  const connectConfig = AGENT_CONFIG[AgentMap.Connect];
+
+  const occupiedChains = useMemo(() => {
+    const occupied = new Set<EvmChainId>();
+    (services ?? []).forEach((service) => {
+      if (matchesAgentConfig(service, connectConfig)) {
+        occupied.add(asEvmChainId(service.home_chain));
+      }
+    });
+    return occupied;
+  }, [services, connectConfig]);
+
+  return (
+    <Flex vertical gap={8}>
+      <Text className="text-neutral-tertiary">Operating chain</Text>
+      <Select
+        size="large"
+        placeholder="Select a chain"
+        value={selectedChain}
+        onChange={(value) => onSelectChain?.(value as EvmChainId)}
+        style={{ width: '100%' }}
+      >
+        {CONNECT_CHAIN_OPTIONS.map((chainId) => {
+          const isOccupied = occupiedChains.has(chainId);
+          return (
+            <Select.Option
+              key={chainId}
+              value={chainId}
+              disabled={isOccupied}
+              label={EvmChainName[chainId]}
+            >
+              <Flex align="center" gap={8}>
+                <Image
+                  src={CHAIN_IMAGE_MAP[chainId]}
+                  width={20}
+                  height={20}
+                  alt={EvmChainName[chainId]}
+                />
+                {EvmChainName[chainId]}
+                {isOccupied && (
+                  <Tag bordered={false} className="ml-auto">
+                    Already added
+                  </Tag>
+                )}
+              </Flex>
+            </Select.Option>
+          );
+        })}
+      </Select>
+    </Flex>
+  );
+};
+
 type MinimumFundingRequirementsProps = {
   agentType: AgentType;
+  /** Override chain (Connect selects its chain in this step). */
+  chainId?: EvmChainId;
 };
 const MinimumFundingRequirements = ({
   agentType,
+  chainId,
 }: MinimumFundingRequirementsProps) => {
   const { evmHomeChainId } = AGENT_CONFIG[agentType];
-  const tokens = useInitialFundingRequirements(agentType);
+  const targetChain = chainId ?? evmHomeChainId;
+  const tokens = useInitialFundingRequirements(agentType, chainId);
 
-  const allTokens = Object.entries(tokens[evmHomeChainId] || {})
+  const allTokens = Object.entries(tokens[targetChain] || {})
     .map(([token, amount]) => {
       const icon = TokenSymbolConfigMap[token as TokenSymbol]?.image as string;
       return { token, amount, icon };
@@ -242,11 +325,16 @@ const YouCanCoverAllRequirements = () => (
 type FundingRequirementStepProps = {
   agentType: AgentType;
   desc?: string;
+  /** Connect only: the operating chain chosen in this step, and its setter. */
+  selectedChain?: EvmChainId;
+  onSelectChain?: (chain: EvmChainId) => void;
 };
 
 export const FundingRequirementStep = ({
   agentType,
   desc,
+  selectedChain,
+  onSelectChain,
 }: FundingRequirementStepProps) => {
   const {
     displayName: agentName,
@@ -257,6 +345,7 @@ export const FundingRequirementStep = ({
     isPhasedOut,
   } = AGENT_CONFIG[agentType];
   const { name, displayName } = asEvmChainDetails(middlewareHomeChainId);
+  const isConnect = agentType === AgentMap.Connect;
 
   const blockingAlert = isUnderConstruction ? (
     <UnderConstructionAlert />
@@ -288,6 +377,19 @@ export const FundingRequirementStep = ({
         />
         {blockingAlert ? (
           <div style={{ marginBottom: 300 }}>{blockingAlert}</div>
+        ) : isConnect ? (
+          <>
+            <ConnectChainSelect
+              selectedChain={selectedChain}
+              onSelectChain={onSelectChain}
+            />
+            {selectedChain != null && (
+              <MinimumFundingRequirements
+                agentType={agentType}
+                chainId={selectedChain}
+              />
+            )}
+          </>
         ) : (
           <>
             <OperatingChain chainName={name} chainDisplayName={displayName} />

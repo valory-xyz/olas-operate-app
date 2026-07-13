@@ -16,4 +16,5 @@ export const X402_ENABLED_FLAGS: {
   [AgentMap.Basius]: true,
   [AgentMap.PettAi]: false,
   [AgentMap.Polystrat]: true,
+  [AgentMap.Connect]: false,
 };

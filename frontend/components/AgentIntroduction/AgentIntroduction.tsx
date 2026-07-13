@@ -8,6 +8,7 @@ import { COLOR } from '@/constants/colors';
 import {
   AGENTS_FUN_ONBOARDING_STEPS,
   BASIUS_ONBOARDING_STEPS,
+  CONNECT_ONBOARDING_STEPS,
   MODIUS_ONBOARDING_STEPS,
   OPTIMUS_ONBOARDING_STEPS,
   PETT_AI_ONBOARDING_STEPS,
@@ -37,12 +38,15 @@ const onboardingStepsMap: Record<AgentType, OnboardingStep[]> = {
   [AgentMap.Basius]: BASIUS_ONBOARDING_STEPS,
   [AgentMap.PettAi]: PETT_AI_ONBOARDING_STEPS,
   [AgentMap.Polystrat]: POLYSTRAT_ONBOARDING_STEPS,
+  [AgentMap.Connect]: CONNECT_ONBOARDING_STEPS,
 };
 
 type AgentIntroductionProps = {
   agentType?: AgentType;
   renderFundingRequirements?: (desc: string) => ReactNode;
   renderAgentSelection?: () => ReactNode;
+  /** Fill the parent's height and pin nav + selection to the bottom. */
+  fillHeight?: boolean;
 } & {
   styles?: IntroductionStepStyles;
 };
@@ -54,6 +58,7 @@ export const AgentIntroduction = ({
   agentType,
   renderFundingRequirements,
   renderAgentSelection,
+  fillHeight = false,
   styles,
 }: AgentIntroductionProps) => {
   const [onboardingStep, setOnboardingStep] = useState(0);
@@ -79,7 +84,12 @@ export const AgentIntroduction = ({
 
   if (steps.length === 0) {
     return (
-      <Flex align="center" justify="center" className="w-full">
+      <Flex
+        align="center"
+        justify="center"
+        className="w-full"
+        style={fillHeight ? { height: '100%' } : undefined}
+      >
         <Text>Select an agent.</Text>
       </Flex>
     );
@@ -91,6 +101,7 @@ export const AgentIntroduction = ({
       desc={steps[onboardingStep]?.desc}
       imgSrc={steps[onboardingStep]?.imgSrc}
       helper={steps[onboardingStep]?.helper}
+      fillHeight={fillHeight}
       renderFundingRequirements={renderFundingRequirements}
       onPrev={onboardingStep === 0 ? undefined : onPreviousStep}
       onNext={onboardingStep === steps.length - 1 ? undefined : onNextStep}

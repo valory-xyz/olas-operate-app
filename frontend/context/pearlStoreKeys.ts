@@ -24,6 +24,7 @@ export const BACKEND_BOUND_KEYS: (keyof PearlStore)[] = [
   'basius',
   'pett_ai',
   'polymarket_trader',
+  'connect',
   'firstStakingRewardAchieved',
   'lastSelectedServiceConfigId',
   'lastSelectedAgentType',

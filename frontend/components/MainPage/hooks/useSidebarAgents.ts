@@ -8,7 +8,11 @@ import {
   useServices,
   useSetup,
 } from '@/hooks';
-import { getServiceInstanceName, isServiceOfAgent } from '@/utils';
+import {
+  getServiceEvmChainId,
+  getServiceInstanceName,
+  isServiceOfAgent,
+} from '@/utils';
 
 /**
  * Manages the agent list (filtered by archive state) and all archive-related
@@ -81,7 +85,7 @@ export const useSidebarAgents = () => {
     const instanceName = getServiceInstanceName(
       service,
       config.displayName,
-      config.evmHomeChainId,
+      getServiceEvmChainId(service, config),
     );
     return `${instanceName} (${config.displayName})`;
   }, [services, pendingArchiveInstanceId]);

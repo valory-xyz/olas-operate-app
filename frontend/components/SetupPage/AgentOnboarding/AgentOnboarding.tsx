@@ -1,5 +1,5 @@
 import { Button, Flex, Spin, Typography } from 'antd';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { LuArchive } from 'react-icons/lu';
 import { TbPlus } from 'react-icons/tb';
 import styled from 'styled-components';
@@ -8,7 +8,14 @@ import { AgentIntroduction } from '@/components/AgentIntroduction';
 import { Segmented } from '@/components/ui';
 import { BackButton } from '@/components/ui/BackButton';
 import { AGENT_CONFIG } from '@/config/agents';
-import { AgentType, COLOR, PAGES, SETUP_SCREEN } from '@/constants';
+import {
+  AgentMap,
+  AgentType,
+  COLOR,
+  EvmChainId,
+  PAGES,
+  SETUP_SCREEN,
+} from '@/constants';
 import {
   useArchivedAgents,
   useIsAgentGeoRestricted,
@@ -47,38 +54,47 @@ const AgentOnboardingContainer = styled(Flex)`
 
 const Container = styled(Flex)`
   width: 840px;
+  height: 716px;
   border-radius: 16px;
   background-color: ${COLOR.WHITE};
+  overflow: hidden;
   .agent-selection-left-content {
     width: 380px;
-    padding: 16px 0;
+    height: 100%;
     border-right: 1px solid ${COLOR.GRAY_4};
+  }
+  .agent-selection-left-header {
+    padding: 24px 24px 16px 24px;
+  }
+  .agent-selection-left-list {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
   }
   .agent-selection-right-content {
     width: 460px;
-    min-height: 600px;
+    height: 100%;
     overflow: hidden;
+  }
+  .agent-selection-right-content > * {
+    flex: 1;
+    min-height: 0;
   }
 `;
 
-const SelectYourAgent = ({ canGoBack }: { canGoBack: boolean }) => {
-  const { goto } = usePageState();
-  return (
-    <Flex vertical gap={12}>
-      {canGoBack && <BackButton onPrev={() => goto(PAGES.Main)} />}
-      <Title level={3} className="m-0">
-        Select Agent
-      </Title>
-      <Text type="secondary">
-        Review and select the AI agent you&apos;d like to add or restore.
-      </Text>
-    </Flex>
-  );
+type BlockButtonProps = {
+  text: string;
+  onClick: () => void;
+  disabled?: boolean;
 };
-
-type BlockButtonProps = { text: string; onClick: () => void };
-const BlockButton = ({ text, onClick }: BlockButtonProps) => (
-  <Button onClick={onClick} type="primary" block size="large">
+const BlockButton = ({ text, onClick, disabled }: BlockButtonProps) => (
+  <Button
+    onClick={onClick}
+    type="primary"
+    block
+    size="large"
+    disabled={disabled}
+  >
     {text}
   </Button>
 );
@@ -129,6 +145,12 @@ export const AgentOnboarding = () => {
   const [selectedArchivedInstanceId, setSelectedArchivedInstanceId] =
     useState<Optional<string>>();
   const [activeTab, setActiveTab] = useState<AgentTab>(AGENT_TAB.New);
+  // Connect only: the operating chain picked in the funding-requirements step.
+  const [selectedConnectChain, setSelectedConnectChain] =
+    useState<Optional<EvmChainId>>();
+
+  // Reset the chosen Connect chain whenever the selected agent changes.
+  useEffect(() => setSelectedConnectChain(undefined), [selectedAgent]);
 
   // Derive agentType for the selected archived instance (for AgentIntroduction)
   const selectedArchivedAgentType = useMemo<Optional<AgentType>>(() => {
@@ -234,6 +256,7 @@ export const AgentOnboarding = () => {
       return (
         <AgentIntroduction
           agentType={selectedArchivedAgentType}
+          fillHeight
           renderAgentSelection={
             selectedArchivedInstanceId
               ? () => (
@@ -258,20 +281,36 @@ export const AgentOnboarding = () => {
       return <RestrictedRegion />;
     }
 
+    const isConnect = selectedAgent === AgentMap.Connect;
+
     return (
       <AgentIntroduction
         agentType={selectedAgent}
+        fillHeight
         renderFundingRequirements={(desc) =>
           selectedAgent ? (
-            <FundingRequirementStep agentType={selectedAgent} desc={desc} />
+            <FundingRequirementStep
+              agentType={selectedAgent}
+              desc={desc}
+              selectedChain={isConnect ? selectedConnectChain : undefined}
+              onSelectChain={isConnect ? setSelectedConnectChain : undefined}
+            />
           ) : null
         }
         renderAgentSelection={
-          canSelectAgent
-            ? () => (
-                <BlockButton text="Select Agent" onClick={handleAgentSelect} />
+          isConnect
+            ? // PR1: rendered but disabled — creation lands in PR2.
+              () => (
+                <BlockButton text="Select Agent" onClick={() => {}} disabled />
               )
-            : undefined
+            : canSelectAgent
+              ? () => (
+                  <BlockButton
+                    text="Select Agent"
+                    onClick={handleAgentSelect}
+                  />
+                )
+              : undefined
         }
       />
     );
@@ -287,12 +326,15 @@ export const AgentOnboarding = () => {
     selectedAgentConfig?.isGeoLocationRestricted,
     selectedArchivedAgentType,
     selectedArchivedInstanceId,
+    selectedConnectChain,
   ]);
 
   return (
     <>
       <AgentOnboardingContainer vertical gap={24}>
-        <SelectYourAgent canGoBack={isNonEmpty(services)} />
+        {isNonEmpty(services) && (
+          <BackButton onPrev={() => gotoPage(PAGES.Main)} />
+        )}
 
         {archivedInstances.length > 0 && (
           <Flex style={{ borderBottom: `1px solid ${COLOR.GRAY_4}` }}>
@@ -311,16 +353,27 @@ export const AgentOnboarding = () => {
 
         <Container>
           <Flex vertical className="agent-selection-left-content">
-            <SelectAgent
-              onSelectYourAgent={handleSelectYourAgent}
-              onSelectArchivedInstance={handleSelectArchivedInstance}
-              selectedAgent={selectedAgent}
-              selectedArchivedInstance={selectedArchivedInstanceId}
-              activeTab={activeTab}
-            />
+            <Flex vertical gap={8} className="agent-selection-left-header">
+              <Title level={3} className="m-0">
+                Select your agent
+              </Title>
+              <Text type="secondary">
+                Review and select the AI agent you&apos;d like to add or
+                restore.
+              </Text>
+            </Flex>
+            <div className="agent-selection-left-list">
+              <SelectAgent
+                onSelectYourAgent={handleSelectYourAgent}
+                onSelectArchivedInstance={handleSelectArchivedInstance}
+                selectedAgent={selectedAgent}
+                selectedArchivedInstance={selectedArchivedInstanceId}
+                activeTab={activeTab}
+              />
+            </div>
           </Flex>
 
-          <Flex className="agent-selection-right-content">
+          <Flex vertical className="agent-selection-right-content">
             {rightPanelContent}
           </Flex>
         </Container>
