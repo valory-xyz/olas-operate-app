@@ -252,12 +252,7 @@ const ConnectChainSelect = ({
         {CONNECT_CHAIN_OPTIONS.map((chainId) => {
           const isOccupied = occupiedChains.has(chainId);
           return (
-            <Select.Option
-              key={chainId}
-              value={chainId}
-              disabled={isOccupied}
-              label={EvmChainName[chainId]}
-            >
+            <Select.Option key={chainId} value={chainId} disabled={isOccupied}>
               <Flex align="center" gap={8}>
                 <Image
                   src={CHAIN_IMAGE_MAP[chainId]}

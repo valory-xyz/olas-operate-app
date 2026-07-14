@@ -18,7 +18,7 @@ import {
 } from '@/types';
 
 import { generateAgentName } from './generateAgentName';
-import { asEvmChainId } from './middlewareHelpers';
+import { asEvmChainId, asMiddlewareChain } from './middlewareHelpers';
 
 /**
  * Returns the creation timestamp of a service from its hash_history.
@@ -199,7 +199,11 @@ export const matchesAgentConfig = (
   if (service.service_public_id !== config.servicePublicId) return false;
 
   if (config.supportedChains) {
-    return config.supportedChains.includes(asEvmChainId(service.home_chain));
+    // Compare middleware-chain values so an unknown `home_chain` yields `false`
+    // instead of throwing (asEvmChainId throws on unknown chains).
+    return config.supportedChains.some(
+      (evmChainId) => asMiddlewareChain(evmChainId) === service.home_chain,
+    );
   }
 
   return service.home_chain === config.middlewareHomeChainId;

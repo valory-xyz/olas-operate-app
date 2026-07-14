@@ -28,7 +28,7 @@ const CONNECT_HASH_PLACEHOLDER =
 const CONNECT_SERVICE_VERSION_PLACEHOLDER = 'PLACEHOLDER_CONNECT_VERSION';
 const CONNECT_NFT_PLACEHOLDER =
   'bafybeiafjcy63arqkfqbtjqpzxyeia2tscpbyradb4zlpzhgc3xymwmmtu';
-const CONNECT_AGENT_ID_PLACEHOLDER = 116;
+const CONNECT_AGENT_ID = 161; // Olas agent blueprint 161
 
 // Raw per-chain funding amounts (native + USDC).
 const POLYGON_NATIVE_POL = 15;
@@ -66,7 +66,7 @@ export const CONNECT_SERVICE_TEMPLATE: ServiceTemplate = {
       staking_program_id: 'no_staking',
       nft: CONNECT_NFT_PLACEHOLDER,
       rpc: '', // overwritten
-      agent_id: CONNECT_AGENT_ID_PLACEHOLDER,
+      agent_id: CONNECT_AGENT_ID,
       cost_of_bond: '0',
       fund_requirements: {
         [ethers.constants.AddressZero]: {
@@ -86,7 +86,7 @@ export const CONNECT_SERVICE_TEMPLATE: ServiceTemplate = {
       staking_program_id: 'no_staking',
       nft: CONNECT_NFT_PLACEHOLDER,
       rpc: '', // overwritten
-      agent_id: CONNECT_AGENT_ID_PLACEHOLDER,
+      agent_id: CONNECT_AGENT_ID,
       cost_of_bond: '0',
       fund_requirements: {
         [ethers.constants.AddressZero]: {
@@ -106,7 +106,7 @@ export const CONNECT_SERVICE_TEMPLATE: ServiceTemplate = {
       staking_program_id: 'no_staking',
       nft: CONNECT_NFT_PLACEHOLDER,
       rpc: '', // overwritten
-      agent_id: CONNECT_AGENT_ID_PLACEHOLDER,
+      agent_id: CONNECT_AGENT_ID,
       cost_of_bond: '0',
       fund_requirements: {
         [ethers.constants.AddressZero]: {
@@ -117,6 +117,18 @@ export const CONNECT_SERVICE_TEMPLATE: ServiceTemplate = {
     },
   },
   env_variables: {
+    SAFE_CONTRACT_ADDRESSES: {
+      name: 'Safe contract addresses',
+      description: '',
+      value: '',
+      provision_type: EnvProvisionType.COMPUTED,
+    },
+    FUND_REQUIREMENTS: {
+      name: 'Fund requirements',
+      description: '',
+      value: '',
+      provision_type: EnvProvisionType.COMPUTED,
+    },
     POLYGON_LEDGER_RPC: {
       name: 'Polygon ledger RPC',
       description: '',
