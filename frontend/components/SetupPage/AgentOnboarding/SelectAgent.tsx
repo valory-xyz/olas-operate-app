@@ -5,7 +5,7 @@ import { LuConstruction } from 'react-icons/lu';
 import styled from 'styled-components';
 
 import { ACTIVE_AGENTS } from '@/config/agents';
-import { AgentType, COLOR } from '@/constants';
+import { AgentMap, AgentType, COLOR } from '@/constants';
 import { useServices } from '@/hooks';
 import { AgentConfig } from '@/types';
 
@@ -76,14 +76,20 @@ const SelectYourAgentList = ({
       !!config.isUnderConstruction || !!config.isAddingNewBlocked;
     return (
       [...ACTIVE_AGENTS]
-        // Sorted with under-construction / adding-blocked agents at the end
+        // Connect pinned to the top; under-construction / adding-blocked agents
+        // pushed to the end; existing config order preserved otherwise.
         .sort(
           (
-            [, agentA]: [string, AgentConfig],
-            [, agentB]: [string, AgentConfig],
+            [typeA, agentA]: [string, AgentConfig],
+            [typeB, agentB]: [string, AgentConfig],
           ) => {
-            if (isBlocked(agentA) === isBlocked(agentB)) return 0;
-            return isBlocked(agentA) ? 1 : -1;
+            if (isBlocked(agentA) !== isBlocked(agentB)) {
+              return isBlocked(agentA) ? 1 : -1;
+            }
+            const isConnectA = typeA === AgentMap.Connect;
+            const isConnectB = typeB === AgentMap.Connect;
+            if (isConnectA !== isConnectB) return isConnectA ? -1 : 1;
+            return 0;
           },
         )
     );

@@ -70,6 +70,10 @@ jest.mock('../../../../utils', () => ({
       config: { servicePublicId: string },
     ) => service.service_public_id === config.servicePublicId,
   ),
+  getServiceEvmChainId: jest.fn(
+    (_service: unknown, config: { evmHomeChainId: number }) =>
+      config.evmHomeChainId,
+  ),
   getServiceInstanceName: jest.fn(
     (service: { service_config_id: string }) => service.service_config_id,
   ),

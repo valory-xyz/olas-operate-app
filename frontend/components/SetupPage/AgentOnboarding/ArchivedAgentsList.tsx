@@ -6,7 +6,11 @@ import styled from 'styled-components';
 import { ACTIVE_AGENTS } from '@/config/agents';
 import { COLOR } from '@/constants';
 import { useArchivedAgents, useServices } from '@/hooks';
-import { getServiceInstanceName, isServiceOfAgent } from '@/utils';
+import {
+  getServiceEvmChainId,
+  getServiceInstanceName,
+  isServiceOfAgent,
+} from '@/utils';
 
 const { Text } = Typography;
 
@@ -59,7 +63,7 @@ export const ArchivedAgentsList = ({
           name: getServiceInstanceName(
             service,
             config.displayName,
-            config.evmHomeChainId,
+            getServiceEvmChainId(service, config),
           ),
           agentIcon: `/agent-${agentType}-icon.png`,
         };

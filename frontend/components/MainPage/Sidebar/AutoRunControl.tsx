@@ -17,7 +17,11 @@ import { AgentType, COLOR } from '@/constants';
 import { useAutoRunContext } from '@/context/AutoRunProvider';
 import { useAgentRunning, useService, useServices } from '@/hooks';
 import { Service } from '@/types';
-import { getServiceInstanceName, isServiceOfAgent } from '@/utils';
+import {
+  getServiceEvmChainId,
+  getServiceInstanceName,
+  isServiceOfAgent,
+} from '@/utils';
 
 const { Text } = Typography;
 
@@ -64,7 +68,7 @@ const buildGroups = (
       name: getServiceInstanceName(
         service,
         config.displayName,
-        config.evmHomeChainId,
+        getServiceEvmChainId(service, config),
       ),
     });
   }

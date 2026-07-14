@@ -58,7 +58,16 @@ const AGENT_DEPLOYMENT_GAS_REQUIREMENT_WEI = 2;
  * @example
  * { 100 : { XDAI: 11.5, OLAS: 40 }}
  */
-export const useInitialFundingRequirements = (agentType: AgentType) => {
+export const useInitialFundingRequirements = (
+  agentType: AgentType,
+  /**
+   * Optional chain filter. Multi-chain agents (e.g. Connect) have one
+   * `configurations` block per chain; pass a chain to compute requirements for
+   * just that chain (used by `SelectChain`). Omit to compute for every
+   * configured chain (existing single-chain callers are unaffected).
+   */
+  chainId?: EvmChainId,
+) => {
   const agentConfig = AGENT_CONFIG[agentType];
   const serviceTemplate = SERVICE_TEMPLATES.find(
     (template) => template.agentType === agentType,
@@ -78,6 +87,8 @@ export const useInitialFundingRequirements = (agentType: AgentType) => {
     Object.entries(serviceTemplate.configurations).forEach(
       ([middlewareChain, config]) => {
         const evmChainId = asEvmChainId(middlewareChain);
+        // When a chain filter is provided, skip other chains' configurations.
+        if (chainId && evmChainId !== chainId) return;
         const masterSafe = getMasterSafeOf(evmChainId);
         const { safeCreationThreshold: defaultSafeCreationThreshold } =
           CHAIN_CONFIG[evmChainId];
@@ -125,5 +136,6 @@ export const useInitialFundingRequirements = (agentType: AgentType) => {
     isMasterWalletsFetched,
     stakingProgramId,
     additionalRequirements,
+    chainId,
   ]);
 };

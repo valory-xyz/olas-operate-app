@@ -16,6 +16,10 @@ jest.mock('../../../../constants/providers', () => ({ PROVIDERS: {} }));
 jest.mock('../../../../utils', () => ({
   getServiceInstanceName: (_service: unknown, displayName: string) =>
     `My ${displayName}`,
+  getServiceEvmChainId: (
+    _service: unknown,
+    config: { evmHomeChainId: number },
+  ) => config.evmHomeChainId,
   isServiceOfAgent: (
     service: { service_public_id: string; home_chain: number },
     config: { servicePublicId: string; middlewareHomeChainId: number },

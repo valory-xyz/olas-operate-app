@@ -12,10 +12,12 @@ import {
   MODIUS_SERVICE_TEMPLATE,
   OPTIMUS_SERVICE_TEMPLATE,
 } from '@/constants/serviceTemplates';
+import { CONNECT_SERVICE_TEMPLATE } from '@/constants/serviceTemplates/service/connect';
 import { PREDICT_POLYMARKET_SERVICE_TEMPLATE } from '@/constants/serviceTemplates/service/trader';
 import { X402_ENABLED_FLAGS } from '@/constants/x402';
 import { AgentsFunBaseService } from '@/service/agents/AgentsFunBase';
 import { BasiusService } from '@/service/agents/Basius';
+import { ConnectService } from '@/service/agents/Connect';
 import { ModiusService } from '@/service/agents/Modius';
 import { OptimismService } from '@/service/agents/Optimism';
 import { PettAiService } from '@/service/agents/PettAi';
@@ -94,6 +96,36 @@ const getPolystratPusdConfig = () => {
     0;
 
   return Number(formatUnits(pusdSafeRequirement, polystratPusdConfig.decimals));
+};
+
+const getConnectPolygonUsdcConfig = () => {
+  const fundRequirements =
+    CONNECT_SERVICE_TEMPLATE.configurations[MiddlewareChainMap.POLYGON]
+      ?.fund_requirements;
+  const usdcConfig = POLYGON_TOKEN_CONFIG[TokenSymbolMap.USDC];
+
+  if (!usdcConfig) {
+    throw new Error('Connect Polygon USDC config not found');
+  }
+
+  const usdcSafeRequirement =
+    fundRequirements?.[usdcConfig.address as Address]?.safe || 0;
+  return Number(formatUnits(usdcSafeRequirement, usdcConfig.decimals));
+};
+
+const getConnectBaseUsdcConfig = () => {
+  const fundRequirements =
+    CONNECT_SERVICE_TEMPLATE.configurations[MiddlewareChainMap.BASE]
+      ?.fund_requirements;
+  const usdcConfig = BASE_TOKEN_CONFIG[TokenSymbolMap.USDC];
+
+  if (!usdcConfig) {
+    throw new Error('Connect Base USDC config not found');
+  }
+
+  const usdcSafeRequirement =
+    fundRequirements?.[usdcConfig.address as Address]?.safe || 0;
+  return Number(formatUnits(usdcSafeRequirement, usdcConfig.decimals));
 };
 
 export const AGENT_CONFIG: {
@@ -278,6 +310,41 @@ export const AGENT_CONFIG: {
       message:
         'To operate, the agent must be linked to a pet. Link one in the Profile tab or press Connect below.',
     },
+  },
+  [AgentMap.Connect]: {
+    isAgentEnabled: true,
+    requiresSetup: false,
+    isX402Enabled: X402_ENABLED_FLAGS[AgentMap.Connect],
+    name: 'Connect',
+    // Connect is multi-chain (one instance per chain). evmHomeChainId /
+    // middlewareHomeChainId are a sensible default (Gnosis) for back-compat;
+    // the real per-instance chain comes from `service.home_chain` and the
+    // chain the user picks in the funding-requirements step.
+    evmHomeChainId: EvmChainIdMap.Gnosis,
+    middlewareHomeChainId: MiddlewareChainMap.GNOSIS,
+    supportedChains: [
+      EvmChainIdMap.Polygon,
+      EvmChainIdMap.Base,
+      EvmChainIdMap.Gnosis,
+    ],
+    agentIds: [], // TODO(PR2): real Olas Registry agent id(s)
+    additionalRequirements: {
+      [EvmChainIdMap.Polygon]: {
+        [TokenSymbolMap.USDC]: getConnectPolygonUsdcConfig(),
+      },
+      [EvmChainIdMap.Base]: {
+        [TokenSymbolMap.USDC]: getConnectBaseUsdcConfig(),
+      },
+    },
+    defaultStakingProgramId: 'no_staking',
+    serviceApi: ConnectService,
+    displayName: 'Connect',
+    description: 'Connect agent powered by a local Claude Code session.',
+    hasExternalFunds: false,
+    doesChatUiRequireApiKey: false,
+    // PLACEHOLDER: real public id lands with the minted Connect package (PR2).
+    servicePublicId: 'valory/connect:0.1.0',
+    erc20Tokens: [TokenSymbolMap.USDC],
   },
 };
 

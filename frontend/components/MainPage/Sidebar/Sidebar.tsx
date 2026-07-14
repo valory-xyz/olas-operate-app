@@ -38,6 +38,7 @@ import {
   useSetup,
 } from '@/hooks';
 import {
+  getServiceEvmChainId,
   getServiceInstanceName,
   isServiceOfAgent,
   sortByCreationTime,
@@ -196,7 +197,7 @@ export const Sidebar = () => {
         name: getServiceInstanceName(
           service,
           config.displayName,
-          config.evmHomeChainId,
+          getServiceEvmChainId(service, config),
         ),
         hasEarnedRewards: rewardStatusByConfigId.get(service.service_config_id),
       });

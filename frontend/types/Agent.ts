@@ -8,6 +8,7 @@ import {
 } from '@/constants';
 import { AgentsFunBaseService } from '@/service/agents/AgentsFunBase';
 import { BasiusService } from '@/service/agents/Basius';
+import { ConnectService } from '@/service/agents/Connect';
 import { ModiusService } from '@/service/agents/Modius';
 import { OptimismService } from '@/service/agents/Optimism';
 import { PredictTraderService } from '@/service/agents/PredictTrader';
@@ -17,7 +18,8 @@ type ServiceApi =
   | typeof ModiusService
   | typeof OptimismService
   | typeof BasiusService
-  | typeof AgentsFunBaseService;
+  | typeof AgentsFunBaseService
+  | typeof ConnectService;
 
 type NeedsOpenProfileEachAgentRun = {
   /** Whether the agent requires opening profile first before showing performance metrics */
@@ -42,6 +44,13 @@ export type AgentConfig = {
   name: string;
   evmHomeChainId: EvmChainId;
   middlewareHomeChainId: SupportedMiddlewareChain;
+  /**
+   * Chains this agent can run on. Present only for multi-chain agents (e.g.
+   * Connect, one instance per chain). When set, service grouping matches any
+   * instance whose `home_chain` is in this list (see `matchesAgentConfig`);
+   * when absent, the agent is single-chain and matches `middlewareHomeChainId`.
+   */
+  supportedChains?: EvmChainId[];
   agentIds: number[];
   defaultStakingProgramId: StakingProgramId;
   additionalRequirements?: Partial<

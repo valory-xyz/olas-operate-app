@@ -12,6 +12,7 @@ import {
   OPTIMUS_SERVICE_TEMPLATE,
 } from '.';
 import { KPI_DESC_PREFIX } from './constants';
+import { CONNECT_SERVICE_TEMPLATE } from './service/connect';
 import {
   PREDICT_POLYMARKET_SERVICE_TEMPLATE,
   PREDICT_SERVICE_TEMPLATE,
@@ -240,4 +241,5 @@ export const SERVICE_TEMPLATES: ServiceTemplate[] = [
   OPTIMUS_SERVICE_TEMPLATE,
   BASIUS_SERVICE_TEMPLATE,
   PETT_AI_SERVICE_TEMPLATE,
+  CONNECT_SERVICE_TEMPLATE,
 ] as const;

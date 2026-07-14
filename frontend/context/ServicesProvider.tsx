@@ -48,6 +48,7 @@ import {
 } from '@/types';
 import {
   asEvmChainId,
+  getServiceEvmChainId,
   getServiceInstanceName,
   isNilOrEmpty,
   isServiceOfAgent,
@@ -467,7 +468,7 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
       getServiceInstanceName(
         selectedService,
         selectedAgentConfig.displayName,
-        selectedAgentConfig.evmHomeChainId,
+        getServiceEvmChainId(selectedService, selectedAgentConfig),
       ),
     [selectedService, selectedAgentConfig],
   );
