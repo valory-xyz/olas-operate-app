@@ -3,7 +3,7 @@ import { isEmpty, sortBy } from 'lodash';
 import { ACTIVE_AGENTS, AGENT_CONFIG } from '@/config/agents';
 import { AgentType } from '@/constants';
 import { Service } from '@/types';
-import { getServiceInstanceName } from '@/utils/service';
+import { getServiceInstanceName, matchesAgentConfig } from '@/utils/service';
 
 import { AgentMeta, IncludedAgentInstance } from '../types';
 
@@ -52,10 +52,8 @@ export const notifyStartFailed = (
  * `undefined` if no match is found.
  */
 export const getAgentFromService = (service: Service) => {
-  return ACTIVE_AGENTS.find(
-    ([, agentConfig]) =>
-      agentConfig.servicePublicId === service.service_public_id &&
-      agentConfig.middlewareHomeChainId === service.home_chain,
+  return ACTIVE_AGENTS.find(([, agentConfig]) =>
+    matchesAgentConfig(service, agentConfig),
   );
 };
 

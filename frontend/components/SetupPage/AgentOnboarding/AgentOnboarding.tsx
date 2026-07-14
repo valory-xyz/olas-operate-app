@@ -1,4 +1,4 @@
-import { Button, Flex, Spin, Typography } from 'antd';
+import { Button, Flex, message, Spin, Typography } from 'antd';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { LuArchive } from 'react-icons/lu';
 import { TbPlus } from 'react-icons/tb';
@@ -18,13 +18,14 @@ import {
 } from '@/constants';
 import {
   useArchivedAgents,
+  useCreateConnectService,
   useIsAgentGeoRestricted,
   usePageState,
   useServices,
   useSetup,
 } from '@/hooks';
 import { Optional } from '@/types';
-import { isNonEmpty } from '@/utils';
+import { asEvmChainId, isNonEmpty, matchesAgentConfig } from '@/utils';
 
 import { FundingRequirementStep } from './FundingRequirementStep';
 import { RestrictedRegion } from './RestrictedRegion';
@@ -86,14 +87,21 @@ type BlockButtonProps = {
   text: string;
   onClick: () => void;
   disabled?: boolean;
+  loading?: boolean;
 };
-const BlockButton = ({ text, onClick, disabled }: BlockButtonProps) => (
+const BlockButton = ({
+  text,
+  onClick,
+  disabled,
+  loading,
+}: BlockButtonProps) => (
   <Button
     onClick={onClick}
     type="primary"
     block
     size="large"
     disabled={disabled}
+    loading={loading}
   >
     {text}
   </Button>
@@ -148,9 +156,32 @@ export const AgentOnboarding = () => {
   // Connect only: the operating chain picked in the funding-requirements step.
   const [selectedConnectChain, setSelectedConnectChain] =
     useState<Optional<EvmChainId>>();
+  const [isCreatingConnect, setIsCreatingConnect] = useState(false);
+  // Incremented to send the user back to the chain selector (first slide) and
+  // highlight it when "Select agent" is clicked without a chain chosen.
+  const [chainPromptSignal, setChainPromptSignal] = useState(0);
+  const createConnectService = useCreateConnectService();
 
   // Reset the chosen Connect chain whenever the selected agent changes.
   useEffect(() => setSelectedConnectChain(undefined), [selectedAgent]);
+
+  const handleConnectCreate = useCallback(async () => {
+    if (!selectedConnectChain) {
+      // No chain chosen — jump to the first slide (chain selector) and
+      // highlight it, instead of creating.
+      setChainPromptSignal((signal) => signal + 1);
+      return;
+    }
+    setIsCreatingConnect(true);
+    try {
+      // Creates the Connect service (no_staking) and routes to funding.
+      await createConnectService(selectedConnectChain);
+    } catch (error) {
+      console.error(error);
+      message.error('Failed to create the Connect agent. Please try again.');
+      setIsCreatingConnect(false);
+    }
+  }, [selectedConnectChain, createConnectService]);
 
   // Derive agentType for the selected archived instance (for AgentIntroduction)
   const selectedArchivedAgentType = useMemo<Optional<AgentType>>(() => {
@@ -251,6 +282,21 @@ export const AgentOnboarding = () => {
     return true;
   }, [selectedAgent, isAgentGeoRestricted]);
 
+  const connectConfig = AGENT_CONFIG[AgentMap.Connect];
+  // Every supported chain already has a Connect instance (one per chain) →
+  // there is nothing left to add, so the "Select Agent" button is hidden.
+  const connectAllChainsOccupied = useMemo(() => {
+    const supported = connectConfig.supportedChains ?? [];
+    if (supported.length === 0) return false;
+    const occupied = new Set<EvmChainId>();
+    (services ?? []).forEach((service) => {
+      if (matchesAgentConfig(service, connectConfig)) {
+        occupied.add(asEvmChainId(service.home_chain));
+      }
+    });
+    return supported.every((chainId) => occupied.has(chainId));
+  }, [services, connectConfig]);
+
   const rightPanelContent = useMemo(() => {
     if (activeTab === AGENT_TAB.Archived) {
       return (
@@ -287,6 +333,7 @@ export const AgentOnboarding = () => {
       <AgentIntroduction
         agentType={selectedAgent}
         fillHeight
+        goToFirstStepSignal={isConnect ? chainPromptSignal : undefined}
         renderFundingRequirements={(desc) =>
           selectedAgent ? (
             <FundingRequirementStep
@@ -294,15 +341,25 @@ export const AgentOnboarding = () => {
               desc={desc}
               selectedChain={isConnect ? selectedConnectChain : undefined}
               onSelectChain={isConnect ? setSelectedConnectChain : undefined}
+              highlightSignal={isConnect ? chainPromptSignal : undefined}
             />
           ) : null
         }
         renderAgentSelection={
           isConnect
-            ? // PR1: rendered but disabled — creation lands in PR2.
-              () => (
-                <BlockButton text="Select Agent" onClick={() => {}} disabled />
-              )
+            ? // No button once every chain has a Connect instance; otherwise
+              // it creates the service (no_staking) with the chosen chain, or
+              // jumps back to the chain selector when none is chosen.
+              connectAllChainsOccupied
+              ? undefined
+              : () => (
+                  <BlockButton
+                    text="Select Agent"
+                    onClick={handleConnectCreate}
+                    disabled={isCreatingConnect}
+                    loading={isCreatingConnect}
+                  />
+                )
             : canSelectAgent
               ? () => (
                   <BlockButton
@@ -317,6 +374,7 @@ export const AgentOnboarding = () => {
   }, [
     activeTab,
     canSelectAgent,
+    connectAllChainsOccupied,
     handleAgentSelect,
     handleRestoreInstance,
     isAgentGeoRestricted,
@@ -327,6 +385,9 @@ export const AgentOnboarding = () => {
     selectedArchivedAgentType,
     selectedArchivedInstanceId,
     selectedConnectChain,
+    isCreatingConnect,
+    handleConnectCreate,
+    chainPromptSignal,
   ]);
 
   return (

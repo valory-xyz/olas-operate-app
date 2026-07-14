@@ -19,11 +19,16 @@ import { KPI_DESC_PREFIX } from '../constants';
  * with the real minted values before enabling service creation (PR2) and
  * before running `scripts/js/check_service_templates.ts`.
  */
-const CONNECT_HASH_PLACEHOLDER = 'PLACEHOLDER_CONNECT_HASH';
+// Local testing: real published service hash (service/valory/connect/0.1.0) so a
+// create mints an actual Connect service and onboarding resolves to the Connect
+// agent. Provisional — content-derived, moves if the `packages/` service changes
+// (e.g. when SAFE_CONTRACT_ADDRESSES / FUND_REQUIREMENTS are added).
+const CONNECT_HASH_PLACEHOLDER =
+  'bafybeibue5tquh2yify7upvvlarotk7rbelg3uicd3dctwb4csa5yxkysi';
 const CONNECT_SERVICE_VERSION_PLACEHOLDER = 'PLACEHOLDER_CONNECT_VERSION';
-const CONNECT_NFT_PLACEHOLDER = 'PLACEHOLDER_CONNECT_NFT';
-const CONNECT_AGENT_ID_PLACEHOLDER = 0; // TODO(PR2): real Olas Registry agent id
-const CONNECT_COST_OF_BOND_PLACEHOLDER = parseEther(1); // unused for no_staking
+const CONNECT_NFT_PLACEHOLDER =
+  'bafybeiafjcy63arqkfqbtjqpzxyeia2tscpbyradb4zlpzhgc3xymwmmtu';
+const CONNECT_AGENT_ID_PLACEHOLDER = 116;
 
 // Raw per-chain funding amounts (native + USDC).
 const POLYGON_NATIVE_POL = 15;
@@ -62,6 +67,7 @@ export const CONNECT_SERVICE_TEMPLATE: ServiceTemplate = {
       nft: CONNECT_NFT_PLACEHOLDER,
       rpc: '', // overwritten
       agent_id: CONNECT_AGENT_ID_PLACEHOLDER,
+      cost_of_bond: '0',
       fund_requirements: {
         [ethers.constants.AddressZero]: {
           agent: '0',
@@ -81,7 +87,7 @@ export const CONNECT_SERVICE_TEMPLATE: ServiceTemplate = {
       nft: CONNECT_NFT_PLACEHOLDER,
       rpc: '', // overwritten
       agent_id: CONNECT_AGENT_ID_PLACEHOLDER,
-      cost_of_bond: CONNECT_COST_OF_BOND_PLACEHOLDER,
+      cost_of_bond: '0',
       fund_requirements: {
         [ethers.constants.AddressZero]: {
           agent: '0',
@@ -101,7 +107,7 @@ export const CONNECT_SERVICE_TEMPLATE: ServiceTemplate = {
       nft: CONNECT_NFT_PLACEHOLDER,
       rpc: '', // overwritten
       agent_id: CONNECT_AGENT_ID_PLACEHOLDER,
-      cost_of_bond: CONNECT_COST_OF_BOND_PLACEHOLDER,
+      cost_of_bond: '0',
       fund_requirements: {
         [ethers.constants.AddressZero]: {
           agent: '0',

@@ -5,9 +5,9 @@ import { useContext, useMemo } from 'react';
 import { ACTIVE_AGENTS, AGENT_CONFIG } from '@/config/agents';
 import { EvmChainId, FIVE_SECONDS_INTERVAL } from '@/constants';
 import { OnlineStatusContext } from '@/context/OnlineStatusProvider';
-import { assertRequired } from '@/types/Util';
 import { sumBigNumbers } from '@/utils/calculations';
 import { asMiddlewareChain } from '@/utils/middlewareHelpers';
+import { matchesAgentConfig } from '@/utils/service';
 
 import { createActiveStakingProgramIdQuery } from './useActiveStakingProgramId';
 import { createStakingRewardsQuery } from './useAgentStakingRewardsDetails';
@@ -37,27 +37,36 @@ export const useStakingRewardsOf = (chainId: EvmChainId) => {
   );
 
   const servicesDetails = useMemo(() => {
-    return servicesOnChain?.map((service) => {
-      const agent = ACTIVE_AGENTS.find(
-        ([, agentConfig]) =>
-          agentConfig.evmHomeChainId === chainId &&
-          agentConfig.servicePublicId === service.service_public_id,
-      );
-      assertRequired(agent, 'Agent not found for the given service.');
-      const agentType = agent[0];
+    return servicesOnChain
+      ?.map((service) => {
+        const agent = ACTIVE_AGENTS.find(([, agentConfig]) =>
+          matchesAgentConfig(service, agentConfig),
+        );
+        // Skip unmatched services and no_staking agents (e.g. Connect) —
+        // they have no staking rewards to fetch.
+        if (
+          !agent ||
+          AGENT_CONFIG[agent[0]].defaultStakingProgramId === 'no_staking'
+        ) {
+          return null;
+        }
+        const agentType = agent[0];
 
-      const chainConfigs = service.chain_configs;
-      const chainDetails = isNil(chainConfigs)
-        ? null
-        : chainConfigs[asMiddlewareChain(chainId)]?.chain_data;
-      const serviceNftTokenId = chainDetails?.token;
-      return {
-        agentConfig: AGENT_CONFIG[agentType],
-        serviceNftTokenId,
-        serviceConfigId: service.service_config_id,
-        multisig: chainDetails?.multisig,
-      };
-    });
+        const chainConfigs = service.chain_configs;
+        const chainDetails = isNil(chainConfigs)
+          ? null
+          : chainConfigs[asMiddlewareChain(chainId)]?.chain_data;
+        const serviceNftTokenId = chainDetails?.token;
+        return {
+          agentConfig: AGENT_CONFIG[agentType],
+          serviceNftTokenId,
+          serviceConfigId: service.service_config_id,
+          multisig: chainDetails?.multisig,
+        };
+      })
+      .filter(
+        (detail): detail is NonNullable<typeof detail> => detail !== null,
+      );
   }, [chainId, servicesOnChain]);
 
   const activeStakingProgramIdQueries = useQueries({

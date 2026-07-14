@@ -47,6 +47,11 @@ type AgentIntroductionProps = {
   renderAgentSelection?: () => ReactNode;
   /** Fill the parent's height and pin nav + selection to the bottom. */
   fillHeight?: boolean;
+  /**
+   * Incrementing this value jumps back to the first slide. Used to bring the
+   * user to the chain selector when "Select agent" is clicked with no chain.
+   */
+  goToFirstStepSignal?: number;
 } & {
   styles?: IntroductionStepStyles;
 };
@@ -59,12 +64,18 @@ export const AgentIntroduction = ({
   renderFundingRequirements,
   renderAgentSelection,
   fillHeight = false,
+  goToFirstStepSignal,
   styles,
 }: AgentIntroductionProps) => {
   const [onboardingStep, setOnboardingStep] = useState(0);
 
   // Reset onboarding step when selected agent changes
   useEffect(() => setOnboardingStep(0), [agentType]);
+
+  // Jump back to the first slide when the caller signals it.
+  useEffect(() => {
+    if (goToFirstStepSignal) setOnboardingStep(0);
+  }, [goToFirstStepSignal]);
 
   // Skip the first step if renderFundingRequirements is provided
   // as first step is funding requirements details and description.

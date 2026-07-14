@@ -1,6 +1,6 @@
 import { Flex, Select, Tag, Typography } from 'antd';
 import Image from 'next/image';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { TbCreditCardFilled } from 'react-icons/tb';
 
 import { IntroductionAnimatedContainer } from '@/components/AgentIntroduction';
@@ -25,6 +25,8 @@ import {
 } from '@/constants';
 import { useInitialFundingRequirements, useServices } from '@/hooks';
 import { asEvmChainDetails, asEvmChainId, matchesAgentConfig } from '@/utils';
+
+import { InstanceCount } from './SelectAgent';
 
 /** Chains offered for Connect, in display order. */
 const CONNECT_CHAIN_OPTIONS: EvmChainId[] = [
@@ -202,13 +204,29 @@ const MinimumStakingRequirements = ({
 type ConnectChainSelectProps = {
   selectedChain?: EvmChainId;
   onSelectChain?: (chain: EvmChainId) => void;
+  /** Incrementing value that flags the selector when the user tries to
+   * continue without choosing a chain. */
+  highlightSignal?: number;
 };
 const ConnectChainSelect = ({
   selectedChain,
   onSelectChain,
+  highlightSignal,
 }: ConnectChainSelectProps) => {
   const { services } = useServices();
   const connectConfig = AGENT_CONFIG[AgentMap.Connect];
+
+  // Highlight the selector when prompted (no chain chosen). Cleared once a
+  // chain is selected.
+  const [isHighlighted, setIsHighlighted] = useState(false);
+  useEffect(() => {
+    if (highlightSignal) setIsHighlighted(true);
+  }, [highlightSignal]);
+  useEffect(() => {
+    if (selectedChain) setIsHighlighted(false);
+  }, [selectedChain]);
+
+  const showError = isHighlighted && !selectedChain;
 
   const occupiedChains = useMemo(() => {
     const occupied = new Set<EvmChainId>();
@@ -228,6 +246,7 @@ const ConnectChainSelect = ({
         placeholder="Select a chain"
         value={selectedChain}
         onChange={(value) => onSelectChain?.(value as EvmChainId)}
+        status={showError ? 'error' : undefined}
         style={{ width: '100%' }}
       >
         {CONNECT_CHAIN_OPTIONS.map((chainId) => {
@@ -248,15 +267,18 @@ const ConnectChainSelect = ({
                 />
                 {EvmChainName[chainId]}
                 {isOccupied && (
-                  <Tag bordered={false} className="ml-auto">
-                    Already added
-                  </Tag>
+                  <Flex className="ml-auto">
+                    <InstanceCount count={1} />
+                  </Flex>
                 )}
               </Flex>
             </Select.Option>
           );
         })}
       </Select>
+      {showError && (
+        <Text type="danger">Please select a chain to continue.</Text>
+      )}
     </Flex>
   );
 };
@@ -328,6 +350,8 @@ type FundingRequirementStepProps = {
   /** Connect only: the operating chain chosen in this step, and its setter. */
   selectedChain?: EvmChainId;
   onSelectChain?: (chain: EvmChainId) => void;
+  /** Connect only: incrementing value that highlights the chain selector. */
+  highlightSignal?: number;
 };
 
 export const FundingRequirementStep = ({
@@ -335,6 +359,7 @@ export const FundingRequirementStep = ({
   desc,
   selectedChain,
   onSelectChain,
+  highlightSignal,
 }: FundingRequirementStepProps) => {
   const {
     displayName: agentName,
@@ -382,6 +407,7 @@ export const FundingRequirementStep = ({
             <ConnectChainSelect
               selectedChain={selectedChain}
               onSelectChain={onSelectChain}
+              highlightSignal={highlightSignal}
             />
             {selectedChain != null && (
               <MinimumFundingRequirements

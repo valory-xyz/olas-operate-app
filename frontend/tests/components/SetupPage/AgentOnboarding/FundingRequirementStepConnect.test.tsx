@@ -116,7 +116,7 @@ describe('FundingRequirementStep — Connect chain select', () => {
     expect(findOption('Polygon')).not.toHaveClass(
       'ant-select-item-option-disabled',
     );
-    expect(screen.getByText('Already added')).toBeInTheDocument();
+    expect(screen.getByText('You own 1')).toBeInTheDocument();
   });
 
   it('calls onSelectChain when an enabled chain is picked', () => {
@@ -130,6 +130,33 @@ describe('FundingRequirementStep — Connect chain select', () => {
     openDropdown();
     fireEvent.click(findOption('Polygon')!);
     expect(onSelectChain).toHaveBeenCalledWith(EvmChainIdMap.Polygon);
+  });
+
+  it('shows an error when highlightSignal fires without a chain chosen', () => {
+    render(
+      <FundingRequirementStep
+        agentType={AgentMap.Connect}
+        highlightSignal={1}
+      />,
+    );
+    expect(
+      screen.getByText('Please select a chain to continue.'),
+    ).toBeInTheDocument();
+    // antd flags the Select with an error status wrapper.
+    expect(document.querySelector('.ant-select-status-error')).not.toBeNull();
+  });
+
+  it('does not show the error once a chain is selected', () => {
+    render(
+      <FundingRequirementStep
+        agentType={AgentMap.Connect}
+        selectedChain={EvmChainIdMap.Polygon}
+        highlightSignal={1}
+      />,
+    );
+    expect(
+      screen.queryByText('Please select a chain to continue.'),
+    ).not.toBeInTheDocument();
   });
 
   it('shows funding requirements for the selected chain', () => {

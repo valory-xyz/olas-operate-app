@@ -101,6 +101,10 @@ const createService = async ({
               ...config,
               rpc: CHAIN_CONFIG[asEvmChainId(middlewareChain)].rpc,
               staking_program_id: stakingProgramId,
+              // Explicitly disable staking for no_staking agents (e.g. Connect).
+              ...(stakingProgramId === 'no_staking'
+                ? { use_staking: false }
+                : {}),
             };
             return acc;
           },

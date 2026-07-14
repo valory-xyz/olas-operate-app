@@ -12,6 +12,7 @@ import {
   DEFAULT_SERVICE_NFT_TOKEN_ID,
   DEFAULT_STAKING_PROGRAM_ID,
   makeChainConfig,
+  makeConnectService,
   makeMiddlewareService,
   MOCK_MULTISIG_ADDRESS,
   MOCK_SERVICE_CONFIG_ID_2,
@@ -526,6 +527,58 @@ describe('useStakingRewardsOf', () => {
       const { result } = renderHook(() => useStakingRewardsOf(GNOSIS));
 
       expect(result.current.totalStakingRewards).toBe('0.0');
+    });
+  });
+
+  // -- no_staking (Connect) services excluded -------------------------------
+  describe('no_staking (Connect) services', () => {
+    const makeGnosisConnectService = () =>
+      makeConnectService(MiddlewareChainMap.GNOSIS, {
+        service_config_id: MOCK_SERVICE_CONFIG_ID_2,
+        chain_configs: makeChainConfig(MiddlewareChainMap.GNOSIS),
+      });
+
+    it('does not throw and issues no staking queries for a lone Connect service', () => {
+      const connect = makeGnosisConnectService();
+      setupServices({ services: [connect] });
+      setupUseQueries();
+
+      const { result } = renderHook(() => useStakingRewardsOf(GNOSIS));
+
+      expect(result.current.totalStakingRewards).toBe('0');
+      expect(result.current.isLoading).toBe(false);
+      expect(mockCreateActiveStakingProgramIdQuery).not.toHaveBeenCalled();
+      expect(mockCreateStakingRewardsQuery).not.toHaveBeenCalled();
+    });
+
+    it('excludes the Connect service but still queries a staking agent on the same chain', () => {
+      const trader = makeGnosisTraderService();
+      const connect = makeGnosisConnectService();
+      setupServices({ services: [trader, connect] });
+      setupUseQueries({
+        stakingProgramResults: [
+          { data: DEFAULT_STAKING_PROGRAM_ID, isLoading: false },
+        ],
+        rewardsResults: [
+          {
+            data: { accruedServiceStakingRewards: 4 },
+            isLoading: false,
+            isSuccess: true,
+          },
+        ],
+      });
+
+      const { result } = renderHook(() => useStakingRewardsOf(GNOSIS));
+
+      expect(result.current.totalStakingRewards).toBe('4.0');
+      // Only the trader service produces a staking query; Connect is skipped.
+      expect(mockCreateStakingRewardsQuery).toHaveBeenCalledTimes(1);
+      expect(mockCreateStakingRewardsQuery).toHaveBeenCalledWith(
+        expect.objectContaining({
+          serviceConfigId: DEFAULT_SERVICE_CONFIG_ID,
+          agentConfig: traderConfig,
+        }),
+      );
     });
   });
 
