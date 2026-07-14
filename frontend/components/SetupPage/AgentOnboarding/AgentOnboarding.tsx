@@ -358,8 +358,7 @@ export const AgentOnboarding = () => {
                 Select your agent
               </Title>
               <Text type="secondary">
-                Review and select the AI agent you&apos;d like to add or
-                restore.
+                Review and select the AI agent you like.
               </Text>
             </Flex>
             <div className="agent-selection-left-list">

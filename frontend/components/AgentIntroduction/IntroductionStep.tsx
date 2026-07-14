@@ -154,7 +154,16 @@ export const IntroductionStep = ({
           height: '100%',
         }}
       >
-        <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
+        <div
+          style={{
+            flex: 1,
+            minHeight: 0,
+            overflowY: 'auto',
+            // Clip the horizontal slide-transition so it doesn't briefly show a
+            // horizontal scrollbar while switching between slides.
+            overflowX: 'hidden',
+          }}
+        >
           {media}
           {contentText && <div style={{ paddingTop: 12 }}>{contentText}</div>}
         </div>

@@ -25,11 +25,7 @@ const CONNECT_NFT_PLACEHOLDER = 'PLACEHOLDER_CONNECT_NFT';
 const CONNECT_AGENT_ID_PLACEHOLDER = 0; // TODO(PR2): real Olas Registry agent id
 const CONNECT_COST_OF_BOND_PLACEHOLDER = parseEther(1); // unused for no_staking
 
-/**
- * Raw per-chain funding amounts (native + USDC). Do NOT add safe-creation or
- * deployment gas here — `useInitialFundingRequirements` layers those on when
- * displaying requirements.
- */
+// Raw per-chain funding amounts (native + USDC).
 const POLYGON_NATIVE_POL = 15;
 const BASE_NATIVE_ETH = 0.0005;
 const GNOSIS_NATIVE_XDAI = 5;
@@ -44,8 +40,9 @@ const USDC_AMOUNT = 5;
  */
 export const CONNECT_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentMap.Connect,
-  name: 'Connect Agent', // should be unique across all services and not be updated
-  description: `${KPI_DESC_PREFIX} Connect agent`,
+  name: 'Connect', // should be unique across all services and not be updated
+  description: `${KPI_DESC_PREFIX} An agent that provides on-chain wallet and agent capabilities for your AI agent`,
+  // TODO: update to Connect NFT
   image:
     'https://gateway.autonolas.tech/ipfs/bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
   hash: CONNECT_HASH_PLACEHOLDER,
@@ -54,7 +51,7 @@ export const CONNECT_SERVICE_TEMPLATE: ServiceTemplate = {
     is_aea: false,
     repository: {
       owner: 'valory-xyz',
-      name: 'connect', // PLACEHOLDER
+      name: 'pearl-connect',
       version: CONNECT_SERVICE_VERSION_PLACEHOLDER,
     },
   },
@@ -65,7 +62,6 @@ export const CONNECT_SERVICE_TEMPLATE: ServiceTemplate = {
       nft: CONNECT_NFT_PLACEHOLDER,
       rpc: '', // overwritten
       agent_id: CONNECT_AGENT_ID_PLACEHOLDER,
-      cost_of_bond: CONNECT_COST_OF_BOND_PLACEHOLDER,
       fund_requirements: {
         [ethers.constants.AddressZero]: {
           agent: '0',

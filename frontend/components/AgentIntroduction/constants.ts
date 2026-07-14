@@ -115,22 +115,25 @@ export const BASIUS_ONBOARDING_STEPS: OnboardingStep[] = [
 // TODO(PR2/PR3): replace placeholder copy and images with final Connect assets.
 export const CONNECT_ONBOARDING_STEPS: OnboardingStep[] = [
   {
-    desc: 'Connect agent powered by a local Claude Code session. [Placeholder copy]',
+    desc: 'Bring your own AI agent, like Claude Code, on-chain. Connect agent uses a web3 wallet provided by Pearl, so it can pay for prediction data and other services on the Olas Marketplace while the keys stay on your machine.',
   },
   {
-    title: 'Placeholder step one',
-    desc: 'Placeholder description for the first Connect onboarding step.',
+    title: 'Connect your AI agent',
+    desc: 'Give your AI agent, like Claude Code, the ability to transact on-chain. Pearl provides the wallet. You stay in control of the funds.',
     imgSrc: 'introduction/setup-agent-connect-1',
+    styles: { imageHeight: 366 },
   },
   {
-    title: 'Placeholder step two',
-    desc: 'Placeholder description for the second Connect onboarding step.',
+    title: 'Your agent acts, Pearl signs',
+    desc: 'Run Connect in Pearl, and link your agent. Your agent can hire other agents for tasks, like getting the probability of a prediction market outcome. Pearl is designed to sign the transactions for it.',
     imgSrc: 'introduction/setup-agent-connect-2',
+    styles: { imageHeight: 366 },
   },
   {
-    title: 'Placeholder step three',
-    desc: 'Placeholder description for the third Connect onboarding step.',
+    title: 'One agent per chain',
+    desc: 'Add Connect on the chain you want, fund it, and run it. Need another chain? Set up a separate Connect anytime.',
     imgSrc: 'introduction/setup-agent-connect-3',
+    styles: { imageHeight: 366 },
   },
 ] as const;
 
