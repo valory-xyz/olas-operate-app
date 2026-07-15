@@ -23,18 +23,45 @@ const { CONNECT_SERVICE_TEMPLATE } = jest.requireMock(
 );
 const BASE_CONFIG = CONNECT_SERVICE_TEMPLATE.configurations.base;
 
-// --- @/utils (onDummyServiceCreation + asMiddlewareChain) --------------------
+// --- @/utils (onDummyServiceCreation + chain/config helpers) -----------------
 const mockOnDummyServiceCreation = jest.fn();
+const mockMatchesAgentConfig = jest.fn();
 const MIDDLEWARE_BY_EVM: Record<number, string> = {
   [EvmChainIdMap.Polygon]: MiddlewareChainMap.POLYGON,
   [EvmChainIdMap.Base]: MiddlewareChainMap.BASE,
   [EvmChainIdMap.Gnosis]: MiddlewareChainMap.GNOSIS,
 };
+const EVM_BY_MIDDLEWARE: Record<string, number> = {
+  [MiddlewareChainMap.POLYGON]: EvmChainIdMap.Polygon,
+  [MiddlewareChainMap.BASE]: EvmChainIdMap.Base,
+  [MiddlewareChainMap.GNOSIS]: EvmChainIdMap.Gnosis,
+};
 
-jest.mock('../../utils', () => ({
-  onDummyServiceCreation: (...args: unknown[]) =>
-    mockOnDummyServiceCreation(...args),
-  asMiddlewareChain: (chainId: number) => MIDDLEWARE_BY_EVM[chainId],
+jest.mock('../../utils', () => {
+  // The hook now reads `AgentMap`/`SETUP_SCREEN` (values) from `@/constants`,
+  // so `constants/index` -> `providers` -> `config/chains` is loaded at
+  // import time. `config/chains` calls `parseEther`/`parseUnits` at module
+  // eval, so the mocked `@/utils` barrel must expose the real (dependency-free)
+  // implementations from `utils/numberFormatters` or module init throws.
+  const { parseEther, parseUnits } = jest.requireActual(
+    '../../utils/numberFormatters',
+  );
+  return {
+    parseEther,
+    parseUnits,
+    onDummyServiceCreation: (...args: unknown[]) =>
+      mockOnDummyServiceCreation(...args),
+    asMiddlewareChain: (chainId: number) => MIDDLEWARE_BY_EVM[chainId],
+    asEvmChainId: (middlewareChain: string) =>
+      EVM_BY_MIDDLEWARE[middlewareChain],
+    matchesAgentConfig: (...args: unknown[]) => mockMatchesAgentConfig(...args),
+  };
+});
+
+// AGENT_CONFIG is only read to hand the Connect config to `matchesAgentConfig`
+// (which is mocked), so any object per agent key suffices.
+jest.mock('../../config/agents', () => ({
+  AGENT_CONFIG: new Proxy({}, { get: () => ({ servicePublicId: 'connect' }) }),
 }));
 
 // --- resolveFundingRoute ----------------------------------------------------
@@ -50,11 +77,15 @@ const mockUpdateSelectedServiceConfigId = jest.fn();
 const mockSetDefaultStakingProgramId = jest.fn();
 const mockMarkServiceAsNotInitiallyFunded = jest.fn();
 
+// Mutable list of services returned by the mocked `useServices`.
+let mockServices: unknown[] = [];
+
 jest.mock('../../hooks/useSetup', () => ({
   useSetup: () => ({ goto: mockGotoSetup }),
 }));
 jest.mock('../../hooks/useServices', () => ({
   useServices: () => ({
+    services: mockServices,
     refetch: mockRefetchServices,
     updateSelectedServiceConfigId: mockUpdateSelectedServiceConfigId,
   }),
@@ -75,11 +106,13 @@ const NEW_SERVICE_CONFIG_ID = 'sc-new-connect';
 describe('useCreateConnectService', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockServices = [];
     mockOnDummyServiceCreation.mockResolvedValue({
       service_config_id: NEW_SERVICE_CONFIG_ID,
     });
     mockResolveFundingRoute.mockResolvedValue(SETUP_SCREEN.FundYourAgent);
     mockRefetchServices.mockResolvedValue(undefined);
+    mockMatchesAgentConfig.mockReturnValue(true);
   });
 
   it('creates a single-chain no_staking Connect service on the chosen chain', async () => {
@@ -145,5 +178,47 @@ describe('useCreateConnectService', () => {
     });
 
     expect(mockGotoSetup).toHaveBeenCalledWith(SETUP_SCREEN.BalanceCheck);
+  });
+
+  it('falls back to FundYourAgent (no re-create) when resolveFundingRoute fails after a successful create', async () => {
+    // The create succeeded; only the funding-route network call throws.
+    mockResolveFundingRoute.mockRejectedValue(new Error('network down'));
+    const { result } = renderHook(() => useCreateConnectService());
+
+    await act(async () => {
+      await result.current(EvmChainIdMap.Base);
+    });
+
+    // Service was created exactly once and the user still lands on funding —
+    // the error must NOT propagate (which would tempt a duplicate create).
+    expect(mockOnDummyServiceCreation).toHaveBeenCalledTimes(1);
+    expect(mockUpdateSelectedServiceConfigId).toHaveBeenCalledWith(
+      NEW_SERVICE_CONFIG_ID,
+    );
+    expect(mockGotoSetup).toHaveBeenCalledTimes(1);
+    expect(mockGotoSetup).toHaveBeenCalledWith(SETUP_SCREEN.FundYourAgent);
+  });
+
+  it('does not create a second service when the chosen chain already has a Connect instance', async () => {
+    const EXISTING_SERVICE_CONFIG_ID = 'sc-existing-base-connect';
+    mockServices = [
+      {
+        service_config_id: EXISTING_SERVICE_CONFIG_ID,
+        home_chain: MiddlewareChainMap.BASE,
+      },
+    ];
+    const { result } = renderHook(() => useCreateConnectService());
+
+    await act(async () => {
+      await result.current(EvmChainIdMap.Base);
+    });
+
+    // Occupancy guard: no new service is created for an already-occupied chain.
+    expect(mockOnDummyServiceCreation).not.toHaveBeenCalled();
+    // Instead the existing instance is selected and routed to funding.
+    expect(mockUpdateSelectedServiceConfigId).toHaveBeenCalledWith(
+      EXISTING_SERVICE_CONFIG_ID,
+    );
+    expect(mockGotoSetup).toHaveBeenCalledWith(SETUP_SCREEN.FundYourAgent);
   });
 });

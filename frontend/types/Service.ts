@@ -86,12 +86,6 @@ export type ConfigurationTemplate = {
    */
   cost_of_bond: string;
   fund_requirements: FundRequirements; // provided by agent teams, used by BE to send initial funds
-  /**
-   * Sent in the create body to explicitly disable staking (e.g. Connect uses
-   * `staking_program_id: 'no_staking'` + `use_staking: false`). Optional — only
-   * set for non-staking agents.
-   */
-  use_staking?: boolean;
 };
 
 export type ServiceTemplate = {
