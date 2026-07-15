@@ -84,7 +84,7 @@ export type ConfigurationTemplate = {
    * For example: Service staking deposit (OLAS) of Polymarket Beta 1 is 100,
    * so cost_of_bond here is 50.
    */
-  cost_of_bond?: string;
+  cost_of_bond: string;
   fund_requirements: FundRequirements; // provided by agent teams, used by BE to send initial funds
 };
 

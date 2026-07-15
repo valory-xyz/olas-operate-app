@@ -48,7 +48,7 @@ type InstanceCountProps = {
   count: number;
 };
 
-const InstanceCount = ({ count }: InstanceCountProps) => {
+export const InstanceCount = ({ count }: InstanceCountProps) => {
   if (!count) return null;
 
   return (

@@ -40,7 +40,7 @@ Branch: `feat/connect-agent`. Produced via `/explore-frontend-codebase`. No code
 | `frontend/hooks/useStartService.ts` | modify | Guard the `STAKING_PROGRAMS[chainId][stakingProgramId]` lookup (`~:63-67`) for `no_staking` (currently **throws**); default `mechType`/`useMechMarketplace`. |
 | `frontend/hooks/useCompleteAgentSetup.ts` | modify | `~:96` returns `'invalid_contract'` for `no_staking` — add Connect/`no_staking` branch so setup completes. |
 | one-per-chain guard util | new | Block a 2nd Connect instance on an occupied chain, using `ServicesProvider.getServiceConfigIdsOf(chainId)`. |
-| main-page section(s) *(iteration 3)* | modify | Render only agent-info + agent-wallet sections for Connect; omit performance + staking. Exact components TBD by a short main-page exploration at the start of Phase 3. |
+| main-page section(s) *(iteration 3)* | modify | Render only agent-info + agent-wallet sections for Connect; omit performance + staking. Exact components TBD by a short main-page exploration at the start of PR 4. |
 | `/session` integration *(iteration 3)* | new | On run: call the local agent server's `POST /session`; render `{launched,harness,error?}` — on failure show the error + Retry. |
 
 ## 5. Backend / Middleware Requirements *(external — must land before Phase 2 create can be exercised end-to-end)*
@@ -103,34 +103,43 @@ Intro flow: `AgentIntroduction` with `CONNECT_ONBOARDING_STEPS` = 3 placeholder 
 
 ## 9. Phased Execution Order (each phase = one PR)
 ```
-PR 1 — Everything up to "Select agent" (creation DISABLED)
+PR 1 — Registration + multi-chain grouping + chain selector (creation DISABLED)  [#2067]
   Registration: AgentMap, x402, ConnectService stub, CONNECT_SERVICE_TEMPLATE,
     AGENT_CONFIG, FEATURES_CONFIG, onboarding constants(placeholders)+map+assets, store keys.
   Multi-chain grouping: matchesAgentConfig + supportedChains; per-instance home_chain
     in name-gen/funding; Connect groups across chains in the sidebar.
-  Chain selector ON THE SELECT AGENT PAGE (in FundingRequirementStep, not a separate
-    screen): chain select (ordered, one-per-chain disable) + funding display +
-    "Select agent" button rendered DISABLED.
-  → /review-implementation
+  Chain selector INLINE in the funding-requirements step of AgentOnboarding
+    (FundingRequirementStep — NOT a separate screen), ordered + one-per-chain disabled;
+    "Select agent" rendered DISABLED.
 
-PR 2 — Enable creation + skip staking + funding methods + intro
-  Enable the "Select agent" button on the Select Agent page → connect-gated create
-    (single-chain template clone, staking_program_id:"no_staking" + use_staking:false),
-    bypass SelectStaking.
-  no_staking fixes: useCompleteAgentSetup(:96), Services.createService use_staking gating.
-  Funding methods: confirm transfer+bridge only (flags). 3-step intro live (placeholders).
-  → /review-implementation
+PR 2 — Enable creation + skip staking + funding + matcher-sweep fixes  [#2068]
+  "Select agent" → connect-gated create (single-chain template clone,
+    staking_program_id:"no_staking" + use_staking:false), bypass SelectStaking.
+  no_staking fixes: useCompleteAgentSetup, Services.createService use_staking gating.
+  Funding: transfer+bridge only (flags). 3-step intro (placeholders).
+  Bug fixes: swept 9 inline strict matchers → matchesAgentConfig (non-Gnosis Connect
+    resolution) incl. useStakingRewardsOf (also skips no_staking); "You own 1" pill;
+    hide "Select agent" when all chains occupied; back-button → AgentOnboarding for
+    no_staking. Review fixes: total matcher, env vars, agentIds/agent_id=161.
 
-PR 3 — Running agent
+PR 3 — Beta tag + AutoRun exclusion   (NEW; independent of PR 4)
+  Beta tag: add `isBeta?: boolean` to AgentConfig; set on AGENT_CONFIG[Connect]; render a
+    "Beta" tag next to Connect in SelectAgent (by the status-icon spot) AND in the sidebar
+    group header (Sidebar/AgentTreeMenu).
+  Exclude Connect from AutoRun: filter it out of the eligibility pipeline in
+    AutoRunProvider (getEligibleInstances / configuredInstances) — via a config flag
+    (`excludeFromAutoRun?`) or agentType===Connect; exact spot via /pre-implementation-check.
+  Tests: Beta tag renders (list + sidebar); AutoRun excludes Connect.
+
+PR 4 — Running agent   (was PR 3; independent of PR 3)
   Start begins with a short main-page exploration (locate the agent-info + agent-wallet
     section components; identify performance/staking sections to omit for Connect).
   Main page for Connect: agent-info section + agent-wallet section ONLY — no performance,
-    no staking. no_staking start-path fix: useStartService(:63-67 lookup).
+    no staking. no_staking start-path fix: useStartService staking lookup.
   On run: call local agent server POST /session; render {launched,harness,error?};
     on launched:false / 503 / 4xx show the error + a Retry button (re-invokes /session).
-  → /review-implementation
 ```
-Each PR: `yarn lint:frontend` + `yarn test:frontend --testPathPattern=connect` green; tests with components; never proceed with known issues.
+Each PR: `yarn quality-check` + `yarn test` green; tests with components; never proceed with known issues.
 
 ## 10. Hard Constraints Checklist
 - [ ] No `eslint-disable`. No new top-level provider (reuse `SetupProvider` for selected chain).
@@ -150,4 +159,4 @@ Each PR: `yarn lint:frontend` + `yarn test:frontend --testPathPattern=connect` g
 ## 12. Open Questions
 None. The funding amounts (POL 15 / USDC 5 / ETH 0.0005 / USDC 5 / XDAI 5) go into `CONNECT_SERVICE_TEMPLATE` `fund_requirements` as-is — no safe-creation/deployment-gas added.
 
-Deferrals (not questions): external §5 deps (mint + middleware readiness) gate PR2's end-to-end create; PR3 opens with a short main-page exploration to locate the agent-info/wallet section components.
+Deferrals (not questions): external §5 deps (mint + middleware readiness) gate PR2's end-to-end create; PR4 (running agent) opens with a short main-page exploration to locate the agent-info/wallet section components.

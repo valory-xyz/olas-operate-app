@@ -327,7 +327,7 @@ export const AGENT_CONFIG: {
       EvmChainIdMap.Base,
       EvmChainIdMap.Gnosis,
     ],
-    agentIds: [], // TODO(PR2): real Olas Registry agent id(s)
+    agentIds: [161],
     additionalRequirements: {
       [EvmChainIdMap.Polygon]: {
         [TokenSymbolMap.USDC]: getConnectPolygonUsdcConfig(),

@@ -468,6 +468,32 @@ describe('useService', () => {
         expect(resolved).toBe(agentType);
       },
     );
+
+    // Multi-chain matcher sweep: a Connect instance resolves to the Connect
+    // agent on any of its supported (non-Gnosis) chains, keyed off home_chain.
+    it.each([
+      { chainId: EvmChainIdMap.Base, chain: MiddlewareChainMap.BASE },
+      { chainId: EvmChainIdMap.Polygon, chain: MiddlewareChainMap.POLYGON },
+      { chainId: EvmChainIdMap.Gnosis, chain: MiddlewareChainMap.GNOSIS },
+    ])(
+      'resolves a Connect service on chain $chain to the Connect agent',
+      ({ chainId, chain }) => {
+        const configId = `sc-connect-${chain}`;
+        const svc = makeFullService({
+          service_config_id: configId,
+          service_public_id: AGENT_CONFIG[AgentMap.Connect].servicePublicId,
+          home_chain: chain,
+          chain_configs: makeChainConfig(chain),
+        });
+        setupMock({ services: [svc], selectedService: svc });
+
+        const { result } = renderHook(() => useService(configId));
+
+        expect(result.current.getAgentTypeOf(chainId, configId)).toBe(
+          AgentMap.Connect,
+        );
+      },
+    );
   });
 
   // -------------------------------------------------------------------

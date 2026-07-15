@@ -12,24 +12,23 @@ import { parseEther, parseUnits } from '@/utils';
 import { MiddlewareChainMap } from '../../chains';
 import { KPI_DESC_PREFIX } from '../constants';
 
-/**
- * PLACEHOLDER external dependency — the Connect agent package (IPFS hash,
- * release version, agent id and NFT) is not yet published (see
- * `docs/explorations/connect-agent-plan.md` §5). These values MUST be replaced
- * with the real minted values before enabling service creation (PR2) and
- * before running `scripts/js/check_service_templates.ts`.
- */
-const CONNECT_HASH_PLACEHOLDER = 'PLACEHOLDER_CONNECT_HASH';
-const CONNECT_SERVICE_VERSION_PLACEHOLDER = 'PLACEHOLDER_CONNECT_VERSION';
-const CONNECT_NFT_PLACEHOLDER = 'PLACEHOLDER_CONNECT_NFT';
-const CONNECT_AGENT_ID_PLACEHOLDER = 0; // TODO(PR2): real Olas Registry agent id
-const CONNECT_COST_OF_BOND_PLACEHOLDER = parseEther(1); // unused for no_staking
-
 // Raw per-chain funding amounts (native + USDC).
 const POLYGON_NATIVE_POL = 15;
 const BASE_NATIVE_ETH = 0.0005;
 const GNOSIS_NATIVE_XDAI = 5;
 const USDC_AMOUNT = 5;
+
+/**
+ * Fields shared by every chain's `configurations` entry — only
+ * `fund_requirements` differs per chain.
+ */
+const COMMON_CONFIG = {
+  staking_program_id: 'no_staking',
+  nft: 'bafybeidldvcrd7exlqwutoa5fj7nh6mjrkh7w6tuuwofwdifavvezj6g2e',
+  rpc: '', // overwritten
+  agent_id: 161,
+  cost_of_bond: '0',
+} as const;
 
 /**
  * Connect service template.
@@ -42,26 +41,22 @@ export const CONNECT_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentMap.Connect,
   name: 'Connect', // should be unique across all services and not be updated
   description: `${KPI_DESC_PREFIX} An agent that provides on-chain wallet and agent capabilities for your AI agent`,
-  // TODO: update to Connect NFT
   image:
-    'https://gateway.autonolas.tech/ipfs/bafybeiaakdeconw7j5z76fgghfdjmsr6tzejotxcwnvmp3nroaw3glgyve',
-  hash: CONNECT_HASH_PLACEHOLDER,
-  service_version: CONNECT_SERVICE_VERSION_PLACEHOLDER,
+    'https://gateway.autonolas.tech/ipfs/bafybeidldvcrd7exlqwutoa5fj7nh6mjrkh7w6tuuwofwdifavvezj6g2e',
+  hash: 'bafybeibue5tquh2yify7upvvlarotk7rbelg3uicd3dctwb4csa5yxkysi',
+  service_version: 'v0.1.0-rc1',
   agent_release: {
     is_aea: false,
     repository: {
       owner: 'valory-xyz',
-      name: 'pearl-connect',
-      version: CONNECT_SERVICE_VERSION_PLACEHOLDER,
+      name: 'connect',
+      version: 'v0.1.0-rc1',
     },
   },
   home_chain: MiddlewareChainMap.GNOSIS,
   configurations: {
     [MiddlewareChainMap.POLYGON]: {
-      staking_program_id: 'no_staking',
-      nft: CONNECT_NFT_PLACEHOLDER,
-      rpc: '', // overwritten
-      agent_id: CONNECT_AGENT_ID_PLACEHOLDER,
+      ...COMMON_CONFIG,
       fund_requirements: {
         [ethers.constants.AddressZero]: {
           agent: '0',
@@ -77,11 +72,7 @@ export const CONNECT_SERVICE_TEMPLATE: ServiceTemplate = {
       },
     },
     [MiddlewareChainMap.BASE]: {
-      staking_program_id: 'no_staking',
-      nft: CONNECT_NFT_PLACEHOLDER,
-      rpc: '', // overwritten
-      agent_id: CONNECT_AGENT_ID_PLACEHOLDER,
-      cost_of_bond: CONNECT_COST_OF_BOND_PLACEHOLDER,
+      ...COMMON_CONFIG,
       fund_requirements: {
         [ethers.constants.AddressZero]: {
           agent: '0',
@@ -97,11 +88,7 @@ export const CONNECT_SERVICE_TEMPLATE: ServiceTemplate = {
       },
     },
     [MiddlewareChainMap.GNOSIS]: {
-      staking_program_id: 'no_staking',
-      nft: CONNECT_NFT_PLACEHOLDER,
-      rpc: '', // overwritten
-      agent_id: CONNECT_AGENT_ID_PLACEHOLDER,
-      cost_of_bond: CONNECT_COST_OF_BOND_PLACEHOLDER,
+      ...COMMON_CONFIG,
       fund_requirements: {
         [ethers.constants.AddressZero]: {
           agent: '0',
@@ -111,6 +98,18 @@ export const CONNECT_SERVICE_TEMPLATE: ServiceTemplate = {
     },
   },
   env_variables: {
+    SAFE_CONTRACT_ADDRESSES: {
+      name: 'Safe contract addresses',
+      description: '',
+      value: '',
+      provision_type: EnvProvisionType.COMPUTED,
+    },
+    FUND_REQUIREMENTS: {
+      name: 'Fund requirements',
+      description: '',
+      value: '',
+      provision_type: EnvProvisionType.COMPUTED,
+    },
     POLYGON_LEDGER_RPC: {
       name: 'Polygon ledger RPC',
       description: '',
