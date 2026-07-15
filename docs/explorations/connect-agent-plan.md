@@ -11,8 +11,8 @@ Branch: `feat/connect-agent`. Produced via `/explore-frontend-codebase`. No code
 - **Backend:** Depends on middleware/agent readiness — see §5.
 
 ## 3. Data-Flow Trace
-- **Source:** user selects Connect in `AgentOnboarding` → new `SelectChain` screen → picks chain → clicks **Select agent**.
-- **Intermediate:** `SetupProvider` (setup state) holds selected chain → `useInitialFundingRequirements(selectedChain)` → connect-gated `ServicesService.createService` (`staking_program_id:"no_staking"`, `use_staking:false`, `home_chain=selectedChain`) → `ServicesProvider` (new instance keyed by `serviceConfigId`, chain = `service.home_chain`).
+- **Source:** user selects Connect in `AgentOnboarding`. The chain **selector lives on the Select Agent page itself** — inside the funding-requirements step of the right panel, **not a separate screen** — → picks chain → clicks **Select agent**.
+- **Intermediate:** `AgentOnboarding` holds the selected chain in local state and passes it to `FundingRequirementStep` → `useInitialFundingRequirements(agentType, selectedChain)` → connect-gated `ServicesService.createService` (`staking_program_id:"no_staking"`, `use_staking:false`, `home_chain=selectedChain`) → `ServicesProvider` (new instance keyed by `serviceConfigId`, chain = `service.home_chain`).
 - **Sink:** service created (middleware); sidebar renders the instance under the single "Connect" group (`AgentTreeMenu`); funding screen (`FundYourAgent`, transfer+bridge) funds the safe. When run: `POST /session` (local agent server) → session opens or error surfaced with retry.
 
 ## 4. File-Level Change List
@@ -32,10 +32,8 @@ Branch: `feat/connect-agent`. Produced via `/explore-frontend-codebase`. No code
 | `frontend/public/introduction/`, `frontend/public/` | new assets | Placeholder `setup-agent-connect-{1,2,3}.png`, `agent-connect-icon.png`. |
 | `frontend/types/ElectronApi.ts` | modify | Add `[AgentMap.Connect]?: AgentSettings` to `PearlStore` (`isInitialFunded` as per-service `Record<string,boolean>` — multi-instance). |
 | `frontend/context/pearlStoreKeys.ts` | modify | Add `'connect'` to `BACKEND_BOUND_KEYS`. |
-| `frontend/constants/setupScreen.ts` | modify | Add `SelectChain` to `SETUP_SCREEN`. |
-| `frontend/components/SetupPage/index.tsx` | modify | Router case for `SelectChain`. |
-| `frontend/components/SetupPage/SelectChain/…` | new | Chain-select screen (antd `Select`, 3 ordered options, disable occupied chains) + funding-requirements display + **"Select agent"** button (creates the service on click). |
-| `frontend/components/SetupPage/AgentOnboarding/AgentOnboarding.tsx` | modify | Connect branch in post-select routing (`~:176-180`) → `SelectChain`, **not** `SelectStaking`. |
+| `frontend/components/SetupPage/AgentOnboarding/FundingRequirementStep.tsx` | modify | For Connect, render the chain **selector on the Select Agent page** — inside the funding-requirements step: antd `Select` (3 ordered options, disable occupied chains) + funding-requirements display for the selected chain. **No separate screen.** |
+| `frontend/components/SetupPage/AgentOnboarding/AgentOnboarding.tsx` | modify | Hold the selected chain in local state; pass it (and the setter) to `FundingRequirementStep`; render the **"Select agent"** button (creates the service on click). No routing to a separate chain screen. |
 | `frontend/hooks/useInitialFundingRequirements.ts` | modify | Use the user-selected chain for Connect instead of static `agentConfig.evmHomeChainId`. |
 | `frontend/utils/service.ts` | modify | Relax the shared agent matcher (`isServiceOfAgent` → `matchesAgentConfig`): match `servicePublicId` (+`agentIds`) with `home_chain ∈ config.supportedChains` (not equality). Core multi-chain change (§7). |
 | `frontend/service/Services.ts` | modify | In `createService`, when `staking_program_id==='no_staking'` also send `use_staking:false` — gated so other agents are unaffected. |
@@ -57,23 +55,25 @@ FE sends `staking_program_id:"no_staking"` and `use_staking:false` in the create
 ## 7. Implementation Approach (recommended)
 **Multi-chain identity via a relaxed matcher + `supportedChains`.** Connect is ONE agent type across 3 chains. Grouping matches `servicePublicId` (+`agentIds`) and today also requires `home_chain === middlewareHomeChainId` — that chain equality is the sole reason one config can't own instances on multiple chains. Give `AGENT_CONFIG[Connect]` a `supportedChains` list and relax the shared matcher to `home_chain ∈ supportedChains`; all Connect instances then resolve to the one type and render under a single "Connect" group (the grouped sidebar already handles N instances). All Connect instances share the same `servicePublicId`, so only the chain half is relaxed. A different on-chain name would **not** avoid this (the blocker is the chain equality, not the name). Ripple is small: the shared matcher is the one real change; only instance-name generation and the funding-requirement lookup switch from `config.evmHomeChainId` to per-instance `service.home_chain` (they already hold the service).
 
-**One-per-chain:** no such limit exists today (`isAddingNewBlocked` is a global on/off). Build a guard on `ServicesProvider.getServiceConfigIdsOf(chainId)` — disable an occupied chain in the `SelectChain` dropdown and block creation for it.
+**One-per-chain:** no such limit exists today (`isAddingNewBlocked` is a global on/off). Build a guard on `ServicesProvider.getServiceConfigIdsOf(chainId)` — disable an occupied chain in the **chain dropdown on the Select Agent page** and block creation for it.
 
-**Service-creation timing (Requirement 5):** create the service on the **"Select agent"** button click in `SelectChain` (the point the user commits the chosen chain), via a **connect-gated** path — do NOT mutate the shared `onDummyServiceCreation` for all agents. Build a single-chain template at create time: clone `CONNECT_SERVICE_TEMPLATE` with `home_chain = selectedMiddlewareChain`, `configurations` pruned to the selected chain, `staking_program_id:'no_staking'`, `use_staking:false`. Then route to the intro flow → funding, **bypassing `SelectStaking` entirely**. This removes Connect from both existing create sites (the setup-form create and the staking-select create).
+**Chain selection lives on the Select Agent page (NOT a separate screen).** When Connect is selected in `AgentOnboarding`, its right-panel funding-requirements step (`FundingRequirementStep`) swaps the static "Operating chain" display for an antd `Select` (chain dropdown) and shows the funding requirements for the chosen chain. `AgentOnboarding` owns the selected-chain state and passes it in. There is no `SelectChain` route/screen.
+
+**Service-creation timing (Requirement 5):** create the service on the **"Select agent"** button click on the Select Agent page (the point the user commits the chosen chain), via a **connect-gated** path — do NOT mutate the shared `onDummyServiceCreation` for all agents. Build a single-chain template at create time: clone `CONNECT_SERVICE_TEMPLATE` with `home_chain = selectedMiddlewareChain`, `configurations` pruned to the selected chain, `staking_program_id:'no_staking'`, `use_staking:false`. Then route to the intro flow → funding, **bypassing `SelectStaking` entirely**. This removes Connect from both existing create sites (the setup-form create and the staking-select create).
 
 **Setup flow for Connect:**
-`Welcome → SetupPassword → SetupBackupSigner → AgentOnboarding (pick Connect) → SelectChain (pick chain + funding reqs → "Select agent" creates service) → AgentIntroduction (3 placeholder steps) → FundYourAgent (transfer+bridge) → Main`.
+`Welcome → SetupPassword → SetupBackupSigner → AgentOnboarding (pick Connect → pick chain + view funding reqs on the same page → "Select agent" creates service) → AgentIntroduction (3 placeholder steps) → FundYourAgent (transfer+bridge) → Main`.
 
-## 8. Per-Screen Visual Spec — `SelectChain` (new)
+## 8. Per-Screen Visual Spec — chain selector on the Select Agent page (NOT a separate screen)
+
+The chain selector is **part of the existing Select Agent page** — it renders in
+the Connect branch of `FundingRequirementStep` (the right-panel funding-requirements
+step of `AgentOnboarding`). There is no `SelectChain` screen / route.
+
 ```
-Screen: SelectChain
-Wrapper: SetupCard (match AgentOnboarding right-panel styling)
-Layout: single card
+Location: AgentOnboarding right panel → FundingRequirementStep (Connect branch)
 
-Title: level={3}, text="[TBD — placeholder]"
-Description: text="[TBD — placeholder]"
-
-Chain select:
+Chain select (replaces the static "Operating chain" display for Connect):
   antd Select (no @/components/ui wrapper exists), size="large"
   placeholder="Select a chain"   (empty on first render — no default)
   Options IN ORDER: Polygon, Base, Gnosis
@@ -83,17 +83,20 @@ Chain select:
     disabled option tag: "Already added"
 
 Funding requirements (shown only after a chain is chosen):
-  reuse MinimumFundingRequirements block from FundingRequirementStep.tsx (:188-231)
-  data: useInitialFundingRequirements(selectedChain)
+  reuse the MinimumFundingRequirements block already in FundingRequirementStep
+  data: useInitialFundingRequirements(agentType, selectedChain)
   Template fund_requirements per chain (raw — do NOT add safe-creation/deployment gas):
     Polygon: POL 15, USDC 5
     Base:    ETH 0.0005, USDC 5
     Gnosis:  XDAI 5
 
-Button: type=primary, size=large, block=yes, text="Select agent"
-  disabled until a chain is chosen
+"Select agent" button (the page's existing renderAgentSelection slot):
+  type=primary, size=large, block=yes, text="Select agent"
   Phase 1: rendered but DISABLED (no creation yet)
-  Phase 2: onClick → create service (no_staking + use_staking:false, home_chain=selected) → goto(AgentIntroduction)
+  Phase 2: onClick → create service (no_staking + use_staking:false, home_chain=selected) → AgentIntroduction
+
+Right-panel layout: fixed-height card (no jump when switching agents); content on
+top; slide-nav + "Select agent" button pinned to the bottom.
 Colors: COLOR.* only.
 ```
 Intro flow: `AgentIntroduction` with `CONNECT_ONBOARDING_STEPS` = 3 placeholder steps (`setup-agent-connect-{1,2,3}`).
@@ -150,7 +153,7 @@ Each PR: `yarn quality-check` + `yarn test` green; tests with components; never 
 ## 11. Test Strategy
 - **Provider:** `ServicesProvider` — Connect instance resolves to Connect type across all 3 chains (`matchesAgentConfig`); `getServiceConfigIdsOf` one-per-chain. Stub `ServicesService`.
 - **Hook:** `useInitialFundingRequirements(chain)` per-chain values; `useFeatureFlag(Connect)` → transfer+bridge only. Mock provider context.
-- **Component:** `SelectChain` — empty default, ordered options, disables occupied chains, "Select agent" gated; PR2: create called with `no_staking`+`use_staking:false`. `/session` integration: launched / error+retry states.
+- **Component:** the Connect chain selector in `FundingRequirementStep` (on the Select Agent page) — empty default, ordered options, disables occupied chains, funding shown for the selected chain, "Select agent" gated; PR2: create called with `no_staking`+`use_staking:false`. `/session` integration: launched / error+retry states.
 - Reuse `makeService`/`makeAgentService`/`makeMiddlewareService`; add `makeConnectService(chain)` factory. Cover loading/error/happy/one-per-chain-race.
 
 ## 12. Open Questions
