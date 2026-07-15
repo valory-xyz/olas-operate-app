@@ -27,6 +27,7 @@ import { useSelectedEligibility } from './hooks/useSelectedEligibility';
 import { AutoRunContextType } from './types';
 import {
   appendNewInstances,
+  getAutoRunExcludedByConfig,
   getDecommissionedInstances,
   getEligibleInstances,
   getExcludedInstances,
@@ -84,15 +85,25 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
     () => getDecommissionedInstances(configuredAgents),
     [configuredAgents],
   );
+  const configExcludedInstances = useMemo(
+    () => getAutoRunExcludedByConfig(configuredAgents),
+    [configuredAgents],
+  );
   const { archivedInstances: archivedInstanceIds } = useArchivedAgents();
 
   const eligibleInstances = useMemo(
     () =>
       getEligibleInstances(configuredInstances, [
         ...decommissionedInstances,
+        ...configExcludedInstances,
         ...archivedInstanceIds,
       ]),
-    [configuredInstances, decommissionedInstances, archivedInstanceIds],
+    [
+      configuredInstances,
+      decommissionedInstances,
+      configExcludedInstances,
+      archivedInstanceIds,
+    ],
   );
   const includedInstancesSorted = useMemo(
     () =>
@@ -365,6 +376,9 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
     for (const id of decommissionedInstances) {
       base[id] = { canRun: false, reason: 'Decommissioned' };
     }
+    for (const id of configExcludedInstances) {
+      base[id] = { canRun: false, reason: 'Not available in auto-run' };
+    }
     const excludedSet = new Set(excludedInstances);
     if (selectedServiceConfigId && !excludedSet.has(selectedServiceConfigId)) {
       base[selectedServiceConfigId] = getSelectedEligibility();
@@ -373,6 +387,7 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
   }, [
     configuredAgents,
     decommissionedInstances,
+    configExcludedInstances,
     excludedInstances,
     getSelectedEligibility,
     selectedServiceConfigId,

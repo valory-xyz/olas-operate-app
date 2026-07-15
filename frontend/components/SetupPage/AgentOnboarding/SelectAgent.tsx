@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import { LuConstruction } from 'react-icons/lu';
 import styled from 'styled-components';
 
+import { BetaTag } from '@/components/ui';
 import { ACTIVE_AGENTS } from '@/config/agents';
 import { AgentMap, AgentType, COLOR } from '@/constants';
 import { useServices } from '@/hooks';
@@ -115,7 +116,10 @@ const SelectYourAgentList = ({
               height={36}
               style={{ borderRadius: 8, border: `1px solid ${COLOR.GRAY_3}` }}
             />
-            <Text style={{ flex: 1 }}>{agentConfig.displayName}</Text>
+            <Flex align="center" gap={8} style={{ flex: 1 }}>
+              <Text>{agentConfig.displayName}</Text>
+              {agentConfig.isBeta && <BetaTag />}
+            </Flex>
             <InstanceCount count={instanceCount} />
             {(agentConfig.isUnderConstruction ||
               agentConfig.isAddingNewBlocked) && <UnderConstructionIcon />}

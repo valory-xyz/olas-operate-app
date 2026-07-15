@@ -40,6 +40,16 @@ jest.mock('../../../../config/agents', () => ({
         isUnderConstruction: false,
       },
     ],
+    [
+      'connect',
+      {
+        displayName: 'Connect',
+        servicePublicId: 'sp-3',
+        middlewareHomeChainId: 100,
+        isUnderConstruction: false,
+        isBeta: true,
+      },
+    ],
   ],
 }));
 
@@ -116,5 +126,15 @@ describe('SelectAgent', () => {
     render(<SelectAgent {...defaultProps} activeTab="new" />);
     expect(screen.getByText('Omenstrat')).toBeInTheDocument();
     expect(screen.getByText('Agents.fun')).toBeInTheDocument();
+  });
+
+  it('renders a Beta tag only for agents flagged isBeta', () => {
+    mockUseServices.mockReturnValue({
+      services: [],
+      getInstancesOfAgentType: () => [],
+    });
+    render(<SelectAgent {...defaultProps} activeTab="new" />);
+    expect(screen.getByText('Connect')).toBeInTheDocument();
+    expect(screen.getAllByText('Beta')).toHaveLength(1);
   });
 });

@@ -166,6 +166,16 @@ export const getDecommissionedInstances = (configuredAgents: AgentMeta[]) =>
     )
     .map((agent) => agent.serviceConfigId);
 
+/**
+ * Returns the service config IDs from `configuredAgents` whose agent config
+ * opts out of auto-run (`isExcludedFromAutoRun`), e.g. Connect. These are
+ * never auto-included and cannot be added to the rotation manually.
+ */
+export const getAutoRunExcludedByConfig = (configuredAgents: AgentMeta[]) =>
+  configuredAgents
+    .filter((agent) => agent.agentConfig.isExcludedFromAutoRun)
+    .map((agent) => agent.serviceConfigId);
+
 export const getEligibleInstances = (
   configuredInstances: string[],
   decommissionedInstances: string[],
