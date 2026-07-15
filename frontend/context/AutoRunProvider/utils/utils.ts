@@ -195,10 +195,19 @@ export const getOrderedIncludedInstances = (
   return eligibleInstances;
 };
 
+/**
+ * Instances that are neither included nor hidden. `hiddenInstances` holds
+ * config-excluded instances (`isExcludedFromAutoRun`, e.g. Connect) — those
+ * must not appear in the auto-run options at all, not even as blocked rows.
+ */
 export const getExcludedInstances = (
   configuredInstances: string[],
   orderedIncludedInstances: string[],
+  hiddenInstances: string[] = [],
 ) => {
   const includedSet = new Set(orderedIncludedInstances);
-  return configuredInstances.filter((id) => !includedSet.has(id));
+  const hiddenSet = new Set(hiddenInstances);
+  return configuredInstances.filter(
+    (id) => !includedSet.has(id) && !hiddenSet.has(id),
+  );
 };

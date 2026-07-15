@@ -311,7 +311,7 @@ describe('AutoRunProvider', () => {
       expect(seeded.map((item) => item.serviceConfigId)).toEqual([scTrader]);
     });
 
-    it('marks config-excluded instances as blocked and ignores includeInstance', () => {
+    it('hides config-excluded instances from the options and ignores includeInstance', () => {
       mockAutoRunStore.isInitialized = true;
       mockAutoRunStore.includedInstances = [
         { serviceConfigId: scTrader, order: 0 },
@@ -320,7 +320,11 @@ describe('AutoRunProvider', () => {
 
       const { result } = renderHook(() => useAutoRunContext(), { wrapper });
 
-      expect(result.current.excludedInstances).toContain(scConnect);
+      // Not in the rotation, and not even listed as an excluded option.
+      expect(
+        result.current.includedInstances.map((item) => item.serviceConfigId),
+      ).not.toContain(scConnect);
+      expect(result.current.excludedInstances).not.toContain(scConnect);
       expect(result.current.eligibilityByInstance[scConnect]).toEqual({
         canRun: false,
         reason: 'Not available in auto-run',
@@ -335,6 +339,32 @@ describe('AutoRunProvider', () => {
           ]),
         }),
       );
+    });
+
+    it('keeps a selected config-excluded instance blocked in eligibility', () => {
+      mockAutoRunStore.isInitialized = true;
+      mockAutoRunStore.includedInstances = [
+        { serviceConfigId: scTrader, order: 0 },
+      ];
+      useAutoRunStore.mockImplementation(() => ({ ...mockAutoRunStore }));
+      useServices.mockReturnValue({
+        services: [
+          { service_config_id: scTrader },
+          { service_config_id: scConnect },
+        ],
+        selectedAgentType: AgentMap.Connect,
+        selectedService: { service_config_id: scConnect },
+        selectedServiceConfigId: scConnect,
+        updateSelectedServiceConfigId: mockUpdateSelectedServiceConfigId,
+      });
+
+      const { result } = renderHook(() => useAutoRunContext(), { wrapper });
+
+      // Live selected-eligibility (permissive) must not overwrite the block.
+      expect(result.current.eligibilityByInstance[scConnect]).toEqual({
+        canRun: false,
+        reason: 'Not available in auto-run',
+      });
     });
   });
 

@@ -123,8 +123,13 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
     [includedInstancesSorted],
   );
   const excludedInstances = useMemo(
-    () => getExcludedInstances(configuredInstances, includedInstancesForUi),
-    [configuredInstances, includedInstancesForUi],
+    () =>
+      getExcludedInstances(
+        configuredInstances,
+        includedInstancesForUi,
+        configExcludedInstances,
+      ),
+    [configuredInstances, includedInstancesForUi, configExcludedInstances],
   );
 
   // Eligibility for the currently selected agent.
@@ -376,11 +381,18 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
     for (const id of decommissionedInstances) {
       base[id] = { canRun: false, reason: 'Decommissioned' };
     }
+    const configExcludedSet = new Set(configExcludedInstances);
     for (const id of configExcludedInstances) {
       base[id] = { canRun: false, reason: 'Not available in auto-run' };
     }
     const excludedSet = new Set(excludedInstances);
-    if (selectedServiceConfigId && !excludedSet.has(selectedServiceConfigId)) {
+    if (
+      selectedServiceConfigId &&
+      !excludedSet.has(selectedServiceConfigId) &&
+      // Config-excluded instances stay blocked even while selected — live
+      // eligibility must never overwrite their canRun: false entry.
+      !configExcludedSet.has(selectedServiceConfigId)
+    ) {
       base[selectedServiceConfigId] = getSelectedEligibility();
     }
     return base;

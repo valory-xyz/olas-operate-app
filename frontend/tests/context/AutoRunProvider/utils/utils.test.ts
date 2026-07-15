@@ -433,4 +433,16 @@ describe('getExcludedInstances', () => {
     const result = getExcludedInstances(configured, configured);
     expect(result).toEqual([]);
   });
+
+  it('omits hidden (config-excluded) instances entirely', () => {
+    const configured = [
+      DEFAULT_SERVICE_CONFIG_ID,
+      MOCK_SERVICE_CONFIG_ID_2,
+      MOCK_SERVICE_CONFIG_ID_3,
+    ];
+    const included = [DEFAULT_SERVICE_CONFIG_ID];
+    const hidden = [MOCK_SERVICE_CONFIG_ID_3];
+    const result = getExcludedInstances(configured, included, hidden);
+    expect(result).toEqual([MOCK_SERVICE_CONFIG_ID_2]);
+  });
 });
