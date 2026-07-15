@@ -59,18 +59,23 @@ export const useStartService = () => {
         throw new Error(`Service template not found for ${agentType}`);
       }
 
-      // Staking program is required to determine mech type for service creation
-      const stakingProgram =
-        STAKING_PROGRAMS[agentConfig.evmHomeChainId]?.[stakingProgramId];
-      if (!stakingProgram) {
-        throw new Error(`Staking program not found for ${agentType}`);
+      // Staking program is required to determine mech type for service
+      // creation, so skip the lookup for `no_staking` agents.
+      let useMechMarketplace = false;
+      if (stakingProgramId !== 'no_staking') {
+        const stakingProgram =
+          STAKING_PROGRAMS[agentConfig.evmHomeChainId]?.[stakingProgramId];
+        if (!stakingProgram) {
+          throw new Error(`Staking program not found for ${agentType}`);
+        }
+        useMechMarketplace = stakingProgram.mechType === MechType.Marketplace;
       }
 
       const serviceToStart = await ServicesService.createService({
         stakingProgramId,
         serviceTemplate,
         deploy: false, // TODO: deprecated will remove
-        useMechMarketplace: stakingProgram.mechType === MechType.Marketplace,
+        useMechMarketplace,
       });
       await ServicesService.startService(serviceToStart.service_config_id);
       return serviceToStart;

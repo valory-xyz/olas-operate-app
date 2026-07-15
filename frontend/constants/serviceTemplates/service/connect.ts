@@ -12,12 +12,6 @@ import { parseEther, parseUnits } from '@/utils';
 import { MiddlewareChainMap } from '../../chains';
 import { KPI_DESC_PREFIX } from '../constants';
 
-// Raw per-chain funding amounts (native + USDC).
-const POLYGON_NATIVE_POL = 15;
-const BASE_NATIVE_ETH = 0.0005;
-const GNOSIS_NATIVE_XDAI = 5;
-const USDC_AMOUNT = 5;
-
 /**
  * Fields shared by every chain's `configurations` entry — only
  * `fund_requirements` differs per chain.
@@ -26,8 +20,8 @@ const COMMON_CONFIG = {
   staking_program_id: 'no_staking',
   nft: 'bafybeidldvcrd7exlqwutoa5fj7nh6mjrkh7w6tuuwofwdifavvezj6g2e',
   rpc: '', // overwritten
-  agent_id: 161,
-  cost_of_bond: '0',
+  agent_id: 116,
+  cost_of_bond: '2', // Olas ServiceRegistry usual minting minimum (2 wei)
 } as const;
 
 /**
@@ -59,13 +53,13 @@ export const CONNECT_SERVICE_TEMPLATE: ServiceTemplate = {
       ...COMMON_CONFIG,
       fund_requirements: {
         [ethers.constants.AddressZero]: {
-          agent: '0',
-          safe: parseEther(POLYGON_NATIVE_POL),
+          agent: parseEther(30),
+          safe: parseEther(15),
         },
         [POLYGON_TOKEN_CONFIG[TokenSymbolMap.USDC]?.address as string]: {
           agent: '0',
           safe: parseUnits(
-            USDC_AMOUNT,
+            5,
             POLYGON_TOKEN_CONFIG[TokenSymbolMap.USDC]?.decimals,
           ),
         },
@@ -75,15 +69,12 @@ export const CONNECT_SERVICE_TEMPLATE: ServiceTemplate = {
       ...COMMON_CONFIG,
       fund_requirements: {
         [ethers.constants.AddressZero]: {
-          agent: '0',
-          safe: parseEther(BASE_NATIVE_ETH),
+          agent: parseEther(0.0002),
+          safe: parseEther(0.0005),
         },
         [BASE_TOKEN_CONFIG[TokenSymbolMap.USDC]?.address as string]: {
           agent: '0',
-          safe: parseUnits(
-            USDC_AMOUNT,
-            BASE_TOKEN_CONFIG[TokenSymbolMap.USDC]?.decimals,
-          ),
+          safe: parseUnits(5, BASE_TOKEN_CONFIG[TokenSymbolMap.USDC]?.decimals),
         },
       },
     },
@@ -91,8 +82,8 @@ export const CONNECT_SERVICE_TEMPLATE: ServiceTemplate = {
       ...COMMON_CONFIG,
       fund_requirements: {
         [ethers.constants.AddressZero]: {
-          agent: '0',
-          safe: parseEther(GNOSIS_NATIVE_XDAI),
+          agent: parseEther(2),
+          safe: parseEther(5),
         },
       },
     },

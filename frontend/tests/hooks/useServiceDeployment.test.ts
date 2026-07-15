@@ -181,6 +181,7 @@ const setupDefaults = () => {
     selectedAgentConfig: {
       evmHomeChainId: 100,
       middlewareHomeChainId: 'gnosis',
+      hasStaking: true,
     },
     selectedAgentType: 'trader',
     overrideSelectedServiceStatus: mockOverrideStatus,
@@ -250,6 +251,26 @@ describe('useServiceDeployment', () => {
     });
 
     it('returns false when all data is loaded and service not running', () => {
+      const { result } = renderHook(() => useServiceDeployment());
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    it('does not gate on staking details for no_staking agents (hasStaking=false)', () => {
+      // Regression: Connect's staking-details record never "loads", which used
+      // to keep the Start button stuck on "Loading".
+      mockUseServices.mockReturnValue({
+        ...mockUseServices(),
+        selectedAgentConfig: {
+          evmHomeChainId: 100,
+          middlewareHomeChainId: 'gnosis',
+          hasStaking: false,
+        },
+        selectedAgentType: 'connect',
+      } as unknown as ReturnType<typeof useServices>);
+      mockUseStakingContractContext.mockReturnValue({
+        ...mockUseStakingContractContext(),
+        isAllStakingContractDetailsRecordLoaded: false,
+      } as unknown as ReturnType<typeof useStakingContractContext>);
       const { result } = renderHook(() => useServiceDeployment());
       expect(result.current.isLoading).toBe(false);
     });

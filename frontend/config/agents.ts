@@ -133,6 +133,8 @@ export const AGENT_CONFIG: {
 } = {
   [AgentMap.PredictTrader]: {
     isAgentEnabled: true,
+    hasStaking: true,
+    hasPerformance: true,
     requiresSetup: true,
     isX402Enabled: X402_ENABLED_FLAGS[AgentMap.PredictTrader],
     name: 'Predict Trader',
@@ -153,6 +155,8 @@ export const AGENT_CONFIG: {
   },
   [AgentMap.Polystrat]: {
     isAgentEnabled: true,
+    hasStaking: true,
+    hasPerformance: true,
     requiresSetup: true,
     isX402Enabled: X402_ENABLED_FLAGS[AgentMap.Polystrat],
     name: 'Polystrat',
@@ -180,6 +184,8 @@ export const AGENT_CONFIG: {
   },
   [AgentMap.Optimus]: {
     isAgentEnabled: true,
+    hasStaking: true,
+    hasPerformance: true,
     isComingSoon: false,
     isAddingNewBlocked: true,
     requiresSetup: true,
@@ -208,6 +214,8 @@ export const AGENT_CONFIG: {
   },
   [AgentMap.Basius]: {
     isAgentEnabled: true,
+    hasStaking: true,
+    hasPerformance: true,
     isComingSoon: false,
     isAddingNewBlocked: false,
     requiresSetup: true,
@@ -238,6 +246,8 @@ export const AGENT_CONFIG: {
   },
   [AgentMap.AgentsFun]: {
     isAgentEnabled: true,
+    hasStaking: true,
+    hasPerformance: true,
     isUnderConstruction: false,
     isComingSoon: false,
     isAddingNewBlocked: true,
@@ -261,6 +271,8 @@ export const AGENT_CONFIG: {
   },
   [AgentMap.Modius]: {
     isAgentEnabled: true,
+    hasStaking: true,
+    hasPerformance: true,
     isUnderConstruction: true,
     isComingSoon: false,
     requiresSetup: true,
@@ -287,6 +299,8 @@ export const AGENT_CONFIG: {
   },
   [AgentMap.PettAi]: {
     isAgentEnabled: true,
+    hasStaking: true,
+    hasPerformance: true,
     isAddingNewBlocked: true,
     isPhasedOut: true,
     requiresSetup: false,
@@ -313,6 +327,8 @@ export const AGENT_CONFIG: {
   },
   [AgentMap.Connect]: {
     isAgentEnabled: true,
+    hasStaking: false,
+    hasPerformance: false,
     requiresSetup: false,
     isX402Enabled: X402_ENABLED_FLAGS[AgentMap.Connect],
     name: 'Connect',
@@ -327,7 +343,7 @@ export const AGENT_CONFIG: {
       EvmChainIdMap.Base,
       EvmChainIdMap.Gnosis,
     ],
-    agentIds: [161],
+    agentIds: [116],
     additionalRequirements: {
       [EvmChainIdMap.Polygon]: {
         [TokenSymbolMap.USDC]: getConnectPolygonUsdcConfig(),
