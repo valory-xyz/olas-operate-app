@@ -14,7 +14,7 @@ const { Text } = Typography;
  * - `launch_failed`: transient launch failure → a Retry button.
  */
 export const ConnectSessionAlert = () => {
-  const { showAlert, errorKind, isLaunching, retry, dismiss } =
+  const { showAlert, errorKind, errorMessage, isLaunching, retry, dismiss } =
     useConnectSession();
 
   if (!showAlert) return null;
@@ -35,9 +35,11 @@ export const ConnectSessionAlert = () => {
         }
         description={
           <Flex vertical gap={12} align="flex-start">
+            {/* Prefer the server's message — it explains which case this is
+                (no Claude vs. the wrong harness selected). */}
             <Text>
-              Connect works with the Claude Desktop app or the Claude Code CLI.
-              Install one, then start the agent again.
+              {errorMessage ??
+                'Connect works with the Claude Desktop app or the Claude Code CLI. Install one, then start the agent again.'}
             </Text>
             <Button
               href={CLAUDE_DOWNLOAD_URL}
@@ -60,7 +62,7 @@ export const ConnectSessionAlert = () => {
       closable
       onClose={dismiss}
       className="mt-16"
-      message="Pearl couldn't launch Claude Code session."
+      message={errorMessage ?? "Pearl couldn't launch Claude Code session."}
       action={
         <Button size="small" onClick={retry} loading={isLaunching}>
           Retry

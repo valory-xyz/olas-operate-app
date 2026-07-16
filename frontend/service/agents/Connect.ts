@@ -68,8 +68,10 @@ export abstract class ConnectService extends StakedAgentService {
    * deployed and its local server is up.
    *
    * Never throws: a response that reaches us (2xx or 4xx/503) is returned as
-   * `{ reachable: true, ...body }`; a transport/abort error becomes
+   * `{ reachable: true, ok, launched, error? }`; a transport/abort error becomes
    * `{ reachable: false }` so the caller can render the retry / install UI.
+   * `ok` carries the HTTP 2xx flag so the caller can keep non-2xx responses
+   * (unknown harness / not-ready / malformed) out of the "not installed" state.
    */
   static startSession = async (
     signal?: AbortSignal,
@@ -82,13 +84,14 @@ export abstract class ConnectService extends StakedAgentService {
       });
       const body = (await response
         .json()
-        .catch(() => ({}))) as Partial<ConnectSessionResponse>;
+        .catch(() => ({}))) as ConnectSessionResponse;
 
       return {
         reachable: true,
+        ok: response.ok,
         launched: Boolean(body.launched),
-        harness: body.harness ?? null,
-        error: body.error,
+        // 200 failures carry `error`; 4xx/5xx HTTPExceptions carry `detail`.
+        error: body.error ?? body.detail,
       };
     } catch {
       // Network/abort error — the server may be starting up; retryable.

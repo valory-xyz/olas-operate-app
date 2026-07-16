@@ -27,13 +27,13 @@ describe('ConnectService.startSession', () => {
     );
     expect(res).toEqual({
       reachable: true,
+      ok: true,
       launched: true,
-      harness: 'claude_code_desktop',
       error: undefined,
     });
   });
 
-  it('returns the parsed body for a non-2xx response (server still reachable)', async () => {
+  it('returns ok:false with the `error` message for a non-2xx 200-shaped body', async () => {
     mockFetch(
       { launched: false, harness: null, error: 'no claude' },
       false,
@@ -44,22 +44,22 @@ describe('ConnectService.startSession', () => {
 
     expect(res).toEqual({
       reachable: true,
+      ok: false,
       launched: false,
-      harness: null,
       error: 'no claude',
     });
   });
 
-  it('normalizes a missing harness to null', async () => {
-    mockFetch({ launched: false }, false, 500);
+  it('reads `detail` for a 4xx/5xx HTTPException body', async () => {
+    mockFetch({ detail: 'unknown harness' }, false, 400);
 
     const res = await ConnectService.startSession();
 
     expect(res).toEqual({
       reachable: true,
+      ok: false,
       launched: false,
-      harness: null,
-      error: undefined,
+      error: 'unknown harness',
     });
   });
 

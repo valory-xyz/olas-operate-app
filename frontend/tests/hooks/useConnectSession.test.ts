@@ -1,4 +1,6 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, renderHook, waitFor } from '@testing-library/react';
+import { createElement, type ReactNode } from 'react';
 
 import { MiddlewareDeploymentStatusMap } from '../../constants/deployment';
 import { useConnectSession } from '../../hooks/useConnectSession';
@@ -27,33 +29,44 @@ const runningConnect = (over: Record<string, unknown> = {}) => ({
   ...over,
 });
 
+// Each render gets its own QueryClient so the launch cache doesn't leak between
+// tests; a single test keeps the same client across `rerender`.
+const renderConnectSession = () => {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false, gcTime: Infinity } },
+  });
+  const wrapper = ({ children }: { children: ReactNode }) =>
+    createElement(QueryClientProvider, { client: queryClient }, children);
+  return renderHook(() => useConnectSession(), { wrapper });
+};
+
 describe('useConnectSession', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockStartSession.mockResolvedValue({
       reachable: true,
+      ok: true,
       launched: true,
-      harness: 'claude_code_desktop',
     });
     servicesValue = runningConnect();
   });
 
   it('auto-launches the session once when a running Connect server is ready', async () => {
-    const { result } = renderHook(() => useConnectSession());
+    const { result } = renderConnectSession();
     await waitFor(() => expect(mockStartSession).toHaveBeenCalledTimes(1));
-    expect(result.current.showAlert).toBe(false);
+    await waitFor(() => expect(result.current.showAlert).toBe(false));
     expect(result.current.errorKind).toBeNull();
   });
 
   it('does not launch for a non-Connect agent', () => {
     servicesValue = runningConnect({ selectedAgentType: 'trader' });
-    renderHook(() => useConnectSession());
+    renderConnectSession();
     expect(mockStartSession).not.toHaveBeenCalled();
   });
 
   it('does not launch until the local server (healthcheck) is ready', () => {
     servicesValue = runningConnect({ deploymentDetails: { healthcheck: {} } });
-    renderHook(() => useConnectSession());
+    renderConnectSession();
     expect(mockStartSession).not.toHaveBeenCalled();
   });
 
@@ -61,47 +74,56 @@ describe('useConnectSession', () => {
     servicesValue = runningConnect({
       selectedService: { service_config_id: 'sc-1', deploymentStatus: STOPPED },
     });
-    renderHook(() => useConnectSession());
+    renderConnectSession();
     expect(mockStartSession).not.toHaveBeenCalled();
   });
 
-  it('surfaces the "not installed" state when no harness was launched', async () => {
+  it('surfaces the "not installed" state for a 200 that did not launch, with the server message', async () => {
     mockStartSession.mockResolvedValue({
       reachable: true,
+      ok: true,
       launched: false,
-      harness: null,
+      error: 'No Claude found; install it or change the harness.',
     });
-    const { result } = renderHook(() => useConnectSession());
+    const { result } = renderConnectSession();
     await waitFor(() => expect(result.current.showAlert).toBe(true));
     expect(result.current.errorKind).toBe('not-installed');
+    expect(result.current.errorMessage).toBe(
+      'No Claude found; install it or change the harness.',
+    );
   });
 
-  it('surfaces the "launch failed" state when a harness exists but did not launch', async () => {
+  it('surfaces the "launch failed" state for a non-2xx response', async () => {
     mockStartSession.mockResolvedValue({
       reachable: true,
+      ok: false,
       launched: false,
-      harness: 'claude_code_desktop',
+      error: 'workspace not ready',
     });
-    const { result } = renderHook(() => useConnectSession());
+    const { result } = renderConnectSession();
     await waitFor(() => expect(result.current.errorKind).toBe('launch-failed'));
   });
 
   it('treats an unreachable server as a retryable launch failure', async () => {
     mockStartSession.mockResolvedValue({ reachable: false });
-    const { result } = renderHook(() => useConnectSession());
+    const { result } = renderConnectSession();
     await waitFor(() => expect(result.current.errorKind).toBe('launch-failed'));
   });
 
   it('re-launches on retry and clears the alert on success', async () => {
     mockStartSession.mockResolvedValue({
       reachable: true,
+      ok: false,
       launched: false,
-      harness: 'claude_code_desktop',
     });
-    const { result } = renderHook(() => useConnectSession());
+    const { result } = renderConnectSession();
     await waitFor(() => expect(result.current.errorKind).toBe('launch-failed'));
 
-    mockStartSession.mockResolvedValue({ reachable: true, launched: true });
+    mockStartSession.mockResolvedValue({
+      reachable: true,
+      ok: true,
+      launched: true,
+    });
     await act(async () => {
       result.current.retry();
     });
@@ -112,10 +134,10 @@ describe('useConnectSession', () => {
   it('dismiss hides the alert without re-launching', async () => {
     mockStartSession.mockResolvedValue({
       reachable: true,
+      ok: false,
       launched: false,
-      harness: 'claude_code_desktop',
     });
-    const { result } = renderHook(() => useConnectSession());
+    const { result } = renderConnectSession();
     await waitFor(() => expect(result.current.showAlert).toBe(true));
 
     act(() => result.current.dismiss());
@@ -124,10 +146,10 @@ describe('useConnectSession', () => {
   });
 
   it('re-launches for a fresh run after the agent was stopped', async () => {
-    const { rerender } = renderHook(() => useConnectSession());
+    const { rerender } = renderConnectSession();
     await waitFor(() => expect(mockStartSession).toHaveBeenCalledTimes(1));
 
-    // Agent stops → state resets.
+    // Agent stops → cached launch is cleared.
     servicesValue = runningConnect({
       selectedService: { service_config_id: 'sc-1', deploymentStatus: STOPPED },
     });
@@ -137,5 +159,22 @@ describe('useConnectSession', () => {
     servicesValue = runningConnect();
     rerender();
     await waitFor(() => expect(mockStartSession).toHaveBeenCalledTimes(2));
+  });
+
+  it('does not surface an error alert once the agent has stopped', async () => {
+    mockStartSession.mockResolvedValue({
+      reachable: true,
+      ok: false,
+      launched: false,
+    });
+    const { result, rerender } = renderConnectSession();
+    await waitFor(() => expect(result.current.showAlert).toBe(true));
+
+    // Agent stops → the alert must not remain on a stopped agent.
+    servicesValue = runningConnect({
+      selectedService: { service_config_id: 'sc-1', deploymentStatus: STOPPED },
+    });
+    rerender();
+    expect(result.current.showAlert).toBe(false);
   });
 });
