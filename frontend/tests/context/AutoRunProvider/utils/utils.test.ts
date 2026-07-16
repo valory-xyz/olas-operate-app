@@ -6,6 +6,7 @@ import {
   appendNewInstances,
   getAgentDisplayName,
   getAgentFromService,
+  getAutoRunExcludedByConfig,
   getDecommissionedInstances,
   getEligibleInstances,
   getExcludedInstances,
@@ -317,6 +318,32 @@ describe('getDecommissionedInstances', () => {
   });
 });
 
+describe('getAutoRunExcludedByConfig', () => {
+  it('returns serviceConfigIds of agents excluded from auto-run by config', () => {
+    const agents = [
+      makeAutoRunAgentMeta(AgentMap.Connect, AGENT_CONFIG[AgentMap.Connect]),
+      makeAutoRunAgentMeta(
+        AgentMap.PredictTrader,
+        AGENT_CONFIG[AgentMap.PredictTrader],
+        MOCK_SERVICE_CONFIG_ID_2,
+      ),
+    ];
+    expect(getAutoRunExcludedByConfig(agents)).toEqual([
+      DEFAULT_SERVICE_CONFIG_ID,
+    ]);
+  });
+
+  it('returns empty when no agent opts out of auto-run', () => {
+    const agents = [
+      makeAutoRunAgentMeta(
+        AgentMap.PredictTrader,
+        AGENT_CONFIG[AgentMap.PredictTrader],
+      ),
+    ];
+    expect(getAutoRunExcludedByConfig(agents)).toEqual([]);
+  });
+});
+
 describe('getEligibleInstances', () => {
   it('excludes decommissioned instances', () => {
     const configured = [
@@ -405,5 +432,17 @@ describe('getExcludedInstances', () => {
     const configured = [DEFAULT_SERVICE_CONFIG_ID];
     const result = getExcludedInstances(configured, configured);
     expect(result).toEqual([]);
+  });
+
+  it('omits hidden (config-excluded) instances entirely', () => {
+    const configured = [
+      DEFAULT_SERVICE_CONFIG_ID,
+      MOCK_SERVICE_CONFIG_ID_2,
+      MOCK_SERVICE_CONFIG_ID_3,
+    ];
+    const included = [DEFAULT_SERVICE_CONFIG_ID];
+    const hidden = [MOCK_SERVICE_CONFIG_ID_3];
+    const result = getExcludedInstances(configured, included, hidden);
+    expect(result).toEqual([MOCK_SERVICE_CONFIG_ID_2]);
   });
 });

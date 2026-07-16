@@ -166,6 +166,16 @@ export const getDecommissionedInstances = (configuredAgents: AgentMeta[]) =>
     )
     .map((agent) => agent.serviceConfigId);
 
+/**
+ * Returns the service config IDs from `configuredAgents` whose agent config
+ * opts out of auto-run (`isExcludedFromAutoRun`), e.g. Connect. These are
+ * never auto-included and cannot be added to the rotation manually.
+ */
+export const getAutoRunExcludedByConfig = (configuredAgents: AgentMeta[]) =>
+  configuredAgents
+    .filter((agent) => agent.agentConfig.isExcludedFromAutoRun)
+    .map((agent) => agent.serviceConfigId);
+
 export const getEligibleInstances = (
   configuredInstances: string[],
   decommissionedInstances: string[],
@@ -185,10 +195,19 @@ export const getOrderedIncludedInstances = (
   return eligibleInstances;
 };
 
+/**
+ * Instances that are neither included nor hidden. `hiddenInstances` holds
+ * config-excluded instances (`isExcludedFromAutoRun`, e.g. Connect) — those
+ * must not appear in the auto-run options at all, not even as blocked rows.
+ */
 export const getExcludedInstances = (
   configuredInstances: string[],
   orderedIncludedInstances: string[],
+  hiddenInstances: string[] = [],
 ) => {
   const includedSet = new Set(orderedIncludedInstances);
-  return configuredInstances.filter((id) => !includedSet.has(id));
+  const hiddenSet = new Set(hiddenInstances);
+  return configuredInstances.filter(
+    (id) => !includedSet.has(id) && !hiddenSet.has(id),
+  );
 };

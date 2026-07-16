@@ -76,6 +76,13 @@ export type AgentConfig = {
    * `shutdownDate` (sunsetting — still runs until the date).
    */
   isPhasedOut?: boolean;
+  /** Renders a "Beta" tag next to the agent name (agent selection + sidebar) */
+  isBeta?: boolean;
+  /**
+   * Keeps the agent's instances out of the auto-run rotation (never
+   * auto-included; the include button is disabled). Manual start still works.
+   */
+  isExcludedFromAutoRun?: boolean;
   /** Whether the agent is enabled and can be shown in the UI */
   isAgentEnabled: boolean;
   /** If agent is enabled but not yet available to use */
