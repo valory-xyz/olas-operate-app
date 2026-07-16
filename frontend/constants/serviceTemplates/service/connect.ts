@@ -21,7 +21,7 @@ const COMMON_CONFIG = {
   nft: 'bafybeidldvcrd7exlqwutoa5fj7nh6mjrkh7w6tuuwofwdifavvezj6g2e',
   rpc: '', // overwritten
   agent_id: 116,
-  cost_of_bond: '2', // Olas ServiceRegistry usual minting minimum (2 wei)
+  cost_of_bond: '1', // Olas ServiceRegistry minting minimum (1 wei)
 } as const;
 
 /**
@@ -53,7 +53,7 @@ export const CONNECT_SERVICE_TEMPLATE: ServiceTemplate = {
       ...COMMON_CONFIG,
       fund_requirements: {
         [ethers.constants.AddressZero]: {
-          agent: parseEther(30),
+          agent: parseEther(8),
           safe: parseEther(15),
         },
         [POLYGON_TOKEN_CONFIG[TokenSymbolMap.USDC]?.address as string]: {
@@ -69,7 +69,7 @@ export const CONNECT_SERVICE_TEMPLATE: ServiceTemplate = {
       ...COMMON_CONFIG,
       fund_requirements: {
         [ethers.constants.AddressZero]: {
-          agent: parseEther(0.0002),
+          agent: parseEther(0.0005),
           safe: parseEther(0.0005),
         },
         [BASE_TOKEN_CONFIG[TokenSymbolMap.USDC]?.address as string]: {
@@ -82,7 +82,7 @@ export const CONNECT_SERVICE_TEMPLATE: ServiceTemplate = {
       ...COMMON_CONFIG,
       fund_requirements: {
         [ethers.constants.AddressZero]: {
-          agent: parseEther(2),
+          agent: parseEther(0.05),
           safe: parseEther(5),
         },
       },

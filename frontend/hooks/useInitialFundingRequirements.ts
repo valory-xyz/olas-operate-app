@@ -27,7 +27,14 @@ type ChainTokenSymbol = {
 };
 
 /**
- * Gets the native token initial gas requirement from fund_requirements config
+ * Gets the native token initial gas requirement from fund_requirements config.
+ *
+ * The agent-EOA amount is doubled to mirror the middleware, which doubles the
+ * agent-EOA native requirement on first deployment to cover the one-off ERC8004
+ * registration gas for every agent. This keeps the card in sync with the transfer amount.
+ *
+ * @note The middleware doubling is planned to become additive (agent + fixed
+ * amount) rather than multiplicative; update this to match when it's done.
  */
 const getNativeInitialGasRequirement = (
   config: ConfigurationTemplate,
@@ -40,16 +47,10 @@ const getNativeInitialGasRequirement = (
   if (!nativeRequirements) return 0n;
   const combinedRequirement =
     BigInt(nativeRequirements.safe || 0) +
-    BigInt(nativeRequirements.agent || 0);
+    BigInt(nativeRequirements.agent || 0) * 2n;
 
   return combinedRequirement;
 };
-
-/**
- * Amount of fund needed for agent deployment. In funding_requirements
- * endpoint this value is in protocol_asset_requirements
- */
-const AGENT_DEPLOYMENT_GAS_REQUIREMENT_WEI = 2;
 
 /**
  * Hook to get the initial funding requirements for a given agent type.
@@ -100,16 +101,14 @@ export const useInitialFundingRequirements = (
         if (!stakingProgramId) return;
 
         // Total native token requirement =
-        // initial gas estimate +
-        // safe creation threshold +
-        // agent deployment gas requirement
+        // initial gas estimate (incl. doubled agent-EOA first-deployment gas) +
+        // safe creation threshold
         const nativeTokenSymbol = getNativeTokenSymbol(evmChainId);
         const nativeTokenConfig =
           NATIVE_TOKEN_CONFIG[evmChainId]?.[nativeTokenSymbol];
         const monthlyGasEstimate = getNativeInitialGasRequirement(config);
-        const agentDeploymentGas = BigInt(AGENT_DEPLOYMENT_GAS_REQUIREMENT_WEI);
         const totalNativeAmount = formatUnitsToNumber(
-          monthlyGasEstimate + safeCreationThreshold + agentDeploymentGas,
+          monthlyGasEstimate + safeCreationThreshold,
           nativeTokenConfig.decimals,
         );
 
