@@ -26,7 +26,7 @@
     "@ant-design/icons": "5.6.1",
     "@fontsource/inter": "5.2.6",
     "@tanstack/react-query": "5.85.5",
-    "adm-zip": "0.5.16",
+    "adm-zip": "0.6.0",
     "antd": "5.27.4",
     "child_process": "1.0.2",
     "cross-env": "7.0.3",
