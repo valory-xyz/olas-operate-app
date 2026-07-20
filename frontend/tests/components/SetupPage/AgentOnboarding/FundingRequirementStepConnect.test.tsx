@@ -93,12 +93,11 @@ describe('FundingRequirementStep — Connect chain select', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('lists the chains in order: Polygon, Base, Gnosis', () => {
+  it('lists the chains in order: Polygon, Gnosis', () => {
     render(<FundingRequirementStep agentType={AgentMap.Connect} />);
     openDropdown();
     expect(getOptions().map((el) => el.textContent?.trim())).toEqual([
       'Polygon',
-      'Base',
       'Gnosis',
     ]);
   });
@@ -106,13 +105,13 @@ describe('FundingRequirementStep — Connect chain select', () => {
   it('disables a chain that already has a Connect instance', () => {
     mockUseServices.mockReturnValue({
       services: [
-        { service_public_id: 'valory/connect:0.1.0', home_chain: 'base' },
+        { service_public_id: 'valory/connect:0.1.0', home_chain: 'gnosis' },
       ],
     });
     render(<FundingRequirementStep agentType={AgentMap.Connect} />);
     openDropdown();
 
-    expect(findOption('Base')).toHaveClass('ant-select-item-option-disabled');
+    expect(findOption('Gnosis')).toHaveClass('ant-select-item-option-disabled');
     expect(findOption('Polygon')).not.toHaveClass(
       'ant-select-item-option-disabled',
     );

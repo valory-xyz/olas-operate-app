@@ -7,7 +7,10 @@ import {
   SETUP_SCREEN,
   StakingProgramId,
 } from '@/constants';
-import { CONNECT_SERVICE_TEMPLATE } from '@/constants/serviceTemplates/service/connect';
+import {
+  CONNECT_FUND_REQUIREMENT_THRESHOLDS,
+  CONNECT_SERVICE_TEMPLATE,
+} from '@/constants/serviceTemplates/service/connect';
 import { ServiceTemplate } from '@/types';
 import {
   asEvmChainId,
@@ -26,9 +29,12 @@ const NO_STAKING: StakingProgramId = 'no_staking';
 
 /**
  * Build a single-chain Connect service template for the chosen chain: clone
- * CONNECT_SERVICE_TEMPLATE, set `home_chain` to the selected chain and prune
- * `configurations` to just that chain. The staking program (`no_staking`) is
- * applied by `Services.createService`.
+ * CONNECT_SERVICE_TEMPLATE, set `home_chain` to the selected chain, prune
+ * `configurations` to just that chain and narrow the `FUND_REQUIREMENTS`
+ * low-funds thresholds to the same chain (the agent package ships a default RPC
+ * for every chain, so an unnarrowed map makes it report deficits for chains the
+ * instance doesn't operate on). The staking program (`no_staking`) is applied by
+ * `Services.createService`.
  */
 const buildSingleChainTemplate = (chainId: EvmChainId): ServiceTemplate => {
   const middlewareChain = asMiddlewareChain(chainId);
@@ -36,10 +42,22 @@ const buildSingleChainTemplate = (chainId: EvmChainId): ServiceTemplate => {
   if (!config) {
     throw new Error(`No Connect configuration for chain ${chainId}`);
   }
+
+  const thresholds = CONNECT_FUND_REQUIREMENT_THRESHOLDS[middlewareChain];
+
   return {
     ...CONNECT_SERVICE_TEMPLATE,
     home_chain: middlewareChain,
     configurations: { [middlewareChain]: config },
+    env_variables: {
+      ...CONNECT_SERVICE_TEMPLATE.env_variables,
+      FUND_REQUIREMENTS: {
+        ...CONNECT_SERVICE_TEMPLATE.env_variables.FUND_REQUIREMENTS,
+        value: JSON.stringify(
+          thresholds ? { [middlewareChain]: thresholds } : {},
+        ),
+      },
+    },
   };
 };
 
