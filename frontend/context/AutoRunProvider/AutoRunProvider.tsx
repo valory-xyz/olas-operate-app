@@ -40,6 +40,7 @@ const AutoRunContext = createContext<AutoRunContextType>({
   enabled: false,
   includedInstances: [],
   excludedInstances: [],
+  configExcludedInstances: [],
   isToggling: false,
   eligibilityByInstance: {},
   setEnabled: () => {},
@@ -410,6 +411,7 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
       enabled,
       includedInstances: includedInstancesSorted,
       excludedInstances,
+      configExcludedInstances,
       isToggling,
       eligibilityByInstance,
       setEnabled,
@@ -419,6 +421,7 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
     [
       enabled,
       excludedInstances,
+      configExcludedInstances,
       eligibilityByInstance,
       excludeInstance,
       includeInstance,
