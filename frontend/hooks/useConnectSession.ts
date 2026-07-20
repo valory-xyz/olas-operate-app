@@ -3,9 +3,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { AgentMap } from '@/constants';
 import { MiddlewareDeploymentStatusMap } from '@/constants/deployment';
-import { ConnectService } from '@/service/agents/Connect';
 import { ConnectSessionResult } from '@/types';
 
+import { useElectronApi } from './useElectronApi';
 import { useServices } from './useServices';
 
 /**
@@ -49,6 +49,7 @@ const toErrorKind = (
 export const useConnectSession = () => {
   const { selectedAgentType, selectedService, deploymentDetails } =
     useServices();
+  const { connect } = useElectronApi();
   const queryClient = useQueryClient();
 
   const isConnect = selectedAgentType === AgentMap.Connect;
@@ -69,7 +70,11 @@ export const useConnectSession = () => {
 
   const { data, isFetching, refetch } = useQuery({
     queryKey: [CONNECT_SESSION_QUERY_KEY, serviceConfigId],
-    queryFn: () => ConnectService.startSession(),
+    // Launched from the Electron main process: the agent's local server enables
+    // no CORS, so a renderer fetch to it is blocked before it is sent. Outside
+    // Electron the bridge is absent and the launch is simply unreachable.
+    queryFn: (): Promise<ConnectSessionResult> =>
+      connect?.startSession?.() ?? Promise.resolve({ reachable: false }),
     enabled,
     // Launch once per run and keep the result cached across navigation so the
     // session is not relaunched when the alert unmounts/remounts.

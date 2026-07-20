@@ -2,8 +2,10 @@
  * Contract for the Connect agent's local `POST /session` endpoint.
  *
  * The Connect agent's "brain" is a local Claude Code session. When the agent is
- * running, the frontend calls `POST http://127.0.0.1:8716/session` to (re)launch
- * that session and surfaces the result.
+ * running, `POST http://127.0.0.1:8716/session` (re)launches that session and
+ * the frontend surfaces the result. The request is issued by the Electron main
+ * process (`connect-start-session`), not the renderer: the agent's server
+ * enables no CORS, so a renderer fetch to it never leaves the browser.
  *
  * The failure state shown to the user is derived from the HTTP status +
  * `launched`, NOT from `harness` (which the server always sends and so can't
@@ -19,7 +21,8 @@
 export type ConnectHarness = 'claude_code_desktop' | 'claude_code_cli';
 
 /**
- * Raw body of a `POST /session` response.
+ * Raw body of a `POST /session` response, as parsed in `electron/main.js`
+ * before it is normalized to `ConnectSessionResult`.
  * `200` returns `{ launched, harness, error? }`; FastAPI `HTTPException`s
  * (`400`/`503`) return `{ detail }` instead — hence both keys are optional.
  */
