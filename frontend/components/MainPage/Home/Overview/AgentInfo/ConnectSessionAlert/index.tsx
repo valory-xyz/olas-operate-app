@@ -48,7 +48,9 @@ export const ConnectSessionAlert = () => {
   }
 
   if (!showAlert) {
-    if (showRunningInfo) {
+    // On a launch failure the AgentActivity strip carries the running notice
+    // (even after the error alert is dismissed) — don't duplicate it here.
+    if (showRunningInfo && !errorKind) {
       return (
         <SessionInfoAlert message="Your agent is running. Start a new session from the agent profile." />
       );

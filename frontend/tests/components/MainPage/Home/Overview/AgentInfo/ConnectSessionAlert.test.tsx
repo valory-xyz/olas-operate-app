@@ -42,12 +42,21 @@ describe('ConnectSessionAlert', () => {
   });
 
   it('renders the running info alert when the agent runs without a launch error', () => {
-    setup({ showAlert: false, showRunningInfo: true });
+    setup({ showAlert: false, showRunningInfo: true, errorKind: null });
     expect(
       screen.getByText(
         /Your agent is running\. Start a new session from the agent profile/i,
       ),
     ).toBeInTheDocument();
+  });
+
+  it('renders nothing while running with a dismissed launch error (strip owns the notice)', () => {
+    const { container } = setup({
+      showAlert: false,
+      showRunningInfo: true,
+      errorKind: 'launch-failed',
+    });
+    expect(container).toBeEmptyDOMElement();
   });
 
   it('prefers the error alert over the running info alert', () => {
