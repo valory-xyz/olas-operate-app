@@ -120,6 +120,10 @@ export type AgentConfig = {
   arePerformanceMetricsUnavailable?: boolean;
   /** ERC20 tokens (beyond native + OLAS) to display and track for this agent */
   erc20Tokens?: TokenSymbol[];
+  /** Whether the agent has on-chain staking (shows the main-page Staking section). */
+  hasStaking: boolean;
+  /** Whether the agent has performance metrics (shows the main-page Performance section). */
+  hasPerformance: boolean;
 } & needsOpenProfileEachAgentRun;
 
 type AgentPerformanceMetric = {

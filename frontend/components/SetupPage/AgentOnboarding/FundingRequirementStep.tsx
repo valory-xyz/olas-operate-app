@@ -31,7 +31,6 @@ import { InstanceCount } from './SelectAgent';
 /** Chains offered for Connect, in display order. */
 const CONNECT_CHAIN_OPTIONS: EvmChainId[] = [
   EvmChainIdMap.Polygon,
-  EvmChainIdMap.Base,
   EvmChainIdMap.Gnosis,
 ];
 

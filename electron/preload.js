@@ -44,6 +44,15 @@ const wakeLock = {
   stop: () => ipcRenderer.invoke('wake-lock-stop'),
 };
 
+/**
+ * IPC methods for the Connect agent's local server. The call is made from the
+ * main process because that server enables no CORS, so the renderer cannot
+ * reach it directly.
+ */
+const connect = {
+  startSession: () => ipcRenderer.invoke('connect-start-session'),
+};
+
 /** IPC bridge for OTA updates (distinct from the electron-updater instance in electron/update.js) */
 const autoUpdater = {
   checkForUpdates: () => ipcRenderer.invoke('update-check'),
@@ -116,6 +125,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   web3AuthSwapOwnerWindow,
   termsAndConditionsWindow,
   wakeLock,
+  connect,
   logEvent: (message) => ipcRenderer.invoke('log-event', message),
   nextLogError: (error, errorInfo) =>
     ipcRenderer.invoke('next-log-error', error, errorInfo),

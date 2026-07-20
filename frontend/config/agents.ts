@@ -113,26 +113,13 @@ const getConnectPolygonUsdcConfig = () => {
   return Number(formatUnits(usdcSafeRequirement, usdcConfig.decimals));
 };
 
-const getConnectBaseUsdcConfig = () => {
-  const fundRequirements =
-    CONNECT_SERVICE_TEMPLATE.configurations[MiddlewareChainMap.BASE]
-      ?.fund_requirements;
-  const usdcConfig = BASE_TOKEN_CONFIG[TokenSymbolMap.USDC];
-
-  if (!usdcConfig) {
-    throw new Error('Connect Base USDC config not found');
-  }
-
-  const usdcSafeRequirement =
-    fundRequirements?.[usdcConfig.address as Address]?.safe || 0;
-  return Number(formatUnits(usdcSafeRequirement, usdcConfig.decimals));
-};
-
 export const AGENT_CONFIG: {
   [_key in AgentType]: AgentConfig;
 } = {
   [AgentMap.PredictTrader]: {
     isAgentEnabled: true,
+    hasStaking: true,
+    hasPerformance: true,
     requiresSetup: true,
     isX402Enabled: X402_ENABLED_FLAGS[AgentMap.PredictTrader],
     name: 'Predict Trader',
@@ -153,6 +140,8 @@ export const AGENT_CONFIG: {
   },
   [AgentMap.Polystrat]: {
     isAgentEnabled: true,
+    hasStaking: true,
+    hasPerformance: true,
     requiresSetup: true,
     isX402Enabled: X402_ENABLED_FLAGS[AgentMap.Polystrat],
     name: 'Polystrat',
@@ -180,6 +169,8 @@ export const AGENT_CONFIG: {
   },
   [AgentMap.Optimus]: {
     isAgentEnabled: true,
+    hasStaking: true,
+    hasPerformance: true,
     isComingSoon: false,
     isAddingNewBlocked: true,
     requiresSetup: true,
@@ -208,6 +199,8 @@ export const AGENT_CONFIG: {
   },
   [AgentMap.Basius]: {
     isAgentEnabled: true,
+    hasStaking: true,
+    hasPerformance: true,
     isComingSoon: false,
     isAddingNewBlocked: false,
     requiresSetup: true,
@@ -238,6 +231,8 @@ export const AGENT_CONFIG: {
   },
   [AgentMap.AgentsFun]: {
     isAgentEnabled: true,
+    hasStaking: true,
+    hasPerformance: true,
     isUnderConstruction: false,
     isComingSoon: false,
     isAddingNewBlocked: true,
@@ -261,6 +256,8 @@ export const AGENT_CONFIG: {
   },
   [AgentMap.Modius]: {
     isAgentEnabled: true,
+    hasStaking: true,
+    hasPerformance: true,
     isUnderConstruction: true,
     isComingSoon: false,
     requiresSetup: true,
@@ -287,6 +284,8 @@ export const AGENT_CONFIG: {
   },
   [AgentMap.PettAi]: {
     isAgentEnabled: true,
+    hasStaking: true,
+    hasPerformance: true,
     isAddingNewBlocked: true,
     isPhasedOut: true,
     requiresSetup: false,
@@ -313,6 +312,8 @@ export const AGENT_CONFIG: {
   },
   [AgentMap.Connect]: {
     isAgentEnabled: true,
+    hasStaking: false,
+    hasPerformance: false,
     isBeta: true,
     isExcludedFromAutoRun: true,
     requiresSetup: false,
@@ -324,18 +325,11 @@ export const AGENT_CONFIG: {
     // chain the user picks in the funding-requirements step.
     evmHomeChainId: EvmChainIdMap.Gnosis,
     middlewareHomeChainId: MiddlewareChainMap.GNOSIS,
-    supportedChains: [
-      EvmChainIdMap.Polygon,
-      EvmChainIdMap.Base,
-      EvmChainIdMap.Gnosis,
-    ],
-    agentIds: [161],
+    supportedChains: [EvmChainIdMap.Polygon, EvmChainIdMap.Gnosis],
+    agentIds: [116],
     additionalRequirements: {
       [EvmChainIdMap.Polygon]: {
         [TokenSymbolMap.USDC]: getConnectPolygonUsdcConfig(),
-      },
-      [EvmChainIdMap.Base]: {
-        [TokenSymbolMap.USDC]: getConnectBaseUsdcConfig(),
       },
     },
     defaultStakingProgramId: 'no_staking',

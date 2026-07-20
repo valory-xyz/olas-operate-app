@@ -53,4 +53,11 @@ export abstract class ConnectService extends StakedAgentService {
   ): Promise<StakingContractDetails | undefined> => {
     return undefined;
   };
+
+  /**
+   * `POST /session` (launching the local Claude Code session) is NOT here: the
+   * agent's local server enables no CORS, so the renderer cannot call it. The
+   * request is made from the Electron main process instead — see
+   * `electronApi.connect.startSession` (`useConnectSession`).
+   */
 }

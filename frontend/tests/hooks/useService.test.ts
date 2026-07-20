@@ -470,9 +470,8 @@ describe('useService', () => {
     );
 
     // Multi-chain matcher sweep: a Connect instance resolves to the Connect
-    // agent on any of its supported (non-Gnosis) chains, keyed off home_chain.
+    // agent on any of its supported chains, keyed off home_chain.
     it.each([
-      { chainId: EvmChainIdMap.Base, chain: MiddlewareChainMap.BASE },
       { chainId: EvmChainIdMap.Polygon, chain: MiddlewareChainMap.POLYGON },
       { chainId: EvmChainIdMap.Gnosis, chain: MiddlewareChainMap.GNOSIS },
     ])(

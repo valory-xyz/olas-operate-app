@@ -17,6 +17,7 @@ export * from './useBridgeRefillRequirements';
 export * from './useBridgeRefillRequirementsOnDemand';
 export * from './useBridgingSteps';
 export * from './useCompleteAgentSetup';
+export * from './useConnectSession';
 export * from './useCreateConnectService';
 export * from './useDeployability';
 export * from './useDynamicRefetchInterval';
