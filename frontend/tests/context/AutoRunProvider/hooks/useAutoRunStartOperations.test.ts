@@ -90,9 +90,32 @@ describe('useAutoRunStartOperations', () => {
     expect(startResult?.reason).toBe('Not configured');
   });
 
-  it('returns ABORTED when balance wait fails', async () => {
+  it('returns INFRA_FAILED when balance wait fails while still enabled', async () => {
     const params = makeHookParams({
       waitForBalancesReady: jest.fn().mockResolvedValue(false),
+    });
+    const { result } = renderHook(() => useAutoRunStartOperations(params));
+
+    let startResult: { status: string; reason?: string } | undefined;
+    await act(async () => {
+      startResult = await result.current.startAgentWithRetries(
+        DEFAULT_SERVICE_CONFIG_ID,
+      );
+    });
+    // Transient balance gate must stay continuable so the scanner falls back to
+    // other eligible agents rather than pausing the whole rotation.
+    expect(startResult?.status).toBe(AUTO_RUN_START_STATUS.INFRA_FAILED);
+    expect(startResult?.reason).toBe('balances not ready');
+  });
+
+  it('returns ABORTED when balance wait fails because auto-run got disabled', async () => {
+    const enabledRef = { current: true };
+    const params = makeHookParams({
+      enabledRef,
+      waitForBalancesReady: jest.fn().mockImplementation(async () => {
+        enabledRef.current = false;
+        return false;
+      }),
     });
     const { result } = renderHook(() => useAutoRunStartOperations(params));
 
