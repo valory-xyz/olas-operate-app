@@ -6,7 +6,6 @@ import {
   isActiveDeploymentStatus,
   MiddlewareDeploymentStatusMap,
 } from '@/constants/deployment';
-import { ConnectService } from '@/service/agents/Connect';
 import { ConnectSessionResult } from '@/types';
 
 import { useElectronApi } from './useElectronApi';
