@@ -115,7 +115,7 @@ export const BASIUS_ONBOARDING_STEPS: OnboardingStep[] = [
 // TODO(PR2/PR3): replace placeholder copy and images with final Connect assets.
 export const CONNECT_ONBOARDING_STEPS: OnboardingStep[] = [
   {
-    desc: 'Bring your own AI agent, like Claude Code, on-chain. Connect agent uses a web3 wallet provided by Pearl, so it can pay for prediction data and other services on the Olas Marketplace while the keys stay on your machine.',
+    desc: 'Give your AI coding agent, like Claude Code, the ability to make on-chain transactions. Pearl provides a crypto wallet, so your agent can request digital services from other agents on the Olas Marketplace. For example, it can request a fresh prediction on a prediction-market outcome.',
   },
   {
     title: 'Connect your AI agent',

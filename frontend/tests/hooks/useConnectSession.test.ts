@@ -171,6 +171,44 @@ describe('useConnectSession', () => {
     await waitFor(() => expect(mockStartSession).toHaveBeenCalledTimes(2));
   });
 
+  it('flips from the start-agent info to the running info once the agent starts', async () => {
+    servicesValue = runningConnect({
+      selectedService: { service_config_id: 'sc-1', deploymentStatus: STOPPED },
+    });
+    const { result, rerender } = renderConnectSession();
+    expect(result.current.showStartInfo).toBe(true);
+    expect(result.current.showRunningInfo).toBe(false);
+
+    // Agent starts → the idle nudge flips to the running one.
+    servicesValue = runningConnect();
+    rerender();
+    expect(result.current.showStartInfo).toBe(false);
+    expect(result.current.showRunningInfo).toBe(true);
+    await waitFor(() => expect(mockStartSession).toHaveBeenCalledTimes(1));
+  });
+
+  it('shows neither info while the deployment is transitioning', () => {
+    servicesValue = runningConnect({
+      selectedService: {
+        service_config_id: 'sc-1',
+        deploymentStatus: MiddlewareDeploymentStatusMap.DEPLOYING,
+      },
+    });
+    const { result } = renderConnectSession();
+    expect(result.current.showStartInfo).toBe(false);
+    expect(result.current.showRunningInfo).toBe(false);
+  });
+
+  it('does not show either info for a non-Connect agent', () => {
+    servicesValue = runningConnect({
+      selectedAgentType: 'trader',
+      selectedService: { service_config_id: 'sc-1', deploymentStatus: STOPPED },
+    });
+    const { result } = renderConnectSession();
+    expect(result.current.showStartInfo).toBe(false);
+    expect(result.current.showRunningInfo).toBe(false);
+  });
+
   it('does not surface an error alert once the agent has stopped', async () => {
     mockStartSession.mockResolvedValue({
       reachable: true,

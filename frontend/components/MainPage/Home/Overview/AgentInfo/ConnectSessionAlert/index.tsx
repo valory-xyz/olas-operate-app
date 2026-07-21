@@ -1,3 +1,4 @@
+import { InfoCircleOutlined } from '@ant-design/icons';
 import { Button, Flex, Typography } from 'antd';
 
 import { Alert } from '@/components/ui';
@@ -6,18 +7,56 @@ import { useConnectSession } from '@/hooks';
 
 const { Text } = Typography;
 
+// Sized to match the other agent alerts ("Complete Agent Setup",
+// "phased out"), whose copy renders at text-sm.
+const SessionInfoAlert = ({ message }: { message: string }) => (
+  <Alert
+    type="info"
+    showIcon
+    fullWidth
+    customIcon={<InfoCircleOutlined className="text-sm" />}
+    className="mt-16"
+    message={<Text className="text-sm">{message}</Text>}
+  />
+);
+
 /**
- * Surfaces the result of launching the Connect agent's local Claude Code
- * session (see `useConnectSession`). Renders nothing on success; on failure it
- * shows one of two states:
+ * Surfaces the state of the Connect agent's local Claude Code session (see
+ * `useConnectSession`). While the agent is idle, an info alert nudges the user
+ * to start it; while it runs (and the launch succeeded), the alert points at
+ * the agent profile for starting new sessions. On a failed launch it shows one
+ * of two error states:
  * - `harness_not_installed`: Claude isn't installed → prompt to download it.
  * - `launch_failed`: transient launch failure → a Retry button.
  */
 export const ConnectSessionAlert = () => {
-  const { showAlert, errorKind, errorMessage, isLaunching, retry, dismiss } =
-    useConnectSession();
+  const {
+    showAlert,
+    showStartInfo,
+    showRunningInfo,
+    errorKind,
+    errorMessage,
+    isLaunching,
+    retry,
+    dismiss,
+  } = useConnectSession();
 
-  if (!showAlert) return null;
+  if (showStartInfo) {
+    return (
+      <SessionInfoAlert message="Start agent to initiate a Claude Code session with Connect capabilities." />
+    );
+  }
+
+  if (!showAlert) {
+    // On a launch failure the AgentActivity strip carries the running notice
+    // (even after the error alert is dismissed) — don't duplicate it here.
+    if (showRunningInfo && !errorKind) {
+      return (
+        <SessionInfoAlert message="Your agent is running. Start a new session from the agent profile." />
+      );
+    }
+    return null;
+  }
 
   if (errorKind === 'not-installed') {
     return (

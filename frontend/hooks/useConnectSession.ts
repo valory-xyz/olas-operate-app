@@ -2,7 +2,11 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { AgentMap } from '@/constants';
-import { MiddlewareDeploymentStatusMap } from '@/constants/deployment';
+import {
+  isActiveDeploymentStatus,
+  MiddlewareDeploymentStatusMap,
+} from '@/constants/deployment';
+import { ConnectService } from '@/service/agents/Connect';
 import { ConnectSessionResult } from '@/types';
 
 import { useElectronApi } from './useElectronApi';
@@ -115,8 +119,18 @@ export const useConnectSession = () => {
   // stops can't surface a stale alert on a stopped agent.
   const showAlert = Boolean(isConnect && isRunning && !dismissed && error);
 
+  // Idle Connect agent (no active/transitioning deployment) — the UI nudges
+  // the user to start it so the Claude Code session can launch. Once the agent
+  // is DEPLOYED the nudge flips to pointing at the agent profile for new
+  // sessions; during transitions (deploying/stopping) neither applies.
+  const showStartInfo =
+    isConnect && !isActiveDeploymentStatus(selectedService?.deploymentStatus);
+  const showRunningInfo = isConnect && isRunning;
+
   return {
     isConnect,
+    showStartInfo,
+    showRunningInfo,
     errorKind: error?.kind ?? null,
     errorMessage: error?.message,
     isLaunching: isFetching,

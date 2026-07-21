@@ -320,11 +320,13 @@ describe('AutoRunProvider', () => {
 
       const { result } = renderHook(() => useAutoRunContext(), { wrapper });
 
-      // Not in the rotation, and not even listed as an excluded option.
+      // Not in the rotation, and not listed as an includable excluded option —
+      // surfaced separately as a config-excluded (permanently blocked) row.
       expect(
         result.current.includedInstances.map((item) => item.serviceConfigId),
       ).not.toContain(scConnect);
       expect(result.current.excludedInstances).not.toContain(scConnect);
+      expect(result.current.configExcludedInstances).toContain(scConnect);
       expect(result.current.eligibilityByInstance[scConnect]).toEqual({
         canRun: false,
         reason: 'Not available in auto-run',
