@@ -113,21 +113,6 @@ const getConnectPolygonUsdcConfig = () => {
   return Number(formatUnits(usdcSafeRequirement, usdcConfig.decimals));
 };
 
-const getConnectBaseUsdcConfig = () => {
-  const fundRequirements =
-    CONNECT_SERVICE_TEMPLATE.configurations[MiddlewareChainMap.BASE]
-      ?.fund_requirements;
-  const usdcConfig = BASE_TOKEN_CONFIG[TokenSymbolMap.USDC];
-
-  if (!usdcConfig) {
-    throw new Error('Connect Base USDC config not found');
-  }
-
-  const usdcSafeRequirement =
-    fundRequirements?.[usdcConfig.address as Address]?.safe || 0;
-  return Number(formatUnits(usdcSafeRequirement, usdcConfig.decimals));
-};
-
 export const AGENT_CONFIG: {
   [_key in AgentType]: AgentConfig;
 } = {
@@ -340,18 +325,11 @@ export const AGENT_CONFIG: {
     // chain the user picks in the funding-requirements step.
     evmHomeChainId: EvmChainIdMap.Gnosis,
     middlewareHomeChainId: MiddlewareChainMap.GNOSIS,
-    supportedChains: [
-      EvmChainIdMap.Polygon,
-      EvmChainIdMap.Base,
-      EvmChainIdMap.Gnosis,
-    ],
+    supportedChains: [EvmChainIdMap.Polygon, EvmChainIdMap.Gnosis],
     agentIds: [116],
     additionalRequirements: {
       [EvmChainIdMap.Polygon]: {
         [TokenSymbolMap.USDC]: getConnectPolygonUsdcConfig(),
-      },
-      [EvmChainIdMap.Base]: {
-        [TokenSymbolMap.USDC]: getConnectBaseUsdcConfig(),
       },
     },
     defaultStakingProgramId: 'no_staking',

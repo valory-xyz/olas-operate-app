@@ -5,12 +5,12 @@ import { createElement, type ReactNode } from 'react';
 import { MiddlewareDeploymentStatusMap } from '../../constants/deployment';
 import { useConnectSession } from '../../hooks/useConnectSession';
 
-// ConnectService.startSession is the network call — mock it entirely.
+// The launch goes through the Electron main process (the agent server enables
+// no CORS) — mock the IPC bridge.
 const mockStartSession = jest.fn();
-jest.mock('../../service/agents/Connect', () => ({
-  ConnectService: {
-    startSession: (...args: unknown[]) => mockStartSession(...args),
-  },
+let connectApi: Record<string, unknown> | undefined;
+jest.mock('../../hooks/useElectronApi', () => ({
+  useElectronApi: () => ({ connect: connectApi }),
 }));
 
 // Controllable useServices return value.
@@ -48,6 +48,9 @@ describe('useConnectSession', () => {
       ok: true,
       launched: true,
     });
+    connectApi = {
+      startSession: (...args: unknown[]) => mockStartSession(...args),
+    };
     servicesValue = runningConnect();
   });
 
@@ -102,6 +105,13 @@ describe('useConnectSession', () => {
     });
     const { result } = renderConnectSession();
     await waitFor(() => expect(result.current.errorKind).toBe('launch-failed'));
+  });
+
+  it('treats a missing Electron bridge as a retryable launch failure', async () => {
+    connectApi = undefined;
+    const { result } = renderConnectSession();
+    await waitFor(() => expect(result.current.errorKind).toBe('launch-failed'));
+    expect(mockStartSession).not.toHaveBeenCalled();
   });
 
   it('treats an unreachable server as a retryable launch failure', async () => {
