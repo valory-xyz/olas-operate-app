@@ -201,16 +201,21 @@ describe('useRewardsHistory', () => {
       expect(result).toEqual(serviceResponse.service);
     });
 
-    it('returns null when Zod parse fails', async () => {
+    // Regression (OPE-1841): returning null on a parse failure was cached by
+    // React Query as a *successful* result for a whole day, silently wiping
+    // the active staking program. The queryFn must throw so the fetch is
+    // treated as an error and retried.
+    it('throws when Zod parse fails', async () => {
       const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
 
       // Return invalid shape — missing required fields
       mockGraphqlRequest.mockResolvedValue({ service: { bad: 'data' } });
 
       renderHook(() => useRewardsHistory());
-      const result = await capturedQueryConfig!.queryFn();
 
-      expect(result).toBeNull();
+      await expect(capturedQueryConfig!.queryFn()).rejects.toThrow(
+        'Failed to parse service rewards history',
+      );
       expect(consoleErrorSpy).toHaveBeenCalledWith(
         'Failed to parse service rewards:',
         expect.anything(),
