@@ -340,7 +340,9 @@ export const AGENT_CONFIG: {
     doesChatUiRequireApiKey: false,
     // PLACEHOLDER: real public id lands with the minted Connect package (PR2).
     servicePublicId: 'valory/connect:0.1.0',
-    erc20Tokens: [TokenSymbolMap.USDC],
+    // Per-chain: Connect uses USDC on Polygon only. Gnosis runs on native xDAI,
+    // so USDC must not appear in the Gnosis agent wallet.
+    erc20Tokens: { [EvmChainIdMap.Polygon]: [TokenSymbolMap.USDC] },
   },
 };
 

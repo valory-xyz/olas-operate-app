@@ -118,8 +118,14 @@ export type AgentConfig = {
    * remove or set to false to restore the metrics view.
    */
   arePerformanceMetricsUnavailable?: boolean;
-  /** ERC20 tokens (beyond native + OLAS) to display and track for this agent */
-  erc20Tokens?: TokenSymbol[];
+  /**
+   * ERC20 tokens (beyond native + OLAS) to display and track for this agent.
+   * Use a flat list for single-chain agents. For multi-chain agents (e.g.
+   * Connect, one instance per chain) use a per-chain map so a token isn't shown
+   * on a chain that doesn't use it — e.g. Connect uses USDC on Polygon but not
+   * on Gnosis, which also defines USDC in its token config.
+   */
+  erc20Tokens?: TokenSymbol[] | Partial<Record<EvmChainId, TokenSymbol[]>>;
   /** Whether the agent has on-chain staking (shows the main-page Staking section). */
   hasStaking: boolean;
   /** Whether the agent has performance metrics (shows the main-page Performance section). */
