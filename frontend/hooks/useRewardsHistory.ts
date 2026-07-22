@@ -164,7 +164,11 @@ const useServiceRewardsHistory = (
 
       if (parsedResponse.error) {
         console.error('Failed to parse service rewards:', parsedResponse.error);
-        return null;
+        // Throw instead of returning null — a null here is cached as a
+        // *successful* result for ONE_DAY_IN_MS, wiping the active staking
+        // program (and everything derived from it) for a whole day after a
+        // single malformed subgraph response (OPE-1841).
+        throw new Error('Failed to parse service rewards history');
       }
 
       return parsedResponse.data.service;
