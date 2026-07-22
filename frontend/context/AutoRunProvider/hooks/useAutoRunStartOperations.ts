@@ -80,7 +80,16 @@ export const useAutoRunStartOperations = ({
       // Lightweight global balance gate before the expensive start call.
       const balancesReady = await waitForBalancesReady();
       if (!balancesReady) {
-        return { status: AUTO_RUN_START_STATUS.ABORTED };
+        // Balances can be unready because auto-run was disabled, or just because
+        // this agent's balances timed out. Only stop the rotation when disabled;
+        // otherwise report a transient failure so the scanner tries other agents.
+        if (!enabledRef.current) {
+          return { status: AUTO_RUN_START_STATUS.ABORTED };
+        }
+        return {
+          status: AUTO_RUN_START_STATUS.INFRA_FAILED,
+          reason: 'balances not ready',
+        };
       }
 
       onAutoRunStartStateChange?.(true);
