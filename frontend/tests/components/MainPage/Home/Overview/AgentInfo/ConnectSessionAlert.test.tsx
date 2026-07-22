@@ -13,6 +13,8 @@ const mockUseConnectSession = useConnectSession as jest.Mock;
 const setup = (over: Record<string, unknown> = {}) => {
   mockUseConnectSession.mockReturnValue({
     showAlert: true,
+    showStartInfo: false,
+    showRunningInfo: false,
     errorKind: 'launch-failed',
     isLaunching: false,
     retry: jest.fn(),
@@ -28,6 +30,55 @@ describe('ConnectSessionAlert', () => {
   it('renders nothing when there is no alert to show', () => {
     const { container } = setup({ showAlert: false });
     expect(container).toBeEmptyDOMElement();
+  });
+
+  it('renders the start-agent info alert when the agent is idle', () => {
+    setup({ showAlert: false, showStartInfo: true });
+    expect(
+      screen.getByText(
+        /Start agent to initiate a Claude Code session with Connect capabilities/i,
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('renders the running info alert when the agent runs without a launch error', () => {
+    setup({ showAlert: false, showRunningInfo: true, errorKind: null });
+    expect(
+      screen.getByText(
+        /Your agent is running\. Start a new session from the agent profile/i,
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('renders nothing while running with a dismissed launch error (strip owns the notice)', () => {
+    const { container } = setup({
+      showAlert: false,
+      showRunningInfo: true,
+      errorKind: 'launch-failed',
+    });
+    expect(container).toBeEmptyDOMElement();
+  });
+
+  it('prefers the error alert over the running info alert', () => {
+    setup({ showRunningInfo: true, errorKind: 'launch-failed' });
+    expect(
+      screen.getByText(/couldn't launch Claude Code session/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/Start a new session from the agent profile/i),
+    ).not.toBeInTheDocument();
+  });
+
+  it('prefers the start-agent info alert over error states while idle', () => {
+    setup({ showStartInfo: true, errorKind: 'launch-failed' });
+    expect(
+      screen.getByText(
+        /Start agent to initiate a Claude Code session with Connect capabilities/i,
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/couldn't launch Claude Code session/i),
+    ).not.toBeInTheDocument();
   });
 
   it('renders the "Claude isn\'t installed" state with a download link', () => {

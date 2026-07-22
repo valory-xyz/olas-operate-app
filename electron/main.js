@@ -61,6 +61,7 @@ const {
   PORT_RANGE,
   WIDTH,
   HEIGHT,
+  AGENT_SERVER_URL,
 } = require('./constants');
 const { killProcesses } = require('./processes');
 const { isPortAvailable, findAvailablePort } = require('./ports');
@@ -1035,6 +1036,39 @@ ipcMain.handle('web3auth-swap-owner-failure', (_event, result) =>
 ipcMain.handle('terms-window-show', (_event, hash) =>
   handleTermsAndConditionsWindowShow(hash),
 );
+
+/**
+ * Connect agent — launches the local Claude Code session.
+ *
+ * Runs in the main process rather than the renderer on purpose: the agent's
+ * local server enables no CORS (its auth model relies on cross-origin requests
+ * failing), so a renderer `fetch` to it from http://localhost:3000 is blocked
+ * before it is even sent. From here there is no origin, no preflight.
+ *
+ * Never throws: a response that reaches us (2xx or 4xx/503) is reported as
+ * `{ reachable: true, ok, launched, error? }`; a transport error becomes
+ * `{ reachable: false }` so the UI can offer retry / install.
+ */
+ipcMain.handle('connect-start-session', async () => {
+  try {
+    const response = await fetch(`${AGENT_SERVER_URL}/session`, {
+      method: 'POST',
+    });
+    const body = await response.json().catch(() => ({}));
+
+    return {
+      reachable: true,
+      ok: response.ok,
+      launched: Boolean(body.launched),
+      // 200 failures carry `error`; 4xx/5xx HTTPExceptions carry `detail`.
+      error: body.error ?? body.detail,
+    };
+  } catch (e) {
+    // Network error — the server may still be starting up; retryable.
+    logger.electron(`[connect] /session unreachable: ${e}`);
+    return { reachable: false };
+  }
+});
 
 /**
  * Wake lock handlers — prevent OS sleep while auto-run agents are active.

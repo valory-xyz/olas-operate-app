@@ -5,12 +5,12 @@ import { createElement, type ReactNode } from 'react';
 import { MiddlewareDeploymentStatusMap } from '../../constants/deployment';
 import { useConnectSession } from '../../hooks/useConnectSession';
 
-// ConnectService.startSession is the network call — mock it entirely.
+// The launch goes through the Electron main process (the agent server enables
+// no CORS) — mock the IPC bridge.
 const mockStartSession = jest.fn();
-jest.mock('../../service/agents/Connect', () => ({
-  ConnectService: {
-    startSession: (...args: unknown[]) => mockStartSession(...args),
-  },
+let connectApi: Record<string, unknown> | undefined;
+jest.mock('../../hooks/useElectronApi', () => ({
+  useElectronApi: () => ({ connect: connectApi }),
 }));
 
 // Controllable useServices return value.
@@ -48,6 +48,9 @@ describe('useConnectSession', () => {
       ok: true,
       launched: true,
     });
+    connectApi = {
+      startSession: (...args: unknown[]) => mockStartSession(...args),
+    };
     servicesValue = runningConnect();
   });
 
@@ -102,6 +105,13 @@ describe('useConnectSession', () => {
     });
     const { result } = renderConnectSession();
     await waitFor(() => expect(result.current.errorKind).toBe('launch-failed'));
+  });
+
+  it('treats a missing Electron bridge as a retryable launch failure', async () => {
+    connectApi = undefined;
+    const { result } = renderConnectSession();
+    await waitFor(() => expect(result.current.errorKind).toBe('launch-failed'));
+    expect(mockStartSession).not.toHaveBeenCalled();
   });
 
   it('treats an unreachable server as a retryable launch failure', async () => {
@@ -159,6 +169,44 @@ describe('useConnectSession', () => {
     servicesValue = runningConnect();
     rerender();
     await waitFor(() => expect(mockStartSession).toHaveBeenCalledTimes(2));
+  });
+
+  it('flips from the start-agent info to the running info once the agent starts', async () => {
+    servicesValue = runningConnect({
+      selectedService: { service_config_id: 'sc-1', deploymentStatus: STOPPED },
+    });
+    const { result, rerender } = renderConnectSession();
+    expect(result.current.showStartInfo).toBe(true);
+    expect(result.current.showRunningInfo).toBe(false);
+
+    // Agent starts → the idle nudge flips to the running one.
+    servicesValue = runningConnect();
+    rerender();
+    expect(result.current.showStartInfo).toBe(false);
+    expect(result.current.showRunningInfo).toBe(true);
+    await waitFor(() => expect(mockStartSession).toHaveBeenCalledTimes(1));
+  });
+
+  it('shows neither info while the deployment is transitioning', () => {
+    servicesValue = runningConnect({
+      selectedService: {
+        service_config_id: 'sc-1',
+        deploymentStatus: MiddlewareDeploymentStatusMap.DEPLOYING,
+      },
+    });
+    const { result } = renderConnectSession();
+    expect(result.current.showStartInfo).toBe(false);
+    expect(result.current.showRunningInfo).toBe(false);
+  });
+
+  it('does not show either info for a non-Connect agent', () => {
+    servicesValue = runningConnect({
+      selectedAgentType: 'trader',
+      selectedService: { service_config_id: 'sc-1', deploymentStatus: STOPPED },
+    });
+    const { result } = renderConnectSession();
+    expect(result.current.showStartInfo).toBe(false);
+    expect(result.current.showRunningInfo).toBe(false);
   });
 
   it('does not surface an error alert once the agent has stopped', async () => {

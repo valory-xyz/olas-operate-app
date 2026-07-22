@@ -1,14 +1,6 @@
-import {
-  AGENT_SERVER_URL,
-  CONTENT_TYPE_JSON_UTF8,
-  EvmChainId,
-  EvmChainIdMap,
-  StakingProgramId,
-} from '@/constants';
+import { EvmChainId, EvmChainIdMap, StakingProgramId } from '@/constants';
 import {
   Address,
-  ConnectSessionResponse,
-  ConnectSessionResult,
   ServiceStakingDetails,
   StakingContractDetails,
   StakingRewardsInfo,
@@ -63,39 +55,9 @@ export abstract class ConnectService extends StakedAgentService {
   };
 
   /**
-   * Launch (or re-launch) the local Claude Code session via the running agent's
-   * local server (`POST /session`). Only meaningful once the Connect service is
-   * deployed and its local server is up.
-   *
-   * Never throws: a response that reaches us (2xx or 4xx/503) is returned as
-   * `{ reachable: true, ok, launched, error? }`; a transport/abort error becomes
-   * `{ reachable: false }` so the caller can render the retry / install UI.
-   * `ok` carries the HTTP 2xx flag so the caller can keep non-2xx responses
-   * (unknown harness / not-ready / malformed) out of the "not installed" state.
+   * `POST /session` (launching the local Claude Code session) is NOT here: the
+   * agent's local server enables no CORS, so the renderer cannot call it. The
+   * request is made from the Electron main process instead — see
+   * `electronApi.connect.startSession` (`useConnectSession`).
    */
-  static startSession = async (
-    signal?: AbortSignal,
-  ): Promise<ConnectSessionResult> => {
-    try {
-      const response = await fetch(`${AGENT_SERVER_URL}/session`, {
-        method: 'POST',
-        headers: { ...CONTENT_TYPE_JSON_UTF8 },
-        signal,
-      });
-      const body = (await response
-        .json()
-        .catch(() => ({}))) as ConnectSessionResponse;
-
-      return {
-        reachable: true,
-        ok: response.ok,
-        launched: Boolean(body.launched),
-        // 200 failures carry `error`; 4xx/5xx HTTPExceptions carry `detail`.
-        error: body.error ?? body.detail,
-      };
-    } catch {
-      // Network/abort error — the server may be starting up; retryable.
-      return { reachable: false };
-    }
-  };
 }

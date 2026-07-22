@@ -12,28 +12,32 @@ jest.mock('../../constants/serviceTemplates/service/connect', () => ({
     home_chain: 'gnosis',
     configurations: {
       polygon: { nft: 'poly-nft', agent_id: 116, cost_of_bond: '0' },
-      base: { nft: 'base-nft', agent_id: 116, cost_of_bond: '0' },
       gnosis: { nft: 'gnosis-nft', agent_id: 116, cost_of_bond: '0' },
     },
+    env_variables: {
+      STORE_PATH: { value: 'persistent_data/', provision_type: 'computed' },
+      FUND_REQUIREMENTS: { value: 'all-chains', provision_type: 'fixed' },
+    },
+  },
+  CONNECT_FUND_REQUIREMENT_THRESHOLDS: {
+    polygon: { agent: { '0x0': '1' }, safe: { '0x0': '2' } },
+    gnosis: { agent: { '0x0': '3' }, safe: { '0x0': '4' } },
   },
 }));
 
-const { CONNECT_SERVICE_TEMPLATE } = jest.requireMock(
-  '../../constants/serviceTemplates/service/connect',
-);
-const BASE_CONFIG = CONNECT_SERVICE_TEMPLATE.configurations.base;
+const { CONNECT_SERVICE_TEMPLATE, CONNECT_FUND_REQUIREMENT_THRESHOLDS } =
+  jest.requireMock('../../constants/serviceTemplates/service/connect');
+const GNOSIS_CONFIG = CONNECT_SERVICE_TEMPLATE.configurations.gnosis;
 
 // --- @/utils (onDummyServiceCreation + chain/config helpers) -----------------
 const mockOnDummyServiceCreation = jest.fn();
 const mockMatchesAgentConfig = jest.fn();
 const MIDDLEWARE_BY_EVM: Record<number, string> = {
   [EvmChainIdMap.Polygon]: MiddlewareChainMap.POLYGON,
-  [EvmChainIdMap.Base]: MiddlewareChainMap.BASE,
   [EvmChainIdMap.Gnosis]: MiddlewareChainMap.GNOSIS,
 };
 const EVM_BY_MIDDLEWARE: Record<string, number> = {
   [MiddlewareChainMap.POLYGON]: EvmChainIdMap.Polygon,
-  [MiddlewareChainMap.BASE]: EvmChainIdMap.Base,
   [MiddlewareChainMap.GNOSIS]: EvmChainIdMap.Gnosis,
 };
 
@@ -119,7 +123,7 @@ describe('useCreateConnectService', () => {
     const { result } = renderHook(() => useCreateConnectService());
 
     await act(async () => {
-      await result.current(EvmChainIdMap.Base);
+      await result.current(EvmChainIdMap.Gnosis);
     });
 
     expect(mockOnDummyServiceCreation).toHaveBeenCalledTimes(1);
@@ -127,12 +131,32 @@ describe('useCreateConnectService', () => {
       mockOnDummyServiceCreation.mock.calls[0];
     expect(stakingProgramId).toBe('no_staking');
     // home_chain set to the chosen chain, configurations pruned to it only.
-    expect(template.home_chain).toBe(MiddlewareChainMap.BASE);
+    expect(template.home_chain).toBe(MiddlewareChainMap.GNOSIS);
     expect(Object.keys(template.configurations)).toEqual([
-      MiddlewareChainMap.BASE,
+      MiddlewareChainMap.GNOSIS,
     ]);
-    expect(template.configurations[MiddlewareChainMap.BASE]).toEqual(
-      BASE_CONFIG,
+    expect(template.configurations[MiddlewareChainMap.GNOSIS]).toEqual(
+      GNOSIS_CONFIG,
+    );
+  });
+
+  it('narrows the FUND_REQUIREMENTS thresholds to the chosen chain', async () => {
+    const { result } = renderHook(() => useCreateConnectService());
+
+    await act(async () => {
+      await result.current(EvmChainIdMap.Gnosis);
+    });
+
+    const template = mockOnDummyServiceCreation.mock.calls[0][1];
+    // Other chains must not survive: the agent package ships a default RPC for
+    // every chain, so a stray entry means deficits reported off-chain.
+    expect(JSON.parse(template.env_variables.FUND_REQUIREMENTS.value)).toEqual({
+      [MiddlewareChainMap.GNOSIS]:
+        CONNECT_FUND_REQUIREMENT_THRESHOLDS[MiddlewareChainMap.GNOSIS],
+    });
+    // Untouched env variables are carried over.
+    expect(template.env_variables.STORE_PATH).toEqual(
+      CONNECT_SERVICE_TEMPLATE.env_variables.STORE_PATH,
     );
   });
 
@@ -154,7 +178,7 @@ describe('useCreateConnectService', () => {
     const { result } = renderHook(() => useCreateConnectService());
 
     await act(async () => {
-      await result.current(EvmChainIdMap.Base);
+      await result.current(EvmChainIdMap.Gnosis);
     });
 
     expect(mockMarkServiceAsNotInitiallyFunded).toHaveBeenCalledWith(
@@ -186,7 +210,7 @@ describe('useCreateConnectService', () => {
     const { result } = renderHook(() => useCreateConnectService());
 
     await act(async () => {
-      await result.current(EvmChainIdMap.Base);
+      await result.current(EvmChainIdMap.Gnosis);
     });
 
     // Service was created exactly once and the user still lands on funding —
@@ -200,17 +224,17 @@ describe('useCreateConnectService', () => {
   });
 
   it('does not create a second service when the chosen chain already has a Connect instance', async () => {
-    const EXISTING_SERVICE_CONFIG_ID = 'sc-existing-base-connect';
+    const EXISTING_SERVICE_CONFIG_ID = 'sc-existing-gnosis-connect';
     mockServices = [
       {
         service_config_id: EXISTING_SERVICE_CONFIG_ID,
-        home_chain: MiddlewareChainMap.BASE,
+        home_chain: MiddlewareChainMap.GNOSIS,
       },
     ];
     const { result } = renderHook(() => useCreateConnectService());
 
     await act(async () => {
-      await result.current(EvmChainIdMap.Base);
+      await result.current(EvmChainIdMap.Gnosis);
     });
 
     // Occupancy guard: no new service is created for an already-occupied chain.

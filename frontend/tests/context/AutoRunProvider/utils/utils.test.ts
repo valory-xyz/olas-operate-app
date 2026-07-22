@@ -101,19 +101,18 @@ describe('getAgentFromService', () => {
   });
 
   // Multi-chain matcher sweep: Connect instances on any supported chain
-  // (including non-Gnosis Base/Polygon) resolve to the Connect agent.
-  it.each([
-    MiddlewareChainMap.BASE,
-    MiddlewareChainMap.POLYGON,
-    MiddlewareChainMap.GNOSIS,
-  ])('resolves a Connect service on %s to the Connect agent', (chain) => {
-    const service = makeService({
-      service_public_id: AGENT_CONFIG[AgentMap.Connect].servicePublicId,
-      home_chain: chain,
-    });
-    const result = getAgentFromService(service);
-    expect(result?.[0]).toBe(AgentMap.Connect);
-  });
+  // (including non-Gnosis Polygon) resolve to the Connect agent.
+  it.each([MiddlewareChainMap.POLYGON, MiddlewareChainMap.GNOSIS])(
+    'resolves a Connect service on %s to the Connect agent',
+    (chain) => {
+      const service = makeService({
+        service_public_id: AGENT_CONFIG[AgentMap.Connect].servicePublicId,
+        home_chain: chain,
+      });
+      const result = getAgentFromService(service);
+      expect(result?.[0]).toBe(AgentMap.Connect);
+    },
+  );
 });
 
 describe('sortIncludedInstances', () => {

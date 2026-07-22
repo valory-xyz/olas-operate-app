@@ -1,15 +1,11 @@
 import { ethers } from 'ethers';
 
-import {
-  BASE_TOKEN_CONFIG,
-  POLYGON_TOKEN_CONFIG,
-  TokenSymbolMap,
-} from '@/config/tokens';
+import { POLYGON_TOKEN_CONFIG, TokenSymbolMap } from '@/config/tokens';
 import { AgentMap, EnvProvisionMap as EnvProvisionType } from '@/constants';
 import { ServiceTemplate } from '@/types';
 import { parseEther, parseUnits } from '@/utils';
 
-import { MiddlewareChainMap } from '../../chains';
+import { MiddlewareChain, MiddlewareChainMap } from '../../chains';
 import { KPI_DESC_PREFIX } from '../constants';
 
 /**
@@ -24,12 +20,47 @@ const COMMON_CONFIG = {
   cost_of_bond: '1', // Olas ServiceRegistry minting minimum (1 wei)
 } as const;
 
+const POLYGON_USDC = POLYGON_TOKEN_CONFIG[TokenSymbolMap.USDC];
+
+/**
+ * Low-funds alert thresholds, consumed by the agent's `/funds-status` endpoint
+ * through the `FUND_REQUIREMENTS` env var.
+ *
+ * Shape is `{ chain: { 'agent' | 'safe': { asset: threshold } } }` — roles, not
+ * addresses, since the template can't know the per-user EOA / safe addresses;
+ * the agent resolves the roles against the running deployment.
+ *
+ * Thresholds are 1/5 of the initial requirement in `configurations` below
+ * (product: POL 15/3, USDC 5/1, xDAI 5/1), and the agent-EOA gas budget keeps
+ * the same ratio.
+ *
+ * A Connect instance runs on exactly one chain, but the agent package declares
+ * a default RPC for every chain — so the value handed to a deployment must be
+ * narrowed to its own chain (see `useCreateConnectService`), otherwise the
+ * agent reports a deficit for an unfunded EOA on chains it doesn't operate on.
+ */
+export const CONNECT_FUND_REQUIREMENT_THRESHOLDS: Partial<
+  Record<MiddlewareChain, Record<'agent' | 'safe', Record<string, string>>>
+> = {
+  [MiddlewareChainMap.POLYGON]: {
+    agent: { [ethers.constants.AddressZero]: parseEther(1.6) },
+    safe: {
+      [ethers.constants.AddressZero]: parseEther(3),
+      [POLYGON_USDC?.address as string]: parseUnits(1, POLYGON_USDC?.decimals),
+    },
+  },
+  [MiddlewareChainMap.GNOSIS]: {
+    agent: { [ethers.constants.AddressZero]: parseEther(0.01) },
+    safe: { [ethers.constants.AddressZero]: parseEther(1) },
+  },
+};
+
 /**
  * Connect service template.
  *
- * One `configurations` block per supported chain (Polygon / Base / Gnosis),
- * each with `staking_program_id: 'no_staking'`. The same `name` is shared
- * across chains; the chain is selected at setup time (see `SelectChain`).
+ * One `configurations` block per supported chain (Polygon / Gnosis), each with
+ * `staking_program_id: 'no_staking'`. The same `name` is shared across chains;
+ * the chain is selected at setup time (see `SelectChain`).
  */
 export const CONNECT_SERVICE_TEMPLATE: ServiceTemplate = {
   agentType: AgentMap.Connect,
@@ -38,13 +69,13 @@ export const CONNECT_SERVICE_TEMPLATE: ServiceTemplate = {
   image:
     'https://gateway.autonolas.tech/ipfs/bafybeidldvcrd7exlqwutoa5fj7nh6mjrkh7w6tuuwofwdifavvezj6g2e',
   hash: 'bafybeibue5tquh2yify7upvvlarotk7rbelg3uicd3dctwb4csa5yxkysi',
-  service_version: 'v0.1.0-rc1',
+  service_version: 'v0.1.0-rc3',
   agent_release: {
     is_aea: false,
     repository: {
       owner: 'valory-xyz',
       name: 'connect',
-      version: 'v0.1.0-rc1',
+      version: 'v0.1.0-rc3',
     },
   },
   home_chain: MiddlewareChainMap.GNOSIS,
@@ -56,25 +87,9 @@ export const CONNECT_SERVICE_TEMPLATE: ServiceTemplate = {
           agent: parseEther(8),
           safe: parseEther(15),
         },
-        [POLYGON_TOKEN_CONFIG[TokenSymbolMap.USDC]?.address as string]: {
+        [POLYGON_USDC?.address as string]: {
           agent: '0',
-          safe: parseUnits(
-            5,
-            POLYGON_TOKEN_CONFIG[TokenSymbolMap.USDC]?.decimals,
-          ),
-        },
-      },
-    },
-    [MiddlewareChainMap.BASE]: {
-      ...COMMON_CONFIG,
-      fund_requirements: {
-        [ethers.constants.AddressZero]: {
-          agent: parseEther(0.0005),
-          safe: parseEther(0.0005),
-        },
-        [BASE_TOKEN_CONFIG[TokenSymbolMap.USDC]?.address as string]: {
-          agent: '0',
-          safe: parseUnits(5, BASE_TOKEN_CONFIG[TokenSymbolMap.USDC]?.decimals),
+          safe: parseUnits(5, POLYGON_USDC?.decimals),
         },
       },
     },
@@ -98,17 +113,11 @@ export const CONNECT_SERVICE_TEMPLATE: ServiceTemplate = {
     FUND_REQUIREMENTS: {
       name: 'Fund requirements',
       description: '',
-      value: '',
-      provision_type: EnvProvisionType.COMPUTED,
+      value: JSON.stringify(CONNECT_FUND_REQUIREMENT_THRESHOLDS),
+      provision_type: EnvProvisionType.FIXED,
     },
     POLYGON_LEDGER_RPC: {
       name: 'Polygon ledger RPC',
-      description: '',
-      value: '',
-      provision_type: EnvProvisionType.COMPUTED,
-    },
-    BASE_LEDGER_RPC: {
-      name: 'Base ledger RPC',
       description: '',
       value: '',
       provision_type: EnvProvisionType.COMPUTED,
