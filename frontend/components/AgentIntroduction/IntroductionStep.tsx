@@ -41,7 +41,7 @@ const AnimatedImage = ({ imgSrc, alt, imageHeight }: AnimatedImageProps) => (
       <Image
         src={imgSrc}
         alt={alt}
-        priority
+        loading="lazy"
         width={0}
         height={0}
         sizes="100vw"
