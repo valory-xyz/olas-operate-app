@@ -42,10 +42,7 @@ describe('AgentActivity', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockUseRewardContext.mockReturnValue({ isEpochTargetMet: false });
-    mockUseConnectSession.mockReturnValue({
-      isConnect: false,
-      errorKind: null,
-    });
+    mockUseConnectSession.mockReturnValue({ showRunningInfo: false });
   });
 
   it('shows "Agent is not running" when the service is stopped', () => {
@@ -63,11 +60,8 @@ describe('AgentActivity', () => {
     expect(screen.getByText('Agent is running')).toBeInTheDocument();
   });
 
-  it('points at the agent profile when the Connect session failed to launch', () => {
-    mockUseConnectSession.mockReturnValue({
-      isConnect: true,
-      errorKind: 'launch-failed',
-    });
+  it('points at the agent profile while a Connect agent is running', () => {
+    mockUseConnectSession.mockReturnValue({ showRunningInfo: true });
     setup({ isServiceRunning: true });
     expect(
       screen.getByText(
@@ -76,11 +70,8 @@ describe('AgentActivity', () => {
     ).toBeInTheDocument();
   });
 
-  it('takes priority over healthcheck rounds when the session failed', () => {
-    mockUseConnectSession.mockReturnValue({
-      isConnect: true,
-      errorKind: 'not-installed',
-    });
+  it('takes priority over healthcheck rounds for Connect', () => {
+    mockUseConnectSession.mockReturnValue({ showRunningInfo: true });
     setup({
       isServiceRunning: true,
       deploymentDetails: {
@@ -95,10 +86,9 @@ describe('AgentActivity', () => {
   });
 
   it('does not show the session notice for a stopped Connect agent', () => {
-    mockUseConnectSession.mockReturnValue({
-      isConnect: true,
-      errorKind: 'launch-failed',
-    });
+    // Defensive: even if the hook still reports running, a stopped service
+    // renders the default state.
+    mockUseConnectSession.mockReturnValue({ showRunningInfo: true });
     setup({ isServiceRunning: false });
     expect(screen.getByText('Agent is not running')).toBeInTheDocument();
   });
