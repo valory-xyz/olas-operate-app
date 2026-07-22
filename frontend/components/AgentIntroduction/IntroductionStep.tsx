@@ -45,13 +45,17 @@ const AnimatedImage = ({ imgSrc, alt, imageHeight }: AnimatedImageProps) => (
         width={0}
         height={0}
         sizes="100vw"
-        // Fixed height keeps slide heights consistent; `cover` preserves the
-        // aspect ratio (a bare min-height stretched images whose natural
-        // height at the container width fell short of it).
+        // Scale to the container width at the image's natural aspect ratio so
+        // the whole artwork shows — it has labels at the edges, so a fixed
+        // height + `cover` clipped them whenever the box was narrower than the
+        // image's aspect ratio (e.g. the 460px About Agent modal). `imageHeight`
+        // caps the height on wide containers; `contain` only letterboxes if that
+        // cap engages.
         style={{
           width: '100%',
-          height: imageHeight ?? 416,
-          objectFit: 'cover',
+          height: 'auto',
+          maxHeight: imageHeight ?? 416,
+          objectFit: 'contain',
         }}
       />
     </motion.div>
