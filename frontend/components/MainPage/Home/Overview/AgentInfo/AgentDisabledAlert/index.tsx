@@ -2,6 +2,7 @@ import { ReactNode, useMemo } from 'react';
 
 import { AgentLowBalanceAlert } from '@/components/AgentLowBalanceAlert';
 import { STEPS } from '@/components/AgentWallet/types';
+import { NoStakingRewardsAlert } from '@/components/NoStakingRewardsAlert';
 import {
   AgentSetupCompleteModal,
   ContentTransition,
@@ -42,6 +43,7 @@ export const AgentDisabledAlert = () => {
     isEligibleForStaking,
     hasEnoughServiceSlots,
     isServiceStaked,
+    selectedStakingContractDetails,
   } = useActiveStakingContractDetails();
   const { isInitialFunded } = useIsInitiallyFunded();
   const { isAnotherAgentRunning } = useAgentRunning();
@@ -122,11 +124,24 @@ export const AgentDisabledAlert = () => {
       return { key: 'evicted', content: <EvictedAlert /> };
     }
 
+    // Non-blocking: the reward pool of the selected contract is empty, so the
+    // agent runs but earns nothing until it's refilled (OPE-1846). Rendered
+    // alongside the low-balance alerts (which self-hide) so neither is masked.
+    const hasNoStakingRewards =
+      !isSelectedStakingContractDetailsLoading &&
+      selectedStakingContractDetails?.availableRewards === 0;
+
     // NOTE: Low-balance alerts, each component controls its own visibility.
     return {
       key: 'low-balance',
       content: (
         <>
+          {hasNoStakingRewards && (
+            <NoStakingRewardsAlert
+              className="mt-16"
+              onSwitch={() => goto(PAGES.SelectStaking)}
+            />
+          )}
           <AgentLowBalanceAlert
             onFund={() =>
               goto(PAGES.AgentWallet, {
@@ -153,6 +168,7 @@ export const AgentDisabledAlert = () => {
     isSelectedStakingContractDetailsLoading,
     isServiceStaked,
     selectedAgentConfig,
+    selectedStakingContractDetails,
     selectedStakingProgramMeta,
   ]);
 
