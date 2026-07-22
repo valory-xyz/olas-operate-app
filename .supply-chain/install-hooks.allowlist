@@ -15,4 +15,3 @@ classic-level  # node-gyp-build for the LevelDB C++ binding (hardhat>@nomicfound
 electron  # postinstall downloads the Electron binary tarball for the current platform (direct devDep — required for `yarn dev` and electron-builder)
 keccak  # node-gyp-build for the Keccak hash native binding (ethereum-cryptography>keccak + hardhat>keccak — used by ethers v5 for blockchain hashing; install falls back to JS via `|| exit 0` if compile fails)
 secp256k1  # node-gyp-build for the secp256k1 ECC signing binding (ethereum-cryptography>secp256k1 — used by ethers for transaction signing; install falls back to JS via `|| exit 0` if compile fails)
-sharp  # libvips-backed image optimizer that Next.js 15 ships as a direct dep for next/image; install/check.js looks for a prebuilt binary for the current platform/libc and falls back to building from source if missing — no network beyond the prebuild fetch
