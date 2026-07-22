@@ -71,7 +71,7 @@ The user picks which staking program to use. The view cycles through these state
 
 - Default program = `selectedAgentConfig.defaultStakingProgramId` (from `frontend/config/agents.ts`)
 - "Change Configuration" button toggles to list view (`LIST_MANUAL`)
-- List is ordered by `useStakingContracts`: active program first, deprecated programs hidden, filtered by `agentsSupported`
+- List is ordered by `useStakingContracts`: current program first (shown even if deprecated), other deprecated programs hidden, filtered by `agentsSupported`. `currentStakingProgramId` here is the on-chain (subgraph) program falling back to the service-stored `staking_program_id` — it never falls back to the agent-config default, so the "Selected" badge can't land on a contract the user never joined (OPE-1841)
 - On selection, `SelectStakingButton` writes the chosen `staking_program_id` to the service config before first deploy
 
 ### Main page — Staking block
@@ -103,6 +103,8 @@ Two tabs:
 | Required deposit | `stakingContractInfo.minStakingDeposit` (OLAS) |
 | Epoch countdown | `currentEpochLifetime` from `useStakingDetails` |
 | Stats card | Total rewards earned, current streak |
+
+Contract name and stats are both keyed off `useStakingContracts().currentStakingProgramId` (single source — active/subgraph, then service-stored, never the config default), so the header can't name one contract while the stats show another (OPE-1841).
 
 "Switch Staking Contract" button → opens SelectStakingPage in migrate mode (see Staking Migration below).
 
@@ -275,11 +277,13 @@ Derives several status flags from `selectedStakingContractDetails`:
 
 ### Program ordering (useStakingContracts)
 
+`currentStakingProgramId` = subgraph-derived `activeStakingProgramId`, falling back to the service-stored `user_params.staking_program_id`, else `null`. It deliberately does **not** fall back to `defaultStakingProgramId` — the default is not evidence of a stake, and surfacing it as "current" marked contracts the user never joined as "Selected" (OPE-1841).
+
 `orderedStakingProgramIds` is built by filtering and sorting available programs:
 
-1. Skip deprecated programs
-2. Skip programs that don't support the selected agent type
-3. Place the active staking program first
+1. Place the current staking program first — even if deprecated, so a user staked in a legacy contract can still see it marked as selected
+2. Skip remaining deprecated programs
+3. Skip programs that don't support the selected agent type
 4. Append remaining programs in original order
 
 Returns empty array while `isActiveStakingProgramLoaded` is false.

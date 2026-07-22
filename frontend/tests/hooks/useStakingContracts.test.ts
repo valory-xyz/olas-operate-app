@@ -2,7 +2,11 @@ import { renderHook } from '@testing-library/react';
 
 import { StakingProgramConfig } from '../../config/stakingPrograms';
 import { AgentMap, AgentType } from '../../constants/agent';
-import { EvmChainId, EvmChainIdMap } from '../../constants/chains';
+import {
+  EvmChainId,
+  EvmChainIdMap,
+  MiddlewareChainMap,
+} from '../../constants/chains';
 import {
   STAKING_PROGRAM_IDS,
   StakingProgramId,
@@ -10,7 +14,11 @@ import {
 import { useServices } from '../../hooks/useServices';
 import { useStakingContracts } from '../../hooks/useStakingContracts';
 import { useStakingProgram } from '../../hooks/useStakingProgram';
-import { makeStakingProgramConfig } from '../helpers/factories';
+import {
+  makeChainConfig,
+  makeService,
+  makeStakingProgramConfig,
+} from '../helpers/factories';
 
 /* eslint-disable @typescript-eslint/no-var-requires */
 jest.mock(
@@ -81,22 +89,31 @@ const mockUseStakingProgram = useStakingProgram as jest.Mock;
 
 const setupMocks = ({
   isActiveStakingProgramLoaded = true,
-  selectedStakingProgramId = MARKETPLACE_3 as StakingProgramId | null,
+  activeStakingProgramId = MARKETPLACE_3 as StakingProgramId | null,
+  serviceStakingProgramId = null as StakingProgramId | null,
   evmHomeChainId = EvmChainIdMap.Gnosis as EvmChainId,
   selectedAgentType = AgentMap.PredictTrader as AgentType,
 }: {
   isActiveStakingProgramLoaded?: boolean;
-  selectedStakingProgramId?: StakingProgramId | null;
+  activeStakingProgramId?: StakingProgramId | null;
+  serviceStakingProgramId?: StakingProgramId | null;
   evmHomeChainId?: EvmChainId;
   selectedAgentType?: AgentType;
 } = {}) => {
   mockUseServices.mockReturnValue({
     selectedAgentConfig: { evmHomeChainId },
     selectedAgentType,
+    selectedService: serviceStakingProgramId
+      ? makeService({
+          chain_configs: makeChainConfig(MiddlewareChainMap.GNOSIS, {
+            staking_program_id: serviceStakingProgramId,
+          }),
+        })
+      : undefined,
   });
   mockUseStakingProgram.mockReturnValue({
     isActiveStakingProgramLoaded,
-    selectedStakingProgramId,
+    activeStakingProgramId,
   });
 };
 
@@ -106,10 +123,10 @@ describe('useStakingContracts', () => {
   });
 
   describe('currentStakingProgramId', () => {
-    it('returns selectedStakingProgramId when isActiveStakingProgramLoaded is true', () => {
+    it('returns activeStakingProgramId when isActiveStakingProgramLoaded is true', () => {
       setupMocks({
         isActiveStakingProgramLoaded: true,
-        selectedStakingProgramId: MARKETPLACE_3,
+        activeStakingProgramId: MARKETPLACE_3,
       });
 
       const { result } = renderHook(() => useStakingContracts());
@@ -119,17 +136,42 @@ describe('useStakingContracts', () => {
     it('returns null when isActiveStakingProgramLoaded is false', () => {
       setupMocks({
         isActiveStakingProgramLoaded: false,
-        selectedStakingProgramId: MARKETPLACE_3,
+        activeStakingProgramId: MARKETPLACE_3,
       });
 
       const { result } = renderHook(() => useStakingContracts());
       expect(result.current.currentStakingProgramId).toBeNull();
     });
 
-    it('returns null when selectedStakingProgramId is null and loaded', () => {
+    it('falls back to the service-stored program when active is unknown', () => {
       setupMocks({
         isActiveStakingProgramLoaded: true,
-        selectedStakingProgramId: null,
+        activeStakingProgramId: null,
+        serviceStakingProgramId: MARKETPLACE_4,
+      });
+
+      const { result } = renderHook(() => useStakingContracts());
+      expect(result.current.currentStakingProgramId).toBe(MARKETPLACE_4);
+    });
+
+    it('prefers the on-chain active program over the service-stored one', () => {
+      setupMocks({
+        isActiveStakingProgramLoaded: true,
+        activeStakingProgramId: MARKETPLACE_3,
+        serviceStakingProgramId: MARKETPLACE_4,
+      });
+
+      const { result } = renderHook(() => useStakingContracts());
+      expect(result.current.currentStakingProgramId).toBe(MARKETPLACE_3);
+    });
+
+    // Regression (OPE-1841): the agent-config default must never surface as
+    // "current" — it marked a contract the user never joined as "Selected".
+    it('returns null when neither active nor service-stored program is known', () => {
+      setupMocks({
+        isActiveStakingProgramLoaded: true,
+        activeStakingProgramId: null,
+        serviceStakingProgramId: null,
       });
 
       const { result } = renderHook(() => useStakingContracts());
@@ -148,7 +190,7 @@ describe('useStakingContracts', () => {
     it('filters out deprecated programs', () => {
       setupMocks({
         isActiveStakingProgramLoaded: true,
-        selectedStakingProgramId: null,
+        activeStakingProgramId: null,
       });
 
       const { result } = renderHook(() => useStakingContracts());
@@ -160,7 +202,7 @@ describe('useStakingContracts', () => {
     it('filters out programs that do not support the selected agent type', () => {
       setupMocks({
         isActiveStakingProgramLoaded: true,
-        selectedStakingProgramId: null,
+        activeStakingProgramId: null,
       });
 
       const { result } = renderHook(() => useStakingContracts());
@@ -172,7 +214,7 @@ describe('useStakingContracts', () => {
     it('includes non-deprecated programs that support the agent type', () => {
       setupMocks({
         isActiveStakingProgramLoaded: true,
-        selectedStakingProgramId: null,
+        activeStakingProgramId: null,
       });
 
       const { result } = renderHook(() => useStakingContracts());
@@ -183,7 +225,7 @@ describe('useStakingContracts', () => {
     it('places the active staking program first', () => {
       setupMocks({
         isActiveStakingProgramLoaded: true,
-        selectedStakingProgramId: MARKETPLACE_4,
+        activeStakingProgramId: MARKETPLACE_4,
       });
 
       const { result } = renderHook(() => useStakingContracts());
@@ -194,7 +236,7 @@ describe('useStakingContracts', () => {
     it('does not duplicate the active program in the list', () => {
       setupMocks({
         isActiveStakingProgramLoaded: true,
-        selectedStakingProgramId: MARKETPLACE_3,
+        activeStakingProgramId: MARKETPLACE_3,
       });
 
       const { result } = renderHook(() => useStakingContracts());
@@ -204,28 +246,39 @@ describe('useStakingContracts', () => {
       expect(occurrences).toHaveLength(1);
     });
 
-    it('filters out a deprecated program even if it is the active staking program', () => {
+    // Regression (OPE-1841): a user staked in a deprecated contract could
+    // never see it in the list, so the list could never mark their actual
+    // contract as selected.
+    it('keeps a deprecated program in the list when it is the current one', () => {
       setupMocks({
         isActiveStakingProgramLoaded: true,
-        selectedStakingProgramId: DEPRECATED_BETA_5,
+        activeStakingProgramId: DEPRECATED_BETA_5,
       });
 
       const { result } = renderHook(() => useStakingContracts());
-      // DEPRECATED_BETA_5 is deprecated — the deprecated check runs before the active check
-      expect(result.current.orderedStakingProgramIds).not.toContain(
-        DEPRECATED_BETA_5,
-      );
-      // Remaining non-deprecated, supported programs are still present
       expect(result.current.orderedStakingProgramIds).toEqual([
+        DEPRECATED_BETA_5,
         MARKETPLACE_3,
         MARKETPLACE_4,
       ]);
     });
 
+    it('filters out a deprecated program when it is not the current one', () => {
+      setupMocks({
+        isActiveStakingProgramLoaded: true,
+        activeStakingProgramId: MARKETPLACE_3,
+      });
+
+      const { result } = renderHook(() => useStakingContracts());
+      expect(result.current.orderedStakingProgramIds).not.toContain(
+        DEPRECATED_BETA_5,
+      );
+    });
+
     it('returns programs in correct order: active first then remaining', () => {
       setupMocks({
         isActiveStakingProgramLoaded: true,
-        selectedStakingProgramId: MARKETPLACE_4,
+        activeStakingProgramId: MARKETPLACE_4,
       });
 
       const { result } = renderHook(() => useStakingContracts());
@@ -239,11 +292,11 @@ describe('useStakingContracts', () => {
 
     it('includes active program even if it does not support the selected agent type', () => {
       // MODIUS_ALPHA does NOT support PredictTrader — but it IS the active program.
-      // The implementation promotes active before the agent-support filter (line 31 vs 35),
+      // The implementation promotes active before the agent-support filter,
       // so the active program bypasses the agent-support check.
       setupMocks({
         isActiveStakingProgramLoaded: true,
-        selectedStakingProgramId: MODIUS_ALPHA,
+        activeStakingProgramId: MODIUS_ALPHA,
       });
 
       const { result } = renderHook(() => useStakingContracts());
@@ -258,10 +311,24 @@ describe('useStakingContracts', () => {
       ]);
     });
 
+    it('places the service-stored program first when active is unknown', () => {
+      setupMocks({
+        isActiveStakingProgramLoaded: true,
+        activeStakingProgramId: null,
+        serviceStakingProgramId: MARKETPLACE_4,
+      });
+
+      const { result } = renderHook(() => useStakingContracts());
+      expect(result.current.orderedStakingProgramIds).toEqual([
+        MARKETPLACE_4,
+        MARKETPLACE_3,
+      ]);
+    });
+
     it('returns all supported non-deprecated programs when no active program', () => {
       setupMocks({
         isActiveStakingProgramLoaded: true,
-        selectedStakingProgramId: null,
+        activeStakingProgramId: null,
       });
 
       const { result } = renderHook(() => useStakingContracts());
@@ -274,7 +341,7 @@ describe('useStakingContracts', () => {
     it('returns empty when chain has no programs', () => {
       setupMocks({
         isActiveStakingProgramLoaded: true,
-        selectedStakingProgramId: null,
+        activeStakingProgramId: null,
         evmHomeChainId: EvmChainIdMap.Base,
       });
 
@@ -292,7 +359,7 @@ describe('useStakingContracts', () => {
     it('returns the same orderedStakingProgramIds ref across renders when inputs are stable', () => {
       setupMocks({
         isActiveStakingProgramLoaded: true,
-        selectedStakingProgramId: MARKETPLACE_3,
+        activeStakingProgramId: MARKETPLACE_3,
       });
 
       const { result, rerender } = renderHook(() => useStakingContracts());
