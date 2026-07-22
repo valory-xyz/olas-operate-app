@@ -3,10 +3,16 @@ import { Button as AntdButton, Flex, Typography } from 'antd';
 import { ReactNode, useCallback, useEffect, useState } from 'react';
 import styled from 'styled-components';
 
+import { NoStakingRewardsAlert } from '@/components/NoStakingRewardsAlert';
 import { StakingContractCard } from '@/components/StakingContractCard';
 import { MainContentContainer } from '@/components/ui';
 import { PAGES, StakingProgramId } from '@/constants';
-import { usePageState, useStakingContracts, useStakingProgram } from '@/hooks';
+import {
+  usePageState,
+  useStakingContractDetails,
+  useStakingContracts,
+  useStakingProgram,
+} from '@/hooks';
 import { Nullable } from '@/types';
 
 import { MigrateButtonText, useCanMigrate } from '../hooks/useCanMigrate';
@@ -84,6 +90,30 @@ const SwitchStakingButton = ({
   );
 };
 
+/**
+ * Non-blocking warning surfaced on a contract card whose reward pool is empty.
+ * The contract stays selectable (`useCanMigrate` is unchanged) — this only
+ * tells the user the agent won't earn rewards there until it's refilled.
+ */
+export const StakingRewardsWarning = ({
+  stakingProgramId,
+}: {
+  stakingProgramId: StakingProgramId;
+}) => {
+  const { stakingContractInfo, isRewardsAvailable } =
+    useStakingContractDetails(stakingProgramId);
+
+  // Only warn once details have loaded — `isRewardsAvailable` is false while
+  // undefined, which would otherwise flash the warning during loading.
+  if (!stakingContractInfo || isRewardsAvailable) return null;
+
+  return (
+    <Flex className="px-24 mt-16">
+      <NoStakingRewardsAlert className="w-full" />
+    </Flex>
+  );
+};
+
 type SelectActivityRewardsConfigurationProps = {
   mode: SelectMode;
   backButton?: ReactNode;
@@ -145,6 +175,7 @@ export const SelectActivityRewardsConfiguration = ({
               stakingProgramId={stakingProgramId}
               renderAction={() => (
                 <>
+                  <StakingRewardsWarning stakingProgramId={stakingProgramId} />
                   {mode === 'onboard' && (
                     <Flex className="px-24 pb-24 mt-40" gap={16}>
                       <SelectStakingButton
