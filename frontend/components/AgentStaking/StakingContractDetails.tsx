@@ -4,12 +4,14 @@ import { TbLock, TbSparkles, TbSquareRoundedPercentage } from 'react-icons/tb';
 import styled from 'styled-components';
 
 import { CardFlex, Divider, InfoTooltip, Tooltip } from '@/components/ui';
+import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
 import { COLOR, NA, PAGES } from '@/constants';
 import {
   usePageState,
+  useServices,
   useStakingContractDetails,
+  useStakingContracts,
   useStakingDetails,
-  useStakingProgram,
 } from '@/hooks';
 import { secondsToHours } from '@/utils';
 
@@ -65,14 +67,15 @@ const ContractDetailsSection = ({
 
 export const StakingContractDetails = () => {
   const { goto } = usePageState();
-  const {
-    activeStakingProgramId,
-    defaultStakingProgramId,
-    isActiveStakingProgramLoaded,
-    selectedStakingProgramMeta,
-  } = useStakingProgram();
-  const currentStakingProgramId = isActiveStakingProgramLoaded
-    ? activeStakingProgramId || defaultStakingProgramId
+  const { selectedAgentConfig } = useServices();
+  // Single source for the contract shown here — name and stats must come from
+  // the same program id, and it must never be the agent-config default
+  // presented as if the user were staked in it (OPE-1841).
+  const { currentStakingProgramId } = useStakingContracts();
+  const currentStakingProgramMeta = currentStakingProgramId
+    ? STAKING_PROGRAMS[selectedAgentConfig.evmHomeChainId]?.[
+        currentStakingProgramId
+      ]
     : null;
   const { stakingContractInfo } = useStakingContractDetails(
     currentStakingProgramId,
@@ -86,7 +89,7 @@ export const StakingContractDetails = () => {
   } = stakingContractInfo || {};
   const { currentEpochLifetime } = useStakingDetails();
 
-  if (!stakingContractInfo || !selectedStakingProgramMeta)
+  if (!stakingContractInfo || !currentStakingProgramMeta)
     return (
       <Flex justify="center" align="center" className="mt-32 mb-32">
         <Text>Staking contract details are not available.</Text>
@@ -97,7 +100,7 @@ export const StakingContractDetails = () => {
       <Flex justify="space-between" align="center">
         <Flex align="center" gap={8}>
           <Title level={5} className="m-0">
-            {selectedStakingProgramMeta?.name}
+            {currentStakingProgramMeta?.name}
           </Title>
           <InfoTooltip iconColor={COLOR.BLACK} iconSize={18}>
             This is the staking contract your agent is currently joined to. The

@@ -182,7 +182,9 @@ All waits are guarded by `enabledRef.current`, `sleepAwareDelay()`, and hard tim
 | `started` | Agent deployed and running | Done |
 | `agent_blocked` | Deterministic blocker (low balance, evicted, etc.) | Skip with notification, advance queue |
 | `infra_failed` | Transient failure (RPC/network/timeout) | Mark `hasInfraFailed`, continue scan to try remaining candidates; schedule short rescan if all fail |
-| `aborted` | Auto-run disabled or sleep detected | Stop processing |
+| `aborted` | Auto-run disabled | Stop processing |
+
+`aborted` is returned only when auto-run is actually disabled (`enabledRef.current` is false). Transient gates that fail while auto-run is still enabled — a balance-wait timeout, an interrupted retry backoff — return `infra_failed`, not `aborted`, so a single stalled agent does not pause the whole rotation.
 
 The `infra_failed` handling prevents the scanner from permanently rotating the selected agent on a transient failure. Remaining candidates in the current scan cycle are still tried (they may have different staking contracts and sufficient balance), but the selected agent is not replaced as the preferred choice.
 
