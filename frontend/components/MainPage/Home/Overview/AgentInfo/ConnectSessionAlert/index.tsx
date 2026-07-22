@@ -1,4 +1,3 @@
-import { InfoCircleOutlined } from '@ant-design/icons';
 import { Button, Flex, Typography } from 'antd';
 
 import { Alert } from '@/components/ui';
@@ -7,15 +6,14 @@ import { useConnectSession } from '@/hooks';
 
 const { Text } = Typography;
 
-// Sized to match the other agent alerts ("Complete Agent Setup",
-// "phased out"), whose copy renders at text-sm.
+// Built the same way as AgentRunningAlert — centered info alert, default icon,
+// copy at text-sm.
 const SessionInfoAlert = ({ message }: { message: string }) => (
   <Alert
-    type="info"
     showIcon
-    fullWidth
-    customIcon={<InfoCircleOutlined className="text-sm" />}
+    centered
     className="mt-16"
+    type="info"
     message={<Text className="text-sm">{message}</Text>}
   />
 );
@@ -53,33 +51,34 @@ export const ConnectSessionAlert = () => {
   if (errorKind === 'not-installed') {
     return (
       <Alert
-        type="error"
         showIcon
-        fullWidth
         closable
         onClose={dismiss}
         className="mt-16"
+        type="error"
         message={
-          <Text className="font-weight-600">
-            Claude isn&apos;t installed on this machine.
-          </Text>
-        }
-        description={
-          <Flex vertical gap={12} align="flex-start">
-            {/* Prefer the server's message — it explains which case this is
-                (no Claude vs. the wrong harness selected). */}
-            <Text>
+          <>
+            <Text className="text-sm">
+              <span className="font-weight-600">
+                Claude isn&apos;t installed on this machine.
+              </span>
+              <br />
+              {/* Prefer the server's message — it explains which case this is
+                  (no Claude vs. the wrong harness selected). */}
               {errorMessage ??
                 'Connect works with the Claude Desktop app or the Claude Code CLI. Install one, then start the agent again.'}
             </Text>
+            <br />
             <Button
+              size="small"
+              className="mt-8"
               href={CLAUDE_DOWNLOAD_URL}
               target="_blank"
               rel="noopener noreferrer"
             >
               Download Claude
             </Button>
-          </Flex>
+          </>
         }
       />
     );
@@ -87,17 +86,25 @@ export const ConnectSessionAlert = () => {
 
   return (
     <Alert
-      type="error"
       showIcon
-      fullWidth
       closable
       onClose={dismiss}
       className="mt-16"
-      message={errorMessage ?? "Pearl couldn't launch Claude Code session."}
-      action={
-        <Button size="small" onClick={retry} loading={isLaunching}>
-          Retry
-        </Button>
+      type="error"
+      message={
+        <Flex justify="space-between" gap={4}>
+          <Text className="text-sm">
+            {errorMessage ?? "Pearl couldn't launch Claude Code session."}
+          </Text>
+          <Button
+            size="small"
+            className="mr-6"
+            onClick={retry}
+            loading={isLaunching}
+          >
+            Retry
+          </Button>
+        </Flex>
       }
     />
   );
