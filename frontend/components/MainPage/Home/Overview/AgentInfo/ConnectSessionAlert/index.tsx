@@ -23,8 +23,8 @@ const SessionInfoAlert = ({ message }: { message: string }) => (
 /**
  * Surfaces the state of the Connect agent's local Claude Code session (see
  * `useConnectSession`). While the agent is idle, an info alert nudges the user
- * to start it; while it runs (and the launch succeeded), the alert points at
- * the agent profile for starting new sessions. On a failed launch it shows one
+ * to start it; while it runs, the AgentActivity strip below the card carries
+ * the "start a new session" notice instead. On a failed launch it shows one
  * of two error states:
  * - `harness_not_installed`: Claude isn't installed → prompt to download it.
  * - `launch_failed`: transient launch failure → a Retry button.
@@ -33,7 +33,6 @@ export const ConnectSessionAlert = () => {
   const {
     showAlert,
     showStartInfo,
-    showRunningInfo,
     errorKind,
     errorMessage,
     isLaunching,
@@ -47,16 +46,9 @@ export const ConnectSessionAlert = () => {
     );
   }
 
-  if (!showAlert) {
-    // On a launch failure the AgentActivity strip carries the running notice
-    // (even after the error alert is dismissed) — don't duplicate it here.
-    if (showRunningInfo && !errorKind) {
-      return (
-        <SessionInfoAlert message="Your agent is running. Start a new session from the agent profile." />
-      );
-    }
-    return null;
-  }
+  // While the agent runs, the AgentActivity strip carries the "start a new
+  // session from the agent profile" notice — never duplicated here.
+  if (!showAlert) return null;
 
   if (errorKind === 'not-installed') {
     return (

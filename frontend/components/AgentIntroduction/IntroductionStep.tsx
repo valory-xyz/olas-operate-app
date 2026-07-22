@@ -45,7 +45,14 @@ const AnimatedImage = ({ imgSrc, alt, imageHeight }: AnimatedImageProps) => (
         width={0}
         height={0}
         sizes="100vw"
-        style={{ width: '100%', height: 'auto', minHeight: imageHeight ?? 416 }}
+        // Fixed height keeps slide heights consistent; `cover` preserves the
+        // aspect ratio (a bare min-height stretched images whose natural
+        // height at the container width fell short of it).
+        style={{
+          width: '100%',
+          height: imageHeight ?? 416,
+          objectFit: 'cover',
+        }}
       />
     </motion.div>
   </AnimatePresence>

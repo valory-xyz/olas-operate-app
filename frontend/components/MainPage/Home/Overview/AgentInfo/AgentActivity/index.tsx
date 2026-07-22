@@ -42,10 +42,9 @@ export const AgentActivity = () => {
   const { deploymentDetails, isServiceRunning, isServiceDeploying } =
     useAgentActivity();
   const { isEpochTargetMet } = useRewardContext();
-  const { isConnect, errorKind } = useConnectSession();
-  // Connect only: the agent is up but its Claude Code session failed to
-  // launch — the activity strip points at the profile instead of rounds.
-  const isSessionLaunchFailed = isConnect && errorKind !== null;
+  // Connect only: while the agent runs, the activity strip points at the
+  // agent profile for new Claude Code sessions instead of rounds.
+  const { showRunningInfo: isConnectRunning } = useConnectSession();
   const {
     value: isModalOpen,
     setTrue: showModal,
@@ -71,7 +70,7 @@ export const AgentActivity = () => {
     }
 
     if (isServiceRunning) {
-      if (isSessionLaunchFailed) {
+      if (isConnectRunning) {
         return {
           status: 'activity-not-ready',
           content:
@@ -109,7 +108,7 @@ export const AgentActivity = () => {
     isEpochTargetMet,
     isServiceDeploying,
     isServiceRunning,
-    isSessionLaunchFailed,
+    isConnectRunning,
     rounds,
     roundsInfo,
   ]);

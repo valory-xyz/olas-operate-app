@@ -41,13 +41,16 @@ describe('ConnectSessionAlert', () => {
     ).toBeInTheDocument();
   });
 
-  it('renders the running info alert when the agent runs without a launch error', () => {
-    setup({ showAlert: false, showRunningInfo: true, errorKind: null });
+  it('renders nothing while the agent runs without an error (strip owns the notice)', () => {
+    const { container } = setup({
+      showAlert: false,
+      showRunningInfo: true,
+      errorKind: null,
+    });
+    expect(container).toBeEmptyDOMElement();
     expect(
-      screen.getByText(
-        /Your agent is running\. Start a new session from the agent profile/i,
-      ),
-    ).toBeInTheDocument();
+      screen.queryByText(/Start a new session from the agent profile/i),
+    ).not.toBeInTheDocument();
   });
 
   it('renders nothing while running with a dismissed launch error (strip owns the notice)', () => {
@@ -57,16 +60,6 @@ describe('ConnectSessionAlert', () => {
       errorKind: 'launch-failed',
     });
     expect(container).toBeEmptyDOMElement();
-  });
-
-  it('prefers the error alert over the running info alert', () => {
-    setup({ showRunningInfo: true, errorKind: 'launch-failed' });
-    expect(
-      screen.getByText(/couldn't launch Claude Code session/i),
-    ).toBeInTheDocument();
-    expect(
-      screen.queryByText(/Start a new session from the agent profile/i),
-    ).not.toBeInTheDocument();
   });
 
   it('prefers the start-agent info alert over error states while idle', () => {
