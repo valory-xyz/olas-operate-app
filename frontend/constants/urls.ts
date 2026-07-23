@@ -41,7 +41,7 @@ export const TRANSACTION_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN: Partial<
   [EvmChainIdMap.Polygon]: undefined,
   [EvmChainIdMap.Optimism]:
     'https://transactions-optimism.subgraph.autonolas.tech/',
-  [EvmChainIdMap.Base]: undefined,
+  [EvmChainIdMap.Base]: 'https://transactions-base.subgraph.autonolas.tech/',
 };
 
 // telegram
