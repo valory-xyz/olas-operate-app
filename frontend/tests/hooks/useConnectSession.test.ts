@@ -19,6 +19,12 @@ jest.mock('../../hooks/useServices', () => ({
   useServices: () => servicesValue,
 }));
 
+// Controllable "another agent is running" signal.
+let isAnotherAgentRunning = false;
+jest.mock('../../hooks/useAgentRunning', () => ({
+  useAgentRunning: () => ({ isAnotherAgentRunning }),
+}));
+
 const DEPLOYED = MiddlewareDeploymentStatusMap.DEPLOYED;
 const STOPPED = MiddlewareDeploymentStatusMap.STOPPED;
 
@@ -52,6 +58,7 @@ describe('useConnectSession', () => {
       startSession: (...args: unknown[]) => mockStartSession(...args),
     };
     servicesValue = runningConnect();
+    isAnotherAgentRunning = false;
   });
 
   it('auto-launches the session once when a running Connect server is ready', async () => {
@@ -193,6 +200,16 @@ describe('useConnectSession', () => {
         service_config_id: 'sc-1',
         deploymentStatus: MiddlewareDeploymentStatusMap.DEPLOYING,
       },
+    });
+    const { result } = renderConnectSession();
+    expect(result.current.showStartInfo).toBe(false);
+    expect(result.current.showRunningInfo).toBe(false);
+  });
+
+  it('suppresses the start-agent info while another agent is running', () => {
+    isAnotherAgentRunning = true;
+    servicesValue = runningConnect({
+      selectedService: { service_config_id: 'sc-1', deploymentStatus: STOPPED },
     });
     const { result } = renderConnectSession();
     expect(result.current.showStartInfo).toBe(false);

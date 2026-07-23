@@ -8,6 +8,7 @@ import {
 } from '@/constants/deployment';
 import { ConnectSessionResult } from '@/types';
 
+import { useAgentRunning } from './useAgentRunning';
 import { useElectronApi } from './useElectronApi';
 import { useServices } from './useServices';
 
@@ -52,6 +53,7 @@ const toErrorKind = (
 export const useConnectSession = () => {
   const { selectedAgentType, selectedService, deploymentDetails } =
     useServices();
+  const { isAnotherAgentRunning } = useAgentRunning();
   const { connect } = useElectronApi();
   const queryClient = useQueryClient();
 
@@ -122,8 +124,12 @@ export const useConnectSession = () => {
   // the user to start it so the Claude Code session can launch. Once the agent
   // is DEPLOYED the nudge flips to pointing at the agent profile for new
   // sessions; during transitions (deploying/stopping) neither applies.
+  // Suppressed while another agent is running, so the "another agent is
+  // running" alert is the only one shown (one alert at a time, by priority).
   const showStartInfo =
-    isConnect && !isActiveDeploymentStatus(selectedService?.deploymentStatus);
+    isConnect &&
+    !isActiveDeploymentStatus(selectedService?.deploymentStatus) &&
+    !isAnotherAgentRunning;
   const showRunningInfo = isConnect && isRunning;
 
   return {
