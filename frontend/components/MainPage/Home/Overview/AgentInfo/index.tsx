@@ -17,6 +17,7 @@ import { AgentActivity } from './AgentActivity';
 import { AgentDeprecationAlert } from './AgentDeprecationAlert';
 import { AgentDisabledAlert } from './AgentDisabledAlert';
 import { AgentRunButton } from './AgentRunButton';
+import { ConnectSessionAlert } from './ConnectSessionAlert';
 
 const { Title, Text } = Typography;
 
@@ -170,6 +171,7 @@ export const AgentInfo = () => {
             </Flex>
           </Flex>
           <AgentDisabledAlert />
+          <ConnectSessionAlert />
           {selectedAgentConfig.shutdownDate && (
             <AgentDeprecationAlert
               agentName={selectedAgentConfig.displayName}

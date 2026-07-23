@@ -109,7 +109,7 @@ const eoaPusdBalance: WalletBalance = {
 type SetupMocksOptions = {
   evmHomeChainId?: number | null;
   middlewareHomeChainId?: string;
-  erc20Tokens?: string[];
+  erc20Tokens?: string[] | Partial<Record<number, string[]>>;
   selectedService?: ReturnType<typeof makeService> | typeof NO_SERVICE | null;
   serviceSafeOlas?: WalletBalance | null;
   serviceSafeNativeBalances?: WalletBalance[] | null;
@@ -600,6 +600,38 @@ describe('useAvailableAgentAssets', () => {
         );
       },
     );
+  });
+
+  describe('per-chain erc20Tokens map (multi-chain agents e.g. Connect)', () => {
+    const connectErc20Tokens = {
+      [EvmChainIdMap.Polygon]: [TokenSymbolMap.USDC],
+    };
+
+    it('includes USDC on Polygon when listed for that chain', () => {
+      setupMocks({
+        evmHomeChainId: EvmChainIdMap.Polygon,
+        middlewareHomeChainId: MiddlewareChainMap.POLYGON,
+        erc20Tokens: connectErc20Tokens,
+        serviceSafeErc20Balances: [],
+        serviceEoaErc20Balances: [],
+      });
+      const { result } = renderHook(() => useAvailableAgentAssets());
+      const symbols = result.current.availableAssets.map((a) => a.symbol);
+      expect(symbols).toContain(TokenSymbolMap.USDC);
+    });
+
+    it('excludes USDC on Gnosis when it is not listed for that chain', () => {
+      setupMocks({
+        evmHomeChainId: EvmChainIdMap.Gnosis,
+        middlewareHomeChainId: MiddlewareChainMap.GNOSIS,
+        erc20Tokens: connectErc20Tokens,
+        serviceSafeErc20Balances: [],
+        serviceEoaErc20Balances: [],
+      });
+      const { result } = renderHook(() => useAvailableAgentAssets());
+      const symbols = result.current.availableAssets.map((a) => a.symbol);
+      expect(symbols).not.toContain(TokenSymbolMap.USDC);
+    });
   });
 
   describe('hook calls', () => {

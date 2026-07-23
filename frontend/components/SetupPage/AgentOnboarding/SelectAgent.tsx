@@ -4,8 +4,9 @@ import { useMemo } from 'react';
 import { LuConstruction } from 'react-icons/lu';
 import styled from 'styled-components';
 
+import { BetaTag } from '@/components/ui';
 import { ACTIVE_AGENTS } from '@/config/agents';
-import { AgentType, COLOR } from '@/constants';
+import { AgentMap, AgentType, COLOR } from '@/constants';
 import { useServices } from '@/hooks';
 import { AgentConfig } from '@/types';
 
@@ -48,7 +49,7 @@ type InstanceCountProps = {
   count: number;
 };
 
-const InstanceCount = ({ count }: InstanceCountProps) => {
+export const InstanceCount = ({ count }: InstanceCountProps) => {
   if (!count) return null;
 
   return (
@@ -76,14 +77,20 @@ const SelectYourAgentList = ({
       !!config.isUnderConstruction || !!config.isAddingNewBlocked;
     return (
       [...ACTIVE_AGENTS]
-        // Sorted with under-construction / adding-blocked agents at the end
+        // Connect pinned to the top; under-construction / adding-blocked agents
+        // pushed to the end; existing config order preserved otherwise.
         .sort(
           (
-            [, agentA]: [string, AgentConfig],
-            [, agentB]: [string, AgentConfig],
+            [typeA, agentA]: [string, AgentConfig],
+            [typeB, agentB]: [string, AgentConfig],
           ) => {
-            if (isBlocked(agentA) === isBlocked(agentB)) return 0;
-            return isBlocked(agentA) ? 1 : -1;
+            if (isBlocked(agentA) !== isBlocked(agentB)) {
+              return isBlocked(agentA) ? 1 : -1;
+            }
+            const isConnectA = typeA === AgentMap.Connect;
+            const isConnectB = typeB === AgentMap.Connect;
+            if (isConnectA !== isConnectB) return isConnectA ? -1 : 1;
+            return 0;
           },
         )
     );
@@ -109,7 +116,10 @@ const SelectYourAgentList = ({
               height={36}
               style={{ borderRadius: 8, border: `1px solid ${COLOR.GRAY_3}` }}
             />
-            <Text style={{ flex: 1 }}>{agentConfig.displayName}</Text>
+            <Flex align="center" gap={8} style={{ flex: 1 }}>
+              <Text>{agentConfig.displayName}</Text>
+              {agentConfig.isBeta && <BetaTag />}
+            </Flex>
             <InstanceCount count={instanceCount} />
             {(agentConfig.isUnderConstruction ||
               agentConfig.isAddingNewBlocked) && <UnderConstructionIcon />}

@@ -1,23 +1,20 @@
-import {
-  Button,
-  Divider,
-  Flex,
-  Popover,
-  Switch,
-  Tooltip,
-  Typography,
-} from 'antd';
+import { Button, Divider, Flex, Popover, Switch, Typography } from 'antd';
 import { useMemo } from 'react';
 import { LuCircleMinus, LuCirclePlus, LuRefreshCcw } from 'react-icons/lu';
 import styled from 'styled-components';
 
+import { Tooltip } from '@/components/ui';
 import { AgentGroup, AgentTreeInstance } from '@/components/ui/AgentTree';
-import { ACTIVE_AGENTS } from '@/config/agents';
+import { ACTIVE_AGENTS, AGENT_CONFIG } from '@/config/agents';
 import { AgentType, COLOR } from '@/constants';
 import { useAutoRunContext } from '@/context/AutoRunProvider';
 import { useAgentRunning, useService, useServices } from '@/hooks';
 import { Service } from '@/types';
-import { getServiceInstanceName, isServiceOfAgent } from '@/utils';
+import {
+  getServiceEvmChainId,
+  getServiceInstanceName,
+  isServiceOfAgent,
+} from '@/utils';
 
 const { Text } = Typography;
 
@@ -64,7 +61,7 @@ const buildGroups = (
       name: getServiceInstanceName(
         service,
         config.displayName,
-        config.evmHomeChainId,
+        getServiceEvmChainId(service, config),
       ),
     });
   }
@@ -72,11 +69,25 @@ const buildGroups = (
   return Array.from(groupMap.values());
 };
 
+/** Tooltip body for agents that are excluded from auto-run by config. */
+const ConfigExcludedTooltip = ({ displayName }: { displayName: string }) => (
+  <Flex vertical gap={8}>
+    <Text className="text-sm">
+      {displayName} is not an autonomous agent, so it can&apos;t be included in
+      auto-run.
+    </Text>
+    <Text className="text-sm">
+      To use {displayName}, disable auto-run and start the agent manually.
+    </Text>
+  </Flex>
+);
+
 export const AutoRunControl = () => {
   const {
     enabled,
     includedInstances,
     excludedInstances,
+    configExcludedInstances,
     eligibilityByInstance,
     isToggling,
     setEnabled,
@@ -102,6 +113,11 @@ export const AutoRunControl = () => {
   const excludedGroups = useMemo(
     () => buildGroups(excludedInstances, services),
     [excludedInstances, services],
+  );
+
+  const configExcludedGroups = useMemo(
+    () => buildGroups(configExcludedInstances, services),
+    [configExcludedInstances, services],
   );
 
   const popoverContent = (
@@ -166,7 +182,7 @@ export const AutoRunControl = () => {
             </Flex>
           </PopoverSection>
 
-          {excludedGroups.length > 0 && (
+          {(excludedGroups.length > 0 || configExcludedGroups.length > 0) && (
             <>
               <PopoverSection>
                 <Text className="text-sm text-neutral-tertiary">
@@ -200,6 +216,34 @@ export const AutoRunControl = () => {
                           </Tooltip>
                         );
                       }}
+                    />
+                  ))}
+                  {configExcludedGroups.map((group) => (
+                    <AgentGroup
+                      key={group.agentType}
+                      agentType={group.agentType}
+                      instances={group.instances}
+                      renderInstanceTrailing={() => (
+                        <Tooltip
+                          title={
+                            <ConfigExcludedTooltip
+                              displayName={
+                                AGENT_CONFIG[group.agentType].displayName
+                              }
+                            />
+                          }
+                          placement="right"
+                          trigger={['hover', 'click']}
+                          overlayInnerStyle={{ width: 300 }}
+                        >
+                          <Button
+                            size="small"
+                            type="text"
+                            disabled
+                            icon={<LuCirclePlus size={16} />}
+                          />
+                        </Tooltip>
+                      )}
                     />
                   ))}
                 </Flex>

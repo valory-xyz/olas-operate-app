@@ -12,6 +12,7 @@ import { IncludedAgentInstance } from '../../../context/AutoRunProvider/types';
 import {
   DEFAULT_SERVICE_CONFIG_ID,
   MOCK_SERVICE_CONFIG_ID_2,
+  MOCK_SERVICE_CONFIG_ID_3,
 } from '../../helpers/factories';
 
 // --- Mutable mock state ---
@@ -265,6 +266,107 @@ describe('AutoRunProvider', () => {
         (call: [Record<string, unknown>]) => call[0]?.isInitialized === true,
       );
       expect(seedCalls).toHaveLength(0);
+    });
+  });
+
+  describe('config-excluded agents (isExcludedFromAutoRun)', () => {
+    const scConnect = MOCK_SERVICE_CONFIG_ID_3;
+
+    beforeEach(() => {
+      useServices.mockReturnValue({
+        services: [
+          { service_config_id: scTrader },
+          { service_config_id: scConnect },
+        ],
+        selectedAgentType: AgentMap.PredictTrader,
+        selectedService: { service_config_id: scTrader },
+        selectedServiceConfigId: scTrader,
+        updateSelectedServiceConfigId: mockUpdateSelectedServiceConfigId,
+      });
+      useConfiguredAgents.mockReturnValue([
+        {
+          agentType: AgentMap.PredictTrader,
+          agentConfig: AGENT_CONFIG[AgentMap.PredictTrader],
+          serviceConfigId: scTrader,
+        },
+        {
+          agentType: AgentMap.Connect,
+          agentConfig: AGENT_CONFIG[AgentMap.Connect],
+          serviceConfigId: scConnect,
+        },
+      ]);
+    });
+
+    it('does not seed config-excluded instances into the rotation', () => {
+      mockAutoRunStore.isInitialized = false;
+      useAutoRunStore.mockImplementation(() => ({ ...mockAutoRunStore }));
+
+      renderHook(() => useAutoRunContext(), { wrapper });
+
+      const seedCall = mockAutoRunStore.updateAutoRun.mock.calls.find(
+        (call: [Record<string, unknown>]) => call[0]?.isInitialized === true,
+      );
+      expect(seedCall).toBeDefined();
+      const seeded = seedCall![0].includedInstances as IncludedAgentInstance[];
+      expect(seeded.map((item) => item.serviceConfigId)).toEqual([scTrader]);
+    });
+
+    it('hides config-excluded instances from the options and ignores includeInstance', () => {
+      mockAutoRunStore.isInitialized = true;
+      mockAutoRunStore.includedInstances = [
+        { serviceConfigId: scTrader, order: 0 },
+      ];
+      useAutoRunStore.mockImplementation(() => ({ ...mockAutoRunStore }));
+
+      const { result } = renderHook(() => useAutoRunContext(), { wrapper });
+
+      // Not in the rotation, and not listed as an includable excluded option —
+      // surfaced separately as a config-excluded (permanently blocked) row.
+      expect(
+        result.current.includedInstances.map((item) => item.serviceConfigId),
+      ).not.toContain(scConnect);
+      expect(result.current.excludedInstances).not.toContain(scConnect);
+      expect(result.current.configExcludedInstances).toContain(scConnect);
+      expect(result.current.eligibilityByInstance[scConnect]).toEqual({
+        canRun: false,
+        reason: 'Not available in auto-run',
+      });
+
+      act(() => result.current.includeInstance(scConnect));
+
+      expect(mockAutoRunStore.updateAutoRun).not.toHaveBeenCalledWith(
+        expect.objectContaining({
+          includedInstances: expect.arrayContaining([
+            expect.objectContaining({ serviceConfigId: scConnect }),
+          ]),
+        }),
+      );
+    });
+
+    it('keeps a selected config-excluded instance blocked in eligibility', () => {
+      mockAutoRunStore.isInitialized = true;
+      mockAutoRunStore.includedInstances = [
+        { serviceConfigId: scTrader, order: 0 },
+      ];
+      useAutoRunStore.mockImplementation(() => ({ ...mockAutoRunStore }));
+      useServices.mockReturnValue({
+        services: [
+          { service_config_id: scTrader },
+          { service_config_id: scConnect },
+        ],
+        selectedAgentType: AgentMap.Connect,
+        selectedService: { service_config_id: scConnect },
+        selectedServiceConfigId: scConnect,
+        updateSelectedServiceConfigId: mockUpdateSelectedServiceConfigId,
+      });
+
+      const { result } = renderHook(() => useAutoRunContext(), { wrapper });
+
+      // Live selected-eligibility (permissive) must not overwrite the block.
+      expect(result.current.eligibilityByInstance[scConnect]).toEqual({
+        canRun: false,
+        reason: 'Not available in auto-run',
+      });
     });
   });
 

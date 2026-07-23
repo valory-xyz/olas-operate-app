@@ -1,5 +1,5 @@
-import { Button, Flex, Spin, Typography } from 'antd';
-import { useCallback, useMemo, useState } from 'react';
+import { Button, Flex, message, Spin, Typography } from 'antd';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { LuArchive } from 'react-icons/lu';
 import { TbPlus } from 'react-icons/tb';
 import styled from 'styled-components';
@@ -8,16 +8,24 @@ import { AgentIntroduction } from '@/components/AgentIntroduction';
 import { Segmented } from '@/components/ui';
 import { BackButton } from '@/components/ui/BackButton';
 import { AGENT_CONFIG } from '@/config/agents';
-import { AgentType, COLOR, PAGES, SETUP_SCREEN } from '@/constants';
+import {
+  AgentMap,
+  AgentType,
+  COLOR,
+  EvmChainId,
+  PAGES,
+  SETUP_SCREEN,
+} from '@/constants';
 import {
   useArchivedAgents,
+  useCreateConnectService,
   useIsAgentGeoRestricted,
   usePageState,
   useServices,
   useSetup,
 } from '@/hooks';
 import { Optional } from '@/types';
-import { isNonEmpty } from '@/utils';
+import { asEvmChainId, isNonEmpty, matchesAgentConfig } from '@/utils';
 
 import { FundingRequirementStep } from './FundingRequirementStep';
 import { RestrictedRegion } from './RestrictedRegion';
@@ -47,38 +55,54 @@ const AgentOnboardingContainer = styled(Flex)`
 
 const Container = styled(Flex)`
   width: 840px;
+  height: 716px;
   border-radius: 16px;
   background-color: ${COLOR.WHITE};
+  overflow: hidden;
   .agent-selection-left-content {
     width: 380px;
-    padding: 16px 0;
+    height: 100%;
     border-right: 1px solid ${COLOR.GRAY_4};
+  }
+  .agent-selection-left-header {
+    padding: 24px 24px 16px 24px;
+  }
+  .agent-selection-left-list {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
   }
   .agent-selection-right-content {
     width: 460px;
-    min-height: 600px;
+    height: 100%;
     overflow: hidden;
+  }
+  .agent-selection-right-content > * {
+    flex: 1;
+    min-height: 0;
   }
 `;
 
-const SelectYourAgent = ({ canGoBack }: { canGoBack: boolean }) => {
-  const { goto } = usePageState();
-  return (
-    <Flex vertical gap={12}>
-      {canGoBack && <BackButton onPrev={() => goto(PAGES.Main)} />}
-      <Title level={3} className="m-0">
-        Select Agent
-      </Title>
-      <Text type="secondary">
-        Review and select the AI agent you&apos;d like to add or restore.
-      </Text>
-    </Flex>
-  );
+type BlockButtonProps = {
+  text: string;
+  onClick: () => void;
+  disabled?: boolean;
+  loading?: boolean;
 };
-
-type BlockButtonProps = { text: string; onClick: () => void };
-const BlockButton = ({ text, onClick }: BlockButtonProps) => (
-  <Button onClick={onClick} type="primary" block size="large">
+const BlockButton = ({
+  text,
+  onClick,
+  disabled,
+  loading,
+}: BlockButtonProps) => (
+  <Button
+    onClick={onClick}
+    type="primary"
+    block
+    size="large"
+    disabled={disabled}
+    loading={loading}
+  >
     {text}
   </Button>
 );
@@ -129,6 +153,35 @@ export const AgentOnboarding = () => {
   const [selectedArchivedInstanceId, setSelectedArchivedInstanceId] =
     useState<Optional<string>>();
   const [activeTab, setActiveTab] = useState<AgentTab>(AGENT_TAB.New);
+  // Connect only: the operating chain picked in the funding-requirements step.
+  const [selectedConnectChain, setSelectedConnectChain] =
+    useState<Optional<EvmChainId>>();
+  const [isCreatingConnect, setIsCreatingConnect] = useState(false);
+  // Incremented to send the user back to the chain selector (first slide) and
+  // highlight it when "Select agent" is clicked without a chain chosen.
+  const [chainPromptSignal, setChainPromptSignal] = useState(0);
+  const createConnectService = useCreateConnectService();
+
+  // Reset the chosen Connect chain whenever the selected agent changes.
+  useEffect(() => setSelectedConnectChain(undefined), [selectedAgent]);
+
+  const handleConnectCreate = useCallback(async () => {
+    if (!selectedConnectChain) {
+      // No chain chosen — jump to the first slide (chain selector) and
+      // highlight it, instead of creating.
+      setChainPromptSignal((signal) => signal + 1);
+      return;
+    }
+    setIsCreatingConnect(true);
+    try {
+      // Creates the Connect service (no_staking) and routes to funding.
+      await createConnectService(selectedConnectChain);
+    } catch (error) {
+      console.error(error);
+      message.error('Failed to create the Connect agent. Please try again.');
+      setIsCreatingConnect(false);
+    }
+  }, [selectedConnectChain, createConnectService]);
 
   // Derive agentType for the selected archived instance (for AgentIntroduction)
   const selectedArchivedAgentType = useMemo<Optional<AgentType>>(() => {
@@ -229,11 +282,27 @@ export const AgentOnboarding = () => {
     return true;
   }, [selectedAgent, isAgentGeoRestricted]);
 
+  const connectConfig = AGENT_CONFIG[AgentMap.Connect];
+  // Every supported chain already has a Connect instance (one per chain) →
+  // there is nothing left to add, so the "Select Agent" button is hidden.
+  const connectAllChainsOccupied = useMemo(() => {
+    const supported = connectConfig.supportedChains ?? [];
+    if (supported.length === 0) return false;
+    const occupied = new Set<EvmChainId>();
+    (services ?? []).forEach((service) => {
+      if (matchesAgentConfig(service, connectConfig)) {
+        occupied.add(asEvmChainId(service.home_chain));
+      }
+    });
+    return supported.every((chainId) => occupied.has(chainId));
+  }, [services, connectConfig]);
+
   const rightPanelContent = useMemo(() => {
     if (activeTab === AGENT_TAB.Archived) {
       return (
         <AgentIntroduction
           agentType={selectedArchivedAgentType}
+          fillHeight
           renderAgentSelection={
             selectedArchivedInstanceId
               ? () => (
@@ -258,26 +327,54 @@ export const AgentOnboarding = () => {
       return <RestrictedRegion />;
     }
 
+    const isConnect = selectedAgent === AgentMap.Connect;
+
     return (
       <AgentIntroduction
         agentType={selectedAgent}
+        fillHeight
+        goToFirstStepSignal={isConnect ? chainPromptSignal : undefined}
         renderFundingRequirements={(desc) =>
           selectedAgent ? (
-            <FundingRequirementStep agentType={selectedAgent} desc={desc} />
+            <FundingRequirementStep
+              agentType={selectedAgent}
+              desc={desc}
+              selectedChain={isConnect ? selectedConnectChain : undefined}
+              onSelectChain={isConnect ? setSelectedConnectChain : undefined}
+              highlightSignal={isConnect ? chainPromptSignal : undefined}
+            />
           ) : null
         }
         renderAgentSelection={
-          canSelectAgent
-            ? () => (
-                <BlockButton text="Select Agent" onClick={handleAgentSelect} />
-              )
-            : undefined
+          isConnect
+            ? // No button once every chain has a Connect instance; otherwise
+              // it creates the service (no_staking) with the chosen chain, or
+              // jumps back to the chain selector when none is chosen.
+              connectAllChainsOccupied
+              ? undefined
+              : () => (
+                  <BlockButton
+                    text="Select Agent"
+                    onClick={handleConnectCreate}
+                    disabled={isCreatingConnect}
+                    loading={isCreatingConnect}
+                  />
+                )
+            : canSelectAgent
+              ? () => (
+                  <BlockButton
+                    text="Select Agent"
+                    onClick={handleAgentSelect}
+                  />
+                )
+              : undefined
         }
       />
     );
   }, [
     activeTab,
     canSelectAgent,
+    connectAllChainsOccupied,
     handleAgentSelect,
     handleRestoreInstance,
     isAgentGeoRestricted,
@@ -287,12 +384,18 @@ export const AgentOnboarding = () => {
     selectedAgentConfig?.isGeoLocationRestricted,
     selectedArchivedAgentType,
     selectedArchivedInstanceId,
+    selectedConnectChain,
+    isCreatingConnect,
+    handleConnectCreate,
+    chainPromptSignal,
   ]);
 
   return (
     <>
       <AgentOnboardingContainer vertical gap={24}>
-        <SelectYourAgent canGoBack={isNonEmpty(services)} />
+        {isNonEmpty(services) && (
+          <BackButton onPrev={() => gotoPage(PAGES.Main)} />
+        )}
 
         {archivedInstances.length > 0 && (
           <Flex style={{ borderBottom: `1px solid ${COLOR.GRAY_4}` }}>
@@ -311,16 +414,26 @@ export const AgentOnboarding = () => {
 
         <Container>
           <Flex vertical className="agent-selection-left-content">
-            <SelectAgent
-              onSelectYourAgent={handleSelectYourAgent}
-              onSelectArchivedInstance={handleSelectArchivedInstance}
-              selectedAgent={selectedAgent}
-              selectedArchivedInstance={selectedArchivedInstanceId}
-              activeTab={activeTab}
-            />
+            <Flex vertical gap={8} className="agent-selection-left-header">
+              <Title level={3} className="m-0">
+                Select your agent
+              </Title>
+              <Text type="secondary">
+                Review and select the AI agent you like.
+              </Text>
+            </Flex>
+            <div className="agent-selection-left-list">
+              <SelectAgent
+                onSelectYourAgent={handleSelectYourAgent}
+                onSelectArchivedInstance={handleSelectArchivedInstance}
+                selectedAgent={selectedAgent}
+                selectedArchivedInstance={selectedArchivedInstanceId}
+                activeTab={activeTab}
+              />
+            </div>
           </Flex>
 
-          <Flex className="agent-selection-right-content">
+          <Flex vertical className="agent-selection-right-content">
             {rightPanelContent}
           </Flex>
         </Container>

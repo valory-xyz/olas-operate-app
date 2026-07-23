@@ -38,6 +38,7 @@ The application uses a multi-layered communication architecture:
    - Logging / support: `electronAPI.{saveLogs,saveLogsForSupport,cleanupSupportLogs,logEvent,nextLogError,readFile,openPath,getAppVersion}`
    - Managed child windows: `electronAPI.{onRampWindow,web3AuthWindow,web3AuthSwapOwnerWindow,termsAndConditionsWindow}` (each window has `show`/`close` + result callbacks)
    - OS wake-lock (keeps device awake during AutoRun): `electronAPI.wakeLock.{start,stop}`
+   - Connect agent's local server (proxied through main — that server enables no CORS): `electronAPI.connect.startSession`
    - In-app auto-updater: `electronAPI.autoUpdater.{checkForUpdates,downloadUpdate,cancelDownload,quitAndInstall,onUpdateAvailable,onDownloadProgress,onUpdateDownloaded,onUpdateError,onUpdateNotAvailable}`
    - Raw IPC escape hatch: `electronAPI.ipcRenderer.{send,on,invoke,removeListener}` — used sparingly; prefer the named APIs.
 

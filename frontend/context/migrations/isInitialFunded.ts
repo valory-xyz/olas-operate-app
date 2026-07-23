@@ -1,6 +1,7 @@
 import { ACTIVE_AGENTS } from '@/config/agents';
 import { MiddlewareServiceResponse } from '@/types';
 import { PearlStore } from '@/types/ElectronApi';
+import { matchesAgentConfig } from '@/utils';
 
 type IsInitialFundedWrite = {
   storeKey: string;
@@ -38,10 +39,8 @@ export const migrateIsInitialFunded = ({
       value: isInitialFunded,
     });
 
-    const firstMatchingService = services.find(
-      (service) =>
-        service.service_public_id === config.servicePublicId &&
-        service.home_chain === config.middlewareHomeChainId,
+    const firstMatchingService = services.find((service) =>
+      matchesAgentConfig(service, config),
     );
 
     if (firstMatchingService) {

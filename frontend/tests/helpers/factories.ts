@@ -266,6 +266,24 @@ export const makeAgentService = (
     ...overrides,
   });
 
+/** Public id used by the (multi-chain) Connect agent. */
+export const CONNECT_SERVICE_PUBLIC_ID = 'valory/connect:0.1.0';
+
+/**
+ * Builds a Connect MiddlewareServiceResponse on a given chain. Connect runs one
+ * instance per chain, all sharing the same `service_public_id`.
+ */
+export const makeConnectService = (
+  chain: SupportedMiddlewareChain,
+  overrides: Partial<MiddlewareServiceResponse> = {},
+): MiddlewareServiceResponse =>
+  makeMiddlewareService(chain, {
+    service_public_id: CONNECT_SERVICE_PUBLIC_ID,
+    name: 'Connect Agent',
+    description: 'Connect agent',
+    ...overrides,
+  });
+
 /** Creates a StakingProgramConfig for tests (defaults based on PearlBetaMechMarketplace3). */
 export const makeStakingProgramConfig = (
   overrides: Partial<StakingProgramConfig> = {},

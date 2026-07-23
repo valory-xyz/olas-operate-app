@@ -10,6 +10,13 @@ type Url = `http${'s' | ''}://${string}`;
 export const BACKEND_URL: Url = `https://localhost:${process.env.NODE_ENV === 'production' ? 8765 : 8000}/api`;
 export const BACKEND_URL_V2: Url = `https://localhost:${process.env.NODE_ENV === 'production' ? 8765 : 8000}/api/v2`;
 
+// The local agent server exposed by the running agent (shared across agents).
+// Hosts the agent UI (`/`, embedded in Profile), the healthcheck / funds-status endpoints
+export const AGENT_SERVER_URL: Url = 'http://127.0.0.1:8716';
+
+// Connect: where to send users when no Claude harness is installed.
+export const CLAUDE_DOWNLOAD_URL: Url = 'https://claude.ai/download';
+
 // pearl site
 export const PEARL_URL: Url = 'https://www.pearl.you';
 export const FAQ_URL: Url = `${PEARL_URL}#FAQ`;

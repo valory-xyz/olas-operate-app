@@ -34,6 +34,7 @@ jest.mock('../../../../config/agents', () => ({
     optimus: { displayName: 'Optimus' },
     pett_ai: { displayName: 'PettBro by Pett.ai' },
     polymarket_trader: { displayName: 'Polystrat' },
+    connect: { displayName: 'Connect' },
   },
   ACTIVE_AGENTS: [
     [
@@ -60,7 +61,31 @@ jest.mock('../../../../config/agents', () => ({
         evmHomeChainId: 8453,
       },
     ],
+    [
+      'connect',
+      {
+        displayName: 'Connect',
+        servicePublicId: 'valory/connect',
+        evmHomeChainId: 100,
+      },
+    ],
   ],
+}));
+
+// Mock the ui barrel's Tooltip so its title is rendered inline and assertable.
+jest.mock('../../../../components/ui', () => ({
+  Tooltip: ({
+    title,
+    children,
+  }: {
+    title?: ReactNode;
+    children?: ReactNode;
+  }) => (
+    <>
+      {children}
+      {title ? <div data-testid="tooltip-title">{title}</div> : null}
+    </>
+  ),
 }));
 
 jest.mock('../../../../utils', () => ({
@@ -69,6 +94,10 @@ jest.mock('../../../../utils', () => ({
       service: { service_public_id: string },
       config: { servicePublicId: string },
     ) => service.service_public_id === config.servicePublicId,
+  ),
+  getServiceEvmChainId: jest.fn(
+    (_service: unknown, config: { evmHomeChainId: number }) =>
+      config.evmHomeChainId,
   ),
   getServiceInstanceName: jest.fn(
     (service: { service_config_id: string }) => service.service_config_id,
@@ -159,6 +188,7 @@ type SetupOptions = {
   enabled?: boolean;
   includedInstances?: IncludedAgentInstance[];
   excludedInstances?: string[];
+  configExcludedInstances?: string[];
   eligibilityByInstance?: Record<string, { canRun: boolean; reason?: string }>;
   isToggling?: boolean;
   runningServiceConfigId?: string | null;
@@ -175,6 +205,7 @@ const defaultSetup = (overrides: SetupOptions = {}) => {
       { serviceConfigId: 'sc-modius-1', order: 1 },
     ],
     excludedInstances = ['sc-memeooorr-1'],
+    configExcludedInstances = [],
     eligibilityByInstance = {},
     isToggling = false,
     runningServiceConfigId = null,
@@ -194,6 +225,7 @@ const defaultSetup = (overrides: SetupOptions = {}) => {
     enabled,
     includedInstances,
     excludedInstances,
+    configExcludedInstances,
     eligibilityByInstance,
     isToggling,
     setEnabled: mockSetEnabled,
@@ -347,6 +379,70 @@ describe('AutoRunControl', () => {
       render(<AutoRunControl />);
 
       expect(screen.getByText('Excluded from auto-run')).toBeInTheDocument();
+    });
+  });
+
+  // -----------------------------------------------------------------------
+  // Config-excluded (Connect) section
+  // -----------------------------------------------------------------------
+
+  describe('Config-excluded instances', () => {
+    const connectSetup = (overrides: SetupOptions = {}) =>
+      defaultSetup({
+        excludedInstances: [],
+        configExcludedInstances: ['sc-connect-1'],
+        services: [
+          {
+            service_config_id: 'sc-trader-1',
+            service_public_id: 'valory/trader',
+          },
+          {
+            service_config_id: 'sc-modius-1',
+            service_public_id: 'valory/modius',
+          },
+          {
+            service_config_id: 'sc-connect-1',
+            service_public_id: 'valory/connect',
+          },
+        ],
+        ...overrides,
+      });
+
+    it('shows the excluded section when only config-excluded instances exist', () => {
+      connectSetup();
+      render(<AutoRunControl />);
+
+      expect(screen.getByText('Excluded from auto-run')).toBeInTheDocument();
+      expect(screen.getByTestId('instance-sc-connect-1')).toBeInTheDocument();
+    });
+
+    it('renders a disabled + button that never calls includeInstance', () => {
+      connectSetup();
+      render(<AutoRunControl />);
+
+      const button = screen
+        .getByTestId('instance-sc-connect-1')
+        .querySelector('button')!;
+      expect(button).toBeDisabled();
+
+      fireEvent.click(button);
+      expect(mockIncludeInstance).not.toHaveBeenCalled();
+    });
+
+    it('explains in the tooltip why Connect cannot be included', () => {
+      connectSetup();
+      render(<AutoRunControl />);
+
+      expect(
+        screen.getByText(
+          /Connect is not an autonomous agent, so it can't be included in auto-run\./,
+        ),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          /To use Connect, disable auto-run and start the agent manually\./,
+        ),
+      ).toBeInTheDocument();
     });
   });
 

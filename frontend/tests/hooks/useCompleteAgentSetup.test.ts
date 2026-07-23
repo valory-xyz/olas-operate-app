@@ -53,6 +53,22 @@ jest.mock('../../context/SupportModalProvider', () => ({
   })),
 }));
 
+// Controls the staking program the user has selected (read via
+// useContext(StakingProgramContext)). Mutated per-test.
+let mockSelectedStakingProgramId: string | null = null;
+
+jest.mock('../../context/StakingProgramProvider', () => {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const React = require('react');
+  return {
+    StakingProgramContext: React.createContext({
+      get selectedStakingProgramId() {
+        return mockSelectedStakingProgramId;
+      },
+    }),
+  };
+});
+
 const mockGoto = jest.fn();
 const mockGotoSetup = jest.fn();
 
@@ -83,6 +99,7 @@ const setupMocks = ({
   isLoadingMasterSafeCreation = false,
   isErrorMasterSafeCreation = false,
   creationAndTransferDetails = undefined as CreationAndTransferDetails,
+  defaultStakingProgramId = undefined as string | undefined,
 } = {}) => {
   const getMasterSafeOf = jest
     .fn()
@@ -99,7 +116,10 @@ const setupMocks = ({
     isFetched: isMasterWalletFetched,
   });
   (useServices as jest.Mock).mockReturnValue({
-    selectedAgentConfig: { evmHomeChainId: POLYGON_CHAIN_ID },
+    selectedAgentConfig: {
+      evmHomeChainId: POLYGON_CHAIN_ID,
+      defaultStakingProgramId,
+    },
   });
   (useGetRefillRequirements as jest.Mock).mockReturnValue({
     totalTokenRequirements,
@@ -123,6 +143,42 @@ describe('useCompleteAgentSetup', () => {
     jest.clearAllMocks();
     jest.useRealTimers();
     mockCreateMasterSafe.mockReset();
+    mockSelectedStakingProgramId = null;
+  });
+
+  describe('no_staking selection gating (invalid_contract)', () => {
+    it('returns invalid_contract for a staking agent when no_staking is selected', () => {
+      mockSelectedStakingProgramId = 'no_staking';
+      setupMocks({
+        masterSafeAddress: POLYGON_SAFE_ADDRESS,
+        safeBalances: [makeOlasBalance(100), makeUsdceBalance(50)],
+        defaultStakingProgramId: 'pearl_beta',
+      });
+      const { result } = renderHook(() => useCompleteAgentSetup());
+      expect(result.current.setupState).toBe('invalid_contract');
+    });
+
+    it('does NOT return invalid_contract for a no_staking agent (e.g. Connect); completes when funded', () => {
+      mockSelectedStakingProgramId = 'no_staking';
+      setupMocks({
+        masterSafeAddress: POLYGON_SAFE_ADDRESS,
+        safeBalances: [makeOlasBalance(100), makeUsdceBalance(50)],
+        defaultStakingProgramId: 'no_staking',
+      });
+      const { result } = renderHook(() => useCompleteAgentSetup());
+      expect(result.current.setupState).toBe('readyToComplete');
+    });
+
+    it('routes a no_staking agent to needsFunding when the safe is underfunded (not invalid_contract)', () => {
+      mockSelectedStakingProgramId = 'no_staking';
+      setupMocks({
+        masterSafeAddress: POLYGON_SAFE_ADDRESS,
+        safeBalances: [makeOlasBalance(100), makeUsdceBalance(10)],
+        defaultStakingProgramId: 'no_staking',
+      });
+      const { result } = renderHook(() => useCompleteAgentSetup());
+      expect(result.current.setupState).toBe('needsFunding');
+    });
   });
 
   describe('setupState derivation', () => {

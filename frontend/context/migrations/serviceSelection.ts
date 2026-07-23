@@ -1,6 +1,7 @@
 import { AGENT_CONFIG } from '@/config/agents';
 import { AgentType } from '@/constants';
 import { MiddlewareServiceResponse, Nullable } from '@/types';
+import { matchesAgentConfig } from '@/utils';
 
 type MigrationResult = {
   serviceConfigId: Nullable<string>;
@@ -41,10 +42,8 @@ export const resolveSelectedServiceConfigId = ({
   if (!hasMigrated && legacyAgentType) {
     const config = AGENT_CONFIG[legacyAgentType];
     if (config) {
-      const matchingService = services.find(
-        (service) =>
-          service.service_public_id === config.servicePublicId &&
-          service.home_chain === config.middlewareHomeChainId,
+      const matchingService = services.find((service) =>
+        matchesAgentConfig(service, config),
       );
       if (matchingService) {
         return {

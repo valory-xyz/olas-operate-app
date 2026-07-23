@@ -18,6 +18,7 @@ import {
   SERVICE_TEMPLATES,
 } from '@/constants/serviceTemplates';
 import { useElectronApi, usePageState, useServices } from '@/hooks';
+import { matchesAgentConfig } from '@/utils';
 
 import { BackButton, cardStyles } from '../ui';
 
@@ -177,10 +178,8 @@ export const ReleaseNotesPage = () => {
     if (!services) return null;
     const types = new Set<AgentType>();
     services.forEach((service) => {
-      const agent = ACTIVE_AGENTS.find(
-        ([, agentConfig]) =>
-          agentConfig.servicePublicId === service.service_public_id &&
-          agentConfig.middlewareHomeChainId === service.home_chain,
+      const agent = ACTIVE_AGENTS.find(([, agentConfig]) =>
+        matchesAgentConfig(service, agentConfig),
       );
       if (agent) types.add(agent[0]);
     });

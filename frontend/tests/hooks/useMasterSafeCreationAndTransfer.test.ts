@@ -217,6 +217,24 @@ describe('useMasterSafeCreationAndTransfer', () => {
     expect(response!.transferDetails.isTransferComplete).toBe(true);
   });
 
+  it('returns isTransferComplete=true for SAFE_EXISTS_TRANSFER_COMPLETED', async () => {
+    mockCreateSafe.mockResolvedValue(
+      makeSafeCreationResponse({ status: 'SAFE_EXISTS_TRANSFER_COMPLETED' }),
+    );
+
+    const { result } = renderHook(
+      () => useMasterSafeCreationAndTransfer([TokenSymbolMap.XDAI]),
+      { wrapper: createWrapper() },
+    );
+
+    let response: Awaited<ReturnType<typeof result.current.mutateAsync>>;
+    await act(async () => {
+      response = await result.current.mutateAsync();
+    });
+
+    expect(response!.transferDetails.isTransferComplete).toBe(true);
+  });
+
   it('returns isTransferComplete=false for transfer-failed statuses', async () => {
     mockCreateSafe.mockResolvedValue(
       makeSafeCreationResponse({ status: 'SAFE_CREATED_TRANSFER_FAILED' }),

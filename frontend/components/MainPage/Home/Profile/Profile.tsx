@@ -1,6 +1,7 @@
 import { Flex, Spin, Typography } from 'antd';
 import styled from 'styled-components';
 
+import { AGENT_SERVER_URL } from '@/constants';
 import { useElectronApi, useServices } from '@/hooks';
 
 const { Text } = Typography;
@@ -19,8 +20,6 @@ const Iframe = styled.iframe`
   border: none;
   border-radius: 8px;
 `;
-
-const IFRAME_SRC = 'http://127.0.0.1:8716';
 
 export const Profile = () => {
   const { nextLogError } = useElectronApi();
@@ -42,7 +41,7 @@ export const Profile = () => {
   return (
     <Container>
       <Iframe
-        src={IFRAME_SRC}
+        src={AGENT_SERVER_URL}
         id="agent-ui"
         allow="popups"
         onError={(e) => {
@@ -51,7 +50,7 @@ export const Profile = () => {
             errorEvent.message || 'Agent UI iframe failed to load',
           );
           nextLogError?.(error, {
-            errorInfo: `[Profile] Agent UI iframe failed to load from ${IFRAME_SRC}`,
+            errorInfo: `[Profile] Agent UI iframe failed to load from ${AGENT_SERVER_URL}`,
           });
         }}
       />

@@ -22,6 +22,7 @@ import {
 import { TokenBalanceRecord } from '@/types';
 import { Nullable, Optional, ValueOf } from '@/types/Util';
 import { AvailableAsset } from '@/types/Wallet';
+import { matchesAgentConfig } from '@/utils';
 
 import { STEPS, TransactionHistory } from './types';
 
@@ -104,8 +105,7 @@ export const AgentWalletProvider = ({ children }: { children: ReactNode }) => {
 
   const agent = ACTIVE_AGENTS.find(
     ([, agentConfig]) =>
-      agentConfig.servicePublicId === selectedService?.service_public_id &&
-      agentConfig.middlewareHomeChainId === selectedService?.home_chain,
+      !!selectedService && matchesAgentConfig(selectedService, agentConfig),
   );
   const agentType = agent ? agent[0] : null;
 
