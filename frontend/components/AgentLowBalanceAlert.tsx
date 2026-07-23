@@ -1,7 +1,7 @@
 import { Button, Typography } from 'antd';
 
 import { Alert } from '@/components/ui';
-import { useAgentFundingRequests } from '@/hooks';
+import { useAgentFundingRequests, useServices } from '@/hooks';
 
 const { Text } = Typography;
 
@@ -12,6 +12,7 @@ type AgentLowBalanceAlertProps = {
 export const AgentLowBalanceAlert = ({ onFund }: AgentLowBalanceAlertProps) => {
   const { isAgentBalanceLow, agentTokenRequirementsFormatted } =
     useAgentFundingRequests();
+  const { selectedAgentConfig } = useServices();
 
   if (!isAgentBalanceLow) return null;
 
@@ -30,7 +31,11 @@ export const AgentLowBalanceAlert = ({ onFund }: AgentLowBalanceAlertProps) => {
               {agentTokenRequirementsFormatted}
             </span>{' '}
             to keep running your agent. It&apos;s needed for the agent to
-            perform on-chain activity and meet staking requirements.
+            perform on-chain activity
+            {selectedAgentConfig.hasStaking
+              ? ' and meet staking requirements'
+              : ''}
+            .
           </Text>
           <br />
           <Button onClick={onFund} size="small" className="mt-8">
