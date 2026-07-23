@@ -33,10 +33,16 @@ import { WalletBalance } from '../../types/Balance';
 import { MiddlewareServiceResponse, Service } from '../../types/Service';
 import {
   AgentFundingEvent,
+  AgentFundingEventV2,
+  AgentTransactionHistoryResponseV2,
+  BondMovementV2,
   FundsMovement,
+  FundsMovementV2,
   MasterSafeEntity,
+  ServiceRefV2,
   SubgraphMeta,
   TransactionHistoryResponse,
+  TransactionHistoryResponseV2,
 } from '../../types/TransactionHistory';
 import { TokenRequirement } from '../../types/Wallet';
 
@@ -622,6 +628,99 @@ export const makeTransactionHistoryResponse = (
   masterSafe: makeMasterSafeEntity(),
   fundsMovements: [],
   agentFundingEvents: [],
+  _meta: makeSubgraphMeta(),
+  ...overrides,
+});
+
+// --- v2 (subgraph v0.0.7) raw-response factories ----------------------------
+// Field values mirror real Base deployment responses. NB: v2 Service.id is
+// registry Bytes unrelated to the numeric id (deliberately mismatched here so
+// code reading `.id` instead of `.serviceId` fails tests).
+export const makeServiceRefV2 = (
+  overrides: Partial<ServiceRefV2> = {},
+): ServiceRefV2 => ({
+  id: '0x7802',
+  serviceId: '42',
+  agentIds: [25],
+  ...overrides,
+});
+
+export const makeFundsMovementV2 = (
+  overrides: Partial<FundsMovementV2> = {},
+): FundsMovementV2 => ({
+  id: `${MOCK_TX_HASH_1}-0`,
+  category: 'MASTER_FUNDING_IN',
+  source: 'RAW_TRANSFER',
+  token: null,
+  amount: '1000000000000000000',
+  from: DEFAULT_EOA_ADDRESS,
+  to: DEFAULT_SAFE_ADDRESS,
+  blockTimestamp: `${DEFAULT_TS_CHECKPOINT}`,
+  transactionHash: MOCK_TX_HASH_1,
+  agentSafe: null,
+  ...overrides,
+});
+
+export const makeBondMovementV2 = (
+  overrides: Partial<BondMovementV2> = {},
+): BondMovementV2 => ({
+  ...makeFundsMovementV2({
+    id: `${MOCK_TX_HASH_2}-0`,
+    category: 'SERVICE_BOND_DEPOSIT',
+    token: MOCK_OLAS_TOKEN_ADDRESS,
+    amount: '2500000000000000000000',
+    from: DEFAULT_SAFE_ADDRESS,
+    transactionHash: MOCK_TX_HASH_2,
+    service: makeServiceRefV2(),
+  }),
+  bondType: 'AGENT_BOND',
+  ...overrides,
+});
+
+export const makeAgentFundingEventV2 = (
+  overrides: Partial<AgentFundingEventV2> = {},
+): AgentFundingEventV2 => {
+  const txHash = overrides.txHash ?? MOCK_TX_HASH_2;
+  return {
+    id: `${txHash}-${DEFAULT_SAFE_ADDRESS}-42`.toLowerCase(),
+    txHash,
+    blockTimestamp: `${DEFAULT_TS_CHECKPOINT}`,
+    totalNativeAmount: '0',
+    totalOlasAmount: '0',
+    transfers: [
+      makeFundsMovementV2({
+        id: `${txHash}-0`,
+        category: 'MASTER_TO_AGENT',
+        token: MOCK_USDC_E_TOKEN_ADDRESS,
+        amount: '5000000',
+        from: DEFAULT_SAFE_ADDRESS,
+        to: MOCK_MULTISIG_ADDRESS,
+        transactionHash: txHash,
+        agentSafe: {
+          id: MOCK_MULTISIG_ADDRESS,
+          service: makeServiceRefV2(),
+        },
+      }),
+    ],
+    ...overrides,
+  };
+};
+
+export const makeTransactionHistoryResponseV2 = (
+  overrides: Partial<TransactionHistoryResponseV2> = {},
+): TransactionHistoryResponseV2 => ({
+  masterSafe: makeMasterSafeEntity(),
+  fundsMovements: [],
+  bondMovements: [],
+  agentFundingEvents: [],
+  _meta: makeSubgraphMeta(),
+  ...overrides,
+});
+
+export const makeAgentTransactionHistoryResponseV2 = (
+  overrides: Partial<AgentTransactionHistoryResponseV2> = {},
+): AgentTransactionHistoryResponseV2 => ({
+  fundsMovements: [],
   _meta: makeSubgraphMeta(),
   ...overrides,
 });

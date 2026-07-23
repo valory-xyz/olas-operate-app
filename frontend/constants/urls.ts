@@ -1,3 +1,5 @@
+import { TransactionHistorySchemaRevision } from '@/types/TransactionHistory';
+
 import {
   EvmChainId,
   EvmChainIdMap,
@@ -43,6 +45,22 @@ export const TRANSACTION_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN: Partial<
     'https://transactions-optimism.subgraph.autonolas.tech/',
   [EvmChainIdMap.Base]: 'https://transactions-base.subgraph.autonolas.tech/',
 };
+
+// Which pearl-transactions schema each chain's deployment serves (see
+// TransactionHistorySchemaRevision). Gnosis/Optimism proxies pin subgraph
+// v0.0.6 (v1); Base pins v0.0.7 (v2) — its indexers no longer serve v0.0.6.
+// When a chain's proxy migrates to v0.0.7, flip its entry here; absent
+// entries default to v1.
+export const TRANSACTION_HISTORY_SUBGRAPH_SCHEMA_BY_EVM_CHAIN: Partial<
+  Record<EvmChainId, TransactionHistorySchemaRevision>
+> = {
+  [EvmChainIdMap.Base]: 'v2',
+};
+
+export const getTransactionHistorySchemaRevision = (
+  chainId: EvmChainId,
+): TransactionHistorySchemaRevision =>
+  TRANSACTION_HISTORY_SUBGRAPH_SCHEMA_BY_EVM_CHAIN[chainId] ?? 'v1';
 
 // telegram
 export const SUPPORT_URL: Url = 'https://t.me/olaschat';
