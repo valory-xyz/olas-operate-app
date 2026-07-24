@@ -1,12 +1,19 @@
 import { gql, request } from 'graphql-request';
 
 import { EvmChainId } from '@/constants/chains';
-import { TRANSACTION_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN } from '@/constants/urls';
+import {
+  getTransactionHistorySchemaRevision,
+  TRANSACTION_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN,
+} from '@/constants/urls';
 import { Address } from '@/types/Address';
 import {
   TransactionHistoryResponse,
   TransactionHistoryResponseSchema,
+  TransactionHistoryResponseV2Schema,
 } from '@/types/TransactionHistory';
+// Deep import (not the '@/utils' barrel): config/chains pulls the barrel at
+// module init, so barrel-importing here forms a cycle that breaks test loads.
+import { normalizeTransactionHistoryResponseV2 } from '@/utils/transactionHistory';
 
 const FETCH_TRANSACTION_HISTORY_QUERY = gql`
   query GetTransactionHistory($masterSafe: Bytes!, $first: Int!, $skip: Int!) {
@@ -103,6 +110,142 @@ const FETCH_TRANSACTION_HISTORY_QUERY = gql`
   }
 `;
 
+// v2 (subgraph v0.0.7) variant. Differences from v1: FundsMovement has no
+// `bondType` and no SERVICE_BOND_* rows — bonds live on the separate
+// `bondMovements` ledger (queried alongside and merged during normalization);
+// OLAS reward sweeps arrive pre-split as AGENT_OLAS_TO_MASTER (excluded by the
+// category filter, matching v1's client-side hiding); service refs carry the
+// numeric id in `serviceId`.
+const FETCH_TRANSACTION_HISTORY_QUERY_V2 = gql`
+  query GetTransactionHistoryV2(
+    $masterSafe: Bytes!
+    $first: Int!
+    $skip: Int!
+  ) {
+    masterSafe(id: $masterSafe) {
+      id
+      masterEoa
+      owners
+      threshold
+      historyFloorBlock
+      historyFloorTimestamp
+    }
+    fundsMovements(
+      where: {
+        masterSafe: $masterSafe
+        category_in: [
+          MASTER_FUNDING_IN
+          AGENT_TO_MASTER
+          MASTER_TO_AGENT
+          MASTER_WITHDRAWAL
+        ]
+      }
+      orderBy: blockTimestamp
+      orderDirection: desc
+      first: $first
+      skip: $skip
+    ) {
+      id
+      category
+      source
+      token
+      amount
+      from
+      to
+      blockTimestamp
+      transactionHash
+      agentSafe {
+        id
+        service {
+          id
+          serviceId
+          agentIds
+        }
+      }
+      service {
+        id
+        serviceId
+        agentIds
+      }
+    }
+    bondMovements(
+      where: { masterSafe: $masterSafe }
+      orderBy: blockTimestamp
+      orderDirection: desc
+      first: $first
+      skip: $skip
+    ) {
+      id
+      category
+      source
+      bondType
+      token
+      amount
+      from
+      to
+      blockTimestamp
+      transactionHash
+      agentSafe {
+        id
+        service {
+          id
+          serviceId
+          agentIds
+        }
+      }
+      service {
+        id
+        serviceId
+        agentIds
+      }
+    }
+    agentFundingEvents(
+      where: { masterSafe: $masterSafe }
+      orderBy: blockTimestamp
+      orderDirection: desc
+      first: $first
+      skip: $skip
+    ) {
+      id
+      txHash
+      blockTimestamp
+      totalNativeAmount
+      totalOlasAmount
+      transfers {
+        id
+        category
+        source
+        token
+        amount
+        from
+        to
+        blockTimestamp
+        transactionHash
+        agentSafe {
+          id
+          service {
+            id
+            serviceId
+            agentIds
+          }
+        }
+        service {
+          id
+          serviceId
+          agentIds
+        }
+      }
+    }
+    _meta {
+      block {
+        number
+        timestamp
+      }
+      hasIndexingErrors
+    }
+  }
+`;
+
 const DEFAULT_PAGE_SIZE = 100;
 
 type GetTransactionHistoryParams = {
@@ -125,12 +268,20 @@ const get = async ({
     );
   }
 
-  const raw = await request(url, FETCH_TRANSACTION_HISTORY_QUERY, {
-    masterSafe: masterSafe.toLowerCase(),
-    first,
-    skip,
-  });
+  const variables = { masterSafe: masterSafe.toLowerCase(), first, skip };
 
+  if (getTransactionHistorySchemaRevision(chainId) === 'v2') {
+    const raw = await request(
+      url,
+      FETCH_TRANSACTION_HISTORY_QUERY_V2,
+      variables,
+    );
+    return normalizeTransactionHistoryResponseV2(
+      TransactionHistoryResponseV2Schema.parse(raw),
+    );
+  }
+
+  const raw = await request(url, FETCH_TRANSACTION_HISTORY_QUERY, variables);
   return TransactionHistoryResponseSchema.parse(raw);
 };
 

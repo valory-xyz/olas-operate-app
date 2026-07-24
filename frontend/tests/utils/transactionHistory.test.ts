@@ -2,10 +2,19 @@ import { EvmChainIdMap } from '../../constants/chains';
 import {
   computeIsDataDelayed,
   isOlasAgentToMaster,
+  normalizeAgentTransactionHistoryResponseV2,
+  normalizeFundsMovementV2,
+  normalizeTransactionHistoryResponseV2,
 } from '../../utils/transactionHistory';
 import {
+  makeAgentFundingEventV2,
+  makeAgentTransactionHistoryResponseV2,
+  makeBondMovementV2,
   makeFundsMovement,
+  makeFundsMovementV2,
+  makeServiceRefV2,
   makeSubgraphMeta,
+  makeTransactionHistoryResponseV2,
   MOCK_OLAS_TOKEN_ADDRESS,
   MOCK_USDC_E_TOKEN_ADDRESS,
 } from '../helpers/factories';
@@ -94,5 +103,106 @@ describe('computeIsDataDelayed', () => {
         makeSubgraphMeta({ block: { number: 1, timestamp: null } }),
       ),
     ).toBe(false);
+  });
+});
+
+describe('normalizeFundsMovementV2', () => {
+  it('maps service refs so domain service.id is the numeric serviceId', () => {
+    const normalized = normalizeFundsMovementV2(
+      makeFundsMovementV2({
+        category: 'MASTER_TO_AGENT',
+        agentSafe: {
+          id: '0xagentsafe',
+          service: makeServiceRefV2({ id: '0x7802', serviceId: '632' }),
+        },
+        service: makeServiceRefV2({ id: '0x7802', serviceId: '632' }),
+      }),
+    );
+
+    expect(normalized?.agentSafe?.service?.id).toBe('632');
+    expect(normalized?.service?.id).toBe('632');
+  });
+
+  it('preserves agentIds and null refs', () => {
+    const normalized = normalizeFundsMovementV2(
+      makeFundsMovementV2({
+        agentSafe: { id: '0xagentsafe', service: null },
+      }),
+    );
+
+    expect(normalized?.agentSafe).toEqual({ id: '0xagentsafe', service: null });
+    expect(normalized?.service).toBeUndefined();
+  });
+
+  it('drops AGENT_OLAS_TO_MASTER rows (server-split reward sweeps)', () => {
+    expect(
+      normalizeFundsMovementV2(
+        makeFundsMovementV2({
+          category: 'AGENT_OLAS_TO_MASTER',
+          token: MOCK_OLAS_TOKEN_ADDRESS,
+        }),
+      ),
+    ).toBeNull();
+  });
+});
+
+describe('normalizeTransactionHistoryResponseV2', () => {
+  it('merges bondMovements into fundsMovements sorted by timestamp desc', () => {
+    const normalized = normalizeTransactionHistoryResponseV2(
+      makeTransactionHistoryResponseV2({
+        fundsMovements: [
+          makeFundsMovementV2({ id: 'funding', blockTimestamp: '100' }),
+        ],
+        bondMovements: [
+          makeBondMovementV2({ id: 'bond', blockTimestamp: '200' }),
+        ],
+      }),
+    );
+
+    expect(normalized.fundsMovements.map((m) => m.id)).toEqual([
+      'bond',
+      'funding',
+    ]);
+    expect(normalized.fundsMovements[0].bondType).toBe('AGENT_BOND');
+    expect(normalized.fundsMovements[0].category).toBe('SERVICE_BOND_DEPOSIT');
+  });
+
+  it('normalizes agentFundingEvent transfers and passes through meta/masterSafe', () => {
+    const response = makeTransactionHistoryResponseV2({
+      agentFundingEvents: [makeAgentFundingEventV2()],
+    });
+
+    const normalized = normalizeTransactionHistoryResponseV2(response);
+
+    expect(
+      normalized.agentFundingEvents[0].transfers[0].agentSafe?.service?.id,
+    ).toBe('42');
+    expect(normalized.masterSafe).toEqual(response.masterSafe);
+    expect(normalized._meta).toEqual(response._meta);
+  });
+});
+
+describe('normalizeAgentTransactionHistoryResponseV2', () => {
+  it('normalizes rows and drops sweep categories', () => {
+    const normalized = normalizeAgentTransactionHistoryResponseV2(
+      makeAgentTransactionHistoryResponseV2({
+        fundsMovements: [
+          makeFundsMovementV2({
+            id: 'kept',
+            category: 'AGENT_TO_MASTER',
+            token: MOCK_USDC_E_TOKEN_ADDRESS,
+            service: makeServiceRefV2(),
+          }),
+          makeFundsMovementV2({
+            id: 'dropped',
+            category: 'AGENT_OLAS_TO_MASTER',
+            token: MOCK_OLAS_TOKEN_ADDRESS,
+          }),
+        ],
+      }),
+    );
+
+    expect(normalized.fundsMovements.map((m) => m.id)).toEqual(['kept']);
+    expect(normalized.fundsMovements[0].service?.id).toBe('42');
   });
 });

@@ -36,6 +36,18 @@ pearl-transactions subgraph (Gnosis | Polygon | Optimism | Base)
                     └── <HistoryTab /> in BalancesAndAssets
 ```
 
+## Subgraph schema revisions (v1 / v2)
+
+Live deployments serve two incompatible schema revisions (2026-07): Gnosis/Optimism proxies pin subgraph **v0.0.6 (v1)**, Base pins **v0.0.7 (v2)** — its indexers no longer serve v0.0.6. Differences (verified against the live Base deployment, not the subgraph README):
+
+| | v1 (v0.0.6) | v2 (v0.0.7) |
+|---|---|---|
+| Bond rows | `fundsMovements` with `bondType` | separate `bondMovements` ledger (carries `bondType`) |
+| OLAS reward sweeps | `AGENT_TO_MASTER`, hidden client-side (`isOlasAgentToMaster`) | pre-split `AGENT_OLAS_TO_MASTER`, excluded by the query's category filter |
+| `Service.id` | numeric string | registry Bytes (`"0x7802"`); numeric id in new `serviceId` field |
+
+Mechanism: `TRANSACTION_HISTORY_SUBGRAPH_SCHEMA_BY_EVM_CHAIN` (`frontend/constants/urls.ts`) maps chain → revision (absent = v1). Both services pick the matching query document, Zod-parse with the matching schema, and — for v2 — normalize to the v1-shaped domain types via `normalize*V2` in `frontend/utils/transactionHistory.ts` (bond rows merged into `fundsMovements`, sweep rows dropped, `service.id` mapped from `serviceId`). Hooks and components are revision-agnostic. Migrating a chain to v0.0.7 = flip its map entry.
+
 ## New files
 
 | File | Purpose |
