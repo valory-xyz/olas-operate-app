@@ -70,6 +70,13 @@ describe('AGENT_CONFIG', () => {
     }
   });
 
+  it('Connect lists USDC and pUSD on Polygon only, no ERC20s on Gnosis', () => {
+    const connectErc20Tokens = AGENT_CONFIG[AgentMap.Connect].erc20Tokens;
+    expect(connectErc20Tokens).toEqual({
+      [EvmChainIdMap.Polygon]: [TokenSymbolMap.USDC, TokenSymbolMap.pUSD],
+    });
+  });
+
   it('Polystrat additionalRequirements surfaces pUSD safe amount from service template', () => {
     const polystratRequirements =
       AGENT_CONFIG[AgentMap.Polystrat].additionalRequirements;
