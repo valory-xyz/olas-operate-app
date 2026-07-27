@@ -166,7 +166,8 @@ export const TransferFunds = () => {
           showIcon
           type="warning"
           className="mt-24"
-          message={`Only send on ${chainName} Chain — funds on other networks are unrecoverable.`}
+          message={`Only send funds on ${chainName} Chain`}
+          description="Your agent can send funds to any address. Consider only funding it with what it needs."
         />
 
         {destinationAddress && (

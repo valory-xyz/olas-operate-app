@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useUnmount } from 'usehooks-ts';
 
 import {
+  Alert,
   BackButton,
   CardFlex,
   cardStyles,
@@ -186,6 +187,11 @@ export const FundAgent = ({ onBack }: { onBack: () => void }) => {
           <Flex gap={12} vertical>
             <BackButton onPrev={onBack} />
             <FundAgentTitle />
+            <Alert
+              showIcon
+              type="warning"
+              message="Your agent can send funds to any address. Consider only funding it with what it needs."
+            />
           </Flex>
           <PearlWalletToAgentWallet />
 

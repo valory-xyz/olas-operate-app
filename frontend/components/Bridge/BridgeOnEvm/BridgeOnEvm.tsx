@@ -1,6 +1,11 @@
 import { Flex, Typography } from 'antd';
 
-import { BackButton, CardFlex, FundingDescription } from '@/components/ui';
+import {
+  Alert,
+  BackButton,
+  CardFlex,
+  FundingDescription,
+} from '@/components/ui';
 import { CHAIN_IMAGE_MAP, MiddlewareChain } from '@/constants';
 import { useMasterWalletContext } from '@/hooks';
 import { CrossChainTransferDetails } from '@/types/Bridge';
@@ -56,6 +61,14 @@ export const BridgeOnEvm = ({
           Wallet address below. Pearl will automatically detect your transfer
           and bridge the funds for you.
         </Text>
+
+        <Alert
+          showIcon
+          type="warning"
+          className="mt-24"
+          message={`Only send funds on ${fromChainDetails.displayName} Chain`}
+          description="Your agent can send funds to any address. Consider only funding it with what it needs."
+        />
 
         {address && (
           <FundingDescription
