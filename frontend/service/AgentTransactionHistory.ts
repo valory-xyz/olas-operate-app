@@ -1,12 +1,19 @@
 import { gql, request } from 'graphql-request';
 
 import { EvmChainId } from '@/constants/chains';
-import { TRANSACTION_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN } from '@/constants/urls';
+import {
+  getTransactionHistorySchemaRevision,
+  TRANSACTION_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN,
+} from '@/constants/urls';
 import { Address } from '@/types/Address';
 import {
   AgentTransactionHistoryResponse,
   AgentTransactionHistoryResponseSchema,
+  AgentTransactionHistoryResponseV2Schema,
 } from '@/types/TransactionHistory';
+// Deep import (not the '@/utils' barrel): config/chains pulls the barrel at
+// module init, so barrel-importing here forms a cycle that breaks test loads.
+import { normalizeAgentTransactionHistoryResponseV2 } from '@/utils/transactionHistory';
 
 const FETCH_AGENT_TRANSACTION_HISTORY_QUERY = gql`
   query GetAgentTransactionHistory(
@@ -56,6 +63,59 @@ const FETCH_AGENT_TRANSACTION_HISTORY_QUERY = gql`
   }
 `;
 
+// v2 (subgraph v0.0.7) variant: no `bondType` on FundsMovement, service refs
+// carry the numeric id in `serviceId`. The category filter is unchanged — on
+// v2 OLAS reward sweeps are categorized AGENT_OLAS_TO_MASTER, so the same
+// filter now excludes them server-side (v1 hides them client-side).
+const FETCH_AGENT_TRANSACTION_HISTORY_QUERY_V2 = gql`
+  query GetAgentTransactionHistoryV2(
+    $agentSafe: Bytes!
+    $first: Int!
+    $skip: Int!
+  ) {
+    fundsMovements(
+      where: {
+        agentSafe: $agentSafe
+        category_in: [MASTER_TO_AGENT, AGENT_TO_MASTER]
+      }
+      orderBy: blockTimestamp
+      orderDirection: desc
+      first: $first
+      skip: $skip
+    ) {
+      id
+      category
+      source
+      token
+      amount
+      from
+      to
+      blockTimestamp
+      transactionHash
+      agentSafe {
+        id
+        service {
+          id
+          serviceId
+          agentIds
+        }
+      }
+      service {
+        id
+        serviceId
+        agentIds
+      }
+    }
+    _meta {
+      block {
+        number
+        timestamp
+      }
+      hasIndexingErrors
+    }
+  }
+`;
+
 type GetAgentTransactionHistoryParams = {
   chainId: EvmChainId;
   agentSafe: Address;
@@ -78,12 +138,24 @@ const get = async ({
     );
   }
 
-  const raw = await request(url, FETCH_AGENT_TRANSACTION_HISTORY_QUERY, {
-    agentSafe: agentSafe.toLowerCase(),
-    first,
-    skip,
-  });
+  const variables = { agentSafe: agentSafe.toLowerCase(), first, skip };
 
+  if (getTransactionHistorySchemaRevision(chainId) === 'v2') {
+    const raw = await request(
+      url,
+      FETCH_AGENT_TRANSACTION_HISTORY_QUERY_V2,
+      variables,
+    );
+    return normalizeAgentTransactionHistoryResponseV2(
+      AgentTransactionHistoryResponseV2Schema.parse(raw),
+    );
+  }
+
+  const raw = await request(
+    url,
+    FETCH_AGENT_TRANSACTION_HISTORY_QUERY,
+    variables,
+  );
   return AgentTransactionHistoryResponseSchema.parse(raw);
 };
 

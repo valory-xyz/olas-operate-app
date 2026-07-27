@@ -22,10 +22,11 @@ export const FUNDS_CATEGORY = {
   MASTER_FUNDING_IN: 'MASTER_FUNDING_IN',
   MASTER_TO_AGENT: 'MASTER_TO_AGENT',
   AGENT_TO_MASTER: 'AGENT_TO_MASTER',
-  // NB: the schema on subgraph main also splits an AGENT_OLAS_TO_MASTER
-  // category out of AGENT_TO_MASTER (OLAS reward sweeps). Deliberately not
-  // mirrored here until the live deployment ships it — see
-  // isOlasAgentToMaster in useTransactionHistory for the client-side filter.
+  // NB: the v2 schema (subgraph v0.0.7) splits an AGENT_OLAS_TO_MASTER
+  // category out of AGENT_TO_MASTER (OLAS reward sweeps). The domain shape
+  // deliberately keeps the v1 enum: v2 responses are normalized at the
+  // service boundary, where AGENT_OLAS_TO_MASTER rows are dropped — the same
+  // hiding that isOlasAgentToMaster applies client-side on v1 chains.
   MASTER_WITHDRAWAL: 'MASTER_WITHDRAWAL',
   AGENT_TO_APP: 'AGENT_TO_APP',
   APP_TO_AGENT: 'APP_TO_AGENT',
@@ -135,6 +136,94 @@ export const AgentTransactionHistoryResponseSchema = z.object({
 });
 export type AgentTransactionHistoryResponse = z.infer<
   typeof AgentTransactionHistoryResponseSchema
+>;
+
+/**
+ * Which pearl-transactions subgraph schema a chain's deployment serves.
+ * - v1 — subgraph v0.0.6: `bondType` on FundsMovement, bond rows in
+ *   `fundsMovements`, OLAS sweeps categorized AGENT_TO_MASTER.
+ * - v2 — subgraph v0.0.7: bond rows moved to a separate `bondMovements`
+ *   ledger (which carries `bondType`), sweeps split into
+ *   AGENT_OLAS_TO_MASTER, and Service.id reshaped to registry bytes with the
+ *   numeric id in `serviceId`.
+ * v2 responses are normalized back to the v1-shaped domain types at the
+ * service boundary, so hooks and components are revision-agnostic.
+ */
+export type TransactionHistorySchemaRevision = 'v1' | 'v2';
+
+// --- v2 (subgraph v0.0.7) raw-response schemas ------------------------------
+// Verified against the live Base deployment (schema introspection + sample
+// rows), not the subgraph README.
+
+const FundsCategoryV2Schema = z.enum([
+  ...FundsCategorySchema.options,
+  'AGENT_OLAS_TO_MASTER',
+]);
+
+// v2 Service.id is the registry key as Bytes (e.g. "0x7802"); the numeric id
+// the UI needs (TransactionHistoryRow consumers `Number()` it) lives in
+// `serviceId`.
+const ServiceRefV2Schema = z.object({
+  id: z.string(),
+  serviceId: z.string(),
+  agentIds: z.array(z.number()),
+});
+export type ServiceRefV2 = z.infer<typeof ServiceRefV2Schema>;
+
+const AgentSafeRefV2Schema = z.object({
+  id: z.string(),
+  service: ServiceRefV2Schema.nullable(),
+});
+
+const FundsMovementV2Schema = z.object({
+  id: z.string(),
+  category: FundsCategoryV2Schema,
+  source: FundsSourceSchema,
+  token: z.string().nullable(),
+  amount: z.string(),
+  from: z.string(),
+  to: z.string(),
+  blockTimestamp: z.string(),
+  transactionHash: z.string(),
+  agentSafe: AgentSafeRefV2Schema.nullable(),
+  service: ServiceRefV2Schema.nullable().optional(),
+});
+export type FundsMovementV2 = z.infer<typeof FundsMovementV2Schema>;
+
+// The v2 bond ledger: SERVICE_BOND_DEPOSIT / SERVICE_BOND_REFUND rows, the
+// only place `bondType` exists on v2.
+const BondMovementV2Schema = FundsMovementV2Schema.extend({
+  bondType: ServiceBondTypeSchema.nullable(),
+});
+export type BondMovementV2 = z.infer<typeof BondMovementV2Schema>;
+
+const AgentFundingEventV2Schema = z.object({
+  id: z.string(),
+  txHash: z.string(),
+  blockTimestamp: z.string(),
+  totalNativeAmount: z.string(),
+  totalOlasAmount: z.string(),
+  transfers: z.array(FundsMovementV2Schema),
+});
+export type AgentFundingEventV2 = z.infer<typeof AgentFundingEventV2Schema>;
+
+export const TransactionHistoryResponseV2Schema = z.object({
+  masterSafe: MasterSafeEntitySchema.nullable(),
+  fundsMovements: z.array(FundsMovementV2Schema),
+  bondMovements: z.array(BondMovementV2Schema),
+  agentFundingEvents: z.array(AgentFundingEventV2Schema),
+  _meta: SubgraphMetaSchema.nullable(),
+});
+export type TransactionHistoryResponseV2 = z.infer<
+  typeof TransactionHistoryResponseV2Schema
+>;
+
+export const AgentTransactionHistoryResponseV2Schema = z.object({
+  fundsMovements: z.array(FundsMovementV2Schema),
+  _meta: SubgraphMetaSchema.nullable(),
+});
+export type AgentTransactionHistoryResponseV2 = z.infer<
+  typeof AgentTransactionHistoryResponseV2Schema
 >;
 
 export type TransferDirection = 'in' | 'out';

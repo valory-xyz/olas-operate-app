@@ -1,11 +1,19 @@
 import { EvmChainIdMap } from '../../constants/chains';
-import { TRANSACTION_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN } from '../../constants/urls';
+import {
+  TRANSACTION_HISTORY_SUBGRAPH_SCHEMA_BY_EVM_CHAIN,
+  TRANSACTION_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN,
+} from '../../constants/urls';
 import { TransactionHistoryService } from '../../service/TransactionHistory';
 import { Address } from '../../types/Address';
 import {
   DEFAULT_SAFE_ADDRESS,
+  makeBondMovementV2,
   makeFundsMovement,
+  makeFundsMovementV2,
+  makeServiceRefV2,
   makeTransactionHistoryResponse,
+  makeTransactionHistoryResponseV2,
+  MOCK_OLAS_TOKEN_ADDRESS,
 } from '../helpers/factories';
 
 const mockGraphqlRequest = jest.fn();
@@ -250,5 +258,92 @@ describe('TransactionHistoryService.getAll', () => {
     ).rejects.toThrow('No transaction-history subgraph configured');
 
     expect(mockGraphqlRequest).not.toHaveBeenCalled();
+  });
+});
+
+describe('TransactionHistoryService.get (v2 schema)', () => {
+  const URL = 'https://pearl-transactions.subgraph.example';
+
+  beforeEach(() => {
+    TRANSACTION_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN[EvmChainIdMap.Gnosis] = URL;
+    TRANSACTION_HISTORY_SUBGRAPH_SCHEMA_BY_EVM_CHAIN[EvmChainIdMap.Gnosis] =
+      'v2';
+  });
+  afterEach(() => {
+    jest.clearAllMocks();
+    delete TRANSACTION_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN[EvmChainIdMap.Gnosis];
+    delete TRANSACTION_HISTORY_SUBGRAPH_SCHEMA_BY_EVM_CHAIN[
+      EvmChainIdMap.Gnosis
+    ];
+  });
+
+  it('sends the v2 query (bondMovements ledger, no bondType on fundsMovements)', async () => {
+    mockGraphqlRequest.mockResolvedValueOnce(
+      makeTransactionHistoryResponseV2(),
+    );
+
+    await TransactionHistoryService.get({
+      chainId: EvmChainIdMap.Gnosis,
+      masterSafe: DEFAULT_SAFE_ADDRESS,
+    });
+
+    const [url, query, variables] = mockGraphqlRequest.mock.calls[0];
+    expect(url).toBe(URL);
+    expect(query).toContain('GetTransactionHistoryV2');
+    expect(query).toContain('bondMovements');
+    expect(query).not.toContain('SERVICE_BOND_DEPOSIT');
+    expect(variables).toEqual({
+      masterSafe: DEFAULT_SAFE_ADDRESS.toLowerCase(),
+      first: 100,
+      skip: 0,
+    });
+  });
+
+  it('normalizes the v2 response to the domain shape', async () => {
+    mockGraphqlRequest.mockResolvedValueOnce(
+      makeTransactionHistoryResponseV2({
+        fundsMovements: [
+          makeFundsMovementV2({
+            id: 'funding',
+            category: 'MASTER_TO_AGENT',
+            blockTimestamp: '100',
+            service: makeServiceRefV2({ id: '0x7802', serviceId: '632' }),
+          }),
+          makeFundsMovementV2({
+            id: 'sweep',
+            category: 'AGENT_OLAS_TO_MASTER',
+            token: MOCK_OLAS_TOKEN_ADDRESS,
+            blockTimestamp: '150',
+          }),
+        ],
+        bondMovements: [
+          makeBondMovementV2({ id: 'bond', blockTimestamp: '200' }),
+        ],
+      }),
+    );
+
+    const result = await TransactionHistoryService.get({
+      chainId: EvmChainIdMap.Gnosis,
+      masterSafe: DEFAULT_SAFE_ADDRESS,
+    });
+
+    // Bond rows merged in (newest first), sweep rows dropped, numeric
+    // serviceId surfaced as domain service.id.
+    expect(result.fundsMovements.map((m) => m.id)).toEqual(['bond', 'funding']);
+    expect(result.fundsMovements[0].bondType).toBe('AGENT_BOND');
+    expect(result.fundsMovements[1].service?.id).toBe('632');
+  });
+
+  it('throws when a v1-shaped response arrives on a v2 chain', async () => {
+    // makeTransactionHistoryResponse() has no bondMovements collection — the
+    // v2 Zod schema must reject it rather than silently passing bad data on.
+    mockGraphqlRequest.mockResolvedValueOnce(makeTransactionHistoryResponse());
+
+    await expect(
+      TransactionHistoryService.get({
+        chainId: EvmChainIdMap.Gnosis,
+        masterSafe: DEFAULT_SAFE_ADDRESS,
+      }),
+    ).rejects.toThrow();
   });
 });
