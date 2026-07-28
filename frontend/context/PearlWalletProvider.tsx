@@ -34,7 +34,11 @@ import {
   TokenBalanceRecord,
   ValueOf,
 } from '@/types';
-import { generateAgentName, isValidServiceId } from '@/utils';
+import {
+  generateAgentName,
+  isValidServiceId,
+  matchesAgentConfig,
+} from '@/utils';
 import { asMiddlewareChain } from '@/utils/middlewareHelpers';
 
 import { STEPS, WalletChain } from '../components/PearlWallet/types';
@@ -56,10 +60,8 @@ const getChainList = (services?: MiddlewareServiceResponse[]) => {
   >();
 
   services.forEach((service) => {
-    const agent = ACTIVE_AGENTS.find(
-      ([, agentConfig]) =>
-        agentConfig.servicePublicId === service.service_public_id &&
-        agentConfig.middlewareHomeChainId === service.home_chain,
+    const agent = ACTIVE_AGENTS.find(([, agentConfig]) =>
+      matchesAgentConfig(service, agentConfig),
     );
     if (!agent) return;
 

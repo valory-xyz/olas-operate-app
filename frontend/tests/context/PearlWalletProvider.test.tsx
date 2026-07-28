@@ -101,10 +101,36 @@ jest.mock('../../components/PearlWallet/utils', () => ({
   getInitialDepositForMasterSafe: jest.fn(),
 }));
 
-jest.mock('../../utils', () => ({
-  generateAgentName: jest.fn(() => 'Agent Name'),
-  isValidServiceId: jest.fn(() => false),
-}));
+jest.mock('../../utils', () => {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { EvmChainIdMap, MiddlewareChainMap } = require('../../constants');
+  const middlewareToEvm: Record<string, number> = {
+    [MiddlewareChainMap.GNOSIS]: EvmChainIdMap.Gnosis,
+    [MiddlewareChainMap.BASE]: EvmChainIdMap.Base,
+    [MiddlewareChainMap.OPTIMISM]: EvmChainIdMap.Optimism,
+    [MiddlewareChainMap.POLYGON]: EvmChainIdMap.Polygon,
+  };
+  return {
+    generateAgentName: jest.fn(() => 'Agent Name'),
+    isValidServiceId: jest.fn(() => false),
+    matchesAgentConfig: (
+      service: { service_public_id: string; home_chain: string },
+      config: {
+        servicePublicId: string;
+        middlewareHomeChainId: string;
+        supportedChains?: number[];
+      },
+    ) => {
+      if (service.service_public_id !== config.servicePublicId) return false;
+      if (config.supportedChains) {
+        return config.supportedChains.includes(
+          middlewareToEvm[service.home_chain],
+        );
+      }
+      return service.home_chain === config.middlewareHomeChainId;
+    },
+  };
+});
 
 const mockUseServices = useServices as jest.Mock;
 const mockUsePageState = usePageState as jest.Mock;

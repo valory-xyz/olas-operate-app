@@ -6,6 +6,10 @@ const nextConfig = {
   // Enable source maps in production, helpful for readable stack traces.
   productionBrowserSourceMaps: true,
   images: {
+    // All images are local Electron assets — optimization buys nothing and the
+    // Next 15 dev optimizer 400s on widths outside its allow-list (e.g. w=192
+    // for an 88px icon on a 2x display), blanking fixed-size icons/logos.
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: 'http',

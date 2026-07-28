@@ -93,7 +93,13 @@ export const useCompleteAgentSetup = (
     const masterSafe = getMasterSafeOf?.(evmHomeChainId);
     if (masterSafe) {
       const safeBalances = getMasterSafeBalancesOf(evmHomeChainId);
-      if (selectedStakingProgramId === 'no_staking') {
+      // `no_staking` is an incompatible selection for staking agents, but it is
+      // the intended (valid) program for agents that default to it (e.g.
+      // Connect) — so only treat it as invalid for staking agents.
+      if (
+        selectedStakingProgramId === 'no_staking' &&
+        selectedAgentConfig.defaultStakingProgramId !== 'no_staking'
+      ) {
         return 'invalid_contract';
       }
       if (allRequirementsMet(safeBalances, totalTokenRequirements))
@@ -112,6 +118,7 @@ export const useCompleteAgentSetup = (
     evmHomeChainId,
     getMasterSafeBalancesOf,
     selectedStakingProgramId,
+    selectedAgentConfig.defaultStakingProgramId,
     totalTokenRequirements,
     getMasterEoaBalancesOf,
   ]);

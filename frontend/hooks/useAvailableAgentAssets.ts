@@ -33,13 +33,21 @@ export const useAvailableAgentAssets = () => {
 
     const tokenConfig = TOKEN_CONFIG[evmHomeChainId];
 
+    // Resolve the ERC20 display list for the current chain. `erc20Tokens` is a
+    // flat list for single-chain agents, or a per-chain map for multi-chain
+    // agents (e.g. Connect) so a token isn't shown on a chain that doesn't use
+    // it.
+    const chainErc20Tokens = Array.isArray(erc20Tokens)
+      ? erc20Tokens
+      : (erc20Tokens?.[evmHomeChainId] ?? []);
+
     // Filter tokens: always include native + OLAS, only include other ERC20s
     // if they are listed in the agent's erc20Tokens config
     const filteredTokenEntries = entries(tokenConfig).filter(
       ([symbol, { tokenType }]) => {
         if (tokenType === TokenType.NativeGas) return true;
         if (symbol === TokenSymbolMap.OLAS) return true;
-        return erc20Tokens?.includes(symbol as TokenSymbol) ?? false;
+        return chainErc20Tokens.includes(symbol as TokenSymbol);
       },
     );
 

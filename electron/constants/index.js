@@ -43,9 +43,12 @@ const publishOptions = {
   private: false,
 };
 
+// Local server hosted by a running agent (mirrors AGENT_SERVER_URL in the frontend)
+const AGENT_SERVER_URL = 'http://127.0.0.1:8716';
+
 // URLs allowed to open as pop-ups from the agent UI
 const popupAllowedUrls = [
-  'http://127.0.0.1:8716/privy-login',
+  `${AGENT_SERVER_URL}/privy-login`,
   'http://localhost:8716/privy-login',
 ];
 
@@ -60,4 +63,5 @@ module.exports = {
   publishOptions,
   paths,
   popupAllowedUrls,
+  AGENT_SERVER_URL,
 };

@@ -18,7 +18,7 @@ import {
 } from '@/hooks';
 import { AccountService } from '@/service/Account';
 import { WalletService } from '@/service/Wallet';
-import { asEvmChainId, getErrorMessage } from '@/utils';
+import { asEvmChainId, getErrorMessage, matchesAgentConfig } from '@/utils';
 
 import { ContentTransition } from '../ui';
 import { FormFlex } from '../ui/FormFlex';
@@ -59,10 +59,8 @@ const useSetupNavigation = ({
     if (!selectedService) return false;
     if (!selectedAgentConfig) return false;
 
-    return services.some(
-      ({ service_public_id, home_chain }) =>
-        service_public_id === selectedAgentConfig.servicePublicId &&
-        home_chain === selectedAgentConfig.middlewareHomeChainId,
+    return services.some((service) =>
+      matchesAgentConfig(service, selectedAgentConfig),
     );
   }, [isServicesFetched, services, selectedService, selectedAgentConfig]);
 

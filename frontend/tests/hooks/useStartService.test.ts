@@ -230,6 +230,30 @@ describe('useStartService', () => {
       );
     });
 
+    it('skips the staking-program lookup for no_staking (useMechMarketplace=false)', async () => {
+      // Connect uses `no_staking`, which has no STAKING_PROGRAMS entry — the
+      // lookup must be skipped rather than throwing "Staking program not found".
+      const { result } = renderHook(() => useStartService());
+      const returned = await result.current.startService({
+        ...baseInput,
+        service: null,
+        createServiceIfMissing: true,
+        stakingProgramId: 'no_staking' as Parameters<
+          ReturnType<typeof useStartService>['startService']
+        >[0]['stakingProgramId'],
+      });
+
+      expect(mockCreateService).toHaveBeenCalledWith(
+        expect.objectContaining({
+          stakingProgramId: 'no_staking',
+          useMechMarketplace: false,
+          deploy: false,
+        }),
+      );
+      expect(mockStartService).toHaveBeenCalledWith(MOCK_SERVICE_CONFIG_ID_2);
+      expect(returned).toEqual({ service_config_id: MOCK_SERVICE_CONFIG_ID_2 });
+    });
+
     it('starts the created service and returns it', async () => {
       const createdService = { service_config_id: MOCK_SERVICE_CONFIG_ID_2 };
       mockCreateService.mockResolvedValue(createdService);

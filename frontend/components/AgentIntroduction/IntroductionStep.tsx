@@ -41,11 +41,22 @@ const AnimatedImage = ({ imgSrc, alt, imageHeight }: AnimatedImageProps) => (
       <Image
         src={imgSrc}
         alt={alt}
-        priority
+        loading="lazy"
         width={0}
         height={0}
         sizes="100vw"
-        style={{ width: '100%', height: 'auto', minHeight: imageHeight ?? 416 }}
+        // Scale to the container width at the image's natural aspect ratio so
+        // the whole artwork shows — it has labels at the edges, so a fixed
+        // height + `cover` clipped them whenever the box was narrower than the
+        // image's aspect ratio (e.g. the 460px About Agent modal). `imageHeight`
+        // caps the height on wide containers; `contain` only letterboxes if that
+        // cap engages.
+        style={{
+          width: '100%',
+          height: 'auto',
+          maxHeight: imageHeight ?? 416,
+          objectFit: 'contain',
+        }}
       />
     </motion.div>
   </AnimatePresence>
@@ -76,6 +87,12 @@ type IntroductionProps = OnboardingStep & {
   renderDot?: () => ReactNode;
   renderAgentSelection?: () => ReactNode;
   styles?: IntroductionStepStyles;
+  /**
+   * When true, the step fills its parent's height and pins the slide-nav +
+   * agent-selection block to the bottom, leaving the flexible space between it
+   * and the (top-aligned) content blank. Used in the onboarding right panel.
+   */
+  fillHeight?: boolean;
 };
 
 /**
@@ -92,62 +109,90 @@ export const IntroductionStep = ({
   renderFundingRequirements,
   renderAgentSelection,
   styles: { imageHeight, descPadding } = {},
+  fillHeight = false,
 }: IntroductionProps) => {
   const isFundingDetailsStep = !title && !imgSrc;
 
+  const media = isFundingDetailsStep ? (
+    renderFundingRequirements?.(desc)
+  ) : (
+    <AnimatedImage
+      imgSrc={`/${imgSrc}.png`}
+      alt={title ?? ''}
+      imageHeight={imageHeight}
+    />
+  );
+
+  const contentText = isFundingDetailsStep ? null : (
+    <div style={{ padding: descPadding ?? '0px 20px', overflow: 'hidden' }}>
+      <Content title={title} desc={desc} helper={helper} />
+    </div>
+  );
+
+  const navAndSelection = (
+    <Flex vertical gap={24} align="center" style={{ padding: '0px 24px' }}>
+      <Flex gap={12} align="center">
+        <Button
+          onClick={onPrev}
+          disabled={!onPrev}
+          size="large"
+          style={{ minWidth: 40 }}
+          icon={<LeftOutlined />}
+        />
+        {renderDot && renderDot()}
+        <Button
+          onClick={onNext}
+          disabled={!onNext}
+          size="large"
+          style={{ minWidth: 40 }}
+          icon={<RightOutlined />}
+        />
+      </Flex>
+
+      {renderAgentSelection ? renderAgentSelection() : null}
+    </Flex>
+  );
+
+  // Onboarding right panel: content on top, nav + selection pinned to bottom,
+  // flexible blank space in between.
+  if (fillHeight) {
+    return (
+      <div
+        style={{
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+          height: '100%',
+        }}
+      >
+        <div
+          style={{
+            flex: 1,
+            minHeight: 0,
+            overflowY: 'auto',
+            // Clip the horizontal slide-transition so it doesn't briefly show a
+            // horizontal scrollbar while switching between slides.
+            overflowX: 'hidden',
+          }}
+        >
+          {media}
+          {contentText && <div style={{ paddingTop: 12 }}>{contentText}</div>}
+        </div>
+        <div style={{ padding: '12px 0px 20px 0px', flexShrink: 0 }}>
+          {navAndSelection}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={{ overflow: 'hidden' }}>
-      {isFundingDetailsStep ? (
-        renderFundingRequirements?.(desc)
-      ) : (
-        <AnimatedImage
-          imgSrc={`/${imgSrc}.png`}
-          alt={title ?? ''}
-          imageHeight={imageHeight}
-        />
-      )}
+      {media}
 
       <div style={{ padding: '12px 0px 20px 0px' }}>
         <Flex vertical gap={24}>
-          {isFundingDetailsStep ? null : (
-            <>
-              <div
-                style={{
-                  padding: descPadding ?? '0px 20px',
-                  overflow: 'hidden',
-                }}
-              >
-                <Content title={title} desc={desc} helper={helper} />
-              </div>
-            </>
-          )}
-
-          <Flex
-            vertical
-            gap={24}
-            align="center"
-            style={{ padding: '0px 24px' }}
-          >
-            <Flex gap={12} align="center">
-              <Button
-                onClick={onPrev}
-                disabled={!onPrev}
-                size="large"
-                style={{ minWidth: 40 }}
-                icon={<LeftOutlined />}
-              />
-              {renderDot && renderDot()}
-              <Button
-                onClick={onNext}
-                disabled={!onNext}
-                size="large"
-                style={{ minWidth: 40 }}
-                icon={<RightOutlined />}
-              />
-            </Flex>
-
-            {renderAgentSelection ? renderAgentSelection() : null}
-          </Flex>
+          {contentText}
+          {navAndSelection}
         </Flex>
       </div>
     </div>

@@ -28,6 +28,7 @@ const { Text, Title, Paragraph } = Typography;
 
 const FundingContainer = styled(Flex)`
   padding: 0 80px;
+  align-items: center;
 
   @media (max-width: ${ANTD_BREAKPOINTS.xl}px) {
     padding: 0 24px;
@@ -154,37 +155,47 @@ export const FundYourAgent = () => {
 
   return (
     <FundingContainer vertical>
-      <Flex vertical>
-        <BackButton
-          onPrev={() => {
-            resetTokenRequirements();
-            goto(SETUP_SCREEN.SelectStaking);
-          }}
-        />
-        <Title level={3} className="mt-12">
-          Fund your {selectedAgentConfig.displayName}
-        </Title>
-        <Text className="text-neutral-secondary">
-          Select the payment method that suits you best.
-        </Text>
-      </Flex>
+      <Flex vertical style={{ width: 'fit-content' }}>
+        <Flex vertical>
+          <BackButton
+            onPrev={() => {
+              resetTokenRequirements();
+              // Connect (and any no_staking agent) skips SelectStaking, so back
+              // must return to the agent/chain step, not the staking screen.
+              goto(
+                selectedAgentConfig.defaultStakingProgramId === 'no_staking'
+                  ? SETUP_SCREEN.AgentOnboarding
+                  : SETUP_SCREEN.SelectStaking,
+              );
+            }}
+          />
+          <Title level={3} className="mt-12">
+            Fund your {selectedAgentConfig.displayName}
+          </Title>
+          <Text className="text-neutral-secondary">
+            Select the payment method that suits you best.
+          </Text>
+        </Flex>
 
-      <Flex gap={24} style={{ marginTop: 32 }}>
-        {isOnRampEnabled && <OnRampMethodCard />}
-        <TransferTokens
-          chainName={chainName}
-          tokenRequirements={tokenRequirements}
-          isBalancesAndFundingRequirementsLoading={areTokenRequirementsLoading}
-        />
-        {isBridgeOnboardingEnabled && (
-          <BridgeTokens
+        <Flex gap={24} style={{ marginTop: 32 }}>
+          {isOnRampEnabled && <OnRampMethodCard />}
+          <TransferTokens
             chainName={chainName}
             tokenRequirements={tokenRequirements}
             isBalancesAndFundingRequirementsLoading={
               areTokenRequirementsLoading
             }
           />
-        )}
+          {isBridgeOnboardingEnabled && (
+            <BridgeTokens
+              chainName={chainName}
+              tokenRequirements={tokenRequirements}
+              isBalancesAndFundingRequirementsLoading={
+                areTokenRequirementsLoading
+              }
+            />
+          )}
+        </Flex>
       </Flex>
     </FundingContainer>
   );

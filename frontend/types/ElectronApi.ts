@@ -29,6 +29,7 @@ export type PearlStore = {
   [AgentMap.Basius]?: AgentSettings;
   [AgentMap.PettAi]?: AgentSettings;
   [AgentMap.Polystrat]?: AgentSettings;
+  [AgentMap.Connect]?: AgentSettings;
 
   autoRun?: {
     enabled?: boolean;

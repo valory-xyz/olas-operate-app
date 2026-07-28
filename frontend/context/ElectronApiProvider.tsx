@@ -3,6 +3,7 @@ import { createContext, PropsWithChildren, useMemo } from 'react';
 
 import { StoreService } from '@/service/StoreService';
 import { Address } from '@/types/Address';
+import { ConnectSessionResult } from '@/types/ConnectSession';
 import {
   ElectronStore,
   ElectronTrayIconStatus,
@@ -109,6 +110,14 @@ type ElectronApiContextProps = {
     start?: () => Promise<void>;
     stop?: () => Promise<void>;
   };
+  /**
+   * IPC bridge for the Connect agent's local server. The launch is proxied
+   * through the main process because that server enables no CORS, so the
+   * renderer cannot call it directly.
+   */
+  connect?: {
+    startSession?: () => Promise<ConnectSessionResult>;
+  };
   /** IPC bridge for OTA updates — distinct from the electron-updater instance in electron/update.js */
   autoUpdater?: {
     checkForUpdates?: () => Promise<unknown>;
@@ -181,6 +190,9 @@ export const ElectronApiContext = createContext<ElectronApiContextProps>({
     start: async () => {},
     stop: async () => {},
   },
+  connect: {
+    startSession: async () => ({ reachable: false }),
+  },
   autoUpdater: {
     checkForUpdates: async () => {},
     downloadUpdate: async () => {},
@@ -231,6 +243,14 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
     () => ({
       start: getElectronApiFunction('wakeLock.start', true),
       stop: getElectronApiFunction('wakeLock.stop', true),
+    }),
+    [],
+  );
+
+  // Stabilized for the same reason: useConnectSession keys a React Query on it.
+  const connect = useMemo<ElectronApiContextProps['connect']>(
+    () => ({
+      startSession: getElectronApiFunction('connect.startSession', true),
     }),
     [],
   );
@@ -383,6 +403,7 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
         logEvent: getElectronApiFunction('logEvent'),
         nextLogError: getElectronApiFunction('nextLogError'),
         wakeLock,
+        connect,
         autoUpdater,
       }}
     >

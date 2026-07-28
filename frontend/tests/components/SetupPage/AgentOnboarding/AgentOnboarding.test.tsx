@@ -14,6 +14,7 @@ const mockUsePageState = jest.fn();
 const mockUseServices = jest.fn();
 const mockUseArchivedAgents = jest.fn();
 const mockUseIsAgentGeoRestricted = jest.fn();
+const mockCreateConnectService = jest.fn();
 
 jest.mock('../../../../hooks', () => ({
   useSetup: (...args: unknown[]) => mockUseSetup(...args),
@@ -22,6 +23,7 @@ jest.mock('../../../../hooks', () => ({
   useArchivedAgents: (...args: unknown[]) => mockUseArchivedAgents(...args),
   useIsAgentGeoRestricted: (...args: unknown[]) =>
     mockUseIsAgentGeoRestricted(...args),
+  useCreateConnectService: () => mockCreateConnectService,
 }));
 
 jest.mock('../../../../config/agents', () => ({
@@ -33,6 +35,13 @@ jest.mock('../../../../config/agents', () => ({
       isUnderConstruction: false,
       isGeoLocationRestricted: false,
       isAddingNewBlocked: false,
+    },
+    connect: {
+      displayName: 'Connect',
+      servicePublicId: 'valory/connect:0.1.0',
+      supportedChains: [137, 8453, 100],
+      evmHomeChainId: 100,
+      middlewareHomeChainId: 'gnosis',
     },
   },
 }));
@@ -88,12 +97,20 @@ jest.mock(
       <div>
         <div data-testid="select-agent-active-tab">{activeTab}</div>
         {onSelectYourAgent && (
-          <button
-            data-testid="mock-select-trader"
-            onClick={() => onSelectYourAgent('trader')}
-          >
-            Mock Select Trader
-          </button>
+          <>
+            <button
+              data-testid="mock-select-trader"
+              onClick={() => onSelectYourAgent('trader')}
+            >
+              Mock Select Trader
+            </button>
+            <button
+              data-testid="mock-select-connect"
+              onClick={() => onSelectYourAgent('connect')}
+            >
+              Mock Select Connect
+            </button>
+          </>
         )}
       </div>
     ),
@@ -150,5 +167,50 @@ describe('AgentOnboarding', () => {
     ).not.toBeInTheDocument();
 
     AGENT_CONFIG.trader.isAddingNewBlocked = false;
+  });
+
+  describe('Connect — connectAllChainsOccupied', () => {
+    const connectService = (homeChain: string) => ({
+      service_config_id: `sc-connect-${homeChain}`,
+      service_public_id: 'valory/connect:0.1.0',
+      home_chain: homeChain,
+    });
+
+    it('hides "Select Agent" button when every supported chain has a Connect instance', () => {
+      // Connect supportedChains: [137 (polygon), 8453 (base), 100 (gnosis)].
+      mockUseServices.mockReturnValue({
+        services: [
+          connectService('polygon'),
+          connectService('base'),
+          connectService('gnosis'),
+        ],
+        selectAgentTypeForSetup: jest.fn(),
+        updateSelectedServiceConfigId: jest.fn(),
+        getAgentTypeFromService: jest.fn(),
+      });
+
+      render(<AgentOnboarding />);
+      fireEvent.click(screen.getByTestId('mock-select-connect'));
+
+      expect(
+        screen.queryByRole('button', { name: 'Select Agent' }),
+      ).not.toBeInTheDocument();
+    });
+
+    it('shows "Select Agent" button when at least one supported chain is free', () => {
+      mockUseServices.mockReturnValue({
+        services: [connectService('polygon'), connectService('base')],
+        selectAgentTypeForSetup: jest.fn(),
+        updateSelectedServiceConfigId: jest.fn(),
+        getAgentTypeFromService: jest.fn(),
+      });
+
+      render(<AgentOnboarding />);
+      fireEvent.click(screen.getByTestId('mock-select-connect'));
+
+      expect(
+        screen.getByRole('button', { name: 'Select Agent' }),
+      ).toBeInTheDocument();
+    });
   });
 });

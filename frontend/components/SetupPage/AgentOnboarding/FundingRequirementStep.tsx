@@ -1,5 +1,6 @@
-import { Flex, Tag, Typography } from 'antd';
+import { Flex, Select, Tag, Typography } from 'antd';
 import Image from 'next/image';
+import { useEffect, useMemo, useState } from 'react';
 import { TbCreditCardFilled } from 'react-icons/tb';
 
 import { IntroductionAnimatedContainer } from '@/components/AgentIntroduction';
@@ -13,13 +14,25 @@ import {
 import {
   AgentMap,
   AgentType,
+  CHAIN_IMAGE_MAP,
   COLOR,
+  EvmChainId,
+  EvmChainIdMap,
+  EvmChainName,
   POLYMARKET_DEPOSIT_WALLET_MIGRATION_URL,
   UNICODE_SYMBOLS,
   X_DEVELOPER_CONSOLE_URL,
 } from '@/constants';
-import { useInitialFundingRequirements } from '@/hooks';
-import { asEvmChainDetails } from '@/utils';
+import { useInitialFundingRequirements, useServices } from '@/hooks';
+import { asEvmChainDetails, asEvmChainId, matchesAgentConfig } from '@/utils';
+
+import { InstanceCount } from './SelectAgent';
+
+/** Chains offered for Connect, in display order. */
+const CONNECT_CHAIN_OPTIONS: EvmChainId[] = [
+  EvmChainIdMap.Polygon,
+  EvmChainIdMap.Gnosis,
+];
 
 const { Text, Title, Link } = Typography;
 
@@ -182,16 +195,102 @@ const MinimumStakingRequirements = ({
   );
 };
 
+/**
+ * Operating-chain selector for Connect (multi-chain, one instance per chain).
+ * Rendered in place of the static `OperatingChain` display. Chains that already
+ * have a Connect instance are disabled ("Already added").
+ */
+type ConnectChainSelectProps = {
+  selectedChain?: EvmChainId;
+  onSelectChain?: (chain: EvmChainId) => void;
+  /** Incrementing value that flags the selector when the user tries to
+   * continue without choosing a chain. */
+  highlightSignal?: number;
+};
+const ConnectChainSelect = ({
+  selectedChain,
+  onSelectChain,
+  highlightSignal,
+}: ConnectChainSelectProps) => {
+  const { services } = useServices();
+  const connectConfig = AGENT_CONFIG[AgentMap.Connect];
+
+  // Highlight the selector when prompted (no chain chosen). Cleared once a
+  // chain is selected.
+  const [isHighlighted, setIsHighlighted] = useState(false);
+  useEffect(() => {
+    if (highlightSignal) setIsHighlighted(true);
+  }, [highlightSignal]);
+  useEffect(() => {
+    if (selectedChain) setIsHighlighted(false);
+  }, [selectedChain]);
+
+  const showError = isHighlighted && !selectedChain;
+
+  const occupiedChains = useMemo(() => {
+    const occupied = new Set<EvmChainId>();
+    (services ?? []).forEach((service) => {
+      if (matchesAgentConfig(service, connectConfig)) {
+        occupied.add(asEvmChainId(service.home_chain));
+      }
+    });
+    return occupied;
+  }, [services, connectConfig]);
+
+  return (
+    <Flex vertical gap={8}>
+      <Text className="text-neutral-tertiary">Operating chain</Text>
+      <Select
+        size="large"
+        placeholder="Select a chain"
+        value={selectedChain}
+        onChange={(value) => onSelectChain?.(value as EvmChainId)}
+        status={showError ? 'error' : undefined}
+        style={{ width: '100%' }}
+      >
+        {CONNECT_CHAIN_OPTIONS.map((chainId) => {
+          const isOccupied = occupiedChains.has(chainId);
+          return (
+            <Select.Option key={chainId} value={chainId} disabled={isOccupied}>
+              <Flex align="center" gap={8}>
+                <Image
+                  src={CHAIN_IMAGE_MAP[chainId]}
+                  width={20}
+                  height={20}
+                  alt={EvmChainName[chainId]}
+                />
+                {EvmChainName[chainId]}
+                {isOccupied && (
+                  <Flex className="ml-auto">
+                    <InstanceCount count={1} />
+                  </Flex>
+                )}
+              </Flex>
+            </Select.Option>
+          );
+        })}
+      </Select>
+      {showError && (
+        <Text type="danger">Please select a chain to continue.</Text>
+      )}
+    </Flex>
+  );
+};
+
 type MinimumFundingRequirementsProps = {
   agentType: AgentType;
+  /** Override chain (Connect selects its chain in this step). */
+  chainId?: EvmChainId;
 };
 const MinimumFundingRequirements = ({
   agentType,
+  chainId,
 }: MinimumFundingRequirementsProps) => {
   const { evmHomeChainId } = AGENT_CONFIG[agentType];
-  const tokens = useInitialFundingRequirements(agentType);
+  const targetChain = chainId ?? evmHomeChainId;
+  const tokens = useInitialFundingRequirements(agentType, chainId);
 
-  const allTokens = Object.entries(tokens[evmHomeChainId] || {})
+  const allTokens = Object.entries(tokens[targetChain] || {})
     .map(([token, amount]) => {
       const icon = TokenSymbolConfigMap[token as TokenSymbol]?.image as string;
       return { token, amount, icon };
@@ -242,11 +341,19 @@ const YouCanCoverAllRequirements = () => (
 type FundingRequirementStepProps = {
   agentType: AgentType;
   desc?: string;
+  /** Connect only: the operating chain chosen in this step, and its setter. */
+  selectedChain?: EvmChainId;
+  onSelectChain?: (chain: EvmChainId) => void;
+  /** Connect only: incrementing value that highlights the chain selector. */
+  highlightSignal?: number;
 };
 
 export const FundingRequirementStep = ({
   agentType,
   desc,
+  selectedChain,
+  onSelectChain,
+  highlightSignal,
 }: FundingRequirementStepProps) => {
   const {
     displayName: agentName,
@@ -257,6 +364,7 @@ export const FundingRequirementStep = ({
     isPhasedOut,
   } = AGENT_CONFIG[agentType];
   const { name, displayName } = asEvmChainDetails(middlewareHomeChainId);
+  const isConnect = agentType === AgentMap.Connect;
 
   const blockingAlert = isUnderConstruction ? (
     <UnderConstructionAlert />
@@ -288,6 +396,20 @@ export const FundingRequirementStep = ({
         />
         {blockingAlert ? (
           <div style={{ marginBottom: 300 }}>{blockingAlert}</div>
+        ) : isConnect ? (
+          <>
+            <ConnectChainSelect
+              selectedChain={selectedChain}
+              onSelectChain={onSelectChain}
+              highlightSignal={highlightSignal}
+            />
+            {selectedChain != null && (
+              <MinimumFundingRequirements
+                agentType={agentType}
+                chainId={selectedChain}
+              />
+            )}
+          </>
         ) : (
           <>
             <OperatingChain chainName={name} chainDisplayName={displayName} />

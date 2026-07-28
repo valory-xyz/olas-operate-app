@@ -18,6 +18,7 @@ import {
 } from '@/types';
 
 import { generateAgentName } from './generateAgentName';
+import { asEvmChainId, asMiddlewareChain } from './middlewareHelpers';
 
 /**
  * Returns the creation timestamp of a service from its hash_history.
@@ -183,13 +184,52 @@ export const isValidServiceId = (
   return typeof token === 'number' && token !== -1 && token !== 0;
 };
 
-/** Checks if a service belongs to a given agent config */
-export const isServiceOfAgent = (
+/**
+ * Checks if a service belongs to a given agent config (the shared agent matcher).
+ *
+ * Multi-chain agents (`config.supportedChains` present, e.g. Connect) match any
+ * instance sharing the `servicePublicId` whose `home_chain` is one of the
+ * supported chains. Single-chain agents keep the original strict `home_chain`
+ * equality, so their grouping/naming behaviour is unchanged.
+ */
+export const matchesAgentConfig = (
   service: Service | MiddlewareServiceResponse,
   config: AgentConfig,
-): boolean =>
-  service.service_public_id === config.servicePublicId &&
-  service.home_chain === config.middlewareHomeChainId;
+): boolean => {
+  if (service.service_public_id !== config.servicePublicId) return false;
+
+  if (config.supportedChains) {
+    // Compare middleware-chain values so an unknown `home_chain` yields `false`
+    // instead of throwing (asEvmChainId throws on unknown chains).
+    return config.supportedChains.some(
+      (evmChainId) => asMiddlewareChain(evmChainId) === service.home_chain,
+    );
+  }
+
+  return service.home_chain === config.middlewareHomeChainId;
+};
+
+/**
+ * @deprecated Alias of {@link matchesAgentConfig}, kept for existing callers.
+ */
+export const isServiceOfAgent = matchesAgentConfig;
+
+/**
+ * Resolves the EVM chain a service instance runs on for a given agent config.
+ *
+ * Multi-chain agents (`config.supportedChains`) resolve the chain per-instance
+ * from `service.home_chain`; single-chain agents use the static
+ * `config.evmHomeChainId`, so their behaviour is unchanged.
+ */
+export const getServiceEvmChainId = (
+  service: Maybe<Service | MiddlewareServiceResponse>,
+  config: AgentConfig,
+): EvmChainId => {
+  if (config.supportedChains && service?.home_chain) {
+    return asEvmChainId(service.home_chain);
+  }
+  return config.evmHomeChainId;
+};
 
 /**
  * Get display name for a service instance.

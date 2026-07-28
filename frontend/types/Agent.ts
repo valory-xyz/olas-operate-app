@@ -8,6 +8,7 @@ import {
 } from '@/constants';
 import { AgentsFunBaseService } from '@/service/agents/AgentsFunBase';
 import { BasiusService } from '@/service/agents/Basius';
+import { ConnectService } from '@/service/agents/Connect';
 import { ModiusService } from '@/service/agents/Modius';
 import { OptimismService } from '@/service/agents/Optimism';
 import { PredictTraderService } from '@/service/agents/PredictTrader';
@@ -17,7 +18,8 @@ type ServiceApi =
   | typeof ModiusService
   | typeof OptimismService
   | typeof BasiusService
-  | typeof AgentsFunBaseService;
+  | typeof AgentsFunBaseService
+  | typeof ConnectService;
 
 type NeedsOpenProfileEachAgentRun = {
   /** Whether the agent requires opening profile first before showing performance metrics */
@@ -42,6 +44,13 @@ export type AgentConfig = {
   name: string;
   evmHomeChainId: EvmChainId;
   middlewareHomeChainId: SupportedMiddlewareChain;
+  /**
+   * Chains this agent can run on. Present only for multi-chain agents (e.g.
+   * Connect, one instance per chain). When set, service grouping matches any
+   * instance whose `home_chain` is in this list (see `matchesAgentConfig`);
+   * when absent, the agent is single-chain and matches `middlewareHomeChainId`.
+   */
+  supportedChains?: EvmChainId[];
   agentIds: number[];
   defaultStakingProgramId: StakingProgramId;
   additionalRequirements?: Partial<
@@ -67,6 +76,13 @@ export type AgentConfig = {
    * `shutdownDate` (sunsetting — still runs until the date).
    */
   isPhasedOut?: boolean;
+  /** Renders a "Beta" tag next to the agent name (agent selection + sidebar) */
+  isBeta?: boolean;
+  /**
+   * Keeps the agent's instances out of the auto-run rotation (never
+   * auto-included; the include button is disabled). Manual start still works.
+   */
+  isExcludedFromAutoRun?: boolean;
   /** Whether the agent is enabled and can be shown in the UI */
   isAgentEnabled: boolean;
   /** If agent is enabled but not yet available to use */
@@ -102,8 +118,18 @@ export type AgentConfig = {
    * remove or set to false to restore the metrics view.
    */
   arePerformanceMetricsUnavailable?: boolean;
-  /** ERC20 tokens (beyond native + OLAS) to display and track for this agent */
-  erc20Tokens?: TokenSymbol[];
+  /**
+   * ERC20 tokens (beyond native + OLAS) to display and track for this agent.
+   * Use a flat list for single-chain agents. For multi-chain agents (e.g.
+   * Connect, one instance per chain) use a per-chain map so a token isn't shown
+   * on a chain that doesn't use it — e.g. Connect uses USDC on Polygon but not
+   * on Gnosis, which also defines USDC in its token config.
+   */
+  erc20Tokens?: TokenSymbol[] | Partial<Record<EvmChainId, TokenSymbol[]>>;
+  /** Whether the agent has on-chain staking (shows the main-page Staking section). */
+  hasStaking: boolean;
+  /** Whether the agent has performance metrics (shows the main-page Performance section). */
+  hasPerformance: boolean;
 } & needsOpenProfileEachAgentRun;
 
 type AgentPerformanceMetric = {
