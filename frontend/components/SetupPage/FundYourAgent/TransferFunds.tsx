@@ -166,8 +166,17 @@ export const TransferFunds = () => {
           showIcon
           type="warning"
           className="mt-24"
-          message={`Only send funds on ${chainName} Chain`}
-          description="Your agent can send funds to any address. Consider only funding it with what it needs."
+          message={
+            <Flex vertical gap={2}>
+              <Text className="text-sm font-weight-600">
+                Only send funds on {chainName} Chain
+              </Text>
+              <Text className="text-sm">
+                Your agent can send funds to any address. Consider only funding
+                it with what it needs.
+              </Text>
+            </Flex>
+          }
         />
 
         {destinationAddress && (

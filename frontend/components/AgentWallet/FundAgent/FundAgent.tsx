@@ -190,6 +190,7 @@ export const FundAgent = ({ onBack }: { onBack: () => void }) => {
             <Alert
               showIcon
               type="warning"
+              className="text-sm"
               message="Your agent can send funds to any address. Consider only funding it with what it needs."
             />
           </Flex>
