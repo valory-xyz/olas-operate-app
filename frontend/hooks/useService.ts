@@ -19,6 +19,7 @@ import { Address } from '@/types/Address';
 import { Service } from '@/types/Service';
 import { Nullable, Optional } from '@/types/Util';
 import { asEvmChainId, asMiddlewareChain } from '@/utils/middlewareHelpers';
+import { matchesAgentConfig } from '@/utils/service';
 
 import { useServices } from './useServices';
 
@@ -215,10 +216,8 @@ export const useService = (serviceConfigId?: string) => {
           service.home_chain === asMiddlewareChain(chainId),
       );
       if (!service) return null;
-      const agent = ACTIVE_AGENTS.find(
-        ([, agentConfig]) =>
-          agentConfig.servicePublicId === service.service_public_id &&
-          agentConfig.middlewareHomeChainId === service.home_chain,
+      const agent = ACTIVE_AGENTS.find(([, agentConfig]) =>
+        matchesAgentConfig(service, agentConfig),
       );
       return agent ? agent[0] : null;
     },

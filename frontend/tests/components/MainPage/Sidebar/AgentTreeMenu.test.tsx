@@ -82,6 +82,20 @@ describe('AgentTreeMenu', () => {
     expect(screen.getByText('Optimus')).toBeInTheDocument();
   });
 
+  it('renders a Beta tag only for beta agents in the group header', () => {
+    const connectGroup = makeGroup(AgentMap.Connect, [
+      { serviceConfigId: 'sc-connect-1', name: 'fafon-norlo48' },
+    ]);
+    render(
+      <AgentTreeMenu
+        {...defaultProps}
+        groups={[traderGroup, optimusGroup, connectGroup]}
+      />,
+    );
+    expect(screen.getByText('Connect')).toBeInTheDocument();
+    expect(screen.getAllByText('Beta')).toHaveLength(1);
+  });
+
   it('auto-expands group containing selected instance', () => {
     render(<AgentTreeMenu {...defaultProps} />);
     // The trader group should be expanded because selected instance is in it

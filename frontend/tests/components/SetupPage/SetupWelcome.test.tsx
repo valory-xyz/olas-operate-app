@@ -223,6 +223,20 @@ jest.mock('../../../utils', () => ({
   getErrorMessage: jest.fn((e: unknown) =>
     e instanceof Error ? e.message : String(e),
   ),
+  matchesAgentConfig: (
+    service: { service_public_id: string; home_chain: unknown },
+    config: {
+      servicePublicId: string;
+      middlewareHomeChainId: unknown;
+      supportedChains?: number[];
+    },
+  ) => {
+    if (service.service_public_id !== config.servicePublicId) return false;
+    if (config.supportedChains) {
+      return config.supportedChains.includes(service.home_chain as number);
+    }
+    return service.home_chain === config.middlewareHomeChainId;
+  },
 }));
 
 // ---------------------------------------------------------------------------

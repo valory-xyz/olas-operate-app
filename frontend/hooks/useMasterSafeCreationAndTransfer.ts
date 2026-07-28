@@ -47,8 +47,13 @@ export const useMasterSafeCreationAndTransfer = (
         };
 
         //  details related to transfers (NOTE: to be split into different API)
+        // `SAFE_EXISTS_TRANSFER_COMPLETED` covers the common case where the
+        // master safe already exists on the chain (e.g. the user already runs
+        // another agent there) and the funding sweep just completed — without
+        // it the setup flow strands the user on the funding page.
         const isTransferComplete =
           status === 'SAFE_CREATED_TRANSFER_COMPLETED' ||
+          status === 'SAFE_EXISTS_TRANSFER_COMPLETED' ||
           status === 'SAFE_EXISTS_ALREADY_FUNDED';
         const transferDetails = {
           isTransferComplete,

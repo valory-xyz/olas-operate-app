@@ -1,4 +1,5 @@
 import { MainContentContainer } from '@/components/ui';
+import { useServices } from '@/hooks';
 
 import { AgentInfo } from './AgentInfo';
 import { Performance } from './Performance';
@@ -11,14 +12,19 @@ type OverviewProps = {
 };
 
 export const Overview = ({ openProfile, hasVisitedProfile }: OverviewProps) => {
+  const { selectedAgentConfig } = useServices();
+  const { hasStaking, hasPerformance } = selectedAgentConfig;
+
   return (
     <MainContentContainer vertical gap={40}>
       <AgentInfo />
-      <Performance
-        openProfile={openProfile}
-        hasVisitedProfile={hasVisitedProfile}
-      />
-      <Staking />
+      {hasPerformance && (
+        <Performance
+          openProfile={openProfile}
+          hasVisitedProfile={hasVisitedProfile}
+        />
+      )}
+      {hasStaking && <Staking />}
       <Wallet />
     </MainContentContainer>
   );

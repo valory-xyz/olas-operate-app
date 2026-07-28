@@ -3,6 +3,7 @@ export * from './AgentSetupCompleteModal';
 export * from './Alert';
 export * from './animations';
 export * from './BackButton';
+export * from './BetaTag';
 export * from './CardFlex';
 export * from './CardSection';
 export * from './Collapse';

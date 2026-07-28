@@ -112,6 +112,31 @@ export const BASIUS_ONBOARDING_STEPS: OnboardingStep[] = [
   },
 ] as const;
 
+// TODO(PR2/PR3): replace placeholder copy and images with final Connect assets.
+export const CONNECT_ONBOARDING_STEPS: OnboardingStep[] = [
+  {
+    desc: 'Give your AI coding agent, like Claude Code, the ability to make on-chain transactions. Pearl provides a crypto wallet, so your agent can request digital services from other agents on the Olas Marketplace. For example, it can request a fresh prediction on a prediction-market outcome.',
+  },
+  {
+    title: 'Connect your AI agent',
+    desc: 'Give your AI agent, like Claude Code, the ability to transact on-chain. Pearl provides the wallet. You stay in control of the funds.',
+    imgSrc: 'introduction/setup-agent-connect-1',
+    styles: { imageHeight: 366 },
+  },
+  {
+    title: 'Your agent acts, Pearl signs',
+    desc: 'Run Connect in Pearl, and link your agent. Your agent can hire other agents for tasks, like getting the probability of a prediction market outcome. Pearl is designed to sign the transactions for it.',
+    imgSrc: 'introduction/setup-agent-connect-2',
+    styles: { imageHeight: 366 },
+  },
+  {
+    title: 'One agent per chain',
+    desc: 'Add Connect on the chain you want, fund it, and run it. Need another chain? Set up a separate Connect anytime.',
+    imgSrc: 'introduction/setup-agent-connect-3',
+    styles: { imageHeight: 366 },
+  },
+] as const;
+
 export const POLYSTRAT_ONBOARDING_STEPS: OnboardingStep[] = [
   {
     desc: 'Trade Polymarket on autopilot with your customizable, always-on AI agent. Polystrat scans markets in real-time, executes trades on future events for you and collects winnings as the markets resolve.',

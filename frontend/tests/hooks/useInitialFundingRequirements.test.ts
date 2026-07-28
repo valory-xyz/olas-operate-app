@@ -174,13 +174,12 @@ describe('useInitialFundingRequirements', () => {
       useInitialFundingRequirements(AgentMap.PredictTrader),
     );
 
-    // monthlyGas = 1e18 + 0.5e18 = 1.5e18
+    // monthlyGas = 1e18 (safe) + 2 × 0.5e18 (agent, doubled) = 2e18
     // safeCreationThreshold = 0.1e18 (no master safe exists)
-    // agentDeploymentGas = 2n
-    // total = (1.5e18 + 0.1e18 + 2) / 1e18 = 1.6
+    // total = (2e18 + 0.1e18) / 1e18 = 2.1
     const gnosisResult = result.current[EvmChainIdMap.Gnosis];
     expect(gnosisResult).toBeDefined();
-    expect(gnosisResult.XDAI).toBe(1.6);
+    expect(gnosisResult.XDAI).toBe(2.1);
   });
 
   it('uses 0 for safeCreationThreshold when master safe exists', () => {
@@ -195,13 +194,12 @@ describe('useInitialFundingRequirements', () => {
       useInitialFundingRequirements(AgentMap.PredictTrader),
     );
 
-    // monthlyGas = 1.5e18
+    // monthlyGas = 1e18 (safe) + 2 × 0.5e18 (agent, doubled) = 2e18
     // safeCreationThreshold = 0 (master safe exists)
-    // agentDeploymentGas = 2n
-    // total = (1.5e18 + 0 + 2) / 1e18 = 1.5
+    // total = 2e18 / 1e18 = 2.0
     const gnosisResult = result.current[EvmChainIdMap.Gnosis];
     expect(gnosisResult).toBeDefined();
-    expect(gnosisResult.XDAI).toBe(1.5);
+    expect(gnosisResult.XDAI).toBe(2);
   });
 
   it('includes OLAS staking requirement from STAKING_PROGRAMS', () => {

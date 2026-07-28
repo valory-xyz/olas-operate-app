@@ -38,8 +38,12 @@ describe('AgentMap', () => {
     expect(AgentMap.Polystrat).toBe('polymarket_trader');
   });
 
-  it('covers exactly 7 agent types', () => {
-    expect(Object.keys(AgentMap)).toHaveLength(7);
+  it('maps Connect to the middleware identifier "connect"', () => {
+    expect(AgentMap.Connect).toBe('connect');
+  });
+
+  it('covers exactly 8 agent types', () => {
+    expect(Object.keys(AgentMap)).toHaveLength(8);
   });
 
   it('has no duplicate middleware identifier values', () => {

@@ -70,6 +70,10 @@ jest.mock('../../../../utils', () => ({
   ) =>
     service.service_public_id === config.servicePublicId &&
     service.home_chain === config.middlewareHomeChainId,
+  getServiceEvmChainId: (
+    _service: unknown,
+    config: { evmHomeChainId: number },
+  ) => config.evmHomeChainId,
   getServiceInstanceName: (_service: unknown, displayName: string) =>
     `My ${displayName}`,
 }));

@@ -66,6 +66,12 @@ const FEATURES_CONFIG = FeaturesConfigSchema.parse({
     'bridge-onboarding': true,
     'on-ramp': true,
   },
+  [AgentMap.Connect]: {
+    'withdraw-funds': true,
+    'backup-via-safe': true,
+    'bridge-onboarding': true,
+    'on-ramp': false,
+  },
 });
 
 type FeatureFlagReturn<T extends FeatureFlags | FeatureFlags[]> =

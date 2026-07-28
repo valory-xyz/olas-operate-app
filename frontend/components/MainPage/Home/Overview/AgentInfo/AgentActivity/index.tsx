@@ -6,7 +6,7 @@ import { useBoolean } from 'usehooks-ts';
 
 import { InfoTooltip } from '@/components/ui';
 import { COLOR } from '@/constants';
-import { useAgentActivity, useRewardContext } from '@/hooks';
+import { useAgentActivity, useConnectSession, useRewardContext } from '@/hooks';
 
 import { AgentActivityModal } from './AgentActivityModal';
 import { Container, Text } from './styles';
@@ -42,6 +42,9 @@ export const AgentActivity = () => {
   const { deploymentDetails, isServiceRunning, isServiceDeploying } =
     useAgentActivity();
   const { isEpochTargetMet } = useRewardContext();
+  // Connect only: while the agent runs, the activity strip points at the
+  // agent profile for new Claude Code sessions instead of rounds.
+  const { showRunningInfo: isConnectRunning } = useConnectSession();
   const {
     value: isModalOpen,
     setTrue: showModal,
@@ -67,6 +70,14 @@ export const AgentActivity = () => {
     }
 
     if (isServiceRunning) {
+      if (isConnectRunning) {
+        return {
+          status: 'activity-not-ready',
+          content:
+            'Your agent is running. Start a new session from the agent profile.',
+        };
+      }
+
       if (isEpochTargetMet) {
         return { status: 'idle', content: <IdleContent /> };
       }
@@ -97,6 +108,7 @@ export const AgentActivity = () => {
     isEpochTargetMet,
     isServiceDeploying,
     isServiceRunning,
+    isConnectRunning,
     rounds,
     roundsInfo,
   ]);

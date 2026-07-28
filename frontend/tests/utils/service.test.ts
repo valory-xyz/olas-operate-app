@@ -5,10 +5,13 @@ import {
   StakingProgramId,
 } from '../../constants';
 import { AddressZero } from '../../constants/address';
+import { AgentConfig } from '../../types/Agent';
 import { Service, ServiceTemplate } from '../../types/Service';
 import {
+  getServiceEvmChainId,
   getServiceInstanceName,
   isValidServiceId,
+  matchesAgentConfig,
   onDummyServiceCreation,
   updateServiceIfNeeded,
 } from '../../utils/service';
@@ -623,5 +626,116 @@ describe('getServiceInstanceName', () => {
       EvmChainIdMap.Gnosis,
     );
     expect(name1).not.toBe(name2);
+  });
+});
+
+describe('matchesAgentConfig', () => {
+  // Minimal single-chain config (existing agents).
+  const singleChainConfig = {
+    servicePublicId: 'valory/trader_pearl:0.1.0',
+    middlewareHomeChainId: MiddlewareChainMap.GNOSIS,
+    evmHomeChainId: EvmChainIdMap.Gnosis,
+  } as unknown as AgentConfig;
+
+  // Minimal multi-chain config (Connect).
+  const multiChainConfig = {
+    servicePublicId: 'valory/connect:0.1.0',
+    middlewareHomeChainId: MiddlewareChainMap.GNOSIS,
+    evmHomeChainId: EvmChainIdMap.Gnosis,
+    supportedChains: [
+      EvmChainIdMap.Polygon,
+      EvmChainIdMap.Base,
+      EvmChainIdMap.Gnosis,
+    ],
+  } as unknown as AgentConfig;
+
+  const makeServiceOn = (publicId: string, chain: string) =>
+    ({
+      service_public_id: publicId,
+      home_chain: chain,
+    }) as unknown as Service;
+
+  describe('single-chain agents (behaviour unchanged)', () => {
+    it('matches when public id and home_chain match', () => {
+      const service = makeServiceOn(
+        'valory/trader_pearl:0.1.0',
+        MiddlewareChainMap.GNOSIS,
+      );
+      expect(matchesAgentConfig(service, singleChainConfig)).toBe(true);
+    });
+
+    it('does not match when home_chain differs', () => {
+      const service = makeServiceOn(
+        'valory/trader_pearl:0.1.0',
+        MiddlewareChainMap.BASE,
+      );
+      expect(matchesAgentConfig(service, singleChainConfig)).toBe(false);
+    });
+
+    it('does not match when public id differs', () => {
+      const service = makeServiceOn(
+        'valory/other:0.1.0',
+        MiddlewareChainMap.GNOSIS,
+      );
+      expect(matchesAgentConfig(service, singleChainConfig)).toBe(false);
+    });
+  });
+
+  describe('multi-chain agents (Connect)', () => {
+    it.each([
+      MiddlewareChainMap.POLYGON,
+      MiddlewareChainMap.BASE,
+      MiddlewareChainMap.GNOSIS,
+    ])('matches an instance on supported chain %s', (chain) => {
+      const service = makeServiceOn('valory/connect:0.1.0', chain);
+      expect(matchesAgentConfig(service, multiChainConfig)).toBe(true);
+    });
+
+    it('does not match an instance on an unsupported chain', () => {
+      const service = makeServiceOn(
+        'valory/connect:0.1.0',
+        MiddlewareChainMap.MODE,
+      );
+      expect(matchesAgentConfig(service, multiChainConfig)).toBe(false);
+    });
+
+    it('does not match when the public id differs', () => {
+      const service = makeServiceOn(
+        'valory/trader_pearl:0.1.0',
+        MiddlewareChainMap.POLYGON,
+      );
+      expect(matchesAgentConfig(service, multiChainConfig)).toBe(false);
+    });
+  });
+});
+
+describe('getServiceEvmChainId', () => {
+  const singleChainConfig = {
+    evmHomeChainId: EvmChainIdMap.Gnosis,
+  } as unknown as AgentConfig;
+
+  const multiChainConfig = {
+    evmHomeChainId: EvmChainIdMap.Gnosis,
+    supportedChains: [EvmChainIdMap.Polygon, EvmChainIdMap.Base],
+  } as unknown as AgentConfig;
+
+  it('uses the static config chain for single-chain agents', () => {
+    const service = { home_chain: MiddlewareChainMap.BASE } as Service;
+    expect(getServiceEvmChainId(service, singleChainConfig)).toBe(
+      EvmChainIdMap.Gnosis,
+    );
+  });
+
+  it('uses per-instance home_chain for multi-chain agents', () => {
+    const service = { home_chain: MiddlewareChainMap.POLYGON } as Service;
+    expect(getServiceEvmChainId(service, multiChainConfig)).toBe(
+      EvmChainIdMap.Polygon,
+    );
+  });
+
+  it('falls back to the config chain when the service is missing', () => {
+    expect(getServiceEvmChainId(undefined, multiChainConfig)).toBe(
+      EvmChainIdMap.Gnosis,
+    );
   });
 });

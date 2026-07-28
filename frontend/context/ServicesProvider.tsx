@@ -48,6 +48,7 @@ import {
 } from '@/types';
 import {
   asEvmChainId,
+  getServiceEvmChainId,
   getServiceInstanceName,
   isNilOrEmpty,
   isServiceOfAgent,
@@ -379,13 +380,26 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
     );
   }, [selectedServiceConfigId, getAgentTypeFromService, pendingAgentType]);
 
+  const selectedServiceHomeChain = selectedService?.home_chain;
   const selectedAgentConfig = useMemo(() => {
     const config: Maybe<AgentConfig> = AGENT_CONFIG[selectedAgentType];
     if (!config) {
       throw new Error(`Agent config not found for ${selectedAgentType}`);
     }
+    // Multi-chain agents (e.g. Connect) run one instance per chain. Resolve the
+    // config's home chain to the selected instance's `home_chain` so all
+    // downstream chain-dependent hooks (funding requirements, balances, master
+    // safe creation, setup completion, deployment) operate on the correct
+    // chain. Single-chain agents (no `supportedChains`) are unaffected.
+    if (config.supportedChains && selectedServiceHomeChain) {
+      return {
+        ...config,
+        evmHomeChainId: asEvmChainId(selectedServiceHomeChain),
+        middlewareHomeChainId: selectedServiceHomeChain,
+      };
+    }
     return config;
-  }, [selectedAgentType]);
+  }, [selectedAgentType, selectedServiceHomeChain]);
 
   const updateSelectedServiceConfigId = useCallback(
     (serviceConfigId: string) => {
@@ -467,7 +481,7 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
       getServiceInstanceName(
         selectedService,
         selectedAgentConfig.displayName,
-        selectedAgentConfig.evmHomeChainId,
+        getServiceEvmChainId(selectedService, selectedAgentConfig),
       ),
     [selectedService, selectedAgentConfig],
   );

@@ -6,6 +6,8 @@ import styled from 'styled-components';
 import { AGENT_CONFIG } from '@/config/agents';
 import { AgentType, COLOR } from '@/constants';
 
+import { BetaTag } from './BetaTag';
+
 const { Text } = Typography;
 
 export const TreeLine = styled.div`
@@ -51,9 +53,12 @@ export const AgentGroupHeader = ({
         align="center"
         style={{ flex: 1, minWidth: 0 }}
       >
-        <Text ellipsis style={{ fontSize: 14, lineHeight: '20px' }}>
-          {config.displayName}
-        </Text>
+        <Flex align="center" gap={8} style={{ minWidth: 0 }}>
+          <Text ellipsis style={{ fontSize: 14, lineHeight: '20px' }}>
+            {config.displayName}
+          </Text>
+          {config.isBeta && <BetaTag />}
+        </Flex>
         {children}
       </Flex>
     </>

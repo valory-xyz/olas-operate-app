@@ -53,6 +53,19 @@ let fundingDescriptionProps: Record<string, unknown> | null = null;
 let depositForBridgingProps: Record<string, unknown> | null = null;
 
 jest.mock('../../../../components/ui', () => ({
+  Alert: ({
+    message,
+    description,
+  }: {
+    message: React.ReactNode;
+    description?: React.ReactNode;
+  }) =>
+    createElement(
+      'div',
+      { 'data-testid': 'alert' },
+      createElement('div', null, message),
+      description ? createElement('div', null, description) : null,
+    ),
   BackButton: ({ onPrev }: { onPrev: () => void }) =>
     createElement('button', { onClick: onPrev }, 'Back'),
   CardFlex: ({ children }: { children: React.ReactNode }) =>
@@ -111,6 +124,14 @@ describe('BridgeOnEvm', () => {
 
     expect(screen.getByText('Bridge Crypto from Ethereum')).toBeInTheDocument();
     expect(screen.getByText('Step 1. Send Funds')).toBeInTheDocument();
+    expect(
+      screen.getByText('Only send funds on Ethereum Chain'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Your agent can send funds to any address. Consider only funding it with what it needs.',
+      ),
+    ).toBeInTheDocument();
     expect(screen.getByTestId('funding-description')).toBeInTheDocument();
     expect(fundingDescriptionProps).toMatchObject({
       address: DEFAULT_EOA_ADDRESS,
