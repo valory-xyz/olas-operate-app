@@ -242,10 +242,10 @@ describe('EXPLORER_URL_BY_MIDDLEWARE_CHAIN', () => {
     }
   });
 
-  it('Gnosis explorer is gnosisscan.io', () => {
+  it('Gnosis explorer is gnosis.blockscout.com', () => {
     expect(
       urls.EXPLORER_URL_BY_MIDDLEWARE_CHAIN[MiddlewareChainMap.GNOSIS],
-    ).toBe('https://gnosisscan.io');
+    ).toBe('https://gnosis.blockscout.com');
   });
 
   it('Base explorer is basescan.org', () => {
