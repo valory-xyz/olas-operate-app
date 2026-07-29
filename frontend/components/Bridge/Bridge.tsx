@@ -31,6 +31,8 @@ type BridgeProps = {
   getBridgeRequirementsParams: GetBridgeRequirementsParams;
   onPrevBeforeBridging: () => void;
   onBridgingCompleted?: () => void;
+  /** See {@link BridgeOnEvm} — passed only by the Connect onboarding flow. */
+  showAgentCustodyAlert?: boolean;
 };
 
 /**
@@ -45,6 +47,7 @@ export const Bridge = ({
   getBridgeRequirementsParams,
   onPrevBeforeBridging,
   onBridgingCompleted,
+  showAgentCustodyAlert,
 }: BridgeProps) => {
   const { goto } = usePageState();
 
@@ -120,6 +123,7 @@ export const Bridge = ({
           updateCrossChainTransferDetails={updateCrossChainTransferDetails}
           onPrev={onPrevBeforeBridging}
           onNext={handleNextStep}
+          showAgentCustodyAlert={showAgentCustodyAlert}
         />
       );
     /**

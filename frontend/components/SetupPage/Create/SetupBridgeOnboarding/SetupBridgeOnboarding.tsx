@@ -3,7 +3,7 @@ import { useCallback, useState } from 'react';
 
 import { Bridge } from '@/components/Bridge';
 import { AgentSetupCompleteModal } from '@/components/ui';
-import { AllEvmChainIdMap, SETUP_SCREEN } from '@/constants';
+import { AgentMap, AllEvmChainIdMap, SETUP_SCREEN } from '@/constants';
 import { useGetBridgeRequirementsParams, useServices, useSetup } from '@/hooks';
 import { asAllMiddlewareChain } from '@/utils/middlewareHelpers';
 
@@ -11,7 +11,7 @@ export const SetupBridgeOnboarding = () => {
   const [isBridgeCompleted, setIsBridgeCompleted] = useState(false);
 
   const { goto: gotoSetup, prevState } = useSetup();
-  const { selectedAgentConfig } = useServices();
+  const { selectedAgentConfig, selectedAgentType } = useServices();
 
   // Determine the from chain based on the agent's home chain
   const toMiddlewareChain = selectedAgentConfig.middlewareHomeChainId;
@@ -38,6 +38,7 @@ export const SetupBridgeOnboarding = () => {
         getBridgeRequirementsParams={getBridgeRequirementsParams}
         onPrevBeforeBridging={handlePrevStep}
         onBridgingCompleted={handleBridgingCompleted}
+        showAgentCustodyAlert={selectedAgentType === AgentMap.Connect}
       />
       {isBridgeCompleted && <AgentSetupCompleteModal />}
     </Flex>

@@ -14,7 +14,7 @@ import {
   TokenAmountInput,
 } from '@/components/ui';
 import { TOKEN_CONFIG, TokenSymbol, TokenSymbolMap } from '@/config/tokens';
-import { AddressZero, PAGES } from '@/constants';
+import { AddressZero, AgentMap, PAGES } from '@/constants';
 import { EvmChainIdMap } from '@/constants/chains';
 import { useAvailableAssets, usePageState, useServices } from '@/hooks';
 import { TokenAmountDetails, TokenAmounts } from '@/types/Wallet';
@@ -164,7 +164,11 @@ const useFundAgent = () => {
 };
 
 export const FundAgent = ({ onBack }: { onBack: () => void }) => {
+  const { selectedAgentType } = useServices();
   const { availableAssets, amountsToFund, onAmountChange } = useFundAgent();
+  // Connect is user-driven and can send funds anywhere; other agents only
+  // spend within their own strategy, so the custody warning is Connect-only.
+  const isConnect = selectedAgentType === AgentMap.Connect;
 
   const canTransfer = useMemo(() => {
     const entries = Object.entries(amountsToFund);
@@ -187,12 +191,14 @@ export const FundAgent = ({ onBack }: { onBack: () => void }) => {
           <Flex gap={12} vertical>
             <BackButton onPrev={onBack} />
             <FundAgentTitle />
-            <Alert
-              showIcon
-              type="warning"
-              className="text-sm"
-              message="Your agent can send funds to any address. Consider only funding it with what it needs."
-            />
+            {isConnect && (
+              <Alert
+                showIcon
+                type="warning"
+                className="text-sm"
+                message="Your agent can send funds to any address. Consider only funding it with what it needs."
+              />
+            )}
           </Flex>
           <PearlWalletToAgentWallet />
 

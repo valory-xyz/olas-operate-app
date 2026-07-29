@@ -14,7 +14,12 @@ import {
   TokenRequirementsTable,
 } from '@/components/ui';
 import { TokenSymbol } from '@/config/tokens';
-import { CHAIN_IMAGE_MAP, EvmChainName, SETUP_SCREEN } from '@/constants';
+import {
+  AgentMap,
+  CHAIN_IMAGE_MAP,
+  EvmChainName,
+  SETUP_SCREEN,
+} from '@/constants';
 import { useSupportModal } from '@/context/SupportModalProvider';
 import {
   useMasterSafeCreationAndTransfer,
@@ -36,7 +41,7 @@ export const TransferFunds = () => {
     getMasterSafeOf,
     isFetched: isMasterWalletFetched,
   } = useMasterWalletContext();
-  const { selectedAgentConfig } = useServices();
+  const { selectedAgentConfig, selectedAgentType } = useServices();
   const { isFullyFunded, tokensFundingStatus, isLoading } =
     useTokensFundingStatus();
   const {
@@ -162,22 +167,34 @@ export const TransferFunds = () => {
           Wallet address below. Pearl will automatically detect your transfer.
         </Text>
 
-        <Alert
-          showIcon
-          type="warning"
-          className="mt-24"
-          message={
-            <Flex vertical gap={2}>
-              <Text className="text-sm font-weight-600">
-                Only send funds on {chainName} Chain
-              </Text>
-              <Text className="text-sm">
-                Your agent can send funds to any address. Consider only funding
-                it with what it needs.
-              </Text>
-            </Flex>
-          }
-        />
+        {/* Connect is user-driven and can send funds anywhere; other agents
+            only spend within their own strategy, so the custody warning is
+            Connect-only. */}
+        {selectedAgentType === AgentMap.Connect ? (
+          <Alert
+            showIcon
+            type="warning"
+            className="mt-24"
+            message={
+              <Flex vertical gap={2}>
+                <Text className="text-sm font-weight-600">
+                  Only send funds on {chainName} Chain
+                </Text>
+                <Text className="text-sm">
+                  Your agent can send funds to any address. Consider only
+                  funding it with what it needs.
+                </Text>
+              </Flex>
+            }
+          />
+        ) : (
+          <Alert
+            showIcon
+            type="warning"
+            className="mt-24"
+            message={`Only send on ${chainName} Chain — funds on other networks are unrecoverable.`}
+          />
+        )}
 
         {destinationAddress && (
           <FundingDescription
