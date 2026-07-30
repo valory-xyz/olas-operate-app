@@ -1,6 +1,6 @@
 [project]
 name = "olas-operate-app"
-version = "1.8.5-rc7"
+version = "1.8.5-rc8"
 description = ""
 authors = [
     { name = "David Vilela", email = "dvilelaf@gmail.com" },
@@ -13,7 +13,7 @@ dependencies = [
     "open-aea-ledger-cosmos==2.2.8",
     "open-aea-ledger-ethereum==2.2.8",
     "open-aea-cli-ipfs==2.2.8",
-    "olas-operate-middleware==0.15.31",
+    "olas-operate-middleware==0.15.33",
 ]
 
 [dependency-groups]
@@ -28,6 +28,3 @@ package = false
 # provenance we had under Poetry). Drop this only if we want to
 # opt every release into uv-managed interpreters.
 python-preference = "only-system"
-
-[tool.uv.sources]
-olas-operate-middleware = { git = "https://github.com/valory-xyz/olas-operate-middleware.git", rev = "1f0ecc9344efe0fa83250279f8b41c7ec24ecced" }
