@@ -24,6 +24,13 @@ type BridgeOnEvmProps = {
   getBridgeRequirementsParams: GetBridgeRequirementsParams;
   updateQuoteId: (quoteId: string) => void;
   updateCrossChainTransferDetails: (details: CrossChainTransferDetails) => void;
+  /**
+   * Warn that the funded agent can send funds to any address. Only passed by
+   * the Connect onboarding flow — Connect is user-driven, while other agents
+   * spend within their own strategy and the deposit flow funds the Pearl
+   * Wallet, not an agent.
+   */
+  showAgentCustodyAlert?: boolean;
 };
 
 /**
@@ -38,6 +45,7 @@ export const BridgeOnEvm = ({
   getBridgeRequirementsParams,
   updateQuoteId,
   updateCrossChainTransferDetails,
+  showAgentCustodyAlert = false,
 }: BridgeOnEvmProps) => {
   const { masterEoa } = useMasterWalletContext();
   // TODO: check if master safe exists once we support agents on From Chain
@@ -62,22 +70,24 @@ export const BridgeOnEvm = ({
           and bridge the funds for you.
         </Text>
 
-        <Alert
-          showIcon
-          type="warning"
-          className="mt-24"
-          message={
-            <Flex vertical gap={2}>
-              <Text className="text-sm font-weight-600">
-                Only send funds on {fromChainDetails.displayName} Chain
-              </Text>
-              <Text className="text-sm">
-                Your agent can send funds to any address. Consider only funding
-                it with what it needs.
-              </Text>
-            </Flex>
-          }
-        />
+        {showAgentCustodyAlert && (
+          <Alert
+            showIcon
+            type="warning"
+            className="mt-24"
+            message={
+              <Flex vertical gap={2}>
+                <Text className="text-sm font-weight-600">
+                  Only send funds on {fromChainDetails.displayName} Chain
+                </Text>
+                <Text className="text-sm">
+                  Your agent can send funds to any address. Consider only
+                  funding it with what it needs.
+                </Text>
+              </Flex>
+            }
+          />
+        )}
 
         {address && (
           <FundingDescription

@@ -107,6 +107,7 @@ const defaultProps = {
   getBridgeRequirementsParams: mockGetBridgeRequirementsParams,
   updateQuoteId: mockUpdateQuoteId,
   updateCrossChainTransferDetails: mockUpdateCrossChainTransferDetails,
+  showAgentCustodyAlert: true,
 };
 
 describe('BridgeOnEvm', () => {
@@ -160,6 +161,22 @@ describe('BridgeOnEvm', () => {
     fireEvent.click(screen.getByText('Back'));
 
     expect(mockOnPrev).toHaveBeenCalledTimes(1);
+  });
+
+  it('hides the agent custody alert when showAgentCustodyAlert is not set', () => {
+    render(
+      createElement(BridgeOnEvm, {
+        ...defaultProps,
+        showAgentCustodyAlert: undefined,
+      }),
+    );
+
+    expect(screen.queryByText('Only send funds on Ethereum Chain')).toBeNull();
+    expect(
+      screen.queryByText(
+        'Your agent can send funds to any address. Consider only funding it with what it needs.',
+      ),
+    ).toBeNull();
   });
 
   it('skips the funding description when the master EOA is unavailable', () => {
