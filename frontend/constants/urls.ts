@@ -99,7 +99,7 @@ export const PEARL_LICENSE: Url =
   'https://github.com/valory-xyz/olas-operate-app/blob/main/LICENSE';
 
 // explorers @note DO NOT END WITH `/`
-const GNOSIS_EXPLORER_URL: Url = 'https://gnosisscan.io';
+const GNOSIS_EXPLORER_URL: Url = 'https://gnosis.blockscout.com';
 const BASE_EXPLORER_URL: Url = 'https://basescan.org';
 const MODE_EXPLORER_URL: Url = 'https://explorer.mode.network';
 const OPTIMISM_EXPLORER_URL: Url = 'https://optimistic.etherscan.io';
@@ -120,7 +120,7 @@ export const BLOCKSCOUT_URL_BY_MIDDLEWARE_CHAIN: Record<
   SupportedMiddlewareChain,
   Url
 > = {
-  [MiddlewareChainMap.GNOSIS]: 'https://gnosis.blockscout.com',
+  [MiddlewareChainMap.GNOSIS]: GNOSIS_EXPLORER_URL,
   [MiddlewareChainMap.BASE]: 'https://base.blockscout.com',
   [MiddlewareChainMap.MODE]: 'https://explorer.mode.network',
   [MiddlewareChainMap.OPTIMISM]: 'https://optimism.blockscout.com',
