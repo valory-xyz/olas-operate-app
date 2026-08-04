@@ -44,7 +44,8 @@ export const AgentActivity = () => {
   const { isEpochTargetMet } = useRewardContext();
   // Connect only: while the agent runs, the activity strip points at the
   // agent profile for new Claude Code sessions instead of rounds.
-  const { showRunningInfo: isConnectRunning } = useConnectSession();
+  const { showRunningInfo: isConnectRunning, isFirstRun } =
+    useConnectSession();
   const {
     value: isModalOpen,
     setTrue: showModal,
@@ -73,8 +74,9 @@ export const AgentActivity = () => {
       if (isConnectRunning) {
         return {
           status: 'activity-not-ready',
-          content:
-            'Your agent is running. Start a new session from the agent profile.',
+          content: isFirstRun
+            ? 'Your agent is running. You can visit the agent Profile to start a new session.'
+            : 'Your agent is running. You can open the agent Profile to start a new session.',
         };
       }
 
@@ -109,6 +111,7 @@ export const AgentActivity = () => {
     isServiceDeploying,
     isServiceRunning,
     isConnectRunning,
+    isFirstRun,
     rounds,
     roundsInfo,
   ]);
