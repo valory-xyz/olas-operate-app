@@ -1,36 +1,29 @@
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { fireEvent, render, screen } from '@testing-library/react';
 
 import { ConnectFirstRunModal } from '../../../../../components/MainPage/Home/ConnectFirstRunModal';
 
-jest.mock('../../../../../components/ui', () => {
-  const { createElement, type ReactNode } = jest.requireActual('react');
-  return {
-    Modal: ({
-      open,
-      title,
-      description,
-      action,
-      closable,
-    }: {
-      open: boolean;
-      title?: string;
-      description?: ReactNode;
-      action?: ReactNode;
-      closable?: boolean;
-    }) =>
-      open
-        ? createElement(
-            'div',
-            { 'data-testid': 'modal', 'data-closable': closable },
-            title && createElement('h5', null, title),
-            description &&
-              createElement('span', { 'data-testid': 'description' }, description),
-            action,
-          )
-        : null,
-  };
-});
+jest.mock('../../../../../components/ui', () => ({
+  Modal: ({
+    open,
+    title,
+    description,
+    action,
+    closable,
+  }: {
+    open: boolean;
+    title?: string;
+    description?: React.ReactNode;
+    action?: React.ReactNode;
+    closable?: boolean;
+  }) =>
+    open ? (
+      <div data-testid="modal" data-closable={closable}>
+        {title && <h5>{title}</h5>}
+        {description && <span data-testid="description">{description}</span>}
+        {action}
+      </div>
+    ) : null,
+}));
 
 describe('ConnectFirstRunModal', () => {
   const mockOnOpenProfile = jest.fn();
@@ -66,19 +59,20 @@ describe('ConnectFirstRunModal', () => {
     ).toBeInTheDocument();
   });
 
-  it('has no close button (closable is false)', () => {
+  it('has no close button (closable is not set, defaulting to false)', () => {
     render(
       <ConnectFirstRunModal open={true} onOpenProfile={mockOnOpenProfile} />,
     );
     const modal = screen.getByTestId('modal');
-    expect(modal).toHaveAttribute('data-closable', 'false');
+    // ConnectFirstRunModal does not pass closable — Modal defaults to false.
+    expect(modal).not.toHaveAttribute('data-closable', 'true');
   });
 
-  it('calls onOpenProfile when the CTA button is clicked', async () => {
+  it('calls onOpenProfile when the CTA button is clicked', () => {
     render(
       <ConnectFirstRunModal open={true} onOpenProfile={mockOnOpenProfile} />,
     );
-    await userEvent.click(
+    fireEvent.click(
       screen.getByRole('button', { name: /open agent profile/i }),
     );
     expect(mockOnOpenProfile).toHaveBeenCalledTimes(1);

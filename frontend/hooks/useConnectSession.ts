@@ -73,13 +73,17 @@ export const useConnectSession = () => {
   // first-run modal flow. `undefined` entries are treated as first-run.
   const isFirstRunComplete =
     storeState !== undefined &&
-    (storeState.connect?.firstRunCompleted?.[serviceConfigId ?? ''] ?? false) ===
-      true;
+    (storeState.connect?.firstRunCompleted?.[serviceConfigId ?? ''] ??
+      false) === true;
 
   const [dismissed, setDismissed] = useState(false);
 
   const enabled = Boolean(
-    isConnect && isRunning && isServerReady && serviceConfigId && isFirstRunComplete,
+    isConnect &&
+      isRunning &&
+      isServerReady &&
+      serviceConfigId &&
+      isFirstRunComplete,
   );
 
   const { data, isFetching, refetch } = useQuery({

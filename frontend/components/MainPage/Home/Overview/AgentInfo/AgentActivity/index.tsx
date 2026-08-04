@@ -44,8 +44,7 @@ export const AgentActivity = () => {
   const { isEpochTargetMet } = useRewardContext();
   // Connect only: while the agent runs, the activity strip points at the
   // agent profile for new Claude Code sessions instead of rounds.
-  const { showRunningInfo: isConnectRunning, isFirstRun } =
-    useConnectSession();
+  const { showRunningInfo: isConnectRunning, isFirstRun } = useConnectSession();
   const {
     value: isModalOpen,
     setTrue: showModal,
