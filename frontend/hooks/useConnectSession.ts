@@ -11,6 +11,7 @@ import { ConnectSessionResult } from '@/types';
 import { useAgentRunning } from './useAgentRunning';
 import { useElectronApi } from './useElectronApi';
 import { useServices } from './useServices';
+import { useStore } from './useStore';
 
 /**
  * Which error state to surface for the Connect session:
@@ -54,7 +55,8 @@ export const useConnectSession = () => {
   const { selectedAgentType, selectedService, deploymentDetails } =
     useServices();
   const { isAnotherAgentRunning } = useAgentRunning();
-  const { connect } = useElectronApi();
+  const { connect, store } = useElectronApi();
+  const { storeState } = useStore();
   const queryClient = useQueryClient();
 
   const isConnect = selectedAgentType === AgentMap.Connect;
@@ -67,10 +69,17 @@ export const useConnectSession = () => {
     Object.keys(deploymentDetails?.healthcheck || {}).length > 0;
   const serviceConfigId = selectedService?.service_config_id;
 
+  // First-run gate: suppress auto-launch until the user has completed the
+  // first-run modal flow. `undefined` entries are treated as first-run.
+  const isFirstRunComplete =
+    storeState !== undefined &&
+    (storeState.connect?.firstRunCompleted?.[serviceConfigId ?? ''] ?? false) ===
+      true;
+
   const [dismissed, setDismissed] = useState(false);
 
   const enabled = Boolean(
-    isConnect && isRunning && isServerReady && serviceConfigId,
+    isConnect && isRunning && isServerReady && serviceConfigId && isFirstRunComplete,
   );
 
   const { data, isFetching, refetch } = useQuery({
@@ -132,10 +141,29 @@ export const useConnectSession = () => {
     !isAnotherAgentRunning;
   const showRunningInfo = isConnect && isRunning;
 
+  // First-run state: agent is running but has not yet completed first-run flow.
+  const isFirstRun =
+    isConnect && isRunning && storeState !== undefined && !isFirstRunComplete;
+  // Show the modal only when the agent is ready (server up, has a config id).
+  const showFirstRunModal =
+    isFirstRun && Boolean(isServerReady && serviceConfigId);
+
+  const markFirstRunComplete = useCallback(() => {
+    if (!serviceConfigId) return;
+    const existing = storeState?.connect?.firstRunCompleted ?? {};
+    store?.set?.('connect.firstRunCompleted', {
+      ...existing,
+      [serviceConfigId]: true,
+    });
+  }, [store, serviceConfigId, storeState?.connect?.firstRunCompleted]);
+
   return {
     isConnect,
     showStartInfo,
     showRunningInfo,
+    isFirstRun,
+    showFirstRunModal,
+    markFirstRunComplete,
     errorKind: error?.kind ?? null,
     errorMessage: error?.message,
     isLaunching: isFetching,
