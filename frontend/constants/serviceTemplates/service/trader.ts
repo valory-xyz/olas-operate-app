@@ -37,7 +37,11 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
       fund_requirements: {
         [ethers.constants.AddressZero]: {
           agent: parseEther(2),
-          safe: parseEther(8),
+          // Matches the `safe` topup in the agent package's funds_manager
+          // overrides (OPE-1853). Raised 8 -> 10 because the omenstrat staking
+          // contracts now require 16 mech req/day instead of 8, doubling xDAI
+          // burn while redemptions still land days later.
+          safe: parseEther(10),
         },
       },
     },
