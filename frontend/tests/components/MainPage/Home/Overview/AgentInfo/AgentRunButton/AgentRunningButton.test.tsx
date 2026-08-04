@@ -1,10 +1,14 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { act } from 'react';
 
+import { AgentRunningButton } from '../../../../../../../components/MainPage/Home/Overview/AgentInfo/AgentRunButton/AgentRunningButton';
 import { FIVE_SECONDS_INTERVAL } from '../../../../../../../constants';
 import { MiddlewareDeploymentStatusMap } from '../../../../../../../constants/deployment';
 import { REACT_QUERY_KEYS } from '../../../../../../../constants/reactQueryKeys';
-import { DEFAULT_SERVICE_CONFIG_ID, makeService } from '../../../../../../helpers/factories';
+import {
+  DEFAULT_SERVICE_CONFIG_ID,
+  makeService,
+} from '../../../../../../helpers/factories';
 
 // ---------------------------------------------------------------------------
 // Module mocks
@@ -16,7 +20,9 @@ jest.mock(
   () => require('../../../../../../mocks/ethersMulticall').ethersMulticallMock,
 );
 /* eslint-enable @typescript-eslint/no-var-requires */
-jest.mock('../../../../../../../constants/providers', () => ({ PROVIDERS: {} }));
+jest.mock('../../../../../../../constants/providers', () => ({
+  PROVIDERS: {},
+}));
 
 const mockRefetchQueries = jest.fn().mockResolvedValue(undefined);
 jest.mock('@tanstack/react-query', () => ({
@@ -43,15 +49,14 @@ jest.mock('../../../../../../../hooks/useServices', () => ({
   }),
 }));
 
-const mockStopDeployment = jest.fn().mockResolvedValue({ status: 'stopped', nodes: [] });
+const mockStopDeployment = jest
+  .fn()
+  .mockResolvedValue({ status: 'stopped', nodes: [] });
 jest.mock('../../../../../../../service/Services', () => ({
-  ServicesService: { stopDeployment: (...args: unknown[]) => mockStopDeployment(...args) },
+  ServicesService: {
+    stopDeployment: (...args: unknown[]) => mockStopDeployment(...args),
+  },
 }));
-
-// Must import after all jest.mock calls
-const { AgentRunningButton } =
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  require('../../../../../../../components/MainPage/Home/Overview/AgentInfo/AgentRunButton/AgentRunningButton');
 
 describe('AgentRunningButton', () => {
   beforeEach(() => {
@@ -67,7 +72,9 @@ describe('AgentRunningButton', () => {
 
   it('renders the Pause Agent button', () => {
     render(<AgentRunningButton />);
-    expect(screen.getByRole('button', { name: 'Pause Agent' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Pause Agent' }),
+    ).toBeInTheDocument();
   });
 
   it('calls stopDeployment when Pause Agent is clicked', async () => {
@@ -129,7 +136,9 @@ describe('AgentRunningButton', () => {
       fireEvent.click(screen.getByRole('button', { name: 'Pause Agent' }));
     });
 
-    expect(mockShowNotification).toHaveBeenCalledWith('Error while stopping agent');
+    expect(mockShowNotification).toHaveBeenCalledWith(
+      'Error while stopping agent',
+    );
 
     await act(async () => {
       jest.advanceTimersByTime(FIVE_SECONDS_INTERVAL);
