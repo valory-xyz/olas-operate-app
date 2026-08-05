@@ -17,6 +17,16 @@ import {
 import { emitPearlStoreDelete, emitPearlStoreSet } from './pearlStoreEventBus';
 import { BACKEND_BOUND_KEYS, ELECTRON_NATIVE_KEYS } from './pearlStoreKeys';
 
+// Module-level write queue — accumulates failed backend writes within a session.
+// Persisted to electron-store on each failure so it survives restarts.
+// Reset on process start; cross-session persistence is via electron-store.
+let pendingWriteQueue: Array<{ key: string; value: unknown }> = [];
+
+/** Reset the in-memory write queue. Used by tests only. */
+export const resetPendingWriteQueue = () => {
+  pendingWriteQueue = [];
+};
+
 type ElectronApiContextProps = {
   getAppVersion?: () => Promise<string>;
   setIsAppLoaded?: (isLoaded: boolean) => void;
@@ -332,6 +342,35 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
             return StoreService.setStoreKey(key, value).catch((error) => {
               logStoreEvent(`Failed to persist key '${key}': ${error}`);
               console.error(`Failed to persist store key '${key}':`, error);
+
+              // Queue the failed write for flush on next launch.
+              pendingWriteQueue.push({ key, value });
+
+              // Persist queue to electron-store via raw IPC (not the store.set
+              // abstraction — we are inside it; calling it would recurse).
+              const rawStoreSet = getElectronApiFunction(
+                'store.set',
+                true,
+              ) as
+                | ((k: string, v: unknown) => Promise<void>)
+                | undefined;
+              if (rawStoreSet) {
+                rawStoreSet('pendingStoreWrites', [
+                  ...pendingWriteQueue,
+                ]).catch((queueError) => {
+                  logStoreEvent(
+                    `Failed to persist write queue: ${queueError}`,
+                  );
+                  console.error(
+                    'Failed to persist pending write queue:',
+                    queueError,
+                  );
+                });
+              }
+
+              logStoreEvent(
+                `Enqueued failed write for '${key}' (${pendingWriteQueue.length} pending)`,
+              );
             });
           },
           delete: (key: string) => {
