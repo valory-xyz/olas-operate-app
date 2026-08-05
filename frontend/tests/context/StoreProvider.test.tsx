@@ -292,6 +292,163 @@ describe('StoreProvider', () => {
     });
   });
 
+  describe('flush pending writes', () => {
+    const mockSetStoreKey = StoreService.setStoreKey as jest.Mock;
+
+    /** Wrapper that returns pending writes from electron-store get. */
+    const makeFlushWrapper = (
+      pendingWrites: Array<{ key: string; value: unknown }>,
+    ) => {
+      const storeSet = jest.fn().mockResolvedValue(undefined);
+      const Wrapper = ({ children }: PropsWithChildren) => {
+        const electron = {
+          store: {
+            get: jest.fn().mockImplementation((key: string) => {
+              if (key === 'pendingStoreWrites') return Promise.resolve(pendingWrites);
+              if (key === 'pearlStoreMigrationComplete') return Promise.resolve(true);
+              if (key === 'pearlStoreAutoRunRepaired') return Promise.resolve(true);
+              return Promise.resolve(undefined);
+            }),
+            set: storeSet,
+          },
+        };
+        return createElement(
+          ElectronApiContext.Provider,
+          { value: electron },
+          createElement(StoreProvider, null, children),
+        );
+      };
+      return { Wrapper, storeSet };
+    };
+
+    beforeEach(() => {
+      mockSetStoreKey.mockResolvedValue(undefined);
+    });
+
+    it('flushes pending writes to backend before hydration', async () => {
+      const { Wrapper, storeSet } = makeFlushWrapper([
+        { key: 'autoRun', value: { enabled: false } },
+      ]);
+      mockGetStore.mockResolvedValue({ autoRun: { enabled: false } });
+
+      const { result } = renderHook(() => useContext(StoreContext), {
+        wrapper: Wrapper,
+      });
+
+      await waitFor(() => {
+        expect(result.current.storeState).toBeDefined();
+      });
+
+      // setStoreKey should be called for the pending write
+      expect(mockSetStoreKey).toHaveBeenCalledWith('autoRun', {
+        enabled: false,
+      });
+
+      // Queue should be cleared after successful flush
+      expect(storeSet).toHaveBeenCalledWith('pendingStoreWrites', []);
+    });
+
+    it('clears queue after all writes succeed', async () => {
+      const { Wrapper, storeSet } = makeFlushWrapper([
+        { key: 'autoRun', value: { enabled: false } },
+        { key: 'lastSelectedServiceConfigId', value: 'svc-2' },
+      ]);
+      mockGetStore.mockResolvedValue({});
+
+      const { result } = renderHook(() => useContext(StoreContext), {
+        wrapper: Wrapper,
+      });
+
+      await waitFor(() => {
+        expect(result.current.storeState).toBeDefined();
+      });
+
+      expect(mockSetStoreKey).toHaveBeenCalledWith('autoRun', {
+        enabled: false,
+      });
+      expect(mockSetStoreKey).toHaveBeenCalledWith(
+        'lastSelectedServiceConfigId',
+        'svc-2',
+      );
+      expect(storeSet).toHaveBeenCalledWith('pendingStoreWrites', []);
+    });
+
+    it('keeps failed entries in queue on partial flush failure', async () => {
+      const { Wrapper, storeSet } = makeFlushWrapper([
+        { key: 'autoRun', value: { enabled: false } },
+        { key: 'lastSelectedServiceConfigId', value: 'svc-2' },
+      ]);
+      mockSetStoreKey
+        .mockResolvedValueOnce(undefined) // autoRun succeeds
+        .mockRejectedValueOnce(new Error('still down')); // lastSelectedServiceConfigId fails
+      mockGetStore.mockResolvedValue({});
+
+      const consoleSpy = jest
+        .spyOn(console, 'warn')
+        .mockImplementation(() => {});
+
+      const { result } = renderHook(() => useContext(StoreContext), {
+        wrapper: Wrapper,
+      });
+
+      await waitFor(() => {
+        expect(result.current.storeState).toBeDefined();
+      });
+
+      // Queue should contain only the failed entry
+      expect(storeSet).toHaveBeenCalledWith('pendingStoreWrites', [
+        { key: 'lastSelectedServiceConfigId', value: 'svc-2' },
+      ]);
+
+      consoleSpy.mockRestore();
+    });
+
+    it('skips flush and proceeds to hydration when queue is empty', async () => {
+      const { Wrapper } = makeFlushWrapper([]);
+      mockGetStore.mockResolvedValue({ autoRun: { enabled: true } });
+
+      const { result } = renderHook(() => useContext(StoreContext), {
+        wrapper: Wrapper,
+      });
+
+      await waitFor(() => {
+        expect(result.current.storeState).toEqual({
+          autoRun: { enabled: true },
+        });
+      });
+
+      // No setStoreKey calls from flush (only hydration)
+      expect(mockSetStoreKey).not.toHaveBeenCalled();
+    });
+
+    it('proceeds to hydration even when flush fails entirely', async () => {
+      const { Wrapper } = makeFlushWrapper([
+        { key: 'autoRun', value: { enabled: false } },
+      ]);
+      mockSetStoreKey.mockRejectedValue(new Error('backend still down'));
+      mockGetStore.mockResolvedValue({ autoRun: { enabled: true } });
+
+      const consoleSpy = jest
+        .spyOn(console, 'warn')
+        .mockImplementation(() => {});
+
+      const { result } = renderHook(() => useContext(StoreContext), {
+        wrapper: Wrapper,
+      });
+
+      // Hydration should still complete with backend data
+      await waitFor(() => {
+        expect(result.current.storeState).toEqual({
+          autoRun: { enabled: true },
+        });
+      });
+
+      expect(mockGetStore).toHaveBeenCalled();
+
+      consoleSpy.mockRestore();
+    });
+  });
+
   describe('migration', () => {
     const mockSetStoreKey = StoreService.setStoreKey as jest.Mock;
 

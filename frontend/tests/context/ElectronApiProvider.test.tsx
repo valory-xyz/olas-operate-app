@@ -5,6 +5,7 @@ import { createElement, PropsWithChildren, useContext } from 'react';
 import {
   ElectronApiContext,
   ElectronApiProvider,
+  resetPendingWriteQueue,
 } from '../../context/ElectronApiProvider';
 import {
   emitPearlStoreDelete,
@@ -238,6 +239,66 @@ describe('ElectronApiProvider', () => {
         "Failed to persist store key 'autoRun':",
         writeError,
       );
+
+      consoleSpy.mockRestore();
+    });
+
+    it('queues failed write to pendingStoreWrites via raw IPC', async () => {
+      resetPendingWriteQueue();
+      const { result, mockApi } = setupProvider();
+      mockApi.store.set.mockResolvedValue(undefined);
+      mockSetStoreKey.mockRejectedValueOnce(new Error('Failed to fetch'));
+
+      const consoleSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
+
+      await result.current.store?.set?.('autoRun', { enabled: false });
+
+      // Raw IPC store.set should be called with the pending queue
+      expect(mockApi.store.set).toHaveBeenCalledWith('pendingStoreWrites', [
+        { key: 'autoRun', value: { enabled: false } },
+      ]);
+
+      consoleSpy.mockRestore();
+    });
+
+    it('does not queue when backend write succeeds', async () => {
+      resetPendingWriteQueue();
+      const { result, mockApi } = setupProvider();
+      mockSetStoreKey.mockResolvedValue(undefined);
+
+      await result.current.store?.set?.('autoRun', { enabled: true });
+
+      // Raw IPC store.set should NOT be called with pendingStoreWrites
+      const pendingCalls = mockApi.store.set.mock.calls.filter(
+        (call: unknown[]) => call[0] === 'pendingStoreWrites',
+      );
+      expect(pendingCalls).toHaveLength(0);
+    });
+
+    it('accumulates multiple failed writes in the queue', async () => {
+      resetPendingWriteQueue();
+      const { result, mockApi } = setupProvider();
+      mockApi.store.set.mockResolvedValue(undefined);
+      mockSetStoreKey.mockRejectedValue(new Error('Failed to fetch'));
+
+      const consoleSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
+
+      await result.current.store?.set?.('autoRun', { enabled: false });
+      await result.current.store?.set?.('lastSelectedServiceConfigId', 'svc-2');
+
+      // Second IPC call should contain both entries
+      const pendingCalls = mockApi.store.set.mock.calls.filter(
+        (call: unknown[]) => call[0] === 'pendingStoreWrites',
+      );
+      expect(pendingCalls).toHaveLength(2);
+      expect(pendingCalls[1][1]).toEqual([
+        { key: 'autoRun', value: { enabled: false } },
+        { key: 'lastSelectedServiceConfigId', value: 'svc-2' },
+      ]);
 
       consoleSpy.mockRestore();
     });
