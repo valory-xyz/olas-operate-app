@@ -143,12 +143,57 @@ export const StoreProvider = ({ children }: PropsWithChildren) => {
   // No polling — all writes originate in the frontend so state stays in sync.
   // Retries up to HYDRATION_MAX_RETRIES times on failure to avoid permanently
   // stuck state when the backend is briefly unavailable.
+  //
+  // Before hydration, flushes any pending writes that failed on a previous
+  // session (e.g. backend was down during shutdown). This ensures
+  // pearl_store.json reflects the user's last intent before getStore() reads it.
   useEffect(() => {
     if (hydrationAttempted.current) return;
     hydrationAttempted.current = true;
 
     let cancelled = false;
     let retryTimeout: ReturnType<typeof setTimeout>;
+
+    const flushPendingWrites = async () => {
+      const storeGet = store?.get;
+      const storeSet = store?.set;
+      if (!storeGet || !storeSet) return;
+
+      const queue = (await storeGet('pendingStoreWrites')) as
+        | Array<{ key: string; value: unknown }>
+        | undefined;
+
+      if (!queue || queue.length === 0) return;
+
+      log(`Flushing ${queue.length} pending write(s) to backend`);
+      console.warn(
+        `[StoreProvider] Flushing ${queue.length} pending write(s) from previous session`,
+      );
+
+      const results = await Promise.allSettled(
+        queue.map(({ key, value }) => StoreService.setStoreKey(key, value)),
+      );
+
+      const failed = queue.filter(
+        (_, i) => results[i].status === 'rejected',
+      );
+      const succeededCount = results.filter(
+        (r) => r.status === 'fulfilled',
+      ).length;
+
+      if (failed.length === 0) {
+        await storeSet('pendingStoreWrites', []);
+        log(`Flushed ${succeededCount} pending write(s) successfully`);
+      } else {
+        await storeSet('pendingStoreWrites', failed);
+        log(
+          `Flushed ${succeededCount} write(s), ${failed.length} still pending`,
+        );
+        console.warn(
+          `[StoreProvider] ${failed.length} pending write(s) could not be flushed`,
+        );
+      }
+    };
 
     const attemptHydration = (retriesLeft: number) => {
       const attempt = HYDRATION_MAX_RETRIES - retriesLeft + 1;
@@ -209,7 +254,18 @@ export const StoreProvider = ({ children }: PropsWithChildren) => {
         });
     };
 
-    attemptHydration(HYDRATION_MAX_RETRIES);
+    // Flush first, then hydrate — flush failure is non-fatal.
+    flushPendingWrites()
+      .catch((error) => {
+        const msg = error instanceof Error ? error.message : String(error);
+        log(`Flush failed: ${msg}`);
+        console.error('[StoreProvider] Flush pending writes failed:', error);
+      })
+      .then(() => {
+        if (!cancelled) {
+          attemptHydration(HYDRATION_MAX_RETRIES);
+        }
+      });
 
     return () => {
       cancelled = true;
