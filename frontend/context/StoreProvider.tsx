@@ -166,7 +166,7 @@ export const StoreProvider = ({ children }: PropsWithChildren) => {
       if (!queue || queue.length === 0) return;
 
       log(`Flushing ${queue.length} pending write(s) to backend`);
-      console.warn(
+      console.error(
         `[StoreProvider] Flushing ${queue.length} pending write(s) from previous session`,
       );
 
@@ -174,9 +174,7 @@ export const StoreProvider = ({ children }: PropsWithChildren) => {
         queue.map(({ key, value }) => StoreService.setStoreKey(key, value)),
       );
 
-      const failed = queue.filter(
-        (_, i) => results[i].status === 'rejected',
-      );
+      const failed = queue.filter((_, i) => results[i].status === 'rejected');
       const succeededCount = results.filter(
         (r) => r.status === 'fulfilled',
       ).length;
@@ -189,7 +187,7 @@ export const StoreProvider = ({ children }: PropsWithChildren) => {
         log(
           `Flushed ${succeededCount} write(s), ${failed.length} still pending`,
         );
-        console.warn(
+        console.error(
           `[StoreProvider] ${failed.length} pending write(s) could not be flushed`,
         );
       }

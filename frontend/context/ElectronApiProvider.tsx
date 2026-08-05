@@ -348,24 +348,21 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
 
               // Persist queue to electron-store via raw IPC (not the store.set
               // abstraction — we are inside it; calling it would recurse).
-              const rawStoreSet = getElectronApiFunction(
-                'store.set',
-                true,
-              ) as
+              const rawStoreSet = getElectronApiFunction('store.set', true) as
                 | ((k: string, v: unknown) => Promise<void>)
                 | undefined;
               if (rawStoreSet) {
-                rawStoreSet('pendingStoreWrites', [
-                  ...pendingWriteQueue,
-                ]).catch((queueError) => {
-                  logStoreEvent(
-                    `Failed to persist write queue: ${queueError}`,
-                  );
-                  console.error(
-                    'Failed to persist pending write queue:',
-                    queueError,
-                  );
-                });
+                rawStoreSet('pendingStoreWrites', [...pendingWriteQueue]).catch(
+                  (queueError) => {
+                    logStoreEvent(
+                      `Failed to persist write queue: ${queueError}`,
+                    );
+                    console.error(
+                      'Failed to persist pending write queue:',
+                      queueError,
+                    );
+                  },
+                );
               }
 
               logStoreEvent(

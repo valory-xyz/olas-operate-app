@@ -304,9 +304,12 @@ describe('StoreProvider', () => {
         const electron = {
           store: {
             get: jest.fn().mockImplementation((key: string) => {
-              if (key === 'pendingStoreWrites') return Promise.resolve(pendingWrites);
-              if (key === 'pearlStoreMigrationComplete') return Promise.resolve(true);
-              if (key === 'pearlStoreAutoRunRepaired') return Promise.resolve(true);
+              if (key === 'pendingStoreWrites')
+                return Promise.resolve(pendingWrites);
+              if (key === 'pearlStoreMigrationComplete')
+                return Promise.resolve(true);
+              if (key === 'pearlStoreAutoRunRepaired')
+                return Promise.resolve(true);
               return Promise.resolve(undefined);
             }),
             set: storeSet,
@@ -384,7 +387,7 @@ describe('StoreProvider', () => {
       mockGetStore.mockResolvedValue({});
 
       const consoleSpy = jest
-        .spyOn(console, 'warn')
+        .spyOn(console, 'error')
         .mockImplementation(() => {});
 
       const { result } = renderHook(() => useContext(StoreContext), {
@@ -429,7 +432,7 @@ describe('StoreProvider', () => {
       mockGetStore.mockResolvedValue({ autoRun: { enabled: true } });
 
       const consoleSpy = jest
-        .spyOn(console, 'warn')
+        .spyOn(console, 'error')
         .mockImplementation(() => {});
 
       const { result } = renderHook(() => useContext(StoreContext), {
