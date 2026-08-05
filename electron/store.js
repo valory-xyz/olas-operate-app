@@ -19,6 +19,10 @@ const schema = {
   pearlStoreMigrationComplete: { type: 'boolean', default: false },
   // Set to true once the autoRun.enabled repair has been checked.
   pearlStoreAutoRunRepaired: { type: 'boolean', default: false },
+  // Queue of backend-bound writes that failed (e.g. backend unreachable during
+  // shutdown). Flushed to the backend on the next successful startup before
+  // hydration reads pearl_store.json.
+  pendingStoreWrites: { type: 'array', default: [] },
 };
 
 /**
