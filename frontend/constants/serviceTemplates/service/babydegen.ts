@@ -15,10 +15,10 @@ import { STAKING_PROGRAM_IDS } from '../../stakingProgram';
 import { X402_ENABLED_FLAGS } from '../../x402';
 import { KPI_DESC_PREFIX } from '../constants';
 
-// Modius + Optimus share this (reverted to the version on `staging`; the new
-// staking contracts for these agents are hidden for now). Basius ships the
-// newer build with its own hash below.
-const BABYDEGEN_COMMON_TEMPLATE: Pick<
+// Modius only (reverted to the version on `staging`; the new staking contracts
+// for that agent are hidden for now). Optimus and Basius each ship their own
+// newer build with their own hash below.
+const MODIUS_TEMPLATE_RELEASE: Pick<
   ServiceTemplate,
   'hash' | 'service_version' | 'agent_release'
 > = {
@@ -237,7 +237,7 @@ export const MODIUS_SERVICE_TEMPLATE: ServiceTemplate = {
       provision_type: EnvProvisionType.FIXED,
     },
   },
-  ...BABYDEGEN_COMMON_TEMPLATE,
+  ...MODIUS_TEMPLATE_RELEASE,
 } as const;
 
 export const OPTIMUS_SERVICE_TEMPLATE: ServiceTemplate = {
