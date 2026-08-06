@@ -15,9 +15,9 @@ import { STAKING_PROGRAM_IDS } from '../../stakingProgram';
 import { X402_ENABLED_FLAGS } from '../../x402';
 import { KPI_DESC_PREFIX } from '../constants';
 
-// Modius + Optimus share this (reverted to the version on `staging`; the new
-// staking contracts for these agents are hidden for now). Basius ships the
-// newer build with its own hash below.
+// Modius uses this (reverted to the version on `staging`; the new staking
+// contracts for that agent are hidden for now). Optimus and Basius each ship
+// their own newer build with their own hash below.
 const BABYDEGEN_COMMON_TEMPLATE: Pick<
   ServiceTemplate,
   'hash' | 'service_version' | 'agent_release'
@@ -40,14 +40,14 @@ const BASIUS_TEMPLATE_RELEASE: Pick<
   ServiceTemplate,
   'hash' | 'service_version' | 'agent_release'
 > = {
-  hash: 'bafybeigoetjxteip6ic7fryr3sikbl4f7iuannkqegf5fgurlgiibf574e',
-  service_version: 'v0.12.4',
+  hash: 'bafybeif4vwaxgn7mjxsbb2gimr7dqws6glnptexfwvq53pexox37wi4rvu',
+  service_version: 'v0.12.5',
   agent_release: {
     is_aea: true,
     repository: {
       owner: 'valory-xyz',
       name: 'optimus',
-      version: 'v0.12.4',
+      version: 'v0.12.5',
     },
   },
 };
@@ -59,14 +59,14 @@ const OPTIMUS_TEMPLATE_RELEASE: Pick<
   ServiceTemplate,
   'hash' | 'service_version' | 'agent_release'
 > = {
-  hash: 'bafybeieauvbqf4mlsxfnt5yzs4hmhae43nkca2rsnklnyundzpqj42jyt4',
-  service_version: 'v0.12.4',
+  hash: 'bafybeigxjo3luwej3eissqwlowe6vez3toa72wq63rqxjfbjkljygs5ov4',
+  service_version: 'v0.12.5',
   agent_release: {
     is_aea: true,
     repository: {
       owner: 'valory-xyz',
       name: 'optimus',
-      version: 'v0.12.4',
+      version: 'v0.12.5',
     },
   },
 };
