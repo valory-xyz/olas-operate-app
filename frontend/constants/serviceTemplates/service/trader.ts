@@ -37,7 +37,8 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
       fund_requirements: {
         [ethers.constants.AddressZero]: {
           agent: parseEther(2),
-          safe: parseEther(8),
+          // Matches the `safe` topup in the agent package's funds_manager
+          safe: parseEther(10),
         },
       },
     },
