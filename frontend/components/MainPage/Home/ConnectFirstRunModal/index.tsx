@@ -1,9 +1,7 @@
-import { CheckCircleFilled } from '@ant-design/icons';
 import { Button } from 'antd';
-import { LuArrowUpRight } from 'react-icons/lu';
 
+import { SuccessOutlined } from '@/components/custom-icons';
 import { Modal } from '@/components/ui';
-import { COLOR } from '@/constants';
 
 type ConnectFirstRunModalProps = {
   open: boolean;
@@ -17,19 +15,21 @@ export const ConnectFirstRunModal = ({
   <Modal
     open={open}
     size="medium"
-    header={
-      <CheckCircleFilled style={{ fontSize: 80, color: COLOR.SUCCESS }} />
-    }
+    header={<SuccessOutlined />}
     title="Your agent is ready"
     description="Open the Agent Profile to configure and start your first session in Claude Code."
+    // Non-dismissable: the CTA is the only way out. `closable` already defaults
+    // to false; mask/ESC are inert only because no `onCancel` is passed, so pin
+    // them explicitly rather than relying on that.
+    maskClosable={false}
+    keyboard={false}
     action={
       <Button
         type="primary"
-        size="middle"
-        className="mt-16"
+        size="large"
+        block
+        className="mt-32"
         onClick={onOpenProfile}
-        iconPosition="end"
-        icon={<LuArrowUpRight />}
       >
         Open Agent Profile
       </Button>
