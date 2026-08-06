@@ -18,7 +18,7 @@ import { KPI_DESC_PREFIX } from '../constants';
 // Modius uses this (reverted to the version on `staging`; the new staking
 // contracts for that agent are hidden for now). Optimus and Basius each ship
 // their own newer build with their own hash below.
-const BABYDEGEN_COMMON_TEMPLATE: Pick<
+const MODIUS_TEMPLATE_RELEASE: Pick<
   ServiceTemplate,
   'hash' | 'service_version' | 'agent_release'
 > = {
