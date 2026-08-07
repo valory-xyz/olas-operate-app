@@ -11,14 +11,14 @@ import { X402_ENABLED_FLAGS } from '../../x402';
 import { KPI_DESC_PREFIX } from '../constants';
 
 export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
-  hash: 'bafybeigfo273qta5ofgmidchoy6zy5ai464xi4prydsp4gen2mhgiy7rg4',
-  service_version: 'v0.40.1',
+  hash: 'bafybeibacz7xudlx3x42bdlntudom2ap37ecjjuhwminh66vv7xgj55poe',
+  service_version: 'v0.40.3',
   agent_release: {
     is_aea: true,
     repository: {
       owner: 'valory-xyz',
       name: 'trader',
-      version: 'v0.40.1',
+      version: 'v0.40.3',
     },
   },
   agentType: AgentMap.PredictTrader,
@@ -37,7 +37,8 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
       fund_requirements: {
         [ethers.constants.AddressZero]: {
           agent: parseEther(2),
-          safe: parseEther(8),
+          // Matches the `safe` topup in the agent package's funds_manager
+          safe: parseEther(10),
         },
       },
     },
@@ -144,14 +145,14 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
 } as const;
 
 export const PREDICT_POLYMARKET_SERVICE_TEMPLATE: ServiceTemplate = {
-  hash: 'bafybeigmltj5g6ewucxtctvptbbkfpapntpqmq5n6mshfwsbvz776htrzy',
-  service_version: 'v0.40.2',
+  hash: 'bafybeihxgs2r46hcmius2ftqjqk32zxex6pex2ejezb2djxlyrhanlyxda',
+  service_version: 'v0.40.3',
   agent_release: {
     is_aea: true,
     repository: {
       owner: 'valory-xyz',
       name: 'trader',
-      version: 'v0.40.2',
+      version: 'v0.40.3',
     },
   },
   agentType: AgentMap.Polystrat,

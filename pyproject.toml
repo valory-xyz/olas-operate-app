@@ -1,6 +1,6 @@
 [project]
 name = "olas-operate-app"
-version = "1.8.5-rc12"
+version = "1.9.1-rc0"
 description = ""
 authors = [
     { name = "David Vilela", email = "dvilelaf@gmail.com" },

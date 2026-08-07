@@ -48,7 +48,7 @@ export const AGENT_UI_RELEASES: Partial<Record<AgentType, AgentUiRelease>> = {
   [AgentMap.Basius]: {
     owner: 'valory-xyz',
     name: AGENT_UI_MONOREPO,
-    version: 'v0.2.0-basius',
+    version: 'v0.2.1-basius',
   },
   [AgentMap.AgentsFun]: {
     owner: 'valory-xyz',

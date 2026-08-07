@@ -4,9 +4,10 @@ import { RiRobot3Line } from 'react-icons/ri';
 import { TbId } from 'react-icons/tb';
 
 import { ContentTransition, Segmented } from '@/components/ui';
-import { useService } from '@/hooks';
+import { useConnectSession, useService } from '@/hooks';
 import { useServices } from '@/hooks/useServices';
 
+import { ConnectFirstRunModal } from './ConnectFirstRunModal';
 import { Overview } from './Overview/Overview';
 import { Profile } from './Profile/Profile';
 import { UnlockChatUiAlert } from './Profile/UnlockChatUiAlert';
@@ -50,6 +51,7 @@ export const Home = () => {
     selectedAgentConfig,
   } = useServices();
   const { isServiceActive } = useService(selectedService?.service_config_id);
+  const { showFirstRunModal, markFirstRunComplete } = useConnectSession();
 
   const [view, setView] = useState<View>('overview');
   const [hasVisitedProfile, setHasVisitedProfile] = useState(false);
@@ -131,6 +133,13 @@ export const Home = () => {
           isOpen={isUnlockChatUiModalOpen}
           onClose={() => setIsUnlockChatUiModalOpen(false)}
           onSkip={() => setView('profile')}
+        />
+        <ConnectFirstRunModal
+          open={showFirstRunModal}
+          onOpenProfile={() => {
+            markFirstRunComplete();
+            handleChangeView('profile');
+          }}
         />
       </Flex>
     </ContentTransition>
