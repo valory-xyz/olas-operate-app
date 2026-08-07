@@ -328,6 +328,13 @@ describe('StoreProvider', () => {
       mockSetStoreKey.mockResolvedValue(undefined);
     });
 
+    // Some cases install custom implementations; jest.clearAllMocks() does not
+    // clear those, so drop them before the next suite runs.
+    afterEach(() => {
+      mockSetStoreKey.mockReset();
+      mockGetStore.mockReset();
+    });
+
     it('flushes pending writes to backend before hydration', async () => {
       const { Wrapper, storeSet } = makeFlushWrapper([
         { key: 'autoRun', value: { enabled: false } },
@@ -349,6 +356,66 @@ describe('StoreProvider', () => {
 
       // Queue should be cleared after successful flush
       expect(storeSet).toHaveBeenCalledWith('pendingStoreWrites', []);
+    });
+
+    it('completes the flush before reading the store back', async () => {
+      const { Wrapper } = makeFlushWrapper([
+        { key: 'autoRun', value: { enabled: false } },
+      ]);
+
+      const callOrder: string[] = [];
+      mockSetStoreKey.mockImplementation(() => {
+        callOrder.push('setStoreKey');
+        return Promise.resolve(undefined);
+      });
+      mockGetStore.mockImplementation(() => {
+        callOrder.push('getStore');
+        return Promise.resolve({ autoRun: { enabled: false } });
+      });
+
+      const { result } = renderHook(() => useContext(StoreContext), {
+        wrapper: Wrapper,
+      });
+
+      await waitFor(() => {
+        expect(result.current.storeState).toBeDefined();
+      });
+
+      // Hydrating first would read the stale value the flush is there to fix.
+      expect(callOrder).toEqual(['setStoreKey', 'getStore']);
+    });
+
+    it('replays queued writes sequentially, not concurrently', async () => {
+      const { Wrapper } = makeFlushWrapper([
+        { key: 'autoRun', value: { enabled: false } },
+        { key: 'autoRun', value: { enabled: true } },
+      ]);
+      mockGetStore.mockResolvedValue({});
+
+      let inFlight = 0;
+      let maxInFlight = 0;
+      mockSetStoreKey.mockImplementation(() => {
+        inFlight += 1;
+        maxInFlight = Math.max(maxInFlight, inFlight);
+        return Promise.resolve().then(() => {
+          inFlight -= 1;
+        });
+      });
+
+      const { result } = renderHook(() => useContext(StoreContext), {
+        wrapper: Wrapper,
+      });
+
+      await waitFor(() => {
+        expect(result.current.storeState).toBeDefined();
+      });
+
+      // Overlapping writes to the same key would land in a random order.
+      expect(maxInFlight).toBe(1);
+      expect(mockSetStoreKey.mock.calls).toEqual([
+        ['autoRun', { enabled: false }],
+        ['autoRun', { enabled: true }],
+      ]);
     });
 
     it('clears queue after all writes succeed', async () => {

@@ -5,13 +5,17 @@ import { createElement, PropsWithChildren, useContext } from 'react';
 import {
   ElectronApiContext,
   ElectronApiProvider,
+  getPendingWriteQueue,
+  removeFlushedWrites,
   resetPendingWriteQueue,
+  seedPendingWriteQueue,
 } from '../../context/ElectronApiProvider';
 import {
   emitPearlStoreDelete,
   emitPearlStoreSet,
 } from '../../context/pearlStoreEventBus';
 import { StoreService } from '../../service/StoreService';
+import { makeElectronApiMock } from '../helpers/factories';
 
 // Mock StoreService and event bus — store.set/delete/clear now route through these.
 jest.mock('../../service/StoreService', () => ({
@@ -33,54 +37,7 @@ const mockDeleteStoreKey = StoreService.deleteStoreKey as jest.Mock;
 const mockEmitPearlStoreSet = emitPearlStoreSet as jest.Mock;
 const mockEmitPearlStoreDelete = emitPearlStoreDelete as jest.Mock;
 
-const buildMockElectronApi = () => ({
-  getAppVersion: jest.fn(),
-  setIsAppLoaded: jest.fn(),
-  closeApp: jest.fn(),
-  minimizeApp: jest.fn(),
-  setTrayIcon: jest.fn(),
-  ipcRenderer: {
-    send: jest.fn(),
-    on: jest.fn(),
-    invoke: jest.fn(),
-    removeListener: jest.fn(),
-  },
-  store: {
-    store: jest.fn(),
-    get: jest.fn(),
-    set: jest.fn(),
-    delete: jest.fn(),
-    clear: jest.fn(),
-  },
-  showNotification: jest.fn(),
-  saveLogs: jest.fn(),
-  saveLogsForSupport: jest.fn(),
-  cleanupSupportLogs: jest.fn(),
-  readFile: jest.fn(),
-  openPath: jest.fn(),
-  onRampWindow: {
-    show: jest.fn(),
-    close: jest.fn(),
-    transactionSuccess: jest.fn(),
-    transactionFailure: jest.fn(),
-  },
-  web3AuthWindow: {
-    show: jest.fn(),
-    close: jest.fn(),
-    authSuccess: jest.fn(),
-  },
-  web3AuthSwapOwnerWindow: {
-    show: jest.fn(),
-    close: jest.fn(),
-    swapSuccess: jest.fn(),
-    swapFailure: jest.fn(),
-  },
-  termsAndConditionsWindow: {
-    show: jest.fn(),
-  },
-  logEvent: jest.fn(),
-  nextLogError: jest.fn(),
-});
+const buildMockElectronApi = makeElectronApiMock;
 
 // store.set, store.delete, and store.clear are now wrapper functions that route
 // between Electron IPC and backend HTTP, so they won't be strict-equal to the
@@ -302,6 +259,106 @@ describe('ElectronApiProvider', () => {
 
       consoleSpy.mockRestore();
     });
+
+    it('drops a queued write once a later write for the same key succeeds', async () => {
+      resetPendingWriteQueue();
+      const { result, mockApi } = setupProvider();
+      mockApi.store.set.mockResolvedValue(undefined);
+
+      const consoleSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
+
+      mockSetStoreKey.mockRejectedValueOnce(new Error('Failed to fetch'));
+      await result.current.store?.set?.('autoRun', { enabled: false });
+
+      // Backend recovers and the user's newer value lands.
+      mockSetStoreKey.mockResolvedValueOnce(undefined);
+      await result.current.store?.set?.('autoRun', { enabled: true });
+
+      // Replaying the queued {enabled: false} would undo the write that landed.
+      expect(getPendingWriteQueue()).toEqual([]);
+      const pendingCalls = mockApi.store.set.mock.calls.filter(
+        (call: unknown[]) => call[0] === 'pendingStoreWrites',
+      );
+      expect(pendingCalls[pendingCalls.length - 1][1]).toEqual([]);
+
+      consoleSpy.mockRestore();
+    });
+
+    it('keeps only the latest value when the same key fails twice', async () => {
+      resetPendingWriteQueue();
+      const { result, mockApi } = setupProvider();
+      mockApi.store.set.mockResolvedValue(undefined);
+      mockSetStoreKey.mockRejectedValue(new Error('Failed to fetch'));
+
+      const consoleSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
+
+      await result.current.store?.set?.('autoRun', { enabled: false });
+      await result.current.store?.set?.('autoRun', { enabled: true });
+
+      // Replaying the stale {enabled: false} would undo the user's later choice.
+      expect(getPendingWriteQueue()).toEqual([
+        { key: 'autoRun', value: { enabled: true } },
+      ]);
+
+      consoleSpy.mockRestore();
+    });
+
+    it('merges a new failure with the queue seeded from a previous session', async () => {
+      resetPendingWriteQueue();
+      seedPendingWriteQueue([{ key: 'autoRun', value: { enabled: false } }]);
+      const { result, mockApi } = setupProvider();
+      mockApi.store.set.mockResolvedValue(undefined);
+      mockSetStoreKey.mockRejectedValue(new Error('Failed to fetch'));
+
+      const consoleSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
+
+      await result.current.store?.set?.('lastSelectedServiceConfigId', 'svc-2');
+
+      // The seeded entry must survive — persisting only the new write would
+      // silently drop the previous session's queue.
+      const pendingCalls = mockApi.store.set.mock.calls.filter(
+        (call: unknown[]) => call[0] === 'pendingStoreWrites',
+      );
+      expect(pendingCalls[0][1]).toEqual([
+        { key: 'autoRun', value: { enabled: false } },
+        { key: 'lastSelectedServiceConfigId', value: 'svc-2' },
+      ]);
+
+      consoleSpy.mockRestore();
+    });
+  });
+
+  describe('pending write queue helpers', () => {
+    it('removeFlushedWrites drops flushed entries and keeps newer ones', () => {
+      resetPendingWriteQueue();
+      const flushed = { key: 'autoRun', value: { enabled: false } };
+      const stillPending = {
+        key: 'lastSelectedServiceConfigId',
+        value: 'svc-2',
+      };
+      seedPendingWriteQueue([flushed, stillPending]);
+
+      expect(removeFlushedWrites([flushed])).toEqual([stillPending]);
+      expect(getPendingWriteQueue()).toEqual([stillPending]);
+    });
+
+    it('removeFlushedWrites keeps a re-queued entry for an already flushed key', () => {
+      resetPendingWriteQueue();
+      const flushed = { key: 'autoRun', value: { enabled: false } };
+      seedPendingWriteQueue([flushed]);
+
+      // A fresh failure for the same key while the flush was in flight.
+      const requeued = { key: 'autoRun', value: { enabled: true } };
+      seedPendingWriteQueue([requeued]);
+
+      expect(removeFlushedWrites([flushed])).toEqual([requeued]);
+    });
   });
 
   describe('store.delete routing', () => {
@@ -355,6 +412,27 @@ describe('ElectronApiProvider', () => {
         "Failed to delete store key 'autoRun':",
         deleteError,
       );
+
+      consoleSpy.mockRestore();
+    });
+
+    it('drops a queued write once the key is deleted successfully', async () => {
+      resetPendingWriteQueue();
+      const { result, mockApi } = setupProvider();
+      mockApi.store.set.mockResolvedValue(undefined);
+
+      const consoleSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
+
+      mockSetStoreKey.mockRejectedValueOnce(new Error('Failed to fetch'));
+      await result.current.store?.set?.('autoRun', { enabled: false });
+
+      mockDeleteStoreKey.mockResolvedValueOnce(undefined);
+      await result.current.store?.delete?.('autoRun');
+
+      // Replaying the queued write would resurrect the deleted key.
+      expect(getPendingWriteQueue()).toEqual([]);
 
       consoleSpy.mockRestore();
     });
