@@ -10,7 +10,12 @@ import {
 import { StoreService } from '@/service/StoreService';
 import type { PearlStore } from '@/types/ElectronApi';
 
-import { ElectronApiContext } from './ElectronApiProvider';
+import {
+  ElectronApiContext,
+  type PendingStoreWrite,
+  removeFlushedWrites,
+  seedPendingWriteQueue,
+} from './ElectronApiProvider';
 import {
   registerPearlStoreDeleteHandler,
   registerPearlStoreSetHandler,
@@ -160,35 +165,47 @@ export const StoreProvider = ({ children }: PropsWithChildren) => {
       if (!storeGet || !storeSet) return;
 
       const queue = (await storeGet('pendingStoreWrites')) as
-        | Array<{ key: string; value: unknown }>
+        | PendingStoreWrite[]
         | undefined;
 
       if (!queue || queue.length === 0) return;
+
+      // Adopt the previous session's queue before replaying it, so a write that
+      // fails later in this session merges with these entries rather than
+      // overwriting them on disk.
+      seedPendingWriteQueue(queue);
 
       log(`Flushing ${queue.length} pending write(s) to backend`);
       console.error(
         `[StoreProvider] Flushing ${queue.length} pending write(s) from previous session`,
       );
 
-      const results = await Promise.allSettled(
-        queue.map(({ key, value }) => StoreService.setStoreKey(key, value)),
-      );
+      // Replay sequentially, not concurrently — concurrent writes to the same
+      // key would land in a non-deterministic order.
+      const succeeded: PendingStoreWrite[] = [];
+      const failedKeys: string[] = [];
+      for (const entry of queue) {
+        try {
+          await StoreService.setStoreKey(entry.key, entry.value);
+          succeeded.push(entry);
+        } catch (error) {
+          const msg = error instanceof Error ? error.message : String(error);
+          failedKeys.push(entry.key);
+          log(`Flush failed for '${entry.key}': ${msg}`);
+        }
+      }
 
-      const failed = queue.filter((_, i) => results[i].status === 'rejected');
-      const succeededCount = results.filter(
-        (r) => r.status === 'fulfilled',
-      ).length;
+      const remaining = removeFlushedWrites(succeeded);
+      await storeSet('pendingStoreWrites', remaining);
 
-      if (failed.length === 0) {
-        await storeSet('pendingStoreWrites', []);
-        log(`Flushed ${succeededCount} pending write(s) successfully`);
+      if (failedKeys.length === 0) {
+        log(`Flushed ${succeeded.length} pending write(s) successfully`);
       } else {
-        await storeSet('pendingStoreWrites', failed);
         log(
-          `Flushed ${succeededCount} write(s), ${failed.length} still pending`,
+          `Flushed ${succeeded.length} write(s), ${failedKeys.length} still pending`,
         );
         console.error(
-          `[StoreProvider] ${failed.length} pending write(s) could not be flushed`,
+          `[StoreProvider] ${failedKeys.length} pending write(s) could not be flushed: ${failedKeys.join(', ')}`,
         );
       }
     };

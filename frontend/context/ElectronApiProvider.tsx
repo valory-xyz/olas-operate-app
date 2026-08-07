@@ -17,10 +17,39 @@ import {
 import { emitPearlStoreDelete, emitPearlStoreSet } from './pearlStoreEventBus';
 import { BACKEND_BOUND_KEYS, ELECTRON_NATIVE_KEYS } from './pearlStoreKeys';
 
+export type PendingStoreWrite = { key: string; value: unknown };
+
 // Module-level write queue — accumulates failed backend writes within a session.
 // Persisted to electron-store on each failure so it survives restarts.
-// Reset on process start; cross-session persistence is via electron-store.
-let pendingWriteQueue: Array<{ key: string; value: unknown }> = [];
+// Starts empty on process start and is seeded from electron-store by
+// StoreProvider's startup flush, so a failure later in this session merges with
+// the previous session's queue instead of overwriting it on disk.
+let pendingWriteQueue: PendingStoreWrite[] = [];
+
+/**
+ * Adopt writes persisted by a previous session into the in-memory queue.
+ * Called by StoreProvider once it has read `pendingStoreWrites` on startup.
+ */
+export const seedPendingWriteQueue = (entries: PendingStoreWrite[]) => {
+  pendingWriteQueue = [...entries];
+};
+
+/**
+ * Drop entries that were flushed to the backend successfully, keeping anything
+ * queued since the flush started. Compares by identity so a fresh failure for
+ * the same key (which replaced the seeded entry) is never dropped.
+ * Returns the resulting queue so the caller can persist it.
+ */
+export const removeFlushedWrites = (flushed: PendingStoreWrite[]) => {
+  const flushedEntries = new Set(flushed);
+  pendingWriteQueue = pendingWriteQueue.filter(
+    (entry) => !flushedEntries.has(entry),
+  );
+  return [...pendingWriteQueue];
+};
+
+/** Read the in-memory write queue. Used by tests only. */
+export const getPendingWriteQueue = () => [...pendingWriteQueue];
 
 /** Reset the in-memory write queue. Used by tests only. */
 export const resetPendingWriteQueue = () => {
@@ -233,6 +262,44 @@ const getElectronApiFunction = (
   return fn;
 };
 
+const logStoreEvent = (msg: string) => {
+  const fn = getElectronApiFunction('logEvent') as
+    | ((m: string) => void)
+    | undefined;
+  fn?.(`pearl_store: ${msg}`);
+};
+
+/**
+ * Persist the write queue to electron-store via raw IPC. Never goes through
+ * `store.set` — this runs inside that function's own callbacks, so routing back
+ * through it would recurse.
+ */
+const persistPendingWriteQueue = () => {
+  const rawStoreSet = getElectronApiFunction('store.set', true) as
+    | ((k: string, v: unknown) => Promise<void>)
+    | undefined;
+  if (!rawStoreSet) return;
+
+  rawStoreSet('pendingStoreWrites', [...pendingWriteQueue]).catch(
+    (queueError) => {
+      logStoreEvent(`Failed to persist write queue: ${queueError}`);
+      console.error('Failed to persist pending write queue:', queueError);
+    },
+  );
+};
+
+/**
+ * Drop any queued write for a key that has just been persisted (or deleted)
+ * successfully — replaying it on the next launch would undo the newer value.
+ */
+const dropQueuedWritesFor = (key: string) => {
+  if (!pendingWriteQueue.some((entry) => entry.key === key)) return;
+
+  pendingWriteQueue = pendingWriteQueue.filter((entry) => entry.key !== key);
+  persistPendingWriteQueue();
+  logStoreEvent(`Dropped superseded queued write for '${key}'`);
+};
+
 export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
   // Stabilize ipcRenderer so consumers with useEffect([…, ipcRenderer]) don't
   // fire spurious cleanup→body cycles on every parent re-render (e.g.
@@ -307,13 +374,6 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
     [],
   );
 
-  const logStoreEvent = (msg: string) => {
-    const fn = getElectronApiFunction('logEvent') as
-      | ((m: string) => void)
-      | undefined;
-    fn?.(`pearl_store: ${msg}`);
-  };
-
   return (
     <ElectronApiContext.Provider
       value={{
@@ -339,36 +399,29 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
             }
             // Backend-bound key: persist to .operate/pearl_store.json and update React state.
             emitPearlStoreSet(key, value);
-            return StoreService.setStoreKey(key, value).catch((error) => {
-              logStoreEvent(`Failed to persist key '${key}': ${error}`);
-              console.error(`Failed to persist store key '${key}':`, error);
+            // Two-callback form, not .then().catch() — the success path must
+            // not be able to fall into the enqueue path.
+            return StoreService.setStoreKey(key, value).then(
+              () => dropQueuedWritesFor(key),
+              (error) => {
+                logStoreEvent(`Failed to persist key '${key}': ${error}`);
+                console.error(`Failed to persist store key '${key}':`, error);
 
-              // Queue the failed write for flush on next launch.
-              pendingWriteQueue.push({ key, value });
+                // Queue the failed write for flush on next launch, keeping only
+                // the latest value per key — replaying a stale earlier value
+                // would clobber whatever the user set afterwards. Appending the
+                // fresh entry preserves the relative order of the other keys.
+                pendingWriteQueue = [
+                  ...pendingWriteQueue.filter((entry) => entry.key !== key),
+                  { key, value },
+                ];
+                persistPendingWriteQueue();
 
-              // Persist queue to electron-store via raw IPC (not the store.set
-              // abstraction — we are inside it; calling it would recurse).
-              const rawStoreSet = getElectronApiFunction('store.set', true) as
-                | ((k: string, v: unknown) => Promise<void>)
-                | undefined;
-              if (rawStoreSet) {
-                rawStoreSet('pendingStoreWrites', [...pendingWriteQueue]).catch(
-                  (queueError) => {
-                    logStoreEvent(
-                      `Failed to persist write queue: ${queueError}`,
-                    );
-                    console.error(
-                      'Failed to persist pending write queue:',
-                      queueError,
-                    );
-                  },
+                logStoreEvent(
+                  `Enqueued failed write for '${key}' (${pendingWriteQueue.length} pending)`,
                 );
-              }
-
-              logStoreEvent(
-                `Enqueued failed write for '${key}' (${pendingWriteQueue.length} pending)`,
-              );
-            });
+              },
+            );
           },
           delete: (key: string) => {
             if (ELECTRON_NATIVE_KEYS.has(key.split('.')[0])) {
@@ -379,10 +432,15 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
             }
             // Backend-bound key: remove from .operate/pearl_store.json and update React state.
             emitPearlStoreDelete(key);
-            return StoreService.deleteStoreKey(key).catch((error) => {
-              logStoreEvent(`Failed to delete key '${key}': ${error}`);
-              console.error(`Failed to delete store key '${key}':`, error);
-            });
+            return StoreService.deleteStoreKey(key).then(
+              // A queued write for a key the user has since deleted must not be
+              // replayed — that would resurrect the value on the next launch.
+              () => dropQueuedWritesFor(key),
+              (error) => {
+                logStoreEvent(`Failed to delete key '${key}': ${error}`);
+                console.error(`Failed to delete store key '${key}':`, error);
+              },
+            );
           },
           clear: () => {
             // Clear Electron-native keys via IPC.
