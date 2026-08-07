@@ -8,9 +8,10 @@ import { useConnectSession } from '../../hooks/useConnectSession';
 // The launch goes through the Electron main process (the agent server enables
 // no CORS) — mock the IPC bridge.
 const mockStartSession = jest.fn();
+const mockStoreSet = jest.fn();
 let connectApi: Record<string, unknown> | undefined;
 jest.mock('../../hooks/useElectronApi', () => ({
-  useElectronApi: () => ({ connect: connectApi }),
+  useElectronApi: () => ({ connect: connectApi, store: { set: mockStoreSet } }),
 }));
 
 // Controllable useServices return value.
@@ -23,6 +24,12 @@ jest.mock('../../hooks/useServices', () => ({
 let isAnotherAgentRunning = false;
 jest.mock('../../hooks/useAgentRunning', () => ({
   useAgentRunning: () => ({ isAnotherAgentRunning }),
+}));
+
+// Controllable store state for first-run detection.
+let storeStateValue: Record<string, unknown> | undefined;
+jest.mock('../../hooks/useStore', () => ({
+  useStore: () => ({ storeState: storeStateValue }),
 }));
 
 const DEPLOYED = MiddlewareDeploymentStatusMap.DEPLOYED;
@@ -59,6 +66,10 @@ describe('useConnectSession', () => {
     };
     servicesValue = runningConnect();
     isAnotherAgentRunning = false;
+    // Default: subsequent run (first-run already completed).
+    storeStateValue = {
+      connect: { firstRunCompleted: { 'sc-1': true }, isInitialFunded: {} },
+    };
   });
 
   it('auto-launches the session once when a running Connect server is ready', async () => {
@@ -241,5 +252,128 @@ describe('useConnectSession', () => {
     });
     rerender();
     expect(result.current.showAlert).toBe(false);
+  });
+
+  describe('first-run gate', () => {
+    it('does not launch when storeState is undefined (store not yet hydrated)', () => {
+      storeStateValue = undefined;
+      renderConnectSession();
+      expect(mockStartSession).not.toHaveBeenCalled();
+    });
+
+    it('does not launch on first run (firstRunCompleted entry absent)', () => {
+      storeStateValue = { connect: { isInitialFunded: {} } };
+      renderConnectSession();
+      expect(mockStartSession).not.toHaveBeenCalled();
+    });
+
+    it('showFirstRunModal is true on first run (running + server ready + store hydrated)', () => {
+      storeStateValue = { connect: { isInitialFunded: {} } };
+      const { result } = renderConnectSession();
+      expect(result.current.showFirstRunModal).toBe(true);
+      expect(result.current.isFirstRun).toBe(true);
+    });
+
+    it('showFirstRunModal is false while store is loading', () => {
+      storeStateValue = undefined;
+      const { result } = renderConnectSession();
+      expect(result.current.showFirstRunModal).toBe(false);
+      expect(result.current.isFirstRun).toBe(false);
+    });
+
+    it('launches on subsequent run (firstRunCompleted[serviceConfigId] is true)', async () => {
+      storeStateValue = {
+        connect: { firstRunCompleted: { 'sc-1': true }, isInitialFunded: {} },
+      };
+      renderConnectSession();
+      await waitFor(() => expect(mockStartSession).toHaveBeenCalledTimes(1));
+    });
+
+    it('markFirstRunComplete calls store.set with correct key and merged value', () => {
+      storeStateValue = { connect: { isInitialFunded: {} } };
+      const { result } = renderConnectSession();
+      act(() => result.current.markFirstRunComplete());
+      expect(mockStoreSet).toHaveBeenCalledWith('connect.firstRunCompleted', {
+        'sc-1': true,
+      });
+    });
+
+    it('does not launch after markFirstRunComplete — the first run launches nothing', async () => {
+      storeStateValue = { connect: { isInitialFunded: {} } };
+      const { result, rerender } = renderConnectSession();
+      expect(result.current.showFirstRunModal).toBe(true);
+
+      // CTA fires: the flag is written and the store state updates in place.
+      act(() => result.current.markFirstRunComplete());
+      storeStateValue = {
+        connect: { firstRunCompleted: { 'sc-1': true }, isInitialFunded: {} },
+      };
+      rerender();
+
+      // The modal goes away, but the run must still not launch a session.
+      expect(result.current.showFirstRunModal).toBe(false);
+      await waitFor(() => expect(result.current.isFirstRun).toBe(true));
+      expect(mockStartSession).not.toHaveBeenCalled();
+    });
+
+    it('keeps the first-run status copy for the rest of the run after the CTA', async () => {
+      storeStateValue = { connect: { isInitialFunded: {} } };
+      const { result, rerender } = renderConnectSession();
+
+      act(() => result.current.markFirstRunComplete());
+      storeStateValue = {
+        connect: { firstRunCompleted: { 'sc-1': true }, isInitialFunded: {} },
+      };
+      rerender();
+
+      // `isFirstRun` drives the "visit the agent Profile" wording — it must not
+      // flip to the subsequent-run copy mid-run.
+      expect(result.current.isFirstRun).toBe(true);
+    });
+
+    it('auto-launches on the run after a completed first run', async () => {
+      storeStateValue = { connect: { isInitialFunded: {} } };
+      const { result, rerender } = renderConnectSession();
+      act(() => result.current.markFirstRunComplete());
+      storeStateValue = {
+        connect: { firstRunCompleted: { 'sc-1': true }, isInitialFunded: {} },
+      };
+      rerender();
+      expect(mockStartSession).not.toHaveBeenCalled();
+
+      // Agent stops → the latched "suppress" decision is dropped.
+      servicesValue = runningConnect({
+        selectedService: {
+          service_config_id: 'sc-1',
+          deploymentStatus: STOPPED,
+        },
+      });
+      rerender();
+
+      // Agent starts again → this run is a subsequent one, so it launches.
+      servicesValue = runningConnect();
+      rerender();
+      await waitFor(() => expect(mockStartSession).toHaveBeenCalledTimes(1));
+      expect(result.current.isFirstRun).toBe(false);
+    });
+
+    it('does not show the modal without a serviceConfigId — the CTA could not dismiss it', () => {
+      storeStateValue = { connect: { isInitialFunded: {} } };
+      servicesValue = runningConnect({
+        selectedService: { deploymentStatus: DEPLOYED },
+      });
+      const { result } = renderConnectSession();
+      expect(result.current.showFirstRunModal).toBe(false);
+    });
+
+    it('markFirstRunComplete is a no-op when serviceConfigId is null', () => {
+      storeStateValue = { connect: { isInitialFunded: {} } };
+      servicesValue = runningConnect({
+        selectedService: { deploymentStatus: DEPLOYED },
+      });
+      const { result } = renderConnectSession();
+      act(() => result.current.markFirstRunComplete());
+      expect(mockStoreSet).not.toHaveBeenCalled();
+    });
   });
 });

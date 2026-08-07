@@ -11,6 +11,7 @@ import { ConnectSessionResult } from '@/types';
 import { useAgentRunning } from './useAgentRunning';
 import { useElectronApi } from './useElectronApi';
 import { useServices } from './useServices';
+import { useStore } from './useStore';
 
 /**
  * Which error state to surface for the Connect session:
@@ -22,6 +23,21 @@ import { useServices } from './useServices';
 export type ConnectSessionErrorKind = 'not-installed' | 'launch-failed';
 
 const CONNECT_SESSION_QUERY_KEY = 'connectSession';
+
+/**
+ * Set when the first-run modal's CTA completes the first run, and held for the
+ * remainder of that run.
+ *
+ * Completing the first run writes `firstRunCompleted`, which on its own would
+ * immediately satisfy the auto-launch gate and fire the very session the first
+ * run exists to defer. This keeps the run suppressed regardless, so an
+ * instance's first run launches nothing at all; the agent-stopped cleanup
+ * clears it, and the next run auto-launches normally.
+ *
+ * Lives in the query cache rather than component state because
+ * `useConnectSession` has several independent call sites that must agree on it.
+ */
+const CONNECT_LAUNCH_SUPPRESSED_QUERY_KEY = 'connectLaunchSuppressed';
 
 const toErrorKind = (
   res: ConnectSessionResult,
@@ -48,13 +64,18 @@ const toErrorKind = (
  * the session is never relaunched for the same run. When the agent stops, the
  * cached entry is cleared so the next run launches again.
  *
+ * An instance's *first* run launches nothing at all: the first-run modal takes
+ * over, and the auto-launch stays suppressed for that entire run (see
+ * `CONNECT_LAUNCH_SUPPRESSED_QUERY_KEY`). Auto-launch resumes on the next run.
+ *
  * Exposes the failure (if any) plus `retry` / `dismiss` for the alert UI.
  */
 export const useConnectSession = () => {
   const { selectedAgentType, selectedService, deploymentDetails } =
     useServices();
   const { isAnotherAgentRunning } = useAgentRunning();
-  const { connect } = useElectronApi();
+  const { connect, store } = useElectronApi();
+  const { storeState } = useStore();
   const queryClient = useQueryClient();
 
   const isConnect = selectedAgentType === AgentMap.Connect;
@@ -67,11 +88,32 @@ export const useConnectSession = () => {
     Object.keys(deploymentDetails?.healthcheck || {}).length > 0;
   const serviceConfigId = selectedService?.service_config_id;
 
+  // First-run gate: suppress auto-launch until the user has completed the
+  // first-run modal flow. `undefined` entries are treated as first-run.
+  const isFirstRunComplete =
+    storeState !== undefined &&
+    (storeState.connect?.firstRunCompleted?.[serviceConfigId ?? ''] ??
+      false) === true;
+
   const [dismissed, setDismissed] = useState(false);
 
-  const enabled = Boolean(
+  // Everything the run needs before a session may be auto-launched.
+  const isReady = Boolean(
     isConnect && isRunning && isServerReady && serviceConfigId,
   );
+  const isStoreHydrated = storeState !== undefined;
+
+  const { data: isLaunchSuppressed } = useQuery<boolean>({
+    queryKey: [CONNECT_LAUNCH_SUPPRESSED_QUERY_KEY, serviceConfigId],
+    // Never fetched — written directly by `markFirstRunComplete`.
+    queryFn: () => false,
+    enabled: false,
+    initialData: false,
+    staleTime: Infinity,
+    gcTime: Infinity,
+  });
+
+  const enabled = isReady && isFirstRunComplete && !isLaunchSuppressed;
 
   const { data, isFetching, refetch } = useQuery({
     queryKey: [CONNECT_SESSION_QUERY_KEY, serviceConfigId],
@@ -99,6 +141,11 @@ export const useConnectSession = () => {
     if (!serviceConfigId) return;
     queryClient.removeQueries({
       queryKey: [CONNECT_SESSION_QUERY_KEY, serviceConfigId],
+    });
+    // Lift the first-run suppression too — that is what turns a completed first
+    // run into an auto-launching subsequent one.
+    queryClient.removeQueries({
+      queryKey: [CONNECT_LAUNCH_SUPPRESSED_QUERY_KEY, serviceConfigId],
     });
   }, [isConnect, isRunning, serviceConfigId, queryClient]);
 
@@ -132,10 +179,52 @@ export const useConnectSession = () => {
     !isAnotherAgentRunning;
   const showRunningInfo = isConnect && isRunning;
 
+  // First-run state, scoped to the run rather than read live off the store flag:
+  // it stays true after the CTA writes `firstRunCompleted`, so the status strip
+  // keeps the first-run copy for the rest of the run instead of flipping mid-run.
+  const isFirstRun = Boolean(
+    isConnect &&
+      isRunning &&
+      isStoreHydrated &&
+      (!isFirstRunComplete || isLaunchSuppressed),
+  );
+  // The modal itself is dismissed by the CTA, so it does track the store flag.
+  // `serviceConfigId` is required: without one `markFirstRunComplete` cannot
+  // persist anything, and a non-dismissable modal that the CTA cannot dismiss
+  // would trap the user.
+  const showFirstRunModal =
+    isFirstRun &&
+    isServerReady &&
+    Boolean(serviceConfigId) &&
+    !isFirstRunComplete;
+
+  const markFirstRunComplete = useCallback(() => {
+    if (!serviceConfigId) return;
+    // Suppress before persisting: the store write lands back in `storeState`,
+    // which would otherwise open the auto-launch gate for the rest of this run.
+    queryClient.setQueryData<boolean>(
+      [CONNECT_LAUNCH_SUPPRESSED_QUERY_KEY, serviceConfigId],
+      true,
+    );
+    const existing = storeState?.connect?.firstRunCompleted ?? {};
+    store?.set?.('connect.firstRunCompleted', {
+      ...existing,
+      [serviceConfigId]: true,
+    });
+  }, [
+    store,
+    queryClient,
+    serviceConfigId,
+    storeState?.connect?.firstRunCompleted,
+  ]);
+
   return {
     isConnect,
     showStartInfo,
     showRunningInfo,
+    isFirstRun,
+    showFirstRunModal,
+    markFirstRunComplete,
     errorKind: error?.kind ?? null,
     errorMessage: error?.message,
     isLaunching: isFetching,
