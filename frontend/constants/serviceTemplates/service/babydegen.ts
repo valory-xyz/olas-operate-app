@@ -40,14 +40,14 @@ const BASIUS_TEMPLATE_RELEASE: Pick<
   ServiceTemplate,
   'hash' | 'service_version' | 'agent_release'
 > = {
-  hash: 'bafybeif4vwaxgn7mjxsbb2gimr7dqws6glnptexfwvq53pexox37wi4rvu',
-  service_version: 'v0.12.5',
+  hash: 'bafybeic7zju3c7bajqh4x2vyywrbnf3v22mtmcysqopeglwce5dfzfatci',
+  service_version: 'v0.12.6',
   agent_release: {
     is_aea: true,
     repository: {
       owner: 'valory-xyz',
       name: 'optimus',
-      version: 'v0.12.5',
+      version: 'v0.12.6',
     },
   },
 };
@@ -59,14 +59,14 @@ const OPTIMUS_TEMPLATE_RELEASE: Pick<
   ServiceTemplate,
   'hash' | 'service_version' | 'agent_release'
 > = {
-  hash: 'bafybeigxjo3luwej3eissqwlowe6vez3toa72wq63rqxjfbjkljygs5ov4',
-  service_version: 'v0.12.5',
+  hash: 'bafybeicu5n5titywwjhiuvebrailugxvmq7xgbzqgus7mvl3lvuzv3kklm',
+  service_version: 'v0.12.6',
   agent_release: {
     is_aea: true,
     repository: {
       owner: 'valory-xyz',
       name: 'optimus',
-      version: 'v0.12.5',
+      version: 'v0.12.6',
     },
   },
 };
@@ -374,6 +374,20 @@ export const OPTIMUS_SERVICE_TEMPLATE: ServiceTemplate = {
       value: X402_ENABLED_FLAGS[AgentMap.Optimus].toString(),
       provision_type: EnvProvisionType.FIXED,
     },
+    USE_OFFCHAIN: {
+      name: 'Use offchain mech dispatch',
+      description:
+        'Route mech requests via the offchain HTTP path instead of the on-chain marketplace tx. Requires the priority mech to have an offchain endpoint registered.',
+      value: 'true',
+      provision_type: EnvProvisionType.FIXED,
+    },
+    OFFCHAIN_DEPOSIT_TARGET_CALLS: {
+      name: 'Offchain deposit target calls',
+      description:
+        'Number of forward mech requests each auto-deposit to the BalanceTracker should cover. Deposit chunk = target_calls * delivery_rate, clamped by auto_deposit_cap_per_cycle.',
+      value: '5',
+      provision_type: EnvProvisionType.FIXED,
+    },
   },
   ...OPTIMUS_TEMPLATE_RELEASE,
 } as const;
@@ -512,6 +526,20 @@ export const BASIUS_SERVICE_TEMPLATE: ServiceTemplate = {
       description:
         'Enables feature of agents paying for api keys usage instead of asking users to manually provide them',
       value: X402_ENABLED_FLAGS[AgentMap.Basius].toString(),
+      provision_type: EnvProvisionType.FIXED,
+    },
+    USE_OFFCHAIN: {
+      name: 'Use offchain mech dispatch',
+      description:
+        'Route mech requests via the offchain HTTP path instead of the on-chain marketplace tx. Requires the priority mech to have an offchain endpoint registered.',
+      value: 'true',
+      provision_type: EnvProvisionType.FIXED,
+    },
+    OFFCHAIN_DEPOSIT_TARGET_CALLS: {
+      name: 'Offchain deposit target calls',
+      description:
+        'Number of forward mech requests each auto-deposit to the BalanceTracker should cover. Deposit chunk = target_calls * delivery_rate, clamped by auto_deposit_cap_per_cycle.',
+      value: '5',
       provision_type: EnvProvisionType.FIXED,
     },
   },
