@@ -156,14 +156,20 @@ export const AgentOnboarding = () => {
   // Connect only: the operating chain picked in the funding-requirements step.
   const [selectedConnectChain, setSelectedConnectChain] =
     useState<Optional<EvmChainId>>();
+  // Connect only: the Connect-specific risk acknowledgement, required before
+  // the agent can be created.
+  const [hasAcceptedConnectRisks, setHasAcceptedConnectRisks] = useState(false);
   const [isCreatingConnect, setIsCreatingConnect] = useState(false);
   // Incremented to send the user back to the chain selector (first slide) and
   // highlight it when "Select agent" is clicked without a chain chosen.
   const [chainPromptSignal, setChainPromptSignal] = useState(0);
   const createConnectService = useCreateConnectService();
 
-  // Reset the chosen Connect chain whenever the selected agent changes.
-  useEffect(() => setSelectedConnectChain(undefined), [selectedAgent]);
+  // Reset the Connect-specific choices whenever the selected agent changes.
+  useEffect(() => {
+    setSelectedConnectChain(undefined);
+    setHasAcceptedConnectRisks(false);
+  }, [selectedAgent]);
 
   const handleConnectCreate = useCallback(async () => {
     if (!selectedConnectChain) {
@@ -342,6 +348,10 @@ export const AgentOnboarding = () => {
               selectedChain={isConnect ? selectedConnectChain : undefined}
               onSelectChain={isConnect ? setSelectedConnectChain : undefined}
               highlightSignal={isConnect ? chainPromptSignal : undefined}
+              hasAcceptedRisks={isConnect ? hasAcceptedConnectRisks : undefined}
+              onAcceptRisksChange={
+                isConnect ? setHasAcceptedConnectRisks : undefined
+              }
             />
           ) : null
         }
@@ -356,7 +366,8 @@ export const AgentOnboarding = () => {
                   <BlockButton
                     text="Select Agent"
                     onClick={handleConnectCreate}
-                    disabled={isCreatingConnect}
+                    // The Connect-specific risks must be acknowledged first.
+                    disabled={isCreatingConnect || !hasAcceptedConnectRisks}
                     loading={isCreatingConnect}
                   />
                 )
@@ -385,6 +396,7 @@ export const AgentOnboarding = () => {
     selectedArchivedAgentType,
     selectedArchivedInstanceId,
     selectedConnectChain,
+    hasAcceptedConnectRisks,
     isCreatingConnect,
     handleConnectCreate,
     chainPromptSignal,

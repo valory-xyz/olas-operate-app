@@ -48,10 +48,17 @@ jest.mock('../../../../config/agents', () => ({
 
 jest.mock('../../../../components/AgentIntroduction', () => ({
   AgentIntroduction: ({
+    renderFundingRequirements,
     renderAgentSelection,
   }: {
+    renderFundingRequirements?: (desc: string) => React.ReactNode;
     renderAgentSelection?: () => React.ReactNode;
-  }) => <div data-testid="agent-introduction">{renderAgentSelection?.()}</div>,
+  }) => (
+    <div data-testid="agent-introduction">
+      {renderFundingRequirements?.('')}
+      {renderAgentSelection?.()}
+    </div>
+  ),
 }));
 
 jest.mock('../../../../components/ui', () => ({
@@ -67,8 +74,21 @@ jest.mock('../../../../components/ui/BackButton', () => ({
 jest.mock(
   '../../../../components/SetupPage/AgentOnboarding/FundingRequirementStep',
   () => ({
-    FundingRequirementStep: () => (
-      <div data-testid="funding-requirement-step" />
+    FundingRequirementStep: ({
+      onAcceptRisksChange,
+    }: {
+      onAcceptRisksChange?: (checked: boolean) => void;
+    }) => (
+      <div data-testid="funding-requirement-step">
+        {onAcceptRisksChange && (
+          <button
+            data-testid="mock-accept-connect-risks"
+            onClick={() => onAcceptRisksChange(true)}
+          >
+            Mock Accept Risks
+          </button>
+        )}
+      </div>
     ),
   }),
 );
@@ -211,6 +231,61 @@ describe('AgentOnboarding', () => {
       expect(
         screen.getByRole('button', { name: 'Select Agent' }),
       ).toBeInTheDocument();
+    });
+  });
+
+  describe('Connect — risk acknowledgement gating', () => {
+    beforeEach(() => {
+      mockUseServices.mockReturnValue({
+        services: [],
+        selectAgentTypeForSetup: jest.fn(),
+        updateSelectedServiceConfigId: jest.fn(),
+        getAgentTypeFromService: jest.fn(),
+      });
+      mockUseArchivedAgents.mockReturnValue({
+        archivedInstances: [],
+        unarchiveInstance: jest.fn(),
+      });
+    });
+
+    it('disables "Select Agent" until the Connect risks are acknowledged', () => {
+      render(<AgentOnboarding />);
+      fireEvent.click(screen.getByTestId('mock-select-connect'));
+
+      expect(
+        screen.getByRole('button', { name: 'Select Agent' }),
+      ).toBeDisabled();
+
+      fireEvent.click(screen.getByTestId('mock-accept-connect-risks'));
+
+      expect(
+        screen.getByRole('button', { name: 'Select Agent' }),
+      ).toBeEnabled();
+    });
+
+    it('resets the acknowledgement when a different agent is selected', () => {
+      render(<AgentOnboarding />);
+      fireEvent.click(screen.getByTestId('mock-select-connect'));
+      fireEvent.click(screen.getByTestId('mock-accept-connect-risks'));
+      expect(
+        screen.getByRole('button', { name: 'Select Agent' }),
+      ).toBeEnabled();
+
+      // Switch away and back — the acknowledgement must not carry over.
+      fireEvent.click(screen.getByTestId('mock-select-trader'));
+      fireEvent.click(screen.getByTestId('mock-select-connect'));
+
+      expect(
+        screen.getByRole('button', { name: 'Select Agent' }),
+      ).toBeDisabled();
+    });
+
+    it('does not create the Connect service while unacknowledged', () => {
+      render(<AgentOnboarding />);
+      fireEvent.click(screen.getByTestId('mock-select-connect'));
+      fireEvent.click(screen.getByRole('button', { name: 'Select Agent' }));
+
+      expect(mockCreateConnectService).not.toHaveBeenCalled();
     });
   });
 });

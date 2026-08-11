@@ -34,11 +34,15 @@ jest.mock('../../../../components/ui', () => ({
 }));
 
 const mockUseServices = jest.fn();
+const mockTermsAndConditionsWindowShow = jest.fn();
 
 jest.mock('../../../../hooks', () => ({
   useServices: (...args: unknown[]) => mockUseServices(...args),
   useInitialFundingRequirements: (_agentType: string, chainId: number) => ({
     [chainId]: { OLAS: 0, POL: 15, USDC: 5 },
+  }),
+  useElectronApi: () => ({
+    termsAndConditionsWindow: { show: mockTermsAndConditionsWindowShow },
   }),
 }));
 
@@ -170,5 +174,59 @@ describe('FundingRequirementStep — Connect chain select', () => {
     ).toBeInTheDocument();
     expect(screen.getByText('15 POL')).toBeInTheDocument();
     expect(screen.getByText('5 USDC')).toBeInTheDocument();
+  });
+});
+
+describe('FundingRequirementStep — Connect risk acknowledgement', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockUseServices.mockReturnValue({ services: [] });
+  });
+
+  it('renders the acknowledgement, unchecked, before a chain is chosen', () => {
+    render(<FundingRequirementStep agentType={AgentMap.Connect} />);
+
+    expect(
+      screen.getByText(/risks specific to Pearl Connect/i),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('checkbox')).not.toBeChecked();
+  });
+
+  it('reflects the hasAcceptedRisks prop', () => {
+    render(
+      <FundingRequirementStep agentType={AgentMap.Connect} hasAcceptedRisks />,
+    );
+
+    expect(screen.getByRole('checkbox')).toBeChecked();
+  });
+
+  it('calls onAcceptRisksChange when toggled', () => {
+    const onAcceptRisksChange = jest.fn();
+    render(
+      <FundingRequirementStep
+        agentType={AgentMap.Connect}
+        onAcceptRisksChange={onAcceptRisksChange}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('checkbox'));
+    expect(onAcceptRisksChange).toHaveBeenCalledWith(true);
+  });
+
+  it('opens the Pearl Terms window at section 6.1.2 without toggling the checkbox', () => {
+    const onAcceptRisksChange = jest.fn();
+    render(
+      <FundingRequirementStep
+        agentType={AgentMap.Connect}
+        onAcceptRisksChange={onAcceptRisksChange}
+      />,
+    );
+
+    fireEvent.click(screen.getByText('Section 6.1.2'));
+
+    expect(mockTermsAndConditionsWindowShow).toHaveBeenCalledWith(
+      'section-6-1-2',
+    );
+    expect(onAcceptRisksChange).not.toHaveBeenCalled();
   });
 });

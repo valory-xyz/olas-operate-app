@@ -1,7 +1,8 @@
-import { Flex, Select, Tag, Typography } from 'antd';
+import { Checkbox, Flex, Select, Tag, Typography } from 'antd';
 import Image from 'next/image';
 import { useEffect, useMemo, useState } from 'react';
 import { TbCreditCardFilled } from 'react-icons/tb';
+import styled from 'styled-components';
 
 import { IntroductionAnimatedContainer } from '@/components/AgentIntroduction';
 import { Alert } from '@/components/ui';
@@ -23,7 +24,11 @@ import {
   UNICODE_SYMBOLS,
   X_DEVELOPER_CONSOLE_URL,
 } from '@/constants';
-import { useInitialFundingRequirements, useServices } from '@/hooks';
+import {
+  useElectronApi,
+  useInitialFundingRequirements,
+  useServices,
+} from '@/hooks';
 import { asEvmChainDetails, asEvmChainId, matchesAgentConfig } from '@/utils';
 
 import { InstanceCount } from './SelectAgent';
@@ -33,6 +38,9 @@ const CONNECT_CHAIN_OPTIONS: EvmChainId[] = [
   EvmChainIdMap.Polygon,
   EvmChainIdMap.Gnosis,
 ];
+
+/** Pearl Terms anchor covering the risks specific to Pearl Connect. */
+const CONNECT_RISKS_TERMS_HASH = 'section-6-1-2';
 
 const { Text, Title, Link } = Typography;
 
@@ -277,6 +285,49 @@ const ConnectChainSelect = ({
   );
 };
 
+const RiskAcknowledgementCheckbox = styled(Checkbox)`
+  .ant-checkbox {
+    align-self: start;
+  }
+`;
+
+/**
+ * Connect only: the user must acknowledge the Connect-specific risks
+ * (prompt injection, loss of funds) before the agent can be created.
+ */
+type ConnectRiskAcknowledgementProps = {
+  checked?: boolean;
+  onChange?: (checked: boolean) => void;
+};
+const ConnectRiskAcknowledgement = ({
+  checked,
+  onChange,
+}: ConnectRiskAcknowledgementProps) => {
+  const { termsAndConditionsWindow } = useElectronApi();
+
+  return (
+    <RiskAcknowledgementCheckbox
+      checked={checked}
+      onChange={(e) => onChange?.(e.target.checked)}
+      className="text-xs text-neutral-tertiary"
+    >
+      I have read and understood the risks specific to Pearl Connect (including
+      prompt injection and loss of funds) described in{' '}
+      <a
+        onClick={(e) => {
+          // Keep the click from toggling the checkbox.
+          e.preventDefault();
+          e.stopPropagation();
+          termsAndConditionsWindow?.show?.(CONNECT_RISKS_TERMS_HASH);
+        }}
+      >
+        Section 6.1.2
+      </a>
+      .
+    </RiskAcknowledgementCheckbox>
+  );
+};
+
 type MinimumFundingRequirementsProps = {
   agentType: AgentType;
   /** Override chain (Connect selects its chain in this step). */
@@ -346,6 +397,9 @@ type FundingRequirementStepProps = {
   onSelectChain?: (chain: EvmChainId) => void;
   /** Connect only: incrementing value that highlights the chain selector. */
   highlightSignal?: number;
+  /** Connect only: risk acknowledgement state, and its setter. */
+  hasAcceptedRisks?: boolean;
+  onAcceptRisksChange?: (checked: boolean) => void;
 };
 
 export const FundingRequirementStep = ({
@@ -354,6 +408,8 @@ export const FundingRequirementStep = ({
   selectedChain,
   onSelectChain,
   highlightSignal,
+  hasAcceptedRisks,
+  onAcceptRisksChange,
 }: FundingRequirementStepProps) => {
   const {
     displayName: agentName,
@@ -409,6 +465,10 @@ export const FundingRequirementStep = ({
                 chainId={selectedChain}
               />
             )}
+            <ConnectRiskAcknowledgement
+              checked={hasAcceptedRisks}
+              onChange={onAcceptRisksChange}
+            />
           </>
         ) : (
           <>
