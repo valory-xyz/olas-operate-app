@@ -308,6 +308,7 @@ const ConnectRiskAcknowledgement = ({
       href={PEARL_CONNECT_RISKS_TERMS_URL}
       target="_blank"
       rel="noopener noreferrer"
+      className="text-xs"
       onClick={(e) => e.stopPropagation()}
     >
       Section 6.1.2
