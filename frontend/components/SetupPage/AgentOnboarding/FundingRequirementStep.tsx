@@ -288,35 +288,61 @@ const RiskAcknowledgementCheckbox = styled(Checkbox)`
 /**
  * Connect only: the user must acknowledge the Connect-specific risks
  * (prompt injection, loss of funds) before the agent can be created.
+ *
+ * Both props are required — this is a compliance gate, and the component has
+ * no legitimate use with either omitted. A missing `onChange` would render a
+ * checkbox whose clicks are silently swallowed; a missing `checked` would hand
+ * antd `undefined` and make it uncontrolled, free to drift from the parent.
  */
 type ConnectRiskAcknowledgementProps = {
-  checked?: boolean;
-  onChange?: (checked: boolean) => void;
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  /** Incrementing value that flags the checkbox when the user tries to
+   * continue without acknowledging. */
+  highlightSignal?: number;
 };
 const ConnectRiskAcknowledgement = ({
   checked,
   onChange,
-}: ConnectRiskAcknowledgementProps) => (
-  <RiskAcknowledgementCheckbox
-    checked={checked}
-    onChange={(e) => onChange?.(e.target.checked)}
-    className="text-sm text-neutral-tertiary"
-  >
-    I have read and understood the risks specific to Pearl Connect (including
-    prompt injection and loss of funds) described in{' '}
-    <Link
-      href={PEARL_CONNECT_RISKS_TERMS_URL}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="text-sm"
-      onClick={(e) => e.stopPropagation()}
-    >
-      Section 6.1.2
-      <span className="text-xxs ml-4">{UNICODE_SYMBOLS.EXTERNAL_LINK}</span>
-    </Link>
-    .
-  </RiskAcknowledgementCheckbox>
-);
+  highlightSignal,
+}: ConnectRiskAcknowledgementProps) => {
+  // Highlight when prompted (not acknowledged). Cleared once ticked.
+  const [isHighlighted, setIsHighlighted] = useState(false);
+  useEffect(() => {
+    if (highlightSignal) setIsHighlighted(true);
+  }, [highlightSignal]);
+  useEffect(() => {
+    if (checked) setIsHighlighted(false);
+  }, [checked]);
+
+  const showError = isHighlighted && !checked;
+
+  return (
+    <Flex vertical gap={8}>
+      <RiskAcknowledgementCheckbox
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        className="text-sm text-neutral-tertiary"
+      >
+        I have read and understood the risks specific to Pearl Connect
+        (including prompt injection and loss of funds) described in{' '}
+        <Link
+          href={PEARL_CONNECT_RISKS_TERMS_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-sm"
+        >
+          Section 6.1.2
+          <span className="text-xxs ml-4">{UNICODE_SYMBOLS.EXTERNAL_LINK}</span>
+        </Link>
+        .
+      </RiskAcknowledgementCheckbox>
+      {showError && (
+        <Text type="danger">Please acknowledge the risks to continue.</Text>
+      )}
+    </Flex>
+  );
+};
 
 type MinimumFundingRequirementsProps = {
   agentType: AgentType;
@@ -455,10 +481,15 @@ export const FundingRequirementStep = ({
                 chainId={selectedChain}
               />
             )}
-            <ConnectRiskAcknowledgement
-              checked={hasAcceptedRisks}
-              onChange={onAcceptRisksChange}
-            />
+            {/* Rendered only with a setter in hand — a checkbox that can't
+                report its own changes is worse than none. */}
+            {onAcceptRisksChange && (
+              <ConnectRiskAcknowledgement
+                checked={hasAcceptedRisks ?? false}
+                onChange={onAcceptRisksChange}
+                highlightSignal={highlightSignal}
+              />
+            )}
           </>
         ) : (
           <>

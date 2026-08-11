@@ -75,11 +75,21 @@ jest.mock(
   '../../../../components/SetupPage/AgentOnboarding/FundingRequirementStep',
   () => ({
     FundingRequirementStep: ({
+      hasAcceptedRisks,
       onAcceptRisksChange,
+      highlightSignal,
     }: {
+      hasAcceptedRisks?: boolean;
       onAcceptRisksChange?: (checked: boolean) => void;
+      highlightSignal?: number;
     }) => (
       <div data-testid="funding-requirement-step">
+        {/* Render the value the parent hands down, so the state direction is
+            observed and not just the callback direction. */}
+        <span data-testid="mock-has-accepted">{String(hasAcceptedRisks)}</span>
+        <span data-testid="mock-highlight-signal">
+          {String(highlightSignal)}
+        </span>
         {onAcceptRisksChange && (
           <button
             data-testid="mock-accept-connect-risks"
@@ -248,44 +258,71 @@ describe('AgentOnboarding', () => {
       });
     });
 
-    it('disables "Select Agent" until the Connect risks are acknowledged', () => {
+    it('keeps "Select Agent" enabled while unacknowledged, so it is never a dead end', () => {
       render(<AgentOnboarding />);
       fireEvent.click(screen.getByTestId('mock-select-connect'));
 
       expect(
         screen.getByRole('button', { name: 'Select Agent' }),
-      ).toBeDisabled();
+      ).toBeEnabled();
+    });
+
+    it('prompts instead of creating when the risks are unacknowledged', () => {
+      render(<AgentOnboarding />);
+      fireEvent.click(screen.getByTestId('mock-select-connect'));
+
+      const signalBefore = screen.getByTestId(
+        'mock-highlight-signal',
+      ).textContent;
+      fireEvent.click(screen.getByRole('button', { name: 'Select Agent' }));
+
+      expect(mockCreateConnectService).not.toHaveBeenCalled();
+      // The prompt signal advanced, sending the user back to the first slide
+      // and flagging the unmet precondition there.
+      expect(screen.getByTestId('mock-highlight-signal').textContent).not.toBe(
+        signalBefore,
+      );
+    });
+
+    it('prompts instead of creating when acknowledged but no chain is chosen', () => {
+      // The state this PR introduces: risks accepted, chain still unset. The
+      // button is enabled here, so this exercises the guard rather than the
+      // DOM's disabled-button semantics.
+      render(<AgentOnboarding />);
+      fireEvent.click(screen.getByTestId('mock-select-connect'));
+      fireEvent.click(screen.getByTestId('mock-accept-connect-risks'));
+      expect(screen.getByTestId('mock-has-accepted')).toHaveTextContent('true');
+
+      fireEvent.click(screen.getByRole('button', { name: 'Select Agent' }));
+
+      expect(mockCreateConnectService).not.toHaveBeenCalled();
+    });
+
+    it('passes the acknowledgement state down to the funding step', () => {
+      render(<AgentOnboarding />);
+      fireEvent.click(screen.getByTestId('mock-select-connect'));
+      expect(screen.getByTestId('mock-has-accepted')).toHaveTextContent(
+        'false',
+      );
 
       fireEvent.click(screen.getByTestId('mock-accept-connect-risks'));
 
-      expect(
-        screen.getByRole('button', { name: 'Select Agent' }),
-      ).toBeEnabled();
+      expect(screen.getByTestId('mock-has-accepted')).toHaveTextContent('true');
     });
 
     it('resets the acknowledgement when a different agent is selected', () => {
       render(<AgentOnboarding />);
       fireEvent.click(screen.getByTestId('mock-select-connect'));
       fireEvent.click(screen.getByTestId('mock-accept-connect-risks'));
-      expect(
-        screen.getByRole('button', { name: 'Select Agent' }),
-      ).toBeEnabled();
+      expect(screen.getByTestId('mock-has-accepted')).toHaveTextContent('true');
 
       // Switch away and back — the acknowledgement must not carry over.
       fireEvent.click(screen.getByTestId('mock-select-trader'));
       fireEvent.click(screen.getByTestId('mock-select-connect'));
 
-      expect(
-        screen.getByRole('button', { name: 'Select Agent' }),
-      ).toBeDisabled();
-    });
-
-    it('does not create the Connect service while unacknowledged', () => {
-      render(<AgentOnboarding />);
-      fireEvent.click(screen.getByTestId('mock-select-connect'));
-      fireEvent.click(screen.getByRole('button', { name: 'Select Agent' }));
-
-      expect(mockCreateConnectService).not.toHaveBeenCalled();
+      expect(screen.getByTestId('mock-has-accepted')).toHaveTextContent(
+        'false',
+      );
     });
   });
 });

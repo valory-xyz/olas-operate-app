@@ -160,9 +160,12 @@ export const AgentOnboarding = () => {
   // the agent can be created.
   const [hasAcceptedConnectRisks, setHasAcceptedConnectRisks] = useState(false);
   const [isCreatingConnect, setIsCreatingConnect] = useState(false);
-  // Incremented to send the user back to the chain selector (first slide) and
-  // highlight it when "Select agent" is clicked without a chain chosen.
-  const [chainPromptSignal, setChainPromptSignal] = useState(0);
+  // Incremented to send the user back to the first slide and flag whichever
+  // precondition is unmet when "Select agent" is clicked — a missing chain, an
+  // unticked risk acknowledgement, or both. Keeping the button enabled and
+  // guiding the user beats a silently disabled button, which reads as a dead
+  // end from slides 2-4 where neither control is visible.
+  const [connectPromptSignal, setConnectPromptSignal] = useState(0);
   const createConnectService = useCreateConnectService();
 
   // Reset the Connect-specific choices whenever the selected agent changes.
@@ -172,10 +175,10 @@ export const AgentOnboarding = () => {
   }, [selectedAgent]);
 
   const handleConnectCreate = useCallback(async () => {
-    if (!selectedConnectChain) {
-      // No chain chosen — jump to the first slide (chain selector) and
-      // highlight it, instead of creating.
-      setChainPromptSignal((signal) => signal + 1);
+    // Either precondition unmet — jump to the first slide and flag the
+    // offending control(s) there, instead of creating.
+    if (!selectedConnectChain || !hasAcceptedConnectRisks) {
+      setConnectPromptSignal((signal) => signal + 1);
       return;
     }
     setIsCreatingConnect(true);
@@ -187,7 +190,7 @@ export const AgentOnboarding = () => {
       message.error('Failed to create the Connect agent. Please try again.');
       setIsCreatingConnect(false);
     }
-  }, [selectedConnectChain, createConnectService]);
+  }, [selectedConnectChain, hasAcceptedConnectRisks, createConnectService]);
 
   // Derive agentType for the selected archived instance (for AgentIntroduction)
   const selectedArchivedAgentType = useMemo<Optional<AgentType>>(() => {
@@ -339,7 +342,7 @@ export const AgentOnboarding = () => {
       <AgentIntroduction
         agentType={selectedAgent}
         fillHeight
-        goToFirstStepSignal={isConnect ? chainPromptSignal : undefined}
+        goToFirstStepSignal={isConnect ? connectPromptSignal : undefined}
         renderFundingRequirements={(desc) =>
           selectedAgent ? (
             <FundingRequirementStep
@@ -347,7 +350,7 @@ export const AgentOnboarding = () => {
               desc={desc}
               selectedChain={isConnect ? selectedConnectChain : undefined}
               onSelectChain={isConnect ? setSelectedConnectChain : undefined}
-              highlightSignal={isConnect ? chainPromptSignal : undefined}
+              highlightSignal={isConnect ? connectPromptSignal : undefined}
               hasAcceptedRisks={isConnect ? hasAcceptedConnectRisks : undefined}
               onAcceptRisksChange={
                 isConnect ? setHasAcceptedConnectRisks : undefined
@@ -358,16 +361,16 @@ export const AgentOnboarding = () => {
         renderAgentSelection={
           isConnect
             ? // No button once every chain has a Connect instance; otherwise
-              // it creates the service (no_staking) with the chosen chain, or
-              // jumps back to the chain selector when none is chosen.
+              // it creates the service (no_staking) once a chain is chosen and
+              // the risks are acknowledged, or jumps back to the first slide
+              // and flags whichever of the two is still outstanding.
               connectAllChainsOccupied
               ? undefined
               : () => (
                   <BlockButton
                     text="Select Agent"
                     onClick={handleConnectCreate}
-                    // The Connect-specific risks must be acknowledged first.
-                    disabled={isCreatingConnect || !hasAcceptedConnectRisks}
+                    disabled={isCreatingConnect}
                     loading={isCreatingConnect}
                   />
                 )
@@ -399,7 +402,7 @@ export const AgentOnboarding = () => {
     hasAcceptedConnectRisks,
     isCreatingConnect,
     handleConnectCreate,
-    chainPromptSignal,
+    connectPromptSignal,
   ]);
 
   return (

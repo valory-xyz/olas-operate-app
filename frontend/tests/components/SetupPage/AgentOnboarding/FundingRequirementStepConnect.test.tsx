@@ -180,7 +180,12 @@ describe('FundingRequirementStep — Connect risk acknowledgement', () => {
   });
 
   it('renders the acknowledgement, unchecked, before a chain is chosen', () => {
-    render(<FundingRequirementStep agentType={AgentMap.Connect} />);
+    render(
+      <FundingRequirementStep
+        agentType={AgentMap.Connect}
+        onAcceptRisksChange={jest.fn()}
+      />,
+    );
 
     expect(
       screen.getByText(/risks specific to Pearl Connect/i),
@@ -190,7 +195,11 @@ describe('FundingRequirementStep — Connect risk acknowledgement', () => {
 
   it('reflects the hasAcceptedRisks prop', () => {
     render(
-      <FundingRequirementStep agentType={AgentMap.Connect} hasAcceptedRisks />,
+      <FundingRequirementStep
+        agentType={AgentMap.Connect}
+        hasAcceptedRisks
+        onAcceptRisksChange={jest.fn()}
+      />,
     );
 
     expect(screen.getByRole('checkbox')).toBeChecked();
@@ -209,8 +218,21 @@ describe('FundingRequirementStep — Connect risk acknowledgement', () => {
     expect(onAcceptRisksChange).toHaveBeenCalledWith(true);
   });
 
-  it('links to the Pearl Terms risk section, opened in the browser', () => {
+  it('omits the checkbox when no setter is supplied', () => {
+    // A checkbox that cannot report its own changes would silently swallow
+    // clicks, so it is not rendered at all.
     render(<FundingRequirementStep agentType={AgentMap.Connect} />);
+
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+  });
+
+  it('links to the Pearl Terms risk section, opened in the browser', () => {
+    render(
+      <FundingRequirementStep
+        agentType={AgentMap.Connect}
+        onAcceptRisksChange={jest.fn()}
+      />,
+    );
 
     const link = screen.getByRole('link', { name: /Section 6\.1\.2/ });
     expect(link).toHaveAttribute(
@@ -221,17 +243,32 @@ describe('FundingRequirementStep — Connect risk acknowledgement', () => {
     expect(link).toHaveAttribute('rel', 'noopener noreferrer');
   });
 
-  it('does not toggle the checkbox when the terms link is clicked', () => {
-    const onAcceptRisksChange = jest.fn();
+  it('shows an error when highlightSignal fires without acknowledgement', () => {
     render(
       <FundingRequirementStep
         agentType={AgentMap.Connect}
-        onAcceptRisksChange={onAcceptRisksChange}
+        onAcceptRisksChange={jest.fn()}
+        highlightSignal={1}
       />,
     );
 
-    fireEvent.click(screen.getByRole('link', { name: /Section 6\.1\.2/ }));
+    expect(
+      screen.getByText('Please acknowledge the risks to continue.'),
+    ).toBeInTheDocument();
+  });
 
-    expect(onAcceptRisksChange).not.toHaveBeenCalled();
+  it('does not show the acknowledgement error once ticked', () => {
+    render(
+      <FundingRequirementStep
+        agentType={AgentMap.Connect}
+        hasAcceptedRisks
+        onAcceptRisksChange={jest.fn()}
+        highlightSignal={1}
+      />,
+    );
+
+    expect(
+      screen.queryByText('Please acknowledge the risks to continue.'),
+    ).not.toBeInTheDocument();
   });
 });
