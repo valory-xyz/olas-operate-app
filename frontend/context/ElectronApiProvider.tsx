@@ -51,7 +51,7 @@ export const removeFlushedWrites = (flushed: PendingStoreWrite[]) => {
 /** Read the in-memory write queue. Used by tests only. */
 export const getPendingWriteQueue = () => [...pendingWriteQueue];
 
-/** Reset the in-memory write queue. Used by tests only. */
+/** Reset the in-memory write queue. Used by `store.clear` and by tests. */
 export const resetPendingWriteQueue = () => {
   pendingWriteQueue = [];
 };
@@ -273,19 +273,25 @@ const logStoreEvent = (msg: string) => {
  * Persist the write queue to electron-store via raw IPC. Never goes through
  * `store.set` — this runs inside that function's own callbacks, so routing back
  * through it would recurse.
+ *
+ * Returns false when the IPC bridge is unavailable, so callers can say the queue
+ * is memory-only rather than logging a durability they did not get.
  */
 const persistPendingWriteQueue = () => {
   const rawStoreSet = getElectronApiFunction('store.set', true) as
     | ((k: string, v: unknown) => Promise<void>)
     | undefined;
-  if (!rawStoreSet) return;
+  if (!rawStoreSet) return false;
 
   rawStoreSet('pendingStoreWrites', [...pendingWriteQueue]).catch(
     (queueError) => {
-      logStoreEvent(`Failed to persist write queue: ${queueError}`);
+      logStoreEvent(
+        `Failed to persist write queue (${pendingWriteQueue.length} entries lost on restart): ${queueError}`,
+      );
       console.error('Failed to persist pending write queue:', queueError);
     },
   );
+  return true;
 };
 
 /**
@@ -296,8 +302,12 @@ const dropQueuedWritesFor = (key: string) => {
   if (!pendingWriteQueue.some((entry) => entry.key === key)) return;
 
   pendingWriteQueue = pendingWriteQueue.filter((entry) => entry.key !== key);
-  persistPendingWriteQueue();
-  logStoreEvent(`Dropped superseded queued write for '${key}'`);
+  const persisted = persistPendingWriteQueue();
+  logStoreEvent(
+    persisted
+      ? `Dropped superseded queued write for '${key}'`
+      : `Dropped superseded queued write for '${key}' in memory only — store.set IPC unavailable, the stale entry remains on disk`,
+  );
 };
 
 export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
@@ -415,10 +425,12 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
                   ...pendingWriteQueue.filter((entry) => entry.key !== key),
                   { key, value },
                 ];
-                persistPendingWriteQueue();
+                const persisted = persistPendingWriteQueue();
 
                 logStoreEvent(
-                  `Enqueued failed write for '${key}' (${pendingWriteQueue.length} pending)`,
+                  persisted
+                    ? `Enqueued failed write for '${key}' (${pendingWriteQueue.length} pending)`
+                    : `Queued failed write for '${key}' in memory only — store.set IPC unavailable, it will not survive a restart`,
                 );
               },
             );
@@ -443,6 +455,11 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
             );
           },
           clear: () => {
+            // Drop queued writes up front: store-clear wipes the persisted
+            // queue, so anything still in memory would be re-persisted by the
+            // next failed write and resurrect data the user just reset.
+            resetPendingWriteQueue();
+
             // Clear Electron-native keys via IPC.
             const clearFn = getElectronApiFunction(
               'store.clear',

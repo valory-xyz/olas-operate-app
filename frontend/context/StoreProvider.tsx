@@ -71,6 +71,22 @@ type PendingOp =
   | { type: 'set'; key: string; value: unknown }
   | { type: 'delete'; key: string };
 
+/**
+ * Narrow whatever electron-store handed back to well-formed queue entries.
+ * `store.get` is typed `unknown` and the file is user-writable, so a bad entry
+ * would otherwise reach StoreService.setStoreKey(undefined, undefined).
+ */
+const toPendingStoreWrites = (value: unknown): PendingStoreWrite[] => {
+  if (!Array.isArray(value)) return [];
+  return value.filter(
+    (entry): entry is PendingStoreWrite =>
+      typeof entry === 'object' &&
+      entry !== null &&
+      typeof (entry as PendingStoreWrite).key === 'string' &&
+      (entry as PendingStoreWrite).key.length > 0,
+  );
+};
+
 const HYDRATION_RETRY_DELAY_MS = 3000;
 const HYDRATION_MAX_RETRIES = 3;
 
@@ -162,13 +178,30 @@ export const StoreProvider = ({ children }: PropsWithChildren) => {
     const flushPendingWrites = async () => {
       const storeGet = store?.get;
       const storeSet = store?.set;
-      if (!storeGet || !storeSet) return;
+      if (!storeGet || !storeSet) {
+        // Not silent: this is the guard on the whole reason the flush exists,
+        // so a missing bridge must be visible in the Pearl log.
+        log('Skipped flush — Electron store bridge unavailable');
+        return;
+      }
 
-      const queue = (await storeGet('pendingStoreWrites')) as
-        | PendingStoreWrite[]
-        | undefined;
+      const persisted = await storeGet('pendingStoreWrites');
+      const queue = toPendingStoreWrites(persisted);
+      const discarded =
+        (Array.isArray(persisted) ? persisted.length : 0) - queue.length;
 
-      if (!queue || queue.length === 0) return;
+      if (discarded > 0) {
+        log(`Discarded ${discarded} malformed pending write(s)`);
+        console.error(
+          `[StoreProvider] Discarded ${discarded} malformed pending write(s)`,
+        );
+      }
+
+      if (queue.length === 0) {
+        // Don't re-read the malformed entries on every subsequent launch.
+        if (discarded > 0) await storeSet('pendingStoreWrites', []);
+        return;
+      }
 
       // Adopt the previous session's queue before replaying it, so a write that
       // fails later in this session merges with these entries rather than

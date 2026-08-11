@@ -22,7 +22,17 @@ const schema = {
   // Queue of backend-bound writes that failed (e.g. backend unreachable during
   // shutdown). Flushed to the backend on the next successful startup before
   // hydration reads pearl_store.json.
-  pendingStoreWrites: { type: 'array', default: [] },
+  // Entries are constrained so a corrupted or hand-edited config.json is
+  // rejected here rather than replayed to the backend on the next launch.
+  pendingStoreWrites: {
+    type: 'array',
+    default: [],
+    items: {
+      type: 'object',
+      properties: { key: { type: 'string' }, value: {} },
+      required: ['key'],
+    },
+  },
 };
 
 /**

@@ -286,6 +286,57 @@ describe('ElectronApiProvider', () => {
       consoleSpy.mockRestore();
     });
 
+    it('keeps the entry in memory when persisting the queue rejects', async () => {
+      resetPendingWriteQueue();
+      const { result, mockApi } = setupProvider();
+      const queueError = new Error('EACCES');
+      mockApi.store.set.mockRejectedValue(queueError);
+      mockSetStoreKey.mockRejectedValueOnce(new Error('Failed to fetch'));
+
+      const consoleSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
+
+      await result.current.store?.set?.('autoRun', { enabled: false });
+      // Let the raw IPC rejection settle.
+      await Promise.resolve();
+
+      expect(consoleSpy).toHaveBeenCalledWith(
+        'Failed to persist pending write queue:',
+        queueError,
+      );
+      // Still recoverable within this session, just not across a restart.
+      expect(getPendingWriteQueue()).toEqual([
+        { key: 'autoRun', value: { enabled: false } },
+      ]);
+
+      consoleSpy.mockRestore();
+    });
+
+    it('reports memory-only queueing when the store.set bridge is missing', async () => {
+      resetPendingWriteQueue();
+      const { result, mockApi } = setupProvider();
+      unset(mockApi, 'store.set');
+      mockSetStoreKey.mockRejectedValueOnce(new Error('Failed to fetch'));
+
+      const consoleSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
+
+      await result.current.store?.set?.('autoRun', { enabled: false });
+
+      // The log must not claim durability it did not get.
+      const logged = mockApi.logEvent.mock.calls.map(
+        (call: unknown[]) => call[0],
+      );
+      expect(logged).toContainEqual(expect.stringContaining('in memory only'));
+      expect(logged).not.toContainEqual(
+        expect.stringContaining('Enqueued failed write'),
+      );
+
+      consoleSpy.mockRestore();
+    });
+
     it('keeps only the latest value when the same key fails twice', async () => {
       resetPendingWriteQueue();
       const { result, mockApi } = setupProvider();
@@ -467,6 +518,45 @@ describe('ElectronApiProvider', () => {
       expect(deletedKeys).toContain('trader');
       expect(deletedKeys).toContain('autoRun');
       expect(deletedKeys).toContain('lastSelectedServiceConfigId');
+    });
+
+    it('drops queued writes so a later failure cannot resurrect reset data', async () => {
+      resetPendingWriteQueue();
+      const mockApi = buildMockElectronApi();
+      mockApi.store.clear.mockResolvedValue(undefined);
+      mockApi.store.set.mockResolvedValue(undefined);
+      (window as unknown as Record<string, unknown>).electronAPI = mockApi;
+
+      const consoleSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
+
+      const { result } = renderHook(() => useContext(ElectronApiContext), {
+        wrapper: ({ children }: PropsWithChildren) =>
+          createElement(ElectronApiProvider, null, children),
+      });
+
+      // A write fails and is queued, then the user resets their account.
+      mockSetStoreKey.mockRejectedValueOnce(new Error('Failed to fetch'));
+      await result.current.store?.set?.('autoRun', { enabled: true });
+      expect(getPendingWriteQueue()).toHaveLength(1);
+
+      mockDeleteStoreKey.mockResolvedValue(undefined);
+      await result.current.store?.clear?.();
+      expect(getPendingWriteQueue()).toEqual([]);
+
+      // A failure after the reset must not re-persist the pre-clear entry.
+      mockSetStoreKey.mockRejectedValueOnce(new Error('Failed to fetch'));
+      await result.current.store?.set?.('lastSelectedServiceConfigId', 'svc-1');
+
+      const pendingCalls = mockApi.store.set.mock.calls.filter(
+        (call: unknown[]) => call[0] === 'pendingStoreWrites',
+      );
+      expect(pendingCalls[pendingCalls.length - 1][1]).toEqual([
+        { key: 'lastSelectedServiceConfigId', value: 'svc-1' },
+      ]);
+
+      consoleSpy.mockRestore();
     });
   });
 });
