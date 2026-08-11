@@ -20,15 +20,12 @@ import {
   EvmChainId,
   EvmChainIdMap,
   EvmChainName,
+  PEARL_CONNECT_RISKS_TERMS_URL,
   POLYMARKET_DEPOSIT_WALLET_MIGRATION_URL,
   UNICODE_SYMBOLS,
   X_DEVELOPER_CONSOLE_URL,
 } from '@/constants';
-import {
-  useElectronApi,
-  useInitialFundingRequirements,
-  useServices,
-} from '@/hooks';
+import { useInitialFundingRequirements, useServices } from '@/hooks';
 import { asEvmChainDetails, asEvmChainId, matchesAgentConfig } from '@/utils';
 
 import { InstanceCount } from './SelectAgent';
@@ -38,9 +35,6 @@ const CONNECT_CHAIN_OPTIONS: EvmChainId[] = [
   EvmChainIdMap.Polygon,
   EvmChainIdMap.Gnosis,
 ];
-
-/** Pearl Terms anchor covering the risks specific to Pearl Connect. */
-const CONNECT_RISKS_TERMS_HASH = 'section-6-1-2';
 
 const { Text, Title, Link } = Typography;
 
@@ -302,31 +296,26 @@ type ConnectRiskAcknowledgementProps = {
 const ConnectRiskAcknowledgement = ({
   checked,
   onChange,
-}: ConnectRiskAcknowledgementProps) => {
-  const { termsAndConditionsWindow } = useElectronApi();
-
-  return (
-    <RiskAcknowledgementCheckbox
-      checked={checked}
-      onChange={(e) => onChange?.(e.target.checked)}
-      className="text-xs text-neutral-tertiary"
+}: ConnectRiskAcknowledgementProps) => (
+  <RiskAcknowledgementCheckbox
+    checked={checked}
+    onChange={(e) => onChange?.(e.target.checked)}
+    className="text-xs text-neutral-tertiary"
+  >
+    I have read and understood the risks specific to Pearl Connect (including
+    prompt injection and loss of funds) described in{' '}
+    <Link
+      href={PEARL_CONNECT_RISKS_TERMS_URL}
+      target="_blank"
+      rel="noopener noreferrer"
+      onClick={(e) => e.stopPropagation()}
     >
-      I have read and understood the risks specific to Pearl Connect (including
-      prompt injection and loss of funds) described in{' '}
-      <a
-        onClick={(e) => {
-          // Keep the click from toggling the checkbox.
-          e.preventDefault();
-          e.stopPropagation();
-          termsAndConditionsWindow?.show?.(CONNECT_RISKS_TERMS_HASH);
-        }}
-      >
-        Section 6.1.2
-      </a>
-      .
-    </RiskAcknowledgementCheckbox>
-  );
-};
+      Section 6.1.2
+      <span className="text-xxs ml-4">{UNICODE_SYMBOLS.EXTERNAL_LINK}</span>
+    </Link>
+    .
+  </RiskAcknowledgementCheckbox>
+);
 
 type MinimumFundingRequirementsProps = {
   agentType: AgentType;

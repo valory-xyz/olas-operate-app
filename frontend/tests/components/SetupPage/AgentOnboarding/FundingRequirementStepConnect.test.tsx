@@ -34,15 +34,11 @@ jest.mock('../../../../components/ui', () => ({
 }));
 
 const mockUseServices = jest.fn();
-const mockTermsAndConditionsWindowShow = jest.fn();
 
 jest.mock('../../../../hooks', () => ({
   useServices: (...args: unknown[]) => mockUseServices(...args),
   useInitialFundingRequirements: (_agentType: string, chainId: number) => ({
     [chainId]: { OLAS: 0, POL: 15, USDC: 5 },
-  }),
-  useElectronApi: () => ({
-    termsAndConditionsWindow: { show: mockTermsAndConditionsWindowShow },
   }),
 }));
 
@@ -213,7 +209,19 @@ describe('FundingRequirementStep — Connect risk acknowledgement', () => {
     expect(onAcceptRisksChange).toHaveBeenCalledWith(true);
   });
 
-  it('opens the Pearl Terms window at section 6.1.2 without toggling the checkbox', () => {
+  it('links to the Pearl Terms risk section, opened in the browser', () => {
+    render(<FundingRequirementStep agentType={AgentMap.Connect} />);
+
+    const link = screen.getByRole('link', { name: /Section 6\.1\.2/ });
+    expect(link).toHaveAttribute(
+      'href',
+      'https://olas.network/pearl-terms#section-6-1-2',
+    );
+    expect(link).toHaveAttribute('target', '_blank');
+    expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+  });
+
+  it('does not toggle the checkbox when the terms link is clicked', () => {
     const onAcceptRisksChange = jest.fn();
     render(
       <FundingRequirementStep
@@ -222,11 +230,8 @@ describe('FundingRequirementStep — Connect risk acknowledgement', () => {
       />,
     );
 
-    fireEvent.click(screen.getByText('Section 6.1.2'));
+    fireEvent.click(screen.getByRole('link', { name: /Section 6\.1\.2/ }));
 
-    expect(mockTermsAndConditionsWindowShow).toHaveBeenCalledWith(
-      'section-6-1-2',
-    );
     expect(onAcceptRisksChange).not.toHaveBeenCalled();
   });
 });
