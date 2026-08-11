@@ -300,7 +300,7 @@ const ConnectRiskAcknowledgement = ({
   <RiskAcknowledgementCheckbox
     checked={checked}
     onChange={(e) => onChange?.(e.target.checked)}
-    className="text-xs text-neutral-tertiary"
+    className="text-sm text-neutral-tertiary"
   >
     I have read and understood the risks specific to Pearl Connect (including
     prompt injection and loss of funds) described in{' '}
@@ -308,7 +308,7 @@ const ConnectRiskAcknowledgement = ({
       href={PEARL_CONNECT_RISKS_TERMS_URL}
       target="_blank"
       rel="noopener noreferrer"
-      className="text-xs"
+      className="text-sm"
       onClick={(e) => e.stopPropagation()}
     >
       Section 6.1.2
