@@ -14,6 +14,7 @@
     "immutable": "5.1.9",
     "js-yaml": "4.3.1",
     "lodash": "4.18.1",
+    "nanoid": "3.3.18",
     "node-gyp": "12.3.0",
     "picomatch": "2.3.2",
     "postcss": "8.5.22",
