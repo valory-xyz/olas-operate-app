@@ -606,6 +606,50 @@ describe('useAutoRunScanner', () => {
       });
       expect(started).toBe(false);
     });
+
+    it('returns false and notifies when deployability check finds empty reward pool', async () => {
+      const params = makeHookParams({
+        getDeployabilityForAgent: jest.fn().mockResolvedValue({
+          canRun: false,
+          reason: 'Staking contract reward pool is empty',
+        }),
+      });
+      const { result } = renderHook(() => useAutoRunScanner(params));
+
+      let started: boolean | undefined;
+      await act(async () => {
+        started = await result.current.startSelectedAgentIfEligible();
+      });
+      expect(started).toBe(false);
+      expect(params.notifySkipOnce).toHaveBeenCalledWith(
+        scTrader,
+        'Staking contract reward pool is empty',
+        false,
+      );
+      expect(params.startAgentWithRetries).not.toHaveBeenCalled();
+    });
+
+    it('returns false and schedules retry when deployability check returns transient block', async () => {
+      const params = makeHookParams({
+        getDeployabilityForAgent: jest.fn().mockResolvedValue({
+          canRun: false,
+          reason: 'Staking data unavailable',
+          isTransient: true,
+        }),
+      });
+      const { result } = renderHook(() => useAutoRunScanner(params));
+
+      let started: boolean | undefined;
+      await act(async () => {
+        started = await result.current.startSelectedAgentIfEligible();
+      });
+      expect(started).toBe(false);
+      expect(params.scheduleNextScan).toHaveBeenCalledWith(
+        SCAN_LOADING_RETRY_SECONDS,
+      );
+      expect(params.notifySkipOnce).not.toHaveBeenCalled();
+      expect(params.startAgentWithRetries).not.toHaveBeenCalled();
+    });
   });
 
   describe('waitForEligibilityReady (via startSelectedAgentIfEligible)', () => {
