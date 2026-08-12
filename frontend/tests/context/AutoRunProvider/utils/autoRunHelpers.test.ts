@@ -1031,4 +1031,34 @@ describe('fetchDeployabilityForAgent', () => {
     expect(mockGetServiceStakingDetails).not.toHaveBeenCalled();
     expect(result.canRun).toBe(true);
   });
+
+  it('returns canRun=false when availableRewards is 0 (empty reward pool)', async () => {
+    mockGetStakingContractDetails.mockResolvedValue({
+      serviceIds: [1, 2],
+      maxNumServices: 10,
+      minimumStakingDuration: 86400,
+      availableRewards: 0,
+    });
+    const result = await fetchDeployabilityForAgent(makeAgentMeta(), makeCtx());
+    expect(result.canRun).toBe(false);
+    expect(result.reason).toBe('Staking contract reward pool is empty');
+    expect(result.isTransient).toBeFalsy();
+  });
+
+  it('returns canRun=true when availableRewards > 0', async () => {
+    mockGetStakingContractDetails.mockResolvedValue({
+      serviceIds: [1, 2],
+      maxNumServices: 10,
+      minimumStakingDuration: 86400,
+      availableRewards: 10,
+    });
+    const result = await fetchDeployabilityForAgent(makeAgentMeta(), makeCtx());
+    expect(result.canRun).toBe(true);
+  });
+
+  it('does NOT block when availableRewards is undefined (makeOkStaking base case)', async () => {
+    // makeOkStaking does not include availableRewards → undefined === 0 is false
+    const result = await fetchDeployabilityForAgent(makeAgentMeta(), makeCtx());
+    expect(result.canRun).toBe(true);
+  });
 });
