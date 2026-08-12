@@ -272,6 +272,7 @@ Every delay and poll interval in auto-run uses `sleepAwareDelay`. On `false`:
 | 10 | Region restricted | Skip with notification | Via deployability |
 | 11 | No slots | Skip with notification | Via deployability |
 | 12 | Under construction | Skip with notification | Via deployability |
+| 13a | Empty reward pool | Skip with notification | `fetchDeployabilityForAgent` checks `availableRewards === 0` after eviction check; scanner sets `hasBlocked`, 10-min rescan; pool refill re-enables agent on next scan |
 
 ### Loading States (No Skip Notification)
 
@@ -492,7 +493,7 @@ Shared eligibility-wait implementation. Polls every 2s until eligibility leaves 
 ### `fetchDeployabilityForAgent(agentMeta, ctx)` — `utils/autoRunHelpers.ts`
 Checks whether a candidate agent is deployable without switching the UI selection. Mirrors `useDeployability` but fetches staking state directly via `agentMeta.agentConfig.serviceApi` (same pattern as `fetchAgentStakingRewardsInfo`). Called by `scanAndStartNext` for each candidate so the visible page never changes during a scan cycle.
 
-Returns `{ canRun: true }`, `{ canRun: false, isTransient: true }` (transient/loading — short retry), or `{ canRun: false }` (deterministic block). Checks in order: safe readiness, `isPhasedOut`, `isUnderConstruction`, geo restriction, another agent running, on-chain slots/staking state (via `getStakingContractDetails` + `getServiceStakingDetails`), initial funding, balance sufficiency. API errors return `isTransient: true` (scanner uses short retry rather than treating as permanent block). Kept in parity with `useDeployability`.
+Returns `{ canRun: true }`, `{ canRun: false, isTransient: true }` (transient/loading — short retry), or `{ canRun: false }` (deterministic block). Checks in order: safe readiness, `isPhasedOut`, `isUnderConstruction`, geo restriction, another agent running, on-chain slots/staking state (via `getStakingContractDetails` + `getServiceStakingDetails`), reward pool empty (`availableRewards === 0`), initial funding, balance sufficiency. API errors return `isTransient: true` (scanner uses short retry rather than treating as permanent block). Kept in parity with `useDeployability`.
 
 ---
 
@@ -512,6 +513,7 @@ All auto-run logs are prefixed with `autorun::`.
 | `start error for X: ...` | Start threw an exception (e.g., Failed to fetch) | Warning |
 | `start failed for X` | All retries exhausted | Error |
 | `skip X: reason` | Agent skipped with notification | Normal |
+| `skip X: Staking contract reward pool is empty` | Agent skipped — staking contract has no rewards to distribute | Normal |
 | `balances stale, triggering refetch` | Balance data older than 120s | Normal |
 | `balances refetch failed: ...` | Refetch threw an error | Warning |
 | `rewards fetch error: X: ...` | RPC error fetching rewards | Warning |
