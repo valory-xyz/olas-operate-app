@@ -12,9 +12,11 @@ import type { PearlStore } from '@/types/ElectronApi';
 
 import {
   ElectronApiContext,
+  isPendingWriteFlushAborted,
   type PendingStoreWrite,
   removeFlushedWrites,
   seedPendingWriteQueue,
+  setPendingWriteFlush,
 } from './ElectronApiProvider';
 import {
   registerPearlStoreDeleteHandler,
@@ -217,7 +219,15 @@ export const StoreProvider = ({ children }: PropsWithChildren) => {
       // key would land in a non-deterministic order.
       const succeeded: PendingStoreWrite[] = [];
       const failedKeys: string[] = [];
+      let aborted = false;
       for (const entry of queue) {
+        // Re-checked every iteration, not just before the loop: `store.clear`
+        // can land mid-replay, and a write sent after its delete would put the
+        // key back in pearl_store.json.
+        if (cancelled || isPendingWriteFlushAborted()) {
+          aborted = true;
+          break;
+        }
         try {
           await StoreService.setStoreKey(entry.key, entry.value);
           succeeded.push(entry);
@@ -226,6 +236,14 @@ export const StoreProvider = ({ children }: PropsWithChildren) => {
           failedKeys.push(entry.key);
           log(`Flush failed for '${entry.key}': ${msg}`);
         }
+      }
+
+      if (aborted) {
+        // The queue is owned by whoever aborted us — don't write it back.
+        log(
+          `Flush aborted after ${succeeded.length} write(s) — store cleared or provider unmounted`,
+        );
+        return;
       }
 
       const remaining = removeFlushedWrites(succeeded);
@@ -303,17 +321,22 @@ export const StoreProvider = ({ children }: PropsWithChildren) => {
     };
 
     // Flush first, then hydrate — flush failure is non-fatal.
-    flushPendingWrites()
-      .catch((error) => {
-        const msg = error instanceof Error ? error.message : String(error);
-        log(`Flush failed: ${msg}`);
-        console.error('[StoreProvider] Flush pending writes failed:', error);
-      })
-      .then(() => {
-        if (!cancelled) {
-          attemptHydration(HYDRATION_MAX_RETRIES);
-        }
-      });
+    const flush = flushPendingWrites().catch((error) => {
+      const msg = error instanceof Error ? error.message : String(error);
+      log(`Flush failed: ${msg}`);
+      console.error('[StoreProvider] Flush pending writes failed:', error);
+    });
+
+    // Published so `store.clear` can wait for a replay in progress rather than
+    // racing its deletes against it.
+    setPendingWriteFlush(flush);
+
+    flush.then(() => {
+      setPendingWriteFlush(null);
+      if (!cancelled) {
+        attemptHydration(HYDRATION_MAX_RETRIES);
+      }
+    });
 
     return () => {
       cancelled = true;

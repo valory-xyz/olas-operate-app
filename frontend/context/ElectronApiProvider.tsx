@@ -51,9 +51,44 @@ export const removeFlushedWrites = (flushed: PendingStoreWrite[]) => {
 /** Read the in-memory write queue. Used by tests only. */
 export const getPendingWriteQueue = () => [...pendingWriteQueue];
 
-/** Reset the in-memory write queue. Used by `store.clear` and by tests. */
+// Set by `store.clear` so an in-flight startup flush stops replaying. Without
+// it, a write already awaiting the backend when the reset began can land after
+// the matching delete and put the key back in pearl_store.json.
+let flushAborted = false;
+
+/** True once `store.clear` has run — the startup flush must stop replaying. */
+export const isPendingWriteFlushAborted = () => flushAborted;
+
+// The startup flush, while it is running. Aborting stops the *next* iteration,
+// but a write already awaiting the backend cannot be unsent — so `store.clear`
+// also waits for this to settle before issuing its deletes, otherwise that
+// last write lands after the delete and puts the key back.
+let flushInFlight: Promise<void> | null = null;
+
+/** Register (or clear) the startup flush. Called by StoreProvider. */
+export const setPendingWriteFlush = (flush: Promise<void> | null) => {
+  flushInFlight = flush;
+};
+
+/** Resolves once any in-flight startup flush has settled. Never rejects. */
+export const awaitPendingWriteFlush = () =>
+  flushInFlight ? flushInFlight.catch(() => {}) : Promise.resolve();
+
+/**
+ * Drop the queue and stop any in-flight startup flush. Used by `store.clear`:
+ * the reset deletes backend keys, so neither the queued writes nor the replay
+ * still in progress may reach the backend afterwards.
+ */
+export const abortPendingWriteFlush = () => {
+  pendingWriteQueue = [];
+  flushAborted = true;
+};
+
+/** Reset the in-memory write queue and flush state. Used by tests only. */
 export const resetPendingWriteQueue = () => {
   pendingWriteQueue = [];
+  flushAborted = false;
+  flushInFlight = null;
 };
 
 type ElectronApiContextProps = {
@@ -455,21 +490,27 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
             );
           },
           clear: () => {
-            // Drop queued writes up front: store-clear wipes the persisted
-            // queue, so anything still in memory would be re-persisted by the
-            // next failed write and resurrect data the user just reset.
-            resetPendingWriteQueue();
+            // Drop queued writes up front, and stop any startup flush still
+            // replaying: store-clear wipes the persisted queue, so anything
+            // left in memory would be re-persisted by the next failed write.
+            abortPendingWriteFlush();
 
-            // Clear Electron-native keys via IPC.
-            const clearFn = getElectronApiFunction(
-              'store.clear',
-            ) as unknown as () => Promise<void>;
-            // Clear backend-bound keys from pearl_store.json.
-            const backendDeletes = BACKEND_BOUND_KEYS.map((key) => {
-              emitPearlStoreDelete(key);
-              return StoreService.deleteStoreKey(key);
-            });
-            return Promise.all([clearFn(), ...backendDeletes])
+            // Then let the flush settle before deleting. Aborting stops the
+            // remaining entries, but a write already sent has to land first —
+            // otherwise it arrives after the delete and restores the key.
+            return awaitPendingWriteFlush()
+              .then(() => {
+                // Clear Electron-native keys via IPC.
+                const clearFn = getElectronApiFunction(
+                  'store.clear',
+                ) as unknown as () => Promise<void>;
+                // Clear backend-bound keys from pearl_store.json.
+                const backendDeletes = BACKEND_BOUND_KEYS.map((key) => {
+                  emitPearlStoreDelete(key);
+                  return StoreService.deleteStoreKey(key);
+                });
+                return Promise.all([clearFn(), ...backendDeletes]);
+              })
               .then(() => {})
               .catch((error) => {
                 logStoreEvent(`Failed to clear store: ${error}`);

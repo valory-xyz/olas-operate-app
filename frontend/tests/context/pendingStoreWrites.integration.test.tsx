@@ -22,6 +22,7 @@ jest.mock('../../service/StoreService', () => ({
 
 const mockGetStore = StoreService.getStore as jest.Mock;
 const mockSetStoreKey = StoreService.setStoreKey as jest.Mock;
+const mockDeleteStoreKey = StoreService.deleteStoreKey as jest.Mock;
 
 /** Stands in for the Python backend's pearl_store.json. */
 const backend = {
@@ -46,6 +47,10 @@ const startSession = () => {
   );
   api.store.set.mockImplementation((key: string, value: unknown) => {
     electronStore[key] = value;
+    return Promise.resolve();
+  });
+  api.store.clear.mockImplementation(() => {
+    electronStore = {};
     return Promise.resolve();
   });
   (window as unknown as Record<string, unknown>).electronAPI = api;
@@ -95,6 +100,11 @@ describe('pending store writes (ElectronApiProvider + StoreProvider)', () => {
     mockSetStoreKey.mockImplementation((key: string, value: unknown) => {
       if (!backend.reachable) return failedToFetch();
       backend.data[key] = value;
+      return Promise.resolve(undefined);
+    });
+    mockDeleteStoreKey.mockImplementation((key: string) => {
+      if (!backend.reachable) return failedToFetch();
+      delete backend.data[key];
       return Promise.resolve(undefined);
     });
 
@@ -233,6 +243,66 @@ describe('pending store writes (ElectronApiProvider + StoreProvider)', () => {
       autoRun: { enabled: false },
       lastSelectedServiceConfigId: 'svc-1',
     });
+    quit(session);
+  });
+
+  it('does not replay queued writes over a reset that lands mid-flush', async () => {
+    // Two writes are queued from the previous session.
+    electronStore.pendingStoreWrites = [
+      { key: 'autoRun', value: { enabled: true } },
+      { key: 'lastSelectedServiceConfigId', value: 'svc-1' },
+    ];
+    backend.data = {};
+
+    // Hold the first replayed write open so the reset interleaves with it.
+    let releaseFirstWrite!: () => void;
+    let signalFirstWriteStarted!: () => void;
+    const firstWriteStarted = new Promise<void>((resolve) => {
+      signalFirstWriteStarted = resolve;
+    });
+
+    let isFirstWrite = true;
+    mockSetStoreKey.mockImplementation((key: string, value: unknown) => {
+      if (!backend.reachable) return failedToFetch();
+      if (isFirstWrite) {
+        isFirstWrite = false;
+        return new Promise<void>((resolveWrite) => {
+          releaseFirstWrite = () => {
+            backend.data[key] = value;
+            resolveWrite();
+          };
+          signalFirstWriteStarted();
+        });
+      }
+      backend.data[key] = value;
+      return Promise.resolve(undefined);
+    });
+
+    const session = startSession();
+    await firstWriteStarted;
+
+    // The user resets their account while the replay is still in flight.
+    // clear() must wait for that write rather than racing its deletes.
+    let clearDone = false;
+    const clearing = act(async () => {
+      await session.result.current.electron.store?.clear?.();
+      clearDone = true;
+    });
+
+    await Promise.resolve();
+    expect(clearDone).toBe(false); // still waiting on the in-flight write
+
+    releaseFirstWrite();
+    await clearing;
+
+    // The delete wins: the replayed value does not survive the reset...
+    expect(backend.data.autoRun).toBeUndefined();
+    // ...and the second queued entry never replays at all.
+    expect(backend.data.lastSelectedServiceConfigId).toBeUndefined();
+    expect(mockSetStoreKey).toHaveBeenCalledTimes(1);
+
+    // The aborted flush must not write the queue back over the cleared slot.
+    expect(electronStore.pendingStoreWrites).toBeUndefined();
     quit(session);
   });
 });
