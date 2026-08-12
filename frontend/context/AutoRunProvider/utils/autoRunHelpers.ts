@@ -408,8 +408,12 @@ export const fetchDeployabilityForAgent = async (
         !!serviceStakingStartTime &&
         serviceStakingState === StakingState.Staked;
 
-      const { serviceIds, maxNumServices, minimumStakingDuration, availableRewards } =
-        contractDetails ?? {};
+      const {
+        serviceIds,
+        maxNumServices,
+        minimumStakingDuration,
+        availableRewards,
+      } = contractDetails ?? {};
       const hasEnoughServiceSlots =
         isNil(serviceIds) || isNil(maxNumServices)
           ? null

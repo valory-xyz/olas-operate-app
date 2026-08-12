@@ -357,14 +357,17 @@ export const useAutoRunScanner = ({
       return false;
     }
 
-    const fastPathDeployability =
-      await getDeployabilityForAgent(selectedMeta);
+    const fastPathDeployability = await getDeployabilityForAgent(selectedMeta);
     if (!fastPathDeployability.canRun) {
       if (fastPathDeployability.isTransient) {
         scheduleNextScan(SCAN_LOADING_RETRY_SECONDS);
         return false;
       }
-      notifySkipOnce(selectedServiceConfigId, fastPathDeployability.reason, false);
+      notifySkipOnce(
+        selectedServiceConfigId,
+        fastPathDeployability.reason,
+        false,
+      );
       return false;
     }
 
