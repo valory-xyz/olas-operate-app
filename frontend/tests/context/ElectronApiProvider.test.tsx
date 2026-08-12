@@ -214,7 +214,7 @@ describe('ElectronApiProvider', () => {
 
       // Raw IPC store.set should be called with the pending queue
       expect(mockApi.store.set).toHaveBeenCalledWith('pendingStoreWrites', [
-        { key: 'autoRun', value: { enabled: false } },
+        { key: 'autoRun', op: 'set', value: { enabled: false } },
       ]);
 
       consoleSpy.mockRestore();
@@ -253,8 +253,8 @@ describe('ElectronApiProvider', () => {
       );
       expect(pendingCalls).toHaveLength(2);
       expect(pendingCalls[1][1]).toEqual([
-        { key: 'autoRun', value: { enabled: false } },
-        { key: 'lastSelectedServiceConfigId', value: 'svc-2' },
+        { key: 'autoRun', op: 'set', value: { enabled: false } },
+        { key: 'lastSelectedServiceConfigId', op: 'set', value: 'svc-2' },
       ]);
 
       consoleSpy.mockRestore();
@@ -307,7 +307,7 @@ describe('ElectronApiProvider', () => {
       );
       // Still recoverable within this session, just not across a restart.
       expect(getPendingWriteQueue()).toEqual([
-        { key: 'autoRun', value: { enabled: false } },
+        { key: 'autoRun', op: 'set', value: { enabled: false } },
       ]);
 
       consoleSpy.mockRestore();
@@ -423,7 +423,7 @@ describe('ElectronApiProvider', () => {
 
       // Replaying the stale {enabled: false} would undo the user's later choice.
       expect(getPendingWriteQueue()).toEqual([
-        { key: 'autoRun', value: { enabled: true } },
+        { key: 'autoRun', op: 'set', value: { enabled: true } },
       ]);
 
       consoleSpy.mockRestore();
@@ -434,6 +434,9 @@ describe('ElectronApiProvider', () => {
     const setupProvider = () => {
       const mockApi = buildMockElectronApi();
       mockApi.store.delete.mockResolvedValue(undefined);
+      // A failed delete persists the queue through this, so it must return a
+      // promise like the real ipcRenderer.invoke bridge does.
+      mockApi.store.set.mockResolvedValue(undefined);
       (window as unknown as Record<string, unknown>).electronAPI = mockApi;
 
       const { result } = renderHook(() => useContext(ElectronApiContext), {
@@ -533,6 +536,55 @@ describe('ElectronApiProvider', () => {
 
       consoleSpy.mockRestore();
     });
+
+    it('queues a failed delete for replay on the next launch', async () => {
+      resetPendingStoreWrites();
+      const { result, mockApi } = setupProvider();
+      mockApi.store.set.mockResolvedValue(undefined);
+      mockDeleteStoreKey.mockRejectedValueOnce(
+        new TypeError('Failed to fetch'),
+      );
+
+      const consoleSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
+
+      await result.current.store?.delete?.('lastSelectedAgentType');
+
+      expect(getPendingWriteQueue()).toEqual([
+        { key: 'lastSelectedAgentType', op: 'delete' },
+      ]);
+      expect(mockApi.store.set).toHaveBeenCalledWith('pendingStoreWrites', [
+        { key: 'lastSelectedAgentType', op: 'delete' },
+      ]);
+
+      consoleSpy.mockRestore();
+    });
+
+    it('collapses a queued write and a later failed delete to the delete', async () => {
+      resetPendingStoreWrites();
+      const { result, mockApi } = setupProvider();
+      mockApi.store.set.mockResolvedValue(undefined);
+
+      const consoleSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
+
+      mockSetStoreKey.mockRejectedValueOnce(new TypeError('Failed to fetch'));
+      await result.current.store?.set?.('autoRun', { enabled: false });
+
+      mockDeleteStoreKey.mockRejectedValueOnce(
+        new TypeError('Failed to fetch'),
+      );
+      await result.current.store?.delete?.('autoRun');
+
+      // Replaying the set after the delete would resurrect the key.
+      expect(getPendingWriteQueue()).toEqual([
+        { key: 'autoRun', op: 'delete' },
+      ]);
+
+      consoleSpy.mockRestore();
+    });
   });
 
   describe('store.clear', () => {
@@ -599,7 +651,7 @@ describe('ElectronApiProvider', () => {
         (call: unknown[]) => call[0] === 'pendingStoreWrites',
       );
       expect(pendingCalls[pendingCalls.length - 1][1]).toEqual([
-        { key: 'lastSelectedServiceConfigId', value: 'svc-1' },
+        { key: 'lastSelectedServiceConfigId', op: 'set', value: 'svc-1' },
       ]);
 
       consoleSpy.mockRestore();

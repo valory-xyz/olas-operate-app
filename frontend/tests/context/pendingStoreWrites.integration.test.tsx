@@ -142,7 +142,7 @@ describe('pending store writes (ElectronApiProvider + StoreProvider)', () => {
     await setKey(session1, 'autoRun', { enabled: false });
 
     expect(electronStore.pendingStoreWrites).toEqual([
-      { key: 'autoRun', value: { enabled: false } },
+      { key: 'autoRun', op: 'set', value: { enabled: false } },
     ]);
     expect(backend.data.autoRun).toEqual({ enabled: true }); // write never landed
     quit(session1);
@@ -210,8 +210,8 @@ describe('pending store writes (ElectronApiProvider + StoreProvider)', () => {
     await setKey(session2, 'lastSelectedServiceConfigId', 'svc-2');
 
     expect(electronStore.pendingStoreWrites).toEqual([
-      { key: 'autoRun', value: { enabled: false } },
-      { key: 'lastSelectedServiceConfigId', value: 'svc-2' },
+      { key: 'autoRun', op: 'set', value: { enabled: false } },
+      { key: 'lastSelectedServiceConfigId', op: 'set', value: 'svc-2' },
     ]);
     quit(session2);
 
@@ -246,11 +246,47 @@ describe('pending store writes (ElectronApiProvider + StoreProvider)', () => {
     quit(session);
   });
 
+  it('completes a migration delete that failed at shutdown', async () => {
+    // The lastSelectedAgentType migration: write the new key, drop the legacy
+    // one. The delete is the half that used to be lost.
+    backend.data = { lastSelectedAgentType: 'trader' };
+
+    const session1 = startSession();
+    await waitFor(() => {
+      expect(session1.result.current.store.storeState).toBeDefined();
+    });
+
+    backend.reachable = false;
+    await act(async () => {
+      await session1.result.current.electron.store?.delete?.(
+        'lastSelectedAgentType',
+      );
+    });
+
+    expect(electronStore.pendingStoreWrites).toEqual([
+      { key: 'lastSelectedAgentType', op: 'delete' },
+    ]);
+    expect(backend.data.lastSelectedAgentType).toBe('trader'); // still there
+    quit(session1);
+
+    // Next launch: the delete completes before hydration reads the store, so
+    // the migration does not see the legacy key again.
+    backend.reachable = true;
+    const session2 = startSession();
+    await waitFor(() => {
+      expect(session2.result.current.store.storeState).toEqual({});
+    });
+
+    expect(backend.data.lastSelectedAgentType).toBeUndefined();
+    expect(electronStore.pendingStoreWrites).toEqual([]);
+    quit(session2);
+  });
+
   it('does not replay queued writes over a reset that lands mid-flush', async () => {
     // Two writes are queued from the previous session.
     electronStore.pendingStoreWrites = [
-      { key: 'autoRun', value: { enabled: true } },
-      { key: 'lastSelectedServiceConfigId', value: 'svc-1' },
+      { key: 'autoRun', op: 'set', value: { enabled: true } },
+      { key: 'lastSelectedServiceConfigId', op: 'set', value: 'svc-1' },
     ];
     backend.data = {};
 

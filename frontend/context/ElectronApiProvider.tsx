@@ -21,6 +21,7 @@ import {
   awaitPendingWriteFlush,
   beginWrite,
   dropQueuedWritesFor,
+  enqueueFailedDelete,
   enqueueFailedWrite,
   logStoreEvent,
 } from './pendingStoreWrites';
@@ -356,7 +357,7 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
             emitPearlStoreDelete(key);
             // Claim the key so an earlier set that rejects late cannot queue —
             // replaying it would resurrect a key the user has just deleted.
-            beginWrite(key);
+            const seq = beginWrite(key);
             return StoreService.deleteStoreKey(key).then(
               // A queued write for a key the user has since deleted must not be
               // replayed — that would resurrect the value on the next launch.
@@ -364,6 +365,7 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
               (error) => {
                 logStoreEvent(`Failed to delete key '${key}': ${error}`);
                 console.error(`Failed to delete store key '${key}':`, error);
+                return enqueueFailedDelete(key, seq);
               },
             );
           },

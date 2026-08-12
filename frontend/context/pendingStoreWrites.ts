@@ -15,7 +15,14 @@ import { StoreService } from '@/service/StoreService';
  * providers — same pattern as pearlStoreEventBus.
  */
 
-export type PendingStoreWrite = { key: string; value: unknown };
+/** Which mutation a queued entry replays. `value` is unused for deletes. */
+export type PendingStoreOp = 'set' | 'delete';
+
+export type PendingStoreWrite = {
+  key: string;
+  op: PendingStoreOp;
+  value?: unknown;
+};
 
 /** electron-store key holding the queue across restarts. */
 export const PENDING_STORE_WRITES_KEY = 'pendingStoreWrites';
@@ -79,36 +86,45 @@ export const beginWrite = (key: string) => {
 };
 
 /**
- * Queue a failed write for replay on the next launch, unless a newer mutation
- * for the same key has since been issued.
+ * Queue a failed mutation for replay on the next launch, unless a newer
+ * mutation for the same key has since been issued.
  *
- * Keeps only the latest value per key: replaying a stale earlier value would
- * clobber whatever the user set afterwards. The fresh entry is appended, so the
- * last write of any key is always last in the queue and the relative order of
- * other keys is preserved.
+ * Keeps only the latest entry per key, so a set followed by a delete collapses
+ * to the delete: replaying a stale earlier value would clobber whatever the
+ * user did afterwards. The fresh entry is appended, so the last mutation of any
+ * key is last in the queue and the relative order of other keys is preserved.
  */
-export const enqueueFailedWrite = (
-  key: string,
-  value: unknown,
+const enqueueFailedOp = (
+  entry: PendingStoreWrite,
   seq: number,
 ): Promise<void> | undefined => {
+  const { key, op } = entry;
+
   if (latestSeqByKey.get(key) !== seq) {
     logStoreEvent(
-      `Discarded late failure for '${key}' — superseded by a newer write`,
+      `Discarded late ${op} failure for '${key}' — superseded by a newer mutation`,
     );
     return undefined;
   }
 
-  queue = [...queue.filter((entry) => entry.key !== key), { key, value }];
+  queue = [...queue.filter((queued) => queued.key !== key), entry];
   const persisted = persist();
 
   logStoreEvent(
     persisted
-      ? `Enqueued failed write for '${key}' (${queue.length} pending)`
-      : `Queued failed write for '${key}' in memory only — store.set IPC unavailable, it will not survive a restart`,
+      ? `Enqueued failed ${op} for '${key}' (${queue.length} pending)`
+      : `Queued failed ${op} for '${key}' in memory only — store.set IPC unavailable, it will not survive a restart`,
   );
   return persisted;
 };
+
+/** Queue a failed `store.set`. */
+export const enqueueFailedWrite = (key: string, value: unknown, seq: number) =>
+  enqueueFailedOp({ key, op: 'set', value }, seq);
+
+/** Queue a failed `store.delete`. */
+export const enqueueFailedDelete = (key: string, seq: number) =>
+  enqueueFailedOp({ key, op: 'delete' }, seq);
 
 /**
  * Drop any queued write for a key that has just been persisted (or deleted)
@@ -151,16 +167,22 @@ export const awaitPendingWriteFlush = () =>
  * Narrow whatever electron-store handed back to well-formed entries.
  * `store.get` is typed `unknown` and the file is user-writable, so a bad entry
  * would otherwise reach StoreService.setStoreKey(undefined, undefined).
+ *
+ * A missing `op` reads as `'set'` — entries written by an rc build from before
+ * deletes were queued had no `op` field.
  */
 const toPendingStoreWrites = (value: unknown): PendingStoreWrite[] => {
   if (!Array.isArray(value)) return [];
-  return value.filter(
-    (entry): entry is PendingStoreWrite =>
-      typeof entry === 'object' &&
-      entry !== null &&
-      typeof (entry as PendingStoreWrite).key === 'string' &&
-      (entry as PendingStoreWrite).key.length > 0,
-  );
+
+  return value.flatMap((entry) => {
+    if (typeof entry !== 'object' || entry === null) return [];
+
+    const { key, op, value: entryValue } = entry as Partial<PendingStoreWrite>;
+    if (typeof key !== 'string' || key.length === 0) return [];
+    if (op !== undefined && op !== 'set' && op !== 'delete') return [];
+
+    return [{ key, op: op ?? 'set', value: entryValue }];
+  });
 };
 
 type FlushDeps = {
@@ -241,7 +263,11 @@ export const flushPendingWrites = async ({
     if (!queue.includes(entry)) continue;
 
     try {
-      await StoreService.setStoreKey(entry.key, entry.value);
+      if (entry.op === 'delete') {
+        await StoreService.deleteStoreKey(entry.key);
+      } else {
+        await StoreService.setStoreKey(entry.key, entry.value);
+      }
       succeeded.push(entry);
     } catch (error) {
       const msg = error instanceof Error ? error.message : String(error);

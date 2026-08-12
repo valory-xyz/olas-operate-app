@@ -341,8 +341,8 @@ describe('StoreProvider', () => {
 
     it('skips an entry a successful in-session write superseded mid-flush', async () => {
       const { Wrapper } = makeFlushWrapper([
-        { key: 'autoRun', value: { enabled: false } },
-        { key: 'lastSelectedServiceConfigId', value: 'svc-1' },
+        { key: 'autoRun', op: 'set', value: { enabled: false } },
+        { key: 'lastSelectedServiceConfigId', op: 'set', value: 'svc-1' },
       ]);
       mockGetStore.mockResolvedValue({});
 
@@ -363,6 +363,47 @@ describe('StoreProvider', () => {
       });
 
       expect(mockSetStoreKey).toHaveBeenCalledTimes(1);
+      expect(mockSetStoreKey).toHaveBeenCalledWith('autoRun', {
+        enabled: false,
+      });
+    });
+
+    it('replays a queued delete via deleteStoreKey', async () => {
+      const mockDeleteStoreKey = StoreService.deleteStoreKey as jest.Mock;
+      mockDeleteStoreKey.mockResolvedValue(undefined);
+      const { Wrapper, storeSet } = makeFlushWrapper([
+        { key: 'lastSelectedAgentType', op: 'delete' },
+      ]);
+      mockGetStore.mockResolvedValue({});
+
+      const { result } = renderHook(() => useContext(StoreContext), {
+        wrapper: Wrapper,
+      });
+
+      await waitFor(() => {
+        expect(result.current.storeState).toBeDefined();
+      });
+
+      expect(mockDeleteStoreKey).toHaveBeenCalledWith('lastSelectedAgentType');
+      expect(mockSetStoreKey).not.toHaveBeenCalled();
+      expect(storeSet).toHaveBeenCalledWith('pendingStoreWrites', []);
+    });
+
+    it('replays an entry with no op as a set', async () => {
+      // Entries persisted by an rc build from before deletes were queued.
+      const { Wrapper } = makeFlushWrapper([
+        { key: 'autoRun', value: { enabled: false } },
+      ]);
+      mockGetStore.mockResolvedValue({});
+
+      const { result } = renderHook(() => useContext(StoreContext), {
+        wrapper: Wrapper,
+      });
+
+      await waitFor(() => {
+        expect(result.current.storeState).toBeDefined();
+      });
+
       expect(mockSetStoreKey).toHaveBeenCalledWith('autoRun', {
         enabled: false,
       });
@@ -412,7 +453,7 @@ describe('StoreProvider', () => {
 
     it('skips entries for keys already written this session', async () => {
       const { Wrapper, storeSet } = makeFlushWrapper([
-        { key: 'autoRun', value: { enabled: false } },
+        { key: 'autoRun', op: 'set', value: { enabled: false } },
       ]);
       mockGetStore.mockResolvedValue({});
 
@@ -434,7 +475,7 @@ describe('StoreProvider', () => {
 
     it('flushes pending writes to backend before hydration', async () => {
       const { Wrapper, storeSet } = makeFlushWrapper([
-        { key: 'autoRun', value: { enabled: false } },
+        { key: 'autoRun', op: 'set', value: { enabled: false } },
       ]);
       mockGetStore.mockResolvedValue({ autoRun: { enabled: false } });
 
@@ -457,7 +498,7 @@ describe('StoreProvider', () => {
 
     it('completes the flush before reading the store back', async () => {
       const { Wrapper } = makeFlushWrapper([
-        { key: 'autoRun', value: { enabled: false } },
+        { key: 'autoRun', op: 'set', value: { enabled: false } },
       ]);
 
       const callOrder: string[] = [];
@@ -484,8 +525,8 @@ describe('StoreProvider', () => {
 
     it('replays queued writes sequentially, not concurrently', async () => {
       const { Wrapper } = makeFlushWrapper([
-        { key: 'autoRun', value: { enabled: false } },
-        { key: 'autoRun', value: { enabled: true } },
+        { key: 'autoRun', op: 'set', value: { enabled: false } },
+        { key: 'autoRun', op: 'set', value: { enabled: true } },
       ]);
       mockGetStore.mockResolvedValue({});
 
@@ -517,8 +558,8 @@ describe('StoreProvider', () => {
 
     it('clears queue after all writes succeed', async () => {
       const { Wrapper, storeSet } = makeFlushWrapper([
-        { key: 'autoRun', value: { enabled: false } },
-        { key: 'lastSelectedServiceConfigId', value: 'svc-2' },
+        { key: 'autoRun', op: 'set', value: { enabled: false } },
+        { key: 'lastSelectedServiceConfigId', op: 'set', value: 'svc-2' },
       ]);
       mockGetStore.mockResolvedValue({});
 
@@ -542,7 +583,7 @@ describe('StoreProvider', () => {
 
     it('discards malformed entries instead of replaying them', async () => {
       const { Wrapper, storeSet } = makeFlushWrapper([
-        { key: 'autoRun', value: { enabled: false } },
+        { key: 'autoRun', op: 'set', value: { enabled: false } },
         null,
         'garbage',
         { value: 'no key' },
@@ -643,8 +684,8 @@ describe('StoreProvider', () => {
 
     it('keeps failed entries in queue on partial flush failure', async () => {
       const { Wrapper, storeSet } = makeFlushWrapper([
-        { key: 'autoRun', value: { enabled: false } },
-        { key: 'lastSelectedServiceConfigId', value: 'svc-2' },
+        { key: 'autoRun', op: 'set', value: { enabled: false } },
+        { key: 'lastSelectedServiceConfigId', op: 'set', value: 'svc-2' },
       ]);
       mockSetStoreKey
         .mockResolvedValueOnce(undefined) // autoRun succeeds
@@ -665,7 +706,7 @@ describe('StoreProvider', () => {
 
       // Queue should contain only the failed entry
       expect(storeSet).toHaveBeenCalledWith('pendingStoreWrites', [
-        { key: 'lastSelectedServiceConfigId', value: 'svc-2' },
+        { key: 'lastSelectedServiceConfigId', op: 'set', value: 'svc-2' },
       ]);
 
       consoleSpy.mockRestore();
@@ -691,7 +732,7 @@ describe('StoreProvider', () => {
 
     it('proceeds to hydration even when flush fails entirely', async () => {
       const { Wrapper } = makeFlushWrapper([
-        { key: 'autoRun', value: { enabled: false } },
+        { key: 'autoRun', op: 'set', value: { enabled: false } },
       ]);
       mockSetStoreKey.mockRejectedValue(new Error('backend still down'));
       mockGetStore.mockResolvedValue({ autoRun: { enabled: true } });
