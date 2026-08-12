@@ -222,3 +222,13 @@ export const ELIGIBILITY_REASON = {
 export const ELIGIBILITY_LOADING_REASON = {
   BALANCES: 'Balances',
 } as const;
+
+/**
+ * Deterministic skip reason returned when a candidate's staking contract has no
+ * OLAS left to distribute (`availableRewards === 0`).
+ *
+ * Exported rather than inlined because the scanner matches on it: an empty-pool
+ * candidate is *deferred* rather than skipped outright, so it can still be
+ * started in degraded mode when no rewarded candidate is startable.
+ */
+export const EMPTY_REWARD_POOL_REASON = 'Staking contract reward pool is empty';
