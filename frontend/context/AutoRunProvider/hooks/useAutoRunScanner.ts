@@ -357,6 +357,17 @@ export const useAutoRunScanner = ({
       return false;
     }
 
+    const fastPathDeployability =
+      await getDeployabilityForAgent(selectedMeta);
+    if (!fastPathDeployability.canRun) {
+      if (fastPathDeployability.isTransient) {
+        scheduleNextScan(SCAN_LOADING_RETRY_SECONDS);
+        return false;
+      }
+      notifySkipOnce(selectedServiceConfigId, fastPathDeployability.reason, false);
+      return false;
+    }
+
     const rewardsEligibility = await waitForRewardsEligibility(
       selectedServiceConfigId,
     );
@@ -394,6 +405,7 @@ export const useAutoRunScanner = ({
   }, [
     configuredAgents,
     enabledRef,
+    getDeployabilityForAgent,
     getSelectedEligibility,
     getRewardSnapshot,
     markRewardSnapshotPending,
