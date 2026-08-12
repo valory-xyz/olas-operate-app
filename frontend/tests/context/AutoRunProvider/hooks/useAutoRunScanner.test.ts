@@ -6,6 +6,7 @@ import { AgentMap } from '../../../../constants/agent';
 import {
   AUTO_RUN_START_STATUS,
   ELIGIBILITY_REASON,
+  EMPTY_REWARD_POOL_REASON,
   SCAN_BLOCKED_DELAY_SECONDS,
   SCAN_ELIGIBLE_DELAY_SECONDS,
   SCAN_LOADING_RETRY_SECONDS,
@@ -190,6 +191,85 @@ describe('useAutoRunScanner', () => {
         false,
       );
       expect(params.startAgentWithRetries).toHaveBeenCalledWith(scPolystrat);
+    });
+
+    it('prefers a rewarded candidate over an empty-pool one, and notifies the skip', async () => {
+      const params = makeHookParams({
+        getDeployabilityForAgent: jest
+          .fn()
+          // optimus: empty pool → deferred
+          .mockResolvedValueOnce({
+            canRun: false,
+            reason: EMPTY_REWARD_POOL_REASON,
+          })
+          // polystrat: fine
+          .mockResolvedValue({ canRun: true }),
+      });
+      const { result } = renderHook(() => useAutoRunScanner(params));
+
+      await act(async () => {
+        await result.current.scanAndStartNext(scTrader);
+      });
+      expect(params.startAgentWithRetries).toHaveBeenCalledWith(scPolystrat);
+      expect(params.startAgentWithRetries).not.toHaveBeenCalledWith(scOptimus);
+      // optimus really was passed over this cycle → surface it
+      expect(params.notifySkipOnce).toHaveBeenCalledWith(
+        scOptimus,
+        EMPTY_REWARD_POOL_REASON,
+        false,
+      );
+    });
+
+    it('falls back to an empty-pool candidate when no rewarded candidate can start', async () => {
+      // All three drained: running one without rewards beats idling entirely.
+      const params = makeHookParams({
+        getDeployabilityForAgent: jest.fn().mockResolvedValue({
+          canRun: false,
+          reason: EMPTY_REWARD_POOL_REASON,
+        }),
+      });
+      const { result } = renderHook(() => useAutoRunScanner(params));
+
+      let scanResult: { started: boolean } | undefined;
+      await act(async () => {
+        scanResult = await result.current.scanAndStartNext(scTrader);
+      });
+      expect(scanResult?.started).toBe(true);
+      expect(params.startAgentWithRetries).toHaveBeenCalledWith(scOptimus);
+      // The one we started must not be reported as skipped...
+      expect(params.notifySkipOnce).not.toHaveBeenCalledWith(
+        scOptimus,
+        EMPTY_REWARD_POOL_REASON,
+        false,
+      );
+      // ...but the ones we passed over must be.
+      expect(params.notifySkipOnce).toHaveBeenCalledWith(
+        scPolystrat,
+        EMPTY_REWARD_POOL_REASON,
+        false,
+      );
+    });
+
+    it('does not fall back to an empty-pool candidate that already earned this epoch', async () => {
+      const params = makeHookParams({
+        orderedIncludedInstances: [scTrader, scOptimus],
+        getDeployabilityForAgent: jest.fn().mockResolvedValue({
+          canRun: false,
+          reason: EMPTY_REWARD_POOL_REASON,
+        }),
+        waitForRewardsEligibility: jest.fn().mockResolvedValue(true),
+      });
+      const { result } = renderHook(() => useAutoRunScanner(params));
+
+      await act(async () => {
+        await result.current.scanAndStartNext(scOptimus);
+      });
+      expect(params.startAgentWithRetries).not.toHaveBeenCalled();
+      expect(params.notifySkipOnce).toHaveBeenCalledWith(
+        scTrader,
+        EMPTY_REWARD_POOL_REASON,
+        false,
+      );
     });
 
     it('schedules blocked delay when all candidates blocked', async () => {
@@ -607,11 +687,14 @@ describe('useAutoRunScanner', () => {
       expect(started).toBe(false);
     });
 
-    it('returns false and notifies when deployability check finds empty reward pool', async () => {
+    it('returns false WITHOUT notifying when deployability finds empty reward pool', async () => {
+      // Deferred on purpose: the caller falls through to scanAndStartNext,
+      // which may still start this instance in degraded mode. Notifying here
+      // would announce a skip that never happens.
       const params = makeHookParams({
         getDeployabilityForAgent: jest.fn().mockResolvedValue({
           canRun: false,
-          reason: 'Staking contract reward pool is empty',
+          reason: EMPTY_REWARD_POOL_REASON,
         }),
       });
       const { result } = renderHook(() => useAutoRunScanner(params));
@@ -621,12 +704,26 @@ describe('useAutoRunScanner', () => {
         started = await result.current.startSelectedAgentIfEligible();
       });
       expect(started).toBe(false);
+      expect(params.notifySkipOnce).not.toHaveBeenCalled();
+      expect(params.startAgentWithRetries).not.toHaveBeenCalled();
+    });
+
+    it('still notifies for non-empty-pool deterministic blocks', async () => {
+      const params = makeHookParams({
+        getDeployabilityForAgent: jest
+          .fn()
+          .mockResolvedValue({ canRun: false, reason: 'Low balance' }),
+      });
+      const { result } = renderHook(() => useAutoRunScanner(params));
+
+      await act(async () => {
+        await result.current.startSelectedAgentIfEligible();
+      });
       expect(params.notifySkipOnce).toHaveBeenCalledWith(
         scTrader,
-        'Staking contract reward pool is empty',
+        'Low balance',
         false,
       );
-      expect(params.startAgentWithRetries).not.toHaveBeenCalled();
     });
 
     it('returns false and schedules retry when deployability check returns transient block', async () => {

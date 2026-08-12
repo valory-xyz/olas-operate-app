@@ -1061,4 +1061,35 @@ describe('fetchDeployabilityForAgent', () => {
     const result = await fetchDeployabilityForAgent(makeAgentMeta(), makeCtx());
     expect(result.canRun).toBe(true);
   });
+
+  // The scanner's degraded-mode fallback starts empty-pool candidates without
+  // re-running the other gates, which is only sound because the pool check is
+  // evaluated last. These two pin that ordering.
+  it('reports the funding blocker, not the empty pool, when both apply', async () => {
+    mockGetStakingContractDetails.mockResolvedValue({
+      serviceIds: [1, 2],
+      maxNumServices: 10,
+      minimumStakingDuration: 86400,
+      availableRewards: 0,
+    });
+    const ctx = makeCtx({
+      isInstanceInitiallyFunded: jest.fn().mockReturnValue(false),
+    });
+    const result = await fetchDeployabilityForAgent(makeAgentMeta(), ctx);
+    expect(result.reason).toBe('Unfinished setup');
+  });
+
+  it('reports the balance blocker, not the empty pool, when both apply', async () => {
+    mockGetStakingContractDetails.mockResolvedValue({
+      serviceIds: [1, 2],
+      maxNumServices: 10,
+      minimumStakingDuration: 86400,
+      availableRewards: 0,
+    });
+    const ctx = makeCtx({
+      allowStartAgentByServiceConfigId: jest.fn().mockReturnValue(false),
+    });
+    const result = await fetchDeployabilityForAgent(makeAgentMeta(), ctx);
+    expect(result.reason).toBe('Low balance');
+  });
 });
