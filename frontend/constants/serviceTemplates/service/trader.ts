@@ -155,6 +155,20 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
       value: '5',
       provision_type: EnvProvisionType.FIXED,
     },
+    USE_MECH_ANALYTICS: {
+      name: 'Use mech analytics',
+      description:
+        'Read per-request mech data from the mech-analytics service instead of the on-chain subgraph. Required for surfacing offchain mech requests in agent-performance summaries, which the on-chain subgraph does not index.',
+      value: 'true',
+      provision_type: EnvProvisionType.FIXED,
+    },
+    MECH_ANALYTICS_URL: {
+      name: 'Mech analytics URL',
+      description:
+        'Base URL of the mech-analytics HTTP service. Required when USE_MECH_ANALYTICS is true.',
+      value: 'https://mech-analytics.autonolas.tech',
+      provision_type: EnvProvisionType.FIXED,
+    },
   },
 } as const;
 
@@ -301,6 +315,20 @@ export const PREDICT_POLYMARKET_SERVICE_TEMPLATE: ServiceTemplate = {
       description:
         'Number of forward mech requests each auto-deposit to the BalanceTracker should cover. Deposit chunk = target_calls * delivery_rate, clamped by auto_deposit_cap_per_cycle.',
       value: '5',
+      provision_type: EnvProvisionType.FIXED,
+    },
+    USE_MECH_ANALYTICS: {
+      name: 'Use mech analytics',
+      description:
+        'Read per-request mech data from the mech-analytics service instead of the on-chain subgraph. Required for surfacing offchain mech requests in agent-performance summaries, which the on-chain subgraph does not index.',
+      value: 'true',
+      provision_type: EnvProvisionType.FIXED,
+    },
+    MECH_ANALYTICS_URL: {
+      name: 'Mech analytics URL',
+      description:
+        'Base URL of the mech-analytics HTTP service. Required when USE_MECH_ANALYTICS is true.',
+      value: 'https://mech-analytics.autonolas.tech',
       provision_type: EnvProvisionType.FIXED,
     },
   },
