@@ -42,7 +42,10 @@ describe('AgentActivity', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockUseRewardContext.mockReturnValue({ isEpochTargetMet: false });
-    mockUseConnectSession.mockReturnValue({ showRunningInfo: false });
+    mockUseConnectSession.mockReturnValue({
+      showRunningInfo: false,
+      isFirstRun: false,
+    });
   });
 
   it('shows "Agent is not running" when the service is stopped', () => {
@@ -60,18 +63,37 @@ describe('AgentActivity', () => {
     expect(screen.getByText('Agent is running')).toBeInTheDocument();
   });
 
-  it('points at the agent profile while a Connect agent is running', () => {
-    mockUseConnectSession.mockReturnValue({ showRunningInfo: true });
+  it('shows "visit" copy on first run while Connect agent is running', () => {
+    mockUseConnectSession.mockReturnValue({
+      showRunningInfo: true,
+      isFirstRun: true,
+    });
     setup({ isServiceRunning: true });
     expect(
       screen.getByText(
-        'Your agent is running. Start a new session from the agent profile.',
+        'Your agent is running. You can visit the agent Profile to start a new session.',
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('shows "open" copy on subsequent runs while Connect agent is running', () => {
+    mockUseConnectSession.mockReturnValue({
+      showRunningInfo: true,
+      isFirstRun: false,
+    });
+    setup({ isServiceRunning: true });
+    expect(
+      screen.getByText(
+        'Your agent is running. You can open the agent Profile to start a new session.',
       ),
     ).toBeInTheDocument();
   });
 
   it('takes priority over healthcheck rounds for Connect', () => {
-    mockUseConnectSession.mockReturnValue({ showRunningInfo: true });
+    mockUseConnectSession.mockReturnValue({
+      showRunningInfo: true,
+      isFirstRun: false,
+    });
     setup({
       isServiceRunning: true,
       deploymentDetails: {
@@ -80,7 +102,7 @@ describe('AgentActivity', () => {
     });
     expect(
       screen.getByText(
-        'Your agent is running. Start a new session from the agent profile.',
+        'Your agent is running. You can open the agent Profile to start a new session.',
       ),
     ).toBeInTheDocument();
   });
@@ -88,7 +110,10 @@ describe('AgentActivity', () => {
   it('does not show the session notice for a stopped Connect agent', () => {
     // Defensive: even if the hook still reports running, a stopped service
     // renders the default state.
-    mockUseConnectSession.mockReturnValue({ showRunningInfo: true });
+    mockUseConnectSession.mockReturnValue({
+      showRunningInfo: true,
+      isFirstRun: false,
+    });
     setup({ isServiceRunning: false });
     expect(screen.getByText('Agent is not running')).toBeInTheDocument();
   });
@@ -97,7 +122,7 @@ describe('AgentActivity', () => {
     setup({ isServiceRunning: true });
     expect(
       screen.queryByText(
-        'Your agent is running. Start a new session from the agent profile.',
+        'Your agent is running. You can open the agent Profile to start a new session.',
       ),
     ).not.toBeInTheDocument();
   });

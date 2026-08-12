@@ -1,7 +1,8 @@
-import { Flex, Select, Tag, Typography } from 'antd';
+import { Checkbox, Flex, Select, Tag, Typography } from 'antd';
 import Image from 'next/image';
 import { useEffect, useMemo, useState } from 'react';
 import { TbCreditCardFilled } from 'react-icons/tb';
+import styled from 'styled-components';
 
 import { IntroductionAnimatedContainer } from '@/components/AgentIntroduction';
 import { Alert } from '@/components/ui';
@@ -19,6 +20,7 @@ import {
   EvmChainId,
   EvmChainIdMap,
   EvmChainName,
+  PEARL_CONNECT_RISKS_TERMS_URL,
   POLYMARKET_DEPOSIT_WALLET_MIGRATION_URL,
   UNICODE_SYMBOLS,
   X_DEVELOPER_CONSOLE_URL,
@@ -277,6 +279,71 @@ const ConnectChainSelect = ({
   );
 };
 
+const RiskAcknowledgementCheckbox = styled(Checkbox)`
+  .ant-checkbox {
+    align-self: start;
+  }
+`;
+
+/**
+ * Connect only: the user must acknowledge the Connect-specific risks
+ * (prompt injection, loss of funds) before the agent can be created.
+ *
+ * Both props are required — this is a compliance gate, and the component has
+ * no legitimate use with either omitted. A missing `onChange` would render a
+ * checkbox whose clicks are silently swallowed; a missing `checked` would hand
+ * antd `undefined` and make it uncontrolled, free to drift from the parent.
+ */
+type ConnectRiskAcknowledgementProps = {
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  /** Incrementing value that flags the checkbox when the user tries to
+   * continue without acknowledging. */
+  highlightSignal?: number;
+};
+const ConnectRiskAcknowledgement = ({
+  checked,
+  onChange,
+  highlightSignal,
+}: ConnectRiskAcknowledgementProps) => {
+  // Highlight when prompted (not acknowledged). Cleared once ticked.
+  const [isHighlighted, setIsHighlighted] = useState(false);
+  useEffect(() => {
+    if (highlightSignal) setIsHighlighted(true);
+  }, [highlightSignal]);
+  useEffect(() => {
+    if (checked) setIsHighlighted(false);
+  }, [checked]);
+
+  const showError = isHighlighted && !checked;
+
+  return (
+    <Flex vertical gap={8}>
+      <RiskAcknowledgementCheckbox
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        className="text-sm text-neutral-tertiary"
+      >
+        I have read and understood the risks specific to Pearl Connect
+        (including prompt injection and loss of funds) described in{' '}
+        <Link
+          href={PEARL_CONNECT_RISKS_TERMS_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-sm"
+        >
+          Section 6.1.2
+          <span className="text-xxs ml-4">{UNICODE_SYMBOLS.EXTERNAL_LINK}</span>
+        </Link>
+        .
+      </RiskAcknowledgementCheckbox>
+      {showError && (
+        <Text type="danger">Please acknowledge the risks to continue.</Text>
+      )}
+    </Flex>
+  );
+};
+
 type MinimumFundingRequirementsProps = {
   agentType: AgentType;
   /** Override chain (Connect selects its chain in this step). */
@@ -346,6 +413,9 @@ type FundingRequirementStepProps = {
   onSelectChain?: (chain: EvmChainId) => void;
   /** Connect only: incrementing value that highlights the chain selector. */
   highlightSignal?: number;
+  /** Connect only: risk acknowledgement state, and its setter. */
+  hasAcceptedRisks?: boolean;
+  onAcceptRisksChange?: (checked: boolean) => void;
 };
 
 export const FundingRequirementStep = ({
@@ -354,6 +424,8 @@ export const FundingRequirementStep = ({
   selectedChain,
   onSelectChain,
   highlightSignal,
+  hasAcceptedRisks,
+  onAcceptRisksChange,
 }: FundingRequirementStepProps) => {
   const {
     displayName: agentName,
@@ -407,6 +479,15 @@ export const FundingRequirementStep = ({
               <MinimumFundingRequirements
                 agentType={agentType}
                 chainId={selectedChain}
+              />
+            )}
+            {/* Rendered only with a setter in hand — a checkbox that can't
+                report its own changes is worse than none. */}
+            {onAcceptRisksChange && (
+              <ConnectRiskAcknowledgement
+                checked={hasAcceptedRisks ?? false}
+                onChange={onAcceptRisksChange}
+                highlightSignal={highlightSignal}
               />
             )}
           </>

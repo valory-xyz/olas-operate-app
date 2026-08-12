@@ -60,3 +60,14 @@ describe('FundingRequirementStep — maintenance alert copy', () => {
     ).toBeInTheDocument();
   });
 });
+
+describe('FundingRequirementStep — non-Connect agents', () => {
+  it('does not render the Connect risk acknowledgement', () => {
+    render(<FundingRequirementStep agentType={AgentMap.PredictTrader} />);
+
+    expect(
+      screen.queryByText(/risks specific to Pearl Connect/i),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+  });
+});

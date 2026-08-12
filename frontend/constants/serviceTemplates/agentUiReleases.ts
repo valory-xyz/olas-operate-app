@@ -48,7 +48,7 @@ export const AGENT_UI_RELEASES: Partial<Record<AgentType, AgentUiRelease>> = {
   [AgentMap.Basius]: {
     owner: 'valory-xyz',
     name: AGENT_UI_MONOREPO,
-    version: 'v0.2.0-basius',
+    version: 'v0.2.1-basius',
   },
   [AgentMap.AgentsFun]: {
     owner: 'valory-xyz',
@@ -60,12 +60,9 @@ export const AGENT_UI_RELEASES: Partial<Record<AgentType, AgentUiRelease>> = {
     name: 'pettai-agent',
     version: 'v0.1.11',
   },
-  // PLACEHOLDER: Connect UI release not yet published (external dep — see
-  // connect-agent-plan.md §5). Bump when the real agent-ui-monorepo Connect
-  // release lands.
   [AgentMap.Connect]: {
     owner: 'valory-xyz',
     name: AGENT_UI_MONOREPO,
-    version: 'v0.0.0-connect',
+    version: 'v0.1.2-connect',
   },
 };
