@@ -408,7 +408,7 @@ export const fetchDeployabilityForAgent = async (
         !!serviceStakingStartTime &&
         serviceStakingState === StakingState.Staked;
 
-      const { serviceIds, maxNumServices, minimumStakingDuration } =
+      const { serviceIds, maxNumServices, minimumStakingDuration, availableRewards } =
         contractDetails ?? {};
       const hasEnoughServiceSlots =
         isNil(serviceIds) || isNil(maxNumServices)
@@ -431,6 +431,13 @@ export const fetchDeployabilityForAgent = async (
         if (!isEligibleAfterEviction) {
           return { canRun: false, reason: 'Evicted' };
         }
+      }
+
+      if (availableRewards === 0) {
+        return {
+          canRun: false,
+          reason: 'Staking contract reward pool is empty',
+        };
       }
     } catch (error) {
       ctx.logMessage(
