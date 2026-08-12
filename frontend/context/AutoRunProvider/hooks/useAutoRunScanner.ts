@@ -5,6 +5,7 @@ import {
   AutoRunScannerMetric,
   AutoRunStartResult,
   ELIGIBILITY_REASON,
+  EMPTY_REWARD_POOL_REASON,
   SCAN_BLOCKED_DELAY_SECONDS,
   SCAN_ELIGIBLE_DELAY_SECONDS,
   SCAN_LOADING_RETRY_SECONDS,
@@ -201,6 +202,21 @@ export const useAutoRunScanner = ({
       let hasEligible = false;
       let hasLoading = false;
       let hasInfraFailed = false;
+      // Candidates blocked *only* because their staking contract has no rewards
+      // left. Deferred rather than skipped outright: if nothing better can run,
+      // starting one of these beats idling the entire rotation — they still do
+      // their on-chain work, they just don't earn while the pool is drained.
+      const emptyPoolCandidates: string[] = [];
+
+      // Announces the deferred empty-pool candidates we did NOT end up running.
+      // Safe to call at several exits — `notifySkipOnce` dedupes per reason.
+      const notifyEmptyPoolSkips = (startedCandidate?: string) => {
+        for (const deferred of emptyPoolCandidates) {
+          if (deferred === startedCandidate) continue;
+          notifySkipOnce(deferred, EMPTY_REWARD_POOL_REASON, false);
+        }
+      };
+
       let candidate = findNextInOrder(startFrom);
       if (!candidate) {
         scheduleNextScan(SCAN_ELIGIBLE_DELAY_SECONDS);
@@ -232,6 +248,8 @@ export const useAutoRunScanner = ({
         if (!deployability.canRun) {
           if (deployability.isTransient) {
             hasLoading = true;
+          } else if (deployability.reason === EMPTY_REWARD_POOL_REASON) {
+            emptyPoolCandidates.push(candidate);
           } else {
             notifySkipOnce(candidate, deployability.reason, false);
             hasBlocked = true;
@@ -249,6 +267,7 @@ export const useAutoRunScanner = ({
 
         const startResult = await startAgentWithRetries(candidate);
         if (startResult.status === AUTO_RUN_START_STATUS.STARTED) {
+          notifyEmptyPoolSkips();
           return { started: true };
         }
         if (startResult.status === AUTO_RUN_START_STATUS.ABORTED) {
@@ -270,6 +289,50 @@ export const useAutoRunScanner = ({
         }
         hasBlocked = true;
         candidate = findNextInOrder(candidate);
+      }
+
+      // Degraded mode: no rewarded candidate could be started, so fall back to
+      // the instances deferred for an empty reward pool instead of idling.
+      // Without this, a user whose agents all sit on drained contracts would
+      // have auto-run start nothing at all — strictly worse than before the
+      // empty-pool skip existed. Each of these already passed every other
+      // deployability gate (the pool check runs last in
+      // `fetchDeployabilityForAgent`), so they can be started directly.
+      if (emptyPoolCandidates.length > 0) {
+        logVerbose(
+          `scan: no rewarded candidate startable, falling back to ${emptyPoolCandidates.length} empty-pool candidate(s)`,
+        );
+        for (const deferred of emptyPoolCandidates) {
+          if (!enabledRef.current) return { started: false };
+
+          const deferredEligibility = await waitForRewardsEligibility(deferred);
+          if (deferredEligibility === true) {
+            hasEligible = true;
+            continue;
+          }
+
+          const startResult = await startAgentWithRetries(deferred);
+          if (startResult.status === AUTO_RUN_START_STATUS.STARTED) {
+            logVerbose(
+              `scan: started ${deferred} in degraded mode (empty reward pool)`,
+            );
+            notifyEmptyPoolSkips(deferred);
+            return { started: true };
+          }
+          if (startResult.status === AUTO_RUN_START_STATUS.ABORTED) {
+            if (enabledRef.current) {
+              scheduleNextScan(SCAN_LOADING_RETRY_SECONDS);
+            }
+            return { started: false };
+          }
+          if (startResult.status === AUTO_RUN_START_STATUS.INFRA_FAILED) {
+            hasInfraFailed = true;
+            continue;
+          }
+          hasBlocked = true;
+        }
+        // Nothing in the deferred set ran — surface them all as real skips.
+        notifyEmptyPoolSkips();
       }
 
       const delay = (() => {
@@ -363,11 +426,16 @@ export const useAutoRunScanner = ({
         scheduleNextScan(SCAN_LOADING_RETRY_SECONDS);
         return false;
       }
-      notifySkipOnce(
-        selectedServiceConfigId,
-        fastPathDeployability.reason,
-        false,
-      );
+      // Empty pool is deferred, not notified, here: the caller falls through to
+      // `scanAndStartNext`, which may still start this instance in degraded
+      // mode. Notifying now would announce a skip that never happens.
+      if (fastPathDeployability.reason !== EMPTY_REWARD_POOL_REASON) {
+        notifySkipOnce(
+          selectedServiceConfigId,
+          fastPathDeployability.reason,
+          false,
+        );
+      }
       return false;
     }
 
