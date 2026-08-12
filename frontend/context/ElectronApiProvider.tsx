@@ -16,80 +16,14 @@ import {
 
 import { emitPearlStoreDelete, emitPearlStoreSet } from './pearlStoreEventBus';
 import { BACKEND_BOUND_KEYS, ELECTRON_NATIVE_KEYS } from './pearlStoreKeys';
-
-export type PendingStoreWrite = { key: string; value: unknown };
-
-// Module-level write queue — accumulates failed backend writes within a session.
-// Persisted to electron-store on each failure so it survives restarts.
-// Starts empty on process start and is seeded from electron-store by
-// StoreProvider's startup flush, so a failure later in this session merges with
-// the previous session's queue instead of overwriting it on disk.
-let pendingWriteQueue: PendingStoreWrite[] = [];
-
-/**
- * Adopt writes persisted by a previous session into the in-memory queue.
- * Called by StoreProvider once it has read `pendingStoreWrites` on startup.
- */
-export const seedPendingWriteQueue = (entries: PendingStoreWrite[]) => {
-  pendingWriteQueue = [...entries];
-};
-
-/**
- * Drop entries that were flushed to the backend successfully, keeping anything
- * queued since the flush started. Compares by identity so a fresh failure for
- * the same key (which replaced the seeded entry) is never dropped.
- * Returns the resulting queue so the caller can persist it.
- */
-export const removeFlushedWrites = (flushed: PendingStoreWrite[]) => {
-  const flushedEntries = new Set(flushed);
-  pendingWriteQueue = pendingWriteQueue.filter(
-    (entry) => !flushedEntries.has(entry),
-  );
-  return [...pendingWriteQueue];
-};
-
-/** Read the in-memory write queue. Used by tests only. */
-export const getPendingWriteQueue = () => [...pendingWriteQueue];
-
-// Set by `store.clear` so an in-flight startup flush stops replaying. Without
-// it, a write already awaiting the backend when the reset began can land after
-// the matching delete and put the key back in pearl_store.json.
-let flushAborted = false;
-
-/** True once `store.clear` has run — the startup flush must stop replaying. */
-export const isPendingWriteFlushAborted = () => flushAborted;
-
-// The startup flush, while it is running. Aborting stops the *next* iteration,
-// but a write already awaiting the backend cannot be unsent — so `store.clear`
-// also waits for this to settle before issuing its deletes, otherwise that
-// last write lands after the delete and puts the key back.
-let flushInFlight: Promise<void> | null = null;
-
-/** Register (or clear) the startup flush. Called by StoreProvider. */
-export const setPendingWriteFlush = (flush: Promise<void> | null) => {
-  flushInFlight = flush;
-};
-
-/** Resolves once any in-flight startup flush has settled. Never rejects. */
-export const awaitPendingWriteFlush = () =>
-  flushInFlight ? flushInFlight.catch(() => {}) : Promise.resolve();
-
-/**
- * Drop the queue and stop any in-flight startup flush. Used by `store.clear`:
- * the reset deletes backend keys, so neither the queued writes nor the replay
- * still in progress may reach the backend afterwards.
- */
-export const abortPendingWriteFlush = () => {
-  pendingWriteQueue = [];
-  flushAborted = true;
-};
-
-/** Reset the in-memory write queue and flush state. Used by tests only. */
-export const resetPendingWriteQueue = () => {
-  pendingWriteQueue = [];
-  flushAborted = false;
-  flushInFlight = null;
-};
+import {
+  abortPendingWriteFlush,
+  awaitPendingWriteFlush,
+  beginWrite,
+  dropQueuedWritesFor,
+  enqueueFailedWrite,
+  logStoreEvent,
+} from './pendingStoreWrites';
 
 type ElectronApiContextProps = {
   getAppVersion?: () => Promise<string>;
@@ -297,54 +231,6 @@ const getElectronApiFunction = (
   return fn;
 };
 
-const logStoreEvent = (msg: string) => {
-  const fn = getElectronApiFunction('logEvent') as
-    | ((m: string) => void)
-    | undefined;
-  fn?.(`pearl_store: ${msg}`);
-};
-
-/**
- * Persist the write queue to electron-store via raw IPC. Never goes through
- * `store.set` — this runs inside that function's own callbacks, so routing back
- * through it would recurse.
- *
- * Returns false when the IPC bridge is unavailable, so callers can say the queue
- * is memory-only rather than logging a durability they did not get.
- */
-const persistPendingWriteQueue = () => {
-  const rawStoreSet = getElectronApiFunction('store.set', true) as
-    | ((k: string, v: unknown) => Promise<void>)
-    | undefined;
-  if (!rawStoreSet) return false;
-
-  rawStoreSet('pendingStoreWrites', [...pendingWriteQueue]).catch(
-    (queueError) => {
-      logStoreEvent(
-        `Failed to persist write queue (${pendingWriteQueue.length} entries lost on restart): ${queueError}`,
-      );
-      console.error('Failed to persist pending write queue:', queueError);
-    },
-  );
-  return true;
-};
-
-/**
- * Drop any queued write for a key that has just been persisted (or deleted)
- * successfully — replaying it on the next launch would undo the newer value.
- */
-const dropQueuedWritesFor = (key: string) => {
-  if (!pendingWriteQueue.some((entry) => entry.key === key)) return;
-
-  pendingWriteQueue = pendingWriteQueue.filter((entry) => entry.key !== key);
-  const persisted = persistPendingWriteQueue();
-  logStoreEvent(
-    persisted
-      ? `Dropped superseded queued write for '${key}'`
-      : `Dropped superseded queued write for '${key}' in memory only — store.set IPC unavailable, the stale entry remains on disk`,
-  );
-};
-
 export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
   // Stabilize ipcRenderer so consumers with useEffect([…, ipcRenderer]) don't
   // fire spurious cleanup→body cycles on every parent re-render (e.g.
@@ -444,29 +330,18 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
             }
             // Backend-bound key: persist to .operate/pearl_store.json and update React state.
             emitPearlStoreSet(key, value);
+            // Claim the key before issuing the write, so a rejection that
+            // arrives after a newer mutation can tell it has been superseded.
+            const seq = beginWrite(key);
             // Two-callback form, not .then().catch() — the success path must
-            // not be able to fall into the enqueue path.
+            // not be able to fall into the enqueue path. Both paths return the
+            // queue write, so awaiting store.set awaits queue durability.
             return StoreService.setStoreKey(key, value).then(
               () => dropQueuedWritesFor(key),
               (error) => {
                 logStoreEvent(`Failed to persist key '${key}': ${error}`);
                 console.error(`Failed to persist store key '${key}':`, error);
-
-                // Queue the failed write for flush on next launch, keeping only
-                // the latest value per key — replaying a stale earlier value
-                // would clobber whatever the user set afterwards. Appending the
-                // fresh entry preserves the relative order of the other keys.
-                pendingWriteQueue = [
-                  ...pendingWriteQueue.filter((entry) => entry.key !== key),
-                  { key, value },
-                ];
-                const persisted = persistPendingWriteQueue();
-
-                logStoreEvent(
-                  persisted
-                    ? `Enqueued failed write for '${key}' (${pendingWriteQueue.length} pending)`
-                    : `Queued failed write for '${key}' in memory only — store.set IPC unavailable, it will not survive a restart`,
-                );
+                return enqueueFailedWrite(key, value, seq);
               },
             );
           },
@@ -479,6 +354,9 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
             }
             // Backend-bound key: remove from .operate/pearl_store.json and update React state.
             emitPearlStoreDelete(key);
+            // Claim the key so an earlier set that rejects late cannot queue —
+            // replaying it would resurrect a key the user has just deleted.
+            beginWrite(key);
             return StoreService.deleteStoreKey(key).then(
               // A queued write for a key the user has since deleted must not be
               // replayed — that would resurrect the value on the next launch.

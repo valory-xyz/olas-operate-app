@@ -6,6 +6,11 @@ import {
   registerPearlStoreDeleteHandler,
   registerPearlStoreSetHandler,
 } from '../../context/pearlStoreEventBus';
+import {
+  beginWrite,
+  dropQueuedWritesFor,
+  resetPendingStoreWrites,
+} from '../../context/pendingStoreWrites';
 import { StoreContext, StoreProvider } from '../../context/StoreProvider';
 import { StoreService } from '../../service/StoreService';
 import { PearlStore } from '../../types/ElectronApi';
@@ -323,6 +328,7 @@ describe('StoreProvider', () => {
     };
 
     beforeEach(() => {
+      resetPendingStoreWrites();
       mockSetStoreKey.mockResolvedValue(undefined);
     });
 
@@ -331,6 +337,99 @@ describe('StoreProvider', () => {
     afterEach(() => {
       mockSetStoreKey.mockReset();
       mockGetStore.mockReset();
+    });
+
+    it('skips an entry a successful in-session write superseded mid-flush', async () => {
+      const { Wrapper } = makeFlushWrapper([
+        { key: 'autoRun', value: { enabled: false } },
+        { key: 'lastSelectedServiceConfigId', value: 'svc-1' },
+      ]);
+      mockGetStore.mockResolvedValue({});
+
+      // While autoRun replays, a live write for the second key succeeds and
+      // drops it from the queue. Replaying it would revert that newer value.
+      mockSetStoreKey.mockImplementation((key: string) => {
+        if (key === 'autoRun')
+          dropQueuedWritesFor('lastSelectedServiceConfigId');
+        return Promise.resolve(undefined);
+      });
+
+      const { result } = renderHook(() => useContext(StoreContext), {
+        wrapper: Wrapper,
+      });
+
+      await waitFor(() => {
+        expect(result.current.storeState).toBeDefined();
+      });
+
+      expect(mockSetStoreKey).toHaveBeenCalledTimes(1);
+      expect(mockSetStoreKey).toHaveBeenCalledWith('autoRun', {
+        enabled: false,
+      });
+    });
+
+    it('hydrates anyway when store IPC has no registered handler', async () => {
+      // If the electron-store constructor throws (e.g. a schema violation),
+      // main.js logs and swallows it, so no store IPC handler is registered.
+      // The preload functions still exist, so the missing-bridge guard does not
+      // fire — every invoke just rejects instead.
+      const Wrapper = ({ children }: PropsWithChildren) => {
+        const electron = {
+          logEvent: jest.fn(),
+          store: {
+            get: jest
+              .fn()
+              .mockRejectedValue(
+                new Error("No handler registered for 'store-get'"),
+              ),
+            set: jest.fn().mockResolvedValue(undefined),
+          },
+        };
+        return createElement(
+          ElectronApiContext.Provider,
+          { value: electron },
+          createElement(StoreProvider, null, children),
+        );
+      };
+      mockGetStore.mockResolvedValue({ autoRun: { enabled: true } });
+
+      const consoleSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
+
+      const { result } = renderHook(() => useContext(StoreContext), {
+        wrapper: Wrapper,
+      });
+
+      await waitFor(() => {
+        expect(result.current.storeState).toEqual({
+          autoRun: { enabled: true },
+        });
+      });
+
+      consoleSpy.mockRestore();
+    });
+
+    it('skips entries for keys already written this session', async () => {
+      const { Wrapper, storeSet } = makeFlushWrapper([
+        { key: 'autoRun', value: { enabled: false } },
+      ]);
+      mockGetStore.mockResolvedValue({});
+
+      // A write for this key was issued before the flush read the queue, so the
+      // persisted entry is already stale — it must not replay over it.
+      beginWrite('autoRun');
+
+      const { result } = renderHook(() => useContext(StoreContext), {
+        wrapper: Wrapper,
+      });
+
+      await waitFor(() => {
+        expect(result.current.storeState).toBeDefined();
+      });
+
+      expect(mockSetStoreKey).not.toHaveBeenCalled();
+      expect(storeSet).toHaveBeenCalledWith('pendingStoreWrites', []);
     });
 
     it('flushes pending writes to backend before hydration', async () => {

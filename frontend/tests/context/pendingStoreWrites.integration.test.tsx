@@ -4,8 +4,8 @@ import { createElement, PropsWithChildren, useContext } from 'react';
 import {
   ElectronApiContext,
   ElectronApiProvider,
-  resetPendingWriteQueue,
 } from '../../context/ElectronApiProvider';
+import { resetPendingStoreWrites } from '../../context/pendingStoreWrites';
 import { StoreContext, StoreProvider } from '../../context/StoreProvider';
 import { StoreService } from '../../service/StoreService';
 import { makeElectronApiMock } from '../helpers/factories';
@@ -74,7 +74,7 @@ const startSession = () => {
 /** Quit Pearl: the renderer dies, so the in-memory queue is gone. */
 const quit = (session: ReturnType<typeof startSession>) => {
   session.unmount();
-  resetPendingWriteQueue();
+  resetPendingStoreWrites();
 };
 
 describe('pending store writes (ElectronApiProvider + StoreProvider)', () => {
@@ -82,7 +82,7 @@ describe('pending store writes (ElectronApiProvider + StoreProvider)', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    resetPendingWriteQueue();
+    resetPendingStoreWrites();
 
     backend.reachable = true;
     backend.data = {};

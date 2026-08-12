@@ -10,19 +10,13 @@ import {
 import { StoreService } from '@/service/StoreService';
 import type { PearlStore } from '@/types/ElectronApi';
 
-import {
-  ElectronApiContext,
-  isPendingWriteFlushAborted,
-  type PendingStoreWrite,
-  removeFlushedWrites,
-  seedPendingWriteQueue,
-  setPendingWriteFlush,
-} from './ElectronApiProvider';
+import { ElectronApiContext } from './ElectronApiProvider';
 import {
   registerPearlStoreDeleteHandler,
   registerPearlStoreSetHandler,
 } from './pearlStoreEventBus';
 import { BACKEND_BOUND_KEYS } from './pearlStoreKeys';
+import { flushPendingWrites, setPendingWriteFlush } from './pendingStoreWrites';
 
 export const StoreContext = createContext<{ storeState?: PearlStore }>({
   storeState: undefined,
@@ -72,22 +66,6 @@ const applyNestedDelete = (store: PearlStore, key: string): PearlStore => {
 type PendingOp =
   | { type: 'set'; key: string; value: unknown }
   | { type: 'delete'; key: string };
-
-/**
- * Narrow whatever electron-store handed back to well-formed queue entries.
- * `store.get` is typed `unknown` and the file is user-writable, so a bad entry
- * would otherwise reach StoreService.setStoreKey(undefined, undefined).
- */
-const toPendingStoreWrites = (value: unknown): PendingStoreWrite[] => {
-  if (!Array.isArray(value)) return [];
-  return value.filter(
-    (entry): entry is PendingStoreWrite =>
-      typeof entry === 'object' &&
-      entry !== null &&
-      typeof (entry as PendingStoreWrite).key === 'string' &&
-      (entry as PendingStoreWrite).key.length > 0,
-  );
-};
 
 const HYDRATION_RETRY_DELAY_MS = 3000;
 const HYDRATION_MAX_RETRIES = 3;
@@ -177,7 +155,7 @@ export const StoreProvider = ({ children }: PropsWithChildren) => {
     let cancelled = false;
     let retryTimeout: ReturnType<typeof setTimeout>;
 
-    const flushPendingWrites = async () => {
+    const runFlush = async () => {
       const storeGet = store?.get;
       const storeSet = store?.set;
       if (!storeGet || !storeSet) {
@@ -187,78 +165,12 @@ export const StoreProvider = ({ children }: PropsWithChildren) => {
         return;
       }
 
-      const persisted = await storeGet('pendingStoreWrites');
-      const queue = toPendingStoreWrites(persisted);
-      const discarded =
-        (Array.isArray(persisted) ? persisted.length : 0) - queue.length;
-
-      if (discarded > 0) {
-        log(`Discarded ${discarded} malformed pending write(s)`);
-        console.error(
-          `[StoreProvider] Discarded ${discarded} malformed pending write(s)`,
-        );
-      }
-
-      if (queue.length === 0) {
-        // Don't re-read the malformed entries on every subsequent launch.
-        if (discarded > 0) await storeSet('pendingStoreWrites', []);
-        return;
-      }
-
-      // Adopt the previous session's queue before replaying it, so a write that
-      // fails later in this session merges with these entries rather than
-      // overwriting them on disk.
-      seedPendingWriteQueue(queue);
-
-      log(`Flushing ${queue.length} pending write(s) to backend`);
-      console.error(
-        `[StoreProvider] Flushing ${queue.length} pending write(s) from previous session`,
-      );
-
-      // Replay sequentially, not concurrently — concurrent writes to the same
-      // key would land in a non-deterministic order.
-      const succeeded: PendingStoreWrite[] = [];
-      const failedKeys: string[] = [];
-      let aborted = false;
-      for (const entry of queue) {
-        // Re-checked every iteration, not just before the loop: `store.clear`
-        // can land mid-replay, and a write sent after its delete would put the
-        // key back in pearl_store.json.
-        if (cancelled || isPendingWriteFlushAborted()) {
-          aborted = true;
-          break;
-        }
-        try {
-          await StoreService.setStoreKey(entry.key, entry.value);
-          succeeded.push(entry);
-        } catch (error) {
-          const msg = error instanceof Error ? error.message : String(error);
-          failedKeys.push(entry.key);
-          log(`Flush failed for '${entry.key}': ${msg}`);
-        }
-      }
-
-      if (aborted) {
-        // The queue is owned by whoever aborted us — don't write it back.
-        log(
-          `Flush aborted after ${succeeded.length} write(s) — store cleared or provider unmounted`,
-        );
-        return;
-      }
-
-      const remaining = removeFlushedWrites(succeeded);
-      await storeSet('pendingStoreWrites', remaining);
-
-      if (failedKeys.length === 0) {
-        log(`Flushed ${succeeded.length} pending write(s) successfully`);
-      } else {
-        log(
-          `Flushed ${succeeded.length} write(s), ${failedKeys.length} still pending`,
-        );
-        console.error(
-          `[StoreProvider] ${failedKeys.length} pending write(s) could not be flushed: ${failedKeys.join(', ')}`,
-        );
-      }
+      await flushPendingWrites({
+        storeGet,
+        storeSet,
+        log,
+        isCancelled: () => cancelled,
+      });
     };
 
     const attemptHydration = (retriesLeft: number) => {
@@ -321,7 +233,7 @@ export const StoreProvider = ({ children }: PropsWithChildren) => {
     };
 
     // Flush first, then hydrate — flush failure is non-fatal.
-    const flush = flushPendingWrites().catch((error) => {
+    const flush = runFlush().catch((error) => {
       const msg = error instanceof Error ? error.message : String(error);
       log(`Flush failed: ${msg}`);
       console.error('[StoreProvider] Flush pending writes failed:', error);
