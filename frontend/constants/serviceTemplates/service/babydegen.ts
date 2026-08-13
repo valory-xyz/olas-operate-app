@@ -309,7 +309,7 @@ export const OPTIMUS_SERVICE_TEMPLATE: ServiceTemplate = {
     MECH_TOOL: {
       name: 'Mech tool',
       description: '',
-      value: 'prediction-offline-v1',
+      value: 'superforcaster',
       provision_type: EnvProvisionType.FIXED,
     },
     ACTIVITY_CHECKER_CONTRACT_ADDRESS: {

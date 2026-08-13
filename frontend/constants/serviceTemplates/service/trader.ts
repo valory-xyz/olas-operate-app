@@ -166,7 +166,7 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
       name: 'Mech analytics URL',
       description:
         'Base URL of the mech-analytics HTTP service. Required when USE_MECH_ANALYTICS is true.',
-      value: 'https://mech-analytics.autonolas.tech',
+      value: 'https://mech-analytics-api.autonolas.tech',
       provision_type: EnvProvisionType.FIXED,
     },
   },
@@ -328,7 +328,7 @@ export const PREDICT_POLYMARKET_SERVICE_TEMPLATE: ServiceTemplate = {
       name: 'Mech analytics URL',
       description:
         'Base URL of the mech-analytics HTTP service. Required when USE_MECH_ANALYTICS is true.',
-      value: 'https://mech-analytics.autonolas.tech',
+      value: 'https://mech-analytics-api.autonolas.tech',
       provision_type: EnvProvisionType.FIXED,
     },
   },
