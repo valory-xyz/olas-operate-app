@@ -43,6 +43,13 @@ const scTrader = DEFAULT_SERVICE_CONFIG_ID;
 const scOptimus = MOCK_SERVICE_CONFIG_ID_2;
 const scPolystrat = MOCK_SERVICE_CONFIG_ID_3;
 
+/** Deployability result for a candidate blocked solely by a drained pool. */
+const emptyPool = () => ({
+  canRun: false,
+  reason: EMPTY_REWARD_POOL_REASON,
+  isEmptyRewardPool: true,
+});
+
 const makeHookParams = (
   overrides: Partial<Parameters<typeof useAutoRunScanner>[0]> = {},
 ) => ({
@@ -198,10 +205,7 @@ describe('useAutoRunScanner', () => {
         getDeployabilityForAgent: jest
           .fn()
           // optimus: empty pool → deferred
-          .mockResolvedValueOnce({
-            canRun: false,
-            reason: EMPTY_REWARD_POOL_REASON,
-          })
+          .mockResolvedValueOnce(emptyPool())
           // polystrat: fine
           .mockResolvedValue({ canRun: true }),
       });
@@ -223,10 +227,7 @@ describe('useAutoRunScanner', () => {
     it('falls back to an empty-pool candidate when no rewarded candidate can start', async () => {
       // All three drained: running one without rewards beats idling entirely.
       const params = makeHookParams({
-        getDeployabilityForAgent: jest.fn().mockResolvedValue({
-          canRun: false,
-          reason: EMPTY_REWARD_POOL_REASON,
-        }),
+        getDeployabilityForAgent: jest.fn().mockResolvedValue(emptyPool()),
       });
       const { result } = renderHook(() => useAutoRunScanner(params));
 
@@ -251,12 +252,12 @@ describe('useAutoRunScanner', () => {
     });
 
     it('does not fall back to an empty-pool candidate that already earned this epoch', async () => {
+      // Already-earned candidates are passed over *silently*, matching the main
+      // loop — they would have been passed over with a full pool too, so an
+      // "empty reward pool" notification would misattribute the reason.
       const params = makeHookParams({
         orderedIncludedInstances: [scTrader, scOptimus],
-        getDeployabilityForAgent: jest.fn().mockResolvedValue({
-          canRun: false,
-          reason: EMPTY_REWARD_POOL_REASON,
-        }),
+        getDeployabilityForAgent: jest.fn().mockResolvedValue(emptyPool()),
         waitForRewardsEligibility: jest.fn().mockResolvedValue(true),
       });
       const { result } = renderHook(() => useAutoRunScanner(params));
@@ -265,11 +266,131 @@ describe('useAutoRunScanner', () => {
         await result.current.scanAndStartNext(scOptimus);
       });
       expect(params.startAgentWithRetries).not.toHaveBeenCalled();
-      expect(params.notifySkipOnce).toHaveBeenCalledWith(
-        scTrader,
+      expect(params.notifySkipOnce).not.toHaveBeenCalled();
+      expect(params.scheduleNextScan).toHaveBeenCalledWith(
+        SCAN_ELIGIBLE_DELAY_SECONDS,
+      );
+    });
+
+    it('continues to the next deferred candidate when a degraded start infra-fails', async () => {
+      const params = makeHookParams({
+        getDeployabilityForAgent: jest.fn().mockResolvedValue(emptyPool()),
+        startAgentWithRetries: jest
+          .fn()
+          .mockResolvedValueOnce({
+            status: AUTO_RUN_START_STATUS.INFRA_FAILED,
+            reason: 'RPC down',
+          })
+          .mockResolvedValueOnce({ status: AUTO_RUN_START_STATUS.STARTED }),
+      });
+      const { result } = renderHook(() => useAutoRunScanner(params));
+
+      let scanResult: { started: boolean } | undefined;
+      await act(async () => {
+        scanResult = await result.current.scanAndStartNext(scTrader);
+      });
+      expect(scanResult?.started).toBe(true);
+      expect(params.startAgentWithRetries).toHaveBeenCalledTimes(2);
+      // The attempted-and-failed candidate reports via notifyStartFailed, so it
+      // must NOT also be announced as an empty-pool skip.
+      expect(params.notifySkipOnce).not.toHaveBeenCalledWith(
+        scOptimus,
         EMPTY_REWARD_POOL_REASON,
         false,
       );
+    });
+
+    it('does not announce an empty-pool skip for a candidate that was attempted and failed', async () => {
+      const params = makeHookParams({
+        orderedIncludedInstances: [scTrader, scOptimus],
+        getDeployabilityForAgent: jest.fn().mockResolvedValue(emptyPool()),
+        startAgentWithRetries: jest.fn().mockResolvedValue({
+          status: AUTO_RUN_START_STATUS.INFRA_FAILED,
+          reason: 'RPC down',
+        }),
+      });
+      const { result } = renderHook(() => useAutoRunScanner(params));
+
+      await act(async () => {
+        await result.current.scanAndStartNext(scTrader);
+      });
+      // Both were attempted; neither may be reported as passed over.
+      expect(params.notifySkipOnce).not.toHaveBeenCalled();
+      expect(params.scheduleNextScan).toHaveBeenCalledWith(
+        SCAN_LOADING_RETRY_SECONDS,
+      );
+    });
+
+    it('re-validates a deferred candidate and skips it when a new blocker appeared', async () => {
+      // The deferred check can be ~48min stale by the time degraded mode runs.
+      const params = makeHookParams({
+        orderedIncludedInstances: [scTrader, scOptimus],
+        getDeployabilityForAgent: jest
+          .fn()
+          // Main-loop visits: both deferred for an empty pool.
+          .mockResolvedValueOnce(emptyPool())
+          .mockResolvedValueOnce(emptyPool())
+          // Fallback re-check: balance drained in the meantime.
+          .mockResolvedValue({ canRun: false, reason: 'Low balance' }),
+      });
+      const { result } = renderHook(() => useAutoRunScanner(params));
+
+      await act(async () => {
+        await result.current.scanAndStartNext(scTrader);
+      });
+      expect(params.startAgentWithRetries).not.toHaveBeenCalled();
+      expect(params.notifySkipOnce).toHaveBeenCalledWith(
+        scOptimus,
+        'Low balance',
+        false,
+      );
+      // The stale "empty pool" reason must not be reported for it.
+      expect(params.notifySkipOnce).not.toHaveBeenCalledWith(
+        scOptimus,
+        EMPTY_REWARD_POOL_REASON,
+        false,
+      );
+    });
+
+    it('starts a deferred candidate whose pool was refilled between check and fallback', async () => {
+      const params = makeHookParams({
+        orderedIncludedInstances: [scTrader, scOptimus],
+        getDeployabilityForAgent: jest
+          .fn()
+          .mockResolvedValueOnce(emptyPool())
+          .mockResolvedValueOnce(emptyPool())
+          .mockResolvedValue({ canRun: true }),
+      });
+      const { result } = renderHook(() => useAutoRunScanner(params));
+
+      let scanResult: { started: boolean } | undefined;
+      await act(async () => {
+        scanResult = await result.current.scanAndStartNext(scTrader);
+      });
+      expect(scanResult?.started).toBe(true);
+      expect(params.startAgentWithRetries).toHaveBeenCalledWith(scOptimus);
+    });
+
+    it('exits the degraded-mode loop when auto-run is disabled mid-fallback', async () => {
+      const enabledRef = { current: true };
+      const params = makeHookParams({
+        enabledRef,
+        orderedIncludedInstances: [scTrader, scOptimus],
+        getDeployabilityForAgent: jest.fn().mockResolvedValue(emptyPool()),
+        waitForRewardsEligibility: jest.fn().mockImplementation(async () => {
+          enabledRef.current = false;
+          return false;
+        }),
+      });
+      const { result } = renderHook(() => useAutoRunScanner(params));
+
+      let scanResult: { started: boolean } | undefined;
+      await act(async () => {
+        scanResult = await result.current.scanAndStartNext(scTrader);
+      });
+      expect(scanResult?.started).toBe(false);
+      expect(params.startAgentWithRetries).not.toHaveBeenCalled();
+      expect(params.notifySkipOnce).not.toHaveBeenCalled();
     });
 
     it('schedules blocked delay when all candidates blocked', async () => {
@@ -692,10 +813,7 @@ describe('useAutoRunScanner', () => {
       // which may still start this instance in degraded mode. Notifying here
       // would announce a skip that never happens.
       const params = makeHookParams({
-        getDeployabilityForAgent: jest.fn().mockResolvedValue({
-          canRun: false,
-          reason: EMPTY_REWARD_POOL_REASON,
-        }),
+        getDeployabilityForAgent: jest.fn().mockResolvedValue(emptyPool()),
       });
       const { result } = renderHook(() => useAutoRunScanner(params));
 

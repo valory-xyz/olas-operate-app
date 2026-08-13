@@ -324,6 +324,15 @@ export type DeployabilityCheckResult = {
   reason?: string;
   /** true → transient/loading; scanner uses short-retry delay instead of long block. */
   isTransient?: boolean;
+  /**
+   * true → the only thing blocking this agent is a drained staking reward pool.
+   *
+   * A structured discriminant rather than a `reason` string comparison: `reason`
+   * is user-facing notification copy, and the scanner branches on this to decide
+   * degraded-mode participation. Editing the copy must not be able to silently
+   * disable degraded mode.
+   */
+  isEmptyRewardPool?: boolean;
 };
 
 /**
@@ -480,7 +489,11 @@ export const fetchDeployabilityForAgent = async (
   //    `?? 0 <= 0`) matches the Overview-tab banner and fails open on missing
   //    data, consistent with `hasEnoughServiceSlots` above.
   if (availableRewards === 0) {
-    return { canRun: false, reason: EMPTY_REWARD_POOL_REASON };
+    return {
+      canRun: false,
+      reason: EMPTY_REWARD_POOL_REASON,
+      isEmptyRewardPool: true,
+    };
   }
 
   return { canRun: true };

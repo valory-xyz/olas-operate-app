@@ -5,6 +5,7 @@ import {
   AUTO_RUN_HEALTH_METRIC,
   ELIGIBILITY_LOADING_REASON,
   ELIGIBILITY_REASON,
+  EMPTY_REWARD_POOL_REASON,
   REWARDS_POLL_SECONDS,
 } from '../../../../context/AutoRunProvider/constants';
 import { AgentMeta } from '../../../../context/AutoRunProvider/types';
@@ -1041,8 +1042,19 @@ describe('fetchDeployabilityForAgent', () => {
     });
     const result = await fetchDeployabilityForAgent(makeAgentMeta(), makeCtx());
     expect(result.canRun).toBe(false);
-    expect(result.reason).toBe('Staking contract reward pool is empty');
+    expect(result.reason).toBe(EMPTY_REWARD_POOL_REASON);
     expect(result.isTransient).toBeFalsy();
+    // Structured discriminant — the scanner branches on this, not on the copy.
+    expect(result.isEmptyRewardPool).toBe(true);
+  });
+
+  it('does not set isEmptyRewardPool on other deterministic blocks', async () => {
+    const ctx = makeCtx({
+      allowStartAgentByServiceConfigId: jest.fn().mockReturnValue(false),
+    });
+    const result = await fetchDeployabilityForAgent(makeAgentMeta(), ctx);
+    expect(result.reason).toBe('Low balance');
+    expect(result.isEmptyRewardPool).toBeFalsy();
   });
 
   it('returns canRun=true when availableRewards > 0', async () => {
