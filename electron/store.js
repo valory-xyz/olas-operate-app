@@ -19,6 +19,32 @@ const schema = {
   pearlStoreMigrationComplete: { type: 'boolean', default: false },
   // Set to true once the autoRun.enabled repair has been checked.
   pearlStoreAutoRunRepaired: { type: 'boolean', default: false },
+  // Queue of backend-bound writes and deletes that failed (e.g. backend
+  // unreachable during shutdown). Flushed to the backend on the next successful
+  // startup before hydration reads pearl_store.json. `op` is optional so
+  // entries written before deletes were queued still validate; they read as
+  // sets. `value` is unused for deletes.
+  // Entries are constrained so a corrupted or hand-edited config.json cannot be
+  // replayed to the backend on the next launch. Note this is not a per-key
+  // rejection: conf validates the whole store in the Store constructor and
+  // throws, which setupStoreIpc's caller in main.js logs and swallows — leaving
+  // the session with no store IPC at all. That is pre-existing behaviour for
+  // every other key in this schema; the frontend degrades by logging and
+  // skipping the flush. StoreProvider narrows the value again on read, for the
+  // paths where validation never runs.
+  pendingStoreWrites: {
+    type: 'array',
+    default: [],
+    items: {
+      type: 'object',
+      properties: {
+        key: { type: 'string' },
+        op: { type: 'string', enum: ['set', 'delete'] },
+        value: {},
+      },
+      required: ['key'],
+    },
+  },
 };
 
 /**

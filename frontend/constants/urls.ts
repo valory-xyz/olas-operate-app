@@ -25,6 +25,8 @@ export const FAQ_URL: Url = `${PEARL_URL}#FAQ`;
 export const DOWNLOAD_URL: Url = `${PEARL_URL}#update`;
 // to be moved to pearl site
 export const TERMS_AND_CONDITIONS_URL: Url = 'https://olas.network/pearl-terms';
+// Pearl Terms section covering the risks specific to Pearl Connect
+export const PEARL_CONNECT_RISKS_TERMS_URL: Url = `${TERMS_AND_CONDITIONS_URL}#section-6-1-2`;
 
 // thegraph
 export const REWARDS_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN: Record<

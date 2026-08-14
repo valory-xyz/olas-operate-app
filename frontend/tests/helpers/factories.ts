@@ -742,3 +742,56 @@ export const makeAgentTransactionHistoryResponseV2 = (
   _meta: makeSubgraphMeta(),
   ...overrides,
 });
+
+/**
+ * Stand-in for `window.electronAPI`. Covers every path ElectronApiProvider
+ * resolves non-silently — omitting one makes the provider throw on render.
+ */
+export const makeElectronApiMock = () => ({
+  getAppVersion: jest.fn(),
+  setIsAppLoaded: jest.fn(),
+  closeApp: jest.fn(),
+  minimizeApp: jest.fn(),
+  setTrayIcon: jest.fn(),
+  ipcRenderer: {
+    send: jest.fn(),
+    on: jest.fn(),
+    invoke: jest.fn(),
+    removeListener: jest.fn(),
+  },
+  store: {
+    store: jest.fn(),
+    get: jest.fn(),
+    set: jest.fn(),
+    delete: jest.fn(),
+    clear: jest.fn(),
+  },
+  showNotification: jest.fn(),
+  saveLogs: jest.fn(),
+  saveLogsForSupport: jest.fn(),
+  cleanupSupportLogs: jest.fn(),
+  readFile: jest.fn(),
+  openPath: jest.fn(),
+  onRampWindow: {
+    show: jest.fn(),
+    close: jest.fn(),
+    transactionSuccess: jest.fn(),
+    transactionFailure: jest.fn(),
+  },
+  web3AuthWindow: {
+    show: jest.fn(),
+    close: jest.fn(),
+    authSuccess: jest.fn(),
+  },
+  web3AuthSwapOwnerWindow: {
+    show: jest.fn(),
+    close: jest.fn(),
+    swapSuccess: jest.fn(),
+    swapFailure: jest.fn(),
+  },
+  termsAndConditionsWindow: {
+    show: jest.fn(),
+  },
+  logEvent: jest.fn(),
+  nextLogError: jest.fn(),
+});
