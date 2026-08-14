@@ -466,6 +466,12 @@ export const BASIUS_SERVICE_TEMPLATE: ServiceTemplate = {
       value: 'base',
       provision_type: EnvProvisionType.FIXED,
     },
+    MECH_TOOL: {
+      name: 'Mech tool',
+      description: '',
+      value: 'superforcaster',
+      provision_type: EnvProvisionType.FIXED,
+    },
     ACTIVITY_CHECKER_CONTRACT_ADDRESS: {
       name: 'Staking activity checker contract address',
       description: '',
