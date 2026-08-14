@@ -16,6 +16,7 @@ import {
   registerPearlStoreSetHandler,
 } from './pearlStoreEventBus';
 import { BACKEND_BOUND_KEYS } from './pearlStoreKeys';
+import { flushPendingWrites, setPendingWriteFlush } from './pendingStoreWrites';
 
 export const StoreContext = createContext<{ storeState?: PearlStore }>({
   storeState: undefined,
@@ -143,12 +144,34 @@ export const StoreProvider = ({ children }: PropsWithChildren) => {
   // No polling — all writes originate in the frontend so state stays in sync.
   // Retries up to HYDRATION_MAX_RETRIES times on failure to avoid permanently
   // stuck state when the backend is briefly unavailable.
+  //
+  // Before hydration, flushes any pending writes that failed on a previous
+  // session (e.g. backend was down during shutdown). This ensures
+  // pearl_store.json reflects the user's last intent before getStore() reads it.
   useEffect(() => {
     if (hydrationAttempted.current) return;
     hydrationAttempted.current = true;
 
     let cancelled = false;
     let retryTimeout: ReturnType<typeof setTimeout>;
+
+    const runFlush = async () => {
+      const storeGet = store?.get;
+      const storeSet = store?.set;
+      if (!storeGet || !storeSet) {
+        // Not silent: this is the guard on the whole reason the flush exists,
+        // so a missing bridge must be visible in the Pearl log.
+        log('Skipped flush — Electron store bridge unavailable');
+        return;
+      }
+
+      await flushPendingWrites({
+        storeGet,
+        storeSet,
+        log,
+        isCancelled: () => cancelled,
+      });
+    };
 
     const attemptHydration = (retriesLeft: number) => {
       const attempt = HYDRATION_MAX_RETRIES - retriesLeft + 1;
@@ -209,7 +232,23 @@ export const StoreProvider = ({ children }: PropsWithChildren) => {
         });
     };
 
-    attemptHydration(HYDRATION_MAX_RETRIES);
+    // Flush first, then hydrate — flush failure is non-fatal.
+    const flush = runFlush().catch((error) => {
+      const msg = error instanceof Error ? error.message : String(error);
+      log(`Flush failed: ${msg}`);
+      console.error('[StoreProvider] Flush pending writes failed:', error);
+    });
+
+    // Published so `store.clear` can wait for a replay in progress rather than
+    // racing its deletes against it.
+    setPendingWriteFlush(flush);
+
+    flush.then(() => {
+      setPendingWriteFlush(null);
+      if (!cancelled) {
+        attemptHydration(HYDRATION_MAX_RETRIES);
+      }
+    });
 
     return () => {
       cancelled = true;

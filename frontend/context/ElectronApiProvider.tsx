@@ -16,6 +16,15 @@ import {
 
 import { emitPearlStoreDelete, emitPearlStoreSet } from './pearlStoreEventBus';
 import { BACKEND_BOUND_KEYS, ELECTRON_NATIVE_KEYS } from './pearlStoreKeys';
+import {
+  abortPendingWriteFlush,
+  awaitPendingWriteFlush,
+  beginWrite,
+  dropQueuedWritesFor,
+  enqueueFailedDelete,
+  enqueueFailedWrite,
+  logStoreEvent,
+} from './pendingStoreWrites';
 
 type ElectronApiContextProps = {
   getAppVersion?: () => Promise<string>;
@@ -297,13 +306,6 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
     [],
   );
 
-  const logStoreEvent = (msg: string) => {
-    const fn = getElectronApiFunction('logEvent') as
-      | ((m: string) => void)
-      | undefined;
-    fn?.(`pearl_store: ${msg}`);
-  };
-
   return (
     <ElectronApiContext.Provider
       value={{
@@ -329,10 +331,20 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
             }
             // Backend-bound key: persist to .operate/pearl_store.json and update React state.
             emitPearlStoreSet(key, value);
-            return StoreService.setStoreKey(key, value).catch((error) => {
-              logStoreEvent(`Failed to persist key '${key}': ${error}`);
-              console.error(`Failed to persist store key '${key}':`, error);
-            });
+            // Claim the key before issuing the write, so a rejection that
+            // arrives after a newer mutation can tell it has been superseded.
+            const seq = beginWrite(key);
+            // Two-callback form, not .then().catch() — the success path must
+            // not be able to fall into the enqueue path. Both paths return the
+            // queue write, so awaiting store.set awaits queue durability.
+            return StoreService.setStoreKey(key, value).then(
+              () => dropQueuedWritesFor(key),
+              (error) => {
+                logStoreEvent(`Failed to persist key '${key}': ${error}`);
+                console.error(`Failed to persist store key '${key}':`, error);
+                return enqueueFailedWrite(key, value, seq);
+              },
+            );
           },
           delete: (key: string) => {
             if (ELECTRON_NATIVE_KEYS.has(key.split('.')[0])) {
@@ -343,22 +355,42 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
             }
             // Backend-bound key: remove from .operate/pearl_store.json and update React state.
             emitPearlStoreDelete(key);
-            return StoreService.deleteStoreKey(key).catch((error) => {
-              logStoreEvent(`Failed to delete key '${key}': ${error}`);
-              console.error(`Failed to delete store key '${key}':`, error);
-            });
+            // Claim the key so an earlier set that rejects late cannot queue —
+            // replaying it would resurrect a key the user has just deleted.
+            const seq = beginWrite(key);
+            return StoreService.deleteStoreKey(key).then(
+              // A queued write for a key the user has since deleted must not be
+              // replayed — that would resurrect the value on the next launch.
+              () => dropQueuedWritesFor(key),
+              (error) => {
+                logStoreEvent(`Failed to delete key '${key}': ${error}`);
+                console.error(`Failed to delete store key '${key}':`, error);
+                return enqueueFailedDelete(key, seq);
+              },
+            );
           },
           clear: () => {
-            // Clear Electron-native keys via IPC.
-            const clearFn = getElectronApiFunction(
-              'store.clear',
-            ) as unknown as () => Promise<void>;
-            // Clear backend-bound keys from pearl_store.json.
-            const backendDeletes = BACKEND_BOUND_KEYS.map((key) => {
-              emitPearlStoreDelete(key);
-              return StoreService.deleteStoreKey(key);
-            });
-            return Promise.all([clearFn(), ...backendDeletes])
+            // Drop queued writes up front, and stop any startup flush still
+            // replaying: store-clear wipes the persisted queue, so anything
+            // left in memory would be re-persisted by the next failed write.
+            abortPendingWriteFlush();
+
+            // Then let the flush settle before deleting. Aborting stops the
+            // remaining entries, but a write already sent has to land first —
+            // otherwise it arrives after the delete and restores the key.
+            return awaitPendingWriteFlush()
+              .then(() => {
+                // Clear Electron-native keys via IPC.
+                const clearFn = getElectronApiFunction(
+                  'store.clear',
+                ) as unknown as () => Promise<void>;
+                // Clear backend-bound keys from pearl_store.json.
+                const backendDeletes = BACKEND_BOUND_KEYS.map((key) => {
+                  emitPearlStoreDelete(key);
+                  return StoreService.deleteStoreKey(key);
+                });
+                return Promise.all([clearFn(), ...backendDeletes]);
+              })
               .then(() => {})
               .catch((error) => {
                 logStoreEvent(`Failed to clear store: ${error}`);
