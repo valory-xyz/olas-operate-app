@@ -5,6 +5,7 @@ import {
   AUTO_RUN_HEALTH_METRIC,
   ELIGIBILITY_LOADING_REASON,
   ELIGIBILITY_REASON,
+  EMPTY_REWARD_POOL_REASON,
   REWARDS_POLL_SECONDS,
 } from '../../../../context/AutoRunProvider/constants';
 import { AgentMeta } from '../../../../context/AutoRunProvider/types';
@@ -1030,5 +1031,77 @@ describe('fetchDeployabilityForAgent', () => {
     expect(mockGetStakingContractDetails).not.toHaveBeenCalled();
     expect(mockGetServiceStakingDetails).not.toHaveBeenCalled();
     expect(result.canRun).toBe(true);
+  });
+
+  it('returns canRun=false when availableRewards is 0 (empty reward pool)', async () => {
+    mockGetStakingContractDetails.mockResolvedValue({
+      serviceIds: [1, 2],
+      maxNumServices: 10,
+      minimumStakingDuration: 86400,
+      availableRewards: 0,
+    });
+    const result = await fetchDeployabilityForAgent(makeAgentMeta(), makeCtx());
+    expect(result.canRun).toBe(false);
+    expect(result.reason).toBe(EMPTY_REWARD_POOL_REASON);
+    expect(result.isTransient).toBeFalsy();
+    // Structured discriminant — the scanner branches on this, not on the copy.
+    expect(result.isEmptyRewardPool).toBe(true);
+  });
+
+  it('does not set isEmptyRewardPool on other deterministic blocks', async () => {
+    const ctx = makeCtx({
+      allowStartAgentByServiceConfigId: jest.fn().mockReturnValue(false),
+    });
+    const result = await fetchDeployabilityForAgent(makeAgentMeta(), ctx);
+    expect(result.reason).toBe('Low balance');
+    expect(result.isEmptyRewardPool).toBeFalsy();
+  });
+
+  it('returns canRun=true when availableRewards > 0', async () => {
+    mockGetStakingContractDetails.mockResolvedValue({
+      serviceIds: [1, 2],
+      maxNumServices: 10,
+      minimumStakingDuration: 86400,
+      availableRewards: 10,
+    });
+    const result = await fetchDeployabilityForAgent(makeAgentMeta(), makeCtx());
+    expect(result.canRun).toBe(true);
+  });
+
+  it('does NOT block when availableRewards is undefined (makeOkStaking base case)', async () => {
+    // makeOkStaking does not include availableRewards → undefined === 0 is false
+    const result = await fetchDeployabilityForAgent(makeAgentMeta(), makeCtx());
+    expect(result.canRun).toBe(true);
+  });
+
+  // The scanner's degraded-mode fallback starts empty-pool candidates without
+  // re-running the other gates, which is only sound because the pool check is
+  // evaluated last. These two pin that ordering.
+  it('reports the funding blocker, not the empty pool, when both apply', async () => {
+    mockGetStakingContractDetails.mockResolvedValue({
+      serviceIds: [1, 2],
+      maxNumServices: 10,
+      minimumStakingDuration: 86400,
+      availableRewards: 0,
+    });
+    const ctx = makeCtx({
+      isInstanceInitiallyFunded: jest.fn().mockReturnValue(false),
+    });
+    const result = await fetchDeployabilityForAgent(makeAgentMeta(), ctx);
+    expect(result.reason).toBe('Unfinished setup');
+  });
+
+  it('reports the balance blocker, not the empty pool, when both apply', async () => {
+    mockGetStakingContractDetails.mockResolvedValue({
+      serviceIds: [1, 2],
+      maxNumServices: 10,
+      minimumStakingDuration: 86400,
+      availableRewards: 0,
+    });
+    const ctx = makeCtx({
+      allowStartAgentByServiceConfigId: jest.fn().mockReturnValue(false),
+    });
+    const result = await fetchDeployabilityForAgent(makeAgentMeta(), ctx);
+    expect(result.reason).toBe('Low balance');
   });
 });

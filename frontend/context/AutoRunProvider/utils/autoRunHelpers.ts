@@ -18,6 +18,7 @@ import {
   AutoRunScannerMetric,
   ELIGIBILITY_LOADING_REASON,
   ELIGIBILITY_REASON,
+  EMPTY_REWARD_POOL_REASON,
   REWARDS_POLL_SECONDS,
   REWARDS_RETRY_DELAY_SECONDS,
 } from '../constants';
@@ -323,6 +324,15 @@ export type DeployabilityCheckResult = {
   reason?: string;
   /** true → transient/loading; scanner uses short-retry delay instead of long block. */
   isTransient?: boolean;
+  /**
+   * true → the only thing blocking this agent is a drained staking reward pool.
+   *
+   * A structured discriminant rather than a `reason` string comparison: `reason`
+   * is user-facing notification copy, and the scanner branches on this to decide
+   * degraded-mode participation. Editing the copy must not be able to silently
+   * disable degraded mode.
+   */
+  isEmptyRewardPool?: boolean;
 };
 
 /**
@@ -382,6 +392,12 @@ export const fetchDeployabilityForAgent = async (
     };
   }
 
+  // Reward-pool balance of the staking contract, read in step 4 but evaluated
+  // last (step 7). Deferring it means an `EMPTY_REWARD_POOL_REASON` result
+  // guarantees every other gate passed — which is what lets the scanner start
+  // such an agent in degraded mode without re-running the remaining checks.
+  let availableRewards: number | undefined;
+
   // 4. On-chain staking state via direct API calls (same endpoints as
   //    StakingContractDetailsProvider, but for any service, not just selected).
   //    Skip if the service hasn't been deployed yet (no NFT token ID or staking program).
@@ -408,8 +424,13 @@ export const fetchDeployabilityForAgent = async (
         !!serviceStakingStartTime &&
         serviceStakingState === StakingState.Staked;
 
-      const { serviceIds, maxNumServices, minimumStakingDuration } =
-        contractDetails ?? {};
+      const {
+        serviceIds,
+        maxNumServices,
+        minimumStakingDuration,
+        availableRewards: contractAvailableRewards,
+      } = contractDetails ?? {};
+      availableRewards = contractAvailableRewards;
       const hasEnoughServiceSlots =
         isNil(serviceIds) || isNil(maxNumServices)
           ? null
@@ -461,6 +482,18 @@ export const fetchDeployabilityForAgent = async (
   }
   if (!ctx.allowStartAgentByServiceConfigId(agentMeta.serviceConfigId)) {
     return { canRun: false, reason: 'Low balance' };
+  }
+
+  // 7. Empty staking reward pool — evaluated last so this reason is only ever
+  //    returned for an agent that is otherwise fully startable. `=== 0` (not
+  //    `?? 0 <= 0`) matches the Overview-tab banner and fails open on missing
+  //    data, consistent with `hasEnoughServiceSlots` above.
+  if (availableRewards === 0) {
+    return {
+      canRun: false,
+      reason: EMPTY_REWARD_POOL_REASON,
+      isEmptyRewardPool: true,
+    };
   }
 
   return { canRun: true };

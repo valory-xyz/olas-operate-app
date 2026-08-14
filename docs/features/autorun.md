@@ -272,6 +272,10 @@ Every delay and poll interval in auto-run uses `sleepAwareDelay`. On `false`:
 | 10 | Region restricted | Skip with notification | Via deployability |
 | 11 | No slots | Skip with notification | Via deployability |
 | 12 | Under construction | Skip with notification | Via deployability |
+| 12a | Empty reward pool (another agent can run) | Deferred, then skipped with notification | `fetchDeployabilityForAgent` returns `EMPTY_REWARD_POOL_REASON` when `availableRewards === 0`; scanner defers the candidate, starts a rewarded one, then notifies the deferred skips. Pool refill re-enables the agent on the next scan (no caching) |
+| 12b | Empty reward pool (no other agent can run) | Started anyway in degraded mode, no skip notification | Scanner's fallback loop after the main scan: running an agent that earns nothing beats idling the whole rotation. Deployability is **re-validated** immediately before the degraded start — the deferred check can be ~48min stale if a candidate ahead exhausted its retries |
+| 12c | Deferred candidate gains a new blocker before degraded start | Skipped under the *new* reason, not the empty pool | Fallback re-check returns e.g. `Low balance`; that reason is notified instead, so the stale empty-pool explanation is never reported |
+| 12d | Deferred candidate attempted but fails to start | `notifyStartFailed` only — no empty-pool skip notification | Attributing both would contradict: the agent tried and failed, it was not passed over. Already-earned deferred candidates are silent too, matching the main loop |
 
 ### Loading States (No Skip Notification)
 
@@ -371,6 +375,7 @@ Every delay and poll interval in auto-run uses `sleepAwareDelay`. On `false`:
 - Backend start can hang beyond `waitForRunningAgent` timeout if `startService()` itself hangs (mitigated by `withTimeout` wrapping the call at 15min).
 - Rewards eligibility is selection-driven; polling via `setInterval` is a workaround.
 - `rotateToNext`: if `currentMeta` is not found (agent removed from config mid-rotation), returns without scheduling rescan. Low probability; rewards poll will re-trigger within 120s.
+- **Empty reward pool draining mid-run is not detected.** The empty-pool check is a *start-time* gate in `fetchDeployabilityForAgent`; it is not re-evaluated for the instance that is already running. If a pool drains while its agent is running, the rotation signal can never fire (see "Empty reward pool freezes the rotation signal" in Fixed Bugs) and the 70-minute `RUNNING_AGENT_MAX_RUNTIME_SECONDS` watchdog is the only escape — once per drain event, not once overall. Closing this would require polling `getStakingContractDetails` for the running instance alongside `REWARDS_POLL_SECONDS`; deferred as the watchdog bounds the damage.
 
 ---
 
@@ -467,6 +472,10 @@ Every delay and poll interval in auto-run uses `sleepAwareDelay`. On `false`:
 ### Code — Dead code removed
 - `if (!stopRunningAgent) return` was unreachable.
 
+### P1 — Empty reward pool freezes the rotation signal (OPE-1875)
+- **Root cause**: when a staking contract's `availableRewards` reaches 0, its `checkpoint()` is **believed** to become a no-op, leaving `tsCheckpoint` unadvanced. ⚠️ This link is inferred from observed behaviour and is *not* confirmed against the contract source (which is not in this repo); everything downstream of it below is verified in the frontend code. The fix does not depend on it — an empty pool is worth gating on either way — only this explanation of why the stall is total rather than intermittent does. That makes `isStakingEpochExpired` permanently `true`, and both `refreshRewardsEligibility` (`eligible = epochExpired ? false : epochTargetMet`) and `useAutoRunSignals` then pin the rewards snapshot to `false` forever. Rotation only fires on a `false → true` transition, so it can never trigger. In the legacy regime a second mechanism compounds it: `requiredRequests` is derived from `max(livenessPeriod, secondsSinceCheckpoint)`, which grows without bound against a frozen checkpoint, so `isEligibleForRewards` never turns true either. Auto-run ran the affected agent indefinitely and the 70-min watchdog was the only escape. Note the irony: the earlier epoch-expired fix assumed "start the agent so it triggers a checkpoint" — with a drained pool, running the agent *cannot* trigger one, so that escape hatch became the trap.
+- **Fix**: empty pool is now a deployability gate rather than a rewards-signal concern. `fetchDeployabilityForAgent` returns `EMPTY_REWARD_POOL_REASON` when `availableRewards === 0` (checked last, after every other gate), and both the scanner and the `startSelectedAgentIfEligible` fast path consult it before attempting a start. To avoid replacing one stall with another, empty-pool candidates are *deferred* rather than skipped outright: if no rewarded candidate can start, the scanner falls back to running them anyway (degraded mode), so a user whose agents all sit on drained contracts is never left with nothing running. Notifications fire only for the candidates actually passed over.
+
 ---
 
 ## 14. Utilities
@@ -492,7 +501,11 @@ Shared eligibility-wait implementation. Polls every 2s until eligibility leaves 
 ### `fetchDeployabilityForAgent(agentMeta, ctx)` — `utils/autoRunHelpers.ts`
 Checks whether a candidate agent is deployable without switching the UI selection. Mirrors `useDeployability` but fetches staking state directly via `agentMeta.agentConfig.serviceApi` (same pattern as `fetchAgentStakingRewardsInfo`). Called by `scanAndStartNext` for each candidate so the visible page never changes during a scan cycle.
 
-Returns `{ canRun: true }`, `{ canRun: false, isTransient: true }` (transient/loading — short retry), or `{ canRun: false }` (deterministic block). Checks in order: safe readiness, `isPhasedOut`, `isUnderConstruction`, geo restriction, another agent running, on-chain slots/staking state (via `getStakingContractDetails` + `getServiceStakingDetails`), initial funding, balance sufficiency. API errors return `isTransient: true` (scanner uses short retry rather than treating as permanent block). Kept in parity with `useDeployability`.
+Returns `{ canRun: true }`, `{ canRun: false, isTransient: true }` (transient/loading — short retry), or `{ canRun: false }` (deterministic block). Checks in order: safe readiness, `isPhasedOut`, `isUnderConstruction`, geo restriction, another agent running, on-chain slots/staking state (via `getStakingContractDetails` + `getServiceStakingDetails`), initial funding, balance sufficiency, empty reward pool (`availableRewards === 0`, returned with `isEmptyRewardPool: true`). API errors return `isTransient: true` (scanner uses short retry rather than treating as permanent block). Kept in parity with `useDeployability`, except for the empty-pool check, which is auto-run-only — adding it to `useDeployability` would block the manual Start button and contradict the Overview-tab banner ("your agent can still run").
+
+The scanner branches on the structured `isEmptyRewardPool` flag, never on the `reason` copy — `reason` is user-facing notification text, so editing it must not be able to silently disable degraded mode.
+
+The empty-pool check is deliberately **last**: an `EMPTY_REWARD_POOL_REASON` result therefore guarantees every other gate passed, which is what lets the scanner start such a candidate in degraded mode without re-running the remaining checks. It uses `=== 0` rather than `?? 0 <= 0` so missing/partial contract data fails *open*, matching `hasEnoughServiceSlots` above and the Overview-tab banner.
 
 ---
 
@@ -512,6 +525,12 @@ All auto-run logs are prefixed with `autorun::`.
 | `start error for X: ...` | Start threw an exception (e.g., Failed to fetch) | Warning |
 | `start failed for X` | All retries exhausted | Error |
 | `skip X: reason` | Agent skipped with notification | Normal |
+| `skip X: Staking contract reward pool is empty` | Agent passed over — staking contract has no rewards to distribute | Normal |
+| `scan: no rewarded candidate startable, falling back to N empty-pool candidate(s)` | Degraded mode entered — every startable candidate has a drained pool | Normal |
+| `scan: started X in degraded mode (empty reward pool)` | Agent started despite earning no staking rewards | Normal |
+| `scan: X no longer startable in degraded mode (reason)` | Re-validation before a degraded start found a newer blocker | Normal |
+| `scan: X infra_failed in degraded mode (...), trying next deferred candidate` | Degraded start failed transiently; moving on | Warning |
+| `scan paused on X (degraded mode): start gates timed out, rescan in Ns` | Degraded start aborted on gate timeout | Warning |
 | `balances stale, triggering refetch` | Balance data older than 120s | Normal |
 | `balances refetch failed: ...` | Refetch threw an error | Warning |
 | `rewards fetch error: X: ...` | RPC error fetching rewards | Warning |

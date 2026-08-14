@@ -6,6 +6,11 @@ import {
   registerPearlStoreDeleteHandler,
   registerPearlStoreSetHandler,
 } from '../../context/pearlStoreEventBus';
+import {
+  beginWrite,
+  dropQueuedWritesFor,
+  resetPendingStoreWrites,
+} from '../../context/pendingStoreWrites';
 import { StoreContext, StoreProvider } from '../../context/StoreProvider';
 import { StoreService } from '../../service/StoreService';
 import { PearlStore } from '../../types/ElectronApi';
@@ -289,6 +294,467 @@ describe('StoreProvider', () => {
       expect(result.current.storeState).toEqual({
         lastSelectedServiceConfigId: 'svc-1',
       });
+    });
+  });
+
+  describe('flush pending writes', () => {
+    const mockSetStoreKey = StoreService.setStoreKey as jest.Mock;
+
+    /** Wrapper that returns pending writes from electron-store get. */
+    const makeFlushWrapper = (pendingWrites: unknown) => {
+      const storeSet = jest.fn().mockResolvedValue(undefined);
+      const Wrapper = ({ children }: PropsWithChildren) => {
+        const electron = {
+          store: {
+            get: jest.fn().mockImplementation((key: string) => {
+              if (key === 'pendingStoreWrites')
+                return Promise.resolve(pendingWrites);
+              if (key === 'pearlStoreMigrationComplete')
+                return Promise.resolve(true);
+              if (key === 'pearlStoreAutoRunRepaired')
+                return Promise.resolve(true);
+              return Promise.resolve(undefined);
+            }),
+            set: storeSet,
+          },
+        };
+        return createElement(
+          ElectronApiContext.Provider,
+          { value: electron },
+          createElement(StoreProvider, null, children),
+        );
+      };
+      return { Wrapper, storeSet };
+    };
+
+    beforeEach(() => {
+      resetPendingStoreWrites();
+      mockSetStoreKey.mockResolvedValue(undefined);
+    });
+
+    // Some cases install custom implementations; jest.clearAllMocks() does not
+    // clear those, so drop them before the next suite runs.
+    afterEach(() => {
+      mockSetStoreKey.mockReset();
+      mockGetStore.mockReset();
+    });
+
+    it('skips an entry a successful in-session write superseded mid-flush', async () => {
+      const { Wrapper } = makeFlushWrapper([
+        { key: 'autoRun', op: 'set', value: { enabled: false } },
+        { key: 'lastSelectedServiceConfigId', op: 'set', value: 'svc-1' },
+      ]);
+      mockGetStore.mockResolvedValue({});
+
+      // While autoRun replays, a live write for the second key succeeds and
+      // drops it from the queue. Replaying it would revert that newer value.
+      mockSetStoreKey.mockImplementation((key: string) => {
+        if (key === 'autoRun')
+          dropQueuedWritesFor('lastSelectedServiceConfigId');
+        return Promise.resolve(undefined);
+      });
+
+      const { result } = renderHook(() => useContext(StoreContext), {
+        wrapper: Wrapper,
+      });
+
+      await waitFor(() => {
+        expect(result.current.storeState).toBeDefined();
+      });
+
+      expect(mockSetStoreKey).toHaveBeenCalledTimes(1);
+      expect(mockSetStoreKey).toHaveBeenCalledWith('autoRun', {
+        enabled: false,
+      });
+    });
+
+    it('replays a queued delete via deleteStoreKey', async () => {
+      const mockDeleteStoreKey = StoreService.deleteStoreKey as jest.Mock;
+      mockDeleteStoreKey.mockResolvedValue(undefined);
+      const { Wrapper, storeSet } = makeFlushWrapper([
+        { key: 'lastSelectedAgentType', op: 'delete' },
+      ]);
+      mockGetStore.mockResolvedValue({});
+
+      const { result } = renderHook(() => useContext(StoreContext), {
+        wrapper: Wrapper,
+      });
+
+      await waitFor(() => {
+        expect(result.current.storeState).toBeDefined();
+      });
+
+      expect(mockDeleteStoreKey).toHaveBeenCalledWith('lastSelectedAgentType');
+      expect(mockSetStoreKey).not.toHaveBeenCalled();
+      expect(storeSet).toHaveBeenCalledWith('pendingStoreWrites', []);
+    });
+
+    it('replays an entry with no op as a set', async () => {
+      // Entries persisted by an rc build from before deletes were queued.
+      const { Wrapper } = makeFlushWrapper([
+        { key: 'autoRun', value: { enabled: false } },
+      ]);
+      mockGetStore.mockResolvedValue({});
+
+      const { result } = renderHook(() => useContext(StoreContext), {
+        wrapper: Wrapper,
+      });
+
+      await waitFor(() => {
+        expect(result.current.storeState).toBeDefined();
+      });
+
+      expect(mockSetStoreKey).toHaveBeenCalledWith('autoRun', {
+        enabled: false,
+      });
+    });
+
+    it('hydrates anyway when store IPC has no registered handler', async () => {
+      // If the electron-store constructor throws (e.g. a schema violation),
+      // main.js logs and swallows it, so no store IPC handler is registered.
+      // The preload functions still exist, so the missing-bridge guard does not
+      // fire — every invoke just rejects instead.
+      const Wrapper = ({ children }: PropsWithChildren) => {
+        const electron = {
+          logEvent: jest.fn(),
+          store: {
+            get: jest
+              .fn()
+              .mockRejectedValue(
+                new Error("No handler registered for 'store-get'"),
+              ),
+            set: jest.fn().mockResolvedValue(undefined),
+          },
+        };
+        return createElement(
+          ElectronApiContext.Provider,
+          { value: electron },
+          createElement(StoreProvider, null, children),
+        );
+      };
+      mockGetStore.mockResolvedValue({ autoRun: { enabled: true } });
+
+      const consoleSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
+
+      const { result } = renderHook(() => useContext(StoreContext), {
+        wrapper: Wrapper,
+      });
+
+      await waitFor(() => {
+        expect(result.current.storeState).toEqual({
+          autoRun: { enabled: true },
+        });
+      });
+
+      consoleSpy.mockRestore();
+    });
+
+    it('skips entries for keys already written this session', async () => {
+      const { Wrapper, storeSet } = makeFlushWrapper([
+        { key: 'autoRun', op: 'set', value: { enabled: false } },
+      ]);
+      mockGetStore.mockResolvedValue({});
+
+      // A write for this key was issued before the flush read the queue, so the
+      // persisted entry is already stale — it must not replay over it.
+      beginWrite('autoRun');
+
+      const { result } = renderHook(() => useContext(StoreContext), {
+        wrapper: Wrapper,
+      });
+
+      await waitFor(() => {
+        expect(result.current.storeState).toBeDefined();
+      });
+
+      expect(mockSetStoreKey).not.toHaveBeenCalled();
+      expect(storeSet).toHaveBeenCalledWith('pendingStoreWrites', []);
+    });
+
+    it('flushes pending writes to backend before hydration', async () => {
+      const { Wrapper, storeSet } = makeFlushWrapper([
+        { key: 'autoRun', op: 'set', value: { enabled: false } },
+      ]);
+      mockGetStore.mockResolvedValue({ autoRun: { enabled: false } });
+
+      const { result } = renderHook(() => useContext(StoreContext), {
+        wrapper: Wrapper,
+      });
+
+      await waitFor(() => {
+        expect(result.current.storeState).toBeDefined();
+      });
+
+      // setStoreKey should be called for the pending write
+      expect(mockSetStoreKey).toHaveBeenCalledWith('autoRun', {
+        enabled: false,
+      });
+
+      // Queue should be cleared after successful flush
+      expect(storeSet).toHaveBeenCalledWith('pendingStoreWrites', []);
+    });
+
+    it('completes the flush before reading the store back', async () => {
+      const { Wrapper } = makeFlushWrapper([
+        { key: 'autoRun', op: 'set', value: { enabled: false } },
+      ]);
+
+      const callOrder: string[] = [];
+      mockSetStoreKey.mockImplementation(() => {
+        callOrder.push('setStoreKey');
+        return Promise.resolve(undefined);
+      });
+      mockGetStore.mockImplementation(() => {
+        callOrder.push('getStore');
+        return Promise.resolve({ autoRun: { enabled: false } });
+      });
+
+      const { result } = renderHook(() => useContext(StoreContext), {
+        wrapper: Wrapper,
+      });
+
+      await waitFor(() => {
+        expect(result.current.storeState).toBeDefined();
+      });
+
+      // Hydrating first would read the stale value the flush is there to fix.
+      expect(callOrder).toEqual(['setStoreKey', 'getStore']);
+    });
+
+    it('replays queued writes sequentially, not concurrently', async () => {
+      const { Wrapper } = makeFlushWrapper([
+        { key: 'autoRun', op: 'set', value: { enabled: false } },
+        { key: 'autoRun', op: 'set', value: { enabled: true } },
+      ]);
+      mockGetStore.mockResolvedValue({});
+
+      let inFlight = 0;
+      let maxInFlight = 0;
+      mockSetStoreKey.mockImplementation(() => {
+        inFlight += 1;
+        maxInFlight = Math.max(maxInFlight, inFlight);
+        return Promise.resolve().then(() => {
+          inFlight -= 1;
+        });
+      });
+
+      const { result } = renderHook(() => useContext(StoreContext), {
+        wrapper: Wrapper,
+      });
+
+      await waitFor(() => {
+        expect(result.current.storeState).toBeDefined();
+      });
+
+      // Overlapping writes to the same key would land in a random order.
+      expect(maxInFlight).toBe(1);
+      expect(mockSetStoreKey.mock.calls).toEqual([
+        ['autoRun', { enabled: false }],
+        ['autoRun', { enabled: true }],
+      ]);
+    });
+
+    it('clears queue after all writes succeed', async () => {
+      const { Wrapper, storeSet } = makeFlushWrapper([
+        { key: 'autoRun', op: 'set', value: { enabled: false } },
+        { key: 'lastSelectedServiceConfigId', op: 'set', value: 'svc-2' },
+      ]);
+      mockGetStore.mockResolvedValue({});
+
+      const { result } = renderHook(() => useContext(StoreContext), {
+        wrapper: Wrapper,
+      });
+
+      await waitFor(() => {
+        expect(result.current.storeState).toBeDefined();
+      });
+
+      expect(mockSetStoreKey).toHaveBeenCalledWith('autoRun', {
+        enabled: false,
+      });
+      expect(mockSetStoreKey).toHaveBeenCalledWith(
+        'lastSelectedServiceConfigId',
+        'svc-2',
+      );
+      expect(storeSet).toHaveBeenCalledWith('pendingStoreWrites', []);
+    });
+
+    it('discards malformed entries instead of replaying them', async () => {
+      const { Wrapper, storeSet } = makeFlushWrapper([
+        { key: 'autoRun', op: 'set', value: { enabled: false } },
+        null,
+        'garbage',
+        { value: 'no key' },
+        { key: 42 },
+      ]);
+      mockGetStore.mockResolvedValue({});
+
+      const consoleSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
+
+      const { result } = renderHook(() => useContext(StoreContext), {
+        wrapper: Wrapper,
+      });
+
+      await waitFor(() => {
+        expect(result.current.storeState).toBeDefined();
+      });
+
+      // Only the well-formed entry is replayed — a bad one would reach the
+      // backend as setStoreKey(undefined, undefined).
+      expect(mockSetStoreKey).toHaveBeenCalledTimes(1);
+      expect(mockSetStoreKey).toHaveBeenCalledWith('autoRun', {
+        enabled: false,
+      });
+      expect(storeSet).toHaveBeenCalledWith('pendingStoreWrites', []);
+
+      consoleSpy.mockRestore();
+    });
+
+    it('clears the slot when every persisted entry is malformed', async () => {
+      const { Wrapper, storeSet } = makeFlushWrapper(['garbage', null]);
+      mockGetStore.mockResolvedValue({});
+
+      const consoleSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
+
+      const { result } = renderHook(() => useContext(StoreContext), {
+        wrapper: Wrapper,
+      });
+
+      await waitFor(() => {
+        expect(result.current.storeState).toBeDefined();
+      });
+
+      expect(mockSetStoreKey).not.toHaveBeenCalled();
+      expect(storeSet).toHaveBeenCalledWith('pendingStoreWrites', []);
+
+      consoleSpy.mockRestore();
+    });
+
+    it('ignores a non-array persisted value', async () => {
+      const { Wrapper, storeSet } = makeFlushWrapper({ not: 'an array' });
+      mockGetStore.mockResolvedValue({ autoRun: { enabled: true } });
+
+      const { result } = renderHook(() => useContext(StoreContext), {
+        wrapper: Wrapper,
+      });
+
+      await waitFor(() => {
+        expect(result.current.storeState).toEqual({
+          autoRun: { enabled: true },
+        });
+      });
+
+      expect(mockSetStoreKey).not.toHaveBeenCalled();
+      expect(storeSet).not.toHaveBeenCalledWith(
+        'pendingStoreWrites',
+        expect.anything(),
+      );
+    });
+
+    it('logs instead of silently skipping when the store bridge is missing', async () => {
+      const logEvent = jest.fn();
+      const Wrapper = ({ children }: PropsWithChildren) =>
+        createElement(
+          ElectronApiContext.Provider,
+          { value: { logEvent } },
+          createElement(StoreProvider, null, children),
+        );
+      mockGetStore.mockResolvedValue({});
+
+      const { result } = renderHook(() => useContext(StoreContext), {
+        wrapper: Wrapper,
+      });
+
+      await waitFor(() => {
+        expect(result.current.storeState).toBeDefined();
+      });
+
+      expect(
+        logEvent.mock.calls.map((call: unknown[]) => call[0]),
+      ).toContainEqual(
+        expect.stringContaining('Electron store bridge unavailable'),
+      );
+    });
+
+    it('keeps failed entries in queue on partial flush failure', async () => {
+      const { Wrapper, storeSet } = makeFlushWrapper([
+        { key: 'autoRun', op: 'set', value: { enabled: false } },
+        { key: 'lastSelectedServiceConfigId', op: 'set', value: 'svc-2' },
+      ]);
+      mockSetStoreKey
+        .mockResolvedValueOnce(undefined) // autoRun succeeds
+        .mockRejectedValueOnce(new Error('still down')); // lastSelectedServiceConfigId fails
+      mockGetStore.mockResolvedValue({});
+
+      const consoleSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
+
+      const { result } = renderHook(() => useContext(StoreContext), {
+        wrapper: Wrapper,
+      });
+
+      await waitFor(() => {
+        expect(result.current.storeState).toBeDefined();
+      });
+
+      // Queue should contain only the failed entry
+      expect(storeSet).toHaveBeenCalledWith('pendingStoreWrites', [
+        { key: 'lastSelectedServiceConfigId', op: 'set', value: 'svc-2' },
+      ]);
+
+      consoleSpy.mockRestore();
+    });
+
+    it('skips flush and proceeds to hydration when queue is empty', async () => {
+      const { Wrapper } = makeFlushWrapper([]);
+      mockGetStore.mockResolvedValue({ autoRun: { enabled: true } });
+
+      const { result } = renderHook(() => useContext(StoreContext), {
+        wrapper: Wrapper,
+      });
+
+      await waitFor(() => {
+        expect(result.current.storeState).toEqual({
+          autoRun: { enabled: true },
+        });
+      });
+
+      // No setStoreKey calls from flush (only hydration)
+      expect(mockSetStoreKey).not.toHaveBeenCalled();
+    });
+
+    it('proceeds to hydration even when flush fails entirely', async () => {
+      const { Wrapper } = makeFlushWrapper([
+        { key: 'autoRun', op: 'set', value: { enabled: false } },
+      ]);
+      mockSetStoreKey.mockRejectedValue(new Error('backend still down'));
+      mockGetStore.mockResolvedValue({ autoRun: { enabled: true } });
+
+      const consoleSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
+
+      const { result } = renderHook(() => useContext(StoreContext), {
+        wrapper: Wrapper,
+      });
+
+      // Hydration should still complete with backend data
+      await waitFor(() => {
+        expect(result.current.storeState).toEqual({
+          autoRun: { enabled: true },
+        });
+      });
+
+      expect(mockGetStore).toHaveBeenCalled();
+
+      consoleSpy.mockRestore();
     });
   });
 
