@@ -10,6 +10,7 @@ export const ELECTRON_NATIVE_KEYS = new Set([
   'updateAvailableKnownVersion',
   'pearlStoreMigrationComplete',
   'pearlStoreAutoRunRepaired',
+  'pendingStoreWrites',
 ]);
 
 /**
