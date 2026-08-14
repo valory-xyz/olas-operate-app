@@ -344,6 +344,32 @@ describe('useAutoRunLifecycle', () => {
       expect(params.scanAndStartNext).toHaveBeenCalled();
     });
 
+    it('falls through to a scan anchored on the selected instance when the fast path defers it', async () => {
+      // Pins the wiring the empty-pool fast-path deferral depends on: the fast
+      // path returns false WITHOUT notifying, and the scan that follows is
+      // anchored so the same (drained) instance is the first candidate — which
+      // is what lets degraded mode still start it. Covered as two units
+      // elsewhere; this pins them together.
+      const params = makeHookParams({
+        enabled: true,
+        enabledRef: { current: true },
+        runningAgentType: null,
+        runningServiceConfigId: null,
+        runningAgentTypeRef: { current: null },
+        runningServiceConfigIdRef: { current: null },
+        startSelectedAgentIfEligible: jest.fn().mockResolvedValue(false),
+        getPreferredStartFrom: jest.fn().mockReturnValue('sc-previous'),
+      });
+
+      renderHook(() => useAutoRunLifecycle(params));
+      await act(async () => {
+        await new Promise((r) => setTimeout(r, 0));
+      });
+
+      expect(params.startSelectedAgentIfEligible).toHaveBeenCalled();
+      expect(params.scanAndStartNext).toHaveBeenCalledWith('sc-previous');
+    });
+
     it('does not scan when selected agent starts successfully', async () => {
       const params = makeHookParams({
         enabled: true,
