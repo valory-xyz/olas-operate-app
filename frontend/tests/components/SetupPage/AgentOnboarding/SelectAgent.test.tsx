@@ -50,6 +50,15 @@ jest.mock('../../../../config/agents', () => ({
         isBeta: true,
       },
     ],
+    [
+      'pett_ai',
+      {
+        displayName: 'PettBro by Pett.ai',
+        servicePublicId: 'sp-4',
+        middlewareHomeChainId: 8453,
+        isFullyRetired: true,
+      },
+    ],
   ],
 }));
 
@@ -136,5 +145,16 @@ describe('SelectAgent', () => {
     render(<SelectAgent {...defaultProps} activeTab="new" />);
     expect(screen.getByText('Connect')).toBeInTheDocument();
     expect(screen.getAllByText('Beta')).toHaveLength(1);
+  });
+
+  it('does not render agents with isFullyRetired: true in the new-agents list', () => {
+    mockUseServices.mockReturnValue({
+      services: [],
+      getInstancesOfAgentType: () => [],
+    });
+    render(<SelectAgent {...defaultProps} activeTab="new" />);
+    expect(
+      screen.queryByText('PettBro by Pett.ai'),
+    ).not.toBeInTheDocument();
   });
 });
