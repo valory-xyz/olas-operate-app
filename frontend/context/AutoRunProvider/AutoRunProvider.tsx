@@ -128,9 +128,14 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
       getExcludedInstances(
         configuredInstances,
         includedInstancesForUi,
-        configExcludedInstances,
+        [...configExcludedInstances, ...decommissionedInstances],
       ),
-    [configuredInstances, includedInstancesForUi, configExcludedInstances],
+    [
+      configuredInstances,
+      includedInstancesForUi,
+      configExcludedInstances,
+      decommissionedInstances,
+    ],
   );
 
   // Eligibility for the currently selected agent.
