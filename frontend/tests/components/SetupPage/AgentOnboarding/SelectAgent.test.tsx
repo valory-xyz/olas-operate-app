@@ -153,8 +153,6 @@ describe('SelectAgent', () => {
       getInstancesOfAgentType: () => [],
     });
     render(<SelectAgent {...defaultProps} activeTab="new" />);
-    expect(
-      screen.queryByText('PettBro by Pett.ai'),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByText('PettBro by Pett.ai')).not.toBeInTheDocument();
   });
 });

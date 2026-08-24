@@ -125,11 +125,10 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
   );
   const excludedInstances = useMemo(
     () =>
-      getExcludedInstances(
-        configuredInstances,
-        includedInstancesForUi,
-        [...configExcludedInstances, ...decommissionedInstances],
-      ),
+      getExcludedInstances(configuredInstances, includedInstancesForUi, [
+        ...configExcludedInstances,
+        ...decommissionedInstances,
+      ]),
     [
       configuredInstances,
       includedInstancesForUi,

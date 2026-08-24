@@ -98,8 +98,7 @@ describe('ACTIVE_AGENTS', () => {
 describe('AVAILABLE_FOR_ADDING_AGENTS', () => {
   it('is derived from ACTIVE_AGENTS by excluding under-construction and fully retired agents', () => {
     const expected = ACTIVE_AGENTS.filter(
-      ([, config]) =>
-        !config.isUnderConstruction && !config.isFullyRetired,
+      ([, config]) => !config.isUnderConstruction && !config.isFullyRetired,
     );
     expect(AVAILABLE_FOR_ADDING_AGENTS).toEqual(expected);
   });
