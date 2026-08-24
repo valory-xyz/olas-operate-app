@@ -76,6 +76,14 @@ export type AgentConfig = {
    * `shutdownDate` (sunsetting — still runs until the date).
    */
   isPhasedOut?: boolean;
+  /**
+   * Fully retired agent. Hidden from the "Select Your Agent" screen and from
+   * the AVAILABLE_FOR_ADDING_AGENTS slot count, but kept in ACTIVE_AGENTS
+   * (isAgentEnabled: true) so existing instances remain visible in the sidebar
+   * and the Withdraw flow stays reachable. Distinct from `isPhasedOut` (which
+   * only blocks running/staking — the agent still appears in the selection list).
+   */
+  isFullyRetired?: boolean;
   /** Renders a "Beta" tag next to the agent name (agent selection + sidebar) */
   isBeta?: boolean;
   /**
