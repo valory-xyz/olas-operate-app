@@ -598,7 +598,7 @@ describe('AutoRunProvider', () => {
       });
     });
 
-    it('marks decommissioned agents as canRun: false with reason', () => {
+    it('marks decommissioned agents as canRun: false and hides them from excludedInstances', () => {
       const scModius = 'sc-modius-test';
       useConfiguredAgents.mockReturnValue([
         {
@@ -626,6 +626,9 @@ describe('AutoRunProvider', () => {
         canRun: false,
         reason: 'Decommissioned',
       });
+      // Decommissioned instances are hidden from the excluded section
+      // entirely, not rendered as blocked rows.
+      expect(result.current.excludedInstances).not.toContain(scModius);
     });
   });
 

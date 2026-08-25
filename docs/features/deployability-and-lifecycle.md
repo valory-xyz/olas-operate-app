@@ -146,17 +146,23 @@ The hook evaluates conditions in priority order. The first failing condition det
 
 The `safeEligibility` parameter is optional. Currently only auto-run's `useSelectedEligibility` passes it — `useServiceDeployment` calls `useDeployability()` with no argument, so manual deployment is **not** pre-blocked by safe eligibility at this level (safe eligibility is instead checked inside `createSafeIfNeeded` during the start flow). When provided, it's checked first, even before loading state.
 
-### Phased-out agents (terminal retirement)
+### Phased-out agents (retirement stage 1)
 
-`AgentConfig.isPhasedOut` marks an agent as permanently retired — existing instances can no longer be run, only their funds withdrawn (set on **Agents.fun**). It is distinct from `isUnderConstruction` (temporary/technical, also hides the staking section) and `shutdownDate` (sunsetting — the agent still runs until the date). Behavior when set:
+`AgentConfig.isPhasedOut` marks an agent as permanently retired — existing instances can no longer be run, only their funds withdrawn (set on **Agents.fun** and **Pett.ai**). It is distinct from `isUnderConstruction` (temporary/technical, also hides the staking section) and `shutdownDate` (sunsetting — the agent still runs until the date). Behavior when set:
 
 - **`useDeployability`** returns `canRun: false, reason: 'Phased out'` (step 3 above), disabling the Start button.
-- **Auto-run** excludes the instances two ways: `getDecommissionedInstances` (`AutoRunProvider/utils/utils.ts`) marks them `canRun: false, reason: 'Decommissioned'`, and the scanner's `fetchDeployabilityForAgent` (`autoRunHelpers.ts`) returns `'Phased out'` — kept in parity with `useDeployability`.
+- **Auto-run** excludes the instances two ways: `getDecommissionedInstances` (`AutoRunProvider/utils/utils.ts`) marks them `canRun: false, reason: 'Decommissioned'` and hides them from the popover entirely (merged into the `hiddenInstances` argument of `getExcludedInstances`, so they don't render even as blocked rows in the "Excluded from auto-run" section), and the scanner's `fetchDeployabilityForAgent` (`autoRunHelpers.ts`) returns `'Phased out'` — kept in parity with `useDeployability`.
 - **Agent page** shows `AgentPhasedOutAlert` ("…has been phased out and is no longer supported. You can still withdraw funds from your Agent Wallet." + Withdraw CTA), rendered as the first/pre-empting branch in `AgentDisabledAlert`.
-- **Select Agent** maintenance alert drops the "Existing agents continue to run as usual." line (`FundingRequirementStep`).
+- **Select Agent** still lists the agent (pushed to the end as decommissioned); its maintenance alert drops the "Existing agents continue to run as usual." line (`FundingRequirementStep`).
 - **New-epoch notifications** are skipped (`useNotifyOnNewEpoch`).
 
 `isAgentEnabled` and `isAddingNewBlocked` are deliberately kept `true`, so the sidebar entry, the staking section, and balance polling (for the withdraw flow) remain available. A currently-running instance is **not** force-stopped — restart is blocked and the user off-ramps via Withdraw.
+
+### Fully retired agents (retirement stage 2)
+
+`AgentConfig.isFullyRetired` (set on **Pett.ai**) additionally hides the agent from the "Select Your Agent" screen (`SelectAgent.tsx`) and from `AVAILABLE_FOR_ADDING_AGENTS` (`config/agents.ts`) — new users never see it, not even as decommissioned. The flag is purely presentational: it **must** be set alongside `isPhasedOut` (which does the run-blocking) and `isAgentEnabled: true` (which keeps existing instances in the sidebar and the withdraw flow reachable); an invariant test in `tests/config/agents.test.ts` enforces the stacking.
+
+Full lifecycle ladder: sunsetting (`shutdownDate`, banner only, still runs) → phased out (can't run, withdraw-only, still listed) → fully retired (also hidden from selection).
 
 ### Service start flow (`useStartService`)
 
