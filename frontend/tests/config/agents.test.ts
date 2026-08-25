@@ -111,6 +111,32 @@ describe('AVAILABLE_FOR_ADDING_AGENTS', () => {
   });
 });
 
+describe('lifecycle flag invariants', () => {
+  // isFullyRetired is purely presentational (hides the agent from selection);
+  // it relies on isPhasedOut for run-blocking and on isAgentEnabled for the
+  // sidebar entry / withdraw flow. An agent flagged isFullyRetired alone would
+  // vanish from selection while still running and auto-running.
+  it('every isFullyRetired agent is also isPhasedOut', () => {
+    Object.entries(AGENT_CONFIG).forEach(([agentType, config]) => {
+      if (!config.isFullyRetired) return;
+      expect({ agentType, isPhasedOut: config.isPhasedOut }).toEqual({
+        agentType,
+        isPhasedOut: true,
+      });
+    });
+  });
+
+  it('every isPhasedOut agent stays isAgentEnabled so withdraw remains reachable', () => {
+    Object.entries(AGENT_CONFIG).forEach(([agentType, config]) => {
+      if (!config.isPhasedOut) return;
+      expect({ agentType, isAgentEnabled: config.isAgentEnabled }).toEqual({
+        agentType,
+        isAgentEnabled: true,
+      });
+    });
+  });
+});
+
 describe('PettAi phase-out', () => {
   it('is marked phased out', () => {
     expect(AGENT_CONFIG[AgentMap.PettAi].isPhasedOut).toBe(true);
