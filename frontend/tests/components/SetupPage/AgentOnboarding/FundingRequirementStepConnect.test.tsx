@@ -172,3 +172,103 @@ describe('FundingRequirementStep — Connect chain select', () => {
     expect(screen.getByText('5 USDC')).toBeInTheDocument();
   });
 });
+
+describe('FundingRequirementStep — Connect risk acknowledgement', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockUseServices.mockReturnValue({ services: [] });
+  });
+
+  it('renders the acknowledgement, unchecked, before a chain is chosen', () => {
+    render(
+      <FundingRequirementStep
+        agentType={AgentMap.Connect}
+        onAcceptRisksChange={jest.fn()}
+      />,
+    );
+
+    expect(
+      screen.getByText(/risks specific to Pearl Connect/i),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('checkbox')).not.toBeChecked();
+  });
+
+  it('reflects the hasAcceptedRisks prop', () => {
+    render(
+      <FundingRequirementStep
+        agentType={AgentMap.Connect}
+        hasAcceptedRisks
+        onAcceptRisksChange={jest.fn()}
+      />,
+    );
+
+    expect(screen.getByRole('checkbox')).toBeChecked();
+  });
+
+  it('calls onAcceptRisksChange when toggled', () => {
+    const onAcceptRisksChange = jest.fn();
+    render(
+      <FundingRequirementStep
+        agentType={AgentMap.Connect}
+        onAcceptRisksChange={onAcceptRisksChange}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('checkbox'));
+    expect(onAcceptRisksChange).toHaveBeenCalledWith(true);
+  });
+
+  it('omits the checkbox when no setter is supplied', () => {
+    // A checkbox that cannot report its own changes would silently swallow
+    // clicks, so it is not rendered at all.
+    render(<FundingRequirementStep agentType={AgentMap.Connect} />);
+
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+  });
+
+  it('links to the Pearl Terms risk section, opened in the browser', () => {
+    render(
+      <FundingRequirementStep
+        agentType={AgentMap.Connect}
+        onAcceptRisksChange={jest.fn()}
+      />,
+    );
+
+    const link = screen.getByRole('link', { name: /Section 6\.1\.2/ });
+    expect(link).toHaveAttribute(
+      'href',
+      'https://olas.network/pearl-terms#section-6-1-2',
+    );
+    expect(link).toHaveAttribute('target', '_blank');
+    expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+  });
+
+  it('shows an error when highlightSignal fires without acknowledgement', () => {
+    render(
+      <FundingRequirementStep
+        agentType={AgentMap.Connect}
+        onAcceptRisksChange={jest.fn()}
+        highlightSignal={1}
+      />,
+    );
+
+    expect(
+      screen.getByText('Please acknowledge the risks to continue.'),
+    ).toBeInTheDocument();
+  });
+
+  it('does not show the acknowledgement error once ticked', () => {
+    render(
+      <FundingRequirementStep
+        agentType={AgentMap.Connect}
+        hasAcceptedRisks
+        onAcceptRisksChange={jest.fn()}
+        highlightSignal={1}
+      />,
+    );
+
+    expect(
+      screen.queryByText('Please acknowledge the risks to continue.'),
+    ).not.toBeInTheDocument();
+  });
+});
