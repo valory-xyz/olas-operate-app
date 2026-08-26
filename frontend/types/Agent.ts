@@ -69,13 +69,24 @@ export type AgentConfig = {
   /** Human-readable shutdown date for deprecation banner, e.g. 'June 15, 2026' */
   shutdownDate?: string;
   /**
-   * Terminal retirement. Blocks running existing instances (Start disabled,
-   * excluded from auto-run, no new-epoch nudges) and shows a "phased out — you
-   * can still withdraw" alert. Keep `isAgentEnabled: true` so the instance stays
-   * in the sidebar and the withdraw flow remains reachable. Distinct from
-   * `shutdownDate` (sunsetting — still runs until the date).
+   * Retirement stage 1 of 2: the agent can no longer run. Blocks running
+   * existing instances (Start disabled, excluded from auto-run, no new-epoch
+   * nudges) and shows a "phased out — you can still withdraw" alert, but the
+   * agent is still listed on the selection screen as decommissioned. Keep
+   * `isAgentEnabled: true` so the instance stays in the sidebar and the
+   * withdraw flow remains reachable. Distinct from `shutdownDate` (sunsetting —
+   * still runs until the date).
    */
   isPhasedOut?: boolean;
+  /**
+   * Retirement stage 2 of 2: the agent is also hidden from the "Select Your
+   * Agent" screen and from AVAILABLE_FOR_ADDING_AGENTS. Purely presentational —
+   * it must be set alongside `isPhasedOut` (which does the run-blocking) and
+   * `isAgentEnabled: true` (which keeps existing instances in the sidebar and
+   * the Withdraw flow reachable). An invariant test in
+   * tests/config/agents.test.ts enforces the stacking.
+   */
+  isFullyRetired?: boolean;
   /** Renders a "Beta" tag next to the agent name (agent selection + sidebar) */
   isBeta?: boolean;
   /**

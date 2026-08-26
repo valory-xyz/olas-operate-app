@@ -290,11 +290,11 @@ Every delay and poll interval in auto-run uses `sleepAwareDelay`. On `false`:
 
 | # | Scenario | Expected | Implementation |
 |---|----------|----------|----------------|
-| 17 | Decommissioned agent | Auto-excluded, cannot add | Filtered by `getEligibleAgentTypes` |
+| 17 | Decommissioned agent | Hidden from the popover entirely (not shown even as an excluded row); never eligible | `getDecommissionedInstances` filtered from `getEligibleInstances` and merged into the `hiddenInstances` arg of `getExcludedInstances` |
 | 18 | User excludes agent | Moves to excluded list | `userExcludedAgents` in store |
 | 19 | User re-includes agent | Reappears in included list | Appends with next order index |
 | 20 | Order persists after restart | Same included order | Electron store persistence |
-| 21 | Empty included list | Fallback to all eligible | `getOrderedIncludedAgentTypes` returns `eligibleAgentTypes` |
+| 21 | Empty included list | Fallback to all eligible | `getOrderedIncludedInstances` returns `eligibleInstances` |
 
 ### Failure Handling
 

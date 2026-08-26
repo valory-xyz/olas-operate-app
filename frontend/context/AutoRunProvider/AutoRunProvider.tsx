@@ -125,12 +125,16 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
   );
   const excludedInstances = useMemo(
     () =>
-      getExcludedInstances(
-        configuredInstances,
-        includedInstancesForUi,
-        configExcludedInstances,
-      ),
-    [configuredInstances, includedInstancesForUi, configExcludedInstances],
+      getExcludedInstances(configuredInstances, includedInstancesForUi, [
+        ...configExcludedInstances,
+        ...decommissionedInstances,
+      ]),
+    [
+      configuredInstances,
+      includedInstancesForUi,
+      configExcludedInstances,
+      decommissionedInstances,
+    ],
   );
 
   // Eligibility for the currently selected agent.

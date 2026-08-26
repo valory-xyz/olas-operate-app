@@ -77,6 +77,8 @@ const SelectYourAgentList = ({
       !!config.isUnderConstruction || !!config.isAddingNewBlocked;
     return (
       [...ACTIVE_AGENTS]
+        // Fully retired agents are hidden from selection entirely.
+        .filter(([, config]) => !config.isFullyRetired)
         // Connect pinned to the top; under-construction / adding-blocked agents
         // pushed to the end; existing config order preserved otherwise.
         .sort(

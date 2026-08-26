@@ -197,8 +197,9 @@ export const getOrderedIncludedInstances = (
 
 /**
  * Instances that are neither included nor hidden. `hiddenInstances` holds
- * config-excluded instances (`isExcludedFromAutoRun`, e.g. Connect) — those
- * must not appear in the auto-run options at all, not even as blocked rows.
+ * instances that must not appear in the auto-run options at all, not even as
+ * blocked rows: config-excluded ones (`isExcludedFromAutoRun`, e.g. Connect)
+ * and decommissioned ones (see `getDecommissionedInstances`).
  */
 export const getExcludedInstances = (
   configuredInstances: string[],
