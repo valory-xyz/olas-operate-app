@@ -33,7 +33,7 @@ export const AGENT_UI_RELEASES: Partial<Record<AgentType, AgentUiRelease>> = {
   [AgentMap.Polystrat]: {
     owner: 'valory-xyz',
     name: AGENT_UI_MONOREPO,
-    version: 'v0.1.16-polystrat-trader',
+    version: 'v0.1.18-polystrat-trader',
   },
   [AgentMap.Modius]: {
     owner: 'valory-xyz',
