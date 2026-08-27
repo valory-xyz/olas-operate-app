@@ -11,14 +11,14 @@ import { X402_ENABLED_FLAGS } from '../../x402';
 import { KPI_DESC_PREFIX } from '../constants';
 
 export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
-  hash: 'bafybeiaebouuu3vpyqpedhdkovhcvt4oj5sc5h2oyl6qlzasvc527wsuc4',
-  service_version: 'v0.40.7',
+  hash: 'bafybeic5y43hgupsyjztcztrefmysmul4zasojmtu22ewderjl5cu4sqky',
+  service_version: 'v0.40.8',
   agent_release: {
     is_aea: true,
     repository: {
       owner: 'valory-xyz',
       name: 'trader',
-      version: 'v0.40.7',
+      version: 'v0.40.8',
     },
   },
   agentType: AgentMap.PredictTrader,
@@ -139,6 +139,34 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
       name: 'Enable multi-bets fallback mode',
       description: 'Enables agents to run in multi-bets fallback mode',
       value: 'false',
+      provision_type: EnvProvisionType.FIXED,
+    },
+    USE_OFFCHAIN: {
+      name: 'Use offchain mech dispatch',
+      description:
+        'Route mech requests via the offchain HTTP path instead of the on-chain marketplace tx. Requires the priority mech to have an offchain endpoint registered.',
+      value: 'true',
+      provision_type: EnvProvisionType.FIXED,
+    },
+    OFFCHAIN_DEPOSIT_TARGET_CALLS: {
+      name: 'Offchain deposit target calls',
+      description:
+        'Number of forward mech requests each auto-deposit to the BalanceTracker should cover. Deposit chunk = target_calls * delivery_rate, clamped by auto_deposit_cap_per_cycle.',
+      value: '5',
+      provision_type: EnvProvisionType.FIXED,
+    },
+    USE_MECH_ANALYTICS: {
+      name: 'Use mech analytics',
+      description:
+        'Read per-request mech data from the mech-analytics service instead of the on-chain subgraph. Required for surfacing offchain mech requests in agent-performance summaries, which the on-chain subgraph does not index.',
+      value: 'true',
+      provision_type: EnvProvisionType.FIXED,
+    },
+    MECH_ANALYTICS_URL: {
+      name: 'Mech analytics URL',
+      description:
+        'Base URL of the mech-analytics HTTP service. Required when USE_MECH_ANALYTICS is true.',
+      value: 'https://mech-analytics-api.autonolas.tech',
       provision_type: EnvProvisionType.FIXED,
     },
   },
@@ -273,6 +301,34 @@ export const PREDICT_POLYMARKET_SERVICE_TEMPLATE: ServiceTemplate = {
       description:
         'Enables feature of agents paying for api keys usage instead of asking users to manually provide them',
       value: X402_ENABLED_FLAGS[AgentMap.Polystrat].toString(),
+      provision_type: EnvProvisionType.FIXED,
+    },
+    USE_OFFCHAIN: {
+      name: 'Use offchain mech dispatch',
+      description:
+        'Route mech requests via the offchain HTTP path instead of the on-chain marketplace tx. Requires the priority mech to have an offchain endpoint registered.',
+      value: 'true',
+      provision_type: EnvProvisionType.FIXED,
+    },
+    OFFCHAIN_DEPOSIT_TARGET_CALLS: {
+      name: 'Offchain deposit target calls',
+      description:
+        'Number of forward mech requests each auto-deposit to the BalanceTracker should cover. Deposit chunk = target_calls * delivery_rate, clamped by auto_deposit_cap_per_cycle.',
+      value: '5',
+      provision_type: EnvProvisionType.FIXED,
+    },
+    USE_MECH_ANALYTICS: {
+      name: 'Use mech analytics',
+      description:
+        'Read per-request mech data from the mech-analytics service instead of the on-chain subgraph. Required for surfacing offchain mech requests in agent-performance summaries, which the on-chain subgraph does not index.',
+      value: 'true',
+      provision_type: EnvProvisionType.FIXED,
+    },
+    MECH_ANALYTICS_URL: {
+      name: 'Mech analytics URL',
+      description:
+        'Base URL of the mech-analytics HTTP service. Required when USE_MECH_ANALYTICS is true.',
+      value: 'https://mech-analytics-api.autonolas.tech',
       provision_type: EnvProvisionType.FIXED,
     },
   },
