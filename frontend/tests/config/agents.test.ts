@@ -96,9 +96,9 @@ describe('ACTIVE_AGENTS', () => {
 });
 
 describe('AVAILABLE_FOR_ADDING_AGENTS', () => {
-  it('is derived from ACTIVE_AGENTS by excluding under-construction agents', () => {
+  it('is derived from ACTIVE_AGENTS by excluding under-construction and fully retired agents', () => {
     const expected = ACTIVE_AGENTS.filter(
-      ([, config]) => !config.isUnderConstruction,
+      ([, config]) => !config.isUnderConstruction && !config.isFullyRetired,
     );
     expect(AVAILABLE_FOR_ADDING_AGENTS).toEqual(expected);
   });
@@ -111,9 +111,39 @@ describe('AVAILABLE_FOR_ADDING_AGENTS', () => {
   });
 });
 
+describe('lifecycle flag invariants', () => {
+  // isFullyRetired is purely presentational (hides the agent from selection);
+  // it relies on isPhasedOut for run-blocking and on isAgentEnabled for the
+  // sidebar entry / withdraw flow. An agent flagged isFullyRetired alone would
+  // vanish from selection while still running and auto-running.
+  it('every isFullyRetired agent is also isPhasedOut', () => {
+    Object.entries(AGENT_CONFIG).forEach(([agentType, config]) => {
+      if (!config.isFullyRetired) return;
+      expect({ agentType, isPhasedOut: config.isPhasedOut }).toEqual({
+        agentType,
+        isPhasedOut: true,
+      });
+    });
+  });
+
+  it('every isPhasedOut agent stays isAgentEnabled so withdraw remains reachable', () => {
+    Object.entries(AGENT_CONFIG).forEach(([agentType, config]) => {
+      if (!config.isPhasedOut) return;
+      expect({ agentType, isAgentEnabled: config.isAgentEnabled }).toEqual({
+        agentType,
+        isAgentEnabled: true,
+      });
+    });
+  });
+});
+
 describe('PettAi phase-out', () => {
   it('is marked phased out', () => {
     expect(AGENT_CONFIG[AgentMap.PettAi].isPhasedOut).toBe(true);
+  });
+
+  it('is marked fully retired', () => {
+    expect(AGENT_CONFIG[AgentMap.PettAi].isFullyRetired).toBe(true);
   });
 
   it('still blocks creation of new instances', () => {
@@ -132,11 +162,11 @@ describe('PettAi phase-out', () => {
     expect(pettAiEntry).toBeDefined();
   });
 
-  it('PettAi appears in AVAILABLE_FOR_ADDING_AGENTS (isAddingNewBlocked does not filter from list)', () => {
+  it('does NOT appear in AVAILABLE_FOR_ADDING_AGENTS (isFullyRetired filters it from slot count)', () => {
     const pettAiEntry = AVAILABLE_FOR_ADDING_AGENTS.find(
       ([agentType]) => agentType === AgentMap.PettAi,
     );
-    expect(pettAiEntry).toBeDefined();
+    expect(pettAiEntry).toBeUndefined();
   });
 });
 

@@ -164,7 +164,6 @@ export const AGENT_CONFIG: {
       'Trade sizes adapt to market conditions and agent confidence.',
     servicePublicId: 'valory/polymarket_trader:0.1.0',
     isGeoLocationRestricted: true,
-    arePerformanceMetricsUnavailable: true,
     erc20Tokens: [TokenSymbolMap.USDC, TokenSymbolMap.pUSD],
   },
   [AgentMap.Optimus]: {
@@ -288,6 +287,7 @@ export const AGENT_CONFIG: {
     hasPerformance: true,
     isAddingNewBlocked: true,
     isPhasedOut: true,
+    isFullyRetired: true,
     requiresSetup: false,
     isX402Enabled: X402_ENABLED_FLAGS[AgentMap.PettAi],
     name: 'Pett.ai',
@@ -353,5 +353,6 @@ export const ACTIVE_AGENTS = entries(AGENT_CONFIG).filter(([, agentConfig]) => {
 }) as [AgentType, AgentConfig][];
 
 export const AVAILABLE_FOR_ADDING_AGENTS = ACTIVE_AGENTS.filter(
-  ([, agentConfig]) => !agentConfig.isUnderConstruction,
+  ([, agentConfig]) =>
+    !agentConfig.isUnderConstruction && !agentConfig.isFullyRetired,
 );
