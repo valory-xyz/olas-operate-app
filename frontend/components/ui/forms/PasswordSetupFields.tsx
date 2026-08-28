@@ -82,6 +82,11 @@ export const usePasswordSetupValidity = (
   return { isValid, passwordsState, newPassword };
 };
 
+type PasswordSetupFieldsProps = {
+  firstFieldLabel?: string;
+  secondFieldLabel?: string;
+};
+
 /**
  * Shared "New password + Confirm new password" fields used by Settings'
  * UpdatePasswordScreen and the SRP-recovery SetNewPasswordViaSRP. Renders
@@ -89,7 +94,10 @@ export const usePasswordSetupValidity = (
  * on mismatch. Validation rules are enforced both via the CTA disabled
  * state and via antd Form rules so programmatic submits can't bypass them.
  */
-export const PasswordSetupFields = () => {
+export const PasswordSetupFields = ({
+  firstFieldLabel = 'New password',
+  secondFieldLabel = 'Confirm new password',
+}: PasswordSetupFieldsProps = {}) => {
   const newPassword = Form.useWatch(NEW_PASSWORD_FIELD);
   const confirmNewPassword = Form.useWatch(CONFIRM_PASSWORD_FIELD);
 
@@ -100,7 +108,7 @@ export const PasswordSetupFields = () => {
     <>
       <Form.Item
         name={NEW_PASSWORD_FIELD}
-        label={<FormLabel>New password</FormLabel>}
+        label={<FormLabel>{firstFieldLabel}</FormLabel>}
         rules={[
           { required: true, message: 'Please input a password.' },
           newPasswordMinLengthRule,
@@ -121,7 +129,7 @@ export const PasswordSetupFields = () => {
 
       <Form.Item
         name={CONFIRM_PASSWORD_FIELD}
-        label={<FormLabel>Confirm new password</FormLabel>}
+        label={<FormLabel>{secondFieldLabel}</FormLabel>}
         dependencies={[NEW_PASSWORD_FIELD]}
         rules={[
           { required: true, message: 'Please confirm your password.' },
