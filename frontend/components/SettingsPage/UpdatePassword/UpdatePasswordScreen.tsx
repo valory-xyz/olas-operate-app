@@ -42,6 +42,7 @@ export const UpdatePasswordScreen = () => {
   const isFormValid = !!currentPassword && passwordsValid;
 
   const handleSubmit = async (values: UpdatePasswordFormValues) => {
+    if (!isFormValid) return;
     setIsSubmitting(true);
     try {
       await AccountService.updateAccount(

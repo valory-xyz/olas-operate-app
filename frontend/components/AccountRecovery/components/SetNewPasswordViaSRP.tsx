@@ -113,7 +113,7 @@ export const SetNewPasswordViaSRP = () => {
 
   const handleSubmit = useCallback(
     async (values: SetNewPasswordFormValues) => {
-      if (!srpMnemonic) return;
+      if (!srpMnemonic || !isFormValid) return;
       setIsSubmitting(true);
       try {
         await AccountService.resetAccountWithMnemonic(
@@ -138,7 +138,7 @@ export const SetNewPasswordViaSRP = () => {
         setIsSubmitting(false);
       }
     },
-    [srpMnemonic, goBack, setSrpError],
+    [srpMnemonic, isFormValid, goBack, setSrpError],
   );
 
   return (

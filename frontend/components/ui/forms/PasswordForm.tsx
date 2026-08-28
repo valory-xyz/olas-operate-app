@@ -40,7 +40,7 @@ const SetupPasswordTitle = ({ title }: { title: string }) => (
 
 export const PasswordStrength = ({ score }: { score: number }) => {
   return (
-    <Text style={{ color: COLOR.GRAY_2 }}>
+    <Text style={{ color: COLOR.GRAY_2, fontSize: 'inherit' }}>
       Password strength:{' '}
       <span style={{ color: colors[score] }}>{strength[score]}</span>
     </Text>

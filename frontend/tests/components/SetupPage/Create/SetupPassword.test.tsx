@@ -161,6 +161,54 @@ describe('SetupPassword', () => {
     });
   });
 
+  describe('new password captions', () => {
+    it('shows the min-length caption while the password is too short', async () => {
+      render(<SetupPassword />);
+      await act(async () => {
+        fillField('Enter password', 'short');
+      });
+      expect(
+        screen.getByText('Password must be at least 8 characters.'),
+      ).toBeInTheDocument();
+      expect(screen.queryByText(/Password strength:/)).not.toBeInTheDocument();
+    });
+
+    it('shows the ASCII caption for non-ASCII input', async () => {
+      render(<SetupPassword />);
+      await act(async () => {
+        fillField('Enter password', 'pässword123');
+      });
+      expect(
+        screen.getByText('Password must only contain ASCII characters.'),
+      ).toBeInTheDocument();
+    });
+
+    it('replaces the error caption with strength once valid', async () => {
+      render(<SetupPassword />);
+      await act(async () => {
+        fillField('Enter password', 'short');
+      });
+      await act(async () => {
+        fillField('Enter password', 'validpass123!');
+      });
+      expect(screen.getByText(/Password strength:/)).toBeInTheDocument();
+      expect(
+        screen.queryByText('Password must be at least 8 characters.'),
+      ).not.toBeInTheDocument();
+    });
+
+    it('shows "Please input a password." when cleared after typing', async () => {
+      render(<SetupPassword />);
+      await act(async () => {
+        fillField('Enter password', 'validpass123!');
+      });
+      await act(async () => {
+        fillField('Enter password', '');
+      });
+      expect(screen.getByText('Please input a password.')).toBeInTheDocument();
+    });
+  });
+
   describe('password match/mismatch captions', () => {
     it('shows "Passwords match" when passwords match', async () => {
       render(<SetupPassword />);
@@ -178,6 +226,21 @@ describe('SetupPassword', () => {
         fillField('Confirm password', 'differentpass');
       });
       expect(screen.getByText("Passwords don't match")).toBeInTheDocument();
+    });
+
+    it('shows "Please confirm your password." when confirm is cleared after typing', async () => {
+      render(<SetupPassword />);
+      await act(async () => {
+        fillField('Enter password', 'validpass123!');
+        fillField('Confirm password', 'validpass123!');
+      });
+      await act(async () => {
+        fillField('Confirm password', '');
+      });
+      expect(
+        screen.getByText('Please confirm your password.'),
+      ).toBeInTheDocument();
+      expect(screen.queryByText('Passwords match')).not.toBeInTheDocument();
     });
   });
 
