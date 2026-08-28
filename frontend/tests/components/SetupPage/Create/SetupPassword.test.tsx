@@ -79,18 +79,14 @@ jest.mock(
 // Typed mock references
 // ---------------------------------------------------------------------------
 
-const { AccountService } = jest.requireMock(
-  '../../../../service/Account',
-) as {
+const { AccountService } = jest.requireMock('../../../../service/Account') as {
   AccountService: {
     createAccount: jest.Mock;
     loginAccount: jest.Mock;
   };
 };
 
-const { WalletService } = jest.requireMock(
-  '../../../../service/Wallet',
-) as {
+const { WalletService } = jest.requireMock('../../../../service/Wallet') as {
   WalletService: { createEoa: jest.Mock };
 };
 
@@ -103,8 +99,7 @@ const fillField = (label: string, value: string) => {
   fireEvent.change(input, { target: { value } });
 };
 
-const getSubmitButton = () =>
-  screen.getByRole('button', { name: 'Continue' });
+const getSubmitButton = () => screen.getByRole('button', { name: 'Continue' });
 
 // ---------------------------------------------------------------------------
 // Tests
