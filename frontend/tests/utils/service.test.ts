@@ -270,6 +270,46 @@ describe('updateServiceIfNeeded', () => {
     });
   });
 
+  it('resends env variable when it switched from fixed to computed', async () => {
+    const service = createService({
+      env_variables: {
+        RESET_PAUSE_DURATION: { value: '300' },
+        STORE_PATH: { value: 'persistent_data/', provision_type: 'fixed' },
+        PERSONA: { value: '' },
+      },
+    });
+
+    await updateServiceIfNeeded(service, AgentMap.AgentsFun);
+
+    expect(mockUpdateService).toHaveBeenCalledWith({
+      serviceConfigId: SERVICE_CONFIG_ID,
+      partialServiceTemplate: {
+        env_variables: {
+          STORE_PATH: {
+            name: 'Store path',
+            description: '',
+            value: 'persistent_data/',
+            provision_type: 'computed',
+          },
+        },
+      },
+    });
+  });
+
+  it('does not resend a computed env variable that is already computed', async () => {
+    const service = createService({
+      env_variables: {
+        RESET_PAUSE_DURATION: { value: '300' },
+        STORE_PATH: { value: 'other/', provision_type: 'computed' },
+        PERSONA: { value: '' },
+      },
+    });
+
+    await updateServiceIfNeeded(service, AgentMap.AgentsFun);
+
+    expect(mockUpdateService).not.toHaveBeenCalled();
+  });
+
   it('does not update user env variables even when value differs', async () => {
     const service = createService({
       env_variables: {
