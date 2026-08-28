@@ -1,5 +1,4 @@
 import { Flex, Form, FormInstance, Input, Typography } from 'antd';
-import { Rule } from 'antd/es/form';
 import { ReactNode } from 'react';
 import { LuCircleCheck, LuTriangleAlert } from 'react-icons/lu';
 import zxcvbn from 'zxcvbn';
@@ -19,18 +18,6 @@ export const PASSWORD_REQUIREMENTS_MESSAGE =
   'Your password must be at least 8 characters long. Use a mix of letters, numbers, and symbols.';
 
 const isAscii = (value: string) => /^[\x20-\x7E]*$/.test(value);
-
-export const passwordAsciiRule: Rule = {
-  validator: (_rule, value) => {
-    if (!value) return Promise.resolve();
-    if (!isAscii(value)) {
-      return Promise.reject(
-        new Error('Password must only contain ASCII characters.'),
-      );
-    }
-    return Promise.resolve();
-  },
-};
 
 type PasswordsState = 'match' | 'mismatch' | null;
 
@@ -80,6 +67,8 @@ type FieldCaptionProps = {
  * never changes the row's height.
  */
 const FieldCaption = ({ text, color, icon }: FieldCaptionProps) => (
+  // `color` on the Flex tints the icon via currentColor; antd Typography sets
+  // its own color, so the Text needs it explicitly as well.
   <Flex align="center" gap={6} className="mt-6" style={{ color }}>
     {icon}
     <Text style={{ color }} className="text-sm">
@@ -166,6 +155,9 @@ export const PasswordSetupFields = ({
   const newPassword = Form.useWatch(NEW_PASSWORD_FIELD, form);
   const confirmNewPassword = Form.useWatch(CONFIRM_PASSWORD_FIELD, form);
 
+  // `isFieldTouched` is not reactive by itself; it is safe to read here only
+  // because the `useWatch` calls above re-render on every value change and a
+  // field becomes touched on its first change.
   const isNewPasswordTouched = form.isFieldTouched(NEW_PASSWORD_FIELD);
   const isNewPasswordInvalid =
     isNewPasswordTouched && !isAsciiAndLongEnough(newPassword);

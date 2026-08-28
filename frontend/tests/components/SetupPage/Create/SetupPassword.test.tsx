@@ -51,16 +51,6 @@ jest.mock('../../../../components/ui', () => ({
   ),
 }));
 
-jest.mock('../../../../components/ui/forms', () => {
-  const actual = jest.requireActual('../../../../components/ui/forms');
-  return {
-    ...actual,
-    PasswordStrength: (props: { score: number }) => (
-      <div data-testid="password-strength" data-score={props.score} />
-    ),
-  };
-});
-
 jest.mock('zxcvbn', () => ({
   __esModule: true,
   default: (password: string) => ({
@@ -278,6 +268,24 @@ describe('SetupPassword', () => {
         expect(mockSetPassword).toHaveBeenCalledWith('validpass123!');
         expect(mockGoto).toHaveBeenCalledWith(SETUP_SCREEN.SetupBackupSigner);
       });
+    });
+
+    it('ignores a programmatic submit while passwords do not match', async () => {
+      render(<SetupPassword />);
+
+      await act(async () => {
+        fillField('Enter password', 'validpass123!');
+        fillField('Confirm password', 'differentpass');
+      });
+
+      await act(async () => {
+        fireEvent.submit(
+          screen.getByLabelText('Enter password').closest('form')!,
+        );
+      });
+
+      expect(AccountService.createAccount).not.toHaveBeenCalled();
+      expect(mockGoto).not.toHaveBeenCalled();
     });
 
     it('shows error toast on failure', async () => {

@@ -1,9 +1,10 @@
-import { Button, Flex, Form, Typography } from 'antd';
+import { Button, Flex, Form } from 'antd';
 import React, { useState } from 'react';
 
 import { BackButton, CardFlex } from '@/components/ui';
 import {
   PasswordSetupFields,
+  SetupPasswordTitle,
   usePasswordSetupValidity,
 } from '@/components/ui/forms';
 import { SETUP_SCREEN } from '@/constants';
@@ -12,8 +13,6 @@ import { useMnemonicExists, usePageState, useSetup } from '@/hooks';
 import { AccountService } from '@/service/Account';
 import { WalletService } from '@/service/Wallet';
 import { getErrorMessage } from '@/utils';
-
-const { Title, Text } = Typography;
 
 export const SetupPassword = () => {
   const { goto, setPassword } = useSetup();
@@ -59,16 +58,7 @@ export const SetupPassword = () => {
     <CardFlex $gap={16} $padding="24px 32px" $noBorder>
       <BackButton onPrev={() => goto(SETUP_SCREEN.Welcome)} />
 
-      <Flex vertical gap={12}>
-        <Title level={3} className="m-0">
-          Set Password
-        </Title>
-        <Text className="text-neutral-secondary">
-          Your password must be at least 8 characters long.
-          <br />
-          Use a mix of letters, numbers, and symbols.
-        </Text>
-      </Flex>
+      <SetupPasswordTitle title="Set Password" />
 
       <Form
         name="createPassword"
@@ -82,14 +72,14 @@ export const SetupPassword = () => {
             secondFieldLabel="Confirm password"
           />
 
-          <Form.Item style={{ marginBottom: 0 }}>
+          <Form.Item className="mb-0">
             <Button
               size="large"
               type="primary"
               htmlType="submit"
               disabled={!isValid}
               loading={isLoading}
-              style={{ width: '100%' }}
+              className="w-full"
             >
               Continue
             </Button>

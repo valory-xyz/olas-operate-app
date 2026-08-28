@@ -182,6 +182,30 @@ describe('SetNewPasswordViaSRP', () => {
     expect(mockOnPrev).toHaveBeenCalled();
   });
 
+  it('ignores a programmatic submit while passwords do not match', async () => {
+    renderComponent();
+
+    fireEvent.change(screen.getByLabelText('New password'), {
+      target: { value: 'ValidPass1!' },
+    });
+    fireEvent.change(screen.getByLabelText('Confirm new password'), {
+      target: { value: 'differentpass' },
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText("Passwords don't match")).toBeInTheDocument();
+    });
+
+    fireEvent.submit(screen.getByLabelText('New password').closest('form')!);
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole('button', { name: 'Confirm Password' }),
+      ).toBeDisabled();
+    });
+    expect(mockResetAccountWithMnemonic).not.toHaveBeenCalled();
+  });
+
   it('shows success modal on resetAccountWithMnemonic success', async () => {
     mockIsUserLoggedIn = false;
     renderComponent();

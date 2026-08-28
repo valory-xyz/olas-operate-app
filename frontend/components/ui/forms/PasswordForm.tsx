@@ -25,7 +25,7 @@ const colors = [
   COLOR.PURPLE,
 ] as const;
 
-const SetupPasswordTitle = ({ title }: { title: string }) => (
+export const SetupPasswordTitle = ({ title }: { title: string }) => (
   <Flex vertical gap={12}>
     <Title level={3} className="m-0">
       {title}

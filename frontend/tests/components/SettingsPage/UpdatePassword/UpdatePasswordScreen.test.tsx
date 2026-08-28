@@ -185,6 +185,24 @@ describe('UpdatePasswordScreen', () => {
   });
 
   describe('form submission', () => {
+    it('ignores a programmatic submit while passwords do not match', async () => {
+      render(<UpdatePasswordScreen />);
+
+      await act(async () => {
+        fillField('Current password', 'oldpassword');
+        fillField('New password', 'newpassword123!');
+        fillField('Confirm new password', 'differentpass');
+      });
+
+      await act(async () => {
+        fireEvent.submit(
+          screen.getByLabelText('New password').closest('form')!,
+        );
+      });
+
+      expect(AccountService.updateAccount).not.toHaveBeenCalled();
+    });
+
     it('calls updateAccount and shows success toast on success', async () => {
       render(<UpdatePasswordScreen />);
 
