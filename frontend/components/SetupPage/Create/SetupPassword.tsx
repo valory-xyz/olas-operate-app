@@ -1,7 +1,11 @@
-import { Form } from 'antd';
-import React, { useEffect, useState } from 'react';
+import { Button, Flex, Form, Typography } from 'antd';
+import React, { useState } from 'react';
 
-import { PasswordForm } from '@/components/ui';
+import { BackButton, CardFlex } from '@/components/ui';
+import {
+  PasswordSetupFields,
+  usePasswordSetupValidity,
+} from '@/components/ui/forms';
 import { SETUP_SCREEN } from '@/constants';
 import { useMessageApi } from '@/context/MessageProvider';
 import { useMnemonicExists, usePageState, useSetup } from '@/hooks';
@@ -9,33 +13,31 @@ import { AccountService } from '@/service/Account';
 import { WalletService } from '@/service/Wallet';
 import { getErrorMessage } from '@/utils';
 
+const { Title, Text } = Typography;
+
 export const SetupPassword = () => {
   const { goto, setPassword } = useSetup();
   const { setUserLoggedIn } = usePageState();
   const { setMnemonicExists } = useMnemonicExists();
-  const [form] = Form.useForm<{ password: string; terms: boolean }>();
+  const [form] = Form.useForm<{
+    newPassword: string;
+    confirmNewPassword: string;
+  }>();
   const message = useMessageApi();
   const [isLoading, setIsLoading] = useState(false);
-  const password = Form.useWatch('password', form);
-  const [isPasswordValid, setIsPasswordValid] = useState(false);
+  const { isValid } = usePasswordSetupValidity(form);
 
-  useEffect(() => {
-    if (password !== undefined) {
-      form
-        .validateFields(['password'])
-        .then(() => setIsPasswordValid(true))
-        .catch(() => setIsPasswordValid(false));
-    } else {
-      setIsPasswordValid(false);
-    }
-  }, [password, form]);
-
-  const handleCreateEoa = async ({ password }: { password: string }) => {
-    if (!isPasswordValid || password.length < 8) return;
+  const handleCreateEoa = async ({
+    newPassword,
+  }: {
+    newPassword: string;
+    confirmNewPassword: string;
+  }) => {
+    if (!isValid) return;
 
     setIsLoading(true);
-    AccountService.createAccount(password)
-      .then(() => AccountService.loginAccount(password))
+    AccountService.createAccount(newPassword)
+      .then(() => AccountService.loginAccount(newPassword))
       .then(() => WalletService.createEoa())
       .then(() => {
         // Mnemonic is always created for new accounts
@@ -44,7 +46,7 @@ export const SetupPassword = () => {
         // Hold the password in setup context so the backup-wallet step can
         // eager-write canonical_backup_owner right after the user picks an
         // address. Cleared by useApplyBackupDuringSetup once applied.
-        setPassword(password);
+        setPassword(newPassword);
         goto(SETUP_SCREEN.SetupBackupSigner);
       })
       .catch((e: unknown) => {
@@ -54,12 +56,46 @@ export const SetupPassword = () => {
   };
 
   return (
-    <PasswordForm
-      form={form}
-      onFinish={handleCreateEoa}
-      isSubmitting={isLoading}
-      onBack={() => goto(SETUP_SCREEN.Welcome)}
-      isPasswordValid={isPasswordValid}
-    />
+    <CardFlex $gap={16} $padding="24px 32px" $noBorder>
+      <BackButton onPrev={() => goto(SETUP_SCREEN.Welcome)} />
+
+      <Flex vertical gap={12}>
+        <Title level={3} className="m-0">
+          Set Password
+        </Title>
+        <Text className="text-neutral-secondary">
+          Your password must be at least 8 characters long.
+          <br />
+          Use a mix of letters, numbers, and symbols.
+        </Text>
+      </Flex>
+
+      <Form
+        name="createPassword"
+        form={form}
+        onFinish={handleCreateEoa}
+        layout="vertical"
+      >
+        <Flex vertical gap={24}>
+          <PasswordSetupFields
+            firstFieldLabel="Enter password"
+            secondFieldLabel="Confirm password"
+          />
+
+          <Form.Item style={{ marginBottom: 0 }}>
+            <Button
+              size="large"
+              type="primary"
+              htmlType="submit"
+              disabled={!isValid}
+              loading={isLoading}
+              style={{ width: '100%' }}
+            >
+              Continue
+            </Button>
+          </Form.Item>
+        </Flex>
+      </Form>
+    </CardFlex>
   );
 };
