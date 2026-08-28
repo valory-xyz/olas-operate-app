@@ -93,6 +93,16 @@ export const updateServiceIfNeeded = async (
       ) {
         envVariablesToUpdate[key] = templateVariable;
       }
+
+      // If the variable switched from fixed to computed, resend it to the
+      // middleware so they update the value
+      if (
+        serviceEnvVariable &&
+        serviceEnvVariable.provision_type === EnvProvisionMap.FIXED &&
+        templateVariable.provision_type === EnvProvisionMap.COMPUTED
+      ) {
+        envVariablesToUpdate[key] = templateVariable;
+      }
     },
   );
 
