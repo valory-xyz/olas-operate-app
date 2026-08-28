@@ -378,8 +378,8 @@ export const OPTIMUS_SERVICE_TEMPLATE: ServiceTemplate = {
       name: 'Use offchain mech dispatch',
       description:
         'Route mech requests via the offchain HTTP path instead of the on-chain marketplace tx. Requires the priority mech to have an offchain endpoint registered.',
-      value: 'true',
-      provision_type: EnvProvisionType.FIXED,
+      value: '',
+      provision_type: EnvProvisionType.COMPUTED,
     },
     OFFCHAIN_DEPOSIT_TARGET_CALLS: {
       name: 'Offchain deposit target calls',
@@ -538,8 +538,8 @@ export const BASIUS_SERVICE_TEMPLATE: ServiceTemplate = {
       name: 'Use offchain mech dispatch',
       description:
         'Route mech requests via the offchain HTTP path instead of the on-chain marketplace tx. Requires the priority mech to have an offchain endpoint registered.',
-      value: 'true',
-      provision_type: EnvProvisionType.FIXED,
+      value: '',
+      provision_type: EnvProvisionType.COMPUTED,
     },
     OFFCHAIN_DEPOSIT_TARGET_CALLS: {
       name: 'Offchain deposit target calls',
