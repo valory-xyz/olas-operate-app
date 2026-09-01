@@ -141,6 +141,32 @@ describe('SetupPassword', () => {
       expect(getSubmitButton()).toBeDisabled();
     });
 
+    it('disables Continue when passwords match but are too short', async () => {
+      render(<SetupPassword />);
+      await act(async () => {
+        fillField('Enter password', 'short');
+        fillField('Confirm password', 'short');
+      });
+      expect(screen.getByText('Passwords match')).toBeInTheDocument();
+      expect(
+        screen.getByText('Password must be at least 8 characters.'),
+      ).toBeInTheDocument();
+      expect(getSubmitButton()).toBeDisabled();
+    });
+
+    it('disables Continue when passwords match but contain non-ASCII characters', async () => {
+      render(<SetupPassword />);
+      await act(async () => {
+        fillField('Enter password', 'pässword123');
+        fillField('Confirm password', 'pässword123');
+      });
+      expect(screen.getByText('Passwords match')).toBeInTheDocument();
+      expect(
+        screen.getByText('Password must only contain ASCII characters.'),
+      ).toBeInTheDocument();
+      expect(getSubmitButton()).toBeDisabled();
+    });
+
     it('enables Continue when passwords match and are >= 8 chars', async () => {
       render(<SetupPassword />);
       await act(async () => {
@@ -276,6 +302,24 @@ describe('SetupPassword', () => {
       await act(async () => {
         fillField('Enter password', 'validpass123!');
         fillField('Confirm password', 'differentpass');
+      });
+
+      await act(async () => {
+        fireEvent.submit(
+          screen.getByLabelText('Enter password').closest('form')!,
+        );
+      });
+
+      expect(AccountService.createAccount).not.toHaveBeenCalled();
+      expect(mockGoto).not.toHaveBeenCalled();
+    });
+
+    it('ignores a programmatic submit while passwords match but are too short', async () => {
+      render(<SetupPassword />);
+
+      await act(async () => {
+        fillField('Enter password', 'short');
+        fillField('Confirm password', 'short');
       });
 
       await act(async () => {

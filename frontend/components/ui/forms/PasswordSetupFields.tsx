@@ -14,6 +14,12 @@ const NEW_PASSWORD_FIELD = 'newPassword';
 const CONFIRM_PASSWORD_FIELD = 'confirmNewPassword';
 const MIN_PASSWORD_LENGTH = 8;
 
+/** Form values contributed by <PasswordSetupFields />. */
+export type PasswordSetupFieldsValues = {
+  newPassword: string;
+  confirmNewPassword: string;
+};
+
 export const PASSWORD_REQUIREMENTS_MESSAGE =
   'Your password must be at least 8 characters long. Use a mix of letters, numbers, and symbols.';
 
@@ -141,11 +147,9 @@ type PasswordSetupFieldsProps = {
  * (required / length / ASCII / strength / match / mismatch).
  *
  * No antd validation rules are attached on purpose: every state is drawn
- * through `help` with the same `FieldCaption` shape. Rule errors would (a)
- * cross-fade with `help` in antd's ErrorList and flicker on each keystroke,
- * and (b) restyle the row via `.ant-form-item-explain-error` (different
- * color, font-size and margins), shifting layout. Parents must therefore
- * gate submit on `usePasswordSetupValidity().isValid`.
+ * through `help` with the same `FieldCaption` shape (`required` below only
+ * marks the labels with the asterisk). Parents must therefore gate submit
+ * on `usePasswordSetupValidity().isValid`.
  */
 export const PasswordSetupFields = ({
   firstFieldLabel = 'New password',
@@ -172,6 +176,7 @@ export const PasswordSetupFields = ({
     <>
       <Form.Item
         name={NEW_PASSWORD_FIELD}
+        required
         label={<FormLabel>{firstFieldLabel}</FormLabel>}
         help={getNewPasswordCaption(newPassword, isNewPasswordTouched)}
         labelCol={{ style: { paddingBottom: 4 } }}
@@ -186,6 +191,7 @@ export const PasswordSetupFields = ({
 
       <Form.Item
         name={CONFIRM_PASSWORD_FIELD}
+        required
         label={<FormLabel>{secondFieldLabel}</FormLabel>}
         help={getConfirmPasswordCaption(
           passwordsState,

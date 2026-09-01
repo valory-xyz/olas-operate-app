@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { BackButton, CardFlex } from '@/components/ui';
 import {
   PasswordSetupFields,
+  PasswordSetupFieldsValues,
   SetupPasswordTitle,
   usePasswordSetupValidity,
 } from '@/components/ui/forms';
@@ -18,20 +19,14 @@ export const SetupPassword = () => {
   const { goto, setPassword } = useSetup();
   const { setUserLoggedIn } = usePageState();
   const { setMnemonicExists } = useMnemonicExists();
-  const [form] = Form.useForm<{
-    newPassword: string;
-    confirmNewPassword: string;
-  }>();
+  const [form] = Form.useForm<PasswordSetupFieldsValues>();
   const message = useMessageApi();
   const [isLoading, setIsLoading] = useState(false);
   const { isValid } = usePasswordSetupValidity(form);
 
   const handleCreateEoa = async ({
     newPassword,
-  }: {
-    newPassword: string;
-    confirmNewPassword: string;
-  }) => {
+  }: PasswordSetupFieldsValues) => {
     if (!isValid) return;
 
     setIsLoading(true);

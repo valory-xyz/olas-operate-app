@@ -145,6 +145,23 @@ describe('SetNewPasswordViaSRP', () => {
     });
   });
 
+  it('disables submit button when passwords match but are too short', async () => {
+    renderComponent();
+
+    fireEvent.change(screen.getByLabelText('New password'), {
+      target: { value: 'short' },
+    });
+    fireEvent.change(screen.getByLabelText('Confirm new password'), {
+      target: { value: 'short' },
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Passwords match')).toBeInTheDocument();
+    });
+    const button = screen.getByRole('button', { name: 'Confirm Password' });
+    expect(button).toBeDisabled();
+  });
+
   it('shows "Passwords match" when both fields match', async () => {
     renderComponent();
 

@@ -143,6 +143,17 @@ describe('UpdatePasswordScreen', () => {
       expect(getSubmitButton()).toBeDisabled();
     });
 
+    it('disables CTA when passwords match but are too short', async () => {
+      render(<UpdatePasswordScreen />);
+      await act(async () => {
+        fillField('Current password', 'oldpassword');
+        fillField('New password', 'short');
+        fillField('Confirm new password', 'short');
+      });
+      expect(screen.getByText('Passwords match')).toBeInTheDocument();
+      expect(getSubmitButton()).toBeDisabled();
+    });
+
     it('enables CTA when all fields are filled and passwords match', async () => {
       render(<UpdatePasswordScreen />);
       await act(async () => {
