@@ -12,13 +12,13 @@ import { KPI_DESC_PREFIX } from '../constants';
 
 export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
   hash: 'bafybeigjabw4zzblwcszqz4rsnff6gptfekp63xqqzluavizrffk4yhohm',
-  service_version: 'v0.40.10-rc2',
+  service_version: 'v0.40.10',
   agent_release: {
     is_aea: true,
     repository: {
       owner: 'valory-xyz',
       name: 'trader',
-      version: 'v0.40.10-rc2',
+      version: 'v0.40.10',
     },
   },
   agentType: AgentMap.PredictTrader,
@@ -174,13 +174,13 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
 
 export const PREDICT_POLYMARKET_SERVICE_TEMPLATE: ServiceTemplate = {
   hash: 'bafybeiemehficsphbgbyjxh7ahtg4nditzzz37uvlfdtbuozivhpluhw5y',
-  service_version: 'v0.40.10-rc2',
+  service_version: 'v0.40.10',
   agent_release: {
     is_aea: true,
     repository: {
       owner: 'valory-xyz',
       name: 'trader',
-      version: 'v0.40.10-rc2',
+      version: 'v0.40.10',
     },
   },
   agentType: AgentMap.Polystrat,
