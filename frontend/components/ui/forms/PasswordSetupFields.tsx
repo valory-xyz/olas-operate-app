@@ -1,5 +1,5 @@
 import { Flex, Form, FormInstance, Input, Typography } from 'antd';
-import { Rule } from 'antd/es/form';
+import { ReactNode } from 'react';
 import { LuCircleCheck, LuTriangleAlert } from 'react-icons/lu';
 import zxcvbn from 'zxcvbn';
 
@@ -14,34 +14,16 @@ const NEW_PASSWORD_FIELD = 'newPassword';
 const CONFIRM_PASSWORD_FIELD = 'confirmNewPassword';
 const MIN_PASSWORD_LENGTH = 8;
 
+/** Form values contributed by <PasswordSetupFields />. */
+export type PasswordSetupFieldsValues = {
+  newPassword: string;
+  confirmNewPassword: string;
+};
+
 export const PASSWORD_REQUIREMENTS_MESSAGE =
   'Your password must be at least 8 characters long. Use a mix of letters, numbers, and symbols.';
 
-export const passwordAsciiRule: Rule = {
-  validator: (_rule, value) => {
-    if (!value) return Promise.resolve();
-    if (!/^[\x20-\x7E]*$/.test(value)) {
-      return Promise.reject(
-        new Error('Password must only contain ASCII characters.'),
-      );
-    }
-    return Promise.resolve();
-  },
-};
-
-const newPasswordMinLengthRule: Rule = {
-  min: MIN_PASSWORD_LENGTH,
-  message: `Password must be at least ${MIN_PASSWORD_LENGTH} characters.`,
-};
-
-const confirmPasswordMatchRule: Rule = ({ getFieldValue }) => ({
-  validator: (_rule, value) => {
-    if (!value || value === getFieldValue(NEW_PASSWORD_FIELD)) {
-      return Promise.resolve();
-    }
-    return Promise.reject(new Error("Passwords don't match."));
-  },
-});
+const isAscii = (value: string) => /^[\x20-\x7E]*$/.test(value);
 
 type PasswordsState = 'match' | 'mismatch' | null;
 
@@ -52,9 +34,7 @@ type PasswordValidity = {
 };
 
 const isAsciiAndLongEnough = (value: string | undefined) =>
-  !!value &&
-  value.length >= MIN_PASSWORD_LENGTH &&
-  /^[\x20-\x7E]*$/.test(value);
+  !!value && value.length >= MIN_PASSWORD_LENGTH && isAscii(value);
 
 const derivePasswordsState = (
   newPassword: string | undefined,
@@ -82,86 +62,148 @@ export const usePasswordSetupValidity = (
   return { isValid, passwordsState, newPassword };
 };
 
+type FieldCaptionProps = {
+  text: ReactNode;
+  color?: string;
+  icon?: ReactNode;
+};
+
+/**
+ * Single caption shape for every field state so toggling between states
+ * never changes the row's height.
+ */
+const FieldCaption = ({ text, color, icon }: FieldCaptionProps) => (
+  // `color` on the Flex tints the icon via currentColor; antd Typography sets
+  // its own color, so the Text needs it explicitly as well.
+  <Flex align="center" gap={6} className="mt-6" style={{ color }}>
+    {icon}
+    <Text style={{ color }} className="text-sm">
+      {text}
+    </Text>
+  </Flex>
+);
+
+const ErrorCaption = ({ text }: { text: string }) => (
+  <FieldCaption
+    icon={<LuTriangleAlert />}
+    color={COLOR.TEXT_COLOR.ERROR.DEFAULT}
+    text={text}
+  />
+);
+
+const getNewPasswordCaption = (
+  value: string | undefined,
+  isTouched: boolean,
+): ReactNode => {
+  if (!value) {
+    return isTouched ? <ErrorCaption text="Please input a password." /> : null;
+  }
+  if (!isAscii(value)) {
+    return <ErrorCaption text="Password must only contain ASCII characters." />;
+  }
+  if (value.length < MIN_PASSWORD_LENGTH) {
+    return (
+      <ErrorCaption
+        text={`Password must be at least ${MIN_PASSWORD_LENGTH} characters.`}
+      />
+    );
+  }
+  return (
+    <FieldCaption text={<PasswordStrength score={zxcvbn(value).score} />} />
+  );
+};
+
+const getConfirmPasswordCaption = (
+  passwordsState: PasswordsState,
+  isEmptyAfterTouch: boolean,
+): ReactNode => {
+  if (passwordsState === 'match') {
+    return (
+      <FieldCaption
+        icon={<LuCircleCheck />}
+        color={COLOR.TEXT_COLOR.SUCCESS.DEFAULT}
+        text="Passwords match"
+      />
+    );
+  }
+  if (passwordsState === 'mismatch') {
+    return <ErrorCaption text="Passwords don't match" />;
+  }
+  if (isEmptyAfterTouch) {
+    return <ErrorCaption text="Please confirm your password." />;
+  }
+  return null;
+};
+
+type PasswordSetupFieldsProps = {
+  firstFieldLabel?: string;
+  secondFieldLabel?: string;
+};
+
 /**
  * Shared "New password + Confirm new password" fields used by Settings'
- * UpdatePasswordScreen and the SRP-recovery SetNewPasswordViaSRP. Renders
- * the inputs, strength indicator, match/mismatch caption, and error-border
- * on mismatch. Validation rules are enforced both via the CTA disabled
- * state and via antd Form rules so programmatic submits can't bypass them.
+ * UpdatePasswordScreen, the SRP-recovery SetNewPasswordViaSRP and the
+ * signup SetupPassword. Renders the inputs plus a caption row per field
+ * (required / length / ASCII / strength / match / mismatch).
+ *
+ * No antd validation rules are attached on purpose: every state is drawn
+ * through `help` with the same `FieldCaption` shape (`required` below only
+ * marks the labels with the asterisk). Parents must therefore gate submit
+ * on `usePasswordSetupValidity().isValid`.
  */
-export const PasswordSetupFields = () => {
-  const newPassword = Form.useWatch(NEW_PASSWORD_FIELD);
-  const confirmNewPassword = Form.useWatch(CONFIRM_PASSWORD_FIELD);
+export const PasswordSetupFields = ({
+  firstFieldLabel = 'New password',
+  secondFieldLabel = 'Confirm new password',
+}: PasswordSetupFieldsProps = {}) => {
+  const form = Form.useFormInstance();
+  const newPassword = Form.useWatch(NEW_PASSWORD_FIELD, form);
+  const confirmNewPassword = Form.useWatch(CONFIRM_PASSWORD_FIELD, form);
 
-  const isNewPasswordValid = isAsciiAndLongEnough(newPassword);
+  // `isFieldTouched` is not reactive by itself; it is safe to read here only
+  // because the `useWatch` calls above re-render on every value change and a
+  // field becomes touched on its first change.
+  const isNewPasswordTouched = form.isFieldTouched(NEW_PASSWORD_FIELD);
+  const isNewPasswordInvalid =
+    isNewPasswordTouched && !isAsciiAndLongEnough(newPassword);
+
   const passwordsState = derivePasswordsState(newPassword, confirmNewPassword);
+  const isConfirmEmptyAfterTouch =
+    !confirmNewPassword && form.isFieldTouched(CONFIRM_PASSWORD_FIELD);
+  const isConfirmInvalid =
+    passwordsState === 'mismatch' || isConfirmEmptyAfterTouch;
 
   return (
     <>
       <Form.Item
         name={NEW_PASSWORD_FIELD}
-        label={<FormLabel>New password</FormLabel>}
-        rules={[
-          { required: true, message: 'Please input a password.' },
-          newPasswordMinLengthRule,
-          passwordAsciiRule,
-        ]}
-        help={
-          isNewPasswordValid ? (
-            <div className="mt-6">
-              <PasswordStrength score={zxcvbn(newPassword).score} />
-            </div>
-          ) : null
-        }
-        labelCol={{ style: { paddingBottom: 4 } }}
-        style={{ marginBottom: 0 }}
-      >
-        <Input.Password size="large" maxLength={64} />
-      </Form.Item>
-
-      <Form.Item
-        name={CONFIRM_PASSWORD_FIELD}
-        label={<FormLabel>Confirm new password</FormLabel>}
-        dependencies={[NEW_PASSWORD_FIELD]}
-        rules={[
-          { required: true, message: 'Please confirm your password.' },
-          passwordAsciiRule,
-          confirmPasswordMatchRule,
-        ]}
-        help={
-          passwordsState === 'match' ? (
-            <Flex align="center" gap={6} className="mt-6">
-              <LuCircleCheck
-                style={{ color: COLOR.TEXT_COLOR.SUCCESS.DEFAULT }}
-              />
-              <Text
-                style={{ color: COLOR.TEXT_COLOR.SUCCESS.DEFAULT }}
-                className="text-sm"
-              >
-                Passwords match
-              </Text>
-            </Flex>
-          ) : passwordsState === 'mismatch' ? (
-            <Flex align="center" gap={6} className="mt-6">
-              <LuTriangleAlert
-                style={{ color: COLOR.TEXT_COLOR.ERROR.DEFAULT }}
-              />
-              <Text
-                style={{ color: COLOR.TEXT_COLOR.ERROR.DEFAULT }}
-                className="text-sm"
-              >
-                Passwords don&apos;t match
-              </Text>
-            </Flex>
-          ) : null
-        }
+        required
+        label={<FormLabel>{firstFieldLabel}</FormLabel>}
+        help={getNewPasswordCaption(newPassword, isNewPasswordTouched)}
         labelCol={{ style: { paddingBottom: 4 } }}
         style={{ marginBottom: 0 }}
       >
         <Input.Password
           size="large"
           maxLength={64}
-          status={passwordsState === 'mismatch' ? 'error' : undefined}
+          status={isNewPasswordInvalid ? 'error' : undefined}
+        />
+      </Form.Item>
+
+      <Form.Item
+        name={CONFIRM_PASSWORD_FIELD}
+        required
+        label={<FormLabel>{secondFieldLabel}</FormLabel>}
+        help={getConfirmPasswordCaption(
+          passwordsState,
+          isConfirmEmptyAfterTouch,
+        )}
+        labelCol={{ style: { paddingBottom: 4 } }}
+        style={{ marginBottom: 0 }}
+      >
+        <Input.Password
+          size="large"
+          maxLength={64}
+          status={isConfirmInvalid ? 'error' : undefined}
         />
       </Form.Item>
     </>

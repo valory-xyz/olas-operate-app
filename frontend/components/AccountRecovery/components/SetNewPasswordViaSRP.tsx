@@ -13,6 +13,7 @@ import {
 import {
   PASSWORD_REQUIREMENTS_MESSAGE,
   PasswordSetupFields,
+  PasswordSetupFieldsValues,
   usePasswordSetupValidity,
 } from '@/components/ui/forms';
 import { PAGES, SETUP_SCREEN } from '@/constants';
@@ -73,13 +74,8 @@ const PasswordResetFailedModal = ({
   />
 );
 
-type SetNewPasswordFormValues = {
-  newPassword: string;
-  confirmNewPassword: string;
-};
-
 export const SetNewPasswordViaSRP = () => {
-  const [form] = Form.useForm<SetNewPasswordFormValues>();
+  const [form] = Form.useForm<PasswordSetupFieldsValues>();
   const { isUserLoggedIn, goto: gotoPage } = usePageState();
   const { goto: gotoSetup } = useSetup();
   const { toggleSupportModal } = useSupportModal();
@@ -112,8 +108,8 @@ export const SetNewPasswordViaSRP = () => {
   const { isValid: isFormValid } = usePasswordSetupValidity(form);
 
   const handleSubmit = useCallback(
-    async (values: SetNewPasswordFormValues) => {
-      if (!srpMnemonic) return;
+    async (values: PasswordSetupFieldsValues) => {
+      if (!srpMnemonic || !isFormValid) return;
       setIsSubmitting(true);
       try {
         await AccountService.resetAccountWithMnemonic(
@@ -138,7 +134,7 @@ export const SetNewPasswordViaSRP = () => {
         setIsSubmitting(false);
       }
     },
-    [srpMnemonic, goBack, setSrpError],
+    [srpMnemonic, isFormValid, goBack, setSrpError],
   );
 
   return (
