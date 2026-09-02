@@ -1,7 +1,11 @@
-export { PasswordForm, PasswordStrength } from './PasswordForm';
+export {
+  PasswordForm,
+  PasswordStrength,
+  SetupPasswordTitle,
+} from './PasswordForm';
 export {
   PASSWORD_REQUIREMENTS_MESSAGE,
-  passwordAsciiRule,
   PasswordSetupFields,
+  type PasswordSetupFieldsValues,
   usePasswordSetupValidity,
 } from './PasswordSetupFields';

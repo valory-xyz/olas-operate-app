@@ -143,6 +143,17 @@ describe('UpdatePasswordScreen', () => {
       expect(getSubmitButton()).toBeDisabled();
     });
 
+    it('disables CTA when passwords match but are too short', async () => {
+      render(<UpdatePasswordScreen />);
+      await act(async () => {
+        fillField('Current password', 'oldpassword');
+        fillField('New password', 'short');
+        fillField('Confirm new password', 'short');
+      });
+      expect(screen.getByText('Passwords match')).toBeInTheDocument();
+      expect(getSubmitButton()).toBeDisabled();
+    });
+
     it('enables CTA when all fields are filled and passwords match', async () => {
       render(<UpdatePasswordScreen />);
       await act(async () => {
@@ -185,6 +196,24 @@ describe('UpdatePasswordScreen', () => {
   });
 
   describe('form submission', () => {
+    it('ignores a programmatic submit while passwords do not match', async () => {
+      render(<UpdatePasswordScreen />);
+
+      await act(async () => {
+        fillField('Current password', 'oldpassword');
+        fillField('New password', 'newpassword123!');
+        fillField('Confirm new password', 'differentpass');
+      });
+
+      await act(async () => {
+        fireEvent.submit(
+          screen.getByLabelText('New password').closest('form')!,
+        );
+      });
+
+      expect(AccountService.updateAccount).not.toHaveBeenCalled();
+    });
+
     it('calls updateAccount and shows success toast on success', async () => {
       render(<UpdatePasswordScreen />);
 

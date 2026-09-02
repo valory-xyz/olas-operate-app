@@ -12,6 +12,7 @@ import {
 import {
   PASSWORD_REQUIREMENTS_MESSAGE,
   PasswordSetupFields,
+  PasswordSetupFieldsValues,
   usePasswordSetupValidity,
 } from '@/components/ui/forms';
 import { PAGES, SETUP_SCREEN } from '@/constants';
@@ -23,10 +24,8 @@ import { AccountService } from '@/service/Account';
 
 const { Title, Text } = Typography;
 
-type UpdatePasswordFormValues = {
+type UpdatePasswordFormValues = PasswordSetupFieldsValues & {
   currentPassword: string;
-  newPassword: string;
-  confirmNewPassword: string;
 };
 
 export const UpdatePasswordScreen = () => {
@@ -42,6 +41,7 @@ export const UpdatePasswordScreen = () => {
   const isFormValid = !!currentPassword && passwordsValid;
 
   const handleSubmit = async (values: UpdatePasswordFormValues) => {
+    if (!isFormValid) return;
     setIsSubmitting(true);
     try {
       await AccountService.updateAccount(
