@@ -5,7 +5,7 @@ import styled from 'styled-components';
 
 import { NoStakingRewardsAlert } from '@/components/NoStakingRewardsAlert';
 import { StakingContractCard } from '@/components/StakingContractCard';
-import { MainContentContainer } from '@/components/ui';
+import { Alert, MainContentContainer } from '@/components/ui';
 import { PAGES, StakingProgramId } from '@/constants';
 import {
   usePageState,
@@ -129,8 +129,14 @@ export const SelectActivityRewardsConfiguration = ({
   onSelectStart,
   onSelectEnd,
 }: SelectActivityRewardsConfigurationProps) => {
-  const { orderedStakingProgramIds } = useStakingContracts();
+  const { orderedStakingProgramIds, isStakingContractsLoaded } =
+    useStakingContracts();
   const [stableOrder, setStableOrder] = useState<StakingProgramId[]>([]);
+
+  // Loaded but nothing compatible with the service's multisig (e.g. a
+  // standard-Safe Polystrat service before the new Polygon contracts ship).
+  const hasNoCompatibleContracts =
+    isStakingContractsLoaded && orderedStakingProgramIds.length === 0;
 
   // Keep render order stable across renders. Reset only when the SET of IDs
   // changes (agent switch / strict subset / superset). Initial population is
@@ -164,6 +170,16 @@ export const SelectActivityRewardsConfiguration = ({
           your agent.
         </Text>
       </MainContentContainer>
+
+      {hasNoCompatibleContracts && (
+        <MainContentContainer vertical className="mt-32">
+          <Alert
+            type="info"
+            showIcon
+            message="No compatible staking contracts are available for this agent yet."
+          />
+        </MainContentContainer>
+      )}
 
       <StakingContractsWrapper>
         {stableOrder.map((stakingProgramId) => {

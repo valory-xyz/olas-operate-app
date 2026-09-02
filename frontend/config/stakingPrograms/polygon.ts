@@ -30,6 +30,7 @@ export const POLYGON_STAKING_PROGRAMS_CONTRACT_ADDRESSES: Record<
 export const POLYGON_STAKING_PROGRAMS: StakingProgramMap = {
   [STAKING_PROGRAM_IDS.PolygonBeta1]: {
     chainId: EvmChainIdMap.Polygon,
+    requiresPolySafe: true,
     name: 'Polygon Beta I',
     agentsSupported: [AgentMap.Polystrat],
     stakingRequirements: {
@@ -59,6 +60,7 @@ export const POLYGON_STAKING_PROGRAMS: StakingProgramMap = {
   },
   [STAKING_PROGRAM_IDS.PolygonBeta2]: {
     chainId: EvmChainIdMap.Polygon,
+    requiresPolySafe: true,
     name: 'Polygon Beta II',
     agentsSupported: [AgentMap.Polystrat],
     stakingRequirements: {
@@ -88,6 +90,7 @@ export const POLYGON_STAKING_PROGRAMS: StakingProgramMap = {
   },
   [STAKING_PROGRAM_IDS.PolygonBeta3]: {
     chainId: EvmChainIdMap.Polygon,
+    requiresPolySafe: true,
     name: 'Polygon Alpha III',
     agentsSupported: [AgentMap.Polystrat],
     stakingRequirements: {
@@ -117,6 +120,7 @@ export const POLYGON_STAKING_PROGRAMS: StakingProgramMap = {
   },
   [STAKING_PROGRAM_IDS.PolystratI]: {
     chainId: EvmChainIdMap.Polygon,
+    requiresPolySafe: true,
     name: 'Polystrat I',
     activityTarget: 8,
     agentsSupported: [AgentMap.Polystrat],
@@ -147,6 +151,7 @@ export const POLYGON_STAKING_PROGRAMS: StakingProgramMap = {
   },
   [STAKING_PROGRAM_IDS.PolystratII]: {
     chainId: EvmChainIdMap.Polygon,
+    requiresPolySafe: true,
     name: 'Polystrat II',
     activityTarget: 8,
     agentsSupported: [AgentMap.Polystrat],
@@ -177,6 +182,7 @@ export const POLYGON_STAKING_PROGRAMS: StakingProgramMap = {
   },
   [STAKING_PROGRAM_IDS.PolystratIII]: {
     chainId: EvmChainIdMap.Polygon,
+    requiresPolySafe: true,
     name: 'Polystrat III',
     activityTarget: 8,
     agentsSupported: [AgentMap.Polystrat],

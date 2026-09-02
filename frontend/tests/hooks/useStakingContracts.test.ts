@@ -11,6 +11,7 @@ import {
   STAKING_PROGRAM_IDS,
   StakingProgramId,
 } from '../../constants/stakingProgram';
+import { useIsPolySafeService } from '../../hooks/useIsPolySafeService';
 import { useServices } from '../../hooks/useServices';
 import { useStakingContracts } from '../../hooks/useStakingContracts';
 import { useStakingProgram } from '../../hooks/useStakingProgram';
@@ -37,6 +38,10 @@ jest.mock('../../hooks/useStakingProgram', () => ({
   useStakingProgram: jest.fn(),
 }));
 
+jest.mock('../../hooks/useIsPolySafeService', () => ({
+  useIsPolySafeService: jest.fn(),
+}));
+
 /**
  * Mock STAKING_PROGRAMS with four programs to test all filtering branches:
  * - PearlBetaMechMarketplace3: active, supports PredictTrader
@@ -48,6 +53,9 @@ const MARKETPLACE_3 = STAKING_PROGRAM_IDS.PearlBetaMechMarketplace3;
 const DEPRECATED_BETA_5 = STAKING_PROGRAM_IDS.PearlBeta5;
 const MARKETPLACE_4 = STAKING_PROGRAM_IDS.PearlBetaMechMarketplace4;
 const MODIUS_ALPHA = STAKING_PROGRAM_IDS.ModiusAlpha;
+// Polygon: one contract pinned to the PolySafe proxy, one accepting a standard Safe.
+const POLY_SAFE_PROGRAM = STAKING_PROGRAM_IDS.PolystratI;
+const STANDARD_SAFE_PROGRAM = 'polystrat_standard_safe' as StakingProgramId;
 
 const MOCK_STAKING_PROGRAMS: Record<
   EvmChainId,
@@ -75,7 +83,19 @@ const MOCK_STAKING_PROGRAMS: Record<
   [EvmChainIdMap.Base]: {},
   [EvmChainIdMap.Mode]: {},
   [EvmChainIdMap.Optimism]: {},
-  [EvmChainIdMap.Polygon]: {},
+  [EvmChainIdMap.Polygon]: {
+    [POLY_SAFE_PROGRAM]: makeStakingProgramConfig({
+      chainId: EvmChainIdMap.Polygon,
+      name: 'Polystrat I',
+      agentsSupported: [AgentMap.Polystrat],
+      requiresPolySafe: true,
+    }),
+    [STANDARD_SAFE_PROGRAM]: makeStakingProgramConfig({
+      chainId: EvmChainIdMap.Polygon,
+      name: 'Polystrat Standard Safe',
+      agentsSupported: [AgentMap.Polystrat],
+    }),
+  },
 };
 
 jest.mock('../../config/stakingPrograms', () => ({
@@ -86,6 +106,7 @@ jest.mock('../../config/stakingPrograms', () => ({
 
 const mockUseServices = useServices as jest.Mock;
 const mockUseStakingProgram = useStakingProgram as jest.Mock;
+const mockUseIsPolySafeService = useIsPolySafeService as jest.Mock;
 
 const setupMocks = ({
   isActiveStakingProgramLoaded = true,
@@ -93,13 +114,21 @@ const setupMocks = ({
   serviceStakingProgramId = null as StakingProgramId | null,
   evmHomeChainId = EvmChainIdMap.Gnosis as EvmChainId,
   selectedAgentType = AgentMap.PredictTrader as AgentType,
+  isPolySafeService = false,
+  isMultisigTypeLoaded = true,
 }: {
   isActiveStakingProgramLoaded?: boolean;
   activeStakingProgramId?: StakingProgramId | null;
   serviceStakingProgramId?: StakingProgramId | null;
   evmHomeChainId?: EvmChainId;
   selectedAgentType?: AgentType;
+  isPolySafeService?: boolean;
+  isMultisigTypeLoaded?: boolean;
 } = {}) => {
+  mockUseIsPolySafeService.mockReturnValue({
+    isPolySafeService,
+    isMultisigTypeLoaded,
+  });
   mockUseServices.mockReturnValue({
     selectedAgentConfig: { evmHomeChainId },
     selectedAgentType,
@@ -371,5 +400,82 @@ describe('useStakingContracts', () => {
       rerender();
       expect(result.current.orderedStakingProgramIds).toBe(firstRef);
     });
+  });
+});
+
+describe('useStakingContracts — multisig compatibility (OPE-1919)', () => {
+  const setupPolygon = (overrides: Parameters<typeof setupMocks>[0] = {}) =>
+    setupMocks({
+      evmHomeChainId: EvmChainIdMap.Polygon,
+      selectedAgentType: AgentMap.Polystrat,
+      activeStakingProgramId: null,
+      ...overrides,
+    });
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('shows only PolySafe contracts to a PolySafe-deployed service', () => {
+    setupPolygon({ isPolySafeService: true });
+
+    const { result } = renderHook(() => useStakingContracts());
+    expect(result.current.orderedStakingProgramIds).toEqual([
+      POLY_SAFE_PROGRAM,
+    ]);
+  });
+
+  it('shows only standard-Safe contracts to a standard-Safe service', () => {
+    setupPolygon({ isPolySafeService: false });
+
+    const { result } = renderHook(() => useStakingContracts());
+    expect(result.current.orderedStakingProgramIds).toEqual([
+      STANDARD_SAFE_PROGRAM,
+    ]);
+  });
+
+  it('keeps the current program first even when it is incompatible', () => {
+    setupPolygon({
+      isPolySafeService: false,
+      activeStakingProgramId: POLY_SAFE_PROGRAM,
+    });
+
+    const { result } = renderHook(() => useStakingContracts());
+    expect(result.current.orderedStakingProgramIds).toEqual([
+      POLY_SAFE_PROGRAM,
+      STANDARD_SAFE_PROGRAM,
+    ]);
+  });
+
+  it('returns an empty list and isStakingContractsLoaded=false until the multisig type is known', () => {
+    setupPolygon({ isMultisigTypeLoaded: false });
+
+    const { result } = renderHook(() => useStakingContracts());
+    expect(result.current.orderedStakingProgramIds).toEqual([]);
+    expect(result.current.isStakingContractsLoaded).toBe(false);
+  });
+
+  it('reports isStakingContractsLoaded=false while the active program is loading', () => {
+    setupPolygon({ isActiveStakingProgramLoaded: false });
+
+    const { result } = renderHook(() => useStakingContracts());
+    expect(result.current.isStakingContractsLoaded).toBe(false);
+  });
+
+  it('reports isStakingContractsLoaded=true once both sources are loaded', () => {
+    setupPolygon();
+
+    const { result } = renderHook(() => useStakingContracts());
+    expect(result.current.isStakingContractsLoaded).toBe(true);
+  });
+
+  it('is unaffected on chains without PolySafe contracts', () => {
+    setupMocks({ activeStakingProgramId: null, isPolySafeService: false });
+
+    const { result } = renderHook(() => useStakingContracts());
+    expect(result.current.orderedStakingProgramIds).toEqual([
+      MARKETPLACE_3,
+      MARKETPLACE_4,
+    ]);
   });
 });

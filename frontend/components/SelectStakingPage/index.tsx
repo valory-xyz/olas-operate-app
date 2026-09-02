@@ -50,18 +50,35 @@ type SelectStakingProps = {
 export const SelectStakingPage = ({ mode }: SelectStakingProps) => {
   const { goto: gotoPage } = usePageState();
   const { isLoading, selectedService, selectedAgentConfig } = useServices();
-  const { currentStakingProgramId } = useStakingContracts();
+  const {
+    currentStakingProgramId,
+    orderedStakingProgramIds,
+    isStakingContractsLoaded,
+  } = useStakingContracts();
   const { selectedStakingProgramId } = useStakingProgram();
   const { defaultStakingProgramId } = selectedAgentConfig;
 
-  const shouldShowList =
-    !!selectedService &&
+  // Wait for the contract list too — it depends on the service multisig type,
+  // and recommending a contract before that is known would flash a card the
+  // service may not be able to stake on.
+  const isPageLoading = isLoading || !isStakingContractsLoaded;
+
+  // The agent-config default may not accept the service's multisig (e.g. the
+  // PolySafe-only Polygon contracts for a service deployed with a standard
+  // Safe). Never recommend it in that case — go straight to the filtered list.
+  const isDefaultStakingProgramCompatible =
     !!defaultStakingProgramId &&
-    !!selectedStakingProgramId &&
-    selectedStakingProgramId !== defaultStakingProgramId;
+    orderedStakingProgramIds.includes(defaultStakingProgramId);
+
+  const shouldShowList =
+    (!!selectedService &&
+      !!defaultStakingProgramId &&
+      !!selectedStakingProgramId &&
+      selectedStakingProgramId !== defaultStakingProgramId) ||
+    (isStakingContractsLoaded && !isDefaultStakingProgramCompatible);
 
   const [viewState, setViewState] = useState<ViewStateValue>(() => {
-    if (isLoading) return ViewState.LOADING;
+    if (isPageLoading) return ViewState.LOADING;
 
     // For migrate flow, we always show the list of staking programs to select from
     if (mode === 'migrate') return ViewState.LIST_AUTO;
@@ -74,7 +91,7 @@ export const SelectStakingPage = ({ mode }: SelectStakingProps) => {
   });
 
   useEffect(() => {
-    if (isLoading) {
+    if (isPageLoading) {
       // Keep LOADING while services/staking state is still fetching.
       if (viewState !== ViewState.LOADING) {
         setViewState(ViewState.LOADING);
@@ -113,7 +130,7 @@ export const SelectStakingPage = ({ mode }: SelectStakingProps) => {
         setViewState(ViewState.CONFIGURE);
       }
     }
-  }, [mode, isLoading, shouldShowList, viewState]);
+  }, [mode, isPageLoading, shouldShowList, viewState]);
 
   const onChangeConfiguration = useCallback(() => {
     setViewState(ViewState.LIST_MANUAL);
@@ -122,13 +139,15 @@ export const SelectStakingPage = ({ mode }: SelectStakingProps) => {
   const handleBack = useCallback(() => {
     const isList =
       viewState === ViewState.LIST_AUTO || viewState === ViewState.LIST_MANUAL;
-    if (mode === 'onboard' && isList) {
+    // Only return to the Configure view when its recommended contract is one
+    // the service can actually stake on.
+    if (mode === 'onboard' && isList && isDefaultStakingProgramCompatible) {
       setViewState(ViewState.CONFIGURE_MANUAL);
       return;
     }
 
     gotoPage(PAGES.Main);
-  }, [gotoPage, mode, viewState]);
+  }, [gotoPage, mode, viewState, isDefaultStakingProgramCompatible]);
 
   const isConfigurationView =
     viewState === ViewState.CONFIGURE ||
@@ -143,8 +162,11 @@ export const SelectStakingPage = ({ mode }: SelectStakingProps) => {
   // LIST_AUTO/LIST_MANUAL → back returns to CONFIGURE_MANUAL.
   // SWITCHING → back exits to Main (selection already committed).
   // In onboard mode, configure views only show back if a service already exists.
+  // Without a compatible default there is no Configure view to go back to.
   const backButton = (selectedService ||
-    (mode === 'onboard' && isListView)) && <BackButton onPrev={handleBack} />;
+    (mode === 'onboard' &&
+      isListView &&
+      isDefaultStakingProgramCompatible)) && <BackButton onPrev={handleBack} />;
 
   return viewState === ViewState.LOADING ? (
     <Flex justify="center" align="center" className="w-full py-32">

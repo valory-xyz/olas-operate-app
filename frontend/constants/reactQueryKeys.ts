@@ -71,6 +71,8 @@ export const REACT_QUERY_KEYS = {
     ['agentTransactionHistory', chainId, agentSafe] as const,
 
   // multisigs
+  MULTISIG_CODEHASH_KEY: (chainId: number, multisig: string) =>
+    ['multisig', 'codehash', chainId, multisig] as const,
   MULTISIG_GET_OWNERS_KEY: (multisig: Safe) =>
     ['multisig', 'getOwners', multisig.evmChainId, multisig.address] as const,
   MULTISIGS_GET_OWNERS_KEY: (multisigs: Safe[]) =>

@@ -77,6 +77,9 @@ type SetupOptions = {
   hasService?: boolean;
   defaultStakingProgramId?: string | null;
   selectedStakingProgramId?: string | null;
+  /** Contracts compatible with the service multisig; defaults to both programs. */
+  orderedStakingProgramIds?: string[];
+  isStakingContractsLoaded?: boolean;
 };
 
 const setupMocks = ({
@@ -84,6 +87,11 @@ const setupMocks = ({
   hasService = false,
   defaultStakingProgramId = DEFAULT_STAKING_PROGRAM_ID,
   selectedStakingProgramId = DEFAULT_STAKING_PROGRAM_ID,
+  orderedStakingProgramIds = [
+    DEFAULT_STAKING_PROGRAM_ID,
+    SECOND_STAKING_PROGRAM_ID,
+  ],
+  isStakingContractsLoaded = true,
 }: SetupOptions = {}) => {
   mockUsePageState.mockReturnValue({
     goto: mockGotoPage,
@@ -95,6 +103,8 @@ const setupMocks = ({
   } as unknown as ReturnType<typeof useServices>);
   mockUseStakingContracts.mockReturnValue({
     currentStakingProgramId: selectedStakingProgramId,
+    orderedStakingProgramIds,
+    isStakingContractsLoaded,
   } as ReturnType<typeof useStakingContracts>);
   mockUseStakingProgram.mockReturnValue({
     selectedStakingProgramId,
@@ -428,5 +438,72 @@ describe('SelectStakingPage', () => {
 
       expect(screen.getByTestId('list-view')).toBeInTheDocument();
     });
+  });
+});
+
+// ─── Multisig compatibility (OPE-1919) ───────────────────────────────────────
+// The agent-config default may not accept the service multisig (e.g. the
+// PolySafe-only Polygon contracts for a standard-Safe service). The page must
+// never recommend it, and must wait for the compatible list before rendering.
+
+describe('SelectStakingPage — incompatible default contract', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    MockBackButton.mockImplementation(({ onPrev }) => (
+      <button data-testid="back-button" onClick={onPrev}>
+        Back
+      </button>
+    ));
+    MockConfigureActivityRewards.mockImplementation(({ backButton }) => (
+      <div data-testid="configure-view">{backButton}</div>
+    ));
+    MockSelectActivityRewardsConfiguration.mockImplementation(
+      ({ backButton }) => <div data-testid="list-view">{backButton}</div>,
+    );
+  });
+
+  it('shows the loading spinner while the compatible contract list is loading', () => {
+    setupMocks({ isStakingContractsLoaded: false });
+    render(<SelectStakingPage mode="onboard" />);
+    expect(screen.queryByTestId('configure-view')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('list-view')).not.toBeInTheDocument();
+    expect(document.querySelector('[aria-busy="true"]')).toBeInTheDocument();
+  });
+
+  it('shows the list instead of the recommended card when the default is incompatible, even without a service', () => {
+    setupMocks({
+      hasService: false,
+      orderedStakingProgramIds: [SECOND_STAKING_PROGRAM_ID],
+    });
+    render(<SelectStakingPage mode="onboard" />);
+    expect(screen.getByTestId('list-view')).toBeInTheDocument();
+    expect(screen.queryByTestId('configure-view')).not.toBeInTheDocument();
+  });
+
+  it('hides the back button on the onboard list when there is no compatible default to return to', () => {
+    setupMocks({
+      hasService: false,
+      orderedStakingProgramIds: [SECOND_STAKING_PROGRAM_ID],
+    });
+    render(<SelectStakingPage mode="onboard" />);
+    expect(screen.getByTestId('list-view')).toBeInTheDocument();
+    expect(screen.queryByTestId('back-button')).not.toBeInTheDocument();
+  });
+
+  it('back navigates to Main (not the recommended card) when a service exists but the default is incompatible', () => {
+    setupMocks({
+      hasService: true,
+      orderedStakingProgramIds: [SECOND_STAKING_PROGRAM_ID],
+    });
+    render(<SelectStakingPage mode="onboard" />);
+    fireEvent.click(screen.getByTestId('back-button'));
+    expect(screen.queryByTestId('configure-view')).not.toBeInTheDocument();
+    expect(mockGotoPage).toHaveBeenCalledWith(PAGES.Main);
+  });
+
+  it('still shows the recommended card when the default is compatible', () => {
+    setupMocks({ hasService: false });
+    render(<SelectStakingPage mode="onboard" />);
+    expect(screen.getByTestId('configure-view')).toBeInTheDocument();
   });
 });

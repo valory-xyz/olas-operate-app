@@ -17,6 +17,14 @@ export type StakingProgramConfig = {
   chainId: EvmChainId;
   deprecated?: boolean; // hides program from UI unless user is already staked in this program
   /**
+   * The contract pins `service.multisig.codehash` to the PolySafe proxy
+   * (`POLY_SAFE_PROXY_CODEHASH`), so only services deployed with a PolySafe can
+   * stake there. Absent → the contract expects a standard Safe proxy.
+   * Do NOT mark these programs `deprecated` while PolySafe services exist —
+   * their users would be left with an empty contract list.
+   */
+  requiresPolySafe?: boolean;
+  /**
    * Off-chain per-epoch activity target (mech requests) for the decoupled-activity
    * staking regime (OPE-1803). Presence marks this program as "new regime": the
    * agent is "done for the epoch" when its on-chain activity count reaches this

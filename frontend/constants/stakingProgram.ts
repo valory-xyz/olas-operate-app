@@ -98,6 +98,15 @@ export const STAKING_PROGRAM_IDS = {
   ...POLYGON_STAKING_PROGRAM_IDS,
 } as const;
 
+/**
+ * keccak256 of the PolySafe proxy bytecode. The live Polygon staking contracts
+ * pin `service.multisig.codehash` to this value (`proxyHash()` on each of them
+ * returns it), so only services deployed with a PolySafe can stake there.
+ * Standard Safe proxies (every other chain) hash to a different value.
+ */
+export const POLY_SAFE_PROXY_CODEHASH =
+  '0x92565062fdea8761e07d9df2fcdbd66c0582af6ddf0e0355bc07754ad97400b0';
+
 const NO_STAKING_PROGRAM_ID = 'no_staking';
 
 export type StakingProgramId =

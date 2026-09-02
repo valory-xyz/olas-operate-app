@@ -63,6 +63,8 @@ All three derive from the selected agent. `selectedStakingProgramId` is `null` w
 
 Consequence: `allStakingContractDetailsRecord` only contains programs for the **currently selected agent type**. Switching from Optimus to Polystrat clears the map and re-fetches for the new agent's programs.
 
+The *selectable* list (`useStakingContracts` → `getCompatibleStakingProgramIds`) applies two more filters on top: `deprecated` and multisig compatibility (`requiresPolySafe` vs. `useIsPolySafeService`, see `staking-and-rewards.md` → "Multisig compatibility"). Details are still fetched for every agent-supported program so the current contract's data loads even when it is no longer selectable.
+
 ---
 
 ## Can staking data be fetched for a non-selected agent?

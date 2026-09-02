@@ -82,6 +82,14 @@ describe('POLYGON_STAKING_PROGRAMS', () => {
     }
   });
 
+  // OPE-1919: every live Polygon contract pins the multisig codehash to the
+  // PolySafe proxy, so services deployed with a standard Safe must not see them.
+  it('all programs require a PolySafe-deployed service', () => {
+    for (const program of Object.values(POLYGON_STAKING_PROGRAMS)) {
+      expect(program.requiresPolySafe).toBe(true);
+    }
+  });
+
   describe('staking tier requirements', () => {
     it('PolygonBeta1 requires 100 OLAS (entry tier)', () => {
       expect(
