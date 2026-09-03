@@ -80,6 +80,10 @@ const POLYGON_STAKING_PROGRAM_IDS = {
   PolystratI: 'polystrat_i',
   PolystratII: 'polystrat_ii',
   PolystratIII: 'polystrat_iii',
+  // Standard-Safe contracts (post PolySafe de-whitelisting, OPE-1919).
+  PolystratIV: 'polystrat_iv',
+  PolystratV: 'polystrat_v',
+  PolystratVI: 'polystrat_vi',
 } as const;
 
 export type PolygonStakingProgramId = ValueOf<

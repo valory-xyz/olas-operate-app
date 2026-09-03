@@ -23,7 +23,7 @@ jest.mock(
 const EVM_ADDRESS_PATTERN = /^0x[0-9a-fA-F]{40}$/;
 
 describe('POLYGON_STAKING_PROGRAMS', () => {
-  it('covers all 6 Polygon staking program IDs (legacy PolygonBeta1/2/3 + decoupled PolystratI/II/III)', () => {
+  it('covers all 9 Polygon staking program IDs (legacy PolygonBeta1/2/3 + PolySafe PolystratI/II/III + standard-Safe PolystratIV/V/VI)', () => {
     const expectedIds = [
       STAKING_PROGRAM_IDS.PolygonBeta1,
       STAKING_PROGRAM_IDS.PolygonBeta2,
@@ -31,11 +31,14 @@ describe('POLYGON_STAKING_PROGRAMS', () => {
       STAKING_PROGRAM_IDS.PolystratI,
       STAKING_PROGRAM_IDS.PolystratII,
       STAKING_PROGRAM_IDS.PolystratIII,
+      STAKING_PROGRAM_IDS.PolystratIV,
+      STAKING_PROGRAM_IDS.PolystratV,
+      STAKING_PROGRAM_IDS.PolystratVI,
     ];
     for (const id of expectedIds) {
       expect(POLYGON_STAKING_PROGRAMS[id]).toBeDefined();
     }
-    expect(Object.keys(POLYGON_STAKING_PROGRAMS)).toHaveLength(6);
+    expect(Object.keys(POLYGON_STAKING_PROGRAMS)).toHaveLength(9);
   });
 
   it('all programs are on Polygon chain (chainId 137)', () => {
@@ -82,12 +85,35 @@ describe('POLYGON_STAKING_PROGRAMS', () => {
     }
   });
 
-  // OPE-1919: every live Polygon contract pins the multisig codehash to the
-  // PolySafe proxy, so services deployed with a standard Safe must not see them.
-  it('all programs require a PolySafe-deployed service', () => {
-    for (const program of Object.values(POLYGON_STAKING_PROGRAMS)) {
-      expect(program.requiresPolySafe).toBe(true);
-    }
+  // OPE-1919: the original six contracts pin the multisig codehash to the
+  // PolySafe proxy; IV/V/VI accept a standard Safe. The two sets are mutually
+  // exclusive, so the flag must be exact on every entry.
+  describe('multisig compatibility', () => {
+    const POLY_SAFE_IDS = [
+      STAKING_PROGRAM_IDS.PolygonBeta1,
+      STAKING_PROGRAM_IDS.PolygonBeta2,
+      STAKING_PROGRAM_IDS.PolygonBeta3,
+      STAKING_PROGRAM_IDS.PolystratI,
+      STAKING_PROGRAM_IDS.PolystratII,
+      STAKING_PROGRAM_IDS.PolystratIII,
+    ];
+    const STANDARD_SAFE_IDS = [
+      STAKING_PROGRAM_IDS.PolystratIV,
+      STAKING_PROGRAM_IDS.PolystratV,
+      STAKING_PROGRAM_IDS.PolystratVI,
+    ];
+
+    it('legacy and PolySafe Polystrat contracts require a PolySafe service', () => {
+      for (const id of POLY_SAFE_IDS) {
+        expect(POLYGON_STAKING_PROGRAMS[id].requiresPolySafe).toBe(true);
+      }
+    });
+
+    it('Polystrat IV/V/VI accept a standard Safe service', () => {
+      for (const id of STANDARD_SAFE_IDS) {
+        expect(POLYGON_STAKING_PROGRAMS[id].requiresPolySafe).toBeUndefined();
+      }
+    });
   });
 
   describe('staking tier requirements', () => {
@@ -131,6 +157,18 @@ describe('POLYGON_STAKING_PROGRAMS', () => {
         POLYGON_STAKING_PROGRAMS[STAKING_PROGRAM_IDS.PolystratIII]
           .stakingRequirements['OLAS'],
       ).toBe(10000);
+    });
+
+    it.each([
+      ['PolystratIV', 100],
+      ['PolystratV', 1000],
+      ['PolystratVI', 10000],
+    ] as const)('%s requires %i OLAS (standard-Safe tier)', (key, olas) => {
+      expect(
+        POLYGON_STAKING_PROGRAMS[STAKING_PROGRAM_IDS[key]].stakingRequirements[
+          'OLAS'
+        ],
+      ).toBe(olas);
     });
   });
 
