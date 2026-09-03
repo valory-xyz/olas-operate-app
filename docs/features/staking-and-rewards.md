@@ -297,10 +297,11 @@ Staking contracts pin `service.multisig.codehash`. The original six Polygon cont
 
 - `StakingProgramConfig.requiresPolySafe: true` marks a contract as PolySafe-only. Absent = standard Safe (every other chain). Never mark these programs `deprecated` while PolySafe services exist — their users would get an empty list.
 - `useIsPolySafeService` (`frontend/hooks/useIsPolySafeService.ts`) detects the service's multisig type, in order:
-  1. Chain has no `requiresPolySafe` programs → `false`, no RPC call
-  2. On-chain active program or service-stored `staking_program_id` is a `requiresPolySafe` program → `true`, no RPC call (the contract enforces it on stake)
-  3. Service not deployed yet (no `chain_data.multisig`) → `false` (the middleware deploys a standard Safe for every new service)
-  4. Otherwise `keccak256(eth_getCode(multisig)) === POLY_SAFE_PROXY_CODEHASH`, cached for the session. On RPC failure it falls back to `false` (loaded) so the list never stays empty silently.
+  1. Chain has no `requiresPolySafe` programs → standard Safe, no RPC call
+  2. Service is staked on-chain (`activeStakingProgramId`) → the staked program's flag is proof either way (the contract enforces the codehash on stake), no RPC call. The service-stored `staking_program_id` is deliberately **not** used: it is only the user's choice and may predate a failed stake
+  3. Service not deployed yet (no `chain_data.multisig`) → standard Safe (the middleware deploys a standard Safe for every new service)
+  4. Otherwise `keccak256(eth_getCode(multisig)) === POLY_SAFE_PROXY_CODEHASH` via the provider of the service's `home_chain`, cached for the session (`staleTime`/`gcTime: Infinity`, `retry: 1`). On RPC failure the hook reports `isMultisigTypeError` instead of guessing; `useStakingContracts` then returns an empty list with `isStakingContractsError` and the list page shows an error alert with Retry.
+- `scripts/js/check_staking_proxy_hashes.ts` (run in CI next to the service-template check) reads `proxyHash()` from every program on chains that have `requiresPolySafe` entries and fails when a flag disagrees with the contract.
 - Neither group can see the other set on any list screen; `useStakingContracts` is the single list source for onboarding and switching.
 
 ### Reward streak (useRewardsHistory)

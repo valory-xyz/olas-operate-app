@@ -129,14 +129,21 @@ export const SelectActivityRewardsConfiguration = ({
   onSelectStart,
   onSelectEnd,
 }: SelectActivityRewardsConfigurationProps) => {
-  const { orderedStakingProgramIds, isStakingContractsLoaded } =
-    useStakingContracts();
+  const {
+    orderedStakingProgramIds,
+    isStakingContractsLoaded,
+    isStakingContractsError,
+    retryStakingContracts,
+  } = useStakingContracts();
   const [stableOrder, setStableOrder] = useState<StakingProgramId[]>([]);
 
-  // Loaded but nothing compatible with the service's multisig (e.g. a
-  // standard-Safe Polystrat service before the new Polygon contracts ship).
+  // Derived from `stableOrder` (what the cards render from), not from
+  // `orderedStakingProgramIds`, so the alert and the cards can never disagree
+  // for the frame before the stable-order effect catches up.
   const hasNoCompatibleContracts =
-    isStakingContractsLoaded && orderedStakingProgramIds.length === 0;
+    isStakingContractsLoaded &&
+    !isStakingContractsError &&
+    stableOrder.length === 0;
 
   // Keep render order stable across renders. Reset only when the SET of IDs
   // changes (agent switch / strict subset / superset). Initial population is
@@ -170,6 +177,21 @@ export const SelectActivityRewardsConfiguration = ({
           your agent.
         </Text>
       </MainContentContainer>
+
+      {isStakingContractsError && (
+        <MainContentContainer vertical className="mt-32">
+          <Alert
+            type="error"
+            showIcon
+            message="Could not verify which staking contracts your agent can use."
+            action={
+              <Button size="small" onClick={retryStakingContracts}>
+                Retry
+              </Button>
+            }
+          />
+        </MainContentContainer>
+      )}
 
       {hasNoCompatibleContracts && (
         <MainContentContainer vertical className="mt-32">

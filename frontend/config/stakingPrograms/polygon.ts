@@ -220,6 +220,7 @@ export const POLYGON_STAKING_PROGRAMS: StakingProgramMap = {
   // Standard-Safe contract (accepts services deployed after PolySafe de-whitelisting).
   [STAKING_PROGRAM_IDS.PolystratIV]: {
     chainId: EvmChainIdMap.Polygon,
+    requiresPolySafe: false,
     name: 'Polystrat IV',
     activityTarget: 8,
     agentsSupported: [AgentMap.Polystrat],
@@ -251,6 +252,7 @@ export const POLYGON_STAKING_PROGRAMS: StakingProgramMap = {
   // Standard-Safe contract (accepts services deployed after PolySafe de-whitelisting).
   [STAKING_PROGRAM_IDS.PolystratV]: {
     chainId: EvmChainIdMap.Polygon,
+    requiresPolySafe: false,
     name: 'Polystrat V',
     activityTarget: 8,
     agentsSupported: [AgentMap.Polystrat],
@@ -282,6 +284,7 @@ export const POLYGON_STAKING_PROGRAMS: StakingProgramMap = {
   // Standard-Safe contract (accepts services deployed after PolySafe de-whitelisting).
   [STAKING_PROGRAM_IDS.PolystratVI]: {
     chainId: EvmChainIdMap.Polygon,
+    requiresPolySafe: false,
     name: 'Polystrat VI',
     activityTarget: 8,
     agentsSupported: [AgentMap.Polystrat],

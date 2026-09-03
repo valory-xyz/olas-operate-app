@@ -111,7 +111,16 @@ describe('POLYGON_STAKING_PROGRAMS', () => {
 
     it('Polystrat IV/V/VI accept a standard Safe service', () => {
       for (const id of STANDARD_SAFE_IDS) {
-        expect(POLYGON_STAKING_PROGRAMS[id].requiresPolySafe).toBeUndefined();
+        expect(POLYGON_STAKING_PROGRAMS[id].requiresPolySafe).toBe(false);
+      }
+    });
+
+    // Omitting the flag on a future Polygon program must not compile clean
+    // into "standard Safe" by accident — every entry declares it explicitly.
+    it('every Polygon program declares requiresPolySafe explicitly', () => {
+      for (const [id, program] of Object.entries(POLYGON_STAKING_PROGRAMS)) {
+        expect(typeof program.requiresPolySafe).toBe('boolean');
+        expect([...POLY_SAFE_IDS, ...STANDARD_SAFE_IDS]).toContain(id);
       }
     });
   });

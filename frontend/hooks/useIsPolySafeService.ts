@@ -6,13 +6,15 @@ import {
   POLY_SAFE_PROXY_CODEHASH,
   PROVIDERS,
   REACT_QUERY_KEYS,
-  StakingProgramId,
 } from '@/constants';
 import { Address } from '@/types';
+import { asEvmChainId } from '@/utils/middlewareHelpers';
 import { chainHasPolySafePrograms } from '@/utils/stakingProgram';
 
 import { useServices } from './useServices';
 import { useStakingProgram } from './useStakingProgram';
+
+const NOT_POLY_SAFE = { isPolySafeService: false, isMultisigTypeError: false };
 
 /**
  * Detects whether the selected service was deployed with a PolySafe multisig.
@@ -20,74 +22,88 @@ import { useStakingProgram } from './useStakingProgram';
  * Staking contracts pin `service.multisig.codehash`, so a PolySafe service can
  * only stake on `requiresPolySafe` programs and a standard Safe service only
  * on the others. The middleware does not expose the multisig type, so:
- * 1. Chains without `requiresPolySafe` programs → `false`, no RPC call.
- * 2. Service staked in / storing a `requiresPolySafe` program → `true`, no RPC
- *    call (the contract enforces this on stake).
- * 3. Service not deployed yet (no multisig) → `false`. The pinned middleware
- *    deploys a standard Safe for every new service.
+ * 1. Chain without `requiresPolySafe` programs → standard Safe, no RPC call.
+ * 2. Service staked on-chain → the staked program's flag is proof either way
+ *    (the contract enforces the codehash on stake), no RPC call. The
+ *    service-stored `staking_program_id` is deliberately NOT used: it is only
+ *    the user's choice and may predate a failed stake.
+ * 3. Service not deployed yet (no multisig) → standard Safe. The pinned
+ *    middleware deploys a standard Safe for every new service.
  * 4. Otherwise `keccak256(getCode(multisig)) === POLY_SAFE_PROXY_CODEHASH`.
+ *    On RPC failure `isMultisigTypeError` is set instead of guessing.
  */
 export const useIsPolySafeService = () => {
   const { selectedService, selectedAgentConfig } = useServices();
   const { activeStakingProgramId, isActiveStakingProgramLoaded } =
     useStakingProgram();
-  const { evmHomeChainId } = selectedAgentConfig;
 
-  const programs = STAKING_PROGRAMS[evmHomeChainId];
+  // The multisig lives on the service's home chain, which for multi-chain
+  // agents can differ from the agent config's `evmHomeChainId`.
+  const evmChainId = selectedService
+    ? asEvmChainId(selectedService.home_chain)
+    : selectedAgentConfig.evmHomeChainId;
+  const programs = STAKING_PROGRAMS[evmChainId];
   const hasPolySafePrograms = chainHasPolySafePrograms(programs);
 
-  const chainData =
-    selectedService?.chain_configs?.[selectedService?.home_chain]?.chain_data;
-  const multisig = chainData?.multisig;
-  const storedStakingProgramId = chainData?.user_params?.staking_program_id;
-
-  const isKnownPolySafeFromProgram = [
-    activeStakingProgramId,
-    storedStakingProgramId,
-  ].some(
-    (id: StakingProgramId | null | undefined) =>
-      !!id && !!programs[id]?.requiresPolySafe,
-  );
+  const multisig =
+    selectedService?.chain_configs?.[selectedService.home_chain]?.chain_data
+      ?.multisig;
+  const activeProgram = activeStakingProgramId
+    ? programs[activeStakingProgramId]
+    : undefined;
 
   const shouldQueryCodehash =
     hasPolySafePrograms &&
     isActiveStakingProgramLoaded &&
-    !isKnownPolySafeFromProgram &&
+    !activeProgram &&
     !!multisig;
 
-  const { data: isPolySafeFromCodehash, isFetched } = useQuery({
+  const {
+    data: isPolySafeFromCodehash,
+    isFetched,
+    isError,
+    refetch,
+  } = useQuery({
     queryKey: REACT_QUERY_KEYS.MULTISIG_CODEHASH_KEY(
-      evmHomeChainId,
+      evmChainId,
       multisig ?? '',
     ),
     queryFn: async () => {
-      const code = await PROVIDERS[evmHomeChainId].provider.getCode(
+      const code = await PROVIDERS[evmChainId].provider.getCode(
         multisig as Address,
       );
       return ethers.utils.keccak256(code) === POLY_SAFE_PROXY_CODEHASH;
     },
     enabled: shouldQueryCodehash,
-    // The multisig bytecode never changes — fetch once per session.
+    // The multisig bytecode never changes — keep the answer for the session
+    // and don't stall the staking page behind exponential-backoff retries.
     staleTime: Infinity,
+    gcTime: Infinity,
+    retry: 1,
   });
 
   if (!hasPolySafePrograms) {
-    return { isPolySafeService: false, isMultisigTypeLoaded: true };
-  }
-  if (isKnownPolySafeFromProgram) {
-    return { isPolySafeService: true, isMultisigTypeLoaded: true };
+    return { ...NOT_POLY_SAFE, isMultisigTypeLoaded: true, refetch };
   }
   if (!isActiveStakingProgramLoaded) {
-    return { isPolySafeService: false, isMultisigTypeLoaded: false };
+    return { ...NOT_POLY_SAFE, isMultisigTypeLoaded: false, refetch };
+  }
+  if (activeProgram) {
+    return {
+      isPolySafeService: !!activeProgram.requiresPolySafe,
+      isMultisigTypeError: false,
+      isMultisigTypeLoaded: true,
+      refetch,
+    };
   }
   if (!multisig) {
-    return { isPolySafeService: false, isMultisigTypeLoaded: true };
+    return { ...NOT_POLY_SAFE, isMultisigTypeLoaded: true, refetch };
   }
 
-  // On RPC failure (`isFetched` with no data) fall back to "standard Safe" so
-  // the contract list never stays empty without explanation.
   return {
     isPolySafeService: isPolySafeFromCodehash ?? false,
+    isMultisigTypeError: isError,
     isMultisigTypeLoaded: isFetched,
+    refetch,
   };
 };

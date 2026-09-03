@@ -1,4 +1,4 @@
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { ethers } from 'ethers';
 
 import { StakingProgramConfig } from '../../config/stakingPrograms';
@@ -7,6 +7,7 @@ import {
   EvmChainId,
   EvmChainIdMap,
   MiddlewareChainMap,
+  SupportedMiddlewareChain,
 } from '../../constants/chains';
 import {
   POLY_SAFE_PROXY_CODEHASH,
@@ -24,7 +25,8 @@ import {
 } from '../helpers/factories';
 import { createQueryClientWrapper } from '../helpers/queryClient';
 
-const mockGetCode = jest.fn();
+const mockGetCodePolygon = jest.fn();
+const mockGetCodeGnosis = jest.fn();
 
 /* eslint-disable @typescript-eslint/no-var-requires */
 jest.mock(
@@ -34,8 +36,12 @@ jest.mock(
 /* eslint-enable @typescript-eslint/no-var-requires */
 jest.mock('../../constants/providers', () => ({
   PROVIDERS: {
-    137: { provider: { getCode: (address: string) => mockGetCode(address) } },
-    100: { provider: { getCode: (address: string) => mockGetCode(address) } },
+    137: {
+      provider: { getCode: (address: string) => mockGetCodePolygon(address) },
+    },
+    100: {
+      provider: { getCode: (address: string) => mockGetCodeGnosis(address) },
+    },
   },
 }));
 jest.mock('../../config/providers', () => ({ providers: [] }));
@@ -46,7 +52,7 @@ jest.mock('../../hooks/useStakingProgram', () => ({
 }));
 
 const POLY_SAFE_PROGRAM = STAKING_PROGRAM_IDS.PolystratI;
-const STANDARD_SAFE_PROGRAM = 'polystrat_standard_safe' as StakingProgramId;
+const STANDARD_SAFE_PROGRAM = STAKING_PROGRAM_IDS.PolystratIV;
 
 const MOCK_STAKING_PROGRAMS: Record<
   EvmChainId,
@@ -67,6 +73,7 @@ const MOCK_STAKING_PROGRAMS: Record<
     [STANDARD_SAFE_PROGRAM]: makeStakingProgramConfig({
       chainId: EvmChainIdMap.Polygon,
       agentsSupported: [AgentMap.Polystrat],
+      requiresPolySafe: false,
     }),
   },
 };
@@ -93,6 +100,7 @@ const mockUseStakingProgram = useStakingProgram as jest.Mock;
 
 const setupMocks = ({
   evmHomeChainId = EvmChainIdMap.Polygon as EvmChainId,
+  serviceHomeChain = MiddlewareChainMap.POLYGON as SupportedMiddlewareChain,
   hasService = true,
   hasMultisig = true,
   storedStakingProgramId = STANDARD_SAFE_PROGRAM,
@@ -100,6 +108,7 @@ const setupMocks = ({
   isActiveStakingProgramLoaded = true,
 }: {
   evmHomeChainId?: EvmChainId;
+  serviceHomeChain?: SupportedMiddlewareChain;
   hasService?: boolean;
   hasMultisig?: boolean;
   storedStakingProgramId?: StakingProgramId;
@@ -110,8 +119,8 @@ const setupMocks = ({
     selectedAgentConfig: { evmHomeChainId },
     selectedService: hasService
       ? makeService({
-          home_chain: MiddlewareChainMap.POLYGON,
-          chain_configs: makeChainConfig(MiddlewareChainMap.POLYGON, {
+          home_chain: serviceHomeChain,
+          chain_configs: makeChainConfig(serviceHomeChain, {
             multisig: hasMultisig ? MULTISIG : undefined,
             staking_program_id: storedStakingProgramId,
           }),
@@ -129,10 +138,16 @@ const renderIsPolySafe = () =>
     wrapper: createQueryClientWrapper(),
   });
 
+const expectNoRpcCall = () => {
+  expect(mockGetCodePolygon).not.toHaveBeenCalled();
+  expect(mockGetCodeGnosis).not.toHaveBeenCalled();
+};
+
 describe('useIsPolySafeService', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockGetCode.mockResolvedValue(STANDARD_SAFE_PROXY_BYTECODE);
+    mockGetCodePolygon.mockResolvedValue(STANDARD_SAFE_PROXY_BYTECODE);
+    mockGetCodeGnosis.mockResolvedValue(STANDARD_SAFE_PROXY_BYTECODE);
   });
 
   it('sanity: the fixture bytecode hashes to POLY_SAFE_PROXY_CODEHASH', () => {
@@ -141,57 +156,77 @@ describe('useIsPolySafeService', () => {
     );
   });
 
-  it('returns false without an RPC call on chains that have no PolySafe contracts', () => {
-    setupMocks({ evmHomeChainId: EvmChainIdMap.Gnosis });
+  it('returns standard Safe without an RPC call on chains that have no PolySafe contracts', () => {
+    setupMocks({
+      evmHomeChainId: EvmChainIdMap.Gnosis,
+      serviceHomeChain: MiddlewareChainMap.GNOSIS,
+    });
 
     const { result } = renderIsPolySafe();
-    expect(result.current).toEqual({
+    expect(result.current).toMatchObject({
       isPolySafeService: false,
       isMultisigTypeLoaded: true,
+      isMultisigTypeError: false,
     });
-    expect(mockGetCode).not.toHaveBeenCalled();
+    expectNoRpcCall();
   });
 
-  it('returns true without an RPC call when the service stores a PolySafe program', () => {
-    setupMocks({ storedStakingProgramId: POLY_SAFE_PROGRAM });
-
-    const { result } = renderIsPolySafe();
-    expect(result.current).toEqual({
-      isPolySafeService: true,
-      isMultisigTypeLoaded: true,
-    });
-    expect(mockGetCode).not.toHaveBeenCalled();
-  });
-
-  it('returns true without an RPC call when the on-chain active program is a PolySafe program', () => {
+  it('returns PolySafe without an RPC call when the service is staked in a PolySafe program', () => {
     setupMocks({ activeStakingProgramId: POLY_SAFE_PROGRAM });
 
     const { result } = renderIsPolySafe();
-    expect(result.current.isPolySafeService).toBe(true);
-    expect(result.current.isMultisigTypeLoaded).toBe(true);
-    expect(mockGetCode).not.toHaveBeenCalled();
+    expect(result.current).toMatchObject({
+      isPolySafeService: true,
+      isMultisigTypeLoaded: true,
+    });
+    expectNoRpcCall();
   });
 
-  it('returns false (loaded) for a service that is not deployed yet', () => {
-    setupMocks({ hasMultisig: false });
+  it('returns standard Safe without an RPC call when the service is staked in a standard-Safe program', () => {
+    setupMocks({ activeStakingProgramId: STANDARD_SAFE_PROGRAM });
 
     const { result } = renderIsPolySafe();
-    expect(result.current).toEqual({
+    expect(result.current).toMatchObject({
       isPolySafeService: false,
       isMultisigTypeLoaded: true,
     });
-    expect(mockGetCode).not.toHaveBeenCalled();
+    expectNoRpcCall();
   });
 
-  it('returns false (loaded) when there is no service at all', () => {
+  // Regression (review): a stored program is only the user's choice and may
+  // predate a failed stake — it must never classify an undeployed service.
+  it('ignores the service-stored program when the service is not deployed yet', () => {
+    setupMocks({
+      hasMultisig: false,
+      storedStakingProgramId: POLY_SAFE_PROGRAM,
+    });
+
+    const { result } = renderIsPolySafe();
+    expect(result.current).toMatchObject({
+      isPolySafeService: false,
+      isMultisigTypeLoaded: true,
+    });
+    expectNoRpcCall();
+  });
+
+  it('ignores the service-stored program and reads the bytecode when deployed but unstaked', async () => {
+    setupMocks({ storedStakingProgramId: POLY_SAFE_PROGRAM });
+
+    const { result } = renderIsPolySafe();
+    await waitFor(() => expect(result.current.isMultisigTypeLoaded).toBe(true));
+    expect(result.current.isPolySafeService).toBe(false);
+    expect(mockGetCodePolygon).toHaveBeenCalledWith(MULTISIG);
+  });
+
+  it('returns standard Safe (loaded) when there is no service at all', () => {
     setupMocks({ hasService: false });
 
     const { result } = renderIsPolySafe();
-    expect(result.current).toEqual({
+    expect(result.current).toMatchObject({
       isPolySafeService: false,
       isMultisigTypeLoaded: true,
     });
-    expect(mockGetCode).not.toHaveBeenCalled();
+    expectNoRpcCall();
   });
 
   it('stays unloaded until the active staking program is known', () => {
@@ -199,11 +234,11 @@ describe('useIsPolySafeService', () => {
 
     const { result } = renderIsPolySafe();
     expect(result.current.isMultisigTypeLoaded).toBe(false);
-    expect(mockGetCode).not.toHaveBeenCalled();
+    expectNoRpcCall();
   });
 
   it('detects a PolySafe multisig from its bytecode', async () => {
-    mockGetCode.mockResolvedValue(POLY_SAFE_PROXY_BYTECODE);
+    mockGetCodePolygon.mockResolvedValue(POLY_SAFE_PROXY_BYTECODE);
     setupMocks();
 
     const { result } = renderIsPolySafe();
@@ -211,11 +246,12 @@ describe('useIsPolySafeService', () => {
 
     await waitFor(() => expect(result.current.isMultisigTypeLoaded).toBe(true));
     expect(result.current.isPolySafeService).toBe(true);
-    expect(mockGetCode).toHaveBeenCalledWith(MULTISIG);
+    expect(result.current.isMultisigTypeError).toBe(false);
+    expect(mockGetCodePolygon).toHaveBeenCalledWith(MULTISIG);
   });
 
   it('detects a standard Safe multisig from its bytecode', async () => {
-    mockGetCode.mockResolvedValue(STANDARD_SAFE_PROXY_BYTECODE);
+    mockGetCodePolygon.mockResolvedValue(STANDARD_SAFE_PROXY_BYTECODE);
     setupMocks();
 
     const { result } = renderIsPolySafe();
@@ -223,12 +259,42 @@ describe('useIsPolySafeService', () => {
     expect(result.current.isPolySafeService).toBe(false);
   });
 
-  it('falls back to standard Safe (loaded) when the RPC call fails', async () => {
-    mockGetCode.mockRejectedValue(new Error('rpc down'));
-    setupMocks();
+  it('uses the provider of the service home chain, not the agent config chain', async () => {
+    mockGetCodePolygon.mockResolvedValue(POLY_SAFE_PROXY_BYTECODE);
+    // Multi-chain agent configured on Gnosis, instance living on Polygon.
+    setupMocks({
+      evmHomeChainId: EvmChainIdMap.Gnosis,
+      serviceHomeChain: MiddlewareChainMap.POLYGON,
+    });
 
     const { result } = renderIsPolySafe();
     await waitFor(() => expect(result.current.isMultisigTypeLoaded).toBe(true));
+    expect(result.current.isPolySafeService).toBe(true);
+    expect(mockGetCodePolygon).toHaveBeenCalledWith(MULTISIG);
+    expect(mockGetCodeGnosis).not.toHaveBeenCalled();
+  });
+
+  it('reports an error instead of guessing when the RPC call fails, and can retry', async () => {
+    mockGetCodePolygon.mockRejectedValue(new Error('rpc down'));
+    setupMocks();
+
+    const { result } = renderIsPolySafe();
+    // The query retries once (react-query's default 1s backoff) before
+    // surfacing the error, so allow for that delay.
+    await waitFor(
+      () => expect(result.current.isMultisigTypeLoaded).toBe(true),
+      { timeout: 4000 },
+    );
+    expect(result.current.isMultisigTypeError).toBe(true);
     expect(result.current.isPolySafeService).toBe(false);
+    expect(mockGetCodePolygon).toHaveBeenCalledTimes(2);
+
+    mockGetCodePolygon.mockResolvedValue(POLY_SAFE_PROXY_BYTECODE);
+    await act(async () => {
+      await result.current.refetch();
+    });
+    await waitFor(() => expect(result.current.isMultisigTypeError).toBe(false));
+    expect(result.current.isPolySafeService).toBe(true);
+    expect(mockGetCodePolygon).toHaveBeenCalledTimes(3);
   });
 });

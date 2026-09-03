@@ -107,6 +107,7 @@ jest.mock('../../config/stakingPrograms', () => ({
 const mockUseServices = useServices as jest.Mock;
 const mockUseStakingProgram = useStakingProgram as jest.Mock;
 const mockUseIsPolySafeService = useIsPolySafeService as jest.Mock;
+const mockRefetchMultisigType = jest.fn();
 
 const setupMocks = ({
   isActiveStakingProgramLoaded = true,
@@ -116,6 +117,7 @@ const setupMocks = ({
   selectedAgentType = AgentMap.PredictTrader as AgentType,
   isPolySafeService = false,
   isMultisigTypeLoaded = true,
+  isMultisigTypeError = false,
 }: {
   isActiveStakingProgramLoaded?: boolean;
   activeStakingProgramId?: StakingProgramId | null;
@@ -124,10 +126,13 @@ const setupMocks = ({
   selectedAgentType?: AgentType;
   isPolySafeService?: boolean;
   isMultisigTypeLoaded?: boolean;
+  isMultisigTypeError?: boolean;
 } = {}) => {
   mockUseIsPolySafeService.mockReturnValue({
     isPolySafeService,
     isMultisigTypeLoaded,
+    isMultisigTypeError,
+    refetch: mockRefetchMultisigType,
   });
   mockUseServices.mockReturnValue({
     selectedAgentConfig: { evmHomeChainId },
@@ -477,5 +482,40 @@ describe('useStakingContracts — multisig compatibility (OPE-1919)', () => {
       MARKETPLACE_3,
       MARKETPLACE_4,
     ]);
+  });
+});
+
+describe('useStakingContracts — multisig type verification failure', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('returns an empty list and isStakingContractsError when the multisig type could not be verified', () => {
+    setupMocks({
+      evmHomeChainId: EvmChainIdMap.Polygon,
+      selectedAgentType: AgentMap.Polystrat,
+      activeStakingProgramId: null,
+      isMultisigTypeError: true,
+    });
+
+    const { result } = renderHook(() => useStakingContracts());
+    expect(result.current.orderedStakingProgramIds).toEqual([]);
+    expect(result.current.isStakingContractsLoaded).toBe(true);
+    expect(result.current.isStakingContractsError).toBe(true);
+  });
+
+  it('retryStakingContracts refetches the multisig type', () => {
+    setupMocks({ isMultisigTypeError: true });
+
+    const { result } = renderHook(() => useStakingContracts());
+    result.current.retryStakingContracts();
+    expect(mockRefetchMultisigType).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not report an error while still loading', () => {
+    setupMocks({ isMultisigTypeLoaded: false, isMultisigTypeError: true });
+
+    const { result } = renderHook(() => useStakingContracts());
+    expect(result.current.isStakingContractsError).toBe(false);
   });
 });

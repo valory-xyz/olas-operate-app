@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 
 import { SelectActivityRewardsConfiguration } from '../../../components/SelectStakingPage/components/SelectActivityRewardsConfiguration';
 import { useStakingContracts } from '../../../hooks';
@@ -38,8 +38,19 @@ jest.mock('../../../components/NoStakingRewardsAlert', () => ({
 }));
 
 jest.mock('../../../components/ui', () => ({
-  Alert: ({ message }: { message: string }) => (
-    <div data-testid="empty-alert">{message}</div>
+  Alert: ({
+    message,
+    type,
+    action,
+  }: {
+    message: string;
+    type: string;
+    action?: React.ReactNode;
+  }) => (
+    <div data-testid={`alert-${type}`}>
+      {message}
+      {action}
+    </div>
   ),
   MainContentContainer: ({ children }: { children?: React.ReactNode }) => (
     <div>{children}</div>
@@ -50,14 +61,19 @@ const mockUseStakingContracts = useStakingContracts as jest.MockedFunction<
   typeof useStakingContracts
 >;
 
+const mockRetry = jest.fn();
+
 const setup = ({
   orderedStakingProgramIds = [] as string[],
   isStakingContractsLoaded = true,
+  isStakingContractsError = false,
 } = {}) => {
   mockUseStakingContracts.mockReturnValue({
     currentStakingProgramId: null,
     orderedStakingProgramIds,
     isStakingContractsLoaded,
+    isStakingContractsError,
+    retryStakingContracts: mockRetry,
   } as ReturnType<typeof useStakingContracts>);
   return render(
     <SelectActivityRewardsConfiguration
@@ -72,14 +88,14 @@ describe('SelectActivityRewardsConfiguration — empty state (OPE-1919)', () => 
 
   it('shows an info alert when no contract is compatible with the service', () => {
     setup({ orderedStakingProgramIds: [], isStakingContractsLoaded: true });
-    expect(screen.getByTestId('empty-alert')).toHaveTextContent(
+    expect(screen.getByTestId('alert-info')).toHaveTextContent(
       'No compatible staking contracts are available for this agent yet.',
     );
   });
 
   it('shows nothing while the compatible list is still loading', () => {
     setup({ orderedStakingProgramIds: [], isStakingContractsLoaded: false });
-    expect(screen.queryByTestId('empty-alert')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('alert-info')).not.toBeInTheDocument();
   });
 
   it('renders a card per compatible contract and no alert', () => {
@@ -95,6 +111,17 @@ describe('SelectActivityRewardsConfiguration — empty state (OPE-1919)', () => 
     expect(
       screen.getByTestId(`card-${SECOND_STAKING_PROGRAM_ID}`),
     ).toBeInTheDocument();
-    expect(screen.queryByTestId('empty-alert')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('alert-info')).not.toBeInTheDocument();
+  });
+
+  it('shows an error alert with a working Retry when the multisig type could not be verified', () => {
+    setup({ isStakingContractsError: true });
+    expect(screen.getByTestId('alert-error')).toHaveTextContent(
+      'Could not verify which staking contracts your agent can use.',
+    );
+    expect(screen.queryByTestId('alert-info')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    expect(mockRetry).toHaveBeenCalledTimes(1);
   });
 });
