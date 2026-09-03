@@ -5,8 +5,8 @@
  * Staking contracts reject a stake when `keccak256(service.multisig.code)`
  * differs from `proxyHash()`. Pearl uses the flag to show each service only
  * the contracts it can stake on, so a wrong or missing flag surfaces as a
- * reverted stake for a real user. This check runs for every chain that has at
- * least one flagged program (Polygon today).
+ * reverted stake for a real user. Every program on every chain is checked, so
+ * an unflagged program that pins the PolySafe hash is caught too.
  *
  * Usage (from `frontend/`): `npx tsx ../scripts/js/check_staking_proxy_hashes.ts`
  * Override the RPC with `<CHAIN>_RPC` (e.g. `POLYGON_RPC`).
@@ -34,12 +34,27 @@ const RPC_ENV_BY_CHAIN: Record<EvmChainId, string> = {
 };
 
 const PROXY_HASH_ABI = ['function proxyHash() view returns (bytes32)'];
+const RETRIES = 3;
+const RETRY_DELAY_MS = 2000;
 
 let hasErrors = false;
 
 function logError(msg: string) {
   console.error(msg);
   hasErrors = true;
+}
+
+async function readProxyHash(contract: ethers.Contract): Promise<string | null> {
+  for (let attempt = 1; attempt <= RETRIES; attempt++) {
+    try {
+      return (await contract.proxyHash()).toLowerCase();
+    } catch {
+      if (attempt < RETRIES) {
+        await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS * attempt));
+      }
+    }
+  }
+  return null;
 }
 
 async function checkChain(chainId: EvmChainId): Promise<void> {
@@ -53,11 +68,9 @@ async function checkChain(chainId: EvmChainId): Promise<void> {
 
   for (const [programId, program] of Object.entries(programs)) {
     const contract = new ethers.Contract(program.address, PROXY_HASH_ABI, provider);
-    let proxyHash: string;
-    try {
-      proxyHash = (await contract.proxyHash()).toLowerCase();
-    } catch (error) {
-      logError(`❌ ${programId} (${program.address}): proxyHash() call failed — ${error}`);
+    const proxyHash = await readProxyHash(contract);
+    if (!proxyHash) {
+      logError(`❌ ${programId} (${program.address}): proxyHash() call failed after ${RETRIES} attempts`);
       continue;
     }
 
@@ -76,18 +89,9 @@ async function checkChain(chainId: EvmChainId): Promise<void> {
 }
 
 async function main(): Promise<void> {
-  const chainsWithPolySafePrograms = (
-    Object.keys(STAKING_PROGRAMS).map(Number) as EvmChainId[]
-  ).filter((chainId) =>
-    Object.values(STAKING_PROGRAMS[chainId]).some((p) => p.requiresPolySafe),
-  );
+  const chainIds = Object.keys(STAKING_PROGRAMS).map(Number) as EvmChainId[];
 
-  if (chainsWithPolySafePrograms.length === 0) {
-    console.log('No chain has requiresPolySafe programs — nothing to check.');
-    return;
-  }
-
-  for (const chainId of chainsWithPolySafePrograms) {
+  for (const chainId of chainIds) {
     console.log(`\nChecking staking proxy hashes on chain ${chainId}`);
     await checkChain(chainId);
   }

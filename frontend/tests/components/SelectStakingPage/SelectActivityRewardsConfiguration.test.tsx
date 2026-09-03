@@ -124,4 +124,68 @@ describe('SelectActivityRewardsConfiguration — empty state (OPE-1919)', () => 
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
     expect(mockRetry).toHaveBeenCalledTimes(1);
   });
+
+  // Review regression: the alert and the cards must agree within a single
+  // committed frame — no empty-state flash on first load, and no alert above
+  // a still-populated list when the compatible set collapses.
+  it('does not flash the empty-state alert on the first loaded render with a non-empty list', () => {
+    setup({ orderedStakingProgramIds: [DEFAULT_STAKING_PROGRAM_ID] });
+    expect(screen.queryByTestId('alert-info')).not.toBeInTheDocument();
+    expect(
+      screen.getByTestId(`card-${DEFAULT_STAKING_PROGRAM_ID}`),
+    ).toBeInTheDocument();
+  });
+
+  it('removes the cards in the same render that shows the empty-state alert', () => {
+    const { rerender } = setup({
+      orderedStakingProgramIds: [DEFAULT_STAKING_PROGRAM_ID],
+    });
+    mockUseStakingContracts.mockReturnValue({
+      currentStakingProgramId: null,
+      orderedStakingProgramIds: [],
+      isStakingContractsLoaded: true,
+      isStakingContractsError: false,
+      retryStakingContracts: mockRetry,
+    } as ReturnType<typeof useStakingContracts>);
+    rerender(
+      <SelectActivityRewardsConfiguration
+        mode="onboard"
+        currentStakingProgramId={null}
+      />,
+    );
+    expect(screen.getByTestId('alert-info')).toBeInTheDocument();
+    expect(
+      screen.queryByTestId(`card-${DEFAULT_STAKING_PROGRAM_ID}`),
+    ).not.toBeInTheDocument();
+  });
+
+  it('keeps the existing card order when the same ids arrive re-sorted', () => {
+    const { rerender } = setup({
+      orderedStakingProgramIds: [
+        DEFAULT_STAKING_PROGRAM_ID,
+        SECOND_STAKING_PROGRAM_ID,
+      ],
+    });
+    mockUseStakingContracts.mockReturnValue({
+      currentStakingProgramId: SECOND_STAKING_PROGRAM_ID,
+      orderedStakingProgramIds: [
+        SECOND_STAKING_PROGRAM_ID,
+        DEFAULT_STAKING_PROGRAM_ID,
+      ],
+      isStakingContractsLoaded: true,
+      isStakingContractsError: false,
+      retryStakingContracts: mockRetry,
+    } as ReturnType<typeof useStakingContracts>);
+    rerender(
+      <SelectActivityRewardsConfiguration
+        mode="onboard"
+        currentStakingProgramId={SECOND_STAKING_PROGRAM_ID}
+      />,
+    );
+    const cards = screen.getAllByTestId(/^card-/);
+    expect(cards.map((el) => el.getAttribute('data-testid'))).toEqual([
+      `card-${DEFAULT_STAKING_PROGRAM_ID}`,
+      `card-${SECOND_STAKING_PROGRAM_ID}`,
+    ]);
+  });
 });

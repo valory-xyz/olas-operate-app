@@ -301,7 +301,7 @@ Staking contracts pin `service.multisig.codehash`. The original six Polygon cont
   2. Service is staked on-chain (`activeStakingProgramId`) → the staked program's flag is proof either way (the contract enforces the codehash on stake), no RPC call. The service-stored `staking_program_id` is deliberately **not** used: it is only the user's choice and may predate a failed stake
   3. Service not deployed yet (no `chain_data.multisig`) → standard Safe (the middleware deploys a standard Safe for every new service)
   4. Otherwise `keccak256(eth_getCode(multisig)) === POLY_SAFE_PROXY_CODEHASH` via the provider of the service's `home_chain`, cached for the session (`staleTime`/`gcTime: Infinity`, `retry: 1`). On RPC failure the hook reports `isMultisigTypeError` instead of guessing; `useStakingContracts` then returns an empty list with `isStakingContractsError` and the list page shows an error alert with Retry.
-- `scripts/js/check_staking_proxy_hashes.ts` (run in CI next to the service-template check) reads `proxyHash()` from every program on chains that have `requiresPolySafe` entries and fails when a flag disagrees with the contract.
+- `scripts/js/check_staking_proxy_hashes.ts` (run in CI next to the service-template check) reads `proxyHash()` from every program on every chain and fails when a flag disagrees with the contract.
 - Neither group can see the other set on any list screen; `useStakingContracts` is the single list source for onboarding and switching.
 
 ### Reward streak (useRewardsHistory)
