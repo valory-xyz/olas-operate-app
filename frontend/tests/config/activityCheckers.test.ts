@@ -157,6 +157,9 @@ describe('POLYGON_STAKING_PROGRAMS_ACTIVITY_CHECKERS', () => {
     'PolystratI',
     'PolystratII',
     'PolystratIII',
+    'PolystratIV',
+    'PolystratV',
+    'PolystratVI',
   ] as const;
 
   it('has an activity checker for every Polygon staking program', () => {
@@ -168,10 +171,10 @@ describe('POLYGON_STAKING_PROGRAMS_ACTIVITY_CHECKERS', () => {
     }
   });
 
-  it('covers exactly 6 Polygon staking programs', () => {
+  it('covers exactly 9 Polygon staking programs', () => {
     expect(
       Object.keys(POLYGON_STAKING_PROGRAMS_ACTIVITY_CHECKERS),
-    ).toHaveLength(6);
+    ).toHaveLength(9);
   });
 });
 

@@ -122,6 +122,9 @@ jobs:
       - name: Check service templates
         run: cd frontend && npx tsx ../scripts/js/check_service_templates.ts
 
+      - name: Check staking multisig flags against on-chain proxyHash
+        run: cd frontend && npx tsx ../scripts/js/check_staking_proxy_hashes.ts
+
   frontend-tests:
     name: Frontend Tests
     runs-on: ubuntu-latest

@@ -5,7 +5,7 @@ import styled from 'styled-components';
 
 import { NoStakingRewardsAlert } from '@/components/NoStakingRewardsAlert';
 import { StakingContractCard } from '@/components/StakingContractCard';
-import { MainContentContainer } from '@/components/ui';
+import { Alert, MainContentContainer } from '@/components/ui';
 import { PAGES, StakingProgramId } from '@/constants';
 import {
   usePageState,
@@ -114,6 +114,19 @@ export const StakingRewardsWarning = ({
   );
 };
 
+/** True when the two lists contain a different SET of ids (order ignored). */
+const haveDifferentIds = (
+  current: StakingProgramId[],
+  next: StakingProgramId[],
+) => {
+  const currentSet = new Set(current);
+  const nextSet = new Set(next);
+  return (
+    next.some((id) => !currentSet.has(id)) ||
+    current.some((id) => !nextSet.has(id))
+  );
+};
+
 type SelectActivityRewardsConfigurationProps = {
   mode: SelectMode;
   backButton?: ReactNode;
@@ -129,28 +142,31 @@ export const SelectActivityRewardsConfiguration = ({
   onSelectStart,
   onSelectEnd,
 }: SelectActivityRewardsConfigurationProps) => {
-  const { orderedStakingProgramIds } = useStakingContracts();
-  const [stableOrder, setStableOrder] = useState<StakingProgramId[]>([]);
+  const {
+    orderedStakingProgramIds,
+    isStakingContractsLoaded,
+    isStakingContractsError,
+    retryStakingContracts,
+  } = useStakingContracts();
+  // Keep render order stable across renders: reset only when the SET of ids
+  // changes (agent switch / strict subset / superset), not when the same ids
+  // are re-sorted. Derived during render (React's "adjust state on prop
+  // change" pattern) rather than in an effect, so the cards and the alert
+  // below always reflect the same list within one committed frame — an
+  // effect would lag one paint behind and briefly show the empty-state alert
+  // above a populated list (or vice versa). Both-empty is a no-op, so the
+  // initial loading state doesn't loop.
+  const [stableOrder, setStableOrder] = useState<StakingProgramId[]>(
+    orderedStakingProgramIds,
+  );
+  if (haveDifferentIds(stableOrder, orderedStakingProgramIds)) {
+    setStableOrder(orderedStakingProgramIds);
+  }
 
-  // Keep render order stable across renders. Reset only when the SET of IDs
-  // changes (agent switch / strict subset / superset). Initial population is
-  // covered by `hasNewIds` (empty `stableOrder` makes every incoming id new).
-  // Do NOT add a `!stableOrder.length` guard — when both arrays are empty
-  // (initial loading state) it fires `setStableOrder([])` every render and
-  // produces "Maximum update depth exceeded" because each new `[]` ref
-  // changes the dep and re-triggers the effect.
-  useEffect(() => {
-    const nextSet = new Set(orderedStakingProgramIds);
-    const currentSet = new Set(stableOrder);
-    const hasNewIds = orderedStakingProgramIds.some(
-      (id) => !currentSet.has(id),
-    );
-    const hasRemovedIds = stableOrder.some((id) => !nextSet.has(id));
-
-    if (hasNewIds || hasRemovedIds) {
-      setStableOrder(orderedStakingProgramIds);
-    }
-  }, [orderedStakingProgramIds, stableOrder]);
+  const hasNoCompatibleContracts =
+    isStakingContractsLoaded &&
+    !isStakingContractsError &&
+    orderedStakingProgramIds.length === 0;
 
   return (
     <Flex vertical justify="center" className="w-full">
@@ -164,6 +180,31 @@ export const SelectActivityRewardsConfiguration = ({
           your agent.
         </Text>
       </MainContentContainer>
+
+      {isStakingContractsError && (
+        <MainContentContainer vertical className="mt-32">
+          <Alert
+            type="error"
+            showIcon
+            message="Could not verify which staking contracts your agent can use."
+            action={
+              <Button size="small" onClick={retryStakingContracts}>
+                Retry
+              </Button>
+            }
+          />
+        </MainContentContainer>
+      )}
+
+      {hasNoCompatibleContracts && (
+        <MainContentContainer vertical className="mt-32">
+          <Alert
+            type="info"
+            showIcon
+            message="No compatible staking contracts are available for this agent yet."
+          />
+        </MainContentContainer>
+      )}
 
       <StakingContractsWrapper>
         {stableOrder.map((stakingProgramId) => {
