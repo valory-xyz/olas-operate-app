@@ -246,4 +246,13 @@ export const POLYGON_STAKING_PROGRAMS_ACTIVITY_CHECKERS: Record<
   [STAKING_PROGRAM_IDS.PolystratIII]: getRequesterActivityCheckerContract(
     '0x5B70A66fe68c4c86FFd724B58cc56049c70e9D3D',
   ),
+  [STAKING_PROGRAM_IDS.PolystratIV]: getRequesterActivityCheckerContract(
+    '0x5B70A66fe68c4c86FFd724B58cc56049c70e9D3D',
+  ),
+  [STAKING_PROGRAM_IDS.PolystratV]: getRequesterActivityCheckerContract(
+    '0x5B70A66fe68c4c86FFd724B58cc56049c70e9D3D',
+  ),
+  [STAKING_PROGRAM_IDS.PolystratVI]: getRequesterActivityCheckerContract(
+    '0x5B70A66fe68c4c86FFd724B58cc56049c70e9D3D',
+  ),
 } as const;

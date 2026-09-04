@@ -34,6 +34,7 @@ export * from './useInitialFundingRequirements';
 export * from './useInsufficientGasModal';
 export * from './useIsAgentGeoRestricted';
 export * from './useIsInitiallyFunded';
+export * from './useIsPolySafeService';
 export * from './useLogs';
 export * from './useMasterBalances';
 export * from './useMasterSafeCreationAndTransfer';

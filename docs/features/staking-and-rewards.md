@@ -71,7 +71,8 @@ The user picks which staking program to use. The view cycles through these state
 
 - Default program = `selectedAgentConfig.defaultStakingProgramId` (from `frontend/config/agents.ts`)
 - "Change Configuration" button toggles to list view (`LIST_MANUAL`)
-- List is ordered by `useStakingContracts`: current program first (shown even if deprecated), other deprecated programs hidden, filtered by `agentsSupported`. `currentStakingProgramId` here is the on-chain (subgraph) program falling back to the service-stored `staking_program_id` — it never falls back to the agent-config default, so the "Selected" badge can't land on a contract the user never joined (OPE-1841)
+- List is ordered by `useStakingContracts`: current program first (shown even if deprecated), other deprecated programs hidden, filtered by `agentsSupported`, then filtered by multisig compatibility (see "Multisig compatibility" below). `currentStakingProgramId` here is the on-chain (subgraph) program falling back to the service-stored `staking_program_id` — it never falls back to the agent-config default, so the "Selected" badge can't land on a contract the user never joined (OPE-1841)
+- If the agent-config default is not in the compatible list, the page skips the "Recommended configuration" card and shows the list directly (with an info alert when the list is empty). The Back button is hidden in that case so the user can't reach the incompatible recommended card (OPE-1919)
 - On selection, `SelectStakingButton` writes the chosen `staking_program_id` to the service config before first deploy
 
 ### Main page — Staking block
@@ -156,7 +157,8 @@ AutoRun uses staking eligibility as its primary scheduling signal. The key funct
 - `frontend/context/StakingContractDetailsProvider.tsx` — contract details caching + refetch logic
 - `frontend/context/RewardProvider.tsx` — rewards state + optimistic calculation
 - `frontend/hooks/useStakingProgram.ts` — program metadata (active, default, selected, all available)
-- `frontend/hooks/useStakingContracts.ts` — ordered list of available programs (active first, deprecated filtered)
+- `frontend/hooks/useStakingContracts.ts` — ordered list of available programs (active first, deprecated + multisig-incompatible filtered)
+- `frontend/hooks/useIsPolySafeService.ts` — detects whether the service multisig is a PolySafe (fast path via program, else `eth_getCode` hash)
 - `frontend/hooks/useStakingContractDetails.ts` — contract state for any program + active contract eligibility
 - `frontend/hooks/useStakingContractCountdown.ts` — minimum staking duration countdown timer
 - `frontend/hooks/useStakingDetails.ts` — reward streak + current epoch lifetime
@@ -164,7 +166,7 @@ AutoRun uses staking eligibility as its primary scheduling signal. The key funct
 - `frontend/hooks/useStakingRewardsOf.ts` — multi-service rewards aggregation across a chain
 - `frontend/hooks/useAgentStakingRewardsDetails.ts` — single-service rewards + eligibility query
 - `frontend/hooks/useRewardsHistory.ts` — GraphQL subgraph query + epoch grouping + streak
-- `frontend/utils/stakingProgram.ts` — `deriveStakingProgramId()` address normalization
+- `frontend/utils/stakingProgram.ts` — `deriveStakingProgramId()` address normalization, `getCompatibleStakingProgramIds()` list ordering/filtering
 - `frontend/utils/stakingRewards.ts` — `fetchAgentStakingRewardsInfo()` shared fetcher
 
 ## Contract / schema
@@ -281,12 +283,26 @@ Derives several status flags from `selectedStakingContractDetails`:
 
 `orderedStakingProgramIds` is built by filtering and sorting available programs:
 
-1. Place the current staking program first — even if deprecated, so a user staked in a legacy contract can still see it marked as selected
+1. Place the current staking program first — even if deprecated or incompatible, so a user staked in a legacy contract can still see it marked as selected
 2. Skip remaining deprecated programs
 3. Skip programs that don't support the selected agent type
-4. Append remaining programs in original order
+4. Skip programs whose multisig requirement doesn't match the service (see below)
+5. Append remaining programs in original order
 
-Returns empty array while `isActiveStakingProgramLoaded` is false.
+The pure logic lives in `getCompatibleStakingProgramIds()` (`frontend/utils/stakingProgram.ts`). Returns empty array (and `isStakingContractsLoaded: false`) while `isActiveStakingProgramLoaded` or `isMultisigTypeLoaded` is false.
+
+### Multisig compatibility (OPE-1919)
+
+Staking contracts pin `service.multisig.codehash`. The original six Polygon contracts (Polygon Beta I–III, Polystrat I–III) only accept services deployed with a **PolySafe** multisig (`proxyHash() = POLY_SAFE_PROXY_CODEHASH`), while new Pearl versions deploy a standard Safe — so old and new Polystrat services need different contract sets. Polystrat IV/V/VI (same 100/1000/10000 OLAS tiers, same activity checker) accept a standard Safe and are the default for new services (`defaultStakingProgramId: PolystratIV`).
+
+- `StakingProgramConfig.requiresPolySafe: true` marks a contract as PolySafe-only. Absent = standard Safe (every other chain). Never mark these programs `deprecated` while PolySafe services exist — their users would get an empty list.
+- `useIsPolySafeService` (`frontend/hooks/useIsPolySafeService.ts`) detects the service's multisig type, in order:
+  1. Chain has no `requiresPolySafe` programs → standard Safe, no RPC call
+  2. Service is staked on-chain (`activeStakingProgramId`) → the staked program's flag is proof either way (the contract enforces the codehash on stake), no RPC call. The service-stored `staking_program_id` is deliberately **not** used: it is only the user's choice and may predate a failed stake
+  3. Service not deployed yet (no `chain_data.multisig`) → standard Safe (the middleware deploys a standard Safe for every new service)
+  4. Otherwise `keccak256(eth_getCode(multisig)) === POLY_SAFE_PROXY_CODEHASH` via the provider of the service's `home_chain`, cached for the session (`staleTime`/`gcTime: Infinity`, `retry: 1`). On RPC failure the hook reports `isMultisigTypeError` instead of guessing; `useStakingContracts` then returns an empty list with `isStakingContractsError` and the list page shows an error alert with Retry.
+- `scripts/js/check_staking_proxy_hashes.ts` (run in CI next to the service-template check) reads `proxyHash()` from every program on every chain and fails when a flag disagrees with the contract.
+- Neither group can see the other set on any list screen; `useStakingContracts` is the single list source for onboarding and switching.
 
 ### Reward streak (useRewardsHistory)
 

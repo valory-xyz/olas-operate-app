@@ -153,7 +153,7 @@ export const AGENT_CONFIG: {
         [TokenSymbolMap.pUSD]: getPolystratPusdConfig(),
       },
     },
-    defaultStakingProgramId: STAKING_PROGRAM_IDS.PolystratI,
+    defaultStakingProgramId: STAKING_PROGRAM_IDS.PolystratIV,
     serviceApi: Polystrat,
     displayName: 'Polystrat',
     description: 'Participates in prediction markets on Polymarket.',

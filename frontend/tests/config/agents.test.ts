@@ -3,6 +3,7 @@ import {
   AGENT_CONFIG,
   AVAILABLE_FOR_ADDING_AGENTS,
 } from '../../config/agents';
+import { STAKING_PROGRAMS } from '../../config/stakingPrograms';
 import { TokenSymbolMap } from '../../config/tokens';
 import { AgentMap } from '../../constants/agent';
 import { EvmChainIdMap } from '../../constants/chains';
@@ -241,4 +242,27 @@ describe('defensive guard: getPolystratPusdConfig throws when pUSD config is mis
       });
     }).toThrow('Polystrat pUSD config not found');
   });
+});
+
+// The Select Staking page recommends `defaultStakingProgramId` as-is, and
+// switches to the full list when the default is not in the selectable set.
+// Guard the config so a deprecated / unsupported default can't silently
+// remove the "Recommended configuration" card (see SelectStakingPage).
+describe('AGENT_CONFIG defaultStakingProgramId', () => {
+  it.each(
+    Object.entries(AGENT_CONFIG).filter(
+      ([, config]) =>
+        config.isAgentEnabled &&
+        config.defaultStakingProgramId !== 'no_staking',
+    ),
+  )(
+    '%s default is a non-deprecated program on its home chain that supports the agent',
+    (agentType, config) => {
+      const program =
+        STAKING_PROGRAMS[config.evmHomeChainId][config.defaultStakingProgramId];
+      expect(program).toBeDefined();
+      expect(program.deprecated).toBeFalsy();
+      expect(program.agentsSupported).toContain(agentType);
+    },
+  );
 });
