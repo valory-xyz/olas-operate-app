@@ -25,8 +25,8 @@ const surveyState = (overrides = {}) => ({
 const renderSurvey = (overrides = {}) => {
   const state = surveyState(overrides);
   mockUseOnboardingSurvey.mockReturnValue(state);
-  render(<OnboardingSurvey />);
-  return state;
+  const utils = render(<OnboardingSurvey />);
+  return { ...state, ...utils };
 };
 
 /** Ticks the checkbox inside the card carrying `label`. */
@@ -223,6 +223,73 @@ describe('OnboardingSurvey', () => {
 
       expect(screen.getByRole('button', { name: 'Continue' })).toBeDisabled();
       expect(state.submitEverythingSmooth).not.toHaveBeenCalled();
+    });
+  });
+
+  // The component stays mounted while the modal is closed, so its step and selections outlive a
+  // dismissal. These cover the transition, not the frame.
+  describe('reopening from the nudge', () => {
+    it('returns to step 1 with the previous selections cleared', () => {
+      const state = renderSurvey();
+
+      pick('Funding your agent');
+      fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+      expect(
+        screen.getByText('How was your experience overall?'),
+      ).toBeInTheDocument();
+
+      // Dismiss, then reopen — what the sidebar nudge does.
+      mockUseOnboardingSurvey.mockReturnValue({ ...state, isModalOpen: false });
+      state.rerender(<OnboardingSurvey />);
+      mockUseOnboardingSurvey.mockReturnValue({ ...state, isModalOpen: true });
+      state.rerender(<OnboardingSurvey />);
+
+      expect(screen.getByText('How did setup go?')).toBeInTheDocument();
+      const card = screen
+        .getByText('Funding your agent')
+        .closest('label') as HTMLElement;
+      expect(card.querySelector('input')).not.toBeChecked();
+    });
+
+    it('does not come back on the success view after a completed submission', async () => {
+      const state = renderSurvey();
+
+      pick('Everything was smooth');
+      fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+      await screen.findByText('Thanks for your feedback!');
+
+      mockUseOnboardingSurvey.mockReturnValue({ ...state, isModalOpen: false });
+      state.rerender(<OnboardingSurvey />);
+      mockUseOnboardingSurvey.mockReturnValue({ ...state, isModalOpen: true });
+      state.rerender(<OnboardingSurvey />);
+
+      expect(screen.getByText('How did setup go?')).toBeInTheDocument();
+      expect(
+        screen.queryByText('Thanks for your feedback!'),
+      ).not.toBeInTheDocument();
+    });
+
+    it('clears a failed attempt so the retry starts clean', async () => {
+      const state = renderSurvey({
+        submit: jest.fn().mockResolvedValue({ success: false, error: 'boom' }),
+      });
+
+      pick('Other');
+      fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+      fireEvent.click(screen.getByText('Bad'));
+      fireEvent.click(screen.getByRole('button', { name: 'Send Feedback' }));
+      await waitFor(() => expect(state.submit).toHaveBeenCalledTimes(1));
+
+      mockUseOnboardingSurvey.mockReturnValue({ ...state, isModalOpen: false });
+      state.rerender(<OnboardingSurvey />);
+      mockUseOnboardingSurvey.mockReturnValue({ ...state, isModalOpen: true });
+      state.rerender(<OnboardingSurvey />);
+
+      // Back at step 1, not stuck mid-flight on a step 2 that still shows the old rating.
+      expect(screen.getByText('How did setup go?')).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: 'Continue' }),
+      ).not.toBeDisabled();
     });
   });
 

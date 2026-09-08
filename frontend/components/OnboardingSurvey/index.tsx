@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Modal } from '@/components/ui';
 import { useOnboardingSurvey } from '@/hooks';
@@ -49,6 +49,23 @@ export const OnboardingSurvey = () => {
   const [rating, setRating] = useState<SurveyRating | null>(null);
   const [comment, setComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Reopening from the nudge must land on a clean step 1. The component stays mounted while the
+  // modal is closed — it only renders null — so without this a user who dismisses from step 2
+  // comes back to step 2 with their old answers, or worse to the success view of a submission
+  // they already made. Reset on the closed → open edge rather than on close, so a modal closed
+  // by anything other than the two handlers below is covered too.
+  const wasOpenRef = useRef(isModalOpen);
+  useEffect(() => {
+    if (isModalOpen && !wasOpenRef.current) {
+      setStep('friction');
+      setFrictionAreas([]);
+      setRating(null);
+      setComment('');
+      setIsSubmitting(false);
+    }
+    wasOpenRef.current = isModalOpen;
+  }, [isModalOpen]);
 
   const handleContinue = useCallback(async () => {
     // Fast exit — skip step 2 entirely and submit an automatic Good rating.
