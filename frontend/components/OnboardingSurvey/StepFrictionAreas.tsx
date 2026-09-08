@@ -1,4 +1,4 @@
-import { Button, Checkbox, Flex } from 'antd';
+import { Button, Checkbox, Flex, Typography } from 'antd';
 import styled from 'styled-components';
 
 import { COLOR } from '@/constants';
@@ -6,6 +6,8 @@ import { FrictionAreaId } from '@/service/OnboardingSurvey';
 
 import { EVERYTHING_SMOOTH_OPTION, FRICTION_AREA_OPTIONS } from './constants';
 import { selectableCardStyles } from './SelectableCard';
+
+const { Text } = Typography;
 
 const OptionCard = styled.label<{ $selected: boolean }>`
   ${selectableCardStyles}
@@ -18,8 +20,7 @@ const OptionCard = styled.label<{ $selected: boolean }>`
 
 const Separator = styled.div`
   width: 100%;
-  height: 1px;
-  background: ${COLOR.GRAY_4};
+  border-top: 1px dashed ${COLOR.GRAY_3};
 `;
 
 type StepFrictionAreasProps = {
@@ -70,7 +71,14 @@ export const StepFrictionAreas = ({
               checked={isChecked}
               onChange={() => toggleFrictionArea(option.id)}
             />
-            {option.label}
+            <span>
+              {option.label}
+              {'hint' in option && (
+                <Text type="secondary" className="ml-4">
+                  {option.hint}
+                </Text>
+              )}
+            </span>
           </OptionCard>
         );
       })}
@@ -91,9 +99,10 @@ export const StepFrictionAreas = ({
         className="w-full mt-24"
         onClick={onContinue}
         loading={isSubmitting}
-        // The fast exit submits from this step, so it needs a connection; every other path only
+        // Nothing picked yet is not a valid answer (the design shows the button disabled). The
+        // fast exit submits from this step, so it also needs a connection; every other path only
         // moves to step 2 and can proceed offline.
-        disabled={isEverythingSmooth && !isOnline}
+        disabled={selected.length === 0 || (isEverythingSmooth && !isOnline)}
       >
         Continue
       </Button>

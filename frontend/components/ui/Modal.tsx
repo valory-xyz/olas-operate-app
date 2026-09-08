@@ -48,12 +48,21 @@ const MODAL_STYLES: AntdModalProps['styles'] = {
   },
 };
 
+type ModalAlign = 'center' | 'flex-start';
+
 type ModalProps = {
   header?: ReactNode;
   title?: string;
   description?: ReactNode;
   size?: ModalSize;
+  /** Overrides the size's default alignment, e.g. a left-aligned 450px modal. */
+  align?: ModalAlign;
   action?: ReactNode;
+};
+
+const textAlignClassMap: Record<ModalAlign, string> = {
+  center: 'text-center',
+  'flex-start': 'text-left',
 };
 
 export const Modal = ({
@@ -61,11 +70,18 @@ export const Modal = ({
   title,
   description,
   size = 'medium',
+  align,
   action = null,
   closable = false,
   ...props
 }: ModalProps & AntdModalProps) => {
-  const sizeStyles = modalStylesMap[size];
+  const sizeStyles = {
+    ...modalStylesMap[size],
+    ...(align && {
+      flexAlign: align,
+      textAlignClass: textAlignClassMap[align],
+    }),
+  };
 
   return (
     <AntdModal

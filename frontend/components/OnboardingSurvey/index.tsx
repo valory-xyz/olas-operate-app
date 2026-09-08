@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { RiRobot3Line } from 'react-icons/ri';
+import styled from 'styled-components';
 
 import { Modal } from '@/components/ui';
+import { COLOR } from '@/constants';
 import { useOnboardingSurvey } from '@/hooks';
 import { FrictionAreaId, SurveyRating } from '@/service/OnboardingSurvey';
 
@@ -10,6 +13,18 @@ import { StepRating } from './StepRating';
 import { SurveySuccess } from './SurveySuccess';
 
 type Step = 'friction' | 'rating' | 'success';
+
+/** The agent avatar tile the design puts above the title. */
+const HeaderIcon = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  background: ${COLOR.GRAY_1};
+  color: ${COLOR.TEXT};
+`;
 
 const STEP_COPY: Record<Step, { title: string; description?: string }> = {
   friction: {
@@ -109,6 +124,12 @@ export const OnboardingSurvey = () => {
       onCancel={handleCancel}
       closable
       size="medium"
+      align="flex-start"
+      header={
+        <HeaderIcon>
+          <RiRobot3Line size={28} />
+        </HeaderIcon>
+      }
       title={title}
       description={description}
       action={

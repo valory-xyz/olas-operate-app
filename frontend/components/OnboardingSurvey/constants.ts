@@ -39,7 +39,7 @@ export const FRICTION_AREA_OPTIONS = [
   { id: 'activity_rewards', label: 'Understanding activity rewards' },
   { id: 'funding_agent', label: 'Funding your agent' },
   { id: 'agent_activity', label: 'Understanding what your agent does' },
-  { id: 'other', label: 'Other' },
+  { id: 'other', label: 'Other', hint: '(please describe in the next step)' },
 ] as const;
 
 /**

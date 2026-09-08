@@ -63,6 +63,15 @@ describe('OnboardingSurvey', () => {
     ].forEach((label) => expect(screen.getByText(label)).toBeInTheDocument());
   });
 
+  it('keeps Continue disabled until something is picked', () => {
+    renderSurvey();
+
+    expect(screen.getByRole('button', { name: 'Continue' })).toBeDisabled();
+
+    pick('Other');
+    expect(screen.getByRole('button', { name: 'Continue' })).not.toBeDisabled();
+  });
+
   it('advances to step 2 when a friction area is selected', () => {
     renderSurvey();
 
@@ -285,11 +294,12 @@ describe('OnboardingSurvey', () => {
       mockUseOnboardingSurvey.mockReturnValue({ ...state, isModalOpen: true });
       state.rerender(<OnboardingSurvey />);
 
-      // Back at step 1, not stuck mid-flight on a step 2 that still shows the old rating.
+      // Back at step 1 with the selection cleared, not stuck mid-flight on a step 2 that still
+      // shows the old rating. Continue is disabled again only because nothing is picked.
       expect(screen.getByText('How did setup go?')).toBeInTheDocument();
-      expect(
-        screen.getByRole('button', { name: 'Continue' }),
-      ).not.toBeDisabled();
+      const card = screen.getByText('Other').closest('label') as HTMLElement;
+      expect(card.querySelector('input')).not.toBeChecked();
+      expect(screen.getByRole('button', { name: 'Continue' })).toBeDisabled();
     });
   });
 
