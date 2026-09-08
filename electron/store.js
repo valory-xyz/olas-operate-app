@@ -19,6 +19,11 @@ const schema = {
   pearlStoreMigrationComplete: { type: 'boolean', default: false },
   // Set to true once the autoRun.enabled repair has been checked.
   pearlStoreAutoRunRepaired: { type: 'boolean', default: false },
+  // ISO timestamp of the very first launch, written once by main.js. Deliberately Electron-native
+  // rather than backend-bound: it is recorded before an account exists, so before
+  // .operate/pearl_store.json exists. Used to measure time-to-first-success for the post-setup
+  // questionnaire, which reports `null` when it is empty.
+  firstAppOpenedAt: { type: 'string', default: '' },
   // Queue of backend-bound writes and deletes that failed (e.g. backend
   // unreachable during shutdown). Flushed to the backend on the next successful
   // startup before hydration reads pearl_store.json. `op` is optional so
@@ -53,6 +58,16 @@ const schema = {
  */
 const setupStoreIpc = (ipcMain) => {
   const store = new Store({ schema });
+
+  // Stamp the first-ever launch, once. Written here rather than in main.js so there is a single
+  // Store instance for the schema, and from the main process rather than the renderer so it
+  // records the launch itself and not the first React render — the gap between the two is part
+  // of what time-to-first-success measures. Existing installs stamp on their first launch after
+  // this ships; the survey classifies those accounts as timing-unavailable instead of reporting
+  // a duration measured from the wrong moment.
+  if (!store.get('firstAppOpenedAt')) {
+    store.set('firstAppOpenedAt', new Date().toISOString());
+  }
 
   // exposed to electron browser window
   ipcMain.handle('store', () => store.store);

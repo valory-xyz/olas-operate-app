@@ -143,6 +143,9 @@ export const WEB3AUTH_SWAP_OWNER_URL = `${WEB3AUTH_GATEWAY_URL}/swap-owner-sessi
 // support API
 export const SUPPORT_API_URL = `${PEARL_API_URL}/api/zendesk`;
 
+// onboarding survey (OPE-1899) — one anonymous row per submission
+export const ONBOARDING_SURVEY_API_URL = `${PEARL_API_URL}/api/feedback/onboarding-survey`;
+
 // geo eligibility
 export const GEO_ELIGIBILITY_API_URL = `${PEARL_API_URL}/api/geo/agent-eligibility`;
 export const GEO_ELIGIBILITY_DOCS_URL =

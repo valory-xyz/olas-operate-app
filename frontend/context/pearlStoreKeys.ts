@@ -11,6 +11,7 @@ export const ELECTRON_NATIVE_KEYS = new Set([
   'pearlStoreMigrationComplete',
   'pearlStoreAutoRunRepaired',
   'pendingStoreWrites',
+  'firstAppOpenedAt',
 ]);
 
 /**
@@ -35,4 +36,5 @@ export const BACKEND_BOUND_KEYS: (keyof PearlStore)[] = [
   'autoRun',
   'recoveryPhraseBackedUp',
   'keepDeviceAwake',
+  'onboardingSurvey',
 ];

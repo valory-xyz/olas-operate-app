@@ -18,6 +18,7 @@ import {
 } from 'react-icons/tb';
 import styled from 'styled-components';
 
+import { SurveyNudge } from '@/components/OnboardingSurvey/SurveyNudge';
 import { ACTIVE_AGENTS, AGENT_CONFIG } from '@/config/agents';
 import {
   AgentType,
@@ -339,6 +340,7 @@ export const Sidebar = () => {
             <BackupSeedPhraseAlert />
             <BackupWalletAlert />
             <UpdateAvailableAlert onOpen={openUpdateModal} />
+            <SurveyNudge />
             <UpdateAvailableModal
               isOpen={isUpdateModalOpen}
               onClose={closeUpdateModal}

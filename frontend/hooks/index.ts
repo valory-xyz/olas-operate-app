@@ -40,6 +40,7 @@ export * from './useMasterBalances';
 export * from './useMasterSafeCreationAndTransfer';
 export * from './useMnemonicExists';
 export * from './useMultisig';
+export * from './useOnboardingSurvey';
 export * from './useOnlineStatus';
 export * from './useOnRampContext';
 export * from './usePageState';
