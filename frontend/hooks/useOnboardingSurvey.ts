@@ -326,7 +326,11 @@ export const useOnboardingSurvey = () => {
   );
 
   return {
-    isModalOpen: isEligible && session.isOpen,
+    // Deliberately not gated on `isEligible`. Submitting writes `completed`, which makes the
+    // survey ineligible — gating here would tear the modal down before the user ever sees the
+    // success view. Everything that *starts* a session (auto-open, `open`) is gated instead.
+    isModalOpen:
+      IS_ONBOARDING_SURVEY_ENABLED && isStoreHydrated && session.isOpen,
     showNudge: Boolean(isEligible && survey.firstShownAt && !session.isOpen),
     isOnline,
     open,

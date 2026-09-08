@@ -545,6 +545,38 @@ describe('useOnboardingSurvey', () => {
       });
     });
 
+    it('stays open after a successful submission so the success view can render', async () => {
+      // Submitting writes `completed`, which makes the survey ineligible. If that also closed
+      // the modal, the user would never see the thank-you screen.
+      const { result, rerender } = setupForSubmit();
+      act(() => result.current.open());
+      await waitFor(() => expect(result.current.isModalOpen).toBe(true));
+
+      await act(async () => {
+        await result.current.submit({
+          frictionAreas: [],
+          rating: 3,
+          comment: '',
+        });
+      });
+
+      // Replay the store write the way StoreProvider would.
+      mockUseStore.mockReturnValue({
+        storeState: makePearlStore({
+          onboardingSurvey: makeOnboardingSurveyState({
+            firstShownAt: shownAt,
+            agentType: AgentMap.Polystrat,
+            timingUnavailable: false,
+            completed: true,
+          }),
+        }),
+      });
+      rerender();
+
+      expect(result.current.isModalOpen).toBe(true);
+      expect(result.current.showNudge).toBe(false);
+    });
+
     it('leaves the nudge in place and records nothing when the request fails', async () => {
       mockSubmit.mockResolvedValue({ success: false, error: 'boom' });
       const { result } = setupForSubmit({ dismissed: true });
