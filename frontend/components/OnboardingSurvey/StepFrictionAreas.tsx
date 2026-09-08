@@ -1,4 +1,4 @@
-import { Button, Checkbox, Flex, Typography } from 'antd';
+import { Button, Checkbox, Flex } from 'antd';
 import styled from 'styled-components';
 
 import { COLOR } from '@/constants';
@@ -7,9 +7,7 @@ import { FrictionAreaId } from '@/service/OnboardingSurvey';
 import { EVERYTHING_SMOOTH_OPTION, FRICTION_AREA_OPTIONS } from './constants';
 import { selectableCardStyles } from './SelectableCard';
 
-const { Text } = Typography;
-
-const OptionCard = styled.label<{ $selected: boolean }>`
+const OptionCard = styled.label<{ $selected: boolean; $disabled?: boolean }>`
   ${selectableCardStyles}
   display: flex;
   align-items: center;
@@ -18,9 +16,20 @@ const OptionCard = styled.label<{ $selected: boolean }>`
   text-align: left;
 `;
 
+const Hint = styled.span`
+  margin-left: 4px;
+  color: ${COLOR.TEXT_NEUTRAL_TERTIARY};
+`;
+
+/** 1px dashed rule with a 4px dash / 4px gap, which `border-style: dashed` cannot pin down. */
 const Separator = styled.div`
   width: 100%;
-  border-top: 1px dashed ${COLOR.GRAY_3};
+  height: 1px;
+  background-image: repeating-linear-gradient(
+    90deg,
+    ${COLOR.GRAY_3} 0 4px,
+    transparent 4px 8px
+  );
 `;
 
 type StepFrictionAreasProps = {
@@ -35,8 +44,9 @@ type StepFrictionAreasProps = {
  * Step 1 — the multi-select.
  *
  * "Everything was smooth" is the fast exit and is mutually exclusive with the friction options:
- * picking it clears them and vice versa. pearl-api enforces the same rule, so a UI bug fails
- * loudly rather than writing a nonsense row.
+ * it is disabled while any friction option is picked, and picking a friction option while it is
+ * selected clears it. pearl-api enforces the same rule, so a UI bug fails loudly rather than
+ * writing a nonsense row.
  */
 export const StepFrictionAreas = ({
   selected,
@@ -46,6 +56,7 @@ export const StepFrictionAreas = ({
   isOnline,
 }: StepFrictionAreasProps) => {
   const isEverythingSmooth = selected.includes(EVERYTHING_SMOOTH_OPTION.id);
+  const isFastExitDisabled = selected.length > 0 && !isEverythingSmooth;
 
   const toggleFrictionArea = (id: FrictionAreaId) => {
     const withoutFastExit = selected.filter(
@@ -62,7 +73,7 @@ export const StepFrictionAreas = ({
     onChange(isEverythingSmooth ? [] : [EVERYTHING_SMOOTH_OPTION.id]);
 
   return (
-    <Flex vertical gap={8} className="w-full mt-24">
+    <Flex vertical gap={6} className="w-full mt-16">
       {FRICTION_AREA_OPTIONS.map((option) => {
         const isChecked = selected.includes(option.id);
         return (
@@ -73,21 +84,19 @@ export const StepFrictionAreas = ({
             />
             <span>
               {option.label}
-              {'hint' in option && (
-                <Text type="secondary" className="ml-4">
-                  {option.hint}
-                </Text>
-              )}
+              {'hint' in option && <Hint>{option.hint}</Hint>}
             </span>
           </OptionCard>
         );
       })}
 
+      {/* 6px list gap + 6px margin = the design's 12px either side of the rule. */}
       <Separator className="my-6" />
 
-      <OptionCard $selected={isEverythingSmooth}>
+      <OptionCard $selected={isEverythingSmooth} $disabled={isFastExitDisabled}>
         <Checkbox
           checked={isEverythingSmooth}
+          disabled={isFastExitDisabled}
           onChange={toggleEverythingSmooth}
         />
         {EVERYTHING_SMOOTH_OPTION.label}

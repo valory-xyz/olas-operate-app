@@ -54,13 +54,36 @@ export const EVERYTHING_SMOOTH_OPTION = {
 /** Rating recorded for the fast-exit path, where the user is never asked. 3 = Good. */
 export const EVERYTHING_SMOOTH_RATING = 3;
 
+/** Which of the app's semantic colour sets a picked rating is tinted with. */
+export type RatingTone = 'error' | 'warning' | 'success';
+
 /**
  * Three-grade rating, worst to best. The images are PNGs rather than literal emoji: emoji render
  * differently across macOS, Windows and Linux, and a Linux install may have no colour emoji font
  * at all.
  */
-export const RATING_OPTIONS = [
-  { value: 1, label: 'Bad', icon: '/onboarding-survey-rating-bad.png' },
-  { value: 2, label: 'OK', icon: '/onboarding-survey-rating-ok.png' },
-  { value: 3, label: 'Good', icon: '/onboarding-survey-rating-good.png' },
-] as const;
+export const RATING_OPTIONS: ReadonlyArray<{
+  value: 1 | 2 | 3;
+  label: string;
+  icon: string;
+  tone: RatingTone;
+}> = [
+  {
+    value: 1,
+    label: 'Bad',
+    icon: '/onboarding-survey-rating-bad.png',
+    tone: 'error',
+  },
+  {
+    value: 2,
+    label: 'OK',
+    icon: '/onboarding-survey-rating-ok.png',
+    tone: 'warning',
+  },
+  {
+    value: 3,
+    label: 'Good',
+    icon: '/onboarding-survey-rating-good.png',
+    tone: 'success',
+  },
+];

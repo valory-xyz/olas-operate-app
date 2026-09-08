@@ -110,9 +110,11 @@ export const Modal = ({
             {title}
           </Title>
         )}
-        <Text type="secondary" className={sizeStyles.textAlignClass}>
-          {description}
-        </Text>
+        {description && (
+          <Text type="secondary" className={sizeStyles.textAlignClass}>
+            {description}
+          </Text>
+        )}
         {action}
       </Flex>
     </AntdModal>

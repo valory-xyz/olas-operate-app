@@ -14,7 +14,7 @@ address, `serviceConfigId` or account identifier is attached, by product require
 firstStakingRewardAchieved (RewardProvider)  ─┐
 Home: view === 'profile'  (Connect only)     ─┴─► useOnboardingSurvey
                                                    ├── OnboardingSurvey  (modal, from MainPage)
-                                                   ├── SurveyNudge       (sidebar)
+                                                   ├── FeedbackAlert     (sidebar)
                                                    └── OnboardingSurveyService.submit → pearl-api
 ```
 
@@ -23,7 +23,7 @@ Home: view === 'profile'  (Connect only)     ─┴─► useOnboardingSurvey
 - `frontend/hooks/useOnboardingSurvey.ts` — trigger, gating, expiry, timing classification, submission
 - `frontend/components/OnboardingSurvey/constants.ts` — kill switch, option ids and labels, 2-week window
 - `frontend/components/OnboardingSurvey/index.tsx` — modal shell; owns step state and the selections
-- `frontend/components/OnboardingSurvey/SurveyNudge.tsx` — sidebar reminder
+- `frontend/components/OnboardingSurvey/FeedbackAlert.tsx` — sidebar alert
 - `frontend/service/OnboardingSurvey.ts` — the POST and its payload type
 - `frontend/types/ElectronApi.ts` — `OnboardingSurveyState`, `OsInfo`, `ElectronStore.firstAppOpenedAt`
 - `electron/store.js` — `firstAppOpenedAt` schema key, stamped once at first launch

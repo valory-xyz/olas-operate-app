@@ -96,22 +96,38 @@ describe('OnboardingSurvey', () => {
     expect(card.querySelector('input')).toBeChecked();
   });
 
-  it('makes the fast exit mutually exclusive with the friction options', () => {
+  it('disables the fast exit while any friction option is picked', () => {
     renderSurvey();
 
+    const fastExit = () =>
+      screen.getByText('Everything was smooth').closest('label') as HTMLElement;
+    expect(fastExit().querySelector('input')).not.toBeDisabled();
+
     pick('Funding your agent');
+    expect(fastExit().querySelector('input')).toBeDisabled();
+
+    // Clicking a disabled checkbox must not select it.
     pick('Everything was smooth');
+    expect(fastExit().querySelector('input')).not.toBeChecked();
 
-    const friction = screen
-      .getByText('Funding your agent')
-      .closest('label') as HTMLElement;
-    expect(friction.querySelector('input')).not.toBeChecked();
+    pick('Funding your agent');
+    expect(fastExit().querySelector('input')).not.toBeDisabled();
+  });
 
+  it('clears the fast exit when a friction option is picked after it', () => {
+    renderSurvey();
+
+    pick('Everything was smooth');
     pick('Understanding activity rewards');
+
     const fastExit = screen
       .getByText('Everything was smooth')
       .closest('label') as HTMLElement;
     expect(fastExit.querySelector('input')).not.toBeChecked();
+    const friction = screen
+      .getByText('Understanding activity rewards')
+      .closest('label') as HTMLElement;
+    expect(friction.querySelector('input')).toBeChecked();
   });
 
   it('the fast exit skips step 2 and lands on the success view', async () => {
@@ -136,11 +152,16 @@ describe('OnboardingSurvey', () => {
     pick('Other');
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
 
+    // Nothing is pre-selected.
+    expect(
+      screen.queryByRole('radio', { checked: true }),
+    ).not.toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: 'Send Feedback' }),
     ).toBeDisabled();
 
     fireEvent.click(screen.getByText('OK'));
+    expect(screen.getByRole('radio', { checked: true })).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: 'Send Feedback' }),
     ).not.toBeDisabled();
@@ -152,10 +173,9 @@ describe('OnboardingSurvey', () => {
     pick('Setting up backup wallet');
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
     fireEvent.click(screen.getByText('Bad'));
-    fireEvent.change(
-      screen.getByPlaceholderText('What issues did you encounter?'),
-      { target: { value: 'the deposit address confused me' } },
-    );
+    fireEvent.change(screen.getByRole('textbox'), {
+      target: { value: 'the deposit address confused me' },
+    });
     fireEvent.click(screen.getByRole('button', { name: 'Send Feedback' }));
 
     await waitFor(() =>

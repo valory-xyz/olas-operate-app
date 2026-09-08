@@ -1,5 +1,6 @@
+import { Flex, Typography } from 'antd';
+import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { RiRobot3Line } from 'react-icons/ri';
 import styled from 'styled-components';
 
 import { Modal } from '@/components/ui';
@@ -12,19 +13,51 @@ import { StepFrictionAreas } from './StepFrictionAreas';
 import { StepRating } from './StepRating';
 import { SurveySuccess } from './SurveySuccess';
 
+const { Title, Text } = Typography;
+
 type Step = 'friction' | 'rating' | 'success';
 
-/** The agent avatar tile the design puts above the title. */
+/** The Pearl robot on a soft gradient tile, as the design puts above the title. */
 const HeaderIcon = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
   width: 56px;
   height: 56px;
+  border: 1px solid ${COLOR.GRAY_3};
   border-radius: 12px;
-  background: ${COLOR.GRAY_1};
-  color: ${COLOR.TEXT};
+  background: linear-gradient(180deg, ${COLOR.WHITE} 0%, ${COLOR.GRAY_1} 100%);
 `;
+
+/** 14/20 regular, per the design; antd's default Text line-height is 22px. */
+const Description = styled(Text)`
+  line-height: 20px;
+  color: ${COLOR.TEXT_NEUTRAL_TERTIARY};
+`;
+
+/**
+ * Icon, title and description with the design's own rhythm (24px, 8px), rendered through the
+ * Modal's `header` slot instead of its `title`/`description` props, whose spacing is shared by
+ * every other modal in the app.
+ */
+const SurveyHeader = ({
+  title,
+  description,
+}: {
+  title: string;
+  description?: string;
+}) => (
+  <Flex vertical align="flex-start" className="w-full">
+    <HeaderIcon>
+      <Image src="/splash-robot-head.png" alt="Pearl" width={45} height={45} />
+    </HeaderIcon>
+    {/* Level 4 is the theme's 20px / 28px heading; the design wants it at medium weight. */}
+    <Title level={4} className="mt-24 mb-8 font-weight-500">
+      {title}
+    </Title>
+    {description && <Description>{description}</Description>}
+  </Flex>
+);
 
 const STEP_COPY: Record<Step, { title: string; description?: string }> = {
   friction: {
@@ -125,13 +158,7 @@ export const OnboardingSurvey = () => {
       closable
       size="medium"
       align="flex-start"
-      header={
-        <HeaderIcon>
-          <RiRobot3Line size={28} />
-        </HeaderIcon>
-      }
-      title={title}
-      description={description}
+      header={<SurveyHeader title={title} description={description} />}
       action={
         <>
           {step === 'friction' && (
