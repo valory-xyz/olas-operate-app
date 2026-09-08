@@ -66,10 +66,15 @@ const makeDeployedService = () => ({
   chain_configs: { gnosis: { chain_data: { token: 42 } } },
 });
 
+/**
+ * A service that was created but never deployed. The middleware writes `token: -1`
+ * (`NON_EXISTENT_TOKEN`) here, not `null` — this is the state every new account is in when `Main`
+ * first mounts, since `AgentOnboarding` creates the record before the user reaches `Main`.
+ */
 const makeUndeployedService = () => ({
   service_config_id: DEFAULT_SERVICE_CONFIG_ID,
   home_chain: 'gnosis',
-  chain_configs: { gnosis: { chain_data: {} } },
+  chain_configs: { gnosis: { chain_data: { token: -1 } } },
 });
 
 type SetupOptions = {
@@ -81,13 +86,17 @@ type SetupOptions = {
 
 const setup = (
   storeState: PearlStore | undefined,
-  {
-    services = [],
+  options: SetupOptions = {},
+) => {
+  const {
     isFetched = true,
     selectedAgentType = AgentMap.Polystrat,
     isOnline = true,
-  }: SetupOptions = {},
-) => {
+  } = options;
+  // `undefined` is a meaningful value for `services` (nothing was fetched), so it only defaults
+  // to an empty list when the key is absent — a destructuring default would swallow it.
+  const services = 'services' in options ? options.services : [];
+
   mockUseStore.mockReturnValue({ storeState });
   mockUseServices.mockReturnValue({
     services,
@@ -376,11 +385,31 @@ describe('useOnboardingSurvey', () => {
       );
     });
 
+    it('marks a new account whose service is created but not yet deployed as timing-available', async () => {
+      // The realistic new-user state at first `Main` mount: a record with `token: -1`.
+      setup(makePearlStore({}), { services: [makeUndeployedService()] });
+
+      await waitFor(() =>
+        expect(writeFor('onboardingSurvey.timingUnavailable')?.[1]).toBe(false),
+      );
+    });
+
     it('does not classify before the service list has been fetched', () => {
       // An unfetched list looks empty, which would misclassify a returning user as new.
       setup(makePearlStore({}), {
         services: undefined,
         isFetched: false,
+      });
+
+      expect(writeFor('onboardingSurvey.timingUnavailable')).toBeUndefined();
+    });
+
+    it('does not classify when the list is undefined even though isFetched reads true', () => {
+      // `isFetched` is `!isLoading`, which a disabled query (offline at launch) also reports.
+      setup(makePearlStore({}), {
+        services: undefined,
+        isFetched: true,
+        isOnline: false,
       });
 
       expect(writeFor('onboardingSurvey.timingUnavailable')).toBeUndefined();

@@ -1,3 +1,5 @@
+import { ONE_DAY_INTERVAL } from '@/constants/intervals';
+
 /**
  * Kill switch for the post-setup questionnaire (OPE-1899).
  *
@@ -19,7 +21,7 @@ export const IS_ONBOARDING_SURVEY_ENABLED = false;
  * Checked on open only, so a user who already has the modal open when the deadline passes may
  * still submit.
  */
-export const ONBOARDING_SURVEY_EXPIRY_MS = 14 * 24 * 60 * 60 * 1000;
+export const ONBOARDING_SURVEY_EXPIRY_MS = 14 * ONE_DAY_INTERVAL;
 
 /** Matches `FEEDBACK_COMMENT_MAX_LENGTH` in pearl-api — a longer body is rejected with a 400. */
 export const ONBOARDING_SURVEY_COMMENT_MAX_LENGTH = 2000;

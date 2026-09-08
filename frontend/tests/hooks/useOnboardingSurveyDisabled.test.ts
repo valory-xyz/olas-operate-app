@@ -1,4 +1,4 @@
-import { renderHook } from '@testing-library/react';
+import { renderHook, waitFor } from '@testing-library/react';
 
 import { AgentMap } from '../../constants/agent';
 import { useOnboardingSurvey } from '../../hooks/useOnboardingSurvey';
@@ -39,7 +39,7 @@ jest.mock('../../service/OnboardingSurvey', () => ({
 }));
 
 describe('useOnboardingSurvey with IS_ONBOARDING_SURVEY_ENABLED = false', () => {
-  it('shows nothing and writes nothing, even with both triggers satisfied', () => {
+  it('shows nothing and never arms, even with both triggers satisfied', () => {
     mockUseStore.mockReturnValue({
       storeState: makePearlStore({ firstStakingRewardAchieved: true }),
     });
@@ -58,10 +58,32 @@ describe('useOnboardingSurvey with IS_ONBOARDING_SURVEY_ENABLED = false', () => 
     expect(result.current.isModalOpen).toBe(false);
     expect(result.current.showNudge).toBe(false);
     expect(
-      mockStoreSet.mock.calls.filter(([key]: [string]) =>
-        key.startsWith('onboardingSurvey'),
+      mockStoreSet.mock.calls.filter(
+        ([key]: [string]) =>
+          key.startsWith('onboardingSurvey') &&
+          key !== 'onboardingSurvey.timingUnavailable',
       ),
     ).toHaveLength(0);
     expect(mockSubmit).not.toHaveBeenCalled();
+  });
+
+  it('still records the timing classification, so a later flip does not misclassify the account', async () => {
+    mockUseStore.mockReturnValue({ storeState: makePearlStore({}) });
+    mockUseServices.mockReturnValue({
+      services: [],
+      isFetched: true,
+      selectedAgentType: AgentMap.Polystrat,
+    });
+
+    renderHook(() => useOnboardingSurvey(), {
+      wrapper: createQueryClientWrapper(),
+    });
+
+    await waitFor(() =>
+      expect(mockStoreSet).toHaveBeenCalledWith(
+        'onboardingSurvey.timingUnavailable',
+        false,
+      ),
+    );
   });
 });

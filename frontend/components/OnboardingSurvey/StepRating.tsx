@@ -2,7 +2,6 @@ import { Button, Flex, Input, Typography } from 'antd';
 import Image from 'next/image';
 import styled from 'styled-components';
 
-import { COLOR } from '@/constants';
 import { useElectronApi } from '@/hooks';
 import { SurveyRating } from '@/service/OnboardingSurvey';
 
@@ -10,29 +9,17 @@ import {
   ONBOARDING_SURVEY_COMMENT_MAX_LENGTH,
   RATING_OPTIONS,
 } from './constants';
+import { selectableCardStyles } from './SelectableCard';
 
 const { Text } = Typography;
 
 const RatingCard = styled.button<{ $selected: boolean }>`
+  ${selectableCardStyles}
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  padding: 12px;
-  border: 1px solid
-    ${({ $selected }) => ($selected ? COLOR.PURPLE : COLOR.GRAY_3)};
-  border-radius: 8px;
-  background: ${({ $selected }) =>
-    $selected ? COLOR.PURPLE_LIGHT_3 : COLOR.WHITE};
-  cursor: pointer;
-  transition:
-    background 0.15s,
-    border-color 0.15s;
-
-  &:hover {
-    border-color: ${COLOR.BORDER_COLOR.HOVER.DEFAULT};
-  }
 `;
 
 type StepRatingProps = {
@@ -96,7 +83,15 @@ export const StepRating = ({
       <Text type="secondary" className="text-xs text-left">
         By submitting, you assign ownership of your feedback to Valory per the{' '}
         {/* The same in-app window as Help Center → Terms, not the public web page. */}
-        <a onClick={() => termsAndConditionsWindow?.show?.()}>Pearl Terms</a>.
+        <Button
+          type="link"
+          size="small"
+          className="p-0"
+          onClick={() => termsAndConditionsWindow?.show?.()}
+        >
+          Pearl Terms
+        </Button>
+        .
       </Text>
 
       <Flex gap={12}>

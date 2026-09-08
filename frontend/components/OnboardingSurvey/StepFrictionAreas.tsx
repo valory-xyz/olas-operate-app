@@ -5,27 +5,15 @@ import { COLOR } from '@/constants';
 import { FrictionAreaId } from '@/service/OnboardingSurvey';
 
 import { EVERYTHING_SMOOTH_OPTION, FRICTION_AREA_OPTIONS } from './constants';
+import { selectableCardStyles } from './SelectableCard';
 
 const OptionCard = styled.label<{ $selected: boolean }>`
+  ${selectableCardStyles}
   display: flex;
   align-items: center;
   gap: 12px;
   width: 100%;
-  padding: 12px;
-  border: 1px solid
-    ${({ $selected }) => ($selected ? COLOR.PURPLE : COLOR.GRAY_3)};
-  border-radius: 8px;
-  background: ${({ $selected }) =>
-    $selected ? COLOR.PURPLE_LIGHT_3 : COLOR.WHITE};
-  cursor: pointer;
   text-align: left;
-  transition:
-    background 0.15s,
-    border-color 0.15s;
-
-  &:hover {
-    border-color: ${COLOR.BORDER_COLOR.HOVER.DEFAULT};
-  }
 `;
 
 const Separator = styled.div`

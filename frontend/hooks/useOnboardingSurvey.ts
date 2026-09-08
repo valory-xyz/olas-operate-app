@@ -14,6 +14,7 @@ import {
   SurveyRating,
 } from '@/service/OnboardingSurvey';
 import { OnboardingSurveyState } from '@/types/ElectronApi';
+import { isValidServiceId } from '@/utils/service';
 
 import { useElectronApi } from './useElectronApi';
 import { useOnlineStatusContext } from './useOnlineStatus';
@@ -191,17 +192,28 @@ export const useOnboardingSurvey = () => {
    * `firstAppOpenedAt` was stamped long after the user actually started — the elapsed time would
    * be wrong rather than merely missing, so it is reported as `null` instead. Waiting for
    * `isServicesFetched` matters: an unfetched list would misclassify a returning user as new.
+   *
+   * Deliberately not gated on the kill switch: the classification must happen on the first
+   * hydration after the update, before the user deploys anything. A build shipped with the switch
+   * off that only classified once it was flipped on would call every user who onboarded in
+   * between "pre-existing".
+   *
+   * "Deployed" means an on-chain token id. The middleware writes `token: -1` for a service that
+   * has been created but not deployed, which is exactly the state a new account is in when `Main`
+   * first mounts, so `!= null` would call every new account pre-existing.
    */
   useEffect(() => {
-    if (!IS_ONBOARDING_SURVEY_ENABLED) return;
     if (!isStoreHydrated) return;
     if (survey.timingUnavailable !== undefined) return;
-    if (!isServicesFetched) return;
+    // `isFetched` is derived from `!isLoading`, which is also true for a query that never ran
+    // (offline at launch); an undefined list is the tell that nothing was actually fetched.
+    if (!isServicesFetched || services === undefined) return;
     if (readSession().hasClassifiedTiming) return;
 
-    const hasPreExistingService = (services ?? []).some(
-      (service) =>
-        service.chain_configs?.[service.home_chain]?.chain_data?.token != null,
+    const hasPreExistingService = services.some((service) =>
+      isValidServiceId(
+        service.chain_configs?.[service.home_chain]?.chain_data?.token,
+      ),
     );
 
     patchSession({ hasClassifiedTiming: true });

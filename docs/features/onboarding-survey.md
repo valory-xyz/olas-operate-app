@@ -32,7 +32,10 @@ Home: view === 'profile'  (Connect only)     ─┴─► useOnboardingSurvey
 ## Kill switch
 
 `IS_ONBOARDING_SURVEY_ENABLED` in the feature's `constants.ts` is a single boolean. While it is
-`false` the hook shows nothing and writes nothing.
+`false` the hook shows nothing and never arms. The one thing it still does is the timing
+classification below: that has to be recorded on the first hydration after the update, before the
+user deploys anything, or a build shipped with the switch off would call everyone who onboarded in
+between "pre-existing" once it was flipped on.
 
 **It ships `false`.** The endpoint it posts to is still an unmerged draft
 ([autonolas-frontend-mono#449](https://github.com/valory-xyz/autonolas-frontend-mono/pull/449)),
@@ -100,11 +103,16 @@ the launch and not the first React render.
 - **Existing users are handled by doing nothing special.** Someone whose
   `firstStakingRewardAchieved` was already true simply arms on the first launch after the update.
   Their timing is classified as unavailable (below) and reported as `null`.
-- **Timing classification.** An account that already has a service with an on-chain
-  `chain_data.token` predates this feature, so its `firstAppOpenedAt` was stamped long after the
-  user actually started — the elapsed time would be *wrong*, not merely missing, so it is sent as
-  `null`. Waiting for `useServices().isFetched` matters: an unfetched list would misclassify a
-  returning user as new.
+- **Timing classification.** An account that already has a *deployed* service predates this
+  feature, so its `firstAppOpenedAt` was stamped long after the user actually started — the elapsed
+  time would be *wrong*, not merely missing, so it is sent as `null`. "Deployed" is decided with
+  `isValidServiceId(chain_data.token)`: the middleware writes `token: -1` for a service that is
+  created but not deployed, which is the state every new account is in when `Main` first mounts
+  (`AgentOnboarding` creates the record before the user reaches `Main`), so a `!= null` check would
+  call every new account pre-existing. The classification waits for `useServices().isFetched`
+  **and** a defined list: `isFetched` is derived from `!isLoading`, which a query that never ran
+  (offline at launch) also reports, and an unfetched list would misclassify a returning user as
+  new.
 - **Expiry is computed, not scheduled.** The 2-week window is derived by comparing now against
   `firstShownAt`; a timer would not survive a restart. Checked on open only, so a user who
   already has the modal open when the window lapses may still submit.
