@@ -27,6 +27,10 @@ jest.mock('../../../components/AchievementModal', () => ({
   AchievementModal: () => <div data-testid="achievement-modal" />,
 }));
 
+jest.mock('../../../components/OnboardingSurvey', () => ({
+  OnboardingSurvey: () => <div data-testid="onboarding-survey" />,
+}));
+
 jest.mock('../../../components/PearlWallet', () => ({
   PearlWallet: () => <div data-testid="pearl-wallet" />,
 }));
