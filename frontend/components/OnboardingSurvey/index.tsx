@@ -5,8 +5,13 @@ import styled from 'styled-components';
 
 import { Modal } from '@/components/ui';
 import { COLOR } from '@/constants';
+import { useMessageApi } from '@/context/MessageProvider';
 import { useOnboardingSurvey } from '@/hooks';
-import { FrictionAreaId, SurveyRating } from '@/service/OnboardingSurvey';
+import {
+  FrictionAreaId,
+  SubmitSurveyResponse,
+  SurveyRating,
+} from '@/service/OnboardingSurvey';
 
 import { EVERYTHING_SMOOTH_OPTION } from './constants';
 import { StepFrictionAreas } from './StepFrictionAreas';
@@ -35,11 +40,8 @@ const Description = styled(Text)`
   color: ${COLOR.TEXT_NEUTRAL_TERTIARY};
 `;
 
-/**
- * Icon, title and description with the design's own rhythm (24px, 8px), rendered through the
- * Modal's `header` slot instead of its `title`/`description` props, whose spacing is shared by
- * every other modal in the app.
- */
+// Rendered through the Modal's `header` slot: the design's 24px/8px rhythm differs from the
+// title/description spacing every other modal shares.
 const SurveyHeader = ({
   title,
   description,
@@ -72,15 +74,12 @@ const STEP_COPY: Record<Step, { title: string; description?: string }> = {
   },
 };
 
+const SUBMIT_FAILED_MESSAGE = 'Could not send your feedback. Please try again.';
+
 /**
- * The post-setup questionnaire (OPE-1899): a two-step modal plus a success view.
- *
- * Rendered once from `MainPage` alongside `AchievementModal`, so it is independent of `pageState`
- * and cannot be unmounted by navigation mid-answer. The steps are states of this one overlay,
- * never separate `PAGES` entries.
- *
- * Selections live here rather than in the step components, which is what makes "Back" preserve
- * them without any extra plumbing.
+ * The post-setup questionnaire (OPE-1899): a two-step modal plus a success view, rendered once
+ * from `MainPage` so navigation cannot unmount it mid-answer. Selections live here so "Back"
+ * preserves them.
  */
 export const OnboardingSurvey = () => {
   const {
@@ -91,6 +90,7 @@ export const OnboardingSurvey = () => {
     submit,
     submitEverythingSmooth,
   } = useOnboardingSurvey();
+  const message = useMessageApi();
 
   const [step, setStep] = useState<Step>('friction');
   const [frictionAreas, setFrictionAreas] = useState<FrictionAreaId[]>([]);
@@ -98,11 +98,8 @@ export const OnboardingSurvey = () => {
   const [comment, setComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Reopening from the nudge must land on a clean step 1. The component stays mounted while the
-  // modal is closed — it only renders null — so without this a user who dismisses from step 2
-  // comes back to step 2 with their old answers, or worse to the success view of a submission
-  // they already made. Reset on the closed → open edge rather than on close, so a modal closed
-  // by anything other than the two handlers below is covered too.
+  // The component stays mounted while closed (it renders null), so reset on the closed → open
+  // edge or a reopen from the sidebar alert lands on the previous step with the old answers.
   const wasOpenRef = useRef(isModalOpen);
   useEffect(() => {
     if (isModalOpen && !wasOpenRef.current) {
@@ -115,30 +112,36 @@ export const OnboardingSurvey = () => {
     wasOpenRef.current = isModalOpen;
   }, [isModalOpen]);
 
-  const handleContinue = useCallback(async () => {
-    // Fast exit — skip step 2 entirely and submit an automatic Good rating.
-    if (frictionAreas.includes(EVERYTHING_SMOOTH_OPTION.id)) {
+  // A failed send must say so; a silent no-op reads as a dead button and invites a second click,
+  // which is a second row.
+  const submitAndAdvance = useCallback(
+    async (run: () => Promise<SubmitSurveyResponse>) => {
       setIsSubmitting(true);
-      const result = await submitEverythingSmooth();
+      const result = await run();
       setIsSubmitting(false);
-      if (result.success) setStep('success');
-      return;
+      if (result.success) {
+        setStep('success');
+        return;
+      }
+      message.error(SUBMIT_FAILED_MESSAGE);
+    },
+    [message],
+  );
+
+  const handleContinue = useCallback(() => {
+    // Fast exit: skip step 2 and submit an automatic Good rating.
+    if (frictionAreas.includes(EVERYTHING_SMOOTH_OPTION.id)) {
+      return submitAndAdvance(submitEverythingSmooth);
     }
-
     setStep('rating');
-  }, [frictionAreas, submitEverythingSmooth]);
+  }, [frictionAreas, submitAndAdvance, submitEverythingSmooth]);
 
-  const handleSubmit = useCallback(async () => {
+  const handleSubmit = useCallback(() => {
     if (rating === null) return;
+    return submitAndAdvance(() => submit({ frictionAreas, rating, comment }));
+  }, [comment, frictionAreas, rating, submit, submitAndAdvance]);
 
-    setIsSubmitting(true);
-    const result = await submit({ frictionAreas, rating, comment });
-    setIsSubmitting(false);
-    if (result.success) setStep('success');
-  }, [comment, frictionAreas, rating, submit]);
-
-  // Closing the success view is not a dismissal — the submission already landed, so there is
-  // nothing left to nudge about.
+  // Closing the success view is not a dismissal: the submission already landed.
   const handleCancel = useCallback(() => {
     if (step === 'success') {
       close();

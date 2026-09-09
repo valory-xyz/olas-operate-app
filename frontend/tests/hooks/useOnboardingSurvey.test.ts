@@ -12,14 +12,6 @@ import {
 } from '../helpers/factories';
 import { createQueryClientWrapper } from '../helpers/queryClient';
 
-// The feature ships behind a kill switch that is `false` until pearl-api is deployed. Forcing it
-// on here keeps every case below about the gating rules rather than about the flag; the one case
-// that asserts the flag's own behaviour re-mocks it.
-jest.mock('../../components/OnboardingSurvey/constants', () => ({
-  ...jest.requireActual('../../components/OnboardingSurvey/constants'),
-  IS_ONBOARDING_SURVEY_ENABLED: true,
-}));
-
 const mockStoreSet = jest.fn();
 const mockStoreGet = jest.fn();
 const mockGetAppVersion = jest.fn();
@@ -183,6 +175,37 @@ describe('useOnboardingSurvey', () => {
       );
 
       await waitFor(() => expect(result.current.isModalOpen).toBe(true));
+    });
+
+    it('waits for the service list so the persisted agentType is not the fallback', async () => {
+      // Until services resolve, selectedAgentType is ServicesProvider's PredictTrader fallback.
+      // Store hydration lands first for an existing user, so the trigger is already satisfied.
+      mockUseStore.mockReturnValue({
+        storeState: makePearlStore({ firstStakingRewardAchieved: true }),
+      });
+      mockUseServices.mockReturnValue({
+        services: undefined,
+        isFetched: false,
+        selectedAgentType: AgentMap.PredictTrader,
+      });
+      mockUseOnlineStatus.mockReturnValue({ isOnline: true });
+
+      const { result, rerender } = renderHook(() => useOnboardingSurvey(), {
+        wrapper: createQueryClientWrapper(),
+      });
+
+      expect(result.current.isModalOpen).toBe(false);
+      expect(writeFor('onboardingSurvey.agentType')).toBeUndefined();
+
+      mockUseServices.mockReturnValue({
+        services: [makeDeployedService()],
+        isFetched: true,
+        selectedAgentType: AgentMap.Modius,
+      });
+      rerender();
+
+      await waitFor(() => expect(result.current.isModalOpen).toBe(true));
+      expect(writeFor('onboardingSurvey.agentType')?.[1]).toBe(AgentMap.Modius);
     });
 
     it('arms only once when several consumers mount the hook', async () => {
@@ -444,6 +467,40 @@ describe('useOnboardingSurvey', () => {
         }),
         { selectedAgentType: AgentMap.PredictTrader },
       );
+
+    it('sends null while the timing classification is still pending', async () => {
+      // `timingUnavailable` is undefined until services have fetched; an unclassified account
+      // must not report a duration measured from a possibly meaningless stamp.
+      const { result } = setupForSubmit({ timingUnavailable: undefined });
+
+      await act(async () => {
+        await result.current.submit({
+          frictionAreas: ['other'],
+          rating: 2,
+          comment: '',
+        });
+      });
+
+      expect(mockSubmit.mock.calls[0][0].timeToFirstSuccessSeconds).toBeNull();
+    });
+
+    it('reports a failed attempt rather than throwing when an IPC call rejects', async () => {
+      mockGetOsInfo.mockRejectedValue(new Error('ipc down'));
+      const { result } = setupForSubmit();
+
+      let outcome: unknown;
+      await act(async () => {
+        outcome = await result.current.submit({
+          frictionAreas: ['other'],
+          rating: 2,
+          comment: '',
+        });
+      });
+
+      expect(outcome).toEqual({ success: false, error: expect.any(String) });
+      expect(mockSubmit).not.toHaveBeenCalled();
+      expect(writeFor('onboardingSurvey.completed')).toBeUndefined();
+    });
 
     it('sends the full payload and records completion on success', async () => {
       const { result } = setupForSubmit();

@@ -59,22 +59,28 @@ const schema = {
 const setupStoreIpc = (ipcMain) => {
   const store = new Store({ schema });
 
-  // Stamp the first-ever launch, once. Written here rather than in main.js so there is a single
-  // Store instance for the schema, and from the main process rather than the renderer so it
-  // records the launch itself and not the first React render — the gap between the two is part
-  // of what time-to-first-success measures. Existing installs stamp on their first launch after
-  // this ships; the survey classifies those accounts as timing-unavailable instead of reporting
-  // a duration measured from the wrong moment.
+  // Stamp the first-ever launch, once, from the main process so it records the launch itself
+  // rather than the first React render.
   if (!store.get('firstAppOpenedAt')) {
     store.set('firstAppOpenedAt', new Date().toISOString());
   }
+
+  // `store.clear()` runs during account creation (SetupWelcome resets persistent state when no
+  // account exists yet), i.e. on the very launch the stamp above was written. Losing it there
+  // would make time-to-first-success unmeasurable for every new account, so it survives the
+  // clear.
+  const clearStore = () => {
+    const firstAppOpenedAt = store.get('firstAppOpenedAt');
+    store.clear();
+    if (firstAppOpenedAt) store.set('firstAppOpenedAt', firstAppOpenedAt);
+  };
 
   // exposed to electron browser window
   ipcMain.handle('store', () => store.store);
   ipcMain.handle('store-get', (_, key) => store.get(key));
   ipcMain.handle('store-set', (_, key, value) => store.set(key, value));
   ipcMain.handle('store-delete', (_, key) => store.delete(key));
-  ipcMain.handle('store-clear', (_) => store.clear());
+  ipcMain.handle('store-clear', (_) => clearStore());
 };
 
 module.exports = { setupStoreIpc };

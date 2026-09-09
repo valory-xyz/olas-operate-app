@@ -112,7 +112,6 @@ export const StepRating = ({
 
   return (
     <Flex vertical gap={24} className="w-full mt-16">
-      {/* Nothing is pre-selected; Send Feedback stays disabled until a rating is picked. */}
       <RatingGroup
         block
         size="large"
@@ -151,7 +150,6 @@ export const StepRating = ({
         />
       </Flex>
 
-      {/* Same styling as the terms line on the account-creation screen (SetupWelcomeCreate). */}
       <Text className="text-xs text-neutral-tertiary text-left">
         By submitting, you assign ownership of your feedback to Valory per the{' '}
         <a onClick={onTermsClick}>Pearl Terms</a>.

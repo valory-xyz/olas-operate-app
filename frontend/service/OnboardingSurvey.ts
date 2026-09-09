@@ -1,4 +1,4 @@
-import { ONBOARDING_SURVEY_API_URL } from '@/constants';
+import { AgentType, ONBOARDING_SURVEY_API_URL } from '@/constants';
 import { OsInfo } from '@/types/ElectronApi';
 import { parseApiError } from '@/utils';
 
@@ -12,27 +12,23 @@ export type FrictionAreaId =
   | 'other'
   | 'everything_smooth';
 
-/** 1 = Bad, 2 = OK, 3 = Good. Numeric, not the label — pearl-api rejects strings. */
+/** 1 = Bad, 2 = OK, 3 = Good. Numeric; pearl-api rejects labels. */
 export type SurveyRating = 1 | 2 | 3;
 
 /**
- * The exact body `POST /api/feedback/onboarding-survey` accepts.
- *
- * Deliberately carries no wallet address, `serviceConfigId` or account identifier, and none may
- * be added: the questionnaire is anonymous by product requirement. Building the request from
- * this type is what enforces that — a caller cannot smuggle a field the type does not name.
+ * The exact body `POST /api/feedback/onboarding-survey` accepts. Anonymous by product
+ * requirement: no wallet address, `serviceConfigId` or account identifier may be added.
  */
 export type OnboardingSurveyPayload = {
-  /** UUID v4, fresh per submission attempt. The server does not dedupe; it is for analysis only. */
+  /** UUID v4, fresh per attempt. The server does not dedupe. */
   submissionId: string;
   frictionAreas: FrictionAreaId[];
   rating: SurveyRating;
   comment: string;
   os: OsInfo;
-  /** The `AgentMap` id (e.g. `polymarket_trader`), never a display name. */
-  agentType: string;
+  agentType: AgentType;
   pearlVersion: string;
-  /** `null` when Pearl has no usable first-open timestamp. Never coerced to 0. */
+  /** `null` when there is no usable first-open timestamp. Never coerced to 0. */
   timeToFirstSuccessSeconds: number | null;
   timeToCompleteSurveySeconds: number;
 };
@@ -43,13 +39,7 @@ export type SubmitSurveyResponse =
 
 const SUBMIT_ERROR = 'Failed to submit feedback';
 
-/**
- * Sends one submission.
- *
- * Any 2xx means accepted — including when pearl-api fell back to its internal buffer, which is
- * indistinguishable from a plain success on the wire. There is deliberately **no retry**: the
- * server does not dedupe, so a retry appends a second row to the sheet.
- */
+/** Any 2xx means accepted. No retry: the server does not dedupe, so a retry appends a row. */
 const submit = async (
   payload: OnboardingSurveyPayload,
 ): Promise<SubmitSurveyResponse> => {

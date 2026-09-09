@@ -4,12 +4,16 @@ import { OnboardingSurvey } from '../../../components/OnboardingSurvey';
 
 const mockUseOnboardingSurvey = jest.fn();
 const mockTermsWindowShow = jest.fn();
+const mockMessageError = jest.fn();
 
 jest.mock('../../../hooks', () => ({
   useOnboardingSurvey: () => mockUseOnboardingSurvey(),
   useElectronApi: () => ({
     termsAndConditionsWindow: { show: mockTermsWindowShow },
   }),
+}));
+jest.mock('../../../context/MessageProvider', () => ({
+  useMessageApi: () => ({ error: mockMessageError }),
 }));
 
 const surveyState = (overrides = {}) => ({
@@ -207,6 +211,30 @@ describe('OnboardingSurvey', () => {
     expect(
       screen.queryByText('Thanks for your feedback!'),
     ).not.toBeInTheDocument();
+    // A silent failure reads as a dead button and invites a duplicate submission.
+    expect(mockMessageError).toHaveBeenCalledWith(
+      'Could not send your feedback. Please try again.',
+    );
+    expect(
+      screen.getByRole('button', { name: 'Send Feedback' }),
+    ).not.toHaveClass('ant-btn-loading');
+  });
+
+  it('tells the user when the fast exit fails too', async () => {
+    const state = renderSurvey({
+      submitEverythingSmooth: jest
+        .fn()
+        .mockResolvedValue({ success: false, error: 'boom' }),
+    });
+
+    pick('Everything was smooth');
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+
+    await waitFor(() =>
+      expect(state.submitEverythingSmooth).toHaveBeenCalled(),
+    );
+    expect(mockMessageError).toHaveBeenCalledTimes(1);
+    expect(screen.getByText('How did setup go?')).toBeInTheDocument();
   });
 
   it('opens the in-app terms window rather than a browser tab', () => {
@@ -245,12 +273,21 @@ describe('OnboardingSurvey', () => {
       expect(state.submit).not.toHaveBeenCalled();
     });
 
-    it('disables the fast-exit Continue, which submits from step 1', () => {
+    it('disables the fast-exit Continue, which submits from step 1, and says why', () => {
       const state = renderSurvey({ isOnline: false });
 
+      // The friction options can proceed offline, so no hint until the fast exit is picked.
+      pick('Other');
+      expect(screen.queryByText(/You're offline/)).not.toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: 'Continue' }),
+      ).not.toBeDisabled();
+
+      pick('Other');
       pick('Everything was smooth');
 
       expect(screen.getByRole('button', { name: 'Continue' })).toBeDisabled();
+      expect(screen.getByText(/You're offline/)).toBeInTheDocument();
       expect(state.submitEverythingSmooth).not.toHaveBeenCalled();
     });
   });

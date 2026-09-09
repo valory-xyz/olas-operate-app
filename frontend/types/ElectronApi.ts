@@ -4,26 +4,17 @@ import { BackupWalletType } from './BackupWallet';
 import { Nullable } from './Util';
 
 /**
- * One-time post-setup questionnaire state (OPE-1899).
- *
- * Backend-bound so it travels with `.operate`: "shown once, ever" is per Pearl account, so a
- * user who migrates machines must not be prompted again. Grouped under one key rather than five
- * top-level ones, so the whole feature is a single `BACKEND_BOUND_KEYS` entry.
+ * Post-setup questionnaire state (OPE-1899). Backend-bound so "shown once, ever" follows the
+ * account across machines.
  */
 export type OnboardingSurveyState = {
-  /**
-   * Set once, on the first hydration after the feature ships. True for an account that already
-   * had a deployed service, i.e. one that predates the `firstAppOpenedAt` timestamp, so its
-   * time-to-first-success can never be computed and is reported as `null`.
-   */
+  /** Tri-state: `true`/`false` once classified, `undefined` until then (treated as unavailable). */
   timingUnavailable?: boolean;
-  /** ISO timestamp of the first time the modal was opened. Its absence means "never shown". */
+  /** ISO timestamp of the first open. Absent means "never shown". */
   firstShownAt?: string;
-  /** The agent whose success fired the trigger — not whichever agent is selected at submit time. */
+  /** The agent whose success fired the trigger. */
   agentType?: AgentType;
-  /** Set when the user closes the modal without submitting. */
   dismissed?: boolean;
-  /** Set on any 2xx from pearl-api. Removes the nudge for good. */
   completed?: boolean;
 };
 

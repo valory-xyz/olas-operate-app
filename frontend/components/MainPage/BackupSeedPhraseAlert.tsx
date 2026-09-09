@@ -24,7 +24,6 @@ export const BackupSeedPhraseAlert = () => {
     <Alert
       type="warning"
       className="mt-auto mb-16"
-      // Icon on the left, text and button stacked beside it — same layout as the survey nudge.
       showIcon
       customIcon={<TbShieldHalfFilled size={20} />}
       message={

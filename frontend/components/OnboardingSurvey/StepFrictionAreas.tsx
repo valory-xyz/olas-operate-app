@@ -1,4 +1,4 @@
-import { Button, Checkbox, Flex } from 'antd';
+import { Button, Checkbox, Flex, Typography } from 'antd';
 import styled from 'styled-components';
 
 import { COLOR } from '@/constants';
@@ -6,6 +6,8 @@ import { FrictionAreaId } from '@/service/OnboardingSurvey';
 
 import { EVERYTHING_SMOOTH_OPTION, FRICTION_AREA_OPTIONS } from './constants';
 import { selectableCardStyles } from './SelectableCard';
+
+const { Text } = Typography;
 
 const OptionCard = styled.label<{ $selected: boolean; $disabled?: boolean }>`
   ${selectableCardStyles}
@@ -41,12 +43,8 @@ type StepFrictionAreasProps = {
 };
 
 /**
- * Step 1 — the multi-select.
- *
- * "Everything was smooth" is the fast exit and is mutually exclusive with the friction options:
- * it is disabled while any friction option is picked, and picking a friction option while it is
- * selected clears it. pearl-api enforces the same rule, so a UI bug fails loudly rather than
- * writing a nonsense row.
+ * Step 1. "Everything was smooth" is the fast exit and is mutually exclusive with the friction
+ * options; pearl-api enforces the same rule.
  */
 export const StepFrictionAreas = ({
   selected,
@@ -108,13 +106,18 @@ export const StepFrictionAreas = ({
         className="w-full mt-24"
         onClick={onContinue}
         loading={isSubmitting}
-        // Nothing picked yet is not a valid answer (the design shows the button disabled). The
-        // fast exit submits from this step, so it also needs a connection; every other path only
-        // moves to step 2 and can proceed offline.
+        // The fast exit submits from this step, so it needs a connection; the friction options
+        // only move to step 2.
         disabled={selected.length === 0 || (isEverythingSmooth && !isOnline)}
       >
         Continue
       </Button>
+
+      {isEverythingSmooth && !isOnline && (
+        <Text type="secondary" className="text-xs">
+          You&apos;re offline. Reconnect to send your feedback.
+        </Text>
+      )}
     </Flex>
   );
 };

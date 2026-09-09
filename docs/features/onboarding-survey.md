@@ -21,7 +21,7 @@ Home: view === 'profile'  (Connect only)     ─┴─► useOnboardingSurvey
 ## Source of truth
 
 - `frontend/hooks/useOnboardingSurvey.ts` — trigger, gating, expiry, timing classification, submission
-- `frontend/components/OnboardingSurvey/constants.ts` — kill switch, option ids and labels, 2-week window
+- `frontend/components/OnboardingSurvey/constants.ts` — option ids and labels, 2-week window
 - `frontend/components/OnboardingSurvey/index.tsx` — modal shell; owns step state and the selections
 - `frontend/components/OnboardingSurvey/FeedbackAlert.tsx` — sidebar alert
 - `frontend/service/OnboardingSurvey.ts` — the POST and its payload type
@@ -29,22 +29,12 @@ Home: view === 'profile'  (Connect only)     ─┴─► useOnboardingSurvey
 - `electron/store.js` — `firstAppOpenedAt` schema key, stamped once at first launch
 - `electron/main.js` / `electron/preload.js` — the `os-info` IPC channel
 
-## Kill switch
+## Release gate
 
-`IS_ONBOARDING_SURVEY_ENABLED` in the feature's `constants.ts` is a single boolean. While it is
-`false` the hook shows nothing and never arms. The one thing it still does is the timing
-classification below: that has to be recorded on the first hydration after the update, before the
-user deploys anything, or a build shipped with the switch off would call everyone who onboarded in
-between "pre-existing" once it was flipped on.
-
-**It ships `false`.** The endpoint it posts to is still an unmerged draft
-([autonolas-frontend-mono#449](https://github.com/valory-xyz/autonolas-frontend-mono/pull/449)),
-and its Google service-account credentials, `BLOB_READ_WRITE_TOKEN` and Vercel WAF rule are
-one-time manual setup that has not been done. Flip it to `true` once that endpoint is live in
-production; nothing else is gated on it.
-
-`useFeatureFlag` is deliberately not used — it is keyed per `AgentMap` entry, and this
-questionnaire is account-wide.
+There is no in-code switch. The feature is gated by not merging this branch until the pearl-api
+endpoint ([autonolas-frontend-mono#449](https://github.com/valory-xyz/autonolas-frontend-mono/pull/449))
+is deployed to production with its Google and Blob credentials in place. `useFeatureFlag` is not
+used either: it is keyed per `AgentMap` entry, and this questionnaire is account-wide.
 
 ## Triggers
 
@@ -150,9 +140,5 @@ id such as `polymarket_trader` (not a display name), and `submissionId` is a fre
 
 ## Known gaps
 
-- **The three rating PNGs in `frontend/public/` are placeholders.** The Figma file could not be
-  read while implementing (API 429, ~47h), so the real exports are not in the branch. Swapping
-  them is a pure file replacement — the filenames in `constants.ts` are already the final ones.
-- **All in-app copy is carried from the v1 scope's reading of the Figma frames**, not re-verified
-  against the current file, for the same reason. The design is the source of truth for copy; the
-  option labels there differ from the ticket description's wording.
+- **`store.clear()` during account creation** would wipe `firstAppOpenedAt` on the very launch it
+  was stamped. `electron/store.js` preserves that one key across the clear for this reason.

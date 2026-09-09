@@ -4,16 +4,16 @@ import { useCallback, useEffect, useMemo } from 'react';
 import {
   EVERYTHING_SMOOTH_OPTION,
   EVERYTHING_SMOOTH_RATING,
-  IS_ONBOARDING_SURVEY_ENABLED,
   ONBOARDING_SURVEY_EXPIRY_MS,
 } from '@/components/OnboardingSurvey/constants';
 import { AgentMap, AgentType } from '@/constants';
 import {
   FrictionAreaId,
   OnboardingSurveyService,
+  SubmitSurveyResponse,
   SurveyRating,
 } from '@/service/OnboardingSurvey';
-import { OnboardingSurveyState } from '@/types/ElectronApi';
+import { OnboardingSurveyState, OsInfo } from '@/types/ElectronApi';
 import { isValidServiceId } from '@/utils/service';
 
 import { useElectronApi } from './useElectronApi';
@@ -23,23 +23,13 @@ import { useStore } from './useStore';
 
 const STORE_KEY = 'onboardingSurvey';
 
-/**
- * Session-scoped state shared by every call site of this hook.
- *
- * The modal (rendered from `Main`), the sidebar nudge and `Home`'s Connect trigger each mount
- * their own instance, so "is the modal open" and "has this session already armed" cannot live in
- * component state. Held in the always-mounted query cache — the same device `useConnectSession`
- * uses for its launch-suppression flag — rather than in module scope, so it resets with the
- * cache and never leaks between tests.
- */
+// Session state shared by the modal, the sidebar alert and Home, each of which mounts its own
+// hook instance. Lives in the query cache (as `useConnectSession` does) rather than module scope.
 const ONBOARDING_SURVEY_SESSION_KEY = 'onboardingSurveySession';
 
 type SurveySession = {
-  /** The modal is on screen. Once open it stays open, even if the 2-week window lapses. */
   isOpen: boolean;
-  /** This session has already auto-opened the modal, so a second consumer must not re-fire it. */
   hasAutoOpened: boolean;
-  /** The one-time timing classification has been written (or is in flight) this session. */
   hasClassifiedTiming: boolean;
 };
 
@@ -55,21 +45,17 @@ export type SurveyAnswers = {
   comment: string;
 };
 
+type SubmitResult = SubmitSurveyResponse;
+
+const SUBMISSION_METADATA_ERROR =
+  'Could not read app details for the submission';
+
 const toSeconds = (ms: number) => Math.max(0, Math.floor(ms / 1000));
 
 /**
- * Owns the whole post-setup questionnaire decision (OPE-1899): when it may open, whether the
- * sidebar nudge shows, when it expires, and what a submission contains.
- *
- * `Main`, `Sidebar`, `Home` and the survey components are all consumers — keeping the
- * "shown once, ever" rule here rather than spread across three components is what makes it
- * testable without rendering the app.
- *
- * The gate is `storeState.onboardingSurvey` and nothing else. `firstStakingRewardAchieved` and
- * the Connect Profile visit only *arm* the survey; they never gate it. In particular
- * `connect.firstRunCompleted` must never be used here — it is a `Record<serviceConfigId, …>`,
- * so it is per service, and a second Connect instance would re-trigger a survey that is meant to
- * be once per account.
+ * Owns the post-setup questionnaire decision (OPE-1899): trigger, once-per-account gating,
+ * expiry and the submission payload. The gate is `storeState.onboardingSurvey` only; the triggers
+ * arm it. `connect.firstRunCompleted` is per service and must never gate it.
  */
 export const useOnboardingSurvey = () => {
   const queryClient = useQueryClient();
@@ -92,13 +78,8 @@ export const useOnboardingSurvey = () => {
     gcTime: Infinity,
   });
 
-  /**
-   * Reads the session straight from the cache instead of the render closure.
-   *
-   * Several consumers run their effects in the same commit, all closed over the same stale
-   * `session`. Reading here — after an earlier effect's synchronous `setQueryData` — is what
-   * stops two of them arming the survey at once.
-   */
+  // Read from the cache, not the render closure: several consumers run their effects in the same
+  // commit over the same stale `session`, and this is what stops two of them arming at once.
   const readSession = useCallback(
     (): SurveySession =>
       queryClient.getQueryData<SurveySession>([
@@ -132,19 +113,12 @@ export const useOnboardingSurvey = () => {
     return Number.isNaN(parsed) ? null : parsed;
   }, [survey.firstShownAt]);
 
-  /**
-   * The 2-week window, derived on read rather than scheduled: a timer would not survive an app
-   * restart, and the requirement is only that the survey is gone once the window has passed.
-   */
+  // Derived on read rather than scheduled; a timer would not survive a restart.
   const isExpired =
     firstShownAtMs !== null &&
     Date.now() - firstShownAtMs > ONBOARDING_SURVEY_EXPIRY_MS;
 
-  const isEligible =
-    IS_ONBOARDING_SURVEY_ENABLED &&
-    isStoreHydrated &&
-    !survey.completed &&
-    !isExpired;
+  const isEligible = isStoreHydrated && !survey.completed && !isExpired;
 
   /** Records the moment the survey was first shown, plus the agent whose success armed it. */
   const markShown = useCallback(
@@ -155,26 +129,26 @@ export const useOnboardingSurvey = () => {
     [store],
   );
 
-  // Staking trigger. `RewardProvider` already writes this flag the first time `isEpochTargetMet`
-  // turns true — the green "earned" line, not an on-chain reward transfer — and it is
-  // account-wide rather than per agent, so nothing new has to be built here.
+  // The green "earned" line (`isEpochTargetMet`), written by RewardProvider, not a reward transfer.
   const isStakingTriggerFired = storeState?.firstStakingRewardAchieved === true;
 
-  /**
-   * Auto-open, once per account.
-   *
-   * Skipped when `firstShownAt` is already set: the modal is shown in the session the trigger
-   * fires and never re-opens by itself on a later launch — only the nudge persists.
-   */
+  // `isFetched` is `!isLoading`, which a query that never ran (offline at launch) also reports;
+  // an undefined list is the tell that nothing was actually fetched.
+  const hasServiceList = isServicesFetched && services !== undefined;
+
+  // Auto-open, once per account. Waits for the service list: until it resolves,
+  // `selectedAgentType` is the PredictTrader fallback, and `markShown` persists it for good.
   useEffect(() => {
     if (!isEligible) return;
     if (survey.dismissed || survey.firstShownAt) return;
     if (!isStakingTriggerFired) return;
+    if (!hasServiceList) return;
     if (readSession().hasAutoOpened) return;
 
     patchSession({ hasAutoOpened: true, isOpen: true });
     markShown(selectedAgentType);
   }, [
+    hasServiceList,
     isEligible,
     isStakingTriggerFired,
     markShown,
@@ -185,29 +159,14 @@ export const useOnboardingSurvey = () => {
     survey.firstShownAt,
   ]);
 
-  /**
-   * One-time timing classification.
-   *
-   * An account that already has a deployed service predates this feature, so its
-   * `firstAppOpenedAt` was stamped long after the user actually started — the elapsed time would
-   * be wrong rather than merely missing, so it is reported as `null` instead. Waiting for
-   * `isServicesFetched` matters: an unfetched list would misclassify a returning user as new.
-   *
-   * Deliberately not gated on the kill switch: the classification must happen on the first
-   * hydration after the update, before the user deploys anything. A build shipped with the switch
-   * off that only classified once it was flipped on would call every user who onboarded in
-   * between "pre-existing".
-   *
-   * "Deployed" means an on-chain token id. The middleware writes `token: -1` for a service that
-   * has been created but not deployed, which is exactly the state a new account is in when `Main`
-   * first mounts, so `!= null` would call every new account pre-existing.
-   */
+  // One-time timing classification: an account with a deployed service predates the feature, so
+  // its `firstAppOpenedAt` is meaningless and the duration is reported as `null`. "Deployed" is
+  // `isValidServiceId`: the middleware writes `token: -1` for a created-but-undeployed service,
+  // which every new account has at first `Main` mount.
   useEffect(() => {
     if (!isStoreHydrated) return;
     if (survey.timingUnavailable !== undefined) return;
-    // `isFetched` is derived from `!isLoading`, which is also true for a query that never ran
-    // (offline at launch); an undefined list is the tell that nothing was actually fetched.
-    if (!isServicesFetched || services === undefined) return;
+    if (!hasServiceList) return;
     if (readSession().hasClassifiedTiming) return;
 
     const hasPreExistingService = services.some((service) =>
@@ -219,7 +178,7 @@ export const useOnboardingSurvey = () => {
     patchSession({ hasClassifiedTiming: true });
     store?.set?.(`${STORE_KEY}.timingUnavailable`, hasPreExistingService);
   }, [
-    isServicesFetched,
+    hasServiceList,
     isStoreHydrated,
     patchSession,
     readSession,
@@ -228,13 +187,7 @@ export const useOnboardingSurvey = () => {
     survey.timingUnavailable,
   ]);
 
-  /**
-   * The Connect trigger, reported by `Home` when the user opens the Profile tab.
-   *
-   * Connect never stakes, so it has no reward signal; the Profile visit is the equivalent
-   * moment. Reported in rather than read out of `Home`'s local state so the hook stays the only
-   * thing that knows the gating rules.
-   */
+  // Connect never stakes; `Home` reports the first Profile visit as its equivalent moment.
   const reportConnectProfileVisit = useCallback(() => {
     if (!isEligible) return;
     if (selectedAgentType !== AgentMap.Connect) return;
@@ -272,24 +225,37 @@ export const useOnboardingSurvey = () => {
   );
 
   const submit = useCallback(
-    async (answers: SurveyAnswers) => {
+    async (answers: SurveyAnswers): Promise<SubmitResult> => {
       const shownAtMs = firstShownAtMs ?? Date.now();
 
-      const [pearlVersion, os, firstAppOpenedAt] = await Promise.all([
-        getAppVersion?.() ?? Promise.resolve(''),
-        getOsInfo?.() ??
-          Promise.resolve({ type: '', platform: '', arch: '', release: '' }),
-        store?.get?.('firstAppOpenedAt') ?? Promise.resolve(''),
-      ]);
+      // A rejected IPC call must surface as a failed attempt, not an unhandled throw that leaves
+      // the modal's submitting state stuck.
+      let pearlVersion: string;
+      let os: OsInfo;
+      let firstAppOpenedAt: unknown;
+      try {
+        [pearlVersion, os, firstAppOpenedAt] = await Promise.all([
+          getAppVersion?.() ?? Promise.resolve(''),
+          getOsInfo?.() ??
+            Promise.resolve({ type: '', platform: '', arch: '', release: '' }),
+          store?.get?.('firstAppOpenedAt') ?? Promise.resolve(''),
+        ]);
+      } catch (error) {
+        console.error(
+          'Onboarding survey: could not read submission metadata:',
+          error,
+        );
+        return { success: false, error: SUBMISSION_METADATA_ERROR };
+      }
 
-      // `null`, never 0: the contract distinguishes "we could not measure this" from "it took no
-      // time", and an account that predates the feature has no honest number to report.
+      // `null`, never 0, whenever the duration cannot be trusted. `timingUnavailable` is tri-state:
+      // only an explicit `false` (classified as a new account) allows a number.
       const firstOpenedMs =
         typeof firstAppOpenedAt === 'string' && firstAppOpenedAt
           ? Date.parse(firstAppOpenedAt)
           : NaN;
       const timeToFirstSuccessSeconds =
-        survey.timingUnavailable || Number.isNaN(firstOpenedMs)
+        survey.timingUnavailable !== false || Number.isNaN(firstOpenedMs)
           ? null
           : toSeconds(shownAtMs - firstOpenedMs);
 
@@ -299,13 +265,11 @@ export const useOnboardingSurvey = () => {
         rating: answers.rating,
         comment: answers.comment,
         os,
-        // The agent recorded when the trigger fired, not whichever is selected now — otherwise a
-        // user who switches agents before submitting from the nudge reports the wrong one.
+        // The agent recorded when the trigger fired, not whichever is selected at submit time.
         agentType: survey.agentType ?? selectedAgentType,
         pearlVersion,
         timeToFirstSuccessSeconds,
-        // Measured from the persisted `firstShownAt`, not from mount, so a user who dismisses and
-        // returns days later via the nudge records days rather than seconds.
+        // From the persisted `firstShownAt`, so a return via the nudge days later records days.
         timeToCompleteSurveySeconds: toSeconds(Date.now() - shownAtMs),
       });
 
@@ -326,7 +290,7 @@ export const useOnboardingSurvey = () => {
     ],
   );
 
-  /** Fast exit: no friction, an automatic Good rating, no comment, straight to the success view. */
+  /** Fast exit: no friction, an automatic Good rating, no comment. */
   const submitEverythingSmooth = useCallback(
     () =>
       submit({
@@ -338,11 +302,9 @@ export const useOnboardingSurvey = () => {
   );
 
   return {
-    // Deliberately not gated on `isEligible`. Submitting writes `completed`, which makes the
-    // survey ineligible — gating here would tear the modal down before the user ever sees the
-    // success view. Everything that *starts* a session (auto-open, `open`) is gated instead.
-    isModalOpen:
-      IS_ONBOARDING_SURVEY_ENABLED && isStoreHydrated && session.isOpen,
+    // Not gated on `isEligible`: submitting writes `completed`, which would tear the modal down
+    // before the success view renders. Everything that *starts* a session is gated instead.
+    isModalOpen: isStoreHydrated && session.isOpen,
     showNudge: Boolean(isEligible && survey.firstShownAt && !session.isOpen),
     isOnline,
     open,

@@ -1,20 +1,6 @@
 import { ONE_DAY_INTERVAL } from '@/constants/intervals';
 
 /**
- * Kill switch for the post-setup questionnaire (OPE-1899).
- *
- * Ships `false`: the survey posts to `POST /api/feedback/onboarding-survey`, which is still an
- * unmerged draft in `valory-xyz/autonolas-frontend-mono` (PR #449) and whose Google
- * service-account credentials, `BLOB_READ_WRITE_TOKEN` and Vercel WAF rule are one-time manual
- * setup that is not done. Enabling before that lands means every submission fails and the user
- * keeps a nudge they cannot clear.
- *
- * Flip to `true` in a follow-up once the endpoint is deployed to production — that is the only
- * change required; nothing else is gated on it.
- */
-export const IS_ONBOARDING_SURVEY_ENABLED = false;
-
-/**
  * How long the questionnaire stays reachable after it is first shown. Past this the nudge
  * disappears and the survey can no longer be opened, with no row sent.
  *
