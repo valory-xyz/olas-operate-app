@@ -204,20 +204,23 @@ describe('OnboardingSurvey', () => {
     fireEvent.click(screen.getByText('Good'));
     fireEvent.click(screen.getByRole('button', { name: 'Send Feedback' }));
 
-    await waitFor(() => expect(state.submit).toHaveBeenCalled());
+    // A silent failure reads as a dead button and invites a duplicate submission. The message
+    // fires after the awaited submit settles, so wait for it before checking the button, which
+    // has a different accessible name while its spinner is showing.
+    await waitFor(() =>
+      expect(mockMessageError).toHaveBeenCalledWith(
+        'Could not send your feedback. Please try again.',
+      ),
+    );
     expect(
       screen.getByText('How was your experience overall?'),
     ).toBeInTheDocument();
     expect(
       screen.queryByText('Thanks for your feedback!'),
     ).not.toBeInTheDocument();
-    // A silent failure reads as a dead button and invites a duplicate submission.
-    expect(mockMessageError).toHaveBeenCalledWith(
-      'Could not send your feedback. Please try again.',
-    );
     expect(
       screen.getByRole('button', { name: 'Send Feedback' }),
-    ).not.toHaveClass('ant-btn-loading');
+    ).toBeEnabled();
   });
 
   it('tells the user when the fast exit fails too', async () => {
