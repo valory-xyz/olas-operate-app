@@ -165,7 +165,7 @@ describe('useOnboardingSurvey', () => {
       );
 
       expect(result.current.isModalOpen).toBe(false);
-      expect(result.current.showNudge).toBe(false);
+      expect(result.current.showFeedbackAlert).toBe(false);
     });
 
     it('shows an existing user the modal on the first launch after the update', async () => {
@@ -292,8 +292,8 @@ describe('useOnboardingSurvey', () => {
     });
   });
 
-  describe('dismissal and the nudge', () => {
-    it('dismissing closes the modal, records it and shows the nudge', async () => {
+  describe('dismissal and the feedback alert', () => {
+    it('dismissing closes the modal, records it and shows the feedback alert', async () => {
       const { result } = setup(
         makePearlStore({ firstStakingRewardAchieved: true }),
       );
@@ -305,7 +305,7 @@ describe('useOnboardingSurvey', () => {
       await waitFor(() => expect(result.current.isModalOpen).toBe(false));
     });
 
-    it('does not reopen the modal on the next launch — only the nudge persists', () => {
+    it('does not reopen the modal on the next launch — only the feedback alert persists', () => {
       const { result } = setup(
         makePearlStore({
           firstStakingRewardAchieved: true,
@@ -317,10 +317,10 @@ describe('useOnboardingSurvey', () => {
       );
 
       expect(result.current.isModalOpen).toBe(false);
-      expect(result.current.showNudge).toBe(true);
+      expect(result.current.showFeedbackAlert).toBe(true);
     });
 
-    it('the nudge reopens the modal without rewriting firstShownAt', async () => {
+    it('the feedback alert reopens the modal without rewriting firstShownAt', async () => {
       const { result } = setup(
         makePearlStore({
           onboardingSurvey: makeOnboardingSurveyState({
@@ -336,7 +336,7 @@ describe('useOnboardingSurvey', () => {
       expect(writeFor('onboardingSurvey.firstShownAt')).toBeUndefined();
     });
 
-    it('hides the nudge once the survey is completed', () => {
+    it('hides the feedback alert once the survey is completed', () => {
       const { result } = setup(
         makePearlStore({
           onboardingSurvey: makeOnboardingSurveyState({
@@ -346,7 +346,7 @@ describe('useOnboardingSurvey', () => {
         }),
       );
 
-      expect(result.current.showNudge).toBe(false);
+      expect(result.current.showFeedbackAlert).toBe(false);
     });
   });
 
@@ -354,7 +354,7 @@ describe('useOnboardingSurvey', () => {
     const shownDaysAgo = (days: number) =>
       new Date(NOW - days * 24 * 60 * 60 * 1000).toISOString();
 
-    it('still shows the nudge at 13 days', () => {
+    it('still shows the feedback alert at 13 days', () => {
       const { result } = setup(
         makePearlStore({
           onboardingSurvey: makeOnboardingSurveyState({
@@ -364,10 +364,10 @@ describe('useOnboardingSurvey', () => {
         }),
       );
 
-      expect(result.current.showNudge).toBe(true);
+      expect(result.current.showFeedbackAlert).toBe(true);
     });
 
-    it('removes the nudge and blocks reopening at 15 days', () => {
+    it('removes the feedback alert and blocks reopening at 15 days', () => {
       const { result } = setup(
         makePearlStore({
           onboardingSurvey: makeOnboardingSurveyState({
@@ -377,7 +377,7 @@ describe('useOnboardingSurvey', () => {
         }),
       );
 
-      expect(result.current.showNudge).toBe(false);
+      expect(result.current.showFeedbackAlert).toBe(false);
 
       act(() => result.current.open());
 
@@ -598,7 +598,7 @@ describe('useOnboardingSurvey', () => {
     });
 
     it('measures survey duration from the persisted firstShownAt, not from mount', async () => {
-      // Shown 3 days ago, dismissed, then submitted now via the nudge.
+      // Shown 3 days ago, dismissed, then submitted now via the feedback alert.
       const { result } = setupForSubmit({
         firstShownAt: new Date(NOW - 3 * 24 * 60 * 60 * 1000).toISOString(),
         dismissed: true,
@@ -660,10 +660,10 @@ describe('useOnboardingSurvey', () => {
       rerender();
 
       expect(result.current.isModalOpen).toBe(true);
-      expect(result.current.showNudge).toBe(false);
+      expect(result.current.showFeedbackAlert).toBe(false);
     });
 
-    it('leaves the nudge in place and records nothing when the request fails', async () => {
+    it('leaves the feedback alert in place and records nothing when the request fails', async () => {
       mockSubmit.mockResolvedValue({ success: false, error: 'boom' });
       const { result } = setupForSubmit({ dismissed: true });
 
@@ -676,7 +676,7 @@ describe('useOnboardingSurvey', () => {
       });
 
       expect(writeFor('onboardingSurvey.completed')).toBeUndefined();
-      expect(result.current.showNudge).toBe(true);
+      expect(result.current.showFeedbackAlert).toBe(true);
     });
   });
 

@@ -1,7 +1,7 @@
 import { ONE_DAY_INTERVAL } from '@/constants/intervals';
 
 /**
- * How long the questionnaire stays reachable after it is first shown. Past this the nudge
+ * How long the questionnaire stays reachable after it is first shown. Past this the feedback alert
  * disappears and the survey can no longer be opened, with no row sent.
  *
  * Checked on open only, so a user who already has the modal open when the deadline passes may

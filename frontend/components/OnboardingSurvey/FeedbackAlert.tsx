@@ -14,9 +14,9 @@ const { Text } = Typography;
  * 2-week window lapses — both decided by `useOnboardingSurvey`, not here.
  */
 export const FeedbackAlert = () => {
-  const { showNudge, open } = useOnboardingSurvey();
+  const { showFeedbackAlert, open } = useOnboardingSurvey();
 
-  if (!showNudge) return null;
+  if (!showFeedbackAlert) return null;
 
   return (
     <Alert

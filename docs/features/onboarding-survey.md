@@ -3,7 +3,7 @@
 ## Overview
 
 A one-time, two-step questionnaire shown once per Pearl account immediately after the user's
-first agent success, plus a persistent sidebar nudge for anyone who closes it without answering.
+first agent success, plus a persistent sidebar alert for anyone who closes it without answering.
 It exists to capture onboarding friction from the average user at the moment setup works — a
 signal neither Zendesk (skews to bug reporters) nor Telegram (skews to power users) reaches.
 
@@ -75,7 +75,7 @@ migrates machines must not be re-prompted. Grouped under one key rather than fiv
 
 The `completed` write is durable — `pendingStoreWrites` queues backend-bound writes that fail
 (typically because the Python backend is unreachable during shutdown) and replays them on the
-next launch, so quitting immediately after submitting does not bring the nudge back.
+next launch, so quitting immediately after submitting does not bring the feedback alert back.
 
 ### `firstAppOpenedAt` (Electron-native)
 
@@ -89,7 +89,7 @@ the launch and not the first React render.
 ## Behaviours worth not breaking
 
 - **Auto-open happens once, in the session the trigger fires.** A persisted `firstShownAt` alone
-  never reopens the modal on a later launch — only the nudge persists.
+  never reopens the modal on a later launch — only the feedback alert persists.
 - **Existing users are handled by doing nothing special.** Someone whose
   `firstStakingRewardAchieved` was already true simply arms on the first launch after the update.
   Their timing is classified as unavailable (below) and reported as `null`.
@@ -107,17 +107,17 @@ the launch and not the first React render.
   `firstShownAt`; a timer would not survive a restart. Checked on open only, so a user who
   already has the modal open when the window lapses may still submit.
 - **`timeToCompleteSurveySeconds` is measured from the persisted `firstShownAt`**, not from
-  mount — otherwise a user who dismisses and returns days later via the nudge records seconds.
+  mount — otherwise a user who dismisses and returns days later via the feedback alert records seconds.
 - **`agentType` comes from the value persisted at trigger time**, not the currently selected
-  agent, so switching agents before submitting from the nudge still reports the right one.
+  agent, so switching agents before submitting from the feedback alert still reports the right one.
 - **No retry.** pearl-api does not dedupe, so a retry appends a second row. Any 2xx is treated as
   complete — including the server's internal fallback path, which is indistinguishable on the
-  wire. Any non-2xx leaves the nudge in place.
+  wire. Any non-2xx leaves the feedback alert in place.
 - **`timeToFirstSuccessSeconds` is `number | null`, never coerced to `0`.**
 
 ## Shared session state
 
-The modal (from `MainPage`), the sidebar nudge and `Home`'s Connect trigger each mount their own
+The modal (from `MainPage`), the sidebar alert and `Home`'s Connect trigger each mount their own
 instance of the hook, so "is the modal open" and "has this session already armed" cannot live in
 component state. They are held in the always-mounted query cache under
 `onboardingSurveySession` — the same device `useConnectSession` uses for its launch-suppression

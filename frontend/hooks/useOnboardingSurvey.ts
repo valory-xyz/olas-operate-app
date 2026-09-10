@@ -206,7 +206,7 @@ export const useOnboardingSurvey = () => {
     survey.firstShownAt,
   ]);
 
-  /** Re-opens the modal at step 1 from the nudge. Deliberately does not rewrite `firstShownAt`. */
+  /** Re-opens the modal at step 1 from the feedback alert. Deliberately does not rewrite `firstShownAt`. */
   const open = useCallback(
     () => patchSession({ isOpen: true }),
     [patchSession],
@@ -269,7 +269,7 @@ export const useOnboardingSurvey = () => {
         agentType: survey.agentType ?? selectedAgentType,
         pearlVersion,
         timeToFirstSuccessSeconds,
-        // From the persisted `firstShownAt`, so a return via the nudge days later records days.
+        // From the persisted `firstShownAt`, so a return via the feedback alert days later records days.
         timeToCompleteSurveySeconds: toSeconds(Date.now() - shownAtMs),
       });
 
@@ -305,7 +305,9 @@ export const useOnboardingSurvey = () => {
     // Not gated on `isEligible`: submitting writes `completed`, which would tear the modal down
     // before the success view renders. Everything that *starts* a session is gated instead.
     isModalOpen: isStoreHydrated && session.isOpen,
-    showNudge: Boolean(isEligible && survey.firstShownAt && !session.isOpen),
+    showFeedbackAlert: Boolean(
+      isEligible && survey.firstShownAt && !session.isOpen,
+    ),
     isOnline,
     open,
     close,

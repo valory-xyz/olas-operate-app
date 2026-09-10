@@ -195,7 +195,7 @@ describe('OnboardingSurvey', () => {
   });
 
   it('stays on step 2 when the submission fails', async () => {
-    const state = renderSurvey({
+    renderSurvey({
       submit: jest.fn().mockResolvedValue({ success: false, error: 'boom' }),
     });
 
@@ -218,9 +218,7 @@ describe('OnboardingSurvey', () => {
     expect(
       screen.queryByText('Thanks for your feedback!'),
     ).not.toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: 'Send Feedback' }),
-    ).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Send Feedback' })).toBeEnabled();
   });
 
   it('tells the user when the fast exit fails too', async () => {
@@ -297,7 +295,7 @@ describe('OnboardingSurvey', () => {
 
   // The component stays mounted while the modal is closed, so its step and selections outlive a
   // dismissal. These cover the transition, not the frame.
-  describe('reopening from the nudge', () => {
+  describe('reopening from the feedback alert', () => {
     it('returns to step 1 with the previous selections cleared', () => {
       const state = renderSurvey();
 
@@ -307,7 +305,7 @@ describe('OnboardingSurvey', () => {
         screen.getByText('How was your experience overall?'),
       ).toBeInTheDocument();
 
-      // Dismiss, then reopen — what the sidebar nudge does.
+      // Dismiss, then reopen — what the sidebar alert does.
       mockUseOnboardingSurvey.mockReturnValue({ ...state, isModalOpen: false });
       state.rerender(<OnboardingSurvey />);
       mockUseOnboardingSurvey.mockReturnValue({ ...state, isModalOpen: true });
