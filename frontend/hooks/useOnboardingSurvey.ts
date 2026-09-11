@@ -14,7 +14,6 @@ import {
   SurveyRating,
 } from '@/service/OnboardingSurvey';
 import { OnboardingSurveyState, OsInfo } from '@/types/ElectronApi';
-import { isValidServiceId } from '@/utils/service';
 
 import { useElectronApi } from './useElectronApi';
 import { useOnlineStatusContext } from './useOnlineStatus';
@@ -30,13 +29,11 @@ const ONBOARDING_SURVEY_SESSION_KEY = 'onboardingSurveySession';
 type SurveySession = {
   isOpen: boolean;
   hasAutoOpened: boolean;
-  hasClassifiedTiming: boolean;
 };
 
 const INITIAL_SESSION: SurveySession = {
   isOpen: false,
   hasAutoOpened: false,
-  hasClassifiedTiming: false,
 };
 
 export type SurveyAnswers = {
@@ -55,17 +52,15 @@ const toSeconds = (ms: number) => Math.max(0, Math.floor(ms / 1000));
 /**
  * Owns the post-setup questionnaire decision (OPE-1899): trigger, once-per-account gating,
  * expiry and the submission payload. The gate is `storeState.onboardingSurvey` only; the triggers
- * arm it. `connect.firstRunCompleted` is per service and must never gate it.
+ * arm it. `connect.firstRunCompleted` is per service and must never gate it. Accounts that
+ * predate the feature (`timingUnavailable: true`, see `useOnboardingSurveyTiming`) never arm:
+ * the functional scope excludes a retroactive trigger.
  */
 export const useOnboardingSurvey = () => {
   const queryClient = useQueryClient();
   const { store, getAppVersion, getOsInfo } = useElectronApi();
   const { storeState } = useStore();
-  const {
-    services,
-    isFetched: isServicesFetched,
-    selectedAgentType,
-  } = useServices();
+  const { selectedAgentType } = useServices();
   const { isOnline } = useOnlineStatusContext();
 
   const { data: session = INITIAL_SESSION } = useQuery<SurveySession>({
@@ -120,6 +115,10 @@ export const useOnboardingSurvey = () => {
 
   const isEligible = isStoreHydrated && !survey.completed && !isExpired;
 
+  // Only an account classified as new (see `useOnboardingSurveyTiming`) may ever arm. `undefined`
+  // means not classified yet, `true` means it predates the feature; neither arms.
+  const isNewAccount = survey.timingUnavailable === false;
+
   /** Records the moment the survey was first shown, plus the agent whose success armed it. */
   const markShown = useCallback(
     (agentType: AgentType) => {
@@ -129,32 +128,27 @@ export const useOnboardingSurvey = () => {
     [store],
   );
 
-  // The green "earned" line (`isEpochTargetMet`), written by RewardProvider, not a reward transfer.
-  const isStakingTriggerFired = storeState?.firstStakingRewardAchieved === true;
+  // The green "earned" line (`isEpochTargetMet`). RewardProvider writes the flag together with
+  // the agent that earned it; a flag without the agent was set before that write existed, which
+  // is itself proof the account predates the feature, so it never arms.
+  const stakingTriggerAgentType = storeState?.firstStakingRewardAgentType;
+  const isStakingTriggerFired =
+    storeState?.firstStakingRewardAchieved === true &&
+    stakingTriggerAgentType !== undefined &&
+    stakingTriggerAgentType !== null;
 
-  // `isFetched` is `!isLoading`, which a query that never ran (offline at launch) also reports;
-  // an undefined list is the tell that nothing was actually fetched.
-  const hasServiceList = isServicesFetched && services !== undefined;
-
-  // The agent that earned the first reward, written by RewardProvider with the flag. Accounts
-  // whose flag predates that write have no record, so the selected agent is the best available.
-  const stakingTriggerAgentType =
-    storeState?.firstStakingRewardAgentType ?? selectedAgentType;
-
-  // Auto-open, once per account. Waits for the service list: until it resolves,
-  // `selectedAgentType` is the PredictTrader fallback, and `markShown` persists it for good.
+  // Auto-open, once per account.
   useEffect(() => {
-    if (!isEligible) return;
+    if (!isEligible || !isNewAccount) return;
     if (survey.dismissed || survey.firstShownAt) return;
-    if (!isStakingTriggerFired) return;
-    if (!hasServiceList) return;
+    if (!isStakingTriggerFired || !stakingTriggerAgentType) return;
     if (readSession().hasAutoOpened) return;
 
     patchSession({ hasAutoOpened: true, isOpen: true });
     markShown(stakingTriggerAgentType);
   }, [
-    hasServiceList,
     isEligible,
+    isNewAccount,
     isStakingTriggerFired,
     markShown,
     patchSession,
@@ -164,37 +158,9 @@ export const useOnboardingSurvey = () => {
     survey.firstShownAt,
   ]);
 
-  // One-time timing classification: an account with a deployed service predates the feature, so
-  // its `firstAppOpenedAt` is meaningless and the duration is reported as `null`. "Deployed" is
-  // `isValidServiceId`: the middleware writes `token: -1` for a created-but-undeployed service,
-  // which every new account has at first `Main` mount.
-  useEffect(() => {
-    if (!isStoreHydrated) return;
-    if (survey.timingUnavailable !== undefined) return;
-    if (!hasServiceList) return;
-    if (readSession().hasClassifiedTiming) return;
-
-    const hasPreExistingService = services.some((service) =>
-      isValidServiceId(
-        service.chain_configs?.[service.home_chain]?.chain_data?.token,
-      ),
-    );
-
-    patchSession({ hasClassifiedTiming: true });
-    store?.set?.(`${STORE_KEY}.timingUnavailable`, hasPreExistingService);
-  }, [
-    hasServiceList,
-    isStoreHydrated,
-    patchSession,
-    readSession,
-    services,
-    store,
-    survey.timingUnavailable,
-  ]);
-
   // Connect never stakes; `Home` reports the first Profile visit as its equivalent moment.
   const reportConnectProfileVisit = useCallback(() => {
-    if (!isEligible) return;
+    if (!isEligible || !isNewAccount) return;
     if (selectedAgentType !== AgentMap.Connect) return;
     if (survey.dismissed || survey.firstShownAt) return;
     if (readSession().hasAutoOpened) return;
@@ -203,6 +169,7 @@ export const useOnboardingSurvey = () => {
     markShown(AgentMap.Connect);
   }, [
     isEligible,
+    isNewAccount,
     markShown,
     patchSession,
     readSession,

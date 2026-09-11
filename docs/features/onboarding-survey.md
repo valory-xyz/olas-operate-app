@@ -20,7 +20,8 @@ Home: view === 'profile'  (Connect only)     ─┴─► useOnboardingSurvey
 
 ## Source of truth
 
-- `frontend/hooks/useOnboardingSurvey.ts` — trigger, gating, expiry, timing classification, submission
+- `frontend/hooks/useOnboardingSurvey.ts` — trigger, gating, expiry, submission
+- `frontend/hooks/useOnboardingSurveyTiming.ts` — one-time account classification (new vs pre-existing), mounted once at the app root via `components/OnboardingSurvey/TimingClassifier.tsx`
 - `frontend/components/OnboardingSurvey/constants.ts` — option ids and labels, 2-week window
 - `frontend/components/OnboardingSurvey/index.tsx` — modal shell; owns step state and the selections
 - `frontend/components/OnboardingSurvey/FeedbackAlert.tsx` — sidebar alert
@@ -64,9 +65,9 @@ its first run would re-prompt a user who has already answered.
 
 | Field | Written when |
 |---|---|
-| `timingUnavailable` | Once, at the first hydration where it is undefined and services have fetched |
+| `timingUnavailable` | Once, by `useOnboardingSurveyTiming` at the first hydration where it is undefined and services have fetched. `true` = the account predates the feature and never sees the survey; `false` = new account |
 | `firstShownAt` | ISO timestamp of the first open. Its absence means "never shown" |
-| `agentType` | Alongside `firstShownAt` — the agent whose success fired the trigger: `firstStakingRewardAgentType` (written by `RewardProvider` with the flag) for staking agents, Connect for Connect. Falls back to the selected agent only for accounts whose flag predates that write |
+| `agentType` | Alongside `firstShownAt` — the agent whose success fired the trigger: `firstStakingRewardAgentType` (written by `RewardProvider` with the flag) for staking agents, Connect for Connect. Never the selected agent |
 | `dismissed` | On close without submitting |
 | `completed` | On any 2xx from pearl-api |
 
@@ -90,19 +91,20 @@ the launch and not the first React render.
 
 - **Auto-open happens once, in the session the trigger fires.** A persisted `firstShownAt` alone
   never reopens the modal on a later launch — only the feedback alert persists.
-- **Existing users are handled by doing nothing special.** Someone whose
-  `firstStakingRewardAchieved` was already true simply arms on the first launch after the update.
-  Their timing is classified as unavailable (below) and reported as `null`.
-- **Timing classification.** An account that already has a *deployed* service predates this
-  feature, so its `firstAppOpenedAt` was stamped long after the user actually started — the elapsed
-  time would be *wrong*, not merely missing, so it is sent as `null`. "Deployed" is decided with
-  `isValidServiceId(chain_data.token)`: the middleware writes `token: -1` for a service that is
-  created but not deployed, which is the state every new account is in when `Main` first mounts
-  (`AgentOnboarding` creates the record before the user reaches `Main`), so a `!= null` check would
-  call every new account pre-existing. The classification waits for `useServices().isFetched`
+- **Accounts that predate the feature never see the survey.** The functional scope lists a
+  retroactive trigger as out of scope. Both triggers require `timingUnavailable === false`, and
+  the staking trigger additionally requires `firstStakingRewardAgentType`, which only builds with
+  this feature write. Someone whose `firstStakingRewardAchieved` was already true before the
+  update therefore never arms, and neither does a pre-existing Connect user visiting Profile.
+- **Account classification.** `useOnboardingSurveyTiming` runs once at the app root, right after
+  login, before onboarding creates anything. An account that already has a *deployed* service
+  predates the feature (`timingUnavailable: true`); one with no services, or only created-but-
+  undeployed ones, is new (`false`). "Deployed" is decided with `isValidServiceId(chain_data.token)`:
+  the middleware writes `token: -1` for a created-but-undeployed service, so a `!= null` check
+  would call every new account pre-existing. The classification waits for `useServices().isFetched`
   **and** a defined list: `isFetched` is derived from `!isLoading`, which a query that never ran
   (offline at launch) also reports, and an unfetched list would misclassify a returning user as
-  new.
+  new. Until classified (`undefined`) nothing arms.
 - **Expiry is computed, not scheduled.** The 2-week window is derived by comparing now against
   `firstShownAt`; a timer would not survive a restart. Checked on open only, so a user who
   already has the modal open when the window lapses may still submit.
@@ -110,8 +112,8 @@ the launch and not the first React render.
   mount — otherwise a user who dismisses and returns days later via the feedback alert records seconds.
 - **`agentType` is the agent that earned the first reward**, read from
   `firstStakingRewardAgentType`, which `RewardProvider` writes in the same effect as
-  `firstStakingRewardAchieved`. It is persisted once at trigger time, so neither the agent selected
-  when the survey arms nor a switch before submitting changes it.
+  `firstStakingRewardAchieved`. There is no fallback to the selected agent: a flag without the
+  agent means the account predates the feature, and it does not arm.
 - **No retry.** pearl-api does not dedupe, so a retry appends a second row. Any 2xx is treated as
   complete — including the server's internal fallback path, which is indistinguishable on the
   wire. Any non-2xx leaves the feedback alert in place.

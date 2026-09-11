@@ -6,7 +6,6 @@ import { AgentMap, AgentType } from '../../constants/agent';
 import { useOnboardingSurvey } from '../../hooks/useOnboardingSurvey';
 import { PearlStore } from '../../types/ElectronApi';
 import {
-  DEFAULT_SERVICE_CONFIG_ID,
   makeOnboardingSurveyState,
   makePearlStore,
 } from '../helpers/factories';
@@ -51,24 +50,6 @@ const OS_INFO = {
 const FIRST_OPENED_AT = '2026-01-01T00:00:00.000Z';
 const NOW = Date.parse('2026-01-02T02:00:00.000Z'); // 1 day 2 hours later
 
-/** A service that carries an on-chain NFT token id — i.e. an account that predates the feature. */
-const makeDeployedService = () => ({
-  service_config_id: DEFAULT_SERVICE_CONFIG_ID,
-  home_chain: 'gnosis',
-  chain_configs: { gnosis: { chain_data: { token: 42 } } },
-});
-
-/**
- * A service that was created but never deployed. The middleware writes `token: -1`
- * (`NON_EXISTENT_TOKEN`) here, not `null` — this is the state every new account is in when `Main`
- * first mounts, since `AgentOnboarding` creates the record before the user reaches `Main`.
- */
-const makeUndeployedService = () => ({
-  service_config_id: DEFAULT_SERVICE_CONFIG_ID,
-  home_chain: 'gnosis',
-  chain_configs: { gnosis: { chain_data: { token: -1 } } },
-});
-
 type SetupOptions = {
   services?: unknown[];
   isFetched?: boolean;
@@ -107,6 +88,24 @@ const surveyWrites = () =>
     key.startsWith('onboardingSurvey'),
   );
 
+/**
+ * A new account whose first reward has just been detected: classified as new by
+ * `useOnboardingSurveyTiming`, with the earning agent recorded by RewardProvider.
+ */
+const makeNewAccountWithReward = (
+  survey: Partial<PearlStore['onboardingSurvey']> = {},
+  rest: Partial<PearlStore> = {},
+) =>
+  makePearlStore({
+    firstStakingRewardAchieved: true,
+    firstStakingRewardAgentType: AgentMap.Polystrat,
+    onboardingSurvey: makeOnboardingSurveyState({
+      timingUnavailable: false,
+      ...survey,
+    }),
+    ...rest,
+  });
+
 const writeFor = (key: string) =>
   mockStoreSet.mock.calls.find(([k]: [string]) => k === key);
 
@@ -124,9 +123,7 @@ afterEach(() => jest.restoreAllMocks());
 describe('useOnboardingSurvey', () => {
   describe('staking trigger', () => {
     it('opens the modal and records the trigger when the first reward is earned', async () => {
-      const { result } = setup(
-        makePearlStore({ firstStakingRewardAchieved: true }),
-      );
+      const { result } = setup(makeNewAccountWithReward());
 
       await waitFor(() => expect(result.current.isModalOpen).toBe(true));
       expect(writeFor('onboardingSurvey.firstShownAt')).toBeDefined();
@@ -144,11 +141,8 @@ describe('useOnboardingSurvey', () => {
 
     it('does not fire when the survey was already shown', () => {
       const { result } = setup(
-        makePearlStore({
-          firstStakingRewardAchieved: true,
-          onboardingSurvey: makeOnboardingSurveyState({
-            firstShownAt: new Date(NOW - 1000).toISOString(),
-          }),
+        makeNewAccountWithReward({
+          firstShownAt: new Date(NOW - 1000).toISOString(),
         }),
       );
 
@@ -157,33 +151,53 @@ describe('useOnboardingSurvey', () => {
     });
 
     it('does not fire when the survey was already completed', () => {
-      const { result } = setup(
-        makePearlStore({
-          firstStakingRewardAchieved: true,
-          onboardingSurvey: makeOnboardingSurveyState({ completed: true }),
-        }),
-      );
+      const { result } = setup(makeNewAccountWithReward({ completed: true }));
 
       expect(result.current.isModalOpen).toBe(false);
       expect(result.current.showFeedbackAlert).toBe(false);
     });
 
-    it('shows an existing user the modal on the first launch after the update', async () => {
-      // firstStakingRewardAchieved is already true and onboardingSurvey is absent.
+    it('never shows an account that predates the feature', () => {
+      // The functional scope excludes a retroactive trigger: a pre-existing account keeps its
+      // flag but the questionnaire must not appear on the first launch after the update.
       const { result } = setup(
-        makePearlStore({ firstStakingRewardAchieved: true }),
+        makeNewAccountWithReward({ timingUnavailable: true }),
       );
 
-      await waitFor(() => expect(result.current.isModalOpen).toBe(true));
+      expect(result.current.isModalOpen).toBe(false);
+      expect(result.current.showFeedbackAlert).toBe(false);
+      expect(writeFor('onboardingSurvey.firstShownAt')).toBeUndefined();
+    });
+
+    it('does not arm until the account has been classified', () => {
+      const { result } = setup(
+        makeNewAccountWithReward({ timingUnavailable: undefined }),
+      );
+
+      expect(result.current.isModalOpen).toBe(false);
+      expect(writeFor('onboardingSurvey.firstShownAt')).toBeUndefined();
+    });
+
+    it('does not arm on a flag written without the earning agent', () => {
+      // Only builds before this feature wrote the flag alone; such an account predates it.
+      const { result } = setup(
+        makeNewAccountWithReward(
+          {},
+          { firstStakingRewardAgentType: undefined },
+        ),
+      );
+
+      expect(result.current.isModalOpen).toBe(false);
+      expect(writeFor('onboardingSurvey.firstShownAt')).toBeUndefined();
     });
 
     it('records the agent that earned the reward, not the one selected now', async () => {
       // RewardProvider writes the earning agent alongside the flag; the user has since switched.
       const { result } = setup(
-        makePearlStore({
-          firstStakingRewardAchieved: true,
-          firstStakingRewardAgentType: AgentMap.Modius,
-        }),
+        makeNewAccountWithReward(
+          {},
+          { firstStakingRewardAgentType: AgentMap.Modius },
+        ),
         { selectedAgentType: AgentMap.Polystrat },
       );
 
@@ -191,40 +205,9 @@ describe('useOnboardingSurvey', () => {
       expect(writeFor('onboardingSurvey.agentType')?.[1]).toBe(AgentMap.Modius);
     });
 
-    it('waits for the service list so the persisted agentType is not the fallback', async () => {
-      // Until services resolve, selectedAgentType is ServicesProvider's PredictTrader fallback.
-      // Store hydration lands first for an existing user, so the trigger is already satisfied.
-      mockUseStore.mockReturnValue({
-        storeState: makePearlStore({ firstStakingRewardAchieved: true }),
-      });
-      mockUseServices.mockReturnValue({
-        services: undefined,
-        isFetched: false,
-        selectedAgentType: AgentMap.PredictTrader,
-      });
-      mockUseOnlineStatus.mockReturnValue({ isOnline: true });
-
-      const { result, rerender } = renderHook(() => useOnboardingSurvey(), {
-        wrapper: createQueryClientWrapper(),
-      });
-
-      expect(result.current.isModalOpen).toBe(false);
-      expect(writeFor('onboardingSurvey.agentType')).toBeUndefined();
-
-      mockUseServices.mockReturnValue({
-        services: [makeDeployedService()],
-        isFetched: true,
-        selectedAgentType: AgentMap.Modius,
-      });
-      rerender();
-
-      await waitFor(() => expect(result.current.isModalOpen).toBe(true));
-      expect(writeFor('onboardingSurvey.agentType')?.[1]).toBe(AgentMap.Modius);
-    });
-
     it('arms only once when several consumers mount the hook', async () => {
       mockUseStore.mockReturnValue({
-        storeState: makePearlStore({ firstStakingRewardAchieved: true }),
+        storeState: makeNewAccountWithReward(),
       });
       mockUseServices.mockReturnValue({
         services: [],
@@ -256,8 +239,12 @@ describe('useOnboardingSurvey', () => {
   });
 
   describe('Connect trigger', () => {
+    const newConnectAccount = makePearlStore({
+      onboardingSurvey: makeOnboardingSurveyState({ timingUnavailable: false }),
+    });
+
     it('opens the modal when Home reports the Profile visit', async () => {
-      const { result } = setup(makePearlStore({}), {
+      const { result } = setup(newConnectAccount, {
         selectedAgentType: AgentMap.Connect,
       });
 
@@ -270,16 +257,31 @@ describe('useOnboardingSurvey', () => {
     });
 
     it('ignores the Profile visit for a non-Connect agent', () => {
-      const { result } = setup(makePearlStore({}), {
+      const { result } = setup(newConnectAccount, {
         selectedAgentType: AgentMap.Polystrat,
       });
 
       act(() => result.current.reportConnectProfileVisit());
 
       expect(result.current.isModalOpen).toBe(false);
-      // The timing classification still runs — only the trigger must not.
       expect(writeFor('onboardingSurvey.firstShownAt')).toBeUndefined();
       expect(writeFor('onboardingSurvey.agentType')).toBeUndefined();
+    });
+
+    it('ignores the Profile visit for an account that predates the feature', () => {
+      const { result } = setup(
+        makePearlStore({
+          onboardingSurvey: makeOnboardingSurveyState({
+            timingUnavailable: true,
+          }),
+        }),
+        { selectedAgentType: AgentMap.Connect },
+      );
+
+      act(() => result.current.reportConnectProfileVisit());
+
+      expect(result.current.isModalOpen).toBe(false);
+      expect(writeFor('onboardingSurvey.firstShownAt')).toBeUndefined();
     });
 
     it('does not re-trigger for a second Connect instance', () => {
@@ -308,9 +310,7 @@ describe('useOnboardingSurvey', () => {
 
   describe('dismissal and the feedback alert', () => {
     it('dismissing closes the modal, records it and shows the feedback alert', async () => {
-      const { result } = setup(
-        makePearlStore({ firstStakingRewardAchieved: true }),
-      );
+      const { result } = setup(makeNewAccountWithReward());
       await waitFor(() => expect(result.current.isModalOpen).toBe(true));
 
       act(() => result.current.dismiss());
@@ -402,67 +402,6 @@ describe('useOnboardingSurvey', () => {
 
     it('uses the scoped window rather than an ad-hoc number', () => {
       expect(ONBOARDING_SURVEY_EXPIRY_MS).toBe(14 * 24 * 60 * 60 * 1000);
-    });
-  });
-
-  describe('timing classification', () => {
-    it('marks an account with a deployed service as timing-unavailable', async () => {
-      setup(makePearlStore({}), { services: [makeDeployedService()] });
-
-      await waitFor(() =>
-        expect(writeFor('onboardingSurvey.timingUnavailable')?.[1]).toBe(true),
-      );
-    });
-
-    it('marks a fresh install as timing-available', async () => {
-      setup(makePearlStore({}), { services: [] });
-
-      await waitFor(() =>
-        expect(writeFor('onboardingSurvey.timingUnavailable')?.[1]).toBe(false),
-      );
-    });
-
-    it('marks a new account whose service is created but not yet deployed as timing-available', async () => {
-      // The realistic new-user state at first `Main` mount: a record with `token: -1`.
-      setup(makePearlStore({}), { services: [makeUndeployedService()] });
-
-      await waitFor(() =>
-        expect(writeFor('onboardingSurvey.timingUnavailable')?.[1]).toBe(false),
-      );
-    });
-
-    it('does not classify before the service list has been fetched', () => {
-      // An unfetched list looks empty, which would misclassify a returning user as new.
-      setup(makePearlStore({}), {
-        services: undefined,
-        isFetched: false,
-      });
-
-      expect(writeFor('onboardingSurvey.timingUnavailable')).toBeUndefined();
-    });
-
-    it('does not classify when the list is undefined even though isFetched reads true', () => {
-      // `isFetched` is `!isLoading`, which a disabled query (offline at launch) also reports.
-      setup(makePearlStore({}), {
-        services: undefined,
-        isFetched: true,
-        isOnline: false,
-      });
-
-      expect(writeFor('onboardingSurvey.timingUnavailable')).toBeUndefined();
-    });
-
-    it('does not reclassify once already recorded', () => {
-      setup(
-        makePearlStore({
-          onboardingSurvey: makeOnboardingSurveyState({
-            timingUnavailable: true,
-          }),
-        }),
-        { services: [makeUndeployedService()] },
-      );
-
-      expect(writeFor('onboardingSurvey.timingUnavailable')).toBeUndefined();
     });
   });
 
