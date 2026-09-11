@@ -3,6 +3,21 @@ import { AgentMap, AgentType } from '@/constants';
 import { BackupWalletType } from './BackupWallet';
 import { Nullable } from './Util';
 
+/**
+ * Post-setup questionnaire state (OPE-1899). Backend-bound so "shown once, ever" follows the
+ * account across machines.
+ */
+export type OnboardingSurveyState = {
+  /** Tri-state: `true`/`false` once classified, `undefined` until then (treated as unavailable). */
+  timingUnavailable?: boolean;
+  /** ISO timestamp of the first open. Absent means "never shown". */
+  firstShownAt?: string;
+  /** The agent whose success fired the trigger. */
+  agentType?: AgentType;
+  dismissed?: boolean;
+  completed?: boolean;
+};
+
 type AgentSettings = {
   isInitialFunded: boolean | Record<string, boolean>;
   /** @deprecated Preserved during migration from boolean → per-service record. */
@@ -17,6 +32,8 @@ type AgentSettings = {
 export type PearlStore = {
   // First time user settings
   firstStakingRewardAchieved?: boolean;
+  /** The agent that earned the first staking reward, written with the flag above. */
+  firstStakingRewardAgentType?: AgentType;
 
   /** @deprecated Use `lastSelectedServiceConfigId` instead. Kept for one-time migration only. */
   lastSelectedAgentType?: AgentType;
@@ -65,6 +82,8 @@ export type PearlStore = {
 
   /** When true (and auto-run is enabled), prevents the OS from sleeping. */
   keepDeviceAwake?: boolean;
+
+  onboardingSurvey?: OnboardingSurveyState;
 };
 
 /**
@@ -76,6 +95,21 @@ export type ElectronStore = {
   knownVersion?: string;
   /** Stores the latest app version for which the "update available" modal was dismissed. */
   updateAvailableKnownVersion?: string;
+  /**
+   * ISO timestamp of the very first app launch, written once by the main process.
+   *
+   * Electron-native rather than backend-bound because it is recorded before an account — and so
+   * before `.operate/pearl_store.json` — exists. The cost is that it does not follow the user to
+   * a new machine; the survey contract already carries a `null` path for exactly that gap.
+   */
+  firstAppOpenedAt?: string;
+};
+
+export type OsInfo = {
+  type: string;
+  platform: string;
+  arch: string;
+  release: string;
 };
 
 export type ElectronTrayIconStatus =

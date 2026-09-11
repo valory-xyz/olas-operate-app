@@ -30,6 +30,7 @@ import {
   StakingState,
 } from '../../types/Autonolas';
 import { WalletBalance } from '../../types/Balance';
+import { OnboardingSurveyState, PearlStore } from '../../types/ElectronApi';
 import { MiddlewareServiceResponse, Service } from '../../types/Service';
 import {
   AgentFundingEvent,
@@ -744,11 +745,28 @@ export const makeAgentTransactionHistoryResponseV2 = (
 });
 
 /**
+ * Post-setup questionnaire state (OPE-1899). Defaults to "never triggered" — the state a fresh
+ * account is in — so a case only names the field it is actually about.
+ */
+export const makeOnboardingSurveyState = (
+  overrides: Partial<OnboardingSurveyState> = {},
+): OnboardingSurveyState => ({ ...overrides });
+
+/**
+ * A hydrated `PearlStore`. Passing `{}` matters: `StoreProvider` leaves `storeState` undefined
+ * until hydration, and the survey must do nothing at all in that window.
+ */
+export const makePearlStore = (
+  overrides: Partial<PearlStore> = {},
+): PearlStore => ({ ...overrides });
+
+/**
  * Stand-in for `window.electronAPI`. Covers every path ElectronApiProvider
  * resolves non-silently — omitting one makes the provider throw on render.
  */
 export const makeElectronApiMock = () => ({
   getAppVersion: jest.fn(),
+  getOsInfo: jest.fn(),
   setIsAppLoaded: jest.fn(),
   closeApp: jest.fn(),
   minimizeApp: jest.fn(),

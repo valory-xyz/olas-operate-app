@@ -7,6 +7,7 @@ import { ConnectSessionResult } from '@/types/ConnectSession';
 import {
   ElectronStore,
   ElectronTrayIconStatus,
+  OsInfo,
   PearlStore,
 } from '@/types/ElectronApi';
 import {
@@ -28,6 +29,7 @@ import {
 
 type ElectronApiContextProps = {
   getAppVersion?: () => Promise<string>;
+  getOsInfo?: () => Promise<OsInfo>;
   setIsAppLoaded?: (isLoaded: boolean) => void;
   closeApp?: () => void;
   minimizeApp?: () => void;
@@ -152,6 +154,7 @@ type ElectronApiContextProps = {
 
 export const ElectronApiContext = createContext<ElectronApiContextProps>({
   getAppVersion: async () => '',
+  getOsInfo: async () => ({ type: '', platform: '', arch: '', release: '' }),
   setIsAppLoaded: () => false,
   closeApp: () => {},
   minimizeApp: () => {},
@@ -310,6 +313,7 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
     <ElectronApiContext.Provider
       value={{
         getAppVersion: getElectronApiFunction('getAppVersion'),
+        getOsInfo: getElectronApiFunction('getOsInfo'),
         setIsAppLoaded: getElectronApiFunction('setIsAppLoaded'),
         closeApp: getElectronApiFunction('closeApp'),
         minimizeApp: getElectronApiFunction('minimizeApp'),

@@ -4,7 +4,7 @@ import { RiRobot3Line } from 'react-icons/ri';
 import { TbId } from 'react-icons/tb';
 
 import { ContentTransition, Segmented } from '@/components/ui';
-import { useConnectSession, useService } from '@/hooks';
+import { useConnectSession, useOnboardingSurvey, useService } from '@/hooks';
 import { useServices } from '@/hooks/useServices';
 
 import { ConnectFirstRunModal } from './ConnectFirstRunModal';
@@ -52,6 +52,7 @@ export const Home = () => {
   } = useServices();
   const { isServiceActive } = useService(selectedService?.service_config_id);
   const { showFirstRunModal, markFirstRunComplete } = useConnectSession();
+  const { reportConnectProfileVisit } = useOnboardingSurvey();
 
   const [view, setView] = useState<View>('overview');
   const [hasVisitedProfile, setHasVisitedProfile] = useState(false);
@@ -66,12 +67,16 @@ export const Home = () => {
     // Track when user visits profile
     if (view === 'profile') {
       setHasVisitedProfile(true);
+      // Connect never stakes, so it has no reward signal — this visit is its equivalent of a
+      // first success and is what arms the post-setup questionnaire. The hook decides whether
+      // that actually shows anything; the reset below is local UI state and does not undo it.
+      reportConnectProfileVisit();
     }
     // Reset if profile was visited after agent run
     if (!isServiceActive) {
       setHasVisitedProfile(false);
     }
-  }, [view, isServiceActive]);
+  }, [view, isServiceActive, reportConnectProfileVisit]);
 
   const handleChangeView = useCallback(
     (nextView: View) => {

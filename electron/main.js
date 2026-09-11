@@ -449,6 +449,15 @@ const createMainWindow = async () => {
 
   ipcMain.handle('app-version', () => app.getVersion());
 
+  // OS details for the post-setup questionnaire. Read here rather than from the renderer's
+  // user-agent, which reports no OS release at all under the reduced-UA direction.
+  ipcMain.handle('os-info', () => ({
+    type: os.type(),
+    platform: os.platform(),
+    arch: os.arch(),
+    release: os.release(),
+  }));
+
   mainWindow.webContents.on(
     'did-fail-load',
     (_event, errorCode, errorDescription, validatedURL, isMainFrame) => {

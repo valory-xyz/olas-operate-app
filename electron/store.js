@@ -19,6 +19,11 @@ const schema = {
   pearlStoreMigrationComplete: { type: 'boolean', default: false },
   // Set to true once the autoRun.enabled repair has been checked.
   pearlStoreAutoRunRepaired: { type: 'boolean', default: false },
+  // ISO timestamp of the very first launch, written once by main.js. Deliberately Electron-native
+  // rather than backend-bound: it is recorded before an account exists, so before
+  // .operate/pearl_store.json exists. Used to measure time-to-first-success for the post-setup
+  // questionnaire, which reports `null` when it is empty.
+  firstAppOpenedAt: { type: 'string', default: '' },
   // Queue of backend-bound writes and deletes that failed (e.g. backend
   // unreachable during shutdown). Flushed to the backend on the next successful
   // startup before hydration reads pearl_store.json. `op` is optional so
@@ -54,12 +59,28 @@ const schema = {
 const setupStoreIpc = (ipcMain) => {
   const store = new Store({ schema });
 
+  // Stamp the first-ever launch, once, from the main process so it records the launch itself
+  // rather than the first React render.
+  if (!store.get('firstAppOpenedAt')) {
+    store.set('firstAppOpenedAt', new Date().toISOString());
+  }
+
+  // `store.clear()` runs during account creation (SetupWelcome resets persistent state when no
+  // account exists yet), i.e. on the very launch the stamp above was written. Losing it there
+  // would make time-to-first-success unmeasurable for every new account, so it survives the
+  // clear.
+  const clearStore = () => {
+    const firstAppOpenedAt = store.get('firstAppOpenedAt');
+    store.clear();
+    if (firstAppOpenedAt) store.set('firstAppOpenedAt', firstAppOpenedAt);
+  };
+
   // exposed to electron browser window
   ipcMain.handle('store', () => store.store);
   ipcMain.handle('store-get', (_, key) => store.get(key));
   ipcMain.handle('store-set', (_, key, value) => store.set(key, value));
   ipcMain.handle('store-delete', (_, key) => store.delete(key));
-  ipcMain.handle('store-clear', (_) => store.clear());
+  ipcMain.handle('store-clear', (_) => clearStore());
 };
 
 module.exports = { setupStoreIpc };
