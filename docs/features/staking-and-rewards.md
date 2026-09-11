@@ -246,7 +246,7 @@ Two parallel data streams:
 
 `optimisticRewardsEarnedForEpoch` equals `availableRewardsForEpochEth` when `isEpochTargetMet` is true (see Decoupled-activity regime below), otherwise undefined.
 
-On first staking reward achievement, `firstStakingRewardAchieved` is persisted to Electron store.
+On first staking reward achievement, `firstStakingRewardAchieved` and `firstStakingRewardAgentType` (the agent that earned it) are persisted to the backend-bound store; the onboarding survey reads both.
 
 ### Eligibility determination
 

@@ -150,6 +150,9 @@ jest.mock('../../context/SupportModalProvider', () => ({
     <div data-testid="support-modal-provider">{children}</div>
   ),
 }));
+jest.mock('../../components/OnboardingSurvey/TimingClassifier', () => ({
+  OnboardingSurveyTimingClassifier: () => null,
+}));
 
 const mockUseElectronApi = useElectronApi as jest.MockedFunction<
   typeof useElectronApi

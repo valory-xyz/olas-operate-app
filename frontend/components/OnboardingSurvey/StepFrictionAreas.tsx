@@ -1,0 +1,123 @@
+import { Button, Checkbox, Flex, Typography } from 'antd';
+import styled from 'styled-components';
+
+import { COLOR } from '@/constants';
+import { FrictionAreaId } from '@/service/OnboardingSurvey';
+
+import { EVERYTHING_SMOOTH_OPTION, FRICTION_AREA_OPTIONS } from './constants';
+import { selectableCardStyles } from './SelectableCard';
+
+const { Text } = Typography;
+
+const OptionCard = styled.label<{ $selected: boolean; $disabled?: boolean }>`
+  ${selectableCardStyles}
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+`;
+
+const Hint = styled.span`
+  margin-left: 4px;
+  color: ${COLOR.TEXT_NEUTRAL_TERTIARY};
+`;
+
+/** 1px dashed rule with a 4px dash / 4px gap, which `border-style: dashed` cannot pin down. */
+const Separator = styled.div`
+  width: 100%;
+  height: 1px;
+  background-image: repeating-linear-gradient(
+    90deg,
+    ${COLOR.GRAY_3} 0 4px,
+    transparent 4px 8px
+  );
+`;
+
+type StepFrictionAreasProps = {
+  selected: FrictionAreaId[];
+  onChange: (selected: FrictionAreaId[]) => void;
+  onContinue: () => void;
+  isSubmitting: boolean;
+  isOnline: boolean;
+};
+
+/**
+ * Step 1. "Everything was smooth" is the fast exit and is mutually exclusive with the friction
+ * options; pearl-api enforces the same rule.
+ */
+export const StepFrictionAreas = ({
+  selected,
+  onChange,
+  onContinue,
+  isSubmitting,
+  isOnline,
+}: StepFrictionAreasProps) => {
+  const isEverythingSmooth = selected.includes(EVERYTHING_SMOOTH_OPTION.id);
+  const isFastExitDisabled = selected.length > 0 && !isEverythingSmooth;
+
+  const toggleFrictionArea = (id: FrictionAreaId) => {
+    const withoutFastExit = selected.filter(
+      (item) => item !== EVERYTHING_SMOOTH_OPTION.id,
+    );
+    onChange(
+      withoutFastExit.includes(id)
+        ? withoutFastExit.filter((item) => item !== id)
+        : [...withoutFastExit, id],
+    );
+  };
+
+  const toggleEverythingSmooth = () =>
+    onChange(isEverythingSmooth ? [] : [EVERYTHING_SMOOTH_OPTION.id]);
+
+  return (
+    <Flex vertical gap={6} className="w-full mt-16">
+      {FRICTION_AREA_OPTIONS.map((option) => {
+        const isChecked = selected.includes(option.id);
+        return (
+          <OptionCard key={option.id} $selected={isChecked}>
+            <Checkbox
+              checked={isChecked}
+              onChange={() => toggleFrictionArea(option.id)}
+            />
+            <span>
+              {option.label}
+              {'hint' in option && <Hint>{option.hint}</Hint>}
+            </span>
+          </OptionCard>
+        );
+      })}
+
+      {/* 6px list gap + 6px margin = the design's 12px either side of the rule. */}
+      <Separator className="my-6" />
+
+      <OptionCard $selected={isEverythingSmooth} $disabled={isFastExitDisabled}>
+        <Checkbox
+          checked={isEverythingSmooth}
+          disabled={isFastExitDisabled}
+          onChange={toggleEverythingSmooth}
+        />
+        {EVERYTHING_SMOOTH_OPTION.label}
+      </OptionCard>
+
+      <Button
+        type="primary"
+        size="large"
+        className="w-full mt-24"
+        onClick={onContinue}
+        loading={isSubmitting}
+        // The fast exit submits from this step, so it needs a connection; the friction options
+        // only move to step 2.
+        disabled={selected.length === 0 || (isEverythingSmooth && !isOnline)}
+      >
+        Continue
+      </Button>
+
+      {isEverythingSmooth && !isOnline && (
+        <Text type="secondary" className="text-xs">
+          You&apos;re offline. Reconnect to send your feedback.
+        </Text>
+      )}
+    </Flex>
+  );
+};

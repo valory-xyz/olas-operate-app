@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { Layout } from '@/components/Layout';
+import { OnboardingSurveyTimingClassifier } from '@/components/OnboardingSurvey/TimingClassifier';
 import { mainTheme } from '@/constants';
 import { AutoRunProvider } from '@/context/AutoRunProvider/AutoRunProvider';
 import { BalanceProvider } from '@/context/BalanceProvider/BalanceProvider';
@@ -63,6 +64,7 @@ function App({ Component, pageProps }: AppProps) {
                                     <OnRampProvider>
                                       <PearlWalletProvider>
                                         <SupportModalProvider>
+                                          <OnboardingSurveyTimingClassifier />
                                           {isMounted ? (
                                             <Layout>
                                               <Component {...pageProps} />

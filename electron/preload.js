@@ -120,6 +120,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   readFile: (filePath) => ipcRenderer.invoke('read-file', filePath),
   openPath: (filePath) => ipcRenderer.send('open-path', filePath),
   getAppVersion: () => ipcRenderer.invoke('app-version'),
+  getOsInfo: () => ipcRenderer.invoke('os-info'),
   onRampWindow,
   web3AuthWindow,
   web3AuthSwapOwnerWindow,

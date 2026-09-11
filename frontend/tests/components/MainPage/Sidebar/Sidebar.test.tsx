@@ -79,6 +79,10 @@ jest.mock('../../../../components/MainPage/BackupSeedPhraseAlert', () => ({
   BackupSeedPhraseAlert: () => <div data-testid="backup-alert" />,
 }));
 
+jest.mock('../../../../components/OnboardingSurvey/FeedbackAlert', () => ({
+  FeedbackAlert: () => <div data-testid="feedback-alert" />,
+}));
+
 jest.mock(
   '../../../../components/MainPage/UpdateAvailableAlert/UpdateAvailableAlert',
   () => ({
