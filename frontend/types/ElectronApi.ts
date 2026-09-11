@@ -32,6 +32,8 @@ type AgentSettings = {
 export type PearlStore = {
   // First time user settings
   firstStakingRewardAchieved?: boolean;
+  /** The agent that earned the first staking reward, written with the flag above. */
+  firstStakingRewardAgentType?: AgentType;
 
   /** @deprecated Use `lastSelectedServiceConfigId` instead. Kept for one-time migration only. */
   lastSelectedAgentType?: AgentType;

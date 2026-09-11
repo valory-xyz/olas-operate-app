@@ -95,7 +95,7 @@ export const RewardProvider = ({ children }: PropsWithChildren) => {
   const { storeState } = useStore();
   const electronApi = useElectronApi();
   const { selectedStakingProgramId } = useContext(StakingProgramContext);
-  const { selectedAgentConfig } = useServices();
+  const { selectedAgentConfig, selectedAgentType } = useServices();
 
   const currentChainId = selectedAgentConfig.evmHomeChainId;
 
@@ -145,14 +145,18 @@ export const RewardProvider = ({ children }: PropsWithChildren) => {
     return availableRewardsForEpochEth;
   }, [availableRewardsForEpochEth, isEpochTargetMet]);
 
-  // store the first staking reward achieved in the store for notification
+  // Store the first staking reward achieved, together with which agent earned it: this provider
+  // is scoped to the selected service, so the selected agent is the earning one at this moment.
+  // The onboarding survey reads the agent from here rather than from whatever is selected later.
   useEffect(() => {
     if (!isEpochTargetMet) return;
     if (storeState?.firstStakingRewardAchieved) return;
+    electronApi.store?.set?.('firstStakingRewardAgentType', selectedAgentType);
     electronApi.store?.set?.('firstStakingRewardAchieved', true);
   }, [
     electronApi.store,
     isEpochTargetMet,
+    selectedAgentType,
     storeState?.firstStakingRewardAchieved,
   ]);
 

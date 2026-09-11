@@ -66,7 +66,7 @@ its first run would re-prompt a user who has already answered.
 |---|---|
 | `timingUnavailable` | Once, at the first hydration where it is undefined and services have fetched |
 | `firstShownAt` | ISO timestamp of the first open. Its absence means "never shown" |
-| `agentType` | Alongside `firstShownAt` — the agent whose success fired the trigger |
+| `agentType` | Alongside `firstShownAt` — the agent whose success fired the trigger: `firstStakingRewardAgentType` (written by `RewardProvider` with the flag) for staking agents, Connect for Connect. Falls back to the selected agent only for accounts whose flag predates that write |
 | `dismissed` | On close without submitting |
 | `completed` | On any 2xx from pearl-api |
 
@@ -108,8 +108,10 @@ the launch and not the first React render.
   already has the modal open when the window lapses may still submit.
 - **`timeToCompleteSurveySeconds` is measured from the persisted `firstShownAt`**, not from
   mount — otherwise a user who dismisses and returns days later via the feedback alert records seconds.
-- **`agentType` comes from the value persisted at trigger time**, not the currently selected
-  agent, so switching agents before submitting from the feedback alert still reports the right one.
+- **`agentType` is the agent that earned the first reward**, read from
+  `firstStakingRewardAgentType`, which `RewardProvider` writes in the same effect as
+  `firstStakingRewardAchieved`. It is persisted once at trigger time, so neither the agent selected
+  when the survey arms nor a switch before submitting changes it.
 - **No retry.** pearl-api does not dedupe, so a retry appends a second row. Any 2xx is treated as
   complete — including the server's internal fallback path, which is indistinguishable on the
   wire. Any non-2xx leaves the feedback alert in place.

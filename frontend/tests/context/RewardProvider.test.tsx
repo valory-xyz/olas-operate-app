@@ -93,6 +93,7 @@ const mockUseServices = jest.fn<
     selectedService: { service_config_id: string } | undefined;
     isFetched: boolean;
     selectedAgentConfig: Partial<AgentConfig>;
+    selectedAgentType: string;
   },
   []
 >();
@@ -124,6 +125,7 @@ jest.mock('../../config/stakingPrograms', () => ({
 // ── Helpers ───────────────────────────────────────────────────────────
 
 const CHAIN_ID = EvmChainIdMap.Gnosis;
+const SELECTED_AGENT_TYPE = 'modius';
 
 const defaultAgentConfig: Partial<AgentConfig> = {
   evmHomeChainId: CHAIN_ID,
@@ -173,6 +175,7 @@ const setupMocks = (opts: SetupMocksOptions = {}) => {
         : { service_config_id: DEFAULT_SERVICE_CONFIG_ID },
     isFetched: opts.isFetched ?? true,
     selectedAgentConfig: defaultAgentConfig,
+    selectedAgentType: SELECTED_AGENT_TYPE,
   });
 };
 
@@ -383,10 +386,10 @@ describe('RewardProvider', () => {
     });
   });
 
-  // Note: firstStakingRewardAchieved is still written to store in the source
-  // (previously used for confetti UI). Tests cover the store persistence logic.
+  // firstStakingRewardAchieved arms the onboarding survey, which also needs to know which agent
+  // earned it, so the agent type is written in the same effect.
   describe('firstStakingRewardAchieved store persistence', () => {
-    it('writes firstStakingRewardAchieved to store on first eligibility', async () => {
+    it('writes the flag and the earning agent to store on first eligibility', async () => {
       setupMocks({
         stakingRewardsDetails: makeStakingRewardsInfo({
           isEligibleForRewards: true,
@@ -400,6 +403,10 @@ describe('RewardProvider', () => {
           true,
         );
       });
+      expect(mockStoreSet).toHaveBeenCalledWith(
+        'firstStakingRewardAgentType',
+        SELECTED_AGENT_TYPE,
+      );
     });
 
     it('does not write to store when already achieved', () => {

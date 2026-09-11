@@ -28,6 +28,7 @@ export const BACKEND_BOUND_KEYS: (keyof PearlStore)[] = [
   'polymarket_trader',
   'connect',
   'firstStakingRewardAchieved',
+  'firstStakingRewardAgentType',
   'lastSelectedServiceConfigId',
   'lastSelectedAgentType',
   'archivedAgents',

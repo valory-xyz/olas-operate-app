@@ -136,6 +136,11 @@ export const useOnboardingSurvey = () => {
   // an undefined list is the tell that nothing was actually fetched.
   const hasServiceList = isServicesFetched && services !== undefined;
 
+  // The agent that earned the first reward, written by RewardProvider with the flag. Accounts
+  // whose flag predates that write have no record, so the selected agent is the best available.
+  const stakingTriggerAgentType =
+    storeState?.firstStakingRewardAgentType ?? selectedAgentType;
+
   // Auto-open, once per account. Waits for the service list: until it resolves,
   // `selectedAgentType` is the PredictTrader fallback, and `markShown` persists it for good.
   useEffect(() => {
@@ -146,7 +151,7 @@ export const useOnboardingSurvey = () => {
     if (readSession().hasAutoOpened) return;
 
     patchSession({ hasAutoOpened: true, isOpen: true });
-    markShown(selectedAgentType);
+    markShown(stakingTriggerAgentType);
   }, [
     hasServiceList,
     isEligible,
@@ -154,7 +159,7 @@ export const useOnboardingSurvey = () => {
     markShown,
     patchSession,
     readSession,
-    selectedAgentType,
+    stakingTriggerAgentType,
     survey.dismissed,
     survey.firstShownAt,
   ]);

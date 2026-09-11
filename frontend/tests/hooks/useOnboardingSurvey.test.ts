@@ -177,6 +177,20 @@ describe('useOnboardingSurvey', () => {
       await waitFor(() => expect(result.current.isModalOpen).toBe(true));
     });
 
+    it('records the agent that earned the reward, not the one selected now', async () => {
+      // RewardProvider writes the earning agent alongside the flag; the user has since switched.
+      const { result } = setup(
+        makePearlStore({
+          firstStakingRewardAchieved: true,
+          firstStakingRewardAgentType: AgentMap.Modius,
+        }),
+        { selectedAgentType: AgentMap.Polystrat },
+      );
+
+      await waitFor(() => expect(result.current.isModalOpen).toBe(true));
+      expect(writeFor('onboardingSurvey.agentType')?.[1]).toBe(AgentMap.Modius);
+    });
+
     it('waits for the service list so the persisted agentType is not the fallback', async () => {
       // Until services resolve, selectedAgentType is ServicesProvider's PredictTrader fallback.
       // Store hydration lands first for an existing user, so the trigger is already satisfied.
