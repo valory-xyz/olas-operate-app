@@ -1,6 +1,6 @@
 # Transaction History (VLOP-73)
 
-Per-chain ledger view inside Pearl Wallet. Source: the proposed pearl-transactions subgraph ([PR #129](https://github.com/valory-xyz/autonolas-subgraph-studio/pull/129), currently plan-only). Mirrors the rewards-history stack: Service (GraphQL) → Hook (React Query) → Component.
+Per-chain ledger view inside Pearl Wallet and the Agent Wallet. Source: the pearl-transactions indexer — graph-node subgraphs for Gnosis/Optimism/Base ([autonolas-subgraph-studio](https://github.com/valory-xyz/autonolas-subgraph-studio/tree/main/subgraphs/pearl-transactions)) and an SQD squid for Polygon ([autonolas-subgraph](https://github.com/valory-xyz/autonolas-subgraph/tree/main/squids/pearl-transactions)). Mirrors the rewards-history stack: Service (GraphQL) → Hook (React Query) → Component. Shipped on all four chains; sections marked *(as shipped)* are current, the rest is the original plan kept for history.
 
 Linear: [VLOP-73](https://linear.app/valory-xyz/issue/VLOP-73).
 
@@ -170,24 +170,20 @@ VLOP-73: "Primary value: token amount only" (no USD). Use existing `TokenAmount`
 
 For native transfers (Phase 2a `Safe.SafeReceived` / `ExecutionSuccess`) the subgraph's `token` field will be `null` or zero address — render as chain-native (xDAI / POL).
 
-## Testing
+## Testing (as shipped)
 
-Per `frontend/tests/TEST_PLAN.md` conventions:
+Per `frontend/tests/TEST_PLAN.md` conventions, under `frontend/tests/`:
 
-- `service/TransactionHistory.test.ts` — mock `graphql-request`, assert query/variables, Zod parse coverage
-- `hooks/useTransactionHistory.test.ts` — categorization, month grouping, sort order, empty state
-- `hooks/useSubgraphLag.test.ts` — stale threshold transitions
-- `components/PearlWallet/History/HistoryTab.test.tsx` — render states (loading, empty, populated, stale, pre-Safe), tab gating, chain switch refetch
-- Add to `tests/helpers/factories.ts`: `makeFundsMovement`, `makeMetaResponse` — all hex via existing address factories
+- `service/TransactionHistory.test.ts`, `service/AgentTransactionHistory.test.ts` — `graphql-request` mocked; per-revision query/variable assertions (incl. absence of the other dialect's args), Zod rejection of the wrong shape, `getAll` paging
+- `utils/transactionHistory.test.ts` — `isOlasAgentToMaster`, `computeIsDataDelayed`, the v2/sqd normalizers and `indexerStatusToSubgraphMeta`
+- `hooks/useTransactionHistory.test.ts`, `hooks/useAgentTransactionHistory.test.ts` — row building, grouping, sweep hiding, delayed flag, unavailable gating
+- `components/PearlWallet/History/TransactionHistory.test.tsx`, `labels.test.ts`, `tokenLookup.test.ts`; `components/AgentWallet/BalancesAndAssets/agentTransactionLabels.test.ts` — render states and label/token resolution with the hook mocked
+- `components/PearlWallet/History/TransactionHistory.sqdReplay.test.tsx` — replays a captured live Polygon squid response through the unmocked service → normalizer → hook → view, for both wallets, including the stale-banner case
+- Factories in `tests/helpers/factories.ts`: `makeFundsMovement`, `makeSubgraphMeta`, `make*V2`, `makeIndexerStatus`, `make*Sqd`
 
-## Phasing
+## Phasing (history)
 
-1. **Phase 1** — types + service + hook + subgraph URLs. No UI. Tests.
-2. **Phase 2** — `HistoryTab` + tab wrapping inside `BalancesAndAssets`. Tests.
-3. **Phase 3** — lag indicator + empty/error states polish. Tests.
-4. **Phase 4** — multi-instance support (post-VLOP-73 if `lastSelectedServiceConfigId` lands first; see `docs/features/multi-instance-agents.md`).
-
-Each phase = separate PR, with `/review-implementation` between.
+Shipped as planned: types/service/hook (VLOP-73), the history section inside `BalancesAndAssets` and the stale banner, then the Agent Wallet view (OPE-1773), Optimism, Base (v2 revision) and Polygon via SQD (OPE-1905). Multi-instance interaction remains as noted under Open questions.
 
 ## Dependencies
 
@@ -454,6 +450,8 @@ sequenceDiagram
 ```
 
 ## Open questions
+
+Status as of the Polygon/SQD ship: 1 resolved (the indexer reads `ServiceRegistryTokenUtility`; bonds render as "\<agent\> stake" / "unstake"); 2 still open — `SAFE_SETUP_TRANSFER` is neither captured pre-discovery nor included in the wallet's category filter, so the first post-registration top-up is hidden on all revisions (follow-up ticket); 3 resolved (stablecoin transfers are indexed; pUSD renders on Polygon); 4 still open; 5 resolved — shipped as a 12h wall-clock threshold on the indexed block timestamp, not a block-count lag; 6 shipped as a single 1000-row page per list with `MAX_PAGES = 1` (an `id_ASC` tiebreaker is needed before paging deeper — follow-up ticket). Original text kept below.
 
 1. **OLAS staking entry source.** No on-chain event surfaces the staking bond — it moves through `ServiceRegistryTokenUtility` which isn't indexed. Per our [open ask 2](https://github.com/valory-xyz/autonolas-subgraph-studio/pull/129#issuecomment-4533199835), options: (a) subgraph synthesizes `STAKING_DEPOSIT` at `ServiceStaked` using `minStakingDeposit × numAgentInstances`, (b) subgraph indexes `ServiceRegistryTokenUtility`, (c) UI skips the entry. Awaiting subgraph response.
 2. **Pre-stake "Setup complete" anchor.** Per our [open ask 1](https://github.com/valory-xyz/autonolas-subgraph-studio/pull/129#issuecomment-4533199835), `SAFE_SETUP_TRANSFER` requires the `Safe` template to spawn with a historical `startBlock` (`createWithContext`) so the pre-stake xDAI funding is captured. If not adopted, "Setup complete" can only anchor on `SAFE_DEPLOYED` (no amount) — confirm with design whether that's acceptable.
