@@ -10,8 +10,11 @@ import {
   makeBondMovementV2,
   makeFundsMovement,
   makeFundsMovementV2,
+  makeIndexerStatus,
   makeServiceRefV2,
+  makeSubgraphMeta,
   makeTransactionHistoryResponse,
+  makeTransactionHistoryResponseSqd,
   makeTransactionHistoryResponseV2,
   MOCK_OLAS_TOKEN_ADDRESS,
 } from '../helpers/factories';
@@ -345,5 +348,165 @@ describe('TransactionHistoryService.get (v2 schema)', () => {
         masterSafe: DEFAULT_SAFE_ADDRESS,
       }),
     ).rejects.toThrow();
+  });
+});
+
+describe('TransactionHistoryService.get (sqd schema)', () => {
+  const URL = 'https://subgraph.example/squid/transactions-polygon/graphql';
+
+  beforeEach(() => {
+    TRANSACTION_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN[EvmChainIdMap.Polygon] = URL;
+    TRANSACTION_HISTORY_SUBGRAPH_SCHEMA_BY_EVM_CHAIN[EvmChainIdMap.Polygon] =
+      'sqd';
+  });
+  afterEach(() => {
+    jest.clearAllMocks();
+    delete TRANSACTION_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN[
+      EvmChainIdMap.Polygon
+    ];
+    delete TRANSACTION_HISTORY_SUBGRAPH_SCHEMA_BY_EVM_CHAIN[
+      EvmChainIdMap.Polygon
+    ];
+  });
+
+  it('sends the OpenReader query with limit/offset variables', async () => {
+    mockGraphqlRequest.mockResolvedValueOnce(
+      makeTransactionHistoryResponseSqd(),
+    );
+
+    await TransactionHistoryService.get({
+      chainId: EvmChainIdMap.Polygon,
+      masterSafe: DEFAULT_SAFE_ADDRESS,
+    });
+
+    const [url, query, variables] = mockGraphqlRequest.mock.calls[0];
+    expect(url).toBe(URL);
+    expect(query).toContain('GetTransactionHistorySqd');
+    // Dialect: singular-by-id, relation filters, ordering, paging, meta.
+    expect(query).toContain('masterSafe: masterSafeById(id: $masterSafe)');
+    expect(query).toContain('masterSafe: { id_eq: $masterSafe }');
+    expect(query).toContain('orderBy: blockTimestamp_DESC');
+    expect(query).toContain('indexerStatus: indexerStatusById(id: "1")');
+    expect(query).toContain('bondMovements');
+    expect(query).not.toContain('orderDirection');
+    expect(query).not.toContain('_meta');
+    expect(query).not.toContain('Bytes!');
+    expect(variables).toEqual({
+      masterSafe: DEFAULT_SAFE_ADDRESS.toLowerCase(),
+      limit: 100,
+      offset: 0,
+    });
+  });
+
+  it('maps first/skip overrides onto limit/offset', async () => {
+    mockGraphqlRequest.mockResolvedValueOnce(
+      makeTransactionHistoryResponseSqd(),
+    );
+
+    await TransactionHistoryService.get({
+      chainId: EvmChainIdMap.Polygon,
+      masterSafe: DEFAULT_SAFE_ADDRESS,
+      first: 25,
+      skip: 50,
+    });
+
+    const [, , variables] = mockGraphqlRequest.mock.calls[0];
+    expect(variables).toEqual({
+      masterSafe: DEFAULT_SAFE_ADDRESS.toLowerCase(),
+      limit: 25,
+      offset: 50,
+    });
+  });
+
+  it('normalizes the sqd response to the domain shape, mapping meta', async () => {
+    mockGraphqlRequest.mockResolvedValueOnce(
+      makeTransactionHistoryResponseSqd({
+        fundsMovements: [
+          makeFundsMovementV2({
+            id: 'funding',
+            category: 'MASTER_TO_AGENT',
+            blockTimestamp: '100',
+            service: makeServiceRefV2({ id: '272', serviceId: '272' }),
+          }),
+          makeFundsMovementV2({
+            id: 'sweep',
+            category: 'AGENT_OLAS_TO_MASTER',
+            token: MOCK_OLAS_TOKEN_ADDRESS,
+            blockTimestamp: '150',
+          }),
+        ],
+        bondMovements: [
+          makeBondMovementV2({ id: 'bond', blockTimestamp: '200' }),
+        ],
+        indexerStatus: makeIndexerStatus(),
+      }),
+    );
+
+    const result = await TransactionHistoryService.get({
+      chainId: EvmChainIdMap.Polygon,
+      masterSafe: DEFAULT_SAFE_ADDRESS,
+    });
+
+    expect(result.fundsMovements.map((m) => m.id)).toEqual(['bond', 'funding']);
+    expect(result.fundsMovements[0].bondType).toBe('AGENT_BOND');
+    expect(result.fundsMovements[1].service?.id).toBe('272');
+    expect(result._meta).toEqual(makeSubgraphMeta());
+  });
+
+  it('throws when a Graph-shaped response (with _meta) arrives on an sqd chain', async () => {
+    // A v2 response carries `_meta` and no `indexerStatus` — the sqd Zod
+    // schema must reject it rather than silently yielding a null meta.
+    mockGraphqlRequest.mockResolvedValueOnce(
+      makeTransactionHistoryResponseV2(),
+    );
+
+    await expect(
+      TransactionHistoryService.get({
+        chainId: EvmChainIdMap.Polygon,
+        masterSafe: DEFAULT_SAFE_ADDRESS,
+      }),
+    ).rejects.toThrow();
+  });
+});
+
+describe('TransactionHistoryService.getAll (sqd schema)', () => {
+  const URL = 'https://subgraph.example/squid/transactions-polygon/graphql';
+
+  beforeEach(() => {
+    TRANSACTION_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN[EvmChainIdMap.Polygon] = URL;
+    TRANSACTION_HISTORY_SUBGRAPH_SCHEMA_BY_EVM_CHAIN[EvmChainIdMap.Polygon] =
+      'sqd';
+  });
+  afterEach(() => {
+    jest.clearAllMocks();
+    delete TRANSACTION_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN[
+      EvmChainIdMap.Polygon
+    ];
+    delete TRANSACTION_HISTORY_SUBGRAPH_SCHEMA_BY_EVM_CHAIN[
+      EvmChainIdMap.Polygon
+    ];
+  });
+
+  it('pages with limit/offset and keeps meta from the first page', async () => {
+    mockGraphqlRequest.mockResolvedValueOnce(
+      makeTransactionHistoryResponseSqd({
+        fundsMovements: [makeFundsMovementV2({ id: 'only' })],
+      }),
+    );
+
+    const result = await TransactionHistoryService.getAll({
+      chainId: EvmChainIdMap.Polygon,
+      masterSafe: DEFAULT_SAFE_ADDRESS,
+    });
+
+    expect(mockGraphqlRequest).toHaveBeenCalledTimes(1);
+    const [, , variables] = mockGraphqlRequest.mock.calls[0];
+    expect(variables).toEqual({
+      masterSafe: DEFAULT_SAFE_ADDRESS.toLowerCase(),
+      limit: 1000,
+      offset: 0,
+    });
+    expect(result.fundsMovements.map((m) => m.id)).toEqual(['only']);
+    expect(result._meta).toEqual(makeSubgraphMeta());
   });
 });

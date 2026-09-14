@@ -35,14 +35,17 @@ import { MiddlewareServiceResponse, Service } from '../../types/Service';
 import {
   AgentFundingEvent,
   AgentFundingEventV2,
+  AgentTransactionHistoryResponseSqd,
   AgentTransactionHistoryResponseV2,
   BondMovementV2,
   FundsMovement,
   FundsMovementV2,
+  IndexerStatus,
   MasterSafeEntity,
   ServiceRefV2,
   SubgraphMeta,
   TransactionHistoryResponse,
+  TransactionHistoryResponseSqd,
   TransactionHistoryResponseV2,
 } from '../../types/TransactionHistory';
 import { TokenRequirement } from '../../types/Wallet';
@@ -741,6 +744,37 @@ export const makeAgentTransactionHistoryResponseV2 = (
 ): AgentTransactionHistoryResponseV2 => ({
   fundsMovements: [],
   _meta: makeSubgraphMeta(),
+  ...overrides,
+});
+
+// --- sqd (SQD squid, OpenReader) raw-response factories ---------------------
+// Rows reuse the v2 factories (the squid ships the v2 entity shape); only the
+// wrapper's meta differs. Values mirror the live Polygon squid: BigInts are
+// decimal strings. The defaults map onto makeSubgraphMeta() exactly.
+export const makeIndexerStatus = (
+  overrides: Partial<IndexerStatus> = {},
+): IndexerStatus => ({
+  blockNumber: '35000000',
+  blockTimestamp: `${DEFAULT_TS_CHECKPOINT}`,
+  ...overrides,
+});
+
+export const makeTransactionHistoryResponseSqd = (
+  overrides: Partial<TransactionHistoryResponseSqd> = {},
+): TransactionHistoryResponseSqd => ({
+  masterSafe: makeMasterSafeEntity(),
+  fundsMovements: [],
+  bondMovements: [],
+  agentFundingEvents: [],
+  indexerStatus: makeIndexerStatus(),
+  ...overrides,
+});
+
+export const makeAgentTransactionHistoryResponseSqd = (
+  overrides: Partial<AgentTransactionHistoryResponseSqd> = {},
+): AgentTransactionHistoryResponseSqd => ({
+  fundsMovements: [],
+  indexerStatus: makeIndexerStatus(),
   ...overrides,
 });
 

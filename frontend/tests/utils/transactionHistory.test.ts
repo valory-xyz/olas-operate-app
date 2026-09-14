@@ -1,19 +1,25 @@
 import { EvmChainIdMap } from '../../constants/chains';
 import {
   computeIsDataDelayed,
+  indexerStatusToSubgraphMeta,
   isOlasAgentToMaster,
+  normalizeAgentTransactionHistoryResponseSqd,
   normalizeAgentTransactionHistoryResponseV2,
   normalizeFundsMovementV2,
+  normalizeTransactionHistoryResponseSqd,
   normalizeTransactionHistoryResponseV2,
 } from '../../utils/transactionHistory';
 import {
   makeAgentFundingEventV2,
+  makeAgentTransactionHistoryResponseSqd,
   makeAgentTransactionHistoryResponseV2,
   makeBondMovementV2,
   makeFundsMovement,
   makeFundsMovementV2,
+  makeIndexerStatus,
   makeServiceRefV2,
   makeSubgraphMeta,
+  makeTransactionHistoryResponseSqd,
   makeTransactionHistoryResponseV2,
   MOCK_OLAS_TOKEN_ADDRESS,
   MOCK_USDC_E_TOKEN_ADDRESS,
@@ -204,5 +210,122 @@ describe('normalizeAgentTransactionHistoryResponseV2', () => {
 
     expect(normalized.fundsMovements.map((m) => m.id)).toEqual(['kept']);
     expect(normalized.fundsMovements[0].service?.id).toBe('42');
+  });
+});
+
+describe('indexerStatusToSubgraphMeta', () => {
+  it('maps the BigInt-string status onto the numeric SubgraphMeta shape', () => {
+    // Factory defaults are chosen to line up, so the whole shape can be
+    // asserted in one go — including the synthesized hasIndexingErrors.
+    expect(indexerStatusToSubgraphMeta(makeIndexerStatus())).toEqual(
+      makeSubgraphMeta(),
+    );
+  });
+
+  it('coerces real squid values (decimal strings) to numbers', () => {
+    expect(
+      indexerStatusToSubgraphMeta(
+        makeIndexerStatus({
+          blockNumber: '93780236',
+          blockTimestamp: '1789375387',
+        }),
+      ),
+    ).toEqual({
+      block: { number: 93_780_236, timestamp: 1_789_375_387 },
+      hasIndexingErrors: false,
+    });
+  });
+
+  it('passes null through', () => {
+    expect(indexerStatusToSubgraphMeta(null)).toBeNull();
+  });
+
+  it('feeds computeIsDataDelayed without any change to that helper', () => {
+    const nowSeconds = Math.floor(Date.now() / 1000);
+    const fresh = indexerStatusToSubgraphMeta(
+      makeIndexerStatus({ blockTimestamp: `${nowSeconds - 60}` }),
+    );
+    const stale = indexerStatusToSubgraphMeta(
+      makeIndexerStatus({ blockTimestamp: `${nowSeconds - 13 * 3600}` }),
+    );
+
+    expect(computeIsDataDelayed(fresh)).toBe(false);
+    expect(computeIsDataDelayed(stale)).toBe(true);
+  });
+});
+
+describe('normalizeTransactionHistoryResponseSqd', () => {
+  it('normalizes like v2 (bond merge, sweep drop, serviceId) and maps meta', () => {
+    const normalized = normalizeTransactionHistoryResponseSqd(
+      makeTransactionHistoryResponseSqd({
+        fundsMovements: [
+          makeFundsMovementV2({
+            id: 'funding',
+            category: 'MASTER_TO_AGENT',
+            blockTimestamp: '100',
+            service: makeServiceRefV2({ id: '272', serviceId: '272' }),
+          }),
+          makeFundsMovementV2({
+            id: 'sweep',
+            category: 'AGENT_OLAS_TO_MASTER',
+            token: MOCK_OLAS_TOKEN_ADDRESS,
+            blockTimestamp: '150',
+          }),
+        ],
+        bondMovements: [
+          makeBondMovementV2({ id: 'bond', blockTimestamp: '200' }),
+        ],
+        agentFundingEvents: [makeAgentFundingEventV2()],
+      }),
+    );
+
+    expect(normalized.fundsMovements.map((m) => m.id)).toEqual([
+      'bond',
+      'funding',
+    ]);
+    expect(normalized.fundsMovements[0].bondType).toBe('AGENT_BOND');
+    expect(normalized.fundsMovements[1].service?.id).toBe('272');
+    expect(
+      normalized.agentFundingEvents[0].transfers[0].agentSafe?.service?.id,
+    ).toBe('42');
+    expect(normalized._meta).toEqual(makeSubgraphMeta());
+    // The raw indexerStatus must not leak into the domain shape.
+    expect(normalized).not.toHaveProperty('indexerStatus');
+  });
+
+  it('yields a null _meta when the squid has no status row', () => {
+    const normalized = normalizeTransactionHistoryResponseSqd(
+      makeTransactionHistoryResponseSqd({ indexerStatus: null }),
+    );
+
+    expect(normalized._meta).toBeNull();
+    expect(computeIsDataDelayed(normalized._meta)).toBe(false);
+  });
+});
+
+describe('normalizeAgentTransactionHistoryResponseSqd', () => {
+  it('normalizes rows, drops sweeps, and maps meta', () => {
+    const normalized = normalizeAgentTransactionHistoryResponseSqd(
+      makeAgentTransactionHistoryResponseSqd({
+        fundsMovements: [
+          makeFundsMovementV2({
+            id: 'kept',
+            category: 'MASTER_TO_AGENT',
+            token: MOCK_USDC_E_TOKEN_ADDRESS,
+            service: makeServiceRefV2(),
+          }),
+          makeFundsMovementV2({
+            id: 'dropped',
+            category: 'AGENT_OLAS_TO_MASTER',
+            token: MOCK_OLAS_TOKEN_ADDRESS,
+          }),
+        ],
+      }),
+    );
+
+    expect(normalized.fundsMovements.map((m) => m.id)).toEqual(['kept']);
+    expect(normalized.fundsMovements[0].service?.id).toBe('42');
+    expect(normalized._meta).toEqual(makeSubgraphMeta());
+    expect(normalized).not.toHaveProperty('indexerStatus');
   });
 });

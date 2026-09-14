@@ -9,11 +9,15 @@ import { Address } from '@/types/Address';
 import {
   AgentTransactionHistoryResponse,
   AgentTransactionHistoryResponseSchema,
+  AgentTransactionHistoryResponseSqdSchema,
   AgentTransactionHistoryResponseV2Schema,
 } from '@/types/TransactionHistory';
 // Deep import (not the '@/utils' barrel): config/chains pulls the barrel at
 // module init, so barrel-importing here forms a cycle that breaks test loads.
-import { normalizeAgentTransactionHistoryResponseV2 } from '@/utils/transactionHistory';
+import {
+  normalizeAgentTransactionHistoryResponseSqd,
+  normalizeAgentTransactionHistoryResponseV2,
+} from '@/utils/transactionHistory';
 
 const FETCH_AGENT_TRANSACTION_HISTORY_QUERY = gql`
   query GetAgentTransactionHistory(
@@ -116,6 +120,54 @@ const FETCH_AGENT_TRANSACTION_HISTORY_QUERY_V2 = gql`
   }
 `;
 
+// sqd (SQD squid) variant — v2 selection set over OpenReader. See the master
+// query in TransactionHistory.ts for the dialect deltas; the only extra here
+// is that the agentSafe relation filter becomes `{ id_eq }` too.
+const FETCH_AGENT_TRANSACTION_HISTORY_QUERY_SQD = gql`
+  query GetAgentTransactionHistorySqd(
+    $agentSafe: String!
+    $limit: Int!
+    $offset: Int!
+  ) {
+    fundsMovements(
+      where: {
+        agentSafe: { id_eq: $agentSafe }
+        category_in: [MASTER_TO_AGENT, AGENT_TO_MASTER]
+      }
+      orderBy: blockTimestamp_DESC
+      limit: $limit
+      offset: $offset
+    ) {
+      id
+      category
+      source
+      token
+      amount
+      from
+      to
+      blockTimestamp
+      transactionHash
+      agentSafe {
+        id
+        service {
+          id
+          serviceId
+          agentIds
+        }
+      }
+      service {
+        id
+        serviceId
+        agentIds
+      }
+    }
+    indexerStatus: indexerStatusById(id: "1") {
+      blockNumber
+      blockTimestamp
+    }
+  }
+`;
+
 type GetAgentTransactionHistoryParams = {
   chainId: EvmChainId;
   agentSafe: Address;
@@ -138,9 +190,25 @@ const get = async ({
     );
   }
 
-  const variables = { agentSafe: agentSafe.toLowerCase(), first, skip };
+  const lowered = agentSafe.toLowerCase();
+  const revision = getTransactionHistorySchemaRevision(chainId);
 
-  if (getTransactionHistorySchemaRevision(chainId) === 'v2') {
+  if (revision === 'sqd') {
+    // OpenReader pages with limit/offset; the first/skip params stay so getAll
+    // and callers are dialect-agnostic.
+    const raw = await request(url, FETCH_AGENT_TRANSACTION_HISTORY_QUERY_SQD, {
+      agentSafe: lowered,
+      limit: first,
+      offset: skip,
+    });
+    return normalizeAgentTransactionHistoryResponseSqd(
+      AgentTransactionHistoryResponseSqdSchema.parse(raw),
+    );
+  }
+
+  const variables = { agentSafe: lowered, first, skip };
+
+  if (revision === 'v2') {
     const raw = await request(
       url,
       FETCH_AGENT_TRANSACTION_HISTORY_QUERY_V2,

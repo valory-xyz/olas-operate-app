@@ -36,17 +36,21 @@ pearl-transactions subgraph (Gnosis | Polygon | Optimism | Base)
                     └── <HistoryTab /> in BalancesAndAssets
 ```
 
-## Subgraph schema revisions (v1 / v2)
+## Schema revisions (v1 / v2 / sqd)
 
-Live deployments serve two incompatible schema revisions (2026-07): Gnosis/Optimism proxies pin subgraph **v0.0.6 (v1)**, Base pins **v0.0.7 (v2)** — its indexers no longer serve v0.0.6. Differences (verified against the live Base deployment, not the subgraph README):
+Live deployments serve three incompatible revisions: Gnosis/Optimism proxies pin subgraph **v0.0.6 (v1)**, Base pins **v0.0.7 (v2)** — its indexers no longer serve v0.0.6 — and Polygon is served by the **SQD squid (sqd)** at `autonolas-subgraph/squids/pearl-transactions` (OPE-1905; the graph-node Polygon deployment indexed too slowly to be usable, see the squid's `MIGRATION.md`). Differences (verified against the live Base deployment and the live Polygon squid, not READMEs):
 
-| | v1 (v0.0.6) | v2 (v0.0.7) |
-|---|---|---|
-| Bond rows | `fundsMovements` with `bondType` | separate `bondMovements` ledger (carries `bondType`) |
-| OLAS reward sweeps | `AGENT_TO_MASTER`, hidden client-side (`isOlasAgentToMaster`) | pre-split `AGENT_OLAS_TO_MASTER`, excluded by the query's category filter |
-| `Service.id` | numeric string | registry Bytes (`"0x7802"`); numeric id in new `serviceId` field |
+| | v1 (v0.0.6) | v2 (v0.0.7) | sqd (squid) |
+|---|---|---|---|
+| Bond rows | `fundsMovements` with `bondType` | separate `bondMovements` ledger (carries `bondType`) | as v2 |
+| OLAS reward sweeps | `AGENT_TO_MASTER`, hidden client-side (`isOlasAgentToMaster`) | pre-split `AGENT_OLAS_TO_MASTER`, excluded by the query's category filter | as v2 |
+| `Service.id` | numeric string | registry Bytes (`"0x7802"`); numeric id in new `serviceId` field | numeric string; `serviceId` also present |
+| Query dialect | Graph | Graph | **OpenReader**: `limit`/`offset`, `orderBy: x_DESC`, relation filters `{ id_eq }`, singular `masterSafeById`, `String!` ids |
+| Indexer head | `_meta { block { number timestamp } hasIndexingErrors }` | as v1 | no `_meta`; `indexerStatusById(id: "1") { blockNumber blockTimestamp }` singleton, BigInt strings |
 
-Mechanism: `TRANSACTION_HISTORY_SUBGRAPH_SCHEMA_BY_EVM_CHAIN` (`frontend/constants/urls.ts`) maps chain → revision (absent = v1). Both services pick the matching query document, Zod-parse with the matching schema, and — for v2 — normalize to the v1-shaped domain types via `normalize*V2` in `frontend/utils/transactionHistory.ts` (bond rows merged into `fundsMovements`, sweep rows dropped, `service.id` mapped from `serviceId`). Hooks and components are revision-agnostic. Migrating a chain to v0.0.7 = flip its map entry.
+Mechanism: `TRANSACTION_HISTORY_SUBGRAPH_SCHEMA_BY_EVM_CHAIN` (`frontend/constants/urls.ts`) maps chain → revision (absent = v1). Both services pick the matching query document, Zod-parse with the matching schema, and — for v2/sqd — normalize to the v1-shaped domain types via `normalize*V2` / `normalize*Sqd` in `frontend/utils/transactionHistory.ts` (bond rows merged into `fundsMovements`, sweep rows dropped, `service.id` mapped from `serviceId`). Hooks and components are revision-agnostic.
+
+The sqd revision is deliberately thin: its query documents alias `masterSafeById` → `masterSafe` and `indexerStatusById` → `indexerStatus`, so the response wrapper matches v2 apart from meta. Its Zod schemas are `*V2Schema.omit({ _meta }).extend({ indexerStatus })`, and its normalizer maps `IndexerStatus → SubgraphMeta` (`hasIndexingErrors` synthesised `false`) then delegates to the v2 normalizer — so `computeIsDataDelayed` is untouched. The `first`/`skip` params on `get`/`getAll` are kept for all revisions; the sqd branch maps them to `limit`/`offset` internally. Polygon's URL is path-style (`…/squid/transactions-polygon/graphql`) rather than a `transactions-<chain>.` host — that difference is deliberate, not a typo.
 
 ## New files
 

@@ -9,11 +9,15 @@ import { Address } from '@/types/Address';
 import {
   TransactionHistoryResponse,
   TransactionHistoryResponseSchema,
+  TransactionHistoryResponseSqdSchema,
   TransactionHistoryResponseV2Schema,
 } from '@/types/TransactionHistory';
 // Deep import (not the '@/utils' barrel): config/chains pulls the barrel at
 // module init, so barrel-importing here forms a cycle that breaks test loads.
-import { normalizeTransactionHistoryResponseV2 } from '@/utils/transactionHistory';
+import {
+  normalizeTransactionHistoryResponseSqd,
+  normalizeTransactionHistoryResponseV2,
+} from '@/utils/transactionHistory';
 
 const FETCH_TRANSACTION_HISTORY_QUERY = gql`
   query GetTransactionHistory($masterSafe: Bytes!, $first: Int!, $skip: Int!) {
@@ -246,6 +250,137 @@ const FETCH_TRANSACTION_HISTORY_QUERY_V2 = gql`
   }
 `;
 
+// sqd (SQD squid) variant — same selection set as v2, served over OpenReader.
+// Dialect deltas: `limit`/`offset` for `first`/`skip`; `orderBy: field_DESC`;
+// relation filters as `{ id_eq }`; singular lookups via `<entity>ById`.
+// `masterSafeById` is aliased to `masterSafe` so the response wrapper matches
+// v2; `_meta` has no OpenReader equivalent, so the squid's IndexerStatus
+// singleton stands in and is mapped to SubgraphMeta during normalization.
+// Ids are lowercase hex strings, hence `String!` variables rather than `Bytes!`.
+const FETCH_TRANSACTION_HISTORY_QUERY_SQD = gql`
+  query GetTransactionHistorySqd(
+    $masterSafe: String!
+    $limit: Int!
+    $offset: Int!
+  ) {
+    masterSafe: masterSafeById(id: $masterSafe) {
+      id
+      masterEoa
+      owners
+      threshold
+      historyFloorBlock
+      historyFloorTimestamp
+    }
+    fundsMovements(
+      where: {
+        masterSafe: { id_eq: $masterSafe }
+        category_in: [
+          MASTER_FUNDING_IN
+          AGENT_TO_MASTER
+          MASTER_TO_AGENT
+          MASTER_WITHDRAWAL
+        ]
+      }
+      orderBy: blockTimestamp_DESC
+      limit: $limit
+      offset: $offset
+    ) {
+      id
+      category
+      source
+      token
+      amount
+      from
+      to
+      blockTimestamp
+      transactionHash
+      agentSafe {
+        id
+        service {
+          id
+          serviceId
+          agentIds
+        }
+      }
+      service {
+        id
+        serviceId
+        agentIds
+      }
+    }
+    bondMovements(
+      where: { masterSafe: { id_eq: $masterSafe } }
+      orderBy: blockTimestamp_DESC
+      limit: $limit
+      offset: $offset
+    ) {
+      id
+      category
+      source
+      bondType
+      token
+      amount
+      from
+      to
+      blockTimestamp
+      transactionHash
+      agentSafe {
+        id
+        service {
+          id
+          serviceId
+          agentIds
+        }
+      }
+      service {
+        id
+        serviceId
+        agentIds
+      }
+    }
+    agentFundingEvents(
+      where: { masterSafe: { id_eq: $masterSafe } }
+      orderBy: blockTimestamp_DESC
+      limit: $limit
+      offset: $offset
+    ) {
+      id
+      txHash
+      blockTimestamp
+      totalNativeAmount
+      totalOlasAmount
+      transfers {
+        id
+        category
+        source
+        token
+        amount
+        from
+        to
+        blockTimestamp
+        transactionHash
+        agentSafe {
+          id
+          service {
+            id
+            serviceId
+            agentIds
+          }
+        }
+        service {
+          id
+          serviceId
+          agentIds
+        }
+      }
+    }
+    indexerStatus: indexerStatusById(id: "1") {
+      blockNumber
+      blockTimestamp
+    }
+  }
+`;
+
 const DEFAULT_PAGE_SIZE = 100;
 
 type GetTransactionHistoryParams = {
@@ -268,9 +403,25 @@ const get = async ({
     );
   }
 
-  const variables = { masterSafe: masterSafe.toLowerCase(), first, skip };
+  const lowered = masterSafe.toLowerCase();
+  const revision = getTransactionHistorySchemaRevision(chainId);
 
-  if (getTransactionHistorySchemaRevision(chainId) === 'v2') {
+  if (revision === 'sqd') {
+    // OpenReader pages with limit/offset; the first/skip params stay so getAll
+    // and callers are dialect-agnostic.
+    const raw = await request(url, FETCH_TRANSACTION_HISTORY_QUERY_SQD, {
+      masterSafe: lowered,
+      limit: first,
+      offset: skip,
+    });
+    return normalizeTransactionHistoryResponseSqd(
+      TransactionHistoryResponseSqdSchema.parse(raw),
+    );
+  }
+
+  const variables = { masterSafe: lowered, first, skip };
+
+  if (revision === 'v2') {
     const raw = await request(
       url,
       FETCH_TRANSACTION_HISTORY_QUERY_V2,

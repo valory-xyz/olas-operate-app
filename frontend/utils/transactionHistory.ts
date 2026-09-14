@@ -5,13 +5,16 @@ import {
   AgentFundingEvent,
   AgentFundingEventV2,
   AgentTransactionHistoryResponse,
+  AgentTransactionHistoryResponseSqd,
   AgentTransactionHistoryResponseV2,
   BondMovementV2,
   FUNDS_CATEGORY,
   FundsMovement,
   FundsMovementV2,
+  IndexerStatus,
   SubgraphMeta,
   TransactionHistoryResponse,
+  TransactionHistoryResponseSqd,
   TransactionHistoryResponseV2,
 } from '@/types/TransactionHistory';
 
@@ -126,3 +129,42 @@ export const normalizeAgentTransactionHistoryResponseV2 = (
     .filter((m): m is FundsMovement => m !== null),
   _meta: response._meta,
 });
+
+// --- sqd (OpenReader) → domain normalization --------------------------------
+// The squid serves the v2 row shape, so sqd normalization is v2 normalization
+// plus one mapping: IndexerStatus → SubgraphMeta, so computeIsDataDelayed
+// keeps reading `_meta.block.timestamp` unchanged. `hasIndexingErrors` has no
+// squid counterpart (a failing processor stops rather than serving data
+// flagged as errored), so it's synthesized false. Block fields are BigInt
+// strings on the wire; SubgraphMeta carries numbers.
+
+export const indexerStatusToSubgraphMeta = (
+  status: IndexerStatus | null,
+): SubgraphMeta | null =>
+  status
+    ? {
+        block: {
+          number: Number(status.blockNumber),
+          timestamp: Number(status.blockTimestamp),
+        },
+        hasIndexingErrors: false,
+      }
+    : null;
+
+export const normalizeTransactionHistoryResponseSqd = ({
+  indexerStatus,
+  ...response
+}: TransactionHistoryResponseSqd): TransactionHistoryResponse =>
+  normalizeTransactionHistoryResponseV2({
+    ...response,
+    _meta: indexerStatusToSubgraphMeta(indexerStatus),
+  });
+
+export const normalizeAgentTransactionHistoryResponseSqd = ({
+  indexerStatus,
+  ...response
+}: AgentTransactionHistoryResponseSqd): AgentTransactionHistoryResponse =>
+  normalizeAgentTransactionHistoryResponseV2({
+    ...response,
+    _meta: indexerStatusToSubgraphMeta(indexerStatus),
+  });
