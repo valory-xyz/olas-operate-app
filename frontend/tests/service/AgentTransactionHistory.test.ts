@@ -99,6 +99,11 @@ describe('AgentTransactionHistoryService.get (v2 schema)', () => {
   });
 });
 
+const ORIGINAL_POLYGON_URL =
+  TRANSACTION_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN[EvmChainIdMap.Polygon];
+const ORIGINAL_POLYGON_SCHEMA =
+  TRANSACTION_HISTORY_SUBGRAPH_SCHEMA_BY_EVM_CHAIN[EvmChainIdMap.Polygon];
+
 describe('AgentTransactionHistoryService.get (sqd schema)', () => {
   const URL = 'https://subgraph.example/squid/transactions-polygon/graphql';
 
@@ -107,14 +112,14 @@ describe('AgentTransactionHistoryService.get (sqd schema)', () => {
     TRANSACTION_HISTORY_SUBGRAPH_SCHEMA_BY_EVM_CHAIN[EvmChainIdMap.Polygon] =
       'sqd';
   });
+  // Polygon is a real shipped entry (unlike the Base stand-in the v2 suite
+  // borrows), so restore it rather than delete it.
   afterEach(() => {
     jest.clearAllMocks();
-    delete TRANSACTION_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN[
-      EvmChainIdMap.Polygon
-    ];
-    delete TRANSACTION_HISTORY_SUBGRAPH_SCHEMA_BY_EVM_CHAIN[
-      EvmChainIdMap.Polygon
-    ];
+    TRANSACTION_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN[EvmChainIdMap.Polygon] =
+      ORIGINAL_POLYGON_URL;
+    TRANSACTION_HISTORY_SUBGRAPH_SCHEMA_BY_EVM_CHAIN[EvmChainIdMap.Polygon] =
+      ORIGINAL_POLYGON_SCHEMA;
   });
 
   it('sends the OpenReader query with limit/offset and lowercased agentSafe', async () => {
@@ -138,11 +143,42 @@ describe('AgentTransactionHistoryService.get (sqd schema)', () => {
     expect(query).not.toContain('orderDirection');
     expect(query).not.toContain('_meta');
     expect(query).not.toContain('bondType');
+    expect(query).not.toContain('first:');
+    expect(query).not.toContain('skip:');
     expect(variables).toEqual({
       agentSafe: MOCK_MULTISIG_ADDRESS.toLowerCase(),
       limit: 25,
       offset: 50,
     });
+  });
+
+  // getAll is the entry point the Agent Wallet hook actually calls; pin that
+  // it drives the sqd branch at PAGE_SIZE and that the mapped meta survives
+  // the page-merge spread.
+  it('getAll pages with limit/offset and keeps the mapped meta', async () => {
+    mockGraphqlRequest.mockResolvedValueOnce(
+      makeAgentTransactionHistoryResponseSqd({
+        fundsMovements: [
+          makeFundsMovementV2({ id: 'only', category: 'MASTER_TO_AGENT' }),
+        ],
+      }),
+    );
+
+    const result = await AgentTransactionHistoryService.getAll({
+      chainId: EvmChainIdMap.Polygon,
+      agentSafe: MOCK_MULTISIG_ADDRESS,
+    });
+
+    expect(mockGraphqlRequest).toHaveBeenCalledTimes(1);
+    const [, query, variables] = mockGraphqlRequest.mock.calls[0];
+    expect(query).toContain('GetAgentTransactionHistorySqd');
+    expect(variables).toEqual({
+      agentSafe: MOCK_MULTISIG_ADDRESS.toLowerCase(),
+      limit: 1000,
+      offset: 0,
+    });
+    expect(result.fundsMovements.map((m) => m.id)).toEqual(['only']);
+    expect(result._meta).toEqual(makeSubgraphMeta());
   });
 
   it('normalizes the sqd response to the domain shape, mapping meta', async () => {

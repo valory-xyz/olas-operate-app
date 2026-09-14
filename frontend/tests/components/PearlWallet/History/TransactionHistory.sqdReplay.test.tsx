@@ -52,12 +52,18 @@ jest.mock(
   }),
 );
 
-// The captured status is wall-clock relative; pin it to "now" so the
-// stale-data banner reflects a live indexer, as it would in production.
-const freshStatus = () => ({
+// The captured status is wall-clock relative; pin it relative to "now" so the
+// stale-data banner reflects a live indexer (or, for the stale case, one
+// past computeIsDataDelayed's 12h threshold).
+const statusAgedBy = (seconds: number) => ({
   blockNumber: '93780236',
-  blockTimestamp: `${Math.floor(Date.now() / 1000)}`,
+  blockTimestamp: `${Math.floor(Date.now() / 1000) - seconds}`,
 });
+const freshStatus = () => statusAgedBy(60);
+const staleStatus = () => statusAgedBy(13 * 3600);
+
+// Exact copy of the shipped DataDelayAlert message in TransactionHistoryView.
+const STALE_BANNER = 'Recent transactions may not appear yet';
 
 describe('Polygon transaction history — live squid response replay', () => {
   beforeEach(() => {
@@ -124,13 +130,31 @@ describe('Polygon transaction history — live squid response replay', () => {
     expect(text).toContain('OLAS');
 
     // Not stale, not unavailable, not empty.
-    expect(screen.queryByText(/refresh/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(STALE_BANNER)).not.toBeInTheDocument();
     expect(
       screen.queryByText(/not available on this network/i),
     ).not.toBeInTheDocument();
     expect(
       screen.queryByText('There are no transaction records yet.'),
     ).not.toBeInTheDocument();
+  });
+
+  it('shows the stale-data banner when the squid status is ≥12h behind', async () => {
+    mockUsePearlWallet.mockReturnValue({
+      walletChainId: EvmChainIdMap.Polygon,
+      masterSafeAddress: POLYSTRAT_MASTER_SAFE,
+    });
+    mockGraphqlRequest.mockResolvedValueOnce({
+      ...SQD_MASTER_RESPONSE,
+      indexerStatus: staleStatus(),
+    });
+
+    render(<TransactionHistory />, { wrapper: createQueryClientWrapper() });
+
+    // Rows still render; the banner sits above them, driven purely by the
+    // IndexerStatus → SubgraphMeta mapping feeding computeIsDataDelayed.
+    expect(await screen.findAllByText('Fund Polystrat')).toHaveLength(2);
+    expect(screen.getByText(STALE_BANNER)).toBeInTheDocument();
   });
 
   it('Polystrat Agent Wallet renders the two "Fund agent" inflows and nothing else', async () => {
@@ -164,6 +188,6 @@ describe('Polygon transaction history — live squid response replay', () => {
     expect(text).toContain('pUSD');
     expect(text).toContain('+40.00');
     expect(text).toContain('POL');
-    expect(screen.queryByText(/refresh/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(STALE_BANNER)).not.toBeInTheDocument();
   });
 });

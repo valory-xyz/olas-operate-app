@@ -351,6 +351,11 @@ describe('TransactionHistoryService.get (v2 schema)', () => {
   });
 });
 
+const ORIGINAL_POLYGON_URL =
+  TRANSACTION_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN[EvmChainIdMap.Polygon];
+const ORIGINAL_POLYGON_SCHEMA =
+  TRANSACTION_HISTORY_SUBGRAPH_SCHEMA_BY_EVM_CHAIN[EvmChainIdMap.Polygon];
+
 describe('TransactionHistoryService.get (sqd schema)', () => {
   const URL = 'https://subgraph.example/squid/transactions-polygon/graphql';
 
@@ -359,14 +364,15 @@ describe('TransactionHistoryService.get (sqd schema)', () => {
     TRANSACTION_HISTORY_SUBGRAPH_SCHEMA_BY_EVM_CHAIN[EvmChainIdMap.Polygon] =
       'sqd';
   });
+  // Polygon is a real shipped entry (unlike the Gnosis stand-in the v2 suites
+  // borrow), so restore it rather than delete it — later suites must still
+  // see the production config.
   afterEach(() => {
     jest.clearAllMocks();
-    delete TRANSACTION_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN[
-      EvmChainIdMap.Polygon
-    ];
-    delete TRANSACTION_HISTORY_SUBGRAPH_SCHEMA_BY_EVM_CHAIN[
-      EvmChainIdMap.Polygon
-    ];
+    TRANSACTION_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN[EvmChainIdMap.Polygon] =
+      ORIGINAL_POLYGON_URL;
+    TRANSACTION_HISTORY_SUBGRAPH_SCHEMA_BY_EVM_CHAIN[EvmChainIdMap.Polygon] =
+      ORIGINAL_POLYGON_SCHEMA;
   });
 
   it('sends the OpenReader query with limit/offset variables', async () => {
@@ -391,6 +397,10 @@ describe('TransactionHistoryService.get (sqd schema)', () => {
     expect(query).not.toContain('orderDirection');
     expect(query).not.toContain('_meta');
     expect(query).not.toContain('Bytes!');
+    // The document is a hand-copy of v2's; a leftover Graph paging arg on any
+    // list would 400 in production while every other assertion still passed.
+    expect(query).not.toContain('first:');
+    expect(query).not.toContain('skip:');
     expect(variables).toEqual({
       masterSafe: DEFAULT_SAFE_ADDRESS.toLowerCase(),
       limit: 100,
@@ -477,14 +487,15 @@ describe('TransactionHistoryService.getAll (sqd schema)', () => {
     TRANSACTION_HISTORY_SUBGRAPH_SCHEMA_BY_EVM_CHAIN[EvmChainIdMap.Polygon] =
       'sqd';
   });
+  // Polygon is a real shipped entry (unlike the Gnosis stand-in the v2 suites
+  // borrow), so restore it rather than delete it — later suites must still
+  // see the production config.
   afterEach(() => {
     jest.clearAllMocks();
-    delete TRANSACTION_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN[
-      EvmChainIdMap.Polygon
-    ];
-    delete TRANSACTION_HISTORY_SUBGRAPH_SCHEMA_BY_EVM_CHAIN[
-      EvmChainIdMap.Polygon
-    ];
+    TRANSACTION_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN[EvmChainIdMap.Polygon] =
+      ORIGINAL_POLYGON_URL;
+    TRANSACTION_HISTORY_SUBGRAPH_SCHEMA_BY_EVM_CHAIN[EvmChainIdMap.Polygon] =
+      ORIGINAL_POLYGON_SCHEMA;
   });
 
   it('pages with limit/offset and keeps meta from the first page', async () => {

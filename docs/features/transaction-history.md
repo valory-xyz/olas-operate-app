@@ -25,15 +25,18 @@ Acceptance criteria from VLOP-73:
 - Chain switching stays on the existing `Segmented` control (`BalancesAndAssets.tsx:140-159`). The History tab re-keys its query on `walletChainId`.
 - For a chain with no Pearl service yet (e.g. user has only run PredictTrader, then switches to Base before deploying AgentsFun) — empty-state copy "No transactions yet."
 
-## Data flow
+## Data flow (as shipped)
 
 ```
-pearl-transactions subgraph (Gnosis | Polygon | Optimism | Base)
-  └── TransactionHistoryService (graphql-request, gql query + Zod parse)
-        └── useTransactionHistory(chainId, masterSafeAddress)
-              ├── useTransactionHistoryByMonth (group + sort transformer)
-              └── useSubgraphLag (queries _meta, returns stale flag)
-                    └── <HistoryTab /> in BalancesAndAssets
+pearl-transactions — graph-node: Gnosis v1 | Optimism v1 | Base v2 — SQD squid: Polygon sqd
+  └── TransactionHistoryService / AgentTransactionHistoryService
+        (graphql-request; per-revision document + Zod schema + normalizer → v1-shaped domain)
+        └── useTransactionHistory / useAgentTransactionHistory (React Query, 15-min refetch)
+              ├── row building (group by tx + category, AgentFundingEvent dedup, sweep hiding)
+              └── computeIsDataDelayed(_meta) → isDataDelayed
+                    └── <TransactionHistoryView /> — shared shell (states, Load more, stale banner)
+                          rendered by <TransactionHistory /> (Pearl Wallet BalancesAndAssets)
+                          and <AgentTransactionHistory /> (Agent Wallet BalancesAndAssets)
 ```
 
 ## Schema revisions (v1 / v2 / sqd)
@@ -52,15 +55,18 @@ Mechanism: `TRANSACTION_HISTORY_SUBGRAPH_SCHEMA_BY_EVM_CHAIN` (`frontend/constan
 
 The sqd revision is deliberately thin: its query documents alias `masterSafeById` → `masterSafe` and `indexerStatusById` → `indexerStatus`, so the response wrapper matches v2 apart from meta. Its Zod schemas are `*V2Schema.omit({ _meta }).extend({ indexerStatus })`, and its normalizer maps `IndexerStatus → SubgraphMeta` (`hasIndexingErrors` synthesised `false`) then delegates to the v2 normalizer — so `computeIsDataDelayed` is untouched. The `first`/`skip` params on `get`/`getAll` are kept for all revisions; the sqd branch maps them to `limit`/`offset` internally. Polygon's URL is path-style (`…/squid/transactions-polygon/graphql`) rather than a `transactions-<chain>.` host — that difference is deliberate, not a typo.
 
-## New files
+## Files (as shipped)
 
 | File | Purpose |
 |---|---|
-| `frontend/types/TransactionHistory.ts` | Zod schemas: `FundsMovement`, `AgentFundingEvent`, `FundsCategory` enum, `Meta`. Mirror `Autonolas.ts` |
-| `frontend/service/TransactionHistory.ts` | `graphql-request` queries (`getTransactionHistory`, `getMeta`). Mirror `service/FundRecovery.ts` |
-| `frontend/hooks/useTransactionHistory.ts` | `useQuery` keyed `['transactionHistory', chainId, masterSafe]`; transformer to categorized + month-grouped rows |
-| `frontend/hooks/useSubgraphLag.ts` | Lag detector: `latestL1Block - _meta.block.number > LAG_THRESHOLD_BLOCKS` |
-| `frontend/components/PearlWallet/History/` | `HistoryTab.tsx`, `HistoryRow.tsx`, `MonthGroup.tsx`, `StaleIndicator.tsx`, `EmptyState.tsx` |
+| `frontend/types/TransactionHistory.ts` | Zod schemas per revision (v1 domain, v2 raw, sqd raw), `FundsCategory`, `SubgraphMeta`, `IndexerStatus`, `TransactionHistoryRow` |
+| `frontend/service/TransactionHistory.ts`, `AgentTransactionHistory.ts` | one query document per revision; `get` (one page) and `getAll` (page loop, `PAGE_SIZE` 1000, `MAX_PAGES` 1) |
+| `frontend/utils/transactionHistory.ts` | `isOlasAgentToMaster`, `computeIsDataDelayed`, `normalize*V2`, `normalize*Sqd`, `indexerStatusToSubgraphMeta` |
+| `frontend/hooks/useTransactionHistory.ts`, `useAgentTransactionHistory.ts` | React Query wiring + row building; expose `rows`, `isDataDelayed`, `isUnavailable`, etc. |
+| `frontend/components/PearlWallet/History/` | `TransactionHistory.tsx`, `TransactionHistoryView.tsx` (shared shell), `TransactionHistoryRow.tsx`, `TransactionRowIcon.tsx`, `labels.ts`, `tokenLookup.ts`, `useAgentLookupBySafe.ts`, `agentByAgentId.ts` |
+| `frontend/components/AgentWallet/BalancesAndAssets/AgentTransactionHistory.tsx`, `agentTransactionLabels.ts` | agent-perspective wrapper + perspective-flipped labels/icons |
+
+There is no month grouping, no separate lag hook, and no per-chain tab component — history is a section inside the existing Balances screen, keyed on the wallet's selected chain.
 
 ## Touched files
 
@@ -147,9 +153,9 @@ Two lists merged client-side into one chronological stream. Pagination: cursor b
 
 `AgentFundingEvent.agentSafe.service.id` (subgraph) ↔ `chain_data.token` (frontend `Service` type, `frontend/types/Service.ts:59`) ↔ `serviceConfigId`. Lookup `agentType` from `ServicesProvider` by matching `chain_data.multisig === agentSafe.id`. Resolves to a display name via `AGENT_CONFIG[agentType].displayName`.
 
-## Subgraph-lag indicator
+## Stale-data indicator (as shipped)
 
-`useSubgraphLag` returns `{ isStale: boolean, lagBlocks: number }`. Polls `_meta` every 30s. `isStale` when `lagBlocks > 50` (Gnosis ≈ 4 min, Polygon ≈ 2 min). Renders inline banner above the list: "Refresh in progress…". Reuses no existing pattern — none exists today.
+No separate lag hook. `computeIsDataDelayed(meta)` (`frontend/utils/transactionHistory.ts`) returns true when the indexed block's **timestamp** is ≥12h behind wall-clock; each hook exposes it as `isDataDelayed`, and `TransactionHistoryView` renders the `DataDelayAlert` above the rows — message "Recent transactions may not appear yet", description "Wallet operations work normally. This usually resolves on its own." It shows only alongside actual history, never in the loading / error / empty / unavailable states. On v1/v2 the timestamp is `_meta.block.timestamp`; on sqd it comes from the squid's `IndexerStatus` singleton mapped into the same `SubgraphMeta` shape, so the helper is revision-agnostic.
 
 ## Pre-Safe state
 

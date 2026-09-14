@@ -227,8 +227,9 @@ const get = async ({
   return AgentTransactionHistoryResponseSchema.parse(raw);
 };
 
-// The Graph caps `first` at 1000. We fetch a single 1000-row page for now —
-// plenty for the 10-at-a-time view and bounds gateway cost. Older history
+// The Graph caps `first` at 1000 (OpenReader/sqd has no cap — 1000 is our own
+// bound there). We fetch a single 1000-row page for now — plenty for the
+// 10-at-a-time view and bounds gateway cost. Older history
 // beyond 1000 raw movements is dropped (an error fires); the real fix
 // (server-side filtering + pagination) is a subgraph follow-up. getAll keeps
 // the page loop so the cap is a one-line bump (MAX_PAGES) once that lands.
