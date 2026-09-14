@@ -68,14 +68,14 @@ export const CONNECT_SERVICE_TEMPLATE: ServiceTemplate = {
   description: `${KPI_DESC_PREFIX} An agent that provides on-chain wallet and agent capabilities for your AI agent`,
   image:
     'https://gateway.autonolas.tech/ipfs/bafybeidldvcrd7exlqwutoa5fj7nh6mjrkh7w6tuuwofwdifavvezj6g2e',
-  hash: 'bafybeibue5tquh2yify7upvvlarotk7rbelg3uicd3dctwb4csa5yxkysi',
-  service_version: 'v0.1.4',
+  hash: 'bafybeihl7bdnhhsh5alvbxv6uajckbjsmcetaexjg246x342qitiw3nfw4',
+  service_version: 'v0.1.5',
   agent_release: {
     is_aea: false,
     repository: {
       owner: 'valory-xyz',
       name: 'connect',
-      version: 'v0.1.4',
+      version: 'v0.1.5',
     },
   },
   home_chain: MiddlewareChainMap.GNOSIS,
