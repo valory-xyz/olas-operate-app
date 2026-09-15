@@ -33,7 +33,7 @@ jest.mock(
 const EVM_ADDRESS_PATTERN = /^0x[0-9a-fA-F]{40}$/;
 
 describe('TokenSymbolMap', () => {
-  it('defines ETH, OLAS, USDC, XDAI, WXDAI, POL, USDC.e, and pUSD', () => {
+  it('defines ETH, OLAS, USDC, XDAI, WXDAI, POL, USDC.e, pUSD and USDG', () => {
     expect(TokenSymbolMap.ETH).toBe('ETH');
     expect(TokenSymbolMap.OLAS).toBe('OLAS');
     expect(TokenSymbolMap.USDC).toBe('USDC');
@@ -42,10 +42,11 @@ describe('TokenSymbolMap', () => {
     expect(TokenSymbolMap.POL).toBe('POL');
     expect(TokenSymbolMap['USDC.e']).toBe('USDC.e');
     expect(TokenSymbolMap.pUSD).toBe('pUSD');
+    expect(TokenSymbolMap.USDG).toBe('USDG');
   });
 
-  it('covers exactly 8 token symbols', () => {
-    expect(Object.keys(TokenSymbolMap)).toHaveLength(8);
+  it('covers exactly 9 token symbols', () => {
+    expect(Object.keys(TokenSymbolMap)).toHaveLength(9);
   });
 });
 
@@ -118,7 +119,7 @@ describe('GNOSIS_TOKEN_CONFIG', () => {
 });
 
 describe('TOKEN_CONFIG — per-chain data integrity', () => {
-  it('has entries for all 5 supported EVM chains', () => {
+  it('has entries for all 6 supported EVM chains', () => {
     const supportedChainIds = Object.values(EvmChainIdMap);
     for (const chainId of supportedChainIds) {
       expect(TOKEN_CONFIG[chainId]).toBeDefined();

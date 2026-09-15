@@ -23,7 +23,7 @@ jest.mock(
 jest.mock('../../constants/providers', () => ({ PROVIDERS: {} }));
 
 describe('CHAIN_CONFIG', () => {
-  it('has entries for exactly 5 supported EVM chains', () => {
+  it('has entries for exactly 6 supported EVM chains', () => {
     const supportedChainIds = Object.values(EvmChainIdMap);
     expect(Object.keys(CHAIN_CONFIG)).toHaveLength(supportedChainIds.length);
   });
@@ -158,6 +158,38 @@ describe('CHAIN_CONFIG', () => {
     it('safeCreationThreshold is 16 POL in wei', () => {
       // Polygon has the highest threshold due to POL's lower USD value
       expect(config.safeCreationThreshold).toBe(BigInt('16000000000000000000'));
+    });
+  });
+
+  describe('Robinhood (chain 4663)', () => {
+    const config = CHAIN_CONFIG[EvmChainIdMap.Robinhood];
+
+    it('name is "Robinhood"', () => {
+      expect(config.name).toBe('Robinhood');
+    });
+
+    it('evmChainId is 4663', () => {
+      expect(config.evmChainId).toBe(4663);
+    });
+
+    it('middlewareChain is "robinhood"', () => {
+      expect(config.middlewareChain).toBe(MiddlewareChainMap.ROBINHOOD);
+    });
+
+    it('nativeToken symbol is ETH', () => {
+      expect(config.nativeToken.symbol).toBe('ETH');
+    });
+
+    it('safeCreationThreshold is 0.005 ETH in wei', () => {
+      // Mirrors the middleware DEFAULT_EOA_TOPUPS_WITHOUT_SAFE (2 × 0.0025 ETH),
+      // the same profile as Base and Optimism.
+      expect(config.safeCreationThreshold).toBe(BigInt('5000000000000000'));
+    });
+
+    it('safeCreationThreshold matches Base (same middleware top-up profile)', () => {
+      expect(config.safeCreationThreshold).toBe(
+        CHAIN_CONFIG[EvmChainIdMap.Base].safeCreationThreshold,
+      );
     });
   });
 

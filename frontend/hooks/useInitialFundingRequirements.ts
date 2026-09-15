@@ -27,6 +27,15 @@ type ChainTokenSymbol = {
 };
 
 /**
+ * Native wei the middleware adds for the service registration bonds: one
+ * agent bond plus one security deposit, 1 wei each (`MIN_AGENT_BOND` and
+ * `MIN_SECURITY_DEPOSIT`). Negligible on its own, but the funding screen
+ * rounds the middleware total up to 4 decimals, so leaving it out here can
+ * make the onboarding estimate land one step lower than the funding screen.
+ */
+const PROTOCOL_BOND_WEI = 2n;
+
+/**
  * Gets the native token initial gas requirement from fund_requirements config.
  *
  * The agent-EOA amount is doubled to mirror the middleware, which doubles the
@@ -102,13 +111,13 @@ export const useInitialFundingRequirements = (
 
         // Total native token requirement =
         // initial gas estimate (incl. doubled agent-EOA first-deployment gas) +
-        // safe creation threshold
+        // safe creation threshold + protocol bonds
         const nativeTokenSymbol = getNativeTokenSymbol(evmChainId);
         const nativeTokenConfig =
           NATIVE_TOKEN_CONFIG[evmChainId]?.[nativeTokenSymbol];
         const monthlyGasEstimate = getNativeInitialGasRequirement(config);
         const totalNativeAmount = formatUnitsToNumber(
-          monthlyGasEstimate + safeCreationThreshold,
+          monthlyGasEstimate + safeCreationThreshold + PROTOCOL_BOND_WEI,
           nativeTokenConfig.decimals,
         );
 

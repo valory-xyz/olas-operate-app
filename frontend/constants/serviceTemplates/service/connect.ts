@@ -1,6 +1,10 @@
 import { ethers } from 'ethers';
 
-import { POLYGON_TOKEN_CONFIG, TokenSymbolMap } from '@/config/tokens';
+import {
+  POLYGON_TOKEN_CONFIG,
+  ROBINHOOD_TOKEN_CONFIG,
+  TokenSymbolMap,
+} from '@/config/tokens';
 import { AgentMap, EnvProvisionMap as EnvProvisionType } from '@/constants';
 import { ServiceTemplate } from '@/types';
 import { parseEther, parseUnits } from '@/utils';
@@ -21,6 +25,7 @@ const COMMON_CONFIG = {
 } as const;
 
 const POLYGON_USDC = POLYGON_TOKEN_CONFIG[TokenSymbolMap.USDC];
+const ROBINHOOD_USDG = ROBINHOOD_TOKEN_CONFIG[TokenSymbolMap.USDG];
 
 /**
  * Low-funds alert thresholds, consumed by the agent's `/funds-status` endpoint
@@ -32,7 +37,9 @@ const POLYGON_USDC = POLYGON_TOKEN_CONFIG[TokenSymbolMap.USDC];
  *
  * Thresholds are 1/5 of the initial requirement in `configurations` below
  * (product: POL 15/3, USDC 5/1, xDAI 5/1), and the agent-EOA gas budget keeps
- * the same ratio.
+ * the same ratio. Robinhood uses ETH 0.0005/0.0002. Its USDG threshold is 0 on
+ * purpose: a user who spends the whole USDG balance on mech requests must not
+ * get a low-funds alert.
  *
  * A Connect instance runs on exactly one chain, but the agent package declares
  * a default RPC for every chain — so the value handed to a deployment must be
@@ -53,13 +60,20 @@ export const CONNECT_FUND_REQUIREMENT_THRESHOLDS: Partial<
     agent: { [ethers.constants.AddressZero]: parseEther(0.01) },
     safe: { [ethers.constants.AddressZero]: parseEther(1) },
   },
+  [MiddlewareChainMap.ROBINHOOD]: {
+    agent: { [ethers.constants.AddressZero]: parseEther(0.00004) },
+    safe: {
+      [ethers.constants.AddressZero]: parseEther(0.0002),
+      [ROBINHOOD_USDG?.address as string]: '0',
+    },
+  },
 };
 
 /**
  * Connect service template.
  *
- * One `configurations` block per supported chain (Polygon / Gnosis), each with
- * `staking_program_id: 'no_staking'`. The same `name` is shared across chains;
+ * One `configurations` block per supported chain (Polygon / Gnosis / Robinhood),
+ * each with `staking_program_id: 'no_staking'`. The same `name` is shared across chains;
  * the chain is selected at setup time (see `SelectChain`).
  */
 export const CONNECT_SERVICE_TEMPLATE: ServiceTemplate = {
@@ -68,14 +82,14 @@ export const CONNECT_SERVICE_TEMPLATE: ServiceTemplate = {
   description: `${KPI_DESC_PREFIX} An agent that provides on-chain wallet and agent capabilities for your AI agent`,
   image:
     'https://gateway.autonolas.tech/ipfs/bafybeidldvcrd7exlqwutoa5fj7nh6mjrkh7w6tuuwofwdifavvezj6g2e',
-  hash: 'bafybeibue5tquh2yify7upvvlarotk7rbelg3uicd3dctwb4csa5yxkysi',
-  service_version: 'v0.1.4',
+  hash: 'bafybeihl7bdnhhsh5alvbxv6uajckbjsmcetaexjg246x342qitiw3nfw4',
+  service_version: 'v0.1.5',
   agent_release: {
     is_aea: false,
     repository: {
       owner: 'valory-xyz',
       name: 'connect',
-      version: 'v0.1.4',
+      version: 'v0.1.5',
     },
   },
   home_chain: MiddlewareChainMap.GNOSIS,
@@ -102,6 +116,19 @@ export const CONNECT_SERVICE_TEMPLATE: ServiceTemplate = {
         },
       },
     },
+    [MiddlewareChainMap.ROBINHOOD]: {
+      ...COMMON_CONFIG,
+      fund_requirements: {
+        [ethers.constants.AddressZero]: {
+          agent: parseEther(0.0002),
+          safe: parseEther(0.0005),
+        },
+        [ROBINHOOD_USDG?.address as string]: {
+          agent: '0',
+          safe: parseUnits(5, ROBINHOOD_USDG?.decimals),
+        },
+      },
+    },
   },
   env_variables: {
     SAFE_CONTRACT_ADDRESSES: {
@@ -124,6 +151,12 @@ export const CONNECT_SERVICE_TEMPLATE: ServiceTemplate = {
     },
     GNOSIS_LEDGER_RPC: {
       name: 'Gnosis ledger RPC',
+      description: '',
+      value: '',
+      provision_type: EnvProvisionType.COMPUTED,
+    },
+    ROBINHOOD_LEDGER_RPC: {
+      name: 'Robinhood ledger RPC',
       description: '',
       value: '',
       provision_type: EnvProvisionType.COMPUTED,

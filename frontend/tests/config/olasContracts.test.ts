@@ -26,8 +26,8 @@ describe('OLAS_CONTRACTS', () => {
     }
   });
 
-  it('covers exactly 5 chains', () => {
-    expect(Object.keys(OLAS_CONTRACTS)).toHaveLength(5);
+  it('covers exactly 6 chains', () => {
+    expect(Object.keys(OLAS_CONTRACTS)).toHaveLength(6);
   });
 
   it('every chain has a ServiceRegistryL2 contract', () => {

@@ -71,11 +71,30 @@ describe('AGENT_CONFIG', () => {
     }
   });
 
-  it('Connect lists USDC and pUSD on Polygon only, no ERC20s on Gnosis', () => {
+  it('Connect lists USDC and pUSD on Polygon and USDG on Robinhood, no ERC20s on Gnosis', () => {
     const connectErc20Tokens = AGENT_CONFIG[AgentMap.Connect].erc20Tokens;
     expect(connectErc20Tokens).toEqual({
       [EvmChainIdMap.Polygon]: [TokenSymbolMap.USDC, TokenSymbolMap.pUSD],
+      [EvmChainIdMap.Robinhood]: [TokenSymbolMap.USDG],
     });
+  });
+
+  it('Connect supports Polygon, Gnosis and Robinhood', () => {
+    expect(AGENT_CONFIG[AgentMap.Connect].supportedChains).toEqual([
+      EvmChainIdMap.Polygon,
+      EvmChainIdMap.Gnosis,
+      EvmChainIdMap.Robinhood,
+    ]);
+  });
+
+  it('Connect additionalRequirements surface the stablecoin safe amounts from the service template', () => {
+    const requirements = AGENT_CONFIG[AgentMap.Connect].additionalRequirements;
+    expect(requirements?.[EvmChainIdMap.Polygon]?.[TokenSymbolMap.USDC]).toBe(
+      5,
+    );
+    expect(requirements?.[EvmChainIdMap.Robinhood]?.[TokenSymbolMap.USDG]).toBe(
+      5,
+    );
   });
 
   it('Polystrat additionalRequirements surfaces pUSD safe amount from service template', () => {

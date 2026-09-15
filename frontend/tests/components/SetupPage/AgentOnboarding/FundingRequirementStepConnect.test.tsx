@@ -93,12 +93,13 @@ describe('FundingRequirementStep — Connect chain select', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('lists the chains in order: Polygon, Gnosis', () => {
+  it('lists the chains in order: Polygon, Gnosis, Robinhood', () => {
     render(<FundingRequirementStep agentType={AgentMap.Connect} />);
     openDropdown();
     expect(getOptions().map((el) => el.textContent?.trim())).toEqual([
       'Polygon',
       'Gnosis',
+      'Robinhood',
     ]);
   });
 

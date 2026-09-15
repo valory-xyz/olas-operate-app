@@ -34,6 +34,8 @@ export const asEvmChainId = (
       return EvmChainIdMap.Optimism;
     case MiddlewareChainMap.POLYGON:
       return EvmChainIdMap.Polygon;
+    case MiddlewareChainMap.ROBINHOOD:
+      return EvmChainIdMap.Robinhood;
   }
   throw new Error(`Invalid middleware chain enum: ${chain}`);
 };
@@ -96,6 +98,13 @@ export const asEvmChainDetails = (
         symbol: TokenSymbolMap.POL,
         chainId: AllEvmChainIdMap.Polygon,
       };
+    case MiddlewareChainMap.ROBINHOOD:
+      return {
+        name: 'robinhood',
+        displayName: 'Robinhood',
+        symbol: TokenSymbolMap.ETH,
+        chainId: AllEvmChainIdMap.Robinhood,
+      };
   }
   throw new Error(`Invalid middleware chain enum: ${chain}`);
 };
@@ -116,6 +125,8 @@ export const asMiddlewareChain = (chainId?: EvmChainId | AllEvmChainId) => {
       return MiddlewareChainMap.OPTIMISM;
     case EvmChainIdMap.Polygon:
       return MiddlewareChainMap.POLYGON;
+    case EvmChainIdMap.Robinhood:
+      return MiddlewareChainMap.ROBINHOOD;
   }
   throw new Error(`Invalid chain id: ${chainId}`);
 };

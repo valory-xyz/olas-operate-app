@@ -36,8 +36,12 @@ describe('EvmChainIdMap', () => {
     expect(EvmChainIdMap.Polygon).toBe(137);
   });
 
-  it('covers exactly 5 supported chains', () => {
-    expect(Object.keys(EvmChainIdMap)).toHaveLength(5);
+  it('maps Robinhood to chain ID 4663', () => {
+    expect(EvmChainIdMap.Robinhood).toBe(4663);
+  });
+
+  it('covers exactly 6 supported chains', () => {
+    expect(Object.keys(EvmChainIdMap)).toHaveLength(6);
   });
 
   it('has no duplicate chain IDs', () => {
@@ -68,8 +72,12 @@ describe('EvmChainName', () => {
     expect(EvmChainName[137]).toBe('Polygon');
   });
 
-  it('covers exactly 5 entries (one per supported EVM chain)', () => {
-    expect(Object.keys(EvmChainName)).toHaveLength(5);
+  it('resolves chain ID 4663 to "Robinhood"', () => {
+    expect(EvmChainName[EvmChainIdMap.Robinhood]).toBe('Robinhood');
+  });
+
+  it('covers exactly 6 entries (one per supported EVM chain)', () => {
+    expect(Object.keys(EvmChainName)).toHaveLength(6);
   });
 
   it('is consistent with EvmChainIdMap (every chain ID has a name)', () => {
@@ -94,8 +102,8 @@ describe('AllEvmChainIdMap', () => {
     }
   });
 
-  it('covers exactly 6 entries (Ethereum + 5 supported EVM chains)', () => {
-    expect(Object.keys(AllEvmChainIdMap)).toHaveLength(6);
+  it('covers exactly 7 entries (Ethereum + 6 supported EVM chains)', () => {
+    expect(Object.keys(AllEvmChainIdMap)).toHaveLength(7);
   });
 });
 
@@ -109,10 +117,11 @@ describe('MiddlewareChainMap', () => {
     expect(MiddlewareChainMap.BASE).toBe('base');
     expect(MiddlewareChainMap.MODE).toBe('mode');
     expect(MiddlewareChainMap.POLYGON).toBe('polygon');
+    expect(MiddlewareChainMap.ROBINHOOD).toBe('robinhood');
   });
 
-  it('covers 8 middleware chains', () => {
-    expect(Object.keys(MiddlewareChainMap)).toHaveLength(8);
+  it('covers 9 middleware chains', () => {
+    expect(Object.keys(MiddlewareChainMap)).toHaveLength(9);
   });
 
   it('has no duplicate string values', () => {
@@ -143,8 +152,8 @@ describe('SupportedMiddlewareChainMap', () => {
     expect(SupportedMiddlewareChainMap.polygon).toBe('polygon');
   });
 
-  it('covers exactly 5 agent-supported chains (excludes ethereum, goerli, solana)', () => {
-    expect(Object.keys(SupportedMiddlewareChainMap)).toHaveLength(5);
+  it('covers exactly 6 agent-supported chains (excludes ethereum, goerli, solana)', () => {
+    expect(Object.keys(SupportedMiddlewareChainMap)).toHaveLength(6);
   });
 
   it('every value is also present in MiddlewareChainMap', () => {

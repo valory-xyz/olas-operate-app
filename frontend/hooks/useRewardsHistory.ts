@@ -149,11 +149,17 @@ const useServiceRewardsHistory = (
 ) => {
   const transformCheckpoints = useTransformCheckpoints();
 
+  // Chains without staking programmes (Robinhood) have no staking subgraph.
+  const subgraphUrl = REWARDS_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN[chainId];
+
   return useQuery({
     queryKey: REACT_QUERY_KEYS.REWARDS_HISTORY_KEY(chainId, serviceId!),
     queryFn: async () => {
+      if (!subgraphUrl) {
+        throw new Error(`No rewards history subgraph for chain ${chainId}`);
+      }
       const response = await request<ServiceResponse>(
-        REWARDS_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN[chainId],
+        subgraphUrl,
         FETCH_SERVICE_REWARDS_QUERY,
         {
           serviceId: serviceId!.toString(),
@@ -204,7 +210,7 @@ const useServiceRewardsHistory = (
         latestStakingContract: service.latestStakingContract ?? undefined,
       };
     },
-    enabled: !!serviceId,
+    enabled: !!serviceId && !!subgraphUrl,
     refetchInterval: ONE_DAY_IN_MS,
     staleTime: ONE_DAY_IN_MS,
   });
