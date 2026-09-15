@@ -11,7 +11,7 @@ readme = "README.md"
 dependencies = [
     "open-autonomy[cli,docker]==0.21.29",
     "open-aea-ledger-cosmos==2.2.9",
-    "open-aea-ledger-ethereum==2.2.8",
+    "open-aea-ledger-ethereum==2.2.9",
     "open-aea-cli-ipfs==2.2.9",
     "olas-operate-middleware==0.15.38",
 ]

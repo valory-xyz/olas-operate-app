@@ -1033,7 +1033,7 @@ requires-dist = [
     { name = "olas-operate-middleware", specifier = "==0.15.38" },
     { name = "open-aea-cli-ipfs", specifier = "==2.2.9" },
     { name = "open-aea-ledger-cosmos", specifier = "==2.2.9" },
-    { name = "open-aea-ledger-ethereum", specifier = "==2.2.8" },
+    { name = "open-aea-ledger-ethereum", specifier = "==2.2.9" },
     { name = "open-autonomy", extras = ["cli", "docker"], specifier = "==0.21.29" },
 ]
 
@@ -1121,7 +1121,7 @@ wheels = [
 
 [[package]]
 name = "open-aea-ledger-ethereum"
-version = "2.2.8"
+version = "2.2.9"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "eth-account" },
@@ -1129,9 +1129,9 @@ dependencies = [
     { name = "requests" },
     { name = "web3" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/6c/fd/1ead316e5461b4ae92f96febc43c7972a9a4fc412ac5cc2552be77fb53ea/open_aea_ledger_ethereum-2.2.8.tar.gz", hash = "sha256:65fb6c674270ae6b3393fee2d42d87c5a551b615dab04da95af13ea5a66b96ca", size = 157449, upload-time = "2026-06-08T14:10:59.246Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/8e/41/0a40d2dcdc260788e063e6a1ce1d47c48efb0f257ec20070580fd2ea79bb/open_aea_ledger_ethereum-2.2.9.tar.gz", hash = "sha256:b83ea05690fe8686501e7bee481cb89ca3ff7a85130c4088029cb6e89073691f", size = 158173, upload-time = "2026-06-24T11:29:42.556Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/85/db/afa121a1e0b1a800ed3882da42705f07b0f0d4b629cc3e99c7587628ac99/open_aea_ledger_ethereum-2.2.8-py3-none-any.whl", hash = "sha256:609fbbbf996d6f007607aba6edd389685d77d62096242a60cf329bbc9f83ce95", size = 43874, upload-time = "2026-06-08T14:10:58.182Z" },
+    { url = "https://files.pythonhosted.org/packages/22/e8/2a110c3ee8cba36e7be7155a687a4e22d6beb88edd39982c3e485ea39c49/open_aea_ledger_ethereum-2.2.9-py3-none-any.whl", hash = "sha256:bf6dc9c746fa7d9577c1a3c1753bf0def7d780fb2d5d820ece87149d8108a0a3", size = 43884, upload-time = "2026-06-24T11:29:41.593Z" },
 ]
 
 [[package]]
