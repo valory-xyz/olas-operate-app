@@ -23,7 +23,9 @@ export type ChainConfig = {
   /**
    * Least amount of native token required to create a Safe in wei
    * @example for gnosis chain, 1.5 XDAI is required to create a Safe.
-   * For new chains, ask middleware team for the value.
+   * Must equal the middleware's `DEFAULT_EOA_TOPUPS_WITHOUT_SAFE` for the
+   * chain (`operate/ledger/profiles.py`), otherwise the onboarding estimate
+   * and the funding screen show different totals.
    */
   safeCreationThreshold: bigint;
 };
@@ -83,6 +85,17 @@ const POLYGON_CHAIN_CONFIG: ChainConfig = {
   safeCreationThreshold: BigInt(parseEther(16)),
 } as const;
 
+const ROBINHOOD_CHAIN_CONFIG: ChainConfig = {
+  evmChainId: EvmChainIdMap.Robinhood,
+  name: 'Robinhood',
+  nativeToken: TOKEN_CONFIG[EvmChainIdMap.Robinhood][
+    TokenSymbolMap.ETH
+  ] as TokenConfig,
+  middlewareChain: MiddlewareChainMap.ROBINHOOD,
+  rpc: process.env.ROBINHOOD_RPC as HttpUrl,
+  safeCreationThreshold: BigInt(parseEther(0.005)),
+} as const;
+
 export const CHAIN_CONFIG: {
   [evmChainId in EvmChainId]: ChainConfig;
 } = {
@@ -91,4 +104,5 @@ export const CHAIN_CONFIG: {
   [EvmChainIdMap.Mode]: MODE_CHAIN_CONFIG,
   [EvmChainIdMap.Optimism]: OPTIMISM_CHAIN_CONFIG,
   [EvmChainIdMap.Polygon]: POLYGON_CHAIN_CONFIG,
+  [EvmChainIdMap.Robinhood]: ROBINHOOD_CHAIN_CONFIG,
 } as const;

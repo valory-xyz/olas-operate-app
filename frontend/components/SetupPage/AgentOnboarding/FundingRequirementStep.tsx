@@ -34,6 +34,7 @@ import { InstanceCount } from './SelectAgent';
 const CONNECT_CHAIN_OPTIONS: EvmChainId[] = [
   EvmChainIdMap.Polygon,
   EvmChainIdMap.Gnosis,
+  EvmChainIdMap.Robinhood,
 ];
 
 const { Text, Title, Link } = Typography;

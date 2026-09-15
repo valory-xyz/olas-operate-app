@@ -26,15 +26,29 @@ describe('MIN_ONRAMP_AMOUNT', () => {
 });
 
 describe('ON_RAMP_CHAIN_MAP', () => {
-  it('covers all 5 supported middleware chains', () => {
+  it('covers all 6 supported middleware chains', () => {
     const supportedChains = Object.values(SupportedMiddlewareChainMap);
     for (const chain of supportedChains) {
       expect(ON_RAMP_CHAIN_MAP[chain]).toBeDefined();
     }
   });
 
-  it('covers exactly 5 entries — one per supported middleware chain', () => {
-    expect(Object.keys(ON_RAMP_CHAIN_MAP)).toHaveLength(5);
+  it('covers exactly 6 entries — one per supported middleware chain', () => {
+    expect(Object.keys(ON_RAMP_CHAIN_MAP)).toHaveLength(6);
+  });
+
+  describe('robinhood chain routing', () => {
+    it('routes robinhood agents to Base for on-ramp (robinhood has no direct fiat ramp)', () => {
+      expect(
+        ON_RAMP_CHAIN_MAP[SupportedMiddlewareChainMap.robinhood].chain,
+      ).toBe(EvmChainIdMap.Base);
+    });
+
+    it('uses ETH as the crypto currency for robinhood on-ramp', () => {
+      expect(
+        ON_RAMP_CHAIN_MAP[SupportedMiddlewareChainMap.robinhood].cryptoCurrency,
+      ).toBe('ETH');
+    });
   });
 
   describe('gnosis chain routing', () => {

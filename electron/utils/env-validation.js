@@ -21,6 +21,7 @@ const envSchema = z.object({
   GNOSIS_RPC: z.string().url('Invalid GNOSIS_RPC must be a valid URL'),
   OPTIMISM_RPC: z.string().url('Invalid OPTIMISM_RPC must be a valid URL'),
   POLYGON_RPC: z.string().url('Invalid POLYGON_RPC must be a valid URL'),
+  ROBINHOOD_RPC: z.string().url('Invalid ROBINHOOD_RPC must be a valid URL'),
 });
 
 const validateEnv = () => {

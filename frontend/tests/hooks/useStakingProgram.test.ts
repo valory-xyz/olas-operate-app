@@ -70,6 +70,7 @@ const MOCK_STAKING_PROGRAMS: Record<EvmChainId, StakingProgramMap> = {
   [EvmChainIdMap.Base]: {},
   [EvmChainIdMap.Mode]: {},
   [EvmChainIdMap.Optimism]: {},
+  [EvmChainIdMap.Robinhood]: {},
   [EvmChainIdMap.Polygon]: {},
 };
 

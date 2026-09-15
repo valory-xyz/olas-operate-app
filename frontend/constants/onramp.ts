@@ -44,4 +44,11 @@ export const ON_RAMP_CHAIN_MAP: Record<
     chain: EvmChainIdMap.Polygon,
     cryptoCurrency: 'POL',
   },
+  // Robinhood has no fiat ramp: like Gnosis and Mode, ETH is bought on an
+  // on-ramp chain and bridged. The on-ramp only ever buys the native token,
+  // so USDG (Transak lists it on Ethereum only) is a bridge-only asset.
+  [SupportedMiddlewareChainMap.robinhood]: {
+    chain: EvmChainIdMap.Base,
+    cryptoCurrency: 'ETH',
+  },
 };

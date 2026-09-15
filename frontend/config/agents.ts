@@ -5,6 +5,7 @@ import {
   EvmChainIdMap,
   MiddlewareChainMap,
   STAKING_PROGRAM_IDS,
+  SupportedMiddlewareChain,
 } from '@/constants';
 import { AgentMap, AgentType } from '@/constants/agent';
 import {
@@ -31,6 +32,8 @@ import {
   MODE_TOKEN_CONFIG,
   OPTIMISM_TOKEN_CONFIG,
   POLYGON_TOKEN_CONFIG,
+  ROBINHOOD_TOKEN_CONFIG,
+  TokenConfig,
   TokenSymbolMap,
 } from './tokens';
 
@@ -98,19 +101,24 @@ const getPolystratPusdConfig = () => {
   return Number(formatUnits(pusdSafeRequirement, polystratPusdConfig.decimals));
 };
 
-const getConnectPolygonUsdcConfig = () => {
+/**
+ * Connect's stablecoin safe requirement on a chain, read back from the
+ * service template so the onboarding table and the template cannot drift.
+ */
+const getConnectStablecoinConfig = (
+  middlewareChain: SupportedMiddlewareChain,
+  tokenConfig: TokenConfig | undefined,
+) => {
   const fundRequirements =
-    CONNECT_SERVICE_TEMPLATE.configurations[MiddlewareChainMap.POLYGON]
-      ?.fund_requirements;
-  const usdcConfig = POLYGON_TOKEN_CONFIG[TokenSymbolMap.USDC];
+    CONNECT_SERVICE_TEMPLATE.configurations[middlewareChain]?.fund_requirements;
 
-  if (!usdcConfig) {
-    throw new Error('Connect Polygon USDC config not found');
+  if (!tokenConfig) {
+    throw new Error(`Connect ${middlewareChain} stablecoin config not found`);
   }
 
-  const usdcSafeRequirement =
-    fundRequirements?.[usdcConfig.address as Address]?.safe || 0;
-  return Number(formatUnits(usdcSafeRequirement, usdcConfig.decimals));
+  const safeRequirement =
+    fundRequirements?.[tokenConfig.address as Address]?.safe || 0;
+  return Number(formatUnits(safeRequirement, tokenConfig.decimals));
 };
 
 export const AGENT_CONFIG: {
@@ -325,11 +333,24 @@ export const AGENT_CONFIG: {
     // chain the user picks in the funding-requirements step.
     evmHomeChainId: EvmChainIdMap.Gnosis,
     middlewareHomeChainId: MiddlewareChainMap.GNOSIS,
-    supportedChains: [EvmChainIdMap.Polygon, EvmChainIdMap.Gnosis],
+    supportedChains: [
+      EvmChainIdMap.Polygon,
+      EvmChainIdMap.Gnosis,
+      EvmChainIdMap.Robinhood,
+    ],
     agentIds: [116],
     additionalRequirements: {
       [EvmChainIdMap.Polygon]: {
-        [TokenSymbolMap.USDC]: getConnectPolygonUsdcConfig(),
+        [TokenSymbolMap.USDC]: getConnectStablecoinConfig(
+          MiddlewareChainMap.POLYGON,
+          POLYGON_TOKEN_CONFIG[TokenSymbolMap.USDC],
+        ),
+      },
+      [EvmChainIdMap.Robinhood]: {
+        [TokenSymbolMap.USDG]: getConnectStablecoinConfig(
+          MiddlewareChainMap.ROBINHOOD,
+          ROBINHOOD_TOKEN_CONFIG[TokenSymbolMap.USDG],
+        ),
       },
     },
     defaultStakingProgramId: 'no_staking',
@@ -340,10 +361,11 @@ export const AGENT_CONFIG: {
     doesChatUiRequireApiKey: false,
     // PLACEHOLDER: real public id lands with the minted Connect package (PR2).
     servicePublicId: 'valory/connect:0.1.0',
-    // Per-chain: Connect uses USDC and pUSD on Polygon only. Gnosis runs on
-    // native xDAI, so neither may appear in the Gnosis agent wallet.
+    // Per-chain: Connect uses USDC and pUSD on Polygon and USDG on Robinhood.
+    // Gnosis runs on native xDAI, so no ERC20 may appear in its agent wallet.
     erc20Tokens: {
       [EvmChainIdMap.Polygon]: [TokenSymbolMap.USDC, TokenSymbolMap.pUSD],
+      [EvmChainIdMap.Robinhood]: [TokenSymbolMap.USDG],
     },
   },
 };
