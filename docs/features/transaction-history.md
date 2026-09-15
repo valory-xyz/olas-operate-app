@@ -1,6 +1,6 @@
 # Transaction History (VLOP-73)
 
-Per-chain ledger view inside Pearl Wallet. Source: the proposed pearl-transactions subgraph ([PR #129](https://github.com/valory-xyz/autonolas-subgraph-studio/pull/129), currently plan-only). Mirrors the rewards-history stack: Service (GraphQL) → Hook (React Query) → Component.
+Per-chain ledger view inside Pearl Wallet and the Agent Wallet. Source: the pearl-transactions indexer — graph-node subgraphs for Gnosis/Optimism/Base ([autonolas-subgraph-studio](https://github.com/valory-xyz/autonolas-subgraph-studio/tree/main/subgraphs/pearl-transactions)) and an SQD squid for Polygon ([autonolas-subgraph](https://github.com/valory-xyz/autonolas-subgraph/tree/main/squids/pearl-transactions)). Mirrors the rewards-history stack: Service (GraphQL) → Hook (React Query) → Component. Shipped on all four chains; sections marked *(as shipped)* are current, the rest is the original plan kept for history.
 
 Linear: [VLOP-73](https://linear.app/valory-xyz/issue/VLOP-73).
 
@@ -25,38 +25,48 @@ Acceptance criteria from VLOP-73:
 - Chain switching stays on the existing `Segmented` control (`BalancesAndAssets.tsx:140-159`). The History tab re-keys its query on `walletChainId`.
 - For a chain with no Pearl service yet (e.g. user has only run PredictTrader, then switches to Base before deploying AgentsFun) — empty-state copy "No transactions yet."
 
-## Data flow
+## Data flow (as shipped)
 
 ```
-pearl-transactions subgraph (Gnosis | Polygon | Optimism | Base)
-  └── TransactionHistoryService (graphql-request, gql query + Zod parse)
-        └── useTransactionHistory(chainId, masterSafeAddress)
-              ├── useTransactionHistoryByMonth (group + sort transformer)
-              └── useSubgraphLag (queries _meta, returns stale flag)
-                    └── <HistoryTab /> in BalancesAndAssets
+pearl-transactions — graph-node: Gnosis v1 | Optimism v1 | Base v2 — SQD squid: Polygon sqd
+  └── TransactionHistoryService / AgentTransactionHistoryService
+        (graphql-request; per-revision document + Zod schema + normalizer → v1-shaped domain)
+        └── useTransactionHistory / useAgentTransactionHistory (React Query, 15-min refetch)
+              ├── row building (group by tx + category, AgentFundingEvent dedup, sweep hiding)
+              └── computeIsDataDelayed(_meta) → isDataDelayed
+                    └── <TransactionHistoryView /> — shared shell (states, Load more, stale banner)
+                          rendered by <TransactionHistory /> (Pearl Wallet BalancesAndAssets)
+                          and <AgentTransactionHistory /> (Agent Wallet BalancesAndAssets)
 ```
 
-## Subgraph schema revisions (v1 / v2)
+## Schema revisions (v1 / v2 / sqd)
 
-Live deployments serve two incompatible schema revisions (2026-07): Gnosis/Optimism proxies pin subgraph **v0.0.6 (v1)**, Base pins **v0.0.7 (v2)** — its indexers no longer serve v0.0.6. Differences (verified against the live Base deployment, not the subgraph README):
+Live deployments serve three incompatible revisions: Gnosis/Optimism proxies pin subgraph **v0.0.6 (v1)**, Base pins **v0.0.7 (v2)** — its indexers no longer serve v0.0.6 — and Polygon is served by the **SQD squid (sqd)** at `autonolas-subgraph/squids/pearl-transactions` (OPE-1905; the graph-node Polygon deployment indexed too slowly to be usable, see the squid's `MIGRATION.md`). Differences (verified against the live Base deployment and the live Polygon squid, not READMEs):
 
-| | v1 (v0.0.6) | v2 (v0.0.7) |
-|---|---|---|
-| Bond rows | `fundsMovements` with `bondType` | separate `bondMovements` ledger (carries `bondType`) |
-| OLAS reward sweeps | `AGENT_TO_MASTER`, hidden client-side (`isOlasAgentToMaster`) | pre-split `AGENT_OLAS_TO_MASTER`, excluded by the query's category filter |
-| `Service.id` | numeric string | registry Bytes (`"0x7802"`); numeric id in new `serviceId` field |
+| | v1 (v0.0.6) | v2 (v0.0.7) | sqd (squid) |
+|---|---|---|---|
+| Bond rows | `fundsMovements` with `bondType` | separate `bondMovements` ledger (carries `bondType`) | as v2 |
+| OLAS reward sweeps | `AGENT_TO_MASTER`, hidden client-side (`isOlasAgentToMaster`) | pre-split `AGENT_OLAS_TO_MASTER`, excluded by the query's category filter | as v2 |
+| `Service.id` | numeric string | registry Bytes (`"0x7802"`); numeric id in new `serviceId` field | numeric string; `serviceId` also present |
+| Query dialect | Graph | Graph | **OpenReader**: `limit`/`offset`, `orderBy: x_DESC`, relation filters `{ id_eq }`, singular `masterSafeById`, `String!` ids |
+| Indexer head | `_meta { block { number timestamp } hasIndexingErrors }` | as v1 | no `_meta`; `indexerStatusById(id: "1") { blockNumber blockTimestamp }` singleton, BigInt strings |
 
-Mechanism: `TRANSACTION_HISTORY_SUBGRAPH_SCHEMA_BY_EVM_CHAIN` (`frontend/constants/urls.ts`) maps chain → revision (absent = v1). Both services pick the matching query document, Zod-parse with the matching schema, and — for v2 — normalize to the v1-shaped domain types via `normalize*V2` in `frontend/utils/transactionHistory.ts` (bond rows merged into `fundsMovements`, sweep rows dropped, `service.id` mapped from `serviceId`). Hooks and components are revision-agnostic. Migrating a chain to v0.0.7 = flip its map entry.
+Mechanism: `TRANSACTION_HISTORY_SUBGRAPH_SCHEMA_BY_EVM_CHAIN` (`frontend/constants/urls.ts`) maps chain → revision (absent = v1). Both services pick the matching query document, Zod-parse with the matching schema, and — for v2/sqd — normalize to the v1-shaped domain types via `normalize*V2` / `normalize*Sqd` in `frontend/utils/transactionHistory.ts` (bond rows merged into `fundsMovements`, sweep rows dropped, `service.id` mapped from `serviceId`). Hooks and components are revision-agnostic.
 
-## New files
+The sqd revision is deliberately thin: its query documents alias `masterSafeById` → `masterSafe` and `indexerStatusById` → `indexerStatus`, so the response wrapper matches v2 apart from meta. Its Zod schemas are `*V2Schema.omit({ _meta }).extend({ indexerStatus })`, and its normalizer maps `IndexerStatus → SubgraphMeta` (`hasIndexingErrors` synthesised `false`) then delegates to the v2 normalizer — so `computeIsDataDelayed` is untouched. The `first`/`skip` params on `get`/`getAll` are kept for all revisions; the sqd branch maps them to `limit`/`offset` internally. Polygon's URL is path-style (`…/squid/transactions-polygon/graphql`) rather than a `transactions-<chain>.` host — that difference is deliberate, not a typo.
+
+## Files (as shipped)
 
 | File | Purpose |
 |---|---|
-| `frontend/types/TransactionHistory.ts` | Zod schemas: `FundsMovement`, `AgentFundingEvent`, `FundsCategory` enum, `Meta`. Mirror `Autonolas.ts` |
-| `frontend/service/TransactionHistory.ts` | `graphql-request` queries (`getTransactionHistory`, `getMeta`). Mirror `service/FundRecovery.ts` |
-| `frontend/hooks/useTransactionHistory.ts` | `useQuery` keyed `['transactionHistory', chainId, masterSafe]`; transformer to categorized + month-grouped rows |
-| `frontend/hooks/useSubgraphLag.ts` | Lag detector: `latestL1Block - _meta.block.number > LAG_THRESHOLD_BLOCKS` |
-| `frontend/components/PearlWallet/History/` | `HistoryTab.tsx`, `HistoryRow.tsx`, `MonthGroup.tsx`, `StaleIndicator.tsx`, `EmptyState.tsx` |
+| `frontend/types/TransactionHistory.ts` | Zod schemas per revision (v1 domain, v2 raw, sqd raw), `FundsCategory`, `SubgraphMeta`, `IndexerStatus`, `TransactionHistoryRow` |
+| `frontend/service/TransactionHistory.ts`, `AgentTransactionHistory.ts` | one query document per revision; `get` (one page) and `getAll` (page loop, `PAGE_SIZE` 1000, `MAX_PAGES` 1) |
+| `frontend/utils/transactionHistory.ts` | `isOlasAgentToMaster`, `computeIsDataDelayed`, `normalize*V2`, `normalize*Sqd`, `indexerStatusToSubgraphMeta` |
+| `frontend/hooks/useTransactionHistory.ts`, `useAgentTransactionHistory.ts` | React Query wiring + row building; expose `rows`, `isDataDelayed`, `isUnavailable`, etc. |
+| `frontend/components/PearlWallet/History/` | `TransactionHistory.tsx`, `TransactionHistoryView.tsx` (shared shell), `TransactionHistoryRow.tsx`, `TransactionRowIcon.tsx`, `labels.ts`, `tokenLookup.ts`, `useAgentLookupBySafe.ts`, `agentByAgentId.ts` |
+| `frontend/components/AgentWallet/BalancesAndAssets/AgentTransactionHistory.tsx`, `agentTransactionLabels.ts` | agent-perspective wrapper + perspective-flipped labels/icons |
+
+There is no month grouping, no separate lag hook, and no per-chain tab component — history is a section inside the existing Balances screen, keyed on the wallet's selected chain.
 
 ## Touched files
 
@@ -143,9 +153,9 @@ Two lists merged client-side into one chronological stream. Pagination: cursor b
 
 `AgentFundingEvent.agentSafe.service.id` (subgraph) ↔ `chain_data.token` (frontend `Service` type, `frontend/types/Service.ts:59`) ↔ `serviceConfigId`. Lookup `agentType` from `ServicesProvider` by matching `chain_data.multisig === agentSafe.id`. Resolves to a display name via `AGENT_CONFIG[agentType].displayName`.
 
-## Subgraph-lag indicator
+## Stale-data indicator (as shipped)
 
-`useSubgraphLag` returns `{ isStale: boolean, lagBlocks: number }`. Polls `_meta` every 30s. `isStale` when `lagBlocks > 50` (Gnosis ≈ 4 min, Polygon ≈ 2 min). Renders inline banner above the list: "Refresh in progress…". Reuses no existing pattern — none exists today.
+No separate lag hook. `computeIsDataDelayed(meta)` (`frontend/utils/transactionHistory.ts`) returns true when the indexed block's **timestamp** is ≥12h behind wall-clock; each hook exposes it as `isDataDelayed`, and `TransactionHistoryView` renders the `DataDelayAlert` above the rows — message "Recent transactions may not appear yet", description "Wallet operations work normally. This usually resolves on its own." It shows only alongside actual history, never in the loading / error / empty / unavailable states. On v1/v2 the timestamp is `_meta.block.timestamp`; on sqd it comes from the squid's `IndexerStatus` singleton mapped into the same `SubgraphMeta` shape, so the helper is revision-agnostic.
 
 ## Pre-Safe state
 
@@ -160,24 +170,20 @@ VLOP-73: "Primary value: token amount only" (no USD). Use existing `TokenAmount`
 
 For native transfers (Phase 2a `Safe.SafeReceived` / `ExecutionSuccess`) the subgraph's `token` field will be `null` or zero address — render as chain-native (xDAI / POL).
 
-## Testing
+## Testing (as shipped)
 
-Per `frontend/tests/TEST_PLAN.md` conventions:
+Per `frontend/tests/TEST_PLAN.md` conventions, under `frontend/tests/`:
 
-- `service/TransactionHistory.test.ts` — mock `graphql-request`, assert query/variables, Zod parse coverage
-- `hooks/useTransactionHistory.test.ts` — categorization, month grouping, sort order, empty state
-- `hooks/useSubgraphLag.test.ts` — stale threshold transitions
-- `components/PearlWallet/History/HistoryTab.test.tsx` — render states (loading, empty, populated, stale, pre-Safe), tab gating, chain switch refetch
-- Add to `tests/helpers/factories.ts`: `makeFundsMovement`, `makeMetaResponse` — all hex via existing address factories
+- `service/TransactionHistory.test.ts`, `service/AgentTransactionHistory.test.ts` — `graphql-request` mocked; per-revision query/variable assertions (incl. absence of the other dialect's args), Zod rejection of the wrong shape, `getAll` paging
+- `utils/transactionHistory.test.ts` — `isOlasAgentToMaster`, `computeIsDataDelayed`, the v2/sqd normalizers and `indexerStatusToSubgraphMeta`
+- `hooks/useTransactionHistory.test.ts`, `hooks/useAgentTransactionHistory.test.ts` — row building, grouping, sweep hiding, delayed flag, unavailable gating
+- `components/PearlWallet/History/TransactionHistory.test.tsx`, `labels.test.ts`, `tokenLookup.test.ts`; `components/AgentWallet/BalancesAndAssets/agentTransactionLabels.test.ts` — render states and label/token resolution with the hook mocked
+- `components/PearlWallet/History/TransactionHistory.sqdReplay.test.tsx` — replays a captured live Polygon squid response through the unmocked service → normalizer → hook → view, for both wallets, including the stale-banner case
+- Factories in `tests/helpers/factories.ts`: `makeFundsMovement`, `makeSubgraphMeta`, `make*V2`, `makeIndexerStatus`, `make*Sqd`
 
-## Phasing
+## Phasing (history)
 
-1. **Phase 1** — types + service + hook + subgraph URLs. No UI. Tests.
-2. **Phase 2** — `HistoryTab` + tab wrapping inside `BalancesAndAssets`. Tests.
-3. **Phase 3** — lag indicator + empty/error states polish. Tests.
-4. **Phase 4** — multi-instance support (post-VLOP-73 if `lastSelectedServiceConfigId` lands first; see `docs/features/multi-instance-agents.md`).
-
-Each phase = separate PR, with `/review-implementation` between.
+Shipped as planned: types/service/hook (VLOP-73), the history section inside `BalancesAndAssets` and the stale banner, then the Agent Wallet view (OPE-1773), Optimism, Base (v2 revision) and Polygon via SQD (OPE-1905). Multi-instance interaction remains as noted under Open questions.
 
 ## Dependencies
 
@@ -444,6 +450,8 @@ sequenceDiagram
 ```
 
 ## Open questions
+
+Status as of the Polygon/SQD ship: 1 resolved (the indexer reads `ServiceRegistryTokenUtility`; bonds render as "\<agent\> stake" / "unstake"); 2 still open — `SAFE_SETUP_TRANSFER` is neither captured pre-discovery nor included in the wallet's category filter, so the first post-registration top-up is hidden on all revisions (follow-up ticket); 3 resolved (stablecoin transfers are indexed; pUSD renders on Polygon); 4 still open; 5 resolved — shipped as a 12h wall-clock threshold on the indexed block timestamp, not a block-count lag; 6 shipped as a single 1000-row page per list with `MAX_PAGES = 1` (an `id_ASC` tiebreaker is needed before paging deeper — follow-up ticket). Original text kept below.
 
 1. **OLAS staking entry source.** No on-chain event surfaces the staking bond — it moves through `ServiceRegistryTokenUtility` which isn't indexed. Per our [open ask 2](https://github.com/valory-xyz/autonolas-subgraph-studio/pull/129#issuecomment-4533199835), options: (a) subgraph synthesizes `STAKING_DEPOSIT` at `ServiceStaked` using `minStakingDeposit × numAgentInstances`, (b) subgraph indexes `ServiceRegistryTokenUtility`, (c) UI skips the entry. Awaiting subgraph response.
 2. **Pre-stake "Setup complete" anchor.** Per our [open ask 1](https://github.com/valory-xyz/autonolas-subgraph-studio/pull/129#issuecomment-4533199835), `SAFE_SETUP_TRANSFER` requires the `Safe` template to spawn with a historical `startBlock` (`createWithContext`) so the pre-stake xDAI funding is captured. If not adopted, "Setup complete" can only anchor on `SAFE_DEPLOYED` (no amount) — confirm with design whether that's acceptable.

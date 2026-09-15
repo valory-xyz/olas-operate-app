@@ -146,10 +146,14 @@ export type AgentTransactionHistoryResponse = z.infer<
  *   ledger (which carries `bondType`), sweeps split into
  *   AGENT_OLAS_TO_MASTER, and Service.id reshaped to registry bytes with the
  *   numeric id in `serviceId`.
- * v2 responses are normalized back to the v1-shaped domain types at the
- * service boundary, so hooks and components are revision-agnostic.
+ * - sqd — the SQD squid port (Polygon). Same entity shape as v2, but served
+ *   over OpenReader rather than the Graph dialect (`limit`/`offset`,
+ *   `orderBy: x_DESC`, relation filters as `{ id_eq }`, `<entity>ById`), and
+ *   with an `IndexerStatus` singleton in place of `_meta`.
+ * v2 and sqd responses are normalized back to the v1-shaped domain types at
+ * the service boundary, so hooks and components are revision-agnostic.
  */
-export type TransactionHistorySchemaRevision = 'v1' | 'v2';
+export type TransactionHistorySchemaRevision = 'v1' | 'v2' | 'sqd';
 
 // --- v2 (subgraph v0.0.7) raw-response schemas ------------------------------
 // Verified against the live Base deployment (schema introspection + sample
@@ -224,6 +228,37 @@ export const AgentTransactionHistoryResponseV2Schema = z.object({
 });
 export type AgentTransactionHistoryResponseV2 = z.infer<
   typeof AgentTransactionHistoryResponseV2Schema
+>;
+
+// --- sqd (SQD squid, OpenReader) raw-response schemas -----------------------
+// Verified against the live Polygon squid, not its schema.graphql. The squid
+// ships the v2 entity shape (separate bond ledger, pre-split OLAS sweeps,
+// numeric `serviceId`), so rows reuse the v2 schemas verbatim, and the query
+// document aliases `masterSafeById` → `masterSafe` so the wrapper matches too.
+// The one shape difference is meta: OpenReader has no `_meta`, so the squid
+// writes an IndexerStatus singleton (id "1") per batch. BigInts arrive as
+// decimal strings.
+
+export const IndexerStatusSchema = z.object({
+  blockNumber: z.string(),
+  blockTimestamp: z.string(),
+});
+export type IndexerStatus = z.infer<typeof IndexerStatusSchema>;
+
+export const TransactionHistoryResponseSqdSchema =
+  TransactionHistoryResponseV2Schema.omit({ _meta: true }).extend({
+    indexerStatus: IndexerStatusSchema.nullable(),
+  });
+export type TransactionHistoryResponseSqd = z.infer<
+  typeof TransactionHistoryResponseSqdSchema
+>;
+
+export const AgentTransactionHistoryResponseSqdSchema =
+  AgentTransactionHistoryResponseV2Schema.omit({ _meta: true }).extend({
+    indexerStatus: IndexerStatusSchema.nullable(),
+  });
+export type AgentTransactionHistoryResponseSqd = z.infer<
+  typeof AgentTransactionHistoryResponseSqdSchema
 >;
 
 export type TransferDirection = 'in' | 'out';
