@@ -70,11 +70,15 @@ const Content = ({ title, desc, helper }: OnboardingStep) => (
           {title}
         </Title>
       )}
-      {/* A newline in `desc` starts a new paragraph; the Flex gap spaces them.
-          Single-line descriptions render exactly as before. */}
-      {desc.split('\n').map((paragraph) => (
-        <Text key={paragraph}>{paragraph}</Text>
-      ))}
+      {/* A newline in `desc` starts a new paragraph. These carry their own
+          gap rather than the surrounding 8px one, so the break reads as a
+          blank line instead of a line wrap. A single-line description is one
+          child and renders exactly as before. */}
+      <Flex vertical gap={20}>
+        {desc.split('\n').map((paragraph) => (
+          <Text key={paragraph}>{paragraph}</Text>
+        ))}
+      </Flex>
       {helper && (
         <Text type="secondary" className="text-sm">
           {helper}
