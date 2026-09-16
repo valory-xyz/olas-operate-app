@@ -23,6 +23,14 @@ jest.mock('../../constants/serviceTemplates/service/connect', () => ({
     polygon: { agent: { '0x0': '1' }, safe: { '0x0': '2' } },
     gnosis: { agent: { '0x0': '3' }, safe: { '0x0': '4' } },
   },
+  // Mirrors the real helper: the value handed to a deployment names one chain.
+  connectFundRequirementsFor: (chain: string) =>
+    JSON.stringify({
+      [chain]: {
+        polygon: { agent: { '0x0': '1' }, safe: { '0x0': '2' } },
+        gnosis: { agent: { '0x0': '3' }, safe: { '0x0': '4' } },
+      }[chain],
+    }),
 }));
 
 const { CONNECT_SERVICE_TEMPLATE, CONNECT_FUND_REQUIREMENT_THRESHOLDS } =

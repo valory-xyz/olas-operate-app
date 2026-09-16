@@ -70,6 +70,21 @@ export const CONNECT_FUND_REQUIREMENT_THRESHOLDS: Partial<
 };
 
 /**
+ * `FUND_REQUIREMENTS` narrowed to the one chain an instance runs on.
+ *
+ * A Connect instance runs on exactly one chain, but this template carries the
+ * thresholds for all of them. Handing a deployment the unnarrowed map makes
+ * the agent report a deficit for an unfunded EOA on chains it does not operate
+ * on, so both the creation path (`useCreateConnectService`) and the restart
+ * path (`updateServiceIfNeeded`, which re-pushes FIXED values that differ from
+ * the template) must narrow it the same way.
+ */
+export const connectFundRequirementsFor = (chain: MiddlewareChain): string => {
+  const thresholds = CONNECT_FUND_REQUIREMENT_THRESHOLDS[chain];
+  return JSON.stringify(thresholds ? { [chain]: thresholds } : {});
+};
+
+/**
  * Connect service template.
  *
  * One `configurations` block per supported chain (Polygon / Gnosis / Robinhood),

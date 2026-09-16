@@ -8,8 +8,8 @@ import {
   StakingProgramId,
 } from '@/constants';
 import {
-  CONNECT_FUND_REQUIREMENT_THRESHOLDS,
   CONNECT_SERVICE_TEMPLATE,
+  connectFundRequirementsFor,
 } from '@/constants/serviceTemplates/service/connect';
 import { ServiceTemplate } from '@/types';
 import {
@@ -43,8 +43,6 @@ const buildSingleChainTemplate = (chainId: EvmChainId): ServiceTemplate => {
     throw new Error(`No Connect configuration for chain ${chainId}`);
   }
 
-  const thresholds = CONNECT_FUND_REQUIREMENT_THRESHOLDS[middlewareChain];
-
   return {
     ...CONNECT_SERVICE_TEMPLATE,
     home_chain: middlewareChain,
@@ -53,9 +51,7 @@ const buildSingleChainTemplate = (chainId: EvmChainId): ServiceTemplate => {
       ...CONNECT_SERVICE_TEMPLATE.env_variables,
       FUND_REQUIREMENTS: {
         ...CONNECT_SERVICE_TEMPLATE.env_variables.FUND_REQUIREMENTS,
-        value: JSON.stringify(
-          thresholds ? { [middlewareChain]: thresholds } : {},
-        ),
+        value: connectFundRequirementsFor(middlewareChain),
       },
     },
   };

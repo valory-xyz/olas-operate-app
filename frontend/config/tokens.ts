@@ -285,7 +285,6 @@ export const ROBINHOOD_TOKEN_CONFIG: ChainTokenConfig = {
   /**
    * @warning USDG has 6 decimals, not 18.
    * @link https://robinhoodchain.blockscout.com/token/0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168
-   * @note When parsing or formatting units, use `decimals` (6) instead of the standard `ether` sizing (10^18).
    */
   [TokenSymbolMap.USDG]: {
     tokenType: TokenType.Erc20,

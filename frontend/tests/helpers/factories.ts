@@ -61,6 +61,7 @@ export const ALL_EVM_CHAIN_IDS: EvmChainId[] = [
   EvmChainIdMap.Mode,
   EvmChainIdMap.Optimism,
   EvmChainIdMap.Polygon,
+  EvmChainIdMap.Robinhood,
 ];
 
 /** EIP-55 checksummed addresses — safe with `getAddress()` and `isAddress()` */

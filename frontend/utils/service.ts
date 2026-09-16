@@ -1,6 +1,7 @@
 import { isEmpty, isEqual } from 'lodash';
 
 import { AgentMap, AgentType, EvmChainId, StakingProgramId } from '@/constants';
+import { MiddlewareChain } from '@/constants/chains';
 import { EnvProvisionMap } from '@/constants/envVariables';
 import {
   KPI_DESC_PREFIX,
@@ -38,6 +39,46 @@ export const sortByCreationTime = (
   b: MiddlewareServiceResponse,
 ): number => getServiceCreationTime(a) - getServiceCreationTime(b);
 
+/**
+ * A copy of `template` whose FIXED `FUND_REQUIREMENTS` names only `homeChain`.
+ *
+ * The value is a JSON object keyed by middleware chain. Narrowed from the
+ * template's own value rather than rebuilt from the agent's constants, so this
+ * stays free of any per-agent import — the utils barrel is loaded almost
+ * everywhere, and reaching into a service template's config from here would
+ * drag the token config in with it.
+ */
+const narrowFundRequirementsToHomeChain = (
+  template: ServiceTemplate,
+  homeChain: MiddlewareChain,
+): ServiceTemplate => {
+  const fundRequirements = template.env_variables?.FUND_REQUIREMENTS;
+  if (!fundRequirements) return template;
+
+  let forHomeChain: unknown;
+  try {
+    forHomeChain = (
+      JSON.parse(fundRequirements.value) as Record<string, unknown>
+    )[homeChain];
+  } catch {
+    // Not JSON we recognise — leave it exactly as the template has it.
+    return template;
+  }
+
+  return {
+    ...template,
+    env_variables: {
+      ...template.env_variables,
+      FUND_REQUIREMENTS: {
+        ...fundRequirements,
+        value: JSON.stringify(
+          forHomeChain ? { [homeChain]: forHomeChain } : {},
+        ),
+      },
+    },
+  };
+};
+
 export const updateServiceIfNeeded = async (
   service: Service,
   agentType: AgentType,
@@ -45,12 +86,22 @@ export const updateServiceIfNeeded = async (
 ): Promise<void> => {
   const partialServiceTemplate: DeepPartial<ServiceTemplate> = {};
 
-  const serviceTemplate = SERVICE_TEMPLATES.find(
+  const foundTemplate = SERVICE_TEMPLATES.find(
     (template) =>
       template.name === service.name || template.agentType === agentType,
   );
 
-  if (!serviceTemplate) return;
+  if (!foundTemplate) return;
+
+  // Connect runs one instance per chain and its `FUND_REQUIREMENTS` is FIXED,
+  // so the diff below would re-push the every-chain map on every start and undo
+  // the narrowing done at creation — leaving the agent reporting deficits for
+  // chains this instance does not run on. Narrow to this service's home chain
+  // first, so the value compared (and any value sent) is the per-chain one.
+  const serviceTemplate: ServiceTemplate =
+    foundTemplate.agentType === AgentMap.Connect
+      ? narrowFundRequirementsToHomeChain(foundTemplate, service.home_chain)
+      : foundTemplate;
 
   // Check if the hash is different
   if (service.hash !== serviceTemplate.hash) {

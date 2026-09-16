@@ -2,8 +2,8 @@
  * Tests for token configuration data and helper functions.
  *
  * Critical data integrity rules:
- * - USDC and USDC.e always have 6 decimals (NOT 18). Using 18 causes 10^12x
- *   over/under-estimates in all funding calculations.
+ * - USDC, USDC.e and USDG always have 6 decimals (NOT 18). Using 18 causes
+ *   10^12x over/under-estimates in all funding calculations.
  * - OLAS always has 18 decimals.
  * - Every supported EVM chain must have a native token and an OLAS entry.
  * - getNativeTokenSymbol and getErc20s are utility functions used throughout
@@ -12,10 +12,12 @@
 
 import {
   ERC20_TOKEN_CONFIG,
+  ETHEREUM_TOKEN_CONFIG,
   getErc20s,
   getNativeTokenSymbol,
   GNOSIS_TOKEN_CONFIG,
   NATIVE_TOKEN_CONFIG,
+  ROBINHOOD_TOKEN_CONFIG,
   TOKEN_CONFIG,
   TokenSymbolMap,
   TokenType,
@@ -158,6 +160,13 @@ describe('TOKEN_CONFIG — per-chain data integrity', () => {
         '0x0000000000000000000000000000000000000000',
       );
     }
+  });
+
+  it('USDG has 6 decimals wherever it exists (NOT 18)', () => {
+    // Same footgun as USDC: USDG is the stablecoin Connect trades with on
+    // Robinhood, and it is bridged from Ethereum, so both entries must agree.
+    expect(ROBINHOOD_TOKEN_CONFIG[TokenSymbolMap.USDG]?.decimals).toBe(6);
+    expect(ETHEREUM_TOKEN_CONFIG[TokenSymbolMap.USDG]?.decimals).toBe(6);
   });
 
   it('USDC has 6 decimals on chains where it exists (NOT 18)', () => {
