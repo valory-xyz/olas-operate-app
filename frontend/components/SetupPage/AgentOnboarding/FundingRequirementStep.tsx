@@ -1,6 +1,6 @@
 import { Checkbox, Flex, Select, Tag, Typography } from 'antd';
 import Image from 'next/image';
-import { useEffect, useMemo, useState } from 'react';
+import { ReactNode, useEffect, useMemo, useState } from 'react';
 import { TbCreditCardFilled } from 'react-icons/tb';
 import styled from 'styled-components';
 
@@ -121,7 +121,7 @@ type HeaderProps = {
   agentType: AgentType;
   agentName: string;
   category?: string;
-  desc?: string;
+  desc?: ReactNode;
 };
 const Header = ({ agentType, agentName, category, desc }: HeaderProps) => (
   <Flex vertical gap={16}>
@@ -407,7 +407,7 @@ const YouCanCoverAllRequirements = () => (
 
 type FundingRequirementStepProps = {
   agentType: AgentType;
-  desc?: string;
+  desc?: ReactNode;
   /** Connect only: the operating chain chosen in this step, and its setter. */
   selectedChain?: EvmChainId;
   onSelectChain?: (chain: EvmChainId) => void;

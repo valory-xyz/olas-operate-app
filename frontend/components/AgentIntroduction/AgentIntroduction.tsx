@@ -43,7 +43,7 @@ const onboardingStepsMap: Record<AgentType, OnboardingStep[]> = {
 
 type AgentIntroductionProps = {
   agentType?: AgentType;
-  renderFundingRequirements?: (desc: string) => ReactNode;
+  renderFundingRequirements?: (desc: OnboardingStep['desc']) => ReactNode;
   renderAgentSelection?: () => ReactNode;
   /** Fill the parent's height and pin nav + selection to the bottom. */
   fillHeight?: boolean;

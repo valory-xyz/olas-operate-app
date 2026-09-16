@@ -15,7 +15,7 @@ export type IntroductionStepStyles = {
 
 export type OnboardingStep = {
   title?: string;
-  desc: string;
+  desc: string | React.ReactNode;
   imgSrc?: string;
   helper?: string;
   styles?: IntroductionStepStyles;
@@ -70,15 +70,7 @@ const Content = ({ title, desc, helper }: OnboardingStep) => (
           {title}
         </Title>
       )}
-      {/* A newline in `desc` starts a new paragraph. These carry their own
-          gap rather than the surrounding 8px one, so the break reads as a
-          blank line instead of a line wrap. A single-line description is one
-          child and renders exactly as before. */}
-      <Flex vertical gap={20}>
-        {desc.split('\n').map((paragraph) => (
-          <Text key={paragraph}>{paragraph}</Text>
-        ))}
-      </Flex>
+      <Text>{desc}</Text>
       {helper && (
         <Text type="secondary" className="text-sm">
           {helper}
@@ -91,7 +83,7 @@ const Content = ({ title, desc, helper }: OnboardingStep) => (
 type IntroductionProps = OnboardingStep & {
   onPrev: (() => void) | undefined;
   onNext: (() => void) | undefined;
-  renderFundingRequirements?: (desc: string) => ReactNode;
+  renderFundingRequirements?: (desc: OnboardingStep['desc']) => ReactNode;
   renderDot?: () => ReactNode;
   renderAgentSelection?: () => ReactNode;
   styles?: IntroductionStepStyles;
