@@ -70,7 +70,11 @@ const Content = ({ title, desc, helper }: OnboardingStep) => (
           {title}
         </Title>
       )}
-      <Text>{desc}</Text>
+      {/* A newline in `desc` starts a new paragraph; the Flex gap spaces them.
+          Single-line descriptions render exactly as before. */}
+      {desc.split('\n').map((paragraph) => (
+        <Text key={paragraph}>{paragraph}</Text>
+      ))}
       {helper && (
         <Text type="secondary" className="text-sm">
           {helper}
