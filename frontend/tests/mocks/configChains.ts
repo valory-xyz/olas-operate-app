@@ -27,6 +27,11 @@ export const chainConfigMock = {
     rpc: '',
     evmChainId: EvmChainIdMap.Polygon,
   },
+  [EvmChainIdMap.Robinhood]: {
+    name: 'Robinhood',
+    rpc: '',
+    evmChainId: EvmChainIdMap.Robinhood,
+  },
   [EvmChainIdMap.Base]: {
     name: 'Base',
     rpc: '',

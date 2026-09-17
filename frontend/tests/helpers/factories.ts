@@ -164,6 +164,7 @@ export const SERVICE_PUBLIC_ID_MAP = {
   OPTIMUS: 'valory/optimus:0.1.0',
   PETT_AI: 'pettaidev/pett_agent:0.1.0',
   MEMOOORR: 'dvilela/memeooorr:0.1.0',
+  CONNECT: 'valory/connect:0.1.0',
 };
 
 export const makeService = (overrides: Partial<Service> = {}): Service => ({
