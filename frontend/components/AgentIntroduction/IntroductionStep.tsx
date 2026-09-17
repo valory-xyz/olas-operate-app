@@ -15,7 +15,7 @@ export type IntroductionStepStyles = {
 
 export type OnboardingStep = {
   title?: string;
-  desc: string;
+  desc: string | React.ReactNode;
   imgSrc?: string;
   helper?: string;
   styles?: IntroductionStepStyles;
@@ -83,7 +83,7 @@ const Content = ({ title, desc, helper }: OnboardingStep) => (
 type IntroductionProps = OnboardingStep & {
   onPrev: (() => void) | undefined;
   onNext: (() => void) | undefined;
-  renderFundingRequirements?: (desc: string) => ReactNode;
+  renderFundingRequirements?: (desc: OnboardingStep['desc']) => ReactNode;
   renderDot?: () => ReactNode;
   renderAgentSelection?: () => ReactNode;
   styles?: IntroductionStepStyles;

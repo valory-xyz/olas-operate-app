@@ -5,7 +5,7 @@ This is the complete guide for integrating an agent into the OLAS ecosystem and 
 **Works for:** brand new agents and existing agents being integrated for the first time.
 **Who does it:** the agent team, with Pearl team review at Phases 4 and 5.
 
-> **New chain?** If your agent runs on a chain not yet supported in Pearl (currently: Gnosis, Base, Mode, Optimism, Polygon), contact the Pearl team before starting Phase 5. Chain-level infrastructure will be handled internally by the Pearl team.
+> **New chain?** If your agent runs on a chain not yet supported in Pearl (currently: Gnosis, Base, Mode, Optimism, Polygon, Robinhood), contact the Pearl team before starting Phase 5. Chain-level infrastructure will be handled internally by the Pearl team.
 
 > **Stuck at any point?** Reach out to support@valory.zendesk.com, or open an issue at [github.com/valory-xyz/olas-operate-app/issues](https://github.com/valory-xyz/olas-operate-app/issues).
 

@@ -35,6 +35,12 @@ describe('asEvmChainId', () => {
     );
   });
 
+  it('converts robinhood to 4663', () => {
+    expect(asEvmChainId(MiddlewareChainMap.ROBINHOOD)).toBe(
+      EvmChainIdMap.Robinhood,
+    );
+  });
+
   it('converts polygon to 137', () => {
     expect(asEvmChainId(MiddlewareChainMap.POLYGON)).toBe(
       EvmChainIdMap.Polygon,
@@ -97,6 +103,14 @@ describe('asEvmChainDetails', () => {
     expect(result.symbol).toBe(TokenSymbolMap.POL);
   });
 
+  it('returns correct details for robinhood', () => {
+    const result = asEvmChainDetails(MiddlewareChainMap.ROBINHOOD);
+    expect(result.symbol).toBe(TokenSymbolMap.ETH);
+    expect(result.chainId).toBe(EvmChainIdMap.Robinhood);
+    expect(result.name).toBe('robinhood');
+    expect(result.displayName).toBe('Robinhood');
+  });
+
   it('returns ETH symbol for base, mode, optimism', () => {
     expect(asEvmChainDetails(MiddlewareChainMap.BASE).symbol).toBe(
       TokenSymbolMap.ETH,
@@ -125,6 +139,9 @@ describe('asMiddlewareChain', () => {
     expect(asMiddlewareChain(EvmChainIdMap.Mode)).toBe(MiddlewareChainMap.MODE);
     expect(asMiddlewareChain(EvmChainIdMap.Optimism)).toBe(
       MiddlewareChainMap.OPTIMISM,
+    );
+    expect(asMiddlewareChain(EvmChainIdMap.Robinhood)).toBe(
+      MiddlewareChainMap.ROBINHOOD,
     );
     expect(asMiddlewareChain(EvmChainIdMap.Polygon)).toBe(
       MiddlewareChainMap.POLYGON,

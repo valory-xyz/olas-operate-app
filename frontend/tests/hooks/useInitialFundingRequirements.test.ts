@@ -42,6 +42,10 @@ jest.mock('../../config/agents', () => ({
       defaultStakingProgramId: undefined,
       additionalRequirements: {},
     },
+    connect: {
+      defaultStakingProgramId: 'no_staking',
+      additionalRequirements: {},
+    },
     // Agent with AGENT_CONFIG but no SERVICE_TEMPLATES entry
     orphan_agent: {
       defaultStakingProgramId: 'some_program',
@@ -78,6 +82,19 @@ jest.mock('../../constants/serviceTemplates', () => ({
         },
       },
     },
+    {
+      agentType: 'connect',
+      configurations: {
+        robinhood: {
+          fund_requirements: {
+            '0x0000000000000000000000000000000000000000': {
+              safe: '500000000000000', // 0.0005 ETH in wei
+              agent: '200000000000000', // 0.0002 ETH in wei
+            },
+          },
+        },
+      },
+    },
   ],
 }));
 
@@ -87,6 +104,8 @@ jest.mock('../../config/chains', () => ({
     100: { safeCreationThreshold: 100000000000000000n }, // 0.1 in wei
     // EvmChainIdMap.Mode = 34443
     34443: { safeCreationThreshold: 100000000000000000n },
+    // EvmChainIdMap.Robinhood = 4663
+    4663: { safeCreationThreshold: 5000000000000000n }, // 0.005 in wei
   },
 }));
 
@@ -98,6 +117,7 @@ jest.mock('../../config/tokens', () => ({
   NATIVE_TOKEN_CONFIG: {
     100: { XDAI: { decimals: 18, tokenType: 'native', symbol: 'XDAI' } },
     34443: { ETH: { decimals: 18, tokenType: 'native', symbol: 'ETH' } },
+    4663: { ETH: { decimals: 18, tokenType: 'native', symbol: 'ETH' } },
   },
   TokenSymbolMap: {
     OLAS: 'OLAS',
@@ -200,6 +220,22 @@ describe('useInitialFundingRequirements', () => {
     const gnosisResult = result.current[EvmChainIdMap.Gnosis];
     expect(gnosisResult).toBeDefined();
     expect(gnosisResult.XDAI).toBe(2);
+  });
+
+  it('rounds up with the 2 wei protocol bonds, matching the funding screen', () => {
+    mockGetMasterSafeOf.mockReturnValue(undefined);
+
+    const { result } = renderHook(() =>
+      useInitialFundingRequirements(AgentMap.Connect, EvmChainIdMap.Robinhood),
+    );
+
+    // gas = 0.0005e18 (safe) + 2 × 0.0002e18 (agent, doubled) = 0.0009e18
+    // safeCreationThreshold = 0.005e18, protocol bonds = 2 wei
+    // total = 0.0059e18 + 2 wei → ceil to 4 decimals = 0.006
+    // (the middleware total carries the same 2 wei, so both screens agree)
+    const robinhoodResult = result.current[EvmChainIdMap.Robinhood];
+    expect(robinhoodResult).toBeDefined();
+    expect(robinhoodResult.ETH).toBe(0.006);
   });
 
   it('includes OLAS staking requirement from STAKING_PROGRAMS', () => {

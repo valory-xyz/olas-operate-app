@@ -1,3 +1,4 @@
+import { skipToken } from '@tanstack/react-query';
 import { renderHook } from '@testing-library/react';
 
 import { EvmChainIdMap, MiddlewareChainMap } from '../../constants/chains';
@@ -53,12 +54,15 @@ jest.mock('../../hooks/useService', () => ({
   useService: (...args: unknown[]) => mockUseService(...args),
 }));
 
-// Mock @tanstack/react-query — capture config for queryFn / select testing
+// Mock @tanstack/react-query — capture config for queryFn / select testing.
+// The mock must export a `skipToken`, since the hook sets it as `queryFn` to
+// disable the query. Its value is opaque and never called; the assertions
+// below import it back from the mocked module rather than redeclaring it,
+// because a module-scope const cannot be read from a hoisted mock factory.
 type QueryConfig = {
   queryKey: unknown[];
-  queryFn: () => Promise<unknown>;
+  queryFn: (() => Promise<unknown>) | symbol;
   select: (data: unknown) => unknown;
-  enabled: boolean;
   refetchInterval: number;
 };
 
@@ -66,6 +70,7 @@ let capturedQueryConfig: QueryConfig | null = null;
 const mockRefetch = jest.fn();
 
 jest.mock('@tanstack/react-query', () => ({
+  skipToken: 'skip-token-sentinel',
   useQuery: (config: QueryConfig) => {
     capturedQueryConfig = config;
 
@@ -83,6 +88,18 @@ jest.mock('@tanstack/react-query', () => ({
     };
   },
 }));
+
+/**
+ * The captured `queryFn`, narrowed past the `skipToken` sentinel. Fails loudly
+ * rather than silently skipping when a test expected the query to run.
+ */
+const capturedQueryFn = () => {
+  const queryFn = capturedQueryConfig?.queryFn;
+  if (typeof queryFn !== 'function') {
+    throw new Error('expected a queryFn, but the query was skipped');
+  }
+  return queryFn;
+};
 
 let mockQueryData: unknown = undefined;
 let mockQueryState = { isError: false, isLoading: false, isFetched: true };
@@ -145,20 +162,38 @@ describe('useRewardsHistory', () => {
   // -----------------------------------------------------------------------
 
   describe('useQuery configuration', () => {
-    it('sets enabled to true when serviceNftTokenId exists', () => {
+    it('runs the query when serviceNftTokenId exists', () => {
       renderHook(() => useRewardsHistory());
-      expect(capturedQueryConfig?.enabled).toBe(true);
+      expect(capturedQueryConfig?.queryFn).not.toBe(skipToken);
     });
 
-    it('sets enabled to false when serviceNftTokenId is undefined', () => {
+    it('skips the query when serviceNftTokenId is undefined', () => {
       mockUseService.mockReturnValue({
         service: makeService({ chain_configs: {} }),
       });
       renderHook(() => useRewardsHistory());
-      expect(capturedQueryConfig?.enabled).toBe(false);
+      expect(capturedQueryConfig?.queryFn).toBe(skipToken);
     });
 
-    it('sets enabled to true when serviceNftTokenId is -1 (invalid but truthy)', () => {
+    it('skips the query on a chain with no rewards subgraph', () => {
+      // Robinhood has no staking programmes and so no staking subgraph.
+      // `skipToken` rather than `enabled`, because the hook refetches on the
+      // service NFT id and `refetch()` ignores `enabled` — without this the
+      // query would run, retry and settle in `isError`.
+      mockUseServices.mockReturnValue({
+        selectedService: makeService({
+          service_config_id: DEFAULT_SERVICE_CONFIG_ID,
+        }),
+        selectedAgentConfig: {
+          serviceApi: makeMockServiceApi(),
+          evmHomeChainId: EvmChainIdMap.Robinhood,
+        },
+      });
+      renderHook(() => useRewardsHistory());
+      expect(capturedQueryConfig?.queryFn).toBe(skipToken);
+    });
+
+    it('runs the query when serviceNftTokenId is -1 (invalid but truthy)', () => {
       mockUseService.mockReturnValue({
         service: makeService({
           chain_configs: makeChainConfig(MiddlewareChainMap.GNOSIS, {
@@ -167,8 +202,8 @@ describe('useRewardsHistory', () => {
         }),
       });
       renderHook(() => useRewardsHistory());
-      // -1 is truthy, so !!serviceId is true — no validation on value
-      expect(capturedQueryConfig?.enabled).toBe(true);
+      // -1 is truthy, so the guard passes — no validation on the value
+      expect(capturedQueryConfig?.queryFn).not.toBe(skipToken);
     });
 
     it('includes chainId and serviceId in the queryKey', () => {
@@ -191,7 +226,7 @@ describe('useRewardsHistory', () => {
       mockGraphqlRequest.mockResolvedValue(serviceResponse);
 
       renderHook(() => useRewardsHistory());
-      const result = await capturedQueryConfig!.queryFn();
+      const result = await capturedQueryFn()();
 
       expect(mockGraphqlRequest).toHaveBeenCalledWith(
         expect.stringContaining('subgraph'),
@@ -213,7 +248,7 @@ describe('useRewardsHistory', () => {
 
       renderHook(() => useRewardsHistory());
 
-      await expect(capturedQueryConfig!.queryFn()).rejects.toThrow(
+      await expect(capturedQueryFn()()).rejects.toThrow(
         'Failed to parse service rewards history',
       );
       expect(consoleErrorSpy).toHaveBeenCalledWith(
@@ -228,7 +263,7 @@ describe('useRewardsHistory', () => {
       mockGraphqlRequest.mockResolvedValue({ service: null });
 
       renderHook(() => useRewardsHistory());
-      const result = await capturedQueryConfig!.queryFn();
+      const result = await capturedQueryFn()();
 
       expect(result).toBeNull();
     });

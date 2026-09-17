@@ -16,6 +16,8 @@ export const TokenSymbolMap = {
   POL: 'POL',
   'USDC.e': 'USDC.e',
   pUSD: 'pUSD',
+  /** USDG: Paxos Global Dollar, the stablecoin of Robinhood Chain (no canonical USDC there) */
+  USDG: 'USDG',
 } as const;
 
 export type TokenSymbol = keyof typeof TokenSymbolMap;
@@ -29,6 +31,7 @@ export const TokenSymbolConfigMap: Record<TokenSymbol, { image: string }> = {
   [TokenSymbolMap.POL]: { image: '/tokens/pol-icon.png' },
   [TokenSymbolMap['USDC.e']]: { image: '/tokens/usdc-icon.png' },
   [TokenSymbolMap.pUSD]: { image: '/tokens/pusd-icon.png' },
+  [TokenSymbolMap.USDG]: { image: '/tokens/usdg-icon.png' },
 } as const;
 
 export enum TokenType {
@@ -87,6 +90,18 @@ export const ETHEREUM_TOKEN_CONFIG: ChainTokenConfig = {
     decimals: 6,
     tokenType: TokenType.Erc20,
     symbol: TokenSymbolMap.USDC,
+  },
+  /**
+   * @note USDG on Ethereum is the bridge source for USDG on Robinhood Chain
+   * (the middleware's Relay route lists it on both chains).
+   * @warning 6 decimals, not 18.
+   * @link https://etherscan.io/token/0xe343167631d89B6Ffc58B88d6b7fB0228795491D
+   */
+  [TokenSymbolMap.USDG]: {
+    address: '0xe343167631d89B6Ffc58B88d6b7fB0228795491D',
+    decimals: 6,
+    tokenType: TokenType.Erc20,
+    symbol: TokenSymbolMap.USDG,
   },
 } as const;
 
@@ -250,6 +265,35 @@ export const POLYGON_TOKEN_CONFIG: ChainTokenConfig = {
   },
 };
 
+/**
+ * Robinhood Chain (Arbitrum Orbit L2, ETH gas). Its stablecoin is Paxos USDG;
+ * there is no canonical USDC on the chain. OLAS is the canonical
+ * Arbitrum-gateway-bridged token.
+ */
+export const ROBINHOOD_TOKEN_CONFIG: ChainTokenConfig = {
+  [TokenSymbolMap.ETH]: {
+    tokenType: TokenType.NativeGas,
+    symbol: TokenSymbolMap.ETH,
+    decimals: 18,
+  },
+  [TokenSymbolMap.OLAS]: {
+    tokenType: TokenType.Erc20,
+    symbol: TokenSymbolMap.OLAS,
+    decimals: 18,
+    address: '0x092963938deBD8013a2e545b3549f8A5ec0D2286',
+  },
+  /**
+   * @warning USDG has 6 decimals, not 18.
+   * @link https://robinhoodchain.blockscout.com/token/0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168
+   */
+  [TokenSymbolMap.USDG]: {
+    tokenType: TokenType.Erc20,
+    symbol: TokenSymbolMap.USDG,
+    decimals: 6,
+    address: '0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168',
+  },
+};
+
 // TODO
 // 1. combine EvmChainIdMap and AllEvmChainId into one thing to avoid confusion
 // 2. include ethereum config into this and make it so balances are not requested for it
@@ -259,6 +303,7 @@ export const TOKEN_CONFIG: Record<EvmChainId, ChainTokenConfig> = {
   [EvmChainIdMap.Mode]: MODE_TOKEN_CONFIG,
   [EvmChainIdMap.Optimism]: OPTIMISM_TOKEN_CONFIG,
   [EvmChainIdMap.Polygon]: POLYGON_TOKEN_CONFIG,
+  [EvmChainIdMap.Robinhood]: ROBINHOOD_TOKEN_CONFIG,
 } as const;
 
 export const ALL_TOKEN_CONFIG: Record<AllEvmChainId, ChainTokenConfig> = {

@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { skipToken, useQuery } from '@tanstack/react-query';
 import { ethers } from 'ethers';
 import { Maybe } from 'graphql/jsutils/Maybe';
 import { gql, request } from 'graphql-request';
@@ -149,30 +149,43 @@ const useServiceRewardsHistory = (
 ) => {
   const transformCheckpoints = useTransformCheckpoints();
 
+  // Chains without staking programmes (Robinhood) have no staking subgraph.
+  const subgraphUrl = REWARDS_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN[chainId];
+
   return useQuery({
     queryKey: REACT_QUERY_KEYS.REWARDS_HISTORY_KEY(chainId, serviceId!),
-    queryFn: async () => {
-      const response = await request<ServiceResponse>(
-        REWARDS_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN[chainId],
-        FETCH_SERVICE_REWARDS_QUERY,
-        {
-          serviceId: serviceId!.toString(),
-        },
-      );
+    // `skipToken`, not `enabled`: the consumer below refetches whenever the
+    // service NFT id appears, and `refetch()` ignores `enabled`. On a chain
+    // with no subgraph that would run the query anyway, retry three times and
+    // settle in `isError`. `skipToken` makes the refetch a no-op instead.
+    queryFn:
+      !subgraphUrl || !serviceId
+        ? skipToken
+        : async () => {
+            const response = await request<ServiceResponse>(
+              subgraphUrl,
+              FETCH_SERVICE_REWARDS_QUERY,
+              {
+                serviceId: serviceId.toString(),
+              },
+            );
 
-      const parsedResponse = ServiceResponseSchema.safeParse(response);
+            const parsedResponse = ServiceResponseSchema.safeParse(response);
 
-      if (parsedResponse.error) {
-        console.error('Failed to parse service rewards:', parsedResponse.error);
-        // Throw instead of returning null — a null here is cached as a
-        // *successful* result for ONE_DAY_IN_MS, wiping the active staking
-        // program (and everything derived from it) for a whole day after a
-        // single malformed subgraph response (OPE-1841).
-        throw new Error('Failed to parse service rewards history');
-      }
+            if (parsedResponse.error) {
+              console.error(
+                'Failed to parse service rewards:',
+                parsedResponse.error,
+              );
+              // Throw instead of returning null — a null here is cached as a
+              // *successful* result for ONE_DAY_IN_MS, wiping the active staking
+              // program (and everything derived from it) for a whole day after a
+              // single malformed subgraph response (OPE-1841).
+              throw new Error('Failed to parse service rewards history');
+            }
 
-      return parsedResponse.data.service;
-    },
+            return parsedResponse.data.service;
+          },
     select: (
       service,
     ): {
@@ -204,7 +217,6 @@ const useServiceRewardsHistory = (
         latestStakingContract: service.latestStakingContract ?? undefined,
       };
     },
-    enabled: !!serviceId,
     refetchInterval: ONE_DAY_IN_MS,
     staleTime: ONE_DAY_IN_MS,
   });

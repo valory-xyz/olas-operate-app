@@ -1,6 +1,6 @@
 import { Checkbox, Flex, Select, Tag, Typography } from 'antd';
 import Image from 'next/image';
-import { useEffect, useMemo, useState } from 'react';
+import { ReactNode, useEffect, useMemo, useState } from 'react';
 import { TbCreditCardFilled } from 'react-icons/tb';
 import styled from 'styled-components';
 
@@ -18,7 +18,6 @@ import {
   CHAIN_IMAGE_MAP,
   COLOR,
   EvmChainId,
-  EvmChainIdMap,
   EvmChainName,
   PEARL_CONNECT_RISKS_TERMS_URL,
   POLYMARKET_DEPOSIT_WALLET_MIGRATION_URL,
@@ -30,11 +29,12 @@ import { asEvmChainDetails, asEvmChainId, matchesAgentConfig } from '@/utils';
 
 import { InstanceCount } from './SelectAgent';
 
-/** Chains offered for Connect, in display order. */
-const CONNECT_CHAIN_OPTIONS: EvmChainId[] = [
-  EvmChainIdMap.Polygon,
-  EvmChainIdMap.Gnosis,
-];
+/**
+ * Chains offered for Connect, in display order — read from the agent config
+ * rather than restated, so adding a chain stays a one-line change there.
+ */
+const CONNECT_CHAIN_OPTIONS: EvmChainId[] =
+  AGENT_CONFIG[AgentMap.Connect].supportedChains ?? [];
 
 const { Text, Title, Link } = Typography;
 
@@ -121,7 +121,7 @@ type HeaderProps = {
   agentType: AgentType;
   agentName: string;
   category?: string;
-  desc?: string;
+  desc?: ReactNode;
 };
 const Header = ({ agentType, agentName, category, desc }: HeaderProps) => (
   <Flex vertical gap={16}>
@@ -407,7 +407,7 @@ const YouCanCoverAllRequirements = () => (
 
 type FundingRequirementStepProps = {
   agentType: AgentType;
-  desc?: string;
+  desc?: ReactNode;
   /** Connect only: the operating chain chosen in this step, and its setter. */
   selectedChain?: EvmChainId;
   onSelectChain?: (chain: EvmChainId) => void;

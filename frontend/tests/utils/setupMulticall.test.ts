@@ -19,11 +19,22 @@ describe('setupMulticallAddresses', () => {
     mockSetMulticallAddress.mockClear();
   });
 
-  it('uses the default multicall address for all chains', async () => {
+  it('uses the default Multicall3 address for every chain except Robinhood', async () => {
     await setupMulticallAddresses();
     for (const call of mockSetMulticallAddress.mock.calls) {
+      if (call[0] === EvmChainIdMap.Robinhood) continue;
       expect(call[1]).toBe(DEFAULT_MULTICALL_ADDRESS);
     }
+  });
+
+  it("uses Robinhood's own L2 Multicall on Robinhood", async () => {
+    await setupMulticallAddresses();
+    const robinhoodCall = mockSetMulticallAddress.mock.calls.find(
+      (call: unknown[]) => call[0] === EvmChainIdMap.Robinhood,
+    );
+    expect(robinhoodCall?.[1]).toBe(
+      '0x2cAC2D899eCC914d704FeaAE33ac1bF36277DaD1',
+    );
   });
 
   it('passes numeric chain IDs for all supported chains', async () => {

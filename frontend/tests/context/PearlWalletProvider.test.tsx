@@ -109,6 +109,7 @@ jest.mock('../../utils', () => {
     [MiddlewareChainMap.BASE]: EvmChainIdMap.Base,
     [MiddlewareChainMap.OPTIMISM]: EvmChainIdMap.Optimism,
     [MiddlewareChainMap.POLYGON]: EvmChainIdMap.Polygon,
+    [MiddlewareChainMap.ROBINHOOD]: EvmChainIdMap.Robinhood,
   };
   return {
     generateAgentName: jest.fn(() => 'Agent Name'),
@@ -443,6 +444,43 @@ describe('PearlWalletProvider', () => {
       expect(result.current.chains).toEqual([
         { chainId: EvmChainIdMap.Gnosis, chainName: 'Gnosis' },
       ]);
+    });
+
+    it("uses a multi-chain instance's own chain, not its agent config's", () => {
+      // Connect keeps a static Gnosis `evmHomeChainId` for back-compat while
+      // each instance runs on its own chain. Reading the config here offered
+      // Gnosis for a Robinhood instance, so the deposit chain select — whose
+      // value comes from the resolved config — had no matching option and
+      // rendered the raw chain id instead of the name.
+      mockUseServices.mockReturnValue({
+        isLoading: false,
+        selectedAgentConfig: {
+          evmHomeChainId: EvmChainIdMap.Robinhood,
+          middlewareHomeChainId: MiddlewareChainMap.ROBINHOOD,
+          displayName: 'Connect',
+        },
+        selectedService: null,
+        services: [
+          {
+            service_public_id: SERVICE_PUBLIC_ID_MAP.CONNECT,
+            home_chain: MiddlewareChainMap.ROBINHOOD,
+            service_config_id: DEFAULT_SERVICE_CONFIG_ID,
+          },
+        ],
+        availableServiceConfigIds: [],
+        getServiceConfigIdsOf: jest.fn(() => []),
+      });
+
+      const { result } = renderHook(() => usePearlWallet(), { wrapper });
+      expect(result.current.chains).toEqual([
+        { chainId: EvmChainIdMap.Robinhood, chainName: 'Robinhood' },
+      ]);
+      // The selected chain must have an option to render.
+      expect(
+        result.current.chains.some(
+          ({ chainId }) => chainId === result.current.walletChainId,
+        ),
+      ).toBe(true);
     });
 
     it('returns multiple unique chains for different services', () => {

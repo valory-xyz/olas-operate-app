@@ -15,6 +15,8 @@ const addresses: AddressesForAllChainIds = {
   [EvmChainIdMap.Mode]: DEFAULT_MULTICALL_ADDRESS,
   [EvmChainIdMap.Optimism]: DEFAULT_MULTICALL_ADDRESS,
   [EvmChainIdMap.Polygon]: DEFAULT_MULTICALL_ADDRESS,
+  // Robinhood's own L2 Multicall (docs.robinhood.com/chain/protocol-contracts)
+  [EvmChainIdMap.Robinhood]: '0x2cAC2D899eCC914d704FeaAE33ac1bF36277DaD1',
 };
 
 /**

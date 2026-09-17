@@ -44,4 +44,19 @@ export const ON_RAMP_CHAIN_MAP: Record<
     chain: EvmChainIdMap.Polygon,
     cryptoCurrency: 'POL',
   },
+  // Robinhood has no fiat ramp: like Gnosis and Mode, ETH is bought on an
+  // on-ramp chain and bridged. The on-ramp only ever buys the native token,
+  // so USDG (Transak lists it on Ethereum only) is a bridge-only asset.
+  //
+  // TODO(robinhood): this entry is inert while `IS_TRANSAK_UNAVAILABLE` is
+  // true, and cannot be used as-is when Transak returns. Connect on Robinhood
+  // needs 5 USDG, `BASE_TOKEN_CONFIG` has no USDG, so `getFromToken` throws
+  // "Failed to get source token for the destination token". Robinhood is the
+  // first chain to need both a bridge leg and an ERC20 — Polygon's on-ramp
+  // chain is its destination, and Gnosis Connect needs no ERC20 — so the
+  // source-token gap has to be closed before re-enabling the ramp here.
+  [SupportedMiddlewareChainMap.robinhood]: {
+    chain: EvmChainIdMap.Base,
+    cryptoCurrency: 'ETH',
+  },
 };
