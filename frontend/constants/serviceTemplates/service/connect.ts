@@ -37,9 +37,13 @@ const ROBINHOOD_USDG = ROBINHOOD_TOKEN_CONFIG[TokenSymbolMap.USDG];
  *
  * Thresholds are 1/5 of the initial requirement in `configurations` below
  * (product: POL 15/3, USDC 5/1, xDAI 5/1), and the agent-EOA gas budget keeps
- * the same ratio. Robinhood uses ETH 0.0005/0.0002. Its USDG threshold is 0 on
- * purpose: a user who spends the whole USDG balance on mech requests must not
- * get a low-funds alert.
+ * the same ratio. Robinhood is the exception: only its agent EOA carries a
+ * threshold, because that balance is gas and running out of it stops the
+ * agent. Its safe thresholds are 0 — see the note on that entry.
+ *
+ * A 0 threshold disables the alert rather than leaving it unset: the agent
+ * computes `deficit = max(0, threshold - balance)` and reads the value as a
+ * plain int, with no fallback to a default, so 0 can never raise one.
  *
  * A Connect instance runs on exactly one chain, but the agent package declares
  * a default RPC for every chain — so the value handed to a deployment must be
@@ -62,8 +66,12 @@ export const CONNECT_FUND_REQUIREMENT_THRESHOLDS: Partial<
   },
   [MiddlewareChainMap.ROBINHOOD]: {
     agent: { [ethers.constants.AddressZero]: parseEther(0.00004) },
+    // Both safe thresholds are 0, and for the same reason: everything the
+    // safe holds on Robinhood is there to be spent. USDG buys mech requests,
+    // ETH is what Pons draws on. Alerting as either falls would report normal
+    // operation as a fault.
     safe: {
-      [ethers.constants.AddressZero]: parseEther(0.0002),
+      [ethers.constants.AddressZero]: '0',
       [ROBINHOOD_USDG?.address as string]: '0',
     },
   },
