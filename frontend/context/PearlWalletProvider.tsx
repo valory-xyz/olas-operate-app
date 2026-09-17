@@ -39,7 +39,7 @@ import {
   isValidServiceId,
   matchesAgentConfig,
 } from '@/utils';
-import { asMiddlewareChain } from '@/utils/middlewareHelpers';
+import { asEvmChainId, asMiddlewareChain } from '@/utils/middlewareHelpers';
 
 import { STEPS, WalletChain } from '../components/PearlWallet/types';
 import { getInitialDepositForMasterSafe } from '../components/PearlWallet/utils';
@@ -65,10 +65,16 @@ const getChainList = (services?: MiddlewareServiceResponse[]) => {
     );
     if (!agent) return;
 
-    const [, agentConfig] = agent;
-    if (!agentConfig.evmHomeChainId) return;
+    // The instance's own chain, not the agent config's. A multi-chain agent
+    // (Connect) keeps one static `evmHomeChainId` for back-compat while each
+    // instance runs on its own chain, so reading the config here offered
+    // Gnosis for a Robinhood instance — and the chain select, whose value
+    // comes from the resolved config, then had no option to render and fell
+    // back to showing the raw chain id.
+    if (!service.home_chain) return;
+    const chainId = asEvmChainId(service.home_chain);
+    if (!CHAIN_CONFIG[chainId]) return;
 
-    const chainId = agentConfig.evmHomeChainId;
     if (!chainMap.has(chainId)) {
       const chainName = CHAIN_CONFIG[chainId].name as EvmChainName;
       chainMap.set(chainId, { chainId, chainName });

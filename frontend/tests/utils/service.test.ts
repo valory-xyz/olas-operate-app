@@ -5,6 +5,11 @@ import {
   StakingProgramId,
 } from '../../constants';
 import { AddressZero } from '../../constants/address';
+import { EnvProvisionMap } from '../../constants/envVariables';
+import {
+  CONNECT_SERVICE_TEMPLATE,
+  connectFundRequirementsFor,
+} from '../../constants/serviceTemplates/service/connect';
 import { AgentConfig } from '../../types/Agent';
 import { Service, ServiceTemplate } from '../../types/Service';
 import {
@@ -35,6 +40,11 @@ jest.mock(
 /* eslint-disable @typescript-eslint/no-var-requires */
 jest.mock('../../constants/serviceTemplates', () => {
   const { AddressZero: addr } = require('../../constants/address');
+  // The real Connect template, so the multi-chain narrowing below is exercised
+  // against the value the app actually ships rather than a hand-written copy.
+  const {
+    CONNECT_SERVICE_TEMPLATE: connectTemplate,
+  } = require('../../constants/serviceTemplates/service/connect');
   return {
     KPI_DESC_PREFIX: '[Pearl service]',
     SERVICE_TEMPLATES: [
@@ -83,6 +93,7 @@ jest.mock('../../constants/serviceTemplates', () => {
           },
         },
       },
+      connectTemplate,
     ],
   };
 });
@@ -493,6 +504,81 @@ describe('updateServiceIfNeeded', () => {
     expect(updatePayload).not.toHaveProperty('chain_configs');
     expect(updatePayload).not.toHaveProperty('service_public_id');
     expect(updatePayload).not.toHaveProperty('hash_history');
+  });
+
+  it('narrows Connect FUND_REQUIREMENTS to the service home chain', async () => {
+    // Connect runs one instance per chain. FUND_REQUIREMENTS is FIXED, so
+    // without narrowing this diff would re-push the every-chain map on every
+    // start and undo what `useCreateConnectService` narrowed at creation,
+    // making the agent report deficits for chains it does not run on.
+    const service = createService({
+      name: 'Connect',
+      home_chain: MiddlewareChainMap.ROBINHOOD,
+      hash: CONNECT_SERVICE_TEMPLATE.hash,
+      agent_release: CONNECT_SERVICE_TEMPLATE.agent_release,
+      chain_configs: {
+        [MiddlewareChainMap.ROBINHOOD]: {
+          chain_data: {
+            user_params: {
+              fund_requirements:
+                CONNECT_SERVICE_TEMPLATE.configurations[
+                  MiddlewareChainMap.ROBINHOOD
+                ]?.fund_requirements,
+            },
+          },
+        },
+      },
+      env_variables: {
+        FUND_REQUIREMENTS: {
+          value: connectFundRequirementsFor(MiddlewareChainMap.ROBINHOOD),
+          provision_type: EnvProvisionMap.FIXED,
+        },
+      },
+    });
+
+    await updateServiceIfNeeded(service, AgentMap.Connect);
+
+    // Already narrowed, so there is nothing to push back.
+    const pushed = mockUpdateService.mock.calls[0]?.[0]?.partialServiceTemplate;
+    expect(pushed?.env_variables?.FUND_REQUIREMENTS).toBeUndefined();
+  });
+
+  it('re-narrows a Connect service still holding the every-chain map', async () => {
+    const service = createService({
+      name: 'Connect',
+      home_chain: MiddlewareChainMap.ROBINHOOD,
+      hash: CONNECT_SERVICE_TEMPLATE.hash,
+      agent_release: CONNECT_SERVICE_TEMPLATE.agent_release,
+      chain_configs: {
+        [MiddlewareChainMap.ROBINHOOD]: {
+          chain_data: {
+            user_params: {
+              fund_requirements:
+                CONNECT_SERVICE_TEMPLATE.configurations[
+                  MiddlewareChainMap.ROBINHOOD
+                ]?.fund_requirements,
+            },
+          },
+        },
+      },
+      env_variables: {
+        FUND_REQUIREMENTS: {
+          value: CONNECT_SERVICE_TEMPLATE.env_variables.FUND_REQUIREMENTS.value,
+          provision_type: EnvProvisionMap.FIXED,
+        },
+      },
+    });
+
+    await updateServiceIfNeeded(service, AgentMap.Connect);
+
+    const pushed = mockUpdateService.mock.calls[0][0].partialServiceTemplate;
+    expect(pushed.env_variables.FUND_REQUIREMENTS.value).toBe(
+      connectFundRequirementsFor(MiddlewareChainMap.ROBINHOOD),
+    );
+    // The narrowed value names one chain, not all three.
+    expect(
+      Object.keys(JSON.parse(pushed.env_variables.FUND_REQUIREMENTS.value)),
+    ).toEqual([MiddlewareChainMap.ROBINHOOD]);
   });
 
   it('updates staking program when requested even with no other changes', async () => {

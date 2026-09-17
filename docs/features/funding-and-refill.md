@@ -186,7 +186,7 @@ Computes static, config-based funding requirements from service templates. Does 
 
 For each chain in the service template:
 ```
-Native = fund_requirements[AddressZero].safe + agent + safeCreationThreshold + AGENT_DEPLOYMENT_GAS_REQUIREMENT_WEI(2)
+Native = fund_requirements[AddressZero].safe + agent × 2 + safeCreationThreshold + PROTOCOL_BOND_WEI(2)
 OLAS = stakingRequirements[OLAS]
 Additional = additionalRequirements[chainId]
 ```
@@ -276,7 +276,7 @@ Fetches a Transak price quote to convert native token amount to USD:
 - `useGetRefillRequirements` caches requirements in state and only recalculates when empty — test the caching behavior and reset on agent type change
 - `useGetRefillRequirements` combines native token requirements from master safe + master EOA — test both `AddressBalanceRecord` (real address) and `MasterSafeBalanceRecord` (placeholder) paths
 - `useAgentFundingRequests` merges BigInt values across wallets — test with multiple agent wallets contributing to the same token
-- `useInitialFundingRequirements` includes `AGENT_DEPLOYMENT_GAS_REQUIREMENT_WEI = 2` wei — a trivially small constant that adds to native requirements
+- `useInitialFundingRequirements` includes `PROTOCOL_BOND_WEI = 2` wei (agent bond + security deposit, as the middleware does) — negligible, but it keeps the 4-decimal ceil rounding in step with the funding screen for sub-0.01 totals
 - `useGetBridgeRequirementsParams` deduplicates requests by summing amounts — test with overlapping wallet entries for the same token
 - `useTotalNativeTokenRequired` freeze logic uses a ref — test that frozen values persist through re-renders when `shouldFreezeTotals` is true
 - `useTotalFiatFromNativeToken` adds a fixed `$5` fiat buffer — test the buffer calculation with `getEthWithBuffer`

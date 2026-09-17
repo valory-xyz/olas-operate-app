@@ -23,6 +23,7 @@ const PUBLIC_RPCS: Partial<Record<EvmChainId, string>> = {
   [EvmChainIdMap.Base]: 'https://mainnet.base.org',
   [EvmChainIdMap.Mode]: 'https://mainnet.mode.network',
   [EvmChainIdMap.Optimism]: 'https://mainnet.optimism.io',
+  [EvmChainIdMap.Robinhood]: 'https://rpc.mainnet.chain.robinhood.com',
 };
 
 const RPC_ENV_BY_CHAIN: Record<EvmChainId, string> = {
@@ -31,6 +32,7 @@ const RPC_ENV_BY_CHAIN: Record<EvmChainId, string> = {
   [EvmChainIdMap.Base]: 'BASE_RPC',
   [EvmChainIdMap.Mode]: 'MODE_RPC',
   [EvmChainIdMap.Optimism]: 'OPTIMISM_RPC',
+  [EvmChainIdMap.Robinhood]: 'ROBINHOOD_RPC',
 };
 
 const PROXY_HASH_ABI = ['function proxyHash() view returns (bytes32)'];
@@ -59,6 +61,10 @@ async function readProxyHash(contract: ethers.Contract): Promise<string | null> 
 
 async function checkChain(chainId: EvmChainId): Promise<void> {
   const programs = STAKING_PROGRAMS[chainId];
+  if (Object.keys(programs).length === 0) {
+    console.log(`No staking programs on chain ${chainId}, skipping`);
+    return;
+  }
   const rpc = process.env[RPC_ENV_BY_CHAIN[chainId]] || PUBLIC_RPCS[chainId];
   if (!rpc) {
     logError(`❌ No RPC configured for chain ${chainId}`);

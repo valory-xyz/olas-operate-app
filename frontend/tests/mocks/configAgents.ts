@@ -45,6 +45,23 @@ export const activeAgentsMock = [
     },
   ],
   [
+    'connect',
+    {
+      isAgentEnabled: true,
+      servicePublicId: SERVICE_PUBLIC_ID_MAP.CONNECT,
+      // Multi-chain: one static home chain for back-compat, while each
+      // instance runs on its own chain from `supportedChains`.
+      evmHomeChainId: EvmChainIdMap.Gnosis,
+      middlewareHomeChainId: MiddlewareChainMap.GNOSIS,
+      supportedChains: [
+        EvmChainIdMap.Polygon,
+        EvmChainIdMap.Gnosis,
+        EvmChainIdMap.Robinhood,
+      ],
+      displayName: 'Connect',
+    },
+  ],
+  [
     'pett_ai',
     {
       isAgentEnabled: true,

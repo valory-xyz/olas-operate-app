@@ -2,8 +2,8 @@
  * Tests for token configuration data and helper functions.
  *
  * Critical data integrity rules:
- * - USDC and USDC.e always have 6 decimals (NOT 18). Using 18 causes 10^12x
- *   over/under-estimates in all funding calculations.
+ * - USDC, USDC.e and USDG always have 6 decimals (NOT 18). Using 18 causes
+ *   10^12x over/under-estimates in all funding calculations.
  * - OLAS always has 18 decimals.
  * - Every supported EVM chain must have a native token and an OLAS entry.
  * - getNativeTokenSymbol and getErc20s are utility functions used throughout
@@ -12,10 +12,12 @@
 
 import {
   ERC20_TOKEN_CONFIG,
+  ETHEREUM_TOKEN_CONFIG,
   getErc20s,
   getNativeTokenSymbol,
   GNOSIS_TOKEN_CONFIG,
   NATIVE_TOKEN_CONFIG,
+  ROBINHOOD_TOKEN_CONFIG,
   TOKEN_CONFIG,
   TokenSymbolMap,
   TokenType,
@@ -33,7 +35,7 @@ jest.mock(
 const EVM_ADDRESS_PATTERN = /^0x[0-9a-fA-F]{40}$/;
 
 describe('TokenSymbolMap', () => {
-  it('defines ETH, OLAS, USDC, XDAI, WXDAI, POL, USDC.e, and pUSD', () => {
+  it('defines ETH, OLAS, USDC, XDAI, WXDAI, POL, USDC.e, pUSD and USDG', () => {
     expect(TokenSymbolMap.ETH).toBe('ETH');
     expect(TokenSymbolMap.OLAS).toBe('OLAS');
     expect(TokenSymbolMap.USDC).toBe('USDC');
@@ -42,10 +44,11 @@ describe('TokenSymbolMap', () => {
     expect(TokenSymbolMap.POL).toBe('POL');
     expect(TokenSymbolMap['USDC.e']).toBe('USDC.e');
     expect(TokenSymbolMap.pUSD).toBe('pUSD');
+    expect(TokenSymbolMap.USDG).toBe('USDG');
   });
 
-  it('covers exactly 8 token symbols', () => {
-    expect(Object.keys(TokenSymbolMap)).toHaveLength(8);
+  it('covers exactly 9 token symbols', () => {
+    expect(Object.keys(TokenSymbolMap)).toHaveLength(9);
   });
 });
 
@@ -118,7 +121,7 @@ describe('GNOSIS_TOKEN_CONFIG', () => {
 });
 
 describe('TOKEN_CONFIG — per-chain data integrity', () => {
-  it('has entries for all 5 supported EVM chains', () => {
+  it('has entries for all 6 supported EVM chains', () => {
     const supportedChainIds = Object.values(EvmChainIdMap);
     for (const chainId of supportedChainIds) {
       expect(TOKEN_CONFIG[chainId]).toBeDefined();
@@ -157,6 +160,13 @@ describe('TOKEN_CONFIG — per-chain data integrity', () => {
         '0x0000000000000000000000000000000000000000',
       );
     }
+  });
+
+  it('USDG has 6 decimals wherever it exists (NOT 18)', () => {
+    // Same footgun as USDC: USDG is the stablecoin Connect trades with on
+    // Robinhood, and it is bridged from Ethereum, so both entries must agree.
+    expect(ROBINHOOD_TOKEN_CONFIG[TokenSymbolMap.USDG]?.decimals).toBe(6);
+    expect(ETHEREUM_TOKEN_CONFIG[TokenSymbolMap.USDG]?.decimals).toBe(6);
   });
 
   it('USDC has 6 decimals on chains where it exists (NOT 18)', () => {

@@ -29,9 +29,10 @@ export const TERMS_AND_CONDITIONS_URL: Url = 'https://olas.network/pearl-terms';
 export const PEARL_CONNECT_RISKS_TERMS_URL: Url = `${TERMS_AND_CONDITIONS_URL}#section-6-1-2`;
 
 // thegraph
-export const REWARDS_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN: Record<
-  EvmChainId,
-  Url
+// Absent for chains with no staking programmes (Robinhood): `useRewardsHistory`
+// does not query there.
+export const REWARDS_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN: Partial<
+  Record<EvmChainId, Url>
 > = {
   [EvmChainIdMap.Gnosis]: 'https://staking-gnosis.subgraph.autonolas.tech',
   [EvmChainIdMap.Base]: 'https://staking-base.subgraph.autonolas.tech',
@@ -109,6 +110,8 @@ const BASE_EXPLORER_URL: Url = 'https://basescan.org';
 const MODE_EXPLORER_URL: Url = 'https://explorer.mode.network';
 const OPTIMISM_EXPLORER_URL: Url = 'https://optimistic.etherscan.io';
 const POLYGON_EXPLORER_URL: Url = 'https://polygonscan.com';
+// Blockscout is the only explorer on Robinhood Chain.
+const ROBINHOOD_EXPLORER_URL: Url = 'https://robinhoodchain.blockscout.com';
 
 export const EXPLORER_URL_BY_MIDDLEWARE_CHAIN: Record<
   SupportedMiddlewareChain,
@@ -119,6 +122,7 @@ export const EXPLORER_URL_BY_MIDDLEWARE_CHAIN: Record<
   [MiddlewareChainMap.MODE]: MODE_EXPLORER_URL,
   [MiddlewareChainMap.OPTIMISM]: OPTIMISM_EXPLORER_URL,
   [MiddlewareChainMap.POLYGON]: POLYGON_EXPLORER_URL,
+  [MiddlewareChainMap.ROBINHOOD]: ROBINHOOD_EXPLORER_URL,
 };
 
 export const BLOCKSCOUT_URL_BY_MIDDLEWARE_CHAIN: Record<
@@ -130,6 +134,7 @@ export const BLOCKSCOUT_URL_BY_MIDDLEWARE_CHAIN: Record<
   [MiddlewareChainMap.MODE]: 'https://explorer.mode.network',
   [MiddlewareChainMap.OPTIMISM]: 'https://optimism.blockscout.com',
   [MiddlewareChainMap.POLYGON]: 'https://polygon.blockscout.com',
+  [MiddlewareChainMap.ROBINHOOD]: ROBINHOOD_EXPLORER_URL,
 };
 
 // on-ramp
