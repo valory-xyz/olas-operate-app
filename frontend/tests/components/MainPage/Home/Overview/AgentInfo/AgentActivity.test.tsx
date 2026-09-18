@@ -6,6 +6,10 @@ import {
   useConnectSession,
   useRewardContext,
 } from '../../../../../../hooks';
+import {
+  makeAgentLiveness,
+  makeServiceDeployment,
+} from '../../../../../helpers/factories';
 
 jest.mock('../../../../../../hooks', () => ({
   useAgentActivity: jest.fn(),
@@ -33,6 +37,7 @@ const setup = (over: Record<string, unknown> = {}) => {
     deploymentDetails: undefined,
     isServiceRunning: false,
     isServiceDeploying: false,
+    isAgentActive: false,
     ...over,
   });
   return render(<AgentActivity />);
@@ -59,7 +64,7 @@ describe('AgentActivity', () => {
   });
 
   it('shows "Agent is running" when running without healthcheck rounds', () => {
-    setup({ isServiceRunning: true });
+    setup({ isAgentActive: true });
     expect(screen.getByText('Agent is running')).toBeInTheDocument();
   });
 
@@ -68,7 +73,7 @@ describe('AgentActivity', () => {
       showRunningInfo: true,
       isFirstRun: true,
     });
-    setup({ isServiceRunning: true });
+    setup({ isAgentActive: true });
     expect(
       screen.getByText(
         'Your agent is running. You can visit the agent Profile to start a new session.',
@@ -81,7 +86,7 @@ describe('AgentActivity', () => {
       showRunningInfo: true,
       isFirstRun: false,
     });
-    setup({ isServiceRunning: true });
+    setup({ isAgentActive: true });
     expect(
       screen.getByText(
         'Your agent is running. You can open the agent Profile to start a new session.',
@@ -95,7 +100,7 @@ describe('AgentActivity', () => {
       isFirstRun: false,
     });
     setup({
-      isServiceRunning: true,
+      isAgentActive: true,
       deploymentDetails: {
         healthcheck: { rounds: ['round_a'], rounds_info: {} },
       },
@@ -119,11 +124,37 @@ describe('AgentActivity', () => {
   });
 
   it('does not show the session notice for non-Connect agents', () => {
-    setup({ isServiceRunning: true });
+    setup({ isAgentActive: true });
     expect(
       screen.queryByText(
         'Your agent is running. You can open the agent Profile to start a new session.',
       ),
+    ).not.toBeInTheDocument();
+  });
+
+  it('shows "Agent is not running" instead of a stale round when the agent died', () => {
+    // The reported symptom: the healthcheck snapshot is frozen at the round
+    // the agent died in, so the round list is still populated. Rendering it
+    // would show "Current action: <round>" in the active state for a process
+    // that no longer exists.
+    setup({
+      isServiceRunning: false,
+      deploymentDetails: makeServiceDeployment({
+        healthcheck: {
+          ...makeServiceDeployment().healthcheck,
+          rounds: ['collect_signature_round'],
+        },
+        agent_liveness: makeAgentLiveness({
+          is_alive: false,
+          reason: 'agent_process_exited',
+        }),
+      }),
+    });
+
+    expect(screen.getByText('Agent is not running')).toBeInTheDocument();
+    expect(screen.queryByText('Current action:')).not.toBeInTheDocument();
+    expect(
+      screen.queryByText('collect_signature_round'),
     ).not.toBeInTheDocument();
   });
 });

@@ -22,7 +22,11 @@ import {
 import { MultisigOwners } from '../../hooks/useMultisig';
 import { AchievementWithConfig } from '../../types/Achievement';
 import { Address } from '../../types/Address';
-import { AgentConfig } from '../../types/Agent';
+import {
+  AgentConfig,
+  AgentLiveness,
+  ServiceDeployment,
+} from '../../types/Agent';
 import {
   ServiceStakingDetails,
   StakingContractDetails,
@@ -332,6 +336,44 @@ export const makeServiceStakingDetails = (
 ): ServiceStakingDetails => ({
   serviceStakingStartTime: DEFAULT_TS_CHECKPOINT,
   serviceStakingState: StakingState.Staked,
+  ...overrides,
+});
+
+/**
+ * Deployment payload as returned by the middleware's deployment endpoints.
+ *
+ * `agent_liveness` is optional there — older middleware builds omit it, and a
+ * consumer must read that as "unknown", never as "not alive" — so it is left
+ * off by default and passed explicitly by the cases that need it.
+ */
+export const makeServiceDeployment = (
+  overrides: Partial<ServiceDeployment> = {},
+): ServiceDeployment => ({
+  status: MiddlewareDeploymentStatusMap.DEPLOYED,
+  nodes: { agent: [], tendermint: [] },
+  healthcheck: {
+    agent_health: {},
+    is_healthy: true,
+    is_tm_healthy: true,
+    is_transitioning_fast: false,
+    period: 0,
+    reset_pause_duration: 0,
+    rounds: [],
+    seconds_since_last_transition: 0,
+    age_seconds: 1,
+  },
+  ...overrides,
+});
+
+export const makeAgentLiveness = (
+  overrides: Partial<AgentLiveness> = {},
+): AgentLiveness => ({
+  is_alive: true,
+  reason: null,
+  last_checked_at: 1788940512,
+  last_healthy_at: 1788940512,
+  consecutive_failures: 0,
+  restarts_since_last_healthy: 0,
   ...overrides,
 });
 
