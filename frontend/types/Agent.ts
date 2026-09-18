@@ -181,12 +181,44 @@ type AgentHealthCheck = {
   rounds: string[];
   rounds_info?: RoundsInfo;
   seconds_since_last_transition: number;
+  /** Age of the on-disk snapshot in seconds; absent when there is no snapshot. */
+  age_seconds?: number;
+};
+
+/**
+ * Why the middleware does not consider the agent process alive.
+ *
+ * `null` when `is_alive` is true. Frozen vocabulary — see the middleware's
+ * `GET /api/v2/services/deployment` contract.
+ */
+export type AgentLivenessReason =
+  | 'agent_process_exited'
+  | 'agent_unresponsive'
+  | 'evicted_cannot_restake'
+  | 'not_monitored';
+
+export type AgentLiveness = {
+  is_alive: boolean;
+  reason: AgentLivenessReason | null;
+  last_checked_at: number | null;
+  last_healthy_at: number | null;
+  consecutive_failures: number;
+  restarts_since_last_healthy: number;
 };
 
 export type ServiceDeployment = {
   status: MiddlewareDeploymentStatus;
   nodes: DeployedNodes;
   healthcheck: AgentHealthCheck;
+  /**
+   * Whether the agent process is actually alive, as opposed to `status`, which
+   * is the middleware's record of the last deployment transition it performed.
+   *
+   * Optional: Pearl ships against older middleware builds that do not send it.
+   * A missing object means "unknown", never "not alive" — reading it the other
+   * way would show "Agent is not running" for every healthy agent.
+   */
+  agent_liveness?: AgentLiveness;
 };
 
 export type AgentInstance = {
