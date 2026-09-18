@@ -137,7 +137,7 @@ describe('useAgentActivity', () => {
   });
 
   describe('agent liveness', () => {
-    it('returns isServiceRunning=false when DEPLOYED but the agent has exited', () => {
+    it('reports the agent inactive when DEPLOYED but the process has exited', () => {
       // The reported symptom: an evicted agent whose process died, while the
       // middleware still reports the deployment as DEPLOYED.
       mockUseServices.mockReturnValue({
@@ -153,7 +153,46 @@ describe('useAgentActivity', () => {
       });
 
       const { result } = renderHook(() => useAgentActivity());
-      expect(result.current.isServiceRunning).toBe(false);
+      expect(result.current.isAgentActive).toBe(false);
+      // `isServiceRunning` stays deployment-only so Staking.tsx can't end up
+      // telling the user to start an agent whose button reads "Stop agent".
+      expect(result.current.isServiceRunning).toBe(true);
+    });
+
+    // The middleware reports `not_monitored` when it holds no health-check
+    // record and its PID-name probe misses — unknown, not dead.
+    it('treats not_monitored as unknown, not as not-alive', () => {
+      mockUseServices.mockReturnValue({
+        selectedService: makeService({
+          deploymentStatus: MiddlewareDeploymentStatusMap.DEPLOYED,
+        }),
+        deploymentDetails: makeServiceDeployment({
+          agent_liveness: makeAgentLiveness({
+            is_alive: false,
+            reason: 'not_monitored',
+          }),
+        }),
+      });
+
+      const { result } = renderHook(() => useAgentActivity());
+      expect(result.current.isAgentActive).toBe(true);
+    });
+
+    it('reports the agent inactive when it is unresponsive', () => {
+      mockUseServices.mockReturnValue({
+        selectedService: makeService({
+          deploymentStatus: MiddlewareDeploymentStatusMap.DEPLOYED,
+        }),
+        deploymentDetails: makeServiceDeployment({
+          agent_liveness: makeAgentLiveness({
+            is_alive: false,
+            reason: 'agent_unresponsive',
+          }),
+        }),
+      });
+
+      const { result } = renderHook(() => useAgentActivity());
+      expect(result.current.isAgentActive).toBe(false);
     });
 
     it('returns isServiceRunning=true when DEPLOYED and the agent is alive', () => {
@@ -167,7 +206,7 @@ describe('useAgentActivity', () => {
       });
 
       const { result } = renderHook(() => useAgentActivity());
-      expect(result.current.isServiceRunning).toBe(true);
+      expect(result.current.isAgentActive).toBe(true);
     });
 
     it('treats absent liveness as unknown, not as not-alive', () => {
@@ -181,7 +220,7 @@ describe('useAgentActivity', () => {
       });
 
       const { result } = renderHook(() => useAgentActivity());
-      expect(result.current.isServiceRunning).toBe(true);
+      expect(result.current.isAgentActive).toBe(true);
     });
   });
 

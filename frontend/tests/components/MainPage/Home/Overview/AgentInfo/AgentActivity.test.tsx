@@ -37,6 +37,7 @@ const setup = (over: Record<string, unknown> = {}) => {
     deploymentDetails: undefined,
     isServiceRunning: false,
     isServiceDeploying: false,
+    isAgentActive: false,
     ...over,
   });
   return render(<AgentActivity />);
@@ -63,7 +64,7 @@ describe('AgentActivity', () => {
   });
 
   it('shows "Agent is running" when running without healthcheck rounds', () => {
-    setup({ isServiceRunning: true });
+    setup({ isAgentActive: true });
     expect(screen.getByText('Agent is running')).toBeInTheDocument();
   });
 
@@ -72,7 +73,7 @@ describe('AgentActivity', () => {
       showRunningInfo: true,
       isFirstRun: true,
     });
-    setup({ isServiceRunning: true });
+    setup({ isAgentActive: true });
     expect(
       screen.getByText(
         'Your agent is running. You can visit the agent Profile to start a new session.',
@@ -85,7 +86,7 @@ describe('AgentActivity', () => {
       showRunningInfo: true,
       isFirstRun: false,
     });
-    setup({ isServiceRunning: true });
+    setup({ isAgentActive: true });
     expect(
       screen.getByText(
         'Your agent is running. You can open the agent Profile to start a new session.',
@@ -99,7 +100,7 @@ describe('AgentActivity', () => {
       isFirstRun: false,
     });
     setup({
-      isServiceRunning: true,
+      isAgentActive: true,
       deploymentDetails: {
         healthcheck: { rounds: ['round_a'], rounds_info: {} },
       },
@@ -123,7 +124,7 @@ describe('AgentActivity', () => {
   });
 
   it('does not show the session notice for non-Connect agents', () => {
-    setup({ isServiceRunning: true });
+    setup({ isAgentActive: true });
     expect(
       screen.queryByText(
         'Your agent is running. You can open the agent Profile to start a new session.',

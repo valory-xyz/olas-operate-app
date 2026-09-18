@@ -39,7 +39,7 @@ const IdleContent = () => (
 );
 
 export const AgentActivity = () => {
-  const { deploymentDetails, isServiceRunning, isServiceDeploying } =
+  const { deploymentDetails, isAgentActive, isServiceDeploying } =
     useAgentActivity();
   const { isEpochTargetMet } = useRewardContext();
   // Connect only: while the agent runs, the activity strip points at the
@@ -59,7 +59,9 @@ export const AgentActivity = () => {
     return deploymentDetails?.healthcheck?.rounds_info;
   }, [deploymentDetails?.healthcheck?.rounds_info]);
 
-  const canOpenModal = isServiceRunning && !!rounds.length;
+  // `isAgentActive`, not `isServiceRunning`: a crash-looping agent stays
+  // DEPLOYED while its round list is frozen at the round it died in.
+  const canOpenModal = isAgentActive && !!rounds.length;
 
   const activityInfo = useMemo<{
     status: AgentStatus;
@@ -69,7 +71,7 @@ export const AgentActivity = () => {
       return { status: 'loading', content: 'Agent is loading' };
     }
 
-    if (isServiceRunning) {
+    if (isAgentActive) {
       if (isConnectRunning) {
         return {
           status: 'activity-not-ready',
@@ -108,7 +110,7 @@ export const AgentActivity = () => {
   }, [
     isEpochTargetMet,
     isServiceDeploying,
-    isServiceRunning,
+    isAgentActive,
     isConnectRunning,
     isFirstRun,
     rounds,
