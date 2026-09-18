@@ -21,7 +21,7 @@ frontend/context/AutoRunProvider/
     useAutoRunStartOperations.ts — Guarded start flow with retries (eligibility verified by scanner before call)
     useAutoRunStopOperations.ts  — Stop flow with deployment confirmation + recovery retries
     useAutoRunScanner.ts       — Queue traversal, candidate selection, startSelectedAgentIfEligible
-    useAutoRunLifecycle.ts     — Effects: rotation on rewards, rewards polling, startup/resume, watchdog
+    useAutoRunLifecycle.ts     — Effects: rotation on rewards, rewards polling, startup/resume, runtime watchdog, eviction watchdog
     useAutoRunVerboseLogger.ts — Verbose log gate utility (tied to AUTO_RUN_VERBOSE_LOGS)
     useAutoRunStore.ts         — Electron store persistence (enabled, includedAgents, userExcludedAgents)
     useConfiguredAgents.ts     — Derives AgentMeta[] from services
@@ -43,7 +43,7 @@ AutoRunProvider
        │   ├─ useAutoRunStartOperations  → guarded start with retries + eligibility gates
        │   └─ useAutoRunStopOperations   → stop + deployment polling + bounded recovery
        ├─ useAutoRunScanner      → scanAndStartNext, startSelectedAgentIfEligible
-       └─ useAutoRunLifecycle    → rotation effect, rewards poll, startup/resume, watchdog
+       └─ useAutoRunLifecycle    → rotation effect, rewards poll, startup/resume, runtime watchdog, eviction watchdog
 ```
 
 ### Key Refs
@@ -78,7 +78,8 @@ Note: timing constants are centralized in `constants.ts` to avoid duplicate knob
 | `AUTO_RUN_VERBOSE_LOGS` | true | Gates high-volume diagnostic logs; set to true while actively debugging incidents |
 | `COOLDOWN_SECONDS` | 20s | Delay after stop before starting next instance |
 | `RUNNING_AGENT_MAX_RUNTIME_SECONDS` | 70min | Watchdog threshold for maximum continuous runtime per instance |
-| `RUNNING_AGENT_WATCHDOG_CHECK_SECONDS` | 5min | Watchdog check cadence |
+| `RUNNING_AGENT_WATCHDOG_CHECK_SECONDS` | 5min | Runtime watchdog check cadence |
+| `RUNNING_AGENT_ELIGIBILITY_CHECK_SECONDS` | 10min | Eviction watchdog cadence — how often the running instance's on-chain staking state is re-read |
 | `HEALTH_SUMMARY_INTERVAL_SECONDS` | 15min | Aggregated auto-run health log cadence (error/success counters); only emitted when `AUTO_RUN_VERBOSE_LOGS=true` |
 | `RETRY_BACKOFF_SECONDS` | [30, 60, 120] | Progressive backoff between start retries |
 | `REWARDS_POLL_SECONDS` | 120s | How often to poll rewards for the running instance |
@@ -145,12 +146,23 @@ Note: Resetting `lastRewardsEligibilityRef` on successful stop is critical — w
 3. In force mode, if all other agents are earned/unknown (no known alternative), current agent is kept running and watchdog retries later (no stop-to-idle).
 4. If rotate/recovery fails, scanner fallback is scheduled with blocked delay.
 
-### 3.6 Observability
+### 3.6 Evicted Running Instance
+
+The eviction gate in `fetchDeployabilityForAgent` only runs when choosing a candidate to *start*. Neither rotation trigger can fire once the running instance is evicted — rewards eligibility can no longer flip false→true, and the runtime watchdog is purely time-based — so before this check an evicted instance held the queue until the 70-minute cap, crash-looping the whole time if its agent exits on eviction (OPE-1920).
+
+1. Every 10 minutes (`RUNNING_AGENT_ELIGIBILITY_CHECK_SECONDS`), the running instance's deployability is re-read. The read happens *outside* `isRotatingRef`, which is claimed only once there is something to do — otherwise every check would block the runtime watchdog and the rewards trigger for the duration of a network call.
+2. Not evicted, or a transient result (e.g. RPC failure) → no action. A failed staking read must never stop a healthy agent.
+3. Evicted and past `minimumStakingDuration` → `stopAgentWithRecovery` then `startAgentWithRetries` for the same instance; the start re-stakes it through the middleware's deploy endpoint. A failed stop aborts before the start and records the usual backoff. `runningSinceRef` is reset afterwards, since the instance id does not change across the recovery.
+4. Evicted and still inside `minimumStakingDuration` → forced `rotateToNext`. Nothing can re-stake it until the window ends, so the queue should move on.
+
+**Division of labour with the middleware.** The middleware's health checker also re-stakes an evicted service, from its own restart loop, about five minutes after the agent process dies. That is why this interval is 10 minutes and not shorter: tightening it mostly buys races with work that layer is already doing. Auto-run covers what the middleware cannot see — an agent type that stays up while evicted (its health probe never fails, so `_restart` is never reached) and the locked-eviction rotation, which only auto-run can perform. Overlap is safe: `stopAgentWithRecovery` cancels the middleware's health-check job before anything on-chain happens, and the middleware serialises its staking flow on a per-service lock.
+
+### 3.7 Observability
 
 1. When `AUTO_RUN_VERBOSE_LOGS=true`, start/stop operations emit structured phase logs with operation ids:
 `start_prepare`, `start_request`, `start_confirm`, `stop_request`, `stop_confirm`, `stop_retry`.
 2. When `AUTO_RUN_VERBOSE_LOGS=true`, rotation and watchdog flows emit cycle correlation ids:
-`cycle=<id> trigger=<rewards|watchdog> phase=<...>`.
+`cycle=<id> trigger=<rewards|watchdog|eviction> phase=<...>`.
 3. When `AUTO_RUN_VERBOSE_LOGS=true`, every 15 minutes (while auto-run is enabled), a health summary log is emitted with counters:
 `startErrors`, `stopTimeouts`, `rewardsErrors`, `eligibilityTimeouts`, `rotationsSucceeded`.
 
@@ -262,6 +274,14 @@ Every delay and poll interval in auto-run uses `sleepAwareDelay`. On `false`:
 | 6 | Agent already earned before enable | Skip, move to next | Rewards snapshot check before start |
 | 7 | All agents earned | Keep current running, rescan in 30min | `allEarnedOrUnknown` → `SCAN_ELIGIBLE_DELAY_SECONDS` |
 | 7a | Epoch expired (clock = 0), all agents show `isEligibleForRewards = true` from old epoch, no agent running | Treat as not-yet-earned and start next agent to trigger on-chain checkpoint | `epochExpired` check in `refreshRewardsEligibility` (fresh chain data) + separate `isEpochExpired` flag passed to `useAutoRunSignals` where `!isEligibleForRewards \|\| isEpochExpired` is evaluated at the snapshot write |
+
+### Running Instance Evicted
+
+| # | Scenario | Expected | Implementation |
+|---|----------|----------|----------------|
+| 7b | Running instance evicted on-chain, past `minimumStakingDuration` | Stop then start the same instance; the start re-stakes it | Eviction watchdog, §3.6 — `isAgentEvicted && isEligibleAfterEviction` from `fetchDeployabilityForAgent`. Usually the middleware gets there first (~5min) and this check finds a healthy instance |
+| 7c | Running instance evicted, still inside `minimumStakingDuration` | Forced rotation to the next instance | Eviction watchdog, §3.6 — nothing can re-stake it until the window ends, so holding the slot for the 70min cap is pure idle time |
+| 7d | Staking read fails while the running instance is healthy | No action | `isTransient` result is ignored; a flaky RPC must never stop a healthy agent |
 
 ### Blocked Agents
 
