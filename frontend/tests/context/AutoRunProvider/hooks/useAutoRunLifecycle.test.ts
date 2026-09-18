@@ -568,6 +568,42 @@ describe('useAutoRunLifecycle', () => {
       expect(calls).toEqual(['stop', 'start']);
     });
 
+    it('does not let the runtime watchdog rotate a just-recovered instance', async () => {
+      // The instance id is unchanged across the recovery, so the runtime
+      // watchdog would otherwise still be counting the pre-eviction runtime.
+      const params = makeRunningParams({
+        getDeployabilityForRunningInstance: jest.fn().mockResolvedValue({
+          canRun: true,
+          isAgentEvicted: true,
+          isEligibleAfterEviction: true,
+        }),
+      });
+
+      renderHook(() => useAutoRunLifecycle(params));
+      await act(async () => {
+        await flushMicrotasks();
+      });
+
+      // Sit just under the runtime cap, then let the eviction check recover.
+      await act(async () => {
+        jest.advanceTimersByTime(
+          RUNNING_AGENT_MAX_RUNTIME_SECONDS * 1000 -
+            RUNNING_AGENT_ELIGIBILITY_CHECK_SECONDS * 1000,
+        );
+        await flushMicrotasks();
+      });
+      expect(params.startAgentWithRetries).toHaveBeenCalledTimes(1);
+
+      (params.stopAgentWithRecovery as jest.Mock).mockClear();
+      // The runtime watchdog would have fired here on the old clock.
+      await act(async () => {
+        jest.advanceTimersByTime(RUNNING_AGENT_WATCHDOG_CHECK_SECONDS * 1000);
+        await flushMicrotasks();
+      });
+
+      expect(params.stopAgentWithRecovery).not.toHaveBeenCalled();
+    });
+
     it('does not start when the stop fails, and records backoff', async () => {
       const params = makeRunningParams({
         getDeployabilityForRunningInstance: jest.fn().mockResolvedValue({

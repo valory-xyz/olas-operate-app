@@ -430,6 +430,11 @@ export const useAutoRunLifecycle = ({
           }
           if (!enabledRef.current) return;
           await startAgentWithRetriesRef.current(currentId);
+          // The instance id does not change across a recovery, so the effect
+          // that resets this on rotation may not re-run. Without the reset the
+          // runtime watchdog would count the pre-eviction runtime and rotate
+          // straight off a just-recovered agent.
+          runningSinceRef.current = Date.now();
         } catch (error) {
           logMessage(`eviction watchdog error: ${error}`);
           recordMetric(AUTO_RUN_HEALTH_METRIC.REWARDS_ERRORS);
