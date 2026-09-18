@@ -59,6 +59,19 @@ export const RUNNING_AGENT_MAX_RUNTIME_SECONDS = 70 * 60; // 70 minutes
 export const RUNNING_AGENT_WATCHDOG_CHECK_SECONDS = 5 * 60; // 5 minutes
 
 /**
+ * How often (in seconds) auto-run re-reads the on-chain staking state of the
+ * *running* instance, to catch an eviction that happened while it ran.
+ *
+ * Deliberately not tighter: the middleware's health checker notices an evicted
+ * agent about five minutes after its process dies and re-stakes it from there,
+ * so a shorter interval mostly buys races with work that layer is already
+ * doing. Auto-run covers what it cannot see — an agent that stays up while
+ * evicted, and rotating away from an eviction that cannot be cleared.
+ * Example: every 10 minutes -> if the running instance is evicted, recover or rotate.
+ */
+export const RUNNING_AGENT_ELIGIBILITY_CHECK_SECONDS = 10 * 60; // 10 minutes
+
+/**
  * How often (in seconds) auto-run emits an aggregated health summary log,
  * when `AUTO_RUN_VERBOSE_LOGS` is enabled.
  * This summarizes error/success counters without spamming per-event logs.

@@ -859,7 +859,7 @@ describe('fetchDeployabilityForAgent', () => {
 
   it('returns canRun=true when all checks pass', async () => {
     const result = await fetchDeployabilityForAgent(makeAgentMeta(), makeCtx());
-    expect(result).toEqual({ canRun: true });
+    expect(result).toEqual({ canRun: true, isAgentEvicted: false });
   });
 
   it('returns canRun=false isTransient=true when safe is loading', async () => {
@@ -972,6 +972,8 @@ describe('fetchDeployabilityForAgent', () => {
     const result = await fetchDeployabilityForAgent(makeAgentMeta(), makeCtx());
     expect(result.canRun).toBe(false);
     expect(result.reason).toBe('Evicted');
+    expect(result.isAgentEvicted).toBe(true);
+    expect(result.isEligibleAfterEviction).toBe(false);
   });
 
   it('returns canRun=true when agent is evicted but minimum duration elapsed', async () => {
@@ -987,6 +989,44 @@ describe('fetchDeployabilityForAgent', () => {
     });
     const result = await fetchDeployabilityForAgent(makeAgentMeta(), makeCtx());
     expect(result.canRun).toBe(true);
+    expect(result.isAgentEvicted).toBe(true);
+    expect(result.isEligibleAfterEviction).toBe(true);
+  });
+
+  it('surfaces the eviction facts without changing canRun for a later gate', async () => {
+    // `canRun` collapses an evicted-but-recoverable instance into `true`,
+    // which is correct for a start decision and useless to the running-instance
+    // watchdog. The discriminants must survive whichever gate decides.
+    const now = Math.floor(Date.now() / 1000);
+    mockGetStakingContractDetails.mockResolvedValue({
+      serviceIds: [1],
+      maxNumServices: 10,
+      minimumStakingDuration: 86400,
+    });
+    mockGetServiceStakingDetails.mockResolvedValue({
+      serviceStakingState: StakingState.Evicted,
+      serviceStakingStartTime: now - 90000,
+    });
+    const ctx = makeCtx({
+      allowStartAgentByServiceConfigId: jest.fn().mockReturnValue(false),
+    });
+
+    const result = await fetchDeployabilityForAgent(makeAgentMeta(), ctx);
+
+    expect(result.canRun).toBe(false);
+    expect(result.reason).toBe('Low balance');
+    expect(result.isAgentEvicted).toBe(true);
+    expect(result.isEligibleAfterEviction).toBe(true);
+  });
+
+  it('omits the eviction facts when the staking read never happened', async () => {
+    // A transient read failure must not be mistaken for "not evicted".
+    mockGetStakingContractDetails.mockRejectedValue(new Error('RPC error'));
+
+    const result = await fetchDeployabilityForAgent(makeAgentMeta(), makeCtx());
+
+    expect(result.isAgentEvicted).toBeUndefined();
+    expect(result.isEligibleAfterEviction).toBeUndefined();
   });
 
   it('returns canRun=false isTransient=true when staking API throws', async () => {
