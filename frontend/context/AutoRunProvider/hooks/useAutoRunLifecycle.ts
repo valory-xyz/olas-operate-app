@@ -347,11 +347,19 @@ export const useAutoRunLifecycle = ({
     getDeployabilityForRunningInstance,
   );
   const startAgentWithRetriesRef = useRef(startAgentWithRetries);
+  // `rotateToNext` closes over `orderedIncludedInstances`, which derives from
+  // `services` — refetched every 5s. Left in the dep array it would tear down
+  // and recreate this interval faster than its 10-minute period, so the check
+  // could never fire. The runtime watchdog survives the same churn only
+  // because `runningSinceRef` carries its progress across restarts; this
+  // check is stateless, so it has to hold the callback in a ref instead.
+  const rotateToNextRef = useRef(rotateToNext);
   useEffect(() => {
     getDeployabilityForRunningInstanceRef.current =
       getDeployabilityForRunningInstance;
     startAgentWithRetriesRef.current = startAgentWithRetries;
-  }, [getDeployabilityForRunningInstance, startAgentWithRetries]);
+    rotateToNextRef.current = rotateToNext;
+  }, [getDeployabilityForRunningInstance, startAgentWithRetries, rotateToNext]);
 
   /**
    * Eviction watchdog for the *running* instance.
@@ -398,6 +406,10 @@ export const useAutoRunLifecycle = ({
           // Re-check under the guard: another loop may have started rotating
           // while the read was in flight. No await between here and the claim.
           if (isRotatingRef.current) return;
+          // A rotation may also have *completed* during the read, leaving a
+          // different instance running. Acting on `currentId` now would stop
+          // an agent that is no longer the one we checked.
+          if (runningServiceConfigIdRef.current !== currentId) return;
           isRotatingRef.current = true;
           hasRotationGuard = true;
 
@@ -405,7 +417,7 @@ export const useAutoRunLifecycle = ({
             logVerbose(
               `cycle=${cycleId} trigger=eviction phase=trigger current=${currentId} eligible=false action=rotate`,
             );
-            await rotateToNext(currentId, {
+            await rotateToNextRef.current(currentId, {
               force: true,
               cycleId,
               trigger: 'eviction',
@@ -428,6 +440,16 @@ export const useAutoRunLifecycle = ({
             scheduleNextScan(SCAN_BLOCKED_DELAY_SECONDS);
             return;
           }
+          // Reset the rewards guard as `rotateToNext` does after a successful
+          // stop: a stale `true` left over from before the eviction would
+          // block the rewards trigger for this instance in every later epoch.
+          lastRewardsEligibilityRef.current[currentId] = undefined;
+          stopRetryBackoffUntilRef.current[currentId] = undefined;
+          if (!enabledRef.current) return;
+          // Same cooldown rotation uses — the backend needs time to tear the
+          // service down before a start on the same instance is accepted.
+          const cooldownOk = await sleepAwareDelay(COOLDOWN_SECONDS);
+          if (!cooldownOk) return;
           if (!enabledRef.current) return;
           await startAgentWithRetriesRef.current(currentId);
           // The instance id does not change across a recovery, so the effect
@@ -449,10 +471,10 @@ export const useAutoRunLifecycle = ({
   }, [
     enabled,
     enabledRef,
+    lastRewardsEligibilityRef,
     logMessage,
     logVerbose,
     recordMetric,
-    rotateToNext,
     runningServiceConfigId,
     runningServiceConfigIdRef,
     scheduleNextScan,
