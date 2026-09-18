@@ -6,6 +6,10 @@ import {
   useConnectSession,
   useRewardContext,
 } from '../../../../../../hooks';
+import {
+  makeAgentLiveness,
+  makeServiceDeployment,
+} from '../../../../../helpers/factories';
 
 jest.mock('../../../../../../hooks', () => ({
   useAgentActivity: jest.fn(),
@@ -124,6 +128,32 @@ describe('AgentActivity', () => {
       screen.queryByText(
         'Your agent is running. You can open the agent Profile to start a new session.',
       ),
+    ).not.toBeInTheDocument();
+  });
+
+  it('shows "Agent is not running" instead of a stale round when the agent died', () => {
+    // The reported symptom: the healthcheck snapshot is frozen at the round
+    // the agent died in, so the round list is still populated. Rendering it
+    // would show "Current action: <round>" in the active state for a process
+    // that no longer exists.
+    setup({
+      isServiceRunning: false,
+      deploymentDetails: makeServiceDeployment({
+        healthcheck: {
+          ...makeServiceDeployment().healthcheck,
+          rounds: ['collect_signature_round'],
+        },
+        agent_liveness: makeAgentLiveness({
+          is_alive: false,
+          reason: 'agent_process_exited',
+        }),
+      }),
+    });
+
+    expect(screen.getByText('Agent is not running')).toBeInTheDocument();
+    expect(screen.queryByText('Current action:')).not.toBeInTheDocument();
+    expect(
+      screen.queryByText('collect_signature_round'),
     ).not.toBeInTheDocument();
   });
 });

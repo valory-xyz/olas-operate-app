@@ -36,6 +36,16 @@ const EvictionAlert = () => (
   />
 );
 
+const EvictionRestartableAlert = () => (
+  <Alert
+    message="The agent was evicted from staking but is eligible to stake again. Restart it to re-stake."
+    type="warning"
+    centered
+    showIcon
+    className="text-sm"
+  />
+);
+
 const RunAgentAlert = () => (
   <Alert
     message="Start the agent to join staking and unlock protocol rewards."
@@ -69,6 +79,8 @@ export const Staking = () => {
   const alert = useMemo(() => {
     if (isUnderConstruction) return <UnderConstructionAlert />;
     if (isAgentEvicted && !isEligibleForStaking) return <EvictionAlert />;
+    if (isAgentEvicted && isEligibleForStaking)
+      return <EvictionRestartableAlert />;
     if (!isServiceRunning) return <RunAgentAlert />;
     return null;
   }, [

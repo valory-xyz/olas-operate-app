@@ -28,6 +28,7 @@ import { AgentPhasedOutAlert } from './AgentPhasedOutAlert';
 import { AgentRunningAlert } from './AgentRunningAlert';
 import { ContractDeprecatedAlert } from './ContractDeprecatedAlert';
 import { EvictedAlert } from './EvictedAlert';
+import { EvictedRestartableAlert } from './EvictedRestartableAlert';
 import { MasterEoaLowBalanceAlert } from './MasterEoaLowBalanceAlert';
 import { NoSlotsAvailableAlert } from './NoSlotsAvailableAlert';
 import { UnderConstructionAlert } from './UnderConstructionAlert';
@@ -122,6 +123,15 @@ export const AgentDisabledAlert = () => {
 
     if (isAgentEvicted && !isEligibleForStaking) {
       return { key: 'evicted', content: <EvictedAlert /> };
+    }
+
+    // Evicted but past `minimumStakingDuration`: restarting re-stakes it, so
+    // this is the actionable eviction — the one that used to render nothing.
+    if (isAgentEvicted && isEligibleForStaking) {
+      return {
+        key: 'evicted-restartable',
+        content: <EvictedRestartableAlert />,
+      };
     }
 
     // Non-blocking: the reward pool of the selected contract is empty, so the

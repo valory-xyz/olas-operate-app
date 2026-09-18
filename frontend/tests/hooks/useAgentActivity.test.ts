@@ -2,8 +2,11 @@ import { renderHook } from '@testing-library/react';
 
 import { MiddlewareDeploymentStatusMap } from '../../constants/deployment';
 import { useAgentActivity } from '../../hooks/useAgentActivity';
-import { ServiceDeployment } from '../../types/Agent';
-import { makeService } from '../helpers/factories';
+import {
+  makeAgentLiveness,
+  makeService,
+  makeServiceDeployment,
+} from '../helpers/factories';
 
 /* eslint-disable @typescript-eslint/no-var-requires */
 jest.mock(
@@ -13,20 +16,7 @@ jest.mock(
 /* eslint-enable @typescript-eslint/no-var-requires */
 jest.mock('../../constants/providers', () => ({ PROVIDERS: {} }));
 
-const mockDeploymentDetails: ServiceDeployment = {
-  status: MiddlewareDeploymentStatusMap.DEPLOYED,
-  nodes: { agent: [], tendermint: [] },
-  healthcheck: {
-    agent_health: {},
-    is_healthy: true,
-    is_tm_healthy: true,
-    is_transitioning_fast: false,
-    period: 0,
-    reset_pause_duration: 0,
-    rounds: [],
-    seconds_since_last_transition: 0,
-  },
-};
+const mockDeploymentDetails = makeServiceDeployment();
 
 const mockUseServices = jest.fn();
 jest.mock('../../hooks/useServices', () => ({
@@ -144,6 +134,55 @@ describe('useAgentActivity', () => {
 
     expect(result.current.isServiceRunning).toBe(false);
     expect(result.current.isServiceDeploying).toBe(false);
+  });
+
+  describe('agent liveness', () => {
+    it('returns isServiceRunning=false when DEPLOYED but the agent has exited', () => {
+      // The reported symptom: an evicted agent whose process died, while the
+      // middleware still reports the deployment as DEPLOYED.
+      mockUseServices.mockReturnValue({
+        selectedService: makeService({
+          deploymentStatus: MiddlewareDeploymentStatusMap.DEPLOYED,
+        }),
+        deploymentDetails: makeServiceDeployment({
+          agent_liveness: makeAgentLiveness({
+            is_alive: false,
+            reason: 'agent_process_exited',
+          }),
+        }),
+      });
+
+      const { result } = renderHook(() => useAgentActivity());
+      expect(result.current.isServiceRunning).toBe(false);
+    });
+
+    it('returns isServiceRunning=true when DEPLOYED and the agent is alive', () => {
+      mockUseServices.mockReturnValue({
+        selectedService: makeService({
+          deploymentStatus: MiddlewareDeploymentStatusMap.DEPLOYED,
+        }),
+        deploymentDetails: makeServiceDeployment({
+          agent_liveness: makeAgentLiveness(),
+        }),
+      });
+
+      const { result } = renderHook(() => useAgentActivity());
+      expect(result.current.isServiceRunning).toBe(true);
+    });
+
+    it('treats absent liveness as unknown, not as not-alive', () => {
+      // Pearl ships against older middleware builds. Inverting this default
+      // would read "Agent is not running" for every healthy agent.
+      mockUseServices.mockReturnValue({
+        selectedService: makeService({
+          deploymentStatus: MiddlewareDeploymentStatusMap.DEPLOYED,
+        }),
+        deploymentDetails: mockDeploymentDetails,
+      });
+
+      const { result } = renderHook(() => useAgentActivity());
+      expect(result.current.isServiceRunning).toBe(true);
+    });
   });
 
   it('returns both flags false when deploymentStatus is undefined on the service', () => {
