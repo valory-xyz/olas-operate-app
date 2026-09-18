@@ -106,13 +106,13 @@ export const CONNECT_SERVICE_TEMPLATE: ServiceTemplate = {
   image:
     'https://gateway.autonolas.tech/ipfs/bafybeidldvcrd7exlqwutoa5fj7nh6mjrkh7w6tuuwofwdifavvezj6g2e',
   hash: 'bafybeihl7bdnhhsh5alvbxv6uajckbjsmcetaexjg246x342qitiw3nfw4',
-  service_version: 'v0.1.7',
+  service_version: 'v0.1.8-rc1',
   agent_release: {
     is_aea: false,
     repository: {
       owner: 'valory-xyz',
       name: 'connect',
-      version: 'v0.1.7',
+      version: 'v0.1.8-rc1',
     },
   },
   home_chain: MiddlewareChainMap.GNOSIS,
