@@ -121,17 +121,16 @@ export const AgentDisabledAlert = () => {
       return { key: 'no-slots', content: <NoSlotsAvailableAlert /> };
     }
 
-    if (isAgentEvicted && !isEligibleForStaking) {
+    // Guarded on loading like the no-slots branch above: while staking details
+    // load, `hasEnoughRewardsAndSlots` can be nil, which forces
+    // `isEligibleForStaking` false and would flash the un-recoverable eviction
+    // copy (with a date) at someone whose agent can actually re-stake now.
+    if (
+      !isSelectedStakingContractDetailsLoading &&
+      isAgentEvicted &&
+      !isEligibleForStaking
+    ) {
       return { key: 'evicted', content: <EvictedAlert /> };
-    }
-
-    // Evicted but past `minimumStakingDuration`: restarting re-stakes it, so
-    // this is the actionable eviction — the one that used to render nothing.
-    if (isAgentEvicted && isEligibleForStaking) {
-      return {
-        key: 'evicted-restartable',
-        content: <EvictedRestartableAlert />,
-      };
     }
 
     // Non-blocking: the reward pool of the selected contract is empty, so the
@@ -141,11 +140,24 @@ export const AgentDisabledAlert = () => {
       !isSelectedStakingContractDetailsLoading &&
       selectedStakingContractDetails?.availableRewards === 0;
 
+    // Non-blocking: evicted but past `minimumStakingDuration`, so it can be
+    // re-staked and `useDeployability` still reports `canRun: true`. This case
+    // used to render nothing at all — every eviction surface was gated on
+    // `isAgentEvicted && !isEligibleForStaking`, so the eviction was hidden
+    // exactly when it was actionable (OPE-1920). Deliberately not a
+    // pre-empting branch: it must not mask the low-balance alerts, which are
+    // what actually block the restart it recommends.
+    const isEvictedButRestartable =
+      !isSelectedStakingContractDetailsLoading &&
+      isAgentEvicted &&
+      isEligibleForStaking;
+
     // NOTE: Low-balance alerts, each component controls its own visibility.
     return {
       key: 'low-balance',
       content: (
         <>
+          {isEvictedButRestartable && <EvictedRestartableAlert />}
           {hasNoStakingRewards && (
             <NoStakingRewardsAlert
               className="mt-16"

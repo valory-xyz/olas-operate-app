@@ -78,9 +78,12 @@ export const Staking = () => {
 
   const alert = useMemo(() => {
     if (isUnderConstruction) return <UnderConstructionAlert />;
-    if (isAgentEvicted && !isEligibleForStaking) return <EvictionAlert />;
-    if (isAgentEvicted && isEligibleForStaking)
-      return <EvictionRestartableAlert />;
+    if (isAgentEvicted)
+      return isEligibleForStaking ? (
+        <EvictionRestartableAlert />
+      ) : (
+        <EvictionAlert />
+      );
     if (!isServiceRunning) return <RunAgentAlert />;
     return null;
   }, [
