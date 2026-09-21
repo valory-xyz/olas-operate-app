@@ -6,6 +6,7 @@ import { sleepAwareDelay } from '@/utils/delay';
 import {
   AUTO_RUN_HEALTH_METRIC,
   AUTO_RUN_START_DELAY_SECONDS,
+  AUTO_RUN_START_STATUS,
   AutoRunLifecycleMetric,
   AutoRunStartResult,
   COOLDOWN_SECONDS,
@@ -451,12 +452,28 @@ export const useAutoRunLifecycle = ({
           const cooldownOk = await sleepAwareDelay(COOLDOWN_SECONDS);
           if (!cooldownOk) return;
           if (!enabledRef.current) return;
-          await startAgentWithRetriesRef.current(currentId);
+          const startResult = await startAgentWithRetriesRef.current(currentId);
           // The instance id does not change across a recovery, so the effect
           // that resets this on rotation may not re-run. Without the reset the
           // runtime watchdog would count the pre-eviction runtime and rotate
           // straight off a just-recovered agent.
           runningSinceRef.current = Date.now();
+          // We stopped a running agent to get here, so a start that did not
+          // take leaves the queue idle. Schedule a rescan rather than relying
+          // on the resume effect noticing, which is what `rotateToNext` does
+          // on its own failure paths. `ABORTED` is auto-run being switched
+          // off mid-recovery — not a failure, and nothing should restart it.
+          if (
+            startResult.status !== AUTO_RUN_START_STATUS.STARTED &&
+            startResult.status !== AUTO_RUN_START_STATUS.ABORTED
+          ) {
+            logMessage(
+              `eviction recovery start failed for ${currentId}: ${startResult.status}${
+                startResult.reason ? ` (${startResult.reason})` : ''
+              }`,
+            );
+            scheduleNextScan(SCAN_BLOCKED_DELAY_SECONDS);
+          }
         } catch (error) {
           logMessage(`eviction watchdog error: ${error}`);
           recordMetric(AUTO_RUN_HEALTH_METRIC.REWARDS_ERRORS);

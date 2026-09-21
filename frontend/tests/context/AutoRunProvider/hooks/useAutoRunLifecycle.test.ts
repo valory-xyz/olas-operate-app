@@ -578,6 +578,65 @@ describe('useAutoRunLifecycle', () => {
       expect(getDeployability).toHaveBeenCalled();
     });
 
+    // We stopped a running agent to get here, so a start that doesn't take
+    // leaves the queue idle — it must not depend on the resume effect noticing.
+    it('schedules a rescan when the recovery start fails', async () => {
+      const params = makeRunningParams({
+        getDeployabilityForRunningInstance: jest.fn().mockResolvedValue({
+          canRun: true,
+          isAgentEvicted: true,
+          isEligibleAfterEviction: true,
+        }),
+        startAgentWithRetries: jest
+          .fn()
+          .mockResolvedValue({ status: 'infra_failed', reason: 'boom' }),
+      });
+
+      await runOneCheck(params);
+
+      expect(params.scheduleNextScan).toHaveBeenCalledWith(
+        SCAN_BLOCKED_DELAY_SECONDS,
+      );
+      expect(params.logMessage).toHaveBeenCalledWith(
+        expect.stringContaining('eviction recovery start failed'),
+      );
+    });
+
+    it('does not schedule a rescan when the recovery start succeeds', async () => {
+      const params = makeRunningParams({
+        getDeployabilityForRunningInstance: jest.fn().mockResolvedValue({
+          canRun: true,
+          isAgentEvicted: true,
+          isEligibleAfterEviction: true,
+        }),
+        startAgentWithRetries: jest
+          .fn()
+          .mockResolvedValue({ status: 'started' }),
+      });
+
+      await runOneCheck(params);
+
+      expect(params.scheduleNextScan).not.toHaveBeenCalled();
+    });
+
+    // `aborted` is auto-run being switched off mid-recovery, not a failure.
+    it('does not schedule a rescan when the start is aborted', async () => {
+      const params = makeRunningParams({
+        getDeployabilityForRunningInstance: jest.fn().mockResolvedValue({
+          canRun: true,
+          isAgentEvicted: true,
+          isEligibleAfterEviction: true,
+        }),
+        startAgentWithRetries: jest
+          .fn()
+          .mockResolvedValue({ status: 'aborted' }),
+      });
+
+      await runOneCheck(params);
+
+      expect(params.scheduleNextScan).not.toHaveBeenCalled();
+    });
+
     // R5: the staking read is a network call; a rotation can complete while it
     // is in flight, and stopping `currentId` then would kill a different agent.
     it('does not act when the running instance changed during the read', async () => {
