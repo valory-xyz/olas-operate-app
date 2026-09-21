@@ -1,5 +1,5 @@
 import { MiddlewareDeploymentStatusMap } from '@/constants/deployment';
-import { AgentLivenessReason } from '@/types/Agent';
+import { AgentLivenessReason } from '@/types';
 
 import { useServices } from './useServices';
 

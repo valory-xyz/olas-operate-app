@@ -181,8 +181,6 @@ type AgentHealthCheck = {
   rounds: string[];
   rounds_info?: RoundsInfo;
   seconds_since_last_transition: number;
-  /** Age of the on-disk snapshot in seconds; absent when there is no snapshot. */
-  age_seconds?: number;
 };
 
 /**
@@ -197,13 +195,21 @@ export type AgentLivenessReason =
   | 'evicted_cannot_restake'
   | 'not_monitored';
 
+/**
+ * Whether the agent *process* is alive, as opposed to `ServiceDeployment.status`,
+ * which records the last deployment transition the middleware performed — a
+ * crash-looping agent stays `DEPLOYED` while its process is dead.
+ *
+ * Narrowed to the two fields Pearl reads. The response also carries
+ * `last_checked_at`, `last_healthy_at`, `consecutive_failures` and
+ * `restarts_since_last_healthy`, and `healthcheck` gains `age_seconds` —
+ * deliberately omitted until something renders them, so the type cannot drift
+ * on fields nobody checks. Re-verify the shape on every
+ * `olas-operate-middleware` pin bump in `pyproject.toml`.
+ */
 export type AgentLiveness = {
   is_alive: boolean;
   reason: AgentLivenessReason | null;
-  last_checked_at: number | null;
-  last_healthy_at: number | null;
-  consecutive_failures: number;
-  restarts_since_last_healthy: number;
 };
 
 export type ServiceDeployment = {

@@ -360,7 +360,6 @@ export const makeServiceDeployment = (
     reset_pause_duration: 0,
     rounds: [],
     seconds_since_last_transition: 0,
-    age_seconds: 1,
   },
   ...overrides,
 });
@@ -370,10 +369,6 @@ export const makeAgentLiveness = (
 ): AgentLiveness => ({
   is_alive: true,
   reason: null,
-  last_checked_at: 1788940512,
-  last_healthy_at: 1788940512,
-  consecutive_failures: 0,
-  restarts_since_last_healthy: 0,
   ...overrides,
 });
 
