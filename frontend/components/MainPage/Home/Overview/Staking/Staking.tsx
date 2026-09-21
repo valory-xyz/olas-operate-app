@@ -36,7 +36,7 @@ const EvictionAlert = () => (
   />
 );
 
-const EvictionRestartableAlert = () => (
+const EvictionRecoverableAlert = () => (
   <Alert
     message="The agent was evicted from staking but is eligible to stake again. Restart it to re-stake."
     type="warning"
@@ -80,7 +80,7 @@ export const Staking = () => {
     if (isUnderConstruction) return <UnderConstructionAlert />;
     if (isAgentEvicted)
       return isEligibleForStaking ? (
-        <EvictionRestartableAlert />
+        <EvictionRecoverableAlert />
       ) : (
         <EvictionAlert />
       );
