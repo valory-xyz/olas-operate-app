@@ -67,7 +67,7 @@ export const ConnectSessionAlert = () => {
               {/* Prefer the server's message — it explains which case this is
                   (no Claude vs. the wrong harness selected). */}
               {errorMessage ??
-                'Connect works with the Claude Code CLI or the Claude Desktop app. Install one, then start the agent again.'}
+                'Connect works with the Claude Code CLI or Codex. Install one, then start the agent again.'}
             </Text>
             <br />
             <Button

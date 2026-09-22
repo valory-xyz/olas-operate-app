@@ -18,7 +18,7 @@ export const AGENT_SERVER_URL: Url = 'http://127.0.0.1:8716';
 
 // Connect: where to send users when no Claude harness is installed. The Claude
 // Code CLI is Connect's default harness, so the install instructions for *it*
-// are what an operator with nothing installed needs — not the Desktop app.
+// are what an operator with nothing installed needs.
 export const CLAUDE_CODE_CLI_INSTALL_URL: Url =
   'https://code.claude.com/docs/en/quickstart#step-1-install-claude-code';
 

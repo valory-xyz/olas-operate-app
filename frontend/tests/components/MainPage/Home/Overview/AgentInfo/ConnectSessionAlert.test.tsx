@@ -89,9 +89,7 @@ describe('ConnectSessionAlert', () => {
   it('falls back to the CLI-first description when the server sent no message', () => {
     setup({ errorKind: 'not-installed' });
     expect(
-      screen.getByText(
-        /Connect works with the Claude Code CLI or the Claude Desktop app/i,
-      ),
+      screen.getByText(/Connect works with the Claude Code CLI or Codex/i),
     ).toBeInTheDocument();
   });
 
@@ -104,9 +102,7 @@ describe('ConnectSessionAlert', () => {
       screen.getByText(/Could not open claude_code_cli - is it installed\?/i),
     ).toBeInTheDocument();
     expect(
-      screen.queryByText(
-        /Connect works with the Claude Code CLI or the Claude Desktop app/i,
-      ),
+      screen.queryByText(/Connect works with the Claude Code CLI or Codex/i),
     ).not.toBeInTheDocument();
   });
 
