@@ -176,6 +176,17 @@ describe('static URL constants', () => {
   it('GOVERN_APP_URL points to govern.olas.network', () => {
     expect(urls.GOVERN_APP_URL).toBe('https://govern.olas.network');
   });
+
+  // Pinned as a literal on purpose. The only other assertion on this constant
+  // (ConnectSessionAlert.test.tsx) compares the rendered href against the
+  // constant itself, so it passes for whatever value the constant holds. This
+  // is the one test that fails if the destination is wrong, or is reverted to
+  // the Claude Desktop download page.
+  it('CLAUDE_CODE_CLI_INSTALL_URL points at the CLI install step', () => {
+    expect(urls.CLAUDE_CODE_CLI_INSTALL_URL).toBe(
+      'https://code.claude.com/docs/en/quickstart#step-1-install-claude-code',
+    );
+  });
 });
 
 // ─── Per-chain URL maps ───────────────────────────────────────────────────────
