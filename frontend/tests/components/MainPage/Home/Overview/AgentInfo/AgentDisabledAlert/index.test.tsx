@@ -81,12 +81,6 @@ jest.mock(
   }),
 );
 jest.mock(
-  '../../../../../../../components/MainPage/Home/Overview/AgentInfo/AgentDisabledAlert/EvictedRestartableAlert',
-  () => ({
-    EvictedRestartableAlert: () => <div>evicted-restartable</div>,
-  }),
-);
-jest.mock(
   '../../../../../../../components/MainPage/Home/Overview/AgentInfo/AgentDisabledAlert/MasterEoaLowBalanceAlert',
   () => ({
     MasterEoaLowBalanceAlert: () => <div>master-eoa-low-balance</div>,
@@ -186,18 +180,19 @@ describe('AgentDisabledAlert', () => {
     });
   });
 
+  // The recoverable case renders no eviction alert at all: `AgentRunButton`
+  // sits directly above this strip, so a stopped agent already shows
+  // "Start agent", and auto-run recovers a running one on its own.
   describe('recoverable eviction', () => {
-    // Deliberately NOT a pre-empting branch: it must not hide the low-balance
-    // alerts, which are what actually block the restart it recommends.
-    it('renders alongside the low-balance alerts rather than replacing them', () => {
+    it('renders only the low-balance alerts, no eviction alert', () => {
       setup({ staking: { isAgentEvicted: true, isEligibleForStaking: true } });
 
-      expect(screen.getByText('evicted-restartable')).toBeInTheDocument();
       expect(screen.getByText('low-balance')).toBeInTheDocument();
       expect(screen.getByText('master-eoa-low-balance')).toBeInTheDocument();
+      expect(screen.queryByText('evicted-locked')).not.toBeInTheDocument();
     });
 
-    it('renders together with the empty-reward-pool alert', () => {
+    it('still surfaces an empty reward pool', () => {
       setup({
         staking: {
           isAgentEvicted: true,
@@ -206,20 +201,7 @@ describe('AgentDisabledAlert', () => {
         },
       });
 
-      expect(screen.getByText('evicted-restartable')).toBeInTheDocument();
       expect(screen.getByText('no-rewards')).toBeInTheDocument();
-    });
-
-    it('does not render while staking details are still loading', () => {
-      setup({
-        staking: {
-          isSelectedStakingContractDetailsLoading: true,
-          isAgentEvicted: true,
-          isEligibleForStaking: true,
-        },
-      });
-
-      expect(screen.queryByText('evicted-restartable')).not.toBeInTheDocument();
     });
   });
 
@@ -265,18 +247,21 @@ describe('AgentDisabledAlert', () => {
         'no-slots',
         { staking: { isServiceStaked: false, hasEnoughServiceSlots: false } },
       ],
-    ])('%s wins over a recoverable eviction', (expected, overrides) => {
-      setup({
-        ...overrides,
-        staking: {
-          isAgentEvicted: true,
-          isEligibleForStaking: true,
-          ...(overrides as { staking?: StakingOverrides }).staking,
-        },
-      });
+    ])(
+      '%s still wins when the agent is evicted but eligible',
+      (expected, overrides) => {
+        setup({
+          ...overrides,
+          staking: {
+            isAgentEvicted: true,
+            isEligibleForStaking: true,
+            ...(overrides as { staking?: StakingOverrides }).staking,
+          },
+        });
 
-      expect(screen.getByText(expected)).toBeInTheDocument();
-      expect(screen.queryByText('evicted-restartable')).not.toBeInTheDocument();
-    });
+        expect(screen.getByText(expected)).toBeInTheDocument();
+        expect(screen.queryByText('low-balance')).not.toBeInTheDocument();
+      },
+    );
   });
 });

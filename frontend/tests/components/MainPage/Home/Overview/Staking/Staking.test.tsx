@@ -46,8 +46,6 @@ const mockUseServices = useServices as jest.Mock;
 
 const EVICTED_COPY =
   'The agent is evicted and cannot participate in staking until the eviction period ends.';
-const RECOVERABLE_COPY =
-  'The agent was evicted from staking but is eligible to stake again. Restart it to re-stake.';
 const RUN_AGENT_COPY =
   'Start the agent to join staking and unlock protocol rewards.';
 const UNDER_CONSTRUCTION_COPY =
@@ -83,13 +81,11 @@ describe('Staking', () => {
   });
 
   describe('eviction alerts', () => {
-    // The recoverable case used to render nothing here: both this card and the
-    // alert strip were gated on `isAgentEvicted && !isEligibleForStaking`, so
-    // the eviction was hidden exactly when restarting was the fix (OPE-1920).
-    it('shows the recoverable copy when evicted but eligible to stake again', () => {
+    // Deliberately no alert in the recoverable case: the Start button sits
+    // directly above this card, and auto-run recovers a running instance.
+    it('shows no eviction alert when evicted but eligible to stake again', () => {
       setup({ isAgentEvicted: true, isEligibleForStaking: true });
 
-      expect(screen.getByText(RECOVERABLE_COPY)).toBeInTheDocument();
       expect(screen.queryByText(EVICTED_COPY)).not.toBeInTheDocument();
     });
 
@@ -97,19 +93,18 @@ describe('Staking', () => {
       setup({ isAgentEvicted: true, isEligibleForStaking: false });
 
       expect(screen.getByText(EVICTED_COPY)).toBeInTheDocument();
-      expect(screen.queryByText(RECOVERABLE_COPY)).not.toBeInTheDocument();
     });
 
-    // Guard: an eviction alert must win over "start the agent", which would
-    // otherwise be the branch a stopped evicted agent falls into.
+    // Guard: the un-recoverable alert must win over "start the agent", which
+    // would otherwise be the branch a stopped evicted agent falls into.
     it('prefers the eviction alert over the run-agent prompt', () => {
       setup({
         isAgentEvicted: true,
-        isEligibleForStaking: true,
+        isEligibleForStaking: false,
         isServiceRunning: false,
       });
 
-      expect(screen.getByText(RECOVERABLE_COPY)).toBeInTheDocument();
+      expect(screen.getByText(EVICTED_COPY)).toBeInTheDocument();
       expect(screen.queryByText(RUN_AGENT_COPY)).not.toBeInTheDocument();
     });
 
@@ -117,11 +112,11 @@ describe('Staking', () => {
       setup({
         isUnderConstruction: true,
         isAgentEvicted: true,
-        isEligibleForStaking: true,
+        isEligibleForStaking: false,
       });
 
       expect(screen.getByText(UNDER_CONSTRUCTION_COPY)).toBeInTheDocument();
-      expect(screen.queryByText(RECOVERABLE_COPY)).not.toBeInTheDocument();
+      expect(screen.queryByText(EVICTED_COPY)).not.toBeInTheDocument();
     });
   });
 

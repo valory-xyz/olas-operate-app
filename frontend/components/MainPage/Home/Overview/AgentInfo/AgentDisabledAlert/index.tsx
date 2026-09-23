@@ -28,7 +28,6 @@ import { AgentPhasedOutAlert } from './AgentPhasedOutAlert';
 import { AgentRunningAlert } from './AgentRunningAlert';
 import { ContractDeprecatedAlert } from './ContractDeprecatedAlert';
 import { EvictedAlert } from './EvictedAlert';
-import { EvictedRestartableAlert } from './EvictedRestartableAlert';
 import { MasterEoaLowBalanceAlert } from './MasterEoaLowBalanceAlert';
 import { NoSlotsAvailableAlert } from './NoSlotsAvailableAlert';
 import { UnderConstructionAlert } from './UnderConstructionAlert';
@@ -140,24 +139,11 @@ export const AgentDisabledAlert = () => {
       !isSelectedStakingContractDetailsLoading &&
       selectedStakingContractDetails?.availableRewards === 0;
 
-    // Non-blocking: evicted but past `minimumStakingDuration`, so it can be
-    // re-staked and `useDeployability` still reports `canRun: true`. This case
-    // used to render nothing at all — every eviction surface was gated on
-    // `isAgentEvicted && !isEligibleForStaking`, so the eviction was hidden
-    // exactly when it was actionable (OPE-1920). Deliberately not a
-    // pre-empting branch: it must not mask the low-balance alerts, which are
-    // what actually block the restart it recommends.
-    const isEvictedButRestartable =
-      !isSelectedStakingContractDetailsLoading &&
-      isAgentEvicted &&
-      isEligibleForStaking;
-
     // NOTE: Low-balance alerts, each component controls its own visibility.
     return {
       key: 'low-balance',
       content: (
         <>
-          {isEvictedButRestartable && <EvictedRestartableAlert />}
           {hasNoStakingRewards && (
             <NoStakingRewardsAlert
               className="mt-16"
