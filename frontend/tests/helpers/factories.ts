@@ -369,6 +369,7 @@ export const makeAgentLiveness = (
 ): AgentLiveness => ({
   is_alive: true,
   reason: null,
+  consecutive_failures: 0,
   ...overrides,
 });
 

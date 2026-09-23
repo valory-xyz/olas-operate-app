@@ -200,16 +200,25 @@ export type AgentLivenessReason =
  * which records the last deployment transition the middleware performed — a
  * crash-looping agent stays `DEPLOYED` while its process is dead.
  *
- * Narrowed to the two fields Pearl reads. The response also carries
- * `last_checked_at`, `last_healthy_at`, `consecutive_failures` and
- * `restarts_since_last_healthy`, and `healthcheck` gains `age_seconds` —
- * deliberately omitted until something renders them, so the type cannot drift
- * on fields nobody checks. Re-verify the shape on every
- * `olas-operate-middleware` pin bump in `pyproject.toml`.
+ * Narrowed to the fields Pearl reads. The response also carries
+ * `last_checked_at`, `last_healthy_at` and `restarts_since_last_healthy`, and
+ * `healthcheck` gains `age_seconds` — deliberately omitted until something
+ * renders them, so the type cannot drift on fields nobody checks. Re-verify
+ * the shape on every `olas-operate-middleware` pin bump in `pyproject.toml`.
  */
 export type AgentLiveness = {
   is_alive: boolean;
   reason: AgentLivenessReason | null;
+  /**
+   * Failed probes since the last successful one.
+   *
+   * Load-bearing: `is_alive` flips false on the *first* failed probe, while
+   * the middleware's own health checker tolerates 60 consecutive failures
+   * before it believes the agent is gone. Without this counter a single blip
+   * — or an agent still answering HTTP 425 while it starts up — reads as a
+   * dead agent.
+   */
+  consecutive_failures: number;
 };
 
 export type ServiceDeployment = {

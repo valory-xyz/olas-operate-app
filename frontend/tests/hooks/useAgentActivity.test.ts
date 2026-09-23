@@ -137,89 +137,107 @@ describe('useAgentActivity', () => {
   });
 
   describe('agent liveness', () => {
-    it('reports the agent inactive when DEPLOYED but the process has exited', () => {
-      // The reported symptom: an evicted agent whose process died, while the
-      // middleware still reports the deployment as DEPLOYED.
+    const renderWithLiveness = (
+      liveness: Parameters<typeof makeAgentLiveness>[0] | null,
+    ) => {
       mockUseServices.mockReturnValue({
         selectedService: makeService({
           deploymentStatus: MiddlewareDeploymentStatusMap.DEPLOYED,
         }),
-        deploymentDetails: makeServiceDeployment({
-          agent_liveness: makeAgentLiveness({
-            is_alive: false,
-            reason: 'agent_process_exited',
-          }),
-        }),
+        deploymentDetails:
+          liveness === null
+            ? mockDeploymentDetails
+            : makeServiceDeployment({
+                agent_liveness: makeAgentLiveness(liveness),
+              }),
+      });
+      return renderHook(() => useAgentActivity());
+    };
+
+    it('reports the agent inactive when the process has been gone for a while', () => {
+      // The reported symptom: an evicted agent whose process died, while the
+      // middleware still reports the deployment as DEPLOYED.
+      const { result } = renderWithLiveness({
+        is_alive: false,
+        reason: 'agent_process_exited',
+        consecutive_failures: 60,
       });
 
-      const { result } = renderHook(() => useAgentActivity());
       expect(result.current.isAgentActive).toBe(false);
       // `isServiceRunning` stays deployment-only so Staking.tsx can't end up
       // telling the user to start an agent whose button reads "Stop agent".
       expect(result.current.isServiceRunning).toBe(true);
     });
 
-    // The middleware reports `not_monitored` when it holds no health-check
-    // record and its PID-name probe misses — unknown, not dead.
-    it('treats not_monitored as unknown, not as not-alive', () => {
-      mockUseServices.mockReturnValue({
-        selectedService: makeService({
-          deploymentStatus: MiddlewareDeploymentStatusMap.DEPLOYED,
-        }),
-        deploymentDetails: makeServiceDeployment({
-          agent_liveness: makeAgentLiveness({
-            is_alive: false,
-            reason: 'not_monitored',
-          }),
-        }),
+    it('reports the agent inactive when unresponsive for a while', () => {
+      const { result } = renderWithLiveness({
+        is_alive: false,
+        reason: 'agent_unresponsive',
+        consecutive_failures: 60,
       });
 
-      const { result } = renderHook(() => useAgentActivity());
-      expect(result.current.isAgentActive).toBe(true);
-    });
-
-    it('reports the agent inactive when it is unresponsive', () => {
-      mockUseServices.mockReturnValue({
-        selectedService: makeService({
-          deploymentStatus: MiddlewareDeploymentStatusMap.DEPLOYED,
-        }),
-        deploymentDetails: makeServiceDeployment({
-          agent_liveness: makeAgentLiveness({
-            is_alive: false,
-            reason: 'agent_unresponsive',
-          }),
-        }),
-      });
-
-      const { result } = renderHook(() => useAgentActivity());
       expect(result.current.isAgentActive).toBe(false);
     });
 
-    it('returns isServiceRunning=true when DEPLOYED and the agent is alive', () => {
-      mockUseServices.mockReturnValue({
-        selectedService: makeService({
-          deploymentStatus: MiddlewareDeploymentStatusMap.DEPLOYED,
-        }),
-        deploymentDetails: makeServiceDeployment({
-          agent_liveness: makeAgentLiveness(),
-        }),
+    // Regression, OPE-1920 follow-up: the agent answers HTTP 425 ("Too Early")
+    // while starting up, which the middleware counts as an unhealthy probe and
+    // which flips `is_alive` false on the very first one. Believing that
+    // rendered "Agent is not running" under a "Pause" button.
+    it('does not report a starting agent down after a couple of failed probes', () => {
+      const { result } = renderWithLiveness({
+        is_alive: false,
+        reason: 'agent_unresponsive',
+        consecutive_failures: 2,
       });
 
-      const { result } = renderHook(() => useAgentActivity());
+      expect(result.current.isAgentActive).toBe(true);
+    });
+
+    it('does not report down on a single failed probe', () => {
+      const { result } = renderWithLiveness({
+        is_alive: false,
+        reason: 'agent_process_exited',
+        consecutive_failures: 1,
+      });
+
+      expect(result.current.isAgentActive).toBe(true);
+    });
+
+    // Not probe-derived — the middleware stopped the service itself because it
+    // could not clear an on-chain eviction, so there is nothing to wait out.
+    it('reports down immediately for an uncleared eviction', () => {
+      const { result } = renderWithLiveness({
+        is_alive: false,
+        reason: 'evicted_cannot_restake',
+        consecutive_failures: 0,
+      });
+
+      expect(result.current.isAgentActive).toBe(false);
+    });
+
+    // The middleware reports `not_monitored` when it holds no health-check
+    // record and its PID-name probe misses — unknown, not dead.
+    it('treats not_monitored as unknown, however many probes failed', () => {
+      const { result } = renderWithLiveness({
+        is_alive: false,
+        reason: 'not_monitored',
+        consecutive_failures: 60,
+      });
+
+      expect(result.current.isAgentActive).toBe(true);
+    });
+
+    it('returns isAgentActive=true when DEPLOYED and the agent is alive', () => {
+      const { result } = renderWithLiveness({});
+
       expect(result.current.isAgentActive).toBe(true);
     });
 
     it('treats absent liveness as unknown, not as not-alive', () => {
       // Pearl ships against older middleware builds. Inverting this default
       // would read "Agent is not running" for every healthy agent.
-      mockUseServices.mockReturnValue({
-        selectedService: makeService({
-          deploymentStatus: MiddlewareDeploymentStatusMap.DEPLOYED,
-        }),
-        deploymentDetails: mockDeploymentDetails,
-      });
+      const { result } = renderWithLiveness(null);
 
-      const { result } = renderHook(() => useAgentActivity());
       expect(result.current.isAgentActive).toBe(true);
     });
   });

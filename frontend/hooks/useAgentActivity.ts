@@ -4,19 +4,31 @@ import { AgentLivenessReason } from '@/types';
 import { useServices } from './useServices';
 
 /**
- * Liveness reasons that positively establish the agent process is down.
+ * Failed probes before a probe-derived liveness reason is believed.
  *
- * `not_monitored` is excluded on purpose. The middleware falls back to a PID
- * probe when it holds no health-check record for a service, and that probe
- * matches on process names — a miss reports `not_monitored` for a perfectly
- * healthy agent. Rendering "Agent is not running" under a running agent is a
- * worse failure than leaving the strip as it is today, so unknown stays
- * unknown.
+ * `agent_liveness.is_alive` flips false on the *first* failed probe, but the
+ * middleware's own health checker tolerates 60 consecutive failures (5 min at
+ * its 5 s period) before it concludes the agent is gone — because brief
+ * failures are routine. Two observed cases that are not a dead agent:
+ *
+ * - the agent answers HTTP 425 ("Too Early") while it is still starting, which
+ *   `_probe_agent` counts as unhealthy like any non-200;
+ * - the port is briefly unreachable between rounds.
+ *
+ * Without this floor either one renders "Agent is not running" underneath a
+ * "Pause" button. 12 probes is roughly a minute — far clear of a blip, and
+ * still an order of magnitude faster than the two hours of stale "Current
+ * action" in OPE-1920.
  */
-const DEAD_AGENT_LIVENESS_REASONS: readonly AgentLivenessReason[] = [
+const MIN_FAILED_PROBES_TO_REPORT_DOWN = 12;
+
+/**
+ * Probe-derived reasons: subject to the failure floor above, because one bad
+ * probe is not evidence of a dead agent.
+ */
+const PROBE_DERIVED_DOWN_REASONS: readonly AgentLivenessReason[] = [
   'agent_process_exited',
   'agent_unresponsive',
-  'evicted_cannot_restake',
 ];
 
 export const useAgentActivity = () => {
@@ -34,14 +46,21 @@ export const useAgentActivity = () => {
   // performed, not a probe of the agent process: an agent that exited (e.g.
   // because its service was evicted on-chain) leaves the service DEPLOYED and
   // `healthcheck.rounds` frozen at the round it died in. Liveness is what tells
-  // the two apart. A missing `agent_liveness` means an older middleware —
-  // unknown, not dead — so it keeps today's behaviour.
+  // the two apart.
+  //
+  // Everything not positively established as down stays unknown, which keeps
+  // today's behaviour: a missing `agent_liveness` (older middleware) and
+  // `not_monitored` (no health-check record, and the PID probe's process-name
+  // match missed) both mean "don't know", not "dead".
   const liveness = deploymentDetails?.agent_liveness;
-  const isAgentDown =
-    !!liveness &&
-    !liveness.is_alive &&
-    !!liveness.reason &&
-    DEAD_AGENT_LIVENESS_REASONS.includes(liveness.reason);
+  const isAgentDown = (() => {
+    if (!liveness || liveness.is_alive || !liveness.reason) return false;
+    // Not probe-derived: the middleware stopped the service itself because it
+    // could not clear an on-chain eviction. Authoritative straight away.
+    if (liveness.reason === 'evicted_cannot_restake') return true;
+    if (!PROBE_DERIVED_DOWN_REASONS.includes(liveness.reason)) return false;
+    return liveness.consecutive_failures >= MIN_FAILED_PROBES_TO_REPORT_DOWN;
+  })();
 
   return {
     deploymentDetails,
