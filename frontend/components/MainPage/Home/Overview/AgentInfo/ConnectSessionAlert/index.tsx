@@ -1,7 +1,7 @@
 import { Button, Flex, Typography } from 'antd';
 
 import { Alert } from '@/components/ui';
-import { CLAUDE_DOWNLOAD_URL } from '@/constants';
+import { CLAUDE_CODE_CLI_INSTALL_URL } from '@/constants';
 import { useConnectSession } from '@/hooks';
 
 const { Text } = Typography;
@@ -24,8 +24,9 @@ const SessionInfoAlert = ({ message }: { message: string }) => (
  * to start it; while it runs, the AgentActivity strip below the card carries
  * the "start a new session" notice instead. On a failed launch it shows one
  * of two error states:
- * - `harness_not_installed`: Claude isn't installed → prompt to download it.
- * - `launch_failed`: transient launch failure → a Retry button.
+ * - `not-installed`: no Claude harness is installed → prompt to install the
+ *   Claude Code CLI, which is the harness Connect reaches for first.
+ * - `launch-failed`: transient launch failure → a Retry button.
  */
 export const ConnectSessionAlert = () => {
   const {
@@ -66,13 +67,13 @@ export const ConnectSessionAlert = () => {
               {/* Prefer the server's message — it explains which case this is
                   (no Claude vs. the wrong harness selected). */}
               {errorMessage ??
-                'Connect works with the Claude Desktop app or the Claude Code CLI. Install one, then start the agent again.'}
+                'Connect works with the Claude Code CLI or Codex. Install one, then start the agent again.'}
             </Text>
             <br />
             <Button
               size="small"
               className="mt-8"
-              href={CLAUDE_DOWNLOAD_URL}
+              href={CLAUDE_CODE_CLI_INSTALL_URL}
               target="_blank"
               rel="noopener noreferrer"
             >
