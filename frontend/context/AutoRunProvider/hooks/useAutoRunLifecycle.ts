@@ -6,14 +6,18 @@ import { sleepAwareDelay } from '@/utils/delay';
 import {
   AUTO_RUN_HEALTH_METRIC,
   AUTO_RUN_START_DELAY_SECONDS,
+  AUTO_RUN_START_STATUS,
   AutoRunLifecycleMetric,
+  AutoRunStartResult,
   COOLDOWN_SECONDS,
   REWARDS_POLL_SECONDS,
+  RUNNING_AGENT_ELIGIBILITY_CHECK_SECONDS,
   RUNNING_AGENT_MAX_RUNTIME_SECONDS,
   RUNNING_AGENT_WATCHDOG_CHECK_SECONDS,
   SCAN_BLOCKED_DELAY_SECONDS,
   SCAN_ELIGIBLE_DELAY_SECONDS,
 } from '../constants';
+import { DeployabilityCheckResult } from '../utils/autoRunHelpers';
 import { useAutoRunVerboseLogger } from './useAutoRunVerboseLogger';
 
 type UseAutoRunLifecycleParams = {
@@ -41,6 +45,14 @@ type UseAutoRunLifecycleParams = {
   }>;
   startSelectedAgentIfEligible: () => Promise<boolean>;
   stopAgentWithRecovery: (serviceConfigId: string) => Promise<boolean>;
+  startAgentWithRetries: (
+    serviceConfigId: string,
+  ) => Promise<AutoRunStartResult>;
+  /**
+   * Reads the on-chain deployability of the running instance. `null` when the
+   * running instance has no known metadata to check against.
+   */
+  getDeployabilityForRunningInstance: () => Promise<DeployabilityCheckResult | null>;
   stopRetryBackoffUntilRef: MutableRefObject<Partial<Record<string, number>>>;
   recordMetric: (metric: AutoRunLifecycleMetric) => void;
   logMessage: (message: string) => void;
@@ -73,6 +85,8 @@ export const useAutoRunLifecycle = ({
   scanAndStartNext,
   startSelectedAgentIfEligible,
   stopAgentWithRecovery,
+  startAgentWithRetries,
+  getDeployabilityForRunningInstance,
   stopRetryBackoffUntilRef,
   recordMetric,
   logMessage,
@@ -327,6 +341,163 @@ export const useAutoRunLifecycle = ({
 
     return () => clearInterval(interval);
   }, [enabled, refreshRewardsEligibility, runningServiceConfigId]);
+
+  // Keep the eligibility check reading the current callback without
+  // re-creating the interval on every render.
+  const getDeployabilityForRunningInstanceRef = useRef(
+    getDeployabilityForRunningInstance,
+  );
+  const startAgentWithRetriesRef = useRef(startAgentWithRetries);
+  // `rotateToNext` closes over `orderedIncludedInstances`, which derives from
+  // `services` — refetched every 5s. Left in the dep array it would tear down
+  // and recreate this interval faster than its 10-minute period, so the check
+  // could never fire. The runtime watchdog survives the same churn only
+  // because `runningSinceRef` carries its progress across restarts; this
+  // check is stateless, so it has to hold the callback in a ref instead.
+  const rotateToNextRef = useRef(rotateToNext);
+  useEffect(() => {
+    getDeployabilityForRunningInstanceRef.current =
+      getDeployabilityForRunningInstance;
+    startAgentWithRetriesRef.current = startAgentWithRetries;
+    rotateToNextRef.current = rotateToNext;
+  }, [getDeployabilityForRunningInstance, startAgentWithRetries, rotateToNext]);
+
+  /**
+   * Eviction watchdog for the *running* instance.
+   *
+   * The eviction gate in `fetchDeployabilityForAgent` only ever runs when
+   * choosing a candidate to start, and neither rotation trigger can fire once
+   * an instance is evicted: rewards eligibility can no longer flip false→true,
+   * and the runtime watchdog is purely time-based. So an instance evicted while
+   * running stays selected until the 70-minute cap — crash-looping the whole
+   * time if its agent exits on eviction.
+   *
+   * Recoverable (past `minimumStakingDuration`) → stop and start, since the
+   * start path re-stakes through the middleware's deploy endpoint. Locked →
+   * hand the queue to another instance; the instance is un-runnable until its
+   * eviction window ends, and no layer can re-stake it before then.
+   */
+  useEffect(() => {
+    if (!enabled) return;
+    if (!runningServiceConfigId) return;
+
+    const intervalId = setInterval(() => {
+      const currentId = runningServiceConfigIdRef.current;
+      if (!enabledRef.current || !currentId) return;
+      if (isRotatingRef.current) return;
+
+      const stopRetryBackoffUntil =
+        stopRetryBackoffUntilRef.current[currentId] ?? 0;
+      if (Date.now() < stopRetryBackoffUntil) return;
+
+      const cycleId = `eviction-${currentId}-${++rotationCycleSeqRef.current}`;
+      void (async () => {
+        // The staking read is a network call. Claim the rotation guard only
+        // once there is something to do, or every check would block the
+        // runtime watchdog and the rewards trigger for the read's duration.
+        let hasRotationGuard = false;
+        try {
+          const deployability =
+            await getDeployabilityForRunningInstanceRef.current();
+          if (!enabledRef.current) return;
+          if (!deployability) return;
+          // A failed staking read must never stop a healthy agent.
+          if (deployability.isTransient) return;
+          if (!deployability.isAgentEvicted) return;
+          // Re-check under the guard: another loop may have started rotating
+          // while the read was in flight. No await between here and the claim.
+          if (isRotatingRef.current) return;
+          // A rotation may also have *completed* during the read, leaving a
+          // different instance running. Acting on `currentId` now would stop
+          // an agent that is no longer the one we checked.
+          if (runningServiceConfigIdRef.current !== currentId) return;
+          isRotatingRef.current = true;
+          hasRotationGuard = true;
+
+          if (!deployability.isEligibleAfterEviction) {
+            logVerbose(
+              `cycle=${cycleId} trigger=eviction phase=trigger current=${currentId} eligible=false action=rotate`,
+            );
+            await rotateToNextRef.current(currentId, {
+              force: true,
+              cycleId,
+              trigger: 'eviction',
+            });
+            return;
+          }
+
+          logVerbose(
+            `cycle=${cycleId} trigger=eviction phase=trigger current=${currentId} eligible=true action=restart`,
+          );
+          const stopOk = await stopAgentWithRecovery(currentId);
+          if (!stopOk) {
+            // Never start on top of a stop that did not complete; let the
+            // existing backoff reschedule, exactly as rotateToNext does.
+            logMessage(
+              `stop timeout for ${currentId}, aborting eviction recovery`,
+            );
+            stopRetryBackoffUntilRef.current[currentId] =
+              Date.now() + SCAN_BLOCKED_DELAY_SECONDS * 1000;
+            scheduleNextScan(SCAN_BLOCKED_DELAY_SECONDS);
+            return;
+          }
+          // Reset the rewards guard as `rotateToNext` does after a successful
+          // stop: a stale `true` left over from before the eviction would
+          // block the rewards trigger for this instance in every later epoch.
+          lastRewardsEligibilityRef.current[currentId] = undefined;
+          stopRetryBackoffUntilRef.current[currentId] = undefined;
+          if (!enabledRef.current) return;
+          // Same cooldown rotation uses — the backend needs time to tear the
+          // service down before a start on the same instance is accepted.
+          const cooldownOk = await sleepAwareDelay(COOLDOWN_SECONDS);
+          if (!cooldownOk) return;
+          if (!enabledRef.current) return;
+          const startResult = await startAgentWithRetriesRef.current(currentId);
+          // The instance id does not change across a recovery, so the effect
+          // that resets this on rotation may not re-run. Without the reset the
+          // runtime watchdog would count the pre-eviction runtime and rotate
+          // straight off a just-recovered agent.
+          runningSinceRef.current = Date.now();
+          // We stopped a running agent to get here, so a start that did not
+          // take leaves the queue idle. Schedule a rescan rather than relying
+          // on the resume effect noticing, which is what `rotateToNext` does
+          // on its own failure paths. `ABORTED` is auto-run being switched
+          // off mid-recovery — not a failure, and nothing should restart it.
+          if (
+            startResult.status !== AUTO_RUN_START_STATUS.STARTED &&
+            startResult.status !== AUTO_RUN_START_STATUS.ABORTED
+          ) {
+            logMessage(
+              `eviction recovery start failed for ${currentId}: ${startResult.status}${
+                startResult.reason ? ` (${startResult.reason})` : ''
+              }`,
+            );
+            scheduleNextScan(SCAN_BLOCKED_DELAY_SECONDS);
+          }
+        } catch (error) {
+          logMessage(`eviction watchdog error: ${error}`);
+          recordMetric(AUTO_RUN_HEALTH_METRIC.REWARDS_ERRORS);
+          scheduleNextScan(SCAN_BLOCKED_DELAY_SECONDS);
+        } finally {
+          if (hasRotationGuard) isRotatingRef.current = false;
+        }
+      })();
+    }, RUNNING_AGENT_ELIGIBILITY_CHECK_SECONDS * 1000);
+
+    return () => clearInterval(intervalId);
+  }, [
+    enabled,
+    enabledRef,
+    lastRewardsEligibilityRef,
+    logMessage,
+    logVerbose,
+    recordMetric,
+    runningServiceConfigId,
+    runningServiceConfigIdRef,
+    scheduleNextScan,
+    stopAgentWithRecovery,
+    stopRetryBackoffUntilRef,
+  ]);
 
   // Runtime watchdog: if one instance keeps running too long, attempt rotation/recovery.
   useEffect(() => {

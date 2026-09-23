@@ -4,7 +4,9 @@ import { act } from 'react';
 import { AgentMap, AgentType } from '../../../../constants/agent';
 import {
   AUTO_RUN_HEALTH_METRIC,
+  AUTO_RUN_START_STATUS,
   COOLDOWN_SECONDS,
+  RUNNING_AGENT_ELIGIBILITY_CHECK_SECONDS,
   RUNNING_AGENT_MAX_RUNTIME_SECONDS,
   RUNNING_AGENT_WATCHDOG_CHECK_SECONDS,
   SCAN_BLOCKED_DELAY_SECONDS,
@@ -56,6 +58,10 @@ const makeHookParams = (
   scanAndStartNext: jest.fn().mockResolvedValue({ started: false }),
   startSelectedAgentIfEligible: jest.fn().mockResolvedValue(false),
   stopAgentWithRecovery: jest.fn().mockResolvedValue(true),
+  startAgentWithRetries: jest
+    .fn()
+    .mockResolvedValue({ status: AUTO_RUN_START_STATUS.STARTED }),
+  getDeployabilityForRunningInstance: jest.fn().mockResolvedValue(null),
   stopRetryBackoffUntilRef: {
     current: {} as Partial<Record<string, number>>,
   },
@@ -469,6 +475,416 @@ describe('useAutoRunLifecycle', () => {
       });
 
       expect(params.stopAgentWithRecovery).not.toHaveBeenCalled();
+      expect(params.scheduleNextScan).toHaveBeenCalledWith(
+        SCAN_BLOCKED_DELAY_SECONDS,
+      );
+    });
+  });
+
+  describe('eviction watchdog — running instance evicted on-chain', () => {
+    beforeEach(() => {
+      jest.useFakeTimers();
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    const flushMicrotasks = async () => {
+      for (let i = 0; i < 10; i++) {
+        await Promise.resolve();
+      }
+    };
+
+    const makeRunningParams = (
+      overrides: Partial<Parameters<typeof useAutoRunLifecycle>[0]> = {},
+    ) =>
+      makeHookParams({
+        enabled: true,
+        enabledRef: { current: true },
+        runningAgentType: AgentMap.PredictTrader,
+        runningServiceConfigId: scTrader,
+        runningAgentTypeRef: { current: AgentMap.PredictTrader },
+        runningServiceConfigIdRef: { current: scTrader },
+        ...overrides,
+      });
+
+    const runOneCheck = async (
+      params: ReturnType<typeof makeHookParams>,
+    ): Promise<void> => {
+      renderHook(() => useAutoRunLifecycle(params));
+      await act(async () => {
+        await flushMicrotasks();
+      });
+      (params.stopAgentWithRecovery as jest.Mock).mockClear();
+      (params.scheduleNextScan as jest.Mock).mockClear();
+
+      await act(async () => {
+        jest.advanceTimersByTime(
+          RUNNING_AGENT_ELIGIBILITY_CHECK_SECONDS * 1000,
+        );
+        await flushMicrotasks();
+      });
+    };
+
+    // R1: `rotateToNext` closes over data derived from the 5s-refetched
+    // services query. If it stays in the effect's dep array, a re-render
+    // between ticks tears the interval down and the 10-minute check never
+    // fires. Re-rendering here stands in for that churn.
+    it('still fires after re-renders that change callback identity', async () => {
+      const getDeployability = jest.fn().mockResolvedValue({
+        canRun: true,
+        isAgentEvicted: true,
+        isEligibleAfterEviction: true,
+      });
+      const params = makeRunningParams({
+        getDeployabilityForRunningInstance: getDeployability,
+      });
+      const { rerender } = renderHook(
+        (p: Parameters<typeof useAutoRunLifecycle>[0]) =>
+          useAutoRunLifecycle(p),
+        { initialProps: params },
+      );
+      await act(async () => {
+        await flushMicrotasks();
+      });
+
+      // Half a period in, re-render with fresh function identities.
+      await act(async () => {
+        jest.advanceTimersByTime(
+          (RUNNING_AGENT_ELIGIBILITY_CHECK_SECONDS / 2) * 1000,
+        );
+        await flushMicrotasks();
+      });
+      await act(async () => {
+        rerender({
+          ...params,
+          orderedIncludedInstances: [...params.orderedIncludedInstances],
+          refreshRewardsEligibility: jest.fn().mockResolvedValue(false),
+          getDeployabilityForRunningInstance: getDeployability,
+        });
+        // Let the rewards effect the re-render retriggers settle, so it isn't
+        // holding `isRotatingRef` when the eviction tick lands.
+        await flushMicrotasks();
+      });
+
+      await act(async () => {
+        jest.advanceTimersByTime(
+          (RUNNING_AGENT_ELIGIBILITY_CHECK_SECONDS / 2) * 1000,
+        );
+        await flushMicrotasks();
+      });
+
+      expect(getDeployability).toHaveBeenCalled();
+    });
+
+    // We stopped a running agent to get here, so a start that doesn't take
+    // leaves the queue idle — it must not depend on the resume effect noticing.
+    it('schedules a rescan when the recovery start fails', async () => {
+      const params = makeRunningParams({
+        getDeployabilityForRunningInstance: jest.fn().mockResolvedValue({
+          canRun: true,
+          isAgentEvicted: true,
+          isEligibleAfterEviction: true,
+        }),
+        startAgentWithRetries: jest
+          .fn()
+          .mockResolvedValue({ status: 'infra_failed', reason: 'boom' }),
+      });
+
+      await runOneCheck(params);
+
+      expect(params.scheduleNextScan).toHaveBeenCalledWith(
+        SCAN_BLOCKED_DELAY_SECONDS,
+      );
+      expect(params.logMessage).toHaveBeenCalledWith(
+        expect.stringContaining('eviction recovery start failed'),
+      );
+    });
+
+    it('does not schedule a rescan when the recovery start succeeds', async () => {
+      const params = makeRunningParams({
+        getDeployabilityForRunningInstance: jest.fn().mockResolvedValue({
+          canRun: true,
+          isAgentEvicted: true,
+          isEligibleAfterEviction: true,
+        }),
+        startAgentWithRetries: jest
+          .fn()
+          .mockResolvedValue({ status: 'started' }),
+      });
+
+      await runOneCheck(params);
+
+      expect(params.scheduleNextScan).not.toHaveBeenCalled();
+    });
+
+    // `aborted` is auto-run being switched off mid-recovery, not a failure.
+    it('does not schedule a rescan when the start is aborted', async () => {
+      const params = makeRunningParams({
+        getDeployabilityForRunningInstance: jest.fn().mockResolvedValue({
+          canRun: true,
+          isAgentEvicted: true,
+          isEligibleAfterEviction: true,
+        }),
+        startAgentWithRetries: jest
+          .fn()
+          .mockResolvedValue({ status: 'aborted' }),
+      });
+
+      await runOneCheck(params);
+
+      expect(params.scheduleNextScan).not.toHaveBeenCalled();
+    });
+
+    // R5: the staking read is a network call; a rotation can complete while it
+    // is in flight, and stopping `currentId` then would kill a different agent.
+    it('does not act when the running instance changed during the read', async () => {
+      const runningRef = { current: scTrader as string | null };
+      const params = makeRunningParams({
+        runningServiceConfigIdRef: runningRef,
+        getDeployabilityForRunningInstance: jest.fn().mockImplementation(() => {
+          runningRef.current = scOptimus;
+          return Promise.resolve({
+            canRun: true,
+            isAgentEvicted: true,
+            isEligibleAfterEviction: true,
+          });
+        }),
+      });
+
+      await runOneCheck(params);
+
+      expect(params.stopAgentWithRecovery).not.toHaveBeenCalled();
+      expect(params.startAgentWithRetries).not.toHaveBeenCalled();
+    });
+
+    // R6: rotation waits COOLDOWN_SECONDS between stop and start so the
+    // backend can finish tearing the service down; recovery must too.
+    it('waits the rotation cooldown between the stop and the start', async () => {
+      const params = makeRunningParams({
+        getDeployabilityForRunningInstance: jest.fn().mockResolvedValue({
+          canRun: true,
+          isAgentEvicted: true,
+          isEligibleAfterEviction: true,
+        }),
+      });
+
+      await runOneCheck(params);
+
+      expect(params.stopAgentWithRecovery).toHaveBeenCalledWith(scTrader);
+      expect(mockSleepAwareDelay).toHaveBeenCalledWith(COOLDOWN_SECONDS);
+      expect(params.startAgentWithRetries).toHaveBeenCalledWith(scTrader);
+    });
+
+    it('does nothing when the running instance is not evicted', async () => {
+      const params = makeRunningParams({
+        getDeployabilityForRunningInstance: jest
+          .fn()
+          .mockResolvedValue({ canRun: true, isAgentEvicted: false }),
+      });
+
+      await runOneCheck(params);
+
+      expect(params.stopAgentWithRecovery).not.toHaveBeenCalled();
+      expect(params.startAgentWithRetries).not.toHaveBeenCalled();
+    });
+
+    it('stops then starts an evicted instance that can re-stake', async () => {
+      // The start path re-stakes through the middleware's deploy endpoint, so
+      // the restart is the recovery. Starting on top of an incomplete stop is
+      // the failure mode this branch introduces — hence the order assertion.
+      const calls: string[] = [];
+      const params = makeRunningParams({
+        getDeployabilityForRunningInstance: jest.fn().mockResolvedValue({
+          canRun: true,
+          isAgentEvicted: true,
+          isEligibleAfterEviction: true,
+        }),
+        stopAgentWithRecovery: jest.fn().mockImplementation(async () => {
+          calls.push('stop');
+          return true;
+        }),
+        startAgentWithRetries: jest.fn().mockImplementation(async () => {
+          calls.push('start');
+          return { status: AUTO_RUN_START_STATUS.STARTED };
+        }),
+      });
+
+      await runOneCheck(params);
+
+      expect(params.stopAgentWithRecovery).toHaveBeenCalledWith(scTrader);
+      expect(params.startAgentWithRetries).toHaveBeenCalledWith(scTrader);
+      expect(calls).toEqual(['stop', 'start']);
+    });
+
+    it('does not let the runtime watchdog rotate a just-recovered instance', async () => {
+      // The instance id is unchanged across the recovery, so the runtime
+      // watchdog would otherwise still be counting the pre-eviction runtime.
+      const params = makeRunningParams({
+        getDeployabilityForRunningInstance: jest.fn().mockResolvedValue({
+          canRun: true,
+          isAgentEvicted: true,
+          isEligibleAfterEviction: true,
+        }),
+      });
+
+      renderHook(() => useAutoRunLifecycle(params));
+      await act(async () => {
+        await flushMicrotasks();
+      });
+
+      // Sit just under the runtime cap, then let the eviction check recover.
+      await act(async () => {
+        jest.advanceTimersByTime(
+          RUNNING_AGENT_MAX_RUNTIME_SECONDS * 1000 -
+            RUNNING_AGENT_ELIGIBILITY_CHECK_SECONDS * 1000,
+        );
+        await flushMicrotasks();
+      });
+      expect(params.startAgentWithRetries).toHaveBeenCalledTimes(1);
+
+      (params.stopAgentWithRecovery as jest.Mock).mockClear();
+      // The runtime watchdog would have fired here on the old clock.
+      await act(async () => {
+        jest.advanceTimersByTime(RUNNING_AGENT_WATCHDOG_CHECK_SECONDS * 1000);
+        await flushMicrotasks();
+      });
+
+      expect(params.stopAgentWithRecovery).not.toHaveBeenCalled();
+    });
+
+    it('does not start when the stop fails, and records backoff', async () => {
+      const params = makeRunningParams({
+        getDeployabilityForRunningInstance: jest.fn().mockResolvedValue({
+          canRun: true,
+          isAgentEvicted: true,
+          isEligibleAfterEviction: true,
+        }),
+        stopAgentWithRecovery: jest.fn().mockResolvedValue(false),
+      });
+
+      await runOneCheck(params);
+
+      expect(params.startAgentWithRetries).not.toHaveBeenCalled();
+      expect(params.scheduleNextScan).toHaveBeenCalledWith(
+        SCAN_BLOCKED_DELAY_SECONDS,
+      );
+      expect(params.stopRetryBackoffUntilRef.current[scTrader]).toBeGreaterThan(
+        Date.now(),
+      );
+    });
+
+    it('rotates away from an eviction that cannot be cleared', async () => {
+      // Inside minStakingDuration nothing can re-stake it, so holding the queue
+      // for the 70-minute runtime cap is pure idle time.
+      const params = makeRunningParams({
+        getDeployabilityForRunningInstance: jest.fn().mockResolvedValue({
+          canRun: false,
+          reason: 'Evicted',
+          isAgentEvicted: true,
+          isEligibleAfterEviction: false,
+        }),
+        refreshRewardsEligibility: jest.fn().mockResolvedValue(false),
+        getRewardSnapshot: jest.fn().mockReturnValue(false),
+      });
+
+      await runOneCheck(params);
+
+      expect(params.stopAgentWithRecovery).toHaveBeenCalledWith(scTrader);
+      expect(params.startAgentWithRetries).not.toHaveBeenCalled();
+      expect(params.scanAndStartNext).toHaveBeenCalledWith(scTrader);
+    });
+
+    it('ignores a transient staking read', async () => {
+      // A flaky RPC must never stop a healthy agent.
+      const params = makeRunningParams({
+        getDeployabilityForRunningInstance: jest.fn().mockResolvedValue({
+          canRun: false,
+          reason: 'Staking data unavailable',
+          isTransient: true,
+        }),
+      });
+
+      await runOneCheck(params);
+
+      expect(params.stopAgentWithRecovery).not.toHaveBeenCalled();
+      expect(params.startAgentWithRetries).not.toHaveBeenCalled();
+    });
+
+    it('does not start a second recovery while the first is in flight', async () => {
+      // A start blocked on the middleware's per-service staking lock resolves
+      // slowly; the rotation guard is what stops the next check piling on.
+      let releaseStart: (() => void) | undefined;
+      const params = makeRunningParams({
+        getDeployabilityForRunningInstance: jest.fn().mockResolvedValue({
+          canRun: true,
+          isAgentEvicted: true,
+          isEligibleAfterEviction: true,
+        }),
+        startAgentWithRetries: jest.fn().mockImplementation(
+          () =>
+            new Promise((resolve) => {
+              releaseStart = () =>
+                resolve({ status: AUTO_RUN_START_STATUS.STARTED });
+            }),
+        ),
+      });
+
+      renderHook(() => useAutoRunLifecycle(params));
+      await act(async () => {
+        await flushMicrotasks();
+      });
+
+      await act(async () => {
+        jest.advanceTimersByTime(
+          RUNNING_AGENT_ELIGIBILITY_CHECK_SECONDS * 1000,
+        );
+        await flushMicrotasks();
+      });
+      expect(params.startAgentWithRetries).toHaveBeenCalledTimes(1);
+
+      // Second tick while the first start is still pending.
+      await act(async () => {
+        jest.advanceTimersByTime(
+          RUNNING_AGENT_ELIGIBILITY_CHECK_SECONDS * 1000,
+        );
+        await flushMicrotasks();
+      });
+      expect(params.startAgentWithRetries).toHaveBeenCalledTimes(1);
+
+      await act(async () => {
+        releaseStart?.();
+        await flushMicrotasks();
+      });
+    });
+
+    it('does nothing when the running instance has no metadata', async () => {
+      const params = makeRunningParams({
+        getDeployabilityForRunningInstance: jest.fn().mockResolvedValue(null),
+      });
+
+      await runOneCheck(params);
+
+      expect(params.stopAgentWithRecovery).not.toHaveBeenCalled();
+      expect(params.startAgentWithRetries).not.toHaveBeenCalled();
+    });
+
+    it('logs, records a metric and reschedules when the check throws', async () => {
+      const params = makeRunningParams({
+        getDeployabilityForRunningInstance: jest
+          .fn()
+          .mockRejectedValue(new Error('boom')),
+      });
+
+      await runOneCheck(params);
+
+      expect(params.logMessage).toHaveBeenCalledWith(
+        expect.stringContaining('eviction watchdog error'),
+      );
+      expect(params.recordMetric).toHaveBeenCalledWith(
+        AUTO_RUN_HEALTH_METRIC.REWARDS_ERRORS,
+      );
       expect(params.scheduleNextScan).toHaveBeenCalledWith(
         SCAN_BLOCKED_DELAY_SECONDS,
       );

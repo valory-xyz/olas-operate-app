@@ -333,6 +333,19 @@ export type DeployabilityCheckResult = {
    * disable degraded mode.
    */
   isEmptyRewardPool?: boolean;
+  /**
+   * true → the service is evicted on-chain in its current staking program.
+   *
+   * Surfaced alongside `isEligibleAfterEviction` rather than folded into
+   * `canRun`, for the same reason as `isEmptyRewardPool`: the running-instance
+   * watchdog has to tell an eviction it can recover (stop + start re-stakes it)
+   * from one it cannot (rotate away), and `canRun` collapses both into `true`
+   * and `false` respectively for reasons that are correct for a *start*
+   * decision and wrong for a running one.
+   */
+  isAgentEvicted?: boolean;
+  /** true → the eviction can be cleared by re-staking, i.e. past `minimumStakingDuration`. */
+  isEligibleAfterEviction?: boolean;
 };
 
 /**
@@ -351,6 +364,24 @@ export type DeployabilityCheckResult = {
 export const fetchDeployabilityForAgent = async (
   agentMeta: AgentMeta,
   ctx: FetchDeployabilityContext,
+): Promise<DeployabilityCheckResult> => {
+  // The eviction facts are read in step 4 but are useful to a caller whatever
+  // later gate ends up deciding `canRun`, so they are collected here and merged
+  // into whichever result the checks return.
+  const evictionFacts: EvictionFacts = {};
+  const result = await runDeployabilityChecks(agentMeta, ctx, evictionFacts);
+  return { ...evictionFacts, ...result };
+};
+
+type EvictionFacts = Pick<
+  DeployabilityCheckResult,
+  'isAgentEvicted' | 'isEligibleAfterEviction'
+>;
+
+const runDeployabilityChecks = async (
+  agentMeta: AgentMeta,
+  ctx: FetchDeployabilityContext,
+  evictionFacts: EvictionFacts,
 ): Promise<DeployabilityCheckResult> => {
   // 1. Safe readiness (derived from cached wallet data — no API call).
   const safeEligibility = ctx.canCreateSafeForChain(agentMeta.chainId);
@@ -449,9 +480,13 @@ export const fetchDeployabilityForAgent = async (
             minimumStakingDuration
           );
         })();
+        evictionFacts.isAgentEvicted = true;
+        evictionFacts.isEligibleAfterEviction = isEligibleAfterEviction;
         if (!isEligibleAfterEviction) {
           return { canRun: false, reason: 'Evicted' };
         }
+      } else {
+        evictionFacts.isAgentEvicted = false;
       }
     } catch (error) {
       ctx.logMessage(
