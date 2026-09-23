@@ -183,11 +183,14 @@ describe('useAgentActivity', () => {
     // while starting up, which the middleware counts as an unhealthy probe and
     // which flips `is_alive` false on the very first one. Believing that
     // rendered "Agent is not running" under a "Pause" button.
-    it('does not report a starting agent down after a couple of failed probes', () => {
+    it('does not report a starting agent down across the longest observed window', () => {
+      // 12 consecutive failures is the worst unhealthy stretch measured on a
+      // real capture for an agent that was perfectly fine (56 s of HTTP 425
+      // while it started). An earlier floor of 12 would have tripped on it.
       const { result } = renderWithLiveness({
         is_alive: false,
         reason: 'agent_unresponsive',
-        consecutive_failures: 2,
+        consecutive_failures: 12,
       });
 
       expect(result.current.isAgentActive).toBe(true);

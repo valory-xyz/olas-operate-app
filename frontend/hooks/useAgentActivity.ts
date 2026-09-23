@@ -16,11 +16,17 @@ import { useServices } from './useServices';
  * - the port is briefly unreachable between rounds.
  *
  * Without this floor either one renders "Agent is not running" underneath a
- * "Pause" button. 12 probes is roughly a minute — far clear of a blip, and
- * still an order of magnitude faster than the two hours of stale "Current
- * action" in OPE-1920.
+ * "Pause" button.
+ *
+ * 30 is half the health checker's own `NUMBER_OF_FAILS_DEFAULT` of 60 — an
+ * anchor rather than a guess, and ~2.5 min at the 5 s period. Measured against
+ * a real capture, the unhealthy windows of a *healthy* agent ran 35 s, 45 s and
+ * 56 s (the last one ~12 consecutive failures), so a tighter floor reports a
+ * starting agent as dead. It still beats the two hours of stale "Current
+ * action" in OPE-1920 by two orders of magnitude, and lands well inside the
+ * ~5 min the agent stays down in each crash-loop cycle.
  */
-const MIN_FAILED_PROBES_TO_REPORT_DOWN = 12;
+const MIN_FAILED_PROBES_TO_REPORT_DOWN = 30;
 
 /**
  * Probe-derived reasons: subject to the failure floor above, because one bad
