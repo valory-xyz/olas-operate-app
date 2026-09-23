@@ -18,10 +18,11 @@
  */
 
 /**
- * Harness the agent launched (or attempted to launch) — the agent server's
- * full `HARNESSES` tuple, Claude Code and Codex alike. `claude_code_cli` is
- * its default, and an unnamed launch falls back through the rest, so a Codex
- * value is a reachable answer rather than a theoretical one.
+ * Harness the agent launched (or attempted to launch) — every value in the
+ * agent server's `HARNESSES` tuple, Claude Code and Codex alike. Listed in
+ * the order an unnamed launch falls back through (`workspace.py` →
+ * `DEEP_LINKS`, then the terminal commands), so a Codex value is a
+ * reachable answer rather than a theoretical one.
  */
 export type ConnectHarness =
   | 'claude_code_cli'
