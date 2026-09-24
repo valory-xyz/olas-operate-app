@@ -173,6 +173,15 @@ type RoundsInfo = Record<
 
 export type AgentHealthCheck = {
   agent_health: Record<string, unknown>;
+  /**
+   * How long ago the middleware last wrote this object, in seconds.
+   *
+   * It rewrites `healthcheck.json` only on a probe that answered HTTP 200, so
+   * every other field here is as old as this number says. Without it a payload
+   * frozen by an agent that stopped answering is indistinguishable from a live
+   * one. Optional because middleware older than 0.15.40 omits it.
+   */
+  age_seconds?: number;
   is_healthy: boolean;
   is_tm_healthy: boolean;
   is_transitioning_fast: boolean;

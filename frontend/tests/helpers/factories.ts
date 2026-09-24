@@ -352,6 +352,9 @@ export const makeAgentHealthCheck = (
   overrides: Partial<AgentHealthCheck> = {},
 ): AgentHealthCheck => ({
   agent_health: {},
+  // Written by the probe that produced this body, so a default payload is a
+  // fresh one; a case testing staleness names its own age.
+  age_seconds: 0,
   is_healthy: true,
   is_tm_healthy: true,
   is_transitioning_fast: false,

@@ -382,15 +382,68 @@ describe('useAgentActivity', () => {
       expect(result.current.isAgentStalled).toBe(false);
     });
 
-    it('does not flag an agent whose process is reported down', () => {
-      // "Not running" is a different statement from "stalled", and the strip
-      // already has a branch for it.
+    // The verdict is independent of `agent_liveness`, which is what keeps it
+    // reachable. The probe failures that make up a stall are the same ones
+    // that drive `is_alive` false -- at the pinned middleware an HTTP 200
+    // answer carrying `is_healthy: false` is a failed probe just like an
+    // unreachable port -- so gating on liveness would have retired the verdict
+    // at ~150 s of continuous stall, and left it unreachable altogether for a
+    // service whose pause pushes its threshold past that. A consumer
+    // rendering both resolves the precedence itself.
+    it('still flags a stall while liveness reports the process down', () => {
       const { result } = renderWithHealth(
         { seconds_since_last_transition: 300 },
         { isAlive: false },
       );
 
+      expect(result.current.isAgentStalled).toBe(true);
+      expect(result.current.isAgentActive).toBe(false);
+    });
+
+    // The genuinely dead agent is excluded by the freshness guard rather than
+    // by liveness: it stops answering, so the middleware stops rewriting
+    // `healthcheck.json` and every field on it -- the dwell included -- ages.
+    it('does not flag a stall from a healthcheck older than the bar', () => {
+      const { result } = renderWithHealth({
+        seconds_since_last_transition: 300,
+        age_seconds: 200,
+      });
+
       expect(result.current.isAgentStalled).toBe(false);
+    });
+
+    // The incident's own shape: `/healthcheck` stops answering mid-round, so
+    // the last body written holds the small dwell taken just after the round
+    // started. Believing it would keep the strip reporting normal operation
+    // for the whole outage -- which is what the operator watched it do.
+    it('does not flag a stall from a stale payload holding a small dwell', () => {
+      const { result } = renderWithHealth({
+        seconds_since_last_transition: 4,
+        age_seconds: 300,
+      });
+
+      expect(result.current.isAgentStalled).toBe(false);
+    });
+
+    // A reading taken within the bar still describes the window being judged.
+    it('flags a stall from a reading younger than the bar', () => {
+      const { result } = renderWithHealth({
+        seconds_since_last_transition: 300,
+        age_seconds: 5,
+      });
+
+      expect(result.current.isAgentStalled).toBe(true);
+    });
+
+    // Middleware older than 0.15.40 omits `age_seconds`. Reading its absence
+    // as "stale" would disable the derivation outright on those builds.
+    it('treats a missing age as fresh rather than as stale', () => {
+      const { result } = renderWithHealth({
+        seconds_since_last_transition: 300,
+        age_seconds: undefined,
+      });
+
+      expect(result.current.isAgentStalled).toBe(true);
     });
 
     describe('clearing', () => {
@@ -437,16 +490,29 @@ describe('useAgentActivity', () => {
       });
     });
 
+    // `agentHealth` is the only non-primitive this hook builds itself, so it is
+    // the only one a consumer can accidentally put in a dependency array and
+    // get a memo that never memoises.
+    it('keeps agentHealth referentially stable across renders', () => {
+      const { result, rerender } = renderWithHealth({
+        seconds_since_last_transition: 300,
+      });
+      const first = result.current.agentHealth;
+
+      rerender();
+
+      expect(result.current.agentHealth).toBe(first);
+    });
+
     // The query carrying the healthcheck polls at 5 s, 15 s or 50 s with a
     // deployment active, 15/45/150 s without one, and stops entirely when it
     // is not in a `success` state. The verdict must be a function of the
     // payload alone — this is the guard against anyone reintroducing a poll
     // counter, and the no-re-render case is the one that would catch it.
     it.each([
-      ['a single observation', 1],
-      ['a focused 5 s cadence', 12],
-      ['a background 50 s cadence', 2],
-      ['a 150 s cadence with no active deployment', 1],
+      ['one render', 1],
+      ['a few renders', 2],
+      ['many renders', 12],
     ])(
       'reaches the same verdict from the same payload (%s)',
       (_label, renders) => {

@@ -1,3 +1,5 @@
+import { useMemo } from 'react';
+
 import { MiddlewareDeploymentStatusMap } from '@/constants/deployment';
 import {
   AGENT_STALL_ANNOUNCE_INTERVAL,
@@ -105,14 +107,59 @@ export const useAgentActivity = () => {
   const healthcheck = deploymentDetails?.healthcheck;
   const dwellMs =
     (healthcheck?.seconds_since_last_transition ?? 0) * ONE_SECOND_INTERVAL;
+  // The middleware rewrites `healthcheck.json` only on a probe that answered
+  // HTTP 200, so `seconds_since_last_transition` is frozen for as long as the
+  // agent is not answering at all — the shape OPE-1941 reported, where the
+  // port accepted connections but `/healthcheck` never replied. Without this
+  // the dwell can sit below the bar for the whole incident and the stall is
+  // never seen; worse, a stale small number would keep the strip asserting
+  // normal operation. Defaults to 0 because middleware older than 0.15.40
+  // omits the field, and unknown age must not disable the derivation.
+  const healthcheckAgeMs =
+    (healthcheck?.age_seconds ?? 0) * ONE_SECOND_INTERVAL;
   const announceThresholdMs = Math.max(
     AGENT_STALL_ANNOUNCE_INTERVAL,
     (healthcheck?.reset_pause_duration ?? 0) * ONE_SECOND_INTERVAL +
       AGENT_STALL_PAUSE_MARGIN_INTERVAL,
   );
 
+  // Judged against the same bar the dwell is: a reading older than the
+  // announce threshold predates the window being judged, so it cannot
+  // establish that the agent is failing to progress *now*.
+  const isHealthcheckCurrent = healthcheckAgeMs <= announceThresholdMs;
+
+  // Gated on `isServiceRunning`, deliberately not on `isAgentActive`. The
+  // probe failures that make up a stall are the same ones that drive
+  // `agent_liveness` towards `is_alive: false`: at the pinned middleware a
+  // 200 answer carrying `is_healthy: false` is recorded as a failed probe just
+  // like an unreachable port, so `isAgentDown` flips at ~150 s of continuous
+  // stall. Gating on it would have left the verdict true for roughly the 30 s
+  // between the two bars, and unreachable altogether for a service whose
+  // `reset_pause_duration` pushes its threshold past 150 s. The genuinely
+  // dead-agent case is excluded by `isHealthcheckCurrent` instead, which is
+  // the honest discriminator: a dead agent stops rewriting the file, a stalled
+  // one keeps rewriting it with a dwell that climbs.
   const isAgentStalled =
-    isAgentActive && !!healthcheck && dwellMs > announceThresholdMs;
+    isServiceRunning &&
+    !!healthcheck &&
+    isHealthcheckCurrent &&
+    dwellMs > announceThresholdMs;
+
+  // Memoised because it is the only non-primitive this hook returns that React
+  // Query does not keep stable for us. A consumer putting a fresh object
+  // literal in a dependency array gets a `useMemo` that never memoises, or an
+  // effect that fires every render.
+  const agentHealth = useMemo(
+    () => ({
+      isHealthy: healthcheck?.is_healthy,
+      isTmHealthy: healthcheck?.is_tm_healthy,
+      isTransitioningFast: healthcheck?.is_transitioning_fast,
+      secondsSinceLastTransition: healthcheck?.seconds_since_last_transition,
+      /** The bar `secondsSinceLastTransition` was measured against. */
+      announceThresholdMs,
+    }),
+    [healthcheck, announceThresholdMs],
+  );
 
   return {
     deploymentDetails,
@@ -123,6 +170,10 @@ export const useAgentActivity = () => {
      *
      * Read together with `agentHealth`, never on its own — see the constraint
      * recorded there.
+     *
+     * Independent of `isAgentActive`, so a consumer rendering both must order
+     * them itself: "not running" is the stronger claim and takes precedence
+     * where they disagree.
      */
     isAgentStalled,
     /**
@@ -131,14 +182,7 @@ export const useAgentActivity = () => {
      * agent (`isTmHealthy: true`) from a wedged one (`isTmHealthy: false`),
      * which want different things said about them.
      */
-    agentHealth: {
-      isHealthy: healthcheck?.is_healthy,
-      isTmHealthy: healthcheck?.is_tm_healthy,
-      isTransitioningFast: healthcheck?.is_transitioning_fast,
-      secondsSinceLastTransition: healthcheck?.seconds_since_last_transition,
-      /** The bar `secondsSinceLastTransition` was measured against. */
-      announceThresholdMs,
-    },
+    agentHealth,
     isAgentActive,
   };
 };
