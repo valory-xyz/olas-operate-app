@@ -19,9 +19,6 @@
 # Logs:    Progress lines on stderr
 # Exit:    0=success  1=error
 #
-# Env vars (optional):
-#   ETHERSCAN_API_KEY  — required only for Ethereum (chainid=1)
-#
 # Examples:
 #   extract-context.sh bundle.zip services
 #   extract-context.sh bundle.zip master-wallet
@@ -93,7 +90,7 @@ SUBCOMMANDS — ZIP-ONLY (fast, no network calls)
     When:    Run when the issue might be platform-specific (e.g. Windows-on-ARM, low memory,
              unsupported OS). Also useful context for any bug report.
 
-SUBCOMMANDS — LIVE API CALLS (require network; use Blockscout for most chains, Etherscan V2 for Ethereum)
+SUBCOMMANDS — LIVE API CALLS (require network; Blockscout-compatible explorer APIs)
 
   balances <address> <chainid>
     Fetches: Current native balance + native balance at log-export time (via block lookup)
@@ -105,7 +102,6 @@ SUBCOMMANDS — LIVE API CALLS (require network; use Blockscout for most chains,
                - Were there unexpected token inflows or outflows around the failure time?
     Note:    The export-time balance reflects what the agent had when the user exported logs.
              The current balance may differ if the agent has since been topped up or drained.
-    Env:     ETHERSCAN_API_KEY required for chainid=1 (Ethereum) only.
 
   tx-history <address> <chainid> [--since <unix-ts>] [--until <unix-ts>]
     Fetches: Normal transactions + ERC-20 token transfers for <address> in the time window
@@ -119,7 +115,6 @@ SUBCOMMANDS — LIVE API CALLS (require network; use Blockscout for most chains,
              Also run for the Safe address if investigating DeFi position activity.
     Options: --since <unix-ts>  override window start (unix timestamp)
              --until <unix-ts>  override window end (unix timestamp)
-    Env:     ETHERSCAN_API_KEY required for chainid=1 (Ethereum) only.
 
 CHAIN IDS
   1=Ethereum  10=Optimism  100=Gnosis  137=Polygon  8453=Base  34443=Mode
@@ -184,12 +179,11 @@ parse_export_ts() {
   date -u -d "${iso}Z" +%s 2>/dev/null || date -j -u -f "%Y-%m-%dT%H:%M:%S" "${iso}" +%s 2>/dev/null || date +%s
 }
 
-# Chain ID → explorer base URL and result parsing style
-# Style: "etherscan" (result is plain string) | "blockscout" (result is object with .blockNumber)
+# Chain ID → explorer API base URL
 chain_api_base() {
   local chainid="${1}"
   case "${chainid}" in
-    1)     printf 'https://api.etherscan.io/v2/api?chainid=1&apikey=%s' "${ETHERSCAN_API_KEY:-YourApiKeyToken}" ;;
+    1)     printf 'https://eth.blockscout.com/api' ;;
     10)    printf 'https://explorer.optimism.io/api' ;;
     100)   printf 'https://gnosis.blockscout.com/api' ;;
     137)   printf 'https://polygon.blockscout.com/api' ;;
@@ -242,25 +236,22 @@ validate_chainid() {
   esac
 }
 
-# Call Etherscan V2 or Blockscout API — returns raw JSON
+# Call Blockscout API — returns raw JSON
 # Usage: api_call <chainid> <query_string>
 # query_string examples: "module=account&action=balance&address=0x..."
 api_call() {
   local chainid="${1}" qs="${2}"
-  if [[ "${chainid}" == "1" ]]; then
-    if [[ -z "${ETHERSCAN_API_KEY:-}" ]]; then
-      printf '[extract-context] WARNING: ETHERSCAN_API_KEY not set, skipping Ethereum on-chain query\n' >&2
-      printf '{"status":"0","message":"SKIPPED","result":"no_api_key"}'
-      return
-    fi
-    local base="https://api.etherscan.io/v2/api?chainid=1&apikey=${ETHERSCAN_API_KEY}"
-    curl -sL "${base}&${qs}"
-  else
-    local base
-    base="$(chain_api_base "${chainid}")"
+  local base out attempt
+  base="$(chain_api_base "${chainid}")"
+  for attempt in 1 2 3 4 5 6 7; do
     # Blockscout occasionally returns trailing content after JSON — take first valid JSON line
-    curl -sL "${base}?${qs}" | python3 -c "import sys,json; raw=sys.stdin.read().strip(); lines=raw.split('\n'); [print(l) for l in lines if l.startswith('{')]" | head -1
-  fi
+    out=$(curl -sL --max-time 20 "${base}?${qs}" | python3 -c "import sys,json; raw=sys.stdin.read().strip(); lines=raw.split('\n'); [print(l) for l in lines if l.startswith('{')]" | head -1)
+    [[ -n "${out}" && "${out}" != *"Too many requests"* ]] && break
+    [[ "${attempt}" -lt 7 ]] || break
+    printf '[extract-context] Explorer API rate-limited or returned no JSON, retrying in %ss...\n' "$(( 2 ** (attempt - 1) ))" >&2
+    sleep "$(( 2 ** (attempt - 1) ))"
+  done
+  printf '%s' "${out}"
 }
 
 # Get block number closest to a unix timestamp for a given chain
@@ -277,7 +268,7 @@ get_block_at_ts() {
     printf '0'
     return
   fi
-  # Etherscan: result is a plain string; Blockscout: result is {"blockNumber": "..."}
+  # Blockscout: result is {"blockNumber": "..."}
   printf '%s' "${raw}" | python3 -c "
 import sys, json
 d = json.loads(sys.stdin.read())
@@ -289,9 +280,25 @@ else:
 "
 }
 
-# Format wei to ETH (18 decimals)
-wei_to_eth() {
-  python3 -c "v=int('${1}' or '0'); print(f'{v/1e18:.6f}')" 2>/dev/null || printf '?'
+# Native balance at <block> ("latest" or a number), or "(query failed: ...)" — never a silent 0
+# action=balance ignores tag on Blockscout, so use eth_get_balance (JSON-RPC shape, hex result)
+native_balance() {
+  local chainid="${1}" address="${2}" block="${3}"
+  api_call "${chainid}" "module=account&action=eth_get_balance&address=${address}&block=${block}" | python3 -c "
+import sys, json
+try:
+    d = json.loads(sys.stdin.read())
+except Exception:
+    print('(query failed: no valid response)')
+    sys.exit(0)
+r = d.get('result')
+if isinstance(r, str) and r.startswith('0x'):
+    print(f'{int(r, 16) / 1e18:.6f} ETH/native')
+else:
+    err = d.get('error')
+    msg = err.get('message') if isinstance(err, dict) else d.get('message')
+    print(f'(query failed: {msg or \"unknown error\"})')
+"
 }
 
 # Format raw token amount using decimals
@@ -603,22 +610,14 @@ cmd_balances() {
 
   # --- Current native balance ---
   printf '[extract-context] Fetching current native balance...\n' >&2
-  local cur_native_raw
-  cur_native_raw=$(api_call "${chainid}" "module=account&action=balance&address=${address}&tag=latest")
-  local cur_native_wei
-  cur_native_wei=$(printf '%s' "${cur_native_raw}" | python3 -c "import sys,json; d=json.loads(sys.stdin.read()); print(d.get('result','0') if d.get('status')=='1' else '0')" 2>/dev/null || printf '0')
   local cur_native_eth
-  cur_native_eth=$(wei_to_eth "${cur_native_wei}")
+  cur_native_eth=$(native_balance "${chainid}" "${address}" latest)
 
   # --- Export-time native balance ---
   local exp_native_eth="(block lookup failed)"
   if [[ "${export_block}" != "0" ]]; then
     printf '[extract-context] Fetching native balance at export block %s...\n' "${export_block}" >&2
-    local exp_native_raw
-    exp_native_raw=$(api_call "${chainid}" "module=account&action=balance&address=${address}&tag=${export_block}")
-    local exp_native_wei
-    exp_native_wei=$(printf '%s' "${exp_native_raw}" | python3 -c "import sys,json; d=json.loads(sys.stdin.read()); print(d.get('result','0') if d.get('status')=='1' else '0')" 2>/dev/null || printf '0')
-    exp_native_eth=$(wei_to_eth "${exp_native_wei}")
+    exp_native_eth=$(native_balance "${chainid}" "${address}" "${export_block}")
   fi
 
   # --- Recent ERC-20 token transfers (to infer token holdings) ---
@@ -629,7 +628,7 @@ cmd_balances() {
   local tokentx_raw
   if [[ "${export_block}" == "0" ]]; then
     printf '[extract-context] WARNING: export block lookup failed; skipping ERC-20 token transfer query.\n' >&2
-    tokentx_raw='{"status":"1","message":"export block lookup failed; tokentx query skipped","result":[]}'
+    tokentx_raw='{"status":"0","message":"skipped (block lookup failed)","result":[]}'
   else
     tokentx_raw=$(api_call "${chainid}" "module=account&action=tokentx&address=${address}&startblock=${start_block}&endblock=${export_block}&sort=desc&page=1&offset=50")
   fi
@@ -637,8 +636,8 @@ cmd_balances() {
   printf '=== Balances: %s on %s (chainid=%s) ===\n\n' "${address}" "${chain_nm}" "${chainid}"
   printf 'Explorer:          %s\n' "$(chain_explorer_url "${chainid}" "${address}" "address")"
   printf '\n'
-  printf 'Native balance (current):          %s ETH/native\n' "${cur_native_eth}"
-  printf 'Native balance (at export %s): %s ETH/native\n' "${export_iso}" "${exp_native_eth}"
+  printf 'Native balance (current):          %s\n' "${cur_native_eth}"
+  printf 'Native balance (at export %s): %s\n' "${export_iso}" "${exp_native_eth}"
   printf '\n'
 
   # Parse and display recent token transfers
