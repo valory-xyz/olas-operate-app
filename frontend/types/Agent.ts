@@ -200,6 +200,14 @@ export type AgentHealthCheck = {
  */
 export type AgentLivenessReason =
   | 'agent_process_exited'
+  /**
+   * The agent answered the probe, promptly and well-formed, and reported itself
+   * unhealthy. The odd member of this set: the process is demonstrably up and
+   * serving HTTP, so it must never be rendered as "agent is not running" — it
+   * means "not making progress", which is the same condition as
+   * `useAgentActivity`'s `isAgentStalled`.
+   */
+  | 'agent_reported_unhealthy'
   | 'agent_unresponsive'
   | 'evicted_cannot_restake'
   | 'not_monitored';
@@ -210,10 +218,10 @@ export type AgentLivenessReason =
  * crash-looping agent stays `DEPLOYED` while its process is dead.
  *
  * Narrowed to the fields Pearl reads. The response also carries
- * `last_checked_at`, `last_healthy_at` and `restarts_since_last_healthy`, and
- * `healthcheck` gains `age_seconds` — deliberately omitted until something
- * renders them, so the type cannot drift on fields nobody checks. Re-verify
- * the shape on every `olas-operate-middleware` pin bump in `pyproject.toml`.
+ * `last_checked_at` and `last_healthy_at` — deliberately omitted until
+ * something renders them, so the type cannot drift on fields nobody checks.
+ * Re-verify the shape on every `olas-operate-middleware` pin bump in
+ * `pyproject.toml`.
  */
 export type AgentLiveness = {
   is_alive: boolean;
@@ -228,6 +236,19 @@ export type AgentLiveness = {
    * dead agent.
    */
   consecutive_failures: number;
+  /**
+   * Restarts the middleware has performed since the agent last reported healthy.
+   *
+   * The only field that separates a redeploy from a slow first poll. During a
+   * middleware-forced restart the deployment still reports `DEPLOYED` while
+   * `healthcheck.rounds` is empty — which looks identical to an agent that has
+   * simply not answered its first probe yet. A non-zero count says a restart
+   * actually happened. Reset by a healthy probe, so it describes the current
+   * run only.
+   *
+   * Optional: middleware older than 0.15.40 does not send it.
+   */
+  restarts_since_last_healthy?: number;
 };
 
 export type ServiceDeployment = {

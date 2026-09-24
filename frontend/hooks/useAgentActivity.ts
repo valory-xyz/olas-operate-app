@@ -38,11 +38,30 @@ const MIN_FAILED_PROBES_TO_REPORT_DOWN = 30;
 /**
  * Probe-derived reasons: subject to the failure floor above, because one bad
  * probe is not evidence of a dead agent.
+ *
+ * `agent_reported_unhealthy` is deliberately **not** here and must not be added.
+ * It means the agent answered the probe and reported itself unhealthy, so the
+ * process is demonstrably up and serving HTTP — the one reason in the middleware's
+ * vocabulary that establishes the agent is *not* down. It belongs to the stall
+ * treatment below.
  */
 const PROBE_DERIVED_DOWN_REASONS: readonly AgentLivenessReason[] = [
   'agent_process_exited',
   'agent_unresponsive',
 ];
+
+/**
+ * The middleware's own name for the condition this hook calls a stall: the agent
+ * answered, and said it is not progressing.
+ *
+ * Read as a second route to the same verdict rather than a replacement for the
+ * dwell rule, because it is available only on middleware that sends it and only
+ * while a health-check job is running. Where it is available it is the stronger
+ * signal, since it is the middleware's own conclusion from probes taken at its
+ * fixed 5 s cadence rather than an inference from a field that may be stale.
+ */
+const AGENT_NOT_PROGRESSING_REASON: AgentLivenessReason =
+  'agent_reported_unhealthy';
 
 export const useAgentActivity = () => {
   const { selectedService, deploymentDetails } = useServices();
@@ -139,11 +158,22 @@ export const useAgentActivity = () => {
   // dead-agent case is excluded by `isHealthcheckCurrent` instead, which is
   // the honest discriminator: a dead agent stops rewriting the file, a stalled
   // one keeps rewriting it with a dwell that climbs.
+  const isDwellPastTheBar =
+    !!healthcheck && isHealthcheckCurrent && dwellMs > announceThresholdMs;
+
+  // The middleware saying so, on the same evidence floor as any other
+  // probe-derived reason: the reason flips on the *first* failed probe, and
+  // announcing a stall five seconds into one would cry wolf on every transient
+  // blip. At the middleware's 5 s period the floor lands ~150 s in, a little
+  // later than the dwell rule's own bar — which is the right order, since this
+  // route exists for the case where the dwell reading is frozen or absent
+  // rather than to pre-empt it.
+  const isAgentReportedNotProgressing =
+    liveness?.reason === AGENT_NOT_PROGRESSING_REASON &&
+    liveness.consecutive_failures >= MIN_FAILED_PROBES_TO_REPORT_DOWN;
+
   const isAgentStalled =
-    isServiceRunning &&
-    !!healthcheck &&
-    isHealthcheckCurrent &&
-    dwellMs > announceThresholdMs;
+    isServiceRunning && (isDwellPastTheBar || isAgentReportedNotProgressing);
 
   // Memoised because it is the only non-primitive this hook returns that React
   // Query does not keep stable for us. A consumer putting a fresh object
@@ -160,6 +190,15 @@ export const useAgentActivity = () => {
     }),
     [healthcheck, announceThresholdMs],
   );
+
+  // A restart the middleware performed, not one the operator asked for. While it
+  // runs the deployment still reports DEPLOYED with an empty `rounds` array,
+  // which is indistinguishable from an agent that has not answered its first
+  // probe yet — so the strip's fallback branch says "Agent is running" at the one
+  // moment it certainly is not. The counter is what tells the two apart; it is
+  // reset by a healthy probe, so it goes quiet on its own.
+  const isAgentRedeploying =
+    isServiceRunning && (liveness?.restarts_since_last_healthy ?? 0) > 0;
 
   return {
     deploymentDetails,
@@ -184,5 +223,11 @@ export const useAgentActivity = () => {
      */
     agentHealth,
     isAgentActive,
+    /**
+     * The middleware is restarting the agent, and it has not reported healthy
+     * since. Distinct from `isServiceDeploying`, which is the deployment status
+     * of an operator-initiated start.
+     */
+    isAgentRedeploying,
   };
 };

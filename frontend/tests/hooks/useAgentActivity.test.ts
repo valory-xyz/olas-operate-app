@@ -1,6 +1,9 @@
 import { renderHook } from '@testing-library/react';
 
-import { MiddlewareDeploymentStatusMap } from '../../constants/deployment';
+import {
+  MiddlewareDeploymentStatus,
+  MiddlewareDeploymentStatusMap,
+} from '../../constants/deployment';
 import { useAgentActivity } from '../../hooks/useAgentActivity';
 import {
   makeAgentHealthCheck,
@@ -525,6 +528,151 @@ describe('useAgentActivity', () => {
         expect(result.current.isAgentStalled).toBe(true);
       },
     );
+  });
+
+  // The middleware's own name for this condition, incoming from
+  // `olas-operate-middleware#481`: the agent answered the probe, promptly and
+  // well-formed, and reported itself unhealthy. It is the one reason in that
+  // vocabulary where the process is demonstrably up, so it must route to the
+  // stall treatment and never to the down treatment. Pinned now so the
+  // distinction cannot be lost when the middleware side merges.
+  describe('agent_reported_unhealthy', () => {
+    const renderWithReason = (
+      liveness: Parameters<typeof makeAgentLiveness>[0],
+      health: Parameters<typeof makeAgentHealthCheck>[0] = {},
+    ) => {
+      mockUseServices.mockReturnValue({
+        selectedService: makeService({
+          deploymentStatus: MiddlewareDeploymentStatusMap.DEPLOYED,
+        }),
+        deploymentDetails: makeServiceDeployment({
+          healthcheck: makeAgentHealthCheck(health),
+          agent_liveness: makeAgentLiveness(liveness),
+        }),
+      });
+      return renderHook(() => useAgentActivity());
+    };
+
+    it('never reports the agent down, however many probes failed', () => {
+      const { result } = renderWithReason({
+        is_alive: false,
+        reason: 'agent_reported_unhealthy',
+        consecutive_failures: 60,
+      });
+
+      expect(result.current.isAgentActive).toBe(true);
+    });
+
+    // The route that matters: the payload's own dwell is stale and small, so
+    // the dwell rule cannot see the stall. The middleware's conclusion can.
+    it('reaches the stall verdict where a frozen dwell cannot', () => {
+      const { result } = renderWithReason(
+        {
+          is_alive: false,
+          reason: 'agent_reported_unhealthy',
+          consecutive_failures: 60,
+        },
+        { seconds_since_last_transition: 4, age_seconds: 300 },
+      );
+
+      expect(result.current.isAgentStalled).toBe(true);
+    });
+
+    // On the same evidence floor as any other probe-derived reason: the reason
+    // flips on the *first* failed probe, and announcing five seconds into one
+    // would cry wolf on every transient blip.
+    it('does not announce on a short streak of failed probes', () => {
+      const { result } = renderWithReason({
+        is_alive: false,
+        reason: 'agent_reported_unhealthy',
+        consecutive_failures: 1,
+      });
+
+      expect(result.current.isAgentStalled).toBe(false);
+    });
+
+    // A stopped service is not stalled, whatever a leftover record says.
+    it('does not announce for a service that is not running', () => {
+      mockUseServices.mockReturnValue({
+        selectedService: makeService({
+          deploymentStatus: MiddlewareDeploymentStatusMap.STOPPED,
+        }),
+        deploymentDetails: makeServiceDeployment({
+          agent_liveness: makeAgentLiveness({
+            is_alive: false,
+            reason: 'agent_reported_unhealthy',
+            consecutive_failures: 60,
+          }),
+        }),
+      });
+
+      const { result } = renderHook(() => useAgentActivity());
+
+      expect(result.current.isAgentStalled).toBe(false);
+    });
+  });
+
+  // The redeploy case. A middleware-forced restart leaves the deployment
+  // reporting DEPLOYED with an empty round list, which is indistinguishable
+  // from an agent that has not answered its first probe yet -- so the strip
+  // claimed "Agent is running" at the one moment it certainly was not. The
+  // restart counter is the only field that separates the two.
+  describe('redeploy derivation', () => {
+    const renderWithRestarts = (
+      liveness: Parameters<typeof makeAgentLiveness>[0] | null,
+      deploymentStatus: MiddlewareDeploymentStatus = MiddlewareDeploymentStatusMap.DEPLOYED,
+    ) => {
+      mockUseServices.mockReturnValue({
+        selectedService: makeService({ deploymentStatus }),
+        deploymentDetails: makeServiceDeployment({
+          healthcheck: makeAgentHealthCheck({ rounds: [] }),
+          agent_liveness:
+            liveness === null ? undefined : makeAgentLiveness(liveness),
+        }),
+      });
+      return renderHook(() => useAgentActivity());
+    };
+
+    it('reports a redeploy when the middleware has restarted the agent', () => {
+      const { result } = renderWithRestarts({
+        is_alive: false,
+        reason: 'agent_unresponsive',
+        consecutive_failures: 60,
+        restarts_since_last_healthy: 1,
+      });
+
+      expect(result.current.isAgentRedeploying).toBe(true);
+    });
+
+    // The ambiguity this counter resolves: same status, same empty round list,
+    // no restart behind it.
+    it('does not report a redeploy for a slow first poll', () => {
+      const { result } = renderWithRestarts({ restarts_since_last_healthy: 0 });
+
+      expect(result.current.isAgentRedeploying).toBe(false);
+    });
+
+    // Middleware older than 0.15.40 omits the field, and so does a payload
+    // with no liveness object at all. Absent must read as "no restart", not as
+    // a restart of unknown count.
+    it.each([
+      ['an absent counter', { restarts_since_last_healthy: undefined }],
+      ['an absent liveness object', null],
+    ])('does not report a redeploy from %s', (_label, liveness) => {
+      const { result } = renderWithRestarts(liveness);
+
+      expect(result.current.isAgentRedeploying).toBe(false);
+    });
+
+    // A stopped service is not redeploying, and the counter survives the stop.
+    it('does not report a redeploy for a service that is not running', () => {
+      const { result } = renderWithRestarts(
+        { restarts_since_last_healthy: 3 },
+        MiddlewareDeploymentStatusMap.STOPPED,
+      );
+
+      expect(result.current.isAgentRedeploying).toBe(false);
+    });
   });
 
   it('returns both flags false when deploymentStatus is undefined on the service', () => {
