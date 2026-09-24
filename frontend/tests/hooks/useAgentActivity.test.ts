@@ -553,6 +553,22 @@ describe('useAgentActivity', () => {
       return renderHook(() => useAgentActivity());
     };
 
+    // Section 8's constraint: the hook must return the fields it based the
+    // verdict on, never a lone derived boolean. That has to hold for this route
+    // too, or half the verdict's basis is invisible to a consumer.
+    it('exposes the reason and the streak it decided from', () => {
+      const { result } = renderWithReason({
+        is_alive: false,
+        reason: 'agent_reported_unhealthy',
+        consecutive_failures: 60,
+      });
+
+      expect(result.current.agentHealth.livenessReason).toBe(
+        'agent_reported_unhealthy',
+      );
+      expect(result.current.agentHealth.consecutiveFailures).toBe(60);
+    });
+
     it('never reports the agent down, however many probes failed', () => {
       const { result } = renderWithReason({
         is_alive: false,

@@ -187,8 +187,15 @@ export const useAgentActivity = () => {
       secondsSinceLastTransition: healthcheck?.seconds_since_last_transition,
       /** The bar `secondsSinceLastTransition` was measured against. */
       announceThresholdMs,
+      /**
+       * The middleware's own verdict and the streak behind it — the second route
+       * to `isAgentStalled`, carried here so every input to that verdict is
+       * visible to a consumer rather than only the dwell half.
+       */
+      livenessReason: liveness?.reason,
+      consecutiveFailures: liveness?.consecutive_failures,
     }),
-    [healthcheck, announceThresholdMs],
+    [healthcheck, announceThresholdMs, liveness],
   );
 
   // A restart the middleware performed, not one the operator asked for. While it
