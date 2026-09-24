@@ -330,7 +330,7 @@ describe('useAgentActivity', () => {
         });
 
         expect(result.current.isAgentStalled).toBe(false);
-        expect(result.current.agentHealth.announceThreshold).toBe(330_000);
+        expect(result.current.agentHealth.announceThresholdMs).toBe(330_000);
       });
     });
 
@@ -406,9 +406,22 @@ describe('useAgentActivity', () => {
         expect(result.current.isAgentStalled).toBe(false);
       });
 
-      // Hysteresis: between the clear bar (30 s) and the announce bar a single
-      // transition must not wink the indicator off and straight back on.
-      it('holds the verdict between the two bars', () => {
+      // The verdict carries nothing over from the previous payload. This is
+      // what lets two surfaces read the hook independently and still agree:
+      // an alert mounted mid-stall and a strip mounted before it see the same
+      // answer, because the answer is a function of the payload and nothing
+      // else.
+      //
+      // NOTE(OPE-1941): the technical scope also specifies a second, lower
+      // bar — "clear after THIRTY_SECONDS_INTERVAL of continuous health" —
+      // which is not implemented, because it cannot be as specified. Holding a
+      // verdict across payloads needs state; per-hook-instance state lets the
+      // two surfaces disagree, which the scope forbids as a hard constraint,
+      // and the shared state that would fix it is a new provider, which the
+      // scope also rules out. Left for a human: in practice dwell has to climb
+      // back over the announce bar before the indicator can return, so the
+      // shortest possible cycle is already ~2 minutes, not a flicker.
+      it('carries nothing over from the previous payload', () => {
         const { result, rerender } = renderWithHealth({
           seconds_since_last_transition: 300,
         });
@@ -417,15 +430,10 @@ describe('useAgentActivity', () => {
         setHealth({ seconds_since_last_transition: 60 });
         rerender();
 
-        expect(result.current.isAgentStalled).toBe(true);
-      });
-
-      it('does not flag a healthy agent that merely sits in the band', () => {
-        const { result } = renderWithHealth({
-          seconds_since_last_transition: 60,
-        });
-
         expect(result.current.isAgentStalled).toBe(false);
+
+        const fresh = renderWithHealth({ seconds_since_last_transition: 60 });
+        expect(fresh.result.current.isAgentStalled).toBe(false);
       });
     });
 

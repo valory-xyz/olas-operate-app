@@ -45,14 +45,3 @@ export const AGENT_STALL_ANNOUNCE_INTERVAL = 2 * ONE_MINUTE_INTERVAL;
  * raise it past any fixed number without failing loudly.
  */
 export const AGENT_STALL_PAUSE_MARGIN_INTERVAL = THIRTY_SECONDS_INTERVAL;
-
-/**
- * Dwell below which a stall announcement clears again.
- *
- * The low bar of a Schmitt trigger, not a second announce rule: between this
- * and `AGENT_STALL_ANNOUNCE_INTERVAL` the previous verdict holds, so a single
- * transition part-way through a stall does not wink the indicator off and
- * straight back on. The verdict stays idempotent — the same payload always
- * yields the same answer, however many times it is observed.
- */
-export const AGENT_STALL_CLEAR_INTERVAL = THIRTY_SECONDS_INTERVAL;

@@ -46,7 +46,7 @@ const setup = (over: Record<string, unknown> = {}) => {
       isTmHealthy: true,
       isTransitioningFast: true,
       secondsSinceLastTransition: 0,
-      announceThreshold: AGENT_STALL_ANNOUNCE_INTERVAL,
+      announceThresholdMs: AGENT_STALL_ANNOUNCE_INTERVAL,
     },
     ...over,
   });
@@ -193,7 +193,7 @@ describe('AgentActivity', () => {
         isTmHealthy: true,
         isTransitioningFast: false,
         secondsSinceLastTransition: 300,
-        announceThreshold: AGENT_STALL_ANNOUNCE_INTERVAL,
+        announceThresholdMs: AGENT_STALL_ANNOUNCE_INTERVAL,
       },
       deploymentDetails: withRounds(['polymarket_fetch_market_round']),
     });

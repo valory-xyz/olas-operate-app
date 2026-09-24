@@ -1,9 +1,6 @@
-import { useRef } from 'react';
-
 import { MiddlewareDeploymentStatusMap } from '@/constants/deployment';
 import {
   AGENT_STALL_ANNOUNCE_INTERVAL,
-  AGENT_STALL_CLEAR_INTERVAL,
   AGENT_STALL_PAUSE_MARGIN_INTERVAL,
   ONE_SECOND_INTERVAL,
 } from '@/constants/intervals';
@@ -98,35 +95,24 @@ export const useAgentActivity = () => {
   // reads the same before and after. The individual fields are returned
   // alongside the verdict so a consumer can still tell a stall from a wedged
   // Tendermint, rather than being handed one opaque boolean.
+  //
+  // A pure function of the payload, deliberately: two surfaces are meant to
+  // read this and they must never disagree with each other. Anything that
+  // remembered a previous verdict would have to live in shared state to manage
+  // that, and a per-hook-instance ref would let a strip mounted before a stall
+  // and an alert mounted during one reach opposite conclusions from the same
+  // payload.
   const healthcheck = deploymentDetails?.healthcheck;
-  const dwell =
+  const dwellMs =
     (healthcheck?.seconds_since_last_transition ?? 0) * ONE_SECOND_INTERVAL;
-  const announceThreshold = Math.max(
+  const announceThresholdMs = Math.max(
     AGENT_STALL_ANNOUNCE_INTERVAL,
     (healthcheck?.reset_pause_duration ?? 0) * ONE_SECOND_INTERVAL +
       AGENT_STALL_PAUSE_MARGIN_INTERVAL,
   );
 
-  // Holds the verdict across the band between the two thresholds. Safe to
-  // touch during render because the assignment is idempotent: the same payload
-  // always drives it to the same value, so a double-invoked render cannot
-  // observe a different answer than a single one.
-  const wasStalledRef = useRef(false);
-  const isAgentStalled = (() => {
-    if (!isAgentActive || !healthcheck) {
-      wasStalledRef.current = false;
-      return false;
-    }
-    if (dwell > announceThreshold) {
-      wasStalledRef.current = true;
-      return true;
-    }
-    if (dwell < AGENT_STALL_CLEAR_INTERVAL) {
-      wasStalledRef.current = false;
-      return false;
-    }
-    return wasStalledRef.current;
-  })();
+  const isAgentStalled =
+    isAgentActive && !!healthcheck && dwellMs > announceThresholdMs;
 
   return {
     deploymentDetails,
@@ -150,8 +136,8 @@ export const useAgentActivity = () => {
       isTmHealthy: healthcheck?.is_tm_healthy,
       isTransitioningFast: healthcheck?.is_transitioning_fast,
       secondsSinceLastTransition: healthcheck?.seconds_since_last_transition,
-      /** The bar `secondsSinceLastTransition` was measured against, in ms. */
-      announceThreshold,
+      /** The bar `secondsSinceLastTransition` was measured against. */
+      announceThresholdMs,
     },
     isAgentActive,
   };
