@@ -3,6 +3,7 @@ import { renderHook } from '@testing-library/react';
 import { MiddlewareDeploymentStatusMap } from '../../constants/deployment';
 import { useAgentActivity } from '../../hooks/useAgentActivity';
 import {
+  makeAgentHealthCheck,
   makeAgentLiveness,
   makeService,
   makeServiceDeployment,
@@ -252,9 +253,7 @@ describe('useAgentActivity', () => {
     // a *second* payload to the *same* hook instance — which is the only way
     // to exercise the verdict held across the band between the two bars.
     const setHealth = (
-      health: Partial<
-        ReturnType<typeof makeServiceDeployment>['healthcheck']
-      > = {},
+      health: Parameters<typeof makeAgentHealthCheck>[0] = {},
       { isAlive = true }: { isAlive?: boolean } = {},
     ) => {
       mockUseServices.mockReturnValue({
@@ -262,7 +261,7 @@ describe('useAgentActivity', () => {
           deploymentStatus: MiddlewareDeploymentStatusMap.DEPLOYED,
         }),
         deploymentDetails: makeServiceDeployment({
-          healthcheck: { ...makeServiceDeployment().healthcheck, ...health },
+          healthcheck: makeAgentHealthCheck(health),
           agent_liveness: makeAgentLiveness(
             isAlive
               ? {}

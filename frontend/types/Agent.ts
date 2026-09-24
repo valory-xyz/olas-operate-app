@@ -171,7 +171,7 @@ type RoundsInfo = Record<
   }
 >;
 
-type AgentHealthCheck = {
+export type AgentHealthCheck = {
   agent_health: Record<string, unknown>;
   is_healthy: boolean;
   is_tm_healthy: boolean;

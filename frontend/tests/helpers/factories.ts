@@ -24,6 +24,7 @@ import { AchievementWithConfig } from '../../types/Achievement';
 import { Address } from '../../types/Address';
 import {
   AgentConfig,
+  AgentHealthCheck,
   AgentLiveness,
   ServiceDeployment,
 } from '../../types/Agent';
@@ -340,6 +341,28 @@ export const makeServiceStakingDetails = (
 });
 
 /**
+ * The agent's own healthcheck body, as the middleware forwards it.
+ *
+ * Kept separate from `makeServiceDeployment` because overriding a nested
+ * object on that factory replaces it wholesale: a case that wants one round
+ * would otherwise silently drop all seven health fields. Defaults describe a
+ * healthy agent that has just transitioned.
+ */
+export const makeAgentHealthCheck = (
+  overrides: Partial<AgentHealthCheck> = {},
+): AgentHealthCheck => ({
+  agent_health: {},
+  is_healthy: true,
+  is_tm_healthy: true,
+  is_transitioning_fast: false,
+  period: 0,
+  reset_pause_duration: 0,
+  rounds: [],
+  seconds_since_last_transition: 0,
+  ...overrides,
+});
+
+/**
  * Deployment payload as returned by the middleware's deployment endpoints.
  *
  * `agent_liveness` is optional there — older middleware builds omit it, and a
@@ -351,16 +374,7 @@ export const makeServiceDeployment = (
 ): ServiceDeployment => ({
   status: MiddlewareDeploymentStatusMap.DEPLOYED,
   nodes: { agent: [], tendermint: [] },
-  healthcheck: {
-    agent_health: {},
-    is_healthy: true,
-    is_tm_healthy: true,
-    is_transitioning_fast: false,
-    period: 0,
-    reset_pause_duration: 0,
-    rounds: [],
-    seconds_since_last_transition: 0,
-  },
+  healthcheck: makeAgentHealthCheck(),
   ...overrides,
 });
 
