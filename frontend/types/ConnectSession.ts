@@ -17,8 +17,18 @@
  *   `503` not-ready) → treated as a transient, retryable launch failure.
  */
 
-/** Claude harness the agent launched (or attempted to launch). */
-export type ConnectHarness = 'claude_code_desktop' | 'claude_code_cli';
+/**
+ * Harness the agent launched (or attempted to launch) — every value in the
+ * agent server's `HARNESSES` tuple, Claude Code and Codex alike. Listed in
+ * the order an unnamed launch falls back through (`workspace.py` →
+ * `DEEP_LINKS`, then the terminal commands), so a Codex value is a
+ * reachable answer rather than a theoretical one.
+ */
+export type ConnectHarness =
+  | 'claude_code_cli'
+  | 'codex_desktop'
+  | 'claude_code_desktop'
+  | 'codex_cli';
 
 /**
  * Raw body of a `POST /session` response, as parsed in `electron/main.js`
@@ -27,7 +37,7 @@ export type ConnectHarness = 'claude_code_desktop' | 'claude_code_cli';
  * (`400`/`503`) return `{ detail }` instead — hence both keys are optional.
  */
 export type ConnectSessionResponse = {
-  /** True when a Claude Code session was launched (200 only). */
+  /** True when an agent session was launched (200 only). */
   launched?: boolean;
   /** The harness used; always present on a 200 (not a usable discriminator). */
   harness?: ConnectHarness | null;

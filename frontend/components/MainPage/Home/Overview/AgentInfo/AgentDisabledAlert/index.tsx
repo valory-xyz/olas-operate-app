@@ -120,7 +120,15 @@ export const AgentDisabledAlert = () => {
       return { key: 'no-slots', content: <NoSlotsAvailableAlert /> };
     }
 
-    if (isAgentEvicted && !isEligibleForStaking) {
+    // Guarded on loading like the no-slots branch above: while staking details
+    // load, `hasEnoughRewardsAndSlots` can be nil, which forces
+    // `isEligibleForStaking` false and would flash the un-recoverable eviction
+    // copy (with a date) at someone whose agent can actually re-stake now.
+    if (
+      !isSelectedStakingContractDetailsLoading &&
+      isAgentEvicted &&
+      !isEligibleForStaking
+    ) {
       return { key: 'evicted', content: <EvictedAlert /> };
     }
 

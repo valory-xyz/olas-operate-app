@@ -257,6 +257,20 @@ export const useAutoRunController = ({
     logMessage,
   });
 
+  // Deployability of the instance that is *currently running*, for the eviction
+  // watchdog. `getDeployabilityForAgent` excludes an agent when another one is
+  // running, so it already answers meaningfully when asked about the running
+  // instance itself.
+  const getDeployabilityForRunningInstance = useCallback(async () => {
+    const currentId = runningServiceConfigIdRef.current;
+    if (!currentId) return null;
+    const agentMeta = configuredAgents.find(
+      (agent) => agent.serviceConfigId === currentId,
+    );
+    if (!agentMeta) return null;
+    return getDeployabilityForAgent(agentMeta);
+  }, [configuredAgents, getDeployabilityForAgent, runningServiceConfigIdRef]);
+
   const { stopCurrentRunningAgent } = useAutoRunLifecycle({
     enabled,
     runningAgentType,
@@ -276,6 +290,8 @@ export const useAutoRunController = ({
     scanAndStartNext,
     startSelectedAgentIfEligible,
     stopAgentWithRecovery,
+    startAgentWithRetries,
+    getDeployabilityForRunningInstance,
     stopRetryBackoffUntilRef,
     recordMetric,
     logMessage,

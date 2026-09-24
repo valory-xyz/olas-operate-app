@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 
 import { ConnectSessionAlert } from '../../../../../../components/MainPage/Home/Overview/AgentInfo/ConnectSessionAlert';
-import { CLAUDE_DOWNLOAD_URL } from '../../../../../../constants';
+import { CLAUDE_CODE_CLI_INSTALL_URL } from '../../../../../../constants';
 import { useConnectSession } from '../../../../../../hooks';
 
 jest.mock('../../../../../../hooks', () => ({
@@ -80,7 +80,30 @@ describe('ConnectSessionAlert', () => {
       screen.getByText(/Claude isn't installed on this machine/i),
     ).toBeInTheDocument();
     const link = screen.getByRole('link', { name: /download claude/i });
-    expect(link).toHaveAttribute('href', CLAUDE_DOWNLOAD_URL);
+    // Wiring only: this compares the href against the constant that rendered
+    // it, so it catches a dropped href but never a wrong destination. The
+    // value itself is pinned in tests/constants/urls.test.ts.
+    expect(link).toHaveAttribute('href', CLAUDE_CODE_CLI_INSTALL_URL);
+  });
+
+  it('falls back to the CLI-first description when the server sent no message', () => {
+    setup({ errorKind: 'not-installed' });
+    expect(
+      screen.getByText(/Connect works with the Claude Code CLI or Codex/i),
+    ).toBeInTheDocument();
+  });
+
+  it("shows the server's message instead of the fallback description", () => {
+    setup({
+      errorKind: 'not-installed',
+      errorMessage: 'Could not open claude_code_cli - is it installed?',
+    });
+    expect(
+      screen.getByText(/Could not open claude_code_cli - is it installed\?/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/Connect works with the Claude Code CLI or Codex/i),
+    ).not.toBeInTheDocument();
   });
 
   it('renders the "couldn\'t launch" state and retries on click', () => {

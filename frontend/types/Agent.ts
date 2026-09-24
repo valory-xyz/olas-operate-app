@@ -183,10 +183,57 @@ type AgentHealthCheck = {
   seconds_since_last_transition: number;
 };
 
+/**
+ * Why the middleware does not consider the agent process alive.
+ *
+ * `null` when `is_alive` is true. Frozen vocabulary — see the middleware's
+ * `GET /api/v2/services/deployment` contract.
+ */
+export type AgentLivenessReason =
+  | 'agent_process_exited'
+  | 'agent_unresponsive'
+  | 'evicted_cannot_restake'
+  | 'not_monitored';
+
+/**
+ * Whether the agent *process* is alive, as opposed to `ServiceDeployment.status`,
+ * which records the last deployment transition the middleware performed — a
+ * crash-looping agent stays `DEPLOYED` while its process is dead.
+ *
+ * Narrowed to the fields Pearl reads. The response also carries
+ * `last_checked_at`, `last_healthy_at` and `restarts_since_last_healthy`, and
+ * `healthcheck` gains `age_seconds` — deliberately omitted until something
+ * renders them, so the type cannot drift on fields nobody checks. Re-verify
+ * the shape on every `olas-operate-middleware` pin bump in `pyproject.toml`.
+ */
+export type AgentLiveness = {
+  is_alive: boolean;
+  reason: AgentLivenessReason | null;
+  /**
+   * Failed probes since the last successful one.
+   *
+   * Load-bearing: `is_alive` flips false on the *first* failed probe, while
+   * the middleware's own health checker tolerates 60 consecutive failures
+   * before it believes the agent is gone. Without this counter a single blip
+   * — or an agent still answering HTTP 425 while it starts up — reads as a
+   * dead agent.
+   */
+  consecutive_failures: number;
+};
+
 export type ServiceDeployment = {
   status: MiddlewareDeploymentStatus;
   nodes: DeployedNodes;
   healthcheck: AgentHealthCheck;
+  /**
+   * Whether the agent process is actually alive, as opposed to `status`, which
+   * is the middleware's record of the last deployment transition it performed.
+   *
+   * Optional: Pearl ships against older middleware builds that do not send it.
+   * A missing object means "unknown", never "not alive" — reading it the other
+   * way would show "Agent is not running" for every healthy agent.
+   */
+  agent_liveness?: AgentLiveness;
 };
 
 export type AgentInstance = {

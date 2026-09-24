@@ -468,6 +468,10 @@ describe('useDeployability', () => {
       expect(result.current.reason).toBe('Evicted');
     });
 
+    // Regression guard. Starting an evicted-but-eligible agent is what
+    // re-stakes it, so this gate must keep saying yes. Widening it to all
+    // evictions — the obvious-looking "finish the job" change — would block
+    // the very restart the eviction alert offers.
     it('allows when evicted but eligible for re-staking', () => {
       setupDefaults({
         staking: {

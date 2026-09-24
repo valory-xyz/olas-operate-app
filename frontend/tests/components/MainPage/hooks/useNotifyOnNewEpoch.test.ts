@@ -215,6 +215,22 @@ describe('useNotifyOnNewEpoch', () => {
       expect(mockShowNotification).not.toHaveBeenCalled();
     });
 
+    it('still notifies when isAgentEvicted=true AND isEligibleForStaking=true', () => {
+      // Regression guard. This gate and `useDeployability` are the two of the
+      // four eviction call sites that are already correct: an evicted-but-
+      // eligible agent *can* be started, and telling the user to start it is
+      // exactly the recovery. Widening them to all evictions would block the
+      // restart this ticket asks for.
+      const state = createPassingMockState();
+      state.stakingDetails.isAgentEvicted = true;
+      state.stakingDetails.isEligibleForStaking = true;
+      applyMocks(state);
+
+      renderHook(() => useNotifyOnNewEpoch());
+
+      expect(mockShowNotification).toHaveBeenCalled();
+    });
+
     it('does not notify when isServiceRunning is true', () => {
       const state = createPassingMockState();
       state.service.isServiceRunning = true;
