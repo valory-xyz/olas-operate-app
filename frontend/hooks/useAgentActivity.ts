@@ -1,4 +1,12 @@
+import { useRef } from 'react';
+
 import { MiddlewareDeploymentStatusMap } from '@/constants/deployment';
+import {
+  AGENT_STALL_ANNOUNCE_INTERVAL,
+  AGENT_STALL_CLEAR_INTERVAL,
+  AGENT_STALL_PAUSE_MARGIN_INTERVAL,
+  ONE_SECOND_INTERVAL,
+} from '@/constants/intervals';
 import { AgentLivenessReason } from '@/types';
 
 import { useServices } from './useServices';
@@ -68,18 +76,83 @@ export const useAgentActivity = () => {
     return liveness.consecutive_failures >= MIN_FAILED_PROBES_TO_REPORT_DOWN;
   })();
 
+  /**
+   * DEPLOYED *and* the agent process is not reported down.
+   *
+   * Kept separate from `isServiceRunning` because `Staking.tsx` uses that to
+   * pick between "start the agent" and no alert: a dead-but-DEPLOYED agent
+   * would make its card read "Start the agent" directly under a "Stop agent"
+   * button. Only the activity strip should act on liveness.
+   */
+  const isAgentActive = isServiceRunning && !isAgentDown;
+
+  // A stalled agent is one that is alive and answering, but has not advanced
+  // its FSM for longer than its own inter-cycle pause can explain. OPE-1941's
+  // operator sat through two five-minute stalls with the strip still reporting
+  // "Current action: ..." from a frozen round list.
+  //
+  // Keyed on dwell rather than on `is_healthy`, for two reasons. The agent
+  // reports itself unhealthy during rounds whose events carry no timeout — a
+  // trader defect, so `is_healthy: false` today means something different from
+  // what it will mean once that lands. And "has not progressed for N seconds"
+  // reads the same before and after. The individual fields are returned
+  // alongside the verdict so a consumer can still tell a stall from a wedged
+  // Tendermint, rather than being handed one opaque boolean.
+  const healthcheck = deploymentDetails?.healthcheck;
+  const dwell =
+    (healthcheck?.seconds_since_last_transition ?? 0) * ONE_SECOND_INTERVAL;
+  const announceThreshold = Math.max(
+    AGENT_STALL_ANNOUNCE_INTERVAL,
+    (healthcheck?.reset_pause_duration ?? 0) * ONE_SECOND_INTERVAL +
+      AGENT_STALL_PAUSE_MARGIN_INTERVAL,
+  );
+
+  // Holds the verdict across the band between the two thresholds. Safe to
+  // touch during render because the assignment is idempotent: the same payload
+  // always drives it to the same value, so a double-invoked render cannot
+  // observe a different answer than a single one.
+  const wasStalledRef = useRef(false);
+  const isAgentStalled = (() => {
+    if (!isAgentActive || !healthcheck) {
+      wasStalledRef.current = false;
+      return false;
+    }
+    if (dwell > announceThreshold) {
+      wasStalledRef.current = true;
+      return true;
+    }
+    if (dwell < AGENT_STALL_CLEAR_INTERVAL) {
+      wasStalledRef.current = false;
+      return false;
+    }
+    return wasStalledRef.current;
+  })();
+
   return {
     deploymentDetails,
     isServiceRunning,
     isServiceDeploying,
     /**
-     * DEPLOYED *and* the agent process is not reported down.
+     * The agent is alive but has stopped advancing its FSM.
      *
-     * Kept separate from `isServiceRunning` because `Staking.tsx` uses that to
-     * pick between "start the agent" and no alert: a dead-but-DEPLOYED agent
-     * would make its card read "Start the agent" directly under a "Stop agent"
-     * button. Only the activity strip should act on liveness.
+     * Read together with `agentHealth`, never on its own — see the constraint
+     * recorded there.
      */
-    isAgentActive: isServiceRunning && !isAgentDown,
+    isAgentStalled,
+    /**
+     * The health fields `isAgentStalled` was derived from, so a consumer can
+     * distinguish the cases a single boolean flattens — notably a stalled
+     * agent (`isTmHealthy: true`) from a wedged one (`isTmHealthy: false`),
+     * which want different things said about them.
+     */
+    agentHealth: {
+      isHealthy: healthcheck?.is_healthy,
+      isTmHealthy: healthcheck?.is_tm_healthy,
+      isTransitioningFast: healthcheck?.is_transitioning_fast,
+      secondsSinceLastTransition: healthcheck?.seconds_since_last_transition,
+      /** The bar `secondsSinceLastTransition` was measured against, in ms. */
+      announceThreshold,
+    },
+    isAgentActive,
   };
 };
