@@ -245,10 +245,10 @@ api_call() {
   base="$(chain_api_base "${chainid}")"
   for attempt in 1 2 3 4 5 6 7; do
     # Blockscout occasionally returns trailing content after JSON — take first valid JSON line
-    out=$(curl -sL "${base}?${qs}" | python3 -c "import sys,json; raw=sys.stdin.read().strip(); lines=raw.split('\n'); [print(l) for l in lines if l.startswith('{')]" | head -1)
+    out=$(curl -sL --max-time 20 "${base}?${qs}" | python3 -c "import sys,json; raw=sys.stdin.read().strip(); lines=raw.split('\n'); [print(l) for l in lines if l.startswith('{')]" | head -1)
     [[ -n "${out}" && "${out}" != *"Too many requests"* ]] && break
     [[ "${attempt}" -lt 7 ]] || break
-    printf '[extract-context] Rate-limited by explorer API, retrying in %ss...\n' "$(( 2 ** (attempt - 1) ))" >&2
+    printf '[extract-context] Explorer API rate-limited or returned no JSON, retrying in %ss...\n' "$(( 2 ** (attempt - 1) ))" >&2
     sleep "$(( 2 ** (attempt - 1) ))"
   done
   printf '%s' "${out}"
@@ -268,7 +268,7 @@ get_block_at_ts() {
     printf '0'
     return
   fi
-  # Etherscan: result is a plain string; Blockscout: result is {"blockNumber": "..."}
+  # Blockscout: result is {"blockNumber": "..."}
   printf '%s' "${raw}" | python3 -c "
 import sys, json
 d = json.loads(sys.stdin.read())
@@ -280,21 +280,24 @@ else:
 "
 }
 
-# Format wei to ETH (18 decimals)
-# Native balance in ETH at <tag>, or "(query failed: ...)" — never a silent 0
+# Native balance at <block> ("latest" or a number), or "(query failed: ...)" — never a silent 0
+# action=balance ignores tag on Blockscout, so use eth_get_balance (JSON-RPC shape, hex result)
 native_balance() {
-  local chainid="${1}" address="${2}" tag="${3}"
-  api_call "${chainid}" "module=account&action=balance&address=${address}&tag=${tag}" | python3 -c "
+  local chainid="${1}" address="${2}" block="${3}"
+  api_call "${chainid}" "module=account&action=eth_get_balance&address=${address}&block=${block}" | python3 -c "
 import sys, json
 try:
     d = json.loads(sys.stdin.read())
 except Exception:
     print('(query failed: no valid response)')
     sys.exit(0)
-if d.get('status') == '1':
-    print(f\"{int(d.get('result') or '0') / 1e18:.6f}\")
+r = d.get('result')
+if isinstance(r, str) and r.startswith('0x'):
+    print(f'{int(r, 16) / 1e18:.6f} ETH/native')
 else:
-    print(f\"(query failed: {d.get('message') or 'unknown error'})\")
+    err = d.get('error')
+    msg = err.get('message') if isinstance(err, dict) else d.get('message')
+    print(f'(query failed: {msg or \"unknown error\"})')
 "
 }
 
@@ -633,8 +636,8 @@ cmd_balances() {
   printf '=== Balances: %s on %s (chainid=%s) ===\n\n' "${address}" "${chain_nm}" "${chainid}"
   printf 'Explorer:          %s\n' "$(chain_explorer_url "${chainid}" "${address}" "address")"
   printf '\n'
-  printf 'Native balance (current):          %s ETH/native\n' "${cur_native_eth}"
-  printf 'Native balance (at export %s): %s ETH/native\n' "${export_iso}" "${exp_native_eth}"
+  printf 'Native balance (current):          %s\n' "${cur_native_eth}"
+  printf 'Native balance (at export %s): %s\n' "${export_iso}" "${exp_native_eth}"
   printf '\n'
 
   # Parse and display recent token transfers
