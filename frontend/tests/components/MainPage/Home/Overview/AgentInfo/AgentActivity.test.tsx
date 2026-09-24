@@ -41,6 +41,7 @@ const setup = (over: Record<string, unknown> = {}) => {
     isServiceDeploying: false,
     isAgentActive: false,
     isAgentStalled: false,
+    isAgentRedeploying: false,
     agentHealth: {
       isHealthy: true,
       isTmHealthy: true,
@@ -172,19 +173,13 @@ describe('AgentActivity', () => {
     expect(screen.queryByText('Current action:')).not.toBeInTheDocument();
   });
 
-  // OPE-1941, pinning today's behaviour rather than the wanted behaviour.
-  //
-  // The hook now reports the stall, but nothing renders it: both surfaces that
-  // would need copy that is still an open question on the ticket. So a stalled
-  // agent still renders the round it stalled in, under "Current action:", in
-  // the running state — which is exactly what the reporting operator saw for
-  // two unbroken five-minute stretches before they gave up and restarted Pearl
-  // by hand.
-  //
-  // When the stall branch lands between branches 3 and 4, this test is the one
-  // that must be updated, and updating it is the point: it makes the
-  // misrepresentation an executable fact instead of a paragraph on a ticket.
-  it('still renders a stalled agent as running (pending the stall branch)', () => {
+  // OPE-1941, the misrepresentation this ticket is about. Before the stall
+  // branch existed the round list was still populated — frozen at the round the
+  // agent stopped advancing past — so this rendered "Current action:
+  // polymarket_fetch_market_round" in the running state, which is exactly what
+  // the reporting operator watched for two unbroken five-minute stretches
+  // before they gave up and restarted Pearl by hand.
+  it('announces the stall instead of the round it stalled in', () => {
     setup({
       isAgentActive: true,
       isAgentStalled: true,
@@ -198,10 +193,95 @@ describe('AgentActivity', () => {
       deploymentDetails: withRounds(['polymarket_fetch_market_round']),
     });
 
-    expect(screen.getByText('Current action:')).toBeInTheDocument();
+    expect(screen.getByText("Agent isn't progressing")).toBeInTheDocument();
+    expect(screen.queryByText('Current action:')).not.toBeInTheDocument();
     expect(
-      screen.getByText('polymarket_fetch_market_round'),
+      screen.queryByText('polymarket_fetch_market_round'),
+    ).not.toBeInTheDocument();
+  });
+
+  // The two branches above the stall are states the agent is deliberately in,
+  // so a transient stall must not displace either. Ordering is the whole
+  // correctness of a branch ladder, and neither guard is free.
+  it('keeps the standby notice ahead of a stall', () => {
+    mockUseRewardContext.mockReturnValue({ isEpochTargetMet: true });
+    setup({
+      isAgentActive: true,
+      isAgentStalled: true,
+      deploymentDetails: withRounds(['polymarket_fetch_market_round']),
+    });
+
+    expect(
+      screen.getByText(/is in standby mode for the next epoch/),
     ).toBeInTheDocument();
+    expect(
+      screen.queryByText("Agent isn't progressing"),
+    ).not.toBeInTheDocument();
+  });
+
+  it('keeps the Connect session notice ahead of a stall', () => {
+    mockUseConnectSession.mockReturnValue({
+      showRunningInfo: true,
+      isFirstRun: false,
+    });
+    setup({ isAgentActive: true, isAgentStalled: true });
+
+    expect(
+      screen.getByText(
+        'Your agent is running. You can open the agent Profile to start a new session.',
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText("Agent isn't progressing"),
+    ).not.toBeInTheDocument();
+  });
+
+  // The stall branch sits inside the `isAgentActive` guard, so an agent the
+  // liveness probe has concluded is gone reads as not running rather than as
+  // stalled. That is the right precedence — "not running" is the stronger
+  // claim — and it is worth pinning because the hook deliberately derives the
+  // two independently.
+  it('reports a stalled agent the probe considers dead as not running', () => {
+    setup({ isAgentActive: false, isAgentStalled: true });
+
+    expect(screen.getByText('Agent is not running')).toBeInTheDocument();
+    expect(
+      screen.queryByText("Agent isn't progressing"),
+    ).not.toBeInTheDocument();
+  });
+
+  // The redeploy case: same DEPLOYED status and same empty round list as a slow
+  // first poll, which is why this branch used to say "Agent is running" at the
+  // one moment it certainly was not.
+  it('says the agent is restarting rather than running during a redeploy', () => {
+    setup({ isAgentActive: true, isAgentRedeploying: true });
+
+    expect(screen.getByText('Agent is restarting')).toBeInTheDocument();
+    expect(screen.queryByText('Agent is running')).not.toBeInTheDocument();
+  });
+
+  // The counter is what separates the two, so its absence must keep today's
+  // copy rather than announcing a restart nobody performed.
+  it('keeps "Agent is running" for a first poll with no restart behind it', () => {
+    setup({ isAgentActive: true, isAgentRedeploying: false });
+
+    expect(screen.getByText('Agent is running')).toBeInTheDocument();
+    expect(screen.queryByText('Agent is restarting')).not.toBeInTheDocument();
+  });
+
+  // A redeploy that arrives with a populated round list is a stale list, and
+  // the round branch above still owns it. Pinned so the ordering is deliberate
+  // rather than incidental: the counter goes quiet on the first healthy probe,
+  // which is also the first probe that refreshes the list.
+  it('keeps the round branch ahead of the redeploy branch', () => {
+    setup({
+      isAgentActive: true,
+      isAgentRedeploying: true,
+      deploymentDetails: withRounds(['sampling_round']),
+    });
+
+    expect(screen.getByText('Current action:')).toBeInTheDocument();
+    expect(screen.queryByText('Agent is restarting')).not.toBeInTheDocument();
   });
 
   it('shows "Agent is not running" instead of a stale round when the agent died', () => {
