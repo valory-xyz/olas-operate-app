@@ -39,8 +39,13 @@ const IdleContent = () => (
 );
 
 export const AgentActivity = () => {
-  const { deploymentDetails, isAgentActive, isServiceDeploying } =
-    useAgentActivity();
+  const {
+    deploymentDetails,
+    isAgentActive,
+    isAgentRedeploying,
+    isAgentStalled,
+    isServiceDeploying,
+  } = useAgentActivity();
   const { isEpochTargetMet } = useRewardContext();
   // Connect only: while the agent runs, the activity strip points at the
   // agent profile for new Claude Code sessions instead of rounds.
@@ -85,6 +90,15 @@ export const AgentActivity = () => {
         return { status: 'idle', content: <IdleContent /> };
       }
 
+      // Above the `rounds` branch, because that branch is what absorbs a stall
+      // today: the round list is still there, frozen at the round the agent
+      // stopped advancing past, so the strip reports "Current action: ..." for
+      // as long as the stall lasts. Below the Connect and standby branches,
+      // which are states the agent is deliberately in and must keep precedence.
+      if (isAgentStalled) {
+        return { status: 'stalled', content: "Agent isn't progressing" };
+      }
+
       if (rounds.length > 0) {
         const currentRound = rounds[0];
         const roundInfo = roundsInfo?.[currentRound]?.name || currentRound;
@@ -100,6 +114,15 @@ export const AgentActivity = () => {
         };
       }
 
+      // No rounds yet. That is the first-poll case on a fresh start, and it is
+      // also what a middleware-forced restart looks like from here — same
+      // DEPLOYED status, same empty round list — so this branch used to claim
+      // "Agent is running" at the one moment it certainly was not. The restart
+      // counter is the only field that separates the two.
+      if (isAgentRedeploying) {
+        return { status: 'redeploying', content: 'Agent is restarting' };
+      }
+
       return {
         status: 'activity-not-ready',
         content: 'Agent is running',
@@ -111,6 +134,8 @@ export const AgentActivity = () => {
     isEpochTargetMet,
     isServiceDeploying,
     isAgentActive,
+    isAgentRedeploying,
+    isAgentStalled,
     isConnectRunning,
     isFirstRun,
     rounds,
