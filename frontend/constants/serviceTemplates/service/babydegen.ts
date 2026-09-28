@@ -59,14 +59,14 @@ const OPTIMUS_TEMPLATE_RELEASE: Pick<
   ServiceTemplate,
   'hash' | 'service_version' | 'agent_release'
 > = {
-  hash: 'bafybeigmbbwop5kwe577qiscmawha3gidp25g3jdh7lvo4qczhvufosiny',
-  service_version: 'v0.12.13-rc1',
+  hash: 'bafybeibtsriszaofawukgtwxtp2cts34yxvljmctbxa63uw3pas57vgtn4',
+  service_version: 'v0.12.13',
   agent_release: {
     is_aea: true,
     repository: {
       owner: 'valory-xyz',
       name: 'optimus',
-      version: 'v0.12.13-rc1',
+      version: 'v0.12.13',
     },
   },
 };
