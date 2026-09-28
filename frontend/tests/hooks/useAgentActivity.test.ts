@@ -27,9 +27,52 @@ jest.mock('../../hooks/useServices', () => ({
   useServices: () => mockUseServices(),
 }));
 
+const setPayload = ({
+  deploymentStatus = MiddlewareDeploymentStatusMap.DEPLOYED,
+  deploymentDetails,
+}: {
+  deploymentStatus?: MiddlewareDeploymentStatus;
+  deploymentDetails: ReturnType<typeof makeServiceDeployment>;
+}) =>
+  mockUseServices.mockReturnValue({
+    selectedService: makeService({ deploymentStatus }),
+    deploymentDetails,
+  });
+
+/** Thin wrapper over the shared factories; `liveness: null` omits the object. */
+const renderWith = ({
+  health = {},
+  liveness = {},
+  deploymentStatus,
+}: {
+  health?: Parameters<typeof makeAgentHealthCheck>[0];
+  liveness?: Parameters<typeof makeAgentLiveness>[0] | null;
+  deploymentStatus?: MiddlewareDeploymentStatus;
+} = {}) => {
+  setPayload({
+    deploymentStatus,
+    deploymentDetails: makeServiceDeployment({
+      healthcheck: makeAgentHealthCheck(health),
+      agent_liveness:
+        liveness === null ? undefined : makeAgentLiveness(liveness),
+    }),
+  });
+  return renderHook(() => useAgentActivity());
+};
+
+/** The reported incident: unhealthy, no transition for five minutes. */
+const STALLED = {
+  is_healthy: false,
+  seconds_since_last_transition: 300,
+} as const;
+
 describe('useAgentActivity', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   it('returns isServiceRunning=true when deployment status is DEPLOYED', () => {
@@ -141,30 +184,13 @@ describe('useAgentActivity', () => {
   });
 
   describe('agent liveness', () => {
-    const renderWithLiveness = (
-      liveness: Parameters<typeof makeAgentLiveness>[0] | null,
-    ) => {
-      mockUseServices.mockReturnValue({
-        selectedService: makeService({
-          deploymentStatus: MiddlewareDeploymentStatusMap.DEPLOYED,
-        }),
-        deploymentDetails:
-          liveness === null
-            ? mockDeploymentDetails
-            : makeServiceDeployment({
-                agent_liveness: makeAgentLiveness(liveness),
-              }),
-      });
-      return renderHook(() => useAgentActivity());
-    };
-
     it('reports the agent inactive when the process has been gone for a while', () => {
-      // The reported symptom: an evicted agent whose process died, while the
-      // middleware still reports the deployment as DEPLOYED.
-      const { result } = renderWithLiveness({
-        is_alive: false,
-        reason: 'agent_process_exited',
-        consecutive_failures: 60,
+      const { result } = renderWith({
+        liveness: {
+          is_alive: false,
+          reason: 'agent_process_exited',
+          consecutive_failures: 60,
+        },
       });
 
       expect(result.current.isAgentActive).toBe(false);
@@ -174,236 +200,197 @@ describe('useAgentActivity', () => {
     });
 
     it('reports the agent inactive when unresponsive for a while', () => {
-      const { result } = renderWithLiveness({
-        is_alive: false,
-        reason: 'agent_unresponsive',
-        consecutive_failures: 60,
+      const { result } = renderWith({
+        liveness: {
+          is_alive: false,
+          reason: 'agent_unresponsive',
+          consecutive_failures: 60,
+        },
       });
 
       expect(result.current.isAgentActive).toBe(false);
     });
 
-    // Regression, OPE-1920 follow-up: the agent answers HTTP 425 ("Too Early")
-    // while starting up, which the middleware counts as an unhealthy probe and
-    // which flips `is_alive` false on the very first one. Believing that
-    // rendered "Agent is not running" under a "Pause" button.
+    // Regression, OPE-1920 follow-up: a starting agent answers HTTP 425, which
+    // flips `is_alive` false on the first probe. 12 failures is the longest
+    // such stretch measured on a healthy agent.
     it('does not report a starting agent down across the longest observed window', () => {
-      // 12 consecutive failures is the worst unhealthy stretch measured on a
-      // real capture for an agent that was perfectly fine (56 s of HTTP 425
-      // while it started). An earlier floor of 12 would have tripped on it.
-      const { result } = renderWithLiveness({
-        is_alive: false,
-        reason: 'agent_unresponsive',
-        consecutive_failures: 12,
+      const { result } = renderWith({
+        liveness: {
+          is_alive: false,
+          reason: 'agent_unresponsive',
+          consecutive_failures: 12,
+        },
       });
 
       expect(result.current.isAgentActive).toBe(true);
     });
 
-    it('does not report down on a single failed probe', () => {
-      const { result } = renderWithLiveness({
-        is_alive: false,
-        reason: 'agent_process_exited',
-        consecutive_failures: 1,
+    it.each([
+      ['one short of the floor', 29, true],
+      ['exactly at the floor', 30, false],
+    ])(
+      'applies the failure floor %s',
+      (_label, consecutiveFailures, isActive) => {
+        const { result } = renderWith({
+          liveness: {
+            is_alive: false,
+            reason: 'agent_process_exited',
+            consecutive_failures: consecutiveFailures,
+          },
+        });
+
+        expect(result.current.isAgentActive).toBe(isActive);
+      },
+    );
+
+    // Set by the middleware when it stops the service itself, so there is no
+    // streak to wait out.
+    it.each(['evicted_cannot_restake', 'stopped_by_failfast'] as const)(
+      'reports down immediately for %s',
+      (reason) => {
+        const { result } = renderWith({
+          liveness: { is_alive: false, reason, consecutive_failures: 0 },
+        });
+
+        expect(result.current.isAgentActive).toBe(false);
+      },
+    );
+
+    // Failfast deletes `healthcheck.json` and tears the deployment down while
+    // the status still reads DEPLOYED: empty rounds, restarts at the limit.
+    it('does not report a failfast-stopped agent as restarting', () => {
+      const { result } = renderWith({
+        health: { rounds: [] },
+        liveness: {
+          is_alive: false,
+          reason: 'stopped_by_failfast',
+          consecutive_failures: 0,
+          restarts_since_last_healthy: 5,
+        },
       });
 
-      expect(result.current.isAgentActive).toBe(true);
+      expect(result.current.isAgentRedeploying).toBe(false);
     });
 
-    // Not probe-derived — the middleware stopped the service itself because it
-    // could not clear an on-chain eviction, so there is nothing to wait out.
-    it('reports down immediately for an uncleared eviction', () => {
-      const { result } = renderWithLiveness({
-        is_alive: false,
-        reason: 'evicted_cannot_restake',
-        consecutive_failures: 0,
-      });
-
-      expect(result.current.isAgentActive).toBe(false);
-    });
-
-    // The middleware reports `not_monitored` when it holds no health-check
-    // record and its PID-name probe misses — unknown, not dead.
     it('treats not_monitored as unknown, however many probes failed', () => {
-      const { result } = renderWithLiveness({
-        is_alive: false,
-        reason: 'not_monitored',
-        consecutive_failures: 60,
+      const { result } = renderWith({
+        liveness: {
+          is_alive: false,
+          reason: 'not_monitored',
+          consecutive_failures: 60,
+        },
       });
 
       expect(result.current.isAgentActive).toBe(true);
     });
 
     it('returns isAgentActive=true when DEPLOYED and the agent is alive', () => {
-      const { result } = renderWithLiveness({});
+      const { result } = renderWith();
 
       expect(result.current.isAgentActive).toBe(true);
     });
 
+    // Older middleware omits `agent_liveness`; absent means unknown.
     it('treats absent liveness as unknown, not as not-alive', () => {
-      // Pearl ships against older middleware builds. Inverting this default
-      // would read "Agent is not running" for every healthy agent.
-      const { result } = renderWithLiveness(null);
+      const { result } = renderWith({ liveness: null });
 
       expect(result.current.isAgentActive).toBe(true);
     });
   });
 
   describe('stall derivation', () => {
-    // Thin wrappers over the shared factory: only the health fields a case
-    // turns on are named, everything else stays the factory's default.
-    // `setHealth` is separate from `renderWithHealth` so that a case can feed
-    // a *second* payload to the *same* hook instance — which is the only way
-    // to exercise the verdict held across the band between the two bars.
-    const setHealth = (
-      health: Parameters<typeof makeAgentHealthCheck>[0] = {},
-      { isAlive = true }: { isAlive?: boolean } = {},
-    ) => {
-      mockUseServices.mockReturnValue({
-        selectedService: makeService({
-          deploymentStatus: MiddlewareDeploymentStatusMap.DEPLOYED,
-        }),
-        deploymentDetails: makeServiceDeployment({
-          healthcheck: makeAgentHealthCheck(health),
-          agent_liveness: makeAgentLiveness(
-            isAlive
-              ? {}
-              : {
-                  is_alive: false,
-                  reason: 'agent_process_exited',
-                  consecutive_failures: 60,
-                },
-          ),
-        }),
-      });
-    };
-
-    const renderWithHealth = (
-      ...args: Parameters<typeof setHealth>
-    ): ReturnType<
-      typeof renderHook<ReturnType<typeof useAgentActivity>, never>
-    > => {
-      setHealth(...args);
-      return renderHook(() => useAgentActivity());
-    };
-
     describe('the threshold reads the service its own pause duration', () => {
-      // Polystrat pauses 90 s between trading cycles, so 95 s of dwell is a
-      // legitimate pause, not a stall. Pair this with the case below — a flat
-      // 120 s threshold also passes this one.
+      // Polystrat pauses 90 s between cycles: 95 s of dwell is a pause.
       it('does not flag a Polystrat agent inside its own reset pause', () => {
-        const { result } = renderWithHealth({
-          reset_pause_duration: 90,
-          seconds_since_last_transition: 95,
+        const { result } = renderWith({
+          health: {
+            ...STALLED,
+            reset_pause_duration: 90,
+            seconds_since_last_transition: 95,
+          },
         });
 
         expect(result.current.isAgentStalled).toBe(false);
       });
 
-      // Omenstrat pauses 30 s, so its threshold is the 2-minute floor rather
-      // than `reset_pause_duration + margin` (60 s).
-      //
-      // NOTE(OPE-1941): the technical scope is internally inconsistent here.
-      // Its hard-constraint list, its Section 5 and 7 prose and the
-      // reviewer's recorded Q4 answer all give the rule as
-      // `max(2 * ONE_MINUTE_INTERVAL, reset_pause_duration + margin)`, which
-      // cannot produce a threshold below 120 s and so cannot stall at 95 s.
-      // Its Section 9 test brief asks for the opposite — that this case *does*
-      // stall, "which a flat 120 s threshold fails". Implemented per the
-      // hard constraint, which is the decided rule and is stated four times;
-      // this test pins what that rule actually does. Flagged for a human: if
-      // the floor is meant to be a per-service value rather than a floor, both
-      // this test and the constant change together.
+      // Omenstrat pauses 30 s; the 2-minute floor still applies.
       it('holds a short-pause agent to the two-minute floor', () => {
-        const { result } = renderWithHealth({
-          reset_pause_duration: 30,
-          seconds_since_last_transition: 95,
+        const { result } = renderWith({
+          health: {
+            ...STALLED,
+            reset_pause_duration: 30,
+            seconds_since_last_transition: 95,
+          },
         });
 
         expect(result.current.isAgentStalled).toBe(false);
       });
 
-      // The case that distinguishes reading the field from hardcoding 120 s:
-      // a template raising RESET_PAUSE_DURATION past the floor must widen the
-      // bar, not flag the agent for every one of its normal pauses.
       it('widens the bar for a service whose pause exceeds the floor', () => {
-        const { result } = renderWithHealth({
-          reset_pause_duration: 300,
-          seconds_since_last_transition: 290,
+        const { result } = renderWith({
+          health: {
+            ...STALLED,
+            reset_pause_duration: 300,
+            seconds_since_last_transition: 290,
+          },
         });
 
         expect(result.current.isAgentStalled).toBe(false);
         expect(result.current.agentHealth.announceThresholdMs).toBe(330_000);
       });
+
+      it.each([
+        ['at the bar', 120, false],
+        ['just past the bar', 121, true],
+      ])('treats a dwell %s', (_label, dwell, isStalled) => {
+        const { result } = renderWith({
+          health: { ...STALLED, seconds_since_last_transition: dwell },
+        });
+
+        expect(result.current.isAgentStalled).toBe(isStalled);
+      });
     });
 
-    it('does not flag a healthy agent that is transitioning', () => {
-      const { result } = renderWithHealth({
-        rounds: ['polymarket_fetch_market_round'],
-        seconds_since_last_transition: 17,
+    // The ticket's own healthy run had a legitimate 16.5 s round.
+    it('does not flag a slow round below the threshold', () => {
+      const { result } = renderWith({
+        health: {
+          ...STALLED,
+          rounds: ['polymarket_fetch_market_round'],
+          seconds_since_last_transition: 17,
+        },
       });
 
       expect(result.current.isAgentStalled).toBe(false);
     });
 
-    // The reported incident: unhealthy, Tendermint fine, no transition for
-    // five minutes, while the strip rendered the frozen round list.
-    it('flags an agent that has not transitioned past the threshold', () => {
-      const { result } = renderWithHealth({
-        is_healthy: false,
-        is_tm_healthy: true,
-        is_transitioning_fast: false,
-        rounds: ['polymarket_fetch_market_round'],
-        seconds_since_last_transition: 300,
-      });
-
-      expect(result.current.isAgentStalled).toBe(true);
-    });
-
-    // Trader computes `is_healthy = is_transitioning_fast or
-    // waiting_for_a_mech_response`. One case per arm, so the pair the hook
-    // reads as a mech wait cannot drift from that formula unnoticed.
+    // One case per arm of trader's `is_healthy = is_transitioning_fast or
+    // waiting_for_a_mech_response`.
     describe('mech wait', () => {
-      // Since trader v0.40.12 `is_transitioning_fast` holds for dwell up to
-      // ~700 s, so a healthy report must not be what suppresses a stall.
-      it('flags a stall the agent still reports healthy while transitioning fast', () => {
-        const { result } = renderWithHealth({
-          is_healthy: true,
-          is_transitioning_fast: true,
-          seconds_since_last_transition: 300,
-        });
+      it.each([
+        ['healthy and transitioning fast', true, true, true],
+        ['healthy but not transitioning fast (mech wait)', true, false, false],
+        ['unhealthy and not transitioning fast', false, false, true],
+      ])(
+        'past the bar, %s',
+        (_label, isHealthy, isTransitioningFast, isStalled) => {
+          const { result } = renderWith({
+            health: {
+              is_healthy: isHealthy,
+              is_transitioning_fast: isTransitioningFast,
+              seconds_since_last_transition: 300,
+            },
+          });
 
-        expect(result.current.isAgentStalled).toBe(true);
-      });
-
-      it('does not flag an agent waiting on a mech response', () => {
-        const { result } = renderWithHealth({
-          is_healthy: true,
-          is_transitioning_fast: false,
-          seconds_since_last_transition: 300,
-        });
-
-        expect(result.current.isAgentStalled).toBe(false);
-      });
-
-      it('flags an unhealthy agent that is not transitioning fast', () => {
-        const { result } = renderWithHealth({
-          is_healthy: false,
-          is_transitioning_fast: false,
-          seconds_since_last_transition: 300,
-        });
-
-        expect(result.current.isAgentStalled).toBe(true);
-      });
+          expect(result.current.isAgentStalled).toBe(isStalled);
+        },
+      );
     });
 
-    // A wedged Tendermint is a different fault with the same dwell. The
-    // verdict is the same; the fields are what let a consumer say so.
     it('exposes the fields that separate a wedged agent from a stalled one', () => {
-      const { result } = renderWithHealth({
-        is_healthy: false,
-        is_tm_healthy: false,
-        seconds_since_last_transition: 300,
+      const { result } = renderWith({
+        health: { ...STALLED, is_tm_healthy: false },
       });
 
       expect(result.current.isAgentStalled).toBe(true);
@@ -412,153 +399,128 @@ describe('useAgentActivity', () => {
       expect(result.current.agentHealth.secondsSinceLastTransition).toBe(300);
     });
 
-    // The ticket's own healthy run had a legitimate 16.5 s round.
-    it('does not flag a slow round below the threshold', () => {
-      const { result } = renderWithHealth({
-        is_healthy: false,
-        seconds_since_last_transition: 17,
+    // "Not running" is the stronger claim, so the hook resolves the precedence
+    // and no consumer can render both.
+    it('does not flag a stall while liveness reports the process down', () => {
+      const { result } = renderWith({
+        health: STALLED,
+        liveness: {
+          is_alive: false,
+          reason: 'agent_process_exited',
+          consecutive_failures: 60,
+        },
       });
 
       expect(result.current.isAgentStalled).toBe(false);
-    });
-
-    // The verdict is independent of `agent_liveness`, which is what keeps it
-    // reachable. The probe failures that make up a stall are the same ones
-    // that drive `is_alive` false -- at the pinned middleware an HTTP 200
-    // answer carrying `is_healthy: false` is a failed probe just like an
-    // unreachable port -- so gating on liveness would have retired the verdict
-    // at ~150 s of continuous stall, and left it unreachable altogether for a
-    // service whose pause pushes its threshold past that. A consumer
-    // rendering both resolves the precedence itself.
-    it('still flags a stall while liveness reports the process down', () => {
-      const { result } = renderWithHealth(
-        { seconds_since_last_transition: 300 },
-        { isAlive: false },
-      );
-
-      expect(result.current.isAgentStalled).toBe(true);
       expect(result.current.isAgentActive).toBe(false);
     });
 
-    // The genuinely dead agent is excluded by the freshness guard rather than
-    // by liveness: it stops answering, so the middleware stops rewriting
-    // `healthcheck.json` and every field on it -- the dwell included -- ages.
-    it('does not flag a stall from a healthcheck older than the bar', () => {
-      const { result } = renderWithHealth({
-        seconds_since_last_transition: 300,
-        age_seconds: 200,
-      });
-
-      expect(result.current.isAgentStalled).toBe(false);
-    });
-
-    // The incident's own shape: `/healthcheck` stops answering mid-round, so
-    // the last body written holds the small dwell taken just after the round
-    // started. Believing it would keep the strip reporting normal operation
-    // for the whole outage -- which is what the operator watched it do.
-    it('does not flag a stall from a stale payload holding a small dwell', () => {
-      const { result } = renderWithHealth({
-        seconds_since_last_transition: 4,
-        age_seconds: 300,
-      });
-
-      expect(result.current.isAgentStalled).toBe(false);
-    });
-
-    // A reading taken within the bar still describes the window being judged.
-    it('flags a stall from a reading younger than the bar', () => {
-      const { result } = renderWithHealth({
-        seconds_since_last_transition: 300,
-        age_seconds: 5,
-      });
-
-      expect(result.current.isAgentStalled).toBe(true);
-    });
-
-    // Middleware older than 0.15.40 omits `age_seconds`. Reading its absence
-    // as "stale" would disable the derivation outright on those builds.
-    it('treats a missing age as fresh rather than as stale', () => {
-      const { result } = renderWithHealth({
-        seconds_since_last_transition: 300,
-        age_seconds: undefined,
-      });
-
-      expect(result.current.isAgentStalled).toBe(true);
-    });
-
-    describe('clearing', () => {
-      it('clears once the agent transitions again', () => {
-        const { result, rerender } = renderWithHealth({
-          seconds_since_last_transition: 300,
+    describe('healthcheck age', () => {
+      it.each([
+        ['younger than the bar', 5, true],
+        ['exactly at the bar', 120, true],
+        ['just past the bar', 121, false],
+      ])('a reading %s', (_label, age, isStalled) => {
+        const { result } = renderWith({
+          health: { ...STALLED, age_seconds: age },
         });
-        expect(result.current.isAgentStalled).toBe(true);
 
-        setHealth({ seconds_since_last_transition: 2 });
-        rerender();
+        expect(result.current.isAgentStalled).toBe(isStalled);
+      });
+
+      // The incident's own shape: `/healthcheck` stops answering mid-round, so
+      // the last body written holds a small dwell.
+      it('does not flag a stall from a stale payload holding a small dwell', () => {
+        const { result } = renderWith({
+          health: {
+            ...STALLED,
+            seconds_since_last_transition: 4,
+            age_seconds: 300,
+          },
+        });
 
         expect(result.current.isAgentStalled).toBe(false);
       });
 
-      // The verdict carries nothing over from the previous payload. This is
-      // what lets two surfaces read the hook independently and still agree:
-      // an alert mounted mid-stall and a strip mounted before it see the same
-      // answer, because the answer is a function of the payload and nothing
-      // else.
-      //
-      // NOTE(OPE-1941): the technical scope also specifies a second, lower
-      // bar — "clear after THIRTY_SECONDS_INTERVAL of continuous health" —
-      // which is not implemented, because it cannot be as specified. Holding a
-      // verdict across payloads needs state; per-hook-instance state lets the
-      // two surfaces disagree, which the scope forbids as a hard constraint,
-      // and the shared state that would fix it is a new provider, which the
-      // scope also rules out. Left for a human: in practice dwell has to climb
-      // back over the announce bar before the indicator can return, so the
-      // shortest possible cycle is already ~2 minutes, not a flicker.
-      it('carries nothing over from the previous payload', () => {
-        const { result, rerender } = renderWithHealth({
-          seconds_since_last_transition: 300,
+      it('treats a missing age as fresh rather than as stale', () => {
+        const { result } = renderWith({
+          health: { ...STALLED, age_seconds: undefined },
         });
+
         expect(result.current.isAgentStalled).toBe(true);
-
-        setHealth({ seconds_since_last_transition: 60 });
-        rerender();
-
-        expect(result.current.isAgentStalled).toBe(false);
-
-        const fresh = renderWithHealth({ seconds_since_last_transition: 60 });
-        expect(fresh.result.current.isAgentStalled).toBe(false);
       });
     });
 
-    // `agentHealth` is the only non-primitive this hook builds itself, so it is
-    // the only one a consumer can accidentally put in a dependency array and
-    // get a memo that never memoises.
-    it('keeps agentHealth referentially stable across renders', () => {
-      const { result, rerender } = renderWithHealth({
-        seconds_since_last_transition: 300,
+    it.each([
+      ['an empty body', {}],
+      ['an error body', { error: 'Error reading healthcheck.json' }],
+    ])('degrades %s to no stall', (_label, body) => {
+      jest.spyOn(console, 'error').mockImplementation(() => {});
+      setPayload({
+        deploymentDetails: makeServiceDeployment({ healthcheck: body }),
       });
+      const { result } = renderHook(() => useAgentActivity());
+
+      expect(result.current.isAgentStalled).toBe(false);
+    });
+
+    it('logs an unreadable healthcheck', () => {
+      const consoleError = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
+      setPayload({
+        deploymentDetails: makeServiceDeployment({
+          healthcheck: { error: 'Error reading healthcheck.json' },
+        }),
+      });
+      renderHook(() => useAgentActivity());
+
+      expect(consoleError).toHaveBeenCalledWith(
+        'Agent healthcheck unreadable:',
+        'Error reading healthcheck.json',
+      );
+    });
+
+    // Pure function of the payload, so two surfaces reading the hook agree.
+    it('clears once the agent transitions again, carrying nothing over', () => {
+      const { result, rerender } = renderWith({ health: STALLED });
+      expect(result.current.isAgentStalled).toBe(true);
+
+      setPayload({
+        deploymentDetails: makeServiceDeployment({
+          healthcheck: makeAgentHealthCheck({
+            ...STALLED,
+            seconds_since_last_transition: 60,
+          }),
+        }),
+      });
+      rerender();
+
+      expect(result.current.isAgentStalled).toBe(false);
+    });
+
+    // Every poll carries a fresh `healthcheck` object (its `age_seconds` is
+    // recomputed per request), so stability must survive an equal new payload.
+    it('keeps agentHealth referentially stable across equal payloads', () => {
+      const { result, rerender } = renderWith({ health: STALLED });
       const first = result.current.agentHealth;
 
+      setPayload({
+        deploymentDetails: makeServiceDeployment({
+          healthcheck: makeAgentHealthCheck({ ...STALLED, age_seconds: 5 }),
+          agent_liveness: makeAgentLiveness(),
+        }),
+      });
       rerender();
 
       expect(result.current.agentHealth).toBe(first);
     });
 
-    // The query carrying the healthcheck polls at 5 s, 15 s or 50 s with a
-    // deployment active, 15/45/150 s without one, and stops entirely when it
-    // is not in a `success` state. The verdict must be a function of the
-    // payload alone — this is the guard against anyone reintroducing a poll
-    // counter, and the no-re-render case is the one that would catch it.
-    it.each([
-      ['one render', 1],
-      ['a few renders', 2],
-      ['many renders', 12],
-    ])(
-      'reaches the same verdict from the same payload (%s)',
-      (_label, renders) => {
-        const { result, rerender } = renderWithHealth({
-          seconds_since_last_transition: 300,
-        });
+    // Guards against a poll counter: the verdict must not depend on renders.
+    it.each([1, 2, 12])(
+      'reaches the same verdict from the same payload after %i render(s)',
+      (renders) => {
+        const { result, rerender } = renderWith({ health: STALLED });
 
         for (let i = 1; i < renders; i += 1) rerender();
 
@@ -567,38 +529,15 @@ describe('useAgentActivity', () => {
     );
   });
 
-  // The middleware's own name for this condition, incoming from
-  // `olas-operate-middleware#481`: the agent answered the probe, promptly and
-  // well-formed, and reported itself unhealthy. It is the one reason in that
-  // vocabulary where the process is demonstrably up, so it must route to the
-  // stall treatment and never to the down treatment. Pinned now so the
-  // distinction cannot be lost when the middleware side merges.
   describe('agent_reported_unhealthy', () => {
-    const renderWithReason = (
-      liveness: Parameters<typeof makeAgentLiveness>[0],
-      health: Parameters<typeof makeAgentHealthCheck>[0] = {},
-    ) => {
-      mockUseServices.mockReturnValue({
-        selectedService: makeService({
-          deploymentStatus: MiddlewareDeploymentStatusMap.DEPLOYED,
-        }),
-        deploymentDetails: makeServiceDeployment({
-          healthcheck: makeAgentHealthCheck(health),
-          agent_liveness: makeAgentLiveness(liveness),
-        }),
-      });
-      return renderHook(() => useAgentActivity());
-    };
+    const REPORTED_UNHEALTHY = {
+      is_alive: false,
+      reason: 'agent_reported_unhealthy',
+      consecutive_failures: 60,
+    } as const;
 
-    // Section 8's constraint: the hook must return the fields it based the
-    // verdict on, never a lone derived boolean. That has to hold for this route
-    // too, or half the verdict's basis is invisible to a consumer.
     it('exposes the reason and the streak it decided from', () => {
-      const { result } = renderWithReason({
-        is_alive: false,
-        reason: 'agent_reported_unhealthy',
-        consecutive_failures: 60,
-      });
+      const { result } = renderWith({ liveness: REPORTED_UNHEALTHY });
 
       expect(result.current.agentHealth.livenessReason).toBe(
         'agent_reported_unhealthy',
@@ -607,143 +546,102 @@ describe('useAgentActivity', () => {
     });
 
     it('never reports the agent down, however many probes failed', () => {
-      const { result } = renderWithReason({
-        is_alive: false,
-        reason: 'agent_reported_unhealthy',
-        consecutive_failures: 60,
-      });
+      const { result } = renderWith({ liveness: REPORTED_UNHEALTHY });
 
       expect(result.current.isAgentActive).toBe(true);
     });
 
-    // The route that matters: the payload's own dwell is stale and small, so
-    // the dwell rule cannot see the stall. The middleware's conclusion can.
+    // The payload's own dwell is stale and small, so only this route sees it.
     it('reaches the stall verdict where a frozen dwell cannot', () => {
-      const { result } = renderWithReason(
-        {
-          is_alive: false,
-          reason: 'agent_reported_unhealthy',
-          consecutive_failures: 60,
-        },
-        { seconds_since_last_transition: 4, age_seconds: 300 },
-      );
+      const { result } = renderWith({
+        health: { seconds_since_last_transition: 4, age_seconds: 300 },
+        liveness: REPORTED_UNHEALTHY,
+      });
 
       expect(result.current.isAgentStalled).toBe(true);
     });
 
-    // The mech-wait suppressor reads the payload, which is frozen at whatever
-    // the last good probe saw. A wait that later hangs must still be announced
-    // once the middleware sees the agent answering unhealthy.
     it('is not silenced by a frozen payload from a mech wait', () => {
-      const { result } = renderWithReason(
-        {
-          is_alive: false,
-          reason: 'agent_reported_unhealthy',
-          consecutive_failures: 60,
-        },
-        {
+      const { result } = renderWith({
+        health: {
           is_healthy: true,
           is_transitioning_fast: false,
           seconds_since_last_transition: 300,
           age_seconds: 300,
         },
-      );
+        liveness: REPORTED_UNHEALTHY,
+      });
 
       expect(result.current.isAgentStalled).toBe(true);
     });
 
-    // On the same evidence floor as any other probe-derived reason: the reason
-    // flips on the *first* failed probe, and announcing five seconds into one
-    // would cry wolf on every transient blip.
-    it('does not announce on a short streak of failed probes', () => {
-      const { result } = renderWithReason({
-        is_alive: false,
-        reason: 'agent_reported_unhealthy',
-        consecutive_failures: 1,
-      });
+    it.each([
+      ['one short of the floor', 29, false],
+      ['exactly at the floor', 30, true],
+    ])(
+      'applies the failure floor %s',
+      (_label, consecutiveFailures, isStalled) => {
+        const { result } = renderWith({
+          liveness: {
+            ...REPORTED_UNHEALTHY,
+            consecutive_failures: consecutiveFailures,
+          },
+        });
 
-      expect(result.current.isAgentStalled).toBe(false);
-    });
+        expect(result.current.isAgentStalled).toBe(isStalled);
+      },
+    );
 
-    // A stopped service is not stalled, whatever a leftover record says.
     it('does not announce for a service that is not running', () => {
-      mockUseServices.mockReturnValue({
-        selectedService: makeService({
-          deploymentStatus: MiddlewareDeploymentStatusMap.STOPPED,
-        }),
-        deploymentDetails: makeServiceDeployment({
-          agent_liveness: makeAgentLiveness({
-            is_alive: false,
-            reason: 'agent_reported_unhealthy',
-            consecutive_failures: 60,
-          }),
-        }),
+      const { result } = renderWith({
+        liveness: REPORTED_UNHEALTHY,
+        deploymentStatus: MiddlewareDeploymentStatusMap.STOPPED,
       });
-
-      const { result } = renderHook(() => useAgentActivity());
 
       expect(result.current.isAgentStalled).toBe(false);
     });
   });
 
-  // The redeploy case. A middleware-forced restart leaves the deployment
-  // reporting DEPLOYED with an empty round list, which is indistinguishable
-  // from an agent that has not answered its first probe yet -- so the strip
-  // claimed "Agent is running" at the one moment it certainly was not. The
-  // restart counter is the only field that separates the two.
   describe('redeploy derivation', () => {
-    const renderWithRestarts = (
-      liveness: Parameters<typeof makeAgentLiveness>[0] | null,
-      deploymentStatus: MiddlewareDeploymentStatus = MiddlewareDeploymentStatusMap.DEPLOYED,
-    ) => {
-      mockUseServices.mockReturnValue({
-        selectedService: makeService({ deploymentStatus }),
-        deploymentDetails: makeServiceDeployment({
-          healthcheck: makeAgentHealthCheck({ rounds: [] }),
-          agent_liveness:
-            liveness === null ? undefined : makeAgentLiveness(liveness),
-        }),
-      });
-      return renderHook(() => useAgentActivity());
-    };
-
     it('reports a redeploy when the middleware has restarted the agent', () => {
-      const { result } = renderWithRestarts({
-        is_alive: false,
-        reason: 'agent_unresponsive',
-        consecutive_failures: 60,
-        restarts_since_last_healthy: 1,
+      const { result } = renderWith({
+        health: { rounds: [] },
+        liveness: {
+          is_alive: false,
+          reason: 'agent_unresponsive',
+          consecutive_failures: 12,
+          restarts_since_last_healthy: 1,
+        },
       });
 
       expect(result.current.isAgentRedeploying).toBe(true);
     });
 
-    // The ambiguity this counter resolves: same status, same empty round list,
-    // no restart behind it.
+    // Same status, same empty round list, no restart behind it.
     it('does not report a redeploy for a slow first poll', () => {
-      const { result } = renderWithRestarts({ restarts_since_last_healthy: 0 });
+      const { result } = renderWith({
+        health: { rounds: [] },
+        liveness: { restarts_since_last_healthy: 0 },
+      });
 
       expect(result.current.isAgentRedeploying).toBe(false);
     });
 
-    // Middleware older than 0.15.40 omits the field, and so does a payload
-    // with no liveness object at all. Absent must read as "no restart", not as
-    // a restart of unknown count.
     it.each([
       ['an absent counter', { restarts_since_last_healthy: undefined }],
       ['an absent liveness object', null],
     ])('does not report a redeploy from %s', (_label, liveness) => {
-      const { result } = renderWithRestarts(liveness);
+      const { result } = renderWith({ health: { rounds: [] }, liveness });
 
       expect(result.current.isAgentRedeploying).toBe(false);
     });
 
-    // A stopped service is not redeploying, and the counter survives the stop.
     it('does not report a redeploy for a service that is not running', () => {
-      const { result } = renderWithRestarts(
-        { restarts_since_last_healthy: 3 },
-        MiddlewareDeploymentStatusMap.STOPPED,
-      );
+      const { result } = renderWith({
+        health: { rounds: [] },
+        liveness: { restarts_since_last_healthy: 3 },
+        deploymentStatus: MiddlewareDeploymentStatusMap.STOPPED,
+      });
 
       expect(result.current.isAgentRedeploying).toBe(false);
     });
