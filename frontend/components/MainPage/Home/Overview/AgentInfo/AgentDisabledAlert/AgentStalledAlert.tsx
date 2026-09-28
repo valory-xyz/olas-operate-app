@@ -35,10 +35,10 @@ export const AgentStalledAlert = () => {
           </Text>
           {/*
             Deliberately promises nothing. The middleware does restart an agent
-            after 300 s of unhealthy probes today, but `valory-xyz/trader#1042`
-            makes `is_healthy` stay true for up to 700 s in the affected rounds,
-            so Pearl can show a two-minute stall with no restart coming. Copy
-            promising one would be false the moment that ships.
+            after 300 s of unhealthy probes, but since trader v0.40.12
+            (`valory-xyz/trader#1042`) `is_healthy` stays true for up to 700 s
+            in the affected rounds, so Pearl can show a two-minute stall with no
+            restart coming. Copy promising one would be false.
           */}
           <Text className="text-sm flex mt-4">
             Your agent hasn&apos;t made progress in a few minutes. You
