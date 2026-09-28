@@ -35,9 +35,6 @@ describe('AgentStalledAlert', () => {
     ).toBeInTheDocument();
   });
 
-  // It sits in the non-exclusive group of the alert ladder, so it has to hide
-  // itself: an always-rendered alert would occupy the slot for every healthy
-  // agent and mask the low-balance alerts beside it.
   it('renders nothing when the agent is progressing', () => {
     mockUseAgentActivity.mockReturnValue({ isAgentStalled: false });
     const { container } = render(<AgentStalledAlert />);
@@ -45,8 +42,6 @@ describe('AgentStalledAlert', () => {
     expect(container).toBeEmptyDOMElement();
   });
 
-  // A stall is recoverable, so it is a warning rather than an error — `error`
-  // is reserved in this repo for hard failures.
   it('renders as a warning rather than an error', () => {
     mockUseAgentActivity.mockReturnValue({ isAgentStalled: true });
     render(<AgentStalledAlert />);
@@ -54,10 +49,6 @@ describe('AgentStalledAlert', () => {
     expect(screen.getByTestId('alert')).toHaveAttribute('data-type', 'warning');
   });
 
-  // The copy must not promise an automatic restart. The middleware does restart
-  // an agent after 300 s of unhealthy probes today, but the incoming trader fix
-  // keeps `is_healthy` true for up to 700 s in the affected rounds, so Pearl can
-  // show a two-minute stall with no restart coming.
   it('promises no automatic restart', () => {
     mockUseAgentActivity.mockReturnValue({ isAgentStalled: true });
     render(<AgentStalledAlert />);

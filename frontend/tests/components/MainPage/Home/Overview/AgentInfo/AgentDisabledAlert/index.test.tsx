@@ -190,11 +190,6 @@ describe('AgentDisabledAlert', () => {
   // sits directly above this strip, so a stopped agent already shows
   // "Start agent", and auto-run recovers a running one on its own.
   describe('recoverable eviction', () => {
-    // The stall alert joins the non-exclusive group rather than taking an
-    // exclusive arm above it: a stall is transient, so an exclusive arm would
-    // either mask a blocking condition or be masked by one, and an agent that
-    // is both stalled and low on gas should say both (OPE-1941). It controls
-    // its own visibility, like the alerts beside it.
     it('renders the stall alert alongside the low-balance alerts', () => {
       setup();
 

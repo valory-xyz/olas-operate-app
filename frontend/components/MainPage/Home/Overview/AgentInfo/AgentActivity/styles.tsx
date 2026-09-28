@@ -12,6 +12,7 @@ const getContainerStylesByStatus = (status: AgentStatus) => {
   switch (status) {
     case 'loading':
     case 'activity-not-ready':
+    case 'redeploying':
       return `background: ${COLOR.PURPLE_LIGHT_2};`;
     case 'running':
       return `background: linear-gradient(180deg, ${COLOR.PURPLE_LIGHT_3} 80%, ${COLOR.PURPLE_LIGHT_4} 100%);`;
@@ -19,8 +20,6 @@ const getContainerStylesByStatus = (status: AgentStatus) => {
       return `background: ${COLOR.BG.SUCCESS.DEFAULT};`;
     case 'stalled':
       return `background: ${COLOR.BG.WARNING.DEFAULT};`;
-    case 'redeploying':
-      return `background: ${COLOR.PURPLE_LIGHT_2};`;
     default:
       return `background: ${COLOR.GRAY_4};`;
   }
@@ -57,6 +56,7 @@ const getTextStylesByStatus = (status: AgentStatus) => {
   switch (status) {
     case 'loading':
     case 'activity-not-ready':
+    case 'redeploying':
       return `
         color: ${COLOR.TEXT_INFO};
         margin: auto;
@@ -71,11 +71,6 @@ const getTextStylesByStatus = (status: AgentStatus) => {
     case 'stalled':
       return `
         color: ${COLOR.TEXT_COLOR.WARNING.DEFAULT};
-        margin: auto;
-      `;
-    case 'redeploying':
-      return `
-        color: ${COLOR.TEXT_INFO};
         margin: auto;
       `;
     default:

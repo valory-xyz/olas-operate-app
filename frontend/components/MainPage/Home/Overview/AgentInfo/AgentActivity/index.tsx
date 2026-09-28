@@ -90,11 +90,7 @@ export const AgentActivity = () => {
         return { status: 'idle', content: <IdleContent /> };
       }
 
-      // Above the `rounds` branch, because that branch is what absorbs a stall
-      // today: the round list is still there, frozen at the round the agent
-      // stopped advancing past, so the strip reports "Current action: ..." for
-      // as long as the stall lasts. Below the Connect and standby branches,
-      // which are states the agent is deliberately in and must keep precedence.
+      // Above `rounds`: a stalled agent's round list is frozen, not current.
       if (isAgentStalled) {
         return { status: 'stalled', content: "Agent isn't progressing" };
       }
@@ -114,11 +110,6 @@ export const AgentActivity = () => {
         };
       }
 
-      // No rounds yet. That is the first-poll case on a fresh start, and it is
-      // also what a middleware-forced restart looks like from here — same
-      // DEPLOYED status, same empty round list — so this branch used to claim
-      // "Agent is running" at the one moment it certainly was not. The restart
-      // counter is the only field that separates the two.
       if (isAgentRedeploying) {
         return { status: 'redeploying', content: 'Agent is restarting' };
       }

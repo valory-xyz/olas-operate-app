@@ -140,11 +140,7 @@ export const AgentDisabledAlert = () => {
       !isSelectedStakingContractDetailsLoading &&
       selectedStakingContractDetails?.availableRewards === 0;
 
-    // NOTE: Low-balance alerts, each component controls its own visibility.
-    // `AgentStalledAlert` joins them rather than taking an exclusive arm above:
-    // a stall is transient, so an exclusive arm would either mask a blocking
-    // condition or be masked by one, and an agent that is both stalled and low
-    // on gas should say both (OPE-1941).
+    // NOTE: Non-exclusive alerts, each component controls its own visibility.
     return {
       key: 'low-balance',
       content: (
