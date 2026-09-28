@@ -171,46 +171,40 @@ type RoundsInfo = Record<
   }
 >;
 
-export type AgentHealthCheck = {
+/**
+ * The agent's own healthcheck body, forwarded as-is. Every field is optional:
+ * the middleware sends `{}` before the first successful probe and
+ * `{ error }` when `healthcheck.json` cannot be read.
+ */
+export type AgentHealthCheck = Partial<{
   agent_health: Record<string, unknown>;
-  /**
-   * How long ago the middleware last wrote this object, in seconds.
-   *
-   * It rewrites `healthcheck.json` only on a probe that answered HTTP 200, so
-   * every other field here is as old as this number says. Without it a payload
-   * frozen by an agent that stopped answering is indistinguishable from a live
-   * one. Optional because middleware older than 0.15.40 omits it.
-   */
-  age_seconds?: number;
+  /** Seconds since the middleware last wrote this body (HTTP 200 probes only). */
+  age_seconds: number;
+  error: string;
   is_healthy: boolean;
   is_tm_healthy: boolean;
   is_transitioning_fast: boolean;
   period: number;
   reset_pause_duration: number;
   rounds: string[];
-  rounds_info?: RoundsInfo;
+  rounds_info: RoundsInfo;
   seconds_since_last_transition: number;
-};
+}>;
 
 /**
  * Why the middleware does not consider the agent process alive.
  *
- * `null` when `is_alive` is true. Frozen vocabulary — see the middleware's
- * `GET /api/v2/services/deployment` contract.
+ * `null` when `is_alive` is true. Mirrors the middleware's
+ * `AgentLivenessReason` enum; re-verify on every pin bump.
  */
 export type AgentLivenessReason =
   | 'agent_process_exited'
-  /**
-   * The agent answered the probe, promptly and well-formed, and reported itself
-   * unhealthy. The odd member of this set: the process is demonstrably up and
-   * serving HTTP, so it must never be rendered as "agent is not running" — it
-   * means "not making progress", which is the same condition as
-   * `useAgentActivity`'s `isAgentStalled`.
-   */
+  /** The agent answered and reported itself unhealthy, so it is up. */
   | 'agent_reported_unhealthy'
   | 'agent_unresponsive'
   | 'evicted_cannot_restake'
-  | 'not_monitored';
+  | 'not_monitored'
+  | 'stopped_by_failfast';
 
 /**
  * Whether the agent *process* is alive, as opposed to `ServiceDeployment.status`,
@@ -237,16 +231,8 @@ export type AgentLiveness = {
    */
   consecutive_failures: number;
   /**
-   * Restarts the middleware has performed since the agent last reported healthy.
-   *
-   * The only field that separates a redeploy from a slow first poll. During a
-   * middleware-forced restart the deployment still reports `DEPLOYED` while
-   * `healthcheck.rounds` is empty — which looks identical to an agent that has
-   * simply not answered its first probe yet. A non-zero count says a restart
-   * actually happened. Reset by a healthy probe, so it describes the current
-   * run only.
-   *
-   * Optional: middleware older than 0.15.40 does not send it.
+   * Restarts the middleware has performed since the agent last reported
+   * healthy; reset by a healthy probe. Optional on older middleware.
    */
   restarts_since_last_healthy?: number;
 };

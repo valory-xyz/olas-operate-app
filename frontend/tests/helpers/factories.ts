@@ -341,26 +341,17 @@ export const makeServiceStakingDetails = (
 });
 
 /**
- * The agent's own healthcheck body, as the middleware forwards it.
- *
- * Kept separate from `makeServiceDeployment` because overriding a nested
- * object on that factory replaces it wholesale: a case that wants one round
- * would otherwise silently drop all seven health fields. Defaults describe a
- * healthy agent that has just transitioned.
+ * The agent's own healthcheck body. Separate from `makeServiceDeployment`
+ * because overriding a nested object there replaces it wholesale.
  */
 export const makeAgentHealthCheck = (
   overrides: Partial<AgentHealthCheck> = {},
 ): AgentHealthCheck => ({
   agent_health: {},
-  // Written by the probe that produced this body, so a default payload is a
-  // fresh one; a case testing staleness names its own age.
   age_seconds: 0,
   is_healthy: true,
   is_tm_healthy: true,
-  // Paired with `is_healthy: true` so the default is an agent making progress.
-  // Healthy but not transitioning fast is trader's mech wait, which the stall
-  // derivation deliberately treats differently.
-  is_transitioning_fast: true,
+  is_transitioning_fast: false,
   period: 0,
   reset_pause_duration: 0,
   rounds: [],
