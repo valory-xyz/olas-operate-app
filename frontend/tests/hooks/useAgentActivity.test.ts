@@ -360,6 +360,43 @@ describe('useAgentActivity', () => {
       expect(result.current.isAgentStalled).toBe(true);
     });
 
+    // Trader computes `is_healthy = is_transitioning_fast or
+    // waiting_for_a_mech_response`. One case per arm, so the pair the hook
+    // reads as a mech wait cannot drift from that formula unnoticed.
+    describe('mech wait', () => {
+      // Since trader v0.40.12 `is_transitioning_fast` holds for dwell up to
+      // ~700 s, so a healthy report must not be what suppresses a stall.
+      it('flags a stall the agent still reports healthy while transitioning fast', () => {
+        const { result } = renderWithHealth({
+          is_healthy: true,
+          is_transitioning_fast: true,
+          seconds_since_last_transition: 300,
+        });
+
+        expect(result.current.isAgentStalled).toBe(true);
+      });
+
+      it('does not flag an agent waiting on a mech response', () => {
+        const { result } = renderWithHealth({
+          is_healthy: true,
+          is_transitioning_fast: false,
+          seconds_since_last_transition: 300,
+        });
+
+        expect(result.current.isAgentStalled).toBe(false);
+      });
+
+      it('flags an unhealthy agent that is not transitioning fast', () => {
+        const { result } = renderWithHealth({
+          is_healthy: false,
+          is_transitioning_fast: false,
+          seconds_since_last_transition: 300,
+        });
+
+        expect(result.current.isAgentStalled).toBe(true);
+      });
+    });
+
     // A wedged Tendermint is a different fault with the same dwell. The
     // verdict is the same; the fields are what let a consumer say so.
     it('exposes the fields that separate a wedged agent from a stalled one', () => {
@@ -589,6 +626,27 @@ describe('useAgentActivity', () => {
           consecutive_failures: 60,
         },
         { seconds_since_last_transition: 4, age_seconds: 300 },
+      );
+
+      expect(result.current.isAgentStalled).toBe(true);
+    });
+
+    // The mech-wait suppressor reads the payload, which is frozen at whatever
+    // the last good probe saw. A wait that later hangs must still be announced
+    // once the middleware sees the agent answering unhealthy.
+    it('is not silenced by a frozen payload from a mech wait', () => {
+      const { result } = renderWithReason(
+        {
+          is_alive: false,
+          reason: 'agent_reported_unhealthy',
+          consecutive_failures: 60,
+        },
+        {
+          is_healthy: true,
+          is_transitioning_fast: false,
+          seconds_since_last_transition: 300,
+          age_seconds: 300,
+        },
       );
 
       expect(result.current.isAgentStalled).toBe(true);

@@ -357,7 +357,10 @@ export const makeAgentHealthCheck = (
   age_seconds: 0,
   is_healthy: true,
   is_tm_healthy: true,
-  is_transitioning_fast: false,
+  // Paired with `is_healthy: true` so the default is an agent making progress.
+  // Healthy but not transitioning fast is trader's mech wait, which the stall
+  // derivation deliberately treats differently.
+  is_transitioning_fast: true,
   period: 0,
   reset_pause_duration: 0,
   rounds: [],

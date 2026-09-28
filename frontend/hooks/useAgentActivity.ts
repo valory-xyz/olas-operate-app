@@ -109,13 +109,14 @@ export const useAgentActivity = () => {
   // operator sat through two five-minute stalls with the strip still reporting
   // "Current action: ..." from a frozen round list.
   //
-  // Keyed on dwell rather than on `is_healthy`, for two reasons. The agent
-  // reports itself unhealthy during rounds whose events carry no timeout — a
-  // trader defect, so `is_healthy: false` today means something different from
-  // what it will mean once that lands. And "has not progressed for N seconds"
-  // reads the same before and after. The individual fields are returned
-  // alongside the verdict so a consumer can still tell a stall from a wedged
-  // Tendermint, rather than being handed one opaque boolean.
+  // Keyed on dwell rather than on `is_healthy`, for two reasons. Trader before
+  // v0.40.12 reports itself unhealthy during rounds whose events carry no
+  // timeout, so `is_healthy: false` means different things across versions.
+  // And since v0.40.12 `is_healthy` stays true for dwell up to ~700 s, far
+  // past the announce bar, so it cannot mark a stall either. "Has not
+  // progressed for N seconds" reads the same on both. The individual fields
+  // are returned alongside the verdict so a consumer can still tell a stall
+  // from a wedged Tendermint, rather than being handed one opaque boolean.
   //
   // A pure function of the payload, deliberately: two surfaces are meant to
   // read this and they must never disagree with each other. Anything that
@@ -161,6 +162,21 @@ export const useAgentActivity = () => {
   const isDwellPastTheBar =
     !!healthcheck && isHealthcheckCurrent && dwellMs > announceThresholdMs;
 
+  // A mech wait is a long dwell the agent is right to sit in: it is blocked on
+  // a third party's response, and trader reports itself healthy throughout.
+  // Trader computes `is_healthy = is_transitioning_fast or
+  // waiting_for_a_mech_response`, so healthy-but-not-transitioning-fast is that
+  // wait and nothing else. Suppressing on `is_healthy` alone would silence
+  // every stall under ~700 s, which is most of the ones worth announcing.
+  //
+  // NOTE(OPE-1941): inferred from trader's formula, not from a field trader
+  // publishes. A second disjunct added to `is_healthy` would widen this
+  // silently. Only the dwell route reads it: the middleware's own verdict
+  // below means the agent answered unhealthy, which a mech wait never does.
+  const isAwaitingMechResponse =
+    healthcheck?.is_healthy === true &&
+    healthcheck.is_transitioning_fast === false;
+
   // The middleware saying so, on the same evidence floor as any other
   // probe-derived reason: the reason flips on the *first* failed probe, and
   // announcing a stall five seconds into one would cry wolf on every transient
@@ -173,7 +189,9 @@ export const useAgentActivity = () => {
     liveness.consecutive_failures >= MIN_FAILED_PROBES_TO_REPORT_DOWN;
 
   const isAgentStalled =
-    isServiceRunning && (isDwellPastTheBar || isAgentReportedNotProgressing);
+    isServiceRunning &&
+    ((isDwellPastTheBar && !isAwaitingMechResponse) ||
+      isAgentReportedNotProgressing);
 
   // Memoised because it is the only non-primitive this hook returns that React
   // Query does not keep stable for us. A consumer putting a fresh object
