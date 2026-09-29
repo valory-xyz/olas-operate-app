@@ -28,3 +28,6 @@ package = false
 # provenance we had under Poetry). Drop this only if we want to
 # opt every release into uv-managed interpreters.
 python-preference = "only-system"
+
+[tool.uv.sources]
+olas-operate-middleware = { git = "https://github.com/valory-xyz/olas-operate-middleware.git", rev = "cd8900139a335c7c2f274e80db14e238c8f16d20" }
