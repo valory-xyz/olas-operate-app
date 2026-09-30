@@ -1,6 +1,8 @@
+import { Flex } from 'antd';
 import { useEffect, useState } from 'react';
 
 import { FundingFlow } from '@/components/FundingFlow';
+import { Alert, BackButton, cardStyles } from '@/components/ui';
 import { CHAIN_CONFIG } from '@/config/chains';
 import {
   MiddlewareChain,
@@ -14,13 +16,18 @@ const SUPPORTED_CHAINS: readonly string[] = Object.values(
   SupportedMiddlewareChainMap,
 );
 
-/** The chain an insufficient-gas error named, if the caller passed one. */
-const readChain = (params: unknown): MiddlewareChain | undefined => {
+export const UNSUPPORTED_CHAIN_ERROR =
+  "Pearl can't top up the Pearl Wallet on this chain. Please contact support.";
+
+const readChain = (
+  params: unknown,
+): MiddlewareChain | 'unsupported' | undefined => {
   if (!params || typeof params !== 'object') return undefined;
   const value = (params as Record<string, unknown>).chain;
+  if (value === undefined) return undefined;
   return typeof value === 'string' && SUPPORTED_CHAINS.includes(value)
     ? (value as MiddlewareChain)
-    : undefined;
+    : 'unsupported';
 };
 
 /**
@@ -37,6 +44,16 @@ export const FundPearlWallet = () => {
   useEffect(() => {
     clearNavParams();
   }, [clearNavParams]);
+
+  // Topping up the home chain instead would leave the named chain short.
+  if (navChain === 'unsupported') {
+    return (
+      <Flex vertical gap={16} style={cardStyles}>
+        <BackButton onPrev={() => goto(PAGES.Main)} />
+        <Alert type="error" showIcon message={UNSUPPORTED_CHAIN_ERROR} />
+      </Flex>
+    );
+  }
 
   const homeChainId = selectedAgentConfig.evmHomeChainId;
   const destinationChain = navChain ?? asMiddlewareChain(homeChainId);
@@ -57,6 +74,7 @@ export const FundPearlWallet = () => {
           : undefined
       }
       onBack={() => goto(PAGES.Main)}
+      onBackToPearlWallet={() => goto(PAGES.PearlWallet)}
       onTransferCompleted={() => goto(PAGES.PearlWallet)}
     />
   );

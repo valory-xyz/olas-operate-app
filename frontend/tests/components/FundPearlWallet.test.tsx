@@ -2,7 +2,10 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 
 import { FundingFlowProps } from '../../components/FundingFlow';
-import { FundPearlWallet } from '../../components/FundPearlWallet';
+import {
+  FundPearlWallet,
+  UNSUPPORTED_CHAIN_ERROR,
+} from '../../components/FundPearlWallet';
 import { EvmChainIdMap } from '../../constants/chains';
 import { PAGES } from '../../constants/pages';
 
@@ -41,6 +44,7 @@ jest.mock('../../components/FundingFlow', () => ({
         </span>
       ))}
       <button onClick={props.onBack}>back</button>
+      <button onClick={props.onBackToPearlWallet}>back to wallet</button>
       <button onClick={props.onTransferCompleted}>done</button>
     </div>
   ),
@@ -67,10 +71,11 @@ describe('FundPearlWallet', () => {
     expect(screen.queryByTestId('token-XDAI')).toBeNull();
   });
 
-  it('ignores an unknown chain and falls back to the home chain', () => {
+  it('refuses a chain it cannot top up instead of funding the home chain', () => {
     mockNavParams = { chain: 'solana' };
     render(<FundPearlWallet />);
-    expect(screen.getByTestId('flow-chain')).toHaveTextContent('gnosis');
+    expect(screen.queryByTestId('funding-flow')).toBeNull();
+    expect(screen.getByText(UNSUPPORTED_CHAIN_ERROR)).toBeInTheDocument();
   });
 
   it('keeps the captured chain after navParams are cleared', () => {
@@ -87,6 +92,12 @@ describe('FundPearlWallet', () => {
     fireEvent.click(screen.getByText('back'));
     expect(mockGoto).toHaveBeenCalledWith(PAGES.Main);
     fireEvent.click(screen.getByText('done'));
+    expect(mockGoto).toHaveBeenCalledWith(PAGES.PearlWallet);
+  });
+
+  it('offers a way back to the Pearl Wallet before the transfer completes', () => {
+    render(<FundPearlWallet />);
+    fireEvent.click(screen.getByText('back to wallet'));
     expect(mockGoto).toHaveBeenCalledWith(PAGES.PearlWallet);
   });
 });
