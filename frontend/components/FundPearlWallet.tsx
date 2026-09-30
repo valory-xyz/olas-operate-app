@@ -5,29 +5,23 @@ import { FundingFlow } from '@/components/FundingFlow';
 import { Alert, BackButton, cardStyles } from '@/components/ui';
 import { CHAIN_CONFIG } from '@/config/chains';
 import {
-  MiddlewareChain,
+  isSupportedMiddlewareChain,
   PAGES,
-  SupportedMiddlewareChainMap,
+  SupportedMiddlewareChain,
 } from '@/constants';
 import { useMasterBalances, usePageState, useServices } from '@/hooks';
 import { asMiddlewareChain } from '@/utils/middlewareHelpers';
-
-const SUPPORTED_CHAINS: readonly string[] = Object.values(
-  SupportedMiddlewareChainMap,
-);
 
 export const UNSUPPORTED_CHAIN_ERROR =
   "Pearl can't top up the Pearl Wallet on this chain. Please contact support.";
 
 const readChain = (
   params: unknown,
-): MiddlewareChain | 'unsupported' | undefined => {
+): SupportedMiddlewareChain | 'unsupported' | undefined => {
   if (!params || typeof params !== 'object') return undefined;
   const value = (params as Record<string, unknown>).chain;
   if (value === undefined) return undefined;
-  return typeof value === 'string' && SUPPORTED_CHAINS.includes(value)
-    ? (value as MiddlewareChain)
-    : 'unsupported';
+  return isSupportedMiddlewareChain(value) ? value : 'unsupported';
 };
 
 /**

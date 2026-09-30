@@ -11,6 +11,7 @@ import {
   CHAIN_IMAGE_MAP,
   EvmChainIdMap,
   EvmChainName,
+  isSupportedMiddlewareChain,
   MiddlewareChainMap,
   SupportedMiddlewareChainMap,
 } from '../../constants/chains';
@@ -166,6 +167,18 @@ describe('SupportedMiddlewareChainMap', () => {
     for (const value of Object.values(SupportedMiddlewareChainMap)) {
       expect(middlewareValues.has(value)).toBe(true);
     }
+  });
+});
+
+describe('isSupportedMiddlewareChain', () => {
+  it('accepts an agent-supported chain', () => {
+    expect(isSupportedMiddlewareChain('polygon')).toBe(true);
+  });
+
+  it('rejects a source-only chain, an unknown string and a non-string', () => {
+    expect(isSupportedMiddlewareChain('arbitrum_one')).toBe(false);
+    expect(isSupportedMiddlewareChain('celo')).toBe(false);
+    expect(isSupportedMiddlewareChain(137)).toBe(false);
   });
 });
 

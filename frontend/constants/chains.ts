@@ -67,6 +67,15 @@ export type SupportedMiddlewareChain = ValueOf<
   typeof SupportedMiddlewareChainMap
 >;
 
+const SUPPORTED_MIDDLEWARE_CHAINS: readonly unknown[] = Object.values(
+  SupportedMiddlewareChainMap,
+);
+
+export const isSupportedMiddlewareChain = (
+  value: unknown,
+): value is SupportedMiddlewareChain =>
+  SUPPORTED_MIDDLEWARE_CHAINS.includes(value);
+
 export const CHAIN_IMAGE_MAP = {
   [AllEvmChainIdMap.Ethereum]: '/chains/ethereum-chain.png',
   [EvmChainIdMap.Gnosis]: '/chains/gnosis-chain.png',
