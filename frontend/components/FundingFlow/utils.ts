@@ -105,8 +105,7 @@ export const isRunProcessing = (run: FundingRun) => {
   return phase === 'processing' || phase === 'completed';
 };
 
-export const isRunLive = (run: FundingRun | null): run is FundingRun => {
-  if (!run) return false;
+export const isRunLive = (run: FundingRun) => {
   const phase = getRunPhase(run);
   return phase === 'editable' || phase === 'processing';
 };

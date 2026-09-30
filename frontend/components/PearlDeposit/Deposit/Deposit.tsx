@@ -120,7 +120,7 @@ const getContinueTooltip = (
 
 export const Deposit = ({ onBack, onContinue }: DepositProps) => {
   const { activeRun } = useFundingRun();
-  const liveRun = isRunLive(activeRun) ? activeRun : null;
+  const liveRun = activeRun && isRunLive(activeRun) ? activeRun : null;
   const {
     onDepositAmountChange,
     amountsToDeposit,

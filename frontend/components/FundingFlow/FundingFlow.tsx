@@ -125,7 +125,9 @@ export const FundingFlow = (props: FundingFlowProps) => {
   } = useFundingRun();
 
   const seenLiveRunIds = useRef(new Set<string>());
-  if (isRunLive(activeRun)) seenLiveRunIds.current.add(activeRun.id);
+  if (activeRun && isRunLive(activeRun)) {
+    seenLiveRunIds.current.add(activeRun.id);
+  }
   const run = resolveDisplayedRun(activeRun, mode, seenLiveRunIds.current);
 
   const [step, setStep] = useState<SelectionStep | null>(null);

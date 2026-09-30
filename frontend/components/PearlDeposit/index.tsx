@@ -6,16 +6,11 @@ import { TOKEN_CONFIG } from '@/config/tokens';
 import { AddressZero } from '@/constants';
 import { usePearlWallet } from '@/context/PearlWalletProvider';
 import { useFundingRun } from '@/hooks';
-import { Address, TokenAmounts, ValueOf } from '@/types';
+import { Address, TokenAmounts } from '@/types';
 import { asMiddlewareChain, parseUnits } from '@/utils';
 
 import { Deposit } from './Deposit/Deposit';
 import { getNetDepositAmounts } from './utils';
-
-const PEARL_DEPOSIT_STEPS = {
-  DEPOSIT: 'DEPOSIT',
-  FUNDING_FLOW: 'FUNDING_FLOW',
-} as const;
 
 type PearlDepositProps = {
   onBack: () => void;
@@ -50,43 +45,30 @@ export const PearlDeposit = ({ onBack }: PearlDepositProps) => {
   const { walletChainId, amountsToDeposit, availableAssets, gotoPearlWallet } =
     usePearlWallet();
   const { activeRun } = useFundingRun();
-  const [step, setStep] = useState<ValueOf<typeof PEARL_DEPOSIT_STEPS>>(
-    PEARL_DEPOSIT_STEPS.DEPOSIT,
+  const [isFundingFlowOpen, setIsFundingFlowOpen] = useState(false);
+
+  // A live run is resumed instead of starting a new deposit. The flow stays
+  // open once the run ends, so it can show its completion.
+  const hasLiveRun = !!activeRun && isRunLive(activeRun);
+  if (hasLiveRun && !isFundingFlowOpen) setIsFundingFlowOpen(true);
+
+  if (!isFundingFlowOpen) {
+    return (
+      <Deposit onBack={onBack} onContinue={() => setIsFundingFlowOpen(true)} />
+    );
+  }
+  if (!walletChainId) return null;
+  return (
+    <FundingFlow
+      mode="deposit"
+      depositAmounts={toDepositAmounts(walletChainId, amountsToDeposit)}
+      destinationChain={asMiddlewareChain(walletChainId)}
+      fallbackToReceive={getNetDepositAmounts(
+        amountsToDeposit,
+        availableAssets,
+      )}
+      onBack={hasLiveRun ? onBack : () => setIsFundingFlowOpen(false)}
+      onTransferCompleted={gotoPearlWallet}
+    />
   );
-
-  // A live run is resumed instead of starting a new deposit. The step stays
-  // latched once the run ends, so the flow can show its completion.
-  const hasLiveRun = isRunLive(activeRun);
-  if (hasLiveRun && step !== PEARL_DEPOSIT_STEPS.FUNDING_FLOW) {
-    setStep(PEARL_DEPOSIT_STEPS.FUNDING_FLOW);
-  }
-
-  switch (step) {
-    case PEARL_DEPOSIT_STEPS.DEPOSIT:
-      return (
-        <Deposit
-          onBack={onBack}
-          onContinue={() => setStep(PEARL_DEPOSIT_STEPS.FUNDING_FLOW)}
-        />
-      );
-    case PEARL_DEPOSIT_STEPS.FUNDING_FLOW:
-      if (!walletChainId) return null;
-      return (
-        <FundingFlow
-          mode="deposit"
-          depositAmounts={toDepositAmounts(walletChainId, amountsToDeposit)}
-          destinationChain={asMiddlewareChain(walletChainId)}
-          fallbackToReceive={getNetDepositAmounts(
-            amountsToDeposit,
-            availableAssets,
-          )}
-          onBack={
-            hasLiveRun ? onBack : () => setStep(PEARL_DEPOSIT_STEPS.DEPOSIT)
-          }
-          onTransferCompleted={gotoPearlWallet}
-        />
-      );
-    default:
-      throw new Error('Invalid step');
-  }
 };
