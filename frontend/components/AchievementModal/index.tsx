@@ -3,12 +3,17 @@ import { useEffect, useState } from 'react';
 import { useUnmount } from 'usehooks-ts';
 
 import { Modal } from '@/components/ui';
-import { AgentMap } from '@/constants';
+import { ACHIEVEMENT_TYPE, AgentMap, AgentType } from '@/constants';
 import { useServices } from '@/hooks';
+import { Achievement } from '@/types/Achievement';
+import { Nullable } from '@/types/Util';
 
 import { useCurrentAchievement } from './hooks/useCurrentAchievement';
 import { useTriggerAchievementBackgroundTasks } from './hooks/useTriggerAchievementBackgroundTasks';
-import { PolystratModalContent } from './ModalContent/Polystrat';
+import {
+  PredictionPayout,
+  PredictionPayoutAgent,
+} from './ModalContent/PredictionPayout';
 
 const ConfettiAnimation = dynamic(
   () =>
@@ -17,6 +22,19 @@ const ConfettiAnimation = dynamic(
     ),
   { ssr: false },
 );
+
+const PAYOUT_ACHIEVEMENT_TYPE_BY_AGENT: Record<
+  PredictionPayoutAgent,
+  Achievement['achievement_type']
+> = {
+  [AgentMap.PredictTrader]: ACHIEVEMENT_TYPE.OMENSTRAT_PAYOUT,
+  [AgentMap.Polystrat]: ACHIEVEMENT_TYPE.POLYSTRAT_PAYOUT,
+};
+
+const isPayoutAgent = (
+  agentType: Nullable<AgentType>,
+): agentType is PredictionPayoutAgent =>
+  !!agentType && agentType in PAYOUT_ACHIEVEMENT_TYPE_BY_AGENT;
 
 export const AchievementModal = () => {
   const { getAgentTypeFromService } = useServices();
@@ -35,24 +53,43 @@ export const AchievementModal = () => {
     currentAchievement?.serviceConfigId,
   );
 
+  const payoutAgentType =
+    isPayoutAgent(agentType) &&
+    PAYOUT_ACHIEVEMENT_TYPE_BY_AGENT[agentType] ===
+      currentAchievement?.achievement_type
+      ? agentType
+      : null;
+
   const handleClose = () => {
     markCurrentAchievementAsShown();
     setShowModal(false);
   };
 
   useEffect(() => {
-    if (!currentAchievement) return;
+    if (!currentAchievement || !agentType) return;
+
+    // Skip achievements with no content rather than opening an empty modal
+    if (!payoutAgentType) {
+      markCurrentAchievementAsShown();
+      return;
+    }
 
     triggerAchievementBackgroundTasks(currentAchievement);
     setShowModal(true);
-  }, [currentAchievement, triggerAchievementBackgroundTasks]);
+  }, [
+    currentAchievement,
+    agentType,
+    payoutAgentType,
+    markCurrentAchievementAsShown,
+    triggerAchievementBackgroundTasks,
+  ]);
 
   useUnmount(() => {
     setShowModal(false);
   });
 
   if (isLoading || isError) return null;
-  if (!currentAchievement || !agentType) return null;
+  if (!currentAchievement || !payoutAgentType) return null;
 
   return (
     <Modal
@@ -63,13 +100,12 @@ export const AchievementModal = () => {
       action={
         <>
           <ConfettiAnimation loop={false} />
-          {agentType === AgentMap.Polystrat ? (
-            <PolystratModalContent
-              achievement={currentAchievement}
-              onShare={handleClose}
-              areBackgroundTasksFinalized={areBackgroundTasksFinalized}
-            />
-          ) : null}
+          <PredictionPayout
+            agentType={payoutAgentType}
+            achievement={currentAchievement}
+            onShare={handleClose}
+            areBackgroundTasksFinalized={areBackgroundTasksFinalized}
+          />
         </>
       }
     />

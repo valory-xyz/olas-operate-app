@@ -5,8 +5,10 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { LuSquareArrowOutUpRight } from 'react-icons/lu';
 import styled from 'styled-components';
 
+import { AGENT_CONFIG } from '@/config/agents';
 import {
   type AchievementAgent,
+  AgentMap,
   COLOR,
   EXPLORER_URL_BY_MIDDLEWARE_CHAIN,
   NA,
@@ -14,10 +16,7 @@ import {
 import { Achievement } from '@/types/Achievement';
 import { formatAmountNormalized } from '@/utils';
 
-import {
-  generateXIntentUrl,
-  getPredictWebsiteAchievementUrl,
-} from '../../utils';
+import { generateXIntentUrl, getPredictWebsiteAchievementUrl } from '../utils';
 
 const { Title, Text } = Typography;
 
@@ -35,8 +34,12 @@ const StatsWrapper = styled(Flex)`
   border-top: 1px dashed ${COLOR.GRAY_3};
 `;
 
-const getTransactionUrl = (hash?: string) =>
-  `${EXPLORER_URL_BY_MIDDLEWARE_CHAIN['polygon']}/tx/${hash}`;
+export type PredictionPayoutAgent =
+  | typeof AgentMap.PredictTrader
+  | typeof AgentMap.Polystrat;
+
+const getTransactionUrl = (agentType: PredictionPayoutAgent, hash: string) =>
+  `${EXPLORER_URL_BY_MIDDLEWARE_CHAIN[AGENT_CONFIG[agentType].middlewareHomeChainId]}/tx/${hash}`;
 
 type StatColumnProps = {
   label: string;
@@ -54,17 +57,19 @@ const StatColumn = ({ label, value }: StatColumnProps) => {
   );
 };
 
-type PolystratModalContentProps = {
+type PredictionPayoutProps = {
+  agentType: PredictionPayoutAgent;
   achievement: Achievement;
   onShare?: () => void;
   areBackgroundTasksFinalized: boolean;
 };
 
-export const PolystratPayoutAchievement = ({
+export const PredictionPayout = ({
+  agentType,
   achievement,
   onShare,
   areBackgroundTasksFinalized,
-}: PolystratModalContentProps) => {
+}: PredictionPayoutProps) => {
   const [isShareReady, setIsShareReady] = useState(false);
 
   const { description = NA, achievement_type: type, data } = achievement ?? {};
@@ -102,6 +107,7 @@ export const PolystratPayoutAchievement = ({
     }
   }, [areBackgroundTasksFinalized, warmUpPredictPage]);
 
+  const agentName = AGENT_CONFIG[agentType].displayName;
   const question = market?.title ?? NA;
   const totalPayoutFormatted = isNil(totalPayout)
     ? null
@@ -136,10 +142,10 @@ export const PolystratPayoutAchievement = ({
   return (
     <Flex vertical align="center">
       <Image
-        src={'/agent-polymarket_trader-icon.png'}
+        src={`/agent-${agentType}-icon.png`}
         width={56}
         height={56}
-        alt="Polystrat"
+        alt={agentName}
         className="mb-24"
       />
 
@@ -152,7 +158,7 @@ export const PolystratPayoutAchievement = ({
       )}
 
       <Text className="text-center mb-12 text-neutral-secondary">
-        Your Polystrat made a high-return trade and collected{' '}
+        Your {agentName} made a high-return trade and collected{' '}
         <Text className="font-weight-600">{totalPayoutText}</Text>.
       </Text>
 
@@ -161,7 +167,7 @@ export const PolystratPayoutAchievement = ({
           className="flex align-center text-sm gap-6 mb-24"
           target="_blank"
           rel="noopener noreferrer"
-          href={getTransactionUrl(transaction_hash)}
+          href={getTransactionUrl(agentType, transaction_hash)}
         >
           View transaction <LuSquareArrowOutUpRight />
         </a>
