@@ -39,7 +39,7 @@ export const AgentSetupCompleteModal = ({
     <Modal
       header={<SuccessOutlined />}
       title="Setup Complete"
-      description="Your autonomous AI agent is ready to work for you."
+      description="Your AI agent is ready to work."
       closable={onDismiss !== undefined}
       onCancel={onDismiss}
       action={
