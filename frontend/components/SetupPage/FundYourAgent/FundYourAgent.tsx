@@ -1,4 +1,7 @@
+import { Flex, Skeleton } from 'antd';
+
 import { FundingFlow } from '@/components/FundingFlow';
+import { cardStyles } from '@/components/ui';
 import { SETUP_SCREEN } from '@/constants';
 import {
   useBackupSigner,
@@ -18,10 +21,20 @@ export const FundYourAgent = () => {
   const { refillTokenRequirements, resetTokenRequirements } =
     useGetRefillRequirements();
 
+  // The service is created before this screen; it is only missing while
+  // services are still loading after a restart.
+  if (!selectedService) {
+    return (
+      <Flex style={cardStyles}>
+        <Skeleton active />
+      </Flex>
+    );
+  }
+
   return (
     <FundingFlow
       mode="onboard"
-      serviceConfigId={selectedService?.service_config_id}
+      serviceConfigId={selectedService.service_config_id}
       backupOwner={backupOwner}
       destinationChain={asMiddlewareChain(selectedAgentConfig.evmHomeChainId)}
       fallbackToReceive={refillTokenRequirements}

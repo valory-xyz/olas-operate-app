@@ -75,6 +75,16 @@ describe('FundYourAgent', () => {
     ).toBeNull();
   });
 
+  it('waits for the service instead of opening a flow it could not start', () => {
+    mockUseServices.mockReturnValue({
+      selectedAgentConfig: { evmHomeChainId: EvmChainIdMap.Polygon },
+      selectedService: undefined,
+    });
+    render(<FundYourAgent />);
+
+    expect(mockFlowProps).toBeNull();
+  });
+
   it('routes back to AgentOnboarding for a no_staking agent (e.g. Connect)', () => {
     setup('no_staking');
     render(<FundYourAgent />);

@@ -910,7 +910,6 @@ export const makeFundingRunStep = (
   status: 'PENDING',
   token: FUNDING_RUN_BASE_USDC,
   amount: '15000000',
-  tx_hash: null,
   explorer_link: null,
   started_at: null,
   finished_at: null,
@@ -919,78 +918,80 @@ export const makeFundingRunStep = (
   ...overrides,
 });
 
-/** A Polystrat onboarding run funded with USDC on Base, awaiting its deposit. */
+/**
+ * A Polystrat onboarding run funded with USDC on Base, awaiting its deposit.
+ * Overrides must keep `status` and `error` consistent: a `FAILED` run needs an error.
+ */
 export const makeFundingRun = (
   overrides: Partial<FundingRun> = {},
-): FundingRun => ({
-  id: 'fr-3f2a0000-0000-4000-8000-000000000000',
-  mode: 'onboard',
-  status: 'AWAITING_DEPOSIT',
-  source: {
-    chain: 'base',
-    token: FUNDING_RUN_BASE_USDC,
-    symbol: 'USDC',
-    decimals: 6,
-    deposit_address: DEFAULT_EOA_ADDRESS,
-  },
-  destination: { chain: 'polygon', wallet: 'master_safe' },
-  quote: {
-    required_amount: '15000000',
-    received_amount: '0',
-    outstanding_amount: '15000000',
-    eta_seconds: 180,
-    quoted_at: 1790592071,
-    next_refresh_at: 1790592251,
-  },
-  quote_message: null,
-  to_receive: [
-    {
-      token: FUNDING_RUN_NATIVE,
-      symbol: 'POL',
-      amount: '6000000000000000000',
+): FundingRun =>
+  ({
+    id: 'fr-3f2a0000-0000-4000-8000-000000000000',
+    mode: 'onboard',
+    status: 'AWAITING_DEPOSIT',
+    source: {
+      chain: 'base',
+      token: FUNDING_RUN_BASE_USDC,
+      symbol: 'USDC',
+      decimals: 6,
+      deposit_address: DEFAULT_EOA_ADDRESS,
     },
-    {
-      token: FUNDING_RUN_POLYGON_OLAS,
-      symbol: 'OLAS',
-      amount: '40000000000000000000',
+    destination: { chain: 'polygon', wallet: 'master_safe' },
+    quote: {
+      required_amount: '15000000',
+      received_amount: '0',
+      outstanding_amount: '15000000',
+      quoted_at: 1790592071,
+      next_refresh_at: 1790592251,
     },
-    { token: FUNDING_RUN_POLYGON_PUSD, symbol: 'pUSD', amount: '10000000' },
-  ],
-  steps: [
-    makeFundingRunStep(),
-    makeFundingRunStep({
-      id: 'bridge',
-      kind: 'BRIDGE',
-      token: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359',
-      amount: '14800000',
-    }),
-    makeFundingRunStep({
-      id: 'native',
-      kind: 'NATIVE',
-      token: FUNDING_RUN_NATIVE,
-      amount: '6000000000000000000',
-    }),
-    makeFundingRunStep({
-      id: `swap:${FUNDING_RUN_POLYGON_OLAS}`,
-      kind: 'SWAP',
-      token: FUNDING_RUN_POLYGON_OLAS,
-      amount: '40000000000000000000',
-    }),
-    makeFundingRunStep({
-      id: 'safe',
-      kind: 'SAFE_AND_TRANSFER',
-      token: null,
-      amount: null,
-      visible: false,
-    }),
-    makeFundingRunStep({
-      id: 'clear_delegation',
-      kind: 'CLEAR_DELEGATION',
-      token: null,
-      amount: null,
-      visible: false,
-    }),
-  ],
-  error: null,
-  ...overrides,
-});
+    to_receive: [
+      {
+        token: FUNDING_RUN_NATIVE,
+        symbol: 'POL',
+        amount: '6000000000000000000',
+      },
+      {
+        token: FUNDING_RUN_POLYGON_OLAS,
+        symbol: 'OLAS',
+        amount: '40000000000000000000',
+      },
+      { token: FUNDING_RUN_POLYGON_PUSD, symbol: 'pUSD', amount: '10000000' },
+    ],
+    steps: [
+      makeFundingRunStep(),
+      makeFundingRunStep({
+        id: 'bridge',
+        kind: 'BRIDGE',
+        token: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359',
+        amount: '14800000',
+      }),
+      makeFundingRunStep({
+        id: 'native',
+        kind: 'NATIVE',
+        token: FUNDING_RUN_NATIVE,
+        amount: '6000000000000000000',
+      }),
+      makeFundingRunStep({
+        id: `swap:${FUNDING_RUN_POLYGON_OLAS}`,
+        kind: 'SWAP',
+        token: FUNDING_RUN_POLYGON_OLAS,
+        amount: '40000000000000000000',
+      }),
+      makeFundingRunStep({
+        id: 'safe',
+        kind: 'SAFE_AND_TRANSFER',
+        token: null,
+        amount: null,
+        visible: false,
+      }),
+      makeFundingRunStep({
+        id: 'clear_delegation',
+        kind: 'CLEAR_DELEGATION',
+        token: null,
+        amount: null,
+        visible: false,
+      }),
+    ],
+    error: null,
+    ...overrides,
+  }) as FundingRun;

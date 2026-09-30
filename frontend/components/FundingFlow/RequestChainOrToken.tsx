@@ -1,5 +1,5 @@
 import { Button, Flex, Input, Typography } from 'antd';
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 
 import { MiddlewareChain } from '@/constants';
 import { useMessageApi } from '@/context/MessageProvider';
@@ -23,29 +23,31 @@ type RequestChainOrTokenProps =
   | { kind: 'chain'; contextChain?: undefined; onDone: () => void }
   | { kind: 'token'; contextChain: MiddlewareChain; onDone: () => void };
 
-export const RequestChainOrToken = ({
-  kind,
-  contextChain,
-  onDone,
-}: RequestChainOrTokenProps) => {
+export const RequestChainOrToken = (props: RequestChainOrTokenProps) => {
+  const { kind, onDone } = props;
   const message = useMessageApi();
   const [requestedName, setRequestedName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const copy = REQUEST_COPY[kind];
 
-  const handleSubmit = useCallback(async () => {
+  const handleSubmit = async () => {
     const name = requestedName.trim();
     if (!name) return;
     setIsSubmitting(true);
     const submissionId = crypto.randomUUID();
     const result = await FundingRequestService.submit(
-      kind === 'chain'
-        ? { submissionId, kind, requestedName: name, contextChain: null }
+      props.kind === 'chain'
+        ? {
+            submissionId,
+            kind: 'chain',
+            requestedName: name,
+            contextChain: null,
+          }
         : {
             submissionId,
-            kind,
+            kind: 'token',
             requestedName: name,
-            contextChain: contextChain as MiddlewareChain,
+            contextChain: props.contextChain,
           },
     );
     setIsSubmitting(false);
@@ -55,7 +57,7 @@ export const RequestChainOrToken = ({
     }
     message.success(REQUEST_ACKNOWLEDGEMENT);
     onDone();
-  }, [contextChain, kind, message, onDone, requestedName]);
+  };
 
   return (
     <>
