@@ -1,5 +1,5 @@
 import { Button, Flex, Skeleton, Typography } from 'antd';
-import { useEffect, useReducer, useRef, useState } from 'react';
+import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 
 import {
   AgentSetupCompleteModal,
@@ -128,6 +128,8 @@ export const FundingFlow = (props: FundingFlowProps) => {
   if (activeRun && isRunLive(activeRun)) {
     seenLiveRunIds.current.add(activeRun.id);
   }
+  // A run this flow created counts as seen, even if it came back already COMPLETED.
+  if (createMutation.data) seenLiveRunIds.current.add(createMutation.data.id);
   const run = resolveDisplayedRun(activeRun, mode, seenLiveRunIds.current);
 
   const [step, setStep] = useState<SelectionStep | null>(null);
@@ -157,15 +159,27 @@ export const FundingFlow = (props: FundingFlowProps) => {
     [completedRunId],
   );
 
-  // Once a run replaces a failed create, the error is spent: it must not
-  // resurface if that run later stops being returned.
+  const { isError: isCreateError, reset: resetCreateMutation } = createMutation;
+  const resetCreate = useCallback(() => {
+    resetCreateMutation();
+    setPendingSelection(null);
+  }, [resetCreateMutation]);
+
+  // A different run replacing a failed create (e.g. the live run behind a 409) spends the error.
+  const runIdAtCreate = useRef<string | null>(null);
   const displayedRunId = run?.id;
-  const { isError: isCreateError, reset: resetCreate } = createMutation;
   useEffect(() => {
-    if (displayedRunId && isCreateError) resetCreate();
+    if (
+      isCreateError &&
+      displayedRunId &&
+      displayedRunId !== runIdAtCreate.current
+    ) {
+      resetCreate();
+    }
   }, [displayedRunId, isCreateError, resetCreate]);
 
   const create = (selection: Selection) => {
+    runIdAtCreate.current = run?.id ?? null;
     setPendingSelection(selection);
     setStep(null);
     createMutation.mutate(buildCreateRequest(props, selection), {
@@ -252,13 +266,13 @@ export const FundingFlow = (props: FundingFlowProps) => {
     const canChange = editable && canCreate;
     const onChangeChain = canChange
       ? () => {
-          createMutation.reset();
+          resetCreate();
           setStep('chain');
         }
       : undefined;
     const onChangeToken = canChange
       ? () => {
-          createMutation.reset();
+          resetCreate();
           setSelectedChain(selection.chain);
           setStep('token');
         }

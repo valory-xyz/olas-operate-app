@@ -47,6 +47,7 @@ type HookState = {
   activeRunError?: boolean;
   createPending?: boolean;
   createError?: Error;
+  createdRun?: FundingRun;
   sourcesLoading?: boolean;
   sourcesError?: boolean;
 };
@@ -75,6 +76,7 @@ jest.mock('../../../hooks/useFundingRun', () => ({
       isPending: !!mockHookState.createPending,
       isError: !!mockHookState.createError,
       error: mockHookState.createError ?? null,
+      data: mockHookState.createdRun,
     },
     refreshQuoteMutation: { mutate: mockRefreshQuote, isPending: false },
     retryMutation: { mutate: mockRetry, isPending: false },
@@ -140,6 +142,9 @@ const processingRun = (overrides: Partial<FundingRun> = {}) => {
 beforeEach(() => {
   jest.resetAllMocks();
   mockHookState = { activeRun: null };
+  mockCreateReset.mockImplementation(() => {
+    mockHookState = { ...mockHookState, createError: undefined };
+  });
 });
 
 describe('FundingFlow — selection', () => {
@@ -285,7 +290,7 @@ describe('FundingFlow — failures around the run', () => {
     ).toBeInTheDocument();
   });
 
-  it('clears a failed create once the live run behind it is shown', () => {
+  it('returns to chain selection once the live run behind a failed create goes away', () => {
     const { rerender } = renderFlow();
     fireEvent.click(screen.getByRole('button', { name: /Base/ }));
     fireEvent.click(screen.getByRole('button', { name: /USDC/ }));
@@ -298,8 +303,57 @@ describe('FundingFlow — failures around the run', () => {
       createError: CREATE_ERROR,
     };
     rerender(<FundingFlow {...ONBOARD_PROPS} />);
-
     expect(mockCreateReset).toHaveBeenCalledTimes(1);
+
+    mockHookState = { ...mockHookState, activeRun: null };
+    rerender(<FundingFlow {...ONBOARD_PROPS} />);
+
+    expect(
+      screen.getByText('Select the preferred chain to send funds from:'),
+    ).toBeInTheDocument();
+    expect(screen.queryByText('Getting a quote')).toBeNull();
+    expect(screen.queryByText("Couldn't get a quote")).toBeNull();
+  });
+
+  it('still shows a new create failure after an earlier one was cleared', () => {
+    const { rerender } = renderFlow();
+    fireEvent.click(screen.getByRole('button', { name: /Base/ }));
+    fireEvent.click(screen.getByRole('button', { name: /USDC/ }));
+    mockHookState = {
+      activeRun: makeFundingRun({ id: 'fr-live-then-gone' }),
+      createError: CREATE_ERROR,
+    };
+    rerender(<FundingFlow {...ONBOARD_PROPS} />);
+    mockHookState = { ...mockHookState, activeRun: null };
+    rerender(<FundingFlow {...ONBOARD_PROPS} />);
+
+    fireEvent.click(screen.getByRole('button', { name: /Optimism/ }));
+    fireEvent.click(screen.getByRole('button', { name: /ETH/ }));
+    mockHookState = { activeRun: null, createError: CREATE_ERROR };
+    rerender(<FundingFlow {...ONBOARD_PROPS} />);
+
+    expect(screen.getByText("Couldn't get a quote")).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
+  });
+
+  it('shows the failure when a Change create fails and cancels the run on screen', () => {
+    const shown = makeFundingRun({ id: 'fr-replaced-by-change' });
+    mockHookState = { activeRun: shown };
+    const { rerender } = renderFlow();
+    const [, changeToken] = screen.getAllByRole('button', { name: 'Change' });
+    fireEvent.click(changeToken);
+    fireEvent.click(screen.getByRole('button', { name: /ETH/ }));
+
+    mockHookState = { activeRun: shown, createError: CREATE_ERROR };
+    rerender(<FundingFlow {...ONBOARD_PROPS} />);
+    expect(mockCreateReset).toHaveBeenCalledTimes(1);
+
+    // The refetch finds the old run cancelled by the failed create.
+    mockHookState = { activeRun: null, createError: CREATE_ERROR };
+    rerender(<FundingFlow {...ONBOARD_PROPS} />);
+
+    expect(screen.getByText("Couldn't get a quote")).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
   });
 
   it('clears a failed create on Change, so the next selection starts clean', () => {
@@ -881,6 +935,29 @@ describe('FundingFlow — completion', () => {
     );
 
     expect(screen.getByText('Transfer Completed!')).toBeInTheDocument();
+  });
+
+  it('shows the transfer-completed modal for a run created already complete', () => {
+    const props = { mode: 'signer_gas' } as Partial<FundingFlowProps>;
+    const { rerender } = renderFlow(props);
+    fireEvent.click(screen.getByRole('button', { name: /Base/ }));
+    fireEvent.click(screen.getByRole('button', { name: /USDC/ }));
+
+    const created = makeFundingRun({
+      id: 'fr-created-complete',
+      mode: 'signer_gas',
+      status: 'COMPLETED',
+      quote: null,
+      steps: [],
+      to_receive: [],
+    });
+    mockHookState = { activeRun: created, createdRun: created };
+    rerender(
+      <FundingFlow {...({ ...ONBOARD_PROPS, ...props } as FundingFlowProps)} />,
+    );
+
+    expect(screen.getByText('Transfer Completed!')).toBeInTheDocument();
+    expect(screen.queryByText('Getting a quote')).toBeNull();
   });
 
   it('does not replay a deposit run that completed before the screen opened', () => {
