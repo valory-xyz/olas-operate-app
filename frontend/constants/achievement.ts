@@ -8,4 +8,5 @@ export type AchievementAgent =
 
 export const ACHIEVEMENT_TYPE = {
   POLYSTRAT_PAYOUT: 'polystrat/payout',
+  OMENSTRAT_PAYOUT: 'omenstrat/payout',
 } as const;
