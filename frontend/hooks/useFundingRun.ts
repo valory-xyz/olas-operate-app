@@ -1,5 +1,4 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useCallback } from 'react';
 
 import { FIVE_SECONDS_INTERVAL, REACT_QUERY_KEYS } from '@/constants';
 import { FundingRunService } from '@/service/FundingRun';
@@ -25,19 +24,19 @@ export const useFundingRun = () => {
     staleTime: Infinity,
   });
 
-  const setActiveRun = useCallback(
-    (run: FundingRun) =>
-      queryClient.setQueryData(REACT_QUERY_KEYS.FUNDING_RUN_ACTIVE_KEY, run),
-    [queryClient],
-  );
+  // Cancel any in-flight poll first, so its older response cannot overwrite
+  // the run a mutation just returned.
+  const setActiveRun = async (run: FundingRun) => {
+    await queryClient.cancelQueries({
+      queryKey: REACT_QUERY_KEYS.FUNDING_RUN_ACTIVE_KEY,
+    });
+    queryClient.setQueryData(REACT_QUERY_KEYS.FUNDING_RUN_ACTIVE_KEY, run);
+  };
 
-  const invalidateActiveRun = useCallback(
-    () =>
-      queryClient.invalidateQueries({
-        queryKey: REACT_QUERY_KEYS.FUNDING_RUN_ACTIVE_KEY,
-      }),
-    [queryClient],
-  );
+  const invalidateActiveRun = () =>
+    queryClient.invalidateQueries({
+      queryKey: REACT_QUERY_KEYS.FUNDING_RUN_ACTIVE_KEY,
+    });
 
   const createMutation = useMutation<
     FundingRun,
@@ -51,7 +50,7 @@ export const useFundingRun = () => {
   });
 
   const refreshQuoteMutation = useMutation<FundingRun, Error, string>({
-    mutationFn: (id) => FundingRunService.refreshQuote(id, true),
+    mutationFn: FundingRunService.refreshQuote,
     onSuccess: setActiveRun,
     onError: invalidateActiveRun,
   });

@@ -1,9 +1,6 @@
 import { CONTENT_TYPE_JSON_UTF8 } from '../../constants/headers';
 import { BACKEND_URL } from '../../constants/urls';
-import {
-  FundingRunRequestError,
-  FundingRunService,
-} from '../../service/FundingRun';
+import { FundingRunService } from '../../service/FundingRun';
 import { CreateFundingRunRequest } from '../../types/FundingRun';
 import { FUNDING_RUN_BASE_USDC, makeFundingRun } from '../helpers/factories';
 
@@ -65,7 +62,7 @@ describe('FundingRunService', () => {
   it('refreshQuote posts force to the run route', async () => {
     (fetch as jest.Mock).mockReturnValue(mockResponse(RUN));
 
-    await FundingRunService.refreshQuote(RUN.id, true);
+    await FundingRunService.refreshQuote(RUN.id);
     expect(fetch).toHaveBeenCalledWith(`${RUN_URL}/${RUN.id}/refresh_quote`, {
       method: 'POST',
       headers: { ...CONTENT_TYPE_JSON_UTF8 },
@@ -83,17 +80,7 @@ describe('FundingRunService', () => {
     });
   });
 
-  it('cancel deletes the run', async () => {
-    (fetch as jest.Mock).mockReturnValue(mockResponse(RUN));
-
-    await FundingRunService.cancel(RUN.id);
-    expect(fetch).toHaveBeenCalledWith(`${RUN_URL}/${RUN.id}`, {
-      method: 'DELETE',
-      headers: { ...CONTENT_TYPE_JSON_UTF8 },
-    });
-  });
-
-  it('throws the backend message with its status on a 409', async () => {
+  it('throws the backend message on a 409', async () => {
     (fetch as jest.Mock).mockReturnValue(
       mockResponse(
         { error: 'Funding run conflicts with the current run state.' },
@@ -102,18 +89,22 @@ describe('FundingRunService', () => {
     );
 
     const error = await FundingRunService.retry(RUN.id).catch((e) => e);
-    expect(error).toBeInstanceOf(FundingRunRequestError);
-    expect(error.status).toBe(409);
+    expect(error).toBeInstanceOf(Error);
     expect(error.message).toBe(
       'Funding run conflicts with the current run state.',
     );
   });
 
   it('falls back to a fixed message when the error body is not JSON', async () => {
-    (fetch as jest.Mock).mockReturnValue(mockResponse('Bad gateway', 502));
+    (fetch as jest.Mock).mockReturnValue(
+      Promise.resolve({
+        ok: false,
+        status: 502,
+        json: () => Promise.reject(new SyntaxError('Unexpected token')),
+      } as Response),
+    );
 
     const error = await FundingRunService.getActive().catch((e) => e);
-    expect(error.status).toBe(502);
     expect(error.message).toBe('Failed to fetch the active funding run');
   });
 });

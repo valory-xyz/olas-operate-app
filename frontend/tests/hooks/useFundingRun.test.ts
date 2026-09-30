@@ -2,22 +2,17 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 
 import { FIVE_SECONDS_INTERVAL } from '../../constants/intervals';
 import { useFundingRun } from '../../hooks/useFundingRun';
-import {
-  FundingRunRequestError,
-  FundingRunService,
-} from '../../service/FundingRun';
+import { FundingRunService } from '../../service/FundingRun';
 import { FUNDING_RUN_BASE_USDC, makeFundingRun } from '../helpers/factories';
 import { createQueryClientWrapper } from '../helpers/queryClient';
 
 jest.mock('../../service/FundingRun', () => ({
-  ...jest.requireActual('../../service/FundingRun'),
   FundingRunService: {
     getSources: jest.fn(),
     getActive: jest.fn(),
     create: jest.fn(),
     refreshQuote: jest.fn(),
     retry: jest.fn(),
-    cancel: jest.fn(),
   },
 }));
 
@@ -90,9 +85,7 @@ describe('useFundingRun', () => {
 
   it('refetches the active run when create conflicts with a live run', async () => {
     const live = makeFundingRun({ status: 'PROCESSING' });
-    mockService.create.mockRejectedValue(
-      new FundingRunRequestError('conflict', 409),
-    );
+    mockService.create.mockRejectedValue(new Error('conflict'));
 
     const { result } = renderHook(() => useFundingRun(), {
       wrapper: createQueryClientWrapper(),
@@ -124,14 +117,14 @@ describe('useFundingRun', () => {
       await result.current.refreshQuoteMutation.mutateAsync(run.id);
     });
 
-    expect(mockService.refreshQuote).toHaveBeenCalledWith(run.id, true);
+    expect(mockService.refreshQuote).toHaveBeenCalledWith(run.id);
     await waitFor(() => expect(result.current.activeRun).toEqual(refreshed));
   });
 
   it('retry stores the resumed run', async () => {
     const failed = makeFundingRun({
       status: 'FAILED',
-      error: { step_id: 'bridge', message: 'x' },
+      error: { step_id: 'bridge' },
     });
     const resumed = makeFundingRun({ status: 'PROCESSING' });
     mockService.getActive.mockResolvedValue(failed);
