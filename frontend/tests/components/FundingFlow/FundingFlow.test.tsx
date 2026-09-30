@@ -43,9 +43,10 @@ const SOURCES = {
 
 type HookState = {
   activeRun: FundingRun | null;
+  activeRunUnfetched?: boolean;
   activeRunError?: boolean;
   createPending?: boolean;
-  createError?: boolean;
+  createError?: Error;
   sourcesLoading?: boolean;
   sourcesError?: boolean;
 };
@@ -53,11 +54,12 @@ const mockRefetchActiveRun = jest.fn();
 const mockRefetchSources = jest.fn();
 const mockCreateReset = jest.fn();
 let mockHookState: HookState = { activeRun: null };
+const CREATE_ERROR = new Error('Failed to create the funding run');
 
 jest.mock('../../../hooks/useFundingRun', () => ({
   useFundingRun: () => ({
     activeRun: mockHookState.activeRun,
-    isActiveRunFetched: true,
+    isActiveRunFetched: !mockHookState.activeRunUnfetched,
     isActiveRunError: !!mockHookState.activeRunError,
     refetchActiveRun: mockRefetchActiveRun,
     sources:
@@ -72,6 +74,7 @@ jest.mock('../../../hooks/useFundingRun', () => ({
       reset: mockCreateReset,
       isPending: !!mockHookState.createPending,
       isError: !!mockHookState.createError,
+      error: mockHookState.createError ?? null,
     },
     refreshQuoteMutation: { mutate: mockRefreshQuote, isPending: false },
     retryMutation: { mutate: mockRetry, isPending: false },
@@ -230,7 +233,7 @@ describe('FundingFlow — failures around the run', () => {
     fireEvent.click(screen.getByRole('button', { name: /USDC/ }));
     expect(mockCreate).toHaveBeenCalledTimes(1);
 
-    mockHookState = { activeRun: null, createError: true };
+    mockHookState = { activeRun: null, createError: CREATE_ERROR };
     rerender(<FundingFlow {...ONBOARD_PROPS} />);
     expect(screen.getByText("Couldn't get a quote")).toBeInTheDocument();
 
@@ -239,22 +242,29 @@ describe('FundingFlow — failures around the run', () => {
     expect(mockCreate.mock.calls[1][0]).toEqual(mockCreate.mock.calls[0][0]);
   });
 
-  it('shows why a create failed', () => {
+  it('shows why a create failed, in a toast and in the failed panel', () => {
+    const error = new Error('Invalid deposit amounts.');
     mockCreate.mockImplementation((_request, options) =>
-      options.onError(new Error('Invalid deposit amounts.')),
+      options.onError(error),
     );
-    renderFlow();
+    const { rerender } = renderFlow();
     fireEvent.click(screen.getByRole('button', { name: /Base/ }));
     fireEvent.click(screen.getByRole('button', { name: /USDC/ }));
-
     expect(mockMessageError).toHaveBeenCalledWith('Invalid deposit amounts.');
+
+    mockHookState = { activeRun: null, createError: error };
+    rerender(<FundingFlow {...ONBOARD_PROPS} />);
+    expect(screen.getByText('Invalid deposit amounts.')).toBeInTheDocument();
+    expect(
+      screen.queryByText('Check your connection and try again.'),
+    ).toBeNull();
   });
 
   it('shows the live run found after a failed create instead of the failure', () => {
     const { rerender } = renderFlow();
     fireEvent.click(screen.getByRole('button', { name: /Base/ }));
     fireEvent.click(screen.getByRole('button', { name: /USDC/ }));
-    mockHookState = { activeRun: null, createError: true };
+    mockHookState = { activeRun: null, createError: CREATE_ERROR };
     rerender(<FundingFlow {...ONBOARD_PROPS} />);
     expect(screen.getByText("Couldn't get a quote")).toBeInTheDocument();
 
@@ -266,7 +276,7 @@ describe('FundingFlow — failures around the run', () => {
         deposit_address: '0x2222222222222222222222222222222222222222',
       },
     });
-    mockHookState = { activeRun: live, createError: true };
+    mockHookState = { activeRun: live, createError: CREATE_ERROR };
     rerender(<FundingFlow {...ONBOARD_PROPS} />);
 
     expect(screen.queryByText("Couldn't get a quote")).toBeNull();
@@ -279,7 +289,7 @@ describe('FundingFlow — failures around the run', () => {
     const { rerender } = renderFlow();
     fireEvent.click(screen.getByRole('button', { name: /Base/ }));
     fireEvent.click(screen.getByRole('button', { name: /USDC/ }));
-    mockHookState = { activeRun: null, createError: true };
+    mockHookState = { activeRun: null, createError: CREATE_ERROR };
     rerender(<FundingFlow {...ONBOARD_PROPS} />);
 
     fireEvent.click(screen.getAllByRole('button', { name: 'Change' })[0]);
@@ -338,6 +348,16 @@ describe('FundingFlow — failures around the run', () => {
     expect(mockMessageError).toHaveBeenCalledWith(
       'Funding run conflicts with the current run state.',
     );
+  });
+
+  it('shows neither selection nor a run until the active-run check finishes', () => {
+    mockHookState = { activeRun: null, activeRunUnfetched: true };
+    renderFlow();
+
+    expect(
+      screen.queryByText('Select the preferred chain to send funds from:'),
+    ).toBeNull();
+    expect(screen.queryByRole('button', { name: /Base/ })).toBeNull();
   });
 
   it('does not offer a new selection when the active run could not be checked', () => {

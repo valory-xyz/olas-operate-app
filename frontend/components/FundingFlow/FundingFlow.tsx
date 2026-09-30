@@ -281,7 +281,7 @@ export const FundingFlow = (props: FundingFlowProps) => {
         ) : (
           <QuoteAndDeposit
             run={isCreateUnresolved ? null : run}
-            isCreateError={createMutation.isError}
+            createError={createMutation.error}
             onRetryCreate={() => pendingSelection && create(pendingSelection)}
             onRefreshQuote={() =>
               run &&

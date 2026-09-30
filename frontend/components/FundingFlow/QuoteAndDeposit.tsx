@@ -66,15 +66,20 @@ const GettingQuote = () => (
   </>
 );
 
-type QuoteFailedProps = { onRetry: () => void; isRetrying: boolean };
+type QuoteFailedProps = {
+  onRetry: () => void;
+  isRetrying: boolean;
+  /** Why it failed, when known; otherwise the generic advice is shown. */
+  reason?: string;
+};
 
-const QuoteFailed = ({ onRetry, isRetrying }: QuoteFailedProps) => (
+const QuoteFailed = ({ onRetry, isRetrying, reason }: QuoteFailedProps) => (
   <>
     <Banner tone="progress">{QUOTE_COPY.gettingQuote}</Banner>
     <CardRow>
       <FailureDetails
         title={QUOTE_COPY.failedTitle}
-        description={[QUOTE_COPY.failedDescription]}
+        description={[reason || QUOTE_COPY.failedDescription]}
         onRetry={onRetry}
         isRetrying={isRetrying}
       />
@@ -109,7 +114,7 @@ type QuoteAndDepositProps = {
   /** `null` while the first run is being created. */
   run: FundingRun | null;
   /** Creating the run failed outright, before any run existed. */
-  isCreateError: boolean;
+  createError: Error | null;
   onRetryCreate: () => void;
   onRefreshQuote: () => void;
   isRefreshing: boolean;
@@ -117,7 +122,7 @@ type QuoteAndDepositProps = {
 
 export const QuoteAndDeposit = ({
   run,
-  isCreateError,
+  createError,
   onRetryCreate,
   onRefreshQuote,
   isRefreshing,
@@ -133,8 +138,12 @@ export const QuoteAndDeposit = ({
   };
 
   if (!run) {
-    return isCreateError ? (
-      <QuoteFailed onRetry={onRetryCreate} isRetrying={false} />
+    return createError ? (
+      <QuoteFailed
+        onRetry={onRetryCreate}
+        isRetrying={false}
+        reason={createError.message}
+      />
     ) : (
       <GettingQuote />
     );

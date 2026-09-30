@@ -22,7 +22,7 @@ The screen is a function of the run returned by `GET /api/funding_run/active` (p
 
 Rules the flow enforces:
 
-- **One run at a time.** A live run of any mode is shown by whichever host opens, instead of a new selection. `PearlDeposit` opens straight into it and stays on the flow once it completes, so the success modal shows; its Continue is disabled while a run is live. The middleware also returns `409` for a second run: the create error is shown as a toast, and the live run the refetch finds replaces the quote-failure screen. Change resets a failed create.
+- **One run at a time.** A live run of any mode is shown by whichever host opens, instead of a new selection. `PearlDeposit` opens straight into it and stays on the flow once it completes, so the success modal shows; its Continue is disabled while a run is live. The middleware also returns `409` for a second run: the create error is shown as a toast and on the quote-failure screen, and the live run the refetch finds replaces the quote-failure screen. Change resets a failed create.
 - **Stale status.** If a poll fails while a run is on screen, the last known run stays with a "Connection lost" banner.
 - **Resume.** Run state lives in the middleware (`~/.operate/funding_runs/`), so reopening any host after a restart resumes the run. A run that completed before the screen opened is shown again only for onboarding (so the setup-complete modal still appears after a restart); a completed run is acknowledged once its modal is dismissed or the screen is left.
 - **Copy is the app's.** The middleware returns step kinds, tokens and amounts; `FundingFlow/constants.ts` maps them to copy per mode. No gas, paymaster or bundler wording appears anywhere.
