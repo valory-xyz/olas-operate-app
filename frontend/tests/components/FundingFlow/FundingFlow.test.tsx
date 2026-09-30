@@ -285,6 +285,23 @@ describe('FundingFlow — failures around the run', () => {
     ).toBeInTheDocument();
   });
 
+  it('clears a failed create once the live run behind it is shown', () => {
+    const { rerender } = renderFlow();
+    fireEvent.click(screen.getByRole('button', { name: /Base/ }));
+    fireEvent.click(screen.getByRole('button', { name: /USDC/ }));
+    mockHookState = { activeRun: null, createError: CREATE_ERROR };
+    rerender(<FundingFlow {...ONBOARD_PROPS} />);
+    expect(mockCreateReset).not.toHaveBeenCalled();
+
+    mockHookState = {
+      activeRun: makeFundingRun({ id: 'fr-live-behind-409' }),
+      createError: CREATE_ERROR,
+    };
+    rerender(<FundingFlow {...ONBOARD_PROPS} />);
+
+    expect(mockCreateReset).toHaveBeenCalledTimes(1);
+  });
+
   it('clears a failed create on Change, so the next selection starts clean', () => {
     const { rerender } = renderFlow();
     fireEvent.click(screen.getByRole('button', { name: /Base/ }));

@@ -157,6 +157,14 @@ export const FundingFlow = (props: FundingFlowProps) => {
     [completedRunId],
   );
 
+  // Once a run replaces a failed create, the error is spent: it must not
+  // resurface if that run later stops being returned.
+  const displayedRunId = run?.id;
+  const { isError: isCreateError, reset: resetCreate } = createMutation;
+  useEffect(() => {
+    if (displayedRunId && isCreateError) resetCreate();
+  }, [displayedRunId, isCreateError, resetCreate]);
+
   const create = (selection: Selection) => {
     setPendingSelection(selection);
     setStep(null);
