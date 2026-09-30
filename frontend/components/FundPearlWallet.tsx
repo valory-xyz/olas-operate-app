@@ -1,72 +1,63 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 
-import { TransferCryptoFromExternalWallet } from '@/components/PearlWallet';
+import { FundingFlow } from '@/components/FundingFlow';
 import { CHAIN_CONFIG } from '@/config/chains';
-import { PAGES } from '@/constants';
 import {
-  useMasterBalances,
-  useMasterWalletContext,
-  usePageState,
-  useServices,
-} from '@/hooks';
-import { AvailableAsset } from '@/types/Wallet';
-import {
-  asEvmChainDetails,
-  asMiddlewareChain,
-} from '@/utils/middlewareHelpers';
-import { formatUnitsToNumber } from '@/utils/numberFormatters';
+  MiddlewareChain,
+  PAGES,
+  SupportedMiddlewareChainMap,
+} from '@/constants';
+import { useMasterBalances, usePageState, useServices } from '@/hooks';
+import { asMiddlewareChain } from '@/utils/middlewareHelpers';
 
-const readPrefillAmountWei = (params: unknown): string | undefined => {
+const SUPPORTED_CHAINS: readonly string[] = Object.values(
+  SupportedMiddlewareChainMap,
+);
+
+/** The chain an insufficient-gas error named, if the caller passed one. */
+const readChain = (params: unknown): MiddlewareChain | undefined => {
   if (!params || typeof params !== 'object') return undefined;
-  const value = (params as Record<string, unknown>).prefillAmountWei;
-  return typeof value === 'string' ? value : undefined;
+  const value = (params as Record<string, unknown>).chain;
+  return typeof value === 'string' && SUPPORTED_CHAINS.includes(value)
+    ? (value as MiddlewareChain)
+    : undefined;
 };
 
+/**
+ * Tops up the Pearl Signer's gas reserve through the funding flow. The
+ * middleware derives the reserve itself, so no amount is passed in.
+ */
 export const FundPearlWallet = () => {
   const { goto, navParams, clearNavParams } = usePageState();
   const { selectedAgentConfig } = useServices();
   const { masterEoaGasRequirement } = useMasterBalances();
-  const { masterEoa } = useMasterWalletContext();
 
-  const [prefillAmountWei] = useState<string | undefined>(() =>
-    readPrefillAmountWei(navParams),
-  );
+  const [navChain] = useState(() => readChain(navParams));
 
   useEffect(() => {
     clearNavParams();
   }, [clearNavParams]);
 
   const homeChainId = selectedAgentConfig.evmHomeChainId;
-  const { symbol, decimals } = CHAIN_CONFIG[homeChainId].nativeToken;
-
-  const tokenAndDepositedAmounts = useMemo<AvailableAsset[]>(() => {
-    if (prefillAmountWei !== undefined) {
-      return [
-        {
-          symbol,
-          amount: formatUnitsToNumber(prefillAmountWei, decimals, 6),
-        },
-      ];
-    }
-    if (!masterEoaGasRequirement) return [];
-    return [{ symbol, amount: masterEoaGasRequirement }];
-  }, [prefillAmountWei, masterEoaGasRequirement, symbol, decimals]);
-
-  if (!masterEoa) return null;
-
-  const chainName = asEvmChainDetails(
-    asMiddlewareChain(homeChainId),
-  ).displayName;
+  const destinationChain = navChain ?? asMiddlewareChain(homeChainId);
+  const isHomeChain = destinationChain === asMiddlewareChain(homeChainId);
 
   return (
-    <TransferCryptoFromExternalWallet
-      description={`Send funds from your external wallet to the Pearl Wallet address below. When you’re done, you can leave this screen — after the transfer confirms on ${chainName}, your Pearl Wallet balance updates automatically.`}
-      chainName={chainName}
-      address={masterEoa.address}
-      tokensToDeposit={tokenAndDepositedAmounts}
+    <FundingFlow
+      mode="signer_gas"
+      destinationChain={destinationChain}
+      fallbackToReceive={
+        isHomeChain && masterEoaGasRequirement
+          ? [
+              {
+                symbol: CHAIN_CONFIG[homeChainId].nativeToken.symbol,
+                amount: masterEoaGasRequirement,
+              },
+            ]
+          : undefined
+      }
       onBack={() => goto(PAGES.Main)}
-      onBackToPearlWallet={() => goto(PAGES.PearlWallet)}
-      requestedColumnText="Total Amount Required"
+      onTransferCompleted={() => goto(PAGES.PearlWallet)}
     />
   );
 };

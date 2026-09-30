@@ -205,6 +205,7 @@ export const EnterWithdrawalAddress = ({
     onFund: (gasError) => {
       goto(PAGES.FundPearlWallet, {
         prefillAmountWei: gasError.prefill_amount_wei,
+        chain: gasError.chain,
       });
     },
     onClose: closePasswordModal,

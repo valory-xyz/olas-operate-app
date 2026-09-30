@@ -179,10 +179,13 @@ describe('ConfirmTransfer (Case 3 — Fund Agent)', () => {
     consoleSpy.mockRestore();
   });
 
-  it('navigates to FundPearlWallet with prefillAmountWei when Fund CTA is clicked', async () => {
+  it('navigates to FundPearlWallet with the gas-error chain and prefillAmountWei when Fund CTA is clicked', async () => {
     const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
     mockFundAgent.mockRejectedValue(
-      makeInsufficientGasError({ prefill_amount_wei: '2500000000000000' }),
+      makeInsufficientGasError({
+        chain: 'base',
+        prefill_amount_wei: '2500000000000000',
+      }),
     );
 
     renderComponent();
@@ -195,6 +198,7 @@ describe('ConfirmTransfer (Case 3 — Fund Agent)', () => {
 
     expect(mockGoto).toHaveBeenCalledWith(PAGES.FundPearlWallet, {
       prefillAmountWei: '2500000000000000',
+      chain: 'base',
     });
     consoleSpy.mockRestore();
   });

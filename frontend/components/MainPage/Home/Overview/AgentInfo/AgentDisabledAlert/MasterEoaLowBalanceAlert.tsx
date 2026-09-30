@@ -4,6 +4,7 @@ import { Alert } from '@/components/ui';
 import { CHAIN_CONFIG } from '@/config/chains';
 import { PAGES } from '@/constants';
 import { useMasterBalances, usePageState, useServices } from '@/hooks';
+import { asMiddlewareChain } from '@/utils/middlewareHelpers';
 
 const { Text } = Typography;
 
@@ -37,7 +38,14 @@ export const MasterEoaLowBalanceAlert = () => {
             </Text>
           </Flex>
 
-          <Button onClick={() => goto(PAGES.FundPearlWallet)} size="small">
+          <Button
+            onClick={() =>
+              goto(PAGES.FundPearlWallet, {
+                chain: asMiddlewareChain(homeChainId),
+              })
+            }
+            size="small"
+          >
             Fund Pearl Wallet
           </Button>
         </Flex>

@@ -313,6 +313,7 @@ export const ConfirmTransfer = ({
     onFund: (gasError) => {
       goto(PAGES.FundPearlWallet, {
         prefillAmountWei: gasError.prefill_amount_wei,
+        chain: gasError.chain,
       });
     },
     onClose: dismissGasErrorModal,
