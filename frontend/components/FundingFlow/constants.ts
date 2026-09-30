@@ -1,7 +1,4 @@
-import { ONE_SECOND_INTERVAL } from '@/constants';
 import { FundingRunMode, FundingStepKind } from '@/types/FundingRun';
-
-export const QUOTE_COUNTDOWN_TICK = ONE_SECOND_INTERVAL;
 
 export const TITLES: Record<
   FundingRunMode,
@@ -22,6 +19,15 @@ export const TITLES: Record<
 };
 
 export const ACTIVE_RUN_ERROR = "Couldn't check your funding status.";
+export const CONNECTION_LOST =
+  'Connection lost. Showing the last known status.';
+export const NO_DEPOSIT_AMOUNTS =
+  'There is nothing to deposit. Go back and enter the amounts first.';
+/** A `to_receive` token whose decimals the app does not know. */
+export const UNKNOWN_AMOUNT = 'Some';
+export const GENERIC_FAILURE = "Couldn't finish the transfer";
+export const COPY_FAILED =
+  "Couldn't copy the address. Please copy it manually.";
 
 export const SUCCESS_BANNER: Record<FundingRunMode, string> = {
   onboard: 'Your agent is ready!',
@@ -102,8 +108,8 @@ const swapInProgress = ({ mode, symbol }: StepCopyArgs) => {
   return `Getting ${symbol} for your agent`;
 };
 
-/** Copy for every visible step kind; hidden kinds never render. */
-export const STEP_COPY: Partial<Record<FundingStepKind, StepCopy>> = {
+/** `null` for the kinds the middleware always sends hidden. */
+export const STEP_COPY: Record<FundingStepKind, StepCopy | null> = {
   RECEIVE: {
     inProgress: () => QUOTE_COPY.waiting,
     done: ({ quantity }) => `Received ${quantity}`,
@@ -124,4 +130,6 @@ export const STEP_COPY: Partial<Record<FundingStepKind, StepCopy>> = {
     done: ({ quantity }) => `Got ${quantity}`,
     failed: ({ symbol }) => `Couldn't get ${symbol}`,
   },
+  SAFE_AND_TRANSFER: null,
+  CLEAR_DELEGATION: null,
 };

@@ -1,5 +1,4 @@
 import { Button, Flex, QRCode, Skeleton, Typography } from 'antd';
-import { useCallback } from 'react';
 import { TbCopy } from 'react-icons/tb';
 import styled from 'styled-components';
 
@@ -8,7 +7,12 @@ import { useMessageApi } from '@/context/MessageProvider';
 import { FundingRun } from '@/types/FundingRun';
 import { copyToClipboard } from '@/utils/copyToClipboard';
 
-import { DEPOSIT_INSTRUCTION, QR_CAPTION, QUOTE_COPY } from './constants';
+import {
+  COPY_FAILED,
+  DEPOSIT_INSTRUCTION,
+  QR_CAPTION,
+  QUOTE_COPY,
+} from './constants';
 import { FailureDetails } from './FailureDetails';
 import { QuoteCountdown } from './QuoteCountdown';
 import { Banner, CardRow, TokenIcon } from './styles';
@@ -121,10 +125,12 @@ export const QuoteAndDeposit = ({
   const message = useMessageApi();
   const address = run?.source.deposit_address;
 
-  const handleCopy = useCallback(() => {
+  const handleCopy = () => {
     if (!address) return;
-    copyToClipboard(address).then(() => message.success('Address copied!'));
-  }, [address, message]);
+    copyToClipboard(address)
+      .then(() => message.success('Address copied!'))
+      .catch(() => message.error(COPY_FAILED));
+  };
 
   if (!run) {
     return isCreateError ? (

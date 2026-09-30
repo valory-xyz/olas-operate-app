@@ -5,7 +5,12 @@ import { TbArrowUpRight, TbCheck, TbSquareCheckFilled } from 'react-icons/tb';
 import { COLOR } from '@/constants';
 import { FundingRun, FundingRunStep } from '@/types/FundingRun';
 
-import { FUNDS_SAFE, SLOW_STEP, SUCCESS_BANNER } from './constants';
+import {
+  FUNDS_SAFE,
+  GENERIC_FAILURE,
+  SLOW_STEP,
+  SUCCESS_BANNER,
+} from './constants';
 import { FailureDetails } from './FailureDetails';
 import { Banner, CardRow } from './styles';
 import {
@@ -46,6 +51,9 @@ const StatusBanner = ({
       <Banner tone="error">{getStepText(run, failedStep, 'failed')}</Banner>
     );
   }
+  if (run.status === 'FAILED') {
+    return <Banner tone="error">{GENERIC_FAILURE}</Banner>;
+  }
   const currentStep = getCurrentStep(run);
   if (!currentStep) return null;
   return (
@@ -83,7 +91,6 @@ type FundingProgressProps = {
   isRetrying: boolean;
 };
 
-/** The status banner, the failed step if any, then finished steps newest-first. */
 export const FundingProgress = ({
   run,
   onRetry,
@@ -95,16 +102,24 @@ export const FundingProgress = ({
   return (
     <>
       <StatusBanner run={run} failedStep={failedStep} />
-      {failedStep && (
+      {run.status === 'FAILED' && (
         <CardRow>
           <FailureDetails
-            title={getStepText(run, failedStep, 'failed')}
+            title={
+              failedStep
+                ? getStepText(run, failedStep, 'failed')
+                : GENERIC_FAILURE
+            }
             description={FUNDS_SAFE}
             onRetry={onRetry}
             isRetrying={isRetrying}
-            extra={formatStepTime(
-              failedStep.finished_at ?? failedStep.started_at,
-            )}
+            extra={
+              failedStep
+                ? formatStepTime(
+                    failedStep.finished_at ?? failedStep.started_at,
+                  )
+                : undefined
+            }
           />
         </CardRow>
       )}

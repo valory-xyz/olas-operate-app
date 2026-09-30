@@ -11,11 +11,9 @@ type FailureDetailsProps = {
   description: string[];
   onRetry: () => void;
   isRetrying: boolean;
-  /** Right-aligned extra, e.g. the failure time. */
   extra?: string;
 };
 
-/** A failed row: what failed, why it is safe, and Retry / Contact Support. */
 export const FailureDetails = ({
   title,
   description,

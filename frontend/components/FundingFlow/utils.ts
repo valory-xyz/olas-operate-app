@@ -8,7 +8,12 @@ import {
 } from '@/config/tokens';
 import { AddressZero, CHAIN_IMAGE_MAP, MiddlewareChain } from '@/constants';
 import { Address } from '@/types/Address';
-import { FundingRun, FundingRunMode, FundingRunStep } from '@/types/FundingRun';
+import {
+  FundingRun,
+  FundingRunMode,
+  FundingRunStatus,
+  FundingRunStep,
+} from '@/types/FundingRun';
 import { areAddressesEqual } from '@/utils/address';
 import { asAllEvmChainId, asEvmChainDetails } from '@/utils/middlewareHelpers';
 import { formatAmount, formatUnits } from '@/utils/numberFormatters';
@@ -76,13 +81,35 @@ export const getTokenMeta = (
 export const formatBaseUnits = (amount: string, decimals: number) =>
   formatAmount(formatUnits(amount, decimals), 2);
 
-export const isRunEditable = (run: FundingRun) =>
-  run.status === 'AWAITING_DEPOSIT' || run.status === 'QUOTE_FAILED';
+type RunPhase = 'editable' | 'processing' | 'completed' | 'cancelled';
 
-export const isRunProcessing = (run: FundingRun) =>
-  run.status === 'PROCESSING' ||
-  run.status === 'FAILED' ||
-  run.status === 'COMPLETED';
+const RUN_PHASE: Record<FundingRunStatus, RunPhase> = {
+  AWAITING_DEPOSIT: 'editable',
+  QUOTE_FAILED: 'editable',
+  PROCESSING: 'processing',
+  FAILED: 'processing',
+  COMPLETED: 'completed',
+  CANCELLED: 'cancelled',
+};
+
+// A status the app does not know yet is shown as a run in progress: it is
+// not safe to offer Change on it, nor to start another run over it.
+const getRunPhase = (run: FundingRun): RunPhase =>
+  RUN_PHASE[run.status] ?? 'processing';
+
+export const isRunEditable = (run: FundingRun) =>
+  getRunPhase(run) === 'editable';
+
+export const isRunProcessing = (run: FundingRun) => {
+  const phase = getRunPhase(run);
+  return phase === 'processing' || phase === 'completed';
+};
+
+export const isRunLive = (run: FundingRun | null): run is FundingRun => {
+  if (!run) return false;
+  const phase = getRunPhase(run);
+  return phase === 'editable' || phase === 'processing';
+};
 
 /**
  * Runs whose success the user has already acknowledged. The middleware keeps
@@ -104,16 +131,18 @@ export const resolveDisplayedRun = (
   hostMode: FundingRunMode,
   seenLiveRunIds: ReadonlySet<string>,
 ): FundingRun | null => {
-  if (!run || run.status === 'CANCELLED') return null;
-  if (run.status !== 'COMPLETED') return run;
+  if (!run) return null;
+  const phase = getRunPhase(run);
+  if (phase === 'cancelled') return null;
+  if (phase !== 'completed') return run;
   if (acknowledgedRunIds.has(run.id)) return null;
   if (seenLiveRunIds.has(run.id)) return run;
   return run.mode === 'onboard' && hostMode === 'onboard' ? run : null;
 };
 
-/** Visible steps only. The Safe/transfer and delegation-clearing steps never render. */
+/** Visible steps the app has copy for. The Safe/transfer and delegation-clearing steps never render. */
 export const getVisibleSteps = (run: FundingRun) =>
-  run.steps.filter((step) => step.visible);
+  run.steps.filter((step) => step.visible && !!STEP_COPY[step.kind]);
 
 /**
  * The step a failure is reported on. A hidden step's failure (the Safe step)
@@ -143,7 +172,6 @@ export const getCurrentStep = (run: FundingRun): FundingRunStep | null => {
   );
 };
 
-/** Finished visible steps, newest first. */
 export const getLogSteps = (
   run: FundingRun,
   failedStep: FundingRunStep | null,

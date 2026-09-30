@@ -1,5 +1,5 @@
 import { Button, Flex, Skeleton, Typography } from 'antd';
-import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
+import { useEffect, useReducer, useRef, useState } from 'react';
 
 import {
   AgentSetupCompleteModal,
@@ -18,13 +18,18 @@ import {
   FundingRunMode,
 } from '@/types/FundingRun';
 
-import { ACTIVE_RUN_ERROR, TITLES } from './constants';
+import {
+  ACTIVE_RUN_ERROR,
+  CONNECTION_LOST,
+  NO_DEPOSIT_AMOUNTS,
+  TITLES,
+} from './constants';
 import { FundingProgress } from './FundingProgress';
 import { QuoteAndDeposit } from './QuoteAndDeposit';
 import { RequestChainOrToken } from './RequestChainOrToken';
 import { SelectSourceChain } from './SelectSourceChain';
 import { SelectSourceToken } from './SelectSourceToken';
-import { CardRow, SelectionRow } from './styles';
+import { Banner, CardRow, SelectionRow } from './styles';
 import { ToReceiveItem, ToReceiveSummary } from './ToReceiveSummary';
 import {
   acknowledgeRun,
@@ -33,6 +38,7 @@ import {
   getTokenImage,
   getTokenMeta,
   isRunEditable,
+  isRunLive,
   isRunProcessing,
   resolveDisplayedRun,
 } from './utils';
@@ -44,7 +50,7 @@ type Selection = { chain: MiddlewareChain; token: Address };
 type SelectionStep = 'chain' | 'token' | 'request-chain' | 'request-token';
 
 type ModeProps =
-  | { mode: 'onboard'; serviceConfigId?: string; backupOwner?: Address }
+  | { mode: 'onboard'; serviceConfigId: string; backupOwner?: Address }
   | {
       mode: 'deposit';
       /** Target balances in base units, keyed by token address. */
@@ -53,9 +59,10 @@ type ModeProps =
   | { mode: 'signer_gas' };
 
 export type FundingFlowProps = ModeProps & {
-  /** The chain the funds must end up on. */
   destinationChain: MiddlewareChain;
   onBack: () => void;
+  /** A persistent exit to the Pearl Wallet, for hosts opened from it. */
+  onBackToPearlWallet?: () => void;
   /** "Go to Pearl Wallet" on a completed deposit or signer-gas run. */
   onTransferCompleted?: () => void;
   /** The entry point's requirement, shown as "To receive" before a run exists. */
@@ -67,7 +74,6 @@ const buildCreateRequest = (
   { chain, token }: Selection,
 ): CreateFundingRunRequest => {
   const base = {
-    mode: props.mode,
     source: { chain, token },
     destination: { chain: props.destinationChain },
   };
@@ -75,13 +81,18 @@ const buildCreateRequest = (
     case 'onboard':
       return {
         ...base,
+        mode: props.mode,
         service_config_id: props.serviceConfigId,
         backup_owner: props.backupOwner,
       };
     case 'deposit':
-      return { ...base, deposit_amounts: props.depositAmounts };
-    default:
-      return base;
+      return {
+        ...base,
+        mode: props.mode,
+        deposit_amounts: props.depositAmounts,
+      };
+    case 'signer_gas':
+      return { ...base, mode: props.mode };
   }
 };
 
@@ -90,14 +101,15 @@ const getTitle = (run: FundingRun | null, mode: FundingRunMode) =>
     ? TITLES[run.mode].processing
     : TITLES[run?.mode ?? mode].selecting;
 
-/**
- * The one-transaction funding flow: pick a source chain and token, send one
- * transfer to the Pearl Signer, then watch Pearl bridge and swap it. The
- * screen is derived from the middleware's funding run, so reopening any
- * entry point resumes the live run.
- */
+/** One transfer from any supported source, rendered from the middleware's funding run. */
 export const FundingFlow = (props: FundingFlowProps) => {
-  const { mode, destinationChain, onBack, onTransferCompleted } = props;
+  const {
+    mode,
+    destinationChain,
+    onBack,
+    onBackToPearlWallet,
+    onTransferCompleted,
+  } = props;
   const {
     activeRun,
     isActiveRunFetched,
@@ -113,9 +125,7 @@ export const FundingFlow = (props: FundingFlowProps) => {
   } = useFundingRun();
 
   const seenLiveRunIds = useRef(new Set<string>());
-  if (activeRun && activeRun.status !== 'COMPLETED') {
-    seenLiveRunIds.current.add(activeRun.id);
-  }
+  if (isRunLive(activeRun)) seenLiveRunIds.current.add(activeRun.id);
   const run = resolveDisplayedRun(activeRun, mode, seenLiveRunIds.current);
 
   const [step, setStep] = useState<SelectionStep | null>(null);
@@ -148,19 +158,20 @@ export const FundingFlow = (props: FundingFlowProps) => {
   const create = (selection: Selection) => {
     setPendingSelection(selection);
     setStep(null);
-    createMutation.mutate(buildCreateRequest(props, selection));
+    createMutation.mutate(buildCreateRequest(props, selection), {
+      onError: showMutationError,
+    });
   };
 
-  const handleSelectChain = useCallback((chain: MiddlewareChain) => {
+  const handleSelectChain = (chain: MiddlewareChain) => {
     setSelectedChain(chain);
     setStep('token');
-  }, []);
+  };
 
   // A run can only be (re)created with this host's own parameters, so another
   // mode's run, or a deposit with no amounts, cannot be changed from here.
   const hasCreateParams =
-    (props.mode !== 'onboard' || !!props.serviceConfigId) &&
-    (props.mode !== 'deposit' || Object.keys(props.depositAmounts).length > 0);
+    props.mode !== 'deposit' || Object.keys(props.depositAmounts).length > 0;
   const canCreate = hasCreateParams && (!run || run.mode === mode);
   const editable = !run || isRunEditable(run);
   const currentStep: SelectionStep | 'quote' =
@@ -193,7 +204,7 @@ export const FundingFlow = (props: FundingFlowProps) => {
             <SelectSourceToken
               chain={tokenStepChain}
               tokens={sources?.[tokenStepChain] ?? []}
-              disabled={!canCreate}
+              disabledReason={hasCreateParams ? undefined : NO_DEPOSIT_AMOUNTS}
               onSelect={(token) => create({ chain: tokenStepChain, token })}
               onOther={() => setStep('request-token')}
             />
@@ -214,9 +225,11 @@ export const FundingFlow = (props: FundingFlowProps) => {
   };
 
   const renderRun = () => {
-    // While a create is pending or has failed, the new selection is what counts.
+    // While a create is pending, or has failed with no run to fall back on,
+    // the new selection is what counts. A run found after a failed create
+    // (e.g. the live run behind a 409) is the truth, so it is shown instead.
     const isCreateUnresolved =
-      createMutation.isPending || createMutation.isError;
+      createMutation.isPending || (createMutation.isError && !run);
     const selection: Selection | null =
       run && !isCreateUnresolved
         ? { chain: run.source.chain, token: run.source.token }
@@ -227,9 +240,15 @@ export const FundingFlow = (props: FundingFlowProps) => {
       run?.source.symbol ??
       '';
     const canChange = editable && canCreate;
-    const onChangeChain = canChange ? () => setStep('chain') : undefined;
+    const onChangeChain = canChange
+      ? () => {
+          createMutation.reset();
+          setStep('chain');
+        }
+      : undefined;
     const onChangeToken = canChange
       ? () => {
+          createMutation.reset();
           setSelectedChain(selection.chain);
           setStep('token');
         }
@@ -297,6 +316,9 @@ export const FundingFlow = (props: FundingFlowProps) => {
     return currentStep === 'quote' ? renderRun() : renderSelection();
   };
 
+  // The last run fetched stays on screen when a poll fails; say it may be stale.
+  const isShowingStaleRun = isActiveRunError && !!activeRun;
+
   return (
     <Flex vertical gap={16} style={cardStyles}>
       <Flex vertical gap={12}>
@@ -306,6 +328,7 @@ export const FundingFlow = (props: FundingFlowProps) => {
         </Title>
       </Flex>
       <CardFlex $noBorder $noBodyPadding>
+        {isShowingStaleRun && <Banner tone="error">{CONNECTION_LOST}</Banner>}
         {renderBody()}
       </CardFlex>
       <ToReceiveSummary
@@ -313,6 +336,11 @@ export const FundingFlow = (props: FundingFlowProps) => {
         destinationChain={run?.destination.chain ?? destinationChain}
         fallback={props.fallbackToReceive}
       />
+      {onBackToPearlWallet && (
+        <Button size="large" onClick={onBackToPearlWallet}>
+          Back to Pearl Wallet
+        </Button>
+      )}
       {run?.status === 'COMPLETED' &&
         (run.mode === 'onboard' ? (
           <AgentSetupCompleteModal />

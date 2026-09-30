@@ -6,12 +6,12 @@ import { MiddlewareChain } from '@/constants';
 import { FundingRunTokenAmount } from '@/types/FundingRun';
 import { formatAmount } from '@/utils/numberFormatters';
 
+import { UNKNOWN_AMOUNT } from './constants';
 import { TokenIcon } from './styles';
 import { formatBaseUnits, getTokenImage, getTokenMeta } from './utils';
 
 const { Text } = Typography;
 
-/** A display-ready "To receive" entry, for when no run exists yet. */
 export type ToReceiveItem = { symbol: string; amount: number };
 
 type ToReceiveSummaryProps = {
@@ -30,7 +30,7 @@ const runItemsToDisplay = (
     const meta = getTokenMeta(chain, token);
     return {
       symbol,
-      amount: meta ? formatBaseUnits(amount, meta.decimals) : '',
+      amount: meta ? formatBaseUnits(amount, meta.decimals) : UNKNOWN_AMOUNT,
     };
   });
 
@@ -60,7 +60,7 @@ export const ToReceiveSummary = ({
               {index > 0 && <Text className="text-neutral-tertiary">•</Text>}
               <Flex gap={6} align="center">
                 <TokenIcon src={getTokenImage(symbol)} alt={symbol} />
-                <Text>{`${amount} ${symbol}`.trim()}</Text>
+                <Text>{`${amount} ${symbol}`}</Text>
               </Flex>
             </Fragment>
           ))}

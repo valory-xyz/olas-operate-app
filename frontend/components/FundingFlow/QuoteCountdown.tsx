@@ -4,9 +4,7 @@ import { TbRefresh } from 'react-icons/tb';
 import styled from 'styled-components';
 import { useInterval } from 'usehooks-ts';
 
-import { COLOR } from '@/constants';
-
-import { QUOTE_COUNTDOWN_TICK } from './constants';
+import { COLOR, ONE_SECOND_INTERVAL } from '@/constants';
 
 const Button = styled(AntdButton)`
   background: ${COLOR.GRAY_1};
@@ -23,7 +21,6 @@ export const formatMinutesSeconds = (totalSeconds: number) => {
 };
 
 type QuoteCountdownProps = {
-  /** Unix seconds of the next automatic re-quote. */
   nextRefreshAt: number;
   onRefresh: () => void;
   isRefreshing: boolean;
@@ -35,7 +32,7 @@ export const QuoteCountdown = ({
   isRefreshing,
 }: QuoteCountdownProps) => {
   const [, setTick] = useState(0);
-  useInterval(() => setTick((tick) => tick + 1), QUOTE_COUNTDOWN_TICK);
+  useInterval(() => setTick((tick) => tick + 1), ONE_SECOND_INTERVAL);
 
   return (
     <Button

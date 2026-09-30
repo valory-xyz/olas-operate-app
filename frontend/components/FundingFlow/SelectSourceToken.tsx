@@ -16,7 +16,8 @@ const { Text } = Typography;
 type SelectSourceTokenProps = {
   chain: MiddlewareChain;
   tokens: Address[];
-  disabled?: boolean;
+  /** Why the tokens cannot be picked; set, it disables them. */
+  disabledReason?: string;
   onSelect: (token: Address) => void;
   onOther: () => void;
 };
@@ -24,13 +25,16 @@ type SelectSourceTokenProps = {
 export const SelectSourceToken = ({
   chain,
   tokens,
-  disabled,
+  disabledReason,
   onSelect,
   onOther,
 }: SelectSourceTokenProps) => (
   <>
     <CardRow vertical gap={12}>
       <Text>{SELECT_TOKEN_LABEL}</Text>
+      {disabledReason && (
+        <Text className="text-neutral-tertiary">{disabledReason}</Text>
+      )}
       <Flex gap={8} wrap>
         {tokens.map((token) => {
           const symbol = getTokenMeta(chain, token)?.symbol ?? token;
@@ -39,14 +43,14 @@ export const SelectSourceToken = ({
               key={token}
               icon={getTokenImage(symbol)}
               label={symbol}
-              disabled={disabled}
+              disabled={!!disabledReason}
               onClick={() => onSelect(token)}
             />
           );
         })}
         <OptionButton
           label={OTHER_TOKEN}
-          disabled={disabled}
+          disabled={!!disabledReason}
           onClick={onOther}
         />
       </Flex>
