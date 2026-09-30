@@ -727,11 +727,7 @@ describe('FundingFlow — progress', () => {
   it('shows a generic failure with Retry when no step can be named', () => {
     const run = processingRun();
     mockHookState = {
-      activeRun: {
-        ...run,
-        status: 'FAILED',
-        error: null,
-      } as unknown as FundingRun,
+      activeRun: { ...run, status: 'FAILED', error: null },
     };
     renderFlow();
 

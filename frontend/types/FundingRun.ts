@@ -56,9 +56,10 @@ export type FundingRunTokenAmount = {
   amount: string;
 };
 
-type FundingRunBase = {
+export type FundingRun = {
   id: string;
   mode: FundingRunMode;
+  status: FundingRunStatus;
   source: {
     chain: MiddlewareChain;
     token: Address;
@@ -75,16 +76,14 @@ type FundingRunBase = {
   /** Net delivery: what the user gains after existing balances. Can be empty. */
   to_receive: FundingRunTokenAmount[];
   steps: FundingRunStep[];
+  /**
+   * Set by the middleware on `FAILED`. Nullable on every status because the
+   * response is not validated, so readers must not assume it.
+   */
+  error: FundingRunError | null;
 };
 
 export type FundingRunError = { step_id: string };
-
-export type FundingRun =
-  | (FundingRunBase & {
-      status: Exclude<FundingRunStatus, 'FAILED'>;
-      error: FundingRunError | null;
-    })
-  | (FundingRunBase & { status: 'FAILED'; error: FundingRunError });
 
 /** Middleware chain → accepted source tokens. */
 export type FundingRunSources = Partial<Record<MiddlewareChain, Address[]>>;
