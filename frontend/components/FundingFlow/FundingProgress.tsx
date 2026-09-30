@@ -23,7 +23,7 @@ import {
 const { Text } = Typography;
 
 /** Local wall-clock time, e.g. "16:45:15". */
-export const formatStepTime = (unixSeconds: number | null) =>
+const formatStepTime = (unixSeconds: number | null) =>
   isNil(unixSeconds)
     ? ''
     : new Date(unixSeconds * 1000).toLocaleTimeString('en-GB', {

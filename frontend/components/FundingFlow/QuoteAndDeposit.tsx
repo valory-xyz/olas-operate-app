@@ -69,7 +69,6 @@ const GettingQuote = () => (
 type QuoteFailedProps = {
   onRetry: () => void;
   isRetrying: boolean;
-  /** Why it failed, when known; otherwise the generic advice is shown. */
   reason?: string;
 };
 
