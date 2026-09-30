@@ -2,6 +2,8 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { createElement } from 'react';
 
 import { EvmChainIdMap } from '../../../../constants/chains';
+import { FundingRun } from '../../../../types/FundingRun';
+import { makeFundingRun } from '../../../helpers/factories';
 
 jest.mock('next/image', () => ({
   __esModule: true,
@@ -18,6 +20,11 @@ const mockTokenBalancesToSentence = jest.fn((value?: unknown) => {
   void value;
   return '1 ETH and 2 USDC';
 });
+
+let mockActiveRun: FundingRun | null = null;
+jest.mock('../../../../hooks/useFundingRun', () => ({
+  useFundingRun: () => ({ activeRun: mockActiveRun }),
+}));
 
 jest.mock('../../../../context/PearlWalletProvider', () => ({
   usePearlWallet: () => mockUsePearlWallet(),
@@ -61,8 +68,19 @@ jest.mock('../../../../components/ui', () => ({
       `${tokenSymbol}:${value}/${totalAmount}`,
     );
   },
-  Tooltip: ({ children }: { children: React.ReactNode }) =>
-    createElement('div', null, children),
+  Tooltip: ({
+    children,
+    title,
+  }: {
+    children: React.ReactNode;
+    title: React.ReactNode;
+  }) =>
+    createElement(
+      'div',
+      null,
+      children,
+      title ? createElement('span', { 'data-testid': 'tooltip' }, title) : null,
+    ),
   WalletTransferDirection: () =>
     createElement('div', { 'data-testid': 'wallet-direction' }),
 }));
@@ -138,8 +156,9 @@ const setupWalletMock = (
 ) => {
   mockUsePearlWallet.mockReturnValue({
     onDepositAmountChange: mockOnDepositAmountChange,
+    // Target balances: hold 6 ETH (5 held today).
     amountsToDeposit: {
-      ETH: { amount: 1 },
+      ETH: { amount: 6 },
       USDC: { amount: 0 },
     },
     availableAssets: [
@@ -162,6 +181,7 @@ describe('Deposit', () => {
     Object.keys(tokenInputHandlers).forEach(
       (key) => delete tokenInputHandlers[key],
     );
+    mockActiveRun = null;
     setupWalletMock();
   });
 
@@ -233,7 +253,7 @@ describe('Deposit', () => {
       }),
     );
 
-    fireEvent.click(screen.getByText('ETH:1/5'));
+    fireEvent.click(screen.getByText('ETH:6/5'));
 
     expect(mockOnDepositAmountChange).toHaveBeenCalledWith('ETH', {
       amount: 0,
@@ -286,6 +306,55 @@ describe('Deposit', () => {
     );
 
     expect(screen.getByText('Continue')).toBeDisabled();
+  });
+
+  it('asks for the balances the Pearl Wallet should hold', () => {
+    render(
+      createElement(Deposit, {
+        onBack: mockOnBack,
+        onContinue: mockOnContinue,
+      }),
+    );
+
+    expect(
+      screen.getByText(
+        'Enter the token amounts you want your Pearl Wallet to hold.',
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('disables continue with a note when every target is already held', () => {
+    setupWalletMock({
+      amountsToDeposit: { ETH: { amount: 5 }, USDC: { amount: 3 } },
+    });
+
+    render(
+      createElement(Deposit, {
+        onBack: mockOnBack,
+        onContinue: mockOnContinue,
+      }),
+    );
+
+    expect(screen.getByText('Continue')).toBeDisabled();
+    expect(
+      screen.getByText('Your Pearl Wallet already holds these amounts.'),
+    ).toBeInTheDocument();
+  });
+
+  it('disables continue while another funding run is in progress', () => {
+    mockActiveRun = makeFundingRun({ mode: 'onboard', status: 'PROCESSING' });
+
+    render(
+      createElement(Deposit, {
+        onBack: mockOnBack,
+        onContinue: mockOnContinue,
+      }),
+    );
+
+    expect(screen.getByText('Continue')).toBeDisabled();
+    expect(screen.getByTestId('tooltip')).toHaveTextContent(
+      'Your agent setup funding is still in progress. Finish it first.',
+    );
   });
 
   it('continues when deposit amounts are selected and the wallet exists', () => {

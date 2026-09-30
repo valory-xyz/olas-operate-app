@@ -1,9 +1,11 @@
-import { render } from '@testing-library/react';
-import { act, createElement } from 'react';
+import { act, render, screen } from '@testing-library/react';
+import { createElement } from 'react';
 
-// ---------------------------------------------------------------------------
-// Module mocks
-// ---------------------------------------------------------------------------
+import { FundingFlowProps } from '../../../components/FundingFlow';
+import { PearlDeposit } from '../../../components/PearlDeposit';
+import { EvmChainIdMap } from '../../../constants/chains';
+import { FundingRun } from '../../../types/FundingRun';
+import { makeFundingRun } from '../../helpers/factories';
 
 /* eslint-disable @typescript-eslint/no-var-requires */
 jest.mock(
@@ -14,118 +16,113 @@ jest.mock(
 jest.mock('../../../constants/providers', () => ({ PROVIDERS: {} }));
 jest.mock('../../../config/providers', () => ({ providers: [] }));
 
-let depositProps: Record<string, unknown> = {};
-let selectPaymentMethodProps: Record<string, unknown> = {};
+let depositProps: { onBack: () => void; onContinue: () => void };
+let flowProps: FundingFlowProps | null = null;
+let mockActiveRun: FundingRun | null = null;
+const mockGotoPearlWallet = jest.fn();
 
 jest.mock('../../../components/PearlDeposit/Deposit/Deposit', () => ({
-  Deposit: (props: Record<string, unknown>) => {
+  Deposit: (props: typeof depositProps) => {
     depositProps = props;
     return createElement('div', { 'data-testid': 'deposit' });
   },
 }));
 
-jest.mock(
-  '../../../components/PearlDeposit/SelectPaymentMethod/SelectPaymentMethod',
-  () => ({
-    SelectPaymentMethod: (props: Record<string, unknown>) => {
-      selectPaymentMethodProps = props;
-      return createElement('div', { 'data-testid': 'select-payment-method' });
-    },
+jest.mock('../../../components/FundingFlow', () => ({
+  FundingFlow: (props: FundingFlowProps) => {
+    flowProps = props;
+    return createElement('div', { 'data-testid': 'funding-flow' });
+  },
+}));
+
+jest.mock('../../../hooks', () => ({
+  useFundingRun: () => ({ activeRun: mockActiveRun }),
+}));
+
+jest.mock('../../../context/PearlWalletProvider', () => ({
+  usePearlWallet: () => ({
+    walletChainId: EvmChainIdMap.Polygon,
+    // Targets: hold 100 OLAS and 5 POL.
+    amountsToDeposit: { OLAS: { amount: 100 }, POL: { amount: 5 } },
+    availableAssets: [
+      { symbol: 'OLAS', amount: 40 },
+      { symbol: 'POL', amount: 7 },
+    ],
+    gotoPearlWallet: mockGotoPearlWallet,
   }),
-);
-
-// ---------------------------------------------------------------------------
-// Import after mocks
-// ---------------------------------------------------------------------------
-
-/* eslint-disable @typescript-eslint/no-var-requires */
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const { PearlDeposit } = require('../../../components/PearlDeposit/index');
-/* eslint-enable @typescript-eslint/no-var-requires */
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
+}));
 
 const mockOnBack = jest.fn();
-
-const renderPearlDeposit = () =>
-  render(createElement(PearlDeposit, { onBack: mockOnBack }));
-
-// ---------------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------------
 
 describe('PearlDeposit', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    depositProps = {};
-    selectPaymentMethodProps = {};
+    flowProps = null;
+    mockActiveRun = null;
   });
 
-  describe('initial state (DEPOSIT step)', () => {
-    it('renders Deposit component initially', () => {
-      const { getByTestId, queryByTestId } = renderPearlDeposit();
-      expect(getByTestId('deposit')).toBeTruthy();
-      expect(queryByTestId('select-payment-method')).toBeNull();
-    });
+  it('starts on the amounts step', () => {
+    render(<PearlDeposit onBack={mockOnBack} />);
+    expect(screen.getByTestId('deposit')).toBeInTheDocument();
+    expect(depositProps.onBack).toBe(mockOnBack);
+  });
 
-    it('passes onBack to Deposit', () => {
-      renderPearlDeposit();
-      expect(depositProps.onBack).toBe(mockOnBack);
+  it('opens the funding flow on Continue, never the payment-method picker', () => {
+    render(<PearlDeposit onBack={mockOnBack} />);
+    act(() => depositProps.onContinue());
+
+    expect(screen.getByTestId('funding-flow')).toBeInTheDocument();
+    expect(screen.queryByText(/Buy|Bridge|Transfer/)).toBeNull();
+  });
+
+  it('sends the entered amounts as base-unit target balances by token address', () => {
+    render(<PearlDeposit onBack={mockOnBack} />);
+    act(() => depositProps.onContinue());
+
+    expect(flowProps).toMatchObject({
+      mode: 'deposit',
+      destinationChain: 'polygon',
+      depositAmounts: {
+        '0xFEF5d947472e72Efbb2E388c730B7428406F2F95': '100000000000000000000',
+        '0x0000000000000000000000000000000000000000': '5000000000000000000',
+      },
     });
   });
 
-  describe('step transitions', () => {
-    it('transitions to SELECT_PAYMENT_METHOD when onContinue is called', () => {
-      const { getByTestId, queryByTestId } = renderPearlDeposit();
+  it('shows target minus balance as "To receive" before a run exists', () => {
+    render(<PearlDeposit onBack={mockOnBack} />);
+    act(() => depositProps.onContinue());
 
-      act(() => {
-        (depositProps.onContinue as () => void)();
-      });
+    expect(flowProps?.fallbackToReceive).toEqual([
+      { symbol: 'OLAS', amount: 60 },
+    ]);
+  });
 
-      expect(getByTestId('select-payment-method')).toBeTruthy();
-      expect(queryByTestId('deposit')).toBeNull();
-    });
+  it('goes back to the amounts step, and to the wallet on completion', () => {
+    render(<PearlDeposit onBack={mockOnBack} />);
+    act(() => depositProps.onContinue());
 
-    it('transitions back to DEPOSIT when SelectPaymentMethod calls onBack', () => {
-      const { getByTestId } = renderPearlDeposit();
+    act(() => flowProps?.onBack());
+    expect(screen.getByTestId('deposit')).toBeInTheDocument();
 
-      // Go to SELECT_PAYMENT_METHOD
-      act(() => {
-        (depositProps.onContinue as () => void)();
-      });
+    act(() => depositProps.onContinue());
+    flowProps?.onTransferCompleted?.();
+    expect(mockGotoPearlWallet).toHaveBeenCalled();
+  });
 
-      expect(getByTestId('select-payment-method')).toBeTruthy();
+  it('opens straight into a live run instead of a new deposit', () => {
+    mockActiveRun = makeFundingRun({ mode: 'deposit', status: 'PROCESSING' });
+    render(<PearlDeposit onBack={mockOnBack} />);
 
-      // Go back to DEPOSIT
-      act(() => {
-        (selectPaymentMethodProps.onBack as () => void)();
-      });
+    expect(screen.getByTestId('funding-flow')).toBeInTheDocument();
+    act(() => flowProps?.onBack());
+    expect(mockOnBack).toHaveBeenCalled();
+  });
 
-      expect(getByTestId('deposit')).toBeTruthy();
-    });
+  it('ignores a completed run', () => {
+    mockActiveRun = makeFundingRun({ mode: 'deposit', status: 'COMPLETED' });
+    render(<PearlDeposit onBack={mockOnBack} />);
 
-    it('can cycle between steps multiple times', () => {
-      const { getByTestId } = renderPearlDeposit();
-
-      // Forward
-      act(() => {
-        (depositProps.onContinue as () => void)();
-      });
-      expect(getByTestId('select-payment-method')).toBeTruthy();
-
-      // Back
-      act(() => {
-        (selectPaymentMethodProps.onBack as () => void)();
-      });
-      expect(getByTestId('deposit')).toBeTruthy();
-
-      // Forward again
-      act(() => {
-        (depositProps.onContinue as () => void)();
-      });
-      expect(getByTestId('select-payment-method')).toBeTruthy();
-    });
+    expect(screen.getByTestId('deposit')).toBeInTheDocument();
   });
 });

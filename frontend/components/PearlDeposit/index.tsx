@@ -1,36 +1,87 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
-import { ValueOf } from '@/types';
+import { FundingFlow } from '@/components/FundingFlow';
+import { TOKEN_CONFIG } from '@/config/tokens';
+import { AddressZero } from '@/constants';
+import { usePearlWallet } from '@/context/PearlWalletProvider';
+import { useFundingRun } from '@/hooks';
+import { Address, TokenAmounts, ValueOf } from '@/types';
+import { asMiddlewareChain, parseUnits } from '@/utils';
 
 import { Deposit } from './Deposit/Deposit';
-import { SelectPaymentMethod } from './SelectPaymentMethod/SelectPaymentMethod';
+import { getNetDepositAmounts } from './utils';
 
 const PEARL_DEPOSIT_STEPS = {
   DEPOSIT: 'DEPOSIT',
-  SELECT_PAYMENT_METHOD: 'SELECT_PAYMENT_METHOD',
+  FUNDING_FLOW: 'FUNDING_FLOW',
 } as const;
 
 type PearlDepositProps = {
   onBack: () => void;
 };
 
+/** Target balances in base units, keyed by token address, as the middleware expects. */
+const toDepositAmounts = (
+  chainId: keyof typeof TOKEN_CONFIG,
+  amounts: TokenAmounts,
+): Record<Address, string> =>
+  Object.fromEntries(
+    Object.entries(amounts).flatMap(([symbol, details]) => {
+      const config = TOKEN_CONFIG[chainId][symbol as keyof TokenAmounts];
+      if (!config || !details || details.amount <= 0) return [];
+      return [
+        [
+          config.address ?? AddressZero,
+          parseUnits(details.amount.toFixed(config.decimals), config.decimals),
+        ],
+      ];
+    }),
+  );
+
 export const PearlDeposit = ({ onBack }: PearlDepositProps) => {
+  const { walletChainId, amountsToDeposit, availableAssets, gotoPearlWallet } =
+    usePearlWallet();
+  const { activeRun } = useFundingRun();
   const [step, setStep] = useState<ValueOf<typeof PEARL_DEPOSIT_STEPS>>(
     PEARL_DEPOSIT_STEPS.DEPOSIT,
   );
 
-  switch (step) {
+  // A live run is resumed instead of starting a new deposit.
+  const hasLiveRun =
+    !!activeRun &&
+    activeRun.status !== 'COMPLETED' &&
+    activeRun.status !== 'CANCELLED';
+  const currentStep = hasLiveRun ? PEARL_DEPOSIT_STEPS.FUNDING_FLOW : step;
+
+  const depositAmounts = useMemo(
+    () =>
+      walletChainId ? toDepositAmounts(walletChainId, amountsToDeposit) : {},
+    [walletChainId, amountsToDeposit],
+  );
+
+  switch (currentStep) {
     case PEARL_DEPOSIT_STEPS.DEPOSIT:
       return (
         <Deposit
           onBack={onBack}
-          onContinue={() => setStep(PEARL_DEPOSIT_STEPS.SELECT_PAYMENT_METHOD)}
+          onContinue={() => setStep(PEARL_DEPOSIT_STEPS.FUNDING_FLOW)}
         />
       );
-    case PEARL_DEPOSIT_STEPS.SELECT_PAYMENT_METHOD:
+    case PEARL_DEPOSIT_STEPS.FUNDING_FLOW:
+      if (!walletChainId) return null;
       return (
-        <SelectPaymentMethod
-          onBack={() => setStep(PEARL_DEPOSIT_STEPS.DEPOSIT)}
+        <FundingFlow
+          mode="deposit"
+          depositAmounts={depositAmounts}
+          destinationChain={asMiddlewareChain(walletChainId)}
+          fallbackToReceive={getNetDepositAmounts(
+            amountsToDeposit,
+            availableAssets,
+          )}
+          onBack={
+            hasLiveRun ? onBack : () => setStep(PEARL_DEPOSIT_STEPS.DEPOSIT)
+          }
+          onTransferCompleted={gotoPearlWallet}
         />
       );
     default:

@@ -13,20 +13,36 @@ import {
   WalletTransferDirection,
 } from '@/components/ui';
 import { usePearlWallet } from '@/context/PearlWalletProvider';
+import { useFundingRun } from '@/hooks/useFundingRun';
+import { FundingRun, FundingRunMode } from '@/types/FundingRun';
 import {
   asEvmChainDetails,
   asMiddlewareChain,
   tokenBalancesToSentence,
 } from '@/utils';
 
+import { getNetDepositAmounts } from '../utils';
+
 const { Title, Text } = Typography;
+
+/** The entries are target balances, not amounts to add. */
+export const DEPOSIT_SUBTITLE =
+  'Enter the token amounts you want your Pearl Wallet to hold.';
+export const ALREADY_HELD_NOTE =
+  'Your Pearl Wallet already holds these amounts.';
+
+const FUNDING_RUN_LABEL: Record<FundingRunMode, string> = {
+  onboard: 'agent setup funding',
+  deposit: 'Pearl Wallet deposit',
+  signer_gas: 'Pearl Wallet top-up',
+};
 
 const DepositTitle = () => (
   <Flex vertical justify="space-between" gap={12}>
     <Title level={4} className="m-0">
       Deposit to Pearl Wallet
     </Title>
-    <Text>Enter the token amounts you want to deposit.</Text>
+    <Text>{DEPOSIT_SUBTITLE}</Text>
   </Flex>
 );
 
@@ -90,7 +106,25 @@ type DepositProps = {
   onContinue: () => void;
 };
 
+const getContinueTooltip = (
+  masterSafeAddress: string | null,
+  liveRun: FundingRun | null,
+) => {
+  if (!masterSafeAddress) return 'Complete agent setup to enable';
+  if (liveRun) {
+    return `Your ${FUNDING_RUN_LABEL[liveRun.mode]} is still in progress. Finish it first.`;
+  }
+  return null;
+};
+
 export const Deposit = ({ onBack, onContinue }: DepositProps) => {
+  const { activeRun } = useFundingRun();
+  const liveRun =
+    activeRun &&
+    activeRun.status !== 'COMPLETED' &&
+    activeRun.status !== 'CANCELLED'
+      ? activeRun
+      : null;
   const {
     onDepositAmountChange,
     amountsToDeposit,
@@ -104,6 +138,13 @@ export const Deposit = ({ onBack, onContinue }: DepositProps) => {
   useEffect(() => {
     initializeDepositAmounts();
   }, [walletChainId, initializeDepositAmounts]);
+
+  const hasEnteredAmounts = !values(amountsToDeposit).every(
+    (i) => i.amount === 0,
+  );
+  const isAlreadyHeld =
+    hasEnteredAmounts &&
+    getNetDepositAmounts(amountsToDeposit, availableAssets).length === 0;
 
   return (
     <CardFlex $noBorder $padding="32px" style={cardStyles}>
@@ -133,13 +174,19 @@ export const Deposit = ({ onBack, onContinue }: DepositProps) => {
           </Flex>
         </Flex>
 
-        <Tooltip
-          title={masterSafeAddress ? null : 'Complete agent setup to enable'}
-        >
+        {isAlreadyHeld && (
+          <Text className="text-sm text-neutral-tertiary">
+            {ALREADY_HELD_NOTE}
+          </Text>
+        )}
+
+        <Tooltip title={getContinueTooltip(masterSafeAddress, liveRun)}>
           <Button
             disabled={
-              values(amountsToDeposit).every((i) => i.amount === 0) ||
-              !masterSafeAddress
+              !hasEnteredAmounts ||
+              isAlreadyHeld ||
+              !masterSafeAddress ||
+              !!liveRun
             }
             onClick={onContinue}
             type="primary"
