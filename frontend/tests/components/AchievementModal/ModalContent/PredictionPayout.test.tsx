@@ -150,6 +150,18 @@ describe('PredictionPayout', () => {
       ).toHaveAttribute('href', `https://polygonscan.com/tx/${MOCK_TX_HASH_1}`);
     });
 
+    it('never mentions Omenstrat or Gnosis', async () => {
+      const { container } = await renderAndWarmUp(
+        <PredictionPayout
+          agentType={AgentMap.Polystrat}
+          achievement={makePolystratPayoutAchievement()}
+          areBackgroundTasksFinalized
+        />,
+      );
+
+      expect(container.innerHTML).not.toMatch(/omenstrat|gnosis/i);
+    });
+
     it('warms up the polystrat card URL', async () => {
       await renderAndWarmUp(
         <PredictionPayout

@@ -606,7 +606,7 @@ export const makePolystratPayoutAchievement = (
 export const MOCK_OMENSTRAT_ACHIEVEMENT_ID = 'ach-omenstrat-payout-001';
 
 /**
- * Omen bet ids are the transaction hash followed by an 8-byte log index.
+ * Omen bet ids are the transaction hash followed by a 4-byte log index.
  * 2.00 xDAI wagered → 4.80 payout = 2.4× multiplier.
  */
 export const MOCK_OMEN_BET_ID = `${MOCK_TX_HASH_1}0000000f` as `0x${string}`;
