@@ -21,6 +21,8 @@ export const TITLES: Record<
   },
 };
 
+export const ACTIVE_RUN_ERROR = "Couldn't check your funding status.";
+
 export const SUCCESS_BANNER: Record<FundingRunMode, string> = {
   onboard: 'Your agent is ready!',
   deposit: 'Transfer is done',

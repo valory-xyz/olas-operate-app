@@ -1,4 +1,4 @@
-import { Flex, Skeleton, Typography } from 'antd';
+import { Button, Flex, Skeleton, Typography } from 'antd';
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 
 import {
@@ -9,6 +9,7 @@ import {
   TransferCompletedModal,
 } from '@/components/ui';
 import { MiddlewareChain } from '@/constants';
+import { useMessageApi } from '@/context/MessageProvider';
 import { useFundingRun } from '@/hooks/useFundingRun';
 import { Address } from '@/types/Address';
 import {
@@ -17,13 +18,13 @@ import {
   FundingRunMode,
 } from '@/types/FundingRun';
 
-import { TITLES } from './constants';
+import { ACTIVE_RUN_ERROR, TITLES } from './constants';
 import { FundingProgress } from './FundingProgress';
 import { QuoteAndDeposit } from './QuoteAndDeposit';
 import { RequestChainOrToken } from './RequestChainOrToken';
 import { SelectSourceChain } from './SelectSourceChain';
 import { SelectSourceToken } from './SelectSourceToken';
-import { SelectionRow } from './styles';
+import { CardRow, SelectionRow } from './styles';
 import { ToReceiveItem, ToReceiveSummary } from './ToReceiveSummary';
 import {
   acknowledgeRun,
@@ -36,7 +37,7 @@ import {
   resolveDisplayedRun,
 } from './utils';
 
-const { Title } = Typography;
+const { Text, Title } = Typography;
 
 type Selection = { chain: MiddlewareChain; token: Address };
 
@@ -100,6 +101,8 @@ export const FundingFlow = (props: FundingFlowProps) => {
   const {
     activeRun,
     isActiveRunFetched,
+    isActiveRunError,
+    refetchActiveRun,
     sources,
     isSourcesLoading,
     isSourcesError,
@@ -122,6 +125,9 @@ export const FundingFlow = (props: FundingFlowProps) => {
   const [pendingSelection, setPendingSelection] = useState<Selection | null>(
     null,
   );
+
+  const message = useMessageApi();
+  const showMutationError = (error: Error) => message.error(error.message);
 
   const [, rerender] = useReducer((count: number) => count + 1, 0);
   const handleGoToPearlWallet = (runId: string) => {
@@ -150,7 +156,12 @@ export const FundingFlow = (props: FundingFlowProps) => {
     setStep('token');
   }, []);
 
-  const canCreate = mode !== 'onboard' || !!props.serviceConfigId;
+  // A run can only be (re)created with this host's own parameters, so another
+  // mode's run, or a deposit with no amounts, cannot be changed from here.
+  const hasCreateParams =
+    (props.mode !== 'onboard' || !!props.serviceConfigId) &&
+    (props.mode !== 'deposit' || Object.keys(props.depositAmounts).length > 0);
+  const canCreate = hasCreateParams && (!run || run.mode === mode);
   const editable = !run || isRunEditable(run);
   const currentStep: SelectionStep | 'quote' =
     step ?? (run || pendingSelection ? 'quote' : 'chain');
@@ -215,8 +226,9 @@ export const FundingFlow = (props: FundingFlowProps) => {
       getTokenMeta(selection.chain, selection.token)?.symbol ??
       run?.source.symbol ??
       '';
-    const onChangeChain = editable ? () => setStep('chain') : undefined;
-    const onChangeToken = editable
+    const canChange = editable && canCreate;
+    const onChangeChain = canChange ? () => setStep('chain') : undefined;
+    const onChangeToken = canChange
       ? () => {
           setSelectedChain(selection.chain);
           setStep('token');
@@ -240,7 +252,9 @@ export const FundingFlow = (props: FundingFlowProps) => {
         {run && !editable ? (
           <FundingProgress
             run={run}
-            onRetry={() => retryMutation.mutate(run.id)}
+            onRetry={() =>
+              retryMutation.mutate(run.id, { onError: showMutationError })
+            }
             isRetrying={retryMutation.isPending}
           />
         ) : (
@@ -248,7 +262,12 @@ export const FundingFlow = (props: FundingFlowProps) => {
             run={isCreateUnresolved ? null : run}
             isCreateError={createMutation.isError}
             onRetryCreate={() => pendingSelection && create(pendingSelection)}
-            onRefreshQuote={() => run && refreshQuoteMutation.mutate(run.id)}
+            onRefreshQuote={() =>
+              run &&
+              refreshQuoteMutation.mutate(run.id, {
+                onError: showMutationError,
+              })
+            }
             isRefreshing={refreshQuoteMutation.isPending}
           />
         )}
@@ -257,6 +276,16 @@ export const FundingFlow = (props: FundingFlowProps) => {
   };
 
   const renderBody = () => {
+    if (isActiveRunError && !activeRun) {
+      return (
+        <CardRow vertical gap={8} align="flex-start">
+          <Text>{ACTIVE_RUN_ERROR}</Text>
+          <Button size="small" onClick={() => refetchActiveRun()}>
+            Retry
+          </Button>
+        </CardRow>
+      );
+    }
     if (!isActiveRunFetched) {
       return (
         <Flex className="p-24">

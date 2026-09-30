@@ -42,15 +42,19 @@ const SOURCES = {
 
 type HookState = {
   activeRun: FundingRun | null;
+  activeRunError?: boolean;
   createPending?: boolean;
   createError?: boolean;
 };
+const mockRefetchActiveRun = jest.fn();
 let mockHookState: HookState = { activeRun: null };
 
 jest.mock('../../../hooks/useFundingRun', () => ({
   useFundingRun: () => ({
     activeRun: mockHookState.activeRun,
     isActiveRunFetched: true,
+    isActiveRunError: !!mockHookState.activeRunError,
+    refetchActiveRun: mockRefetchActiveRun,
     sources: SOURCES,
     isSourcesLoading: false,
     isSourcesError: false,
@@ -117,7 +121,7 @@ const processingRun = (overrides: Partial<FundingRun> = {}) => {
 };
 
 beforeEach(() => {
-  jest.clearAllMocks();
+  jest.resetAllMocks();
   mockHookState = { activeRun: null };
 });
 
@@ -199,6 +203,131 @@ describe('FundingFlow — selection', () => {
   });
 });
 
+describe('FundingFlow — failures around the run', () => {
+  it('shows a failed create as a quote failure, and Retry recreates the same selection', () => {
+    const { rerender } = renderFlow();
+    fireEvent.click(screen.getByRole('button', { name: /Base/ }));
+    fireEvent.click(screen.getByRole('button', { name: /USDC/ }));
+    expect(mockCreate).toHaveBeenCalledTimes(1);
+
+    mockHookState = { activeRun: null, createError: true };
+    rerender(<FundingFlow {...ONBOARD_PROPS} />);
+    expect(screen.getByText("Couldn't get a quote")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    expect(mockCreate).toHaveBeenCalledTimes(2);
+    expect(mockCreate.mock.calls[1][0]).toEqual(mockCreate.mock.calls[0][0]);
+  });
+
+  it('tells the user when the retry request itself fails', () => {
+    mockRetry.mockImplementation((_id, options) =>
+      options.onError(new Error('Funding run failed. Please check the logs.')),
+    );
+    const run = processingRun();
+    mockHookState = {
+      activeRun: {
+        ...run,
+        status: 'FAILED',
+        error: { step_id: 'bridge', message: 'x' },
+      },
+    };
+    renderFlow();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    expect(mockMessageError).toHaveBeenCalledWith(
+      'Funding run failed. Please check the logs.',
+    );
+  });
+
+  it('tells the user when a quote refresh fails', () => {
+    mockRefreshQuote.mockImplementation((_id, options) =>
+      options.onError(
+        new Error('Funding run conflicts with the current run state.'),
+      ),
+    );
+    mockHookState = { activeRun: makeFundingRun({ status: 'QUOTE_FAILED' }) };
+    renderFlow();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    expect(mockMessageError).toHaveBeenCalledWith(
+      'Funding run conflicts with the current run state.',
+    );
+  });
+
+  it('does not offer a new selection when the active run could not be checked', () => {
+    mockHookState = { activeRun: null, activeRunError: true };
+    renderFlow();
+
+    expect(
+      screen.getByText("Couldn't check your funding status."),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText('Select the preferred chain to send funds from:'),
+    ).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    expect(mockRefetchActiveRun).toHaveBeenCalled();
+  });
+
+  it('treats a cancelled run as no run', () => {
+    mockHookState = { activeRun: makeFundingRun({ status: 'CANCELLED' }) };
+    renderFlow();
+
+    expect(
+      screen.getByText('Select the preferred chain to send funds from:'),
+    ).toBeInTheDocument();
+  });
+
+  it("offers no Change on another mode's run it cannot recreate", () => {
+    mockHookState = { activeRun: makeFundingRun({ mode: 'signer_gas' }) };
+    renderFlow();
+
+    expect(screen.getByText('Waiting for your transfer')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Change' })).toBeNull();
+  });
+
+  it('offers no Change on a deposit run when the host has no amounts to resend', () => {
+    mockHookState = { activeRun: makeFundingRun({ mode: 'deposit' }) };
+    renderFlow({
+      mode: 'deposit',
+      depositAmounts: {},
+    } as Partial<FundingFlowProps>);
+
+    expect(screen.queryByRole('button', { name: 'Change' })).toBeNull();
+  });
+});
+
+describe('FundingFlow — "To receive"', () => {
+  it("shows the run's net delivery", () => {
+    mockHookState = { activeRun: makeFundingRun() };
+    renderFlow({ fallbackToReceive: [{ symbol: 'OLAS', amount: 999 }] });
+
+    expect(screen.getByText('To receive')).toBeInTheDocument();
+    expect(screen.getByText('6.00 POL')).toBeInTheDocument();
+    expect(screen.getByText('40.00 OLAS')).toBeInTheDocument();
+    expect(screen.getByText('10.00 pUSD')).toBeInTheDocument();
+    expect(screen.queryByText('999.00 OLAS')).toBeNull();
+  });
+
+  it("shows the entry point's requirement before a run exists, skipping zero amounts", () => {
+    renderFlow({
+      fallbackToReceive: [
+        { symbol: 'POL', amount: 15 },
+        { symbol: 'OLAS', amount: 0 },
+      ],
+    });
+
+    expect(screen.getByText('15.00 POL')).toBeInTheDocument();
+    expect(screen.queryByText(/OLAS/)).toBeNull();
+  });
+
+  it('renders no summary when nothing is left to receive', () => {
+    mockHookState = { activeRun: makeFundingRun({ to_receive: [] }) };
+    renderFlow();
+
+    expect(screen.queryByText('To receive')).toBeNull();
+  });
+});
+
 describe('FundingFlow — quote and deposit address', () => {
   it('renders the quote and the address together, and resumes an existing run on mount', () => {
     mockHookState = { activeRun: makeFundingRun() };
@@ -258,7 +387,10 @@ describe('FundingFlow — quote and deposit address', () => {
       expect(screen.getByText(/Quote update in 2:40/)).toBeInTheDocument();
 
       fireEvent.click(screen.getByRole('button', { name: /Refresh quote/ }));
-      expect(mockRefreshQuote).toHaveBeenCalledWith(makeFundingRun().id);
+      expect(mockRefreshQuote).toHaveBeenCalledWith(
+        makeFundingRun().id,
+        expect.anything(),
+      );
     } finally {
       jest.useRealTimers();
     }
@@ -286,7 +418,10 @@ describe('FundingFlow — quote and deposit address', () => {
 
     expect(screen.getByText("Couldn't get a quote")).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
-    expect(mockRefreshQuote).toHaveBeenCalledWith(makeFundingRun().id);
+    expect(mockRefreshQuote).toHaveBeenCalledWith(
+      makeFundingRun().id,
+      expect.anything(),
+    );
     fireEvent.click(screen.getByRole('button', { name: 'Contact Support' }));
     expect(mockToggleSupportModal).toHaveBeenCalled();
   });
@@ -436,7 +571,7 @@ describe('FundingFlow — progress', () => {
       screen.getByText("Don't worry, your funds remain safe."),
     ).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
-    expect(mockRetry).toHaveBeenCalledWith(run.id);
+    expect(mockRetry).toHaveBeenCalledWith(run.id, expect.anything());
   });
 
   it('reports a hidden Safe-step failure on the last visible step', () => {
@@ -569,6 +704,25 @@ describe('FundingFlow — "Other" requests', () => {
     });
     expect(mockMessageSuccess).toHaveBeenCalledWith('Thank you for your input');
     expect(screen.getByText('Select the token:')).toBeInTheDocument();
+  });
+
+  it('keeps the form open and says so when the request fails', async () => {
+    mockSubmit.mockResolvedValue({ success: false, error: 'Bad gateway' });
+    renderFlow();
+    fireEvent.click(screen.getByRole('button', { name: 'Other chain' }));
+    fireEvent.change(screen.getByPlaceholderText('Enter chain'), {
+      target: { value: 'Monad' },
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Request Chain' }));
+    });
+
+    expect(mockMessageError).toHaveBeenCalledWith(
+      "Couldn't send your request. Please try again.",
+    );
+    expect(mockMessageSuccess).not.toHaveBeenCalled();
+    expect(screen.getByPlaceholderText('Enter chain')).toBeInTheDocument();
   });
 
   it('sends a chain request without a context chain', async () => {

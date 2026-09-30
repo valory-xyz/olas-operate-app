@@ -65,6 +65,8 @@ export const useFundingRun = () => {
   return {
     activeRun: activeRunQuery.data ?? null,
     isActiveRunFetched: activeRunQuery.isFetched,
+    isActiveRunError: activeRunQuery.isError,
+    refetchActiveRun: activeRunQuery.refetch,
     sources: sourcesQuery.data,
     isSourcesLoading: sourcesQuery.isLoading,
     isSourcesError: sourcesQuery.isError,
