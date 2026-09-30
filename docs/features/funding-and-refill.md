@@ -10,19 +10,20 @@ Every external-wallet funding entry point runs through one shared **FundingFlow*
 | --- | --- | --- |
 | Onboarding "Fund your agent" (`SETUP_SCREEN.FundYourAgent`) | `onboard` | Master Safe on the agent's home chain; the middleware derives the targets from the service |
 | Pearl Wallet "Deposit" (`PearlDeposit`) | `deposit` | Master Safe on the selected wallet chain; amounts are **target balances**, not amounts to add |
-| "Fund Pearl Wallet" page (`PAGES.FundPearlWallet`) | `signer_gas` | Master EOA gas reserve on the chain named by the gas error (`navParams.chain`), else the home chain |
+| "Fund Pearl Wallet" page (`PAGES.FundPearlWallet`) | `signer_gas` | Master EOA gas reserve on the chain named by the gas error (`navParams.chain`), else the home chain. A `chain` param Pearl does not support shows an error instead of falling back. A persistent "Back to Pearl Wallet" exit sits under the flow |
 
 The screen is a function of the run returned by `GET /api/funding_run/active` (polled every 5 s by `useFundingRun`), plus the chain/token picked before a run exists:
 
 1. **Chain** — from `GET /api/funding_run/sources`, plus "Other chain".
 2. **Token** — the chosen chain's tokens, plus "Other token". Picking one calls `POST /api/funding_run`; there is no confirm step.
 3. **Quote and address** — outstanding amount, `Quote update in m:ss` countdown to `quote.next_refresh_at` with manual refresh, the Signer address with Copy and a QR. No address is shown without a quote. Partial receipts reduce the outstanding amount. Chain/Token "Change" controls exist only in `AWAITING_DEPOSIT` / `QUOTE_FAILED` and recreate the run.
-4. **Progress** — a status banner naming the step in progress (or "Taking longer than usual..."), and a newest-first log of finished visible steps with timestamps and "Details" links. Steps with `visible: false` (`SAFE_AND_TRANSFER`, `CLEAR_DELEGATION`) never render; a hidden step's failure is shown on the last visible step. On `FAILED` the banner and the failed row both derive from `error.step_id`, with Retry (`POST .../retry`) and Contact Support.
+4. **Progress** — a status banner naming the step in progress (or "Taking longer than usual..."), and a newest-first log of finished visible steps with timestamps and "Details" links. Steps with `visible: false` (`SAFE_AND_TRANSFER`, `CLEAR_DELEGATION`) never render; a hidden step's failure is shown on the last visible step. On `FAILED` the banner and the failed row both derive from `error.step_id`, with Retry (`POST .../retry`) and Contact Support; a failure with no step to name shows "Couldn't finish the transfer" with the same actions.
 5. **Success** — `AgentSetupCompleteModal` for onboarding; `TransferCompletedModal` ("Go to Pearl Wallet") otherwise.
 
 Rules the flow enforces:
 
-- **One run at a time.** A live run of any mode is shown by whichever host opens, instead of a new selection. `PearlDeposit` opens straight into it, and its Continue is disabled while one is live. The middleware also returns `409` for a second run.
+- **One run at a time.** A live run of any mode is shown by whichever host opens, instead of a new selection. `PearlDeposit` opens straight into it and stays on the flow once it completes, so the success modal shows; its Continue is disabled while a run is live. The middleware also returns `409` for a second run: the create error is shown as a toast, and the live run the refetch finds replaces the quote-failure screen. Change resets a failed create.
+- **Stale status.** If a poll fails while a run is on screen, the last known run stays with a "Connection lost" banner.
 - **Resume.** Run state lives in the middleware (`~/.operate/funding_runs/`), so reopening any host after a restart resumes the run. A run that completed before the screen opened is shown again only for onboarding (so the setup-complete modal still appears after a restart); a completed run is acknowledged once its modal is dismissed or the screen is left.
 - **Copy is the app's.** The middleware returns step kinds, tokens and amounts; `FundingFlow/constants.ts` maps them to copy per mode. No gas, paymaster or bundler wording appears anywhere.
 - **"Other chain / Other token"** posts `{ submissionId, kind, requestedName, contextChain }` to pearl-api (`FundingRequestService`) and only acknowledges receipt.
