@@ -139,6 +139,10 @@ export const REACT_QUERY_KEYS = {
   // backup owner
   BACKUP_OWNER_STATUS_KEY: ['backupOwnerStatus'] as const,
 
+  // one-transaction funding
+  FUNDING_RUN_ACTIVE_KEY: ['fundingRunActive'] as const,
+  FUNDING_RUN_SOURCES_KEY: ['fundingRunSources'] as const,
+
   // agent wallet partial withdrawal
   SAFE_WITHDRAWABLE_BALANCE_KEY: (serviceConfigId: string) =>
     ['safeWithdrawableBalance', serviceConfigId] as const,

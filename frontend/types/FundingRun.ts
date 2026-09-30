@@ -1,0 +1,99 @@
+import { MiddlewareChain } from '@/constants/chains';
+
+import { Address } from './Address';
+
+/**
+ * Mirrors the run object returned by every `/api/funding_run` route
+ * (`FundingRunManager.run_json` in olas-operate-middleware).
+ * Amounts are integer strings in base units; token `0x000…000` is native.
+ */
+
+export type FundingRunMode = 'onboard' | 'deposit' | 'signer_gas';
+
+export type FundingRunStatus =
+  | 'AWAITING_DEPOSIT'
+  | 'QUOTE_FAILED'
+  | 'PROCESSING'
+  | 'FAILED'
+  | 'COMPLETED'
+  | 'CANCELLED';
+
+export type FundingStepKind =
+  | 'RECEIVE'
+  | 'BRIDGE'
+  | 'NATIVE'
+  | 'SWAP'
+  | 'SAFE_AND_TRANSFER'
+  | 'CLEAR_DELEGATION';
+
+export type FundingStepStatus = 'PENDING' | 'PROCESSING' | 'DONE' | 'FAILED';
+
+export type FundingRunStep = {
+  id: string;
+  kind: FundingStepKind;
+  status: FundingStepStatus;
+  token: Address | null;
+  amount: string | null;
+  tx_hash: string | null;
+  explorer_link: string | null;
+  /** Unix seconds. */
+  started_at: number | null;
+  /** Unix seconds. */
+  finished_at: number | null;
+  is_slow: boolean;
+  visible: boolean;
+};
+
+export type FundingRunQuote = {
+  required_amount: string;
+  received_amount: string;
+  outstanding_amount: string;
+  eta_seconds: number | null;
+  /** Unix seconds. */
+  quoted_at: number;
+  /** Unix seconds. */
+  next_refresh_at: number;
+};
+
+export type FundingRunTokenAmount = {
+  token: Address;
+  symbol: string;
+  amount: string;
+};
+
+export type FundingRun = {
+  id: string;
+  mode: FundingRunMode;
+  status: FundingRunStatus;
+  source: {
+    chain: MiddlewareChain;
+    token: Address;
+    symbol: string;
+    decimals: number;
+    deposit_address: Address;
+  };
+  destination: {
+    chain: MiddlewareChain;
+    wallet: 'master_safe' | 'master_eoa';
+  };
+  /** `null` until the first quote lands. */
+  quote: FundingRunQuote | null;
+  quote_message: string | null;
+  /** Net delivery: what the user gains after existing balances. Can be empty. */
+  to_receive: FundingRunTokenAmount[];
+  steps: FundingRunStep[];
+  error: { step_id: string; message: string } | null;
+};
+
+/** Middleware chain → accepted source tokens. */
+export type FundingRunSources = Partial<Record<MiddlewareChain, Address[]>>;
+
+export type CreateFundingRunRequest = {
+  mode: FundingRunMode;
+  source: { chain: MiddlewareChain; token: Address };
+  destination: { chain: MiddlewareChain };
+  service_config_id?: string;
+  /** Deposit mode only: target balances in base units, keyed by token address. */
+  deposit_amounts?: Record<Address, string>;
+  backup_owner?: Address;
+};
