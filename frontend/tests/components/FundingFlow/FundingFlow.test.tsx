@@ -1,0 +1,605 @@
+import { act, fireEvent, render, screen } from '@testing-library/react';
+
+import {
+  FundingFlow,
+  FundingFlowProps,
+} from '../../../components/FundingFlow/FundingFlow';
+import { FundingRequestService } from '../../../service/FundingRequest';
+import { FundingRun } from '../../../types/FundingRun';
+import {
+  FUNDING_RUN_BASE_USDC,
+  FUNDING_RUN_NATIVE,
+  makeFundingRun,
+} from '../../helpers/factories';
+
+/* eslint-disable @typescript-eslint/no-var-requires */
+jest.mock(
+  'ethers-multicall',
+  () => require('../../mocks/ethersMulticall').ethersMulticallMock,
+);
+/* eslint-enable @typescript-eslint/no-var-requires */
+jest.mock('../../../constants/providers', () => ({ PROVIDERS: {} }));
+
+const mockCreate = jest.fn();
+const mockRefreshQuote = jest.fn();
+const mockRetry = jest.fn();
+const mockToggleSupportModal = jest.fn();
+const mockMessageSuccess = jest.fn();
+const mockMessageError = jest.fn();
+
+const SOURCES = {
+  ethereum: [FUNDING_RUN_NATIVE, '0xA0b86991c6218b36c1d19D4a2e9EB0CE3606EB48'],
+  base: [FUNDING_RUN_NATIVE, FUNDING_RUN_BASE_USDC],
+  optimism: [FUNDING_RUN_NATIVE, '0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85'],
+  polygon: [FUNDING_RUN_NATIVE, '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359'],
+  arbitrum_one: [
+    FUNDING_RUN_NATIVE,
+    '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',
+  ],
+  gnosis: [FUNDING_RUN_NATIVE],
+  robinhood: [FUNDING_RUN_NATIVE],
+};
+
+type HookState = {
+  activeRun: FundingRun | null;
+  createPending?: boolean;
+  createError?: boolean;
+};
+let mockHookState: HookState = { activeRun: null };
+
+jest.mock('../../../hooks/useFundingRun', () => ({
+  useFundingRun: () => ({
+    activeRun: mockHookState.activeRun,
+    isActiveRunFetched: true,
+    sources: SOURCES,
+    isSourcesLoading: false,
+    isSourcesError: false,
+    refetchSources: jest.fn(),
+    createMutation: {
+      mutate: mockCreate,
+      isPending: !!mockHookState.createPending,
+      isError: !!mockHookState.createError,
+    },
+    refreshQuoteMutation: { mutate: mockRefreshQuote, isPending: false },
+    retryMutation: { mutate: mockRetry, isPending: false },
+  }),
+}));
+
+jest.mock('../../../context/SupportModalProvider', () => ({
+  useSupportModal: () => ({ toggleSupportModal: mockToggleSupportModal }),
+}));
+
+jest.mock('../../../context/MessageProvider', () => ({
+  useMessageApi: () => ({
+    success: mockMessageSuccess,
+    error: mockMessageError,
+  }),
+}));
+
+jest.mock('../../../components/ui/AgentSetupCompleteModal', () => ({
+  AgentSetupCompleteModal: () => <div>Setup Complete</div>,
+}));
+
+jest.mock('../../../service/FundingRequest', () => ({
+  FundingRequestService: { submit: jest.fn() },
+}));
+
+const mockSubmit = FundingRequestService.submit as jest.Mock;
+const mockOnTransferCompleted = jest.fn();
+
+const ONBOARD_PROPS: FundingFlowProps = {
+  mode: 'onboard',
+  serviceConfigId: 'sc-1',
+  backupOwner: '0x1111111111111111111111111111111111111111',
+  destinationChain: 'polygon',
+  onBack: jest.fn(),
+  onTransferCompleted: mockOnTransferCompleted,
+};
+
+const renderFlow = (props: Partial<FundingFlowProps> = {}) =>
+  render(
+    <FundingFlow {...({ ...ONBOARD_PROPS, ...props } as FundingFlowProps)} />,
+  );
+
+const processingRun = (overrides: Partial<FundingRun> = {}) => {
+  const base = makeFundingRun();
+  return makeFundingRun({
+    status: 'PROCESSING',
+    steps: base.steps.map((step) => {
+      if (step.id === 'receive') {
+        return { ...step, status: 'DONE', finished_at: 1790592100 };
+      }
+      if (step.id === 'bridge') return { ...step, status: 'PROCESSING' };
+      return step;
+    }),
+    ...overrides,
+  });
+};
+
+beforeEach(() => {
+  jest.clearAllMocks();
+  mockHookState = { activeRun: null };
+});
+
+describe('FundingFlow — selection', () => {
+  it('lists the backend source chains, with "Other chain" last', () => {
+    renderFlow();
+
+    const labels = screen
+      .getAllByRole('button')
+      .map((button) => button.textContent?.trim())
+      .filter((label) => label && label !== 'Back');
+    expect(labels).toEqual([
+      'Ethereum',
+      'Base',
+      'Optimism',
+      'Polygon',
+      'Arbitrum',
+      'Gnosis',
+      'Robinhood',
+      'Other chain',
+    ]);
+    expect(screen.queryByText(/Celo|Solana/)).not.toBeInTheDocument();
+    expect(
+      screen.getByText('Select the preferred chain to send funds from:'),
+    ).toBeInTheDocument();
+  });
+
+  it('offers only xDAI on Gnosis and only ETH on Robinhood', () => {
+    renderFlow();
+    fireEvent.click(screen.getByRole('button', { name: /Gnosis/ }));
+    expect(screen.getByRole('button', { name: /XDAI/ })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /USDC/ })).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Change' }));
+    fireEvent.click(screen.getByRole('button', { name: /Robinhood/ }));
+    expect(screen.getByRole('button', { name: /ETH/ })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /USDC/ })).toBeNull();
+  });
+
+  it('creates an onboarding run when a token is picked, with no confirm step', () => {
+    renderFlow();
+    fireEvent.click(screen.getByRole('button', { name: /Base/ }));
+    fireEvent.click(screen.getByRole('button', { name: /USDC/ }));
+
+    expect(mockCreate).toHaveBeenCalledWith({
+      mode: 'onboard',
+      source: { chain: 'base', token: FUNDING_RUN_BASE_USDC },
+      destination: { chain: 'polygon' },
+      service_config_id: 'sc-1',
+      backup_owner: '0x1111111111111111111111111111111111111111',
+    });
+    expect(screen.queryByRole('button', { name: /confirm/i })).toBeNull();
+  });
+
+  it('sends deposit targets in deposit mode', () => {
+    const depositAmounts = { [FUNDING_RUN_NATIVE]: '5000000000000000000' };
+    renderFlow({
+      mode: 'deposit',
+      depositAmounts,
+    } as Partial<FundingFlowProps>);
+    fireEvent.click(screen.getByRole('button', { name: /Base/ }));
+    fireEvent.click(screen.getByRole('button', { name: /USDC/ }));
+
+    expect(mockCreate).toHaveBeenCalledWith({
+      mode: 'deposit',
+      source: { chain: 'base', token: FUNDING_RUN_BASE_USDC },
+      destination: { chain: 'polygon' },
+      deposit_amounts: depositAmounts,
+    });
+  });
+
+  it('shows "Getting a quote" while the run is being created', () => {
+    mockHookState = { activeRun: null, createPending: true };
+    renderFlow();
+    fireEvent.click(screen.getByRole('button', { name: /Base/ }));
+    fireEvent.click(screen.getByRole('button', { name: /USDC/ }));
+
+    expect(screen.getByText('Getting a quote')).toBeInTheDocument();
+  });
+});
+
+describe('FundingFlow — quote and deposit address', () => {
+  it('renders the quote and the address together, and resumes an existing run on mount', () => {
+    mockHookState = { activeRun: makeFundingRun() };
+    renderFlow();
+
+    expect(screen.getByText('Waiting for your transfer')).toBeInTheDocument();
+    expect(screen.getByText('15.00')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Send funds from your external wallet on Base chain to the wallet address below.',
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(makeFundingRun().source.deposit_address),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText('Select the preferred chain to send funds from:'),
+    ).toBeNull();
+  });
+
+  it('says funds on another chain "might" be lost, never "will"', () => {
+    mockHookState = { activeRun: makeFundingRun() };
+    const { container } = renderFlow();
+
+    expect(
+      screen.getByText('Funds sent on another chain might be lost.'),
+    ).toBeInTheDocument();
+    expect(container.textContent).not.toMatch(/will be lost/);
+  });
+
+  it('shows no address before the first quote lands', () => {
+    mockHookState = { activeRun: makeFundingRun({ quote: null }) };
+    renderFlow();
+
+    expect(screen.getByText('Getting a quote')).toBeInTheDocument();
+    expect(
+      screen.queryByText(makeFundingRun().source.deposit_address),
+    ).toBeNull();
+  });
+
+  it('counts down to the next quote and refreshes on click', () => {
+    jest.useFakeTimers();
+    try {
+      const now = 1_790_592_000;
+      jest.setSystemTime(now * 1000);
+      mockHookState = {
+        activeRun: makeFundingRun({
+          quote: { ...makeFundingRun().quote!, next_refresh_at: now + 162 },
+        }),
+      };
+      renderFlow();
+      expect(screen.getByText(/Quote update in 2:42/)).toBeInTheDocument();
+
+      act(() => {
+        jest.advanceTimersByTime(2000);
+      });
+      expect(screen.getByText(/Quote update in 2:40/)).toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole('button', { name: /Refresh quote/ }));
+      expect(mockRefreshQuote).toHaveBeenCalledWith(makeFundingRun().id);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('shows a partial receipt and the reduced outstanding amount', () => {
+    mockHookState = {
+      activeRun: makeFundingRun({
+        quote: {
+          ...makeFundingRun().quote!,
+          received_amount: '4000000',
+          outstanding_amount: '11000000',
+        },
+      }),
+    };
+    renderFlow();
+
+    expect(screen.getByText('4.00 USDC received')).toBeInTheDocument();
+    expect(screen.getByText('11.00')).toBeInTheDocument();
+  });
+
+  it('shows the quote failure with Retry and Contact Support', () => {
+    mockHookState = { activeRun: makeFundingRun({ status: 'QUOTE_FAILED' }) };
+    renderFlow();
+
+    expect(screen.getByText("Couldn't get a quote")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    expect(mockRefreshQuote).toHaveBeenCalledWith(makeFundingRun().id);
+    fireEvent.click(screen.getByRole('button', { name: 'Contact Support' }));
+    expect(mockToggleSupportModal).toHaveBeenCalled();
+  });
+
+  it('Change on the token recreates the run with the new selection', () => {
+    mockHookState = { activeRun: makeFundingRun() };
+    renderFlow();
+
+    const [, changeToken] = screen.getAllByRole('button', { name: 'Change' });
+    fireEvent.click(changeToken);
+    fireEvent.click(screen.getByRole('button', { name: /ETH/ }));
+
+    expect(mockCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: { chain: 'base', token: FUNDING_RUN_NATIVE },
+      }),
+    );
+  });
+});
+
+describe('FundingFlow — progress', () => {
+  it('hides the Change controls once processing starts', () => {
+    mockHookState = { activeRun: processingRun() };
+    renderFlow();
+
+    expect(screen.queryByRole('button', { name: 'Change' })).toBeNull();
+    expect(screen.getByText('Setting up your agent')).toBeInTheDocument();
+    expect(screen.getByText('Moving funds to Polygon')).toBeInTheDocument();
+  });
+
+  it('logs finished visible steps newest-first with Details links', () => {
+    const run = processingRun();
+    mockHookState = {
+      activeRun: {
+        ...run,
+        steps: run.steps.map((step) => {
+          if (step.id === 'bridge') {
+            return {
+              ...step,
+              status: 'DONE',
+              finished_at: 1790592200,
+              explorer_link: 'https://polygonscan.com/tx/0xbridge',
+            };
+          }
+          if (step.id === 'native') return { ...step, status: 'PROCESSING' };
+          if (step.id === 'safe') {
+            return { ...step, status: 'DONE', finished_at: 1790592999 };
+          }
+          return step;
+        }),
+      },
+    };
+    renderFlow();
+
+    const rows = screen.getAllByText(/^(Received|Moved|Got) /);
+    expect(rows.map((row) => row.textContent)).toEqual([
+      'Moved 14.80 USDC to Polygon',
+      'Received 15.00 USDC',
+    ]);
+    expect(screen.getByRole('link', { name: /Details/ })).toHaveAttribute(
+      'href',
+      'https://polygonscan.com/tx/0xbridge',
+    );
+    expect(screen.getByText('Getting POL for fees')).toBeInTheDocument();
+  });
+
+  it('shows "Taking longer than usual..." for a slow step', () => {
+    const run = processingRun();
+    mockHookState = {
+      activeRun: {
+        ...run,
+        steps: run.steps.map((step) =>
+          step.id === 'bridge' ? { ...step, is_slow: true } : step,
+        ),
+      },
+    };
+    renderFlow();
+
+    expect(screen.getByText('Taking longer than usual...')).toBeInTheDocument();
+  });
+
+  it('words swaps per mode', () => {
+    const swapping = (mode: FundingRun['mode']) => {
+      const run = processingRun({ mode });
+      return {
+        ...run,
+        steps: run.steps.map((step) => {
+          if (step.kind === 'SWAP')
+            return { ...step, status: 'PROCESSING' as const };
+          if (step.visible) return { ...step, status: 'DONE' as const };
+          return step;
+        }),
+      };
+    };
+
+    mockHookState = { activeRun: swapping('onboard') };
+    const { unmount } = renderFlow();
+    expect(
+      screen.getByText('Getting OLAS for activity rewards'),
+    ).toBeInTheDocument();
+    unmount();
+
+    mockHookState = { activeRun: swapping('deposit') };
+    renderFlow({
+      mode: 'deposit',
+      depositAmounts: {},
+    } as Partial<FundingFlowProps>);
+    expect(screen.getByText('Getting OLAS')).toBeInTheDocument();
+  });
+
+  it('never renders the delegation-clearing step, whatever its status', () => {
+    const run = processingRun();
+    mockHookState = {
+      activeRun: {
+        ...run,
+        steps: run.steps.map((step) =>
+          step.kind === 'CLEAR_DELEGATION'
+            ? { ...step, status: 'FAILED', finished_at: 1790599999 }
+            : step,
+        ),
+      },
+    };
+    renderFlow();
+
+    expect(screen.getByText('Moving funds to Polygon')).toBeInTheDocument();
+    expect(screen.queryByText(/Couldn't/)).toBeNull();
+  });
+
+  it('names the same failed step in the banner and the row, and retries it', () => {
+    const run = processingRun();
+    mockHookState = {
+      activeRun: {
+        ...run,
+        status: 'FAILED',
+        steps: run.steps.map((step) =>
+          step.id === 'bridge'
+            ? { ...step, status: 'FAILED', finished_at: 1790592200 }
+            : step,
+        ),
+        error: { step_id: 'bridge', message: 'Relay fill failed' },
+      },
+    };
+    renderFlow();
+
+    expect(screen.getAllByText("Couldn't bridge to Polygon")).toHaveLength(2);
+    expect(
+      screen.getByText("Don't worry, your funds remain safe."),
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    expect(mockRetry).toHaveBeenCalledWith(run.id);
+  });
+
+  it('reports a hidden Safe-step failure on the last visible step', () => {
+    const run = processingRun();
+    mockHookState = {
+      activeRun: {
+        ...run,
+        status: 'FAILED',
+        steps: run.steps.map((step) =>
+          step.visible
+            ? { ...step, status: 'DONE', finished_at: 1790592200 }
+            : step,
+        ),
+        error: { step_id: 'safe', message: 'Safe creation failed' },
+      },
+    };
+    renderFlow();
+
+    expect(screen.getAllByText("Couldn't get OLAS")).toHaveLength(2);
+  });
+});
+
+describe('FundingFlow — completion', () => {
+  const completed = (mode: FundingRun['mode']) =>
+    makeFundingRun({
+      id: `fr-completed-${mode}`,
+      mode,
+      status: 'COMPLETED',
+      steps: makeFundingRun().steps.map((step) => ({
+        ...step,
+        status: 'DONE' as const,
+        finished_at: 1790592300,
+      })),
+    });
+
+  it('shows the setup-complete modal for an onboarding run, even on first render', () => {
+    mockHookState = { activeRun: completed('onboard') };
+    renderFlow();
+
+    expect(screen.getByText('Your agent is ready!')).toBeInTheDocument();
+    expect(screen.getByText('Setup Complete')).toBeInTheDocument();
+  });
+
+  it('shows the transfer-completed modal for a deposit run seen live', () => {
+    const live = processingRun({ id: 'fr-completed-deposit', mode: 'deposit' });
+    mockHookState = { activeRun: live };
+    const props = {
+      mode: 'deposit',
+      depositAmounts: {},
+    } as Partial<FundingFlowProps>;
+    const { rerender } = renderFlow(props);
+
+    mockHookState = { activeRun: completed('deposit') };
+    rerender(
+      <FundingFlow {...({ ...ONBOARD_PROPS, ...props } as FundingFlowProps)} />,
+    );
+
+    expect(screen.getByText('Transfer is done')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Go to Pearl Wallet' }));
+    expect(mockOnTransferCompleted).toHaveBeenCalled();
+    expect(screen.queryByText('Transfer Completed!')).toBeNull();
+  });
+
+  it('shows the transfer-completed modal for a signer-gas run seen live', () => {
+    const live = processingRun({
+      id: 'fr-completed-signer_gas',
+      mode: 'signer_gas',
+    });
+    mockHookState = { activeRun: live };
+    const props = { mode: 'signer_gas' } as Partial<FundingFlowProps>;
+    const { rerender } = renderFlow(props);
+
+    mockHookState = { activeRun: completed('signer_gas') };
+    rerender(
+      <FundingFlow {...({ ...ONBOARD_PROPS, ...props } as FundingFlowProps)} />,
+    );
+
+    expect(screen.getByText('Transfer Completed!')).toBeInTheDocument();
+  });
+
+  it('does not replay a deposit run that completed before the screen opened', () => {
+    mockHookState = { activeRun: completed('deposit') };
+    renderFlow({
+      mode: 'deposit',
+      depositAmounts: {},
+    } as Partial<FundingFlowProps>);
+
+    expect(screen.queryByText('Transfer Completed!')).toBeNull();
+    expect(
+      screen.getByText('Select the preferred chain to send funds from:'),
+    ).toBeInTheDocument();
+  });
+
+  it("shows another mode's live run instead of a new selection", () => {
+    mockHookState = { activeRun: processingRun({ mode: 'deposit' }) };
+    renderFlow();
+
+    expect(screen.getByText('Transferring your funds')).toBeInTheDocument();
+    expect(
+      screen.queryByText('Select the preferred chain to send funds from:'),
+    ).toBeNull();
+  });
+});
+
+describe('FundingFlow — "Other" requests', () => {
+  it('submits only the request fields, acknowledges, and returns to selection', async () => {
+    mockSubmit.mockResolvedValue({ success: true });
+    renderFlow();
+    fireEvent.click(screen.getByRole('button', { name: /Base/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Other token' }));
+    fireEvent.change(screen.getByPlaceholderText('Enter token'), {
+      target: { value: ' DAI ' },
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Request Token' }));
+    });
+
+    const payload = mockSubmit.mock.calls[0][0];
+    expect(Object.keys(payload).sort()).toEqual([
+      'contextChain',
+      'kind',
+      'requestedName',
+      'submissionId',
+    ]);
+    expect(payload).toMatchObject({
+      kind: 'token',
+      requestedName: 'DAI',
+      contextChain: 'base',
+    });
+    expect(mockMessageSuccess).toHaveBeenCalledWith('Thank you for your input');
+    expect(screen.getByText('Select the token:')).toBeInTheDocument();
+  });
+
+  it('sends a chain request without a context chain', async () => {
+    mockSubmit.mockResolvedValue({ success: true });
+    renderFlow();
+    fireEvent.click(screen.getByRole('button', { name: 'Other chain' }));
+    fireEvent.change(screen.getByPlaceholderText('Enter chain'), {
+      target: { value: 'Monad' },
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Request Chain' }));
+    });
+
+    expect(mockSubmit.mock.calls[0][0]).toMatchObject({
+      kind: 'chain',
+      requestedName: 'Monad',
+      contextChain: null,
+    });
+  });
+});
+
+describe('FundingFlow — copy guardrails', () => {
+  it.each([
+    ['awaiting deposit', makeFundingRun()],
+    ['processing', processingRun()],
+  ])('mentions no gas, paymaster or bundler while %s', (_, run) => {
+    mockHookState = { activeRun: run };
+    const { container } = renderFlow();
+
+    expect(container.textContent).not.toMatch(/gas|paymaster|bundler/i);
+    expect(container.textContent).not.toMatch(/take it into account/);
+  });
+});
