@@ -11,9 +11,6 @@ import {
 } from '@/hooks';
 import { asMiddlewareChain } from '@/utils';
 
-/**
- * Fund a new agent with one transfer from any supported chain and token.
- */
 export const FundYourAgent = () => {
   const { goto } = useSetup();
   const { selectedAgentConfig, selectedService } = useServices();

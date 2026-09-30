@@ -34,10 +34,10 @@ export const formatStepTime = (unixSeconds: number | null) =>
 
 const StatusBanner = ({
   run,
-  failedStep,
+  failureText,
 }: {
   run: FundingRun;
-  failedStep: FundingRunStep | null;
+  failureText: string | null;
 }) => {
   if (run.status === 'COMPLETED') {
     return (
@@ -46,14 +46,7 @@ const StatusBanner = ({
       </Banner>
     );
   }
-  if (failedStep) {
-    return (
-      <Banner tone="error">{getStepText(run, failedStep, 'failed')}</Banner>
-    );
-  }
-  if (run.status === 'FAILED') {
-    return <Banner tone="error">{GENERIC_FAILURE}</Banner>;
-  }
+  if (failureText) return <Banner tone="error">{failureText}</Banner>;
   const currentStep = getCurrentStep(run);
   if (!currentStep) return null;
   return (
@@ -98,18 +91,18 @@ export const FundingProgress = ({
 }: FundingProgressProps) => {
   const failedStep = getFailedStep(run);
   const logSteps = getLogSteps(run, failedStep);
+  // Banner and failure row name the same step, so they cannot disagree.
+  let failureText: string | null = null;
+  if (failedStep) failureText = getStepText(run, failedStep, 'failed');
+  else if (run.status === 'FAILED') failureText = GENERIC_FAILURE;
 
   return (
     <>
-      <StatusBanner run={run} failedStep={failedStep} />
-      {run.status === 'FAILED' && (
+      <StatusBanner run={run} failureText={failureText} />
+      {failureText && (
         <CardRow>
           <FailureDetails
-            title={
-              failedStep
-                ? getStepText(run, failedStep, 'failed')
-                : GENERIC_FAILURE
-            }
+            title={failureText}
             description={FUNDS_SAFE}
             onRetry={onRetry}
             isRetrying={isRetrying}
