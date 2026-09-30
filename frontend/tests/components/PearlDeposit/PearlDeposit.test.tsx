@@ -19,6 +19,9 @@ jest.mock('../../../config/providers', () => ({ providers: [] }));
 let depositProps: { onBack: () => void; onContinue: () => void };
 let flowProps: FundingFlowProps | null = null;
 let mockActiveRun: FundingRun | null = null;
+// Targets: hold 100 OLAS and 5 POL.
+const DEFAULT_TARGETS = { OLAS: { amount: 100 }, POL: { amount: 5 } };
+let mockAmountsToDeposit: Record<string, { amount: number }> = DEFAULT_TARGETS;
 const mockGotoPearlWallet = jest.fn();
 
 jest.mock('../../../components/PearlDeposit/Deposit/Deposit', () => ({
@@ -42,8 +45,7 @@ jest.mock('../../../hooks', () => ({
 jest.mock('../../../context/PearlWalletProvider', () => ({
   usePearlWallet: () => ({
     walletChainId: EvmChainIdMap.Polygon,
-    // Targets: hold 100 OLAS and 5 POL.
-    amountsToDeposit: { OLAS: { amount: 100 }, POL: { amount: 5 } },
+    amountsToDeposit: mockAmountsToDeposit,
     availableAssets: [
       { symbol: 'OLAS', amount: 40 },
       { symbol: 'POL', amount: 7 },
@@ -59,6 +61,7 @@ describe('PearlDeposit', () => {
     jest.clearAllMocks();
     flowProps = null;
     mockActiveRun = null;
+    mockAmountsToDeposit = DEFAULT_TARGETS;
   });
 
   it('starts on the amounts step', () => {
@@ -86,6 +89,20 @@ describe('PearlDeposit', () => {
         '0xFEF5d947472e72Efbb2E388c730B7428406F2F95': '100000000000000000000',
         '0x0000000000000000000000000000000000000000': '5000000000000000000',
       },
+    });
+  });
+
+  it('sends decimal targets exactly, without float noise', () => {
+    mockAmountsToDeposit = {
+      OLAS: { amount: 0.1 },
+      POL: { amount: 1234.5678 },
+    };
+    render(<PearlDeposit onBack={mockOnBack} />);
+    act(() => depositProps.onContinue());
+
+    expect(flowProps?.mode === 'deposit' && flowProps.depositAmounts).toEqual({
+      '0xFEF5d947472e72Efbb2E388c730B7428406F2F95': '100000000000000000',
+      '0x0000000000000000000000000000000000000000': '1234567800000000000000',
     });
   });
 
@@ -117,6 +134,19 @@ describe('PearlDeposit', () => {
     expect(screen.getByTestId('funding-flow')).toBeInTheDocument();
     act(() => flowProps?.onBack());
     expect(mockOnBack).toHaveBeenCalled();
+  });
+
+  it('keeps a resumed run on screen once it completes, so its success shows', () => {
+    const live = makeFundingRun({ mode: 'deposit', status: 'PROCESSING' });
+    mockActiveRun = live;
+    const { rerender } = render(<PearlDeposit onBack={mockOnBack} />);
+    expect(screen.getByTestId('funding-flow')).toBeInTheDocument();
+
+    mockActiveRun = { ...live, status: 'COMPLETED' };
+    rerender(<PearlDeposit onBack={mockOnBack} />);
+
+    expect(screen.getByTestId('funding-flow')).toBeInTheDocument();
+    expect(screen.queryByTestId('deposit')).toBeNull();
   });
 
   it('ignores a completed run', () => {

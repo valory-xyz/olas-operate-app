@@ -22,6 +22,8 @@ const mockTokenBalancesToSentence = jest.fn((value?: unknown) => {
 });
 
 let mockActiveRun: FundingRun | null = null;
+jest.mock('../../../../constants/providers', () => ({ PROVIDERS: {} }));
+
 jest.mock('../../../../hooks/useFundingRun', () => ({
   useFundingRun: () => ({ activeRun: mockActiveRun }),
 }));

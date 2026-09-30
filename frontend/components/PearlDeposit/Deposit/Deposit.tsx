@@ -3,6 +3,7 @@ import { isEmpty, kebabCase, values } from 'lodash';
 import Image from 'next/image';
 import { useEffect } from 'react';
 
+import { isRunLive } from '@/components/FundingFlow/utils';
 import {
   Alert,
   BackButton,
@@ -119,12 +120,7 @@ const getContinueTooltip = (
 
 export const Deposit = ({ onBack, onContinue }: DepositProps) => {
   const { activeRun } = useFundingRun();
-  const liveRun =
-    activeRun &&
-    activeRun.status !== 'COMPLETED' &&
-    activeRun.status !== 'CANCELLED'
-      ? activeRun
-      : null;
+  const liveRun = isRunLive(activeRun) ? activeRun : null;
   const {
     onDepositAmountChange,
     amountsToDeposit,

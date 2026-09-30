@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 
 import { FundingFlow } from '@/components/FundingFlow';
+import { isRunLive } from '@/components/FundingFlow/utils';
 import { TOKEN_CONFIG } from '@/config/tokens';
 import { AddressZero } from '@/constants';
 import { usePearlWallet } from '@/context/PearlWalletProvider';
@@ -32,7 +33,14 @@ const toDepositAmounts = (
       return [
         [
           config.address ?? AddressZero,
-          parseUnits(details.amount.toFixed(config.decimals), config.decimals),
+          // toFixed would print the float's binary error, a few wei off.
+          parseUnits(
+            details.amount.toLocaleString('en-US', {
+              useGrouping: false,
+              maximumFractionDigits: config.decimals,
+            }),
+            config.decimals,
+          ),
         ],
       ];
     }),
@@ -46,20 +54,14 @@ export const PearlDeposit = ({ onBack }: PearlDepositProps) => {
     PEARL_DEPOSIT_STEPS.DEPOSIT,
   );
 
-  // A live run is resumed instead of starting a new deposit.
-  const hasLiveRun =
-    !!activeRun &&
-    activeRun.status !== 'COMPLETED' &&
-    activeRun.status !== 'CANCELLED';
-  const currentStep = hasLiveRun ? PEARL_DEPOSIT_STEPS.FUNDING_FLOW : step;
+  // A live run is resumed instead of starting a new deposit. The step stays
+  // latched once the run ends, so the flow can show its completion.
+  const hasLiveRun = isRunLive(activeRun);
+  if (hasLiveRun && step !== PEARL_DEPOSIT_STEPS.FUNDING_FLOW) {
+    setStep(PEARL_DEPOSIT_STEPS.FUNDING_FLOW);
+  }
 
-  const depositAmounts = useMemo(
-    () =>
-      walletChainId ? toDepositAmounts(walletChainId, amountsToDeposit) : {},
-    [walletChainId, amountsToDeposit],
-  );
-
-  switch (currentStep) {
+  switch (step) {
     case PEARL_DEPOSIT_STEPS.DEPOSIT:
       return (
         <Deposit
@@ -72,7 +74,7 @@ export const PearlDeposit = ({ onBack }: PearlDepositProps) => {
       return (
         <FundingFlow
           mode="deposit"
-          depositAmounts={depositAmounts}
+          depositAmounts={toDepositAmounts(walletChainId, amountsToDeposit)}
           destinationChain={asMiddlewareChain(walletChainId)}
           fallbackToReceive={getNetDepositAmounts(
             amountsToDeposit,
