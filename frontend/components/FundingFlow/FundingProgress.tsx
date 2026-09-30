@@ -91,10 +91,14 @@ export const FundingProgress = ({
 }: FundingProgressProps) => {
   const failedStep = getFailedStep(run);
   const logSteps = getLogSteps(run, failedStep);
-  // Banner and failure row name the same step, so they cannot disagree.
+  // Banner and failure row share one text, so they cannot disagree. The
+  // middleware's message is the failure copy; the app's is only a fallback.
   let failureText: string | null = null;
-  if (failedStep) failureText = getStepText(run, failedStep, 'failed');
-  else if (run.status === 'FAILED') failureText = GENERIC_FAILURE;
+  if (run.status === 'FAILED') {
+    failureText =
+      run.error?.message ||
+      (failedStep ? getStepText(run, failedStep, 'failed') : GENERIC_FAILURE);
+  }
 
   return (
     <>

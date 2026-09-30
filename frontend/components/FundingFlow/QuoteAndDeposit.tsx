@@ -69,16 +69,23 @@ const GettingQuote = () => (
 type QuoteFailedProps = {
   onRetry: () => void;
   isRetrying: boolean;
+  /** The middleware's copy for the failure; the app's is only a fallback. */
+  message?: string | null;
   reason?: string;
 };
 
-const QuoteFailed = ({ onRetry, isRetrying, reason }: QuoteFailedProps) => (
+const QuoteFailed = ({
+  onRetry,
+  isRetrying,
+  message,
+  reason,
+}: QuoteFailedProps) => (
   <>
     <Banner tone="progress">{QUOTE_COPY.gettingQuote}</Banner>
     <CardRow>
       <FailureDetails
-        title={QUOTE_COPY.failedTitle}
-        description={[reason || QUOTE_COPY.failedDescription]}
+        title={message || QUOTE_COPY.failedTitle}
+        description={message ? [] : [reason || QUOTE_COPY.failedDescription]}
         onRetry={onRetry}
         isRetrying={isRetrying}
       />
@@ -148,7 +155,13 @@ export const QuoteAndDeposit = ({
     );
   }
   if (run.status === 'QUOTE_FAILED') {
-    return <QuoteFailed onRetry={onRefreshQuote} isRetrying={isRefreshing} />;
+    return (
+      <QuoteFailed
+        onRetry={onRefreshQuote}
+        isRetrying={isRefreshing}
+        message={run.quote_message}
+      />
+    );
   }
   // No address is ever shown without a quote.
   if (!run.quote || !address) return <GettingQuote />;

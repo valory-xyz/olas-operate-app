@@ -940,6 +940,7 @@ export const makeFundingRun = (
     quoted_at: 1790592071,
     next_refresh_at: 1790592251,
   },
+  quote_message: null,
   to_receive: [
     {
       token: FUNDING_RUN_NATIVE,

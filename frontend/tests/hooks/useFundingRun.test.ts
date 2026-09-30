@@ -124,7 +124,7 @@ describe('useFundingRun', () => {
   it('retry stores the resumed run', async () => {
     const failed = makeFundingRun({
       status: 'FAILED',
-      error: { step_id: 'bridge' },
+      error: { step_id: 'bridge', message: 'Step failed.' },
     });
     const resumed = makeFundingRun({ status: 'PROCESSING' });
     mockService.getActive.mockResolvedValue(failed);

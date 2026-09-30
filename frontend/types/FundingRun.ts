@@ -73,6 +73,8 @@ export type FundingRun = {
   };
   /** `null` until the first quote lands. */
   quote: FundingRunQuote | null;
+  /** Why the last quote failed; set on `QUOTE_FAILED`. */
+  quote_message: string | null;
   /** Net delivery: what the user gains after existing balances. Can be empty. */
   to_receive: FundingRunTokenAmount[];
   steps: FundingRunStep[];
@@ -83,7 +85,7 @@ export type FundingRun = {
   error: FundingRunError | null;
 };
 
-export type FundingRunError = { step_id: string };
+export type FundingRunError = { step_id: string; message: string };
 
 /** Middleware chain → accepted source tokens. */
 export type FundingRunSources = Partial<Record<MiddlewareChain, Address[]>>;

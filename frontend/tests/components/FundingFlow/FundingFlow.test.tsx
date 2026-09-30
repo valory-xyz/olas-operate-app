@@ -341,7 +341,7 @@ describe('FundingFlow — failures around the run', () => {
       activeRun: {
         ...run,
         status: 'FAILED',
-        error: { step_id: 'bridge' },
+        error: { step_id: 'bridge', message: 'Step failed.' },
       },
     };
     renderFlow();
@@ -598,6 +598,24 @@ describe('FundingFlow — quote and deposit address', () => {
     expect(screen.getByText('11.00')).toBeInTheDocument();
   });
 
+  it("shows the middleware's quote failure message instead of the app's copy", () => {
+    mockHookState = {
+      activeRun: makeFundingRun({
+        status: 'QUOTE_FAILED',
+        quote_message: 'No route for this token right now.',
+      }),
+    };
+    renderFlow();
+
+    expect(
+      screen.getByText('No route for this token right now.'),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Couldn't get a quote")).toBeNull();
+    expect(
+      screen.queryByText('Check your connection and try again.'),
+    ).toBeNull();
+  });
+
   it('shows the quote failure with Retry and Contact Support', () => {
     mockHookState = { activeRun: makeFundingRun({ status: 'QUOTE_FAILED' }) };
     renderFlow();
@@ -737,28 +755,41 @@ describe('FundingFlow — progress', () => {
     expect(screen.queryByText(/Couldn't/)).toBeNull();
   });
 
-  it('names the same failed step in the banner and the row, and retries it', () => {
+  const failedAtBridge = (message: string): FundingRun => {
     const run = processingRun();
-    mockHookState = {
-      activeRun: {
-        ...run,
-        status: 'FAILED',
-        steps: run.steps.map((step) =>
-          step.id === 'bridge'
-            ? { ...step, status: 'FAILED', finished_at: 1790592200 }
-            : step,
-        ),
-        error: { step_id: 'bridge' },
-      },
+    return {
+      ...run,
+      status: 'FAILED',
+      steps: run.steps.map((step) =>
+        step.id === 'bridge'
+          ? { ...step, status: 'FAILED', finished_at: 1790592200 }
+          : step,
+      ),
+      error: { step_id: 'bridge', message },
     };
+  };
+
+  it("shows the middleware's failure message in the banner and the row, and retries it", () => {
+    const run = failedAtBridge('The bridge is paused. Try again later.');
+    mockHookState = { activeRun: run };
     renderFlow();
 
-    expect(screen.getAllByText("Couldn't bridge to Polygon")).toHaveLength(2);
+    expect(
+      screen.getAllByText('The bridge is paused. Try again later.'),
+    ).toHaveLength(2);
+    expect(screen.queryByText("Couldn't bridge to Polygon")).toBeNull();
     expect(
       screen.getByText("Don't worry, your funds remain safe."),
     ).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
     expect(mockRetry).toHaveBeenCalledWith(run.id, expect.anything());
+  });
+
+  it('names the failed step in the banner and the row when the middleware sends no message', () => {
+    mockHookState = { activeRun: failedAtBridge('') };
+    renderFlow();
+
+    expect(screen.getAllByText("Couldn't bridge to Polygon")).toHaveLength(2);
   });
 
   it('shows a generic failure with Retry when no step can be named', () => {
@@ -784,7 +815,7 @@ describe('FundingFlow — progress', () => {
             ? { ...step, status: 'DONE', finished_at: 1790592200 }
             : step,
         ),
-        error: { step_id: 'safe' },
+        error: { step_id: 'safe', message: '' },
       },
     };
     renderFlow();
