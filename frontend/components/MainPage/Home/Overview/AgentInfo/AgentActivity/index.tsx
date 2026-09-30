@@ -39,13 +39,8 @@ const IdleContent = () => (
 );
 
 export const AgentActivity = () => {
-  const {
-    deploymentDetails,
-    isAgentActive,
-    isAgentRedeploying,
-    isAgentStalled,
-    isServiceDeploying,
-  } = useAgentActivity();
+  const { deploymentDetails, isAgentActive, isServiceDeploying } =
+    useAgentActivity();
   const { isEpochTargetMet } = useRewardContext();
   // Connect only: while the agent runs, the activity strip points at the
   // agent profile for new Claude Code sessions instead of rounds.
@@ -90,11 +85,6 @@ export const AgentActivity = () => {
         return { status: 'idle', content: <IdleContent /> };
       }
 
-      // Above `rounds`: a stalled agent's round list is frozen, not current.
-      if (isAgentStalled) {
-        return { status: 'stalled', content: "Agent isn't progressing" };
-      }
-
       if (rounds.length > 0) {
         const currentRound = rounds[0];
         const roundInfo = roundsInfo?.[currentRound]?.name || currentRound;
@@ -110,10 +100,6 @@ export const AgentActivity = () => {
         };
       }
 
-      if (isAgentRedeploying) {
-        return { status: 'redeploying', content: 'Agent is restarting' };
-      }
-
       return {
         status: 'activity-not-ready',
         content: 'Agent is running',
@@ -125,8 +111,6 @@ export const AgentActivity = () => {
     isEpochTargetMet,
     isServiceDeploying,
     isAgentActive,
-    isAgentRedeploying,
-    isAgentStalled,
     isConnectRunning,
     isFirstRun,
     rounds,

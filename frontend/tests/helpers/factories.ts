@@ -24,7 +24,6 @@ import { AchievementWithConfig } from '../../types/Achievement';
 import { Address } from '../../types/Address';
 import {
   AgentConfig,
-  AgentHealthCheck,
   AgentLiveness,
   ServiceDeployment,
 } from '../../types/Agent';
@@ -341,25 +340,6 @@ export const makeServiceStakingDetails = (
 });
 
 /**
- * The agent's own healthcheck body. Separate from `makeServiceDeployment`
- * because overriding a nested object there replaces it wholesale.
- */
-export const makeAgentHealthCheck = (
-  overrides: Partial<AgentHealthCheck> = {},
-): AgentHealthCheck => ({
-  agent_health: {},
-  age_seconds: 0,
-  is_healthy: true,
-  is_tm_healthy: true,
-  is_transitioning_fast: false,
-  period: 0,
-  reset_pause_duration: 0,
-  rounds: [],
-  seconds_since_last_transition: 0,
-  ...overrides,
-});
-
-/**
  * Deployment payload as returned by the middleware's deployment endpoints.
  *
  * `agent_liveness` is optional there — older middleware builds omit it, and a
@@ -371,7 +351,16 @@ export const makeServiceDeployment = (
 ): ServiceDeployment => ({
   status: MiddlewareDeploymentStatusMap.DEPLOYED,
   nodes: { agent: [], tendermint: [] },
-  healthcheck: makeAgentHealthCheck(),
+  healthcheck: {
+    agent_health: {},
+    is_healthy: true,
+    is_tm_healthy: true,
+    is_transitioning_fast: false,
+    period: 0,
+    reset_pause_duration: 0,
+    rounds: [],
+    seconds_since_last_transition: 0,
+  },
   ...overrides,
 });
 
@@ -381,7 +370,6 @@ export const makeAgentLiveness = (
   is_alive: true,
   reason: null,
   consecutive_failures: 0,
-  restarts_since_last_healthy: 0,
   ...overrides,
 });
 

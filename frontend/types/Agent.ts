@@ -171,40 +171,29 @@ type RoundsInfo = Record<
   }
 >;
 
-/**
- * The agent's own healthcheck body, forwarded as-is. Every field is optional:
- * the middleware sends `{}` before the first successful probe and
- * `{ error }` when `healthcheck.json` cannot be read.
- */
-export type AgentHealthCheck = Partial<{
+type AgentHealthCheck = {
   agent_health: Record<string, unknown>;
-  /** Seconds since the middleware last wrote this body (HTTP 200 probes only). */
-  age_seconds: number;
-  error: string;
   is_healthy: boolean;
   is_tm_healthy: boolean;
   is_transitioning_fast: boolean;
   period: number;
   reset_pause_duration: number;
   rounds: string[];
-  rounds_info: RoundsInfo;
+  rounds_info?: RoundsInfo;
   seconds_since_last_transition: number;
-}>;
+};
 
 /**
  * Why the middleware does not consider the agent process alive.
  *
- * `null` when `is_alive` is true. Mirrors the middleware's
- * `AgentLivenessReason` enum; re-verify on every pin bump.
+ * `null` when `is_alive` is true. Frozen vocabulary — see the middleware's
+ * `GET /api/v2/services/deployment` contract.
  */
 export type AgentLivenessReason =
   | 'agent_process_exited'
-  /** The agent answered and reported itself unhealthy, so it is up. */
-  | 'agent_reported_unhealthy'
   | 'agent_unresponsive'
   | 'evicted_cannot_restake'
-  | 'not_monitored'
-  | 'stopped_by_failfast';
+  | 'not_monitored';
 
 /**
  * Whether the agent *process* is alive, as opposed to `ServiceDeployment.status`,
@@ -212,10 +201,10 @@ export type AgentLivenessReason =
  * crash-looping agent stays `DEPLOYED` while its process is dead.
  *
  * Narrowed to the fields Pearl reads. The response also carries
- * `last_checked_at` and `last_healthy_at` — deliberately omitted until
- * something renders them, so the type cannot drift on fields nobody checks.
- * Re-verify the shape on every `olas-operate-middleware` pin bump in
- * `pyproject.toml`.
+ * `last_checked_at`, `last_healthy_at` and `restarts_since_last_healthy`, and
+ * `healthcheck` gains `age_seconds` — deliberately omitted until something
+ * renders them, so the type cannot drift on fields nobody checks. Re-verify
+ * the shape on every `olas-operate-middleware` pin bump in `pyproject.toml`.
  */
 export type AgentLiveness = {
   is_alive: boolean;
@@ -230,11 +219,6 @@ export type AgentLiveness = {
    * dead agent.
    */
   consecutive_failures: number;
-  /**
-   * Restarts the middleware has performed since the agent last reported
-   * healthy; reset by a healthy probe. Optional on older middleware.
-   */
-  restarts_since_last_healthy?: number;
 };
 
 export type ServiceDeployment = {

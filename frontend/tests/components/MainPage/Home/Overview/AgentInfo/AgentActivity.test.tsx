@@ -1,14 +1,12 @@
 import { render, screen } from '@testing-library/react';
 
 import { AgentActivity } from '../../../../../../components/MainPage/Home/Overview/AgentInfo/AgentActivity';
-import { AGENT_STALL_ANNOUNCE_INTERVAL } from '../../../../../../constants/intervals';
 import {
   useAgentActivity,
   useConnectSession,
   useRewardContext,
 } from '../../../../../../hooks';
 import {
-  makeAgentHealthCheck,
   makeAgentLiveness,
   makeServiceDeployment,
 } from '../../../../../helpers/factories';
@@ -40,22 +38,10 @@ const setup = (over: Record<string, unknown> = {}) => {
     isServiceRunning: false,
     isServiceDeploying: false,
     isAgentActive: false,
-    isAgentStalled: false,
-    isAgentRedeploying: false,
-    agentHealth: {
-      isHealthy: true,
-      isTmHealthy: true,
-      isTransitioningFast: true,
-      secondsSinceLastTransition: 0,
-      announceThresholdMs: AGENT_STALL_ANNOUNCE_INTERVAL,
-    },
     ...over,
   });
   return render(<AgentActivity />);
 };
-
-const withRounds = (rounds: string[]) =>
-  makeServiceDeployment({ healthcheck: makeAgentHealthCheck({ rounds }) });
 
 describe('AgentActivity', () => {
   beforeEach(() => {
@@ -146,121 +132,6 @@ describe('AgentActivity', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('shows the current round when the agent is running and producing rounds', () => {
-    setup({
-      isAgentActive: true,
-      deploymentDetails: withRounds(['sampling_round']),
-    });
-
-    expect(screen.getByText('Current action:')).toBeInTheDocument();
-    expect(screen.getByText('sampling_round')).toBeInTheDocument();
-  });
-
-  it('shows the standby notice when the epoch target is met, ahead of rounds', () => {
-    mockUseRewardContext.mockReturnValue({ isEpochTargetMet: true });
-    setup({
-      isAgentActive: true,
-      deploymentDetails: withRounds(['sampling_round']),
-    });
-
-    expect(
-      screen.getByText(/is in standby mode for the next epoch/),
-    ).toBeInTheDocument();
-    expect(screen.queryByText('Current action:')).not.toBeInTheDocument();
-  });
-
-  // OPE-1941: the frozen round list used to render as "Current action: ...".
-  it('announces the stall instead of the round it stalled in', () => {
-    setup({
-      isAgentActive: true,
-      isAgentStalled: true,
-      agentHealth: {
-        isHealthy: false,
-        isTmHealthy: true,
-        isTransitioningFast: false,
-        secondsSinceLastTransition: 300,
-        announceThresholdMs: AGENT_STALL_ANNOUNCE_INTERVAL,
-      },
-      deploymentDetails: withRounds(['polymarket_fetch_market_round']),
-    });
-
-    expect(screen.getByText("Agent isn't progressing")).toBeInTheDocument();
-    expect(screen.queryByText('Current action:')).not.toBeInTheDocument();
-    expect(
-      screen.queryByText('polymarket_fetch_market_round'),
-    ).not.toBeInTheDocument();
-  });
-
-  // Standby and Connect are deliberate states; a stall must not displace them.
-  it('keeps the standby notice ahead of a stall', () => {
-    mockUseRewardContext.mockReturnValue({ isEpochTargetMet: true });
-    setup({
-      isAgentActive: true,
-      isAgentStalled: true,
-      deploymentDetails: withRounds(['polymarket_fetch_market_round']),
-    });
-
-    expect(
-      screen.getByText(/is in standby mode for the next epoch/),
-    ).toBeInTheDocument();
-    expect(
-      screen.queryByText("Agent isn't progressing"),
-    ).not.toBeInTheDocument();
-  });
-
-  it('keeps the Connect session notice ahead of a stall', () => {
-    mockUseConnectSession.mockReturnValue({
-      showRunningInfo: true,
-      isFirstRun: false,
-    });
-    setup({ isAgentActive: true, isAgentStalled: true });
-
-    expect(
-      screen.getByText(
-        'Your agent is running. You can open the agent Profile to start a new session.',
-      ),
-    ).toBeInTheDocument();
-    expect(
-      screen.queryByText("Agent isn't progressing"),
-    ).not.toBeInTheDocument();
-  });
-
-  // Defence in depth: the hook already never reports both.
-  it('reports a stalled agent the probe considers dead as not running', () => {
-    setup({ isAgentActive: false, isAgentStalled: true });
-
-    expect(screen.getByText('Agent is not running')).toBeInTheDocument();
-    expect(
-      screen.queryByText("Agent isn't progressing"),
-    ).not.toBeInTheDocument();
-  });
-
-  it('says the agent is restarting rather than running during a redeploy', () => {
-    setup({ isAgentActive: true, isAgentRedeploying: true });
-
-    expect(screen.getByText('Agent is restarting')).toBeInTheDocument();
-    expect(screen.queryByText('Agent is running')).not.toBeInTheDocument();
-  });
-
-  it('keeps "Agent is running" for a first poll with no restart behind it', () => {
-    setup({ isAgentActive: true, isAgentRedeploying: false });
-
-    expect(screen.getByText('Agent is running')).toBeInTheDocument();
-    expect(screen.queryByText('Agent is restarting')).not.toBeInTheDocument();
-  });
-
-  // The counter resets on the same healthy probe that refreshes the list.
-  it('keeps the round branch ahead of the redeploy branch', () => {
-    setup({
-      isAgentActive: true,
-      isAgentRedeploying: true,
-      deploymentDetails: withRounds(['sampling_round']),
-    });
-
-    expect(screen.getByText('Current action:')).toBeInTheDocument();
-    expect(screen.queryByText('Agent is restarting')).not.toBeInTheDocument();
-  });
-
   it('shows "Agent is not running" instead of a stale round when the agent died', () => {
     // The reported symptom: the healthcheck snapshot is frozen at the round
     // the agent died in, so the round list is still populated. Rendering it
@@ -269,9 +140,10 @@ describe('AgentActivity', () => {
     setup({
       isServiceRunning: false,
       deploymentDetails: makeServiceDeployment({
-        healthcheck: makeAgentHealthCheck({
+        healthcheck: {
+          ...makeServiceDeployment().healthcheck,
           rounds: ['collect_signature_round'],
-        }),
+        },
         agent_liveness: makeAgentLiveness({
           is_alive: false,
           reason: 'agent_process_exited',

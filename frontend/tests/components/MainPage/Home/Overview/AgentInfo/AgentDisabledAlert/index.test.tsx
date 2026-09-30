@@ -69,12 +69,6 @@ jest.mock(
   }),
 );
 jest.mock(
-  '../../../../../../../components/MainPage/Home/Overview/AgentInfo/AgentDisabledAlert/AgentStalledAlert',
-  () => ({
-    AgentStalledAlert: () => <div>stalled</div>,
-  }),
-);
-jest.mock(
   '../../../../../../../components/MainPage/Home/Overview/AgentInfo/AgentDisabledAlert/ContractDeprecatedAlert',
   () => ({
     ContractDeprecatedAlert: () => <div>contract-deprecated</div>,
@@ -190,14 +184,6 @@ describe('AgentDisabledAlert', () => {
   // sits directly above this strip, so a stopped agent already shows
   // "Start agent", and auto-run recovers a running one on its own.
   describe('recoverable eviction', () => {
-    it('renders the stall alert alongside the low-balance alerts', () => {
-      setup();
-
-      expect(screen.getByText('stalled')).toBeInTheDocument();
-      expect(screen.getByText('low-balance')).toBeInTheDocument();
-      expect(screen.getByText('master-eoa-low-balance')).toBeInTheDocument();
-    });
-
     it('renders only the low-balance alerts, no eviction alert', () => {
       setup({ staking: { isAgentEvicted: true, isEligibleForStaking: true } });
 

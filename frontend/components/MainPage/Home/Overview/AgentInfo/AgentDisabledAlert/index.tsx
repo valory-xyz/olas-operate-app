@@ -26,7 +26,6 @@ import {
 import { AgentGeoBlockedAlert } from './AgentGeoBlockedAlert';
 import { AgentPhasedOutAlert } from './AgentPhasedOutAlert';
 import { AgentRunningAlert } from './AgentRunningAlert';
-import { AgentStalledAlert } from './AgentStalledAlert';
 import { ContractDeprecatedAlert } from './ContractDeprecatedAlert';
 import { EvictedAlert } from './EvictedAlert';
 import { MasterEoaLowBalanceAlert } from './MasterEoaLowBalanceAlert';
@@ -140,7 +139,7 @@ export const AgentDisabledAlert = () => {
       !isSelectedStakingContractDetailsLoading &&
       selectedStakingContractDetails?.availableRewards === 0;
 
-    // NOTE: Non-exclusive alerts, each component controls its own visibility.
+    // NOTE: Low-balance alerts, each component controls its own visibility.
     return {
       key: 'low-balance',
       content: (
@@ -151,7 +150,6 @@ export const AgentDisabledAlert = () => {
               onSwitch={() => goto(PAGES.SelectStaking)}
             />
           )}
-          <AgentStalledAlert />
           <AgentLowBalanceAlert
             onFund={() =>
               goto(PAGES.AgentWallet, {
