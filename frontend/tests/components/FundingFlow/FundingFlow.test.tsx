@@ -598,7 +598,7 @@ describe('FundingFlow — quote and deposit address', () => {
     expect(screen.getByText('11.00')).toBeInTheDocument();
   });
 
-  it("shows the middleware's quote failure message instead of the app's copy", () => {
+  it("shows the middleware's quote failure reason instead of the app's", () => {
     mockHookState = {
       activeRun: makeFundingRun({
         status: 'QUOTE_FAILED',
@@ -610,7 +610,7 @@ describe('FundingFlow — quote and deposit address', () => {
     expect(
       screen.getByText('No route for this token right now.'),
     ).toBeInTheDocument();
-    expect(screen.queryByText("Couldn't get a quote")).toBeNull();
+    expect(screen.getByText("Couldn't get a quote")).toBeInTheDocument();
     expect(
       screen.queryByText('Check your connection and try again.'),
     ).toBeNull();
