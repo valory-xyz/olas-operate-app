@@ -78,19 +78,25 @@ const QuoteFailed = ({
   isRetrying,
   title,
   description,
-}: QuoteFailedProps) => (
-  <>
-    <Banner tone="progress">{QUOTE_COPY.gettingQuote}</Banner>
-    <CardRow>
-      <FailureDetails
-        title={title || QUOTE_COPY.failedTitle}
-        description={[description || QUOTE_COPY.failedDescription]}
-        onRetry={onRetry}
-        isRetrying={isRetrying}
-      />
-    </CardRow>
-  </>
-);
+}: QuoteFailedProps) => {
+  // Connection advice only fits the generic failure, not a specific reason such as an unroutable token.
+  const isGeneric = !title || title === QUOTE_COPY.failedTitle;
+  const advice =
+    description || (isGeneric ? QUOTE_COPY.failedDescription : null);
+  return (
+    <>
+      <Banner tone="progress">{QUOTE_COPY.gettingQuote}</Banner>
+      <CardRow>
+        <FailureDetails
+          title={title || QUOTE_COPY.failedTitle}
+          description={advice ? [advice] : []}
+          onRetry={onRetry}
+          isRetrying={isRetrying}
+        />
+      </CardRow>
+    </>
+  );
+};
 
 const ReceiptBanner = ({ run }: { run: FundingRun }) => {
   const { quote, source } = run;

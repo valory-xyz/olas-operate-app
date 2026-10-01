@@ -724,6 +724,25 @@ describe('FundingFlow — quote and deposit address', () => {
     ).toBeInTheDocument();
   });
 
+  it("shows an onboarding run's undeliverable-token reason without the connection advice", () => {
+    mockHookState = {
+      activeRun: makeFundingRun({
+        status: 'QUOTE_FAILED',
+        quote_message: "OLAS can't be delivered to Gnosis yet",
+      }),
+    };
+    renderFlow();
+
+    expect(
+      screen.getByText("OLAS can't be delivered to Gnosis yet"),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Couldn't get a quote")).toBeNull();
+    expect(
+      screen.queryByText('Check your connection and try again.'),
+    ).toBeNull();
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
+  });
+
   it('shows the quote failure with Retry and Contact Support', () => {
     mockHookState = { activeRun: makeFundingRun({ status: 'QUOTE_FAILED' }) };
     renderFlow();
