@@ -5,6 +5,7 @@ import {
   useQueryClient,
 } from '@tanstack/react-query';
 
+import { isRunEditable, isRunStarted } from '@/components/FundingFlow/utils';
 import { FIVE_SECONDS_INTERVAL, REACT_QUERY_KEYS } from '@/constants';
 import { FundingRunService } from '@/service/FundingRun';
 import { CreateFundingRunRequest, FundingRun } from '@/types/FundingRun';
@@ -84,6 +85,17 @@ export const useFundingRun = () => {
     onError: invalidateActiveRun,
   });
 
+  // The polled run can be seconds old, and the middleware cancels a waiting
+  // run even after funds arrive, so check a fresh copy before cancelling.
+  const cancelIfOnlyQuoted = async (runId: string) => {
+    const fresh = await FundingRunService.getActive();
+    if (fresh?.id === runId && isRunEditable(fresh) && !isRunStarted(fresh)) {
+      await cancelMutation.mutateAsync(runId);
+      return;
+    }
+    queryClient.setQueryData(REACT_QUERY_KEYS.FUNDING_RUN_ACTIVE_KEY, fresh);
+  };
+
   return {
     activeRun: activeRunQuery.data ?? null,
     isActiveRunFetched: activeRunQuery.isFetched,
@@ -97,5 +109,6 @@ export const useFundingRun = () => {
     refreshQuoteMutation,
     retryMutation,
     cancelMutation,
+    cancelIfOnlyQuoted,
   };
 };

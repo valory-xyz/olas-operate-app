@@ -1,9 +1,11 @@
 import { useState } from 'react';
 
 import { FundingFlow } from '@/components/FundingFlow';
-import { isRunLive, isRunStarted } from '@/components/FundingFlow/utils';
+import { CANCEL_FAILED } from '@/components/FundingFlow/constants';
+import { isRunEditable, isRunStarted } from '@/components/FundingFlow/utils';
 import { TOKEN_CONFIG } from '@/config/tokens';
 import { AddressZero } from '@/constants';
+import { useMessageApi } from '@/context/MessageProvider';
 import { usePearlWallet } from '@/context/PearlWalletProvider';
 import { useFundingRun } from '@/hooks';
 import { Address, TokenAmounts } from '@/types';
@@ -43,20 +45,28 @@ const toDepositAmounts = (
 
 export const PearlDeposit = ({ onBack }: PearlDepositProps) => {
   const { walletChainId, amountsToDeposit, gotoPearlWallet } = usePearlWallet();
-  const { activeRun } = useFundingRun();
+  const { activeRun, cancelIfOnlyQuoted } = useFundingRun();
+  const message = useMessageApi();
   const [isFundingFlowOpen, setIsFundingFlowOpen] = useState(false);
 
-  // A started run (funds received or in transfer) is resumed instead of a new
-  // deposit; one that was only quoted is left for the next run to replace.
-  // The flow stays open once the run ends, so it can show its completion.
-  const hasStartedRun =
-    !!activeRun && isRunLive(activeRun) && isRunStarted(activeRun);
+  // A started run is resumed; the flow stays open once it ends, to show its completion.
+  const hasStartedRun = !!activeRun && isRunStarted(activeRun);
   if (hasStartedRun && !isFundingFlowOpen) setIsFundingFlowOpen(true);
 
+  // A quoted run was for amounts entered earlier, so a new deposit replaces it.
+  const handleContinue = () => {
+    if (activeRun && isRunEditable(activeRun) && !isRunStarted(activeRun)) {
+      cancelIfOnlyQuoted(activeRun.id).then(
+        () => setIsFundingFlowOpen(true),
+        () => message.error(CANCEL_FAILED),
+      );
+      return;
+    }
+    setIsFundingFlowOpen(true);
+  };
+
   if (!isFundingFlowOpen) {
-    return (
-      <Deposit onBack={onBack} onContinue={() => setIsFundingFlowOpen(true)} />
-    );
+    return <Deposit onBack={onBack} onContinue={handleContinue} />;
   }
   if (!walletChainId) return null;
   return (

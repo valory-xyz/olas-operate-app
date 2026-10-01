@@ -37,8 +37,17 @@ jest.mock('../../../components/FundingFlow', () => ({
   },
 }));
 
+const mockCancelIfOnlyQuoted = jest.fn();
+const mockMessageError = jest.fn();
 jest.mock('../../../hooks', () => ({
-  useFundingRun: () => ({ activeRun: mockActiveRun }),
+  useFundingRun: () => ({
+    activeRun: mockActiveRun,
+    cancelIfOnlyQuoted: mockCancelIfOnlyQuoted,
+  }),
+}));
+
+jest.mock('../../../context/MessageProvider', () => ({
+  useMessageApi: () => ({ error: mockMessageError }),
 }));
 
 jest.mock('../../../context/PearlWalletProvider', () => ({
@@ -61,6 +70,7 @@ describe('PearlDeposit', () => {
     flowProps = null;
     mockActiveRun = null;
     mockAmountsToDeposit = DEFAULT_AMOUNTS;
+    mockCancelIfOnlyQuoted.mockReset().mockResolvedValue(undefined);
   });
 
   it('starts on the amounts step', () => {
@@ -134,6 +144,29 @@ describe('PearlDeposit', () => {
     expect(screen.getByTestId('funding-flow')).toBeInTheDocument();
     act(() => flowProps?.onBack());
     expect(mockOnBack).toHaveBeenCalled();
+  });
+
+  it('discards a quoted run on Continue, so the new amounts get a fresh quote', async () => {
+    mockCancelIfOnlyQuoted.mockResolvedValue(undefined);
+    const quoted = makeFundingRun({ mode: 'deposit' });
+    mockActiveRun = quoted;
+    render(<PearlDeposit onBack={mockOnBack} />);
+
+    await act(async () => depositProps.onContinue());
+
+    expect(mockCancelIfOnlyQuoted).toHaveBeenCalledWith(quoted.id);
+    expect(screen.getByTestId('funding-flow')).toBeInTheDocument();
+  });
+
+  it('stays on the amounts step when the quoted run cannot be cancelled', async () => {
+    mockCancelIfOnlyQuoted.mockRejectedValue(new Error('conflict'));
+    mockActiveRun = makeFundingRun({ mode: 'deposit' });
+    render(<PearlDeposit onBack={mockOnBack} />);
+
+    await act(async () => depositProps.onContinue());
+
+    expect(mockMessageError).toHaveBeenCalled();
+    expect(screen.getByTestId('deposit')).toBeInTheDocument();
   });
 
   it('starts a new deposit over a run that was only quoted', () => {

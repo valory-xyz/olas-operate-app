@@ -116,11 +116,7 @@ export const isRunLive = (run: FundingRun) => {
   return phase === 'editable' || phase === 'processing';
 };
 
-/**
- * A run that holds the user's funds: some of the deposit has arrived, or the
- * transfer is under way. It can't be left or changed, only finished, so funds
- * are never stranded in the Master EOA.
- */
+/** Holds the user's funds (deposit received or transfer under way): only finished, never left, so funds aren't stranded. */
 export const isRunStarted = (run: FundingRun) => {
   const phase = getRunPhase(run);
   if (phase === 'processing') return true;

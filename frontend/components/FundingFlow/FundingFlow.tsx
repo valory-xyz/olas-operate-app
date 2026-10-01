@@ -130,6 +130,7 @@ export const FundingFlow = (props: FundingFlowProps) => {
     refreshQuoteMutation,
     retryMutation,
     cancelMutation,
+    cancelIfOnlyQuoted,
   } = useFundingRun();
 
   const host: FundingHost = {
@@ -146,6 +147,7 @@ export const FundingFlow = (props: FundingFlowProps) => {
   // A run this flow created counts as seen, even if it came back already COMPLETED.
   if (createMutation.data) seenLiveRunIds.current.add(createMutation.data.id);
   const run = resolveDisplayedRun(activeRun, host, seenLiveRunIds.current);
+  const started = !!run && isRunStarted(run);
 
   const [step, setStep] = useState<SelectionStep | null>(null);
   const [selectedChain, setSelectedChain] = useState<MiddlewareChain | null>(
@@ -219,6 +221,8 @@ export const FundingFlow = (props: FundingFlowProps) => {
     });
 
   const create = (selection: Selection) => {
+    // Recreating cancels the run, so never over one holding the user's funds.
+    if (started) return;
     runIdAtCreate.current = run?.id ?? null;
     setPendingSelection(selection);
     setStep(null);
@@ -238,9 +242,11 @@ export const FundingFlow = (props: FundingFlowProps) => {
     props.mode !== 'deposit' || Object.keys(props.depositAmounts).length > 0;
   const canCreate = hasCreateParams && (!run || isRunForHost(run, host));
   const editable = !run || isRunEditable(run);
-  const started = !!run && isRunStarted(run);
-  const currentStep: SelectionStep | 'quote' =
-    step ?? (run || pendingSelection ? 'quote' : 'chain');
+  // A run that became started while the user was back on a selection step
+  // takes over the screen, so the stale step can't recreate it.
+  const currentStep: SelectionStep | 'quote' = started
+    ? 'quote'
+    : (step ?? (run || pendingSelection ? 'quote' : 'chain'));
   const tokenStepChain = selectedChain ?? run?.source.chain ?? null;
 
   const renderSelection = () => {
@@ -388,7 +394,7 @@ export const FundingFlow = (props: FundingFlowProps) => {
         return;
       case 'quote':
         resetCreate();
-        setSelectedChain(run?.source.chain ?? pendingSelection?.chain ?? null);
+        setSelectedChain(pendingSelection?.chain ?? run?.source.chain ?? null);
         setStep('token');
         return;
       case 'token':
@@ -396,15 +402,15 @@ export const FundingFlow = (props: FundingFlowProps) => {
         return;
       default:
         if (run && isRunForHost(run, host) && editable) {
-          cancelMutation.mutate(run.id, {
-            onError: () => message.error(CANCEL_FAILED),
-          });
+          cancelIfOnlyQuoted(run.id).catch(() => message.error(CANCEL_FAILED));
         }
         onBack();
     }
   };
-  // Hidden while the run holds the user's funds, until it fails.
-  const canGoBack = !started || run?.status === 'FAILED';
+  // Hidden while the run holds the user's funds (until it fails), and while a
+  // create is in flight, since it can't be aborted and would leave a run behind.
+  const canGoBack =
+    (!started || run?.status === 'FAILED') && !createMutation.isPending;
 
   const renderBody = () => {
     if (isActiveRunError && !activeRun) {

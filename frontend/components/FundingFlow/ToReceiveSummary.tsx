@@ -46,8 +46,7 @@ export const ToReceiveSummary = ({
   destinationChain,
   fallback = [],
 }: ToReceiveSummaryProps) => {
-  // The run and the fallback list tokens in different orders; sorting keeps
-  // the row from reshuffling as one replaces the other during a quote.
+  // The run and the fallback order tokens differently; sorting stops a reshuffle between them.
   const items: DisplayItem[] = (
     toReceive
       ? runItemsToDisplay(toReceive, destinationChain)

@@ -37,14 +37,29 @@ const getActive = async (): Promise<FundingRun | null> =>
     ),
   );
 
-const create = async (request: CreateFundingRunRequest): Promise<FundingRun> =>
-  fetch(FUNDING_RUN_URL, {
-    method: 'POST',
-    headers: { ...CONTENT_TYPE_JSON_UTF8 },
-    body: JSON.stringify(request),
-  }).then((response) =>
-    handleResponse<FundingRun>(response, 'Failed to create the funding run'),
-  );
+/** Polling pauses while a create is in flight, so a hung create must not hang forever. */
+export const CREATE_TIMEOUT_MS = 60_000;
+
+const create = async (
+  request: CreateFundingRunRequest,
+): Promise<FundingRun> => {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), CREATE_TIMEOUT_MS);
+  try {
+    const response = await fetch(FUNDING_RUN_URL, {
+      method: 'POST',
+      headers: { ...CONTENT_TYPE_JSON_UTF8 },
+      body: JSON.stringify(request),
+      signal: controller.signal,
+    });
+    return await handleResponse<FundingRun>(
+      response,
+      'Failed to create the funding run',
+    );
+  } finally {
+    clearTimeout(timeout);
+  }
+};
 
 const refreshQuote = async (id: string): Promise<FundingRun> =>
   fetch(`${FUNDING_RUN_URL}/${id}/refresh_quote`, {
