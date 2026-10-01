@@ -4,11 +4,15 @@ import { Fragment } from 'react';
 import { CardFlex } from '@/components/ui';
 import { MiddlewareChain } from '@/constants';
 import { FundingRunTokenAmount } from '@/types/FundingRun';
-import { formatAmount } from '@/utils/numberFormatters';
 
 import { UNKNOWN_AMOUNT, UNKNOWN_TOKEN } from './constants';
 import { TokenIcon } from './styles';
-import { formatBaseUnits, getTokenImage, getTokenMeta } from './utils';
+import {
+  formatBaseUnits,
+  formatDisplayAmount,
+  getTokenImage,
+  getTokenMeta,
+} from './utils';
 
 const { Text } = Typography;
 
@@ -52,7 +56,7 @@ export const ToReceiveSummary = ({
           .map(({ symbol, amount }) => ({
             key: symbol,
             symbol,
-            amount: formatAmount(amount, 2),
+            amount: formatDisplayAmount(amount),
           }))
   ).sort((a, b) =>
     a.symbol.localeCompare(b.symbol, undefined, { sensitivity: 'base' }),

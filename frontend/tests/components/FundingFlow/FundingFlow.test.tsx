@@ -810,6 +810,40 @@ describe('FundingFlow — quote and deposit address', () => {
     expect(screen.getByText('11.00')).toBeInTheDocument();
   });
 
+  it('shows small amounts to about 4 significant digits instead of rounding them up to 0.01', () => {
+    mockHookState = {
+      activeRun: makeFundingRun({
+        source: {
+          ...makeFundingRun().source,
+          token: FUNDING_RUN_NATIVE,
+          symbol: 'ETH',
+          decimals: 18,
+        },
+        destination: { chain: 'base', wallet: 'master_safe' },
+        quote: {
+          required_amount: '1000000000000000',
+          received_amount: '260000000000000',
+          outstanding_amount: '740000000000000',
+          quoted_at: 1790592071,
+          next_refresh_at: 1790592251,
+        },
+        to_receive: [
+          {
+            token: FUNDING_RUN_NATIVE,
+            symbol: 'ETH',
+            amount: '740000000000000',
+          },
+        ],
+      }),
+    };
+    renderFlow();
+
+    expect(screen.getByText('0.00074')).toBeInTheDocument();
+    expect(screen.getByText('0.00026 ETH received')).toBeInTheDocument();
+    expect(screen.getByText('0.00074 ETH')).toBeInTheDocument();
+    expect(screen.queryByText(/0\.01/)).toBeNull();
+  });
+
   it("shows the middleware's quote failure message as the title, once, above the app's advice", () => {
     mockHookState = {
       activeRun: makeFundingRun({

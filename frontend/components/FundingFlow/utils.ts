@@ -77,9 +77,15 @@ export const getTokenMeta = (
   return config ? { symbol: config.symbol, decimals: config.decimals } : null;
 };
 
-/** Base-unit amount as a two-decimal display string, e.g. "15.00". */
+/** ~4 significant digits (2–8 decimals), rounded up: 0.00074 ETH must not show as 0.01. */
+export const formatDisplayAmount = (value: number) => {
+  const magnitude = value > 0 ? Math.floor(Math.log10(value)) : 0;
+  const decimals = Math.min(8, Math.max(2, 3 - magnitude));
+  return formatAmount(value, decimals).replace(/(\.\d{2}\d*?)0+$/, '$1');
+};
+
 export const formatBaseUnits = (amount: string, decimals: number) =>
-  formatAmount(formatUnits(amount, decimals), 2);
+  formatDisplayAmount(Number(formatUnits(amount, decimals)));
 
 type RunPhase = 'editable' | 'processing' | 'completed' | 'cancelled';
 
