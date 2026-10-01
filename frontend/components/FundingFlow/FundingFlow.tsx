@@ -10,6 +10,7 @@ import {
 } from '@/components/ui';
 import { MiddlewareChain } from '@/constants';
 import { useMessageApi } from '@/context/MessageProvider';
+import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRefillRequirementsContext';
 import { useFundingRun } from '@/hooks/useFundingRun';
 import { Address } from '@/types/Address';
 import {
@@ -161,6 +162,22 @@ export const FundingFlow = (props: FundingFlowProps) => {
     [completedRunId],
   );
 
+  // Requirements poll hourly while no agent runs, so Start and refill state would lag a finished run.
+  const { refetch: refetchRequirements } =
+    useBalanceAndRefillRequirementsContext();
+  const requirementsRefreshedForRunId = useRef<string | null>(null);
+  const finishedRunId = activeRun?.status === 'COMPLETED' ? activeRun.id : null;
+  useEffect(() => {
+    if (
+      !finishedRunId ||
+      requirementsRefreshedForRunId.current === finishedRunId
+    ) {
+      return;
+    }
+    requirementsRefreshedForRunId.current = finishedRunId;
+    refetchRequirements();
+  }, [finishedRunId, refetchRequirements]);
+
   const { isError: isCreateError, reset: resetCreateMutation } = createMutation;
   const resetCreate = useCallback(() => {
     resetCreateMutation();
@@ -179,6 +196,15 @@ export const FundingFlow = (props: FundingFlowProps) => {
       resetCreate();
     }
   }, [displayedRunId, isCreateError, resetCreate]);
+
+  const cancelRun = (runId: string) =>
+    cancelMutation.mutate(runId, {
+      onSuccess: () => {
+        resetCreate();
+        setStep(null);
+      },
+      onError: () => message.error(CANCEL_FAILED),
+    });
 
   const create = (selection: Selection) => {
     runIdAtCreate.current = run?.id ?? null;
@@ -301,30 +327,35 @@ export const FundingFlow = (props: FundingFlowProps) => {
               retryMutation.mutate(run.id, { onError: showMutationError })
             }
             isRetrying={retryMutation.isPending}
-            onCancel={() =>
-              cancelMutation.mutate(run.id, {
-                onSuccess: () => {
-                  resetCreate();
-                  setStep(null);
-                },
-                onError: () => message.error(CANCEL_FAILED),
-              })
-            }
+            onCancel={() => cancelRun(run.id)}
             isCancelling={cancelMutation.isPending}
           />
         ) : (
-          <QuoteAndDeposit
-            run={isCreateUnresolved ? null : run}
-            createError={createMutation.error}
-            onRetryCreate={() => pendingSelection && create(pendingSelection)}
-            onRefreshQuote={() =>
-              run &&
-              refreshQuoteMutation.mutate(run.id, {
-                onError: showMutationError,
-              })
-            }
-            isRefreshing={refreshQuoteMutation.isPending}
-          />
+          <>
+            <QuoteAndDeposit
+              run={isCreateUnresolved ? null : run}
+              createError={createMutation.error}
+              onRetryCreate={() => pendingSelection && create(pendingSelection)}
+              onRefreshQuote={() =>
+                run &&
+                refreshQuoteMutation.mutate(run.id, {
+                  onError: showMutationError,
+                })
+              }
+              isRefreshing={refreshQuoteMutation.isPending}
+            />
+            {run && run.mode !== mode && (
+              <CardRow>
+                <Button
+                  size="small"
+                  onClick={() => cancelRun(run.id)}
+                  loading={cancelMutation.isPending}
+                >
+                  Cancel
+                </Button>
+              </CardRow>
+            )}
+          </>
         )}
       </>
     );

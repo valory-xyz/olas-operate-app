@@ -25,6 +25,7 @@ const mockCreate = jest.fn();
 const mockRefreshQuote = jest.fn();
 const mockRetry = jest.fn();
 const mockCancel = jest.fn();
+const mockRefetchRequirements = jest.fn();
 const mockToggleSupportModal = jest.fn();
 const mockMessageSuccess = jest.fn();
 const mockMessageError = jest.fn();
@@ -82,6 +83,12 @@ jest.mock('../../../hooks/useFundingRun', () => ({
     refreshQuoteMutation: { mutate: mockRefreshQuote, isPending: false },
     retryMutation: { mutate: mockRetry, isPending: false },
     cancelMutation: { mutate: mockCancel, isPending: false },
+  }),
+}));
+
+jest.mock('../../../hooks/useBalanceAndRefillRequirementsContext', () => ({
+  useBalanceAndRefillRequirementsContext: () => ({
+    refetch: mockRefetchRequirements,
   }),
 }));
 
@@ -462,6 +469,32 @@ describe('FundingFlow — failures around the run', () => {
 
     expect(screen.getByText('Waiting for your transfer')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Change' })).toBeNull();
+  });
+
+  it("cancels another mode's waiting run so this flow can start its own", () => {
+    const run = makeFundingRun({ mode: 'deposit' });
+    mockHookState = { activeRun: run };
+    mockCancel.mockImplementation((_id, options) => {
+      mockHookState = { activeRun: { ...run, status: 'CANCELLED' } };
+      options.onSuccess();
+    });
+    const { rerender } = renderFlow();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect(mockCancel).toHaveBeenCalledWith(run.id, expect.anything());
+
+    rerender(<FundingFlow {...ONBOARD_PROPS} />);
+    expect(
+      screen.getByText('Select the preferred chain to send funds from:'),
+    ).toBeInTheDocument();
+  });
+
+  it('offers Change, not Cancel, on its own waiting run', () => {
+    mockHookState = { activeRun: makeFundingRun() };
+    renderFlow();
+
+    expect(screen.getAllByRole('button', { name: 'Change' })).toHaveLength(2);
+    expect(screen.queryByRole('button', { name: 'Cancel' })).toBeNull();
   });
 
   it('explains why tokens cannot be picked when there is nothing to deposit', () => {
@@ -957,6 +990,18 @@ describe('FundingFlow — completion', () => {
         finished_at: 1790592300,
       })),
     });
+
+  it('refreshes funding requirements once when the run completes', () => {
+    const live = processingRun({ id: 'fr-refresh-reqs' });
+    mockHookState = { activeRun: live };
+    const { rerender } = renderFlow();
+    expect(mockRefetchRequirements).not.toHaveBeenCalled();
+
+    mockHookState = { activeRun: completed('onboard', 'fr-refresh-reqs') };
+    rerender(<FundingFlow {...ONBOARD_PROPS} />);
+    rerender(<FundingFlow {...ONBOARD_PROPS} />);
+    expect(mockRefetchRequirements).toHaveBeenCalledTimes(1);
+  });
 
   it('shows the setup-complete modal for an onboarding run, even on first render', () => {
     mockHookState = { activeRun: completed('onboard', 'fr-onboard-first') };
