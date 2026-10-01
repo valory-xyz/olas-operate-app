@@ -1366,65 +1366,6 @@ describe('PearlWalletProvider', () => {
       );
     });
 
-    it('pre-fills target balances: each refill shortfall plus the balance held', () => {
-      // A shortfall of 10 OLAS with 8 held must target 18, so 10 still arrive.
-      const shortfalls = {
-        [TokenSymbolMap.OLAS]: { amount: 10 },
-        [TokenSymbolMap.XDAI]: { amount: 1 },
-      };
-      mockGetInitialDepositForMasterSafe.mockReturnValue(shortfalls);
-      mockUseAvailableAssets.mockReturnValue({
-        isLoading: false,
-        availableAssets: [
-          { symbol: TokenSymbolMap.OLAS, amount: 8 },
-          { symbol: TokenSymbolMap.XDAI, amount: 0.5 },
-        ],
-      });
-      mockUseMasterWalletContext.mockReturnValue({
-        masterSafes: [
-          { evmChainId: EvmChainIdMap.Gnosis, address: DEFAULT_SAFE_ADDRESS },
-        ],
-      });
-
-      const { result } = renderHook(() => usePearlWallet(), { wrapper });
-
-      act(() => {
-        result.current.initializeDepositAmounts();
-      });
-
-      expect(result.current.amountsToDeposit).toEqual({
-        [TokenSymbolMap.OLAS]: { amount: 18 },
-        [TokenSymbolMap.XDAI]: { amount: 1.5 },
-      });
-      // The low-balance alert still names the amounts to add.
-      expect(result.current.defaultRequirementDepositValues).toEqual(
-        shortfalls,
-      );
-    });
-
-    it('waits for balances before pre-filling target balances', () => {
-      mockGetInitialDepositForMasterSafe.mockReturnValue({
-        [TokenSymbolMap.OLAS]: { amount: 10 },
-      });
-      mockUseAvailableAssets.mockReturnValue({
-        isLoading: true,
-        availableAssets: [],
-      });
-      mockUseMasterWalletContext.mockReturnValue({
-        masterSafes: [
-          { evmChainId: EvmChainIdMap.Gnosis, address: DEFAULT_SAFE_ADDRESS },
-        ],
-      });
-
-      const { result } = renderHook(() => usePearlWallet(), { wrapper });
-
-      act(() => {
-        result.current.initializeDepositAmounts();
-      });
-
-      expect(result.current.amountsToDeposit).toEqual({});
-    });
-
     it('does nothing when getInitialDepositForMasterSafe returns undefined', () => {
       mockGetInitialDepositForMasterSafe.mockReturnValue(undefined);
 

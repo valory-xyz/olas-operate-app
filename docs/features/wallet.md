@@ -199,7 +199,7 @@ Manages the chain-aware wallet UI for viewing balances, depositing, and withdraw
 - `walletChainId` — which chain's wallet to display. Initialized to `selectedAgentConfig.evmHomeChainId`, auto-synced when the selected agent changes — **except** when the user is on `PAGES.PearlWallet` or `PAGES.FundPearlWallet` (prevents auto-run agent rotation from switching the tab under the user).
 - `walletStep` — current step in the wallet flow (`PEARL_WALLET_SCREEN`, `DEPOSIT`, `WITHDRAW`, etc.)
 - `amountsToWithdraw` / `amountsToDeposit` — per-token amounts (`TokenAmounts` = `Record<TokenSymbol, { amount, withdrawAll? }>`)
-- `defaultRequirementDepositValues` — the refill shortfall per token (via `getInitialDepositForMasterSafe`), named by the low-balance alert; `amountsToDeposit` is pre-filled with it converted to target balances (shortfall + balance held)
+- `defaultRequirementDepositValues` — pre-filled deposit amounts from refill requirements (via `getInitialDepositForMasterSafe`)
 - `chains` — unique list of chains derived from services via `getChainList` (matches services to `ACTIVE_AGENTS` configs)
 - `stakedAssets` — OLAS staked per service on the current chain, with agent name and icon
 - `availableAssets` — available master wallet assets on the current chain (via `useAvailableAssets`; excludes master EOA assets during deposit on staking pages)

@@ -5,7 +5,6 @@ import {
   useContext,
   useEffect,
   useMemo,
-  useRef,
   useState,
 } from 'react';
 
@@ -42,7 +41,6 @@ import {
 } from '@/utils';
 import { asEvmChainId, asMiddlewareChain } from '@/utils/middlewareHelpers';
 
-import { toTargetBalances } from '../components/PearlDeposit/utils';
 import { STEPS, WalletChain } from '../components/PearlWallet/types';
 import { getInitialDepositForMasterSafe } from '../components/PearlWallet/utils';
 
@@ -203,16 +201,9 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
     [masterSafes, walletChainId],
   );
 
-  // Read through a ref so that a balance refresh does not re-initialize the
-  // deposit amounts over what the user has typed.
-  const availableAssetsRef = useRef(availableAssets);
-  availableAssetsRef.current = availableAssets;
-
   // Function to manually initialize deposit amounts based on refill requirements
   const initializeDepositAmounts = useCallback(() => {
     if (!masterSafeAddress) return;
-    // The deposit fields are target balances, so the balances must be known.
-    if (isAvailableAssetsLoading) return;
 
     const defaultRequirementDepositValues = getInitialDepositForMasterSafe(
       walletChainId,
@@ -224,16 +215,10 @@ export const PearlWalletProvider = ({ children }: { children: ReactNode }) => {
     if (!defaultRequirementDepositValues) return;
 
     setDefaultDepositValues(defaultRequirementDepositValues);
-    setAmountsToDeposit(
-      toTargetBalances(
-        defaultRequirementDepositValues,
-        availableAssetsRef.current,
-      ),
-    );
+    setAmountsToDeposit(defaultRequirementDepositValues);
   }, [
     walletChainId,
     masterSafeAddress,
-    isAvailableAssetsLoading,
     getFundingEligibleServiceConfigIdsOf,
     getRefillRequirementsOf,
   ]);
