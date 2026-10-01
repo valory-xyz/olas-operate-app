@@ -499,49 +499,82 @@ describe('FundingFlow — failures around the run', () => {
 
   it.each([
     [
-      'another destination',
+      'another chain',
       { destination: { chain: 'gnosis', wallet: 'master_safe' } },
     ],
-    ['another service', { service_config_id: 'sc-other' }],
+    ['another agent', { service_config_id: 'sc-other' }],
   ] as const)(
-    "hides a waiting onboarding run for %s, showing this host's requirement",
+    'shows a waiting onboarding run for %s read-only, labelled, with Cancel',
     (_label, overrides) => {
       mockHookState = {
         activeRun: makeFundingRun({ status: 'QUOTE_FAILED', ...overrides }),
       };
-      renderFlow({ fallbackToReceive: [{ symbol: 'POL', amount: 15 }] });
+      renderFlow();
 
       expect(
-        screen.getByText('Select the preferred chain to send funds from:'),
+        screen.getByText(
+          'This transfer is funding another agent. Cancel it to fund this one.',
+        ),
       ).toBeInTheDocument();
-      expect(screen.getByText('15.00 POL')).toBeInTheDocument();
-      expect(screen.queryByText('40.00 OLAS')).toBeNull();
+      expect(
+        screen.getByRole('button', { name: 'Cancel' }),
+      ).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Change' })).toBeNull();
     },
   );
 
-  it("still shows another service's onboarding run once it is processing", () => {
-    mockHookState = {
-      activeRun: processingRun({ service_config_id: 'sc-other' }),
-    };
-    renderFlow();
+  it("cancels another agent's waiting run so this agent can start its own", () => {
+    const run = makeFundingRun({ service_config_id: 'sc-other' });
+    mockHookState = { activeRun: run };
+    mockCancel.mockImplementation((_id, options) => {
+      mockHookState = { activeRun: { ...run, status: 'CANCELLED' } };
+      options.onSuccess();
+    });
+    const { rerender } = renderFlow();
 
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect(mockCancel).toHaveBeenCalledWith(run.id, expect.anything());
+
+    rerender(<FundingFlow {...ONBOARD_PROPS} />);
     expect(
-      screen.queryByText('Select the preferred chain to send funds from:'),
-    ).toBeNull();
-    expect(screen.queryByRole('button', { name: 'Change' })).toBeNull();
+      screen.getByText('Select the preferred chain to send funds from:'),
+    ).toBeInTheDocument();
   });
 
-  it("does not resume another service's completed onboarding run", () => {
+  it('labels a deposit run for another chain as such', () => {
     mockHookState = {
       activeRun: makeFundingRun({
-        id: 'fr-other-service-done',
-        status: 'COMPLETED',
-        service_config_id: 'sc-other',
+        mode: 'deposit',
+        destination: { chain: 'gnosis', wallet: 'master_safe' },
       }),
     };
-    renderFlow();
+    renderFlow({
+      mode: 'deposit',
+      depositAmounts: { [FUNDING_RUN_NATIVE]: '1' },
+    } as Partial<FundingFlowProps>);
+
+    expect(
+      screen.getByText(
+        'This transfer is for another chain. Cancel it to start this one.',
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("never shows another agent's success, even after seeing its run live", () => {
+    const live = makeFundingRun({
+      id: 'fr-other-agent',
+      service_config_id: 'sc-other',
+    });
+    mockHookState = { activeRun: live };
+    const { rerender } = renderFlow();
+
+    mockHookState = { activeRun: { ...live, status: 'COMPLETED' } };
+    rerender(<FundingFlow {...ONBOARD_PROPS} />);
 
     expect(screen.queryByText('Setup Complete')).toBeNull();
+    expect(
+      screen.getByText('Select the preferred chain to send funds from:'),
+    ).toBeInTheDocument();
   });
 
   it('explains why tokens cannot be picked when there is nothing to deposit', () => {
@@ -592,21 +625,6 @@ describe('FundingFlow — "To receive"', () => {
 
     expect(screen.getByText('15.00 POL')).toBeInTheDocument();
     expect(screen.queryByText(/OLAS/)).toBeNull();
-  });
-
-  it("keeps the previous run's amounts while a changed source recreates the run", () => {
-    const fallbackToReceive = [{ symbol: 'POL', amount: 999 }];
-    mockHookState = { activeRun: makeFundingRun() };
-    const { rerender } = renderFlow({ fallbackToReceive });
-    expect(screen.getByText('6.00 POL')).toBeInTheDocument();
-
-    // Creating the new run cancels the old one before the new one lands.
-    mockHookState = { activeRun: null, createPending: true };
-    rerender(
-      <FundingFlow {...ONBOARD_PROPS} fallbackToReceive={fallbackToReceive} />,
-    );
-    expect(screen.getByText('6.00 POL')).toBeInTheDocument();
-    expect(screen.queryByText('999.00 POL')).toBeNull();
   });
 
   it('keeps the same token order when the run replaces the requirement', () => {

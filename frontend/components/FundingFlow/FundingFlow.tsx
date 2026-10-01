@@ -24,6 +24,7 @@ import {
   CANCEL_FAILED,
   CONNECTION_LOST,
   NO_DEPOSIT_AMOUNTS,
+  OTHER_TARGET_RUN,
   TITLES,
 } from './constants';
 import { FundingProgress } from './FundingProgress';
@@ -35,11 +36,14 @@ import { Banner, CardRow, SelectionRow } from './styles';
 import { ToReceiveItem, ToReceiveSummary } from './ToReceiveSummary';
 import {
   acknowledgeRun,
+  FundingHost,
   getChainImage,
   getChainName,
   getTokenImage,
   getTokenMeta,
   isRunEditable,
+  isRunForAnotherTarget,
+  isRunForHost,
   isRunLive,
   isRunProcessing,
   resolveDisplayedRun,
@@ -127,9 +131,12 @@ export const FundingFlow = (props: FundingFlowProps) => {
     cancelMutation,
   } = useFundingRun();
 
-  // While a changed source recreates the run, the old run is briefly gone;
-  // keep its delivery on screen rather than flash the entry point's estimate.
-  const lastToReceive = useRef<FundingRun['to_receive'] | undefined>(undefined);
+  const host: FundingHost = {
+    mode,
+    destinationChain,
+    serviceConfigId:
+      props.mode === 'onboard' ? props.serviceConfigId : undefined,
+  };
 
   const seenLiveRunIds = useRef(new Set<string>());
   if (activeRun && isRunLive(activeRun)) {
@@ -137,17 +144,7 @@ export const FundingFlow = (props: FundingFlowProps) => {
   }
   // A run this flow created counts as seen, even if it came back already COMPLETED.
   if (createMutation.data) seenLiveRunIds.current.add(createMutation.data.id);
-  const run = resolveDisplayedRun(
-    activeRun,
-    {
-      mode,
-      destinationChain,
-      serviceConfigId:
-        props.mode === 'onboard' ? props.serviceConfigId : undefined,
-    },
-    seenLiveRunIds.current,
-  );
-  if (run) lastToReceive.current = run.to_receive;
+  const run = resolveDisplayedRun(activeRun, host, seenLiveRunIds.current);
 
   const [step, setStep] = useState<SelectionStep | null>(null);
   const [selectedChain, setSelectedChain] = useState<MiddlewareChain | null>(
@@ -235,10 +232,10 @@ export const FundingFlow = (props: FundingFlowProps) => {
   };
 
   // A run can only be (re)created with this host's own parameters, so another
-  // mode's run, or a deposit with no amounts, cannot be changed from here.
+  // mode's or target's run, or a deposit with no amounts, cannot be changed from here.
   const hasCreateParams =
     props.mode !== 'deposit' || Object.keys(props.depositAmounts).length > 0;
-  const canCreate = hasCreateParams && (!run || run.mode === mode);
+  const canCreate = hasCreateParams && (!run || isRunForHost(run, host));
   const editable = !run || isRunEditable(run);
   const currentStep: SelectionStep | 'quote' =
     step ?? (run || pendingSelection ? 'quote' : 'chain');
@@ -358,8 +355,15 @@ export const FundingFlow = (props: FundingFlowProps) => {
               }
               isRefreshing={refreshQuoteMutation.isPending}
             />
-            {run && run.mode !== mode && (
-              <CardRow>
+            {run && !isRunForHost(run, host) && (
+              <CardRow vertical gap={8} align="flex-start">
+                {isRunForAnotherTarget(run, host) && (
+                  <Text>
+                    {mode === 'onboard'
+                      ? OTHER_TARGET_RUN.agent
+                      : OTHER_TARGET_RUN.chain}
+                  </Text>
+                )}
                 <Button
                   size="small"
                   onClick={() => cancelRun(run.id)}
@@ -413,10 +417,7 @@ export const FundingFlow = (props: FundingFlowProps) => {
         {renderBody()}
       </CardFlex>
       <ToReceiveSummary
-        toReceive={
-          run?.to_receive ??
-          (createMutation.isPending ? lastToReceive.current : undefined)
-        }
+        toReceive={run?.to_receive}
         destinationChain={run?.destination.chain ?? destinationChain}
         fallback={props.fallbackToReceive}
       />

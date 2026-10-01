@@ -1,4 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  useIsMutating,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 
 import { FIVE_SECONDS_INTERVAL, REACT_QUERY_KEYS } from '@/constants';
 import { FundingRunService } from '@/service/FundingRun';
@@ -12,10 +17,16 @@ import { CreateFundingRunRequest, FundingRun } from '@/types/FundingRun';
 export const useFundingRun = () => {
   const queryClient = useQueryClient();
 
+  // A create cancels the old run before it responds, so a poll landing in
+  // between would briefly show no run. Polling pauses while a create is in
+  // flight; the old run stays in the cache until the new one replaces it.
+  const isCreating =
+    useIsMutating({ mutationKey: REACT_QUERY_KEYS.FUNDING_RUN_CREATE_KEY }) > 0;
+
   const activeRunQuery = useQuery<FundingRun | null>({
     queryKey: REACT_QUERY_KEYS.FUNDING_RUN_ACTIVE_KEY,
     queryFn: FundingRunService.getActive,
-    refetchInterval: FIVE_SECONDS_INTERVAL,
+    refetchInterval: isCreating ? false : FIVE_SECONDS_INTERVAL,
   });
 
   const sourcesQuery = useQuery({
@@ -24,12 +35,15 @@ export const useFundingRun = () => {
     staleTime: Infinity,
   });
 
+  const cancelActiveRunPoll = () =>
+    queryClient.cancelQueries({
+      queryKey: REACT_QUERY_KEYS.FUNDING_RUN_ACTIVE_KEY,
+    });
+
   // Cancel any in-flight poll first, so its older response cannot overwrite
   // the run a mutation just returned.
   const setActiveRun = async (run: FundingRun) => {
-    await queryClient.cancelQueries({
-      queryKey: REACT_QUERY_KEYS.FUNDING_RUN_ACTIVE_KEY,
-    });
+    await cancelActiveRunPoll();
     queryClient.setQueryData(REACT_QUERY_KEYS.FUNDING_RUN_ACTIVE_KEY, run);
   };
 
@@ -43,7 +57,10 @@ export const useFundingRun = () => {
     Error,
     CreateFundingRunRequest
   >({
+    mutationKey: REACT_QUERY_KEYS.FUNDING_RUN_CREATE_KEY,
     mutationFn: FundingRunService.create,
+    // A poll already in flight could still land after the old run is cancelled.
+    onMutate: cancelActiveRunPoll,
     onSuccess: setActiveRun,
     // A 409 means another run is live: refetching surfaces it.
     onError: invalidateActiveRun,

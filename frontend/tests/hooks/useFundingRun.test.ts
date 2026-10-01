@@ -84,6 +84,46 @@ describe('useFundingRun', () => {
     expect(mockService.getActive).toHaveBeenCalledTimes(1);
   });
 
+  it('keeps the old run and stops polling while a create is in flight', async () => {
+    jest.useFakeTimers();
+    try {
+      const old = makeFundingRun({ id: 'fr-old' });
+      const created = makeFundingRun({ id: 'fr-created' });
+      mockService.getActive.mockResolvedValue(old);
+      let resolveCreate: (run: typeof created) => void = () => {};
+      mockService.create.mockImplementation(
+        () => new Promise((resolve) => (resolveCreate = resolve)),
+      );
+
+      const { result } = renderHook(() => useFundingRun(), {
+        wrapper: createQueryClientWrapper(),
+      });
+      await waitFor(() => expect(result.current.activeRun).toEqual(old));
+
+      // The backend cancels the old run as soon as the create arrives.
+      mockService.getActive.mockResolvedValue(null);
+      act(() => {
+        result.current.createMutation.mutate(CREATE_REQUEST);
+      });
+      await waitFor(() =>
+        expect(result.current.createMutation.isPending).toBe(true),
+      );
+      await act(async () => {
+        jest.advanceTimersByTime(FIVE_SECONDS_INTERVAL * 3);
+      });
+
+      expect(mockService.getActive).toHaveBeenCalledTimes(1);
+      expect(result.current.activeRun).toEqual(old);
+
+      await act(async () => {
+        resolveCreate(created);
+      });
+      await waitFor(() => expect(result.current.activeRun).toEqual(created));
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
   it('refetches the active run when create conflicts with a live run', async () => {
     const live = makeFundingRun({ status: 'PROCESSING' });
     mockService.create.mockRejectedValue(new Error('conflict'));
