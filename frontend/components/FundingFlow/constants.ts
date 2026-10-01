@@ -124,7 +124,7 @@ export const STEP_COPY: Record<FundingStepKind, StepCopy | null> = {
     failed: ({ chainName }) => `Couldn't bridge to ${chainName}`,
   },
   NATIVE: {
-    inProgress: ({ nativeSymbol }) => `Getting ${nativeSymbol} for fees`,
+    inProgress: ({ nativeSymbol }) => `Getting ${nativeSymbol}`,
     done: ({ quantity }) => `Got ${quantity}`,
     failed: ({ nativeSymbol }) => `Couldn't get ${nativeSymbol}`,
   },

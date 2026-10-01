@@ -900,7 +900,7 @@ describe('FundingFlow — progress', () => {
       'href',
       'https://polygonscan.com/tx/0xbridge',
     );
-    expect(screen.getByText('Getting POL for fees')).toBeInTheDocument();
+    expect(screen.getByText('Getting POL')).toBeInTheDocument();
   });
 
   it('shows "Taking longer than usual..." for a slow step', () => {
