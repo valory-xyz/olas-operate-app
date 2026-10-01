@@ -101,7 +101,7 @@ export type CreateFundingRunRequest = CreateFundingRunBase &
     | { mode: 'onboard'; service_config_id: string; backup_owner?: Address }
     | {
         mode: 'deposit';
-        /** Target balances in base units, keyed by token address. */
+        /** Amounts to deliver in base units, keyed by token address. */
         deposit_amounts: Record<Address, string>;
       }
     | { mode: 'signer_gas' }

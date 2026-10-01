@@ -22,14 +22,9 @@ import {
   tokenBalancesToSentence,
 } from '@/utils';
 
-import { getNetDepositAmounts } from '../utils';
-
 const { Title, Text } = Typography;
 
-/** The entries are target balances, not amounts to add. */
-const DEPOSIT_SUBTITLE =
-  'Enter the token amounts you want your Pearl Wallet to hold.';
-const ALREADY_HELD_NOTE = 'Your Pearl Wallet already holds these amounts.';
+const DEPOSIT_SUBTITLE = 'Enter the token amounts you want to deposit.';
 
 const FUNDING_RUN_LABEL: Record<FundingRunMode, string> = {
   onboard: 'agent setup funding',
@@ -137,9 +132,6 @@ export const Deposit = ({ onBack, onContinue }: DepositProps) => {
   const hasEnteredAmounts = !values(amountsToDeposit).every(
     (i) => i.amount === 0,
   );
-  const isAlreadyHeld =
-    hasEnteredAmounts &&
-    getNetDepositAmounts(amountsToDeposit, availableAssets).length === 0;
 
   return (
     <CardFlex $noBorder $padding="32px" style={cardStyles}>
@@ -169,20 +161,9 @@ export const Deposit = ({ onBack, onContinue }: DepositProps) => {
           </Flex>
         </Flex>
 
-        {isAlreadyHeld && (
-          <Text className="text-sm text-neutral-tertiary">
-            {ALREADY_HELD_NOTE}
-          </Text>
-        )}
-
         <Tooltip title={getContinueTooltip(masterSafeAddress, liveRun)}>
           <Button
-            disabled={
-              !hasEnteredAmounts ||
-              isAlreadyHeld ||
-              !masterSafeAddress ||
-              !!liveRun
-            }
+            disabled={!hasEnteredAmounts || !masterSafeAddress || !!liveRun}
             onClick={onContinue}
             type="primary"
             size="large"

@@ -158,7 +158,6 @@ const setupWalletMock = (
 ) => {
   mockUsePearlWallet.mockReturnValue({
     onDepositAmountChange: mockOnDepositAmountChange,
-    // Target balances: hold 6 ETH (5 held today).
     amountsToDeposit: {
       ETH: { amount: 6 },
       USDC: { amount: 0 },
@@ -310,7 +309,7 @@ describe('Deposit', () => {
     expect(screen.getByText('Continue')).toBeDisabled();
   });
 
-  it('asks for the balances the Pearl Wallet should hold', () => {
+  it('asks for the amounts to deposit', () => {
     render(
       createElement(Deposit, {
         onBack: mockOnBack,
@@ -319,13 +318,11 @@ describe('Deposit', () => {
     );
 
     expect(
-      screen.getByText(
-        'Enter the token amounts you want your Pearl Wallet to hold.',
-      ),
+      screen.getByText('Enter the token amounts you want to deposit.'),
     ).toBeInTheDocument();
   });
 
-  it('disables continue with a note when every target is already held', () => {
+  it('allows continue when the wallet already holds more than the entered amounts', () => {
     setupWalletMock({
       amountsToDeposit: { ETH: { amount: 5 }, USDC: { amount: 3 } },
     });
@@ -337,10 +334,7 @@ describe('Deposit', () => {
       }),
     );
 
-    expect(screen.getByText('Continue')).toBeDisabled();
-    expect(
-      screen.getByText('Your Pearl Wallet already holds these amounts.'),
-    ).toBeInTheDocument();
+    expect(screen.getByText('Continue')).toBeEnabled();
   });
 
   it('disables continue while another funding run is in progress', () => {

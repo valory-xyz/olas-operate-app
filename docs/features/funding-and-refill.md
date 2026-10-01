@@ -9,7 +9,7 @@ Every external-wallet funding entry point runs through one shared **FundingFlow*
 | Host | Mode | Destination |
 | --- | --- | --- |
 | Onboarding "Fund your agent" (`SETUP_SCREEN.FundYourAgent`) | `onboard` | Master Safe on the agent's home chain; the middleware derives the targets from the service |
-| Pearl Wallet "Deposit" (`PearlDeposit`) | `deposit` | Master Safe on the selected wallet chain; amounts are **target balances**, not amounts to add |
+| Pearl Wallet "Deposit" (`PearlDeposit`) | `deposit` | Master Safe on the selected wallet chain; amounts are **amounts to add**; the Safe's existing balance is never counted toward them |
 | "Fund Pearl Wallet" page (`PAGES.FundPearlWallet`) | `signer_gas` | Master EOA gas reserve on the chain named by the gas error (`navParams.chain`), else the home chain. A `chain` param Pearl does not support shows an error instead of falling back. A persistent "Back to Pearl Wallet" exit sits under the flow |
 
 The screen is a function of the run returned by `GET /api/funding_run/active` (polled every 5 s by `useFundingRun`), plus the chain/token picked before a run exists:

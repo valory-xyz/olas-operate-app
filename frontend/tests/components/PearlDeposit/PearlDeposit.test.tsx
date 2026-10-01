@@ -19,9 +19,8 @@ jest.mock('../../../config/providers', () => ({ providers: [] }));
 let depositProps: { onBack: () => void; onContinue: () => void };
 let flowProps: FundingFlowProps | null = null;
 let mockActiveRun: FundingRun | null = null;
-// Targets: hold 100 OLAS and 5 POL.
-const DEFAULT_TARGETS = { OLAS: { amount: 100 }, POL: { amount: 5 } };
-let mockAmountsToDeposit: Record<string, { amount: number }> = DEFAULT_TARGETS;
+const DEFAULT_AMOUNTS = { OLAS: { amount: 100 }, POL: { amount: 5 } };
+let mockAmountsToDeposit: Record<string, { amount: number }> = DEFAULT_AMOUNTS;
 const mockGotoPearlWallet = jest.fn();
 
 jest.mock('../../../components/PearlDeposit/Deposit/Deposit', () => ({
@@ -61,7 +60,7 @@ describe('PearlDeposit', () => {
     jest.clearAllMocks();
     flowProps = null;
     mockActiveRun = null;
-    mockAmountsToDeposit = DEFAULT_TARGETS;
+    mockAmountsToDeposit = DEFAULT_AMOUNTS;
   });
 
   it('starts on the amounts step', () => {
@@ -78,7 +77,7 @@ describe('PearlDeposit', () => {
     expect(screen.queryByText(/Buy|Bridge|Transfer/)).toBeNull();
   });
 
-  it('sends the entered amounts as base-unit target balances by token address', () => {
+  it('sends the entered amounts in base units by token address', () => {
     render(<PearlDeposit onBack={mockOnBack} />);
     act(() => depositProps.onContinue());
 
@@ -92,7 +91,7 @@ describe('PearlDeposit', () => {
     });
   });
 
-  it('sends decimal targets exactly, without float noise', () => {
+  it('sends decimal amounts exactly, without float noise', () => {
     mockAmountsToDeposit = {
       OLAS: { amount: 0.1 },
       POL: { amount: 1234.5678 },
@@ -106,12 +105,13 @@ describe('PearlDeposit', () => {
     });
   });
 
-  it('shows target minus balance as "To receive" before a run exists', () => {
+  it('shows the entered amounts, not net of the balance, as "To receive" before a run exists', () => {
     render(<PearlDeposit onBack={mockOnBack} />);
     act(() => depositProps.onContinue());
 
     expect(flowProps?.fallbackToReceive).toEqual([
-      { symbol: 'OLAS', amount: 60 },
+      { symbol: 'OLAS', amount: 100 },
+      { symbol: 'POL', amount: 5 },
     ]);
   });
 

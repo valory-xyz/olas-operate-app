@@ -10,13 +10,13 @@ import { Address, TokenAmounts } from '@/types';
 import { asMiddlewareChain, parseUnits } from '@/utils';
 
 import { Deposit } from './Deposit/Deposit';
-import { getNetDepositAmounts } from './utils';
+import { getEnteredDepositAmounts } from './utils';
 
 type PearlDepositProps = {
   onBack: () => void;
 };
 
-/** Target balances in base units, keyed by token address, as the middleware expects. */
+/** Amounts to deliver in base units, keyed by token address, as the middleware expects. */
 const toDepositAmounts = (
   chainId: keyof typeof TOKEN_CONFIG,
   amounts: TokenAmounts,
@@ -42,8 +42,7 @@ const toDepositAmounts = (
   );
 
 export const PearlDeposit = ({ onBack }: PearlDepositProps) => {
-  const { walletChainId, amountsToDeposit, availableAssets, gotoPearlWallet } =
-    usePearlWallet();
+  const { walletChainId, amountsToDeposit, gotoPearlWallet } = usePearlWallet();
   const { activeRun } = useFundingRun();
   const [isFundingFlowOpen, setIsFundingFlowOpen] = useState(false);
 
@@ -63,10 +62,7 @@ export const PearlDeposit = ({ onBack }: PearlDepositProps) => {
       mode="deposit"
       depositAmounts={toDepositAmounts(walletChainId, amountsToDeposit)}
       destinationChain={asMiddlewareChain(walletChainId)}
-      fallbackToReceive={getNetDepositAmounts(
-        amountsToDeposit,
-        availableAssets,
-      )}
+      fallbackToReceive={getEnteredDepositAmounts(amountsToDeposit)}
       onBack={hasLiveRun ? onBack : () => setIsFundingFlowOpen(false)}
       onTransferCompleted={gotoPearlWallet}
     />

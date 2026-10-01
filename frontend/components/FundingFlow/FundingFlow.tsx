@@ -55,7 +55,7 @@ type ModeProps =
   | { mode: 'onboard'; serviceConfigId: string; backupOwner?: Address }
   | {
       mode: 'deposit';
-      /** Target balances in base units, keyed by token address. */
+      /** Amounts to deliver in base units, keyed by token address. */
       depositAmounts: Record<Address, string>;
     }
   | { mode: 'signer_gas' };
