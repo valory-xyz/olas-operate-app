@@ -1,6 +1,6 @@
 [project]
 name = "olas-operate-app"
-version = "1.9.9-rc18"
+version = "1.9.9-rc19"
 description = ""
 authors = [
     { name = "David Vilela", email = "dvilelaf@gmail.com" },
@@ -30,4 +30,4 @@ package = false
 python-preference = "only-system"
 
 [tool.uv.sources]
-olas-operate-middleware = { git = "https://github.com/valory-xyz/olas-operate-middleware.git", rev = "d937be878a8fe12a6da1e80ae412a105e089fc97" }
+olas-operate-middleware = { git = "https://github.com/valory-xyz/olas-operate-middleware.git", rev = "be79a43a64ebe3fcb4ab75c08bcf2289ecc2252e" }
