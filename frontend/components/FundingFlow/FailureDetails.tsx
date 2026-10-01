@@ -11,6 +11,8 @@ type FailureDetailsProps = {
   description: string[];
   onRetry: () => void;
   isRetrying: boolean;
+  onCancel?: () => void;
+  isCancelling?: boolean;
   extra?: string;
 };
 
@@ -19,6 +21,8 @@ export const FailureDetails = ({
   description,
   onRetry,
   isRetrying,
+  onCancel,
+  isCancelling,
   extra,
 }: FailureDetailsProps) => {
   const { toggleSupportModal } = useSupportModal();
@@ -52,6 +56,11 @@ export const FailureDetails = ({
           <Button size="small" onClick={toggleSupportModal}>
             Contact Support
           </Button>
+          {onCancel && (
+            <Button size="small" onClick={onCancel} loading={isCancelling}>
+              Cancel
+            </Button>
+          )}
         </Flex>
       </Flex>
     </Flex>

@@ -82,12 +82,16 @@ type FundingProgressProps = {
   run: FundingRun;
   onRetry: () => void;
   isRetrying: boolean;
+  onCancel?: () => void;
+  isCancelling?: boolean;
 };
 
 export const FundingProgress = ({
   run,
   onRetry,
   isRetrying,
+  onCancel,
+  isCancelling,
 }: FundingProgressProps) => {
   const failedStep = getFailedStep(run);
   const logSteps = getLogSteps(run, failedStep);
@@ -109,6 +113,8 @@ export const FundingProgress = ({
             description={FUNDS_SAFE}
             onRetry={onRetry}
             isRetrying={isRetrying}
+            onCancel={onCancel}
+            isCancelling={isCancelling}
             extra={
               failedStep
                 ? formatStepTime(

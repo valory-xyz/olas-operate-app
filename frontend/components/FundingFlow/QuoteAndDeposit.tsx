@@ -69,17 +69,22 @@ const GettingQuote = () => (
 type QuoteFailedProps = {
   onRetry: () => void;
   isRetrying: boolean;
-  /** Why the quote failed, from the middleware; the app's copy is only a fallback. */
-  reason?: string | null;
+  title?: string | null;
+  description?: string;
 };
 
-const QuoteFailed = ({ onRetry, isRetrying, reason }: QuoteFailedProps) => (
+const QuoteFailed = ({
+  onRetry,
+  isRetrying,
+  title,
+  description,
+}: QuoteFailedProps) => (
   <>
     <Banner tone="progress">{QUOTE_COPY.gettingQuote}</Banner>
     <CardRow>
       <FailureDetails
-        title={QUOTE_COPY.failedTitle}
-        description={[reason || QUOTE_COPY.failedDescription]}
+        title={title || QUOTE_COPY.failedTitle}
+        description={[description || QUOTE_COPY.failedDescription]}
         onRetry={onRetry}
         isRetrying={isRetrying}
       />
@@ -142,7 +147,7 @@ export const QuoteAndDeposit = ({
       <QuoteFailed
         onRetry={onRetryCreate}
         isRetrying={false}
-        reason={createError.message}
+        description={createError.message}
       />
     ) : (
       <GettingQuote />
@@ -153,7 +158,7 @@ export const QuoteAndDeposit = ({
       <QuoteFailed
         onRetry={onRefreshQuote}
         isRetrying={isRefreshing}
-        reason={run.quote_message}
+        title={run.quote_message}
       />
     );
   }

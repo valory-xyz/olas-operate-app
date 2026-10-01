@@ -80,6 +80,16 @@ describe('FundingRunService', () => {
     });
   });
 
+  it('cancel deletes the run', async () => {
+    (fetch as jest.Mock).mockReturnValue(mockResponse(RUN));
+
+    await FundingRunService.cancel(RUN.id);
+    expect(fetch).toHaveBeenCalledWith(`${RUN_URL}/${RUN.id}`, {
+      method: 'DELETE',
+      headers: { ...CONTENT_TYPE_JSON_UTF8 },
+    });
+  });
+
   it('throws the backend message on a 409', async () => {
     (fetch as jest.Mock).mockReturnValue(
       mockResponse(

@@ -61,6 +61,12 @@ export const useFundingRun = () => {
     onError: invalidateActiveRun,
   });
 
+  const cancelMutation = useMutation<FundingRun, Error, string>({
+    mutationFn: FundingRunService.cancel,
+    onSuccess: setActiveRun,
+    onError: invalidateActiveRun,
+  });
+
   return {
     activeRun: activeRunQuery.data ?? null,
     isActiveRunFetched: activeRunQuery.isFetched,
@@ -73,5 +79,6 @@ export const useFundingRun = () => {
     createMutation,
     refreshQuoteMutation,
     retryMutation,
+    cancelMutation,
   };
 };

@@ -24,6 +24,7 @@ jest.mock('../../../constants/providers', () => ({ PROVIDERS: {} }));
 const mockCreate = jest.fn();
 const mockRefreshQuote = jest.fn();
 const mockRetry = jest.fn();
+const mockCancel = jest.fn();
 const mockToggleSupportModal = jest.fn();
 const mockMessageSuccess = jest.fn();
 const mockMessageError = jest.fn();
@@ -80,6 +81,7 @@ jest.mock('../../../hooks/useFundingRun', () => ({
     },
     refreshQuoteMutation: { mutate: mockRefreshQuote, isPending: false },
     retryMutation: { mutate: mockRetry, isPending: false },
+    cancelMutation: { mutate: mockCancel, isPending: false },
   }),
 }));
 
@@ -529,6 +531,28 @@ describe('FundingFlow — "To receive"', () => {
     expect(screen.getByText('Some NEW')).toBeInTheDocument();
   });
 
+  it('labels a token whose symbol the middleware could not read', () => {
+    mockHookState = {
+      activeRun: makeFundingRun({
+        to_receive: [
+          {
+            token: '0x9999999999999999999999999999999999999999',
+            symbol: null,
+            amount: '1000',
+          },
+          {
+            token: '0x8888888888888888888888888888888888888888',
+            symbol: null,
+            amount: '2000',
+          },
+        ],
+      }),
+    };
+    renderFlow();
+
+    expect(screen.getAllByText('Some token')).toHaveLength(2);
+  });
+
   it('renders no summary when nothing is left to receive', () => {
     mockHookState = { activeRun: makeFundingRun({ to_receive: [] }) };
     renderFlow();
@@ -652,22 +676,19 @@ describe('FundingFlow — quote and deposit address', () => {
     expect(screen.getByText('11.00')).toBeInTheDocument();
   });
 
-  it("shows the middleware's quote failure reason instead of the app's", () => {
+  it("shows the middleware's quote failure message as the title, once, above the app's advice", () => {
     mockHookState = {
       activeRun: makeFundingRun({
         status: 'QUOTE_FAILED',
-        quote_message: 'No route for this token right now.',
+        quote_message: "Couldn't get a quote",
       }),
     };
     renderFlow();
 
+    expect(screen.getAllByText("Couldn't get a quote")).toHaveLength(1);
     expect(
-      screen.getByText('No route for this token right now.'),
+      screen.getByText('Check your connection and try again.'),
     ).toBeInTheDocument();
-    expect(screen.getByText("Couldn't get a quote")).toBeInTheDocument();
-    expect(
-      screen.queryByText('Check your connection and try again.'),
-    ).toBeNull();
   });
 
   it('shows the quote failure with Retry and Contact Support', () => {
@@ -856,6 +877,50 @@ describe('FundingFlow — progress', () => {
     expect(screen.getAllByText("Couldn't finish the transfer")).toHaveLength(2);
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
     expect(mockRetry).toHaveBeenCalledWith(run.id, expect.anything());
+  });
+
+  it('cancels a failed run and returns to chain selection', () => {
+    const run = failedAtBridge("Couldn't bridge to Polygon");
+    mockHookState = { activeRun: run };
+    mockCancel.mockImplementation((_id, options) => {
+      mockHookState = { activeRun: { ...run, status: 'CANCELLED' } };
+      options.onSuccess();
+    });
+    const { rerender } = renderFlow();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect(mockCancel).toHaveBeenCalledWith(run.id, expect.anything());
+    expect(mockCreateReset).toHaveBeenCalled();
+
+    rerender(<FundingFlow {...ONBOARD_PROPS} />);
+    expect(
+      screen.getByText('Select the preferred chain to send funds from:'),
+    ).toBeInTheDocument();
+    expect(screen.queryByText('Getting a quote')).toBeNull();
+  });
+
+  it('keeps a failed run on screen and explains why when it cannot be cancelled yet', () => {
+    const run = failedAtBridge("Couldn't bridge to Polygon");
+    mockHookState = { activeRun: run };
+    mockCancel.mockImplementation((_id, options) =>
+      options.onError(
+        new Error('Funding run conflicts with the current run state.'),
+      ),
+    );
+    renderFlow();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect(mockMessageError).toHaveBeenCalledWith(
+      "Couldn't cancel: a transfer may still be in progress. Try again in a few minutes.",
+    );
+    expect(screen.getAllByText("Couldn't bridge to Polygon")).toHaveLength(2);
+  });
+
+  it('offers Cancel only on a failed run', () => {
+    mockHookState = { activeRun: processingRun() };
+    renderFlow();
+
+    expect(screen.queryByRole('button', { name: 'Cancel' })).toBeNull();
   });
 
   it('reports a hidden Safe-step failure on the last visible step', () => {

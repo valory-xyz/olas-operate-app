@@ -20,6 +20,7 @@ import {
 
 import {
   ACTIVE_RUN_ERROR,
+  CANCEL_FAILED,
   CONNECTION_LOST,
   NO_DEPOSIT_AMOUNTS,
   TITLES,
@@ -122,6 +123,7 @@ export const FundingFlow = (props: FundingFlowProps) => {
     createMutation,
     refreshQuoteMutation,
     retryMutation,
+    cancelMutation,
   } = useFundingRun();
 
   const seenLiveRunIds = useRef(new Set<string>());
@@ -299,6 +301,16 @@ export const FundingFlow = (props: FundingFlowProps) => {
               retryMutation.mutate(run.id, { onError: showMutationError })
             }
             isRetrying={retryMutation.isPending}
+            onCancel={() =>
+              cancelMutation.mutate(run.id, {
+                onSuccess: () => {
+                  resetCreate();
+                  setStep(null);
+                },
+                onError: () => message.error(CANCEL_FAILED),
+              })
+            }
+            isCancelling={cancelMutation.isPending}
           />
         ) : (
           <QuoteAndDeposit

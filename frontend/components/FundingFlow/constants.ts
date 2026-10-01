@@ -25,7 +25,10 @@ export const NO_DEPOSIT_AMOUNTS =
   'There is nothing to deposit. Go back and enter the amounts first.';
 /** A `to_receive` token whose decimals the app does not know. */
 export const UNKNOWN_AMOUNT = 'Some';
+export const UNKNOWN_TOKEN = 'token';
 export const GENERIC_FAILURE = "Couldn't finish the transfer";
+export const CANCEL_FAILED =
+  "Couldn't cancel: a transfer may still be in progress. Try again in a few minutes.";
 export const COPY_FAILED =
   "Couldn't copy the address. Please copy it manually.";
 

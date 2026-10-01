@@ -6,13 +6,15 @@ import { MiddlewareChain } from '@/constants';
 import { FundingRunTokenAmount } from '@/types/FundingRun';
 import { formatAmount } from '@/utils/numberFormatters';
 
-import { UNKNOWN_AMOUNT } from './constants';
+import { UNKNOWN_AMOUNT, UNKNOWN_TOKEN } from './constants';
 import { TokenIcon } from './styles';
 import { formatBaseUnits, getTokenImage, getTokenMeta } from './utils';
 
 const { Text } = Typography;
 
 export type ToReceiveItem = { symbol: string; amount: number };
+
+type DisplayItem = { key: string; symbol: string; amount: string };
 
 type ToReceiveSummaryProps = {
   /** The run's net delivery; takes precedence over `fallback` once a run exists. */
@@ -25,11 +27,12 @@ type ToReceiveSummaryProps = {
 const runItemsToDisplay = (
   toReceive: FundingRunTokenAmount[],
   chain: MiddlewareChain,
-): { symbol: string; amount: string }[] =>
+): DisplayItem[] =>
   toReceive.map(({ token, symbol, amount }) => {
     const meta = getTokenMeta(chain, token);
     return {
-      symbol,
+      key: token,
+      symbol: symbol ?? meta?.symbol ?? UNKNOWN_TOKEN,
       amount: meta ? formatBaseUnits(amount, meta.decimals) : UNKNOWN_AMOUNT,
     };
   });
@@ -39,11 +42,12 @@ export const ToReceiveSummary = ({
   destinationChain,
   fallback = [],
 }: ToReceiveSummaryProps) => {
-  const items = toReceive
+  const items: DisplayItem[] = toReceive
     ? runItemsToDisplay(toReceive, destinationChain)
     : fallback
         .filter(({ amount }) => amount > 0)
         .map(({ symbol, amount }) => ({
+          key: symbol,
           symbol,
           amount: formatAmount(amount, 2),
         }));
@@ -55,8 +59,8 @@ export const ToReceiveSummary = ({
       <Flex vertical gap={4}>
         <Text className="text-neutral-tertiary">To receive</Text>
         <Flex gap={8} align="center" wrap>
-          {items.map(({ symbol, amount }, index) => (
-            <Fragment key={symbol}>
+          {items.map(({ key, symbol, amount }, index) => (
+            <Fragment key={key}>
               {index > 0 && <Text className="text-neutral-tertiary">•</Text>}
               <Flex gap={6} align="center">
                 <TokenIcon src={getTokenImage(symbol)} alt={symbol} />

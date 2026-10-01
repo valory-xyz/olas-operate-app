@@ -52,7 +52,8 @@ export type FundingRunQuote = {
 
 export type FundingRunTokenAmount = {
   token: Address;
-  symbol: string;
+  /** `null` when the middleware can't read an unknown token's on-chain symbol. */
+  symbol: string | null;
   amount: string;
 };
 

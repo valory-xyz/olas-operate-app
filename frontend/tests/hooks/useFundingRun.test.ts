@@ -13,6 +13,7 @@ jest.mock('../../service/FundingRun', () => ({
     create: jest.fn(),
     refreshQuote: jest.fn(),
     retry: jest.fn(),
+    cancel: jest.fn(),
   },
 }));
 
@@ -141,5 +142,27 @@ describe('useFundingRun', () => {
 
     expect(mockService.retry).toHaveBeenCalledWith(failed.id);
     await waitFor(() => expect(result.current.activeRun).toEqual(resumed));
+  });
+
+  it('cancel stores the cancelled run', async () => {
+    const failed = makeFundingRun({
+      status: 'FAILED',
+      error: { step_id: 'bridge', message: "Couldn't bridge to Polygon" },
+    });
+    const cancelled = { ...failed, status: 'CANCELLED' as const };
+    mockService.getActive.mockResolvedValue(failed);
+    mockService.cancel.mockResolvedValue(cancelled);
+
+    const { result } = renderHook(() => useFundingRun(), {
+      wrapper: createQueryClientWrapper(),
+    });
+    await waitFor(() => expect(result.current.activeRun).toEqual(failed));
+
+    await act(async () => {
+      await result.current.cancelMutation.mutateAsync(failed.id);
+    });
+
+    expect(mockService.cancel).toHaveBeenCalledWith(failed.id);
+    await waitFor(() => expect(result.current.activeRun).toEqual(cancelled));
   });
 });

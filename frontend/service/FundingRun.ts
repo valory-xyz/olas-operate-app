@@ -63,10 +63,19 @@ const retry = async (id: string): Promise<FundingRun> =>
     handleResponse<FundingRun>(response, 'Failed to retry the funding run'),
   );
 
+const cancel = async (id: string): Promise<FundingRun> =>
+  fetch(`${FUNDING_RUN_URL}/${id}`, {
+    method: 'DELETE',
+    headers: { ...CONTENT_TYPE_JSON_UTF8 },
+  }).then((response) =>
+    handleResponse<FundingRun>(response, 'Failed to cancel the funding run'),
+  );
+
 export const FundingRunService = {
   getSources,
   getActive,
   create,
   refreshQuote,
   retry,
+  cancel,
 };
