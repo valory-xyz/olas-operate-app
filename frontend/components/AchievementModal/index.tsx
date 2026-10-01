@@ -36,11 +36,22 @@ const isPayoutAgent = (
 ): agentType is PredictionPayoutAgent =>
   !!agentType && agentType in PAYOUT_ACHIEVEMENT_TYPE_BY_AGENT;
 
+const getPayoutAgentType = (
+  agentType: Nullable<AgentType>,
+  achievementType?: Achievement['achievement_type'],
+): Nullable<PredictionPayoutAgent> => {
+  if (!isPayoutAgent(agentType)) return null;
+  if (PAYOUT_ACHIEVEMENT_TYPE_BY_AGENT[agentType] !== achievementType)
+    return null;
+  return agentType;
+};
+
 export const AchievementModal = () => {
   const { getAgentTypeFromService } = useServices();
   const {
     currentAchievement,
     markCurrentAchievementAsShown,
+    skipCurrentAchievement,
     isLoading,
     isError,
   } = useCurrentAchievement();
@@ -53,12 +64,10 @@ export const AchievementModal = () => {
     currentAchievement?.serviceConfigId,
   );
 
-  const payoutAgentType =
-    isPayoutAgent(agentType) &&
-    PAYOUT_ACHIEVEMENT_TYPE_BY_AGENT[agentType] ===
-      currentAchievement?.achievement_type
-      ? agentType
-      : null;
+  const payoutAgentType = getPayoutAgentType(
+    agentType,
+    currentAchievement?.achievement_type,
+  );
 
   const handleClose = () => {
     markCurrentAchievementAsShown();
@@ -68,9 +77,8 @@ export const AchievementModal = () => {
   useEffect(() => {
     if (!currentAchievement || !agentType) return;
 
-    // Skip achievements with no content rather than opening an empty modal
     if (!payoutAgentType) {
-      markCurrentAchievementAsShown();
+      skipCurrentAchievement();
       return;
     }
 
@@ -81,6 +89,7 @@ export const AchievementModal = () => {
     agentType,
     payoutAgentType,
     markCurrentAchievementAsShown,
+    skipCurrentAchievement,
     triggerAchievementBackgroundTasks,
   ]);
 

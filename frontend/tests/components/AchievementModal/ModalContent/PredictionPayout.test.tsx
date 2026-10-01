@@ -64,6 +64,12 @@ describe('PredictionPayout', () => {
 
       const icon = screen.getByAltText('Omenstrat');
       expect(icon).toHaveAttribute('src', '/agent-trader-icon.png');
+      expect(screen.getAllByRole('img')).toHaveLength(1);
+      expect(mockFetch).toHaveBeenCalledWith(
+        `${PREDICT_WEBSITE_URL}/omenstrat/achievement/?betId=${MOCK_OMEN_BET_ID}&type=payout`,
+        { mode: 'no-cors' },
+      );
+      expect(mockFetch).toHaveBeenCalledTimes(1);
       expect(
         screen.getByText(/Your Omenstrat made a high-return trade/),
       ).toBeInTheDocument();

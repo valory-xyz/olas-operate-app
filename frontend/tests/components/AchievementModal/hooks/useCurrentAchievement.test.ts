@@ -131,6 +131,28 @@ describe('useCurrentAchievement', () => {
     });
   });
 
+  it('skips unsupported achievements immediately without the display delay', async () => {
+    const ach1 = makeAchievement('ach-1');
+    const ach2 = makeAchievement('ach-2');
+    mockUseAchievements.mockReturnValue({
+      achievements: [ach1, ach2],
+      isLoading: false,
+      isError: false,
+    });
+
+    const { result } = renderHook(() => useCurrentAchievement());
+    await waitFor(() => {
+      expect(result.current.currentAchievement?.achievement_id).toBe('ach-1');
+    });
+
+    act(() => result.current.skipCurrentAchievement());
+
+    await waitFor(() => {
+      expect(result.current.currentAchievement?.achievement_id).toBe('ach-2');
+    });
+    expect(jest.getTimerCount()).toBe(0);
+  });
+
   it('does not show already-shown achievements again', async () => {
     const ach1 = makeAchievement('ach-1');
     mockUseAchievements.mockReturnValue({

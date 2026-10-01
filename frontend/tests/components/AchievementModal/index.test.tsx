@@ -39,6 +39,7 @@ jest.mock('../../../hooks', () => ({
 }));
 
 const mockMarkCurrentAchievementAsShown = jest.fn();
+const mockSkipCurrentAchievement = jest.fn();
 const mockUseCurrentAchievement = jest.fn();
 jest.mock(
   '../../../components/AchievementModal/hooks/useCurrentAchievement',
@@ -62,14 +63,17 @@ const setCurrentAchievement = (
   mockUseCurrentAchievement.mockReturnValue({
     currentAchievement,
     markCurrentAchievementAsShown: mockMarkCurrentAchievementAsShown,
+    skipCurrentAchievement: mockSkipCurrentAchievement,
     isLoading: false,
     isError: false,
   });
 
 const renderModal = async () => {
+  let rendered!: ReturnType<typeof render>;
   await act(async () => {
-    render(<AchievementModal />);
+    rendered = render(<AchievementModal />);
   });
+  return rendered;
 };
 
 describe('AchievementModal', () => {
@@ -117,7 +121,7 @@ describe('AchievementModal', () => {
       await renderModal();
 
       expect(screen.queryByTestId('achievement-modal')).not.toBeInTheDocument();
-      expect(mockMarkCurrentAchievementAsShown).toHaveBeenCalled();
+      expect(mockSkipCurrentAchievement).toHaveBeenCalled();
       expect(mockTriggerBackgroundTasks).not.toHaveBeenCalled();
     },
   );
@@ -126,10 +130,19 @@ describe('AchievementModal', () => {
     mockGetAgentTypeFromService.mockReturnValue(null);
     setCurrentAchievement(makeOmenstratPayoutAchievement());
 
-    await renderModal();
+    const rendered = await renderModal();
 
     expect(screen.queryByTestId('achievement-modal')).not.toBeInTheDocument();
     expect(mockMarkCurrentAchievementAsShown).not.toHaveBeenCalled();
     expect(mockTriggerBackgroundTasks).not.toHaveBeenCalled();
+
+    mockGetAgentTypeFromService.mockReturnValue(AgentMap.PredictTrader);
+    await act(async () => rendered.rerender(<AchievementModal />));
+
+    expect(screen.getByTestId('achievement-modal')).toBeInTheDocument();
+    expect(screen.getByTestId('payout-content')).toHaveTextContent(
+      AgentMap.PredictTrader,
+    );
+    expect(mockTriggerBackgroundTasks).toHaveBeenCalledTimes(1);
   });
 });

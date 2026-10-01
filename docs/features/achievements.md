@@ -81,14 +81,14 @@ Query params: `agent` and `type` are derived by splitting `achievement_type` on 
 
 1. **Polling**: `useAchievements` fetches achievements every 5 minutes via `getServiceAchievements`. Only enabled when a service is running.
 
-2. **Scheduling**: `useCurrentAchievement` picks the next unshown achievement, with a 1-minute delay between displays. Tracks shown achievement IDs to avoid repeats within a session.
+2. **Scheduling**: `useCurrentAchievement` picks the next unshown achievement, with a 1-minute delay between displayed achievements. Unsupported achievements are skipped immediately. Shown IDs are tracked within a session.
 
 3. **Background tasks**: When an achievement is displayed, `useTriggerAchievementBackgroundTasks` runs in parallel:
    - `acknowledgeServiceAchievement` — marks it as seen in the backend
    - `generateAchievementImage` — triggers server-side image generation for sharing
    - Both retry up to 3 times on failure
 
-4. **Content**: `AchievementModal` renders `PredictionPayout` only when the agent's own payout type matches (`PredictTrader` → `omenstrat/payout`, `Polystrat` → `polystrat/payout`). Any other combination is marked shown without opening the modal, so an unknown type never produces an empty confetti modal. "View transaction" uses the explorer of the agent's home chain (Gnosis Blockscout for Omenstrat, Polygonscan for Polystrat).
+4. **Content**: `AchievementModal` renders `PredictionPayout` only when the agent's own payout type matches (`PredictTrader` → `omenstrat/payout`, `Polystrat` → `polystrat/payout`). Any other combination is skipped without opening the modal or delaying the next achievement, so an unknown type never produces an empty confetti modal. "View transaction" uses the explorer of the agent's home chain (Gnosis Blockscout for Omenstrat, Polygonscan for Polystrat).
 
 5. **Sharing**: The payout modal shows a "Share on X" button that opens a tweet intent with the achievement URL. The button is only enabled after the predict website has been "warmed up" (prefetched).
 
