@@ -117,6 +117,21 @@ export const isRunLive = (run: FundingRun) => {
 };
 
 /**
+ * A run that holds the user's funds: some of the deposit has arrived, or the
+ * transfer is under way. It can't be left or changed, only finished, so funds
+ * are never stranded in the Master EOA.
+ */
+export const isRunStarted = (run: FundingRun) => {
+  const phase = getRunPhase(run);
+  if (phase === 'processing') return true;
+  return (
+    phase === 'editable' &&
+    !!run.quote &&
+    BigInt(run.quote.received_amount) > BigInt(0)
+  );
+};
+
+/**
  * Runs whose success the user has already acknowledged. The middleware keeps
  * returning a completed run for a few minutes; without this, reopening a
  * funding entry point would replay the previous run's success modal.
@@ -146,8 +161,10 @@ export const isRunForHost = (run: FundingRun, host: FundingHost) =>
 
 /**
  * Which run, if any, the flow should render.
- * - A live run is always shown, whatever mode or target started it: one run
- *   at a time. One that is not this host's is shown read-only, with Cancel.
+ * - A run that is only quoted, and is not this host's, is discarded: this host
+ *   starts its own, and creating it cancels the old one.
+ * - Any other live run is shown, whatever mode or target started it: one run
+ *   at a time. One that is not this host's is shown read-only.
  * - A completed run is shown if it was seen live in this session, or if it is
  *   this host's onboarding run reopened in onboarding (resume after a restart).
  *   Another target's completed run never is, so one agent's onboarding never
@@ -161,6 +178,9 @@ export const resolveDisplayedRun = (
   if (!run) return null;
   const phase = getRunPhase(run);
   if (phase === 'cancelled') return null;
+  if (phase === 'editable' && !isRunStarted(run) && !isRunForHost(run, host)) {
+    return null;
+  }
   if (phase !== 'completed') return run;
   if (acknowledgedRunIds.has(run.id)) return null;
   if (isRunForAnotherTarget(run, host)) return null;

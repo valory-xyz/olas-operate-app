@@ -24,7 +24,7 @@ import {
   CANCEL_FAILED,
   CONNECTION_LOST,
   NO_DEPOSIT_AMOUNTS,
-  OTHER_TARGET_RUN,
+  OTHER_RUN_IN_PROGRESS,
   TITLES,
 } from './constants';
 import { FundingProgress } from './FundingProgress';
@@ -46,6 +46,7 @@ import {
   isRunForHost,
   isRunLive,
   isRunProcessing,
+  isRunStarted,
   resolveDisplayedRun,
 } from './utils';
 
@@ -237,6 +238,7 @@ export const FundingFlow = (props: FundingFlowProps) => {
     props.mode !== 'deposit' || Object.keys(props.depositAmounts).length > 0;
   const canCreate = hasCreateParams && (!run || isRunForHost(run, host));
   const editable = !run || isRunEditable(run);
+  const started = !!run && isRunStarted(run);
   const currentStep: SelectionStep | 'quote' =
     step ?? (run || pendingSelection ? 'quote' : 'chain');
   const tokenStepChain = selectedChain ?? run?.source.chain ?? null;
@@ -302,7 +304,7 @@ export const FundingFlow = (props: FundingFlowProps) => {
       getTokenMeta(selection.chain, selection.token)?.symbol ??
       run?.source.symbol ??
       '';
-    const canChange = editable && canCreate;
+    const canChange = editable && canCreate && !started;
     const onChangeChain = canChange
       ? () => {
           resetCreate();
@@ -356,21 +358,12 @@ export const FundingFlow = (props: FundingFlowProps) => {
               isRefreshing={refreshQuoteMutation.isPending}
             />
             {run && !isRunForHost(run, host) && (
-              <CardRow vertical gap={8} align="flex-start">
-                {isRunForAnotherTarget(run, host) && (
-                  <Text>
-                    {mode === 'onboard'
-                      ? OTHER_TARGET_RUN.agent
-                      : OTHER_TARGET_RUN.chain}
-                  </Text>
-                )}
-                <Button
-                  size="small"
-                  onClick={() => cancelRun(run.id)}
-                  loading={cancelMutation.isPending}
-                >
-                  Cancel
-                </Button>
+              <CardRow>
+                <Text>
+                  {mode === 'onboard' && isRunForAnotherTarget(run, host)
+                    ? OTHER_RUN_IN_PROGRESS.agent
+                    : OTHER_RUN_IN_PROGRESS.other}
+                </Text>
               </CardRow>
             )}
           </>
@@ -378,6 +371,40 @@ export const FundingFlow = (props: FundingFlowProps) => {
       </>
     );
   };
+
+  // Back walks the selection steps in reverse, then leaves the flow,
+  // cancelling a run it only quoted so the next visit starts afresh.
+  const handleBack = () => {
+    if (started) {
+      onBack();
+      return;
+    }
+    switch (currentStep) {
+      case 'request-chain':
+        setStep('chain');
+        return;
+      case 'request-token':
+        setStep('token');
+        return;
+      case 'quote':
+        resetCreate();
+        setSelectedChain(run?.source.chain ?? pendingSelection?.chain ?? null);
+        setStep('token');
+        return;
+      case 'token':
+        setStep('chain');
+        return;
+      default:
+        if (run && isRunForHost(run, host) && editable) {
+          cancelMutation.mutate(run.id, {
+            onError: () => message.error(CANCEL_FAILED),
+          });
+        }
+        onBack();
+    }
+  };
+  // Hidden while the run holds the user's funds, until it fails.
+  const canGoBack = !started || run?.status === 'FAILED';
 
   const renderBody = () => {
     if (isActiveRunError && !activeRun) {
@@ -407,7 +434,7 @@ export const FundingFlow = (props: FundingFlowProps) => {
   return (
     <Flex vertical gap={16} style={cardStyles}>
       <Flex vertical gap={12}>
-        <BackButton onPrev={onBack} />
+        {canGoBack && <BackButton onPrev={handleBack} />}
         <Title level={3} className="m-0">
           {getTitle(run, mode)}
         </Title>

@@ -136,6 +136,23 @@ describe('PearlDeposit', () => {
     expect(mockOnBack).toHaveBeenCalled();
   });
 
+  it('starts a new deposit over a run that was only quoted', () => {
+    mockActiveRun = makeFundingRun({ mode: 'deposit' });
+    render(<PearlDeposit onBack={mockOnBack} />);
+
+    expect(screen.getByTestId('deposit')).toBeInTheDocument();
+  });
+
+  it('resumes a run once part of its deposit has arrived', () => {
+    mockActiveRun = makeFundingRun({
+      mode: 'deposit',
+      quote: { ...makeFundingRun().quote!, received_amount: '1' },
+    });
+    render(<PearlDeposit onBack={mockOnBack} />);
+
+    expect(screen.getByTestId('funding-flow')).toBeInTheDocument();
+  });
+
   it('keeps a resumed run on screen once it completes, so its success shows', () => {
     const live = makeFundingRun({ mode: 'deposit', status: 'PROCESSING' });
     mockActiveRun = live;

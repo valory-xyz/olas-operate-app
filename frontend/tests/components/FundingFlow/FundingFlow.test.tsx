@@ -148,6 +148,17 @@ const processingRun = (overrides: Partial<FundingRun> = {}) => {
   });
 };
 
+/** A run some of whose deposit has arrived: it holds the user's funds. */
+const partlyFundedRun = (overrides: Partial<FundingRun> = {}) =>
+  makeFundingRun({
+    quote: {
+      ...makeFundingRun().quote!,
+      received_amount: '4000000',
+      outstanding_amount: '11000000',
+    },
+    ...overrides,
+  });
+
 beforeEach(() => {
   jest.resetAllMocks();
   mockHookState = { activeRun: null };
@@ -463,31 +474,29 @@ describe('FundingFlow — failures around the run', () => {
     ).toBeInTheDocument();
   });
 
-  it("offers no Change on another mode's run it cannot recreate", () => {
-    mockHookState = { activeRun: makeFundingRun({ mode: 'signer_gas' }) };
-    renderFlow();
+  it.each([
+    ['another mode', { mode: 'signer_gas' }],
+    [
+      'another chain',
+      { destination: { chain: 'gnosis', wallet: 'master_safe' } },
+    ],
+    ['another agent', { service_config_id: 'sc-other' }],
+  ] as const)(
+    'discards a quoted run for %s, so this flow starts its own',
+    (_label, overrides) => {
+      mockHookState = {
+        activeRun: makeFundingRun({ status: 'QUOTE_FAILED', ...overrides }),
+      };
+      renderFlow();
 
-    expect(screen.getByText('Waiting for your transfer')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Change' })).toBeNull();
-  });
-
-  it("cancels another mode's waiting run so this flow can start its own", () => {
-    const run = makeFundingRun({ mode: 'deposit' });
-    mockHookState = { activeRun: run };
-    mockCancel.mockImplementation((_id, options) => {
-      mockHookState = { activeRun: { ...run, status: 'CANCELLED' } };
-      options.onSuccess();
-    });
-    const { rerender } = renderFlow();
-
-    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
-    expect(mockCancel).toHaveBeenCalledWith(run.id, expect.anything());
-
-    rerender(<FundingFlow {...ONBOARD_PROPS} />);
-    expect(
-      screen.getByText('Select the preferred chain to send funds from:'),
-    ).toBeInTheDocument();
-  });
+      expect(
+        screen.getByText('Select the preferred chain to send funds from:'),
+      ).toBeInTheDocument();
+      fireEvent.click(screen.getByRole('button', { name: /Base/ }));
+      fireEvent.click(screen.getByRole('button', { name: /USDC/ }));
+      expect(mockCreate).toHaveBeenCalled();
+    },
+  );
 
   it('offers Change, not Cancel, on its own waiting run', () => {
     mockHookState = { activeRun: makeFundingRun() };
@@ -497,71 +506,43 @@ describe('FundingFlow — failures around the run', () => {
     expect(screen.queryByRole('button', { name: 'Cancel' })).toBeNull();
   });
 
-  it.each([
-    [
-      'another chain',
-      { destination: { chain: 'gnosis', wallet: 'master_safe' } },
-    ],
-    ['another agent', { service_config_id: 'sc-other' }],
-  ] as const)(
-    'shows a waiting onboarding run for %s read-only, labelled, with Cancel',
-    (_label, overrides) => {
-      mockHookState = {
-        activeRun: makeFundingRun({ status: 'QUOTE_FAILED', ...overrides }),
-      };
-      renderFlow();
-
-      expect(
-        screen.getByText(
-          'This transfer is funding another agent. Cancel it to fund this one.',
-        ),
-      ).toBeInTheDocument();
-      expect(
-        screen.getByRole('button', { name: 'Cancel' }),
-      ).toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: 'Change' })).toBeNull();
-    },
-  );
-
-  it("cancels another agent's waiting run so this agent can start its own", () => {
-    const run = makeFundingRun({ service_config_id: 'sc-other' });
-    mockHookState = { activeRun: run };
-    mockCancel.mockImplementation((_id, options) => {
-      mockHookState = { activeRun: { ...run, status: 'CANCELLED' } };
-      options.onSuccess();
-    });
-    const { rerender } = renderFlow();
-
-    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
-    expect(mockCancel).toHaveBeenCalledWith(run.id, expect.anything());
-
-    rerender(<FundingFlow {...ONBOARD_PROPS} />);
-    expect(
-      screen.getByText('Select the preferred chain to send funds from:'),
-    ).toBeInTheDocument();
-  });
-
-  it('labels a deposit run for another chain as such', () => {
+  it("shows another agent's partly funded run read-only, so it finishes", () => {
     mockHookState = {
-      activeRun: makeFundingRun({
-        mode: 'deposit',
-        destination: { chain: 'gnosis', wallet: 'master_safe' },
-      }),
+      activeRun: partlyFundedRun({ service_config_id: 'sc-other' }),
     };
-    renderFlow({
-      mode: 'deposit',
-      depositAmounts: { [FUNDING_RUN_NATIVE]: '1' },
-    } as Partial<FundingFlowProps>);
+    renderFlow();
 
     expect(
       screen.getByText(
-        'This transfer is for another chain. Cancel it to start this one.',
+        'This transfer is funding another agent. Finish it before funding this one.',
+      ),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Change' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Cancel' })).toBeNull();
+    expect(screen.queryByRole('button', { name: /Back$/ })).toBeNull();
+  });
+
+  it("labels another mode's partly funded run as a transfer in progress", () => {
+    mockHookState = { activeRun: partlyFundedRun({ mode: 'deposit' }) };
+    renderFlow();
+
+    expect(
+      screen.getByText(
+        'Another transfer is in progress. Finish it before starting a new one.',
       ),
     ).toBeInTheDocument();
   });
 
+  it('offers no Change or Back on its own run once funds have arrived', () => {
+    mockHookState = { activeRun: partlyFundedRun() };
+    renderFlow();
+
+    expect(screen.queryByRole('button', { name: 'Change' })).toBeNull();
+    expect(screen.queryByRole('button', { name: /Back$/ })).toBeNull();
+  });
+
   it("never shows another agent's success, even after seeing its run live", () => {
-    const live = makeFundingRun({
+    const live = partlyFundedRun({
       id: 'fr-other-agent',
       service_config_id: 'sc-other',
     });
@@ -1384,5 +1365,62 @@ describe('FundingFlow — copy guardrails', () => {
 
     expect(container.textContent).not.toMatch(/gas|paymaster|bundler/i);
     expect(container.textContent).not.toMatch(/take it into account/);
+  });
+});
+
+describe('FundingFlow — Back', () => {
+  const back = () =>
+    fireEvent.click(screen.getByRole('button', { name: /Back$/ }));
+
+  it('walks back from the quote through token and chain, then leaves and cancels the quoted run', () => {
+    const run = makeFundingRun();
+    mockHookState = { activeRun: run };
+    renderFlow();
+
+    back();
+    expect(screen.getByRole('button', { name: /USDC/ })).toBeInTheDocument();
+    back();
+    expect(
+      screen.getByText('Select the preferred chain to send funds from:'),
+    ).toBeInTheDocument();
+    expect(ONBOARD_PROPS.onBack).not.toHaveBeenCalled();
+
+    back();
+    expect(mockCancel).toHaveBeenCalledWith(run.id, expect.anything());
+    expect(ONBOARD_PROPS.onBack).toHaveBeenCalled();
+  });
+
+  it('leaves from chain selection without cancelling when there is no run', () => {
+    renderFlow();
+    back();
+
+    expect(mockCancel).not.toHaveBeenCalled();
+    expect(ONBOARD_PROPS.onBack).toHaveBeenCalled();
+  });
+
+  it('goes back from an "Other chain" request to chain selection', () => {
+    renderFlow();
+    fireEvent.click(screen.getByRole('button', { name: 'Other chain' }));
+    back();
+
+    expect(
+      screen.getByText('Select the preferred chain to send funds from:'),
+    ).toBeInTheDocument();
+  });
+
+  it('is hidden while the transfer is under way', () => {
+    mockHookState = { activeRun: processingRun() };
+    renderFlow();
+
+    expect(screen.queryByRole('button', { name: /Back$/ })).toBeNull();
+  });
+
+  it('returns on failure, and leaves without cancelling the failed run', () => {
+    mockHookState = { activeRun: processingRun({ status: 'FAILED' }) };
+    renderFlow();
+
+    back();
+    expect(mockCancel).not.toHaveBeenCalled();
+    expect(ONBOARD_PROPS.onBack).toHaveBeenCalled();
   });
 });

@@ -27,10 +27,12 @@ export const NO_DEPOSIT_AMOUNTS =
 export const UNKNOWN_AMOUNT = 'Some';
 export const UNKNOWN_TOKEN = 'token';
 export const GENERIC_FAILURE = "Couldn't finish the transfer";
-/** Shown on a waiting run of this mode that funds another agent or chain. */
-export const OTHER_TARGET_RUN = {
-  agent: 'This transfer is funding another agent. Cancel it to fund this one.',
-  chain: 'This transfer is for another chain. Cancel it to start this one.',
+/** Shown on a started run this host did not start; it must finish first. */
+export const OTHER_RUN_IN_PROGRESS = {
+  agent:
+    'This transfer is funding another agent. Finish it before funding this one.',
+  other:
+    'Another transfer is in progress. Finish it before starting a new one.',
 };
 export const CANCEL_FAILED =
   "Couldn't cancel: a transfer may still be in progress. Try again in a few minutes.";

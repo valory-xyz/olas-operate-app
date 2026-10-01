@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 import { FundingFlow } from '@/components/FundingFlow';
-import { isRunLive } from '@/components/FundingFlow/utils';
+import { isRunLive, isRunStarted } from '@/components/FundingFlow/utils';
 import { TOKEN_CONFIG } from '@/config/tokens';
 import { AddressZero } from '@/constants';
 import { usePearlWallet } from '@/context/PearlWalletProvider';
@@ -46,10 +46,12 @@ export const PearlDeposit = ({ onBack }: PearlDepositProps) => {
   const { activeRun } = useFundingRun();
   const [isFundingFlowOpen, setIsFundingFlowOpen] = useState(false);
 
-  // A live run is resumed instead of starting a new deposit. The flow stays
-  // open once the run ends, so it can show its completion.
-  const hasLiveRun = !!activeRun && isRunLive(activeRun);
-  if (hasLiveRun && !isFundingFlowOpen) setIsFundingFlowOpen(true);
+  // A started run (funds received or in transfer) is resumed instead of a new
+  // deposit; one that was only quoted is left for the next run to replace.
+  // The flow stays open once the run ends, so it can show its completion.
+  const hasStartedRun =
+    !!activeRun && isRunLive(activeRun) && isRunStarted(activeRun);
+  if (hasStartedRun && !isFundingFlowOpen) setIsFundingFlowOpen(true);
 
   if (!isFundingFlowOpen) {
     return (
@@ -63,7 +65,7 @@ export const PearlDeposit = ({ onBack }: PearlDepositProps) => {
       depositAmounts={toDepositAmounts(walletChainId, amountsToDeposit)}
       destinationChain={asMiddlewareChain(walletChainId)}
       fallbackToReceive={getEnteredDepositAmounts(amountsToDeposit)}
-      onBack={hasLiveRun ? onBack : () => setIsFundingFlowOpen(false)}
+      onBack={hasStartedRun ? onBack : () => setIsFundingFlowOpen(false)}
       onTransferCompleted={gotoPearlWallet}
     />
   );

@@ -353,6 +353,19 @@ describe('Deposit', () => {
     );
   });
 
+  it('does not block continue on a run that was only quoted', () => {
+    mockActiveRun = makeFundingRun({ mode: 'onboard' });
+
+    render(
+      createElement(Deposit, {
+        onBack: mockOnBack,
+        onContinue: mockOnContinue,
+      }),
+    );
+
+    expect(screen.getByText('Continue')).toBeEnabled();
+  });
+
   it('continues when deposit amounts are selected and the wallet exists', () => {
     render(
       createElement(Deposit, {
