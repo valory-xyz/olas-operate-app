@@ -30,4 +30,4 @@ package = false
 python-preference = "only-system"
 
 [tool.uv.sources]
-olas-operate-middleware = { git = "https://github.com/valory-xyz/olas-operate-middleware.git", rev = "be79a43a64ebe3fcb4ab75c08bcf2289ecc2252e" }
+olas-operate-middleware = { git = "https://github.com/valory-xyz/olas-operate-middleware.git", rev = "f412d03249094c2269363d268aa342c43d11fc30" }
