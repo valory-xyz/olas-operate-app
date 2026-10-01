@@ -38,7 +38,7 @@ export const getChainName = (chain: MiddlewareChain) => {
   }
 };
 
-export const getChainNativeSymbol = (chain: MiddlewareChain) => {
+const getChainNativeSymbol = (chain: MiddlewareChain) => {
   try {
     return asEvmChainDetails(chain).symbol;
   } catch {
@@ -140,7 +140,7 @@ export const resolveDisplayedRun = (
 };
 
 /** Visible steps the app has copy for. The Safe/transfer and delegation-clearing steps never render. */
-export const getVisibleSteps = (run: FundingRun) =>
+const getVisibleSteps = (run: FundingRun) =>
   run.steps.filter((step) => step.visible && !!STEP_COPY[step.kind]);
 
 /**
@@ -180,7 +180,7 @@ export const getLogSteps = (
     .sort((a, b) => (b.finished_at ?? 0) - (a.finished_at ?? 0));
 
 /** Token symbol and decimals for a step: the receipt is in the source token. */
-export const getStepToken = (
+const getStepToken = (
   run: FundingRun,
   step: FundingRunStep,
 ): TokenMeta | null => {

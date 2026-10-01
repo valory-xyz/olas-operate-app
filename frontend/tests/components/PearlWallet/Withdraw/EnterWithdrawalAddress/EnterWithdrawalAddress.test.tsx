@@ -160,7 +160,7 @@ describe('EnterWithdrawalAddress', () => {
     expect(screen.getByText('Withdrawal Failed')).toBeInTheDocument();
   });
 
-  it('navigates to FundPearlWallet with the gas-error chain and prefillAmountWei on CTA click', () => {
+  it('navigates to FundPearlWallet with the gas-error chain on CTA click', () => {
     mockUseWithdrawFunds.mockReturnValue({
       isLoading: false,
       isError: true,
@@ -178,7 +178,6 @@ describe('EnterWithdrawalAddress', () => {
     fireEvent.click(screen.getByTestId('gas-modal-fund'));
 
     expect(mockGoto).toHaveBeenCalledWith(PAGES.FundPearlWallet, {
-      prefillAmountWei: '2500000000000000',
       chain: 'base',
     });
   });

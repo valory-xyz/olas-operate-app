@@ -17,7 +17,7 @@ export const CardRow = styled(Flex)`
   }
 `;
 
-export type BannerTone = 'info' | 'progress' | 'success' | 'error';
+type BannerTone = 'info' | 'progress' | 'success' | 'error';
 
 const BANNER_COLORS: Record<BannerTone, { background: string; text: string }> =
   {

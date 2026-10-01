@@ -14,7 +14,7 @@ const secondsUntil = (unixSeconds: number) =>
   Math.max(0, unixSeconds - Math.floor(Date.now() / 1000));
 
 /** `m:ss`, e.g. 162 → "2:42". */
-export const formatMinutesSeconds = (totalSeconds: number) => {
+const formatMinutesSeconds = (totalSeconds: number) => {
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
   return `${minutes}:${seconds.toString().padStart(2, '0')}`;

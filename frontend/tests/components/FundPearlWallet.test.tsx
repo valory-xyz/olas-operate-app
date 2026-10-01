@@ -64,7 +64,7 @@ describe('FundPearlWallet', () => {
   });
 
   it('funds the chain named by the gas error', () => {
-    mockNavParams = { chain: 'base', prefillAmountWei: '1' };
+    mockNavParams = { chain: 'base' };
     render(<FundPearlWallet />);
     expect(screen.getByTestId('flow-chain')).toHaveTextContent('base');
     // The home-chain requirement does not describe another chain's reserve.

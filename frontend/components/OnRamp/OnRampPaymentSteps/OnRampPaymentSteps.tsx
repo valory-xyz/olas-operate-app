@@ -68,9 +68,7 @@ export const OnRampPaymentSteps = ({
     error: bridgeExecuteError,
     caseType: 'bridge',
     onFund: (gasError) => {
-      goto(PAGES.FundPearlWallet, {
-        prefillAmountWei: gasError.prefill_amount_wei,
-      });
+      goto(PAGES.FundPearlWallet, { chain: gasError.chain });
     },
     onClose: () => setIsGasModalDismissed(true),
     resetMutation: () => {

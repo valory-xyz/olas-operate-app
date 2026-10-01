@@ -27,10 +27,9 @@ import { getNetDepositAmounts } from '../utils';
 const { Title, Text } = Typography;
 
 /** The entries are target balances, not amounts to add. */
-export const DEPOSIT_SUBTITLE =
+const DEPOSIT_SUBTITLE =
   'Enter the token amounts you want your Pearl Wallet to hold.';
-export const ALREADY_HELD_NOTE =
-  'Your Pearl Wallet already holds these amounts.';
+const ALREADY_HELD_NOTE = 'Your Pearl Wallet already holds these amounts.';
 
 const FUNDING_RUN_LABEL: Record<FundingRunMode, string> = {
   onboard: 'agent setup funding',
