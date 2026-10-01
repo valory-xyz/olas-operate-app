@@ -72,6 +72,8 @@ export type FundingRun = {
     chain: MiddlewareChain;
     wallet: 'master_safe' | 'master_eoa';
   };
+  /** The service an onboarding run funds; `null` in other modes. */
+  service_config_id: string | null;
   /** `null` until the first quote lands. */
   quote: FundingRunQuote | null;
   /** Why the last quote failed; set on `QUOTE_FAILED`. */

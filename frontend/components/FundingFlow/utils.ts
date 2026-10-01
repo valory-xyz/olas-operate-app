@@ -119,24 +119,48 @@ const acknowledgedRunIds = new Set<string>();
 
 export const acknowledgeRun = (runId: string) => acknowledgedRunIds.add(runId);
 
+export type FundingHost = {
+  mode: FundingRunMode;
+  destinationChain: MiddlewareChain;
+  /** Onboarding only: the service being funded. */
+  serviceConfigId?: string;
+};
+
+/** A run of the host's mode started for another destination or service, e.g. another agent's onboarding. */
+const isForAnotherTarget = (run: FundingRun, host: FundingHost) =>
+  run.mode === host.mode &&
+  (run.destination.chain !== host.destinationChain ||
+    (host.mode === 'onboard' &&
+      !!run.service_config_id &&
+      run.service_config_id !== host.serviceConfigId));
+
 /**
  * Which run, if any, the flow should render.
  * - A live run is always shown, whatever mode started it: one run at a time.
+ *   The exception is an editable run of this mode for another target: it is
+ *   hidden so the user can pick a source, and creating a run cancels it.
  * - A completed run is shown if it was seen live in this session, or if it is
- *   an onboarding run reopened in onboarding (resume after a restart).
+ *   this host's onboarding run reopened in onboarding (resume after a restart).
  */
 export const resolveDisplayedRun = (
   run: FundingRun | null,
-  hostMode: FundingRunMode,
+  host: FundingHost,
   seenLiveRunIds: ReadonlySet<string>,
 ): FundingRun | null => {
   if (!run) return null;
   const phase = getRunPhase(run);
   if (phase === 'cancelled') return null;
+  if (phase === 'editable') {
+    return isForAnotherTarget(run, host) ? null : run;
+  }
   if (phase !== 'completed') return run;
   if (acknowledgedRunIds.has(run.id)) return null;
   if (seenLiveRunIds.has(run.id)) return run;
-  return run.mode === 'onboard' && hostMode === 'onboard' ? run : null;
+  return run.mode === 'onboard' &&
+    host.mode === 'onboard' &&
+    !isForAnotherTarget(run, host)
+    ? run
+    : null;
 };
 
 /** Visible steps the app has copy for. The Safe/transfer and delegation-clearing steps never render. */

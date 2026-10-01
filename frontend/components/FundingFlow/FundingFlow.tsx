@@ -127,13 +127,27 @@ export const FundingFlow = (props: FundingFlowProps) => {
     cancelMutation,
   } = useFundingRun();
 
+  // While a changed source recreates the run, the old run is briefly gone;
+  // keep its delivery on screen rather than flash the entry point's estimate.
+  const lastToReceive = useRef<FundingRun['to_receive'] | undefined>(undefined);
+
   const seenLiveRunIds = useRef(new Set<string>());
   if (activeRun && isRunLive(activeRun)) {
     seenLiveRunIds.current.add(activeRun.id);
   }
   // A run this flow created counts as seen, even if it came back already COMPLETED.
   if (createMutation.data) seenLiveRunIds.current.add(createMutation.data.id);
-  const run = resolveDisplayedRun(activeRun, mode, seenLiveRunIds.current);
+  const run = resolveDisplayedRun(
+    activeRun,
+    {
+      mode,
+      destinationChain,
+      serviceConfigId:
+        props.mode === 'onboard' ? props.serviceConfigId : undefined,
+    },
+    seenLiveRunIds.current,
+  );
+  if (run) lastToReceive.current = run.to_receive;
 
   const [step, setStep] = useState<SelectionStep | null>(null);
   const [selectedChain, setSelectedChain] = useState<MiddlewareChain | null>(
@@ -399,7 +413,10 @@ export const FundingFlow = (props: FundingFlowProps) => {
         {renderBody()}
       </CardFlex>
       <ToReceiveSummary
-        toReceive={run?.to_receive}
+        toReceive={
+          run?.to_receive ??
+          (createMutation.isPending ? lastToReceive.current : undefined)
+        }
         destinationChain={run?.destination.chain ?? destinationChain}
         fallback={props.fallbackToReceive}
       />

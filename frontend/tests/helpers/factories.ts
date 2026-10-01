@@ -933,6 +933,7 @@ export const makeFundingRun = (
     deposit_address: DEFAULT_EOA_ADDRESS,
   },
   destination: { chain: 'polygon', wallet: 'master_safe' },
+  service_config_id: 'sc-1',
   quote: {
     required_amount: '15000000',
     received_amount: '0',

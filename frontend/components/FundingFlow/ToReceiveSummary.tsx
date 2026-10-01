@@ -42,15 +42,21 @@ export const ToReceiveSummary = ({
   destinationChain,
   fallback = [],
 }: ToReceiveSummaryProps) => {
-  const items: DisplayItem[] = toReceive
-    ? runItemsToDisplay(toReceive, destinationChain)
-    : fallback
-        .filter(({ amount }) => amount > 0)
-        .map(({ symbol, amount }) => ({
-          key: symbol,
-          symbol,
-          amount: formatAmount(amount, 2),
-        }));
+  // The run and the fallback list tokens in different orders; sorting keeps
+  // the row from reshuffling as one replaces the other during a quote.
+  const items: DisplayItem[] = (
+    toReceive
+      ? runItemsToDisplay(toReceive, destinationChain)
+      : fallback
+          .filter(({ amount }) => amount > 0)
+          .map(({ symbol, amount }) => ({
+            key: symbol,
+            symbol,
+            amount: formatAmount(amount, 2),
+          }))
+  ).sort((a, b) =>
+    a.symbol.localeCompare(b.symbol, undefined, { sensitivity: 'base' }),
+  );
 
   if (items.length === 0) return null;
 
