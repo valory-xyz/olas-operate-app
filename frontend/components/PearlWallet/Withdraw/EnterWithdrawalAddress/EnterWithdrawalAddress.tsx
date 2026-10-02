@@ -203,9 +203,7 @@ export const EnterWithdrawalAddress = ({
     error,
     caseType: 'pearl-withdraw',
     onFund: (gasError) => {
-      goto(PAGES.FundPearlWallet, {
-        prefillAmountWei: gasError.prefill_amount_wei,
-      });
+      goto(PAGES.FundPearlWallet, { chain: gasError.chain });
     },
     onClose: closePasswordModal,
     resetMutation,

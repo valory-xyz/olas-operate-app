@@ -192,6 +192,22 @@ describe('useIsInitiallyFunded', () => {
       );
     });
 
+    it('skips the write when the service is already marked funded', () => {
+      const storeState: Partial<PearlStore> = {
+        [AgentMap.PredictTrader]: {
+          isInitialFunded: { [DEFAULT_SERVICE_CONFIG_ID]: true },
+        },
+      };
+      mockUseStore.mockReturnValue({ storeState });
+
+      const { result } = renderHook(() => useIsInitiallyFunded());
+
+      act(() => {
+        result.current.setIsInitiallyFunded();
+      });
+      expect(mockSetStore).not.toHaveBeenCalled();
+    });
+
     it('uses the selected agent type in the store key for setIsInitiallyFunded', () => {
       mockUseServices.mockReturnValue({
         selectedAgentType: AgentMap.Modius,

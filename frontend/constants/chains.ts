@@ -28,6 +28,8 @@ export const AllEvmChainIdMap = {
   Optimism: EvmChainIdMap.Optimism,
   Polygon: EvmChainIdMap.Polygon,
   Robinhood: EvmChainIdMap.Robinhood,
+  /** Funding source only: no agent runs here, so it is not in `EvmChainIdMap`. */
+  Arbitrum: 42161,
 } as const;
 export type AllEvmChainId =
   (typeof AllEvmChainIdMap)[keyof typeof AllEvmChainIdMap];
@@ -49,6 +51,7 @@ export const MiddlewareChainMap = {
   MODE: 'mode',
   POLYGON: 'polygon',
   ROBINHOOD: 'robinhood',
+  ARBITRUM_ONE: 'arbitrum_one',
 } as const;
 export type MiddlewareChain = ValueOf<typeof MiddlewareChainMap>;
 
@@ -64,6 +67,15 @@ export type SupportedMiddlewareChain = ValueOf<
   typeof SupportedMiddlewareChainMap
 >;
 
+const SUPPORTED_MIDDLEWARE_CHAINS: readonly unknown[] = Object.values(
+  SupportedMiddlewareChainMap,
+);
+
+export const isSupportedMiddlewareChain = (
+  value: unknown,
+): value is SupportedMiddlewareChain =>
+  SUPPORTED_MIDDLEWARE_CHAINS.includes(value);
+
 export const CHAIN_IMAGE_MAP = {
   [AllEvmChainIdMap.Ethereum]: '/chains/ethereum-chain.png',
   [EvmChainIdMap.Gnosis]: '/chains/gnosis-chain.png',
@@ -72,6 +84,7 @@ export const CHAIN_IMAGE_MAP = {
   [EvmChainIdMap.Optimism]: '/chains/optimism-chain.png',
   [EvmChainIdMap.Polygon]: '/chains/polygon-chain.png',
   [EvmChainIdMap.Robinhood]: '/chains/robinhood-chain.png',
+  [AllEvmChainIdMap.Arbitrum]: '/chains/arbitrum-chain.png',
 } as const;
 
 export type ChainImage = ValueOf<typeof CHAIN_IMAGE_MAP>;

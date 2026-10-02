@@ -2,6 +2,8 @@
 
 ## Overview
 
+> **Entry point retired.** Since the one-transaction funding flow, no screen routes into this flow: every external-wallet funding entry point uses `FundingFlow` (see [funding-and-refill.md](funding-and-refill.md)). The implementation below is retained, and its tests still run.
+
 The on-ramping system handles fiat-to-crypto purchases via Transak, then bridges the purchased tokens to the agent's operating chain. It manages the full flow: calculating how much crypto is needed, opening the Transak payment widget, detecting fund receipt, swapping/bridging tokens, and optionally creating a master safe.
 
 The system has three layers:

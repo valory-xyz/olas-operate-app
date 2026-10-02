@@ -64,7 +64,7 @@ describe('AgentSetupCompleteModal', () => {
       'Setup Complete',
     );
     expect(screen.getByTestId('modal-description')).toHaveTextContent(
-      'Your autonomous AI agent is ready to work for you.',
+      'Your AI agent is ready to work.',
     );
   });
 

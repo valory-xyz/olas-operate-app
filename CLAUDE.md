@@ -163,11 +163,10 @@ Direct Ant Design overrides (using the `antd` import for these is a bug):
 | `Progress` | Border radius for progress bars |
 | `Segmented` | `activeIconColored` prop |
 | `Steps` | Styled wrapper |
-| `Typography` | App-themed Title/Text/Paragraph defaults |
 
 App-specific composites (`SetupCard`, `CardFlex`, `BackButton`, `CopyAddress`, `TokenAmountInput`, `TokenRequirementsTable`, `FinishingSetupModal`, ~20 more) also live in `@/components/ui` — grep the barrel before writing anything new.
 
-Components with no wrapper (`Button`, `Flex`, `Input`, `Form`, `Tag`) come directly from `antd`.
+Components with no wrapper (`Button`, `Flex`, `Input`, `Form`, `Tag`, `Typography`) come directly from `antd`.
 
 ### Colors — Use Constants
 

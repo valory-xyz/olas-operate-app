@@ -145,6 +145,12 @@ describe('static URL constants', () => {
     );
   });
 
+  it('FUNDING_REQUEST_API_URL is derived from PEARL_API_URL', () => {
+    expect(urls.FUNDING_REQUEST_API_URL).toBe(
+      'https://pearl-api.olas.network/api/feedback/funding-request',
+    );
+  });
+
   it('GEO_ELIGIBILITY_API_URL is derived from PEARL_API_URL', () => {
     expect(urls.GEO_ELIGIBILITY_API_URL).toBe(
       'https://pearl-api.olas.network/api/geo/agent-eligibility',

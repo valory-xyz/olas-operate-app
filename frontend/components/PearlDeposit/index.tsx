@@ -1,39 +1,92 @@
 import { useState } from 'react';
 
-import { ValueOf } from '@/types';
+import { FundingFlow } from '@/components/FundingFlow';
+import { CANCEL_FAILED } from '@/components/FundingFlow/constants';
+import { isRunEditable, isRunStarted } from '@/components/FundingFlow/utils';
+import { TOKEN_CONFIG } from '@/config/tokens';
+import { AddressZero } from '@/constants';
+import { useMessageApi } from '@/context/MessageProvider';
+import { usePearlWallet } from '@/context/PearlWalletProvider';
+import { useFundingRun } from '@/hooks';
+import { Address, TokenAmounts } from '@/types';
+import { asMiddlewareChain, parseUnits } from '@/utils';
 
 import { Deposit } from './Deposit/Deposit';
-import { SelectPaymentMethod } from './SelectPaymentMethod/SelectPaymentMethod';
-
-const PEARL_DEPOSIT_STEPS = {
-  DEPOSIT: 'DEPOSIT',
-  SELECT_PAYMENT_METHOD: 'SELECT_PAYMENT_METHOD',
-} as const;
+import { getEnteredDepositAmounts } from './utils';
 
 type PearlDepositProps = {
   onBack: () => void;
 };
 
-export const PearlDeposit = ({ onBack }: PearlDepositProps) => {
-  const [step, setStep] = useState<ValueOf<typeof PEARL_DEPOSIT_STEPS>>(
-    PEARL_DEPOSIT_STEPS.DEPOSIT,
+/** Amounts to deliver in base units, keyed by token address, as the middleware expects. */
+const toDepositAmounts = (
+  chainId: keyof typeof TOKEN_CONFIG,
+  amounts: TokenAmounts,
+): Record<Address, string> =>
+  Object.fromEntries(
+    Object.entries(amounts).flatMap(([symbol, details]) => {
+      const config = TOKEN_CONFIG[chainId][symbol as keyof TokenAmounts];
+      if (!config || !details || details.amount <= 0) return [];
+      return [
+        [
+          config.address ?? AddressZero,
+          // toFixed would print the float's binary error, a few wei off.
+          parseUnits(
+            details.amount.toLocaleString('en-US', {
+              useGrouping: false,
+              maximumFractionDigits: config.decimals,
+            }),
+            config.decimals,
+          ),
+        ],
+      ];
+    }),
   );
 
-  switch (step) {
-    case PEARL_DEPOSIT_STEPS.DEPOSIT:
-      return (
-        <Deposit
-          onBack={onBack}
-          onContinue={() => setStep(PEARL_DEPOSIT_STEPS.SELECT_PAYMENT_METHOD)}
-        />
-      );
-    case PEARL_DEPOSIT_STEPS.SELECT_PAYMENT_METHOD:
-      return (
-        <SelectPaymentMethod
-          onBack={() => setStep(PEARL_DEPOSIT_STEPS.DEPOSIT)}
-        />
-      );
-    default:
-      throw new Error('Invalid step');
+export const PearlDeposit = ({ onBack }: PearlDepositProps) => {
+  const { walletChainId, amountsToDeposit, gotoPearlWallet } = usePearlWallet();
+  const { activeRun, cancelIfOnlyQuoted } = useFundingRun();
+  const message = useMessageApi();
+  const [isFundingFlowOpen, setIsFundingFlowOpen] = useState(false);
+  const [isDiscardingRun, setIsDiscardingRun] = useState(false);
+
+  // A started run is resumed; the flow stays open once it ends, to show its completion.
+  const hasStartedRun = !!activeRun && isRunStarted(activeRun);
+  if (hasStartedRun && !isFundingFlowOpen) setIsFundingFlowOpen(true);
+
+  // A quoted run was for amounts entered earlier, so a new deposit replaces it.
+  const handleContinue = () => {
+    if (activeRun && isRunEditable(activeRun) && !isRunStarted(activeRun)) {
+      setIsDiscardingRun(true);
+      cancelIfOnlyQuoted(activeRun.id)
+        .then(
+          () => setIsFundingFlowOpen(true),
+          () => message.error(CANCEL_FAILED),
+        )
+        .finally(() => setIsDiscardingRun(false));
+      return;
+    }
+    setIsFundingFlowOpen(true);
+  };
+
+  if (!isFundingFlowOpen) {
+    return (
+      <Deposit
+        onBack={onBack}
+        onContinue={handleContinue}
+        isContinuing={isDiscardingRun}
+      />
+    );
   }
+  if (!walletChainId) return null;
+  return (
+    <FundingFlow
+      mode="deposit"
+      depositAmounts={toDepositAmounts(walletChainId, amountsToDeposit)}
+      destinationChain={asMiddlewareChain(walletChainId)}
+      fallbackToReceive={getEnteredDepositAmounts(amountsToDeposit)}
+      onBack={hasStartedRun ? onBack : () => setIsFundingFlowOpen(false)}
+      onTransferCompleted={gotoPearlWallet}
+    />
+  );
 };
