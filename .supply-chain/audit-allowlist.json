@@ -10,5 +10,15 @@
     "added": "YYYY-MM-DD when the entry was added — REQUIRED",
     "review": "YYYY-MM-DD by which the entry must be re-evaluated — REQUIRED. An expired entry prints a CI warning but does not fail the job."
   },
-  "entries": []
+  "entries": [
+    {
+      "id": 1240912,
+      "ghsa": "GHSA-86w9-cpqp-85rv",
+      "package": "node-forge",
+      "severity": "high",
+      "reason": "No patched release exists (advisory covers <=1.4.0, the latest published version). Pearl only uses node-forge in electron/main.js to generate and sign a self-signed localhost certificate; it never verifies RSA PKCS#1 v1.5 signatures, the code path the advisory affects. Bump once upstream ships a fix.",
+      "added": "2026-10-02",
+      "review": "2026-12-31"
+    }
+  ]
 }

@@ -9,9 +9,12 @@ import {
 } from '../../../../service/Achievement';
 import {
   DEFAULT_SERVICE_CONFIG_ID,
+  makeOmenstratPayoutAchievement,
   makePolystratPayoutAchievement as makeFactoryAchievement,
   MOCK_ACHIEVEMENT_ID,
   MOCK_BET_ID,
+  MOCK_OMEN_BET_ID,
+  MOCK_OMENSTRAT_ACHIEVEMENT_ID,
 } from '../../../helpers/factories';
 
 jest.mock('../../../../service/Achievement', () => ({
@@ -83,6 +86,26 @@ describe('useTriggerAchievementBackgroundTasks', () => {
       type: 'payout',
       id: MOCK_BET_ID,
     });
+  });
+
+  it('acknowledges and generates the image for OMENSTRAT_PAYOUT', async () => {
+    const achievement = makeOmenstratPayoutAchievement();
+    const { result } = renderHook(() => useTriggerAchievementBackgroundTasks());
+
+    await act(async () => {
+      await result.current.triggerAchievementBackgroundTasks(achievement);
+    });
+
+    expect(mockAcknowledge).toHaveBeenCalledWith({
+      serviceConfigId: DEFAULT_SERVICE_CONFIG_ID,
+      achievementId: MOCK_OMENSTRAT_ACHIEVEMENT_ID,
+    });
+    expect(mockGenerateImage).toHaveBeenCalledWith({
+      agent: 'omenstrat',
+      type: 'payout',
+      id: MOCK_OMEN_BET_ID,
+    });
+    expect(result.current.areBackgroundTasksFinalized).toBe(true);
   });
 
   it('sets areBackgroundTasksFinalized=true after completion', async () => {

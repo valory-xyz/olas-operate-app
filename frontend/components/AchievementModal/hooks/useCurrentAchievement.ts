@@ -30,6 +30,12 @@ export const useCurrentAchievement = () => {
     setCurrentAchievement(nextAchievement);
   }, [unshownAchievements]);
 
+  const markAchievementAsShown = useCallback((achievementId: string) => {
+    setCurrentAchievement(null);
+    setShownAchievementIds((prev) => new Set([...prev, achievementId]));
+    timeoutRef.current = null;
+  }, []);
+
   const markCurrentAchievementAsShown = useCallback(() => {
     if (!currentAchievement) return;
 
@@ -39,14 +45,21 @@ export const useCurrentAchievement = () => {
 
     // Wait for 1 minute before marking the current achievement as shown
     // This is to ensure that there is a small delay between showing achievements
-    timeoutRef.current = setTimeout(() => {
-      setCurrentAchievement(null);
-      setShownAchievementIds(
-        (prev) => new Set([...prev, currentAchievement.achievement_id]),
-      );
-      timeoutRef.current = null;
-    }, ONE_MINUTE_IN_MS);
-  }, [currentAchievement]);
+    timeoutRef.current = setTimeout(
+      () => markAchievementAsShown(currentAchievement.achievement_id),
+      ONE_MINUTE_IN_MS,
+    );
+  }, [currentAchievement, markAchievementAsShown]);
+
+  const skipCurrentAchievement = useCallback(() => {
+    if (!currentAchievement) return;
+
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
+    markAchievementAsShown(currentAchievement.achievement_id);
+  }, [currentAchievement, markAchievementAsShown]);
 
   useUnmount(() => {
     if (timeoutRef.current) {
@@ -63,6 +76,7 @@ export const useCurrentAchievement = () => {
   return {
     currentAchievement,
     markCurrentAchievementAsShown,
+    skipCurrentAchievement,
     isLoading,
     isError,
   };
