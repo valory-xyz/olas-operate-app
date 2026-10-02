@@ -34,5 +34,6 @@ export * from './TokenRequirementsDisplay';
 export * from './TokenRequirementsTable';
 export * from './tooltips';
 export * from './TransactionSteps';
+export * from './TransferCompletedModal';
 export * from './Typography';
 export * from './WalletTransferDirection';

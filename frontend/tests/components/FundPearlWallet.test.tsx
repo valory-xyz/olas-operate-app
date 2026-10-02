@@ -1,9 +1,13 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 
-import { FundPearlWallet } from '../../components/FundPearlWallet';
+import { FundingFlowProps } from '../../components/FundingFlow';
+import {
+  FundPearlWallet,
+  UNSUPPORTED_CHAIN_ERROR,
+} from '../../components/FundPearlWallet';
 import { EvmChainIdMap } from '../../constants/chains';
-import { DEFAULT_EOA_ADDRESS } from '../helpers/factories';
+import { PAGES } from '../../constants/pages';
 
 /* eslint-disable @typescript-eslint/no-var-requires */
 jest.mock(
@@ -27,29 +31,21 @@ jest.mock('../../hooks', () => ({
     selectedAgentConfig: { evmHomeChainId: EvmChainIdMap.Gnosis },
   }),
   useMasterBalances: () => ({ masterEoaGasRequirement: 0.5 }),
-  useMasterWalletContext: () => ({
-    masterEoa: { address: DEFAULT_EOA_ADDRESS },
-  }),
 }));
 
-jest.mock('../../components/PearlWallet', () => ({
-  TransferCryptoFromExternalWallet: ({
-    tokensToDeposit,
-    address,
-    chainName,
-  }: {
-    tokensToDeposit: Array<{ symbol: string; amount: number }>;
-    address: string;
-    chainName: string;
-  }) => (
-    <div data-testid="transfer-crypto">
-      <span data-testid="transfer-chain">{chainName}</span>
-      <span data-testid="transfer-address">{address}</span>
-      {tokensToDeposit.map((t) => (
-        <span key={t.symbol} data-testid={`token-${t.symbol}`}>
-          {t.amount}
+jest.mock('../../components/FundingFlow', () => ({
+  FundingFlow: (props: FundingFlowProps) => (
+    <div data-testid="funding-flow">
+      <span data-testid="flow-mode">{props.mode}</span>
+      <span data-testid="flow-chain">{props.destinationChain}</span>
+      {props.fallbackToReceive?.map((item) => (
+        <span key={item.symbol} data-testid={`token-${item.symbol}`}>
+          {item.amount}
         </span>
       ))}
+      <button onClick={props.onBack}>back</button>
+      <button onClick={props.onBackToPearlWallet}>back to wallet</button>
+      <button onClick={props.onTransferCompleted}>done</button>
     </div>
   ),
 }));
@@ -60,42 +56,48 @@ describe('FundPearlWallet', () => {
     mockNavParams = {};
   });
 
-  it('falls back to masterEoaGasRequirement when no navParams are supplied', () => {
+  it('renders the funding flow in signer-gas mode for the home chain by default', () => {
     render(<FundPearlWallet />);
+    expect(screen.getByTestId('flow-mode')).toHaveTextContent('signer_gas');
+    expect(screen.getByTestId('flow-chain')).toHaveTextContent('gnosis');
     expect(screen.getByTestId('token-XDAI')).toHaveTextContent('0.5');
   });
 
-  it('uses navParams.prefillAmountWei when present (Gnosis: 0.75 xDAI)', () => {
-    mockNavParams = { prefillAmountWei: '750000000000000000' };
+  it('funds the chain named by the gas error', () => {
+    mockNavParams = { chain: 'base' };
     render(<FundPearlWallet />);
-    expect(screen.getByTestId('token-XDAI')).toHaveTextContent('0.75');
+    expect(screen.getByTestId('flow-chain')).toHaveTextContent('base');
+    // The home-chain requirement does not describe another chain's reserve.
+    expect(screen.queryByTestId('token-XDAI')).toBeNull();
   });
 
-  it('handles smaller prefill values correctly (e.g. 0.0025 ETH-equivalent)', () => {
-    mockNavParams = { prefillAmountWei: '2500000000000000' };
+  it('refuses a chain it cannot top up instead of funding the home chain', () => {
+    mockNavParams = { chain: 'solana' };
     render(<FundPearlWallet />);
-    expect(screen.getByTestId('token-XDAI')).toHaveTextContent('0.0025');
+    expect(screen.queryByTestId('funding-flow')).toBeNull();
+    expect(screen.getByText(UNSUPPORTED_CHAIN_ERROR)).toBeInTheDocument();
   });
 
-  it('clears navParams on mount so subsequent navigations without params do not inherit the override', () => {
-    mockNavParams = { prefillAmountWei: '750000000000000000' };
-    render(<FundPearlWallet />);
-    expect(mockClearNavParams).toHaveBeenCalled();
-  });
-
-  it('retains the captured prefill amount even after navParams are cleared', () => {
-    mockNavParams = { prefillAmountWei: '750000000000000000' };
+  it('keeps the captured chain after navParams are cleared', () => {
+    mockNavParams = { chain: 'base' };
     const { rerender } = render(<FundPearlWallet />);
-    // Simulate navParams being cleared after useEffect runs
+    expect(mockClearNavParams).toHaveBeenCalled();
     mockNavParams = {};
     rerender(<FundPearlWallet />);
-    expect(screen.getByTestId('token-XDAI')).toHaveTextContent('0.75');
+    expect(screen.getByTestId('flow-chain')).toHaveTextContent('base');
   });
 
-  it('routes deposits to the master EOA address', () => {
+  it('goes back to Main, and to the Pearl Wallet once the transfer completes', () => {
     render(<FundPearlWallet />);
-    expect(screen.getByTestId('transfer-address')).toHaveTextContent(
-      DEFAULT_EOA_ADDRESS,
-    );
+    fireEvent.click(screen.getByText('back'));
+    expect(mockGoto).toHaveBeenCalledWith(PAGES.Main);
+    fireEvent.click(screen.getByText('done'));
+    expect(mockGoto).toHaveBeenCalledWith(PAGES.PearlWallet);
+  });
+
+  it('offers a way back to the Pearl Wallet before the transfer completes', () => {
+    render(<FundPearlWallet />);
+    fireEvent.click(screen.getByText('back to wallet'));
+    expect(mockGoto).toHaveBeenCalledWith(PAGES.PearlWallet);
   });
 });

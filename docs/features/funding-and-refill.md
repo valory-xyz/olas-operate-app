@@ -2,32 +2,43 @@
 
 ## Overview
 
-The funding system has **two flows** that share the same three payment mechanisms.
+Every external-wallet funding entry point runs through one shared **FundingFlow** (`frontend/components/FundingFlow/`). The user picks a source chain and token they already hold, sends one transfer to the Pearl Signer (Master EOA), and the middleware's funding run bridges and swaps it into the tokens and wallets Pearl needs.
 
-### Flow 1: Alert-based (reactive)
+### FundingFlow and its three hosts
 
-The system detects low balances and shows alerts with pre-calculated amounts:
+| Host | Mode | Destination |
+| --- | --- | --- |
+| Onboarding "Fund your agent" (`SETUP_SCREEN.FundYourAgent`) | `onboard` | Master Safe on the agent's home chain; the middleware derives the targets from the service |
+| Pearl Wallet "Deposit" (`PearlDeposit`) | `deposit` | Master Safe on the selected wallet chain; amounts are **amounts to add**; the Safe's existing balance is never counted toward them |
+| "Fund Pearl Wallet" page (`PAGES.FundPearlWallet`) | `signer_gas` | Master EOA gas reserve on the chain named by the gas error (`navParams.chain`), else the home chain. A `chain` param Pearl does not support shows an error instead of falling back. A persistent "Back to Pearl Wallet" exit sits under the flow |
 
-- **Low Agent Wallet** — `useAgentFundingRequests` consolidates `agent_funding_requests` from middleware across all agent wallets. If any token requirement > 0, `AgentLowBalanceAlert` renders with the exact shortfall. Clicking "Fund Agent" pre-fills amounts and navigates to funding.
+The screen is a function of the run returned by `GET /api/funding_run/active` (polled every 5 s by `useFundingRun`), plus the chain/token picked before a run exists:
+
+1. **Chain** — from `GET /api/funding_run/sources`, plus "Other chain".
+2. **Token** — the chosen chain's tokens, plus "Other token". Picking one calls `POST /api/funding_run`; there is no confirm step.
+3. **Quote and address** — outstanding amount, `Quote update in m:ss` countdown to `quote.next_refresh_at` with manual refresh, the Signer address with Copy and a QR. No address is shown without a quote. Partial receipts reduce the outstanding amount. Chain/Token "Change" controls exist only in `AWAITING_DEPOSIT` / `QUOTE_FAILED` and recreate the run.
+4. **Progress** — a status banner naming the step in progress (or "Taking longer than usual..."), and a newest-first log of finished visible steps with timestamps and "Details" links. Steps with `visible: false` (`SAFE_AND_TRANSFER`, `CLEAR_DELEGATION`) never render; a hidden step's failure is shown on the last visible step. On `FAILED` the banner and the failed row show the same text, `error.message`, on the step `error.step_id` names, with Retry (`POST .../retry`), Contact Support and Cancel (`DELETE .../{id}`; a `409` while a transfer may still land shows a "try again in a few minutes" toast, and success returns to chain selection); without a message they fall back to that step's failure copy, or to "Couldn't finish the transfer" when there is no step to name.
+5. **Success** — `AgentSetupCompleteModal` for onboarding; `TransferCompletedModal` ("Go to Pearl Wallet") otherwise.
+
+Rules the flow enforces:
+
+- **One run at a time.** A run is *started* once any deposit arrives or its transfer runs; it holds funds, so it has no Change or Cancel and is resumed everywhere (Pearl Wallet reopens a started deposit) until it finishes. A failed run keeps Cancel, so it can't block funding forever. A run only quoted that isn't this host's (another mode, chain or agent) is discarded and replaced by the host's own; a started one is shown read-only. Another target's completed run is never shown. Polling pauses while a create is in flight. The middleware also returns `409` for a second run: the create error is shown as a toast and on the quote-failure screen, and a live run the refetch finds, other than the one on screen when the create was fired, replaces the quote-failure screen and clears the create error and the pending selection, so neither can reappear. Change also resets a failed create. A run the create returns already `COMPLETED` (nothing to fund) counts as seen, so its success modal shows.
+- **Back.** Walks quote → token → chain → the entry point's previous screen, cancelling a run only quoted (checked against a fresh fetch). Hidden while a run is started (until it fails) or a create is in flight.
+- **Requirements refresh.** When the active run reaches `COMPLETED`, the flow refetches balances and funding requirements once, since they otherwise poll hourly while no agent runs.
+- **Stale status.** If a poll fails while a run is on screen, the last known run stays with a "Connection lost" banner.
+- **Resume.** Run state lives in the middleware (`~/.operate/funding_runs/`), so reopening any host after a restart resumes the run. A run that completed before the screen opened is shown again only for onboarding (so the setup-complete modal still appears after a restart); a completed run is acknowledged once its modal is dismissed or the screen is left.
+- **Failure reasons come from the middleware.** A failed run's `error.message` is the text of the failure banner and row, a failed quote's `quote_message` is the quote-failure title (without the connection advice when it is a specific reason, e.g. "OLAS can't be delivered to Gnosis yet"), and a failed create's error is the description under "Couldn't get a quote". `GENERIC_FAILURE`, the per-step failure copy, `QUOTE_COPY.failedTitle` and `QUOTE_COPY.failedDescription` are only fallbacks for when a message is missing. A `to_receive` symbol the middleware can't read (`null`) shows as "token". All other copy is the app's: the middleware returns step kinds, tokens and amounts, and `FundingFlow/constants.ts` maps them to copy per mode. No gas, paymaster or bundler wording appears anywhere.
+- **"Other chain / Other token"** posts `{ submissionId, kind, requestedName, contextChain }` to pearl-api (`FundingRequestService`) and only acknowledges receipt.
+
+### Retired entry points (implementations retained)
+
+The Buy (Transak), Bridge (from Ethereum) and Transfer (exact chain and token) entry points no longer have a route in: `FundYourAgent` no longer renders their cards, `PearlDeposit` no longer reaches `SelectPaymentMethod`, and `FundPearlWallet` no longer renders `TransferCryptoFromExternalWallet`. Their components, hooks, `SETUP_SCREEN` entries and the `on-ramp` / `bridge-onboarding` feature flags are kept, and their tests still run. The sections below describe that retained code and the refill requirements, which still drive alerts and the fallback "To receive" shown before a run exists.
+
+### Alerts that lead into funding
+
+- **Low Agent Wallet** — `useAgentFundingRequests` consolidates `agent_funding_requests` from middleware across all agent wallets. If any token requirement > 0, `AgentLowBalanceAlert` renders with the exact shortfall. Clicking "Fund Agent" pre-fills amounts and navigates to funding (Pearl Wallet → Agent Wallet, unchanged).
 - **Low Pearl Wallet (master safe)** — `isPearlWalletRefillRequired` flag drives `LowPearlWalletBalanceAlert` and sidebar "Low" tag. Amounts derived from `refill_requirements`.
-- **Low Master EOA** — `MasterEoaLowBalanceAlert` sends user to `FundPearlWallet` page showing required native-token gas amount.
-
-Amounts are **system-determined**, user just confirms.
-
-### Flow 2: User-initiated deposit (proactive)
-
-User clicks Deposit from Pearl Wallet at any time:
-
-1. `Deposit.tsx` — editable token amount inputs per chain, optionally pre-filled from refill requirements via `initializeDepositAmounts()`
-2. `SelectPaymentMethod.tsx` — user picks payment method, cost estimates derived from user-entered amounts
-
-Amounts are **user-controlled**.
-
-### Three payment mechanisms (shared)
-
-1. **Buy (on-ramp)** — Fiat via Transak. Token amounts → native token equivalent (`useTotalNativeTokenRequired`) → fiat estimate (`useTotalFiatFromNativeToken`). Enforces `MIN_ONRAMP_AMOUNT`.
-2. **Transfer** — Direct on-chain send to master safe address. Lowest fees.
-3. **Bridge** — From Ethereum mainnet to target chain. Behind `bridge-onboarding` feature flag. Estimates include fees/slippage.
+- **Low Master EOA** — `MasterEoaLowBalanceAlert`, and the insufficient-signer-gas modals in the `pearl-withdraw` and `fund-agent` flows, send the user to `FundPearlWallet` with `chain`, which runs FundingFlow in `signer_gas` mode.
 
 ### Data flow
 
@@ -52,6 +63,11 @@ FundService (POST /fund → trigger master-to-agent transfer)
 ```
 
 ## Source of truth
+
+- `frontend/components/FundingFlow/` — the shared flow (`FundingFlow.tsx` container, `constants.ts` copy, `utils.ts` run → screen rules)
+- `frontend/service/FundingRun.ts` / `frontend/types/FundingRun.ts` — `/api/funding_run/*` client and the run object
+- `frontend/service/FundingRequest.ts` — pearl-api "Other chain / Other token" requests
+- `frontend/hooks/useFundingRun.ts` — active-run polling, sources, create / refresh / retry mutations
 
 - `frontend/service/Fund.ts` — fund API client (master-to-agent transfer)
 - `frontend/service/Balance.ts` — funding requirements API client (includes partial-success `getAllBalancesAndFundingRequirements`)
