@@ -85,15 +85,19 @@ export const useFundingRun = () => {
     onError: invalidateActiveRun,
   });
 
-  // The polled run can be seconds old, and the middleware cancels a waiting
-  // run even after funds arrive, so check a fresh copy before cancelling.
-  const cancelIfOnlyQuoted = async (runId: string) => {
+  /**
+   * Cancels the run if a fresh copy shows it is still only quoted (the polled
+   * one can be seconds old). Resolves `false` when the run must stay, e.g.
+   * funds arrived meanwhile; the fresh run is then in the cache.
+   */
+  const cancelIfOnlyQuoted = async (runId: string): Promise<boolean> => {
     const fresh = await FundingRunService.getActive();
     if (fresh?.id === runId && isRunEditable(fresh) && !isRunStarted(fresh)) {
       await cancelMutation.mutateAsync(runId);
-      return;
+      return true;
     }
     queryClient.setQueryData(REACT_QUERY_KEYS.FUNDING_RUN_ACTIVE_KEY, fresh);
+    return fresh?.id !== runId;
   };
 
   return {

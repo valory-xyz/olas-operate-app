@@ -1,6 +1,10 @@
 import { CONTENT_TYPE_JSON_UTF8 } from '../../constants/headers';
 import { BACKEND_URL } from '../../constants/urls';
-import { CREATE_TIMEOUT_MS, FundingRunService } from '../../service/FundingRun';
+import {
+  CREATE_TIMED_OUT,
+  CREATE_TIMEOUT_MS,
+  FundingRunService,
+} from '../../service/FundingRun';
 import { CreateFundingRunRequest } from '../../types/FundingRun';
 import { FUNDING_RUN_BASE_USDC, makeFundingRun } from '../helpers/factories';
 
@@ -60,7 +64,7 @@ describe('FundingRunService', () => {
     });
   });
 
-  it('create aborts a request that hangs past its timeout', async () => {
+  it('create aborts a request that hangs past its timeout, with a readable message', async () => {
     jest.useFakeTimers();
     try {
       let signal: AbortSignal | undefined;
@@ -81,7 +85,7 @@ describe('FundingRunService', () => {
 
       jest.advanceTimersByTime(CREATE_TIMEOUT_MS);
 
-      await expect(created).rejects.toThrow('aborted');
+      await expect(created).rejects.toThrow(CREATE_TIMED_OUT);
       expect(signal?.aborted).toBe(true);
     } finally {
       jest.useRealTimers();

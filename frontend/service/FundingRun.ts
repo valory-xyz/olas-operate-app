@@ -39,6 +39,9 @@ const getActive = async (): Promise<FundingRun | null> =>
 
 /** Polling pauses while a create is in flight, so a hung create must not hang forever. */
 export const CREATE_TIMEOUT_MS = 60_000;
+/** The middleware may still create the run after the client gives up, so a Retry before the next poll can 409. */
+export const CREATE_TIMED_OUT =
+  'The request timed out. Check the transfer before retrying.';
 
 const create = async (
   request: CreateFundingRunRequest,
@@ -56,6 +59,9 @@ const create = async (
       response,
       'Failed to create the funding run',
     );
+  } catch (error) {
+    if (controller.signal.aborted) throw new Error(CREATE_TIMED_OUT);
+    throw error;
   } finally {
     clearTimeout(timeout);
   }

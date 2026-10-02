@@ -16,7 +16,11 @@ jest.mock(
 jest.mock('../../../constants/providers', () => ({ PROVIDERS: {} }));
 jest.mock('../../../config/providers', () => ({ providers: [] }));
 
-let depositProps: { onBack: () => void; onContinue: () => void };
+let depositProps: {
+  onBack: () => void;
+  onContinue: () => void;
+  isContinuing?: boolean;
+};
 let flowProps: FundingFlowProps | null = null;
 let mockActiveRun: FundingRun | null = null;
 const DEFAULT_AMOUNTS = { OLAS: { amount: 100 }, POL: { amount: 5 } };
@@ -155,6 +159,21 @@ describe('PearlDeposit', () => {
     await act(async () => depositProps.onContinue());
 
     expect(mockCancelIfOnlyQuoted).toHaveBeenCalledWith(quoted.id);
+    expect(screen.getByTestId('funding-flow')).toBeInTheDocument();
+  });
+
+  it('marks Continue busy while the quoted run is discarded', async () => {
+    let resolveCancel: (isGone: boolean) => void = () => {};
+    mockCancelIfOnlyQuoted.mockReturnValue(
+      new Promise((resolve) => (resolveCancel = resolve)),
+    );
+    mockActiveRun = makeFundingRun({ mode: 'deposit' });
+    render(<PearlDeposit onBack={mockOnBack} />);
+
+    act(() => depositProps.onContinue());
+    expect(depositProps.isContinuing).toBe(true);
+
+    await act(async () => resolveCancel(true));
     expect(screen.getByTestId('funding-flow')).toBeInTheDocument();
   });
 

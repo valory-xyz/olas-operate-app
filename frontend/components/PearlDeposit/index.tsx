@@ -48,6 +48,7 @@ export const PearlDeposit = ({ onBack }: PearlDepositProps) => {
   const { activeRun, cancelIfOnlyQuoted } = useFundingRun();
   const message = useMessageApi();
   const [isFundingFlowOpen, setIsFundingFlowOpen] = useState(false);
+  const [isDiscardingRun, setIsDiscardingRun] = useState(false);
 
   // A started run is resumed; the flow stays open once it ends, to show its completion.
   const hasStartedRun = !!activeRun && isRunStarted(activeRun);
@@ -56,17 +57,26 @@ export const PearlDeposit = ({ onBack }: PearlDepositProps) => {
   // A quoted run was for amounts entered earlier, so a new deposit replaces it.
   const handleContinue = () => {
     if (activeRun && isRunEditable(activeRun) && !isRunStarted(activeRun)) {
-      cancelIfOnlyQuoted(activeRun.id).then(
-        () => setIsFundingFlowOpen(true),
-        () => message.error(CANCEL_FAILED),
-      );
+      setIsDiscardingRun(true);
+      cancelIfOnlyQuoted(activeRun.id)
+        .then(
+          () => setIsFundingFlowOpen(true),
+          () => message.error(CANCEL_FAILED),
+        )
+        .finally(() => setIsDiscardingRun(false));
       return;
     }
     setIsFundingFlowOpen(true);
   };
 
   if (!isFundingFlowOpen) {
-    return <Deposit onBack={onBack} onContinue={handleContinue} />;
+    return (
+      <Deposit
+        onBack={onBack}
+        onContinue={handleContinue}
+        isContinuing={isDiscardingRun}
+      />
+    );
   }
   if (!walletChainId) return null;
   return (

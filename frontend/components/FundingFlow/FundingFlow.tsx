@@ -156,6 +156,7 @@ export const FundingFlow = (props: FundingFlowProps) => {
   const [pendingSelection, setPendingSelection] = useState<Selection | null>(
     null,
   );
+  const [isLeaving, setIsLeaving] = useState(false);
 
   const message = useMessageApi();
   const showMutationError = (error: Error) => message.error(error.message);
@@ -401,16 +402,25 @@ export const FundingFlow = (props: FundingFlowProps) => {
         setStep('chain');
         return;
       default:
-        if (run && isRunForHost(run, host) && editable) {
-          cancelIfOnlyQuoted(run.id).catch(() => message.error(CANCEL_FAILED));
+        if (!run || !isRunForHost(run, host) || !editable) {
+          onBack();
+          return;
         }
-        onBack();
+        // Leave only once the run is gone; if it got funded meanwhile, the
+        // refreshed run takes over the screen instead.
+        setIsLeaving(true);
+        cancelIfOnlyQuoted(run.id)
+          .then((isGone) => isGone && onBack())
+          .catch(() => message.error(CANCEL_FAILED))
+          .finally(() => setIsLeaving(false));
     }
   };
   // Hidden while the run holds the user's funds (until it fails), and while a
   // create is in flight, since it can't be aborted and would leave a run behind.
   const canGoBack =
-    (!started || run?.status === 'FAILED') && !createMutation.isPending;
+    (!started || run?.status === 'FAILED') &&
+    !createMutation.isPending &&
+    !isLeaving;
 
   const renderBody = () => {
     if (isActiveRunError && !activeRun) {

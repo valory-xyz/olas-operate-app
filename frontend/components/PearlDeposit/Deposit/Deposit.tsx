@@ -99,6 +99,8 @@ const SelectChainToDeposit = () => {
 type DepositProps = {
   onBack: () => void;
   onContinue: () => void;
+  /** Continue is replacing an old quoted run; blocks a second click. */
+  isContinuing?: boolean;
 };
 
 const getContinueTooltip = (
@@ -112,7 +114,11 @@ const getContinueTooltip = (
   return null;
 };
 
-export const Deposit = ({ onBack, onContinue }: DepositProps) => {
+export const Deposit = ({
+  onBack,
+  onContinue,
+  isContinuing = false,
+}: DepositProps) => {
   const { activeRun } = useFundingRun();
   // Only a run holding the user's funds blocks a new deposit; a quoted one is replaced.
   const liveRun = activeRun && isRunStarted(activeRun) ? activeRun : null;
@@ -166,6 +172,7 @@ export const Deposit = ({ onBack, onContinue }: DepositProps) => {
           <Button
             disabled={!hasEnteredAmounts || !masterSafeAddress || !!liveRun}
             onClick={onContinue}
+            loading={isContinuing}
             type="primary"
             size="large"
             block

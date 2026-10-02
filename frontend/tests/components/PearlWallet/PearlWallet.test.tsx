@@ -17,10 +17,11 @@ jest.mock('../../../config/providers', () => ({ providers: [] }));
 
 const mockUpdateStep = jest.fn();
 let mockActiveRun: FundingRun | null = null;
+let mockWalletStep: string = 'PEARL_WALLET_SCREEN';
 
 jest.mock('../../../context/PearlWalletProvider', () => ({
   usePearlWallet: () => ({
-    walletStep: 'PEARL_WALLET_SCREEN',
+    walletStep: mockWalletStep,
     updateStep: mockUpdateStep,
   }),
 }));
@@ -42,6 +43,7 @@ const fundedQuote = { ...makeFundingRun().quote!, received_amount: '1' };
 beforeEach(() => {
   jest.clearAllMocks();
   mockActiveRun = null;
+  mockWalletStep = STEPS.PEARL_WALLET_SCREEN;
 });
 
 describe('PearlWallet — funding run', () => {
@@ -50,6 +52,22 @@ describe('PearlWallet — funding run', () => {
     render(<PearlWallet />);
 
     expect(mockUpdateStep).toHaveBeenCalledWith(STEPS.DEPOSIT);
+  });
+
+  it('reopens it only once per visit, so Back from a failed run reaches the wallet', () => {
+    const started = makeFundingRun({ mode: 'deposit', quote: fundedQuote });
+    mockActiveRun = started;
+    const { rerender } = render(<PearlWallet />);
+    mockWalletStep = STEPS.DEPOSIT;
+    rerender(<PearlWallet />);
+
+    mockActiveRun = { ...started, status: 'FAILED' };
+    mockWalletStep = STEPS.PEARL_WALLET_SCREEN;
+    rerender(<PearlWallet />);
+
+    expect(
+      mockUpdateStep.mock.calls.filter(([step]) => step === STEPS.DEPOSIT),
+    ).toHaveLength(1);
   });
 
   it.each([

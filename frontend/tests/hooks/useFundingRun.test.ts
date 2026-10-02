@@ -164,11 +164,13 @@ describe('useFundingRun', () => {
       wrapper: createQueryClientWrapper(),
     });
 
+    let isGone: boolean | undefined;
     await act(async () => {
-      await result.current.cancelIfOnlyQuoted(run.id);
+      isGone = await result.current.cancelIfOnlyQuoted(run.id);
     });
 
     expect(mockService.cancel).toHaveBeenCalledWith(run.id);
+    expect(isGone).toBe(true);
   });
 
   it('does not cancel a run whose deposit arrived since the last poll', async () => {
@@ -183,11 +185,13 @@ describe('useFundingRun', () => {
     await waitFor(() => expect(result.current.activeRun).toEqual(run));
 
     mockService.getActive.mockResolvedValue(funded);
+    let isGone: boolean | undefined;
     await act(async () => {
-      await result.current.cancelIfOnlyQuoted(run.id);
+      isGone = await result.current.cancelIfOnlyQuoted(run.id);
     });
 
     expect(mockService.cancel).not.toHaveBeenCalled();
+    expect(isGone).toBe(false);
     await waitFor(() => expect(result.current.activeRun).toEqual(funded));
   });
 

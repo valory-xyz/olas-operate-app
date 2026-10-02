@@ -164,7 +164,7 @@ const partlyFundedRun = (overrides: Partial<FundingRun> = {}) =>
 beforeEach(() => {
   jest.resetAllMocks();
   mockHookState = { activeRun: null };
-  mockCancelIfOnlyQuoted.mockResolvedValue(undefined);
+  mockCancelIfOnlyQuoted.mockResolvedValue(true);
   mockCreateReset.mockImplementation(() => {
     mockHookState = { ...mockHookState, createError: undefined };
   });
@@ -1414,7 +1414,7 @@ describe('FundingFlow — Back', () => {
   const back = () =>
     fireEvent.click(screen.getByRole('button', { name: /Back$/ }));
 
-  it('walks back from the quote through token and chain, then leaves and cancels the quoted run', () => {
+  it('walks back from the quote through token and chain, then leaves and cancels the quoted run', async () => {
     const run = makeFundingRun();
     mockHookState = { activeRun: run };
     renderFlow();
@@ -1427,12 +1427,41 @@ describe('FundingFlow — Back', () => {
     ).toBeInTheDocument();
     expect(ONBOARD_PROPS.onBack).not.toHaveBeenCalled();
 
-    back();
+    await act(async () => back());
     expect(mockCancelIfOnlyQuoted).toHaveBeenCalledWith(run.id);
     expect(ONBOARD_PROPS.onBack).toHaveBeenCalled();
   });
 
-  it('still leaves when the cancel fails, and says so', async () => {
+  it('hides Back while the cancel is checked, and leaves only once it lands', async () => {
+    let resolveCancel: (isGone: boolean) => void = () => {};
+    mockCancelIfOnlyQuoted.mockReturnValue(
+      new Promise((resolve) => (resolveCancel = resolve)),
+    );
+    mockHookState = { activeRun: makeFundingRun() };
+    renderFlow();
+    back();
+    back();
+    back();
+
+    expect(screen.queryByRole('button', { name: /Back$/ })).toBeNull();
+    expect(ONBOARD_PROPS.onBack).not.toHaveBeenCalled();
+    await act(async () => resolveCancel(true));
+    expect(ONBOARD_PROPS.onBack).toHaveBeenCalled();
+  });
+
+  it('stays when the run got funded meanwhile, so it can finish', async () => {
+    mockCancelIfOnlyQuoted.mockResolvedValue(false);
+    mockHookState = { activeRun: makeFundingRun() };
+    renderFlow();
+    back();
+    back();
+    await act(async () => back());
+
+    expect(ONBOARD_PROPS.onBack).not.toHaveBeenCalled();
+    expect(mockMessageError).not.toHaveBeenCalled();
+  });
+
+  it('stays and says so when the cancel fails', async () => {
     mockCancelIfOnlyQuoted.mockRejectedValue(new Error('conflict'));
     mockHookState = { activeRun: makeFundingRun() };
     renderFlow();
@@ -1440,7 +1469,7 @@ describe('FundingFlow — Back', () => {
     back();
     await act(async () => back());
 
-    expect(ONBOARD_PROPS.onBack).toHaveBeenCalled();
+    expect(ONBOARD_PROPS.onBack).not.toHaveBeenCalled();
     expect(mockMessageError).toHaveBeenCalledWith(
       expect.stringMatching(/^Couldn't cancel/),
     );
