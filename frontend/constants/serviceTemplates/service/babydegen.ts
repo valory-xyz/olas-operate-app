@@ -40,7 +40,7 @@ const BASIUS_TEMPLATE_RELEASE: Pick<
   ServiceTemplate,
   'hash' | 'service_version' | 'agent_release'
 > = {
-  hash: 'bafybeigpbmg77qctgzsyqkdec7ibiy6ptzzjrq3gsivcsw3bwtxmy524iq',
+  hash: 'bafybeib2hpkoowka6fkhv5mxhff6aey3wjnmbnjwsoufle6d6y5pxpfgea',
   service_version: 'v0.13.0',
   agent_release: {
     is_aea: true,
@@ -59,7 +59,7 @@ const OPTIMUS_TEMPLATE_RELEASE: Pick<
   ServiceTemplate,
   'hash' | 'service_version' | 'agent_release'
 > = {
-  hash: 'bafybeidzf5d57yd3pt2ulrufusgsldug6rwykeonzjp32wtshtqulcbfiu',
+  hash: 'bafybeifgdpfdvv2h7ts4gqeahrhxpiifdzwvmqsyzxrzmcqmwfoagaiafu',
   service_version: 'v0.13.0',
   agent_release: {
     is_aea: true,
