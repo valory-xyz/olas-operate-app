@@ -7,18 +7,18 @@ import { parseEther, parseUnits } from '@/utils';
 
 import { MiddlewareChainMap } from '../../chains';
 import { STAKING_PROGRAM_IDS } from '../../stakingProgram';
-import { X402_ENABLED_FLAGS } from '../../x402';
+import { MECH_FACILITATOR_ENABLED_FLAGS, X402_ENABLED_FLAGS } from '../../x402';
 import { KPI_DESC_PREFIX } from '../constants';
 
 export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
-  hash: 'bafybeianb2h3klnijx2nlyrrd7p3lnkg372qa6krvmfkphekzsx2brkerm',
-  service_version: 'v0.40.13',
+  hash: 'bafybeidozl2hbeolzictygblmlt4mqma6hluspwtykh2mpavhwxvplrqrm',
+  service_version: 'v0.41.0',
   agent_release: {
     is_aea: true,
     repository: {
       owner: 'valory-xyz',
       name: 'trader',
-      version: 'v0.40.13',
+      version: 'v0.41.0',
     },
   },
   agentType: AgentMap.PredictTrader,
@@ -135,6 +135,13 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
       value: X402_ENABLED_FLAGS[AgentMap.PredictTrader].toString(),
       provision_type: EnvProvisionType.FIXED,
     },
+    USE_MECH_FACILITATOR: {
+      name: 'Use the mech facilitator',
+      description:
+        'Pays for the agent api calls from the service Safe mech marketplace pre-deposit, instead of spending the agent balance on each call',
+      value: MECH_FACILITATOR_ENABLED_FLAGS[AgentMap.PredictTrader].toString(),
+      provision_type: EnvProvisionType.FIXED,
+    },
     ENABLE_MULTI_BETS_FALLBACK: {
       name: 'Enable multi-bets fallback mode',
       description: 'Enables agents to run in multi-bets fallback mode',
@@ -173,14 +180,14 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
 } as const;
 
 export const PREDICT_POLYMARKET_SERVICE_TEMPLATE: ServiceTemplate = {
-  hash: 'bafybeiaojcomn4mapi3pzphpsrue76cwzrjlpg4p6wb7qimfuugjoggriy',
-  service_version: 'v0.40.13',
+  hash: 'bafybeigm2rcncwx7i4ust63lhkzgeselzpwdvkbznsmecmf5vnrhslqiti',
+  service_version: 'v0.41.0',
   agent_release: {
     is_aea: true,
     repository: {
       owner: 'valory-xyz',
       name: 'trader',
-      version: 'v0.40.13',
+      version: 'v0.41.0',
     },
   },
   agentType: AgentMap.Polystrat,
@@ -301,6 +308,13 @@ export const PREDICT_POLYMARKET_SERVICE_TEMPLATE: ServiceTemplate = {
       description:
         'Enables feature of agents paying for api keys usage instead of asking users to manually provide them',
       value: X402_ENABLED_FLAGS[AgentMap.Polystrat].toString(),
+      provision_type: EnvProvisionType.FIXED,
+    },
+    USE_MECH_FACILITATOR: {
+      name: 'Use the mech facilitator',
+      description:
+        'Pays for the agent api calls from the service Safe mech marketplace pre-deposit, instead of spending the agent balance on each call',
+      value: MECH_FACILITATOR_ENABLED_FLAGS[AgentMap.Polystrat].toString(),
       provision_type: EnvProvisionType.FIXED,
     },
     USE_OFFCHAIN: {
