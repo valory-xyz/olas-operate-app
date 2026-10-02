@@ -2,6 +2,8 @@
 
 ## Overview
 
+> **Entry point retired.** Since the one-transaction funding flow, no screen routes into this flow: every external-wallet funding entry point uses `FundingFlow` (see [funding-and-refill.md](funding-and-refill.md)). The implementation below is retained, and its tests still run.
+
 The bridging system handles cross-chain token transfers — getting funds from a source chain (typically Ethereum) to the agent's operating chain (e.g., Base, Gnosis, Optimism). It covers quoting, execution, status polling, and retry logic.
 
 The system has three layers:

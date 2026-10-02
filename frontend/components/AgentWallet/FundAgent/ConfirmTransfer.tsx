@@ -311,9 +311,7 @@ export const ConfirmTransfer = ({
     error,
     caseType: 'fund-agent',
     onFund: (gasError) => {
-      goto(PAGES.FundPearlWallet, {
-        prefillAmountWei: gasError.prefill_amount_wei,
-      });
+      goto(PAGES.FundPearlWallet, { chain: gasError.chain });
     },
     onClose: dismissGasErrorModal,
     resetMutation,

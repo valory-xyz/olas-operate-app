@@ -157,6 +157,9 @@ export const SUPPORT_API_URL = `${PEARL_API_URL}/api/zendesk`;
 // onboarding survey (OPE-1899) — one anonymous row per submission
 export const ONBOARDING_SURVEY_API_URL = `${PEARL_API_URL}/api/feedback/onboarding-survey`;
 
+// funding flow "Other chain / Other token" requests
+export const FUNDING_REQUEST_API_URL = `${PEARL_API_URL}/api/feedback/funding-request`;
+
 // geo eligibility
 export const GEO_ELIGIBILITY_API_URL = `${PEARL_API_URL}/api/geo/agent-eligibility`;
 export const GEO_ELIGIBILITY_DOCS_URL =

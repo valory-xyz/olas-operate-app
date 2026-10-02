@@ -294,6 +294,21 @@ export const ROBINHOOD_TOKEN_CONFIG: ChainTokenConfig = {
   },
 };
 
+/** Arbitrum One is a funding source only: native ETH and Circle USDC. */
+export const ARBITRUM_TOKEN_CONFIG: ChainTokenConfig = {
+  [TokenSymbolMap.ETH]: {
+    tokenType: TokenType.NativeGas,
+    symbol: TokenSymbolMap.ETH,
+    decimals: 18,
+  },
+  [TokenSymbolMap.USDC]: {
+    tokenType: TokenType.Erc20,
+    symbol: TokenSymbolMap.USDC,
+    decimals: 6,
+    address: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',
+  },
+};
+
 // TODO
 // 1. combine EvmChainIdMap and AllEvmChainId into one thing to avoid confusion
 // 2. include ethereum config into this and make it so balances are not requested for it
@@ -308,6 +323,7 @@ export const TOKEN_CONFIG: Record<EvmChainId, ChainTokenConfig> = {
 
 export const ALL_TOKEN_CONFIG: Record<AllEvmChainId, ChainTokenConfig> = {
   [AllEvmChainIdMap.Ethereum]: ETHEREUM_TOKEN_CONFIG,
+  [AllEvmChainIdMap.Arbitrum]: ARBITRUM_TOKEN_CONFIG,
   ...TOKEN_CONFIG,
 } as const;
 

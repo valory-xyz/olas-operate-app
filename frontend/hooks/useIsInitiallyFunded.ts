@@ -25,6 +25,8 @@ export const useIsInitiallyFunded = () => {
     const current = storeState?.[selectedAgentType]?.isInitialFunded;
     const existing =
       typeof current === 'object' && current !== null ? current : {};
+    // A write changes storeState and so this callback; repeating it would loop effects that call it.
+    if (existing[selectedServiceConfigId] === true) return;
 
     electronApi.store?.set?.(`${selectedAgentType}.isInitialFunded`, {
       ...existing,

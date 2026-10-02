@@ -24,6 +24,7 @@ export * from './useDynamicRefetchInterval';
 export * from './useElectronApi';
 export * from './useFeatureFlag';
 export * from './useFundingEligibleServices';
+export * from './useFundingRun';
 export * from './useFundRecoveryExecute';
 export * from './useFundRecoveryScan';
 export * from './useGetBridgeRequirementsParams';
