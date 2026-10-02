@@ -116,6 +116,17 @@ export const isRunLive = (run: FundingRun) => {
   return phase === 'editable' || phase === 'processing';
 };
 
+/** Holds the user's funds (deposit received or transfer under way): only finished, never left, so funds aren't stranded. */
+export const isRunStarted = (run: FundingRun) => {
+  const phase = getRunPhase(run);
+  if (phase === 'processing') return true;
+  return (
+    phase === 'editable' &&
+    !!run.quote &&
+    BigInt(run.quote.received_amount) > BigInt(0)
+  );
+};
+
 /**
  * Runs whose success the user has already acknowledged. The middleware keeps
  * returning a completed run for a few minutes; without this, reopening a
@@ -125,24 +136,52 @@ const acknowledgedRunIds = new Set<string>();
 
 export const acknowledgeRun = (runId: string) => acknowledgedRunIds.add(runId);
 
+export type FundingHost = {
+  mode: FundingRunMode;
+  destinationChain: MiddlewareChain;
+  /** Onboarding only: the service being funded. */
+  serviceConfigId?: string;
+};
+
+/** A run of the host's mode started for another destination or service, e.g. another agent's onboarding. */
+export const isRunForAnotherTarget = (run: FundingRun, host: FundingHost) =>
+  run.mode === host.mode &&
+  (run.destination.chain !== host.destinationChain ||
+    (host.mode === 'onboard' &&
+      !!run.service_config_id &&
+      run.service_config_id !== host.serviceConfigId));
+
+/** A run this host started, or could have: its mode and target. */
+export const isRunForHost = (run: FundingRun, host: FundingHost) =>
+  run.mode === host.mode && !isRunForAnotherTarget(run, host);
+
 /**
  * Which run, if any, the flow should render.
- * - A live run is always shown, whatever mode started it: one run at a time.
+ * - A run that is only quoted, and is not this host's, is discarded: this host
+ *   starts its own, and creating it cancels the old one.
+ * - Any other live run is shown, whatever mode or target started it: one run
+ *   at a time. One that is not this host's is shown read-only.
  * - A completed run is shown if it was seen live in this session, or if it is
- *   an onboarding run reopened in onboarding (resume after a restart).
+ *   this host's onboarding run reopened in onboarding (resume after a restart).
+ *   Another target's completed run never is, so one agent's onboarding never
+ *   shows another agent's success.
  */
 export const resolveDisplayedRun = (
   run: FundingRun | null,
-  hostMode: FundingRunMode,
+  host: FundingHost,
   seenLiveRunIds: ReadonlySet<string>,
 ): FundingRun | null => {
   if (!run) return null;
   const phase = getRunPhase(run);
   if (phase === 'cancelled') return null;
+  if (phase === 'editable' && !isRunStarted(run) && !isRunForHost(run, host)) {
+    return null;
+  }
   if (phase !== 'completed') return run;
   if (acknowledgedRunIds.has(run.id)) return null;
+  if (isRunForAnotherTarget(run, host)) return null;
   if (seenLiveRunIds.has(run.id)) return run;
-  return run.mode === 'onboard' && hostMode === 'onboard' ? run : null;
+  return run.mode === 'onboard' && host.mode === 'onboard' ? run : null;
 };
 
 /** Visible steps the app has copy for. The Safe/transfer and delegation-clearing steps never render. */

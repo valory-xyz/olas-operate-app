@@ -3,7 +3,7 @@ import { isEmpty, kebabCase, values } from 'lodash';
 import Image from 'next/image';
 import { useEffect } from 'react';
 
-import { isRunLive } from '@/components/FundingFlow/utils';
+import { isRunStarted } from '@/components/FundingFlow/utils';
 import {
   Alert,
   BackButton,
@@ -99,6 +99,8 @@ const SelectChainToDeposit = () => {
 type DepositProps = {
   onBack: () => void;
   onContinue: () => void;
+  /** Continue is replacing an old quoted run; blocks a second click. */
+  isContinuing?: boolean;
 };
 
 const getContinueTooltip = (
@@ -112,9 +114,14 @@ const getContinueTooltip = (
   return null;
 };
 
-export const Deposit = ({ onBack, onContinue }: DepositProps) => {
+export const Deposit = ({
+  onBack,
+  onContinue,
+  isContinuing = false,
+}: DepositProps) => {
   const { activeRun } = useFundingRun();
-  const liveRun = activeRun && isRunLive(activeRun) ? activeRun : null;
+  // Only a run holding the user's funds blocks a new deposit; a quoted one is replaced.
+  const liveRun = activeRun && isRunStarted(activeRun) ? activeRun : null;
   const {
     onDepositAmountChange,
     amountsToDeposit,
@@ -165,6 +172,7 @@ export const Deposit = ({ onBack, onContinue }: DepositProps) => {
           <Button
             disabled={!hasEnteredAmounts || !masterSafeAddress || !!liveRun}
             onClick={onContinue}
+            loading={isContinuing}
             type="primary"
             size="large"
             block

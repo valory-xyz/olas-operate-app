@@ -25,6 +25,7 @@ const mockCreate = jest.fn();
 const mockRefreshQuote = jest.fn();
 const mockRetry = jest.fn();
 const mockCancel = jest.fn();
+const mockCancelIfOnlyQuoted = jest.fn();
 const mockRefetchRequirements = jest.fn();
 const mockToggleSupportModal = jest.fn();
 const mockMessageSuccess = jest.fn();
@@ -83,6 +84,7 @@ jest.mock('../../../hooks/useFundingRun', () => ({
     refreshQuoteMutation: { mutate: mockRefreshQuote, isPending: false },
     retryMutation: { mutate: mockRetry, isPending: false },
     cancelMutation: { mutate: mockCancel, isPending: false },
+    cancelIfOnlyQuoted: mockCancelIfOnlyQuoted,
   }),
 }));
 
@@ -148,9 +150,21 @@ const processingRun = (overrides: Partial<FundingRun> = {}) => {
   });
 };
 
+/** A run some of whose deposit has arrived: it holds the user's funds. */
+const partlyFundedRun = (overrides: Partial<FundingRun> = {}) =>
+  makeFundingRun({
+    quote: {
+      ...makeFundingRun().quote!,
+      received_amount: '4000000',
+      outstanding_amount: '11000000',
+    },
+    ...overrides,
+  });
+
 beforeEach(() => {
   jest.resetAllMocks();
   mockHookState = { activeRun: null };
+  mockCancelIfOnlyQuoted.mockResolvedValue(true);
   mockCreateReset.mockImplementation(() => {
     mockHookState = { ...mockHookState, createError: undefined };
   });
@@ -463,31 +477,29 @@ describe('FundingFlow — failures around the run', () => {
     ).toBeInTheDocument();
   });
 
-  it("offers no Change on another mode's run it cannot recreate", () => {
-    mockHookState = { activeRun: makeFundingRun({ mode: 'signer_gas' }) };
-    renderFlow();
+  it.each([
+    ['another mode', { mode: 'signer_gas' }],
+    [
+      'another chain',
+      { destination: { chain: 'gnosis', wallet: 'master_safe' } },
+    ],
+    ['another agent', { service_config_id: 'sc-other' }],
+  ] as const)(
+    'discards a quoted run for %s, so this flow starts its own',
+    (_label, overrides) => {
+      mockHookState = {
+        activeRun: makeFundingRun({ status: 'QUOTE_FAILED', ...overrides }),
+      };
+      renderFlow();
 
-    expect(screen.getByText('Waiting for your transfer')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Change' })).toBeNull();
-  });
-
-  it("cancels another mode's waiting run so this flow can start its own", () => {
-    const run = makeFundingRun({ mode: 'deposit' });
-    mockHookState = { activeRun: run };
-    mockCancel.mockImplementation((_id, options) => {
-      mockHookState = { activeRun: { ...run, status: 'CANCELLED' } };
-      options.onSuccess();
-    });
-    const { rerender } = renderFlow();
-
-    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
-    expect(mockCancel).toHaveBeenCalledWith(run.id, expect.anything());
-
-    rerender(<FundingFlow {...ONBOARD_PROPS} />);
-    expect(
-      screen.getByText('Select the preferred chain to send funds from:'),
-    ).toBeInTheDocument();
-  });
+      expect(
+        screen.getByText('Select the preferred chain to send funds from:'),
+      ).toBeInTheDocument();
+      fireEvent.click(screen.getByRole('button', { name: /Base/ }));
+      fireEvent.click(screen.getByRole('button', { name: /USDC/ }));
+      expect(mockCreate).toHaveBeenCalled();
+    },
+  );
 
   it('offers Change, not Cancel, on its own waiting run', () => {
     mockHookState = { activeRun: makeFundingRun() };
@@ -495,6 +507,97 @@ describe('FundingFlow — failures around the run', () => {
 
     expect(screen.getAllByRole('button', { name: 'Change' })).toHaveLength(2);
     expect(screen.queryByRole('button', { name: 'Cancel' })).toBeNull();
+  });
+
+  it("shows another agent's partly funded run read-only, so it finishes", () => {
+    mockHookState = {
+      activeRun: partlyFundedRun({ service_config_id: 'sc-other' }),
+    };
+    renderFlow();
+
+    expect(
+      screen.getByText(
+        'This transfer is funding another agent. Finish it before funding this one.',
+      ),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Change' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Cancel' })).toBeNull();
+    expect(screen.queryByRole('button', { name: /Back$/ })).toBeNull();
+  });
+
+  it("labels another mode's partly funded run as a transfer in progress", () => {
+    mockHookState = { activeRun: partlyFundedRun({ mode: 'deposit' }) };
+    renderFlow();
+
+    expect(
+      screen.getByText(
+        'Another transfer is in progress. Finish it before starting a new one.',
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('offers no Change or Back on its own run once funds have arrived', () => {
+    mockHookState = { activeRun: partlyFundedRun() };
+    renderFlow();
+
+    expect(screen.queryByRole('button', { name: 'Change' })).toBeNull();
+    expect(screen.queryByRole('button', { name: /Back$/ })).toBeNull();
+  });
+
+  it.each([
+    ['deposit', { depositAmounts: { [FUNDING_RUN_NATIVE]: '1' } }],
+    ['signer_gas', {}],
+  ] as const)(
+    "handles another chain's run in a %s host: discards it quoted, labels it started",
+    (mode, extra) => {
+      const props = { mode, ...extra } as Partial<FundingFlowProps>;
+      const otherChain = {
+        mode,
+        destination: { chain: 'gnosis', wallet: 'master_safe' },
+      } as const;
+      mockHookState = { activeRun: makeFundingRun(otherChain) };
+      const { unmount } = renderFlow(props);
+      expect(
+        screen.getByText('Select the preferred chain to send funds from:'),
+      ).toBeInTheDocument();
+      unmount();
+
+      mockHookState = { activeRun: partlyFundedRun(otherChain) };
+      renderFlow(props);
+      expect(
+        screen.getByText(
+          'Another transfer is in progress. Finish it before starting a new one.',
+        ),
+      ).toBeInTheDocument();
+    },
+  );
+
+  it("doesn't show a run's success once the host switches to another agent", () => {
+    const live = makeFundingRun({ id: 'fr-agent-a' });
+    mockHookState = { activeRun: live };
+    const { rerender } = renderFlow();
+
+    mockHookState = { activeRun: { ...live, status: 'COMPLETED' } };
+    rerender(<FundingFlow {...ONBOARD_PROPS} serviceConfigId="sc-2" />);
+
+    expect(screen.queryByText('Setup Complete')).toBeNull();
+  });
+
+  it("never shows another agent's success, even after seeing its run live", () => {
+    const live = partlyFundedRun({
+      id: 'fr-other-agent',
+      service_config_id: 'sc-other',
+    });
+    mockHookState = { activeRun: live };
+    const { rerender } = renderFlow();
+
+    mockHookState = { activeRun: { ...live, status: 'COMPLETED' } };
+    rerender(<FundingFlow {...ONBOARD_PROPS} />);
+
+    expect(screen.queryByText('Setup Complete')).toBeNull();
+    expect(
+      screen.getByText('Select the preferred chain to send funds from:'),
+    ).toBeInTheDocument();
   });
 
   it('explains why tokens cannot be picked when there is nothing to deposit', () => {
@@ -545,6 +648,27 @@ describe('FundingFlow — "To receive"', () => {
 
     expect(screen.getByText('15.00 POL')).toBeInTheDocument();
     expect(screen.queryByText(/OLAS/)).toBeNull();
+  });
+
+  it('keeps the same token order when the run replaces the requirement', () => {
+    const fallbackToReceive = [
+      { symbol: 'pUSD', amount: 10 },
+      { symbol: 'POL', amount: 6 },
+      { symbol: 'OLAS', amount: 40 },
+    ];
+    const tokenOrder = () =>
+      screen
+        .getAllByText(/^\d+\.\d{2} \w+$/)
+        .map((node) => node.textContent?.split(' ')[1]);
+
+    const { rerender } = renderFlow({ fallbackToReceive });
+    expect(tokenOrder()).toEqual(['OLAS', 'POL', 'pUSD']);
+
+    mockHookState = { activeRun: makeFundingRun() };
+    rerender(
+      <FundingFlow {...ONBOARD_PROPS} fallbackToReceive={fallbackToReceive} />,
+    );
+    expect(tokenOrder()).toEqual(['OLAS', 'POL', 'pUSD']);
   });
 
   it('marks the amount of a token the app does not know instead of leaving it blank', () => {
@@ -1283,5 +1407,146 @@ describe('FundingFlow — copy guardrails', () => {
 
     expect(container.textContent).not.toMatch(/gas|paymaster|bundler/i);
     expect(container.textContent).not.toMatch(/take it into account/);
+  });
+});
+
+describe('FundingFlow — Back', () => {
+  const back = () =>
+    fireEvent.click(screen.getByRole('button', { name: /Back$/ }));
+
+  it('walks back from the quote through token and chain, then leaves and cancels the quoted run', async () => {
+    const run = makeFundingRun();
+    mockHookState = { activeRun: run };
+    renderFlow();
+
+    back();
+    expect(screen.getByRole('button', { name: /USDC/ })).toBeInTheDocument();
+    back();
+    expect(
+      screen.getByText('Select the preferred chain to send funds from:'),
+    ).toBeInTheDocument();
+    expect(ONBOARD_PROPS.onBack).not.toHaveBeenCalled();
+
+    await act(async () => back());
+    expect(mockCancelIfOnlyQuoted).toHaveBeenCalledWith(run.id);
+    expect(ONBOARD_PROPS.onBack).toHaveBeenCalled();
+  });
+
+  it('hides Back while the cancel is checked, and leaves only once it lands', async () => {
+    let resolveCancel: (isGone: boolean) => void = () => {};
+    mockCancelIfOnlyQuoted.mockReturnValue(
+      new Promise((resolve) => (resolveCancel = resolve)),
+    );
+    mockHookState = { activeRun: makeFundingRun() };
+    renderFlow();
+    back();
+    back();
+    back();
+
+    expect(screen.queryByRole('button', { name: /Back$/ })).toBeNull();
+    expect(ONBOARD_PROPS.onBack).not.toHaveBeenCalled();
+    await act(async () => resolveCancel(true));
+    expect(ONBOARD_PROPS.onBack).toHaveBeenCalled();
+  });
+
+  it('stays when the run got funded meanwhile, so it can finish', async () => {
+    mockCancelIfOnlyQuoted.mockResolvedValue(false);
+    mockHookState = { activeRun: makeFundingRun() };
+    renderFlow();
+    back();
+    back();
+    await act(async () => back());
+
+    expect(ONBOARD_PROPS.onBack).not.toHaveBeenCalled();
+    expect(mockMessageError).not.toHaveBeenCalled();
+  });
+
+  it('stays and says so when the cancel fails', async () => {
+    mockCancelIfOnlyQuoted.mockRejectedValue(new Error('conflict'));
+    mockHookState = { activeRun: makeFundingRun() };
+    renderFlow();
+    back();
+    back();
+    await act(async () => back());
+
+    expect(ONBOARD_PROPS.onBack).not.toHaveBeenCalled();
+    expect(mockMessageError).toHaveBeenCalledWith(
+      expect.stringMatching(/^Couldn't cancel/),
+    );
+  });
+
+  it('is hidden while a create is in flight', () => {
+    mockHookState = { activeRun: null, createPending: true };
+    renderFlow();
+    fireEvent.click(screen.getByRole('button', { name: /Base/ }));
+    fireEvent.click(screen.getByRole('button', { name: /USDC/ }));
+
+    expect(screen.queryByRole('button', { name: /Back$/ })).toBeNull();
+  });
+
+  it('clears a failed create when going back, so a re-pick starts clean', () => {
+    const { rerender } = renderFlow();
+    fireEvent.click(screen.getByRole('button', { name: /Base/ }));
+    fireEvent.click(screen.getByRole('button', { name: /USDC/ }));
+    mockHookState = { activeRun: null, createError: CREATE_ERROR };
+    rerender(<FundingFlow {...ONBOARD_PROPS} />);
+    expect(screen.getByText("Couldn't get a quote")).toBeInTheDocument();
+
+    back();
+    expect(mockCreateReset).toHaveBeenCalled();
+    rerender(<FundingFlow {...ONBOARD_PROPS} />);
+    fireEvent.click(screen.getByRole('button', { name: /USDC/ }));
+
+    expect(mockCreate).toHaveBeenCalledTimes(2);
+    expect(screen.queryByText("Couldn't get a quote")).toBeNull();
+  });
+
+  it('shows a run that got funded while the user was back on token selection, and never recreates it', () => {
+    const run = makeFundingRun();
+    mockHookState = { activeRun: run };
+    const { rerender } = renderFlow();
+    back();
+    expect(screen.getByRole('button', { name: /USDC/ })).toBeInTheDocument();
+
+    mockHookState = { activeRun: partlyFundedRun({ id: run.id }) };
+    rerender(<FundingFlow {...ONBOARD_PROPS} />);
+
+    expect(screen.queryByRole('button', { name: /USDC/ })).toBeNull();
+    expect(screen.queryByRole('button', { name: /Back$/ })).toBeNull();
+    expect(mockCreate).not.toHaveBeenCalled();
+  });
+
+  it('leaves from chain selection without cancelling when there is no run', () => {
+    renderFlow();
+    back();
+
+    expect(mockCancel).not.toHaveBeenCalled();
+    expect(ONBOARD_PROPS.onBack).toHaveBeenCalled();
+  });
+
+  it('goes back from an "Other chain" request to chain selection', () => {
+    renderFlow();
+    fireEvent.click(screen.getByRole('button', { name: 'Other chain' }));
+    back();
+
+    expect(
+      screen.getByText('Select the preferred chain to send funds from:'),
+    ).toBeInTheDocument();
+  });
+
+  it('is hidden while the transfer is under way', () => {
+    mockHookState = { activeRun: processingRun() };
+    renderFlow();
+
+    expect(screen.queryByRole('button', { name: /Back$/ })).toBeNull();
+  });
+
+  it('returns on failure, and leaves without cancelling the failed run', () => {
+    mockHookState = { activeRun: processingRun({ status: 'FAILED' }) };
+    renderFlow();
+
+    back();
+    expect(mockCancel).not.toHaveBeenCalled();
+    expect(ONBOARD_PROPS.onBack).toHaveBeenCalled();
   });
 });

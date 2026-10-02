@@ -16,7 +16,11 @@ jest.mock(
 jest.mock('../../../constants/providers', () => ({ PROVIDERS: {} }));
 jest.mock('../../../config/providers', () => ({ providers: [] }));
 
-let depositProps: { onBack: () => void; onContinue: () => void };
+let depositProps: {
+  onBack: () => void;
+  onContinue: () => void;
+  isContinuing?: boolean;
+};
 let flowProps: FundingFlowProps | null = null;
 let mockActiveRun: FundingRun | null = null;
 const DEFAULT_AMOUNTS = { OLAS: { amount: 100 }, POL: { amount: 5 } };
@@ -37,8 +41,17 @@ jest.mock('../../../components/FundingFlow', () => ({
   },
 }));
 
+const mockCancelIfOnlyQuoted = jest.fn();
+const mockMessageError = jest.fn();
 jest.mock('../../../hooks', () => ({
-  useFundingRun: () => ({ activeRun: mockActiveRun }),
+  useFundingRun: () => ({
+    activeRun: mockActiveRun,
+    cancelIfOnlyQuoted: mockCancelIfOnlyQuoted,
+  }),
+}));
+
+jest.mock('../../../context/MessageProvider', () => ({
+  useMessageApi: () => ({ error: mockMessageError }),
 }));
 
 jest.mock('../../../context/PearlWalletProvider', () => ({
@@ -61,6 +74,7 @@ describe('PearlDeposit', () => {
     flowProps = null;
     mockActiveRun = null;
     mockAmountsToDeposit = DEFAULT_AMOUNTS;
+    mockCancelIfOnlyQuoted.mockReset().mockResolvedValue(undefined);
   });
 
   it('starts on the amounts step', () => {
@@ -134,6 +148,61 @@ describe('PearlDeposit', () => {
     expect(screen.getByTestId('funding-flow')).toBeInTheDocument();
     act(() => flowProps?.onBack());
     expect(mockOnBack).toHaveBeenCalled();
+  });
+
+  it('discards a quoted run on Continue, so the new amounts get a fresh quote', async () => {
+    mockCancelIfOnlyQuoted.mockResolvedValue(undefined);
+    const quoted = makeFundingRun({ mode: 'deposit' });
+    mockActiveRun = quoted;
+    render(<PearlDeposit onBack={mockOnBack} />);
+
+    await act(async () => depositProps.onContinue());
+
+    expect(mockCancelIfOnlyQuoted).toHaveBeenCalledWith(quoted.id);
+    expect(screen.getByTestId('funding-flow')).toBeInTheDocument();
+  });
+
+  it('marks Continue busy while the quoted run is discarded', async () => {
+    let resolveCancel: (isGone: boolean) => void = () => {};
+    mockCancelIfOnlyQuoted.mockReturnValue(
+      new Promise((resolve) => (resolveCancel = resolve)),
+    );
+    mockActiveRun = makeFundingRun({ mode: 'deposit' });
+    render(<PearlDeposit onBack={mockOnBack} />);
+
+    act(() => depositProps.onContinue());
+    expect(depositProps.isContinuing).toBe(true);
+
+    await act(async () => resolveCancel(true));
+    expect(screen.getByTestId('funding-flow')).toBeInTheDocument();
+  });
+
+  it('stays on the amounts step when the quoted run cannot be cancelled', async () => {
+    mockCancelIfOnlyQuoted.mockRejectedValue(new Error('conflict'));
+    mockActiveRun = makeFundingRun({ mode: 'deposit' });
+    render(<PearlDeposit onBack={mockOnBack} />);
+
+    await act(async () => depositProps.onContinue());
+
+    expect(mockMessageError).toHaveBeenCalled();
+    expect(screen.getByTestId('deposit')).toBeInTheDocument();
+  });
+
+  it('starts a new deposit over a run that was only quoted', () => {
+    mockActiveRun = makeFundingRun({ mode: 'deposit' });
+    render(<PearlDeposit onBack={mockOnBack} />);
+
+    expect(screen.getByTestId('deposit')).toBeInTheDocument();
+  });
+
+  it('resumes a run once part of its deposit has arrived', () => {
+    mockActiveRun = makeFundingRun({
+      mode: 'deposit',
+      quote: { ...makeFundingRun().quote!, received_amount: '1' },
+    });
+    render(<PearlDeposit onBack={mockOnBack} />);
+
+    expect(screen.getByTestId('funding-flow')).toBeInTheDocument();
   });
 
   it('keeps a resumed run on screen once it completes, so its success shows', () => {

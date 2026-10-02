@@ -46,15 +46,20 @@ export const ToReceiveSummary = ({
   destinationChain,
   fallback = [],
 }: ToReceiveSummaryProps) => {
-  const items: DisplayItem[] = toReceive
-    ? runItemsToDisplay(toReceive, destinationChain)
-    : fallback
-        .filter(({ amount }) => amount > 0)
-        .map(({ symbol, amount }) => ({
-          key: symbol,
-          symbol,
-          amount: formatDisplayAmount(amount),
-        }));
+  // The run and the fallback order tokens differently; sorting stops a reshuffle between them.
+  const items: DisplayItem[] = (
+    toReceive
+      ? runItemsToDisplay(toReceive, destinationChain)
+      : fallback
+          .filter(({ amount }) => amount > 0)
+          .map(({ symbol, amount }) => ({
+            key: symbol,
+            symbol,
+            amount: formatDisplayAmount(amount),
+          }))
+  ).sort((a, b) =>
+    a.symbol.localeCompare(b.symbol, undefined, { sensitivity: 'base' }),
+  );
 
   if (items.length === 0) return null;
 

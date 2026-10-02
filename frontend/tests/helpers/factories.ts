@@ -933,6 +933,9 @@ export const makeFundingRun = (
     deposit_address: DEFAULT_EOA_ADDRESS,
   },
   destination: { chain: 'polygon', wallet: 'master_safe' },
+  // The middleware sends a service only for onboarding runs.
+  service_config_id:
+    (overrides.mode ?? 'onboard') === 'onboard' ? 'sc-1' : null,
   quote: {
     required_amount: '15000000',
     received_amount: '0',

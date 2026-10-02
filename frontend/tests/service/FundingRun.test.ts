@@ -1,6 +1,10 @@
 import { CONTENT_TYPE_JSON_UTF8 } from '../../constants/headers';
 import { BACKEND_URL } from '../../constants/urls';
-import { FundingRunService } from '../../service/FundingRun';
+import {
+  CREATE_TIMED_OUT,
+  CREATE_TIMEOUT_MS,
+  FundingRunService,
+} from '../../service/FundingRun';
 import { CreateFundingRunRequest } from '../../types/FundingRun';
 import { FUNDING_RUN_BASE_USDC, makeFundingRun } from '../helpers/factories';
 
@@ -56,7 +60,36 @@ describe('FundingRunService', () => {
       method: 'POST',
       headers: { ...CONTENT_TYPE_JSON_UTF8 },
       body: JSON.stringify(request),
+      signal: expect.any(AbortSignal),
     });
+  });
+
+  it('create aborts a request that hangs past its timeout, with a readable message', async () => {
+    jest.useFakeTimers();
+    try {
+      let signal: AbortSignal | undefined;
+      (fetch as jest.Mock).mockImplementation(
+        (_url, init: RequestInit) =>
+          new Promise((_resolve, reject) => {
+            signal = init.signal ?? undefined;
+            signal?.addEventListener('abort', () =>
+              reject(new Error('aborted')),
+            );
+          }),
+      );
+      const created = FundingRunService.create({
+        mode: 'signer_gas',
+        source: { chain: 'base', token: FUNDING_RUN_BASE_USDC },
+        destination: { chain: 'gnosis' },
+      });
+
+      jest.advanceTimersByTime(CREATE_TIMEOUT_MS);
+
+      await expect(created).rejects.toThrow(CREATE_TIMED_OUT);
+      expect(signal?.aborted).toBe(true);
+    } finally {
+      jest.useRealTimers();
+    }
   });
 
   it('refreshQuote posts force to the run route', async () => {

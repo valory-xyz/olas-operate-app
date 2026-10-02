@@ -1,9 +1,11 @@
 import { useState } from 'react';
 
 import { FundingFlow } from '@/components/FundingFlow';
-import { isRunLive } from '@/components/FundingFlow/utils';
+import { CANCEL_FAILED } from '@/components/FundingFlow/constants';
+import { isRunEditable, isRunStarted } from '@/components/FundingFlow/utils';
 import { TOKEN_CONFIG } from '@/config/tokens';
 import { AddressZero } from '@/constants';
+import { useMessageApi } from '@/context/MessageProvider';
 import { usePearlWallet } from '@/context/PearlWalletProvider';
 import { useFundingRun } from '@/hooks';
 import { Address, TokenAmounts } from '@/types';
@@ -43,17 +45,37 @@ const toDepositAmounts = (
 
 export const PearlDeposit = ({ onBack }: PearlDepositProps) => {
   const { walletChainId, amountsToDeposit, gotoPearlWallet } = usePearlWallet();
-  const { activeRun } = useFundingRun();
+  const { activeRun, cancelIfOnlyQuoted } = useFundingRun();
+  const message = useMessageApi();
   const [isFundingFlowOpen, setIsFundingFlowOpen] = useState(false);
+  const [isDiscardingRun, setIsDiscardingRun] = useState(false);
 
-  // A live run is resumed instead of starting a new deposit. The flow stays
-  // open once the run ends, so it can show its completion.
-  const hasLiveRun = !!activeRun && isRunLive(activeRun);
-  if (hasLiveRun && !isFundingFlowOpen) setIsFundingFlowOpen(true);
+  // A started run is resumed; the flow stays open once it ends, to show its completion.
+  const hasStartedRun = !!activeRun && isRunStarted(activeRun);
+  if (hasStartedRun && !isFundingFlowOpen) setIsFundingFlowOpen(true);
+
+  // A quoted run was for amounts entered earlier, so a new deposit replaces it.
+  const handleContinue = () => {
+    if (activeRun && isRunEditable(activeRun) && !isRunStarted(activeRun)) {
+      setIsDiscardingRun(true);
+      cancelIfOnlyQuoted(activeRun.id)
+        .then(
+          () => setIsFundingFlowOpen(true),
+          () => message.error(CANCEL_FAILED),
+        )
+        .finally(() => setIsDiscardingRun(false));
+      return;
+    }
+    setIsFundingFlowOpen(true);
+  };
 
   if (!isFundingFlowOpen) {
     return (
-      <Deposit onBack={onBack} onContinue={() => setIsFundingFlowOpen(true)} />
+      <Deposit
+        onBack={onBack}
+        onContinue={handleContinue}
+        isContinuing={isDiscardingRun}
+      />
     );
   }
   if (!walletChainId) return null;
@@ -63,7 +85,7 @@ export const PearlDeposit = ({ onBack }: PearlDepositProps) => {
       depositAmounts={toDepositAmounts(walletChainId, amountsToDeposit)}
       destinationChain={asMiddlewareChain(walletChainId)}
       fallbackToReceive={getEnteredDepositAmounts(amountsToDeposit)}
-      onBack={hasLiveRun ? onBack : () => setIsFundingFlowOpen(false)}
+      onBack={hasStartedRun ? onBack : () => setIsFundingFlowOpen(false)}
       onTransferCompleted={gotoPearlWallet}
     />
   );

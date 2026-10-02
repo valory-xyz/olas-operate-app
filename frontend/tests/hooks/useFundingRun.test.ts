@@ -84,6 +84,117 @@ describe('useFundingRun', () => {
     expect(mockService.getActive).toHaveBeenCalledTimes(1);
   });
 
+  it('keeps the old run and stops polling while a create is in flight', async () => {
+    jest.useFakeTimers();
+    try {
+      const old = makeFundingRun({ id: 'fr-old' });
+      const created = makeFundingRun({ id: 'fr-created' });
+      mockService.getActive.mockResolvedValue(old);
+      let resolveCreate: (run: typeof created) => void = () => {};
+      mockService.create.mockImplementation(
+        () => new Promise((resolve) => (resolveCreate = resolve)),
+      );
+
+      const { result } = renderHook(() => useFundingRun(), {
+        wrapper: createQueryClientWrapper(),
+      });
+      await waitFor(() => expect(result.current.activeRun).toEqual(old));
+
+      // The backend cancels the old run as soon as the create arrives.
+      mockService.getActive.mockResolvedValue(null);
+      act(() => {
+        result.current.createMutation.mutate(CREATE_REQUEST);
+      });
+      await waitFor(() =>
+        expect(result.current.createMutation.isPending).toBe(true),
+      );
+      await act(async () => {
+        jest.advanceTimersByTime(FIVE_SECONDS_INTERVAL * 3);
+      });
+
+      expect(mockService.getActive).toHaveBeenCalledTimes(1);
+      expect(result.current.activeRun).toEqual(old);
+
+      await act(async () => {
+        resolveCreate(created);
+      });
+      await waitFor(() => expect(result.current.activeRun).toEqual(created));
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it.each([
+    ['succeeds', () => mockService.create.mockResolvedValue(makeFundingRun())],
+    ['fails', () => mockService.create.mockRejectedValue(new Error('boom'))],
+  ])('resumes polling once a create %s', async (_label, arrange) => {
+    jest.useFakeTimers();
+    try {
+      arrange();
+      const { result } = renderHook(() => useFundingRun(), {
+        wrapper: createQueryClientWrapper(),
+      });
+      await waitFor(() => expect(result.current.isActiveRunFetched).toBe(true));
+
+      await act(async () => {
+        await result.current.createMutation
+          .mutateAsync(CREATE_REQUEST)
+          .catch(() => undefined);
+      });
+      const callsAfterCreate = mockService.getActive.mock.calls.length;
+      await act(async () => {
+        jest.advanceTimersByTime(FIVE_SECONDS_INTERVAL);
+      });
+
+      await waitFor(() =>
+        expect(mockService.getActive.mock.calls.length).toBeGreaterThan(
+          callsAfterCreate,
+        ),
+      );
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('cancels a run that a fresh fetch shows is still only quoted', async () => {
+    const run = makeFundingRun();
+    mockService.getActive.mockResolvedValue(run);
+    mockService.cancel.mockResolvedValue({ ...run, status: 'CANCELLED' });
+    const { result } = renderHook(() => useFundingRun(), {
+      wrapper: createQueryClientWrapper(),
+    });
+
+    let isGone: boolean | undefined;
+    await act(async () => {
+      isGone = await result.current.cancelIfOnlyQuoted(run.id);
+    });
+
+    expect(mockService.cancel).toHaveBeenCalledWith(run.id);
+    expect(isGone).toBe(true);
+  });
+
+  it('does not cancel a run whose deposit arrived since the last poll', async () => {
+    const run = makeFundingRun();
+    const funded = makeFundingRun({
+      quote: { ...run.quote!, received_amount: '1' },
+    });
+    mockService.getActive.mockResolvedValue(run);
+    const { result } = renderHook(() => useFundingRun(), {
+      wrapper: createQueryClientWrapper(),
+    });
+    await waitFor(() => expect(result.current.activeRun).toEqual(run));
+
+    mockService.getActive.mockResolvedValue(funded);
+    let isGone: boolean | undefined;
+    await act(async () => {
+      isGone = await result.current.cancelIfOnlyQuoted(run.id);
+    });
+
+    expect(mockService.cancel).not.toHaveBeenCalled();
+    expect(isGone).toBe(false);
+    await waitFor(() => expect(result.current.activeRun).toEqual(funded));
+  });
+
   it('refetches the active run when create conflicts with a live run', async () => {
     const live = makeFundingRun({ status: 'PROCESSING' });
     mockService.create.mockRejectedValue(new Error('conflict'));

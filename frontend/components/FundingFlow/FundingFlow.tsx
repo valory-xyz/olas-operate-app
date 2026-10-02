@@ -24,6 +24,7 @@ import {
   CANCEL_FAILED,
   CONNECTION_LOST,
   NO_DEPOSIT_AMOUNTS,
+  OTHER_RUN_IN_PROGRESS,
   TITLES,
 } from './constants';
 import { FundingProgress } from './FundingProgress';
@@ -35,13 +36,17 @@ import { Banner, CardRow, SelectionRow } from './styles';
 import { ToReceiveItem, ToReceiveSummary } from './ToReceiveSummary';
 import {
   acknowledgeRun,
+  FundingHost,
   getChainImage,
   getChainName,
   getTokenImage,
   getTokenMeta,
   isRunEditable,
+  isRunForAnotherTarget,
+  isRunForHost,
   isRunLive,
   isRunProcessing,
+  isRunStarted,
   resolveDisplayedRun,
 } from './utils';
 
@@ -125,7 +130,15 @@ export const FundingFlow = (props: FundingFlowProps) => {
     refreshQuoteMutation,
     retryMutation,
     cancelMutation,
+    cancelIfOnlyQuoted,
   } = useFundingRun();
+
+  const host: FundingHost = {
+    mode,
+    destinationChain,
+    serviceConfigId:
+      props.mode === 'onboard' ? props.serviceConfigId : undefined,
+  };
 
   const seenLiveRunIds = useRef(new Set<string>());
   if (activeRun && isRunLive(activeRun)) {
@@ -133,7 +146,8 @@ export const FundingFlow = (props: FundingFlowProps) => {
   }
   // A run this flow created counts as seen, even if it came back already COMPLETED.
   if (createMutation.data) seenLiveRunIds.current.add(createMutation.data.id);
-  const run = resolveDisplayedRun(activeRun, mode, seenLiveRunIds.current);
+  const run = resolveDisplayedRun(activeRun, host, seenLiveRunIds.current);
+  const started = !!run && isRunStarted(run);
 
   const [step, setStep] = useState<SelectionStep | null>(null);
   const [selectedChain, setSelectedChain] = useState<MiddlewareChain | null>(
@@ -142,6 +156,7 @@ export const FundingFlow = (props: FundingFlowProps) => {
   const [pendingSelection, setPendingSelection] = useState<Selection | null>(
     null,
   );
+  const [isLeaving, setIsLeaving] = useState(false);
 
   const message = useMessageApi();
   const showMutationError = (error: Error) => message.error(error.message);
@@ -207,6 +222,8 @@ export const FundingFlow = (props: FundingFlowProps) => {
     });
 
   const create = (selection: Selection) => {
+    // Recreating cancels the run, so never over one holding the user's funds.
+    if (started) return;
     runIdAtCreate.current = run?.id ?? null;
     setPendingSelection(selection);
     setStep(null);
@@ -221,13 +238,16 @@ export const FundingFlow = (props: FundingFlowProps) => {
   };
 
   // A run can only be (re)created with this host's own parameters, so another
-  // mode's run, or a deposit with no amounts, cannot be changed from here.
+  // mode's or target's run, or a deposit with no amounts, cannot be changed from here.
   const hasCreateParams =
     props.mode !== 'deposit' || Object.keys(props.depositAmounts).length > 0;
-  const canCreate = hasCreateParams && (!run || run.mode === mode);
+  const canCreate = hasCreateParams && (!run || isRunForHost(run, host));
   const editable = !run || isRunEditable(run);
-  const currentStep: SelectionStep | 'quote' =
-    step ?? (run || pendingSelection ? 'quote' : 'chain');
+  // A run that became started while the user was back on a selection step
+  // takes over the screen, so the stale step can't recreate it.
+  const currentStep: SelectionStep | 'quote' = started
+    ? 'quote'
+    : (step ?? (run || pendingSelection ? 'quote' : 'chain'));
   const tokenStepChain = selectedChain ?? run?.source.chain ?? null;
 
   const renderSelection = () => {
@@ -291,7 +311,7 @@ export const FundingFlow = (props: FundingFlowProps) => {
       getTokenMeta(selection.chain, selection.token)?.symbol ??
       run?.source.symbol ??
       '';
-    const canChange = editable && canCreate;
+    const canChange = editable && canCreate && !started;
     const onChangeChain = canChange
       ? () => {
           resetCreate();
@@ -344,15 +364,13 @@ export const FundingFlow = (props: FundingFlowProps) => {
               }
               isRefreshing={refreshQuoteMutation.isPending}
             />
-            {run && run.mode !== mode && (
+            {run && !isRunForHost(run, host) && (
               <CardRow>
-                <Button
-                  size="small"
-                  onClick={() => cancelRun(run.id)}
-                  loading={cancelMutation.isPending}
-                >
-                  Cancel
-                </Button>
+                <Text>
+                  {mode === 'onboard' && isRunForAnotherTarget(run, host)
+                    ? OTHER_RUN_IN_PROGRESS.agent
+                    : OTHER_RUN_IN_PROGRESS.other}
+                </Text>
               </CardRow>
             )}
           </>
@@ -360,6 +378,49 @@ export const FundingFlow = (props: FundingFlowProps) => {
       </>
     );
   };
+
+  // Back walks the selection steps in reverse, then leaves the flow,
+  // cancelling a run it only quoted so the next visit starts afresh.
+  const handleBack = () => {
+    if (started) {
+      onBack();
+      return;
+    }
+    switch (currentStep) {
+      case 'request-chain':
+        setStep('chain');
+        return;
+      case 'request-token':
+        setStep('token');
+        return;
+      case 'quote':
+        resetCreate();
+        setSelectedChain(pendingSelection?.chain ?? run?.source.chain ?? null);
+        setStep('token');
+        return;
+      case 'token':
+        setStep('chain');
+        return;
+      default:
+        if (!run || !isRunForHost(run, host) || !editable) {
+          onBack();
+          return;
+        }
+        // Leave only once the run is gone; if it got funded meanwhile, the
+        // refreshed run takes over the screen instead.
+        setIsLeaving(true);
+        cancelIfOnlyQuoted(run.id)
+          .then((isGone) => isGone && onBack())
+          .catch(() => message.error(CANCEL_FAILED))
+          .finally(() => setIsLeaving(false));
+    }
+  };
+  // Hidden while the run holds the user's funds (until it fails), and while a
+  // create is in flight, since it can't be aborted and would leave a run behind.
+  const canGoBack =
+    (!started || run?.status === 'FAILED') &&
+    !createMutation.isPending &&
+    !isLeaving;
 
   const renderBody = () => {
     if (isActiveRunError && !activeRun) {
@@ -389,7 +450,7 @@ export const FundingFlow = (props: FundingFlowProps) => {
   return (
     <Flex vertical gap={16} style={cardStyles}>
       <Flex vertical gap={12}>
-        <BackButton onPrev={onBack} />
+        {canGoBack && <BackButton onPrev={handleBack} />}
         <Title level={3} className="m-0">
           {getTitle(run, mode)}
         </Title>
