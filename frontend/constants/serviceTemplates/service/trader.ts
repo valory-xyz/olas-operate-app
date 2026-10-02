@@ -138,7 +138,7 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
     USE_MECH_FACILITATOR: {
       name: 'Use the mech facilitator',
       description:
-        'Uses the mech marketplace to pay for third party service calls like Gemini, from the service Safe pre-deposit instead of spending the agent balance on each call',
+        'Uses the mech marketplace to pay for third party service calls like Gemini',
       value: MECH_FACILITATOR_ENABLED_FLAGS[AgentMap.PredictTrader].toString(),
       provision_type: EnvProvisionType.FIXED,
     },
@@ -313,7 +313,7 @@ export const PREDICT_POLYMARKET_SERVICE_TEMPLATE: ServiceTemplate = {
     USE_MECH_FACILITATOR: {
       name: 'Use the mech facilitator',
       description:
-        'Uses the mech marketplace to pay for third party service calls like Gemini, from the service Safe pre-deposit instead of spending the agent balance on each call',
+        'Uses the mech marketplace to pay for third party service calls like Gemini',
       value: MECH_FACILITATOR_ENABLED_FLAGS[AgentMap.Polystrat].toString(),
       provision_type: EnvProvisionType.FIXED,
     },

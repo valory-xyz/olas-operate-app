@@ -377,7 +377,7 @@ export const OPTIMUS_SERVICE_TEMPLATE: ServiceTemplate = {
     USE_MECH_FACILITATOR: {
       name: 'Use the mech facilitator',
       description:
-        'Uses the mech marketplace to pay for third party service calls like CoinGecko and Gemini, from the service Safe pre-deposit instead of spending the agent balance on each call',
+        'Uses the mech marketplace to pay for third party service calls like CoinGecko and Gemini',
       value: MECH_FACILITATOR_ENABLED_FLAGS[AgentMap.Optimus].toString(),
       provision_type: EnvProvisionType.FIXED,
     },
@@ -544,7 +544,7 @@ export const BASIUS_SERVICE_TEMPLATE: ServiceTemplate = {
     USE_MECH_FACILITATOR: {
       name: 'Use the mech facilitator',
       description:
-        'Uses the mech marketplace to pay for third party service calls like CoinGecko and Gemini, from the service Safe pre-deposit instead of spending the agent balance on each call',
+        'Uses the mech marketplace to pay for third party service calls like CoinGecko and Gemini',
       value: MECH_FACILITATOR_ENABLED_FLAGS[AgentMap.Basius].toString(),
       provision_type: EnvProvisionType.FIXED,
     },
