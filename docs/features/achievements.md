@@ -24,7 +24,7 @@ useAchievements (5-min polling)
 - `frontend/components/AchievementModal/hooks/useCurrentAchievement.ts` — display scheduling (1-minute delay between achievements)
 - `frontend/components/AchievementModal/hooks/useTriggerAchievementBackgroundTasks.ts` — acknowledge + image generation (3 retries)
 - `frontend/components/AchievementModal/index.tsx` — modal component (triggers background tasks, marks shown on close, skips achievements it has no content for)
-- `frontend/components/AchievementModal/ModalContent/PredictionPayout.tsx` — payout content shared by Omenstrat (`PredictTrader`) and Polystrat; name, icon and explorer come from `AGENT_CONFIG`
+- `frontend/components/AchievementModal/ModalContent/PredictionPayout.tsx` — payout content shared by Omenstrat (`PredictTrader`) and Polystrat; name, icon and explorer come from `AGENT_CONFIG`. `PREDICTION_PAYOUT_BY_AGENT` maps each agent to its achievement type and predict-website route — add a new payout agent there
 - `frontend/components/AchievementModal/utils.ts` — achievement URL and X share intent generation
 
 ## Contract / schema

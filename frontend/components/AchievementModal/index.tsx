@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useUnmount } from 'usehooks-ts';
 
 import { Modal } from '@/components/ui';
-import { ACHIEVEMENT_TYPE, AgentMap, AgentType } from '@/constants';
+import { AgentType } from '@/constants';
 import { useServices } from '@/hooks';
 import { Achievement } from '@/types/Achievement';
 import { Nullable } from '@/types/Util';
@@ -11,6 +11,7 @@ import { Nullable } from '@/types/Util';
 import { useCurrentAchievement } from './hooks/useCurrentAchievement';
 import { useTriggerAchievementBackgroundTasks } from './hooks/useTriggerAchievementBackgroundTasks';
 import {
+  PREDICTION_PAYOUT_BY_AGENT,
   PredictionPayout,
   PredictionPayoutAgent,
 } from './ModalContent/PredictionPayout';
@@ -23,25 +24,17 @@ const ConfettiAnimation = dynamic(
   { ssr: false },
 );
 
-const PAYOUT_ACHIEVEMENT_TYPE_BY_AGENT: Record<
-  PredictionPayoutAgent,
-  Achievement['achievement_type']
-> = {
-  [AgentMap.PredictTrader]: ACHIEVEMENT_TYPE.OMENSTRAT_PAYOUT,
-  [AgentMap.Polystrat]: ACHIEVEMENT_TYPE.POLYSTRAT_PAYOUT,
-};
-
 const isPayoutAgent = (
   agentType: Nullable<AgentType>,
 ): agentType is PredictionPayoutAgent =>
-  !!agentType && agentType in PAYOUT_ACHIEVEMENT_TYPE_BY_AGENT;
+  !!agentType && agentType in PREDICTION_PAYOUT_BY_AGENT;
 
 const getPayoutAgentType = (
   agentType: Nullable<AgentType>,
   achievementType?: Achievement['achievement_type'],
 ): Nullable<PredictionPayoutAgent> => {
   if (!isPayoutAgent(agentType)) return null;
-  if (PAYOUT_ACHIEVEMENT_TYPE_BY_AGENT[agentType] !== achievementType)
+  if (PREDICTION_PAYOUT_BY_AGENT[agentType].achievementType !== achievementType)
     return null;
   return agentType;
 };

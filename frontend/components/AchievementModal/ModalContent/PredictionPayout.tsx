@@ -7,7 +7,8 @@ import styled from 'styled-components';
 
 import { AGENT_CONFIG } from '@/config/agents';
 import {
-  type AchievementAgent,
+  ACHIEVEMENT_AGENT,
+  ACHIEVEMENT_TYPE,
   AgentMap,
   COLOR,
   EXPLORER_URL_BY_MIDDLEWARE_CHAIN,
@@ -34,9 +35,22 @@ const StatsWrapper = styled(Flex)`
   border-top: 1px dashed ${COLOR.GRAY_3};
 `;
 
-export type PredictionPayoutAgent =
-  | typeof AgentMap.PredictTrader
-  | typeof AgentMap.Polystrat;
+// Single source for each payout agent's achievement type and the
+// predict-website route its share link points to.
+export const PREDICTION_PAYOUT_BY_AGENT = {
+  [AgentMap.PredictTrader]: {
+    achievementType: ACHIEVEMENT_TYPE.OMENSTRAT_PAYOUT,
+    websiteAgent: ACHIEVEMENT_AGENT.OMENSTRAT,
+    websiteType: 'payout',
+  },
+  [AgentMap.Polystrat]: {
+    achievementType: ACHIEVEMENT_TYPE.POLYSTRAT_PAYOUT,
+    websiteAgent: ACHIEVEMENT_AGENT.POLYSTRAT,
+    websiteType: 'payout',
+  },
+} as const;
+
+export type PredictionPayoutAgent = keyof typeof PREDICTION_PAYOUT_BY_AGENT;
 
 const getTransactionUrl = (agentType: PredictionPayoutAgent, hash: string) =>
   `${EXPLORER_URL_BY_MIDDLEWARE_CHAIN[AGENT_CONFIG[agentType].middlewareHomeChainId]}/tx/${hash}`;
@@ -72,7 +86,7 @@ export const PredictionPayout = ({
 }: PredictionPayoutProps) => {
   const [isShareReady, setIsShareReady] = useState(false);
 
-  const { description = NA, achievement_type: type, data } = achievement ?? {};
+  const { description = NA, data } = achievement ?? {};
   const {
     id: betId,
     market,
@@ -83,12 +97,12 @@ export const PredictionPayout = ({
   } = data ?? {};
 
   const predictUrl = useMemo(() => {
-    const [agent, achievementType] = type.split('/');
+    const { websiteAgent, websiteType } = PREDICTION_PAYOUT_BY_AGENT[agentType];
     return getPredictWebsiteAchievementUrl(
-      agent as AchievementAgent,
-      new URLSearchParams({ betId, type: achievementType }),
+      websiteAgent,
+      new URLSearchParams({ betId, type: websiteType }),
     );
-  }, [type, betId]);
+  }, [agentType, betId]);
 
   const warmUpPredictPage = useCallback(async () => {
     setIsShareReady(false);
