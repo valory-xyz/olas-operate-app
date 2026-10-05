@@ -519,10 +519,10 @@ const createMainWindow = async () => {
   try {
     logger.electron('Setting up store IPC');
     store = setupStoreIpc(ipcMain);
+    verifyPendingInstall(store);
   } catch (e) {
     logger.electron(`Store IPC failed: ${stringifyJson(e)}`);
   }
-  if (store) verifyPendingInstall(store);
   if (isDev) {
     mainWindow.webContents.openDevTools({ mode: 'detach' });
   }

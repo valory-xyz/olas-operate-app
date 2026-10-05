@@ -9,7 +9,7 @@ const { isMac, paths } = require('./constants');
 const QUIT_AND_INSTALL_FALLBACK_MS = 5000;
 
 let squirrelReady = false;
-// The IPC quit-and-install call carries no version, so remember the one electron-updater downloaded
+// The quit-and-install IPC carries no version
 let downloadedVersion = null;
 let downloadCancellationToken = null;
 let pendingSquirrelListener = null;
@@ -17,10 +17,7 @@ let pendingSquirrelListener = null;
 const ota = (message) =>
   logger.electron(`[OTA] (current=${app.getVersion()}) ${message}`);
 
-/**
- * Records the install attempt so the next launch can tell whether it worked.
- * Never throws: a missing marker only costs a log line, a thrown error would block the install.
- */
+// Never throws: that would block the install.
 const recordPendingInstall = (store) => {
   if (!downloadedVersion) {
     ota('No downloaded version known, skipping pending install marker');
@@ -41,12 +38,6 @@ const recordPendingInstall = (store) => {
   }
 };
 
-/**
- * Checks the marker left by the previous quit-and-install and logs whether the update applied.
- * On failure the attempted version is marked as already offered, so the update modal stays
- * closed until a newer version is published.
- * @param {import('electron-store')} store
- */
 const verifyPendingInstall = (store) => {
   try {
     const pending = store.get('pendingUpdateInstall');
@@ -54,17 +45,17 @@ const verifyPendingInstall = (store) => {
     // Removed before acting on it, so a marker can never be handled twice
     store.delete('pendingUpdateInstall');
 
-    const { targetVersion, fromVersion } = pending;
+    const { targetVersion, fromVersion, requestedAt } = pending;
     const runningVersion = app.getVersion();
 
-    if (targetVersion && runningVersion === targetVersion) {
+    if (runningVersion === targetVersion) {
       ota(`Update to ${targetVersion} installed successfully`);
       return;
     }
 
-    if (targetVersion && runningVersion === fromVersion) {
+    if (runningVersion === fromVersion) {
       ota(
-        `Install failed: attempted=${targetVersion} running=${runningVersion}`,
+        `Install failed: attempted=${targetVersion} running=${runningVersion} requestedAt=${requestedAt}`,
       );
       if (isMac) {
         const exists = (filePath) =>
@@ -73,12 +64,13 @@ const verifyPendingInstall = (store) => {
           `ShipIt logs: stderr=${exists(paths.shipItStderrLogFile)} stdout=${exists(paths.shipItStdoutLogFile)}`,
         );
       }
+      // Stop auto-reopening the modal for the version that failed
       store.set('updateAvailableKnownVersion', targetVersion);
       return;
     }
 
     ota(
-      `Discarding pending install marker: attempted=${targetVersion ?? 'unknown'} from=${fromVersion ?? 'unknown'} running=${runningVersion}`,
+      `Discarding pending install marker: attempted=${targetVersion} from=${fromVersion} running=${runningVersion}`,
     );
   } catch (e) {
     ota(`Failed to verify pending install: ${e.message}`);
@@ -107,8 +99,6 @@ const registerAutoUpdaterHandlers = ({
 
   autoUpdater.on('update-available', async (info) => {
     ota(`Update available: ${info.version}`);
-    // Hourly re-checks re-announce the version already downloaded, which must not forget it
-    if (info.version !== downloadedVersion) downloadedVersion = null;
     // electron-updater's GitHubProvider has a bug where releaseNotes come from
     // the wrong Atom feed entry when allowPrerelease is true. Fetch directly
     // from the GitHub API to get the correct release notes for this version.
