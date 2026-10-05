@@ -613,34 +613,34 @@ export const MOCK_OMEN_BET_ID = `${MOCK_TX_HASH_1}0000000f` as `0x${string}`;
 
 export const makeOmenstratPayoutAchievement = (
   overrides: Partial<AchievementWithConfig> = {},
-): AchievementWithConfig => ({
-  achievement_id: MOCK_OMENSTRAT_ACHIEVEMENT_ID,
-  achievement_type: ACHIEVEMENT_TYPE.OMENSTRAT_PAYOUT,
-  acknowledgement_timestamp: 0,
-  acknowledged: false,
-  title: 'High ROI on bet!',
-  description:
-    'My Omenstrat agent just made 2.4× ROI on Omen Markets! 🚀\n\nCheck it out👇\n{achievement_url}',
-  timestamp: 1790000000,
-  data: {
-    id: MOCK_OMEN_BET_ID,
-    prediction_side: 'yes',
-    bet_amount: 2,
-    status: 'won',
-    net_profit: 2.8,
-    total_payout: 4.8,
-    created_at: '2026-09-29T10:00:00Z',
-    settled_at: '2026-09-30T08:00:00Z',
-    transaction_hash: MOCK_TX_HASH_1,
-    market: {
-      id: MOCK_MARKET_ID,
-      title: 'Does Google have the best AI model end of January?',
-      external_url: `https://predict.olas.network/questions/${MOCK_MARKET_ID}`,
+): AchievementWithConfig => {
+  const { data } = makePolystratPayoutAchievement();
+  return makePolystratPayoutAchievement({
+    achievement_id: MOCK_OMENSTRAT_ACHIEVEMENT_ID,
+    achievement_type: ACHIEVEMENT_TYPE.OMENSTRAT_PAYOUT,
+    title: 'High ROI on bet!',
+    description:
+      'My Omenstrat agent just made 2.4× ROI on Omen Markets! 🚀\n\nCheck it out👇\n{achievement_url}',
+    timestamp: 1790000000,
+    data: {
+      ...data,
+      id: MOCK_OMEN_BET_ID,
+      prediction_side: 'yes',
+      bet_amount: 2,
+      status: 'won',
+      net_profit: 2.8,
+      total_payout: 4.8,
+      created_at: '2026-09-29T10:00:00Z',
+      settled_at: '2026-09-30T08:00:00Z',
+      market: {
+        ...data.market,
+        title: 'Does Google have the best AI model end of January?',
+        external_url: `https://predict.olas.network/questions/${MOCK_MARKET_ID}`,
+      },
     },
-  },
-  serviceConfigId: DEFAULT_SERVICE_CONFIG_ID,
-  ...overrides,
-});
+    ...overrides,
+  });
+};
 
 export const makeInsufficientGasError = (
   overrides: Partial<InsufficientGasErrorBody> = {},
