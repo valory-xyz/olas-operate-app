@@ -184,7 +184,6 @@ function prepareLogsForDebug(data, forSupport = false) {
     logger.electron(e);
   }
 
-  // ShipIt logs hold the reason a macOS update failed to install after quit
   if (isMac) {
     [
       { logFileName: 'ShipIt_stderr.log', filePath: paths.shipItStderrLogFile },

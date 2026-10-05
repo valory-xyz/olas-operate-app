@@ -19,8 +19,7 @@ const dotOperateDirectory = isProd
   ? path.join(os.homedir(), '.operate')
   : path.join(process.cwd(), '.operate');
 
-// Squirrel.Mac's ShipIt installs updates after Pearl quits and logs only here. The directory is
-// named after the bundle id (`appId` in build.js).
+// Squirrel.Mac ShipIt logs; dir is build.js appId + ".ShipIt"
 const shipItCacheDirectory = path.join(
   os.homedir(),
   'Library',
