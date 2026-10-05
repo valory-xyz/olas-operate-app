@@ -19,6 +19,15 @@
       "reason": "No patched release (<=1.4.0, no fix yet). The flaw is in RSA PKCS#1 v1.5 signature verification; Pearl only uses node-forge in electron/main.js to generate the localhost self-signed key and certificate, and never verifies signatures with it, so the vulnerable path is unreachable. Upgrade once a fixed version ships.",
       "added": "2026-10-02",
       "review": "2026-11-02"
+    },
+    {
+      "id": 1240992,
+      "ghsa": "GHSA-vfj7-8cjw-p6xm",
+      "package": "braces",
+      "severity": "high",
+      "reason": "No patched release (<=3.0.3, no fix yet). The flaw is a stack-exhaustion DoS when expanding deeply nested brace patterns. In the root production tree braces only arrives via sass > @parcel/watcher > micromatch, a build-time stylesheet compiler that only sees glob patterns from this repo's own build config, never user or network input, and the Electron runtime never loads it. Upgrade once a fixed version ships.",
+      "added": "2026-10-05",
+      "review": "2027-01-03"
     }
   ]
 }
