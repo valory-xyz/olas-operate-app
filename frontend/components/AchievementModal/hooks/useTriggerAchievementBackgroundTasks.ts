@@ -19,6 +19,7 @@ const getAchievementDataIdFromType = (achievement: AchievementWithConfig) => {
 
   switch (achievement_type) {
     case ACHIEVEMENT_TYPE.POLYSTRAT_PAYOUT:
+    case ACHIEVEMENT_TYPE.OMENSTRAT_PAYOUT:
       return data.id;
     default:
       return null;

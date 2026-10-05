@@ -23,7 +23,8 @@ useAchievements (5-min polling)
 - `frontend/components/AchievementModal/hooks/useAchievements.ts` — achievement polling (5-minute interval)
 - `frontend/components/AchievementModal/hooks/useCurrentAchievement.ts` — display scheduling (1-minute delay between achievements)
 - `frontend/components/AchievementModal/hooks/useTriggerAchievementBackgroundTasks.ts` — acknowledge + image generation (3 retries)
-- `frontend/components/AchievementModal/index.tsx` — modal component (triggers background tasks, marks shown on close)
+- `frontend/components/AchievementModal/index.tsx` — modal component (triggers background tasks, marks shown on close, skips achievements it has no content for)
+- `frontend/components/AchievementModal/ModalContent/PredictionPayout.tsx` — payout content shared by Omenstrat (`PredictTrader`) and Polystrat; name, icon and explorer come from `AGENT_CONFIG`. `PREDICTION_PAYOUT_BY_AGENT` maps each agent to its achievement type and predict-website route — add a new payout agent there
 - `frontend/components/AchievementModal/utils.ts` — achievement URL and X share intent generation
 
 ## Contract / schema
@@ -72,7 +73,7 @@ No request body. Throws `Error` on non-ok response.
 
 **`POST /api/achievement/generate-image?agent={agent}&type={type}&id={id}`** (Pearl API at `pearl-api.olas.network`) — triggers server-side achievement image generation.
 
-Query params: `agent` and `type` are derived by splitting `achievement_type` on `"/"` (e.g., `"polystrat/payout"` → `agent="polystrat"`, `type="payout"`). `id` is **not** the `achievement_id` — it's a type-specific data ID extracted via `getAchievementDataIdFromType()`. For Polystrat payouts, this is `achievement.data.id` (the bet ID). If the data ID can't be resolved (unknown achievement type), background tasks are skipped. Throws `Error` on non-ok response.
+Query params: `agent` and `type` are derived by splitting `achievement_type` on `"/"` (e.g., `"polystrat/payout"` → `agent="polystrat"`, `type="payout"`). `id` is **not** the `achievement_id` — it's a type-specific data ID extracted via `getAchievementDataIdFromType()`. For `polystrat/payout` and `omenstrat/payout`, this is `achievement.data.id` (the bet ID). If the data ID can't be resolved (unknown achievement type), background tasks are skipped. Throws `Error` on non-ok response.
 
 ## Runtime behavior
 
@@ -80,14 +81,16 @@ Query params: `agent` and `type` are derived by splitting `achievement_type` on 
 
 1. **Polling**: `useAchievements` fetches achievements every 5 minutes via `getServiceAchievements`. Only enabled when a service is running.
 
-2. **Scheduling**: `useCurrentAchievement` picks the next unshown achievement, with a 1-minute delay between displays. Tracks shown achievement IDs to avoid repeats within a session.
+2. **Scheduling**: `useCurrentAchievement` picks the next unshown achievement, with a 1-minute delay between displayed achievements. Unsupported achievements are skipped immediately. Shown IDs are tracked within a session.
 
 3. **Background tasks**: When an achievement is displayed, `useTriggerAchievementBackgroundTasks` runs in parallel:
    - `acknowledgeServiceAchievement` — marks it as seen in the backend
    - `generateAchievementImage` — triggers server-side image generation for sharing
    - Both retry up to 3 times on failure
 
-4. **Sharing**: The Polystrat payout modal shows a "Share on X" button that opens a tweet intent with the achievement URL. The button is only enabled after the predict website has been "warmed up" (prefetched).
+4. **Content**: `AchievementModal` renders `PredictionPayout` only when the agent's own payout type matches (`PredictTrader` → `omenstrat/payout`, `Polystrat` → `polystrat/payout`). Any other combination is skipped without opening the modal or delaying the next achievement, so an unknown type never produces an empty confetti modal. "View transaction" uses the explorer of the agent's home chain (Gnosis Blockscout for Omenstrat, Polygonscan for Polystrat).
+
+5. **Sharing**: The payout modal shows a "Share on X" button that opens a tweet intent with the achievement URL. The button is only enabled after the predict website has been "warmed up" (prefetched).
 
 ## Failure / guard behavior
 
