@@ -68,7 +68,10 @@ const { isPortAvailable, findAvailablePort } = require('./ports');
 const { setupStoreIpc } = require('./store');
 const { logger } = require('./logger');
 const { PearlTray } = require('./components/PearlTray');
-const { registerAutoUpdaterHandlers } = require('./autoUpdater');
+const {
+  registerAutoUpdaterHandlers,
+  verifyPendingInstall,
+} = require('./autoUpdater');
 
 const { pki } = require('node-forge');
 
@@ -174,6 +177,9 @@ const getOnRampWindow = () => onRampWindow;
 
 /** @type {Electron.Tray | null} */
 let tray = null;
+
+/** @type {import('electron-store') | null} */
+let store = null;
 
 // Tracks the active powerSaveBlocker ID; null when no blocker is active.
 // Uses 'prevent-app-suspension' to prevent system/CPU sleep while allowing
@@ -512,10 +518,11 @@ const createMainWindow = async () => {
 
   try {
     logger.electron('Setting up store IPC');
-    setupStoreIpc(ipcMain);
+    store = setupStoreIpc(ipcMain);
   } catch (e) {
     logger.electron(`Store IPC failed: ${stringifyJson(e)}`);
   }
+  if (store) verifyPendingInstall(store);
   if (isDev) {
     mainWindow.webContents.openDevTools({ mode: 'detach' });
   }
@@ -945,6 +952,7 @@ registerAutoUpdaterHandlers({
   },
   getOperateDaemonPid: () => operateDaemonPid,
   killProcesses,
+  getStore: () => store,
 });
 
 /**
