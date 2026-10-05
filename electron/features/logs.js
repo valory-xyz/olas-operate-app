@@ -5,7 +5,7 @@ const os = require('os');
 const AdmZip = require('adm-zip');
 
 const { logger } = require('../logger');
-const { paths } = require('../constants');
+const { isMac, paths } = require('../constants');
 const { sanitizeLogs } = require('../utils/sanitizers');
 
 const FILE_SIZE_LIMITS = {
@@ -182,6 +182,27 @@ function prepareLogsForDebug(data, forSupport = false) {
     }
   } catch (e) {
     logger.electron(e);
+  }
+
+  // ShipIt logs hold the reason a macOS update failed to install after quit
+  if (isMac) {
+    [
+      { logFileName: 'ShipIt_stderr.log', filePath: paths.shipItStderrLogFile },
+      { logFileName: 'ShipIt_stdout.log', filePath: paths.shipItStdoutLogFile },
+    ].forEach(({ logFileName, filePath }) => {
+      try {
+        if (fs.existsSync(filePath)) {
+          sanitizeLogFile({
+            logFileName,
+            filePath,
+            isForSupport: forSupport,
+            sizeLimit: FILE_SIZE_LIMITS.FIVE_HUNDRED_KB,
+          });
+        }
+      } catch (e) {
+        logger.electron(e);
+      }
+    });
   }
 
   // Agent logs
