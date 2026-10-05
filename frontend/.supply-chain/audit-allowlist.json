@@ -10,5 +10,15 @@
     "added": "YYYY-MM-DD when the entry was added — REQUIRED",
     "review": "YYYY-MM-DD by which the entry must be re-evaluated — REQUIRED. An expired entry prints a CI warning but does not fail the job."
   },
-  "entries": []
+  "entries": [
+    {
+      "id": 1240992,
+      "ghsa": "GHSA-vfj7-8cjw-p6xm",
+      "package": "braces",
+      "severity": "high",
+      "reason": "No patched release (<=3.0.3 is affected and 3.0.3 is the latest). Only reachable via sass > @parcel/watcher > micromatch > braces, which expands glob patterns from our own build/watch config, never from user or network input, so the stack-exhaustion DoS needs attacker-controlled patterns we never pass. Upgrade once a fixed version ships.",
+      "added": "2026-10-05",
+      "review": "2027-01-03"
+    }
+  ]
 }
