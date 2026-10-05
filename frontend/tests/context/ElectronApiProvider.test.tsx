@@ -455,6 +455,16 @@ describe('ElectronApiProvider', () => {
       expect(mockEmitPearlStoreDelete).not.toHaveBeenCalled();
     });
 
+    it('routes the pending update install marker to IPC', async () => {
+      const { result, mockApi } = setupProvider();
+
+      await result.current.store?.delete?.('pendingUpdateInstall');
+
+      expect(mockApi.store.delete).toHaveBeenCalledWith('pendingUpdateInstall');
+      expect(mockEmitPearlStoreDelete).not.toHaveBeenCalled();
+      expect(mockDeleteStoreKey).not.toHaveBeenCalled();
+    });
+
     it('routes backend-bound keys to StoreService and event bus', async () => {
       const { result, mockApi } = setupProvider();
 

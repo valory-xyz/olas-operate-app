@@ -103,6 +103,12 @@ export type ElectronStore = {
    * a new machine; the survey contract already carries a `null` path for exactly that gap.
    */
   firstAppOpenedAt?: string;
+  /** Written by the main process just before `quitAndInstall()`; checked and removed on the next launch. */
+  pendingUpdateInstall?: {
+    targetVersion?: string;
+    fromVersion?: string;
+    requestedAt?: string;
+  };
 };
 
 export type OsInfo = {
