@@ -153,6 +153,35 @@ describe('useCurrentAchievement', () => {
     expect(jest.getTimerCount()).toBe(0);
   });
 
+  it('skipCurrentAchievement cancels a pending mark-as-shown timer', async () => {
+    const ach1 = makeAchievement('ach-1');
+    const ach2 = makeAchievement('ach-2');
+    mockUseAchievements.mockReturnValue({
+      achievements: [ach1, ach2],
+      isLoading: false,
+      isError: false,
+    });
+
+    const { result } = renderHook(() => useCurrentAchievement());
+    await waitFor(() => {
+      expect(result.current.currentAchievement?.achievement_id).toBe('ach-1');
+    });
+
+    act(() => result.current.markCurrentAchievementAsShown());
+    act(() => result.current.skipCurrentAchievement());
+
+    await waitFor(() => {
+      expect(result.current.currentAchievement?.achievement_id).toBe('ach-2');
+    });
+    expect(jest.getTimerCount()).toBe(0);
+
+    // A stale timer would mark ach-1 as shown again and null out ach-2
+    act(() => {
+      jest.advanceTimersByTime(ONE_MINUTE_IN_MS);
+    });
+    expect(result.current.currentAchievement?.achievement_id).toBe('ach-2');
+  });
+
   it('does not show already-shown achievements again', async () => {
     const ach1 = makeAchievement('ach-1');
     mockUseAchievements.mockReturnValue({

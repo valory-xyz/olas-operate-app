@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 
 import { AchievementModal } from '../../../components/AchievementModal';
 import { ACHIEVEMENT_TYPE } from '../../../constants/achievement';
@@ -20,15 +20,40 @@ jest.mock('../../../config/providers', () => ({}));
 jest.mock('next/dynamic', () => () => () => null);
 
 jest.mock('../../../components/ui', () => ({
-  Modal: ({ open, action }: { open: boolean; action: React.ReactNode }) =>
-    open ? <div data-testid="achievement-modal">{action}</div> : null,
+  Modal: ({
+    open,
+    action,
+    onCancel,
+  }: {
+    open: boolean;
+    action: React.ReactNode;
+    onCancel: () => void;
+  }) =>
+    open ? (
+      <div data-testid="achievement-modal">
+        {action}
+        <button onClick={onCancel}>close</button>
+      </div>
+    ) : null,
 }));
 
 jest.mock(
   '../../../components/AchievementModal/ModalContent/PredictionPayout',
   () => ({
-    PredictionPayout: ({ agentType }: { agentType: string }) => (
-      <div data-testid="payout-content">{agentType}</div>
+    ...jest.requireActual(
+      '../../../components/AchievementModal/ModalContent/PredictionPayout',
+    ),
+    PredictionPayout: ({
+      agentType,
+      onShare,
+    }: {
+      agentType: string;
+      onShare: () => void;
+    }) => (
+      <div data-testid="payout-content">
+        {agentType}
+        <button onClick={onShare}>share</button>
+      </div>
     ),
   }),
 );
@@ -92,6 +117,21 @@ describe('AchievementModal', () => {
     expect(mockTriggerBackgroundTasks).toHaveBeenCalledWith(achievement);
     expect(mockMarkCurrentAchievementAsShown).not.toHaveBeenCalled();
   });
+
+  it.each(['close', 'share'])(
+    'marks the achievement as shown with the display delay on %s',
+    async (button) => {
+      mockGetAgentTypeFromService.mockReturnValue(AgentMap.PredictTrader);
+      setCurrentAchievement(makeOmenstratPayoutAchievement());
+
+      await renderModal();
+      fireEvent.click(screen.getByRole('button', { name: button }));
+
+      expect(mockMarkCurrentAchievementAsShown).toHaveBeenCalledTimes(1);
+      expect(mockSkipCurrentAchievement).not.toHaveBeenCalled();
+      expect(screen.queryByTestId('achievement-modal')).not.toBeInTheDocument();
+    },
+  );
 
   it.each([
     [
