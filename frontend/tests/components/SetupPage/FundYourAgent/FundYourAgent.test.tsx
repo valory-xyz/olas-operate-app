@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 
+import { FundingFlowProps } from '../../../../components/FundingFlow';
 // Import after mocks
 import { FundYourAgent } from '../../../../components/SetupPage/FundYourAgent/FundYourAgent';
 import { SETUP_SCREEN } from '../../../../constants';
@@ -7,8 +8,8 @@ import { EvmChainIdMap } from '../../../../constants/chains';
 
 /* eslint-disable @typescript-eslint/no-var-requires */
 jest.mock(
-  'styled-components',
-  () => require('../../../mocks/styledComponents').styledComponentsMock,
+  'ethers-multicall',
+  () => require('../../../mocks/ethersMulticall').ethersMulticallMock,
 );
 /* eslint-enable @typescript-eslint/no-var-requires */
 jest.mock('../../../../constants/providers', () => ({ PROVIDERS: {} }));
@@ -16,12 +17,12 @@ jest.mock('../../../../constants/providers', () => ({ PROVIDERS: {} }));
 const mockGotoSetup = jest.fn();
 const mockResetTokenRequirements = jest.fn();
 const mockUseServices = jest.fn();
+const BACKUP_OWNER = '0x2222222222222222222222222222222222222222';
 
 jest.mock('../../../../hooks', () => ({
-  // Disable both optional cards to keep the tree small.
-  useFeatureFlag: () => [false, false],
   useSetup: () => ({ goto: mockGotoSetup }),
   useServices: () => mockUseServices(),
+  useBackupSigner: () => BACKUP_OWNER,
   useGetRefillRequirements: () => ({
     refillTokenRequirements: [{ symbol: 'OLAS', amount: 1 }],
     isLoading: false,
@@ -29,41 +30,59 @@ jest.mock('../../../../hooks', () => ({
   }),
 }));
 
-jest.mock('../../../../components/ui', () => ({
-  BackButton: ({ onPrev }: { onPrev: () => void }) => (
-    <button data-testid="back-button" onClick={onPrev}>
-      Back
-    </button>
-  ),
-  CardFlex: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  CardTitle: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  TokenRequirements: () => <div data-testid="token-requirements" />,
+let mockFlowProps: FundingFlowProps | null = null;
+jest.mock('../../../../components/FundingFlow', () => ({
+  FundingFlow: (props: FundingFlowProps) => {
+    mockFlowProps = props;
+    return (
+      <button data-testid="back-button" onClick={props.onBack}>
+        Back
+      </button>
+    );
+  },
 }));
-
-jest.mock(
-  '../../../../components/SetupPage/FundYourAgent/components/OnRampMethodCard',
-  () => ({
-    OnRampMethodCard: () => <div data-testid="on-ramp-method-card" />,
-  }),
-);
 
 const setup = (defaultStakingProgramId?: string) => {
   mockUseServices.mockReturnValue({
     selectedAgentConfig: {
-      evmHomeChainId: EvmChainIdMap.Gnosis,
-      displayName: 'Connect',
+      evmHomeChainId: EvmChainIdMap.Polygon,
+      displayName: 'Polystrat',
       defaultStakingProgramId,
     },
+    selectedService: { service_config_id: 'sc-polystrat' },
   });
 };
 
-describe('FundYourAgent — Back button routing', () => {
+describe('FundYourAgent', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockFlowProps = null;
+  });
+
+  it('renders the funding flow for the new agent instead of Buy, Transfer and Bridge', () => {
+    setup('pearl_beta');
+    render(<FundYourAgent />);
+
+    expect(mockFlowProps).toMatchObject({
+      mode: 'onboard',
+      serviceConfigId: 'sc-polystrat',
+      backupOwner: BACKUP_OWNER,
+      destinationChain: 'polygon',
+      fallbackToReceive: [{ symbol: 'OLAS', amount: 1 }],
+    });
+    expect(
+      screen.queryByText(/Transfer Crypto on|Bridge Crypto|Buy/),
+    ).toBeNull();
+  });
+
+  it('waits for the service instead of opening a flow it could not start', () => {
+    mockUseServices.mockReturnValue({
+      selectedAgentConfig: { evmHomeChainId: EvmChainIdMap.Polygon },
+      selectedService: undefined,
+    });
+    render(<FundYourAgent />);
+
+    expect(mockFlowProps).toBeNull();
   });
 
   it('routes back to AgentOnboarding for a no_staking agent (e.g. Connect)', () => {

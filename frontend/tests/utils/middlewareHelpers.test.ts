@@ -67,6 +67,12 @@ describe('asAllEvmChainId', () => {
     );
   });
 
+  it('converts arbitrum_one to 42161', () => {
+    expect(asAllEvmChainId(MiddlewareChainMap.ARBITRUM_ONE)).toBe(
+      AllEvmChainIdMap.Arbitrum,
+    );
+  });
+
   it('delegates non-ethereum chains to asEvmChainId', () => {
     expect(asAllEvmChainId(MiddlewareChainMap.GNOSIS)).toBe(
       EvmChainIdMap.Gnosis,
@@ -89,6 +95,14 @@ describe('asEvmChainDetails', () => {
     expect(result.displayName).toBe('Ethereum');
     expect(result.symbol).toBe(TokenSymbolMap.ETH);
     expect(result.chainId).toBe(AllEvmChainIdMap.Ethereum);
+  });
+
+  it('returns correct details for arbitrum_one', () => {
+    const result = asEvmChainDetails(MiddlewareChainMap.ARBITRUM_ONE);
+    expect(result.name).toBe('arbitrum_one');
+    expect(result.displayName).toBe('Arbitrum');
+    expect(result.symbol).toBe(TokenSymbolMap.ETH);
+    expect(result.chainId).toBe(AllEvmChainIdMap.Arbitrum);
   });
 
   it('returns correct details for gnosis', () => {
@@ -163,6 +177,12 @@ describe('asAllMiddlewareChain', () => {
   it('converts Ethereum chain ID to ethereum middleware chain', () => {
     expect(asAllMiddlewareChain(AllEvmChainIdMap.Ethereum)).toBe(
       MiddlewareChainMap.ETHEREUM,
+    );
+  });
+
+  it('converts the Arbitrum chain ID to arbitrum_one', () => {
+    expect(asAllMiddlewareChain(AllEvmChainIdMap.Arbitrum)).toBe(
+      MiddlewareChainMap.ARBITRUM_ONE,
     );
   });
 

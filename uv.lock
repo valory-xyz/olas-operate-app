@@ -1013,7 +1013,7 @@ wheels = [
 
 [[package]]
 name = "olas-operate-app"
-version = "1.9.9rc23"
+version = "1.9.9rc25"
 source = { virtual = "." }
 dependencies = [
     { name = "olas-operate-middleware" },
@@ -1030,7 +1030,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "olas-operate-middleware", specifier = "==0.15.42" },
+    { name = "olas-operate-middleware", specifier = "==0.15.43" },
     { name = "open-aea-cli-ipfs", specifier = "==2.2.9" },
     { name = "open-aea-ledger-cosmos", specifier = "==2.2.9" },
     { name = "open-aea-ledger-ethereum", specifier = "==2.2.9" },
@@ -1042,7 +1042,7 @@ dev = [{ name = "pyinstaller", specifier = "==6.20.0" }]
 
 [[package]]
 name = "olas-operate-middleware"
-version = "0.15.42"
+version = "0.15.43"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiohttp" },
@@ -1062,9 +1062,9 @@ dependencies = [
     { name = "uvicorn" },
     { name = "werkzeug" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/b3/12/bd167275200e24213fa726219eef07c3febea1c9b415166e60d157cce72c/olas_operate_middleware-0.15.42.tar.gz", hash = "sha256:0ad86d26d5a531fcc0484e9d6a9cb02e2cfc6e28ab79401e3016e34214349d24", size = 307578, upload-time = "2026-09-30T10:55:23.475Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/a5/6f/e3b8d3e86359cf012fcb5137cb3e7d45a811006b57e266055759d030af7a/olas_operate_middleware-0.15.43.tar.gz", hash = "sha256:5d3b33fe3425b38a8412fa9f60affc360502f2c6cedda0916c2657ca2e5d89e4", size = 338052, upload-time = "2026-10-02T13:16:47.358Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/80/e2/ca8c2eb0fb1b2af9803682a7f6cb9225eea86560cdb7d0f5efa8cd1d0da1/olas_operate_middleware-0.15.42-py3-none-any.whl", hash = "sha256:70e393392ae490467b14c11a250828b68b1d77f24baf4c4d84995b0b2c3e9873", size = 367173, upload-time = "2026-09-30T10:55:21.739Z" },
+    { url = "https://files.pythonhosted.org/packages/c3/d6/19b03fdb96de7f66afd6f4062d75ee119ee10d69d2794460be898ec0a16b/olas_operate_middleware-0.15.43-py3-none-any.whl", hash = "sha256:002330c5d19eff1925a3e1f7fa02d5d4e10375537fc238332a85dd0f4ba6483f", size = 401389, upload-time = "2026-10-02T13:16:45.555Z" },
 ]
 
 [[package]]

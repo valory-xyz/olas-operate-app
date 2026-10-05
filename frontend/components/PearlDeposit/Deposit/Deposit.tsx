@@ -3,6 +3,7 @@ import { isEmpty, kebabCase, values } from 'lodash';
 import Image from 'next/image';
 import { useEffect } from 'react';
 
+import { isRunStarted } from '@/components/FundingFlow/utils';
 import {
   Alert,
   BackButton,
@@ -13,6 +14,8 @@ import {
   WalletTransferDirection,
 } from '@/components/ui';
 import { usePearlWallet } from '@/context/PearlWalletProvider';
+import { useFundingRun } from '@/hooks/useFundingRun';
+import { FundingRun, FundingRunMode } from '@/types/FundingRun';
 import {
   asEvmChainDetails,
   asMiddlewareChain,
@@ -21,12 +24,20 @@ import {
 
 const { Title, Text } = Typography;
 
+const DEPOSIT_SUBTITLE = 'Enter the token amounts you want to deposit.';
+
+const FUNDING_RUN_LABEL: Record<FundingRunMode, string> = {
+  onboard: 'agent setup funding',
+  deposit: 'Pearl Wallet deposit',
+  signer_gas: 'Pearl Wallet top-up',
+};
+
 const DepositTitle = () => (
   <Flex vertical justify="space-between" gap={12}>
     <Title level={4} className="m-0">
       Deposit to Pearl Wallet
     </Title>
-    <Text>Enter the token amounts you want to deposit.</Text>
+    <Text>{DEPOSIT_SUBTITLE}</Text>
   </Flex>
 );
 
@@ -88,9 +99,29 @@ const SelectChainToDeposit = () => {
 type DepositProps = {
   onBack: () => void;
   onContinue: () => void;
+  /** Continue is replacing an old quoted run; blocks a second click. */
+  isContinuing?: boolean;
 };
 
-export const Deposit = ({ onBack, onContinue }: DepositProps) => {
+const getContinueTooltip = (
+  masterSafeAddress: string | null,
+  liveRun: FundingRun | null,
+) => {
+  if (!masterSafeAddress) return 'Complete agent setup to enable';
+  if (liveRun) {
+    return `Your ${FUNDING_RUN_LABEL[liveRun.mode]} is still in progress. Finish it first.`;
+  }
+  return null;
+};
+
+export const Deposit = ({
+  onBack,
+  onContinue,
+  isContinuing = false,
+}: DepositProps) => {
+  const { activeRun } = useFundingRun();
+  // Only a run holding the user's funds blocks a new deposit; a quoted one is replaced.
+  const liveRun = activeRun && isRunStarted(activeRun) ? activeRun : null;
   const {
     onDepositAmountChange,
     amountsToDeposit,
@@ -104,6 +135,10 @@ export const Deposit = ({ onBack, onContinue }: DepositProps) => {
   useEffect(() => {
     initializeDepositAmounts();
   }, [walletChainId, initializeDepositAmounts]);
+
+  const hasEnteredAmounts = !values(amountsToDeposit).every(
+    (i) => i.amount === 0,
+  );
 
   return (
     <CardFlex $noBorder $padding="32px" style={cardStyles}>
@@ -133,15 +168,11 @@ export const Deposit = ({ onBack, onContinue }: DepositProps) => {
           </Flex>
         </Flex>
 
-        <Tooltip
-          title={masterSafeAddress ? null : 'Complete agent setup to enable'}
-        >
+        <Tooltip title={getContinueTooltip(masterSafeAddress, liveRun)}>
           <Button
-            disabled={
-              values(amountsToDeposit).every((i) => i.amount === 0) ||
-              !masterSafeAddress
-            }
+            disabled={!hasEnteredAmounts || !masterSafeAddress || !!liveRun}
             onClick={onContinue}
+            loading={isContinuing}
             type="primary"
             size="large"
             block

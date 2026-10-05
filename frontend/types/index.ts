@@ -9,6 +9,7 @@ export * from './ConnectSession';
 export * from './ElectronApi';
 export * from './Epoch';
 export * from './Funding';
+export * from './FundingRun';
 export * from './FundRecovery';
 export * from './Service';
 export * from './Util';

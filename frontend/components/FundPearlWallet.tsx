@@ -1,72 +1,75 @@
-import { useEffect, useMemo, useState } from 'react';
+import { Flex } from 'antd';
+import { useEffect, useState } from 'react';
 
-import { TransferCryptoFromExternalWallet } from '@/components/PearlWallet';
+import { FundingFlow } from '@/components/FundingFlow';
+import { Alert, BackButton, cardStyles } from '@/components/ui';
 import { CHAIN_CONFIG } from '@/config/chains';
-import { PAGES } from '@/constants';
 import {
-  useMasterBalances,
-  useMasterWalletContext,
-  usePageState,
-  useServices,
-} from '@/hooks';
-import { AvailableAsset } from '@/types/Wallet';
-import {
-  asEvmChainDetails,
-  asMiddlewareChain,
-} from '@/utils/middlewareHelpers';
-import { formatUnitsToNumber } from '@/utils/numberFormatters';
+  isSupportedMiddlewareChain,
+  PAGES,
+  SupportedMiddlewareChain,
+} from '@/constants';
+import { useMasterBalances, usePageState, useServices } from '@/hooks';
+import { asMiddlewareChain } from '@/utils/middlewareHelpers';
 
-const readPrefillAmountWei = (params: unknown): string | undefined => {
+export const UNSUPPORTED_CHAIN_ERROR =
+  "Pearl can't top up the Pearl Wallet on this chain. Please contact support.";
+
+const readChain = (
+  params: unknown,
+): SupportedMiddlewareChain | 'unsupported' | undefined => {
   if (!params || typeof params !== 'object') return undefined;
-  const value = (params as Record<string, unknown>).prefillAmountWei;
-  return typeof value === 'string' ? value : undefined;
+  const value = (params as Record<string, unknown>).chain;
+  if (value === undefined) return undefined;
+  return isSupportedMiddlewareChain(value) ? value : 'unsupported';
 };
 
+/**
+ * Tops up the Pearl Signer's gas reserve through the funding flow. The
+ * middleware derives the reserve itself, so no amount is passed in.
+ */
 export const FundPearlWallet = () => {
   const { goto, navParams, clearNavParams } = usePageState();
   const { selectedAgentConfig } = useServices();
   const { masterEoaGasRequirement } = useMasterBalances();
-  const { masterEoa } = useMasterWalletContext();
 
-  const [prefillAmountWei] = useState<string | undefined>(() =>
-    readPrefillAmountWei(navParams),
-  );
+  const [navChain] = useState(() => readChain(navParams));
 
   useEffect(() => {
     clearNavParams();
   }, [clearNavParams]);
 
+  // Topping up the home chain instead would leave the named chain short.
+  if (navChain === 'unsupported') {
+    return (
+      <Flex vertical gap={16} style={cardStyles}>
+        <BackButton onPrev={() => goto(PAGES.Main)} />
+        <Alert type="error" showIcon message={UNSUPPORTED_CHAIN_ERROR} />
+      </Flex>
+    );
+  }
+
   const homeChainId = selectedAgentConfig.evmHomeChainId;
-  const { symbol, decimals } = CHAIN_CONFIG[homeChainId].nativeToken;
-
-  const tokenAndDepositedAmounts = useMemo<AvailableAsset[]>(() => {
-    if (prefillAmountWei !== undefined) {
-      return [
-        {
-          symbol,
-          amount: formatUnitsToNumber(prefillAmountWei, decimals, 6),
-        },
-      ];
-    }
-    if (!masterEoaGasRequirement) return [];
-    return [{ symbol, amount: masterEoaGasRequirement }];
-  }, [prefillAmountWei, masterEoaGasRequirement, symbol, decimals]);
-
-  if (!masterEoa) return null;
-
-  const chainName = asEvmChainDetails(
-    asMiddlewareChain(homeChainId),
-  ).displayName;
+  const destinationChain = navChain ?? asMiddlewareChain(homeChainId);
+  const isHomeChain = destinationChain === asMiddlewareChain(homeChainId);
 
   return (
-    <TransferCryptoFromExternalWallet
-      description={`Send funds from your external wallet to the Pearl Wallet address below. When you’re done, you can leave this screen — after the transfer confirms on ${chainName}, your Pearl Wallet balance updates automatically.`}
-      chainName={chainName}
-      address={masterEoa.address}
-      tokensToDeposit={tokenAndDepositedAmounts}
+    <FundingFlow
+      mode="signer_gas"
+      destinationChain={destinationChain}
+      fallbackToReceive={
+        isHomeChain && masterEoaGasRequirement
+          ? [
+              {
+                symbol: CHAIN_CONFIG[homeChainId].nativeToken.symbol,
+                amount: masterEoaGasRequirement,
+              },
+            ]
+          : undefined
+      }
       onBack={() => goto(PAGES.Main)}
       onBackToPearlWallet={() => goto(PAGES.PearlWallet)}
-      requestedColumnText="Total Amount Required"
+      onTransferCompleted={() => goto(PAGES.PearlWallet)}
     />
   );
 };

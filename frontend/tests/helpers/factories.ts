@@ -35,6 +35,7 @@ import {
 } from '../../types/Autonolas';
 import { WalletBalance } from '../../types/Balance';
 import { OnboardingSurveyState, PearlStore } from '../../types/ElectronApi';
+import { FundingRun, FundingRunStep } from '../../types/FundingRun';
 import { MiddlewareServiceResponse, Service } from '../../types/Service';
 import {
   AgentFundingEvent,
@@ -924,4 +925,111 @@ export const makeElectronApiMock = () => ({
   },
   logEvent: jest.fn(),
   nextLogError: jest.fn(),
+});
+
+// ---------------------------------------------------------------------------
+// Funding run (shape of `FundingRunManager.run_json` in the middleware)
+// ---------------------------------------------------------------------------
+
+export const FUNDING_RUN_NATIVE: Address =
+  '0x0000000000000000000000000000000000000000';
+export const FUNDING_RUN_BASE_USDC: Address =
+  '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
+export const FUNDING_RUN_POLYGON_OLAS: Address =
+  '0xFEF5d947472e72Efbb2E388c730B7428406F2F95';
+export const FUNDING_RUN_POLYGON_PUSD: Address =
+  '0xC011a7E12a19f7B1f670d46F03B03f3342E82DFB';
+
+export const makeFundingRunStep = (
+  overrides: Partial<FundingRunStep> = {},
+): FundingRunStep => ({
+  id: 'receive',
+  kind: 'RECEIVE',
+  status: 'PENDING',
+  token: FUNDING_RUN_BASE_USDC,
+  amount: '15000000',
+  explorer_link: null,
+  started_at: null,
+  finished_at: null,
+  is_slow: false,
+  visible: true,
+  ...overrides,
+});
+
+/** A Polystrat onboarding run funded with USDC on Base, awaiting its deposit. */
+export const makeFundingRun = (
+  overrides: Partial<FundingRun> = {},
+): FundingRun => ({
+  id: 'fr-3f2a0000-0000-4000-8000-000000000000',
+  mode: 'onboard',
+  status: 'AWAITING_DEPOSIT',
+  source: {
+    chain: 'base',
+    token: FUNDING_RUN_BASE_USDC,
+    symbol: 'USDC',
+    decimals: 6,
+    deposit_address: DEFAULT_EOA_ADDRESS,
+  },
+  destination: { chain: 'polygon', wallet: 'master_safe' },
+  // The middleware sends a service only for onboarding runs.
+  service_config_id:
+    (overrides.mode ?? 'onboard') === 'onboard' ? 'sc-1' : null,
+  quote: {
+    required_amount: '15000000',
+    received_amount: '0',
+    outstanding_amount: '15000000',
+    quoted_at: 1790592071,
+    next_refresh_at: 1790592251,
+  },
+  quote_message: null,
+  to_receive: [
+    {
+      token: FUNDING_RUN_NATIVE,
+      symbol: 'POL',
+      amount: '6000000000000000000',
+    },
+    {
+      token: FUNDING_RUN_POLYGON_OLAS,
+      symbol: 'OLAS',
+      amount: '40000000000000000000',
+    },
+    { token: FUNDING_RUN_POLYGON_PUSD, symbol: 'pUSD', amount: '10000000' },
+  ],
+  steps: [
+    makeFundingRunStep(),
+    makeFundingRunStep({
+      id: 'bridge',
+      kind: 'BRIDGE',
+      token: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359',
+      amount: '14800000',
+    }),
+    makeFundingRunStep({
+      id: 'native',
+      kind: 'NATIVE',
+      token: FUNDING_RUN_NATIVE,
+      amount: '6000000000000000000',
+    }),
+    makeFundingRunStep({
+      id: `swap:${FUNDING_RUN_POLYGON_OLAS}`,
+      kind: 'SWAP',
+      token: FUNDING_RUN_POLYGON_OLAS,
+      amount: '40000000000000000000',
+    }),
+    makeFundingRunStep({
+      id: 'safe',
+      kind: 'SAFE_AND_TRANSFER',
+      token: null,
+      amount: null,
+      visible: false,
+    }),
+    makeFundingRunStep({
+      id: 'clear_delegation',
+      kind: 'CLEAR_DELEGATION',
+      token: null,
+      amount: null,
+      visible: false,
+    }),
+  ],
+  error: null,
+  ...overrides,
 });

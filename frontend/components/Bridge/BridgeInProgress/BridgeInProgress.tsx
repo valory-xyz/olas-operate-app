@@ -83,9 +83,7 @@ export const BridgeInProgress = ({
     error: bridgeExecuteError,
     caseType: 'bridge',
     onFund: (gasError) => {
-      goto(PAGES.FundPearlWallet, {
-        prefillAmountWei: gasError.prefill_amount_wei,
-      });
+      goto(PAGES.FundPearlWallet, { chain: gasError.chain });
     },
     onClose: () => setIsGasModalDismissed(true),
     // The bridge execute is a useQuery, not a mutation. Removing it from the
