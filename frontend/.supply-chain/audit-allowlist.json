@@ -10,15 +10,5 @@
     "added": "YYYY-MM-DD when the entry was added — REQUIRED",
     "review": "YYYY-MM-DD by which the entry must be re-evaluated — REQUIRED. An expired entry prints a CI warning but does not fail the job."
   },
-  "entries": [
-    {
-      "id": 1240992,
-      "ghsa": "GHSA-vfj7-8cjw-p6xm",
-      "package": "braces",
-      "severity": "high",
-      "reason": "No patched release (<=3.0.3, and 3.0.3 is the latest published braces). The flaw is stack exhaustion when expanding deeply nested brace patterns. braces is only reached via sass>@parcel/watcher>micromatch, and sass loads @parcel/watcher only inside watchDir() for `sass --watch`; Pearl compiles SCSS at build time through Next.js and never runs the sass watcher, and the glob patterns are never attacker-supplied, so the vulnerable path is unreachable. Remove once a fixed braces ships.",
-      "added": "2026-10-05",
-      "review": "2027-01-03"
-    }
-  ]
+  "entries": []
 }
