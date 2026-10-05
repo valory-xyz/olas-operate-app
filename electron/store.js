@@ -24,9 +24,7 @@ const schema = {
   // .operate/pearl_store.json exists. Used to measure time-to-first-success for the post-setup
   // questionnaire, which reports `null` when it is empty.
   firstAppOpenedAt: { type: 'string', default: '' },
-  // Written by the main process just before quitAndInstall() and removed on the next launch, so
-  // a relaunch still on the old version can be detected as a failed install. No default: absent
-  // means no install is pending, and a null default would fail validation for type 'object'.
+  // No default: a null default fails 'object' validation; absence means nothing pending.
   pendingUpdateInstall: {
     type: 'object',
     properties: {
@@ -66,7 +64,7 @@ const schema = {
 /**
  * Sets up the IPC communication and initializes the Electron store.
  * @param {Electron.IpcMain} ipcMain - The IPC main channel for communication.
- * @returns {Store} The store instance, for main-process reads and writes.
+ * @returns {Store}
  */
 const setupStoreIpc = (ipcMain) => {
   const store = new Store({ schema });
@@ -80,15 +78,11 @@ const setupStoreIpc = (ipcMain) => {
   // `store.clear()` runs during account creation (SetupWelcome resets persistent state when no
   // account exists yet), i.e. on the very launch the stamp above was written. Losing it there
   // would make time-to-first-success unmeasurable for every new account, so it survives the
-  // clear. A pending update install marker is kept too, so a reset cannot hide a failed install.
+  // clear.
   const clearStore = () => {
     const firstAppOpenedAt = store.get('firstAppOpenedAt');
-    const pendingUpdateInstall = store.get('pendingUpdateInstall');
     store.clear();
     if (firstAppOpenedAt) store.set('firstAppOpenedAt', firstAppOpenedAt);
-    if (pendingUpdateInstall) {
-      store.set('pendingUpdateInstall', pendingUpdateInstall);
-    }
   };
 
   // exposed to electron browser window
