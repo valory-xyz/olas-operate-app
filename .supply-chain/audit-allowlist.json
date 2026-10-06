@@ -25,7 +25,7 @@
       "ghsa": "GHSA-vfj7-8cjw-p6xm",
       "package": "braces",
       "severity": "high",
-      "reason": "No patched release (<=3.0.3 is affected and 3.0.3 is the latest). Only reachable via sass > @parcel/watcher > micromatch > braces, which expands glob patterns from our own build/watch config, never from user or network input, so the stack-exhaustion DoS needs attacker-controlled patterns we never pass. Upgrade once a fixed version ships.",
+      "reason": "No patched release (<=3.0.3, no fix yet). The flaw is a stack-exhaustion DoS when expanding deeply nested brace patterns. In the root production tree braces only arrives via sass > @parcel/watcher > micromatch, a build-time stylesheet compiler that only sees glob patterns from this repo's own build config, never user or network input, and the Electron runtime never loads it. Upgrade once a fixed version ships.",
       "added": "2026-10-05",
       "review": "2027-01-03"
     }
