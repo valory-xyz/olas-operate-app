@@ -16,7 +16,7 @@
       "ghsa": "GHSA-vfj7-8cjw-p6xm",
       "package": "braces",
       "severity": "high",
-      "reason": "No patched release (<=3.0.3, and 3.0.3 is the latest published braces). The flaw is stack exhaustion when expanding deeply nested brace patterns. braces is only reached via sass>@parcel/watcher>micromatch, and sass loads @parcel/watcher only inside watchDir() for `sass --watch`; Pearl compiles SCSS at build time through Next.js and never runs the sass watcher, and the glob patterns are never attacker-supplied, so the vulnerable path is unreachable. Remove once a fixed braces ships.",
+      "reason": "No patched release (<=3.0.3, no fix yet). The flaw is a stack-exhaustion DoS when expanding deeply nested brace patterns. In the frontend production tree braces only arrives via sass > @parcel/watcher > micromatch, a build-time stylesheet compiler that only sees glob patterns from this repo's own build config, never user or network input, and the shipped app never loads it. Upgrade once a fixed version ships.",
       "added": "2026-10-05",
       "review": "2027-01-03"
     }

@@ -1,6 +1,6 @@
 import { ACHIEVEMENT_TYPE } from '@/constants';
 
-type PolystratAchievementData = {
+type PredictionPayoutAchievementData = {
   id: string;
   prediction_side: string;
   bet_amount: number;
@@ -9,7 +9,7 @@ type PolystratAchievementData = {
   total_payout: number;
   created_at: string;
   settled_at: string;
-  transaction_hash: string;
+  transaction_hash: string | null;
   market: {
     id: string;
     title: string;
@@ -28,11 +28,18 @@ type BaseAchievement = {
 
 type PolystratPayoutAchievement = BaseAchievement & {
   achievement_type: typeof ACHIEVEMENT_TYPE.POLYSTRAT_PAYOUT;
-  data: PolystratAchievementData;
+  data: PredictionPayoutAchievementData;
+};
+
+type OmenstratPayoutAchievement = BaseAchievement & {
+  achievement_type: typeof ACHIEVEMENT_TYPE.OMENSTRAT_PAYOUT;
+  data: PredictionPayoutAchievementData;
 };
 
 // Discriminated union of all achievement types
-export type Achievement = PolystratPayoutAchievement;
+export type Achievement =
+  | PolystratPayoutAchievement
+  | OmenstratPayoutAchievement;
 
 export type ServiceAchievements = Achievement[];
 
