@@ -683,6 +683,38 @@ describe('useAutoRunLifecycle', () => {
       expect(params.stopAgentWithRecovery).toHaveBeenCalledWith(scTrader);
     });
 
+    it('does not fire at 70 minutes and fires once the 4-hour cap is passed', async () => {
+      const params = makeHookParams({
+        enabled: true,
+        enabledRef: { current: true },
+        runningAgentType: AgentMap.PredictTrader,
+        runningServiceConfigId: scTrader,
+        runningAgentTypeRef: { current: AgentMap.PredictTrader },
+        runningServiceConfigIdRef: { current: scTrader },
+        refreshRewardsEligibility: jest.fn().mockResolvedValue(false),
+        getRewardSnapshot: jest.fn().mockReturnValue(false),
+      });
+
+      renderHook(() => useAutoRunLifecycle(params));
+      await act(async () => {
+        await flushMicrotasks();
+      });
+
+      await act(async () => {
+        jest.advanceTimersByTime(
+          70 * 60 * 1000 + RUNNING_AGENT_WATCHDOG_CHECK_SECONDS * 1000,
+        );
+        await flushMicrotasks();
+      });
+      expect(params.stopAgentWithRecovery).not.toHaveBeenCalled();
+
+      await act(async () => {
+        jest.advanceTimersByTime(4 * 60 * 60 * 1000);
+        await flushMicrotasks();
+      });
+      expect(params.stopAgentWithRecovery).toHaveBeenCalledWith(scTrader);
+    });
+
     it('does not stop when all other agents are earned (force mode, no alternative)', async () => {
       const params = makeHookParams({
         enabled: true,

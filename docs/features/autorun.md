@@ -77,7 +77,7 @@ Note: timing constants are centralized in `constants.ts` to avoid duplicate knob
 | `AUTO_RUN_START_DELAY_SECONDS` | 30s | Delay before starting after first enable (gives user time to configure) |
 | `AUTO_RUN_VERBOSE_LOGS` | true | Gates high-volume diagnostic logs; set to true while actively debugging incidents |
 | `COOLDOWN_SECONDS` | 20s | Delay after stop before starting next instance |
-| `RUNNING_AGENT_MAX_RUNTIME_SECONDS` | 70min | Watchdog threshold for maximum continuous runtime per instance |
+| `RUNNING_AGENT_MAX_RUNTIME_SECONDS` | 4h | Watchdog threshold for maximum continuous runtime per instance |
 | `RUNNING_AGENT_WATCHDOG_CHECK_SECONDS` | 5min | Runtime watchdog check cadence |
 | `RUNNING_AGENT_ELIGIBILITY_CHECK_SECONDS` | 10min | Eviction watchdog cadence — how often the running instance's on-chain staking state is re-read |
 | `HEALTH_SUMMARY_INTERVAL_SECONDS` | 15min | Aggregated auto-run health log cadence (error/success counters); only emitted when `AUTO_RUN_VERBOSE_LOGS=true` |
@@ -142,7 +142,7 @@ Note: Resetting `lastRewardsEligibilityRef` on successful stop is critical — w
 ### 3.5 Long-Running Agent Watchdog
 
 1. While auto-run is enabled and an agent is running, watchdog checks runtime every 5 minutes.
-2. If the same agent has been running for more than 70 minutes continuously, watchdog attempts forced `rotateToNext` (ignores the normal "all others earned/unknown" keep-running optimization).
+2. If the same agent has been running for more than 4 hours continuously, watchdog attempts forced `rotateToNext` (ignores the normal "all others earned/unknown" keep-running optimization).
 3. In force mode, if all other agents are earned/unknown (no known alternative), current agent is kept running and watchdog retries later (no stop-to-idle).
 4. If rotate/recovery fails, scanner fallback is scheduled with blocked delay.
 
