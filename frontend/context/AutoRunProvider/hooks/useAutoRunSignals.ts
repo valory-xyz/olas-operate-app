@@ -19,8 +19,16 @@ type UseAutoRunSignalsParams = {
   runningAgentType: AgentType | null;
   runningServiceConfigId: string | null;
   isSelectedAgentDetailsLoading: boolean;
-  /** Regime-aware "agent has done its epoch work" — the rotation signal. */
-  isEpochTargetMet: boolean | undefined;
+  /**
+   * Selected instance is done for the epoch: staking KPI (regime-aware) and
+   * activity goal both met — the rotation signal.
+   */
+  isSelectedDoneForEpoch: boolean | undefined;
+  /**
+   * Selected instance has no staking (Connect). Its done signal comes only
+   * from `refreshRewardsEligibility`, so the selection must not overwrite it.
+   */
+  isSelectedNoStakingAgent: boolean;
   /** Whether the staking epoch has expired without a checkpoint being called. */
   isEpochExpired: boolean;
   selectedAgentType: AgentType;
@@ -43,7 +51,8 @@ export const useAutoRunSignals = ({
   runningAgentType,
   runningServiceConfigId,
   isSelectedAgentDetailsLoading,
-  isEpochTargetMet,
+  isSelectedDoneForEpoch,
+  isSelectedNoStakingAgent,
   isEpochExpired,
   selectedAgentType,
   selectedServiceConfigId,
@@ -121,16 +130,25 @@ export const useAutoRunSignals = ({
   }, [selectedServiceConfigId]);
 
   // Update rewards snapshot for the selected instance (RewardProvider is selection-driven).
-  // isEpochTargetMet=true means the instance has done its epoch work (regime-aware).
+  // isSelectedDoneForEpoch=true means the instance has done its epoch work
+  // (staking KPI and activity goal), matching `refreshRewardsEligibility`.
   // However if the epoch has already expired (clock = 0, checkpoint not yet called),
   // that value is stale — the instance needs to run in the new epoch to trigger checkpoint.
   // We check both conditions separately rather than modifying the business value itself.
   useEffect(() => {
     if (!selectedServiceConfigId) return;
-    const effectiveEligibility = isEpochExpired ? false : isEpochTargetMet;
+    if (isSelectedNoStakingAgent) return;
+    const effectiveEligibility = isEpochExpired
+      ? false
+      : isSelectedDoneForEpoch;
     rewardSnapshotRef.current[selectedServiceConfigId] = effectiveEligibility;
     setRewardsTick((value) => value + 1);
-  }, [isEpochTargetMet, isEpochExpired, selectedServiceConfigId]);
+  }, [
+    isSelectedDoneForEpoch,
+    isEpochExpired,
+    isSelectedNoStakingAgent,
+    selectedServiceConfigId,
+  ]);
 
   // Cleanup pending scan timer on unmount.
   useEffect(() => {

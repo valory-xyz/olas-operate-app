@@ -1,19 +1,26 @@
 import { renderHook } from '@testing-library/react';
 import { act } from 'react';
 
+import { AGENT_CONFIG } from '../../../../config/agents';
 import { AgentMap } from '../../../../constants/agent';
 import {
   AUTO_RUN_VERBOSE_LOGS,
   HEALTH_SUMMARY_INTERVAL_SECONDS,
 } from '../../../../context/AutoRunProvider/constants';
 import { useAutoRunController } from '../../../../context/AutoRunProvider/hooks/useAutoRunController';
-import { DEFAULT_SERVICE_CONFIG_ID } from '../../../helpers/factories';
+import { AgentMeta } from '../../../../context/AutoRunProvider/types';
+import {
+  DEFAULT_SERVICE_CONFIG_ID,
+  makeAutoRunAgentMeta,
+  MOCK_SERVICE_CONFIG_ID_2,
+} from '../../../helpers/factories';
 
 jest.mock('../../../../hooks', () => ({
   useRewardContext: jest.fn().mockReturnValue({
     isEpochTargetMet: false,
     stakingRewardsDetails: null,
   }),
+  useEpochWorkStatus: jest.fn().mockReturnValue({ isDoneForEpoch: false }),
   useAgentRunning: jest.fn().mockReturnValue({
     runningAgentType: null,
     runningServiceConfigId: null,
@@ -80,6 +87,8 @@ jest.mock(
   () => ({
     useAutoRunOperations: jest.fn().mockReturnValue({
       refreshRewardsEligibility: jest.fn().mockResolvedValue(false),
+      advanceConnectRunBaseline: jest.fn(),
+      notifyGoalReachedOnce: jest.fn(),
       notifySkipOnce: jest.fn(),
       startAgentWithRetries: jest.fn().mockResolvedValue({ status: 'started' }),
       stopAgentWithRecovery: jest.fn().mockResolvedValue(true),
@@ -114,6 +123,12 @@ const { useAutoRunOperations } = jest.requireMock(
 const { useAutoRunSignals } = jest.requireMock(
   '../../../../context/AutoRunProvider/hooks/useAutoRunSignals',
 ) as { useAutoRunSignals: jest.Mock };
+const { useEpochWorkStatus } = jest.requireMock('../../../../hooks') as {
+  useEpochWorkStatus: jest.Mock;
+};
+const { fetchDeployabilityForAgent } = jest.requireMock(
+  '../../../../context/AutoRunProvider/utils/autoRunHelpers',
+) as { fetchDeployabilityForAgent: jest.Mock };
 const { useLogAutoRunEvent } = jest.requireMock(
   '../../../../context/AutoRunProvider/hooks/useLogAutoRunEvent',
 ) as { useLogAutoRunEvent: jest.Mock };
@@ -260,6 +275,97 @@ describe('useAutoRunController', () => {
           typeof call[0] === 'string' && call[0].includes('health summary'),
       );
       expect(summaryCalls).toHaveLength(0);
+    });
+  });
+  describe('activity goal and Connect wiring', () => {
+    const lastCallArgs = (mock: jest.Mock) =>
+      mock.mock.calls[mock.mock.calls.length - 1][0];
+    const connectMeta = {
+      ...makeAutoRunAgentMeta(
+        AgentMap.Connect,
+        AGENT_CONFIG[AgentMap.Connect],
+        MOCK_SERVICE_CONFIG_ID_2,
+      ),
+      stakingProgramId: 'no_staking',
+    } as AgentMeta;
+    const traderMeta = makeAutoRunAgentMeta(
+      AgentMap.PredictTrader,
+      AGENT_CONFIG[AgentMap.PredictTrader],
+    ) as AgentMeta;
+
+    it('feeds the selected done-for-epoch signal (staking + goal) to the signals', () => {
+      useEpochWorkStatus.mockReturnValue({ isDoneForEpoch: true });
+      renderHook(() =>
+        useAutoRunController(
+          makeHookParams({ configuredAgents: [traderMeta] }),
+        ),
+      );
+      const signalsArgs = lastCallArgs(useAutoRunSignals);
+      expect(signalsArgs.isSelectedDoneForEpoch).toBe(true);
+      expect(signalsArgs.isSelectedNoStakingAgent).toBe(false);
+      expect(signalsArgs).not.toHaveProperty('isEpochTargetMet');
+    });
+
+    it('flags a selected Connect instance as no-staking', () => {
+      renderHook(() =>
+        useAutoRunController(
+          makeHookParams({
+            configuredAgents: [traderMeta, connectMeta],
+            selectedServiceConfigId: MOCK_SERVICE_CONFIG_ID_2,
+          }),
+        ),
+      );
+      expect(lastCallArgs(useAutoRunSignals).isSelectedNoStakingAgent).toBe(
+        true,
+      );
+    });
+
+    it('passes the Connect operations and configured agents to the lifecycle', () => {
+      const configuredAgents = [traderMeta, connectMeta];
+      renderHook(() =>
+        useAutoRunController(makeHookParams({ configuredAgents })),
+      );
+      const operations = useAutoRunOperations.mock.results[0].value;
+      const lifecycleArgs = lastCallArgs(useAutoRunLifecycle);
+      expect(lifecycleArgs.configuredAgents).toBe(configuredAgents);
+      expect(lifecycleArgs.advanceConnectRunBaseline).toBe(
+        operations.advanceConnectRunBaseline,
+      );
+      expect(lifecycleArgs.notifyGoalReachedOnce).toBe(
+        operations.notifyGoalReachedOnce,
+      );
+    });
+
+    it('probes hand-over deployability with the running gate ignored', async () => {
+      renderHook(() =>
+        useAutoRunController(
+          makeHookParams({ configuredAgents: [traderMeta, connectMeta] }),
+        ),
+      );
+      const { getHandOverDeployability } = lastCallArgs(useAutoRunLifecycle);
+
+      await act(async () => {
+        await getHandOverDeployability(DEFAULT_SERVICE_CONFIG_ID);
+      });
+
+      expect(fetchDeployabilityForAgent).toHaveBeenCalledWith(
+        traderMeta,
+        expect.objectContaining({ ignoreRunningAgent: true }),
+      );
+    });
+
+    it('returns null from the hand-over probe for an unknown instance', async () => {
+      renderHook(() =>
+        useAutoRunController(makeHookParams({ configuredAgents: [] })),
+      );
+      const { getHandOverDeployability } = lastCallArgs(useAutoRunLifecycle);
+
+      let result: unknown;
+      await act(async () => {
+        result = await getHandOverDeployability('sc-unknown');
+      });
+      expect(result).toBeNull();
+      expect(fetchDeployabilityForAgent).not.toHaveBeenCalled();
     });
   });
 });

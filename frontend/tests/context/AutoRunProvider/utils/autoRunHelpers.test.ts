@@ -13,7 +13,6 @@ import {
   FetchDeployabilityContext,
   fetchDeployabilityForAgent,
   formatEligibilityReason,
-  isNoStakingAgent,
   isOnlyLoadingReason,
   isStakingEpochExpired,
   normalizeEligibility,
@@ -94,17 +93,6 @@ describe('isStakingEpochExpired', () => {
 
   it('returns false (fail closed) when livenessPeriod is malformed', () => {
     expect(isStakingEpochExpired(makeArgs('not-a-number', 0))).toBe(false);
-  });
-});
-
-describe('isNoStakingAgent', () => {
-  it('is true only for the no_staking program', () => {
-    expect(isNoStakingAgent({ stakingProgramId: 'no_staking' })).toBe(true);
-    expect(
-      isNoStakingAgent({
-        stakingProgramId: STAKING_PROGRAM_IDS.PearlBetaMechMarketplace3,
-      }),
-    ).toBe(false);
   });
 });
 

@@ -36,8 +36,8 @@ export type AutoRunContextType = {
   excludedInstances: string[];
   /**
    * Instances whose agent config opts out of auto-run entirely
-   * (`isExcludedFromAutoRun`, e.g. Connect). Shown as permanently blocked
-   * rows in the auto-run options, never includable.
+   * (`isExcludedFromAutoRun`). Shown as permanently blocked rows in the
+   * auto-run options, never includable.
    */
   configExcludedInstances: string[];
   /** Whether the Auto-Run toggle is in the process of being changed. */

@@ -13,6 +13,7 @@ import {
 } from '@/utils/activityGoal';
 import { sleepAwareDelay } from '@/utils/delay';
 import { isValidServiceId } from '@/utils/service';
+import { isNoStakingProgram } from '@/utils/stakingProgram';
 import {
   deriveIsEpochTargetMet,
   fetchAgentStakingRewardsInfo,
@@ -54,13 +55,6 @@ export const isStakingEpochExpired = ({
     return false;
   }
 };
-
-/**
- * Agents without staking (Connect) have no epoch: Auto-run decides their turn
- * from completed runs instead of the staking KPI.
- */
-export const isNoStakingAgent = (meta: Pick<AgentMeta, 'stakingProgramId'>) =>
-  meta.stakingProgramId === 'no_staking';
 
 type ActivityGoalRead =
   | { ok: true; goal: ActivityGoal | null }
@@ -186,7 +180,7 @@ export const refreshRewardsEligibility = async ({
 
   // A no-staking agent that is not running is never done: no fetch needed,
   // so it bypasses the throttle and the scanner never waits on its snapshot.
-  if (meta && isNoStakingAgent(meta) && !isRunning) {
+  if (meta && isNoStakingProgram(meta.stakingProgramId) && !isRunning) {
     setRewardSnapshot(serviceConfigId, false);
     return false;
   }
@@ -200,7 +194,7 @@ export const refreshRewardsEligibility = async ({
   lastRewardsFetchRef.current[serviceConfigId] = now;
   if (!meta) return;
 
-  if (isNoStakingAgent(meta)) {
+  if (isNoStakingProgram(meta.stakingProgramId)) {
     const read = await readActivityGoal(serviceConfigId);
     if (!read.ok) {
       onRewardsFetchError?.();
@@ -542,7 +536,7 @@ const runDeployabilityChecks = async (
   if (
     isValidServiceId(agentMeta.serviceNftTokenId) &&
     agentMeta.stakingProgramId &&
-    !isNoStakingAgent(agentMeta)
+    !isNoStakingProgram(agentMeta.stakingProgramId)
   ) {
     try {
       const [contractDetails, stakingDetails] = await Promise.all([

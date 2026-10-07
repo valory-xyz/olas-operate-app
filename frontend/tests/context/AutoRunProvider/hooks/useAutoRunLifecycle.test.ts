@@ -1,6 +1,7 @@
 import { renderHook } from '@testing-library/react';
 import { act } from 'react';
 
+import { AGENT_CONFIG } from '../../../../config/agents';
 import { AgentMap, AgentType } from '../../../../constants/agent';
 import {
   AUTO_RUN_HEALTH_METRIC,
@@ -13,9 +14,11 @@ import {
   SCAN_ELIGIBLE_DELAY_SECONDS,
 } from '../../../../context/AutoRunProvider/constants';
 import { useAutoRunLifecycle } from '../../../../context/AutoRunProvider/hooks/useAutoRunLifecycle';
+import { AgentMeta } from '../../../../context/AutoRunProvider/types';
 import * as delayModule from '../../../../utils/delay';
 import {
   DEFAULT_SERVICE_CONFIG_ID,
+  makeAutoRunAgentMeta,
   MOCK_SERVICE_CONFIG_ID_2,
 } from '../../../helpers/factories';
 
@@ -42,6 +45,7 @@ const makeHookParams = (
   runningAgentType: null as AgentType | null,
   runningServiceConfigId: null as string | null,
   orderedIncludedInstances: [scTrader, scOptimus],
+  configuredAgents: [] as AgentMeta[],
   enabledRef: { current: false },
   runningAgentTypeRef: { current: null as AgentType | null },
   runningServiceConfigIdRef: { current: null as string | null },
@@ -62,6 +66,9 @@ const makeHookParams = (
     .fn()
     .mockResolvedValue({ status: AUTO_RUN_START_STATUS.STARTED }),
   getDeployabilityForRunningInstance: jest.fn().mockResolvedValue(null),
+  getHandOverDeployability: jest.fn().mockResolvedValue({ canRun: true }),
+  advanceConnectRunBaseline: jest.fn(),
+  notifyGoalReachedOnce: jest.fn(),
   stopRetryBackoffUntilRef: {
     current: {} as Partial<Record<string, number>>,
   },
@@ -394,6 +401,237 @@ describe('useAutoRunLifecycle', () => {
 
       expect(params.startSelectedAgentIfEligible).toHaveBeenCalled();
       expect(params.scanAndStartNext).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('activity goal and Connect rotation', () => {
+    const scConnect = 'sc-connect';
+    const scPolystrat = 'sc-polystrat';
+    const connectMeta = {
+      ...makeAutoRunAgentMeta(
+        AgentMap.Connect,
+        AGENT_CONFIG[AgentMap.Connect],
+        scConnect,
+      ),
+      stakingProgramId: 'no_staking',
+    } as AgentMeta;
+    const traderMeta = makeAutoRunAgentMeta(
+      AgentMap.PredictTrader,
+      AGENT_CONFIG[AgentMap.PredictTrader],
+      scTrader,
+    ) as AgentMeta;
+
+    const flush = async () => {
+      await act(async () => {
+        await new Promise((r) => setTimeout(r, 0));
+      });
+    };
+
+    const makeConnectRunningParams = (
+      overrides: Partial<Parameters<typeof useAutoRunLifecycle>[0]> = {},
+    ) =>
+      makeHookParams({
+        enabled: true,
+        enabledRef: { current: true },
+        runningAgentType: AgentMap.Connect,
+        runningServiceConfigId: scConnect,
+        runningAgentTypeRef: { current: AgentMap.Connect },
+        runningServiceConfigIdRef: { current: scConnect },
+        orderedIncludedInstances: [scConnect, scTrader, scPolystrat],
+        configuredAgents: [connectMeta, traderMeta],
+        lastRewardsEligibilityRef: {
+          current: { [scConnect]: false } as Partial<
+            Record<string, boolean | undefined>
+          >,
+        },
+        // Connect just completed a run; alternates have not earned yet.
+        refreshRewardsEligibility: jest
+          .fn()
+          .mockImplementation(async (id: string) => id === scConnect),
+        getRewardSnapshot: jest.fn().mockReturnValue(false),
+        ...overrides,
+      });
+
+    it('does not rotate a staking agent that earned rewards but has not met its goal', async () => {
+      const params = makeHookParams({
+        enabled: true,
+        enabledRef: { current: true },
+        runningAgentType: AgentMap.PredictTrader,
+        runningServiceConfigId: scTrader,
+        runningAgentTypeRef: { current: AgentMap.PredictTrader },
+        runningServiceConfigIdRef: { current: scTrader },
+        lastRewardsEligibilityRef: {
+          current: { [scTrader]: false } as Partial<
+            Record<string, boolean | undefined>
+          >,
+        },
+        // Combined snapshot: staking KPI met, goal not met → not done.
+        refreshRewardsEligibility: jest.fn().mockResolvedValue(false),
+      });
+
+      const { rerender } = renderHook((props) => useAutoRunLifecycle(props), {
+        initialProps: params,
+      });
+      await flush();
+      expect(params.stopAgentWithRecovery).not.toHaveBeenCalled();
+
+      // Goal met too → the snapshot turns true and rotation follows.
+      (params.refreshRewardsEligibility as jest.Mock).mockImplementation(
+        async (id: string) => id === scTrader,
+      );
+      rerender({ ...params, rewardsTick: 1 });
+      await flush();
+      expect(params.stopAgentWithRecovery).toHaveBeenCalledWith(scTrader);
+    });
+
+    it('hands Connect over to a runnable alternate with one notification', async () => {
+      const params = makeConnectRunningParams();
+
+      renderHook(() => useAutoRunLifecycle(params));
+      await flush();
+
+      expect(params.getHandOverDeployability).toHaveBeenCalledWith(scTrader);
+      expect(params.getHandOverDeployability).toHaveBeenCalledTimes(1);
+      expect(params.stopAgentWithRecovery).toHaveBeenCalledWith(scConnect);
+      expect(params.scanAndStartNext).toHaveBeenCalledWith(scConnect);
+      expect(params.notifyGoalReachedOnce).toHaveBeenCalledTimes(1);
+      expect(params.notifyGoalReachedOnce).toHaveBeenCalledWith(scConnect);
+      expect(params.advanceConnectRunBaseline).not.toHaveBeenCalled();
+    });
+
+    it('skips alternates that are done or cannot start when choosing the hand-over', async () => {
+      const params = makeConnectRunningParams({
+        refreshRewardsEligibility: jest
+          .fn()
+          .mockImplementation(
+            async (id: string) => id === scConnect || id === scTrader,
+          ),
+        getHandOverDeployability: jest
+          .fn()
+          .mockResolvedValue({ canRun: false, reason: 'Low balance' }),
+      });
+
+      renderHook(() => useAutoRunLifecycle(params));
+      await flush();
+
+      expect(params.getHandOverDeployability).not.toHaveBeenCalledWith(
+        scTrader,
+      );
+      expect(params.getHandOverDeployability).toHaveBeenCalledWith(scPolystrat);
+      expect(params.stopAgentWithRecovery).not.toHaveBeenCalled();
+    });
+
+    it('keeps Connect running and advances its baseline when nothing else can run', async () => {
+      const lastRewardsEligibilityRef = {
+        current: { [scConnect]: false } as Partial<
+          Record<string, boolean | undefined>
+        >,
+      };
+      const params = makeConnectRunningParams({
+        lastRewardsEligibilityRef,
+        getHandOverDeployability: jest
+          .fn()
+          .mockResolvedValue({ canRun: false, reason: 'Low balance' }),
+      });
+
+      renderHook(() => useAutoRunLifecycle(params));
+      await flush();
+
+      expect(params.stopAgentWithRecovery).not.toHaveBeenCalled();
+      expect(params.advanceConnectRunBaseline).toHaveBeenCalledWith(scConnect);
+      expect(params.notifyGoalReachedOnce).not.toHaveBeenCalled();
+      expect(params.scheduleNextScan).toHaveBeenCalledWith(
+        SCAN_ELIGIBLE_DELAY_SECONDS,
+      );
+      // Re-armed so the next completed run is a fresh false → true edge.
+      expect(lastRewardsEligibilityRef.current[scConnect]).toBe(false);
+    });
+
+    it('re-checks for a hand-over at the next completed run', async () => {
+      const getHandOverDeployability = jest
+        .fn()
+        .mockResolvedValue({ canRun: false, reason: 'Low balance' });
+      const params = makeConnectRunningParams({ getHandOverDeployability });
+
+      const { rerender } = renderHook((props) => useAutoRunLifecycle(props), {
+        initialProps: params,
+      });
+      await flush();
+      expect(params.stopAgentWithRecovery).not.toHaveBeenCalled();
+
+      // Next poll after the baseline moved: run not completed yet.
+      (params.refreshRewardsEligibility as jest.Mock).mockResolvedValue(false);
+      rerender({ ...params, rewardsTick: 1 });
+      await flush();
+
+      // Next completed run, and an alternate has become runnable.
+      (params.refreshRewardsEligibility as jest.Mock).mockImplementation(
+        async (id: string) => id === scConnect,
+      );
+      getHandOverDeployability.mockResolvedValue({ canRun: true });
+      rerender({ ...params, rewardsTick: 2 });
+      await flush();
+
+      expect(params.stopAgentWithRecovery).toHaveBeenCalledWith(scConnect);
+      expect(params.notifyGoalReachedOnce).toHaveBeenCalledTimes(1);
+    });
+
+    it('takes the stop-timeout backoff path and sends no notification', async () => {
+      const lastRewardsEligibilityRef = {
+        current: { [scConnect]: false } as Partial<
+          Record<string, boolean | undefined>
+        >,
+      };
+      const stopRetryBackoffUntilRef = {
+        current: {} as Partial<Record<string, number>>,
+      };
+      const params = makeConnectRunningParams({
+        lastRewardsEligibilityRef,
+        stopRetryBackoffUntilRef,
+        stopAgentWithRecovery: jest.fn().mockResolvedValue(false),
+      });
+
+      renderHook(() => useAutoRunLifecycle(params));
+      await flush();
+
+      expect(params.notifyGoalReachedOnce).not.toHaveBeenCalled();
+      expect(params.scanAndStartNext).not.toHaveBeenCalled();
+      expect(lastRewardsEligibilityRef.current[scConnect]).toBeUndefined();
+      expect(stopRetryBackoffUntilRef.current[scConnect]).toBeGreaterThan(
+        Date.now(),
+      );
+      expect(params.scheduleNextScan).toHaveBeenCalledWith(
+        SCAN_BLOCKED_DELAY_SECONDS,
+      );
+    });
+
+    it('hands a finished staking agent over to Connect when every other agent is done', async () => {
+      const params = makeHookParams({
+        enabled: true,
+        enabledRef: { current: true },
+        runningAgentType: AgentMap.PredictTrader,
+        runningServiceConfigId: scTrader,
+        runningAgentTypeRef: { current: AgentMap.PredictTrader },
+        runningServiceConfigIdRef: { current: scTrader },
+        orderedIncludedInstances: [scTrader, scPolystrat, scConnect],
+        configuredAgents: [traderMeta, connectMeta],
+        lastRewardsEligibilityRef: {
+          current: { [scTrader]: false } as Partial<
+            Record<string, boolean | undefined>
+          >,
+        },
+        // Connect is never done while not running.
+        refreshRewardsEligibility: jest
+          .fn()
+          .mockImplementation(async (id: string) => id !== scConnect),
+      });
+
+      renderHook(() => useAutoRunLifecycle(params));
+      await flush();
+
+      expect(params.stopAgentWithRecovery).toHaveBeenCalledWith(scTrader);
+      expect(params.scanAndStartNext).toHaveBeenCalledWith(scTrader);
+      expect(params.getHandOverDeployability).not.toHaveBeenCalled();
     });
   });
 
@@ -777,7 +1015,7 @@ describe('useAutoRunLifecycle', () => {
 
     it('rotates away from an eviction that cannot be cleared', async () => {
       // Inside minStakingDuration nothing can re-stake it, so holding the queue
-      // for the 70-minute runtime cap is pure idle time.
+      // for the runtime cap is pure idle time.
       const params = makeRunningParams({
         getDeployabilityForRunningInstance: jest.fn().mockResolvedValue({
           canRun: false,

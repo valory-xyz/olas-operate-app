@@ -8,7 +8,11 @@ import {
 } from '../constants';
 import { AgentMeta } from '../types';
 import { refreshRewardsEligibility as refreshRewardsEligibilityHelper } from '../utils/autoRunHelpers';
-import { getInstanceDisplayNames, notifySkipped } from '../utils/utils';
+import {
+  getInstanceDisplayNames,
+  notifyGoalReached,
+  notifySkipped,
+} from '../utils/utils';
 import { useAutoRunStartOperations } from './useAutoRunStartOperations';
 import { useAutoRunStopOperations } from './useAutoRunStopOperations';
 import { useAutoRunVerboseLogger } from './useAutoRunVerboseLogger';
@@ -46,6 +50,7 @@ type UseAutoRunOperationsParams = {
 /**
  * Composes operational primitives used by scanner/lifecycle:
  * - rewards refresh + skip notifications
+ * - Connect run baseline + its one-per-turn goal-reached notification
  * - guarded start with retries
  * - stop with deployment confirmation and recovery retries
  */
@@ -76,12 +81,82 @@ export const useAutoRunOperations = ({
   // Used by refreshRewardsEligibilityHelper to detect a stale
   // `epoch-target-met=true` that persists from a prior active run.
   const lastStartedAtRef = useRef<Partial<Record<string, number>>>({});
+  // No-staking (Connect) runs completed after this unix-seconds baseline
+  // count as done. Moved forward when a completed run is handled in place.
+  const connectRunBaselineRef = useRef<Partial<Record<string, number>>>({});
+  // Latest `last_met_at` read per no-staking instance.
+  const connectLastMetAtRef = useRef<Partial<Record<string, number | null>>>(
+    {},
+  );
+  // Start time (ms) of the turn whose goal-reached notification was sent.
+  const goalNotifiedRef = useRef<Partial<Record<string, number>>>({});
 
   useEffect(() => {
     if (!enabled) {
       skipNotifiedRef.current = {};
+      connectRunBaselineRef.current = {};
+      connectLastMetAtRef.current = {};
+      goalNotifiedRef.current = {};
     }
   }, [enabled]);
+
+  /**
+   * Baseline in unix seconds (the clock Connect stamps `last_met_at` with):
+   * when Auto-run last started the instance, or, if it did not start it this
+   * session, the moment it is first evaluated.
+   */
+  const getConnectRunBaseline = useCallback((serviceConfigId: string) => {
+    const startedAtSeconds = Math.floor(
+      (lastStartedAtRef.current[serviceConfigId] ?? 0) / 1000,
+    );
+    const advanced = connectRunBaselineRef.current[serviceConfigId];
+    if (advanced === undefined && startedAtSeconds === 0) {
+      const nowSeconds = Math.floor(Date.now() / 1000);
+      connectRunBaselineRef.current[serviceConfigId] = nowSeconds;
+      return nowSeconds;
+    }
+    return Math.max(advanced ?? 0, startedAtSeconds);
+  }, []);
+
+  const recordConnectLastMetAt = useCallback(
+    (serviceConfigId: string, lastMetAt: number | null) => {
+      connectLastMetAtRef.current[serviceConfigId] = lastMetAt;
+    },
+    [],
+  );
+
+  /**
+   * Marks the completed run as handled while the no-staking instance keeps
+   * running, so only the next completed run reports it done again.
+   */
+  const advanceConnectRunBaseline = useCallback(
+    (serviceConfigId: string) => {
+      const baseline = getConnectRunBaseline(serviceConfigId);
+      const lastMetAt = connectLastMetAtRef.current[serviceConfigId] ?? null;
+      connectRunBaselineRef.current[serviceConfigId] = Math.max(
+        baseline,
+        lastMetAt ?? baseline,
+      );
+      setRewardSnapshot(serviceConfigId, false);
+    },
+    [getConnectRunBaseline, setRewardSnapshot],
+  );
+
+  /** Sends the goal-reached notification at most once per Auto-run turn. */
+  const notifyGoalReachedOnce = useCallback(
+    (serviceConfigId: string) => {
+      const turnStartedAt = lastStartedAtRef.current[serviceConfigId] ?? 0;
+      if (goalNotifiedRef.current[serviceConfigId] === turnStartedAt) return;
+      goalNotifiedRef.current[serviceConfigId] = turnStartedAt;
+      const { agentName, instanceName } = getInstanceDisplayNames(
+        serviceConfigId,
+        configuredAgents,
+      );
+      notifyGoalReached(showNotification, agentName, instanceName);
+      logMessage(`goal reached, handing over: ${serviceConfigId}`);
+    },
+    [configuredAgents, logMessage, showNotification],
+  );
 
   // Wrap the caller's optional start callback so lastStartedAtRef is updated
   // on every successful AutoRun start. Caller's callback still fires after.
@@ -106,10 +181,14 @@ export const useAutoRunOperations = ({
         logMessage,
         onRewardsFetchError: () =>
           recordMetric(AUTO_RUN_HEALTH_METRIC.REWARDS_ERRORS),
+        getConnectRunBaseline,
+        onConnectGoalRead: recordConnectLastMetAt,
       }),
     [
       configuredAgents,
+      getConnectRunBaseline,
       getRewardSnapshot,
+      recordConnectLastMetAt,
       logMessage,
       recordMetric,
       runningServiceConfigIdRef,
@@ -157,6 +236,8 @@ export const useAutoRunOperations = ({
 
   return {
     refreshRewardsEligibility,
+    advanceConnectRunBaseline,
+    notifyGoalReachedOnce,
     notifySkipOnce,
     startAgentWithRetries,
     stopAgentWithRecovery,
