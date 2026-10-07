@@ -159,10 +159,6 @@ export const useAutoRunLifecycle = ({
       trigger: string,
       onStopped?: () => void,
     ) => {
-      // Stop the currently running instance, but if stopping fails (e.g. backend timeout),
-      // keep it running and retry rotation after a delay.
-      // This avoids a bad state where the current instance is stopped
-      // but fails to start again, leaving no instances running.
       const stopOk = await stopAgentWithRecovery(currentServiceConfigId);
       if (!stopOk) {
         logMessage(
@@ -238,7 +234,6 @@ export const useAutoRunLifecycle = ({
         scheduleNextScan(delay);
       };
 
-      // Alternates in turn order, starting after the current instance.
       const currentIndex = orderedIncludedInstances.indexOf(
         currentServiceConfigId,
       );

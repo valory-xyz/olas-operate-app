@@ -605,6 +605,72 @@ describe('useAutoRunLifecycle', () => {
       );
     });
 
+    describe('watchdog force rotation of Connect', () => {
+      beforeEach(() => {
+        jest.useFakeTimers();
+      });
+
+      afterEach(() => {
+        jest.useRealTimers();
+      });
+
+      const flushMicrotasks = async () => {
+        for (let i = 0; i < 10; i++) {
+          await Promise.resolve();
+        }
+      };
+
+      // No completed run: only the runtime watchdog can trigger rotation.
+      const runWatchdog = async (
+        overrides: Partial<Parameters<typeof useAutoRunLifecycle>[0]>,
+      ) => {
+        const params = makeConnectRunningParams({
+          refreshRewardsEligibility: jest.fn().mockResolvedValue(false),
+          ...overrides,
+        });
+        renderHook(() => useAutoRunLifecycle(params));
+        await act(async () => {
+          await flushMicrotasks();
+        });
+        (params.scheduleNextScan as jest.Mock).mockClear();
+        await act(async () => {
+          jest.advanceTimersByTime(
+            RUNNING_AGENT_MAX_RUNTIME_SECONDS * 1000 +
+              RUNNING_AGENT_WATCHDOG_CHECK_SECONDS * 1000,
+          );
+          await flushMicrotasks();
+        });
+        return params;
+      };
+
+      it('keeps Connect running without treating it as a completed run', async () => {
+        const params = await runWatchdog({
+          getHandOverDeployability: jest
+            .fn()
+            .mockResolvedValue({ canRun: false, reason: 'Low balance' }),
+        });
+
+        expect(params.getHandOverDeployability).toHaveBeenCalled();
+        expect(params.stopAgentWithRecovery).not.toHaveBeenCalled();
+        expect(params.advanceConnectRunBaseline).not.toHaveBeenCalled();
+        expect(params.notifyGoalReachedOnce).not.toHaveBeenCalled();
+        expect(params.scheduleNextScan).toHaveBeenCalledWith(
+          SCAN_BLOCKED_DELAY_SECONDS,
+        );
+      });
+
+      it('hands over to a runnable alternate without a goal notification', async () => {
+        const params = await runWatchdog({
+          getHandOverDeployability: jest.fn().mockResolvedValue({
+            canRun: true,
+          }),
+        });
+
+        expect(params.stopAgentWithRecovery).toHaveBeenCalledWith(scConnect);
+        expect(params.notifyGoalReachedOnce).not.toHaveBeenCalled();
+      });
+    });
+
     it('hands a finished staking agent over to Connect when every other agent is done', async () => {
       const params = makeHookParams({
         enabled: true,

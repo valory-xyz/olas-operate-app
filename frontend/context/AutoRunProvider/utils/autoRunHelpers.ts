@@ -288,6 +288,12 @@ export const refreshRewardsEligibility = async ({
   // (the runtime watchdog remains the backstop); for a candidate it allows a
   // start, and the agent then stands by on its own.
   const goalRead = await readActivityGoal(serviceConfigId);
+  if (!goalRead.ok) {
+    onRewardsFetchError?.();
+    logMessage(
+      `activity goal fetch error: ${serviceConfigId}: ${goalRead.error}`,
+    );
+  }
   const doneForEpoch = goalRead.ok
     ? deriveIsDoneForEpoch(epochTargetMet, goalRead.goal, response.tsCheckpoint)
     : false;

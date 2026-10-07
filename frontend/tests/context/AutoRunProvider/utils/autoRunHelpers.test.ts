@@ -778,12 +778,17 @@ describe('refreshRewardsEligibility', () => {
       mockFetchRewards.mockResolvedValue(stakingMet);
       mockGetAgentPerformance.mockRejectedValue(new Error('backend down'));
       const logMessage = jest.fn();
+      const onRewardsFetchError = jest.fn();
 
       const result = await refreshRewardsEligibility(
-        makeParams({ logMessage }),
+        makeParams({ logMessage, onRewardsFetchError }),
       );
 
       expect(result).toBe(false);
+      expect(onRewardsFetchError).toHaveBeenCalledTimes(1);
+      expect(logMessage).toHaveBeenCalledWith(
+        `activity goal fetch error: ${DEFAULT_SERVICE_CONFIG_ID}: Error: backend down`,
+      );
       expect(logMessage).toHaveBeenCalledWith(
         expect.stringContaining('goal=unavailable'),
       );

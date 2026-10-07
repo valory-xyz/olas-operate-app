@@ -88,7 +88,8 @@ export const useAutoRunOperations = ({
   const connectLastMetAtRef = useRef<Partial<Record<string, number | null>>>(
     {},
   );
-  // Start time (ms) of the turn whose goal-reached notification was sent.
+  // Completed run (its `last_met_at`, else its baseline) whose goal-reached
+  // notification was sent.
   const goalNotifiedRef = useRef<Partial<Record<string, number>>>({});
 
   useEffect(() => {
@@ -142,12 +143,19 @@ export const useAutoRunOperations = ({
     [getConnectRunBaseline, setRewardSnapshot],
   );
 
-  /** Sends the goal-reached notification at most once per Auto-run turn. */
+  /**
+   * Sends the goal-reached notification at most once per completed run, and
+   * ends the run's baseline: the instance is stopped on hand-over, so its next
+   * run (started by Auto-run or manually) gets a fresh one.
+   */
   const notifyGoalReachedOnce = useCallback(
     (serviceConfigId: string) => {
-      const turnStartedAt = lastStartedAtRef.current[serviceConfigId] ?? 0;
-      if (goalNotifiedRef.current[serviceConfigId] === turnStartedAt) return;
-      goalNotifiedRef.current[serviceConfigId] = turnStartedAt;
+      const completedRun =
+        connectLastMetAtRef.current[serviceConfigId] ??
+        getConnectRunBaseline(serviceConfigId);
+      if (goalNotifiedRef.current[serviceConfigId] === completedRun) return;
+      goalNotifiedRef.current[serviceConfigId] = completedRun;
+      delete connectRunBaselineRef.current[serviceConfigId];
       const { agentName, instanceName } = getInstanceDisplayNames(
         serviceConfigId,
         configuredAgents,
@@ -155,7 +163,7 @@ export const useAutoRunOperations = ({
       notifyGoalReached(showNotification, agentName, instanceName);
       logMessage(`goal reached, handing over: ${serviceConfigId}`);
     },
-    [configuredAgents, logMessage, showNotification],
+    [configuredAgents, getConnectRunBaseline, logMessage, showNotification],
   );
 
   // Wrap the caller's optional start callback so lastStartedAtRef is updated

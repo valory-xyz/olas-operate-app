@@ -367,9 +367,11 @@ describe('useAutoRunOperations', () => {
       expect(getConnectRunBaseline(CONNECT_ID)).toBe(NOW_SECONDS + 3_600);
     });
 
-    it('sends the goal-reached notification once per Auto-run turn', async () => {
-      const { params, hook, startInstance } = renderOperations();
+    it('sends the goal-reached notification once per completed run', async () => {
+      const { params, hook, helperArgs, startInstance } = renderOperations();
       startInstance();
+      const { onConnectGoalRead } = await helperArgs();
+      onConnectGoalRead(CONNECT_ID, NOW_SECONDS + 900);
 
       act(() => hook.result.current.notifyGoalReachedOnce(CONNECT_ID));
       act(() => hook.result.current.notifyGoalReachedOnce(CONNECT_ID));
@@ -380,10 +382,36 @@ describe('useAutoRunOperations', () => {
         'corzim-vardor96',
       );
 
-      jest.spyOn(Date, 'now').mockReturnValue(NOW_MS + 3_600_000);
-      startInstance();
+      onConnectGoalRead(CONNECT_ID, NOW_SECONDS + 4_500);
       act(() => hook.result.current.notifyGoalReachedOnce(CONNECT_ID));
       expect(mockNotifyGoalReached).toHaveBeenCalledTimes(2);
+    });
+
+    it('notifies on every hand-over of a manually started instance', async () => {
+      // No Auto-run start is recorded for a manual start.
+      const { hook, helperArgs } = renderOperations();
+      const { onConnectGoalRead } = await helperArgs();
+
+      onConnectGoalRead(CONNECT_ID, NOW_SECONDS + 900);
+      act(() => hook.result.current.notifyGoalReachedOnce(CONNECT_ID));
+
+      // Next manual run: Connect restarted and completed another run.
+      onConnectGoalRead(CONNECT_ID, NOW_SECONDS + 7_200);
+      act(() => hook.result.current.notifyGoalReachedOnce(CONNECT_ID));
+
+      expect(mockNotifyGoalReached).toHaveBeenCalledTimes(2);
+    });
+
+    it('gives the next run a fresh baseline after a hand-over', async () => {
+      const { hook, helperArgs } = renderOperations();
+      const { getConnectRunBaseline, onConnectGoalRead } = await helperArgs();
+      expect(getConnectRunBaseline(CONNECT_ID)).toBe(NOW_SECONDS);
+      onConnectGoalRead(CONNECT_ID, NOW_SECONDS + 900);
+
+      act(() => hook.result.current.notifyGoalReachedOnce(CONNECT_ID));
+
+      jest.spyOn(Date, 'now').mockReturnValue(NOW_MS + 3_600_000);
+      expect(getConnectRunBaseline(CONNECT_ID)).toBe(NOW_SECONDS + 3_600);
     });
 
     it('resets the baseline and notification state on disable', async () => {
