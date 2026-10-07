@@ -5,11 +5,10 @@ import { useElectronApi } from '@/hooks/useElectronApi';
 import { useRewardContext } from '@/hooks/useRewardContext';
 import { useServices } from '@/hooks/useServices';
 
-const REWARD_MESSAGE =
-  "Your agent earned its rewards! It's now idle and will resume working next epoch.";
+const REWARD_MESSAGE = 'Your agent earned its rewards for this epoch.';
 
 /**
- * Hook to notify the user when the agent earns rewards and is idle.
+ * Hook to notify the user when the agent earns its staking rewards.
  */
 export const useNotifyOnAgentRewards = () => {
   const electronApi = useElectronApi();
