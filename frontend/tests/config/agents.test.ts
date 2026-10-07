@@ -79,6 +79,10 @@ describe('AGENT_CONFIG', () => {
     });
   });
 
+  it('Connect takes part in auto-run', () => {
+    expect(AGENT_CONFIG[AgentMap.Connect].isExcludedFromAutoRun).toBeFalsy();
+  });
+
   it('Connect supports Polygon, Gnosis and Robinhood', () => {
     expect(AGENT_CONFIG[AgentMap.Connect].supportedChains).toEqual([
       EvmChainIdMap.Polygon,

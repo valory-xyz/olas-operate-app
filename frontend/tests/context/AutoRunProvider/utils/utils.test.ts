@@ -13,6 +13,7 @@ import {
   getInstanceDisplayNames,
   getOrderedIncludedInstances,
   normalizeIncludedInstances,
+  notifyGoalReached,
   notifySkipped,
   notifyStartFailed,
   sortIncludedInstances,
@@ -24,6 +25,23 @@ import {
   MOCK_SERVICE_CONFIG_ID_2,
   MOCK_SERVICE_CONFIG_ID_3,
 } from '../../../helpers/factories';
+
+describe('notifyGoalReached', () => {
+  it('announces the finished run and the hand-over', () => {
+    const showNotification = jest.fn();
+    notifyGoalReached(showNotification, 'Connect', 'connect-polygon');
+    expect(showNotification).toHaveBeenCalledWith(
+      'Connect agent "connect-polygon" finished its run',
+      'Moving to next agent.',
+    );
+  });
+
+  it('is a no-op without showNotification', () => {
+    expect(() =>
+      notifyGoalReached(undefined, 'Connect', 'connect-polygon'),
+    ).not.toThrow();
+  });
+});
 
 describe('notifySkipped', () => {
   it('calls showNotification with agent name, instance name, and reason', () => {
@@ -320,7 +338,10 @@ describe('getDecommissionedInstances', () => {
 describe('getAutoRunExcludedByConfig', () => {
   it('returns serviceConfigIds of agents excluded from auto-run by config', () => {
     const agents = [
-      makeAutoRunAgentMeta(AgentMap.Connect, AGENT_CONFIG[AgentMap.Connect]),
+      makeAutoRunAgentMeta(AgentMap.Connect, {
+        ...AGENT_CONFIG[AgentMap.Connect],
+        isExcludedFromAutoRun: true,
+      }),
       makeAutoRunAgentMeta(
         AgentMap.PredictTrader,
         AGENT_CONFIG[AgentMap.PredictTrader],
@@ -330,6 +351,13 @@ describe('getAutoRunExcludedByConfig', () => {
     expect(getAutoRunExcludedByConfig(agents)).toEqual([
       DEFAULT_SERVICE_CONFIG_ID,
     ]);
+  });
+
+  it('no longer excludes Connect, which now takes part in auto-run', () => {
+    const agents = [
+      makeAutoRunAgentMeta(AgentMap.Connect, AGENT_CONFIG[AgentMap.Connect]),
+    ];
+    expect(getAutoRunExcludedByConfig(agents)).toEqual([]);
   });
 
   it('returns empty when no agent opts out of auto-run', () => {
