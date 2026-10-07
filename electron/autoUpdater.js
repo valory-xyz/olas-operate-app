@@ -1,23 +1,88 @@
+const fs = require('fs');
 const { app, ipcMain, autoUpdater: nativeUpdater } = require('electron');
 const { CancellationToken } = require('electron-updater');
 
 const { autoUpdater } = require('./update');
 const { logger } = require('./logger');
+const { isMac, paths } = require('./constants');
 
 const QUIT_AND_INSTALL_FALLBACK_MS = 5000;
 
 let squirrelReady = false;
+// The quit-and-install IPC carries no version
+let downloadedVersion = null;
 let downloadCancellationToken = null;
 let pendingSquirrelListener = null;
 
 const ota = (message) =>
   logger.electron(`[OTA] (current=${app.getVersion()}) ${message}`);
 
+// Never throws: that would block the install.
+const recordPendingInstall = (store) => {
+  if (!downloadedVersion) {
+    ota('No downloaded version known, skipping pending install marker');
+    return;
+  }
+  if (!store) {
+    ota('Store unavailable, skipping pending install marker');
+    return;
+  }
+  try {
+    store.set('pendingUpdateInstall', {
+      targetVersion: downloadedVersion,
+      fromVersion: app.getVersion(),
+      requestedAt: new Date().toISOString(),
+    });
+  } catch (e) {
+    ota(`Failed to write pending install marker: ${e.message}`);
+  }
+};
+
+const verifyPendingInstall = (store) => {
+  try {
+    const pending = store.get('pendingUpdateInstall');
+    if (!pending) return;
+    // Removed before acting on it, so a marker can never be handled twice
+    store.delete('pendingUpdateInstall');
+
+    const { targetVersion, fromVersion, requestedAt } = pending;
+    const runningVersion = app.getVersion();
+
+    if (runningVersion === targetVersion) {
+      ota(`Update to ${targetVersion} installed successfully`);
+      return;
+    }
+
+    if (runningVersion === fromVersion) {
+      ota(
+        `Install failed: attempted=${targetVersion} running=${runningVersion} requestedAt=${requestedAt}`,
+      );
+      if (isMac) {
+        const exists = (filePath) =>
+          fs.existsSync(filePath) ? 'present' : 'missing';
+        ota(
+          `ShipIt logs: stderr=${exists(paths.shipItStderrLogFile)} stdout=${exists(paths.shipItStdoutLogFile)}`,
+        );
+      }
+      // Stop auto-reopening the modal for the version that failed
+      store.set('updateAvailableKnownVersion', targetVersion);
+      return;
+    }
+
+    ota(
+      `Discarding pending install marker: attempted=${targetVersion} from=${fromVersion} running=${runningVersion}`,
+    );
+  } catch (e) {
+    ota(`Failed to verify pending install: ${e.message}`);
+  }
+};
+
 const registerAutoUpdaterHandlers = ({
   getMainWindow,
   setAppRealClose,
   getOperateDaemonPid,
   killProcesses,
+  getStore,
 }) => {
   const send = (channel, payload) =>
     getMainWindow()?.webContents.send(channel, payload);
@@ -75,6 +140,7 @@ const registerAutoUpdaterHandlers = ({
     ota(
       `electron-updater update-downloaded version=${info?.version ?? 'unknown'} squirrelReady=${squirrelReady}`,
     );
+    downloadedVersion = info?.version ?? null;
     if (process.platform === 'darwin') {
       // On macOS, wait for Squirrel to finish before notifying renderer
       if (squirrelReady) {
@@ -142,6 +208,7 @@ const registerAutoUpdaterHandlers = ({
         ota(`killProcesses error (non-fatal): ${JSON.stringify(e)}`);
       }
     }
+    recordPendingInstall(getStore());
     // Allow the app to quit — the before-quit and mainWindow close handlers check this
     setAppRealClose(true);
     ota('appRealClose set to true, calling autoUpdater.quitAndInstall()');
@@ -154,4 +221,4 @@ const registerAutoUpdaterHandlers = ({
   });
 };
 
-module.exports = { registerAutoUpdaterHandlers };
+module.exports = { registerAutoUpdaterHandlers, verifyPendingInstall };

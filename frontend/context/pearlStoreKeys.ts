@@ -12,6 +12,7 @@ export const ELECTRON_NATIVE_KEYS = new Set([
   'pearlStoreAutoRunRepaired',
   'pendingStoreWrites',
   'firstAppOpenedAt',
+  'pendingUpdateInstall',
 ]);
 
 /**
