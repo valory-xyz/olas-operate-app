@@ -24,6 +24,15 @@ const schema = {
   // .operate/pearl_store.json exists. Used to measure time-to-first-success for the post-setup
   // questionnaire, which reports `null` when it is empty.
   firstAppOpenedAt: { type: 'string', default: '' },
+  // No default: a null default fails 'object' validation; absence means nothing pending.
+  pendingUpdateInstall: {
+    type: 'object',
+    properties: {
+      targetVersion: { type: 'string' },
+      fromVersion: { type: 'string' },
+      requestedAt: { type: 'string' },
+    },
+  },
   // Queue of backend-bound writes and deletes that failed (e.g. backend
   // unreachable during shutdown). Flushed to the backend on the next successful
   // startup before hydration reads pearl_store.json. `op` is optional so
@@ -55,6 +64,7 @@ const schema = {
 /**
  * Sets up the IPC communication and initializes the Electron store.
  * @param {Electron.IpcMain} ipcMain - The IPC main channel for communication.
+ * @returns {Store}
  */
 const setupStoreIpc = (ipcMain) => {
   const store = new Store({ schema });
@@ -81,6 +91,8 @@ const setupStoreIpc = (ipcMain) => {
   ipcMain.handle('store-set', (_, key, value) => store.set(key, value));
   ipcMain.handle('store-delete', (_, key) => store.delete(key));
   ipcMain.handle('store-clear', (_) => clearStore());
+
+  return store;
 };
 
 module.exports = { setupStoreIpc };
