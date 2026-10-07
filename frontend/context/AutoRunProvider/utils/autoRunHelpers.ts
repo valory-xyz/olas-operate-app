@@ -3,7 +3,14 @@ import { isNil } from 'lodash';
 import { MutableRefObject } from 'react';
 
 import { AgentType, EvmChainId } from '@/constants';
-import { StakingRewardsInfo, StakingState } from '@/types';
+import { ServicesService } from '@/service/Services';
+import { ActivityGoal, StakingRewardsInfo, StakingState } from '@/types';
+import {
+  deriveIsDoneForEpoch,
+  hasConnectRunCompletedSince,
+  isActivityGoalCurrent,
+  parseActivityGoal,
+} from '@/utils/activityGoal';
 import { sleepAwareDelay } from '@/utils/delay';
 import { isValidServiceId } from '@/utils/service';
 import {
@@ -49,6 +56,40 @@ export const isStakingEpochExpired = ({
 };
 
 /**
+ * Agents without staking (Connect) have no epoch: Auto-run decides their turn
+ * from completed runs instead of the staking KPI.
+ */
+export const isNoStakingAgent = (meta: Pick<AgentMeta, 'stakingProgramId'>) =>
+  meta.stakingProgramId === 'no_staking';
+
+type ActivityGoalRead =
+  | { ok: true; goal: ActivityGoal | null }
+  | { ok: false; error: unknown };
+
+const readActivityGoal = async (
+  serviceConfigId: string,
+): Promise<ActivityGoalRead> => {
+  try {
+    const performance = await ServicesService.getAgentPerformance({
+      serviceConfigId,
+    });
+    return { ok: true, goal: parseActivityGoal(performance?.activity_goal) };
+  } catch (error) {
+    return { ok: false, error };
+  }
+};
+
+const formatGoalForLog = (read: ActivityGoalRead, tsCheckpoint: number) => {
+  if (!read.ok) return 'goal=unavailable';
+  if (!read.goal) return 'goal=none';
+  const { progress, target, is_met } = read.goal;
+  return (
+    `goal=${progress}/${target} goalMet=${is_met} ` +
+    `goalCurrent=${isActivityGoalCurrent(read.goal, tsCheckpoint)}`
+  );
+};
+
+/**
  * Format eligibility into a human-readable reason for logs/UI.
  *  * @example
  * - { reason: 'Loading', loadingReason: 'Balances' } → "Loading: Balances"
@@ -69,7 +110,13 @@ export const formatEligibilityReason = (eligibility: {
 };
 
 /**
- * Fetch staking reward eligibility for an instance, throttled per serviceConfigId.
+ * Fetch whether an instance is done for the epoch, throttled per serviceConfigId.
+ *
+ * For staking agents "done" needs both the staking KPI and the agent's
+ * activity goal (`deriveIsDoneForEpoch`); an unreadable goal counts as not
+ * met. For no-staking agents (Connect) "done" means a run has completed since
+ * `getConnectRunBaseline` while it is the running instance, and is always
+ * `false` otherwise, so the rotation reaches it after every other agent.
  *
  * Retries once on transient RPC failure (null response) before marking the
  * snapshot as unknown. `onRewardsFetchError` fires only on the final failure
@@ -92,8 +139,8 @@ export const formatEligibilityReason = (eligibility: {
  * from "stale nonce delta from a prior run" without cross-session history.
  *
  * @returns
- * - true      – agent has earned its staking rewards for the current epoch
- * - false     – agent has not yet earned rewards
+ * - true      – agent is done for the current epoch (or Connect's run completed)
+ * - false     – agent still has work to do
  * - undefined  – instance not found in configuredAgents, missing required staking
  *               data (multisig / serviceNftTokenId / stakingProgramId), the API
  *               call failed on both attempts, or a sleep/wake event was detected
@@ -109,12 +156,21 @@ export const refreshRewardsEligibility = async ({
   setRewardSnapshot,
   logMessage,
   onRewardsFetchError,
+  getConnectRunBaseline,
+  onConnectGoalRead,
 }: {
   serviceConfigId: string;
   configuredAgents: AgentMeta[];
   lastRewardsFetchRef: MutableRefObject<Partial<Record<string, number>>>;
   lastStartedAtRef?: MutableRefObject<Partial<Record<string, number>>>;
   runningServiceConfigIdRef?: MutableRefObject<string | null>;
+  /** Unix seconds after which a completed Connect run counts. */
+  getConnectRunBaseline?: (serviceConfigId: string) => number;
+  /** Receives the `last_met_at` of each Connect goal read. */
+  onConnectGoalRead?: (
+    serviceConfigId: string,
+    lastMetAt: number | null,
+  ) => void;
   getRewardSnapshot: (serviceConfigId: string) => boolean | undefined;
   setRewardSnapshot: (
     serviceConfigId: string,
@@ -123,6 +179,18 @@ export const refreshRewardsEligibility = async ({
   logMessage: (message: string) => void;
   onRewardsFetchError?: () => void;
 }) => {
+  const meta = configuredAgents.find(
+    (agent) => agent.serviceConfigId === serviceConfigId,
+  );
+  const isRunning = runningServiceConfigIdRef?.current === serviceConfigId;
+
+  // A no-staking agent that is not running is never done: no fetch needed,
+  // so it bypasses the throttle and the scanner never waits on its snapshot.
+  if (meta && isNoStakingAgent(meta) && !isRunning) {
+    setRewardSnapshot(serviceConfigId, false);
+    return false;
+  }
+
   const now = Date.now();
   const lastFetch = lastRewardsFetchRef.current[serviceConfigId] ?? 0;
   if (now - lastFetch < REWARDS_POLL_SECONDS * 1000) {
@@ -130,10 +198,32 @@ export const refreshRewardsEligibility = async ({
   }
 
   lastRewardsFetchRef.current[serviceConfigId] = now;
-  const meta = configuredAgents.find(
-    (agent) => agent.serviceConfigId === serviceConfigId,
-  );
   if (!meta) return;
+
+  if (isNoStakingAgent(meta)) {
+    const read = await readActivityGoal(serviceConfigId);
+    if (!read.ok) {
+      onRewardsFetchError?.();
+      logMessage(
+        `activity goal fetch error: ${serviceConfigId}: ${read.error}`,
+      );
+      setRewardSnapshot(serviceConfigId, false);
+      return false;
+    }
+    const lastMetAt = read.goal?.last_met_at ?? null;
+    onConnectGoalRead?.(serviceConfigId, lastMetAt);
+    const baseline = getConnectRunBaseline?.(serviceConfigId);
+    const runCompleted =
+      baseline !== undefined &&
+      hasConnectRunCompletedSince(read.goal, baseline);
+    logMessage(
+      `${serviceConfigId}: no staking, lastMetAt=${lastMetAt ?? 'none'} ` +
+        `baseline=${baseline ?? 'none'} → done=${runCompleted}`,
+    );
+    setRewardSnapshot(serviceConfigId, runCompleted);
+    return runCompleted;
+  }
+
   if (
     !meta.multisig ||
     !isValidServiceId(meta.serviceNftTokenId) ||
@@ -199,6 +289,15 @@ export const refreshRewardsEligibility = async ({
 
   const epochExpired = isStakingEpochExpired(response);
 
+  // The agent's own activity goal is the second half of "done". An unreadable
+  // report counts as not met: for the running agent that only delays rotation
+  // (the runtime watchdog remains the backstop); for a candidate it allows a
+  // start, and the agent then stands by on its own.
+  const goalRead = await readActivityGoal(serviceConfigId);
+  const doneForEpoch = goalRead.ok
+    ? deriveIsDoneForEpoch(epochTargetMet, goalRead.goal, response.tsCheckpoint)
+    : false;
+
   // Decision inputs — one line per evaluation (throttled to REWARDS_POLL_SECONDS),
   // so a Pearl log explains exactly why an agent did/didn't rotate, and lets us
   // cross-check the FE's on-chain count against the agent's own activity logs.
@@ -206,19 +305,20 @@ export const refreshRewardsEligibility = async ({
     `${serviceConfigId}: activityThisEpoch=${response.activityThisEpoch} ` +
       `target=${activityTarget ?? 'on-chain-KPI'} ` +
       `stakingKpi=${response.isEligibleForRewards} ` +
-      `epochExpired=${epochExpired} → epochTargetMet=${epochTargetMet}`,
+      `epochExpired=${epochExpired} epochTargetMet=${epochTargetMet} ` +
+      `${formatGoalForLog(goalRead, response.tsCheckpoint)} → done=${doneForEpoch}`,
   );
 
-  if (epochExpired && epochTargetMet) {
+  if (epochExpired && doneForEpoch) {
     logMessage(
       `${serviceConfigId}: epoch expired, stale epoch-target-met=true overridden to false so agent runs and triggers on-chain checkpoint`,
     );
   }
-  // epochTargetMet=true → agent already did its epoch work → auto-run SKIPS it.
-  // epochTargetMet=false → agent hasn't finished yet → auto-run STARTS it.
+  // done=true → agent already did its epoch work → auto-run SKIPS it.
+  // done=false → agent hasn't finished yet → auto-run STARTS it.
   // Epoch expired but checkpoint not yet called: true is stale, override to false so
   // auto-run starts the agent and triggers the on-chain checkpoint for the new epoch.
-  let eligible = epochExpired ? false : epochTargetMet;
+  let eligible = epochExpired ? false : doneForEpoch;
 
   // Stale-true override: when an idle alternate reports `true` but has not run
   // locally since the staking pool's last checkpoint, its `true` is residue
@@ -317,6 +417,11 @@ export type FetchDeployabilityContext = {
   ) => boolean;
   isGeoRestrictedForAgent: (agentType: AgentType) => boolean;
   logMessage: (message: string) => void;
+  /**
+   * Skip the "Another agent running" gate, to ask whether an agent could take
+   * over from the running one (Connect hand-over) before stopping it.
+   */
+  ignoreRunningAgent?: boolean;
 };
 
 export type DeployabilityCheckResult = {
@@ -413,6 +518,7 @@ const runDeployabilityChecks = async (
 
   // 3. Another agent already running (transient — rotation handles this).
   if (
+    !ctx.ignoreRunningAgent &&
     ctx.runningServiceConfigId !== null &&
     ctx.runningServiceConfigId !== agentMeta.serviceConfigId
   ) {
@@ -431,10 +537,12 @@ const runDeployabilityChecks = async (
 
   // 4. On-chain staking state via direct API calls (same endpoints as
   //    StakingContractDetailsProvider, but for any service, not just selected).
-  //    Skip if the service hasn't been deployed yet (no NFT token ID or staking program).
+  //    Skip if the service hasn't been deployed yet (no NFT token ID or staking
+  //    program), or has no staking contract at all (`no_staking`).
   if (
     isValidServiceId(agentMeta.serviceNftTokenId) &&
-    agentMeta.stakingProgramId
+    agentMeta.stakingProgramId &&
+    !isNoStakingAgent(agentMeta)
   ) {
     try {
       const [contractDetails, stakingDetails] = await Promise.all([
