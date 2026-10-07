@@ -66,6 +66,11 @@ export type PearlStore = {
     userExcludedAgents?: AgentType[];
     /** Instances explicitly excluded from auto-run by the user, keyed by serviceConfigId. */
     userExcludedAgentInstances?: string[];
+    /**
+     * Set once the Connect instances that predate Connect's Auto-run support
+     * have been added to `userExcludedAgentInstances`.
+     */
+    connectAutoRunMigrated?: boolean;
   };
 
   lastProvidedBackupWallet?: {
