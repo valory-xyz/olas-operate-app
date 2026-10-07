@@ -7,7 +7,7 @@ import { parseEther, parseUnits } from '@/utils';
 
 import { MiddlewareChainMap } from '../../chains';
 import { STAKING_PROGRAM_IDS } from '../../stakingProgram';
-import { X402_ENABLED_FLAGS } from '../../x402';
+import { MECH_FACILITATOR_ENABLED_FLAGS, X402_ENABLED_FLAGS } from '../../x402';
 import { KPI_DESC_PREFIX } from '../constants';
 
 export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
@@ -133,6 +133,13 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
       description:
         'Enables feature of agents paying for api keys usage instead of asking users to manually provide them',
       value: X402_ENABLED_FLAGS[AgentMap.PredictTrader].toString(),
+      provision_type: EnvProvisionType.FIXED,
+    },
+    USE_MECH_FACILITATOR: {
+      name: 'Use the mech facilitator',
+      description:
+        'Uses the mech marketplace to pay for third party service calls like Gemini',
+      value: MECH_FACILITATOR_ENABLED_FLAGS[AgentMap.PredictTrader].toString(),
       provision_type: EnvProvisionType.FIXED,
     },
     ENABLE_MULTI_BETS_FALLBACK: {
@@ -301,6 +308,13 @@ export const PREDICT_POLYMARKET_SERVICE_TEMPLATE: ServiceTemplate = {
       description:
         'Enables feature of agents paying for api keys usage instead of asking users to manually provide them',
       value: X402_ENABLED_FLAGS[AgentMap.Polystrat].toString(),
+      provision_type: EnvProvisionType.FIXED,
+    },
+    USE_MECH_FACILITATOR: {
+      name: 'Use the mech facilitator',
+      description:
+        'Uses the mech marketplace to pay for third party service calls like Gemini',
+      value: MECH_FACILITATOR_ENABLED_FLAGS[AgentMap.Polystrat].toString(),
       provision_type: EnvProvisionType.FIXED,
     },
     USE_OFFCHAIN: {

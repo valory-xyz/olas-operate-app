@@ -12,7 +12,7 @@ import { parseEther, parseUnits } from '@/utils';
 
 import { MiddlewareChainMap } from '../../chains';
 import { STAKING_PROGRAM_IDS } from '../../stakingProgram';
-import { X402_ENABLED_FLAGS } from '../../x402';
+import { MECH_FACILITATOR_ENABLED_FLAGS, X402_ENABLED_FLAGS } from '../../x402';
 import { KPI_DESC_PREFIX } from '../constants';
 
 // Modius uses this (reverted to the version on `staging`; the new staking
@@ -40,14 +40,14 @@ const BASIUS_TEMPLATE_RELEASE: Pick<
   ServiceTemplate,
   'hash' | 'service_version' | 'agent_release'
 > = {
-  hash: 'bafybeic3i2wsrc6qepxf754b6qaqf5hydylbhdtdjk6yf55xmdlhj7xvae',
-  service_version: 'v0.12.12',
+  hash: 'bafybeidlw3mdmldv7m4o56gxzxe3ustfxpbrhhoerepsbd3fmccwz4uhh4',
+  service_version: 'v0.13.3',
   agent_release: {
     is_aea: true,
     repository: {
       owner: 'valory-xyz',
       name: 'optimus',
-      version: 'v0.12.12',
+      version: 'v0.13.3',
     },
   },
 };
@@ -59,14 +59,14 @@ const OPTIMUS_TEMPLATE_RELEASE: Pick<
   ServiceTemplate,
   'hash' | 'service_version' | 'agent_release'
 > = {
-  hash: 'bafybeibtsriszaofawukgtwxtp2cts34yxvljmctbxa63uw3pas57vgtn4',
-  service_version: 'v0.12.13',
+  hash: 'bafybeigtumxihsme6iujizkf2dkphrv5ay2uqxnsm62lyofm676fbgx4qq',
+  service_version: 'v0.13.3',
   agent_release: {
     is_aea: true,
     repository: {
       owner: 'valory-xyz',
       name: 'optimus',
-      version: 'v0.12.13',
+      version: 'v0.13.3',
     },
   },
 };
@@ -374,6 +374,13 @@ export const OPTIMUS_SERVICE_TEMPLATE: ServiceTemplate = {
       value: X402_ENABLED_FLAGS[AgentMap.Optimus].toString(),
       provision_type: EnvProvisionType.FIXED,
     },
+    USE_MECH_FACILITATOR: {
+      name: 'Use the mech facilitator',
+      description:
+        'Uses the mech marketplace to pay for third party service calls like CoinGecko and Gemini',
+      value: MECH_FACILITATOR_ENABLED_FLAGS[AgentMap.Optimus].toString(),
+      provision_type: EnvProvisionType.FIXED,
+    },
     USE_OFFCHAIN: {
       name: 'Use offchain mech dispatch',
       description:
@@ -532,6 +539,13 @@ export const BASIUS_SERVICE_TEMPLATE: ServiceTemplate = {
       description:
         'Enables feature of agents paying for api keys usage instead of asking users to manually provide them',
       value: X402_ENABLED_FLAGS[AgentMap.Basius].toString(),
+      provision_type: EnvProvisionType.FIXED,
+    },
+    USE_MECH_FACILITATOR: {
+      name: 'Use the mech facilitator',
+      description:
+        'Uses the mech marketplace to pay for third party service calls like CoinGecko and Gemini',
+      value: MECH_FACILITATOR_ENABLED_FLAGS[AgentMap.Basius].toString(),
       provision_type: EnvProvisionType.FIXED,
     },
     USE_OFFCHAIN: {
