@@ -1,6 +1,9 @@
 import { AGENT_CONFIG } from '../../../../config/agents';
 import { AgentMap, AgentType } from '../../../../constants/agent';
-import { MiddlewareChainMap } from '../../../../constants/chains';
+import {
+  EvmChainIdMap,
+  MiddlewareChainMap,
+} from '../../../../constants/chains';
 import { IncludedAgentInstance } from '../../../../context/AutoRunProvider/types';
 import {
   appendNewInstances,
@@ -18,9 +21,11 @@ import {
   notifyStartFailed,
   sortIncludedInstances,
 } from '../../../../context/AutoRunProvider/utils/utils';
+import { generateAgentName } from '../../../../utils/generateAgentName';
 import {
   DEFAULT_SERVICE_CONFIG_ID,
   makeAutoRunAgentMeta,
+  makeChainConfig,
   makeService,
   MOCK_SERVICE_CONFIG_ID_2,
   MOCK_SERVICE_CONFIG_ID_3,
@@ -263,6 +268,28 @@ describe('getInstanceDisplayNames', () => {
       AGENT_CONFIG[AgentMap.PredictTrader].displayName,
     );
     expect(typeof result.instanceName).toBe('string');
+  });
+
+  it('names a multi-chain instance after its own chain', () => {
+    const token = 42;
+    const connectOnPolygon = {
+      ...makeAutoRunAgentMeta(AgentMap.Connect, AGENT_CONFIG[AgentMap.Connect]),
+      service: makeService({
+        home_chain: MiddlewareChainMap.POLYGON,
+        chain_configs: makeChainConfig(MiddlewareChainMap.POLYGON, { token }),
+      }),
+      chainId: EvmChainIdMap.Polygon,
+    };
+
+    const { instanceName } = getInstanceDisplayNames(
+      DEFAULT_SERVICE_CONFIG_ID,
+      [connectOnPolygon],
+    );
+
+    expect(instanceName).toBe(generateAgentName(EvmChainIdMap.Polygon, token));
+    expect(instanceName).not.toBe(
+      generateAgentName(EvmChainIdMap.Gnosis, token),
+    );
   });
 
   it('falls back to serviceConfigId when not found', () => {

@@ -165,7 +165,7 @@ export const getInstanceDisplayNames = (
   const instanceName = getServiceInstanceName(
     meta.service,
     meta.agentConfig.displayName,
-    meta.agentConfig.evmHomeChainId,
+    meta.chainId,
   );
 
   return { agentName: meta.agentConfig.displayName, instanceName };
