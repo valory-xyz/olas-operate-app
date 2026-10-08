@@ -2,10 +2,15 @@ import { renderHook } from '@testing-library/react';
 
 import { AGENT_CONFIG } from '../../../../config/agents';
 import { AgentMap } from '../../../../constants/agent';
-import { EvmChainId } from '../../../../constants/chains';
+import {
+  EvmChainId,
+  EvmChainIdMap,
+  MiddlewareChainMap,
+} from '../../../../constants/chains';
 import { useSelectedEligibility } from '../../../../context/AutoRunProvider/hooks/useSelectedEligibility';
 import { useServices } from '../../../../hooks';
 import { useDeployability } from '../../../../hooks/useDeployability';
+import { makeService } from '../../../helpers/factories';
 
 jest.mock('../../../../hooks', () => ({
   useServices: jest.fn(),
@@ -113,5 +118,15 @@ describe('useSelectedEligibility', () => {
     expect(canCreateSafeForChain).toHaveBeenCalledWith(
       traderConfig.evmHomeChainId,
     );
+  });
+
+  it("checks the safe on a multi-chain instance's own chain", () => {
+    mockUseServices.mockReturnValue({
+      selectedAgentConfig: AGENT_CONFIG[AgentMap.Connect],
+      selectedAgentType: AgentMap.Connect,
+      selectedService: makeService({ home_chain: MiddlewareChainMap.POLYGON }),
+    } as unknown as ReturnType<typeof useServices>);
+    renderHook(() => useSelectedEligibility({ canCreateSafeForChain }));
+    expect(canCreateSafeForChain).toHaveBeenCalledWith(EvmChainIdMap.Polygon);
   });
 });
