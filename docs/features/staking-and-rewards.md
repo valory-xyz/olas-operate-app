@@ -129,22 +129,23 @@ Migration requires the agent to be stopped first (or auto-run to rotate away). T
 
 ## AutoRun integration
 
-AutoRun uses staking eligibility as its primary scheduling signal. The key function is `refreshRewardsEligibility()` in `frontend/context/AutoRunProvider/utils/autoRunHelpers.ts`.
+AutoRun schedules on "done for the epoch": staking eligibility combined with the activity goal. The key function is `refreshRewardsEligibility()` in `frontend/context/AutoRunProvider/utils/autoRunHelpers.ts`.
 
-**`refreshRewardsEligibility(candidate)`**:
+**`refreshRewardsEligibility(candidate)`** returns whether the agent is done for the epoch:
 - Throttled per `serviceConfigId` (minimum 120 s between fetches)
-- Calls `fetchAgentStakingRewardsInfo()` to get the current epoch snapshot
-- Stale epoch detection: if `isStakingEpochExpired()` returns `true` (i.e. `livenessPeriod ≤ now − tsCheckpoint`) and `isEligibleForRewards` is `true`, overrides eligibility to `false` so the agent runs and triggers the on-chain checkpoint
-- Returns `true` (eligible), `false` (not eligible), or `undefined` (data missing)
+- Calls `fetchAgentStakingRewardsInfo()` to get the current epoch snapshot, and `getAgentPerformance()` for the `activity_goal` block
+- Done = `isEpochTargetMet` and the current activity goal met (`deriveIsDoneForEpoch`); without a block, `isEpochTargetMet` alone
+- Stale epoch detection: if `isStakingEpochExpired()` returns `true` (i.e. `livenessPeriod ≤ now − tsCheckpoint`) and the agent is done, overrides it to `false` so the agent runs and triggers the on-chain checkpoint
+- Returns `true` (done), `false` (not done), or `undefined` (data missing, or the goal unreadable once `isEpochTargetMet` is true)
 
 **Scanner logic** (`useAutoRunScanner.ts`):
-- `eligibility === true` → agent already earned this epoch → skip, wait for next scan slot
-- `eligibility === false` → agent hasn't earned yet → start the agent
+- `eligibility === true` → agent already done this epoch → skip, wait for next scan slot
+- `eligibility === false` → agent not done yet → start the agent
 - `eligibility === undefined` → data missing → retry after `SCAN_LOADING_RETRY_SECONDS` (30 s)
 
-**Reward-triggered rotation** (`useAutoRunLifecycle.ts`):
-- `lastRewardsEligibilityRef` tracks the previous eligibility value per agent
-- On transition from `false → true` (reward earned), rotation is triggered: stop current agent → 20 s cooldown → `scanAndStartNext`
+**Done-triggered rotation** (`useAutoRunLifecycle.ts`):
+- `lastRewardsEligibilityRef` tracks the previous done value per agent
+- On transition from `false → true` (done for the epoch), rotation is triggered: stop current agent → 20 s cooldown → `scanAndStartNext`
 - Prevents duplicate rotation: `isRotatingRef` blocks overlapping rotation/startup
 
 ## Source of truth
