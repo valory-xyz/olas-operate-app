@@ -28,6 +28,7 @@ import {
   StakingContractDetails,
 } from '@/types';
 import { isValidServiceId } from '@/utils';
+import { isNoStakingProgram } from '@/utils/stakingProgram';
 
 import { StakingProgramContext } from './StakingProgramProvider';
 
@@ -158,7 +159,7 @@ const useStakingContractDetailsByStakingProgram = ({
     // returns undefined) doesn't surface a noisy error in the console
     // for the QA build path.
     enabled:
-      !isPaused && !!stakingProgramId && stakingProgramId !== 'no_staking',
+      !isPaused && !!stakingProgramId && !isNoStakingProgram(stakingProgramId),
     refetchInterval: isPaused ? false : refetchInterval,
     refetchIntervalInBackground: !isPaused,
   });

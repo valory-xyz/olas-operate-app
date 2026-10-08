@@ -10,6 +10,7 @@ import {
   useSetup,
 } from '@/hooks';
 import { asMiddlewareChain } from '@/utils';
+import { isNoStakingProgram } from '@/utils/stakingProgram';
 
 export const FundYourAgent = () => {
   const { goto } = useSetup();
@@ -40,7 +41,7 @@ export const FundYourAgent = () => {
         // Connect (and any no_staking agent) skips SelectStaking, so back
         // must return to the agent/chain step, not the staking screen.
         goto(
-          selectedAgentConfig.defaultStakingProgramId === 'no_staking'
+          isNoStakingProgram(selectedAgentConfig.defaultStakingProgramId)
             ? SETUP_SCREEN.AgentOnboarding
             : SETUP_SCREEN.SelectStaking,
         );

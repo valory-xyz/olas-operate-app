@@ -5,6 +5,7 @@ import { StakingProgramId } from '@/constants';
 import { StakingContractDetailsContext } from '@/context/StakingContractDetailsProvider';
 import { StakingProgramContext } from '@/context/StakingProgramProvider';
 import { Maybe, StakingState } from '@/types';
+import { isNoStakingProgram } from '@/utils/stakingProgram';
 
 export const useStakingContractContext = () =>
   useContext(StakingContractDetailsContext);
@@ -60,7 +61,7 @@ export const useActiveStakingContractDetails = () => {
   const isServiceStakedForMinimumDuration = (() => {
     if (
       isNil(selectedStakingProgramId) ||
-      selectedStakingProgramId === 'no_staking'
+      isNoStakingProgram(selectedStakingProgramId)
     ) {
       return true;
     }
