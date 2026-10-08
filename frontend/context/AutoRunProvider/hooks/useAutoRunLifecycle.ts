@@ -161,8 +161,7 @@ export const useAutoRunLifecycle = ({
         logMessage(
           `stop timeout for ${currentServiceConfigId}, aborting rotation`,
         );
-        // Reset rewards guard so the next poll cycle can re-trigger rotation
-        // instead of being blocked by the previousEligibility === true check.
+        // Reset the rewards guard so the next poll can re-trigger rotation.
         lastRewardsEligibilityRef.current[currentServiceConfigId] = undefined;
         stopRetryBackoffUntilRef.current[currentServiceConfigId] =
           Date.now() + SCAN_BLOCKED_DELAY_SECONDS * 1000;
@@ -174,10 +173,7 @@ export const useAutoRunLifecycle = ({
       }
       onStopped?.();
 
-      // Rotation successful: reset BOTH the rewards guard AND the stop backoff for this instance.
-      // Resetting lastRewardsEligibilityRef is critical — without it the guard stays `true` from the
-      // current epoch and permanently blocks rotation in all future epochs (previousEligibility === true
-      // check bails early every time this instance runs and earns rewards again).
+      // Reset the rewards guard, or a leftover `true` blocks every later rotation.
       lastRewardsEligibilityRef.current[currentServiceConfigId] = undefined;
       stopRetryBackoffUntilRef.current[currentServiceConfigId] = undefined;
       if (!enabledRef.current) return;
@@ -202,14 +198,7 @@ export const useAutoRunLifecycle = ({
     ],
   );
 
-  /**
-   * Rotation away from a no-staking agent (Connect). It is stopped only once
-   * another instance is confirmed startable, so a run is never ended just to
-   * relaunch the same agent. Otherwise it keeps running and its rewards guard
-   * is reset: Connect's `is_met` stays true for the rest of its process, so
-   * without the reset the rotation effect would never re-check, and the next
-   * rewards poll is what hands over once another instance becomes ready.
-   */
+  /** Stops a no-staking agent (Connect) only once another instance can start. */
   const handOverFromNoStakingAgent = useCallback(
     async (
       currentServiceConfigId: string,
