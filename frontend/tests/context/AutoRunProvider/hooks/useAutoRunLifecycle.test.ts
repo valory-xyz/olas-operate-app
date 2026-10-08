@@ -67,8 +67,7 @@ const makeHookParams = (
     .mockResolvedValue({ status: AUTO_RUN_START_STATUS.STARTED }),
   getDeployabilityForRunningInstance: jest.fn().mockResolvedValue(null),
   getHandOverDeployability: jest.fn().mockResolvedValue({ canRun: true }),
-  advanceConnectRunBaseline: jest.fn(),
-  notifyGoalReachedOnce: jest.fn(),
+  notifyGoalReachedOnHandOver: jest.fn(),
   stopRetryBackoffUntilRef: {
     current: {} as Partial<Record<string, number>>,
   },
@@ -444,7 +443,7 @@ describe('useAutoRunLifecycle', () => {
             Record<string, boolean | undefined>
           >,
         },
-        // Connect just completed a run; alternates have not earned yet.
+        // Connect just met its goal; alternates have not earned yet.
         refreshRewardsEligibility: jest
           .fn()
           .mockImplementation(async (id: string) => id === scConnect),
@@ -494,9 +493,10 @@ describe('useAutoRunLifecycle', () => {
       expect(params.getHandOverDeployability).toHaveBeenCalledTimes(1);
       expect(params.stopAgentWithRecovery).toHaveBeenCalledWith(scConnect);
       expect(params.scanAndStartNext).toHaveBeenCalledWith(scConnect);
-      expect(params.notifyGoalReachedOnce).toHaveBeenCalledTimes(1);
-      expect(params.notifyGoalReachedOnce).toHaveBeenCalledWith(scConnect);
-      expect(params.advanceConnectRunBaseline).not.toHaveBeenCalled();
+      expect(params.notifyGoalReachedOnHandOver).toHaveBeenCalledTimes(1);
+      expect(params.notifyGoalReachedOnHandOver).toHaveBeenCalledWith(
+        scConnect,
+      );
     });
 
     it('skips alternates that are done or cannot start when choosing the hand-over', async () => {
@@ -521,7 +521,32 @@ describe('useAutoRunLifecycle', () => {
       expect(params.stopAgentWithRecovery).not.toHaveBeenCalled();
     });
 
-    it('keeps Connect running and advances its baseline when nothing else can run', async () => {
+    it.each([
+      ['done', true, false],
+      ['not done', false, true],
+    ])(
+      'falls back to the cached snapshot of an alternate whose read failed (%s)',
+      async (_, cachedSnapshot, isProbed) => {
+        const params = makeConnectRunningParams({
+          orderedIncludedInstances: [scConnect, scTrader],
+          refreshRewardsEligibility: jest
+            .fn()
+            .mockImplementation(async (id: string) =>
+              id === scConnect ? true : undefined,
+            ),
+          getRewardSnapshot: jest.fn().mockReturnValue(cachedSnapshot),
+        });
+
+        renderHook(() => useAutoRunLifecycle(params));
+        await flush();
+
+        expect(
+          (params.getHandOverDeployability as jest.Mock).mock.calls.length > 0,
+        ).toBe(isProbed);
+      },
+    );
+
+    it('keeps Connect running and resets its rewards guard when nothing else can run', async () => {
       const lastRewardsEligibilityRef = {
         current: { [scConnect]: false } as Partial<
           Record<string, boolean | undefined>
@@ -538,16 +563,15 @@ describe('useAutoRunLifecycle', () => {
       await flush();
 
       expect(params.stopAgentWithRecovery).not.toHaveBeenCalled();
-      expect(params.advanceConnectRunBaseline).toHaveBeenCalledWith(scConnect);
-      expect(params.notifyGoalReachedOnce).not.toHaveBeenCalled();
+      expect(params.notifyGoalReachedOnHandOver).not.toHaveBeenCalled();
       expect(params.scheduleNextScan).toHaveBeenCalledWith(
         SCAN_ELIGIBLE_DELAY_SECONDS,
       );
-      // Re-armed so the next completed run is a fresh false → true edge.
-      expect(lastRewardsEligibilityRef.current[scConnect]).toBe(false);
+      // Connect stays met, so only a reset guard lets the next poll re-trigger.
+      expect(lastRewardsEligibilityRef.current[scConnect]).toBeUndefined();
     });
 
-    it('re-checks for a hand-over at the next completed run', async () => {
+    it('hands over on the next rewards poll after an alternate becomes ready', async () => {
       const getHandOverDeployability = jest
         .fn()
         .mockResolvedValue({ canRun: false, reason: 'Low balance' });
@@ -559,21 +583,13 @@ describe('useAutoRunLifecycle', () => {
       await flush();
       expect(params.stopAgentWithRecovery).not.toHaveBeenCalled();
 
-      // Next poll after the baseline moved: run not completed yet.
-      (params.refreshRewardsEligibility as jest.Mock).mockResolvedValue(false);
+      // Connect is still met; an alternate has become runnable since.
+      getHandOverDeployability.mockResolvedValue({ canRun: true });
       rerender({ ...params, rewardsTick: 1 });
       await flush();
 
-      // Next completed run, and an alternate has become runnable.
-      (params.refreshRewardsEligibility as jest.Mock).mockImplementation(
-        async (id: string) => id === scConnect,
-      );
-      getHandOverDeployability.mockResolvedValue({ canRun: true });
-      rerender({ ...params, rewardsTick: 2 });
-      await flush();
-
       expect(params.stopAgentWithRecovery).toHaveBeenCalledWith(scConnect);
-      expect(params.notifyGoalReachedOnce).toHaveBeenCalledTimes(1);
+      expect(params.notifyGoalReachedOnHandOver).toHaveBeenCalledTimes(1);
     });
 
     it('takes the stop-timeout backoff path and sends no notification', async () => {
@@ -594,7 +610,7 @@ describe('useAutoRunLifecycle', () => {
       renderHook(() => useAutoRunLifecycle(params));
       await flush();
 
-      expect(params.notifyGoalReachedOnce).not.toHaveBeenCalled();
+      expect(params.notifyGoalReachedOnHandOver).not.toHaveBeenCalled();
       expect(params.scanAndStartNext).not.toHaveBeenCalled();
       expect(lastRewardsEligibilityRef.current[scConnect]).toBeUndefined();
       expect(stopRetryBackoffUntilRef.current[scConnect]).toBeGreaterThan(
@@ -620,7 +636,7 @@ describe('useAutoRunLifecycle', () => {
         }
       };
 
-      // No completed run: only the runtime watchdog can trigger rotation.
+      // Goal not met: only the runtime watchdog can trigger rotation.
       const runWatchdog = async (
         overrides: Partial<Parameters<typeof useAutoRunLifecycle>[0]>,
       ) => {
@@ -643,7 +659,7 @@ describe('useAutoRunLifecycle', () => {
         return params;
       };
 
-      it('keeps Connect running without treating it as a completed run', async () => {
+      it('keeps Connect running without treating it as goal reached', async () => {
         const params = await runWatchdog({
           getHandOverDeployability: jest
             .fn()
@@ -652,8 +668,7 @@ describe('useAutoRunLifecycle', () => {
 
         expect(params.getHandOverDeployability).toHaveBeenCalled();
         expect(params.stopAgentWithRecovery).not.toHaveBeenCalled();
-        expect(params.advanceConnectRunBaseline).not.toHaveBeenCalled();
-        expect(params.notifyGoalReachedOnce).not.toHaveBeenCalled();
+        expect(params.notifyGoalReachedOnHandOver).not.toHaveBeenCalled();
         expect(params.scheduleNextScan).toHaveBeenCalledWith(
           SCAN_BLOCKED_DELAY_SECONDS,
         );
@@ -667,7 +682,7 @@ describe('useAutoRunLifecycle', () => {
         });
 
         expect(params.stopAgentWithRecovery).toHaveBeenCalledWith(scConnect);
-        expect(params.notifyGoalReachedOnce).not.toHaveBeenCalled();
+        expect(params.notifyGoalReachedOnHandOver).not.toHaveBeenCalled();
       });
     });
 

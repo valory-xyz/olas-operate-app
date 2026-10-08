@@ -63,10 +63,8 @@ type UseAutoRunLifecycleParams = {
   getHandOverDeployability: (
     serviceConfigId: string,
   ) => Promise<DeployabilityCheckResult | null>;
-  /** Marks a completed Connect run as handled while it keeps running. */
-  advanceConnectRunBaseline: (serviceConfigId: string) => void;
-  /** Goal-reached notification for a Connect hand-over, once per turn. */
-  notifyGoalReachedOnce: (serviceConfigId: string) => void;
+  /** Goal-reached notification for a Connect hand-over. */
+  notifyGoalReachedOnHandOver: (serviceConfigId: string) => void;
   stopRetryBackoffUntilRef: MutableRefObject<Partial<Record<string, number>>>;
   recordMetric: (metric: AutoRunLifecycleMetric) => void;
   logMessage: (message: string) => void;
@@ -103,8 +101,7 @@ export const useAutoRunLifecycle = ({
   startAgentWithRetries,
   getDeployabilityForRunningInstance,
   getHandOverDeployability,
-  advanceConnectRunBaseline,
-  notifyGoalReachedOnce,
+  notifyGoalReachedOnHandOver,
   stopRetryBackoffUntilRef,
   recordMetric,
   logMessage,
@@ -206,11 +203,12 @@ export const useAutoRunLifecycle = ({
   );
 
   /**
-   * Rotation away from a no-staking agent (Connect) after a completed run.
-   * It is stopped only once another instance is confirmed startable, so a
-   * run is never ended just to relaunch the same agent. Otherwise it keeps
-   * running and the completed run is marked handled, so the next completed
-   * run re-checks.
+   * Rotation away from a no-staking agent (Connect). It is stopped only once
+   * another instance is confirmed startable, so a run is never ended just to
+   * relaunch the same agent. Otherwise it keeps running and its rewards guard
+   * is reset: Connect's `is_met` stays true for the rest of its process, so
+   * without the reset the rotation effect would never re-check, and the next
+   * rewards poll is what hands over once another instance becomes ready.
    */
   const handOverFromNoStakingAgent = useCallback(
     async (
@@ -218,22 +216,6 @@ export const useAutoRunLifecycle = ({
       options: { force?: boolean; cycleId: string; trigger: string },
     ) => {
       const { force, cycleId, trigger } = options;
-      // A watchdog/eviction trigger is not a completed run: keep the baseline.
-      const isRunCompleted = !force;
-      const keepRunning = () => {
-        if (isRunCompleted) {
-          advanceConnectRunBaseline(currentServiceConfigId);
-          lastRewardsEligibilityRef.current[currentServiceConfigId] = false;
-        }
-        const delay = isRunCompleted
-          ? SCAN_ELIGIBLE_DELAY_SECONDS
-          : SCAN_BLOCKED_DELAY_SECONDS;
-        logVerbose(
-          `cycle=${cycleId} trigger=${trigger} keeping connect running, no runnable alternate current=${currentServiceConfigId} rescan=${delay}s`,
-        );
-        scheduleNextScan(delay);
-      };
-
       const currentIndex = orderedIncludedInstances.indexOf(
         currentServiceConfigId,
       );
@@ -260,30 +242,37 @@ export const useAutoRunLifecycle = ({
       }
       if (!enabledRef.current) return;
       if (!handOverTo) {
-        keepRunning();
+        lastRewardsEligibilityRef.current[currentServiceConfigId] = undefined;
+        const delay = force
+          ? SCAN_BLOCKED_DELAY_SECONDS
+          : SCAN_ELIGIBLE_DELAY_SECONDS;
+        logVerbose(
+          `cycle=${cycleId} trigger=${trigger} keeping connect running, no runnable alternate current=${currentServiceConfigId} rescan=${delay}s`,
+        );
+        scheduleNextScan(delay);
         return;
       }
 
       logVerbose(
         `cycle=${cycleId} trigger=${trigger} phase=hand_over current=${currentServiceConfigId} next=${handOverTo}`,
       );
+      // A watchdog or eviction hand-over does not mean the goal was reached.
       await stopAndScanFrom(
         currentServiceConfigId,
         cycleId,
         trigger,
-        isRunCompleted
-          ? () => notifyGoalReachedOnce(currentServiceConfigId)
-          : undefined,
+        force
+          ? undefined
+          : () => notifyGoalReachedOnHandOver(currentServiceConfigId),
       );
     },
     [
-      advanceConnectRunBaseline,
       enabledRef,
       getHandOverDeployability,
       getRewardSnapshot,
       lastRewardsEligibilityRef,
       logVerbose,
-      notifyGoalReachedOnce,
+      notifyGoalReachedOnHandOver,
       orderedIncludedInstances,
       refreshRewardsEligibility,
       scheduleNextScan,

@@ -824,7 +824,7 @@ describe('refreshRewardsEligibility', () => {
 
   describe('no-staking agent (Connect)', () => {
     const CONNECT_ID = 'sc-connect';
-    const baselineSeconds = 1_800_000_000;
+    const startRequestedAtSeconds = 1_800_000_000;
     const connectMeta = {
       ...makeAutoRunAgentMeta(
         AgentMap.Connect,
@@ -833,8 +833,18 @@ describe('refreshRewardsEligibility', () => {
       ),
       stakingProgramId: 'no_staking',
     } as AgentMeta;
-    const connectGoal = (lastMetAt: number | null) =>
-      makeActivityGoal({ unit: 'minutes', target: 15, last_met_at: lastMetAt });
+    // A block written by the process Auto-run started.
+    const connectGoal = (
+      overrides: Parameters<typeof makeActivityGoal>[0] = {},
+    ) =>
+      makeActivityGoal({
+        unit: 'minutes',
+        target: 15,
+        progress: 15,
+        is_met: true,
+        period_start: startRequestedAtSeconds + 3,
+        ...overrides,
+      });
 
     const makeConnectParams = (
       overrides: Partial<Parameters<typeof refreshRewardsEligibility>[0]> = {},
@@ -843,47 +853,71 @@ describe('refreshRewardsEligibility', () => {
         serviceConfigId: CONNECT_ID,
         configuredAgents: [connectMeta],
         runningServiceConfigIdRef: { current: CONNECT_ID },
-        getConnectRunBaseline: () => baselineSeconds,
+        startRequestedAtRef: {
+          current: { [CONNECT_ID]: startRequestedAtSeconds * 1000 + 999 },
+        },
         ...overrides,
       });
 
     it('never reads staking rewards', async () => {
-      mockGetAgentPerformance.mockResolvedValue(
-        makePerformance(connectGoal(null)),
-      );
+      mockGetAgentPerformance.mockResolvedValue(makePerformance(connectGoal()));
       await refreshRewardsEligibility(makeConnectParams());
       expect(mockFetchRewards).not.toHaveBeenCalled();
     });
 
-    it('is done when the running Connect completed a run after the baseline', async () => {
-      mockGetAgentPerformance.mockResolvedValue(
-        makePerformance(connectGoal(baselineSeconds + 5)),
-      );
+    it('is done when the running process met its goal', async () => {
+      mockGetAgentPerformance.mockResolvedValue(makePerformance(connectGoal()));
       const setRewardSnapshot = jest.fn();
-      const onConnectGoalRead = jest.fn();
 
       const result = await refreshRewardsEligibility(
-        makeConnectParams({ setRewardSnapshot, onConnectGoalRead }),
+        makeConnectParams({ setRewardSnapshot }),
       );
 
       expect(result).toBe(true);
       expect(setRewardSnapshot).toHaveBeenCalledWith(CONNECT_ID, true);
-      expect(onConnectGoalRead).toHaveBeenCalledWith(
-        CONNECT_ID,
-        baselineSeconds + 5,
-      );
     });
 
     it.each([
-      ['no run completed yet', null],
-      ['last run at the baseline', baselineSeconds],
-      ['last run before the baseline', baselineSeconds - 60],
-    ])('is not done when %s', async (_, lastMetAt) => {
-      mockGetAgentPerformance.mockResolvedValue(
-        makePerformance(connectGoal(lastMetAt)),
-      );
+      [
+        'the target was lowered to the progress made',
+        connectGoal({ target: 5, progress: 5, is_met: true }),
+        true,
+      ],
+      [
+        'the target is 0',
+        connectGoal({ target: 0, progress: 0, is_met: true }),
+        true,
+      ],
+      [
+        'the goal is not met yet',
+        connectGoal({ progress: 4, is_met: false }),
+        false,
+      ],
+      [
+        'the target was raised above the progress made',
+        connectGoal({ target: 30, progress: 20, is_met: false }),
+        false,
+      ],
+      [
+        'the met block was left by the previous process',
+        connectGoal({ period_start: startRequestedAtSeconds - 1 }),
+        false,
+      ],
+      ['there is no block', undefined, false],
+    ])('when %s, done is %s', async (_, goal, expected) => {
+      mockGetAgentPerformance.mockResolvedValue(makePerformance(goal));
       const result = await refreshRewardsEligibility(makeConnectParams());
-      expect(result).toBe(false);
+      expect(result).toBe(expected);
+    });
+
+    it('counts any met block when Auto-run did not start the process', async () => {
+      mockGetAgentPerformance.mockResolvedValue(
+        makePerformance(connectGoal({ period_start: 1 })),
+      );
+      const result = await refreshRewardsEligibility(
+        makeConnectParams({ startRequestedAtRef: { current: {} } }),
+      );
+      expect(result).toBe(true);
     });
 
     it('is never done while not running, without fetching or throttling', async () => {

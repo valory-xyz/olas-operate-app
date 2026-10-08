@@ -232,8 +232,7 @@ export const useAutoRunController = ({
 
   const {
     refreshRewardsEligibility,
-    advanceConnectRunBaseline,
-    notifyGoalReachedOnce,
+    notifyGoalReachedOnHandOver,
     notifySkipOnce,
     startAgentWithRetries,
     stopAgentWithRecovery,
@@ -331,8 +330,7 @@ export const useAutoRunController = ({
     startAgentWithRetries,
     getDeployabilityForRunningInstance,
     getHandOverDeployability,
-    advanceConnectRunBaseline,
-    notifyGoalReachedOnce,
+    notifyGoalReachedOnHandOver,
     stopRetryBackoffUntilRef,
     recordMetric,
     logMessage,

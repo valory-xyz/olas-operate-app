@@ -6,8 +6,8 @@ import { AgentType, EvmChainId } from '@/constants';
 import { ServicesService } from '@/service/Services';
 import { ActivityGoal, StakingRewardsInfo, StakingState } from '@/types';
 import {
+  deriveIsActivityGoalMet,
   deriveIsDoneForEpoch,
-  hasConnectRunCompletedSince,
   isActivityGoalCurrent,
   parseActivityGoal,
 } from '@/utils/activityGoal';
@@ -73,13 +73,13 @@ const readActivityGoal = async (
   }
 };
 
-const formatGoalForLog = (read: ActivityGoalRead, tsCheckpoint: number) => {
+const formatGoalForLog = (read: ActivityGoalRead, periodStartFloor: number) => {
   if (!read.ok) return 'goal=unavailable';
   if (!read.goal) return 'goal=none';
   const { progress, target, is_met } = read.goal;
   return (
     `goal=${progress}/${target} goalMet=${is_met} ` +
-    `goalCurrent=${isActivityGoalCurrent(read.goal, tsCheckpoint)}`
+    `goalCurrent=${isActivityGoalCurrent(read.goal, periodStartFloor)}`
   );
 };
 
@@ -106,11 +106,13 @@ export const formatEligibilityReason = (eligibility: {
 /**
  * Fetch whether an instance is done for the epoch, throttled per serviceConfigId.
  *
- * For staking agents "done" needs both the staking KPI and the agent's
- * activity goal (`deriveIsDoneForEpoch`); an unreadable goal counts as not
- * met. For no-staking agents (Connect) "done" means a run has completed since
- * `getConnectRunBaseline` while it is the running instance, and is always
- * `false` otherwise, so the rotation reaches it after every other agent.
+ "Done" is the same rule for every agent: the staking KPI is met (or the
+ * agent has no staking), and its activity goal block is current and met; an
+ * unreadable goal counts as not met. Only the freshness of the block differs:
+ * a staking agent's must belong to the current epoch, Connect's must come from
+ * the process Auto-run last asked to start (`startRequestedAtRef`). A Connect
+ * instance that is not running is never done, since its next process opens a
+ * fresh window.
  *
  * Retries once on transient RPC failure (null response) before marking the
  * snapshot as unknown. `onRewardsFetchError` fires only on the final failure
@@ -133,7 +135,7 @@ export const formatEligibilityReason = (eligibility: {
  * from "stale nonce delta from a prior run" without cross-session history.
  *
  * @returns
- * - true      – agent is done for the current epoch (or Connect's run completed)
+ * - true      – agent is done for the current epoch (or Connect met its goal)
  * - false     – agent still has work to do
  * - undefined  – instance not found in configuredAgents, missing required staking
  *               data (multisig / serviceNftTokenId / stakingProgramId), the API
@@ -150,21 +152,15 @@ export const refreshRewardsEligibility = async ({
   setRewardSnapshot,
   logMessage,
   onRewardsFetchError,
-  getConnectRunBaseline,
-  onConnectGoalRead,
+  startRequestedAtRef,
 }: {
   serviceConfigId: string;
   configuredAgents: AgentMeta[];
   lastRewardsFetchRef: MutableRefObject<Partial<Record<string, number>>>;
   lastStartedAtRef?: MutableRefObject<Partial<Record<string, number>>>;
   runningServiceConfigIdRef?: MutableRefObject<string | null>;
-  /** Unix seconds after which a completed Connect run counts. */
-  getConnectRunBaseline?: (serviceConfigId: string) => number;
-  /** Receives the `last_met_at` of each Connect goal read. */
-  onConnectGoalRead?: (
-    serviceConfigId: string,
-    lastMetAt: number | null,
-  ) => void;
+  /** When Auto-run last asked to start each instance, in ms. */
+  startRequestedAtRef?: MutableRefObject<Partial<Record<string, number>>>;
   getRewardSnapshot: (serviceConfigId: string) => boolean | undefined;
   setRewardSnapshot: (
     serviceConfigId: string,
@@ -204,18 +200,20 @@ export const refreshRewardsEligibility = async ({
       setRewardSnapshot(serviceConfigId, false);
       return false;
     }
-    const lastMetAt = read.goal?.last_met_at ?? null;
-    onConnectGoalRead?.(serviceConfigId, lastMetAt);
-    const baseline = getConnectRunBaseline?.(serviceConfigId);
-    const runCompleted =
-      baseline !== undefined &&
-      hasConnectRunCompletedSince(read.goal, baseline);
-    logMessage(
-      `${serviceConfigId}: no staking, lastMetAt=${lastMetAt ?? 'none'} ` +
-        `baseline=${baseline ?? 'none'} → done=${runCompleted}`,
+    // The previous process's block, which may still say `is_met`, stays on
+    // disk until the new process rewrites it at boot. The new process starts
+    // only after Auto-run asks for it, so its `period_start` is never earlier.
+    const periodStartFloor = Math.floor(
+      (startRequestedAtRef?.current[serviceConfigId] ?? 0) / 1000,
     );
-    setRewardSnapshot(serviceConfigId, runCompleted);
-    return runCompleted;
+    const doneForRun =
+      deriveIsActivityGoalMet(read.goal, periodStartFloor) ?? false;
+    logMessage(
+      `${serviceConfigId}: no staking, ` +
+        `${formatGoalForLog(read, periodStartFloor)} → done=${doneForRun}`,
+    );
+    setRewardSnapshot(serviceConfigId, doneForRun);
+    return doneForRun;
   }
 
   if (

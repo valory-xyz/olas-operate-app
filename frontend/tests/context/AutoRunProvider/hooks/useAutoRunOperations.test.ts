@@ -272,162 +272,56 @@ describe('useAutoRunOperations', () => {
       expect(params.logMessage).toHaveBeenCalledTimes(2);
     });
   });
-  describe('Connect run baseline', () => {
-    const CONNECT_ID = 'sc-connect';
+  describe('Connect hand-over support', () => {
     const NOW_MS = 1_800_000_000_500;
-    const NOW_SECONDS = 1_800_000_000;
-
-    type HelperArgs = {
-      getConnectRunBaseline: (serviceConfigId: string) => number;
-      onConnectGoalRead: (
-        serviceConfigId: string,
-        lastMetAt: number | null,
-      ) => void;
-    };
-
-    const renderOperations = () => {
-      const params = makeHookParams();
-      const hook = renderHook(
-        ({ enabled }) => useAutoRunOperations({ ...params, enabled }),
-        { initialProps: { enabled: true } },
-      );
-      const helperArgs = async () => {
-        await act(async () => {
-          await hook.result.current.refreshRewardsEligibility(CONNECT_ID);
-        });
-        return mockRefreshRewardsEligibilityHelper.mock.calls.at(
-          -1,
-        )?.[0] as HelperArgs;
-      };
-      const startInstance = () => {
-        const onStarted = mockUseAutoRunStartOperations.mock.calls.at(-1)?.[0]
-          .onAutoRunInstanceStarted as (serviceConfigId: string) => void;
-        act(() => onStarted(CONNECT_ID));
-      };
-      return { params, hook, helperArgs, startInstance };
-    };
-
-    beforeEach(() => {
-      jest.spyOn(Date, 'now').mockReturnValue(NOW_MS);
-    });
 
     afterEach(() => {
       jest.restoreAllMocks();
     });
 
-    it('starts counting from the first evaluation when Auto-run did not start it', async () => {
-      const { helperArgs } = renderOperations();
-      const { getConnectRunBaseline } = await helperArgs();
+    it('records when a start is requested and passes it to the rewards helper', async () => {
+      jest.spyOn(Date, 'now').mockReturnValue(NOW_MS);
+      const params = makeHookParams();
+      const { result } = renderHook(() => useAutoRunOperations(params));
+      const [meta] = params.configuredAgents;
 
-      expect(getConnectRunBaseline(CONNECT_ID)).toBe(NOW_SECONDS);
-      jest.spyOn(Date, 'now').mockReturnValue(NOW_MS + 60_000);
-      expect(getConnectRunBaseline(CONNECT_ID)).toBe(NOW_SECONDS);
+      const [{ startService }] = mockUseAutoRunStartOperations.mock.calls.at(
+        -1,
+      ) as [Parameters<typeof useAutoRunOperations>[0]];
+      await act(async () => {
+        await startService({
+          agentType: meta.agentType,
+          agentConfig: meta.agentConfig,
+          service: meta.service,
+          stakingProgramId: meta.stakingProgramId,
+          createSafeIfNeeded: jest.fn(),
+        });
+      });
+      await act(async () => {
+        await result.current.refreshRewardsEligibility(meta.serviceConfigId);
+      });
+
+      expect(params.startService).toHaveBeenCalledTimes(1);
+      const [{ startRequestedAtRef }] =
+        mockRefreshRewardsEligibilityHelper.mock.calls.at(-1) as [
+          { startRequestedAtRef: { current: Record<string, number> } },
+        ];
+      expect(startRequestedAtRef.current[meta.serviceConfigId]).toBe(NOW_MS);
     });
 
-    it('uses the Auto-run start time in unix seconds', async () => {
-      const { helperArgs, startInstance } = renderOperations();
-      startInstance();
-      const { getConnectRunBaseline } = await helperArgs();
+    it('sends the goal-reached notification on every hand-over', () => {
+      const params = makeHookParams();
+      const { result } = renderHook(() => useAutoRunOperations(params));
 
-      expect(getConnectRunBaseline(CONNECT_ID)).toBe(NOW_SECONDS);
-    });
+      act(() => result.current.notifyGoalReachedOnHandOver('sc-connect'));
+      act(() => result.current.notifyGoalReachedOnHandOver('sc-connect'));
 
-    it('moves the baseline to the handled run and clears the snapshot', async () => {
-      const { params, hook, helperArgs, startInstance } = renderOperations();
-      startInstance();
-      const { getConnectRunBaseline, onConnectGoalRead } = await helperArgs();
-      onConnectGoalRead(CONNECT_ID, NOW_SECONDS + 900);
-
-      act(() => hook.result.current.advanceConnectRunBaseline(CONNECT_ID));
-
-      expect(getConnectRunBaseline(CONNECT_ID)).toBe(NOW_SECONDS + 900);
-      expect(params.setRewardSnapshot).toHaveBeenCalledWith(CONNECT_ID, false);
-    });
-
-    it('keeps the baseline when no run time was read', async () => {
-      const { hook, helperArgs, startInstance } = renderOperations();
-      startInstance();
-      const { getConnectRunBaseline } = await helperArgs();
-
-      act(() => hook.result.current.advanceConnectRunBaseline(CONNECT_ID));
-
-      expect(getConnectRunBaseline(CONNECT_ID)).toBe(NOW_SECONDS);
-    });
-
-    it('takes a later Auto-run start over an older handled run', async () => {
-      const { hook, helperArgs, startInstance } = renderOperations();
-      startInstance();
-      const { getConnectRunBaseline, onConnectGoalRead } = await helperArgs();
-      onConnectGoalRead(CONNECT_ID, NOW_SECONDS + 900);
-      act(() => hook.result.current.advanceConnectRunBaseline(CONNECT_ID));
-
-      jest.spyOn(Date, 'now').mockReturnValue(NOW_MS + 3_600_000);
-      startInstance();
-
-      expect(getConnectRunBaseline(CONNECT_ID)).toBe(NOW_SECONDS + 3_600);
-    });
-
-    it('sends the goal-reached notification once per completed run', async () => {
-      const { params, hook, helperArgs, startInstance } = renderOperations();
-      startInstance();
-      const { onConnectGoalRead } = await helperArgs();
-      onConnectGoalRead(CONNECT_ID, NOW_SECONDS + 900);
-
-      act(() => hook.result.current.notifyGoalReachedOnce(CONNECT_ID));
-      act(() => hook.result.current.notifyGoalReachedOnce(CONNECT_ID));
-      expect(mockNotifyGoalReached).toHaveBeenCalledTimes(1);
+      expect(mockNotifyGoalReached).toHaveBeenCalledTimes(2);
       expect(mockNotifyGoalReached).toHaveBeenCalledWith(
         params.showNotification,
         'Omenstrat',
         'corzim-vardor96',
       );
-
-      onConnectGoalRead(CONNECT_ID, NOW_SECONDS + 4_500);
-      act(() => hook.result.current.notifyGoalReachedOnce(CONNECT_ID));
-      expect(mockNotifyGoalReached).toHaveBeenCalledTimes(2);
-    });
-
-    it('notifies on every hand-over of a manually started instance', async () => {
-      // No Auto-run start is recorded for a manual start.
-      const { hook, helperArgs } = renderOperations();
-      const { onConnectGoalRead } = await helperArgs();
-
-      onConnectGoalRead(CONNECT_ID, NOW_SECONDS + 900);
-      act(() => hook.result.current.notifyGoalReachedOnce(CONNECT_ID));
-
-      // Next manual run: Connect restarted and completed another run.
-      onConnectGoalRead(CONNECT_ID, NOW_SECONDS + 7_200);
-      act(() => hook.result.current.notifyGoalReachedOnce(CONNECT_ID));
-
-      expect(mockNotifyGoalReached).toHaveBeenCalledTimes(2);
-    });
-
-    it('gives the next run a fresh baseline after a hand-over', async () => {
-      const { hook, helperArgs } = renderOperations();
-      const { getConnectRunBaseline, onConnectGoalRead } = await helperArgs();
-      expect(getConnectRunBaseline(CONNECT_ID)).toBe(NOW_SECONDS);
-      onConnectGoalRead(CONNECT_ID, NOW_SECONDS + 900);
-
-      act(() => hook.result.current.notifyGoalReachedOnce(CONNECT_ID));
-
-      jest.spyOn(Date, 'now').mockReturnValue(NOW_MS + 3_600_000);
-      expect(getConnectRunBaseline(CONNECT_ID)).toBe(NOW_SECONDS + 3_600);
-    });
-
-    it('resets the baseline and notification state on disable', async () => {
-      const { hook, helperArgs, startInstance } = renderOperations();
-      startInstance();
-      const { getConnectRunBaseline, onConnectGoalRead } = await helperArgs();
-      onConnectGoalRead(CONNECT_ID, NOW_SECONDS + 900);
-      act(() => hook.result.current.advanceConnectRunBaseline(CONNECT_ID));
-      act(() => hook.result.current.notifyGoalReachedOnce(CONNECT_ID));
-
-      hook.rerender({ enabled: false });
-      hook.rerender({ enabled: true });
-
-      expect(getConnectRunBaseline(CONNECT_ID)).toBe(NOW_SECONDS);
-      act(() => hook.result.current.notifyGoalReachedOnce(CONNECT_ID));
-      expect(mockNotifyGoalReached).toHaveBeenCalledTimes(2);
     });
   });
 });

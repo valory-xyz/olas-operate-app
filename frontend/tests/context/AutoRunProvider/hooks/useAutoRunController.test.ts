@@ -87,8 +87,7 @@ jest.mock(
   () => ({
     useAutoRunOperations: jest.fn().mockReturnValue({
       refreshRewardsEligibility: jest.fn().mockResolvedValue(false),
-      advanceConnectRunBaseline: jest.fn(),
-      notifyGoalReachedOnce: jest.fn(),
+      notifyGoalReachedOnHandOver: jest.fn(),
       notifySkipOnce: jest.fn(),
       startAgentWithRetries: jest.fn().mockResolvedValue({ status: 'started' }),
       stopAgentWithRecovery: jest.fn().mockResolvedValue(true),
@@ -328,11 +327,8 @@ describe('useAutoRunController', () => {
       const operations = useAutoRunOperations.mock.results[0].value;
       const lifecycleArgs = lastCallArgs(useAutoRunLifecycle);
       expect(lifecycleArgs.configuredAgents).toBe(configuredAgents);
-      expect(lifecycleArgs.advanceConnectRunBaseline).toBe(
-        operations.advanceConnectRunBaseline,
-      );
-      expect(lifecycleArgs.notifyGoalReachedOnce).toBe(
-        operations.notifyGoalReachedOnce,
+      expect(lifecycleArgs.notifyGoalReachedOnHandOver).toBe(
+        operations.notifyGoalReachedOnHandOver,
       );
     });
 

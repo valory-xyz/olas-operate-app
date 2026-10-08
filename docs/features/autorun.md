@@ -61,9 +61,7 @@ AutoRunProvider
 | `balanceLastUpdatedRef` | Tracks when balance data was last refreshed |
 | `didLogStaleRef` | Deduplicates "balances stale" log messages |
 | `skipNotifiedRef` | Per-instance+reason notification dedup; cleared on disable |
-| `connectRunBaselineRef` | Per no-staking instance (Connect): unix-seconds baseline after which a completed run counts; cleared on disable |
-| `connectLastMetAtRef` | Per no-staking instance: latest `activity_goal.last_met_at` read; cleared on disable |
-| `goalNotifiedRef` | Per no-staking instance: start time of the turn whose goal-reached notification was sent; cleared on disable |
+| `startRequestedAtRef` | Per instance: when Auto-run last asked to start it (ms); the freshness floor of Connect's `activity_goal` block |
 | `runningSinceRef` | Timestamp when current instance started; used by runtime watchdog |
 | `rotationCycleSeqRef` | Sequence counter for cycle correlation IDs in verbose logs |
 | `startOperationSeqRef` | Op-id sequence for structured start phase logs |
@@ -138,11 +136,12 @@ Note: Resetting `lastRewardsEligibilityRef` on successful stop is critical — w
 
 ### 3.2a Connect (no-staking agents)
 
-Connect (`stakingProgramId === 'no_staking'`) has no epoch. It is an ordinary checklist row; its turn ends when it completes a run (its `activity_goal.last_met_at` moves past a baseline).
+Connect (`stakingProgramId === 'no_staking'`) has no epoch. It is an ordinary checklist row and uses the same "done" rule as every other agent, with no staking half: its `activity_goal` block is current and `is_met`. Connect opens one run window per process and keeps `is_met` true once its minutes have elapsed, so it rotates through the same `false → true` rotation effect.
 
-- **Not running:** `refreshRewardsEligibility` returns `false` without a fetch or throttle, so the circular order reaches it after every other agent has had a turn, and `rotateToNext` from a finished staking agent hands over to it.
-- **Running:** done when `last_met_at` is newer than the baseline (`floor(lastStartedAt / 1000)`, or the first evaluation if Auto-run did not start it; a `0`-minute target always counts).
-- **Hand-over:** `rotateToNext` refreshes the alternates, probes each not-done one in turn order with `fetchDeployabilityForAgent(..., { ignoreRunningAgent: true })`, and stops Connect only if one can start; the goal-reached notification ("Connect agent "…" finished its run") is sent once per turn on that stop. Otherwise Connect keeps running, the baseline moves to the handled run and the guard re-arms, so the next completed run re-checks. No notification is sent then.
+- **Not running:** `refreshRewardsEligibility` returns `false` without a fetch or throttle, since its next process opens a fresh window. The circular order reaches it after every other agent has had a turn, and `rotateToNext` from a finished staking agent hands over to it.
+- **Running:** done when the block is current and `is_met`. Freshness is the only per-type difference: the block is current when `period_start >= floor(startRequestedAt / 1000)`, the moment Auto-run asked for the start (no floor if Auto-run did not start it). That ignores a leftover `is_met: true` from the previous process before the new one rewrites the file at boot. The start request is used rather than `lastStartedAt`, which is stamped only once the deployment is confirmed, after the new process has already opened its window.
+- **Hand-over:** `rotateToNext` refreshes the alternates, probes each not-done one in turn order with `fetchDeployabilityForAgent(..., { ignoreRunningAgent: true })`, and stops Connect only if one can start; the goal-reached notification ("Connect agent "…" finished its run") is sent on that stop, once per hand-over. Otherwise Connect keeps running and `lastRewardsEligibilityRef[connect]` is reset, as on a stop failure: Connect's `is_met` never goes back to false within a process, so the reset is what lets the next rewards poll re-check, and hand over once another agent becomes ready.
+- A watchdog or eviction hand-over sends no goal-reached notification.
 - `fetchDeployabilityForAgent` skips the staking reads for `no_staking`, and `AgentMeta.chainId` is the instance's own chain (`getServiceEvmChainId`).
 - **Upgrade:** Connect instances that exist when the version first loads are added once to `userExcludedAgentInstances` (`autoRun.connectAutoRunMigrated`); later instances are auto-added.
 

@@ -1,7 +1,6 @@
 import {
   deriveIsActivityGoalMet,
   deriveIsDoneForEpoch,
-  hasConnectRunCompletedSince,
   isActivityGoalCurrent,
   parseActivityGoal,
 } from '../../utils/activityGoal';
@@ -97,56 +96,5 @@ describe('deriveIsDoneForEpoch', () => {
     expect(
       deriveIsDoneForEpoch(epochTargetMet, goal, DEFAULT_TS_CHECKPOINT),
     ).toBe(expected);
-  });
-});
-
-describe('hasConnectRunCompletedSince', () => {
-  const baselineSeconds = 1_800_000_000;
-  const connectGoal = (overrides: Parameters<typeof makeActivityGoal>[0]) =>
-    makeActivityGoal({ unit: 'minutes', target: 15, ...overrides });
-
-  it('is false when the block is absent', () => {
-    expect(hasConnectRunCompletedSince(null, baselineSeconds)).toBe(false);
-  });
-
-  it('is false when no run has completed yet (last_met_at null)', () => {
-    expect(
-      hasConnectRunCompletedSince(
-        connectGoal({ last_met_at: null }),
-        baselineSeconds,
-      ),
-    ).toBe(false);
-  });
-
-  it('is false when last_met_at equals the baseline', () => {
-    expect(
-      hasConnectRunCompletedSince(
-        connectGoal({ last_met_at: baselineSeconds }),
-        baselineSeconds,
-      ),
-    ).toBe(false);
-  });
-
-  it('is true when last_met_at is newer than the baseline', () => {
-    expect(
-      hasConnectRunCompletedSince(
-        connectGoal({ last_met_at: baselineSeconds + 1 }),
-        baselineSeconds,
-      ),
-    ).toBe(true);
-  });
-
-  it('is true for a 0-minute target, which is always met', () => {
-    expect(
-      hasConnectRunCompletedSince(
-        connectGoal({
-          target: 0,
-          progress: 0,
-          is_met: true,
-          last_met_at: null,
-        }),
-        baselineSeconds,
-      ),
-    ).toBe(true);
   });
 });
