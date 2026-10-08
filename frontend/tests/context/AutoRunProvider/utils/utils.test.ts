@@ -427,9 +427,11 @@ describe('getOrderedIncludedInstances', () => {
       { serviceConfigId: MOCK_SERVICE_CONFIG_ID_2 },
       { serviceConfigId: DEFAULT_SERVICE_CONFIG_ID },
     ];
-    const result = getOrderedIncludedInstances(included, [
-      DEFAULT_SERVICE_CONFIG_ID,
-    ]);
+    const result = getOrderedIncludedInstances(
+      included,
+      [DEFAULT_SERVICE_CONFIG_ID],
+      [],
+    );
     expect(result).toEqual([
       MOCK_SERVICE_CONFIG_ID_2,
       DEFAULT_SERVICE_CONFIG_ID,
@@ -438,8 +440,17 @@ describe('getOrderedIncludedInstances', () => {
 
   it('falls back to eligible instances when included is empty', () => {
     const eligible = [DEFAULT_SERVICE_CONFIG_ID, MOCK_SERVICE_CONFIG_ID_3];
-    const result = getOrderedIncludedInstances([], eligible);
+    const result = getOrderedIncludedInstances([], eligible, []);
     expect(result).toEqual(eligible);
+  });
+
+  it('leaves user-excluded instances out of the fallback', () => {
+    const result = getOrderedIncludedInstances(
+      [],
+      [DEFAULT_SERVICE_CONFIG_ID, MOCK_SERVICE_CONFIG_ID_3],
+      [MOCK_SERVICE_CONFIG_ID_3],
+    );
+    expect(result).toEqual([DEFAULT_SERVICE_CONFIG_ID]);
   });
 });
 

@@ -204,14 +204,20 @@ export const getEligibleInstances = (
   return configuredInstances.filter((id) => !blocked.has(id));
 };
 
+/**
+ * The rotation order. An empty included list falls back to every eligible
+ * instance the user has not excluded.
+ */
 export const getOrderedIncludedInstances = (
   includedInstancesSorted: { serviceConfigId: string }[],
   eligibleInstances: string[],
+  userExcludedInstances: string[],
 ) => {
   if (includedInstancesSorted.length > 0) {
     return includedInstancesSorted.map((inst) => inst.serviceConfigId);
   }
-  return eligibleInstances;
+  const excluded = new Set(userExcludedInstances);
+  return eligibleInstances.filter((id) => !excluded.has(id));
 };
 
 /**

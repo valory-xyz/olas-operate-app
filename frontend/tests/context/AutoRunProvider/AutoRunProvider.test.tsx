@@ -433,6 +433,18 @@ describe('AutoRunProvider', () => {
       expect(seeded.map((item) => item.serviceConfigId)).toEqual([scTrader]);
     });
 
+    it('keeps a user-excluded Connect out of the rotation when the included list is empty', () => {
+      mockAutoRunStore.isInitialized = true;
+      mockAutoRunStore.includedInstances = [];
+      mockAutoRunStore.userExcludedInstances = [scConnect];
+      useAutoRunStore.mockImplementation(() => ({ ...mockAutoRunStore }));
+
+      renderHook(() => useAutoRunContext(), { wrapper });
+
+      const controllerArgs = useAutoRunController.mock.calls.at(-1)![0];
+      expect(controllerArgs.orderedIncludedInstances).toEqual([scTrader]);
+    });
+
     it('auto-appends a newly created Connect instance', () => {
       mockAutoRunStore.isInitialized = true;
       mockAutoRunStore.includedInstances = [

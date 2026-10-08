@@ -116,8 +116,12 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
   );
   const orderedIncludedInstances = useMemo(
     () =>
-      getOrderedIncludedInstances(includedInstancesSorted, eligibleInstances),
-    [eligibleInstances, includedInstancesSorted],
+      getOrderedIncludedInstances(
+        includedInstancesSorted,
+        eligibleInstances,
+        userExcludedInstances,
+      ),
+    [eligibleInstances, includedInstancesSorted, userExcludedInstances],
   );
   const includedInstancesForUi = useMemo(
     () => includedInstancesSorted.map((instance) => instance.serviceConfigId),
