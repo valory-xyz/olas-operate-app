@@ -774,23 +774,55 @@ describe('refreshRewardsEligibility', () => {
       );
     });
 
-    it('counts a failed performance fetch as not done', async () => {
+    it('leaves done unknown when the performance fetch fails after the staking KPI is met', async () => {
       mockFetchRewards.mockResolvedValue(stakingMet);
       mockGetAgentPerformance.mockRejectedValue(new Error('backend down'));
       const logMessage = jest.fn();
       const onRewardsFetchError = jest.fn();
+      const setRewardSnapshot = jest.fn();
 
       const result = await refreshRewardsEligibility(
-        makeParams({ logMessage, onRewardsFetchError }),
+        makeParams({ logMessage, onRewardsFetchError, setRewardSnapshot }),
       );
 
-      expect(result).toBe(false);
+      expect(result).toBeUndefined();
+      expect(setRewardSnapshot).not.toHaveBeenCalled();
       expect(onRewardsFetchError).toHaveBeenCalledTimes(1);
       expect(logMessage).toHaveBeenCalledWith(
         `activity goal fetch error: ${DEFAULT_SERVICE_CONFIG_ID}: Error: backend down`,
       );
       expect(logMessage).toHaveBeenCalledWith(
         expect.stringContaining('goal=unavailable'),
+      );
+    });
+
+    it('is not done when the performance fetch fails before the staking KPI is met', async () => {
+      mockFetchRewards.mockResolvedValue(stakingUnmet);
+      mockGetAgentPerformance.mockRejectedValue(new Error('backend down'));
+
+      const result = await refreshRewardsEligibility(makeParams());
+
+      expect(result).toBe(false);
+    });
+
+    it('logs the validation issues of a malformed block and falls back to the staking KPI', async () => {
+      mockFetchRewards.mockResolvedValue(stakingMet);
+      mockGetAgentPerformance.mockResolvedValue(
+        makePerformance({ ...makeActivityGoal(), is_met: 'yes' }),
+      );
+      const logMessage = jest.fn();
+
+      const result = await refreshRewardsEligibility(
+        makeParams({ logMessage }),
+      );
+
+      expect(result).toBe(true);
+      expect(logMessage).toHaveBeenCalledWith(
+        expect.stringMatching(
+          new RegExp(
+            `^activity goal malformed: ${DEFAULT_SERVICE_CONFIG_ID}: is_met: `,
+          ),
+        ),
       );
     });
 
@@ -908,6 +940,26 @@ describe('refreshRewardsEligibility', () => {
       mockGetAgentPerformance.mockResolvedValue(makePerformance(goal));
       const result = await refreshRewardsEligibility(makeConnectParams());
       expect(result).toBe(expected);
+    });
+
+    it('counts a block that opened in the same second as the start request', async () => {
+      mockGetAgentPerformance.mockResolvedValue(
+        makePerformance(connectGoal({ period_start: startRequestedAtSeconds })),
+      );
+      const result = await refreshRewardsEligibility(makeConnectParams());
+      expect(result).toBe(true);
+    });
+
+    it('counts the met block of a process the user restarted after Auto-run started it', async () => {
+      // `startRequestedAtRef` still holds Auto-run's earlier request, so the
+      // block of the process the user stopped is not recognised as leftover.
+      mockGetAgentPerformance.mockResolvedValue(
+        makePerformance(
+          connectGoal({ period_start: startRequestedAtSeconds + 600 }),
+        ),
+      );
+      const result = await refreshRewardsEligibility(makeConnectParams());
+      expect(result).toBe(true);
     });
 
     it('counts any met block when Auto-run did not start the process', async () => {

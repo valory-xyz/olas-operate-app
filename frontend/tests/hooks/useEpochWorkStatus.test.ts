@@ -69,8 +69,6 @@ describe('useEpochWorkStatus', () => {
 
   it('is working before the staking KPI is met', () => {
     expect(setup({ isEpochTargetMet: false })).toEqual({
-      isEpochTargetMet: false,
-      isActivityGoalMet: undefined,
       isDoneForEpoch: false,
       workStatus: 'working',
     });
@@ -82,7 +80,6 @@ describe('useEpochWorkStatus', () => {
       activityGoal: makeActivityGoal({ is_met: true }),
     });
     expect(status.workStatus).toBe('working');
-    expect(status.isActivityGoalMet).toBe(true);
     expect(status.isDoneForEpoch).toBe(false);
   });
 
@@ -93,8 +90,6 @@ describe('useEpochWorkStatus', () => {
         activityGoal: makeActivityGoal({ is_met: false }),
       }),
     ).toEqual({
-      isEpochTargetMet: true,
-      isActivityGoalMet: false,
       isDoneForEpoch: false,
       workStatus: 'goal-pending',
     });
@@ -119,8 +114,6 @@ describe('useEpochWorkStatus', () => {
         activityGoal: makeActivityGoal({ is_met: true }),
       }),
     ).toEqual({
-      isEpochTargetMet: true,
-      isActivityGoalMet: true,
       isDoneForEpoch: true,
       workStatus: 'standby',
     });
@@ -130,12 +123,17 @@ describe('useEpochWorkStatus', () => {
     const status = setup({ isEpochTargetMet: true, activityGoal: null });
     expect(status.workStatus).toBe('standby');
     expect(status.isDoneForEpoch).toBe(true);
-    expect(status.isActivityGoalMet).toBeUndefined();
   });
 
-  it('counts an unreadable report as goal not met', () => {
+  it('is undefined when the report is unreadable after rewards are earned', () => {
     const status = setup({ isEpochTargetMet: true, isUnavailable: true });
-    expect(status.workStatus).toBe('goal-pending');
+    expect(status.workStatus).toBeUndefined();
+    expect(status.isDoneForEpoch).toBeUndefined();
+  });
+
+  it('stays working when the report is unreadable before rewards are earned', () => {
+    const status = setup({ isEpochTargetMet: false, isUnavailable: true });
+    expect(status.workStatus).toBe('working');
     expect(status.isDoneForEpoch).toBe(false);
   });
 

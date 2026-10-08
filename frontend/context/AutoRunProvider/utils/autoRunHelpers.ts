@@ -56,20 +56,25 @@ export const isStakingEpochExpired = ({
   }
 };
 
-type ActivityGoalRead =
-  | { ok: true; goal: ActivityGoal | null }
-  | { ok: false; error: unknown };
+type ActivityGoalRead = { ok: true; goal: ActivityGoal | null } | { ok: false };
 
 const readActivityGoal = async (
   serviceConfigId: string,
+  logMessage: (message: string) => void,
+  onRewardsFetchError?: () => void,
 ): Promise<ActivityGoalRead> => {
   try {
     const performance = await ServicesService.getAgentPerformance({
       serviceConfigId,
     });
-    return { ok: true, goal: parseActivityGoal(performance?.activity_goal) };
+    const goal = parseActivityGoal(performance?.activity_goal, (issues) =>
+      logMessage(`activity goal malformed: ${serviceConfigId}: ${issues}`),
+    );
+    return { ok: true, goal };
   } catch (error) {
-    return { ok: false, error };
+    onRewardsFetchError?.();
+    logMessage(`activity goal fetch error: ${serviceConfigId}: ${error}`);
+    return { ok: false };
   }
 };
 
@@ -106,9 +111,10 @@ export const formatEligibilityReason = (eligibility: {
 /**
  * Fetch whether an instance is done for the epoch, throttled per serviceConfigId.
  *
- "Done" is the same rule for every agent: the staking KPI is met (or the
- * agent has no staking), and its activity goal block is current and met; an
- * unreadable goal counts as not met. Only the freshness of the block differs:
+ * "Done" is the same rule for every agent: the staking KPI is met (or the
+ * agent has no staking), and its activity goal block is current and met. An
+ * unreadable goal leaves a staking agent whose KPI is met unknown, and Connect
+ * not done. Only the freshness of the block differs:
  * a staking agent's must belong to the current epoch, Connect's must come from
  * the process Auto-run last asked to start (`startRequestedAtRef`). A Connect
  * instance that is not running is never done, since its next process opens a
@@ -139,8 +145,9 @@ export const formatEligibilityReason = (eligibility: {
  * - false     – agent still has work to do
  * - undefined  – instance not found in configuredAgents, missing required staking
  *               data (multisig / serviceNftTokenId / stakingProgramId), the API
- *               call failed on both attempts, or a sleep/wake event was detected
- *               between retries
+ *               call failed on both attempts, a sleep/wake event was detected
+ *               between retries, or the staking KPI is met but the activity
+ *               goal could not be read
  */
 export const refreshRewardsEligibility = async ({
   serviceConfigId,
@@ -191,12 +198,12 @@ export const refreshRewardsEligibility = async ({
   if (!meta) return;
 
   if (isNoStakingProgram(meta.stakingProgramId)) {
-    const read = await readActivityGoal(serviceConfigId);
+    const read = await readActivityGoal(
+      serviceConfigId,
+      logMessage,
+      onRewardsFetchError,
+    );
     if (!read.ok) {
-      onRewardsFetchError?.();
-      logMessage(
-        `activity goal fetch error: ${serviceConfigId}: ${read.error}`,
-      );
       setRewardSnapshot(serviceConfigId, false);
       return false;
     }
@@ -282,19 +289,23 @@ export const refreshRewardsEligibility = async ({
   const epochExpired = isStakingEpochExpired(response);
 
   // The agent's own activity goal is the second half of "done". An unreadable
-  // report counts as not met: for the running agent that only delays rotation
-  // (the runtime watchdog remains the backstop); for a candidate it allows a
-  // start, and the agent then stands by on its own.
-  const goalRead = await readActivityGoal(serviceConfigId);
-  if (!goalRead.ok) {
-    onRewardsFetchError?.();
-    logMessage(
-      `activity goal fetch error: ${serviceConfigId}: ${goalRead.error}`,
-    );
+  // report leaves "done" unknown so callers keep the previous snapshot: a
+  // failure must neither override a met goal nor fake a false → true rotation.
+  const goalRead = await readActivityGoal(
+    serviceConfigId,
+    logMessage,
+    onRewardsFetchError,
+  );
+  let doneForEpoch: boolean | undefined = false;
+  if (epochTargetMet) {
+    doneForEpoch = goalRead.ok
+      ? deriveIsDoneForEpoch(
+          epochTargetMet,
+          goalRead.goal,
+          response.tsCheckpoint,
+        )
+      : undefined;
   }
-  const doneForEpoch = goalRead.ok
-    ? deriveIsDoneForEpoch(epochTargetMet, goalRead.goal, response.tsCheckpoint)
-    : false;
 
   // Decision inputs — one line per evaluation (throttled to REWARDS_POLL_SECONDS),
   // so a Pearl log explains exactly why an agent did/didn't rotate, and lets us

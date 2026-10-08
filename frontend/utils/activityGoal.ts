@@ -1,3 +1,4 @@
+import { isNil } from 'lodash';
 import { z } from 'zod';
 
 import { ActivityGoal } from '@/types/Agent';
@@ -16,11 +17,22 @@ const ActivityGoalSchema: z.ZodType<ActivityGoal> = z.object({
 
 /**
  * Returns the agent's `activity_goal` block, or `null` when it is absent
- * (older agent builds) or malformed. Never throws.
+ * (older agent builds) or malformed; `onInvalid` receives a malformed block's
+ * validation issues. Never throws.
  */
-export const parseActivityGoal = (raw: unknown): ActivityGoal | null => {
+export const parseActivityGoal = (
+  raw: unknown,
+  onInvalid?: (issues: string) => void,
+): ActivityGoal | null => {
+  if (isNil(raw)) return null;
   const result = ActivityGoalSchema.safeParse(raw);
-  return result.success ? result.data : null;
+  if (result.success) return result.data;
+  onInvalid?.(
+    result.error.issues
+      .map((issue) => `${issue.path.join('.')}: ${issue.message}`)
+      .join('; '),
+  );
+  return null;
 };
 
 /**
@@ -59,7 +71,5 @@ export const deriveIsDoneForEpoch = (
   epochTargetMet: boolean,
   goal: ActivityGoal | null,
   tsCheckpoint: number,
-): boolean => {
-  if (!epochTargetMet) return false;
-  return deriveIsActivityGoalMet(goal, tsCheckpoint) ?? epochTargetMet;
-};
+): boolean =>
+  epochTargetMet && (deriveIsActivityGoalMet(goal, tsCheckpoint) ?? true);

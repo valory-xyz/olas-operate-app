@@ -1,10 +1,7 @@
 import { isNil } from 'lodash';
 import { useMemo } from 'react';
 
-import {
-  deriveIsActivityGoalMet,
-  deriveIsDoneForEpoch,
-} from '@/utils/activityGoal';
+import { deriveIsDoneForEpoch } from '@/utils/activityGoal';
 
 import { useActivityGoal } from './useActivityGoal';
 import { useRewardContext } from './useRewardContext';
@@ -18,16 +15,19 @@ import { useServices } from './useServices';
 export type EpochWorkStatus = 'working' | 'goal-pending' | 'standby';
 
 type EpochWorkStatusResult = {
-  isEpochTargetMet: boolean | undefined;
-  isActivityGoalMet: boolean | undefined;
   isDoneForEpoch: boolean | undefined;
   workStatus: EpochWorkStatus | undefined;
+};
+
+const UNKNOWN_WORK_STATUS: EpochWorkStatusResult = {
+  isDoneForEpoch: undefined,
+  workStatus: undefined,
 };
 
 /**
  * Combines the selected instance's staking KPI with its activity goal into
  * the single "done for the epoch" signal used by the Overview strip and
- * Auto-run. Values are `undefined` while either side is still loading.
+ * Auto-run. Values are `undefined` while either side is unknown.
  */
 export const useEpochWorkStatus = (): EpochWorkStatusResult => {
   const { selectedService } = useServices();
@@ -39,45 +39,21 @@ export const useEpochWorkStatus = (): EpochWorkStatusResult => {
 
   return useMemo(() => {
     if (isNil(isEpochTargetMet) || isNil(tsCheckpoint)) {
-      return {
-        isEpochTargetMet,
-        isActivityGoalMet: undefined,
-        isDoneForEpoch: undefined,
-        workStatus: undefined,
-      };
+      return UNKNOWN_WORK_STATUS;
     }
-
-    // A failed read counts as "goal not met", as in Auto-run's own poll, so
-    // the Overview and Auto-run never disagree about the same instance.
-    const isActivityGoalMet = isUnavailable
-      ? false
-      : deriveIsActivityGoalMet(activityGoal, tsCheckpoint);
-
     if (!isEpochTargetMet) {
-      return {
-        isEpochTargetMet,
-        isActivityGoalMet,
-        isDoneForEpoch: false,
-        workStatus: 'working',
-      };
+      return { isDoneForEpoch: false, workStatus: 'working' };
     }
+    // A failed read is unknown, as in Auto-run's own poll, so the Overview
+    // and Auto-run never disagree about the same instance.
+    if (isLoading || isUnavailable) return UNKNOWN_WORK_STATUS;
 
-    if (isLoading) {
-      return {
-        isEpochTargetMet,
-        isActivityGoalMet: undefined,
-        isDoneForEpoch: undefined,
-        workStatus: undefined,
-      };
-    }
-
-    const isDoneForEpoch = isUnavailable
-      ? false
-      : deriveIsDoneForEpoch(isEpochTargetMet, activityGoal, tsCheckpoint);
-
-    return {
+    const isDoneForEpoch = deriveIsDoneForEpoch(
       isEpochTargetMet,
-      isActivityGoalMet,
+      activityGoal,
+      tsCheckpoint,
+    );
+    return {
       isDoneForEpoch,
       workStatus: isDoneForEpoch ? 'standby' : 'goal-pending',
     };

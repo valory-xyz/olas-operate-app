@@ -28,6 +28,21 @@ describe('parseActivityGoal', () => {
   ])('returns null without throwing when the block is %s', (_, raw) => {
     expect(parseActivityGoal(raw)).toBeNull();
   });
+
+  it('reports the validation issues of a malformed block', () => {
+    const onInvalid = jest.fn();
+    parseActivityGoal({ ...makeActivityGoal(), target: '8' }, onInvalid);
+    expect(onInvalid).toHaveBeenCalledWith(expect.stringMatching(/^target: /));
+  });
+
+  it.each([
+    ['missing', undefined],
+    ['null', null],
+  ])('reports nothing when the block is %s', (_, raw) => {
+    const onInvalid = jest.fn();
+    parseActivityGoal(raw, onInvalid);
+    expect(onInvalid).not.toHaveBeenCalled();
+  });
 });
 
 describe('isActivityGoalCurrent', () => {
