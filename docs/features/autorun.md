@@ -122,7 +122,7 @@ An instance counts as done for the epoch only when **both** that staking signal 
 - block whose `period_start` predates the epoch's `tsCheckpoint` → goal not met;
 - otherwise → `activity_goal.is_met`.
 
-A failed performance read leaves a staking agent whose staking signal is met unknown (`undefined`), so callers keep the previous snapshot and the scanner retries instead of starting it; for Connect it counts as not done. A malformed block is logged as `activity goal malformed: <id>: <zod issues>` and reads as no block. The decision log line carries `goal=<progress>/<target> goalMet=<bool> goalCurrent=<bool> → done=<bool>` (or `goal=none` / `goal=unavailable`). The selection-driven snapshot in `useAutoRunSignals` uses `useEpochWorkStatus().isDoneForEpoch`, so both writers agree.
+The goal is read only once the staking signal is met; until then the instance is not done and no performance request is made. A failed performance read leaves a staking agent whose staking signal is met unknown (`undefined`), so callers keep the previous snapshot and the scanner retries instead of starting it; for Connect it counts as not done. A malformed block is logged as `activity goal malformed: <id>: <zod issues>` and reads as no block. The decision log line carries `goal=<progress>/<target> goalMet=<bool> goalCurrent=<bool> → done=<bool>` (or `goal=none` / `goal=unavailable`, or `goal=unread` when the staking signal is not met). The selection-driven snapshot in `useAutoRunSignals` uses `useEpochWorkStatus().isDoneForEpoch`, so both writers agree.
 
 1. `REWARDS_POLL_SECONDS` interval calls `refreshRewardsEligibility(runningServiceConfigId)`.
 2. Snapshot update bumps `rewardsTick` → rotation effect fires.

@@ -796,13 +796,23 @@ describe('refreshRewardsEligibility', () => {
       );
     });
 
-    it('is not done when the performance fetch fails before the staking KPI is met', async () => {
+    it('does not read the goal until the staking KPI is met', async () => {
       mockFetchRewards.mockResolvedValue(stakingUnmet);
-      mockGetAgentPerformance.mockRejectedValue(new Error('backend down'));
+      const logMessage = jest.fn();
+      const onRewardsFetchError = jest.fn();
 
-      const result = await refreshRewardsEligibility(makeParams());
+      const result = await refreshRewardsEligibility(
+        makeParams({ logMessage, onRewardsFetchError }),
+      );
 
       expect(result).toBe(false);
+      expect(mockGetAgentPerformance).not.toHaveBeenCalled();
+      expect(onRewardsFetchError).not.toHaveBeenCalled();
+      expect(logMessage).toHaveBeenCalledWith(
+        expect.stringContaining(
+          'epochTargetMet=false goal=unread → done=false',
+        ),
+      );
     });
 
     it('logs the validation issues of a malformed block and falls back to the staking KPI', async () => {

@@ -78,7 +78,11 @@ const readActivityGoal = async (
   }
 };
 
-const formatGoalForLog = (read: ActivityGoalRead, periodStartFloor: number) => {
+const formatGoalForLog = (
+  read: ActivityGoalRead | undefined,
+  periodStartFloor: number,
+) => {
+  if (!read) return 'goal=unread';
   if (!read.ok) return 'goal=unavailable';
   if (!read.goal) return 'goal=none';
   const { progress, target, is_met } = read.goal;
@@ -288,16 +292,18 @@ export const refreshRewardsEligibility = async ({
 
   const epochExpired = isStakingEpochExpired(response);
 
-  // The agent's own activity goal is the second half of "done". An unreadable
-  // report leaves "done" unknown so callers keep the previous snapshot: a
-  // failure must neither override a met goal nor fake a false → true rotation.
-  const goalRead = await readActivityGoal(
-    serviceConfigId,
-    logMessage,
-    onRewardsFetchError,
-  );
+  // The agent's own activity goal is the second half of "done", so it is only
+  // read once the staking KPI is met. An unreadable report leaves "done"
+  // unknown so callers keep the previous snapshot: a failure must neither
+  // override a met goal nor fake a false → true rotation.
+  let goalRead: ActivityGoalRead | undefined;
   let doneForEpoch: boolean | undefined = false;
   if (epochTargetMet) {
+    goalRead = await readActivityGoal(
+      serviceConfigId,
+      logMessage,
+      onRewardsFetchError,
+    );
     doneForEpoch = goalRead.ok
       ? deriveIsDoneForEpoch(
           epochTargetMet,
