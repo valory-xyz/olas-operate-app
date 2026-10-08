@@ -176,10 +176,13 @@ const putService = async ({
  *
  * @throws Error & Partial<InsufficientGasErrorBody>
  */
+const startRequestedAtMs: Partial<Record<ServiceConfigId, number>> = {};
+
 const startService = async (
   serviceConfigId: string,
-): Promise<MiddlewareServiceResponse> =>
-  fetch(`${BACKEND_URL_V2}/service/${serviceConfigId}`, {
+): Promise<MiddlewareServiceResponse> => {
+  startRequestedAtMs[serviceConfigId] = Date.now();
+  return fetch(`${BACKEND_URL_V2}/service/${serviceConfigId}`, {
     method: 'POST',
     headers: { ...CONTENT_TYPE_JSON_UTF8 },
   }).then(async (response) => {
@@ -193,6 +196,14 @@ const startService = async (
     Object.assign(err, body);
     throw err;
   });
+};
+
+/**
+ * When this app session last asked the backend to start a service, in ms, by
+ * any path (manual start, restart, Auto-run). Undefined after an app reload.
+ */
+const getStartRequestedAt = (serviceConfigId: ServiceConfigId) =>
+  startRequestedAtMs[serviceConfigId];
 
 const stopDeployment = async (
   serviceConfigId: string,
@@ -328,6 +339,7 @@ export const ServicesService = {
   getAllServiceDeployments,
   getDeployment,
   startService,
+  getStartRequestedAt,
   createService,
   updateService,
   putService,

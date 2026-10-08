@@ -481,6 +481,23 @@ describe('ServicesService', () => {
       expect(err.prefill_amount_wei).toBe('750000000000000000');
     });
 
+    it('records when the start was requested, even if it fails', async () => {
+      const requestedAtMs = 1_800_000_000_500;
+      jest.spyOn(Date, 'now').mockReturnValue(requestedAtMs);
+      jest
+        .spyOn(global, 'fetch')
+        .mockReturnValue(mockJsonResponse({}, false, 500));
+
+      await ServicesService.startService('sc-recorded').catch(() => undefined);
+
+      expect(ServicesService.getStartRequestedAt('sc-recorded')).toBe(
+        requestedAtMs,
+      );
+      expect(ServicesService.getStartRequestedAt('sc-never-started')).toBe(
+        undefined,
+      );
+    });
+
     it('falls back to a generic message when the error body has no `error` field', async () => {
       jest
         .spyOn(global, 'fetch')

@@ -120,7 +120,7 @@ export const formatEligibilityReason = (eligibility: {
  * unreadable goal leaves a staking agent whose KPI is met unknown, and Connect
  * not done. Only the freshness of the block differs:
  * a staking agent's must belong to the current epoch, Connect's must come from
- * the process Auto-run last asked to start (`startRequestedAtRef`). A Connect
+ * the process last asked to start (`ServicesService.getStartRequestedAt`). A Connect
  * instance that is not running is never done, since its next process opens a
  * fresh window.
  *
@@ -163,15 +163,12 @@ export const refreshRewardsEligibility = async ({
   setRewardSnapshot,
   logMessage,
   onRewardsFetchError,
-  startRequestedAtRef,
 }: {
   serviceConfigId: string;
   configuredAgents: AgentMeta[];
   lastRewardsFetchRef: MutableRefObject<Partial<Record<string, number>>>;
   lastStartedAtRef?: MutableRefObject<Partial<Record<string, number>>>;
   runningServiceConfigIdRef?: MutableRefObject<string | null>;
-  /** When Auto-run last asked to start each instance, in ms. */
-  startRequestedAtRef?: MutableRefObject<Partial<Record<string, number>>>;
   getRewardSnapshot: (serviceConfigId: string) => boolean | undefined;
   setRewardSnapshot: (
     serviceConfigId: string,
@@ -213,9 +210,9 @@ export const refreshRewardsEligibility = async ({
     }
     // The previous process's block, which may still say `is_met`, stays on
     // disk until the new process rewrites it at boot. The new process starts
-    // only after Auto-run asks for it, so its `period_start` is never earlier.
+    // only after the start request, so its `period_start` is never earlier.
     const periodStartFloor = Math.floor(
-      (startRequestedAtRef?.current[serviceConfigId] ?? 0) / 1000,
+      (ServicesService.getStartRequestedAt(serviceConfigId) ?? 0) / 1000,
     );
     const doneForRun =
       deriveIsActivityGoalMet(read.goal, periodStartFloor) ?? false;

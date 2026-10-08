@@ -273,42 +273,6 @@ describe('useAutoRunOperations', () => {
     });
   });
   describe('Connect hand-over support', () => {
-    const NOW_MS = 1_800_000_000_500;
-
-    afterEach(() => {
-      jest.restoreAllMocks();
-    });
-
-    it('records when a start is requested and passes it to the rewards helper', async () => {
-      jest.spyOn(Date, 'now').mockReturnValue(NOW_MS);
-      const params = makeHookParams();
-      const { result } = renderHook(() => useAutoRunOperations(params));
-      const [meta] = params.configuredAgents;
-
-      const [{ startService }] = mockUseAutoRunStartOperations.mock.calls.at(
-        -1,
-      ) as [Parameters<typeof useAutoRunOperations>[0]];
-      await act(async () => {
-        await startService({
-          agentType: meta.agentType,
-          agentConfig: meta.agentConfig,
-          service: meta.service,
-          stakingProgramId: meta.stakingProgramId,
-          createSafeIfNeeded: jest.fn(),
-        });
-      });
-      await act(async () => {
-        await result.current.refreshRewardsEligibility(meta.serviceConfigId);
-      });
-
-      expect(params.startService).toHaveBeenCalledTimes(1);
-      const [{ startRequestedAtRef }] =
-        mockRefreshRewardsEligibilityHelper.mock.calls.at(-1) as [
-          { startRequestedAtRef: { current: Record<string, number> } },
-        ];
-      expect(startRequestedAtRef.current[meta.serviceConfigId]).toBe(NOW_MS);
-    });
-
     it('sends the goal-reached notification on every hand-over', () => {
       const params = makeHookParams();
       const { result } = renderHook(() => useAutoRunOperations(params));

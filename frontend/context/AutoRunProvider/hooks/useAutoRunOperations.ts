@@ -81,24 +81,12 @@ export const useAutoRunOperations = ({
   // Used by refreshRewardsEligibilityHelper to detect a stale
   // `epoch-target-met=true` that persists from a prior active run.
   const lastStartedAtRef = useRef<Partial<Record<string, number>>>({});
-  // When AutoRun last asked to start each instance: a Connect activity-goal
-  // block whose `period_start` is earlier was left by a previous process.
-  const startRequestedAtRef = useRef<Partial<Record<string, number>>>({});
 
   useEffect(() => {
     if (!enabled) {
       skipNotifiedRef.current = {};
     }
   }, [enabled]);
-
-  const startServiceAndRecordRequest = useCallback(
-    (params: Parameters<UseAutoRunOperationsParams['startService']>[0]) => {
-      startRequestedAtRef.current[params.service.service_config_id] =
-        Date.now();
-      return startService(params);
-    },
-    [startService],
-  );
 
   /** Sent once per hand-over, when Connect is stopped after meeting its goal. */
   const notifyGoalReachedOnHandOver = useCallback(
@@ -136,7 +124,6 @@ export const useAutoRunOperations = ({
         logMessage,
         onRewardsFetchError: () =>
           recordMetric(AUTO_RUN_HEALTH_METRIC.REWARDS_ERRORS),
-        startRequestedAtRef,
       }),
     [
       configuredAgents,
@@ -168,7 +155,7 @@ export const useAutoRunOperations = ({
     enabledRef,
     configuredAgents,
     createSafeIfNeeded,
-    startService: startServiceAndRecordRequest,
+    startService,
     waitForBalancesReady,
     waitForRunningInstance,
     onAutoRunInstanceStarted: wrappedOnAutoRunInstanceStarted,

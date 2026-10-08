@@ -31,7 +31,10 @@ import {
 } from '../../../helpers/factories';
 
 jest.mock('../../../../service/Services', () => ({
-  ServicesService: { getAgentPerformance: jest.fn() },
+  ServicesService: {
+    getAgentPerformance: jest.fn(),
+    getStartRequestedAt: jest.fn(),
+  },
 }));
 
 jest.mock('../../../../utils/stakingRewards', () => ({
@@ -60,6 +63,8 @@ const mockFetchRewards = fetchAgentStakingRewardsInfo as jest.MockedFunction<
 >;
 const mockGetAgentPerformance =
   ServicesService.getAgentPerformance as jest.Mock;
+const mockGetStartRequestedAt =
+  ServicesService.getStartRequestedAt as jest.Mock;
 
 /** Agent performance report as the middleware returns it. */
 const makePerformance = (activityGoal?: unknown) => ({
@@ -895,11 +900,14 @@ describe('refreshRewardsEligibility', () => {
         serviceConfigId: CONNECT_ID,
         configuredAgents: [connectMeta],
         runningServiceConfigIdRef: { current: CONNECT_ID },
-        startRequestedAtRef: {
-          current: { [CONNECT_ID]: startRequestedAtSeconds * 1000 + 999 },
-        },
         ...overrides,
       });
+
+    beforeEach(() => {
+      mockGetStartRequestedAt.mockImplementation((id: string) =>
+        id === CONNECT_ID ? startRequestedAtSeconds * 1000 + 999 : undefined,
+      );
+    });
 
     it('never reads staking rewards', async () => {
       mockGetAgentPerformance.mockResolvedValue(makePerformance(connectGoal()));
@@ -960,25 +968,27 @@ describe('refreshRewardsEligibility', () => {
       expect(result).toBe(true);
     });
 
-    it('counts the met block of a process the user restarted after Auto-run started it', async () => {
-      // `startRequestedAtRef` still holds Auto-run's earlier request, so the
-      // block of the process the user stopped is not recognised as leftover.
+    it('ignores the met block of a process the user stopped before restarting it', async () => {
+      // The user's restart is a newer start request than the stopped
+      // process's window.
+      mockGetStartRequestedAt.mockReturnValue(
+        (startRequestedAtSeconds + 900) * 1000,
+      );
       mockGetAgentPerformance.mockResolvedValue(
         makePerformance(
           connectGoal({ period_start: startRequestedAtSeconds + 600 }),
         ),
       );
       const result = await refreshRewardsEligibility(makeConnectParams());
-      expect(result).toBe(true);
+      expect(result).toBe(false);
     });
 
-    it('counts any met block when Auto-run did not start the process', async () => {
+    it('counts any met block when no start was requested in this session', async () => {
+      mockGetStartRequestedAt.mockReturnValue(undefined);
       mockGetAgentPerformance.mockResolvedValue(
         makePerformance(connectGoal({ period_start: 1 })),
       );
-      const result = await refreshRewardsEligibility(
-        makeConnectParams({ startRequestedAtRef: { current: {} } }),
-      );
+      const result = await refreshRewardsEligibility(makeConnectParams());
       expect(result).toBe(true);
     });
 
