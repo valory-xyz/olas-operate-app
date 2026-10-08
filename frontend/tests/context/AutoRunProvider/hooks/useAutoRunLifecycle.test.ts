@@ -571,6 +571,50 @@ describe('useAutoRunLifecycle', () => {
       expect(lastRewardsEligibilityRef.current[scConnect]).toBeUndefined();
     });
 
+    it.each([
+      [
+        'Connect is the only included instance',
+        { orderedIncludedInstances: [scConnect] },
+      ],
+      [
+        'every alternate is already done',
+        { refreshRewardsEligibility: jest.fn().mockResolvedValue(true) },
+      ],
+      [
+        "an alternate's deployability is unknown",
+        {
+          orderedIncludedInstances: [scConnect, scTrader],
+          getHandOverDeployability: jest.fn().mockResolvedValue(null),
+        },
+      ],
+    ])(
+      'keeps Connect running when %s',
+      async (
+        _,
+        overrides: Partial<Parameters<typeof useAutoRunLifecycle>[0]>,
+      ) => {
+        const lastRewardsEligibilityRef = {
+          current: { [scConnect]: false } as Partial<
+            Record<string, boolean | undefined>
+          >,
+        };
+        const params = makeConnectRunningParams({
+          lastRewardsEligibilityRef,
+          ...overrides,
+        });
+
+        renderHook(() => useAutoRunLifecycle(params));
+        await flush();
+
+        expect(params.stopAgentWithRecovery).not.toHaveBeenCalled();
+        expect(params.notifyGoalReachedOnHandOver).not.toHaveBeenCalled();
+        expect(params.scheduleNextScan).toHaveBeenCalledWith(
+          SCAN_ELIGIBLE_DELAY_SECONDS,
+        );
+        expect(lastRewardsEligibilityRef.current[scConnect]).toBeUndefined();
+      },
+    );
+
     it('hands over on the next rewards poll after an alternate becomes ready', async () => {
       const getHandOverDeployability = jest
         .fn()
@@ -660,7 +704,11 @@ describe('useAutoRunLifecycle', () => {
       };
 
       it('keeps Connect running without treating it as goal reached', async () => {
+        const lastRewardsEligibilityRef = {
+          current: {} as Partial<Record<string, boolean | undefined>>,
+        };
         const params = await runWatchdog({
+          lastRewardsEligibilityRef,
           getHandOverDeployability: jest
             .fn()
             .mockResolvedValue({ canRun: false, reason: 'Low balance' }),
@@ -672,6 +720,7 @@ describe('useAutoRunLifecycle', () => {
         expect(params.scheduleNextScan).toHaveBeenCalledWith(
           SCAN_BLOCKED_DELAY_SECONDS,
         );
+        expect(lastRewardsEligibilityRef.current[scConnect]).toBeUndefined();
       });
 
       it('hands over to a runnable alternate without a goal notification', async () => {
