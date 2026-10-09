@@ -8,6 +8,7 @@ import { OnlineStatusContext } from '@/context/OnlineStatusProvider';
 import { sumBigNumbers } from '@/utils/calculations';
 import { asMiddlewareChain } from '@/utils/middlewareHelpers';
 import { matchesAgentConfig } from '@/utils/service';
+import { isNoStakingProgram } from '@/utils/stakingProgram';
 
 import { createActiveStakingProgramIdQuery } from './useActiveStakingProgramId';
 import { createStakingRewardsQuery } from './useAgentStakingRewardsDetails';
@@ -46,7 +47,7 @@ export const useStakingRewardsOf = (chainId: EvmChainId) => {
         // they have no staking rewards to fetch.
         if (
           !agent ||
-          AGENT_CONFIG[agent[0]].defaultStakingProgramId === 'no_staking'
+          isNoStakingProgram(AGENT_CONFIG[agent[0]].defaultStakingProgramId)
         ) {
           return null;
         }

@@ -129,22 +129,23 @@ Migration requires the agent to be stopped first (or auto-run to rotate away). T
 
 ## AutoRun integration
 
-AutoRun uses staking eligibility as its primary scheduling signal. The key function is `refreshRewardsEligibility()` in `frontend/context/AutoRunProvider/utils/autoRunHelpers.ts`.
+AutoRun schedules on "done for the epoch": staking eligibility combined with the activity goal. The key function is `refreshRewardsEligibility()` in `frontend/context/AutoRunProvider/utils/autoRunHelpers.ts`.
 
-**`refreshRewardsEligibility(candidate)`**:
+**`refreshRewardsEligibility(candidate)`** returns whether the agent is done for the epoch:
 - Throttled per `serviceConfigId` (minimum 120 s between fetches)
-- Calls `fetchAgentStakingRewardsInfo()` to get the current epoch snapshot
-- Stale epoch detection: if `isStakingEpochExpired()` returns `true` (i.e. `livenessPeriod ≤ now − tsCheckpoint`) and `isEligibleForRewards` is `true`, overrides eligibility to `false` so the agent runs and triggers the on-chain checkpoint
-- Returns `true` (eligible), `false` (not eligible), or `undefined` (data missing)
+- Calls `fetchAgentStakingRewardsInfo()` to get the current epoch snapshot, and `getAgentPerformance()` for the `activity_goal` block
+- Done = `isEpochTargetMet` and the current activity goal met (`deriveIsDoneForEpoch`); without a block, `isEpochTargetMet` alone
+- Stale epoch detection: if `isStakingEpochExpired()` returns `true` (i.e. `livenessPeriod ≤ now − tsCheckpoint`) and the agent is done, overrides it to `false` so the agent runs and triggers the on-chain checkpoint
+- Returns `true` (done), `false` (not done), or `undefined` (data missing, or the goal unreadable once `isEpochTargetMet` is true)
 
 **Scanner logic** (`useAutoRunScanner.ts`):
-- `eligibility === true` → agent already earned this epoch → skip, wait for next scan slot
-- `eligibility === false` → agent hasn't earned yet → start the agent
+- `eligibility === true` → agent already done this epoch → skip, wait for next scan slot
+- `eligibility === false` → agent not done yet → start the agent
 - `eligibility === undefined` → data missing → retry after `SCAN_LOADING_RETRY_SECONDS` (30 s)
 
-**Reward-triggered rotation** (`useAutoRunLifecycle.ts`):
-- `lastRewardsEligibilityRef` tracks the previous eligibility value per agent
-- On transition from `false → true` (reward earned), rotation is triggered: stop current agent → 20 s cooldown → `scanAndStartNext`
+**Done-triggered rotation** (`useAutoRunLifecycle.ts`):
+- `lastRewardsEligibilityRef` tracks the previous done value per agent
+- On transition from `false → true` (done for the epoch), rotation is triggered: stop current agent → 20 s cooldown → `scanAndStartNext`
 - Prevents duplicate rotation: `isRotatingRef` blocks overlapping rotation/startup
 
 ## Source of truth
@@ -262,7 +263,8 @@ The required activity count is derived from: `(effectivePeriod * livenessRatio) 
 Newer staking contracts set the on-chain threshold to ~1 (staking unlocks after a single request) and move the *real* per-epoch target off-chain. Such a program carries an `activityTarget` in its config (`StakingProgramConfig.activityTarget`); its presence is what marks the new regime.
 
 - **Signal source:** every agent reader now surfaces `StakingRewardsInfo.activityThisEpoch` — the raw on-chain request count this epoch (`currentCount − checkpointSnapshot`). `deriveIsEpochTargetMet(info, target)` returns `activityThisEpoch >= target` when a target is set, and falls back to the on-chain KPI (`isEligibleForRewards`) when it isn't — so legacy programs behave exactly as before.
-- **`isEpochTargetMet`** is the single "agent has done its epoch work" signal. `RewardProvider` exposes it for the selected service; `useAllInstancesRewardStatus` computes it per-service for the sidebar. It drives the green idle banner, streak flame, sidebar dot, the earned notification, the optimistic earned amount, and AutoRun rotation. The raw `isEligibleForRewards` is retained only as the documented on-chain KPI.
+- **`isEpochTargetMet`** is the staking side of "agent has done its epoch work". `RewardProvider` exposes it for the selected service; `useAllInstancesRewardStatus` computes it per-service for the sidebar. It drives the streak flame, sidebar dot, the earned notification and the optimistic earned amount. The raw `isEligibleForRewards` is retained only as the documented on-chain KPI.
+- **Activity goal (OPE-1801).** Each agent also publishes an `activity_goal` block in `agent_performance.json` (read via `useActivityGoal`). `useEpochWorkStatus` combines it with `isEpochTargetMet` (`deriveIsDoneForEpoch`, `frontend/utils/activityGoal.ts`): the Overview strip shows the current action until rewards are earned, then "earned activity rewards and keeps working toward its daily goal" (purple) until the goal is met, then "reached its daily goal … standby" (green gradient). AutoRun rotation uses the same combined signal (see `autorun.md` §3.2). Without a block (older agent builds) the staking signal alone decides, as before. `useNotifyOnActivityGoal` notifies when the running staking agent's goal turns met.
 - **Derived on-chain**, so it persists across service stop / app restart. The agent healthcheck is deliberately not consumed — the agent computes the same `completed >= target` from the same on-chain values, so reading it would add nothing and would vanish when the agent stops.
 - Phase-1 targets are hardcoded per program (8 for the trader-style agents, 1 for the DeFi agents) and must match each agent's `ACTIVITY_TARGET`.
 

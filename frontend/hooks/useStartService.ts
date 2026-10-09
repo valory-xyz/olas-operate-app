@@ -8,6 +8,7 @@ import { ServicesService } from '@/service/Services';
 import { AgentConfig } from '@/types/Agent';
 import { Service } from '@/types/Service';
 import { updateServiceIfNeeded } from '@/utils/service';
+import { isNoStakingProgram } from '@/utils/stakingProgram';
 
 type StartServiceInput = {
   agentType: AgentType;
@@ -62,7 +63,7 @@ export const useStartService = () => {
       // Staking program is required to determine mech type for service
       // creation, so skip the lookup for `no_staking` agents.
       let useMechMarketplace = false;
-      if (stakingProgramId !== 'no_staking') {
+      if (!isNoStakingProgram(stakingProgramId)) {
         const stakingProgram =
           STAKING_PROGRAMS[agentConfig.evmHomeChainId]?.[stakingProgramId];
         if (!stakingProgram) {

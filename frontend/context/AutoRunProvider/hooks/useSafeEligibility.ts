@@ -4,6 +4,7 @@ import { EvmChainId } from '@/constants/chains';
 import { useMasterWalletContext } from '@/hooks';
 import { useMultisigs } from '@/hooks/useMultisig';
 import { WalletService } from '@/service/Wallet';
+import { asMiddlewareChain } from '@/utils/middlewareHelpers';
 import { BACKUP_SIGNER_STATUS, getSafeEligibility } from '@/utils/safe';
 
 import { AgentMeta } from '../types';
@@ -58,8 +59,10 @@ export const useSafeEligibility = () => {
   // Throws for non-actionable states so caller can treat it as a start blocker.
   const createSafeIfNeeded = useCallback(
     async (meta: AgentMeta) => {
+      // `meta.chainId`, not the config's home chain: a multi-chain agent
+      // (Connect) needs its safe on the chain the instance runs on.
       const eligibility = getSafeEligibility({
-        chainId: meta.agentConfig.evmHomeChainId,
+        chainId: meta.chainId,
         masterSafes,
         masterSafesOwners,
         masterEoa,
@@ -76,7 +79,7 @@ export const useSafeEligibility = () => {
       }
 
       await WalletService.createSafe(
-        meta.agentConfig.middlewareHomeChainId,
+        asMiddlewareChain(meta.chainId),
         eligibility.backupOwner,
       );
     },

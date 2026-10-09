@@ -6,7 +6,11 @@ import { useBoolean } from 'usehooks-ts';
 
 import { InfoTooltip } from '@/components/ui';
 import { COLOR } from '@/constants';
-import { useAgentActivity, useConnectSession, useRewardContext } from '@/hooks';
+import {
+  useAgentActivity,
+  useConnectSession,
+  useEpochWorkStatus,
+} from '@/hooks';
 
 import { AgentActivityModal } from './AgentActivityModal';
 import { Container, Text } from './styles';
@@ -26,9 +30,21 @@ const CurrentActionText = styled.span`
   width: fit-content;
 `;
 
-const IdleContent = () => (
+const GoalPendingContent = () => (
   <Flex align="center" justify="center" gap={4}>
-    Agent has earned staking rewards and is in standby mode for the next epoch{' '}
+    Agent has earned activity rewards and keeps working toward its daily goal{' '}
+    <InfoTooltip iconColor={COLOR.PURPLE}>
+      <Paragraph className="text-sm m-0">
+        The agent keeps working until it reaches its daily goal for this epoch.
+        To see or change the goal, use the agent chat in Profile.
+      </Paragraph>
+    </InfoTooltip>
+  </Flex>
+);
+
+const StandbyContent = () => (
+  <Flex align="center" justify="center" gap={4}>
+    Agent has reached its daily goal and is in standby mode for the next epoch{' '}
     <InfoTooltip iconColor={COLOR.TEXT_COLOR.SUCCESS.DEFAULT}>
       <Paragraph className="text-sm m-0">
         The agent is inactive during standby. If you keep it running, it will
@@ -41,7 +57,7 @@ const IdleContent = () => (
 export const AgentActivity = () => {
   const { deploymentDetails, isAgentActive, isServiceDeploying } =
     useAgentActivity();
-  const { isEpochTargetMet } = useRewardContext();
+  const { workStatus } = useEpochWorkStatus();
   // Connect only: while the agent runs, the activity strip points at the
   // agent profile for new Claude Code sessions instead of rounds.
   const { showRunningInfo: isConnectRunning, isFirstRun } = useConnectSession();
@@ -81,8 +97,12 @@ export const AgentActivity = () => {
         };
       }
 
-      if (isEpochTargetMet) {
-        return { status: 'idle', content: <IdleContent /> };
+      if (workStatus === 'standby') {
+        return { status: 'idle', content: <StandbyContent /> };
+      }
+
+      if (workStatus === 'goal-pending') {
+        return { status: 'running', content: <GoalPendingContent /> };
       }
 
       if (rounds.length > 0) {
@@ -108,7 +128,7 @@ export const AgentActivity = () => {
 
     return { status: 'not-running', content: 'Agent is not running' };
   }, [
-    isEpochTargetMet,
+    workStatus,
     isServiceDeploying,
     isAgentActive,
     isConnectRunning,

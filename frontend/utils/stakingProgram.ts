@@ -15,6 +15,14 @@ export const deriveStakingProgramId = (address: Address): string => {
   return `0x${normalized.padStart(64, '0')}`;
 };
 
+/**
+ * Whether a service runs without staking (Connect). Such agents have no
+ * staking contract or epoch, so staking reads and the staking KPI do not apply.
+ */
+export const isNoStakingProgram = (
+  stakingProgramId: Nullable<StakingProgramId> | undefined,
+) => stakingProgramId === 'no_staking';
+
 /** Whether any program on the chain only accepts PolySafe-deployed services. */
 export const chainHasPolySafePrograms = (programs: StakingProgramMap) =>
   Object.values(programs).some((program) => program.requiresPolySafe);

@@ -2,10 +2,16 @@ import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { AGENT_CONFIG } from '@/config/agents';
 import { AgentMap, AgentType, EvmChainId } from '@/constants';
-import { useAgentRunning, useRewardContext, useStartService } from '@/hooks';
+import {
+  useAgentRunning,
+  useEpochWorkStatus,
+  useRewardContext,
+  useStartService,
+} from '@/hooks';
 import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRefillRequirementsContext';
 import { useIsAgentGeoRestricted } from '@/hooks/useIsAgentGeoRestricted';
 import { useIsInitiallyFunded } from '@/hooks/useIsInitiallyFunded';
+import { isNoStakingProgram } from '@/utils/stakingProgram';
 
 import {
   AUTO_RUN_VERBOSE_LOGS,
@@ -14,6 +20,7 @@ import {
 } from '../constants';
 import { AgentMeta } from '../types';
 import {
+  FetchDeployabilityContext,
   fetchDeployabilityForAgent,
   isStakingEpochExpired,
 } from '../utils/autoRunHelpers';
@@ -73,7 +80,16 @@ export const useAutoRunController = ({
   onAutoRunInstanceStarted,
   onAutoRunStartStateChange,
 }: UseAutoRunControllerParams) => {
-  const { isEpochTargetMet, stakingRewardsDetails } = useRewardContext();
+  const { stakingRewardsDetails } = useRewardContext();
+  // Staking KPI and activity goal combined, so the selection-driven snapshot
+  // agrees with the one `refreshRewardsEligibility` polls.
+  const { isDoneForEpoch: isSelectedDoneForEpoch } = useEpochWorkStatus();
+  const isSelectedNoStakingAgent = useMemo(() => {
+    const selectedMeta = configuredAgents.find(
+      (agent) => agent.serviceConfigId === selectedServiceConfigId,
+    );
+    return !!selectedMeta && isNoStakingProgram(selectedMeta.stakingProgramId);
+  }, [configuredAgents, selectedServiceConfigId]);
 
   // Tracks whether the staking epoch has expired without a checkpoint
   // being called on-chain yet
@@ -174,7 +190,8 @@ export const useAutoRunController = ({
     runningAgentType,
     runningServiceConfigId,
     isSelectedAgentDetailsLoading,
-    isEpochTargetMet,
+    isSelectedDoneForEpoch,
+    isSelectedNoStakingAgent,
     isEpochExpired,
     selectedAgentType,
     selectedServiceConfigId,
@@ -188,7 +205,10 @@ export const useAutoRunController = ({
   // switching UI selection. Captures stable refs/callbacks so it doesn't
   // change on every render.
   const getDeployabilityForAgent = useCallback(
-    (agentMeta: AgentMeta) =>
+    (
+      agentMeta: AgentMeta,
+      options?: Pick<FetchDeployabilityContext, 'ignoreRunningAgent'>,
+    ) =>
       fetchDeployabilityForAgent(agentMeta, {
         runningServiceConfigId: runningServiceConfigIdRef.current,
         canCreateSafeForChain,
@@ -197,6 +217,7 @@ export const useAutoRunController = ({
         isInstanceInitiallyFunded,
         isGeoRestrictedForAgent,
         logMessage,
+        ...options,
       }),
     [
       runningServiceConfigIdRef,
@@ -211,6 +232,7 @@ export const useAutoRunController = ({
 
   const {
     refreshRewardsEligibility,
+    notifyGoalReachedOnHandOver,
     notifySkipOnce,
     startAgentWithRetries,
     stopAgentWithRecovery,
@@ -271,11 +293,26 @@ export const useAutoRunController = ({
     return getDeployabilityForAgent(agentMeta);
   }, [configuredAgents, getDeployabilityForAgent, runningServiceConfigIdRef]);
 
+  // Deployability of a possible successor while a no-staking agent (Connect)
+  // still runs. The running gate is ignored: the question is whether this
+  // instance could start once the current one is stopped.
+  const getHandOverDeployability = useCallback(
+    async (serviceConfigId: string) => {
+      const agentMeta = configuredAgents.find(
+        (agent) => agent.serviceConfigId === serviceConfigId,
+      );
+      if (!agentMeta) return null;
+      return getDeployabilityForAgent(agentMeta, { ignoreRunningAgent: true });
+    },
+    [configuredAgents, getDeployabilityForAgent],
+  );
+
   const { stopCurrentRunningAgent } = useAutoRunLifecycle({
     enabled,
     runningAgentType,
     runningServiceConfigId,
     orderedIncludedInstances,
+    configuredAgents,
     enabledRef,
     runningAgentTypeRef,
     runningServiceConfigIdRef,
@@ -292,6 +329,8 @@ export const useAutoRunController = ({
     stopAgentWithRecovery,
     startAgentWithRetries,
     getDeployabilityForRunningInstance,
+    getHandOverDeployability,
+    notifyGoalReachedOnHandOver,
     stopRetryBackoffUntilRef,
     recordMetric,
     logMessage,

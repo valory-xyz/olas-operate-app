@@ -2,7 +2,10 @@ import { renderHook } from '@testing-library/react';
 
 import { AGENT_CONFIG } from '../../../../config/agents';
 import { AgentMap } from '../../../../constants/agent';
-import { MiddlewareChainMap } from '../../../../constants/chains';
+import {
+  EvmChainIdMap,
+  MiddlewareChainMap,
+} from '../../../../constants/chains';
 import { useConfiguredAgents } from '../../../../context/AutoRunProvider/hooks/useConfiguredAgents';
 import {
   DEFAULT_SERVICE_CONFIG_ID,
@@ -115,6 +118,31 @@ describe('useConfiguredAgents', () => {
     expect(result.current).toHaveLength(2);
     expect(result.current[0].agentType).toBe(AgentMap.PredictTrader);
     expect(result.current[1].agentType).toBe(AgentMap.Polystrat);
+  });
+
+  it('uses the instance chain for a multi-chain Connect instance', () => {
+    const connectConfig = AGENT_CONFIG[AgentMap.Connect];
+    const service = makeService({
+      service_public_id: connectConfig.servicePublicId,
+      home_chain: MiddlewareChainMap.POLYGON,
+      chain_configs: makeChainConfig(MiddlewareChainMap.POLYGON),
+    });
+
+    const { result } = renderHook(() => useConfiguredAgents([service]));
+    expect(result.current[0].agentType).toBe(AgentMap.Connect);
+    expect(result.current[0].chainId).toBe(EvmChainIdMap.Polygon);
+  });
+
+  it('keeps the config home chain for single-chain agents', () => {
+    const polystratConfig = AGENT_CONFIG[AgentMap.Polystrat];
+    const service = makeService({
+      service_public_id: polystratConfig.servicePublicId,
+      home_chain: polystratConfig.middlewareHomeChainId,
+      chain_configs: makeChainConfig(polystratConfig.middlewareHomeChainId),
+    });
+
+    const { result } = renderHook(() => useConfiguredAgents([service]));
+    expect(result.current[0].chainId).toBe(polystratConfig.evmHomeChainId);
   });
 
   it('is memoized — returns same reference when services unchanged', () => {

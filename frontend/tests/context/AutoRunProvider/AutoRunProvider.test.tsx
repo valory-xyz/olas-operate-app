@@ -271,6 +271,11 @@ describe('AutoRunProvider', () => {
 
   describe('config-excluded agents (isExcludedFromAutoRun)', () => {
     const scConnect = MOCK_SERVICE_CONFIG_ID_3;
+    // No shipped agent opts out today; the opt-out stays as generic machinery.
+    const excludedConfig = {
+      ...AGENT_CONFIG[AgentMap.Connect],
+      isExcludedFromAutoRun: true,
+    };
 
     beforeEach(() => {
       useServices.mockReturnValue({
@@ -291,7 +296,7 @@ describe('AutoRunProvider', () => {
         },
         {
           agentType: AgentMap.Connect,
-          agentConfig: AGENT_CONFIG[AgentMap.Connect],
+          agentConfig: excludedConfig,
           serviceConfigId: scConnect,
         },
       ]);
@@ -366,6 +371,138 @@ describe('AutoRunProvider', () => {
       expect(result.current.eligibilityByInstance[scConnect]).toEqual({
         canRun: false,
         reason: 'Not available in auto-run',
+      });
+    });
+  });
+
+  describe('Connect in auto-run', () => {
+    const scConnect = MOCK_SERVICE_CONFIG_ID_3;
+
+    beforeEach(() => {
+      useServices.mockReturnValue({
+        services: [
+          { service_config_id: scTrader },
+          { service_config_id: scConnect },
+        ],
+        selectedAgentType: AgentMap.PredictTrader,
+        selectedService: { service_config_id: scTrader },
+        selectedServiceConfigId: scTrader,
+        updateSelectedServiceConfigId: mockUpdateSelectedServiceConfigId,
+      });
+      useConfiguredAgents.mockReturnValue([
+        {
+          agentType: AgentMap.PredictTrader,
+          agentConfig: AGENT_CONFIG[AgentMap.PredictTrader],
+          serviceConfigId: scTrader,
+        },
+        {
+          agentType: AgentMap.Connect,
+          agentConfig: AGENT_CONFIG[AgentMap.Connect],
+          serviceConfigId: scConnect,
+        },
+      ]);
+    });
+
+    it('seeds Connect into the rotation like any other agent', () => {
+      mockAutoRunStore.isInitialized = false;
+      useAutoRunStore.mockImplementation(() => ({ ...mockAutoRunStore }));
+
+      renderHook(() => useAutoRunContext(), { wrapper });
+
+      const seedCall = mockAutoRunStore.updateAutoRun.mock.calls.find(
+        (call: [Record<string, unknown>]) => call[0]?.isInitialized === true,
+      );
+      const seeded = seedCall![0].includedInstances as IncludedAgentInstance[];
+      expect(seeded.map((item) => item.serviceConfigId)).toEqual([
+        scTrader,
+        scConnect,
+      ]);
+    });
+
+    it('does not seed a pre-existing Connect excluded by the upgrade migration', () => {
+      mockAutoRunStore.isInitialized = false;
+      mockAutoRunStore.userExcludedInstances = [scConnect];
+      useAutoRunStore.mockImplementation(() => ({ ...mockAutoRunStore }));
+
+      renderHook(() => useAutoRunContext(), { wrapper });
+
+      const seedCall = mockAutoRunStore.updateAutoRun.mock.calls.find(
+        (call: [Record<string, unknown>]) => call[0]?.isInitialized === true,
+      );
+      const seeded = seedCall![0].includedInstances as IncludedAgentInstance[];
+      expect(seeded.map((item) => item.serviceConfigId)).toEqual([scTrader]);
+    });
+
+    it('keeps a user-excluded Connect out of the rotation when the included list is empty', () => {
+      mockAutoRunStore.isInitialized = true;
+      mockAutoRunStore.includedInstances = [];
+      mockAutoRunStore.userExcludedInstances = [scConnect];
+      useAutoRunStore.mockImplementation(() => ({ ...mockAutoRunStore }));
+
+      renderHook(() => useAutoRunContext(), { wrapper });
+
+      const controllerArgs = useAutoRunController.mock.calls.at(-1)![0];
+      expect(controllerArgs.orderedIncludedInstances).toEqual([scTrader]);
+    });
+
+    it('auto-appends a newly created Connect instance', () => {
+      mockAutoRunStore.isInitialized = true;
+      mockAutoRunStore.includedInstances = [
+        { serviceConfigId: scTrader, order: 0 },
+      ];
+      useAutoRunStore.mockImplementation(() => ({ ...mockAutoRunStore }));
+
+      renderHook(() => useAutoRunContext(), { wrapper });
+
+      expect(mockAutoRunStore.updateAutoRun).toHaveBeenCalledWith({
+        includedInstances: [
+          { serviceConfigId: scTrader, order: 0 },
+          { serviceConfigId: scConnect, order: 1 },
+        ],
+      });
+    });
+
+    it('lists an excluded Connect as includable and includes it', () => {
+      mockAutoRunStore.isInitialized = true;
+      mockAutoRunStore.includedInstances = [
+        { serviceConfigId: scTrader, order: 0 },
+      ];
+      mockAutoRunStore.userExcludedInstances = [scConnect];
+      useAutoRunStore.mockImplementation(() => ({ ...mockAutoRunStore }));
+
+      const { result } = renderHook(() => useAutoRunContext(), { wrapper });
+
+      expect(result.current.excludedInstances).toContain(scConnect);
+      expect(result.current.configExcludedInstances).not.toContain(scConnect);
+      expect(result.current.eligibilityByInstance[scConnect]).toEqual({
+        canRun: true,
+      });
+
+      act(() => result.current.includeInstance(scConnect));
+
+      expect(mockAutoRunStore.updateAutoRun).toHaveBeenCalledWith({
+        includedInstances: [
+          { serviceConfigId: scTrader, order: 0 },
+          { serviceConfigId: scConnect, order: 1 },
+        ],
+        userExcludedInstances: [],
+      });
+    });
+
+    it('excludes an included Connect', () => {
+      mockAutoRunStore.isInitialized = true;
+      mockAutoRunStore.includedInstances = [
+        { serviceConfigId: scTrader, order: 0 },
+        { serviceConfigId: scConnect, order: 1 },
+      ];
+      useAutoRunStore.mockImplementation(() => ({ ...mockAutoRunStore }));
+
+      const { result } = renderHook(() => useAutoRunContext(), { wrapper });
+      act(() => result.current.excludeInstance(scConnect));
+
+      expect(mockAutoRunStore.updateAutoRun).toHaveBeenCalledWith({
+        includedInstances: [{ serviceConfigId: scTrader, order: 0 }],
+        userExcludedInstances: [scConnect],
       });
     });
   });

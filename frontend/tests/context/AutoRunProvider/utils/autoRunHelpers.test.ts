@@ -19,13 +19,23 @@ import {
   refreshRewardsEligibility,
   waitForEligibilityReadyHelper,
 } from '../../../../context/AutoRunProvider/utils/autoRunHelpers';
+import { ServicesService } from '../../../../service/Services';
 import { StakingState } from '../../../../types';
 import * as delayModule from '../../../../utils/delay';
 import { fetchAgentStakingRewardsInfo } from '../../../../utils/stakingRewards';
 import {
   DEFAULT_SERVICE_CONFIG_ID,
+  DEFAULT_TS_CHECKPOINT,
+  makeActivityGoal,
   makeAutoRunAgentMeta,
 } from '../../../helpers/factories';
+
+jest.mock('../../../../service/Services', () => ({
+  ServicesService: {
+    getAgentPerformance: jest.fn(),
+    getStartRequestedAt: jest.fn(),
+  },
+}));
 
 jest.mock('../../../../utils/stakingRewards', () => ({
   fetchAgentStakingRewardsInfo: jest.fn(),
@@ -51,6 +61,19 @@ const mockSleepAwareDelay = delayModule.sleepAwareDelay as jest.Mock;
 const mockFetchRewards = fetchAgentStakingRewardsInfo as jest.MockedFunction<
   typeof fetchAgentStakingRewardsInfo
 >;
+const mockGetAgentPerformance =
+  ServicesService.getAgentPerformance as jest.Mock;
+const mockGetStartRequestedAt =
+  ServicesService.getStartRequestedAt as jest.Mock;
+
+/** Agent performance report as the middleware returns it. */
+const makePerformance = (activityGoal?: unknown) => ({
+  timestamp: null,
+  metrics: [],
+  last_activity: null,
+  agent_behavior: null,
+  ...(activityGoal === undefined ? {} : { activity_goal: activityGoal }),
+});
 
 describe('isStakingEpochExpired', () => {
   const makeArgs = (livenessPeriod: unknown, tsCheckpoint: number) =>
@@ -251,6 +274,8 @@ describe('refreshRewardsEligibility', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    // Older agent builds publish no goal block, so the staking KPI decides.
+    mockGetAgentPerformance.mockResolvedValue(makePerformance());
   });
 
   it('returns cached snapshot when within throttle window', async () => {
@@ -686,6 +711,320 @@ describe('refreshRewardsEligibility', () => {
       );
     });
   });
+
+  describe('activity goal (both conditions)', () => {
+    const stakingMet = {
+      isEligibleForRewards: true,
+      livenessPeriod: 86_400,
+      tsCheckpoint: DEFAULT_TS_CHECKPOINT,
+    } as unknown as Awaited<ReturnType<typeof fetchAgentStakingRewardsInfo>>;
+    const stakingUnmet = {
+      ...stakingMet,
+      isEligibleForRewards: false,
+    } as Awaited<ReturnType<typeof fetchAgentStakingRewardsInfo>>;
+
+    beforeEach(() => {
+      // Keep the epoch open regardless of the fixed checkpoint.
+      jest
+        .spyOn(Date, 'now')
+        .mockReturnValue((DEFAULT_TS_CHECKPOINT + 3_600) * 1000);
+    });
+
+    afterEach(() => {
+      jest.restoreAllMocks();
+    });
+
+    it.each([
+      [
+        'staking unmet',
+        stakingUnmet,
+        makeActivityGoal({ is_met: true }),
+        false,
+      ],
+      ['staking met, no block (fallback)', stakingMet, undefined, true],
+      [
+        'staking met, current goal unmet',
+        stakingMet,
+        makeActivityGoal(),
+        false,
+      ],
+      [
+        'staking met, current goal met',
+        stakingMet,
+        makeActivityGoal({ is_met: true }),
+        true,
+      ],
+      [
+        'staking met, met goal from an earlier epoch',
+        stakingMet,
+        makeActivityGoal({
+          is_met: true,
+          period_start: DEFAULT_TS_CHECKPOINT - 86_400,
+        }),
+        false,
+      ],
+    ])('%s → done=%s', async (_, rewards, goal, expected) => {
+      mockFetchRewards.mockResolvedValue(rewards);
+      mockGetAgentPerformance.mockResolvedValue(makePerformance(goal));
+      const setRewardSnapshot = jest.fn();
+
+      const result = await refreshRewardsEligibility(
+        makeParams({ setRewardSnapshot }),
+      );
+
+      expect(result).toBe(expected);
+      expect(setRewardSnapshot).toHaveBeenCalledWith(
+        DEFAULT_SERVICE_CONFIG_ID,
+        expected,
+      );
+    });
+
+    it('leaves done unknown when the performance fetch fails after the staking KPI is met', async () => {
+      mockFetchRewards.mockResolvedValue(stakingMet);
+      mockGetAgentPerformance.mockRejectedValue(new Error('backend down'));
+      const logMessage = jest.fn();
+      const onRewardsFetchError = jest.fn();
+      const setRewardSnapshot = jest.fn();
+
+      const result = await refreshRewardsEligibility(
+        makeParams({ logMessage, onRewardsFetchError, setRewardSnapshot }),
+      );
+
+      expect(result).toBeUndefined();
+      expect(setRewardSnapshot).not.toHaveBeenCalled();
+      expect(onRewardsFetchError).toHaveBeenCalledTimes(1);
+      expect(logMessage).toHaveBeenCalledWith(
+        `activity goal fetch error: ${DEFAULT_SERVICE_CONFIG_ID}: Error: backend down`,
+      );
+      expect(logMessage).toHaveBeenCalledWith(
+        expect.stringContaining('goal=unavailable'),
+      );
+    });
+
+    it('does not read the goal until the staking KPI is met', async () => {
+      mockFetchRewards.mockResolvedValue(stakingUnmet);
+      const logMessage = jest.fn();
+      const onRewardsFetchError = jest.fn();
+
+      const result = await refreshRewardsEligibility(
+        makeParams({ logMessage, onRewardsFetchError }),
+      );
+
+      expect(result).toBe(false);
+      expect(mockGetAgentPerformance).not.toHaveBeenCalled();
+      expect(onRewardsFetchError).not.toHaveBeenCalled();
+      expect(logMessage).toHaveBeenCalledWith(
+        expect.stringContaining(
+          'epochTargetMet=false goal=unread → done=false',
+        ),
+      );
+    });
+
+    it('logs the validation issues of a malformed block and falls back to the staking KPI', async () => {
+      mockFetchRewards.mockResolvedValue(stakingMet);
+      mockGetAgentPerformance.mockResolvedValue(
+        makePerformance({ ...makeActivityGoal(), is_met: 'yes' }),
+      );
+      const logMessage = jest.fn();
+
+      const result = await refreshRewardsEligibility(
+        makeParams({ logMessage }),
+      );
+
+      expect(result).toBe(true);
+      expect(logMessage).toHaveBeenCalledWith(
+        expect.stringMatching(
+          new RegExp(
+            `^activity goal malformed: ${DEFAULT_SERVICE_CONFIG_ID}: is_met: `,
+          ),
+        ),
+      );
+    });
+
+    it('logs the goal fields alongside the staking inputs', async () => {
+      mockFetchRewards.mockResolvedValue(stakingMet);
+      mockGetAgentPerformance.mockResolvedValue(
+        makePerformance(makeActivityGoal({ progress: 3, target: 8 })),
+      );
+      const logMessage = jest.fn();
+
+      await refreshRewardsEligibility(makeParams({ logMessage }));
+
+      expect(logMessage).toHaveBeenCalledWith(
+        expect.stringContaining(
+          'epochTargetMet=true goal=3/8 goalMet=false goalCurrent=true → done=false',
+        ),
+      );
+    });
+
+    it('logs goal=none for agents that publish no block', async () => {
+      mockFetchRewards.mockResolvedValue(stakingMet);
+      const logMessage = jest.fn();
+
+      await refreshRewardsEligibility(makeParams({ logMessage }));
+
+      expect(logMessage).toHaveBeenCalledWith(
+        expect.stringContaining('goal=none → done=true'),
+      );
+    });
+  });
+
+  describe('no-staking agent (Connect)', () => {
+    const CONNECT_ID = 'sc-connect';
+    const startRequestedAtSeconds = 1_800_000_000;
+    const connectMeta = {
+      ...makeAutoRunAgentMeta(
+        AgentMap.Connect,
+        AGENT_CONFIG[AgentMap.Connect],
+        CONNECT_ID,
+      ),
+      stakingProgramId: 'no_staking',
+    } as AgentMeta;
+    // A block written by the process Auto-run started.
+    const connectGoal = (
+      overrides: Parameters<typeof makeActivityGoal>[0] = {},
+    ) =>
+      makeActivityGoal({
+        unit: 'minutes',
+        target: 15,
+        progress: 15,
+        is_met: true,
+        period_start: startRequestedAtSeconds + 3,
+        ...overrides,
+      });
+
+    const makeConnectParams = (
+      overrides: Partial<Parameters<typeof refreshRewardsEligibility>[0]> = {},
+    ) =>
+      makeParams({
+        serviceConfigId: CONNECT_ID,
+        configuredAgents: [connectMeta],
+        runningServiceConfigIdRef: { current: CONNECT_ID },
+        ...overrides,
+      });
+
+    beforeEach(() => {
+      mockGetStartRequestedAt.mockImplementation((id: string) =>
+        id === CONNECT_ID ? startRequestedAtSeconds * 1000 + 999 : undefined,
+      );
+    });
+
+    it('never reads staking rewards', async () => {
+      mockGetAgentPerformance.mockResolvedValue(makePerformance(connectGoal()));
+      await refreshRewardsEligibility(makeConnectParams());
+      expect(mockFetchRewards).not.toHaveBeenCalled();
+    });
+
+    it('is done when the running process met its goal', async () => {
+      mockGetAgentPerformance.mockResolvedValue(makePerformance(connectGoal()));
+      const setRewardSnapshot = jest.fn();
+
+      const result = await refreshRewardsEligibility(
+        makeConnectParams({ setRewardSnapshot }),
+      );
+
+      expect(result).toBe(true);
+      expect(setRewardSnapshot).toHaveBeenCalledWith(CONNECT_ID, true);
+    });
+
+    it.each([
+      [
+        'the target was lowered to the progress made',
+        connectGoal({ target: 5, progress: 5, is_met: true }),
+        true,
+      ],
+      [
+        'the target is 0',
+        connectGoal({ target: 0, progress: 0, is_met: true }),
+        true,
+      ],
+      [
+        'the goal is not met yet',
+        connectGoal({ progress: 4, is_met: false }),
+        false,
+      ],
+      [
+        'the target was raised above the progress made',
+        connectGoal({ target: 30, progress: 20, is_met: false }),
+        false,
+      ],
+      [
+        'the met block was left by the previous process',
+        connectGoal({ period_start: startRequestedAtSeconds - 1 }),
+        false,
+      ],
+      ['there is no block', undefined, false],
+    ])('when %s, done is %s', async (_, goal, expected) => {
+      mockGetAgentPerformance.mockResolvedValue(makePerformance(goal));
+      const result = await refreshRewardsEligibility(makeConnectParams());
+      expect(result).toBe(expected);
+    });
+
+    it('counts a block that opened in the same second as the start request', async () => {
+      mockGetAgentPerformance.mockResolvedValue(
+        makePerformance(connectGoal({ period_start: startRequestedAtSeconds })),
+      );
+      const result = await refreshRewardsEligibility(makeConnectParams());
+      expect(result).toBe(true);
+    });
+
+    it('ignores the met block of a process the user stopped before restarting it', async () => {
+      // The user's restart is a newer start request than the stopped
+      // process's window.
+      mockGetStartRequestedAt.mockReturnValue(
+        (startRequestedAtSeconds + 900) * 1000,
+      );
+      mockGetAgentPerformance.mockResolvedValue(
+        makePerformance(
+          connectGoal({ period_start: startRequestedAtSeconds + 600 }),
+        ),
+      );
+      const result = await refreshRewardsEligibility(makeConnectParams());
+      expect(result).toBe(false);
+    });
+
+    it('counts any met block when no start was requested in this session', async () => {
+      mockGetStartRequestedAt.mockReturnValue(undefined);
+      mockGetAgentPerformance.mockResolvedValue(
+        makePerformance(connectGoal({ period_start: 1 })),
+      );
+      const result = await refreshRewardsEligibility(makeConnectParams());
+      expect(result).toBe(true);
+    });
+
+    it('is never done while not running, without fetching or throttling', async () => {
+      const setRewardSnapshot = jest.fn();
+      const lastRewardsFetchRef = {
+        current: { [CONNECT_ID]: Date.now() } as Partial<
+          Record<string, number>
+        >,
+      };
+
+      const result = await refreshRewardsEligibility(
+        makeConnectParams({
+          runningServiceConfigIdRef: { current: 'sc-other' },
+          lastRewardsFetchRef,
+          setRewardSnapshot,
+        }),
+      );
+
+      expect(result).toBe(false);
+      expect(setRewardSnapshot).toHaveBeenCalledWith(CONNECT_ID, false);
+      expect(mockGetAgentPerformance).not.toHaveBeenCalled();
+    });
+
+    it('is not done when the performance fetch fails', async () => {
+      mockGetAgentPerformance.mockRejectedValue(new Error('backend down'));
+      const onRewardsFetchError = jest.fn();
+
+      const result = await refreshRewardsEligibility(
+        makeConnectParams({ onRewardsFetchError }),
+      );
+
+      expect(result).toBe(false);
+      expect(onRewardsFetchError).toHaveBeenCalledTimes(1);
+    });
+  });
 });
 
 describe('waitForEligibilityReadyHelper', () => {
@@ -860,6 +1199,31 @@ describe('fetchDeployabilityForAgent', () => {
   it('returns canRun=true when all checks pass', async () => {
     const result = await fetchDeployabilityForAgent(makeAgentMeta(), makeCtx());
     expect(result).toEqual({ canRun: true, isAgentEvicted: false });
+  });
+
+  it('never reads staking details for a no-staking agent', async () => {
+    const meta = {
+      ...makeAgentMeta(),
+      stakingProgramId: 'no_staking',
+    } as AgentMeta;
+    mockGetServiceStakingDetails.mockRejectedValue(
+      new Error('Connect agent does not support staking (no_staking).'),
+    );
+
+    const result = await fetchDeployabilityForAgent(meta, makeCtx());
+
+    expect(result).toEqual({ canRun: true });
+    expect(mockGetServiceStakingDetails).not.toHaveBeenCalled();
+    expect(mockGetStakingContractDetails).not.toHaveBeenCalled();
+  });
+
+  it('bypasses the another-agent-running gate when asked to ignore it', async () => {
+    const ctx = makeCtx({
+      runningServiceConfigId: 'sc-running',
+      ignoreRunningAgent: true,
+    });
+    const result = await fetchDeployabilityForAgent(makeAgentMeta(), ctx);
+    expect(result.canRun).toBe(true);
   });
 
   it('returns canRun=false isTransient=true when safe is loading', async () => {

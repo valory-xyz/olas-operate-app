@@ -16,7 +16,7 @@ const getContainerStylesByStatus = (status: AgentStatus) => {
     case 'running':
       return `background: linear-gradient(180deg, ${COLOR.PURPLE_LIGHT_3} 80%, ${COLOR.PURPLE_LIGHT_4} 100%);`;
     case 'idle':
-      return `background: ${COLOR.BG.SUCCESS.DEFAULT};`;
+      return `background: linear-gradient(180deg, ${COLOR.BG.SUCCESS.DEFAULT} 80%, ${COLOR.BG.SUCCESS.GRADIENT_END} 100%);`;
     default:
       return `background: ${COLOR.GRAY_4};`;
   }

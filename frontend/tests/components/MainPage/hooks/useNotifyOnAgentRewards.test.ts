@@ -107,7 +107,7 @@ describe('useNotifyOnAgentRewards', () => {
 
     expect(mockShowNotification).toHaveBeenCalledTimes(1);
     expect(mockShowNotification).toHaveBeenCalledWith(
-      "Your agent earned its rewards! It's now idle and will resume working next epoch.",
+      'Your agent earned its rewards for this epoch.',
     );
   });
 

@@ -323,7 +323,6 @@ export const AGENT_CONFIG: {
     hasStaking: false,
     hasPerformance: false,
     isBeta: true,
-    isExcludedFromAutoRun: true,
     requiresSetup: false,
     isX402Enabled: X402_ENABLED_FLAGS[AgentMap.Connect],
     name: 'Connect',

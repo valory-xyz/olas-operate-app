@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { EvmChainId } from '@/constants';
 import { useServices } from '@/hooks';
 import { useDeployability } from '@/hooks/useDeployability';
+import { getServiceEvmChainId } from '@/utils/service';
 
 type UseSelectedEligibilityProps = {
   canCreateSafeForChain: (chainId: EvmChainId) => {
@@ -25,11 +26,16 @@ type UseSelectedEligibilityProps = {
 export const useSelectedEligibility = ({
   canCreateSafeForChain,
 }: UseSelectedEligibilityProps) => {
-  const { selectedAgentConfig, selectedAgentType } = useServices();
+  const { selectedAgentConfig, selectedAgentType, selectedService } =
+    useServices();
+  const selectedChainId = getServiceEvmChainId(
+    selectedService,
+    selectedAgentConfig,
+  );
 
   const safeEligibility = useMemo(
-    () => canCreateSafeForChain(selectedAgentConfig.evmHomeChainId),
-    [canCreateSafeForChain, selectedAgentConfig.evmHomeChainId],
+    () => canCreateSafeForChain(selectedChainId),
+    [canCreateSafeForChain, selectedChainId],
   );
 
   const deployability = useDeployability({ safeEligibility });

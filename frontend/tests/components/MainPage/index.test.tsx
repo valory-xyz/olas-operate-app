@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { ReactNode } from 'react';
 
+import { useNotifyOnActivityGoal } from '../../../components/MainPage/hooks/useNotifyOnActivityGoal';
 import { useNotifyOnAgentRewards } from '../../../components/MainPage/hooks/useNotifyOnAgentRewards';
 import { useNotifyOnNewEpoch } from '../../../components/MainPage/hooks/useNotifyOnNewEpoch';
 import { useSetupTrayIcon } from '../../../components/MainPage/hooks/useSetupTrayIcon';
@@ -106,6 +107,10 @@ jest.mock('../../../components/MainPage/hooks/useNotifyOnAgentRewards', () => ({
   useNotifyOnAgentRewards: jest.fn(),
 }));
 
+jest.mock('../../../components/MainPage/hooks/useNotifyOnActivityGoal', () => ({
+  useNotifyOnActivityGoal: jest.fn(),
+}));
+
 /* eslint-disable @typescript-eslint/no-var-requires */
 jest.mock(
   'styled-components',
@@ -117,6 +122,7 @@ const mockUsePageState = usePageState as jest.Mock;
 const mockUseSetupTrayIcon = useSetupTrayIcon as jest.Mock;
 const mockUseNotifyOnNewEpoch = useNotifyOnNewEpoch as jest.Mock;
 const mockUseNotifyOnAgentRewards = useNotifyOnAgentRewards as jest.Mock;
+const mockUseNotifyOnActivityGoal = useNotifyOnActivityGoal as jest.Mock;
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -150,6 +156,11 @@ describe('Main (MainPage entry)', () => {
     it('calls useNotifyOnAgentRewards on render', () => {
       renderWithPage(PAGES.Main);
       expect(mockUseNotifyOnAgentRewards).toHaveBeenCalled();
+    });
+
+    it('calls useNotifyOnActivityGoal on render', () => {
+      renderWithPage(PAGES.Main);
+      expect(mockUseNotifyOnActivityGoal).toHaveBeenCalled();
     });
   });
 

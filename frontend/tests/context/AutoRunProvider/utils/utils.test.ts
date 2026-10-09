@@ -1,6 +1,9 @@
 import { AGENT_CONFIG } from '../../../../config/agents';
 import { AgentMap, AgentType } from '../../../../constants/agent';
-import { MiddlewareChainMap } from '../../../../constants/chains';
+import {
+  EvmChainIdMap,
+  MiddlewareChainMap,
+} from '../../../../constants/chains';
 import { IncludedAgentInstance } from '../../../../context/AutoRunProvider/types';
 import {
   appendNewInstances,
@@ -13,17 +16,37 @@ import {
   getInstanceDisplayNames,
   getOrderedIncludedInstances,
   normalizeIncludedInstances,
+  notifyGoalReached,
   notifySkipped,
   notifyStartFailed,
   sortIncludedInstances,
 } from '../../../../context/AutoRunProvider/utils/utils';
+import { generateAgentName } from '../../../../utils/generateAgentName';
 import {
   DEFAULT_SERVICE_CONFIG_ID,
   makeAutoRunAgentMeta,
+  makeChainConfig,
   makeService,
   MOCK_SERVICE_CONFIG_ID_2,
   MOCK_SERVICE_CONFIG_ID_3,
 } from '../../../helpers/factories';
+
+describe('notifyGoalReached', () => {
+  it('announces the finished run and the hand-over', () => {
+    const showNotification = jest.fn();
+    notifyGoalReached(showNotification, 'Connect', 'connect-polygon');
+    expect(showNotification).toHaveBeenCalledWith(
+      'Connect agent "connect-polygon" finished its run',
+      'Moving to next agent.',
+    );
+  });
+
+  it('is a no-op without showNotification', () => {
+    expect(() =>
+      notifyGoalReached(undefined, 'Connect', 'connect-polygon'),
+    ).not.toThrow();
+  });
+});
 
 describe('notifySkipped', () => {
   it('calls showNotification with agent name, instance name, and reason', () => {
@@ -247,6 +270,28 @@ describe('getInstanceDisplayNames', () => {
     expect(typeof result.instanceName).toBe('string');
   });
 
+  it('names a multi-chain instance after its own chain', () => {
+    const token = 42;
+    const connectOnPolygon = {
+      ...makeAutoRunAgentMeta(AgentMap.Connect, AGENT_CONFIG[AgentMap.Connect]),
+      service: makeService({
+        home_chain: MiddlewareChainMap.POLYGON,
+        chain_configs: makeChainConfig(MiddlewareChainMap.POLYGON, { token }),
+      }),
+      chainId: EvmChainIdMap.Polygon,
+    };
+
+    const { instanceName } = getInstanceDisplayNames(
+      DEFAULT_SERVICE_CONFIG_ID,
+      [connectOnPolygon],
+    );
+
+    expect(instanceName).toBe(generateAgentName(EvmChainIdMap.Polygon, token));
+    expect(instanceName).not.toBe(
+      generateAgentName(EvmChainIdMap.Gnosis, token),
+    );
+  });
+
   it('falls back to serviceConfigId when not found', () => {
     const result = getInstanceDisplayNames('sc-unknown', []);
     expect(result.agentName).toBe('sc-unknown');
@@ -320,7 +365,10 @@ describe('getDecommissionedInstances', () => {
 describe('getAutoRunExcludedByConfig', () => {
   it('returns serviceConfigIds of agents excluded from auto-run by config', () => {
     const agents = [
-      makeAutoRunAgentMeta(AgentMap.Connect, AGENT_CONFIG[AgentMap.Connect]),
+      makeAutoRunAgentMeta(AgentMap.Connect, {
+        ...AGENT_CONFIG[AgentMap.Connect],
+        isExcludedFromAutoRun: true,
+      }),
       makeAutoRunAgentMeta(
         AgentMap.PredictTrader,
         AGENT_CONFIG[AgentMap.PredictTrader],
@@ -330,6 +378,13 @@ describe('getAutoRunExcludedByConfig', () => {
     expect(getAutoRunExcludedByConfig(agents)).toEqual([
       DEFAULT_SERVICE_CONFIG_ID,
     ]);
+  });
+
+  it('no longer excludes Connect, which now takes part in auto-run', () => {
+    const agents = [
+      makeAutoRunAgentMeta(AgentMap.Connect, AGENT_CONFIG[AgentMap.Connect]),
+    ];
+    expect(getAutoRunExcludedByConfig(agents)).toEqual([]);
   });
 
   it('returns empty when no agent opts out of auto-run', () => {
@@ -399,9 +454,11 @@ describe('getOrderedIncludedInstances', () => {
       { serviceConfigId: MOCK_SERVICE_CONFIG_ID_2 },
       { serviceConfigId: DEFAULT_SERVICE_CONFIG_ID },
     ];
-    const result = getOrderedIncludedInstances(included, [
-      DEFAULT_SERVICE_CONFIG_ID,
-    ]);
+    const result = getOrderedIncludedInstances(
+      included,
+      [DEFAULT_SERVICE_CONFIG_ID],
+      [],
+    );
     expect(result).toEqual([
       MOCK_SERVICE_CONFIG_ID_2,
       DEFAULT_SERVICE_CONFIG_ID,
@@ -410,8 +467,17 @@ describe('getOrderedIncludedInstances', () => {
 
   it('falls back to eligible instances when included is empty', () => {
     const eligible = [DEFAULT_SERVICE_CONFIG_ID, MOCK_SERVICE_CONFIG_ID_3];
-    const result = getOrderedIncludedInstances([], eligible);
+    const result = getOrderedIncludedInstances([], eligible, []);
     expect(result).toEqual(eligible);
+  });
+
+  it('leaves user-excluded instances out of the fallback', () => {
+    const result = getOrderedIncludedInstances(
+      [],
+      [DEFAULT_SERVICE_CONFIG_ID, MOCK_SERVICE_CONFIG_ID_3],
+      [MOCK_SERVICE_CONFIG_ID_3],
+    );
+    expect(result).toEqual([DEFAULT_SERVICE_CONFIG_ID]);
   });
 });
 

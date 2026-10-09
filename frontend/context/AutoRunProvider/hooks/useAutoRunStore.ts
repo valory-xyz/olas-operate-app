@@ -1,5 +1,7 @@
 import { useCallback, useRef } from 'react';
 
+import { AgentMap } from '@/constants/agent';
+import { prepareConnectAutoRunMigration } from '@/context/migrations/autoRunConnectInstances';
 import { prepateAutoRunInstancesForMigration } from '@/context/migrations/autoRunInstances';
 import { useElectronApi, useServices, useStore } from '@/hooks';
 
@@ -10,6 +12,7 @@ type AutoRunStoreState = {
   isInitialized: boolean;
   includedInstances: IncludedAgentInstance[];
   userExcludedInstances: string[];
+  connectAutoRunMigrated: boolean;
 };
 
 const DEFAULT_AUTO_RUN: AutoRunStoreState = {
@@ -17,14 +20,25 @@ const DEFAULT_AUTO_RUN: AutoRunStoreState = {
   isInitialized: false,
   includedInstances: [],
   userExcludedInstances: [],
+  connectAutoRunMigrated: false,
 };
+
+/** Store shape of the `autoRun` key for a resolved state. */
+const toStoredAutoRun = (state: AutoRunStoreState) => ({
+  enabled: state.enabled,
+  isInitialized: state.isInitialized,
+  includedAgentInstances: state.includedInstances,
+  userExcludedAgentInstances: state.userExcludedInstances,
+  connectAutoRunMigrated: state.connectAutoRunMigrated,
+});
 
 /**
  * Persisted auto-run settings bridge.
  *
  * Reads/writes `includedAgentInstances` and `userExcludedAgentInstances`
  * (keyed by serviceConfigId). On first load, migrates from legacy
- * `includedAgents`/`userExcludedAgents` (keyed by AgentType).
+ * `includedAgents`/`userExcludedAgents` (keyed by AgentType), and once
+ * excludes the Connect instances that predate Connect's Auto-run support.
  */
 export const useAutoRunStore = () => {
   const { store } = useElectronApi();
@@ -32,6 +46,7 @@ export const useAutoRunStore = () => {
   const { services, getInstancesOfAgentType } = useServices();
   const autoRunRef = useRef(DEFAULT_AUTO_RUN);
   const hasMigratedRef = useRef(false);
+  const hasMigratedConnectRef = useRef(false);
 
   // Only read from storeState after hydration (storeState is defined).
   // Before hydration, autoRunRef keeps DEFAULT_AUTO_RUN with isInitialized=false,
@@ -45,6 +60,7 @@ export const useAutoRunStore = () => {
       isInitialized: autoRun.isInitialized ?? false,
       includedInstances: autoRun.includedAgentInstances ?? [],
       userExcludedInstances: autoRun.userExcludedAgentInstances ?? [],
+      connectAutoRunMigrated: !!autoRun.connectAutoRunMigrated,
     };
 
     // Run one-time migration from AgentType → serviceConfigId
@@ -63,14 +79,41 @@ export const useAutoRunStore = () => {
           userExcludedInstances,
         };
         store?.set?.('autoRun', {
-          enabled: autoRunRef.current.enabled,
-          isInitialized: autoRunRef.current.isInitialized,
-          includedAgentInstances: includedInstances,
-          userExcludedAgentInstances: userExcludedInstances,
+          ...toStoredAutoRun(autoRunRef.current),
           includedAgents: [],
           userExcludedAgents: [],
         });
       }
+    }
+  }
+
+  // One-time Connect migration. Runs during render, before the provider's
+  // seed and auto-append effects read the lists, and only once `services` has
+  // loaded so every pre-existing Connect instance is known.
+  if (
+    storeLoaded &&
+    services &&
+    !hasMigratedConnectRef.current &&
+    !autoRunRef.current.connectAutoRunMigrated
+  ) {
+    hasMigratedConnectRef.current = true;
+    const { userExcludedInstances, shouldMigrate } =
+      prepareConnectAutoRunMigration(
+        {
+          connectAutoRunMigrated: autoRunRef.current.connectAutoRunMigrated,
+          userExcludedAgentInstances: autoRunRef.current.userExcludedInstances,
+        },
+        getInstancesOfAgentType(AgentMap.Connect).map(
+          (service) => service.service_config_id,
+        ),
+      );
+    if (shouldMigrate) {
+      autoRunRef.current = {
+        ...autoRunRef.current,
+        userExcludedInstances,
+        connectAutoRunMigrated: true,
+      };
+      store?.set?.('autoRun', toStoredAutoRun(autoRunRef.current));
     }
   }
 
@@ -85,7 +128,7 @@ export const useAutoRunStore = () => {
       if (!store?.set) return;
       // Merge with latest snapshot so partial writes do not erase sibling fields.
       // Example: toggling `enabled` should not wipe `includedInstances`.
-      const next = {
+      const next: AutoRunStoreState = {
         enabled:
           partial.enabled ??
           autoRunRef.current.enabled ??
@@ -94,22 +137,21 @@ export const useAutoRunStore = () => {
           partial.isInitialized ??
           autoRunRef.current.isInitialized ??
           DEFAULT_AUTO_RUN.isInitialized,
-        includedAgentInstances:
+        includedInstances:
           partial.includedInstances ??
           autoRunRef.current.includedInstances ??
           DEFAULT_AUTO_RUN.includedInstances,
-        userExcludedAgentInstances:
+        userExcludedInstances:
           partial.userExcludedInstances ??
           autoRunRef.current.userExcludedInstances ??
           DEFAULT_AUTO_RUN.userExcludedInstances,
+        connectAutoRunMigrated:
+          partial.connectAutoRunMigrated ??
+          autoRunRef.current.connectAutoRunMigrated ??
+          DEFAULT_AUTO_RUN.connectAutoRunMigrated,
       };
-      autoRunRef.current = {
-        enabled: next.enabled,
-        isInitialized: next.isInitialized,
-        includedInstances: next.includedAgentInstances,
-        userExcludedInstances: next.userExcludedAgentInstances,
-      };
-      store?.set?.('autoRun', next);
+      autoRunRef.current = next;
+      store?.set?.('autoRun', toStoredAutoRun(next));
     },
     [store],
   );

@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 
 import { Service } from '@/types';
+import { getServiceEvmChainId } from '@/utils/service';
 
 import { AgentMeta } from '../types';
 import { getAgentFromService } from '../utils/utils';
@@ -33,7 +34,8 @@ export const useConfiguredAgents = (services?: Service[]) => {
         agentConfig,
         service,
         serviceConfigId: service.service_config_id,
-        chainId: agentConfig.evmHomeChainId,
+        // Multi-chain agents (Connect) run on the instance's own chain.
+        chainId: getServiceEvmChainId(service, agentConfig),
         stakingProgramId,
         multisig: chainConfig.chain_data.multisig,
         serviceNftTokenId: chainConfig.chain_data.token,

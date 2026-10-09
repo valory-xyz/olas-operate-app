@@ -20,6 +20,7 @@ import { FundPearlWallet } from '../FundPearlWallet';
 import { PearlWallet } from '../PearlWallet';
 import { SelectStakingPage } from '../SelectStakingPage';
 import { Home } from './Home';
+import { useNotifyOnActivityGoal } from './hooks/useNotifyOnActivityGoal';
 import { useNotifyOnAgentRewards } from './hooks/useNotifyOnAgentRewards';
 import { useNotifyOnNewEpoch } from './hooks/useNotifyOnNewEpoch';
 import { useScrollPage } from './hooks/useScrollPage';
@@ -61,6 +62,7 @@ const usePageInitialization = () => {
   useSetupTrayIcon();
   useNotifyOnNewEpoch();
   useNotifyOnAgentRewards();
+  useNotifyOnActivityGoal();
 };
 
 export const Main = () => {

@@ -46,6 +46,25 @@ export const notifyStartFailed = (
 };
 
 /**
+ * Desktop notification when a no-staking agent (Connect) completed its run and
+ * Auto-run hands the turn to the next agent.
+ *
+ * @example notifyGoalReached(show, "Connect", "connect-polygon")
+ * // → title: 'Connect agent "connect-polygon" finished its run'
+ * // → body:  'Moving to next agent.'
+ */
+export const notifyGoalReached = (
+  showNotification: ((title: string, body?: string) => void) | undefined,
+  agentDisplayName: string,
+  instanceName: string,
+) => {
+  showNotification?.(
+    `${agentDisplayName} agent "${instanceName}" finished its run`,
+    'Moving to next agent.',
+  );
+};
+
+/**
  * Resolves the ACTIVE_AGENTS config entry that corresponds to a running
  * service instance by matching both `servicePublicId` and
  * `middlewareHomeChainId`. Returns the `[AgentType, AgentConfig]` tuple, or
@@ -146,7 +165,7 @@ export const getInstanceDisplayNames = (
   const instanceName = getServiceInstanceName(
     meta.service,
     meta.agentConfig.displayName,
-    meta.agentConfig.evmHomeChainId,
+    meta.chainId,
   );
 
   return { agentName: meta.agentConfig.displayName, instanceName };
@@ -168,8 +187,8 @@ export const getDecommissionedInstances = (configuredAgents: AgentMeta[]) =>
 
 /**
  * Returns the service config IDs from `configuredAgents` whose agent config
- * opts out of auto-run (`isExcludedFromAutoRun`), e.g. Connect. These are
- * never auto-included and cannot be added to the rotation manually.
+ * opts out of auto-run (`isExcludedFromAutoRun`). These are never
+ * auto-included and cannot be added to the rotation manually.
  */
 export const getAutoRunExcludedByConfig = (configuredAgents: AgentMeta[]) =>
   configuredAgents
@@ -185,21 +204,27 @@ export const getEligibleInstances = (
   return configuredInstances.filter((id) => !blocked.has(id));
 };
 
+/**
+ * The rotation order. An empty included list falls back to every eligible
+ * instance the user has not excluded.
+ */
 export const getOrderedIncludedInstances = (
   includedInstancesSorted: { serviceConfigId: string }[],
   eligibleInstances: string[],
+  userExcludedInstances: string[],
 ) => {
   if (includedInstancesSorted.length > 0) {
     return includedInstancesSorted.map((inst) => inst.serviceConfigId);
   }
-  return eligibleInstances;
+  const excluded = new Set(userExcludedInstances);
+  return eligibleInstances.filter((id) => !excluded.has(id));
 };
 
 /**
  * Instances that are neither included nor hidden. `hiddenInstances` holds
  * instances that must not appear in the auto-run options at all, not even as
- * blocked rows: config-excluded ones (`isExcludedFromAutoRun`, e.g. Connect)
- * and decommissioned ones (see `getDecommissionedInstances`).
+ * blocked rows: config-excluded ones (`isExcludedFromAutoRun`) and
+ * decommissioned ones (see `getDecommissionedInstances`).
  */
 export const getExcludedInstances = (
   configuredInstances: string[],
