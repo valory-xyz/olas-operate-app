@@ -150,11 +150,28 @@ type AgentPerformanceMetric = {
   description?: string;
 };
 
+/**
+ * Activity-goal block an agent writes into its `agent_performance.json`.
+ * Times are unix seconds; `period_start` is the staking epoch's
+ * `tsCheckpoint` for staking agents and the run-window start for Connect.
+ */
+export type ActivityGoal = {
+  unit: 'trades' | 'rounds' | 'minutes';
+  target: number;
+  progress: number;
+  is_met: boolean;
+  period_start: number;
+  last_met_at: number | null;
+  updated_at: number;
+};
+
 export type AgentPerformance = {
   timestamp: number | null;
   metrics: AgentPerformanceMetric[];
   last_activity: null;
   agent_behavior: string | null;
+  /** Absent on older agent builds; parse with `parseActivityGoal` before use. */
+  activity_goal?: unknown;
 };
 
 type DeployedNodes = {

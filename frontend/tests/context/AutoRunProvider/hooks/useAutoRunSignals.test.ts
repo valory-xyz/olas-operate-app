@@ -44,7 +44,8 @@ const makeHookParams = (
   runningAgentType: null as AgentType | null,
   runningServiceConfigId: null as string | null,
   isSelectedAgentDetailsLoading: false,
-  isEpochTargetMet: undefined as boolean | undefined,
+  isSelectedDoneForEpoch: undefined as boolean | undefined,
+  isSelectedNoStakingAgent: false,
   isEpochExpired: false,
   selectedAgentType: AgentMap.PredictTrader,
   selectedServiceConfigId: DEFAULT_SERVICE_CONFIG_ID as string | null,
@@ -101,10 +102,10 @@ describe('useAutoRunSignals', () => {
     );
   });
 
-  it('updates reward snapshot when isEpochTargetMet changes', () => {
+  it('updates reward snapshot when isSelectedDoneForEpoch changes', () => {
     const params = makeHookParams({
       selectedServiceConfigId: DEFAULT_SERVICE_CONFIG_ID,
-      isEpochTargetMet: false,
+      isSelectedDoneForEpoch: false,
     });
     const { result, rerender } = renderHook(
       (props) => useAutoRunSignals(props),
@@ -114,14 +115,35 @@ describe('useAutoRunSignals', () => {
       result.current.rewardSnapshotRef.current[DEFAULT_SERVICE_CONFIG_ID],
     ).toBe(false);
 
-    rerender({ ...params, isEpochTargetMet: true });
+    rerender({ ...params, isSelectedDoneForEpoch: true });
     expect(
       result.current.rewardSnapshotRef.current[DEFAULT_SERVICE_CONFIG_ID],
     ).toBe(true);
   });
 
+  it('does not overwrite the snapshot of a selected no-staking agent', () => {
+    const params = makeHookParams({
+      selectedServiceConfigId: DEFAULT_SERVICE_CONFIG_ID,
+      isSelectedDoneForEpoch: undefined,
+      isSelectedNoStakingAgent: true,
+    });
+    const { result, rerender } = renderHook(
+      (props) => useAutoRunSignals(props),
+      { initialProps: params },
+    );
+    act(() => {
+      result.current.setRewardSnapshot(DEFAULT_SERVICE_CONFIG_ID, true);
+    });
+
+    rerender({ ...params, isEpochExpired: true });
+
+    expect(result.current.getRewardSnapshot(DEFAULT_SERVICE_CONFIG_ID)).toBe(
+      true,
+    );
+  });
+
   it('markRewardSnapshotPending sets snapshot to undefined', () => {
-    const params = makeHookParams({ isEpochTargetMet: true });
+    const params = makeHookParams({ isSelectedDoneForEpoch: true });
     const { result } = renderHook(() => useAutoRunSignals(params));
     act(() => {
       result.current.markRewardSnapshotPending(DEFAULT_SERVICE_CONFIG_ID);
@@ -132,7 +154,7 @@ describe('useAutoRunSignals', () => {
   });
 
   it('getRewardSnapshot returns the stored value', () => {
-    const params = makeHookParams({ isEpochTargetMet: true });
+    const params = makeHookParams({ isSelectedDoneForEpoch: true });
     const { result } = renderHook(() => useAutoRunSignals(params));
     expect(result.current.getRewardSnapshot(DEFAULT_SERVICE_CONFIG_ID)).toBe(
       true,
@@ -408,7 +430,7 @@ describe('useAutoRunSignals', () => {
 
   describe('waitForRewardsEligibility', () => {
     it('returns snapshot value immediately when populated', async () => {
-      const params = makeHookParams({ isEpochTargetMet: true });
+      const params = makeHookParams({ isSelectedDoneForEpoch: true });
       const { result } = renderHook(() => useAutoRunSignals(params));
 
       let value: boolean | undefined;
@@ -421,7 +443,7 @@ describe('useAutoRunSignals', () => {
     });
 
     it('returns false snapshot when populated with false', async () => {
-      const params = makeHookParams({ isEpochTargetMet: false });
+      const params = makeHookParams({ isSelectedDoneForEpoch: false });
       const { result } = renderHook(() => useAutoRunSignals(params));
 
       let value: boolean | undefined;
@@ -436,7 +458,7 @@ describe('useAutoRunSignals', () => {
     it('returns undefined and logs timeout when snapshot stays undefined', async () => {
       const logMessage = jest.fn();
       const params = makeHookParams({
-        isEpochTargetMet: undefined,
+        isSelectedDoneForEpoch: undefined,
         logMessage,
       });
       const { result } = renderHook(() => useAutoRunSignals(params));
@@ -463,7 +485,7 @@ describe('useAutoRunSignals', () => {
     });
 
     it('returns undefined when sleepAwareDelay returns false', async () => {
-      const params = makeHookParams({ isEpochTargetMet: undefined });
+      const params = makeHookParams({ isSelectedDoneForEpoch: undefined });
       const { result } = renderHook(() => useAutoRunSignals(params));
 
       act(() => {
@@ -666,10 +688,10 @@ describe('useAutoRunSignals', () => {
   });
 
   describe('isEpochExpired override', () => {
-    it('overrides isEpochTargetMet to false when epoch is expired', () => {
+    it('overrides isSelectedDoneForEpoch to false when epoch is expired', () => {
       const params = makeHookParams({
         selectedServiceConfigId: DEFAULT_SERVICE_CONFIG_ID,
-        isEpochTargetMet: true,
+        isSelectedDoneForEpoch: true,
         isEpochExpired: true,
       });
       const { result } = renderHook(() => useAutoRunSignals(params));

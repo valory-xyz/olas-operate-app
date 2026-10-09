@@ -23,6 +23,7 @@ import { MultisigOwners } from '../../hooks/useMultisig';
 import { AchievementWithConfig } from '../../types/Achievement';
 import { Address } from '../../types/Address';
 import {
+  ActivityGoal,
   AgentConfig,
   AgentLiveness,
   ServiceDeployment,
@@ -451,6 +452,23 @@ export const makeStakingRewardsInfo = (
   accruedServiceStakingRewards: 0.5,
   minimumStakedAmount: 50,
   tsCheckpoint: DEFAULT_TS_CHECKPOINT,
+  ...overrides,
+});
+
+/**
+ * Builds the `activity_goal` block an agent writes into `agent_performance.json`,
+ * defaulting to the current epoch (`period_start = DEFAULT_TS_CHECKPOINT`), not met.
+ */
+export const makeActivityGoal = (
+  overrides: Partial<ActivityGoal> = {},
+): ActivityGoal => ({
+  unit: 'trades',
+  target: 8,
+  progress: 3,
+  is_met: false,
+  period_start: DEFAULT_TS_CHECKPOINT,
+  last_met_at: null,
+  updated_at: DEFAULT_TS_CHECKPOINT + 60,
   ...overrides,
 });
 

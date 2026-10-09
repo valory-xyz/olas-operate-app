@@ -8,7 +8,11 @@ import {
 } from '../constants';
 import { AgentMeta } from '../types';
 import { refreshRewardsEligibility as refreshRewardsEligibilityHelper } from '../utils/autoRunHelpers';
-import { getInstanceDisplayNames, notifySkipped } from '../utils/utils';
+import {
+  getInstanceDisplayNames,
+  notifyGoalReached,
+  notifySkipped,
+} from '../utils/utils';
 import { useAutoRunStartOperations } from './useAutoRunStartOperations';
 import { useAutoRunStopOperations } from './useAutoRunStopOperations';
 import { useAutoRunVerboseLogger } from './useAutoRunVerboseLogger';
@@ -46,6 +50,7 @@ type UseAutoRunOperationsParams = {
 /**
  * Composes operational primitives used by scanner/lifecycle:
  * - rewards refresh + skip notifications
+ * - goal-reached notification for a Connect hand-over
  * - guarded start with retries
  * - stop with deployment confirmation and recovery retries
  */
@@ -82,6 +87,19 @@ export const useAutoRunOperations = ({
       skipNotifiedRef.current = {};
     }
   }, [enabled]);
+
+  /** Sent once per hand-over, when Connect is stopped after meeting its goal. */
+  const notifyGoalReachedOnHandOver = useCallback(
+    (serviceConfigId: string) => {
+      const { agentName, instanceName } = getInstanceDisplayNames(
+        serviceConfigId,
+        configuredAgents,
+      );
+      notifyGoalReached(showNotification, agentName, instanceName);
+      logMessage(`goal reached, handed over: ${serviceConfigId}`);
+    },
+    [configuredAgents, logMessage, showNotification],
+  );
 
   // Wrap the caller's optional start callback so lastStartedAtRef is updated
   // on every successful AutoRun start. Caller's callback still fires after.
@@ -157,6 +175,7 @@ export const useAutoRunOperations = ({
 
   return {
     refreshRewardsEligibility,
+    notifyGoalReachedOnHandOver,
     notifySkipOnce,
     startAgentWithRetries,
     stopAgentWithRecovery,

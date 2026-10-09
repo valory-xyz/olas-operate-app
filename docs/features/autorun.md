@@ -23,14 +23,14 @@ frontend/context/AutoRunProvider/
     useAutoRunScanner.ts       — Queue traversal, candidate selection, startSelectedAgentIfEligible
     useAutoRunLifecycle.ts     — Effects: rotation on rewards, rewards polling, startup/resume, runtime watchdog, eviction watchdog
     useAutoRunVerboseLogger.ts — Verbose log gate utility (tied to AUTO_RUN_VERBOSE_LOGS)
-    useAutoRunStore.ts         — Electron store persistence (enabled, includedAgents, userExcludedAgents)
+    useAutoRunStore.ts         — Store persistence (enabled, includedAgentInstances, userExcludedAgentInstances) + one-time migrations
     useConfiguredAgents.ts     — Derives AgentMeta[] from services
     useLogAutoRunEvent.ts      — Prefixed logging utility
     useSelectedEligibility.ts  — Eligibility for the currently selected agent
     useSafeEligibility.ts      — Safe creation checks
   utils/
     autoRunHelpers.ts          — refreshRewardsEligibility, fetchDeployabilityForAgent, formatEligibilityReason, isOnlyLoadingReason, waitForEligibilityReadyHelper
-    utils.ts                   — getAgentDisplayName, notifySkipped, notifyStartFailed, list utilities
+    utils.ts                   — getAgentDisplayName, notifySkipped, notifyStartFailed, notifyGoalReached, list utilities
 ```
 
 ### Data Flow
@@ -77,7 +77,7 @@ Note: timing constants are centralized in `constants.ts` to avoid duplicate knob
 | `AUTO_RUN_START_DELAY_SECONDS` | 30s | Delay before starting after first enable (gives user time to configure) |
 | `AUTO_RUN_VERBOSE_LOGS` | true | Gates high-volume diagnostic logs; set to true while actively debugging incidents |
 | `COOLDOWN_SECONDS` | 20s | Delay after stop before starting next instance |
-| `RUNNING_AGENT_MAX_RUNTIME_SECONDS` | 70min | Watchdog threshold for maximum continuous runtime per instance |
+| `RUNNING_AGENT_MAX_RUNTIME_SECONDS` | 4h | Watchdog threshold for maximum continuous runtime per instance |
 | `RUNNING_AGENT_WATCHDOG_CHECK_SECONDS` | 5min | Runtime watchdog check cadence |
 | `RUNNING_AGENT_ELIGIBILITY_CHECK_SECONDS` | 10min | Eviction watchdog cadence — how often the running instance's on-chain staking state is re-read |
 | `HEALTH_SUMMARY_INTERVAL_SECONDS` | 15min | Aggregated auto-run health log cadence (error/success counters); only emitted when `AUTO_RUN_VERBOSE_LOGS=true` |
@@ -114,6 +114,15 @@ Note: timing constants are centralized in `constants.ts` to avoid duplicate knob
 
 The rotation signal is regime-aware (OPE-1803): `refreshRewardsEligibility` returns "epoch work done", which for new (decoupled-activity) staking contracts is `activityThisEpoch >= activityTarget` and for legacy contracts is the on-chain staking KPI (`isEligibleForRewards`). Both are read on-chain, so it works for stopped candidates too. See `staking-and-rewards.md` → "Decoupled-activity regime".
 
+An instance counts as done for the epoch only when **both** that staking signal and the agent's own activity goal are met (OPE-1801). The goal comes from the `activity_goal` block the agent writes into `agent_performance.json`, read through `ServicesService.getAgentPerformance` (`frontend/utils/activityGoal.ts` → `deriveIsDoneForEpoch`):
+
+- staking signal false → not done;
+- no (or malformed) block, i.e. an older agent build → the staking signal alone, as before;
+- block whose `period_start` predates the epoch's `tsCheckpoint` → goal not met;
+- otherwise → `activity_goal.is_met`.
+
+The goal is read only once the staking signal is met; until then the instance is not done and no performance request is made. A failed performance read leaves a staking agent whose staking signal is met unknown (`undefined`), so callers keep the previous snapshot and the scanner retries instead of starting it; for Connect it counts as not done. A malformed block is logged as `activity goal malformed: <id>: <zod issues>` and reads as no block. The decision log line carries `goal=<progress>/<target> goalMet=<bool> goalCurrent=<bool> → done=<bool>` (or `goal=none` / `goal=unavailable`, or `goal=unread` when the staking signal is not met). The selection-driven snapshot in `useAutoRunSignals` uses `useEpochWorkStatus().isDoneForEpoch`, so both writers agree.
+
 1. `REWARDS_POLL_SECONDS` interval calls `refreshRewardsEligibility(runningServiceConfigId)`.
 2. Snapshot update bumps `rewardsTick` → rotation effect fires.
 3. Effect detects `false → true` transition via `lastRewardsEligibilityRef` guard.
@@ -123,6 +132,17 @@ The rotation signal is regime-aware (OPE-1803): `refreshRewardsEligibility` retu
    c. Otherwise → `stopAgentWithRecovery` → reset `lastRewardsEligibilityRef[current]` → cooldown → `scanAndStartNext`.
 
 Note: Resetting `lastRewardsEligibilityRef` on successful stop is critical — without it the guard stays `true` from the current epoch and permanently blocks rotation in all future epochs when this instance runs again.
+
+### 3.2a Connect (no-staking agents)
+
+Connect (`stakingProgramId === 'no_staking'`) has no epoch. It is an ordinary checklist row and uses the same "done" rule as every other agent, with no staking half: its `activity_goal` block is current and `is_met`. Connect opens one run window per process and keeps `is_met` true once its minutes have elapsed, so it rotates through the same `false → true` rotation effect.
+
+- **Not running:** `refreshRewardsEligibility` returns `false` without a fetch or throttle, since its next process opens a fresh window. The circular order reaches it after every other agent has had a turn, and `rotateToNext` from a finished staking agent hands over to it.
+- **Running:** done when the block is current and `is_met`. Freshness is the only per-type difference: the block is current when `period_start >= floor(startRequestedAt / 1000)`, the moment the app last asked the backend to start the instance (`ServicesService.getStartRequestedAt`). `ServicesService.startService` records it on every path, so a manual start or restart counts the same as an Auto-run start. That ignores a leftover `is_met: true` from the previous process before the new one rewrites the file at boot. The record lives in memory: after a frontend reload while Connect keeps running there is no floor, and a leftover met block counts until the process rewrites it. The start request is used rather than `lastStartedAt`, which is stamped only once the deployment is confirmed, after the new process has already opened its window.
+- **Hand-over:** `rotateToNext` refreshes the alternates, probes each not-done one in turn order with `fetchDeployabilityForAgent(..., { ignoreRunningAgent: true })`, and stops Connect only if one can start; the goal-reached notification ("Connect agent "…" finished its run") is sent on that stop, once per hand-over. Otherwise Connect keeps running and `lastRewardsEligibilityRef[connect]` is reset, as on a stop failure: Connect's `is_met` never goes back to false within a process, so the reset is what lets the next rewards poll re-check, and hand over once another agent becomes ready.
+- A watchdog or eviction hand-over sends no goal-reached notification.
+- `fetchDeployabilityForAgent` skips the staking reads for `no_staking`, and `AgentMeta.chainId` is the instance's own chain (`getServiceEvmChainId`).
+- **Upgrade:** Connect instances that exist when the version first loads are added once to `userExcludedAgentInstances` (`autoRun.connectAutoRunMigrated`); later instances are auto-added.
 
 ### 3.3 Resume After Stop (Sleep/Wake, Backend Crash)
 
@@ -142,13 +162,13 @@ Note: Resetting `lastRewardsEligibilityRef` on successful stop is critical — w
 ### 3.5 Long-Running Agent Watchdog
 
 1. While auto-run is enabled and an agent is running, watchdog checks runtime every 5 minutes.
-2. If the same agent has been running for more than 70 minutes continuously, watchdog attempts forced `rotateToNext` (ignores the normal "all others earned/unknown" keep-running optimization).
+2. If the same agent has been running for more than 4 hours continuously, watchdog attempts forced `rotateToNext` (ignores the normal "all others earned/unknown" keep-running optimization).
 3. In force mode, if all other agents are earned/unknown (no known alternative), current agent is kept running and watchdog retries later (no stop-to-idle).
 4. If rotate/recovery fails, scanner fallback is scheduled with blocked delay.
 
 ### 3.6 Evicted Running Instance
 
-The eviction gate in `fetchDeployabilityForAgent` only runs when choosing a candidate to *start*. Neither rotation trigger can fire once the running instance is evicted — rewards eligibility can no longer flip false→true, and the runtime watchdog is purely time-based — so before this check an evicted instance held the queue until the 70-minute cap, crash-looping the whole time if its agent exits on eviction (OPE-1920).
+The eviction gate in `fetchDeployabilityForAgent` only runs when choosing a candidate to *start*. Neither rotation trigger can fire once the running instance is evicted — rewards eligibility can no longer flip false→true, and the runtime watchdog is purely time-based — so before this check an evicted instance held the queue until the runtime cap, crash-looping the whole time if its agent exits on eviction (OPE-1920).
 
 1. Every 10 minutes (`RUNNING_AGENT_ELIGIBILITY_CHECK_SECONDS`), the running instance's deployability is re-read. The read happens *outside* `isRotatingRef`, which is claimed only once there is something to do — otherwise every check would block the runtime watchdog and the rewards trigger for the duration of a network call.
 2. Not evicted, or a transient result (e.g. RPC failure) → no action. A failed staking read must never stop a healthy agent.
@@ -284,7 +304,7 @@ Every delay and poll interval in auto-run uses `sleepAwareDelay`. On `false`:
 | # | Scenario | Expected | Implementation |
 |---|----------|----------|----------------|
 | 7b | Running instance evicted on-chain, past `minimumStakingDuration` | Stop then start the same instance; the start re-stakes it | Eviction watchdog, §3.6 — `isAgentEvicted && isEligibleAfterEviction` from `fetchDeployabilityForAgent`. Usually the middleware gets there first (~5min) and this check finds a healthy instance |
-| 7c | Running instance evicted, still inside `minimumStakingDuration` | Forced rotation to the next instance | Eviction watchdog, §3.6 — nothing can re-stake it until the window ends, so holding the slot for the 70min cap is pure idle time |
+| 7c | Running instance evicted, still inside `minimumStakingDuration` | Forced rotation to the next instance | Eviction watchdog, §3.6 — nothing can re-stake it until the window ends, so holding the slot for the runtime cap is pure idle time |
 | 7d | Staking read fails while the running instance is healthy | No action | `isTransient` result is ignored; a flaky RPC must never stop a healthy agent |
 
 ### Blocked Agents
@@ -399,7 +419,7 @@ Every delay and poll interval in auto-run uses `sleepAwareDelay`. On `false`:
 - Backend start can hang beyond `waitForRunningAgent` timeout if `startService()` itself hangs (mitigated by `withTimeout` wrapping the call at 15min).
 - Rewards eligibility is selection-driven; polling via `setInterval` is a workaround.
 - `rotateToNext`: if `currentMeta` is not found (agent removed from config mid-rotation), returns without scheduling rescan. Low probability; rewards poll will re-trigger within 120s.
-- **Empty reward pool draining mid-run is not detected.** The empty-pool check is a *start-time* gate in `fetchDeployabilityForAgent`; it is not re-evaluated for the instance that is already running. If a pool drains while its agent is running, the rotation signal can never fire (see "Empty reward pool freezes the rotation signal" in Fixed Bugs) and the 70-minute `RUNNING_AGENT_MAX_RUNTIME_SECONDS` watchdog is the only escape — once per drain event, not once overall. Closing this would require polling `getStakingContractDetails` for the running instance alongside `REWARDS_POLL_SECONDS`; deferred as the watchdog bounds the damage.
+- **Empty reward pool draining mid-run is not detected.** The empty-pool check is a *start-time* gate in `fetchDeployabilityForAgent`; it is not re-evaluated for the instance that is already running. If a pool drains while its agent is running, the rotation signal can never fire (see "Empty reward pool freezes the rotation signal" in Fixed Bugs) and the `RUNNING_AGENT_MAX_RUNTIME_SECONDS` watchdog (4 hours) is the only escape — once per drain event, not once overall. Closing this would require polling `getStakingContractDetails` for the running instance alongside `REWARDS_POLL_SECONDS`; deferred as the watchdog bounds the damage.
 
 ---
 

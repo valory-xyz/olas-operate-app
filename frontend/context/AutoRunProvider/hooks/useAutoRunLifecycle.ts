@@ -2,6 +2,7 @@ import { MutableRefObject, useCallback, useEffect, useRef } from 'react';
 
 import { AgentType } from '@/constants';
 import { sleepAwareDelay } from '@/utils/delay';
+import { isNoStakingProgram } from '@/utils/stakingProgram';
 
 import {
   AUTO_RUN_HEALTH_METRIC,
@@ -17,6 +18,7 @@ import {
   SCAN_BLOCKED_DELAY_SECONDS,
   SCAN_ELIGIBLE_DELAY_SECONDS,
 } from '../constants';
+import { AgentMeta } from '../types';
 import { DeployabilityCheckResult } from '../utils/autoRunHelpers';
 import { useAutoRunVerboseLogger } from './useAutoRunVerboseLogger';
 
@@ -25,6 +27,7 @@ type UseAutoRunLifecycleParams = {
   runningAgentType: AgentType | null;
   runningServiceConfigId: string | null;
   orderedIncludedInstances: string[];
+  configuredAgents: AgentMeta[];
   enabledRef: MutableRefObject<boolean>;
   runningAgentTypeRef: MutableRefObject<AgentType | null>;
   runningServiceConfigIdRef: MutableRefObject<string | null>;
@@ -53,6 +56,15 @@ type UseAutoRunLifecycleParams = {
    * running instance has no known metadata to check against.
    */
   getDeployabilityForRunningInstance: () => Promise<DeployabilityCheckResult | null>;
+  /**
+   * Deployability of an instance as if nothing were running, to check that a
+   * no-staking agent (Connect) has someone to hand over to before stopping it.
+   */
+  getHandOverDeployability: (
+    serviceConfigId: string,
+  ) => Promise<DeployabilityCheckResult | null>;
+  /** Goal-reached notification for a Connect hand-over. */
+  notifyGoalReachedOnHandOver: (serviceConfigId: string) => void;
   stopRetryBackoffUntilRef: MutableRefObject<Partial<Record<string, number>>>;
   recordMetric: (metric: AutoRunLifecycleMetric) => void;
   logMessage: (message: string) => void;
@@ -71,6 +83,7 @@ export const useAutoRunLifecycle = ({
   runningAgentType,
   runningServiceConfigId,
   orderedIncludedInstances,
+  configuredAgents,
   enabledRef,
   runningAgentTypeRef,
   runningServiceConfigIdRef,
@@ -87,6 +100,8 @@ export const useAutoRunLifecycle = ({
   stopAgentWithRecovery,
   startAgentWithRetries,
   getDeployabilityForRunningInstance,
+  getHandOverDeployability,
+  notifyGoalReachedOnHandOver,
   stopRetryBackoffUntilRef,
   recordMetric,
   logMessage,
@@ -129,6 +144,132 @@ export const useAutoRunLifecycle = ({
   }, [getPreferredStartFrom, scanAndStartNext, startSelectedAgentIfEligible]);
 
   /**
+   * Stops the current instance and, after the cooldown, scans from it for the
+   * next one. If stopping fails (e.g. backend timeout) the instance keeps
+   * running and rotation is retried after a delay, so the queue is never left
+   * with nothing running. `onStopped` runs right after a successful stop.
+   */
+  const stopAndScanFrom = useCallback(
+    async (
+      currentServiceConfigId: string,
+      cycleId: string,
+      trigger: string,
+      onStopped?: () => void,
+    ) => {
+      const stopOk = await stopAgentWithRecovery(currentServiceConfigId);
+      if (!stopOk) {
+        logMessage(
+          `stop timeout for ${currentServiceConfigId}, aborting rotation`,
+        );
+        // Reset the rewards guard so the next poll can re-trigger rotation.
+        lastRewardsEligibilityRef.current[currentServiceConfigId] = undefined;
+        stopRetryBackoffUntilRef.current[currentServiceConfigId] =
+          Date.now() + SCAN_BLOCKED_DELAY_SECONDS * 1000;
+        logMessage(
+          `reset rewards guard for ${currentServiceConfigId}, scheduling rescan in ${SCAN_BLOCKED_DELAY_SECONDS}s`,
+        );
+        scheduleNextScan(SCAN_BLOCKED_DELAY_SECONDS);
+        return;
+      }
+      onStopped?.();
+
+      // Reset the rewards guard, or a leftover `true` blocks every later rotation.
+      lastRewardsEligibilityRef.current[currentServiceConfigId] = undefined;
+      stopRetryBackoffUntilRef.current[currentServiceConfigId] = undefined;
+      if (!enabledRef.current) return;
+      const cooldownOk = await sleepAwareDelay(COOLDOWN_SECONDS);
+      if (!cooldownOk) return;
+      if (!enabledRef.current) return;
+      await scanAndStartNextRef.current(currentServiceConfigId);
+      recordMetric(AUTO_RUN_HEALTH_METRIC.ROTATIONS_SUCCEEDED);
+      logVerbose(
+        `cycle=${cycleId} trigger=${trigger} phase=rotate_end status=ok current=${currentServiceConfigId}`,
+      );
+    },
+    [
+      enabledRef,
+      lastRewardsEligibilityRef,
+      logMessage,
+      logVerbose,
+      recordMetric,
+      scheduleNextScan,
+      stopAgentWithRecovery,
+      stopRetryBackoffUntilRef,
+    ],
+  );
+
+  /** Stops a no-staking agent (Connect) only once another instance can start. */
+  const handOverFromNoStakingAgent = useCallback(
+    async (
+      currentServiceConfigId: string,
+      options: { force?: boolean; cycleId: string; trigger: string },
+    ) => {
+      const { force, cycleId, trigger } = options;
+      const currentIndex = orderedIncludedInstances.indexOf(
+        currentServiceConfigId,
+      );
+      const alternates = [
+        ...orderedIncludedInstances.slice(currentIndex + 1),
+        ...orderedIncludedInstances.slice(0, Math.max(currentIndex, 0)),
+      ].filter((id) => id !== currentServiceConfigId);
+
+      const refreshed = await Promise.all(
+        alternates.map((id) => refreshRewardsEligibility(id)),
+      );
+      const notDone = alternates.filter(
+        (id, index) => (refreshed[index] ?? getRewardSnapshot(id)) !== true,
+      );
+
+      let handOverTo: string | null = null;
+      for (const candidate of notDone) {
+        if (!enabledRef.current) return;
+        const deployability = await getHandOverDeployability(candidate);
+        if (deployability?.canRun) {
+          handOverTo = candidate;
+          break;
+        }
+      }
+      if (!enabledRef.current) return;
+      if (!handOverTo) {
+        lastRewardsEligibilityRef.current[currentServiceConfigId] = undefined;
+        const delay = force
+          ? SCAN_BLOCKED_DELAY_SECONDS
+          : SCAN_ELIGIBLE_DELAY_SECONDS;
+        logVerbose(
+          `cycle=${cycleId} trigger=${trigger} keeping connect running, no runnable alternate current=${currentServiceConfigId} rescan=${delay}s`,
+        );
+        scheduleNextScan(delay);
+        return;
+      }
+
+      logVerbose(
+        `cycle=${cycleId} trigger=${trigger} phase=hand_over current=${currentServiceConfigId} next=${handOverTo}`,
+      );
+      // A watchdog or eviction hand-over does not mean the goal was reached.
+      await stopAndScanFrom(
+        currentServiceConfigId,
+        cycleId,
+        trigger,
+        force
+          ? undefined
+          : () => notifyGoalReachedOnHandOver(currentServiceConfigId),
+      );
+    },
+    [
+      enabledRef,
+      getHandOverDeployability,
+      getRewardSnapshot,
+      lastRewardsEligibilityRef,
+      logVerbose,
+      notifyGoalReachedOnHandOver,
+      orderedIncludedInstances,
+      refreshRewardsEligibility,
+      scheduleNextScan,
+      stopAndScanFrom,
+    ],
+  );
+
+  /**
    * Rotation effect: when the currently running instance earns rewards, try to rotate to the next one.
    * If no other instances are eligible, keep the current one running and retry rotation after a delay.
    */
@@ -149,6 +290,18 @@ export const useAutoRunLifecycle = ({
       //    path treats unknown leniently. Blocking on unknown would deadlock
       //    when an alternate's rewards fetch fails transiently.
       // 2) Otherwise stop current, cool down, and scan from next.
+      const currentMeta = configuredAgents.find(
+        (agent) => agent.serviceConfigId === currentServiceConfigId,
+      );
+      if (currentMeta && isNoStakingProgram(currentMeta.stakingProgramId)) {
+        await handOverFromNoStakingAgent(currentServiceConfigId, {
+          force: options?.force,
+          cycleId,
+          trigger,
+        });
+        return;
+      }
+
       const otherInstances = orderedIncludedInstances.filter(
         (id) => id !== currentServiceConfigId,
       );
@@ -195,56 +348,18 @@ export const useAutoRunLifecycle = ({
       }
 
       if (!enabledRef.current) return;
-
-      // Stop the currently running instance, but if stopping fails (e.g. backend timeout),
-      // keep it running and retry rotation after a delay.
-      // This avoids a bad state where the current instance is stopped
-      // but fails to start again, leaving no instances running.
-      const stopOk = await stopAgentWithRecovery(currentServiceConfigId);
-      if (!stopOk) {
-        logMessage(
-          `stop timeout for ${currentServiceConfigId}, aborting rotation`,
-        );
-        // Reset rewards guard so the next poll cycle can re-trigger rotation
-        // instead of being blocked by the previousEligibility === true check.
-        lastRewardsEligibilityRef.current[currentServiceConfigId] = undefined;
-        stopRetryBackoffUntilRef.current[currentServiceConfigId] =
-          Date.now() + SCAN_BLOCKED_DELAY_SECONDS * 1000;
-        logMessage(
-          `reset rewards guard for ${currentServiceConfigId}, scheduling rescan in ${SCAN_BLOCKED_DELAY_SECONDS}s`,
-        );
-        scheduleNextScan(SCAN_BLOCKED_DELAY_SECONDS);
-        return;
-      }
-
-      // Rotation successful: reset BOTH the rewards guard AND the stop backoff for this instance.
-      // Resetting lastRewardsEligibilityRef is critical — without it the guard stays `true` from the
-      // current epoch and permanently blocks rotation in all future epochs (previousEligibility === true
-      // check bails early every time this instance runs and earns rewards again).
-      lastRewardsEligibilityRef.current[currentServiceConfigId] = undefined;
-      stopRetryBackoffUntilRef.current[currentServiceConfigId] = undefined;
-      if (!enabledRef.current) return;
-      const cooldownOk = await sleepAwareDelay(COOLDOWN_SECONDS);
-      if (!cooldownOk) return;
-      if (!enabledRef.current) return;
-      await scanAndStartNextRef.current(currentServiceConfigId);
-      recordMetric(AUTO_RUN_HEALTH_METRIC.ROTATIONS_SUCCEEDED);
-      logVerbose(
-        `cycle=${cycleId} trigger=${trigger} phase=rotate_end status=ok current=${currentServiceConfigId}`,
-      );
+      await stopAndScanFrom(currentServiceConfigId, cycleId, trigger);
     },
     [
+      configuredAgents,
       enabledRef,
       getRewardSnapshot,
-      logMessage,
+      handOverFromNoStakingAgent,
       orderedIncludedInstances,
       refreshRewardsEligibility,
-      recordMetric,
       scheduleNextScan,
-      stopAgentWithRecovery,
-      lastRewardsEligibilityRef,
       logVerbose,
-      stopRetryBackoffUntilRef,
+      stopAndScanFrom,
     ],
   );
 
@@ -369,7 +484,7 @@ export const useAutoRunLifecycle = ({
    * choosing a candidate to start, and neither rotation trigger can fire once
    * an instance is evicted: rewards eligibility can no longer flip false→true,
    * and the runtime watchdog is purely time-based. So an instance evicted while
-   * running stays selected until the 70-minute cap — crash-looping the whole
+   * running stays selected until the runtime cap — crash-looping the whole
    * time if its agent exits on eviction.
    *
    * Recoverable (past `minimumStakingDuration`) → stop and start, since the

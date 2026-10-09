@@ -44,7 +44,11 @@ jest.mock('../../../../context/AutoRunProvider/utils/utils', () => ({
     instanceName: 'corzim-vardor96',
   }),
   notifySkipped: jest.fn(),
+  notifyGoalReached: jest.fn(),
 }));
+const { notifyGoalReached: mockNotifyGoalReached } = jest.requireMock(
+  '../../../../context/AutoRunProvider/utils/utils',
+) as { notifyGoalReached: jest.Mock };
 
 const makeHookParams = () => ({
   enabled: true,
@@ -266,6 +270,22 @@ describe('useAutoRunOperations', () => {
         result.current.notifySkipOnce(DEFAULT_SERVICE_CONFIG_ID, 'Low balance');
       });
       expect(params.logMessage).toHaveBeenCalledTimes(2);
+    });
+  });
+  describe('Connect hand-over support', () => {
+    it('sends the goal-reached notification on every hand-over', () => {
+      const params = makeHookParams();
+      const { result } = renderHook(() => useAutoRunOperations(params));
+
+      act(() => result.current.notifyGoalReachedOnHandOver('sc-connect'));
+      act(() => result.current.notifyGoalReachedOnHandOver('sc-connect'));
+
+      expect(mockNotifyGoalReached).toHaveBeenCalledTimes(2);
+      expect(mockNotifyGoalReached).toHaveBeenCalledWith(
+        params.showNotification,
+        'Omenstrat',
+        'corzim-vardor96',
+      );
     });
   });
 });

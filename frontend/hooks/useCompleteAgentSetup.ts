@@ -7,6 +7,7 @@ import { StakingProgramContext } from '@/context/StakingProgramProvider';
 import { useSupportModal } from '@/context/SupportModalProvider';
 import { TokenRequirement } from '@/types';
 import { WalletBalance } from '@/types/Balance';
+import { isNoStakingProgram } from '@/utils/stakingProgram';
 
 import { useGetRefillRequirements } from './useGetRefillRequirements';
 import { useMasterBalances } from './useMasterBalances';
@@ -97,8 +98,8 @@ export const useCompleteAgentSetup = (
       // the intended (valid) program for agents that default to it (e.g.
       // Connect) — so only treat it as invalid for staking agents.
       if (
-        selectedStakingProgramId === 'no_staking' &&
-        selectedAgentConfig.defaultStakingProgramId !== 'no_staking'
+        isNoStakingProgram(selectedStakingProgramId) &&
+        !isNoStakingProgram(selectedAgentConfig.defaultStakingProgramId)
       ) {
         return 'invalid_contract';
       }

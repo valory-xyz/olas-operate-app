@@ -3,7 +3,10 @@ import { act } from 'react';
 
 import { AGENT_CONFIG } from '../../../../config/agents';
 import { AgentMap } from '../../../../constants/agent';
-import { EvmChainIdMap } from '../../../../constants/chains';
+import {
+  EvmChainIdMap,
+  MiddlewareChainMap,
+} from '../../../../constants/chains';
 import { useSafeEligibility } from '../../../../context/AutoRunProvider/hooks/useSafeEligibility';
 import { useMasterWalletContext } from '../../../../hooks';
 import { useMultisigs } from '../../../../hooks/useMultisig';
@@ -154,6 +157,32 @@ describe('useSafeEligibility', () => {
       });
       expect(mockCreateSafe).toHaveBeenCalledWith(
         traderConfig.middlewareHomeChainId,
+        BACKUP_SIGNER_ADDRESS,
+      );
+    });
+
+    it('checks and creates the safe on the chain of a Polygon Connect instance', async () => {
+      const connectConfig = AGENT_CONFIG[AgentMap.Connect];
+      const polygonConnectMeta = {
+        ...makeAutoRunAgentMeta(AgentMap.Connect, connectConfig),
+        chainId: EvmChainIdMap.Polygon,
+      };
+      mockGetSafeEligibility.mockReturnValue({
+        status: BACKUP_SIGNER_STATUS.Ready,
+        canProceed: true,
+        shouldCreateSafe: true,
+        backupOwner: BACKUP_SIGNER_ADDRESS,
+      });
+      mockCreateSafe.mockResolvedValue(undefined);
+      const { result } = renderHook(() => useSafeEligibility());
+      await act(async () => {
+        await result.current.createSafeIfNeeded(polygonConnectMeta);
+      });
+      expect(mockGetSafeEligibility).toHaveBeenCalledWith(
+        expect.objectContaining({ chainId: EvmChainIdMap.Polygon }),
+      );
+      expect(mockCreateSafe).toHaveBeenCalledWith(
+        MiddlewareChainMap.POLYGON,
         BACKUP_SIGNER_ADDRESS,
       );
     });

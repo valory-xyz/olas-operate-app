@@ -45,6 +45,7 @@ export const COLOR = {
   BG: {
     SUCCESS: {
       DEFAULT: '#DEF8E7',
+      GRADIENT_END: '#C4F2D4',
     },
     WARNING: {
       DEFAULT: '#FCFCE3',

@@ -8,6 +8,7 @@ import {
   chainHasPolySafePrograms,
   deriveStakingProgramId,
   getCompatibleStakingProgramIds,
+  isNoStakingProgram,
   isStakingProgramCompatibleWithMultisig,
 } from '../../utils/stakingProgram';
 import { makeStakingProgramConfig } from '../helpers/factories';
@@ -48,6 +49,16 @@ const GNOSIS_PROGRAMS = {
   [STAKING_PROGRAM_IDS.PearlBetaMechMarketplace3]: makeStakingProgramConfig(),
   [STAKING_PROGRAM_IDS.PearlBetaMechMarketplace4]: makeStakingProgramConfig(),
 };
+
+describe('isNoStakingProgram', () => {
+  it('is true only for the no_staking program', () => {
+    expect(isNoStakingProgram('no_staking')).toBe(true);
+    expect(
+      isNoStakingProgram(STAKING_PROGRAM_IDS.PearlBetaMechMarketplace3),
+    ).toBe(false);
+    expect(isNoStakingProgram(undefined)).toBe(false);
+  });
+});
 
 describe('deriveStakingProgramId', () => {
   it('lowercases and left-pads the address to 64 hex chars', () => {

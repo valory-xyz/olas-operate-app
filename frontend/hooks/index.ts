@@ -1,4 +1,5 @@
 export * from './useActiveStakingProgramId';
+export * from './useActivityGoal';
 export * from './useAgentActivity';
 export * from './useAgentFundingRequests';
 export * from './useAgentRunning';
@@ -22,6 +23,7 @@ export * from './useCreateConnectService';
 export * from './useDeployability';
 export * from './useDynamicRefetchInterval';
 export * from './useElectronApi';
+export * from './useEpochWorkStatus';
 export * from './useFeatureFlag';
 export * from './useFundingEligibleServices';
 export * from './useFundingRun';
