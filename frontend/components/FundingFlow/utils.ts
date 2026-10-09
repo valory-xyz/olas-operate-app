@@ -38,7 +38,7 @@ export const getChainName = (chain: MiddlewareChain) => {
   }
 };
 
-const getChainNativeSymbol = (chain: MiddlewareChain) => {
+export const getChainNativeSymbol = (chain: MiddlewareChain) => {
   try {
     return asEvmChainDetails(chain).symbol;
   } catch {
@@ -75,6 +75,62 @@ export const getTokenMeta = (
           areAddressesEqual(tokenConfig.address, token),
   );
   return config ? { symbol: config.symbol, decimals: config.decimals } : null;
+};
+
+/** Address of the token with `symbol` on a chain; native is `AddressZero`. */
+const getTokenAddress = (
+  chain: MiddlewareChain,
+  symbol: string,
+): Address | null => {
+  const chainId = tryAllEvmChainId(chain);
+  if (isNil(chainId)) return null;
+  const config = Object.values(ALL_TOKEN_CONFIG[chainId] ?? {}).find(
+    (tokenConfig) => tokenConfig.symbol.toLowerCase() === symbol.toLowerCase(),
+  );
+  if (!config) return null;
+  if (config.tokenType === TokenType.NativeGas) return AddressZero;
+  return config.address ?? null;
+};
+
+type HostRequirement = {
+  mode: FundingRunMode;
+  destinationChain: MiddlewareChain;
+  /** Deposit only: amounts in base units, keyed by token address. */
+  depositAmounts?: Record<Address, string>;
+  /** Onboarding only: the requirement shown before a run exists. */
+  fallbackToReceive?: { symbol: string; amount: number }[];
+};
+
+/**
+ * The host's single required token on `chain`, offered as a funding token
+ * there; `null` unless exactly one token is required and `chain` is where.
+ */
+export const getRequiredSourceToken = (
+  chain: MiddlewareChain,
+  {
+    mode,
+    destinationChain,
+    depositAmounts,
+    fallbackToReceive,
+  }: HostRequirement,
+): Address | null => {
+  if (chain !== destinationChain) return null;
+  if (mode === 'deposit') {
+    const required = Object.entries(depositAmounts ?? {}).filter(
+      ([, amount]) => BigInt(amount) > BigInt(0),
+    );
+    return required.length === 1 ? (required[0][0] as Address) : null;
+  }
+  if (mode === 'onboard') {
+    const required = (fallbackToReceive ?? []).filter(
+      ({ amount }) => amount > 0,
+    );
+    return required.length === 1
+      ? getTokenAddress(chain, required[0].symbol)
+      : null;
+  }
+  // Signer gas needs the native token, which every chain already lists.
+  return null;
 };
 
 /** ~4 significant digits (2–8 decimals), rounded up: 0.00074 ETH must not show as 0.01. */

@@ -10,7 +10,10 @@ import { copyToClipboard } from '../../../utils/copyToClipboard';
 import {
   FUNDING_RUN_BASE_USDC,
   FUNDING_RUN_NATIVE,
+  FUNDING_RUN_POLYGON_OLAS,
+  FUNDING_RUN_POLYGON_PUSD,
   makeFundingRun,
+  makeFundingRunStep,
 } from '../../helpers/factories';
 
 /* eslint-disable @typescript-eslint/no-var-requires */
@@ -237,6 +240,66 @@ describe('FundingFlow — selection', () => {
       {
         mode: 'deposit',
         source: { chain: 'base', token: FUNDING_RUN_BASE_USDC },
+        destination: { chain: 'polygon' },
+        deposit_amounts: depositAmounts,
+      },
+      expect.anything(),
+    );
+  });
+
+  const tokenLabels = () =>
+    screen
+      .getAllByRole('button')
+      .map((button) => button.textContent?.trim())
+      .filter((label) => label && !['Back', 'Change'].includes(label));
+
+  it('offers the single required token on its own chain only', () => {
+    renderFlow({ fallbackToReceive: [{ symbol: 'pUSD', amount: 10 }] });
+
+    fireEvent.click(screen.getByRole('button', { name: /Polygon/ }));
+    expect(tokenLabels()).toEqual(['POL', 'USDC', 'pUSD', 'Other token']);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Change' }));
+    fireEvent.click(screen.getByRole('button', { name: /Base/ }));
+    expect(tokenLabels()).toEqual(['ETH', 'USDC', 'Other token']);
+  });
+
+  it('offers no extra token when more than one token is required', () => {
+    renderFlow({
+      fallbackToReceive: [
+        { symbol: 'pUSD', amount: 10 },
+        { symbol: 'OLAS', amount: 40 },
+      ],
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /Polygon/ }));
+    expect(tokenLabels()).toEqual(['POL', 'USDC', 'Other token']);
+  });
+
+  it('lists a required token that is already offered once', () => {
+    renderFlow({ fallbackToReceive: [{ symbol: 'POL', amount: 10 }] });
+
+    fireEvent.click(screen.getByRole('button', { name: /Polygon/ }));
+    expect(tokenLabels()).toEqual(['POL', 'USDC', 'Other token']);
+  });
+
+  it('creates the run with the required token, taken from deposit amounts in deposit mode', () => {
+    const depositAmounts = {
+      [FUNDING_RUN_POLYGON_PUSD]: '10000000',
+      [FUNDING_RUN_POLYGON_OLAS]: '0',
+    };
+    renderFlow({
+      mode: 'deposit',
+      depositAmounts,
+    } as Partial<FundingFlowProps>);
+
+    fireEvent.click(screen.getByRole('button', { name: /Polygon/ }));
+    fireEvent.click(screen.getByRole('button', { name: /pUSD/ }));
+
+    expect(mockCreate).toHaveBeenCalledWith(
+      {
+        mode: 'deposit',
+        source: { chain: 'polygon', token: FUNDING_RUN_POLYGON_PUSD },
         destination: { chain: 'polygon' },
         deposit_amounts: depositAmounts,
       },
@@ -631,7 +694,7 @@ describe('FundingFlow — "To receive"', () => {
     mockHookState = { activeRun: makeFundingRun() };
     renderFlow({ fallbackToReceive: [{ symbol: 'OLAS', amount: 999 }] });
 
-    expect(screen.getByText('To receive')).toBeInTheDocument();
+    expect(screen.getByText('To receive on')).toBeInTheDocument();
     expect(screen.getByText('6.00 POL')).toBeInTheDocument();
     expect(screen.getByText('40.00 OLAS')).toBeInTheDocument();
     expect(screen.getByText('10.00 pUSD')).toBeInTheDocument();
@@ -714,8 +777,43 @@ describe('FundingFlow — "To receive"', () => {
     mockHookState = { activeRun: makeFundingRun({ to_receive: [] }) };
     renderFlow();
 
-    expect(screen.queryByText('To receive')).toBeNull();
+    expect(screen.queryByText('To receive on')).toBeNull();
   });
+
+  const toReceiveHeader = () =>
+    screen.getByText('To receive on').parentElement?.textContent;
+
+  it.each([
+    ['onboard', {}],
+    ['deposit', { depositAmounts: { [FUNDING_RUN_NATIVE]: '1' } }],
+    ['signer_gas', {}],
+  ])(
+    // A started run for another destination is shown, so its chain wins.
+    'names the destination chain in %s mode, from the run once it exists',
+    (mode, extra) => {
+      const props = {
+        mode,
+        ...extra,
+        destinationChain: 'polygon',
+        fallbackToReceive: [{ symbol: 'POL', amount: 1 }],
+      } as Partial<FundingFlowProps>;
+      const { rerender } = renderFlow(props);
+      expect(toReceiveHeader()).toBe('To receive onPolygon');
+
+      mockHookState = {
+        activeRun: partlyFundedRun({
+          mode: mode as FundingRun['mode'],
+          destination: { chain: 'gnosis', wallet: 'master_safe' },
+        }),
+      };
+      rerender(
+        <FundingFlow
+          {...({ ...ONBOARD_PROPS, ...props } as FundingFlowProps)}
+        />,
+      );
+      expect(toReceiveHeader()).toBe('To receive onGnosis');
+    },
+  );
 });
 
 describe('FundingFlow — quote and deposit address', () => {
@@ -777,6 +875,88 @@ describe('FundingFlow — quote and deposit address', () => {
       screen.getByText('Funds sent on another chain might be lost.'),
     ).toBeInTheDocument();
     expect(container.textContent).not.toMatch(/will be lost/);
+  });
+
+  const exactRun = (overrides: Partial<FundingRun> = {}) =>
+    makeFundingRun({
+      source: {
+        chain: 'polygon',
+        token: FUNDING_RUN_POLYGON_PUSD,
+        symbol: 'pUSD',
+        decimals: 6,
+        deposit_address: '0x5afe5afe5afe5afe5afe5afe5afe5afe5afe5afe',
+      },
+      quote: {
+        ...makeFundingRun().quote!,
+        required_amount: '10000000',
+        outstanding_amount: '10000000',
+        exact: true,
+      },
+      to_receive: [
+        { token: FUNDING_RUN_POLYGON_PUSD, symbol: 'pUSD', amount: '10000000' },
+      ],
+      steps: [
+        makeFundingRunStep({
+          token: FUNDING_RUN_POLYGON_PUSD,
+          amount: '10000000',
+        }),
+      ],
+      ...overrides,
+    });
+
+  it('shows an exact amount with no quote countdown or fee note', () => {
+    mockHookState = { activeRun: exactRun() };
+    renderFlow();
+
+    expect(screen.getByText('10.00')).toBeInTheDocument();
+    expect(
+      screen.getByText('0x5afe5afe5afe5afe5afe5afe5afe5afe5afe5afe'),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/Quote update in/)).toBeNull();
+    expect(screen.queryByRole('button', { name: /Refresh quote/ })).toBeNull();
+    expect(
+      screen.getByText('pUSD', { selector: '.text-lg' }).nextElementSibling,
+    ).toBeNull();
+  });
+
+  it('explains the buffer and names the destination native token on a quoted run', async () => {
+    mockHookState = { activeRun: makeFundingRun() };
+    renderFlow();
+
+    expect(screen.getByText(/Quote update in/)).toBeInTheDocument();
+    const icon = screen.getByText('USDC', {
+      selector: '.text-lg',
+    }).nextElementSibling!;
+    expect(icon.tagName.toLowerCase()).toBe('svg');
+    fireEvent.mouseEnter(icon);
+
+    expect(
+      await screen.findByText(
+        'Includes extra for possible fee changes. Unused funds should arrive in your Pearl Wallet as POL.',
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('shows a single received row and the success state for a completed exact run', () => {
+    mockHookState = {
+      activeRun: exactRun({
+        id: 'fr-exact-done',
+        status: 'COMPLETED',
+        steps: [
+          makeFundingRunStep({
+            token: FUNDING_RUN_POLYGON_PUSD,
+            amount: '10000000',
+            status: 'DONE',
+            finished_at: 1790592300,
+          }),
+        ],
+      }),
+    };
+    renderFlow();
+
+    expect(screen.getAllByText(/^Received /)).toHaveLength(1);
+    expect(screen.getByText('Received 10.00 pUSD')).toBeInTheDocument();
+    expect(screen.getByText('Your agent is ready!')).toBeInTheDocument();
   });
 
   it('shows no address before the first quote lands', () => {
@@ -849,6 +1029,7 @@ describe('FundingFlow — quote and deposit address', () => {
           outstanding_amount: '740000000000000',
           quoted_at: 1790592071,
           next_refresh_at: 1790592251,
+          exact: false,
         },
         to_receive: [
           {
