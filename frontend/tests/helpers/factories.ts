@@ -998,6 +998,7 @@ export const makeFundingRun = (
     outstanding_amount: '15000000',
     quoted_at: 1790592071,
     next_refresh_at: 1790592251,
+    exact: false,
   },
   quote_message: null,
   to_receive: [

@@ -18,6 +18,7 @@ import {
   FundingRun,
   FundingRunMode,
 } from '@/types/FundingRun';
+import { areAddressesEqual } from '@/utils/address';
 
 import {
   ACTIVE_RUN_ERROR,
@@ -39,6 +40,7 @@ import {
   FundingHost,
   getChainImage,
   getChainName,
+  getRequiredSourceToken,
   getTokenImage,
   getTokenMeta,
   isRunEditable,
@@ -250,6 +252,20 @@ export const FundingFlow = (props: FundingFlowProps) => {
     : (step ?? (run || pendingSelection ? 'quote' : 'chain'));
   const tokenStepChain = selectedChain ?? run?.source.chain ?? null;
 
+  const getSourceTokens = (chain: MiddlewareChain): Address[] => {
+    const listed = sources?.[chain] ?? [];
+    const required = getRequiredSourceToken(chain, {
+      mode,
+      destinationChain,
+      depositAmounts:
+        props.mode === 'deposit' ? props.depositAmounts : undefined,
+      fallbackToReceive: props.fallbackToReceive,
+    });
+    if (!required || listed.some((token) => areAddressesEqual(token, required)))
+      return listed;
+    return [...listed, required];
+  };
+
   const renderSelection = () => {
     switch (currentStep) {
       case 'request-chain':
@@ -275,7 +291,7 @@ export const FundingFlow = (props: FundingFlowProps) => {
             />
             <SelectSourceToken
               chain={tokenStepChain}
-              tokens={sources?.[tokenStepChain] ?? []}
+              tokens={getSourceTokens(tokenStepChain)}
               disabledReason={hasCreateParams ? undefined : NO_DEPOSIT_AMOUNTS}
               onSelect={(token) => create({ chain: tokenStepChain, token })}
               onOther={() => setStep('request-token')}

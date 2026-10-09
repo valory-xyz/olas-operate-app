@@ -79,6 +79,11 @@ export const QUOTE_COPY = {
   failedDescription: 'Check your connection and try again.',
 } as const;
 
+export const TO_RECEIVE_ON = 'To receive on';
+
+export const LEFTOVER_TOOLTIP = (nativeSymbol: string) =>
+  `Includes extra for possible fee changes. Unused funds should arrive in your Pearl Wallet as ${nativeSymbol}.`;
+
 export const DEPOSIT_INSTRUCTION = (chainName: string) =>
   `Send funds from your external wallet on ${chainName} chain to the wallet address below.`;
 

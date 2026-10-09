@@ -5,11 +5,13 @@ import { CardFlex } from '@/components/ui';
 import { MiddlewareChain } from '@/constants';
 import { FundingRunTokenAmount } from '@/types/FundingRun';
 
-import { UNKNOWN_AMOUNT, UNKNOWN_TOKEN } from './constants';
+import { TO_RECEIVE_ON, UNKNOWN_AMOUNT, UNKNOWN_TOKEN } from './constants';
 import { TokenIcon } from './styles';
 import {
   formatBaseUnits,
   formatDisplayAmount,
+  getChainImage,
+  getChainName,
   getTokenImage,
   getTokenMeta,
 } from './utils';
@@ -66,7 +68,16 @@ export const ToReceiveSummary = ({
   return (
     <CardFlex $noBorder $padding="16px 24px">
       <Flex vertical gap={4}>
-        <Text className="text-neutral-tertiary">To receive</Text>
+        <Flex gap={8} align="center">
+          <Text className="text-neutral-tertiary">{TO_RECEIVE_ON}</Text>
+          <Flex gap={6} align="center">
+            <TokenIcon
+              src={getChainImage(destinationChain)}
+              alt={getChainName(destinationChain)}
+            />
+            <Text>{getChainName(destinationChain)}</Text>
+          </Flex>
+        </Flex>
         <Flex gap={8} align="center" wrap>
           {items.map(({ key, symbol, amount }, index) => (
             <Fragment key={key}>
