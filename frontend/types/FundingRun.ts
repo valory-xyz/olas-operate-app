@@ -48,8 +48,8 @@ export type FundingRunQuote = {
   outstanding_amount: string;
   quoted_at: number;
   next_refresh_at: number;
-  /** No bridge or swap: the exact amount, never re-quoted, so no countdown. */
-  exact: boolean;
+  /** No bridge or swap; never re-quoted. */
+  exact?: boolean;
 };
 
 export type FundingRunTokenAmount = {
