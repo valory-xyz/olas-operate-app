@@ -56,6 +56,7 @@ const getTokensDetailsForFunding = (
           amount: parsedAmount,
           symbol,
           iconSrc: ICON_OVERRIDES[symbol] || iconSrc,
+          address: tokenAddress as Address,
         };
       }
     }),

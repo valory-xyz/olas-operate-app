@@ -251,6 +251,28 @@ describe('useGetRefillRequirements', () => {
     });
   });
 
+  it('carries each token address, AddressZero for native', () => {
+    setupMocks({
+      totalRequirements: buildRequirements({
+        safeAddress: DEFAULT_SAFE_ADDRESS,
+        nativeSafe: '1000000000000000000',
+        erc20Safe: '40000000000000000000',
+      }),
+    });
+
+    const { result } = renderHook(() => useGetRefillRequirements());
+
+    expect(
+      result.current.totalTokenRequirements.map(({ symbol, address }) => ({
+        symbol,
+        address,
+      })),
+    ).toEqual([
+      { symbol: TokenSymbolMap.OLAS, address: OLAS_ADDRESS },
+      { symbol: TokenSymbolMap.XDAI, address: AddressZero },
+    ]);
+  });
+
   describe('MASTER_SAFE_REFILL_PLACEHOLDER fallback', () => {
     it('falls back to MASTER_SAFE_REFILL_PLACEHOLDER when no master safe exists', () => {
       const safeBigInt = '3000000000000000000'; // 3 XDAI

@@ -2,7 +2,6 @@ import { isNil } from 'lodash';
 
 import {
   ALL_TOKEN_CONFIG,
-  TokenConfig,
   TokenSymbol,
   TokenSymbolConfigMap,
   TokenType,
@@ -23,7 +22,7 @@ import { STEP_COPY } from './constants';
 
 type TokenMeta = { symbol: string; decimals: number };
 
-const tryAllEvmChainId = (chain: MiddlewareChain) => {
+export const tryAllEvmChainId = (chain: MiddlewareChain) => {
   try {
     return asAllEvmChainId(chain);
   } catch {
@@ -61,40 +60,21 @@ export const getTokenImage = (symbol: string): string | undefined => {
   return key ? TokenSymbolConfigMap[key].image : undefined;
 };
 
-const findTokenConfig = (
-  chain: MiddlewareChain,
-  predicate: (tokenConfig: TokenConfig) => boolean,
-) => {
-  const chainId = tryAllEvmChainId(chain);
-  if (isNil(chainId)) return undefined;
-  return Object.values(ALL_TOKEN_CONFIG[chainId] ?? {}).find(predicate);
-};
-
 /** Symbol and decimals of a token address on a chain, or `null` if unknown to the app. */
 export const getTokenMeta = (
   chain: MiddlewareChain,
   token: Address,
 ): TokenMeta | null => {
-  const config = findTokenConfig(chain, (tokenConfig) =>
-    areAddressesEqual(token, AddressZero)
-      ? tokenConfig.tokenType === TokenType.NativeGas
-      : !!tokenConfig.address && areAddressesEqual(tokenConfig.address, token),
+  const chainId = tryAllEvmChainId(chain);
+  if (isNil(chainId)) return null;
+  const config = Object.values(ALL_TOKEN_CONFIG[chainId] ?? {}).find(
+    (tokenConfig) =>
+      areAddressesEqual(token, AddressZero)
+        ? tokenConfig.tokenType === TokenType.NativeGas
+        : !!tokenConfig.address &&
+          areAddressesEqual(tokenConfig.address, token),
   );
   return config ? { symbol: config.symbol, decimals: config.decimals } : null;
-};
-
-/** Address of the token with `symbol` on a chain; native is `AddressZero`. */
-const getTokenAddress = (
-  chain: MiddlewareChain,
-  symbol: string,
-): Address | null => {
-  const config = findTokenConfig(
-    chain,
-    (tokenConfig) => tokenConfig.symbol.toLowerCase() === symbol.toLowerCase(),
-  );
-  if (!config) return null;
-  if (config.tokenType === TokenType.NativeGas) return AddressZero;
-  return config.address ?? null;
 };
 
 type HostRequirement = {
@@ -105,7 +85,7 @@ type HostRequirement = {
   /** Deposit only: amounts in base units, keyed by token address. */
   depositAmounts?: Record<Address, string>;
   /** Onboarding only: the requirement shown before a run exists. */
-  fallbackToReceive?: { symbol: string; amount: number }[];
+  fallbackToReceive?: { address?: Address; amount: number }[];
 };
 
 /** The single required token, offered on the destination chain only; else null. */
@@ -130,9 +110,7 @@ export const getRequiredSourceToken = (
     const required = (fallbackToReceive ?? []).filter(
       ({ amount }) => amount > 0,
     );
-    return required.length === 1
-      ? getTokenAddress(chain, required[0].symbol)
-      : null;
+    return required.length === 1 ? (required[0].address ?? null) : null;
   }
   // Signer gas needs the native token, which every chain already lists.
   return null;
