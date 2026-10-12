@@ -2,6 +2,7 @@ import { isNil } from 'lodash';
 
 import {
   ALL_TOKEN_CONFIG,
+  TokenConfig,
   TokenSymbol,
   TokenSymbolConfigMap,
   TokenType,
@@ -60,19 +61,24 @@ export const getTokenImage = (symbol: string): string | undefined => {
   return key ? TokenSymbolConfigMap[key].image : undefined;
 };
 
+const findTokenConfig = (
+  chain: MiddlewareChain,
+  predicate: (tokenConfig: TokenConfig) => boolean,
+) => {
+  const chainId = tryAllEvmChainId(chain);
+  if (isNil(chainId)) return undefined;
+  return Object.values(ALL_TOKEN_CONFIG[chainId] ?? {}).find(predicate);
+};
+
 /** Symbol and decimals of a token address on a chain, or `null` if unknown to the app. */
 export const getTokenMeta = (
   chain: MiddlewareChain,
   token: Address,
 ): TokenMeta | null => {
-  const chainId = tryAllEvmChainId(chain);
-  if (isNil(chainId)) return null;
-  const config = Object.values(ALL_TOKEN_CONFIG[chainId] ?? {}).find(
-    (tokenConfig) =>
-      areAddressesEqual(token, AddressZero)
-        ? tokenConfig.tokenType === TokenType.NativeGas
-        : !!tokenConfig.address &&
-          areAddressesEqual(tokenConfig.address, token),
+  const config = findTokenConfig(chain, (tokenConfig) =>
+    areAddressesEqual(token, AddressZero)
+      ? tokenConfig.tokenType === TokenType.NativeGas
+      : !!tokenConfig.address && areAddressesEqual(tokenConfig.address, token),
   );
   return config ? { symbol: config.symbol, decimals: config.decimals } : null;
 };
@@ -82,9 +88,8 @@ const getTokenAddress = (
   chain: MiddlewareChain,
   symbol: string,
 ): Address | null => {
-  const chainId = tryAllEvmChainId(chain);
-  if (isNil(chainId)) return null;
-  const config = Object.values(ALL_TOKEN_CONFIG[chainId] ?? {}).find(
+  const config = findTokenConfig(
+    chain,
     (tokenConfig) => tokenConfig.symbol.toLowerCase() === symbol.toLowerCase(),
   );
   if (!config) return null;
@@ -95,26 +100,26 @@ const getTokenAddress = (
 type HostRequirement = {
   mode: FundingRunMode;
   destinationChain: MiddlewareChain;
+  /** On the destination chain; the middleware's exact runs, the only ones taking the required token, need it. */
+  hasMasterSafe: boolean;
   /** Deposit only: amounts in base units, keyed by token address. */
   depositAmounts?: Record<Address, string>;
   /** Onboarding only: the requirement shown before a run exists. */
   fallbackToReceive?: { symbol: string; amount: number }[];
 };
 
-/**
- * The host's single required token on `chain`, offered as a funding token
- * there; `null` unless exactly one token is required and `chain` is where.
- */
+/** The single required token, offered on the destination chain only; else null. */
 export const getRequiredSourceToken = (
   chain: MiddlewareChain,
   {
     mode,
     destinationChain,
+    hasMasterSafe,
     depositAmounts,
     fallbackToReceive,
   }: HostRequirement,
 ): Address | null => {
-  if (chain !== destinationChain) return null;
+  if (chain !== destinationChain || !hasMasterSafe) return null;
   if (mode === 'deposit') {
     const required = Object.entries(depositAmounts ?? {}).filter(
       ([, amount]) => BigInt(amount) > BigInt(0),

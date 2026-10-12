@@ -12,6 +12,7 @@ import { MiddlewareChain } from '@/constants';
 import { useMessageApi } from '@/context/MessageProvider';
 import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRefillRequirementsContext';
 import { useFundingRun } from '@/hooks/useFundingRun';
+import { useMasterWalletContext } from '@/hooks/useWallet';
 import { Address } from '@/types/Address';
 import {
   CreateFundingRunRequest,
@@ -19,6 +20,7 @@ import {
   FundingRunMode,
 } from '@/types/FundingRun';
 import { areAddressesEqual } from '@/utils/address';
+import { asAllEvmChainId } from '@/utils/middlewareHelpers';
 
 import {
   ACTIVE_RUN_ERROR,
@@ -134,6 +136,7 @@ export const FundingFlow = (props: FundingFlowProps) => {
     cancelMutation,
     cancelIfOnlyQuoted,
   } = useFundingRun();
+  const { getMasterSafeOf } = useMasterWalletContext();
 
   const host: FundingHost = {
     mode,
@@ -257,6 +260,7 @@ export const FundingFlow = (props: FundingFlowProps) => {
     const required = getRequiredSourceToken(chain, {
       mode,
       destinationChain,
+      hasMasterSafe: !!getMasterSafeOf?.(asAllEvmChainId(destinationChain)),
       depositAmounts:
         props.mode === 'deposit' ? props.depositAmounts : undefined,
       fallbackToReceive: props.fallbackToReceive,

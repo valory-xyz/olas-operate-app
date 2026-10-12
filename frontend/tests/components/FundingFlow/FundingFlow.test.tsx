@@ -4,6 +4,7 @@ import {
   FundingFlow,
   FundingFlowProps,
 } from '../../../components/FundingFlow/FundingFlow';
+import { EvmChainIdMap } from '../../../constants/chains';
 import { FundingRequestService } from '../../../service/FundingRequest';
 import { FundingRun } from '../../../types/FundingRun';
 import { copyToClipboard } from '../../../utils/copyToClipboard';
@@ -34,11 +35,12 @@ const mockToggleSupportModal = jest.fn();
 const mockMessageSuccess = jest.fn();
 const mockMessageError = jest.fn();
 
+const POLYGON_USDC = '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359';
 const SOURCES = {
   ethereum: [FUNDING_RUN_NATIVE, '0xA0b86991c6218b36c1d19D4a2e9EB0CE3606EB48'],
   base: [FUNDING_RUN_NATIVE, FUNDING_RUN_BASE_USDC],
   optimism: [FUNDING_RUN_NATIVE, '0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85'],
-  polygon: [FUNDING_RUN_NATIVE, '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359'],
+  polygon: [FUNDING_RUN_NATIVE, POLYGON_USDC],
   arbitrum_one: [
     FUNDING_RUN_NATIVE,
     '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',
@@ -88,6 +90,16 @@ jest.mock('../../../hooks/useFundingRun', () => ({
     retryMutation: { mutate: mockRetry, isPending: false },
     cancelMutation: { mutate: mockCancel, isPending: false },
     cancelIfOnlyQuoted: mockCancelIfOnlyQuoted,
+  }),
+}));
+
+let mockMasterSafeChainIds: number[] = [];
+jest.mock('../../../hooks/useWallet', () => ({
+  useMasterWalletContext: () => ({
+    getMasterSafeOf: (chainId: number) =>
+      mockMasterSafeChainIds.includes(chainId)
+        ? { address: '0x5afe5afe5afe5afe5afe5afe5afe5afe5afe5afe' }
+        : undefined,
   }),
 }));
 
@@ -167,6 +179,7 @@ const partlyFundedRun = (overrides: Partial<FundingRun> = {}) =>
 beforeEach(() => {
   jest.resetAllMocks();
   mockHookState = { activeRun: null };
+  mockMasterSafeChainIds = [EvmChainIdMap.Polygon];
   mockCancelIfOnlyQuoted.mockResolvedValue(true);
   mockCreateReset.mockImplementation(() => {
     mockHookState = { ...mockHookState, createError: undefined };
@@ -264,6 +277,14 @@ describe('FundingFlow — selection', () => {
     expect(tokenLabels()).toEqual(['ETH', 'USDC', 'Other token']);
   });
 
+  it('offers no extra token while the destination chain has no Master Safe', () => {
+    mockMasterSafeChainIds = [];
+    renderFlow({ fallbackToReceive: [{ symbol: 'pUSD', amount: 10 }] });
+
+    fireEvent.click(screen.getByRole('button', { name: /Polygon/ }));
+    expect(tokenLabels()).toEqual(['POL', 'USDC', 'Other token']);
+  });
+
   it('offers no extra token when more than one token is required', () => {
     renderFlow({
       fallbackToReceive: [
@@ -271,6 +292,32 @@ describe('FundingFlow — selection', () => {
         { symbol: 'OLAS', amount: 40 },
       ],
     });
+
+    fireEvent.click(screen.getByRole('button', { name: /Polygon/ }));
+    expect(tokenLabels()).toEqual(['POL', 'USDC', 'Other token']);
+  });
+
+  it('offers no extra token when more than one deposit amount is non-zero', () => {
+    renderFlow({
+      mode: 'deposit',
+      depositAmounts: {
+        [FUNDING_RUN_POLYGON_PUSD]: '10000000',
+        [FUNDING_RUN_POLYGON_OLAS]: '1000000000000000000',
+      },
+    } as Partial<FundingFlowProps>);
+
+    fireEvent.click(screen.getByRole('button', { name: /Polygon/ }));
+    expect(tokenLabels()).toEqual(['POL', 'USDC', 'Other token']);
+  });
+
+  it.each([
+    ['a listed token in another case', POLYGON_USDC.toLowerCase()],
+    ['the native token', FUNDING_RUN_NATIVE],
+  ])('lists a required deposit token once when it is %s', (_name, token) => {
+    renderFlow({
+      mode: 'deposit',
+      depositAmounts: { [token]: '1000000' },
+    } as Partial<FundingFlowProps>);
 
     fireEvent.click(screen.getByRole('button', { name: /Polygon/ }));
     expect(tokenLabels()).toEqual(['POL', 'USDC', 'Other token']);
@@ -331,6 +378,28 @@ describe('FundingFlow — failures around the run', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
     expect(mockCreate).toHaveBeenCalledTimes(2);
     expect(mockCreate.mock.calls[1][0]).toEqual(mockCreate.mock.calls[0][0]);
+  });
+
+  it('shows a refused required token as a quote failure, and Retry re-posts that token', () => {
+    const props = {
+      fallbackToReceive: [{ symbol: 'pUSD', amount: 10 }],
+    } as Partial<FundingFlowProps>;
+    const { rerender } = renderFlow(props);
+    fireEvent.click(screen.getByRole('button', { name: /Polygon/ }));
+    fireEvent.click(screen.getByRole('button', { name: /pUSD/ }));
+
+    mockHookState = { activeRun: null, createError: CREATE_ERROR };
+    rerender(
+      <FundingFlow {...({ ...ONBOARD_PROPS, ...props } as FundingFlowProps)} />,
+    );
+    expect(screen.getByText("Couldn't get a quote")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    expect(mockCreate).toHaveBeenCalledTimes(2);
+    expect(mockCreate.mock.calls[1][0].source).toEqual({
+      chain: 'polygon',
+      token: FUNDING_RUN_POLYGON_PUSD,
+    });
   });
 
   it('shows why a create failed, in a toast and in the failed panel', () => {
@@ -788,7 +857,6 @@ describe('FundingFlow — "To receive"', () => {
     ['deposit', { depositAmounts: { [FUNDING_RUN_NATIVE]: '1' } }],
     ['signer_gas', {}],
   ])(
-    // A started run for another destination is shown, so its chain wins.
     'names the destination chain in %s mode, from the run once it exists',
     (mode, extra) => {
       const props = {
@@ -800,6 +868,7 @@ describe('FundingFlow — "To receive"', () => {
       const { rerender } = renderFlow(props);
       expect(toReceiveHeader()).toBe('To receive onPolygon');
 
+      // A started run for another destination is shown, so its chain wins.
       mockHookState = {
         activeRun: partlyFundedRun({
           mode: mode as FundingRun['mode'],
@@ -904,7 +973,7 @@ describe('FundingFlow — quote and deposit address', () => {
       ...overrides,
     });
 
-  it('shows an exact amount with no quote countdown or fee note', () => {
+  it('shows an exact amount with no quote countdown or buffer note', async () => {
     mockHookState = { activeRun: exactRun() };
     renderFlow();
 
@@ -914,26 +983,52 @@ describe('FundingFlow — quote and deposit address', () => {
     ).toBeInTheDocument();
     expect(screen.queryByText(/Quote update in/)).toBeNull();
     expect(screen.queryByRole('button', { name: /Refresh quote/ })).toBeNull();
-    expect(
-      screen.getByText('pUSD', { selector: '.text-lg' }).nextElementSibling,
-    ).toBeNull();
+
+    const amountRow = screen.getByText('pUSD', {
+      selector: '.text-lg',
+    }).parentElement!;
+    amountRow
+      .querySelectorAll('*')
+      .forEach((element) => fireEvent.mouseEnter(element));
+    // Longer than the tooltip's open delay.
+    await act(() => new Promise((resolve) => setTimeout(resolve, 300)));
+    expect(screen.queryByText(/Includes extra/)).toBeNull();
   });
+
+  const hoverBufferIcon = () => {
+    const icon = screen.getByText('USDC', {
+      selector: '.text-lg',
+    }).nextElementSibling!;
+    expect(icon.tagName.toLowerCase()).toBe('svg');
+    fireEvent.mouseEnter(icon);
+  };
 
   it('explains the buffer and names the destination native token on a quoted run', async () => {
     mockHookState = { activeRun: makeFundingRun() };
     renderFlow();
 
     expect(screen.getByText(/Quote update in/)).toBeInTheDocument();
-    const icon = screen.getByText('USDC', {
-      selector: '.text-lg',
-    }).nextElementSibling!;
-    expect(icon.tagName.toLowerCase()).toBe('svg');
-    fireEvent.mouseEnter(icon);
+    hoverBufferIcon();
 
     expect(
       await screen.findByText(
-        'Includes extra for possible fee changes. Unused funds should arrive in your Pearl Wallet as POL.',
+        'Includes extra for possible price changes. Unused funds should arrive in your Pearl Wallet as POL.',
       ),
+    ).toBeInTheDocument();
+  });
+
+  it("names the run's destination native token, not the host's", async () => {
+    mockHookState = {
+      activeRun: partlyFundedRun({
+        destination: { chain: 'gnosis', wallet: 'master_safe' },
+      }),
+    };
+    renderFlow({ destinationChain: 'polygon' });
+
+    hoverBufferIcon();
+
+    expect(
+      await screen.findByText(/Unused funds should arrive .* as XDAI\.$/),
     ).toBeInTheDocument();
   });
 
