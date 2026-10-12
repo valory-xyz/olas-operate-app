@@ -973,26 +973,35 @@ describe('FundingFlow — quote and deposit address', () => {
       ...overrides,
     });
 
-  it('shows an exact amount with no quote countdown or buffer note', async () => {
-    mockHookState = { activeRun: exactRun() };
-    renderFlow();
+  it('shows an exact amount with no quote countdown or buffer note', () => {
+    jest.useFakeTimers();
+    try {
+      mockHookState = { activeRun: exactRun() };
+      renderFlow();
 
-    expect(screen.getByText('10.00')).toBeInTheDocument();
-    expect(
-      screen.getByText('0x5afe5afe5afe5afe5afe5afe5afe5afe5afe5afe'),
-    ).toBeInTheDocument();
-    expect(screen.queryByText(/Quote update in/)).toBeNull();
-    expect(screen.queryByRole('button', { name: /Refresh quote/ })).toBeNull();
+      expect(screen.getByText('10.00')).toBeInTheDocument();
+      expect(
+        screen.getByText('0x5afe5afe5afe5afe5afe5afe5afe5afe5afe5afe'),
+      ).toBeInTheDocument();
+      expect(screen.queryByText(/Quote update in/)).toBeNull();
+      expect(
+        screen.queryByRole('button', { name: /Refresh quote/ }),
+      ).toBeNull();
 
-    const amountRow = screen.getByText('pUSD', {
-      selector: '.text-lg',
-    }).parentElement!;
-    amountRow
-      .querySelectorAll('*')
-      .forEach((element) => fireEvent.mouseEnter(element));
-    // Longer than the tooltip's open delay.
-    await act(() => new Promise((resolve) => setTimeout(resolve, 300)));
-    expect(screen.queryByText(/Includes extra/)).toBeNull();
+      const amountRow = screen.getByText('pUSD', {
+        selector: '.text-lg',
+      }).parentElement!;
+      amountRow
+        .querySelectorAll('*')
+        .forEach((element) => fireEvent.mouseEnter(element));
+      // Longer than the tooltip's open delay.
+      act(() => {
+        jest.advanceTimersByTime(300);
+      });
+      expect(screen.queryByText(/Includes extra/)).toBeNull();
+    } finally {
+      jest.useRealTimers();
+    }
   });
 
   const hoverBufferIcon = () => {

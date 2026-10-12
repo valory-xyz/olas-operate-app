@@ -100,7 +100,7 @@ const getTokenAddress = (
 type HostRequirement = {
   mode: FundingRunMode;
   destinationChain: MiddlewareChain;
-  /** On the destination chain; the middleware's exact runs, the only ones taking the required token, need it. */
+  /** Whether the Master Safe exists on the destination chain. */
   hasMasterSafe: boolean;
   /** Deposit only: amounts in base units, keyed by token address. */
   depositAmounts?: Record<Address, string>;
