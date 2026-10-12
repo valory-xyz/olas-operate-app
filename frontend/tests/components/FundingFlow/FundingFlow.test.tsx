@@ -94,12 +94,14 @@ jest.mock('../../../hooks/useFundingRun', () => ({
 }));
 
 let mockMasterSafeChainIds: number[] = [];
+let mockIsMasterWalletsFetched = true;
 jest.mock('../../../hooks/useWallet', () => ({
   useMasterWalletContext: () => ({
     getMasterSafeOf: (chainId: number) =>
       mockMasterSafeChainIds.includes(chainId)
         ? { address: '0x5afe5afe5afe5afe5afe5afe5afe5afe5afe5afe' }
         : undefined,
+    isFetched: mockIsMasterWalletsFetched,
   }),
 }));
 
@@ -180,6 +182,7 @@ beforeEach(() => {
   jest.resetAllMocks();
   mockHookState = { activeRun: null };
   mockMasterSafeChainIds = [EvmChainIdMap.Polygon];
+  mockIsMasterWalletsFetched = true;
   mockCancelIfOnlyQuoted.mockResolvedValue(true);
   mockCreateReset.mockImplementation(() => {
     mockHookState = { ...mockHookState, createError: undefined };
@@ -267,7 +270,11 @@ describe('FundingFlow — selection', () => {
       .filter((label) => label && !['Back', 'Change'].includes(label));
 
   it('offers the single required token on its own chain only', () => {
-    renderFlow({ fallbackToReceive: [{ symbol: 'pUSD', amount: 10 }] });
+    renderFlow({
+      fallbackToReceive: [
+        { symbol: 'pUSD', amount: 10, address: FUNDING_RUN_POLYGON_PUSD },
+      ],
+    });
 
     fireEvent.click(screen.getByRole('button', { name: /Polygon/ }));
     expect(tokenLabels()).toEqual(['POL', 'USDC', 'pUSD', 'Other token']);
@@ -279,17 +286,54 @@ describe('FundingFlow — selection', () => {
 
   it('offers no extra token while the destination chain has no Master Safe', () => {
     mockMasterSafeChainIds = [];
+    renderFlow({
+      fallbackToReceive: [
+        { symbol: 'pUSD', amount: 10, address: FUNDING_RUN_POLYGON_PUSD },
+      ],
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /Polygon/ }));
+    expect(tokenLabels()).toEqual(['POL', 'USDC', 'Other token']);
+  });
+
+  it('waits for the Master Safe check before listing tokens, so none pops in late', () => {
+    mockIsMasterWalletsFetched = false;
+    const props = {
+      fallbackToReceive: [
+        { symbol: 'pUSD', amount: 10, address: FUNDING_RUN_POLYGON_PUSD },
+      ],
+    } as Partial<FundingFlowProps>;
+    const { rerender } = renderFlow(props);
+
+    fireEvent.click(screen.getByRole('button', { name: /Polygon/ }));
+    expect(screen.queryByRole('button', { name: 'Other token' })).toBeNull();
+
+    mockIsMasterWalletsFetched = true;
+    rerender(
+      <FundingFlow {...({ ...ONBOARD_PROPS, ...props } as FundingFlowProps)} />,
+    );
+    expect(tokenLabels()).toEqual(['POL', 'USDC', 'pUSD', 'Other token']);
+  });
+
+  it('offers no extra token for an onboarding requirement with no address', () => {
     renderFlow({ fallbackToReceive: [{ symbol: 'pUSD', amount: 10 }] });
 
     fireEvent.click(screen.getByRole('button', { name: /Polygon/ }));
     expect(tokenLabels()).toEqual(['POL', 'USDC', 'Other token']);
   });
 
+  it('lists tokens when the destination chain has no EVM chain id', () => {
+    renderFlow({ destinationChain: 'solana' });
+
+    fireEvent.click(screen.getByRole('button', { name: /Base/ }));
+    expect(tokenLabels()).toEqual(['ETH', 'USDC', 'Other token']);
+  });
+
   it('offers no extra token when more than one token is required', () => {
     renderFlow({
       fallbackToReceive: [
-        { symbol: 'pUSD', amount: 10 },
-        { symbol: 'OLAS', amount: 40 },
+        { symbol: 'pUSD', amount: 10, address: FUNDING_RUN_POLYGON_PUSD },
+        { symbol: 'OLAS', amount: 40, address: FUNDING_RUN_POLYGON_OLAS },
       ],
     });
 
@@ -324,7 +368,11 @@ describe('FundingFlow — selection', () => {
   });
 
   it('lists a required token that is already offered once', () => {
-    renderFlow({ fallbackToReceive: [{ symbol: 'POL', amount: 10 }] });
+    renderFlow({
+      fallbackToReceive: [
+        { symbol: 'POL', amount: 10, address: FUNDING_RUN_NATIVE },
+      ],
+    });
 
     fireEvent.click(screen.getByRole('button', { name: /Polygon/ }));
     expect(tokenLabels()).toEqual(['POL', 'USDC', 'Other token']);
@@ -382,7 +430,9 @@ describe('FundingFlow — failures around the run', () => {
 
   it('shows a refused required token as a quote failure, and Retry re-posts that token', () => {
     const props = {
-      fallbackToReceive: [{ symbol: 'pUSD', amount: 10 }],
+      fallbackToReceive: [
+        { symbol: 'pUSD', amount: 10, address: FUNDING_RUN_POLYGON_PUSD },
+      ],
     } as Partial<FundingFlowProps>;
     const { rerender } = renderFlow(props);
     fireEvent.click(screen.getByRole('button', { name: /Polygon/ }));
@@ -842,15 +892,16 @@ describe('FundingFlow — "To receive"', () => {
     expect(screen.getAllByText('Some token')).toHaveLength(2);
   });
 
-  it('renders no summary when nothing is left to receive', () => {
+  const toReceiveHeader = () =>
+    screen.getByText('To receive on').parentElement?.textContent;
+
+  it('still names the destination chain when nothing is left to receive', () => {
     mockHookState = { activeRun: makeFundingRun({ to_receive: [] }) };
     renderFlow();
 
-    expect(screen.queryByText('To receive on')).toBeNull();
+    expect(toReceiveHeader()).toBe('To receive onPolygon');
+    expect(screen.queryByText(/^\d[\d.]* \S+$/)).toBeNull();
   });
-
-  const toReceiveHeader = () =>
-    screen.getByText('To receive on').parentElement?.textContent;
 
   it.each([
     ['onboard', {}],
