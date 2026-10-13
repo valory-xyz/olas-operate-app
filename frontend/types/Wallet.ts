@@ -58,6 +58,8 @@ export type TokenRequirement = {
   amount: number;
   symbol: string;
   iconSrc: string;
+  /** Native is `AddressZero`; set where the requirement came from the middleware. */
+  address?: Address;
 };
 
 enum MiddlewareLedger {

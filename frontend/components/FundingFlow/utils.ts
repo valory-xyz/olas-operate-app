@@ -22,7 +22,7 @@ import { STEP_COPY } from './constants';
 
 type TokenMeta = { symbol: string; decimals: number };
 
-const tryAllEvmChainId = (chain: MiddlewareChain) => {
+export const tryAllEvmChainId = (chain: MiddlewareChain) => {
   try {
     return asAllEvmChainId(chain);
   } catch {
@@ -38,7 +38,7 @@ export const getChainName = (chain: MiddlewareChain) => {
   }
 };
 
-const getChainNativeSymbol = (chain: MiddlewareChain) => {
+export const getChainNativeSymbol = (chain: MiddlewareChain) => {
   try {
     return asEvmChainDetails(chain).symbol;
   } catch {
@@ -75,6 +75,45 @@ export const getTokenMeta = (
           areAddressesEqual(tokenConfig.address, token),
   );
   return config ? { symbol: config.symbol, decimals: config.decimals } : null;
+};
+
+type HostRequirement = {
+  mode: FundingRunMode;
+  destinationChain: MiddlewareChain;
+  /** Whether the Master Safe exists on the destination chain. */
+  hasMasterSafe: boolean;
+  /** Deposit only: amounts in base units, keyed by token address. */
+  depositAmounts?: Record<Address, string>;
+  /** Onboarding only: the requirement shown before a run exists. */
+  fallbackToReceive?: { address?: Address; amount: number }[];
+};
+
+/** The single required token, offered on the destination chain only; else null. */
+export const getRequiredSourceToken = (
+  chain: MiddlewareChain,
+  {
+    mode,
+    destinationChain,
+    hasMasterSafe,
+    depositAmounts,
+    fallbackToReceive,
+  }: HostRequirement,
+): Address | null => {
+  if (chain !== destinationChain || !hasMasterSafe) return null;
+  if (mode === 'deposit') {
+    const required = Object.entries(depositAmounts ?? {}).filter(
+      ([, amount]) => BigInt(amount) > BigInt(0),
+    );
+    return required.length === 1 ? (required[0][0] as Address) : null;
+  }
+  if (mode === 'onboard') {
+    const required = (fallbackToReceive ?? []).filter(
+      ({ amount }) => amount > 0,
+    );
+    return required.length === 1 ? (required[0].address ?? null) : null;
+  }
+  // Signer gas needs the native token, which every chain already lists.
+  return null;
 };
 
 /** ~4 significant digits (2–8 decimals), rounded up: 0.00074 ETH must not show as 0.01. */

@@ -2,6 +2,7 @@ import { Button, Flex, QRCode, Skeleton, Typography } from 'antd';
 import { TbCopy } from 'react-icons/tb';
 import styled from 'styled-components';
 
+import { InfoTooltip } from '@/components/ui';
 import { COLOR } from '@/constants';
 import { useMessageApi } from '@/context/MessageProvider';
 import { FundingRun } from '@/types/FundingRun';
@@ -10,6 +11,7 @@ import { copyToClipboard } from '@/utils/copyToClipboard';
 import {
   COPY_FAILED,
   DEPOSIT_INSTRUCTION,
+  LEFTOVER_TOOLTIP,
   QR_CAPTION,
   QUOTE_COPY,
 } from './constants';
@@ -20,6 +22,7 @@ import {
   formatBaseUnits,
   getChainImage,
   getChainName,
+  getChainNativeSymbol,
   getTokenImage,
 } from './utils';
 
@@ -189,12 +192,19 @@ export const QuoteAndDeposit = ({
               {formatBaseUnits(quote.outstanding_amount, source.decimals)}
             </Title>
             <Text className="text-lg">{source.symbol}</Text>
+            {!quote.exact && (
+              <InfoTooltip placement="top">
+                {LEFTOVER_TOOLTIP(getChainNativeSymbol(run.destination.chain))}
+              </InfoTooltip>
+            )}
           </Flex>
-          <QuoteCountdown
-            nextRefreshAt={quote.next_refresh_at}
-            onRefresh={onRefreshQuote}
-            isRefreshing={isRefreshing}
-          />
+          {!quote.exact && (
+            <QuoteCountdown
+              nextRefreshAt={quote.next_refresh_at}
+              onRefresh={onRefreshQuote}
+              isRefreshing={isRefreshing}
+            />
+          )}
         </Flex>
         <Text className="text-sm text-neutral-tertiary">
           {DEPOSIT_INSTRUCTION(chainName)}
