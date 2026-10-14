@@ -3,20 +3,27 @@ import { Fragment } from 'react';
 
 import { CardFlex } from '@/components/ui';
 import { MiddlewareChain } from '@/constants';
+import { Address } from '@/types/Address';
 import { FundingRunTokenAmount } from '@/types/FundingRun';
 
-import { UNKNOWN_AMOUNT, UNKNOWN_TOKEN } from './constants';
+import { TO_RECEIVE_ON, UNKNOWN_AMOUNT, UNKNOWN_TOKEN } from './constants';
 import { TokenIcon } from './styles';
 import {
   formatBaseUnits,
   formatDisplayAmount,
+  getChainImage,
+  getChainName,
   getTokenImage,
   getTokenMeta,
 } from './utils';
 
 const { Text } = Typography;
 
-export type ToReceiveItem = { symbol: string; amount: number };
+export type ToReceiveItem = {
+  symbol: string;
+  amount: number;
+  address?: Address;
+};
 
 type DisplayItem = { key: string; symbol: string; amount: string };
 
@@ -61,23 +68,32 @@ export const ToReceiveSummary = ({
     a.symbol.localeCompare(b.symbol, undefined, { sensitivity: 'base' }),
   );
 
-  if (items.length === 0) return null;
-
   return (
     <CardFlex $noBorder $padding="16px 24px">
       <Flex vertical gap={4}>
-        <Text className="text-neutral-tertiary">To receive</Text>
-        <Flex gap={8} align="center" wrap>
-          {items.map(({ key, symbol, amount }, index) => (
-            <Fragment key={key}>
-              {index > 0 && <Text className="text-neutral-tertiary">•</Text>}
-              <Flex gap={6} align="center">
-                <TokenIcon src={getTokenImage(symbol)} alt={symbol} />
-                <Text>{`${amount} ${symbol}`}</Text>
-              </Flex>
-            </Fragment>
-          ))}
+        <Flex gap={8} align="center">
+          <Text className="text-neutral-tertiary">{TO_RECEIVE_ON}</Text>
+          <Flex gap={6} align="center">
+            <TokenIcon
+              src={getChainImage(destinationChain)}
+              alt={getChainName(destinationChain)}
+            />
+            <Text>{getChainName(destinationChain)}</Text>
+          </Flex>
         </Flex>
+        {items.length > 0 && (
+          <Flex gap={8} align="center" wrap>
+            {items.map(({ key, symbol, amount }, index) => (
+              <Fragment key={key}>
+                {index > 0 && <Text className="text-neutral-tertiary">•</Text>}
+                <Flex gap={6} align="center">
+                  <TokenIcon src={getTokenImage(symbol)} alt={symbol} />
+                  <Text>{`${amount} ${symbol}`}</Text>
+                </Flex>
+              </Fragment>
+            ))}
+          </Flex>
+        )}
       </Flex>
     </CardFlex>
   );

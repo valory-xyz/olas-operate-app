@@ -1,5 +1,13 @@
 import { Button, Flex, Skeleton, Typography } from 'antd';
-import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
+import { isNil } from 'lodash';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  useState,
+} from 'react';
 
 import {
   AgentSetupCompleteModal,
@@ -12,12 +20,14 @@ import { MiddlewareChain } from '@/constants';
 import { useMessageApi } from '@/context/MessageProvider';
 import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRefillRequirementsContext';
 import { useFundingRun } from '@/hooks/useFundingRun';
+import { useMasterWalletContext } from '@/hooks/useWallet';
 import { Address } from '@/types/Address';
 import {
   CreateFundingRunRequest,
   FundingRun,
   FundingRunMode,
 } from '@/types/FundingRun';
+import { areAddressesEqual } from '@/utils/address';
 
 import {
   ACTIVE_RUN_ERROR,
@@ -39,6 +49,7 @@ import {
   FundingHost,
   getChainImage,
   getChainName,
+  getRequiredSourceToken,
   getTokenImage,
   getTokenMeta,
   isRunEditable,
@@ -48,6 +59,7 @@ import {
   isRunProcessing,
   isRunStarted,
   resolveDisplayedRun,
+  tryAllEvmChainId,
 } from './utils';
 
 const { Text, Title } = Typography;
@@ -132,6 +144,8 @@ export const FundingFlow = (props: FundingFlowProps) => {
     cancelMutation,
     cancelIfOnlyQuoted,
   } = useFundingRun();
+  const { getMasterSafeOf, isFetched: isMasterWalletsFetched } =
+    useMasterWalletContext();
 
   const host: FundingHost = {
     mode,
@@ -250,6 +264,35 @@ export const FundingFlow = (props: FundingFlowProps) => {
     : (step ?? (run || pendingSelection ? 'quote' : 'chain'));
   const tokenStepChain = selectedChain ?? run?.source.chain ?? null;
 
+  const destinationChainId = tryAllEvmChainId(destinationChain);
+  const hasMasterSafe =
+    !isNil(destinationChainId) && !!getMasterSafeOf?.(destinationChainId);
+  const depositAmounts =
+    props.mode === 'deposit' ? props.depositAmounts : undefined;
+  const { fallbackToReceive } = props;
+  const sourceTokens = useMemo(() => {
+    if (!tokenStepChain) return [];
+    const listed = sources?.[tokenStepChain] ?? [];
+    const required = getRequiredSourceToken(tokenStepChain, {
+      mode,
+      destinationChain,
+      hasMasterSafe,
+      depositAmounts,
+      fallbackToReceive,
+    });
+    if (!required || listed.some((token) => areAddressesEqual(token, required)))
+      return listed;
+    return [...listed, required];
+  }, [
+    tokenStepChain,
+    sources,
+    mode,
+    destinationChain,
+    hasMasterSafe,
+    depositAmounts,
+    fallbackToReceive,
+  ]);
+
   const renderSelection = () => {
     switch (currentStep) {
       case 'request-chain':
@@ -273,13 +316,22 @@ export const FundingFlow = (props: FundingFlowProps) => {
               value={getChainName(tokenStepChain)}
               onChange={() => setStep('chain')}
             />
-            <SelectSourceToken
-              chain={tokenStepChain}
-              tokens={sources?.[tokenStepChain] ?? []}
-              disabledReason={hasCreateParams ? undefined : NO_DEPOSIT_AMOUNTS}
-              onSelect={(token) => create({ chain: tokenStepChain, token })}
-              onOther={() => setStep('request-token')}
-            />
+            {/* The required token depends on the Master Safe, so it must not pop in late. */}
+            {isMasterWalletsFetched ? (
+              <SelectSourceToken
+                chain={tokenStepChain}
+                tokens={sourceTokens}
+                disabledReason={
+                  hasCreateParams ? undefined : NO_DEPOSIT_AMOUNTS
+                }
+                onSelect={(token) => create({ chain: tokenStepChain, token })}
+                onOther={() => setStep('request-token')}
+              />
+            ) : (
+              <Flex className="p-24">
+                <Skeleton active />
+              </Flex>
+            )}
           </>
         ) : null;
       default:
