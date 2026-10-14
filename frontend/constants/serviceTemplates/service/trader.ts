@@ -11,14 +11,14 @@ import { MECH_FACILITATOR_ENABLED_FLAGS, X402_ENABLED_FLAGS } from '../../x402';
 import { KPI_DESC_PREFIX } from '../constants';
 
 export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
-  hash: 'bafybeiab6tdaf7xyzskqrxzg5xdufu2ihha2gohb6eittqgvdoyiibwrk4',
-  service_version: 'v0.41.4',
+  hash: 'bafybeihsqfwupqrustgshzwfkvvzicgwi3xw7i532rfug7mjr53qxmerl4',
+  service_version: 'v0.41.5-rc1',
   agent_release: {
     is_aea: true,
     repository: {
       owner: 'valory-xyz',
       name: 'trader',
-      version: 'v0.41.4',
+      version: 'v0.41.5-rc1',
     },
   },
   agentType: AgentMap.PredictTrader,
@@ -95,13 +95,13 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
     TOOLS_ACCURACY_HASH: {
       name: 'Tools accuracy hash',
       description: '',
-      value: 'Qmc3vbrQLVSmrm7Cn9Za5EnpQphm3DJH8SaR2RLf7cz5XV',
+      value: 'QmYyfAn7d8KyL1xzdtDfMCvgGjBBKTRd9KZikKWu5HzYa8',
       provision_type: EnvProvisionType.FIXED,
     },
     ACC_INFO_FIELDS_REQUESTS: {
       name: 'Acc info fields requests',
       description: '',
-      value: 'nr_responses',
+      value: 'total_requests',
       provision_type: EnvProvisionType.FIXED,
     },
     MECH_INTERACT_ROUND_TIMEOUT_SECONDS: {
@@ -180,14 +180,14 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
 } as const;
 
 export const PREDICT_POLYMARKET_SERVICE_TEMPLATE: ServiceTemplate = {
-  hash: 'bafybeida2i7r7m5kjf6bwyxlii2kvtsnxznuhkwpdox3v7zzwp632sznii',
-  service_version: 'v0.41.4',
+  hash: 'bafybeickv7yofnwzkhalk7navcw3bs3ztcfhemt6nhygn4efmpgtejb5iu',
+  service_version: 'v0.41.5-rc1',
   agent_release: {
     is_aea: true,
     repository: {
       owner: 'valory-xyz',
       name: 'trader',
-      version: 'v0.41.4',
+      version: 'v0.41.5-rc1',
     },
   },
   agentType: AgentMap.Polystrat,
@@ -270,7 +270,7 @@ export const PREDICT_POLYMARKET_SERVICE_TEMPLATE: ServiceTemplate = {
     TOOLS_ACCURACY_HASH: {
       name: 'Tools accuracy hash',
       description: '',
-      value: 'QmSf7SHsZYoSyYJqzesR8frVRqZy4Nx1JbNya6BPCQmTUL',
+      value: 'QmaLiU5Pf9MadAA8nhuYRpNXUc1tkq1w8BhAHdGmeEMmA9',
       provision_type: EnvProvisionType.FIXED,
     },
     ACC_INFO_FIELDS_REQUESTS: {
