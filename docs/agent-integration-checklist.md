@@ -298,7 +298,6 @@ These flags control how Pearl handles the agent. Confirm the correct value for e
 | `backup-via-safe` | Enables wallet backup via Safe (set to `false` if chain not supported by Safe) |
 | `bridge-onboarding` | Enables bridge flow during initial setup |
 | `bridge-add-funds` | Enables bridge flow in low-balance alerts |
-| `on-ramp` | Enables fiat on-ramp (buy crypto) flow |
 
 **Visual Assets**
 

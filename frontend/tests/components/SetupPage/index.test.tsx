@@ -73,13 +73,6 @@ jest.mock(
   }),
 );
 
-jest.mock(
-  '../../../components/SetupPage/Create/SetupOnRamp/SetupOnRamp',
-  () => ({
-    SetupOnRamp: () => <div data-testid="setup-on-ramp" />,
-  }),
-);
-
 jest.mock('../../../components/SetupPage/EarlyAccessOnly', () => ({
   EarlyAccessOnly: () => <div data-testid="early-access-only" />,
 }));
@@ -218,11 +211,6 @@ describe('Setup (SetupPage entry)', () => {
         expectedTestId: 'setup-bridge-onboarding',
       },
       {
-        screenKey: 'SetupOnRamp',
-        state: SETUP_SCREEN.SetupOnRamp,
-        expectedTestId: 'setup-on-ramp',
-      },
-      {
         screenKey: 'EarlyAccessOnly',
         state: SETUP_SCREEN.EarlyAccessOnly,
         expectedTestId: 'early-access-only',
@@ -311,7 +299,6 @@ describe('Setup (SetupPage entry)', () => {
         screenKey: 'SetupBridgeOnboardingScreen',
         state: SETUP_SCREEN.SetupBridgeOnboardingScreen,
       },
-      { screenKey: 'SetupOnRamp', state: SETUP_SCREEN.SetupOnRamp },
       { screenKey: 'SelectStaking', state: SETUP_SCREEN.SelectStaking },
       { screenKey: 'AccountRecovery', state: SETUP_SCREEN.AccountRecovery },
       {

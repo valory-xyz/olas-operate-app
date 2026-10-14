@@ -79,20 +79,6 @@ type ElectronApiContextProps = {
     | { success?: false; error?: string }
   >;
   openPath?: (filePath: string) => void;
-  onRampWindow?: {
-    show?: (
-      amountToPay: number,
-      networkName: string,
-      cryptoCurrencyCode: string,
-    ) => void;
-    close?: () => void;
-    /**
-     * @deprecated On-ramp window will be closed automatically
-     * after the master EOA receives the funds.
-     */
-    transactionSuccess?: () => void;
-    transactionFailure?: () => void;
-  };
   web3AuthWindow?: {
     show?: () => void;
     close?: () => void;
@@ -177,10 +163,6 @@ export const ElectronApiContext = createContext<ElectronApiContextProps>({
   cleanupSupportLogs: async () => {},
   readFile: async () => ({ success: false }),
   openPath: () => {},
-  onRampWindow: {
-    show: () => {},
-    transactionSuccess: () => {},
-  },
   web3AuthWindow: {
     show: () => {},
     close: () => {},
@@ -408,16 +390,6 @@ export const ElectronApiProvider = ({ children }: PropsWithChildren) => {
         cleanupSupportLogs: getElectronApiFunction('cleanupSupportLogs'),
         readFile: getElectronApiFunction('readFile'),
         openPath: getElectronApiFunction('openPath'),
-        onRampWindow: {
-          show: getElectronApiFunction('onRampWindow.show'),
-          close: getElectronApiFunction('onRampWindow.close'),
-          transactionSuccess: getElectronApiFunction(
-            'onRampWindow.transactionSuccess',
-          ),
-          transactionFailure: getElectronApiFunction(
-            'onRampWindow.transactionFailure',
-          ),
-        },
         web3AuthWindow: {
           show: getElectronApiFunction('web3AuthWindow.show'),
           close: getElectronApiFunction('web3AuthWindow.close'),

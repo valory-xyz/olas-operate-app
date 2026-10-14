@@ -11,7 +11,6 @@ import { SetupCard } from '../ui/SetupCard';
 import { AgentOnboarding } from './AgentOnboarding/AgentOnboarding';
 import { SetupBackupSigner } from './Create/SetupBackupSigner';
 import { SetupBridgeOnboarding } from './Create/SetupBridgeOnboarding/SetupBridgeOnboarding';
-import { SetupOnRamp } from './Create/SetupOnRamp/SetupOnRamp';
 import { SetupPassword } from './Create/SetupPassword';
 import { EarlyAccessOnly } from './EarlyAccessOnly';
 import { FundRecovery } from './FundRecovery';
@@ -42,7 +41,6 @@ const SCREEN_WITHOUT_CARDS: SetupScreen[] = [
   SETUP_SCREEN.ConfirmFunding,
   SETUP_SCREEN.TransferFunds,
   SETUP_SCREEN.SetupBridgeOnboardingScreen,
-  SETUP_SCREEN.SetupOnRamp,
   SETUP_SCREEN.SelectStaking,
   SETUP_SCREEN.AccountRecovery,
   SETUP_SCREEN.MigrateOperateFolder,
@@ -76,8 +74,6 @@ export const Setup = () => {
         return <TransferFunds />;
       case SETUP_SCREEN.SetupBridgeOnboardingScreen:
         return <SetupBridgeOnboarding />;
-      case SETUP_SCREEN.SetupOnRamp:
-        return <SetupOnRamp />;
       case SETUP_SCREEN.EarlyAccessOnly:
         return <EarlyAccessOnly />;
       case SETUP_SCREEN.AccountRecovery:

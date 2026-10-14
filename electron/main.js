@@ -35,7 +35,6 @@ const {
   Notification,
   ipcMain,
   shell,
-  systemPreferences,
   nativeImage,
   screen,
   powerSaveBlocker,
@@ -55,7 +54,6 @@ const appIcon = nativeImage.createFromPath(iconPath);
 
 const {
   paths,
-  isMac,
   isDev,
   popupAllowedUrls,
   PORT_RANGE,
@@ -171,9 +169,6 @@ const backendUrl = () =>
 let mainWindow = null;
 /** @type {Electron.BrowserWindow | null} */
 let splashWindow = null;
-/** @type {Electron.BrowserWindow | null} */
-let onRampWindow = null;
-const getOnRampWindow = () => onRampWindow;
 
 /** @type {Electron.Tray | null} */
 let tray = null;
@@ -598,82 +593,6 @@ function createAndLoadSslCertificate() {
   }
 }
 
-/**
- * Create the on-ramping window for displaying transak iframe
- */
-/** @type {()=>Promise<BrowserWindow|undefined>} */
-const createOnRampWindow = async (
-  amountToPay,
-  networkName,
-  cryptoCurrencyCode,
-) => {
-  const existingWindow = getOnRampWindow();
-  if (!existingWindow || existingWindow.isDestroyed()) {
-    const { width, height: onRampHeight } = getWindowDimensions(APP_WIDTH, 700);
-    onRampWindow = new BrowserWindow({
-      title: 'Buy Crypto on Transak',
-      resizable: false,
-      draggable: true,
-      frame: false,
-      transparent: true,
-      fullscreenable: false,
-      maximizable: false,
-      closable: false,
-      width,
-      height: onRampHeight,
-      media: true,
-      webPreferences: {
-        nodeIntegration: false,
-        contextIsolation: true,
-        preload: path.join(__dirname, 'preload.js'),
-      },
-    });
-
-    onRampWindow.webContents.setWindowOpenHandler(({ url }) => {
-      // open url in a browser and prevent default
-      shell.openExternal(url);
-      return { action: 'deny' };
-    });
-
-    // query parameters for the on-ramp URL
-    const onRampQuery = new URLSearchParams();
-    if (amountToPay) {
-      onRampQuery.append('amount', amountToPay.toString());
-    }
-    if (networkName) {
-      onRampQuery.append('networkName', networkName);
-    }
-    if (cryptoCurrencyCode) {
-      onRampQuery.append('cryptoCurrencyCode', cryptoCurrencyCode);
-    }
-    const onRampUrl = `${nextUrl()}/onramp?${onRampQuery.toString()}`;
-    logger.electron(`OnRamp URL: ${onRampUrl}`);
-
-    // request camera access for KYC
-    if (isMac) {
-      try {
-        const granted = await systemPreferences.askForMediaAccess('camera');
-        logger.electron(`macOS camera permission granted: ${granted}`);
-      } catch (e) {
-        logger.electron(`Error requesting macOS camera permission: ${e}`);
-      }
-    }
-
-    onRampWindow.loadURL(onRampUrl).then(() => {
-      logger.electron(`onRampWindow: ${onRampWindow.url}`);
-    });
-  } else {
-    logger.electron('OnRamp window already exists');
-  }
-
-  onRampWindow.on('close', function (event) {
-    event.preventDefault();
-    onRampWindow?.destroy();
-  });
-
-  return onRampWindow;
-};
-
 function removeQuarantine(filePath) {
   try {
     const { execSync } = require('child_process');
@@ -964,59 +883,6 @@ ipcMain.handle('log-event', (_event, message) => {
 
 ipcMain.handle('next-log-error', (_event, error, errorInfo) => {
   nextLogger.error(error, errorInfo);
-});
-
-/**
- * OnRamp window handlers
- */
-ipcMain.handle(
-  'onramp-window-show',
-  (_event, amountToPay, networkName, cryptoCurrencyCode) => {
-    logger.electron('onramp-window-show');
-
-    if (!getOnRampWindow() || getOnRampWindow().isDestroyed()) {
-      createOnRampWindow(amountToPay, networkName, cryptoCurrencyCode)?.then(
-        (window) => window.show(),
-      );
-    } else {
-      getOnRampWindow()?.show();
-    }
-  },
-);
-
-ipcMain.handle('onramp-window-close', () => {
-  logger.electron('onramp-window-close');
-
-  // already destroyed or not created
-  if (!getOnRampWindow() || getOnRampWindow().isDestroyed()) return;
-
-  getOnRampWindow()?.destroy();
-
-  // Notify all other windows that it has been closed
-  BrowserWindow.getAllWindows().forEach((win) => {
-    logger.electron(`onramp-window-did-close to ${win.id}`);
-    win.webContents.send('onramp-window-did-close');
-  });
-});
-
-ipcMain.handle('onramp-transaction-success', () => {
-  logger.electron('onramp-transaction-success');
-
-  // Notify all other windows that the transaction was successful
-  BrowserWindow.getAllWindows().forEach((win) => {
-    logger.electron(`onramp-transaction-success to ${win.id}`);
-    win.webContents.send('onramp-transaction-success');
-  });
-});
-
-ipcMain.handle('onramp-transaction-failure', () => {
-  logger.electron('onramp-transaction-failure');
-
-  // Notify all other windows that the transaction was failed
-  BrowserWindow.getAllWindows().forEach((win) => {
-    logger.electron(`onramp-transaction-failure to ${win.id}`);
-    win.webContents.send('onramp-transaction-failure');
-  });
 });
 
 /**

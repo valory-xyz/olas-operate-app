@@ -135,11 +135,6 @@ jest.mock('../../context/SharedProvider/SharedProvider', () => ({
     <div data-testid="shared-provider">{children}</div>
   ),
 }));
-jest.mock('../../context/OnRampProvider', () => ({
-  OnRampProvider: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="on-ramp-provider">{children}</div>
-  ),
-}));
 jest.mock('../../context/PearlWalletProvider', () => ({
   PearlWalletProvider: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="pearl-wallet-provider">{children}</div>
@@ -291,7 +286,6 @@ describe('AppRoot (_app)', () => {
     expect(screen.getByTestId('settings-provider')).toBeInTheDocument();
     expect(screen.getByTestId('message-provider')).toBeInTheDocument();
     expect(screen.getByTestId('shared-provider')).toBeInTheDocument();
-    expect(screen.getByTestId('on-ramp-provider')).toBeInTheDocument();
     expect(screen.getByTestId('pearl-wallet-provider')).toBeInTheDocument();
     expect(screen.getByTestId('support-modal-provider')).toBeInTheDocument();
     expect(screen.getByTestId('layout')).toBeInTheDocument();

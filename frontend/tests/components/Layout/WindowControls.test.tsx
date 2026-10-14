@@ -50,7 +50,6 @@ const { WindowControls } = require('../../../components/Layout/WindowControls');
 const makeElectronApiMocks = () => ({
   closeApp: jest.fn(),
   minimizeApp: jest.fn(),
-  onRampWindow: { close: jest.fn() },
   web3AuthWindow: { close: jest.fn() },
   web3AuthSwapOwnerWindow: { close: jest.fn() },
 });
@@ -105,20 +104,6 @@ describe('WindowControls', () => {
       fireEvent.click(close);
 
       expect(mocks.closeApp).toHaveBeenCalledTimes(1);
-      expect(mocks.onRampWindow.close).not.toHaveBeenCalled();
-      expect(mocks.web3AuthWindow.close).not.toHaveBeenCalled();
-      expect(mocks.web3AuthSwapOwnerWindow.close).not.toHaveBeenCalled();
-    });
-
-    it('calls onRampWindow.close on /onramp route', () => {
-      const mocks = setupMocks('/onramp');
-      const { container } = render(createElement(WindowControls));
-      const { close } = getTrafficLights(container);
-
-      fireEvent.click(close);
-
-      expect(mocks.onRampWindow.close).toHaveBeenCalledTimes(1);
-      expect(mocks.closeApp).not.toHaveBeenCalled();
       expect(mocks.web3AuthWindow.close).not.toHaveBeenCalled();
       expect(mocks.web3AuthSwapOwnerWindow.close).not.toHaveBeenCalled();
     });
@@ -132,7 +117,6 @@ describe('WindowControls', () => {
 
       expect(mocks.web3AuthWindow.close).toHaveBeenCalledTimes(1);
       expect(mocks.closeApp).not.toHaveBeenCalled();
-      expect(mocks.onRampWindow.close).not.toHaveBeenCalled();
       expect(mocks.web3AuthSwapOwnerWindow.close).not.toHaveBeenCalled();
     });
 
@@ -145,7 +129,6 @@ describe('WindowControls', () => {
 
       expect(mocks.web3AuthSwapOwnerWindow.close).toHaveBeenCalledTimes(1);
       expect(mocks.closeApp).not.toHaveBeenCalled();
-      expect(mocks.onRampWindow.close).not.toHaveBeenCalled();
       expect(mocks.web3AuthWindow.close).not.toHaveBeenCalled();
     });
 
@@ -154,7 +137,6 @@ describe('WindowControls', () => {
       mockUseElectronApi.mockReturnValue({
         closeApp: undefined,
         minimizeApp: jest.fn(),
-        onRampWindow: { close: jest.fn() },
         web3AuthWindow: { close: jest.fn() },
         web3AuthSwapOwnerWindow: { close: jest.fn() },
       } as unknown as ReturnType<typeof useElectronApi>);
@@ -166,7 +148,6 @@ describe('WindowControls', () => {
       fireEvent.click(close);
 
       const electronApi = mockUseElectronApi.mock.results[0].value;
-      expect(electronApi.onRampWindow.close).not.toHaveBeenCalled();
       expect(electronApi.web3AuthWindow.close).not.toHaveBeenCalled();
       expect(electronApi.web3AuthSwapOwnerWindow.close).not.toHaveBeenCalled();
     });
@@ -183,7 +164,7 @@ describe('WindowControls', () => {
       expect(mocks.minimizeApp).toHaveBeenCalledTimes(1);
     });
 
-    it.each(['/onramp', '/web3auth', '/web3auth-swap-owner'])(
+    it.each(['/web3auth', '/web3auth-swap-owner'])(
       'renders disabled minimize button on %s route',
       (pathname) => {
         const mocks = setupMocks(pathname);

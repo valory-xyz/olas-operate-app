@@ -287,16 +287,6 @@ describe('BRIDGE_REFILL_REQUIREMENTS_KEY', () => {
   });
 });
 
-describe('BRIDGE_REFILL_REQUIREMENTS_KEY_ON_DEMAND', () => {
-  it('embeds params in the key', () => {
-    const params = { chain: 'optimism' } as never;
-    const key =
-      REACT_QUERY_KEYS.BRIDGE_REFILL_REQUIREMENTS_KEY_ON_DEMAND(params);
-    expect(key[0]).toBe('useBridgeRefillRequirementsOnDemand');
-    expect(key[1]).toBe(params);
-  });
-});
-
 describe('BRIDGE_STATUS_BY_QUOTE_ID_KEY', () => {
   it('embeds quoteId in the key', () => {
     const key = REACT_QUERY_KEYS.BRIDGE_STATUS_BY_QUOTE_ID_KEY('quote-abc-123');
@@ -310,20 +300,6 @@ describe('BRIDGE_EXECUTE_KEY', () => {
     const key = REACT_QUERY_KEYS.BRIDGE_EXECUTE_KEY('quote-xyz-456');
     expect(key[0]).toBe('bridgeExecute');
     expect(key[1]).toBe('quote-xyz-456');
-  });
-});
-
-describe('ON_RAMP_QUOTE_KEY', () => {
-  it('embeds chain and amount in the key', () => {
-    const key = REACT_QUERY_KEYS.ON_RAMP_QUOTE_KEY('base' as never, 100);
-    expect(key[0]).toBe('onRampQuote');
-    expect(key[1]).toBe('base');
-    expect(key[2]).toBe(100);
-  });
-
-  it('accepts a string amount', () => {
-    const key = REACT_QUERY_KEYS.ON_RAMP_QUOTE_KEY('optimism' as never, '50.5');
-    expect(key[2]).toBe('50.5');
   });
 });
 
