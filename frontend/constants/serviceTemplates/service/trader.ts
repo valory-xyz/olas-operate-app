@@ -11,7 +11,7 @@ import { MECH_FACILITATOR_ENABLED_FLAGS, X402_ENABLED_FLAGS } from '../../x402';
 import { KPI_DESC_PREFIX } from '../constants';
 
 export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
-  hash: 'bafybeihsqfwupqrustgshzwfkvvzicgwi3xw7i532rfug7mjr53qxmerl4',
+  hash: 'bafybeicju5d5dsaapqpxxqwxcleev6outlyal5suf6q5orprt2lpmy77ou',
   service_version: 'v0.41.5-rc1',
   agent_release: {
     is_aea: true,
@@ -180,7 +180,7 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
 } as const;
 
 export const PREDICT_POLYMARKET_SERVICE_TEMPLATE: ServiceTemplate = {
-  hash: 'bafybeickv7yofnwzkhalk7navcw3bs3ztcfhemt6nhygn4efmpgtejb5iu',
+  hash: 'bafybeidsuq2txujoj6fpqiwforfftdldebb65o2hya5ho5xyrrkrhb7j2i',
   service_version: 'v0.41.5-rc1',
   agent_release: {
     is_aea: true,
