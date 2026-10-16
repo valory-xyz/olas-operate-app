@@ -36,7 +36,7 @@ Rules the flow enforces:
 
 The Bridge (from Ethereum) and Transfer (exact chain and token) entry points no longer have a route in: `FundYourAgent` no longer renders their cards, `PearlDeposit` no longer reaches `SelectPaymentMethod`, and `FundPearlWallet` no longer renders `TransferCryptoFromExternalWallet`. Their components, hooks, `SETUP_SCREEN` entries and the `bridge-onboarding` feature flag are kept, and their tests still run. The sections below describe that retained code and the refill requirements, which still drive alerts and the fallback "To receive" shown before a run exists.
 
-The Buy (Transak) fiat on-ramp was removed along with its entry point. Only `IS_TRANSAK_UNAVAILABLE` in `frontend/constants/onramp.ts` remains, as the MiCA re-enable gate that any return of a card on-ramp must pass.
+The Buy (Transak) fiat on-ramp was removed along with its entry point. Only `IS_TRANSAK_UNAVAILABLE` in `frontend/constants/onramp.ts` remains, as the single switch that any future card on-ramp must be gated on.
 
 ### Alerts that lead into funding
 

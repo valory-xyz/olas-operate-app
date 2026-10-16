@@ -1,7 +1,6 @@
 /**
- * IS_TRANSAK_UNAVAILABLE is the MiCA re-enable gate for a fiat on-ramp. The
- * monthly MiCA on-ramp policy check reads it, so it must stay true until the
- * policy's conditions for a return are met.
+ * IS_TRANSAK_UNAVAILABLE is the single switch for a fiat on-ramp. It stays true
+ * until an on-ramp returns.
  */
 
 import { IS_TRANSAK_UNAVAILABLE } from '../../constants/onramp';
