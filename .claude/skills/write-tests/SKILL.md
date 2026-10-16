@@ -43,7 +43,7 @@ Mirror the source path under `frontend/tests/`:
 
 1. **Read the source file** completely — understand every branch, edge case, and dependency
 2. **Read the feature doc** for the file's domain (see the "Feature documentation reference" table in `frontend/tests/TEST_PLAN.md`). Feature docs live in `docs/features/` and describe runtime behavior, state transitions, failure modes, and test-relevant notes. For auto-run files, the corresponding doc is `docs/features/autorun.md`.
-3. **Follow cross-references** — if the feature doc delegates contract details to another doc (e.g., on-ramping.md references bridging.md and funding-and-refill.md for shared API shapes; deployability-and-lifecycle.md references services.md for stop/withdraw error behavior), read those referenced docs too. The delegated details affect mocking and assertions.
+3. **Follow cross-references** — if the feature doc delegates contract details to another doc (e.g., funding-and-refill.md references bridging.md for the bridge request schema; deployability-and-lifecycle.md references services.md for stop/withdraw error behavior), read those referenced docs too. The delegated details affect mocking and assertions.
 4. **Read the types/interfaces** it imports — know the shape of inputs and outputs
 5. **Trace dependencies** — identify which hooks, contexts, or services it calls
 6. **Read related constants/configs** if the logic references them (e.g., staking programs, chain configs, token configs)
@@ -57,8 +57,8 @@ When testing a file, understand which feature domain it belongs to. Tests should
 - **Account & Wallet:** Account creation → wallet setup → safe creation → multisig → recovery. Includes `PearlWalletProvider`, `MasterWalletProvider`, `AccountRecovery` component hooks.
 - **Balance & Services:** Balance fetching → aggregation → per-wallet/per-service selectors → availability checks. `ServicesProvider` is central to most features.
 - **Staking & Rewards:** Program selection → contract details → eligibility → rewards calculation → countdown. Includes `ConfirmSwitch` and `SelectStakingPage` component hooks. Agent services (PredictTrader, Modius, etc.) extend `StakedAgentService`.
-- **Funding & Refill:** Refill requirements → funding requests → bridge/on-ramp params → initial funding. Includes `SetupPage/FundYourAgent` component hooks.
-- **Bridging & On-ramping:** Bridge requirements → execution → status polling → retry. On-ramp flow → payment steps → fiat conversion. All Bridge/OnRamp/PearlDeposit components are tested with their hooks.
+- **Funding & Refill:** Refill requirements → funding requests → bridge params → initial funding. Includes `SetupPage/FundYourAgent` component hooks.
+- **Bridging:** Bridge requirements → execution → status polling → retry. All Bridge/PearlDeposit components are tested with their hooks.
 - **Deployability & Lifecycle:** 14-branch eligibility check → service start → deployment workflow. Includes `UpdateAgentPage` and `AchievementModal` component hooks/context.
 - **Auto-run:** Queue traversal → eligibility scanning → signals → start/stop operations → lifecycle management. Most complex subsystem — test utils first, then hooks bottom-up.
 

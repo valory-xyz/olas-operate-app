@@ -33,24 +33,13 @@ const WindowControlsContainer = styled.div`
 
 export const WindowControls = () => {
   const router = useRouter();
-  const {
-    closeApp,
-    minimizeApp,
-    onRampWindow,
-    web3AuthWindow,
-    web3AuthSwapOwnerWindow,
-  } = useElectronApi();
-  const isOnRamp = router.pathname === '/onramp';
+  const { closeApp, minimizeApp, web3AuthWindow, web3AuthSwapOwnerWindow } =
+    useElectronApi();
   const isWeb3Auth = router.pathname === '/web3auth';
   const isWeb3AuthSwapOwner = router.pathname === '/web3auth-swap-owner';
-  const isNotMain = [isOnRamp, isWeb3Auth, isWeb3AuthSwapOwner].some(Boolean);
+  const isNotMain = [isWeb3Auth, isWeb3AuthSwapOwner].some(Boolean);
 
   const handleClose = useCallback(() => {
-    if (isOnRamp) {
-      onRampWindow?.close?.();
-      return;
-    }
-
     if (isWeb3Auth) {
       web3AuthWindow?.close?.();
       return;
@@ -65,10 +54,8 @@ export const WindowControls = () => {
     closeApp();
   }, [
     closeApp,
-    isOnRamp,
     isWeb3Auth,
     isWeb3AuthSwapOwner,
-    onRampWindow,
     web3AuthWindow,
     web3AuthSwapOwnerWindow,
   ]);

@@ -95,11 +95,6 @@ describe('useFeatureFlag', () => {
         );
         expect(result.current).toBe(true);
       });
-
-      it('returns true for on-ramp', () => {
-        const { result } = renderHook(() => useFeatureFlag('on-ramp'));
-        expect(result.current).toBe(true);
-      });
     });
 
     describe('Modius (backup-via-safe disabled)', () => {
@@ -125,11 +120,6 @@ describe('useFeatureFlag', () => {
         );
         expect(result.current).toBe(true);
       });
-
-      it('returns true for on-ramp', () => {
-        const { result } = renderHook(() => useFeatureFlag('on-ramp'));
-        expect(result.current).toBe(true);
-      });
     });
   });
 
@@ -144,11 +134,10 @@ describe('useFeatureFlag', () => {
           'withdraw-funds',
           'backup-via-safe',
           'bridge-onboarding',
-          'on-ramp',
         ]),
       );
 
-      expect(result.current).toEqual([true, true, true, true]);
+      expect(result.current).toEqual([true, true, true]);
     });
 
     it('returns array with false for Modius backup-via-safe', () => {
@@ -161,11 +150,10 @@ describe('useFeatureFlag', () => {
           'withdraw-funds',
           'backup-via-safe',
           'bridge-onboarding',
-          'on-ramp',
         ]),
       );
 
-      expect(result.current).toEqual([true, false, true, true]);
+      expect(result.current).toEqual([true, false, true]);
     });
 
     it('returns single-element array for array with one flag', () => {

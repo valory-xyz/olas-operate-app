@@ -1,7 +1,5 @@
 import { BridgeRefillRequirementsRequest } from '@/types/Bridge';
 
-export type SendFundAction = 'transfer' | 'bridge' | 'onRamp';
-
 export type BridgeRetryOutcome = 'NEED_REFILL';
 
 export type BridgeMode = 'onboard' | 'deposit';

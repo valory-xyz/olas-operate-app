@@ -32,9 +32,11 @@ Rules the flow enforces:
 - **Failure reasons come from the middleware.** A failed run's `error.message` is the text of the failure banner and row, a failed quote's `quote_message` is the quote-failure title (without the connection advice when it is a specific reason, e.g. "OLAS can't be delivered to Gnosis yet"), and a failed create's error is the description under "Couldn't get a quote". `GENERIC_FAILURE`, the per-step failure copy, `QUOTE_COPY.failedTitle` and `QUOTE_COPY.failedDescription` are only fallbacks for when a message is missing. A `to_receive` symbol the middleware can't read (`null`) shows as "token". All other copy is the app's: the middleware returns step kinds, tokens and amounts, and `FundingFlow/constants.ts` maps them to copy per mode. No gas, paymaster or bundler wording appears anywhere.
 - **"Other chain / Other token"** posts `{ submissionId, kind, requestedName, contextChain }` to pearl-api (`FundingRequestService`) and only acknowledges receipt.
 
-### Retired entry points (implementations retained)
+### Retired entry points
 
-The Buy (Transak), Bridge (from Ethereum) and Transfer (exact chain and token) entry points no longer have a route in: `FundYourAgent` no longer renders their cards, `PearlDeposit` no longer reaches `SelectPaymentMethod`, and `FundPearlWallet` no longer renders `TransferCryptoFromExternalWallet`. Their components, hooks, `SETUP_SCREEN` entries and the `on-ramp` / `bridge-onboarding` feature flags are kept, and their tests still run. The sections below describe that retained code and the refill requirements, which still drive alerts and the fallback "To receive" shown before a run exists.
+The Bridge (from Ethereum) and Transfer (exact chain and token) entry points no longer have a route in: `FundYourAgent` no longer renders their cards, `PearlDeposit` no longer reaches `SelectPaymentMethod`, and `FundPearlWallet` no longer renders `TransferCryptoFromExternalWallet`. Their components, hooks, `SETUP_SCREEN` entries and the `bridge-onboarding` feature flag are kept, and their tests still run. The sections below describe that retained code and the refill requirements, which still drive alerts and the fallback "To receive" shown before a run exists.
+
+The Buy (Transak) fiat on-ramp was removed along with its entry point. Only `IS_TRANSAK_UNAVAILABLE` in `frontend/constants/onramp.ts` remains, as the single switch that any future card on-ramp must be gated on.
 
 ### Alerts that lead into funding
 
@@ -48,18 +50,15 @@ The Buy (Transak), Bridge (from Ethereum) and Transfer (exact chain and token) e
 
 - `useAgentFundingRequests` — merges per-wallet requirements into consolidated token amounts (BigInt sums), formats for display
 - `getInitialDepositForMasterSafe` — aggregates refill requirements across services on a chain for deposit pre-fill
-- `useGetOnRampRequirementsParams` / `useBridgeRefillRequirements` — convert amounts into bridge request shapes and Transak queries
+- `useBridgeRefillRequirements` — converts amounts into bridge request shapes
 
 ```
 BalancesAndRefillRequirementsProvider (middleware polling + derivation)
   ├── useGetRefillRequirements (total requirements → TokenRequirement[])
   ├── useAgentFundingRequests (agent wallet needs → consolidated per-token)
-  ├── useGetBridgeRequirementsParams (refill → bridge request params)
-  └── useGetOnRampRequirementsParams (deposit → bridge request params)
+  └── useGetBridgeRequirementsParams (refill → bridge request params)
 
 useInitialFundingRequirements (static config → per-chain token amounts)
-useTotalNativeTokenRequired (bridge requirements → total native token)
-useTotalFiatFromNativeToken (Transak API → fiat price quote)
 
 FundService (POST /fund → trigger master-to-agent transfer)
 ```
@@ -80,9 +79,6 @@ FundService (POST /fund → trigger master-to-agent transfer)
 - `frontend/hooks/useAgentFundingRequests.tsx` — agent funding needs consolidation + formatted string
 - `frontend/hooks/useInitialFundingRequirements.ts` — static initial funding from service template config
 - `frontend/hooks/useGetBridgeRequirementsParams.ts` — refill requirements → bridge request params
-- `frontend/hooks/useGetOnRampRequirementsParams.ts` — manual deposit → bridge request params
-- `frontend/hooks/useTotalNativeTokenRequired.ts` — bridge requirements → total native token with freeze logic
-- `frontend/hooks/useTotalFiatFromNativeToken.ts` — Transak quote API for fiat conversion
 
 ## Contract / schema
 
@@ -104,38 +100,7 @@ Defined in `frontend/types/Wallet.ts`. Contains `amount` (formatted, not wei), `
 
 ### Bridge quote request/response used by funding hooks
 
-`useGetBridgeRequirementsParams` returns `BridgeRefillRequirementsRequest` for `BridgeService.getBridgeRefillRequirements`. `useTotalNativeTokenRequired` consumes that response and reads `bridge_refill_requirements` (onboard mode), `bridge_total_requirements` (deposit mode), and `balances` (existing source-chain native balance). The full bridge request/response schema and status model are documented in `docs/features/bridging.md`.
-
-### Transak quote response (used by useTotalFiatFromNativeToken)
-
-`GET ON_RAMP_GATEWAY_URL/price-quote?fiatCurrency=USD&cryptoCurrency=ETH&isBuyOrSell=BUY&network=base&paymentMethod=credit_debit_card&cryptoAmount=0.00570193`
-
-```json
-{
-  "response": {
-    "quoteId": "db19d05e-cacc-43c0-80e7-0ae973662063",
-    "conversionPrice": 0.0004898564956664364,
-    "marketConversionPrice": 0.0004933885928557331,
-    "slippage": 0.72,
-    "fiatCurrency": "USD",
-    "cryptoCurrency": "ETH",
-    "paymentMethod": "credit_debit_card",
-    "fiatAmount": 13.17,
-    "cryptoAmount": 0.00570193,
-    "isBuyOrSell": "BUY",
-    "network": "base",
-    "totalFee": 1.53,
-    "feeBreakdown": [
-      { "name": "Transak fee", "value": 1.53, "id": "transak_fee" },
-      { "name": "Network/Exchange fee", "value": 0, "id": "network_fee" }
-    ],
-    "nonce": 1773074894,
-    "cryptoLiquidityProvider": "transak"
-  }
-}
-```
-
-The frontend uses `fiatAmount` and `cryptoAmount` from the response. `fiatAmount` gets a $5 buffer added; `cryptoAmount` is used to derive the equivalent buffer in crypto.
+`useGetBridgeRequirementsParams` returns `BridgeRefillRequirementsRequest` for `BridgeService.getBridgeRefillRequirements`. The full bridge request/response schema and status model are documented in `docs/features/bridging.md`.
 
 ## Runtime behavior
 
@@ -230,47 +195,6 @@ For each wallet+token pair in `refillRequirements`:
 `from.address` is always the master EOA. `to.address` is the master safe (or master EOA if no safe exists).
 The exact bridge request schema is documented in `docs/features/bridging.md`.
 
-### On-ramp requirements params (useGetOnRampRequirementsParams)
-
-Creates a single `BridgeRequest` from a token address and amount (used in deposit mode where the user manually specifies amounts):
-
-- `from`: on-ramp chain, master EOA, native token (`AddressZero`)
-- `to`: wallet chain, master safe (or EOA), specified token, `parseUnits(amount, decimals)`
-
-### Total native token calculation (useTotalNativeTokenRequired)
-
-Calculates how much native token the user needs to on-ramp to cover all requirements (native + bridged non-native tokens). Two modes:
-
-- **onboard**: uses `bridge_refill_requirements` (top-up amount)
-- **deposit**: uses `bridge_total_requirements` (full amount)
-
-Two output values:
-
-- `totalNativeTokenToPay` — amount the user needs to actually purchase/on-ramp (bridge requirements for non-native tokens + direct native token needs)
-- `totalNativeTokenRequired` — `totalNativeTokenToPay` + existing native balance on the source chain (the full amount that should be on-chain after on-ramping, accounting for balance already there)
-
-```
-totalNativeTokenToPay = bridgeRequirementsOfNonNativeTokens + nativeTokenFromBridgeParams
-totalNativeTokenRequired = totalNativeTokenToPay + existingNativeBalance
-```
-
-`nativeTokenFromBridgeParams` is only included when the on-ramp chain equals the destination chain (no bridging needed for the native token).
-
-**Freeze logic**: once the user initiates on-ramping (`isBuyCryptoBtnLoading`) or completes it (`isOnRampingTransactionSuccessful`), the calculated totals are frozen in a ref. This prevents recalculation from bridge requirement updates during the payment flow. The frozen ref resets when the flow restarts.
-
-Updates `onRampContext.nativeAmountToPay` and `nativeTotalAmountRequired` via effects (skipped while frozen).
-
-### Fiat price quote (useTotalFiatFromNativeToken)
-
-Fetches a Transak price quote to convert native token amount to USD:
-
-- Endpoint: `ON_RAMP_GATEWAY_URL/price-quote`
-- Query params: `fiatCurrency=USD`, `cryptoCurrency`, `isBuyOrSell=BUY`, `network`, `paymentMethod=credit_debit_card`, `cryptoAmount`
-- Adds a `$5 USD` buffer to account for price fluctuations during the on-ramp process
-- Derives `nativeAmountToDisplay` = `nativeAmountToPay + (cryptoAmount/fiatAmount * $5)` (buffer converted to crypto)
-- **Prerequisite**: `ensureRequired(selectedChainId)` is called before `useQuery` — if `selectedChainId` is nil, the hook throws immediately (not a query guard)
-- Enabled when: `!skip && fromChain && nativeTokenAmount` are truthy
-
 ## Failure / guard behavior
 
 - **FundService.fundAgent** — rejects with `"Failed to fund agent"` on non-ok response. Backend returns 409 if funding already in progress.
@@ -281,9 +205,6 @@ Fetches a Transak price quote to convert native token amount to USD:
 - **useAgentFundingRequests** — returns null when `isAgentFundingRequestsStale` is true (funding in progress or cooldown)
 - **useInitialFundingRequirements** — returns empty object when service template is nil or master wallets not fetched. Skips chains with no `stakingProgramId`.
 - **useGetBridgeRequirementsParams** — returns null when loading, no refill requirements, or no addresses. Skips invalid addresses via `isAddress` check.
-- **useGetOnRampRequirementsParams** — returns null when master wallets not fetched or missing chain config
-- **useTotalNativeTokenRequired** — returns early when bridge requirements unavailable or master EOA missing. Returns 0 for `totalNativeToken` when no data.
-- **useTotalFiatFromNativeToken** — `ensureRequired(selectedChainId)` throws synchronously if chain ID is nil, before any query logic runs. `getEthWithBuffer` returns unmodified amount when `fiatAmount` is 0 (avoids division by zero). Logs and rethrows fetch errors.
 
 ## Test-relevant notes
 
@@ -296,6 +217,3 @@ Fetches a Transak price quote to convert native token amount to USD:
 - `useAgentFundingRequests` merges BigInt values across wallets — test with multiple agent wallets contributing to the same token
 - `useInitialFundingRequirements` includes `PROTOCOL_BOND_WEI = 2` wei (agent bond + security deposit, as the middleware does) — negligible, but it keeps the 4-decimal ceil rounding in step with the funding screen for sub-0.01 totals
 - `useGetBridgeRequirementsParams` deduplicates requests by summing amounts — test with overlapping wallet entries for the same token
-- `useTotalNativeTokenRequired` freeze logic uses a ref — test that frozen values persist through re-renders when `shouldFreezeTotals` is true
-- `useTotalFiatFromNativeToken` adds a fixed `$5` fiat buffer — test the buffer calculation with `getEthWithBuffer`
-- `useGetOnRampRequirementsParams` always uses `AddressZero` as `from.token` — the on-ramp source is always native token

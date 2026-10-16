@@ -41,7 +41,7 @@ Each phase has corresponding feature documentation in `docs/features/`. **Always
 | 3 | `balance.md`, `services.md` |
 | 4 | `staking-and-rewards.md` |
 | 5 | `funding-and-refill.md` |
-| 6 | `bridging.md`, `on-ramping.md`, `funding-and-refill.md` |
+| 6 | `bridging.md`, `funding-and-refill.md` |
 | 7 | `deployability-and-lifecycle.md`, `achievements.md`, `agent-settings.md`, `services.md`, `account.md` |
 | 8 | [`docs/features/autorun.md`](../../docs/features/autorun.md) |
 | 9 | (none — static data) |
@@ -339,11 +339,8 @@ StakedAgentService (abstract base)
 - `hooks/useAgentFundingRequests.tsx` — agent funding needs consolidation
 - `hooks/useInitialFundingRequirements.ts` — first-time funding
 - `hooks/useGetBridgeRequirementsParams.ts` — bridge requirement params
-- `hooks/useGetOnRampRequirementsParams.ts` — on-ramp requirement params
 - `context/BalancesAndRefillRequirementsProvider/BalancesAndRefillRequirementsProvider.tsx` — consolidated provider
 - `service/Fund.ts` — fund API client
-- `hooks/useTotalNativeTokenRequired.ts` — total native token calc with freeze logic
-- `hooks/useTotalFiatFromNativeToken.ts` — fiat price conversion
 
 **Funding components:**
 - `components/SetupPage/FundYourAgent/hooks/` — funding setup hooks
@@ -360,7 +357,6 @@ StakedAgentService (abstract base)
 - `service/Bridge.ts` — bridge API client
 - `hooks/useBridgingSteps.ts` — bridge execution workflow + polling
 - `hooks/useBridgeRefillRequirements.ts` — bridge requirements polling
-- `hooks/useBridgeRefillRequirementsOnDemand.ts` — on-demand bridge query
 
 **Bridging (components):**
 - `components/Bridge/Bridge.tsx` — bridge entry component
@@ -372,26 +368,10 @@ StakedAgentService (abstract base)
 - `components/Bridge/BridgeOnEvm/BridgeOnEvm.tsx` — EVM bridge
 - `components/Bridge/BridgeOnEvm/DepositForBridging.tsx` — deposit for bridge
 
-**On-ramping (hooks & context):**
-- `hooks/useOnRampContext.ts` — on-ramp context accessor
-- `context/OnRampProvider.tsx` — on-ramp flow state (310 lines)
-
-**On-ramping (components):**
-- `components/OnRamp/OnRamp.tsx` — on-ramp entry component
-- `components/OnRamp/hooks/useBridgeRequirementsUtils.ts` — bridge requirements utils hook
-- `components/OnRamp/OnRampPaymentSteps/OnRampPaymentSteps.tsx` — payment steps
-- `components/OnRamp/OnRampPaymentSteps/useBuyCryptoStep.tsx` — buy crypto step hook
-- `components/OnRamp/OnRampPaymentSteps/useCreateAndTransferFundsToMasterSafeSteps.tsx` — transfer steps hook
-- `components/OnRamp/OnRampPaymentSteps/useSwapFundsStep.tsx` — swap funds step hook
-- `components/OnRamp/PayingReceivingTable/PayingReceivingTable.tsx` — payment table
-- `components/OnRamp/PayingReceivingTable/useBridgeRequirementsQuery.ts` — bridge query hook
-- `components/OnRampIframe/OnRampIframe.tsx` — iframe wrapper
-
 **Deposit flow (related):**
 - `components/PearlDeposit/Deposit/Deposit.tsx` — deposit component
 - `components/PearlDeposit/SelectPaymentMethod/SelectPaymentMethod.tsx` — payment method selection
 - `components/PearlDeposit/SelectPaymentMethod/BridgeCryptoOn.tsx` — bridge option
-- `components/PearlDeposit/SelectPaymentMethod/OnRampCryptoOn.tsx` — on-ramp option
 - `components/PearlDeposit/SelectPaymentMethod/TransferCryptoOn.tsx` — transfer option
 
 ---
@@ -555,7 +535,6 @@ AutoRunProvider.tsx
 **Pages:**
 - `pages/_app.tsx` — app wrapper
 - `pages/index.tsx` — home
-- `pages/onramp.tsx` — on-ramp page
 - `pages/web3auth.tsx`, `pages/web3auth-swap-owner.tsx` — web3auth pages
 
 ---

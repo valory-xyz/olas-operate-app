@@ -101,8 +101,3 @@ export type BridgeStatuses = {
   status: BridgingStepStatus;
   txnLink: Maybe<string>;
 }[];
-
-export type ReceivingTokens = {
-  amount: number;
-  symbol?: TokenSymbol;
-}[];

@@ -921,12 +921,6 @@ export const makeElectronApiMock = () => ({
   cleanupSupportLogs: jest.fn(),
   readFile: jest.fn(),
   openPath: jest.fn(),
-  onRampWindow: {
-    show: jest.fn(),
-    close: jest.fn(),
-    transactionSuccess: jest.fn(),
-    transactionFailure: jest.fn(),
-  },
   web3AuthWindow: {
     show: jest.fn(),
     close: jest.fn(),

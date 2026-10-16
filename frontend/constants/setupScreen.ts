@@ -11,7 +11,6 @@ export const SETUP_SCREEN = {
   ConfirmFunding: 'ConfirmFunding',
   TransferFunds: 'TransferFunds',
   SetupBridgeOnboardingScreen: 'SetupBridgeOnboardingScreen',
-  SetupOnRamp: 'SetupOnRamp',
   EarlyAccessOnly: 'EarlyAccessOnly',
   AccountRecovery: 'AccountRecovery',
   RestoreViaBackup: 'RestoreViaBackup',

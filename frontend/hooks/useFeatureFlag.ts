@@ -9,7 +9,6 @@ const FeatureFlagsSchema = z.enum([
   'withdraw-funds', // Enables withdrawing funds from the wallet (Manage Wallet → Withdraw)
   'backup-via-safe', // Enables wallet backup via Safe (alerts and settings)
   'bridge-onboarding', // Enables the bridge funds flow during setup
-  'on-ramp', // Enables the fiat on-ramp (buy crypto) flow/screens
 ]);
 type FeatureFlags = z.infer<typeof FeatureFlagsSchema>;
 
@@ -28,49 +27,41 @@ const FEATURES_CONFIG = FeaturesConfigSchema.parse({
     'withdraw-funds': true,
     'backup-via-safe': true,
     'bridge-onboarding': true,
-    'on-ramp': true,
   },
   [AgentMap.Polystrat]: {
     'withdraw-funds': true,
     'backup-via-safe': true,
     'bridge-onboarding': true,
-    'on-ramp': true,
   },
   [AgentMap.AgentsFun]: {
     'withdraw-funds': true,
     'backup-via-safe': true,
     'bridge-onboarding': true,
-    'on-ramp': true,
   },
   [AgentMap.Modius]: {
     'withdraw-funds': true,
     'backup-via-safe': false, // temporarily hidden until mode is available on safe https://app.safe.global/new-safe/create
     'bridge-onboarding': true,
-    'on-ramp': true,
   },
   [AgentMap.Optimus]: {
     'withdraw-funds': true,
     'backup-via-safe': true,
     'bridge-onboarding': true,
-    'on-ramp': true,
   },
   [AgentMap.Basius]: {
     'withdraw-funds': true,
     'backup-via-safe': true,
     'bridge-onboarding': true,
-    'on-ramp': true,
   },
   [AgentMap.PettAi]: {
     'withdraw-funds': true,
     'backup-via-safe': true,
     'bridge-onboarding': true,
-    'on-ramp': true,
   },
   [AgentMap.Connect]: {
     'withdraw-funds': true,
     'backup-via-safe': true,
     'bridge-onboarding': true,
-    'on-ramp': false,
   },
 });
 

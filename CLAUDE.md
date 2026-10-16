@@ -36,7 +36,7 @@ The application uses a multi-layered communication architecture:
    - Window controls: `electronAPI.{closeApp,minimizeApp,setTrayIcon,setIsAppLoaded}`
    - Notifications: `electronAPI.showNotification`
    - Logging / support: `electronAPI.{saveLogs,saveLogsForSupport,cleanupSupportLogs,logEvent,nextLogError,readFile,openPath,getAppVersion}`
-   - Managed child windows: `electronAPI.{onRampWindow,web3AuthWindow,web3AuthSwapOwnerWindow,termsAndConditionsWindow}` (each window has `show`/`close` + result callbacks)
+   - Managed child windows: `electronAPI.{web3AuthWindow,web3AuthSwapOwnerWindow,termsAndConditionsWindow}` (each window has `show`/`close` + result callbacks)
    - OS wake-lock (keeps device awake during AutoRun): `electronAPI.wakeLock.{start,stop}`
    - Connect agent's local server (proxied through main — that server enables no CORS): `electronAPI.connect.startSession`
    - In-app auto-updater: `electronAPI.autoUpdater.{checkForUpdates,downloadUpdate,cancelDownload,quitAndInstall,onUpdateAvailable,onDownloadProgress,onUpdateDownloaded,onUpdateError,onUpdateNotAvailable}`
@@ -48,7 +48,7 @@ The application uses a multi-layered communication architecture:
    - 50+ FastAPI endpoints, mostly under `/api/v2/*` for services and `/api/*` for account/wallet/bridge/recovery/store.
 
 3. **Frontend State Management**:
-   - React Context providers in `/frontend/context/` (one provider per folder). Non-exhaustive list of load-bearing providers: `ServicesProvider`, `BalanceProvider`, `StakingContractDetailsProvider`, `StakingProgramProvider`, `MasterWalletProvider`, `PearlWalletProvider`, `RewardProvider`, `SetupProvider`, `SettingsProvider`, `StoreProvider`, `PageStateProvider`, `OnRampProvider`, `OnlineStatusProvider`, `MessageProvider`, `SupportModalProvider`, `ElectronApiProvider`, `AutoRunProvider`, `BalancesAndRefillRequirementsProvider`, `SharedProvider`. Read `frontend/context/` before assuming a provider doesn't exist.
+   - React Context providers in `/frontend/context/` (one provider per folder). Non-exhaustive list of load-bearing providers: `ServicesProvider`, `BalanceProvider`, `StakingContractDetailsProvider`, `StakingProgramProvider`, `MasterWalletProvider`, `PearlWalletProvider`, `RewardProvider`, `SetupProvider`, `SettingsProvider`, `StoreProvider`, `PageStateProvider`, `OnlineStatusProvider`, `MessageProvider`, `SupportModalProvider`, `ElectronApiProvider`, `AutoRunProvider`, `BalancesAndRefillRequirementsProvider`, `SharedProvider`. Read `frontend/context/` before assuming a provider doesn't exist.
    - Electron-native persistence via `electron-store` (`electron/store.js`) — see Electron Store Schema below. All other state lives in `.operate/pearl_store.json` served by the Python backend.
 
 ### Service Templates & Agents
@@ -95,17 +95,17 @@ IPC handles: `store`, `store-get`, `store-set`, `store-delete`, `store-clear`. N
 - Electron preload (IPC surface): `electron/preload.js`
 - Electron store (native schema): `electron/store.js`
 - Electron feature modules (e.g. logs): `electron/features/`
-- Electron child windows (on-ramp, web3auth, T&C): `electron/windows/`
+- Electron child windows (web3auth, T&C): `electron/windows/`
 - System tray component: `electron/components/PearlTray.js`
-- Frontend entry: `frontend/pages/_app.tsx` (plus `index.tsx`, `onramp.tsx`, `web3auth.tsx`, `web3auth-swap-owner.tsx` — last two are Electron child-window wrappers)
-- Components: `frontend/components/` — mix of folders and top-level `.tsx` files, grouped into **shared UI** (`ui/`), **page/flow** folders (`SetupPage/`, `MainPage/`, `SelectStakingPage/`, `SettingsPage/`, `UpdateAgentPage/`, `PearlWallet/`, `PearlDeposit/`, `AccountRecovery/`), **agent-specific** (`AgentStaking/`, `AgentWallet/`, `AgentForms/`, `AgentIntroduction/`, plus single-file `AgentLowBalanceAlert.tsx`, `AgentNft.tsx`, `StakingContractCard.tsx`), **flows** (`Bridge/`, `OnRamp/`, `OnRampIframe/`, `Web3AuthIframe/`, `ConfirmSwitch/`, plus `FundPearlWallet.tsx`), **modals/alerts** (`AchievementModal/`, `SupportModal/`, `ErrorBoundary/`), **utilities** (`Layout/`, `Pages/`, `custom-icons/`, plus `ExportLogsButton.tsx`). Grep before creating a new top-level folder or file.
+- Frontend entry: `frontend/pages/_app.tsx` (plus `index.tsx`, `web3auth.tsx`, `web3auth-swap-owner.tsx` — last two are Electron child-window wrappers)
+- Components: `frontend/components/` — mix of folders and top-level `.tsx` files, grouped into **shared UI** (`ui/`), **page/flow** folders (`SetupPage/`, `MainPage/`, `SelectStakingPage/`, `SettingsPage/`, `UpdateAgentPage/`, `PearlWallet/`, `PearlDeposit/`, `AccountRecovery/`), **agent-specific** (`AgentStaking/`, `AgentWallet/`, `AgentForms/`, `AgentIntroduction/`, plus single-file `AgentLowBalanceAlert.tsx`, `AgentNft.tsx`, `StakingContractCard.tsx`), **flows** (`Bridge/`, `Web3AuthIframe/`, `ConfirmSwitch/`, plus `FundPearlWallet.tsx`), **modals/alerts** (`AchievementModal/`, `SupportModal/`, `ErrorBoundary/`), **utilities** (`Layout/`, `Pages/`, `custom-icons/`, plus `ExportLogsButton.tsx`). Grep before creating a new top-level folder or file.
 - Domain types: `frontend/types/` (17 files — `Autonolas.ts` is staking/rewards hub; `ElectronApi.ts` defines `PearlStore`)
 - Service definitions: `frontend/constants/serviceTemplates/` (directory)
 - Agent configs: `frontend/config/agents.ts`
 - Chain configs: `frontend/constants/chains.ts`
 - Token configs: `frontend/config/tokens.ts`
 - Staking programs: `frontend/constants/stakingProgram.ts`
-- Feature docs: `docs/features/` (18 files — start here before touching a feature)
+- Feature docs: `docs/features/` (19 files — start here before touching a feature)
 - AutoRun internals (hook hierarchy, timing constants, guard refs, start-status codes): `docs/features/autorun.md`
 - Multi-instance agents implementation plan (in-flight; migrates selection from `lastSelectedAgentType` → `lastSelectedServiceConfigId` and `isInitialFunded` boolean → per-service map): `docs/features/multi-instance-agents.md`
 - Agent integration guide: `docs/agent-integration-checklist.md`

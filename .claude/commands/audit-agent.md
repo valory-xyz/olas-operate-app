@@ -76,7 +76,7 @@ File: `frontend/config/agents.ts`
 
 File: `frontend/hooks/useFeatureFlag.ts`
 - Check whether the agent's `AgentMap` key has an entry in `FEATURES_CONFIG`.
-- Confirm all four flags are set (boolean, not undefined): `withdraw-funds`, `backup-via-safe`, `bridge-onboarding`, `on-ramp`. (If the canonical flag list in the `FeatureFlagsSchema` enum has grown since this command was last updated, cross-check there and audit whatever enum currently defines — the audit should reflect the live schema.)
+- Confirm all three flags are set (boolean, not undefined): `withdraw-funds`, `backup-via-safe`, `bridge-onboarding`. (If the canonical flag list in the `FeatureFlagsSchema` enum has grown since this command was last updated, cross-check there and audit whatever enum currently defines — the audit should reflect the live schema.)
 
 ---
 

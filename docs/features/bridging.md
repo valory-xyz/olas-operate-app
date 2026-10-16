@@ -9,13 +9,12 @@ The bridging system handles cross-chain token transfers — getting funds from a
 The system has three layers:
 
 1. **Bridge API client** — HTTP requests to the middleware for quote fetching, execution, and status polling
-2. **Core hooks** — `useBridgeRefillRequirements` (polling quote), `useBridgeRefillRequirementsOnDemand` (one-shot quote), `useBridgingSteps` (execute + poll status)
+2. **Core hooks** — `useBridgeRefillRequirements` (polling quote), `useBridgingSteps` (execute + poll status)
 3. **Component-level orchestration** — `DepositForBridging` (quote + deposit tracking + auto-advance), `useMasterSafeCreateAndTransferSteps` (post-bridge safe creation), `useRetryBridge` (bridge failure recovery)
 
 ```
 BridgeService (middleware API)
   ├── useBridgeRefillRequirements (polling quote fetcher)
-  ├── useBridgeRefillRequirementsOnDemand (one-shot quote fetcher)
   └── useBridgingSteps (execute + status poll)
         │
         ├── DepositForBridging (quote + deposit tracking + auto-advance)
@@ -28,7 +27,6 @@ BridgeService (middleware API)
 - `frontend/service/Bridge.ts` — bridge API client (quote, execute, status)
 - `frontend/types/Bridge.ts` — `BridgeRequest`, `BridgeRefillRequirementsRequest`, `BridgeRefillRequirementsResponse`, `BridgeStatusResponse`, `QuoteStatus`, `BridgingStepStatus`, `BridgeStatuses`
 - `frontend/hooks/useBridgeRefillRequirements.ts` — polling bridge quote fetcher
-- `frontend/hooks/useBridgeRefillRequirementsOnDemand.ts` — one-shot bridge quote fetcher
 - `frontend/hooks/useBridgingSteps.ts` — bridge execution + status polling
 - `frontend/components/Bridge/Bridge.tsx` — Bridge UI state machine (`depositing → in_progress → completed`)
 - `frontend/components/Bridge/BridgeOnEvm/DepositForBridging.tsx` — Bridge flow: quote polling, deposit tracking, auto-advance
@@ -172,7 +170,7 @@ Backend `QuoteStatus` values are mapped to frontend `BridgingStepStatus` for UI 
 
 ## Runtime behavior
 
-### Quote fetching — polling mode (`useBridgeRefillRequirements`)
+### Quote fetching (`useBridgeRefillRequirements`)
 
 Configurable polling wrapper around `getBridgeRefillRequirements`:
 
@@ -185,10 +183,6 @@ Configurable polling wrapper around `getBridgeRefillRequirements`:
 | `pollingInterval` | 10s | Polling interval |
 
 Polling runs when `isOnline && params && enabled`. The refetch interval is `pollingInterval` when both `enabled` and `canPoll` are true; otherwise polling stops. `staleTime: 0` ensures fresh data on every poll. `refetchOnMount: 'always'` and `refetchOnReconnect: 'always'` ensure immediate fetch on mount and reconnection.
-
-### Quote fetching — on-demand mode (`useBridgeRefillRequirementsOnDemand`)
-
-Same API call but `enabled: false` and `retry: false`. The query never runs automatically — consumers call `refetch()` manually. Used by the on-ramping flow (see on-ramping doc).
 
 ### Bridge execution and status polling (`useBridgingSteps`)
 
@@ -284,7 +278,6 @@ Simple hook for recovering from bridge failures:
 
 - **BridgeService methods** — all three throw `Error` objects on non-ok responses with endpoint-specific messages (e.g., `"Failed to get bridge refill requirements for the following params: ..."`, `"Failed to execute bridge quote for the following quote id: ..."`, `"Failed to get bridge status for the following quote id: ..."`). No HTTP status-specific handling.
 - **useBridgeRefillRequirements** — disabled when `!isOnline`, `!params`, or `!enabled`. Returns `null` (not undefined) when params are missing inside the query function.
-- **useBridgeRefillRequirementsOnDemand** — `enabled: false` means it never auto-fires. `retry: false` means failures are not retried. Returns `null` when params are missing.
 - **useBridgingSteps** — execute query has `retry: false`. If `quoteId` is falsy but enabled, logs a warning and returns undefined (does not throw). Catches and re-throws errors after logging.
 - **useBridgingSteps status poll** — enabled only when execute is fully complete (not loading AND not fetching AND has data). This prevents the status query from firing during execute retries.
 - **isBridgingCompleted uses `.every()`** — all entries must be `EXECUTION_DONE`. An empty array returns `true` (vacuous truth), but this is safe because the hook only runs when there are bridge requests.
@@ -296,7 +289,7 @@ Simple hook for recovering from bridge failures:
 - **Bridge.tsx state invariants** — throws `Error` if `in_progress` state is reached without `quoteId` or `transferAndReceivingDetails`.
 - **useMasterSafeCreateAndTransferSteps ref guard** — `canCreateMasterSafeAndTransferRef` is set only once (when `null`), so remounts or re-renders don't re-evaluate safe creation need.
 - **useRetryBridge** — returns early without action when `refetch()` returns no data.
-- **Offline** — `useBridgeRefillRequirements`, `useBridgingSteps` execute query, and `useBridgingSteps` status poll are all online-gated. `useBridgeRefillRequirementsOnDemand` is NOT explicitly online-gated (it relies on manual `refetch()` calls).
+- **Offline** — `useBridgeRefillRequirements`, `useBridgingSteps` execute query, and `useBridgingSteps` status poll are all online-gated.
 
 ## Test-relevant notes
 
@@ -306,7 +299,6 @@ Simple hook for recovering from bridge failures:
 - `isBridgingFailedFn` uses `.some()` — test that a single `EXECUTION_FAILED` among `EXECUTION_DONE` entries triggers failure.
 - `getBridgeStats` pairs `tokenSymbols` with `bridge_request_status` by array index — test with mismatched array lengths.
 - `useBridgeRefillRequirements` has five configurable options — test each combination of `canPoll`, `enabled`, and `isOnline` for correct polling behavior.
-- `useBridgeRefillRequirementsOnDemand` is `enabled: false` with `retry: false` — test that it only fires on manual `refetch()` and does not retry failures.
 - `useMasterSafeCreateAndTransferSteps` uses a ref to lock the safe creation decision — test that it doesn't re-evaluate after initial mount.
 - `useRetryBridge` has two outcomes: `NEED_REFILL` callback or toast message — test both paths and the early return on missing data.
 - `Bridge.tsx` state machine has three states (`depositing → in_progress → completed`) — test transitions, `NEED_REFILL` reset, and the throw on missing `quoteId`/`transferDetails` in `in_progress`.

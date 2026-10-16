@@ -1,19 +1,5 @@
 const { contextBridge, ipcRenderer } = require('electron/renderer');
 
-/** IPC methods for transak window */
-const onRampWindow = {
-  show: (amountToPay, networkName, cryptoCurrencyCode) =>
-    ipcRenderer.invoke(
-      'onramp-window-show',
-      amountToPay,
-      networkName,
-      cryptoCurrencyCode,
-    ),
-  close: () => ipcRenderer.invoke('onramp-window-close'),
-  transactionSuccess: () => ipcRenderer.invoke('onramp-transaction-success'),
-  transactionFailure: () => ipcRenderer.invoke('onramp-transaction-failure'),
-};
-
 /** IPC methods for web3auth window */
 const web3AuthWindow = {
   show: () => ipcRenderer.invoke('web3auth-window-show'),
@@ -121,7 +107,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   openPath: (filePath) => ipcRenderer.send('open-path', filePath),
   getAppVersion: () => ipcRenderer.invoke('app-version'),
   getOsInfo: () => ipcRenderer.invoke('os-info'),
-  onRampWindow,
   web3AuthWindow,
   web3AuthSwapOwnerWindow,
   termsAndConditionsWindow,

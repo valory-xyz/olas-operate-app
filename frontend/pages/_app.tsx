@@ -16,7 +16,6 @@ import { ElectronApiProvider } from '@/context/ElectronApiProvider';
 import { MasterWalletProvider } from '@/context/MasterWalletProvider';
 import { MessageProvider } from '@/context/MessageProvider';
 import { OnlineStatusProvider } from '@/context/OnlineStatusProvider';
-import { OnRampProvider } from '@/context/OnRampProvider';
 import { PageStateProvider } from '@/context/PageStateProvider';
 import { PearlWalletProvider } from '@/context/PearlWalletProvider';
 import { RewardProvider } from '@/context/RewardProvider';
@@ -61,18 +60,16 @@ function App({ Component, pageProps }: AppProps) {
                               <SettingsProvider>
                                 <MessageProvider>
                                   <SharedProvider>
-                                    <OnRampProvider>
-                                      <PearlWalletProvider>
-                                        <SupportModalProvider>
-                                          <OnboardingSurveyTimingClassifier />
-                                          {isMounted ? (
-                                            <Layout>
-                                              <Component {...pageProps} />
-                                            </Layout>
-                                          ) : null}
-                                        </SupportModalProvider>
-                                      </PearlWalletProvider>
-                                    </OnRampProvider>
+                                    <PearlWalletProvider>
+                                      <SupportModalProvider>
+                                        <OnboardingSurveyTimingClassifier />
+                                        {isMounted ? (
+                                          <Layout>
+                                            <Component {...pageProps} />
+                                          </Layout>
+                                        ) : null}
+                                      </SupportModalProvider>
+                                    </PearlWalletProvider>
                                   </SharedProvider>
                                 </MessageProvider>
                               </SettingsProvider>
