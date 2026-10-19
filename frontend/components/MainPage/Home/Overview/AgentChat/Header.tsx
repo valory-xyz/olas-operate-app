@@ -97,7 +97,10 @@ const HeaderMetrics = () => {
   );
 };
 
-/** Today's Performance banners, under the same conditions. */
+/**
+ * The banners of the Performance section (`Performance.tsx`), under the same
+ * conditions.
+ */
 const PerformanceAlert = () => {
   const { selectedService, selectedAgentConfig } = useServices();
   const { isServiceActive } = useService(selectedService?.service_config_id);
@@ -118,7 +121,7 @@ const PerformanceAlert = () => {
 
 /**
  * Compact agent header: name, run button, wallet and streak shortcuts, the
- * agent's two key metrics, and today's Overview banners at the bottom.
+ * agent's two key metrics, and the Overview's banners at the bottom.
  */
 export const AgentChatHeader = () => {
   const { goto } = usePageState();
