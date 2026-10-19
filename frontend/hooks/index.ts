@@ -1,6 +1,8 @@
 export * from './useActiveStakingProgramId';
 export * from './useActivityGoal';
 export * from './useAgentActivity';
+export * from './useAgentChat';
+export * from './useAgentFeed';
 export * from './useAgentFundingRequests';
 export * from './useAgentRunning';
 export * from './useAgentStakingRewardsDetails';
@@ -17,6 +19,7 @@ export * from './useBalanceContext';
 export * from './useBridgeRefillRequirements';
 export * from './useBridgeRefillRequirementsOnDemand';
 export * from './useBridgingSteps';
+export * from './useChatCostNote';
 export * from './useCompleteAgentSetup';
 export * from './useConnectSession';
 export * from './useCreateConnectService';

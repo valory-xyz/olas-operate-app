@@ -14,8 +14,10 @@ export type ChatFailure = 'failed' | 'no-funds';
 export type LocalChatMessage = {
   client_id: string;
   text: string;
-  /** Unix seconds. */
+  /** Unix seconds, shown on the message. */
   ts: number;
+  /** Milliseconds; when the current request for it started. */
+  sentAt: number;
   state: 'pending' | ChatFailure;
 };
 

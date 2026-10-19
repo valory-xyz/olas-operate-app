@@ -42,6 +42,7 @@ const makeLocal = (
   client_id: 'client-1',
   text: 'Why did you trade?',
   ts: 1_760_000_100,
+  sentAt: 1_760_000_100_000,
   state: 'pending',
   ...overrides,
 });

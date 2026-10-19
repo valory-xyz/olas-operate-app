@@ -233,6 +233,16 @@ describe('AGENT_PERFORMANCE_KEY', () => {
   });
 });
 
+describe('agent chat keys', () => {
+  it.each([
+    ['AGENT_FEED_KEY', 'agentFeed'],
+    ['AGENT_FEED_LATEST_KEY', 'agentFeedLatest'],
+    ['AGENT_CHAT_SESSION_KEY', 'agentChatSession'],
+  ] as const)('%s embeds the serviceConfigId', (name, discriminator) => {
+    expect(REACT_QUERY_KEYS[name]('svc-1')).toEqual([discriminator, 'svc-1']);
+  });
+});
+
 describe('BALANCES_AND_REFILL_REQUIREMENTS_KEY', () => {
   it('embeds the serviceConfigId', () => {
     const key = REACT_QUERY_KEYS.BALANCES_AND_REFILL_REQUIREMENTS_KEY('svc-1');
