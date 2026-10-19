@@ -1,4 +1,5 @@
 import { InfiniteData } from '@tanstack/react-query';
+import dayjs from 'dayjs';
 
 import { FeedEntry, FeedMessageEntry, FeedPage } from '@/types/AgentChat';
 
@@ -124,3 +125,15 @@ export const chatFailureFromStatus = (
   if (status === 409) return 'busy';
   return 'failed';
 };
+
+/** "Today", "Yesterday" or e.g. "12 Oct 2026", in local time. */
+export const formatFeedDay = (ts: number, now: number = Date.now()) => {
+  const day = dayjs.unix(ts).startOf('day');
+  const today = dayjs(now).startOf('day');
+  if (day.isSame(today)) return 'Today';
+  if (day.isSame(today.subtract(1, 'day'))) return 'Yesterday';
+  return day.format('D MMM YYYY');
+};
+
+/** e.g. "14:25", in local time. */
+export const formatFeedTime = (ts: number) => dayjs.unix(ts).format('HH:mm');

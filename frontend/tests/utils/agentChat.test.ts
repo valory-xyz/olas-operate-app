@@ -11,6 +11,8 @@ import {
   chatFailureFromStatus,
   FeedPageParam,
   flattenFeedPages,
+  formatFeedDay,
+  formatFeedTime,
   LocalChatMessage,
   mergeIntoNewestPage,
 } from '../../utils/agentChat';
@@ -231,5 +233,26 @@ describe('chatFailureFromStatus', () => {
     [undefined, 'failed'],
   ] as const)('maps %s to %s', (status, failure) => {
     expect(chatFailureFromStatus(status)).toBe(failure);
+  });
+});
+
+describe('formatFeedDay', () => {
+  const now = new Date(2026, 9, 19, 9, 30).getTime();
+  const toUnix = (date: Date) => Math.floor(date.getTime() / 1000);
+
+  it.each([
+    [new Date(2026, 9, 19, 0, 0), 'Today'],
+    [new Date(2026, 9, 18, 23, 59), 'Yesterday'],
+    [new Date(2026, 9, 18, 0, 0), 'Yesterday'],
+    [new Date(2026, 9, 17, 23, 59), '17 Oct 2026'],
+  ])('labels %s as %s', (date, label) => {
+    expect(formatFeedDay(toUnix(date), now)).toBe(label);
+  });
+});
+
+describe('formatFeedTime', () => {
+  it('shows the local 24-hour time', () => {
+    const ts = Math.floor(new Date(2026, 9, 19, 14, 5).getTime() / 1000);
+    expect(formatFeedTime(ts)).toBe('14:05');
   });
 });
