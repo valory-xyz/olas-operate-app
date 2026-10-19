@@ -295,6 +295,25 @@ describe('AgentChat', () => {
       expect(messageInput()).toHaveValue('');
     });
 
+    it('sends on Enter', () => {
+      renderChat();
+
+      fireEvent.change(messageInput(), { target: { value: 'Why?' } });
+      fireEvent.keyDown(messageInput(), { key: 'Enter' });
+
+      expect(chat.send).toHaveBeenCalledWith('Why?');
+    });
+
+    it('does not send on Shift+Enter, which adds a new line', () => {
+      renderChat();
+
+      fireEvent.change(messageInput(), { target: { value: 'Why?' } });
+      fireEvent.keyDown(messageInput(), { key: 'Enter', shiftKey: true });
+
+      expect(chat.send).not.toHaveBeenCalled();
+      expect(messageInput()).toHaveValue('Why?');
+    });
+
     it('keeps the text when the message is not sent', () => {
       chat.send.mockReturnValue(false);
       renderChat();

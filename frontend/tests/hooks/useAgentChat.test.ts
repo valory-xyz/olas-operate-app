@@ -7,7 +7,10 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { act, createElement, PropsWithChildren } from 'react';
 
 import { REACT_QUERY_KEYS } from '../../constants/reactQueryKeys';
-import { useAgentChat } from '../../hooks/useAgentChat';
+import {
+  BUSY_NOTICE_DURATION_MS,
+  useAgentChat,
+} from '../../hooks/useAgentChat';
 import { AgentChatError, AgentChatService } from '../../service/AgentChat';
 import { ChatReply, FeedPage } from '../../types/AgentChat';
 import { FeedData } from '../../utils/agentChat';
@@ -91,6 +94,7 @@ describe('useAgentChat', () => {
   beforeEach(() => {
     mockSendAgentChat.mockReset();
     jest.spyOn(crypto, 'randomUUID').mockReturnValue(CLIENT_ID);
+    jest.spyOn(console, 'error').mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -159,6 +163,30 @@ describe('useAgentChat', () => {
       jest.useRealTimers();
     });
 
+    it('closes the busy notice on its own after a few seconds', () => {
+      jest.useFakeTimers();
+      mockSendAgentChat.mockReturnValue(new Promise(() => {}));
+      const { result } = renderChat();
+      act(() => {
+        result.current.send('Why?');
+      });
+      act(() => {
+        result.current.send('And the risks?');
+      });
+      expect(result.current.isBusyNoticeOpen).toBe(true);
+
+      act(() => {
+        jest.advanceTimersByTime(BUSY_NOTICE_DURATION_MS - 1);
+      });
+      expect(result.current.isBusyNoticeOpen).toBe(true);
+
+      act(() => {
+        jest.advanceTimersByTime(1);
+      });
+      expect(result.current.isBusyNoticeOpen).toBe(false);
+      jest.useRealTimers();
+    });
+
     it('does not send while a reply is pending and shows the busy notice', async () => {
       mockSendAgentChat.mockReturnValue(new Promise(() => {}));
       const { result } = renderChat();
@@ -195,6 +223,21 @@ describe('useAgentChat', () => {
       expect(result.current.localMessages[0].state).toBe(state);
       expect(result.current.isPending).toBe(false);
       expect(result.current.isBusyNoticeOpen).toBe(false);
+    });
+
+    it('logs the failure with its client_id', async () => {
+      const error = new AgentChatError('timeout', 504);
+      mockSendAgentChat.mockRejectedValueOnce(error);
+      const { result } = renderChat();
+
+      await act(async () => {
+        result.current.send('Why?');
+      });
+
+      expect(console.error).toHaveBeenCalledWith(
+        expect.stringContaining(CLIENT_ID),
+        error,
+      );
     });
 
     it('resends the same client_id on Try again and clears the message on 200', async () => {

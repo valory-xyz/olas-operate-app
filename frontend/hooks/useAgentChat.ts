@@ -11,7 +11,7 @@ import {
   mergeIntoNewestPage,
 } from '@/utils/agentChat';
 
-const BUSY_NOTICE_DURATION_MS = 5_000;
+export const BUSY_NOTICE_DURATION_MS = 5_000;
 
 /**
  * Chat state that lives for the app session, per service. Kept in the query
@@ -135,6 +135,7 @@ export const useAgentChat = ({
           ),
         }));
       } catch (error) {
+        console.error(`Agent chat failed for client_id ${clientId}:`, error);
         const failure = chatFailureFromStatus(
           error instanceof AgentChatError ? error.status : undefined,
         );
