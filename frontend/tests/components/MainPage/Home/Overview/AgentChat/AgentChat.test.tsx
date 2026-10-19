@@ -133,6 +133,7 @@ const renderChat = ({
     isError: false,
     hasOlder: false,
     isFetchingOlder: false,
+    isFetchOlderError: false,
     fetchOlder: jest.fn(),
   });
   mockUseAgentChat.mockReturnValue({ ...chat, ...chatOverrides });

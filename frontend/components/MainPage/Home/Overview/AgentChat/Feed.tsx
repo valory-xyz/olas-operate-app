@@ -62,6 +62,8 @@ type FeedProps = {
   isError: boolean;
   hasOlder: boolean;
   isFetchingOlder: boolean;
+  /** The last attempt to load older entries failed. */
+  isFetchOlderError: boolean;
   fetchOlder: () => void;
   /** Shown instead of the feed when it has nothing to show. */
   emptyState: ReactNode;
@@ -80,6 +82,7 @@ export const Feed = ({
   isError,
   hasOlder,
   isFetchingOlder,
+  isFetchOlderError,
   fetchOlder,
   emptyState,
   onRetry,
@@ -105,9 +108,13 @@ export const Feed = ({
     const element = scrollRef.current;
     if (!element) return;
     const previous = previousRef.current;
-    if (previous.firstKey && firstKey !== previous.firstKey) {
+    const isOlderPrepended =
+      previous.firstKey !== undefined &&
+      firstKey !== previous.firstKey &&
+      items.some(({ key }) => key === previous.firstKey);
+    if (isOlderPrepended) {
       element.scrollTop += element.scrollHeight - previous.scrollHeight;
-    } else if (isAtBottomRef.current) {
+    } else if (isAtBottomRef.current || firstKey !== previous.firstKey) {
       element.scrollTop = element.scrollHeight;
     }
     previousRef.current = { firstKey, scrollHeight: element.scrollHeight };
@@ -128,9 +135,9 @@ export const Feed = ({
   // A short first page may not fill the view, so nothing would ever scroll.
   useEffect(() => {
     const element = scrollRef.current;
-    if (!element || !hasOlder || isFetchingOlder) return;
+    if (!element || !hasOlder || isFetchingOlder || isFetchOlderError) return;
     if (element.scrollHeight <= element.clientHeight) fetchOlder();
-  }, [items, hasOlder, isFetchingOlder, fetchOlder]);
+  }, [items, hasOlder, isFetchingOlder, isFetchOlderError, fetchOlder]);
 
   if (isLoading) {
     return (

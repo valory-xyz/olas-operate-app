@@ -70,6 +70,7 @@ export const useAgentFeed = (serviceConfigId: Maybe<string>) => {
     isError: feed.isError,
     hasOlder: feed.hasNextPage,
     isFetchingOlder: feed.isFetchingNextPage,
+    isFetchOlderError: feed.isFetchNextPageError,
     fetchOlder: feed.fetchNextPage,
   };
 };

@@ -102,6 +102,7 @@ export const AgentChat = () => {
             isError={feed.isError}
             hasOlder={feed.hasOlder}
             isFetchingOlder={feed.isFetchingOlder}
+            isFetchOlderError={feed.isFetchOlderError}
             fetchOlder={feed.fetchOlder}
             emptyState={
               <EmptyState
