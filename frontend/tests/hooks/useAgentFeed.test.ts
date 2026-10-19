@@ -99,6 +99,46 @@ describe('useAgentFeed', () => {
     expect(entryIds(result)).toEqual([21, 22, 23, 24]);
   });
 
+  it('retries a failed first load and then starts polling', async () => {
+    mockGetAgentFeed.mockRejectedValueOnce(new Error('feed down'));
+    const { result } = renderFeed();
+    await waitFor(() => expect(result.current.isError).toBe(true));
+
+    mockGetAgentFeed
+      .mockResolvedValueOnce(page([21, 22], true))
+      .mockResolvedValue(page([21, 22, 23], true));
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(FIVE_SECONDS_INTERVAL);
+    });
+
+    await waitFor(() => expect(entryIds(result)).toEqual([21, 22, 23]));
+    expect(result.current.isError).toBe(false);
+  });
+
+  it('does not reload loaded pages when an older page fails', async () => {
+    mockGetAgentFeed.mockImplementation(
+      async (_id: string, { before }: { before?: number }) => {
+        if (before === 21) throw new Error('older down');
+        return page([21, 22], true);
+      },
+    );
+    const { result } = renderFeed();
+    await waitFor(() => expect(entryIds(result)).toEqual([21, 22]));
+
+    await act(async () => {
+      await result.current.fetchOlder();
+    });
+    await waitFor(() => expect(result.current.isFetchOlderError).toBe(true));
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(FIVE_SECONDS_INTERVAL * 2);
+    });
+
+    expect(result.current.isFetchOlderError).toBe(true);
+    expect(
+      mockGetAgentFeed.mock.calls.filter(([, { before }]) => before === 21),
+    ).toHaveLength(1);
+  });
+
   it('keeps entries an earlier poll brought after they leave the newest page', async () => {
     mockGetAgentFeed
       .mockResolvedValueOnce(page([1, 2], false))

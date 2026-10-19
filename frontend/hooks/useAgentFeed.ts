@@ -45,6 +45,9 @@ export const useAgentFeed = (serviceConfigId: Maybe<string>) => {
     enabled: !!serviceConfigId,
     // Kept fresh by the poll below; refetching would reload every page.
     staleTime: Infinity,
+    // The poll waits for a first page, so a failed first load retries here.
+    refetchInterval: ({ state }) =>
+      state.status === 'error' && !state.data ? FIVE_SECONDS_INTERVAL : false,
   });
 
   useQuery({
