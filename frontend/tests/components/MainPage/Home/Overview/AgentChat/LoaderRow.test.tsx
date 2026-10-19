@@ -191,6 +191,8 @@ describe('LoaderRow', () => {
       renderRow({ isMessagesOnly: true, isPending: true });
 
       expect(screen.getByText('Thinking...')).toBeInTheDocument();
+      expect(screen.queryByTestId('badge-pending')).toBeNull();
+      expect(screen.queryByTestId('badge-done')).toBeNull();
     });
   });
 

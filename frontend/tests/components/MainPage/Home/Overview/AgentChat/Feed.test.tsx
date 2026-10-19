@@ -95,6 +95,15 @@ describe('Feed', () => {
     ).not.toBeInTheDocument();
   });
 
+  it('shows the load error, not the empty state, when the first load failed', () => {
+    renderFeed({ items: [], isError: true });
+
+    expect(
+      screen.getByText("Couldn't load the agent's activity."),
+    ).toBeInTheDocument();
+    expect(screen.queryByText('empty')).toBeNull();
+  });
+
   it('shows the empty state when there is nothing to show', () => {
     renderFeed({ items: [] });
 
