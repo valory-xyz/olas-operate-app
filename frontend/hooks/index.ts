@@ -4,6 +4,7 @@ export * from './useAgentActivity';
 export * from './useAgentChat';
 export * from './useAgentFeed';
 export * from './useAgentFundingRequests';
+export * from './useAgentPerformance';
 export * from './useAgentRunning';
 export * from './useAgentStakingRewardsDetails';
 export * from './useAllInstancesRewardStatus';

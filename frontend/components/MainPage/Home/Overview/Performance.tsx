@@ -1,19 +1,17 @@
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { Button, Col, Flex, Row, Spin, Typography } from 'antd';
-import { isNil } from 'lodash';
 import { useMemo } from 'react';
 import styled from 'styled-components';
 
 import { Alert, CardFlex, InfoTooltip, Tooltip } from '@/components/ui';
-import { COLOR, FIVE_MINUTE_INTERVAL, REACT_QUERY_KEYS } from '@/constants';
+import { COLOR } from '@/constants';
 import { useService, useServices } from '@/hooks';
-import { ServicesService } from '@/service/Services';
+import { useAgentPerformance } from '@/hooks/useAgentPerformance';
 import { Optional } from '@/types/Util';
-import { asEvmChainId, getTimeAgo, sanitizeHtml } from '@/utils';
+import { getTimeAgo, sanitizeHtml } from '@/utils';
 
 const { Text, Title } = Typography;
 
-const NoMetricsAlert = () => (
+export const NoMetricsAlert = () => (
   <Alert
     message="Additional performance metrics appear with the first measurable result."
     type="info"
@@ -23,7 +21,7 @@ const NoMetricsAlert = () => (
   />
 );
 
-const MetricsUnavailableAlert = () => (
+export const MetricsUnavailableAlert = () => (
   <Alert
     message="Performance metrics aren't available in this app version"
     type="info"
@@ -54,7 +52,7 @@ const RequiresProfileOpenAlert = ({
   />
 );
 
-const MetricsCapturedTimestampAlert = ({
+export const MetricsCapturedTimestampAlert = ({
   timestamp,
 }: {
   timestamp: number;
@@ -77,32 +75,6 @@ const AgentBehaviorContainer = styled.div`
   background-color: ${COLOR.GRAY_1};
   border-radius: 10px;
 `;
-
-/**
- * Hook to get the agent performance data
- */
-const useAgentPerformance = () => {
-  const { selectedService } = useServices();
-  const chainId = selectedService?.home_chain;
-  const serviceConfigId = selectedService?.service_config_id;
-
-  return useQuery({
-    queryKey: REACT_QUERY_KEYS.AGENT_PERFORMANCE_KEY(
-      chainId ? asEvmChainId(chainId) : -1,
-      serviceConfigId!,
-    ),
-    queryFn: async () => {
-      if (!serviceConfigId) return null;
-
-      return await ServicesService.getAgentPerformance({
-        serviceConfigId,
-      });
-    },
-    enabled: !isNil(chainId) && !isNil(serviceConfigId),
-    refetchInterval: FIVE_MINUTE_INTERVAL,
-    placeholderData: keepPreviousData,
-  });
-};
 
 type PerformanceProps = {
   openProfile: () => void;

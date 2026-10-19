@@ -25,7 +25,7 @@ const AgentInfoContainer = styled.div`
   position: relative;
 `;
 
-const IconButton = styled(Flex)`
+export const IconButton = styled(Flex)`
   padding: 8px;
   cursor: pointer;
   border-radius: 10px;
@@ -43,7 +43,7 @@ const AutoRunAlertContainer = styled(Flex)`
   padding: 2px 8px;
 `;
 
-const AutoRunAlert = () => (
+export const AutoRunAlert = () => (
   <Flex align="self-end" style={{ height: 40 }}>
     <Tooltip
       title="Selected agents will run in sequence automatically. To change which agents are included, use the auto-run toggle."
@@ -57,7 +57,7 @@ const AutoRunAlert = () => (
   </Flex>
 );
 
-const AboutAgent = () => {
+export const AboutAgent = () => {
   const { selectedAgentType } = useServices();
   const [isAboutAgentModalOpen, setIsAboutAgentModalOpen] = useState(false);
 
@@ -89,7 +89,7 @@ const AboutAgent = () => {
   );
 };
 
-const ChainBadge = () => {
+export const ChainBadge = () => {
   const { selectedAgentConfig } = useServices();
   const chainConfig = CHAIN_CONFIG[selectedAgentConfig.evmHomeChainId];
   const chainName = chainConfig?.name;
@@ -108,6 +108,23 @@ const ChainBadge = () => {
         />
       </IconButton>
     </Tooltip>
+  );
+};
+
+/** Banners shown under the agent's name and run button. */
+export const AgentInfoAlerts = () => {
+  const { selectedAgentConfig } = useServices();
+  return (
+    <>
+      <AgentDisabledAlert />
+      <ConnectSessionAlert />
+      {selectedAgentConfig.shutdownDate && (
+        <AgentDeprecationAlert
+          agentName={selectedAgentConfig.displayName}
+          shutdownDate={selectedAgentConfig.shutdownDate}
+        />
+      )}
+    </>
   );
 };
 
@@ -170,14 +187,7 @@ export const AgentInfo = () => {
               {isAutoRunEnabled ? <AutoRunAlert /> : <AgentRunButton />}
             </Flex>
           </Flex>
-          <AgentDisabledAlert />
-          <ConnectSessionAlert />
-          {selectedAgentConfig.shutdownDate && (
-            <AgentDeprecationAlert
-              agentName={selectedAgentConfig.displayName}
-              shutdownDate={selectedAgentConfig.shutdownDate}
-            />
-          )}
+          <AgentInfoAlerts />
         </AgentInfoContainer>
       </CardFlex>
 
