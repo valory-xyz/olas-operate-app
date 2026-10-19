@@ -42,7 +42,7 @@ const PopoverContent = styled(Flex)`
 type ChatInputProps = {
   text: string;
   onTextChange: (text: string) => void;
-  /** Sends the text; resolves to whether it was sent. */
+  /** Sends the text; returns whether it was sent. */
   onSend: () => boolean;
   /** The agent can answer now (deployed and alive). */
   canSend: boolean;
