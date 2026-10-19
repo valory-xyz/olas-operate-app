@@ -113,6 +113,17 @@ export const useAgentChat = ({
     [updateSession],
   );
 
+  const removeMessage = useCallback(
+    (id: string, clientId: string) =>
+      updateSession(id, (previous) => ({
+        ...previous,
+        messages: previous.messages.filter(
+          (local) => local.client_id !== clientId,
+        ),
+      })),
+    [updateSession],
+  );
+
   const post = useCallback(
     async (id: string, clientId: string, text: string) => {
       try {
@@ -133,12 +144,7 @@ export const useAgentChat = ({
             has_more: false,
           }),
         );
-        updateSession(id, (previous) => ({
-          ...previous,
-          messages: previous.messages.filter(
-            (local) => local.client_id !== clientId,
-          ),
-        }));
+        removeMessage(id, clientId);
       } catch (error) {
         console.error(`Agent chat failed for client_id ${clientId}:`, error);
         const failure = chatFailureFromStatus(
@@ -150,7 +156,7 @@ export const useAgentChat = ({
         setMessageState(id, clientId, failure === 'busy' ? 'failed' : failure);
       }
     },
-    [queryClient, setMessageState, updateSession],
+    [queryClient, removeMessage, setMessageState],
   );
 
   /** Returns whether the message was sent, so the input can be cleared. */
@@ -206,14 +212,9 @@ export const useAgentChat = ({
   const dismiss = useCallback(
     (clientId: string) => {
       if (!serviceConfigId) return;
-      updateSession(serviceConfigId, (previous) => ({
-        ...previous,
-        messages: previous.messages.filter(
-          (local) => local.client_id !== clientId,
-        ),
-      }));
+      removeMessage(serviceConfigId, clientId);
     },
-    [serviceConfigId, updateSession],
+    [removeMessage, serviceConfigId],
   );
 
   const setMessagesOnly = useCallback(
