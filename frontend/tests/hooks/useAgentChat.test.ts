@@ -143,6 +143,25 @@ describe('useAgentChat', () => {
       ).toEqual([reply.message, reply.reply]);
     });
 
+    it('keeps the message, no longer pending, on 200 before the feed has loaded', async () => {
+      mockSendAgentChat.mockResolvedValue(makeReply(CLIENT_ID));
+      const { result, queryClient } = renderChat();
+
+      await act(async () => {
+        result.current.send('Why?');
+      });
+
+      expect(result.current.isPending).toBe(false);
+      expect(result.current.localMessages).toMatchObject([
+        { client_id: CLIENT_ID, text: 'Why?', state: 'sent' },
+      ]);
+      expect(
+        queryClient.getQueryData(
+          REACT_QUERY_KEYS.AGENT_FEED_KEY(SERVICE_CONFIG_ID),
+        ),
+      ).toBeUndefined();
+    });
+
     it('shows Still thinking after 30 seconds of waiting', () => {
       jest.useFakeTimers();
       mockSendAgentChat.mockReturnValue(new Promise(() => {}));
@@ -242,7 +261,12 @@ describe('useAgentChat', () => {
 
     it('resends the same client_id on Try again and clears the message on 200', async () => {
       failWith(504);
-      const { result } = renderChat();
+      const queryClient = createQueryClient();
+      queryClient.setQueryData<FeedData>(
+        REACT_QUERY_KEYS.AGENT_FEED_KEY(SERVICE_CONFIG_ID),
+        { pages: [FEED_PAGE], pageParams: [undefined] },
+      );
+      const { result } = renderChat(undefined, queryClient);
       await act(async () => {
         result.current.send('Why?');
       });

@@ -208,6 +208,13 @@ describe('buildFeedItems', () => {
     });
   });
 
+  it('shows a message answered before the feed loaded without a failure', () => {
+    const items = buildFeedItems([], [makeLocal({ state: 'sent' })]);
+
+    expect(items).toEqual([expect.objectContaining({ key: 'local-client-1' })]);
+    expect(items[0]).not.toHaveProperty('failure');
+  });
+
   it('marks a message the Agent Wallet could not pay for as no-funds', () => {
     const items = buildFeedItems([], [makeLocal({ state: 'no-funds' })]);
 

@@ -19,7 +19,8 @@ export type LocalChatMessage = {
   ts: number;
   /** Milliseconds; when the current request for it started. */
   sentAt: number;
-  state: 'pending' | ChatFailure;
+  /** `sent`: answered before the feed loaded, so the feed doesn't show it yet. */
+  state: 'pending' | 'sent' | ChatFailure;
 };
 
 export type FeedItem = {
@@ -92,7 +93,7 @@ export const buildFeedItems = (
     const state = localMessages.find(
       (message) => message.client_id === clientId,
     )?.state;
-    return state === 'pending' ? undefined : state;
+    return state === 'pending' || state === 'sent' ? undefined : state;
   };
 
   const feedItems = entries.map((entry): FeedItem => {

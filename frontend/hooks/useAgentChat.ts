@@ -120,13 +120,18 @@ export const useAgentChat = ({
           text,
           client_id: clientId,
         });
-        queryClient.setQueryData<FeedData>(
-          REACT_QUERY_KEYS.AGENT_FEED_KEY(id),
-          (data) =>
-            mergeIntoNewestPage(data, {
-              entries: [message, reply],
-              has_more: false,
-            }),
+        const feedKey = REACT_QUERY_KEYS.AGENT_FEED_KEY(id);
+        // Until the feed's first page loads there is nothing to merge into, so
+        // the local message stays until the feed shows its user line.
+        if (!queryClient.getQueryData<FeedData>(feedKey)?.pages.length) {
+          setMessageState(id, clientId, 'sent');
+          return;
+        }
+        queryClient.setQueryData<FeedData>(feedKey, (data) =>
+          mergeIntoNewestPage(data, {
+            entries: [message, reply],
+            has_more: false,
+          }),
         );
         updateSession(id, (previous) => ({
           ...previous,
@@ -159,6 +164,7 @@ export const useAgentChat = ({
       const clientId = crypto.randomUUID();
       const now = Date.now();
       updateSession(serviceConfigId, (previous) => ({
+        ...previous,
         messages: [
           ...previous.messages,
           {
@@ -169,7 +175,6 @@ export const useAgentChat = ({
             state: 'pending',
           },
         ],
-        isMessagesOnlyOffByUser: previous.isMessagesOnlyOffByUser,
         isMessagesOnly:
           previous.isMessagesOnly || !previous.isMessagesOnlyOffByUser,
       }));
