@@ -175,6 +175,12 @@ describe('LoaderRow', () => {
       expect(screen.getByText('Agent is not running')).toBeInTheDocument();
     });
 
+    it('says the agent is running before it reports any step', () => {
+      renderRow({ rounds: [] });
+
+      expect(screen.getByText('Agent is running')).toBeInTheDocument();
+    });
+
     it('is hidden in Messages only while no reply is pending', () => {
       renderRow({ isMessagesOnly: true });
 
@@ -194,6 +200,14 @@ describe('LoaderRow', () => {
     fireEvent.click(screen.getByTestId('loader-row'));
 
     expect(screen.getByText('Agent Activity modal')).toBeInTheDocument();
+  });
+
+  it('does not open the Agent Activity modal while a reply is pending', () => {
+    renderRow({ isPending: true });
+
+    fireEvent.click(screen.getByTestId('loader-row'));
+
+    expect(screen.queryByText('Agent Activity modal')).toBeNull();
   });
 
   describe('reward badges', () => {
