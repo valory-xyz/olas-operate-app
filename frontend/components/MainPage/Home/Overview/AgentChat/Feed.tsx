@@ -166,6 +166,16 @@ export const Feed = ({
               <Spin size="small" />
             </Flex>
           )}
+          {isFetchOlderError && !isFetchingOlder && (
+            <Flex justify="center" align="center" gap={8}>
+              <Text className="text-sm text-neutral-tertiary">
+                {CHAT_COPY.olderError}
+              </Text>
+              <Button size="small" onClick={() => fetchOlder()}>
+                {CHAT_COPY.tryAgain}
+              </Button>
+            </Flex>
+          )}
           {items.map((item, index) => {
             const day = formatFeedDay(item.entry.ts);
             const isNewDay =

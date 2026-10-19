@@ -49,4 +49,5 @@ export const CHAT_COPY = {
   notReached: 'not reached yet',
   targetHint: 'To see or change the target, ask your agent.',
   feedError: "Couldn't load the agent's activity.",
+  olderError: "Couldn't load earlier activity.",
 } as const;

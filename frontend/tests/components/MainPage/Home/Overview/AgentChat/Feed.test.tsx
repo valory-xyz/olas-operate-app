@@ -73,6 +73,28 @@ describe('Feed', () => {
     expect(fetchOlder).not.toHaveBeenCalled();
   });
 
+  it('offers to try again when loading older entries failed', () => {
+    const { fetchOlder } = renderFeed({
+      hasOlder: true,
+      isFetchOlderError: true,
+    });
+
+    expect(
+      screen.getByText("Couldn't load earlier activity."),
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+
+    expect(fetchOlder).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows no load error while older entries load fine', () => {
+    renderFeed({ hasOlder: true });
+
+    expect(
+      screen.queryByText("Couldn't load earlier activity."),
+    ).not.toBeInTheDocument();
+  });
+
   it('shows the empty state when there is nothing to show', () => {
     renderFeed({ items: [] });
 
