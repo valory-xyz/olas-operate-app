@@ -16,21 +16,30 @@ export type FeedEventEntry = {
   /** Unix seconds. */
   ts: number;
   kind: 'event';
-  type: string;
   title: string;
   fields: FeedEventField[];
 };
 
-export type FeedMessageEntry = {
+type FeedMessageLine = {
   id: number;
   /** Unix seconds. */
   ts: number;
   kind: 'message';
-  role: 'user' | 'agent';
   text: string;
-  /** On user lines, and on agent lines with the `client_id` they answer. */
+};
+
+export type FeedUserMessageEntry = FeedMessageLine & {
+  role: 'user';
+  client_id: string;
+};
+
+export type FeedAgentMessageEntry = FeedMessageLine & {
+  role: 'agent';
+  /** The user line it answers; absent when the agent wrote unprompted. */
   client_id?: string;
 };
+
+export type FeedMessageEntry = FeedUserMessageEntry | FeedAgentMessageEntry;
 
 export type FeedEntry = FeedEventEntry | FeedMessageEntry;
 
@@ -41,12 +50,18 @@ export type FeedPage = {
   has_more: boolean;
 };
 
+/** A feed page as loaded by Pearl, after lines it can't show were dropped. */
+export type LoadedFeedPage = FeedPage & {
+  /** Oldest id the middleware sent, dropped lines included: the next `before`. */
+  oldestId?: number;
+};
+
 export type ChatRequest = {
   text: string;
   client_id: string;
 };
 
 export type ChatReply = {
-  message: FeedMessageEntry;
-  reply: FeedMessageEntry;
+  message: FeedUserMessageEntry;
+  reply: FeedAgentMessageEntry;
 };

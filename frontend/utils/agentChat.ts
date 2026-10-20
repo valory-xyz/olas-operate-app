@@ -1,12 +1,18 @@
 import { InfiniteData } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 
-import { FeedEntry, FeedMessageEntry, FeedPage } from '@/types/AgentChat';
+import {
+  FeedAgentMessageEntry,
+  FeedEntry,
+  FeedEventEntry,
+  FeedUserMessageEntry,
+  LoadedFeedPage,
+} from '@/types/AgentChat';
 
 /** `before` cursor of a feed page; `undefined` for the newest page. */
 export type FeedPageParam = number | undefined;
 
-export type FeedData = InfiniteData<FeedPage, FeedPageParam>;
+export type FeedData = InfiniteData<LoadedFeedPage, FeedPageParam>;
 
 /** Why a sent message has no reply. Session-only: the agent writes no failures. */
 export type ChatFailure = 'failed' | 'no-funds';
@@ -23,11 +29,18 @@ export type LocalChatMessage = {
   state: 'pending' | 'sent' | ChatFailure;
 };
 
-export type FeedItem = {
-  key: string;
-  entry: FeedEntry | Omit<FeedMessageEntry, 'id'>;
-  failure?: ChatFailure;
-};
+export type FeedItem =
+  | {
+      key: string;
+      entry: FeedEventEntry | FeedAgentMessageEntry;
+      failure?: never;
+    }
+  | {
+      key: string;
+      /** No `id` while it is only a local message. */
+      entry: FeedUserMessageEntry | Omit<FeedUserMessageEntry, 'id'>;
+      failure?: ChatFailure;
+    };
 
 const byId = (entries: FeedEntry[]) =>
   [...new Map(entries.map((entry) => [entry.id, entry])).values()].sort(
@@ -47,7 +60,7 @@ export const flattenFeedPages = (data: FeedData | undefined): FeedEntry[] =>
  */
 export const mergeIntoNewestPage = (
   data: FeedData | undefined,
-  polled: FeedPage,
+  polled: LoadedFeedPage,
 ): FeedData | undefined => {
   if (!data || data.pages.length === 0) return data;
 
@@ -88,8 +101,8 @@ export const buildFeedItems = (
     (entry.role === 'user' ? polledUserIds : answeredIds).add(entry.client_id);
   });
 
-  const failureOf = (clientId: string | undefined) => {
-    if (!clientId || answeredIds.has(clientId)) return undefined;
+  const failureOf = (clientId: string) => {
+    if (answeredIds.has(clientId)) return undefined;
     const state = localMessages.find(
       (message) => message.client_id === clientId,
     )?.state;
@@ -97,11 +110,10 @@ export const buildFeedItems = (
   };
 
   const feedItems = entries.map((entry): FeedItem => {
-    const failure =
-      entry.kind === 'message' && entry.role === 'user'
-        ? failureOf(entry.client_id)
-        : undefined;
-    return { key: `entry-${entry.id}`, entry, ...(failure && { failure }) };
+    const key = `entry-${entry.id}`;
+    if (entry.kind === 'event' || entry.role === 'agent') return { key, entry };
+    const failure = failureOf(entry.client_id);
+    return { key, entry, ...(failure && { failure }) };
   });
 
   const localItems = localMessages

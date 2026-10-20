@@ -131,7 +131,6 @@ export const FeedItemView = ({
     );
   }
 
-  const clientId = entry.client_id;
   return (
     <Flex vertical gap={4}>
       <UserBubble>
@@ -140,11 +139,11 @@ export const FeedItemView = ({
           <TimeText>{formatFeedTime(entry.ts)}</TimeText>
         </Flex>
       </UserBubble>
-      {failure && clientId && (
+      {failure && (
         <FailureRow
           failure={failure}
-          onRetry={() => onRetry(clientId)}
-          onDismiss={() => onDismiss(clientId)}
+          onRetry={() => onRetry(entry.client_id)}
+          onDismiss={() => onDismiss(entry.client_id)}
         />
       )}
     </Flex>

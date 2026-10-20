@@ -7,7 +7,7 @@ import { useMemo } from 'react';
 
 import { FIVE_SECONDS_INTERVAL, REACT_QUERY_KEYS } from '@/constants';
 import { AgentChatService } from '@/service/AgentChat';
-import { FeedPage } from '@/types/AgentChat';
+import { LoadedFeedPage } from '@/types/AgentChat';
 import { Maybe } from '@/types/Util';
 import {
   FeedData,
@@ -27,7 +27,7 @@ export const useAgentFeed = (serviceConfigId: Maybe<string>) => {
   const feedKey = REACT_QUERY_KEYS.AGENT_FEED_KEY(serviceConfigId);
 
   const feed = useInfiniteQuery<
-    FeedPage,
+    LoadedFeedPage,
     Error,
     FeedData,
     typeof feedKey,
@@ -41,7 +41,7 @@ export const useAgentFeed = (serviceConfigId: Maybe<string>) => {
       }),
     initialPageParam: undefined,
     getNextPageParam: (lastPage) =>
-      lastPage.has_more ? lastPage.entries[0]?.id : undefined,
+      lastPage.has_more ? lastPage.oldestId : undefined,
     enabled: !!serviceConfigId,
     // Kept fresh by the poll below; refetching would reload every page.
     staleTime: Infinity,
@@ -50,7 +50,7 @@ export const useAgentFeed = (serviceConfigId: Maybe<string>) => {
       state.status === 'error' && !state.data ? FIVE_SECONDS_INTERVAL : false,
   });
 
-  useQuery({
+  const poll = useQuery({
     queryKey: REACT_QUERY_KEYS.AGENT_FEED_LATEST_KEY(serviceConfigId),
     queryFn: async () => {
       const page = await AgentChatService.getAgentFeed(serviceConfigId!, {
@@ -71,6 +71,8 @@ export const useAgentFeed = (serviceConfigId: Maybe<string>) => {
     entries,
     isLoading: feed.isLoading,
     isError: feed.isError,
+    /** The latest poll failed, so newer entries may be missing. */
+    isPollError: poll.isError,
     hasOlder: feed.hasNextPage,
     isFetchingOlder: feed.isFetchingNextPage,
     isFetchOlderError: feed.isFetchNextPageError,

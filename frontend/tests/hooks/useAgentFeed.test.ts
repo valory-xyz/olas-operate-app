@@ -5,7 +5,9 @@ import { act, createElement, PropsWithChildren } from 'react';
 import { FIVE_SECONDS_INTERVAL } from '../../constants/intervals';
 import { FEED_PAGE_SIZE, useAgentFeed } from '../../hooks/useAgentFeed';
 import { AgentChatService } from '../../service/AgentChat';
-import { FeedEventEntry, FeedPage } from '../../types/AgentChat';
+import { LoadedFeedPage } from '../../types/AgentChat';
+import { Maybe } from '../../types/Util';
+import { makeFeedEvent } from '../helpers/factories';
 import { createTestQueryClient } from '../helpers/queryClient';
 
 jest.mock('../../service/AgentChat', () => ({
@@ -16,26 +18,20 @@ const mockGetAgentFeed = AgentChatService.getAgentFeed as jest.Mock;
 
 const SERVICE_CONFIG_ID = 'sc-1';
 
-const makeEvent = (id: number): FeedEventEntry => ({
-  id,
-  ts: 1_760_000_000 + id,
-  kind: 'event',
-  type: 'market_skipped',
-  title: 'Skipped a market',
-  fields: [],
-});
-
-const page = (entryIds: number[], hasMore: boolean): FeedPage => ({
-  entries: entryIds.map(makeEvent),
+const page = (entryIds: number[], hasMore: boolean): LoadedFeedPage => ({
+  entries: entryIds.map((id) => makeFeedEvent(id)),
   has_more: hasMore,
+  oldestId: entryIds[0],
 });
 
-const renderFeed = () => {
+const renderFeedFor = (serviceConfigId: Maybe<string>) => {
   const queryClient = createTestQueryClient();
   const wrapper = ({ children }: PropsWithChildren) =>
     createElement(QueryClientProvider, { client: queryClient }, children);
-  return renderHook(() => useAgentFeed(SERVICE_CONFIG_ID), { wrapper });
+  return renderHook(() => useAgentFeed(serviceConfigId), { wrapper });
 };
+
+const renderFeed = () => renderFeedFor(SERVICE_CONFIG_ID);
 
 const entryIds = (result: { current: ReturnType<typeof useAgentFeed> }) =>
   result.current.entries.map(({ id }) => id);
@@ -81,6 +77,73 @@ describe('useAgentFeed', () => {
     });
     await waitFor(() => expect(entryIds(result)).toEqual([19, 20, 21, 22]));
     expect(result.current.hasOlder).toBe(false);
+  });
+
+  it('loads older entries before the oldest id sent, even when that line was dropped', async () => {
+    mockGetAgentFeed.mockImplementation(
+      async (_id: string, { before }: { before?: number }) =>
+        before === undefined
+          ? { ...page([21, 22], true), oldestId: 19 }
+          : page([17, 18], false),
+    );
+    const { result } = renderFeed();
+    await waitFor(() => expect(entryIds(result)).toEqual([21, 22]));
+
+    await act(async () => {
+      await result.current.fetchOlder();
+    });
+
+    expect(mockGetAgentFeed).toHaveBeenCalledWith(SERVICE_CONFIG_ID, {
+      before: 19,
+      limit: FEED_PAGE_SIZE,
+    });
+    await waitFor(() => expect(entryIds(result)).toEqual([17, 18, 21, 22]));
+  });
+
+  it('keeps loading older pages when every line of a page was dropped', async () => {
+    mockGetAgentFeed.mockImplementation(
+      async (_id: string, { before }: { before?: number }) =>
+        before === undefined
+          ? { entries: [], has_more: true, oldestId: 30 }
+          : page([28, 29], false),
+    );
+    const { result } = renderFeed();
+    await waitFor(() => expect(result.current.hasOlder).toBe(true));
+
+    await act(async () => {
+      await result.current.fetchOlder();
+    });
+
+    await waitFor(() => expect(entryIds(result)).toEqual([28, 29]));
+  });
+
+  it('does not fetch without a service', async () => {
+    const { result } = renderFeedFor(undefined);
+
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(FIVE_SECONDS_INTERVAL * 2);
+    });
+
+    expect(mockGetAgentFeed).not.toHaveBeenCalled();
+    expect(result.current.entries).toEqual([]);
+  });
+
+  it('keeps the loaded entries and reports it when a poll fails', async () => {
+    mockGetAgentFeed
+      .mockResolvedValueOnce(page([21, 22], true))
+      .mockResolvedValueOnce(page([21, 22, 23], true));
+    const { result } = renderFeed();
+    await waitFor(() => expect(entryIds(result)).toEqual([21, 22, 23]));
+    expect(result.current.isPollError).toBe(false);
+
+    mockGetAgentFeed.mockRejectedValue(new Error('middleware down'));
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(FIVE_SECONDS_INTERVAL);
+    });
+
+    await waitFor(() => expect(result.current.isPollError).toBe(true));
+    expect(entryIds(result)).toEqual([21, 22, 23]);
+    expect(result.current.isError).toBe(false);
   });
 
   it('polls the newest page and merges new entries by id', async () => {

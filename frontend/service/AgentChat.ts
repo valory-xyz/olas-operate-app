@@ -4,27 +4,38 @@ import { BACKEND_URL_V2, CONTENT_TYPE_JSON_UTF8 } from '@/constants';
 import {
   ChatReply,
   ChatRequest,
+  FeedAgentMessageEntry,
   FeedEntry,
-  FeedMessageEntry,
-  FeedPage,
+  FeedUserMessageEntry,
+  LoadedFeedPage,
 } from '@/types/AgentChat';
 
-const FeedMessageEntrySchema: z.ZodType<FeedMessageEntry> = z.object({
+const FeedLineSchema = z.object({
   id: z.number().int(),
   ts: z.number(),
-  kind: z.literal('message'),
-  role: z.enum(['user', 'agent']),
-  text: z.string(),
-  client_id: z.string().optional(),
 });
 
+const FeedUserMessageEntrySchema: z.ZodType<FeedUserMessageEntry> =
+  FeedLineSchema.extend({
+    kind: z.literal('message'),
+    role: z.literal('user'),
+    text: z.string(),
+    client_id: z.string(),
+  });
+
+const FeedAgentMessageEntrySchema: z.ZodType<FeedAgentMessageEntry> =
+  FeedLineSchema.extend({
+    kind: z.literal('message'),
+    role: z.literal('agent'),
+    text: z.string(),
+    client_id: z.string().optional(),
+  });
+
 const FeedEntrySchema: z.ZodType<FeedEntry> = z.union([
-  FeedMessageEntrySchema,
-  z.object({
-    id: z.number().int(),
-    ts: z.number(),
+  FeedUserMessageEntrySchema,
+  FeedAgentMessageEntrySchema,
+  FeedLineSchema.extend({
     kind: z.literal('event'),
-    type: z.string(),
     title: z.string(),
     fields: z.array(
       z.object({
@@ -36,15 +47,18 @@ const FeedEntrySchema: z.ZodType<FeedEntry> = z.union([
   }),
 ]);
 
-const ChatReplySchema: z.ZodType<ChatReply> = z.object({
-  message: FeedMessageEntrySchema,
-  reply: FeedMessageEntrySchema,
+/** The middleware only serves lines with an integer `id`. */
+const FeedPageSchema = z.object({
+  entries: z.array(z.object({ id: z.number().int() }).passthrough()),
+  has_more: z.boolean(),
 });
 
-/**
- * A failed chat request. `status` is the HTTP status, or `undefined` when the
- * middleware could not be reached.
- */
+const ChatReplySchema: z.ZodType<ChatReply> = z.object({
+  message: FeedUserMessageEntrySchema,
+  reply: FeedAgentMessageEntrySchema,
+});
+
+/** A failed chat request. `status` is the HTTP status, if there was a response. */
 export class AgentChatError extends Error {
   constructor(
     message: string,
@@ -58,20 +72,23 @@ export class AgentChatError extends Error {
 const readErrorMessage = async (response: Response, fallback: string) => {
   const text = await response.text();
   try {
-    return JSON.parse(text)?.error ?? fallback;
+    const { error } = JSON.parse(text) ?? {};
+    if (typeof error === 'string') return error;
   } catch {
-    return fallback;
+    // Not JSON: the raw text below is the best message there is.
   }
+  return text.trim() || fallback;
 };
 
 /**
  * One page of the agent's feed, oldest → newest. Omit `before` for the newest
- * page. Lines that don't match the feed contract are dropped.
+ * page. Lines that don't match the feed contract are dropped and logged; a
+ * page that doesn't is an error.
  */
 const getAgentFeed = async (
   serviceConfigId: string,
   { before, limit }: { before?: number; limit?: number },
-): Promise<FeedPage> => {
+): Promise<LoadedFeedPage> => {
   const params = new URLSearchParams();
   if (before !== undefined) params.set('before', String(before));
   if (limit !== undefined) params.set('limit', String(limit));
@@ -87,18 +104,27 @@ const getAgentFeed = async (
     );
   }
 
-  const page: { entries?: unknown[]; has_more?: boolean } =
-    await response.json();
-  const entries = (page.entries ?? []).flatMap((entry) => {
+  const page = FeedPageSchema.safeParse(await response.json());
+  if (!page.success) {
+    throw new Error(`Unexpected agent feed page: ${page.error.message}`);
+  }
+
+  const entries = page.data.entries.flatMap((entry) => {
     const parsed = FeedEntrySchema.safeParse(entry);
-    return parsed.success ? [parsed.data] : [];
+    if (parsed.success) return [parsed.data];
+    console.error(`Dropped agent feed line ${entry.id}:`, parsed.error.issues);
+    return [];
   });
-  return { entries, has_more: page.has_more === true };
+  return {
+    entries,
+    has_more: page.data.has_more,
+    oldestId: page.data.entries[0]?.id,
+  };
 };
 
 /**
  * Sends a chat message to the running agent and waits for its reply.
- * Throws an `AgentChatError` carrying the HTTP status on failure.
+ * Throws an `AgentChatError` on failure.
  */
 const sendAgentChat = async (
   serviceConfigId: string,
