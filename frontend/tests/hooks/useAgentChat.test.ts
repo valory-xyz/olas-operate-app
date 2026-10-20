@@ -12,46 +12,24 @@ import {
   useAgentChat,
 } from '../../hooks/useAgentChat';
 import { AgentChatError, AgentChatService } from '../../service/AgentChat';
-import { ChatReply, FeedPage } from '../../types/AgentChat';
+import { ChatReply, LoadedFeedPage } from '../../types/AgentChat';
+import { Maybe } from '../../types/Util';
 import { FeedData } from '../../utils/agentChat';
+import { makeChatReply } from '../helpers/factories';
 
 jest.mock('../../service/AgentChat', () => ({
   ...jest.requireActual('../../service/AgentChat'),
   AgentChatService: { sendAgentChat: jest.fn() },
 }));
 
-jest.mock(
-  'ethers-multicall',
-  () =>
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    require('../mocks/ethersMulticall').ethersMulticallMock,
-);
-
 const mockSendAgentChat = AgentChatService.sendAgentChat as jest.Mock;
 
 const SERVICE_CONFIG_ID = 'sc-1';
+const OTHER_SERVICE_CONFIG_ID = 'sc-2';
 const CLIENT_ID = '11111111-1111-4111-8111-111111111111';
+const OTHER_CLIENT_ID = '22222222-2222-4222-8222-222222222222';
 
-const makeReply = (clientId: string): ChatReply => ({
-  message: {
-    id: 10,
-    ts: 1_760_000_010,
-    kind: 'message',
-    role: 'user',
-    text: 'Why?',
-    client_id: clientId,
-  },
-  reply: {
-    id: 11,
-    ts: 1_760_000_020,
-    kind: 'message',
-    role: 'agent',
-    text: 'Because.',
-    client_id: clientId,
-  },
-});
-
-const FEED_PAGE: FeedPage = { entries: [], has_more: false };
+const FEED_PAGE: LoadedFeedPage = { entries: [], has_more: false };
 
 /** A promise the test resolves or rejects when it wants the reply to land. */
 const deferred = <T>() => {
@@ -67,19 +45,34 @@ const deferred = <T>() => {
 const createQueryClient = () =>
   new QueryClient({ defaultOptions: { queries: { retry: false } } });
 
+type ChatProps = { serviceConfigId: Maybe<string>; isAgentStopped: boolean };
+
 const renderChat = (
-  initialProps = { isAgentStopped: false },
+  initialProps: ChatProps = {
+    serviceConfigId: SERVICE_CONFIG_ID,
+    isAgentStopped: false,
+  },
   queryClient: QueryClient = createQueryClient(),
 ) => {
   const wrapper = ({ children }: PropsWithChildren) =>
     createElement(QueryClientProvider, { client: queryClient }, children);
-  const hook = renderHook(
-    ({ isAgentStopped }) =>
-      useAgentChat({ serviceConfigId: SERVICE_CONFIG_ID, isAgentStopped }),
-    { wrapper, initialProps },
-  );
+  const hook = renderHook((props: ChatProps) => useAgentChat(props), {
+    wrapper,
+    initialProps,
+  });
   return { ...hook, queryClient };
 };
+
+const loadFeed = (queryClient: QueryClient, serviceConfigId: string) =>
+  queryClient.setQueryData<FeedData>(
+    REACT_QUERY_KEYS.AGENT_FEED_KEY(serviceConfigId),
+    { pages: [FEED_PAGE], pageParams: [undefined] },
+  );
+
+const feedEntries = (queryClient: QueryClient, serviceConfigId: string) =>
+  queryClient.getQueryData<FeedData>(
+    REACT_QUERY_KEYS.AGENT_FEED_KEY(serviceConfigId),
+  )?.pages[0].entries;
 
 const failWith = (status?: number) =>
   mockSendAgentChat.mockRejectedValueOnce(new AgentChatError('nope', status));
@@ -121,13 +114,10 @@ describe('useAgentChat', () => {
     });
 
     it('replaces the local message with the written lines on 200', async () => {
-      const reply = makeReply(CLIENT_ID);
+      const reply = makeChatReply(CLIENT_ID);
       mockSendAgentChat.mockResolvedValue(reply);
       const queryClient = createQueryClient();
-      queryClient.setQueryData<FeedData>(
-        REACT_QUERY_KEYS.AGENT_FEED_KEY(SERVICE_CONFIG_ID),
-        { pages: [FEED_PAGE], pageParams: [undefined] },
-      );
+      loadFeed(queryClient, SERVICE_CONFIG_ID);
       const { result } = renderChat(undefined, queryClient);
 
       await act(async () => {
@@ -136,15 +126,14 @@ describe('useAgentChat', () => {
 
       expect(result.current.localMessages).toEqual([]);
       expect(result.current.isPending).toBe(false);
-      expect(
-        queryClient.getQueryData<FeedData>(
-          REACT_QUERY_KEYS.AGENT_FEED_KEY(SERVICE_CONFIG_ID),
-        )?.pages[0].entries,
-      ).toEqual([reply.message, reply.reply]);
+      expect(feedEntries(queryClient, SERVICE_CONFIG_ID)).toEqual([
+        reply.message,
+        reply.reply,
+      ]);
     });
 
     it('keeps the message, no longer pending, on 200 before the feed has loaded', async () => {
-      mockSendAgentChat.mockResolvedValue(makeReply(CLIENT_ID));
+      mockSendAgentChat.mockResolvedValue(makeChatReply(CLIENT_ID));
       const { result, queryClient } = renderChat();
 
       await act(async () => {
@@ -262,10 +251,7 @@ describe('useAgentChat', () => {
     it('resends the same client_id on Try again and clears the message on 200', async () => {
       failWith(504);
       const queryClient = createQueryClient();
-      queryClient.setQueryData<FeedData>(
-        REACT_QUERY_KEYS.AGENT_FEED_KEY(SERVICE_CONFIG_ID),
-        { pages: [FEED_PAGE], pageParams: [undefined] },
-      );
+      loadFeed(queryClient, SERVICE_CONFIG_ID);
       const { result } = renderChat(undefined, queryClient);
       await act(async () => {
         result.current.send('Why?');
@@ -284,7 +270,7 @@ describe('useAgentChat', () => {
       expect(result.current.localMessages[0].state).toBe('pending');
 
       await act(async () => {
-        resend.resolve(makeReply(CLIENT_ID));
+        resend.resolve(makeChatReply(CLIENT_ID));
       });
       expect(result.current.localMessages).toEqual([]);
     });
@@ -327,6 +313,149 @@ describe('useAgentChat', () => {
     });
   });
 
+  describe('Try again and Dismiss', () => {
+    it('does not resend while another message is pending and shows the busy notice', async () => {
+      failWith(504);
+      const { result } = renderChat();
+      await act(async () => {
+        result.current.send('Why?');
+      });
+
+      jest.spyOn(crypto, 'randomUUID').mockReturnValue(OTHER_CLIENT_ID);
+      mockSendAgentChat.mockReturnValue(new Promise(() => {}));
+      await act(async () => {
+        result.current.send('And the risks?');
+      });
+      await act(async () => {
+        result.current.retry(CLIENT_ID);
+      });
+
+      expect(mockSendAgentChat).toHaveBeenCalledTimes(2);
+      expect(result.current.isBusyNoticeOpen).toBe(true);
+      expect(result.current.localMessages).toMatchObject([
+        { client_id: CLIENT_ID, state: 'failed' },
+        { client_id: OTHER_CLIENT_ID, state: 'pending' },
+      ]);
+    });
+
+    it('does nothing on Try again after the message was dismissed', async () => {
+      failWith(504);
+      const { result } = renderChat();
+      await act(async () => {
+        result.current.send('Why?');
+      });
+      await act(async () => {
+        result.current.dismiss(CLIENT_ID);
+      });
+
+      await act(async () => {
+        result.current.retry(CLIENT_ID);
+      });
+
+      expect(mockSendAgentChat).toHaveBeenCalledTimes(1);
+      expect(result.current.localMessages).toEqual([]);
+      expect(result.current.isPending).toBe(false);
+    });
+
+    it('ends failed and no longer pending when Try again also times out', async () => {
+      failWith(504);
+      const { result } = renderChat();
+      await act(async () => {
+        result.current.send('Why?');
+      });
+
+      failWith(504);
+      await act(async () => {
+        result.current.retry(CLIENT_ID);
+      });
+
+      expect(mockSendAgentChat).toHaveBeenCalledTimes(2);
+      expect(result.current.localMessages).toMatchObject([
+        { client_id: CLIENT_ID, state: 'failed' },
+      ]);
+      expect(result.current.isPending).toBe(false);
+    });
+
+    it('keeps the message as sent when Try again succeeds before the feed has loaded', async () => {
+      failWith(504);
+      const { result, queryClient } = renderChat();
+      await act(async () => {
+        result.current.send('Why?');
+      });
+
+      mockSendAgentChat.mockResolvedValueOnce(makeChatReply(CLIENT_ID));
+      await act(async () => {
+        result.current.retry(CLIENT_ID);
+      });
+
+      expect(result.current.localMessages).toMatchObject([
+        { client_id: CLIENT_ID, state: 'sent' },
+      ]);
+      expect(result.current.isPending).toBe(false);
+      expect(feedEntries(queryClient, SERVICE_CONFIG_ID)).toBeUndefined();
+    });
+  });
+
+  describe('switching agents', () => {
+    it('files a reply that lands after the switch under the agent it was sent to', async () => {
+      const pending = deferred<ChatReply>();
+      mockSendAgentChat.mockReturnValueOnce(pending.promise);
+      const queryClient = createQueryClient();
+      loadFeed(queryClient, SERVICE_CONFIG_ID);
+      loadFeed(queryClient, OTHER_SERVICE_CONFIG_ID);
+      const { result, rerender } = renderChat(undefined, queryClient);
+      await act(async () => {
+        result.current.send('Why?');
+      });
+
+      rerender({
+        serviceConfigId: OTHER_SERVICE_CONFIG_ID,
+        isAgentStopped: false,
+      });
+      expect(result.current.localMessages).toEqual([]);
+      expect(result.current.isPending).toBe(false);
+
+      const reply = makeChatReply(CLIENT_ID);
+      await act(async () => {
+        pending.resolve(reply);
+      });
+
+      expect(feedEntries(queryClient, SERVICE_CONFIG_ID)).toEqual([
+        reply.message,
+        reply.reply,
+      ]);
+      expect(feedEntries(queryClient, OTHER_SERVICE_CONFIG_ID)).toEqual([]);
+      expect(result.current.localMessages).toEqual([]);
+
+      rerender({ serviceConfigId: SERVICE_CONFIG_ID, isAgentStopped: false });
+      expect(result.current.localMessages).toEqual([]);
+      expect(result.current.isPending).toBe(false);
+    });
+
+    it('marks a failure that lands after the switch on the agent it was sent to', async () => {
+      const pending = deferred<ChatReply>();
+      mockSendAgentChat.mockReturnValueOnce(pending.promise);
+      const { result, rerender } = renderChat();
+      await act(async () => {
+        result.current.send('Why?');
+      });
+
+      rerender({
+        serviceConfigId: OTHER_SERVICE_CONFIG_ID,
+        isAgentStopped: false,
+      });
+      await act(async () => {
+        pending.reject(new AgentChatError('timeout', 504));
+      });
+      expect(result.current.localMessages).toEqual([]);
+
+      rerender({ serviceConfigId: SERVICE_CONFIG_ID, isAgentStopped: false });
+      expect(result.current.localMessages).toMatchObject([
+        { client_id: CLIENT_ID, state: 'failed' },
+      ]);
+    });
+  });
+
   describe('Messages only', () => {
     it('turns on when the user sends', async () => {
       mockSendAgentChat.mockReturnValue(new Promise(() => {}));
@@ -341,7 +470,7 @@ describe('useAgentChat', () => {
     });
 
     it('stays off after the user turns it off, even when sending again', async () => {
-      mockSendAgentChat.mockResolvedValue(makeReply(CLIENT_ID));
+      mockSendAgentChat.mockResolvedValue(makeChatReply(CLIENT_ID));
       const { result } = renderChat();
       await act(async () => {
         result.current.send('Why?');
@@ -358,7 +487,7 @@ describe('useAgentChat', () => {
     });
 
     it('resets when the agent stops, so the next send turns it on again', async () => {
-      mockSendAgentChat.mockResolvedValue(makeReply(CLIENT_ID));
+      mockSendAgentChat.mockResolvedValue(makeChatReply(CLIENT_ID));
       const { result, rerender } = renderChat();
       await act(async () => {
         result.current.send('Why?');
@@ -368,10 +497,10 @@ describe('useAgentChat', () => {
       });
 
       await act(async () => {
-        rerender({ isAgentStopped: true });
+        rerender({ serviceConfigId: SERVICE_CONFIG_ID, isAgentStopped: true });
       });
       await act(async () => {
-        rerender({ isAgentStopped: false });
+        rerender({ serviceConfigId: SERVICE_CONFIG_ID, isAgentStopped: false });
       });
       await act(async () => {
         result.current.send('Again');
@@ -388,7 +517,7 @@ describe('useAgentChat', () => {
       });
       expect(result.current.isMessagesOnly).toBe(true);
 
-      rerender({ isAgentStopped: true });
+      rerender({ serviceConfigId: SERVICE_CONFIG_ID, isAgentStopped: true });
 
       await waitFor(() => expect(result.current.isMessagesOnly).toBe(false));
     });

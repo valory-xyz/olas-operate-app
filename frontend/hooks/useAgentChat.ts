@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { REACT_QUERY_KEYS, THIRTY_SECONDS_INTERVAL } from '@/constants';
 import { AgentChatError, AgentChatService } from '@/service/AgentChat';
+import { ChatReply } from '@/types/AgentChat';
 import { Maybe } from '@/types/Util';
 import {
   chatFailureFromStatus,
@@ -19,20 +20,21 @@ export const BUSY_NOTICE_DURATION_MS = 5_000;
  */
 type ChatSession = {
   messages: LocalChatMessage[];
-  isMessagesOnly: boolean;
-  /** Turned off by the user: sending no longer turns it on until the agent stops. */
-  isMessagesOnlyOffByUser: boolean;
+  /**
+   * `auto`: off until the next send turns it on. `off-by-user`: sending no
+   * longer turns it on until the agent stops.
+   */
+  messagesOnly: 'auto' | 'on' | 'off-by-user';
 };
 
-const EMPTY_SESSION: ChatSession = {
-  messages: [],
-  isMessagesOnly: false,
-  isMessagesOnlyOffByUser: false,
-};
+const EMPTY_SESSION: ChatSession = { messages: [], messagesOnly: 'auto' };
 
 type UseAgentChatParams = {
   serviceConfigId: Maybe<string>;
-  /** Not deployed, deploying or stopping: resets Messages only. */
+  /**
+   * Stopped or never run, i.e. not deploying, deployed or stopping. Resets
+   * Messages only.
+   */
   isAgentStopped: boolean;
 };
 
@@ -94,9 +96,9 @@ export const useAgentChat = ({
   useEffect(() => {
     if (!isAgentStopped || !serviceConfigId) return;
     updateSession(serviceConfigId, (previous) =>
-      previous.isMessagesOnly || previous.isMessagesOnlyOffByUser
-        ? { ...previous, isMessagesOnly: false, isMessagesOnlyOffByUser: false }
-        : previous,
+      previous.messagesOnly === 'auto'
+        ? previous
+        : { ...previous, messagesOnly: 'auto' },
     );
   }, [isAgentStopped, serviceConfigId, updateSession]);
 
@@ -126,25 +128,12 @@ export const useAgentChat = ({
 
   const post = useCallback(
     async (id: string, clientId: string, text: string) => {
+      let chatReply: ChatReply;
       try {
-        const { message, reply } = await AgentChatService.sendAgentChat(id, {
+        chatReply = await AgentChatService.sendAgentChat(id, {
           text,
           client_id: clientId,
         });
-        const feedKey = REACT_QUERY_KEYS.AGENT_FEED_KEY(id);
-        // Until the feed's first page loads there is nothing to merge into, so
-        // the local message stays until the feed shows its user line.
-        if (!queryClient.getQueryData<FeedData>(feedKey)?.pages.length) {
-          setMessageState(id, clientId, 'sent');
-          return;
-        }
-        queryClient.setQueryData<FeedData>(feedKey, (data) =>
-          mergeIntoNewestPage(data, {
-            entries: [message, reply],
-            has_more: false,
-          }),
-        );
-        removeMessage(id, clientId);
       } catch (error) {
         console.error(`Agent chat failed for client_id ${clientId}:`, error);
         const failure = chatFailureFromStatus(
@@ -154,12 +143,28 @@ export const useAgentChat = ({
         // attempt, so the message keeps its failed state.
         if (failure === 'busy') setIsBusyNoticeOpen(true);
         setMessageState(id, clientId, failure === 'busy' ? 'failed' : failure);
+        return;
       }
+
+      const feedKey = REACT_QUERY_KEYS.AGENT_FEED_KEY(id);
+      // Until the feed's first page loads there is nothing to merge into, so
+      // the local message stays until the feed shows its user line.
+      if (!queryClient.getQueryData<FeedData>(feedKey)?.pages.length) {
+        setMessageState(id, clientId, 'sent');
+        return;
+      }
+      queryClient.setQueryData<FeedData>(feedKey, (data) =>
+        mergeIntoNewestPage(data, {
+          entries: [chatReply.message, chatReply.reply],
+          has_more: false,
+        }),
+      );
+      removeMessage(id, clientId);
     },
     [queryClient, removeMessage, setMessageState],
   );
 
-  /** Returns whether the message was sent, so the input can be cleared. */
+  /** Returns whether the message was queued, so the input can be cleared. */
   const send = useCallback(
     (text: string) => {
       if (!serviceConfigId) return false;
@@ -181,8 +186,8 @@ export const useAgentChat = ({
             state: 'pending',
           },
         ],
-        isMessagesOnly:
-          previous.isMessagesOnly || !previous.isMessagesOnlyOffByUser,
+        messagesOnly:
+          previous.messagesOnly === 'auto' ? 'on' : previous.messagesOnly,
       }));
       post(serviceConfigId, clientId, text);
       return true;
@@ -222,8 +227,7 @@ export const useAgentChat = ({
       if (!serviceConfigId) return;
       updateSession(serviceConfigId, (previous) => ({
         ...previous,
-        isMessagesOnly: isOn,
-        isMessagesOnlyOffByUser: !isOn,
+        messagesOnly: isOn ? 'on' : 'off-by-user',
       }));
     },
     [serviceConfigId, updateSession],
@@ -235,7 +239,7 @@ export const useAgentChat = ({
     isStillThinking: !!pendingMessage && isStillThinking,
     isBusyNoticeOpen,
     closeBusyNotice: () => setIsBusyNoticeOpen(false),
-    isMessagesOnly: session.isMessagesOnly,
+    isMessagesOnly: session.messagesOnly === 'on',
     setMessagesOnly,
     send,
     retry,
