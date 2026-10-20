@@ -26,11 +26,13 @@ export const useChatCostNote = (
 
   const markCostNoteSeen = useCallback(() => {
     if (!serviceConfigId) return;
-    store?.set?.(`${agentType}.chatCostNoteSeen`, {
-      ...seenByService,
-      [serviceConfigId]: true,
-    });
-  }, [agentType, seenByService, serviceConfigId, store]);
+    // One key per instance, so two quick writes can't overwrite each other.
+    store
+      ?.set?.(`${agentType}.chatCostNoteSeen.${serviceConfigId}`, true)
+      .catch((error) =>
+        console.error('Failed to save the chat cost note as seen:', error),
+      );
+  }, [agentType, serviceConfigId, store]);
 
   return { shouldShowCostNote, markCostNoteSeen };
 };

@@ -1,4 +1,4 @@
-import { renderHook } from '@testing-library/react';
+import { renderHook, waitFor } from '@testing-library/react';
 
 import { AgentMap } from '../../constants/agent';
 import { useChatCostNote } from '../../hooks/useChatCostNote';
@@ -19,7 +19,7 @@ const SERVICE_CONFIG_ID = 'sc-1';
 
 describe('useChatCostNote', () => {
   beforeEach(() => {
-    mockStoreSet.mockReset();
+    mockStoreSet.mockReset().mockResolvedValue(undefined);
     mockStoreState = {};
   });
 
@@ -71,7 +71,7 @@ describe('useChatCostNote', () => {
     expect(result.current.shouldShowCostNote).toBe(false);
   });
 
-  it('persists the seen flag per agent instance, keeping the others', () => {
+  it('persists the seen flag under its own agent instance key only', () => {
     mockStoreState = {
       [AgentMap.Optimus]: {
         isInitialFunded: true,
@@ -84,9 +84,28 @@ describe('useChatCostNote', () => {
 
     result.current.markCostNoteSeen();
 
-    expect(mockStoreSet).toHaveBeenCalledWith('optimus.chatCostNoteSeen', {
-      'sc-other': true,
-      [SERVICE_CONFIG_ID]: true,
-    });
+    expect(mockStoreSet).toHaveBeenCalledTimes(1);
+    expect(mockStoreSet).toHaveBeenCalledWith(
+      `optimus.chatCostNoteSeen.${SERVICE_CONFIG_ID}`,
+      true,
+    );
+  });
+
+  it('logs a failed write instead of leaving it unhandled', async () => {
+    const error = new Error('store down');
+    mockStoreSet.mockRejectedValue(error);
+    const consoleError = jest
+      .spyOn(console, 'error')
+      .mockImplementation(() => {});
+    const { result } = renderHook(() =>
+      useChatCostNote(AgentMap.Optimus, SERVICE_CONFIG_ID),
+    );
+
+    result.current.markCostNoteSeen();
+
+    await waitFor(() =>
+      expect(consoleError).toHaveBeenCalledWith(expect.any(String), error),
+    );
+    consoleError.mockRestore();
   });
 });
