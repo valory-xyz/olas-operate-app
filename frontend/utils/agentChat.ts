@@ -37,7 +37,6 @@ export type FeedItem =
     }
   | {
       key: string;
-      /** No `id` while it is only a local message. */
       entry: FeedUserMessageEntry | Omit<FeedUserMessageEntry, 'id'>;
       failure?: ChatFailure;
     };

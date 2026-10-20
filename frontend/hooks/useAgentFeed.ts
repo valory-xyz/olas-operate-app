@@ -71,7 +71,7 @@ export const useAgentFeed = (serviceConfigId: Maybe<string>) => {
     entries,
     isLoading: feed.isLoading,
     isError: feed.isError,
-    /** The latest poll failed, so newer entries may be missing. */
+    /** Newer entries may be missing. */
     isPollError: poll.isError,
     hasOlder: feed.hasNextPage,
     isFetchingOlder: feed.isFetchingNextPage,

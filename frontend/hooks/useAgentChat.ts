@@ -31,10 +31,7 @@ const EMPTY_SESSION: ChatSession = { messages: [], messagesOnly: 'auto' };
 
 type UseAgentChatParams = {
   serviceConfigId: Maybe<string>;
-  /**
-   * Stopped or never run, i.e. not deploying, deployed or stopping. Resets
-   * Messages only.
-   */
+  /** Resets Messages only. */
   isAgentStopped: boolean;
 };
 
