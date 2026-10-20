@@ -141,6 +141,12 @@ export const Feed = ({
     if (!element || element.scrollHeight <= element.clientHeight) fetchOlder();
   }, [items, hasOlder, isFetchingOlder, isFetchOlderError, fetchOlder]);
 
+  const pollError = isPollError && (
+    <Text className="text-sm text-neutral-tertiary text-center">
+      {CHAT_COPY.feedError}
+    </Text>
+  );
+
   const olderError = (
     <Flex justify="center" align="center" gap={8}>
       <Text className="text-sm text-neutral-tertiary">
@@ -183,7 +189,12 @@ export const Feed = ({
         </Flex>
       );
     }
-    return <>{emptyState}</>;
+    return (
+      <Flex vertical flex={1} className="pb-24">
+        {emptyState}
+        {pollError}
+      </Flex>
+    );
   }
 
   return (
@@ -211,11 +222,7 @@ export const Feed = ({
               </Fragment>
             );
           })}
-          {isPollError && (
-            <Text className="text-sm text-neutral-tertiary text-center">
-              {CHAT_COPY.feedError}
-            </Text>
-          )}
+          {pollError}
         </Flex>
       </ScrollArea>
       {isJumpVisible && (

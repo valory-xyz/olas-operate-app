@@ -105,6 +105,15 @@ describe('Feed', () => {
     expect(screen.getByText('empty')).toBeInTheDocument();
   });
 
+  it('flags a failed poll under the empty state', () => {
+    renderFeed({ items: [], isPollError: true });
+
+    expect(screen.getByText('empty')).toBeInTheDocument();
+    expect(
+      screen.getByText("Couldn't load the agent's activity."),
+    ).toBeInTheDocument();
+  });
+
   it('flags a failed poll while still showing the loaded entries', () => {
     renderFeed({ isPollError: true });
 
