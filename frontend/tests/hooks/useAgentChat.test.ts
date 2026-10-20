@@ -151,6 +151,32 @@ describe('useAgentChat', () => {
       ).toBeUndefined();
     });
 
+    it('keeps an answered message as sent, not failed, when the feed merge throws', async () => {
+      mockSendAgentChat.mockResolvedValue(makeChatReply(CLIENT_ID));
+      const queryClient = createQueryClient();
+      queryClient.setQueryData(
+        REACT_QUERY_KEYS.AGENT_FEED_KEY(SERVICE_CONFIG_ID),
+        {
+          pages: [{ entries: null, has_more: false }],
+          pageParams: [undefined],
+        },
+      );
+      const { result } = renderChat(undefined, queryClient);
+
+      await act(async () => {
+        result.current.send('Why?');
+      });
+
+      expect(result.current.localMessages).toMatchObject([
+        { client_id: CLIENT_ID, state: 'sent' },
+      ]);
+      expect(result.current.isPending).toBe(false);
+      expect(console.error).toHaveBeenCalledWith(
+        expect.stringContaining('not merged'),
+        expect.any(TypeError),
+      );
+    });
+
     it('shows Still thinking after 30 seconds of waiting', () => {
       jest.useFakeTimers();
       mockSendAgentChat.mockReturnValue(new Promise(() => {}));

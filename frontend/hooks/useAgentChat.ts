@@ -149,17 +149,21 @@ export const useAgentChat = ({
       const feedKey = REACT_QUERY_KEYS.AGENT_FEED_KEY(id);
       // Until the feed's first page loads there is nothing to merge into, so
       // the local message stays until the feed shows its user line.
-      if (!queryClient.getQueryData<FeedData>(feedKey)?.pages.length) {
-        setMessageState(id, clientId, 'sent');
-        return;
+      if (queryClient.getQueryData<FeedData>(feedKey)?.pages.length) {
+        try {
+          queryClient.setQueryData<FeedData>(feedKey, (data) =>
+            mergeIntoNewestPage(data, {
+              entries: [chatReply.message, chatReply.reply],
+              has_more: false,
+            }),
+          );
+          removeMessage(id, clientId);
+          return;
+        } catch (error) {
+          console.error(`Agent chat reply for ${clientId} not merged:`, error);
+        }
       }
-      queryClient.setQueryData<FeedData>(feedKey, (data) =>
-        mergeIntoNewestPage(data, {
-          entries: [chatReply.message, chatReply.reply],
-          has_more: false,
-        }),
-      );
-      removeMessage(id, clientId);
+      setMessageState(id, clientId, 'sent');
     },
     [queryClient, removeMessage, setMessageState],
   );
