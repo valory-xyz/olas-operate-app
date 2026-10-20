@@ -69,16 +69,22 @@ export class AgentChatError extends Error {
   }
 }
 
+const parseErrorField = (text: string): unknown => {
+  try {
+    return JSON.parse(text)?.error;
+  } catch {
+    return undefined;
+  }
+};
+
 const readErrorMessage = async (response: Response, fallback: string) => {
   const text = await response.text();
-  try {
-    const { error } = JSON.parse(text) ?? {};
-    if (typeof error === 'string') return error;
-  } catch {
-    // Not JSON: the raw text below is the best message there is.
-  }
-  return text.trim() || fallback;
+  const error = parseErrorField(text);
+  return typeof error === 'string' ? error : text.trim() || fallback;
 };
+
+/** Feed ids are per service, so a dropped line is keyed by both. */
+const loggedDroppedLines = new Set<string>();
 
 /**
  * One page of the agent's feed, oldest → newest. Omit `before` for the newest
@@ -112,7 +118,14 @@ const getAgentFeed = async (
   const entries = page.data.entries.flatMap((entry) => {
     const parsed = FeedEntrySchema.safeParse(entry);
     if (parsed.success) return [parsed.data];
-    console.error(`Dropped agent feed line ${entry.id}:`, parsed.error.issues);
+    const lineKey = `${serviceConfigId}:${entry.id}`;
+    if (!loggedDroppedLines.has(lineKey)) {
+      loggedDroppedLines.add(lineKey);
+      console.error(
+        `Dropped agent feed line ${entry.id}:`,
+        parsed.error.issues,
+      );
+    }
     return [];
   });
   return {

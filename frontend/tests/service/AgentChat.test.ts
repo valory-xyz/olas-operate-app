@@ -109,13 +109,27 @@ describe('AgentChatService', () => {
       });
 
       it('are logged with their id and what did not match', async () => {
-        await AgentChatService.getAgentFeed(SERVICE_CONFIG_ID, {});
+        await AgentChatService.getAgentFeed('sc-logged', {});
 
         expect(console.error).toHaveBeenCalledTimes(DROPPED_LINES.length);
         expect(console.error).toHaveBeenCalledWith(
           'Dropped agent feed line 4:',
           [expect.objectContaining({ code: 'invalid_union' })],
         );
+      });
+
+      it('are logged once, not on every poll that returns them again', async () => {
+        await AgentChatService.getAgentFeed('sc-polled', {});
+        await AgentChatService.getAgentFeed('sc-polled', {});
+
+        expect(console.error).toHaveBeenCalledTimes(DROPPED_LINES.length);
+      });
+
+      it("are logged again for another agent's feed with the same ids", async () => {
+        await AgentChatService.getAgentFeed('sc-agent-a', {});
+        await AgentChatService.getAgentFeed('sc-agent-b', {});
+
+        expect(console.error).toHaveBeenCalledTimes(2 * DROPPED_LINES.length);
       });
 
       it('still count for the cursor of the next older page', async () => {
