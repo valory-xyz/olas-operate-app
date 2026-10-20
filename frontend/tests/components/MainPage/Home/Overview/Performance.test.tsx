@@ -1,21 +1,20 @@
-import { useQuery } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
 import { Performance } from '../../../../../components/MainPage/Home/Overview/Performance';
-import { useService, useServices } from '../../../../../hooks';
+import {
+  useAgentPerformance,
+  useService,
+  useServices,
+} from '../../../../../hooks';
 
 // ---------------------------------------------------------------------------
 // Module mocks
 // ---------------------------------------------------------------------------
 jest.mock('../../../../../hooks', () => ({
+  useAgentPerformance: jest.fn(),
   useService: jest.fn(),
   useServices: jest.fn(),
-}));
-
-jest.mock('@tanstack/react-query', () => ({
-  ...jest.requireActual('@tanstack/react-query'),
-  useQuery: jest.fn(),
 }));
 
 jest.mock('../../../../../components/ui', () => ({
@@ -35,7 +34,7 @@ jest.mock('../../../../../components/ui', () => ({
 
 const mockUseService = useService as jest.Mock;
 const mockUseServices = useServices as jest.Mock;
-const mockUseQuery = useQuery as jest.Mock;
+const mockUseAgentPerformance = useAgentPerformance as jest.Mock;
 
 const BANNER_TEXT = /Performance metrics aren't available in this app version/i;
 
@@ -52,7 +51,7 @@ describe('Performance', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockUseService.mockReturnValue({ isServiceActive: false });
-    mockUseQuery.mockReturnValue({
+    mockUseAgentPerformance.mockReturnValue({
       data: {
         metrics: [
           { name: 'ROI', value: '5%', is_primary: true, description: null },

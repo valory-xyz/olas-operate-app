@@ -4,8 +4,7 @@ import styled from 'styled-components';
 
 import { Alert, CardFlex, InfoTooltip, Tooltip } from '@/components/ui';
 import { COLOR } from '@/constants';
-import { useService, useServices } from '@/hooks';
-import { useAgentPerformance } from '@/hooks/useAgentPerformance';
+import { useAgentPerformance, useService, useServices } from '@/hooks';
 import { Optional } from '@/types/Util';
 import { getTimeAgo, sanitizeHtml } from '@/utils';
 

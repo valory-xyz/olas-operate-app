@@ -97,10 +97,7 @@ const HeaderMetrics = () => {
   );
 };
 
-/**
- * The banners of the Performance section (`Performance.tsx`), under the same
- * conditions.
- */
+/** Why metrics are missing or stale: unavailable, none yet, or captured while stopped. */
 const PerformanceAlert = () => {
   const { selectedService, selectedAgentConfig } = useServices();
   const { isServiceActive } = useService(selectedService?.service_config_id);
