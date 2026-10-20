@@ -4,6 +4,7 @@ import React from 'react';
 import { Feed } from '../../../../../../components/MainPage/Home/Overview/AgentChat/Feed';
 import { useServices } from '../../../../../../hooks';
 import { FeedItem } from '../../../../../../utils/agentChat';
+import { makeFeedEvent } from '../../../../../helpers/factories';
 
 jest.mock('../../../../../../hooks', () => ({
   useServices: jest.fn(),
@@ -11,14 +12,7 @@ jest.mock('../../../../../../hooks', () => ({
 
 const makeItem = (id: number): FeedItem => ({
   key: `entry-${id}`,
-  entry: {
-    id,
-    ts: 1_760_000_000 + id,
-    kind: 'event',
-    type: 'market_skipped',
-    title: `Skipped market ${id}`,
-    fields: [],
-  },
+  entry: makeFeedEvent(id, { title: `Skipped market ${id}` }),
 });
 
 const ITEMS: FeedItem[] = [1, 2].map(makeItem);
@@ -29,6 +23,7 @@ const makeProps = (overrides: Partial<FeedProps>): FeedProps => ({
   items: ITEMS,
   isLoading: false,
   isError: false,
+  isPollError: false,
   hasOlder: false,
   isFetchingOlder: false,
   isFetchOlderError: false,
@@ -108,6 +103,55 @@ describe('Feed', () => {
     renderFeed({ items: [] });
 
     expect(screen.getByText('empty')).toBeInTheDocument();
+  });
+
+  it('flags a failed poll while still showing the loaded entries', () => {
+    renderFeed({ isPollError: true });
+
+    expect(
+      screen.getByText("Couldn't load the agent's activity."),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Skipped market 1')).toBeInTheDocument();
+  });
+
+  describe('when Messages only hides every loaded entry', () => {
+    it('keeps loading older entries instead of showing the empty state', () => {
+      const { fetchOlder } = renderFeed({ items: [], hasOlder: true });
+
+      expect(fetchOlder).toHaveBeenCalledTimes(1);
+      expect(screen.queryByText('empty')).toBeNull();
+    });
+
+    it('waits for the older entries already loading', () => {
+      const { fetchOlder } = renderFeed({
+        items: [],
+        hasOlder: true,
+        isFetchingOlder: true,
+      });
+
+      expect(fetchOlder).not.toHaveBeenCalled();
+      expect(screen.queryByText('empty')).toBeNull();
+    });
+
+    it('offers to try again, not the empty state, when an older load failed', () => {
+      const { fetchOlder } = renderFeed({
+        items: [],
+        hasOlder: true,
+        isFetchOlderError: true,
+      });
+
+      expect(fetchOlder).not.toHaveBeenCalled();
+      expect(screen.queryByText('empty')).toBeNull();
+      fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+      expect(fetchOlder).toHaveBeenCalledTimes(1);
+    });
+
+    it('shows the empty state once there are no older entries', () => {
+      const { fetchOlder } = renderFeed({ items: [], hasOlder: false });
+
+      expect(fetchOlder).not.toHaveBeenCalled();
+      expect(screen.getByText('empty')).toBeInTheDocument();
+    });
   });
 });
 
@@ -221,5 +265,19 @@ describe('Feed scroll position', () => {
     scrollFeedTo(40);
 
     expect(fetchOlder).toHaveBeenCalledTimes(1);
+  });
+
+  it('leaves loading older entries to Try again after that load failed', () => {
+    const fetchOlder = jest.fn();
+    render(
+      <Feed
+        {...makeProps({ hasOlder: true, isFetchOlderError: true, fetchOlder })}
+      />,
+    );
+
+    scrollFeedTo(40);
+    scrollFeedTo(20);
+
+    expect(fetchOlder).not.toHaveBeenCalled();
   });
 });

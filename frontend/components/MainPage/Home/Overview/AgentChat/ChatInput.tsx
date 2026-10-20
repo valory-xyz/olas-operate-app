@@ -42,9 +42,8 @@ const PopoverContent = styled(Flex)`
 type ChatInputProps = {
   text: string;
   onTextChange: (text: string) => void;
-  /** Sends the text; returns whether it was sent. */
   onSend: () => boolean;
-  /** The agent can answer now (deployed and alive). */
+  /** Deployed and not reported down. */
   canSend: boolean;
   isMessagesOnly: boolean;
   onMessagesOnlyChange: (isOn: boolean) => void;
@@ -69,23 +68,29 @@ export const ChatInput = ({
   const [isCostNoteOpen, setIsCostNoteOpen] = useState(false);
   const canSubmit = canSend && text.trim().length > 0;
 
+  const submit = () => {
+    if (onSend()) onTextChange('');
+  };
+
   const send = () => {
     if (!canSubmit) return;
     if (shouldShowCostNote) {
       setIsCostNoteOpen(true);
       return;
     }
-    if (onSend()) onTextChange('');
+    submit();
   };
 
   const confirmCostNote = () => {
     setIsCostNoteOpen(false);
     onCostNoteSeen();
-    if (onSend()) onTextChange('');
+    submit();
   };
 
   const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key !== 'Enter' || event.shiftKey) return;
+    // Enter that confirms an IME composition must not send.
+    if (event.nativeEvent.isComposing) return;
     event.preventDefault();
     send();
   };

@@ -74,7 +74,6 @@ export const AgentChat = () => {
   // Stopped or never run: no input. Starting, stopping or down: the input is
   // shown but can't send, as the middleware only forwards while it runs.
   const isStopped = !isActiveDeploymentStatus(deploymentStatus);
-  const canSend = isAgentActive;
 
   const [text, setText] = useState('');
   const feed = useAgentFeed(serviceConfigId);
@@ -100,6 +99,7 @@ export const AgentChat = () => {
             items={items}
             isLoading={feed.isLoading}
             isError={feed.isError}
+            isPollError={feed.isPollError}
             hasOlder={feed.hasOlder}
             isFetchingOlder={feed.isFetchingOlder}
             isFetchOlderError={feed.isFetchOlderError}
@@ -129,7 +129,7 @@ export const AgentChat = () => {
               text={text}
               onTextChange={setText}
               onSend={() => chat.send(text.trim())}
-              canSend={canSend}
+              canSend={isAgentActive}
               isMessagesOnly={chat.isMessagesOnly}
               onMessagesOnlyChange={chat.setMessagesOnly}
               isBusyNoticeOpen={chat.isBusyNoticeOpen}

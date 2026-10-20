@@ -38,6 +38,40 @@ const isCostNoteOpen = () => {
   return !!popover && !popover.classList.contains('ant-popover-hidden');
 };
 
+describe('ChatInput Enter key', () => {
+  const textarea = () => screen.getByRole('textbox', { name: 'Message' });
+
+  it('sends on Enter', () => {
+    const { onSend, onTextChange } = renderInput({
+      shouldShowCostNote: false,
+    });
+
+    fireEvent.keyDown(textarea(), { key: 'Enter' });
+
+    expect(onSend).toHaveBeenCalledTimes(1);
+    expect(onTextChange).toHaveBeenCalledWith('');
+  });
+
+  it('does not send on the Enter that confirms an IME composition', () => {
+    const { onSend } = renderInput({ shouldShowCostNote: false });
+
+    fireEvent.keyDown(textarea(), { key: 'Enter', isComposing: true });
+
+    expect(onSend).not.toHaveBeenCalled();
+  });
+
+  it('keeps the text when the message was not queued', () => {
+    const { onTextChange } = renderInput({
+      shouldShowCostNote: false,
+      onSend: jest.fn(() => false),
+    });
+
+    fireEvent.keyDown(textarea(), { key: 'Enter' });
+
+    expect(onTextChange).not.toHaveBeenCalled();
+  });
+});
+
 describe('ChatInput cost note', () => {
   beforeEach(() => jest.useFakeTimers());
   afterEach(() => jest.useRealTimers());

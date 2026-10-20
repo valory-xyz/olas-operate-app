@@ -2,7 +2,6 @@ import { Button, Flex, Spin, Typography } from 'antd';
 import {
   Fragment,
   ReactNode,
-  useCallback,
   useEffect,
   useLayoutEffect,
   useRef,
@@ -60,6 +59,8 @@ type FeedProps = {
   items: FeedItem[];
   isLoading: boolean;
   isError: boolean;
+  /** Polling for newer entries failed, so the feed may be behind. */
+  isPollError: boolean;
   hasOlder: boolean;
   isFetchingOlder: boolean;
   /** The last attempt to load older entries failed. */
@@ -80,6 +81,7 @@ export const Feed = ({
   items,
   isLoading,
   isError,
+  isPollError,
   hasOlder,
   isFetchingOlder,
   isFetchOlderError,
@@ -95,10 +97,10 @@ export const Feed = ({
   });
   const [isJumpVisible, setIsJumpVisible] = useState(false);
 
-  const scrollToLatest = useCallback((behavior: ScrollBehavior = 'auto') => {
+  const scrollToLatest = () => {
     const element = scrollRef.current;
-    element?.scrollTo?.({ top: element.scrollHeight, behavior });
-  }, []);
+    element?.scrollTo?.({ top: element.scrollHeight, behavior: 'smooth' });
+  };
 
   const firstKey = items[0]?.key;
 
@@ -127,17 +129,28 @@ export const Feed = ({
       element.scrollHeight - element.scrollTop - element.clientHeight;
     isAtBottomRef.current = distanceFromBottom <= EDGE_THRESHOLD;
     setIsJumpVisible(!isAtBottomRef.current);
-    if (element.scrollTop <= EDGE_THRESHOLD && hasOlder && !isFetchingOlder) {
-      fetchOlder();
-    }
+    const canFetchOlder = hasOlder && !isFetchingOlder && !isFetchOlderError;
+    if (element.scrollTop <= EDGE_THRESHOLD && canFetchOlder) fetchOlder();
   };
 
-  // A short first page may not fill the view, so nothing would ever scroll.
+  // Nothing to scroll means scrolling up never loads more: a short first page,
+  // or Messages only hiding every loaded entry while older ones may hold some.
   useEffect(() => {
+    if (!hasOlder || isFetchingOlder || isFetchOlderError) return;
     const element = scrollRef.current;
-    if (!element || !hasOlder || isFetchingOlder || isFetchOlderError) return;
-    if (element.scrollHeight <= element.clientHeight) fetchOlder();
+    if (!element || element.scrollHeight <= element.clientHeight) fetchOlder();
   }, [items, hasOlder, isFetchingOlder, isFetchOlderError, fetchOlder]);
+
+  const olderError = (
+    <Flex justify="center" align="center" gap={8}>
+      <Text className="text-sm text-neutral-tertiary">
+        {CHAT_COPY.olderError}
+      </Text>
+      <Button size="small" onClick={() => fetchOlder()}>
+        {CHAT_COPY.tryAgain}
+      </Button>
+    </Flex>
+  );
 
   if (isLoading) {
     return (
@@ -155,7 +168,23 @@ export const Feed = ({
     );
   }
 
-  if (items.length === 0) return <>{emptyState}</>;
+  if (items.length === 0) {
+    if (isFetchOlderError && !isFetchingOlder) {
+      return (
+        <Flex flex={1} justify="center" align="center">
+          {olderError}
+        </Flex>
+      );
+    }
+    if (hasOlder) {
+      return (
+        <Flex flex={1} justify="center" align="center">
+          <Spin />
+        </Flex>
+      );
+    }
+    return <>{emptyState}</>;
+  }
 
   return (
     <FeedContainer>
@@ -166,16 +195,7 @@ export const Feed = ({
               <Spin size="small" />
             </Flex>
           )}
-          {isFetchOlderError && !isFetchingOlder && (
-            <Flex justify="center" align="center" gap={8}>
-              <Text className="text-sm text-neutral-tertiary">
-                {CHAT_COPY.olderError}
-              </Text>
-              <Button size="small" onClick={() => fetchOlder()}>
-                {CHAT_COPY.tryAgain}
-              </Button>
-            </Flex>
-          )}
+          {isFetchOlderError && !isFetchingOlder && olderError}
           {items.map((item, index) => {
             const day = formatFeedDay(item.entry.ts);
             const isNewDay =
@@ -191,6 +211,11 @@ export const Feed = ({
               </Fragment>
             );
           })}
+          {isPollError && (
+            <Text className="text-sm text-neutral-tertiary text-center">
+              {CHAT_COPY.feedError}
+            </Text>
+          )}
         </Flex>
       </ScrollArea>
       {isJumpVisible && (
@@ -198,7 +223,7 @@ export const Feed = ({
           shape="circle"
           icon={<TbChevronDown />}
           aria-label="Jump to latest"
-          onClick={() => scrollToLatest('smooth')}
+          onClick={scrollToLatest}
         />
       )}
     </FeedContainer>

@@ -16,6 +16,12 @@ import {
 } from '../../../../../../hooks';
 import { FeedEntry } from '../../../../../../types/AgentChat';
 import { LocalChatMessage } from '../../../../../../utils/agentChat';
+import {
+  DEFAULT_CHAT_CLIENT_ID,
+  makeFeedAgentMessage,
+  makeFeedEvent,
+  makeLocalChatMessage,
+} from '../../../../../helpers/factories';
 
 jest.mock('../../../../../../hooks', () => ({
   useAgentActivity: jest.fn(),
@@ -50,14 +56,9 @@ const mockUseAgentChat = useAgentChat as jest.Mock;
 const mockUseChatCostNote = useChatCostNote as jest.Mock;
 
 const SERVICE_CONFIG_ID = 'sc-1';
-const CLIENT_ID = 'client-1';
+const CLIENT_ID = DEFAULT_CHAT_CLIENT_ID;
 
-const TRADE_EVENT: FeedEntry = {
-  id: 1,
-  ts: 1_760_000_000,
-  kind: 'event',
-  type: 'trade_placed',
-  title: 'Placed a trade',
+const TRADE_EVENT = makeFeedEvent(1, {
   fields: [
     {
       label: 'Market',
@@ -66,26 +67,9 @@ const TRADE_EVENT: FeedEntry = {
     },
     { label: 'AI confidence', value: '93%' },
   ],
-};
-
-const AGENT_MESSAGE: FeedEntry = {
-  id: 2,
-  ts: 1_760_000_100,
-  kind: 'message',
-  role: 'agent',
-  text: 'I trade small.',
-};
-
-const makeLocal = (
-  overrides: Partial<LocalChatMessage> = {},
-): LocalChatMessage => ({
-  client_id: CLIENT_ID,
-  text: 'Why?',
-  ts: 1_760_000_200,
-  sentAt: 1_760_000_200_000,
-  state: 'pending',
-  ...overrides,
 });
+
+const AGENT_MESSAGE = makeFeedAgentMessage(2, { text: 'I trade small.' });
 
 const chat = {
   localMessages: [] as LocalChatMessage[],
@@ -131,6 +115,7 @@ const renderChat = ({
     entries,
     isLoading: false,
     isError: false,
+    isPollError: false,
     hasOlder: false,
     isFetchingOlder: false,
     isFetchOlderError: false,
@@ -185,7 +170,9 @@ describe('AgentChat', () => {
 
     it('shows a failed reply with Try again and Dismiss', () => {
       renderChat({
-        chatOverrides: { localMessages: [makeLocal({ state: 'failed' })] },
+        chatOverrides: {
+          localMessages: [makeLocalChatMessage({ state: 'failed' })],
+        },
       });
 
       expect(screen.getByText("Couldn't get an answer.")).toBeInTheDocument();
@@ -197,7 +184,9 @@ describe('AgentChat', () => {
 
     it('shows a message the Agent Wallet could not pay for with Dismiss only', () => {
       renderChat({
-        chatOverrides: { localMessages: [makeLocal({ state: 'no-funds' })] },
+        chatOverrides: {
+          localMessages: [makeLocalChatMessage({ state: 'no-funds' })],
+        },
       });
 
       expect(
