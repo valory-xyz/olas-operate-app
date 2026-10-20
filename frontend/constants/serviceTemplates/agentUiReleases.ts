@@ -28,12 +28,12 @@ export const AGENT_UI_RELEASES: Partial<Record<AgentType, AgentUiRelease>> = {
   [AgentMap.PredictTrader]: {
     owner: 'valory-xyz',
     name: AGENT_UI_MONOREPO,
-    version: 'v0.1.20-omenstrat-trader',
+    version: 'v0.1.22-rc1-omenstrat-trader',
   },
   [AgentMap.Polystrat]: {
     owner: 'valory-xyz',
     name: AGENT_UI_MONOREPO,
-    version: 'v0.1.19-polystrat-trader',
+    version: 'v0.1.22-rc1-polystrat-trader',
   },
   [AgentMap.Modius]: {
     owner: 'valory-xyz',
