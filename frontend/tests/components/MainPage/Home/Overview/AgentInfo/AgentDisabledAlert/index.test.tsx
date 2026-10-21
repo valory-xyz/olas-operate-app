@@ -124,8 +124,7 @@ const setup = ({
   isInitialFunded = true,
   isStoreLoading = false,
   hasHomeChainSafe = true,
-  isMasterWalletFetched = true,
-  isMasterWalletFetchFailed = false,
+  isMasterWalletsLoaded = true,
   isAnotherAgentRunning = false,
   isAgentGeoRestricted = false,
   deprecatedStakingProgram = false,
@@ -135,8 +134,7 @@ const setup = ({
   isInitialFunded?: boolean;
   isStoreLoading?: boolean;
   hasHomeChainSafe?: boolean;
-  isMasterWalletFetched?: boolean;
-  isMasterWalletFetchFailed?: boolean;
+  isMasterWalletsLoaded?: boolean;
   isAnotherAgentRunning?: boolean;
   isAgentGeoRestricted?: boolean;
   deprecatedStakingProgram?: boolean;
@@ -170,10 +168,9 @@ const setup = ({
     ? [makeMasterSafe(EvmChainIdMap.Gnosis)]
     : [];
   (useMasterWalletContext as jest.Mock).mockReturnValue({
-    isFetched: isMasterWalletFetched || isMasterWalletFetchFailed,
-    masterWallets: isMasterWalletFetched ? masterSafes : undefined,
+    masterWallets: isMasterWalletsLoaded ? masterSafes : undefined,
     getMasterSafeOf: (chainId: number) =>
-      isMasterWalletFetched
+      isMasterWalletsLoaded
         ? masterSafes.find((safe) => safe.evmChainId === chainId)
         : undefined,
   });
@@ -255,7 +252,6 @@ describe('AgentDisabledAlert', () => {
     });
   });
 
-  // A funding run can complete, and set the flag, before the Safe exists.
   describe('unfinished setup without a home-chain Pearl Safe', () => {
     it('shows the unfinished-setup alert even when initially funded', () => {
       setup({ isInitialFunded: true, hasHomeChainSafe: false });
@@ -269,19 +265,7 @@ describe('AgentDisabledAlert', () => {
       setup({
         isInitialFunded: true,
         hasHomeChainSafe: false,
-        isMasterWalletFetched: false,
-      });
-
-      expect(screen.queryByText('unfinished-setup')).not.toBeInTheDocument();
-      expect(useCompleteAgentSetup).toHaveBeenLastCalledWith(false);
-    });
-
-    // react-query marks a query fetched after an error too, with no data.
-    it('does not show it when fetching master wallets failed', () => {
-      setup({
-        isInitialFunded: true,
-        isMasterWalletFetched: false,
-        isMasterWalletFetchFailed: true,
+        isMasterWalletsLoaded: false,
       });
 
       expect(screen.queryByText('unfinished-setup')).not.toBeInTheDocument();
@@ -302,10 +286,20 @@ describe('AgentDisabledAlert', () => {
       expect(useCompleteAgentSetup).toHaveBeenLastCalledWith(false);
     });
 
-    it('comes after the phased-out alert', () => {
-      setup({ agentConfig: { isPhasedOut: true }, hasHomeChainSafe: false });
+    it.each([
+      ['phased-out', { agentConfig: { isPhasedOut: true } }],
+      [
+        'geo-blocked',
+        {
+          agentConfig: { isGeoLocationRestricted: true },
+          isAgentGeoRestricted: true,
+        },
+      ],
+      ['under-construction', { agentConfig: { isUnderConstruction: true } }],
+    ])('comes after the %s alert', (expected, overrides) => {
+      setup({ ...overrides, isInitialFunded: true, hasHomeChainSafe: false });
 
-      expect(screen.getByText('phased-out')).toBeInTheDocument();
+      expect(screen.getByText(expected)).toBeInTheDocument();
       expect(screen.queryByText('unfinished-setup')).not.toBeInTheDocument();
     });
   });
@@ -322,6 +316,14 @@ describe('AgentDisabledAlert', () => {
       ],
       ['under-construction', { agentConfig: { isUnderConstruction: true } }],
       ['unfinished-setup', { isInitialFunded: false }],
+      [
+        'unfinished-setup',
+        {
+          isInitialFunded: true,
+          hasHomeChainSafe: false,
+          isAnotherAgentRunning: true,
+        },
+      ],
       ['another-running', { isAnotherAgentRunning: true }],
       ['contract-deprecated', { deprecatedStakingProgram: true }],
       [
