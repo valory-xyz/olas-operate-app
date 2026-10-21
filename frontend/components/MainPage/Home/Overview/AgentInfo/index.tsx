@@ -89,24 +89,47 @@ export const AboutAgent = () => {
   );
 };
 
-export const ChainBadge = () => {
+const useHomeChain = () => {
   const { selectedAgentConfig } = useServices();
-  const chainConfig = CHAIN_CONFIG[selectedAgentConfig.evmHomeChainId];
-  const chainName = chainConfig?.name;
+  const chainName = CHAIN_CONFIG[selectedAgentConfig.evmHomeChainId]?.name;
+  return {
+    chainName,
+    tooltip: `${selectedAgentConfig.displayName} is operating on ${chainName} chain`,
+  };
+};
+
+const ChainImage = ({ chainName }: { chainName: string }) => (
+  <Image
+    src={`/chains/${kebabCase(chainName)}-chain.png`}
+    alt={`${chainName} logo`}
+    width={16}
+    height={16}
+  />
+);
+
+export const ChainBadge = () => {
+  const { chainName, tooltip } = useHomeChain();
 
   if (!chainName) return null;
   return (
-    <Tooltip
-      title={`${selectedAgentConfig.displayName} is operating on ${chainName} chain`}
-    >
+    <Tooltip title={tooltip}>
       <IconButton align="center" justify="center" style={{ padding: 10 }}>
-        <Image
-          src={`/chains/${kebabCase(chainName)}-chain.png`}
-          alt={`${chainName} logo`}
-          width={16}
-          height={16}
-        />
+        <ChainImage chainName={chainName} />
       </IconButton>
+    </Tooltip>
+  );
+};
+
+/** The home chain's logo alone, for next to the agent's name. */
+export const ChainLogo = () => {
+  const { chainName, tooltip } = useHomeChain();
+
+  if (!chainName) return null;
+  return (
+    <Tooltip title={tooltip}>
+      <Flex className="flex-none">
+        <ChainImage chainName={chainName} />
+      </Flex>
     </Tooltip>
   );
 };

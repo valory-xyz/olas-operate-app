@@ -25,7 +25,7 @@ import {
   AboutAgent,
   AgentInfoAlerts,
   AutoRunAlert,
-  ChainBadge,
+  ChainLogo,
   IconButton,
 } from '../AgentInfo';
 import { AgentRunButton } from '../AgentInfo/AgentRunButton';
@@ -149,14 +149,16 @@ export const AgentChatHeader = () => {
           className="rounded-12"
         />
         <Flex vertical align="flex-start" gap={16} className="flex-auto">
-          <Title level={5} className="m-0">
-            {displayedAgentName}
-          </Title>
+          <Flex align="center" gap={12}>
+            <Title level={5} className="m-0">
+              {displayedAgentName}
+            </Title>
+            <ChainLogo />
+          </Flex>
           {isAutoRunEnabled ? <AutoRunAlert /> : <AgentRunButton />}
         </Flex>
         <SidePanel vertical gap={12}>
           <Flex gap={8} align="center">
-            <ChainBadge />
             <AboutAgent />
             {hasSettings && (
               <Tooltip title="Agent settings">

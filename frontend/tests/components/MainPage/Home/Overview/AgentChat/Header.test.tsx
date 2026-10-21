@@ -39,7 +39,7 @@ jest.mock(
   '../../../../../../components/MainPage/Home/Overview/AgentInfo',
   () => ({
     AboutAgent: () => null,
-    ChainBadge: () => null,
+    ChainLogo: () => <span>chain logo</span>,
     AutoRunAlert: () => null,
     AgentInfoAlerts: () => <div>AgentInfo banners</div>,
     IconButton: ({
@@ -137,6 +137,14 @@ describe('AgentChatHeader', () => {
 
     expect(screen.getByText('fafon-norlo48')).toBeInTheDocument();
     expect(screen.getByText('Pause Agent')).toBeInTheDocument();
+  });
+
+  it('shows the chain logo next to the agent name', () => {
+    renderHeader();
+
+    expect(screen.getByText('fafon-norlo48').parentElement).toContainElement(
+      screen.getByText('chain logo'),
+    );
   });
 
   it("shows the agent's two key metrics, primary first, with its tooltip", () => {
