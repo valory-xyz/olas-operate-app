@@ -321,3 +321,26 @@ describe('BLOCKSCOUT_URL_BY_MIDDLEWARE_CHAIN', () => {
     }
   });
 });
+
+describe('TRANSACTION_HISTORY_SUBGRAPH_*_BY_EVM_CHAIN — Base', () => {
+  let urls: typeof import('../../constants/urls');
+
+  beforeAll(async () => {
+    urls = await import('../../constants/urls');
+  });
+
+  // Pinned as literals on purpose: the service tests override Base's URL and
+  // revision, so this is the test that fails if Base is pointed away from the
+  // transactions-base squid or its revision drifts from sqd.
+  it('points Base at the transactions-base squid', () => {
+    expect(
+      urls.TRANSACTION_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN[EvmChainIdMap.Base],
+    ).toBe('https://subgraph.autonolas.tech/squid/transactions-base/graphql');
+  });
+
+  it('reads Base with the sqd schema revision', () => {
+    expect(urls.getTransactionHistorySchemaRevision(EvmChainIdMap.Base)).toBe(
+      'sqd',
+    );
+  });
+});
