@@ -39,6 +39,8 @@ export const getTransactionRowLabel = (
       // Safe, Pearl labels this as a gas top-up. See VLOP-73 design.
       if (row.agentInstanceAddress) return 'Allocated for execution costs';
       return `Fund ${agent}`;
+    case FUNDS_CATEGORY.AGENT_SAFE_TO_AGENT_EOA:
+      return 'Agent Safe to Agent Signer movement';
     default:
       return 'Transaction';
   }

@@ -10,6 +10,7 @@ import { EvmChainId } from '@/constants/chains';
 import {
   FundsCategory,
   TransactionHistoryRow as TransactionHistoryRowType,
+  TransferDirection,
 } from '@/types/TransactionHistory';
 import { generateAgentName } from '@/utils/generateAgentName';
 import { asMiddlewareChain } from '@/utils/middlewareHelpers';
@@ -79,6 +80,12 @@ const TimestampLink = styled.a`
     text-decoration: underline;
   }
 `;
+
+const SIGN_BY_DIRECTION: Record<TransferDirection, string> = {
+  in: '+',
+  out: '-',
+  internal: '',
+};
 
 const formatTimestamp = (unixSeconds: number): string => {
   if (!unixSeconds) return '';
@@ -197,7 +204,8 @@ export const TransactionHistoryRow = ({
             tokenInfo?.decimals ?? 18,
             isEth ? 5 : 4,
           );
-          const prefix = transfer.direction === 'in' ? '+' : '-';
+          // 'internal' moves stay inside the wallet, so they carry no sign.
+          const prefix = SIGN_BY_DIRECTION[transfer.direction];
           const className =
             transfer.direction === 'in'
               ? 'text-success-default'
