@@ -51,7 +51,7 @@ const RequiresProfileOpenAlert = ({
   />
 );
 
-export const MetricsCapturedTimestampAlert = ({
+const MetricsCapturedTimestampAlert = ({
   timestamp,
 }: {
   timestamp: number;

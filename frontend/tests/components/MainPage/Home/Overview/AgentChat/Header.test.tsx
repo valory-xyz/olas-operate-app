@@ -192,11 +192,16 @@ describe('AgentChatHeader', () => {
   });
 
   it("shows today's Overview banners at the bottom of the header", () => {
-    renderHeader({ isServiceActive: false, timestamp: 1_760_000_000 });
+    renderHeader();
 
     expect(screen.getByText('AgentInfo banners')).toBeInTheDocument();
     expect(screen.getByText('Staking banner')).toBeInTheDocument();
-    expect(screen.getByText('Data captured banner')).toBeInTheDocument();
+  });
+
+  it('does not show when the metrics were captured, even while stopped', () => {
+    renderHeader({ isServiceActive: false, timestamp: 1_760_000_000 });
+
+    expect(screen.queryByText('Data captured banner')).toBeNull();
   });
 
   it('shows the no-metrics banner when the agent has no metrics yet', () => {

@@ -13,12 +13,7 @@ import {
 } from '@/components/ui';
 import { COLOR, PAGES } from '@/constants';
 import { useAutoRunContext } from '@/context/AutoRunProvider';
-import {
-  useAgentPerformance,
-  usePageState,
-  useService,
-  useServices,
-} from '@/hooks';
+import { useAgentPerformance, usePageState, useServices } from '@/hooks';
 import { sanitizeHtml } from '@/utils';
 
 import {
@@ -29,11 +24,7 @@ import {
   IconButton,
 } from '../AgentInfo';
 import { AgentRunButton } from '../AgentInfo/AgentRunButton';
-import {
-  MetricsCapturedTimestampAlert,
-  MetricsUnavailableAlert,
-  NoMetricsAlert,
-} from '../Performance';
+import { MetricsUnavailableAlert, NoMetricsAlert } from '../Performance';
 import { StakingAlert, useCanManageStaking } from '../Staking/Staking';
 import { Streak } from '../Staking/Streak';
 
@@ -97,10 +88,9 @@ const HeaderMetrics = () => {
   );
 };
 
-/** Why metrics are missing or stale: unavailable, none yet, or captured while stopped. */
+/** Why metrics are missing: unavailable, or none yet. */
 const PerformanceAlert = () => {
-  const { selectedService, selectedAgentConfig } = useServices();
-  const { isServiceActive } = useService(selectedService?.service_config_id);
+  const { selectedAgentConfig } = useServices();
   const { data: agentPerformance, isLoading } = useAgentPerformance();
 
   if (selectedAgentConfig.arePerformanceMetricsUnavailable) {
@@ -108,11 +98,6 @@ const PerformanceAlert = () => {
   }
   if (isLoading) return null;
   if (!agentPerformance?.metrics?.length) return <NoMetricsAlert />;
-  if (!isServiceActive && agentPerformance.timestamp) {
-    return (
-      <MetricsCapturedTimestampAlert timestamp={agentPerformance.timestamp} />
-    );
-  }
   return null;
 };
 
