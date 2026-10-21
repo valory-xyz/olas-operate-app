@@ -87,6 +87,8 @@ const AGENT_MARKDOWN_COMPONENTS: Components = {
     ) : (
       <>{children}</>
     ),
+  // An image would load from any host the reply names, with no click.
+  img: ({ alt }) => <>{alt}</>,
 };
 
 const EventCard = ({ entry }: { entry: FeedEventEntry }) => (

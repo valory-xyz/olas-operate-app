@@ -61,5 +61,15 @@ describe('FeedItemView agent reply', () => {
     const { container } = renderAgentReply('<img src=x onerror="alert(1)">');
 
     expect(container.querySelector('img[src="x"]')).toBeNull();
+    expect(screen.getByText(/<img src=x onerror=/)).toBeInTheDocument();
+  });
+
+  it('shows an image as its alt text without loading it', () => {
+    const { container } = renderAgentReply(
+      '![market chart](https://example.com/chart.png)',
+    );
+
+    expect(container.querySelector('img[src*="chart.png"]')).toBeNull();
+    expect(screen.getByText('market chart')).toBeInTheDocument();
   });
 });

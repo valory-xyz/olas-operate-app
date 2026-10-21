@@ -33,9 +33,7 @@ const config: Config = {
   ],
 };
 
-// react-markdown and its unified/remark dependencies ship ESM only. next/jest
-// transforms no node_modules beyond transpilePackages, and custom
-// transformIgnorePatterns can only add to its own, so widen its allowlist.
+// ESM-only deps of react-markdown, added to next/jest's node_modules transform allowlist.
 const ESM_ONLY_PACKAGES = [
   'react-markdown',
   'remark-.*',
