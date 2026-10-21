@@ -65,7 +65,11 @@ export const useCanManageStaking = () => {
 };
 
 /** The staking banner that applies right now, if any. */
-export const StakingAlert = () => {
+export const StakingAlert = ({
+  withRunAgent = true,
+}: {
+  withRunAgent?: boolean;
+}) => {
   const { isAgentEvicted, isEligibleForStaking } =
     useActiveStakingContractDetails();
   const { isServiceRunning } = useAgentActivity();
@@ -74,7 +78,7 @@ export const StakingAlert = () => {
   if (selectedAgentConfig.isUnderConstruction)
     return <UnderConstructionAlert />;
   if (isAgentEvicted && !isEligibleForStaking) return <EvictionAlert />;
-  if (!isServiceRunning) return <RunAgentAlert />;
+  if (withRunAgent && !isServiceRunning) return <RunAgentAlert />;
   return null;
 };
 

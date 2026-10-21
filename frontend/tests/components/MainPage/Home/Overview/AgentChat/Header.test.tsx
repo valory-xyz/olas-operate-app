@@ -72,7 +72,11 @@ jest.mock(
 jest.mock(
   '../../../../../../components/MainPage/Home/Overview/Staking/Staking',
   () => ({
-    StakingAlert: () => <div>Staking banner</div>,
+    StakingAlert: ({ withRunAgent = true }: { withRunAgent?: boolean }) => (
+      <div>
+        {withRunAgent ? 'Staking banner with run prompt' : 'Staking banner'}
+      </div>
+    ),
     useCanManageStaking: jest.fn(),
   }),
 );

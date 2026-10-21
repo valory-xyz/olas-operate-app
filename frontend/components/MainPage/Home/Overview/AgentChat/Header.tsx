@@ -183,7 +183,7 @@ export const AgentChatHeader = () => {
       </Flex>
       <AgentInfoAlerts />
       <AlertSlot>
-        <StakingAlert />
+        <StakingAlert withRunAgent={false} />
       </AlertSlot>
       <AlertSlot>
         <PerformanceAlert />
