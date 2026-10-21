@@ -66,7 +66,7 @@ const staleStatus = () => statusAgedBy(13 * 3600);
 const STALE_BANNER = 'Recent transactions may not appear yet';
 
 // An Agent Safe → Agent EOA native top-up (OPE-1965) in the squid's row shape:
-// 2 POL, `agentSafe` set, SEMANTIC source. Not yet emitted by the live squid.
+// 2 POL, `agentSafe` set, SEMANTIC source.
 const POLYSTRAT_AGENT_EOA = '0x5f1b4b4e2a1f4e6e2c8f3c9d7a0b1c2d3e4f5a6b';
 const TOP_UP_LABEL = 'Agent Safe to Agent Signer movement';
 const topUpMovement = {
