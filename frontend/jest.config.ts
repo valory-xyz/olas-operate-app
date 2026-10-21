@@ -33,5 +33,53 @@ const config: Config = {
   ],
 };
 
+// react-markdown and its unified/remark dependencies ship ESM only. next/jest
+// transforms no node_modules beyond transpilePackages, and custom
+// transformIgnorePatterns can only add to its own, so widen its allowlist.
+const ESM_ONLY_PACKAGES = [
+  'react-markdown',
+  'remark-.*',
+  'micromark.*',
+  'mdast-.*',
+  'hast-.*',
+  'unist-.*',
+  'unified',
+  'vfile.*',
+  'estree-.*',
+  'markdown-table',
+  'html-url-attributes',
+  'devlop',
+  'bail',
+  'trough',
+  'ccount',
+  'zwitch',
+  'longest-streak',
+  'trim-lines',
+  'property-information',
+  'space-separated-tokens',
+  'comma-separated-tokens',
+  'character-entities.*',
+  'character-reference-invalid',
+  'decode-named-character-reference',
+  'parse-entities',
+  'stringify-entities',
+  'is-alphabetical',
+  'is-alphanumerical',
+  'is-decimal',
+  'is-hexadecimal',
+  'is-plain-obj',
+  'escape-string-regexp',
+].join('|');
+
 // createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async
-export default createJestConfig(config);
+const jestConfig = async (): Promise<Config> => {
+  const resolved = await createJestConfig(config)();
+  return {
+    ...resolved,
+    transformIgnorePatterns: resolved.transformIgnorePatterns?.map((pattern) =>
+      pattern.replace('/node_modules/(?!.pnpm)(?!(', `$&${ESM_ONLY_PACKAGES}|`),
+    ),
+  };
+};
+
+export default jestConfig;

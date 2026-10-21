@@ -1,5 +1,7 @@
 import { Button, Flex, Typography } from 'antd';
 import Image from 'next/image';
+import Markdown, { Components } from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import styled from 'styled-components';
 
 import { COLOR, UNICODE_SYMBOLS } from '@/constants';
@@ -38,9 +40,27 @@ const UserBubble = styled.div`
   overflow-wrap: anywhere;
 `;
 
-const AgentText = styled(Text)`
-  white-space: pre-wrap;
+const AgentText = styled(Typography)`
+  min-width: 0;
   overflow-wrap: anywhere;
+
+  p {
+    margin: 0;
+  }
+
+  p + p {
+    margin-top: 8px;
+  }
+
+  ul,
+  ol {
+    margin: 4px 0 8px;
+    padding-left: 24px;
+  }
+
+  li {
+    margin-bottom: 4px;
+  }
 `;
 
 const TimeText = styled(Text)`
@@ -57,6 +77,17 @@ const FieldValue = ({ value, url }: FeedEventField) =>
   ) : (
     <Text>{value}</Text>
   );
+
+const AGENT_MARKDOWN_COMPONENTS: Components = {
+  a: ({ href, children }) =>
+    href && isWebUrl(href) ? (
+      <a href={href} target="_blank" rel="noopener noreferrer">
+        {children}
+      </a>
+    ) : (
+      <>{children}</>
+    ),
+};
 
 const EventCard = ({ entry }: { entry: FeedEventEntry }) => (
   <Flex vertical gap={8}>
@@ -125,7 +156,14 @@ export const FeedItemView = ({
           alt={selectedAgentType}
           className="rounded-4 flex-none"
         />
-        <AgentText className="flex-auto">{entry.text}</AgentText>
+        <AgentText className="flex-auto">
+          <Markdown
+            remarkPlugins={[remarkGfm]}
+            components={AGENT_MARKDOWN_COMPONENTS}
+          >
+            {entry.text}
+          </Markdown>
+        </AgentText>
         <TimeText>{formatFeedTime(entry.ts)}</TimeText>
       </Flex>
     );
