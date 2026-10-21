@@ -19,17 +19,19 @@ import {
 export const FEED_PAGE_SIZE = 20;
 
 /**
- * The newest entries, paging back until they reach `fetchedUpTo` so none in
- * between are skipped.
+ * Fetches the newest entries, paging back until they reach `fetchedUpTo` so
+ * none in between are skipped. Each page is passed to `merge` as it arrives,
+ * so a failed page keeps those before it.
  */
-const fetchNewestSince = async (
+const pollNewestSince = async (
   serviceConfigId: string,
   fetchedUpTo: number | undefined,
-): Promise<LoadedFeedPage> => {
+  merge: (page: LoadedFeedPage) => void,
+) => {
   const newest = await AgentChatService.getAgentFeed(serviceConfigId, {
     limit: FEED_PAGE_SIZE,
   });
-  const entries = [...newest.entries];
+  merge(newest);
   let oldest = newest;
   while (
     fetchedUpTo !== undefined &&
@@ -42,11 +44,12 @@ const fetchNewestSince = async (
       before,
       limit: FEED_PAGE_SIZE,
     });
-    entries.push(...oldest.entries);
+    // Keeps the newest page's `newestId`, which only applies once this page
+    // reaches `fetchedUpTo`.
+    merge({ ...oldest, newestId: newest.newestId });
     // A page not below `before` would never reach `fetchedUpTo`.
     if (oldest.oldestId === undefined || oldest.oldestId >= before) break;
   }
-  return { ...oldest, entries, newestId: newest.newestId };
 };
 
 /**
@@ -86,11 +89,12 @@ export const useAgentFeed = (serviceConfigId: Maybe<string>) => {
     queryFn: async () => {
       const fetchedUpTo =
         queryClient.getQueryData<FeedData>(feedKey)?.pages[0]?.newestId;
-      const page = await fetchNewestSince(serviceConfigId!, fetchedUpTo);
-      queryClient.setQueryData<FeedData>(feedKey, (data) =>
-        mergeIntoNewestPage(data, page),
+      await pollNewestSince(serviceConfigId!, fetchedUpTo, (page) =>
+        queryClient.setQueryData<FeedData>(feedKey, (data) =>
+          mergeIntoNewestPage(data, page),
+        ),
       );
-      return page;
+      return null;
     },
     // Not `feed.isSuccess`: a failed older page sets it false with data loaded.
     enabled: !!serviceConfigId && !!feed.data,

@@ -81,10 +81,17 @@ export const mergeIntoNewestPage = (
 ): FeedData | undefined => {
   if (!data || data.pages.length === 0) return data;
 
-  const fetchedUpTo = data.pages[0].newestId;
-  // The feed was empty when loaded, so there is no history to keep.
+  const [newest] = data.pages;
+  const fetchedUpTo = newest.newestId;
+  // The feed was empty when loaded: the polled page takes over paging, keeping
+  // only entries added since, e.g. a chat reply.
   if (fetchedUpTo === undefined) {
-    return { pages: [polled], pageParams: [undefined] };
+    return {
+      pages: [
+        { ...polled, entries: byId([...newest.entries, ...polled.entries]) },
+      ],
+      pageParams: [undefined],
+    };
   }
 
   const merged = addToNewestPage(data, polled.entries)!;
@@ -93,12 +100,12 @@ export const mergeIntoNewestPage = (
     (polled.oldestId !== undefined && polled.oldestId <= fetchedUpTo);
   if (!reachesFetched) return merged;
 
-  const [newest, ...older] = merged.pages;
+  const [mergedNewest, ...older] = merged.pages;
   return {
     ...merged,
     pages: [
       {
-        ...newest,
+        ...mergedNewest,
         newestId: Math.max(fetchedUpTo, polled.newestId ?? fetchedUpTo),
       },
       ...older,

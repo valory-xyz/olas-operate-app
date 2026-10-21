@@ -266,6 +266,41 @@ describe('useAgentFeed', () => {
     expect(result.current.hasOlder).toBe(false);
   });
 
+  it('keeps the entries fetched before a page of the gap fails, and fills the gap later', async () => {
+    const pages: Record<string, LoadedFeedPage> = {
+      newest: page([21, 22], true),
+    };
+    let isGapDown = false;
+    mockGetAgentFeed.mockImplementation(
+      async (_id: string, { before }: { before?: number }) => {
+        if (before === 25 && isGapDown) throw new Error('gap down');
+        return pages[before ?? 'newest'];
+      },
+    );
+    const { result } = renderFeed();
+    await waitFor(() => expect(entryIds(result)).toEqual([21, 22]));
+
+    pages.newest = page([28, 29], true);
+    pages[28] = page([25, 26, 27], true);
+    pages[25] = page([22, 23, 24], true);
+    isGapDown = true;
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(FIVE_SECONDS_INTERVAL);
+    });
+    await waitFor(() => expect(result.current.isPollError).toBe(true));
+    expect(entryIds(result)).toEqual([21, 22, 25, 26, 27, 28, 29]);
+
+    isGapDown = false;
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(FIVE_SECONDS_INTERVAL);
+    });
+
+    await waitFor(() =>
+      expect(entryIds(result)).toEqual([21, 22, 23, 24, 25, 26, 27, 28, 29]),
+    );
+    expect(result.current.isPollError).toBe(false);
+  });
+
   it('fetches the entries a chat reply skipped over', async () => {
     const pages: Record<string, LoadedFeedPage> = {
       newest: page([21, 22], true),

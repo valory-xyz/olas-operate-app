@@ -144,6 +144,22 @@ describe('mergeIntoNewestPage', () => {
     expect(merged).toEqual({ pages: [polled], pageParams: [undefined] });
   });
 
+  it('keeps a chat reply added to a feed that was empty when loaded', () => {
+    const data = addToNewestPage(
+      makeInfinite([{ entries: [], has_more: false }]),
+      [makeFeedUserMessage(40), makeFeedAgentMessage(41)],
+    );
+
+    const merged = mergeIntoNewestPage(data, fetchedPage([30, 31], true));
+
+    expect(ids(flattenFeedPages(merged))).toEqual([30, 31, 40, 41]);
+    expect(merged!.pages[0]).toMatchObject({
+      has_more: true,
+      oldestId: 30,
+      newestId: 31,
+    });
+  });
+
   it('leaves the cache alone before the first page loads', () => {
     expect(
       mergeIntoNewestPage(undefined, fetchedPage([1], false)),
