@@ -27,13 +27,17 @@ jest.mock('../../../../../../hooks', () => ({
 jest.mock('../../../../../../components/ui', () => ({
   Tooltip: ({
     title,
+    styles,
     children,
   }: {
     title: React.ReactNode;
+    styles?: { body?: { width?: number } };
     children: React.ReactNode;
   }) => (
     <div>
-      <div data-testid="badges-tooltip">{title}</div>
+      <div data-testid="badges-tooltip" data-width={styles?.body?.width}>
+        {title}
+      </div>
       {children}
     </div>
   ),
@@ -237,6 +241,17 @@ describe('LoaderRow', () => {
       );
       expect(screen.getByTestId('badges-tooltip')).toHaveTextContent(
         'Daily activity target: reached',
+      );
+    });
+
+    it('show their values in bold in a tooltip wide enough not to wrap', () => {
+      renderRow({ isEpochTargetMet: false });
+
+      expect(screen.getByText('not earned yet').tagName).toBe('STRONG');
+      expect(screen.getByText('not reached yet').tagName).toBe('STRONG');
+      expect(screen.getByTestId('badges-tooltip')).toHaveAttribute(
+        'data-width',
+        '360',
       );
     });
 

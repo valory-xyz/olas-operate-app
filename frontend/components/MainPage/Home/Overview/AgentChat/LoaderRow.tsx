@@ -25,6 +25,9 @@ import { CHAT_COPY } from './constants';
 
 const { Text } = Typography;
 
+// Fits the longest line, the target hint, on one line.
+const BADGES_TOOLTIP_WIDTH = 360;
+
 type Tone = 'active' | 'still';
 
 const pulse = keyframes`
@@ -92,15 +95,20 @@ const RewardBadges = () => {
   return (
     <Tooltip
       placement="topRight"
+      styles={{ body: { width: BADGES_TOOLTIP_WIDTH } }}
       title={
         <Flex vertical gap={4} className="text-sm">
           <span>
             {CHAT_COPY.activityRewards}:{' '}
-            {isRewardsEarned ? CHAT_COPY.earned : CHAT_COPY.notEarned}
+            <strong>
+              {isRewardsEarned ? CHAT_COPY.earned : CHAT_COPY.notEarned}
+            </strong>
           </span>
           <span>
             {CHAT_COPY.dailyActivityTarget}:{' '}
-            {isTargetReached ? CHAT_COPY.reached : CHAT_COPY.notReached}
+            <strong>
+              {isTargetReached ? CHAT_COPY.reached : CHAT_COPY.notReached}
+            </strong>
           </span>
           <span>{CHAT_COPY.targetHint}</span>
         </Flex>
