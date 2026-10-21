@@ -224,6 +224,12 @@ describe('AgentChat', () => {
       },
     );
 
+    it('shows the dot field above the title', () => {
+      renderChat({ entries: [] });
+
+      expect(screen.getByTestId('dot-field')).toBeInTheDocument();
+    });
+
     it('fills the input with a picked question without sending it', () => {
       renderChat({ entries: [] });
 

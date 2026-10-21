@@ -16,6 +16,7 @@ import { buildFeedItems } from '@/utils/agentChat';
 
 import { ChatInput } from './ChatInput';
 import { CHAT_COPY, SUGGESTED_QUESTIONS } from './constants';
+import { DotField } from './DotField';
 import { Feed } from './Feed';
 import { AgentChatHeader } from './Header';
 import { LoaderRow } from './LoaderRow';
@@ -44,6 +45,7 @@ type EmptyStateProps = {
 
 const EmptyState = ({ questions, onPick }: EmptyStateProps) => (
   <Flex vertical flex={1} justify="center" align="center" gap={24}>
+    <DotField />
     <Title level={4} className="m-0">
       {CHAT_COPY.emptyTitle}
     </Title>
