@@ -36,7 +36,7 @@ export const Streak = ({ isCompact }: StreakProps) => {
 
   return (
     <Flex gap={6} align="center">
-      {optimisticStreak === 0 ? (
+      {optimisticStreak === 0 && !isCompact ? (
         <>
           <FireV1 /> No streak
         </>

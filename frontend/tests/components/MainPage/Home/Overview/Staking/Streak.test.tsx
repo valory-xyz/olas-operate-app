@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
 
 import { Streak } from '../../../../../../components/MainPage/Home/Overview/Staking/Streak';
@@ -46,5 +46,31 @@ describe('Streak while loading', () => {
     const { container } = render(<Streak />);
 
     expect(getSkeleton(container)?.style.width).toBe('');
+  });
+});
+
+describe('Streak with no streak', () => {
+  beforeEach(() => {
+    (useStakingDetails as jest.Mock).mockReturnValue({
+      isStreakLoading: false,
+      isStreakError: false,
+      optimisticStreak: 0,
+    });
+    (useRewardContext as jest.Mock).mockReturnValue({
+      isEpochTargetMet: false,
+    });
+  });
+
+  it('shows 0 in the compact header', () => {
+    render(<Streak isCompact />);
+
+    expect(screen.getByText('0')).toBeInTheDocument();
+    expect(screen.queryByText(/No streak/)).toBeNull();
+  });
+
+  it('keeps "No streak" by default', () => {
+    render(<Streak />);
+
+    expect(screen.getByText(/No streak/)).toBeInTheDocument();
   });
 });
