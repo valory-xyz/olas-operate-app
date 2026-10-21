@@ -3,7 +3,7 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
-import { useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { FIVE_SECONDS_INTERVAL, REACT_QUERY_KEYS } from '@/constants';
 import { AgentChatService } from '@/service/AgentChat';
@@ -61,9 +61,18 @@ export const useAgentFeed = (serviceConfigId: Maybe<string>) => {
       );
       return page;
     },
-    enabled: !!serviceConfigId && feed.isSuccess,
+    // Not `feed.isSuccess`: a failed older page sets it false with data loaded.
+    enabled: !!serviceConfigId && !!feed.data,
     refetchInterval: FIVE_SECONDS_INTERVAL,
   });
+
+  // Tracked here, not read from the query: each poll's merge clears its error.
+  const [olderErrorFor, setOlderErrorFor] = useState<Maybe<string>>();
+  const { fetchNextPage } = feed;
+  const fetchOlder = useCallback(async () => {
+    const { isFetchNextPageError } = await fetchNextPage();
+    setOlderErrorFor(isFetchNextPageError ? serviceConfigId : undefined);
+  }, [fetchNextPage, serviceConfigId]);
 
   const entries = useMemo(() => flattenFeedPages(feed.data), [feed.data]);
 
@@ -75,7 +84,7 @@ export const useAgentFeed = (serviceConfigId: Maybe<string>) => {
     isPollError: poll.isError,
     hasOlder: feed.hasNextPage,
     isFetchingOlder: feed.isFetchingNextPage,
-    isFetchOlderError: feed.isFetchNextPageError,
-    fetchOlder: feed.fetchNextPage,
+    isFetchOlderError: !!serviceConfigId && olderErrorFor === serviceConfigId,
+    fetchOlder,
   };
 };

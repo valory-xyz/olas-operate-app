@@ -202,6 +202,29 @@ describe('useAgentFeed', () => {
     ).toHaveLength(1);
   });
 
+  it('keeps polling for new entries after an older page fails', async () => {
+    let newestIds = [21, 22];
+    mockGetAgentFeed.mockImplementation(
+      async (_id: string, { before }: { before?: number }) => {
+        if (before === 21) throw new Error('older down');
+        return page(newestIds, true);
+      },
+    );
+    const { result } = renderFeed();
+    await waitFor(() => expect(entryIds(result)).toEqual([21, 22]));
+    await act(async () => {
+      await result.current.fetchOlder();
+    });
+    await waitFor(() => expect(result.current.isFetchOlderError).toBe(true));
+
+    newestIds = [21, 22, 23];
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(FIVE_SECONDS_INTERVAL);
+    });
+
+    await waitFor(() => expect(entryIds(result)).toEqual([21, 22, 23]));
+  });
+
   it('keeps entries an earlier poll brought after they leave the newest page', async () => {
     mockGetAgentFeed
       .mockResolvedValueOnce(page([1, 2], false))
