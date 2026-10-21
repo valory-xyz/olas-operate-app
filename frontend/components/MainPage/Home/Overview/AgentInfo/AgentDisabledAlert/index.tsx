@@ -18,6 +18,7 @@ import {
   useCompleteAgentSetup,
   useIsAgentGeoRestricted,
   useIsInitiallyFunded,
+  useMasterWalletContext,
   usePageState,
   useServices,
   useStakingProgram,
@@ -46,8 +47,17 @@ export const AgentDisabledAlert = () => {
     selectedStakingContractDetails,
   } = useActiveStakingContractDetails();
   const { isInitialFunded } = useIsInitiallyFunded();
+  const { getMasterSafeOf, isFetched: isMasterWalletFetched } =
+    useMasterWalletContext();
   const { isAnotherAgentRunning } = useAgentRunning();
   const { selectedStakingProgramMeta } = useStakingProgram();
+
+  // The flag can be set while the Safe is still missing, e.g. by a funding run
+  // that completed without creating it; the agent cannot start without one.
+  const isHomeChainSafeMissing =
+    !!isMasterWalletFetched &&
+    !getMasterSafeOf?.(selectedAgentConfig.evmHomeChainId);
+
   const {
     setupState,
     handleCompleteSetup,
@@ -55,7 +65,9 @@ export const AgentDisabledAlert = () => {
     dismissModal,
     handleTryAgain,
     handleContactSupport,
-  } = useCompleteAgentSetup(isInitialFunded === false);
+  } = useCompleteAgentSetup(
+    isInitialFunded === false || isHomeChainSafeMissing,
+  );
 
   const { isAgentGeoRestricted } = useIsAgentGeoRestricted({
     agentType: selectedAgentType,
@@ -85,7 +97,7 @@ export const AgentDisabledAlert = () => {
     }
 
     // The "store" is `undefined` during updates, hence waiting till we get the correct value from the store.
-    if (!isInitialFunded) {
+    if (!isInitialFunded || isHomeChainSafeMissing) {
       return {
         key: 'unfinished-setup',
         content: (
@@ -172,6 +184,7 @@ export const AgentDisabledAlert = () => {
     isAgentGeoRestricted,
     isAnotherAgentRunning,
     isEligibleForStaking,
+    isHomeChainSafeMissing,
     isInitialFunded,
     isSelectedStakingContractDetailsLoading,
     isServiceStaked,

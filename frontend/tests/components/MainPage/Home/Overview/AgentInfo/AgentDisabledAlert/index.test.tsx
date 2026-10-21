@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import React from 'react';
 
 import { AgentDisabledAlert } from '../../../../../../../components/MainPage/Home/Overview/AgentInfo/AgentDisabledAlert';
+import { EvmChainIdMap } from '../../../../../../../constants/chains';
 import {
   useActiveStakingContractDetails,
   useAgentFundingRequests,
@@ -9,10 +10,12 @@ import {
   useCompleteAgentSetup,
   useIsAgentGeoRestricted,
   useIsInitiallyFunded,
+  useMasterWalletContext,
   usePageState,
   useServices,
   useStakingProgram,
 } from '../../../../../../../hooks';
+import { makeMasterSafe } from '../../../../../../helpers/factories';
 
 // ---------------------------------------------------------------------------
 // Mocks — every branch is stubbed to a recognisable marker so precedence can be
@@ -25,6 +28,7 @@ jest.mock('../../../../../../../hooks', () => ({
   useCompleteAgentSetup: jest.fn(),
   useIsAgentGeoRestricted: jest.fn(),
   useIsInitiallyFunded: jest.fn(),
+  useMasterWalletContext: jest.fn(),
   usePageState: jest.fn(),
   useServices: jest.fn(),
   useStakingProgram: jest.fn(),
@@ -118,6 +122,9 @@ const setup = ({
   staking = {},
   agentConfig = {},
   isInitialFunded = true,
+  isStoreLoading = false,
+  hasHomeChainSafe = true,
+  isMasterWalletFetched = true,
   isAnotherAgentRunning = false,
   isAgentGeoRestricted = false,
   deprecatedStakingProgram = false,
@@ -125,6 +132,9 @@ const setup = ({
   staking?: StakingOverrides;
   agentConfig?: Record<string, unknown>;
   isInitialFunded?: boolean;
+  isStoreLoading?: boolean;
+  hasHomeChainSafe?: boolean;
+  isMasterWalletFetched?: boolean;
   isAnotherAgentRunning?: boolean;
   isAgentGeoRestricted?: boolean;
   deprecatedStakingProgram?: boolean;
@@ -147,10 +157,23 @@ const setup = ({
       isUnderConstruction: false,
       isGeoLocationRestricted: false,
       displayName: 'Trader',
+      evmHomeChainId: EvmChainIdMap.Gnosis,
       ...agentConfig,
     },
   });
-  (useIsInitiallyFunded as jest.Mock).mockReturnValue({ isInitialFunded });
+  (useIsInitiallyFunded as jest.Mock).mockReturnValue({
+    isInitialFunded: isStoreLoading ? undefined : isInitialFunded,
+  });
+  const masterSafes = hasHomeChainSafe
+    ? [makeMasterSafe(EvmChainIdMap.Gnosis)]
+    : [];
+  (useMasterWalletContext as jest.Mock).mockReturnValue({
+    isFetched: isMasterWalletFetched,
+    getMasterSafeOf: (chainId: number) =>
+      isMasterWalletFetched
+        ? masterSafes.find((safe) => safe.evmChainId === chainId)
+        : undefined,
+  });
   (useAgentRunning as jest.Mock).mockReturnValue({ isAnotherAgentRunning });
   (useIsAgentGeoRestricted as jest.Mock).mockReturnValue({
     isAgentGeoRestricted,
@@ -226,6 +249,49 @@ describe('AgentDisabledAlert', () => {
       });
 
       expect(screen.queryByText('evicted-locked')).not.toBeInTheDocument();
+    });
+  });
+
+  // A funding run can complete, and set the flag, before the Safe exists.
+  describe('unfinished setup without a home-chain Pearl Safe', () => {
+    it('shows the unfinished-setup alert even when initially funded', () => {
+      setup({ isInitialFunded: true, hasHomeChainSafe: false });
+
+      expect(screen.getByText('unfinished-setup')).toBeInTheDocument();
+      expect(screen.queryByText('low-balance')).not.toBeInTheDocument();
+      expect(useCompleteAgentSetup).toHaveBeenLastCalledWith(true);
+    });
+
+    it('waits for master wallets to load before showing it', () => {
+      setup({
+        isInitialFunded: true,
+        hasHomeChainSafe: false,
+        isMasterWalletFetched: false,
+      });
+
+      expect(screen.queryByText('unfinished-setup')).not.toBeInTheDocument();
+      expect(useCompleteAgentSetup).toHaveBeenLastCalledWith(false);
+    });
+
+    it('does not show it when the home chain has a Pearl Safe', () => {
+      setup({ isInitialFunded: true, hasHomeChainSafe: true });
+
+      expect(screen.queryByText('unfinished-setup')).not.toBeInTheDocument();
+      expect(useCompleteAgentSetup).toHaveBeenLastCalledWith(false);
+    });
+
+    it('still shows it while the store is loading', () => {
+      setup({ isStoreLoading: true, hasHomeChainSafe: true });
+
+      expect(screen.getByText('unfinished-setup')).toBeInTheDocument();
+      expect(useCompleteAgentSetup).toHaveBeenLastCalledWith(false);
+    });
+
+    it('comes after the phased-out alert', () => {
+      setup({ agentConfig: { isPhasedOut: true }, hasHomeChainSafe: false });
+
+      expect(screen.getByText('phased-out')).toBeInTheDocument();
+      expect(screen.queryByText('unfinished-setup')).not.toBeInTheDocument();
     });
   });
 
