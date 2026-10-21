@@ -29,6 +29,7 @@ describe('getTransactionRowLabel', () => {
     ['SAFE_SETUP_TRANSFER', 'Setup complete'],
     ['MASTER_FUNDING_IN', 'Deposit'],
     ['MASTER_WITHDRAWAL', 'Withdraw to external wallet'],
+    ['AGENT_SAFE_TO_AGENT_EOA', 'Agent Safe to Agent Signer movement'],
   ];
 
   it.each(fixed)(

@@ -415,6 +415,27 @@ describe('buildTransactionHistoryRows', () => {
     expect(byCategory.SERVICE_BOND_DEPOSIT.transfers[0].direction).toBe('out');
   });
 
+  it('marks AGENT_SAFE_TO_AGENT_EOA internal instead of falling back to the address check', () => {
+    // from ≠ Master Safe, so the address fallback would read it as an inflow.
+    const data = makeTransactionHistoryResponse({
+      fundsMovements: [
+        makeFundsMovement({
+          category: 'AGENT_SAFE_TO_AGENT_EOA',
+          source: 'SEMANTIC',
+          token: null,
+          from: MOCK_MULTISIG_ADDRESS,
+          to: MOCK_INSTANCE_ADDRESS,
+          transactionHash: MOCK_TX_HASH_1,
+          agentSafe: { id: MOCK_MULTISIG_ADDRESS, service: null },
+        }),
+      ],
+    });
+
+    const rows = buildTransactionHistoryRows(data, DEFAULT_SAFE_ADDRESS);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].transfers[0].direction).toBe('internal');
+  });
+
   it('hides OLAS agent→master reward sweeps but keeps native agent→master', () => {
     const OLAS_GNOSIS = '0xce11e14225575945b8e6dc0d4f2dd4c570f79d9f';
     const data = makeTransactionHistoryResponse({

@@ -34,6 +34,12 @@ describe('getAgentTransactionRowLabel', () => {
     );
   });
 
+  it('labels AGENT_SAFE_TO_AGENT_EOA as "Agent Safe to Agent Signer movement"', () => {
+    expect(
+      getAgentTransactionRowLabel(makeRow('AGENT_SAFE_TO_AGENT_EOA')),
+    ).toBe('Agent Safe to Agent Signer movement');
+  });
+
   it('falls back to "Transaction" for other categories', () => {
     expect(getAgentTransactionRowLabel(makeRow('OTHER'))).toBe('Transaction');
   });
@@ -49,6 +55,12 @@ describe('getAgentIconCategory', () => {
   it('maps AGENT_TO_MASTER to the outflow icon (MASTER_WITHDRAWAL)', () => {
     expect(getAgentIconCategory(makeRow('AGENT_TO_MASTER'))).toBe(
       'MASTER_WITHDRAWAL',
+    );
+  });
+
+  it('keeps AGENT_SAFE_TO_AGENT_EOA on its own icon', () => {
+    expect(getAgentIconCategory(makeRow('AGENT_SAFE_TO_AGENT_EOA'))).toBe(
+      'AGENT_SAFE_TO_AGENT_EOA',
     );
   });
 
