@@ -1,3 +1,4 @@
+import { isNil } from 'lodash';
 import { ReactNode, useMemo } from 'react';
 
 import { AgentLowBalanceAlert } from '@/components/AgentLowBalanceAlert';
@@ -47,15 +48,15 @@ export const AgentDisabledAlert = () => {
     selectedStakingContractDetails,
   } = useActiveStakingContractDetails();
   const { isInitialFunded } = useIsInitiallyFunded();
-  const { getMasterSafeOf, isFetched: isMasterWalletFetched } =
-    useMasterWalletContext();
+  const { getMasterSafeOf, masterWallets } = useMasterWalletContext();
   const { isAnotherAgentRunning } = useAgentRunning();
   const { selectedStakingProgramMeta } = useStakingProgram();
 
   // The flag can be set while the Safe is still missing, e.g. by a funding run
   // that completed without creating it; the agent cannot start without one.
+  // Wallet data, not `isFetched`, so a failed fetch doesn't read as "no Safe".
   const isHomeChainSafeMissing =
-    !!isMasterWalletFetched &&
+    !isNil(masterWallets) &&
     !getMasterSafeOf?.(selectedAgentConfig.evmHomeChainId);
 
   const {

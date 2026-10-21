@@ -125,6 +125,7 @@ const setup = ({
   isStoreLoading = false,
   hasHomeChainSafe = true,
   isMasterWalletFetched = true,
+  isMasterWalletFetchFailed = false,
   isAnotherAgentRunning = false,
   isAgentGeoRestricted = false,
   deprecatedStakingProgram = false,
@@ -135,6 +136,7 @@ const setup = ({
   isStoreLoading?: boolean;
   hasHomeChainSafe?: boolean;
   isMasterWalletFetched?: boolean;
+  isMasterWalletFetchFailed?: boolean;
   isAnotherAgentRunning?: boolean;
   isAgentGeoRestricted?: boolean;
   deprecatedStakingProgram?: boolean;
@@ -168,7 +170,8 @@ const setup = ({
     ? [makeMasterSafe(EvmChainIdMap.Gnosis)]
     : [];
   (useMasterWalletContext as jest.Mock).mockReturnValue({
-    isFetched: isMasterWalletFetched,
+    isFetched: isMasterWalletFetched || isMasterWalletFetchFailed,
+    masterWallets: isMasterWalletFetched ? masterSafes : undefined,
     getMasterSafeOf: (chainId: number) =>
       isMasterWalletFetched
         ? masterSafes.find((safe) => safe.evmChainId === chainId)
@@ -267,6 +270,18 @@ describe('AgentDisabledAlert', () => {
         isInitialFunded: true,
         hasHomeChainSafe: false,
         isMasterWalletFetched: false,
+      });
+
+      expect(screen.queryByText('unfinished-setup')).not.toBeInTheDocument();
+      expect(useCompleteAgentSetup).toHaveBeenLastCalledWith(false);
+    });
+
+    // react-query marks a query fetched after an error too, with no data.
+    it('does not show it when fetching master wallets failed', () => {
+      setup({
+        isInitialFunded: true,
+        isMasterWalletFetched: false,
+        isMasterWalletFetchFailed: true,
       });
 
       expect(screen.queryByText('unfinished-setup')).not.toBeInTheDocument();
