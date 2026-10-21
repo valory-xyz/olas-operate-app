@@ -33,10 +33,16 @@ const config: Config = {
   ],
 };
 
-// ESM-only deps of react-markdown, added to next/jest's node_modules transform allowlist.
+// ESM-only deps of react-markdown and its plugins, added to next/jest's node_modules transform allowlist.
 const ESM_ONLY_PACKAGES = [
   'react-markdown',
   'remark-.*',
+  'rehype-.*',
+  'parse5',
+  'entities',
+  'hastscript',
+  'web-namespaces',
+  'html-void-elements',
   'micromark.*',
   'mdast-.*',
   'hast-.*',

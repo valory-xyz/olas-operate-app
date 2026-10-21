@@ -1,6 +1,8 @@
 import { Button, Flex, Typography } from 'antd';
 import Image from 'next/image';
 import Markdown, { Components } from 'react-markdown';
+import rehypeRaw from 'rehype-raw';
+import rehypeSanitize from 'rehype-sanitize';
 import remarkGfm from 'remark-gfm';
 import styled from 'styled-components';
 
@@ -161,6 +163,8 @@ export const FeedItemView = ({
         <AgentText className="flex-auto">
           <Markdown
             remarkPlugins={[remarkGfm]}
+            // Agents reply in HTML; sanitize it, since this runs in Electron.
+            rehypePlugins={[rehypeRaw, rehypeSanitize]}
             components={AGENT_MARKDOWN_COMPONENTS}
           >
             {entry.text}

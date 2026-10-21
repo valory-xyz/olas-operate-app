@@ -57,11 +57,39 @@ describe('FeedItemView agent reply', () => {
     expect(screen.getByText(/settings/)).toBeInTheDocument();
   });
 
-  it('shows raw HTML as text rather than rendering it', () => {
-    const { container } = renderAgentReply('<img src=x onerror="alert(1)">');
+  it('renders the HTML formatting agents reply with', () => {
+    const { container } = renderAgentReply(
+      'Mechs:<br><ul><li><b>0xabc</b></li><li><i>0xdef</i></li></ul>',
+    );
 
+    expect(container.querySelectorAll('li')).toHaveLength(2);
+    expect(container.querySelector('br')).not.toBeNull();
+    expect(screen.getByText('0xabc').tagName).toBe('B');
+    expect(screen.getByText('0xdef').tagName).toBe('I');
+    expect(screen.queryByText(/<li>/)).toBeNull();
+  });
+
+  it('strips scripts and event handlers from agent HTML', () => {
+    const { container } = renderAgentReply(
+      '<b onclick="alert(1)">bold</b><script>alert(2)</script><img src=x onerror="alert(3)">',
+    );
+
+    expect(container.querySelector('script')).toBeNull();
     expect(container.querySelector('img[src="x"]')).toBeNull();
-    expect(screen.getByText(/<img src=x onerror=/)).toBeInTheDocument();
+    expect(container.querySelector('[onclick], [onerror]')).toBeNull();
+    expect(screen.getByText('bold').tagName).toBe('B');
+  });
+
+  it('keeps the link guard on HTML links', () => {
+    renderAgentReply(
+      '<a href="javascript:alert(1)">bad</a> <a href="https://olas.network">ok</a>',
+    );
+
+    expect(screen.getByRole('link', { name: 'ok' })).toHaveAttribute(
+      'target',
+      '_blank',
+    );
+    expect(screen.queryByRole('link', { name: 'bad' })).toBeNull();
   });
 
   it('shows an image as its alt text without loading it', () => {
