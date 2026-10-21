@@ -224,7 +224,7 @@ Only runs the query when `agentConfig.isGeoLocationRestricted === true`. Current
 
 ### Initial funding flag (useIsInitiallyFunded)
 
-Reads `storeState[selectedAgentType].isInitialFunded` from Electron store. Once set via `setIsInitiallyFunded()`, it persists permanently for that agent type.
+Reads `storeState[selectedAgentType].isInitialFunded` from Electron store. Once set via `setIsInitiallyFunded()`, it persists permanently for that agent type. The flag alone does not mean setup is finished: `AgentDisabledAlert` also shows `UnfinishedSetupAlert` (with "Complete setup" → Safe creation) whenever master wallets have loaded and the home chain has no Pearl Safe.
 
 ## Failure / guard behavior
 
