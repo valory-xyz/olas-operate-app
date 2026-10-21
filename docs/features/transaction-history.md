@@ -1,6 +1,6 @@
 # Transaction History (VLOP-73)
 
-Per-chain ledger view inside Pearl Wallet and the Agent Wallet. Source: the pearl-transactions indexer — graph-node subgraphs for Gnosis/Optimism/Base ([autonolas-subgraph-studio](https://github.com/valory-xyz/autonolas-subgraph-studio/tree/main/subgraphs/pearl-transactions)) and an SQD squid for Polygon ([autonolas-subgraph](https://github.com/valory-xyz/autonolas-subgraph/tree/main/squids/pearl-transactions)). Mirrors the rewards-history stack: Service (GraphQL) → Hook (React Query) → Component. Shipped on all four chains; sections marked *(as shipped)* are current, the rest is the original plan kept for history.
+Per-chain ledger view inside Pearl Wallet and the Agent Wallet. Source: the pearl-transactions indexer — graph-node subgraphs for Gnosis/Optimism ([autonolas-subgraph-studio](https://github.com/valory-xyz/autonolas-subgraph-studio/tree/main/subgraphs/pearl-transactions)) and SQD squids for Polygon and Base ([autonolas-subgraph](https://github.com/valory-xyz/autonolas-subgraph/tree/main/squids/pearl-transactions)). Mirrors the rewards-history stack: Service (GraphQL) → Hook (React Query) → Component. Shipped on all four chains; sections marked *(as shipped)* are current, the rest is the original plan kept for history.
 
 Linear: [VLOP-73](https://linear.app/valory-xyz/issue/VLOP-73).
 
@@ -28,7 +28,7 @@ Acceptance criteria from VLOP-73:
 ## Data flow (as shipped)
 
 ```
-pearl-transactions — graph-node: Gnosis v1 | Optimism v1 | Base v2 — SQD squid: Polygon sqd
+pearl-transactions — graph-node: Gnosis v1 | Optimism v1 — SQD squid: Polygon sqd | Base sqd
   └── TransactionHistoryService / AgentTransactionHistoryService
         (graphql-request; per-revision document + Zod schema + normalizer → v1-shaped domain)
         └── useTransactionHistory / useAgentTransactionHistory (React Query, 15-min refetch)
@@ -41,7 +41,7 @@ pearl-transactions — graph-node: Gnosis v1 | Optimism v1 | Base v2 — SQD squ
 
 ## Schema revisions (v1 / v2 / sqd)
 
-Live deployments serve three incompatible revisions: Gnosis/Optimism proxies pin subgraph **v0.0.6 (v1)**, Base pins **v0.0.7 (v2)** — its indexers no longer serve v0.0.6 — and Polygon is served by the **SQD squid (sqd)** at `autonolas-subgraph/squids/pearl-transactions` (OPE-1905; the graph-node Polygon deployment indexed too slowly to be usable, see the squid's `MIGRATION.md`). Differences (verified against the live Base deployment and the live Polygon squid, not READMEs):
+The app supports three incompatible revisions: Gnosis/Optimism proxies pin subgraph **v0.0.6 (v1)**; Polygon and Base are served by the **SQD squid (sqd)** at `autonolas-subgraph/squids/pearl-transactions` (Polygon: OPE-1905, the graph-node deployment indexed too slowly to be usable, see the squid's `MIGRATION.md`; Base: [BDMARK-2309](https://linear.app/valory-xyz/issue/BDMARK-2309), endpoint `…/squid/transactions-base/graphql`). **v0.0.7 (v2)** was Base's graph-node revision; no chain uses it now, but the code path is kept for rollback (Base → `https://transactions-base.subgraph.autonolas.tech/` + `v2`). Differences (verified against the live Base deployment and the live Polygon squid, not READMEs):
 
 | | v1 (v0.0.6) | v2 (v0.0.7) | sqd (squid) |
 |---|---|---|---|
@@ -53,7 +53,7 @@ Live deployments serve three incompatible revisions: Gnosis/Optimism proxies pin
 
 Mechanism: `TRANSACTION_HISTORY_SUBGRAPH_SCHEMA_BY_EVM_CHAIN` (`frontend/constants/urls.ts`) maps chain → revision (absent = v1). Both services pick the matching query document, Zod-parse with the matching schema, and — for v2/sqd — normalize to the v1-shaped domain types via `normalize*V2` / `normalize*Sqd` in `frontend/utils/transactionHistory.ts` (bond rows merged into `fundsMovements`, sweep rows dropped, `service.id` mapped from `serviceId`). Hooks and components are revision-agnostic.
 
-The sqd revision is deliberately thin: its query documents alias `masterSafeById` → `masterSafe` and `indexerStatusById` → `indexerStatus`, so the response wrapper matches v2 apart from meta. Its Zod schemas are `*V2Schema.omit({ _meta }).extend({ indexerStatus })`, and its normalizer maps `IndexerStatus → SubgraphMeta` (`hasIndexingErrors` synthesised `false`) then delegates to the v2 normalizer — so `computeIsDataDelayed` is untouched. The `first`/`skip` params on `get`/`getAll` are kept for all revisions; the sqd branch maps them to `limit`/`offset` internally. Polygon's URL is path-style (`…/squid/transactions-polygon/graphql`) rather than a `transactions-<chain>.` host — that difference is deliberate, not a typo.
+The sqd revision is deliberately thin: its query documents alias `masterSafeById` → `masterSafe` and `indexerStatusById` → `indexerStatus`, so the response wrapper matches v2 apart from meta. Its Zod schemas are `*V2Schema.omit({ _meta }).extend({ indexerStatus })`, and its normalizer maps `IndexerStatus → SubgraphMeta` (`hasIndexingErrors` synthesised `false`) then delegates to the v2 normalizer — so `computeIsDataDelayed` is untouched. The `first`/`skip` params on `get`/`getAll` are kept for all revisions; the sqd branch maps them to `limit`/`offset` internally. The squid URLs are path-style (`…/squid/transactions-<chain>/graphql`) rather than a `transactions-<chain>.` host — that difference is deliberate, not a typo.
 
 ## Files (as shipped)
 

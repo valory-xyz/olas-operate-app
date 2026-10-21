@@ -142,12 +142,13 @@ export type AgentTransactionHistoryResponse = z.infer<
  * Which pearl-transactions subgraph schema a chain's deployment serves.
  * - v1 — subgraph v0.0.6: `bondType` on FundsMovement, bond rows in
  *   `fundsMovements`, OLAS sweeps categorized AGENT_TO_MASTER.
- * - v2 — subgraph v0.0.7: bond rows moved to a separate `bondMovements`
+ * - v2 — subgraph v0.0.7 (Base's former graph-node backend; unused, kept
+ *   for rollback): bond rows moved to a separate `bondMovements`
  *   ledger (which carries `bondType`), sweeps split into
  *   AGENT_OLAS_TO_MASTER, and Service.id reshaped to registry bytes with the
  *   numeric id in `serviceId`.
- * - sqd — the SQD squid port (Polygon). Same entity shape as v2, but served
- *   over OpenReader rather than the Graph dialect (`limit`/`offset`,
+ * - sqd — the SQD squid port (Polygon, Base). Same entity shape as v2, but
+ *   served over OpenReader rather than the Graph dialect (`limit`/`offset`,
  *   `orderBy: x_DESC`, relation filters as `{ id_eq }`, `<entity>ById`), and
  *   with an `IndexerStatus` singleton in place of `_meta`.
  * v2 and sqd responses are normalized back to the v1-shaped domain types at
