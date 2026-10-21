@@ -78,7 +78,11 @@ jest.mock(
 );
 jest.mock(
   '../../../../../../components/MainPage/Home/Overview/Staking/Streak',
-  () => ({ Streak: () => <span>24</span> }),
+  () => ({
+    Streak: ({ isCompact }: { isCompact?: boolean }) => (
+      <span>{isCompact ? 'compact streak' : 'streak'}</span>
+    ),
+  }),
 );
 
 const mockUseServices = useServices as jest.Mock;
@@ -161,6 +165,14 @@ describe('AgentChatHeader', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Manage Staking' }));
 
     expect(mockGoto).toHaveBeenCalledWith(PAGES.AgentStaking);
+  });
+
+  it('fits the streak to the icon row', () => {
+    renderHeader();
+
+    expect(
+      screen.getByRole('button', { name: 'Manage Staking' }),
+    ).toHaveTextContent('compact streak');
   });
 
   it('does not open Manage Staking when staking cannot be managed', () => {

@@ -188,7 +188,7 @@ export const AgentChatHeader = () => {
               aria-disabled={!canManageStaking}
               onClick={() => canManageStaking && goto(PAGES.AgentStaking)}
             >
-              <Streak />
+              <Streak isCompact />
             </IconButton>
           </Flex>
           <HeaderMetrics />
