@@ -1299,6 +1299,31 @@ describe('FundingFlow — progress', () => {
     renderFlow();
 
     expect(screen.getByText(NO_VISIBLE_STEP_BANNER)).toBeInTheDocument();
+    expect(screen.queryByText('Taking longer than usual...')).toBeNull();
+  });
+
+  it('says a run with no visible step is slow when its hidden step is', () => {
+    mockHookState = {
+      activeRun: makeFundingRun({
+        status: 'PROCESSING',
+        quote: null,
+        to_receive: [],
+        steps: [
+          makeFundingRunStep({
+            id: 'safe',
+            kind: 'SAFE_AND_TRANSFER',
+            token: null,
+            amount: null,
+            visible: false,
+            is_slow: true,
+          }),
+        ],
+      }),
+    };
+    renderFlow();
+
+    expect(screen.getByText(NO_VISIBLE_STEP_BANNER)).toBeInTheDocument();
+    expect(screen.getByText('Taking longer than usual...')).toBeInTheDocument();
   });
 
   it('logs finished visible steps newest-first with Details links', () => {
@@ -1509,6 +1534,32 @@ describe('FundingFlow — progress', () => {
     renderFlow();
 
     expect(screen.getAllByText("Couldn't get OLAS")).toHaveLength(2);
+  });
+
+  it('shows the failure, not the setup line, for a failed run with only hidden steps', () => {
+    mockHookState = {
+      activeRun: makeFundingRun({
+        status: 'FAILED',
+        quote: null,
+        to_receive: [],
+        steps: [
+          makeFundingRunStep({
+            id: 'safe',
+            kind: 'SAFE_AND_TRANSFER',
+            token: null,
+            amount: null,
+            visible: false,
+            status: 'FAILED',
+          }),
+        ],
+        error: { step_id: 'safe', message: '' },
+      }),
+    };
+    renderFlow();
+
+    expect(screen.getAllByText("Couldn't finish the transfer")).toHaveLength(2);
+    expect(screen.queryByText(NO_VISIBLE_STEP_BANNER)).toBeNull();
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
   });
 });
 
