@@ -94,6 +94,8 @@ export const QR_CAPTION = (tokenSymbol: string, chainName: string) => [
 ];
 
 export const SLOW_STEP = 'Taking longer than usual...';
+/** Progress line for a run whose only steps are hidden, e.g. a Safe-only onboarding run. */
+export const NO_VISIBLE_STEP_BANNER = 'Setting up your Pearl Wallet';
 export const FUNDS_SAFE = [
   "Don't worry, your funds remain safe.",
   'Try again or contact support.',

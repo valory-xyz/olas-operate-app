@@ -1,5 +1,6 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 
+import { NO_VISIBLE_STEP_BANNER } from '../../../components/FundingFlow/constants';
 import {
   FundingFlow,
   FundingFlowProps,
@@ -1276,6 +1277,28 @@ describe('FundingFlow — progress', () => {
     expect(screen.queryByRole('button', { name: 'Change' })).toBeNull();
     expect(screen.getByText('Setting up your agent')).toBeInTheDocument();
     expect(screen.getByText('Moving funds to Polygon')).toBeInTheDocument();
+  });
+
+  it('shows a setup line while a run with no visible step processes', () => {
+    mockHookState = {
+      activeRun: makeFundingRun({
+        status: 'PROCESSING',
+        quote: null,
+        to_receive: [],
+        steps: [
+          makeFundingRunStep({
+            id: 'safe',
+            kind: 'SAFE_AND_TRANSFER',
+            token: null,
+            amount: null,
+            visible: false,
+          }),
+        ],
+      }),
+    };
+    renderFlow();
+
+    expect(screen.getByText(NO_VISIBLE_STEP_BANNER)).toBeInTheDocument();
   });
 
   it('logs finished visible steps newest-first with Details links', () => {

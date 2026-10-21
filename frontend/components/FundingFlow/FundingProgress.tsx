@@ -8,6 +8,7 @@ import { FundingRun, FundingRunStep } from '@/types/FundingRun';
 import {
   FUNDS_SAFE,
   GENERIC_FAILURE,
+  NO_VISIBLE_STEP_BANNER,
   SLOW_STEP,
   SUCCESS_BANNER,
 } from './constants';
@@ -48,7 +49,11 @@ const StatusBanner = ({
   }
   if (failureText) return <Banner tone="error">{failureText}</Banner>;
   const currentStep = getCurrentStep(run);
-  if (!currentStep) return null;
+  if (!currentStep) {
+    return run.status === 'PROCESSING' ? (
+      <Banner tone="progress">{NO_VISIBLE_STEP_BANNER}</Banner>
+    ) : null;
+  }
   return (
     <Banner tone="progress">
       <Flex vertical align="center">
