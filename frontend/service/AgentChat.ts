@@ -132,6 +132,7 @@ const getAgentFeed = async (
     entries,
     has_more: page.data.has_more,
     oldestId: page.data.entries[0]?.id,
+    newestId: page.data.entries.at(-1)?.id,
   };
 };
 

@@ -6,10 +6,10 @@ import { AgentChatError, AgentChatService } from '@/service/AgentChat';
 import { ChatReply } from '@/types/AgentChat';
 import { Maybe } from '@/types/Util';
 import {
+  addToNewestPage,
   chatFailureFromStatus,
   FeedData,
   LocalChatMessage,
-  mergeIntoNewestPage,
 } from '@/utils/agentChat';
 
 export const BUSY_NOTICE_DURATION_MS = 5_000;
@@ -149,10 +149,7 @@ export const useAgentChat = ({
       if (queryClient.getQueryData<FeedData>(feedKey)?.pages.length) {
         try {
           queryClient.setQueryData<FeedData>(feedKey, (data) =>
-            mergeIntoNewestPage(data, {
-              entries: [chatReply.message, chatReply.reply],
-              has_more: false,
-            }),
+            addToNewestPage(data, [chatReply.message, chatReply.reply]),
           );
           removeMessage(id, clientId);
           return;

@@ -19,6 +19,37 @@ import {
 export const FEED_PAGE_SIZE = 20;
 
 /**
+ * The newest entries, paging back until they reach `fetchedUpTo` so none in
+ * between are skipped.
+ */
+const fetchNewestSince = async (
+  serviceConfigId: string,
+  fetchedUpTo: number | undefined,
+): Promise<LoadedFeedPage> => {
+  const newest = await AgentChatService.getAgentFeed(serviceConfigId, {
+    limit: FEED_PAGE_SIZE,
+  });
+  const entries = [...newest.entries];
+  let oldest = newest;
+  while (
+    fetchedUpTo !== undefined &&
+    oldest.has_more &&
+    oldest.oldestId !== undefined &&
+    oldest.oldestId > fetchedUpTo
+  ) {
+    const before: number = oldest.oldestId;
+    oldest = await AgentChatService.getAgentFeed(serviceConfigId, {
+      before,
+      limit: FEED_PAGE_SIZE,
+    });
+    entries.push(...oldest.entries);
+    // A page not below `before` would never reach `fetchedUpTo`.
+    if (oldest.oldestId === undefined || oldest.oldestId >= before) break;
+  }
+  return { ...oldest, entries, newestId: newest.newestId };
+};
+
+/**
  * The agent's feed, served by the middleware whether the agent runs or not.
  * Older pages load on demand; the newest page is polled and merged by id.
  */
@@ -53,9 +84,9 @@ export const useAgentFeed = (serviceConfigId: Maybe<string>) => {
   const poll = useQuery({
     queryKey: REACT_QUERY_KEYS.AGENT_FEED_LATEST_KEY(serviceConfigId),
     queryFn: async () => {
-      const page = await AgentChatService.getAgentFeed(serviceConfigId!, {
-        limit: FEED_PAGE_SIZE,
-      });
+      const fetchedUpTo =
+        queryClient.getQueryData<FeedData>(feedKey)?.pages[0]?.newestId;
+      const page = await fetchNewestSince(serviceConfigId!, fetchedUpTo);
       queryClient.setQueryData<FeedData>(feedKey, (data) =>
         mergeIntoNewestPage(data, page),
       );

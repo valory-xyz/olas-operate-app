@@ -51,11 +51,29 @@ export const flattenFeedPages = (data: FeedData | undefined): FeedEntry[] =>
   byId(data?.pages.flatMap((page) => page.entries) ?? []);
 
 /**
- * Merges a freshly polled newest page into the cached feed.
- *
- * If the polled page has older entries and starts after everything cached,
- * entries between the two may be missing, so the feed restarts from the
- * polled page and older ones load again on scroll.
+ * Adds entries the feed didn't fetch, e.g. a chat reply, to the newest page.
+ * Its `newestId` stays, so polls still fetch everything after it.
+ */
+export const addToNewestPage = (
+  data: FeedData | undefined,
+  entries: FeedEntry[],
+): FeedData | undefined => {
+  if (!data || data.pages.length === 0) return data;
+
+  const [newest, ...older] = data.pages;
+  return {
+    ...data,
+    pages: [
+      { ...newest, entries: byId([...newest.entries, ...entries]) },
+      ...older,
+    ],
+  };
+};
+
+/**
+ * Merges freshly polled newest entries into the cached feed, keeping loaded
+ * history. `newestId` only advances when they reach back to it, so entries
+ * still missing in between are fetched by the next poll.
  */
 export const mergeIntoNewestPage = (
   data: FeedData | undefined,
@@ -63,20 +81,26 @@ export const mergeIntoNewestPage = (
 ): FeedData | undefined => {
   if (!data || data.pages.length === 0) return data;
 
-  const [newest, ...older] = data.pages;
-  const newestCachedId = newest.entries.at(-1)?.id ?? -Infinity;
-  const oldestPolledId = polled.entries[0]?.id;
-  const mayHaveGap =
-    polled.has_more &&
-    oldestPolledId !== undefined &&
-    oldestPolledId > newestCachedId;
+  const fetchedUpTo = data.pages[0].newestId;
+  // The feed was empty when loaded, so there is no history to keep.
+  if (fetchedUpTo === undefined) {
+    return { pages: [polled], pageParams: [undefined] };
+  }
 
-  if (mayHaveGap) return { pages: [polled], pageParams: [undefined] };
+  const merged = addToNewestPage(data, polled.entries)!;
+  const reachesFetched =
+    !polled.has_more ||
+    (polled.oldestId !== undefined && polled.oldestId <= fetchedUpTo);
+  if (!reachesFetched) return merged;
 
+  const [newest, ...older] = merged.pages;
   return {
-    ...data,
+    ...merged,
     pages: [
-      { ...newest, entries: byId([...newest.entries, ...polled.entries]) },
+      {
+        ...newest,
+        newestId: Math.max(fetchedUpTo, polled.newestId ?? fetchedUpTo),
+      },
       ...older,
     ],
   };

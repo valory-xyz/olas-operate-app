@@ -2,6 +2,7 @@ import { InfiniteData } from '@tanstack/react-query';
 
 import { FeedEntry, LoadedFeedPage } from '../../types/AgentChat';
 import {
+  addToNewestPage,
   buildFeedItems,
   chatFailureFromStatus,
   FeedPageParam,
@@ -52,70 +53,100 @@ describe('flattenFeedPages', () => {
   });
 });
 
+/** A page as `getAgentFeed` returns it, with ids from its entries. */
+const fetchedPage = (entryIds: number[], hasMore: boolean): LoadedFeedPage => ({
+  entries: entryIds.map((id) => makeFeedEvent(id)),
+  has_more: hasMore,
+  oldestId: entryIds[0],
+  newestId: entryIds.at(-1),
+});
+
+describe('addToNewestPage', () => {
+  it('adds entries to the newest page without moving its fetched position', () => {
+    const data = makeInfinite([fetchedPage([81, 100], true)]);
+
+    const added = addToNewestPage(data, [
+      makeFeedUserMessage(101),
+      makeFeedAgentMessage(126),
+    ]);
+
+    expect(ids(added!.pages[0].entries)).toEqual([81, 100, 101, 126]);
+    expect(added!.pages[0].newestId).toBe(100);
+  });
+
+  it('leaves the cache alone before the first page loads', () => {
+    expect(addToNewestPage(undefined, [makeFeedEvent(1)])).toBeUndefined();
+  });
+});
+
 describe('mergeIntoNewestPage', () => {
   it('adds polled entries to the newest page, merged by id', () => {
     const data = makeInfinite([
-      { entries: [makeFeedEvent(3), makeFeedEvent(4)], has_more: true },
-      { entries: [makeFeedEvent(1), makeFeedEvent(2)], has_more: false },
+      fetchedPage([3, 4], true),
+      fetchedPage([1, 2], false),
     ]);
 
-    const merged = mergeIntoNewestPage(data, {
-      entries: [makeFeedEvent(4), makeFeedEvent(5)],
-      has_more: true,
-    });
+    const merged = mergeIntoNewestPage(data, fetchedPage([4, 5], true));
 
     expect(ids(merged!.pages[0].entries)).toEqual([3, 4, 5]);
+    expect(merged!.pages[0].newestId).toBe(5);
     expect(merged!.pages[1]).toBe(data.pages[1]);
     expect(merged!.pageParams).toBe(data.pageParams);
   });
 
-  it('keeps the newest page has_more, so paging older still starts from its oldest entry', () => {
-    const data = makeInfinite([
-      { entries: [makeFeedEvent(3)], has_more: true },
-    ]);
+  it('keeps the newest page has_more and oldestId, so paging older still starts from it', () => {
+    const data = makeInfinite([fetchedPage([3], true)]);
 
-    const merged = mergeIntoNewestPage(data, {
-      entries: [makeFeedEvent(3), makeFeedEvent(4)],
-      has_more: true,
-    });
+    const merged = mergeIntoNewestPage(data, fetchedPage([3, 4], true));
 
-    expect(merged!.pages[0].has_more).toBe(true);
+    expect(merged!.pages[0]).toMatchObject({ has_more: true, oldestId: 3 });
   });
 
-  it('restarts from the polled page when entries between the two may be missing', () => {
+  it('keeps loaded history and its fetched position when entries between may be missing', () => {
     const data = makeInfinite([
-      { entries: [makeFeedEvent(3), makeFeedEvent(4)], has_more: true },
-      { entries: [makeFeedEvent(1), makeFeedEvent(2)], has_more: false },
+      fetchedPage([81, 100], true),
+      fetchedPage([61, 80], true),
     ]);
-    const polled: LoadedFeedPage = {
-      entries: [makeFeedEvent(30), makeFeedEvent(31)],
-      has_more: true,
-    };
+
+    const merged = mergeIntoNewestPage(data, fetchedPage([106, 125], true));
+
+    expect(ids(flattenFeedPages(merged))).toEqual([61, 80, 81, 100, 106, 125]);
+    expect(merged!.pages[0].newestId).toBe(100);
+    expect(merged!.pageParams).toBe(data.pageParams);
+  });
+
+  it('does not count chat entries as fetched when the next poll leaves a gap', () => {
+    const data = addToNewestPage(makeInfinite([fetchedPage([81, 100], true)]), [
+      makeFeedUserMessage(101),
+      makeFeedAgentMessage(126),
+    ]);
+
+    const merged = mergeIntoNewestPage(data, fetchedPage([107, 126], true));
+
+    expect(merged!.pages[0].newestId).toBe(100);
+  });
+
+  it('advances the fetched position over a polled page with no older entries even when its ids jump', () => {
+    const data = makeInfinite([fetchedPage([3], false)]);
+
+    const merged = mergeIntoNewestPage(data, fetchedPage([3, 30], false));
+
+    expect(ids(merged!.pages[0].entries)).toEqual([3, 30]);
+    expect(merged!.pages[0].newestId).toBe(30);
+  });
+
+  it('starts from the polled page when the feed was empty when loaded', () => {
+    const data = makeInfinite([{ entries: [], has_more: false }]);
+    const polled = fetchedPage([30, 31], true);
 
     const merged = mergeIntoNewestPage(data, polled);
 
     expect(merged).toEqual({ pages: [polled], pageParams: [undefined] });
   });
 
-  it('merges a polled page with no older entries even when its ids jump', () => {
-    const data = makeInfinite([
-      { entries: [makeFeedEvent(3)], has_more: false },
-    ]);
-
-    const merged = mergeIntoNewestPage(data, {
-      entries: [makeFeedEvent(3), makeFeedEvent(30)],
-      has_more: false,
-    });
-
-    expect(ids(merged!.pages[0].entries)).toEqual([3, 30]);
-  });
-
   it('leaves the cache alone before the first page loads', () => {
     expect(
-      mergeIntoNewestPage(undefined, {
-        entries: [makeFeedEvent(1)],
-        has_more: false,
-      }),
+      mergeIntoNewestPage(undefined, fetchedPage([1], false)),
     ).toBeUndefined();
   });
 });

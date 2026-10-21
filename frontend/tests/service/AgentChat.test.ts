@@ -70,7 +70,7 @@ describe('AgentChatService', () => {
         method: 'GET',
         headers: { ...CONTENT_TYPE_JSON_UTF8 },
       });
-      expect(page).toEqual({ ...FEED_PAGE, oldestId: 7 });
+      expect(page).toEqual({ ...FEED_PAGE, oldestId: 7, newestId: 7 });
     });
 
     it('passes the before cursor for older pages', async () => {
@@ -139,7 +139,7 @@ describe('AgentChatService', () => {
       });
     });
 
-    it('keeps the cursor when every line on the page was dropped', async () => {
+    it('keeps the cursors when every line on the page was dropped', async () => {
       mockFetch.mockReturnValue(
         mockResponse({
           entries: [{ id: 40, ts: 40, kind: 'unknown' }],
@@ -149,7 +149,12 @@ describe('AgentChatService', () => {
 
       const page = await AgentChatService.getAgentFeed(SERVICE_CONFIG_ID, {});
 
-      expect(page).toEqual({ entries: [], has_more: true, oldestId: 40 });
+      expect(page).toEqual({
+        entries: [],
+        has_more: true,
+        oldestId: 40,
+        newestId: 40,
+      });
     });
 
     it.each([

@@ -3,11 +3,17 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { act, createElement, PropsWithChildren } from 'react';
 
 import { FIVE_SECONDS_INTERVAL } from '../../constants/intervals';
+import { REACT_QUERY_KEYS } from '../../constants/reactQueryKeys';
 import { FEED_PAGE_SIZE, useAgentFeed } from '../../hooks/useAgentFeed';
 import { AgentChatService } from '../../service/AgentChat';
 import { LoadedFeedPage } from '../../types/AgentChat';
 import { Maybe } from '../../types/Util';
-import { makeFeedEvent } from '../helpers/factories';
+import { addToNewestPage, FeedData } from '../../utils/agentChat';
+import {
+  makeFeedAgentMessage,
+  makeFeedEvent,
+  makeFeedUserMessage,
+} from '../helpers/factories';
 import { createTestQueryClient } from '../helpers/queryClient';
 
 jest.mock('../../service/AgentChat', () => ({
@@ -22,13 +28,17 @@ const page = (entryIds: number[], hasMore: boolean): LoadedFeedPage => ({
   entries: entryIds.map((id) => makeFeedEvent(id)),
   has_more: hasMore,
   oldestId: entryIds[0],
+  newestId: entryIds.at(-1),
 });
 
 const renderFeedFor = (serviceConfigId: Maybe<string>) => {
   const queryClient = createTestQueryClient();
   const wrapper = ({ children }: PropsWithChildren) =>
     createElement(QueryClientProvider, { client: queryClient }, children);
-  return renderHook(() => useAgentFeed(serviceConfigId), { wrapper });
+  return {
+    ...renderHook(() => useAgentFeed(serviceConfigId), { wrapper }),
+    queryClient,
+  };
 };
 
 const renderFeed = () => renderFeedFor(SERVICE_CONFIG_ID);
@@ -223,6 +233,73 @@ describe('useAgentFeed', () => {
     });
 
     await waitFor(() => expect(entryIds(result)).toEqual([21, 22, 23]));
+  });
+
+  it('fetches the entries between the loaded ones and a polled page, keeping loaded history', async () => {
+    const pages: Record<string, LoadedFeedPage> = {
+      newest: page([21, 22], true),
+      21: page([19, 20], false),
+    };
+    mockGetAgentFeed.mockImplementation(
+      async (_id: string, { before }: { before?: number }) =>
+        pages[before ?? 'newest'],
+    );
+    const { result } = renderFeed();
+    await waitFor(() => expect(entryIds(result)).toEqual([21, 22]));
+    await act(async () => {
+      await result.current.fetchOlder();
+    });
+    await waitFor(() => expect(entryIds(result)).toEqual([19, 20, 21, 22]));
+
+    pages.newest = page([28, 29], true);
+    pages[28] = page([25, 26, 27], true);
+    pages[25] = page([22, 23, 24], true);
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(FIVE_SECONDS_INTERVAL);
+    });
+
+    await waitFor(() =>
+      expect(entryIds(result)).toEqual([
+        19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
+      ]),
+    );
+    expect(result.current.hasOlder).toBe(false);
+  });
+
+  it('fetches the entries a chat reply skipped over', async () => {
+    const pages: Record<string, LoadedFeedPage> = {
+      newest: page([21, 22], true),
+    };
+    mockGetAgentFeed.mockImplementation(
+      async (_id: string, { before }: { before?: number }) =>
+        pages[before ?? 'newest'],
+    );
+    const { result, queryClient } = renderFeed();
+    await waitFor(() => expect(entryIds(result)).toEqual([21, 22]));
+
+    act(() => {
+      queryClient.setQueryData<FeedData>(
+        REACT_QUERY_KEYS.AGENT_FEED_KEY(SERVICE_CONFIG_ID),
+        (data) =>
+          addToNewestPage(data, [
+            makeFeedUserMessage(23),
+            makeFeedAgentMessage(28),
+          ]),
+      );
+    });
+    pages.newest = {
+      ...page([26, 27], true),
+      entries: [makeFeedEvent(26), makeFeedEvent(27), makeFeedAgentMessage(28)],
+      newestId: 28,
+    };
+    pages[26] = page([22, 23, 24, 25], true);
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(FIVE_SECONDS_INTERVAL);
+    });
+
+    await waitFor(() =>
+      expect(entryIds(result)).toEqual([21, 22, 23, 24, 25, 26, 27, 28]),
+    );
   });
 
   it('keeps entries an earlier poll brought after they leave the newest page', async () => {

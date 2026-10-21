@@ -54,6 +54,11 @@ export type FeedPage = {
 export type LoadedFeedPage = FeedPage & {
   /** Oldest id the middleware sent, dropped lines included: the next `before`. */
   oldestId?: number;
+  /**
+   * Newest id the middleware sent, dropped lines included. On the newest
+   * cached page, every entry up to it has been fetched.
+   */
+  newestId?: number;
 };
 
 export type ChatRequest = {
