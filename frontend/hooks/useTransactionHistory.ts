@@ -37,6 +37,9 @@ const directionFor = (
   if (category === FUNDS_CATEGORY.SERVICE_BOND_DEPOSIT) return 'out';
   if (category === FUNDS_CATEGORY.MASTER_TO_AGENT) return 'out';
   if (category === FUNDS_CATEGORY.SAFE_DEPLOYED) return 'in';
+  // Agent Safe → Agent EOA stays inside one agent wallet; never a Master Safe
+  // inflow, so the address fallback below would mis-sign it as '+'.
+  if (category === FUNDS_CATEGORY.AGENT_SAFE_TO_AGENT_EOA) return 'internal';
   return from.toLowerCase() === masterSafe.toLowerCase() ? 'out' : 'in';
 };
 
