@@ -52,9 +52,7 @@ export const AgentDisabledAlert = () => {
   const { isAnotherAgentRunning } = useAgentRunning();
   const { selectedStakingProgramMeta } = useStakingProgram();
 
-  // The flag can be set while the Safe is still missing, e.g. by a funding run
-  // that completed without creating it; the agent cannot start without one.
-  // Wallet data, not `isFetched`, so a failed fetch doesn't read as "no Safe".
+  // Wallet data, not `isFetched`: a failed fetch must not read as "no Safe".
   const isHomeChainSafeMissing =
     !isNil(masterWallets) &&
     !getMasterSafeOf?.(selectedAgentConfig.evmHomeChainId);
@@ -97,7 +95,6 @@ export const AgentDisabledAlert = () => {
       return { key: 'under-construction', content: <UnderConstructionAlert /> };
     }
 
-    // The "store" is `undefined` during updates, hence waiting till we get the correct value from the store.
     if (!isInitialFunded || isHomeChainSafeMissing) {
       return {
         key: 'unfinished-setup',

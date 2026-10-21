@@ -34,10 +34,8 @@ export const AgentSetupCompleteModal = ({
   );
 
   useEffect(() => {
-    // Without the Pearl Safe the agent cannot start, and a set flag would hide
-    // "Complete setup". The Safe can appear after mount, once wallets refetch.
-    //
-    // TODO: it's not ideal to handle it here, as this component should be dummy
+    // Setup isn't finished without the Pearl Safe, which may appear after mount.
+    // TODO: this component should be dummy, and check balances and service existence instead of the store.
     if (!hasHomeChainSafe) return;
     setIsInitiallyFunded();
   }, [hasHomeChainSafe, setIsInitiallyFunded]);
