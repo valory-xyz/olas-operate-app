@@ -89,6 +89,14 @@ export const REACT_QUERY_KEYS = {
   AGENT_PERFORMANCE_KEY: (chainId: number, serviceConfigId: string) =>
     ['agentPerformance', chainId, serviceConfigId] as const,
 
+  // agent chat
+  AGENT_FEED_KEY: (serviceConfigId: Maybe<string>) =>
+    ['agentFeed', serviceConfigId] as const,
+  AGENT_FEED_LATEST_KEY: (serviceConfigId: Maybe<string>) =>
+    ['agentFeedLatest', serviceConfigId] as const,
+  AGENT_CHAT_SESSION_KEY: (serviceConfigId: Maybe<string>) =>
+    ['agentChatSession', serviceConfigId] as const,
+
   // balances and funding requirements
   BALANCES_AND_REFILL_REQUIREMENTS_KEY: (serviceConfigId: string) =>
     ['balancesAndRefillRequirements', serviceConfigId] as const,
