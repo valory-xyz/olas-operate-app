@@ -29,6 +29,12 @@ import {
   ServiceDeployment,
 } from '../../types/Agent';
 import {
+  ChatReply,
+  FeedAgentMessageEntry,
+  FeedEventEntry,
+  FeedUserMessageEntry,
+} from '../../types/AgentChat';
+import {
   ServiceStakingDetails,
   StakingContractDetails,
   StakingRewardsInfo,
@@ -55,6 +61,7 @@ import {
   TransactionHistoryResponseV2,
 } from '../../types/TransactionHistory';
 import { TokenRequirement } from '../../types/Wallet';
+import { LocalChatMessage } from '../../utils/agentChat';
 
 export const INVALID_CHAIN_ID = 999 as EvmChainId;
 
@@ -1050,5 +1057,68 @@ export const makeFundingRun = (
     }),
   ],
   error: null,
+  ...overrides,
+});
+
+// ---------------------------------------------------------------------------
+// Agent chat: feed.jsonl lines, chat replies and session messages
+// ---------------------------------------------------------------------------
+
+export const DEFAULT_CHAT_CLIENT_ID = 'client-1';
+
+/** `ts` follows `id`, so entries made in id order are also in time order. */
+export const makeFeedEvent = (
+  id: number,
+  overrides: Partial<FeedEventEntry> = {},
+): FeedEventEntry => ({
+  id,
+  ts: 1_760_000_000 + id,
+  kind: 'event',
+  title: 'Placed a trade',
+  fields: [],
+  ...overrides,
+});
+
+export const makeFeedUserMessage = (
+  id: number,
+  overrides: Partial<FeedUserMessageEntry> = {},
+): FeedUserMessageEntry => ({
+  id,
+  ts: 1_760_000_000 + id,
+  kind: 'message',
+  role: 'user',
+  text: `message ${id}`,
+  client_id: DEFAULT_CHAT_CLIENT_ID,
+  ...overrides,
+});
+
+export const makeFeedAgentMessage = (
+  id: number,
+  overrides: Partial<FeedAgentMessageEntry> = {},
+): FeedAgentMessageEntry => ({
+  id,
+  ts: 1_760_000_000 + id,
+  kind: 'message',
+  role: 'agent',
+  text: `reply ${id}`,
+  ...overrides,
+});
+
+/** A 200 from `POST /chat`: the user's line and the agent's answer to it. */
+export const makeChatReply = (
+  clientId: string = DEFAULT_CHAT_CLIENT_ID,
+): ChatReply => ({
+  message: makeFeedUserMessage(10, { text: 'Why?', client_id: clientId }),
+  reply: makeFeedAgentMessage(11, { text: 'Because.', client_id: clientId }),
+});
+
+export const makeLocalChatMessage = (
+  overrides: Partial<LocalChatMessage> = {},
+): LocalChatMessage => ({
+  client_id: DEFAULT_CHAT_CLIENT_ID,
+  text: 'Why?',
+  ts: 1_760_000_100,
+  sentAt: 1_760_000_100_000,
+  state: 'pending',
   ...overrides,
 });

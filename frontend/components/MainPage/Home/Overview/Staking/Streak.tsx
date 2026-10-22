@@ -6,7 +6,12 @@ import { NA } from '@/constants/symbols';
 import { useRewardContext } from '@/hooks';
 import { useStakingDetails } from '@/hooks/useStakingDetails';
 
-export const Streak = () => {
+// The width of the loaded flame and count, so a tight row doesn't overflow.
+const COMPACT_SKELETON_STYLE = { width: 48, minWidth: 48 };
+
+type StreakProps = { isCompact?: boolean };
+
+export const Streak = ({ isCompact }: StreakProps) => {
   const {
     isStreakLoading,
     isStreakError,
@@ -16,14 +21,22 @@ export const Streak = () => {
   const optimisticStreak = useContentTransitionValue(rawStreak);
   const isEpochTargetMet = useContentTransitionValue(rawIsEpochTargetMet);
 
-  if (isStreakLoading) return <Skeleton.Input active size="small" />;
+  if (isStreakLoading) {
+    return (
+      <Skeleton.Input
+        active
+        size="small"
+        style={isCompact ? COMPACT_SKELETON_STYLE : undefined}
+      />
+    );
+  }
   if (isStreakError) return NA;
 
   const isFlameActive = optimisticStreak > 0 && isEpochTargetMet;
 
   return (
     <Flex gap={6} align="center">
-      {optimisticStreak === 0 ? (
+      {optimisticStreak === 0 && !isCompact ? (
         <>
           <FireV1 /> No streak
         </>

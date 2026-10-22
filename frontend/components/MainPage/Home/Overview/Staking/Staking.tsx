@@ -47,16 +47,11 @@ const RunAgentAlert = () => (
 );
 
 /**
- * To display current epoch lifetime, streak, and relevant alerts.
+ * Whether Manage Staking can be opened: the agent is not under construction
+ * and its service is registered on-chain.
  */
-export const Staking = () => {
-  const { goto } = usePageState();
-  const { isAgentEvicted, isEligibleForStaking } =
-    useActiveStakingContractDetails();
-  const { isServiceRunning } = useAgentActivity();
+export const useCanManageStaking = () => {
   const { selectedService, selectedAgentConfig } = useServices();
-
-  const { isUnderConstruction } = selectedAgentConfig;
 
   const hasValidServiceToken = useMemo(() => {
     if (!selectedService) return false;
@@ -66,17 +61,33 @@ export const Staking = () => {
     return isValidServiceId(token);
   }, [selectedService]);
 
-  const alert = useMemo(() => {
-    if (isUnderConstruction) return <UnderConstructionAlert />;
-    if (isAgentEvicted && !isEligibleForStaking) return <EvictionAlert />;
-    if (!isServiceRunning) return <RunAgentAlert />;
-    return null;
-  }, [
-    isAgentEvicted,
-    isEligibleForStaking,
-    isServiceRunning,
-    isUnderConstruction,
-  ]);
+  return !selectedAgentConfig.isUnderConstruction && hasValidServiceToken;
+};
+
+/** The staking banner that applies right now, if any. */
+export const StakingAlert = ({
+  withRunAgent = true,
+}: {
+  withRunAgent?: boolean;
+}) => {
+  const { isAgentEvicted, isEligibleForStaking } =
+    useActiveStakingContractDetails();
+  const { isServiceRunning } = useAgentActivity();
+  const { selectedAgentConfig } = useServices();
+
+  if (selectedAgentConfig.isUnderConstruction)
+    return <UnderConstructionAlert />;
+  if (isAgentEvicted && !isEligibleForStaking) return <EvictionAlert />;
+  if (withRunAgent && !isServiceRunning) return <RunAgentAlert />;
+  return null;
+};
+
+/**
+ * To display current epoch lifetime, streak, and relevant alerts.
+ */
+export const Staking = () => {
+  const { goto } = usePageState();
+  const canManageStaking = useCanManageStaking();
 
   return (
     <Flex vertical gap={12}>
@@ -84,7 +95,7 @@ export const Staking = () => {
         <Title level={5} className="m-0">
           Staking
         </Title>
-        {!isUnderConstruction && hasValidServiceToken && (
+        {canManageStaking && (
           <Button size="small" onClick={() => goto(PAGES.AgentStaking)}>
             Manage Staking
           </Button>
@@ -93,7 +104,7 @@ export const Staking = () => {
 
       <CardFlex $noBorder>
         <Flex vertical gap={24}>
-          {alert}
+          <StakingAlert />
           <Flex flex={1}>
             <Flex flex={1} vertical gap={8}>
               <Text className="text-neutral-secondary">Epoch lifetime</Text>

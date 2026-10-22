@@ -110,6 +110,23 @@ describe('AGENT_CONFIG', () => {
   });
 });
 
+describe('AGENT_CONFIG hasAgentChat', () => {
+  it('shows the agent chat Overview only for Omenstrat, Polystrat, Optimus and Basius', () => {
+    const agentsWithChat = Object.entries(AGENT_CONFIG)
+      .filter(([, config]) => config.hasAgentChat)
+      .map(([agentType]) => agentType);
+
+    expect(agentsWithChat.sort()).toEqual(
+      [
+        AgentMap.PredictTrader,
+        AgentMap.Polystrat,
+        AgentMap.Optimus,
+        AgentMap.Basius,
+      ].sort(),
+    );
+  });
+});
+
 describe('ACTIVE_AGENTS', () => {
   it('is derived from AGENT_CONFIG by filtering enabled agents', () => {
     const expected = Object.entries(AGENT_CONFIG).filter(

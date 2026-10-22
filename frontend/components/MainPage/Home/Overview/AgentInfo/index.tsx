@@ -25,7 +25,7 @@ const AgentInfoContainer = styled.div`
   position: relative;
 `;
 
-const IconButton = styled(Flex)`
+export const IconButton = styled(Flex)`
   padding: 8px;
   cursor: pointer;
   border-radius: 10px;
@@ -43,7 +43,7 @@ const AutoRunAlertContainer = styled(Flex)`
   padding: 2px 8px;
 `;
 
-const AutoRunAlert = () => (
+export const AutoRunAlert = () => (
   <Flex align="self-end" style={{ height: 40 }}>
     <Tooltip
       title="Selected agents will run in sequence automatically. To change which agents are included, use the auto-run toggle."
@@ -57,7 +57,7 @@ const AutoRunAlert = () => (
   </Flex>
 );
 
-const AboutAgent = () => {
+export const AboutAgent = () => {
   const { selectedAgentType } = useServices();
   const [isAboutAgentModalOpen, setIsAboutAgentModalOpen] = useState(false);
 
@@ -89,25 +89,65 @@ const AboutAgent = () => {
   );
 };
 
-const ChainBadge = () => {
+const useHomeChain = () => {
   const { selectedAgentConfig } = useServices();
-  const chainConfig = CHAIN_CONFIG[selectedAgentConfig.evmHomeChainId];
-  const chainName = chainConfig?.name;
+  const chainName = CHAIN_CONFIG[selectedAgentConfig.evmHomeChainId]?.name;
+  return {
+    chainName,
+    tooltip: `${selectedAgentConfig.displayName} is operating on ${chainName} chain`,
+  };
+};
+
+const ChainImage = ({ chainName }: { chainName: string }) => (
+  <Image
+    src={`/chains/${kebabCase(chainName)}-chain.png`}
+    alt={`${chainName} logo`}
+    width={16}
+    height={16}
+  />
+);
+
+export const ChainBadge = () => {
+  const { chainName, tooltip } = useHomeChain();
 
   if (!chainName) return null;
   return (
-    <Tooltip
-      title={`${selectedAgentConfig.displayName} is operating on ${chainName} chain`}
-    >
+    <Tooltip title={tooltip}>
       <IconButton align="center" justify="center" style={{ padding: 10 }}>
-        <Image
-          src={`/chains/${kebabCase(chainName)}-chain.png`}
-          alt={`${chainName} logo`}
-          width={16}
-          height={16}
-        />
+        <ChainImage chainName={chainName} />
       </IconButton>
     </Tooltip>
+  );
+};
+
+/** The home chain's logo alone, for next to the agent's name. */
+export const ChainLogo = () => {
+  const { chainName, tooltip } = useHomeChain();
+
+  if (!chainName) return null;
+  return (
+    <Tooltip title={tooltip}>
+      <Flex className="flex-none">
+        <ChainImage chainName={chainName} />
+      </Flex>
+    </Tooltip>
+  );
+};
+
+/** Banners shown under the agent's name and run button. */
+export const AgentInfoAlerts = () => {
+  const { selectedAgentConfig } = useServices();
+  return (
+    <>
+      <AgentDisabledAlert />
+      <ConnectSessionAlert />
+      {selectedAgentConfig.shutdownDate && (
+        <AgentDeprecationAlert
+          agentName={selectedAgentConfig.displayName}
+          shutdownDate={selectedAgentConfig.shutdownDate}
+        />
+      )}
+    </>
   );
 };
 
@@ -170,14 +210,7 @@ export const AgentInfo = () => {
               {isAutoRunEnabled ? <AutoRunAlert /> : <AgentRunButton />}
             </Flex>
           </Flex>
-          <AgentDisabledAlert />
-          <ConnectSessionAlert />
-          {selectedAgentConfig.shutdownDate && (
-            <AgentDeprecationAlert
-              agentName={selectedAgentConfig.displayName}
-              shutdownDate={selectedAgentConfig.shutdownDate}
-            />
-          )}
+          <AgentInfoAlerts />
         </AgentInfoContainer>
       </CardFlex>
 
