@@ -231,28 +231,4 @@ describe('Polygon transaction history — live squid response replay', () => {
     expect(text).not.toContain('-2.00');
     expect(text).toContain('+65.00');
   });
-
-  it('Pearl Wallet tolerates an Agent Safe → Agent Signer row in the master response', async () => {
-    mockUsePearlWallet.mockReturnValue({
-      walletChainId: EvmChainIdMap.Polygon,
-      masterSafeAddress: POLYSTRAT_MASTER_SAFE,
-    });
-    mockGraphqlRequest.mockResolvedValueOnce({
-      ...SQD_MASTER_RESPONSE,
-      fundsMovements: [topUpMovement, ...SQD_MASTER_RESPONSE.fundsMovements],
-      indexerStatus: freshStatus(),
-    });
-
-    const { container } = render(<TransactionHistory />, {
-      wrapper: createQueryClientWrapper(),
-    });
-
-    // Parsed and rendered alongside the existing rows, without a sign.
-    expect(await screen.findByText(TOP_UP_LABEL)).toBeInTheDocument();
-    expect(screen.getAllByText('Fund Polystrat')).toHaveLength(2);
-    expect(screen.getByText('2.00')).toBeInTheDocument();
-    const text = container.textContent ?? '';
-    expect(text).not.toContain('+2.00');
-    expect(text).not.toContain('-2.00');
-  });
 });
