@@ -23,6 +23,8 @@ type AgentSettings = {
   /** @deprecated Preserved during migration from boolean → per-service record. */
   isInitialFundedLegacy?: boolean;
   firstRunCompleted?: Record<string, boolean>;
+  /** Agent chat: the one-time cost note was seen, keyed by service config id. */
+  chatCostNoteSeen?: Record<string, boolean>;
 };
 
 /**

@@ -46,9 +46,10 @@ export const REWARDS_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN: Partial<
 
 // pearl-transactions endpoints, one entry per shipped network (Mode is
 // deprecated). An undefined/absent entry surfaces the "not available on this
-// network yet" state instead of fetching. Gnosis/Optimism/Base are graph-node
-// subgraph proxies (host-style); Polygon is the SQD squid, which is served
-// path-style under the shared host — the two URL shapes are deliberate.
+// network yet" state instead of fetching. Gnosis/Optimism are graph-node
+// subgraph proxies (host-style); Polygon and Base are SQD squids, which are
+// served path-style under the shared host — the two URL shapes are deliberate.
+// Base rollback: 'https://transactions-base.subgraph.autonolas.tech/' + 'v2'.
 export const TRANSACTION_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN: Partial<
   Record<EvmChainId, Url>
 > = {
@@ -58,18 +59,20 @@ export const TRANSACTION_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN: Partial<
     'https://subgraph.autonolas.tech/squid/transactions-polygon/graphql',
   [EvmChainIdMap.Optimism]:
     'https://transactions-optimism.subgraph.autonolas.tech/',
-  [EvmChainIdMap.Base]: 'https://transactions-base.subgraph.autonolas.tech/',
+  [EvmChainIdMap.Base]:
+    'https://subgraph.autonolas.tech/squid/transactions-base/graphql',
 };
 
 // Which pearl-transactions schema each chain's deployment serves (see
 // TransactionHistorySchemaRevision). Gnosis/Optimism proxies pin subgraph
-// v0.0.6 (v1); Base pins v0.0.7 (v2) — its indexers no longer serve v0.0.6;
-// Polygon is the SQD squid (sqd), which speaks OpenReader. When a chain's
-// backend changes, flip its entry here; absent entries default to v1.
+// v0.0.6 (v1); Polygon and Base are SQD squids (sqd), which speak OpenReader.
+// The v2 revision (graph-node v0.0.7, Base's previous backend) is unused but
+// kept for rollback. When a chain's backend changes, flip its entry here;
+// absent entries default to v1.
 export const TRANSACTION_HISTORY_SUBGRAPH_SCHEMA_BY_EVM_CHAIN: Partial<
   Record<EvmChainId, TransactionHistorySchemaRevision>
 > = {
-  [EvmChainIdMap.Base]: 'v2',
+  [EvmChainIdMap.Base]: 'sqd',
   [EvmChainIdMap.Polygon]: 'sqd',
 };
 
