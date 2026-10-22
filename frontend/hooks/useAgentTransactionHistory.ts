@@ -25,11 +25,10 @@ type UseAgentTransactionHistoryArgs = {
 // Direction is derived from the category, not the address. The query returns
 // only the agent-perspective categories, each with a fixed direction:
 // MASTER_TO_AGENT is always an inflow ("Fund agent"), AGENT_TO_MASTER always an
-// outflow ("Withdrawal"), and AGENT_SAFE_TO_AGENT_EOA stays inside the agent
-// wallet ('internal', unsigned). An address check would mis-sign the EOA leg of
-// a funding tx — gas top-ups land on the Agent EOA (not the Safe) yet still
-// carry the agentSafe ref, so they'd read as outflows under a green "Fund
-// agent" row.
+// outflow ("Withdrawal"), AGENT_SAFE_TO_AGENT_EOA internal. An address check
+// would mis-sign the EOA leg of a funding tx — gas top-ups land on the Agent EOA
+// (not the Safe) yet still carry the agentSafe ref, so they'd read as outflows
+// under a green "Fund agent" row.
 const directionForAgent = (
   category: FundsMovement['category'],
 ): TransferDirection => {

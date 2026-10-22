@@ -30,9 +30,6 @@ export const FUNDS_CATEGORY = {
   MASTER_WITHDRAWAL: 'MASTER_WITHDRAWAL',
   AGENT_TO_APP: 'AGENT_TO_APP',
   APP_TO_AGENT: 'APP_TO_AGENT',
-  // The agent topping up its own Agent EOA (signer) from its Agent Safe with
-  // native gas. One native movement per tx, `agentSafe` set. Neither an
-  // inflow nor an outflow of the agent wallet, so it renders unsigned.
   AGENT_SAFE_TO_AGENT_EOA: 'AGENT_SAFE_TO_AGENT_EOA',
   OTHER: 'OTHER',
 } as const;
@@ -267,8 +264,7 @@ export type AgentTransactionHistoryResponseSqd = z.infer<
   typeof AgentTransactionHistoryResponseSqdSchema
 >;
 
-// 'internal' — funds moved between two addresses of the same wallet (e.g.
-// Agent Safe → Agent EOA); rendered without a sign.
+// 'internal' — moved between two addresses of one wallet; rendered unsigned.
 export type TransferDirection = 'in' | 'out' | 'internal';
 
 export type TransactionHistoryTransfer = {

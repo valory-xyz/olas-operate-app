@@ -204,7 +204,6 @@ export const TransactionHistoryRow = ({
             tokenInfo?.decimals ?? 18,
             isEth ? 5 : 4,
           );
-          // 'internal' moves stay inside the wallet, so they carry no sign.
           const prefix = SIGN_BY_DIRECTION[transfer.direction];
           const className =
             transfer.direction === 'in'
