@@ -4,18 +4,25 @@ import { fireEvent, render, screen } from '@testing-library/react';
 // Import after mocks
 // ---------------------------------------------------------------------------
 import { AgentSetupCompleteModal } from '../../../components/ui/AgentSetupCompleteModal';
+import { EvmChainIdMap } from '../../../constants/chains';
 import { PAGES } from '../../../constants/pages';
+import { makeMasterSafe } from '../../helpers/factories';
 
 // ---------------------------------------------------------------------------
 // Module mocks
 // ---------------------------------------------------------------------------
 const mockGoto = jest.fn();
 const mockSetIsInitiallyFunded = jest.fn();
+const mockGetMasterSafeOf = jest.fn();
 
 jest.mock('../../../hooks', () => ({
   usePageState: () => ({ goto: mockGoto }),
   useIsInitiallyFunded: () => ({
     setIsInitiallyFunded: mockSetIsInitiallyFunded,
+  }),
+  useMasterWalletContext: () => ({ getMasterSafeOf: mockGetMasterSafeOf }),
+  useServices: () => ({
+    selectedAgentConfig: { evmHomeChainId: EvmChainIdMap.Gnosis },
   }),
 }));
 
@@ -56,6 +63,7 @@ jest.mock('../../../components/ui/Modal', () => ({
 describe('AgentSetupCompleteModal', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockGetMasterSafeOf.mockReturnValue(makeMasterSafe(EvmChainIdMap.Gnosis));
   });
 
   it('renders the modal with correct title and description', () => {
@@ -73,8 +81,25 @@ describe('AgentSetupCompleteModal', () => {
     expect(screen.getByTestId('success-icon')).toBeInTheDocument();
   });
 
-  it('calls setIsInitiallyFunded on mount', () => {
+  it('calls setIsInitiallyFunded on mount when the home chain has a Pearl Safe', () => {
     render(<AgentSetupCompleteModal />);
+    expect(mockGetMasterSafeOf).toHaveBeenCalledWith(EvmChainIdMap.Gnosis);
+    expect(mockSetIsInitiallyFunded).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not call setIsInitiallyFunded while the home chain has no Pearl Safe', () => {
+    mockGetMasterSafeOf.mockReturnValue(undefined);
+    render(<AgentSetupCompleteModal />);
+    expect(mockSetIsInitiallyFunded).not.toHaveBeenCalled();
+  });
+
+  it('calls setIsInitiallyFunded once the Pearl Safe appears after mount', () => {
+    mockGetMasterSafeOf.mockReturnValue(undefined);
+    const { rerender } = render(<AgentSetupCompleteModal />);
+    expect(mockSetIsInitiallyFunded).not.toHaveBeenCalled();
+
+    mockGetMasterSafeOf.mockReturnValue(makeMasterSafe(EvmChainIdMap.Gnosis));
+    rerender(<AgentSetupCompleteModal />);
     expect(mockSetIsInitiallyFunded).toHaveBeenCalledTimes(1);
   });
 
