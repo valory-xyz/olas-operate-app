@@ -521,6 +521,22 @@ describe('useCompleteAgentSetup', () => {
   });
 
   describe('when the caller disables the hook mid-flow', () => {
+    const SAFE_DONE: CreationAndTransferDetails = {
+      safeCreationDetails: {
+        isSafeCreated: true,
+        status: 'finish',
+        txnLink: null,
+      },
+      transferDetails: { isTransferComplete: true, transfers: [] },
+    };
+    const TRANSFER_FAILED: CreationAndTransferDetails = {
+      ...SAFE_DONE,
+      transferDetails: {
+        isTransferComplete: false,
+        transfers: [{ symbol: 'OLAS', status: 'error', txnLink: null }],
+      },
+    };
+
     const startSafeCreation = () => {
       setupMocks({
         masterSafeAddress: null,
@@ -536,53 +552,39 @@ describe('useCompleteAgentSetup', () => {
       return hook;
     };
 
-    it('still shows setupComplete once the Safe appears and the transfer completes', async () => {
-      jest.useFakeTimers();
-      const { result, rerender } = startSafeCreation();
-
-      // The Safe shows up in master wallets, so the caller disables the hook.
+    // The Safe shows up in master wallets, so the caller disables the hook.
+    const safeAppears = (
+      rerender: (props: { enabled: boolean }) => void,
+      creationAndTransferDetails = SAFE_DONE,
+    ) => {
       setupMocks({
         masterSafeAddress: POLYGON_SAFE_ADDRESS,
         safeBalances: [makeOlasBalance(100), makeUsdceBalance(50)],
-        creationAndTransferDetails: {
-          safeCreationDetails: {
-            isSafeCreated: true,
-            status: 'finish',
-            txnLink: null,
-          },
-          transferDetails: { isTransferComplete: true, transfers: [] },
-        },
+        creationAndTransferDetails,
       });
       rerender({ enabled: false });
+    };
 
-      await act(async () => {
+    const flushSetupTimer = () =>
+      act(async () => {
         jest.advanceTimersByTime(250);
         await Promise.resolve();
       });
 
-      expect(result.current.modalToShow).toBe('setupComplete');
+    it('still shows setupComplete once the Safe appears and the transfer completes', async () => {
+      jest.useFakeTimers();
+      const { result, rerender } = startSafeCreation();
 
-      jest.useRealTimers();
+      safeAppears(rerender);
+      await flushSetupTimer();
+
+      expect(result.current.modalToShow).toBe('setupComplete');
     });
 
     it('still shows safeCreationFailed when the transfer fails after the Safe appears', () => {
       const { result, rerender } = startSafeCreation();
 
-      setupMocks({
-        masterSafeAddress: POLYGON_SAFE_ADDRESS,
-        creationAndTransferDetails: {
-          safeCreationDetails: {
-            isSafeCreated: true,
-            status: 'finish',
-            txnLink: null,
-          },
-          transferDetails: {
-            isTransferComplete: false,
-            transfers: [{ symbol: 'OLAS', status: 'error', txnLink: null }],
-          },
-        },
-      });
-      rerender({ enabled: false });
+      safeAppears(rerender, TRANSFER_FAILED);
 
       expect(result.current.modalToShow).toBe('safeCreationFailed');
     });
@@ -591,35 +593,30 @@ describe('useCompleteAgentSetup', () => {
       jest.useFakeTimers();
       const { result, rerender } = startSafeCreation();
 
-      setupMocks({
-        masterSafeAddress: POLYGON_SAFE_ADDRESS,
-        creationAndTransferDetails: {
-          safeCreationDetails: {
-            isSafeCreated: true,
-            status: 'finish',
-            txnLink: null,
-          },
-          transferDetails: { isTransferComplete: true, transfers: [] },
-        },
-      });
-      rerender({ enabled: false });
-      await act(async () => {
-        jest.advanceTimersByTime(250);
-        await Promise.resolve();
-      });
+      safeAppears(rerender);
+      await flushSetupTimer();
       expect(result.current.modalToShow).toBe('setupComplete');
 
       act(() => {
         result.current.dismissModal();
       });
-      await act(async () => {
-        jest.advanceTimersByTime(250);
-        await Promise.resolve();
-      });
+      await flushSetupTimer();
 
       expect(result.current.modalToShow).toBeNull();
+    });
 
-      jest.useRealTimers();
+    it('keeps safeCreationFailed closed after it is dismissed', () => {
+      const { result, rerender } = startSafeCreation();
+
+      safeAppears(rerender, TRANSFER_FAILED);
+      expect(result.current.modalToShow).toBe('safeCreationFailed');
+
+      act(() => {
+        result.current.dismissModal();
+      });
+      rerender({ enabled: false });
+
+      expect(result.current.modalToShow).toBeNull();
     });
   });
 
