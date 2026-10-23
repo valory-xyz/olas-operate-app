@@ -13,16 +13,23 @@ import {
   connectFundRequirementsFor,
 } from '../../../constants/serviceTemplates/service/connect';
 
-const entries = Object.entries(CONNECT_FUND_REQUIREMENTS).flatMap(
-  ([chain, roles]) =>
-    Object.entries(roles).flatMap(([role, assets]) =>
-      Object.entries(assets).map(([asset, requirement]) => ({
-        chain,
-        role: role as 'agent' | 'safe',
-        asset,
-        requirement,
-      })),
-    ),
+type Requirement = Record<string, unknown>;
+
+// Read from the value Connect actually receives, not from the constant behind it.
+const sent: Record<
+  string,
+  Record<string, Record<string, Requirement>>
+> = JSON.parse(CONNECT_SERVICE_TEMPLATE.env_variables.FUND_REQUIREMENTS.value);
+
+const entries = Object.entries(sent).flatMap(([chain, roles]) =>
+  Object.entries(roles).flatMap(([role, assets]) =>
+    Object.entries(assets).map(([asset, requirement]) => ({
+      chain,
+      role: role as 'agent' | 'safe',
+      asset,
+      requirement,
+    })),
+  ),
 );
 
 describe('CONNECT_FUND_REQUIREMENTS', () => {
@@ -52,8 +59,8 @@ describe('CONNECT_FUND_REQUIREMENTS', () => {
 
   it('never sets a threshold above its topup', () => {
     for (const { requirement } of entries) {
-      expect(BigInt(requirement.threshold)).toBeLessThanOrEqual(
-        BigInt(requirement.topup),
+      expect(BigInt(requirement.threshold as string)).toBeLessThanOrEqual(
+        BigInt(requirement.topup as string),
       );
     }
   });
