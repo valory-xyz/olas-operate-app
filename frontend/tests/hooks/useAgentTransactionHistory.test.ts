@@ -59,6 +59,27 @@ describe('buildAgentTransactionHistoryRows', () => {
     expect(byCategory.AGENT_TO_MASTER.transfers[0].direction).toBe('out');
   });
 
+  it('marks AGENT_SAFE_TO_AGENT_EOA internal (neither inflow nor outflow)', () => {
+    const rows = buildAgentTransactionHistoryRows(
+      resp([
+        makeFundsMovement({
+          category: 'AGENT_SAFE_TO_AGENT_EOA',
+          source: 'SEMANTIC',
+          token: null,
+          from: MOCK_MULTISIG_ADDRESS,
+          to: MOCK_INSTANCE_ADDRESS,
+          transactionHash: MOCK_TX_HASH_1,
+          agentSafe: agentSafeRef,
+        }),
+      ]),
+      EvmChainIdMap.Gnosis,
+    );
+
+    expect(rows).toHaveLength(1);
+    expect(rows[0].category).toBe('AGENT_SAFE_TO_AGENT_EOA');
+    expect(rows[0].transfers[0].direction).toBe('internal');
+  });
+
   it('marks a MASTER_TO_AGENT leg that lands on the Agent EOA as inbound', () => {
     // Regression for the address-based direction bug: gas top-ups fund the
     // Agent EOA (not the Safe) but still carry the agentSafe ref, so the query

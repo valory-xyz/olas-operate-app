@@ -65,6 +65,24 @@ const staleStatus = () => statusAgedBy(13 * 3600);
 // Exact copy of the shipped DataDelayAlert message in TransactionHistoryView.
 const STALE_BANNER = 'Recent transactions may not appear yet';
 
+// An Agent Safe → Agent EOA native top-up (OPE-1965) in the squid's row shape:
+// 2 POL, `agentSafe` set, SEMANTIC source.
+const POLYSTRAT_AGENT_EOA = '0x5f1b4b4e2a1f4e6e2c8f3c9d7a0b1c2d3e4f5a6b';
+const TOP_UP_LABEL = 'Agent Safe to Agent Signer movement';
+const topUpMovement = {
+  ...SQD_AGENT_RESPONSE.fundsMovements[1],
+  id: '0x7f3c0e063d2542aa320a72ba1a6bc9c8cd1fd60edb3090c00dc27d4fcc280690-12',
+  category: 'AGENT_SAFE_TO_AGENT_EOA',
+  source: 'SEMANTIC',
+  token: null,
+  amount: '2000000000000000000',
+  from: POLYSTRAT_AGENT_SAFE,
+  to: POLYSTRAT_AGENT_EOA,
+  blockTimestamp: '1777430000',
+  transactionHash:
+    '0x7f3c0e063d2542aa320a72ba1a6bc9c8cd1fd60edb3090c00dc27d4fcc280690',
+};
+
 describe('Polygon transaction history — live squid response replay', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -189,5 +207,28 @@ describe('Polygon transaction history — live squid response replay', () => {
     expect(text).toContain('+40.00');
     expect(text).toContain('POL');
     expect(screen.queryByText(STALE_BANNER)).not.toBeInTheDocument();
+  });
+
+  it('Polystrat Agent Wallet renders an Agent Safe → Agent Signer top-up unsigned', async () => {
+    mockUseService.mockReturnValue({
+      getServiceSafeOf: () => ({ address: POLYSTRAT_AGENT_SAFE }),
+    });
+    mockGraphqlRequest.mockResolvedValueOnce({
+      fundsMovements: [topUpMovement, ...SQD_AGENT_RESPONSE.fundsMovements],
+      indexerStatus: freshStatus(),
+    });
+
+    const { container } = render(<AgentTransactionHistory />, {
+      wrapper: createQueryClientWrapper(),
+    });
+
+    expect(await screen.findByText(TOP_UP_LABEL)).toBeInTheDocument();
+    expect(screen.getAllByText('Fund agent')).toHaveLength(2);
+    // The top-up's 2 POL carries no sign; the inflows keep their '+'.
+    expect(screen.getByText('2.00')).toBeInTheDocument();
+    const text = container.textContent ?? '';
+    expect(text).not.toContain('+2.00');
+    expect(text).not.toContain('-2.00');
+    expect(text).toContain('+65.00');
   });
 });
