@@ -31,7 +31,7 @@ const NO_STAKING: StakingProgramId = 'no_staking';
  * Build a single-chain Connect service template for the chosen chain: clone
  * CONNECT_SERVICE_TEMPLATE, set `home_chain` to the selected chain, prune
  * `configurations` to just that chain and narrow the `FUND_REQUIREMENTS`
- * low-funds thresholds to the same chain (the agent package ships a default RPC
+ * low-funds requirements to the same chain (the agent package ships a default RPC
  * for every chain, so an unnarrowed map makes it report deficits for chains the
  * instance doesn't operate on). The staking program (`no_staking`) is applied by
  * `Services.createService`.
