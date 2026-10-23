@@ -1,5 +1,5 @@
 version = 1
-revision = 5
+revision = 3
 requires-python = "==3.14.*"
 
 [[package]]
@@ -1043,7 +1043,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "olas-operate-middleware", git = "https://github.com/valory-xyz/olas-operate-middleware.git?rev=19c437f0b791d5930861e5770a40d7d9f731ac5b" },
+    { name = "olas-operate-middleware", specifier = "==0.15.46" },
     { name = "open-aea-cli-ipfs", specifier = "==2.2.9" },
     { name = "open-aea-ledger-cosmos", specifier = "==2.2.9" },
     { name = "open-aea-ledger-ethereum", specifier = "==2.2.9" },
@@ -1056,7 +1056,7 @@ dev = [{ name = "pyinstaller", specifier = "==6.20.0" }]
 [[package]]
 name = "olas-operate-middleware"
 version = "0.15.46"
-source = { git = "https://github.com/valory-xyz/olas-operate-middleware.git?rev=19c437f0b791d5930861e5770a40d7d9f731ac5b#19c437f0b791d5930861e5770a40d7d9f731ac5b" }
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiohttp" },
     { name = "argon2-cffi" },
@@ -1075,6 +1075,10 @@ dependencies = [
     { name = "requests" },
     { name = "uvicorn" },
     { name = "werkzeug" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/74/a3/25953c821c95e08d9c9e0d16f7eeb9f3aea818a393327f13d03c528ac6e7/olas_operate_middleware-0.15.46.tar.gz", hash = "sha256:2459c43f6f527dcd93dbae0b04dc3e4c7c531f10df4592de7b04be5016ea1c4b", size = 350444, upload-time = "2026-10-23T14:51:18.786Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/2d/69/a2e3122d906ab7d54d6c4e255a35f80d68357dd2f701b2e75c6c61d3a128/olas_operate_middleware-0.15.46-py3-none-any.whl", hash = "sha256:22d4f71a09706beb73dc4338d75f3f036f168857eff7a966907f84289a4efef3", size = 406784, upload-time = "2026-10-23T14:51:16.685Z" },
 ]
 
 [[package]]
