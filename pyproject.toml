@@ -1,6 +1,6 @@
 [project]
 name = "olas-operate-app"
-version = "1.11.3-rc11"
+version = "1.11.3-rc12"
 description = ""
 authors = [
     { name = "David Vilela", email = "dvilelaf@gmail.com" },
@@ -28,3 +28,6 @@ package = false
 # provenance we had under Poetry). Drop this only if we want to
 # opt every release into uv-managed interpreters.
 python-preference = "only-system"
+
+[tool.uv.sources]
+olas-operate-middleware = { git = "https://github.com/valory-xyz/olas-operate-middleware.git", rev = "19c437f0b791d5930861e5770a40d7d9f731ac5b" }
