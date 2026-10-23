@@ -50,9 +50,6 @@ const StatusBanner = ({
   if (failureText) return <Banner tone="error">{failureText}</Banner>;
   const currentStep = getCurrentStep(run);
   if (!currentStep && run.status !== 'PROCESSING') return null;
-  const isSlow = currentStep
-    ? currentStep.is_slow
-    : run.steps.some((step) => step.is_slow);
   return (
     <Banner tone="progress">
       <Flex vertical align="center">
@@ -61,7 +58,7 @@ const StatusBanner = ({
             ? getStepText(run, currentStep, 'inProgress')
             : NO_VISIBLE_STEP_BANNER}
         </span>
-        {isSlow && <Text className="text-sm">{SLOW_STEP}</Text>}
+        {currentStep?.is_slow && <Text className="text-sm">{SLOW_STEP}</Text>}
       </Flex>
     </Banner>
   );

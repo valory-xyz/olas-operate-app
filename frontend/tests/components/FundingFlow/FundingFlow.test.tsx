@@ -7,7 +7,7 @@ import {
 } from '../../../components/FundingFlow/FundingFlow';
 import { EvmChainIdMap } from '../../../constants/chains';
 import { FundingRequestService } from '../../../service/FundingRequest';
-import { FundingRun } from '../../../types/FundingRun';
+import { FundingRun, FundingRunStep } from '../../../types/FundingRun';
 import { copyToClipboard } from '../../../utils/copyToClipboard';
 import {
   FUNDING_RUN_BASE_USDC,
@@ -167,6 +167,27 @@ const processingRun = (overrides: Partial<FundingRun> = {}) => {
     ...overrides,
   });
 };
+
+/** A run whose only step is the hidden Safe step, as in the Safe-only onboard run. */
+const hiddenStepRun = (
+  runOverrides: Partial<FundingRun> = {},
+  stepOverrides: Partial<FundingRunStep> = {},
+) =>
+  makeFundingRun({
+    quote: null,
+    to_receive: [],
+    steps: [
+      makeFundingRunStep({
+        id: 'safe',
+        kind: 'SAFE_AND_TRANSFER',
+        token: null,
+        amount: null,
+        visible: false,
+        ...stepOverrides,
+      }),
+    ],
+    ...runOverrides,
+  });
 
 /** A run some of whose deposit has arrived: it holds the user's funds. */
 const partlyFundedRun = (overrides: Partial<FundingRun> = {}) =>
@@ -1279,52 +1300,18 @@ describe('FundingFlow — progress', () => {
     expect(screen.getByText('Moving funds to Polygon')).toBeInTheDocument();
   });
 
-  it('shows a setup line while a run with no visible step processes', () => {
-    mockHookState = {
-      activeRun: makeFundingRun({
-        status: 'PROCESSING',
-        quote: null,
-        to_receive: [],
-        steps: [
-          makeFundingRunStep({
-            id: 'safe',
-            kind: 'SAFE_AND_TRANSFER',
-            token: null,
-            amount: null,
-            visible: false,
-          }),
-        ],
-      }),
-    };
-    renderFlow();
+  it.each([false, true])(
+    'shows the setup line, without a slow note, while a run with no visible step processes (is_slow: %s)',
+    (isSlow) => {
+      mockHookState = {
+        activeRun: hiddenStepRun({ status: 'PROCESSING' }, { is_slow: isSlow }),
+      };
+      renderFlow();
 
-    expect(screen.getByText(NO_VISIBLE_STEP_BANNER)).toBeInTheDocument();
-    expect(screen.queryByText('Taking longer than usual...')).toBeNull();
-  });
-
-  it('says a run with no visible step is slow when its hidden step is', () => {
-    mockHookState = {
-      activeRun: makeFundingRun({
-        status: 'PROCESSING',
-        quote: null,
-        to_receive: [],
-        steps: [
-          makeFundingRunStep({
-            id: 'safe',
-            kind: 'SAFE_AND_TRANSFER',
-            token: null,
-            amount: null,
-            visible: false,
-            is_slow: true,
-          }),
-        ],
-      }),
-    };
-    renderFlow();
-
-    expect(screen.getByText(NO_VISIBLE_STEP_BANNER)).toBeInTheDocument();
-    expect(screen.getByText('Taking longer than usual...')).toBeInTheDocument();
-  });
+      expect(screen.getByText(NO_VISIBLE_STEP_BANNER)).toBeInTheDocument();
+      expect(screen.queryByText('Taking longer than usual...')).toBeNull();
+    },
+  );
 
   it('logs finished visible steps newest-first with Details links', () => {
     const run = processingRun();
@@ -1538,22 +1525,10 @@ describe('FundingFlow — progress', () => {
 
   it('shows the failure, not the setup line, for a failed run with only hidden steps', () => {
     mockHookState = {
-      activeRun: makeFundingRun({
-        status: 'FAILED',
-        quote: null,
-        to_receive: [],
-        steps: [
-          makeFundingRunStep({
-            id: 'safe',
-            kind: 'SAFE_AND_TRANSFER',
-            token: null,
-            amount: null,
-            visible: false,
-            status: 'FAILED',
-          }),
-        ],
-        error: { step_id: 'safe', message: '' },
-      }),
+      activeRun: hiddenStepRun(
+        { status: 'FAILED', error: { step_id: 'safe', message: '' } },
+        { status: 'FAILED' },
+      ),
     };
     renderFlow();
 
