@@ -1,7 +1,11 @@
 import { isNil } from 'lodash';
 import { useMemo } from 'react';
 
-import { deriveIsDoneForEpoch } from '@/utils/activityGoal';
+import {
+  ActivityGoalProgress,
+  deriveIsDoneForEpoch,
+  getActivityGoalProgress,
+} from '@/utils/activityGoal';
 
 import { useActivityGoal } from './useActivityGoal';
 import { useRewardContext } from './useRewardContext';
@@ -17,6 +21,8 @@ export type EpochWorkStatus = 'working' | 'goal-pending' | 'standby';
 type EpochWorkStatusResult = {
   isDoneForEpoch: boolean | undefined;
   workStatus: EpochWorkStatus | undefined;
+  /** Progress toward the activity goal, while `goal-pending`. */
+  goalProgress?: ActivityGoalProgress;
 };
 
 const UNKNOWN_WORK_STATUS: EpochWorkStatusResult = {
@@ -53,9 +59,13 @@ export const useEpochWorkStatus = (): EpochWorkStatusResult => {
       activityGoal,
       tsCheckpoint,
     );
+    if (isDoneForEpoch) return { isDoneForEpoch, workStatus: 'standby' };
     return {
       isDoneForEpoch,
-      workStatus: isDoneForEpoch ? 'standby' : 'goal-pending',
+      workStatus: 'goal-pending',
+      goalProgress: activityGoal
+        ? getActivityGoalProgress(activityGoal, tsCheckpoint)
+        : undefined,
     };
   }, [activityGoal, isEpochTargetMet, isLoading, isUnavailable, tsCheckpoint]);
 };

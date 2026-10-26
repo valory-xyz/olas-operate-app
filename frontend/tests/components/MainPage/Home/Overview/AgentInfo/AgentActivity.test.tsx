@@ -2,12 +2,15 @@ import { fireEvent, render, screen } from '@testing-library/react';
 
 import { AgentActivity } from '../../../../../../components/MainPage/Home/Overview/AgentInfo/AgentActivity';
 import { COLOR } from '../../../../../../constants/colors';
+import { useAutoRunContext } from '../../../../../../context/AutoRunProvider';
 import {
   useAgentActivity,
   useConnectSession,
   useEpochWorkStatus,
+  useServices,
 } from '../../../../../../hooks';
 import {
+  DEFAULT_SERVICE_CONFIG_ID,
   makeAgentLiveness,
   makeServiceDeployment,
 } from '../../../../../helpers/factories';
@@ -16,6 +19,11 @@ jest.mock('../../../../../../hooks', () => ({
   useAgentActivity: jest.fn(),
   useConnectSession: jest.fn(),
   useEpochWorkStatus: jest.fn(),
+  useServices: jest.fn(),
+}));
+
+jest.mock('../../../../../../context/AutoRunProvider', () => ({
+  useAutoRunContext: jest.fn(),
 }));
 
 jest.mock(
@@ -43,6 +51,8 @@ jest.mock('../../../../../../components/ui', () => ({
 const mockUseAgentActivity = useAgentActivity as jest.Mock;
 const mockUseConnectSession = useConnectSession as jest.Mock;
 const mockUseEpochWorkStatus = useEpochWorkStatus as jest.Mock;
+const mockUseServices = useServices as jest.Mock;
+const mockUseAutoRunContext = useAutoRunContext as jest.Mock;
 
 const setup = (over: Record<string, unknown> = {}) => {
   mockUseAgentActivity.mockReturnValue({
@@ -59,6 +69,13 @@ describe('AgentActivity', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockUseEpochWorkStatus.mockReturnValue({ workStatus: 'working' });
+    mockUseServices.mockReturnValue({
+      selectedServiceConfigId: DEFAULT_SERVICE_CONFIG_ID,
+    });
+    mockUseAutoRunContext.mockReturnValue({
+      enabled: false,
+      stalledInstances: {},
+    });
     mockUseConnectSession.mockReturnValue({
       showRunningInfo: false,
       isFirstRun: false,
@@ -169,6 +186,45 @@ describe('AgentActivity', () => {
       screen.queryByText('collect_signature_round'),
     ).not.toBeInTheDocument();
   });
+  describe('agent Auto-run moved on from for a stalled goal', () => {
+    const stalled = {
+      progress: 0,
+      target: 8,
+      unit: 'trades',
+      periodStart: 1_700_000_000,
+    };
+    const STALLED_COPY =
+      'Auto-run moved on: no progress toward the daily goal in the last hour (0 of 8 trades)';
+
+    it('explains why the agent is not running', () => {
+      mockUseAutoRunContext.mockReturnValue({
+        enabled: true,
+        stalledInstances: { [DEFAULT_SERVICE_CONFIG_ID]: stalled },
+      });
+      setup();
+      expect(screen.getByText(STALLED_COPY)).toBeInTheDocument();
+      expect(screen.queryByText('Agent is not running')).toBeNull();
+    });
+
+    it('shows the plain not-running copy once Auto-run is off', () => {
+      mockUseAutoRunContext.mockReturnValue({
+        enabled: false,
+        stalledInstances: { [DEFAULT_SERVICE_CONFIG_ID]: stalled },
+      });
+      setup();
+      expect(screen.getByText('Agent is not running')).toBeInTheDocument();
+    });
+
+    it("does not show another instance's reason", () => {
+      mockUseAutoRunContext.mockReturnValue({
+        enabled: true,
+        stalledInstances: { 'sc-other': stalled },
+      });
+      setup();
+      expect(screen.getByText('Agent is not running')).toBeInTheDocument();
+    });
+  });
+
   describe('epoch work status', () => {
     const OLD_STANDBY_COPY =
       'Agent has earned staking rewards and is in standby mode for the next epoch';
@@ -207,6 +263,24 @@ describe('AgentActivity', () => {
       setup(runningWithRounds);
       expect(screen.getByText('Current action:')).toBeInTheDocument();
     });
+
+    it.each([
+      [{ progress: 3, target: 8, unit: 'trades' }, '3 of 8 trades'],
+      [{ progress: 0, target: 1, unit: 'trades' }, '0 of 1 trade'],
+      [{ progress: 12, target: 30, unit: 'minutes' }, '12 of 30 minutes'],
+    ])(
+      'shows the goal progress in the goal-pending copy (%j)',
+      (goalProgress, label) => {
+        mockUseEpochWorkStatus.mockReturnValue({
+          workStatus: 'goal-pending',
+          goalProgress,
+        });
+        setup(runningWithRounds);
+        expect(
+          screen.getByText(`${GOAL_PENDING_COPY}: ${label}`, { exact: false }),
+        ).toBeInTheDocument();
+      },
+    );
 
     it('shows the goal-pending copy and tooltip in purple once rewards are earned', () => {
       mockUseEpochWorkStatus.mockReturnValue({ workStatus: 'goal-pending' });

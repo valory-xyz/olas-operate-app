@@ -87,24 +87,33 @@ describe('useEpochWorkStatus', () => {
     expect(
       setup({
         isEpochTargetMet: true,
-        activityGoal: makeActivityGoal({ is_met: false }),
+        activityGoal: makeActivityGoal({
+          is_met: false,
+          progress: 3,
+          target: 8,
+          unit: 'trades',
+        }),
       }),
     ).toEqual({
       isDoneForEpoch: false,
       workStatus: 'goal-pending',
+      goalProgress: { progress: 3, target: 8, unit: 'trades' },
     });
   });
 
-  it('is goal-pending when the met block is from an earlier epoch', () => {
+  it('is goal-pending with no progress when the block is from an earlier epoch', () => {
     const status = setup({
       isEpochTargetMet: true,
       activityGoal: makeActivityGoal({
         is_met: true,
+        progress: 8,
+        target: 8,
         period_start: DEFAULT_TS_CHECKPOINT - 1,
       }),
     });
     expect(status.workStatus).toBe('goal-pending');
     expect(status.isDoneForEpoch).toBe(false);
+    expect(status.goalProgress?.progress).toBe(0);
   });
 
   it('is standby when both the staking KPI and the goal are met', () => {

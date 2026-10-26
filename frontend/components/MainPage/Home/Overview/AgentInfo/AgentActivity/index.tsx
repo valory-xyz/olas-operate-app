@@ -6,11 +6,17 @@ import { useBoolean } from 'usehooks-ts';
 
 import { InfoTooltip } from '@/components/ui';
 import { COLOR } from '@/constants';
+import { useAutoRunContext } from '@/context/AutoRunProvider';
 import {
   useAgentActivity,
   useConnectSession,
   useEpochWorkStatus,
+  useServices,
 } from '@/hooks';
+import {
+  ActivityGoalProgress,
+  formatActivityGoalProgress,
+} from '@/utils/activityGoal';
 
 import { AgentActivityModal } from './AgentActivityModal';
 import { Container, Text } from './styles';
@@ -30,9 +36,14 @@ const CurrentActionText = styled.span`
   width: fit-content;
 `;
 
-const GoalPendingContent = () => (
+const GoalPendingContent = ({
+  goalProgress,
+}: {
+  goalProgress?: ActivityGoalProgress;
+}) => (
   <Flex align="center" justify="center" gap={4}>
-    Agent has earned activity rewards and keeps working toward its daily goal{' '}
+    Agent has earned activity rewards and keeps working toward its daily goal
+    {goalProgress ? `: ${formatActivityGoalProgress(goalProgress)}` : ''}{' '}
     <InfoTooltip iconColor={COLOR.PURPLE}>
       <Paragraph className="text-sm m-0">
         The agent keeps working until it reaches its daily goal for this epoch.
@@ -57,7 +68,13 @@ const StandbyContent = () => (
 export const AgentActivity = () => {
   const { deploymentDetails, isAgentActive, isServiceDeploying } =
     useAgentActivity();
-  const { workStatus } = useEpochWorkStatus();
+  const { workStatus, goalProgress } = useEpochWorkStatus();
+  const { selectedServiceConfigId } = useServices();
+  const { enabled: isAutoRunEnabled, stalledInstances } = useAutoRunContext();
+  const stalledInstance =
+    isAutoRunEnabled && selectedServiceConfigId
+      ? stalledInstances[selectedServiceConfigId]
+      : undefined;
   // Connect only: while the agent runs, the activity strip points at the
   // agent profile for new Claude Code sessions instead of rounds.
   const { showRunningInfo: isConnectRunning, isFirstRun } = useConnectSession();
@@ -102,7 +119,10 @@ export const AgentActivity = () => {
       }
 
       if (workStatus === 'goal-pending') {
-        return { status: 'running', content: <GoalPendingContent /> };
+        return {
+          status: 'running',
+          content: <GoalPendingContent goalProgress={goalProgress} />,
+        };
       }
 
       if (rounds.length > 0) {
@@ -126,9 +146,18 @@ export const AgentActivity = () => {
       };
     }
 
+    if (stalledInstance) {
+      return {
+        status: 'not-running',
+        content: `Auto-run moved on: no progress toward the daily goal in the last hour (${formatActivityGoalProgress(stalledInstance)})`,
+      };
+    }
+
     return { status: 'not-running', content: 'Agent is not running' };
   }, [
     workStatus,
+    goalProgress,
+    stalledInstance,
     isServiceDeploying,
     isAgentActive,
     isConnectRunning,
