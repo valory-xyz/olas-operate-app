@@ -146,22 +146,26 @@ export const useCompleteAgentSetup = (
 
   const shouldShowFailureModal = hasSafeCreationFailure || hasTransferFailure;
 
+  // The caller may disable the hook once the Safe appears, mid-flow; a flow
+  // already showing a modal must still reach its outcome modal.
+  const isFlowActive = enabled || modalToShow !== null;
+
   // Handle backend-reported or network-level failures.
   // Clear the failure modal if the condition resolves (e.g. retry succeeds or
   // external state refetch shows the Safe was created after all) so a stale
   // failure modal doesn't persist.
   useEffect(() => {
-    if (!enabled) return;
+    if (!isFlowActive) return;
     if (shouldShowFailureModal) {
       setModalToShow('safeCreationFailed');
     } else {
       setModalToShow((prev) => (prev === 'safeCreationFailed' ? null : prev));
     }
-  }, [enabled, shouldShowFailureModal]);
+  }, [isFlowActive, shouldShowFailureModal]);
 
   // Show setup complete modal once safe is created and transfer is done
   useEffect(() => {
-    if (!enabled) return;
+    if (!isFlowActive) return;
     if (isLoadingMasterSafeCreation) return;
     if (isErrorMasterSafeCreation) return;
     if (!isSafeCreated) return;
@@ -170,7 +174,7 @@ export const useCompleteAgentSetup = (
     const timeoutId = setTimeout(() => setModalToShow('setupComplete'), 250);
     return () => clearTimeout(timeoutId);
   }, [
-    enabled,
+    isFlowActive,
     isLoadingMasterSafeCreation,
     isErrorMasterSafeCreation,
     isSafeCreated,

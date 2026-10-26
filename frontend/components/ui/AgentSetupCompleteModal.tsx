@@ -1,8 +1,14 @@
 import { Button } from 'antd';
+import { isNil } from 'lodash';
 import { useCallback, useEffect } from 'react';
 
 import { PAGES } from '@/constants';
-import { useIsInitiallyFunded, usePageState } from '@/hooks';
+import {
+  useIsInitiallyFunded,
+  useMasterWalletContext,
+  usePageState,
+  useServices,
+} from '@/hooks';
 
 import { SuccessOutlined } from '../custom-icons';
 import { Modal } from './Modal';
@@ -20,15 +26,19 @@ export const AgentSetupCompleteModal = ({
 }: AgentSetupCompleteModalProps) => {
   const { goto } = usePageState();
   const { setIsInitiallyFunded } = useIsInitiallyFunded();
+  const { getMasterSafeOf } = useMasterWalletContext();
+  const { selectedAgentConfig } = useServices();
+
+  const hasHomeChainSafe = !isNil(
+    getMasterSafeOf?.(selectedAgentConfig.evmHomeChainId),
+  );
 
   useEffect(() => {
-    // Since all steps for onboarding are completed,
-    // we can update the store to indicate that the agent is initially funded.
-    //
-    // TODO: it's not ideal to handle it here, as this component should be dummy
-    // Moreover, instead of relying on store state we should check balances and service existence.
+    // Setup isn't finished without the Pearl Safe, which may appear after mount.
+    // TODO: this component should be dummy, and check balances and service existence instead of the store.
+    if (!hasHomeChainSafe) return;
     setIsInitiallyFunded();
-  }, [setIsInitiallyFunded]);
+  }, [hasHomeChainSafe, setIsInitiallyFunded]);
 
   const handleViewAgent = useCallback(() => {
     goto(PAGES.Main);

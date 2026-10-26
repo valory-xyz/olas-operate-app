@@ -9,11 +9,11 @@ authors = [
 requires-python = ">=3.14,<3.15"
 readme = "README.md"
 dependencies = [
-    "open-autonomy[cli,docker]==0.21.29",
-    "open-aea-ledger-cosmos==2.2.9",
-    "open-aea-ledger-ethereum==2.2.9",
-    "open-aea-cli-ipfs==2.2.9",
-    "olas-operate-middleware==0.15.46",
+    "open-autonomy[cli,docker]==0.21.30",
+    "open-aea-ledger-cosmos==2.2.10",
+    "open-aea-ledger-ethereum==2.2.10",
+    "open-aea-cli-ipfs==2.2.10",
+    "olas-operate-middleware==0.15.47",
 ]
 
 [dependency-groups]
