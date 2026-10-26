@@ -176,6 +176,22 @@ describe('useAutoRunOperations', () => {
       );
     });
 
+    it('passes trackActivityGoal to the helper', async () => {
+      const trackActivityGoal = jest.fn();
+      const params = { ...makeHookParams(), trackActivityGoal };
+      const { result } = renderHook(() => useAutoRunOperations(params));
+
+      await act(async () => {
+        await result.current.refreshRewardsEligibility(
+          DEFAULT_SERVICE_CONFIG_ID,
+        );
+      });
+
+      expect(mockRefreshRewardsEligibilityHelper).toHaveBeenCalledWith(
+        expect.objectContaining({ trackActivityGoal }),
+      );
+    });
+
     it('wrapped onAutoRunInstanceStarted updates lastStartedAtRef AND forwards to caller callback', async () => {
       // Fix depends on onAutoRunInstanceStarted being wrapped so lastStartedAtRef
       // is populated on successful starts. Without this, the stale-true override
