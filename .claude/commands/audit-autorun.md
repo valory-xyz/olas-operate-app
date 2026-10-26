@@ -148,6 +148,7 @@ Run **targeted grep searches** for each pattern. Do **not** re-read the file in 
 | `skip ` | Normal | Agent passed over by a scan — note reason. Logged for every candidate, transient reasons included; only non-transient ones are *notified* |
 | `rotate_end status=same` / `status=none` | Warning | Rotation stopped the agent but started no other one — the `skip` lines of that scan say why |
 | `keeping stalled agent running` | Normal | Running agent made no activity-goal progress for an hour, but no other agent can start |
+| `restarting the activity-goal stall clock` | Normal | Gap between rewards polls (usually sleep/wake) — the stall hour starts over |
 | `rotation triggered` | Normal | `false→true` rewards transition detected — verify stop + new start follows |
 
 **Absence checks:**

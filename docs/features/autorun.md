@@ -85,6 +85,7 @@ Note: timing constants are centralized in `constants.ts` to avoid duplicate knob
 | `HEALTH_SUMMARY_INTERVAL_SECONDS` | 15min | Aggregated auto-run health log cadence (error/success counters); only emitted when `AUTO_RUN_VERBOSE_LOGS=true` |
 | `RETRY_BACKOFF_SECONDS` | [30, 60, 120] | Progressive backoff between start retries |
 | `REWARDS_POLL_SECONDS` | 120s | How often to poll rewards for the running instance |
+| `ACTIVITY_GOAL_STALL_MAX_POLL_GAP_SECONDS` | 6min | A longer gap between two rewards polls (sleep/wake) restarts the activity-goal stall clock (§3.2b) |
 | `SCAN_BLOCKED_DELAY_SECONDS` | 10min | Rescan delay when instances are blocked (low balance, evicted, etc.) |
 | `SCAN_ELIGIBLE_DELAY_SECONDS` | 30min | Rescan delay when all instances have earned rewards |
 | `SCAN_LOADING_RETRY_SECONDS` | 30s | Rescan delay on transient loading states |
@@ -157,10 +158,11 @@ A goal the agent can never reach under its config (e.g. `max_bet_size` at the be
 
 - **Clock starts** on the first poll where the instance is the running one, its staking signal is met, and its block is current and unmet. Time before the staking signal is met does not count.
 - **Restarts** whenever `progress`, `target` or `period_start` changes. `updated_at` is never read: the trader rewrites it every period whether or not it progressed.
+- **Restarts after a poll gap** longer than `ACTIVITY_GOAL_STALL_MAX_POLL_GAP_SECONDS` (logs `<id>: <n>s since the last rewards poll, restarting the activity-goal stall clock`), so time the device slept never counts toward a stall (§13 P1). Until that poll, a clock with such a gap never reads as stalled.
 - **Stops** when the agent stops running, the staking signal or the block stops qualifying, Auto-run is turned off, or Pearl restarts — the state is in memory only.
 - **Stalled** after `ACTIVITY_GOAL_STALL_SECONDS` without a restart. `refreshRewardsEligibility` passes `isStalled` to `deriveIsDoneForEpoch`, so the snapshot turns `true` and the usual rotation edge fires. No-staking agents (Connect) are never watched.
 
-`rotateToNext` then runs the Connect hand-over pre-check (`getHandOverDeployability`): it stops the stalled agent only if a not-done alternate can start, and sends no goal-reached notification. Otherwise it logs `keeping stalled agent running, no runnable alternate`, restarts the clock and leaves the rewards guard `true`, so the next poll reads not-done and another stall an hour later is a fresh edge.
+`rotateToNext` takes a snapshot of the stall clock (`getActivityGoalStall`), then runs the Connect hand-over pre-check (`getHandOverDeployability`): it stops the stalled agent only if a not-done alternate can start, and sends no goal-reached notification. Otherwise it logs `keeping stalled agent running, no runnable alternate`, restarts the clock and leaves the rewards guard `true`, so the next poll reads not-done and another stall an hour later is a fresh edge. Once a stop is confirmed, `deferStalledInstance` defers the agent from the snapshot: the polled running state can drop the agent before the stop returns, which deletes its clock.
 
 The agent it rotated away from is **deferred**: it reads as done (so it does not trigger rotations of its own) but counts as not done for rotation decisions, and the scanner tries it only after the main loop and the empty-pool fallback (`skip <id>: activity goal stalled, deferred`, then `scan: started <id> as a last resort (activity goal stalled)`). The deferral is lifted when it starts again (with a fresh clock), the epoch moves on, the user excludes it from Auto-run, Auto-run is turned off, or Pearl restarts. Deferred instances are exposed as `AutoRunContextType.stalledInstances`, and the Overview strip of a deferred instance reads "Auto-run moved on: no progress toward the daily goal in the last hour (`<progress>` of `<target>` `<unit>`)" instead of "Agent is not running".
 
@@ -594,6 +596,7 @@ All auto-run logs are prefixed with `autorun::`.
 | `scan: started X as a last resort (activity goal stalled)` | No other candidate could start, so the deferred stalled agent got the slot | Normal |
 | `cycle=… phase=stalled current=X noGoalProgressFor=Ns` | Running agent stalled on its activity goal; hand-over pre-check follows | Normal |
 | `cycle=… keeping stalled agent running, no runnable alternate current=X rescan=Ns` | Stalled, but no not-done alternate can start; clock restarted | Normal |
+| `X: Ns since the last rewards poll, restarting the activity-goal stall clock` | Poll gap longer than `ACTIVITY_GOAL_STALL_MAX_POLL_GAP_SECONDS` (usually sleep/wake); the stall hour starts over | Normal |
 | `cycle=… phase=rotate_end status=ok\|same\|none current=X started=Y` | Rotation finished: another agent started / the stopped one restarted / nothing started | Normal (`same`/`none`: check the `skip` lines) |
 | `skip X: Staking contract reward pool is empty` | Agent passed over — staking contract has no rewards to distribute | Normal |
 | `scan: no rewarded candidate startable, falling back to N empty-pool candidate(s)` | Degraded mode entered — every startable candidate has a drained pool | Normal |
