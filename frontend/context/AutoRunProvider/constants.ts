@@ -108,6 +108,16 @@ export const RETRY_BACKOFF_SECONDS = [30, 60, 120]; // 30s, 1m, 2m
 export const REWARDS_POLL_SECONDS = 120; // 2 minutes
 
 /**
+ * Longest gap (in seconds) between two rewards polls that the activity-goal
+ * stall clock still counts as time the agent was watched. A longer gap means
+ * the device slept (or polling stopped), so the clock restarts instead of
+ * counting the gap toward `ACTIVITY_GOAL_STALL_SECONDS`.
+ * Allows for a poll skipped by the fetch throttle plus one failed fetch.
+ */
+export const ACTIVITY_GOAL_STALL_MAX_POLL_GAP_SECONDS =
+  3 * REWARDS_POLL_SECONDS; // 6 minutes
+
+/**
  * How long (in seconds) to wait before re-scanning for a runnable agent when
  * the last scan found at least one agent that was blocked (e.g. low balance,
  * no slots, evicted). A shorter delay is used because the blocking condition

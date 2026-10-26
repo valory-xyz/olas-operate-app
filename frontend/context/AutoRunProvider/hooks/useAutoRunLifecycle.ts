@@ -21,6 +21,7 @@ import {
 } from '../constants';
 import { AgentMeta } from '../types';
 import { DeployabilityCheckResult } from '../utils/autoRunHelpers';
+import { StallClock } from './useActivityGoalStall';
 import { ScanResult } from './useAutoRunScanner';
 import { useAutoRunVerboseLogger } from './useAutoRunVerboseLogger';
 
@@ -68,11 +69,11 @@ type UseAutoRunLifecycleParams = {
   ) => Promise<DeployabilityCheckResult | null>;
   /** Goal-reached notification for a Connect hand-over. */
   notifyGoalReachedOnHandOver: (serviceConfigId: string) => void;
-  /** The running instance made no activity-goal progress for a stall period. */
-  isActivityGoalStalled: (serviceConfigId: string) => boolean;
+  /** The running instance's stall clock, once it made no activity-goal progress for a stall period. */
+  getActivityGoalStall: (serviceConfigId: string) => StallClock | null;
   /** Rotated away from for a stalled goal: not done, but started last. */
   isActivityGoalDeferred: (serviceConfigId: string) => boolean;
-  deferStalledInstance: (serviceConfigId: string) => void;
+  deferStalledInstance: (serviceConfigId: string, stall: StallClock) => void;
   restartActivityGoalStallClock: (serviceConfigId: string) => void;
   stopRetryBackoffUntilRef: MutableRefObject<Partial<Record<string, number>>>;
   recordMetric: (metric: AutoRunLifecycleMetric) => void;
@@ -111,7 +112,7 @@ export const useAutoRunLifecycle = ({
   getDeployabilityForRunningInstance,
   getHandOverDeployability,
   notifyGoalReachedOnHandOver,
-  isActivityGoalStalled,
+  getActivityGoalStall,
   isActivityGoalDeferred,
   deferStalledInstance,
   restartActivityGoalStallClock,
@@ -342,7 +343,8 @@ export const useAutoRunLifecycle = ({
         return;
       }
 
-      if (isActivityGoalStalled(currentServiceConfigId)) {
+      const stall = getActivityGoalStall(currentServiceConfigId);
+      if (stall) {
         logVerbose(
           `cycle=${cycleId} trigger=${trigger} phase=stalled current=${currentServiceConfigId} noGoalProgressFor=${ACTIVITY_GOAL_STALL_SECONDS}s`,
         );
@@ -351,7 +353,7 @@ export const useAutoRunLifecycle = ({
           cycleId,
           trigger,
           label: 'stalled agent',
-          onStopped: () => deferStalledInstance(currentServiceConfigId),
+          onStopped: () => deferStalledInstance(currentServiceConfigId, stall),
           // The rewards guard stays `true`: the next poll reads not-done on
           // the fresh clock, so the next stall is a new false → true edge.
           onKept: () => restartActivityGoalStallClock(currentServiceConfigId),
@@ -417,8 +419,8 @@ export const useAutoRunLifecycle = ({
       enabledRef,
       getRewardSnapshot,
       handOverIfAlternateCanRun,
+      getActivityGoalStall,
       isActivityGoalDeferred,
-      isActivityGoalStalled,
       lastRewardsEligibilityRef,
       notifyGoalReachedOnHandOver,
       orderedIncludedInstances,

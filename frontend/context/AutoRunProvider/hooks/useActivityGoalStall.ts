@@ -3,7 +3,10 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityGoal } from '@/types';
 import { isActivityGoalCurrent } from '@/utils/activityGoal';
 
-import { ACTIVITY_GOAL_STALL_SECONDS } from '../constants';
+import {
+  ACTIVITY_GOAL_STALL_MAX_POLL_GAP_SECONDS,
+  ACTIVITY_GOAL_STALL_SECONDS,
+} from '../constants';
 import { StalledInstance } from '../types';
 
 /** What one rewards poll learned about a staking instance. */
@@ -16,9 +19,11 @@ export type ActivityGoalObservation = {
   goal?: ActivityGoal | null;
 };
 
-type StallClock = StalledInstance & {
+export type StallClock = StalledInstance & {
   /** When `progress`, `target` or `periodStart` last changed (ms). */
   since: number;
+  /** When a rewards poll last saw the instance (ms). */
+  observedAt: number;
   tsCheckpoint: number;
 };
 
@@ -28,6 +33,13 @@ type UseActivityGoalStallParams = {
   orderedIncludedInstances: string[];
   logMessage: (message: string) => void;
 };
+
+const STALL_MS = ACTIVITY_GOAL_STALL_SECONDS * 1000;
+const MAX_POLL_GAP_MS = ACTIVITY_GOAL_STALL_MAX_POLL_GAP_SECONDS * 1000;
+
+/** A clock not seen by a poll for too long (e.g. the device slept) proves nothing. */
+const isClockStalled = (clock: StallClock, now: number) =>
+  now - clock.observedAt <= MAX_POLL_GAP_MS && now - clock.since >= STALL_MS;
 
 const toStalledInstance = ({
   progress,
@@ -44,6 +56,8 @@ const toStalledInstance = ({
  *   KPI is met and its goal block is current and unmet; it restarts whenever
  *   `progress`, `target` or `period_start` changes. `updated_at` is never
  *   read: the agent rewrites it every period whether or not it progressed.
+ *   It also restarts after a gap between polls longer than
+ *   `ACTIVITY_GOAL_STALL_MAX_POLL_GAP_SECONDS`, so time asleep never counts.
  * - A stalled instance Auto-run rotates away from is *deferred*: it reads as
  *   stalled until it starts again or the epoch moves on, so the scanner tries
  *   it only after every other candidate.
@@ -136,23 +150,36 @@ export const useActivityGoalStall = ({
         delete clockRef.current[serviceConfigId];
         return false;
       }
+      const now = Date.now();
+      const clock = clockRef.current[serviceConfigId];
       // Unreadable block: "done" is unknown anyway, so leave the clock as is.
-      if (goal === undefined) return false;
+      if (goal === undefined) {
+        if (clock && now - clock.observedAt <= MAX_POLL_GAP_MS) {
+          clock.observedAt = now;
+        }
+        return false;
+      }
       if (!goal || goal.is_met || !isActivityGoalCurrent(goal, tsCheckpoint)) {
         delete clockRef.current[serviceConfigId];
         return false;
       }
 
-      const now = Date.now();
-      const clock = clockRef.current[serviceConfigId];
+      const isPollGap = !!clock && now - clock.observedAt > MAX_POLL_GAP_MS;
       if (
         !clock ||
+        isPollGap ||
         clock.progress !== goal.progress ||
         clock.target !== goal.target ||
         clock.periodStart !== goal.period_start
       ) {
+        if (isPollGap) {
+          logMessage(
+            `${serviceConfigId}: ${Math.round((now - clock.observedAt) / 1000)}s since the last rewards poll, restarting the activity-goal stall clock`,
+          );
+        }
         clockRef.current[serviceConfigId] = {
           since: now,
+          observedAt: now,
           progress: goal.progress,
           target: goal.target,
           unit: goal.unit,
@@ -161,17 +188,26 @@ export const useActivityGoalStall = ({
         };
         return false;
       }
-      return now - clock.since >= ACTIVITY_GOAL_STALL_SECONDS * 1000;
+      clock.observedAt = now;
+      return isClockStalled(clock, now);
     },
     [logMessage, releaseDeferred],
   );
 
-  /** The running instance has gone a full stall period without progress. */
-  const isActivityGoalStalled = useCallback((serviceConfigId: string) => {
-    const clock = clockRef.current[serviceConfigId];
-    if (!clock) return false;
-    return Date.now() - clock.since >= ACTIVITY_GOAL_STALL_SECONDS * 1000;
-  }, []);
+  /**
+   * The running instance's clock, if it has gone a full stall period without
+   * progress. Pass it to `deferStalledInstance` once the stop is confirmed:
+   * by then the clock may be gone, as the running state can drop the
+   * instance before the stop returns.
+   */
+  const getActivityGoalStall = useCallback(
+    (serviceConfigId: string): StallClock | null => {
+      const clock = clockRef.current[serviceConfigId];
+      if (!clock || !isClockStalled(clock, Date.now())) return null;
+      return { ...clock };
+    },
+    [],
+  );
 
   const isActivityGoalDeferred = useCallback(
     (serviceConfigId: string) => !!deferredRef.current[serviceConfigId],
@@ -180,10 +216,8 @@ export const useActivityGoalStall = ({
 
   /** Marks a stalled instance Auto-run just stopped as deferred. */
   const deferStalledInstance = useCallback(
-    (serviceConfigId: string) => {
-      const clock = clockRef.current[serviceConfigId];
-      if (!clock) return;
-      deferredRef.current[serviceConfigId] = clock;
+    (serviceConfigId: string, stall: StallClock) => {
+      deferredRef.current[serviceConfigId] = stall;
       delete clockRef.current[serviceConfigId];
       publishDeferred();
     },
@@ -211,7 +245,7 @@ export const useActivityGoalStall = ({
   return {
     stalledInstances,
     trackActivityGoal,
-    isActivityGoalStalled,
+    getActivityGoalStall,
     isActivityGoalDeferred,
     deferStalledInstance,
     restartActivityGoalStallClock,

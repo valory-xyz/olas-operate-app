@@ -18,6 +18,7 @@ import { AgentMeta } from '../../../../context/AutoRunProvider/types';
 import * as delayModule from '../../../../utils/delay';
 import {
   DEFAULT_SERVICE_CONFIG_ID,
+  DEFAULT_TS_CHECKPOINT,
   makeAutoRunAgentMeta,
   MOCK_SERVICE_CONFIG_ID_2,
 } from '../../../helpers/factories';
@@ -68,7 +69,7 @@ const makeHookParams = (
   getDeployabilityForRunningInstance: jest.fn().mockResolvedValue(null),
   getHandOverDeployability: jest.fn().mockResolvedValue({ canRun: true }),
   notifyGoalReachedOnHandOver: jest.fn(),
-  isActivityGoalStalled: jest.fn().mockReturnValue(false),
+  getActivityGoalStall: jest.fn().mockReturnValue(null),
   isActivityGoalDeferred: jest.fn().mockReturnValue(false),
   deferStalledInstance: jest.fn(),
   restartActivityGoalStallClock: jest.fn(),
@@ -466,6 +467,16 @@ describe('useAutoRunLifecycle', () => {
       });
     };
 
+    const traderStall = {
+      progress: 0,
+      target: 8,
+      unit: 'trades' as const,
+      periodStart: DEFAULT_TS_CHECKPOINT,
+      since: 0,
+      observedAt: 0,
+      tsCheckpoint: DEFAULT_TS_CHECKPOINT,
+    };
+
     // The trader met its staking KPI but its goal stalled, so its snapshot
     // just turned true while every alternate still has work to do.
     const makeStalledRunningParams = (
@@ -486,9 +497,11 @@ describe('useAutoRunLifecycle', () => {
         refreshRewardsEligibility: jest
           .fn()
           .mockImplementation(async (id: string) => id === scTrader),
-        isActivityGoalStalled: jest
+        getActivityGoalStall: jest
           .fn()
-          .mockImplementation((id: string) => id === scTrader),
+          .mockImplementation((id: string) =>
+            id === scTrader ? traderStall : null,
+          ),
         ...overrides,
       });
 
@@ -504,7 +517,10 @@ describe('useAutoRunLifecycle', () => {
 
       expect(params.getHandOverDeployability).toHaveBeenCalledWith(scOptimus);
       expect(params.stopAgentWithRecovery).toHaveBeenCalledWith(scTrader);
-      expect(params.deferStalledInstance).toHaveBeenCalledWith(scTrader);
+      expect(params.deferStalledInstance).toHaveBeenCalledWith(
+        scTrader,
+        traderStall,
+      );
       expect(params.scanAndStartNext).toHaveBeenCalledWith(scTrader, {
         stoppedId: scTrader,
       });
@@ -565,7 +581,7 @@ describe('useAutoRunLifecycle', () => {
       // A finished agent with only a deferred (stalled) alternate left: the
       // slot goes to the deferred one rather than to standby.
       const params = makeStalledRunningParams({
-        isActivityGoalStalled: jest.fn().mockReturnValue(false),
+        getActivityGoalStall: jest.fn().mockReturnValue(null),
         isActivityGoalDeferred: jest
           .fn()
           .mockImplementation((id: string) => id === scOptimus),

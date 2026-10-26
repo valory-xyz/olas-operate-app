@@ -7,6 +7,7 @@ import {
   ACTIVITY_GOAL_STALL_SECONDS,
   AUTO_RUN_VERBOSE_LOGS,
   HEALTH_SUMMARY_INTERVAL_SECONDS,
+  REWARDS_POLL_SECONDS,
 } from '../../../../context/AutoRunProvider/constants';
 import { useAutoRunController } from '../../../../context/AutoRunProvider/hooks/useAutoRunController';
 import { AgentMeta } from '../../../../context/AutoRunProvider/types';
@@ -404,28 +405,32 @@ describe('useAutoRunController', () => {
       };
 
       // Rewards polls feed the stall clock through the operations.
-      lastCallArgs(useAutoRunOperations).trackActivityGoal(
-        DEFAULT_SERVICE_CONFIG_ID,
-        observation,
-      );
-      act(() => {
-        jest.advanceTimersByTime(ACTIVITY_GOAL_STALL_SECONDS * 1000);
-      });
-      expect(
+      const poll = () =>
         lastCallArgs(useAutoRunOperations).trackActivityGoal(
           DEFAULT_SERVICE_CONFIG_ID,
           observation,
-        ),
-      ).toBe(true);
-      expect(
-        lastCallArgs(useAutoRunLifecycle).isActivityGoalStalled(
-          DEFAULT_SERVICE_CONFIG_ID,
-        ),
-      ).toBe(true);
+        );
+      let isStalled = poll();
+      for (
+        let elapsed = 0;
+        elapsed < ACTIVITY_GOAL_STALL_SECONDS;
+        elapsed += REWARDS_POLL_SECONDS
+      ) {
+        act(() => {
+          jest.advanceTimersByTime(REWARDS_POLL_SECONDS * 1000);
+        });
+        isStalled = poll();
+      }
+      expect(isStalled).toBe(true);
+      const stall = lastCallArgs(useAutoRunLifecycle).getActivityGoalStall(
+        DEFAULT_SERVICE_CONFIG_ID,
+      );
+      if (!stall) throw new Error('expected a stalled clock');
 
       act(() => {
         lastCallArgs(useAutoRunLifecycle).deferStalledInstance(
           DEFAULT_SERVICE_CONFIG_ID,
+          stall,
         );
       });
       expect(result.current.stalledInstances).toEqual({

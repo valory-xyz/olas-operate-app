@@ -202,7 +202,7 @@ export const useAutoRunController = ({
   const {
     stalledInstances,
     trackActivityGoal,
-    isActivityGoalStalled,
+    getActivityGoalStall,
     isActivityGoalDeferred,
     deferStalledInstance,
     restartActivityGoalStallClock,
@@ -364,7 +364,7 @@ export const useAutoRunController = ({
     getDeployabilityForRunningInstance,
     getHandOverDeployability,
     notifyGoalReachedOnHandOver,
-    isActivityGoalStalled,
+    getActivityGoalStall,
     isActivityGoalDeferred,
     deferStalledInstance,
     restartActivityGoalStallClock,
