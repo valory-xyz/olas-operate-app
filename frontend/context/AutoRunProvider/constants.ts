@@ -53,6 +53,14 @@ export const COOLDOWN_SECONDS = 20; // 20 seconds
 export const RUNNING_AGENT_MAX_RUNTIME_SECONDS = 4 * 60 * 60; // 4 hours
 
 /**
+ * How long (in seconds) a running staking agent that has met its staking KPI
+ * may go without any progress toward its activity goal before Auto-run treats
+ * it as stalled and hands its slot to another agent that can start.
+ * Example: KPI met, goal stuck at 0 of 8 trades for 1 hour -> rotate away.
+ */
+export const ACTIVITY_GOAL_STALL_SECONDS = 60 * 60; // 1 hour
+
+/**
  * How often (in seconds) watchdog checks runtime against
  * `RUNNING_AGENT_MAX_RUNTIME_SECONDS`.
  * Example: every 5 minutes -> if runtime exceeded, rotate/recover.

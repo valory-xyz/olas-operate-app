@@ -1,6 +1,6 @@
 import { AGENT_CONFIG } from '@/config/agents';
 import { AgentType, EvmChainId, StakingProgramId } from '@/constants';
-import { Address, Service, ServiceConfigId } from '@/types';
+import { ActivityGoal, Address, Service, ServiceConfigId } from '@/types';
 
 /**
  * Legacy auto-run inclusion entry, keyed by AgentType.
@@ -25,6 +25,14 @@ type Eligibility = {
   canRun: boolean;
   reason?: string;
   loadingReason?: string;
+};
+
+/** Goal progress of an instance Auto-run rotated away from for a stall. */
+export type StalledInstance = {
+  progress: number;
+  target: number;
+  unit: ActivityGoal['unit'];
+  periodStart: number;
 };
 
 export type AutoRunContextType = {
@@ -56,6 +64,11 @@ export type AutoRunContextType = {
    *  }
    */
   eligibilityByInstance: Partial<Record<string, Eligibility>>;
+  /**
+   * Staking instances Auto-run rotated away from for no goal progress, keyed
+   * by serviceConfigId. In memory only.
+   */
+  stalledInstances: Partial<Record<string, StalledInstance>>;
   setEnabled: (enabled: boolean) => void;
   includeInstance: (serviceConfigId: string) => void;
   excludeInstance: (serviceConfigId: string) => void;

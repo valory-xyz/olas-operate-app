@@ -30,6 +30,7 @@ import {
   REWARDS_POLL_SECONDS,
   REWARDS_RETRY_DELAY_SECONDS,
 } from '../constants';
+import { ActivityGoalObservation } from '../hooks/useActivityGoalStall';
 import { AgentMeta } from '../types';
 
 /**
@@ -144,6 +145,9 @@ export const formatEligibilityReason = (eligibility: {
  * This is intentional: Pearl cannot distinguish "genuinely earned this epoch"
  * from "stale nonce delta from a prior run" without cross-session history.
  *
+ * `trackActivityGoal` sees every staking poll and reports whether the
+ * instance is stalled on its activity goal; a stalled instance reads as done.
+ *
  * @returns
  * - true      – agent is done for the current epoch (or Connect met its goal)
  * - false     – agent still has work to do
@@ -163,6 +167,7 @@ export const refreshRewardsEligibility = async ({
   setRewardSnapshot,
   logMessage,
   onRewardsFetchError,
+  trackActivityGoal,
 }: {
   serviceConfigId: string;
   configuredAgents: AgentMeta[];
@@ -176,6 +181,10 @@ export const refreshRewardsEligibility = async ({
   ) => void;
   logMessage: (message: string) => void;
   onRewardsFetchError?: () => void;
+  trackActivityGoal?: (
+    serviceConfigId: string,
+    observation: ActivityGoalObservation,
+  ) => boolean;
 }) => {
   const meta = configuredAgents.find(
     (agent) => agent.serviceConfigId === serviceConfigId,
@@ -294,18 +303,29 @@ export const refreshRewardsEligibility = async ({
   // unknown so callers keep the previous snapshot: a failure must neither
   // override a met goal nor fake a false → true rotation.
   let goalRead: ActivityGoalRead | undefined;
-  let doneForEpoch: boolean | undefined = false;
   if (epochTargetMet) {
     goalRead = await readActivityGoal(
       serviceConfigId,
       logMessage,
       onRewardsFetchError,
     );
+  }
+  const isStalled =
+    trackActivityGoal?.(serviceConfigId, {
+      isRunning,
+      epochTargetMet,
+      epochExpired,
+      tsCheckpoint: response.tsCheckpoint,
+      goal: goalRead?.ok ? goalRead.goal : undefined,
+    }) ?? false;
+  let doneForEpoch: boolean | undefined = false;
+  if (goalRead) {
     doneForEpoch = goalRead.ok
       ? deriveIsDoneForEpoch(
           epochTargetMet,
           goalRead.goal,
           response.tsCheckpoint,
+          isStalled,
         )
       : undefined;
   }
@@ -318,7 +338,8 @@ export const refreshRewardsEligibility = async ({
       `target=${activityTarget ?? 'on-chain-KPI'} ` +
       `stakingKpi=${response.isEligibleForRewards} ` +
       `epochExpired=${epochExpired} epochTargetMet=${epochTargetMet} ` +
-      `${formatGoalForLog(goalRead, response.tsCheckpoint)} → done=${doneForEpoch}`,
+      `${formatGoalForLog(goalRead, response.tsCheckpoint)} ` +
+      `stalled=${isStalled} → done=${doneForEpoch}`,
   );
 
   if (epochExpired && doneForEpoch) {

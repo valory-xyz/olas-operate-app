@@ -815,7 +815,7 @@ describe('refreshRewardsEligibility', () => {
       expect(onRewardsFetchError).not.toHaveBeenCalled();
       expect(logMessage).toHaveBeenCalledWith(
         expect.stringContaining(
-          'epochTargetMet=false goal=unread → done=false',
+          'epochTargetMet=false goal=unread stalled=false → done=false',
         ),
       );
     });
@@ -852,8 +852,56 @@ describe('refreshRewardsEligibility', () => {
 
       expect(logMessage).toHaveBeenCalledWith(
         expect.stringContaining(
-          'epochTargetMet=true goal=3/8 goalMet=false goalCurrent=true → done=false',
+          'epochTargetMet=true goal=3/8 goalMet=false goalCurrent=true stalled=false → done=false',
         ),
+      );
+    });
+
+    it('reads a stalled agent with an unmet goal as done', async () => {
+      mockFetchRewards.mockResolvedValue(stakingMet);
+      const goal = makeActivityGoal({ progress: 0, target: 8 });
+      mockGetAgentPerformance.mockResolvedValue(makePerformance(goal));
+      const trackActivityGoal = jest.fn().mockReturnValue(true);
+      const logMessage = jest.fn();
+
+      const result = await refreshRewardsEligibility(
+        makeParams({
+          trackActivityGoal,
+          logMessage,
+          runningServiceConfigIdRef: { current: DEFAULT_SERVICE_CONFIG_ID },
+        }),
+      );
+
+      expect(result).toBe(true);
+      expect(trackActivityGoal).toHaveBeenCalledWith(
+        DEFAULT_SERVICE_CONFIG_ID,
+        {
+          isRunning: true,
+          epochTargetMet: true,
+          epochExpired: false,
+          tsCheckpoint: DEFAULT_TS_CHECKPOINT,
+          goal,
+        },
+      );
+      expect(logMessage).toHaveBeenCalledWith(
+        expect.stringContaining(
+          'goal=0/8 goalMet=false goalCurrent=true stalled=true → done=true',
+        ),
+      );
+    });
+
+    it('tells the stall tracker when the staking KPI is not met, without reading the goal', async () => {
+      mockFetchRewards.mockResolvedValue(stakingUnmet);
+      const trackActivityGoal = jest.fn().mockReturnValue(false);
+
+      const result = await refreshRewardsEligibility(
+        makeParams({ trackActivityGoal }),
+      );
+
+      expect(result).toBe(false);
+      expect(trackActivityGoal).toHaveBeenCalledWith(
+        DEFAULT_SERVICE_CONFIG_ID,
+        expect.objectContaining({ epochTargetMet: false, goal: undefined }),
       );
     });
 
@@ -864,7 +912,7 @@ describe('refreshRewardsEligibility', () => {
       await refreshRewardsEligibility(makeParams({ logMessage }));
 
       expect(logMessage).toHaveBeenCalledWith(
-        expect.stringContaining('goal=none → done=true'),
+        expect.stringContaining('goal=none stalled=false → done=true'),
       );
     });
   });

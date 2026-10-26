@@ -5,6 +5,7 @@ import { sleepAwareDelay } from '@/utils/delay';
 import { isNoStakingProgram } from '@/utils/stakingProgram';
 
 import {
+  ACTIVITY_GOAL_STALL_SECONDS,
   AUTO_RUN_HEALTH_METRIC,
   AUTO_RUN_START_DELAY_SECONDS,
   AUTO_RUN_START_STATUS,
@@ -67,6 +68,12 @@ type UseAutoRunLifecycleParams = {
   ) => Promise<DeployabilityCheckResult | null>;
   /** Goal-reached notification for a Connect hand-over. */
   notifyGoalReachedOnHandOver: (serviceConfigId: string) => void;
+  /** The running instance made no activity-goal progress for a stall period. */
+  isActivityGoalStalled: (serviceConfigId: string) => boolean;
+  /** Rotated away from for a stalled goal: not done, but started last. */
+  isActivityGoalDeferred: (serviceConfigId: string) => boolean;
+  deferStalledInstance: (serviceConfigId: string) => void;
+  restartActivityGoalStallClock: (serviceConfigId: string) => void;
   stopRetryBackoffUntilRef: MutableRefObject<Partial<Record<string, number>>>;
   recordMetric: (metric: AutoRunLifecycleMetric) => void;
   logMessage: (message: string) => void;
@@ -104,6 +111,10 @@ export const useAutoRunLifecycle = ({
   getDeployabilityForRunningInstance,
   getHandOverDeployability,
   notifyGoalReachedOnHandOver,
+  isActivityGoalStalled,
+  isActivityGoalDeferred,
+  deferStalledInstance,
+  restartActivityGoalStallClock,
   stopRetryBackoffUntilRef,
   recordMetric,
   logMessage,
@@ -209,13 +220,24 @@ export const useAutoRunLifecycle = ({
     ],
   );
 
-  /** Stops a no-staking agent (Connect) only once another instance can start. */
-  const handOverFromNoStakingAgent = useCallback(
+  /**
+   * Stops the current instance only once a not-done alternate can start, for
+   * an agent that should not idle the slot: Connect, or one stalled on its
+   * activity goal. `onKept` runs when nothing else can start.
+   */
+  const handOverIfAlternateCanRun = useCallback(
     async (
       currentServiceConfigId: string,
-      options: { force?: boolean; cycleId: string; trigger: string },
+      options: {
+        force?: boolean;
+        cycleId: string;
+        trigger: string;
+        label: string;
+        onStopped?: () => void;
+        onKept: () => void;
+      },
     ) => {
-      const { force, cycleId, trigger } = options;
+      const { force, cycleId, trigger, label, onStopped, onKept } = options;
       const currentIndex = orderedIncludedInstances.indexOf(
         currentServiceConfigId,
       );
@@ -228,7 +250,9 @@ export const useAutoRunLifecycle = ({
         alternates.map((id) => refreshRewardsEligibility(id)),
       );
       const notDone = alternates.filter(
-        (id, index) => (refreshed[index] ?? getRewardSnapshot(id)) !== true,
+        (id, index) =>
+          isActivityGoalDeferred(id) ||
+          (refreshed[index] ?? getRewardSnapshot(id)) !== true,
       );
 
       let handOverTo: string | null = null;
@@ -242,12 +266,12 @@ export const useAutoRunLifecycle = ({
       }
       if (!enabledRef.current) return;
       if (!handOverTo) {
-        lastRewardsEligibilityRef.current[currentServiceConfigId] = undefined;
+        onKept();
         const delay = force
           ? SCAN_BLOCKED_DELAY_SECONDS
           : SCAN_ELIGIBLE_DELAY_SECONDS;
         logVerbose(
-          `cycle=${cycleId} trigger=${trigger} keeping connect running, no runnable alternate current=${currentServiceConfigId} rescan=${delay}s`,
+          `cycle=${cycleId} trigger=${trigger} keeping ${label} running, no runnable alternate current=${currentServiceConfigId} rescan=${delay}s`,
         );
         scheduleNextScan(delay);
         return;
@@ -256,23 +280,19 @@ export const useAutoRunLifecycle = ({
       logVerbose(
         `cycle=${cycleId} trigger=${trigger} phase=hand_over current=${currentServiceConfigId} next=${handOverTo}`,
       );
-      // A watchdog or eviction hand-over does not mean the goal was reached.
       await stopAndScanFrom(
         currentServiceConfigId,
         cycleId,
         trigger,
-        force
-          ? undefined
-          : () => notifyGoalReachedOnHandOver(currentServiceConfigId),
+        onStopped,
       );
     },
     [
       enabledRef,
       getHandOverDeployability,
       getRewardSnapshot,
-      lastRewardsEligibilityRef,
+      isActivityGoalDeferred,
       logVerbose,
-      notifyGoalReachedOnHandOver,
       orderedIncludedInstances,
       refreshRewardsEligibility,
       scheduleNextScan,
@@ -305,10 +325,36 @@ export const useAutoRunLifecycle = ({
         (agent) => agent.serviceConfigId === currentServiceConfigId,
       );
       if (currentMeta && isNoStakingProgram(currentMeta.stakingProgramId)) {
-        await handOverFromNoStakingAgent(currentServiceConfigId, {
+        await handOverIfAlternateCanRun(currentServiceConfigId, {
           force: options?.force,
           cycleId,
           trigger,
+          label: 'connect',
+          // A watchdog or eviction hand-over does not mean the goal was reached.
+          onStopped: options?.force
+            ? undefined
+            : () => notifyGoalReachedOnHandOver(currentServiceConfigId),
+          onKept: () => {
+            lastRewardsEligibilityRef.current[currentServiceConfigId] =
+              undefined;
+          },
+        });
+        return;
+      }
+
+      if (isActivityGoalStalled(currentServiceConfigId)) {
+        logVerbose(
+          `cycle=${cycleId} trigger=${trigger} phase=stalled current=${currentServiceConfigId} noGoalProgressFor=${ACTIVITY_GOAL_STALL_SECONDS}s`,
+        );
+        await handOverIfAlternateCanRun(currentServiceConfigId, {
+          force: options?.force,
+          cycleId,
+          trigger,
+          label: 'stalled agent',
+          onStopped: () => deferStalledInstance(currentServiceConfigId),
+          // The rewards guard stays `true`: the next poll reads not-done on
+          // the fresh clock, so the next stall is a new false → true edge.
+          onKept: () => restartActivityGoalStallClock(currentServiceConfigId),
         });
         return;
       }
@@ -324,8 +370,12 @@ export const useAutoRunLifecycle = ({
       const refreshed = await Promise.all(
         otherInstances.map((id) => refreshRewardsEligibility(id)),
       );
-      const rewardStates = otherInstances.map(
-        (id, index) => refreshed[index] ?? getRewardSnapshot(id),
+      // A deferred (stalled) agent is not done: it may take a slot that would
+      // otherwise go to an agent with nothing left to do.
+      const rewardStates = otherInstances.map((id, index) =>
+        isActivityGoalDeferred(id)
+          ? 'deferred'
+          : (refreshed[index] ?? getRewardSnapshot(id)),
       );
       const rewardStatesLabel = otherInstances
         .map(
@@ -363,11 +413,17 @@ export const useAutoRunLifecycle = ({
     },
     [
       configuredAgents,
+      deferStalledInstance,
       enabledRef,
       getRewardSnapshot,
-      handOverFromNoStakingAgent,
+      handOverIfAlternateCanRun,
+      isActivityGoalDeferred,
+      isActivityGoalStalled,
+      lastRewardsEligibilityRef,
+      notifyGoalReachedOnHandOver,
       orderedIncludedInstances,
       refreshRewardsEligibility,
+      restartActivityGoalStallClock,
       scheduleNextScan,
       logVerbose,
       stopAndScanFrom,

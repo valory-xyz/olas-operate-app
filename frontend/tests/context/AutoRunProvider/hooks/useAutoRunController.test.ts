@@ -386,6 +386,22 @@ describe('useAutoRunController', () => {
       );
     });
 
+    it('wires activity-goal stall tracking into rewards polling and starts', () => {
+      const params = makeHookParams({ configuredAgents: [traderMeta] });
+      const { result } = renderHook(() => useAutoRunController(params));
+      const operationsArgs = lastCallArgs(useAutoRunOperations);
+
+      expect(typeof operationsArgs.trackActivityGoal).toBe('function');
+      expect(result.current.stalledInstances).toEqual({});
+
+      act(() => {
+        operationsArgs.onAutoRunInstanceStarted(DEFAULT_SERVICE_CONFIG_ID);
+      });
+      expect(params.onAutoRunInstanceStarted).toHaveBeenCalledWith(
+        DEFAULT_SERVICE_CONFIG_ID,
+      );
+    });
+
     it('returns null from the hand-over probe for an unknown instance', async () => {
       renderHook(() =>
         useAutoRunController(makeHookParams({ configuredAgents: [] })),

@@ -8,7 +8,10 @@ import {
   useAutoRunContext,
 } from '../../../context/AutoRunProvider/AutoRunProvider';
 import { DISABLE_RACE_STOP_CHECK_INTERVAL_MS } from '../../../context/AutoRunProvider/constants';
-import { IncludedAgentInstance } from '../../../context/AutoRunProvider/types';
+import {
+  IncludedAgentInstance,
+  StalledInstance,
+} from '../../../context/AutoRunProvider/types';
 import {
   DEFAULT_SERVICE_CONFIG_ID,
   MOCK_SERVICE_CONFIG_ID_2,
@@ -27,6 +30,9 @@ const mockAutoRunStore = {
 
 const mockStopRunningAgent = jest.fn().mockResolvedValue(true);
 const mockControllerRunningAgentType = { current: null as string | null };
+const mockStalledInstances = {
+  current: {} as Record<string, StalledInstance>,
+};
 const mockUpdateSelectedServiceConfigId = jest.fn();
 
 /** Captured callbacks from the last useAutoRunController call. */
@@ -97,6 +103,7 @@ jest.mock(
     useAutoRunController: jest.fn(() => ({
       stopRunningAgent: mockStopRunningAgent,
       runningAgentType: mockControllerRunningAgentType.current,
+      stalledInstances: mockStalledInstances.current,
     })),
   }),
 );
@@ -139,6 +146,7 @@ describe('AutoRunProvider', () => {
     mockAutoRunStore.userExcludedInstances = [];
     mockAutoRunStore.updateAutoRun = jest.fn();
     mockControllerRunningAgentType.current = null;
+    mockStalledInstances.current = {};
     mockUpdateSelectedServiceConfigId.mockClear();
 
     useServices.mockReturnValue({
@@ -166,6 +174,7 @@ describe('AutoRunProvider', () => {
         return {
           stopRunningAgent: mockStopRunningAgent,
           runningAgentType: mockControllerRunningAgentType.current,
+          stalledInstances: mockStalledInstances.current,
         };
       },
     );
@@ -198,6 +207,18 @@ describe('AutoRunProvider', () => {
     expect(typeof result.current.setEnabled).toBe('function');
     expect(typeof result.current.includeInstance).toBe('function');
     expect(typeof result.current.excludeInstance).toBe('function');
+  });
+
+  it('exposes the instances the controller rotated away from for a stalled goal', () => {
+    const stalled: StalledInstance = {
+      progress: 0,
+      target: 8,
+      unit: 'trades',
+      periodStart: 1_700_000_000,
+    };
+    mockStalledInstances.current = { [scTrader]: stalled };
+    const { result } = renderHook(() => useAutoRunContext(), { wrapper });
+    expect(result.current.stalledInstances).toEqual({ [scTrader]: stalled });
   });
 
   describe('useWakeLock integration', () => {

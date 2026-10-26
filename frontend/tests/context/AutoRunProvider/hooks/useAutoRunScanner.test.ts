@@ -86,6 +86,7 @@ const makeHookParams = (
   getBalancesStatus: jest.fn().mockReturnValue({ ready: true, loading: false }),
   notifySkipOnce: jest.fn(),
   getDeployabilityForAgent: jest.fn().mockResolvedValue({ canRun: true }),
+  isActivityGoalDeferred: jest.fn().mockReturnValue(false),
   startAgentWithRetries: jest.fn().mockResolvedValue({
     status: AUTO_RUN_START_STATUS.STARTED,
   }),
@@ -613,6 +614,111 @@ describe('useAutoRunScanner', () => {
       const calls = (params.startAgentWithRetries as jest.Mock).mock.calls;
       expect(calls[0][0]).toBe(scOptimus);
       expect(calls[1][0]).toBe(scPolystrat);
+    });
+  });
+
+  describe('scanAndStartNext — agents deferred for a stalled activity goal', () => {
+    const deferOptimus = jest
+      .fn()
+      .mockImplementation((id: string) => id === scOptimus);
+
+    it('prefers any other startable agent over a deferred one', async () => {
+      const params = makeHookParams({ isActivityGoalDeferred: deferOptimus });
+      const { result } = renderHook(() => useAutoRunScanner(params));
+
+      await act(async () => {
+        await result.current.scanAndStartNext(scTrader);
+      });
+      expect(params.startAgentWithRetries).toHaveBeenCalledTimes(1);
+      expect(params.startAgentWithRetries).toHaveBeenCalledWith(scPolystrat);
+      expect(params.logMessage).toHaveBeenCalledWith(
+        `skip ${scOptimus}: activity goal stalled, deferred`,
+      );
+    });
+
+    it('tries a deferred agent only after the empty-pool fallback', async () => {
+      const params = makeHookParams({
+        isActivityGoalDeferred: deferOptimus,
+        getDeployabilityForAgent: jest
+          .fn()
+          .mockImplementation(async (meta: { serviceConfigId: string }) =>
+            meta.serviceConfigId === scPolystrat
+              ? emptyPool()
+              : { canRun: true },
+          ),
+        // The trader is done for the epoch.
+        waitForRewardsEligibility: jest
+          .fn()
+          .mockImplementation(async (id: string) => id === scTrader),
+        startAgentWithRetries: jest
+          .fn()
+          .mockImplementation(async (id: string) => ({
+            status:
+              id === scPolystrat
+                ? AUTO_RUN_START_STATUS.AGENT_BLOCKED
+                : AUTO_RUN_START_STATUS.STARTED,
+          })),
+      });
+      const { result } = renderHook(() => useAutoRunScanner(params));
+
+      let scanResult: ScanResult | undefined;
+      await act(async () => {
+        scanResult = await result.current.scanAndStartNext(scTrader, {
+          stoppedId: scTrader,
+        });
+      });
+      expect(
+        (params.startAgentWithRetries as jest.Mock).mock.calls.map(
+          ([id]) => id,
+        ),
+      ).toEqual([scPolystrat, scOptimus]);
+      expect(scanResult).toEqual({ started: true, serviceConfigId: scOptimus });
+      // Re-validated with the same scan options before the last-resort start.
+      expect(params.getDeployabilityForAgent).toHaveBeenLastCalledWith(
+        expect.objectContaining({ serviceConfigId: scOptimus }),
+        { stoppedId: scTrader },
+      );
+    });
+
+    it('does not start a deferred agent that gained a blocker', async () => {
+      const params = makeHookParams({
+        orderedIncludedInstances: [scTrader, scOptimus],
+        isActivityGoalDeferred: deferOptimus,
+        getDeployabilityForAgent: jest
+          .fn()
+          .mockResolvedValueOnce({ canRun: true })
+          .mockResolvedValue({ canRun: false, reason: 'Low balance' }),
+        waitForRewardsEligibility: jest.fn().mockResolvedValue(true),
+      });
+      const { result } = renderHook(() => useAutoRunScanner(params));
+
+      await act(async () => {
+        await result.current.scanAndStartNext(scTrader);
+      });
+      expect(params.startAgentWithRetries).not.toHaveBeenCalled();
+      expect(params.notifySkipOnce).toHaveBeenCalledWith(
+        scOptimus,
+        'Low balance',
+        false,
+      );
+      expect(params.scheduleNextScan).toHaveBeenCalledWith(
+        SCAN_BLOCKED_DELAY_SECONDS,
+      );
+    });
+
+    it('leaves a deferred selected agent to the scan', async () => {
+      const params = makeHookParams({
+        selectedServiceConfigId: scOptimus,
+        isActivityGoalDeferred: deferOptimus,
+      });
+      const { result } = renderHook(() => useAutoRunScanner(params));
+
+      let started: boolean | undefined;
+      await act(async () => {
+        started = await result.current.startSelectedAgentIfEligible();
+      });
+      expect(started).toBe(false);
+      expect(params.startAgentWithRetries).not.toHaveBeenCalled();
     });
   });
 

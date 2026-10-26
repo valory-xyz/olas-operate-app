@@ -61,6 +61,8 @@ type UseAutoRunScannerParams = {
     agentMeta: AgentMeta,
     options?: ScanOptions,
   ) => Promise<DeployabilityCheckResult>;
+  /** Rotated away from for a stalled activity goal; started only as a last resort. */
+  isActivityGoalDeferred: (serviceConfigId: string) => boolean;
   startAgentWithRetries: (
     serviceConfigId: string,
   ) => Promise<AutoRunStartResult>;
@@ -92,6 +94,7 @@ export const useAutoRunScanner = ({
   getBalancesStatus,
   notifySkipOnce,
   getDeployabilityForAgent,
+  isActivityGoalDeferred,
   startAgentWithRetries,
   scheduleNextScan,
   recordMetric,
@@ -224,6 +227,9 @@ export const useAutoRunScanner = ({
       // their on-chain work, they just don't earn while the pool is drained.
       // Metas, not ids: the fallback re-validates deployability before starting.
       const emptyPoolCandidates: AgentMeta[] = [];
+      // Candidates rotated away from for a stalled activity goal: tried only
+      // when no rewarded and no empty-pool candidate starts.
+      const stalledCandidates: AgentMeta[] = [];
 
       // Announces the deferred candidates that were genuinely passed over.
       // Deliberately NOT called for candidates that were attempted (those get
@@ -267,6 +273,15 @@ export const useAutoRunScanner = ({
           options,
         );
         if (!enabledRef.current) return { started: false };
+        if (
+          isActivityGoalDeferred(candidate) &&
+          (deployability.canRun || deployability.isEmptyRewardPool)
+        ) {
+          logVerbose(`skip ${candidate}: activity goal stalled, deferred`);
+          stalledCandidates.push(candidateMeta);
+          candidate = findNextInOrder(candidate);
+          continue;
+        }
         if (!deployability.canRun) {
           logVerbose(`skip ${candidate}: ${deployability.reason ?? 'unknown'}`);
           if (deployability.isTransient) {
@@ -403,6 +418,50 @@ export const useAutoRunScanner = ({
         notifyEmptyPoolSkips(passedOver);
       }
 
+      // Last resort: an agent stalled on its activity goal still beats an
+      // idle slot, and gets a fresh stall period once started.
+      for (const stalledMeta of stalledCandidates) {
+        const stalled = stalledMeta.serviceConfigId;
+        if (!enabledRef.current) return { started: false };
+
+        const recheck = await getDeployabilityForAgent(stalledMeta, options);
+        if (!enabledRef.current) return { started: false };
+        if (!recheck.canRun && !recheck.isEmptyRewardPool) {
+          logVerbose(
+            `scan: stalled ${stalled} no longer startable (${recheck.reason ?? 'unknown'})`,
+          );
+          if (recheck.isTransient) {
+            hasLoading = true;
+          } else {
+            notifySkipOnce(stalled, recheck.reason, false);
+            hasBlocked = true;
+          }
+          continue;
+        }
+
+        const startResult = await startAgentWithRetries(stalled);
+        if (startResult.status === AUTO_RUN_START_STATUS.STARTED) {
+          logVerbose(
+            `scan: started ${stalled} as a last resort (activity goal stalled)`,
+          );
+          return { started: true, serviceConfigId: stalled };
+        }
+        if (startResult.status === AUTO_RUN_START_STATUS.ABORTED) {
+          if (enabledRef.current) {
+            logVerbose(
+              `scan paused on stalled ${stalled}: start gates timed out, rescan in ${SCAN_LOADING_RETRY_SECONDS}s`,
+            );
+            scheduleNextScan(SCAN_LOADING_RETRY_SECONDS);
+          }
+          return { started: false };
+        }
+        if (startResult.status === AUTO_RUN_START_STATUS.INFRA_FAILED) {
+          hasInfraFailed = true;
+          continue;
+        }
+        hasBlocked = true;
+      }
+
       const delay = (() => {
         if (hasLoading || hasInfraFailed) return SCAN_LOADING_RETRY_SECONDS;
         if (hasBlocked) return SCAN_BLOCKED_DELAY_SECONDS;
@@ -421,6 +480,7 @@ export const useAutoRunScanner = ({
       enabledRef,
       findNextInOrder,
       getDeployabilityForAgent,
+      isActivityGoalDeferred,
       markRewardSnapshotPending,
       refreshRewardsEligibility,
       notifySkipOnce,
@@ -456,6 +516,8 @@ export const useAutoRunScanner = ({
 
     const rewardSnapshot = getRewardSnapshot(selectedServiceConfigId);
     if (rewardSnapshot === true) return false;
+    // Left to `scanAndStartNext`, which tries it only after everyone else.
+    if (isActivityGoalDeferred(selectedServiceConfigId)) return false;
 
     markRewardSnapshotPending(selectedServiceConfigId);
     const selectionReady = await waitForInstanceSelection(
@@ -547,6 +609,7 @@ export const useAutoRunScanner = ({
     getDeployabilityForAgent,
     getSelectedEligibility,
     getRewardSnapshot,
+    isActivityGoalDeferred,
     markRewardSnapshotPending,
     refreshRewardsEligibility,
     notifySkipOnce,

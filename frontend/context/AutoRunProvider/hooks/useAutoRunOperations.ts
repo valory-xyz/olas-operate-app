@@ -13,6 +13,7 @@ import {
   notifyGoalReached,
   notifySkipped,
 } from '../utils/utils';
+import { ActivityGoalObservation } from './useActivityGoalStall';
 import { useAutoRunStartOperations } from './useAutoRunStartOperations';
 import { useAutoRunStopOperations } from './useAutoRunStopOperations';
 import { useAutoRunVerboseLogger } from './useAutoRunVerboseLogger';
@@ -45,6 +46,10 @@ type UseAutoRunOperationsParams = {
   ) => void;
   recordMetric: (metric: AutoRunHealthMetricNoRotation) => void;
   logMessage: (message: string) => void;
+  trackActivityGoal?: (
+    serviceConfigId: string,
+    observation: ActivityGoalObservation,
+  ) => boolean;
 };
 
 /**
@@ -70,6 +75,7 @@ export const useAutoRunOperations = ({
   setRewardSnapshot,
   recordMetric,
   logMessage,
+  trackActivityGoal,
 }: UseAutoRunOperationsParams) => {
   const logVerbose = useAutoRunVerboseLogger(logMessage);
 
@@ -124,6 +130,7 @@ export const useAutoRunOperations = ({
         logMessage,
         onRewardsFetchError: () =>
           recordMetric(AUTO_RUN_HEALTH_METRIC.REWARDS_ERRORS),
+        trackActivityGoal,
       }),
     [
       configuredAgents,
@@ -132,6 +139,7 @@ export const useAutoRunOperations = ({
       recordMetric,
       runningServiceConfigIdRef,
       setRewardSnapshot,
+      trackActivityGoal,
     ],
   );
 

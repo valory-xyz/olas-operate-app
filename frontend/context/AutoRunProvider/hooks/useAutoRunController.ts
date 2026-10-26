@@ -24,6 +24,7 @@ import {
   fetchDeployabilityForAgent,
   isStakingEpochExpired,
 } from '../utils/autoRunHelpers';
+import { useActivityGoalStall } from './useActivityGoalStall';
 import { useAutoRunLifecycle } from './useAutoRunLifecycle';
 import { useAutoRunOperations } from './useAutoRunOperations';
 import { useAutoRunScanner } from './useAutoRunScanner';
@@ -198,6 +199,24 @@ export const useAutoRunController = ({
     logMessage,
   });
 
+  const {
+    stalledInstances,
+    trackActivityGoal,
+    isActivityGoalStalled,
+    isActivityGoalDeferred,
+    deferStalledInstance,
+    restartActivityGoalStallClock,
+    releaseOnStart,
+  } = useActivityGoalStall({ enabled, runningServiceConfigId, logMessage });
+
+  const handleAutoRunInstanceStarted = useCallback(
+    (serviceConfigId: string) => {
+      releaseOnStart(serviceConfigId);
+      onAutoRunInstanceStarted?.(serviceConfigId);
+    },
+    [onAutoRunInstanceStarted, releaseOnStart],
+  );
+
   // Per-instance backoff after stop-timeout to avoid immediate re-trigger loops.
   const stopRetryBackoffUntilRef = useRef<Partial<Record<string, number>>>({});
 
@@ -250,7 +269,7 @@ export const useAutoRunController = ({
     configuredAgents,
     createSafeIfNeeded,
     showNotification,
-    onAutoRunInstanceStarted,
+    onAutoRunInstanceStarted: handleAutoRunInstanceStarted,
     onAutoRunStartStateChange,
     startService,
     waitForBalancesReady,
@@ -259,6 +278,7 @@ export const useAutoRunController = ({
     setRewardSnapshot,
     recordMetric,
     logMessage,
+    trackActivityGoal,
   });
 
   const {
@@ -280,6 +300,7 @@ export const useAutoRunController = ({
     getBalancesStatus,
     notifySkipOnce,
     getDeployabilityForAgent,
+    isActivityGoalDeferred,
     startAgentWithRetries,
     scheduleNextScan,
     recordMetric,
@@ -338,6 +359,10 @@ export const useAutoRunController = ({
     getDeployabilityForRunningInstance,
     getHandOverDeployability,
     notifyGoalReachedOnHandOver,
+    isActivityGoalStalled,
+    isActivityGoalDeferred,
+    deferStalledInstance,
+    restartActivityGoalStallClock,
     stopRetryBackoffUntilRef,
     recordMetric,
     logMessage,
@@ -346,5 +371,6 @@ export const useAutoRunController = ({
   return {
     stopRunningAgent: stopCurrentRunningAgent,
     runningAgentType,
+    stalledInstances,
   };
 };

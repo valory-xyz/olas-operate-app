@@ -68,6 +68,10 @@ const makeHookParams = (
   getDeployabilityForRunningInstance: jest.fn().mockResolvedValue(null),
   getHandOverDeployability: jest.fn().mockResolvedValue({ canRun: true }),
   notifyGoalReachedOnHandOver: jest.fn(),
+  isActivityGoalStalled: jest.fn().mockReturnValue(false),
+  isActivityGoalDeferred: jest.fn().mockReturnValue(false),
+  deferStalledInstance: jest.fn(),
+  restartActivityGoalStallClock: jest.fn(),
   stopRetryBackoffUntilRef: {
     current: {} as Partial<Record<string, number>>,
   },
@@ -452,6 +456,129 @@ describe('useAutoRunLifecycle', () => {
 
       expect(params.startSelectedAgentIfEligible).toHaveBeenCalled();
       expect(params.scanAndStartNext).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('stalled activity goal', () => {
+    const flush = async () => {
+      await act(async () => {
+        await new Promise((r) => setTimeout(r, 0));
+      });
+    };
+
+    // The trader met its staking KPI but its goal stalled, so its snapshot
+    // just turned true while every alternate still has work to do.
+    const makeStalledRunningParams = (
+      overrides: Partial<Parameters<typeof useAutoRunLifecycle>[0]> = {},
+    ) =>
+      makeHookParams({
+        enabled: true,
+        enabledRef: { current: true },
+        runningAgentType: AgentMap.PredictTrader,
+        runningServiceConfigId: scTrader,
+        runningAgentTypeRef: { current: AgentMap.PredictTrader },
+        runningServiceConfigIdRef: { current: scTrader },
+        lastRewardsEligibilityRef: {
+          current: { [scTrader]: false } as Partial<
+            Record<string, boolean | undefined>
+          >,
+        },
+        refreshRewardsEligibility: jest
+          .fn()
+          .mockImplementation(async (id: string) => id === scTrader),
+        isActivityGoalStalled: jest
+          .fn()
+          .mockImplementation((id: string) => id === scTrader),
+        ...overrides,
+      });
+
+    it('defers the stalled agent and rotates when an alternate can start', async () => {
+      const params = makeStalledRunningParams({
+        scanAndStartNext: jest
+          .fn()
+          .mockResolvedValue({ started: true, serviceConfigId: scOptimus }),
+      });
+
+      renderHook(() => useAutoRunLifecycle(params));
+      await flush();
+
+      expect(params.getHandOverDeployability).toHaveBeenCalledWith(scOptimus);
+      expect(params.stopAgentWithRecovery).toHaveBeenCalledWith(scTrader);
+      expect(params.deferStalledInstance).toHaveBeenCalledWith(scTrader);
+      expect(params.scanAndStartNext).toHaveBeenCalledWith(scTrader, {
+        stoppedId: scTrader,
+      });
+      expect(params.notifyGoalReachedOnHandOver).not.toHaveBeenCalled();
+      expect(params.restartActivityGoalStallClock).not.toHaveBeenCalled();
+    });
+
+    it('keeps the stalled agent running with a fresh clock when no alternate can start', async () => {
+      const lastRewardsEligibilityRef = {
+        current: { [scTrader]: false } as Partial<
+          Record<string, boolean | undefined>
+        >,
+      };
+      const params = makeStalledRunningParams({
+        lastRewardsEligibilityRef,
+        getHandOverDeployability: jest
+          .fn()
+          .mockResolvedValue({ canRun: false, reason: 'Region restricted' }),
+      });
+
+      renderHook(() => useAutoRunLifecycle(params));
+      await flush();
+
+      expect(params.stopAgentWithRecovery).not.toHaveBeenCalled();
+      expect(params.deferStalledInstance).not.toHaveBeenCalled();
+      expect(params.restartActivityGoalStallClock).toHaveBeenCalledWith(
+        scTrader,
+      );
+      // Left `true`, so this rotation is not re-triggered until the next poll
+      // reads not-done on the fresh clock.
+      expect(lastRewardsEligibilityRef.current[scTrader]).toBe(true);
+      expect(params.logMessage).toHaveBeenCalledWith(
+        expect.stringContaining(
+          `keeping stalled agent running, no runnable alternate current=${scTrader} rescan=${SCAN_ELIGIBLE_DELAY_SECONDS}s`,
+        ),
+      );
+      expect(params.scheduleNextScan).toHaveBeenCalledWith(
+        SCAN_ELIGIBLE_DELAY_SECONDS,
+      );
+    });
+
+    it('does not hand over to an alternate that is already done', async () => {
+      const params = makeStalledRunningParams({
+        refreshRewardsEligibility: jest.fn().mockResolvedValue(true),
+      });
+
+      renderHook(() => useAutoRunLifecycle(params));
+      await flush();
+
+      expect(params.getHandOverDeployability).not.toHaveBeenCalled();
+      expect(params.stopAgentWithRecovery).not.toHaveBeenCalled();
+      expect(params.restartActivityGoalStallClock).toHaveBeenCalledWith(
+        scTrader,
+      );
+    });
+
+    it('counts a deferred alternate as not done, though its snapshot reads done', async () => {
+      // A finished agent with only a deferred (stalled) alternate left: the
+      // slot goes to the deferred one rather than to standby.
+      const params = makeStalledRunningParams({
+        isActivityGoalStalled: jest.fn().mockReturnValue(false),
+        isActivityGoalDeferred: jest
+          .fn()
+          .mockImplementation((id: string) => id === scOptimus),
+        refreshRewardsEligibility: jest.fn().mockResolvedValue(true),
+      });
+
+      renderHook(() => useAutoRunLifecycle(params));
+      await flush();
+
+      expect(params.stopAgentWithRecovery).toHaveBeenCalledWith(scTrader);
+      expect(params.scanAndStartNext).toHaveBeenCalledWith(scTrader, {
+        stoppedId: scTrader,
+      });
     });
   });
 
