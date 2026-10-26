@@ -1,7 +1,10 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
-import { Staking } from '../../../../../../components/MainPage/Home/Overview/Staking/Staking';
+import {
+  Staking,
+  StakingAlert,
+} from '../../../../../../components/MainPage/Home/Overview/Staking/Staking';
 import {
   useActiveStakingContractDetails,
   useAgentActivity,
@@ -56,11 +59,13 @@ const setup = ({
   isEligibleForStaking = true,
   isServiceRunning = true,
   isUnderConstruction = false,
+  ui = <Staking />,
 }: {
   isAgentEvicted?: boolean;
   isEligibleForStaking?: boolean;
   isServiceRunning?: boolean;
   isUnderConstruction?: boolean;
+  ui?: React.ReactElement;
 } = {}) => {
   mockUseActiveStakingContractDetails.mockReturnValue({
     isAgentEvicted,
@@ -71,7 +76,7 @@ const setup = ({
     selectedService: makeService(),
     selectedAgentConfig: { isUnderConstruction },
   });
-  return render(<Staking />);
+  return render(ui);
 };
 
 describe('Staking', () => {
@@ -131,6 +136,27 @@ describe('Staking', () => {
       setup({ isServiceRunning: true });
 
       expect(screen.queryByTestId('alert')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('StakingAlert without the run-agent prompt', () => {
+    const ui = <StakingAlert withRunAgent={false} />;
+
+    it('does not prompt to start a stopped agent', () => {
+      setup({ isServiceRunning: false, ui });
+
+      expect(screen.queryByText(RUN_AGENT_COPY)).not.toBeInTheDocument();
+    });
+
+    it('still shows the eviction alert', () => {
+      setup({
+        isAgentEvicted: true,
+        isEligibleForStaking: false,
+        isServiceRunning: false,
+        ui,
+      });
+
+      expect(screen.getByText(EVICTED_COPY)).toBeInTheDocument();
     });
   });
 });

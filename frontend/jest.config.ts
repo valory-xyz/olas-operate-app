@@ -33,5 +33,57 @@ const config: Config = {
   ],
 };
 
+// ESM-only deps of react-markdown and its plugins, added to next/jest's node_modules transform allowlist.
+const ESM_ONLY_PACKAGES = [
+  'react-markdown',
+  'remark-.*',
+  'rehype-.*',
+  'parse5',
+  'entities',
+  'hastscript',
+  'web-namespaces',
+  'html-void-elements',
+  'micromark.*',
+  'mdast-.*',
+  'hast-.*',
+  'unist-.*',
+  'unified',
+  'vfile.*',
+  'estree-.*',
+  'markdown-table',
+  'html-url-attributes',
+  'devlop',
+  'bail',
+  'trough',
+  'ccount',
+  'zwitch',
+  'longest-streak',
+  'trim-lines',
+  'property-information',
+  'space-separated-tokens',
+  'comma-separated-tokens',
+  'character-entities.*',
+  'character-reference-invalid',
+  'decode-named-character-reference',
+  'parse-entities',
+  'stringify-entities',
+  'is-alphabetical',
+  'is-alphanumerical',
+  'is-decimal',
+  'is-hexadecimal',
+  'is-plain-obj',
+  'escape-string-regexp',
+].join('|');
+
 // createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async
-export default createJestConfig(config);
+const jestConfig = async (): Promise<Config> => {
+  const resolved = await createJestConfig(config)();
+  return {
+    ...resolved,
+    transformIgnorePatterns: resolved.transformIgnorePatterns?.map((pattern) =>
+      pattern.replace('/node_modules/(?!.pnpm)(?!(', `$&${ESM_ONLY_PACKAGES}|`),
+    ),
+  };
+};
+
+export default jestConfig;

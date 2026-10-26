@@ -19,21 +19,33 @@ jest.mock('../../constants/serviceTemplates/service/connect', () => ({
       FUND_REQUIREMENTS: { value: 'all-chains', provision_type: 'fixed' },
     },
   },
-  CONNECT_FUND_REQUIREMENT_THRESHOLDS: {
-    polygon: { agent: { '0x0': '1' }, safe: { '0x0': '2' } },
-    gnosis: { agent: { '0x0': '3' }, safe: { '0x0': '4' } },
+  CONNECT_FUND_REQUIREMENTS: {
+    polygon: {
+      agent: { '0x0': { threshold: '1', topup: '5' } },
+      safe: { '0x0': { threshold: '2', topup: '10' } },
+    },
+    gnosis: {
+      agent: { '0x0': { threshold: '3', topup: '15' } },
+      safe: { '0x0': { threshold: '4', topup: '20' } },
+    },
   },
   // Mirrors the real helper: the value handed to a deployment names one chain.
   connectFundRequirementsFor: (chain: string) =>
     JSON.stringify({
       [chain]: {
-        polygon: { agent: { '0x0': '1' }, safe: { '0x0': '2' } },
-        gnosis: { agent: { '0x0': '3' }, safe: { '0x0': '4' } },
+        polygon: {
+          agent: { '0x0': { threshold: '1', topup: '5' } },
+          safe: { '0x0': { threshold: '2', topup: '10' } },
+        },
+        gnosis: {
+          agent: { '0x0': { threshold: '3', topup: '15' } },
+          safe: { '0x0': { threshold: '4', topup: '20' } },
+        },
       }[chain],
     }),
 }));
 
-const { CONNECT_SERVICE_TEMPLATE, CONNECT_FUND_REQUIREMENT_THRESHOLDS } =
+const { CONNECT_SERVICE_TEMPLATE, CONNECT_FUND_REQUIREMENTS } =
   jest.requireMock('../../constants/serviceTemplates/service/connect');
 const GNOSIS_CONFIG = CONNECT_SERVICE_TEMPLATE.configurations.gnosis;
 
@@ -148,7 +160,7 @@ describe('useCreateConnectService', () => {
     );
   });
 
-  it('narrows the FUND_REQUIREMENTS thresholds to the chosen chain', async () => {
+  it('narrows the FUND_REQUIREMENTS requirements to the chosen chain', async () => {
     const { result } = renderHook(() => useCreateConnectService());
 
     await act(async () => {
@@ -160,7 +172,7 @@ describe('useCreateConnectService', () => {
     // every chain, so a stray entry means deficits reported off-chain.
     expect(JSON.parse(template.env_variables.FUND_REQUIREMENTS.value)).toEqual({
       [MiddlewareChainMap.GNOSIS]:
-        CONNECT_FUND_REQUIREMENT_THRESHOLDS[MiddlewareChainMap.GNOSIS],
+        CONNECT_FUND_REQUIREMENTS[MiddlewareChainMap.GNOSIS],
     });
     // Untouched env variables are carried over.
     expect(template.env_variables.STORE_PATH).toEqual(

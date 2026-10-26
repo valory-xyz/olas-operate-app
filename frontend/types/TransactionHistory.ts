@@ -30,6 +30,7 @@ export const FUNDS_CATEGORY = {
   MASTER_WITHDRAWAL: 'MASTER_WITHDRAWAL',
   AGENT_TO_APP: 'AGENT_TO_APP',
   APP_TO_AGENT: 'APP_TO_AGENT',
+  AGENT_SAFE_TO_AGENT_EOA: 'AGENT_SAFE_TO_AGENT_EOA',
   OTHER: 'OTHER',
 } as const;
 
@@ -47,6 +48,7 @@ export const FundsCategorySchema = z.enum([
   FUNDS_CATEGORY.MASTER_WITHDRAWAL,
   FUNDS_CATEGORY.AGENT_TO_APP,
   FUNDS_CATEGORY.APP_TO_AGENT,
+  FUNDS_CATEGORY.AGENT_SAFE_TO_AGENT_EOA,
   FUNDS_CATEGORY.OTHER,
 ]);
 
@@ -262,7 +264,8 @@ export type AgentTransactionHistoryResponseSqd = z.infer<
   typeof AgentTransactionHistoryResponseSqdSchema
 >;
 
-export type TransferDirection = 'in' | 'out';
+// 'internal' — moved between two addresses of one wallet; rendered unsigned.
+export type TransferDirection = 'in' | 'out' | 'internal';
 
 export type TransactionHistoryTransfer = {
   tokenAddress: Address | null;

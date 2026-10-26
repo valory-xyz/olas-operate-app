@@ -15,58 +15,57 @@ import { STAKING_PROGRAM_IDS } from '../../stakingProgram';
 import { MECH_FACILITATOR_ENABLED_FLAGS, X402_ENABLED_FLAGS } from '../../x402';
 import { KPI_DESC_PREFIX } from '../constants';
 
-// Modius uses this (reverted to the version on `staging`; the new staking
-// contracts for that agent are hidden for now). Optimus and Basius each ship
-// their own newer build with their own hash below.
+// Modius runs the same optimus build as Optimus (`service/valory/optimus`
+// hash); its new staking contracts are still hidden. Kept as its own constant
+// so Modius can be pinned separately from Optimus and Basius.
 const MODIUS_TEMPLATE_RELEASE: Pick<
   ServiceTemplate,
   'hash' | 'service_version' | 'agent_release'
 > = {
-  hash: 'bafybeigjyo22nl622tn5kbntetyr6obbr3rtk2rzfu6zbqh7xaejehanum',
-  service_version: 'v0.12.0-rc11',
+  hash: 'bafybeig6bg2pa4sjyhtrcihdhueedkidreodsdyfnwal73lev47cnj65hq',
+  service_version: 'v0.13.8',
   agent_release: {
     is_aea: true,
     repository: {
       owner: 'valory-xyz',
       name: 'optimus',
-      version: 'v0.12.0-rc11',
+      version: 'v0.13.8',
     },
   },
 };
 
-// Basius ships its own (latest) build — kept separate so reverting the shared
-// babydegen hash for Modius/Optimus doesn't drag Basius back.
+// Basius ships its own service package (`service/valory/basius` hash) from the
+// same optimus release.
 const BASIUS_TEMPLATE_RELEASE: Pick<
   ServiceTemplate,
   'hash' | 'service_version' | 'agent_release'
 > = {
-  hash: 'bafybeih5k245dtn5lualynr4cdqa5bavzbrjtfuo7sefrgnh3ucnshoc64',
-  service_version: 'v0.13.4',
+  hash: 'bafybeihx4edyh2xnxcznqsqtv4zmodobrs4fs3j5lmw4k3v7gixdxlnkom',
+  service_version: 'v0.13.8',
   agent_release: {
     is_aea: true,
     repository: {
       owner: 'valory-xyz',
       name: 'optimus',
-      version: 'v0.13.4',
+      version: 'v0.13.8',
     },
   },
 };
 
-// Optimus ships its own build — separated from the shared babydegen hash so
-// Optimism-specific mech config (priority mech 195 on Optimism,
-// prediction-offline-v1 tool) doesn't get applied to Modius too.
+// Optimus shares Modius's hash; its Optimism-specific mech tool comes from the
+// `MECH_TOOL` env var in its template below, not from the service package.
 const OPTIMUS_TEMPLATE_RELEASE: Pick<
   ServiceTemplate,
   'hash' | 'service_version' | 'agent_release'
 > = {
-  hash: 'bafybeighpvcgxiwwbwzwhsvrq7plfqr5euggr4kby3kbqdodssmcayxpei',
-  service_version: 'v0.13.4',
+  hash: 'bafybeig6bg2pa4sjyhtrcihdhueedkidreodsdyfnwal73lev47cnj65hq',
+  service_version: 'v0.13.8',
   agent_release: {
     is_aea: true,
     repository: {
       owner: 'valory-xyz',
       name: 'optimus',
-      version: 'v0.13.4',
+      version: 'v0.13.8',
     },
   },
 };

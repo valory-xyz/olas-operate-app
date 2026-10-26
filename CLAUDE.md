@@ -14,7 +14,7 @@ The frontend is embedded in Electron via Next.js; they communicate with the Pyth
 
 ## Development Commands
 
-**Prerequisites:** Node.js 22.18+ (`.nvmrc`), Yarn 1.22+, Python 3.14 (`pyproject.toml`: `>=3.14,<3.15`), uv 0.11.15+.
+**Prerequisites:** Node.js 22.23.4+ (`.nvmrc`), Yarn 1.22+, Python 3.14 (`pyproject.toml`: `>=3.14,<3.15`), uv 0.13.4+.
 
 Common commands (full list in `package.json` scripts):
 - `yarn install-deps` — installs all three layers

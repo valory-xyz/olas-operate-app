@@ -141,6 +141,8 @@ export type AgentConfig = {
   hasStaking: boolean;
   /** Whether the agent has performance metrics (shows the main-page Performance section). */
   hasPerformance: boolean;
+  /** Shows the agent chat Overview (header, feed, chat input) instead of today's sections. */
+  hasAgentChat?: boolean;
 } & needsOpenProfileEachAgentRun;
 
 type AgentPerformanceMetric = {

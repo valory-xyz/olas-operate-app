@@ -1,6 +1,7 @@
 export * from './Abi';
 export * from './Address';
 export * from './Agent';
+export * from './AgentChat';
 export * from './Autonolas';
 export * from './BackupWallet';
 export * from './Balance';

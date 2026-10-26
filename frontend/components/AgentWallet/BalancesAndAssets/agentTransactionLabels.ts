@@ -17,6 +17,8 @@ export const getAgentTransactionRowLabel = (
       return 'Fund agent';
     case FUNDS_CATEGORY.AGENT_TO_MASTER:
       return 'Withdrawal';
+    case FUNDS_CATEGORY.AGENT_SAFE_TO_AGENT_EOA:
+      return 'Agent Safe to Agent Signer movement';
     default:
       return 'Transaction';
   }
