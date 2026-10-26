@@ -36,6 +36,7 @@ const renderStall = () =>
     initialProps: {
       enabled: true,
       runningServiceConfigId: scTrader,
+      orderedIncludedInstances: [scTrader, scOptimus],
       logMessage: jest.fn(),
     },
   });
@@ -206,6 +207,7 @@ describe('useActivityGoalStall', () => {
       rerender({
         enabled: true,
         runningServiceConfigId: scOptimus,
+        orderedIncludedInstances: [scTrader, scOptimus],
         logMessage: jest.fn(),
       });
       expect(result.current.isActivityGoalDeferred(scTrader)).toBe(true);
@@ -213,8 +215,21 @@ describe('useActivityGoalStall', () => {
       rerender({
         enabled: true,
         runningServiceConfigId: scTrader,
+        orderedIncludedInstances: [scTrader, scOptimus],
         logMessage: jest.fn(),
       });
+      expect(result.current.isActivityGoalDeferred(scTrader)).toBe(false);
+    });
+
+    it('is forgotten when the user excludes it from Auto-run', () => {
+      const { result, rerender } = stallAndDefer();
+      rerender({
+        enabled: true,
+        runningServiceConfigId: scOptimus,
+        orderedIncludedInstances: [scOptimus],
+        logMessage: jest.fn(),
+      });
+      expect(result.current.stalledInstances).toEqual({});
       expect(result.current.isActivityGoalDeferred(scTrader)).toBe(false);
     });
 
@@ -223,6 +238,7 @@ describe('useActivityGoalStall', () => {
       rerender({
         enabled: false,
         runningServiceConfigId: null,
+        orderedIncludedInstances: [scTrader, scOptimus],
         logMessage: jest.fn(),
       });
       expect(result.current.stalledInstances).toEqual({});
@@ -249,6 +265,7 @@ describe('useActivityGoalStall', () => {
     rerender({
       enabled: true,
       runningServiceConfigId: scOptimus,
+      orderedIncludedInstances: [scTrader, scOptimus],
       logMessage: jest.fn(),
     });
     expect(result.current.isActivityGoalStalled(scTrader)).toBe(false);

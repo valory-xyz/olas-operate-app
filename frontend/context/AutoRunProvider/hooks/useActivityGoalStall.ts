@@ -25,6 +25,7 @@ type StallClock = StalledInstance & {
 type UseActivityGoalStallParams = {
   enabled: boolean;
   runningServiceConfigId: string | null;
+  orderedIncludedInstances: string[];
   logMessage: (message: string) => void;
 };
 
@@ -53,6 +54,7 @@ const toStalledInstance = ({
 export const useActivityGoalStall = ({
   enabled,
   runningServiceConfigId,
+  orderedIncludedInstances,
   logMessage,
 }: UseActivityGoalStallParams) => {
   const clockRef = useRef<Partial<Record<string, StallClock>>>({});
@@ -85,6 +87,17 @@ export const useActivityGoalStall = ({
     deferredRef.current = {};
     setStalledInstances({});
   }, [enabled]);
+
+  // An instance the user excluded is no longer Auto-run's to defer.
+  useEffect(() => {
+    const included = new Set(orderedIncludedInstances);
+    const excluded = Object.keys(deferredRef.current).filter(
+      (id) => !included.has(id),
+    );
+    if (excluded.length === 0) return;
+    for (const id of excluded) delete deferredRef.current[id];
+    publishDeferred();
+  }, [orderedIncludedInstances, publishDeferred]);
 
   // Only the running instance is watched, and one that runs again is no
   // longer deferred (e.g. the user started it by hand).

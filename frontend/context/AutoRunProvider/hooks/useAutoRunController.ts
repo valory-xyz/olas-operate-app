@@ -207,7 +207,12 @@ export const useAutoRunController = ({
     deferStalledInstance,
     restartActivityGoalStallClock,
     releaseOnStart,
-  } = useActivityGoalStall({ enabled, runningServiceConfigId, logMessage });
+  } = useActivityGoalStall({
+    enabled,
+    runningServiceConfigId,
+    orderedIncludedInstances,
+    logMessage,
+  });
 
   const handleAutoRunInstanceStarted = useCallback(
     (serviceConfigId: string) => {

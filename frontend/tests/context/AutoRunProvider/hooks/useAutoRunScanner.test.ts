@@ -706,6 +706,58 @@ describe('useAutoRunScanner', () => {
       );
     });
 
+    it.each([
+      [AUTO_RUN_START_STATUS.ABORTED, SCAN_LOADING_RETRY_SECONDS],
+      [AUTO_RUN_START_STATUS.INFRA_FAILED, SCAN_LOADING_RETRY_SECONDS],
+      [AUTO_RUN_START_STATUS.AGENT_BLOCKED, SCAN_BLOCKED_DELAY_SECONDS],
+    ])(
+      'reschedules the scan when the last-resort start ends %s',
+      async (status, delay) => {
+        const params = makeHookParams({
+          orderedIncludedInstances: [scTrader, scOptimus],
+          isActivityGoalDeferred: deferOptimus,
+          waitForRewardsEligibility: jest.fn().mockResolvedValue(true),
+          startAgentWithRetries: jest.fn().mockResolvedValue({ status }),
+        });
+        const { result } = renderHook(() => useAutoRunScanner(params));
+
+        let scanResult: ScanResult | undefined;
+        await act(async () => {
+          scanResult = await result.current.scanAndStartNext(scTrader);
+        });
+        expect(params.startAgentWithRetries).toHaveBeenCalledWith(scOptimus);
+        expect(scanResult).toEqual({ started: false });
+        expect(params.scheduleNextScan).toHaveBeenCalledTimes(1);
+        expect(params.scheduleNextScan).toHaveBeenCalledWith(delay);
+      },
+    );
+
+    it('retries soon when a deferred agent turns transiently unavailable', async () => {
+      const params = makeHookParams({
+        orderedIncludedInstances: [scTrader, scOptimus],
+        isActivityGoalDeferred: deferOptimus,
+        getDeployabilityForAgent: jest
+          .fn()
+          .mockResolvedValueOnce({ canRun: true })
+          .mockResolvedValue({
+            canRun: false,
+            reason: 'Staking data unavailable',
+            isTransient: true,
+          }),
+        waitForRewardsEligibility: jest.fn().mockResolvedValue(true),
+      });
+      const { result } = renderHook(() => useAutoRunScanner(params));
+
+      await act(async () => {
+        await result.current.scanAndStartNext(scTrader);
+      });
+      expect(params.startAgentWithRetries).not.toHaveBeenCalled();
+      expect(params.notifySkipOnce).not.toHaveBeenCalled();
+      expect(params.scheduleNextScan).toHaveBeenCalledWith(
+        SCAN_LOADING_RETRY_SECONDS,
+      );
+    });
+
     it('leaves a deferred selected agent to the scan', async () => {
       const params = makeHookParams({
         selectedServiceConfigId: scOptimus,

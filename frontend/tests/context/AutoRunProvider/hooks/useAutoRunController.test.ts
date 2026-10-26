@@ -4,6 +4,7 @@ import { act } from 'react';
 import { AGENT_CONFIG } from '../../../../config/agents';
 import { AgentMap } from '../../../../constants/agent';
 import {
+  ACTIVITY_GOAL_STALL_SECONDS,
   AUTO_RUN_VERBOSE_LOGS,
   HEALTH_SUMMARY_INTERVAL_SECONDS,
 } from '../../../../context/AutoRunProvider/constants';
@@ -11,6 +12,8 @@ import { useAutoRunController } from '../../../../context/AutoRunProvider/hooks/
 import { AgentMeta } from '../../../../context/AutoRunProvider/types';
 import {
   DEFAULT_SERVICE_CONFIG_ID,
+  DEFAULT_TS_CHECKPOINT,
+  makeActivityGoal,
   makeAutoRunAgentMeta,
   MOCK_SERVICE_CONFIG_ID_2,
 } from '../../../helpers/factories';
@@ -386,17 +389,60 @@ describe('useAutoRunController', () => {
       );
     });
 
-    it('wires activity-goal stall tracking into rewards polling and starts', () => {
-      const params = makeHookParams({ configuredAgents: [traderMeta] });
+    it('defers a stalled agent and releases it when Auto-run starts it again', () => {
+      const params = makeHookParams({
+        enabled: true,
+        configuredAgents: [traderMeta],
+      });
       const { result } = renderHook(() => useAutoRunController(params));
-      const operationsArgs = lastCallArgs(useAutoRunOperations);
+      const observation = {
+        isRunning: true,
+        epochTargetMet: true,
+        epochExpired: false,
+        tsCheckpoint: DEFAULT_TS_CHECKPOINT,
+        goal: makeActivityGoal({ progress: 0, target: 8 }),
+      };
 
-      expect(typeof operationsArgs.trackActivityGoal).toBe('function');
-      expect(result.current.stalledInstances).toEqual({});
+      // Rewards polls feed the stall clock through the operations.
+      lastCallArgs(useAutoRunOperations).trackActivityGoal(
+        DEFAULT_SERVICE_CONFIG_ID,
+        observation,
+      );
+      act(() => {
+        jest.advanceTimersByTime(ACTIVITY_GOAL_STALL_SECONDS * 1000);
+      });
+      expect(
+        lastCallArgs(useAutoRunOperations).trackActivityGoal(
+          DEFAULT_SERVICE_CONFIG_ID,
+          observation,
+        ),
+      ).toBe(true);
+      expect(
+        lastCallArgs(useAutoRunLifecycle).isActivityGoalStalled(
+          DEFAULT_SERVICE_CONFIG_ID,
+        ),
+      ).toBe(true);
 
       act(() => {
-        operationsArgs.onAutoRunInstanceStarted(DEFAULT_SERVICE_CONFIG_ID);
+        lastCallArgs(useAutoRunLifecycle).deferStalledInstance(
+          DEFAULT_SERVICE_CONFIG_ID,
+        );
       });
+      expect(result.current.stalledInstances).toEqual({
+        [DEFAULT_SERVICE_CONFIG_ID]: expect.objectContaining({ target: 8 }),
+      });
+      expect(
+        lastCallArgs(useAutoRunScanner).isActivityGoalDeferred(
+          DEFAULT_SERVICE_CONFIG_ID,
+        ),
+      ).toBe(true);
+
+      act(() => {
+        lastCallArgs(useAutoRunOperations).onAutoRunInstanceStarted(
+          DEFAULT_SERVICE_CONFIG_ID,
+        );
+      });
+      expect(result.current.stalledInstances).toEqual({});
       expect(params.onAutoRunInstanceStarted).toHaveBeenCalledWith(
         DEFAULT_SERVICE_CONFIG_ID,
       );
