@@ -1,3 +1,4 @@
+import { isNil } from 'lodash';
 import { ReactNode, useMemo } from 'react';
 
 import { AgentLowBalanceAlert } from '@/components/AgentLowBalanceAlert';
@@ -18,6 +19,7 @@ import {
   useCompleteAgentSetup,
   useIsAgentGeoRestricted,
   useIsInitiallyFunded,
+  useMasterWalletContext,
   usePageState,
   useServices,
   useStakingProgram,
@@ -46,8 +48,15 @@ export const AgentDisabledAlert = () => {
     selectedStakingContractDetails,
   } = useActiveStakingContractDetails();
   const { isInitialFunded } = useIsInitiallyFunded();
+  const { getMasterSafeOf, masterWallets } = useMasterWalletContext();
   const { isAnotherAgentRunning } = useAgentRunning();
   const { selectedStakingProgramMeta } = useStakingProgram();
+
+  // Wallet data, not `isFetched`: a failed fetch must not read as "no Safe".
+  const isHomeChainSafeMissing =
+    !isNil(masterWallets) &&
+    !getMasterSafeOf?.(selectedAgentConfig.evmHomeChainId);
+
   const {
     setupState,
     handleCompleteSetup,
@@ -55,7 +64,9 @@ export const AgentDisabledAlert = () => {
     dismissModal,
     handleTryAgain,
     handleContactSupport,
-  } = useCompleteAgentSetup(isInitialFunded === false);
+  } = useCompleteAgentSetup(
+    isInitialFunded === false || isHomeChainSafeMissing,
+  );
 
   const { isAgentGeoRestricted } = useIsAgentGeoRestricted({
     agentType: selectedAgentType,
@@ -84,8 +95,7 @@ export const AgentDisabledAlert = () => {
       return { key: 'under-construction', content: <UnderConstructionAlert /> };
     }
 
-    // The "store" is `undefined` during updates, hence waiting till we get the correct value from the store.
-    if (!isInitialFunded) {
+    if (!isInitialFunded || isHomeChainSafeMissing) {
       return {
         key: 'unfinished-setup',
         content: (
@@ -172,6 +182,7 @@ export const AgentDisabledAlert = () => {
     isAgentGeoRestricted,
     isAnotherAgentRunning,
     isEligibleForStaking,
+    isHomeChainSafeMissing,
     isInitialFunded,
     isSelectedStakingContractDetailsLoading,
     isServiceStaked,
