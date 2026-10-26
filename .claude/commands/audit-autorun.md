@@ -145,7 +145,9 @@ Run **targeted grep searches** for each pattern. Do **not** re-read the file in 
 | `eligibility wait timeout` | Warning | Eligibility stuck in Loading for 60s |
 | `selection wait timeout` | Warning | UI selection didn't match requested agent in 60s |
 | `balances wait timeout` | Warning | Balances not ready after 3min |
-| `skip ` | Normal | Agent skipped — note reason; should not fire for "Loading" reasons |
+| `skip ` | Normal | Agent passed over by a scan — note reason. Logged for every candidate, transient reasons included; only non-transient ones are *notified* |
+| `rotate_end status=same` / `status=none` | Warning | Rotation stopped the agent but started no other one — the `skip` lines of that scan say why |
+| `keeping stalled agent running` | Normal | Running agent made no activity-goal progress for an hour, but no other agent can start |
 | `rotation triggered` | Normal | `false→true` rewards transition detected — verify stop + new start follows |
 
 **Absence checks:**
@@ -382,7 +384,7 @@ From `auto-run.md` section 11 — must-pass release blockers:
 | 1 | Enable with eligible agent → starts within timeout | Log: agent started entry appears |
 | 2 | Toggle OFF → running agent stops | Log: stop confirmation appears |
 | 3 | Running agent earns rewards → stops → next eligible starts | Log: `rotation triggered` → stop → start |
-| 4 | Loading states never show skip notification | Log: no `skip` with `Loading` in reason |
+| 4 | Loading states never show skip notification | Scanner `skip` lines include transient reasons (`Another agent running`, `Balance data loading`) by design; check that no skip *notification* was shown for them |
 | 5 | Never runs more than one agent concurrently | Log: no two `started` without a `stopped` between them |
 | 6 | Inclusion order and exclusions persist across restart | Check Electron store |
 | 7 | No infinite waits — all waits have hard timeouts | B6 check |

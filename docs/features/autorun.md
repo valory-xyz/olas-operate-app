@@ -15,6 +15,7 @@ frontend/context/AutoRunProvider/
   constants.ts                 — Shared status enums and core auto-run timing constants
   types.ts                     — Shared TypeScript types (AgentMeta, AutoRunContextType, etc.)
   hooks/
+    useActivityGoalStall.ts    — In-memory stall clock for the running agent's activity goal, and the set of agents deferred for a stall
     useAutoRunController.ts    — Composition root; wires signals + operations + scanner + lifecycle
     useAutoRunSignals.ts       — Shared refs, wait helpers, scan scheduling
     useAutoRunOperations.ts    — Thin composition hook for start/stop/rewards operations
@@ -78,6 +79,7 @@ Note: timing constants are centralized in `constants.ts` to avoid duplicate knob
 | `AUTO_RUN_VERBOSE_LOGS` | true | Gates high-volume diagnostic logs; set to true while actively debugging incidents |
 | `COOLDOWN_SECONDS` | 20s | Delay after stop before starting next instance |
 | `RUNNING_AGENT_MAX_RUNTIME_SECONDS` | 4h | Watchdog threshold for maximum continuous runtime per instance |
+| `ACTIVITY_GOAL_STALL_SECONDS` | 1h | No activity-goal progress for this long after the staking KPI is met → the running agent is stalled (§3.2b) |
 | `RUNNING_AGENT_WATCHDOG_CHECK_SECONDS` | 5min | Runtime watchdog check cadence |
 | `RUNNING_AGENT_ELIGIBILITY_CHECK_SECONDS` | 10min | Eviction watchdog cadence — how often the running instance's on-chain staking state is re-read |
 | `HEALTH_SUMMARY_INTERVAL_SECONDS` | 15min | Aggregated auto-run health log cadence (error/success counters); only emitted when `AUTO_RUN_VERBOSE_LOGS=true` |
@@ -121,7 +123,9 @@ An instance counts as done for the epoch only when **both** that staking signal 
 - block whose `period_start` predates the epoch's `tsCheckpoint` → goal not met;
 - otherwise → `activity_goal.is_met`.
 
-The goal is read only once the staking signal is met; until then the instance is not done and no performance request is made. A failed performance read leaves a staking agent whose staking signal is met unknown (`undefined`), so callers keep the previous snapshot and the scanner retries instead of starting it; for Connect it counts as not done. A malformed block is logged as `activity goal malformed: <id>: <zod issues>` and reads as no block. The decision log line carries `goal=<progress>/<target> goalMet=<bool> goalCurrent=<bool> → done=<bool>` (or `goal=none` / `goal=unavailable`, or `goal=unread` when the staking signal is not met). The selection-driven snapshot in `useAutoRunSignals` uses `useEpochWorkStatus().isDoneForEpoch`, so both writers agree.
+A staking agent stalled on its goal (§3.2b) also reads as done.
+
+The goal is read only once the staking signal is met; until then the instance is not done and no performance request is made. A failed performance read leaves a staking agent whose staking signal is met unknown (`undefined`), so callers keep the previous snapshot and the scanner retries instead of starting it; for Connect it counts as not done. A malformed block is logged as `activity goal malformed: <id>: <zod issues>` and reads as no block. The decision log line carries `goal=<progress>/<target> goalMet=<bool> goalCurrent=<bool> stalled=<bool> → done=<bool>` (or `goal=none` / `goal=unavailable`, or `goal=unread` when the staking signal is not met). The selection-driven snapshot in `useAutoRunSignals` uses `useEpochWorkStatus().isDoneForEpoch`, so both writers agree.
 
 1. `REWARDS_POLL_SECONDS` interval calls `refreshRewardsEligibility(runningServiceConfigId)`.
 2. Snapshot update bumps `rewardsTick` → rotation effect fires.
@@ -129,7 +133,10 @@ The goal is read only once the staking signal is met; until then the instance is
 4. `rotateToNext(currentServiceConfigId)`:
    a. Refresh rewards for all other instances.
    b. If all earned/unknown → keep current, rescan in 30min.
-   c. Otherwise → `stopAgentWithRecovery` → reset `lastRewardsEligibilityRef[current]` → cooldown → `scanAndStartNext`.
+   c. Otherwise → `stopAgentWithRecovery` → reset `lastRewardsEligibilityRef[current]` → cooldown → `scanAndStartNext(current, { stoppedId: current })`.
+5. `rotate_end` logs `status=ok` (another agent started), `same` (the stopped agent was started again) or `none` (nothing started), with `started=<id|none>`. Only `ok` counts towards `rotationsSucceeded`.
+
+The scan after a stop is passed the stopped id because `runningServiceConfigIdRef` mirrors the polled `/services/deployment` query, which can lag the confirmed stop by up to ~50s with the window hidden. While it still reports the stopped agent, every other candidate would read `Another agent running` and the scan would wrap round and restart the stopped one. `stoppedId` affects only that scan; any *other* running agent still blocks candidates.
 
 Note: Resetting `lastRewardsEligibilityRef` on successful stop is critical — without it the guard stays `true` from the current epoch and permanently blocks rotation in all future epochs when this instance runs again.
 
@@ -143,6 +150,19 @@ Connect (`stakingProgramId === 'no_staking'`) has no epoch. It is an ordinary ch
 - A watchdog or eviction hand-over sends no goal-reached notification.
 - `fetchDeployabilityForAgent` skips the staking reads for `no_staking`, and `AgentMeta.chainId` is the instance's own chain (`getServiceEvmChainId`).
 - **Upgrade:** Connect instances that exist when the version first loads are added once to `userExcludedAgentInstances` (`autoRun.connectAutoRunMigrated`); later instances are auto-added.
+
+### 3.2b Stalled activity goal
+
+A goal the agent can never reach under its config (e.g. `max_bet_size` at the bet floor, so it never trades) would otherwise hold the slot until the 4h watchdog. `useActivityGoalStall` watches the running staking agent on each rewards poll:
+
+- **Clock starts** on the first poll where the instance is the running one, its staking signal is met, and its block is current and unmet. Time before the staking signal is met does not count.
+- **Restarts** whenever `progress`, `target` or `period_start` changes. `updated_at` is never read: the trader rewrites it every period whether or not it progressed.
+- **Stops** when the agent stops running, the staking signal or the block stops qualifying, Auto-run is turned off, or Pearl restarts — the state is in memory only.
+- **Stalled** after `ACTIVITY_GOAL_STALL_SECONDS` without a restart. `refreshRewardsEligibility` passes `isStalled` to `deriveIsDoneForEpoch`, so the snapshot turns `true` and the usual rotation edge fires. No-staking agents (Connect) are never watched.
+
+`rotateToNext` then runs the Connect hand-over pre-check (`getHandOverDeployability`): it stops the stalled agent only if a not-done alternate can start, and sends no goal-reached notification. Otherwise it logs `keeping stalled agent running, no runnable alternate`, restarts the clock and leaves the rewards guard `true`, so the next poll reads not-done and another stall an hour later is a fresh edge.
+
+The agent it rotated away from is **deferred**: it reads as done (so it does not trigger rotations of its own) but counts as not done for rotation decisions, and the scanner tries it only after the main loop and the empty-pool fallback (`skip <id>: activity goal stalled, deferred`, then `scan: started <id> as a last resort (activity goal stalled)`). The deferral is lifted when it starts again (with a fresh clock), the epoch moves on, Auto-run is turned off, or Pearl restarts. Deferred instances are exposed as `AutoRunContextType.stalledInstances`, and the Overview strip of a deferred instance reads "Auto-run moved on: no progress toward the daily goal in the last hour (`<progress>` of `<target>` `<unit>`)" instead of "Agent is not running".
 
 ### 3.3 Resume After Stop (Sleep/Wake, Backend Crash)
 
@@ -266,7 +286,7 @@ Every delay and poll interval in auto-run uses `sleepAwareDelay`. On `false`:
 
 `normalizeEligibility` handles two special cases:
 
-1. **"Another agent running"** → Treated as transient Loading (not a skip). This avoids false skip notifications during rotation transitions.
+1. **"Another agent running"** → Treated as transient Loading (no skip notification). This avoids false skip notifications during rotation transitions. The scanner still logs `skip <id>: <reason>` for every candidate it passes over, transient ones included.
 2. **"Loading: Balances" with live balances ready** → Overridden to `{ canRun: true }`. Catches stale render where deployability says Loading but balances context is already resolved.
 
 ---
@@ -568,7 +588,13 @@ All auto-run logs are prefixed with `autorun::`.
 | `start timeout for X (attempt N)` | Start attempt timed out waiting for DEPLOYED | Warning |
 | `start error for X: ...` | Start threw an exception (e.g., Failed to fetch) | Warning |
 | `start failed for X` | All retries exhausted | Error |
-| `skip X: reason` | Agent skipped with notification | Normal |
+| `skip X: reason` | Agent passed over by a scan — logged once per candidate per scan, transient reasons included; the first time a non-transient reason is seen it is also notified | Normal |
+| `skip X: done for the epoch` | Candidate already did its epoch work | Normal |
+| `skip X: activity goal stalled, deferred` | Candidate was rotated away from for a stalled goal; tried last | Normal |
+| `scan: started X as a last resort (activity goal stalled)` | No other candidate could start, so the deferred stalled agent got the slot | Normal |
+| `cycle=… phase=stalled current=X noGoalProgressFor=Ns` | Running agent stalled on its activity goal; hand-over pre-check follows | Normal |
+| `cycle=… keeping stalled agent running, no runnable alternate current=X rescan=Ns` | Stalled, but no not-done alternate can start; clock restarted | Normal |
+| `cycle=… phase=rotate_end status=ok\|same\|none current=X started=Y` | Rotation finished: another agent started / the stopped one restarted / nothing started | Normal (`same`/`none`: check the `skip` lines) |
 | `skip X: Staking contract reward pool is empty` | Agent passed over — staking contract has no rewards to distribute | Normal |
 | `scan: no rewarded candidate startable, falling back to N empty-pool candidate(s)` | Degraded mode entered — every startable candidate has a drained pool | Normal |
 | `scan: started X in degraded mode (empty reward pool)` | Agent started despite earning no staking rewards | Normal |
