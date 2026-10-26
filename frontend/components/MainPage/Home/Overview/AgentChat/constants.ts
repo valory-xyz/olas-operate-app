@@ -21,16 +21,10 @@ export const SUGGESTED_QUESTIONS: Partial<Record<AgentType, string[]>> = {
   [AgentMap.Basius]: DEFI_QUESTIONS,
 };
 
-const COST = 'Each message costs about $0.01, paid from the Agent Wallet';
-
 export const CHAT_COPY = {
   placeholder: 'Ask your agent or give it guidance...',
   emptyTitle: 'Ask your agent anything',
   messagesOnly: 'Messages only',
-  costTooltip: COST,
-  costNoteTitle: 'Before your first message',
-  costNoteBody: `${COST}.`,
-  costNoteConfirm: 'Got it',
   busy: 'Your agent is still thinking. Send your message after it answers.',
   failed: "Couldn't get an answer.",
   noFunds: 'Not enough funds to send this message.',

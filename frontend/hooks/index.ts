@@ -20,7 +20,6 @@ export * from './useBalanceContext';
 export * from './useBridgeRefillRequirements';
 export * from './useBridgeRefillRequirementsOnDemand';
 export * from './useBridgingSteps';
-export * from './useChatCostNote';
 export * from './useCompleteAgentSetup';
 export * from './useConnectSession';
 export * from './useCreateConnectService';
