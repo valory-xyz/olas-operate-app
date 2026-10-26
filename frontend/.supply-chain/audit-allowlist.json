@@ -16,9 +16,9 @@
       "ghsa": "GHSA-mrhx-c7xc-m3w5",
       "package": "zod",
       "severity": "high",
-      "reason": "No patched 3.x release (fix is zod >=4.6.6, a major upgrade). The flaw is memory exhaustion when validating oversized collections that carry size constraints (.min/.max/.length); none of Pearl's zod schemas constrain a collection's size, so the vulnerable path is unreachable. Upgrade to zod 4 separately.",
+      "reason": "No patched 3.x release (fix is zod >=4.6.6, a major upgrade). Unbounded z.array schemas are affected, so the path is reachable, but only from trusted sources: the local middleware (agent feed, requested with a page limit) and Valory's subgraphs over HTTPS (transaction and rewards history, requested with first/limit page sizes). Worst case is a renderer out-of-memory crash, which a compromised source could already cause by returning an oversized JSON body before zod runs. Residual risk accepted until the zod 4 upgrade.",
       "added": "2026-10-26",
-      "review": "2027-01-26"
+      "review": "2026-11-26"
     }
   ]
 }

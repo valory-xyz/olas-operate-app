@@ -64,7 +64,8 @@ export const ChatInput = ({
 
   const send = () => {
     if (!canSubmit) return;
-    if (onSend()) onTextChange('');
+    const wasQueued = onSend();
+    if (wasQueued) onTextChange('');
   };
 
   const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
