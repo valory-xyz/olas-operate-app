@@ -70,6 +70,21 @@ describe('ChatInput Send button', () => {
     expect(onSend).not.toHaveBeenCalled();
   });
 
+  it('shows no message cost on hover', () => {
+    jest.useFakeTimers();
+    renderInput();
+
+    document.querySelectorAll('svg').forEach((icon) => {
+      fireEvent.mouseEnter(icon);
+    });
+    act(() => {
+      jest.runAllTimers();
+    });
+    jest.useRealTimers();
+
+    expect(document.body).not.toHaveTextContent(/\$0\.01|costs|paid from/);
+  });
+
   it('closes the busy notice when it is dismissed', () => {
     jest.useFakeTimers();
     const { onBusyNoticeClose } = renderInput({ isBusyNoticeOpen: true });
