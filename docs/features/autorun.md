@@ -126,7 +126,7 @@ An instance counts as done for the epoch only when **both** that staking signal 
 
 A staking agent stalled on its goal (§3.2b) also reads as done.
 
-The goal is read only once the staking signal is met; until then the instance is not done and no performance request is made. A failed performance read leaves a staking agent whose staking signal is met unknown (`undefined`), so callers keep the previous snapshot and the scanner retries instead of starting it; for Connect it counts as not done. A malformed block is logged as `activity goal malformed: <id>: <zod issues>` and reads as no block. The decision log line carries `goal=<progress>/<target> goalMet=<bool> goalCurrent=<bool> stalled=<bool> → done=<bool>` (or `goal=none` / `goal=unavailable`, or `goal=unread` when the staking signal is not met). The selection-driven snapshot in `useAutoRunSignals` uses `useEpochWorkStatus().isDoneForEpoch`, so both writers agree.
+The goal is read only once the staking signal is met; until then the instance is not done and no performance request is made. A failed performance read leaves a staking agent whose staking signal is met unknown (`undefined`), so callers keep the previous snapshot and the scanner retries instead of starting it; for Connect it counts as not done. A malformed block is logged as `activity goal malformed: <id>: <zod issues>` and reads as no block. The decision log line carries `goal=<progress>/<target> goalMet=<bool> goalCurrent=<bool> stalled=<bool> → done=<bool>` (or `goal=none` / `goal=unavailable`, or `goal=unread` when the staking signal is not met). The selection-driven snapshot in `useAutoRunSignals` uses `useEpochWorkStatus().isDoneForEpoch`, so both writers agree, except that only the poll sees the activity-goal stall (§3.2b): a selection change can overwrite a stalled agent's `true` with `false` until the next poll, delaying its rotation by at most one `REWARDS_POLL_SECONDS`.
 
 1. `REWARDS_POLL_SECONDS` interval calls `refreshRewardsEligibility(runningServiceConfigId)`.
 2. Snapshot update bumps `rewardsTick` → rotation effect fires.
@@ -594,6 +594,7 @@ All auto-run logs are prefixed with `autorun::`.
 | `skip X: done for the epoch` | Candidate already did its epoch work | Normal |
 | `skip X: activity goal stalled, deferred` | Candidate was rotated away from for a stalled goal; tried last | Normal |
 | `scan: started X as a last resort (activity goal stalled)` | No other candidate could start, so the deferred stalled agent got the slot | Normal |
+| `scan: stalled X infra_failed (...), trying next stalled candidate` | Last-resort start of a deferred stalled agent failed transiently; moving on | Warning |
 | `cycle=… phase=stalled current=X noGoalProgressFor=Ns` | Running agent stalled on its activity goal; hand-over pre-check follows | Normal |
 | `cycle=… keeping stalled agent running, no runnable alternate current=X rescan=Ns` | Stalled, but no not-done alternate can start; clock restarted | Normal |
 | `X: Ns since the last rewards poll, restarting the activity-goal stall clock` | Poll gap longer than `ACTIVITY_GOAL_STALL_MAX_POLL_GAP_SECONDS` (usually sleep/wake); the stall hour starts over | Normal |
