@@ -119,6 +119,9 @@ const { useAutoRunLifecycle } = jest.requireMock(
 const { useAutoRunOperations } = jest.requireMock(
   '../../../../context/AutoRunProvider/hooks/useAutoRunOperations',
 ) as { useAutoRunOperations: jest.Mock };
+const { useAutoRunScanner } = jest.requireMock(
+  '../../../../context/AutoRunProvider/hooks/useAutoRunScanner',
+) as { useAutoRunScanner: jest.Mock };
 const { useAutoRunSignals } = jest.requireMock(
   '../../../../context/AutoRunProvider/hooks/useAutoRunSignals',
 ) as { useAutoRunSignals: jest.Mock };
@@ -347,6 +350,39 @@ describe('useAutoRunController', () => {
       expect(fetchDeployabilityForAgent).toHaveBeenCalledWith(
         traderMeta,
         expect.objectContaining({ ignoreRunningAgent: true }),
+      );
+    });
+
+    it('treats a confirmed-stopped instance as not running in the scan after the stop', async () => {
+      renderHook(() =>
+        useAutoRunController(
+          makeHookParams({ configuredAgents: [traderMeta, connectMeta] }),
+        ),
+      );
+      // The polled running state still reports the stopped agent.
+      useAutoRunSignals.mock.results[0].value.runningServiceConfigIdRef.current =
+        'sc-stopped';
+      const { getDeployabilityForAgent } = lastCallArgs(useAutoRunScanner);
+
+      await act(async () => {
+        await getDeployabilityForAgent(traderMeta, { stoppedId: 'sc-stopped' });
+      });
+      expect(fetchDeployabilityForAgent).toHaveBeenLastCalledWith(
+        traderMeta,
+        expect.objectContaining({ runningServiceConfigId: null }),
+      );
+
+      // Any other running agent still blocks the candidate.
+      await act(async () => {
+        await getDeployabilityForAgent(traderMeta, { stoppedId: 'sc-other' });
+      });
+      expect(fetchDeployabilityForAgent).toHaveBeenLastCalledWith(
+        traderMeta,
+        expect.objectContaining({ runningServiceConfigId: 'sc-stopped' }),
+      );
+      expect(fetchDeployabilityForAgent).not.toHaveBeenCalledWith(
+        traderMeta,
+        expect.objectContaining({ stoppedId: expect.anything() }),
       );
     });
 

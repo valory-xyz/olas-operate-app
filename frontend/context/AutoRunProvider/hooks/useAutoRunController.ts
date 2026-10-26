@@ -207,18 +207,25 @@ export const useAutoRunController = ({
   const getDeployabilityForAgent = useCallback(
     (
       agentMeta: AgentMeta,
-      options?: Pick<FetchDeployabilityContext, 'ignoreRunningAgent'>,
-    ) =>
-      fetchDeployabilityForAgent(agentMeta, {
-        runningServiceConfigId: runningServiceConfigIdRef.current,
+      options?: Pick<FetchDeployabilityContext, 'ignoreRunningAgent'> & {
+        stoppedId?: string;
+      },
+    ) => {
+      const { stoppedId, ...contextOverrides } = options ?? {};
+      const runningServiceConfigId = runningServiceConfigIdRef.current;
+      return fetchDeployabilityForAgent(agentMeta, {
+        // A confirmed stop wins over the polled running state, which lags it.
+        runningServiceConfigId:
+          runningServiceConfigId === stoppedId ? null : runningServiceConfigId,
         canCreateSafeForChain,
         allowStartAgentByServiceConfigId,
         hasBalancesForServiceConfigId,
         isInstanceInitiallyFunded,
         isGeoRestrictedForAgent,
         logMessage,
-        ...options,
-      }),
+        ...contextOverrides,
+      });
+    },
     [
       runningServiceConfigIdRef,
       canCreateSafeForChain,

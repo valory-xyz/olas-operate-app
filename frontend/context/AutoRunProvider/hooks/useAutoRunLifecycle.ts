@@ -20,6 +20,7 @@ import {
 } from '../constants';
 import { AgentMeta } from '../types';
 import { DeployabilityCheckResult } from '../utils/autoRunHelpers';
+import { ScanResult } from './useAutoRunScanner';
 import { useAutoRunVerboseLogger } from './useAutoRunVerboseLogger';
 
 type UseAutoRunLifecycleParams = {
@@ -43,9 +44,10 @@ type UseAutoRunLifecycleParams = {
   ) => Promise<boolean | undefined>;
   getRewardSnapshot: (serviceConfigId: string) => boolean | undefined;
   getPreferredStartFrom: () => string | null;
-  scanAndStartNext: (startFrom?: string | null) => Promise<{
-    started: boolean;
-  }>;
+  scanAndStartNext: (
+    startFrom?: string | null,
+    options?: { stoppedId?: string },
+  ) => Promise<ScanResult>;
   startSelectedAgentIfEligible: () => Promise<boolean>;
   stopAgentWithRecovery: (serviceConfigId: string) => Promise<boolean>;
   startAgentWithRetries: (
@@ -180,10 +182,19 @@ export const useAutoRunLifecycle = ({
       const cooldownOk = await sleepAwareDelay(COOLDOWN_SECONDS);
       if (!cooldownOk) return;
       if (!enabledRef.current) return;
-      await scanAndStartNextRef.current(currentServiceConfigId);
-      recordMetric(AUTO_RUN_HEALTH_METRIC.ROTATIONS_SUCCEEDED);
+      const { started, serviceConfigId: startedId } =
+        await scanAndStartNextRef.current(currentServiceConfigId, {
+          stoppedId: currentServiceConfigId,
+        });
+      const status = (() => {
+        if (!started) return 'none';
+        return startedId === currentServiceConfigId ? 'same' : 'ok';
+      })();
+      if (status === 'ok') {
+        recordMetric(AUTO_RUN_HEALTH_METRIC.ROTATIONS_SUCCEEDED);
+      }
       logVerbose(
-        `cycle=${cycleId} trigger=${trigger} phase=rotate_end status=ok current=${currentServiceConfigId}`,
+        `cycle=${cycleId} trigger=${trigger} phase=rotate_end status=${status} current=${currentServiceConfigId} started=${startedId ?? 'none'}`,
       );
     },
     [

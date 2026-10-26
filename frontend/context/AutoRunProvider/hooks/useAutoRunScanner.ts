@@ -19,6 +19,17 @@ import {
 } from '../utils/autoRunHelpers';
 import { useAutoRunVerboseLogger } from './useAutoRunVerboseLogger';
 
+type ScanOptions = {
+  /**
+   * The instance a rotation just confirmed stopped. The polled running state
+   * can still report it as running, which would make every other candidate
+   * read "Another agent running".
+   */
+  stoppedId?: string;
+};
+
+export type ScanResult = { started: boolean; serviceConfigId?: string };
+
 type UseAutoRunScannerParams = {
   enabledRef: MutableRefObject<boolean>;
   orderedIncludedInstances: string[];
@@ -48,6 +59,7 @@ type UseAutoRunScannerParams = {
   /** Fetches deployability for a candidate without switching UI selection. */
   getDeployabilityForAgent: (
     agentMeta: AgentMeta,
+    options?: ScanOptions,
   ) => Promise<DeployabilityCheckResult>;
   startAgentWithRetries: (
     serviceConfigId: string,
@@ -183,10 +195,14 @@ export const useAutoRunScanner = ({
    * 2) fetch deployability directly (no UI switch)
    * 3) skip/start based on deployability + rewards state
    *
-   * Returns `{ started: true }` only when an instance is actually started.
+   * Returns `{ started: true }` with the started instance only when one is
+   * actually started.
    */
   const scanAndStartNext = useCallback(
-    async (startFrom?: string | null) => {
+    async (
+      startFrom?: string | null,
+      options?: ScanOptions,
+    ): Promise<ScanResult> => {
       if (!enabledRef.current) return { started: false };
 
       // Wait for global balance data before scanning any candidate.
@@ -246,9 +262,13 @@ export const useAutoRunScanner = ({
         await refreshRewardsEligibility(candidate);
 
         // Fetch deployability directly without switching UI selection.
-        const deployability = await getDeployabilityForAgent(candidateMeta);
+        const deployability = await getDeployabilityForAgent(
+          candidateMeta,
+          options,
+        );
         if (!enabledRef.current) return { started: false };
         if (!deployability.canRun) {
+          logVerbose(`skip ${candidate}: ${deployability.reason ?? 'unknown'}`);
           if (deployability.isTransient) {
             hasLoading = true;
           } else if (deployability.isEmptyRewardPool) {
@@ -263,6 +283,7 @@ export const useAutoRunScanner = ({
 
         const candidateEligibility = await waitForRewardsEligibility(candidate);
         if (candidateEligibility === true) {
+          logVerbose(`skip ${candidate}: done for the epoch`);
           hasEligible = true;
           candidate = findNextInOrder(candidate);
           continue;
@@ -273,7 +294,7 @@ export const useAutoRunScanner = ({
           notifyEmptyPoolSkips(
             emptyPoolCandidates.map((meta) => meta.serviceConfigId),
           );
-          return { started: true };
+          return { started: true, serviceConfigId: candidate };
         }
         if (startResult.status === AUTO_RUN_START_STATUS.ABORTED) {
           if (enabledRef.current) {
@@ -333,7 +354,7 @@ export const useAutoRunScanner = ({
           // ahead of this one exhausting `startAgentWithRetries` burns up to
           // ~48min. Balances, staking slots and eviction state can all have
           // moved since, and nothing downstream re-checks sufficiency.
-          const recheck = await getDeployabilityForAgent(deferredMeta);
+          const recheck = await getDeployabilityForAgent(deferredMeta, options);
           if (!enabledRef.current) return { started: false };
           if (!recheck.canRun && !recheck.isEmptyRewardPool) {
             logVerbose(
@@ -358,7 +379,7 @@ export const useAutoRunScanner = ({
               `scan: started ${deferred} in degraded mode (empty reward pool)`,
             );
             notifyEmptyPoolSkips(passedOver);
-            return { started: true };
+            return { started: true, serviceConfigId: deferred };
           }
           if (startResult.status === AUTO_RUN_START_STATUS.ABORTED) {
             if (enabledRef.current) {

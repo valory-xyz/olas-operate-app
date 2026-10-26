@@ -11,7 +11,10 @@ import {
   SCAN_ELIGIBLE_DELAY_SECONDS,
   SCAN_LOADING_RETRY_SECONDS,
 } from '../../../../context/AutoRunProvider/constants';
-import { useAutoRunScanner } from '../../../../context/AutoRunProvider/hooks/useAutoRunScanner';
+import {
+  ScanResult,
+  useAutoRunScanner,
+} from '../../../../context/AutoRunProvider/hooks/useAutoRunScanner';
 import * as delayModule from '../../../../utils/delay';
 import {
   DEFAULT_SERVICE_CONFIG_ID,
@@ -153,13 +156,64 @@ describe('useAutoRunScanner', () => {
       const params = makeHookParams();
       const { result } = renderHook(() => useAutoRunScanner(params));
 
-      let scanResult: { started: boolean } | undefined;
+      let scanResult: ScanResult | undefined;
       await act(async () => {
         scanResult = await result.current.scanAndStartNext(scTrader);
       });
-      expect(scanResult?.started).toBe(true);
+      expect(scanResult).toEqual({ started: true, serviceConfigId: scOptimus });
       // Started from trader, so first candidate is optimus
       expect(params.startAgentWithRetries).toHaveBeenCalledWith(scOptimus);
+    });
+
+    it('passes the stopped instance to every deployability check of the scan', async () => {
+      const params = makeHookParams({
+        getDeployabilityForAgent: jest
+          .fn()
+          .mockResolvedValueOnce({ canRun: false, reason: 'Low balance' })
+          .mockResolvedValue(emptyPool()),
+      });
+      const { result } = renderHook(() => useAutoRunScanner(params));
+
+      await act(async () => {
+        await result.current.scanAndStartNext(scTrader, {
+          stoppedId: scTrader,
+        });
+      });
+      // Main loop (optimus, polystrat, trader) plus the empty-pool re-check.
+      expect(params.getDeployabilityForAgent).toHaveBeenCalledTimes(4);
+      for (const [, options] of (params.getDeployabilityForAgent as jest.Mock)
+        .mock.calls) {
+        expect(options).toEqual({ stoppedId: scTrader });
+      }
+    });
+
+    it('logs one skip line per passed-over candidate, transient reasons included', async () => {
+      const params = makeHookParams({
+        getDeployabilityForAgent: jest
+          .fn()
+          .mockResolvedValueOnce({
+            canRun: false,
+            reason: 'Another agent running',
+            isTransient: true,
+          })
+          .mockResolvedValue({ canRun: true }),
+        waitForRewardsEligibility: jest
+          .fn()
+          .mockResolvedValueOnce(true)
+          .mockResolvedValue(false),
+      });
+      const { result } = renderHook(() => useAutoRunScanner(params));
+
+      await act(async () => {
+        await result.current.scanAndStartNext(scTrader);
+      });
+      expect(params.logMessage).toHaveBeenCalledWith(
+        `skip ${scOptimus}: Another agent running`,
+      );
+      expect(params.logMessage).toHaveBeenCalledWith(
+        `skip ${scPolystrat}: done for the epoch`,
+      );
+      expect(params.startAgentWithRetries).toHaveBeenCalledWith(scTrader);
     });
 
     it('skips candidates with rewards already earned', async () => {

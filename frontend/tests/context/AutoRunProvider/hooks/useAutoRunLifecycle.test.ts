@@ -256,7 +256,9 @@ describe('useAutoRunLifecycle', () => {
       });
 
       expect(params.stopAgentWithRecovery).toHaveBeenCalledWith(scTrader);
-      expect(params.scanAndStartNext).toHaveBeenCalledWith(scTrader);
+      expect(params.scanAndStartNext).toHaveBeenCalledWith(scTrader, {
+        stoppedId: scTrader,
+      });
     });
 
     it('resets rewards guard and sets backoff on stop failure', async () => {
@@ -319,6 +321,9 @@ describe('useAutoRunLifecycle', () => {
           .mockImplementation(async (id: string) => id === scTrader),
         getRewardSnapshot: jest.fn().mockReturnValue(false),
         stopAgentWithRecovery: jest.fn().mockResolvedValue(true),
+        scanAndStartNext: jest
+          .fn()
+          .mockResolvedValue({ started: true, serviceConfigId: scOptimus }),
       });
 
       renderHook(() => useAutoRunLifecycle(params));
@@ -327,12 +332,59 @@ describe('useAutoRunLifecycle', () => {
       });
 
       expect(params.stopAgentWithRecovery).toHaveBeenCalled();
-      expect(params.scanAndStartNext).toHaveBeenCalledWith(scTrader);
+      expect(params.scanAndStartNext).toHaveBeenCalledWith(scTrader, {
+        stoppedId: scTrader,
+      });
       expect(params.recordMetric).toHaveBeenCalledWith('rotationsSucceeded');
+      expect(params.logMessage).toHaveBeenCalledWith(
+        expect.stringContaining(
+          `phase=rotate_end status=ok current=${scTrader} started=${scOptimus}`,
+        ),
+      );
       // P1 fix: rewards guard must be cleared so the next epoch can re-trigger rotation.
       // Without this reset, previousEligibility === true permanently blocks future rotations.
       expect(lastRewardsEligibilityRef.current[scTrader]).toBeUndefined();
     });
+
+    it.each([
+      [
+        'same',
+        { started: true, serviceConfigId: DEFAULT_SERVICE_CONFIG_ID },
+        `started=${DEFAULT_SERVICE_CONFIG_ID}`,
+      ],
+      ['none', { started: false }, 'started=none'],
+    ])(
+      'logs status=%s and counts no rotation when no other agent started',
+      async (status, scanResult, startedLabel) => {
+        const params = makeHookParams({
+          enabled: true,
+          enabledRef: { current: true },
+          runningAgentType: AgentMap.PredictTrader,
+          runningServiceConfigId: scTrader,
+          runningAgentTypeRef: { current: AgentMap.PredictTrader },
+          runningServiceConfigIdRef: { current: scTrader },
+          lastRewardsEligibilityRef: { current: { [scTrader]: false } },
+          refreshRewardsEligibility: jest
+            .fn()
+            .mockImplementation(async (id: string) => id === scTrader),
+          scanAndStartNext: jest.fn().mockResolvedValue(scanResult),
+        });
+
+        renderHook(() => useAutoRunLifecycle(params));
+        await act(async () => {
+          await new Promise((r) => setTimeout(r, 0));
+        });
+
+        expect(params.recordMetric).not.toHaveBeenCalledWith(
+          AUTO_RUN_HEALTH_METRIC.ROTATIONS_SUCCEEDED,
+        );
+        expect(params.logMessage).toHaveBeenCalledWith(
+          expect.stringContaining(
+            `phase=rotate_end status=${status} current=${scTrader} ${startedLabel}`,
+          ),
+        );
+      },
+    );
   });
 
   describe('startup when no agent running', () => {
@@ -492,7 +544,9 @@ describe('useAutoRunLifecycle', () => {
       expect(params.getHandOverDeployability).toHaveBeenCalledWith(scTrader);
       expect(params.getHandOverDeployability).toHaveBeenCalledTimes(1);
       expect(params.stopAgentWithRecovery).toHaveBeenCalledWith(scConnect);
-      expect(params.scanAndStartNext).toHaveBeenCalledWith(scConnect);
+      expect(params.scanAndStartNext).toHaveBeenCalledWith(scConnect, {
+        stoppedId: scConnect,
+      });
       expect(params.notifyGoalReachedOnHandOver).toHaveBeenCalledTimes(1);
       expect(params.notifyGoalReachedOnHandOver).toHaveBeenCalledWith(
         scConnect,
@@ -760,7 +814,9 @@ describe('useAutoRunLifecycle', () => {
       await flush();
 
       expect(params.stopAgentWithRecovery).toHaveBeenCalledWith(scTrader);
-      expect(params.scanAndStartNext).toHaveBeenCalledWith(scTrader);
+      expect(params.scanAndStartNext).toHaveBeenCalledWith(scTrader, {
+        stoppedId: scTrader,
+      });
       expect(params.getHandOverDeployability).not.toHaveBeenCalled();
     });
   });
@@ -1193,7 +1249,9 @@ describe('useAutoRunLifecycle', () => {
 
       expect(params.stopAgentWithRecovery).toHaveBeenCalledWith(scTrader);
       expect(params.startAgentWithRetries).not.toHaveBeenCalled();
-      expect(params.scanAndStartNext).toHaveBeenCalledWith(scTrader);
+      expect(params.scanAndStartNext).toHaveBeenCalledWith(scTrader, {
+        stoppedId: scTrader,
+      });
     });
 
     it('ignores a transient staking read', async () => {
