@@ -577,6 +577,26 @@ describe('useAutoRunLifecycle', () => {
       );
     });
 
+    it('hands over to a deferred alternate, though its snapshot reads done', async () => {
+      const params = makeStalledRunningParams({
+        isActivityGoalDeferred: jest
+          .fn()
+          .mockImplementation((id: string) => id === scOptimus),
+        refreshRewardsEligibility: jest.fn().mockResolvedValue(true),
+      });
+
+      renderHook(() => useAutoRunLifecycle(params));
+      await flush();
+
+      expect(params.getHandOverDeployability).toHaveBeenCalledWith(scOptimus);
+      expect(params.stopAgentWithRecovery).toHaveBeenCalledWith(scTrader);
+      expect(params.deferStalledInstance).toHaveBeenCalledWith(
+        scTrader,
+        traderStall,
+      );
+      expect(params.restartActivityGoalStallClock).not.toHaveBeenCalled();
+    });
+
     it('counts a deferred alternate as not done, though its snapshot reads done', async () => {
       // A finished agent with only a deferred (stalled) alternate left: the
       // slot goes to the deferred one rather than to standby.
@@ -716,6 +736,22 @@ describe('useAutoRunLifecycle', () => {
       );
       expect(params.getHandOverDeployability).toHaveBeenCalledWith(scPolystrat);
       expect(params.stopAgentWithRecovery).not.toHaveBeenCalled();
+    });
+
+    it('hands Connect over to a deferred alternate, though its snapshot reads done', async () => {
+      const params = makeConnectRunningParams({
+        orderedIncludedInstances: [scConnect, scTrader],
+        refreshRewardsEligibility: jest.fn().mockResolvedValue(true),
+        isActivityGoalDeferred: jest
+          .fn()
+          .mockImplementation((id: string) => id === scTrader),
+      });
+
+      renderHook(() => useAutoRunLifecycle(params));
+      await flush();
+
+      expect(params.getHandOverDeployability).toHaveBeenCalledWith(scTrader);
+      expect(params.stopAgentWithRecovery).toHaveBeenCalledWith(scConnect);
     });
 
     it.each([
