@@ -9,7 +9,6 @@ import {
   useAgentActivity,
   useAgentChat,
   useAgentFeed,
-  useChatCostNote,
   useServices,
 } from '@/hooks';
 import { buildFeedItems } from '@/utils/agentChat';
@@ -80,10 +79,6 @@ export const AgentChat = () => {
   const [text, setText] = useState('');
   const feed = useAgentFeed(serviceConfigId);
   const chat = useAgentChat({ serviceConfigId, isAgentStopped: isStopped });
-  const { shouldShowCostNote, markCostNoteSeen } = useChatCostNote(
-    selectedAgentType,
-    serviceConfigId,
-  );
 
   const items = useMemo(() => {
     const allItems = buildFeedItems(feed.entries, chat.localMessages);
@@ -136,8 +131,6 @@ export const AgentChat = () => {
               onMessagesOnlyChange={chat.setMessagesOnly}
               isBusyNoticeOpen={chat.isBusyNoticeOpen}
               onBusyNoticeClose={chat.closeBusyNotice}
-              shouldShowCostNote={shouldShowCostNote}
-              onCostNoteSeen={markCostNoteSeen}
             />
           )}
         </Flex>
