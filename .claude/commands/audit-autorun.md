@@ -134,7 +134,7 @@ Run **targeted grep searches** for each pattern. Do **not** re-read the file in 
 | `start error for` | Warning | Start threw an exception (e.g., Failed to fetch); note which agent and attempt number |
 | `start failed for` | Error | All retries exhausted; agent could not be started |
 | `scan complete: no agent started` | Normal/Warning | Full scan with nothing to start — inspect `loading=`, `blocked=`, `eligible=`, `infraFailed=` |
-| `infra_failed` | Warning | Transient start failure — check whether "trying next candidate" (good) or "rescan in 30s" (old bug) follows |
+| `infra_failed` | Warning | Transient start failure — check whether "trying next candidate" / "trying next deferred candidate" / "trying next stalled candidate" (good) or "rescan in 30s" (old bug) follows |
 | `selected start paused` | Warning | `startSelectedAgentIfEligible` hit `INFRA_FAILED` — should say "scanning other agents", not "rescan in 30s" |
 | `epoch expired` | Normal | Epoch expiry override applied — confirm agent starts follow within next scan |
 | `all other agents earned or unknown` | Normal | Keeping current agent running; expected when all others have earned |

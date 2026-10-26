@@ -732,6 +732,26 @@ describe('useAutoRunScanner', () => {
       },
     );
 
+    it('logs an infra failure of the last-resort start', async () => {
+      const params = makeHookParams({
+        orderedIncludedInstances: [scTrader, scOptimus],
+        isActivityGoalDeferred: deferOptimus,
+        waitForRewardsEligibility: jest.fn().mockResolvedValue(true),
+        startAgentWithRetries: jest.fn().mockResolvedValue({
+          status: AUTO_RUN_START_STATUS.INFRA_FAILED,
+          reason: 'balances not ready',
+        }),
+      });
+      const { result } = renderHook(() => useAutoRunScanner(params));
+
+      await act(async () => {
+        await result.current.scanAndStartNext(scTrader);
+      });
+      expect(params.logMessage).toHaveBeenCalledWith(
+        `scan: stalled ${scOptimus} infra_failed (balances not ready), trying next stalled candidate`,
+      );
+    });
+
     it('retries soon when a deferred agent turns transiently unavailable', async () => {
       const params = makeHookParams({
         orderedIncludedInstances: [scTrader, scOptimus],

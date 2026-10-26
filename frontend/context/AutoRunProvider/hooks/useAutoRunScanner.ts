@@ -456,6 +456,9 @@ export const useAutoRunScanner = ({
           return { started: false };
         }
         if (startResult.status === AUTO_RUN_START_STATUS.INFRA_FAILED) {
+          logVerbose(
+            `scan: stalled ${stalled} infra_failed (${startResult.reason ?? 'unknown'}), trying next stalled candidate`,
+          );
           hasInfraFailed = true;
           continue;
         }
