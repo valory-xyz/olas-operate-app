@@ -11,7 +11,6 @@ import {
   useAgentActivity,
   useAgentChat,
   useAgentFeed,
-  useChatCostNote,
   useServices,
 } from '../../../../../../hooks';
 import { FeedEntry } from '../../../../../../types/AgentChat';
@@ -27,15 +26,11 @@ jest.mock('../../../../../../hooks', () => ({
   useAgentActivity: jest.fn(),
   useAgentChat: jest.fn(),
   useAgentFeed: jest.fn(),
-  useChatCostNote: jest.fn(),
   useServices: jest.fn(),
 }));
 
 jest.mock('../../../../../../components/ui', () => ({
   CardFlex: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  InfoTooltip: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),
 }));
@@ -53,7 +48,6 @@ const mockUseServices = useServices as jest.Mock;
 const mockUseAgentActivity = useAgentActivity as jest.Mock;
 const mockUseAgentFeed = useAgentFeed as jest.Mock;
 const mockUseAgentChat = useAgentChat as jest.Mock;
-const mockUseChatCostNote = useChatCostNote as jest.Mock;
 
 const SERVICE_CONFIG_ID = 'sc-1';
 const CLIENT_ID = DEFAULT_CHAT_CLIENT_ID;
@@ -84,18 +78,12 @@ const chat = {
   dismiss: jest.fn(),
 };
 
-const costNote = {
-  shouldShowCostNote: false,
-  markCostNoteSeen: jest.fn(),
-};
-
 type Setup = {
   agentType?: AgentType;
   deploymentStatus?: MiddlewareDeploymentStatus;
   isAgentActive?: boolean;
   entries?: FeedEntry[];
   chatOverrides?: Partial<typeof chat>;
-  shouldShowCostNote?: boolean;
 };
 
 const renderChat = ({
@@ -104,7 +92,6 @@ const renderChat = ({
   isAgentActive = true,
   entries = [TRADE_EVENT, AGENT_MESSAGE],
   chatOverrides = {},
-  shouldShowCostNote = false,
 }: Setup = {}) => {
   mockUseServices.mockReturnValue({
     selectedAgentType: agentType,
@@ -122,7 +109,6 @@ const renderChat = ({
     fetchOlder: jest.fn(),
   });
   mockUseAgentChat.mockReturnValue({ ...chat, ...chatOverrides });
-  mockUseChatCostNote.mockReturnValue({ ...costNote, shouldShowCostNote });
   return render(<AgentChat />);
 };
 
@@ -329,44 +315,20 @@ describe('AgentChat', () => {
       ).toBeInTheDocument();
     });
 
-    it('shows the cost note on the first Send instead of sending, then sends on Got it', () => {
-      renderChat({ shouldShowCostNote: true });
-
-      fireEvent.change(messageInput(), { target: { value: 'Why?' } });
-      fireEvent.click(sendButton());
-
-      expect(chat.send).not.toHaveBeenCalled();
-      expect(screen.getByText('Before your first message')).toBeInTheDocument();
-      expect(
-        screen.getByText(
-          'Each message costs about $0.01, paid from the Agent Wallet.',
-        ),
-      ).toBeInTheDocument();
-
-      fireEvent.click(screen.getByRole('button', { name: 'Got it' }));
-
-      expect(costNote.markCostNoteSeen).toHaveBeenCalledTimes(1);
-      expect(chat.send).toHaveBeenCalledWith('Why?');
-    });
-
-    it('sends straight away once the cost note was seen', () => {
-      renderChat({ shouldShowCostNote: false });
-
-      fireEvent.change(messageInput(), { target: { value: 'Why?' } });
-      fireEvent.click(sendButton());
-
-      expect(screen.queryByText('Before your first message')).toBeNull();
-      expect(chat.send).toHaveBeenCalledWith('Why?');
-    });
-
-    it('shows the cost tooltip text', () => {
+    it('sends on the first Send, with no cost note', () => {
       renderChat();
 
-      expect(
-        screen.getByText(
-          'Each message costs about $0.01, paid from the Agent Wallet',
-        ),
-      ).toBeInTheDocument();
+      fireEvent.change(messageInput(), { target: { value: 'Why?' } });
+      fireEvent.click(sendButton());
+
+      expect(chat.send).toHaveBeenCalledWith('Why?');
+      expect(screen.queryByText('Before your first message')).toBeNull();
+    });
+
+    it('shows no message cost', () => {
+      const { container } = renderChat();
+
+      expect(container).not.toHaveTextContent(/\$0\.01|costs|paid from/);
     });
 
     it('toggles Messages only', () => {

@@ -1,12 +1,13 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 
+import { NO_VISIBLE_STEP_BANNER } from '../../../components/FundingFlow/constants';
 import {
   FundingFlow,
   FundingFlowProps,
 } from '../../../components/FundingFlow/FundingFlow';
 import { EvmChainIdMap } from '../../../constants/chains';
 import { FundingRequestService } from '../../../service/FundingRequest';
-import { FundingRun } from '../../../types/FundingRun';
+import { FundingRun, FundingRunStep } from '../../../types/FundingRun';
 import { copyToClipboard } from '../../../utils/copyToClipboard';
 import {
   FUNDING_RUN_BASE_USDC,
@@ -166,6 +167,27 @@ const processingRun = (overrides: Partial<FundingRun> = {}) => {
     ...overrides,
   });
 };
+
+/** A run whose only step is the hidden Safe step, as in the Safe-only onboard run. */
+const hiddenStepRun = (
+  runOverrides: Partial<FundingRun> = {},
+  stepOverrides: Partial<FundingRunStep> = {},
+) =>
+  makeFundingRun({
+    quote: null,
+    to_receive: [],
+    steps: [
+      makeFundingRunStep({
+        id: 'safe',
+        kind: 'SAFE_AND_TRANSFER',
+        token: null,
+        amount: null,
+        visible: false,
+        ...stepOverrides,
+      }),
+    ],
+    ...runOverrides,
+  });
 
 /** A run some of whose deposit has arrived: it holds the user's funds. */
 const partlyFundedRun = (overrides: Partial<FundingRun> = {}) =>
@@ -1278,6 +1300,19 @@ describe('FundingFlow — progress', () => {
     expect(screen.getByText('Moving funds to Polygon')).toBeInTheDocument();
   });
 
+  it.each([false, true])(
+    'shows the setup line, without a slow note, while a run with no visible step processes (is_slow: %s)',
+    (isSlow) => {
+      mockHookState = {
+        activeRun: hiddenStepRun({ status: 'PROCESSING' }, { is_slow: isSlow }),
+      };
+      renderFlow();
+
+      expect(screen.getByText(NO_VISIBLE_STEP_BANNER)).toBeInTheDocument();
+      expect(screen.queryByText('Taking longer than usual...')).toBeNull();
+    },
+  );
+
   it('logs finished visible steps newest-first with Details links', () => {
     const run = processingRun();
     mockHookState = {
@@ -1486,6 +1521,20 @@ describe('FundingFlow — progress', () => {
     renderFlow();
 
     expect(screen.getAllByText("Couldn't get OLAS")).toHaveLength(2);
+  });
+
+  it('shows the failure, not the setup line, for a failed run with only hidden steps', () => {
+    mockHookState = {
+      activeRun: hiddenStepRun(
+        { status: 'FAILED', error: { step_id: 'safe', message: '' } },
+        { status: 'FAILED' },
+      ),
+    };
+    renderFlow();
+
+    expect(screen.getAllByText("Couldn't finish the transfer")).toHaveLength(2);
+    expect(screen.queryByText(NO_VISIBLE_STEP_BANNER)).toBeNull();
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
   });
 });
 

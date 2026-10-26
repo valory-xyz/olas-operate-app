@@ -1,10 +1,9 @@
 import { Button, Flex, Input, Popover, Typography } from 'antd';
-import { KeyboardEvent, useState } from 'react';
+import { KeyboardEvent } from 'react';
 import { LuMessageCircleMore } from 'react-icons/lu';
 import { TbArrowUp, TbX } from 'react-icons/tb';
 import styled from 'styled-components';
 
-import { InfoTooltip } from '@/components/ui';
 import { COLOR } from '@/constants';
 
 import { CHAT_COPY } from './constants';
@@ -49,8 +48,6 @@ type ChatInputProps = {
   onMessagesOnlyChange: (isOn: boolean) => void;
   isBusyNoticeOpen: boolean;
   onBusyNoticeClose: () => void;
-  shouldShowCostNote: boolean;
-  onCostNoteSeen: () => void;
 };
 
 export const ChatInput = ({
@@ -62,29 +59,13 @@ export const ChatInput = ({
   onMessagesOnlyChange,
   isBusyNoticeOpen,
   onBusyNoticeClose,
-  shouldShowCostNote,
-  onCostNoteSeen,
 }: ChatInputProps) => {
-  const [isCostNoteOpen, setIsCostNoteOpen] = useState(false);
   const canSubmit = canSend && text.trim().length > 0;
-
-  const submit = () => {
-    if (onSend()) onTextChange('');
-  };
 
   const send = () => {
     if (!canSubmit) return;
-    if (shouldShowCostNote) {
-      setIsCostNoteOpen(true);
-      return;
-    }
-    submit();
-  };
-
-  const confirmCostNote = () => {
-    setIsCostNoteOpen(false);
-    onCostNoteSeen();
-    submit();
+    const wasQueued = onSend();
+    if (wasQueued) onTextChange('');
   };
 
   const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -119,49 +100,27 @@ export const ChatInput = ({
           {CHAT_COPY.messagesOnly}
           {isMessagesOnly && <TbX />}
         </MessagesOnlyToggle>
-        <Flex gap={12} align="center">
-          <InfoTooltip placement="topRight">
-            {CHAT_COPY.costTooltip}
-          </InfoTooltip>
-          <Popover
-            open={isBusyNoticeOpen || isCostNoteOpen}
-            placement="topRight"
-            onOpenChange={(isOpen) => {
-              if (isOpen) return;
-              onBusyNoticeClose();
-              setIsCostNoteOpen(false);
-            }}
-            content={
-              isCostNoteOpen ? (
-                <PopoverContent vertical gap={8}>
-                  <Text strong>{CHAT_COPY.costNoteTitle}</Text>
-                  <Text className="text-sm">{CHAT_COPY.costNoteBody}</Text>
-                  <Button
-                    type="primary"
-                    size="small"
-                    className="ml-auto"
-                    onClick={confirmCostNote}
-                  >
-                    {CHAT_COPY.costNoteConfirm}
-                  </Button>
-                </PopoverContent>
-              ) : (
-                <PopoverContent>
-                  <Text>{CHAT_COPY.busy}</Text>
-                </PopoverContent>
-              )
-            }
-          >
-            <Button
-              type="primary"
-              size="small"
-              icon={<TbArrowUp />}
-              aria-label="Send"
-              disabled={!canSubmit}
-              onClick={send}
-            />
-          </Popover>
-        </Flex>
+        <Popover
+          open={isBusyNoticeOpen}
+          placement="topRight"
+          onOpenChange={(isOpen) => {
+            if (!isOpen) onBusyNoticeClose();
+          }}
+          content={
+            <PopoverContent>
+              <Text>{CHAT_COPY.busy}</Text>
+            </PopoverContent>
+          }
+        >
+          <Button
+            type="primary"
+            size="small"
+            icon={<TbArrowUp />}
+            aria-label="Send"
+            disabled={!canSubmit}
+            onClick={send}
+          />
+        </Popover>
       </Flex>
     </InputBox>
   );
