@@ -221,7 +221,7 @@ describe('useAutoRunLifecycle', () => {
       expect(params.stopAgentWithRecovery).not.toHaveBeenCalled();
     });
 
-    it('keeps the running agent when the only alternate has an unknown rewards status', async () => {
+    it('keeps the running agent, rechecking sooner, when the only alternate has an unknown rewards status', async () => {
       const lastRewardsEligibilityRef = {
         current: {
           [scTrader]: false,
@@ -251,7 +251,7 @@ describe('useAutoRunLifecycle', () => {
       expect(params.stopAgentWithRecovery).not.toHaveBeenCalled();
       expect(params.scanAndStartNext).not.toHaveBeenCalled();
       expect(params.scheduleNextScan).toHaveBeenCalledWith(
-        SCAN_ELIGIBLE_DELAY_SECONDS,
+        SCAN_BLOCKED_DELAY_SECONDS,
       );
     });
 

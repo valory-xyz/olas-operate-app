@@ -240,7 +240,8 @@ export const useAutoRunLifecycle = ({
    * one stops. Done and unknown instances never count. Empty-pool instances,
    * then stall-deferred ones, count only when nothing else can start, and
    * stall-deferred ones not at all when the current instance is stalled too.
-   * Logs the check that excluded each one passed over.
+   * Logs the check that excluded each one passed over, and reports whether
+   * any was passed over for an unknown rewards status.
    */
   const findRunnableAlternate = useCallback(
     async (
@@ -262,10 +263,12 @@ export const useAutoRunLifecycle = ({
       const statuses = await Promise.all(
         alternates.map((id) => refreshRewardsEligibility(id)),
       );
+      const hasUnknown = statuses.some((status) => status === undefined);
+      const found = (next: string | null) => ({ next, hasUnknown });
       const emptyPool: string[] = [];
       const stalled: string[] = [];
       for (const [index, candidate] of alternates.entries()) {
-        if (!enabledRef.current) return null;
+        if (!enabledRef.current) return found(null);
         if (statuses[index] === true) {
           passOver(candidate, 'done for the epoch');
           continue;
@@ -280,23 +283,23 @@ export const useAutoRunLifecycle = ({
           continue;
         }
         const deployability = await getHandOverDeployability(candidate);
-        if (deployability?.canRun) return candidate;
+        if (deployability?.canRun) return found(candidate);
         if (deployability?.isEmptyRewardPool) {
           emptyPool.push(candidate);
           continue;
         }
         passOver(candidate, deployability?.reason ?? 'not configured');
       }
-      if (emptyPool.length > 0) return emptyPool[0];
+      if (emptyPool.length > 0) return found(emptyPool[0]);
       for (const candidate of stalled) {
-        if (!enabledRef.current) return null;
+        if (!enabledRef.current) return found(null);
         const deployability = await getHandOverDeployability(candidate);
         if (deployability?.canRun || deployability?.isEmptyRewardPool) {
-          return candidate;
+          return found(candidate);
         }
         passOver(candidate, deployability?.reason ?? 'not configured');
       }
-      return null;
+      return found(null);
     },
     [
       enabledRef,
@@ -335,11 +338,14 @@ export const useAutoRunLifecycle = ({
         `cycle=${cycleId} trigger=${trigger} phase=rotate_begin current=${currentServiceConfigId} force=${Boolean(options?.force)}`,
       );
 
-      const next = await findRunnableAlternate(currentServiceConfigId, {
-        cycleId,
-        trigger,
-        includeStalled: !stalled,
-      });
+      const { next, hasUnknown } = await findRunnableAlternate(
+        currentServiceConfigId,
+        {
+          cycleId,
+          trigger,
+          includeStalled: !stalled,
+        },
+      );
       if (!enabledRef.current) return;
 
       if (!next) {
@@ -350,10 +356,12 @@ export const useAutoRunLifecycle = ({
         if (isNoStakingAgent) {
           lastRewardsEligibilityRef.current[currentServiceConfigId] = undefined;
         }
-        // A forced rotation (watchdog, eviction) rechecks sooner.
-        const delay = options?.force
-          ? SCAN_BLOCKED_DELAY_SECONDS
-          : SCAN_ELIGIBLE_DELAY_SECONDS;
+        // A forced rotation (watchdog, eviction), or an alternate whose rewards
+        // status is unknown, rechecks sooner.
+        const delay =
+          options?.force || hasUnknown
+            ? SCAN_BLOCKED_DELAY_SECONDS
+            : SCAN_ELIGIBLE_DELAY_SECONDS;
         logVerbose(
           `cycle=${cycleId} trigger=${trigger} keeping ${currentServiceConfigId} running, no runnable alternate rescan=${delay}s`,
         );
