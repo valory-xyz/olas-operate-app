@@ -211,7 +211,7 @@ A staking agent can meet its staking KPI but never reach its activity goal (e.g.
 
 - The stall clock (`updateStallClock`) runs only for the running instance, on fresh reads where its staking KPI is met and its goal block is current and not met. It starts on the first such read and restarts whenever the goal's `progress`, `target` or `period_start` changes. Any other read clears it, so time before the KPI is met never counts. `activity_goal.updated_at` is not read (the trader stamps it on every round). The clock lives in memory: a Pearl restart or turning Auto-run off starts it over.
 - After `ACTIVITY_GOAL_STALL_SECONDS` without a change, the read is "stalled": `deriveIsDoneForEpoch` returns `true` and the decision log ends `→ done=true stalled=true`, so the usual `false → true` edge fires with `trigger=stall`.
-- If the pre-check finds another agent, the stalled one is deferred (`stallDeferredRef`) and stopped, with no goal-reached notification. For the rest of the epoch the scanner tries it only after every rewarded and empty-pool candidate, and starts it with a fresh hour. The deferral ends with the epoch.
+- If the pre-check finds another agent, the stalled one is stopped and, once the stop is confirmed, deferred (`stallDeferredRef`), with no goal-reached notification. After a stop timeout it keeps running and is not deferred. For the rest of the epoch the scanner tries it only after every rewarded and empty-pool candidate, and starts it with a fresh hour. The deferral ends with the epoch.
 - If no other agent can start, it keeps running and its hour starts again.
 - Connect (`no_staking`) is never stalled.
 
