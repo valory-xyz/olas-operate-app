@@ -55,6 +55,8 @@ export const useCompleteSetupFromFundingRuns = () => {
     queryFn: () => FundingRunService.getCompletedOnboardRuns(unfinishedIds),
     enabled: isUserLoggedIn && isOnline && unfinishedIds.length > 0,
     refetchInterval: COMPLETED_ONBOARD_POLL_SECONDS * 1000,
+    // A run can finish while Pearl is hidden.
+    refetchIntervalInBackground: true,
   });
 
   // One line per run of failures, so a missing route does not flood the log.

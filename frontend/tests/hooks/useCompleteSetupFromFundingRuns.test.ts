@@ -1,3 +1,4 @@
+import { focusManager } from '@tanstack/react-query';
 import { act, renderHook, waitFor } from '@testing-library/react';
 
 import { AgentMap } from '../../constants/agent';
@@ -254,6 +255,30 @@ describe('useCompleteSetupFromFundingRuns', () => {
         expect(mockService.getCompletedOnboardRuns).toHaveBeenCalledTimes(2),
       );
     } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('keeps asking while Pearl is hidden', async () => {
+    jest.useFakeTimers();
+    try {
+      renderHook(() => useCompleteSetupFromFundingRuns(), {
+        wrapper: createQueryClientWrapper(),
+      });
+      await waitFor(() =>
+        expect(mockService.getCompletedOnboardRuns).toHaveBeenCalledTimes(1),
+      );
+
+      act(() => focusManager.setFocused(false));
+      await act(async () => {
+        jest.advanceTimersByTime(COMPLETED_ONBOARD_POLL_SECONDS * 1000);
+      });
+
+      await waitFor(() =>
+        expect(mockService.getCompletedOnboardRuns).toHaveBeenCalledTimes(2),
+      );
+    } finally {
+      focusManager.setFocused(undefined);
       jest.useRealTimers();
     }
   });
