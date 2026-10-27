@@ -873,6 +873,52 @@ describe('useAutoRunLifecycle', () => {
       });
     });
 
+    it('hands over to an empty-pool alternate only when no rewarded one can start', async () => {
+      const params = makeTraderRunningParams({
+        orderedIncludedInstances: [scTrader, scOptimus, scThird, scFourth],
+        getHandOverDeployability: jest
+          .fn()
+          .mockImplementation(async (id: string) => {
+            if (id === scOptimus) {
+              return { canRun: false, isEmptyRewardPool: true };
+            }
+            if (id === scThird) return { canRun: false, reason: 'Low balance' };
+            return { canRun: false, isEmptyRewardPool: true };
+          }),
+      });
+
+      renderHook(() => useAutoRunLifecycle(params));
+      await flush();
+
+      expect(params.getHandOverDeployability).toHaveBeenCalledWith(scFourth);
+      expect(params.stopAgentWithRecovery).toHaveBeenCalledWith(scTrader);
+      expect(params.scanAndStartNext).toHaveBeenCalledWith(
+        scTrader,
+        expect.objectContaining({ first: scOptimus }),
+      );
+    });
+
+    it('prefers a later rewarded alternate over an earlier empty-pool one', async () => {
+      const params = makeTraderRunningParams({
+        orderedIncludedInstances: [scTrader, scOptimus, scThird],
+        getHandOverDeployability: jest
+          .fn()
+          .mockImplementation(async (id: string) =>
+            id === scOptimus
+              ? { canRun: false, isEmptyRewardPool: true }
+              : { canRun: true },
+          ),
+      });
+
+      renderHook(() => useAutoRunLifecycle(params));
+      await flush();
+
+      expect(params.scanAndStartNext).toHaveBeenCalledWith(
+        scTrader,
+        expect.objectContaining({ first: scThird }),
+      );
+    });
+
     it('keeps the current agent running when no alternate can start', async () => {
       const params = makeTraderRunningParams({
         getHandOverDeployability: jest
