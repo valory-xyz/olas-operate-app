@@ -1293,6 +1293,154 @@ describe('useAutoRunScanner', () => {
     });
   });
 
+  describe('scanAndStartNext — stall-deferred fallback', () => {
+    // Order from trader: optimus (stall-deferred), then trader (done for the
+    // epoch), so only the stalled fallback can start anything.
+    const makeStalledFallbackParams = (
+      overrides: Partial<Parameters<typeof useAutoRunScanner>[0]> = {},
+    ) =>
+      makeHookParams({
+        orderedIncludedInstances: [scTrader, scOptimus],
+        isStallDeferred: jest.fn((id: string) => id === scOptimus),
+        refreshRewardsEligibility: rewardsById({ [scTrader]: true }),
+        ...overrides,
+      });
+
+    /** Optimus reads `false` in the main loop, then `fallbackRead`. */
+    const optimusRewardsThen = (fallbackRead: boolean | undefined) => {
+      let optimusReads = 0;
+      return jest.fn(async (serviceConfigId: string) => {
+        if (serviceConfigId === scTrader) return true;
+        optimusReads += 1;
+        return optimusReads === 1 ? false : fallbackRead;
+      });
+    };
+
+    /** Optimus can run in the main loop, then gets `recheck`. */
+    const optimusDeployabilityThen = (
+      recheck: Partial<DeployabilityCheckResult>,
+    ) => {
+      let optimusChecks = 0;
+      return jest.fn(
+        async ({ serviceConfigId }: { serviceConfigId: string }) => {
+          if (serviceConfigId !== scOptimus) return { canRun: true };
+          optimusChecks += 1;
+          return optimusChecks === 1
+            ? { canRun: true }
+            : { canRun: false, ...recheck };
+        },
+      );
+    };
+
+    const scan = async (params: ReturnType<typeof makeHookParams>) => {
+      const { result } = renderHook(() => useAutoRunScanner(params));
+      let scanResult: ScanResult | undefined;
+      await act(async () => {
+        scanResult = await result.current.scanAndStartNext(scTrader);
+      });
+      return scanResult;
+    };
+
+    it('passes over a stalled candidate found done for the epoch on its re-read', async () => {
+      const params = makeStalledFallbackParams({
+        refreshRewardsEligibility: optimusRewardsThen(true),
+      });
+
+      const scanResult = await scan(params);
+
+      expect(scanResult?.startedId).toBeNull();
+      expect(params.startAgentWithRetries).not.toHaveBeenCalled();
+      expect(params.logMessage).toHaveBeenCalledWith(
+        `scan: pass over ${scOptimus}: done for the epoch`,
+      );
+      expect(params.scheduleNextScan).toHaveBeenCalledWith(
+        SCAN_ELIGIBLE_DELAY_SECONDS,
+      );
+    });
+
+    it('passes over a stalled candidate whose re-read failed, without a skip notification', async () => {
+      const params = makeStalledFallbackParams({
+        refreshRewardsEligibility: optimusRewardsThen(undefined),
+      });
+
+      const scanResult = await scan(params);
+
+      expect(scanResult?.startedId).toBeNull();
+      expect(params.startAgentWithRetries).not.toHaveBeenCalled();
+      expect(params.logMessage).toHaveBeenCalledWith(
+        unknownRewardsLog(scOptimus),
+      );
+      expect(params.recordMetric).toHaveBeenCalledWith('eligibilityTimeouts');
+      expect(params.notifySkipOnce).not.toHaveBeenCalled();
+      expect(params.scheduleNextScan).toHaveBeenCalledWith(
+        SCAN_BLOCKED_DELAY_SECONDS,
+      );
+    });
+
+    it('passes over a stalled candidate blocked transiently on re-check, without a skip notification', async () => {
+      const params = makeStalledFallbackParams({
+        getDeployabilityForAgent: optimusDeployabilityThen({
+          reason: ELIGIBILITY_REASON.LOADING,
+          isTransient: true,
+        }),
+      });
+
+      const scanResult = await scan(params);
+
+      expect(scanResult?.startedId).toBeNull();
+      expect(params.startAgentWithRetries).not.toHaveBeenCalled();
+      expect(params.notifySkipOnce).not.toHaveBeenCalled();
+      expect(params.scheduleNextScan).toHaveBeenCalledWith(
+        SCAN_LOADING_RETRY_SECONDS,
+      );
+    });
+
+    it('notifies the skip of a stalled candidate blocked permanently on re-check', async () => {
+      const params = makeStalledFallbackParams({
+        getDeployabilityForAgent: optimusDeployabilityThen({
+          reason: 'Low balance',
+        }),
+      });
+
+      const scanResult = await scan(params);
+
+      expect(scanResult?.startedId).toBeNull();
+      expect(params.startAgentWithRetries).not.toHaveBeenCalled();
+      expect(params.logMessage).toHaveBeenCalledWith(
+        `scan: pass over ${scOptimus}: Low balance`,
+      );
+      expect(params.notifySkipOnce).toHaveBeenCalledWith(
+        scOptimus,
+        'Low balance',
+        false,
+      );
+      expect(params.scheduleNextScan).toHaveBeenCalledWith(
+        SCAN_BLOCKED_DELAY_SECONDS,
+      );
+    });
+
+    it.each([
+      { status: AUTO_RUN_START_STATUS.ABORTED },
+      { status: AUTO_RUN_START_STATUS.INFRA_FAILED },
+    ])(
+      'keeps the deferral and rescans soon when its start is $status',
+      async ({ status }) => {
+        const params = makeStalledFallbackParams({
+          startAgentWithRetries: jest.fn().mockResolvedValue({ status }),
+        });
+
+        const scanResult = await scan(params);
+
+        expect(scanResult?.startedId).toBeNull();
+        expect(params.startAgentWithRetries).toHaveBeenCalledWith(scOptimus);
+        expect(params.clearStallDeferral).not.toHaveBeenCalled();
+        expect(params.scheduleNextScan).toHaveBeenCalledWith(
+          SCAN_LOADING_RETRY_SECONDS,
+        );
+      },
+    );
+  });
+
   describe('startSelectedAgentIfEligible — rewards and stall gates', () => {
     it('returns false without starting when the selected instance is stall-deferred', async () => {
       const params = makeHookParams({
