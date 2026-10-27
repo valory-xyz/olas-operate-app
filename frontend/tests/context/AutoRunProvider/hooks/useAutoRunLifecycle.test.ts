@@ -1056,6 +1056,22 @@ describe('useAutoRunLifecycle', () => {
         );
       });
 
+      it('does not defer the current agent when its stop times out', async () => {
+        const params = makeTraderRunningParams({
+          isStalled: jest
+            .fn()
+            .mockImplementation((id: string) => id === scTrader),
+          stopAgentWithRecovery: jest.fn().mockResolvedValue(false),
+        });
+
+        renderHook(() => useAutoRunLifecycle(params));
+        await flush();
+
+        expect(params.stopAgentWithRecovery).toHaveBeenCalledWith(scTrader);
+        expect(params.deferStalled).not.toHaveBeenCalled();
+        expect(params.scanAndStartNext).not.toHaveBeenCalled();
+      });
+
       it('keeps the current agent running with a fresh stall hour when no alternate can start', async () => {
         const params = makeTraderRunningParams({
           isStalled: jest.fn().mockReturnValue(true),

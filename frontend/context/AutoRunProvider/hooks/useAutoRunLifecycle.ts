@@ -371,13 +371,16 @@ export const useAutoRunLifecycle = ({
       logVerbose(
         `cycle=${cycleId} trigger=${trigger} phase=hand_over current=${currentServiceConfigId} next=${next}`,
       );
-      if (stalled) deferStalled(currentServiceConfigId);
       // Only Connect finishing its minutes means its goal was reached: a
       // watchdog, eviction or stall hand-over does not.
-      const onStopped =
-        isNoStakingAgent && !options?.force
-          ? () => notifyGoalReachedOnHandOver(currentServiceConfigId)
-          : undefined;
+      const notifyGoalReached = isNoStakingAgent && !options?.force;
+      // Deferred only once stopped: after a stop timeout it is still running.
+      const onStopped = () => {
+        if (stalled) deferStalled(currentServiceConfigId);
+        if (notifyGoalReached) {
+          notifyGoalReachedOnHandOver(currentServiceConfigId);
+        }
+      };
       await stopAndScanFrom(currentServiceConfigId, cycleId, trigger, {
         first: next,
         onStopped,
