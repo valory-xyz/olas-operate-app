@@ -6,7 +6,7 @@ import {
   AUTO_RUN_HEALTH_METRIC,
   AutoRunHealthMetricNoRotation,
 } from '../constants';
-import { AgentMeta } from '../types';
+import { AgentMeta, RewardSnapshot, StallClock } from '../types';
 import { refreshRewardsEligibility as refreshRewardsEligibilityHelper } from '../utils/autoRunHelpers';
 import {
   getInstanceDisplayNames,
@@ -21,6 +21,7 @@ type UseAutoRunOperationsParams = {
   enabled: boolean;
   enabledRef: MutableRefObject<boolean>;
   runningServiceConfigIdRef: MutableRefObject<string | null>;
+  stallClockRef: MutableRefObject<Partial<Record<string, StallClock>>>;
   configuredAgents: AgentMeta[];
   createSafeIfNeeded: (meta: AgentMeta) => Promise<void>;
   showNotification?: (title: string, body?: string) => void;
@@ -38,10 +39,10 @@ type UseAutoRunOperationsParams = {
     serviceConfigId: string,
     timeoutSeconds: number,
   ) => Promise<boolean>;
-  getRewardSnapshot: (serviceConfigId: string) => boolean | undefined;
+  getRewardSnapshot: (serviceConfigId: string) => RewardSnapshot | undefined;
   setRewardSnapshot: (
     serviceConfigId: string,
-    value: boolean | undefined,
+    snapshot: RewardSnapshot,
   ) => void;
   recordMetric: (metric: AutoRunHealthMetricNoRotation) => void;
   logMessage: (message: string) => void;
@@ -58,6 +59,7 @@ export const useAutoRunOperations = ({
   enabled,
   enabledRef,
   runningServiceConfigIdRef,
+  stallClockRef,
   configuredAgents,
   createSafeIfNeeded,
   showNotification,
@@ -119,6 +121,7 @@ export const useAutoRunOperations = ({
         lastRewardsFetchRef,
         lastStartedAtRef,
         runningServiceConfigIdRef,
+        stallClockRef,
         getRewardSnapshot,
         setRewardSnapshot,
         logMessage,
@@ -132,6 +135,7 @@ export const useAutoRunOperations = ({
       recordMetric,
       runningServiceConfigIdRef,
       setRewardSnapshot,
+      stallClockRef,
     ],
   );
 

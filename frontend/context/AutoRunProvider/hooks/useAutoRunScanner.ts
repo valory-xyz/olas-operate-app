@@ -1,6 +1,7 @@
 import { MutableRefObject, useCallback } from 'react';
 
 import {
+  AUTO_RUN_HEALTH_METRIC,
   AUTO_RUN_START_STATUS,
   AutoRunScannerMetric,
   AutoRunStartResult,
@@ -19,6 +20,18 @@ import {
 } from '../utils/autoRunHelpers';
 import { useAutoRunVerboseLogger } from './useAutoRunVerboseLogger';
 
+export type ScanOptions = {
+  /** Candidate tried before the usual order, e.g. a rotation's chosen next agent. */
+  first?: string;
+  /** Instance whose stop is confirmed: read as not running, whatever the deployment poll says. */
+  stoppedId?: string;
+  /** Rotation the scan belongs to, for its log lines. */
+  cycleId?: string;
+  trigger?: string;
+};
+
+export type ScanResult = { startedId: string | null };
+
 type UseAutoRunScannerParams = {
   enabledRef: MutableRefObject<boolean>;
   orderedIncludedInstances: string[];
@@ -31,14 +44,14 @@ type UseAutoRunScannerParams = {
   };
   waitForInstanceSelection: (serviceConfigId: string) => Promise<boolean>;
   waitForBalancesReady: () => Promise<boolean>;
-  waitForRewardsEligibility: (
-    serviceConfigId: string,
-  ) => Promise<boolean | undefined>;
   refreshRewardsEligibility: (
     serviceConfigId: string,
   ) => Promise<boolean | undefined>;
-  markRewardSnapshotPending: (serviceConfigId: string) => void;
-  getRewardSnapshot: (serviceConfigId: string) => boolean | undefined;
+  /** Stored rewards status, `undefined` when it cannot decide without a read. */
+  getRewardStatus: (serviceConfigId: string) => boolean | undefined;
+  /** Whether the instance was moved on from for a stall in this epoch. */
+  isStallDeferred: (serviceConfigId: string) => boolean;
+  clearStallDeferral: (serviceConfigId: string) => void;
   getBalancesStatus: () => { ready: boolean; loading: boolean };
   notifySkipOnce: (
     serviceConfigId: string,
@@ -48,6 +61,7 @@ type UseAutoRunScannerParams = {
   /** Fetches deployability for a candidate without switching UI selection. */
   getDeployabilityForAgent: (
     agentMeta: AgentMeta,
+    options?: { stoppedId?: string },
   ) => Promise<DeployabilityCheckResult>;
   startAgentWithRetries: (
     serviceConfigId: string,
@@ -73,10 +87,10 @@ export const useAutoRunScanner = ({
   getSelectedEligibility,
   waitForInstanceSelection,
   waitForBalancesReady,
-  waitForRewardsEligibility,
   refreshRewardsEligibility,
-  markRewardSnapshotPending,
-  getRewardSnapshot,
+  getRewardStatus,
+  isStallDeferred,
+  clearStallDeferral,
   getBalancesStatus,
   notifySkipOnce,
   getDeployabilityForAgent,
@@ -175,25 +189,55 @@ export const useAutoRunScanner = ({
   }, [orderedIncludedInstances, selectedServiceConfigId]);
 
   /**
+   * An unknown rewards status never means "go": the candidate is passed
+   * over, without a skip notification, and checked again on the next scan.
+   */
+  const passOverUnknownRewards = useCallback(
+    (serviceConfigId: string) => {
+      recordMetric(AUTO_RUN_HEALTH_METRIC.ELIGIBILITY_TIMEOUTS);
+      logMessage(`${serviceConfigId}: rewards status unknown, passing over`);
+    },
+    [logMessage, recordMetric],
+  );
+
+  /**
    * Core queue traversal — runs entirely in the background without switching
    * the visible agent page.
    *
-   * For each candidate once per scan cycle:
-   * 1) refresh rewards snapshot
+   * Candidates: `first` when given, then the included order after `from`,
+   * wrapping round to `from` last. For each, once per scan cycle:
+   * 1) refresh rewards (reusing a read still fresh)
    * 2) fetch deployability directly (no UI switch)
    * 3) skip/start based on deployability + rewards state
    *
-   * Returns `{ started: true }` only when an instance is actually started.
+   * Instances deferred for an empty reward pool, then for a stall, are tried
+   * only once no other candidate started.
+   *
+   * Returns the id of the instance actually started, if any.
    */
   const scanAndStartNext = useCallback(
-    async (startFrom?: string | null) => {
-      if (!enabledRef.current) return { started: false };
+    async (
+      from?: string | null,
+      options: ScanOptions = {},
+    ): Promise<ScanResult> => {
+      const notStarted: ScanResult = { startedId: null };
+      if (!enabledRef.current) return notStarted;
+      const { first, stoppedId, cycleId, trigger } = options;
+      const logPrefix = cycleId
+        ? `cycle=${cycleId} trigger=${trigger ?? 'unknown'} `
+        : 'scan: ';
+      const passOver = (serviceConfigId: string, check?: string) =>
+        logVerbose(
+          `${logPrefix}pass over ${serviceConfigId}: ${check ?? 'unknown'}`,
+        );
+      const getDeployability = (meta: AgentMeta) =>
+        getDeployabilityForAgent(meta, { stoppedId });
 
       // Wait for global balance data before scanning any candidate.
       const balancesReady = await waitForBalancesReady();
       if (!balancesReady) {
         if (enabledRef.current) scheduleNextScan(SCAN_LOADING_RETRY_SECONDS);
-        return { started: false };
+        return notStarted;
       }
 
       // Aggregate scan outcome across all visited candidates so we can choose
@@ -202,12 +246,15 @@ export const useAutoRunScanner = ({
       let hasEligible = false;
       let hasLoading = false;
       let hasInfraFailed = false;
+      let hasUnknown = false;
       // Candidates blocked *only* because their staking contract has no rewards
       // left. Deferred rather than skipped outright: if nothing better can run,
       // starting one of these beats idling the entire rotation — they still do
       // their on-chain work, they just don't earn while the pool is drained.
       // Metas, not ids: the fallback re-validates deployability before starting.
       const emptyPoolCandidates: AgentMeta[] = [];
+      // Candidates moved on from for a stall this epoch: tried last of all.
+      const stalledCandidates: AgentMeta[] = [];
 
       // Announces the deferred candidates that were genuinely passed over.
       // Deliberately NOT called for candidates that were attempted (those get
@@ -220,35 +267,40 @@ export const useAutoRunScanner = ({
         }
       };
 
-      let candidate = findNextInOrder(startFrom);
-      if (!candidate) {
-        scheduleNextScan(SCAN_ELIGIBLE_DELAY_SECONDS);
-        return { started: false };
+      const inOrder: string[] = [];
+      let next = findNextInOrder(from);
+      while (next && !inOrder.includes(next)) {
+        inOrder.push(next);
+        next = findNextInOrder(next);
       }
-      const visited = new Set<string>();
+      const candidates =
+        first && inOrder.includes(first)
+          ? [first, ...inOrder.filter((id) => id !== first)]
+          : inOrder;
+      if (candidates.length === 0) {
+        scheduleNextScan(SCAN_ELIGIBLE_DELAY_SECONDS);
+        return notStarted;
+      }
 
-      // Visit each included agent at most once per scan cycle to prevent
-      // infinite loops in a single scan pass.
-      while (candidate && !visited.has(candidate)) {
-        if (!enabledRef.current) return { started: false };
+      for (const candidate of candidates) {
+        if (!enabledRef.current) return notStarted;
 
-        visited.add(candidate);
         const candidateMeta = configuredAgents.find(
           (agent) => agent.serviceConfigId === candidate,
         );
         if (!candidateMeta) {
+          passOver(candidate, 'not configured');
           hasBlocked = true;
-          candidate = findNextInOrder(candidate);
           continue;
         }
 
-        markRewardSnapshotPending(candidate);
-        await refreshRewardsEligibility(candidate);
+        const candidateEligibility = await refreshRewardsEligibility(candidate);
 
         // Fetch deployability directly without switching UI selection.
-        const deployability = await getDeployabilityForAgent(candidateMeta);
-        if (!enabledRef.current) return { started: false };
+        const deployability = await getDeployability(candidateMeta);
+        if (!enabledRef.current) return notStarted;
         if (!deployability.canRun) {
+          passOver(candidate, deployability.reason);
           if (deployability.isTransient) {
             hasLoading = true;
           } else if (deployability.isEmptyRewardPool) {
@@ -257,14 +309,22 @@ export const useAutoRunScanner = ({
             notifySkipOnce(candidate, deployability.reason, false);
             hasBlocked = true;
           }
-          candidate = findNextInOrder(candidate);
           continue;
         }
 
-        const candidateEligibility = await waitForRewardsEligibility(candidate);
         if (candidateEligibility === true) {
+          passOver(candidate, 'done for the epoch');
           hasEligible = true;
-          candidate = findNextInOrder(candidate);
+          continue;
+        }
+        if (candidateEligibility === undefined) {
+          passOverUnknownRewards(candidate);
+          hasUnknown = true;
+          continue;
+        }
+        if (isStallDeferred(candidate)) {
+          passOver(candidate, 'stalled on its activity goal, deferred');
+          stalledCandidates.push(candidateMeta);
           continue;
         }
 
@@ -273,7 +333,7 @@ export const useAutoRunScanner = ({
           notifyEmptyPoolSkips(
             emptyPoolCandidates.map((meta) => meta.serviceConfigId),
           );
-          return { started: true };
+          return { startedId: candidate };
         }
         if (startResult.status === AUTO_RUN_START_STATUS.ABORTED) {
           if (enabledRef.current) {
@@ -282,18 +342,16 @@ export const useAutoRunScanner = ({
             );
             scheduleNextScan(SCAN_LOADING_RETRY_SECONDS);
           }
-          return { started: false };
+          return notStarted;
         }
         if (startResult.status === AUTO_RUN_START_STATUS.INFRA_FAILED) {
           logVerbose(
             `scan: ${candidate} infra_failed (${startResult.reason ?? 'unknown'}), trying next candidate`,
           );
           hasInfraFailed = true;
-          candidate = findNextInOrder(candidate);
           continue;
         }
         hasBlocked = true;
-        candidate = findNextInOrder(candidate);
       }
 
       // Degraded mode: no rewarded candidate could be started, so fall back to
@@ -316,14 +374,22 @@ export const useAutoRunScanner = ({
 
         for (const deferredMeta of emptyPoolCandidates) {
           const deferred = deferredMeta.serviceConfigId;
-          if (!enabledRef.current) return { started: false };
+          if (!enabledRef.current) return notStarted;
 
-          const deferredEligibility = await waitForRewardsEligibility(deferred);
+          // The main-loop read can be long gone: a `false` decides only while
+          // fresh, so this reads again when it is not.
+          const deferredEligibility = await refreshRewardsEligibility(deferred);
           if (deferredEligibility === true) {
             // Already did its epoch work — the main loop passes these over
             // silently, so notifying here would be inconsistent (and the agent
             // would have been passed over with a full pool too).
             hasEligible = true;
+            passedOver.delete(deferred);
+            continue;
+          }
+          if (deferredEligibility === undefined) {
+            passOverUnknownRewards(deferred);
+            hasUnknown = true;
             passedOver.delete(deferred);
             continue;
           }
@@ -333,8 +399,8 @@ export const useAutoRunScanner = ({
           // ahead of this one exhausting `startAgentWithRetries` burns up to
           // ~48min. Balances, staking slots and eviction state can all have
           // moved since, and nothing downstream re-checks sufficiency.
-          const recheck = await getDeployabilityForAgent(deferredMeta);
-          if (!enabledRef.current) return { started: false };
+          const recheck = await getDeployability(deferredMeta);
+          if (!enabledRef.current) return notStarted;
           if (!recheck.canRun && !recheck.isEmptyRewardPool) {
             logVerbose(
               `scan: ${deferred} no longer startable in degraded mode (${recheck.reason ?? 'unknown'})`,
@@ -358,7 +424,7 @@ export const useAutoRunScanner = ({
               `scan: started ${deferred} in degraded mode (empty reward pool)`,
             );
             notifyEmptyPoolSkips(passedOver);
-            return { started: true };
+            return { startedId: deferred };
           }
           if (startResult.status === AUTO_RUN_START_STATUS.ABORTED) {
             if (enabledRef.current) {
@@ -367,7 +433,7 @@ export const useAutoRunScanner = ({
               );
               scheduleNextScan(SCAN_LOADING_RETRY_SECONDS);
             }
-            return { started: false };
+            return notStarted;
           }
           if (startResult.status === AUTO_RUN_START_STATUS.INFRA_FAILED) {
             logVerbose(
@@ -382,31 +448,83 @@ export const useAutoRunScanner = ({
         notifyEmptyPoolSkips(passedOver);
       }
 
+      // Stalled agents run again only when nothing else could start, and with
+      // a fresh hour once running.
+      for (const stalledMeta of stalledCandidates) {
+        const stalled = stalledMeta.serviceConfigId;
+        if (!enabledRef.current) return notStarted;
+
+        const stalledEligibility = await refreshRewardsEligibility(stalled);
+        if (stalledEligibility === true) {
+          passOver(stalled, 'done for the epoch');
+          hasEligible = true;
+          continue;
+        }
+        if (stalledEligibility === undefined) {
+          passOverUnknownRewards(stalled);
+          hasUnknown = true;
+          continue;
+        }
+
+        const recheck = await getDeployability(stalledMeta);
+        if (!enabledRef.current) return notStarted;
+        if (!recheck.canRun && !recheck.isEmptyRewardPool) {
+          passOver(stalled, recheck.reason);
+          if (recheck.isTransient) {
+            hasLoading = true;
+          } else {
+            notifySkipOnce(stalled, recheck.reason, false);
+            hasBlocked = true;
+          }
+          continue;
+        }
+
+        const startResult = await startAgentWithRetries(stalled);
+        if (startResult.status === AUTO_RUN_START_STATUS.STARTED) {
+          logVerbose(
+            `scan: started stalled ${stalled}, no other agent could start`,
+          );
+          clearStallDeferral(stalled);
+          return { startedId: stalled };
+        }
+        if (startResult.status === AUTO_RUN_START_STATUS.ABORTED) {
+          if (enabledRef.current) scheduleNextScan(SCAN_LOADING_RETRY_SECONDS);
+          return notStarted;
+        }
+        if (startResult.status === AUTO_RUN_START_STATUS.INFRA_FAILED) {
+          hasInfraFailed = true;
+          continue;
+        }
+        hasBlocked = true;
+      }
+
       const delay = (() => {
         if (hasLoading || hasInfraFailed) return SCAN_LOADING_RETRY_SECONDS;
-        if (hasBlocked) return SCAN_BLOCKED_DELAY_SECONDS;
+        if (hasBlocked || hasUnknown) return SCAN_BLOCKED_DELAY_SECONDS;
         if (hasEligible) return SCAN_ELIGIBLE_DELAY_SECONDS;
         return SCAN_BLOCKED_DELAY_SECONDS;
       })();
 
       logVerbose(
-        `scan complete: no agent started (loading=${hasLoading}, blocked=${hasBlocked}, eligible=${hasEligible}, infraFailed=${hasInfraFailed}), rescan in ${delay}s`,
+        `scan complete: no agent started (loading=${hasLoading}, blocked=${hasBlocked}, eligible=${hasEligible}, infraFailed=${hasInfraFailed}, unknown=${hasUnknown}), rescan in ${delay}s`,
       );
       scheduleNextScan(delay);
-      return { started: false };
+      return notStarted;
     },
     [
+      clearStallDeferral,
       configuredAgents,
       enabledRef,
       findNextInOrder,
       getDeployabilityForAgent,
-      markRewardSnapshotPending,
+      isStallDeferred,
+      orderedIncludedInstances,
+      passOverUnknownRewards,
       refreshRewardsEligibility,
       notifySkipOnce,
       scheduleNextScan,
       startAgentWithRetries,
       waitForBalancesReady,
-      waitForRewardsEligibility,
       logVerbose,
     ],
   );
@@ -433,10 +551,10 @@ export const useAutoRunScanner = ({
     );
     if (!selectedMeta) return false;
 
-    const rewardSnapshot = getRewardSnapshot(selectedServiceConfigId);
-    if (rewardSnapshot === true) return false;
+    if (getRewardStatus(selectedServiceConfigId) === true) return false;
+    // A stalled instance waits for the scan's stalled fallback.
+    if (isStallDeferred(selectedServiceConfigId)) return false;
 
-    markRewardSnapshotPending(selectedServiceConfigId);
     const selectionReady = await waitForInstanceSelection(
       selectedServiceConfigId,
     );
@@ -486,10 +604,15 @@ export const useAutoRunScanner = ({
       return false;
     }
 
-    const rewardsEligibility = await waitForRewardsEligibility(
+    // Reuses the read above while it is still fresh.
+    const rewardsEligibility = await refreshRewardsEligibility(
       selectedServiceConfigId,
     );
     if (rewardsEligibility === true) {
+      return false;
+    }
+    if (rewardsEligibility === undefined) {
+      passOverUnknownRewards(selectedServiceConfigId);
       return false;
     }
 
@@ -525,8 +648,9 @@ export const useAutoRunScanner = ({
     enabledRef,
     getDeployabilityForAgent,
     getSelectedEligibility,
-    getRewardSnapshot,
-    markRewardSnapshotPending,
+    getRewardStatus,
+    isStallDeferred,
+    passOverUnknownRewards,
     refreshRewardsEligibility,
     notifySkipOnce,
     orderedIncludedInstances,
@@ -539,7 +663,6 @@ export const useAutoRunScanner = ({
     scheduleNextScan,
     waitForBalancesReady,
     waitForEligibilityReady,
-    waitForRewardsEligibility,
   ]);
 
   return {

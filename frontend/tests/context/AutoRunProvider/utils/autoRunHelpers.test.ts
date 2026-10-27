@@ -2,21 +2,29 @@ import { AGENT_CONFIG } from '../../../../config/agents';
 import { AgentMap } from '../../../../constants/agent';
 import { STAKING_PROGRAM_IDS } from '../../../../constants/stakingProgram';
 import {
+  ACTIVITY_GOAL_STALL_SECONDS,
   AUTO_RUN_HEALTH_METRIC,
   ELIGIBILITY_LOADING_REASON,
   ELIGIBILITY_REASON,
   EMPTY_REWARD_POOL_REASON,
   REWARDS_POLL_SECONDS,
 } from '../../../../context/AutoRunProvider/constants';
-import { AgentMeta } from '../../../../context/AutoRunProvider/types';
+import {
+  AgentMeta,
+  RewardSnapshot,
+  StallClock,
+} from '../../../../context/AutoRunProvider/types';
 import {
   FetchDeployabilityContext,
   fetchDeployabilityForAgent,
   formatEligibilityReason,
+  getUsableRewardStatus,
   isOnlyLoadingReason,
   isStakingEpochExpired,
+  isStallClockExpired,
   normalizeEligibility,
   refreshRewardsEligibility,
+  updateStallClock,
   waitForEligibilityReadyHelper,
 } from '../../../../context/AutoRunProvider/utils/autoRunHelpers';
 import { ServicesService } from '../../../../service/Services';
@@ -25,9 +33,11 @@ import * as delayModule from '../../../../utils/delay';
 import { fetchAgentStakingRewardsInfo } from '../../../../utils/stakingRewards';
 import {
   DEFAULT_SERVICE_CONFIG_ID,
+  DEFAULT_STAKING_PROGRAM_ID,
   DEFAULT_TS_CHECKPOINT,
   makeActivityGoal,
   makeAutoRunAgentMeta,
+  makeStakingRewardsInfo,
 } from '../../../helpers/factories';
 
 jest.mock('../../../../service/Services', () => ({
@@ -74,6 +84,29 @@ const makePerformance = (activityGoal?: unknown) => ({
   agent_behavior: null,
   ...(activityGoal === undefined ? {} : { activity_goal: activityGoal }),
 });
+
+/** Matches a stored rewards snapshot by its decision only. */
+const withDone = (done: boolean) => expect.objectContaining({ done });
+
+/** A moment inside the epoch opened at `DEFAULT_TS_CHECKPOINT`, in ms. */
+const IN_EPOCH_NOW_MS = (DEFAULT_TS_CHECKPOINT + 3_600) * 1000;
+
+/** A stored read of the default instance, inside the current epoch. */
+const makeRewardSnapshot = (
+  overrides: Partial<RewardSnapshot> = {},
+): RewardSnapshot => {
+  const { tsCheckpoint, livenessPeriod } = makeStakingRewardsInfo();
+  return {
+    done: false,
+    readAt: IN_EPOCH_NOW_MS,
+    stakingProgramId: DEFAULT_STAKING_PROGRAM_ID,
+    tsCheckpoint,
+    livenessPeriod,
+    goalTarget: null,
+    goalPeriodStart: null,
+    ...overrides,
+  };
+};
 
 describe('isStakingEpochExpired', () => {
   const makeArgs = (livenessPeriod: unknown, tsCheckpoint: number) =>
@@ -278,18 +311,129 @@ describe('refreshRewardsEligibility', () => {
     mockGetAgentPerformance.mockResolvedValue(makePerformance());
   });
 
-  it('returns cached snapshot when within throttle window', async () => {
-    const getRewardSnapshot = jest.fn().mockReturnValue(true);
-    const params = makeParams({
-      lastRewardsFetchRef: {
-        current: { [DEFAULT_SERVICE_CONFIG_ID]: Date.now() },
-      },
-      getRewardSnapshot,
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  describe('within the throttle window', () => {
+    beforeEach(() => {
+      jest.useFakeTimers();
+      jest.setSystemTime(IN_EPOCH_NOW_MS);
     });
-    const result = await refreshRewardsEligibility(params);
-    expect(result).toBe(true);
-    expect(getRewardSnapshot).toHaveBeenCalledWith(DEFAULT_SERVICE_CONFIG_ID);
-    expect(mockFetchRewards).not.toHaveBeenCalled();
+
+    const makeThrottledParams = (snapshot: RewardSnapshot | undefined) =>
+      makeParams({
+        lastRewardsFetchRef: {
+          current: { [DEFAULT_SERVICE_CONFIG_ID]: IN_EPOCH_NOW_MS - 1_000 },
+        },
+        getRewardSnapshot: jest.fn().mockReturnValue(snapshot),
+      });
+
+    it('keeps a stored true from any earlier read of the open epoch', async () => {
+      const params = makeThrottledParams(
+        makeRewardSnapshot({ done: true, readAt: IN_EPOCH_NOW_MS - 3_000_000 }),
+      );
+      const result = await refreshRewardsEligibility(params);
+      expect(result).toBe(true);
+      expect(params.getRewardSnapshot).toHaveBeenCalledWith(
+        DEFAULT_SERVICE_CONFIG_ID,
+      );
+      expect(mockFetchRewards).not.toHaveBeenCalled();
+    });
+
+    it('answers a recent stored false', async () => {
+      const result = await refreshRewardsEligibility(
+        makeThrottledParams(
+          makeRewardSnapshot({ readAt: IN_EPOCH_NOW_MS - 60_000 }),
+        ),
+      );
+      expect(result).toBe(false);
+    });
+
+    it('answers unknown, not false, from a stale stored false', async () => {
+      const result = await refreshRewardsEligibility(
+        makeThrottledParams(
+          makeRewardSnapshot({
+            readAt: IN_EPOCH_NOW_MS - (REWARDS_POLL_SECONDS * 1000 + 1),
+          }),
+        ),
+      );
+      expect(result).toBeUndefined();
+      expect(mockFetchRewards).not.toHaveBeenCalled();
+    });
+
+    it('answers unknown when nothing was stored', async () => {
+      const result = await refreshRewardsEligibility(
+        makeThrottledParams(undefined),
+      );
+      expect(result).toBeUndefined();
+    });
+
+    it('answers unknown for an instance it no longer knows', async () => {
+      const params = makeThrottledParams(makeRewardSnapshot({ done: true }));
+      const result = await refreshRewardsEligibility({
+        ...params,
+        configuredAgents: [],
+      });
+      expect(result).toBeUndefined();
+    });
+  });
+
+  it('stores every field of a successful read', async () => {
+    jest.useFakeTimers();
+    jest.setSystemTime(IN_EPOCH_NOW_MS);
+    const rewards = makeStakingRewardsInfo({ isEligibleForRewards: true });
+    mockFetchRewards.mockResolvedValue(rewards);
+    mockGetAgentPerformance.mockResolvedValue(
+      makePerformance(makeActivityGoal({ is_met: true, target: 8 })),
+    );
+    const setRewardSnapshot = jest.fn();
+
+    await refreshRewardsEligibility(makeParams({ setRewardSnapshot }));
+
+    expect(setRewardSnapshot).toHaveBeenCalledTimes(1);
+    expect(setRewardSnapshot).toHaveBeenCalledWith(
+      DEFAULT_SERVICE_CONFIG_ID,
+      expect.objectContaining({
+        done: true,
+        readAt: IN_EPOCH_NOW_MS,
+        stakingProgramId: DEFAULT_STAKING_PROGRAM_ID,
+        tsCheckpoint: DEFAULT_TS_CHECKPOINT,
+        livenessPeriod: rewards.livenessPeriod,
+        goalTarget: 8,
+        goalPeriodStart: DEFAULT_TS_CHECKPOINT,
+      }),
+    );
+  });
+
+  it('stores null goal fields when the agent publishes no block', async () => {
+    mockFetchRewards.mockResolvedValue(
+      makeStakingRewardsInfo({ isEligibleForRewards: false }),
+    );
+    const setRewardSnapshot = jest.fn();
+
+    await refreshRewardsEligibility(makeParams({ setRewardSnapshot }));
+
+    expect(setRewardSnapshot).toHaveBeenCalledWith(
+      DEFAULT_SERVICE_CONFIG_ID,
+      expect.objectContaining({
+        done: false,
+        goalTarget: null,
+        goalPeriodStart: null,
+      }),
+    );
+  });
+
+  it('stores nothing when the rewards read fails', async () => {
+    mockFetchRewards.mockRejectedValue(new Error('persistent RPC'));
+    const setRewardSnapshot = jest.fn();
+
+    const result = await refreshRewardsEligibility(
+      makeParams({ setRewardSnapshot }),
+    );
+
+    expect(result).toBeUndefined();
+    expect(setRewardSnapshot).not.toHaveBeenCalled();
   });
 
   it('returns undefined when agent not in configuredAgents', async () => {
@@ -357,7 +501,7 @@ describe('refreshRewardsEligibility', () => {
     expect(result).toBe(true);
     expect(setRewardSnapshot).toHaveBeenCalledWith(
       DEFAULT_SERVICE_CONFIG_ID,
-      true,
+      withDone(true),
     );
   });
 
@@ -386,7 +530,7 @@ describe('refreshRewardsEligibility', () => {
     expect(result).toBe(false);
     expect(setRewardSnapshot).toHaveBeenCalledWith(
       DEFAULT_SERVICE_CONFIG_ID,
-      false,
+      withDone(false),
     );
   });
 
@@ -455,7 +599,7 @@ describe('refreshRewardsEligibility', () => {
     expect(result).toBe(false);
     expect(setRewardSnapshot).toHaveBeenCalledWith(
       DEFAULT_SERVICE_CONFIG_ID,
-      false,
+      withDone(false),
     );
     expect(logMessage).toHaveBeenCalledWith(
       expect.stringContaining('epoch expired'),
@@ -559,7 +703,7 @@ describe('refreshRewardsEligibility', () => {
       expect(result).toBe(false);
       expect(setRewardSnapshot).toHaveBeenCalledWith(
         DEFAULT_SERVICE_CONFIG_ID,
-        false,
+        withDone(false),
       );
       expect(logMessage).toHaveBeenCalledWith(
         expect.stringContaining(
@@ -593,7 +737,7 @@ describe('refreshRewardsEligibility', () => {
       expect(result).toBe(true);
       expect(setRewardSnapshot).toHaveBeenCalledWith(
         DEFAULT_SERVICE_CONFIG_ID,
-        true,
+        withDone(true),
       );
     });
 
@@ -775,7 +919,7 @@ describe('refreshRewardsEligibility', () => {
       expect(result).toBe(expected);
       expect(setRewardSnapshot).toHaveBeenCalledWith(
         DEFAULT_SERVICE_CONFIG_ID,
-        expected,
+        withDone(expected),
       );
     });
 
@@ -869,6 +1013,107 @@ describe('refreshRewardsEligibility', () => {
     });
   });
 
+  describe('stalled activity goal', () => {
+    const STALL_MS = ACTIVITY_GOAL_STALL_SECONDS * 1000;
+
+    /** Reads the instance after `elapsedMs`, past the throttle window. */
+    const readAfter = async (
+      elapsedMs: number,
+      overrides: Partial<Parameters<typeof refreshRewardsEligibility>[0]>,
+    ) => {
+      jest.setSystemTime(IN_EPOCH_NOW_MS + elapsedMs);
+      return refreshRewardsEligibility(
+        makeParams({ lastRewardsFetchRef: { current: {} }, ...overrides }),
+      );
+    };
+
+    beforeEach(() => {
+      jest.useFakeTimers();
+      mockFetchRewards.mockResolvedValue(
+        makeStakingRewardsInfo({ isEligibleForRewards: true }),
+      );
+      mockGetAgentPerformance.mockResolvedValue(
+        makePerformance(makeActivityGoal({ progress: 3, target: 8 })),
+      );
+    });
+
+    it('reads a running instance as done once its unmet goal has not moved for the stall period', async () => {
+      const stallClockRef = { current: {} };
+      const logMessage = jest.fn();
+      const setRewardSnapshot = jest.fn();
+      const running = {
+        runningServiceConfigIdRef: { current: DEFAULT_SERVICE_CONFIG_ID },
+        stallClockRef,
+        logMessage,
+        setRewardSnapshot,
+      };
+
+      expect(await readAfter(0, running)).toBe(false);
+      expect(await readAfter(STALL_MS, running)).toBe(true);
+
+      expect(setRewardSnapshot).toHaveBeenLastCalledWith(
+        DEFAULT_SERVICE_CONFIG_ID,
+        withDone(true),
+      );
+      expect(logMessage).toHaveBeenLastCalledWith(
+        expect.stringContaining(
+          'goal=3/8 goalMet=false goalCurrent=true → done=true stalled=true',
+        ),
+      );
+    });
+
+    it('is not stalled one second before the stall period ends', async () => {
+      const logMessage = jest.fn();
+      const running = {
+        runningServiceConfigIdRef: { current: DEFAULT_SERVICE_CONFIG_ID },
+        stallClockRef: { current: {} },
+        logMessage,
+      };
+
+      await readAfter(0, running);
+      expect(await readAfter(STALL_MS - 1_000, running)).toBe(false);
+      expect(logMessage).not.toHaveBeenCalledWith(
+        expect.stringContaining('stalled=true'),
+      );
+    });
+
+    it('never stalls an instance that is not running', async () => {
+      const stallClockRef = { current: {} };
+      const idle = {
+        runningServiceConfigIdRef: { current: 'sc-other' },
+        stallClockRef,
+      };
+
+      await readAfter(0, idle);
+      expect(await readAfter(STALL_MS, idle)).toBe(false);
+      expect(stallClockRef.current).toEqual({});
+    });
+
+    it('drops the clock of a running instance whose staking KPI is not met', async () => {
+      const stallClockRef: { current: Partial<Record<string, StallClock>> } = {
+        current: {
+          [DEFAULT_SERVICE_CONFIG_ID]: {
+            since: IN_EPOCH_NOW_MS - STALL_MS,
+            progress: 3,
+            target: 8,
+            periodStart: DEFAULT_TS_CHECKPOINT,
+          },
+        },
+      };
+      mockFetchRewards.mockResolvedValue(
+        makeStakingRewardsInfo({ isEligibleForRewards: false }),
+      );
+
+      const result = await readAfter(0, {
+        runningServiceConfigIdRef: { current: DEFAULT_SERVICE_CONFIG_ID },
+        stallClockRef,
+      });
+
+      expect(result).toBe(false);
+      expect(stallClockRef.current).toEqual({});
+    });
+  });
+
   describe('no-staking agent (Connect)', () => {
     const CONNECT_ID = 'sc-connect';
     const startRequestedAtSeconds = 1_800_000_000;
@@ -924,7 +1169,10 @@ describe('refreshRewardsEligibility', () => {
       );
 
       expect(result).toBe(true);
-      expect(setRewardSnapshot).toHaveBeenCalledWith(CONNECT_ID, true);
+      expect(setRewardSnapshot).toHaveBeenCalledWith(
+        CONNECT_ID,
+        withDone(true),
+      );
     });
 
     it.each([
@@ -993,6 +1241,8 @@ describe('refreshRewardsEligibility', () => {
     });
 
     it('is never done while not running, without fetching or throttling', async () => {
+      jest.useFakeTimers();
+      jest.setSystemTime(IN_EPOCH_NOW_MS);
       const setRewardSnapshot = jest.fn();
       const lastRewardsFetchRef = {
         current: { [CONNECT_ID]: Date.now() } as Partial<
@@ -1009,7 +1259,15 @@ describe('refreshRewardsEligibility', () => {
       );
 
       expect(result).toBe(false);
-      expect(setRewardSnapshot).toHaveBeenCalledWith(CONNECT_ID, false);
+      expect(setRewardSnapshot).toHaveBeenCalledWith(CONNECT_ID, {
+        done: false,
+        readAt: Date.now(),
+        stakingProgramId: 'no_staking',
+        tsCheckpoint: 0,
+        livenessPeriod: { _isBigNumber: true, _hex: '0x00' },
+        goalTarget: null,
+        goalPeriodStart: null,
+      });
       expect(mockGetAgentPerformance).not.toHaveBeenCalled();
     });
 
@@ -1024,6 +1282,213 @@ describe('refreshRewardsEligibility', () => {
       expect(result).toBe(false);
       expect(onRewardsFetchError).toHaveBeenCalledTimes(1);
     });
+  });
+});
+
+describe('getUsableRewardStatus', () => {
+  const current = {
+    stakingProgramId: DEFAULT_STAKING_PROGRAM_ID,
+    nowMs: IN_EPOCH_NOW_MS,
+  };
+  const pollMs = REWARDS_POLL_SECONDS * 1000;
+
+  beforeEach(() => {
+    jest.useFakeTimers();
+    jest.setSystemTime(IN_EPOCH_NOW_MS);
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  it('is unknown without a snapshot', () => {
+    expect(getUsableRewardStatus(undefined, current)).toBeUndefined();
+  });
+
+  it.each([true, false])(
+    'is unknown when the instance moved to another staking program (done=%s)',
+    (done) => {
+      expect(
+        getUsableRewardStatus(
+          makeRewardSnapshot({
+            done,
+            stakingProgramId: STAKING_PROGRAM_IDS.PearlBetaMechMarketplace3,
+          }),
+          {
+            ...current,
+            stakingProgramId: STAKING_PROGRAM_IDS.PearlBetaMechMarketplace4,
+          },
+        ),
+      ).toBeUndefined();
+    },
+  );
+
+  it('keeps a false for the poll interval, inclusive', () => {
+    expect(
+      getUsableRewardStatus(
+        makeRewardSnapshot({ readAt: IN_EPOCH_NOW_MS - pollMs }),
+        current,
+      ),
+    ).toBe(false);
+  });
+
+  it('is unknown once a false is older than the poll interval', () => {
+    expect(
+      getUsableRewardStatus(
+        makeRewardSnapshot({ readAt: IN_EPOCH_NOW_MS - pollMs - 1 }),
+        current,
+      ),
+    ).toBeUndefined();
+  });
+
+  it('keeps a true at any age while its epoch is open', () => {
+    expect(
+      getUsableRewardStatus(
+        makeRewardSnapshot({ done: true, readAt: IN_EPOCH_NOW_MS - 3_000_000 }),
+        current,
+      ),
+    ).toBe(true);
+  });
+
+  it('is unknown once the epoch of a true has expired', () => {
+    expect(
+      getUsableRewardStatus(
+        makeRewardSnapshot({
+          done: true,
+          tsCheckpoint: DEFAULT_TS_CHECKPOINT - 86_400,
+        }),
+        current,
+      ),
+    ).toBeUndefined();
+  });
+});
+
+describe('updateStallClock', () => {
+  const ID = DEFAULT_SERVICE_CONFIG_ID;
+  const STALL_MS = ACTIVITY_GOAL_STALL_SECONDS * 1000;
+  const T0 = IN_EPOCH_NOW_MS;
+  const qualifying = {
+    isRunning: true,
+    epochTargetMet: true,
+    goal: makeActivityGoal({ progress: 3, target: 8 }),
+    tsCheckpoint: DEFAULT_TS_CHECKPOINT,
+  };
+  const startedClock: StallClock = {
+    since: T0,
+    progress: 3,
+    target: 8,
+    periodStart: DEFAULT_TS_CHECKPOINT,
+  };
+
+  it('starts a clock on the first read of a running, unmet, current goal', () => {
+    const clocks: Partial<Record<string, StallClock>> = {};
+    expect(updateStallClock(clocks, ID, { ...qualifying, nowMs: T0 })).toBe(
+      false,
+    );
+    expect(clocks[ID]).toEqual(startedClock);
+  });
+
+  it('reports a stall once the goal has not moved for the stall period', () => {
+    const clocks = { [ID]: { ...startedClock } };
+    expect(
+      updateStallClock(clocks, ID, {
+        ...qualifying,
+        nowMs: T0 + STALL_MS - 1,
+      }),
+    ).toBe(false);
+    expect(
+      updateStallClock(clocks, ID, { ...qualifying, nowMs: T0 + STALL_MS }),
+    ).toBe(true);
+    expect(clocks[ID]).toEqual(startedClock);
+  });
+
+  it.each([
+    ['progress', makeActivityGoal({ progress: 4, target: 8 })],
+    ['target', makeActivityGoal({ progress: 3, target: 6 })],
+    [
+      'period start',
+      makeActivityGoal({
+        progress: 3,
+        target: 8,
+        period_start: DEFAULT_TS_CHECKPOINT + 10,
+      }),
+    ],
+  ])('restarts the clock when the %s changes', (_, goal) => {
+    const clocks = { [ID]: { ...startedClock } };
+    const nowMs = T0 + STALL_MS;
+    expect(updateStallClock(clocks, ID, { ...qualifying, goal, nowMs })).toBe(
+      false,
+    );
+    expect(clocks[ID]).toEqual({
+      since: nowMs,
+      progress: goal.progress,
+      target: goal.target,
+      periodStart: goal.period_start,
+    });
+  });
+
+  it.each([
+    ['the instance is not running', { isRunning: false }],
+    ['the staking KPI is not met', { epochTargetMet: false }],
+    ['the agent publishes no block', { goal: null }],
+    [
+      'the goal is met',
+      { goal: makeActivityGoal({ progress: 8, target: 8, is_met: true }) },
+    ],
+    [
+      'the block belongs to an earlier epoch',
+      {
+        goal: makeActivityGoal({
+          progress: 3,
+          target: 8,
+          period_start: DEFAULT_TS_CHECKPOINT - 86_400,
+        }),
+      },
+    ],
+  ])('clears the clock when %s', (_, overrides) => {
+    const clocks = { [ID]: { ...startedClock } };
+    expect(
+      updateStallClock(clocks, ID, {
+        ...qualifying,
+        ...overrides,
+        nowMs: T0 + STALL_MS,
+      }),
+    ).toBe(false);
+    expect(clocks).toEqual({});
+  });
+
+  it('leaves the clocks of other instances alone', () => {
+    const clocks = { [ID]: { ...startedClock }, 'sc-other': startedClock };
+    updateStallClock(clocks, ID, {
+      ...qualifying,
+      isRunning: false,
+      nowMs: T0,
+    });
+    expect(clocks).toEqual({ 'sc-other': startedClock });
+  });
+});
+
+describe('isStallClockExpired', () => {
+  const STALL_MS = ACTIVITY_GOAL_STALL_SECONDS * 1000;
+  const clock: StallClock = {
+    since: IN_EPOCH_NOW_MS,
+    progress: 3,
+    target: 8,
+    periodStart: DEFAULT_TS_CHECKPOINT,
+  };
+
+  it('is false without a clock', () => {
+    expect(isStallClockExpired(undefined, IN_EPOCH_NOW_MS)).toBe(false);
+  });
+
+  it('is false before the stall period ends', () => {
+    expect(isStallClockExpired(clock, IN_EPOCH_NOW_MS + STALL_MS - 1)).toBe(
+      false,
+    );
+  });
+
+  it('is true from the end of the stall period', () => {
+    expect(isStallClockExpired(clock, IN_EPOCH_NOW_MS + STALL_MS)).toBe(true);
   });
 });
 

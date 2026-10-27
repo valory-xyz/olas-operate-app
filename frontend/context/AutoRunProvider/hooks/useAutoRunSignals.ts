@@ -1,14 +1,23 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { AgentType, isRunningDeploymentStatus } from '@/constants';
+import {
+  AgentType,
+  isRunningDeploymentStatus,
+  StakingProgramId,
+} from '@/constants';
 import { useBalanceAndRefillRequirementsContext } from '@/hooks';
+import { ActivityGoal, StakingRewardsInfo } from '@/types';
 import { sleepAwareDelay } from '@/utils/delay';
 
 import {
   AGENT_SELECTION_WAIT_TIMEOUT_SECONDS,
   REWARDS_POLL_SECONDS,
-  REWARDS_WAIT_TIMEOUT_SECONDS,
 } from '../constants';
+import { RewardSnapshot, StallClock } from '../types';
+import {
+  isStakingEpochExpired,
+  isStallClockExpired,
+} from '../utils/autoRunHelpers';
 import { probeDeploymentStatus } from '../utils/probeDeployment';
 
 const BALANCES_WAIT_TIMEOUT_SECONDS = AGENT_SELECTION_WAIT_TIMEOUT_SECONDS * 3;
@@ -31,6 +40,14 @@ type UseAutoRunSignalsParams = {
   isSelectedNoStakingAgent: boolean;
   /** Whether the staking epoch has expired without a checkpoint being called. */
   isEpochExpired: boolean;
+  /** Selected instance's staking program, stored with its snapshot. */
+  selectedStakingProgramId: StakingProgramId | undefined;
+  /** Selected instance's epoch, stored with its snapshot. */
+  selectedRewardsEpoch:
+    | Pick<StakingRewardsInfo, 'tsCheckpoint' | 'livenessPeriod'>
+    | undefined;
+  /** Selected instance's activity goal, stored with its snapshot. */
+  selectedActivityGoal: ActivityGoal | null | undefined;
   selectedAgentType: AgentType;
   selectedServiceConfigId: string | null;
   logMessage: (message: string) => void;
@@ -54,6 +71,9 @@ export const useAutoRunSignals = ({
   isSelectedDoneForEpoch,
   isSelectedNoStakingAgent,
   isEpochExpired,
+  selectedStakingProgramId,
+  selectedRewardsEpoch,
+  selectedActivityGoal,
   selectedAgentType,
   selectedServiceConfigId,
   logMessage,
@@ -81,13 +101,20 @@ export const useAutoRunSignals = ({
     isBalancesAndFundingRequirementsReadyForAllServices,
   );
   const isRefetchingBalancesRef = useRef(false);
-  // Latest rewards snapshot per instance; updated by RewardProvider.
+  // Latest rewards read per instance, from the poll or the selected
+  // instance's RewardProvider data. Never wiped: checked when used.
   const rewardSnapshotRef = useRef<
-    Partial<Record<string, boolean | undefined>>
+    Partial<Record<string, RewardSnapshot | undefined>>
   >({});
   // Track the previous rewards state to detect transitions.
   const lastRewardsEligibilityRef = useRef<
     Partial<Record<string, boolean | undefined>>
+  >({});
+  // When the running instance's activity goal last moved. In memory only.
+  const stallClockRef = useRef<Partial<Record<string, StallClock>>>({});
+  // Instances moved on from for a stall, with the epoch that happened in.
+  const stallDeferredRef = useRef<
+    Partial<Record<string, { tsCheckpoint: number }>>
   >({});
   // Timer + tick pair used for delayed re-scans.
   // Scheduling sets a timeout; when it fires we bump scanTick to trigger effects.
@@ -98,10 +125,13 @@ export const useAutoRunSignals = ({
   // Keep the enabled ref fresh and clear any scheduled scan on disable.
   useEffect(() => {
     enabledRef.current = enabled;
-    if (!enabled && scanTimeoutRef.current) {
+    if (enabled) return;
+    if (scanTimeoutRef.current) {
       clearTimeout(scanTimeoutRef.current);
       scanTimeoutRef.current = null;
     }
+    stallClockRef.current = {};
+    stallDeferredRef.current = {};
   }, [enabled]);
 
   // Keep refs aligned with latest render values.
@@ -135,19 +165,30 @@ export const useAutoRunSignals = ({
   // However if the epoch has already expired (clock = 0, checkpoint not yet called),
   // that value is stale — the instance needs to run in the new epoch to trigger checkpoint.
   // We check both conditions separately rather than modifying the business value itself.
+  // An unknown value is not written: the last read stays, and is checked when used.
   useEffect(() => {
     if (!selectedServiceConfigId) return;
     if (isSelectedNoStakingAgent) return;
-    const effectiveEligibility = isEpochExpired
-      ? false
-      : isSelectedDoneForEpoch;
-    rewardSnapshotRef.current[selectedServiceConfigId] = effectiveEligibility;
+    if (isSelectedDoneForEpoch === undefined) return;
+    if (!selectedStakingProgramId || !selectedRewardsEpoch) return;
+    rewardSnapshotRef.current[selectedServiceConfigId] = {
+      done: isEpochExpired ? false : isSelectedDoneForEpoch,
+      readAt: Date.now(),
+      stakingProgramId: selectedStakingProgramId,
+      tsCheckpoint: selectedRewardsEpoch.tsCheckpoint,
+      livenessPeriod: selectedRewardsEpoch.livenessPeriod,
+      goalTarget: selectedActivityGoal?.target ?? null,
+      goalPeriodStart: selectedActivityGoal?.period_start ?? null,
+    };
     setRewardsTick((value) => value + 1);
   }, [
     isSelectedDoneForEpoch,
     isEpochExpired,
     isSelectedNoStakingAgent,
+    selectedActivityGoal,
+    selectedRewardsEpoch,
     selectedServiceConfigId,
+    selectedStakingProgramId,
   ]);
 
   // Cleanup pending scan timer on unmount.
@@ -251,49 +292,57 @@ export const useAutoRunSignals = ({
     return false;
   }, [logMessage, refetch]);
 
-  // Wait for rewards eligibility to be populated for a given instance.
-  const waitForRewardsEligibility = useCallback(
-    // RewardProvider is selection-driven, so snapshot may be undefined briefly
-    // right after switching candidates.
-    async (serviceConfigId: string) => {
-      const startedAt = Date.now();
-      while (
-        rewardSnapshotRef.current[serviceConfigId] === undefined &&
-        enabledRef.current
-      ) {
-        if (Date.now() - startedAt > REWARDS_WAIT_TIMEOUT_SECONDS * 1000) {
-          logMessage(
-            `rewards eligibility timeout: ${serviceConfigId}, proceeding without it`,
-          );
-          return undefined;
-        }
-        const ok = await sleepAwareDelay(2);
-        if (!ok) return undefined;
-      }
-      const value = rewardSnapshotRef.current[serviceConfigId];
-      return value;
-    },
-    [logMessage],
-  );
-
-  // Reset rewards snapshot so downstream waits don't use stale values.
-  const markRewardSnapshotPending = useCallback((serviceConfigId: string) => {
-    rewardSnapshotRef.current[serviceConfigId] = undefined;
-    setRewardsTick((value) => value + 1);
-  }, []);
-
   const getRewardSnapshot = useCallback(
     (serviceConfigId: string) => rewardSnapshotRef.current[serviceConfigId],
     [],
   );
 
   const setRewardSnapshot = useCallback(
-    (serviceConfigId: string, value: boolean | undefined) => {
-      rewardSnapshotRef.current[serviceConfigId] = value;
+    (serviceConfigId: string, snapshot: RewardSnapshot) => {
+      rewardSnapshotRef.current[serviceConfigId] = snapshot;
       setRewardsTick((current) => current + 1);
     },
     [],
   );
+
+  const isStalled = useCallback(
+    (serviceConfigId: string) =>
+      isStallClockExpired(stallClockRef.current[serviceConfigId], Date.now()),
+    [],
+  );
+
+  const restartStallClock = useCallback((serviceConfigId: string) => {
+    const clock = stallClockRef.current[serviceConfigId];
+    if (clock) clock.since = Date.now();
+  }, []);
+
+  const deferStalled = useCallback((serviceConfigId: string) => {
+    delete stallClockRef.current[serviceConfigId];
+    const snapshot = rewardSnapshotRef.current[serviceConfigId];
+    stallDeferredRef.current[serviceConfigId] = {
+      tsCheckpoint: snapshot?.tsCheckpoint ?? 0,
+    };
+  }, []);
+
+  const clearStallDeferral = useCallback((serviceConfigId: string) => {
+    delete stallDeferredRef.current[serviceConfigId];
+  }, []);
+
+  // A deferral lasts for the epoch it happened in.
+  const isStallDeferred = useCallback((serviceConfigId: string) => {
+    const deferral = stallDeferredRef.current[serviceConfigId];
+    if (!deferral) return false;
+    const snapshot = rewardSnapshotRef.current[serviceConfigId];
+    if (
+      snapshot &&
+      (snapshot.tsCheckpoint !== deferral.tsCheckpoint ||
+        isStakingEpochExpired(snapshot))
+    ) {
+      delete stallDeferredRef.current[serviceConfigId];
+      return false;
+    }
+    return true;
+  }, []);
 
   const getBalancesStatus = useCallback(
     () => ({
@@ -356,17 +405,21 @@ export const useAutoRunSignals = ({
     runningServiceConfigIdRef,
     rewardSnapshotRef,
     lastRewardsEligibilityRef,
+    stallClockRef,
     scanTick,
     rewardsTick,
     scheduleNextScan,
     hasScheduledScan,
     waitForInstanceSelection,
     waitForBalancesReady,
-    waitForRewardsEligibility,
     waitForRunningInstance,
-    markRewardSnapshotPending,
     getRewardSnapshot,
     setRewardSnapshot,
+    isStalled,
+    restartStallClock,
+    deferStalled,
+    clearStallDeferral,
+    isStallDeferred,
     getBalancesStatus,
   };
 };

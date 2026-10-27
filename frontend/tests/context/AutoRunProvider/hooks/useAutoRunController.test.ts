@@ -8,14 +8,22 @@ import {
   HEALTH_SUMMARY_INTERVAL_SECONDS,
 } from '../../../../context/AutoRunProvider/constants';
 import { useAutoRunController } from '../../../../context/AutoRunProvider/hooks/useAutoRunController';
-import { AgentMeta } from '../../../../context/AutoRunProvider/types';
+import {
+  AgentMeta,
+  RewardSnapshot,
+} from '../../../../context/AutoRunProvider/types';
 import {
   DEFAULT_SERVICE_CONFIG_ID,
+  DEFAULT_STAKING_PROGRAM_ID,
+  DEFAULT_TS_CHECKPOINT,
+  makeActivityGoal,
   makeAutoRunAgentMeta,
+  makeStakingRewardsInfo,
   MOCK_SERVICE_CONFIG_ID_2,
 } from '../../../helpers/factories';
 
 jest.mock('../../../../hooks', () => ({
+  useActivityGoal: jest.fn().mockReturnValue({ activityGoal: null }),
   useRewardContext: jest.fn().mockReturnValue({
     isEpochTargetMet: false,
     stakingRewardsDetails: null,
@@ -47,6 +55,7 @@ jest.mock('../../../../hooks/useIsInitiallyFunded', () => ({
 }));
 jest.mock('../../../../context/AutoRunProvider/utils/autoRunHelpers', () => ({
   fetchDeployabilityForAgent: jest.fn().mockResolvedValue({ canRun: true }),
+  getUsableRewardStatus: jest.fn().mockReturnValue(undefined),
   isStakingEpochExpired: jest.fn().mockReturnValue(false),
 }));
 jest.mock(
@@ -57,29 +66,34 @@ jest.mock(
     }),
   }),
 );
+const makeSignals = () => ({
+  enabledRef: { current: false },
+  runningAgentTypeRef: { current: null },
+  runningServiceConfigIdRef: { current: null as string | null },
+  lastRewardsEligibilityRef: { current: {} },
+  stallClockRef: { current: {} },
+  scanTick: 0,
+  rewardsTick: 0,
+  scheduleNextScan: jest.fn(),
+  hasScheduledScan: jest.fn().mockReturnValue(false),
+  waitForInstanceSelection: jest.fn().mockResolvedValue(true),
+  waitForBalancesReady: jest.fn().mockResolvedValue(true),
+  waitForRunningInstance: jest.fn().mockResolvedValue(true),
+  getRewardSnapshot: jest
+    .fn<RewardSnapshot | undefined, [string]>()
+    .mockReturnValue(undefined),
+  setRewardSnapshot: jest.fn(),
+  isStalled: jest.fn().mockReturnValue(false),
+  restartStallClock: jest.fn(),
+  deferStalled: jest.fn(),
+  clearStallDeferral: jest.fn(),
+  isStallDeferred: jest.fn().mockReturnValue(false),
+  getBalancesStatus: jest.fn().mockReturnValue({ ready: true, loading: false }),
+});
 jest.mock(
   '../../../../context/AutoRunProvider/hooks/useAutoRunSignals',
   () => ({
-    useAutoRunSignals: jest.fn().mockReturnValue({
-      enabledRef: { current: false },
-      runningAgentTypeRef: { current: null },
-      runningServiceConfigIdRef: { current: null },
-      lastRewardsEligibilityRef: { current: {} },
-      scanTick: 0,
-      rewardsTick: 0,
-      scheduleNextScan: jest.fn(),
-      hasScheduledScan: jest.fn().mockReturnValue(false),
-      waitForInstanceSelection: jest.fn().mockResolvedValue(true),
-      waitForBalancesReady: jest.fn().mockResolvedValue(true),
-      waitForRewardsEligibility: jest.fn().mockResolvedValue(false),
-      waitForRunningInstance: jest.fn().mockResolvedValue(true),
-      markRewardSnapshotPending: jest.fn(),
-      getRewardSnapshot: jest.fn().mockReturnValue(undefined),
-      setRewardSnapshot: jest.fn(),
-      getBalancesStatus: jest
-        .fn()
-        .mockReturnValue({ ready: true, loading: false }),
-    }),
+    useAutoRunSignals: jest.fn(),
   }),
 );
 jest.mock(
@@ -99,7 +113,7 @@ jest.mock(
   () => ({
     useAutoRunScanner: jest.fn().mockReturnValue({
       getPreferredStartFrom: jest.fn().mockReturnValue(null),
-      scanAndStartNext: jest.fn().mockResolvedValue({ started: false }),
+      scanAndStartNext: jest.fn().mockResolvedValue({ startedId: null }),
       startSelectedAgentIfEligible: jest.fn().mockResolvedValue(false),
     }),
   }),
@@ -122,12 +136,21 @@ const { useAutoRunOperations } = jest.requireMock(
 const { useAutoRunSignals } = jest.requireMock(
   '../../../../context/AutoRunProvider/hooks/useAutoRunSignals',
 ) as { useAutoRunSignals: jest.Mock };
-const { useEpochWorkStatus } = jest.requireMock('../../../../hooks') as {
-  useEpochWorkStatus: jest.Mock;
-};
-const { fetchDeployabilityForAgent } = jest.requireMock(
+const { useAutoRunScanner } = jest.requireMock(
+  '../../../../context/AutoRunProvider/hooks/useAutoRunScanner',
+) as { useAutoRunScanner: jest.Mock };
+const { useActivityGoal, useEpochWorkStatus, useRewardContext } =
+  jest.requireMock('../../../../hooks') as {
+    useActivityGoal: jest.Mock;
+    useEpochWorkStatus: jest.Mock;
+    useRewardContext: jest.Mock;
+  };
+const { fetchDeployabilityForAgent, getUsableRewardStatus } = jest.requireMock(
   '../../../../context/AutoRunProvider/utils/autoRunHelpers',
-) as { fetchDeployabilityForAgent: jest.Mock };
+) as {
+  fetchDeployabilityForAgent: jest.Mock;
+  getUsableRewardStatus: jest.Mock;
+};
 const { useLogAutoRunEvent } = jest.requireMock(
   '../../../../context/AutoRunProvider/hooks/useLogAutoRunEvent',
 ) as { useLogAutoRunEvent: jest.Mock };
@@ -151,9 +174,20 @@ const makeHookParams = (
 });
 
 describe('useAutoRunController', () => {
+  let signals: ReturnType<typeof makeSignals>;
+
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers();
+    signals = makeSignals();
+    useAutoRunSignals.mockReturnValue(signals);
+    useEpochWorkStatus.mockReturnValue({ isDoneForEpoch: false });
+    useActivityGoal.mockReturnValue({ activityGoal: null });
+    useRewardContext.mockReturnValue({
+      isEpochTargetMet: false,
+      stakingRewardsDetails: null,
+    });
+    getUsableRewardStatus.mockReturnValue(undefined);
   });
 
   afterEach(() => {
@@ -362,6 +396,153 @@ describe('useAutoRunController', () => {
       });
       expect(result).toBeNull();
       expect(fetchDeployabilityForAgent).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('scanner wiring', () => {
+    const lastScannerArgs = () =>
+      useAutoRunScanner.mock.calls[useAutoRunScanner.mock.calls.length - 1][0];
+    const traderMeta = makeAutoRunAgentMeta(
+      AgentMap.PredictTrader,
+      AGENT_CONFIG[AgentMap.PredictTrader],
+    ) as AgentMeta;
+    const RUNNING_ID = DEFAULT_SERVICE_CONFIG_ID;
+
+    const renderWithRunning = (runningId: string | null) => {
+      signals.runningServiceConfigIdRef.current = runningId;
+      renderHook(() =>
+        useAutoRunController(
+          makeHookParams({ configuredAgents: [traderMeta] }),
+        ),
+      );
+      return lastScannerArgs();
+    };
+
+    it('treats the running instance as stopped when the scan confirmed its stop', async () => {
+      const { getDeployabilityForAgent } = renderWithRunning(RUNNING_ID);
+
+      await act(async () => {
+        await getDeployabilityForAgent(traderMeta, { stoppedId: RUNNING_ID });
+      });
+
+      const context = fetchDeployabilityForAgent.mock.calls[0][1];
+      expect(context.runningServiceConfigId).toBeNull();
+      expect(context).not.toHaveProperty('stoppedId');
+    });
+
+    it('keeps the running instance when a different instance was stopped', async () => {
+      const { getDeployabilityForAgent } = renderWithRunning(RUNNING_ID);
+
+      await act(async () => {
+        await getDeployabilityForAgent(traderMeta, {
+          stoppedId: MOCK_SERVICE_CONFIG_ID_2,
+        });
+      });
+
+      const context = fetchDeployabilityForAgent.mock.calls[0][1];
+      expect(context.runningServiceConfigId).toBe(RUNNING_ID);
+      expect(context).not.toHaveProperty('stoppedId');
+    });
+
+    it('returns the usable status of the stored snapshot for a configured instance', () => {
+      const nowMs = 1_800_000_000_000;
+      jest.setSystemTime(nowMs);
+      const snapshot: RewardSnapshot = {
+        done: true,
+        readAt: nowMs - 1000,
+        stakingProgramId: DEFAULT_STAKING_PROGRAM_ID,
+        tsCheckpoint: DEFAULT_TS_CHECKPOINT,
+        livenessPeriod: { _isBigNumber: true, _hex: '0x015180' },
+        goalTarget: null,
+        goalPeriodStart: null,
+      };
+      signals.getRewardSnapshot.mockReturnValue(snapshot);
+      getUsableRewardStatus.mockReturnValue(true);
+      const { getRewardStatus } = renderWithRunning(null);
+
+      expect(getRewardStatus(DEFAULT_SERVICE_CONFIG_ID)).toBe(true);
+      expect(signals.getRewardSnapshot).toHaveBeenCalledWith(
+        DEFAULT_SERVICE_CONFIG_ID,
+      );
+      expect(getUsableRewardStatus).toHaveBeenCalledWith(snapshot, {
+        stakingProgramId: traderMeta.stakingProgramId,
+        nowMs,
+      });
+    });
+
+    it('returns an unknown rewards status for an instance that is not configured', () => {
+      getUsableRewardStatus.mockReturnValue(true);
+      const { getRewardStatus } = renderWithRunning(null);
+
+      expect(getRewardStatus('sc-unknown')).toBeUndefined();
+      expect(getUsableRewardStatus).not.toHaveBeenCalled();
+    });
+
+    it('wires the stall helpers from the signals into the scanner and lifecycle', () => {
+      const scannerArgs = renderWithRunning(null);
+      const lifecycleArgs =
+        useAutoRunLifecycle.mock.calls[
+          useAutoRunLifecycle.mock.calls.length - 1
+        ][0];
+
+      expect(scannerArgs.isStallDeferred).toBe(signals.isStallDeferred);
+      expect(scannerArgs.clearStallDeferral).toBe(signals.clearStallDeferral);
+      expect(lifecycleArgs.isStalled).toBe(signals.isStalled);
+      expect(lifecycleArgs.restartStallClock).toBe(signals.restartStallClock);
+      expect(lifecycleArgs.deferStalled).toBe(signals.deferStalled);
+      expect(lifecycleArgs.isStallDeferred).toBe(signals.isStallDeferred);
+      expect(useAutoRunOperations.mock.calls[0][0].stallClockRef).toBe(
+        signals.stallClockRef,
+      );
+    });
+  });
+
+  describe('selected-instance snapshot inputs', () => {
+    const traderMeta = makeAutoRunAgentMeta(
+      AgentMap.PredictTrader,
+      AGENT_CONFIG[AgentMap.PredictTrader],
+    ) as AgentMeta;
+    const lastSignalsArgs = () =>
+      useAutoRunSignals.mock.calls[useAutoRunSignals.mock.calls.length - 1][0];
+
+    it('feeds the selected program, rewards epoch and activity goal to the signals', () => {
+      const details = makeStakingRewardsInfo();
+      const activityGoal = makeActivityGoal();
+      useRewardContext.mockReturnValue({ stakingRewardsDetails: details });
+      useActivityGoal.mockReturnValue({ activityGoal });
+
+      renderHook(() =>
+        useAutoRunController(
+          makeHookParams({ configuredAgents: [traderMeta] }),
+        ),
+      );
+
+      expect(useActivityGoal).toHaveBeenCalledWith(DEFAULT_SERVICE_CONFIG_ID);
+      const signalsArgs = lastSignalsArgs();
+      expect(signalsArgs.selectedStakingProgramId).toBe(
+        traderMeta.stakingProgramId,
+      );
+      expect(signalsArgs.selectedRewardsEpoch).toEqual({
+        tsCheckpoint: details.tsCheckpoint,
+        livenessPeriod: details.livenessPeriod,
+      });
+      expect(signalsArgs.selectedActivityGoal).toBe(activityGoal);
+    });
+
+    it('feeds no program or epoch when the selection is unknown and rewards are not loaded', () => {
+      renderHook(() =>
+        useAutoRunController(
+          makeHookParams({
+            configuredAgents: [traderMeta],
+            selectedServiceConfigId: 'sc-unknown',
+          }),
+        ),
+      );
+
+      const signalsArgs = lastSignalsArgs();
+      expect(signalsArgs.selectedStakingProgramId).toBeUndefined();
+      expect(signalsArgs.selectedRewardsEpoch).toBeUndefined();
+      expect(signalsArgs.selectedActivityGoal).toBeNull();
     });
   });
 });
