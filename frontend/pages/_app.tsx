@@ -6,6 +6,7 @@ import type { AppProps } from 'next/app';
 import { useEffect, useState } from 'react';
 
 import ErrorBoundary from '@/components/ErrorBoundary';
+import { CompleteSetupFromFundingRuns } from '@/components/FundingFlow/CompleteSetupFromFundingRuns';
 import { Layout } from '@/components/Layout';
 import { OnboardingSurveyTimingClassifier } from '@/components/OnboardingSurvey/TimingClassifier';
 import { mainTheme } from '@/constants';
@@ -65,6 +66,7 @@ function App({ Component, pageProps }: AppProps) {
                                       <PearlWalletProvider>
                                         <SupportModalProvider>
                                           <OnboardingSurveyTimingClassifier />
+                                          <CompleteSetupFromFundingRuns />
                                           {isMounted ? (
                                             <Layout>
                                               <Component {...pageProps} />

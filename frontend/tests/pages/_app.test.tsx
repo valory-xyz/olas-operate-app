@@ -153,6 +153,9 @@ jest.mock('../../context/SupportModalProvider', () => ({
 jest.mock('../../components/OnboardingSurvey/TimingClassifier', () => ({
   OnboardingSurveyTimingClassifier: () => null,
 }));
+jest.mock('../../components/FundingFlow/CompleteSetupFromFundingRuns', () => ({
+  CompleteSetupFromFundingRuns: () => null,
+}));
 
 const mockUseElectronApi = useElectronApi as jest.MockedFunction<
   typeof useElectronApi

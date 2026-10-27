@@ -58,6 +58,23 @@ export const useIsInitiallyFunded = () => {
     [electronApi.store, selectedAgentType, storeState],
   );
 
+  /** Mark one instance's setup complete, whichever instance is selected. */
+  const setInstanceInitiallyFunded = useCallback(
+    (serviceConfigId: string, agentType: typeof selectedAgentType) => {
+      const current = storeState?.[agentType]?.isInitialFunded;
+      // A legacy boolean is converted by its own migration; never write over it.
+      if (typeof current === 'boolean') return;
+      if (current?.[serviceConfigId] === true) return;
+      // A per-id key, so writes for several instances of one agent type do
+      // not overwrite each other before the store state catches up.
+      electronApi.store?.set?.(
+        `${agentType}.isInitialFunded.${serviceConfigId}`,
+        true,
+      );
+    },
+    [electronApi.store, storeState],
+  );
+
   /** Check if a specific instance is initially funded */
   const isInstanceInitiallyFunded = useCallback(
     (serviceConfigId: string, agentType: typeof selectedAgentType) => {
@@ -73,6 +90,7 @@ export const useIsInitiallyFunded = () => {
   return {
     isInitialFunded,
     setIsInitiallyFunded,
+    setInstanceInitiallyFunded,
     markServiceAsNotInitiallyFunded,
     isInstanceInitiallyFunded,
   };
