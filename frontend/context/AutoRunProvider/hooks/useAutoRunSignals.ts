@@ -138,8 +138,10 @@ export const useAutoRunSignals = ({
   useEffect(() => {
     runningAgentTypeRef.current = runningAgentType;
   }, [runningAgentType]);
+  // Only the running instance has a stall clock, and a new run gets a fresh one.
   useEffect(() => {
     runningServiceConfigIdRef.current = runningServiceConfigId;
+    stallClockRef.current = {};
   }, [runningServiceConfigId]);
   useEffect(() => {
     isSelectedAgentDetailsLoadingRef.current = isSelectedAgentDetailsLoading;

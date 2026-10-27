@@ -465,6 +465,34 @@ describe('useAutoRunSignals', () => {
       );
     });
 
+    it.each([
+      ['stops', null],
+      ['hands over to another instance', MOCK_SERVICE_CONFIG_ID_2],
+    ])(
+      'drops the stall clock when the running instance %s',
+      (_, nextRunningId) => {
+        const params = makeHookParams({
+          enabled: true,
+          runningServiceConfigId: DEFAULT_SERVICE_CONFIG_ID,
+        });
+        const { result, rerender } = renderHook(
+          (props) => useAutoRunSignals(props),
+          { initialProps: params },
+        );
+        result.current.stallClockRef.current[DEFAULT_SERVICE_CONFIG_ID] =
+          makeStallClock({ since: NOW_MS - STALL_MS });
+
+        rerender({ ...params, runningServiceConfigId: nextRunningId });
+        rerender({
+          ...params,
+          runningServiceConfigId: DEFAULT_SERVICE_CONFIG_ID,
+        });
+
+        expect(result.current.stallClockRef.current).toEqual({});
+        expect(result.current.isStalled(DEFAULT_SERVICE_CONFIG_ID)).toBe(false);
+      },
+    );
+
     it('disabling auto-run clears stall clocks and deferrals', () => {
       const params = makeHookParams({ enabled: true });
       const { result, rerender } = renderHook(
