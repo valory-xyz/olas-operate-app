@@ -10,6 +10,7 @@ import {
 import { useAutoRunController } from '../../../../context/AutoRunProvider/hooks/useAutoRunController';
 import {
   AgentMeta,
+  ObservedGoal,
   RewardSnapshot,
 } from '../../../../context/AutoRunProvider/types';
 import {
@@ -83,6 +84,9 @@ const makeSignals = () => ({
     .fn<RewardSnapshot | undefined, [string]>()
     .mockReturnValue(undefined),
   setRewardSnapshot: jest.fn(),
+  getObservedGoal: jest
+    .fn<ObservedGoal | undefined, [string]>()
+    .mockReturnValue(undefined),
   isStalled: jest.fn().mockReturnValue(false),
   restartStallClock: jest.fn(),
   deferStalled: jest.fn(),
@@ -453,10 +457,16 @@ describe('useAutoRunController', () => {
         stakingProgramId: DEFAULT_STAKING_PROGRAM_ID,
         tsCheckpoint: DEFAULT_TS_CHECKPOINT,
         livenessPeriod: { _isBigNumber: true, _hex: '0x015180' },
+        goalUnit: null,
         goalTarget: null,
         goalPeriodStart: null,
       };
+      const observedGoal: ObservedGoal = {
+        goal: makeActivityGoal(),
+        observedAt: nowMs - 500,
+      };
       signals.getRewardSnapshot.mockReturnValue(snapshot);
+      signals.getObservedGoal.mockReturnValue(observedGoal);
       getUsableRewardStatus.mockReturnValue(true);
       const { getRewardStatus } = renderWithRunning(null);
 
@@ -467,6 +477,7 @@ describe('useAutoRunController', () => {
       expect(getUsableRewardStatus).toHaveBeenCalledWith(snapshot, {
         stakingProgramId: traderMeta.stakingProgramId,
         nowMs,
+        observedGoal,
       });
     });
 

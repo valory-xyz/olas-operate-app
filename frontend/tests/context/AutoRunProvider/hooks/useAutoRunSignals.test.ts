@@ -68,6 +68,7 @@ const makeRewardSnapshot = (
   stakingProgramId: DEFAULT_STAKING_PROGRAM_ID,
   tsCheckpoint: DEFAULT_TS_CHECKPOINT,
   livenessPeriod: DEFAULT_LIVENESS,
+  goalUnit: null,
   goalTarget: null,
   goalPeriodStart: null,
   ...overrides,
@@ -171,9 +172,35 @@ describe('useAutoRunSignals', () => {
         stakingProgramId: DEFAULT_STAKING_PROGRAM_ID,
         tsCheckpoint: DEFAULT_TS_CHECKPOINT,
         livenessPeriod: DEFAULT_LIVENESS,
+        goalUnit: 'trades',
         goalTarget: 8,
         goalPeriodStart: DEFAULT_TS_CHECKPOINT,
       });
+    });
+
+    it('records the selected goal as seen, even when no snapshot is written', () => {
+      const goal = makeActivityGoal({ target: 12 });
+      const params = makeHookParams({
+        isSelectedDoneForEpoch: undefined,
+        selectedActivityGoal: goal,
+      });
+      const { result } = renderHook(() => useAutoRunSignals(params));
+
+      expect(
+        result.current.getRewardSnapshot(DEFAULT_SERVICE_CONFIG_ID),
+      ).toBeUndefined();
+      expect(result.current.getObservedGoal(DEFAULT_SERVICE_CONFIG_ID)).toEqual(
+        { goal, observedAt: NOW_MS },
+      );
+    });
+
+    it('records nothing while the selected goal is still loading', () => {
+      const { result } = renderHook(() =>
+        useAutoRunSignals(makeHookParams({ selectedActivityGoal: undefined })),
+      );
+      expect(
+        result.current.getObservedGoal(DEFAULT_SERVICE_CONFIG_ID),
+      ).toBeUndefined();
     });
 
     it('stores null goal fields when the selected instance has no activity goal', () => {
@@ -185,7 +212,12 @@ describe('useAutoRunSignals', () => {
 
       expect(
         result.current.getRewardSnapshot(DEFAULT_SERVICE_CONFIG_ID),
-      ).toMatchObject({ done: false, goalTarget: null, goalPeriodStart: null });
+      ).toMatchObject({
+        done: false,
+        goalUnit: null,
+        goalTarget: null,
+        goalPeriodStart: null,
+      });
     });
 
     it('rewrites the snapshot with a fresh readAt when isSelectedDoneForEpoch changes', () => {

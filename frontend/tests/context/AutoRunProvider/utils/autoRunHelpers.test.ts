@@ -102,6 +102,7 @@ const makeRewardSnapshot = (
     stakingProgramId: DEFAULT_STAKING_PROGRAM_ID,
     tsCheckpoint,
     livenessPeriod,
+    goalUnit: null,
     goalTarget: null,
     goalPeriodStart: null,
     ...overrides,
@@ -341,6 +342,32 @@ describe('refreshRewardsEligibility', () => {
       expect(mockFetchRewards).not.toHaveBeenCalled();
     });
 
+    it('answers unknown from a stored true once another goal was seen', async () => {
+      const params = makeParams({
+        lastRewardsFetchRef: {
+          current: { [DEFAULT_SERVICE_CONFIG_ID]: IN_EPOCH_NOW_MS - 1_000 },
+        },
+        getRewardSnapshot: jest.fn().mockReturnValue(
+          makeRewardSnapshot({
+            done: true,
+            readAt: IN_EPOCH_NOW_MS - 60_000,
+            goalUnit: 'trades',
+            goalTarget: 8,
+            goalPeriodStart: DEFAULT_TS_CHECKPOINT,
+          }),
+        ),
+        getObservedGoal: jest.fn().mockReturnValue({
+          goal: makeActivityGoal({ target: 12 }),
+          observedAt: IN_EPOCH_NOW_MS - 30_000,
+        }),
+      });
+      const result = await refreshRewardsEligibility(params);
+      expect(result).toBeUndefined();
+      expect(params.getObservedGoal).toHaveBeenCalledWith(
+        DEFAULT_SERVICE_CONFIG_ID,
+      );
+    });
+
     it('answers a recent stored false', async () => {
       const result = await refreshRewardsEligibility(
         makeThrottledParams(
@@ -400,6 +427,7 @@ describe('refreshRewardsEligibility', () => {
         stakingProgramId: DEFAULT_STAKING_PROGRAM_ID,
         tsCheckpoint: DEFAULT_TS_CHECKPOINT,
         livenessPeriod: rewards.livenessPeriod,
+        goalUnit: 'trades',
         goalTarget: 8,
         goalPeriodStart: DEFAULT_TS_CHECKPOINT,
       }),
@@ -418,6 +446,7 @@ describe('refreshRewardsEligibility', () => {
       DEFAULT_SERVICE_CONFIG_ID,
       expect.objectContaining({
         done: false,
+        goalUnit: null,
         goalTarget: null,
         goalPeriodStart: null,
       }),
@@ -1265,6 +1294,7 @@ describe('refreshRewardsEligibility', () => {
         stakingProgramId: 'no_staking',
         tsCheckpoint: 0,
         livenessPeriod: { _isBigNumber: true, _hex: '0x00' },
+        goalUnit: null,
         goalTarget: null,
         goalPeriodStart: null,
       });
@@ -1348,6 +1378,55 @@ describe('getUsableRewardStatus', () => {
         current,
       ),
     ).toBe(true);
+  });
+
+  describe('a true read with one goal, after another goal was seen', () => {
+    const doneWithGoal = makeRewardSnapshot({
+      done: true,
+      readAt: IN_EPOCH_NOW_MS - 60_000,
+      goalUnit: 'trades',
+      goalTarget: 8,
+      goalPeriodStart: DEFAULT_TS_CHECKPOINT,
+    });
+    const seenLater = (goal: ReturnType<typeof makeActivityGoal> | null) => ({
+      ...current,
+      observedGoal: { goal, observedAt: IN_EPOCH_NOW_MS - 1_000 },
+    });
+
+    it.each([
+      ['target', makeActivityGoal({ target: 12 })],
+      ['unit', makeActivityGoal({ unit: 'rounds' })],
+      [
+        'period start',
+        makeActivityGoal({ period_start: DEFAULT_TS_CHECKPOINT + 60 }),
+      ],
+      ['removal', null],
+    ])('is unknown after a goal %s change', (_, goal) => {
+      expect(
+        getUsableRewardStatus(doneWithGoal, seenLater(goal)),
+      ).toBeUndefined();
+    });
+
+    it('keeps the true when the goal seen is the one it was read with', () => {
+      expect(
+        getUsableRewardStatus(
+          doneWithGoal,
+          seenLater(makeActivityGoal({ progress: 8, is_met: true })),
+        ),
+      ).toBe(true);
+    });
+
+    it('keeps the true when the other goal was seen before the read', () => {
+      expect(
+        getUsableRewardStatus(doneWithGoal, {
+          ...current,
+          observedGoal: {
+            goal: makeActivityGoal({ target: 12 }),
+            observedAt: doneWithGoal.readAt - 1,
+          },
+        }),
+      ).toBe(true);
+    });
   });
 
   it('is unknown once the epoch of a true has expired', () => {

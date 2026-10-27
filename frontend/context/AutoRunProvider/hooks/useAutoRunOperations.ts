@@ -6,7 +6,7 @@ import {
   AUTO_RUN_HEALTH_METRIC,
   AutoRunHealthMetricNoRotation,
 } from '../constants';
-import { AgentMeta, RewardSnapshot, StallClock } from '../types';
+import { AgentMeta, ObservedGoal, RewardSnapshot, StallClock } from '../types';
 import { refreshRewardsEligibility as refreshRewardsEligibilityHelper } from '../utils/autoRunHelpers';
 import {
   getInstanceDisplayNames,
@@ -44,6 +44,7 @@ type UseAutoRunOperationsParams = {
     serviceConfigId: string,
     snapshot: RewardSnapshot,
   ) => void;
+  getObservedGoal?: (serviceConfigId: string) => ObservedGoal | undefined;
   recordMetric: (metric: AutoRunHealthMetricNoRotation) => void;
   logMessage: (message: string) => void;
 };
@@ -70,6 +71,7 @@ export const useAutoRunOperations = ({
   waitForRunningInstance,
   getRewardSnapshot,
   setRewardSnapshot,
+  getObservedGoal,
   recordMetric,
   logMessage,
 }: UseAutoRunOperationsParams) => {
@@ -124,12 +126,14 @@ export const useAutoRunOperations = ({
         stallClockRef,
         getRewardSnapshot,
         setRewardSnapshot,
+        getObservedGoal,
         logMessage,
         onRewardsFetchError: () =>
           recordMetric(AUTO_RUN_HEALTH_METRIC.REWARDS_ERRORS),
       }),
     [
       configuredAgents,
+      getObservedGoal,
       getRewardSnapshot,
       logMessage,
       recordMetric,

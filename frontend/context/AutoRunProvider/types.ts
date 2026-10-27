@@ -1,6 +1,12 @@
 import { AGENT_CONFIG } from '@/config/agents';
 import { AgentType, EvmChainId, StakingProgramId } from '@/constants';
-import { Address, Service, ServiceConfigId, StakingRewardsInfo } from '@/types';
+import {
+  ActivityGoal,
+  Address,
+  Service,
+  ServiceConfigId,
+  StakingRewardsInfo,
+} from '@/types';
 
 /**
  * Legacy auto-run inclusion entry, keyed by AgentType.
@@ -88,9 +94,17 @@ export type RewardSnapshot = {
   /** Epoch start of the read, in seconds. */
   tsCheckpoint: number;
   livenessPeriod: StakingRewardsInfo['livenessPeriod'];
-  /** `activity_goal.target` read with it, `null` when none was read. */
+  /** `activity_goal` read with it, `null` when none was read. */
+  goalUnit: ActivityGoal['unit'] | null;
   goalTarget: number | null;
   goalPeriodStart: number | null;
+};
+
+/** An instance's activity goal as last seen outside a rewards read. */
+export type ObservedGoal = {
+  goal: ActivityGoal | null;
+  /** ms */
+  observedAt: number;
 };
 
 /**

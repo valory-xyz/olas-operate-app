@@ -13,7 +13,7 @@ import {
   AGENT_SELECTION_WAIT_TIMEOUT_SECONDS,
   REWARDS_POLL_SECONDS,
 } from '../constants';
-import { RewardSnapshot, StallClock } from '../types';
+import { ObservedGoal, RewardSnapshot, StallClock } from '../types';
 import {
   isStakingEpochExpired,
   isStallClockExpired,
@@ -106,6 +106,8 @@ export const useAutoRunSignals = ({
   const rewardSnapshotRef = useRef<
     Partial<Record<string, RewardSnapshot | undefined>>
   >({});
+  // Latest activity goal seen for each instance outside a rewards read.
+  const observedGoalRef = useRef<Partial<Record<string, ObservedGoal>>>({});
   // Track the previous rewards state to detect transitions.
   const lastRewardsEligibilityRef = useRef<
     Partial<Record<string, boolean | undefined>>
@@ -161,6 +163,16 @@ export const useAutoRunSignals = ({
     selectedServiceConfigIdRef.current = selectedServiceConfigId;
   }, [selectedServiceConfigId]);
 
+  // A stored `true` read with another goal no longer decides on its own.
+  useEffect(() => {
+    if (!selectedServiceConfigId) return;
+    if (selectedActivityGoal === undefined) return;
+    observedGoalRef.current[selectedServiceConfigId] = {
+      goal: selectedActivityGoal,
+      observedAt: Date.now(),
+    };
+  }, [selectedActivityGoal, selectedServiceConfigId]);
+
   // Update rewards snapshot for the selected instance (RewardProvider is selection-driven).
   // isSelectedDoneForEpoch=true means the instance has done its epoch work
   // (staking KPI and activity goal), matching `refreshRewardsEligibility`.
@@ -179,6 +191,7 @@ export const useAutoRunSignals = ({
       stakingProgramId: selectedStakingProgramId,
       tsCheckpoint: selectedRewardsEpoch.tsCheckpoint,
       livenessPeriod: selectedRewardsEpoch.livenessPeriod,
+      goalUnit: selectedActivityGoal?.unit ?? null,
       goalTarget: selectedActivityGoal?.target ?? null,
       goalPeriodStart: selectedActivityGoal?.period_start ?? null,
     };
@@ -307,6 +320,11 @@ export const useAutoRunSignals = ({
     [],
   );
 
+  const getObservedGoal = useCallback(
+    (serviceConfigId: string) => observedGoalRef.current[serviceConfigId],
+    [],
+  );
+
   const isStalled = useCallback(
     (serviceConfigId: string) =>
       isStallClockExpired(stallClockRef.current[serviceConfigId], Date.now()),
@@ -417,6 +435,7 @@ export const useAutoRunSignals = ({
     waitForRunningInstance,
     getRewardSnapshot,
     setRewardSnapshot,
+    getObservedGoal,
     isStalled,
     restartStallClock,
     deferStalled,

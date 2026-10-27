@@ -31,7 +31,7 @@ import {
   REWARDS_POLL_SECONDS,
   REWARDS_RETRY_DELAY_SECONDS,
 } from '../constants';
-import { AgentMeta, RewardSnapshot, StallClock } from '../types';
+import { AgentMeta, ObservedGoal, RewardSnapshot, StallClock } from '../types';
 
 /**
  * Returns true when the staking epoch has expired but no on-chain checkpoint
@@ -57,26 +57,44 @@ export const isStakingEpochExpired = ({
   }
 };
 
+const isSnapshotGoal = (snapshot: RewardSnapshot, goal: ActivityGoal | null) =>
+  snapshot.goalUnit === (goal?.unit ?? null) &&
+  snapshot.goalTarget === (goal?.target ?? null) &&
+  snapshot.goalPeriodStart === (goal?.period_start ?? null);
+
 /**
  * Whether a rewards snapshot can still decide a start, without a new read.
  *
  * - `false` holds for `REWARDS_POLL_SECONDS` after its read: an agent still
  *   working may finish at any time.
- * - `true` holds at any age, while its epoch has not expired: a finished
- *   agent stays finished for the epoch.
+ * - `true` holds at any age, while its epoch has not expired and no goal
+ *   other than the one it was read with has been seen since: a finished
+ *   agent stays finished for the epoch, unless its goal was edited.
  * - Neither holds once the instance moved to another staking program.
  *
  * @returns the snapshot's `done`, or `undefined` when unknown — never "go".
  */
 export const getUsableRewardStatus = (
   snapshot: RewardSnapshot | undefined,
-  current: { stakingProgramId: StakingProgramId; nowMs: number },
+  current: {
+    stakingProgramId: StakingProgramId;
+    nowMs: number;
+    observedGoal?: ObservedGoal;
+  },
 ): boolean | undefined => {
   if (!snapshot) return undefined;
   if (snapshot.stakingProgramId !== current.stakingProgramId) return undefined;
   if (!snapshot.done) {
     const ageMs = current.nowMs - snapshot.readAt;
     return ageMs <= REWARDS_POLL_SECONDS * 1000 ? false : undefined;
+  }
+  const { observedGoal } = current;
+  if (
+    observedGoal &&
+    observedGoal.observedAt > snapshot.readAt &&
+    !isSnapshotGoal(snapshot, observedGoal.goal)
+  ) {
+    return undefined;
   }
   return isStakingEpochExpired(snapshot) ? undefined : true;
 };
@@ -250,6 +268,7 @@ export const refreshRewardsEligibility = async ({
   stallClockRef,
   getRewardSnapshot,
   setRewardSnapshot,
+  getObservedGoal,
   logMessage,
   onRewardsFetchError,
 }: {
@@ -265,6 +284,7 @@ export const refreshRewardsEligibility = async ({
     serviceConfigId: string,
     snapshot: RewardSnapshot,
   ) => void;
+  getObservedGoal?: (serviceConfigId: string) => ObservedGoal | undefined;
   logMessage: (message: string) => void;
   onRewardsFetchError?: () => void;
 }): Promise<boolean | undefined> => {
@@ -283,6 +303,7 @@ export const refreshRewardsEligibility = async ({
       readAt: Date.now(),
       stakingProgramId,
       ...epoch,
+      goalUnit: goal?.unit ?? null,
       goalTarget: goal?.target ?? null,
       goalPeriodStart: goal?.period_start ?? null,
     });
@@ -302,6 +323,7 @@ export const refreshRewardsEligibility = async ({
     return getUsableRewardStatus(getRewardSnapshot(serviceConfigId), {
       stakingProgramId: meta.stakingProgramId,
       nowMs: now,
+      observedGoal: getObservedGoal?.(serviceConfigId),
     });
   }
 

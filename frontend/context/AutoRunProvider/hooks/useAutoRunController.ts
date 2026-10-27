@@ -202,6 +202,7 @@ export const useAutoRunController = ({
     waitForRunningInstance,
     getRewardSnapshot,
     setRewardSnapshot,
+    getObservedGoal,
     isStalled,
     restartStallClock,
     deferStalled,
@@ -275,9 +276,10 @@ export const useAutoRunController = ({
       return getUsableRewardStatus(getRewardSnapshot(serviceConfigId), {
         stakingProgramId: agentMeta.stakingProgramId,
         nowMs: Date.now(),
+        observedGoal: getObservedGoal(serviceConfigId),
       });
     },
-    [configuredAgents, getRewardSnapshot],
+    [configuredAgents, getObservedGoal, getRewardSnapshot],
   );
 
   const {
@@ -301,6 +303,7 @@ export const useAutoRunController = ({
     waitForRunningInstance,
     getRewardSnapshot,
     setRewardSnapshot,
+    getObservedGoal,
     recordMetric,
     logMessage,
   });
