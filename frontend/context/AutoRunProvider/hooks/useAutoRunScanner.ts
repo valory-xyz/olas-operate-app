@@ -65,6 +65,7 @@ type UseAutoRunScannerParams = {
   ) => Promise<DeployabilityCheckResult>;
   startAgentWithRetries: (
     serviceConfigId: string,
+    options?: { isStillDue?: () => Promise<boolean> },
   ) => Promise<AutoRunStartResult>;
   scheduleNextScan: (delaySeconds: number) => void;
   recordMetric: (metric: AutoRunScannerMetric) => void;
@@ -206,12 +207,15 @@ export const useAutoRunScanner = ({
    *
    * Candidates: `first` when given, then the included order after `from`,
    * wrapping round to `from` last. For each, once per scan cycle:
-   * 1) refresh rewards (reusing a read still fresh)
-   * 2) fetch deployability directly (no UI switch)
+   * 1) fetch deployability directly (no UI switch)
+   * 2) refresh rewards (reusing a read still fresh), so the start is decided
+   *    on a read made after any wait for deployability
    * 3) skip/start based on deployability + rewards state
    *
-   * Instances deferred for an empty reward pool, then for a stall, are tried
-   * only once no other candidate started.
+   * Instances deferred for a stall, then for an empty reward pool, are tried
+   * only once no other candidate started: empty-pool ones first, stalled ones
+   * last. `first` is the pre-check's choice among those tiers, so it is never
+   * deferred.
    *
    * Returns the id of the instance actually started, if any.
    */
@@ -232,6 +236,11 @@ export const useAutoRunScanner = ({
         );
       const getDeployability = (meta: AgentMeta) =>
         getDeployabilityForAgent(meta, { stoppedId });
+      const startIfStillDue = (serviceConfigId: string) =>
+        startAgentWithRetries(serviceConfigId, {
+          isStillDue: async () =>
+            (await refreshRewardsEligibility(serviceConfigId)) === false,
+        });
 
       // Wait for global balance data before scanning any candidate.
       const balancesReady = await waitForBalancesReady();
@@ -294,17 +303,15 @@ export const useAutoRunScanner = ({
           continue;
         }
 
-        const candidateEligibility = await refreshRewardsEligibility(candidate);
+        const isFirst = candidate === first;
 
         // Fetch deployability directly without switching UI selection.
         const deployability = await getDeployability(candidateMeta);
         if (!enabledRef.current) return notStarted;
-        if (!deployability.canRun) {
+        if (!deployability.canRun && !deployability.isEmptyRewardPool) {
           passOver(candidate, deployability.reason);
           if (deployability.isTransient) {
             hasLoading = true;
-          } else if (deployability.isEmptyRewardPool) {
-            emptyPoolCandidates.push(candidateMeta);
           } else {
             notifySkipOnce(candidate, deployability.reason, false);
             hasBlocked = true;
@@ -312,6 +319,20 @@ export const useAutoRunScanner = ({
           continue;
         }
 
+        const isDeferredForStall = isStallDeferred(candidate);
+        if (isDeferredForStall && !isFirst) {
+          passOver(candidate, 'stalled on its activity goal, deferred');
+          stalledCandidates.push(candidateMeta);
+          continue;
+        }
+        if (!deployability.canRun && !isFirst) {
+          passOver(candidate, deployability.reason);
+          emptyPoolCandidates.push(candidateMeta);
+          continue;
+        }
+
+        const candidateEligibility = await refreshRewardsEligibility(candidate);
+        if (!enabledRef.current) return notStarted;
         if (candidateEligibility === true) {
           passOver(candidate, 'done for the epoch');
           hasEligible = true;
@@ -322,14 +343,10 @@ export const useAutoRunScanner = ({
           hasUnknown = true;
           continue;
         }
-        if (isStallDeferred(candidate)) {
-          passOver(candidate, 'stalled on its activity goal, deferred');
-          stalledCandidates.push(candidateMeta);
-          continue;
-        }
 
-        const startResult = await startAgentWithRetries(candidate);
+        const startResult = await startIfStillDue(candidate);
         if (startResult.status === AUTO_RUN_START_STATUS.STARTED) {
+          if (isDeferredForStall) clearStallDeferral(candidate);
           notifyEmptyPoolSkips(
             emptyPoolCandidates.map((meta) => meta.serviceConfigId),
           );
@@ -376,24 +393,6 @@ export const useAutoRunScanner = ({
           const deferred = deferredMeta.serviceConfigId;
           if (!enabledRef.current) return notStarted;
 
-          // The main-loop read can be long gone: a `false` decides only while
-          // fresh, so this reads again when it is not.
-          const deferredEligibility = await refreshRewardsEligibility(deferred);
-          if (deferredEligibility === true) {
-            // Already did its epoch work — the main loop passes these over
-            // silently, so notifying here would be inconsistent (and the agent
-            // would have been passed over with a full pool too).
-            hasEligible = true;
-            passedOver.delete(deferred);
-            continue;
-          }
-          if (deferredEligibility === undefined) {
-            passOverUnknownRewards(deferred);
-            hasUnknown = true;
-            passedOver.delete(deferred);
-            continue;
-          }
-
           // Re-validate before starting. The original check happened during the
           // main-loop visit, which can be a long time ago — a single candidate
           // ahead of this one exhausting `startAgentWithRetries` burns up to
@@ -415,10 +414,28 @@ export const useAutoRunScanner = ({
             continue;
           }
 
+          // Read after the recheck: a `false` decides only while fresh.
+          const deferredEligibility = await refreshRewardsEligibility(deferred);
+          if (!enabledRef.current) return notStarted;
+          if (deferredEligibility === true) {
+            // Already did its epoch work — the main loop passes these over
+            // silently, so notifying here would be inconsistent (and the agent
+            // would have been passed over with a full pool too).
+            hasEligible = true;
+            passedOver.delete(deferred);
+            continue;
+          }
+          if (deferredEligibility === undefined) {
+            passOverUnknownRewards(deferred);
+            hasUnknown = true;
+            passedOver.delete(deferred);
+            continue;
+          }
+
           // Attempting it — any failure is reported by `notifyStartFailed`,
           // so it must not also be announced as an empty-pool skip.
           passedOver.delete(deferred);
-          const startResult = await startAgentWithRetries(deferred);
+          const startResult = await startIfStillDue(deferred);
           if (startResult.status === AUTO_RUN_START_STATUS.STARTED) {
             logVerbose(
               `scan: started ${deferred} in degraded mode (empty reward pool)`,
@@ -454,18 +471,6 @@ export const useAutoRunScanner = ({
         const stalled = stalledMeta.serviceConfigId;
         if (!enabledRef.current) return notStarted;
 
-        const stalledEligibility = await refreshRewardsEligibility(stalled);
-        if (stalledEligibility === true) {
-          passOver(stalled, 'done for the epoch');
-          hasEligible = true;
-          continue;
-        }
-        if (stalledEligibility === undefined) {
-          passOverUnknownRewards(stalled);
-          hasUnknown = true;
-          continue;
-        }
-
         const recheck = await getDeployability(stalledMeta);
         if (!enabledRef.current) return notStarted;
         if (!recheck.canRun && !recheck.isEmptyRewardPool) {
@@ -479,7 +484,20 @@ export const useAutoRunScanner = ({
           continue;
         }
 
-        const startResult = await startAgentWithRetries(stalled);
+        const stalledEligibility = await refreshRewardsEligibility(stalled);
+        if (!enabledRef.current) return notStarted;
+        if (stalledEligibility === true) {
+          passOver(stalled, 'done for the epoch');
+          hasEligible = true;
+          continue;
+        }
+        if (stalledEligibility === undefined) {
+          passOverUnknownRewards(stalled);
+          hasUnknown = true;
+          continue;
+        }
+
+        const startResult = await startIfStillDue(stalled);
         if (startResult.status === AUTO_RUN_START_STATUS.STARTED) {
           logVerbose(
             `scan: started stalled ${stalled}, no other agent could start`,
@@ -616,7 +634,10 @@ export const useAutoRunScanner = ({
       return false;
     }
 
-    const startResult = await startAgentWithRetries(selectedServiceConfigId);
+    const startResult = await startAgentWithRetries(selectedServiceConfigId, {
+      isStillDue: async () =>
+        (await refreshRewardsEligibility(selectedServiceConfigId)) === false,
+    });
     if (startResult.status === AUTO_RUN_START_STATUS.STARTED) return true;
     if (startResult.status === AUTO_RUN_START_STATUS.INFRA_FAILED) {
       logVerbose(

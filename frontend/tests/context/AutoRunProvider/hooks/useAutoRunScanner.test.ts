@@ -185,7 +185,10 @@ describe('useAutoRunScanner', () => {
       });
       expect(scanResult?.startedId).toBe(scOptimus);
       // Started from trader, so first candidate is optimus
-      expect(params.startAgentWithRetries).toHaveBeenCalledWith(scOptimus);
+      expect(params.startAgentWithRetries).toHaveBeenCalledWith(
+        scOptimus,
+        expect.anything(),
+      );
     });
 
     it('skips candidates with rewards already earned', async () => {
@@ -201,7 +204,10 @@ describe('useAutoRunScanner', () => {
         await result.current.scanAndStartNext(scTrader);
       });
       // optimus was skipped, polystrat was started
-      expect(params.startAgentWithRetries).toHaveBeenCalledWith(scPolystrat);
+      expect(params.startAgentWithRetries).toHaveBeenCalledWith(
+        scPolystrat,
+        expect.anything(),
+      );
     });
 
     it('skips blocked candidates and notifies once', async () => {
@@ -223,7 +229,10 @@ describe('useAutoRunScanner', () => {
         'Low balance',
         false,
       );
-      expect(params.startAgentWithRetries).toHaveBeenCalledWith(scPolystrat);
+      expect(params.startAgentWithRetries).toHaveBeenCalledWith(
+        scPolystrat,
+        expect.anything(),
+      );
     });
 
     it('prefers a rewarded candidate over an empty-pool one, and notifies the skip', async () => {
@@ -240,8 +249,14 @@ describe('useAutoRunScanner', () => {
       await act(async () => {
         await result.current.scanAndStartNext(scTrader);
       });
-      expect(params.startAgentWithRetries).toHaveBeenCalledWith(scPolystrat);
-      expect(params.startAgentWithRetries).not.toHaveBeenCalledWith(scOptimus);
+      expect(params.startAgentWithRetries).toHaveBeenCalledWith(
+        scPolystrat,
+        expect.anything(),
+      );
+      expect(params.startAgentWithRetries).not.toHaveBeenCalledWith(
+        scOptimus,
+        expect.anything(),
+      );
       // optimus really was passed over this cycle → surface it
       expect(params.notifySkipOnce).toHaveBeenCalledWith(
         scOptimus,
@@ -262,7 +277,10 @@ describe('useAutoRunScanner', () => {
         scanResult = await result.current.scanAndStartNext(scTrader);
       });
       expect(scanResult?.startedId).toBe(scOptimus);
-      expect(params.startAgentWithRetries).toHaveBeenCalledWith(scOptimus);
+      expect(params.startAgentWithRetries).toHaveBeenCalledWith(
+        scOptimus,
+        expect.anything(),
+      );
       // The one we started must not be reported as skipped...
       expect(params.notifySkipOnce).not.toHaveBeenCalledWith(
         scOptimus,
@@ -394,7 +412,10 @@ describe('useAutoRunScanner', () => {
         scanResult = await result.current.scanAndStartNext(scTrader);
       });
       expect(scanResult?.startedId).toBe(scOptimus);
-      expect(params.startAgentWithRetries).toHaveBeenCalledWith(scOptimus);
+      expect(params.startAgentWithRetries).toHaveBeenCalledWith(
+        scOptimus,
+        expect.anything(),
+      );
     });
 
     it('exits the degraded-mode loop when auto-run is disabled mid-fallback', async () => {
@@ -405,9 +426,6 @@ describe('useAutoRunScanner', () => {
         getDeployabilityForAgent: jest.fn().mockResolvedValue(emptyPool()),
         refreshRewardsEligibility: jest
           .fn()
-          // Main-loop reads for both candidates.
-          .mockResolvedValueOnce(false)
-          .mockResolvedValueOnce(false)
           // First fallback read: the user disables auto-run meanwhile.
           .mockImplementation(async () => {
             enabledRef.current = false;
@@ -534,7 +552,10 @@ describe('useAutoRunScanner', () => {
       });
       // scMissing was skipped (no metadata), optimus was started
       expect(scanResult?.startedId).toBe(scOptimus);
-      expect(params.startAgentWithRetries).toHaveBeenCalledWith(scOptimus);
+      expect(params.startAgentWithRetries).toHaveBeenCalledWith(
+        scOptimus,
+        expect.anything(),
+      );
     });
 
     it('returns no started id when balances not ready before scan loop', async () => {
@@ -631,7 +652,10 @@ describe('useAutoRunScanner', () => {
         started = await result.current.startSelectedAgentIfEligible();
       });
       expect(started).toBe(true);
-      expect(params.startAgentWithRetries).toHaveBeenCalledWith(scTrader);
+      expect(params.startAgentWithRetries).toHaveBeenCalledWith(
+        scTrader,
+        expect.anything(),
+      );
     });
 
     it('returns false and notifies when selected agent blocked', async () => {
@@ -972,7 +996,10 @@ describe('useAutoRunScanner', () => {
         scanResult = await result.current.scanAndStartNext(null);
       });
       expect(scanResult?.startedId).toBe(scTrader);
-      expect(params.startAgentWithRetries).toHaveBeenCalledWith(scTrader);
+      expect(params.startAgentWithRetries).toHaveBeenCalledWith(
+        scTrader,
+        expect.anything(),
+      );
     });
 
     it('returns null (no candidate) when single instance wraps to itself', async () => {
@@ -1038,6 +1065,66 @@ describe('useAutoRunScanner', () => {
       expect(params.scheduleNextScan).not.toHaveBeenCalled();
     });
   });
+  describe('scanAndStartNext — rewards read before the start', () => {
+    it('reads rewards after the deployability check it waited on', async () => {
+      const events: string[] = [];
+      const params = makeHookParams({
+        orderedIncludedInstances: [scTrader, scOptimus],
+        getDeployabilityForAgent: jest.fn(
+          async ({ serviceConfigId }: { serviceConfigId: string }) => {
+            events.push(`deployability ${serviceConfigId}`);
+            return { canRun: true };
+          },
+        ),
+        refreshRewardsEligibility: jest.fn(async (serviceConfigId: string) => {
+          events.push(`rewards ${serviceConfigId}`);
+          return false;
+        }),
+      });
+      const { result } = renderHook(() => useAutoRunScanner(params));
+
+      await act(async () => {
+        await result.current.scanAndStartNext(scTrader);
+      });
+      expect(events).toEqual([
+        `deployability ${scOptimus}`,
+        `rewards ${scOptimus}`,
+      ]);
+    });
+
+    it('lets the start go ahead only while a new read still says not done', async () => {
+      let optimusReads = 0;
+      const params = makeHookParams({
+        orderedIncludedInstances: [scTrader, scOptimus],
+        refreshRewardsEligibility: jest.fn(async (serviceConfigId: string) => {
+          if (serviceConfigId === scTrader) return true;
+          optimusReads += 1;
+          // Done by the time the start request would be sent.
+          return optimusReads > 1;
+        }),
+        startAgentWithRetries: jest.fn(
+          async (
+            _: string,
+            options?: { isStillDue?: () => Promise<boolean> },
+          ) =>
+            ((await options?.isStillDue?.()) ?? true)
+              ? { status: AUTO_RUN_START_STATUS.STARTED }
+              : {
+                  status: AUTO_RUN_START_STATUS.AGENT_BLOCKED,
+                  reason: 'rewards status changed',
+                },
+        ),
+      });
+      const { result } = renderHook(() => useAutoRunScanner(params));
+
+      let scanResult: ScanResult | undefined;
+      await act(async () => {
+        scanResult = await result.current.scanAndStartNext(scTrader);
+      });
+      expect(scanResult?.startedId).toBeNull();
+    });
+  });
+
   describe('scanAndStartNext — unknown rewards status', () => {
     it('passes over a candidate whose rewards read failed, without a skip notification', async () => {
       const params = makeHookParams({
@@ -1050,7 +1137,10 @@ describe('useAutoRunScanner', () => {
         scanResult = await result.current.scanAndStartNext(scTrader);
       });
       expect(scanResult?.startedId).toBe(scPolystrat);
-      expect(params.startAgentWithRetries).not.toHaveBeenCalledWith(scOptimus);
+      expect(params.startAgentWithRetries).not.toHaveBeenCalledWith(
+        scOptimus,
+        expect.anything(),
+      );
       expect(params.logMessage).toHaveBeenCalledWith(
         unknownRewardsLog(scOptimus),
       );
@@ -1090,9 +1180,6 @@ describe('useAutoRunScanner', () => {
         getDeployabilityForAgent: jest.fn().mockResolvedValue(emptyPool()),
         refreshRewardsEligibility: jest
           .fn()
-          // Main-loop reads: optimus, trader.
-          .mockResolvedValueOnce(false)
-          .mockResolvedValueOnce(false)
           // Fallback reads: optimus unknown, trader not earned.
           .mockResolvedValueOnce(undefined)
           .mockResolvedValueOnce(false),
@@ -1104,7 +1191,10 @@ describe('useAutoRunScanner', () => {
         scanResult = await result.current.scanAndStartNext(scTrader);
       });
       expect(scanResult?.startedId).toBe(scTrader);
-      expect(params.startAgentWithRetries).not.toHaveBeenCalledWith(scOptimus);
+      expect(params.startAgentWithRetries).not.toHaveBeenCalledWith(
+        scOptimus,
+        expect.anything(),
+      );
       expect(params.logMessage).toHaveBeenCalledWith(
         unknownRewardsLog(scOptimus),
       );
@@ -1154,6 +1244,46 @@ describe('useAutoRunScanner', () => {
       ).toEqual([scPolystrat, scOptimus]);
     });
 
+    it('starts an empty-pool `first` before the stopped agent it replaces', async () => {
+      const params = makeHookParams({
+        orderedIncludedInstances: [scTrader, scOptimus],
+        getDeployabilityForAgent: deployabilityById({
+          [scOptimus]: emptyPool(),
+        }),
+      });
+      const { result } = renderHook(() => useAutoRunScanner(params));
+
+      let scanResult: ScanResult | undefined;
+      await act(async () => {
+        scanResult = await result.current.scanAndStartNext(scTrader, {
+          first: scOptimus,
+          stoppedId: scTrader,
+        });
+      });
+      expect(scanResult?.startedId).toBe(scOptimus);
+      expect(params.startAgentWithRetries).toHaveBeenCalledTimes(1);
+      expect(params.notifySkipOnce).not.toHaveBeenCalled();
+    });
+
+    it('starts a stall-deferred `first` before the stopped agent, and clears its deferral', async () => {
+      const params = makeHookParams({
+        orderedIncludedInstances: [scTrader, scOptimus],
+        isStallDeferred: jest.fn((id: string) => id === scOptimus),
+      });
+      const { result } = renderHook(() => useAutoRunScanner(params));
+
+      let scanResult: ScanResult | undefined;
+      await act(async () => {
+        scanResult = await result.current.scanAndStartNext(scTrader, {
+          first: scOptimus,
+          stoppedId: scTrader,
+        });
+      });
+      expect(scanResult?.startedId).toBe(scOptimus);
+      expect(params.startAgentWithRetries).toHaveBeenCalledTimes(1);
+      expect(params.clearStallDeferral).toHaveBeenCalledWith(scOptimus);
+    });
+
     it('still visits every other candidate, `from` last, after a `first` further down the order', async () => {
       const params = makeHookParams({
         startAgentWithRetries: jest.fn().mockResolvedValue({
@@ -1189,7 +1319,10 @@ describe('useAutoRunScanner', () => {
       expect(params.refreshRewardsEligibility).not.toHaveBeenCalledWith(
         scPolystrat,
       );
-      expect(params.startAgentWithRetries).toHaveBeenCalledWith(scOptimus);
+      expect(params.startAgentWithRetries).toHaveBeenCalledWith(
+        scOptimus,
+        expect.anything(),
+      );
     });
 
     it('passes `stoppedId` to every deployability check', async () => {
@@ -1253,7 +1386,10 @@ describe('useAutoRunScanner', () => {
         scanResult = await result.current.scanAndStartNext(scTrader);
       });
       expect(scanResult?.startedId).toBe(scPolystrat);
-      expect(params.startAgentWithRetries).not.toHaveBeenCalledWith(scOptimus);
+      expect(params.startAgentWithRetries).not.toHaveBeenCalledWith(
+        scOptimus,
+        expect.anything(),
+      );
       expect(params.clearStallDeferral).not.toHaveBeenCalled();
     });
 
@@ -1306,16 +1442,6 @@ describe('useAutoRunScanner', () => {
         ...overrides,
       });
 
-    /** Optimus reads `false` in the main loop, then `fallbackRead`. */
-    const optimusRewardsThen = (fallbackRead: boolean | undefined) => {
-      let optimusReads = 0;
-      return jest.fn(async (serviceConfigId: string) => {
-        if (serviceConfigId === scTrader) return true;
-        optimusReads += 1;
-        return optimusReads === 1 ? false : fallbackRead;
-      });
-    };
-
     /** Optimus can run in the main loop, then gets `recheck`. */
     const optimusDeployabilityThen = (
       recheck: Partial<DeployabilityCheckResult>,
@@ -1341,9 +1467,34 @@ describe('useAutoRunScanner', () => {
       return scanResult;
     };
 
-    it('passes over a stalled candidate found done for the epoch on its re-read', async () => {
+    it('tries a stalled empty-pool candidate after a nonstalled empty-pool one', async () => {
       const params = makeStalledFallbackParams({
-        refreshRewardsEligibility: optimusRewardsThen(true),
+        orderedIncludedInstances: [scTrader, scOptimus, scPolystrat],
+        getDeployabilityForAgent: deployabilityById({
+          [scOptimus]: emptyPool(),
+          [scPolystrat]: emptyPool(),
+        }),
+        startAgentWithRetries: jest.fn().mockResolvedValue({
+          status: AUTO_RUN_START_STATUS.INFRA_FAILED,
+          reason: 'RPC down',
+        }),
+      });
+
+      await scan(params);
+
+      expect(
+        (params.startAgentWithRetries as jest.Mock).mock.calls.map(
+          ([id]) => id,
+        ),
+      ).toEqual([scPolystrat, scOptimus]);
+    });
+
+    it('passes over a stalled candidate found done for the epoch on its fallback read', async () => {
+      const params = makeStalledFallbackParams({
+        refreshRewardsEligibility: rewardsById({
+          [scTrader]: true,
+          [scOptimus]: true,
+        }),
       });
 
       const scanResult = await scan(params);
@@ -1358,9 +1509,12 @@ describe('useAutoRunScanner', () => {
       );
     });
 
-    it('passes over a stalled candidate whose re-read failed, without a skip notification', async () => {
+    it('passes over a stalled candidate whose fallback read failed, without a skip notification', async () => {
       const params = makeStalledFallbackParams({
-        refreshRewardsEligibility: optimusRewardsThen(undefined),
+        refreshRewardsEligibility: rewardsById({
+          [scTrader]: true,
+          [scOptimus]: undefined,
+        }),
       });
 
       const scanResult = await scan(params);
@@ -1432,7 +1586,10 @@ describe('useAutoRunScanner', () => {
         const scanResult = await scan(params);
 
         expect(scanResult?.startedId).toBeNull();
-        expect(params.startAgentWithRetries).toHaveBeenCalledWith(scOptimus);
+        expect(params.startAgentWithRetries).toHaveBeenCalledWith(
+          scOptimus,
+          expect.anything(),
+        );
         expect(params.clearStallDeferral).not.toHaveBeenCalled();
         expect(params.scheduleNextScan).toHaveBeenCalledWith(
           SCAN_LOADING_RETRY_SECONDS,
