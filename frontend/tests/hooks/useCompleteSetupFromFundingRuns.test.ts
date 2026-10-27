@@ -180,6 +180,62 @@ describe('useCompleteSetupFromFundingRuns', () => {
     expect(mockService.getCompletedOnboardRuns).not.toHaveBeenCalled();
   });
 
+  describe('failed requests', () => {
+    const fetchErrorLogs = () =>
+      mockLogMessage.mock.calls.filter(([message]) =>
+        String(message).startsWith(
+          'completed onboard funding runs fetch error:',
+        ),
+      );
+
+    const pollOnce = async (expectedCalls: number) => {
+      await act(async () => {
+        jest.advanceTimersByTime(COMPLETED_ONBOARD_POLL_SECONDS * 1000);
+      });
+      await waitFor(() =>
+        expect(mockService.getCompletedOnboardRuns).toHaveBeenCalledTimes(
+          expectedCalls,
+        ),
+      );
+    };
+
+    beforeEach(() => jest.useFakeTimers());
+    afterEach(() => jest.useRealTimers());
+
+    it('logs one line for a run of failures', async () => {
+      mockService.getCompletedOnboardRuns.mockRejectedValue(
+        new Error('Not Found'),
+      );
+
+      renderHook(() => useCompleteSetupFromFundingRuns(), {
+        wrapper: createQueryClientWrapper(),
+      });
+      await waitFor(() => expect(fetchErrorLogs()).toHaveLength(1));
+      await pollOnce(2);
+      await pollOnce(3);
+
+      expect(fetchErrorLogs()).toEqual([
+        ['completed onboard funding runs fetch error: Error: Not Found'],
+      ]);
+    });
+
+    it('logs again when failures resume after a success', async () => {
+      mockService.getCompletedOnboardRuns
+        .mockRejectedValueOnce(new Error('Not Found'))
+        .mockResolvedValueOnce({ runs: [] })
+        .mockRejectedValueOnce(new Error('Not Found'));
+
+      renderHook(() => useCompleteSetupFromFundingRuns(), {
+        wrapper: createQueryClientWrapper(),
+      });
+      await waitFor(() => expect(fetchErrorLogs()).toHaveLength(1));
+      await pollOnce(2);
+      await pollOnce(3);
+
+      await waitFor(() => expect(fetchErrorLogs()).toHaveLength(2));
+    });
+  });
+
   it('asks again every poll interval while an agent is unfinished', async () => {
     jest.useFakeTimers();
     try {

@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 
 import { AgentType, REACT_QUERY_KEYS } from '@/constants';
 import { useLogAutoRunEvent } from '@/context/AutoRunProvider/hooks/useLogAutoRunEvent';
@@ -50,12 +50,24 @@ export const useCompleteSetupFromFundingRuns = () => {
 
   const unfinishedIds = useMemo(() => [...unfinished.keys()], [unfinished]);
 
-  const { data } = useQuery({
+  const { data, error, isSuccess } = useQuery({
     queryKey: REACT_QUERY_KEYS.FUNDING_RUN_COMPLETED_ONBOARD_KEY(unfinishedIds),
     queryFn: () => FundingRunService.getCompletedOnboardRuns(unfinishedIds),
     enabled: isUserLoggedIn && isOnline && unfinishedIds.length > 0,
     refetchInterval: COMPLETED_ONBOARD_POLL_SECONDS * 1000,
   });
+
+  // One line per run of failures, so a missing route does not flood the log.
+  const isFailureLoggedRef = useRef(false);
+  useEffect(() => {
+    if (isSuccess) {
+      isFailureLoggedRef.current = false;
+      return;
+    }
+    if (!error || isFailureLoggedRef.current) return;
+    isFailureLoggedRef.current = true;
+    logMessage(`completed onboard funding runs fetch error: ${error}`);
+  }, [error, isSuccess, logMessage]);
 
   useEffect(() => {
     for (const run of data?.runs ?? []) {
