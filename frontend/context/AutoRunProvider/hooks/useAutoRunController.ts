@@ -82,14 +82,25 @@ export const useAutoRunController = ({
   onAutoRunInstanceStarted,
   onAutoRunStartStateChange,
 }: UseAutoRunControllerParams) => {
-  const { stakingRewardsDetails } = useRewardContext();
+  const {
+    stakingRewardsDetails,
+    stakingRewardsDataUpdatedAt,
+    isEpochTargetMet,
+  } = useRewardContext();
   // Staking KPI and activity goal combined, so the selection-driven snapshot
   // agrees with the one `refreshRewardsEligibility` polls.
   const { isDoneForEpoch: isSelectedDoneForEpoch } = useEpochWorkStatus();
   // Read with the snapshot it is stored in; shares the Overview's query.
-  const { activityGoal: selectedActivityGoal } = useActivityGoal(
-    selectedServiceConfigId,
-  );
+  const {
+    activityGoal: selectedActivityGoal,
+    dataUpdatedAt: selectedActivityGoalReadAt,
+  } = useActivityGoal(selectedServiceConfigId);
+  const selectedRewardReadAt = isEpochTargetMet
+    ? Math.min(
+        stakingRewardsDataUpdatedAt ?? 0,
+        selectedActivityGoalReadAt ?? 0,
+      )
+    : (stakingRewardsDataUpdatedAt ?? 0);
   const selectedMeta = useMemo(
     () =>
       configuredAgents.find(
@@ -220,6 +231,8 @@ export const useAutoRunController = ({
     selectedStakingProgramId: selectedMeta?.stakingProgramId,
     selectedRewardsEpoch,
     selectedActivityGoal,
+    selectedRewardReadAt,
+    selectedActivityGoalReadAt: selectedActivityGoalReadAt ?? 0,
     selectedAgentType,
     selectedServiceConfigId,
     logMessage,
@@ -277,9 +290,18 @@ export const useAutoRunController = ({
         stakingProgramId: agentMeta.stakingProgramId,
         nowMs: Date.now(),
         observedGoal: getObservedGoal(serviceConfigId),
+        isStalled:
+          runningServiceConfigIdRef.current === serviceConfigId &&
+          isStalled(serviceConfigId),
       });
     },
-    [configuredAgents, getObservedGoal, getRewardSnapshot],
+    [
+      configuredAgents,
+      getObservedGoal,
+      getRewardSnapshot,
+      isStalled,
+      runningServiceConfigIdRef,
+    ],
   );
 
   const {

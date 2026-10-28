@@ -137,11 +137,15 @@ Run **targeted grep searches** for each pattern. Do **not** re-read the file in 
 | `infra_failed` | Warning | Transient start failure — check whether "trying next candidate" (good) or "rescan in 30s" (old bug) follows |
 | `selected start paused` | Warning | `startSelectedAgentIfEligible` hit `INFRA_FAILED` — should say "scanning other agents", not "rescan in 30s" |
 | `epoch expired` | Normal | Epoch expiry override applied — confirm agent starts follow within next scan |
-| `all other agents earned or unknown` | Normal | Keeping current agent running; expected when all others have earned |
+| `keeping X running, no runnable alternate rescan=` | Normal | No alternate could start; recheck in 30 min, or 10 min for unknown rewards or a forced rotation |
 | `balances stale, triggering refetch` | Normal | Balance data older than 120s; should resolve within seconds |
 | `balances refetch failed` | Warning | Refetch threw; balance freshness unknown |
 | `rewards fetch error` | Warning | RPC error fetching rewards for an agent |
-| `rewards eligibility timeout` | Warning | Rewards snapshot never arrived in 20s; scanner proceeded without it |
+| `rewards status unknown, passing over` | Warning | Status could not be confirmed; agent is skipped and never started on unknown status |
+| `pass over <id>: <check>` | Normal/Warning | The named check excluded this candidate; inspect its reason |
+| `phase=rotate_end status=ok` | Normal | A different agent started |
+| `phase=rotate_end status=kept` | Normal | Current agent kept running because no alternate could start |
+| `phase=rotate_end status=none` | Warning | No different agent started; check start failures and the scheduled retry |
 | `eligibility wait timeout` | Warning | Eligibility stuck in Loading for 60s |
 | `selection wait timeout` | Warning | UI selection didn't match requested agent in 60s |
 | `balances wait timeout` | Warning | Balances not ready after 3min |

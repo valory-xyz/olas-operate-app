@@ -70,6 +70,7 @@ const isSnapshotGoal = (snapshot: RewardSnapshot, goal: ActivityGoal | null) =>
  * - `true` holds at any age, while its epoch has not expired and no goal
  *   other than the one it was read with has been seen since: a finished
  *   agent stays finished for the epoch, unless its goal was edited.
+ * - A stall-driven `true` only holds while the current run is still stalled.
  * - Neither holds once the instance moved to another staking program.
  *
  * @returns the snapshot's `done`, or `undefined` when unknown — never "go".
@@ -80,10 +81,12 @@ export const getUsableRewardStatus = (
     stakingProgramId: StakingProgramId;
     nowMs: number;
     observedGoal?: ObservedGoal;
+    isStalled?: boolean;
   },
 ): boolean | undefined => {
   if (!snapshot) return undefined;
   if (snapshot.stakingProgramId !== current.stakingProgramId) return undefined;
+  if (snapshot.stalled && !current.isStalled) return undefined;
   if (!snapshot.done) {
     const ageMs = current.nowMs - snapshot.readAt;
     return ageMs <= REWARDS_POLL_SECONDS * 1000 ? false : undefined;
@@ -297,6 +300,7 @@ export const refreshRewardsEligibility = async ({
     done: boolean,
     epoch: Pick<RewardSnapshot, 'tsCheckpoint' | 'livenessPeriod'>,
     goal: ActivityGoal | null = null,
+    stalled = false,
   ) => {
     setRewardSnapshot(serviceConfigId, {
       done,
@@ -306,6 +310,7 @@ export const refreshRewardsEligibility = async ({
       goalUnit: goal?.unit ?? null,
       goalTarget: goal?.target ?? null,
       goalPeriodStart: goal?.period_start ?? null,
+      ...(stalled ? { stalled: true } : {}),
     });
     return done;
   };
@@ -318,12 +323,22 @@ export const refreshRewardsEligibility = async ({
 
   const now = Date.now();
   const lastFetch = lastRewardsFetchRef.current[serviceConfigId] ?? 0;
-  if (now - lastFetch < REWARDS_POLL_SECONDS * 1000) {
+  const snapshot = getRewardSnapshot(serviceConfigId);
+  const stillStalled =
+    isRunning &&
+    isStallClockExpired(stallClockRef?.current[serviceConfigId], now);
+  // A stall ends a turn, not the epoch's work. Once stopped (or the clock
+  // reset), re-read even inside the throttle so the fallback can restart it.
+  if (
+    now - lastFetch < REWARDS_POLL_SECONDS * 1000 &&
+    !(snapshot?.stalled && !stillStalled)
+  ) {
     if (!meta) return;
-    return getUsableRewardStatus(getRewardSnapshot(serviceConfigId), {
+    return getUsableRewardStatus(snapshot, {
       stakingProgramId: meta.stakingProgramId,
       nowMs: now,
       observedGoal: getObservedGoal?.(serviceConfigId),
+      isStalled: stillStalled,
     });
   }
 
@@ -507,6 +522,7 @@ export const refreshRewardsEligibility = async ({
       livenessPeriod: response.livenessPeriod,
     },
     goalRead?.ok ? goalRead.goal : null,
+    isStalled && eligible,
   );
 };
 

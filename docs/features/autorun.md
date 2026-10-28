@@ -201,6 +201,8 @@ Every rewards read is stored as a `RewardSnapshot` — `done`, `readAt`, staking
 
 - `false` holds for `REWARDS_POLL_SECONDS` after its read; after that a new read is made before deciding. The read throttle is the same 120s, so a throttled `refreshRewardsEligibility` call answers from the snapshot, and a scan reuses the pre-check's read.
 - `true` holds at any age for the same staking program and goal, and is dropped once its epoch expires. `useAutoRunSignals` records the selected instance's goal whenever it loads (`getObservedGoal`); once a goal with another unit, target or period start has been seen after the read, the `true` needs a new read.
+- A stall-driven `true` is marked `stalled` and only holds while that instance is still running with an expired stall clock. After stopping or resetting the clock, the next read bypasses the throttle so the instance can run again if no successor starts.
+- Selected-instance snapshots use the actual successful query timestamps, taking the older of rewards and activity-goal reads when both are needed. Re-renders do not renew freshness, and older provider data never overwrites a newer direct read.
 - A failed read is unknown.
 
 The scanner reads rewards after an instance's deployability check, not before, since that check can take long enough for a `false` to go stale. `startAgentWithRetries` takes an `isStillDue` check, which the scanner passes so a new read still saying "not done" is required right before every start request (the balance wait and retries can outlast the first read); otherwise the start returns `agent_blocked` (`start_request status=not_due`).

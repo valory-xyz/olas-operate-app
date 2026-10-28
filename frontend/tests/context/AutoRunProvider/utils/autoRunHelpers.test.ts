@@ -1091,6 +1091,37 @@ describe('refreshRewardsEligibility', () => {
       );
     });
 
+    it.each(['stopped', 'clock reset'])(
+      'rechecks a stalled agent after %s inside the throttle window',
+      async (reason) => {
+        let snapshot: RewardSnapshot | undefined;
+        const lastRewardsFetchRef = { current: {} };
+        const runningServiceConfigIdRef: { current: string | null } = {
+          current: DEFAULT_SERVICE_CONFIG_ID,
+        };
+        const stallClockRef = { current: {} };
+        const params = makeParams({
+          lastRewardsFetchRef,
+          runningServiceConfigIdRef,
+          stallClockRef,
+          getRewardSnapshot: () => snapshot,
+          setRewardSnapshot: (_id, value) => {
+            snapshot = value;
+          },
+        });
+        jest.setSystemTime(IN_EPOCH_NOW_MS);
+        expect(await refreshRewardsEligibility(params)).toBe(false);
+        jest.setSystemTime(IN_EPOCH_NOW_MS + STALL_MS);
+        expect(await refreshRewardsEligibility(params)).toBe(true);
+        jest.setSystemTime(IN_EPOCH_NOW_MS + STALL_MS + 1_000);
+        expect(await refreshRewardsEligibility(params)).toBe(true);
+        if (reason === 'stopped') runningServiceConfigIdRef.current = null;
+        else stallClockRef.current = {};
+        jest.setSystemTime(IN_EPOCH_NOW_MS + STALL_MS + 20_000);
+        expect(await refreshRewardsEligibility(params)).toBe(false);
+      },
+    );
+
     it('is not stalled one second before the stall period ends', async () => {
       const logMessage = jest.fn();
       const running = {

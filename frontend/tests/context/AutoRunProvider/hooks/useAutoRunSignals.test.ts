@@ -97,6 +97,8 @@ const makeHookParams = (overrides: Partial<HookParams> = {}) => ({
   selectedRewardsEpoch:
     DEFAULT_REWARDS_EPOCH as HookParams['selectedRewardsEpoch'],
   selectedActivityGoal: undefined as HookParams['selectedActivityGoal'],
+  selectedRewardReadAt: NOW_MS,
+  selectedActivityGoalReadAt: NOW_MS,
   selectedAgentType: AgentMap.PredictTrader,
   selectedServiceConfigId: DEFAULT_SERVICE_CONFIG_ID as string | null,
   logMessage: jest.fn(),
@@ -122,6 +124,49 @@ describe('useAutoRunSignals', () => {
 
   afterEach(() => {
     jest.useRealTimers();
+  });
+
+  it('does not renew freshness when cached inputs rerender', () => {
+    const params = makeHookParams({ isSelectedDoneForEpoch: false });
+    const { result, rerender } = renderHook((p) => useAutoRunSignals(p), {
+      initialProps: params,
+    });
+    jest.setSystemTime(NOW_MS + 180_000);
+    rerender({ ...params, selectedRewardsEpoch: { ...DEFAULT_REWARDS_EPOCH } });
+    expect(
+      result.current.getRewardSnapshot(DEFAULT_SERVICE_CONFIG_ID)?.readAt,
+    ).toBe(NOW_MS);
+  });
+
+  it('does not overwrite a newer direct read with older provider data', () => {
+    const params = makeHookParams({ isSelectedDoneForEpoch: false });
+    const { result, rerender } = renderHook((p) => useAutoRunSignals(p), {
+      initialProps: params,
+    });
+    act(() =>
+      result.current.setRewardSnapshot(
+        DEFAULT_SERVICE_CONFIG_ID,
+        makeRewardSnapshot({ done: true, readAt: NOW_MS + 60_000 }),
+      ),
+    );
+    rerender({ ...params, selectedRewardsEpoch: { ...DEFAULT_REWARDS_EPOCH } });
+    expect(
+      result.current.getRewardSnapshot(DEFAULT_SERVICE_CONFIG_ID),
+    ).toMatchObject({ done: true, readAt: NOW_MS + 60_000 });
+  });
+
+  it('does not write a selected snapshot without a successful query timestamp', () => {
+    const { result } = renderHook(() =>
+      useAutoRunSignals(
+        makeHookParams({
+          isSelectedDoneForEpoch: false,
+          selectedRewardReadAt: 0,
+        }),
+      ),
+    );
+    expect(
+      result.current.getRewardSnapshot(DEFAULT_SERVICE_CONFIG_ID),
+    ).toBeUndefined();
   });
 
   it('syncs enabledRef with enabled prop', () => {
@@ -220,7 +265,7 @@ describe('useAutoRunSignals', () => {
       });
     });
 
-    it('rewrites the snapshot with a fresh readAt when isSelectedDoneForEpoch changes', () => {
+    it('uses the query readAt when a fresh read changes isSelectedDoneForEpoch', () => {
       const params = makeHookParams({ isSelectedDoneForEpoch: false });
       const { result, rerender } = renderHook(
         (props) => useAutoRunSignals(props),
@@ -231,7 +276,11 @@ describe('useAutoRunSignals', () => {
       ).toBe(false);
 
       jest.setSystemTime(NOW_MS + 5_000);
-      rerender({ ...params, isSelectedDoneForEpoch: true });
+      rerender({
+        ...params,
+        isSelectedDoneForEpoch: true,
+        selectedRewardReadAt: NOW_MS + 5_000,
+      });
 
       expect(
         result.current.getRewardSnapshot(DEFAULT_SERVICE_CONFIG_ID),

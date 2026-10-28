@@ -86,8 +86,10 @@ export type AgentMeta = {
  * still decide a start is checked when it is used (`getUsableRewardStatus`).
  */
 export type RewardSnapshot = {
-  /** Done for the epoch (staking agent) or for the run (Connect). */
+  /** Done for the epoch/run, or a stalled turn when `stalled` is true. */
   done: boolean;
+  /** This turn ended for lack of progress, rather than completed epoch work. */
+  stalled?: boolean;
   /** When the read completed, in ms. */
   readAt: number;
   stakingProgramId: StakingProgramId;

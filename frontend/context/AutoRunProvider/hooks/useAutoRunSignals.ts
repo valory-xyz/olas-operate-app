@@ -48,6 +48,9 @@ type UseAutoRunSignalsParams = {
     | undefined;
   /** Selected instance's activity goal, stored with its snapshot. */
   selectedActivityGoal: ActivityGoal | null | undefined;
+  /** Oldest successful query read used in the combined decision, in ms. */
+  selectedRewardReadAt: number;
+  selectedActivityGoalReadAt: number;
   selectedAgentType: AgentType;
   selectedServiceConfigId: string | null;
   logMessage: (message: string) => void;
@@ -74,6 +77,8 @@ export const useAutoRunSignals = ({
   selectedStakingProgramId,
   selectedRewardsEpoch,
   selectedActivityGoal,
+  selectedRewardReadAt,
+  selectedActivityGoalReadAt,
   selectedAgentType,
   selectedServiceConfigId,
   logMessage,
@@ -167,11 +172,16 @@ export const useAutoRunSignals = ({
   useEffect(() => {
     if (!selectedServiceConfigId) return;
     if (selectedActivityGoal === undefined) return;
+    if (!selectedActivityGoalReadAt) return;
     observedGoalRef.current[selectedServiceConfigId] = {
       goal: selectedActivityGoal,
-      observedAt: Date.now(),
+      observedAt: selectedActivityGoalReadAt,
     };
-  }, [selectedActivityGoal, selectedServiceConfigId]);
+  }, [
+    selectedActivityGoal,
+    selectedActivityGoalReadAt,
+    selectedServiceConfigId,
+  ]);
 
   // Update rewards snapshot for the selected instance (RewardProvider is selection-driven).
   // isSelectedDoneForEpoch=true means the instance has done its epoch work
@@ -185,9 +195,12 @@ export const useAutoRunSignals = ({
     if (isSelectedNoStakingAgent) return;
     if (isSelectedDoneForEpoch === undefined) return;
     if (!selectedStakingProgramId || !selectedRewardsEpoch) return;
+    if (!selectedRewardReadAt) return;
+    const previous = rewardSnapshotRef.current[selectedServiceConfigId];
+    if (previous && previous.readAt > selectedRewardReadAt) return;
     rewardSnapshotRef.current[selectedServiceConfigId] = {
       done: isEpochExpired ? false : isSelectedDoneForEpoch,
-      readAt: Date.now(),
+      readAt: selectedRewardReadAt,
       stakingProgramId: selectedStakingProgramId,
       tsCheckpoint: selectedRewardsEpoch.tsCheckpoint,
       livenessPeriod: selectedRewardsEpoch.livenessPeriod,
@@ -202,6 +215,7 @@ export const useAutoRunSignals = ({
     isSelectedNoStakingAgent,
     selectedActivityGoal,
     selectedRewardsEpoch,
+    selectedRewardReadAt,
     selectedServiceConfigId,
     selectedStakingProgramId,
   ]);

@@ -478,6 +478,7 @@ describe('useAutoRunController', () => {
         stakingProgramId: traderMeta.stakingProgramId,
         nowMs,
         observedGoal,
+        isStalled: false,
       });
     });
 
@@ -515,6 +516,38 @@ describe('useAutoRunController', () => {
     ) as AgentMeta;
     const lastSignalsArgs = () =>
       useAutoRunSignals.mock.calls[useAutoRunSignals.mock.calls.length - 1][0];
+
+    it.each([
+      [false, 200_000, 100_000, 200_000],
+      [true, 200_000, 100_000, 100_000],
+      [true, 100_000, 200_000, 100_000],
+      [true, 200_000, 0, 0],
+    ])(
+      'uses the required query timestamps when staking met=%s, rewards=%s, goal=%s',
+      (
+        isEpochTargetMet,
+        stakingRewardsDataUpdatedAt,
+        goalReadAt,
+        expectedReadAt,
+      ) => {
+        useRewardContext.mockReturnValue({
+          stakingRewardsDetails: makeStakingRewardsInfo(),
+          isEpochTargetMet,
+          stakingRewardsDataUpdatedAt,
+        });
+        useActivityGoal.mockReturnValue({
+          activityGoal: makeActivityGoal(),
+          dataUpdatedAt: goalReadAt,
+        });
+        renderHook(() =>
+          useAutoRunController(
+            makeHookParams({ configuredAgents: [traderMeta] }),
+          ),
+        );
+        expect(lastSignalsArgs().selectedRewardReadAt).toBe(expectedReadAt);
+        expect(lastSignalsArgs().selectedActivityGoalReadAt).toBe(goalReadAt);
+      },
+    );
 
     it('feeds the selected program, rewards epoch and activity goal to the signals', () => {
       const details = makeStakingRewardsInfo();
