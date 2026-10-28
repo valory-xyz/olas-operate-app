@@ -398,6 +398,27 @@ describe('ServicesService', () => {
         }),
       ).rejects.toThrow('Failed to create service');
     });
+
+    it('rejects with an Error whose message + properties carry the JSON body', async () => {
+      const serviceTemplate = makeServiceTemplate();
+      const errorBody = {
+        error:
+          'Failed to download the service package: <urlopen error [SSL: CERTIFICATE_VERIFY_FAILED]>',
+        error_code: 'SERVICE_PACKAGE_DOWNLOAD_FAILED',
+      };
+      jest
+        .spyOn(global, 'fetch')
+        .mockReturnValue(mockJsonResponse(errorBody, false, 502));
+
+      const err = (await ServicesService.createService({
+        deploy: true,
+        serviceTemplate,
+        stakingProgramId,
+      }).catch((e) => e)) as Error & typeof errorBody;
+      expect(err).toBeInstanceOf(Error);
+      expect(err.message).toBe(errorBody.error);
+      expect(err.error_code).toBe('SERVICE_PACKAGE_DOWNLOAD_FAILED');
+    });
   });
 
   describe('updateService', () => {
