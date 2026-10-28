@@ -399,6 +399,26 @@ describe('ServicesService', () => {
       ).rejects.toThrow('Failed to create service');
     });
 
+    it('rejects with the fallback Error when the error body is not JSON', async () => {
+      const serviceTemplate = makeServiceTemplate();
+      jest.spyOn(global, 'fetch').mockReturnValue(
+        Promise.resolve({
+          ok: false,
+          status: 500,
+          json: () => Promise.reject(new Error('not json')),
+        } as unknown as Response),
+      );
+
+      const err = (await ServicesService.createService({
+        deploy: true,
+        serviceTemplate,
+        stakingProgramId,
+      }).catch((e) => e)) as Error & { error_code?: string };
+      expect(err).toBeInstanceOf(Error);
+      expect(err.message).toBe('Failed to create service');
+      expect(err.error_code).toBeUndefined();
+    });
+
     it('rejects with an Error whose message + properties carry the JSON body', async () => {
       const serviceTemplate = makeServiceTemplate();
       const errorBody = {
