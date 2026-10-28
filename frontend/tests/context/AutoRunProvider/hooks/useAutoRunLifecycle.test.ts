@@ -3,6 +3,7 @@ import { act } from 'react';
 
 import { AGENT_CONFIG } from '../../../../config/agents';
 import { AgentMap, AgentType } from '../../../../constants/agent';
+import { MiddlewareDeploymentStatusMap } from '../../../../constants/deployment';
 import {
   AUTO_RUN_HEALTH_METRIC,
   AUTO_RUN_START_STATUS,
@@ -12,9 +13,11 @@ import {
   RUNNING_AGENT_WATCHDOG_CHECK_SECONDS,
   SCAN_BLOCKED_DELAY_SECONDS,
   SCAN_ELIGIBLE_DELAY_SECONDS,
+  SCAN_LOADING_RETRY_SECONDS,
 } from '../../../../context/AutoRunProvider/constants';
 import { useAutoRunLifecycle } from '../../../../context/AutoRunProvider/hooks/useAutoRunLifecycle';
 import { AgentMeta } from '../../../../context/AutoRunProvider/types';
+import { probeAllDeploymentStatuses } from '../../../../context/AutoRunProvider/utils/probeDeployment';
 import * as delayModule from '../../../../utils/delay';
 import {
   DEFAULT_SERVICE_CONFIG_ID,
@@ -32,6 +35,11 @@ jest.mock(
   () => require('../../../helpers/autoRunMocks').verboseLoggerMockFactory(),
 );
 
+jest.mock('../../../../context/AutoRunProvider/utils/probeDeployment', () => ({
+  probeAllDeploymentStatuses: jest.fn(),
+}));
+
+const mockProbeAllDeployments = probeAllDeploymentStatuses as jest.Mock;
 const mockSleepAwareDelay = delayModule.sleepAwareDelay as jest.Mock;
 
 const scTrader = DEFAULT_SERVICE_CONFIG_ID;
@@ -83,6 +91,193 @@ describe('useAutoRunLifecycle', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockSleepAwareDelay.mockResolvedValue(true);
+    mockProbeAllDeployments.mockResolvedValue({});
+  });
+
+  describe('idle recovery with a lagging deployment poll', () => {
+    const flush = async () => {
+      await act(async () => {
+        await Promise.resolve();
+      });
+    };
+    const activeDeployments = (
+      status: number = MiddlewareDeploymentStatusMap.DEPLOYED,
+    ) => ({
+      [scOptimus]: { status },
+    });
+
+    it.each([
+      MiddlewareDeploymentStatusMap.DEPLOYED,
+      MiddlewareDeploymentStatusMap.DEPLOYING,
+      MiddlewareDeploymentStatusMap.STOPPING,
+    ])(
+      'does not start the sidebar selection when a live deployment has status %s',
+      async (status) => {
+        mockProbeAllDeployments.mockResolvedValue(activeDeployments(status));
+        const params = makeHookParams({
+          enabled: true,
+          enabledRef: { current: true },
+        });
+        renderHook(() => useAutoRunLifecycle(params));
+        await flush();
+        expect(params.startSelectedAgentIfEligible).not.toHaveBeenCalled();
+        expect(params.scanAndStartNext).not.toHaveBeenCalled();
+        expect(params.scheduleNextScan).not.toHaveBeenCalled();
+      },
+    );
+
+    it('preserves a scan start when the shared running state remains null', async () => {
+      const params = makeHookParams({
+        enabled: true,
+        enabledRef: { current: true },
+        scanAndStartNext: jest.fn().mockResolvedValue({ startedId: scOptimus }),
+      });
+      const { rerender } = renderHook((p) => useAutoRunLifecycle(p), {
+        initialProps: params,
+      });
+      await flush();
+      expect(params.scanAndStartNext).toHaveBeenCalledTimes(1);
+      mockProbeAllDeployments.mockResolvedValue(activeDeployments());
+      rerender({ ...params, scanTick: 1 });
+      await flush();
+      expect(params.startSelectedAgentIfEligible).toHaveBeenCalledTimes(1);
+      expect(params.scanAndStartNext).toHaveBeenCalledTimes(1);
+      expect(mockSleepAwareDelay).toHaveBeenCalledWith(COOLDOWN_SECONDS);
+    });
+
+    it('preserves the hand-over choice while the shared running state becomes null', async () => {
+      const params = makeHookParams({
+        enabled: true,
+        enabledRef: { current: true },
+        runningAgentType: AgentMap.PredictTrader,
+        runningServiceConfigId: scTrader,
+        runningAgentTypeRef: {
+          current: AgentMap.PredictTrader as AgentType | null,
+        },
+        runningServiceConfigIdRef: { current: scTrader as string | null },
+        refreshRewardsEligibility: jest
+          .fn()
+          .mockImplementation(async (id: string) => id === scTrader),
+        scanAndStartNext: jest.fn().mockResolvedValue({ startedId: scOptimus }),
+      });
+      const { rerender } = renderHook((p) => useAutoRunLifecycle(p), {
+        initialProps: params,
+      });
+      await flush();
+      expect(params.scanAndStartNext).toHaveBeenCalledWith(
+        scTrader,
+        expect.objectContaining({ first: scOptimus }),
+      );
+      mockProbeAllDeployments.mockResolvedValue(activeDeployments());
+      params.runningAgentTypeRef.current = null;
+      params.runningServiceConfigIdRef.current = null;
+      rerender({
+        ...params,
+        runningAgentType: null,
+        runningServiceConfigId: null,
+      });
+      await flush();
+      expect(params.startSelectedAgentIfEligible).not.toHaveBeenCalled();
+      expect(params.scanAndStartNext).toHaveBeenCalledTimes(1);
+    });
+
+    it('rechecks running state after the recovery cooldown', async () => {
+      const params = makeHookParams({
+        enabled: true,
+        enabledRef: { current: true },
+        runningAgentType: AgentMap.PredictTrader,
+        runningServiceConfigId: scTrader,
+        runningAgentTypeRef: {
+          current: AgentMap.PredictTrader as AgentType | null,
+        },
+        runningServiceConfigIdRef: { current: scTrader as string | null },
+      });
+      const { rerender } = renderHook((p) => useAutoRunLifecycle(p), {
+        initialProps: params,
+      });
+      await flush();
+      let finishCooldown!: (v: boolean) => void;
+      mockSleepAwareDelay.mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            finishCooldown = resolve;
+          }),
+      );
+      params.runningAgentTypeRef.current = null;
+      params.runningServiceConfigIdRef.current = null;
+      rerender({
+        ...params,
+        runningAgentType: null,
+        runningServiceConfigId: null,
+      });
+      params.runningAgentTypeRef.current = AgentMap.Optimus;
+      params.runningServiceConfigIdRef.current = scOptimus;
+      await act(async () => {
+        finishCooldown(true);
+      });
+      expect(params.startSelectedAgentIfEligible).not.toHaveBeenCalled();
+    });
+
+    it('does not schedule idle recovery after a successful selected start', async () => {
+      const params = makeHookParams({
+        enabled: true,
+        enabledRef: { current: true },
+        startSelectedAgentIfEligible: jest.fn().mockResolvedValue(true),
+      });
+      renderHook(() => useAutoRunLifecycle(params));
+      await flush();
+      expect(params.startSelectedAgentIfEligible).toHaveBeenCalledTimes(1);
+      expect(params.scheduleNextScan).not.toHaveBeenCalled();
+    });
+
+    it.each(['network error', 'request aborted'])(
+      'defers on %s, then starts only after a successful idle check',
+      async (message) => {
+        mockProbeAllDeployments.mockRejectedValue(new Error(message));
+        const params = makeHookParams({
+          enabled: true,
+          enabledRef: { current: true },
+          startSelectedAgentIfEligible: jest.fn().mockResolvedValue(true),
+        });
+        const { rerender } = renderHook((p) => useAutoRunLifecycle(p), {
+          initialProps: params,
+        });
+        await flush();
+        expect(params.startSelectedAgentIfEligible).not.toHaveBeenCalled();
+        expect(params.scanAndStartNext).not.toHaveBeenCalled();
+        expect(params.scheduleNextScan).toHaveBeenCalledTimes(1);
+        expect(params.scheduleNextScan).toHaveBeenCalledWith(
+          SCAN_LOADING_RETRY_SECONDS,
+        );
+        mockProbeAllDeployments.mockResolvedValue({});
+        rerender({ ...params, scanTick: 1 });
+        await flush();
+        expect(params.startSelectedAgentIfEligible).toHaveBeenCalledTimes(1);
+      },
+    );
+
+    it('does not start if Auto-run is disabled during the deployment check', async () => {
+      let finishProbe!: (v: object) => void;
+      mockProbeAllDeployments.mockImplementation(
+        () =>
+          new Promise((resolve) => {
+            finishProbe = resolve;
+          }),
+      );
+      const params = makeHookParams({
+        enabled: true,
+        enabledRef: { current: true },
+      });
+      renderHook(() => useAutoRunLifecycle(params));
+      await flush();
+      params.enabledRef.current = false;
+      await act(async () => {
+        finishProbe({});
+      });
+      expect(params.startSelectedAgentIfEligible).not.toHaveBeenCalled();
+      expect(params.scanAndStartNext).not.toHaveBeenCalled();
+      expect(params.scheduleNextScan).not.toHaveBeenCalled();
+    });
   });
 
   it('exposes stopCurrentRunningAgent', () => {

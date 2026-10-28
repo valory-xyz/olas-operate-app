@@ -1,6 +1,6 @@
 import { MutableRefObject, useCallback, useEffect, useRef } from 'react';
 
-import { AgentType } from '@/constants';
+import { AgentType, isActiveDeploymentStatus } from '@/constants';
 import { sleepAwareDelay } from '@/utils/delay';
 import { isNoStakingProgram } from '@/utils/stakingProgram';
 
@@ -17,9 +17,11 @@ import {
   RUNNING_AGENT_WATCHDOG_CHECK_SECONDS,
   SCAN_BLOCKED_DELAY_SECONDS,
   SCAN_ELIGIBLE_DELAY_SECONDS,
+  SCAN_LOADING_RETRY_SECONDS,
 } from '../constants';
 import { AgentMeta } from '../types';
 import { DeployabilityCheckResult } from '../utils/autoRunHelpers';
+import { probeAllDeploymentStatuses } from '../utils/probeDeployment';
 import { ScanOptions, ScanResult } from './useAutoRunScanner';
 import { useAutoRunVerboseLogger } from './useAutoRunVerboseLogger';
 
@@ -762,28 +764,42 @@ export const useAutoRunLifecycle = ({
 
     isRotatingRef.current = true;
     let reachedScan = false;
+    let handled = false;
     const startNext = async () => {
-      const preferredStartFrom = getPreferredStartFromRef.current();
-      if (!wasEnabled) {
-        // First enable path: wait startup delay, try selected instance first, then scan queue.
-        const startOk = await sleepAwareDelay(AUTO_RUN_START_DELAY_SECONDS);
-        if (!startOk) return;
-        if (!enabledRef.current || runningAgentTypeRef.current) return;
-        const startedSelected = await startSelectedAgentIfEligibleRef.current();
-        if (startedSelected) return;
-        reachedScan = true;
-        await scanAndStartNextRef.current(preferredStartFrom);
+      const delay = wasEnabled
+        ? COOLDOWN_SECONDS
+        : AUTO_RUN_START_DELAY_SECONDS;
+      if (!(await sleepAwareDelay(delay))) return;
+      if (!enabledRef.current || runningAgentTypeRef.current) return;
+
+      // Start confirmation can precede the shared deployment poll, especially
+      // while hidden. Starting the sidebar selection would stop that agent.
+      try {
+        const deployments = await probeAllDeploymentStatuses();
+        if (!enabledRef.current) return;
+        const active = Object.entries(deployments).find(([, deployment]) =>
+          isActiveDeploymentStatus(deployment.status),
+        );
+        if (runningAgentTypeRef.current || active) {
+          handled = true;
+          logVerbose(
+            `idle recovery skipped: agent active service=${active?.[0] ?? runningServiceConfigIdRef.current}`,
+          );
+          return;
+        }
+      } catch (error) {
+        handled = true;
+        if (!enabledRef.current) return;
+        logMessage(
+          `idle recovery deferred: deployment status unknown: ${error}`,
+        );
+        scheduleNextScan(SCAN_LOADING_RETRY_SECONDS);
         return;
       }
-      // Auto-run was already enabled but the instance stopped (e.g. sleep/wake,
-      // backend crash). Try to resume the previously running instance first.
-      const cooldownOk = await sleepAwareDelay(COOLDOWN_SECONDS);
-      if (!cooldownOk) return;
-      if (!enabledRef.current) return;
-      const resumedSelected = await startSelectedAgentIfEligibleRef.current();
-      if (resumedSelected) return;
+      handled = await startSelectedAgentIfEligibleRef.current();
+      if (handled) return;
       reachedScan = true;
-      await scanAndStartNextRef.current(preferredStartFrom);
+      await scanAndStartNextRef.current(getPreferredStartFromRef.current());
     };
 
     startNext()
@@ -794,6 +810,7 @@ export const useAutoRunLifecycle = ({
         // never reached scanAndStartNext, ensure the loop retries.
         if (
           !reachedScan &&
+          !handled &&
           enabledRef.current &&
           !runningAgentTypeRef.current &&
           !hasScheduledScan()
@@ -808,6 +825,7 @@ export const useAutoRunLifecycle = ({
     enabled,
     getPreferredStartFrom,
     logMessage,
+    logVerbose,
     runningAgentType,
     scanAndStartNext,
     scanTick,
@@ -815,6 +833,7 @@ export const useAutoRunLifecycle = ({
     hasScheduledScan,
     startSelectedAgentIfEligible,
     runningAgentTypeRef,
+    runningServiceConfigIdRef,
     enabledRef,
   ]);
 

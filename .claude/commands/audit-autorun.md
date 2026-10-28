@@ -136,6 +136,8 @@ Run **targeted grep searches** for each pattern. Do **not** re-read the file in 
 | `scan complete: no agent started` | Normal/Warning | Full scan with nothing to start — inspect `loading=`, `blocked=`, `eligible=`, `infraFailed=` |
 | `infra_failed` | Warning | Transient start failure — check whether "trying next candidate" (good) or "rescan in 30s" (old bug) follows |
 | `selected start paused` | Warning | `startSelectedAgentIfEligible` hit `INFRA_FAILED` — should say "scanning other agents", not "rescan in 30s" |
+| `idle recovery skipped: agent active` | Normal | A live deployment check found an occupied slot despite stale polling; the running agent is left alone |
+| `idle recovery deferred: deployment status unknown` | Warning | The live check failed or timed out; no start is attempted and a scan is scheduled in 30s |
 | `epoch expired` | Normal | Epoch expiry override applied — confirm agent starts follow within next scan |
 | `keeping X running, no runnable alternate rescan=` | Normal | No alternate could start; recheck in 30 min, or 10 min for unknown rewards or a forced rotation |
 | `balances stale, triggering refetch` | Normal | Balance data older than 120s; should resolve within seconds |

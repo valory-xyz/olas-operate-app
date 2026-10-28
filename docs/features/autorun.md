@@ -111,8 +111,11 @@ Note: timing constants are centralized in `constants.ts` to avoid duplicate knob
 1. User toggles auto-run ON.
 2. `useAutoRunLifecycle` startup effect fires. `wasEnabled = false` (first enable).
 3. Wait `AUTO_RUN_START_DELAY_SECONDS` (30s) to let user adjust agent list.
-4. Try `startSelectedAgentIfEligible` — checks rewards, eligibility, balances for the currently selected agent.
-5. If selected can run → start it. If not → `scanAndStartNext` iterates the included queue.
+4. Fetch live deployment statuses, bypassing the shared query cache. If any agent is deployed, deploying or stopping, leave it alone. A failed or timed-out read defers startup for a 30s retry.
+5. Try `startSelectedAgentIfEligible` — checks rewards, eligibility, balances for the currently selected agent.
+6. If selected can run → start it. If not → `scanAndStartNext` iterates the included queue.
+
+Idle recovery while Auto-run is already enabled waits the 20s cooldown and performs the same live check. A confirmed start does not schedule safety-net recovery just because the deployment poll has not caught up. This prevents recovery from starting the sidebar selection and replacing the agent Auto-run just chose.
 
 ### 3.2 Rotation on Rewards
 
