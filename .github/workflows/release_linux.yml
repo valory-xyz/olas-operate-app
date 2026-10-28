@@ -20,7 +20,7 @@ jobs:
       matrix:
         include:
           - os_arch: x64
-            runner: ubuntu-latest
+            runner: ubuntu-24.04
           - os_arch: arm64
             runner: ubuntu-22.04-arm  # to support older GLIBC_2.36 on Raspberry Pi OS
 
@@ -96,7 +96,7 @@ jobs:
         include:
           - os_arch: x64
             env: production
-            runner: ubuntu-latest
+            runner: ubuntu-24.04
           - os_arch: arm64
             env: production
             runner: ubuntu-22.04-arm
