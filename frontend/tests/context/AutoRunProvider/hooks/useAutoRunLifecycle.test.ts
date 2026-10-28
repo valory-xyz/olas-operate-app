@@ -1223,6 +1223,44 @@ describe('useAutoRunLifecycle', () => {
           ),
         );
       });
+
+      it('retries the forced rotation when the hold recheck fires, although the current agent is not done', async () => {
+        const getHandOverDeployability = jest
+          .fn()
+          .mockResolvedValue({ canRun: false, reason: 'Low balance' });
+        const params = makeTraderRunningParams({
+          refreshRewardsEligibility: jest.fn().mockResolvedValue(false),
+          getHandOverDeployability,
+        });
+        const { rerender } = renderHook((props) => useAutoRunLifecycle(props), {
+          initialProps: params,
+        });
+        await act(async () => {
+          await flushMicrotasks();
+        });
+        await act(async () => {
+          jest.advanceTimersByTime(
+            RUNNING_AGENT_MAX_RUNTIME_SECONDS * 1000 +
+              RUNNING_AGENT_WATCHDOG_CHECK_SECONDS * 1000,
+          );
+          await flushMicrotasks();
+        });
+        expect(params.stopAgentWithRecovery).not.toHaveBeenCalled();
+
+        getHandOverDeployability.mockResolvedValue({ canRun: true });
+        rerender({ ...params, scanTick: 1 });
+        await act(async () => {
+          await flushMicrotasks();
+        });
+
+        expect(params.stopAgentWithRecovery).toHaveBeenCalledWith(scTrader);
+        expect(params.scanAndStartNext).toHaveBeenCalledWith(scTrader, {
+          first: scOptimus,
+          stoppedId: scTrader,
+          cycleId: expect.stringMatching(/^watchdog-/),
+          trigger: 'watchdog',
+        });
+      });
     });
   });
 

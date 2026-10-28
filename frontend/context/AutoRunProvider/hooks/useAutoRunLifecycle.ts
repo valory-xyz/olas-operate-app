@@ -127,11 +127,13 @@ export const useAutoRunLifecycle = ({
   const runningSinceRef = useRef<number | null>(null);
   // Sequence for correlation IDs across rotation/watchdog cycles.
   const rotationCycleSeqRef = useRef(0);
-  // The instance kept running because no other could start, and the scan
-  // tick its recheck was scheduled on.
-  const holdRef = useRef<{ serviceConfigId: string; scanTick: number } | null>(
-    null,
-  );
+  // The instance kept running because no other could start, the scan tick
+  // its recheck was scheduled on, and the forced rotation to retry then.
+  const holdRef = useRef<{
+    serviceConfigId: string;
+    scanTick: number;
+    forcedTrigger?: string;
+  } | null>(null);
   const scanTickRef = useRef(scanTick);
   scanTickRef.current = scanTick;
   // Read when a rotation runs, so an instance added during a hold is seen.
@@ -372,6 +374,7 @@ export const useAutoRunLifecycle = ({
         holdRef.current = {
           serviceConfigId: currentServiceConfigId,
           scanTick: scanTickRef.current,
+          forcedTrigger: options?.force ? trigger : undefined,
         };
         return;
       }
@@ -431,24 +434,42 @@ export const useAutoRunLifecycle = ({
     const currentId = runningServiceConfigId;
     if (!currentId) return;
 
-    // The hold's scheduled recheck fired: forget the `true` that started the
-    // hold, so the order is checked again even though the status is unchanged.
+    // The hold's scheduled recheck fired. A forced rotation is retried as
+    // is, since its trigger does not recur soon. Otherwise forget the `true`
+    // that started the hold, so the order is checked again even though the
+    // status is unchanged.
     const hold = holdRef.current;
+    let forcedTrigger: string | undefined;
     if (
       hold &&
       (hold.serviceConfigId !== currentId || hold.scanTick !== scanTick)
     ) {
       if (hold.serviceConfigId === currentId) {
-        lastRewardsEligibilityRef.current[currentId] = undefined;
+        forcedTrigger = hold.forcedTrigger;
+        if (!forcedTrigger) {
+          lastRewardsEligibilityRef.current[currentId] = undefined;
+        }
       }
       holdRef.current = null;
     }
 
     let isActive = true;
     const checkRewardsAndRotate = async () => {
-      const cycleId = `rewards-${currentId}-${++rotationCycleSeqRef.current}`;
       isRotatingRef.current = true;
       try {
+        if (forcedTrigger) {
+          const cycleId = `${forcedTrigger}-${currentId}-${++rotationCycleSeqRef.current}`;
+          logVerbose(
+            `cycle=${cycleId} trigger=${forcedTrigger} phase=trigger current=${currentId} retry=hold`,
+          );
+          await rotateToNext(currentId, {
+            force: true,
+            cycleId,
+            trigger: forcedTrigger,
+          });
+          return;
+        }
+        const cycleId = `rewards-${currentId}-${++rotationCycleSeqRef.current}`;
         const snapshot = await refreshRewardsEligibility(currentId);
         if (!isActive) return;
         // Check backoff BEFORE updating the guard. If the guard were written
