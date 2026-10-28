@@ -137,6 +137,24 @@ describe('useCompleteSetupFromFundingRuns', () => {
     expect(mockSetInstanceInitiallyFunded).not.toHaveBeenCalled();
   });
 
+  it('ignores a returned run for an agent it did not ask about', async () => {
+    mockService.getCompletedOnboardRuns.mockResolvedValue({
+      runs: [run('sc-not-asked'), run(DEFAULT_SERVICE_CONFIG_ID)],
+    });
+
+    renderHook(() => useCompleteSetupFromFundingRuns(), {
+      wrapper: createQueryClientWrapper(),
+    });
+
+    await waitFor(() =>
+      expect(mockSetInstanceInitiallyFunded).toHaveBeenCalledWith(
+        DEFAULT_SERVICE_CONFIG_ID,
+        AgentMap.PredictTrader,
+      ),
+    );
+    expect(mockSetInstanceInitiallyFunded).toHaveBeenCalledTimes(1);
+  });
+
   it('sends no request when every agent is complete', async () => {
     mockStoreState.mockReturnValue(
       unfinishedStore({
@@ -179,6 +197,27 @@ describe('useCompleteSetupFromFundingRuns', () => {
       await Promise.resolve();
     });
     expect(mockService.getCompletedOnboardRuns).not.toHaveBeenCalled();
+  });
+
+  it('waits until online, then asks', async () => {
+    mockIsOnline.mockReturnValue(false);
+
+    const { rerender } = renderHook(() => useCompleteSetupFromFundingRuns(), {
+      wrapper: createQueryClientWrapper(),
+    });
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(mockService.getCompletedOnboardRuns).not.toHaveBeenCalled();
+
+    mockIsOnline.mockReturnValue(true);
+    rerender();
+
+    await waitFor(() =>
+      expect(mockService.getCompletedOnboardRuns).toHaveBeenCalledWith([
+        DEFAULT_SERVICE_CONFIG_ID,
+      ]),
+    );
   });
 
   describe('failed requests', () => {
