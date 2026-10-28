@@ -74,6 +74,7 @@ The user picks which staking program to use. The view cycles through these state
 - List is ordered by `useStakingContracts`: current program first (shown even if deprecated), other deprecated programs hidden, filtered by `agentsSupported`, then filtered by multisig compatibility (see "Multisig compatibility" below). `currentStakingProgramId` here is the on-chain (subgraph) program falling back to the service-stored `staking_program_id` — it never falls back to the agent-config default, so the "Selected" badge can't land on a contract the user never joined (OPE-1841)
 - If the agent-config default is not in the compatible list, the page skips the "Recommended configuration" card and shows the list directly (with an info alert when the list is empty). The Back button is hidden in that case so the user can't reach the incompatible recommended card (OPE-1919)
 - On selection, `SelectStakingButton` writes the chosen `staking_program_id` to the service config before first deploy
+- Select failure toasts: with no service yet it creates one, and a failure shows *"Couldn't download the agent. Check your internet connection, VPN, proxy or antivirus HTTPS scanning, then try again."* for a package download error (`SERVICE_PACKAGE_DOWNLOAD_FAILED`), else *"Couldn't create the agent. Please try again."*. With an existing service, a failed contract update shows *"An error occurred while updating the staking contract."*
 
 ### Main page — Staking block
 
