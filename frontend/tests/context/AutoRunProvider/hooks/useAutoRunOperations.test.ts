@@ -76,6 +76,7 @@ const makeHookParams = () => ({
     .fn<RewardSnapshot | undefined, [string]>()
     .mockReturnValue(undefined),
   setRewardSnapshot: jest.fn<void, [string, RewardSnapshot]>(),
+  getObservedGoal: jest.fn().mockReturnValue(undefined),
   recordMetric: jest.fn(),
   logMessage: jest.fn(),
 });

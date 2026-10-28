@@ -236,15 +236,7 @@ export const useAutoRunLifecycle = ({
     ],
   );
 
-  /**
-   * Pre-check before every rotation: the first instance after the current
-   * one, in order, that still needs its turn and could start once the current
-   * one stops. Done and unknown instances never count. Empty-pool instances,
-   * then stall-deferred ones, count only when nothing else can start, and
-   * stall-deferred ones not at all when the current instance is stalled too.
-   * Logs the check that excluded each one passed over, and reports whether
-   * any was passed over for an unknown rewards status.
-   */
+  /** Run before any stop, so a turn ends only when another agent can take it. */
   const findRunnableAlternate = useCallback(
     async (
       currentServiceConfigId: string,
@@ -255,6 +247,13 @@ export const useAutoRunLifecycle = ({
         logVerbose(
           `cycle=${cycleId} trigger=${trigger} pass over ${serviceConfigId}: ${check ?? 'unknown'}`,
         );
+      const getDeployability = async (serviceConfigId: string) => {
+        const deployability = await getHandOverDeployability(serviceConfigId);
+        if (!deployability?.canRun && !deployability?.isEmptyRewardPool) {
+          passOver(serviceConfigId, deployability?.reason ?? 'not configured');
+        }
+        return deployability;
+      };
       const order = orderedIncludedInstancesRef.current;
       const currentIndex = order.indexOf(currentServiceConfigId);
       const alternates = [
@@ -284,22 +283,17 @@ export const useAutoRunLifecycle = ({
           else passOver(candidate, 'stalled on its activity goal, deferred');
           continue;
         }
-        const deployability = await getHandOverDeployability(candidate);
+        const deployability = await getDeployability(candidate);
         if (deployability?.canRun) return found(candidate);
-        if (deployability?.isEmptyRewardPool) {
-          emptyPool.push(candidate);
-          continue;
-        }
-        passOver(candidate, deployability?.reason ?? 'not configured');
+        if (deployability?.isEmptyRewardPool) emptyPool.push(candidate);
       }
       if (emptyPool.length > 0) return found(emptyPool[0]);
       for (const candidate of stalled) {
         if (!enabledRef.current) return found(null);
-        const deployability = await getHandOverDeployability(candidate);
+        const deployability = await getDeployability(candidate);
         if (deployability?.canRun || deployability?.isEmptyRewardPool) {
           return found(candidate);
         }
-        passOver(candidate, deployability?.reason ?? 'not configured');
       }
       return found(null);
     },

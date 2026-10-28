@@ -56,7 +56,6 @@ export const RUNNING_AGENT_MAX_RUNTIME_SECONDS = 4 * 60 * 60; // 4 hours
  * How long (in seconds) a running staking agent that has met its staking KPI
  * may go without its activity-goal count rising before Auto-run treats it as
  * stalled and moves on, if another agent can run.
- * Example: trades 2/8 at 10:00 and still 2/8 at 11:00 -> stalled.
  */
 export const ACTIVITY_GOAL_STALL_SECONDS = 60 * 60; // 1 hour
 

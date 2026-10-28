@@ -64,17 +64,8 @@ const isSnapshotGoal = (snapshot: RewardSnapshot, goal: ActivityGoal | null) =>
   snapshot.goalPeriodStart === (goal?.period_start ?? null);
 
 /**
- * Whether a rewards snapshot can still decide a start, without a new read.
- *
- * - `false` holds for `REWARDS_POLL_SECONDS` after its read: an agent still
- *   working may finish at any time.
- * - `true` holds at any age, while its epoch has not expired and no goal
- *   other than the one it was read with has been seen since: a finished
- *   agent stays finished for the epoch, unless its goal was edited.
- * - A stall-driven `true` only holds while the current run is still stalled.
- * - Neither holds once the instance moved to another staking program.
- *
- * @returns the snapshot's `done`, or `undefined` when unknown — never "go".
+ * A working agent may finish at any time, so a stored `false` goes stale far
+ * sooner than a `true`.
  */
 export const getUsableRewardStatus = (
   snapshot: RewardSnapshot | undefined,
@@ -139,14 +130,7 @@ const formatGoalForLog = (
   );
 };
 
-/**
- * Updates the running instance's stall clock from a fresh goal read, and
- * reports whether the goal has not moved for `ACTIVITY_GOAL_STALL_SECONDS`.
- *
- * Only time while the instance runs with its staking KPI met and a current,
- * unmet goal counts: anything else clears the clock. A change of progress,
- * target or period restarts it.
- */
+/** Only time the agent could have progressed counts toward a stall. */
 export const updateStallClock = (
   clocks: Partial<Record<string, StallClock>>,
   serviceConfigId: string,
@@ -226,6 +210,12 @@ export const formatEligibilityReason = (eligibility: {
   return eligibility.reason ?? 'unknown';
 };
 
+/** Epoch fields for an agent without staking: an epoch that never expires. */
+const NO_EPOCH: Pick<RewardSnapshot, 'tsCheckpoint' | 'livenessPeriod'> = {
+  tsCheckpoint: 0,
+  livenessPeriod: BigNumber.from(0),
+};
+
 /**
  * Fetch whether an instance is done for the epoch, throttled per serviceConfigId.
  *
@@ -237,10 +227,6 @@ export const formatEligibilityReason = (eligibility: {
  * the process last asked to start (`ServicesService.getStartRequestedAt`). A Connect
  * instance that is not running is never done, since its next process opens a
  * fresh window.
- *
- * Every successful read is stored as a full `RewardSnapshot`. A throttled call
- * answers from the stored snapshot, through `getUsableRewardStatus`, so a
- * caller deciding a start never acts on a stale `false`.
  *
  * Retries once on transient RPC failure (null response) before reporting
  * unknown. `onRewardsFetchError` fires only on the final failure
@@ -290,14 +276,13 @@ export const refreshRewardsEligibility = async ({
   lastRewardsFetchRef: MutableRefObject<Partial<Record<string, number>>>;
   lastStartedAtRef?: MutableRefObject<Partial<Record<string, number>>>;
   runningServiceConfigIdRef?: MutableRefObject<string | null>;
-  /** Per-instance stall clocks; a stalled running instance reads as done. */
-  stallClockRef?: MutableRefObject<Partial<Record<string, StallClock>>>;
+  stallClockRef: MutableRefObject<Partial<Record<string, StallClock>>>;
   getRewardSnapshot: (serviceConfigId: string) => RewardSnapshot | undefined;
   setRewardSnapshot: (
     serviceConfigId: string,
     snapshot: RewardSnapshot,
   ) => void;
-  getObservedGoal?: (serviceConfigId: string) => ObservedGoal | undefined;
+  getObservedGoal: (serviceConfigId: string) => ObservedGoal | undefined;
   logMessage: (message: string) => void;
   onRewardsFetchError?: () => void;
 }): Promise<boolean | undefined> => {
@@ -336,7 +321,7 @@ export const refreshRewardsEligibility = async ({
   const snapshot = getRewardSnapshot(serviceConfigId);
   const stillStalled =
     isRunning &&
-    isStallClockExpired(stallClockRef?.current[serviceConfigId], now);
+    isStallClockExpired(stallClockRef.current[serviceConfigId], now);
   // A stall ends a turn, not the epoch's work. Once stopped (or the clock
   // reset), re-read even inside the throttle so the fallback can restart it.
   if (
@@ -347,7 +332,7 @@ export const refreshRewardsEligibility = async ({
     return getUsableRewardStatus(snapshot, {
       stakingProgramId: meta.stakingProgramId,
       nowMs: now,
-      observedGoal: getObservedGoal?.(serviceConfigId),
+      observedGoal: getObservedGoal(serviceConfigId),
       isStalled: stillStalled,
     });
   }
@@ -457,7 +442,7 @@ export const refreshRewardsEligibility = async ({
       logMessage,
       onRewardsFetchError,
     );
-    if (goalRead.ok && stallClockRef) {
+    if (goalRead.ok) {
       isStalled = updateStallClock(stallClockRef.current, serviceConfigId, {
         isRunning,
         epochTargetMet,
@@ -474,7 +459,7 @@ export const refreshRewardsEligibility = async ({
           isStalled,
         )
       : undefined;
-  } else if (stallClockRef) {
+  } else {
     // Time before the staking KPI is met never counts toward a stall.
     delete stallClockRef.current[serviceConfigId];
   }
@@ -534,12 +519,6 @@ export const refreshRewardsEligibility = async ({
     goalRead?.ok ? goalRead.goal : null,
     isStalled && eligible,
   );
-};
-
-/** Epoch fields for an agent without staking: an epoch that never expires. */
-const NO_EPOCH: Pick<RewardSnapshot, 'tsCheckpoint' | 'livenessPeriod'> = {
-  tsCheckpoint: 0,
-  livenessPeriod: { _isBigNumber: true, _hex: '0x00' },
 };
 
 /**

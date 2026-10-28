@@ -44,7 +44,7 @@ type UseAutoRunOperationsParams = {
     serviceConfigId: string,
     snapshot: RewardSnapshot,
   ) => void;
-  getObservedGoal?: (serviceConfigId: string) => ObservedGoal | undefined;
+  getObservedGoal: (serviceConfigId: string) => ObservedGoal | undefined;
   recordMetric: (metric: AutoRunHealthMetricNoRotation) => void;
   logMessage: (message: string) => void;
 };

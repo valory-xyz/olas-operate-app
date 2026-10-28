@@ -437,7 +437,6 @@ export const useAutoRunSignals = ({
     enabledRef,
     runningAgentTypeRef,
     runningServiceConfigIdRef,
-    rewardSnapshotRef,
     lastRewardsEligibilityRef,
     stallClockRef,
     scanTick,

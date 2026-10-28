@@ -1,5 +1,7 @@
 import { useCallback, useMemo } from 'react';
 
+import { AgentType } from '@/constants';
+
 import { useElectronApi } from './useElectronApi';
 import { useServices } from './useServices';
 import { useStore } from './useStore';
@@ -60,7 +62,7 @@ export const useIsInitiallyFunded = () => {
 
   /** Mark one instance's setup complete, whichever instance is selected. */
   const setInstanceInitiallyFunded = useCallback(
-    (serviceConfigId: string, agentType: typeof selectedAgentType) => {
+    (serviceConfigId: string, agentType: AgentType) => {
       const current = storeState?.[agentType]?.isInitialFunded;
       // A legacy boolean is converted by its own migration; never write over it.
       if (typeof current === 'boolean') return;
@@ -77,7 +79,7 @@ export const useIsInitiallyFunded = () => {
 
   /** Check if a specific instance is initially funded */
   const isInstanceInitiallyFunded = useCallback(
-    (serviceConfigId: string, agentType: typeof selectedAgentType) => {
+    (serviceConfigId: string, agentType: AgentType) => {
       const stored = storeState?.[agentType]?.isInitialFunded;
       if (stored === undefined) return false;
       // Legacy boolean: treat as-is until migration converts to per-service record
