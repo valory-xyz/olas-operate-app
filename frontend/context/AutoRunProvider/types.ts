@@ -116,6 +116,8 @@ export type ObservedGoal = {
 export type StallClock = {
   /** ms */
   since: number;
+  /** Last goal read, in ms. */
+  readAt: number;
   progress: number;
   target: number;
   periodStart: number;

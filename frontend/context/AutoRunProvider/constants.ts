@@ -108,6 +108,13 @@ export const RETRY_BACKOFF_SECONDS = [30, 60, 120]; // 30s, 1m, 2m
 export const REWARDS_POLL_SECONDS = 120; // 2 minutes
 
 /**
+ * A gap between two goal reads of the running instance longer than this
+ * (e.g. the system slept) restarts its stall clock, so time it could not
+ * work never counts as a stall.
+ */
+export const STALL_CLOCK_MAX_READ_GAP_SECONDS = 5 * REWARDS_POLL_SECONDS; // 10 minutes
+
+/**
  * How long (in seconds) to wait before re-scanning for a runnable agent when
  * the last scan found at least one agent that was blocked (e.g. low balance,
  * no slots, evicted). A shorter delay is used because the blocking condition

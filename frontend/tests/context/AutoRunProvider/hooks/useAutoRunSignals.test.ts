@@ -76,6 +76,7 @@ const makeRewardSnapshot = (
 
 const makeStallClock = (overrides: Partial<StallClock> = {}): StallClock => ({
   since: NOW_MS,
+  readAt: NOW_MS,
   progress: 3,
   target: 8,
   periodStart: DEFAULT_TS_CHECKPOINT,

@@ -8,6 +8,7 @@ import {
   ELIGIBILITY_REASON,
   EMPTY_REWARD_POOL_REASON,
   REWARDS_POLL_SECONDS,
+  STALL_CLOCK_MAX_READ_GAP_SECONDS,
 } from '../../../../context/AutoRunProvider/constants';
 import {
   AgentMeta,
@@ -1056,6 +1057,17 @@ describe('refreshRewardsEligibility', () => {
       );
     };
 
+    /** Reads once per poll period from 0, then at `elapsedMs`. */
+    const readEachPollUntil = async (
+      elapsedMs: number,
+      overrides: Partial<Parameters<typeof refreshRewardsEligibility>[0]>,
+    ) => {
+      for (let at = 0; at < elapsedMs; at += REWARDS_POLL_SECONDS * 1000) {
+        await readAfter(at, overrides);
+      }
+      return readAfter(elapsedMs, overrides);
+    };
+
     beforeEach(() => {
       jest.useFakeTimers();
       mockFetchRewards.mockResolvedValue(
@@ -1078,7 +1090,7 @@ describe('refreshRewardsEligibility', () => {
       };
 
       expect(await readAfter(0, running)).toBe(false);
-      expect(await readAfter(STALL_MS, running)).toBe(true);
+      expect(await readEachPollUntil(STALL_MS, running)).toBe(true);
 
       expect(setRewardSnapshot).toHaveBeenLastCalledWith(
         DEFAULT_SERVICE_CONFIG_ID,
@@ -1111,6 +1123,10 @@ describe('refreshRewardsEligibility', () => {
         });
         jest.setSystemTime(IN_EPOCH_NOW_MS);
         expect(await refreshRewardsEligibility(params)).toBe(false);
+        for (let at = 0; at < STALL_MS; at += REWARDS_POLL_SECONDS * 1000) {
+          jest.setSystemTime(IN_EPOCH_NOW_MS + at);
+          await refreshRewardsEligibility(params);
+        }
         jest.setSystemTime(IN_EPOCH_NOW_MS + STALL_MS);
         expect(await refreshRewardsEligibility(params)).toBe(true);
         jest.setSystemTime(IN_EPOCH_NOW_MS + STALL_MS + 1_000);
@@ -1130,8 +1146,22 @@ describe('refreshRewardsEligibility', () => {
         logMessage,
       };
 
+      expect(await readEachPollUntil(STALL_MS - 1_000, running)).toBe(false);
+      expect(logMessage).not.toHaveBeenCalledWith(
+        expect.stringContaining('stalled=true'),
+      );
+    });
+
+    it('does not count a gap between reads, such as system sleep, toward a stall', async () => {
+      const logMessage = jest.fn();
+      const running = {
+        runningServiceConfigIdRef: { current: DEFAULT_SERVICE_CONFIG_ID },
+        stallClockRef: { current: {} },
+        logMessage,
+      };
+
       await readAfter(0, running);
-      expect(await readAfter(STALL_MS - 1_000, running)).toBe(false);
+      expect(await readAfter(STALL_MS, running)).toBe(false);
       expect(logMessage).not.toHaveBeenCalledWith(
         expect.stringContaining('stalled=true'),
       );
@@ -1154,6 +1184,7 @@ describe('refreshRewardsEligibility', () => {
         current: {
           [DEFAULT_SERVICE_CONFIG_ID]: {
             since: IN_EPOCH_NOW_MS - STALL_MS,
+            readAt: IN_EPOCH_NOW_MS - REWARDS_POLL_SECONDS * 1000,
             progress: 3,
             target: 8,
             periodStart: DEFAULT_TS_CHECKPOINT,
@@ -1483,12 +1514,18 @@ describe('updateStallClock', () => {
     goal: makeActivityGoal({ progress: 3, target: 8 }),
     tsCheckpoint: DEFAULT_TS_CHECKPOINT,
   };
+  const POLL_MS = REWARDS_POLL_SECONDS * 1000;
   const startedClock: StallClock = {
     since: T0,
+    readAt: T0,
     progress: 3,
     target: 8,
     periodStart: DEFAULT_TS_CHECKPOINT,
   };
+  /** The clock as last read just before `nowMs`, one poll period earlier. */
+  const readBefore = (nowMs: number) => ({
+    [ID]: { ...startedClock, readAt: nowMs - POLL_MS },
+  });
 
   it('starts a clock on the first read of a running, unmet, current goal', () => {
     const clocks: Partial<Record<string, StallClock>> = {};
@@ -1499,7 +1536,7 @@ describe('updateStallClock', () => {
   });
 
   it('reports a stall once the goal has not moved for the stall period', () => {
-    const clocks = { [ID]: { ...startedClock } };
+    const clocks = readBefore(T0 + STALL_MS - 1);
     expect(
       updateStallClock(clocks, ID, {
         ...qualifying,
@@ -1509,7 +1546,37 @@ describe('updateStallClock', () => {
     expect(
       updateStallClock(clocks, ID, { ...qualifying, nowMs: T0 + STALL_MS }),
     ).toBe(true);
-    expect(clocks[ID]).toEqual(startedClock);
+    expect(clocks[ID]).toEqual({ ...startedClock, readAt: T0 + STALL_MS });
+  });
+
+  it('keeps the clock running when only updated_at changes', () => {
+    const nowMs = T0 + STALL_MS;
+    const clocks = readBefore(nowMs);
+    const goal = makeActivityGoal({
+      progress: 3,
+      target: 8,
+      updated_at: DEFAULT_TS_CHECKPOINT + 3_600,
+    });
+    expect(updateStallClock(clocks, ID, { ...qualifying, goal, nowMs })).toBe(
+      true,
+    );
+    expect(clocks[ID]).toEqual({ ...startedClock, readAt: nowMs });
+  });
+
+  it('restarts the clock when the previous read is too old, such as after system sleep', () => {
+    const nowMs = T0 + STALL_MS;
+    const clocks = {
+      [ID]: {
+        ...startedClock,
+        readAt: nowMs - STALL_CLOCK_MAX_READ_GAP_SECONDS * 1000 - 1,
+      },
+    };
+    expect(updateStallClock(clocks, ID, { ...qualifying, nowMs })).toBe(false);
+    expect(clocks[ID]).toEqual({
+      ...startedClock,
+      since: nowMs,
+      readAt: nowMs,
+    });
   });
 
   it.each([
@@ -1524,13 +1591,14 @@ describe('updateStallClock', () => {
       }),
     ],
   ])('restarts the clock when the %s changes', (_, goal) => {
-    const clocks = { [ID]: { ...startedClock } };
     const nowMs = T0 + STALL_MS;
+    const clocks = readBefore(nowMs);
     expect(updateStallClock(clocks, ID, { ...qualifying, goal, nowMs })).toBe(
       false,
     );
     expect(clocks[ID]).toEqual({
       since: nowMs,
+      readAt: nowMs,
       progress: goal.progress,
       target: goal.target,
       periodStart: goal.period_start,
@@ -1556,7 +1624,7 @@ describe('updateStallClock', () => {
       },
     ],
   ])('clears the clock when %s', (_, overrides) => {
-    const clocks = { [ID]: { ...startedClock } };
+    const clocks = readBefore(T0 + STALL_MS);
     expect(
       updateStallClock(clocks, ID, {
         ...qualifying,
@@ -1582,6 +1650,7 @@ describe('isStallClockExpired', () => {
   const STALL_MS = ACTIVITY_GOAL_STALL_SECONDS * 1000;
   const clock: StallClock = {
     since: IN_EPOCH_NOW_MS,
+    readAt: IN_EPOCH_NOW_MS + STALL_MS - REWARDS_POLL_SECONDS * 1000,
     progress: 3,
     target: 8,
     periodStart: DEFAULT_TS_CHECKPOINT,
@@ -1599,6 +1668,15 @@ describe('isStallClockExpired', () => {
 
   it('is true from the end of the stall period', () => {
     expect(isStallClockExpired(clock, IN_EPOCH_NOW_MS + STALL_MS)).toBe(true);
+  });
+
+  it('is false once the last read is too old, such as after system sleep', () => {
+    expect(
+      isStallClockExpired(
+        clock,
+        clock.readAt + STALL_CLOCK_MAX_READ_GAP_SECONDS * 1000 + 1,
+      ),
+    ).toBe(false);
   });
 });
 

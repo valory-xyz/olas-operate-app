@@ -30,6 +30,7 @@ import {
   EMPTY_REWARD_POOL_REASON,
   REWARDS_POLL_SECONDS,
   REWARDS_RETRY_DELAY_SECONDS,
+  STALL_CLOCK_MAX_READ_GAP_SECONDS,
 } from '../constants';
 import { AgentMeta, ObservedGoal, RewardSnapshot, StallClock } from '../types';
 
@@ -176,25 +177,34 @@ export const updateStallClock = (
   const clock = clocks[serviceConfigId];
   if (
     !clock ||
+    !isStallClockRead(clock, nowMs) ||
     clock.progress !== goal.progress ||
     clock.target !== goal.target ||
     clock.periodStart !== goal.period_start
   ) {
     clocks[serviceConfigId] = {
       since: nowMs,
+      readAt: nowMs,
       progress: goal.progress,
       target: goal.target,
       periodStart: goal.period_start,
     };
     return false;
   }
+  clock.readAt = nowMs;
   return isStallClockExpired(clock, nowMs);
 };
+
+const isStallClockRead = (clock: StallClock, nowMs: number) =>
+  nowMs - clock.readAt <= STALL_CLOCK_MAX_READ_GAP_SECONDS * 1000;
 
 export const isStallClockExpired = (
   clock: StallClock | undefined,
   nowMs: number,
-) => !!clock && nowMs - clock.since >= ACTIVITY_GOAL_STALL_SECONDS * 1000;
+) =>
+  !!clock &&
+  isStallClockRead(clock, nowMs) &&
+  nowMs - clock.since >= ACTIVITY_GOAL_STALL_SECONDS * 1000;
 
 /**
  * Format eligibility into a human-readable reason for logs/UI.
