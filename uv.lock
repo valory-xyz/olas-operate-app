@@ -1026,7 +1026,7 @@ wheels = [
 
 [[package]]
 name = "olas-operate-app"
-version = "1.11.3rc20"
+version = "0.15.48"
 source = { virtual = "." }
 dependencies = [
     { name = "olas-operate-middleware" },
@@ -1043,7 +1043,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "olas-operate-middleware", specifier = "==0.15.47" },
+    { name = "olas-operate-middleware", specifier = "==0.15.48" },
     { name = "open-aea-cli-ipfs", specifier = "==2.2.10" },
     { name = "open-aea-ledger-cosmos", specifier = "==2.2.10" },
     { name = "open-aea-ledger-ethereum", specifier = "==2.2.10" },
@@ -1055,7 +1055,7 @@ dev = [{ name = "pyinstaller", specifier = "==6.20.0" }]
 
 [[package]]
 name = "olas-operate-middleware"
-version = "0.15.47"
+version = "0.15.48"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiohttp" },
@@ -1076,9 +1076,9 @@ dependencies = [
     { name = "uvicorn" },
     { name = "werkzeug" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/99/7a/63fb66ee932f969d8f1c19c59b5a444ae12baacce659726a271183ee4d05/olas_operate_middleware-0.15.47.tar.gz", hash = "sha256:6b2507f1a29d5924588fe5a645730a59982bba6212bbe1df7f2b55b7d0f95f81", size = 350580, upload-time = "2026-10-26T15:58:51.613Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/60/a8/e1c0c413a5c99dd857e3e0289daae4ab8d940094d59018858cd96ed7d8d9/olas_operate_middleware-0.15.48.tar.gz", hash = "sha256:35d63c016ec6cfa02d77d54401070dffba252cf04042e3024fa2c6d1c3335bfd", size = 351471, upload-time = "2026-10-29T16:54:00.731Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ee/00/49454cbf241692bd92ee2aaaf30231d5205acca7f393abf568649b0a2795/olas_operate_middleware-0.15.47-py3-none-any.whl", hash = "sha256:90e60f45d94fd765eaff0e62afa0b8b7c54750a83c4f233dc00846a43306c4fe", size = 406944, upload-time = "2026-10-26T15:58:50.007Z" },
+    { url = "https://files.pythonhosted.org/packages/65/89/9cd10520591390834618c17d607b5dee002d26af0074ac47215f505c7b56/olas_operate_middleware-0.15.48-py3-none-any.whl", hash = "sha256:b0314c647a27a8a7022831e84ffc0a017129d0c905d43d5a6bdee399d701ce5e", size = 407972, upload-time = "2026-10-29T16:53:58.556Z" },
 ]
 
 [[package]]

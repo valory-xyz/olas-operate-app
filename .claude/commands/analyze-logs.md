@@ -111,7 +111,8 @@ Look for these event categories and note their timestamps:
 - **AutoRun state changes**: `autorun:: enabled`, `autorun:: disabled`, `autorun:: rotation triggered`, `autorun:: rotate_begin`
 - **Start/stop events**: `autorun:: starting`, `autorun:: started`, `autorun:: stopping`, `autorun:: stopped`
 - **Start results**: `autorun:: started` (deployed), `autorun:: agent_blocked` (balance/eviction/deterministic), `autorun:: infra_failed` (transient, queue does NOT advance), `autorun:: aborted` (disabled or sleep)
-- **Failures**: `autorun:: start error`, `autorun:: stop failed`, `autorun:: infra_failed`, `autorun:: rewards eligibility timeout`
+- **Rotation decisions**: `pass over <id>: <check>`, `rewards status unknown, passing over`, `phase=rotate_end status=ok|kept|none` (only `ok` means another agent started)
+- **Failures**: `autorun:: start error`, `autorun:: stop failed`, `autorun:: infra_failed`
 - **Stale data**: `autorun:: balances stale`, `autorun:: triggering refetch`
 - **Watchdog / rotation**: `autorun:: rotate_begin` every ~4200s with a single configured agent is **expected behaviour** — watchdog fires, stays on same agent, not a bug
 - **Sleep/wake**: any sleep-detection messages (elapsed > expected + 30s triggers bail-out and safety-net reschedule)

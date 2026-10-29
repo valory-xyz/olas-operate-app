@@ -53,7 +53,10 @@ AutoRunProvider
 | `enabledRef` | Live auto-run enabled state for async loops |
 | `runningAgentTypeRef` | Currently running agent type (from react-query polling) |
 | `runningServiceConfigIdRef` | Currently running instance's serviceConfigId |
+| `rewardSnapshotRef` | Per-instance last rewards read (`RewardSnapshot`); never wiped, checked when used (§3.8) |
 | `lastRewardsEligibilityRef` | Per-instance previous rewards state; guards duplicate rotation triggers |
+| `stallClockRef` | When the running instance's activity-goal count last moved (§3.9) |
+| `stallDeferredRef` | Instances moved on from for a stall, with the epoch it happened in (§3.9) |
 | `isRotatingRef` | Prevents overlapping rotation/startup flows |
 | `wasAutoRunEnabledRef` | Distinguishes first enable from agent-stopped-while-enabled |
 | `stopRetryBackoffUntilRef` | Per-instance exponential backoff after stop timeout |
@@ -78,12 +81,14 @@ Note: timing constants are centralized in `constants.ts` to avoid duplicate knob
 | `AUTO_RUN_VERBOSE_LOGS` | true | Gates high-volume diagnostic logs; set to true while actively debugging incidents |
 | `COOLDOWN_SECONDS` | 20s | Delay after stop before starting next instance |
 | `RUNNING_AGENT_MAX_RUNTIME_SECONDS` | 4h | Watchdog threshold for maximum continuous runtime per instance |
+| `ACTIVITY_GOAL_STALL_SECONDS` | 1h | A running instance whose activity-goal count has not moved for this long after its staking KPI is met is stalled (§3.9) |
+| `STALL_CLOCK_MAX_READ_GAP_SECONDS` | 10min | A longer gap between goal reads (e.g. system sleep) restarts the stall clock (§3.9) |
 | `RUNNING_AGENT_WATCHDOG_CHECK_SECONDS` | 5min | Runtime watchdog check cadence |
 | `RUNNING_AGENT_ELIGIBILITY_CHECK_SECONDS` | 10min | Eviction watchdog cadence — how often the running instance's on-chain staking state is re-read |
 | `HEALTH_SUMMARY_INTERVAL_SECONDS` | 15min | Aggregated auto-run health log cadence (error/success counters); only emitted when `AUTO_RUN_VERBOSE_LOGS=true` |
 | `RETRY_BACKOFF_SECONDS` | [30, 60, 120] | Progressive backoff between start retries |
-| `REWARDS_POLL_SECONDS` | 120s | How often to poll rewards for the running instance |
-| `SCAN_BLOCKED_DELAY_SECONDS` | 10min | Rescan delay when instances are blocked (low balance, evicted, etc.) |
+| `REWARDS_POLL_SECONDS` | 120s | How often to poll rewards for the running instance; also how long a "not done" read can decide a start |
+| `SCAN_BLOCKED_DELAY_SECONDS` | 10min | Rescan delay when instances are blocked (low balance, evicted, etc.) or their rewards status is unknown |
 | `SCAN_ELIGIBLE_DELAY_SECONDS` | 30min | Rescan delay when all instances have earned rewards |
 | `SCAN_LOADING_RETRY_SECONDS` | 30s | Rescan delay on transient loading states |
 | `START_TIMEOUT_SECONDS` | 900s (15min) | How long to wait for DEPLOYED status after start; also used as stop-confirmation timeout |
@@ -91,7 +96,6 @@ Note: timing constants are centralized in `constants.ts` to avoid duplicate knob
 | `STOP_RECOVERY_MAX_ATTEMPTS` | 3 | Bounded stop retries per rotation |
 | `STOP_RECOVERY_RETRY_SECONDS` | 60s | Delay between stop recovery attempts |
 | `AGENT_SELECTION_WAIT_TIMEOUT_SECONDS` | 60s | Hard timeout for UI selection to match requested instance |
-| `REWARDS_WAIT_TIMEOUT_SECONDS` | 20s | Hard timeout for rewards snapshot to arrive |
 | `DISABLE_RACE_STOP_CHECK_INTERVAL_MS` | 10s | Poll cadence when checking for an instance that started during a concurrent disable |
 | `DISABLE_RACE_STOP_MAX_CHECKS` | 90 | Max follow-up checks (90 × 10s = 15min window) before giving up on the disable-race guard |
 | `SLEEP_DRIFT_THRESHOLD_MS` | 30s | Max allowed clock drift before treating as sleep/wake |
@@ -107,8 +111,11 @@ Note: timing constants are centralized in `constants.ts` to avoid duplicate knob
 1. User toggles auto-run ON.
 2. `useAutoRunLifecycle` startup effect fires. `wasEnabled = false` (first enable).
 3. Wait `AUTO_RUN_START_DELAY_SECONDS` (30s) to let user adjust agent list.
-4. Try `startSelectedAgentIfEligible` — checks rewards, eligibility, balances for the currently selected agent.
-5. If selected can run → start it. If not → `scanAndStartNext` iterates the included queue.
+4. Fetch live deployment statuses, bypassing the shared query cache. If any agent is deployed, deploying or stopping, leave it alone. A failed or timed-out read defers startup for a 30s retry.
+5. Try `startSelectedAgentIfEligible` — checks rewards, eligibility, balances for the currently selected agent.
+6. If selected can run → start it. If not → `scanAndStartNext` iterates the included queue.
+
+Idle recovery while Auto-run is already enabled waits the 20s cooldown and performs the same live check. A confirmed start does not schedule safety-net recovery just because the deployment poll has not caught up. This prevents recovery from starting the sidebar selection and replacing the agent Auto-run just chose.
 
 ### 3.2 Rotation on Rewards
 
@@ -126,10 +133,12 @@ The goal is read only once the staking signal is met; until then the instance is
 1. `REWARDS_POLL_SECONDS` interval calls `refreshRewardsEligibility(runningServiceConfigId)`.
 2. Snapshot update bumps `rewardsTick` → rotation effect fires.
 3. Effect detects `false → true` transition via `lastRewardsEligibilityRef` guard.
-4. `rotateToNext(currentServiceConfigId)`:
-   a. Refresh rewards for all other instances.
-   b. If all earned/unknown → keep current, rescan in 30min.
-   c. Otherwise → `stopAgentWithRecovery` → reset `lastRewardsEligibilityRef[current]` → cooldown → `scanAndStartNext`.
+4. `rotateToNext(currentServiceConfigId)` runs the pre-check (`findRunnableAlternate`), the same for every trigger — the rewards edge, a stall, the watchdog, an eviction that cannot be cleared, and Connect's minutes:
+   a. Read rewards for the other instances, in order after the current one. Done and unknown ones never count.
+   b. The rest go through `fetchDeployabilityForAgent` with the running gate ignored; the first that can start is the next agent. Empty-pool instances count only if none can, then stall-deferred ones (§3.9), unless the current instance is itself stalled.
+   c. None → the current instance keeps the slot. Each instance passed over is logged with the check that excluded it, and the order is checked again in 30min (10min after a forced rotation, or when an instance was passed over for an unknown rewards status): when that recheck fires, a forced rotation (watchdog, eviction) is retried as it was, since its trigger would not recur for hours; otherwise `lastRewardsEligibilityRef[current]` is cleared, so an unchanged `true` re-runs the pre-check. Either way the order is read as it is then (an instance added during the hold included).
+   d. Next agent X → `stopAgentWithRecovery` → reset `lastRewardsEligibilityRef[current]` → cooldown → `scanAndStartNext(current, { first: X, stoppedId: current })`. The scan tries X first, re-checking its deployability and then its rewards, even when X is an empty-pool or stall-deferred instance, then the usual order; it treats `current` as stopped, since the stop probe confirmed it, instead of waiting for the deployment poll, which can lag by a minute with the window hidden and would make every other candidate read "Another agent running".
+   e. `rotate_end status=ok` and `rotationsSucceeded` only when an instance other than `current` started; `status=none` when the scan started nothing (or `current` again), `status=kept` from step c.
 
 Note: Resetting `lastRewardsEligibilityRef` on successful stop is critical — without it the guard stays `true` from the current epoch and permanently blocks rotation in all future epochs when this instance runs again.
 
@@ -139,7 +148,7 @@ Connect (`stakingProgramId === 'no_staking'`) has no epoch. It is an ordinary ch
 
 - **Not running:** `refreshRewardsEligibility` returns `false` without a fetch or throttle, since its next process opens a fresh window. The circular order reaches it after every other agent has had a turn, and `rotateToNext` from a finished staking agent hands over to it.
 - **Running:** done when the block is current and `is_met`. Freshness is the only per-type difference: the block is current when `period_start >= floor(startRequestedAt / 1000)`, the moment the app last asked the backend to start the instance (`ServicesService.getStartRequestedAt`). `ServicesService.startService` records it on every path, so a manual start or restart counts the same as an Auto-run start. That ignores a leftover `is_met: true` from the previous process before the new one rewrites the file at boot. The record lives in memory: after a frontend reload while Connect keeps running there is no floor, and a leftover met block counts until the process rewrites it. The start request is used rather than `lastStartedAt`, which is stamped only once the deployment is confirmed, after the new process has already opened its window.
-- **Hand-over:** `rotateToNext` refreshes the alternates, probes each not-done one in turn order with `fetchDeployabilityForAgent(..., { ignoreRunningAgent: true })`, and stops Connect only if one can start; the goal-reached notification ("Connect agent "…" finished its run") is sent on that stop, once per hand-over. Otherwise Connect keeps running and `lastRewardsEligibilityRef[connect]` is reset, as on a stop failure: Connect's `is_met` never goes back to false within a process, so the reset is what lets the next rewards poll re-check, and hand over once another agent becomes ready.
+- **Hand-over:** the §3.2 pre-check, and the scan starts the agent it chose. Connect is stopped only if one can start; the goal-reached notification ("Connect agent "…" finished its run") is sent on that stop, once per hand-over. Otherwise Connect keeps running and `lastRewardsEligibilityRef[connect]` is reset, as on a stop failure: Connect's `is_met` never goes back to false within a process, so the reset is what lets the next rewards poll re-check, and hand over once another agent becomes ready.
 - A watchdog or eviction hand-over sends no goal-reached notification.
 - `fetchDeployabilityForAgent` skips the staking reads for `no_staking`, and `AgentMeta.chainId` is the instance's own chain (`getServiceEvmChainId`).
 - **Upgrade:** Connect instances that exist when the version first loads are added once to `userExcludedAgentInstances` (`autoRun.connectAutoRunMigrated`); later instances are auto-added.
@@ -162,8 +171,8 @@ Connect (`stakingProgramId === 'no_staking'`) has no epoch. It is an ordinary ch
 ### 3.5 Long-Running Agent Watchdog
 
 1. While auto-run is enabled and an agent is running, watchdog checks runtime every 5 minutes.
-2. If the same agent has been running for more than 4 hours continuously, watchdog attempts forced `rotateToNext` (ignores the normal "all others earned/unknown" keep-running optimization).
-3. In force mode, if all other agents are earned/unknown (no known alternative), current agent is kept running and watchdog retries later (no stop-to-idle).
+2. If the same agent has been running for more than 4 hours continuously, watchdog attempts forced `rotateToNext`: the §3.2 pre-check picks the next agent that still needs its turn and can start, and the scan starts that one, not the current one.
+3. If no other agent can start, the current agent is kept running (no stop-to-idle), the log names the check that excluded each other agent, and the order is checked again in 10 minutes.
 4. If rotate/recovery fails, scanner fallback is scheduled with blocked delay.
 
 ### 3.6 Evicted Running Instance
@@ -186,9 +195,33 @@ The running instance is re-checked after the read as well as before it: a rotati
 1. When `AUTO_RUN_VERBOSE_LOGS=true`, start/stop operations emit structured phase logs with operation ids:
 `start_prepare`, `start_request`, `start_confirm`, `stop_request`, `stop_confirm`, `stop_retry`.
 2. When `AUTO_RUN_VERBOSE_LOGS=true`, rotation and watchdog flows emit cycle correlation ids:
-`cycle=<id> trigger=<rewards|watchdog|eviction> phase=<...>`.
+`cycle=<id> trigger=<rewards|stall|watchdog|eviction> phase=<...>`, plus `cycle=<id> trigger=<t> pass over <id>: <check>` for every instance the pre-check or the rotation's scan passes over (transient ones included).
 3. When `AUTO_RUN_VERBOSE_LOGS=true`, every 15 minutes (while auto-run is enabled), a health summary log is emitted with counters:
 `startErrors`, `stopTimeouts`, `rewardsErrors`, `eligibilityTimeouts`, `rotationsSucceeded`.
+
+### 3.8 Rewards Snapshot
+
+Every rewards read is stored as a `RewardSnapshot` — `done`, `readAt`, staking program, `tsCheckpoint`, `livenessPeriod` and the goal unit/target/period start it was read with — by `refreshRewardsEligibility` and by the selected-instance writer in `useAutoRunSignals` (fed from the RewardProvider). It is never wiped. `getUsableRewardStatus` decides whether it can still decide a start:
+
+- `false` holds for `REWARDS_POLL_SECONDS` after its read; after that a new read is made before deciding. The read throttle is the same 120s, so a throttled `refreshRewardsEligibility` call answers from the snapshot, and a scan reuses the pre-check's read.
+- `true` holds at any age for the same staking program and goal, and is dropped once its epoch expires. `useAutoRunSignals` records the selected instance's goal whenever it loads (`getObservedGoal`); once a goal with another unit, target or period start has been seen after the read, the `true` needs a new read.
+- A stall-driven `true` is marked `stalled` and only holds while that instance is still running with an expired stall clock. After stopping or resetting the clock, the next read bypasses the throttle so the instance can run again if no successor starts.
+- Selected-instance snapshots use the actual successful query timestamps, taking the older of rewards and activity-goal reads when both are needed. Re-renders do not renew freshness, and older provider data never overwrites a newer direct read.
+- A failed read is unknown.
+
+The scanner reads rewards after an instance's deployability check, not before, since that check can take long enough for a `false` to go stale. `startAgentWithRetries` takes an `isStillDue` check, which the scanner passes so a new read still saying "not done" is required right before every start request (the balance wait and retries can outlast the first read); otherwise the start returns `agent_blocked` (`start_request status=not_due`).
+
+Unknown (`undefined`) never means "go". The scanner loop, the empty-pool fallback and `startSelectedAgentIfEligible` pass the instance over with `<id>: rewards status unknown, passing over` and an `eligibilityTimeouts` count, without a skip notification. A scan that starts nothing with only unknowns left reschedules in `SCAN_BLOCKED_DELAY_SECONDS`, leaving the slot empty; a running agent keeps running.
+
+### 3.9 Stalled Agent
+
+A staking agent can meet its staking KPI but never reach its activity goal (e.g. a bet size too low to trade). Without a check it held the slot for the 4h runtime cap.
+
+- The stall clock (`updateStallClock`) runs only for the running instance, on fresh reads where its staking KPI is met and its goal block is current and not met. It starts on the first such read and restarts whenever the goal's `progress`, `target` or `period_start` changes. Any other read clears it, so time before the KPI is met never counts. `activity_goal.updated_at` is not read (the trader stamps it on every round). A gap of more than `STALL_CLOCK_MAX_READ_GAP_SECONDS` since the previous read, such as system sleep, also restarts it, and an unread clock is never stalled, so time the agent could not work never counts. The clock lives in memory: a Pearl restart, turning Auto-run off, or any change of the running instance (a stop or a hand-over) starts it over.
+- After `ACTIVITY_GOAL_STALL_SECONDS` without a change, the read is "stalled": `deriveIsDoneForEpoch` returns `true` and the decision log ends `→ done=true stalled=true`, so the usual `false → true` edge fires with `trigger=stall`.
+- If the pre-check finds another agent, the stalled one is stopped and, once the stop is confirmed, deferred (`stallDeferredRef`), with no goal-reached notification. After a stop timeout it keeps running and is not deferred. For the rest of the epoch the scanner tries it only after every rewarded and empty-pool candidate (a stalled instance on an empty pool counts as stalled), unless the pre-check chose it, and starts it with a fresh hour. The deferral ends with the epoch.
+- If no other agent can start, it keeps running and its hour starts again.
+- Connect (`no_staking`) is never stalled.
 
 ---
 
@@ -202,10 +235,9 @@ All waits are guarded by `enabledRef.current`, `sleepAwareDelay()`, and hard tim
 | `waitForBalancesReady` | 180s (`AGENT_SELECTION_WAIT_TIMEOUT_SECONDS * 3`) | Yes | Yes |
 | `waitForRunningAgent` | 900s (`START_TIMEOUT_SECONDS`) | Yes | Yes |
 | `waitForStoppedDeployment` | 900s (`START_TIMEOUT_SECONDS`) | Yes | No (stop must finish) |
-| `waitForRewardsEligibility` | 20s (`REWARDS_WAIT_TIMEOUT_SECONDS`) | Yes | Yes |
 | `waitForEligibilityReady` | 60s (`AGENT_SELECTION_WAIT_TIMEOUT_SECONDS * 1000`) | Yes | Yes |
 
-**No wait can block indefinitely.** Every wait has a hard timeout that returns `false` (or `undefined` for rewards), allowing the caller to reschedule or bail.
+**No wait can block indefinitely.** Every wait has a hard timeout that returns `false`, allowing the caller to reschedule or bail.
 
 ---
 
@@ -298,7 +330,9 @@ Every delay and poll interval in auto-run uses `sleepAwareDelay`. On `false`:
 |---|----------|----------|----------------|
 | 5 | Agent earns rewards | Stop → cooldown → start next | `false→true` transition triggers `rotateToNext` |
 | 6 | Agent already earned before enable | Skip, move to next | Rewards snapshot check before start |
-| 7 | All agents earned | Keep current running, rescan in 30min | `allEarnedOrUnknown` → `SCAN_ELIGIBLE_DELAY_SECONDS` |
+| 7 | All agents earned | Keep current running, recheck the whole order in 30min | Pre-check finds no alternate → `SCAN_ELIGIBLE_DELAY_SECONDS`; the recheck clears the held agent's rewards guard |
+| 7e | Running agent stalled on its activity goal for 1h | Move to the next agent that can start; the stalled one runs again only when nothing else can | §3.9 |
+| 7f | Agent added during a hold | Started on the next recheck at the latest | §3.2 step c re-reads the order |
 | 7a | Epoch expired (clock = 0), all agents show `isEligibleForRewards = true` from old epoch, no agent running | Treat as not-yet-earned and start next agent to trigger on-chain checkpoint | `epochExpired` check in `refreshRewardsEligibility` (fresh chain data) + separate `isEpochExpired` flag passed to `useAutoRunSignals` where `!isEligibleForRewards \|\| isEpochExpired` is evaluated at the snapshot write |
 
 ### Running Instance Evicted
@@ -349,14 +383,14 @@ Every delay and poll interval in auto-run uses `sleepAwareDelay`. On `false`:
 | 22 | Start fails (transient) | Retry with backoff; on final failure return `INFRA_FAILED`; try remaining scan candidates, then schedule short rescan | `startAgentWithRetries` → `INFRA_FAILED` → scanner continues to next candidates → `SCAN_LOADING_RETRY_SECONDS` rescan if all fail |
 | 23 | Stop fails | Bounded retries; reset rewards guard; schedule rescan | `stopAgentWithRecovery` + guard reset + `SCAN_BLOCKED_DELAY_SECONDS` |
 | 24 | Disable during stop recovery | Stop recovery runs to completion | `waitForStoppedDeployment` does not check `enabledRef` |
-| 25 | Rewards API fails (RPC error) | Log error, continue | Returns `undefined`; treated as "not yet earned" |
+| 25 | Rewards API fails (RPC error) | Log error, pass the agent over, recheck later | Returns `undefined`: unknown, never started on it (§3.8) |
 | 26 | Eligibility stuck loading | 60s timeout, then rescan in 30s or advance to next candidate | `waitForEligibilityReady` timeout → scanner continues |
 
 ### Infinite Loop Guards
 
 | # | Scenario | Expected | Implementation |
 |---|----------|----------|----------------|
-| 27 | Single agent earns (no others) | Keep running, rescan 30min | `otherAgents.length === 0` → `SCAN_ELIGIBLE_DELAY_SECONDS` |
+| 27 | Single agent earns (no others) | Keep running, rescan 30min | Pre-check has no alternates → `SCAN_ELIGIBLE_DELAY_SECONDS` |
 | 28 | STOPPING race | Treat as transient Loading | `ANOTHER_AGENT_RUNNING` normalized to Loading |
 | 29 | Disabled during waits | Exit early | All waits check `enabledRef.current` |
 | 30 | Disabled during retries | Stop retrying | `enabledRef.current` checked each iteration |
@@ -370,7 +404,7 @@ Every delay and poll interval in auto-run uses `sleepAwareDelay`. On `false`:
 | 33 | Stale balances after wake | Refetch before proceeding | `balanceLastUpdatedRef` freshness check |
 | 34 | Sleep during retry backoff | Abort retries | `sleepAwareDelay` returns `false` |
 | 35 | Resume previously-running agent | Try same agent first, then scan | `startSelectedAgentIfEligible` before `scanAndStartNext` |
-| 36 | Resume agent that earned during sleep | Falls through to scan | Rewards snapshot check returns `true` → `false` |
+| 36 | Resume agent that earned during sleep | Falls through to scan | `getRewardStatus` returns `true` → `false` |
 
 ### Stop Timeout Recovery
 
@@ -564,8 +598,13 @@ All auto-run logs are prefixed with `autorun::`.
 | `rotation triggered: X earned rewards` | Rewards transition detected, rotation starting | Normal |
 | `stop timeout for X, aborting rotation` | All stop attempts exhausted | Warning |
 | `reset rewards guard for X, scheduling rescan in Ns` | Recovery from stop timeout | Warning |
-| `all other agents earned or unknown, keeping X running, rescan in Ns` | No viable rotation target | Normal |
-| `scan complete: no agent started (loading=, blocked=, eligible=), rescan in Ns` | Full scan found nothing to start | Normal |
+| `cycle=… trigger=… keeping X running, no runnable alternate rescan=Ns` | Pre-check found no other agent that can start | Normal |
+| `cycle=… trigger=… pass over X: <check>` | X excluded by the pre-check or a rotation's scan, and why | Normal |
+| `scan: pass over X: <check>` | Same, for a scan outside a rotation | Normal |
+| `cycle=… trigger=… phase=rotate_end status=<ok\|kept\|none> current=X` | Rotation outcome: another agent started / X kept / nothing started | Normal |
+| `X: rewards status unknown, passing over` | X not started: its rewards status could not be confirmed | Warning |
+| `scan: started stalled X, no other agent could start` | A stall-deferred agent got the slot back | Normal |
+| `scan complete: no agent started (loading=, blocked=, eligible=, infraFailed=, unknown=), rescan in Ns` | Full scan found nothing to start | Normal |
 | `safety net: flow interrupted before scan, retrying in Ns` | Sleep/wake bail-out recovery | Warning |
 | `start timeout for X (attempt N)` | Start attempt timed out waiting for DEPLOYED | Warning |
 | `start error for X: ...` | Start threw an exception (e.g., Failed to fetch) | Warning |
@@ -580,7 +619,6 @@ All auto-run logs are prefixed with `autorun::`.
 | `balances stale, triggering refetch` | Balance data older than 120s | Normal |
 | `balances refetch failed: ...` | Refetch threw an error | Warning |
 | `rewards fetch error: X: ...` | RPC error fetching rewards | Warning |
-| `rewards eligibility timeout: X, proceeding without it` | Rewards snapshot never arrived in 20s | Warning |
 | `eligibility wait timeout` | Eligibility stuck in Loading for 60s | Warning |
 | `selection wait timeout: X` | UI selection didn't match in 60s | Warning |
 | `balances wait timeout` | Balances not ready after 3min | Warning |

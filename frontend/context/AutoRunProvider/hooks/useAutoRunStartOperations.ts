@@ -56,8 +56,15 @@ export const useAutoRunStartOperations = ({
 }: UseAutoRunStartOperationsParams) => {
   const startOperationSeqRef = useRef(0);
 
+  /**
+   * `isStillDue`, when given, is asked right before every start request:
+   * the balance wait and retries can outlast the read that chose the agent.
+   */
   const startAgentWithRetries = useCallback(
-    async (serviceConfigId: string): Promise<AutoRunStartResult> => {
+    async (
+      serviceConfigId: string,
+      options: { isStillDue?: () => Promise<boolean> } = {},
+    ): Promise<AutoRunStartResult> => {
       if (!enabledRef.current) {
         return { status: AUTO_RUN_START_STATUS.ABORTED };
       }
@@ -128,6 +135,15 @@ export const useAutoRunStartOperations = ({
             logVerbose(
               `op=${opId} phase=start_liveness_check status=error service=${meta.serviceConfigId} agent=${meta.agentType} error=${error} — falling through to real start`,
             );
+          }
+          if (options.isStillDue && !(await options.isStillDue())) {
+            logMessage(
+              `op=${opId} phase=start_request status=not_due service=${meta.serviceConfigId} agent=${meta.agentType}`,
+            );
+            return {
+              status: AUTO_RUN_START_STATUS.AGENT_BLOCKED,
+              reason: 'rewards status changed',
+            };
           }
           try {
             logVerbose(

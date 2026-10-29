@@ -130,6 +130,45 @@ describe('useAutoRunStartOperations', () => {
     expect(startResult?.status).toBe(AUTO_RUN_START_STATUS.ABORTED);
   });
 
+  it('sends no start request once the agent is no longer due', async () => {
+    const params = makeHookParams();
+    const isStillDue = jest.fn().mockResolvedValue(false);
+    const { result } = renderHook(() => useAutoRunStartOperations(params));
+
+    let startResult: { status: string; reason?: string } | undefined;
+    await act(async () => {
+      startResult = await result.current.startAgentWithRetries(
+        DEFAULT_SERVICE_CONFIG_ID,
+        { isStillDue },
+      );
+    });
+    expect(isStillDue).toHaveBeenCalled();
+    expect(params.startService).not.toHaveBeenCalled();
+    expect(startResult?.status).toBe(AUTO_RUN_START_STATUS.AGENT_BLOCKED);
+  });
+
+  it('asks again before each retried start request', async () => {
+    const params = makeHookParams({
+      startService: jest.fn().mockRejectedValue(new Error('boom')),
+    });
+    const isStillDue = jest
+      .fn()
+      .mockResolvedValueOnce(true)
+      .mockResolvedValue(false);
+    const { result } = renderHook(() => useAutoRunStartOperations(params));
+
+    let startResult: { status: string; reason?: string } | undefined;
+    await act(async () => {
+      startResult = await result.current.startAgentWithRetries(
+        DEFAULT_SERVICE_CONFIG_ID,
+        { isStillDue },
+      );
+    });
+    expect(params.startService).toHaveBeenCalledTimes(1);
+    expect(isStillDue).toHaveBeenCalledTimes(2);
+    expect(startResult?.status).toBe(AUTO_RUN_START_STATUS.AGENT_BLOCKED);
+  });
+
   it('returns STARTED on successful start and deploy confirmation', async () => {
     const params = makeHookParams();
     const { result } = renderHook(() => useAutoRunStartOperations(params));
