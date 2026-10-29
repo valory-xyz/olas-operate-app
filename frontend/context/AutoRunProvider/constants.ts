@@ -53,6 +53,13 @@ export const COOLDOWN_SECONDS = 20; // 20 seconds
 export const RUNNING_AGENT_MAX_RUNTIME_SECONDS = 4 * 60 * 60; // 4 hours
 
 /**
+ * How long (in seconds) a running staking agent that has met its staking KPI
+ * may go without its activity-goal count rising before Auto-run treats it as
+ * stalled and moves on, if another agent can run.
+ */
+export const ACTIVITY_GOAL_STALL_SECONDS = 60 * 60; // 1 hour
+
+/**
  * How often (in seconds) watchdog checks runtime against
  * `RUNNING_AGENT_MAX_RUNTIME_SECONDS`.
  * Example: every 5 minutes -> if runtime exceeded, rotate/recover.
@@ -100,6 +107,13 @@ export const RETRY_BACKOFF_SECONDS = [30, 60, 120]; // 30s, 1m, 2m
 export const REWARDS_POLL_SECONDS = 120; // 2 minutes
 
 /**
+ * A gap between two goal reads of the running instance longer than this
+ * (e.g. the system slept) restarts its stall clock, so time it could not
+ * work never counts as a stall.
+ */
+export const STALL_CLOCK_MAX_READ_GAP_SECONDS = 5 * REWARDS_POLL_SECONDS; // 10 minutes
+
+/**
  * How long (in seconds) to wait before re-scanning for a runnable agent when
  * the last scan found at least one agent that was blocked (e.g. low balance,
  * no slots, evicted). A shorter delay is used because the blocking condition
@@ -135,12 +149,6 @@ export const REWARDS_RETRY_DELAY_SECONDS = 3; // 3 seconds
  * Example: scanner picks `trader` and waits until UI selection + details are ready.
  */
 export const AGENT_SELECTION_WAIT_TIMEOUT_SECONDS = 60; // 1 minute
-
-/**
- * Maximum time (in seconds) to wait for rewards snapshot after selecting agent.
- * Example: selection changed to `optimus`, wait up to 20s for rewards snapshot.
- */
-export const REWARDS_WAIT_TIMEOUT_SECONDS = 20; // 20 seconds
 
 /**
  * How long (in seconds) to wait for a service to reach DEPLOYED state after

@@ -150,6 +150,8 @@ export const REACT_QUERY_KEYS = {
   FUNDING_RUN_ACTIVE_KEY: ['fundingRunActive'] as const,
   FUNDING_RUN_SOURCES_KEY: ['fundingRunSources'] as const,
   FUNDING_RUN_CREATE_KEY: ['fundingRunCreate'] as const,
+  FUNDING_RUN_COMPLETED_ONBOARD_KEY: (serviceConfigIds: string[]) =>
+    ['fundingRunCompletedOnboard', serviceConfigIds] as const,
 
   // agent wallet partial withdrawal
   SAFE_WITHDRAWABLE_BALANCE_KEY: (serviceConfigId: string) =>

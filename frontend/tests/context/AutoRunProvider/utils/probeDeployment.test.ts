@@ -1,10 +1,14 @@
-import { probeDeploymentStatus } from '../../../../context/AutoRunProvider/utils/probeDeployment';
+import {
+  probeAllDeploymentStatuses,
+  probeDeploymentStatus,
+} from '../../../../context/AutoRunProvider/utils/probeDeployment';
 import { ServicesService } from '../../../../service/Services';
 import { DEFAULT_SERVICE_CONFIG_ID } from '../../../helpers/factories';
 
 jest.mock('../../../../service/Services', () => ({
   ServicesService: {
     getDeployment: jest.fn(),
+    getAllServiceDeployments: jest.fn(),
   },
 }));
 
@@ -62,5 +66,40 @@ describe('probeDeploymentStatus', () => {
     await expect(
       probeDeploymentStatus(DEFAULT_SERVICE_CONFIG_ID),
     ).rejects.toThrow('boom');
+  });
+});
+
+describe('probeAllDeploymentStatuses', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest.useFakeTimers();
+  });
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  it('reads all deployments with an AbortSignal', async () => {
+    const deployments = { [DEFAULT_SERVICE_CONFIG_ID]: { status: 3 } };
+    (ServicesService.getAllServiceDeployments as jest.Mock).mockResolvedValue(
+      deployments,
+    );
+    await expect(probeAllDeploymentStatuses()).resolves.toEqual(deployments);
+    expect(ServicesService.getAllServiceDeployments).toHaveBeenCalledWith(
+      expect.any(AbortSignal),
+    );
+    expect(jest.getTimerCount()).toBe(0);
+  });
+
+  it('aborts a timed-out request and propagates the error', async () => {
+    (ServicesService.getAllServiceDeployments as jest.Mock).mockImplementation(
+      (signal: AbortSignal) =>
+        new Promise((_, reject) =>
+          signal.addEventListener('abort', () => reject(new Error('aborted'))),
+        ),
+    );
+    const result = probeAllDeploymentStatuses().catch((error) => error);
+    jest.advanceTimersByTime(15_001);
+    expect(await result).toEqual(new Error('aborted'));
+    expect(jest.getTimerCount()).toBe(0);
   });
 });

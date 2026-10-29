@@ -92,6 +92,15 @@ export type FundingRun = {
 
 export type FundingRunError = { step_id: string; message: string };
 
+/** A service's latest `COMPLETED` onboard run (`GET /funding_run/completed_onboard`). */
+export type CompletedOnboardRun = {
+  service_config_id: string;
+  run_id: string;
+  finished_at: number;
+};
+
+export type CompletedOnboardRunsResponse = { runs: CompletedOnboardRun[] };
+
 /** Middleware chain → accepted source tokens. */
 export type FundingRunSources = Partial<Record<MiddlewareChain, Address[]>>;
 

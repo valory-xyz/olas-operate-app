@@ -22,7 +22,7 @@ export const useActivityGoal = (serviceConfigId: Maybe<string>) => {
     (service) => service.service_config_id === serviceConfigId,
   )?.home_chain;
 
-  const { data, isLoading, isError } = useQuery({
+  const { data, dataUpdatedAt, isLoading, isError } = useQuery({
     queryKey: REACT_QUERY_KEYS.AGENT_PERFORMANCE_KEY(
       homeChain ? asEvmChainId(homeChain) : -1,
       serviceConfigId!,
@@ -38,6 +38,7 @@ export const useActivityGoal = (serviceConfigId: Maybe<string>) => {
 
   return {
     activityGoal: data ?? null,
+    dataUpdatedAt,
     isLoading,
     /** No report could be read at all (a failed refetch keeps the last one). */
     isUnavailable: isError && data === undefined,

@@ -4,15 +4,27 @@ import { act } from 'react';
 import { AgentMap, AgentType } from '../../../../constants/agent';
 import { MiddlewareDeploymentStatusMap } from '../../../../constants/deployment';
 import {
+  ACTIVITY_GOAL_STALL_SECONDS,
   AGENT_SELECTION_WAIT_TIMEOUT_SECONDS,
   REWARDS_POLL_SECONDS,
-  REWARDS_WAIT_TIMEOUT_SECONDS,
 } from '../../../../context/AutoRunProvider/constants';
 import { useAutoRunSignals } from '../../../../context/AutoRunProvider/hooks/useAutoRunSignals';
+import {
+  RewardSnapshot,
+  StallClock,
+} from '../../../../context/AutoRunProvider/types';
 import { useBalanceAndRefillRequirementsContext } from '../../../../hooks';
 import { ServicesService } from '../../../../service/Services';
 import * as delayModule from '../../../../utils/delay';
-import { DEFAULT_SERVICE_CONFIG_ID } from '../../../helpers/factories';
+import {
+  DEFAULT_LIVENESS_PERIOD_S,
+  DEFAULT_SERVICE_CONFIG_ID,
+  DEFAULT_STAKING_PROGRAM_ID,
+  DEFAULT_TS_CHECKPOINT,
+  makeActivityGoal,
+  makeStakingRewardsInfo,
+  MOCK_SERVICE_CONFIG_ID_2,
+} from '../../../helpers/factories';
 
 const BALANCE_STALENESS_MS = REWARDS_POLL_SECONDS * 1000;
 const BALANCES_WAIT_TIMEOUT_SECONDS = AGENT_SELECTION_WAIT_TIMEOUT_SECONDS * 3;
@@ -37,9 +49,43 @@ const mockUseBalanceContext =
 const mockSleepAwareDelay = delayModule.sleepAwareDelay as jest.Mock;
 const mockGetDeployment = ServicesService.getDeployment as jest.Mock;
 
-const makeHookParams = (
-  overrides: Partial<Parameters<typeof useAutoRunSignals>[0]> = {},
-) => ({
+// Mid-epoch: one hour after the default checkpoint, well inside the liveness period.
+const NOW_MS = (DEFAULT_TS_CHECKPOINT + 3600) * 1000;
+const NEXT_TS_CHECKPOINT = DEFAULT_TS_CHECKPOINT + DEFAULT_LIVENESS_PERIOD_S;
+
+const { tsCheckpoint: DEFAULT_EPOCH_TS, livenessPeriod: DEFAULT_LIVENESS } =
+  makeStakingRewardsInfo();
+const DEFAULT_REWARDS_EPOCH = {
+  tsCheckpoint: DEFAULT_EPOCH_TS,
+  livenessPeriod: DEFAULT_LIVENESS,
+};
+
+const makeRewardSnapshot = (
+  overrides: Partial<RewardSnapshot> = {},
+): RewardSnapshot => ({
+  done: false,
+  readAt: NOW_MS,
+  stakingProgramId: DEFAULT_STAKING_PROGRAM_ID,
+  tsCheckpoint: DEFAULT_TS_CHECKPOINT,
+  livenessPeriod: DEFAULT_LIVENESS,
+  goalUnit: null,
+  goalTarget: null,
+  goalPeriodStart: null,
+  ...overrides,
+});
+
+const makeStallClock = (overrides: Partial<StallClock> = {}): StallClock => ({
+  since: NOW_MS,
+  readAt: NOW_MS,
+  progress: 3,
+  target: 8,
+  periodStart: DEFAULT_TS_CHECKPOINT,
+  ...overrides,
+});
+
+type HookParams = Parameters<typeof useAutoRunSignals>[0];
+
+const makeHookParams = (overrides: Partial<HookParams> = {}) => ({
   enabled: true,
   runningAgentType: null as AgentType | null,
   runningServiceConfigId: null as string | null,
@@ -47,6 +93,13 @@ const makeHookParams = (
   isSelectedDoneForEpoch: undefined as boolean | undefined,
   isSelectedNoStakingAgent: false,
   isEpochExpired: false,
+  selectedStakingProgramId:
+    DEFAULT_STAKING_PROGRAM_ID as HookParams['selectedStakingProgramId'],
+  selectedRewardsEpoch:
+    DEFAULT_REWARDS_EPOCH as HookParams['selectedRewardsEpoch'],
+  selectedActivityGoal: undefined as HookParams['selectedActivityGoal'],
+  selectedRewardReadAt: NOW_MS,
+  selectedActivityGoalReadAt: NOW_MS,
   selectedAgentType: AgentMap.PredictTrader,
   selectedServiceConfigId: DEFAULT_SERVICE_CONFIG_ID as string | null,
   logMessage: jest.fn(),
@@ -57,6 +110,7 @@ describe('useAutoRunSignals', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers();
+    jest.setSystemTime(NOW_MS);
     mockUseBalanceContext.mockReturnValue({
       isBalancesAndFundingRequirementsLoadingForAllServices: false,
       isBalancesAndFundingRequirementsReadyForAllServices: true,
@@ -71,6 +125,49 @@ describe('useAutoRunSignals', () => {
 
   afterEach(() => {
     jest.useRealTimers();
+  });
+
+  it('does not renew freshness when cached inputs rerender', () => {
+    const params = makeHookParams({ isSelectedDoneForEpoch: false });
+    const { result, rerender } = renderHook((p) => useAutoRunSignals(p), {
+      initialProps: params,
+    });
+    jest.setSystemTime(NOW_MS + 180_000);
+    rerender({ ...params, selectedRewardsEpoch: { ...DEFAULT_REWARDS_EPOCH } });
+    expect(
+      result.current.getRewardSnapshot(DEFAULT_SERVICE_CONFIG_ID)?.readAt,
+    ).toBe(NOW_MS);
+  });
+
+  it('does not overwrite a newer direct read with older provider data', () => {
+    const params = makeHookParams({ isSelectedDoneForEpoch: false });
+    const { result, rerender } = renderHook((p) => useAutoRunSignals(p), {
+      initialProps: params,
+    });
+    act(() =>
+      result.current.setRewardSnapshot(
+        DEFAULT_SERVICE_CONFIG_ID,
+        makeRewardSnapshot({ done: true, readAt: NOW_MS + 60_000 }),
+      ),
+    );
+    rerender({ ...params, selectedRewardsEpoch: { ...DEFAULT_REWARDS_EPOCH } });
+    expect(
+      result.current.getRewardSnapshot(DEFAULT_SERVICE_CONFIG_ID),
+    ).toMatchObject({ done: true, readAt: NOW_MS + 60_000 });
+  });
+
+  it('does not write a selected snapshot without a successful query timestamp', () => {
+    const { result } = renderHook(() =>
+      useAutoRunSignals(
+        makeHookParams({
+          isSelectedDoneForEpoch: false,
+          selectedRewardReadAt: 0,
+        }),
+      ),
+    );
+    expect(
+      result.current.getRewardSnapshot(DEFAULT_SERVICE_CONFIG_ID),
+    ).toBeUndefined();
   });
 
   it('syncs enabledRef with enabled prop', () => {
@@ -102,74 +199,400 @@ describe('useAutoRunSignals', () => {
     );
   });
 
-  it('updates reward snapshot when isSelectedDoneForEpoch changes', () => {
-    const params = makeHookParams({
-      selectedServiceConfigId: DEFAULT_SERVICE_CONFIG_ID,
-      isSelectedDoneForEpoch: false,
-    });
-    const { result, rerender } = renderHook(
-      (props) => useAutoRunSignals(props),
-      { initialProps: params },
-    );
-    expect(
-      result.current.rewardSnapshotRef.current[DEFAULT_SERVICE_CONFIG_ID],
-    ).toBe(false);
+  describe('selected-instance snapshot', () => {
+    it('writes a full snapshot of the selected instance read', () => {
+      const params = makeHookParams({
+        isSelectedDoneForEpoch: true,
+        selectedActivityGoal: makeActivityGoal({
+          target: 8,
+          period_start: DEFAULT_TS_CHECKPOINT,
+        }),
+      });
+      const { result } = renderHook(() => useAutoRunSignals(params));
 
-    rerender({ ...params, isSelectedDoneForEpoch: true });
-    expect(
-      result.current.rewardSnapshotRef.current[DEFAULT_SERVICE_CONFIG_ID],
-    ).toBe(true);
-  });
-
-  it('does not overwrite the snapshot of a selected no-staking agent', () => {
-    const params = makeHookParams({
-      selectedServiceConfigId: DEFAULT_SERVICE_CONFIG_ID,
-      isSelectedDoneForEpoch: undefined,
-      isSelectedNoStakingAgent: true,
-    });
-    const { result, rerender } = renderHook(
-      (props) => useAutoRunSignals(props),
-      { initialProps: params },
-    );
-    act(() => {
-      result.current.setRewardSnapshot(DEFAULT_SERVICE_CONFIG_ID, true);
+      expect(
+        result.current.getRewardSnapshot(DEFAULT_SERVICE_CONFIG_ID),
+      ).toEqual({
+        done: true,
+        readAt: NOW_MS,
+        stakingProgramId: DEFAULT_STAKING_PROGRAM_ID,
+        tsCheckpoint: DEFAULT_TS_CHECKPOINT,
+        livenessPeriod: DEFAULT_LIVENESS,
+        goalUnit: 'trades',
+        goalTarget: 8,
+        goalPeriodStart: DEFAULT_TS_CHECKPOINT,
+      });
     });
 
-    rerender({ ...params, isEpochExpired: true });
+    it('records the selected goal as seen, even when no snapshot is written', () => {
+      const goal = makeActivityGoal({ target: 12 });
+      const params = makeHookParams({
+        isSelectedDoneForEpoch: undefined,
+        selectedActivityGoal: goal,
+      });
+      const { result } = renderHook(() => useAutoRunSignals(params));
 
-    expect(result.current.getRewardSnapshot(DEFAULT_SERVICE_CONFIG_ID)).toBe(
-      true,
-    );
-  });
-
-  it('markRewardSnapshotPending sets snapshot to undefined', () => {
-    const params = makeHookParams({ isSelectedDoneForEpoch: true });
-    const { result } = renderHook(() => useAutoRunSignals(params));
-    act(() => {
-      result.current.markRewardSnapshotPending(DEFAULT_SERVICE_CONFIG_ID);
+      expect(
+        result.current.getRewardSnapshot(DEFAULT_SERVICE_CONFIG_ID),
+      ).toBeUndefined();
+      expect(result.current.getObservedGoal(DEFAULT_SERVICE_CONFIG_ID)).toEqual(
+        { goal, observedAt: NOW_MS },
+      );
     });
-    expect(
-      result.current.rewardSnapshotRef.current[DEFAULT_SERVICE_CONFIG_ID],
-    ).toBeUndefined();
+
+    it('records nothing while the selected goal is still loading', () => {
+      const { result } = renderHook(() =>
+        useAutoRunSignals(makeHookParams({ selectedActivityGoal: undefined })),
+      );
+      expect(
+        result.current.getObservedGoal(DEFAULT_SERVICE_CONFIG_ID),
+      ).toBeUndefined();
+    });
+
+    it('stores null goal fields when the selected instance has no activity goal', () => {
+      const params = makeHookParams({
+        isSelectedDoneForEpoch: false,
+        selectedActivityGoal: null,
+      });
+      const { result } = renderHook(() => useAutoRunSignals(params));
+
+      expect(
+        result.current.getRewardSnapshot(DEFAULT_SERVICE_CONFIG_ID),
+      ).toMatchObject({
+        done: false,
+        goalUnit: null,
+        goalTarget: null,
+        goalPeriodStart: null,
+      });
+    });
+
+    it('uses the query readAt when a fresh read changes isSelectedDoneForEpoch', () => {
+      const params = makeHookParams({ isSelectedDoneForEpoch: false });
+      const { result, rerender } = renderHook(
+        (props) => useAutoRunSignals(props),
+        { initialProps: params },
+      );
+      expect(
+        result.current.getRewardSnapshot(DEFAULT_SERVICE_CONFIG_ID)?.done,
+      ).toBe(false);
+
+      jest.setSystemTime(NOW_MS + 5_000);
+      rerender({
+        ...params,
+        isSelectedDoneForEpoch: true,
+        selectedRewardReadAt: NOW_MS + 5_000,
+      });
+
+      expect(
+        result.current.getRewardSnapshot(DEFAULT_SERVICE_CONFIG_ID),
+      ).toMatchObject({ done: true, readAt: NOW_MS + 5_000 });
+    });
+
+    it('writes done=false when the epoch has expired', () => {
+      const params = makeHookParams({
+        isSelectedDoneForEpoch: true,
+        isEpochExpired: true,
+      });
+      const { result } = renderHook(() => useAutoRunSignals(params));
+
+      expect(
+        result.current.getRewardSnapshot(DEFAULT_SERVICE_CONFIG_ID)?.done,
+      ).toBe(false);
+    });
+
+    it('keeps the previous snapshot when isSelectedDoneForEpoch becomes unknown', () => {
+      const params = makeHookParams({ isSelectedDoneForEpoch: true });
+      const { result, rerender } = renderHook(
+        (props) => useAutoRunSignals(props),
+        { initialProps: params },
+      );
+      const previous = result.current.getRewardSnapshot(
+        DEFAULT_SERVICE_CONFIG_ID,
+      );
+
+      jest.setSystemTime(NOW_MS + 5_000);
+      rerender({ ...params, isSelectedDoneForEpoch: undefined });
+
+      expect(result.current.getRewardSnapshot(DEFAULT_SERVICE_CONFIG_ID)).toBe(
+        previous,
+      );
+      expect(previous).toMatchObject({ done: true, readAt: NOW_MS });
+    });
+
+    it('skips writing when the staking program is missing', () => {
+      const params = makeHookParams({
+        isSelectedDoneForEpoch: true,
+        selectedStakingProgramId: undefined,
+      });
+      const { result } = renderHook(() => useAutoRunSignals(params));
+
+      expect(
+        result.current.getRewardSnapshot(DEFAULT_SERVICE_CONFIG_ID),
+      ).toBeUndefined();
+    });
+
+    it('skips writing when the epoch is missing', () => {
+      const params = makeHookParams({
+        isSelectedDoneForEpoch: true,
+        selectedRewardsEpoch: undefined,
+      });
+      const { result } = renderHook(() => useAutoRunSignals(params));
+
+      expect(
+        result.current.getRewardSnapshot(DEFAULT_SERVICE_CONFIG_ID),
+      ).toBeUndefined();
+    });
+
+    it('does not overwrite the snapshot of a selected no-staking agent', () => {
+      const params = makeHookParams({
+        isSelectedDoneForEpoch: false,
+        isSelectedNoStakingAgent: true,
+      });
+      const { result, rerender } = renderHook(
+        (props) => useAutoRunSignals(props),
+        { initialProps: params },
+      );
+      const stored = makeRewardSnapshot({ done: true, tsCheckpoint: 0 });
+      act(() => {
+        result.current.setRewardSnapshot(DEFAULT_SERVICE_CONFIG_ID, stored);
+      });
+
+      rerender({ ...params, isEpochExpired: true });
+
+      expect(result.current.getRewardSnapshot(DEFAULT_SERVICE_CONFIG_ID)).toBe(
+        stored,
+      );
+    });
   });
 
-  it('getRewardSnapshot returns the stored value', () => {
-    const params = makeHookParams({ isSelectedDoneForEpoch: true });
-    const { result } = renderHook(() => useAutoRunSignals(params));
-    expect(result.current.getRewardSnapshot(DEFAULT_SERVICE_CONFIG_ID)).toBe(
-      true,
-    );
-  });
-
-  it('setRewardSnapshot updates the snapshot', () => {
+  it('setRewardSnapshot stores the snapshot and bumps rewardsTick', () => {
     const params = makeHookParams();
     const { result } = renderHook(() => useAutoRunSignals(params));
+    const initialTick = result.current.rewardsTick;
+    const snapshot = makeRewardSnapshot({ done: true });
+
     act(() => {
-      result.current.setRewardSnapshot(DEFAULT_SERVICE_CONFIG_ID, false);
+      result.current.setRewardSnapshot(DEFAULT_SERVICE_CONFIG_ID, snapshot);
     });
+
     expect(result.current.getRewardSnapshot(DEFAULT_SERVICE_CONFIG_ID)).toBe(
-      false,
+      snapshot,
     );
+    expect(result.current.rewardsTick).toBe(initialTick + 1);
+  });
+
+  describe('stall helpers', () => {
+    const STALL_MS = ACTIVITY_GOAL_STALL_SECONDS * 1000;
+
+    it('isStalled is false without a clock', () => {
+      const { result } = renderHook(() => useAutoRunSignals(makeHookParams()));
+      expect(result.current.isStalled(DEFAULT_SERVICE_CONFIG_ID)).toBe(false);
+    });
+
+    it('isStalled is false before the stall period has elapsed', () => {
+      const { result } = renderHook(() => useAutoRunSignals(makeHookParams()));
+      result.current.stallClockRef.current[DEFAULT_SERVICE_CONFIG_ID] =
+        makeStallClock({ since: NOW_MS - STALL_MS + 1 });
+
+      expect(result.current.isStalled(DEFAULT_SERVICE_CONFIG_ID)).toBe(false);
+    });
+
+    it('isStalled is true once the stall period has elapsed', () => {
+      const { result } = renderHook(() => useAutoRunSignals(makeHookParams()));
+      result.current.stallClockRef.current[DEFAULT_SERVICE_CONFIG_ID] =
+        makeStallClock({ since: NOW_MS - STALL_MS });
+
+      expect(result.current.isStalled(DEFAULT_SERVICE_CONFIG_ID)).toBe(true);
+    });
+
+    it('restartStallClock restarts an existing clock from now', () => {
+      const { result } = renderHook(() => useAutoRunSignals(makeHookParams()));
+      result.current.stallClockRef.current[DEFAULT_SERVICE_CONFIG_ID] =
+        makeStallClock({ since: NOW_MS - STALL_MS });
+
+      result.current.restartStallClock(DEFAULT_SERVICE_CONFIG_ID);
+
+      expect(
+        result.current.stallClockRef.current[DEFAULT_SERVICE_CONFIG_ID],
+      ).toEqual(makeStallClock({ since: NOW_MS }));
+      expect(result.current.isStalled(DEFAULT_SERVICE_CONFIG_ID)).toBe(false);
+    });
+
+    it('restartStallClock does not create a clock', () => {
+      const { result } = renderHook(() => useAutoRunSignals(makeHookParams()));
+
+      result.current.restartStallClock(DEFAULT_SERVICE_CONFIG_ID);
+
+      expect(
+        result.current.stallClockRef.current[DEFAULT_SERVICE_CONFIG_ID],
+      ).toBeUndefined();
+    });
+
+    it('deferStalled deletes the clock and defers for the snapshot epoch', () => {
+      const params = makeHookParams({ isSelectedDoneForEpoch: false });
+      const { result } = renderHook(() => useAutoRunSignals(params));
+      result.current.stallClockRef.current[DEFAULT_SERVICE_CONFIG_ID] =
+        makeStallClock({ since: NOW_MS - STALL_MS });
+
+      result.current.deferStalled(DEFAULT_SERVICE_CONFIG_ID);
+
+      expect(
+        result.current.stallClockRef.current[DEFAULT_SERVICE_CONFIG_ID],
+      ).toBeUndefined();
+      expect(result.current.isStallDeferred(DEFAULT_SERVICE_CONFIG_ID)).toBe(
+        true,
+      );
+    });
+
+    it('isStallDeferred is false for an instance never deferred', () => {
+      const { result } = renderHook(() => useAutoRunSignals(makeHookParams()));
+      expect(result.current.isStallDeferred(DEFAULT_SERVICE_CONFIG_ID)).toBe(
+        false,
+      );
+    });
+
+    it('isStallDeferred is true when no snapshot exists', () => {
+      const { result } = renderHook(() => useAutoRunSignals(makeHookParams()));
+
+      result.current.deferStalled(DEFAULT_SERVICE_CONFIG_ID);
+
+      expect(result.current.isStallDeferred(DEFAULT_SERVICE_CONFIG_ID)).toBe(
+        true,
+      );
+    });
+
+    it('isStallDeferred stays true across reads in the same epoch', () => {
+      const { result } = renderHook(() => useAutoRunSignals(makeHookParams()));
+      act(() => {
+        result.current.setRewardSnapshot(
+          DEFAULT_SERVICE_CONFIG_ID,
+          makeRewardSnapshot(),
+        );
+      });
+      result.current.deferStalled(DEFAULT_SERVICE_CONFIG_ID);
+
+      act(() => {
+        result.current.setRewardSnapshot(
+          DEFAULT_SERVICE_CONFIG_ID,
+          makeRewardSnapshot({ readAt: NOW_MS + 60_000 }),
+        );
+      });
+
+      expect(result.current.isStallDeferred(DEFAULT_SERVICE_CONFIG_ID)).toBe(
+        true,
+      );
+    });
+
+    it('isStallDeferred drops the deferral once a new epoch is read', () => {
+      const { result } = renderHook(() => useAutoRunSignals(makeHookParams()));
+      act(() => {
+        result.current.setRewardSnapshot(
+          DEFAULT_SERVICE_CONFIG_ID,
+          makeRewardSnapshot(),
+        );
+      });
+      result.current.deferStalled(DEFAULT_SERVICE_CONFIG_ID);
+
+      act(() => {
+        result.current.setRewardSnapshot(
+          DEFAULT_SERVICE_CONFIG_ID,
+          makeRewardSnapshot({ tsCheckpoint: NEXT_TS_CHECKPOINT }),
+        );
+      });
+      expect(result.current.isStallDeferred(DEFAULT_SERVICE_CONFIG_ID)).toBe(
+        false,
+      );
+
+      // Dropped, not just masked: back to the deferral's epoch it stays gone.
+      act(() => {
+        result.current.setRewardSnapshot(
+          DEFAULT_SERVICE_CONFIG_ID,
+          makeRewardSnapshot(),
+        );
+      });
+      expect(result.current.isStallDeferred(DEFAULT_SERVICE_CONFIG_ID)).toBe(
+        false,
+      );
+    });
+
+    it('isStallDeferred drops the deferral once the snapshot epoch has expired', () => {
+      const { result } = renderHook(() => useAutoRunSignals(makeHookParams()));
+      act(() => {
+        result.current.setRewardSnapshot(
+          DEFAULT_SERVICE_CONFIG_ID,
+          makeRewardSnapshot(),
+        );
+      });
+      result.current.deferStalled(DEFAULT_SERVICE_CONFIG_ID);
+
+      jest.setSystemTime(NEXT_TS_CHECKPOINT * 1000);
+      expect(result.current.isStallDeferred(DEFAULT_SERVICE_CONFIG_ID)).toBe(
+        false,
+      );
+
+      jest.setSystemTime(NOW_MS);
+      expect(result.current.isStallDeferred(DEFAULT_SERVICE_CONFIG_ID)).toBe(
+        false,
+      );
+    });
+
+    it('clearStallDeferral ends the deferral', () => {
+      const { result } = renderHook(() => useAutoRunSignals(makeHookParams()));
+      result.current.deferStalled(DEFAULT_SERVICE_CONFIG_ID);
+
+      result.current.clearStallDeferral(DEFAULT_SERVICE_CONFIG_ID);
+
+      expect(result.current.isStallDeferred(DEFAULT_SERVICE_CONFIG_ID)).toBe(
+        false,
+      );
+    });
+
+    it.each([
+      ['stops', null],
+      ['hands over to another instance', MOCK_SERVICE_CONFIG_ID_2],
+    ])(
+      'drops the stall clock when the running instance %s',
+      (_, nextRunningId) => {
+        const params = makeHookParams({
+          enabled: true,
+          runningServiceConfigId: DEFAULT_SERVICE_CONFIG_ID,
+        });
+        const { result, rerender } = renderHook(
+          (props) => useAutoRunSignals(props),
+          { initialProps: params },
+        );
+        result.current.stallClockRef.current[DEFAULT_SERVICE_CONFIG_ID] =
+          makeStallClock({ since: NOW_MS - STALL_MS });
+
+        rerender({ ...params, runningServiceConfigId: nextRunningId });
+        rerender({
+          ...params,
+          runningServiceConfigId: DEFAULT_SERVICE_CONFIG_ID,
+        });
+
+        expect(result.current.stallClockRef.current).toEqual({});
+        expect(result.current.isStalled(DEFAULT_SERVICE_CONFIG_ID)).toBe(false);
+      },
+    );
+
+    it('disabling auto-run clears stall clocks and deferrals', () => {
+      const params = makeHookParams({ enabled: true });
+      const { result, rerender } = renderHook(
+        (props) => useAutoRunSignals(props),
+        { initialProps: params },
+      );
+      result.current.stallClockRef.current[MOCK_SERVICE_CONFIG_ID_2] =
+        makeStallClock({ since: NOW_MS - STALL_MS });
+      result.current.deferStalled(DEFAULT_SERVICE_CONFIG_ID);
+
+      rerender({ ...params, enabled: false });
+
+      expect(result.current.stallClockRef.current).toEqual({});
+      expect(result.current.isStalled(MOCK_SERVICE_CONFIG_ID_2)).toBe(false);
+      expect(result.current.isStallDeferred(DEFAULT_SERVICE_CONFIG_ID)).toBe(
+        false,
+      );
+    });
   });
 
   it('getBalancesStatus returns ready/loading from context', () => {
@@ -428,82 +851,6 @@ describe('useAutoRunSignals', () => {
     });
   });
 
-  describe('waitForRewardsEligibility', () => {
-    it('returns snapshot value immediately when populated', async () => {
-      const params = makeHookParams({ isSelectedDoneForEpoch: true });
-      const { result } = renderHook(() => useAutoRunSignals(params));
-
-      let value: boolean | undefined;
-      await act(async () => {
-        value = await result.current.waitForRewardsEligibility(
-          DEFAULT_SERVICE_CONFIG_ID,
-        );
-      });
-      expect(value).toBe(true);
-    });
-
-    it('returns false snapshot when populated with false', async () => {
-      const params = makeHookParams({ isSelectedDoneForEpoch: false });
-      const { result } = renderHook(() => useAutoRunSignals(params));
-
-      let value: boolean | undefined;
-      await act(async () => {
-        value = await result.current.waitForRewardsEligibility(
-          DEFAULT_SERVICE_CONFIG_ID,
-        );
-      });
-      expect(value).toBe(false);
-    });
-
-    it('returns undefined and logs timeout when snapshot stays undefined', async () => {
-      const logMessage = jest.fn();
-      const params = makeHookParams({
-        isSelectedDoneForEpoch: undefined,
-        logMessage,
-      });
-      const { result } = renderHook(() => useAutoRunSignals(params));
-
-      act(() => {
-        result.current.markRewardSnapshotPending(DEFAULT_SERVICE_CONFIG_ID);
-      });
-
-      mockSleepAwareDelay.mockImplementation(async () => {
-        jest.advanceTimersByTime(REWARDS_WAIT_TIMEOUT_SECONDS * 1000 + 1);
-        return true;
-      });
-
-      let value: boolean | undefined;
-      await act(async () => {
-        value = await result.current.waitForRewardsEligibility(
-          DEFAULT_SERVICE_CONFIG_ID,
-        );
-      });
-      expect(value).toBeUndefined();
-      expect(logMessage).toHaveBeenCalledWith(
-        `rewards eligibility timeout: ${DEFAULT_SERVICE_CONFIG_ID}, proceeding without it`,
-      );
-    });
-
-    it('returns undefined when sleepAwareDelay returns false', async () => {
-      const params = makeHookParams({ isSelectedDoneForEpoch: undefined });
-      const { result } = renderHook(() => useAutoRunSignals(params));
-
-      act(() => {
-        result.current.markRewardSnapshotPending(DEFAULT_SERVICE_CONFIG_ID);
-      });
-
-      mockSleepAwareDelay.mockResolvedValue(false);
-
-      let value: boolean | undefined;
-      await act(async () => {
-        value = await result.current.waitForRewardsEligibility(
-          DEFAULT_SERVICE_CONFIG_ID,
-        );
-      });
-      expect(value).toBeUndefined();
-    });
-  });
-
   describe('waitForRunningInstance', () => {
     it('returns true when deployment is active immediately', async () => {
       mockGetDeployment.mockResolvedValue({
@@ -684,20 +1031,6 @@ describe('useAutoRunSignals', () => {
       expect(result.current.hasScheduledScan()).toBe(true);
 
       unmount();
-    });
-  });
-
-  describe('isEpochExpired override', () => {
-    it('overrides isSelectedDoneForEpoch to false when epoch is expired', () => {
-      const params = makeHookParams({
-        selectedServiceConfigId: DEFAULT_SERVICE_CONFIG_ID,
-        isSelectedDoneForEpoch: true,
-        isEpochExpired: true,
-      });
-      const { result } = renderHook(() => useAutoRunSignals(params));
-      expect(
-        result.current.rewardSnapshotRef.current[DEFAULT_SERVICE_CONFIG_ID],
-      ).toBe(false);
     });
   });
 });
