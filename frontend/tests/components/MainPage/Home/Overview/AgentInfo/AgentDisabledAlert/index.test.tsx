@@ -3,6 +3,7 @@ import React from 'react';
 
 import { AgentDisabledAlert } from '../../../../../../../components/MainPage/Home/Overview/AgentInfo/AgentDisabledAlert';
 import { EvmChainIdMap } from '../../../../../../../constants/chains';
+import { MiddlewareDeploymentStatusMap } from '../../../../../../../constants/deployment';
 import {
   useActiveStakingContractDetails,
   useAgentFundingRequests,
@@ -12,9 +13,11 @@ import {
   useIsInitiallyFunded,
   useMasterWalletContext,
   usePageState,
+  usePrestartCheck,
   useServices,
   useStakingProgram,
 } from '../../../../../../../hooks';
+import { AgentIssue, PrestartCheckResult } from '../../../../../../../types';
 import { makeMasterSafe } from '../../../../../../helpers/factories';
 
 // ---------------------------------------------------------------------------
@@ -30,8 +33,12 @@ jest.mock('../../../../../../../hooks', () => ({
   useIsInitiallyFunded: jest.fn(),
   useMasterWalletContext: jest.fn(),
   usePageState: jest.fn(),
+  usePrestartCheck: jest.fn(),
   useServices: jest.fn(),
   useStakingProgram: jest.fn(),
+  isPrestartCheckBlocking: jest.requireActual(
+    '../../../../../../../hooks/usePrestartCheck',
+  ).isPrestartCheckBlocking,
 }));
 
 jest.mock('../../../../../../../components/ui', () => ({
@@ -58,6 +65,22 @@ jest.mock(
   '../../../../../../../components/MainPage/Home/Overview/AgentInfo/AgentDisabledAlert/AgentGeoBlockedAlert',
   () => ({
     AgentGeoBlockedAlert: () => <div>geo-blocked</div>,
+  }),
+);
+jest.mock(
+  '../../../../../../../components/MainPage/Home/Overview/AgentInfo/AgentDisabledAlert/AgentIssuesAlert',
+  () => ({
+    AgentIssuesAlert: ({
+      issues,
+    }: {
+      issues: { title: string; description: string }[];
+    }) => (
+      <div>
+        {issues
+          .map(({ title, description }) => `issue: ${title} / ${description}`)
+          .join('\n')}
+      </div>
+    ),
   }),
 );
 jest.mock(
@@ -128,6 +151,9 @@ const setup = ({
   isAnotherAgentRunning = false,
   isAgentGeoRestricted = false,
   deprecatedStakingProgram = false,
+  isRunning = false,
+  agentIssues,
+  prestartCheck,
 }: {
   staking?: StakingOverrides;
   agentConfig?: Record<string, unknown>;
@@ -138,6 +164,9 @@ const setup = ({
   isAnotherAgentRunning?: boolean;
   isAgentGeoRestricted?: boolean;
   deprecatedStakingProgram?: boolean;
+  isRunning?: boolean;
+  agentIssues?: AgentIssue[];
+  prestartCheck?: PrestartCheckResult;
 } = {}) => {
   (useActiveStakingContractDetails as jest.Mock).mockReturnValue({
     isSelectedStakingContractDetailsLoading: false,
@@ -160,6 +189,21 @@ const setup = ({
       evmHomeChainId: EvmChainIdMap.Gnosis,
       ...agentConfig,
     },
+    selectedService: {
+      service_config_id: 'sc-1',
+      deploymentStatus: isRunning
+        ? MiddlewareDeploymentStatusMap.DEPLOYED
+        : MiddlewareDeploymentStatusMap.BUILT,
+    },
+    deploymentDetails: {
+      healthcheck: {
+        agent_health: agentIssues === undefined ? {} : { issues: agentIssues },
+      },
+    },
+  });
+  (usePrestartCheck as jest.Mock).mockReturnValue({
+    result: prestartCheck,
+    isChecking: false,
   });
   (useIsInitiallyFunded as jest.Mock).mockReturnValue({
     isInitialFunded: isStoreLoading ? undefined : isInitialFunded,
@@ -301,6 +345,91 @@ describe('AgentDisabledAlert', () => {
 
       expect(screen.getByText(expected)).toBeInTheDocument();
       expect(screen.queryByText('unfinished-setup')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('agent issues', () => {
+    const issue = {
+      code: 'polymarket_unreachable',
+      title: "Can't reach Polymarket",
+      description: 'Polystrat has stopped asking for predictions.',
+      since: 1700000000,
+    };
+
+    it("shows a running agent's issues as the agent wrote them", () => {
+      setup({ isRunning: true, agentIssues: [issue] });
+
+      expect(
+        screen.getByText(`issue: ${issue.title} / ${issue.description}`),
+      ).toBeInTheDocument();
+      expect(screen.queryByText('low-balance')).not.toBeInTheDocument();
+    });
+
+    it.each([
+      ['an agent that reports none', { isRunning: true, agentIssues: [] }],
+      ['an agent that does not report them', { isRunning: true }],
+      ['a stopped agent', { isRunning: false, agentIssues: [issue] }],
+    ])('shows nothing for %s', (_, overrides) => {
+      setup(overrides);
+
+      expect(screen.queryByText(/^issue:/)).not.toBeInTheDocument();
+      expect(screen.getByText('low-balance')).toBeInTheDocument();
+    });
+  });
+
+  describe('prestart check of the last start', () => {
+    const issue = {
+      code: 'polymarket_unreachable',
+      title: "Can't reach Polymarket",
+      description: "Polystrat couldn't place any bets from this network.",
+    };
+
+    it('shows the issues of a failed check', () => {
+      setup({ prestartCheck: { status: 'failed', issues: [issue] } });
+
+      expect(
+        screen.getByText(`issue: ${issue.title} / ${issue.description}`),
+      ).toBeInTheDocument();
+      expect(screen.queryByText('low-balance')).not.toBeInTheDocument();
+    });
+
+    it('shows that Pearl could not check, for a check that did not complete', () => {
+      setup({ prestartCheck: { status: 'error', issues: [] } });
+
+      expect(
+        screen.getByText(
+          "issue: Couldn't check the agent / Pearl couldn't check whether the Trader agent can run on this network. Check your internet connection and try starting the agent again.",
+        ),
+      ).toBeInTheDocument();
+    });
+
+    it.each(['passed', 'not_supported'] as const)(
+      'shows nothing after a %s check',
+      (status) => {
+        setup({ prestartCheck: { status, issues: [] } });
+
+        expect(screen.queryByText(/^issue:/)).not.toBeInTheDocument();
+      },
+    );
+
+    it('shows nothing once the agent runs', () => {
+      setup({
+        isRunning: true,
+        prestartCheck: { status: 'failed', issues: [issue] },
+      });
+
+      expect(screen.queryByText(/^issue:/)).not.toBeInTheDocument();
+    });
+
+    it('gives way to a region block', () => {
+      setup({
+        agentConfig: { isGeoLocationRestricted: true },
+        isAgentGeoRestricted: true,
+        prestartCheck: { status: 'failed', issues: [issue] },
+      });
+
+      expect(screen.getByText('geo-blocked')).toBeInTheDocument();
+      expect(screen.queryByText(/^issue:/)).not.toBeInTheDocument();
     });
   });
 
