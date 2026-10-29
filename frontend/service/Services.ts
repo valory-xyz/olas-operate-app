@@ -333,10 +333,7 @@ const withdrawSafe = async ({
     throw await response.json().catch(() => ({}));
   });
 
-/**
- * Runs the agent's own checks of whether it can start on this machine.
- * Takes up to ~2 minutes: the middleware runs the agent runner binary.
- */
+/** Runs the agent's own checks of whether it can start on this machine. */
 const getPrestartCheck = async (
   serviceConfigId: ServiceConfigId,
 ): Promise<PrestartCheckResult> =>
