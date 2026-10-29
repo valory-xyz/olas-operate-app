@@ -10,6 +10,7 @@ import {
   DeepPartial,
   MiddlewareServiceResponse,
   Nullable,
+  PrestartCheckResult,
   SafeWithdrawableBalanceResponse,
   ServiceConfigId,
   ServiceDeployment,
@@ -332,6 +333,21 @@ const withdrawSafe = async ({
     throw await response.json().catch(() => ({}));
   });
 
+/**
+ * Runs the agent's own checks of whether it can start on this machine.
+ * Takes up to ~2 minutes: the middleware runs the agent runner binary.
+ */
+const getPrestartCheck = async (
+  serviceConfigId: ServiceConfigId,
+): Promise<PrestartCheckResult> =>
+  fetch(`${BACKEND_URL_V2}/service/${serviceConfigId}/prestart_check`, {
+    method: 'GET',
+    headers: { ...CONTENT_TYPE_JSON_UTF8 },
+  }).then((response) => {
+    if (response.ok) return response.json();
+    throw new Error(`Failed to run the prestart check of ${serviceConfigId}`);
+  });
+
 export const ServicesService = {
   getService,
   getServices,
@@ -348,4 +364,5 @@ export const ServicesService = {
   getAgentPerformance,
   getSafeWithdrawableBalance,
   withdrawSafe,
+  getPrestartCheck,
 };

@@ -628,6 +628,44 @@ describe('ServicesService', () => {
     });
   });
 
+  describe('getPrestartCheck', () => {
+    it('returns the check result on success', async () => {
+      const checkResult = {
+        status: 'failed',
+        issues: [
+          {
+            code: 'polymarket_unreachable',
+            title: "Can't reach Polymarket",
+            description: 'Polystrat cannot connect to Polymarket.',
+          },
+        ],
+      };
+      jest
+        .spyOn(global, 'fetch')
+        .mockReturnValue(mockJsonResponse(checkResult));
+
+      const result = await ServicesService.getPrestartCheck(
+        DEFAULT_SERVICE_CONFIG_ID,
+      );
+
+      expect(result).toEqual(checkResult);
+      expect(fetch).toHaveBeenCalledWith(
+        `${BACKEND_URL_V2}/service/${DEFAULT_SERVICE_CONFIG_ID}/prestart_check`,
+        { method: 'GET', headers: expectedHeaders },
+      );
+    });
+
+    it('throws error on non-ok response', async () => {
+      jest
+        .spyOn(global, 'fetch')
+        .mockReturnValue(mockJsonResponse({}, false, 404));
+
+      await expect(
+        ServicesService.getPrestartCheck(DEFAULT_SERVICE_CONFIG_ID),
+      ).rejects.toThrow('Failed to run the prestart check');
+    });
+  });
+
   describe('withdrawBalance', () => {
     it('resolves with response body on success', async () => {
       const responseBody = { error: null };
