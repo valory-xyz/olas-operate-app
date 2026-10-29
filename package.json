@@ -2,6 +2,7 @@
   "author": "Valory AG",
   "resolutions": {
     "**/conf/ajv": "8.18.0",
+    "@electron/notarize": "3.1.2",
     "@xmldom/xmldom": "0.8.13",
     "bn.js": "5.2.3",
     "builder-util-runtime": "9.7.0",
@@ -65,7 +66,7 @@
   },
   "description": "An all-in-one application designed to streamline your entry into the world of autonomous agents and earning OLAS through staking.",
   "devDependencies": {
-    "@electron/notarize": "2.5.0",
+    "@electron/notarize": "3.1.2",
     "dotenv-cli": "7.4.4",
     "electron": "45.0.0",
     "electron-builder": "26.8.2",
