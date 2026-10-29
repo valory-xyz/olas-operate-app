@@ -251,6 +251,31 @@ describe('useStartService', () => {
       ).toEqual(failed);
     });
 
+    it('checks again on the next start after a blocked one', async () => {
+      mockGetPrestartCheck.mockResolvedValueOnce({
+        status: 'failed',
+        issues: [UNREACHABLE_ISSUE],
+      });
+      const queryClient = createTestQueryClient();
+      const { result } = renderStartService(queryClient);
+
+      await expect(
+        result.current.startService({ ...baseInput, service: existingService }),
+      ).rejects.toThrow(PrestartCheckFailedError);
+      await result.current.startService({
+        ...baseInput,
+        service: existingService,
+      });
+
+      expect(mockGetPrestartCheck).toHaveBeenCalledTimes(2);
+      expect(mockStartService).toHaveBeenCalledWith(DEFAULT_SERVICE_CONFIG_ID);
+      expect(
+        queryClient.getQueryData(
+          REACT_QUERY_KEYS.PRESTART_CHECK_KEY(DEFAULT_SERVICE_CONFIG_ID),
+        ),
+      ).toEqual(PASSED);
+    });
+
     it('checks a new service once it is created, before starting it', async () => {
       mockGetPrestartCheck.mockResolvedValue({
         status: 'failed',
