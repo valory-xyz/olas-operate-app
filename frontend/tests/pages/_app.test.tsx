@@ -153,6 +153,11 @@ jest.mock('../../context/SupportModalProvider', () => ({
 jest.mock('../../components/OnboardingSurvey/TimingClassifier', () => ({
   OnboardingSurveyTimingClassifier: () => null,
 }));
+jest.mock('../../components/FundingFlow/CompleteSetupFromFundingRuns', () => ({
+  CompleteSetupFromFundingRuns: () => (
+    <div data-testid="complete-setup-from-funding-runs" />
+  ),
+}));
 
 const mockUseElectronApi = useElectronApi as jest.MockedFunction<
   typeof useElectronApi
@@ -232,6 +237,23 @@ describe('AppRoot (_app)', () => {
     expect(screen.getByTestId('tracking')).toBeInTheDocument();
     // The child rendered at least once (after isMounted became true)
     expect(renderCount).toBeGreaterThanOrEqual(1);
+  });
+
+  it('mounts CompleteSetupFromFundingRuns at the root, outside the page', async () => {
+    await act(async () => {
+      render(<AppRoot {...defaultAppProps} />);
+    });
+
+    const setupCompletion = screen.getByTestId(
+      'complete-setup-from-funding-runs',
+    );
+    expect(setupCompletion).toBeInTheDocument();
+    expect(screen.getByTestId('support-modal-provider')).toContainElement(
+      setupCompletion,
+    );
+    expect(screen.getByTestId('page-component')).not.toContainElement(
+      setupCompletion,
+    );
   });
 
   it('calls useGlobalErrorHandlers with nextLogError', async () => {

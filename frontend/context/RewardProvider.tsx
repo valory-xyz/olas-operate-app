@@ -26,6 +26,7 @@ import { StakingProgramContext } from './StakingProgramProvider';
 export const RewardContext = createContext<{
   isAvailableRewardsForEpochLoading?: boolean;
   stakingRewardsDetails?: Nullable<StakingRewardsInfo>;
+  stakingRewardsDataUpdatedAt?: number;
   /** current epoch rewards */
   accruedServiceStakingRewards?: number;
   availableRewardsForEpoch?: bigint | null;
@@ -101,6 +102,7 @@ export const RewardProvider = ({ children }: PropsWithChildren) => {
 
   const {
     data: stakingRewardsDetails,
+    dataUpdatedAt: stakingRewardsDataUpdatedAt,
     refetch: refetchStakingRewardsDetails,
     isLoading: isStakingRewardsDetailsLoading,
   } = useAgentStakingRewardsDetails(
@@ -173,6 +175,7 @@ export const RewardProvider = ({ children }: PropsWithChildren) => {
         isStakingRewardsDetailsLoading,
         accruedServiceStakingRewards,
         stakingRewardsDetails,
+        stakingRewardsDataUpdatedAt,
 
         // available rewards for the current epoch
         isAvailableRewardsForEpochLoading,
