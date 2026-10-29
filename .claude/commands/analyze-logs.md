@@ -213,6 +213,7 @@ For each service log file:
 **Polystrat-specific patterns**:
 - `position.get("conditionId")` crash where `position` is a `str` — caused by `data-api.polymarket.com` read timeout returning a raw string instead of JSON. Entire agent loop crashes with `HTTP Client/Server has shutdown`. AutoRun correctly detects and restarts — the bug is a missing type check in agent code (`polymarket_reedem.py:136`), not a Pearl issue.
 - `[ERROR] Trading restricted in your region - https://docs.polymarket.com/developers/CLOB/geoblock` — agent runs but cannot place bets; user may perceive AutoRun as ineffective but it is working correctly. Common on Windows-on-Apple-Silicon (Parallels). Not a Pearl/AutoRun bug.
+- `Failed to fetch orderbook` with `PolyApiException[status_code=None` or `Connection reset by peer` on most order-book reads — the machine cannot reach Polymarket's CLOB at all, so no HTTP answer (and no geoblock message) ever arrives. Gamma may still answer, so markets keep being sampled and the mech keeps being asked. Newer trader releases record these skips in the feed as "Couldn't read the market's order book, so no trade was considered" (older ones as "The trading strategy found no trade worth placing"), stop requesting the mech after `ORDERBOOK_UNAVAILABLE_THRESHOLD` failed reads, report `polymarket_unreachable` in the healthcheck's `agent_health.issues`, and fail Pearl's prestart check (`/prestart_check` in `cli*.log`). Not a Pearl bug: the user's network or VPN blocks Polymarket.
 
 ---
 
@@ -313,6 +314,7 @@ Use this section to quickly match symptoms to root causes before diving into the
 | `current_staking_program=None` warning in cli logs | **EXPECTED** — service hash or staking program was recently updated; old reference intentionally cleared. NOT a bug. | `cli*.log` — only investigate further if `debug_data.json` `hash_history` shows NO recent update |
 | Polystrat crashes with `HTTP Client/Server has shutdown` | `position.get("conditionId")` type error after polymarket API timeout | `sc-{uuid}_agent.log` for `conditionId` / `polymarket_reedem.py` |
 | Polystrat running but not trading | Geo-block from Polymarket | `sc-{uuid}_agent.log` for `Trading restricted in your region` |
+| Polystrat running but not trading | Machine cannot reach Polymarket's CLOB (connection reset, no HTTP response); Gamma may still work, so markets are still sampled | `sc-{uuid}_agent.log` for `Failed to fetch orderbook` with `PolyApiException[status_code=None`, `Connection reset by peer`; the feed's "Couldn't read the market's order book" skips |
 | AutoRun watchdog fires every ~70min, same agent restarts | Only one agent configured — expected watchdog rotation | `electron.log` for `autorun:: rotate_begin` with no queue advancement |
 | Agent not starting, AutoRun shows `agent_blocked` | Low balance, eviction, or staking slot unavailable | `cli*.log` `allow_start_agent`, `isAgentEvicted` signals |
 | Agent not starting, AutoRun shows `infra_failed` | Transient network/timeout — queue does not advance | `cli*.log` for timeouts or connection errors around the same timestamp |
