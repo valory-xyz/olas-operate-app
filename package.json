@@ -113,7 +113,7 @@
     "quality-check:frontend": "cd frontend && yarn quality-check",
     "start": "yarn electron .",
     "start:frontend": "cd frontend && yarn start",
-    "test:electron": "node --test electron/processes.test.js",
+    "test:electron": "node --test electron/processes.test.js test/electron/*.test.js",
     "test:frontend": "cd frontend && yarn test"
   },
   "version": "1.12.3",
