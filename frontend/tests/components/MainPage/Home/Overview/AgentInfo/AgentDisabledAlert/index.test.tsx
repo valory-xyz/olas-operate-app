@@ -368,6 +368,7 @@ describe('AgentDisabledAlert', () => {
     it.each([
       ['under construction', { agentConfig: { isUnderConstruction: true } }],
       ['another agent running', { isAnotherAgentRunning: true }],
+      ['a deprecated contract', { deprecatedStakingProgram: true }],
       [
         'an eviction',
         { staking: { isAgentEvicted: true, isEligibleForStaking: false } },
