@@ -120,22 +120,18 @@ export const AgentDisabledAlert = () => {
     }
 
     if (!isServiceRunning && isPrestartCheckBlocking(prestartCheck)) {
+      const prestartIssues =
+        prestartCheck?.status === 'failed'
+          ? prestartCheck.issues
+          : [
+              {
+                title: "Couldn't check the agent",
+                description: `Pearl couldn't check whether the ${selectedAgentConfig.displayName} agent can run on this network. Check your internet connection and try starting the agent again.`,
+              },
+            ];
       return {
         key: 'prestart-check',
-        content: (
-          <AgentIssuesAlert
-            issues={
-              prestartCheck?.status === 'failed'
-                ? prestartCheck.issues
-                : [
-                    {
-                      title: "Couldn't check the agent",
-                      description: `Pearl couldn't check whether the ${selectedAgentConfig.displayName} agent can run on this network. Check your internet connection and try starting the agent again.`,
-                    },
-                  ]
-            }
-          />
-        ),
+        content: <AgentIssuesAlert issues={prestartIssues} />,
       };
     }
 
