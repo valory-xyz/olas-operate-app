@@ -6,6 +6,7 @@ import {
   useAgentRunning,
   useEpochWorkStatus,
   useRewardContext,
+  useServices,
   useStartService,
 } from '@/hooks';
 import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRefillRequirementsContext';
@@ -29,6 +30,15 @@ import { useAutoRunOperations } from './useAutoRunOperations';
 import { useAutoRunScanner } from './useAutoRunScanner';
 import { useAutoRunSignals } from './useAutoRunSignals';
 import { useLogAutoRunEvent } from './useLogAutoRunEvent';
+
+const createEmptyHealthStats = () => ({
+  startErrors: 0,
+  stopTimeouts: 0,
+  rewardsErrors: 0,
+  eligibilityTimeouts: 0,
+  rotationsSucceeded: 0,
+  healthCheckRestarts: 0,
+});
 
 type UseAutoRunControllerParams = {
   enabled: boolean;
@@ -125,13 +135,7 @@ export const useAutoRunController = ({
     [isPolystratGeoRestricted],
   );
 
-  const healthStatsRef = useRef({
-    startErrors: 0,
-    stopTimeouts: 0,
-    rewardsErrors: 0,
-    eligibilityTimeouts: 0,
-    rotationsSucceeded: 0,
-  });
+  const healthStatsRef = useRef(createEmptyHealthStats());
 
   const recordMetric = useCallback((metric: AutoRunHealthMetric) => {
     healthStatsRef.current[metric] += 1;
@@ -139,13 +143,7 @@ export const useAutoRunController = ({
 
   useEffect(() => {
     if (!enabled || !AUTO_RUN_VERBOSE_LOGS) {
-      healthStatsRef.current = {
-        startErrors: 0,
-        stopTimeouts: 0,
-        rewardsErrors: 0,
-        eligibilityTimeouts: 0,
-        rotationsSucceeded: 0,
-      };
+      healthStatsRef.current = createEmptyHealthStats();
       return;
     }
 
@@ -154,19 +152,32 @@ export const useAutoRunController = ({
       const hasEvents = Object.values(snapshot).some((count) => count > 0);
       if (!hasEvents) return;
       logMessage(
-        `health summary: startErrors=${snapshot.startErrors} stopTimeouts=${snapshot.stopTimeouts} rewardsErrors=${snapshot.rewardsErrors} eligibilityTimeouts=${snapshot.eligibilityTimeouts} rotationsSucceeded=${snapshot.rotationsSucceeded}`,
+        `health summary: startErrors=${snapshot.startErrors} stopTimeouts=${snapshot.stopTimeouts} rewardsErrors=${snapshot.rewardsErrors} eligibilityTimeouts=${snapshot.eligibilityTimeouts} rotationsSucceeded=${snapshot.rotationsSucceeded} healthCheckRestarts=${snapshot.healthCheckRestarts}`,
       );
-      healthStatsRef.current = {
-        startErrors: 0,
-        stopTimeouts: 0,
-        rewardsErrors: 0,
-        eligibilityTimeouts: 0,
-        rotationsSucceeded: 0,
-      };
+      healthStatsRef.current = createEmptyHealthStats();
     }, HEALTH_SUMMARY_INTERVAL_SECONDS * 1000);
 
     return () => clearInterval(intervalId);
   }, [enabled, logMessage]);
+
+  // The middleware's health checker restarts unhealthy agents on its own. The
+  // deployment poll exposes only `restarts_since_last_healthy`, which resets
+  // once the agent is healthy again, so count its increases. The first value
+  // seen for a service is a baseline, not new restarts.
+  const { allDeployments } = useServices();
+  const lastSeenRestartsRef = useRef<Partial<Record<string, number>>>({});
+  useEffect(() => {
+    if (!allDeployments) return;
+    Object.entries(allDeployments).forEach(([serviceConfigId, deployment]) => {
+      const restarts =
+        deployment.agent_liveness?.restarts_since_last_healthy ?? 0;
+      const lastSeen = lastSeenRestartsRef.current[serviceConfigId];
+      if (enabled && lastSeen !== undefined && restarts > lastSeen) {
+        healthStatsRef.current.healthCheckRestarts += restarts - lastSeen;
+      }
+      lastSeenRestartsRef.current[serviceConfigId] = restarts;
+    });
+  }, [allDeployments, enabled]);
 
   const {
     enabledRef,

@@ -11,7 +11,9 @@ import { useAutoRunController } from '../../../../context/AutoRunProvider/hooks/
 import { AgentMeta } from '../../../../context/AutoRunProvider/types';
 import {
   DEFAULT_SERVICE_CONFIG_ID,
+  makeAgentLiveness,
   makeAutoRunAgentMeta,
+  makeServiceDeployment,
   MOCK_SERVICE_CONFIG_ID_2,
 } from '../../../helpers/factories';
 
@@ -28,6 +30,7 @@ jest.mock('../../../../hooks', () => ({
   useStartService: jest.fn().mockReturnValue({
     startService: jest.fn().mockResolvedValue(undefined),
   }),
+  useServices: jest.fn().mockReturnValue({ allDeployments: undefined }),
 }));
 jest.mock('../../../../hooks/useBalanceAndRefillRequirementsContext', () => ({
   useBalanceAndRefillRequirementsContext: jest.fn().mockReturnValue({
@@ -122,8 +125,11 @@ const { useAutoRunOperations } = jest.requireMock(
 const { useAutoRunSignals } = jest.requireMock(
   '../../../../context/AutoRunProvider/hooks/useAutoRunSignals',
 ) as { useAutoRunSignals: jest.Mock };
-const { useEpochWorkStatus } = jest.requireMock('../../../../hooks') as {
+const { useEpochWorkStatus, useServices } = jest.requireMock(
+  '../../../../hooks',
+) as {
   useEpochWorkStatus: jest.Mock;
+  useServices: jest.Mock;
 };
 const { fetchDeployabilityForAgent } = jest.requireMock(
   '../../../../context/AutoRunProvider/utils/autoRunHelpers',
@@ -274,6 +280,46 @@ describe('useAutoRunController', () => {
           typeof call[0] === 'string' && call[0].includes('health summary'),
       );
       expect(summaryCalls).toHaveLength(0);
+    });
+
+    it('counts health-check restarts from polled deployments', () => {
+      const mockLogMessage = jest.fn();
+      useLogAutoRunEvent.mockReturnValue({ logMessage: mockLogMessage });
+      const pollWithRestarts = (restarts: number) => {
+        useServices.mockReturnValue({
+          allDeployments: {
+            [DEFAULT_SERVICE_CONFIG_ID]: makeServiceDeployment({
+              agent_liveness: makeAgentLiveness({
+                restarts_since_last_healthy: restarts,
+              }),
+            }),
+          },
+        });
+      };
+
+      // A restart from before this session is a baseline, not a new restart.
+      pollWithRestarts(1);
+      const params = makeHookParams({ enabled: true });
+      const { rerender } = renderHook((props) => useAutoRunController(props), {
+        initialProps: params,
+      });
+      // Two restarts, a healthy probe resets the counter, then one more.
+      [2, 3, 0, 1].forEach((restarts) => {
+        pollWithRestarts(restarts);
+        rerender({ ...params });
+      });
+
+      act(() => {
+        jest.advanceTimersByTime(HEALTH_SUMMARY_INTERVAL_SECONDS * 1000);
+      });
+
+      const summaryCalls = mockLogMessage.mock.calls.filter(
+        (call: string[]) =>
+          typeof call[0] === 'string' && call[0].includes('health summary'),
+      );
+      expect(summaryCalls).toHaveLength(1);
+      expect(summaryCalls[0][0]).toContain('healthCheckRestarts=3');
+      useServices.mockReturnValue({ allDeployments: undefined });
     });
   });
   describe('activity goal and Connect wiring', () => {

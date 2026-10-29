@@ -220,9 +220,9 @@ export type AgentLivenessReason =
  * crash-looping agent stays `DEPLOYED` while its process is dead.
  *
  * Narrowed to the fields Pearl reads. The response also carries
- * `last_checked_at`, `last_healthy_at` and `restarts_since_last_healthy`, and
- * `healthcheck` gains `age_seconds` — deliberately omitted until something
- * renders them, so the type cannot drift on fields nobody checks. Re-verify
+ * `last_checked_at` and `last_healthy_at`, and `healthcheck` gains
+ * `age_seconds` — deliberately omitted until something renders them, so the
+ * type cannot drift on fields nobody checks. Re-verify
  * the shape on every `olas-operate-middleware` pin bump in `pyproject.toml`.
  */
 export type AgentLiveness = {
@@ -238,6 +238,11 @@ export type AgentLiveness = {
    * dead agent.
    */
   consecutive_failures: number;
+  /**
+   * Restarts the middleware's health checker attempted since the last
+   * successful probe; resets to 0 on the next one.
+   */
+  restarts_since_last_healthy: number;
 };
 
 export type ServiceDeployment = {
