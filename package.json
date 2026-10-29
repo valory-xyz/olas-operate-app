@@ -99,7 +99,6 @@
     "deps:check-pinned": "node scripts/check-deps-pinned.mjs",
     "license-check": "node scripts/license-check.mjs",
     "test:license-check": "node --test scripts/license-check.test.mjs",
-    "test:electron": "node --test test/electron/*.test.js",
     "build:pearl": "sh build_pearl.sh",
     "dev": "dotenv -e .env -- electron .",
     "dev:backend": "uv run python -m operate.cli daemon",
@@ -114,7 +113,7 @@
     "quality-check:frontend": "cd frontend && yarn quality-check",
     "start": "yarn electron .",
     "start:frontend": "cd frontend && yarn start",
-    "test:electron": "node --test electron/processes.test.js",
+    "test:electron": "node --test electron/processes.test.js test/electron/*.test.js",
     "test:frontend": "cd frontend && yarn test"
   },
   "version": "1.12.3",

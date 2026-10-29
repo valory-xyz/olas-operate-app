@@ -164,6 +164,7 @@ describe('useAutoRunController', () => {
 
   afterEach(() => {
     jest.useRealTimers();
+    useServices.mockReturnValue({ allDeployments: undefined });
   });
 
   it('returns stopRunningAgent and runningAgentType', () => {
@@ -282,44 +283,70 @@ describe('useAutoRunController', () => {
       expect(summaryCalls).toHaveLength(0);
     });
 
-    it('counts health-check restarts from polled deployments', () => {
+    const pollWithRestarts = (restarts: number) => {
+      useServices.mockReturnValue({
+        allDeployments: {
+          [DEFAULT_SERVICE_CONFIG_ID]: makeServiceDeployment({
+            agent_liveness: makeAgentLiveness({
+              restarts_since_last_healthy: restarts,
+            }),
+          }),
+        },
+      });
+    };
+
+    const renderAndPoll = (
+      enabled: boolean,
+      initialRestarts: number,
+      polledRestarts: number[],
+    ) => {
       const mockLogMessage = jest.fn();
       useLogAutoRunEvent.mockReturnValue({ logMessage: mockLogMessage });
-      const pollWithRestarts = (restarts: number) => {
-        useServices.mockReturnValue({
-          allDeployments: {
-            [DEFAULT_SERVICE_CONFIG_ID]: makeServiceDeployment({
-              agent_liveness: makeAgentLiveness({
-                restarts_since_last_healthy: restarts,
-              }),
-            }),
-          },
-        });
-      };
-
-      // A restart from before this session is a baseline, not a new restart.
-      pollWithRestarts(1);
-      const params = makeHookParams({ enabled: true });
+      pollWithRestarts(initialRestarts);
+      const params = makeHookParams({ enabled });
       const { rerender } = renderHook((props) => useAutoRunController(props), {
         initialProps: params,
       });
-      // Two restarts, a healthy probe resets the counter, then one more.
-      [2, 3, 0, 1].forEach((restarts) => {
+      polledRestarts.forEach((restarts) => {
         pollWithRestarts(restarts);
         rerender({ ...params });
       });
+      return { mockLogMessage, rerender, params };
+    };
+
+    const getSummaryCalls = (mockLogMessage: jest.Mock) =>
+      mockLogMessage.mock.calls.filter(
+        (call: string[]) =>
+          typeof call[0] === 'string' && call[0].includes('health summary'),
+      );
+
+    it('counts health-check restarts from polled deployments', () => {
+      // A restart from before this session is a baseline, not a new restart.
+      // Then two restarts, a healthy probe resets the counter, and one more.
+      const { mockLogMessage } = renderAndPoll(true, 1, [2, 3, 0, 1]);
 
       act(() => {
         jest.advanceTimersByTime(HEALTH_SUMMARY_INTERVAL_SECONDS * 1000);
       });
 
-      const summaryCalls = mockLogMessage.mock.calls.filter(
-        (call: string[]) =>
-          typeof call[0] === 'string' && call[0].includes('health summary'),
-      );
+      const summaryCalls = getSummaryCalls(mockLogMessage);
       expect(summaryCalls).toHaveLength(1);
       expect(summaryCalls[0][0]).toContain('healthCheckRestarts=3');
-      useServices.mockReturnValue({ allDeployments: undefined });
+    });
+
+    it('does not count health-check restarts while auto-run is disabled', () => {
+      const { mockLogMessage, rerender, params } = renderAndPoll(
+        false,
+        0,
+        [1, 2],
+      );
+      rerender({ ...params, enabled: true });
+
+      act(() => {
+        jest.advanceTimersByTime(HEALTH_SUMMARY_INTERVAL_SECONDS * 1000);
+      });
+
+      expect(getSummaryCalls(mockLogMessage)).toHaveLength(0);
     });
   });
   describe('activity goal and Connect wiring', () => {
