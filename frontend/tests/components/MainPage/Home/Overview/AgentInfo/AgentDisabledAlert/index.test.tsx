@@ -366,6 +366,21 @@ describe('AgentDisabledAlert', () => {
     });
 
     it.each([
+      ['under construction', { agentConfig: { isUnderConstruction: true } }],
+      ['another agent running', { isAnotherAgentRunning: true }],
+      [
+        'an eviction',
+        { staking: { isAgentEvicted: true, isEligibleForStaking: false } },
+      ],
+    ])('wins over %s', (_, overrides) => {
+      setup({ ...overrides, isRunning: true, agentIssues: [issue] });
+
+      expect(
+        screen.getByText(`issue: ${issue.title} / ${issue.description}`),
+      ).toBeInTheDocument();
+    });
+
+    it.each([
       ['an agent that reports none', { isRunning: true, agentIssues: [] }],
       ['an agent that does not report them', { isRunning: true }],
       ['a stopped agent', { isRunning: false, agentIssues: [issue] }],
@@ -419,6 +434,30 @@ describe('AgentDisabledAlert', () => {
       });
 
       expect(screen.queryByText(/^issue:/)).not.toBeInTheDocument();
+    });
+
+    it.each([
+      ['under construction', { agentConfig: { isUnderConstruction: true } }],
+      ['unfinished setup', { isInitialFunded: false }],
+      ['another agent running', { isAnotherAgentRunning: true }],
+      ['a deprecated contract', { deprecatedStakingProgram: true }],
+      [
+        'no free slots',
+        { staking: { isServiceStaked: false, hasEnoughServiceSlots: false } },
+      ],
+      [
+        'an eviction',
+        { staking: { isAgentEvicted: true, isEligibleForStaking: false } },
+      ],
+    ])('wins over %s', (_, overrides) => {
+      setup({
+        ...overrides,
+        prestartCheck: { status: 'failed', issues: [issue] },
+      });
+
+      expect(
+        screen.getByText(`issue: ${issue.title} / ${issue.description}`),
+      ).toBeInTheDocument();
     });
 
     it('gives way to a region block', () => {

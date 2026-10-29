@@ -15,7 +15,10 @@ export const prestartCheckQuery = (serviceConfigId: ServiceConfigId) => ({
     try {
       return await ServicesService.getPrestartCheck(serviceConfigId);
     } catch (error) {
-      console.error('Prestart check request failed:', error);
+      console.error(
+        `Prestart check request failed for ${serviceConfigId}:`,
+        error,
+      );
       return { status: 'error', issues: [] };
     }
   },
