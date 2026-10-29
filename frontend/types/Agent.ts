@@ -190,10 +190,7 @@ type RoundsInfo = Record<
   }
 >;
 
-/**
- * A problem an agent reports, written by the agent for display: Pearl shows
- * `title` and `description` as they are and never branches on `code`.
- */
+/** A problem an agent reports for display; Pearl never branches on `code`. */
 export type AgentIssue = {
   code: string;
   title: string;
@@ -202,20 +199,14 @@ export type AgentIssue = {
   since?: number;
 };
 
-/**
- * Result of `GET /api/v2/service/{id}/prestart_check`: the agent's own checks
- * of whether it can start on this machine. `issues` is empty unless `failed`.
- */
-export type PrestartCheckResult = {
-  status: 'passed' | 'failed' | 'not_supported' | 'error';
-  issues: AgentIssue[];
-};
+/** Result of `GET /api/v2/service/{id}/prestart_check`. */
+export type PrestartCheckResult =
+  | { status: 'failed'; issues: AgentIssue[] }
+  | { status: 'error'; issues: [] }
+  | { status: 'passed' | 'not_supported'; issues: [] };
 
 type AgentHealthCheck = {
-  /**
-   * `issues` is absent on agents that do not report it, which means unknown,
-   * never "nothing wrong".
-   */
+  /** Absent `issues` means the agent doesn't report them, not that none exist. */
   agent_health: Record<string, unknown> & { issues?: AgentIssue[] };
   is_healthy: boolean;
   is_tm_healthy: boolean;

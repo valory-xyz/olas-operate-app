@@ -16,6 +16,7 @@ import { updateServiceIfNeeded } from '../../utils/service';
 import {
   DEFAULT_SERVICE_CONFIG_ID,
   DEFAULT_STAKING_PROGRAM_ID,
+  makeFailedPrestartCheck,
   MOCK_SERVICE_CONFIG_ID_2,
   SECOND_STAKING_PROGRAM_ID,
   TRADER_SERVICE_HASH,
@@ -74,11 +75,6 @@ const mockCreateService = ServicesService.createService as jest.Mock;
 const mockGetPrestartCheck = ServicesService.getPrestartCheck as jest.Mock;
 
 const PASSED = { status: 'passed', issues: [] };
-const UNREACHABLE_ISSUE = {
-  code: 'polymarket_unreachable',
-  title: "Can't reach Polymarket",
-  description: 'Polystrat cannot connect to Polymarket from this network.',
-};
 
 const renderStartService = (queryClient = createTestQueryClient()) =>
   renderHook(() => useStartService(), {
@@ -208,21 +204,21 @@ describe('useStartService', () => {
       expect(mockStartService).toHaveBeenCalledWith(DEFAULT_SERVICE_CONFIG_ID);
     });
 
-    it.each([
-      { status: 'failed', issues: [UNREACHABLE_ISSUE] },
-      { status: 'error', issues: [] },
-    ])('does not start when the check is $status', async (checkResult) => {
-      mockGetPrestartCheck.mockResolvedValue(checkResult);
-      const { result } = renderStartService();
-      const start = result.current.startService({
-        ...baseInput,
-        service: existingService,
-      });
+    it.each([makeFailedPrestartCheck(), { status: 'error', issues: [] }])(
+      'does not start when the check is $status',
+      async (checkResult) => {
+        mockGetPrestartCheck.mockResolvedValue(checkResult);
+        const { result } = renderStartService();
+        const start = result.current.startService({
+          ...baseInput,
+          service: existingService,
+        });
 
-      await expect(start).rejects.toBeInstanceOf(PrestartCheckFailedError);
-      await expect(start).rejects.toMatchObject({ result: checkResult });
-      expect(mockStartService).not.toHaveBeenCalled();
-    });
+        await expect(start).rejects.toBeInstanceOf(PrestartCheckFailedError);
+        await expect(start).rejects.toMatchObject({ result: checkResult });
+        expect(mockStartService).not.toHaveBeenCalled();
+      },
+    );
 
     it('does not start when the check request fails', async () => {
       mockGetPrestartCheck.mockRejectedValue(new Error('Failed to fetch'));
@@ -230,12 +226,15 @@ describe('useStartService', () => {
 
       await expect(
         result.current.startService({ ...baseInput, service: existingService }),
-      ).rejects.toMatchObject({ result: { status: 'error', issues: [] } });
+      ).rejects.toMatchObject({
+        result: { status: 'error', issues: [], detail: 'Failed to fetch' },
+        message: 'Prestart check error: Failed to fetch',
+      });
       expect(mockStartService).not.toHaveBeenCalled();
     });
 
     it('keeps the last result for the alerts, per service', async () => {
-      const failed = { status: 'failed', issues: [UNREACHABLE_ISSUE] };
+      const failed = makeFailedPrestartCheck();
       mockGetPrestartCheck.mockResolvedValue(failed);
       const queryClient = createTestQueryClient();
       const { result } = renderStartService(queryClient);
@@ -252,10 +251,7 @@ describe('useStartService', () => {
     });
 
     it('checks again on the next start after a blocked one', async () => {
-      mockGetPrestartCheck.mockResolvedValueOnce({
-        status: 'failed',
-        issues: [UNREACHABLE_ISSUE],
-      });
+      mockGetPrestartCheck.mockResolvedValueOnce(makeFailedPrestartCheck());
       const queryClient = createTestQueryClient();
       const { result } = renderStartService(queryClient);
 
@@ -277,10 +273,7 @@ describe('useStartService', () => {
     });
 
     it('checks a new service once it is created, before starting it', async () => {
-      mockGetPrestartCheck.mockResolvedValue({
-        status: 'failed',
-        issues: [UNREACHABLE_ISSUE],
-      });
+      mockGetPrestartCheck.mockResolvedValue(makeFailedPrestartCheck());
       const { result } = renderStartService();
 
       await expect(

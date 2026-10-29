@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import React from 'react';
 
 import { AgentIssuesAlert } from '../../../../../../../components/MainPage/Home/Overview/AgentInfo/AgentDisabledAlert/AgentIssuesAlert';
+import { makeAgentIssue } from '../../../../../../helpers/factories';
 
 jest.mock('../../../../../../../components/ui', () => ({
   Alert: ({ message, type }: { message: React.ReactNode; type: string }) => (
@@ -16,8 +17,12 @@ describe('AgentIssuesAlert', () => {
     render(
       <AgentIssuesAlert
         issues={[
-          { title: "Can't reach Polymarket", description: 'First text.' },
-          { title: 'Another problem', description: 'Second text.' },
+          makeAgentIssue({ description: 'First text.' }),
+          makeAgentIssue({
+            code: 'another',
+            title: 'Another problem',
+            description: 'Second text.',
+          }),
         ]}
       />,
     );

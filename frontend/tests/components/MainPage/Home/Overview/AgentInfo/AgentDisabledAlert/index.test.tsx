@@ -17,8 +17,13 @@ import {
   useServices,
   useStakingProgram,
 } from '../../../../../../../hooks';
-import { AgentIssue, PrestartCheckResult } from '../../../../../../../types';
-import { makeMasterSafe } from '../../../../../../helpers/factories';
+import { PrestartCheck } from '../../../../../../../hooks/usePrestartCheck';
+import { AgentIssue } from '../../../../../../../types';
+import {
+  makeAgentIssue,
+  makeFailedPrestartCheck,
+  makeMasterSafe,
+} from '../../../../../../helpers/factories';
 
 // ---------------------------------------------------------------------------
 // Mocks — every branch is stubbed to a recognisable marker so precedence can be
@@ -70,11 +75,7 @@ jest.mock(
 jest.mock(
   '../../../../../../../components/MainPage/Home/Overview/AgentInfo/AgentDisabledAlert/AgentIssuesAlert',
   () => ({
-    AgentIssuesAlert: ({
-      issues,
-    }: {
-      issues: { title: string; description: string }[];
-    }) => (
+    AgentIssuesAlert: ({ issues }: { issues: AgentIssue[] }) => (
       <div>
         {issues
           .map(({ title, description }) => `issue: ${title} / ${description}`)
@@ -154,6 +155,7 @@ const setup = ({
   isRunning = false,
   agentIssues,
   prestartCheck,
+  isChecking = false,
 }: {
   staking?: StakingOverrides;
   agentConfig?: Record<string, unknown>;
@@ -166,7 +168,8 @@ const setup = ({
   deprecatedStakingProgram?: boolean;
   isRunning?: boolean;
   agentIssues?: AgentIssue[];
-  prestartCheck?: PrestartCheckResult;
+  prestartCheck?: PrestartCheck;
+  isChecking?: boolean;
 } = {}) => {
   (useActiveStakingContractDetails as jest.Mock).mockReturnValue({
     isSelectedStakingContractDetailsLoading: false,
@@ -203,7 +206,7 @@ const setup = ({
   });
   (usePrestartCheck as jest.Mock).mockReturnValue({
     result: prestartCheck,
-    isChecking: false,
+    isChecking,
   });
   (useIsInitiallyFunded as jest.Mock).mockReturnValue({
     isInitialFunded: isStoreLoading ? undefined : isInitialFunded,
@@ -349,12 +352,7 @@ describe('AgentDisabledAlert', () => {
   });
 
   describe('agent issues', () => {
-    const issue = {
-      code: 'polymarket_unreachable',
-      title: "Can't reach Polymarket",
-      description: 'Polystrat has stopped asking for predictions.',
-      since: 1700000000,
-    };
+    const issue = makeAgentIssue({ since: 1700000000 });
 
     it("shows a running agent's issues as the agent wrote them", () => {
       setup({ isRunning: true, agentIssues: [issue] });
@@ -406,14 +404,10 @@ describe('AgentDisabledAlert', () => {
   });
 
   describe('prestart check of the last start', () => {
-    const issue = {
-      code: 'polymarket_unreachable',
-      title: "Can't reach Polymarket",
-      description: "Polystrat couldn't place any bets from this network.",
-    };
+    const issue = makeAgentIssue();
 
     it('shows the issues of a failed check', () => {
-      setup({ prestartCheck: { status: 'failed', issues: [issue] } });
+      setup({ prestartCheck: makeFailedPrestartCheck([issue]) });
 
       expect(
         screen.getByText(`issue: ${issue.title} / ${issue.description}`),
@@ -440,10 +434,19 @@ describe('AgentDisabledAlert', () => {
       },
     );
 
+    it('hides the last result while the next start re-runs the check', () => {
+      setup({
+        isChecking: true,
+        prestartCheck: makeFailedPrestartCheck([issue]),
+      });
+
+      expect(screen.queryByText(/^issue:/)).not.toBeInTheDocument();
+    });
+
     it('shows nothing once the agent runs', () => {
       setup({
         isRunning: true,
-        prestartCheck: { status: 'failed', issues: [issue] },
+        prestartCheck: makeFailedPrestartCheck([issue]),
       });
 
       expect(screen.queryByText(/^issue:/)).not.toBeInTheDocument();
@@ -465,7 +468,7 @@ describe('AgentDisabledAlert', () => {
     ])('wins over %s', (_, overrides) => {
       setup({
         ...overrides,
-        prestartCheck: { status: 'failed', issues: [issue] },
+        prestartCheck: makeFailedPrestartCheck([issue]),
       });
 
       expect(
@@ -477,7 +480,7 @@ describe('AgentDisabledAlert', () => {
       setup({
         agentConfig: { isGeoLocationRestricted: true },
         isAgentGeoRestricted: true,
-        prestartCheck: { status: 'failed', issues: [issue] },
+        prestartCheck: makeFailedPrestartCheck([issue]),
       });
 
       expect(screen.getByText('geo-blocked')).toBeInTheDocument();

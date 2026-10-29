@@ -342,7 +342,9 @@ const getPrestartCheck = async (
     headers: { ...CONTENT_TYPE_JSON_UTF8 },
   }).then((response) => {
     if (response.ok) return response.json();
-    throw new Error(`Failed to run the prestart check of ${serviceConfigId}`);
+    throw new Error(
+      `Failed to run the prestart check of ${serviceConfigId}: HTTP ${response.status}`,
+    );
   });
 
 export const ServicesService = {

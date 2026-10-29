@@ -193,7 +193,7 @@ Shared by both manual start (`useServiceDeployment`) and auto-run:
 
 `useStartService` always creates the safe first (step 1) before any service operations.
 
-**Prestart check.** Before every start, `runPrestartCheck` asks the middleware to run the agent's own checks (`GET /api/v2/service/{id}/prestart_check`, up to ~2 min while the agent runner unpacks). It goes through `queryClient.fetchQuery(prestartCheckQuery(id))` (`hooks/usePrestartCheck.ts`), so the result stays in the React Query cache under `PRESTART_CHECK_KEY(id)` for the alerts, and `usePrestartCheck(id).isChecking` makes the run button read "Checking" while it runs. `failed` and `error` throw `PrestartCheckFailedError` (carrying the result) before the on-chain start; `passed` and `not_supported` (an agent release without the command) go on. A failed request counts as `error`. Pearl never interprets the agent's issues: it shows their `title` and `description`.
+**Prestart check.** Before every start, `runPrestartCheck` runs the agent's own checks (`GET /api/v2/service/{id}/prestart_check`) via `queryClient.fetchQuery(prestartCheckQuery(id))`. `failed` and `error` throw `PrestartCheckFailedError` before the on-chain start; `passed` and `not_supported` go on. A failed request counts as `error`, with its cause in `detail` and the error message. The cached result drives the run button's "Checking" state and the alerts (see `services.md`). The contract switch (`ConfirmSwitchButton`) and the settings restart (`useConfirmModal`) start the service directly, so they call the exported `runPrestartCheck` themselves.
 
 ### Manual deployment workflow (`useServiceDeployment`)
 

@@ -185,10 +185,7 @@ export const useServiceDeployment = () => {
       });
     } catch (error) {
       console.error('Error during start:', error);
-      // For other errors, surface a generic toast. Gas errors are surfaced
-      // via the InsufficientSignerGasModal on the host (AgentNotRunningButton)
-      // and a blocking prestart check via the agent's alert (AgentDisabledAlert)
-      // — a toast on top would duplicate the signal.
+      // Gas and prestart-check errors have their own UI; no toast.
       if (
         !isInsufficientGasError(error) &&
         !(error instanceof PrestartCheckFailedError)

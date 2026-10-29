@@ -11,6 +11,7 @@ import { ServicesService } from '../../service/Services';
 import { PrestartCheckResult } from '../../types/Agent';
 import {
   DEFAULT_SERVICE_CONFIG_ID,
+  makeFailedPrestartCheck,
   MOCK_SERVICE_CONFIG_ID_2,
 } from '../helpers/factories';
 import { createTestQueryClient } from '../helpers/queryClient';
@@ -21,10 +22,7 @@ jest.mock('../../service/Services', () => ({
 
 const mockGetPrestartCheck = ServicesService.getPrestartCheck as jest.Mock;
 
-const FAILED: PrestartCheckResult = {
-  status: 'failed',
-  issues: [{ code: 'c', title: 't', description: 'd' }],
-};
+const FAILED = makeFailedPrestartCheck();
 
 const renderUsePrestartCheck = (
   queryClient: QueryClient,
@@ -73,7 +71,11 @@ describe('prestartCheckQuery', () => {
 
     await expect(
       prestartCheckQuery(DEFAULT_SERVICE_CONFIG_ID).queryFn(),
-    ).resolves.toEqual({ status: 'error', issues: [] });
+    ).resolves.toEqual({
+      status: 'error',
+      issues: [],
+      detail: 'Failed to fetch',
+    });
     consoleSpy.mockRestore();
   });
 });

@@ -12,6 +12,7 @@ import * as delayModule from '../../../../utils/delay';
 import {
   DEFAULT_SERVICE_CONFIG_ID,
   makeAutoRunAgentMeta,
+  makeFailedPrestartCheck,
 } from '../../../helpers/factories';
 
 jest.mock('../../../../utils/delay', () =>
@@ -244,18 +245,11 @@ describe('useAutoRunStartOperations', () => {
   describe('prestart check', () => {
     it('skips the agent without retrying when its check fails', async () => {
       const params = makeHookParams({
-        startService: jest.fn().mockRejectedValue(
-          new PrestartCheckFailedError({
-            status: 'failed',
-            issues: [
-              {
-                code: 'polymarket_unreachable',
-                title: "Can't reach Polymarket",
-                description: 'Polystrat cannot connect to Polymarket.',
-              },
-            ],
-          }),
-        ),
+        startService: jest
+          .fn()
+          .mockRejectedValue(
+            new PrestartCheckFailedError(makeFailedPrestartCheck()),
+          ),
       });
       const { result } = renderHook(() => useAutoRunStartOperations(params));
 

@@ -4,14 +4,20 @@ import { REACT_QUERY_KEYS } from '@/constants';
 import { ServicesService } from '@/service/Services';
 import { PrestartCheckResult, ServiceConfigId } from '@/types';
 
-/**
- * The prestart check as a query, so the start writes its result where the
- * alerts read it. A failed request is an `error` result, never a throw, so it
- * blocks the start like any other check that could not complete.
- */
+/** `detail` is set when the request itself failed. */
+export type PrestartCheck =
+  | Exclude<PrestartCheckResult, { status: 'error' }>
+  | { status: 'error'; issues: []; detail?: string };
+
+export type BlockingPrestartCheck = Extract<
+  PrestartCheck,
+  { status: 'failed' | 'error' }
+>;
+
+/** A failed request resolves to `error`, so it blocks the start. */
 export const prestartCheckQuery = (serviceConfigId: ServiceConfigId) => ({
   queryKey: REACT_QUERY_KEYS.PRESTART_CHECK_KEY(serviceConfigId),
-  queryFn: async (): Promise<PrestartCheckResult> => {
+  queryFn: async (): Promise<PrestartCheck> => {
     try {
       return await ServicesService.getPrestartCheck(serviceConfigId);
     } catch (error) {
@@ -19,19 +25,22 @@ export const prestartCheckQuery = (serviceConfigId: ServiceConfigId) => ({
         `Prestart check request failed for ${serviceConfigId}:`,
         error,
       );
-      return { status: 'error', issues: [] };
+      return {
+        status: 'error',
+        issues: [],
+        detail: error instanceof Error ? error.message : String(error),
+      };
     }
   },
   staleTime: 0,
 });
 
-export const isPrestartCheckBlocking = (result?: PrestartCheckResult) =>
+export const isPrestartCheckBlocking = (
+  result?: PrestartCheck,
+): result is BlockingPrestartCheck =>
   result?.status === 'failed' || result?.status === 'error';
 
-/**
- * The last prestart check of a service, run by its last start attempt, and
- * whether one is running now. Never runs the check itself.
- */
+/** The last start's prestart check of a service; never runs the check itself. */
 export const usePrestartCheck = (serviceConfigId?: ServiceConfigId) => {
   const query = prestartCheckQuery(serviceConfigId ?? '');
   const { data } = useQuery({ ...query, enabled: false });

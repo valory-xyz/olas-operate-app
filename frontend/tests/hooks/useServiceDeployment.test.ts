@@ -26,6 +26,7 @@ import {
   BACKUP_SIGNER_ADDRESS,
   DEFAULT_SERVICE_CONFIG_ID,
   DEFAULT_STAKING_PROGRAM_ID,
+  makeFailedPrestartCheck,
   makeMasterEoa,
   makeMasterSafe,
 } from '../helpers/factories';
@@ -524,10 +525,7 @@ describe('useServiceDeployment', () => {
       });
 
       it('leaves the explanation to the agent alert, without the generic toast', async () => {
-        const blocked = new PrestartCheckFailedError({
-          status: 'failed',
-          issues: [{ code: 'c', title: 't', description: 'd' }],
-        });
+        const blocked = new PrestartCheckFailedError(makeFailedPrestartCheck());
         mockStartServiceFn.mockRejectedValue(blocked);
 
         const { result } = renderHook(() => useServiceDeployment());

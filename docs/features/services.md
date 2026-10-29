@@ -226,7 +226,7 @@ Only runs the query when `agentConfig.isGeoLocationRestricted === true`. Current
 
 The geo check above is a policy answer from Pearl's server; it cannot see a network that drops connections to an agent's services. The agent reports that itself, in two places, as `AgentIssue { code, title, description, since? }` that Pearl shows verbatim and never branches on:
 
-- **Before a start** — the result of the prestart check of the last start attempt (`usePrestartCheck`, see `deployability-and-lifecycle.md`). `AgentDisabledAlert` shows a `failed` check's issues, or "Couldn't check the agent" for `error`, while the agent is not running.
+- **Before a start** — the result of the prestart check of the last start attempt (`usePrestartCheck`, see `deployability-and-lifecycle.md`). `AgentDisabledAlert` shows a `failed` check's issues, or "Couldn't check the agent" for `error`, while the agent is not running and no new check is in flight.
 - **While running** — `deploymentDetails.healthcheck.agent_health.issues` from the deployment poll. `AgentDisabledAlert` shows them while the service is `DEPLOYED`; an absent key (older agents) means unknown and shows nothing.
 
 Both use `AgentIssuesAlert`, the layout of `AgentGeoBlockedAlert`, and come right after the geo block in the alert precedence.

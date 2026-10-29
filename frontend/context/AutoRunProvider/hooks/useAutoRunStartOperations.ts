@@ -169,8 +169,6 @@ export const useAutoRunStartOperations = ({
               `op=${opId} phase=start_confirm status=timeout attempt=${attempt + 1} service=${meta.serviceConfigId} agent=${meta.agentType}`,
             );
           } catch (error) {
-            // A failed check is a property of this machine, like a blocked
-            // region; one that could not run is retried like any start error.
             if (
               error instanceof PrestartCheckFailedError &&
               error.result.status === 'failed'

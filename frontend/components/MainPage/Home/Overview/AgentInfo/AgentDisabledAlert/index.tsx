@@ -27,6 +27,7 @@ import {
   useServices,
   useStakingProgram,
 } from '@/hooks';
+import { AgentIssue } from '@/types';
 
 import { AgentGeoBlockedAlert } from './AgentGeoBlockedAlert';
 import { AgentIssuesAlert } from './AgentIssuesAlert';
@@ -38,6 +39,12 @@ import { MasterEoaLowBalanceAlert } from './MasterEoaLowBalanceAlert';
 import { NoSlotsAvailableAlert } from './NoSlotsAvailableAlert';
 import { UnderConstructionAlert } from './UnderConstructionAlert';
 import { UnfinishedSetupAlert } from './UnfinishedSetupAlert';
+
+const prestartCheckErrorIssue = (agentName: string): AgentIssue => ({
+  code: 'prestart_check_error',
+  title: "Couldn't check the agent",
+  description: `Pearl couldn't check whether the ${agentName} agent can run on this network. Check your internet connection and try starting the agent again.`,
+});
 
 export const AgentDisabledAlert = () => {
   const { goto } = usePageState();
@@ -90,7 +97,7 @@ export const AgentDisabledAlert = () => {
   const runningAgentIssues = isServiceRunning
     ? deploymentDetails?.healthcheck?.agent_health?.issues
     : undefined;
-  const { result: prestartCheck } = usePrestartCheck(
+  const { result: prestartCheck, isChecking } = usePrestartCheck(
     selectedService?.service_config_id,
   );
 
@@ -119,19 +126,18 @@ export const AgentDisabledAlert = () => {
       };
     }
 
-    if (!isServiceRunning && isPrestartCheckBlocking(prestartCheck)) {
-      const prestartIssues =
-        prestartCheck?.status === 'failed'
+    if (
+      !isServiceRunning &&
+      !isChecking &&
+      isPrestartCheckBlocking(prestartCheck)
+    ) {
+      const issues =
+        prestartCheck.status === 'failed'
           ? prestartCheck.issues
-          : [
-              {
-                title: "Couldn't check the agent",
-                description: `Pearl couldn't check whether the ${selectedAgentConfig.displayName} agent can run on this network. Check your internet connection and try starting the agent again.`,
-              },
-            ];
+          : [prestartCheckErrorIssue(selectedAgentConfig.displayName)];
       return {
         key: 'prestart-check',
-        content: <AgentIssuesAlert issues={prestartIssues} />,
+        content: <AgentIssuesAlert issues={issues} />,
       };
     }
 
@@ -227,6 +233,7 @@ export const AgentDisabledAlert = () => {
     isAnotherAgentRunning,
     isEligibleForStaking,
     isHomeChainSafeMissing,
+    isChecking,
     isInitialFunded,
     isSelectedStakingContractDetailsLoading,
     isServiceRunning,

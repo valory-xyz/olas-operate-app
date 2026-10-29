@@ -14,6 +14,7 @@ import { ServiceTemplate } from '../../types/Service';
 import { asEvmChainId } from '../../utils/middlewareHelpers';
 import {
   DEFAULT_SERVICE_CONFIG_ID,
+  makeFailedPrestartCheck,
   makeInsufficientGasError,
 } from '../helpers/factories';
 
@@ -630,16 +631,7 @@ describe('ServicesService', () => {
 
   describe('getPrestartCheck', () => {
     it('returns the check result on success', async () => {
-      const checkResult = {
-        status: 'failed',
-        issues: [
-          {
-            code: 'polymarket_unreachable',
-            title: "Can't reach Polymarket",
-            description: 'Polystrat cannot connect to Polymarket.',
-          },
-        ],
-      };
+      const checkResult = makeFailedPrestartCheck();
       jest
         .spyOn(global, 'fetch')
         .mockReturnValue(mockJsonResponse(checkResult));
@@ -662,7 +654,9 @@ describe('ServicesService', () => {
 
       await expect(
         ServicesService.getPrestartCheck(DEFAULT_SERVICE_CONFIG_ID),
-      ).rejects.toThrow('Failed to run the prestart check');
+      ).rejects.toThrow(
+        `Failed to run the prestart check of ${DEFAULT_SERVICE_CONFIG_ID}: HTTP 404`,
+      );
     });
   });
 

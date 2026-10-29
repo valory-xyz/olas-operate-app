@@ -1,4 +1,4 @@
-import { useQueryClient } from '@tanstack/react-query';
+import { QueryClient, useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
 
 import { MechType } from '@/config/mechs';
@@ -6,23 +6,41 @@ import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
 import { AgentType, StakingProgramId } from '@/constants';
 import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
 import { ServicesService } from '@/service/Services';
-import { AgentConfig, PrestartCheckResult } from '@/types/Agent';
+import { AgentConfig } from '@/types/Agent';
 import { Service, ServiceConfigId } from '@/types/Service';
 import { updateServiceIfNeeded } from '@/utils/service';
 import { isNoStakingProgram } from '@/utils/stakingProgram';
 
 import {
+  BlockingPrestartCheck,
   isPrestartCheckBlocking,
   prestartCheckQuery,
 } from './usePrestartCheck';
 
 /** Thrown by `startService` when the agent's prestart check stops the start. */
 export class PrestartCheckFailedError extends Error {
-  constructor(readonly result: PrestartCheckResult) {
-    super(`Prestart check ${result.status}`);
+  constructor(readonly result: BlockingPrestartCheck) {
+    super(
+      result.status === 'error' && result.detail
+        ? `Prestart check error: ${result.detail}`
+        : `Prestart check ${result.status}`,
+    );
     this.name = 'PrestartCheckFailedError';
   }
 }
+
+/** Throws `PrestartCheckFailedError` when the check blocks the start. */
+export const runPrestartCheck = async (
+  queryClient: QueryClient,
+  serviceConfigId: ServiceConfigId,
+) => {
+  const result = await queryClient.fetchQuery(
+    prestartCheckQuery(serviceConfigId),
+  );
+  if (isPrestartCheckBlocking(result)) {
+    throw new PrestartCheckFailedError(result);
+  }
+};
 
 type StartServiceInput = {
   agentType: AgentType;
@@ -40,18 +58,6 @@ type StartServiceInput = {
 export const useStartService = () => {
   const queryClient = useQueryClient();
 
-  const runPrestartCheck = useCallback(
-    async (serviceConfigId: ServiceConfigId) => {
-      const result = await queryClient.fetchQuery(
-        prestartCheckQuery(serviceConfigId),
-      );
-      if (isPrestartCheckBlocking(result)) {
-        throw new PrestartCheckFailedError(result);
-      }
-    },
-    [queryClient],
-  );
-
   const startService = useCallback(
     async ({
       agentType,
@@ -67,7 +73,7 @@ export const useStartService = () => {
       // If service exists, ensure it's up to date and start it
       if (service) {
         await updateServiceIfNeeded(service, agentType);
-        await runPrestartCheck(service.service_config_id);
+        await runPrestartCheck(queryClient, service.service_config_id);
         await ServicesService.startService(service.service_config_id);
         return service;
       }
@@ -107,11 +113,11 @@ export const useStartService = () => {
         deploy: false, // TODO: deprecated will remove
         useMechMarketplace,
       });
-      await runPrestartCheck(serviceToStart.service_config_id);
+      await runPrestartCheck(queryClient, serviceToStart.service_config_id);
       await ServicesService.startService(serviceToStart.service_config_id);
       return serviceToStart;
     },
-    [runPrestartCheck],
+    [queryClient],
   );
 
   return { startService };
