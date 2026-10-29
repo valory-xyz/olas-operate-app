@@ -18,12 +18,9 @@ import {
 
 /** Thrown by `startService` when the agent's prestart check stops the start. */
 export class PrestartCheckFailedError extends Error {
-  result: PrestartCheckResult;
-
-  constructor(result: PrestartCheckResult) {
+  constructor(readonly result: PrestartCheckResult) {
     super(`Prestart check ${result.status}`);
     this.name = 'PrestartCheckFailedError';
-    this.result = result;
   }
 }
 
