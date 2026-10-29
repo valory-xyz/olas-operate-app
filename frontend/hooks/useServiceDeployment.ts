@@ -13,7 +13,10 @@ import { useService } from '@/hooks/useService';
 import { useServices } from '@/hooks/useServices';
 import { useStakingContractContext } from '@/hooks/useStakingContractDetails';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
-import { useStartService } from '@/hooks/useStartService';
+import {
+  PrestartCheckFailedError,
+  useStartService,
+} from '@/hooks/useStartService';
 import { useMasterWalletContext } from '@/hooks/useWallet';
 import { WalletService } from '@/service/Wallet';
 import { AgentConfig } from '@/types/Agent';
@@ -182,10 +185,14 @@ export const useServiceDeployment = () => {
       });
     } catch (error) {
       console.error('Error during start:', error);
-      // For non-gas errors, surface a generic toast. Gas errors are surfaced
+      // For other errors, surface a generic toast. Gas errors are surfaced
       // via the InsufficientSignerGasModal on the host (AgentNotRunningButton)
+      // and a blocking prestart check via the agent's alert (AgentDisabledAlert)
       // — a toast on top would duplicate the signal.
-      if (!isInsufficientGasError(error)) {
+      if (
+        !isInsufficientGasError(error) &&
+        !(error instanceof PrestartCheckFailedError)
+      ) {
         showNotification?.(
           'An error occurred while starting. Please try again.',
         );

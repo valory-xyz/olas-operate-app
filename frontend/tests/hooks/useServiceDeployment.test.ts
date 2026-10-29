@@ -12,7 +12,10 @@ import { useServiceDeployment } from '../../hooks/useServiceDeployment';
 import { useServices } from '../../hooks/useServices';
 import { useStakingContractContext } from '../../hooks/useStakingContractDetails';
 import { useStakingProgram } from '../../hooks/useStakingProgram';
-import { useStartService } from '../../hooks/useStartService';
+import {
+  PrestartCheckFailedError,
+  useStartService,
+} from '../../hooks/useStartService';
 import { useMasterWalletContext } from '../../hooks/useWallet';
 import { WalletService } from '../../service/Wallet';
 import {
@@ -58,6 +61,8 @@ jest.mock('../../hooks/useStakingProgram', () => ({
 }));
 jest.mock('../../hooks/useMultisig', () => ({ useMultisigs: jest.fn() }));
 jest.mock('../../hooks/useStartService', () => ({
+  PrestartCheckFailedError: jest.requireActual('../../hooks/useStartService')
+    .PrestartCheckFailedError,
   useStartService: jest.fn(),
 }));
 jest.mock('../../hooks/useDeployability', () => ({
@@ -504,6 +509,41 @@ describe('useServiceDeployment', () => {
         act(() => result.current.resetStart());
         expect(result.current.isStartError).toBe(false);
         expect(result.current.startError).toBeNull();
+      });
+    });
+
+    describe('blocking prestart check', () => {
+      let consoleSpy: jest.SpyInstance;
+
+      beforeEach(() => {
+        consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      });
+
+      afterEach(() => {
+        consoleSpy.mockRestore();
+      });
+
+      it('leaves the explanation to the agent alert, without the generic toast', async () => {
+        const blocked = new PrestartCheckFailedError({
+          status: 'failed',
+          issues: [{ code: 'c', title: 't', description: 'd' }],
+        });
+        mockStartServiceFn.mockRejectedValue(blocked);
+
+        const { result } = renderHook(() => useServiceDeployment());
+        let caught: unknown;
+        await act(async () => {
+          try {
+            await result.current.handleStart();
+          } catch (e) {
+            caught = e;
+          }
+        });
+
+        expect(caught).toBe(blocked);
+        expect(mockShowNotification).not.toHaveBeenCalled();
+        expect(mockOverrideStatus).toHaveBeenLastCalledWith(null);
+        expect(mockSetServicePollingPaused).toHaveBeenLastCalledWith(false);
       });
     });
 
