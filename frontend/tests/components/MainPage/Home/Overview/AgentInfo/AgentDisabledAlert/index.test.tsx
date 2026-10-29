@@ -381,6 +381,18 @@ describe('AgentDisabledAlert', () => {
       ).toBeInTheDocument();
     });
 
+    it('gives way to a region block', () => {
+      setup({
+        agentConfig: { isGeoLocationRestricted: true },
+        isAgentGeoRestricted: true,
+        isRunning: true,
+        agentIssues: [issue],
+      });
+
+      expect(screen.getByText('geo-blocked')).toBeInTheDocument();
+      expect(screen.queryByText(/^issue:/)).not.toBeInTheDocument();
+    });
+
     it.each([
       ['an agent that reports none', { isRunning: true, agentIssues: [] }],
       ['an agent that does not report them', { isRunning: true }],
