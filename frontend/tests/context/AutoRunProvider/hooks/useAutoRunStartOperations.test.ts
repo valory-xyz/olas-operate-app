@@ -6,6 +6,7 @@ import { AgentMap } from '../../../../constants/agent';
 import { MiddlewareDeploymentStatusMap } from '../../../../constants/deployment';
 import { AUTO_RUN_START_STATUS } from '../../../../context/AutoRunProvider/constants';
 import { useAutoRunStartOperations } from '../../../../context/AutoRunProvider/hooks/useAutoRunStartOperations';
+import { PrestartCheckFailedError } from '../../../../hooks/useStartService';
 import { ServicesService } from '../../../../service/Services';
 import * as delayModule from '../../../../utils/delay';
 import {
@@ -238,6 +239,67 @@ describe('useAutoRunStartOperations', () => {
     });
     expect(startResult?.status).toBe(AUTO_RUN_START_STATUS.INFRA_FAILED);
     expect(mockSleepAwareDelay).toHaveBeenCalled();
+  });
+
+  describe('prestart check', () => {
+    it('skips the agent without retrying when its check fails', async () => {
+      const params = makeHookParams({
+        startService: jest.fn().mockRejectedValue(
+          new PrestartCheckFailedError({
+            status: 'failed',
+            issues: [
+              {
+                code: 'polymarket_unreachable',
+                title: "Can't reach Polymarket",
+                description: 'Polystrat cannot connect to Polymarket.',
+              },
+            ],
+          }),
+        ),
+      });
+      const { result } = renderHook(() => useAutoRunStartOperations(params));
+
+      let startResult: { status: string; reason?: string } | undefined;
+      await act(async () => {
+        startResult = await result.current.startAgentWithRetries(
+          DEFAULT_SERVICE_CONFIG_ID,
+        );
+      });
+
+      expect(startResult).toEqual({
+        status: AUTO_RUN_START_STATUS.AGENT_BLOCKED,
+        reason: 'Prestart check failed: polymarket_unreachable',
+      });
+      expect(params.startService).toHaveBeenCalledTimes(1);
+      expect(mockSleepAwareDelay).not.toHaveBeenCalled();
+      expect(params.showNotification).not.toHaveBeenCalled();
+      const calls = (params.onAutoRunStartStateChange as jest.Mock).mock.calls;
+      expect(calls[calls.length - 1][0]).toBe(false);
+    });
+
+    it('retries a check that could not complete, like any start error', async () => {
+      const params = makeHookParams({
+        startService: jest
+          .fn()
+          .mockRejectedValue(
+            new PrestartCheckFailedError({ status: 'error', issues: [] }),
+          ),
+      });
+      const { result } = renderHook(() => useAutoRunStartOperations(params));
+
+      let startResult: { status: string; reason?: string } | undefined;
+      await act(async () => {
+        startResult = await result.current.startAgentWithRetries(
+          DEFAULT_SERVICE_CONFIG_ID,
+        );
+      });
+
+      expect(startResult?.status).toBe(AUTO_RUN_START_STATUS.INFRA_FAILED);
+      expect(mockSleepAwareDelay).toHaveBeenCalled();
+      expect(
+        (params.startService as jest.Mock).mock.calls.length,
+      ).toBeGreaterThan(1);
+    });
   });
 
   it('returns INFRA_FAILED with retry interrupted when sleepAwareDelay returns false but still enabled', async () => {

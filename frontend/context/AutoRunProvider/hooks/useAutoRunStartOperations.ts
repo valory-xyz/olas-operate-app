@@ -1,6 +1,7 @@
 import { MutableRefObject, useCallback, useRef } from 'react';
 
 import { AgentType, isRunningDeploymentStatus } from '@/constants';
+import { PrestartCheckFailedError } from '@/hooks/useStartService';
 import { sleepAwareDelay, withTimeout } from '@/utils/delay';
 
 import {
@@ -168,6 +169,21 @@ export const useAutoRunStartOperations = ({
               `op=${opId} phase=start_confirm status=timeout attempt=${attempt + 1} service=${meta.serviceConfigId} agent=${meta.agentType}`,
             );
           } catch (error) {
+            // A failed check is a property of this machine, like a blocked
+            // region; one that could not run is retried like any start error.
+            if (
+              error instanceof PrestartCheckFailedError &&
+              error.result.status === 'failed'
+            ) {
+              const codes = error.result.issues.map(({ code }) => code);
+              logMessage(
+                `op=${opId} phase=prestart_check status=failed service=${meta.serviceConfigId} agent=${meta.agentType} issues=${codes.join(',')}`,
+              );
+              return {
+                status: AUTO_RUN_START_STATUS.AGENT_BLOCKED,
+                reason: `Prestart check failed: ${codes.join(', ')}`,
+              };
+            }
             lastInfraError = `${error}`;
             recordMetric(AUTO_RUN_HEALTH_METRIC.START_ERRORS);
             logMessage(
