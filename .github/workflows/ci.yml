@@ -155,6 +155,9 @@ jobs:
       - name: Run tests
         run: yarn test:frontend
 
+      - name: Run Electron tests
+        run: yarn test:electron
+
   gitleaks:
     name: Gitleaks
     runs-on: ubuntu-latest
