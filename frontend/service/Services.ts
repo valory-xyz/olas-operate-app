@@ -109,11 +109,16 @@ const createService = async ({
       },
     }),
     headers: { ...CONTENT_TYPE_JSON_UTF8 },
-  }).then((response) => {
+  }).then(async (response) => {
     if (response.ok) {
       return response.json();
     }
-    throw new Error('Failed to create service');
+    const body = await response.json().catch(() => ({}));
+    const err = new Error(
+      (body as { error?: string })?.error || 'Failed to create service',
+    );
+    Object.assign(err, body);
+    throw err;
   });
 
 /**
