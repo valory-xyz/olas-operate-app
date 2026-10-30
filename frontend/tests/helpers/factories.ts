@@ -25,7 +25,9 @@ import { Address } from '../../types/Address';
 import {
   ActivityGoal,
   AgentConfig,
+  AgentIssue,
   AgentLiveness,
+  PrestartCheckResult,
   ServiceDeployment,
 } from '../../types/Agent';
 import {
@@ -674,6 +676,22 @@ export const makeInsufficientGasError = (
   chain: MiddlewareChainMap.GNOSIS,
   prefill_amount_wei: '750000000000000000',
   ...overrides,
+});
+
+export const makeAgentIssue = (
+  overrides: Partial<AgentIssue> = {},
+): AgentIssue => ({
+  code: 'polymarket_unreachable',
+  title: "Can't reach Polymarket",
+  description: 'Polystrat cannot connect to Polymarket from this network.',
+  ...overrides,
+});
+
+export const makeFailedPrestartCheck = (
+  issues: AgentIssue[] = [makeAgentIssue()],
+): Extract<PrestartCheckResult, { status: 'failed' }> => ({
+  status: 'failed',
+  issues,
 });
 
 // --- Transaction history factories (VLOP-73) ---

@@ -169,6 +169,7 @@ export const useAutoRunOperations = ({
     onAutoRunInstanceStarted: wrappedOnAutoRunInstanceStarted,
     onAutoRunStartStateChange,
     showNotification,
+    notifySkipOnce,
     recordMetric,
     logMessage,
     logVerbose,

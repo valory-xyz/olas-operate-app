@@ -6,11 +6,13 @@ import { AgentMap } from '../../../../constants/agent';
 import { MiddlewareDeploymentStatusMap } from '../../../../constants/deployment';
 import { AUTO_RUN_START_STATUS } from '../../../../context/AutoRunProvider/constants';
 import { useAutoRunStartOperations } from '../../../../context/AutoRunProvider/hooks/useAutoRunStartOperations';
+import { PrestartCheckFailedError } from '../../../../hooks/useStartService';
 import { ServicesService } from '../../../../service/Services';
 import * as delayModule from '../../../../utils/delay';
 import {
   DEFAULT_SERVICE_CONFIG_ID,
   makeAutoRunAgentMeta,
+  makeFailedPrestartCheck,
 } from '../../../helpers/factories';
 
 jest.mock('../../../../utils/delay', () =>
@@ -46,6 +48,7 @@ const makeHookParams = (
   onAutoRunInstanceStarted: jest.fn(),
   onAutoRunStartStateChange: jest.fn(),
   showNotification: jest.fn(),
+  notifySkipOnce: jest.fn(),
   recordMetric: jest.fn(),
   logMessage: jest.fn(),
   logVerbose: jest.fn(),
@@ -277,6 +280,66 @@ describe('useAutoRunStartOperations', () => {
     });
     expect(startResult?.status).toBe(AUTO_RUN_START_STATUS.INFRA_FAILED);
     expect(mockSleepAwareDelay).toHaveBeenCalled();
+  });
+
+  describe('prestart check', () => {
+    it('skips the agent without retrying when its check fails', async () => {
+      const params = makeHookParams({
+        startService: jest
+          .fn()
+          .mockRejectedValue(
+            new PrestartCheckFailedError(makeFailedPrestartCheck()),
+          ),
+      });
+      const { result } = renderHook(() => useAutoRunStartOperations(params));
+
+      let startResult: { status: string; reason?: string } | undefined;
+      await act(async () => {
+        startResult = await result.current.startAgentWithRetries(
+          DEFAULT_SERVICE_CONFIG_ID,
+        );
+      });
+
+      expect(startResult).toEqual({
+        status: AUTO_RUN_START_STATUS.AGENT_BLOCKED,
+        reason: 'Prestart check failed: polymarket_unreachable',
+      });
+      expect(params.startService).toHaveBeenCalledTimes(1);
+      expect(mockSleepAwareDelay).not.toHaveBeenCalled();
+      expect(params.showNotification).not.toHaveBeenCalled();
+      const issue = makeFailedPrestartCheck().issues[0];
+      expect(params.notifySkipOnce).toHaveBeenCalledWith(
+        DEFAULT_SERVICE_CONFIG_ID,
+        `${issue.title}. ${issue.description}`,
+      );
+      const calls = (params.onAutoRunStartStateChange as jest.Mock).mock.calls;
+      expect(calls[calls.length - 1][0]).toBe(false);
+    });
+
+    it('retries a check that could not complete, like any start error', async () => {
+      const params = makeHookParams({
+        startService: jest
+          .fn()
+          .mockRejectedValue(
+            new PrestartCheckFailedError({ status: 'error', issues: [] }),
+          ),
+      });
+      const { result } = renderHook(() => useAutoRunStartOperations(params));
+
+      let startResult: { status: string; reason?: string } | undefined;
+      await act(async () => {
+        startResult = await result.current.startAgentWithRetries(
+          DEFAULT_SERVICE_CONFIG_ID,
+        );
+      });
+
+      expect(startResult?.status).toBe(AUTO_RUN_START_STATUS.INFRA_FAILED);
+      expect(params.notifySkipOnce).not.toHaveBeenCalled();
+      expect(mockSleepAwareDelay).toHaveBeenCalled();
+      expect(
+        (params.startService as jest.Mock).mock.calls.length,
+      ).toBeGreaterThan(1);
+    });
   });
 
   it('returns INFRA_FAILED with retry interrupted when sleepAwareDelay returns false but still enabled', async () => {

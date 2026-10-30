@@ -1,25 +1,34 @@
+import { QueryClientProvider } from '@tanstack/react-query';
 import { renderHook } from '@testing-library/react';
+import { createElement, PropsWithChildren } from 'react';
 
 import { MechType } from '../../config/mechs';
 import { AgentMap } from '../../constants/agent';
 import { EvmChainIdMap } from '../../constants/chains';
-import { useStartService } from '../../hooks/useStartService';
+import { REACT_QUERY_KEYS } from '../../constants/reactQueryKeys';
+import {
+  PrestartCheckFailedError,
+  useStartService,
+} from '../../hooks/useStartService';
 import { ServicesService } from '../../service/Services';
 import { Service } from '../../types/Service';
 import { updateServiceIfNeeded } from '../../utils/service';
 import {
   DEFAULT_SERVICE_CONFIG_ID,
   DEFAULT_STAKING_PROGRAM_ID,
+  makeFailedPrestartCheck,
   MOCK_SERVICE_CONFIG_ID_2,
   SECOND_STAKING_PROGRAM_ID,
   TRADER_SERVICE_HASH,
   TRADER_SERVICE_NAME,
 } from '../helpers/factories';
+import { createTestQueryClient } from '../helpers/queryClient';
 
 jest.mock('../../service/Services', () => ({
   ServicesService: {
     startService: jest.fn(),
     createService: jest.fn(),
+    getPrestartCheck: jest.fn(),
   },
 }));
 
@@ -63,6 +72,15 @@ jest.mock('../../constants/serviceTemplates', () => {
 
 const mockStartService = ServicesService.startService as jest.Mock;
 const mockCreateService = ServicesService.createService as jest.Mock;
+const mockGetPrestartCheck = ServicesService.getPrestartCheck as jest.Mock;
+
+const PASSED = { status: 'passed', issues: [] };
+
+const renderStartService = (queryClient = createTestQueryClient()) =>
+  renderHook(() => useStartService(), {
+    wrapper: ({ children }: PropsWithChildren) =>
+      createElement(QueryClientProvider, { client: queryClient }, children),
+  });
 
 const mockUpdateServiceIfNeeded = updateServiceIfNeeded as jest.Mock;
 
@@ -88,6 +106,7 @@ describe('useStartService', () => {
       service_config_id: MOCK_SERVICE_CONFIG_ID_2,
     });
     mockUpdateServiceIfNeeded.mockResolvedValue(undefined);
+    mockGetPrestartCheck.mockResolvedValue(PASSED);
   });
 
   it('calls createSafeIfNeeded before anything else', async () => {
@@ -105,7 +124,7 @@ describe('useStartService', () => {
       return Promise.resolve();
     });
 
-    const { result } = renderHook(() => useStartService());
+    const { result } = renderStartService();
     await result.current.startService({
       ...baseInput,
       service: existingService,
@@ -116,7 +135,7 @@ describe('useStartService', () => {
 
   describe('existing service path', () => {
     it('updates and starts the existing service', async () => {
-      const { result } = renderHook(() => useStartService());
+      const { result } = renderStartService();
       const returned = await result.current.startService({
         ...baseInput,
         service: existingService,
@@ -131,7 +150,7 @@ describe('useStartService', () => {
     });
 
     it('does not create a new service when one already exists', async () => {
-      const { result } = renderHook(() => useStartService());
+      const { result } = renderStartService();
       await result.current.startService({
         ...baseInput,
         service: existingService,
@@ -141,9 +160,140 @@ describe('useStartService', () => {
     });
   });
 
+  describe('prestart check', () => {
+    it('runs after the update and before the start', async () => {
+      const callOrder: string[] = [];
+      mockUpdateServiceIfNeeded.mockImplementation(async () => {
+        callOrder.push('updateService');
+      });
+      mockGetPrestartCheck.mockImplementation(async () => {
+        callOrder.push('prestartCheck');
+        return PASSED;
+      });
+      mockStartService.mockImplementation(async () => {
+        callOrder.push('startService');
+      });
+
+      const { result } = renderStartService();
+      await result.current.startService({
+        ...baseInput,
+        service: existingService,
+      });
+
+      expect(callOrder).toEqual([
+        'updateService',
+        'prestartCheck',
+        'startService',
+      ]);
+      expect(mockGetPrestartCheck).toHaveBeenCalledWith(
+        DEFAULT_SERVICE_CONFIG_ID,
+      );
+    });
+
+    it('starts an agent whose release has no prestart check', async () => {
+      mockGetPrestartCheck.mockResolvedValue({
+        status: 'not_supported',
+        issues: [],
+      });
+      const { result } = renderStartService();
+      await result.current.startService({
+        ...baseInput,
+        service: existingService,
+      });
+
+      expect(mockStartService).toHaveBeenCalledWith(DEFAULT_SERVICE_CONFIG_ID);
+    });
+
+    it.each([makeFailedPrestartCheck(), { status: 'error', issues: [] }])(
+      'does not start when the check is $status',
+      async (checkResult) => {
+        mockGetPrestartCheck.mockResolvedValue(checkResult);
+        const { result } = renderStartService();
+        const start = result.current.startService({
+          ...baseInput,
+          service: existingService,
+        });
+
+        await expect(start).rejects.toBeInstanceOf(PrestartCheckFailedError);
+        await expect(start).rejects.toMatchObject({ result: checkResult });
+        expect(mockStartService).not.toHaveBeenCalled();
+      },
+    );
+
+    it('does not start when the check request fails', async () => {
+      mockGetPrestartCheck.mockRejectedValue(new Error('Failed to fetch'));
+      const { result } = renderStartService();
+
+      await expect(
+        result.current.startService({ ...baseInput, service: existingService }),
+      ).rejects.toMatchObject({
+        result: { status: 'error', issues: [], detail: 'Failed to fetch' },
+        message: 'Prestart check error: Failed to fetch',
+      });
+      expect(mockStartService).not.toHaveBeenCalled();
+    });
+
+    it('keeps the last result for the alerts, per service', async () => {
+      const failed = makeFailedPrestartCheck();
+      mockGetPrestartCheck.mockResolvedValue(failed);
+      const queryClient = createTestQueryClient();
+      const { result } = renderStartService(queryClient);
+
+      await expect(
+        result.current.startService({ ...baseInput, service: existingService }),
+      ).rejects.toThrow(PrestartCheckFailedError);
+
+      expect(
+        queryClient.getQueryData(
+          REACT_QUERY_KEYS.PRESTART_CHECK_KEY(DEFAULT_SERVICE_CONFIG_ID),
+        ),
+      ).toEqual(failed);
+    });
+
+    it('checks again on the next start after a blocked one', async () => {
+      mockGetPrestartCheck.mockResolvedValueOnce(makeFailedPrestartCheck());
+      const queryClient = createTestQueryClient();
+      const { result } = renderStartService(queryClient);
+
+      await expect(
+        result.current.startService({ ...baseInput, service: existingService }),
+      ).rejects.toThrow(PrestartCheckFailedError);
+      await result.current.startService({
+        ...baseInput,
+        service: existingService,
+      });
+
+      expect(mockGetPrestartCheck).toHaveBeenCalledTimes(2);
+      expect(mockStartService).toHaveBeenCalledWith(DEFAULT_SERVICE_CONFIG_ID);
+      expect(
+        queryClient.getQueryData(
+          REACT_QUERY_KEYS.PRESTART_CHECK_KEY(DEFAULT_SERVICE_CONFIG_ID),
+        ),
+      ).toEqual(PASSED);
+    });
+
+    it('checks a new service once it is created, before starting it', async () => {
+      mockGetPrestartCheck.mockResolvedValue(makeFailedPrestartCheck());
+      const { result } = renderStartService();
+
+      await expect(
+        result.current.startService({
+          ...baseInput,
+          service: null,
+          createServiceIfMissing: true,
+          stakingProgramId: DEFAULT_STAKING_PROGRAM_ID,
+        }),
+      ).rejects.toThrow(PrestartCheckFailedError);
+      expect(mockGetPrestartCheck).toHaveBeenCalledWith(
+        MOCK_SERVICE_CONFIG_ID_2,
+      );
+      expect(mockStartService).not.toHaveBeenCalled();
+    });
+  });
+
   describe('no service path', () => {
     it('throws when createServiceIfMissing is false', async () => {
-      const { result } = renderHook(() => useStartService());
+      const { result } = renderStartService();
       await expect(
         result.current.startService({
           ...baseInput,
@@ -154,7 +304,7 @@ describe('useStartService', () => {
     });
 
     it('throws when createServiceIfMissing is default (false)', async () => {
-      const { result } = renderHook(() => useStartService());
+      const { result } = renderStartService();
       await expect(
         result.current.startService({
           ...baseInput,
@@ -164,7 +314,7 @@ describe('useStartService', () => {
     });
 
     it('throws when stakingProgramId is not provided', async () => {
-      const { result } = renderHook(() => useStartService());
+      const { result } = renderStartService();
       await expect(
         result.current.startService({
           ...baseInput,
@@ -176,7 +326,7 @@ describe('useStartService', () => {
     });
 
     it('throws when service template is not found for the agent type', async () => {
-      const { result } = renderHook(() => useStartService());
+      const { result } = renderStartService();
       await expect(
         result.current.startService({
           ...baseInput,
@@ -189,7 +339,7 @@ describe('useStartService', () => {
     });
 
     it('throws when staking program is not found', async () => {
-      const { result } = renderHook(() => useStartService());
+      const { result } = renderStartService();
       await expect(
         result.current.startService({
           ...baseInput,
@@ -203,7 +353,7 @@ describe('useStartService', () => {
     });
 
     it('creates service with useMechMarketplace=true for Marketplace mechType', async () => {
-      const { result } = renderHook(() => useStartService());
+      const { result } = renderStartService();
       await result.current.startService({
         ...baseInput,
         service: null,
@@ -217,7 +367,7 @@ describe('useStartService', () => {
     });
 
     it('creates service with useMechMarketplace=false for Agent mechType', async () => {
-      const { result } = renderHook(() => useStartService());
+      const { result } = renderStartService();
       await result.current.startService({
         ...baseInput,
         service: null,
@@ -233,7 +383,7 @@ describe('useStartService', () => {
     it('skips the staking-program lookup for no_staking (useMechMarketplace=false)', async () => {
       // Connect uses `no_staking`, which has no STAKING_PROGRAMS entry — the
       // lookup must be skipped rather than throwing "Staking program not found".
-      const { result } = renderHook(() => useStartService());
+      const { result } = renderStartService();
       const returned = await result.current.startService({
         ...baseInput,
         service: null,
@@ -258,7 +408,7 @@ describe('useStartService', () => {
       const createdService = { service_config_id: MOCK_SERVICE_CONFIG_ID_2 };
       mockCreateService.mockResolvedValue(createdService);
 
-      const { result } = renderHook(() => useStartService());
+      const { result } = renderStartService();
       const returned = await result.current.startService({
         ...baseInput,
         service: null,
@@ -271,7 +421,7 @@ describe('useStartService', () => {
     });
 
     it('passes correct fields to createService', async () => {
-      const { result } = renderHook(() => useStartService());
+      const { result } = renderStartService();
       await result.current.startService({
         ...baseInput,
         service: null,
