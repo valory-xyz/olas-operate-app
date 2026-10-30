@@ -202,7 +202,7 @@ export const DISABLE_RACE_STOP_MAX_CHECKS = 90;
  * Start-attempt outcome labels shared between controller and scanner.
  * Example flow:
  * - "started"       → agent deployed and running
- * - "agent_blocked" → deterministic blocker (low balance, evicted, etc.)
+ * - "agent_blocked" → deterministic blocker (low balance, evicted, failed prestart check, etc.)
  * - "infra_failed"  → transient failure (RPC/network/start timeout)
  * - "aborted"       → auto-run disabled or flow interrupted
  */

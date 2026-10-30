@@ -1,6 +1,7 @@
 import { MutableRefObject, useCallback, useRef } from 'react';
 
 import { AgentType, isRunningDeploymentStatus } from '@/constants';
+import { PrestartCheckFailedError } from '@/hooks/useStartService';
 import { sleepAwareDelay, withTimeout } from '@/utils/delay';
 
 import {
@@ -34,6 +35,7 @@ type UseAutoRunStartOperationsParams = {
   onAutoRunInstanceStarted?: (serviceConfigId: string) => void;
   onAutoRunStartStateChange?: (isStarting: boolean) => void;
   showNotification?: (title: string, body?: string) => void;
+  notifySkipOnce: (serviceConfigId: string, reason?: string) => void;
   recordMetric: (metric: AutoRunHealthMetricNoRotation) => void;
   logMessage: (message: string) => void;
   logVerbose: (message: string) => void;
@@ -49,6 +51,7 @@ export const useAutoRunStartOperations = ({
   onAutoRunInstanceStarted,
   onAutoRunStartStateChange,
   showNotification,
+  notifySkipOnce,
   recordMetric,
   logMessage,
   logVerbose,
@@ -184,6 +187,25 @@ export const useAutoRunStartOperations = ({
               `op=${opId} phase=start_confirm status=timeout attempt=${attempt + 1} service=${meta.serviceConfigId} agent=${meta.agentType}`,
             );
           } catch (error) {
+            if (
+              error instanceof PrestartCheckFailedError &&
+              error.result.status === 'failed'
+            ) {
+              const codes = error.result.issues.map(({ code }) => code);
+              logMessage(
+                `op=${opId} phase=prestart_check status=failed service=${meta.serviceConfigId} agent=${meta.agentType} issues=${codes.join(',')}`,
+              );
+              notifySkipOnce(
+                serviceConfigId,
+                error.result.issues
+                  .map(({ title, description }) => `${title}. ${description}`)
+                  .join(' '),
+              );
+              return {
+                status: AUTO_RUN_START_STATUS.AGENT_BLOCKED,
+                reason: `Prestart check failed: ${codes.join(', ')}`,
+              };
+            }
             lastInfraError = `${error}`;
             recordMetric(AUTO_RUN_HEALTH_METRIC.START_ERRORS);
             logMessage(
@@ -235,6 +257,7 @@ export const useAutoRunStartOperations = ({
       onAutoRunStartStateChange,
       recordMetric,
       showNotification,
+      notifySkipOnce,
     ],
   );
 

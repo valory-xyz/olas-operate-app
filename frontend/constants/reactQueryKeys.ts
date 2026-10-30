@@ -9,6 +9,8 @@ export const REACT_QUERY_KEYS = {
   SERVICES_KEY: ['services'] as const,
   SERVICES_VALIDATION_STATUS_KEY: ['servicesValidationStatus'] as const,
   ALL_SERVICE_DEPLOYMENTS_KEY: ['allServiceDeployments'] as const,
+  PRESTART_CHECK_KEY: (serviceConfigId: string) =>
+    ['prestartCheck', serviceConfigId] as const,
 
   // staking programs
   STAKING_CONTRACT_DETAILS_BY_STAKING_PROGRAM_KEY: (

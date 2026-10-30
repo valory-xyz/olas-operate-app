@@ -222,9 +222,18 @@ Polls `getAllServiceDeployments()` and checks if any service OTHER than `selecte
 
 Only runs the query when `agentConfig.isGeoLocationRestricted === true`. Currently only `Polystrat` has this flag. Calls the Pearl API (`/api/geo/agent-eligibility`), caches for 1 hour, and returns `isAgentGeoRestricted: true` when the eligibility status is not `'allowed'`.
 
+### Agent issues and the prestart check
+
+The geo check above is a policy answer from Pearl's server; it cannot see a network that drops connections to an agent's services. The agent reports that itself, in two places, as `AgentIssue { code, title, description, since? }` that Pearl shows verbatim and never branches on:
+
+- **Before a start** — the result of the prestart check of the last start attempt (`usePrestartCheck`, see `deployability-and-lifecycle.md`). `AgentDisabledAlert` shows a `failed` check's issues, or "Couldn't check the agent" for `error`, while the agent is not running and no new check is in flight.
+- **While running** — `deploymentDetails.healthcheck.agent_health.issues` from the deployment poll. `AgentDisabledAlert` shows them while the service is `DEPLOYED`; an absent key (older agents) means unknown and shows nothing.
+
+Both use `AgentIssuesAlert`, the layout of `AgentGeoBlockedAlert`, and come right after the geo block in the alert precedence.
+
 ### Initial funding flag (useIsInitiallyFunded)
 
-Reads `storeState[selectedAgentType].isInitialFunded[selectedServiceConfigId]`, a per-service record in the store. It is `undefined` while the store loads, before the one-time migration from the legacy per-agent-type boolean, or when no service is selected, and `false` for a service with no entry. Once set via `setIsInitiallyFunded()` (selected instance) or `setInstanceInitiallyFunded(serviceConfigId, agentType)` (any instance; writes the per-id key `<agentType>.isInitialFunded.<serviceConfigId>`), it persists permanently for that service. The flag alone does not mean setup is finished: unless the agent is phased out, geo-blocked or under construction (those alerts take precedence), `AgentDisabledAlert` also shows `UnfinishedSetupAlert` once master wallets have loaded and the home chain has no Pearl Safe. Its "Complete setup" creates the Safe when the Master EOA covers the requirements, and otherwise opens the Fund screen (`useCompleteAgentSetup`).
+Reads `storeState[selectedAgentType].isInitialFunded[selectedServiceConfigId]`, a per-service record in the store. It is `undefined` while the store loads, before the one-time migration from the legacy per-agent-type boolean, or when no service is selected, and `false` for a service with no entry. Once set via `setIsInitiallyFunded()` (selected instance) or `setInstanceInitiallyFunded(serviceConfigId, agentType)` (any instance; writes the per-id key `<agentType>.isInitialFunded.<serviceConfigId>`), it persists permanently for that service. The flag alone does not mean setup is finished: unless the agent is phased out, geo-blocked, reporting agent issues or blocked by its last prestart check, or under construction (those alerts take precedence), `AgentDisabledAlert` also shows `UnfinishedSetupAlert` once master wallets have loaded and the home chain has no Pearl Safe. Its "Complete setup" creates the Safe when the Master EOA covers the requirements, and otherwise opens the Fund screen (`useCompleteAgentSetup`).
 
 ## Failure / guard behavior
 

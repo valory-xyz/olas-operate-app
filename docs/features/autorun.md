@@ -248,9 +248,11 @@ All waits are guarded by `enabledRef.current`, `sleepAwareDelay()`, and hard tim
 | Status | Meaning | Scanner Response |
 |--------|---------|-----------------|
 | `started` | Agent deployed and running | Done |
-| `agent_blocked` | Deterministic blocker (low balance, evicted, etc.) | Skip with notification, advance queue |
+| `agent_blocked` | Deterministic blocker (low balance, evicted, a `failed` prestart check, etc.) | Skip with notification, advance queue |
 | `infra_failed` | Transient failure (RPC/network/timeout) | Mark `hasInfraFailed`, continue scan to try remaining candidates; schedule short rescan if all fail |
 | `aborted` | Auto-run disabled | Stop processing |
+
+A `PrestartCheckFailedError` from `startService` with status `failed` (the agent's checks say it cannot run on this machine) returns `agent_blocked` at once, without retries, like `Region restricted`, and sends the deduplicated skip notification (`notifySkipOnce`) with the agent's issue titles and descriptions. Status `error` (the check could not complete) is an ordinary start error: retried with backoff, then `infra_failed`.
 
 `aborted` is returned only when auto-run is actually disabled (`enabledRef.current` is false). Transient gates that fail while auto-run is still enabled — a balance-wait timeout, an interrupted retry backoff — return `infra_failed`, not `aborted`, so a single stalled agent does not pause the whole rotation.
 
