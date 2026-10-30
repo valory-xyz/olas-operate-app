@@ -33,6 +33,7 @@ export const prestartCheckQuery = (serviceConfigId: ServiceConfigId) => ({
     }
   },
   staleTime: 0,
+  gcTime: Infinity,
 });
 
 export const isPrestartCheckBlocking = (

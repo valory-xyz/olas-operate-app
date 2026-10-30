@@ -124,6 +124,28 @@ describe('usePrestartCheck', () => {
     );
   });
 
+  it('keeps the last result after every reader unmounts', async () => {
+    mockGetPrestartCheck.mockResolvedValue(FAILED);
+    const queryClient = createTestQueryClient();
+    const { unmount } = renderUsePrestartCheck(
+      queryClient,
+      DEFAULT_SERVICE_CONFIG_ID,
+    );
+    await act(async () => {
+      await queryClient.fetchQuery(
+        prestartCheckQuery(DEFAULT_SERVICE_CONFIG_ID),
+      );
+    });
+
+    unmount();
+    await new Promise((r) => setTimeout(r, 10));
+
+    expect(
+      renderUsePrestartCheck(queryClient, DEFAULT_SERVICE_CONFIG_ID).result
+        .current.result,
+    ).toEqual(FAILED);
+  });
+
   it("ignores another service's check", async () => {
     mockGetPrestartCheck.mockResolvedValue(FAILED);
     const queryClient = createTestQueryClient();

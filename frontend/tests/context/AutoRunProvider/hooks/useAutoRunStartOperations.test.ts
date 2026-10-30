@@ -48,6 +48,7 @@ const makeHookParams = (
   onAutoRunInstanceStarted: jest.fn(),
   onAutoRunStartStateChange: jest.fn(),
   showNotification: jest.fn(),
+  notifySkipOnce: jest.fn(),
   recordMetric: jest.fn(),
   logMessage: jest.fn(),
   logVerbose: jest.fn(),
@@ -306,6 +307,11 @@ describe('useAutoRunStartOperations', () => {
       expect(params.startService).toHaveBeenCalledTimes(1);
       expect(mockSleepAwareDelay).not.toHaveBeenCalled();
       expect(params.showNotification).not.toHaveBeenCalled();
+      const issue = makeFailedPrestartCheck().issues[0];
+      expect(params.notifySkipOnce).toHaveBeenCalledWith(
+        DEFAULT_SERVICE_CONFIG_ID,
+        `${issue.title}. ${issue.description}`,
+      );
       const calls = (params.onAutoRunStartStateChange as jest.Mock).mock.calls;
       expect(calls[calls.length - 1][0]).toBe(false);
     });
@@ -328,6 +334,7 @@ describe('useAutoRunStartOperations', () => {
       });
 
       expect(startResult?.status).toBe(AUTO_RUN_START_STATUS.INFRA_FAILED);
+      expect(params.notifySkipOnce).not.toHaveBeenCalled();
       expect(mockSleepAwareDelay).toHaveBeenCalled();
       expect(
         (params.startService as jest.Mock).mock.calls.length,
