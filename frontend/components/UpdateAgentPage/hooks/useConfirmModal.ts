@@ -1,7 +1,9 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { message } from 'antd';
 import { useCallback, useState } from 'react';
 
 import { useService } from '@/hooks/useService';
+import { runPrestartCheck } from '@/hooks/useStartService';
 import { ServicesService } from '@/service/Services';
 
 import { useModal } from './useModal';
@@ -12,6 +14,7 @@ export const useConfirmUpdateModal = ({
   confirmCallback: () => Promise<void>;
 }) => {
   const modal = useModal();
+  const queryClient = useQueryClient();
   const { isServiceRunning, service } = useService();
 
   const [pending, setPending] = useState(false);
@@ -21,12 +24,13 @@ export const useConfirmUpdateModal = ({
       try {
         message.info('Restarting service ...');
         await ServicesService.stopDeployment(service.service_config_id);
+        await runPrestartCheck(queryClient, service.service_config_id);
         await ServicesService.startService(service.service_config_id);
       } catch (e) {
         console.error(e);
       }
     }
-  }, [isServiceRunning, service?.service_config_id]);
+  }, [isServiceRunning, queryClient, service?.service_config_id]);
 
   const confirm = useCallback(async () => {
     setPending(true);

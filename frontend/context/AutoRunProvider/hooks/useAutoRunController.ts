@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { AGENT_CONFIG } from '@/config/agents';
 import { AgentMap, AgentType, EvmChainId } from '@/constants';
 import {
+  useActivityGoal,
   useAgentRunning,
   useEpochWorkStatus,
   useRewardContext,
@@ -22,6 +23,7 @@ import { AgentMeta } from '../types';
 import {
   FetchDeployabilityContext,
   fetchDeployabilityForAgent,
+  getUsableRewardStatus,
   isStakingEpochExpired,
 } from '../utils/autoRunHelpers';
 import { useAutoRunLifecycle } from './useAutoRunLifecycle';
@@ -80,16 +82,44 @@ export const useAutoRunController = ({
   onAutoRunInstanceStarted,
   onAutoRunStartStateChange,
 }: UseAutoRunControllerParams) => {
-  const { stakingRewardsDetails } = useRewardContext();
+  const {
+    stakingRewardsDetails,
+    stakingRewardsDataUpdatedAt,
+    isEpochTargetMet,
+  } = useRewardContext();
   // Staking KPI and activity goal combined, so the selection-driven snapshot
   // agrees with the one `refreshRewardsEligibility` polls.
   const { isDoneForEpoch: isSelectedDoneForEpoch } = useEpochWorkStatus();
-  const isSelectedNoStakingAgent = useMemo(() => {
-    const selectedMeta = configuredAgents.find(
-      (agent) => agent.serviceConfigId === selectedServiceConfigId,
-    );
-    return !!selectedMeta && isNoStakingProgram(selectedMeta.stakingProgramId);
-  }, [configuredAgents, selectedServiceConfigId]);
+  // Read with the snapshot it is stored in; shares the Overview's query.
+  const {
+    activityGoal: selectedActivityGoal,
+    dataUpdatedAt: selectedActivityGoalReadAt,
+  } = useActivityGoal(selectedServiceConfigId);
+  const selectedRewardReadAt = isEpochTargetMet
+    ? Math.min(
+        stakingRewardsDataUpdatedAt ?? 0,
+        selectedActivityGoalReadAt ?? 0,
+      )
+    : (stakingRewardsDataUpdatedAt ?? 0);
+  const selectedMeta = useMemo(
+    () =>
+      configuredAgents.find(
+        (agent) => agent.serviceConfigId === selectedServiceConfigId,
+      ),
+    [configuredAgents, selectedServiceConfigId],
+  );
+  const isSelectedNoStakingAgent =
+    !!selectedMeta && isNoStakingProgram(selectedMeta.stakingProgramId);
+  const selectedRewardsEpoch = useMemo(
+    () =>
+      stakingRewardsDetails
+        ? {
+            tsCheckpoint: stakingRewardsDetails.tsCheckpoint,
+            livenessPeriod: stakingRewardsDetails.livenessPeriod,
+          }
+        : undefined,
+    [stakingRewardsDetails],
+  );
 
   // Tracks whether the staking epoch has expired without a checkpoint
   // being called on-chain yet
@@ -173,17 +203,22 @@ export const useAutoRunController = ({
     runningAgentTypeRef,
     runningServiceConfigIdRef,
     lastRewardsEligibilityRef,
+    stallClockRef,
     scanTick,
     rewardsTick,
     scheduleNextScan,
     hasScheduledScan,
     waitForInstanceSelection,
     waitForBalancesReady,
-    waitForRewardsEligibility,
     waitForRunningInstance,
-    markRewardSnapshotPending,
     getRewardSnapshot,
     setRewardSnapshot,
+    getObservedGoal,
+    isStalled,
+    restartStallClock,
+    deferStalled,
+    clearStallDeferral,
+    isStallDeferred,
     getBalancesStatus,
   } = useAutoRunSignals({
     enabled,
@@ -193,6 +228,11 @@ export const useAutoRunController = ({
     isSelectedDoneForEpoch,
     isSelectedNoStakingAgent,
     isEpochExpired,
+    selectedStakingProgramId: selectedMeta?.stakingProgramId,
+    selectedRewardsEpoch,
+    selectedActivityGoal,
+    selectedRewardReadAt,
+    selectedActivityGoalReadAt: selectedActivityGoalReadAt ?? 0,
     selectedAgentType,
     selectedServiceConfigId,
     logMessage,
@@ -204,21 +244,30 @@ export const useAutoRunController = ({
   // Build the deployability callback that scanAndStartNext uses instead of
   // switching UI selection. Captures stable refs/callbacks so it doesn't
   // change on every render.
+  //
+  // `stoppedId` is an instance whose stop the scan saw confirmed: it is not
+  // running, whatever the deployment poll still reports.
   const getDeployabilityForAgent = useCallback(
     (
       agentMeta: AgentMeta,
-      options?: Pick<FetchDeployabilityContext, 'ignoreRunningAgent'>,
-    ) =>
-      fetchDeployabilityForAgent(agentMeta, {
-        runningServiceConfigId: runningServiceConfigIdRef.current,
+      options?: Pick<FetchDeployabilityContext, 'ignoreRunningAgent'> & {
+        stoppedId?: string;
+      },
+    ) => {
+      const { stoppedId, ...contextOptions } = options ?? {};
+      const runningId = runningServiceConfigIdRef.current;
+      return fetchDeployabilityForAgent(agentMeta, {
+        runningServiceConfigId:
+          stoppedId && runningId === stoppedId ? null : runningId,
         canCreateSafeForChain,
         allowStartAgentByServiceConfigId,
         hasBalancesForServiceConfigId,
         isInstanceInitiallyFunded,
         isGeoRestrictedForAgent,
         logMessage,
-        ...options,
-      }),
+        ...contextOptions,
+      });
+    },
     [
       runningServiceConfigIdRef,
       canCreateSafeForChain,
@@ -227,6 +276,31 @@ export const useAutoRunController = ({
       isInstanceInitiallyFunded,
       isGeoRestrictedForAgent,
       logMessage,
+    ],
+  );
+
+  // The stored rewards status, `undefined` when it cannot decide without a read.
+  const getRewardStatus = useCallback(
+    (serviceConfigId: string) => {
+      const agentMeta = configuredAgents.find(
+        (agent) => agent.serviceConfigId === serviceConfigId,
+      );
+      if (!agentMeta) return undefined;
+      return getUsableRewardStatus(getRewardSnapshot(serviceConfigId), {
+        stakingProgramId: agentMeta.stakingProgramId,
+        nowMs: Date.now(),
+        observedGoal: getObservedGoal(serviceConfigId),
+        isStalled:
+          runningServiceConfigIdRef.current === serviceConfigId &&
+          isStalled(serviceConfigId),
+      });
+    },
+    [
+      configuredAgents,
+      getObservedGoal,
+      getRewardSnapshot,
+      isStalled,
+      runningServiceConfigIdRef,
     ],
   );
 
@@ -240,6 +314,7 @@ export const useAutoRunController = ({
     enabled,
     enabledRef,
     runningServiceConfigIdRef,
+    stallClockRef,
     configuredAgents,
     createSafeIfNeeded,
     showNotification,
@@ -250,6 +325,7 @@ export const useAutoRunController = ({
     waitForRunningInstance,
     getRewardSnapshot,
     setRewardSnapshot,
+    getObservedGoal,
     recordMetric,
     logMessage,
   });
@@ -266,10 +342,10 @@ export const useAutoRunController = ({
     getSelectedEligibility,
     waitForInstanceSelection,
     waitForBalancesReady,
-    waitForRewardsEligibility,
     refreshRewardsEligibility,
-    markRewardSnapshotPending,
-    getRewardSnapshot,
+    getRewardStatus,
+    isStallDeferred,
+    clearStallDeferral,
     getBalancesStatus,
     notifySkipOnce,
     getDeployabilityForAgent,
@@ -293,9 +369,9 @@ export const useAutoRunController = ({
     return getDeployabilityForAgent(agentMeta);
   }, [configuredAgents, getDeployabilityForAgent, runningServiceConfigIdRef]);
 
-  // Deployability of a possible successor while a no-staking agent (Connect)
-  // still runs. The running gate is ignored: the question is whether this
-  // instance could start once the current one is stopped.
+  // Deployability of a possible successor while the current instance still
+  // runs. The running gate is ignored: the question is whether this instance
+  // could start once the current one is stopped.
   const getHandOverDeployability = useCallback(
     async (serviceConfigId: string) => {
       const agentMeta = configuredAgents.find(
@@ -322,7 +398,10 @@ export const useAutoRunController = ({
     scheduleNextScan,
     hasScheduledScan,
     refreshRewardsEligibility,
-    getRewardSnapshot,
+    isStalled,
+    restartStallClock,
+    deferStalled,
+    isStallDeferred,
     getPreferredStartFrom,
     scanAndStartNext,
     startSelectedAgentIfEligible,

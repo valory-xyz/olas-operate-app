@@ -3,8 +3,15 @@ import { act } from 'react';
 
 import { useConfirmUpdateModal } from '../../../../components/UpdateAgentPage/hooks/useConfirmModal';
 import { useService } from '../../../../hooks/useService';
+import {
+  PrestartCheckFailedError,
+  runPrestartCheck,
+} from '../../../../hooks/useStartService';
 import { ServicesService } from '../../../../service/Services';
-import { DEFAULT_SERVICE_CONFIG_ID } from '../../../helpers/factories';
+import {
+  DEFAULT_SERVICE_CONFIG_ID,
+  makeFailedPrestartCheck,
+} from '../../../helpers/factories';
 
 jest.mock('antd', () => ({
   message: {
@@ -17,6 +24,13 @@ jest.mock('antd', () => ({
 }));
 jest.mock('../../../../hooks/useService', () => ({
   useService: jest.fn(),
+}));
+jest.mock('@tanstack/react-query', () => ({
+  useQueryClient: jest.fn(() => ({})),
+}));
+jest.mock('../../../../hooks/useStartService', () => ({
+  ...jest.requireActual('../../../../hooks/useStartService'),
+  runPrestartCheck: jest.fn(),
 }));
 jest.mock('../../../../service/Services', () => ({
   ServicesService: {
@@ -39,6 +53,7 @@ const { message } = require('antd') as {
 const mockUseService = useService as jest.MockedFunction<typeof useService>;
 const mockStopDeployment = ServicesService.stopDeployment as jest.Mock;
 const mockStartService = ServicesService.startService as jest.Mock;
+const mockRunPrestartCheck = runPrestartCheck as jest.Mock;
 
 describe('useConfirmUpdateModal', () => {
   beforeEach(() => {
@@ -49,6 +64,7 @@ describe('useConfirmUpdateModal', () => {
     } as ReturnType<typeof useService>);
     mockStopDeployment.mockResolvedValue(undefined);
     mockStartService.mockResolvedValue(undefined);
+    mockRunPrestartCheck.mockResolvedValue(undefined);
   });
 
   it('starts with open=false and pending=false', () => {
@@ -142,7 +158,40 @@ describe('useConfirmUpdateModal', () => {
       expect(mockStopDeployment).toHaveBeenCalledWith(
         DEFAULT_SERVICE_CONFIG_ID,
       );
+      expect(mockRunPrestartCheck).toHaveBeenCalledWith(
+        {},
+        DEFAULT_SERVICE_CONFIG_ID,
+      );
       expect(mockStartService).toHaveBeenCalledWith(DEFAULT_SERVICE_CONFIG_ID);
+    });
+
+    it('leaves the agent stopped when its prestart check blocks the restart', async () => {
+      const consoleSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
+      mockUseService.mockReturnValue({
+        isServiceRunning: true,
+        service: { service_config_id: DEFAULT_SERVICE_CONFIG_ID },
+      } as ReturnType<typeof useService>);
+      mockRunPrestartCheck.mockRejectedValue(
+        new PrestartCheckFailedError(makeFailedPrestartCheck()),
+      );
+
+      const { result } = renderHook(() =>
+        useConfirmUpdateModal({
+          confirmCallback: jest.fn().mockResolvedValue(undefined),
+        }),
+      );
+      await act(async () => {
+        await result.current.confirm();
+      });
+      await new Promise((r) => setTimeout(r, 0));
+
+      expect(mockStopDeployment).toHaveBeenCalledWith(
+        DEFAULT_SERVICE_CONFIG_ID,
+      );
+      expect(mockStartService).not.toHaveBeenCalled();
+      consoleSpy.mockRestore();
     });
 
     it('does not restart when service is not running', async () => {

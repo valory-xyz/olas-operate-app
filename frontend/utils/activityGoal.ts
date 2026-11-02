@@ -61,7 +61,8 @@ export const deriveIsActivityGoalMet = (
 /**
  * "Done for the epoch" for a staking agent: both the staking KPI and the
  * activity goal are met. Without a block it falls back to the staking KPI
- * alone, so older agent builds behave as before.
+ * alone, so older agent builds behave as before. An agent stalled on its goal
+ * reads as done, so Auto-run's usual rotation trigger moves on from it.
  *
  * @example
  * deriveIsDoneForEpoch(true, null, 1000) // => true (fallback)
@@ -71,5 +72,7 @@ export const deriveIsDoneForEpoch = (
   epochTargetMet: boolean,
   goal: ActivityGoal | null,
   tsCheckpoint: number,
+  isStalled = false,
 ): boolean =>
-  epochTargetMet && (deriveIsActivityGoalMet(goal, tsCheckpoint) ?? true);
+  epochTargetMet &&
+  (isStalled || (deriveIsActivityGoalMet(goal, tsCheckpoint) ?? true));

@@ -9,6 +9,8 @@ export const REACT_QUERY_KEYS = {
   SERVICES_KEY: ['services'] as const,
   SERVICES_VALIDATION_STATUS_KEY: ['servicesValidationStatus'] as const,
   ALL_SERVICE_DEPLOYMENTS_KEY: ['allServiceDeployments'] as const,
+  PRESTART_CHECK_KEY: (serviceConfigId: string) =>
+    ['prestartCheck', serviceConfigId] as const,
 
   // staking programs
   STAKING_CONTRACT_DETAILS_BY_STAKING_PROGRAM_KEY: (
@@ -150,6 +152,8 @@ export const REACT_QUERY_KEYS = {
   FUNDING_RUN_ACTIVE_KEY: ['fundingRunActive'] as const,
   FUNDING_RUN_SOURCES_KEY: ['fundingRunSources'] as const,
   FUNDING_RUN_CREATE_KEY: ['fundingRunCreate'] as const,
+  FUNDING_RUN_COMPLETED_ONBOARD_KEY: (serviceConfigIds: string[]) =>
+    ['fundingRunCompletedOnboard', serviceConfigIds] as const,
 
   // agent wallet partial withdrawal
   SAFE_WITHDRAWABLE_BALANCE_KEY: (serviceConfigId: string) =>

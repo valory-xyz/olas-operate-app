@@ -112,4 +112,25 @@ describe('deriveIsDoneForEpoch', () => {
       deriveIsDoneForEpoch(epochTargetMet, goal, DEFAULT_TS_CHECKPOINT),
     ).toBe(expected);
   });
+  it('reads a stalled, unmet goal as done once the staking KPI is met', () => {
+    expect(
+      deriveIsDoneForEpoch(
+        true,
+        makeActivityGoal({ is_met: false }),
+        DEFAULT_TS_CHECKPOINT,
+        true,
+      ),
+    ).toBe(true);
+  });
+
+  it('never reads a stalled goal as done while the staking KPI is unmet', () => {
+    expect(
+      deriveIsDoneForEpoch(
+        false,
+        makeActivityGoal({ is_met: false }),
+        DEFAULT_TS_CHECKPOINT,
+        true,
+      ),
+    ).toBe(false);
+  });
 });

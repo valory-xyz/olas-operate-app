@@ -177,12 +177,14 @@ Shared by both manual start (`useServiceDeployment`) and auto-run:
 
 2. If service exists:
    ├── updateServiceIfNeeded(service, agentType)
+   ├── runPrestartCheck(service.service_config_id)
    └── ServicesService.startService(service.service_config_id)
 
 3. If no service and createServiceIfMissing:
    ├── Find SERVICE_TEMPLATE for agentType (throw if missing)
    ├── Find STAKING_PROGRAM for chain + programId (throw if missing)
    ├── ServicesService.createService({ stakingProgramId, serviceTemplate, useMechMarketplace })
+   ├── runPrestartCheck(newService.service_config_id)
    └── ServicesService.startService(newService.service_config_id)
 
 4. If no service and !createServiceIfMissing:
@@ -190,6 +192,8 @@ Shared by both manual start (`useServiceDeployment`) and auto-run:
 ```
 
 `useStartService` always creates the safe first (step 1) before any service operations.
+
+**Prestart check.** Before every start, `runPrestartCheck` runs the agent's own checks (`GET /api/v2/service/{id}/prestart_check`) via `queryClient.fetchQuery(prestartCheckQuery(id))`. `failed` and `error` throw `PrestartCheckFailedError` before the on-chain start; `passed` and `not_supported` go on. A failed request counts as `error`, with its cause in `detail` and the error message. The cached result (`gcTime: Infinity`, so it lasts until the next start replaces it) drives the run button's "Checking" state and the alerts (see `services.md`). The contract switch (`ConfirmSwitchButton`) and the settings restart (`useConfirmModal`) start the service directly, so they call the exported `runPrestartCheck` themselves.
 
 ### Manual deployment workflow (`useServiceDeployment`)
 
@@ -210,7 +214,7 @@ handleStart()
   │
   ├── startService({ ... createServiceIfMissing: true })
   │     ├── On error:
-  │     │     ├── showNotification('An error occurred...')
+  │     │     ├── showNotification('An error occurred...') — not for gas errors (modal) or PrestartCheckFailedError (agent alert)
   │     │     ├── overrideSelectedServiceStatus(null)
   │     │     ├── resumeAllPolling()
   │     │     └── re-throw

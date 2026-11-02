@@ -1,6 +1,12 @@
 import { AGENT_CONFIG } from '@/config/agents';
 import { AgentType, EvmChainId, StakingProgramId } from '@/constants';
-import { Address, Service, ServiceConfigId } from '@/types';
+import {
+  ActivityGoal,
+  Address,
+  Service,
+  ServiceConfigId,
+  StakingRewardsInfo,
+} from '@/types';
 
 /**
  * Legacy auto-run inclusion entry, keyed by AgentType.
@@ -73,4 +79,46 @@ export type AgentMeta = {
   stakingProgramId: StakingProgramId;
   multisig?: Address;
   serviceNftTokenId?: number;
+};
+
+/**
+ * The last rewards read of an instance. Kept, never wiped: whether it can
+ * still decide a start is checked when it is used (`getUsableRewardStatus`).
+ */
+export type RewardSnapshot = {
+  /** Done for the epoch/run, or a stalled turn when `stalled` is true. */
+  done: boolean;
+  /** This turn ended for lack of progress, rather than completed epoch work. */
+  stalled?: boolean;
+  /** When the read completed, in ms. */
+  readAt: number;
+  stakingProgramId: StakingProgramId;
+  /** Epoch start of the read, in seconds. */
+  tsCheckpoint: number;
+  livenessPeriod: StakingRewardsInfo['livenessPeriod'];
+  /** `activity_goal` read with it, `null` when none was read. */
+  goalUnit: ActivityGoal['unit'] | null;
+  goalTarget: number | null;
+  goalPeriodStart: number | null;
+};
+
+/** An instance's activity goal as last seen outside a rewards read. */
+export type ObservedGoal = {
+  goal: ActivityGoal | null;
+  /** ms */
+  observedAt: number;
+};
+
+/**
+ * When the running instance's activity goal last moved: started once its
+ * staking KPI is met, restarted on any change of the values below.
+ */
+export type StallClock = {
+  /** ms */
+  since: number;
+  /** Last goal read, in ms. */
+  readAt: number;
+  progress: number;
+  target: number;
+  periodStart: number;
 };
