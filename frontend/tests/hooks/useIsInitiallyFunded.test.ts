@@ -267,4 +267,65 @@ describe('useIsInitiallyFunded', () => {
       }).not.toThrow();
     });
   });
+
+  describe('writing (setInstanceInitiallyFunded)', () => {
+    it('writes a per-id key for any instance, not just the selected one', () => {
+      mockUseStore.mockReturnValue({
+        storeState: {
+          [AgentMap.AgentsFun]: {
+            isInitialFunded: { [MOCK_SERVICE_CONFIG_ID_2]: true },
+          },
+        },
+      });
+
+      const { result } = renderHook(() => useIsInitiallyFunded());
+      act(() => {
+        result.current.setInstanceInitiallyFunded(
+          MOCK_SERVICE_CONFIG_ID_3,
+          AgentMap.AgentsFun,
+        );
+      });
+
+      expect(mockSetStore).toHaveBeenCalledWith(
+        `${AgentMap.AgentsFun}.isInitialFunded.${MOCK_SERVICE_CONFIG_ID_3}`,
+        true,
+      );
+    });
+
+    it('skips an instance already marked complete', () => {
+      mockUseStore.mockReturnValue({
+        storeState: {
+          [AgentMap.AgentsFun]: {
+            isInitialFunded: { [MOCK_SERVICE_CONFIG_ID_3]: true },
+          },
+        },
+      });
+
+      const { result } = renderHook(() => useIsInitiallyFunded());
+      act(() => {
+        result.current.setInstanceInitiallyFunded(
+          MOCK_SERVICE_CONFIG_ID_3,
+          AgentMap.AgentsFun,
+        );
+      });
+
+      expect(mockSetStore).not.toHaveBeenCalled();
+    });
+
+    it('leaves a legacy boolean alone', () => {
+      mockUseStore.mockReturnValue({
+        storeState: { [AgentMap.AgentsFun]: { isInitialFunded: false } },
+      });
+
+      const { result } = renderHook(() => useIsInitiallyFunded());
+      act(() => {
+        result.current.setInstanceInitiallyFunded(
+          MOCK_SERVICE_CONFIG_ID_3,
+          AgentMap.AgentsFun,
+        );
+      });
+
+      expect(mockSetStore).not.toHaveBeenCalled();
+    });
+  });
 });

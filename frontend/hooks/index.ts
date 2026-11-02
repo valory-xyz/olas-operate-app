@@ -51,6 +51,7 @@ export * from './useOnlineStatus';
 export * from './useOnRampContext';
 export * from './usePageState';
 export * from './usePause';
+export * from './usePrestartCheck';
 export * from './useRecoveryPhraseBackup';
 export * from './useRewardContext';
 export * from './useRewardsHistory';

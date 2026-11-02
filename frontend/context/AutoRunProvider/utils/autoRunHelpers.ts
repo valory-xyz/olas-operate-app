@@ -2,7 +2,7 @@ import { BigNumber } from 'ethers';
 import { isNil } from 'lodash';
 import { MutableRefObject } from 'react';
 
-import { AgentType, EvmChainId } from '@/constants';
+import { AgentType, EvmChainId, StakingProgramId } from '@/constants';
 import { ServicesService } from '@/service/Services';
 import { ActivityGoal, StakingRewardsInfo, StakingState } from '@/types';
 import {
@@ -21,6 +21,7 @@ import {
 } from '@/utils/stakingRewards';
 
 import {
+  ACTIVITY_GOAL_STALL_SECONDS,
   AGENT_SELECTION_WAIT_TIMEOUT_SECONDS,
   AUTO_RUN_HEALTH_METRIC,
   AutoRunScannerMetric,
@@ -29,8 +30,9 @@ import {
   EMPTY_REWARD_POOL_REASON,
   REWARDS_POLL_SECONDS,
   REWARDS_RETRY_DELAY_SECONDS,
+  STALL_CLOCK_MAX_READ_GAP_SECONDS,
 } from '../constants';
-import { AgentMeta } from '../types';
+import { AgentMeta, ObservedGoal, RewardSnapshot, StallClock } from '../types';
 
 /**
  * Returns true when the staking epoch has expired but no on-chain checkpoint
@@ -54,6 +56,42 @@ export const isStakingEpochExpired = ({
     // Malformed livenessPeriod: fail closed (treat as not expired).
     return false;
   }
+};
+
+const isSnapshotGoal = (snapshot: RewardSnapshot, goal: ActivityGoal | null) =>
+  snapshot.goalUnit === (goal?.unit ?? null) &&
+  snapshot.goalTarget === (goal?.target ?? null) &&
+  snapshot.goalPeriodStart === (goal?.period_start ?? null);
+
+/**
+ * A working agent may finish at any time, so a stored `false` goes stale far
+ * sooner than a `true`.
+ */
+export const getUsableRewardStatus = (
+  snapshot: RewardSnapshot | undefined,
+  current: {
+    stakingProgramId: StakingProgramId;
+    nowMs: number;
+    observedGoal?: ObservedGoal;
+    isStalled?: boolean;
+  },
+): boolean | undefined => {
+  if (!snapshot) return undefined;
+  if (snapshot.stakingProgramId !== current.stakingProgramId) return undefined;
+  if (snapshot.stalled && !current.isStalled) return undefined;
+  if (!snapshot.done) {
+    const ageMs = current.nowMs - snapshot.readAt;
+    return ageMs <= REWARDS_POLL_SECONDS * 1000 ? false : undefined;
+  }
+  const { observedGoal } = current;
+  if (
+    observedGoal &&
+    observedGoal.observedAt > snapshot.readAt &&
+    !isSnapshotGoal(snapshot, observedGoal.goal)
+  ) {
+    return undefined;
+  }
+  return isStakingEpochExpired(snapshot) ? undefined : true;
 };
 
 type ActivityGoalRead = { ok: true; goal: ActivityGoal | null } | { ok: false };
@@ -92,6 +130,66 @@ const formatGoalForLog = (
   );
 };
 
+/** Only time the agent could have progressed counts toward a stall. */
+export const updateStallClock = (
+  clocks: Partial<Record<string, StallClock>>,
+  serviceConfigId: string,
+  {
+    isRunning,
+    epochTargetMet,
+    goal,
+    tsCheckpoint,
+    nowMs,
+  }: {
+    isRunning: boolean;
+    epochTargetMet: boolean;
+    goal: ActivityGoal | null;
+    tsCheckpoint: number;
+    nowMs: number;
+  },
+): boolean => {
+  if (
+    !isRunning ||
+    !epochTargetMet ||
+    !goal ||
+    goal.is_met ||
+    !isActivityGoalCurrent(goal, tsCheckpoint)
+  ) {
+    delete clocks[serviceConfigId];
+    return false;
+  }
+  const clock = clocks[serviceConfigId];
+  if (
+    !clock ||
+    !isStallClockRead(clock, nowMs) ||
+    clock.progress !== goal.progress ||
+    clock.target !== goal.target ||
+    clock.periodStart !== goal.period_start
+  ) {
+    clocks[serviceConfigId] = {
+      since: nowMs,
+      readAt: nowMs,
+      progress: goal.progress,
+      target: goal.target,
+      periodStart: goal.period_start,
+    };
+    return false;
+  }
+  clock.readAt = nowMs;
+  return isStallClockExpired(clock, nowMs);
+};
+
+const isStallClockRead = (clock: StallClock, nowMs: number) =>
+  nowMs - clock.readAt <= STALL_CLOCK_MAX_READ_GAP_SECONDS * 1000;
+
+export const isStallClockExpired = (
+  clock: StallClock | undefined,
+  nowMs: number,
+) =>
+  !!clock &&
+  isStallClockRead(clock, nowMs) &&
+  nowMs - clock.since >= ACTIVITY_GOAL_STALL_SECONDS * 1000;
+
 /**
  * Format eligibility into a human-readable reason for logs/UI.
  *  * @example
@@ -112,6 +210,12 @@ export const formatEligibilityReason = (eligibility: {
   return eligibility.reason ?? 'unknown';
 };
 
+/** Epoch fields for an agent without staking: an epoch that never expires. */
+const NO_EPOCH: Pick<RewardSnapshot, 'tsCheckpoint' | 'livenessPeriod'> = {
+  tsCheckpoint: 0,
+  livenessPeriod: BigNumber.from(0),
+};
+
 /**
  * Fetch whether an instance is done for the epoch, throttled per serviceConfigId.
  *
@@ -124,8 +228,8 @@ export const formatEligibilityReason = (eligibility: {
  * instance that is not running is never done, since its next process opens a
  * fresh window.
  *
- * Retries once on transient RPC failure (null response) before marking the
- * snapshot as unknown. `onRewardsFetchError` fires only on the final failure
+ * Retries once on transient RPC failure (null response) before reporting
+ * unknown. `onRewardsFetchError` fires only on the final failure
  * so the health-summary metric doesn't double-count a single transient blip.
  *
  * When `lastStartedAtRef` and `runningServiceConfigIdRef` are provided and the
@@ -147,11 +251,12 @@ export const formatEligibilityReason = (eligibility: {
  * @returns
  * - true      – agent is done for the current epoch (or Connect met its goal)
  * - false     – agent still has work to do
- * - undefined  – instance not found in configuredAgents, missing required staking
- *               data (multisig / serviceNftTokenId / stakingProgramId), the API
- *               call failed on both attempts, a sleep/wake event was detected
- *               between retries, or the staking KPI is met but the activity
- *               goal could not be read
+ * - undefined  – unknown: instance not found in configuredAgents, missing
+ *               required staking data (multisig / serviceNftTokenId /
+ *               stakingProgramId), the read failed on both attempts, a
+ *               sleep/wake event was detected between retries, the staking KPI
+ *               is met but the activity goal could not be read, or a throttled
+ *               call found no usable snapshot
  */
 export const refreshRewardsEligibility = async ({
   serviceConfigId,
@@ -159,8 +264,10 @@ export const refreshRewardsEligibility = async ({
   lastRewardsFetchRef,
   lastStartedAtRef,
   runningServiceConfigIdRef,
+  stallClockRef,
   getRewardSnapshot,
   setRewardSnapshot,
+  getObservedGoal,
   logMessage,
   onRewardsFetchError,
 }: {
@@ -169,30 +276,65 @@ export const refreshRewardsEligibility = async ({
   lastRewardsFetchRef: MutableRefObject<Partial<Record<string, number>>>;
   lastStartedAtRef?: MutableRefObject<Partial<Record<string, number>>>;
   runningServiceConfigIdRef?: MutableRefObject<string | null>;
-  getRewardSnapshot: (serviceConfigId: string) => boolean | undefined;
+  stallClockRef: MutableRefObject<Partial<Record<string, StallClock>>>;
+  getRewardSnapshot: (serviceConfigId: string) => RewardSnapshot | undefined;
   setRewardSnapshot: (
     serviceConfigId: string,
-    value: boolean | undefined,
+    snapshot: RewardSnapshot,
   ) => void;
+  getObservedGoal: (serviceConfigId: string) => ObservedGoal | undefined;
   logMessage: (message: string) => void;
   onRewardsFetchError?: () => void;
-}) => {
+}): Promise<boolean | undefined> => {
   const meta = configuredAgents.find(
     (agent) => agent.serviceConfigId === serviceConfigId,
   );
   const isRunning = runningServiceConfigIdRef?.current === serviceConfigId;
+  const store = (
+    stakingProgramId: StakingProgramId,
+    done: boolean,
+    epoch: Pick<RewardSnapshot, 'tsCheckpoint' | 'livenessPeriod'>,
+    goal: ActivityGoal | null = null,
+    stalled = false,
+  ) => {
+    setRewardSnapshot(serviceConfigId, {
+      done,
+      readAt: Date.now(),
+      stakingProgramId,
+      ...epoch,
+      goalUnit: goal?.unit ?? null,
+      goalTarget: goal?.target ?? null,
+      goalPeriodStart: goal?.period_start ?? null,
+      ...(stalled ? { stalled: true } : {}),
+    });
+    return done;
+  };
 
   // A no-staking agent that is not running is never done: no fetch needed,
   // so it bypasses the throttle and the scanner never waits on its snapshot.
   if (meta && isNoStakingProgram(meta.stakingProgramId) && !isRunning) {
-    setRewardSnapshot(serviceConfigId, false);
-    return false;
+    return store(meta.stakingProgramId, false, NO_EPOCH);
   }
 
   const now = Date.now();
   const lastFetch = lastRewardsFetchRef.current[serviceConfigId] ?? 0;
-  if (now - lastFetch < REWARDS_POLL_SECONDS * 1000) {
-    return getRewardSnapshot(serviceConfigId);
+  const snapshot = getRewardSnapshot(serviceConfigId);
+  const stillStalled =
+    isRunning &&
+    isStallClockExpired(stallClockRef.current[serviceConfigId], now);
+  // A stall ends a turn, not the epoch's work. Once stopped (or the clock
+  // reset), re-read even inside the throttle so the fallback can restart it.
+  if (
+    now - lastFetch < REWARDS_POLL_SECONDS * 1000 &&
+    !(snapshot?.stalled && !stillStalled)
+  ) {
+    if (!meta) return;
+    return getUsableRewardStatus(snapshot, {
+      stakingProgramId: meta.stakingProgramId,
+      nowMs: now,
+      observedGoal: getObservedGoal(serviceConfigId),
+      isStalled: stillStalled,
+    });
   }
 
   lastRewardsFetchRef.current[serviceConfigId] = now;
@@ -205,8 +347,7 @@ export const refreshRewardsEligibility = async ({
       onRewardsFetchError,
     );
     if (!read.ok) {
-      setRewardSnapshot(serviceConfigId, false);
-      return false;
+      return store(meta.stakingProgramId, false, NO_EPOCH);
     }
     // The previous process's block, which may still say `is_met`, stays on
     // disk until the new process rewrites it at boot. The new process starts
@@ -220,8 +361,7 @@ export const refreshRewardsEligibility = async ({
       `${serviceConfigId}: no staking, ` +
         `${formatGoalForLog(read, periodStartFloor)} → done=${doneForRun}`,
     );
-    setRewardSnapshot(serviceConfigId, doneForRun);
-    return doneForRun;
+    return store(meta.stakingProgramId, doneForRun, NO_EPOCH, read.goal);
   }
 
   if (
@@ -291,23 +431,37 @@ export const refreshRewardsEligibility = async ({
 
   // The agent's own activity goal is the second half of "done", so it is only
   // read once the staking KPI is met. An unreadable report leaves "done"
-  // unknown so callers keep the previous snapshot: a failure must neither
-  // override a met goal nor fake a false → true rotation.
+  // unknown: a failure must neither override a met goal nor fake a
+  // false → true rotation.
   let goalRead: ActivityGoalRead | undefined;
   let doneForEpoch: boolean | undefined = false;
+  let isStalled = false;
   if (epochTargetMet) {
     goalRead = await readActivityGoal(
       serviceConfigId,
       logMessage,
       onRewardsFetchError,
     );
+    if (goalRead.ok) {
+      isStalled = updateStallClock(stallClockRef.current, serviceConfigId, {
+        isRunning,
+        epochTargetMet,
+        goal: goalRead.goal,
+        tsCheckpoint: response.tsCheckpoint,
+        nowMs: Date.now(),
+      });
+    }
     doneForEpoch = goalRead.ok
       ? deriveIsDoneForEpoch(
           epochTargetMet,
           goalRead.goal,
           response.tsCheckpoint,
+          isStalled,
         )
       : undefined;
+  } else {
+    // Time before the staking KPI is met never counts toward a stall.
+    delete stallClockRef.current[serviceConfigId];
   }
 
   // Decision inputs — one line per evaluation (throttled to REWARDS_POLL_SECONDS),
@@ -318,7 +472,8 @@ export const refreshRewardsEligibility = async ({
       `target=${activityTarget ?? 'on-chain-KPI'} ` +
       `stakingKpi=${response.isEligibleForRewards} ` +
       `epochExpired=${epochExpired} epochTargetMet=${epochTargetMet} ` +
-      `${formatGoalForLog(goalRead, response.tsCheckpoint)} → done=${doneForEpoch}`,
+      `${formatGoalForLog(goalRead, response.tsCheckpoint)} → done=${doneForEpoch}` +
+      (isStalled ? ' stalled=true' : ''),
   );
 
   if (epochExpired && doneForEpoch) {
@@ -353,10 +508,17 @@ export const refreshRewardsEligibility = async ({
     }
   }
 
-  if (typeof eligible === 'boolean') {
-    setRewardSnapshot(serviceConfigId, eligible);
-    return eligible;
-  }
+  if (eligible === undefined) return;
+  return store(
+    meta.stakingProgramId,
+    eligible,
+    {
+      tsCheckpoint: response.tsCheckpoint,
+      livenessPeriod: response.livenessPeriod,
+    },
+    goalRead?.ok ? goalRead.goal : null,
+    isStalled && eligible,
+  );
 };
 
 /**

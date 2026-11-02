@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { Button } from 'antd';
 import { useCallback, useMemo, useState } from 'react';
 import { useUnmount } from 'usehooks-ts';
@@ -5,6 +6,7 @@ import { useUnmount } from 'usehooks-ts';
 import { MiddlewareDeploymentStatusMap } from '@/constants';
 import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
 import { useBalanceContext, useServices, useStakingProgram } from '@/hooks';
+import { runPrestartCheck } from '@/hooks/useStartService';
 import { ServicesService } from '@/service/Services';
 import { ServiceTemplate } from '@/types';
 import { updateServiceIfNeeded } from '@/utils';
@@ -35,6 +37,7 @@ export const ConfirmSwitchButton = ({
     overrideSelectedServiceStatus,
   } = useServices();
   const { setIsPaused: setIsBalancePollingPaused } = useBalanceContext();
+  const queryClient = useQueryClient();
   const { stakingProgramIdToMigrateTo, setDefaultStakingProgramId } =
     useStakingProgram();
 
@@ -91,6 +94,7 @@ export const ConfirmSwitchButton = ({
       }
 
       // start service after updating or creating
+      await runPrestartCheck(queryClient, serviceConfigId);
       await ServicesService.startService(serviceConfigId);
       setContractSwitchStatus('COMPLETED');
     } catch (error) {

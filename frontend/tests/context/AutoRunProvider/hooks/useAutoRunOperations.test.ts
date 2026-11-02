@@ -5,6 +5,10 @@ import { AGENT_CONFIG } from '../../../../config/agents';
 import { AgentMap } from '../../../../constants/agent';
 import { useAutoRunOperations } from '../../../../context/AutoRunProvider/hooks/useAutoRunOperations';
 import {
+  RewardSnapshot,
+  StallClock,
+} from '../../../../context/AutoRunProvider/types';
+import {
   DEFAULT_SERVICE_CONFIG_ID,
   makeAutoRunAgentMeta,
 } from '../../../helpers/factories';
@@ -54,6 +58,7 @@ const makeHookParams = () => ({
   enabled: true,
   enabledRef: { current: true },
   runningServiceConfigIdRef: { current: null as string | null },
+  stallClockRef: { current: {} as Partial<Record<string, StallClock>> },
   configuredAgents: [
     makeAutoRunAgentMeta(
       AgentMap.PredictTrader,
@@ -67,8 +72,11 @@ const makeHookParams = () => ({
   startService: jest.fn().mockResolvedValue(undefined),
   waitForBalancesReady: jest.fn().mockResolvedValue(true),
   waitForRunningInstance: jest.fn().mockResolvedValue(true),
-  getRewardSnapshot: jest.fn().mockReturnValue(undefined),
-  setRewardSnapshot: jest.fn(),
+  getRewardSnapshot: jest
+    .fn<RewardSnapshot | undefined, [string]>()
+    .mockReturnValue(undefined),
+  setRewardSnapshot: jest.fn<void, [string, RewardSnapshot]>(),
+  getObservedGoal: jest.fn().mockReturnValue(undefined),
   recordMetric: jest.fn(),
   logMessage: jest.fn(),
 });
@@ -156,7 +164,7 @@ describe('useAutoRunOperations', () => {
       );
     });
 
-    it('passes lastStartedAtRef and runningServiceConfigIdRef to the helper', async () => {
+    it('passes lastStartedAtRef, runningServiceConfigIdRef and stallClockRef to the helper', async () => {
       const params = makeHookParams();
       const { result } = renderHook(() => useAutoRunOperations(params));
 
@@ -172,6 +180,9 @@ describe('useAutoRunOperations', () => {
             current: expect.any(Object),
           }),
           runningServiceConfigIdRef: params.runningServiceConfigIdRef,
+          stallClockRef: params.stallClockRef,
+          getRewardSnapshot: params.getRewardSnapshot,
+          setRewardSnapshot: params.setRewardSnapshot,
         }),
       );
     });
