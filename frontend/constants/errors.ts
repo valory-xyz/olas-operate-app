@@ -1,5 +1,6 @@
 export const ERROR_CODE = {
   INSUFFICIENT_SIGNER_GAS: 'INSUFFICIENT_SIGNER_GAS',
+  SERVICE_PACKAGE_DOWNLOAD_FAILED: 'SERVICE_PACKAGE_DOWNLOAD_FAILED',
   // Substrings of the wrapped backend error returned from PUT /api/account.
   // Middleware emits "Failed to update password: <literal>", so checks
   // should use Error#message.includes(...) — not equality.
@@ -27,4 +28,16 @@ export const isInsufficientGasError = (
     typeof maybe.chain === 'string' &&
     typeof maybe.prefill_amount_wei === 'string'
   );
+};
+
+export type ServicePackageDownloadErrorBody = {
+  error_code: typeof ERROR_CODE.SERVICE_PACKAGE_DOWNLOAD_FAILED;
+};
+
+export const isServicePackageDownloadError = (
+  value: unknown,
+): value is ServicePackageDownloadErrorBody => {
+  if (!value || typeof value !== 'object') return false;
+  const maybe = value as Record<string, unknown>;
+  return maybe.error_code === ERROR_CODE.SERVICE_PACKAGE_DOWNLOAD_FAILED;
 };

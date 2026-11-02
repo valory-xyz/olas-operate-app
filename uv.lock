@@ -1026,7 +1026,7 @@ wheels = [
 
 [[package]]
 name = "olas-operate-app"
-version = "1.11.3rc28"
+version = "1.11.3rc29"
 source = { virtual = "." }
 dependencies = [
     { name = "olas-operate-middleware" },
@@ -1043,7 +1043,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "olas-operate-middleware", specifier = "==0.15.49" },
+    { name = "olas-operate-middleware", specifier = "==0.15.50" },
     { name = "open-aea-cli-ipfs", specifier = "==2.2.10" },
     { name = "open-aea-ledger-cosmos", specifier = "==2.2.10" },
     { name = "open-aea-ledger-ethereum", specifier = "==2.2.10" },
@@ -1055,7 +1055,7 @@ dev = [{ name = "pyinstaller", specifier = "==6.20.0" }]
 
 [[package]]
 name = "olas-operate-middleware"
-version = "0.15.49"
+version = "0.15.50"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiohttp" },
@@ -1076,9 +1076,9 @@ dependencies = [
     { name = "uvicorn" },
     { name = "werkzeug" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/c4/1c/bfdfe0e9b85bea02321625456262d6569bf2a060f55b080ef72540e7f464/olas_operate_middleware-0.15.49.tar.gz", hash = "sha256:6cb795dda2767d694172760fcfa23598857cc81073118e1a10a858d367298822", size = 353789, upload-time = "2026-10-30T17:48:59.856Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/5a/c3/e73cb0d24173c053de26c9145e529af5aabc61acd69049a69ce5ba42b219/olas_operate_middleware-0.15.50.tar.gz", hash = "sha256:6e2da09e333da7c6bc88b87c85b8e9f55970f501d47e1cbbbd5021a226d2e450", size = 354162, upload-time = "2026-11-02T13:57:05.282Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/6b/06/75cd5b9436672475c7ec87b0007600199e55d8fded235aa24d88b0c82d91/olas_operate_middleware-0.15.49-py3-none-any.whl", hash = "sha256:3360e75c8ae2822d31d5f8b2c31a4ed265274a93a59c222801cf7d23a65783bf", size = 410971, upload-time = "2026-10-30T17:48:57.924Z" },
+    { url = "https://files.pythonhosted.org/packages/98/79/9c1d8ee6d1da5f795df6a8018624b94bd210abd4c93dab663f2acb0430f1/olas_operate_middleware-0.15.50-py3-none-any.whl", hash = "sha256:9bd04214dcc94d8f0dffc68366310c09958c41184311d31a764b9e5df827b09d", size = 411358, upload-time = "2026-11-02T13:57:03.507Z" },
 ]
 
 [[package]]
