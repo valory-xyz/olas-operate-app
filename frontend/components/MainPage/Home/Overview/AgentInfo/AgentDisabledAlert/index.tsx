@@ -12,7 +12,9 @@ import {
   useContentTransitionValue,
 } from '@/components/ui';
 import { PAGES } from '@/constants';
+import { MiddlewareDeploymentStatusMap } from '@/constants/deployment';
 import {
+  isPrestartCheckBlocking,
   useActiveStakingContractDetails,
   useAgentFundingRequests,
   useAgentRunning,
@@ -21,11 +23,14 @@ import {
   useIsInitiallyFunded,
   useMasterWalletContext,
   usePageState,
+  usePrestartCheck,
   useServices,
   useStakingProgram,
 } from '@/hooks';
+import { AgentIssue } from '@/types';
 
 import { AgentGeoBlockedAlert } from './AgentGeoBlockedAlert';
+import { AgentIssuesAlert } from './AgentIssuesAlert';
 import { AgentPhasedOutAlert } from './AgentPhasedOutAlert';
 import { AgentRunningAlert } from './AgentRunningAlert';
 import { ContractDeprecatedAlert } from './ContractDeprecatedAlert';
@@ -35,9 +40,20 @@ import { NoSlotsAvailableAlert } from './NoSlotsAvailableAlert';
 import { UnderConstructionAlert } from './UnderConstructionAlert';
 import { UnfinishedSetupAlert } from './UnfinishedSetupAlert';
 
+const prestartCheckErrorIssue = (agentName: string): AgentIssue => ({
+  code: 'prestart_check_error',
+  title: "Couldn't check the agent",
+  description: `Pearl couldn't check whether the ${agentName} agent can run on this network. Check your internet connection and try starting the agent again.`,
+});
+
 export const AgentDisabledAlert = () => {
   const { goto } = usePageState();
-  const { selectedAgentConfig, selectedAgentType } = useServices();
+  const {
+    selectedAgentConfig,
+    selectedAgentType,
+    selectedService,
+    deploymentDetails,
+  } = useServices();
   const { agentTokenRequirements } = useAgentFundingRequests();
   const {
     isSelectedStakingContractDetailsLoading,
@@ -73,6 +89,18 @@ export const AgentDisabledAlert = () => {
     agentConfig: selectedAgentConfig,
   });
 
+  const isServiceRunning =
+    selectedService?.deploymentStatus ===
+    MiddlewareDeploymentStatusMap.DEPLOYED;
+  // A stopped agent's last healthcheck stays in the deployment payload, so
+  // its issues only count while it runs.
+  const runningAgentIssues = isServiceRunning
+    ? deploymentDetails?.healthcheck?.agent_health?.issues
+    : undefined;
+  const { result: prestartCheck, isChecking } = usePrestartCheck(
+    selectedService?.service_config_id,
+  );
+
   const alertResult = useMemo<{
     key: string;
     content: ReactNode;
@@ -89,6 +117,28 @@ export const AgentDisabledAlert = () => {
 
     if (selectedAgentConfig?.isGeoLocationRestricted && isAgentGeoRestricted) {
       return { key: 'geo-blocked', content: <AgentGeoBlockedAlert /> };
+    }
+
+    if (runningAgentIssues?.length) {
+      return {
+        key: 'agent-issues',
+        content: <AgentIssuesAlert issues={runningAgentIssues} />,
+      };
+    }
+
+    if (
+      !isServiceRunning &&
+      !isChecking &&
+      isPrestartCheckBlocking(prestartCheck)
+    ) {
+      const issues =
+        prestartCheck.status === 'failed'
+          ? prestartCheck.issues
+          : [prestartCheckErrorIssue(selectedAgentConfig.displayName)];
+      return {
+        key: 'prestart-check',
+        content: <AgentIssuesAlert issues={issues} />,
+      };
     }
 
     if (selectedAgentConfig.isUnderConstruction) {
@@ -183,9 +233,13 @@ export const AgentDisabledAlert = () => {
     isAnotherAgentRunning,
     isEligibleForStaking,
     isHomeChainSafeMissing,
+    isChecking,
     isInitialFunded,
     isSelectedStakingContractDetailsLoading,
+    isServiceRunning,
     isServiceStaked,
+    prestartCheck,
+    runningAgentIssues,
     selectedAgentConfig,
     selectedStakingContractDetails,
     selectedStakingProgramMeta,

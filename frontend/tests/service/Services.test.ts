@@ -14,6 +14,7 @@ import { ServiceTemplate } from '../../types/Service';
 import { asEvmChainId } from '../../utils/middlewareHelpers';
 import {
   DEFAULT_SERVICE_CONFIG_ID,
+  makeFailedPrestartCheck,
   makeInsufficientGasError,
 } from '../helpers/factories';
 
@@ -625,6 +626,37 @@ describe('ServicesService', () => {
           signal: abortController.signal,
         }),
       ).rejects.toThrow('Failed to fetch deployment');
+    });
+  });
+
+  describe('getPrestartCheck', () => {
+    it('returns the check result on success', async () => {
+      const checkResult = makeFailedPrestartCheck();
+      jest
+        .spyOn(global, 'fetch')
+        .mockReturnValue(mockJsonResponse(checkResult));
+
+      const result = await ServicesService.getPrestartCheck(
+        DEFAULT_SERVICE_CONFIG_ID,
+      );
+
+      expect(result).toEqual(checkResult);
+      expect(fetch).toHaveBeenCalledWith(
+        `${BACKEND_URL_V2}/service/${DEFAULT_SERVICE_CONFIG_ID}/prestart_check`,
+        { method: 'GET', headers: expectedHeaders },
+      );
+    });
+
+    it('throws error on non-ok response', async () => {
+      jest
+        .spyOn(global, 'fetch')
+        .mockReturnValue(mockJsonResponse({}, false, 404));
+
+      await expect(
+        ServicesService.getPrestartCheck(DEFAULT_SERVICE_CONFIG_ID),
+      ).rejects.toThrow(
+        `Failed to run the prestart check of ${DEFAULT_SERVICE_CONFIG_ID}: HTTP 404`,
+      );
     });
   });
 

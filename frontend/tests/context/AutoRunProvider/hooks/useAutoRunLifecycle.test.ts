@@ -3,6 +3,7 @@ import { act } from 'react';
 
 import { AGENT_CONFIG } from '../../../../config/agents';
 import { AgentMap, AgentType } from '../../../../constants/agent';
+import { MiddlewareDeploymentStatusMap } from '../../../../constants/deployment';
 import {
   AUTO_RUN_HEALTH_METRIC,
   AUTO_RUN_START_STATUS,
@@ -12,9 +13,11 @@ import {
   RUNNING_AGENT_WATCHDOG_CHECK_SECONDS,
   SCAN_BLOCKED_DELAY_SECONDS,
   SCAN_ELIGIBLE_DELAY_SECONDS,
+  SCAN_LOADING_RETRY_SECONDS,
 } from '../../../../context/AutoRunProvider/constants';
 import { useAutoRunLifecycle } from '../../../../context/AutoRunProvider/hooks/useAutoRunLifecycle';
 import { AgentMeta } from '../../../../context/AutoRunProvider/types';
+import { probeAllDeploymentStatuses } from '../../../../context/AutoRunProvider/utils/probeDeployment';
 import * as delayModule from '../../../../utils/delay';
 import {
   DEFAULT_SERVICE_CONFIG_ID,
@@ -32,6 +35,11 @@ jest.mock(
   () => require('../../../helpers/autoRunMocks').verboseLoggerMockFactory(),
 );
 
+jest.mock('../../../../context/AutoRunProvider/utils/probeDeployment', () => ({
+  probeAllDeploymentStatuses: jest.fn(),
+}));
+
+const mockProbeAllDeployments = probeAllDeploymentStatuses as jest.Mock;
 const mockSleepAwareDelay = delayModule.sleepAwareDelay as jest.Mock;
 
 const scTrader = DEFAULT_SERVICE_CONFIG_ID;
@@ -57,9 +65,12 @@ const makeHookParams = (
   scheduleNextScan: jest.fn(),
   hasScheduledScan: jest.fn().mockReturnValue(false),
   refreshRewardsEligibility: jest.fn().mockResolvedValue(false),
-  getRewardSnapshot: jest.fn().mockReturnValue(false),
+  isStalled: jest.fn().mockReturnValue(false),
+  restartStallClock: jest.fn(),
+  deferStalled: jest.fn(),
+  isStallDeferred: jest.fn().mockReturnValue(false),
   getPreferredStartFrom: jest.fn().mockReturnValue(null),
-  scanAndStartNext: jest.fn().mockResolvedValue({ started: false }),
+  scanAndStartNext: jest.fn().mockResolvedValue({ startedId: null }),
   startSelectedAgentIfEligible: jest.fn().mockResolvedValue(false),
   stopAgentWithRecovery: jest.fn().mockResolvedValue(true),
   startAgentWithRetries: jest
@@ -80,6 +91,193 @@ describe('useAutoRunLifecycle', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockSleepAwareDelay.mockResolvedValue(true);
+    mockProbeAllDeployments.mockResolvedValue({});
+  });
+
+  describe('idle recovery with a lagging deployment poll', () => {
+    const flush = async () => {
+      await act(async () => {
+        await Promise.resolve();
+      });
+    };
+    const activeDeployments = (
+      status: number = MiddlewareDeploymentStatusMap.DEPLOYED,
+    ) => ({
+      [scOptimus]: { status },
+    });
+
+    it.each([
+      MiddlewareDeploymentStatusMap.DEPLOYED,
+      MiddlewareDeploymentStatusMap.DEPLOYING,
+      MiddlewareDeploymentStatusMap.STOPPING,
+    ])(
+      'does not start the sidebar selection when a live deployment has status %s',
+      async (status) => {
+        mockProbeAllDeployments.mockResolvedValue(activeDeployments(status));
+        const params = makeHookParams({
+          enabled: true,
+          enabledRef: { current: true },
+        });
+        renderHook(() => useAutoRunLifecycle(params));
+        await flush();
+        expect(params.startSelectedAgentIfEligible).not.toHaveBeenCalled();
+        expect(params.scanAndStartNext).not.toHaveBeenCalled();
+        expect(params.scheduleNextScan).not.toHaveBeenCalled();
+      },
+    );
+
+    it('preserves a scan start when the shared running state remains null', async () => {
+      const params = makeHookParams({
+        enabled: true,
+        enabledRef: { current: true },
+        scanAndStartNext: jest.fn().mockResolvedValue({ startedId: scOptimus }),
+      });
+      const { rerender } = renderHook((p) => useAutoRunLifecycle(p), {
+        initialProps: params,
+      });
+      await flush();
+      expect(params.scanAndStartNext).toHaveBeenCalledTimes(1);
+      mockProbeAllDeployments.mockResolvedValue(activeDeployments());
+      rerender({ ...params, scanTick: 1 });
+      await flush();
+      expect(params.startSelectedAgentIfEligible).toHaveBeenCalledTimes(1);
+      expect(params.scanAndStartNext).toHaveBeenCalledTimes(1);
+      expect(mockSleepAwareDelay).toHaveBeenCalledWith(COOLDOWN_SECONDS);
+    });
+
+    it('preserves the hand-over choice while the shared running state becomes null', async () => {
+      const params = makeHookParams({
+        enabled: true,
+        enabledRef: { current: true },
+        runningAgentType: AgentMap.PredictTrader,
+        runningServiceConfigId: scTrader,
+        runningAgentTypeRef: {
+          current: AgentMap.PredictTrader as AgentType | null,
+        },
+        runningServiceConfigIdRef: { current: scTrader as string | null },
+        refreshRewardsEligibility: jest
+          .fn()
+          .mockImplementation(async (id: string) => id === scTrader),
+        scanAndStartNext: jest.fn().mockResolvedValue({ startedId: scOptimus }),
+      });
+      const { rerender } = renderHook((p) => useAutoRunLifecycle(p), {
+        initialProps: params,
+      });
+      await flush();
+      expect(params.scanAndStartNext).toHaveBeenCalledWith(
+        scTrader,
+        expect.objectContaining({ first: scOptimus }),
+      );
+      mockProbeAllDeployments.mockResolvedValue(activeDeployments());
+      params.runningAgentTypeRef.current = null;
+      params.runningServiceConfigIdRef.current = null;
+      rerender({
+        ...params,
+        runningAgentType: null,
+        runningServiceConfigId: null,
+      });
+      await flush();
+      expect(params.startSelectedAgentIfEligible).not.toHaveBeenCalled();
+      expect(params.scanAndStartNext).toHaveBeenCalledTimes(1);
+    });
+
+    it('rechecks running state after the recovery cooldown', async () => {
+      const params = makeHookParams({
+        enabled: true,
+        enabledRef: { current: true },
+        runningAgentType: AgentMap.PredictTrader,
+        runningServiceConfigId: scTrader,
+        runningAgentTypeRef: {
+          current: AgentMap.PredictTrader as AgentType | null,
+        },
+        runningServiceConfigIdRef: { current: scTrader as string | null },
+      });
+      const { rerender } = renderHook((p) => useAutoRunLifecycle(p), {
+        initialProps: params,
+      });
+      await flush();
+      let finishCooldown!: (v: boolean) => void;
+      mockSleepAwareDelay.mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            finishCooldown = resolve;
+          }),
+      );
+      params.runningAgentTypeRef.current = null;
+      params.runningServiceConfigIdRef.current = null;
+      rerender({
+        ...params,
+        runningAgentType: null,
+        runningServiceConfigId: null,
+      });
+      params.runningAgentTypeRef.current = AgentMap.Optimus;
+      params.runningServiceConfigIdRef.current = scOptimus;
+      await act(async () => {
+        finishCooldown(true);
+      });
+      expect(params.startSelectedAgentIfEligible).not.toHaveBeenCalled();
+    });
+
+    it('does not schedule idle recovery after a successful selected start', async () => {
+      const params = makeHookParams({
+        enabled: true,
+        enabledRef: { current: true },
+        startSelectedAgentIfEligible: jest.fn().mockResolvedValue(true),
+      });
+      renderHook(() => useAutoRunLifecycle(params));
+      await flush();
+      expect(params.startSelectedAgentIfEligible).toHaveBeenCalledTimes(1);
+      expect(params.scheduleNextScan).not.toHaveBeenCalled();
+    });
+
+    it.each(['network error', 'request aborted'])(
+      'defers on %s, then starts only after a successful idle check',
+      async (message) => {
+        mockProbeAllDeployments.mockRejectedValue(new Error(message));
+        const params = makeHookParams({
+          enabled: true,
+          enabledRef: { current: true },
+          startSelectedAgentIfEligible: jest.fn().mockResolvedValue(true),
+        });
+        const { rerender } = renderHook((p) => useAutoRunLifecycle(p), {
+          initialProps: params,
+        });
+        await flush();
+        expect(params.startSelectedAgentIfEligible).not.toHaveBeenCalled();
+        expect(params.scanAndStartNext).not.toHaveBeenCalled();
+        expect(params.scheduleNextScan).toHaveBeenCalledTimes(1);
+        expect(params.scheduleNextScan).toHaveBeenCalledWith(
+          SCAN_LOADING_RETRY_SECONDS,
+        );
+        mockProbeAllDeployments.mockResolvedValue({});
+        rerender({ ...params, scanTick: 1 });
+        await flush();
+        expect(params.startSelectedAgentIfEligible).toHaveBeenCalledTimes(1);
+      },
+    );
+
+    it('does not start if Auto-run is disabled during the deployment check', async () => {
+      let finishProbe!: (v: object) => void;
+      mockProbeAllDeployments.mockImplementation(
+        () =>
+          new Promise((resolve) => {
+            finishProbe = resolve;
+          }),
+      );
+      const params = makeHookParams({
+        enabled: true,
+        enabledRef: { current: true },
+      });
+      renderHook(() => useAutoRunLifecycle(params));
+      await flush();
+      params.enabledRef.current = false;
+      await act(async () => {
+        finishProbe({});
+      });
+      expect(params.startSelectedAgentIfEligible).not.toHaveBeenCalled();
+      expect(params.scanAndStartNext).not.toHaveBeenCalled();
+      expect(params.scheduleNextScan).not.toHaveBeenCalled();
+    });
   });
 
   it('exposes stopCurrentRunningAgent', () => {
@@ -155,7 +353,6 @@ describe('useAutoRunLifecycle', () => {
         refreshRewardsEligibility: jest
           .fn()
           .mockImplementation(async (id: string) => id === scTrader),
-        getRewardSnapshot: jest.fn().mockReturnValue(false),
       });
 
       renderHook(() => useAutoRunLifecycle(params));
@@ -206,7 +403,6 @@ describe('useAutoRunLifecycle', () => {
         runningServiceConfigIdRef: { current: scTrader },
         lastRewardsEligibilityRef,
         refreshRewardsEligibility: jest.fn().mockResolvedValue(true),
-        getRewardSnapshot: jest.fn().mockReturnValue(true),
       });
 
       renderHook(() => useAutoRunLifecycle(params));
@@ -220,10 +416,7 @@ describe('useAutoRunLifecycle', () => {
       expect(params.stopAgentWithRecovery).not.toHaveBeenCalled();
     });
 
-    it('proceeds with rotation when alternate rewards state is unknown (undefined)', async () => {
-      // Stale-true override forwards unknown to scanner; rotation proceeds rather
-      // than blocking. This is the fix to the original deadlock where undefined
-      // was treated as earned.
+    it('keeps the running agent, rechecking sooner, when the only alternate has an unknown rewards status', async () => {
       const lastRewardsEligibilityRef = {
         current: {
           [scTrader]: false,
@@ -242,12 +435,6 @@ describe('useAutoRunLifecycle', () => {
           .mockImplementation(async (id: string) =>
             id === scTrader ? true : undefined,
           ),
-        getRewardSnapshot: jest
-          .fn()
-          .mockImplementation((id: string) =>
-            id === scTrader ? false : undefined,
-          ),
-        stopAgentWithRecovery: jest.fn().mockResolvedValue(true),
       });
 
       renderHook(() => useAutoRunLifecycle(params));
@@ -255,8 +442,12 @@ describe('useAutoRunLifecycle', () => {
         await new Promise((r) => setTimeout(r, 0));
       });
 
-      expect(params.stopAgentWithRecovery).toHaveBeenCalledWith(scTrader);
-      expect(params.scanAndStartNext).toHaveBeenCalledWith(scTrader);
+      expect(params.getHandOverDeployability).not.toHaveBeenCalled();
+      expect(params.stopAgentWithRecovery).not.toHaveBeenCalled();
+      expect(params.scanAndStartNext).not.toHaveBeenCalled();
+      expect(params.scheduleNextScan).toHaveBeenCalledWith(
+        SCAN_BLOCKED_DELAY_SECONDS,
+      );
     });
 
     it('resets rewards guard and sets backoff on stop failure', async () => {
@@ -282,7 +473,6 @@ describe('useAutoRunLifecycle', () => {
           .mockImplementation(async (id: string) =>
             id === scTrader ? true : false,
           ),
-        getRewardSnapshot: jest.fn().mockReturnValue(false),
         stopAgentWithRecovery: jest.fn().mockResolvedValue(false),
       });
 
@@ -317,8 +507,8 @@ describe('useAutoRunLifecycle', () => {
         refreshRewardsEligibility: jest
           .fn()
           .mockImplementation(async (id: string) => id === scTrader),
-        getRewardSnapshot: jest.fn().mockReturnValue(false),
         stopAgentWithRecovery: jest.fn().mockResolvedValue(true),
+        scanAndStartNext: jest.fn().mockResolvedValue({ startedId: scOptimus }),
       });
 
       renderHook(() => useAutoRunLifecycle(params));
@@ -327,7 +517,10 @@ describe('useAutoRunLifecycle', () => {
       });
 
       expect(params.stopAgentWithRecovery).toHaveBeenCalled();
-      expect(params.scanAndStartNext).toHaveBeenCalledWith(scTrader);
+      expect(params.scanAndStartNext).toHaveBeenCalledWith(
+        scTrader,
+        expect.objectContaining({ first: scOptimus, stoppedId: scTrader }),
+      );
       expect(params.recordMetric).toHaveBeenCalledWith('rotationsSucceeded');
       // P1 fix: rewards guard must be cleared so the next epoch can re-trigger rotation.
       // Without this reset, previousEligibility === true permanently blocks future rotations.
@@ -447,7 +640,6 @@ describe('useAutoRunLifecycle', () => {
         refreshRewardsEligibility: jest
           .fn()
           .mockImplementation(async (id: string) => id === scConnect),
-        getRewardSnapshot: jest.fn().mockReturnValue(false),
         ...overrides,
       });
 
@@ -492,8 +684,18 @@ describe('useAutoRunLifecycle', () => {
       expect(params.getHandOverDeployability).toHaveBeenCalledWith(scTrader);
       expect(params.getHandOverDeployability).toHaveBeenCalledTimes(1);
       expect(params.stopAgentWithRecovery).toHaveBeenCalledWith(scConnect);
-      expect(params.scanAndStartNext).toHaveBeenCalledWith(scConnect);
+      expect(params.scanAndStartNext).toHaveBeenCalledWith(
+        scConnect,
+        expect.objectContaining({ first: scTrader, stoppedId: scConnect }),
+      );
       expect(params.notifyGoalReachedOnHandOver).toHaveBeenCalledTimes(1);
+      // The notification follows a confirmed stop.
+      expect(
+        (params.stopAgentWithRecovery as jest.Mock).mock.invocationCallOrder[0],
+      ).toBeLessThan(
+        (params.notifyGoalReachedOnHandOver as jest.Mock).mock
+          .invocationCallOrder[0],
+      );
       expect(params.notifyGoalReachedOnHandOver).toHaveBeenCalledWith(
         scConnect,
       );
@@ -521,30 +723,27 @@ describe('useAutoRunLifecycle', () => {
       expect(params.stopAgentWithRecovery).not.toHaveBeenCalled();
     });
 
-    it.each([
-      ['done', true, false],
-      ['not done', false, true],
-    ])(
-      'falls back to the cached snapshot of an alternate whose read failed (%s)',
-      async (_, cachedSnapshot, isProbed) => {
-        const params = makeConnectRunningParams({
-          orderedIncludedInstances: [scConnect, scTrader],
-          refreshRewardsEligibility: jest
-            .fn()
-            .mockImplementation(async (id: string) =>
-              id === scConnect ? true : undefined,
-            ),
-          getRewardSnapshot: jest.fn().mockReturnValue(cachedSnapshot),
-        });
+    it('passes over an alternate whose rewards read failed', async () => {
+      const params = makeConnectRunningParams({
+        orderedIncludedInstances: [scConnect, scTrader],
+        refreshRewardsEligibility: jest
+          .fn()
+          .mockImplementation(async (id: string) =>
+            id === scConnect ? true : undefined,
+          ),
+      });
 
-        renderHook(() => useAutoRunLifecycle(params));
-        await flush();
+      renderHook(() => useAutoRunLifecycle(params));
+      await flush();
 
-        expect(
-          (params.getHandOverDeployability as jest.Mock).mock.calls.length > 0,
-        ).toBe(isProbed);
-      },
-    );
+      expect(params.getHandOverDeployability).not.toHaveBeenCalled();
+      expect(params.stopAgentWithRecovery).not.toHaveBeenCalled();
+      expect(params.logMessage).toHaveBeenCalledWith(
+        expect.stringContaining(
+          `pass over ${scTrader}: rewards status unknown`,
+        ),
+      );
+    });
 
     it('keeps Connect running and resets its rewards guard when nothing else can run', async () => {
       const lastRewardsEligibilityRef = {
@@ -675,7 +874,7 @@ describe('useAutoRunLifecycle', () => {
       });
 
       const flushMicrotasks = async () => {
-        for (let i = 0; i < 10; i++) {
+        for (let i = 0; i < 20; i++) {
           await Promise.resolve();
         }
       };
@@ -760,8 +959,503 @@ describe('useAutoRunLifecycle', () => {
       await flush();
 
       expect(params.stopAgentWithRecovery).toHaveBeenCalledWith(scTrader);
-      expect(params.scanAndStartNext).toHaveBeenCalledWith(scTrader);
-      expect(params.getHandOverDeployability).not.toHaveBeenCalled();
+      expect(params.getHandOverDeployability).toHaveBeenCalledTimes(1);
+      expect(params.getHandOverDeployability).toHaveBeenCalledWith(scConnect);
+      expect(params.scanAndStartNext).toHaveBeenCalledWith(
+        scTrader,
+        expect.objectContaining({ first: scConnect }),
+      );
+    });
+  });
+
+  describe('rotation pre-check and hand-over', () => {
+    const scThird = 'sc-third';
+    const scFourth = 'sc-fourth';
+    const scFifth = 'sc-fifth';
+
+    const flush = async () => {
+      await act(async () => {
+        await new Promise((r) => setTimeout(r, 0));
+      });
+    };
+
+    const flushMicrotasks = async () => {
+      for (let i = 0; i < 20; i++) {
+        await Promise.resolve();
+      }
+    };
+
+    const loggedMessages = (params: ReturnType<typeof makeHookParams>) =>
+      (params.logMessage as jest.Mock).mock.calls.map(([message]) => message);
+
+    // Trader is running and has just turned done; alternates are not done.
+    const makeTraderRunningParams = (
+      overrides: Partial<Parameters<typeof useAutoRunLifecycle>[0]> = {},
+    ) =>
+      makeHookParams({
+        enabled: true,
+        enabledRef: { current: true },
+        runningAgentType: AgentMap.PredictTrader,
+        runningServiceConfigId: scTrader,
+        runningAgentTypeRef: { current: AgentMap.PredictTrader },
+        runningServiceConfigIdRef: { current: scTrader },
+        lastRewardsEligibilityRef: {
+          current: { [scTrader]: false } as Partial<
+            Record<string, boolean | undefined>
+          >,
+        },
+        refreshRewardsEligibility: jest
+          .fn()
+          .mockImplementation(async (id: string) => id === scTrader),
+        ...overrides,
+      });
+
+    it('hands over to the first runnable alternate after the current one, passing over and logging the others', async () => {
+      const params = makeTraderRunningParams({
+        // Circular order after the trader: optimus, third, fourth, fifth.
+        orderedIncludedInstances: [
+          scFifth,
+          scTrader,
+          scOptimus,
+          scThird,
+          scFourth,
+        ],
+        refreshRewardsEligibility: jest
+          .fn()
+          .mockImplementation(async (id: string) => {
+            if (id === scTrader || id === scOptimus) return true;
+            if (id === scThird) return undefined;
+            return false;
+          }),
+        getHandOverDeployability: jest
+          .fn()
+          .mockImplementation(async (id: string) =>
+            id === scFourth
+              ? { canRun: false, reason: 'Low balance' }
+              : { canRun: true },
+          ),
+      });
+
+      renderHook(() => useAutoRunLifecycle(params));
+      await flush();
+
+      // Done and unknown alternates never reach the deployability check.
+      expect(params.getHandOverDeployability).not.toHaveBeenCalledWith(
+        scOptimus,
+      );
+      expect(params.getHandOverDeployability).not.toHaveBeenCalledWith(scThird);
+      const messages = loggedMessages(params);
+      expect(messages).toContainEqual(
+        expect.stringMatching(
+          /^cycle=rewards-sc-\S+ trigger=rewards pass over sc-.+: done for the epoch$/,
+        ),
+      );
+      expect(messages).toContainEqual(
+        expect.stringContaining(`pass over ${scOptimus}: done for the epoch`),
+      );
+      expect(messages).toContainEqual(
+        expect.stringContaining(`pass over ${scThird}: rewards status unknown`),
+      );
+      expect(messages).toContainEqual(
+        expect.stringContaining(`pass over ${scFourth}: Low balance`),
+      );
+      expect(params.stopAgentWithRecovery).toHaveBeenCalledWith(scTrader);
+      expect(params.scanAndStartNext).toHaveBeenCalledWith(scTrader, {
+        first: scFifth,
+        stoppedId: scTrader,
+        cycleId: expect.stringMatching(/^rewards-/),
+        trigger: 'rewards',
+      });
+    });
+
+    it('hands over to an empty-pool alternate only when no rewarded one can start', async () => {
+      const params = makeTraderRunningParams({
+        orderedIncludedInstances: [scTrader, scOptimus, scThird, scFourth],
+        getHandOverDeployability: jest
+          .fn()
+          .mockImplementation(async (id: string) => {
+            if (id === scOptimus) {
+              return { canRun: false, isEmptyRewardPool: true };
+            }
+            if (id === scThird) return { canRun: false, reason: 'Low balance' };
+            return { canRun: false, isEmptyRewardPool: true };
+          }),
+      });
+
+      renderHook(() => useAutoRunLifecycle(params));
+      await flush();
+
+      expect(params.getHandOverDeployability).toHaveBeenCalledWith(scFourth);
+      expect(params.stopAgentWithRecovery).toHaveBeenCalledWith(scTrader);
+      expect(params.scanAndStartNext).toHaveBeenCalledWith(
+        scTrader,
+        expect.objectContaining({ first: scOptimus }),
+      );
+    });
+
+    it('prefers a later rewarded alternate over an earlier empty-pool one', async () => {
+      const params = makeTraderRunningParams({
+        orderedIncludedInstances: [scTrader, scOptimus, scThird],
+        getHandOverDeployability: jest
+          .fn()
+          .mockImplementation(async (id: string) =>
+            id === scOptimus
+              ? { canRun: false, isEmptyRewardPool: true }
+              : { canRun: true },
+          ),
+      });
+
+      renderHook(() => useAutoRunLifecycle(params));
+      await flush();
+
+      expect(params.scanAndStartNext).toHaveBeenCalledWith(
+        scTrader,
+        expect.objectContaining({ first: scThird }),
+      );
+    });
+
+    it('keeps the current agent running when no alternate can start', async () => {
+      const params = makeTraderRunningParams({
+        getHandOverDeployability: jest
+          .fn()
+          .mockResolvedValue({ canRun: false, reason: 'Low balance' }),
+      });
+
+      renderHook(() => useAutoRunLifecycle(params));
+      await flush();
+
+      expect(params.getHandOverDeployability).toHaveBeenCalledWith(scOptimus);
+      expect(params.stopAgentWithRecovery).not.toHaveBeenCalled();
+      expect(params.scanAndStartNext).not.toHaveBeenCalled();
+      const messages = loggedMessages(params);
+      expect(messages).toContainEqual(
+        expect.stringContaining(
+          `keeping ${scTrader} running, no runnable alternate rescan=${SCAN_ELIGIBLE_DELAY_SECONDS}s`,
+        ),
+      );
+      expect(messages).toContainEqual(
+        expect.stringContaining(
+          `phase=rotate_end status=kept current=${scTrader}`,
+        ),
+      );
+      expect(params.scheduleNextScan).toHaveBeenCalledWith(
+        SCAN_ELIGIBLE_DELAY_SECONDS,
+      );
+    });
+
+    it.each([
+      ['another agent started', scOptimus, 'ok', 1],
+      ['nothing started', null, 'none', 0],
+      ['the stopped agent started again', scTrader, 'none', 0],
+    ])(
+      'ends the rotation when %s',
+      async (_, startedId, status, succeededCount) => {
+        const params = makeTraderRunningParams({
+          scanAndStartNext: jest.fn().mockResolvedValue({ startedId }),
+        });
+
+        renderHook(() => useAutoRunLifecycle(params));
+        await flush();
+
+        expect(loggedMessages(params)).toContainEqual(
+          expect.stringContaining(
+            `phase=rotate_end status=${status} current=${scTrader}`,
+          ),
+        );
+        expect(
+          (params.recordMetric as jest.Mock).mock.calls.filter(
+            ([metric]) => metric === AUTO_RUN_HEALTH_METRIC.ROTATIONS_SUCCEEDED,
+          ),
+        ).toHaveLength(succeededCount);
+      },
+    );
+
+    describe('hold recheck', () => {
+      it('checks the order again on the scheduled rescan although the status is still done', async () => {
+        const getHandOverDeployability = jest
+          .fn()
+          .mockResolvedValue({ canRun: false, reason: 'Low balance' });
+        const params = makeTraderRunningParams({ getHandOverDeployability });
+
+        const { rerender } = renderHook((props) => useAutoRunLifecycle(props), {
+          initialProps: params,
+        });
+        await flush();
+        expect(params.stopAgentWithRecovery).not.toHaveBeenCalled();
+
+        // A rewards poll alone does not re-trigger: the status is still done.
+        getHandOverDeployability.mockResolvedValue({ canRun: true });
+        rerender({ ...params, rewardsTick: 1 });
+        await flush();
+        expect(params.stopAgentWithRecovery).not.toHaveBeenCalled();
+
+        // The rescan the hold scheduled fires.
+        rerender({ ...params, rewardsTick: 1, scanTick: 1 });
+        await flush();
+
+        expect(params.stopAgentWithRecovery).toHaveBeenCalledWith(scTrader);
+        expect(params.scanAndStartNext).toHaveBeenCalledWith(
+          scTrader,
+          expect.objectContaining({ first: scOptimus }),
+        );
+      });
+
+      it('considers an agent added to the order during the hold', async () => {
+        const params = makeTraderRunningParams({
+          orderedIncludedInstances: [scTrader],
+        });
+
+        const { rerender } = renderHook((props) => useAutoRunLifecycle(props), {
+          initialProps: params,
+        });
+        await flush();
+        expect(params.stopAgentWithRecovery).not.toHaveBeenCalled();
+
+        rerender({
+          ...params,
+          orderedIncludedInstances: [scTrader, scThird],
+          scanTick: 1,
+        });
+        await flush();
+
+        expect(params.getHandOverDeployability).toHaveBeenCalledWith(scThird);
+        expect(params.scanAndStartNext).toHaveBeenCalledWith(
+          scTrader,
+          expect.objectContaining({ first: scThird }),
+        );
+      });
+    });
+
+    describe('stalled current agent', () => {
+      it('hands over as a stall, deferring the current agent', async () => {
+        const params = makeTraderRunningParams({
+          isStalled: jest
+            .fn()
+            .mockImplementation((id: string) => id === scTrader),
+        });
+
+        renderHook(() => useAutoRunLifecycle(params));
+        await flush();
+
+        expect(params.deferStalled).toHaveBeenCalledWith(scTrader);
+        expect(params.restartStallClock).not.toHaveBeenCalled();
+        expect(params.notifyGoalReachedOnHandOver).not.toHaveBeenCalled();
+        expect(loggedMessages(params)).toContainEqual(
+          expect.stringContaining(
+            `trigger=stall phase=hand_over current=${scTrader} next=${scOptimus}`,
+          ),
+        );
+        expect(params.scanAndStartNext).toHaveBeenCalledWith(
+          scTrader,
+          expect.objectContaining({ first: scOptimus, trigger: 'stall' }),
+        );
+      });
+
+      it('does not defer the current agent when its stop times out', async () => {
+        const params = makeTraderRunningParams({
+          isStalled: jest
+            .fn()
+            .mockImplementation((id: string) => id === scTrader),
+          stopAgentWithRecovery: jest.fn().mockResolvedValue(false),
+        });
+
+        renderHook(() => useAutoRunLifecycle(params));
+        await flush();
+
+        expect(params.stopAgentWithRecovery).toHaveBeenCalledWith(scTrader);
+        expect(params.deferStalled).not.toHaveBeenCalled();
+        expect(params.scanAndStartNext).not.toHaveBeenCalled();
+      });
+
+      it('keeps the current agent running with a fresh stall hour when no alternate can start', async () => {
+        const params = makeTraderRunningParams({
+          isStalled: jest.fn().mockReturnValue(true),
+          getHandOverDeployability: jest
+            .fn()
+            .mockResolvedValue({ canRun: false, reason: 'Low balance' }),
+        });
+
+        renderHook(() => useAutoRunLifecycle(params));
+        await flush();
+
+        expect(params.restartStallClock).toHaveBeenCalledWith(scTrader);
+        expect(params.deferStalled).not.toHaveBeenCalled();
+        expect(params.stopAgentWithRecovery).not.toHaveBeenCalled();
+        expect(loggedMessages(params)).toContainEqual(
+          expect.stringContaining(
+            `trigger=stall phase=rotate_end status=kept current=${scTrader}`,
+          ),
+        );
+      });
+
+      it('does not hand over to a stall-deferred alternate', async () => {
+        const params = makeTraderRunningParams({
+          isStalled: jest
+            .fn()
+            .mockImplementation((id: string) => id === scTrader),
+          isStallDeferred: jest
+            .fn()
+            .mockImplementation((id: string) => id === scOptimus),
+        });
+
+        renderHook(() => useAutoRunLifecycle(params));
+        await flush();
+
+        expect(params.getHandOverDeployability).not.toHaveBeenCalled();
+        expect(params.stopAgentWithRecovery).not.toHaveBeenCalled();
+        expect(loggedMessages(params)).toContainEqual(
+          expect.stringContaining(
+            `pass over ${scOptimus}: stalled on its activity goal, deferred`,
+          ),
+        );
+      });
+    });
+
+    describe('stall-deferred alternate while the current agent is not stalled', () => {
+      const makeDeferredOptimusParams = (
+        thirdDeployability: Record<string, unknown>,
+      ) =>
+        makeTraderRunningParams({
+          orderedIncludedInstances: [scTrader, scOptimus, scThird],
+          isStallDeferred: jest
+            .fn()
+            .mockImplementation((id: string) => id === scOptimus),
+          getHandOverDeployability: jest
+            .fn()
+            .mockImplementation(async (id: string) =>
+              id === scThird ? thirdDeployability : { canRun: true },
+            ),
+        });
+
+      it('prefers a later runnable alternate', async () => {
+        const params = makeDeferredOptimusParams({ canRun: true });
+
+        renderHook(() => useAutoRunLifecycle(params));
+        await flush();
+
+        expect(params.scanAndStartNext).toHaveBeenCalledWith(
+          scTrader,
+          expect.objectContaining({ first: scThird }),
+        );
+      });
+
+      it('is chosen as a last resort', async () => {
+        const params = makeDeferredOptimusParams({
+          canRun: false,
+          reason: 'Low balance',
+        });
+
+        renderHook(() => useAutoRunLifecycle(params));
+        await flush();
+
+        expect(params.getHandOverDeployability).toHaveBeenCalledWith(scOptimus);
+        expect(params.stopAgentWithRecovery).toHaveBeenCalledWith(scTrader);
+        expect(params.scanAndStartNext).toHaveBeenCalledWith(
+          scTrader,
+          expect.objectContaining({ first: scOptimus }),
+        );
+      });
+    });
+
+    describe('runtime watchdog', () => {
+      beforeEach(() => {
+        jest.useFakeTimers();
+      });
+
+      afterEach(() => {
+        jest.useRealTimers();
+      });
+
+      const runWatchdog = async (
+        overrides: Partial<Parameters<typeof useAutoRunLifecycle>[0]>,
+      ) => {
+        const params = makeTraderRunningParams({
+          refreshRewardsEligibility: jest.fn().mockResolvedValue(false),
+          ...overrides,
+        });
+        renderHook(() => useAutoRunLifecycle(params));
+        await act(async () => {
+          await flushMicrotasks();
+        });
+        (params.scheduleNextScan as jest.Mock).mockClear();
+        await act(async () => {
+          jest.advanceTimersByTime(
+            RUNNING_AGENT_MAX_RUNTIME_SECONDS * 1000 +
+              RUNNING_AGENT_WATCHDOG_CHECK_SECONDS * 1000,
+          );
+          await flushMicrotasks();
+        });
+        return params;
+      };
+
+      it('starts the chosen next agent rather than restarting the current one', async () => {
+        const params = await runWatchdog({});
+
+        expect(params.getHandOverDeployability).toHaveBeenCalledWith(scOptimus);
+        expect(params.startAgentWithRetries).not.toHaveBeenCalled();
+        expect(params.scanAndStartNext).toHaveBeenCalledWith(scTrader, {
+          first: scOptimus,
+          stoppedId: scTrader,
+          cycleId: expect.stringMatching(/^watchdog-/),
+          trigger: 'watchdog',
+        });
+      });
+
+      it('keeps the current agent running and rechecks sooner when no alternate can start', async () => {
+        const params = await runWatchdog({
+          getHandOverDeployability: jest
+            .fn()
+            .mockResolvedValue({ canRun: false, reason: 'Low balance' }),
+        });
+
+        expect(params.stopAgentWithRecovery).not.toHaveBeenCalled();
+        expect(params.scheduleNextScan).toHaveBeenCalledWith(
+          SCAN_BLOCKED_DELAY_SECONDS,
+        );
+        expect(loggedMessages(params)).toContainEqual(
+          expect.stringContaining(
+            `trigger=watchdog keeping ${scTrader} running, no runnable alternate rescan=${SCAN_BLOCKED_DELAY_SECONDS}s`,
+          ),
+        );
+      });
+
+      it('retries the forced rotation when the hold recheck fires, although the current agent is not done', async () => {
+        const getHandOverDeployability = jest
+          .fn()
+          .mockResolvedValue({ canRun: false, reason: 'Low balance' });
+        const params = makeTraderRunningParams({
+          refreshRewardsEligibility: jest.fn().mockResolvedValue(false),
+          getHandOverDeployability,
+        });
+        const { rerender } = renderHook((props) => useAutoRunLifecycle(props), {
+          initialProps: params,
+        });
+        await act(async () => {
+          await flushMicrotasks();
+        });
+        await act(async () => {
+          jest.advanceTimersByTime(
+            RUNNING_AGENT_MAX_RUNTIME_SECONDS * 1000 +
+              RUNNING_AGENT_WATCHDOG_CHECK_SECONDS * 1000,
+          );
+          await flushMicrotasks();
+        });
+        expect(params.stopAgentWithRecovery).not.toHaveBeenCalled();
+
+        getHandOverDeployability.mockResolvedValue({ canRun: true });
+        rerender({ ...params, scanTick: 1 });
+        await act(async () => {
+          await flushMicrotasks();
+        });
+
+        expect(params.stopAgentWithRecovery).toHaveBeenCalledWith(scTrader);
+        expect(params.scanAndStartNext).toHaveBeenCalledWith(scTrader, {
+          first: scOptimus,
+          stoppedId: scTrader,
+          cycleId: expect.stringMatching(/^watchdog-/),
+          trigger: 'watchdog',
+        });
+      });
     });
   });
 
@@ -775,7 +1469,7 @@ describe('useAutoRunLifecycle', () => {
     });
 
     const flushMicrotasks = async () => {
-      for (let i = 0; i < 10; i++) {
+      for (let i = 0; i < 20; i++) {
         await Promise.resolve();
       }
     };
@@ -789,7 +1483,6 @@ describe('useAutoRunLifecycle', () => {
         runningAgentTypeRef: { current: AgentMap.PredictTrader },
         runningServiceConfigIdRef: { current: scTrader },
         refreshRewardsEligibility: jest.fn().mockResolvedValue(false),
-        getRewardSnapshot: jest.fn().mockReturnValue(false),
         stopAgentWithRecovery: jest.fn().mockResolvedValue(true),
       });
 
@@ -822,7 +1515,6 @@ describe('useAutoRunLifecycle', () => {
         runningAgentTypeRef: { current: AgentMap.PredictTrader },
         runningServiceConfigIdRef: { current: scTrader },
         refreshRewardsEligibility: jest.fn().mockResolvedValue(false),
-        getRewardSnapshot: jest.fn().mockReturnValue(false),
       });
 
       renderHook(() => useAutoRunLifecycle(params));
@@ -854,7 +1546,6 @@ describe('useAutoRunLifecycle', () => {
         runningAgentTypeRef: { current: AgentMap.PredictTrader },
         runningServiceConfigIdRef: { current: scTrader },
         refreshRewardsEligibility: jest.fn().mockResolvedValue(true),
-        getRewardSnapshot: jest.fn().mockReturnValue(true),
       });
 
       renderHook(() => useAutoRunLifecycle(params));
@@ -891,7 +1582,7 @@ describe('useAutoRunLifecycle', () => {
     });
 
     const flushMicrotasks = async () => {
-      for (let i = 0; i < 10; i++) {
+      for (let i = 0; i < 20; i++) {
         await Promise.resolve();
       }
     };
@@ -1186,14 +1877,16 @@ describe('useAutoRunLifecycle', () => {
           isEligibleAfterEviction: false,
         }),
         refreshRewardsEligibility: jest.fn().mockResolvedValue(false),
-        getRewardSnapshot: jest.fn().mockReturnValue(false),
       });
 
       await runOneCheck(params);
 
       expect(params.stopAgentWithRecovery).toHaveBeenCalledWith(scTrader);
       expect(params.startAgentWithRetries).not.toHaveBeenCalled();
-      expect(params.scanAndStartNext).toHaveBeenCalledWith(scTrader);
+      expect(params.scanAndStartNext).toHaveBeenCalledWith(
+        scTrader,
+        expect.objectContaining({ first: scOptimus, trigger: 'eviction' }),
+      );
     });
 
     it('ignores a transient staking read', async () => {
@@ -1393,7 +2086,6 @@ describe('useAutoRunLifecycle', () => {
         lastRewardsEligibilityRef,
         orderedIncludedInstances: [scTrader],
         refreshRewardsEligibility: jest.fn().mockResolvedValue(true),
-        getRewardSnapshot: jest.fn().mockReturnValue(false),
       });
 
       renderHook(() => useAutoRunLifecycle(params));
@@ -1456,7 +2148,7 @@ describe('useAutoRunLifecycle', () => {
     });
 
     const flushMicrotasks = async () => {
-      for (let i = 0; i < 10; i++) {
+      for (let i = 0; i < 20; i++) {
         await Promise.resolve();
       }
     };
@@ -1476,7 +2168,6 @@ describe('useAutoRunLifecycle', () => {
         runningServiceConfigIdRef: { current: scTrader },
         lastRewardsEligibilityRef,
         refreshRewardsEligibility: refreshMock,
-        getRewardSnapshot: jest.fn().mockReturnValue(false),
         stopAgentWithRecovery: stopMock,
       });
 

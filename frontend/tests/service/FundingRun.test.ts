@@ -44,6 +44,32 @@ describe('FundingRunService', () => {
     });
   });
 
+  it('getCompletedOnboardRuns sends every id as a repeated parameter', async () => {
+    const body = {
+      runs: [{ service_config_id: 'sc-1', run_id: 'fr-1', finished_at: 1 }],
+    };
+    (fetch as jest.Mock).mockReturnValue(mockResponse(body));
+
+    await expect(
+      FundingRunService.getCompletedOnboardRuns(['sc-1', 'sc-2']),
+    ).resolves.toEqual(body);
+    expect(fetch).toHaveBeenCalledWith(
+      `${RUN_URL}/completed_onboard?service_config_id=sc-1&service_config_id=sc-2`,
+      { headers: { ...CONTENT_TYPE_JSON_UTF8 } },
+    );
+  });
+
+  it('getCompletedOnboardRuns rejects on an error response', async () => {
+    (fetch as jest.Mock).mockReturnValue(mockResponse('boom', 500));
+
+    const error = await FundingRunService.getCompletedOnboardRuns([
+      'sc-1',
+    ]).catch((e) => e);
+    expect(error.message).toBe(
+      'Failed to fetch completed onboard funding runs',
+    );
+  });
+
   it('create posts the request body', async () => {
     (fetch as jest.Mock).mockReturnValue(mockResponse(RUN));
     const request: CreateFundingRunRequest = {

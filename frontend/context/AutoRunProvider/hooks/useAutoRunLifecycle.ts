@@ -1,6 +1,6 @@
 import { MutableRefObject, useCallback, useEffect, useRef } from 'react';
 
-import { AgentType } from '@/constants';
+import { AgentType, isActiveDeploymentStatus } from '@/constants';
 import { sleepAwareDelay } from '@/utils/delay';
 import { isNoStakingProgram } from '@/utils/stakingProgram';
 
@@ -17,9 +17,12 @@ import {
   RUNNING_AGENT_WATCHDOG_CHECK_SECONDS,
   SCAN_BLOCKED_DELAY_SECONDS,
   SCAN_ELIGIBLE_DELAY_SECONDS,
+  SCAN_LOADING_RETRY_SECONDS,
 } from '../constants';
 import { AgentMeta } from '../types';
 import { DeployabilityCheckResult } from '../utils/autoRunHelpers';
+import { probeAllDeploymentStatuses } from '../utils/probeDeployment';
+import { ScanOptions, ScanResult } from './useAutoRunScanner';
 import { useAutoRunVerboseLogger } from './useAutoRunVerboseLogger';
 
 type UseAutoRunLifecycleParams = {
@@ -41,11 +44,18 @@ type UseAutoRunLifecycleParams = {
   refreshRewardsEligibility: (
     serviceConfigId: string,
   ) => Promise<boolean | undefined>;
-  getRewardSnapshot: (serviceConfigId: string) => boolean | undefined;
+  /** Whether the running instance has gone an hour without goal progress. */
+  isStalled: (serviceConfigId: string) => boolean;
+  /** Starts the stall hour again, for a stalled instance kept running. */
+  restartStallClock: (serviceConfigId: string) => void;
+  /** Sends a stalled instance to the back of the queue for this epoch. */
+  deferStalled: (serviceConfigId: string) => void;
+  isStallDeferred: (serviceConfigId: string) => boolean;
   getPreferredStartFrom: () => string | null;
-  scanAndStartNext: (startFrom?: string | null) => Promise<{
-    started: boolean;
-  }>;
+  scanAndStartNext: (
+    from?: string | null,
+    options?: ScanOptions,
+  ) => Promise<ScanResult>;
   startSelectedAgentIfEligible: () => Promise<boolean>;
   stopAgentWithRecovery: (serviceConfigId: string) => Promise<boolean>;
   startAgentWithRetries: (
@@ -57,8 +67,8 @@ type UseAutoRunLifecycleParams = {
    */
   getDeployabilityForRunningInstance: () => Promise<DeployabilityCheckResult | null>;
   /**
-   * Deployability of an instance as if nothing were running, to check that a
-   * no-staking agent (Connect) has someone to hand over to before stopping it.
+   * Deployability of an instance as if nothing were running, to check that
+   * the running instance has someone to hand over to before stopping it.
    */
   getHandOverDeployability: (
     serviceConfigId: string,
@@ -93,7 +103,10 @@ export const useAutoRunLifecycle = ({
   scheduleNextScan,
   hasScheduledScan,
   refreshRewardsEligibility,
-  getRewardSnapshot,
+  isStalled,
+  restartStallClock,
+  deferStalled,
+  isStallDeferred,
   getPreferredStartFrom,
   scanAndStartNext,
   startSelectedAgentIfEligible,
@@ -116,6 +129,18 @@ export const useAutoRunLifecycle = ({
   const runningSinceRef = useRef<number | null>(null);
   // Sequence for correlation IDs across rotation/watchdog cycles.
   const rotationCycleSeqRef = useRef(0);
+  // The instance kept running because no other could start, the scan tick
+  // its recheck was scheduled on, and the forced rotation to retry then.
+  const holdRef = useRef<{
+    serviceConfigId: string;
+    scanTick: number;
+    forcedTrigger?: string;
+  } | null>(null);
+  const scanTickRef = useRef(scanTick);
+  scanTickRef.current = scanTick;
+  // Read when a rotation runs, so an instance added during a hold is seen.
+  const orderedIncludedInstancesRef = useRef(orderedIncludedInstances);
+  orderedIncludedInstancesRef.current = orderedIncludedInstances;
 
   // Clear stop-timeout backoff state whenever auto-run is disabled.
   useEffect(() => {
@@ -145,16 +170,17 @@ export const useAutoRunLifecycle = ({
 
   /**
    * Stops the current instance and, after the cooldown, scans from it for the
-   * next one. If stopping fails (e.g. backend timeout) the instance keeps
-   * running and rotation is retried after a delay, so the queue is never left
-   * with nothing running. `onStopped` runs right after a successful stop.
+   * next one, `first` before the usual order. If stopping fails (e.g. backend
+   * timeout) the instance keeps running and rotation is retried after a delay,
+   * so the queue is never left with nothing running. `onStopped` runs right
+   * after a successful stop.
    */
   const stopAndScanFrom = useCallback(
     async (
       currentServiceConfigId: string,
       cycleId: string,
       trigger: string,
-      onStopped?: () => void,
+      options: { first?: string; onStopped?: () => void } = {},
     ) => {
       const stopOk = await stopAgentWithRecovery(currentServiceConfigId);
       if (!stopOk) {
@@ -171,7 +197,7 @@ export const useAutoRunLifecycle = ({
         scheduleNextScan(SCAN_BLOCKED_DELAY_SECONDS);
         return;
       }
-      onStopped?.();
+      options.onStopped?.();
 
       // Reset the rewards guard, or a leftover `true` blocks every later rotation.
       lastRewardsEligibilityRef.current[currentServiceConfigId] = undefined;
@@ -180,10 +206,24 @@ export const useAutoRunLifecycle = ({
       const cooldownOk = await sleepAwareDelay(COOLDOWN_SECONDS);
       if (!cooldownOk) return;
       if (!enabledRef.current) return;
-      await scanAndStartNextRef.current(currentServiceConfigId);
-      recordMetric(AUTO_RUN_HEALTH_METRIC.ROTATIONS_SUCCEEDED);
+      // The stop was confirmed by probing the deployment, so the scan must not
+      // wait for the shared deployment poll to stop reporting it as running.
+      const { startedId } = await scanAndStartNextRef.current(
+        currentServiceConfigId,
+        {
+          first: options.first,
+          stoppedId: currentServiceConfigId,
+          cycleId,
+          trigger,
+        },
+      );
+      const status =
+        startedId && startedId !== currentServiceConfigId ? 'ok' : 'none';
+      if (status === 'ok') {
+        recordMetric(AUTO_RUN_HEALTH_METRIC.ROTATIONS_SUCCEEDED);
+      }
       logVerbose(
-        `cycle=${cycleId} trigger=${trigger} phase=rotate_end status=ok current=${currentServiceConfigId}`,
+        `cycle=${cycleId} trigger=${trigger} phase=rotate_end status=${status} current=${currentServiceConfigId}`,
       );
     },
     [
@@ -198,80 +238,82 @@ export const useAutoRunLifecycle = ({
     ],
   );
 
-  /** Stops a no-staking agent (Connect) only once another instance can start. */
-  const handOverFromNoStakingAgent = useCallback(
+  /** Run before any stop, so a turn ends only when another agent can take it. */
+  const findRunnableAlternate = useCallback(
     async (
       currentServiceConfigId: string,
-      options: { force?: boolean; cycleId: string; trigger: string },
+      options: { cycleId: string; trigger: string; includeStalled: boolean },
     ) => {
-      const { force, cycleId, trigger } = options;
-      const currentIndex = orderedIncludedInstances.indexOf(
-        currentServiceConfigId,
-      );
+      const { cycleId, trigger, includeStalled } = options;
+      const passOver = (serviceConfigId: string, check?: string) =>
+        logVerbose(
+          `cycle=${cycleId} trigger=${trigger} pass over ${serviceConfigId}: ${check ?? 'unknown'}`,
+        );
+      const getDeployability = async (serviceConfigId: string) => {
+        const deployability = await getHandOverDeployability(serviceConfigId);
+        if (!deployability?.canRun && !deployability?.isEmptyRewardPool) {
+          passOver(serviceConfigId, deployability?.reason ?? 'not configured');
+        }
+        return deployability;
+      };
+      const order = orderedIncludedInstancesRef.current;
+      const currentIndex = order.indexOf(currentServiceConfigId);
       const alternates = [
-        ...orderedIncludedInstances.slice(currentIndex + 1),
-        ...orderedIncludedInstances.slice(0, Math.max(currentIndex, 0)),
+        ...order.slice(currentIndex + 1),
+        ...order.slice(0, Math.max(currentIndex, 0)),
       ].filter((id) => id !== currentServiceConfigId);
 
-      const refreshed = await Promise.all(
+      const statuses = await Promise.all(
         alternates.map((id) => refreshRewardsEligibility(id)),
       );
-      const notDone = alternates.filter(
-        (id, index) => (refreshed[index] ?? getRewardSnapshot(id)) !== true,
-      );
-
-      let handOverTo: string | null = null;
-      for (const candidate of notDone) {
-        if (!enabledRef.current) return;
-        const deployability = await getHandOverDeployability(candidate);
-        if (deployability?.canRun) {
-          handOverTo = candidate;
-          break;
+      const hasUnknown = statuses.some((status) => status === undefined);
+      const found = (next: string | null) => ({ next, hasUnknown });
+      const emptyPool: string[] = [];
+      const stalled: string[] = [];
+      for (const [index, candidate] of alternates.entries()) {
+        if (!enabledRef.current) return found(null);
+        if (statuses[index] === true) {
+          passOver(candidate, 'done for the epoch');
+          continue;
+        }
+        if (statuses[index] === undefined) {
+          passOver(candidate, 'rewards status unknown');
+          continue;
+        }
+        if (isStallDeferred(candidate)) {
+          if (includeStalled) stalled.push(candidate);
+          else passOver(candidate, 'stalled on its activity goal, deferred');
+          continue;
+        }
+        const deployability = await getDeployability(candidate);
+        if (deployability?.canRun) return found(candidate);
+        if (deployability?.isEmptyRewardPool) emptyPool.push(candidate);
+      }
+      if (emptyPool.length > 0) return found(emptyPool[0]);
+      for (const candidate of stalled) {
+        if (!enabledRef.current) return found(null);
+        const deployability = await getDeployability(candidate);
+        if (deployability?.canRun || deployability?.isEmptyRewardPool) {
+          return found(candidate);
         }
       }
-      if (!enabledRef.current) return;
-      if (!handOverTo) {
-        lastRewardsEligibilityRef.current[currentServiceConfigId] = undefined;
-        const delay = force
-          ? SCAN_BLOCKED_DELAY_SECONDS
-          : SCAN_ELIGIBLE_DELAY_SECONDS;
-        logVerbose(
-          `cycle=${cycleId} trigger=${trigger} keeping connect running, no runnable alternate current=${currentServiceConfigId} rescan=${delay}s`,
-        );
-        scheduleNextScan(delay);
-        return;
-      }
-
-      logVerbose(
-        `cycle=${cycleId} trigger=${trigger} phase=hand_over current=${currentServiceConfigId} next=${handOverTo}`,
-      );
-      // A watchdog or eviction hand-over does not mean the goal was reached.
-      await stopAndScanFrom(
-        currentServiceConfigId,
-        cycleId,
-        trigger,
-        force
-          ? undefined
-          : () => notifyGoalReachedOnHandOver(currentServiceConfigId),
-      );
+      return found(null);
     },
     [
       enabledRef,
       getHandOverDeployability,
-      getRewardSnapshot,
-      lastRewardsEligibilityRef,
+      isStallDeferred,
       logVerbose,
-      notifyGoalReachedOnHandOver,
-      orderedIncludedInstances,
       refreshRewardsEligibility,
-      scheduleNextScan,
-      stopAndScanFrom,
     ],
   );
 
   /**
-   * Rotation effect: when the currently running instance earns rewards, try to rotate to the next one.
-   * If no other instances are eligible, keep the current one running and retry rotation after a delay.
+   * Ends the running instance's turn: on the rewards edge (done or stalled),
+   * the watchdog, an eviction it cannot recover from, or Connect's minutes.
+   * Stops it only when the pre-check found another instance that can start,
+   * which the scan then tries first. Otherwise the instance keeps the slot,
+   * and the whole order is checked again after a delay.
    */
   const rotateToNext = useCallback(
     async (
@@ -280,85 +322,88 @@ export const useAutoRunLifecycle = ({
     ) => {
       const cycleId =
         options?.cycleId ?? `cycle-unknown-${currentServiceConfigId}`;
-      const trigger = options?.trigger ?? 'unknown';
-      logVerbose(
-        `cycle=${cycleId} trigger=${trigger} phase=rotate_begin current=${currentServiceConfigId} force=${Boolean(options?.force)}`,
-      );
-      // Rotation policy:
-      // 1) Only block rotation when every alternate is CONFIRMED earned (true).
-      //    Unknown (undefined) is forwarded to scanAndStartNext, whose scanner
-      //    path treats unknown leniently. Blocking on unknown would deadlock
-      //    when an alternate's rewards fetch fails transiently.
-      // 2) Otherwise stop current, cool down, and scan from next.
       const currentMeta = configuredAgents.find(
         (agent) => agent.serviceConfigId === currentServiceConfigId,
       );
-      if (currentMeta && isNoStakingProgram(currentMeta.stakingProgramId)) {
-        await handOverFromNoStakingAgent(currentServiceConfigId, {
-          force: options?.force,
+      const isNoStakingAgent =
+        !!currentMeta && isNoStakingProgram(currentMeta.stakingProgramId);
+      const stalled = !isNoStakingAgent && isStalled(currentServiceConfigId);
+      const trigger =
+        stalled && options?.trigger === 'rewards'
+          ? 'stall'
+          : (options?.trigger ?? 'unknown');
+      logVerbose(
+        `cycle=${cycleId} trigger=${trigger} phase=rotate_begin current=${currentServiceConfigId} force=${Boolean(options?.force)}`,
+      );
+
+      const { next, hasUnknown } = await findRunnableAlternate(
+        currentServiceConfigId,
+        {
           cycleId,
           trigger,
-        });
-        return;
-      }
-
-      const otherInstances = orderedIncludedInstances.filter(
-        (id) => id !== currentServiceConfigId,
+          includeStalled: !stalled,
+        },
       );
-      if (otherInstances.length === 0) {
-        scheduleNextScan(SCAN_ELIGIBLE_DELAY_SECONDS);
-        return;
-      }
-
-      const refreshed = await Promise.all(
-        otherInstances.map((id) => refreshRewardsEligibility(id)),
-      );
-      const rewardStates = otherInstances.map(
-        (id, index) => refreshed[index] ?? getRewardSnapshot(id),
-      );
-      const rewardStatesLabel = otherInstances
-        .map(
-          (id, index) =>
-            `${id}=${rewardStates[index] === undefined ? 'unknown' : String(rewardStates[index])}`,
-        )
-        .join(', ');
-
-      const allConfirmedEarned = rewardStates.every((state) => state === true);
-      if (allConfirmedEarned) {
-        if (options?.force) {
-          // Watchdog force mode should not stop the current instance when there is
-          // no known alternative candidate. Doing so would create idle time.
-          // Uses the shorter BLOCKED delay because the watchdog fired on runtime,
-          // which is a stronger signal that we want to recheck rotation soon.
-          logVerbose(
-            `cycle=${cycleId} trigger=${trigger} phase=no_alternative current=${currentServiceConfigId} rewards=[${rewardStatesLabel}] rescan=${SCAN_BLOCKED_DELAY_SECONDS}s`,
-          );
-          scheduleNextScan(SCAN_BLOCKED_DELAY_SECONDS);
-          return;
-        }
-        // All alternates legitimately earned this epoch — wait for the next
-        // epoch before rechecking. The stale-`true` deadlock is handled at the
-        // fetch layer by the local-activity override in `refreshRewardsEligibility`,
-        // so reaching this branch means the alternates are genuinely freshly earned.
-        logVerbose(
-          `all other instances earned, keeping ${currentServiceConfigId} running, rewards=[${rewardStatesLabel}], rescan in ${SCAN_ELIGIBLE_DELAY_SECONDS}s`,
-        );
-        scheduleNextScan(SCAN_ELIGIBLE_DELAY_SECONDS);
-        return;
-      }
-
       if (!enabledRef.current) return;
-      await stopAndScanFrom(currentServiceConfigId, cycleId, trigger);
+
+      if (!next) {
+        // A stalled instance keeps running with a fresh hour.
+        if (stalled) restartStallClock(currentServiceConfigId);
+        // Connect's `is_met` never goes back to false within a process, so the
+        // reset is what lets the next rewards poll check again.
+        if (isNoStakingAgent) {
+          lastRewardsEligibilityRef.current[currentServiceConfigId] = undefined;
+        }
+        // A forced rotation (watchdog, eviction), or an alternate whose rewards
+        // status is unknown, rechecks sooner.
+        const delay =
+          options?.force || hasUnknown
+            ? SCAN_BLOCKED_DELAY_SECONDS
+            : SCAN_ELIGIBLE_DELAY_SECONDS;
+        logVerbose(
+          `cycle=${cycleId} trigger=${trigger} keeping ${currentServiceConfigId} running, no runnable alternate rescan=${delay}s`,
+        );
+        logVerbose(
+          `cycle=${cycleId} trigger=${trigger} phase=rotate_end status=kept current=${currentServiceConfigId}`,
+        );
+        scheduleNextScan(delay);
+        holdRef.current = {
+          serviceConfigId: currentServiceConfigId,
+          scanTick: scanTickRef.current,
+          forcedTrigger: options?.force ? trigger : undefined,
+        };
+        return;
+      }
+
+      logVerbose(
+        `cycle=${cycleId} trigger=${trigger} phase=hand_over current=${currentServiceConfigId} next=${next}`,
+      );
+      // Only Connect finishing its minutes means its goal was reached: a
+      // watchdog, eviction or stall hand-over does not.
+      const notifyGoalReached = isNoStakingAgent && !options?.force;
+      // Deferred only once stopped: after a stop timeout it is still running.
+      const onStopped = () => {
+        if (stalled) deferStalled(currentServiceConfigId);
+        if (notifyGoalReached) {
+          notifyGoalReachedOnHandOver(currentServiceConfigId);
+        }
+      };
+      await stopAndScanFrom(currentServiceConfigId, cycleId, trigger, {
+        first: next,
+        onStopped,
+      });
     },
     [
       configuredAgents,
+      deferStalled,
       enabledRef,
-      getRewardSnapshot,
-      handOverFromNoStakingAgent,
-      orderedIncludedInstances,
-      refreshRewardsEligibility,
-      scheduleNextScan,
+      findRunnableAlternate,
+      isStalled,
+      lastRewardsEligibilityRef,
       logVerbose,
+      notifyGoalReachedOnHandOver,
+      restartStallClock,
+      scheduleNextScan,
       stopAndScanFrom,
     ],
   );
@@ -385,15 +430,44 @@ export const useAutoRunLifecycle = ({
     const currentId = runningServiceConfigId;
     if (!currentId) return;
 
+    // The hold's scheduled recheck fired. A forced rotation is retried as
+    // is, since its trigger does not recur soon. Otherwise forget the `true`
+    // that started the hold, so the order is checked again even though the
+    // status is unchanged.
+    const hold = holdRef.current;
+    let forcedTrigger: string | undefined;
+    if (
+      hold &&
+      (hold.serviceConfigId !== currentId || hold.scanTick !== scanTick)
+    ) {
+      if (hold.serviceConfigId === currentId) {
+        forcedTrigger = hold.forcedTrigger;
+        if (!forcedTrigger) {
+          lastRewardsEligibilityRef.current[currentId] = undefined;
+        }
+      }
+      holdRef.current = null;
+    }
+
     let isActive = true;
     const checkRewardsAndRotate = async () => {
-      const cycleId = `rewards-${currentId}-${++rotationCycleSeqRef.current}`;
       isRotatingRef.current = true;
       try {
-        const refreshed = await refreshRewardsEligibility(currentId);
+        if (forcedTrigger) {
+          const cycleId = `${forcedTrigger}-${currentId}-${++rotationCycleSeqRef.current}`;
+          logVerbose(
+            `cycle=${cycleId} trigger=${forcedTrigger} phase=trigger current=${currentId} retry=hold`,
+          );
+          await rotateToNext(currentId, {
+            force: true,
+            cycleId,
+            trigger: forcedTrigger,
+          });
+          return;
+        }
+        const cycleId = `rewards-${currentId}-${++rotationCycleSeqRef.current}`;
+        const snapshot = await refreshRewardsEligibility(currentId);
         if (!isActive) return;
-        const snapshot =
-          refreshed === undefined ? getRewardSnapshot(currentId) : refreshed;
         // Check backoff BEFORE updating the guard. If the guard were written
         // first it would be overwritten to `true` during the backoff window,
         // permanently blocking future rotation triggers.
@@ -431,7 +505,6 @@ export const useAutoRunLifecycle = ({
     };
   }, [
     enabled,
-    getRewardSnapshot,
     lastRewardsEligibilityRef,
     logMessage,
     logVerbose,
@@ -691,28 +764,42 @@ export const useAutoRunLifecycle = ({
 
     isRotatingRef.current = true;
     let reachedScan = false;
+    let handled = false;
     const startNext = async () => {
-      const preferredStartFrom = getPreferredStartFromRef.current();
-      if (!wasEnabled) {
-        // First enable path: wait startup delay, try selected instance first, then scan queue.
-        const startOk = await sleepAwareDelay(AUTO_RUN_START_DELAY_SECONDS);
-        if (!startOk) return;
-        if (!enabledRef.current || runningAgentTypeRef.current) return;
-        const startedSelected = await startSelectedAgentIfEligibleRef.current();
-        if (startedSelected) return;
-        reachedScan = true;
-        await scanAndStartNextRef.current(preferredStartFrom);
+      const delay = wasEnabled
+        ? COOLDOWN_SECONDS
+        : AUTO_RUN_START_DELAY_SECONDS;
+      if (!(await sleepAwareDelay(delay))) return;
+      if (!enabledRef.current || runningAgentTypeRef.current) return;
+
+      // Start confirmation can precede the shared deployment poll, especially
+      // while hidden. Starting the sidebar selection would stop that agent.
+      try {
+        const deployments = await probeAllDeploymentStatuses();
+        if (!enabledRef.current) return;
+        const active = Object.entries(deployments).find(([, deployment]) =>
+          isActiveDeploymentStatus(deployment.status),
+        );
+        if (runningAgentTypeRef.current || active) {
+          handled = true;
+          logVerbose(
+            `idle recovery skipped: agent active service=${active?.[0] ?? runningServiceConfigIdRef.current}`,
+          );
+          return;
+        }
+      } catch (error) {
+        handled = true;
+        if (!enabledRef.current) return;
+        logMessage(
+          `idle recovery deferred: deployment status unknown: ${error}`,
+        );
+        scheduleNextScan(SCAN_LOADING_RETRY_SECONDS);
         return;
       }
-      // Auto-run was already enabled but the instance stopped (e.g. sleep/wake,
-      // backend crash). Try to resume the previously running instance first.
-      const cooldownOk = await sleepAwareDelay(COOLDOWN_SECONDS);
-      if (!cooldownOk) return;
-      if (!enabledRef.current) return;
-      const resumedSelected = await startSelectedAgentIfEligibleRef.current();
-      if (resumedSelected) return;
+      handled = await startSelectedAgentIfEligibleRef.current();
+      if (handled) return;
       reachedScan = true;
-      await scanAndStartNextRef.current(preferredStartFrom);
+      await scanAndStartNextRef.current(getPreferredStartFromRef.current());
     };
 
     startNext()
@@ -723,6 +810,7 @@ export const useAutoRunLifecycle = ({
         // never reached scanAndStartNext, ensure the loop retries.
         if (
           !reachedScan &&
+          !handled &&
           enabledRef.current &&
           !runningAgentTypeRef.current &&
           !hasScheduledScan()
@@ -737,6 +825,7 @@ export const useAutoRunLifecycle = ({
     enabled,
     getPreferredStartFrom,
     logMessage,
+    logVerbose,
     runningAgentType,
     scanAndStartNext,
     scanTick,
@@ -744,6 +833,7 @@ export const useAutoRunLifecycle = ({
     hasScheduledScan,
     startSelectedAgentIfEligible,
     runningAgentTypeRef,
+    runningServiceConfigIdRef,
     enabledRef,
   ]);
 

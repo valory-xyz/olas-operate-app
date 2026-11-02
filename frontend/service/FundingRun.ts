@@ -1,5 +1,6 @@
 import { BACKEND_URL, CONTENT_TYPE_JSON_UTF8 } from '@/constants';
 import {
+  CompletedOnboardRunsResponse,
   CreateFundingRunRequest,
   FundingRun,
   FundingRunSources,
@@ -36,6 +37,23 @@ const getActive = async (): Promise<FundingRun | null> =>
       'Failed to fetch the active funding run',
     ),
   );
+
+/** The latest `COMPLETED` onboard run of each given service that has one. */
+const getCompletedOnboardRuns = async (
+  serviceConfigIds: string[],
+): Promise<CompletedOnboardRunsResponse> => {
+  const params = new URLSearchParams(
+    serviceConfigIds.map((id) => ['service_config_id', id]),
+  );
+  return fetch(`${FUNDING_RUN_URL}/completed_onboard?${params}`, {
+    headers: { ...CONTENT_TYPE_JSON_UTF8 },
+  }).then((response) =>
+    handleResponse<CompletedOnboardRunsResponse>(
+      response,
+      'Failed to fetch completed onboard funding runs',
+    ),
+  );
+};
 
 /** Polling pauses while a create is in flight, so a hung create must not hang forever. */
 export const CREATE_TIMEOUT_MS = 60_000;
@@ -95,6 +113,7 @@ const cancel = async (id: string): Promise<FundingRun> =>
 export const FundingRunService = {
   getSources,
   getActive,
+  getCompletedOnboardRuns,
   create,
   refreshQuote,
   retry,

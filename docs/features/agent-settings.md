@@ -37,6 +37,7 @@ confirm()
   │     ├── Show 'Agent settings updated successfully'
   │     └── restartIfServiceRunning() (fire-and-forget, not awaited)
   │           ├── ServicesService.stopDeployment(serviceConfigId)
+  │           ├── runPrestartCheck(queryClient, serviceConfigId) — a blocking check leaves the agent stopped
   │           └── ServicesService.startService(serviceConfigId)
   ├── On error: re-throw (caller handles)
   └── Close modal (only on success)
