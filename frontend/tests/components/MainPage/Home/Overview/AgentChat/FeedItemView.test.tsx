@@ -15,17 +15,13 @@ jest.mock('../../../../../../hooks', () => ({
   useServices: jest.fn(),
 }));
 
-const renderEntry = (entry: FeedItem['entry']) =>
+const renderItem = (item: FeedItem) =>
   render(
-    <FeedItemView
-      item={{ key: `entry-${entry.id}`, entry }}
-      onRetry={jest.fn()}
-      onDismiss={jest.fn()}
-    />,
+    <FeedItemView item={item} onRetry={jest.fn()} onDismiss={jest.fn()} />,
   );
 
 const renderAgentReply = (text: string) =>
-  renderEntry(makeFeedAgentMessage(1, { text }));
+  renderItem({ key: 'entry-1', entry: makeFeedAgentMessage(1, { text }) });
 
 describe('FeedItemView agent reply', () => {
   beforeEach(() => {
@@ -121,7 +117,10 @@ describe('FeedItemView text selection', () => {
   });
 
   it('lets the user message be selected but not its time', () => {
-    renderEntry(makeFeedUserMessage(1, { text: 'What is my address?' }));
+    renderItem({
+      key: 'entry-1',
+      entry: makeFeedUserMessage(1, { text: 'What is my address?' }),
+    });
 
     expect(screen.getByText('What is my address?')).toHaveClass(
       'can-select-text',
@@ -132,17 +131,11 @@ describe('FeedItemView text selection', () => {
   });
 
   it('keeps the failure notice and its buttons non-selectable', () => {
-    render(
-      <FeedItemView
-        item={{
-          key: 'entry-1',
-          entry: makeFeedUserMessage(1),
-          failure: 'failed',
-        }}
-        onRetry={jest.fn()}
-        onDismiss={jest.fn()}
-      />,
-    );
+    renderItem({
+      key: 'entry-1',
+      entry: makeFeedUserMessage(1),
+      failure: 'failed',
+    });
 
     expect(screen.getByText('message 1')).toHaveClass('can-select-text');
     [
@@ -164,15 +157,16 @@ describe('FeedItemView text selection', () => {
   });
 
   it('lets the event title and every field row be selected but not the time', () => {
-    renderEntry(
-      makeFeedEvent(1, {
+    renderItem({
+      key: 'entry-1',
+      entry: makeFeedEvent(1, {
         title: 'Placed a trade',
         fields: [
           { label: 'Market', value: 'Will it rain?', url: 'https://x.y/m' },
           { label: 'Amount', value: '5 pUSD' },
         ],
       }),
-    );
+    });
 
     expect(screen.getByText('Placed a trade')).toHaveClass('can-select-text');
     ['Market:', 'Amount:'].forEach((label) =>
