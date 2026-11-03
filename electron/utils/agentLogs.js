@@ -22,4 +22,9 @@ function listPreviousAgentLogs(servicePath) {
   });
 }
 
-module.exports = { listPreviousAgentLogs };
+function previousAgentLogName(serviceDirName, generation) {
+  const suffix = generation === 1 ? '' : `_${generation}`;
+  return `${serviceDirName}_prev_agent${suffix}.log`;
+}
+
+module.exports = { listPreviousAgentLogs, previousAgentLogName };

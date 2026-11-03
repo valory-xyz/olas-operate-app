@@ -6,7 +6,10 @@ const AdmZip = require('adm-zip');
 
 const { logger } = require('../logger');
 const { isMac, paths } = require('../constants');
-const { listPreviousAgentLogs } = require('../utils/agentLogs');
+const {
+  listPreviousAgentLogs,
+  previousAgentLogName,
+} = require('../utils/agentLogs');
 const { sanitizeLogs } = require('../utils/sanitizers');
 
 const FILE_SIZE_LIMITS = {
@@ -237,11 +240,15 @@ function prepareLogsForDebug(data, forSupport = false) {
         try {
           listPreviousAgentLogs(servicePath).forEach(
             ({ generation, filePath }) => {
-              const suffix = generation === 1 ? '' : `_${generation}`;
-              sanitizeLogs({
-                name: `${serviceDirName}_prev_agent${suffix}.log`,
-                filePath,
-              });
+              try {
+                sanitizeLogs({
+                  name: previousAgentLogName(serviceDirName, generation),
+                  filePath,
+                });
+              } catch (e) {
+                logger.electron(`Couldn't export ${filePath}`);
+                logger.electron(e);
+              }
             },
           );
         } catch (e) {

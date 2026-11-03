@@ -190,10 +190,7 @@ export const useAutoRunController = ({
     return () => clearInterval(intervalId);
   }, [enabled, logMessage]);
 
-  // The middleware's health checker restarts unhealthy agents on its own. The
-  // deployment poll exposes only `restarts_since_last_healthy`, which resets
-  // once the agent is healthy again, so count its increases. The first value
-  // seen for a service is a baseline, not new restarts.
+  // Count increases only; the first poll for a service is a baseline.
   const { allDeployments } = useServices();
   const lastSeenRestartsRef = useRef<Partial<Record<string, number>>>({});
   useEffect(() => {

@@ -4,10 +4,14 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 
-const { listPreviousAgentLogs } = require('../../electron/utils/agentLogs');
+const {
+  listPreviousAgentLogs,
+  previousAgentLogName,
+} = require('../../electron/utils/agentLogs');
 
-test('listPreviousAgentLogs: lists every previous agent run log', () => {
+test('listPreviousAgentLogs: lists every previous agent run log', (t) => {
   const servicePath = fs.mkdtempSync(path.join(os.tmpdir(), 'pearl-service-'));
+  t.after(() => fs.rmSync(servicePath, { recursive: true, force: true }));
   [
     'prev_log.txt',
     'prev_log_2.txt',
@@ -27,5 +31,10 @@ test('listPreviousAgentLogs: lists every previous agent run log', () => {
     { generation: 2, filePath: path.join(servicePath, 'prev_log_2.txt') },
     { generation: 20, filePath: path.join(servicePath, 'prev_log_20.txt') },
   ]);
-  fs.rmSync(servicePath, { recursive: true, force: true });
+});
+
+test('previousAgentLogName: builds the exported zip entry names', () => {
+  assert.equal(previousAgentLogName('sc-1', 1), 'sc-1_prev_agent.log');
+  assert.equal(previousAgentLogName('sc-1', 2), 'sc-1_prev_agent_2.log');
+  assert.equal(previousAgentLogName('sc-1', 20), 'sc-1_prev_agent_20.log');
 });

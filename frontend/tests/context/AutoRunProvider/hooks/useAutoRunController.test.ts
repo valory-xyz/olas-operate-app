@@ -238,6 +238,12 @@ describe('useAutoRunController', () => {
 
   const describeVerbose = AUTO_RUN_VERBOSE_LOGS ? describe : describe.skip;
   describeVerbose('health summary logging (AUTO_RUN_VERBOSE_LOGS)', () => {
+    const getSummaryCalls = (mockLogMessage: jest.Mock) =>
+      mockLogMessage.mock.calls.filter(
+        (call: string[]) =>
+          typeof call[0] === 'string' && call[0].includes('health summary'),
+      );
+
     it('logs health summary at interval when enabled', () => {
       const mockLogMessage = jest.fn();
       useLogAutoRunEvent.mockReturnValue({ logMessage: mockLogMessage });
@@ -248,10 +254,7 @@ describe('useAutoRunController', () => {
       act(() => {
         jest.advanceTimersByTime(HEALTH_SUMMARY_INTERVAL_SECONDS * 1000);
       });
-      const summaryCalls = mockLogMessage.mock.calls.filter(
-        (call: string[]) =>
-          typeof call[0] === 'string' && call[0].includes('health summary'),
-      );
+      const summaryCalls = getSummaryCalls(mockLogMessage);
       expect(summaryCalls).toHaveLength(0);
     });
 
@@ -277,10 +280,7 @@ describe('useAutoRunController', () => {
         jest.advanceTimersByTime(HEALTH_SUMMARY_INTERVAL_SECONDS * 1000);
       });
 
-      const summaryCalls = mockLogMessage.mock.calls.filter(
-        (call: string[]) =>
-          typeof call[0] === 'string' && call[0].includes('health summary'),
-      );
+      const summaryCalls = getSummaryCalls(mockLogMessage);
       expect(summaryCalls).toHaveLength(1);
       expect(summaryCalls[0][0]).toContain('startErrors=2');
       expect(summaryCalls[0][0]).toContain('stopTimeouts=1');
@@ -292,10 +292,7 @@ describe('useAutoRunController', () => {
         jest.advanceTimersByTime(HEALTH_SUMMARY_INTERVAL_SECONDS * 1000);
       });
 
-      const summaryCallsAfterReset = mockLogMessage.mock.calls.filter(
-        (call: string[]) =>
-          typeof call[0] === 'string' && call[0].includes('health summary'),
-      );
+      const summaryCallsAfterReset = getSummaryCalls(mockLogMessage);
       expect(summaryCallsAfterReset).toHaveLength(0);
     });
 
@@ -312,10 +309,7 @@ describe('useAutoRunController', () => {
         jest.advanceTimersByTime(HEALTH_SUMMARY_INTERVAL_SECONDS * 1000 * 2);
       });
       // Interval should have been cleared - no health summary logged
-      const summaryCalls = mockLogMessage.mock.calls.filter(
-        (call: string[]) =>
-          typeof call[0] === 'string' && call[0].includes('health summary'),
-      );
+      const summaryCalls = getSummaryCalls(mockLogMessage);
       expect(summaryCalls).toHaveLength(0);
     });
 
@@ -350,15 +344,8 @@ describe('useAutoRunController', () => {
       return { mockLogMessage, rerender, params };
     };
 
-    const getSummaryCalls = (mockLogMessage: jest.Mock) =>
-      mockLogMessage.mock.calls.filter(
-        (call: string[]) =>
-          typeof call[0] === 'string' && call[0].includes('health summary'),
-      );
-
     it('counts health-check restarts from polled deployments', () => {
-      // A restart from before this session is a baseline, not a new restart.
-      // Then two restarts, a healthy probe resets the counter, and one more.
+      // Baseline 1; 2 and 3 count; 0 resets; 1 counts.
       const { mockLogMessage } = renderAndPoll(true, 1, [2, 3, 0, 1]);
 
       act(() => {
@@ -368,6 +355,42 @@ describe('useAutoRunController', () => {
       const summaryCalls = getSummaryCalls(mockLogMessage);
       expect(summaryCalls).toHaveLength(1);
       expect(summaryCalls[0][0]).toContain('healthCheckRestarts=3');
+    });
+
+    it('keeps a separate restart baseline per service', () => {
+      const mockLogMessage = jest.fn();
+      useLogAutoRunEvent.mockReturnValue({ logMessage: mockLogMessage });
+      const deploymentWithRestarts = (restarts: number) =>
+        makeServiceDeployment({
+          agent_liveness: makeAgentLiveness({
+            restarts_since_last_healthy: restarts,
+          }),
+        });
+      useServices.mockReturnValue({
+        allDeployments: {
+          [DEFAULT_SERVICE_CONFIG_ID]: deploymentWithRestarts(2),
+        },
+      });
+      const params = makeHookParams({ enabled: true });
+      const { rerender } = renderHook((props) => useAutoRunController(props), {
+        initialProps: params,
+      });
+
+      useServices.mockReturnValue({
+        allDeployments: {
+          [MOCK_SERVICE_CONFIG_ID_2]: deploymentWithRestarts(1),
+          [DEFAULT_SERVICE_CONFIG_ID]: deploymentWithRestarts(3),
+        },
+      });
+      rerender({ ...params });
+
+      act(() => {
+        jest.advanceTimersByTime(HEALTH_SUMMARY_INTERVAL_SECONDS * 1000);
+      });
+
+      const summaryCalls = getSummaryCalls(mockLogMessage);
+      expect(summaryCalls).toHaveLength(1);
+      expect(summaryCalls[0][0]).toContain('healthCheckRestarts=1');
     });
 
     it('does not count health-check restarts while auto-run is disabled', () => {
