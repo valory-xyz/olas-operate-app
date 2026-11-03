@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
+import { CHAT_COPY } from '../../../../../../components/MainPage/Home/Overview/AgentChat/constants';
 import { FeedItemView } from '../../../../../../components/MainPage/Home/Overview/AgentChat/FeedItemView';
 import { useServices } from '../../../../../../hooks';
 import { FeedItem, formatFeedTime } from '../../../../../../utils/agentChat';
@@ -128,6 +129,27 @@ describe('FeedItemView text selection', () => {
     expect(
       screen.getByText(formatFeedTime(ts)).closest('.can-select-text'),
     ).toBeNull();
+  });
+
+  it('keeps the failure notice and its buttons non-selectable', () => {
+    render(
+      <FeedItemView
+        item={{
+          key: 'entry-1',
+          entry: makeFeedUserMessage(1),
+          failure: 'failed',
+        }}
+        onRetry={jest.fn()}
+        onDismiss={jest.fn()}
+      />,
+    );
+
+    expect(screen.getByText('message 1')).toHaveClass('can-select-text');
+    [
+      screen.getByText(CHAT_COPY.failed),
+      screen.getByRole('button', { name: CHAT_COPY.tryAgain }),
+      screen.getByRole('button', { name: CHAT_COPY.dismiss }),
+    ].forEach((node) => expect(node.closest('.can-select-text')).toBeNull());
   });
 
   it('lets the reply be selected, including its markdown, but not its time', () => {
