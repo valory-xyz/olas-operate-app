@@ -8,11 +8,8 @@ const isWindows = process.platform === 'win32';
 // Prints one "<ppid> <pid>" line per process. Uses PowerShell because wmic
 // is removed from recent Windows 11 releases.
 const windowsListCommand =
-  "Get-CimInstance Win32_Process | ForEach-Object { '{0} {1}' -f $_.ParentProcessId, $_.ProcessId }";
+  "Get-CimInstance Win32_Process -ErrorAction Stop | ForEach-Object { '{0} {1}' -f $_.ParentProcessId, $_.ProcessId }";
 
-/**
- * Parses "<ppid> <pid>" lines into [{ ppid, pid }], skipping anything else.
- */
 function parseProcessList(stdout) {
   return stdout
     .split(/\r?\n/)
@@ -70,8 +67,13 @@ function findDescendantPids(rootPid, processes) {
 }
 
 async function killProcesses(pid) {
-  // Array of PIDs to kill, starting with the children
-  const pidsToKill = findDescendantPids(pid, await listProcesses());
+  const processes = await listProcesses();
+  if (!processes.some((p) => p.pid === Number(pid))) {
+    logger.electron(
+      `Warning: pid ${pid} not in process list of ${processes.length} entries`,
+    );
+  }
+  const pidsToKill = findDescendantPids(pid, processes);
   logger.electron('Pids to kill ' + JSON.stringify(pidsToKill));
 
   if (pidsToKill.length === 0) return;
