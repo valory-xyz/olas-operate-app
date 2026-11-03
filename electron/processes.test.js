@@ -4,12 +4,20 @@
  */
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { execFileSync, spawn } = require('node:child_process');
+const childProcess = require('node:child_process');
+
+const { execFileSync, spawn } = childProcess;
 
 // Stub the logger so the tests write no log files and need no node_modules.
+const logLines = [];
 require.cache[require.resolve('./logger')] = {
-  exports: { logger: { electron: () => {} } },
+  exports: { logger: { electron: (line) => logLines.push(line) } },
 };
+
+// Route execFile through a replaceable stub; processes.js captures it on load.
+const realExecFile = childProcess.execFile;
+let execFileImpl = realExecFile;
+childProcess.execFile = (...args) => execFileImpl(...args);
 
 const {
   findDescendantPids,
@@ -34,8 +42,6 @@ test('parseProcessList: reads Windows CRLF output', () => {
 });
 
 test('findDescendantPids: finds children whose PID is lower than their parent', () => {
-  // The 2026-10-26 update: PIDs wrapped from 99999, so the tendermint_bin
-  // Flask server (2743) and its node (2750) sort before their parents.
   const processes = [
     { ppid: 1, pid: 1 },
     { ppid: 99714, pid: 2743 },
@@ -67,11 +73,39 @@ test('findDescendantPids: returns nothing for an unknown PID', () => {
   assert.deepEqual(findDescendantPids('123', [{ ppid: 1, pid: 2 }]), []);
 });
 
+test('killProcesses: rejects when listing processes fails', async (t) => {
+  t.after(() => {
+    execFileImpl = realExecFile;
+  });
+  const listError = new Error('listing failed');
+  execFileImpl = (_file, _args, _options, callback) => callback(listError);
+
+  await assert.rejects(killProcesses(123), listError);
+});
+
+test('killProcesses: warns and kills nothing on an unusable listing', async (t) => {
+  t.after(() => {
+    execFileImpl = realExecFile;
+  });
+  execFileImpl = (_file, _args, _options, callback) =>
+    callback(null, 'not a process listing\n');
+  logLines.length = 0;
+
+  await killProcesses(123);
+
+  assert.deepEqual(logLines, [
+    'Warning: pid 123 not in process list of 0 entries',
+    'Pids to kill []',
+  ]);
+});
+
 test(
   'killProcesses: kills every descendant of a real process tree',
   { skip: process.platform === 'win32' },
   async () => {
-    const root = spawn('sh', ['-c', 'sh -c "sleep 30 & wait" & wait']);
+    const root = spawn('sh', ['-c', 'sh -c "sleep 30 & wait" & wait'], {
+      detached: true,
+    });
     const isAlive = (pid) => {
       try {
         process.kill(pid, 0);
@@ -92,11 +126,17 @@ test(
       assert.equal(descendants.length, 2, 'sh -> sleep started under root');
 
       await killProcesses(root.pid);
-      await new Promise((resolve) => setTimeout(resolve, 200));
+      for (let i = 0; i < 50 && descendants.some(isAlive); i++) {
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
 
       assert.deepEqual(descendants.filter(isAlive), []);
     } finally {
-      root.kill('SIGKILL');
+      try {
+        process.kill(-root.pid, 'SIGKILL');
+      } catch {
+        // The root exits on its own once its children are gone.
+      }
     }
   },
 );
