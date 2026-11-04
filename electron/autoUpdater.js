@@ -5,6 +5,7 @@ const { CancellationToken } = require('electron-updater');
 const { autoUpdater } = require('./update');
 const { logger } = require('./logger');
 const { isMac, paths } = require('./constants');
+const { stringifyJson } = require('./utils/certificate');
 
 const QUIT_AND_INSTALL_FALLBACK_MS = 5000;
 
@@ -205,7 +206,7 @@ const registerAutoUpdaterHandlers = ({
       try {
         await killProcesses(pid);
       } catch (e) {
-        ota(`killProcesses error (non-fatal): ${JSON.stringify(e)}`);
+        ota(`killProcesses error (non-fatal): ${stringifyJson(e)}`);
       }
     }
     recordPendingInstall(getStore());
