@@ -2,11 +2,18 @@ import {
   ERROR_CODE,
   InsufficientGasErrorBody,
   isInsufficientGasError,
+  isServicePackageDownloadError,
 } from '../../constants/errors';
 
 describe('ERROR_CODE', () => {
   it('exposes the INSUFFICIENT_SIGNER_GAS literal expected by the backend', () => {
     expect(ERROR_CODE.INSUFFICIENT_SIGNER_GAS).toBe('INSUFFICIENT_SIGNER_GAS');
+  });
+
+  it('exposes the SERVICE_PACKAGE_DOWNLOAD_FAILED literal expected by the backend', () => {
+    expect(ERROR_CODE.SERVICE_PACKAGE_DOWNLOAD_FAILED).toBe(
+      'SERVICE_PACKAGE_DOWNLOAD_FAILED',
+    );
   });
 });
 
@@ -69,4 +76,32 @@ describe('isInsufficientGasError', () => {
   it('returns false for an empty object (e.g. non-JSON error body fallback)', () => {
     expect(isInsufficientGasError({})).toBe(false);
   });
+});
+
+describe('isServicePackageDownloadError', () => {
+  it('returns true for an Error carrying the download error_code', () => {
+    const err = Object.assign(new Error('Failed to download'), {
+      error_code: ERROR_CODE.SERVICE_PACKAGE_DOWNLOAD_FAILED,
+    });
+    expect(isServicePackageDownloadError(err)).toBe(true);
+  });
+
+  it('returns false for a different error_code', () => {
+    expect(
+      isServicePackageDownloadError({
+        error_code: ERROR_CODE.INSUFFICIENT_SIGNER_GAS,
+      }),
+    ).toBe(false);
+  });
+
+  it('returns false for an Error without an error_code', () => {
+    expect(isServicePackageDownloadError(new Error('boom'))).toBe(false);
+  });
+
+  it.each([null, undefined, 'SERVICE_PACKAGE_DOWNLOAD_FAILED'])(
+    'returns false for non-object value %p',
+    (value) => {
+      expect(isServicePackageDownloadError(value)).toBe(false);
+    },
+  );
 });
