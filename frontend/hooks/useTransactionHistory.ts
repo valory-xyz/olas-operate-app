@@ -59,32 +59,12 @@ const groupMovementsByTxAndCategory = (
   masterSafe: string,
 ): TransactionHistoryRow[] => {
   const byKey = new Map<string, TransactionHistoryRow>();
-  const keysWithSafeLeg = new Set<string>();
   for (const movement of movements) {
     const key = `${movement.transactionHash}::${movement.category}`;
     const existing = byKey.get(key);
     const transfer = toTransfer(movement, masterSafe);
-    // For MASTER_TO_AGENT rows that land outside an AgentFundingEvent (e.g.
-    // a one-off native gas top-up to the Agent EOA), detect the recipient
-    // role so the UI can render "Allocated for execution costs" instead of
-    // "Fund <agent>". The check mirrors fundingEventToRow.
-    const agentSafeId = movement.agentSafe?.id.toLowerCase();
-    const isAgentEoaRecipient =
-      movement.category === FUNDS_CATEGORY.MASTER_TO_AGENT &&
-      !!agentSafeId &&
-      movement.to.toLowerCase() !== agentSafeId;
-    if (
-      movement.category === FUNDS_CATEGORY.MASTER_TO_AGENT &&
-      !!agentSafeId &&
-      movement.to.toLowerCase() === agentSafeId
-    ) {
-      keysWithSafeLeg.add(key);
-    }
     if (existing) {
       existing.transfers.push(transfer);
-      if (isAgentEoaRecipient && !existing.agentInstanceAddress) {
-        existing.agentInstanceAddress = movement.to as Address;
-      }
       continue;
     }
     byKey.set(key, {
@@ -93,9 +73,7 @@ const groupMovementsByTxAndCategory = (
       blockTimestamp: Number(movement.blockTimestamp),
       transactionHash: movement.transactionHash,
       agentSafeAddress: (movement.agentSafe?.id as Address | null) ?? null,
-      agentInstanceAddress: isAgentEoaRecipient
-        ? (movement.to as Address)
-        : null,
+      agentInstanceAddress: null,
       // Prefer the agentSafe→service link; fall back to the row's direct
       // service (SERVICE_BOND_* stake rows are booked before the agent
       // multisig exists, so agentSafe is null but `service` carries agentIds).
@@ -108,13 +86,30 @@ const groupMovementsByTxAndCategory = (
       transfers: [transfer],
     });
   }
-  // Same rule as fundingEventToRow: a Safe leg anywhere in the tx means this
-  // is agent funding ("Fund <agent>"), not an execution-cost top-up.
-  for (const key of keysWithSafeLeg) {
-    const row = byKey.get(key);
-    if (row) row.agentInstanceAddress = null;
-  }
   return Array.from(byKey.values());
+};
+
+/**
+ * One amount line per token: a Fund Agent split sends the Agent Signer and
+ * the Agent Safe separate legs of the same token, and the Pearl Wallet shows
+ * the total that left the Pearl Safe.
+ */
+const sumTransfersByToken = (
+  transfers: TransactionHistoryTransfer[],
+): TransactionHistoryTransfer[] => {
+  const byToken = new Map<string, TransactionHistoryTransfer>();
+  for (const transfer of transfers) {
+    const key = transfer.tokenAddress?.toLowerCase() ?? 'native';
+    const existing = byToken.get(key);
+    if (existing) {
+      existing.amount = (
+        BigInt(existing.amount) + BigInt(transfer.amount)
+      ).toString();
+      continue;
+    }
+    byToken.set(key, { ...transfer });
+  }
+  return Array.from(byToken.values());
 };
 
 const fundingEventToRow = (
@@ -125,19 +120,9 @@ const fundingEventToRow = (
   // that carries them.
   const agentSafeId =
     event.transfers.map((t) => t.agentSafe?.id).find(Boolean) ?? null;
-  const agentSafeAddrLc = agentSafeId ? agentSafeId.toLowerCase() : null;
   const svc =
     event.transfers.map((t) => t.agentSafe?.service).find(Boolean) ??
     event.transfers.map((t) => t.service).find(Boolean);
-
-  // "Allocated for execution costs" applies only when the event funds the
-  // Agent EOA exclusively. The canonical funding tx carries Safe + EOA legs
-  // in one event — that must still read "Fund <agent>", so any Safe leg wins.
-  const eoaTransfer =
-    agentSafeAddrLc &&
-    event.transfers.every((t) => t.to.toLowerCase() !== agentSafeAddrLc)
-      ? event.transfers[0]
-      : undefined;
 
   return {
     id: event.id,
@@ -145,10 +130,12 @@ const fundingEventToRow = (
     blockTimestamp: Number(event.blockTimestamp),
     transactionHash: event.txHash,
     agentSafeAddress: (agentSafeId as Address | null) ?? null,
-    agentInstanceAddress: (eoaTransfer?.to as Address | undefined) ?? null,
+    agentInstanceAddress: null,
     agentIds: svc?.agentIds ?? null,
     serviceId: svc?.id ?? null,
-    transfers: event.transfers.map((t) => toTransfer(t, masterSafe)),
+    transfers: sumTransfersByToken(
+      event.transfers.map((t) => toTransfer(t, masterSafe)),
+    ),
   };
 };
 
