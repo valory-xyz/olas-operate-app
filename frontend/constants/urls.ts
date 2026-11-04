@@ -33,16 +33,36 @@ export const PEARL_CONNECT_RISKS_TERMS_URL: Url = `${TERMS_AND_CONDITIONS_URL}#s
 
 // thegraph
 // Absent for chains with no staking programmes (Robinhood): `useRewardsHistory`
-// does not query there.
+// does not query there. Base is a SQD squid, served path-style under the shared
+// host; the rest are graph-node subgraph proxies (host-style).
+// Base rollback: 'https://staking-base.subgraph.autonolas.tech' + drop its
+// REWARDS_HISTORY_SUBGRAPH_SCHEMA_BY_EVM_CHAIN entry.
 export const REWARDS_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN: Partial<
   Record<EvmChainId, Url>
 > = {
   [EvmChainIdMap.Gnosis]: 'https://staking-gnosis.subgraph.autonolas.tech',
-  [EvmChainIdMap.Base]: 'https://staking-base.subgraph.autonolas.tech',
+  [EvmChainIdMap.Base]:
+    'https://subgraph.autonolas.tech/squid/staking-base/graphql',
   [EvmChainIdMap.Mode]: 'https://staking-mode.subgraph.autonolas.tech',
   [EvmChainIdMap.Optimism]: 'https://staking-optimism.subgraph.autonolas.tech',
   [EvmChainIdMap.Polygon]: 'https://staking-polygon.subgraph.autonolas.tech',
 };
+
+export type RewardsHistorySchemaRevision = 'graph' | 'sqd';
+
+// Which query dialect each chain's staking indexer speaks: graph-node, or
+// OpenReader on SQD squids. When a chain's backend changes, flip its entry
+// here; absent entries default to graph.
+export const REWARDS_HISTORY_SUBGRAPH_SCHEMA_BY_EVM_CHAIN: Partial<
+  Record<EvmChainId, RewardsHistorySchemaRevision>
+> = {
+  [EvmChainIdMap.Base]: 'sqd',
+};
+
+export const getRewardsHistorySchemaRevision = (
+  chainId: EvmChainId,
+): RewardsHistorySchemaRevision =>
+  REWARDS_HISTORY_SUBGRAPH_SCHEMA_BY_EVM_CHAIN[chainId] ?? 'graph';
 
 // pearl-transactions endpoints, one entry per shipped network (Mode is
 // deprecated). An undefined/absent entry surfaces the "not available on this
