@@ -97,13 +97,18 @@ const EventCard = ({ entry }: { entry: FeedEventEntry }) => (
   <Flex vertical gap={8}>
     <Flex align="center" gap={12}>
       <Dot />
-      <Text className="flex-auto">{entry.title}</Text>
+      <Text className="flex-auto can-select-text">{entry.title}</Text>
       <TimeText>{formatFeedTime(entry.ts)}</TimeText>
     </Flex>
     {entry.fields.length > 0 && (
       <EventFields vertical gap={4}>
         {entry.fields.map((field, index) => (
-          <Flex key={`${field.label}-${index}`} gap={8} wrap>
+          <Flex
+            key={`${field.label}-${index}`}
+            gap={8}
+            wrap
+            className="can-select-text"
+          >
             <Text className="text-neutral-tertiary">{field.label}:</Text>
             <FieldValue {...field} />
           </Flex>
@@ -160,7 +165,7 @@ export const FeedItemView = ({
           alt={selectedAgentType}
           className="rounded-4 flex-none"
         />
-        <AgentText className="flex-auto">
+        <AgentText className="flex-auto can-select-text">
           <Markdown
             remarkPlugins={[remarkGfm]}
             // Agents reply in HTML; sanitize it, since this runs in Electron.
@@ -179,7 +184,7 @@ export const FeedItemView = ({
     <Flex vertical gap={4}>
       <UserBubble>
         <Flex gap={12} align="flex-end" justify="space-between">
-          <Text>{entry.text}</Text>
+          <Text className="can-select-text">{entry.text}</Text>
           <TimeText>{formatFeedTime(entry.ts)}</TimeText>
         </Flex>
       </UserBubble>
