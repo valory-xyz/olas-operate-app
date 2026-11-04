@@ -83,18 +83,45 @@ test('killProcesses: rejects when listing processes fails', async (t) => {
   await assert.rejects(killProcesses(123), listError);
 });
 
-test('killProcesses: warns and kills nothing on an unusable listing', async (t) => {
+test('killProcesses: lists processes with a timeout', async (t) => {
+  t.after(() => {
+    execFileImpl = realExecFile;
+  });
+  let options;
+  execFileImpl = (_file, _args, listOptions, callback) => {
+    options = listOptions;
+    callback(null, '1 123\n');
+  };
+
+  await killProcesses(123);
+
+  assert.equal(options.timeout, 10000);
+});
+
+test('killProcesses: rejects on an unusable listing', async (t) => {
   t.after(() => {
     execFileImpl = realExecFile;
   });
   execFileImpl = (_file, _args, _options, callback) =>
     callback(null, 'not a process listing\n');
+
+  await assert.rejects(killProcesses(123), {
+    message: 'Process listing returned no entries',
+  });
+});
+
+test('killProcesses: warns and kills nothing when the root is not listed', async (t) => {
+  t.after(() => {
+    execFileImpl = realExecFile;
+  });
+  execFileImpl = (_file, _args, _options, callback) =>
+    callback(null, '1 456\n');
   logLines.length = 0;
 
   await killProcesses(123);
 
   assert.deepEqual(logLines, [
-    'Warning: pid 123 not in process list of 0 entries',
+    'Warning: pid 123 not in process list of 1 entries',
     'Pids to kill []',
   ]);
 });

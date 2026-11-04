@@ -10,6 +10,10 @@ const isWindows = process.platform === 'win32';
 const windowsListCommand =
   "Get-CimInstance Win32_Process -ErrorAction Stop | ForEach-Object { '{0} {1}' -f $_.ParentProcessId, $_.ProcessId }";
 
+// quitAndInstall runs only after killProcesses settles, so a hung listing must
+// not block the update.
+const LIST_PROCESSES_TIMEOUT_MS = 10000;
+
 function parseProcessList(stdout) {
   return stdout
     .split(/\r?\n/)
@@ -29,13 +33,18 @@ function listProcesses() {
     : ['ps', ['-A', '-o', 'ppid=,pid=']];
 
   return new Promise((resolve, reject) => {
-    execFile(file, args, { windowsHide: true }, (err, stdout) => {
-      if (err) {
-        reject(err);
-        return;
-      }
-      resolve(parseProcessList(stdout));
-    });
+    execFile(
+      file,
+      args,
+      { windowsHide: true, timeout: LIST_PROCESSES_TIMEOUT_MS },
+      (err, stdout) => {
+        if (err) {
+          reject(err);
+          return;
+        }
+        resolve(parseProcessList(stdout));
+      },
+    );
   });
 }
 
@@ -68,6 +77,9 @@ function findDescendantPids(rootPid, processes) {
 
 async function killProcesses(pid) {
   const processes = await listProcesses();
+  if (processes.length === 0) {
+    throw new Error('Process listing returned no entries');
+  }
   if (!processes.some((p) => p.pid === Number(pid))) {
     logger.electron(
       `Warning: pid ${pid} not in process list of ${processes.length} entries`,
