@@ -1,7 +1,11 @@
 import { Button, message } from 'antd';
 import { useBoolean } from 'usehooks-ts';
 
-import { SETUP_SCREEN, StakingProgramId } from '@/constants';
+import {
+  isServicePackageDownloadError,
+  SETUP_SCREEN,
+  StakingProgramId,
+} from '@/constants';
 import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
 import {
   useIsInitiallyFunded,
@@ -98,7 +102,9 @@ export const SelectStakingButton = ({
         } catch (error) {
           console.error(error);
           message.error(
-            'An error occurred while updating the staking contract.',
+            isServicePackageDownloadError(error)
+              ? "Couldn't download the agent. Check your internet connection, VPN, proxy or antivirus HTTPS scanning, then try again."
+              : "Couldn't create the agent. Please try again.",
           );
           stopLoading();
           return;
