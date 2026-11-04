@@ -161,6 +161,44 @@ describe('TransactionHistory section', () => {
     ).toBeInTheDocument();
   });
 
+  it.each([
+    // ZD#1304: a 0.000000796 POL Agent Safe leg read "+0.00 POL".
+    [EvmChainIdMap.Polygon, '796376351906', '+<0.01'],
+    [EvmChainIdMap.Gnosis, '940000000000', '+<0.01'],
+    // ETH shows 5 decimals, so its floor is 0.00001.
+    [EvmChainIdMap.Optimism, '3000000000000', '+<0.00001'],
+  ])(
+    'renders a dust native amount on chain %s as below precision, not zero',
+    (chainId, amount, expected) => {
+      mockUsePearlWallet.mockReturnValue({
+        walletChainId: chainId,
+        masterSafeAddress: DEFAULT_SAFE_ADDRESS,
+      });
+      mockUseTransactionHistory.mockReturnValue({
+        rows: [
+          {
+            id: 'row-dust',
+            category: 'MASTER_FUNDING_IN',
+            blockTimestamp: 1_720_000_000,
+            transactionHash: MOCK_TX_HASH_1,
+            agentSafeAddress: null,
+            agentInstanceAddress: null,
+            transfers: [
+              { tokenAddress: null, amount, direction: 'in' as const },
+            ],
+          },
+        ],
+        meta: { block: { number: 1 }, hasIndexingErrors: false },
+        isFetched: true,
+        isLoading: false,
+        isError: false,
+      });
+
+      render(<TransactionHistory />);
+      expect(screen.getByText(expected)).toBeInTheDocument();
+    },
+  );
+
   it('renders timestamp with year in transaction row', () => {
     const movement = makeFundsMovement({
       category: 'MASTER_FUNDING_IN',
