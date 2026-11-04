@@ -94,8 +94,7 @@ describe('getTransactionRowLabel', () => {
 
   it('labels MASTER_TO_AGENT to the Agent Signer as "Fund <agent>" too', () => {
     // The Pearl Wallet does not tell Agent Signer and Agent Safe funding
-    // apart (OPE-1979 D8); only the Agent Wallet shows "Allocated for
-    // execution costs".
+    // apart; only the Agent Wallet shows "Allocated for execution costs".
     const label = getTransactionRowLabel(
       makeRow({
         category: 'MASTER_TO_AGENT',

@@ -102,9 +102,9 @@ describe('buildAgentTransactionHistoryRows', () => {
   });
 
   it('splits a Fund Agent transfer into an Agent Safe row and an Agent Signer row', () => {
-    // ZD#1285: one MultiSend paid the Agent Safe and the Agent Signer. The
-    // Agent Wallet shows each side as its own row, adding up to what the
-    // user approved.
+    // One MultiSend paid the Agent Safe and the Agent Signer. The Agent
+    // Wallet shows each side as its own row, adding up to what the user
+    // approved.
     const rows = buildAgentTransactionHistoryRows(
       resp([
         makeFundsMovement({

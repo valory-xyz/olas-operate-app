@@ -220,7 +220,7 @@ describe('buildTransactionHistoryRows', () => {
 
   it('does not flag an Agent Signer recipient on a standalone MASTER_TO_AGENT row', () => {
     // The Pearl Wallet reads "Fund <agent>" whichever Agent Wallet address
-    // was funded (OPE-1979 D8), so no row carries agentInstanceAddress.
+    // was funded, so no row carries agentInstanceAddress.
     const data = makeTransactionHistoryResponse({
       fundsMovements: [
         makeFundsMovement({
@@ -298,8 +298,8 @@ describe('buildTransactionHistoryRows', () => {
   });
 
   it('sums the Agent Signer and Agent Safe legs into one amount per token', () => {
-    // ZD#1285: the user approved 0.0004 ETH, split in one MultiSend between
-    // the Agent Signer and the Agent Safe. The row shows the total.
+    // The user approved 0.0004 ETH, split in one MultiSend between the
+    // Agent Signer and the Agent Safe. The row shows the total.
     const fundingTx = MOCK_TX_HASH_3;
     const agentSafe = {
       id: MOCK_MULTISIG_ADDRESS,
