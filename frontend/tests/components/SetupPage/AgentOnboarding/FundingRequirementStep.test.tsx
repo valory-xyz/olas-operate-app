@@ -70,4 +70,15 @@ describe('FundingRequirementStep — non-Connect agents', () => {
     ).not.toBeInTheDocument();
     expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
   });
+
+  it('does not offer to cover the requirements by card', () => {
+    render(<FundingRequirementStep agentType={AgentMap.PredictTrader} />);
+
+    expect(
+      screen.getByText(/Minimum funding requirements/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/instantly with your card/i),
+    ).not.toBeInTheDocument();
+  });
 });

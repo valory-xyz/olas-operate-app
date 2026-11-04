@@ -1,7 +1,6 @@
 import { Checkbox, Flex, Select, Tag, Typography } from 'antd';
 import Image from 'next/image';
 import { ReactNode, useEffect, useMemo, useState } from 'react';
-import { TbCreditCardFilled } from 'react-icons/tb';
 import styled from 'styled-components';
 
 import { IntroductionAnimatedContainer } from '@/components/AgentIntroduction';
@@ -396,15 +395,6 @@ const MinimumFundingRequirements = ({
   );
 };
 
-const YouCanCoverAllRequirements = () => (
-  <Flex gap={8} align="center">
-    <TbCreditCardFilled size={20} color={COLOR.TEXT_NEUTRAL_TERTIARY} />
-    <Text className="text-neutral-tertiary text-sm">
-      You can cover all requirements instantly with your card.
-    </Text>
-  </Flex>
-);
-
 type FundingRequirementStepProps = {
   agentType: AgentType;
   desc?: ReactNode;
@@ -496,7 +486,6 @@ export const FundingRequirementStep = ({
             <OperatingChain chainName={name} chainDisplayName={displayName} />
             <MinimumStakingRequirements agentType={agentType} />
             <MinimumFundingRequirements agentType={agentType} />
-            <YouCanCoverAllRequirements />
           </>
         )}
       </Flex>
