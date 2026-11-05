@@ -68,16 +68,7 @@
     "AGPL-3.0-only",
     "AGPL-3.0-or-later"
   ],
-  "licenseOverrides": [
-    {
-      "package": "map-stream",
-      "spdx": "MIT",
-      "reason": "Declared license is UNKNOWN; LICENCE file at node_modules/map-stream/LICENCE is verbatim MIT (Dominic Tarr 2011). CORRECTION, not policy exception — PARANOID resolves rather than silences.",
-      "parents": ["ps-tree > event-stream > map-stream"],
-      "added": "2026-06-05",
-      "review": "2027-06-05"
-    }
-  ],
+  "licenseOverrides": [],
   "exemptions": [],
   "exemptionPrefixes": [
     {

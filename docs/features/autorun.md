@@ -197,7 +197,7 @@ The running instance is re-checked after the read as well as before it: a rotati
 2. When `AUTO_RUN_VERBOSE_LOGS=true`, rotation and watchdog flows emit cycle correlation ids:
 `cycle=<id> trigger=<rewards|stall|watchdog|eviction> phase=<...>`, plus `cycle=<id> trigger=<t> pass over <id>: <check>` for every instance the pre-check or the rotation's scan passes over (transient ones included).
 3. When `AUTO_RUN_VERBOSE_LOGS=true`, every 15 minutes (while auto-run is enabled), a health summary log is emitted with counters:
-`startErrors`, `stopTimeouts`, `rewardsErrors`, `eligibilityTimeouts`, `rotationsSucceeded`.
+`startErrors`, `stopTimeouts`, `rewardsErrors`, `eligibilityTimeouts`, `rotationsSucceeded`, `healthCheckRestarts` (increases of a polled deployment's `agent_liveness.restarts_since_last_healthy`).
 
 ### 3.8 Rewards Snapshot
 
