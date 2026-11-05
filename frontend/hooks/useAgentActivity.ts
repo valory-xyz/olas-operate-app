@@ -70,8 +70,9 @@ export const useAgentActivity = () => {
 
   const isAgentActive = isServiceRunning && !isAgentDown;
 
-  // Explicit null only: a missing key (older middleware) is unknown, so the
-  // agent counts as reachable, as with a missing `agent_liveness`.
+  // Explicit null only, as a defensive guard: every middleware that sends
+  // `agent_liveness` also sends `last_healthy_at`, so a missing key is not a
+  // supported shape and counts as reachable, like a missing `agent_liveness`.
   const isAgentStarting = isAgentActive && liveness?.last_healthy_at === null;
 
   return {
