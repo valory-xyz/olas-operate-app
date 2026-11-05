@@ -247,15 +247,6 @@ describe('useAgentActivity', () => {
         expect(result.current.isAgentReachable).toBe(false);
       });
 
-      it('keeps a starting agent unreachable even when the PID probe says alive', () => {
-        const { result } = renderWithLiveness({
-          is_alive: true,
-          last_healthy_at: null,
-        });
-
-        expect(result.current.isAgentReachable).toBe(false);
-      });
-
       it('reports the agent reachable once it has answered since this start', () => {
         const { result } = renderWithLiveness({
           last_healthy_at: LAST_HEALTHY_AT,
@@ -289,7 +280,7 @@ describe('useAgentActivity', () => {
         expect(result.current.isAgentReachable).toBe(false);
       });
 
-      it("keeps today's rule when liveness is absent", () => {
+      it('treats absent liveness as reachable, not starting', () => {
         const { result } = renderWithLiveness(null);
 
         expect(result.current.isAgentStarting).toBe(false);

@@ -92,7 +92,7 @@ export const useAgentActivity = () => {
      * its HTTP server may not be up, so a chat message would fail.
      */
     isAgentStarting,
-    /** Active and not known to be starting; unknown liveness counts as reachable. */
+    /** Active and not known to be starting. */
     isAgentReachable: isAgentActive && !isAgentStarting,
   };
 };
