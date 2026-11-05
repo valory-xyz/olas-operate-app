@@ -53,6 +53,39 @@ describe('Feed', () => {
     expect(screen.getAllByText(/Today|Yesterday|\d{4}/)).toHaveLength(1);
   });
 
+  // Each tag is sticky within its own day's group, so the next day's tag
+  // pushes it out instead of stacking on top of it.
+  it("groups each day tag with only that day's entries", () => {
+    const DAY_SECONDS = 86_400;
+    const makeItemOnDay = (id: number, day: number): FeedItem => ({
+      key: `entry-${id}`,
+      entry: makeFeedEvent(id, {
+        title: `Skipped market ${id}`,
+        ts: 1_760_000_000 + day * DAY_SECONDS + id,
+      }),
+    });
+    renderFeed({
+      items: [
+        makeItemOnDay(1, 0),
+        makeItemOnDay(2, 0),
+        makeItemOnDay(3, 1),
+        makeItemOnDay(4, 2),
+        makeItemOnDay(5, 2),
+      ],
+    });
+
+    const dayGroups = screen
+      .getAllByText(/\d{4}/)
+      .map((tag) => tag.parentElement as HTMLElement);
+    const titlesIn = (group: HTMLElement) =>
+      Array.from(group.textContent?.matchAll(/Skipped market (\d)/g) ?? []).map(
+        ([, id]) => Number(id),
+      );
+
+    expect(dayGroups).toHaveLength(3);
+    expect(dayGroups.map(titlesIn)).toEqual([[1, 2], [3], [4, 5]]);
+  });
+
   it('loads older entries when the loaded ones do not fill the view', () => {
     const { fetchOlder } = renderFeed({ hasOlder: true });
 
