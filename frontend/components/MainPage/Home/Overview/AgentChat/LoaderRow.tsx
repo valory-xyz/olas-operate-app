@@ -35,14 +35,16 @@ const pulse = keyframes`
   50% { opacity: 0.35; }
 `;
 
+// The box is a whole number of tiles so every dot is whole: 5×5 on a 4px tile.
 const ActivityDots = styled.span<{ $tone: Tone }>`
   flex: none;
-  width: 14px;
-  height: 14px;
+  width: 20px;
+  height: 20px;
   background-image: radial-gradient(
     circle,
-    ${({ $tone }) => ($tone === 'active' ? COLOR.PURPLE : COLOR.NEUTRAL_4)} 1px,
-    transparent 1.5px
+    ${({ $tone }) => ($tone === 'active' ? COLOR.PURPLE : COLOR.NEUTRAL_4)}
+      1.4px,
+    transparent 1.6px
   );
   background-size: 4px 4px;
   ${({ $tone }) =>
@@ -138,8 +140,13 @@ export const LoaderRow = ({
   isMessagesOnly,
 }: LoaderRowProps) => {
   const { selectedService } = useServices();
-  const { deploymentDetails, isAgentActive, isServiceDeploying } =
-    useAgentActivity();
+  const {
+    deploymentDetails,
+    isAgentActive,
+    isAgentReachable,
+    isAgentStarting,
+    isServiceDeploying,
+  } = useAgentActivity();
   const { workStatus } = useEpochWorkStatus();
   const {
     value: isModalOpen,
@@ -152,7 +159,7 @@ export const LoaderRow = ({
     [deploymentDetails?.healthcheck?.rounds],
   );
   const roundsInfo = deploymentDetails?.healthcheck?.rounds_info;
-  const canOpenModal = isAgentActive && rounds.length > 0;
+  const canOpenModal = isAgentReachable && rounds.length > 0;
 
   const state = useMemo((): { text: string; tone: Tone } | null => {
     if (isPending) {
@@ -164,6 +171,7 @@ export const LoaderRow = ({
     if (isMessagesOnly) return null;
     if (isServiceDeploying) return { text: CHAT_COPY.loading, tone: 'active' };
     if (!isAgentActive) return { text: CHAT_COPY.notRunning, tone: 'still' };
+    if (isAgentStarting) return { text: CHAT_COPY.loading, tone: 'active' };
     if (workStatus === 'standby') {
       return { text: CHAT_COPY.standby, tone: 'still' };
     }
@@ -177,6 +185,7 @@ export const LoaderRow = ({
     return { text: CHAT_COPY.running, tone: 'active' };
   }, [
     isAgentActive,
+    isAgentStarting,
     isMessagesOnly,
     isPending,
     isServiceDeploying,

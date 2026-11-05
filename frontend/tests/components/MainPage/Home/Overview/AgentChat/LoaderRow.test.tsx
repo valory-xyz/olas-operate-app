@@ -73,6 +73,7 @@ const makeGoal = (overrides: Partial<ActivityGoal> = {}): ActivityGoal => ({
 type Setup = {
   deploymentStatus?: MiddlewareDeploymentStatus;
   isAgentActive?: boolean;
+  isAgentStarting?: boolean;
   workStatus?: EpochWorkStatus;
   rounds?: string[];
   isPending?: boolean;
@@ -85,6 +86,7 @@ type Setup = {
 const renderRow = ({
   deploymentStatus = MiddlewareDeploymentStatusMap.DEPLOYED,
   isAgentActive = true,
+  isAgentStarting = false,
   workStatus = 'working',
   rounds = ['sampling_round'],
   isPending = false,
@@ -98,6 +100,8 @@ const renderRow = ({
   });
   mockUseAgentActivity.mockReturnValue({
     isAgentActive,
+    isAgentStarting,
+    isAgentReachable: isAgentActive && !isAgentStarting,
     isServiceDeploying:
       deploymentStatus === MiddlewareDeploymentStatusMap.DEPLOYING,
     deploymentDetails: {
@@ -145,6 +149,25 @@ describe('LoaderRow', () => {
       });
 
       expect(screen.getByText('Agent is loading')).toBeInTheDocument();
+    });
+
+    it('says the agent is loading while deployed but not answering yet', () => {
+      renderRow({ isAgentStarting: true });
+
+      expect(screen.getByText('Agent is loading')).toBeInTheDocument();
+      expect(screen.queryByText('Sampling a trade...')).toBeNull();
+    });
+
+    it('says loading rather than standby while the agent is starting', () => {
+      renderRow({ isAgentStarting: true, workStatus: 'standby' });
+
+      expect(screen.getByText('Agent is loading')).toBeInTheDocument();
+    });
+
+    it('shows Thinking... over the starting state while a reply is pending', () => {
+      renderRow({ isAgentStarting: true, isPending: true });
+
+      expect(screen.getByText('Thinking...')).toBeInTheDocument();
     });
 
     it('shows the current step while working', () => {
@@ -206,6 +229,29 @@ describe('LoaderRow', () => {
     fireEvent.click(screen.getByTestId('loader-row'));
 
     expect(screen.getByText('Agent Activity modal')).toBeInTheDocument();
+  });
+
+  it('does not open the Agent Activity modal while the agent is starting', () => {
+    renderRow({ isAgentStarting: true });
+
+    fireEvent.click(screen.getByTestId('loader-row'));
+
+    expect(screen.queryByText('Agent Activity modal')).toBeNull();
+  });
+
+  // A 20px box on a 4px tile holds 5×5 whole dots; the old 14px box cut the
+  // last row and column in half.
+  it.each([
+    ['grey', { isAgentActive: false }],
+    ['purple', {}],
+  ] as const)('draws the %s dot icon as 5×5 whole dots', (_, setup) => {
+    renderRow(setup);
+
+    expect(screen.getByTestId('loader-row').firstElementChild).toHaveStyle({
+      width: '20px',
+      height: '20px',
+      backgroundSize: '4px 4px',
+    });
   });
 
   it('does not open the Agent Activity modal while a reply is pending', () => {
