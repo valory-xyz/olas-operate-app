@@ -35,7 +35,7 @@ const pulse = keyframes`
   50% { opacity: 0.35; }
 `;
 
-// The box is a whole number of tiles so every dot is whole: 5×5 on a 4px tile.
+// Width and height are whole multiples of background-size so no dot is clipped.
 const ActivityDots = styled.span<{ $tone: Tone }>`
   flex: none;
   width: 20px;

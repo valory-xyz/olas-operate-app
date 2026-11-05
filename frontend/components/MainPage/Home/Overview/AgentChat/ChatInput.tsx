@@ -42,7 +42,7 @@ type ChatInputProps = {
   text: string;
   onTextChange: (text: string) => void;
   onSend: () => boolean;
-  /** Deployed, not reported down, and answered since this start. */
+  /** See `isAgentReachable` in `useAgentActivity`. */
   canSend: boolean;
   /** Deployed but not answering yet: says why the input is disabled. */
   isStarting?: boolean;

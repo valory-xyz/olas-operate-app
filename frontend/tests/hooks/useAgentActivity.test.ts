@@ -247,8 +247,6 @@ describe('useAgentActivity', () => {
         expect(result.current.isAgentReachable).toBe(false);
       });
 
-      // `get_liveness` falls back to the PID probe with no health-check record
-      // yet, reporting `is_alive: true` before the agent has answered anything.
       it('keeps a starting agent unreachable even when the PID probe says alive', () => {
         const { result } = renderWithLiveness({
           is_alive: true,

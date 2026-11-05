@@ -70,8 +70,8 @@ export const useAgentActivity = () => {
 
   const isAgentActive = isServiceRunning && !isAgentDown;
 
-  // Explicit null only: a payload without the key (older middleware) is
-  // unknown and keeps today's rule, like a missing `agent_liveness`.
+  // Explicit null only: a missing key (older middleware) is unknown, so the
+  // agent counts as reachable, as with a missing `agent_liveness`.
   const isAgentStarting = isAgentActive && liveness?.last_healthy_at === null;
 
   return {
@@ -92,10 +92,7 @@ export const useAgentActivity = () => {
      * its HTTP server may not be up, so a chat message would fail.
      */
     isAgentStarting,
-    /**
-     * Active and has answered since this start. Gates Send. Failed probes
-     * never clear `last_healthy_at`, so only the down rule turns it off again.
-     */
+    /** Active and not known to be starting; unknown liveness counts as reachable. */
     isAgentReachable: isAgentActive && !isAgentStarting,
   };
 };

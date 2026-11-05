@@ -239,8 +239,6 @@ describe('LoaderRow', () => {
     expect(screen.queryByText('Agent Activity modal')).toBeNull();
   });
 
-  // A 20px box on a 4px tile holds 5×5 whole dots; the old 14px box cut the
-  // last row and column in half.
   it.each([
     ['grey', { isAgentActive: false }],
     ['purple', {}],

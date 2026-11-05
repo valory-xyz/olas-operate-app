@@ -17,6 +17,23 @@ const makeItem = (id: number): FeedItem => ({
 
 const ITEMS: FeedItem[] = [1, 2].map(makeItem);
 
+const DAY_SECONDS = 86_400;
+const makeItemOnDay = (id: number, day: number): FeedItem => ({
+  key: `entry-${id}`,
+  entry: makeFeedEvent(id, {
+    title: `Skipped market ${id}`,
+    ts: 1_760_000_000 + day * DAY_SECONDS + id,
+  }),
+});
+
+const dayGroups = () =>
+  screen.getAllByText(/\d{4}/).map((tag) => tag.parentElement as HTMLElement);
+
+const titlesIn = (group: HTMLElement) =>
+  Array.from(group.textContent?.matchAll(/Skipped market (\d)/g) ?? []).map(
+    ([, id]) => Number(id),
+  );
+
 type FeedProps = React.ComponentProps<typeof Feed>;
 
 const makeProps = (overrides: Partial<FeedProps>): FeedProps => ({
@@ -53,17 +70,7 @@ describe('Feed', () => {
     expect(screen.getAllByText(/Today|Yesterday|\d{4}/)).toHaveLength(1);
   });
 
-  // Each tag is sticky within its own day's group, so the next day's tag
-  // pushes it out instead of stacking on top of it.
   it("groups each day tag with only that day's entries", () => {
-    const DAY_SECONDS = 86_400;
-    const makeItemOnDay = (id: number, day: number): FeedItem => ({
-      key: `entry-${id}`,
-      entry: makeFeedEvent(id, {
-        title: `Skipped market ${id}`,
-        ts: 1_760_000_000 + day * DAY_SECONDS + id,
-      }),
-    });
     renderFeed({
       items: [
         makeItemOnDay(1, 0),
@@ -74,16 +81,29 @@ describe('Feed', () => {
       ],
     });
 
-    const dayGroups = screen
-      .getAllByText(/\d{4}/)
-      .map((tag) => tag.parentElement as HTMLElement);
-    const titlesIn = (group: HTMLElement) =>
-      Array.from(group.textContent?.matchAll(/Skipped market (\d)/g) ?? []).map(
-        ([, id]) => Number(id),
-      );
+    expect(dayGroups()).toHaveLength(3);
+    expect(dayGroups().map(titlesIn)).toEqual([[1, 2], [3], [4, 5]]);
+  });
 
-    expect(dayGroups).toHaveLength(3);
-    expect(dayGroups.map(titlesIn)).toEqual([[1, 2], [3], [4, 5]]);
+  it('keeps a day group in place when older entries of that day load above', () => {
+    const props = makeProps({
+      items: [makeItemOnDay(2, 0), makeItemOnDay(3, 0)],
+    });
+    const { rerender } = render(<Feed {...props} />);
+    const [groupBefore] = dayGroups();
+
+    rerender(<Feed {...props} items={[makeItemOnDay(1, 0), ...props.items]} />);
+
+    expect(dayGroups()).toEqual([groupBefore]);
+    expect(titlesIn(groupBefore)).toEqual([1, 2, 3]);
+  });
+
+  it('gives each run of the same day its own group when days are out of order', () => {
+    renderFeed({
+      items: [makeItemOnDay(1, 0), makeItemOnDay(2, 1), makeItemOnDay(3, 0)],
+    });
+
+    expect(dayGroups().map(titlesIn)).toEqual([[1], [2], [3]]);
   });
 
   it('loads older entries when the loaded ones do not fill the view', () => {
