@@ -81,7 +81,6 @@ describe('Feed', () => {
       ],
     });
 
-    expect(dayGroups()).toHaveLength(3);
     expect(dayGroups().map(titlesIn)).toEqual([[1, 2], [3], [4, 5]]);
   });
 
@@ -105,16 +104,19 @@ describe('Feed', () => {
       .spyOn(console, 'error')
       .mockImplementation(() => {});
 
-    renderFeed({
-      items: [makeItemOnDay(1, 0), makeItemOnDay(2, 1), makeItemOnDay(3, 0)],
-    });
+    try {
+      renderFeed({
+        items: [makeItemOnDay(1, 0), makeItemOnDay(2, 1), makeItemOnDay(3, 0)],
+      });
 
-    expect(dayGroups().map(titlesIn)).toEqual([[1], [2], [3]]);
-    const keyWarnings = consoleError.mock.calls.filter((args) =>
-      args.join(' ').includes('same key'),
-    );
-    expect(keyWarnings).toEqual([]);
-    consoleError.mockRestore();
+      expect(dayGroups().map(titlesIn)).toEqual([[1], [2], [3]]);
+      const keyWarnings = consoleError.mock.calls.filter((args) =>
+        args.join(' ').includes('same key'),
+      );
+      expect(keyWarnings).toEqual([]);
+    } finally {
+      consoleError.mockRestore();
+    }
   });
 
   it('loads older entries when the loaded ones do not fill the view', () => {
