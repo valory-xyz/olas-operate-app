@@ -68,6 +68,12 @@ export const useAgentActivity = () => {
     return liveness.consecutive_failures >= MIN_FAILED_PROBES_TO_REPORT_DOWN;
   })();
 
+  const isAgentActive = isServiceRunning && !isAgentDown;
+
+  // Explicit null only: a payload without the key (older middleware) is
+  // unknown and keeps today's rule, like a missing `agent_liveness`.
+  const isAgentStarting = isAgentActive && liveness?.last_healthy_at === null;
+
   return {
     deploymentDetails,
     isServiceRunning,
@@ -80,6 +86,16 @@ export const useAgentActivity = () => {
      * would make its card read "Start the agent" directly under a "Stop agent"
      * button. Only the activity strip should act on liveness.
      */
-    isAgentActive: isServiceRunning && !isAgentDown,
+    isAgentActive,
+    /**
+     * Active, but the agent has not answered a health check since this start:
+     * its HTTP server may not be up, so a chat message would fail.
+     */
+    isAgentStarting,
+    /**
+     * Active and has answered since this start. Gates Send. Failed probes
+     * never clear `last_healthy_at`, so only the down rule turns it off again.
+     */
+    isAgentReachable: isAgentActive && !isAgentStarting,
   };
 };
