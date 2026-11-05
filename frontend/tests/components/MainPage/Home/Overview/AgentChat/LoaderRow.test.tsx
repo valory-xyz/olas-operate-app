@@ -214,6 +214,12 @@ describe('LoaderRow', () => {
       expect(screen.queryByTestId('loader-row')).toBeNull();
     });
 
+    it('stays hidden in Messages only while the agent is starting', () => {
+      renderRow({ isMessagesOnly: true, isAgentStarting: true });
+
+      expect(screen.queryByTestId('loader-row')).toBeNull();
+    });
+
     it('still shows Thinking... in Messages only', () => {
       renderRow({ isMessagesOnly: true, isPending: true });
 
