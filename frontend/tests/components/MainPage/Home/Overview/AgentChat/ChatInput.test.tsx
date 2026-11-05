@@ -62,6 +62,24 @@ describe('ChatInput Send button', () => {
     expect(onTextChange).toHaveBeenCalledWith('');
   });
 
+  it('shows the usual placeholder when the agent is not starting', () => {
+    renderInput();
+
+    expect(screen.getByRole('textbox', { name: 'Message' })).toHaveAttribute(
+      'placeholder',
+      'Ask your agent or give it guidance...',
+    );
+  });
+
+  it('shows the starting placeholder while the agent is starting', () => {
+    renderInput({ canSend: false, isStarting: true });
+
+    expect(screen.getByRole('textbox', { name: 'Message' })).toHaveAttribute(
+      'placeholder',
+      "Your agent is starting. You can chat once it's ready.",
+    );
+  });
+
   it('does not send empty text', () => {
     const { onSend } = renderInput({ text: '   ' });
 

@@ -42,8 +42,10 @@ type ChatInputProps = {
   text: string;
   onTextChange: (text: string) => void;
   onSend: () => boolean;
-  /** Deployed and not reported down. */
+  /** Deployed, not reported down, and answered since this start. */
   canSend: boolean;
+  /** Deployed but not answering yet: says why the input is disabled. */
+  isStarting?: boolean;
   isMessagesOnly: boolean;
   onMessagesOnlyChange: (isOn: boolean) => void;
   isBusyNoticeOpen: boolean;
@@ -55,6 +57,7 @@ export const ChatInput = ({
   onTextChange,
   onSend,
   canSend,
+  isStarting = false,
   isMessagesOnly,
   onMessagesOnlyChange,
   isBusyNoticeOpen,
@@ -82,7 +85,9 @@ export const ChatInput = ({
         value={text}
         onChange={(event) => onTextChange(event.target.value)}
         onKeyDown={handleKeyDown}
-        placeholder={CHAT_COPY.placeholder}
+        placeholder={
+          isStarting ? CHAT_COPY.startingPlaceholder : CHAT_COPY.placeholder
+        }
         autoSize={{ minRows: 1, maxRows: 4 }}
         variant="borderless"
         disabled={!canSend}

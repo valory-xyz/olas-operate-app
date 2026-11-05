@@ -82,6 +82,7 @@ type Setup = {
   agentType?: AgentType;
   deploymentStatus?: MiddlewareDeploymentStatus;
   isAgentActive?: boolean;
+  isAgentStarting?: boolean;
   entries?: FeedEntry[];
   chatOverrides?: Partial<typeof chat>;
 };
@@ -90,6 +91,7 @@ const renderChat = ({
   agentType = AgentMap.Polystrat,
   deploymentStatus = MiddlewareDeploymentStatusMap.DEPLOYED,
   isAgentActive = true,
+  isAgentStarting = false,
   entries = [TRADE_EVENT, AGENT_MESSAGE],
   chatOverrides = {},
 }: Setup = {}) => {
@@ -97,7 +99,11 @@ const renderChat = ({
     selectedAgentType: agentType,
     selectedService: { service_config_id: SERVICE_CONFIG_ID, deploymentStatus },
   });
-  mockUseAgentActivity.mockReturnValue({ isAgentActive });
+  mockUseAgentActivity.mockReturnValue({
+    isAgentActive,
+    isAgentStarting,
+    isAgentReachable: isAgentActive && !isAgentStarting,
+  });
   mockUseAgentFeed.mockReturnValue({
     entries,
     isLoading: false,
@@ -255,6 +261,44 @@ describe('AgentChat', () => {
         expect(sendButton()).toBeDisabled();
       },
     );
+
+    describe('while the agent is starting', () => {
+      it('keeps Send disabled until the agent has answered, even with text', () => {
+        renderChat({ isAgentStarting: true });
+
+        fireEvent.change(messageInput(), { target: { value: 'Hi' } });
+
+        expect(messageInput()).toBeDisabled();
+        expect(sendButton()).toBeDisabled();
+      });
+
+      it('explains why the input is disabled', () => {
+        renderChat({ isAgentStarting: true });
+
+        expect(messageInput()).toHaveAttribute(
+          'placeholder',
+          "Your agent is starting. You can chat once it's ready.",
+        );
+      });
+
+      it('enables Send once the agent has answered', () => {
+        const { rerender } = renderChat({ isAgentStarting: true });
+        mockUseAgentActivity.mockReturnValue({
+          isAgentActive: true,
+          isAgentStarting: false,
+          isAgentReachable: true,
+        });
+        rerender(<AgentChat />);
+
+        fireEvent.change(messageInput(), { target: { value: 'Hi' } });
+
+        expect(sendButton()).toBeEnabled();
+        expect(messageInput()).toHaveAttribute(
+          'placeholder',
+          'Ask your agent or give it guidance...',
+        );
+      });
+    });
 
     it('enables Send while the agent is deployed and alive', () => {
       renderChat();

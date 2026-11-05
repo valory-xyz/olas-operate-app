@@ -23,6 +23,7 @@ export const SUGGESTED_QUESTIONS: Partial<Record<AgentType, string[]>> = {
 
 export const CHAT_COPY = {
   placeholder: 'Ask your agent or give it guidance...',
+  startingPlaceholder: "Your agent is starting. You can chat once it's ready.",
   emptyTitle: 'Ask your agent anything',
   messagesOnly: 'Messages only',
   busy: 'Your agent is still thinking. Send your message after it answers.',

@@ -68,7 +68,7 @@ const EmptyState = ({ questions, onPick }: EmptyStateProps) => (
  */
 export const AgentChat = () => {
   const { selectedService, selectedAgentType } = useServices();
-  const { isAgentActive } = useAgentActivity();
+  const { isAgentReachable, isAgentStarting } = useAgentActivity();
   const serviceConfigId = selectedService?.service_config_id;
   const deploymentStatus = selectedService?.deploymentStatus;
 
@@ -126,7 +126,8 @@ export const AgentChat = () => {
               text={text}
               onTextChange={setText}
               onSend={() => chat.send(text.trim())}
-              canSend={isAgentActive}
+              canSend={isAgentReachable}
+              isStarting={isAgentStarting}
               isMessagesOnly={chat.isMessagesOnly}
               onMessagesOnlyChange={chat.setMessagesOnly}
               isBusyNoticeOpen={chat.isBusyNoticeOpen}
