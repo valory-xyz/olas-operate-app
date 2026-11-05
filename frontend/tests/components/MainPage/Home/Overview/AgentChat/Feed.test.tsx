@@ -4,6 +4,7 @@ import React from 'react';
 import { Feed } from '../../../../../../components/MainPage/Home/Overview/AgentChat/Feed';
 import { useServices } from '../../../../../../hooks';
 import { FeedItem } from '../../../../../../utils/agentChat';
+import { ONE_DAY_IN_S } from '../../../../../../utils/time';
 import { makeFeedEvent } from '../../../../../helpers/factories';
 
 jest.mock('../../../../../../hooks', () => ({
@@ -17,12 +18,11 @@ const makeItem = (id: number): FeedItem => ({
 
 const ITEMS: FeedItem[] = [1, 2].map(makeItem);
 
-const DAY_SECONDS = 86_400;
 const makeItemOnDay = (id: number, day: number): FeedItem => ({
   key: `entry-${id}`,
   entry: makeFeedEvent(id, {
     title: `Skipped market ${id}`,
-    ts: 1_760_000_000 + day * DAY_SECONDS + id,
+    ts: 1_760_000_000 + day * ONE_DAY_IN_S + id,
   }),
 });
 
@@ -99,11 +99,22 @@ describe('Feed', () => {
   });
 
   it('gives each run of the same day its own group when days are out of order', () => {
+    // React only warns on duplicate sibling keys, so a shared group key would
+    // otherwise go unnoticed.
+    const consoleError = jest
+      .spyOn(console, 'error')
+      .mockImplementation(() => {});
+
     renderFeed({
       items: [makeItemOnDay(1, 0), makeItemOnDay(2, 1), makeItemOnDay(3, 0)],
     });
 
     expect(dayGroups().map(titlesIn)).toEqual([[1], [2], [3]]);
+    const keyWarnings = consoleError.mock.calls.filter((args) =>
+      args.join(' ').includes('same key'),
+    );
+    expect(keyWarnings).toEqual([]);
+    consoleError.mockRestore();
   });
 
   it('loads older entries when the loaded ones do not fill the view', () => {
