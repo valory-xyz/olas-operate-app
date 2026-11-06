@@ -246,17 +246,33 @@ describe('LoaderRow', () => {
   });
 
   it.each([
-    ['grey', { isAgentActive: false }],
-    ['purple', {}],
-  ] as const)('draws the %s dot icon as 5×5 whole dots', (_, setup) => {
-    renderRow(setup);
+    ['grey', { isAgentActive: false }, '#A3AEBB'],
+    ['purple', {}, '#7E22CE'],
+  ] as const)(
+    'draws the %s dot icon as 5×5 whole dots',
+    (_, setup, dotColor) => {
+      renderRow(setup);
 
-    expect(screen.getByTestId('loader-row').firstElementChild).toHaveStyle({
-      width: '20px',
-      height: '20px',
-      backgroundSize: '4px 4px',
-    });
-  });
+      const dots = screen.getByTestId('loader-row').firstElementChild!;
+      expect(dots).toHaveStyle({
+        width: '20px',
+        height: '20px',
+        backgroundSize: '4px 4px',
+      });
+      // jsdom drops gradients from computed style, so read the injected rule.
+      const css = Array.from(document.querySelectorAll('style'))
+        .map((style) => style.textContent ?? '')
+        .join('')
+        .replace(/\s*,\s*/g, ', ');
+      const rules = Array.from(dots.classList).flatMap(
+        (className) =>
+          css.match(new RegExp(`\\.${className}\\{[^}]*\\}`, 'g')) ?? [],
+      );
+      expect(rules.join('').toLowerCase()).toContain(
+        `${dotColor.toLowerCase()} 1.4px, transparent 1.6px`,
+      );
+    },
+  );
 
   it('does not open the Agent Activity modal while a reply is pending', () => {
     renderRow({ isPending: true });
