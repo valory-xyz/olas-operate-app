@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 
 import { LoaderRow } from '../../../../../../components/MainPage/Home/Overview/AgentChat/LoaderRow';
+import { COLOR } from '../../../../../../constants/colors';
 import {
   MiddlewareDeploymentStatus,
   MiddlewareDeploymentStatusMap,
@@ -73,6 +74,7 @@ const makeGoal = (overrides: Partial<ActivityGoal> = {}): ActivityGoal => ({
 type Setup = {
   deploymentStatus?: MiddlewareDeploymentStatus;
   isAgentActive?: boolean;
+  isAgentStarting?: boolean;
   workStatus?: EpochWorkStatus;
   rounds?: string[];
   isPending?: boolean;
@@ -85,6 +87,7 @@ type Setup = {
 const renderRow = ({
   deploymentStatus = MiddlewareDeploymentStatusMap.DEPLOYED,
   isAgentActive = true,
+  isAgentStarting = false,
   workStatus = 'working',
   rounds = ['sampling_round'],
   isPending = false,
@@ -98,6 +101,8 @@ const renderRow = ({
   });
   mockUseAgentActivity.mockReturnValue({
     isAgentActive,
+    isAgentStarting,
+    isAgentReachable: isAgentActive && !isAgentStarting,
     isServiceDeploying:
       deploymentStatus === MiddlewareDeploymentStatusMap.DEPLOYING,
     deploymentDetails: {
@@ -147,6 +152,25 @@ describe('LoaderRow', () => {
       expect(screen.getByText('Agent is loading')).toBeInTheDocument();
     });
 
+    it('says the agent is loading while deployed but not answering yet', () => {
+      renderRow({ isAgentStarting: true });
+
+      expect(screen.getByText('Agent is loading')).toBeInTheDocument();
+      expect(screen.queryByText('Sampling a trade...')).toBeNull();
+    });
+
+    it('says loading rather than standby while the agent is starting', () => {
+      renderRow({ isAgentStarting: true, workStatus: 'standby' });
+
+      expect(screen.getByText('Agent is loading')).toBeInTheDocument();
+    });
+
+    it('shows Thinking... over the starting state while a reply is pending', () => {
+      renderRow({ isAgentStarting: true, isPending: true });
+
+      expect(screen.getByText('Thinking...')).toBeInTheDocument();
+    });
+
     it('shows the current step while working', () => {
       renderRow();
 
@@ -191,6 +215,12 @@ describe('LoaderRow', () => {
       expect(screen.queryByTestId('loader-row')).toBeNull();
     });
 
+    it('stays hidden in Messages only while the agent is starting', () => {
+      renderRow({ isMessagesOnly: true, isAgentStarting: true });
+
+      expect(screen.queryByTestId('loader-row')).toBeNull();
+    });
+
     it('still shows Thinking... in Messages only', () => {
       renderRow({ isMessagesOnly: true, isPending: true });
 
@@ -207,6 +237,43 @@ describe('LoaderRow', () => {
 
     expect(screen.getByText('Agent Activity modal')).toBeInTheDocument();
   });
+
+  it('does not open the Agent Activity modal while the agent is starting', () => {
+    renderRow({ isAgentStarting: true });
+
+    fireEvent.click(screen.getByTestId('loader-row'));
+
+    expect(screen.queryByText('Agent Activity modal')).toBeNull();
+  });
+
+  it.each([
+    ['grey', { isAgentActive: false }, COLOR.NEUTRAL_4],
+    ['purple', {}, COLOR.PURPLE],
+  ] as const)(
+    'draws the %s dot icon as 5×5 whole dots',
+    (_, setup, dotColor) => {
+      renderRow(setup);
+
+      const dots = screen.getByTestId('loader-row').firstElementChild!;
+      expect(dots).toHaveStyle({
+        width: '20px',
+        height: '20px',
+        backgroundSize: '4px 4px',
+      });
+      // jsdom drops gradients from computed style, so read the injected rule.
+      const css = Array.from(document.querySelectorAll('style'))
+        .map((style) => style.textContent ?? '')
+        .join('')
+        .replace(/\s*,\s*/g, ', ');
+      const rules = Array.from(dots.classList).flatMap(
+        (className) =>
+          css.match(new RegExp(`\\.${className}\\{[^}]*\\}`, 'g')) ?? [],
+      );
+      expect(rules.join('').toLowerCase()).toContain(
+        `${dotColor.toLowerCase()} 1.4px, transparent 1.6px`,
+      );
+    },
+  );
 
   it('does not open the Agent Activity modal while a reply is pending', () => {
     renderRow({ isPending: true });

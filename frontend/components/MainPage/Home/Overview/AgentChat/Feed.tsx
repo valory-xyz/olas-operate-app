@@ -1,12 +1,5 @@
 import { Button, Flex, Spin, Typography } from 'antd';
-import {
-  Fragment,
-  ReactNode,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from 'react';
+import { ReactNode, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { TbChevronDown } from 'react-icons/tb';
 import styled from 'styled-components';
 
@@ -54,6 +47,32 @@ const JumpToLatestButton = styled(Button)`
   bottom: 8px;
   z-index: 2;
 `;
+
+type DayGroup = { key: string; day: string; items: FeedItem[] };
+
+/** Runs of same-day items: each day's sticky tag is bounded by its own group. */
+const groupByDay = (items: FeedItem[]): DayGroup[] => {
+  const groups: DayGroup[] = [];
+  const seenDays = new Map<string, number>();
+  items.forEach((item) => {
+    const day = formatFeedDay(item.entry.ts);
+    const lastGroup = groups[groups.length - 1];
+    if (lastGroup?.day === day) {
+      lastGroup.items.push(item);
+      return;
+    }
+    // Keyed by day, not by first item, so prepending older entries of the same
+    // day does not remount the group.
+    const repeats = seenDays.get(day) ?? 0;
+    seenDays.set(day, repeats + 1);
+    groups.push({
+      key: repeats === 0 ? day : `${day}-${repeats}`,
+      day,
+      items: [item],
+    });
+  });
+  return groups;
+};
 
 type FeedProps = {
   items: FeedItem[];
@@ -207,21 +226,19 @@ export const Feed = ({
             </Flex>
           )}
           {isFetchOlderError && !isFetchingOlder && olderError}
-          {items.map((item, index) => {
-            const day = formatFeedDay(item.entry.ts);
-            const isNewDay =
-              index === 0 || formatFeedDay(items[index - 1].entry.ts) !== day;
-            return (
-              <Fragment key={item.key}>
-                {isNewDay && <DayTag>{day}</DayTag>}
+          {groupByDay(items).map((group) => (
+            <Flex key={group.key} vertical gap={24}>
+              <DayTag>{group.day}</DayTag>
+              {group.items.map((item) => (
                 <FeedItemView
+                  key={item.key}
                   item={item}
                   onRetry={onRetry}
                   onDismiss={onDismiss}
                 />
-              </Fragment>
-            );
-          })}
+              ))}
+            </Flex>
+          ))}
           {pollError}
         </Flex>
       </ScrollArea>

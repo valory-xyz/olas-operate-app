@@ -2,7 +2,9 @@ import { renderHook } from '@testing-library/react';
 
 import { MiddlewareDeploymentStatusMap } from '../../constants/deployment';
 import { useAgentActivity } from '../../hooks/useAgentActivity';
+import { AgentLiveness } from '../../types/Agent';
 import {
+  LAST_HEALTHY_AT,
   makeAgentLiveness,
   makeService,
   makeServiceDeployment,
@@ -234,6 +236,103 @@ describe('useAgentActivity', () => {
       const { result } = renderWithLiveness({});
 
       expect(result.current.isAgentActive).toBe(true);
+    });
+
+    describe('starting and reachable (Send gate)', () => {
+      it('reports a deployed agent starting until its first healthy probe', () => {
+        const { result } = renderWithLiveness({ last_healthy_at: null });
+
+        expect(result.current.isAgentActive).toBe(true);
+        expect(result.current.isAgentStarting).toBe(true);
+        expect(result.current.isAgentReachable).toBe(false);
+      });
+
+      it('reports the agent reachable once it has answered since this start', () => {
+        const { result } = renderWithLiveness({
+          last_healthy_at: LAST_HEALTHY_AT,
+        });
+
+        expect(result.current.isAgentStarting).toBe(false);
+        expect(result.current.isAgentReachable).toBe(true);
+      });
+
+      it('keeps the agent reachable through failed probes below the down floor', () => {
+        const { result } = renderWithLiveness({
+          is_alive: false,
+          reason: 'agent_unresponsive',
+          consecutive_failures: 12,
+          last_healthy_at: LAST_HEALTHY_AT,
+        });
+
+        expect(result.current.isAgentReachable).toBe(true);
+      });
+
+      it('reports an agent that answers it is unhealthy as reachable before its first healthy probe', () => {
+        const { result } = renderWithLiveness({
+          is_alive: false,
+          reason: 'agent_reported_unhealthy',
+          consecutive_failures: 60,
+          last_healthy_at: null,
+        });
+
+        expect(result.current.isAgentActive).toBe(true);
+        expect(result.current.isAgentStarting).toBe(false);
+        expect(result.current.isAgentReachable).toBe(true);
+      });
+
+      it('reports a starting agent that reached the down floor as down, not starting', () => {
+        const { result } = renderWithLiveness({
+          is_alive: false,
+          reason: 'agent_process_exited',
+          consecutive_failures: 30,
+          last_healthy_at: null,
+        });
+
+        expect(result.current.isAgentActive).toBe(false);
+        expect(result.current.isAgentStarting).toBe(false);
+        expect(result.current.isAgentReachable).toBe(false);
+      });
+
+      it('treats absent liveness as reachable, not starting', () => {
+        const { result } = renderWithLiveness(null);
+
+        expect(result.current.isAgentStarting).toBe(false);
+        expect(result.current.isAgentReachable).toBe(true);
+      });
+
+      it('treats a liveness payload without last_healthy_at as unknown', () => {
+        const { last_healthy_at: _omitted, ...withoutLastHealthy } =
+          makeAgentLiveness();
+        mockUseServices.mockReturnValue({
+          selectedService: makeService({
+            deploymentStatus: MiddlewareDeploymentStatusMap.DEPLOYED,
+          }),
+          deploymentDetails: makeServiceDeployment({
+            agent_liveness: withoutLastHealthy as AgentLiveness,
+          }),
+        });
+
+        const { result } = renderHook(() => useAgentActivity());
+
+        expect(result.current.isAgentStarting).toBe(false);
+        expect(result.current.isAgentReachable).toBe(true);
+      });
+
+      it('is neither starting nor reachable while deploying', () => {
+        mockUseServices.mockReturnValue({
+          selectedService: makeService({
+            deploymentStatus: MiddlewareDeploymentStatusMap.DEPLOYING,
+          }),
+          deploymentDetails: makeServiceDeployment({
+            agent_liveness: makeAgentLiveness({ last_healthy_at: null }),
+          }),
+        });
+
+        const { result } = renderHook(() => useAgentActivity());
+
+        expect(result.current.isAgentStarting).toBe(false);
+        expect(result.current.isAgentReachable).toBe(false);
+      });
     });
 
     it('treats absent liveness as unknown, not as not-alive', () => {

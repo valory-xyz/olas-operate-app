@@ -226,6 +226,7 @@ type AgentHealthCheck = {
  */
 export type AgentLivenessReason =
   | 'agent_process_exited'
+  | 'agent_reported_unhealthy'
   | 'agent_unresponsive'
   | 'evicted_cannot_restake'
   | 'not_monitored';
@@ -236,7 +237,7 @@ export type AgentLivenessReason =
  * crash-looping agent stays `DEPLOYED` while its process is dead.
  *
  * Narrowed to the fields Pearl reads. The response also carries
- * `last_checked_at`, `last_healthy_at` and `restarts_since_last_healthy`, and
+ * `last_checked_at` and `restarts_since_last_healthy`, and
  * `healthcheck` gains `age_seconds` — deliberately omitted until something
  * renders them, so the type cannot drift on fields nobody checks. Re-verify
  * the shape on every `olas-operate-middleware` pin bump in `pyproject.toml`.
@@ -254,6 +255,13 @@ export type AgentLiveness = {
    * dead agent.
    */
   consecutive_failures: number;
+  /**
+   * Unix seconds of the last healthy probe; null until the first one since
+   * this start. Every start and stop drops the record, and failed probes never
+   * clear it, so it tells "has answered since this start" apart from
+   * `is_alive`, which the PID fallback reports true before any probe.
+   */
+  last_healthy_at: number | null;
 };
 
 export type ServiceDeployment = {
