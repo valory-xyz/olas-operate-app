@@ -38,14 +38,17 @@ const PopoverContent = styled(Flex)`
   max-width: 280px;
 `;
 
+/**
+ * Whether the input accepts a message, and if not, whether the agent is still
+ * starting (which picks the placeholder that says why).
+ */
+export type ChatAvailability = 'ready' | 'starting' | 'unavailable';
+
 type ChatInputProps = {
   text: string;
   onTextChange: (text: string) => void;
   onSend: () => boolean;
-  /** See `isAgentReachable` in `useAgentActivity`. */
-  canSend: boolean;
-  /** Deployed but not answering yet: says why the input is disabled. */
-  isStarting?: boolean;
+  availability: ChatAvailability;
   isMessagesOnly: boolean;
   onMessagesOnlyChange: (isOn: boolean) => void;
   isBusyNoticeOpen: boolean;
@@ -56,13 +59,13 @@ export const ChatInput = ({
   text,
   onTextChange,
   onSend,
-  canSend,
-  isStarting = false,
+  availability,
   isMessagesOnly,
   onMessagesOnlyChange,
   isBusyNoticeOpen,
   onBusyNoticeClose,
 }: ChatInputProps) => {
+  const canSend = availability === 'ready';
   const canSubmit = canSend && text.trim().length > 0;
 
   const send = () => {
@@ -86,7 +89,9 @@ export const ChatInput = ({
         onChange={(event) => onTextChange(event.target.value)}
         onKeyDown={handleKeyDown}
         placeholder={
-          isStarting ? CHAT_COPY.startingPlaceholder : CHAT_COPY.placeholder
+          availability === 'starting'
+            ? CHAT_COPY.startingPlaceholder
+            : CHAT_COPY.placeholder
         }
         autoSize={{ minRows: 1, maxRows: 4 }}
         variant="borderless"

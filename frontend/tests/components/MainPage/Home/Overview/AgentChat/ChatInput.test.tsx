@@ -10,7 +10,7 @@ const renderInput = (overrides: Partial<ChatInputProps> = {}) => {
     text: 'Why?',
     onTextChange: jest.fn(),
     onSend: jest.fn(() => true),
-    canSend: true,
+    availability: 'ready',
     isMessagesOnly: false,
     onMessagesOnlyChange: jest.fn(),
     isBusyNoticeOpen: false,
@@ -72,12 +72,31 @@ describe('ChatInput Send button', () => {
   });
 
   it('shows the starting placeholder while the agent is starting', () => {
-    renderInput({ canSend: false, isStarting: true });
+    renderInput({ availability: 'starting' });
 
     expect(screen.getByRole('textbox', { name: 'Message' })).toHaveAttribute(
       'placeholder',
       "Your agent is starting. You can chat once it's ready.",
     );
+  });
+
+  it('disables the input and Send while the agent is starting', () => {
+    renderInput({ availability: 'starting' });
+
+    expect(screen.getByRole('textbox', { name: 'Message' })).toBeDisabled();
+    expect(sendButton()).toBeDisabled();
+  });
+
+  it('disables the input with the usual placeholder when the agent is unavailable', () => {
+    renderInput({ availability: 'unavailable' });
+
+    const textarea = screen.getByRole('textbox', { name: 'Message' });
+    expect(textarea).toBeDisabled();
+    expect(textarea).toHaveAttribute(
+      'placeholder',
+      'Ask your agent or give it guidance...',
+    );
+    expect(sendButton()).toBeDisabled();
   });
 
   it('does not send empty text', () => {
