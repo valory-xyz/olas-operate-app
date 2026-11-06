@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 
 import { LoaderRow } from '../../../../../../components/MainPage/Home/Overview/AgentChat/LoaderRow';
+import { COLOR } from '../../../../../../constants/colors';
 import {
   MiddlewareDeploymentStatus,
   MiddlewareDeploymentStatusMap,
@@ -246,8 +247,8 @@ describe('LoaderRow', () => {
   });
 
   it.each([
-    ['grey', { isAgentActive: false }, '#A3AEBB'],
-    ['purple', {}, '#7E22CE'],
+    ['grey', { isAgentActive: false }, COLOR.NEUTRAL_4],
+    ['purple', {}, COLOR.PURPLE],
   ] as const)(
     'draws the %s dot icon as 5×5 whole dots',
     (_, setup, dotColor) => {
