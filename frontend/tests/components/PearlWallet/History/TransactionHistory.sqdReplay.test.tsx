@@ -68,7 +68,7 @@ const STALE_BANNER = 'Recent transactions may not appear yet';
 // An Agent Safe → Agent EOA native top-up (OPE-1965) in the squid's row shape:
 // 2 POL, `agentSafe` set, SEMANTIC source.
 const POLYSTRAT_AGENT_EOA = '0x5f1b4b4e2a1f4e6e2c8f3c9d7a0b1c2d3e4f5a6b';
-const TOP_UP_LABEL = 'Agent Safe to Agent Signer movement';
+const TOP_UP_LABEL = 'Allocated for execution costs';
 const topUpMovement = {
   ...SQD_AGENT_RESPONSE.fundsMovements[1],
   id: '0x7f3c0e063d2542aa320a72ba1a6bc9c8cd1fd60edb3090c00dc27d4fcc280690-12',
