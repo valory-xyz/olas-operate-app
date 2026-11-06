@@ -267,6 +267,19 @@ describe('useAgentActivity', () => {
         expect(result.current.isAgentReachable).toBe(true);
       });
 
+      it('reports an agent that answers it is unhealthy as reachable before its first healthy probe', () => {
+        const { result } = renderWithLiveness({
+          is_alive: false,
+          reason: 'agent_reported_unhealthy',
+          consecutive_failures: 60,
+          last_healthy_at: null,
+        });
+
+        expect(result.current.isAgentActive).toBe(true);
+        expect(result.current.isAgentStarting).toBe(false);
+        expect(result.current.isAgentReachable).toBe(true);
+      });
+
       it('reports a starting agent that reached the down floor as down, not starting', () => {
         const { result } = renderWithLiveness({
           is_alive: false,

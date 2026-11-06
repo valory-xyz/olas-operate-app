@@ -73,7 +73,12 @@ export const useAgentActivity = () => {
   // Explicit null only, as a defensive guard: every middleware that sends
   // `agent_liveness` also sends `last_healthy_at`, so a missing key is not a
   // supported shape and counts as reachable, like a missing `agent_liveness`.
-  const isAgentStarting = isAgentActive && liveness?.last_healthy_at === null;
+  // An agent reporting itself unhealthy has answered, so its HTTP server is up
+  // even though it has never been healthy since this start.
+  const isAgentStarting =
+    isAgentActive &&
+    liveness?.last_healthy_at === null &&
+    liveness.reason !== 'agent_reported_unhealthy';
 
   return {
     deploymentDetails,
@@ -89,8 +94,9 @@ export const useAgentActivity = () => {
      */
     isAgentActive,
     /**
-     * Active, but the agent has not answered a health check since this start:
-     * its HTTP server may not be up, so a chat message would fail.
+     * Active, but the agent has neither been healthy since this start nor is
+     * answering that it is unhealthy: its HTTP server may not be up, so a chat
+     * message would fail.
      */
     isAgentStarting,
     /** Active and not known to be starting. */

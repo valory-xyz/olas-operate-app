@@ -226,6 +226,7 @@ type AgentHealthCheck = {
  */
 export type AgentLivenessReason =
   | 'agent_process_exited'
+  | 'agent_reported_unhealthy'
   | 'agent_unresponsive'
   | 'evicted_cannot_restake'
   | 'not_monitored';
