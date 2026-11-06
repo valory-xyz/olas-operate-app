@@ -190,7 +190,7 @@ All defined in `frontend/types/Autonolas.ts`:
 
 ### Subgraph schema
 
-The subgraph is queried per service NFT token ID in `frontend/hooks/useRewardsHistory.ts`. The response is Zod-validated with `ServiceResponseSchema`. Returns `latestStakingContract` (address or null) and `rewardsHistory` with epoch, reward amounts (OLAS in wei), and checkpoint data.
+The indexer is queried per service NFT token ID in `frontend/hooks/useRewardsHistory.ts`: graph-node subgraphs on Gnosis, Mode, Optimism and Polygon, an SQD squid on Base. The response is Zod-validated with `ServiceResponseSchema`. Returns `latestStakingContract` (address or null) and `rewardsHistory` with epoch, reward amounts (OLAS in wei), and checkpoint data.
 
 Transformed into `Checkpoint` records (also in `useRewardsHistory.ts`). Key derived fields: `epochStartTimeStamp` (from previous epoch or `blockTimestamp - epochLength`), `reward` (OLAS formatted as ETH, 18 decimals), `earned` (true if `rewardAmount > 0`).
 
@@ -338,9 +338,9 @@ Aggregates rewards across all services on a given chain:
 
 ### Rewards history subgraph (useRewardsHistory)
 
-Fetches all checkpoints for a service from the per-chain subgraph:
+Fetches all checkpoints for a service from the per-chain indexer:
 
-1. Queries with `serviceId` (NFT token ID as string)
+1. Queries with `serviceId` (NFT token ID as string), using the query for the chain's dialect (see below)
 2. Zod-validates the response with `ServiceResponseSchema`
 3. Groups checkpoints by `contractAddress`
 4. Transforms each into a `Checkpoint` with derived start/end timestamps
@@ -349,6 +349,8 @@ Fetches all checkpoints for a service from the per-chain subgraph:
 7. Also refetches when `serviceNftTokenId` changes
 
 Epoch start time derivation: for epoch 0 or when the previous checkpoint is missing, uses `blockTimestamp - epochLength`. Otherwise uses the previous checkpoint's `blockTimestamp`.
+
+Indexer dialect: `REWARDS_HISTORY_SUBGRAPH_SCHEMA_BY_EVM_CHAIN` (`frontend/constants/urls.ts`) maps chain → `graph` or `sqd` (absent = `graph`). Base is `sqd`, served at `https://subgraph.autonolas.tech/squid/staking-base/graphql` ([BDMARK-2331](https://linear.app/valory-xyz/issue/BDMARK-2331)); older Pearl builds still read `https://staking-base.subgraph.autonolas.tech`, which is also the rollback URL. The squid query aliases `serviceById` to `service`, so the Zod schema and everything downstream are shared. Its `orderBy: [blockTimestamp_DESC, id_DESC]` is required: rows can share a `blockTimestamp`, and without `id_DESC` they come back in a different order than graph-node's, which shifts derived epoch start times.
 
 ## Failure / guard behavior
 
@@ -377,4 +379,4 @@ Epoch start time derivation: for epoch 0 or when the previous checkpoint is miss
 - `useStakingRewardsOf` uses `createActiveStakingProgramIdQuery` (multicall-based) rather than `useActiveStakingProgramId` (subgraph-based) — different code paths for multi-service vs single-service
 - `RewardProvider` persists `firstStakingRewardAchieved` to Electron store on first eligibility — mock `useElectronApi`
 - `optimisticRewardsEarnedForEpoch` equals `availableRewardsForEpochEth` only when eligible — test both eligible and ineligible paths
-- Subgraph URL is chain-specific via `REWARDS_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN` — mock `graphql-request`
+- Indexer URL and query dialect are chain-specific via `REWARDS_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN` and `getRewardsHistorySchemaRevision` — mock `graphql-request`

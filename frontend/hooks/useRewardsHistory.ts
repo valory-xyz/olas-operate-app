@@ -8,7 +8,10 @@ import { z } from 'zod';
 
 import { REACT_QUERY_KEYS } from '@/constants';
 import { EvmChainId } from '@/constants/chains';
-import { REWARDS_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN } from '@/constants/urls';
+import {
+  getRewardsHistorySchemaRevision,
+  REWARDS_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN,
+} from '@/constants/urls';
 import { Address } from '@/types/Address';
 import { Nullable } from '@/types/Util';
 import { asMiddlewareChain } from '@/utils';
@@ -57,6 +60,33 @@ const FETCH_SERVICE_REWARDS_QUERY = gql`
         orderDirection: desc
         first: 1000
       ) {
+        id
+        epoch
+        contractAddress
+        rewardAmount
+        checkpointedAt
+        blockTimestamp
+        blockNumber
+        transactionHash
+        checkpoint {
+          epochLength
+          availableRewards
+        }
+      }
+    }
+  }
+`;
+
+// sqd (SQD squid) variant — same selection set, served over OpenReader.
+// Dialect deltas: `serviceById` aliased to `service` so the response schema is
+// shared; `String!` id; `limit` for `first`; `orderBy` as an enum list. `id_DESC`
+// matches graph-node's tie-break, which OpenReader doesn't apply by itself.
+const FETCH_SERVICE_REWARDS_QUERY_SQD = gql`
+  query GetServiceRewardsHistorySqd($serviceId: String!) {
+    service: serviceById(id: $serviceId) {
+      id
+      latestStakingContract
+      rewardsHistory(orderBy: [blockTimestamp_DESC, id_DESC], limit: 1000) {
         id
         epoch
         contractAddress
@@ -164,7 +194,9 @@ const useServiceRewardsHistory = (
         : async () => {
             const response = await request<ServiceResponse>(
               subgraphUrl,
-              FETCH_SERVICE_REWARDS_QUERY,
+              getRewardsHistorySchemaRevision(chainId) === 'sqd'
+                ? FETCH_SERVICE_REWARDS_QUERY_SQD
+                : FETCH_SERVICE_REWARDS_QUERY,
               {
                 serviceId: serviceId.toString(),
               },
