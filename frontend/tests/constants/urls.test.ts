@@ -240,6 +240,37 @@ describe('REWARDS_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN', () => {
       'base',
     );
   });
+
+  it('Base points at the staking squid', () => {
+    expect(urls.REWARDS_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN[8453]).toBe(
+      'https://subgraph.autonolas.tech/squid/staking-base/graphql',
+    );
+  });
+});
+
+describe('getRewardsHistorySchemaRevision', () => {
+  let urls: typeof import('../../constants/urls');
+
+  beforeAll(async () => {
+    urls = await import('../../constants/urls');
+  });
+
+  it('Base is served by a squid', () => {
+    expect(urls.getRewardsHistorySchemaRevision(EvmChainIdMap.Base)).toBe(
+      'sqd',
+    );
+  });
+
+  it('every other chain stays on graph', () => {
+    for (const chainId of [
+      EvmChainIdMap.Gnosis,
+      EvmChainIdMap.Mode,
+      EvmChainIdMap.Optimism,
+      EvmChainIdMap.Polygon,
+    ]) {
+      expect(urls.getRewardsHistorySchemaRevision(chainId)).toBe('graph');
+    }
+  });
 });
 
 describe('EXPLORER_URL_BY_MIDDLEWARE_CHAIN', () => {
