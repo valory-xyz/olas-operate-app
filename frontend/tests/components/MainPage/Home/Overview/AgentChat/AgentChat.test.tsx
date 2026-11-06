@@ -253,11 +253,15 @@ describe('AgentChat', () => {
       ['stopping', MiddlewareDeploymentStatusMap.STOPPING, false],
       ['crashed', MiddlewareDeploymentStatusMap.DEPLOYED, false],
     ] as const)(
-      'shows the input disabled while %s',
+      'shows the input disabled with the usual placeholder while %s',
       (_, deploymentStatus, isAgentActive) => {
         renderChat({ deploymentStatus, isAgentActive });
 
         expect(messageInput()).toBeDisabled();
+        expect(messageInput()).toHaveAttribute(
+          'placeholder',
+          'Ask your agent or give it guidance...',
+        );
         expect(sendButton()).toBeDisabled();
       },
     );
