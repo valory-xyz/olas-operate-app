@@ -143,7 +143,6 @@ export const LoaderRow = ({
   const {
     deploymentDetails,
     isAgentActive,
-    isAgentReachable,
     isAgentStarting,
     isServiceDeploying,
   } = useAgentActivity();
@@ -159,7 +158,7 @@ export const LoaderRow = ({
     [deploymentDetails?.healthcheck?.rounds],
   );
   const roundsInfo = deploymentDetails?.healthcheck?.rounds_info;
-  const canOpenModal = isAgentReachable && rounds.length > 0;
+  const canOpenModal = isAgentActive && rounds.length > 0;
 
   const state = useMemo((): { text: string; tone: Tone } | null => {
     if (isPending) {

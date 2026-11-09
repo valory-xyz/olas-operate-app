@@ -238,12 +238,12 @@ describe('LoaderRow', () => {
     expect(screen.getByText('Agent Activity modal')).toBeInTheDocument();
   });
 
-  it('does not open the Agent Activity modal while the agent is starting', () => {
+  it('opens the Agent Activity modal while the agent is starting', () => {
     renderRow({ isAgentStarting: true });
 
     fireEvent.click(screen.getByTestId('loader-row'));
 
-    expect(screen.queryByText('Agent Activity modal')).toBeNull();
+    expect(screen.getByText('Agent Activity modal')).toBeInTheDocument();
   });
 
   it.each([
