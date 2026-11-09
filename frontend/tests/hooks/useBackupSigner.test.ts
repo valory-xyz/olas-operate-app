@@ -159,6 +159,27 @@ describe('useBackupSigner', () => {
       expect(result.current.backupSignerAddress).toBeUndefined();
     });
 
+    it('stays pending, rather than settling with no backup, when the Safe owners read failed', () => {
+      mockUseSetup.mockReturnValue(web3AuthPick);
+      mockUseMasterWalletContext.mockReturnValue({
+        masterSafes: [SAFE],
+        isFetched: true,
+      });
+      // A failed query is "fetched" but not "success".
+      mockUseMultisigs.mockReturnValue({
+        allBackupAddresses: [],
+        masterSafesOwnersIsFetched: true,
+        masterSafesOwnersIsSuccess: false,
+      });
+
+      const { result } = renderHook(() => useBackupSignerState());
+      expect(result.current).toEqual({
+        backupSignerAddress: undefined,
+        isPending: true,
+        needsNewBackup: false,
+      });
+    });
+
     it('asks for a new backup when an existing Safe has no backup owner on-chain', () => {
       mockUseSetup.mockReturnValue(web3AuthPick);
       mockUseMasterWalletContext.mockReturnValue({
