@@ -278,6 +278,24 @@ describe('Settings (SettingsPage entry)', () => {
       expect(screen.getByText('Password')).toBeInTheDocument();
     });
 
+    it.each([
+      SettingsScreenMap.AddBackupWalletMethod,
+      SettingsScreenMap.UpdateBackupWalletMethod,
+    ])('decides Web3Auth once per entry into %s', (methodScreen) => {
+      setupDefaults({ screen: methodScreen });
+      render(<Settings />);
+      expect(mockUseLatchedWeb3AuthEnabled).toHaveBeenCalledWith(methodScreen);
+    });
+
+    it.each([
+      SettingsScreenMap.Main,
+      SettingsScreenMap.UpdateBackupWalletManual,
+    ])('clears the Web3Auth decision on %s', (otherScreen) => {
+      setupDefaults({ screen: otherScreen });
+      render(<Settings />);
+      expect(mockUseLatchedWeb3AuthEnabled).toHaveBeenCalledWith(null);
+    });
+
     it('renders UpdateBackupWalletConfirmScreen when screen is UpdateBackupWalletConfirm', () => {
       setupDefaults({ screen: SettingsScreenMap.UpdateBackupWalletConfirm });
       render(<Settings />);
