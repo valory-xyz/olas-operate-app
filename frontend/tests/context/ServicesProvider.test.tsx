@@ -1254,10 +1254,12 @@ describe('ServicesProvider', () => {
       );
 
       mockGetAllServiceDeployments.mockResolvedValue({
-        [BACKGROUND_ID]: deploymentWith(
-          MiddlewareDeploymentStatusMap.STOPPED,
-          {},
-        ),
+        // No liveness, so only the status can clear the answer.
+        [BACKGROUND_ID]: {
+          status: MiddlewareDeploymentStatusMap.STOPPED,
+          nodes: { agent: [], tendermint: [] },
+          healthcheck: {},
+        },
       });
       await act(() =>
         wrapper.queryClient.refetchQueries({
