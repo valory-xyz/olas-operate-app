@@ -7,6 +7,8 @@ import { AgentMap, AllEvmChainIdMap, SETUP_SCREEN } from '@/constants';
 import { useGetBridgeRequirementsParams, useServices, useSetup } from '@/hooks';
 import { asAllMiddlewareChain } from '@/utils/middlewareHelpers';
 
+import { BackupSignerGate } from '../../BackupSignerGate';
+
 export const SetupBridgeOnboarding = () => {
   const [isBridgeCompleted, setIsBridgeCompleted] = useState(false);
 
@@ -31,15 +33,20 @@ export const SetupBridgeOnboarding = () => {
 
   return (
     <Flex vertical className="pt-36">
-      <Bridge
-        mode="onboard"
-        fromChain={fromChain}
-        bridgeToChain={toMiddlewareChain}
-        getBridgeRequirementsParams={getBridgeRequirementsParams}
-        onPrevBeforeBridging={handlePrevStep}
-        onBridgingCompleted={handleBridgingCompleted}
-        showAgentCustodyAlert={selectedAgentType === AgentMap.Connect}
-      />
+      {/* The bridge creates the Pearl Safe after bridging, with this screen's latched signer. */}
+      <BackupSignerGate>
+        {() => (
+          <Bridge
+            mode="onboard"
+            fromChain={fromChain}
+            bridgeToChain={toMiddlewareChain}
+            getBridgeRequirementsParams={getBridgeRequirementsParams}
+            onPrevBeforeBridging={handlePrevStep}
+            onBridgingCompleted={handleBridgingCompleted}
+            showAgentCustodyAlert={selectedAgentType === AgentMap.Connect}
+          />
+        )}
+      </BackupSignerGate>
       {isBridgeCompleted && <AgentSetupCompleteModal />}
     </Flex>
   );

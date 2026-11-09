@@ -47,6 +47,7 @@ describe('useWeb3AuthStatus', () => {
   });
 
   afterEach(() => {
+    jest.useRealTimers();
     jest.restoreAllMocks();
   });
 

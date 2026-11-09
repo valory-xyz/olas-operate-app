@@ -1,7 +1,12 @@
 import { useMutation } from '@tanstack/react-query';
 
 import { TOKEN_CONFIG, TokenSymbol, TokenType } from '@/config/tokens';
-import { AddressZero, SETUP_SCREEN } from '@/constants';
+import {
+  AddressZero,
+  BACKUP_SIGNER_CHECKING_MESSAGE,
+  BACKUP_SIGNER_NOT_SET_MESSAGE,
+  SETUP_SCREEN,
+} from '@/constants';
 import { EXPLORER_URL_BY_MIDDLEWARE_CHAIN } from '@/constants/urls';
 import { useLatchedBackupSigner } from '@/context/LatchedBackupSignerContext';
 import { useMessageApi } from '@/context/MessageProvider';
@@ -14,11 +19,6 @@ import { BridgingStepStatus } from '@/types/Bridge';
 import { asEvmChainId } from '@/utils';
 
 import { useBalanceAndRefillRequirementsContext } from '.';
-
-export const BACKUP_SIGNER_NOT_SET =
-  'The backup wallet is not set. Set a backup wallet, then try again.';
-export const BACKUP_SIGNER_CHECKING =
-  'Still checking your backup wallet. Try again in a moment.';
 
 /**
  * Hook to create master safe and transfer funds.
@@ -44,12 +44,16 @@ export const useMasterSafeCreationAndTransfer = (
       // Never create the Pearl Safe on a backup signer that is unsettled or needs
       // replacing. (The onboarding funding run creates it in the middleware instead,
       // with the owner FundYourAgent's guard latched.)
+      if (backupSigner.state === 'needsNewBackup') {
+        throw new BackupWalletError(
+          BACKUP_SIGNER_NOT_SET_MESSAGE,
+          'SIGNER_NEEDS_NEW_BACKUP',
+        );
+      }
       if (backupSigner.state !== 'ready') {
         throw new BackupWalletError(
-          backupSigner.state === 'needsNewBackup'
-            ? BACKUP_SIGNER_NOT_SET
-            : BACKUP_SIGNER_CHECKING,
-          'SIGNER_NOT_READY',
+          BACKUP_SIGNER_CHECKING_MESSAGE,
+          'SIGNER_PENDING',
         );
       }
       const { backupSignerAddress } = backupSigner;
@@ -117,16 +121,18 @@ export const useMasterSafeCreationAndTransfer = (
     },
     onError: (error) => {
       console.error(error);
-      if (
-        error instanceof BackupWalletError &&
-        error.code === 'SIGNER_NOT_READY'
-      ) {
-        message.error(error.message);
-        // Retrying can't help until a new backup wallet is chosen.
-        if (backupSigner.state === 'needsNewBackup') {
+      // Branch on the reason the refusal was thrown with, not on the live state,
+      // which may have moved on since.
+      if (error instanceof BackupWalletError) {
+        if (error.code === 'SIGNER_NEEDS_NEW_BACKUP') {
+          message.error(error.message);
           goto(SETUP_SCREEN.SetupBackupSigner);
+          return;
         }
-        return;
+        if (error.code === 'SIGNER_PENDING') {
+          message.error(error.message);
+          return;
+        }
       }
       message.error('Failed to create master safe.');
     },

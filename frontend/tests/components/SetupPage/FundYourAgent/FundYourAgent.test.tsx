@@ -18,6 +18,7 @@ const mockGotoSetup = jest.fn();
 const mockResetTokenRequirements = jest.fn();
 const mockUseServices = jest.fn();
 const BACKUP_OWNER = '0x2222222222222222222222222222222222222222';
+const mockLatchedSigner = { state: 'ready', backupSignerAddress: BACKUP_OWNER };
 let mockIsBackupSignerReady = true;
 let mockIsBackupSignerError = false;
 
@@ -25,9 +26,8 @@ jest.mock('../../../../hooks', () => ({
   useSetup: () => ({ goto: mockGotoSetup }),
   useServices: () => mockUseServices(),
   useBackupSignerGuard: () => ({
-    isBackupSignerReady: mockIsBackupSignerReady,
+    latchedSigner: mockIsBackupSignerReady ? mockLatchedSigner : null,
     isBackupSignerError: mockIsBackupSignerError,
-    backupSignerAddress: BACKUP_OWNER,
   }),
   useGetRefillRequirements: () => ({
     refillTokenRequirements: [{ symbol: 'OLAS', amount: 1 }],
@@ -37,9 +37,14 @@ jest.mock('../../../../hooks', () => ({
 }));
 
 let mockFlowProps: FundingFlowProps | null = null;
+let mockSeenLatchedSigner: unknown;
 jest.mock('../../../../components/FundingFlow', () => ({
   FundingFlow: (props: FundingFlowProps) => {
     mockFlowProps = props;
+    /* eslint-disable @typescript-eslint/no-var-requires */
+    mockSeenLatchedSigner =
+      require('../../../../context/LatchedBackupSignerContext').useLatchedBackupSigner();
+    /* eslint-enable @typescript-eslint/no-var-requires */
     return (
       <button data-testid="back-button" onClick={props.onBack}>
         Back
@@ -78,6 +83,8 @@ describe('FundYourAgent', () => {
       destinationChain: 'polygon',
       fallbackToReceive: [{ symbol: 'OLAS', amount: 1 }],
     });
+    // Safe creation below the screen reads the same latched signer.
+    expect(mockSeenLatchedSigner).toBe(mockLatchedSigner);
     expect(
       screen.queryByText(/Transfer Crypto on|Bridge Crypto|Buy/),
     ).toBeNull();

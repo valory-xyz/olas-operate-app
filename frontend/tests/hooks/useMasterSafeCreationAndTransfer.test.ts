@@ -4,15 +4,15 @@ import { act, createElement, PropsWithChildren } from 'react';
 
 import { GNOSIS_TOKEN_CONFIG, TokenSymbolMap } from '../../config/tokens';
 import { AddressZero } from '../../constants/address';
+import {
+  BACKUP_SIGNER_CHECKING_MESSAGE,
+  BACKUP_SIGNER_NOT_SET_MESSAGE,
+} from '../../constants/backupWallet';
 import { MiddlewareChainMap } from '../../constants/chains';
 import { SETUP_SCREEN } from '../../constants/setupScreen';
 import { LatchedBackupSignerContext } from '../../context/LatchedBackupSignerContext';
 import { useBackupSignerState } from '../../hooks/useBackupSigner';
-import {
-  BACKUP_SIGNER_CHECKING,
-  BACKUP_SIGNER_NOT_SET,
-  useMasterSafeCreationAndTransfer,
-} from '../../hooks/useMasterSafeCreationAndTransfer';
+import { useMasterSafeCreationAndTransfer } from '../../hooks/useMasterSafeCreationAndTransfer';
 import { useServices } from '../../hooks/useServices';
 import { WalletService } from '../../service/Wallet';
 import { SafeCreationResponse } from '../../types/Wallet';
@@ -120,12 +120,16 @@ describe('useMasterSafeCreationAndTransfer', () => {
   });
 
   it.each([
-    ['pending', BACKUP_SIGNER_CHECKING],
-    ['error', BACKUP_SIGNER_CHECKING],
-    ['needsNewBackup', BACKUP_SIGNER_NOT_SET],
+    ['pending', 'SIGNER_PENDING', BACKUP_SIGNER_CHECKING_MESSAGE],
+    ['error', 'SIGNER_PENDING', BACKUP_SIGNER_CHECKING_MESSAGE],
+    [
+      'needsNewBackup',
+      'SIGNER_NEEDS_NEW_BACKUP',
+      BACKUP_SIGNER_NOT_SET_MESSAGE,
+    ],
   ])(
     'refuses to create the Safe while the backup signer is %s, saying why',
-    async (signerState, expectedMessage) => {
+    async (signerState, expectedCode, expectedMessage) => {
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
       mockUseBackupSignerState.mockReturnValue({ state: signerState });
 
@@ -136,7 +140,7 @@ describe('useMasterSafeCreationAndTransfer', () => {
 
       await act(async () => {
         await expect(result.current.mutateAsync()).rejects.toMatchObject({
-          code: 'SIGNER_NOT_READY',
+          code: expectedCode,
           message: expectedMessage,
         });
       });

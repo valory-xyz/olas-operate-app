@@ -335,7 +335,7 @@ describe('useMultisigs', () => {
       owner: WALLET_OWNER.Master,
     };
     const rpcError = new Error('rpc down');
-    mockMulticallAll.mockRejectedValue(rpcError);
+    mockMulticallAll.mockRejectedValueOnce(rpcError);
 
     const { result } = renderHook(() => useMultisigs([gnosisSafe]), {
       wrapper: createQueryClientWrapper(),
@@ -344,7 +344,6 @@ describe('useMultisigs', () => {
     await waitFor(() =>
       expect(result.current.masterSafesOwnersIsError).toBe(true),
     );
-    expect(result.current.masterSafesOwnersIsSuccess).toBe(false);
     expect(result.current.masterSafesOwners).toBeUndefined();
     expect(result.current.allBackupAddresses).toEqual([]);
     expect(consoleSpy).toHaveBeenCalledWith(
@@ -352,7 +351,6 @@ describe('useMultisigs', () => {
       rpcError,
     );
 
-    mockMulticallAll.mockReset();
     consoleSpy.mockRestore();
   });
 

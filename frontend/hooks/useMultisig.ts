@@ -67,7 +67,6 @@ export const useMultisigs = (safes?: Safe[]) => {
   const {
     data: masterSafesOwners,
     isFetched: masterSafesOwnersIsFetched,
-    isSuccess: masterSafesOwnersIsSuccess,
     isError: masterSafesOwnersIsError,
     isPending: masterSafesOwnersIsPending,
     isLoading: masterSafesOwnersIsLoading,
@@ -181,7 +180,6 @@ export const useMultisigs = (safes?: Safe[]) => {
     allBackupAddressesByChainId,
     masterSafesOwners,
     masterSafesOwnersIsFetched,
-    masterSafesOwnersIsSuccess,
     masterSafesOwnersIsError,
     masterSafesOwnersIsPending,
     masterSafesOwnersIsLoading,

@@ -624,6 +624,17 @@ describe('SetupWelcomeLogin', () => {
       ).toBeInTheDocument();
     });
 
+    it('shows no backup-signer warning before login, even when the owners are unreadable', () => {
+      setupHooksNotInitialFunded();
+      mockUseBackupSignerState.mockReturnValue({ state: 'error' });
+
+      renderSetupWelcomeLogin();
+
+      expect(
+        screen.queryByText(/Couldn.t check your backup wallet/),
+      ).not.toBeInTheDocument();
+    });
+
     it('does not route while the backup signer is pending, then routes once it settles as needing a new backup', async () => {
       setupHooksNotInitialFunded();
       mockUseBackupSignerState.mockReturnValue({ state: 'pending' });
@@ -637,6 +648,10 @@ describe('SetupWelcomeLogin', () => {
       });
       expect(mockGoto).not.toHaveBeenCalledWith(SETUP_SCREEN.FundYourAgent);
       expect(mockGoto).not.toHaveBeenCalledWith(SETUP_SCREEN.SetupBackupSigner);
+      // Merely pending (not unreadable) shows no warning.
+      expect(
+        screen.queryByText(/Couldn.t check your backup wallet/),
+      ).not.toBeInTheDocument();
 
       mockUseBackupSignerState.mockReturnValue({ state: 'needsNewBackup' });
       rerender(<SetupWelcomeLogin />);

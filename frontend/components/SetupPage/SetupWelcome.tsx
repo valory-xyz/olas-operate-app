@@ -20,10 +20,10 @@ import { AccountService } from '@/service/Account';
 import { WalletService } from '@/service/Wallet';
 import { asEvmChainId, getErrorMessage, matchesAgentConfig } from '@/utils';
 
-import { Alert, ContentTransition } from '../ui';
+import { ContentTransition } from '../ui';
 import { FormFlex } from '../ui/FormFlex';
 import { FormLabel } from '../ui/Typography';
-import { BACKUP_SIGNER_UNAVAILABLE } from './BackupSignerUnavailable';
+import { BackupSignerUnavailableAlert } from './BackupSignerUnavailable';
 import { SetupWelcomeCreate } from './SetupWelcomeCreate';
 
 const { Title, Text } = Typography;
@@ -50,7 +50,7 @@ const useSetupNavigation = ({
   const backupSigner = useBackupSignerState();
   // Routing on an unsettled (or unreadable) backup signer could skip or wrongly
   // repeat the backup step.
-  const isBackupSignerPending =
+  const isBackupSignerUnsettled =
     backupSigner.state === 'pending' || backupSigner.state === 'error';
   const needsNewBackup = backupSigner.state === 'needsNewBackup';
   const backupSignerAddress =
@@ -80,7 +80,7 @@ const useSetupNavigation = ({
       !canNavigate ||
       !isServicesFetched ||
       storeState === undefined ||
-      isBackupSignerPending
+      isBackupSignerUnsettled
     )
       return false;
     return true;
@@ -89,7 +89,7 @@ const useSetupNavigation = ({
     isOnline,
     isServicesFetched,
     storeState,
-    isBackupSignerPending,
+    isBackupSignerUnsettled,
   ]);
 
   const isBackupWalletNotSet = useMemo(() => {
@@ -260,15 +260,7 @@ export const SetupWelcomeLogin = () => {
           >
             Continue
           </Button>
-          {isBackupSignerError && (
-            <Alert
-              type="warning"
-              showIcon
-              message={
-                <Text className="text-sm">{BACKUP_SIGNER_UNAVAILABLE}</Text>
-              }
-            />
-          )}
+          {isBackupSignerError && <BackupSignerUnavailableAlert />}
           <Flex justify="center" align="center" gap={4}>
             <Text type="secondary" className="text-sm">
               Can&apos;t sign in?

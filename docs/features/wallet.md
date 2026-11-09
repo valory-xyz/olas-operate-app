@@ -167,9 +167,9 @@ Derived values:
 
 `useBackupSignerState` returns `{ state: 'pending' | 'error' | 'needsNewBackup' | 'ready', backupSignerAddress? }`. It reads the stored pick from the setup context or, until that is restored, the pearl store (`pending` until the store loads).
 
-- Normally (`backupSigner` from setup context is an address pick, or there is no pick, or Web3Auth is enabled): `ready` with `backupSigner.address`, falling back to `allBackupAddresses[0]` from `useMultisigs`. During setup the user-chosen signer is used; post-setup it reads actual on-chain owners.
+- Normally (an address pick, no pick, or Web3Auth enabled): `ready` with the pick's address. Without one it falls back to `allBackupAddresses[0]` from `useMultisigs`, waiting (`pending`/`error`) until the wallets and, with a Pearl Safe, its owners are read. During setup the user-chosen signer is used; post-setup it reads actual on-chain owners.
 - A stored Google/Apple (`web3auth`) pick while pearl-api reports Web3Auth off is ignored: `pending` while the status or wallets load (or, with a Pearl Safe, until its owners are read successfully), `error` while the owners read keeps failing, then `ready` with the on-chain backup owner — or `needsNewBackup` when there is none. Readiness keys off owner *data*, not query flags: a failed refresh keeps the owners read before.
-- `useBackupSignerGuard` (used by `FundYourAgent` and `SetupOnRamp`) waits for `ready`, redirects to `SetupBackupSigner` on `needsNewBackup`, and keeps its first `ready` decision and address for the screen's lifetime. `SetupWelcome` doesn't route while `pending`/`error`, and shows a retrying message on `error`. The guarded screens share their latched decision through `LatchedBackupSignerContext`; `useMasterSafeCreationAndTransfer` reads it (else the live state) and refuses to create the Safe unless `ready`.
+- `useBackupSignerGuard`, through `BackupSignerGate` (wrapping `FundYourAgent`, `SetupOnRamp` and `SetupBridgeOnboarding`), waits for `ready`, redirects to `SetupBackupSigner` on `needsNewBackup`, and keeps its first `ready` decision and address for the screen's lifetime. `SetupWelcome` doesn't route while `pending`/`error`, and shows a retrying message on `error`. `BackupSignerGate` shares the latched decision through `LatchedBackupSignerContext`; `useMasterSafeCreationAndTransfer` reads it (else the live state) and refuses to create the Safe unless `ready`.
 
 ### Multisig owners (`useMultisig` / `useMultisigs`)
 
@@ -234,9 +234,9 @@ Pure functions for token resolution:
 | `useMultisig` with `safe` = nil | Query disabled, returns `undefined` owners |
 | `useMultisigs` with no multicall provider for a chain | `console.error`, skips that chain (continues with others) |
 | Token config not found during safe creation transfer mapping | Throws `"Token config not found for symbol: {symbol} on chain: {chain}"` |
-| `useMasterSafeCreationAndTransfer` refuses: backup signer not `ready` | Throws `BackupWalletError` (`code: 'SIGNER_NOT_READY'`); `message.error` shows its message — "Still checking your backup wallet…" (`pending`/`error`) or "The backup wallet is not set…" (`needsNewBackup`, which also routes to `SetupBackupSigner`) |
+| `useMasterSafeCreationAndTransfer` refuses: backup signer not `ready` | Throws `BackupWalletError`: `SIGNER_PENDING` (`pending`/`error`; "Still checking your backup wallet…") or `SIGNER_NEEDS_NEW_BACKUP` ("The backup wallet is not set…", and routes to `SetupBackupSigner`). `onError` branches on the code |
 | `useMasterSafeCreationAndTransfer` — any other mutation error | `console.error` + `message.error('Failed to create master safe.')` |
-| `useMultisigs` owners read fails (`provider.all` rejects) | `console.error` per chain, then the query errors (`masterSafesOwnersIsError`); earlier owner data is kept |
+| `useMultisigs` owners read fails (`provider.all` rejects) | Logs the first chain whose owners read fails, then the query errors (`masterSafesOwnersIsError`) and the remaining chains are skipped; earlier owner data is kept |
 | `usePearlWallet` outside `PearlWalletProvider` | Returns the context default (no-op stubs) — the guard in the source (`if (!context)`) is unreachable because `createContext` provides a non-null default object |
 | `getFromToken` — token symbol not found on destination chain | Throws `"Failed to get token symbol for the destination token: {address}"` |
 | `getFromToken` — source token not found on source chain | Throws `"Failed to get source token for the destination token: {address}"` |

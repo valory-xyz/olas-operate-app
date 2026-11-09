@@ -1,24 +1,15 @@
 import { useCallback } from 'react';
 
 import { OnRamp } from '@/components/OnRamp';
-import { CardSkeleton } from '@/components/ui';
 import { AddressZero, ON_RAMP_CHAIN_MAP, SETUP_SCREEN } from '@/constants';
-import { LatchedBackupSignerContext } from '@/context/LatchedBackupSignerContext';
-import {
-  useBackupSignerGuard,
-  useGetBridgeRequirementsParams,
-  useServices,
-  useSetup,
-} from '@/hooks';
+import { useGetBridgeRequirementsParams, useServices, useSetup } from '@/hooks';
 import { asMiddlewareChain } from '@/utils';
 
-import { BackupSignerUnavailable } from '../../BackupSignerUnavailable';
+import { BackupSignerGate } from '../../BackupSignerGate';
 
 export const SetupOnRamp = () => {
   const { goto: gotoSetup, prevState } = useSetup();
   const { selectedAgentConfig } = useServices();
-  const { latchedSigner, isBackupSignerReady, isBackupSignerError } =
-    useBackupSignerGuard();
 
   // Calculate onRampChainId based on agent's home chain
   const agentChainName = asMiddlewareChain(selectedAgentConfig.evmHomeChainId);
@@ -35,20 +26,16 @@ export const SetupOnRamp = () => {
     gotoSetup(prevState ?? SETUP_SCREEN.FundYourAgent);
   }, [gotoSetup, prevState]);
 
-  // The on-ramp ends by creating the Pearl Safe with the backup signer.
-  if (isBackupSignerError) return <BackupSignerUnavailable />;
-  if (!isBackupSignerReady) {
-    return <CardSkeleton />;
-  }
-
-  // The on-ramp creates the Pearl Safe at the end: it uses this screen's latched signer.
+  // The on-ramp creates the Pearl Safe at the end, with this screen's latched signer.
   return (
-    <LatchedBackupSignerContext.Provider value={latchedSigner}>
-      <OnRamp
-        mode="onboard"
-        getOnRampRequirementsParams={getOnRampRequirementsParams}
-        handleBack={handleBack}
-      />
-    </LatchedBackupSignerContext.Provider>
+    <BackupSignerGate>
+      {() => (
+        <OnRamp
+          mode="onboard"
+          getOnRampRequirementsParams={getOnRampRequirementsParams}
+          handleBack={handleBack}
+        />
+      )}
+    </BackupSignerGate>
   );
 };

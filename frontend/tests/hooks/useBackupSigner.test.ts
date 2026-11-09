@@ -107,6 +107,31 @@ describe('useBackupSignerState', () => {
       });
     });
 
+    it('waits for the Safe owners before falling back to them with no stored pick', () => {
+      given({ masterSafes: [SAFE], ownersData: null });
+      expect(state()).toEqual({ state: 'pending' });
+
+      given({ masterSafes: [SAFE], ownersData: null, ownersError: true });
+      expect(state()).toEqual({ state: 'error' });
+    });
+
+    it('waits for the wallets before falling back with no stored pick', () => {
+      given({ walletsLoaded: false });
+      expect(state()).toEqual({ state: 'pending' });
+    });
+
+    it('prefers a stored address pick over the on-chain owner', () => {
+      given({
+        pick: manualPick,
+        masterSafes: [SAFE],
+        owners: [BACKUP_SIGNER_ADDRESS_2],
+      });
+      expect(state()).toEqual({
+        state: 'ready',
+        backupSignerAddress: BACKUP_SIGNER_ADDRESS,
+      });
+    });
+
     it('is ready with no address when there is none at all', () => {
       given({});
       expect(state()).toEqual({
@@ -220,6 +245,14 @@ describe('useBackupSignerState', () => {
       expect(state()).toEqual({ state: 'needsNewBackup' });
     });
 
+    it('prefers the setup context pick over a stale stored Google/Apple pick', () => {
+      given({ status: 'disabled', pick: manualPick, storedPick: web3AuthPick });
+      expect(state()).toEqual({
+        state: 'ready',
+        backupSignerAddress: BACKUP_SIGNER_ADDRESS,
+      });
+    });
+
     it('stays pending until the store has loaded', () => {
       given({ status: 'disabled', storeLoaded: false });
       expect(state()).toEqual({ state: 'pending' });
@@ -235,14 +268,14 @@ describe('useBackupSignerGuard', () => {
 
     const { result } = renderHook(() => useBackupSignerGuard());
     expect(mockGoto).toHaveBeenCalledWith(SETUP_SCREEN.SetupBackupSigner);
-    expect(result.current.isBackupSignerReady).toBe(false);
+    expect(result.current.latchedSigner).toBeNull();
   });
 
   it('waits, without redirecting, while pending, then redirects once it settles', () => {
     given({ status: 'loading', pick: web3AuthPick });
     const { rerender, result } = renderHook(() => useBackupSignerGuard());
     expect(mockGoto).not.toHaveBeenCalled();
-    expect(result.current.isBackupSignerReady).toBe(false);
+    expect(result.current.latchedSigner).toBeNull();
 
     given({ status: 'disabled', pick: web3AuthPick });
     rerender();
@@ -260,7 +293,7 @@ describe('useBackupSignerGuard', () => {
 
     const { result } = renderHook(() => useBackupSignerGuard());
     expect(result.current.isBackupSignerError).toBe(true);
-    expect(result.current.isBackupSignerReady).toBe(false);
+    expect(result.current.latchedSigner).toBeNull();
     // An RPC blip must never send an existing-Safe user to the owner-swap step.
     expect(mockGoto).not.toHaveBeenCalled();
   });
@@ -268,23 +301,36 @@ describe('useBackupSignerGuard', () => {
   it('keeps the first ready decision and its address after the status turns disabled', () => {
     given({ status: 'enabled', pick: web3AuthPick });
     const { result, rerender } = renderHook(() => useBackupSignerGuard());
-    expect(result.current).toMatchObject({
-      isBackupSignerReady: true,
+    expect(result.current).toEqual({
+      latchedSigner: {
+        state: 'ready',
+        backupSignerAddress: BACKUP_SIGNER_ADDRESS,
+      },
       isBackupSignerError: false,
-      backupSignerAddress: BACKUP_SIGNER_ADDRESS,
     });
 
     given({ status: 'disabled', pick: web3AuthPick });
     rerender();
     expect(mockGoto).not.toHaveBeenCalled();
-    expect(result.current).toMatchObject({
-      isBackupSignerReady: true,
-      isBackupSignerError: false,
-      backupSignerAddress: BACKUP_SIGNER_ADDRESS,
+    expect(result.current).toEqual({
       latchedSigner: {
         state: 'ready',
         backupSignerAddress: BACKUP_SIGNER_ADDRESS,
       },
+      isBackupSignerError: false,
+    });
+  });
+
+  it('does not latch a missing owner: with no pick, it waits for the Safe owners and latches the on-chain one', () => {
+    given({ masterSafes: [SAFE], ownersData: null });
+    const { result, rerender } = renderHook(() => useBackupSignerGuard());
+    expect(result.current.latchedSigner).toBeNull();
+
+    given({ masterSafes: [SAFE], owners: [BACKUP_SIGNER_ADDRESS_2] });
+    rerender();
+    expect(result.current.latchedSigner).toEqual({
+      state: 'ready',
+      backupSignerAddress: BACKUP_SIGNER_ADDRESS_2,
     });
   });
 });
