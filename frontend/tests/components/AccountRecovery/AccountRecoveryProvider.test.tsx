@@ -1,9 +1,10 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 
 import {
   AccountRecoveryProvider,
   useAccountRecoveryContext,
 } from '../../../components/AccountRecovery/AccountRecoveryProvider';
+import { RecoveryService } from '../../../service/Recovery';
 import { BACKUP_SIGNER_ADDRESS } from '../../helpers/factories';
 import { createQueryClientWrapper } from '../../helpers/queryClient';
 
@@ -103,9 +104,15 @@ describe('AccountRecoveryProvider', () => {
     mockIsWeb3AuthStatusLoading = true;
     renderProvider();
 
+    // Let the wallet query resolve: only the status should still hold loading.
     await waitFor(() =>
-      expect(screen.getByText('loading')).toBeInTheDocument(),
+      expect(RecoveryService.getExtendedWallet).toHaveBeenCalled(),
     );
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    });
+
+    expect(screen.getByText('loading')).toBeInTheDocument();
     expect(screen.queryByTestId('available')).not.toBeInTheDocument();
     mockIsWeb3AuthStatusLoading = false;
   });
