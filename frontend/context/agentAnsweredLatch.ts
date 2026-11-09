@@ -18,23 +18,22 @@ type LivenessSnapshot = {
 /** `consecutive_failures` at the answer, per service config id. */
 const failuresWhenAnswered = new Map<string, number>();
 
+const isAnswer = ({ isDeployed, liveness }: LivenessSnapshot) =>
+  isDeployed && liveness?.reason === 'agent_reported_unhealthy';
+
 /**
  * Whether the stored answer belongs to an earlier start.
  *
  * A user or API start or stop makes the middleware drop the liveness record,
- * so its count restarts at 0. While `last_healthy_at` stays null nothing
- * resets the count within one record, the health checker's forced restart
- * included, so a lower count means a new start.
+ * so its count restarts at 0. Within one record every probe after the answer
+ * raises the count, the health checker's forced restart included, so a count
+ * no higher than the stored one means a new start. An equal count that is
+ * itself an answer is re-recorded by the caller.
  */
 const isStale = (stored: number, { isDeployed, liveness }: LivenessSnapshot) =>
-  !isDeployed || (!!liveness && liveness.consecutive_failures < stored);
+  !isDeployed || (!!liveness && liveness.consecutive_failures <= stored);
 
-/**
- * Record or clear one service's answer from a deployment poll.
- *
- * Fed with every service on every poll (`ServicesProvider`), so a start of a
- * service that is not selected, or not on screen, still clears it.
- */
+/** Record or clear one service's answer from a deployment poll. */
 export const observeAgentLiveness = (
   serviceConfigId: string,
   snapshot: LivenessSnapshot,
@@ -44,13 +43,15 @@ export const observeAgentLiveness = (
     failuresWhenAnswered.delete(serviceConfigId);
   }
 
-  const { isDeployed, liveness } = snapshot;
   if (
-    isDeployed &&
-    liveness?.reason === 'agent_reported_unhealthy' &&
+    snapshot.liveness &&
+    isAnswer(snapshot) &&
     !failuresWhenAnswered.has(serviceConfigId)
   ) {
-    failuresWhenAnswered.set(serviceConfigId, liveness.consecutive_failures);
+    failuresWhenAnswered.set(
+      serviceConfigId,
+      snapshot.liveness.consecutive_failures,
+    );
   }
 };
 
@@ -64,8 +65,7 @@ export const hasAnsweredSinceStart = (
   serviceConfigId: string,
   snapshot: LivenessSnapshot,
 ) => {
-  if (!snapshot.isDeployed) return false;
-  if (snapshot.liveness?.reason === 'agent_reported_unhealthy') return true;
+  if (isAnswer(snapshot)) return true;
 
   const stored = failuresWhenAnswered.get(serviceConfigId);
   return stored !== undefined && !isStale(stored, snapshot);

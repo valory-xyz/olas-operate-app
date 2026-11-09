@@ -79,6 +79,21 @@ describe('agentAnsweredLatch', () => {
     expect(hasAnsweredSinceStart(ID, failingAt(4))).toBe(false);
   });
 
+  // Every probe after the answer raises the count, so an equal count that is
+  // not an answer can only come from a fresh record.
+  it('treats an equal count that is not an answer as a new start', () => {
+    observeAgentLiveness(ID, ANSWERED);
+
+    expect(hasAnsweredSinceStart(ID, failingAt(3))).toBe(false);
+  });
+
+  it('keeps the answer when the same answer is polled again', () => {
+    observeAgentLiveness(ID, ANSWERED);
+    observeAgentLiveness(ID, ANSWERED);
+
+    expect(hasAnsweredSinceStart(ID, failingAt(4))).toBe(true);
+  });
+
   it('treats a lower count on read as a new start', () => {
     observeAgentLiveness(ID, ANSWERED);
 
