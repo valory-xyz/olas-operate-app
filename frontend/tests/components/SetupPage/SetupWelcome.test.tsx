@@ -595,6 +595,25 @@ describe('SetupWelcomeLogin', () => {
       expect(mockSetPassword).toHaveBeenCalledWith('test-password');
     });
 
+    it('goes to the backup step with no service and no backup, without keeping the password', async () => {
+      setupHooksNotInitialFunded();
+      mockUseServices.mockReturnValue({
+        ...mockUseServices(),
+        services: [],
+      });
+      mockUseBackupSignerState.mockReturnValue(signerState());
+      mockLoginAccount.mockResolvedValue({ message: 'ok' });
+
+      renderSetupWelcomeLogin();
+      fireEvent.submit(screen.getByTestId('login-form'));
+
+      await waitFor(() => {
+        expect(mockGoto).toHaveBeenCalledWith(SETUP_SCREEN.SetupBackupSigner);
+      });
+      // Only replacing an ignored Google/Apple pick needs it.
+      expect(mockSetPassword).not.toHaveBeenCalled();
+    });
+
     it('keeps going to FundYourAgent when a service exists and no new backup is needed', async () => {
       setupHooksNotInitialFunded();
       mockUseBackupSignerState.mockReturnValue(signerState());
