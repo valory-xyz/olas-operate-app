@@ -12,13 +12,10 @@ import { SETUP_SCREEN } from '../../../constants';
 const mockGoto = jest.fn();
 const mockSetCurrentStep = jest.fn();
 
+let mockStatus: 'loading' | 'enabled' | 'disabled' = 'enabled';
 jest.mock('../../../hooks', () => ({
   useSetup: () => ({ goto: mockGoto }),
-}));
-
-let mockStatus: 'loading' | 'enabled' | 'disabled' = 'enabled';
-jest.mock('../../../hooks/useWeb3AuthStatus', () => ({
-  useWeb3AuthStatus: () => ({ status: mockStatus }),
+  useWeb3AuthStatus: () => ({ isWeb3AuthEnabled: mockStatus === 'enabled' }),
 }));
 
 // Default mock — overridden per test when needed via mockContextValue
@@ -262,7 +259,7 @@ describe('AccountRecovery guard', () => {
     ).toBeInTheDocument();
   });
 
-  it('shows no reset subtitle while the status loads', () => {
+  it('shows the recovery-phrase subtitle while the status loads (e.g. offline)', () => {
     mockStatus = 'loading';
     mockContextValue = {
       ...defaultContext,
@@ -271,7 +268,9 @@ describe('AccountRecovery guard', () => {
 
     render(<AccountRecovery />);
     expect(
-      screen.queryByText(/You can restore access to your account/),
-    ).not.toBeInTheDocument();
+      screen.getByText(
+        'You can restore access to your account via the seed phrase.',
+      ),
+    ).toBeInTheDocument();
   });
 });

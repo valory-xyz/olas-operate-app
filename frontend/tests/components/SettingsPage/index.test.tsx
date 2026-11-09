@@ -5,11 +5,11 @@ import { Settings } from '../../../components/SettingsPage';
 import { SettingsScreen, SettingsScreenMap } from '../../../constants/screen';
 import {
   useElectronApi,
+  useLatchedWeb3AuthEnabled,
   useMnemonicExists,
   useRecoveryPhraseBackup,
   useSettings,
   useStore,
-  useWeb3AuthStatus,
 } from '../../../hooks';
 
 // ---------------------------------------------------------------------------
@@ -24,7 +24,7 @@ jest.mock('../../../hooks', () => ({
   useRecoveryPhraseBackup: jest.fn(),
   useSettings: jest.fn(),
   useStore: jest.fn(),
-  useWeb3AuthStatus: jest.fn(),
+  useLatchedWeb3AuthEnabled: jest.fn(),
 }));
 
 jest.mock('../../../components/SettingsPage/UpdatePassword', () => ({
@@ -121,7 +121,7 @@ const mockUseMnemonicExists = useMnemonicExists as jest.Mock;
 const mockUseRecoveryPhraseBackup = useRecoveryPhraseBackup as jest.Mock;
 const mockUseElectronApi = useElectronApi as jest.Mock;
 const mockUseStore = useStore as jest.Mock;
-const mockUseWeb3AuthStatus = useWeb3AuthStatus as jest.Mock;
+const mockUseLatchedWeb3AuthEnabled = useLatchedWeb3AuthEnabled as jest.Mock;
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -145,10 +145,7 @@ const setupDefaults = (
     isWeb3AuthEnabled = true,
   } = overrides;
 
-  mockUseWeb3AuthStatus.mockReturnValue({
-    isWeb3AuthEnabled,
-    isLoading: false,
-  });
+  mockUseLatchedWeb3AuthEnabled.mockReturnValue(isWeb3AuthEnabled);
 
   mockUseSettings.mockReturnValue({ screen, goto: jest.fn() });
   mockUseMnemonicExists.mockReturnValue({ mnemonicExists });
@@ -243,10 +240,7 @@ describe('Settings (SettingsPage entry)', () => {
         screen: SettingsScreenMap.AddBackupWalletMethod,
         isWeb3AuthEnabled: false,
       });
-      mockUseWeb3AuthStatus.mockReturnValue({
-        isWeb3AuthEnabled: false,
-        isLoading: true,
-      });
+      mockUseLatchedWeb3AuthEnabled.mockReturnValue(undefined);
       const { rerender } = render(<Settings />);
       expect(screen.getByTestId('card-skeleton')).toBeInTheDocument();
       expect(
@@ -256,10 +250,7 @@ describe('Settings (SettingsPage entry)', () => {
         screen.queryByTestId('add-backup-wallet-method-screen'),
       ).not.toBeInTheDocument();
 
-      mockUseWeb3AuthStatus.mockReturnValue({
-        isWeb3AuthEnabled: true,
-        isLoading: false,
-      });
+      mockUseLatchedWeb3AuthEnabled.mockReturnValue(true);
       rerender(<Settings />);
       expect(
         screen.getByTestId('add-backup-wallet-method-screen'),
@@ -268,20 +259,14 @@ describe('Settings (SettingsPage entry)', () => {
 
     it('shows a loader on the Update method screen while the status loads, then the method screen once enabled', () => {
       setupDefaults({ screen: SettingsScreenMap.UpdateBackupWalletMethod });
-      mockUseWeb3AuthStatus.mockReturnValue({
-        isWeb3AuthEnabled: false,
-        isLoading: true,
-      });
+      mockUseLatchedWeb3AuthEnabled.mockReturnValue(undefined);
       const { rerender } = render(<Settings />);
       expect(screen.getByTestId('card-skeleton')).toBeInTheDocument();
       expect(
         screen.queryByTestId('update-backup-wallet-manual-screen'),
       ).not.toBeInTheDocument();
 
-      mockUseWeb3AuthStatus.mockReturnValue({
-        isWeb3AuthEnabled: true,
-        isLoading: false,
-      });
+      mockUseLatchedWeb3AuthEnabled.mockReturnValue(true);
       rerender(<Settings />);
       expect(
         screen.getByTestId('update-backup-wallet-method-screen'),
@@ -290,10 +275,7 @@ describe('Settings (SettingsPage entry)', () => {
 
     it('does not hold other Settings screens behind the status', () => {
       setupDefaults({ screen: SettingsScreenMap.Main });
-      mockUseWeb3AuthStatus.mockReturnValue({
-        isWeb3AuthEnabled: false,
-        isLoading: true,
-      });
+      mockUseLatchedWeb3AuthEnabled.mockReturnValue(undefined);
       render(<Settings />);
       expect(screen.queryByTestId('card-skeleton')).not.toBeInTheDocument();
       expect(screen.getByText('Password')).toBeInTheDocument();

@@ -19,13 +19,15 @@ const mockResetTokenRequirements = jest.fn();
 const mockUseServices = jest.fn();
 const BACKUP_OWNER = '0x2222222222222222222222222222222222222222';
 let mockIsBackupSignerReady = true;
+let mockIsBackupSignerError = false;
 
 jest.mock('../../../../hooks', () => ({
   useSetup: () => ({ goto: mockGotoSetup }),
   useServices: () => mockUseServices(),
-  useBackupSigner: () => BACKUP_OWNER,
   useBackupSignerGuard: () => ({
     isBackupSignerReady: mockIsBackupSignerReady,
+    isBackupSignerError: mockIsBackupSignerError,
+    backupSignerAddress: BACKUP_OWNER,
   }),
   useGetRefillRequirements: () => ({
     refillTokenRequirements: [{ symbol: 'OLAS', amount: 1 }],
@@ -61,6 +63,8 @@ describe('FundYourAgent', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockFlowProps = null;
+    mockIsBackupSignerReady = true;
+    mockIsBackupSignerError = false;
   });
 
   it('renders the funding flow for the new agent instead of Buy, Transfer and Bridge', () => {
@@ -93,9 +97,20 @@ describe('FundYourAgent', () => {
     setup();
     mockIsBackupSignerReady = false;
     render(<FundYourAgent />);
-    mockIsBackupSignerReady = true;
 
     expect(mockFlowProps).toBeNull();
+  });
+
+  it('shows a retrying error instead of the flow when the backup signer is unreadable', () => {
+    setup();
+    mockIsBackupSignerReady = false;
+    mockIsBackupSignerError = true;
+    render(<FundYourAgent />);
+
+    expect(mockFlowProps).toBeNull();
+    expect(
+      screen.getByText(/Couldn.t check your backup wallet/),
+    ).toBeInTheDocument();
   });
 
   it('routes back to AgentOnboarding for a no_staking agent (e.g. Connect)', () => {

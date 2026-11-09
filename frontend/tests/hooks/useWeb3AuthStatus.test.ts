@@ -3,7 +3,10 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { createElement } from 'react';
 
 import { WEB3AUTH_STATUS_URL } from '../../constants/urls';
-import { useWeb3AuthStatus } from '../../hooks/useWeb3AuthStatus';
+import {
+  useLatchedWeb3AuthEnabled,
+  useWeb3AuthStatus,
+} from '../../hooks/useWeb3AuthStatus';
 import {
   createQueryClientWrapper,
   createTestQueryClient,
@@ -189,5 +192,86 @@ describe('useWeb3AuthStatus', () => {
     } finally {
       onlineManager.setOnline(true);
     }
+  });
+
+  it('does not log a cancelled request as an outage', async () => {
+    const queryClient = createTestQueryClient();
+    const wrapper = ({ children }: { children: React.ReactNode }) =>
+      createElement(QueryClientProvider, { client: queryClient }, children);
+    (global.fetch as jest.Mock).mockImplementation(
+      (_url: string, init: { signal: AbortSignal }) =>
+        new Promise((_resolve, reject) => {
+          init.signal.addEventListener('abort', () =>
+            reject(new DOMException('Aborted', 'AbortError')),
+          );
+        }),
+    );
+
+    renderHook(() => useWeb3AuthStatus(), { wrapper });
+    await waitFor(() => expect(global.fetch).toHaveBeenCalled());
+    await act(async () => {
+      await queryClient.cancelQueries();
+    });
+
+    expect(consoleError).not.toHaveBeenCalled();
+  });
+
+  describe('useLatchedWeb3AuthEnabled', () => {
+    const setup = () => {
+      const queryClient = createTestQueryClient();
+      const wrapper = ({ children }: { children: React.ReactNode }) =>
+        createElement(QueryClientProvider, { client: queryClient }, children);
+      return { queryClient, wrapper };
+    };
+
+    it('is undefined while the status loads', () => {
+      (global.fetch as jest.Mock).mockReturnValue(new Promise(() => {}));
+      const { wrapper } = setup();
+
+      const { result } = renderHook(() => useLatchedWeb3AuthEnabled('a'), {
+        wrapper,
+      });
+      expect(result.current).toBeUndefined();
+    });
+
+    it('keeps the first settled value for a key when a refetch later fails', async () => {
+      const { queryClient, wrapper } = setup();
+      mockFetchResponse({ enabled: true });
+
+      const { result } = renderHook(() => useLatchedWeb3AuthEnabled('a'), {
+        wrapper,
+      });
+      await waitFor(() => expect(result.current).toBe(true));
+
+      jest.useFakeTimers();
+      mockFetchResponse({}, false, 500);
+      await act(async () => {
+        queryClient.refetchQueries();
+        await jest.runAllTimersAsync();
+      });
+      jest.useRealTimers();
+
+      expect(result.current).toBe(true);
+    });
+
+    it('reads the live status again for a new key', async () => {
+      const { queryClient, wrapper } = setup();
+      mockFetchResponse({ enabled: true });
+
+      const { result, rerender } = renderHook(
+        ({ key }: { key: string | null }) => useLatchedWeb3AuthEnabled(key),
+        { wrapper, initialProps: { key: 'a' as string | null } },
+      );
+      await waitFor(() => expect(result.current).toBe(true));
+
+      mockFetchResponse({ enabled: false });
+      await act(async () => {
+        await queryClient.refetchQueries();
+      });
+      expect(result.current).toBe(true);
+
+      rerender({ key: 'b' });
+      await waitFor(() => expect(result.current).toBe(false));
+    });
   });
 });

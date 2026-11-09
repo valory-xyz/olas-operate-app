@@ -6,8 +6,8 @@ import { SETUP_SCREEN } from '@/constants';
 import { useMessageApi } from '@/context/MessageProvider';
 import {
   useApplyBackupDuringSetup,
+  useLatchedWeb3AuthEnabled,
   useSetup,
-  useWeb3AuthStatus,
 } from '@/hooks';
 import { Address } from '@/types/Address';
 import { BackupWalletType } from '@/types/BackupWallet';
@@ -23,8 +23,9 @@ export const SetupBackupSigner = () => {
   const [backupWalletType, setBackupWalletType] =
     useState<BackupWalletType>('web3auth');
   const { goto } = useSetup();
-  const { isWeb3AuthEnabled, isLoading: isWeb3AuthStatusLoading } =
-    useWeb3AuthStatus();
+  // Decided once for this screen, so a later refetch can't swap views mid-flow.
+  const isWeb3AuthEnabled = useLatchedWeb3AuthEnabled('setup-backup-signer');
+  const isWeb3AuthStatusLoading = isWeb3AuthEnabled === undefined;
   const shownBackupWalletType = isWeb3AuthEnabled ? backupWalletType : 'manual';
   const applyBackupDuringSetup = useApplyBackupDuringSetup();
   const message = useMessageApi();

@@ -58,7 +58,6 @@ export const UpdateBackupWalletManualScreen = () => {
       goto(SettingsScreenMap.UpdateBackupWalletMethod);
       return;
     }
-    setSameAddressError(false);
     resetFlow();
     goto(SettingsScreenMap.Main);
   };

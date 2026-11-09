@@ -4,8 +4,8 @@ import { ForgotPasswordCard } from '../../../../components/AccountRecovery/compo
 
 let mockStatus: 'loading' | 'enabled' | 'disabled' = 'enabled';
 
-jest.mock('../../../../hooks/useWeb3AuthStatus', () => ({
-  useWeb3AuthStatus: () => ({ status: mockStatus }),
+jest.mock('../../../../hooks', () => ({
+  useWeb3AuthStatus: () => ({ isWeb3AuthEnabled: mockStatus === 'enabled' }),
 }));
 
 jest.mock(
@@ -55,10 +55,11 @@ describe('ForgotPasswordCard', () => {
     ).toBeInTheDocument();
   });
 
-  it('shows no copy while the status loads, so it never switches under the user', () => {
+  it('shows the recovery-phrase copy while the status loads (e.g. offline)', () => {
     mockStatus = 'loading';
     render(<ForgotPasswordCard />);
-    expect(screen.queryByText(/Reset your password using/)).toBeNull();
-    expect(screen.getByRole('button', { name: 'Reset Password' })).toBeTruthy();
+    expect(
+      screen.getByText('Reset your password using the secret recovery phrase.'),
+    ).toBeTruthy();
   });
 });

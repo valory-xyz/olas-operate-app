@@ -2,8 +2,7 @@ import { Flex, Skeleton, Typography } from 'antd';
 import { useMemo } from 'react';
 
 import { SETUP_SCREEN } from '@/constants';
-import { useSetup } from '@/hooks';
-import { useWeb3AuthStatus } from '@/hooks/useWeb3AuthStatus';
+import { useSetup, useWeb3AuthStatus } from '@/hooks';
 
 import { BackButton } from '../ui';
 import {
@@ -60,7 +59,7 @@ const SelectRecoveryMethod = () => {
 
 const SelectPasswordResetOptionStep = () => {
   const { onPrev } = useAccountRecoveryContext();
-  const { status } = useWeb3AuthStatus();
+  const { isWeb3AuthEnabled } = useWeb3AuthStatus();
 
   return (
     <Flex align="center" vertical>
@@ -69,10 +68,9 @@ const SelectPasswordResetOptionStep = () => {
         Select Password Reset Option
       </Title>
       <Text type="secondary">
-        {status === 'enabled' &&
-          'You can restore access to your account via the seed phrase or the backup wallet.'}
-        {status === 'disabled' &&
-          'You can restore access to your account via the seed phrase.'}
+        {isWeb3AuthEnabled
+          ? 'You can restore access to your account via the seed phrase or the backup wallet.'
+          : 'You can restore access to your account via the seed phrase.'}
       </Text>
 
       <Flex gap={24} style={{ marginTop: 56 }}>

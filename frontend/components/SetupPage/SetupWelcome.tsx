@@ -46,11 +46,16 @@ const useSetupNavigation = ({
     isFetched: isServicesFetched,
   } = useServices();
   const { isInitialFunded } = useIsInitiallyFunded();
-  const {
-    backupSignerAddress,
-    isPending: isBackupSignerPending,
-    needsNewBackup,
-  } = useBackupSignerState();
+  const backupSigner = useBackupSignerState();
+  // Routing on an unsettled (or unreadable) backup signer could skip or wrongly
+  // repeat the backup step.
+  const isBackupSignerPending =
+    backupSigner.state === 'pending' || backupSigner.state === 'error';
+  const needsNewBackup = backupSigner.state === 'needsNewBackup';
+  const backupSignerAddress =
+    backupSigner.state === 'ready'
+      ? backupSigner.backupSignerAddress
+      : undefined;
   const { storeState } = useStore();
 
   const selectedServiceOrAgentChainId = selectedService?.home_chain
@@ -74,7 +79,6 @@ const useSetupNavigation = ({
       !canNavigate ||
       !isServicesFetched ||
       storeState === undefined ||
-      // Routing on an unsettled backup signer would skip or wrongly repeat the backup step.
       isBackupSignerPending
     )
       return false;
@@ -88,8 +92,8 @@ const useSetupNavigation = ({
   ]);
 
   const isBackupWalletNotSet = useMemo(() => {
-    // An ignored Google/Apple pick with no Pearl Safe yet returns to the backup
-    // step even when a service already exists.
+    // An ignored Google/Apple pick with no on-chain backup to fall back to
+    // returns to the backup step even when a service already exists.
     if (needsNewBackup) return true;
     // If no services are created and backup wallet is not set as well.
     return !services?.length && !backupSignerAddress;

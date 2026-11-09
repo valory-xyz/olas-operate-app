@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { useEffect, useState } from 'react';
 
 import {
   FIVE_MINUTE_INTERVAL,
@@ -21,6 +22,8 @@ export const useWeb3AuthStatus = () => {
     // Logged here, once per attempt, rather than once per mounted consumer.
     queryFn: ({ signal }) =>
       BackupWalletService.getWeb3AuthStatus(signal).catch((error: unknown) => {
+        // A cancelled query reverts to its previous state: nothing failed closed.
+        if (signal.aborted) throw error;
         window.console.error(
           `Web3Auth status unavailable from ${WEB3AUTH_STATUS_URL}; treating Google/Apple as off.`,
           error,
@@ -44,4 +47,23 @@ export const useWeb3AuthStatus = () => {
     isWeb3AuthEnabled: status === 'enabled',
     isLoading: status === 'loading',
   };
+};
+
+/**
+ * Whether Web3Auth is enabled as first settled for `key` (a screen or flow), so a later
+ * refetch can't swap that screen's content mid-flow. `undefined` while loading; a new `key`
+ * reads the live status again. With `key` `null`, the live status is returned.
+ */
+export const useLatchedWeb3AuthEnabled = (key: string | null) => {
+  const { status } = useWeb3AuthStatus();
+  const live = status === 'loading' ? undefined : status === 'enabled';
+  const [latched, setLatched] = useState<{ key: string; enabled: boolean }>();
+
+  useEffect(() => {
+    if (key === null || live === undefined || latched?.key === key) return;
+    setLatched({ key, enabled: live });
+  }, [key, live, latched?.key]);
+
+  if (key !== null && latched?.key === key) return latched.enabled;
+  return live;
 };

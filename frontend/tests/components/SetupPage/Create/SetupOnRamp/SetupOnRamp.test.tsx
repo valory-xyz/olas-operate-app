@@ -6,10 +6,12 @@ import { EvmChainIdMap } from '../../../../../constants/chains';
 jest.mock('../../../../../constants/providers', () => ({ PROVIDERS: {} }));
 
 let mockIsBackupSignerReady = true;
+let mockIsBackupSignerError = false;
 
 jest.mock('../../../../../hooks', () => ({
   useBackupSignerGuard: () => ({
     isBackupSignerReady: mockIsBackupSignerReady,
+    isBackupSignerError: mockIsBackupSignerError,
   }),
   useGetBridgeRequirementsParams: () => jest.fn(),
   useServices: () => ({
@@ -25,6 +27,7 @@ jest.mock('../../../../../components/OnRamp', () => ({
 describe('SetupOnRamp', () => {
   afterEach(() => {
     mockIsBackupSignerReady = true;
+    mockIsBackupSignerError = false;
   });
 
   it('opens the on-ramp once the backup signer is settled', () => {
@@ -36,5 +39,15 @@ describe('SetupOnRamp', () => {
     mockIsBackupSignerReady = false;
     render(<SetupOnRamp />);
     expect(screen.queryByTestId('on-ramp')).not.toBeInTheDocument();
+  });
+
+  it('shows a retrying error when the backup signer is unreadable', () => {
+    mockIsBackupSignerReady = false;
+    mockIsBackupSignerError = true;
+    render(<SetupOnRamp />);
+    expect(screen.queryByTestId('on-ramp')).not.toBeInTheDocument();
+    expect(
+      screen.getByText(/Couldn.t check your backup wallet/),
+    ).toBeInTheDocument();
   });
 });

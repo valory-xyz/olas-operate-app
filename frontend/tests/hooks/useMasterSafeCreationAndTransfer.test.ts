@@ -5,6 +5,7 @@ import { act, createElement, PropsWithChildren } from 'react';
 import { GNOSIS_TOKEN_CONFIG, TokenSymbolMap } from '../../config/tokens';
 import { AddressZero } from '../../constants/address';
 import { MiddlewareChainMap } from '../../constants/chains';
+import { SETUP_SCREEN } from '../../constants/setupScreen';
 import { useBackupSignerState } from '../../hooks/useBackupSigner';
 import {
   BACKUP_SIGNER_NOT_READY,
@@ -34,6 +35,11 @@ jest.mock('../../service/Wallet', () => ({
 
 jest.mock('../../hooks/useBackupSigner', () => ({
   useBackupSignerState: jest.fn(),
+}));
+
+const mockGotoSetup = jest.fn();
+jest.mock('../../hooks/useSetup', () => ({
+  useSetup: () => ({ goto: mockGotoSetup }),
 }));
 
 jest.mock('../../hooks/useServices', () => ({
@@ -83,9 +89,8 @@ describe('useMasterSafeCreationAndTransfer', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockUseBackupSignerState.mockReturnValue({
+      state: 'ready',
       backupSignerAddress: BACKUP_SIGNER_ADDRESS,
-      isPending: false,
-      needsNewBackup: false,
     });
     mockUseServices.mockReturnValue({
       selectedAgentConfig: {
@@ -112,17 +117,11 @@ describe('useMasterSafeCreationAndTransfer', () => {
     );
   });
 
-  it.each([
-    ['pending', { isPending: true, needsNewBackup: false }],
-    ['in need of a new backup', { isPending: false, needsNewBackup: true }],
-  ])(
-    'refuses to create the Safe while the backup signer is %s',
-    async (_label, signerState) => {
+  it.each(['pending', 'error', 'needsNewBackup'])(
+    'refuses to create the Safe while the backup signer is %s, with its own message',
+    async (signerState) => {
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
-      mockUseBackupSignerState.mockReturnValue({
-        backupSignerAddress: undefined,
-        ...signerState,
-      });
+      mockUseBackupSignerState.mockReturnValue({ state: signerState });
 
       const { result } = renderHook(
         () => useMasterSafeCreationAndTransfer([TokenSymbolMap.XDAI]),
@@ -135,9 +134,35 @@ describe('useMasterSafeCreationAndTransfer', () => {
         );
       });
       expect(mockCreateSafe).not.toHaveBeenCalled();
+      await waitFor(() =>
+        expect(mockMessageError).toHaveBeenCalledWith(BACKUP_SIGNER_NOT_READY),
+      );
+      expect(mockMessageError).not.toHaveBeenCalledWith(
+        'Failed to create master safe.',
+      );
       consoleSpy.mockRestore();
     },
   );
+
+  it('sends the user to the backup step when a new backup wallet is needed', async () => {
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+    mockUseBackupSignerState.mockReturnValue({ state: 'needsNewBackup' });
+
+    const { result } = renderHook(
+      () => useMasterSafeCreationAndTransfer([TokenSymbolMap.XDAI]),
+      { wrapper: createWrapper() },
+    );
+    await act(async () => {
+      await result.current.mutateAsync().catch(() => undefined);
+    });
+
+    await waitFor(() =>
+      expect(mockGotoSetup).toHaveBeenCalledWith(
+        SETUP_SCREEN.SetupBackupSigner,
+      ),
+    );
+    consoleSpy.mockRestore();
+  });
 
   it('returns isSafeCreated=true when status is not SAFE_CREATION_FAILED', async () => {
     mockCreateSafe.mockResolvedValue(

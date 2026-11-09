@@ -11,7 +11,7 @@ let mockContextValue: {
 };
 
 let mockIsWeb3AuthEnabled = true;
-jest.mock('../../../hooks/useWeb3AuthStatus', () => ({
+jest.mock('../../../hooks', () => ({
   useWeb3AuthStatus: () => ({ isWeb3AuthEnabled: mockIsWeb3AuthEnabled }),
 }));
 

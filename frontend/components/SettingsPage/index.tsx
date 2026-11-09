@@ -19,11 +19,11 @@ import { COLOR } from '@/constants';
 import { SettingsScreenMap } from '@/constants/screen';
 import {
   useElectronApi,
+  useLatchedWeb3AuthEnabled,
   useMnemonicExists,
   useRecoveryPhraseBackup,
   useSettings,
   useStore,
-  useWeb3AuthStatus,
 } from '@/hooks';
 
 import { BackupWalletSection } from './BackupWallet';
@@ -200,15 +200,16 @@ const SettingsMain = () => {
 
 export const Settings = () => {
   const { screen } = useSettings();
-  const { isWeb3AuthEnabled, isLoading: isWeb3AuthStatusLoading } =
-    useWeb3AuthStatus();
+  const isMethodScreen =
+    screen === SettingsScreenMap.AddBackupWalletMethod ||
+    screen === SettingsScreenMap.UpdateBackupWalletMethod;
+  // Decided once per entry: switching the method screen later would drop a
+  // typed address, or the Google/Apple listener and its result modal.
+  const isWeb3AuthEnabled = useLatchedWeb3AuthEnabled(
+    isMethodScreen ? screen : null,
+  );
   const settingsScreen = useMemo(() => {
-    // The method screens depend on the status; switching them after it loads
-    // would drop a typed address.
-    const isMethodScreen =
-      screen === SettingsScreenMap.AddBackupWalletMethod ||
-      screen === SettingsScreenMap.UpdateBackupWalletMethod;
-    if (isMethodScreen && isWeb3AuthStatusLoading) {
+    if (isMethodScreen && isWeb3AuthEnabled === undefined) {
       return <CardSkeleton />;
     }
 
@@ -240,7 +241,7 @@ export const Settings = () => {
       default:
         return null;
     }
-  }, [screen, isWeb3AuthEnabled, isWeb3AuthStatusLoading]);
+  }, [screen, isMethodScreen, isWeb3AuthEnabled]);
 
   return (
     <AddBackupWalletProvider>

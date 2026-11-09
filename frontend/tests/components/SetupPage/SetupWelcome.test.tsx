@@ -194,15 +194,10 @@ const mockMessageError = jest.fn();
 const mockUseOnlineStatusContext = jest.fn();
 const mockUseServices = jest.fn();
 const mockUseBackupSignerState = jest.fn();
-/** `useBackupSignerState` result; settled unless overridden. */
-const signerState = (
-  backupSignerAddress?: string,
-  overrides: { isPending?: boolean; needsNewBackup?: boolean } = {},
-) => ({
+/** A ready `useBackupSignerState` result. */
+const signerState = (backupSignerAddress?: string) => ({
+  state: 'ready',
   backupSignerAddress,
-  isPending: false,
-  needsNewBackup: false,
-  ...overrides,
 });
 const mockUseIsInitiallyFunded = jest.fn();
 const mockUseStore = jest.fn();
@@ -583,9 +578,7 @@ describe('SetupWelcomeLogin', () => {
 
     it('returns to the backup wallet step when a new backup is needed, even with a service', async () => {
       setupHooksNotInitialFunded();
-      mockUseBackupSignerState.mockReturnValue(
-        signerState(undefined, { needsNewBackup: true }),
-      );
+      mockUseBackupSignerState.mockReturnValue({ state: 'needsNewBackup' });
       mockLoginAccount.mockResolvedValue({ message: 'ok' });
 
       renderSetupWelcomeLogin();
@@ -611,11 +604,24 @@ describe('SetupWelcomeLogin', () => {
       expect(mockGoto).not.toHaveBeenCalledWith(SETUP_SCREEN.SetupBackupSigner);
     });
 
+    it('does not route while the Safe owners are unreadable', async () => {
+      setupHooksNotInitialFunded();
+      mockUseBackupSignerState.mockReturnValue({ state: 'error' });
+      mockLoginAccount.mockResolvedValue({ message: 'ok' });
+
+      renderSetupWelcomeLogin();
+      fireEvent.submit(screen.getByTestId('login-form'));
+
+      await waitFor(() => {
+        expect(mockSetUserLoggedIn).toHaveBeenCalledTimes(1);
+      });
+      expect(mockGoto).not.toHaveBeenCalledWith(SETUP_SCREEN.FundYourAgent);
+      expect(mockGoto).not.toHaveBeenCalledWith(SETUP_SCREEN.SetupBackupSigner);
+    });
+
     it('does not route while the backup signer is pending, then routes once it settles as needing a new backup', async () => {
       setupHooksNotInitialFunded();
-      mockUseBackupSignerState.mockReturnValue(
-        signerState(undefined, { isPending: true }),
-      );
+      mockUseBackupSignerState.mockReturnValue({ state: 'pending' });
       mockLoginAccount.mockResolvedValue({ message: 'ok' });
 
       const { rerender } = renderSetupWelcomeLogin();
@@ -627,9 +633,7 @@ describe('SetupWelcomeLogin', () => {
       expect(mockGoto).not.toHaveBeenCalledWith(SETUP_SCREEN.FundYourAgent);
       expect(mockGoto).not.toHaveBeenCalledWith(SETUP_SCREEN.SetupBackupSigner);
 
-      mockUseBackupSignerState.mockReturnValue(
-        signerState(undefined, { needsNewBackup: true }),
-      );
+      mockUseBackupSignerState.mockReturnValue({ state: 'needsNewBackup' });
       rerender(<SetupWelcomeLogin />);
 
       await waitFor(() => {

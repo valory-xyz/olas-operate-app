@@ -121,7 +121,6 @@ describe('UpdateBackupWalletManualScreen', () => {
     fireEvent.click(screen.getByTestId('back'));
     expect(mockGoto).toHaveBeenCalledWith(SettingsScreenMap.Main);
     expect(mockResetFlow).toHaveBeenCalled();
-    expect(mockSetSameAddressError).toHaveBeenCalledWith(false);
   });
 
   it('rejects invalid address', async () => {

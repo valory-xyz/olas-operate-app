@@ -1,11 +1,12 @@
 import { useMutation } from '@tanstack/react-query';
 
 import { TOKEN_CONFIG, TokenSymbol, TokenType } from '@/config/tokens';
-import { AddressZero } from '@/constants';
+import { AddressZero, SETUP_SCREEN } from '@/constants';
 import { EXPLORER_URL_BY_MIDDLEWARE_CHAIN } from '@/constants/urls';
 import { useMessageApi } from '@/context/MessageProvider';
 import { useBackupSignerState } from '@/hooks/useBackupSigner';
 import { useServices } from '@/hooks/useServices';
+import { useSetup } from '@/hooks/useSetup';
 import { WalletService } from '@/service/Wallet';
 import { BridgingStepStatus } from '@/types/Bridge';
 import { asEvmChainId } from '@/utils';
@@ -22,11 +23,8 @@ export const BACKUP_SIGNER_NOT_READY =
 export const useMasterSafeCreationAndTransfer = (
   tokenSymbols: TokenSymbol[],
 ) => {
-  const {
-    backupSignerAddress,
-    isPending: isBackupSignerPending,
-    needsNewBackup,
-  } = useBackupSignerState();
+  const backupSigner = useBackupSignerState();
+  const { goto } = useSetup();
   const { selectedAgentConfig } = useServices();
   const { refetch } = useBalanceAndRefillRequirementsContext();
   const message = useMessageApi();
@@ -36,11 +34,13 @@ export const useMasterSafeCreationAndTransfer = (
 
   return useMutation({
     mutationFn: async () => {
-      // Every path that creates the Pearl Safe goes through here: never create it on a
-      // backup signer that is unsettled or needs replacing.
-      if (isBackupSignerPending || needsNewBackup) {
+      // Never create the Pearl Safe on a backup signer that is unsettled or needs
+      // replacing. (The onboarding funding run creates it in the middleware instead,
+      // with the owner FundYourAgent's guard latched.)
+      if (backupSigner.state !== 'ready') {
         throw new Error(BACKUP_SIGNER_NOT_READY);
       }
+      const { backupSignerAddress } = backupSigner;
       const explorer = `${EXPLORER_URL_BY_MIDDLEWARE_CHAIN[chain]}/tx`;
       try {
         const response = await WalletService.createSafe(
@@ -105,6 +105,14 @@ export const useMasterSafeCreationAndTransfer = (
     },
     onError: (error) => {
       console.error(error);
+      if (error.message === BACKUP_SIGNER_NOT_READY) {
+        message.error(BACKUP_SIGNER_NOT_READY);
+        // Retrying can't help until a new backup wallet is chosen.
+        if (backupSigner.state === 'needsNewBackup') {
+          goto(SETUP_SCREEN.SetupBackupSigner);
+        }
+        return;
+      }
       message.error('Failed to create master safe.');
     },
   });

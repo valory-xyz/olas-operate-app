@@ -68,6 +68,7 @@ export const useMultisigs = (safes?: Safe[]) => {
     data: masterSafesOwners,
     isFetched: masterSafesOwnersIsFetched,
     isSuccess: masterSafesOwnersIsSuccess,
+    isError: masterSafesOwnersIsError,
     isPending: masterSafesOwnersIsPending,
     isLoading: masterSafesOwnersIsLoading,
   } = useQuery<MultisigOwners[]>({
@@ -119,9 +120,15 @@ export const useMultisigs = (safes?: Safe[]) => {
         }
 
         // Execute the multicall
-        const ownersArray = await provider.all(
-          calls.map((call) => call.contractCall),
-        );
+        const ownersArray = await provider
+          .all(calls.map((call) => call.contractCall))
+          .catch((error: unknown) => {
+            console.error(
+              `Failed to read Safe owners on chain ${evmChainId}`,
+              error,
+            );
+            throw error;
+          });
 
         // Combine results into the output
         ownersArray.forEach((owners, index) => {
@@ -175,6 +182,7 @@ export const useMultisigs = (safes?: Safe[]) => {
     masterSafesOwners,
     masterSafesOwnersIsFetched,
     masterSafesOwnersIsSuccess,
+    masterSafesOwnersIsError,
     masterSafesOwnersIsPending,
     masterSafesOwnersIsLoading,
   };

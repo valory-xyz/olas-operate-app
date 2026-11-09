@@ -25,10 +25,8 @@ const capturedProps: {
 jest.mock('../../../../../hooks', () => ({
   useSetup: () => ({ goto: mockGoto }),
   useApplyBackupDuringSetup: () => mockApplyBackupDuringSetup,
-  useWeb3AuthStatus: () => ({
-    isWeb3AuthEnabled: mockIsWeb3AuthEnabled,
-    isLoading: mockIsWeb3AuthStatusLoading,
-  }),
+  useLatchedWeb3AuthEnabled: () =>
+    mockIsWeb3AuthStatusLoading ? undefined : mockIsWeb3AuthEnabled,
 }));
 
 jest.mock('../../../../../context/MessageProvider', () => ({

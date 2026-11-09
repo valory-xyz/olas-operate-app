@@ -16,7 +16,7 @@ Master EOA (single, derived from mnemonic)
 - `frontend/context/MasterWalletProvider.tsx` — master wallet state (EOA + Safes from API, polling)
 - `frontend/context/PearlWalletProvider.tsx` — wallet chain/deposit/withdraw state for the Pearl Wallet UI
 - `frontend/hooks/useWallet.ts` — context accessor for `MasterWalletProvider`
-- `frontend/hooks/useBackupSigner.ts` — resolves backup signer address (setup context → on-chain fallback)
+- `frontend/hooks/useBackupSigner.ts` — resolves the backup signer (setup context → on-chain fallback; a Google/Apple pick is ignored while Web3Auth is off) and its readiness
 - `frontend/hooks/useMultisig.ts` — multisig owners via on-chain calls (single and batch)
 - `frontend/hooks/useMasterSafeCreationAndTransfer.ts` — safe creation + asset transfer mutation
 - `frontend/utils/wallet.ts` — token resolution helpers (`getTokenDetails`, `getFromToken`, `tokenBalancesToSentence`)
@@ -165,7 +165,11 @@ Derived values:
 
 ### Backup signer resolution (`useBackupSigner`)
 
-Returns `backupSigner.address` from setup context if available, otherwise falls back to `allBackupAddresses[0]` from `useMultisigs`. This means during setup the user-chosen signer is used, but post-setup it reads actual on-chain owners.
+`useBackupSignerState` returns `{ state: 'pending' | 'error' | 'needsNewBackup' | 'ready', backupSignerAddress? }`; `useBackupSigner` returns the address when `ready`.
+
+- Normally (`backupSigner` from setup context is an address pick, or there is no pick, or Web3Auth is enabled): `ready` with `backupSigner.address`, falling back to `allBackupAddresses[0]` from `useMultisigs`. During setup the user-chosen signer is used; post-setup it reads actual on-chain owners.
+- A stored Google/Apple (`web3auth`) pick while pearl-api reports Web3Auth off is ignored: `pending` while the status or wallets load (or, with a Pearl Safe, until its owners are read successfully), `error` while the owners read keeps failing, then `ready` with the on-chain backup owner — or `needsNewBackup` when there is none.
+- `useBackupSignerGuard` (used by `FundYourAgent` and `SetupOnRamp`) waits for `ready`, redirects to `SetupBackupSigner` on `needsNewBackup`, and keeps its first `ready` decision and address for the screen's lifetime. `SetupWelcome` doesn't route while `pending`/`error`. `useMasterSafeCreationAndTransfer` refuses to create the Safe unless `ready`.
 
 ### Multisig owners (`useMultisig` / `useMultisigs`)
 
@@ -241,6 +245,6 @@ Pure functions for token resolution:
 - **`MasterWalletProvider`** — `transformMiddlewareWalletResponse` is not exported but contains the core logic. Test through the provider by mocking `WalletService.getWallets` and verifying `masterEoa`, `masterSafes`, `getMasterSafeOf` derivations. The `getAddress` call will throw for truly invalid addresses — not just return false.
 - **`useMultisig`** depends on `ethers.Contract` — needs mocking of the Contract constructor and `getOwners`. `useMultisig` uses case-insensitive `toLowerCase` to filter backup owners; `useMultisigs` uses strict `!==` — this difference matters for test fixtures.
 - **`useMultisigs`** additionally depends on `ethers-multicall` `MulticallContract` and `multicallProvider.all()`.
-- **`useMasterSafeCreationAndTransfer`** depends on `useBackupSigner`, `useServices`, `useBalanceAndRefillRequirementsContext`, and `useMessageApi` — all need mocking. The `TOKEN_CONFIG` lookup and `AddressZero` for native gas tokens are important edge cases.
+- **`useMasterSafeCreationAndTransfer`** depends on `useBackupSignerState`, `useSetup`, `useServices`, `useBalanceAndRefillRequirementsContext`, and `useMessageApi` — all need mocking. The `TOKEN_CONFIG` lookup and `AddressZero` for native gas tokens are important edge cases.
 - **`PearlWalletProvider`** has many dependencies (`useServices`, `useService`, `useBalanceContext`, `useBalanceAndRefillRequirementsContext`, `useMasterWalletContext`, `usePageState`, `useAvailableAssets`). The chain-stability effect (skip sync on wallet pages) is an important branch. `getChainList` and `getMasterSafeAddress` are internal helpers — test through the provider.
 - **`utils/wallet.ts`** — pure functions, no mocking needed. Test `tokenBalancesToSentence` with 0/1/2/3+ tokens, `getTokenDetails` with `AddressZero` and real token addresses, `getFromToken` with bridged tokens (`USDC.e` → `USDC`) and error cases.

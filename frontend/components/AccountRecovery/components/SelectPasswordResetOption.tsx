@@ -2,7 +2,7 @@ import { Button, Typography } from 'antd';
 import { TbCreditCard, TbWallet } from 'react-icons/tb';
 
 import { COLOR } from '@/constants';
-import { useWeb3AuthStatus } from '@/hooks/useWeb3AuthStatus';
+import { useWeb3AuthStatus } from '@/hooks';
 
 import { CardTitle, IconContainer } from '../../ui';
 import { useAccountRecoveryContext } from '../AccountRecoveryProvider';

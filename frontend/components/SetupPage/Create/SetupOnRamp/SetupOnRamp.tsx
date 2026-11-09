@@ -11,10 +11,12 @@ import {
 } from '@/hooks';
 import { asMiddlewareChain } from '@/utils';
 
+import { BackupSignerUnavailable } from '../../BackupSignerUnavailable';
+
 export const SetupOnRamp = () => {
   const { goto: gotoSetup, prevState } = useSetup();
   const { selectedAgentConfig } = useServices();
-  const { isBackupSignerReady } = useBackupSignerGuard();
+  const { isBackupSignerReady, isBackupSignerError } = useBackupSignerGuard();
 
   // Calculate onRampChainId based on agent's home chain
   const agentChainName = asMiddlewareChain(selectedAgentConfig.evmHomeChainId);
@@ -32,6 +34,7 @@ export const SetupOnRamp = () => {
   }, [gotoSetup, prevState]);
 
   // The on-ramp ends by creating the Pearl Safe with the backup signer.
+  if (isBackupSignerError) return <BackupSignerUnavailable />;
   if (!isBackupSignerReady) {
     return <CardSkeleton />;
   }
