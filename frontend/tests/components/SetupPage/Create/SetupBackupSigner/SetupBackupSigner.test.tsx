@@ -119,7 +119,8 @@ describe('SetupBackupSigner', () => {
   it('shows neither view while the Web3Auth status loads, so a typed address is never swapped out', () => {
     mockIsWeb3AuthEnabled = false;
     mockIsWeb3AuthStatusLoading = true;
-    render(<SetupBackupSigner />);
+    const { container } = render(<SetupBackupSigner />);
+    expect(container.querySelector('.ant-skeleton')).toBeInTheDocument();
     expect(screen.queryByTestId('manual')).not.toBeInTheDocument();
     expect(screen.queryByTestId('web3auth')).not.toBeInTheDocument();
   });
