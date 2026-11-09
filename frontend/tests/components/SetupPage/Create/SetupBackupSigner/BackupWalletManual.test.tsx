@@ -141,6 +141,19 @@ describe('BackupWalletManual (setup)', () => {
     expect(useWeb3AuthMock.lastOnFinish).toBe(onFinish);
   });
 
+  it('uses the Google/Apple completion callback when the parent needs to distinguish the backup type', () => {
+    const onFinish = jest.fn();
+    const onWeb3AuthFinish = jest.fn();
+    render(
+      <BackupWalletManual
+        onFinish={onFinish}
+        onWeb3AuthFinish={onWeb3AuthFinish}
+        isWeb3AuthEnabled
+      />,
+    );
+    expect(useWeb3AuthMock.lastOnFinish).toBe(onWeb3AuthFinish);
+  });
+
   it('hides the Google/Apple link when Web3Auth is disabled', () => {
     render(
       <BackupWalletManual onFinish={jest.fn()} isWeb3AuthEnabled={false} />,

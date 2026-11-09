@@ -24,8 +24,13 @@ const { Title, Text } = Typography;
 export const SetupBackupSigner = () => {
   const [backupWalletType, setBackupWalletType] =
     useState<BackupWalletType>('web3auth');
-  const { goto, isReplacingBackup, setIsReplacingBackup, setPassword } =
-    useSetup();
+  const {
+    goto,
+    isReplacingBackup,
+    setIsReplacingBackup,
+    setPassword,
+    setBackupSigner,
+  } = useSetup();
   const { logEvent } = useElectronApi();
   // Decided once for this screen, so a later refetch can't swap views mid-flow.
   const isWeb3AuthEnabled = useLatchedWeb3AuthEnabled(
@@ -37,7 +42,7 @@ export const SetupBackupSigner = () => {
   const message = useMessageApi();
 
   const handleBackupFinish = useCallback(
-    async (address: Address) => {
+    async (address: Address, type: BackupWalletType) => {
       try {
         await applyBackupDuringSetup(address);
       } catch (e: unknown) {
@@ -54,6 +59,7 @@ export const SetupBackupSigner = () => {
         // until then, and in State B once auto-migration completes.
         setPassword(null);
       }
+      if (isReplacingBackup) setBackupSigner({ address, type });
       setIsReplacingBackup(false);
       goto(SETUP_SCREEN.AgentOnboarding);
     },
@@ -65,6 +71,7 @@ export const SetupBackupSigner = () => {
       message,
       setIsReplacingBackup,
       setPassword,
+      setBackupSigner,
     ],
   );
 
@@ -83,7 +90,7 @@ export const SetupBackupSigner = () => {
         {!isWeb3AuthStatusLoading && shownBackupWalletType === 'web3auth' && (
           <BackupWalletWeb3Auth
             onSetUpManuallyClick={() => setBackupWalletType('manual')}
-            onFinish={handleBackupFinish}
+            onFinish={(address) => handleBackupFinish(address, 'web3auth')}
             // The apply happens asynchronously inside onFinish. If it fails we
             // show an error toast; suppress the always-fires "success" toast
             // so the user never sees a success+error pair in sequence.
@@ -92,7 +99,10 @@ export const SetupBackupSigner = () => {
         )}
         {!isWeb3AuthStatusLoading && shownBackupWalletType === 'manual' && (
           <BackupWalletManual
-            onFinish={handleBackupFinish}
+            onFinish={(address) => handleBackupFinish(address, 'manual')}
+            onWeb3AuthFinish={(address) =>
+              handleBackupFinish(address, 'web3auth')
+            }
             isWeb3AuthEnabled={!!isWeb3AuthEnabled}
           />
         )}

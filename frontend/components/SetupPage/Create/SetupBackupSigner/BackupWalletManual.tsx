@@ -25,15 +25,17 @@ const walletFieldRules: FormItemProps['rules'] = [
 
 type BackupWalletManualProps = {
   onFinish: (address: Address) => void | Promise<void>;
+  onWeb3AuthFinish?: (address: Address) => void | Promise<void>;
   /** The parent's latched decision, so the link can't appear or vanish mid-flow. */
   isWeb3AuthEnabled: boolean;
 };
 
 export const BackupWalletManual = ({
   onFinish,
+  onWeb3AuthFinish,
   isWeb3AuthEnabled,
 }: BackupWalletManualProps) => {
-  const { setBackupSigner } = useSetup();
+  const { setBackupSigner, isReplacingBackup } = useSetup();
   const [form] = Form.useForm();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -50,7 +52,9 @@ export const BackupWalletManual = ({
       return;
     }
 
-    setBackupSigner({ address: checksummedAddress, type: 'manual' });
+    if (!isReplacingBackup) {
+      setBackupSigner({ address: checksummedAddress, type: 'manual' });
+    }
     setIsSubmitting(true);
     try {
       await onFinish(checksummedAddress);
@@ -63,7 +67,7 @@ export const BackupWalletManual = ({
   // and shows its own error toast on failure. Firing a generic success toast
   // first would contradict the error toast if apply fails.
   const { openWeb3AuthModel } = useWeb3AuthBackupWallet({
-    onFinish,
+    onFinish: onWeb3AuthFinish ?? onFinish,
     showSuccessMessage: false,
   });
 

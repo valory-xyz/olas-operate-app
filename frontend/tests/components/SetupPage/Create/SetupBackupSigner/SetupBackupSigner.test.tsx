@@ -3,6 +3,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { SetupBackupSigner } from '../../../../../components/SetupPage/Create/SetupBackupSigner';
 import { SETUP_SCREEN } from '../../../../../constants/setupScreen';
 import { BackupWalletError } from '../../../../../service/BackupWalletService';
+import { BACKUP_SIGNER_ADDRESS } from '../../../../helpers/factories';
 
 jest.mock('../../../../../constants/providers', () => ({ PROVIDERS: {} }));
 
@@ -13,6 +14,7 @@ jest.mock('../../../../../constants/providers', () => ({ PROVIDERS: {} }));
 const mockGoto = jest.fn();
 const mockSetPassword = jest.fn();
 const mockSetIsReplacingBackup = jest.fn();
+const mockSetBackupSigner = jest.fn();
 const mockLogEvent = jest.fn();
 let mockIsReplacingBackup = false;
 const mockApplyBackupDuringSetup = jest.fn();
@@ -38,6 +40,7 @@ jest.mock('../../../../../hooks', () => ({
     setPassword: mockSetPassword,
     isReplacingBackup: mockIsReplacingBackup,
     setIsReplacingBackup: mockSetIsReplacingBackup,
+    setBackupSigner: mockSetBackupSigner,
   }),
   useElectronApi: () => ({ logEvent: mockLogEvent }),
   useApplyBackupDuringSetup: () => mockApplyBackupDuringSetup,
@@ -62,9 +65,7 @@ jest.mock(
         <div data-testid="web3auth">
           <button
             data-testid="web3auth-finish"
-            onClick={() =>
-              props.onFinish('0xAa72b201fc49e0837648d5c8a89fCeD3eAb1364f')
-            }
+            onClick={() => props.onFinish(BACKUP_SIGNER_ADDRESS)}
           >
             finish
           </button>
@@ -93,9 +94,7 @@ jest.mock(
         <div data-testid="manual">
           <button
             data-testid="manual-finish"
-            onClick={() =>
-              props.onFinish('0xAa72b201fc49e0837648d5c8a89fCeD3eAb1364f')
-            }
+            onClick={() => props.onFinish(BACKUP_SIGNER_ADDRESS)}
           >
             finish
           </button>
@@ -171,7 +170,7 @@ describe('SetupBackupSigner', () => {
 
     await waitFor(() =>
       expect(mockApplyBackupDuringSetup).toHaveBeenCalledWith(
-        '0xAa72b201fc49e0837648d5c8a89fCeD3eAb1364f',
+        BACKUP_SIGNER_ADDRESS,
       ),
     );
     await waitFor(() =>
@@ -189,7 +188,7 @@ describe('SetupBackupSigner', () => {
 
     await waitFor(() =>
       expect(mockApplyBackupDuringSetup).toHaveBeenCalledWith(
-        '0xAa72b201fc49e0837648d5c8a89fCeD3eAb1364f',
+        BACKUP_SIGNER_ADDRESS,
       ),
     );
     await waitFor(() =>
@@ -238,6 +237,7 @@ describe('SetupBackupSigner', () => {
       expect(mockGoto).not.toHaveBeenCalled();
       expect(mockSetPassword).not.toHaveBeenCalled();
       expect(mockSetIsReplacingBackup).not.toHaveBeenCalled();
+      expect(mockSetBackupSigner).not.toHaveBeenCalled();
     });
 
     it('moves on once the apply succeeds', async () => {
@@ -250,6 +250,26 @@ describe('SetupBackupSigner', () => {
         expect(mockGoto).toHaveBeenCalledWith(SETUP_SCREEN.AgentOnboarding),
       );
       expect(mockSetIsReplacingBackup).toHaveBeenCalledWith(false);
+      expect(mockSetBackupSigner).toHaveBeenCalledWith({
+        address: BACKUP_SIGNER_ADDRESS,
+        type: 'manual',
+      });
+    });
+
+    it('keeps the Google/Apple type when a replacement through Web3Auth succeeds', async () => {
+      mockIsWeb3AuthEnabled = true;
+      mockApplyBackupDuringSetup.mockResolvedValueOnce(undefined);
+      render(<SetupBackupSigner />);
+
+      fireEvent.click(screen.getByTestId('web3auth-finish'));
+
+      await waitFor(() =>
+        expect(mockGoto).toHaveBeenCalledWith(SETUP_SCREEN.AgentOnboarding),
+      );
+      expect(mockSetBackupSigner).toHaveBeenCalledWith({
+        address: BACKUP_SIGNER_ADDRESS,
+        type: 'web3auth',
+      });
     });
   });
 
@@ -273,7 +293,7 @@ describe('SetupBackupSigner', () => {
 
       await waitFor(() =>
         expect(mockApplyBackupDuringSetup).toHaveBeenCalledWith(
-          '0xAa72b201fc49e0837648d5c8a89fCeD3eAb1364f',
+          BACKUP_SIGNER_ADDRESS,
         ),
       );
       await waitFor(() =>
