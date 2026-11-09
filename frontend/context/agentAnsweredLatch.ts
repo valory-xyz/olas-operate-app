@@ -25,10 +25,12 @@ const isAnswer = ({ isDeployed, liveness }: LivenessSnapshot) =>
  * Whether the stored answer belongs to an earlier start.
  *
  * A user or API start or stop makes the middleware drop the liveness record,
- * so its count restarts at 0. Within one record every probe after the answer
- * raises the count, the health checker's forced restart included, so a count
- * no higher than the stored one means a new start. An equal count that is
- * itself an answer is re-recorded by the caller.
+ * so its count restarts at 0. Within one record every failed probe after the
+ * answer raises the count (the health checker's forced restart included), and
+ * a healthy probe resets it but also sets `last_healthy_at`. So a count no
+ * higher than the stored one means a new start or a healthy probe; either way
+ * the answer is no longer needed. An equal count that is itself an answer is
+ * re-recorded by the caller.
  */
 const isStale = (stored: number, { isDeployed, liveness }: LivenessSnapshot) =>
   !isDeployed || (!!liveness && liveness.consecutive_failures <= stored);

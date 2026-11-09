@@ -79,8 +79,8 @@ describe('agentAnsweredLatch', () => {
     expect(hasAnsweredSinceStart(ID, failingAt(4))).toBe(false);
   });
 
-  // Every probe after the answer raises the count, so an equal count that is
-  // not an answer can only come from a fresh record.
+  // Every failed probe after the answer raises the count, so an equal count
+  // from a failed probe can only come from a fresh record.
   it('treats an equal count that is not an answer as a new start', () => {
     observeAgentLiveness(ID, ANSWERED);
 

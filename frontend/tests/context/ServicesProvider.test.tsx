@@ -32,6 +32,7 @@ import {
   makeAgentLiveness,
   makeAgentService,
   makeChainConfig,
+  makeServiceDeployment,
   MOCK_INSTANCE_ADDRESS,
   MOCK_MULTISIG_ADDRESS,
   MOCK_SERVICE_CONFIG_ID_2,
@@ -1207,20 +1208,6 @@ describe('ServicesProvider', () => {
   describe('agent answered since start', () => {
     // Not among the fetched services, so never the selected one.
     const BACKGROUND_ID = MOCK_SERVICE_CONFIG_ID_4;
-    const deploymentWith = (
-      status: (typeof MiddlewareDeploymentStatusMap)[keyof typeof MiddlewareDeploymentStatusMap],
-      liveness: Parameters<typeof makeAgentLiveness>[0],
-    ) => ({
-      status,
-      nodes: { agent: [], tendermint: [] },
-      healthcheck: {},
-      agent_liveness: makeAgentLiveness({ last_healthy_at: null, ...liveness }),
-    });
-    const BOOTING = {
-      is_alive: false,
-      reason: 'agent_unresponsive',
-      consecutive_failures: 4,
-    } as const;
 
     beforeEach(() => {
       observeAgentLiveness(BACKGROUND_ID, {
@@ -1232,14 +1219,14 @@ describe('ServicesProvider', () => {
     it('forgets the answer of a service that is not selected once it is seen stopped', async () => {
       mockGetServices.mockResolvedValue([serviceFor(AgentMap.PredictTrader)]);
       mockGetAllServiceDeployments.mockResolvedValue({
-        [BACKGROUND_ID]: deploymentWith(
-          MiddlewareDeploymentStatusMap.DEPLOYED,
-          {
+        [BACKGROUND_ID]: makeServiceDeployment({
+          agent_liveness: makeAgentLiveness({
             is_alive: false,
             reason: 'agent_reported_unhealthy',
             consecutive_failures: 3,
-          },
-        ),
+            last_healthy_at: null,
+          }),
+        }),
       });
       const wrapper = createWrapper();
       const { result } = renderHook(() => useContext(ServicesContext), {
@@ -1247,7 +1234,12 @@ describe('ServicesProvider', () => {
       });
       const booted = {
         isDeployed: true,
-        liveness: makeAgentLiveness({ last_healthy_at: null, ...BOOTING }),
+        liveness: makeAgentLiveness({
+          is_alive: false,
+          reason: 'agent_unresponsive',
+          consecutive_failures: 4,
+          last_healthy_at: null,
+        }),
       };
       await waitFor(() =>
         expect(hasAnsweredSinceStart(BACKGROUND_ID, booted)).toBe(true),
@@ -1255,11 +1247,9 @@ describe('ServicesProvider', () => {
 
       mockGetAllServiceDeployments.mockResolvedValue({
         // No liveness, so only the status can clear the answer.
-        [BACKGROUND_ID]: {
+        [BACKGROUND_ID]: makeServiceDeployment({
           status: MiddlewareDeploymentStatusMap.STOPPED,
-          nodes: { agent: [], tendermint: [] },
-          healthcheck: {},
-        },
+        }),
       });
       await act(() =>
         wrapper.queryClient.refetchQueries({
