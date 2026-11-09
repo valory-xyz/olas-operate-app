@@ -11,20 +11,17 @@ jest.mock('../../../../../../hooks', () => ({
   useServices: jest.fn(),
 }));
 
-const makeItem = (id: number): FeedItem => ({
-  key: `entry-${id}`,
-  entry: makeFeedEvent(id, { title: `Skipped market ${id}` }),
-});
-
-const ITEMS: FeedItem[] = [1, 2].map(makeItem);
-
 const makeItemOnDay = (id: number, day: number): FeedItem => {
-  const item = makeItem(id);
+  const entry = makeFeedEvent(id, { title: `Skipped market ${id}` });
   return {
-    ...item,
-    entry: { ...item.entry, ts: item.entry.ts + day * ONE_DAY_IN_S },
+    key: `entry-${id}`,
+    entry: { ...entry, ts: entry.ts + day * ONE_DAY_IN_S },
   };
 };
+
+const makeItem = (id: number): FeedItem => makeItemOnDay(id, 0);
+
+const ITEMS: FeedItem[] = [1, 2].map(makeItem);
 
 const dayGroups = () =>
   screen.getAllByText(/\d{4}/).map((tag) => tag.parentElement as HTMLElement);
