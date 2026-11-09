@@ -93,13 +93,8 @@ export const useAgentActivity = () => {
      * button. Only the activity strip should act on liveness.
      */
     isAgentActive,
-    /**
-     * Active, but the agent has neither been healthy since this start nor is
-     * answering that it is unhealthy: its HTTP server may not be up, so a chat
-     * message would fail.
-     */
+    /** Active, but its HTTP server may not be up yet, so a chat message would fail. */
     isAgentStarting,
-    /** Active and not known to be starting. */
     isAgentReachable: isAgentActive && !isAgentStarting,
   };
 };
