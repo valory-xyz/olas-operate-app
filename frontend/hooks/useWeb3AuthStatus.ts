@@ -13,10 +13,26 @@ import { useElectronApi } from './useElectronApi';
 /** `loading` until the first read settles (including while paused offline). */
 export type Web3AuthStatus = 'loading' | 'enabled' | 'disabled';
 
+const getStatus = ({
+  isError,
+  isPending,
+  enabled,
+}: {
+  isError: boolean;
+  isPending: boolean;
+  enabled?: boolean;
+}): Web3AuthStatus => {
+  // An error wins, even over an earlier `enabled: true` read the query keeps.
+  if (isError) return 'disabled';
+  if (isPending) return 'loading';
+  return enabled === true ? 'enabled' : 'disabled';
+};
+
 /**
  * Whether pearl-api offers Google/Apple (Web3Auth) backup-wallet setup and recovery.
- * Fails closed: an error — even one that keeps an earlier `enabled: true` read — or
- * anything but `enabled: true` is `disabled`.
+ * `isWeb3AuthEnabled` fails closed: it is true only for a settled `enabled: true` read,
+ * so loading, an error (even one that keeps an earlier `enabled: true`) and anything
+ * else count as off.
  */
 export const useWeb3AuthStatus = () => {
   const { logEvent } = useElectronApi();
@@ -38,13 +54,7 @@ export const useWeb3AuthStatus = () => {
     retry: 1,
   });
 
-  const status: Web3AuthStatus = isError
-    ? 'disabled'
-    : isPending
-      ? 'loading'
-      : data?.enabled === true
-        ? 'enabled'
-        : 'disabled';
+  const status = getStatus({ isError, isPending, enabled: data?.enabled });
 
   return {
     status,
