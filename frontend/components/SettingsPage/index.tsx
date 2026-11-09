@@ -17,6 +17,7 @@ import {
   useRecoveryPhraseBackup,
   useSettings,
   useStore,
+  useWeb3AuthStatus,
 } from '@/hooks';
 
 import { BackupWalletSection } from './BackupWallet';
@@ -193,16 +194,27 @@ const SettingsMain = () => {
 
 export const Settings = () => {
   const { screen } = useSettings();
+  const { isWeb3AuthEnabled } = useWeb3AuthStatus();
   const settingsScreen = useMemo(() => {
     switch (screen) {
       case SettingsScreenMap.Main:
         return <SettingsMain />;
+      // The method screens only add the Google/Apple choice; while it is
+      // off, address entry is shown directly.
       case SettingsScreenMap.AddBackupWalletMethod:
-        return <AddBackupWalletMethodScreen />;
+        return isWeb3AuthEnabled ? (
+          <AddBackupWalletMethodScreen />
+        ) : (
+          <AddBackupWalletManualScreen />
+        );
       case SettingsScreenMap.AddBackupWalletManual:
         return <AddBackupWalletManualScreen />;
       case SettingsScreenMap.UpdateBackupWalletMethod:
-        return <UpdateBackupWalletMethodScreen />;
+        return isWeb3AuthEnabled ? (
+          <UpdateBackupWalletMethodScreen />
+        ) : (
+          <UpdateBackupWalletManualScreen />
+        );
       case SettingsScreenMap.UpdateBackupWalletManual:
         return <UpdateBackupWalletManualScreen />;
       case SettingsScreenMap.UpdateBackupWalletConfirm:
@@ -212,7 +224,7 @@ export const Settings = () => {
       default:
         return null;
     }
-  }, [screen]);
+  }, [screen, isWeb3AuthEnabled]);
 
   return (
     <AddBackupWalletProvider>

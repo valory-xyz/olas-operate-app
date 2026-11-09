@@ -9,6 +9,7 @@ import {
   useRecoveryPhraseBackup,
   useSettings,
   useStore,
+  useWeb3AuthStatus,
 } from '../../../hooks';
 
 // ---------------------------------------------------------------------------
@@ -23,6 +24,7 @@ jest.mock('../../../hooks', () => ({
   useRecoveryPhraseBackup: jest.fn(),
   useSettings: jest.fn(),
   useStore: jest.fn(),
+  useWeb3AuthStatus: jest.fn(),
 }));
 
 jest.mock('../../../components/SettingsPage/UpdatePassword', () => ({
@@ -118,6 +120,7 @@ const mockUseMnemonicExists = useMnemonicExists as jest.Mock;
 const mockUseRecoveryPhraseBackup = useRecoveryPhraseBackup as jest.Mock;
 const mockUseElectronApi = useElectronApi as jest.Mock;
 const mockUseStore = useStore as jest.Mock;
+const mockUseWeb3AuthStatus = useWeb3AuthStatus as jest.Mock;
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -130,6 +133,7 @@ const setupDefaults = (
     mnemonicExists?: boolean;
     isBackedUp?: boolean;
     keepDeviceAwake?: boolean;
+    isWeb3AuthEnabled?: boolean;
   } = {},
 ) => {
   const {
@@ -137,7 +141,13 @@ const setupDefaults = (
     mnemonicExists = true,
     isBackedUp = false,
     keepDeviceAwake = false,
+    isWeb3AuthEnabled = true,
   } = overrides;
+
+  mockUseWeb3AuthStatus.mockReturnValue({
+    isWeb3AuthEnabled,
+    isLoading: false,
+  });
 
   mockUseSettings.mockReturnValue({ screen, goto: jest.fn() });
   mockUseMnemonicExists.mockReturnValue({ mnemonicExists });
@@ -197,6 +207,34 @@ describe('Settings (SettingsPage entry)', () => {
       expect(
         screen.getByTestId('update-backup-wallet-manual-screen'),
       ).toBeInTheDocument();
+    });
+
+    it('renders AddBackupWalletManualScreen for AddBackupWalletMethod when Web3Auth is disabled', () => {
+      setupDefaults({
+        screen: SettingsScreenMap.AddBackupWalletMethod,
+        isWeb3AuthEnabled: false,
+      });
+      render(<Settings />);
+      expect(
+        screen.getByTestId('add-backup-wallet-manual-screen'),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByTestId('add-backup-wallet-method-screen'),
+      ).not.toBeInTheDocument();
+    });
+
+    it('renders UpdateBackupWalletManualScreen for UpdateBackupWalletMethod when Web3Auth is disabled', () => {
+      setupDefaults({
+        screen: SettingsScreenMap.UpdateBackupWalletMethod,
+        isWeb3AuthEnabled: false,
+      });
+      render(<Settings />);
+      expect(
+        screen.getByTestId('update-backup-wallet-manual-screen'),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByTestId('update-backup-wallet-method-screen'),
+      ).not.toBeInTheDocument();
     });
 
     it('renders UpdateBackupWalletConfirmScreen when screen is UpdateBackupWalletConfirm', () => {

@@ -5,7 +5,7 @@ import { useRef, useState } from 'react';
 import { BackButton, cardStyles } from '@/components/ui';
 import { BACKUP_WALLET_FIELD_RULES } from '@/constants';
 import { SettingsScreenMap } from '@/constants/screen';
-import { useApplyBackupOwner, useSettings } from '@/hooks';
+import { useApplyBackupOwner, useSettings, useWeb3AuthStatus } from '@/hooks';
 import { Address } from '@/types/Address';
 
 import { useAddBackupWallet } from './AddBackupWalletContext';
@@ -18,6 +18,7 @@ const { Title, Text } = Typography;
 
 export const AddBackupWalletManualScreen = () => {
   const { goto } = useSettings();
+  const { isWeb3AuthEnabled } = useWeb3AuthStatus();
   const [form] = Form.useForm();
   const addressValue = Form.useWatch('backup-signer', form) as
     | string
@@ -65,7 +66,11 @@ export const AddBackupWalletManualScreen = () => {
 
   const handleBack = () => {
     resetFlow();
-    goto(SettingsScreenMap.AddBackupWalletMethod);
+    goto(
+      isWeb3AuthEnabled
+        ? SettingsScreenMap.AddBackupWalletMethod
+        : SettingsScreenMap.Main,
+    );
   };
 
   return (

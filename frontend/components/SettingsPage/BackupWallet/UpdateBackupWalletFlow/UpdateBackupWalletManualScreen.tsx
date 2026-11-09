@@ -4,7 +4,7 @@ import { getAddress } from 'ethers/lib/utils';
 import { Alert, BackButton, cardStyles } from '@/components/ui';
 import { BACKUP_WALLET_FIELD_RULES } from '@/constants';
 import { SettingsScreenMap } from '@/constants/screen';
-import { useBackupOwnerStatus, useSettings } from '@/hooks';
+import { useBackupOwnerStatus, useSettings, useWeb3AuthStatus } from '@/hooks';
 import { Address } from '@/types/Address';
 
 import { useUpdateBackupWallet } from './UpdateBackupWalletContext';
@@ -14,7 +14,8 @@ const { Title, Text } = Typography;
 export const UpdateBackupWalletManualScreen = () => {
   const { goto } = useSettings();
   const { backupOwnerStatus } = useBackupOwnerStatus();
-  const { setNewAddress, sameAddressError, setSameAddressError } =
+  const { isWeb3AuthEnabled } = useWeb3AuthStatus();
+  const { setNewAddress, sameAddressError, setSameAddressError, resetFlow } =
     useUpdateBackupWallet();
   const [form] = Form.useForm();
   const addressValue = Form.useWatch('backup-signer', form) as
@@ -50,13 +51,23 @@ export const UpdateBackupWalletManualScreen = () => {
     goto(SettingsScreenMap.UpdateBackupWalletConfirm);
   };
 
+  // With no method screen to go back to, Back leaves the flow, as the method
+  // screen's Back does.
+  const handleBack = () => {
+    if (isWeb3AuthEnabled) {
+      goto(SettingsScreenMap.UpdateBackupWalletMethod);
+      return;
+    }
+    setSameAddressError(false);
+    resetFlow();
+    goto(SettingsScreenMap.Main);
+  };
+
   return (
     <Flex style={cardStyles} vertical gap={32}>
       <Card styles={{ body: { padding: 24 } }}>
         <Flex vertical gap={16}>
-          <BackButton
-            onPrev={() => goto(SettingsScreenMap.UpdateBackupWalletMethod)}
-          />
+          <BackButton onPrev={handleBack} />
           <Title level={4} className="m-0">
             Provide Existing Backup Wallet
           </Title>

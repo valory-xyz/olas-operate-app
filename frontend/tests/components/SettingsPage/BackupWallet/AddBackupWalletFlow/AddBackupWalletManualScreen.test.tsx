@@ -12,10 +12,15 @@ const mockApplyBackupOwner = jest.fn();
 const mockSetPassword = jest.fn();
 const mockResetFlow = jest.fn();
 const mockPassword: string | null = 'test-password';
+let mockIsWeb3AuthEnabled = true;
 
 jest.mock('../../../../../hooks', () => ({
   useApplyBackupOwner: () => ({ mutateAsync: mockApplyBackupOwner }),
   useSettings: () => ({ goto: mockGoto }),
+  useWeb3AuthStatus: () => ({
+    isWeb3AuthEnabled: mockIsWeb3AuthEnabled,
+    isLoading: false,
+  }),
 }));
 
 jest.mock(
@@ -68,6 +73,7 @@ describe('AddBackupWalletManualScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockApplyBackupOwner.mockReset();
+    mockIsWeb3AuthEnabled = true;
   });
 
   it('renders form with placeholder and submit button', () => {
@@ -104,6 +110,14 @@ describe('AddBackupWalletManualScreen', () => {
     expect(mockGoto).toHaveBeenCalledWith(
       SettingsScreenMap.AddBackupWalletMethod,
     );
+  });
+
+  it('Back button returns to Settings when Web3Auth is disabled', () => {
+    mockIsWeb3AuthEnabled = false;
+    render(<AddBackupWalletManualScreen />);
+    fireEvent.click(screen.getByTestId('back'));
+    expect(mockResetFlow).toHaveBeenCalled();
+    expect(mockGoto).toHaveBeenCalledWith(SettingsScreenMap.Main);
   });
 
   it('rejects invalid address on submit', async () => {
