@@ -1,7 +1,12 @@
 import { skipToken } from '@tanstack/react-query';
 import { renderHook } from '@testing-library/react';
 
-import { EvmChainIdMap, MiddlewareChainMap } from '../../constants/chains';
+import {
+  EvmChainId,
+  EvmChainIdMap,
+  MiddlewareChainMap,
+  SupportedMiddlewareChain,
+} from '../../constants/chains';
 import { useRewardsHistory } from '../../hooks/useRewardsHistory';
 import {
   DEFAULT_LIVENESS_PERIOD_S,
@@ -267,6 +272,88 @@ describe('useRewardsHistory', () => {
 
       expect(result).toBeNull();
     });
+  });
+
+  // -----------------------------------------------------------------------
+  // queryFn — indexer dialect per chain
+  // -----------------------------------------------------------------------
+
+  describe('queryFn — indexer dialect', () => {
+    const setupChain = (
+      evmHomeChainId: EvmChainId,
+      middlewareChain: SupportedMiddlewareChain,
+    ) => {
+      mockUseServices.mockReturnValue({
+        selectedService: makeService({
+          service_config_id: DEFAULT_SERVICE_CONFIG_ID,
+        }),
+        selectedAgentConfig: {
+          serviceApi: makeMockServiceApi(),
+          evmHomeChainId,
+        },
+      });
+      mockUseService.mockReturnValue({
+        service: makeService({
+          chain_configs: makeChainConfig(middlewareChain, {
+            token: DEFAULT_SERVICE_NFT_TOKEN_ID,
+          }),
+        }),
+      });
+    };
+
+    it('reads Base from the squid with the OpenReader query', async () => {
+      setupChain(EvmChainIdMap.Base, MiddlewareChainMap.BASE);
+      const serviceResponse = makeRewardsHistoryServiceResponse();
+      mockGraphqlRequest.mockResolvedValue(serviceResponse);
+
+      renderHook(() => useRewardsHistory());
+      const result = await capturedQueryFn()();
+
+      const [url, query, variables] = mockGraphqlRequest.mock.calls[0];
+      expect(url).toBe(
+        'https://subgraph.autonolas.tech/squid/staking-base/graphql',
+      );
+      expect(query).toContain('$serviceId: String!');
+      expect(query).toContain('service: serviceById(id: $serviceId)');
+      // Without id_DESC, rows sharing a blockTimestamp come back in a
+      // different order than graph-node's, shifting epoch start times.
+      expect(query).toContain('orderBy: [blockTimestamp_DESC, id_DESC]');
+      expect(query).toContain('limit: 1000');
+      expect(query).not.toContain('orderDirection');
+      expect(variables).toEqual({
+        serviceId: `${DEFAULT_SERVICE_NFT_TOKEN_ID}`,
+      });
+      expect(result).toEqual(serviceResponse.service);
+    });
+
+    it.each([
+      ['Gnosis', EvmChainIdMap.Gnosis, MiddlewareChainMap.GNOSIS],
+      ['Mode', EvmChainIdMap.Mode, MiddlewareChainMap.MODE],
+      ['Optimism', EvmChainIdMap.Optimism, MiddlewareChainMap.OPTIMISM],
+      ['Polygon', EvmChainIdMap.Polygon, MiddlewareChainMap.POLYGON],
+    ] as const)(
+      'keeps %s on the Graph query',
+      async (name, evmHomeChainId, middlewareChain) => {
+        setupChain(evmHomeChainId, middlewareChain);
+        mockGraphqlRequest.mockResolvedValue(
+          makeRewardsHistoryServiceResponse(),
+        );
+
+        renderHook(() => useRewardsHistory());
+        await capturedQueryFn()();
+
+        const [url, query] = mockGraphqlRequest.mock.calls[0];
+        expect(url).toBe(
+          `https://staking-${name.toLowerCase()}.subgraph.autonolas.tech`,
+        );
+        expect(query).toContain('$serviceId: ID!');
+        expect(query).toContain('service(id: $serviceId)');
+        expect(query).toContain('orderBy: blockTimestamp');
+        expect(query).toContain('orderDirection: desc');
+        expect(query).toContain('first: 1000');
+        expect(query).not.toContain('serviceById');
+      },
+    );
   });
 
   // -----------------------------------------------------------------------
