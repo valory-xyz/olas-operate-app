@@ -51,8 +51,15 @@ jest.mock(
     AddBackupWalletMethodScreen: () => (
       <div data-testid="add-backup-wallet-method-screen" />
     ),
-    AddBackupWalletManualScreen: () => (
-      <div data-testid="add-backup-wallet-manual-screen" />
+    AddBackupWalletManualScreen: ({
+      standsInForMethod,
+    }: {
+      standsInForMethod?: boolean;
+    }) => (
+      <div
+        data-testid="add-backup-wallet-manual-screen"
+        data-stands-in={String(!!standsInForMethod)}
+      />
     ),
     AddBackupWalletPasswordModal: () => null,
     AddBackupWalletProvider: ({ children }: { children: React.ReactNode }) =>
@@ -66,8 +73,15 @@ jest.mock(
     UpdateBackupWalletMethodScreen: () => (
       <div data-testid="update-backup-wallet-method-screen" />
     ),
-    UpdateBackupWalletManualScreen: () => (
-      <div data-testid="update-backup-wallet-manual-screen" />
+    UpdateBackupWalletManualScreen: ({
+      standsInForMethod,
+    }: {
+      standsInForMethod?: boolean;
+    }) => (
+      <div
+        data-testid="update-backup-wallet-manual-screen"
+        data-stands-in={String(!!standsInForMethod)}
+      />
     ),
     UpdateBackupWalletConfirmScreen: () => (
       <div data-testid="update-backup-wallet-confirm-screen" />
@@ -187,7 +201,7 @@ describe('Settings (SettingsPage entry)', () => {
       render(<Settings />);
       expect(
         screen.getByTestId('add-backup-wallet-manual-screen'),
-      ).toBeInTheDocument();
+      ).toHaveAttribute('data-stands-in', 'false');
       expect(screen.queryByText('Settings')).not.toBeInTheDocument();
     });
 
@@ -204,7 +218,7 @@ describe('Settings (SettingsPage entry)', () => {
       render(<Settings />);
       expect(
         screen.getByTestId('update-backup-wallet-manual-screen'),
-      ).toBeInTheDocument();
+      ).toHaveAttribute('data-stands-in', 'false');
     });
 
     it('renders AddBackupWalletManualScreen for AddBackupWalletMethod when Web3Auth is disabled', () => {
@@ -215,7 +229,7 @@ describe('Settings (SettingsPage entry)', () => {
       render(<Settings />);
       expect(
         screen.getByTestId('add-backup-wallet-manual-screen'),
-      ).toBeInTheDocument();
+      ).toHaveAttribute('data-stands-in', 'true');
       expect(
         screen.queryByTestId('add-backup-wallet-method-screen'),
       ).not.toBeInTheDocument();
@@ -229,7 +243,7 @@ describe('Settings (SettingsPage entry)', () => {
       render(<Settings />);
       expect(
         screen.getByTestId('update-backup-wallet-manual-screen'),
-      ).toBeInTheDocument();
+      ).toHaveAttribute('data-stands-in', 'true');
       expect(
         screen.queryByTestId('update-backup-wallet-method-screen'),
       ).not.toBeInTheDocument();

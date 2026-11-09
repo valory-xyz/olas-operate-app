@@ -222,7 +222,7 @@ export const Settings = () => {
         return isWeb3AuthEnabled ? (
           <AddBackupWalletMethodScreen />
         ) : (
-          <AddBackupWalletManualScreen />
+          <AddBackupWalletManualScreen standsInForMethod />
         );
       case SettingsScreenMap.AddBackupWalletManual:
         return <AddBackupWalletManualScreen />;
@@ -230,7 +230,7 @@ export const Settings = () => {
         return isWeb3AuthEnabled ? (
           <UpdateBackupWalletMethodScreen />
         ) : (
-          <UpdateBackupWalletManualScreen />
+          <UpdateBackupWalletManualScreen standsInForMethod />
         );
       case SettingsScreenMap.UpdateBackupWalletManual:
         return <UpdateBackupWalletManualScreen />;

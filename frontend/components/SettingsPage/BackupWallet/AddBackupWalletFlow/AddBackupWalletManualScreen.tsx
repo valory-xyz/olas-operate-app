@@ -16,8 +16,15 @@ import {
 
 const { Title, Text } = Typography;
 
-export const AddBackupWalletManualScreen = () => {
-  const { goto, screen } = useSettings();
+type AddBackupWalletManualScreenProps = {
+  /** Settings shows this screen in place of the method screen: Back leaves the flow. */
+  standsInForMethod?: boolean;
+};
+
+export const AddBackupWalletManualScreen = ({
+  standsInForMethod = false,
+}: AddBackupWalletManualScreenProps) => {
+  const { goto } = useSettings();
   const [form] = Form.useForm();
   const addressValue = Form.useWatch('backup-signer', form) as
     | string
@@ -63,12 +70,10 @@ export const AddBackupWalletManualScreen = () => {
     goto(SettingsScreenMap.Main);
   };
 
-  // Shown in place of the method screen (Web3Auth off), Back leaves the flow.
-  // Taken from the route, not the status, so it always matches what Settings rendered.
   const handleBack = () => {
     resetFlow();
     goto(
-      screen === SettingsScreenMap.AddBackupWalletMethod
+      standsInForMethod
         ? SettingsScreenMap.Main
         : SettingsScreenMap.AddBackupWalletMethod,
     );

@@ -11,8 +11,15 @@ import { useUpdateBackupWallet } from './UpdateBackupWalletContext';
 
 const { Title, Text } = Typography;
 
-export const UpdateBackupWalletManualScreen = () => {
-  const { goto, screen } = useSettings();
+type UpdateBackupWalletManualScreenProps = {
+  /** Settings shows this screen in place of the method screen: Back leaves the flow. */
+  standsInForMethod?: boolean;
+};
+
+export const UpdateBackupWalletManualScreen = ({
+  standsInForMethod = false,
+}: UpdateBackupWalletManualScreenProps) => {
+  const { goto } = useSettings();
   const { backupOwnerStatus } = useBackupOwnerStatus();
   const { setNewAddress, sameAddressError, setSameAddressError, resetFlow } =
     useUpdateBackupWallet();
@@ -50,11 +57,9 @@ export const UpdateBackupWalletManualScreen = () => {
     goto(SettingsScreenMap.UpdateBackupWalletConfirm);
   };
 
-  // Shown in place of the method screen (Web3Auth off): Back leaves the flow, as
-  // the method screen's Back does. Taken from the route, not the status, so it
-  // always matches what Settings rendered.
+  // Standing in for the method screen, Back leaves the flow, as the method screen's Back does.
   const handleBack = () => {
-    if (screen !== SettingsScreenMap.UpdateBackupWalletMethod) {
+    if (!standsInForMethod) {
       goto(SettingsScreenMap.UpdateBackupWalletMethod);
       return;
     }

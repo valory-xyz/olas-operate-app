@@ -113,8 +113,7 @@ describe('UpdateBackupWalletManualScreen', () => {
 
   it('Back button leaves the flow when shown in place of the method screen', () => {
     // Settings shows this screen in place of the method screen (Web3Auth off).
-    mockScreen = SettingsScreenMap.UpdateBackupWalletMethod;
-    render(<UpdateBackupWalletManualScreen />);
+    render(<UpdateBackupWalletManualScreen standsInForMethod />);
     fireEvent.click(screen.getByTestId('back'));
     expect(mockGoto).toHaveBeenCalledWith(SettingsScreenMap.Main);
     expect(mockResetFlow).toHaveBeenCalled();
