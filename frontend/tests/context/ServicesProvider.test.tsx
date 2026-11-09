@@ -14,6 +14,10 @@ import {
 import { PAGES } from '../../constants/pages';
 import { REACT_QUERY_KEYS } from '../../constants/reactQueryKeys';
 import { WALLET_OWNER, WALLET_TYPE } from '../../constants/wallet';
+import {
+  hasAnsweredSinceStart,
+  observeAgentLiveness,
+} from '../../context/agentAnsweredLatch';
 import { OnlineStatusContext } from '../../context/OnlineStatusProvider';
 import {
   ServicesContext,
@@ -25,6 +29,7 @@ import {
 } from '../../types';
 import {
   DEFAULT_SERVICE_CONFIG_ID,
+  makeAgentLiveness,
   makeAgentService,
   makeChainConfig,
   MOCK_INSTANCE_ADDRESS,
@@ -1194,6 +1199,78 @@ describe('ServicesProvider', () => {
       // Multi-instance branch auto-selects the only available service
       expect(result.current.selectedService).toBeDefined();
       expect(result.current.selectedAgentType).toBe(AgentMap.Optimus);
+    });
+  });
+
+  // ─── agent answered since start ────────────────────────────────────
+
+  describe('agent answered since start', () => {
+    // Not among the fetched services, so never the selected one.
+    const BACKGROUND_ID = MOCK_SERVICE_CONFIG_ID_4;
+    const deploymentWith = (
+      status: (typeof MiddlewareDeploymentStatusMap)[keyof typeof MiddlewareDeploymentStatusMap],
+      liveness: Parameters<typeof makeAgentLiveness>[0],
+    ) => ({
+      status,
+      nodes: { agent: [], tendermint: [] },
+      healthcheck: {},
+      agent_liveness: makeAgentLiveness({ last_healthy_at: null, ...liveness }),
+    });
+    const BOOTING = {
+      is_alive: false,
+      reason: 'agent_unresponsive',
+      consecutive_failures: 4,
+    } as const;
+
+    beforeEach(() => {
+      observeAgentLiveness(BACKGROUND_ID, {
+        isDeployed: false,
+        liveness: undefined,
+      });
+    });
+
+    it('forgets the answer of a service that is not selected once it is seen stopped', async () => {
+      mockGetServices.mockResolvedValue([serviceFor(AgentMap.PredictTrader)]);
+      mockGetAllServiceDeployments.mockResolvedValue({
+        [BACKGROUND_ID]: deploymentWith(
+          MiddlewareDeploymentStatusMap.DEPLOYED,
+          {
+            is_alive: false,
+            reason: 'agent_reported_unhealthy',
+            consecutive_failures: 3,
+          },
+        ),
+      });
+      const wrapper = createWrapper();
+      const { result } = renderHook(() => useContext(ServicesContext), {
+        wrapper,
+      });
+      const booted = {
+        isDeployed: true,
+        liveness: makeAgentLiveness({ last_healthy_at: null, ...BOOTING }),
+      };
+      await waitFor(() =>
+        expect(hasAnsweredSinceStart(BACKGROUND_ID, booted)).toBe(true),
+      );
+
+      mockGetAllServiceDeployments.mockResolvedValue({
+        [BACKGROUND_ID]: deploymentWith(
+          MiddlewareDeploymentStatusMap.STOPPED,
+          {},
+        ),
+      });
+      await act(() =>
+        wrapper.queryClient.refetchQueries({
+          queryKey: REACT_QUERY_KEYS.ALL_SERVICE_DEPLOYMENTS_KEY,
+        }),
+      );
+      await waitFor(() =>
+        expect(result.current.allDeployments?.[BACKGROUND_ID]?.status).toBe(
+          MiddlewareDeploymentStatusMap.STOPPED,
+        ),
+      );
+
+      expect(hasAnsweredSinceStart(BACKGROUND_ID, booted)).toBe(false);
     });
   });
 

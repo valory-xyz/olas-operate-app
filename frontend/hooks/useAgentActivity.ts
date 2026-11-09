@@ -1,4 +1,5 @@
 import { MiddlewareDeploymentStatusMap } from '@/constants/deployment';
+import { hasAnsweredSinceStart } from '@/context/agentAnsweredLatch';
 import { AgentLivenessReason } from '@/types';
 
 import { useServices } from './useServices';
@@ -37,22 +38,6 @@ const PROBE_DERIVED_DOWN_REASONS: readonly AgentLivenessReason[] = [
   'agent_unresponsive',
 ];
 
-/**
- * Services whose agent has answered `/healthcheck` with `is_healthy: false`
- * since their current start, mapped to `consecutive_failures` at that answer.
- *
- * `agent_reported_unhealthy` alone cannot keep the agent reachable: the
- * middleware overwrites `reason` on the next failed probe, which would turn an
- * agent that has answered back into a starting one. Module-level so every
- * reader of this hook, and a remount, sees the same answer.
- *
- * Cleared on the next start, seen either as a status other than DEPLOYED or as
- * `consecutive_failures` dropping below the stored count: each start drops the
- * middleware's liveness record, and within one record the count never falls
- * while `last_healthy_at` stays null.
- */
-const failuresWhenAnswered = new Map<string, number>();
-
 export const useAgentActivity = () => {
   const { selectedService, deploymentDetails } = useServices();
 
@@ -86,27 +71,12 @@ export const useAgentActivity = () => {
 
   const isAgentActive = isServiceRunning && !isAgentDown;
 
-  const serviceConfigId = selectedService?.service_config_id;
-  if (serviceConfigId) {
-    const answeredAt = failuresWhenAnswered.get(serviceConfigId);
-    if (
-      !isServiceRunning ||
-      (liveness &&
-        answeredAt !== undefined &&
-        liveness.consecutive_failures < answeredAt)
-    ) {
-      failuresWhenAnswered.delete(serviceConfigId);
-    }
-    if (
-      isServiceRunning &&
-      liveness?.reason === 'agent_reported_unhealthy' &&
-      !failuresWhenAnswered.has(serviceConfigId)
-    ) {
-      failuresWhenAnswered.set(serviceConfigId, liveness.consecutive_failures);
-    }
-  }
-  const hasAnsweredSinceStart =
-    !!serviceConfigId && failuresWhenAnswered.has(serviceConfigId);
+  const hasAnswered =
+    !!selectedService &&
+    hasAnsweredSinceStart(selectedService.service_config_id, {
+      isDeployed: isServiceRunning,
+      liveness,
+    });
 
   // Explicit null only, as a defensive guard: every middleware that sends
   // `agent_liveness` also sends `last_healthy_at`, so a missing key is not a
@@ -114,9 +84,7 @@ export const useAgentActivity = () => {
   // An agent that has reported itself unhealthy has answered, so its HTTP
   // server is up even though it has never been healthy since this start.
   const isAgentStarting =
-    isAgentActive &&
-    liveness?.last_healthy_at === null &&
-    !hasAnsweredSinceStart;
+    isAgentActive && liveness?.last_healthy_at === null && !hasAnswered;
 
   return {
     deploymentDetails,

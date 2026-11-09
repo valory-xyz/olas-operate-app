@@ -257,8 +257,8 @@ export type AgentLiveness = {
   consecutive_failures: number;
   /**
    * Unix seconds of the last healthy probe; null until the first one since
-   * this start. Every start and stop drops the record, and failed probes never
-   * clear it, so it tells "has answered since this start" apart from
+   * this start. A user or API start or stop drops the record (the health
+   * checker's forced restart keeps it), and failed probes never clear it, so it tells "has answered since this start" apart from
    * `is_alive`, which the PID fallback reports true before any probe.
    */
   last_healthy_at: number | null;
