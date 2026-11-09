@@ -14,6 +14,10 @@ const mockApplyBackupDuringSetup = jest.fn();
 const mockError = jest.fn();
 let mockIsWeb3AuthEnabled = true;
 let mockIsWeb3AuthStatusLoading = false;
+const mockUseLatchedWeb3AuthEnabled = jest.fn<
+  boolean | undefined,
+  [string | null]
+>(() => (mockIsWeb3AuthStatusLoading ? undefined : mockIsWeb3AuthEnabled));
 
 // Expose the onFinish each child was rendered with so tests can invoke it.
 const capturedProps: {
@@ -26,8 +30,8 @@ const capturedProps: {
 jest.mock('../../../../../hooks', () => ({
   useSetup: () => ({ goto: mockGoto }),
   useApplyBackupDuringSetup: () => mockApplyBackupDuringSetup,
-  useLatchedWeb3AuthEnabled: () =>
-    mockIsWeb3AuthStatusLoading ? undefined : mockIsWeb3AuthEnabled,
+  useLatchedWeb3AuthEnabled: (key: string | null) =>
+    mockUseLatchedWeb3AuthEnabled(key),
 }));
 
 jest.mock('../../../../../context/MessageProvider', () => ({
@@ -123,6 +127,14 @@ describe('SetupBackupSigner', () => {
     expect(container.querySelector('.ant-skeleton')).toBeInTheDocument();
     expect(screen.queryByTestId('manual')).not.toBeInTheDocument();
     expect(screen.queryByTestId('web3auth')).not.toBeInTheDocument();
+  });
+
+  it('decides Web3Auth once for this step (its own latch key)', () => {
+    render(<SetupBackupSigner />);
+    expect(mockUseLatchedWeb3AuthEnabled).toHaveBeenCalledWith(
+      SETUP_SCREEN.SetupBackupSigner,
+    );
+    expect(mockUseLatchedWeb3AuthEnabled).not.toHaveBeenCalledWith(null);
   });
 
   it('renders Web3Auth path by default', () => {
