@@ -34,7 +34,7 @@ export const SetupBridgeOnboarding = () => {
   return (
     <Flex vertical className="pt-36">
       {/* The bridge creates the Pearl Safe after bridging, with this screen's latched signer. */}
-      <BackupSignerGate>
+      <BackupSignerGate onBack={handlePrevStep}>
         {() => (
           <Bridge
             mode="onboard"

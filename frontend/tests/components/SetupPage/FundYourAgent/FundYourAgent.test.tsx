@@ -24,13 +24,15 @@ let mockIsGateOpen = true;
 jest.mock('../../../../components/SetupPage/BackupSignerGate', () => ({
   BackupSignerGate: ({
     children,
+    onBack,
   }: {
     children: (signer: unknown) => React.ReactNode;
+    onBack: () => void;
   }) =>
     mockIsGateOpen ? (
       children({ state: 'ready', backupSignerAddress: BACKUP_OWNER })
     ) : (
-      <div data-testid="gate-waiting" />
+      <button data-testid="gate-waiting" onClick={onBack} />
     ),
 }));
 
@@ -117,6 +119,17 @@ describe('FundYourAgent', () => {
 
     expect(mockResetTokenRequirements).toHaveBeenCalledTimes(1);
     expect(mockGotoSetup).toHaveBeenCalledWith(SETUP_SCREEN.AgentOnboarding);
+  });
+
+  it("wires the screen's own Back into the gate", () => {
+    setup('pearl_beta');
+    mockIsGateOpen = false;
+    render(<FundYourAgent />);
+
+    fireEvent.click(screen.getByTestId('gate-waiting'));
+
+    expect(mockResetTokenRequirements).toHaveBeenCalledTimes(1);
+    expect(mockGotoSetup).toHaveBeenCalledWith(SETUP_SCREEN.SelectStaking);
   });
 
   it('routes back to SelectStaking for a staking agent', () => {

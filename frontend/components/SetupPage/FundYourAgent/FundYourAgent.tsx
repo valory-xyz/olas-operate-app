@@ -13,12 +13,23 @@ export const FundYourAgent = () => {
   const { refillTokenRequirements, resetTokenRequirements } =
     useGetRefillRequirements();
 
+  const handleBack = () => {
+    resetTokenRequirements();
+    // Connect (and any no_staking agent) skips SelectStaking, so back
+    // must return to the agent/chain step, not the staking screen.
+    goto(
+      isNoStakingProgram(selectedAgentConfig.defaultStakingProgramId)
+        ? SETUP_SCREEN.AgentOnboarding
+        : SETUP_SCREEN.SelectStaking,
+    );
+  };
+
   // The service is created before this screen; it is only missing while
   // services are still loading after a restart.
   if (!selectedService) return <CardSkeleton />;
 
   return (
-    <BackupSignerGate>
+    <BackupSignerGate onBack={handleBack}>
       {/* The latched owner: a later status refetch must not change who the Safe is created with. */}
       {(signer) => (
         <FundingFlow
@@ -29,16 +40,7 @@ export const FundYourAgent = () => {
             selectedAgentConfig.evmHomeChainId,
           )}
           fallbackToReceive={refillTokenRequirements}
-          onBack={() => {
-            resetTokenRequirements();
-            // Connect (and any no_staking agent) skips SelectStaking, so back
-            // must return to the agent/chain step, not the staking screen.
-            goto(
-              isNoStakingProgram(selectedAgentConfig.defaultStakingProgramId)
-                ? SETUP_SCREEN.AgentOnboarding
-                : SETUP_SCREEN.SelectStaking,
-            );
-          }}
+          onBack={handleBack}
         />
       )}
     </BackupSignerGate>

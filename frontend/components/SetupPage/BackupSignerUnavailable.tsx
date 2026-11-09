@@ -1,6 +1,6 @@
 import { Flex, Typography } from 'antd';
 
-import { Alert, cardStyles } from '@/components/ui';
+import { Alert, BackButton, cardStyles } from '@/components/ui';
 
 const { Text } = Typography;
 
@@ -18,9 +18,10 @@ export const BackupSignerUnavailableAlert = () => (
   />
 );
 
-/** `BackupSignerUnavailableAlert` in place of a page card. */
-export const BackupSignerUnavailable = () => (
-  <Flex style={cardStyles}>
+/** `BackupSignerUnavailableAlert` in place of a page card, with the page's Back. */
+export const BackupSignerUnavailable = ({ onBack }: { onBack: () => void }) => (
+  <Flex style={cardStyles} vertical gap={16}>
+    <BackButton onPrev={onBack} />
     <BackupSignerUnavailableAlert />
   </Flex>
 );

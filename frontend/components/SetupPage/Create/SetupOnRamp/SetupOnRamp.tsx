@@ -28,7 +28,7 @@ export const SetupOnRamp = () => {
 
   // The on-ramp creates the Pearl Safe at the end, with this screen's latched signer.
   return (
-    <BackupSignerGate>
+    <BackupSignerGate onBack={handleBack}>
       {() => (
         <OnRamp
           mode="onboard"
