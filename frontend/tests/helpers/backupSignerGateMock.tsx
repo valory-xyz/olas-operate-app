@@ -7,7 +7,7 @@ import React from 'react';
  * `BackupSignerGate.test.tsx`; screen specs only need it open (rendering
  * `children` with `backupSignerGateState.signer`) or closed (a
  * `gate-waiting` button that calls the screen's `onBack`). If the gate's props
- * change, update this one helper instead of three near-identical copies.
+ * change, update this one helper instead of a copy in each spec.
  *
  * Usage:
  *
@@ -18,14 +18,20 @@ import React from 'react';
  * then set `backupSignerGateState.isOpen` / `.signer` in a test, and call
  * `resetBackupSignerGateState()` in `afterEach`.
  */
-export const backupSignerGateState: {
+type BackupSignerGateState = {
   isOpen: boolean;
   signer: { state: 'ready'; backupSignerAddress?: string };
-} = { isOpen: true, signer: { state: 'ready' } };
+};
+
+const initialBackupSignerGateState = (): BackupSignerGateState => ({
+  isOpen: true,
+  signer: { state: 'ready' },
+});
+
+export const backupSignerGateState = initialBackupSignerGateState();
 
 export const resetBackupSignerGateState = () => {
-  backupSignerGateState.isOpen = true;
-  backupSignerGateState.signer = { state: 'ready' };
+  Object.assign(backupSignerGateState, initialBackupSignerGateState());
 };
 
 export const backupSignerGateMock = ({
