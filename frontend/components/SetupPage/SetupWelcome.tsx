@@ -1,6 +1,13 @@
 import { Button, Card, Flex, Form, Input, Spin, Typography } from 'antd';
 import Image from 'next/image';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  MutableRefObject,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 import { PAGES, SETUP_SCREEN } from '@/constants';
 import { useMessageApi } from '@/context/MessageProvider';
@@ -31,13 +38,16 @@ const { Title, Text } = Typography;
 type UseSetupNavigationProps = {
   canNavigate: boolean;
   setIsLoggingIn: (loading: boolean) => void;
+  /** The password just used to log in; read once, by the routing decision, then dropped. */
+  loginPasswordRef: MutableRefObject<string | null>;
 };
 
 const useSetupNavigation = ({
   canNavigate,
   setIsLoggingIn,
+  loginPasswordRef,
 }: UseSetupNavigationProps) => {
-  const { goto } = useSetup();
+  const { goto, setPassword } = useSetup();
   const { goto: gotoPage } = usePageState();
   const { isOnline } = useOnlineStatusContext();
   const {
@@ -106,7 +116,13 @@ const useSetupNavigation = ({
 
     if (!selectedAgentConfig) return;
 
+    const loginPassword = loginPasswordRef.current;
+    loginPasswordRef.current = null;
+
     if (isBackupWalletNotSet) {
+      // Replacing an ignored Google/Apple pick: the new pick must replace the canonical
+      // backup owner too, which needs the password (`useApplyBackupDuringSetup` clears it).
+      if (needsNewBackup && loginPassword) setPassword(loginPassword);
       goto(SETUP_SCREEN.SetupBackupSigner);
       return;
     }
@@ -140,9 +156,12 @@ const useSetupNavigation = ({
     isBackupWalletNotSet,
     isInitialFunded,
     isServiceCreatedForAgent,
+    loginPasswordRef,
+    needsNewBackup,
     selectedAgentConfig,
     selectedServiceOrAgentChainId,
     setIsLoggingIn,
+    setPassword,
   ]);
 
   // Login waits on an unreadable backup signer; say why instead of spinning silently.
@@ -202,9 +221,11 @@ export const SetupWelcomeLogin = () => {
 
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [canNavigate, setCanNavigate] = useState(false);
+  const loginPasswordRef = useRef<string | null>(null);
   const { isBackupSignerError } = useSetupNavigation({
     canNavigate,
     setIsLoggingIn,
+    loginPasswordRef,
   });
 
   const handleLogin = useCallback(
@@ -226,6 +247,7 @@ export const SetupWelcomeLogin = () => {
             }
           });
 
+        loginPasswordRef.current = password;
         setCanNavigate(true);
         setUserLoggedIn();
       } catch (e) {

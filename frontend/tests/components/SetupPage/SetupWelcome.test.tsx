@@ -188,6 +188,7 @@ jest.mock('../../../service/Wallet', () => ({
 // ---------------------------------------------------------------------------
 
 const mockGoto = jest.fn();
+const mockSetPassword = jest.fn();
 const mockGotoPage = jest.fn();
 const mockSetUserLoggedIn = jest.fn();
 const mockSetMnemonicExists = jest.fn();
@@ -205,7 +206,7 @@ const mockUseIsInitiallyFunded = jest.fn();
 const mockUseStore = jest.fn();
 
 jest.mock('../../../hooks', () => ({
-  useSetup: jest.fn(() => ({ goto: mockGoto })),
+  useSetup: jest.fn(() => ({ goto: mockGoto, setPassword: mockSetPassword })),
   usePageState: jest.fn(() => ({
     goto: mockGotoPage,
     setUserLoggedIn: mockSetUserLoggedIn,
@@ -590,6 +591,8 @@ describe('SetupWelcomeLogin', () => {
         expect(mockGoto).toHaveBeenCalledWith(SETUP_SCREEN.SetupBackupSigner);
       });
       expect(mockGoto).not.toHaveBeenCalledWith(SETUP_SCREEN.FundYourAgent);
+      // So the re-pick on the backup step replaces the canonical backup owner too.
+      expect(mockSetPassword).toHaveBeenCalledWith('test-password');
     });
 
     it('keeps going to FundYourAgent when a service exists and no new backup is needed', async () => {
@@ -604,6 +607,8 @@ describe('SetupWelcomeLogin', () => {
         expect(mockGoto).toHaveBeenCalledWith(SETUP_SCREEN.FundYourAgent);
       });
       expect(mockGoto).not.toHaveBeenCalledWith(SETUP_SCREEN.SetupBackupSigner);
+      // The password isn't kept when nothing will apply it.
+      expect(mockSetPassword).not.toHaveBeenCalled();
     });
 
     it('does not route while the Safe owners are unreadable', async () => {
