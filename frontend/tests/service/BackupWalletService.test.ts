@@ -282,34 +282,76 @@ describe('BackupWalletService.getWeb3AuthStatus', () => {
     );
   });
 
-  it('aborts a request that never answers, so a stall becomes an error', async () => {
-    jest.useFakeTimers();
-    global.fetch = jest.fn(
+  // Like real fetch: rejects at once on an aborted signal, otherwise never answers.
+  const hangingFetch = () =>
+    jest.fn(
       (_url: string, init: { signal: AbortSignal }) =>
         new Promise((_resolve, reject) => {
+          if (init.signal.aborted) {
+            reject(new DOMException('Aborted', 'AbortError'));
+            return;
+          }
           init.signal.addEventListener('abort', () =>
             reject(new DOMException('Aborted', 'AbortError')),
           );
         }),
+    ) as unknown as typeof fetch;
+
+  it('times out a request that never answers after exactly 10 s', async () => {
+    jest.useFakeTimers();
+    global.fetch = hangingFetch();
+
+    const outcome = BackupWalletService.getWeb3AuthStatus().catch(
+      (error: Error) => error,
+    );
+    const { signal } = (global.fetch as jest.Mock).mock.calls[0][1];
+
+    jest.advanceTimersByTime(9_999);
+    expect(signal.aborted).toBe(false);
+
+    jest.advanceTimersByTime(1);
+    await expect(outcome).resolves.toHaveProperty('message', 'Aborted');
+    expect(WEB3AUTH_STATUS_TIMEOUT_MS).toBe(10_000);
+  });
+
+  it('times out a response whose body never arrives', async () => {
+    jest.useFakeTimers();
+    global.fetch = jest.fn((_url: string, init: { signal: AbortSignal }) =>
+      Promise.resolve({
+        ok: true,
+        json: () =>
+          new Promise((_resolve, reject) => {
+            init.signal.addEventListener('abort', () =>
+              reject(new DOMException('Aborted', 'AbortError')),
+            );
+          }),
+      }),
     ) as unknown as typeof fetch;
 
     const outcome = BackupWalletService.getWeb3AuthStatus().catch(
       (error: Error) => error,
     );
-    jest.advanceTimersByTime(WEB3AUTH_STATUS_TIMEOUT_MS);
+    await jest.advanceTimersByTimeAsync(10_000);
+    await expect(outcome).resolves.toHaveProperty('message', 'Aborted');
+  });
+
+  it('aborts at once when the caller signal is already aborted', async () => {
+    const controller = new AbortController();
+    controller.abort();
+    global.fetch = hangingFetch();
+
+    const outcome = BackupWalletService.getWeb3AuthStatus(
+      controller.signal,
+    ).catch((error: Error) => error);
+    const { signal } = (global.fetch as jest.Mock).mock.calls[0][1];
+
+    expect(signal.aborted).toBe(true);
     await expect(outcome).resolves.toHaveProperty('message', 'Aborted');
   });
 
   it('aborts when the caller aborts', async () => {
     const controller = new AbortController();
-    global.fetch = jest.fn(
-      (_url: string, init: { signal: AbortSignal }) =>
-        new Promise((_resolve, reject) => {
-          init.signal.addEventListener('abort', () =>
-            reject(new DOMException('Aborted', 'AbortError')),
-          );
-        }),
-    ) as unknown as typeof fetch;
+    global.fetch = hangingFetch();
 
     const pending = BackupWalletService.getWeb3AuthStatus(controller.signal);
     controller.abort();

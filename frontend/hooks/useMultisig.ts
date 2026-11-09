@@ -67,6 +67,7 @@ export const useMultisigs = (safes?: Safe[]) => {
   const {
     data: masterSafesOwners,
     isFetched: masterSafesOwnersIsFetched,
+    isSuccess: masterSafesOwnersIsSuccess,
     isPending: masterSafesOwnersIsPending,
     isLoading: masterSafesOwnersIsLoading,
   } = useQuery<MultisigOwners[]>({
@@ -173,6 +174,7 @@ export const useMultisigs = (safes?: Safe[]) => {
     allBackupAddressesByChainId,
     masterSafesOwners,
     masterSafesOwnersIsFetched,
+    masterSafesOwnersIsSuccess,
     masterSafesOwnersIsPending,
     masterSafesOwnersIsLoading,
   };

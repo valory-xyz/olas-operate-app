@@ -142,6 +142,7 @@ const getWeb3AuthStatus = async (
     WEB3AUTH_STATUS_TIMEOUT_MS,
   );
   const abort = () => controller.abort();
+  if (signal?.aborted) abort();
   signal?.addEventListener('abort', abort);
   try {
     const response = await fetch(WEB3AUTH_STATUS_URL, {
@@ -155,7 +156,8 @@ const getWeb3AuthStatus = async (
         `Failed to fetch Web3Auth status: ${response.status} ${text}`.trim(),
       );
     }
-    return response.json();
+    // Awaited so reading the body stays inside the timeout.
+    return await response.json();
   } finally {
     clearTimeout(timeout);
     signal?.removeEventListener('abort', abort);

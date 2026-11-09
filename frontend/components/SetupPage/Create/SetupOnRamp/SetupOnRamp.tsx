@@ -1,8 +1,7 @@
-import { Flex, Skeleton } from 'antd';
 import { useCallback } from 'react';
 
 import { OnRamp } from '@/components/OnRamp';
-import { cardStyles } from '@/components/ui';
+import { CardSkeleton } from '@/components/ui';
 import { AddressZero, ON_RAMP_CHAIN_MAP, SETUP_SCREEN } from '@/constants';
 import {
   useBackupSignerGuard,
@@ -34,11 +33,7 @@ export const SetupOnRamp = () => {
 
   // The on-ramp ends by creating the Pearl Safe with the backup signer.
   if (!isBackupSignerReady) {
-    return (
-      <Flex style={cardStyles}>
-        <Skeleton active />
-      </Flex>
-    );
+    return <CardSkeleton />;
   }
 
   return (

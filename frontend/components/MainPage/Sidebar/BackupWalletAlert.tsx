@@ -24,18 +24,17 @@ export const BackupWalletAlert = () => {
   const allChainsSynced = backupOwnerStatus?.all_chains_synced ?? true;
   const anyBackupMissing = backupOwnerStatus?.any_backup_missing ?? false;
 
-  // "Update" takes the place of "Sync": updating applies the new address to every chain.
-  const settingsAlertMessage = isUpdatePromptVisible
-    ? 'Update backup wallet'
-    : canonicalAddress === null && (anyBackupMissing || !allChainsSynced)
-      ? 'Add backup wallet'
-      : null;
+  if (!isUpdatePromptVisible && !anyBackupMissing && allChainsSynced)
+    return null;
 
-  if (settingsAlertMessage) {
+  // "Update" takes the place of "Sync": updating applies the new address to every chain.
+  if (isUpdatePromptVisible || canonicalAddress === null) {
     return (
       <Alert
         type="warning"
-        message={settingsAlertMessage}
+        message={
+          isUpdatePromptVisible ? 'Update backup wallet' : 'Add backup wallet'
+        }
         onClick={() => gotoPage(PAGES.Settings)}
         showIcon
         customIcon={<LuWallet />}
@@ -44,8 +43,6 @@ export const BackupWalletAlert = () => {
       />
     );
   }
-
-  if (!anyBackupMissing && allChainsSynced) return null;
 
   return (
     <>

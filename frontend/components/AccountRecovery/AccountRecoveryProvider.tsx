@@ -110,8 +110,6 @@ const AccountRecoveryContext = createContext<{
   isLoading: boolean;
   /** Indicates if account recovery is available based on backup wallet */
   isRecoveryAvailable: boolean;
-  /** Whether pearl-api offers Google/Apple (Web3Auth); the backup-wallet path is hidden when not */
-  isWeb3AuthEnabled: boolean;
   /** Indicates if there are backup wallets across every chain */
   hasBackupWalletsAcrossEveryChain: boolean;
   /** Indicates if all backup owners are the same across chains */
@@ -157,7 +155,6 @@ const AccountRecoveryContext = createContext<{
   isLoading: true,
   currentStep: RECOVERY_STEPS.SelectRecoveryMethod,
   isRecoveryAvailable: false,
-  isWeb3AuthEnabled: false,
   hasBackupWalletsAcrossEveryChain: false,
   areAllBackupOwnersSame: false,
   updateNewMasterEoaAddress: () => {},
@@ -187,8 +184,7 @@ export const AccountRecoveryProvider = ({
   // their EOA's private key (RecoverExistingAccountCard covers that flow).
   const isWeb3AuthBackup =
     storeState?.lastProvidedBackupWallet?.type === 'web3auth';
-  const { isWeb3AuthEnabled, isLoading: isWeb3AuthStatusLoading } =
-    useWeb3AuthStatus();
+  const { isWeb3AuthEnabled } = useWeb3AuthStatus();
 
   const [currentStep, setCurrentStep] = useState<RecoverySteps>(
     RECOVERY_STEPS.SelectRecoveryMethod,
@@ -248,9 +244,7 @@ export const AccountRecoveryProvider = ({
       : false,
   });
 
-  // The status decides which recovery options show, so wait for it.
-  const isLoading =
-    isMasterWalletLoading || isExtendedWalletLoading || isWeb3AuthStatusLoading;
+  const isLoading = isMasterWalletLoading || isExtendedWalletLoading;
 
   // Determine backup wallet details for recovery
   const backupWalletDetails = useMemo(() => {
@@ -273,8 +267,10 @@ export const AccountRecoveryProvider = ({
     return parseRecoveryFundingRequirements(recoveryFundingRequirements);
   }, [recoveryFundingRequirements]);
 
+  // The live status gates only the choice: once the user has picked the backup-wallet
+  // path, a later refetch (flag change or outage) doesn't cut the recovery off.
   const isRecoveryAvailable = !!(
-    isWeb3AuthEnabled &&
+    (isWeb3AuthEnabled || selectedResetMethod === RESET_METHOD.BackupWallet) &&
     isWeb3AuthBackup &&
     backupWalletDetails?.areAllBackupOwnersSame &&
     backupWalletDetails?.hasBackupWalletsAcrossEveryChain
@@ -323,7 +319,6 @@ export const AccountRecoveryProvider = ({
       value={{
         isLoading,
         isRecoveryAvailable,
-        isWeb3AuthEnabled,
         areAllBackupOwnersSame: !!backupWalletDetails?.areAllBackupOwnersSame,
         hasBackupWalletsAcrossEveryChain:
           !!backupWalletDetails?.hasBackupWalletsAcrossEveryChain,

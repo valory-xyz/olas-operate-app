@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 
 import { SETUP_SCREEN } from '@/constants';
 import { useSetup } from '@/hooks';
+import { useWeb3AuthStatus } from '@/hooks/useWeb3AuthStatus';
 
 import { BackButton } from '../ui';
 import {
@@ -58,7 +59,8 @@ const SelectRecoveryMethod = () => {
 };
 
 const SelectPasswordResetOptionStep = () => {
-  const { onPrev, isWeb3AuthEnabled } = useAccountRecoveryContext();
+  const { onPrev } = useAccountRecoveryContext();
+  const { status } = useWeb3AuthStatus();
 
   return (
     <Flex align="center" vertical>
@@ -67,9 +69,10 @@ const SelectPasswordResetOptionStep = () => {
         Select Password Reset Option
       </Title>
       <Text type="secondary">
-        {isWeb3AuthEnabled
-          ? 'You can restore access to your account via the seed phrase or the backup wallet.'
-          : 'You can restore access to your account via the seed phrase.'}
+        {status === 'enabled' &&
+          'You can restore access to your account via the seed phrase or the backup wallet.'}
+        {status === 'disabled' &&
+          'You can restore access to your account via the seed phrase.'}
       </Text>
 
       <Flex gap={24} style={{ marginTop: 56 }}>
@@ -109,8 +112,8 @@ const AccountRecoveryInner = () => {
   if (isLoading) return <Loader />;
 
   // Always show SelectRecoveryMethod and SelectPasswordResetOption without
-  // the recovery guard — the availability check is handled inside the
-  // SelectPasswordResetOption screen (backup wallet card disabled state).
+  // the recovery guard — SelectPasswordResetOption handles availability itself
+  // (backup wallet card hidden while Web3Auth is off, disabled with no backup).
   if (
     currentStep === RECOVERY_STEPS.SelectRecoveryMethod ||
     currentStep === RECOVERY_STEPS.SelectPasswordResetOption

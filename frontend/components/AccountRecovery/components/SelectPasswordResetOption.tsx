@@ -2,6 +2,7 @@ import { Button, Typography } from 'antd';
 import { TbCreditCard, TbWallet } from 'react-icons/tb';
 
 import { COLOR } from '@/constants';
+import { useWeb3AuthStatus } from '@/hooks/useWeb3AuthStatus';
 
 import { CardTitle, IconContainer } from '../../ui';
 import { useAccountRecoveryContext } from '../AccountRecoveryProvider';
@@ -83,7 +84,7 @@ const BackupWalletCard = () => {
 };
 
 export const SelectPasswordResetOption = () => {
-  const { isWeb3AuthEnabled } = useAccountRecoveryContext();
+  const { isWeb3AuthEnabled } = useWeb3AuthStatus();
 
   return (
     <>

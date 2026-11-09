@@ -135,6 +135,25 @@ describe('useWeb3AuthStatus', () => {
     );
   });
 
+  it('logs once per attempt, however many components read the status', async () => {
+    const queryClient = createTestQueryClient();
+    const wrapper = ({ children }: { children: React.ReactNode }) =>
+      createElement(QueryClientProvider, { client: queryClient }, children);
+    jest.useFakeTimers();
+    mockFetchResponse({}, false, 500);
+
+    renderHook(() => [useWeb3AuthStatus(), useWeb3AuthStatus()], { wrapper });
+    renderHook(() => useWeb3AuthStatus(), { wrapper });
+    await act(async () => {
+      await jest.runAllTimersAsync();
+    });
+    jest.useRealTimers();
+
+    // One attempt plus one retry, shared by all three readers.
+    expect(global.fetch).toHaveBeenCalledTimes(2);
+    expect(consoleError).toHaveBeenCalledTimes(2);
+  });
+
   it('turns disabled when a refetch fails after an earlier enabled read', async () => {
     const queryClient = createTestQueryClient();
     const wrapper = ({ children }: { children: React.ReactNode }) =>

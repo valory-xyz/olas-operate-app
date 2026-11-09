@@ -1,7 +1,5 @@
-import { Flex, Skeleton } from 'antd';
-
 import { FundingFlow } from '@/components/FundingFlow';
-import { cardStyles } from '@/components/ui';
+import { CardSkeleton } from '@/components/ui';
 import { SETUP_SCREEN } from '@/constants';
 import {
   useBackupSigner,
@@ -25,11 +23,7 @@ export const FundYourAgent = () => {
   // services are still loading after a restart. The backup signer must be
   // settled before the funding run can create the Pearl Safe with it.
   if (!selectedService || !isBackupSignerReady) {
-    return (
-      <Flex style={cardStyles}>
-        <Skeleton active />
-      </Flex>
-    );
+    return <CardSkeleton />;
   }
 
   return (

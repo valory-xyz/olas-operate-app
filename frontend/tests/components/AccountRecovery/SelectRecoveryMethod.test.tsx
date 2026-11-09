@@ -16,11 +16,15 @@ jest.mock('../../../hooks', () => ({
   useSetup: () => ({ goto: mockGoto }),
 }));
 
+let mockStatus: 'loading' | 'enabled' | 'disabled' = 'enabled';
+jest.mock('../../../hooks/useWeb3AuthStatus', () => ({
+  useWeb3AuthStatus: () => ({ status: mockStatus }),
+}));
+
 // Default mock — overridden per test when needed via mockContextValue
 const defaultContext: {
   isLoading: boolean;
   isRecoveryAvailable: boolean;
-  isWeb3AuthEnabled: boolean;
   currentStep: RecoverySteps;
   setCurrentStep: jest.Mock;
   selectedResetMethod: ResetMethod | undefined;
@@ -28,7 +32,6 @@ const defaultContext: {
 } = {
   isLoading: false,
   isRecoveryAvailable: true,
-  isWeb3AuthEnabled: true,
   currentStep: RECOVERY_STEPS.SelectRecoveryMethod,
   setCurrentStep: mockSetCurrentStep,
   selectedResetMethod: undefined,
@@ -123,6 +126,7 @@ describe('SelectRecoveryMethod', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockContextValue = { ...defaultContext };
+    mockStatus = 'enabled';
   });
 
   it('renders the "Select Recovery Option" title', () => {
@@ -156,6 +160,7 @@ describe('AccountRecovery guard', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockContextValue = { ...defaultContext };
+    mockStatus = 'enabled';
   });
 
   it('shows RecoveryNotAvailable when recovery is not available and method is not SRP', () => {
@@ -226,9 +231,11 @@ describe('AccountRecovery guard', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('mentions the backup wallet in the reset subtitle when Web3Auth is enabled', () => {
+  it('mentions the backup wallet in the reset subtitle when Web3Auth is enabled, even with no backup to recover with', () => {
+    mockStatus = 'enabled';
     mockContextValue = {
       ...defaultContext,
+      isRecoveryAvailable: false,
       currentStep: RECOVERY_STEPS.SelectPasswordResetOption,
     };
 
@@ -241,10 +248,9 @@ describe('AccountRecovery guard', () => {
   });
 
   it('drops the backup wallet from the reset subtitle when Web3Auth is disabled', () => {
+    mockStatus = 'disabled';
     mockContextValue = {
       ...defaultContext,
-      isRecoveryAvailable: false,
-      isWeb3AuthEnabled: false,
       currentStep: RECOVERY_STEPS.SelectPasswordResetOption,
     };
 
@@ -254,5 +260,18 @@ describe('AccountRecovery guard', () => {
         'You can restore access to your account via the seed phrase.',
       ),
     ).toBeInTheDocument();
+  });
+
+  it('shows no reset subtitle while the status loads', () => {
+    mockStatus = 'loading';
+    mockContextValue = {
+      ...defaultContext,
+      currentStep: RECOVERY_STEPS.SelectPasswordResetOption,
+    };
+
+    render(<AccountRecovery />);
+    expect(
+      screen.queryByText(/You can restore access to your account/),
+    ).not.toBeInTheDocument();
   });
 });

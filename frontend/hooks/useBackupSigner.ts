@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 import { SETUP_SCREEN } from '@/constants';
 
@@ -8,19 +8,14 @@ import { useMasterWalletContext } from './useWallet';
 import { useWeb3AuthStatus } from './useWeb3AuthStatus';
 
 /**
- * The onboarding backup signer, and whether that decision is settled.
- *
- * A stored address pick (or any pick while Web3Auth is on) is used as is, falling back to
- * the on-chain backup owner. While Web3Auth is off, a stored Google/Apple pick is ignored
- * and the on-chain backup owner (if any) is used. Until the Web3Auth status — and, for an
- * ignored pick, the Pearl Safe owners — are known, `isPending` is true: callers must not
- * route or create a Safe on it.
+ * The onboarding backup signer. While Web3Auth is off, a stored Google/Apple pick is ignored
+ * in favour of the on-chain backup owner. While `isPending`, don't route or create a Safe on it.
  */
 export const useBackupSignerState = () => {
   const { backupSigner } = useSetup();
   const { masterSafes, isFetched: areWalletsFetched } =
     useMasterWalletContext();
-  const { allBackupAddresses, masterSafesOwnersIsFetched } =
+  const { allBackupAddresses, masterSafesOwnersIsSuccess } =
     useMultisigs(masterSafes);
   const { status } = useWeb3AuthStatus();
 
@@ -36,16 +31,17 @@ export const useBackupSignerState = () => {
   }
 
   const hasMasterSafe = !!masterSafes?.length;
+  // A failed owners read must not pass for "no backup owner on-chain".
   const isPending =
     status === 'loading' ||
     !areWalletsFetched ||
-    (hasMasterSafe && !masterSafesOwnersIsFetched);
+    (hasMasterSafe && !masterSafesOwnersIsSuccess);
 
   return {
     backupSignerAddress: isPending ? undefined : onChainBackupAddress,
     isPending,
-    // D14: only a user with no Pearl Safe yet goes back to choose a backup wallet.
-    needsNewBackup: !isPending && !hasMasterSafe,
+    // With nothing on-chain to fall back to, the user must pick a new backup wallet.
+    needsNewBackup: !isPending && !onChainBackupAddress,
   };
 };
 
@@ -53,16 +49,24 @@ export const useBackupSignerState = () => {
 export const useBackupSigner = () => useBackupSignerState().backupSignerAddress;
 
 /**
- * For onboarding screens that lead to Pearl Safe creation: sends a user whose Google/Apple
- * pick was ignored back to choose a backup wallet, and reports whether the screen may go on.
+ * For onboarding screens that lead to Pearl Safe creation: waits for a settled backup signer
+ * and sends a user who needs a new one back to the backup wallet step. Once the screen is
+ * ready it stays ready, so a later status refetch never pulls the user out of a funding run
+ * or on-ramp already under way.
  */
 export const useBackupSignerGuard = () => {
   const { goto } = useSetup();
   const { isPending, needsNewBackup } = useBackupSignerState();
+  const isReadyNow = !isPending && !needsNewBackup;
+  const [hasBeenReady, setHasBeenReady] = useState(isReadyNow);
 
   useEffect(() => {
-    if (needsNewBackup) goto(SETUP_SCREEN.SetupBackupSigner);
-  }, [needsNewBackup, goto]);
+    if (isReadyNow) setHasBeenReady(true);
+  }, [isReadyNow]);
 
-  return { isBackupSignerReady: !isPending && !needsNewBackup };
+  useEffect(() => {
+    if (!hasBeenReady && needsNewBackup) goto(SETUP_SCREEN.SetupBackupSigner);
+  }, [hasBeenReady, needsNewBackup, goto]);
+
+  return { isBackupSignerReady: hasBeenReady || isReadyNow };
 };

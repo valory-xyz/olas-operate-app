@@ -1,4 +1,4 @@
-import { Button, Card, Flex, Skeleton, Switch, Typography } from 'antd';
+import { Button, Card, Flex, Switch, Typography } from 'antd';
 import { useMemo } from 'react';
 import {
   TbFileText,
@@ -8,7 +8,13 @@ import {
 } from 'react-icons/tb';
 import { useBoolean } from 'usehooks-ts';
 
-import { Alert, CardSection, cardStyles, IconContainer } from '@/components/ui';
+import {
+  Alert,
+  CardSection,
+  CardSkeleton,
+  cardStyles,
+  IconContainer,
+} from '@/components/ui';
 import { COLOR } from '@/constants';
 import { SettingsScreenMap } from '@/constants/screen';
 import {
@@ -203,11 +209,7 @@ export const Settings = () => {
       screen === SettingsScreenMap.AddBackupWalletMethod ||
       screen === SettingsScreenMap.UpdateBackupWalletMethod;
     if (isMethodScreen && isWeb3AuthStatusLoading) {
-      return (
-        <Flex style={cardStyles}>
-          <Skeleton active />
-        </Flex>
-      );
+      return <CardSkeleton />;
     }
 
     switch (screen) {

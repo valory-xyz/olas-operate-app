@@ -4,13 +4,16 @@ import { TOKEN_CONFIG, TokenSymbol, TokenType } from '@/config/tokens';
 import { AddressZero } from '@/constants';
 import { EXPLORER_URL_BY_MIDDLEWARE_CHAIN } from '@/constants/urls';
 import { useMessageApi } from '@/context/MessageProvider';
-import { useBackupSigner } from '@/hooks/useBackupSigner';
+import { useBackupSignerState } from '@/hooks/useBackupSigner';
 import { useServices } from '@/hooks/useServices';
 import { WalletService } from '@/service/Wallet';
 import { BridgingStepStatus } from '@/types/Bridge';
 import { asEvmChainId } from '@/utils';
 
 import { useBalanceAndRefillRequirementsContext } from '.';
+
+export const BACKUP_SIGNER_NOT_READY =
+  'The backup wallet is not set. Set a backup wallet, then try again.';
 
 /**
  * Hook to create master safe and transfer funds.
@@ -19,7 +22,11 @@ import { useBalanceAndRefillRequirementsContext } from '.';
 export const useMasterSafeCreationAndTransfer = (
   tokenSymbols: TokenSymbol[],
 ) => {
-  const backupSignerAddress = useBackupSigner();
+  const {
+    backupSignerAddress,
+    isPending: isBackupSignerPending,
+    needsNewBackup,
+  } = useBackupSignerState();
   const { selectedAgentConfig } = useServices();
   const { refetch } = useBalanceAndRefillRequirementsContext();
   const message = useMessageApi();
@@ -29,6 +36,11 @@ export const useMasterSafeCreationAndTransfer = (
 
   return useMutation({
     mutationFn: async () => {
+      // Every path that creates the Pearl Safe goes through here: never create it on a
+      // backup signer that is unsettled or needs replacing.
+      if (isBackupSignerPending || needsNewBackup) {
+        throw new Error(BACKUP_SIGNER_NOT_READY);
+      }
       const explorer = `${EXPLORER_URL_BY_MIDDLEWARE_CHAIN[chain]}/tx`;
       try {
         const response = await WalletService.createSafe(

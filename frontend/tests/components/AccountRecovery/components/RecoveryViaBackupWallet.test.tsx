@@ -2,14 +2,17 @@ import { render, screen } from '@testing-library/react';
 
 import { ForgotPasswordCard } from '../../../../components/AccountRecovery/components/RecoveryViaBackupWallet';
 
-let mockIsWeb3AuthEnabled = true;
+let mockStatus: 'loading' | 'enabled' | 'disabled' = 'enabled';
+
+jest.mock('../../../../hooks/useWeb3AuthStatus', () => ({
+  useWeb3AuthStatus: () => ({ status: mockStatus }),
+}));
 
 jest.mock(
   '../../../../components/AccountRecovery/AccountRecoveryProvider',
   () => ({
     useAccountRecoveryContext: () => ({
       onNext: jest.fn(),
-      isWeb3AuthEnabled: mockIsWeb3AuthEnabled,
     }),
   }),
 );
@@ -35,7 +38,7 @@ jest.mock(
 
 describe('ForgotPasswordCard', () => {
   it('mentions the backup wallet when Web3Auth is enabled', () => {
-    mockIsWeb3AuthEnabled = true;
+    mockStatus = 'enabled';
     render(<ForgotPasswordCard />);
     expect(
       screen.getByText(
@@ -45,10 +48,17 @@ describe('ForgotPasswordCard', () => {
   });
 
   it('mentions only the recovery phrase when Web3Auth is disabled', () => {
-    mockIsWeb3AuthEnabled = false;
+    mockStatus = 'disabled';
     render(<ForgotPasswordCard />);
     expect(
       screen.getByText('Reset your password using the secret recovery phrase.'),
     ).toBeInTheDocument();
+  });
+
+  it('shows no copy while the status loads, so it never switches under the user', () => {
+    mockStatus = 'loading';
+    render(<ForgotPasswordCard />);
+    expect(screen.queryByText(/Reset your password using/)).toBeNull();
+    expect(screen.getByRole('button', { name: 'Reset Password' })).toBeTruthy();
   });
 });

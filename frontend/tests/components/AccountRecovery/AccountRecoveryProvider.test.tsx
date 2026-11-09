@@ -1,12 +1,21 @@
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { QueryClientProvider } from '@tanstack/react-query';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
+import { PropsWithChildren } from 'react';
 
 import {
   AccountRecoveryProvider,
   useAccountRecoveryContext,
 } from '../../../components/AccountRecovery/AccountRecoveryProvider';
-import { RecoveryService } from '../../../service/Recovery';
+import { RESET_METHOD } from '../../../components/AccountRecovery/constants';
+import { REACT_QUERY_KEYS } from '../../../constants/reactQueryKeys';
 import { BACKUP_SIGNER_ADDRESS } from '../../helpers/factories';
-import { createQueryClientWrapper } from '../../helpers/queryClient';
+import { createTestQueryClient } from '../../helpers/queryClient';
 
 const mockBackupAddress = BACKUP_SIGNER_ADDRESS;
 let mockIsWeb3AuthEnabled = true;
@@ -36,7 +45,7 @@ jest.mock('../../../context/OnlineStatusProvider', () => ({
 jest.mock('../../../service/Recovery', () => ({
   RecoveryService: {
     getExtendedWallet: jest.fn(() => Promise.resolve([{ safes: {} }])),
-    getRecoveryFundingRequirements: jest.fn(),
+    getRecoveryFundingRequirements: jest.fn(() => Promise.resolve({})),
   },
 }));
 
@@ -55,36 +64,49 @@ const Consumer = () => {
   const {
     isLoading,
     isRecoveryAvailable,
-    isWeb3AuthEnabled,
     backupWalletAddress,
+    selectResetMethodAndProceed,
   } = useAccountRecoveryContext();
   if (isLoading) return <div>loading</div>;
   return (
     <div>
       <span data-testid="available">{String(isRecoveryAvailable)}</span>
-      <span data-testid="enabled">{String(isWeb3AuthEnabled)}</span>
       <span data-testid="address">{backupWalletAddress ?? 'none'}</span>
+      <button
+        onClick={() => selectResetMethodAndProceed(RESET_METHOD.BackupWallet)}
+      >
+        pick backup wallet
+      </button>
     </div>
   );
 };
 
-const renderProvider = () =>
-  render(
+const renderProvider = () => {
+  const queryClient = createTestQueryClient();
+  const Wrapper = ({ children }: PropsWithChildren) => (
+    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+  );
+  const utils = render(
     <AccountRecoveryProvider>
       <Consumer />
     </AccountRecoveryProvider>,
-    { wrapper: createQueryClientWrapper() },
+    { wrapper: Wrapper },
   );
+  return { ...utils, queryClient };
+};
 
 describe('AccountRecoveryProvider', () => {
-  it('offers backup-wallet recovery when Web3Auth is enabled', async () => {
+  beforeEach(() => {
     mockIsWeb3AuthEnabled = true;
+    mockIsWeb3AuthStatusLoading = false;
+  });
+
+  it('offers backup-wallet recovery when Web3Auth is enabled', async () => {
     renderProvider();
 
     await waitFor(() =>
       expect(screen.getByTestId('available')).toHaveTextContent('true'),
     );
-    expect(screen.getByTestId('enabled')).toHaveTextContent('true');
     expect(screen.getByTestId('address')).toHaveTextContent(mockBackupAddress);
   });
 
@@ -95,25 +117,39 @@ describe('AccountRecoveryProvider', () => {
     await waitFor(() =>
       expect(screen.getByTestId('available')).toHaveTextContent('false'),
     );
-    expect(screen.getByTestId('enabled')).toHaveTextContent('false');
     expect(screen.getByTestId('address')).toHaveTextContent('none');
   });
 
-  it('keeps loading until the Web3Auth status is known', async () => {
+  it('does not wait for the Web3Auth status, so recovery-phrase reset works offline', async () => {
     mockIsWeb3AuthEnabled = false;
     mockIsWeb3AuthStatusLoading = true;
-    renderProvider();
+    const { queryClient } = renderProvider();
 
-    // Let the wallet query resolve: only the status should still hold loading.
     await waitFor(() =>
-      expect(RecoveryService.getExtendedWallet).toHaveBeenCalled(),
+      expect(
+        queryClient.getQueryState(REACT_QUERY_KEYS.EXTENDED_WALLET_KEY)?.status,
+      ).toBe('success'),
     );
-    await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 50));
-    });
+    expect(screen.queryByText('loading')).not.toBeInTheDocument();
+    expect(screen.getByTestId('available')).toBeInTheDocument();
+  });
 
-    expect(screen.getByText('loading')).toBeInTheDocument();
-    expect(screen.queryByTestId('available')).not.toBeInTheDocument();
-    mockIsWeb3AuthStatusLoading = false;
+  it('keeps a chosen backup-wallet recovery available if the status later turns disabled', async () => {
+    const { rerender } = renderProvider();
+    await waitFor(() =>
+      expect(screen.getByTestId('available')).toHaveTextContent('true'),
+    );
+
+    act(() => {
+      fireEvent.click(screen.getByText('pick backup wallet'));
+    });
+    mockIsWeb3AuthEnabled = false;
+    rerender(
+      <AccountRecoveryProvider>
+        <Consumer />
+      </AccountRecoveryProvider>,
+    );
+
+    expect(screen.getByTestId('available')).toHaveTextContent('true');
   });
 });

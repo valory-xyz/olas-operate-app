@@ -98,6 +98,7 @@ jest.mock('../../../components/ui', () => ({
   CardSection: (props: { children?: React.ReactNode }) => (
     <div>{props.children}</div>
   ),
+  CardSkeleton: () => <div data-testid="card-skeleton" />,
   cardStyles: {},
   IconContainer: (props: { children?: React.ReactNode }) => (
     <div>{props.children}</div>
@@ -247,6 +248,7 @@ describe('Settings (SettingsPage entry)', () => {
         isLoading: true,
       });
       const { rerender } = render(<Settings />);
+      expect(screen.getByTestId('card-skeleton')).toBeInTheDocument();
       expect(
         screen.queryByTestId('add-backup-wallet-manual-screen'),
       ).not.toBeInTheDocument();
@@ -262,6 +264,39 @@ describe('Settings (SettingsPage entry)', () => {
       expect(
         screen.getByTestId('add-backup-wallet-method-screen'),
       ).toBeInTheDocument();
+    });
+
+    it('shows a loader on the Update method screen while the status loads, then the method screen once enabled', () => {
+      setupDefaults({ screen: SettingsScreenMap.UpdateBackupWalletMethod });
+      mockUseWeb3AuthStatus.mockReturnValue({
+        isWeb3AuthEnabled: false,
+        isLoading: true,
+      });
+      const { rerender } = render(<Settings />);
+      expect(screen.getByTestId('card-skeleton')).toBeInTheDocument();
+      expect(
+        screen.queryByTestId('update-backup-wallet-manual-screen'),
+      ).not.toBeInTheDocument();
+
+      mockUseWeb3AuthStatus.mockReturnValue({
+        isWeb3AuthEnabled: true,
+        isLoading: false,
+      });
+      rerender(<Settings />);
+      expect(
+        screen.getByTestId('update-backup-wallet-method-screen'),
+      ).toBeInTheDocument();
+    });
+
+    it('does not hold other Settings screens behind the status', () => {
+      setupDefaults({ screen: SettingsScreenMap.Main });
+      mockUseWeb3AuthStatus.mockReturnValue({
+        isWeb3AuthEnabled: false,
+        isLoading: true,
+      });
+      render(<Settings />);
+      expect(screen.queryByTestId('card-skeleton')).not.toBeInTheDocument();
+      expect(screen.getByText('Password')).toBeInTheDocument();
     });
 
     it('renders UpdateBackupWalletConfirmScreen when screen is UpdateBackupWalletConfirm', () => {

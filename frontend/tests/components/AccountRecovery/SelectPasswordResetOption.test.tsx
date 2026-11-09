@@ -7,9 +7,13 @@ const mockSelectResetMethodAndProceed = jest.fn();
 
 let mockContextValue: {
   isRecoveryAvailable: boolean;
-  isWeb3AuthEnabled: boolean;
   selectResetMethodAndProceed: jest.Mock;
 };
+
+let mockIsWeb3AuthEnabled = true;
+jest.mock('../../../hooks/useWeb3AuthStatus', () => ({
+  useWeb3AuthStatus: () => ({ isWeb3AuthEnabled: mockIsWeb3AuthEnabled }),
+}));
 
 jest.mock(
   '../../../components/AccountRecovery/AccountRecoveryProvider',
@@ -44,9 +48,9 @@ jest.mock(
 describe('SelectPasswordResetOption', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockIsWeb3AuthEnabled = true;
     mockContextValue = {
       isRecoveryAvailable: true,
-      isWeb3AuthEnabled: true,
       selectResetMethodAndProceed: mockSelectResetMethodAndProceed,
     };
   });
@@ -106,10 +110,10 @@ describe('SelectPasswordResetOption', () => {
   });
 
   it('shows only the recovery phrase card when Web3Auth is disabled', () => {
+    mockIsWeb3AuthEnabled = false;
     mockContextValue = {
       ...mockContextValue,
       isRecoveryAvailable: false,
-      isWeb3AuthEnabled: false,
     };
     render(<SelectPasswordResetOption />);
     expect(screen.getByText('Via Secret Recovery Phrase')).toBeInTheDocument();
