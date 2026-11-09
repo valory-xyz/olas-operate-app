@@ -258,8 +258,9 @@ export type AgentLiveness = {
   /**
    * Unix seconds of the last healthy probe; null until the first one since
    * this start. A user or API start or stop drops the record (the health
-   * checker's forced restart keeps it), and failed probes never clear it, so it tells "has answered since this start" apart from
-   * `is_alive`, which the PID fallback reports true before any probe.
+   * checker's forced restart keeps it), and failed probes never clear it. An
+   * agent that answers `is_healthy: false` leaves it null too; see
+   * `context/agentAnsweredLatch.ts`.
    */
   last_healthy_at: number | null;
 };
