@@ -22,10 +22,9 @@ const renderInput = (overrides: Partial<ChatInputProps> = {}) => {
 };
 
 const sendButton = () => screen.getByRole('button', { name: 'Send' });
+const textarea = () => screen.getByRole('textbox', { name: 'Message' });
 
 describe('ChatInput Enter key', () => {
-  const textarea = () => screen.getByRole('textbox', { name: 'Message' });
-
   it('sends on Enter', () => {
     const { onSend, onTextChange } = renderInput();
 
@@ -65,7 +64,7 @@ describe('ChatInput Send button', () => {
   it('shows the usual placeholder when the agent is not starting', () => {
     renderInput();
 
-    expect(screen.getByRole('textbox', { name: 'Message' })).toHaveAttribute(
+    expect(textarea()).toHaveAttribute(
       'placeholder',
       'Ask your agent or give it guidance...',
     );
@@ -74,7 +73,7 @@ describe('ChatInput Send button', () => {
   it('shows the starting placeholder while the agent is starting', () => {
     renderInput({ availability: 'starting' });
 
-    expect(screen.getByRole('textbox', { name: 'Message' })).toHaveAttribute(
+    expect(textarea()).toHaveAttribute(
       'placeholder',
       "Your agent is starting. You can chat once it's ready.",
     );
@@ -83,16 +82,15 @@ describe('ChatInput Send button', () => {
   it('disables the input and Send while the agent is starting', () => {
     renderInput({ availability: 'starting' });
 
-    expect(screen.getByRole('textbox', { name: 'Message' })).toBeDisabled();
+    expect(textarea()).toBeDisabled();
     expect(sendButton()).toBeDisabled();
   });
 
   it('disables the input with the usual placeholder when the agent is unavailable', () => {
     renderInput({ availability: 'unavailable' });
 
-    const textarea = screen.getByRole('textbox', { name: 'Message' });
-    expect(textarea).toBeDisabled();
-    expect(textarea).toHaveAttribute(
+    expect(textarea()).toBeDisabled();
+    expect(textarea()).toHaveAttribute(
       'placeholder',
       'Ask your agent or give it guidance...',
     );
