@@ -350,6 +350,10 @@ describe('useMultisigs', () => {
       `Failed to read Safe owners on chain ${EvmChainIdMap.Gnosis}`,
       rpcError,
     );
+    // The query's error names the chain, for the onboarding gate's log line.
+    expect(result.current.masterSafesOwnersError?.message).toBe(
+      `Failed to read Safe owners on chain ${EvmChainIdMap.Gnosis}: Error: rpc down`,
+    );
 
     consoleSpy.mockRestore();
   });

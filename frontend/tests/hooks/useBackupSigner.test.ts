@@ -26,6 +26,10 @@ jest.mock('../../hooks/useWallet', () => ({
 }));
 jest.mock('../../hooks/useMultisig', () => ({ useMultisigs: jest.fn() }));
 jest.mock('../../hooks/useServices', () => ({ useServices: jest.fn() }));
+const mockLogEvent = jest.fn();
+jest.mock('../../hooks/useElectronApi', () => ({
+  useElectronApi: () => ({ logEvent: mockLogEvent }),
+}));
 jest.mock('../../hooks/useWeb3AuthStatus', () => ({
   useWeb3AuthStatus: jest.fn(),
 }));
@@ -39,6 +43,9 @@ const mockUseWeb3AuthStatus = useWeb3AuthStatus as jest.Mock;
 const mockGoto = jest.fn();
 
 const SAFE = makeMasterSafe(EvmChainIdMap.Gnosis);
+const OWNERS_ERROR = 'Failed to read Safe owners on chain 100: rpc down';
+const OWNERS_FAILED = { state: 'error', reason: OWNERS_ERROR };
+const WALLETS_FAILED = { state: 'error', reason: 'Failed to read the wallets' };
 const web3AuthPick = { address: BACKUP_SIGNER_ADDRESS, type: 'web3auth' };
 const manualPick = { address: BACKUP_SIGNER_ADDRESS, type: 'manual' };
 
@@ -101,6 +108,7 @@ const given = ({
     allBackupAddresses: ownerData ? owners : [],
     masterSafesOwners: ownerData,
     masterSafesOwnersIsError: ownersError,
+    masterSafesOwnersError: ownersError ? new Error(OWNERS_ERROR) : null,
   });
 };
 
@@ -136,7 +144,7 @@ describe('useBackupSignerState', () => {
       expect(stateForSafeCreation()).toEqual({ state: 'pending' });
 
       given({ masterSafes: [SAFE], ownersData: null, ownersError: true });
-      expect(stateForSafeCreation()).toEqual({ state: 'error' });
+      expect(stateForSafeCreation()).toEqual(OWNERS_FAILED);
     });
 
     it('for Safe creation, does not wait on the owners when the home chain already has a Safe', () => {
@@ -169,7 +177,7 @@ describe('useBackupSignerState', () => {
       expect(stateForSafeCreation()).toEqual({ state: 'pending' });
 
       given({ walletsLoaded: false, walletsError: true });
-      expect(stateForSafeCreation()).toEqual({ state: 'error' });
+      expect(stateForSafeCreation()).toEqual(WALLETS_FAILED);
     });
 
     it('for routing, never waits on the wallets or owners with no stored pick (as before)', () => {
@@ -261,12 +269,14 @@ describe('useBackupSignerState', () => {
       });
     });
 
-    it('does not reset a user who already has a Pearl Safe, even with no backup owner on-chain (D21)', () => {
+    it('does not reset a user who already has a Pearl Safe, even with no backup owner on-chain', () => {
+      // The home chain's Safe exists, so no Safe is created here either.
       given({
         status: 'disabled',
         pick: web3AuthPick,
         masterSafes: [SAFE],
         owners: [],
+        homeChainId: EvmChainIdMap.Gnosis,
       });
       expect(state()).toEqual({
         state: 'ready',
@@ -285,7 +295,7 @@ describe('useBackupSignerState', () => {
         walletsLoaded: false,
         walletsError: true,
       });
-      expect(state()).toEqual({ state: 'error' });
+      expect(state()).toEqual(WALLETS_FAILED);
     });
 
     it('for Safe creation, stays pending while the Safe owners load; routing goes on', () => {
@@ -310,7 +320,22 @@ describe('useBackupSignerState', () => {
         ownersData: null,
         ownersError: true,
       });
-      expect(stateForSafeCreation()).toEqual({ state: 'error' });
+      expect(stateForSafeCreation()).toEqual(OWNERS_FAILED);
+    });
+
+    it('for Safe creation, needs a new backup rather than a Safe with none; routing goes on', () => {
+      // A Safe on another chain lists no backup owner, and the home chain has no Safe yet.
+      given({
+        status: 'disabled',
+        pick: web3AuthPick,
+        masterSafes: [SAFE],
+        owners: [],
+      });
+      expect(stateForSafeCreation()).toEqual({ state: 'needsNewBackup' });
+      expect(state()).toEqual({
+        state: 'ready',
+        backupSignerAddress: undefined,
+      });
     });
 
     it('stays ready when a refresh fails after the owners were read', () => {
@@ -410,6 +435,30 @@ describe('useBackupSignerGuard', () => {
       },
       isBackupSignerError: false,
     });
+  });
+
+  it("logs an unreadable signer to Pearl's logs once per failing spell, naming the read", () => {
+    const failing = {
+      status: 'disabled' as const,
+      pick: web3AuthPick,
+      masterSafes: [SAFE],
+      ownersData: null,
+      ownersError: true,
+    };
+    given(failing);
+    const { rerender } = renderHook(() => useBackupSignerGuard());
+    rerender();
+    rerender();
+    expect(mockLogEvent).toHaveBeenCalledTimes(1);
+    expect(mockLogEvent).toHaveBeenCalledWith(
+      `Backup signer unavailable during setup: ${OWNERS_ERROR}`,
+    );
+
+    given({ ...failing, ownersError: false });
+    rerender();
+    given(failing);
+    rerender();
+    expect(mockLogEvent).toHaveBeenCalledTimes(2);
   });
 
   it('keeps a latched signer, with no error, when a later owners read fails', () => {
