@@ -39,7 +39,9 @@ export const useBackupSignerState = ({
   const {
     masterWallets,
     masterSafes,
+    getMasterSafeOf,
     isError: isWalletsError,
+    error: walletsError,
   } = useMasterWalletContext();
   const {
     allBackupAddresses,
@@ -56,29 +58,27 @@ export const useBackupSignerState = ({
   const onChainBackupAddress = allBackupAddresses[0] as Address | undefined;
   const hasMasterSafe = !!masterSafes?.length;
   const createsSafe =
-    forSafeCreation &&
-    !masterSafes?.some(
-      (safe) => safe.evmChainId === selectedAgentConfig?.evmHomeChainId,
-    );
+    forSafeCreation && !getMasterSafeOf?.(selectedAgentConfig.evmHomeChainId);
 
-  // Wallet data, not `isFetched`: a failed wallets read must not pass for "no Safe".
-  const walletsUnsettled = (): BackupSignerState | null =>
-    masterWallets === undefined
-      ? isWalletsError
-        ? { state: 'error', reason: 'Failed to read the wallets' }
-        : { state: 'pending' }
-      : null;
-  // Owner data, not query flags: a failed refresh keeps the owners it read before.
-  const ownersUnsettled = (): BackupSignerState | null =>
-    createsSafe && hasMasterSafe && masterSafesOwners === undefined
-      ? masterSafesOwnersIsError
-        ? {
-            state: 'error',
-            reason:
-              masterSafesOwnersError?.message ?? 'Failed to read Safe owners',
-          }
-        : { state: 'pending' }
-      : null;
+  // `null` means settled. Wallet data first, not `isError`: a failed poll keeps the
+  // wallets read before, and a failed first read must not pass for "no Safe".
+  const walletsUnsettled = (): BackupSignerState | null => {
+    if (masterWallets !== undefined) return null;
+    if (!isWalletsError) return { state: 'pending' };
+    const detail = walletsError ? `: ${walletsError.message}` : '';
+    return { state: 'error', reason: `Failed to read the wallets${detail}` };
+  };
+  // Owner data first, likewise: a failed refresh keeps the owners it read before.
+  const ownersUnsettled = (): BackupSignerState | null => {
+    if (!createsSafe || !hasMasterSafe || masterSafesOwners !== undefined) {
+      return null;
+    }
+    if (!masterSafesOwnersIsError) return { state: 'pending' };
+    return {
+      state: 'error',
+      reason: masterSafesOwnersError?.message ?? 'Failed to read Safe owners',
+    };
+  };
 
   if (pick?.type !== 'web3auth' || status === 'enabled') {
     if (pick?.address) {
@@ -106,6 +106,22 @@ export const useBackupSignerState = ({
 };
 
 /**
+ * Logs an unreadable backup signer to Pearl's logs once per failure reason, not per poll:
+ * the user is stuck (at login or on a setup screen) until it clears. `null` when not failing.
+ */
+export const useLogBackupSignerError = (
+  errorReason: string | null,
+  where: string,
+) => {
+  const { logEvent } = useElectronApi();
+  useEffect(() => {
+    if (errorReason !== null) {
+      logEvent?.(`Backup signer unavailable ${where}: ${errorReason}`);
+    }
+  }, [errorReason, where, logEvent]);
+};
+
+/**
  * For onboarding screens that lead to Pearl Safe creation (use it through `BackupSignerGate`):
  * waits for a settled backup signer and sends a user who needs a new one back to the backup
  * wallet step. The first ready decision — including its address — is kept for the screen's
@@ -114,7 +130,6 @@ export const useBackupSignerState = ({
  */
 export const useBackupSignerGuard = () => {
   const { goto } = useSetup();
-  const { logEvent } = useElectronApi();
   const signer = useBackupSignerState({ forSafeCreation: true });
   const [latched, setLatched] = useState<ReadyBackupSigner | null>(
     signer.state === 'ready' ? signer : null,
@@ -133,13 +148,7 @@ export const useBackupSignerGuard = () => {
   const latchedSigner = latched ?? (signer.state === 'ready' ? signer : null);
   const errorReason =
     !latchedSigner && signer.state === 'error' ? signer.reason : null;
-
-  // Into Pearl's logs once per failure reason, not per poll: the user is stuck until it clears.
-  useEffect(() => {
-    if (errorReason !== null) {
-      logEvent?.(`Backup signer unavailable during setup: ${errorReason}`);
-    }
-  }, [errorReason, logEvent]);
+  useLogBackupSignerError(errorReason, 'during setup');
 
   return { latchedSigner, isBackupSignerError: errorReason !== null };
 };

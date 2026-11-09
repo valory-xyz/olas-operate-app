@@ -15,6 +15,7 @@ import {
   useBackupSignerState,
   useElectronApi,
   useIsInitiallyFunded,
+  useLogBackupSignerError,
   useMnemonicExists,
   useOnlineStatusContext,
   usePageState,
@@ -165,7 +166,10 @@ const useSetupNavigation = ({
   ]);
 
   // Login waits on an unreadable backup signer; say why instead of spinning silently.
-  return { isBackupSignerError: canNavigate && backupSigner.state === 'error' };
+  const errorReason =
+    canNavigate && backupSigner.state === 'error' ? backupSigner.reason : null;
+  useLogBackupSignerError(errorReason, 'at login');
+  return { isBackupSignerError: errorReason !== null };
 };
 
 enum MiddlewareAccountIsSetup {

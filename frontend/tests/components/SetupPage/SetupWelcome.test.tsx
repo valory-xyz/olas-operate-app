@@ -204,6 +204,7 @@ const signerState = (backupSignerAddress?: string) => ({
 });
 const mockUseIsInitiallyFunded = jest.fn();
 const mockUseStore = jest.fn();
+const mockUseLogBackupSignerError = jest.fn();
 
 jest.mock('../../../hooks', () => ({
   useSetup: jest.fn(() => ({ goto: mockGoto, setPassword: mockSetPassword })),
@@ -222,6 +223,8 @@ jest.mock('../../../hooks', () => ({
   useIsInitiallyFunded: (...args: unknown[]) =>
     mockUseIsInitiallyFunded(...args),
   useStore: (...args: unknown[]) => mockUseStore(...args),
+  useLogBackupSignerError: (...args: unknown[]) =>
+    mockUseLogBackupSignerError(...args),
 }));
 
 jest.mock('../../../context/MessageProvider', () => ({
@@ -630,9 +633,12 @@ describe('SetupWelcomeLogin', () => {
       expect(mockSetPassword).not.toHaveBeenCalled();
     });
 
-    it('does not route while the Safe owners are unreadable', async () => {
+    it('does not route while the backup signer is unreadable, and logs why', async () => {
       setupHooksNotInitialFunded();
-      mockUseBackupSignerState.mockReturnValue({ state: 'error' });
+      mockUseBackupSignerState.mockReturnValue({
+        state: 'error',
+        reason: 'Failed to read the wallets: HTTP 500',
+      });
       mockLoginAccount.mockResolvedValue({ message: 'ok' });
 
       renderSetupWelcomeLogin();
@@ -646,13 +652,25 @@ describe('SetupWelcomeLogin', () => {
       expect(
         screen.getByText(/Couldn.t check your backup wallet/),
       ).toBeInTheDocument();
+      expect(mockUseLogBackupSignerError).toHaveBeenLastCalledWith(
+        'Failed to read the wallets: HTTP 500',
+        'at login',
+      );
     });
 
-    it('shows no backup-signer warning before login, even when the owners are unreadable', () => {
+    it('shows no backup-signer warning before login, even when the backup signer is unreadable', () => {
       setupHooksNotInitialFunded();
-      mockUseBackupSignerState.mockReturnValue({ state: 'error' });
+      mockUseBackupSignerState.mockReturnValue({
+        state: 'error',
+        reason: 'Failed to read the wallets: HTTP 500',
+      });
 
       renderSetupWelcomeLogin();
+      // Nothing to log before the user has logged in.
+      expect(mockUseLogBackupSignerError).toHaveBeenLastCalledWith(
+        null,
+        'at login',
+      );
 
       expect(
         screen.queryByText(/Couldn.t check your backup wallet/),

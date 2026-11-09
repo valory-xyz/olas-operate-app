@@ -74,6 +74,7 @@ export const MasterWalletProvider = ({ children }: PropsWithChildren) => {
     refetch,
     isFetched,
     isError,
+    error,
   } = useQuery({
     queryKey: REACT_QUERY_KEYS.WALLETS_KEY,
     queryFn: ({ signal }) =>
@@ -125,6 +126,7 @@ export const MasterWalletProvider = ({ children }: PropsWithChildren) => {
         refetch,
         isFetched,
         isError,
+        error,
         getMasterSafeOf,
       }}
     >

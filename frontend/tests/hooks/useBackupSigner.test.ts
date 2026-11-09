@@ -5,6 +5,7 @@ import { SETUP_SCREEN } from '../../constants/setupScreen';
 import {
   useBackupSignerGuard,
   useBackupSignerState,
+  useLogBackupSignerError,
 } from '../../hooks/useBackupSigner';
 import { useMultisigs } from '../../hooks/useMultisig';
 import { useServices } from '../../hooks/useServices';
@@ -45,7 +46,10 @@ const mockGoto = jest.fn();
 const SAFE = makeMasterSafe(EvmChainIdMap.Gnosis);
 const OWNERS_ERROR = 'Failed to read Safe owners on chain 100: rpc down';
 const OWNERS_FAILED = { state: 'error', reason: OWNERS_ERROR };
-const WALLETS_FAILED = { state: 'error', reason: 'Failed to read the wallets' };
+const WALLETS_FAILED = {
+  state: 'error',
+  reason: 'Failed to read the wallets: HTTP 500',
+};
 const web3AuthPick = { address: BACKUP_SIGNER_ADDRESS, type: 'web3auth' };
 const manualPick = { address: BACKUP_SIGNER_ADDRESS, type: 'manual' };
 
@@ -99,10 +103,18 @@ const given = ({
       ? { lastProvidedBackupWallet: storedPick ?? pick }
       : undefined,
   });
+  const loadedSafes = walletsLoaded ? masterSafes : undefined;
   mockUseMasterWalletContext.mockReturnValue({
-    masterWallets: walletsLoaded ? masterSafes : undefined,
-    masterSafes: walletsLoaded ? masterSafes : undefined,
+    masterWallets: loadedSafes,
+    masterSafes: loadedSafes,
+    getMasterSafeOf: loadedSafes
+      ? (chainId: number) =>
+          (loadedSafes as { evmChainId: number }[]).find(
+            (safe) => safe.evmChainId === chainId,
+          )
+      : undefined,
     isError: walletsError,
+    error: walletsError ? new Error('HTTP 500') : null,
   });
   mockUseMultisigs.mockReturnValue({
     allBackupAddresses: ownerData ? owners : [],
@@ -165,6 +177,18 @@ describe('useBackupSignerState', () => {
         masterSafes: [SAFE],
         owners: [BACKUP_SIGNER_ADDRESS_2],
         ownersError: true,
+      });
+      expect(stateForSafeCreation()).toEqual({
+        state: 'ready',
+        backupSignerAddress: BACKUP_SIGNER_ADDRESS_2,
+      });
+    });
+
+    it('for Safe creation, stays ready when a wallets poll fails after the wallets were read', () => {
+      given({
+        masterSafes: [SAFE],
+        owners: [BACKUP_SIGNER_ADDRESS_2],
+        walletsError: true,
       });
       expect(stateForSafeCreation()).toEqual({
         state: 'ready',
@@ -356,6 +380,24 @@ describe('useBackupSignerState', () => {
       });
     });
 
+    it('stays ready when a wallets poll fails after the wallets were read', () => {
+      given({
+        status: 'disabled',
+        pick: web3AuthPick,
+        masterSafes: [SAFE],
+        owners: [BACKUP_SIGNER_ADDRESS_2],
+        walletsError: true,
+      });
+      expect(state()).toEqual({
+        state: 'ready',
+        backupSignerAddress: BACKUP_SIGNER_ADDRESS_2,
+      });
+      expect(stateForSafeCreation()).toEqual({
+        state: 'ready',
+        backupSignerAddress: BACKUP_SIGNER_ADDRESS_2,
+      });
+    });
+
     it('reads a pick the setup context has not restored yet from the store', () => {
       given({ status: 'disabled', storedPick: web3AuthPick });
       expect(state()).toEqual({ state: 'needsNewBackup' });
@@ -495,5 +537,28 @@ describe('useBackupSignerGuard', () => {
       state: 'ready',
       backupSignerAddress: BACKUP_SIGNER_ADDRESS_2,
     });
+  });
+});
+
+describe('useLogBackupSignerError', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it('logs once per reason, and again for a new reason, never while not failing', () => {
+    const { rerender } = renderHook(
+      ({ reason }: { reason: string | null }) =>
+        useLogBackupSignerError(reason, 'at login'),
+      { initialProps: { reason: null as string | null } },
+    );
+    expect(mockLogEvent).not.toHaveBeenCalled();
+
+    rerender({ reason: 'Failed to read the wallets: HTTP 500' });
+    rerender({ reason: 'Failed to read the wallets: HTTP 500' });
+    expect(mockLogEvent).toHaveBeenCalledTimes(1);
+    expect(mockLogEvent).toHaveBeenCalledWith(
+      'Backup signer unavailable at login: Failed to read the wallets: HTTP 500',
+    );
+
+    rerender({ reason: OWNERS_ERROR });
+    expect(mockLogEvent).toHaveBeenCalledTimes(2);
   });
 });
