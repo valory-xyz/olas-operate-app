@@ -102,7 +102,6 @@ const renderRow = ({
   mockUseAgentActivity.mockReturnValue({
     isAgentActive,
     isAgentStarting,
-    isAgentReachable: isAgentActive && !isAgentStarting,
     isServiceDeploying:
       deploymentStatus === MiddlewareDeploymentStatusMap.DEPLOYING,
     deploymentDetails: {

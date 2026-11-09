@@ -18,13 +18,13 @@ const makeItem = (id: number): FeedItem => ({
 
 const ITEMS: FeedItem[] = [1, 2].map(makeItem);
 
-const makeItemOnDay = (id: number, day: number): FeedItem => ({
-  key: `entry-${id}`,
-  entry: makeFeedEvent(id, {
-    title: `Skipped market ${id}`,
-    ts: 1_760_000_000 + day * ONE_DAY_IN_S + id,
-  }),
-});
+const makeItemOnDay = (id: number, day: number): FeedItem => {
+  const item = makeItem(id);
+  return {
+    ...item,
+    entry: { ...item.entry, ts: item.entry.ts + day * ONE_DAY_IN_S },
+  };
+};
 
 const dayGroups = () =>
   screen.getAllByText(/\d{4}/).map((tag) => tag.parentElement as HTMLElement);
