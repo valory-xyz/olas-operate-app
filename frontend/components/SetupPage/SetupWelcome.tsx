@@ -93,8 +93,8 @@ const useSetupNavigation = ({
   ]);
 
   const isBackupWalletNotSet = useMemo(() => {
-    // An ignored Google/Apple pick with no on-chain backup to fall back to
-    // returns to the backup step even when a service already exists.
+    // An ignored Google/Apple pick with no Pearl Safe yet returns to the
+    // backup step even when a service already exists.
     if (needsNewBackup) return true;
     // If no services are created and backup wallet is not set as well.
     return !services?.length && !backupSignerAddress;

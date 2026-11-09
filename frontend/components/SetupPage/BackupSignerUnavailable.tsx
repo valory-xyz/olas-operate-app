@@ -4,7 +4,7 @@ import { Alert, cardStyles } from '@/components/ui';
 
 const { Text } = Typography;
 
-/** The Pearl Safe's owners can't be read; the read keeps retrying. */
+/** The wallets, or the Pearl Safe owners the backup signer needs, can't be read; the reads keep retrying. */
 export const BackupSignerUnavailableAlert = () => (
   <Alert
     type="warning"
