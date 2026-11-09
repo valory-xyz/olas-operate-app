@@ -1,14 +1,15 @@
 import { renderHook } from '@testing-library/react';
 
 import { MiddlewareDeploymentStatusMap } from '../../constants/deployment';
+import { observeAgentLiveness } from '../../context/agentAnsweredLatch';
 import { useAgentActivity } from '../../hooks/useAgentActivity';
 import { AgentLiveness } from '../../types/Agent';
 import {
+  DEFAULT_SERVICE_CONFIG_ID,
   LAST_HEALTHY_AT,
   makeAgentLiveness,
   makeService,
   makeServiceDeployment,
-  MOCK_SERVICE_CONFIG_ID_2,
 } from '../helpers/factories';
 
 /* eslint-disable @typescript-eslint/no-var-requires */
@@ -240,15 +241,11 @@ describe('useAgentActivity', () => {
     });
 
     describe('starting and reachable (Send gate)', () => {
-      // The answered-since-start latch is module-level; a stopped render clears it.
       beforeEach(() => {
-        mockUseServices.mockReturnValue({
-          selectedService: makeService({
-            deploymentStatus: MiddlewareDeploymentStatusMap.STOPPED,
-          }),
-          deploymentDetails: undefined,
+        observeAgentLiveness(DEFAULT_SERVICE_CONFIG_ID, {
+          isDeployed: false,
+          liveness: undefined,
         });
-        renderHook(() => useAgentActivity()).unmount();
       });
 
       it('reports a deployed agent starting until its first healthy probe', () => {
@@ -317,13 +314,9 @@ describe('useAgentActivity', () => {
         expect(result.current.isAgentReachable).toBe(false);
       });
 
+      // The latch's own rules are in agentAnsweredLatch.test.ts; here only
+      // that the hook reads it.
       describe('once the agent has answered since this start', () => {
-        const ANSWERED = {
-          is_alive: false,
-          reason: 'agent_reported_unhealthy',
-          consecutive_failures: 3,
-          last_healthy_at: null,
-        } as const;
         const UNRESPONSIVE_AFTER = {
           is_alive: false,
           reason: 'agent_unresponsive',
@@ -331,73 +324,25 @@ describe('useAgentActivity', () => {
           last_healthy_at: null,
         } as const;
 
-        const servicesWith = (
-          liveness: Parameters<typeof makeAgentLiveness>[0],
-          service: Parameters<typeof makeService>[0] = {},
-        ) => ({
-          selectedService: makeService({
-            deploymentStatus: MiddlewareDeploymentStatusMap.DEPLOYED,
-            ...service,
-          }),
-          deploymentDetails: makeServiceDeployment({
-            agent_liveness: makeAgentLiveness(liveness),
-          }),
-        });
-
         it('keeps it reachable when the next probe fails', () => {
-          const { result, rerender } = renderWithLiveness(ANSWERED);
-          mockUseServices.mockReturnValue(servicesWith(UNRESPONSIVE_AFTER));
-          rerender();
+          observeAgentLiveness(DEFAULT_SERVICE_CONFIG_ID, {
+            isDeployed: true,
+            liveness: makeAgentLiveness({
+              is_alive: false,
+              reason: 'agent_reported_unhealthy',
+              consecutive_failures: 3,
+              last_healthy_at: null,
+            }),
+          });
+
+          const { result } = renderWithLiveness(UNRESPONSIVE_AFTER);
 
           expect(result.current.isAgentStarting).toBe(false);
           expect(result.current.isAgentReachable).toBe(true);
         });
 
-        it('keeps it reachable across a remount', () => {
-          renderWithLiveness(ANSWERED).unmount();
-
+        it('reports it starting when no answer was observed', () => {
           const { result } = renderWithLiveness(UNRESPONSIVE_AFTER);
-
-          expect(result.current.isAgentReachable).toBe(true);
-        });
-
-        it('does not carry the answer over to another service', () => {
-          renderWithLiveness(ANSWERED);
-          mockUseServices.mockReturnValue(
-            servicesWith(UNRESPONSIVE_AFTER, {
-              service_config_id: MOCK_SERVICE_CONFIG_ID_2,
-            }),
-          );
-
-          const { result } = renderHook(() => useAgentActivity());
-
-          expect(result.current.isAgentStarting).toBe(true);
-        });
-
-        it('reports it starting again after the next start', () => {
-          const { result, rerender } = renderWithLiveness(ANSWERED);
-          mockUseServices.mockReturnValue({
-            selectedService: makeService({
-              deploymentStatus: MiddlewareDeploymentStatusMap.DEPLOYING,
-            }),
-            deploymentDetails: undefined,
-          });
-          rerender();
-          mockUseServices.mockReturnValue(servicesWith(UNRESPONSIVE_AFTER));
-          rerender();
-
-          expect(result.current.isAgentStarting).toBe(true);
-          expect(result.current.isAgentReachable).toBe(false);
-        });
-
-        it('reports it starting again when the middleware starts a fresh record unseen', () => {
-          const { result, rerender } = renderWithLiveness(ANSWERED);
-          mockUseServices.mockReturnValue(
-            servicesWith({ ...UNRESPONSIVE_AFTER, consecutive_failures: 1 }),
-          );
-          rerender();
-          mockUseServices.mockReturnValue(servicesWith(UNRESPONSIVE_AFTER));
-          rerender();
 
           expect(result.current.isAgentStarting).toBe(true);
         });
