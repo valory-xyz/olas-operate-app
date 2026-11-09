@@ -4,7 +4,6 @@ import React from 'react';
 // Import after mocks
 import { SetupWelcomeLogin } from '../../../components/SetupPage/SetupWelcome';
 import { SETUP_SCREEN } from '../../../constants/setupScreen';
-import { useSetup } from '../../../hooks';
 import { AccountService } from '../../../service/Account';
 import { WalletService } from '../../../service/Wallet';
 
@@ -194,7 +193,17 @@ const mockMessageError = jest.fn();
 
 const mockUseOnlineStatusContext = jest.fn();
 const mockUseServices = jest.fn();
-const mockUseBackupSigner = jest.fn();
+const mockUseBackupSignerState = jest.fn();
+/** `useBackupSignerState` result; settled unless overridden. */
+const signerState = (
+  backupSignerAddress?: string,
+  overrides: { isPending?: boolean; needsNewBackup?: boolean } = {},
+) => ({
+  backupSignerAddress,
+  isPending: false,
+  needsNewBackup: false,
+  ...overrides,
+});
 const mockUseIsInitiallyFunded = jest.fn();
 const mockUseStore = jest.fn();
 
@@ -210,7 +219,8 @@ jest.mock('../../../hooks', () => ({
   useOnlineStatusContext: (...args: unknown[]) =>
     mockUseOnlineStatusContext(...args),
   useServices: (...args: unknown[]) => mockUseServices(...args),
-  useBackupSigner: (...args: unknown[]) => mockUseBackupSigner(...args),
+  useBackupSignerState: (...args: unknown[]) =>
+    mockUseBackupSignerState(...args),
   useIsInitiallyFunded: (...args: unknown[]) =>
     mockUseIsInitiallyFunded(...args),
   useStore: (...args: unknown[]) => mockUseStore(...args),
@@ -266,7 +276,7 @@ const setupHooksApplicationNotReady = () => {
     services: [],
     isFetched: false,
   });
-  mockUseBackupSigner.mockReturnValue(undefined);
+  mockUseBackupSignerState.mockReturnValue(signerState());
   mockUseIsInitiallyFunded.mockReturnValue({ isInitialFunded: false });
   mockUseStore.mockReturnValue({ storeState: {} });
 };
@@ -288,7 +298,7 @@ const setupHooksInitialFunded = () => {
     services: [{ service_public_id: 'test-public-id', home_chain: 100 }],
     isFetched: true,
   });
-  mockUseBackupSigner.mockReturnValue('0xbackup');
+  mockUseBackupSignerState.mockReturnValue(signerState('0xbackup'));
   mockUseIsInitiallyFunded.mockReturnValue({ isInitialFunded: true });
   mockUseStore.mockReturnValue({ storeState: {} });
 };
@@ -310,7 +320,7 @@ const setupHooksNotInitialFunded = () => {
     services: [{ service_public_id: 'test-public-id', home_chain: 100 }],
     isFetched: true,
   });
-  mockUseBackupSigner.mockReturnValue('0xbackup');
+  mockUseBackupSignerState.mockReturnValue(signerState('0xbackup'));
   mockUseIsInitiallyFunded.mockReturnValue({ isInitialFunded: false });
   mockUseStore.mockReturnValue({ storeState: {} });
 };
@@ -333,7 +343,7 @@ const setupHooksInitialFundedUndefined = () => {
     services: [{ service_public_id: 'test-public-id', home_chain: 100 }],
     isFetched: true,
   });
-  mockUseBackupSigner.mockReturnValue('0xbackup');
+  mockUseBackupSignerState.mockReturnValue(signerState('0xbackup'));
   mockUseIsInitiallyFunded.mockReturnValue({ isInitialFunded: undefined });
   mockUseStore.mockReturnValue({ storeState: {} });
 };
@@ -356,7 +366,7 @@ const setupHooksStoreNotHydrated = () => {
     services: [{ service_public_id: 'test-public-id', home_chain: 100 }],
     isFetched: true,
   });
-  mockUseBackupSigner.mockReturnValue('0xbackup');
+  mockUseBackupSignerState.mockReturnValue(signerState('0xbackup'));
   mockUseIsInitiallyFunded.mockReturnValue({ isInitialFunded: undefined });
   mockUseStore.mockReturnValue({ storeState: undefined });
 };
@@ -571,13 +581,11 @@ describe('SetupWelcomeLogin', () => {
       );
     });
 
-    it('returns to the backup wallet step when a discarded Google/Apple pick leaves no backup, even with a service', async () => {
+    it('returns to the backup wallet step when a new backup is needed, even with a service', async () => {
       setupHooksNotInitialFunded();
-      mockUseBackupSigner.mockReturnValue(undefined);
-      (useSetup as jest.Mock).mockReturnValue({
-        goto: mockGoto,
-        backupSigner: { address: '0xbackup', type: 'web3auth' },
-      });
+      mockUseBackupSignerState.mockReturnValue(
+        signerState(undefined, { needsNewBackup: true }),
+      );
       mockLoginAccount.mockResolvedValue({ message: 'ok' });
 
       renderSetupWelcomeLogin();
@@ -587,12 +595,11 @@ describe('SetupWelcomeLogin', () => {
         expect(mockGoto).toHaveBeenCalledWith(SETUP_SCREEN.SetupBackupSigner);
       });
       expect(mockGoto).not.toHaveBeenCalledWith(SETUP_SCREEN.FundYourAgent);
-      (useSetup as jest.Mock).mockReturnValue({ goto: mockGoto });
     });
 
-    it('keeps going to FundYourAgent when an address-type pick is missing but a service exists', async () => {
+    it('keeps going to FundYourAgent when a service exists and no new backup is needed', async () => {
       setupHooksNotInitialFunded();
-      mockUseBackupSigner.mockReturnValue(undefined);
+      mockUseBackupSignerState.mockReturnValue(signerState());
       mockLoginAccount.mockResolvedValue({ message: 'ok' });
 
       renderSetupWelcomeLogin();
@@ -601,6 +608,34 @@ describe('SetupWelcomeLogin', () => {
       await waitFor(() => {
         expect(mockGoto).toHaveBeenCalledWith(SETUP_SCREEN.FundYourAgent);
       });
+      expect(mockGoto).not.toHaveBeenCalledWith(SETUP_SCREEN.SetupBackupSigner);
+    });
+
+    it('does not route while the backup signer is pending, then routes once it settles as needing a new backup', async () => {
+      setupHooksNotInitialFunded();
+      mockUseBackupSignerState.mockReturnValue(
+        signerState(undefined, { isPending: true }),
+      );
+      mockLoginAccount.mockResolvedValue({ message: 'ok' });
+
+      const { rerender } = renderSetupWelcomeLogin();
+      fireEvent.submit(screen.getByTestId('login-form'));
+
+      await waitFor(() => {
+        expect(mockSetUserLoggedIn).toHaveBeenCalledTimes(1);
+      });
+      expect(mockGoto).not.toHaveBeenCalledWith(SETUP_SCREEN.FundYourAgent);
+      expect(mockGoto).not.toHaveBeenCalledWith(SETUP_SCREEN.SetupBackupSigner);
+
+      mockUseBackupSignerState.mockReturnValue(
+        signerState(undefined, { needsNewBackup: true }),
+      );
+      rerender(<SetupWelcomeLogin />);
+
+      await waitFor(() => {
+        expect(mockGoto).toHaveBeenCalledWith(SETUP_SCREEN.SetupBackupSigner);
+      });
+      expect(mockGoto).not.toHaveBeenCalledWith(SETUP_SCREEN.FundYourAgent);
     });
 
     it('falls through to Main when isInitialFunded is undefined (store hydrating / legacy)', async () => {

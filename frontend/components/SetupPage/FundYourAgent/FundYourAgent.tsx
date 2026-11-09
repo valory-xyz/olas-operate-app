@@ -5,6 +5,7 @@ import { cardStyles } from '@/components/ui';
 import { SETUP_SCREEN } from '@/constants';
 import {
   useBackupSigner,
+  useBackupSignerGuard,
   useGetRefillRequirements,
   useServices,
   useSetup,
@@ -16,12 +17,14 @@ export const FundYourAgent = () => {
   const { goto } = useSetup();
   const { selectedAgentConfig, selectedService } = useServices();
   const backupOwner = useBackupSigner();
+  const { isBackupSignerReady } = useBackupSignerGuard();
   const { refillTokenRequirements, resetTokenRequirements } =
     useGetRefillRequirements();
 
   // The service is created before this screen; it is only missing while
-  // services are still loading after a restart.
-  if (!selectedService) {
+  // services are still loading after a restart. The backup signer must be
+  // settled before the funding run can create the Pearl Safe with it.
+  if (!selectedService || !isBackupSignerReady) {
     return (
       <Flex style={cardStyles}>
         <Skeleton active />

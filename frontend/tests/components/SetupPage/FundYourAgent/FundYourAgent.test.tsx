@@ -18,11 +18,15 @@ const mockGotoSetup = jest.fn();
 const mockResetTokenRequirements = jest.fn();
 const mockUseServices = jest.fn();
 const BACKUP_OWNER = '0x2222222222222222222222222222222222222222';
+let mockIsBackupSignerReady = true;
 
 jest.mock('../../../../hooks', () => ({
   useSetup: () => ({ goto: mockGotoSetup }),
   useServices: () => mockUseServices(),
   useBackupSigner: () => BACKUP_OWNER,
+  useBackupSignerGuard: () => ({
+    isBackupSignerReady: mockIsBackupSignerReady,
+  }),
   useGetRefillRequirements: () => ({
     refillTokenRequirements: [{ symbol: 'OLAS', amount: 1 }],
     isLoading: false,
@@ -81,6 +85,15 @@ describe('FundYourAgent', () => {
       selectedService: undefined,
     });
     render(<FundYourAgent />);
+
+    expect(mockFlowProps).toBeNull();
+  });
+
+  it('waits for the backup signer before opening the flow that creates the Pearl Safe', () => {
+    setup();
+    mockIsBackupSignerReady = false;
+    render(<FundYourAgent />);
+    mockIsBackupSignerReady = true;
 
     expect(mockFlowProps).toBeNull();
   });

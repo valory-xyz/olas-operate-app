@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { PAGES, SETUP_SCREEN } from '@/constants';
 import { useMessageApi } from '@/context/MessageProvider';
 import {
-  useBackupSigner,
+  useBackupSignerState,
   useElectronApi,
   useIsInitiallyFunded,
   useMnemonicExists,
@@ -36,7 +36,7 @@ const useSetupNavigation = ({
   canNavigate,
   setIsLoggingIn,
 }: UseSetupNavigationProps) => {
-  const { goto, backupSigner } = useSetup();
+  const { goto } = useSetup();
   const { goto: gotoPage } = usePageState();
   const { isOnline } = useOnlineStatusContext();
   const {
@@ -46,7 +46,11 @@ const useSetupNavigation = ({
     isFetched: isServicesFetched,
   } = useServices();
   const { isInitialFunded } = useIsInitiallyFunded();
-  const backupSignerAddress = useBackupSigner();
+  const {
+    backupSignerAddress,
+    isPending: isBackupSignerPending,
+    needsNewBackup,
+  } = useBackupSignerState();
   const { storeState } = useStore();
 
   const selectedServiceOrAgentChainId = selectedService?.home_chain
@@ -69,19 +73,27 @@ const useSetupNavigation = ({
       !isOnline ||
       !canNavigate ||
       !isServicesFetched ||
-      storeState === undefined
+      storeState === undefined ||
+      // Routing on an unsettled backup signer would skip or wrongly repeat the backup step.
+      isBackupSignerPending
     )
       return false;
     return true;
-  }, [canNavigate, isOnline, isServicesFetched, storeState]);
+  }, [
+    canNavigate,
+    isOnline,
+    isServicesFetched,
+    storeState,
+    isBackupSignerPending,
+  ]);
 
   const isBackupWalletNotSet = useMemo(() => {
-    if (backupSignerAddress) return false;
-    // No services created and no backup wallet set. A stored Google/Apple pick
-    // that useBackupSigner discarded (Web3Auth off, no Pearl Safe yet) also
-    // returns to the backup step when a service already exists.
-    return !services?.length || backupSigner?.type === 'web3auth';
-  }, [services?.length, backupSignerAddress, backupSigner?.type]);
+    // An ignored Google/Apple pick with no Pearl Safe yet returns to the backup
+    // step even when a service already exists.
+    if (needsNewBackup) return true;
+    // If no services are created and backup wallet is not set as well.
+    return !services?.length && !backupSignerAddress;
+  }, [needsNewBackup, services?.length, backupSignerAddress]);
 
   useEffect(() => {
     if (!isApplicationReady) return;

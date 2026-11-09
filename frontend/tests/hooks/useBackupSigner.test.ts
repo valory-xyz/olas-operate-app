@@ -1,6 +1,11 @@
 import { renderHook } from '@testing-library/react';
 
-import { useBackupSigner } from '../../hooks/useBackupSigner';
+import { SETUP_SCREEN } from '../../constants/setupScreen';
+import {
+  useBackupSigner,
+  useBackupSignerGuard,
+  useBackupSignerState,
+} from '../../hooks/useBackupSigner';
 import { useMultisigs } from '../../hooks/useMultisig';
 import { useSetup } from '../../hooks/useSetup';
 import { useMasterWalletContext } from '../../hooks/useWallet';
@@ -35,11 +40,11 @@ const mockUseWeb3AuthStatus = useWeb3AuthStatus as jest.Mock;
 describe('useBackupSigner', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockUseMasterWalletContext.mockReturnValue({ masterSafes: [] });
-    mockUseWeb3AuthStatus.mockReturnValue({
-      isWeb3AuthEnabled: true,
-      isLoading: false,
+    mockUseMasterWalletContext.mockReturnValue({
+      masterSafes: [],
+      isFetched: true,
     });
+    mockUseWeb3AuthStatus.mockReturnValue({ status: 'enabled' });
   });
 
   it('returns setup backupSigner address when available', () => {
@@ -97,47 +102,74 @@ describe('useBackupSigner', () => {
   });
 
   describe('when Web3Auth is disabled', () => {
+    const SAFE = { address: DEFAULT_SAFE_ADDRESS, evmChainId: 100 };
+    const web3AuthPick = {
+      backupSigner: { address: BACKUP_SIGNER_ADDRESS, type: 'web3auth' },
+    };
+
     beforeEach(() => {
-      mockUseWeb3AuthStatus.mockReturnValue({
-        isWeb3AuthEnabled: false,
-        isLoading: false,
-      });
+      mockUseWeb3AuthStatus.mockReturnValue({ status: 'disabled' });
     });
 
-    it('ignores a stored Google/Apple pick when no Pearl Safe exists yet', () => {
-      mockUseSetup.mockReturnValue({
-        backupSigner: { address: BACKUP_SIGNER_ADDRESS, type: 'web3auth' },
-      });
+    it('asks for a new backup when a Google/Apple pick has no Pearl Safe yet', () => {
+      mockUseSetup.mockReturnValue(web3AuthPick);
       mockUseMultisigs.mockReturnValue({ allBackupAddresses: [] });
 
-      const { result } = renderHook(() => useBackupSigner());
-      expect(result.current).toBeUndefined();
+      const { result } = renderHook(() => useBackupSignerState());
+      expect(result.current).toEqual({
+        backupSignerAddress: undefined,
+        isPending: false,
+        needsNewBackup: true,
+      });
     });
 
-    it('uses the on-chain backup owner instead of a stored Google/Apple pick', () => {
-      mockUseSetup.mockReturnValue({
-        backupSigner: { address: BACKUP_SIGNER_ADDRESS, type: 'web3auth' },
+    it('uses the on-chain backup owner instead of a Google/Apple pick once a Safe exists', () => {
+      mockUseSetup.mockReturnValue(web3AuthPick);
+      mockUseMasterWalletContext.mockReturnValue({
+        masterSafes: [SAFE],
+        isFetched: true,
       });
       mockUseMultisigs.mockReturnValue({
         allBackupAddresses: [BACKUP_SIGNER_ADDRESS_2],
+        masterSafesOwnersIsFetched: true,
       });
 
-      const { result } = renderHook(() => useBackupSigner());
-      expect(result.current).toBe(BACKUP_SIGNER_ADDRESS_2);
+      const { result } = renderHook(() => useBackupSignerState());
+      expect(result.current).toEqual({
+        backupSignerAddress: BACKUP_SIGNER_ADDRESS_2,
+        isPending: false,
+        needsNewBackup: false,
+      });
     });
 
-    it('keeps a stored Google/Apple pick while the status is still loading', () => {
-      mockUseWeb3AuthStatus.mockReturnValue({
-        isWeb3AuthEnabled: false,
-        isLoading: true,
+    it('stays pending while the Safe owners load, so an existing Safe is not mistaken for none', () => {
+      mockUseSetup.mockReturnValue(web3AuthPick);
+      mockUseMasterWalletContext.mockReturnValue({
+        masterSafes: [SAFE],
+        isFetched: true,
       });
-      mockUseSetup.mockReturnValue({
-        backupSigner: { address: BACKUP_SIGNER_ADDRESS, type: 'web3auth' },
+      mockUseMultisigs.mockReturnValue({
+        allBackupAddresses: [],
+        masterSafesOwnersIsFetched: false,
+      });
+
+      const { result } = renderHook(() => useBackupSignerState());
+      expect(result.current.isPending).toBe(true);
+      expect(result.current.needsNewBackup).toBe(false);
+      expect(result.current.backupSignerAddress).toBeUndefined();
+    });
+
+    it('stays pending while the wallets load', () => {
+      mockUseSetup.mockReturnValue(web3AuthPick);
+      mockUseMasterWalletContext.mockReturnValue({
+        masterSafes: undefined,
+        isFetched: false,
       });
       mockUseMultisigs.mockReturnValue({ allBackupAddresses: [] });
 
-      const { result } = renderHook(() => useBackupSigner());
-      expect(result.current).toBe(BACKUP_SIGNER_ADDRESS);
+      const { result } = renderHook(() => useBackupSignerState());
+      expect(result.current.isPending).toBe(true);
+      expect(result.current.needsNewBackup).toBe(false);
     });
 
     it('keeps a stored address pick', () => {
@@ -146,8 +178,95 @@ describe('useBackupSigner', () => {
       });
       mockUseMultisigs.mockReturnValue({ allBackupAddresses: [] });
 
-      const { result } = renderHook(() => useBackupSigner());
-      expect(result.current).toBe(BACKUP_SIGNER_ADDRESS);
+      const { result } = renderHook(() => useBackupSignerState());
+      expect(result.current).toEqual({
+        backupSignerAddress: BACKUP_SIGNER_ADDRESS,
+        isPending: false,
+        needsNewBackup: false,
+      });
+    });
+  });
+
+  describe('while the Web3Auth status is loading', () => {
+    beforeEach(() => {
+      mockUseWeb3AuthStatus.mockReturnValue({ status: 'loading' });
+    });
+
+    it('holds a Google/Apple pick as pending, with no address to route or create a Safe on', () => {
+      mockUseSetup.mockReturnValue({
+        backupSigner: { address: BACKUP_SIGNER_ADDRESS, type: 'web3auth' },
+      });
+      mockUseMultisigs.mockReturnValue({ allBackupAddresses: [] });
+
+      const { result } = renderHook(() => useBackupSignerState());
+      expect(result.current).toEqual({
+        backupSignerAddress: undefined,
+        isPending: true,
+        needsNewBackup: false,
+      });
+    });
+
+    it('does not hold up an address pick', () => {
+      mockUseSetup.mockReturnValue({
+        backupSigner: { address: BACKUP_SIGNER_ADDRESS, type: 'manual' },
+      });
+      mockUseMultisigs.mockReturnValue({ allBackupAddresses: [] });
+
+      const { result } = renderHook(() => useBackupSignerState());
+      expect(result.current.isPending).toBe(false);
+      expect(result.current.backupSignerAddress).toBe(BACKUP_SIGNER_ADDRESS);
+    });
+  });
+
+  it('useBackupSigner returns the state address', () => {
+    mockUseSetup.mockReturnValue({
+      backupSigner: { address: BACKUP_SIGNER_ADDRESS, type: 'web3auth' },
+    });
+    mockUseMultisigs.mockReturnValue({ allBackupAddresses: [] });
+
+    const { result } = renderHook(() => useBackupSigner());
+    expect(result.current).toBe(BACKUP_SIGNER_ADDRESS);
+  });
+
+  describe('useBackupSignerGuard', () => {
+    const mockGoto = jest.fn();
+
+    it('sends a user whose Google/Apple pick was ignored, with no Safe, back to the backup step', () => {
+      mockUseWeb3AuthStatus.mockReturnValue({ status: 'disabled' });
+      mockUseSetup.mockReturnValue({
+        goto: mockGoto,
+        backupSigner: { address: BACKUP_SIGNER_ADDRESS, type: 'web3auth' },
+      });
+      mockUseMultisigs.mockReturnValue({ allBackupAddresses: [] });
+
+      const { result } = renderHook(() => useBackupSignerGuard());
+      expect(mockGoto).toHaveBeenCalledWith(SETUP_SCREEN.SetupBackupSigner);
+      expect(result.current.isBackupSignerReady).toBe(false);
+    });
+
+    it('is not ready, and does not redirect, while pending', () => {
+      mockUseWeb3AuthStatus.mockReturnValue({ status: 'loading' });
+      mockUseSetup.mockReturnValue({
+        goto: mockGoto,
+        backupSigner: { address: BACKUP_SIGNER_ADDRESS, type: 'web3auth' },
+      });
+      mockUseMultisigs.mockReturnValue({ allBackupAddresses: [] });
+
+      const { result } = renderHook(() => useBackupSignerGuard());
+      expect(mockGoto).not.toHaveBeenCalled();
+      expect(result.current.isBackupSignerReady).toBe(false);
+    });
+
+    it('is ready for a settled backup signer', () => {
+      mockUseSetup.mockReturnValue({
+        goto: mockGoto,
+        backupSigner: { address: BACKUP_SIGNER_ADDRESS, type: 'manual' },
+      });
+      mockUseMultisigs.mockReturnValue({ allBackupAddresses: [] });
+
+      const { result } = renderHook(() => useBackupSignerGuard());
+      expect(mockGoto).not.toHaveBeenCalled();
+      expect(result.current.isBackupSignerReady).toBe(true);
     });
   });
 });

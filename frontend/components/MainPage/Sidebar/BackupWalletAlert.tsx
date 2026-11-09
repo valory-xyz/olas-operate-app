@@ -24,11 +24,18 @@ export const BackupWalletAlert = () => {
   const allChainsSynced = backupOwnerStatus?.all_chains_synced ?? true;
   const anyBackupMissing = backupOwnerStatus?.any_backup_missing ?? false;
 
-  if (isUpdatePromptVisible) {
+  // "Update" takes the place of "Sync": updating applies the new address to every chain.
+  const settingsAlertMessage = isUpdatePromptVisible
+    ? 'Update backup wallet'
+    : canonicalAddress === null && (anyBackupMissing || !allChainsSynced)
+      ? 'Add backup wallet'
+      : null;
+
+  if (settingsAlertMessage) {
     return (
       <Alert
         type="warning"
-        message="Update backup wallet"
+        message={settingsAlertMessage}
         onClick={() => gotoPage(PAGES.Settings)}
         showIcon
         customIcon={<LuWallet />}
@@ -39,22 +46,6 @@ export const BackupWalletAlert = () => {
   }
 
   if (!anyBackupMissing && allChainsSynced) return null;
-
-  const isAddAlert = canonicalAddress === null;
-
-  if (isAddAlert) {
-    return (
-      <Alert
-        type="warning"
-        message="Add backup wallet"
-        onClick={() => gotoPage(PAGES.Settings)}
-        showIcon
-        customIcon={<LuWallet />}
-        className="mt-auto mb-16"
-        style={{ alignItems: 'center', cursor: 'pointer' }}
-      />
-    );
-  }
 
   return (
     <>

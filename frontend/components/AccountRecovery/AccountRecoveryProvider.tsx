@@ -187,7 +187,8 @@ export const AccountRecoveryProvider = ({
   // their EOA's private key (RecoverExistingAccountCard covers that flow).
   const isWeb3AuthBackup =
     storeState?.lastProvidedBackupWallet?.type === 'web3auth';
-  const { isWeb3AuthEnabled } = useWeb3AuthStatus();
+  const { isWeb3AuthEnabled, isLoading: isWeb3AuthStatusLoading } =
+    useWeb3AuthStatus();
 
   const [currentStep, setCurrentStep] = useState<RecoverySteps>(
     RECOVERY_STEPS.SelectRecoveryMethod,
@@ -247,7 +248,9 @@ export const AccountRecoveryProvider = ({
       : false,
   });
 
-  const isLoading = isMasterWalletLoading || isExtendedWalletLoading;
+  // The status decides which recovery options show, so wait for it.
+  const isLoading =
+    isMasterWalletLoading || isExtendedWalletLoading || isWeb3AuthStatusLoading;
 
   // Determine backup wallet details for recovery
   const backupWalletDetails = useMemo(() => {

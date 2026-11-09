@@ -1,5 +1,12 @@
-import { BACKEND_URL, CONTENT_TYPE_JSON_UTF8 } from '@/constants';
-import { BackupOwnerStatus } from '@/types/BackupWallet';
+import {
+  BACKEND_URL,
+  CONTENT_TYPE_JSON_UTF8,
+  WEB3AUTH_STATUS_URL,
+} from '@/constants';
+import {
+  BackupOwnerStatus,
+  Web3AuthStatusResponse,
+} from '@/types/BackupWallet';
 
 export type ApplyBackupOwnerRequest = {
   backup_owner: string;
@@ -123,8 +130,41 @@ const syncBackupOwner = async (): Promise<SyncBackupOwnerResponse> =>
     return data;
   });
 
+/** A stalled pearl-api must turn into an error, which callers treat as disabled. */
+export const WEB3AUTH_STATUS_TIMEOUT_MS = 10_000;
+
+const getWeb3AuthStatus = async (
+  signal?: AbortSignal,
+): Promise<Web3AuthStatusResponse> => {
+  const controller = new AbortController();
+  const timeout = setTimeout(
+    () => controller.abort(),
+    WEB3AUTH_STATUS_TIMEOUT_MS,
+  );
+  const abort = () => controller.abort();
+  signal?.addEventListener('abort', abort);
+  try {
+    const response = await fetch(WEB3AUTH_STATUS_URL, {
+      method: 'GET',
+      headers: { accept: 'application/json' },
+      signal: controller.signal,
+    });
+    if (!response.ok) {
+      const text = await response.text().catch(() => '');
+      throw new Error(
+        `Failed to fetch Web3Auth status: ${response.status} ${text}`.trim(),
+      );
+    }
+    return response.json();
+  } finally {
+    clearTimeout(timeout);
+    signal?.removeEventListener('abort', abort);
+  }
+};
+
 export const BackupWalletService = {
   getBackupOwnerStatus,
+  getWeb3AuthStatus,
   applyBackupOwner,
   syncBackupOwner,
 };

@@ -13,6 +13,7 @@ const mockGoto = jest.fn();
 const mockApplyBackupDuringSetup = jest.fn();
 const mockError = jest.fn();
 let mockIsWeb3AuthEnabled = true;
+let mockIsWeb3AuthStatusLoading = false;
 
 // Expose the onFinish each child was rendered with so tests can invoke it.
 const capturedProps: {
@@ -26,7 +27,7 @@ jest.mock('../../../../../hooks', () => ({
   useApplyBackupDuringSetup: () => mockApplyBackupDuringSetup,
   useWeb3AuthStatus: () => ({
     isWeb3AuthEnabled: mockIsWeb3AuthEnabled,
-    isLoading: false,
+    isLoading: mockIsWeb3AuthStatusLoading,
   }),
 }));
 
@@ -111,6 +112,15 @@ describe('SetupBackupSigner', () => {
     capturedProps.web3AuthOnFinish = undefined;
     capturedProps.manualOnFinish = undefined;
     mockIsWeb3AuthEnabled = true;
+    mockIsWeb3AuthStatusLoading = false;
+  });
+
+  it('shows neither view while the Web3Auth status loads, so a typed address is never swapped out', () => {
+    mockIsWeb3AuthEnabled = false;
+    mockIsWeb3AuthStatusLoading = true;
+    render(<SetupBackupSigner />);
+    expect(screen.queryByTestId('manual')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('web3auth')).not.toBeInTheDocument();
   });
 
   it('renders Web3Auth path by default', () => {

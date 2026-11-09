@@ -1,4 +1,4 @@
-import { Flex, Typography } from 'antd';
+import { Flex, Skeleton, Typography } from 'antd';
 import { useCallback, useState } from 'react';
 
 import { CardFlex } from '@/components/ui';
@@ -23,7 +23,9 @@ export const SetupBackupSigner = () => {
   const [backupWalletType, setBackupWalletType] =
     useState<BackupWalletType>('web3auth');
   const { goto } = useSetup();
-  const { isWeb3AuthEnabled } = useWeb3AuthStatus();
+  const { isWeb3AuthEnabled, isLoading: isWeb3AuthStatusLoading } =
+    useWeb3AuthStatus();
+  const shownBackupWalletType = isWeb3AuthEnabled ? backupWalletType : 'manual';
   const applyBackupDuringSetup = useApplyBackupDuringSetup();
   const message = useMessageApi();
 
@@ -53,7 +55,9 @@ export const SetupBackupSigner = () => {
           you can add your existing crypto wallet as a backup if you have one.
         </Text>
 
-        {isWeb3AuthEnabled && backupWalletType === 'web3auth' && (
+        {/* Wait for the status: switching views later would drop a typed address. */}
+        {isWeb3AuthStatusLoading && <Skeleton active />}
+        {!isWeb3AuthStatusLoading && shownBackupWalletType === 'web3auth' && (
           <BackupWalletWeb3Auth
             onSetUpManuallyClick={() => setBackupWalletType('manual')}
             onFinish={handleBackupFinish}
@@ -63,7 +67,7 @@ export const SetupBackupSigner = () => {
             showSuccessMessage={false}
           />
         )}
-        {(!isWeb3AuthEnabled || backupWalletType === 'manual') && (
+        {!isWeb3AuthStatusLoading && shownBackupWalletType === 'manual' && (
           <BackupWalletManual onFinish={handleBackupFinish} />
         )}
       </Flex>

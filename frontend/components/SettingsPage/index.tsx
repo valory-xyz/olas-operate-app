@@ -1,4 +1,4 @@
-import { Button, Card, Flex, Switch, Typography } from 'antd';
+import { Button, Card, Flex, Skeleton, Switch, Typography } from 'antd';
 import { useMemo } from 'react';
 import {
   TbFileText,
@@ -194,8 +194,22 @@ const SettingsMain = () => {
 
 export const Settings = () => {
   const { screen } = useSettings();
-  const { isWeb3AuthEnabled } = useWeb3AuthStatus();
+  const { isWeb3AuthEnabled, isLoading: isWeb3AuthStatusLoading } =
+    useWeb3AuthStatus();
   const settingsScreen = useMemo(() => {
+    // The method screens depend on the status; switching them after it loads
+    // would drop a typed address.
+    const isMethodScreen =
+      screen === SettingsScreenMap.AddBackupWalletMethod ||
+      screen === SettingsScreenMap.UpdateBackupWalletMethod;
+    if (isMethodScreen && isWeb3AuthStatusLoading) {
+      return (
+        <Flex style={cardStyles}>
+          <Skeleton active />
+        </Flex>
+      );
+    }
+
     switch (screen) {
       case SettingsScreenMap.Main:
         return <SettingsMain />;
@@ -224,7 +238,7 @@ export const Settings = () => {
       default:
         return null;
     }
-  }, [screen, isWeb3AuthEnabled]);
+  }, [screen, isWeb3AuthEnabled, isWeb3AuthStatusLoading]);
 
   return (
     <AddBackupWalletProvider>

@@ -4,10 +4,12 @@ import {
   AccountRecoveryProvider,
   useAccountRecoveryContext,
 } from '../../../components/AccountRecovery/AccountRecoveryProvider';
+import { BACKUP_SIGNER_ADDRESS } from '../../helpers/factories';
 import { createQueryClientWrapper } from '../../helpers/queryClient';
 
-const mockBackupAddress = '0xAa72b201fc49e0837648d5c8a89fCeD3eAb1364f';
+const mockBackupAddress = BACKUP_SIGNER_ADDRESS;
 let mockIsWeb3AuthEnabled = true;
+let mockIsWeb3AuthStatusLoading = false;
 
 jest.mock('../../../hooks', () => ({
   useMasterWalletContext: () => ({ masterSafes: [], isLoading: false }),
@@ -22,7 +24,7 @@ jest.mock('../../../hooks', () => ({
   }),
   useWeb3AuthStatus: () => ({
     isWeb3AuthEnabled: mockIsWeb3AuthEnabled,
-    isLoading: false,
+    isLoading: mockIsWeb3AuthStatusLoading,
   }),
 }));
 
@@ -94,5 +96,17 @@ describe('AccountRecoveryProvider', () => {
     );
     expect(screen.getByTestId('enabled')).toHaveTextContent('false');
     expect(screen.getByTestId('address')).toHaveTextContent('none');
+  });
+
+  it('keeps loading until the Web3Auth status is known', async () => {
+    mockIsWeb3AuthEnabled = false;
+    mockIsWeb3AuthStatusLoading = true;
+    renderProvider();
+
+    await waitFor(() =>
+      expect(screen.getByText('loading')).toBeInTheDocument(),
+    );
+    expect(screen.queryByTestId('available')).not.toBeInTheDocument();
+    mockIsWeb3AuthStatusLoading = false;
   });
 });

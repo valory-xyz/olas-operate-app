@@ -237,15 +237,22 @@ describe('Settings (SettingsPage entry)', () => {
       ).not.toBeInTheDocument();
     });
 
-    it('switches to the method screen once the status reports Web3Auth enabled', () => {
+    it('shows a loader, not the address screen, on a method screen while the status loads', () => {
       setupDefaults({
         screen: SettingsScreenMap.AddBackupWalletMethod,
         isWeb3AuthEnabled: false,
       });
+      mockUseWeb3AuthStatus.mockReturnValue({
+        isWeb3AuthEnabled: false,
+        isLoading: true,
+      });
       const { rerender } = render(<Settings />);
       expect(
-        screen.getByTestId('add-backup-wallet-manual-screen'),
-      ).toBeInTheDocument();
+        screen.queryByTestId('add-backup-wallet-manual-screen'),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByTestId('add-backup-wallet-method-screen'),
+      ).not.toBeInTheDocument();
 
       mockUseWeb3AuthStatus.mockReturnValue({
         isWeb3AuthEnabled: true,
