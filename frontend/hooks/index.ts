@@ -78,3 +78,4 @@ export * from './useValidatePassword';
 export * from './useWakeLock';
 export * from './useWallet';
 export * from './useWalletContribution';
+export * from './useWeb3AuthStatus';

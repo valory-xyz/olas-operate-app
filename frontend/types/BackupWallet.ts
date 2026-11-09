@@ -1,5 +1,10 @@
 export type BackupWalletType = 'web3auth' | 'manual';
 
+/** pearl-api `GET /api/web3auth/status` */
+export type Web3AuthStatusResponse = {
+  enabled: boolean;
+};
+
 export type BackupOwnerStatusChain = {
   chain: string;
   safe: string;
