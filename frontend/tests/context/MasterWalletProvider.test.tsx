@@ -248,6 +248,8 @@ describe('MasterWalletProvider', () => {
     });
 
     await waitFor(() => expect(result.current.isError).toBe(true));
+    // The backup signer's error reason names it.
+    expect(result.current.error).toBe(error);
     expect(result.current.masterWallets).toBeUndefined();
     expect(consoleError).toHaveBeenCalledWith(
       'Failed to read the wallets',
