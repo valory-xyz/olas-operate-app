@@ -58,7 +58,7 @@ const SelectRecoveryMethod = () => {
 };
 
 const SelectPasswordResetOptionStep = () => {
-  const { onPrev } = useAccountRecoveryContext();
+  const { onPrev, isWeb3AuthEnabled } = useAccountRecoveryContext();
 
   return (
     <Flex align="center" vertical>
@@ -67,8 +67,9 @@ const SelectPasswordResetOptionStep = () => {
         Select Password Reset Option
       </Title>
       <Text type="secondary">
-        You can restore access to your account via the seed phrase or the backup
-        wallet.
+        {isWeb3AuthEnabled
+          ? 'You can restore access to your account via the seed phrase or the backup wallet.'
+          : 'You can restore access to your account via the seed phrase.'}
       </Text>
 
       <Flex gap={24} style={{ marginTop: 56 }}>

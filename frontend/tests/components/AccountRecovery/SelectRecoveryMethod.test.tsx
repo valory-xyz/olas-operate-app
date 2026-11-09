@@ -20,6 +20,7 @@ jest.mock('../../../hooks', () => ({
 const defaultContext: {
   isLoading: boolean;
   isRecoveryAvailable: boolean;
+  isWeb3AuthEnabled: boolean;
   currentStep: RecoverySteps;
   setCurrentStep: jest.Mock;
   selectedResetMethod: ResetMethod | undefined;
@@ -27,6 +28,7 @@ const defaultContext: {
 } = {
   isLoading: false,
   isRecoveryAvailable: true,
+  isWeb3AuthEnabled: true,
   currentStep: RECOVERY_STEPS.SelectRecoveryMethod,
   setCurrentStep: mockSetCurrentStep,
   selectedResetMethod: undefined,
@@ -222,5 +224,35 @@ describe('AccountRecovery guard', () => {
     expect(
       screen.queryByTestId('recovery-not-available'),
     ).not.toBeInTheDocument();
+  });
+
+  it('mentions the backup wallet in the reset subtitle when Web3Auth is enabled', () => {
+    mockContextValue = {
+      ...defaultContext,
+      currentStep: RECOVERY_STEPS.SelectPasswordResetOption,
+    };
+
+    render(<AccountRecovery />);
+    expect(
+      screen.getByText(
+        'You can restore access to your account via the seed phrase or the backup wallet.',
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('drops the backup wallet from the reset subtitle when Web3Auth is disabled', () => {
+    mockContextValue = {
+      ...defaultContext,
+      isRecoveryAvailable: false,
+      isWeb3AuthEnabled: false,
+      currentStep: RECOVERY_STEPS.SelectPasswordResetOption,
+    };
+
+    render(<AccountRecovery />);
+    expect(
+      screen.getByText(
+        'You can restore access to your account via the seed phrase.',
+      ),
+    ).toBeInTheDocument();
   });
 });

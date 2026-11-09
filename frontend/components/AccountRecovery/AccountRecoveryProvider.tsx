@@ -16,7 +16,12 @@ import {
   SupportedMiddlewareChain,
 } from '@/constants';
 import { useOnlineStatus } from '@/context/OnlineStatusProvider';
-import { useMasterWalletContext, useSetup, useStore } from '@/hooks';
+import {
+  useMasterWalletContext,
+  useSetup,
+  useStore,
+  useWeb3AuthStatus,
+} from '@/hooks';
 import { RecoveryService } from '@/service/Recovery';
 import { Address } from '@/types';
 import { SwapSafeTransaction } from '@/types/Recovery';
@@ -105,6 +110,8 @@ const AccountRecoveryContext = createContext<{
   isLoading: boolean;
   /** Indicates if account recovery is available based on backup wallet */
   isRecoveryAvailable: boolean;
+  /** Whether pearl-api offers Google/Apple (Web3Auth); the backup-wallet path is hidden when not */
+  isWeb3AuthEnabled: boolean;
   /** Indicates if there are backup wallets across every chain */
   hasBackupWalletsAcrossEveryChain: boolean;
   /** Indicates if all backup owners are the same across chains */
@@ -150,6 +157,7 @@ const AccountRecoveryContext = createContext<{
   isLoading: true,
   currentStep: RECOVERY_STEPS.SelectRecoveryMethod,
   isRecoveryAvailable: false,
+  isWeb3AuthEnabled: false,
   hasBackupWalletsAcrossEveryChain: false,
   areAllBackupOwnersSame: false,
   updateNewMasterEoaAddress: () => {},
@@ -179,6 +187,7 @@ export const AccountRecoveryProvider = ({
   // their EOA's private key (RecoverExistingAccountCard covers that flow).
   const isWeb3AuthBackup =
     storeState?.lastProvidedBackupWallet?.type === 'web3auth';
+  const { isWeb3AuthEnabled } = useWeb3AuthStatus();
 
   const [currentStep, setCurrentStep] = useState<RecoverySteps>(
     RECOVERY_STEPS.SelectRecoveryMethod,
@@ -262,6 +271,7 @@ export const AccountRecoveryProvider = ({
   }, [recoveryFundingRequirements]);
 
   const isRecoveryAvailable = !!(
+    isWeb3AuthEnabled &&
     isWeb3AuthBackup &&
     backupWalletDetails?.areAllBackupOwnersSame &&
     backupWalletDetails?.hasBackupWalletsAcrossEveryChain
@@ -310,6 +320,7 @@ export const AccountRecoveryProvider = ({
       value={{
         isLoading,
         isRecoveryAvailable,
+        isWeb3AuthEnabled,
         areAllBackupOwnersSame: !!backupWalletDetails?.areAllBackupOwnersSame,
         hasBackupWalletsAcrossEveryChain:
           !!backupWalletDetails?.hasBackupWalletsAcrossEveryChain,

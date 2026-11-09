@@ -82,9 +82,13 @@ const BackupWalletCard = () => {
   );
 };
 
-export const SelectPasswordResetOption = () => (
-  <>
-    <SrpCard />
-    <BackupWalletCard />
-  </>
-);
+export const SelectPasswordResetOption = () => {
+  const { isWeb3AuthEnabled } = useAccountRecoveryContext();
+
+  return (
+    <>
+      <SrpCard />
+      {isWeb3AuthEnabled && <BackupWalletCard />}
+    </>
+  );
+};
