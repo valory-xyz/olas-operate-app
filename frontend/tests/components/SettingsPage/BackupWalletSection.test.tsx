@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 
 import { BackupWalletSection } from '../../../components/SettingsPage/BackupWallet';
 import { BackupOwnerStatus } from '../../../types/BackupWallet';
@@ -14,10 +14,14 @@ const mockOpenUpdatePassword = jest.fn();
 const mockCloseUpdatePassword = jest.fn();
 
 let mockBackupOwnerStatus: BackupOwnerStatus | undefined;
+let mockIsUpdatePromptVisible = false;
 
 jest.mock('../../../hooks', () => ({
   useSettings: () => ({ goto: mockGoto }),
   useBackupOwnerStatus: () => ({ backupOwnerStatus: mockBackupOwnerStatus }),
+  useBackupWalletUpdatePrompt: () => ({
+    isUpdatePromptVisible: mockIsUpdatePromptVisible,
+  }),
 }));
 
 jest.mock('usehooks-ts', () => ({
@@ -106,6 +110,7 @@ describe('BackupWalletSection', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockBackupOwnerStatus = undefined;
+    mockIsUpdatePromptVisible = false;
   });
 
   describe('loading state (no data)', () => {
@@ -197,6 +202,67 @@ describe('BackupWalletSection', () => {
       });
       render(<BackupWalletSection />);
       expect(screen.queryByText('Out of Sync')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Update Recommended: Google/Apple backup to replace', () => {
+    beforeEach(() => {
+      mockIsUpdatePromptVisible = true;
+    });
+
+    it('renders the address and the recommendation warning with its copy', () => {
+      mockBackupOwnerStatus = makeStatus({
+        canonical_backup_owner: '0xAa72b201fc49e0837648d5c8a89fCeD3eAb1364f',
+      });
+      render(<BackupWalletSection />);
+      expect(screen.getByTestId('address-link')).toHaveTextContent(
+        '0xAa72b201fc49e0837648d5c8a89fCeD3eAb1364f',
+      );
+      expect(screen.getByTestId('alert')).toHaveAttribute(
+        'data-type',
+        'warning',
+      );
+      expect(
+        screen.getByText('Backup Wallet Update Recommended'),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          'We recommend a hardware wallet or a wallet with its own seed phrase as your backup, so you keep full control of recovery.',
+        ),
+      ).toBeInTheDocument();
+      expect(screen.getAllByText('Update Backup Wallet')).toHaveLength(1);
+    });
+
+    it('opens the existing Update flow from the warning button', () => {
+      mockBackupOwnerStatus = makeStatus({
+        canonical_backup_owner: '0xAa72b201fc49e0837648d5c8a89fCeD3eAb1364f',
+      });
+      render(<BackupWalletSection />);
+      fireEvent.click(screen.getByText('Update Backup Wallet'));
+      expect(mockOpenUpdatePassword).toHaveBeenCalled();
+    });
+
+    it('is shown instead of the out-of-sync warning', () => {
+      mockBackupOwnerStatus = makeStatus({
+        canonical_backup_owner: '0xAa72b201fc49e0837648d5c8a89fCeD3eAb1364f',
+        all_chains_synced: false,
+        any_backup_missing: true,
+      });
+      render(<BackupWalletSection />);
+      expect(
+        screen.getByText('Backup Wallet Update Recommended'),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByText('Backup Wallet Out of Sync'),
+      ).not.toBeInTheDocument();
+    });
+
+    it('keeps "No backup wallet added" when there is no backup wallet', () => {
+      mockBackupOwnerStatus = makeStatus({ canonical_backup_owner: null });
+      render(<BackupWalletSection />);
+      expect(
+        screen.queryByText('Backup Wallet Update Recommended'),
+      ).not.toBeInTheDocument();
     });
   });
 });

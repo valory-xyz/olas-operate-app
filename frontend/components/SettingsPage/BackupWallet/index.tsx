@@ -9,7 +9,7 @@ import {
   IconContainer,
 } from '@/components/ui';
 import { COLOR } from '@/constants';
-import { useBackupOwnerStatus } from '@/hooks';
+import { useBackupOwnerStatus, useBackupWalletUpdatePrompt } from '@/hooks';
 import { Address } from '@/types/Address';
 
 import { AddBackupWalletPasswordModal } from './AddBackupWalletFlow';
@@ -20,6 +20,7 @@ const { Text } = Typography;
 
 export const BackupWalletSection = () => {
   const { backupOwnerStatus, isError, refetch } = useBackupOwnerStatus();
+  const { isUpdatePromptVisible } = useBackupWalletUpdatePrompt();
   const {
     value: isAddPasswordOpen,
     setTrue: openAddPassword,
@@ -109,6 +110,54 @@ export const BackupWalletSection = () => {
         <AddBackupWalletPasswordModal
           open={isAddPasswordOpen}
           onClose={closeAddPassword}
+        />
+      </>
+    );
+  }
+
+  // Google/Apple backup to replace. Shown instead of the out-of-sync state:
+  // updating applies the new address to every chain.
+  if (canonicalAddress !== null && isUpdatePromptVisible) {
+    return (
+      <>
+        <CardSection $padding="24px" $borderBottom vertical gap={12}>
+          <Flex gap={16}>
+            <IconContainer>
+              <TbWallet size={20} color={COLOR.TEXT_NEUTRAL_TERTIARY} />
+            </IconContainer>
+            <Flex vertical gap={6}>
+              <div className="my-6">
+                <Text strong>Backup Wallet</Text>
+              </div>
+              <AddressLink address={canonicalAddress as Address} />
+            </Flex>
+          </Flex>
+          <Alert
+            type="warning"
+            showIcon
+            message={
+              <Flex vertical gap={4}>
+                <Text className="text-sm font-weight-600">
+                  Backup Wallet Update Recommended
+                </Text>
+                <Text className="text-sm">
+                  We recommend a hardware wallet or a wallet with its own seed
+                  phrase as your backup, so you keep full control of recovery.
+                </Text>
+                <Button
+                  className="w-fit text-sm mt-6"
+                  onClick={openUpdatePassword}
+                >
+                  Update Backup Wallet
+                </Button>
+              </Flex>
+            }
+          />
+        </CardSection>
+
+        <UpdateBackupWalletPasswordModal
+          open={isUpdatePasswordOpen}
+          onClose={closeUpdatePassword}
         />
       </>
     );

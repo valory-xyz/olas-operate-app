@@ -69,6 +69,7 @@ jest.mock('../../../../hooks', () => ({
   }),
   useAllInstancesRewardStatus: () => new Map(),
   useBackupOwnerStatus: () => ({}),
+  useBackupWalletUpdatePrompt: () => ({ isUpdatePromptVisible: false }),
 }));
 
 const mockUseServices = jest.fn();

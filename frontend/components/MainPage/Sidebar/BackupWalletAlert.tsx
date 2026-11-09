@@ -4,11 +4,16 @@ import { useBoolean } from 'usehooks-ts';
 import { SyncBackupWalletModal } from '@/components/SettingsPage/BackupWallet/SyncBackupWalletModal';
 import { Alert } from '@/components/ui';
 import { PAGES } from '@/constants';
-import { useBackupOwnerStatus, usePageState } from '@/hooks';
+import {
+  useBackupOwnerStatus,
+  useBackupWalletUpdatePrompt,
+  usePageState,
+} from '@/hooks';
 
 export const BackupWalletAlert = () => {
   const { goto: gotoPage } = usePageState();
   const { backupOwnerStatus } = useBackupOwnerStatus();
+  const { isUpdatePromptVisible } = useBackupWalletUpdatePrompt();
   const {
     value: isSyncOpen,
     setTrue: openSync,
@@ -18,6 +23,22 @@ export const BackupWalletAlert = () => {
   const canonicalAddress = backupOwnerStatus?.canonical_backup_owner ?? null;
   const allChainsSynced = backupOwnerStatus?.all_chains_synced ?? true;
   const anyBackupMissing = backupOwnerStatus?.any_backup_missing ?? false;
+
+  // Takes the place of "Sync backup wallet": updating applies the new
+  // address to every chain.
+  if (isUpdatePromptVisible) {
+    return (
+      <Alert
+        type="warning"
+        message="Update backup wallet"
+        onClick={() => gotoPage(PAGES.Settings)}
+        showIcon
+        customIcon={<LuWallet />}
+        className="mt-auto mb-16"
+        style={{ alignItems: 'center', cursor: 'pointer' }}
+      />
+    );
+  }
 
   if (!anyBackupMissing && allChainsSynced) return null;
 

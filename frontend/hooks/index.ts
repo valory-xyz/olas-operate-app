@@ -15,6 +15,7 @@ export * from './useAvailableAgentAssets';
 export * from './useAvailableAssets';
 export * from './useBackupOwnerStatus';
 export * from './useBackupSigner';
+export * from './useBackupWalletUpdatePrompt';
 export * from './useBalanceAndRefillRequirementsContext';
 export * from './useBalanceContext';
 export * from './useBridgeRefillRequirements';
