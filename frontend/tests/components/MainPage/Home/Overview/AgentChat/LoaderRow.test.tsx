@@ -248,6 +248,7 @@ describe('LoaderRow', () => {
   it.each([
     ['grey', { isAgentActive: false }, COLOR.NEUTRAL_4],
     ['purple', {}, COLOR.PURPLE],
+    ['purple starting', { isAgentStarting: true }, COLOR.PURPLE],
   ] as const)(
     'draws the %s dot icon as 5×5 whole dots',
     (_, setup, dotColor) => {
