@@ -5,6 +5,7 @@ import {
   AddressZero,
   BACKUP_SIGNER_CHECKING_MESSAGE,
   BACKUP_SIGNER_NOT_SET_MESSAGE,
+  BACKUP_SIGNER_UNAVAILABLE_MESSAGE,
   PAGES,
   SETUP_SCREEN,
 } from '@/constants';
@@ -12,6 +13,7 @@ import { EXPLORER_URL_BY_MIDDLEWARE_CHAIN } from '@/constants/urls';
 import { useLatchedBackupSigner } from '@/context/LatchedBackupSignerContext';
 import { useMessageApi } from '@/context/MessageProvider';
 import { useBackupSignerState } from '@/hooks/useBackupSigner';
+import { useElectronApi } from '@/hooks/useElectronApi';
 import { usePageState } from '@/hooks/usePageState';
 import { useServices } from '@/hooks/useServices';
 import { useSetup } from '@/hooks/useSetup';
@@ -38,6 +40,7 @@ export const useMasterSafeCreationAndTransfer = (
   const { selectedAgentConfig } = useServices();
   const { refetch } = useBalanceAndRefillRequirementsContext();
   const message = useMessageApi();
+  const { logEvent } = useElectronApi();
 
   const chain = selectedAgentConfig.middlewareHomeChainId;
   const chainTokenConfig = TOKEN_CONFIG[asEvmChainId(chain)];
@@ -51,6 +54,16 @@ export const useMasterSafeCreationAndTransfer = (
         throw new BackupWalletError(
           BACKUP_SIGNER_NOT_SET_MESSAGE,
           'SIGNER_NEEDS_NEW_BACKUP',
+        );
+      }
+      if (backupSigner.state === 'error') {
+        // Outside a gate (e.g. Main's Complete Agent Setup) nothing else logs why.
+        logEvent?.(
+          `Safe creation refused, backup signer unavailable: ${backupSigner.reason}`,
+        );
+        throw new BackupWalletError(
+          BACKUP_SIGNER_UNAVAILABLE_MESSAGE,
+          'SIGNER_UNAVAILABLE',
         );
       }
       if (backupSigner.state !== 'ready') {
@@ -129,6 +142,7 @@ export const useMasterSafeCreationAndTransfer = (
       if (
         error instanceof BackupWalletError &&
         (error.code === 'SIGNER_PENDING' ||
+          error.code === 'SIGNER_UNAVAILABLE' ||
           error.code === 'SIGNER_NEEDS_NEW_BACKUP')
       ) {
         message.error(error.message);

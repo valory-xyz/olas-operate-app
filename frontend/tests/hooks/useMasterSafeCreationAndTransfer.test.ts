@@ -7,6 +7,7 @@ import { AddressZero } from '../../constants/address';
 import {
   BACKUP_SIGNER_CHECKING_MESSAGE,
   BACKUP_SIGNER_NOT_SET_MESSAGE,
+  BACKUP_SIGNER_UNAVAILABLE_MESSAGE,
 } from '../../constants/backupWallet';
 import { MiddlewareChainMap } from '../../constants/chains';
 import { PAGES } from '../../constants/pages';
@@ -38,6 +39,11 @@ jest.mock('../../service/Wallet', () => ({
 
 jest.mock('../../hooks/useBackupSigner', () => ({
   useBackupSignerState: jest.fn(),
+}));
+
+const mockLogEvent = jest.fn();
+jest.mock('../../hooks/useElectronApi', () => ({
+  useElectronApi: () => ({ logEvent: mockLogEvent }),
 }));
 
 const mockGotoSetup = jest.fn();
@@ -131,7 +137,7 @@ describe('useMasterSafeCreationAndTransfer', () => {
 
   it.each([
     ['pending', 'SIGNER_PENDING', BACKUP_SIGNER_CHECKING_MESSAGE],
-    ['error', 'SIGNER_PENDING', BACKUP_SIGNER_CHECKING_MESSAGE],
+    ['error', 'SIGNER_UNAVAILABLE', BACKUP_SIGNER_UNAVAILABLE_MESSAGE],
     [
       'needsNewBackup',
       'SIGNER_NEEDS_NEW_BACKUP',
@@ -164,6 +170,27 @@ describe('useMasterSafeCreationAndTransfer', () => {
       consoleSpy.mockRestore();
     },
   );
+
+  it("logs why an unavailable backup signer was refused to Pearl's logs", async () => {
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+    mockUseBackupSignerState.mockReturnValue({
+      state: 'error',
+      reason: 'Failed to read Safe owners on chain 100: rpc down',
+    });
+
+    const { result } = renderHook(
+      () => useMasterSafeCreationAndTransfer([TokenSymbolMap.XDAI]),
+      { wrapper: createWrapper() },
+    );
+    await act(async () => {
+      await result.current.mutateAsync().catch(() => undefined);
+    });
+
+    expect(mockLogEvent).toHaveBeenCalledWith(
+      'Safe creation refused, backup signer unavailable: Failed to read Safe owners on chain 100: rpc down',
+    );
+    consoleSpy.mockRestore();
+  });
 
   it.each(['pending', 'error'])(
     'does not send a %s backup signer to the backup step',

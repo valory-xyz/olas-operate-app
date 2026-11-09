@@ -1,6 +1,7 @@
 import { Flex, Typography } from 'antd';
 
 import { Alert, BackButton, cardStyles } from '@/components/ui';
+import { BACKUP_SIGNER_UNAVAILABLE_MESSAGE } from '@/constants';
 
 const { Text } = Typography;
 
@@ -10,10 +11,7 @@ export const BackupSignerUnavailableAlert = () => (
     type="warning"
     showIcon
     message={
-      <Text className="text-sm">
-        Couldn&apos;t check your backup wallet. Pearl keeps retrying — check
-        your connection.
-      </Text>
+      <Text className="text-sm">{BACKUP_SIGNER_UNAVAILABLE_MESSAGE}</Text>
     }
   />
 );
