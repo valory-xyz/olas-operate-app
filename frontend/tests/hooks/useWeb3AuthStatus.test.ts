@@ -56,7 +56,7 @@ describe('useWeb3AuthStatus', () => {
 
     const { result } = render();
 
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    await waitFor(() => expect(result.current.status).not.toBe('loading'));
     expect(global.fetch).toHaveBeenCalledWith(
       WEB3AUTH_STATUS_URL,
       expect.objectContaining({ method: 'GET' }),
@@ -76,7 +76,7 @@ describe('useWeb3AuthStatus', () => {
 
     const { result } = render();
 
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    await waitFor(() => expect(result.current.status).not.toBe('loading'));
     expect(result.current.isWeb3AuthEnabled).toBe(false);
   });
 
@@ -85,7 +85,7 @@ describe('useWeb3AuthStatus', () => {
 
     const { result } = render();
 
-    expect(result.current.isLoading).toBe(true);
+    expect(result.current.status).toBe('loading');
     expect(result.current.isWeb3AuthEnabled).toBe(false);
   });
 
@@ -100,18 +100,29 @@ describe('useWeb3AuthStatus', () => {
     });
     jest.useRealTimers();
 
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    await waitFor(() => expect(result.current.status).not.toBe('loading'));
     expect(result.current.isWeb3AuthEnabled).toBe(false);
     expect(global.fetch).toHaveBeenCalledTimes(2);
   });
 
-  it('is disabled for a malformed response', async () => {
+  it('is disabled, and logs, for a malformed response', async () => {
+    jest.useFakeTimers();
     mockFetchResponse({ enabled: 'true' });
 
     const { result } = render();
+    await act(async () => {
+      await jest.runAllTimersAsync();
+    });
+    jest.useRealTimers();
 
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    await waitFor(() => expect(result.current.status).toBe('disabled'));
     expect(result.current.isWeb3AuthEnabled).toBe(false);
+    expect(consoleError).toHaveBeenCalledWith(
+      expect.stringContaining(WEB3AUTH_STATUS_URL),
+      expect.objectContaining({
+        message: expect.stringContaining('Unexpected Web3Auth status response'),
+      }),
+    );
   });
 
   it('reports isExplicitlyDisabled only for an answered enabled: false', async () => {
@@ -130,6 +141,26 @@ describe('useWeb3AuthStatus', () => {
     jest.useRealTimers();
     await waitFor(() => expect(failed.result.current.status).toBe('disabled'));
     expect(failed.result.current.isExplicitlyDisabled).toBe(false);
+  });
+
+  it('drops isExplicitlyDisabled when a refetch fails after an answered enabled: false', async () => {
+    const { queryClient, wrapper } = withQueryClient();
+    mockFetchResponse({ enabled: false });
+
+    const { result } = renderHook(() => useWeb3AuthStatus(), { wrapper });
+    await waitFor(() => expect(result.current.isExplicitlyDisabled).toBe(true));
+
+    jest.useFakeTimers();
+    mockFetchResponse({}, false, 500);
+    await act(async () => {
+      queryClient.refetchQueries();
+      await jest.runAllTimersAsync();
+    });
+    jest.useRealTimers();
+
+    // React Query keeps the old { enabled: false }; the outage must not read as an answer.
+    await waitFor(() => expect(result.current.status).toBe('disabled'));
+    expect(result.current.isExplicitlyDisabled).toBe(false);
   });
 
   it('reports a three-state status', async () => {
@@ -208,7 +239,7 @@ describe('useWeb3AuthStatus', () => {
     try {
       const { result } = renderHook(() => useWeb3AuthStatus(), { wrapper });
       expect(result.current.status).toBe('loading');
-      expect(result.current.isLoading).toBe(true);
+      expect(result.current.status).toBe('loading');
       expect(global.fetch).not.toHaveBeenCalled();
     } finally {
       onlineManager.setOnline(true);

@@ -270,6 +270,20 @@ describe('BackupWalletService.getWeb3AuthStatus', () => {
     );
   });
 
+  it.each([[{ data: { enabled: true } }], [{ enabled: 'true' }], [null]])(
+    'rejects a 200 whose body is not { enabled: boolean } (%p)',
+    async (body) => {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(body),
+      });
+
+      await expect(BackupWalletService.getWeb3AuthStatus()).rejects.toThrow(
+        'Unexpected Web3Auth status response',
+      );
+    },
+  );
+
   it('throws with the status and response text on a non-OK response', async () => {
     global.fetch = jest.fn().mockResolvedValue({
       ok: false,

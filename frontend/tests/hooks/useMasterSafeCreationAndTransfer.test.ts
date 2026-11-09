@@ -9,6 +9,7 @@ import {
   BACKUP_SIGNER_NOT_SET_MESSAGE,
 } from '../../constants/backupWallet';
 import { MiddlewareChainMap } from '../../constants/chains';
+import { PAGES } from '../../constants/pages';
 import { SETUP_SCREEN } from '../../constants/setupScreen';
 import { LatchedBackupSignerContext } from '../../context/LatchedBackupSignerContext';
 import { useBackupSignerState } from '../../hooks/useBackupSigner';
@@ -42,6 +43,11 @@ jest.mock('../../hooks/useBackupSigner', () => ({
 const mockGotoSetup = jest.fn();
 jest.mock('../../hooks/useSetup', () => ({
   useSetup: () => ({ goto: mockGotoSetup }),
+}));
+
+const mockGotoPage = jest.fn();
+jest.mock('../../hooks/usePageState', () => ({
+  usePageState: () => ({ goto: mockGotoPage }),
 }));
 
 jest.mock('../../hooks/useServices', () => ({
@@ -171,6 +177,7 @@ describe('useMasterSafeCreationAndTransfer', () => {
 
       await waitFor(() => expect(mockMessageError).toHaveBeenCalled());
       expect(mockGotoSetup).not.toHaveBeenCalled();
+      expect(mockGotoPage).not.toHaveBeenCalled();
       consoleSpy.mockRestore();
     },
   );
@@ -192,6 +199,8 @@ describe('useMasterSafeCreationAndTransfer', () => {
         SETUP_SCREEN.SetupBackupSigner,
       ),
     );
+    // Also from the Main page (Complete Agent Setup): switch to the Setup page too.
+    expect(mockGotoPage).toHaveBeenCalledWith(PAGES.Setup);
     consoleSpy.mockRestore();
   });
 

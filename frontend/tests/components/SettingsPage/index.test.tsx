@@ -236,10 +236,7 @@ describe('Settings (SettingsPage entry)', () => {
     });
 
     it('shows a loader, not the address screen, on a method screen while the status loads', () => {
-      setupDefaults({
-        screen: SettingsScreenMap.AddBackupWalletMethod,
-        isWeb3AuthEnabled: false,
-      });
+      setupDefaults({ screen: SettingsScreenMap.AddBackupWalletMethod });
       mockUseLatchedWeb3AuthEnabled.mockReturnValue(undefined);
       const { rerender } = render(<Settings />);
       expect(screen.getByTestId('card-skeleton')).toBeInTheDocument();

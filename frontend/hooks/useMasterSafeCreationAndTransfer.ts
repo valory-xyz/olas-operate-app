@@ -5,12 +5,14 @@ import {
   AddressZero,
   BACKUP_SIGNER_CHECKING_MESSAGE,
   BACKUP_SIGNER_NOT_SET_MESSAGE,
+  PAGES,
   SETUP_SCREEN,
 } from '@/constants';
 import { EXPLORER_URL_BY_MIDDLEWARE_CHAIN } from '@/constants/urls';
 import { useLatchedBackupSigner } from '@/context/LatchedBackupSignerContext';
 import { useMessageApi } from '@/context/MessageProvider';
 import { useBackupSignerState } from '@/hooks/useBackupSigner';
+import { usePageState } from '@/hooks/usePageState';
 import { useServices } from '@/hooks/useServices';
 import { useSetup } from '@/hooks/useSetup';
 import { BackupWalletError } from '@/service/BackupWalletService';
@@ -29,9 +31,10 @@ export const useMasterSafeCreationAndTransfer = (
 ) => {
   // A guarded onboarding screen's latched decision wins over the live state.
   const latchedSigner = useLatchedBackupSigner();
-  const liveSigner = useBackupSignerState();
+  const liveSigner = useBackupSignerState({ forSafeCreation: true });
   const backupSigner = latchedSigner ?? liveSigner;
-  const { goto } = useSetup();
+  const { goto: gotoSetup } = useSetup();
+  const { goto: gotoPage } = usePageState();
   const { selectedAgentConfig } = useServices();
   const { refetch } = useBalanceAndRefillRequirementsContext();
   const message = useMessageApi();
@@ -123,16 +126,19 @@ export const useMasterSafeCreationAndTransfer = (
       console.error(error);
       // Branch on the reason the refusal was thrown with, not on the live state,
       // which may have moved on since.
-      if (error instanceof BackupWalletError) {
+      if (
+        error instanceof BackupWalletError &&
+        (error.code === 'SIGNER_PENDING' ||
+          error.code === 'SIGNER_NEEDS_NEW_BACKUP')
+      ) {
+        message.error(error.message);
         if (error.code === 'SIGNER_NEEDS_NEW_BACKUP') {
-          message.error(error.message);
-          goto(SETUP_SCREEN.SetupBackupSigner);
-          return;
+          // Also from the Main page (Complete Agent Setup), where only changing
+          // the setup screen would leave the user looping on Retry.
+          gotoSetup(SETUP_SCREEN.SetupBackupSigner);
+          gotoPage(PAGES.Setup);
         }
-        if (error.code === 'SIGNER_PENDING') {
-          message.error(error.message);
-          return;
-        }
+        return;
       }
       message.error('Failed to create master safe.');
     },

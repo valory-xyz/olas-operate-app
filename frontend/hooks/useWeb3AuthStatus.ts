@@ -45,7 +45,6 @@ export const useWeb3AuthStatus = () => {
   return {
     status,
     isWeb3AuthEnabled: status === 'enabled',
-    isLoading: status === 'loading',
     /** pearl-api answered `enabled: false`; unlike `status`, an outage doesn't count. */
     isExplicitlyDisabled: !isError && data?.enabled === false,
   };

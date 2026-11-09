@@ -22,12 +22,22 @@ export type ReadyBackupSigner = Extract<BackupSignerState, { state: 'ready' }>;
 
 /**
  * The onboarding backup signer. While Web3Auth is off, a stored Google/Apple pick is ignored
- * in favour of the on-chain backup owner.
+ * in favour of the on-chain backup owner; with no Pearl Safe yet (D21), a new backup is needed.
+ *
+ * Routing (the default) needs only that: otherwise it reads the signer live, as before, and
+ * never waits on the Safe owners. `forSafeCreation` also waits for the wallets and owners
+ * before any on-chain fallback, so a Safe is never created on a value that is still loading.
  */
-export const useBackupSignerState = (): BackupSignerState => {
+export const useBackupSignerState = ({
+  forSafeCreation = false,
+}: { forSafeCreation?: boolean } = {}): BackupSignerState => {
   const { backupSigner } = useSetup();
   const { storeState } = useStore();
-  const { masterWallets, masterSafes } = useMasterWalletContext();
+  const {
+    masterWallets,
+    masterSafes,
+    isError: isWalletsError,
+  } = useMasterWalletContext();
   const { allBackupAddresses, masterSafesOwners, masterSafesOwnersIsError } =
     useMultisigs(masterSafes);
   const { status } = useWeb3AuthStatus();
@@ -36,39 +46,40 @@ export const useBackupSignerState = (): BackupSignerState => {
   if (storeState === undefined) return { state: 'pending' };
   const pick = backupSigner ?? storeState.lastProvidedBackupWallet;
   const onChainBackupAddress = allBackupAddresses[0] as Address | undefined;
+  const hasMasterSafe = !!masterSafes?.length;
 
-  // Before falling back to the on-chain owner, wait until it is known. Wallet data, not
-  // `isFetched` (a failed wallets read must not pass for "no Safe"); owner data, not query
-  // flags (a failed refresh keeps the owners it read before).
-  const onChainUnsettled = (): BackupSignerState | null => {
-    if (masterWallets === undefined) return { state: 'pending' };
-    if (masterSafes?.length && masterSafesOwners === undefined) {
-      return masterSafesOwnersIsError
-        ? { state: 'error' }
-        : { state: 'pending' };
-    }
-    return null;
-  };
+  // Wallet data, not `isFetched`: a failed wallets read must not pass for "no Safe".
+  const walletsUnsettled = (): BackupSignerState | null =>
+    masterWallets === undefined
+      ? { state: isWalletsError ? 'error' : 'pending' }
+      : null;
+  // Owner data, not query flags: a failed refresh keeps the owners it read before.
+  const ownersUnsettled = (): BackupSignerState | null =>
+    hasMasterSafe && masterSafesOwners === undefined
+      ? { state: masterSafesOwnersIsError ? 'error' : 'pending' }
+      : null;
 
   if (pick?.type !== 'web3auth' || status === 'enabled') {
     if (pick?.address) {
       return { state: 'ready', backupSignerAddress: pick.address as Address };
     }
+    const unsettled = forSafeCreation
+      ? (walletsUnsettled() ?? ownersUnsettled())
+      : null;
     return (
-      onChainUnsettled() ?? {
-        state: 'ready',
-        backupSignerAddress: onChainBackupAddress,
-      }
+      unsettled ?? { state: 'ready', backupSignerAddress: onChainBackupAddress }
     );
   }
 
   if (status === 'loading') return { state: 'pending' };
+  const wallets = walletsUnsettled();
+  if (wallets) return wallets;
+  if (!hasMasterSafe) return { state: 'needsNewBackup' };
 
+  // A Safe exists: route on; Settings' Add/Update covers a missing backup owner.
+  const owners = forSafeCreation ? ownersUnsettled() : null;
   return (
-    onChainUnsettled() ??
-    (onChainBackupAddress
-      ? { state: 'ready', backupSignerAddress: onChainBackupAddress }
-      : { state: 'needsNewBackup' })
+    owners ?? { state: 'ready', backupSignerAddress: onChainBackupAddress }
   );
 };
 
@@ -81,7 +92,7 @@ export const useBackupSignerState = (): BackupSignerState => {
  */
 export const useBackupSignerGuard = () => {
   const { goto } = useSetup();
-  const signer = useBackupSignerState();
+  const signer = useBackupSignerState({ forSafeCreation: true });
   const [latched, setLatched] = useState<ReadyBackupSigner | null>(
     signer.state === 'ready' ? signer : null,
   );

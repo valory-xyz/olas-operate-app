@@ -24,12 +24,21 @@ jest.mock('../../../hooks', () => ({
   }),
 }));
 
+// BackupWalletSection calls useBoolean three times per render, in this order:
+// add-password, update-password, sync. Give each its own opener.
+const mockOpenAddPassword = jest.fn();
+let mockBooleanCall = 0;
 jest.mock('usehooks-ts', () => ({
-  useBoolean: (initial: boolean) => ({
-    value: initial,
-    setTrue: initial ? mockOpenSync : mockOpenUpdatePassword,
-    setFalse: initial ? mockCloseSync : mockCloseUpdatePassword,
-  }),
+  useBoolean: (initial: boolean) => {
+    const openers = [mockOpenAddPassword, mockOpenUpdatePassword, mockOpenSync];
+    const closers = [jest.fn(), mockCloseUpdatePassword, mockCloseSync];
+    const index = mockBooleanCall++ % 3;
+    return {
+      value: initial,
+      setTrue: openers[index],
+      setFalse: closers[index],
+    };
+  },
 }));
 
 jest.mock(
@@ -109,6 +118,7 @@ const makeStatus = (
 describe('BackupWalletSection', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockBooleanCall = 0;
     mockBackupOwnerStatus = undefined;
     mockIsUpdatePromptVisible = false;
   });
@@ -240,6 +250,7 @@ describe('BackupWalletSection', () => {
       render(<BackupWalletSection />);
       fireEvent.click(screen.getByText('Update Backup Wallet'));
       expect(mockOpenUpdatePassword).toHaveBeenCalled();
+      expect(mockOpenSync).not.toHaveBeenCalled();
     });
 
     it('is shown instead of the out-of-sync warning', () => {
@@ -265,5 +276,17 @@ describe('BackupWalletSection', () => {
         screen.queryByText('Backup Wallet Update Recommended'),
       ).not.toBeInTheDocument();
     });
+  });
+
+  it('wires "Sync Now" to the sync opener, not the update one', () => {
+    mockBackupOwnerStatus = makeStatus({
+      canonical_backup_owner: '0xAa72b201fc49e0837648d5c8a89fCeD3eAb1364f',
+      all_chains_synced: false,
+      any_backup_missing: true,
+    });
+    render(<BackupWalletSection />);
+    fireEvent.click(screen.getByText('Sync Now'));
+    expect(mockOpenSync).toHaveBeenCalled();
+    expect(mockOpenUpdatePassword).not.toHaveBeenCalled();
   });
 });

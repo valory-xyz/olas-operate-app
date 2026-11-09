@@ -159,7 +159,17 @@ const getWeb3AuthStatus = async (
       );
     }
     // Awaited so reading the body stays inside the timeout.
-    return await response.json();
+    const body: unknown = await response.json();
+    if (
+      typeof body !== 'object' ||
+      body === null ||
+      typeof (body as Partial<Web3AuthStatusResponse>).enabled !== 'boolean'
+    ) {
+      throw new Error(
+        `Unexpected Web3Auth status response: ${JSON.stringify(body)}`,
+      );
+    }
+    return body as Web3AuthStatusResponse;
   } finally {
     clearTimeout(timeout);
     signal?.removeEventListener('abort', abort);

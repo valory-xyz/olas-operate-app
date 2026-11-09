@@ -77,6 +77,9 @@ const Consumer = () => {
       >
         pick backup wallet
       </button>
+      <button onClick={() => selectResetMethodAndProceed(RESET_METHOD.SRP)}>
+        pick recovery phrase
+      </button>
     </div>
   );
 };
@@ -151,5 +154,24 @@ describe('AccountRecoveryProvider', () => {
     );
 
     expect(screen.getByTestId('available')).toHaveTextContent('true');
+  });
+
+  it('does not latch backup-wallet recovery for a recovery-phrase pick', async () => {
+    const { rerender } = renderProvider();
+    await waitFor(() =>
+      expect(screen.getByTestId('available')).toHaveTextContent('true'),
+    );
+
+    act(() => {
+      fireEvent.click(screen.getByText('pick recovery phrase'));
+    });
+    mockIsWeb3AuthEnabled = false;
+    rerender(
+      <AccountRecoveryProvider>
+        <Consumer />
+      </AccountRecoveryProvider>,
+    );
+
+    expect(screen.getByTestId('available')).toHaveTextContent('false');
   });
 });

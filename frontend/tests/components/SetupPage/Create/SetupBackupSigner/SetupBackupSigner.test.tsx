@@ -19,6 +19,7 @@ let mockIsWeb3AuthStatusLoading = false;
 const capturedProps: {
   web3AuthOnFinish?: (address: string) => Promise<void> | void;
   manualOnFinish?: (address: string) => Promise<void> | void;
+  manualIsWeb3AuthEnabled?: boolean;
   setUpManually?: () => void;
 } = {};
 
@@ -69,8 +70,10 @@ jest.mock(
   () => ({
     BackupWalletManual: (props: {
       onFinish: (address: string) => Promise<void> | void;
+      isWeb3AuthEnabled: boolean;
     }) => {
       capturedProps.manualOnFinish = props.onFinish;
+      capturedProps.manualIsWeb3AuthEnabled = props.isWeb3AuthEnabled;
       return (
         <div data-testid="manual">
           <button
@@ -131,6 +134,8 @@ describe('SetupBackupSigner', () => {
     render(<SetupBackupSigner />);
     fireEvent.click(screen.getByTestId('switch-manual'));
     expect(screen.getByTestId('manual')).toBeInTheDocument();
+    // The latched decision reaches the address screen, so its Google/Apple link shows.
+    expect(capturedProps.manualIsWeb3AuthEnabled).toBe(true);
   });
 
   it('on Web3Auth finish: calls applyBackupDuringSetup then navigates to AgentOnboarding', async () => {
@@ -188,6 +193,7 @@ describe('SetupBackupSigner', () => {
       render(<SetupBackupSigner />);
       expect(screen.getByTestId('manual')).toBeInTheDocument();
       expect(screen.queryByTestId('web3auth')).not.toBeInTheDocument();
+      expect(capturedProps.manualIsWeb3AuthEnabled).toBe(false);
     });
 
     it('on manual finish: applies the backup and navigates to AgentOnboarding', async () => {

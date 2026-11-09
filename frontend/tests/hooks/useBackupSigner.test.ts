@@ -1,5 +1,6 @@
 import { renderHook } from '@testing-library/react';
 
+import { EvmChainIdMap } from '../../constants/chains';
 import { SETUP_SCREEN } from '../../constants/setupScreen';
 import {
   useBackupSignerGuard,
@@ -13,7 +14,8 @@ import { useWeb3AuthStatus } from '../../hooks/useWeb3AuthStatus';
 import {
   BACKUP_SIGNER_ADDRESS,
   BACKUP_SIGNER_ADDRESS_2,
-  DEFAULT_SAFE_ADDRESS,
+  makeMasterSafe,
+  makeMultisigOwners,
 } from '../helpers/factories';
 
 jest.mock('../../hooks/useSetup', () => ({ useSetup: jest.fn() }));
@@ -33,7 +35,7 @@ const mockUseMultisigs = useMultisigs as jest.Mock;
 const mockUseWeb3AuthStatus = useWeb3AuthStatus as jest.Mock;
 const mockGoto = jest.fn();
 
-const SAFE = { address: DEFAULT_SAFE_ADDRESS, evmChainId: 100 };
+const SAFE = makeMasterSafe(EvmChainIdMap.Gnosis);
 const web3AuthPick = { address: BACKUP_SIGNER_ADDRESS, type: 'web3auth' };
 const manualPick = { address: BACKUP_SIGNER_ADDRESS, type: 'manual' };
 
@@ -44,6 +46,7 @@ const given = ({
   storeLoaded = true,
   masterSafes = [],
   walletsLoaded = true,
+  walletsError = false,
   owners = [],
   ownersData,
   ownersError = false,
@@ -56,6 +59,7 @@ const given = ({
   storeLoaded?: boolean;
   masterSafes?: unknown[];
   walletsLoaded?: boolean;
+  walletsError?: boolean;
   owners?: string[];
   /** Owner data from the owners query; like the real query, none without a Safe. */
   ownersData?: unknown[] | null;
@@ -64,7 +68,12 @@ const given = ({
   const ownerData =
     ownersData === undefined
       ? masterSafes.length
-        ? owners.map((owner) => ({ owners: [owner] }))
+        ? [
+            makeMultisigOwners(
+              EvmChainIdMap.Gnosis,
+              owners as Parameters<typeof makeMultisigOwners>[1],
+            ),
+          ]
         : undefined
       : (ownersData ?? undefined);
   mockUseWeb3AuthStatus.mockReturnValue({ status });
@@ -77,6 +86,7 @@ const given = ({
   mockUseMasterWalletContext.mockReturnValue({
     masterWallets: walletsLoaded ? masterSafes : undefined,
     masterSafes: walletsLoaded ? masterSafes : undefined,
+    isError: walletsError,
   });
   mockUseMultisigs.mockReturnValue({
     allBackupAddresses: ownerData ? owners : [],
@@ -85,7 +95,12 @@ const given = ({
   });
 };
 
+/** Routing (login) mode. */
 const state = () => renderHook(() => useBackupSignerState()).result.current;
+/** Safe-creation mode (the gate and the mutation). */
+const stateForSafeCreation = () =>
+  renderHook(() => useBackupSignerState({ forSafeCreation: true })).result
+    .current;
 
 describe('useBackupSignerState', () => {
   beforeEach(() => jest.clearAllMocks());
@@ -107,17 +122,34 @@ describe('useBackupSignerState', () => {
       });
     });
 
-    it('waits for the Safe owners before falling back to them with no stored pick', () => {
+    it('for Safe creation, waits for the Safe owners before falling back to them with no stored pick', () => {
       given({ masterSafes: [SAFE], ownersData: null });
-      expect(state()).toEqual({ state: 'pending' });
+      expect(stateForSafeCreation()).toEqual({ state: 'pending' });
 
       given({ masterSafes: [SAFE], ownersData: null, ownersError: true });
-      expect(state()).toEqual({ state: 'error' });
+      expect(stateForSafeCreation()).toEqual({ state: 'error' });
     });
 
-    it('waits for the wallets before falling back with no stored pick', () => {
+    it('for Safe creation, waits for the wallets (and reports a failed read) with no stored pick', () => {
       given({ walletsLoaded: false });
-      expect(state()).toEqual({ state: 'pending' });
+      expect(stateForSafeCreation()).toEqual({ state: 'pending' });
+
+      given({ walletsLoaded: false, walletsError: true });
+      expect(stateForSafeCreation()).toEqual({ state: 'error' });
+    });
+
+    it('for routing, never waits on the wallets or owners with no stored pick (as before)', () => {
+      given({ masterSafes: [SAFE], ownersData: null, ownersError: true });
+      expect(state()).toEqual({
+        state: 'ready',
+        backupSignerAddress: undefined,
+      });
+
+      given({ walletsLoaded: false, walletsError: true });
+      expect(state()).toEqual({
+        state: 'ready',
+        backupSignerAddress: undefined,
+      });
     });
 
     it('prefers a stored address pick over the on-chain owner', () => {
@@ -195,24 +227,45 @@ describe('useBackupSignerState', () => {
       });
     });
 
-    it('needs a new backup when the Safe has no backup owner on-chain', () => {
+    it('does not reset a user who already has a Pearl Safe, even with no backup owner on-chain (D21)', () => {
       given({
         status: 'disabled',
         pick: web3AuthPick,
         masterSafes: [SAFE],
         owners: [],
       });
-      expect(state()).toEqual({ state: 'needsNewBackup' });
+      expect(state()).toEqual({
+        state: 'ready',
+        backupSignerAddress: undefined,
+      });
+      expect(stateForSafeCreation()).toEqual({
+        state: 'ready',
+        backupSignerAddress: undefined,
+      });
     });
 
-    it('stays pending while the Safe owners load', () => {
+    it('reports a failed wallets read as an error, not an endless wait', () => {
+      given({
+        status: 'disabled',
+        pick: web3AuthPick,
+        walletsLoaded: false,
+        walletsError: true,
+      });
+      expect(state()).toEqual({ state: 'error' });
+    });
+
+    it('for Safe creation, stays pending while the Safe owners load; routing goes on', () => {
       given({
         status: 'disabled',
         pick: web3AuthPick,
         masterSafes: [SAFE],
         ownersData: null,
       });
-      expect(state()).toEqual({ state: 'pending' });
+      expect(stateForSafeCreation()).toEqual({ state: 'pending' });
+      expect(state()).toEqual({
+        state: 'ready',
+        backupSignerAddress: undefined,
+      });
     });
 
     it('reports an error, not "no backup", when the Safe owners read failed', () => {
@@ -223,7 +276,7 @@ describe('useBackupSignerState', () => {
         ownersData: null,
         ownersError: true,
       });
-      expect(state()).toEqual({ state: 'error' });
+      expect(stateForSafeCreation()).toEqual({ state: 'error' });
     });
 
     it('stays ready when a refresh fails after the owners were read', () => {
