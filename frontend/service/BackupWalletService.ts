@@ -44,10 +44,13 @@ export type SyncBackupOwnerResponse = {
 //   canonical is stored but chains may still be out of sync).
 // NETWORK_ERROR    — HTTP 5xx / fetch rejection / any other 4xx. Canonical
 //   was NOT stored. Recovery: retry apply.
+// SIGNER_NOT_READY — onboarding refused to create the Pearl Safe: the backup
+//   signer is still being checked, or a new one must be chosen.
 export type BackupWalletErrorCode =
   | 'PARTIAL_FAILURE'
   | 'ALREADY_LINKED'
-  | 'NETWORK_ERROR';
+  | 'NETWORK_ERROR'
+  | 'SIGNER_NOT_READY';
 
 export class BackupWalletError extends Error {
   constructor(

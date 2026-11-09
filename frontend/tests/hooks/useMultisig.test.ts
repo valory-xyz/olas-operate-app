@@ -324,6 +324,38 @@ describe('useMultisigs', () => {
     expect(mockMulticallAll).not.toHaveBeenCalled();
   });
 
+  it('logs and reports a failed owners read', async () => {
+    const consoleSpy = jest
+      .spyOn(console, 'error')
+      .mockImplementation(() => undefined);
+    const gnosisSafe = {
+      address: DEFAULT_SAFE_ADDRESS,
+      evmChainId: EvmChainIdMap.Gnosis,
+      type: WALLET_TYPE.Safe,
+      owner: WALLET_OWNER.Master,
+    };
+    const rpcError = new Error('rpc down');
+    mockMulticallAll.mockRejectedValue(rpcError);
+
+    const { result } = renderHook(() => useMultisigs([gnosisSafe]), {
+      wrapper: createQueryClientWrapper(),
+    });
+
+    await waitFor(() =>
+      expect(result.current.masterSafesOwnersIsError).toBe(true),
+    );
+    expect(result.current.masterSafesOwnersIsSuccess).toBe(false);
+    expect(result.current.masterSafesOwners).toBeUndefined();
+    expect(result.current.allBackupAddresses).toEqual([]);
+    expect(consoleSpy).toHaveBeenCalledWith(
+      `Failed to read Safe owners on chain ${EvmChainIdMap.Gnosis}`,
+      rpcError,
+    );
+
+    mockMulticallAll.mockReset();
+    consoleSpy.mockRestore();
+  });
+
   it('logs error when multicallProvider is missing for a chain', async () => {
     const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
 

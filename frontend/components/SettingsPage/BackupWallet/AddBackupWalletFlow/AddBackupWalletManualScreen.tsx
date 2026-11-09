@@ -5,7 +5,7 @@ import { useRef, useState } from 'react';
 import { BackButton, cardStyles } from '@/components/ui';
 import { BACKUP_WALLET_FIELD_RULES } from '@/constants';
 import { SettingsScreenMap } from '@/constants/screen';
-import { useApplyBackupOwner, useSettings, useWeb3AuthStatus } from '@/hooks';
+import { useApplyBackupOwner, useSettings } from '@/hooks';
 import { Address } from '@/types/Address';
 
 import { useAddBackupWallet } from './AddBackupWalletContext';
@@ -17,8 +17,7 @@ import {
 const { Title, Text } = Typography;
 
 export const AddBackupWalletManualScreen = () => {
-  const { goto } = useSettings();
-  const { isWeb3AuthEnabled } = useWeb3AuthStatus();
+  const { goto, screen } = useSettings();
   const [form] = Form.useForm();
   const addressValue = Form.useWatch('backup-signer', form) as
     | string
@@ -64,12 +63,14 @@ export const AddBackupWalletManualScreen = () => {
     goto(SettingsScreenMap.Main);
   };
 
+  // Shown in place of the method screen (Web3Auth off), Back leaves the flow.
+  // Taken from the route, not the status, so it always matches what Settings rendered.
   const handleBack = () => {
     resetFlow();
     goto(
-      isWeb3AuthEnabled
-        ? SettingsScreenMap.AddBackupWalletMethod
-        : SettingsScreenMap.Main,
+      screen === SettingsScreenMap.AddBackupWalletMethod
+        ? SettingsScreenMap.Main
+        : SettingsScreenMap.AddBackupWalletMethod,
     );
   };
 

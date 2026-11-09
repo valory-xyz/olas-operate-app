@@ -4,7 +4,7 @@ import { getAddress } from 'ethers/lib/utils';
 import { Alert, BackButton, cardStyles } from '@/components/ui';
 import { BACKUP_WALLET_FIELD_RULES } from '@/constants';
 import { SettingsScreenMap } from '@/constants/screen';
-import { useBackupOwnerStatus, useSettings, useWeb3AuthStatus } from '@/hooks';
+import { useBackupOwnerStatus, useSettings } from '@/hooks';
 import { Address } from '@/types/Address';
 
 import { useUpdateBackupWallet } from './UpdateBackupWalletContext';
@@ -12,9 +12,8 @@ import { useUpdateBackupWallet } from './UpdateBackupWalletContext';
 const { Title, Text } = Typography;
 
 export const UpdateBackupWalletManualScreen = () => {
-  const { goto } = useSettings();
+  const { goto, screen } = useSettings();
   const { backupOwnerStatus } = useBackupOwnerStatus();
-  const { isWeb3AuthEnabled } = useWeb3AuthStatus();
   const { setNewAddress, sameAddressError, setSameAddressError, resetFlow } =
     useUpdateBackupWallet();
   const [form] = Form.useForm();
@@ -51,10 +50,11 @@ export const UpdateBackupWalletManualScreen = () => {
     goto(SettingsScreenMap.UpdateBackupWalletConfirm);
   };
 
-  // With no method screen to go back to, Back leaves the flow, as the method
-  // screen's Back does.
+  // Shown in place of the method screen (Web3Auth off): Back leaves the flow, as
+  // the method screen's Back does. Taken from the route, not the status, so it
+  // always matches what Settings rendered.
   const handleBack = () => {
-    if (isWeb3AuthEnabled) {
+    if (screen !== SettingsScreenMap.UpdateBackupWalletMethod) {
       goto(SettingsScreenMap.UpdateBackupWalletMethod);
       return;
     }

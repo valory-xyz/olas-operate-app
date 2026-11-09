@@ -162,6 +162,8 @@ jest.mock('../../../components/SetupPage/SetupWelcomeCreate', () => ({
 jest.mock('../../../components/ui', () => ({
   ContentTransition: ({ children }: { children?: React.ReactNode }) =>
     require('react').createElement('div', null, children),
+  Alert: ({ message }: { message?: React.ReactNode }) =>
+    require('react').createElement('div', { role: 'alert' }, message),
 }));
 /* eslint-enable @typescript-eslint/no-var-requires */
 
@@ -617,6 +619,9 @@ describe('SetupWelcomeLogin', () => {
       });
       expect(mockGoto).not.toHaveBeenCalledWith(SETUP_SCREEN.FundYourAgent);
       expect(mockGoto).not.toHaveBeenCalledWith(SETUP_SCREEN.SetupBackupSigner);
+      expect(
+        screen.getByText(/Couldn.t check your backup wallet/),
+      ).toBeInTheDocument();
     });
 
     it('does not route while the backup signer is pending, then routes once it settles as needing a new backup', async () => {

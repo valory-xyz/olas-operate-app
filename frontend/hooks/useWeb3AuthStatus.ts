@@ -46,6 +46,8 @@ export const useWeb3AuthStatus = () => {
     status,
     isWeb3AuthEnabled: status === 'enabled',
     isLoading: status === 'loading',
+    /** pearl-api answered `enabled: false`; unlike `status`, an outage doesn't count. */
+    isExplicitlyDisabled: !isError && data?.enabled === false,
   };
 };
 
@@ -60,7 +62,12 @@ export const useLatchedWeb3AuthEnabled = (key: string | null) => {
   const [latched, setLatched] = useState<{ key: string; enabled: boolean }>();
 
   useEffect(() => {
-    if (key === null || live === undefined || latched?.key === key) return;
+    // Leaving the screen clears the decision, so the next entry reads the status again.
+    if (key === null) {
+      setLatched(undefined);
+      return;
+    }
+    if (live === undefined || latched?.key === key) return;
     setLatched({ key, enabled: live });
   }, [key, live, latched?.key]);
 

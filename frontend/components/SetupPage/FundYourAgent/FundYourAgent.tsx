@@ -1,6 +1,7 @@
 import { FundingFlow } from '@/components/FundingFlow';
 import { CardSkeleton } from '@/components/ui';
 import { SETUP_SCREEN } from '@/constants';
+import { LatchedBackupSignerContext } from '@/context/LatchedBackupSignerContext';
 import {
   useBackupSignerGuard,
   useGetRefillRequirements,
@@ -17,6 +18,7 @@ export const FundYourAgent = () => {
   const { selectedAgentConfig, selectedService } = useServices();
   // The latched owner: a later status refetch must not change who the Safe is created with.
   const {
+    latchedSigner,
     isBackupSignerReady,
     isBackupSignerError,
     backupSignerAddress: backupOwner,
@@ -33,22 +35,24 @@ export const FundYourAgent = () => {
   }
 
   return (
-    <FundingFlow
-      mode="onboard"
-      serviceConfigId={selectedService.service_config_id}
-      backupOwner={backupOwner}
-      destinationChain={asMiddlewareChain(selectedAgentConfig.evmHomeChainId)}
-      fallbackToReceive={refillTokenRequirements}
-      onBack={() => {
-        resetTokenRequirements();
-        // Connect (and any no_staking agent) skips SelectStaking, so back
-        // must return to the agent/chain step, not the staking screen.
-        goto(
-          isNoStakingProgram(selectedAgentConfig.defaultStakingProgramId)
-            ? SETUP_SCREEN.AgentOnboarding
-            : SETUP_SCREEN.SelectStaking,
-        );
-      }}
-    />
+    <LatchedBackupSignerContext.Provider value={latchedSigner}>
+      <FundingFlow
+        mode="onboard"
+        serviceConfigId={selectedService.service_config_id}
+        backupOwner={backupOwner}
+        destinationChain={asMiddlewareChain(selectedAgentConfig.evmHomeChainId)}
+        fallbackToReceive={refillTokenRequirements}
+        onBack={() => {
+          resetTokenRequirements();
+          // Connect (and any no_staking agent) skips SelectStaking, so back
+          // must return to the agent/chain step, not the staking screen.
+          goto(
+            isNoStakingProgram(selectedAgentConfig.defaultStakingProgramId)
+              ? SETUP_SCREEN.AgentOnboarding
+              : SETUP_SCREEN.SelectStaking,
+          );
+        }}
+      />
+    </LatchedBackupSignerContext.Provider>
   );
 };

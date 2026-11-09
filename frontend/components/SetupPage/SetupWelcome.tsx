@@ -20,9 +20,10 @@ import { AccountService } from '@/service/Account';
 import { WalletService } from '@/service/Wallet';
 import { asEvmChainId, getErrorMessage, matchesAgentConfig } from '@/utils';
 
-import { ContentTransition } from '../ui';
+import { Alert, ContentTransition } from '../ui';
 import { FormFlex } from '../ui/FormFlex';
 import { FormLabel } from '../ui/Typography';
+import { BACKUP_SIGNER_UNAVAILABLE } from './BackupSignerUnavailable';
 import { SetupWelcomeCreate } from './SetupWelcomeCreate';
 
 const { Title, Text } = Typography;
@@ -143,6 +144,9 @@ const useSetupNavigation = ({
     selectedServiceOrAgentChainId,
     setIsLoggingIn,
   ]);
+
+  // Login waits on an unreadable backup signer; say why instead of spinning silently.
+  return { isBackupSignerError: canNavigate && backupSigner.state === 'error' };
 };
 
 enum MiddlewareAccountIsSetup {
@@ -198,7 +202,10 @@ export const SetupWelcomeLogin = () => {
 
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [canNavigate, setCanNavigate] = useState(false);
-  useSetupNavigation({ canNavigate, setIsLoggingIn });
+  const { isBackupSignerError } = useSetupNavigation({
+    canNavigate,
+    setIsLoggingIn,
+  });
 
   const handleLogin = useCallback(
     async ({ password }: { password: string }) => {
@@ -253,6 +260,15 @@ export const SetupWelcomeLogin = () => {
           >
             Continue
           </Button>
+          {isBackupSignerError && (
+            <Alert
+              type="warning"
+              showIcon
+              message={
+                <Text className="text-sm">{BACKUP_SIGNER_UNAVAILABLE}</Text>
+              }
+            />
+          )}
           <Flex justify="center" align="center" gap={4}>
             <Text type="secondary" className="text-sm">
               Can&apos;t sign in?

@@ -12,15 +12,11 @@ const mockApplyBackupOwner = jest.fn();
 const mockSetPassword = jest.fn();
 const mockResetFlow = jest.fn();
 const mockPassword: string | null = 'test-password';
-let mockIsWeb3AuthEnabled = true;
+let mockScreen: string = 'AddBackupWalletManual';
 
 jest.mock('../../../../../hooks', () => ({
   useApplyBackupOwner: () => ({ mutateAsync: mockApplyBackupOwner }),
-  useSettings: () => ({ goto: mockGoto }),
-  useWeb3AuthStatus: () => ({
-    isWeb3AuthEnabled: mockIsWeb3AuthEnabled,
-    isLoading: false,
-  }),
+  useSettings: () => ({ goto: mockGoto, screen: mockScreen }),
 }));
 
 jest.mock(
@@ -73,7 +69,7 @@ describe('AddBackupWalletManualScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockApplyBackupOwner.mockReset();
-    mockIsWeb3AuthEnabled = true;
+    mockScreen = SettingsScreenMap.AddBackupWalletManual;
   });
 
   it('renders form with placeholder and submit button', () => {
@@ -112,8 +108,9 @@ describe('AddBackupWalletManualScreen', () => {
     );
   });
 
-  it('Back button returns to Settings when Web3Auth is disabled', () => {
-    mockIsWeb3AuthEnabled = false;
+  it('Back button returns to Settings when shown in place of the method screen', () => {
+    // Settings shows this screen in place of the method screen (Web3Auth off).
+    mockScreen = SettingsScreenMap.AddBackupWalletMethod;
     render(<AddBackupWalletManualScreen />);
     fireEvent.click(screen.getByTestId('back'));
     expect(mockResetFlow).toHaveBeenCalled();

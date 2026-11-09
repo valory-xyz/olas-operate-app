@@ -6,9 +6,11 @@ import { GNOSIS_TOKEN_CONFIG, TokenSymbolMap } from '../../config/tokens';
 import { AddressZero } from '../../constants/address';
 import { MiddlewareChainMap } from '../../constants/chains';
 import { SETUP_SCREEN } from '../../constants/setupScreen';
+import { LatchedBackupSignerContext } from '../../context/LatchedBackupSignerContext';
 import { useBackupSignerState } from '../../hooks/useBackupSigner';
 import {
-  BACKUP_SIGNER_NOT_READY,
+  BACKUP_SIGNER_CHECKING,
+  BACKUP_SIGNER_NOT_SET,
   useMasterSafeCreationAndTransfer,
 } from '../../hooks/useMasterSafeCreationAndTransfer';
 import { useServices } from '../../hooks/useServices';
@@ -117,9 +119,13 @@ describe('useMasterSafeCreationAndTransfer', () => {
     );
   });
 
-  it.each(['pending', 'error', 'needsNewBackup'])(
-    'refuses to create the Safe while the backup signer is %s, with its own message',
-    async (signerState) => {
+  it.each([
+    ['pending', BACKUP_SIGNER_CHECKING],
+    ['error', BACKUP_SIGNER_CHECKING],
+    ['needsNewBackup', BACKUP_SIGNER_NOT_SET],
+  ])(
+    'refuses to create the Safe while the backup signer is %s, saying why',
+    async (signerState, expectedMessage) => {
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
       mockUseBackupSignerState.mockReturnValue({ state: signerState });
 
@@ -129,17 +135,38 @@ describe('useMasterSafeCreationAndTransfer', () => {
       );
 
       await act(async () => {
-        await expect(result.current.mutateAsync()).rejects.toThrow(
-          BACKUP_SIGNER_NOT_READY,
-        );
+        await expect(result.current.mutateAsync()).rejects.toMatchObject({
+          code: 'SIGNER_NOT_READY',
+          message: expectedMessage,
+        });
       });
       expect(mockCreateSafe).not.toHaveBeenCalled();
       await waitFor(() =>
-        expect(mockMessageError).toHaveBeenCalledWith(BACKUP_SIGNER_NOT_READY),
+        expect(mockMessageError).toHaveBeenCalledWith(expectedMessage),
       );
       expect(mockMessageError).not.toHaveBeenCalledWith(
         'Failed to create master safe.',
       );
+      consoleSpy.mockRestore();
+    },
+  );
+
+  it.each(['pending', 'error'])(
+    'does not send a %s backup signer to the backup step',
+    async (signerState) => {
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+      mockUseBackupSignerState.mockReturnValue({ state: signerState });
+
+      const { result } = renderHook(
+        () => useMasterSafeCreationAndTransfer([TokenSymbolMap.XDAI]),
+        { wrapper: createWrapper() },
+      );
+      await act(async () => {
+        await result.current.mutateAsync().catch(() => undefined);
+      });
+
+      await waitFor(() => expect(mockMessageError).toHaveBeenCalled());
+      expect(mockGotoSetup).not.toHaveBeenCalled();
       consoleSpy.mockRestore();
     },
   );
@@ -162,6 +189,40 @@ describe('useMasterSafeCreationAndTransfer', () => {
       ),
     );
     consoleSpy.mockRestore();
+  });
+
+  it("uses a guarded screen's latched signer over the live state", async () => {
+    mockCreateSafe.mockResolvedValue(makeSafeCreationResponse());
+    mockUseBackupSignerState.mockReturnValue({ state: 'needsNewBackup' });
+    const QueryWrapper = createWrapper();
+    const wrapper = ({ children }: PropsWithChildren) =>
+      createElement(
+        QueryWrapper,
+        null,
+        createElement(
+          LatchedBackupSignerContext.Provider,
+          {
+            value: {
+              state: 'ready',
+              backupSignerAddress: BACKUP_SIGNER_ADDRESS,
+            },
+          },
+          children,
+        ),
+      );
+
+    const { result } = renderHook(
+      () => useMasterSafeCreationAndTransfer([TokenSymbolMap.XDAI]),
+      { wrapper },
+    );
+    await act(async () => {
+      await result.current.mutateAsync();
+    });
+
+    expect(mockCreateSafe).toHaveBeenCalledWith(
+      MiddlewareChainMap.GNOSIS,
+      BACKUP_SIGNER_ADDRESS,
+    );
   });
 
   it('returns isSafeCreated=true when status is not SAFE_CREATION_FAILED', async () => {

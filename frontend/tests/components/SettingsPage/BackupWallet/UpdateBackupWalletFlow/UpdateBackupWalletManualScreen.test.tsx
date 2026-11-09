@@ -13,15 +13,11 @@ const mockSetSameAddressError = jest.fn();
 
 let mockSameAddressError = false;
 let mockCurrentAddress: string | null = null;
-let mockIsWeb3AuthEnabled = true;
+let mockScreen: string = 'UpdateBackupWalletManual';
 const mockResetFlow = jest.fn();
 
 jest.mock('../../../../../hooks', () => ({
-  useSettings: () => ({ goto: mockGoto }),
-  useWeb3AuthStatus: () => ({
-    isWeb3AuthEnabled: mockIsWeb3AuthEnabled,
-    isLoading: false,
-  }),
+  useSettings: () => ({ goto: mockGoto, screen: mockScreen }),
   useBackupOwnerStatus: () => ({
     backupOwnerStatus: {
       canonical_backup_owner: mockCurrentAddress,
@@ -82,7 +78,7 @@ describe('UpdateBackupWalletManualScreen', () => {
     jest.clearAllMocks();
     mockSameAddressError = false;
     mockCurrentAddress = null;
-    mockIsWeb3AuthEnabled = true;
+    mockScreen = SettingsScreenMap.UpdateBackupWalletManual;
   });
 
   it('renders form with Continue button', () => {
@@ -115,8 +111,9 @@ describe('UpdateBackupWalletManualScreen', () => {
     );
   });
 
-  it('Back button leaves the flow when Web3Auth is disabled', () => {
-    mockIsWeb3AuthEnabled = false;
+  it('Back button leaves the flow when shown in place of the method screen', () => {
+    // Settings shows this screen in place of the method screen (Web3Auth off).
+    mockScreen = SettingsScreenMap.UpdateBackupWalletMethod;
     render(<UpdateBackupWalletManualScreen />);
     fireEvent.click(screen.getByTestId('back'));
     expect(mockGoto).toHaveBeenCalledWith(SettingsScreenMap.Main);

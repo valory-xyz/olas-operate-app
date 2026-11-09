@@ -5,13 +5,14 @@ import { Address } from '@/types/Address';
 
 import { useMultisigs } from './useMultisig';
 import { useSetup } from './useSetup';
+import { useStore } from './useStore';
 import { useMasterWalletContext } from './useWallet';
 import { useWeb3AuthStatus } from './useWeb3AuthStatus';
 
 export type BackupSignerState =
   /** Not decided yet: don't route or create a Safe on it. */
   | { state: 'pending' }
-  /** The Safe owners can't be read; the query keeps retrying. */
+  /** The Safe owners have never been read; the query keeps retrying. */
   | { state: 'error' }
   /** Nothing usable: the user must pick a new backup wallet. */
   | { state: 'needsNewBackup' }
@@ -23,21 +24,22 @@ export type BackupSignerState =
  */
 export const useBackupSignerState = (): BackupSignerState => {
   const { backupSigner } = useSetup();
+  const { storeState } = useStore();
   const { masterWallets, masterSafes } = useMasterWalletContext();
-  const {
-    allBackupAddresses,
-    masterSafesOwnersIsSuccess,
-    masterSafesOwnersIsError,
-  } = useMultisigs(masterSafes);
+  const { allBackupAddresses, masterSafesOwners, masterSafesOwnersIsError } =
+    useMultisigs(masterSafes);
   const { status } = useWeb3AuthStatus();
 
+  // Read the pick from the store too: the setup context restores it without a re-render.
+  if (storeState === undefined) return { state: 'pending' };
+  const pick = backupSigner ?? storeState.lastProvidedBackupWallet;
   const onChainBackupAddress = allBackupAddresses[0] as Address | undefined;
 
-  if (backupSigner?.type !== 'web3auth' || status === 'enabled') {
+  if (pick?.type !== 'web3auth' || status === 'enabled') {
     return {
       state: 'ready',
       backupSignerAddress:
-        (backupSigner?.address as Address | undefined) ?? onChainBackupAddress,
+        (pick?.address as Address | undefined) ?? onChainBackupAddress,
     };
   }
 
@@ -46,12 +48,9 @@ export const useBackupSignerState = (): BackupSignerState => {
     return { state: 'pending' };
   }
 
-  if (masterSafes?.length) {
-    // Likewise a failed owners read must not pass for "no backup owner on-chain".
-    if (masterSafesOwnersIsError && !masterSafesOwnersIsSuccess) {
-      return { state: 'error' };
-    }
-    if (!masterSafesOwnersIsSuccess) return { state: 'pending' };
+  // Owner data, not query flags: a failed refresh keeps the owners it read before.
+  if (masterSafes?.length && masterSafesOwners === undefined) {
+    return masterSafesOwnersIsError ? { state: 'error' } : { state: 'pending' };
   }
 
   return onChainBackupAddress
@@ -59,17 +58,12 @@ export const useBackupSignerState = (): BackupSignerState => {
     : { state: 'needsNewBackup' };
 };
 
-/** The onboarding backup signer address once ready; see `useBackupSignerState`. */
-export const useBackupSigner = () => {
-  const signer = useBackupSignerState();
-  return signer.state === 'ready' ? signer.backupSignerAddress : undefined;
-};
-
 /**
  * For onboarding screens that lead to Pearl Safe creation: waits for a settled backup signer
  * and sends a user who needs a new one back to the backup wallet step. The first ready
- * decision — including its address — is kept for the screen's lifetime, so a later status
- * refetch never pulls the user out of a run in progress or changes the Safe's backup owner.
+ * decision — including its address — is kept for the screen's lifetime (share it with Safe
+ * creation via `LatchedBackupSignerContext`), so a later status refetch never pulls the user
+ * out of a run in progress or changes the Safe's backup owner.
  */
 export const useBackupSignerGuard = () => {
   const { goto } = useSetup();
@@ -89,11 +83,11 @@ export const useBackupSignerGuard = () => {
     }
   }, [latched, signer.state, goto]);
 
-  const decision = latched ?? signer;
+  const latchedOrNow = latched ?? (signer.state === 'ready' ? signer : null);
   return {
-    isBackupSignerReady: decision.state === 'ready',
-    isBackupSignerError: decision.state === 'error',
-    backupSignerAddress:
-      decision.state === 'ready' ? decision.backupSignerAddress : undefined,
+    latchedSigner: latchedOrNow,
+    isBackupSignerReady: !!latchedOrNow,
+    isBackupSignerError: !latchedOrNow && signer.state === 'error',
+    backupSignerAddress: latchedOrNow?.backupSignerAddress,
   };
 };

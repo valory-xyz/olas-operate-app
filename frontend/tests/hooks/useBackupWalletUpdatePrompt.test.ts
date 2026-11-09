@@ -23,24 +23,24 @@ const mockUseStore = useStore as jest.Mock;
 const mockUseBackupOwnerStatus = useBackupOwnerStatus as jest.Mock;
 
 const setup = ({
-  isWeb3AuthEnabled = false,
-  isLoading = false,
+  isExplicitlyDisabled = true,
   record = { address: BACKUP_SIGNER_ADDRESS, type: 'web3auth' },
   canonical = BACKUP_SIGNER_ADDRESS,
 }: {
-  isWeb3AuthEnabled?: boolean;
-  isLoading?: boolean;
+  /** pearl-api answered `enabled: false` (an outage or loading leaves this false). */
+  isExplicitlyDisabled?: boolean;
   /** `null` = this device has no record */
   record?: { address: string | null; type: BackupWalletType } | null;
-  canonical?: string | null;
+  /** `'unknown'` = the backup owner status hasn't loaded */
+  canonical?: string | null | 'unknown';
 } = {}) => {
-  mockUseWeb3AuthStatus.mockReturnValue({ isWeb3AuthEnabled, isLoading });
+  mockUseWeb3AuthStatus.mockReturnValue({ isExplicitlyDisabled });
   mockUseStore.mockReturnValue({
     storeState: { lastProvidedBackupWallet: record ?? undefined },
   });
   mockUseBackupOwnerStatus.mockReturnValue({
     backupOwnerStatus:
-      canonical === undefined
+      canonical === 'unknown'
         ? undefined
         : { canonical_backup_owner: canonical },
   });
@@ -59,12 +59,8 @@ describe('useBackupWalletUpdatePrompt', () => {
     );
   });
 
-  it('hides when Web3Auth is enabled', () => {
-    expect(setup({ isWeb3AuthEnabled: true })).toBe(false);
-  });
-
-  it('hides while the Web3Auth status is loading', () => {
-    expect(setup({ isLoading: true })).toBe(false);
+  it('hides unless pearl-api explicitly reports Web3Auth disabled (enabled, loading or an outage)', () => {
+    expect(setup({ isExplicitlyDisabled: false })).toBe(false);
   });
 
   it('hides once the backup wallet has changed', () => {
@@ -90,22 +86,6 @@ describe('useBackupWalletUpdatePrompt', () => {
   });
 
   it('hides while the backup owner status is unknown', () => {
-    mockUseBackupOwnerStatus.mockReturnValue({ backupOwnerStatus: undefined });
-    mockUseWeb3AuthStatus.mockReturnValue({
-      isWeb3AuthEnabled: false,
-      isLoading: false,
-    });
-    mockUseStore.mockReturnValue({
-      storeState: {
-        lastProvidedBackupWallet: {
-          address: BACKUP_SIGNER_ADDRESS,
-          type: 'web3auth',
-        },
-      },
-    });
-    expect(
-      renderHook(() => useBackupWalletUpdatePrompt()).result.current
-        .isUpdatePromptVisible,
-    ).toBe(false);
+    expect(setup({ canonical: 'unknown' })).toBe(false);
   });
 });

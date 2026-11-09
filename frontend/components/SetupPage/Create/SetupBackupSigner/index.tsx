@@ -24,7 +24,9 @@ export const SetupBackupSigner = () => {
     useState<BackupWalletType>('web3auth');
   const { goto } = useSetup();
   // Decided once for this screen, so a later refetch can't swap views mid-flow.
-  const isWeb3AuthEnabled = useLatchedWeb3AuthEnabled('setup-backup-signer');
+  const isWeb3AuthEnabled = useLatchedWeb3AuthEnabled(
+    SETUP_SCREEN.SetupBackupSigner,
+  );
   const isWeb3AuthStatusLoading = isWeb3AuthEnabled === undefined;
   const shownBackupWalletType = isWeb3AuthEnabled ? backupWalletType : 'manual';
   const applyBackupDuringSetup = useApplyBackupDuringSetup();
@@ -69,7 +71,10 @@ export const SetupBackupSigner = () => {
           />
         )}
         {!isWeb3AuthStatusLoading && shownBackupWalletType === 'manual' && (
-          <BackupWalletManual onFinish={handleBackupFinish} />
+          <BackupWalletManual
+            onFinish={handleBackupFinish}
+            isWeb3AuthEnabled={!!isWeb3AuthEnabled}
+          />
         )}
       </Flex>
     </CardFlex>

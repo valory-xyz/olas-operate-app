@@ -6,7 +6,6 @@ import { RiAppleFill, RiGoogleFill } from 'react-icons/ri';
 import { FormFlex } from '@/components/ui';
 import { COLOR } from '@/constants';
 import { useSetup } from '@/hooks/useSetup';
-import { useWeb3AuthStatus } from '@/hooks/useWeb3AuthStatus';
 import { Address } from '@/types/Address';
 
 import { useWeb3AuthBackupWallet } from './useWeb3AuthBackupWallet';
@@ -26,11 +25,15 @@ const walletFieldRules: FormItemProps['rules'] = [
 
 type BackupWalletManualProps = {
   onFinish: (address: Address) => void | Promise<void>;
+  /** The parent's latched decision, so the link can't appear or vanish mid-flow. */
+  isWeb3AuthEnabled: boolean;
 };
 
-export const BackupWalletManual = ({ onFinish }: BackupWalletManualProps) => {
+export const BackupWalletManual = ({
+  onFinish,
+  isWeb3AuthEnabled,
+}: BackupWalletManualProps) => {
   const { setBackupSigner } = useSetup();
-  const { isWeb3AuthEnabled } = useWeb3AuthStatus();
   const [form] = Form.useForm();
   const [isSubmitting, setIsSubmitting] = useState(false);
 

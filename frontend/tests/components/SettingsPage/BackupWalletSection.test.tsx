@@ -260,6 +260,7 @@ describe('BackupWalletSection', () => {
     it('keeps "No backup wallet added" when there is no backup wallet', () => {
       mockBackupOwnerStatus = makeStatus({ canonical_backup_owner: null });
       render(<BackupWalletSection />);
+      expect(screen.getByText('No backup wallet added.')).toBeInTheDocument();
       expect(
         screen.queryByText('Backup Wallet Update Recommended'),
       ).not.toBeInTheDocument();

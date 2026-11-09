@@ -5,7 +5,11 @@ import { ForgotPasswordCard } from '../../../../components/AccountRecovery/compo
 let mockStatus: 'loading' | 'enabled' | 'disabled' = 'enabled';
 
 jest.mock('../../../../hooks', () => ({
-  useWeb3AuthStatus: () => ({ isWeb3AuthEnabled: mockStatus === 'enabled' }),
+  useWeb3AuthStatus: () => ({
+    status: mockStatus,
+    isWeb3AuthEnabled: mockStatus === 'enabled',
+    isLoading: mockStatus === 'loading',
+  }),
 }));
 
 jest.mock(
@@ -60,6 +64,6 @@ describe('ForgotPasswordCard', () => {
     render(<ForgotPasswordCard />);
     expect(
       screen.getByText('Reset your password using the secret recovery phrase.'),
-    ).toBeTruthy();
+    ).toBeInTheDocument();
   });
 });

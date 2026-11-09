@@ -15,7 +15,11 @@ const mockSetCurrentStep = jest.fn();
 let mockStatus: 'loading' | 'enabled' | 'disabled' = 'enabled';
 jest.mock('../../../hooks', () => ({
   useSetup: () => ({ goto: mockGoto }),
-  useWeb3AuthStatus: () => ({ isWeb3AuthEnabled: mockStatus === 'enabled' }),
+  useWeb3AuthStatus: () => ({
+    status: mockStatus,
+    isWeb3AuthEnabled: mockStatus === 'enabled',
+    isLoading: mockStatus === 'loading',
+  }),
 }));
 
 // Default mock — overridden per test when needed via mockContextValue

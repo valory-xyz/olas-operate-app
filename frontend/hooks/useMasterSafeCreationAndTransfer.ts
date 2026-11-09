@@ -3,18 +3,22 @@ import { useMutation } from '@tanstack/react-query';
 import { TOKEN_CONFIG, TokenSymbol, TokenType } from '@/config/tokens';
 import { AddressZero, SETUP_SCREEN } from '@/constants';
 import { EXPLORER_URL_BY_MIDDLEWARE_CHAIN } from '@/constants/urls';
+import { useLatchedBackupSigner } from '@/context/LatchedBackupSignerContext';
 import { useMessageApi } from '@/context/MessageProvider';
 import { useBackupSignerState } from '@/hooks/useBackupSigner';
 import { useServices } from '@/hooks/useServices';
 import { useSetup } from '@/hooks/useSetup';
+import { BackupWalletError } from '@/service/BackupWalletService';
 import { WalletService } from '@/service/Wallet';
 import { BridgingStepStatus } from '@/types/Bridge';
 import { asEvmChainId } from '@/utils';
 
 import { useBalanceAndRefillRequirementsContext } from '.';
 
-export const BACKUP_SIGNER_NOT_READY =
+export const BACKUP_SIGNER_NOT_SET =
   'The backup wallet is not set. Set a backup wallet, then try again.';
+export const BACKUP_SIGNER_CHECKING =
+  'Still checking your backup wallet. Try again in a moment.';
 
 /**
  * Hook to create master safe and transfer funds.
@@ -23,7 +27,10 @@ export const BACKUP_SIGNER_NOT_READY =
 export const useMasterSafeCreationAndTransfer = (
   tokenSymbols: TokenSymbol[],
 ) => {
-  const backupSigner = useBackupSignerState();
+  // A guarded onboarding screen's latched decision wins over the live state.
+  const latchedSigner = useLatchedBackupSigner();
+  const liveSigner = useBackupSignerState();
+  const backupSigner = latchedSigner ?? liveSigner;
   const { goto } = useSetup();
   const { selectedAgentConfig } = useServices();
   const { refetch } = useBalanceAndRefillRequirementsContext();
@@ -38,7 +45,12 @@ export const useMasterSafeCreationAndTransfer = (
       // replacing. (The onboarding funding run creates it in the middleware instead,
       // with the owner FundYourAgent's guard latched.)
       if (backupSigner.state !== 'ready') {
-        throw new Error(BACKUP_SIGNER_NOT_READY);
+        throw new BackupWalletError(
+          backupSigner.state === 'needsNewBackup'
+            ? BACKUP_SIGNER_NOT_SET
+            : BACKUP_SIGNER_CHECKING,
+          'SIGNER_NOT_READY',
+        );
       }
       const { backupSignerAddress } = backupSigner;
       const explorer = `${EXPLORER_URL_BY_MIDDLEWARE_CHAIN[chain]}/tx`;
@@ -105,8 +117,11 @@ export const useMasterSafeCreationAndTransfer = (
     },
     onError: (error) => {
       console.error(error);
-      if (error.message === BACKUP_SIGNER_NOT_READY) {
-        message.error(BACKUP_SIGNER_NOT_READY);
+      if (
+        error instanceof BackupWalletError &&
+        error.code === 'SIGNER_NOT_READY'
+      ) {
+        message.error(error.message);
         // Retrying can't help until a new backup wallet is chosen.
         if (backupSigner.state === 'needsNewBackup') {
           goto(SETUP_SCREEN.SetupBackupSigner);
