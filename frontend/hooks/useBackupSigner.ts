@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { SETUP_SCREEN } from '@/constants';
 import { Address } from '@/types/Address';
@@ -134,16 +134,11 @@ export const useBackupSignerGuard = () => {
   const errorReason =
     !latchedSigner && signer.state === 'error' ? signer.reason : null;
 
-  // Once per failing spell, not per poll, into Pearl's logs: the user is stuck until it clears.
-  const isErrorLoggedRef = useRef(false);
+  // Into Pearl's logs once per failure reason, not per poll: the user is stuck until it clears.
   useEffect(() => {
-    if (errorReason === null) {
-      isErrorLoggedRef.current = false;
-      return;
+    if (errorReason !== null) {
+      logEvent?.(`Backup signer unavailable during setup: ${errorReason}`);
     }
-    if (isErrorLoggedRef.current) return;
-    isErrorLoggedRef.current = true;
-    logEvent?.(`Backup signer unavailable during setup: ${errorReason}`);
   }, [errorReason, logEvent]);
 
   return { latchedSigner, isBackupSignerError: errorReason !== null };

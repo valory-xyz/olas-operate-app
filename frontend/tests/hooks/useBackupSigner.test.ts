@@ -437,7 +437,7 @@ describe('useBackupSignerGuard', () => {
     });
   });
 
-  it("logs an unreadable signer to Pearl's logs once per failing spell, naming the read", () => {
+  it("logs an unreadable signer to Pearl's logs once per failure, naming the read", () => {
     const failing = {
       status: 'disabled' as const,
       pick: web3AuthPick,
