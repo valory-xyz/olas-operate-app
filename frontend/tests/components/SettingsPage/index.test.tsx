@@ -237,6 +237,26 @@ describe('Settings (SettingsPage entry)', () => {
       ).not.toBeInTheDocument();
     });
 
+    it('switches to the method screen once the status reports Web3Auth enabled', () => {
+      setupDefaults({
+        screen: SettingsScreenMap.AddBackupWalletMethod,
+        isWeb3AuthEnabled: false,
+      });
+      const { rerender } = render(<Settings />);
+      expect(
+        screen.getByTestId('add-backup-wallet-manual-screen'),
+      ).toBeInTheDocument();
+
+      mockUseWeb3AuthStatus.mockReturnValue({
+        isWeb3AuthEnabled: true,
+        isLoading: false,
+      });
+      rerender(<Settings />);
+      expect(
+        screen.getByTestId('add-backup-wallet-method-screen'),
+      ).toBeInTheDocument();
+    });
+
     it('renders UpdateBackupWalletConfirmScreen when screen is UpdateBackupWalletConfirm', () => {
       setupDefaults({ screen: SettingsScreenMap.UpdateBackupWalletConfirm });
       render(<Settings />);

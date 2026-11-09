@@ -24,8 +24,6 @@ export const BackupWalletAlert = () => {
   const allChainsSynced = backupOwnerStatus?.all_chains_synced ?? true;
   const anyBackupMissing = backupOwnerStatus?.any_backup_missing ?? false;
 
-  // Takes the place of "Sync backup wallet": updating applies the new
-  // address to every chain.
   if (isUpdatePromptVisible) {
     return (
       <Alert

@@ -126,6 +126,20 @@ describe('useBackupSigner', () => {
       expect(result.current).toBe(BACKUP_SIGNER_ADDRESS_2);
     });
 
+    it('keeps a stored Google/Apple pick while the status is still loading', () => {
+      mockUseWeb3AuthStatus.mockReturnValue({
+        isWeb3AuthEnabled: false,
+        isLoading: true,
+      });
+      mockUseSetup.mockReturnValue({
+        backupSigner: { address: BACKUP_SIGNER_ADDRESS, type: 'web3auth' },
+      });
+      mockUseMultisigs.mockReturnValue({ allBackupAddresses: [] });
+
+      const { result } = renderHook(() => useBackupSigner());
+      expect(result.current).toBe(BACKUP_SIGNER_ADDRESS);
+    });
+
     it('keeps a stored address pick', () => {
       mockUseSetup.mockReturnValue({
         backupSigner: { address: BACKUP_SIGNER_ADDRESS, type: 'manual' },

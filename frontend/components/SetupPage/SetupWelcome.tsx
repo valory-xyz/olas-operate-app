@@ -36,7 +36,7 @@ const useSetupNavigation = ({
   canNavigate,
   setIsLoggingIn,
 }: UseSetupNavigationProps) => {
-  const { goto } = useSetup();
+  const { goto, backupSigner } = useSetup();
   const { goto: gotoPage } = usePageState();
   const { isOnline } = useOnlineStatusContext();
   const {
@@ -76,9 +76,12 @@ const useSetupNavigation = ({
   }, [canNavigate, isOnline, isServicesFetched, storeState]);
 
   const isBackupWalletNotSet = useMemo(() => {
-    // If no services are created and backup wallet is not set as well.
-    return !services?.length && !backupSignerAddress;
-  }, [services?.length, backupSignerAddress]);
+    if (backupSignerAddress) return false;
+    // No services created and no backup wallet set. A stored Google/Apple pick
+    // that useBackupSigner discarded (Web3Auth off, no Pearl Safe yet) also
+    // returns to the backup step when a service already exists.
+    return !services?.length || backupSigner?.type === 'web3auth';
+  }, [services?.length, backupSignerAddress, backupSigner?.type]);
 
   useEffect(() => {
     if (!isApplicationReady) return;

@@ -3,6 +3,8 @@ import React from 'react';
 
 // Import after mocks
 import { SetupWelcomeLogin } from '../../../components/SetupPage/SetupWelcome';
+import { SETUP_SCREEN } from '../../../constants/setupScreen';
+import { useSetup } from '../../../hooks';
 import { AccountService } from '../../../service/Account';
 import { WalletService } from '../../../service/Wallet';
 
@@ -567,6 +569,38 @@ describe('SetupWelcomeLogin', () => {
       expect(mockGotoPage).not.toHaveBeenCalledWith(
         expect.stringContaining('Main'),
       );
+    });
+
+    it('returns to the backup wallet step when a discarded Google/Apple pick leaves no backup, even with a service', async () => {
+      setupHooksNotInitialFunded();
+      mockUseBackupSigner.mockReturnValue(undefined);
+      (useSetup as jest.Mock).mockReturnValue({
+        goto: mockGoto,
+        backupSigner: { address: '0xbackup', type: 'web3auth' },
+      });
+      mockLoginAccount.mockResolvedValue({ message: 'ok' });
+
+      renderSetupWelcomeLogin();
+      fireEvent.submit(screen.getByTestId('login-form'));
+
+      await waitFor(() => {
+        expect(mockGoto).toHaveBeenCalledWith(SETUP_SCREEN.SetupBackupSigner);
+      });
+      expect(mockGoto).not.toHaveBeenCalledWith(SETUP_SCREEN.FundYourAgent);
+      (useSetup as jest.Mock).mockReturnValue({ goto: mockGoto });
+    });
+
+    it('keeps going to FundYourAgent when an address-type pick is missing but a service exists', async () => {
+      setupHooksNotInitialFunded();
+      mockUseBackupSigner.mockReturnValue(undefined);
+      mockLoginAccount.mockResolvedValue({ message: 'ok' });
+
+      renderSetupWelcomeLogin();
+      fireEvent.submit(screen.getByTestId('login-form'));
+
+      await waitFor(() => {
+        expect(mockGoto).toHaveBeenCalledWith(SETUP_SCREEN.FundYourAgent);
+      });
     });
 
     it('falls through to Main when isInitialFunded is undefined (store hydrating / legacy)', async () => {

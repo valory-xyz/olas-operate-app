@@ -77,6 +77,10 @@ describe('useBackupWalletUpdatePrompt', () => {
     ).toBe(false);
   });
 
+  it('hides for a Google/Apple record with no address', () => {
+    expect(setup({ record: { address: null, type: 'web3auth' } })).toBe(false);
+  });
+
   it('hides when this device has no record', () => {
     expect(setup({ record: null })).toBe(false);
   });

@@ -1,4 +1,4 @@
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 
 import { WEB3AUTH_STATUS_URL } from '../../constants/urls';
 import { useWeb3AuthStatus } from '../../hooks/useWeb3AuthStatus';
@@ -63,15 +63,20 @@ describe('useWeb3AuthStatus', () => {
     expect(result.current.isWeb3AuthEnabled).toBe(false);
   });
 
-  it('is disabled when the request fails', async () => {
+  it('retries once, then is disabled when the request fails', async () => {
+    jest.useFakeTimers();
     mockFetchResponse({}, false, 500);
 
     const { result } = render();
 
-    await waitFor(() => expect(result.current.isLoading).toBe(false), {
-      timeout: 5000,
+    await act(async () => {
+      await jest.runAllTimersAsync();
     });
+    jest.useRealTimers();
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.isWeb3AuthEnabled).toBe(false);
+    expect(global.fetch).toHaveBeenCalledTimes(2);
   });
 
   it('is disabled for a malformed response', async () => {

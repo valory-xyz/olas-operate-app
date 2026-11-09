@@ -115,8 +115,7 @@ export const BackupWalletSection = () => {
     );
   }
 
-  // Google/Apple backup to replace. Shown instead of the out-of-sync state:
-  // updating applies the new address to every chain.
+  // Google/Apple backup to replace; takes precedence over State C.
   if (canonicalAddress !== null && isUpdatePromptVisible) {
     return (
       <>

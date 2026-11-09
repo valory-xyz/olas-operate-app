@@ -44,7 +44,7 @@ If you have retained your **recovery phrase**, you may recover **full access** t
 
 If you created a backup wallet using **Google or Apple**, you may recover your Pearl account directly within the application.
 
-> **Availability:** this option is shown only while it is available. When it is temporarily unavailable, Pearl offers backup wallet setup by entering a wallet address only, does not show *Reset via Backup Wallet*, and asks users with a Google or Apple backup wallet to update it in Settings.
+> **Availability:** when this option is temporarily unavailable, Pearl offers backup wallet setup by entering a wallet address only, does not show *Reset via Backup Wallet*, and asks users with a Google or Apple backup wallet to update it in Settings.
 
 ### **Recovery process**
 
