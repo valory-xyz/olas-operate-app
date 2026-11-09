@@ -8,7 +8,6 @@ jest.mock('../../../../hooks', () => ({
   useWeb3AuthStatus: () => ({
     status: mockStatus,
     isWeb3AuthEnabled: mockStatus === 'enabled',
-    isLoading: mockStatus === 'loading',
   }),
 }));
 

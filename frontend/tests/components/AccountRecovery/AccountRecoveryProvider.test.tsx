@@ -18,8 +18,7 @@ import { BACKUP_SIGNER_ADDRESS } from '../../helpers/factories';
 import { createTestQueryClient } from '../../helpers/queryClient';
 
 const mockBackupAddress = BACKUP_SIGNER_ADDRESS;
-let mockIsWeb3AuthEnabled = true;
-let mockIsWeb3AuthStatusLoading = false;
+let mockStatus: 'loading' | 'enabled' | 'disabled' = 'enabled';
 
 jest.mock('../../../hooks', () => ({
   useMasterWalletContext: () => ({ masterSafes: [], isLoading: false }),
@@ -33,8 +32,8 @@ jest.mock('../../../hooks', () => ({
     },
   }),
   useWeb3AuthStatus: () => ({
-    isWeb3AuthEnabled: mockIsWeb3AuthEnabled,
-    isLoading: mockIsWeb3AuthStatusLoading,
+    status: mockStatus,
+    isWeb3AuthEnabled: mockStatus === 'enabled',
   }),
 }));
 
@@ -102,8 +101,7 @@ const renderProvider = () => {
 
 describe('AccountRecoveryProvider', () => {
   beforeEach(() => {
-    mockIsWeb3AuthEnabled = true;
-    mockIsWeb3AuthStatusLoading = false;
+    mockStatus = 'enabled';
   });
 
   it('offers backup-wallet recovery when Web3Auth is enabled', async () => {
@@ -116,7 +114,7 @@ describe('AccountRecoveryProvider', () => {
   });
 
   it('does not offer backup-wallet recovery when Web3Auth is disabled', async () => {
-    mockIsWeb3AuthEnabled = false;
+    mockStatus = 'disabled';
     renderProvider();
 
     await waitFor(() =>
@@ -126,8 +124,7 @@ describe('AccountRecoveryProvider', () => {
   });
 
   it('does not wait for the Web3Auth status, so recovery-phrase reset works offline', async () => {
-    mockIsWeb3AuthEnabled = false;
-    mockIsWeb3AuthStatusLoading = true;
+    mockStatus = 'loading';
     const { queryClient } = renderProvider();
 
     await waitFor(() =>
@@ -148,7 +145,7 @@ describe('AccountRecoveryProvider', () => {
     act(() => {
       fireEvent.click(screen.getByText('pick backup wallet'));
     });
-    mockIsWeb3AuthEnabled = false;
+    mockStatus = 'disabled';
     rerender(
       <AccountRecoveryProvider>
         <Consumer />
@@ -167,7 +164,7 @@ describe('AccountRecoveryProvider', () => {
     act(() => {
       fireEvent.click(screen.getByText('pick recovery phrase'));
     });
-    mockIsWeb3AuthEnabled = false;
+    mockStatus = 'disabled';
     rerender(
       <AccountRecoveryProvider>
         <Consumer />
@@ -187,7 +184,7 @@ describe('AccountRecoveryProvider', () => {
     act(() => {
       fireEvent.click(screen.getByText('pick backup wallet'));
     });
-    mockIsWeb3AuthEnabled = false;
+    mockStatus = 'disabled';
     rerender(
       <AccountRecoveryProvider>
         <Consumer />
