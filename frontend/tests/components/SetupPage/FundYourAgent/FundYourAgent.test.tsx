@@ -18,17 +18,25 @@ const mockGotoSetup = jest.fn();
 const mockResetTokenRequirements = jest.fn();
 const mockUseServices = jest.fn();
 const BACKUP_OWNER = '0x2222222222222222222222222222222222222222';
-const mockLatchedSigner = { state: 'ready', backupSignerAddress: BACKUP_OWNER };
-let mockIsBackupSignerReady = true;
-let mockIsBackupSignerError = false;
+let mockIsGateOpen = true;
+
+// The gate's loader, error and context sharing are covered by BackupSignerGate.test.tsx.
+jest.mock('../../../../components/SetupPage/BackupSignerGate', () => ({
+  BackupSignerGate: ({
+    children,
+  }: {
+    children: (signer: unknown) => React.ReactNode;
+  }) =>
+    mockIsGateOpen ? (
+      children({ state: 'ready', backupSignerAddress: BACKUP_OWNER })
+    ) : (
+      <div data-testid="gate-waiting" />
+    ),
+}));
 
 jest.mock('../../../../hooks', () => ({
   useSetup: () => ({ goto: mockGotoSetup }),
   useServices: () => mockUseServices(),
-  useBackupSignerGuard: () => ({
-    latchedSigner: mockIsBackupSignerReady ? mockLatchedSigner : null,
-    isBackupSignerError: mockIsBackupSignerError,
-  }),
   useGetRefillRequirements: () => ({
     refillTokenRequirements: [{ symbol: 'OLAS', amount: 1 }],
     isLoading: false,
@@ -37,14 +45,9 @@ jest.mock('../../../../hooks', () => ({
 }));
 
 let mockFlowProps: FundingFlowProps | null = null;
-let mockSeenLatchedSigner: unknown;
 jest.mock('../../../../components/FundingFlow', () => ({
   FundingFlow: (props: FundingFlowProps) => {
     mockFlowProps = props;
-    /* eslint-disable @typescript-eslint/no-var-requires */
-    mockSeenLatchedSigner =
-      require('../../../../context/LatchedBackupSignerContext').useLatchedBackupSigner();
-    /* eslint-enable @typescript-eslint/no-var-requires */
     return (
       <button data-testid="back-button" onClick={props.onBack}>
         Back
@@ -68,8 +71,7 @@ describe('FundYourAgent', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockFlowProps = null;
-    mockIsBackupSignerReady = true;
-    mockIsBackupSignerError = false;
+    mockIsGateOpen = true;
   });
 
   it('renders the funding flow for the new agent instead of Buy, Transfer and Bridge', () => {
@@ -83,8 +85,6 @@ describe('FundYourAgent', () => {
       destinationChain: 'polygon',
       fallbackToReceive: [{ symbol: 'OLAS', amount: 1 }],
     });
-    // Safe creation below the screen reads the same latched signer.
-    expect(mockSeenLatchedSigner).toBe(mockLatchedSigner);
     expect(
       screen.queryByText(/Transfer Crypto on|Bridge Crypto|Buy/),
     ).toBeNull();
@@ -100,24 +100,13 @@ describe('FundYourAgent', () => {
     expect(mockFlowProps).toBeNull();
   });
 
-  it('waits for the backup signer before opening the flow that creates the Pearl Safe', () => {
+  it('does not open the flow (which creates the Pearl Safe) until the gate opens', () => {
     setup();
-    mockIsBackupSignerReady = false;
+    mockIsGateOpen = false;
     render(<FundYourAgent />);
 
     expect(mockFlowProps).toBeNull();
-  });
-
-  it('shows a retrying error instead of the flow when the backup signer is unreadable', () => {
-    setup();
-    mockIsBackupSignerReady = false;
-    mockIsBackupSignerError = true;
-    render(<FundYourAgent />);
-
-    expect(mockFlowProps).toBeNull();
-    expect(
-      screen.getByText(/Couldn.t check your backup wallet/),
-    ).toBeInTheDocument();
+    expect(screen.getByTestId('gate-waiting')).toBeInTheDocument();
   });
 
   it('routes back to AgentOnboarding for a no_staking agent (e.g. Connect)', () => {
