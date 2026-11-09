@@ -123,6 +123,10 @@ describe('useMasterSafeCreationAndTransfer', () => {
       MiddlewareChainMap.GNOSIS,
       BACKUP_SIGNER_ADDRESS,
     );
+    // Safe-creation mode: routing mode would not wait for the owners.
+    expect(mockUseBackupSignerState).toHaveBeenCalledWith({
+      forSafeCreation: true,
+    });
   });
 
   it.each([
