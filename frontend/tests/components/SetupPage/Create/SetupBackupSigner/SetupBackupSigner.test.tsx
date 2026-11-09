@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 
 import { SetupBackupSigner } from '../../../../../components/SetupPage/Create/SetupBackupSigner';
 import { SETUP_SCREEN } from '../../../../../constants/setupScreen';
+import { BackupWalletError } from '../../../../../service/BackupWalletService';
 
 jest.mock('../../../../../constants/providers', () => ({ PROVIDERS: {} }));
 
@@ -10,6 +11,10 @@ jest.mock('../../../../../constants/providers', () => ({ PROVIDERS: {} }));
 // ---------------------------------------------------------------------------
 
 const mockGoto = jest.fn();
+const mockSetPassword = jest.fn();
+const mockSetIsReplacingBackup = jest.fn();
+const mockLogEvent = jest.fn();
+let mockIsReplacingBackup = false;
 const mockApplyBackupDuringSetup = jest.fn();
 const mockError = jest.fn();
 let mockIsWeb3AuthEnabled = true;
@@ -28,7 +33,13 @@ const capturedProps: {
 } = {};
 
 jest.mock('../../../../../hooks', () => ({
-  useSetup: () => ({ goto: mockGoto }),
+  useSetup: () => ({
+    goto: mockGoto,
+    setPassword: mockSetPassword,
+    isReplacingBackup: mockIsReplacingBackup,
+    setIsReplacingBackup: mockSetIsReplacingBackup,
+  }),
+  useElectronApi: () => ({ logEvent: mockLogEvent }),
   useApplyBackupDuringSetup: () => mockApplyBackupDuringSetup,
   useLatchedWeb3AuthEnabled: (key: string | null) =>
     mockUseLatchedWeb3AuthEnabled(key),
@@ -118,6 +129,7 @@ describe('SetupBackupSigner', () => {
     capturedProps.manualOnFinish = undefined;
     mockIsWeb3AuthEnabled = true;
     mockIsWeb3AuthStatusLoading = false;
+    mockIsReplacingBackup = false;
   });
 
   it('shows neither view while the Web3Auth status loads, so a typed address is never swapped out', () => {
@@ -195,6 +207,50 @@ describe('SetupBackupSigner', () => {
     await waitFor(() =>
       expect(mockGoto).toHaveBeenCalledWith(SETUP_SCREEN.AgentOnboarding),
     );
+    // Nothing will retry it, so the password isn't kept; the failure is logged.
+    expect(mockSetPassword).toHaveBeenCalledWith(null);
+    expect(mockLogEvent).toHaveBeenCalledWith(
+      'Backup wallet apply during setup failed (UNKNOWN): boom',
+    );
+  });
+
+  describe('when replacing an ignored Google/Apple pick', () => {
+    beforeEach(() => {
+      mockIsWeb3AuthEnabled = false;
+      mockIsReplacingBackup = true;
+    });
+
+    it('stays on the step, keeping the password, when the apply fails, and logs the code', async () => {
+      mockApplyBackupDuringSetup.mockRejectedValueOnce(
+        new BackupWalletError('Network error', 'NETWORK_ERROR'),
+      );
+      render(<SetupBackupSigner />);
+
+      fireEvent.click(screen.getByTestId('manual-finish'));
+
+      await waitFor(() =>
+        expect(mockError).toHaveBeenCalledWith('Network error'),
+      );
+      expect(mockLogEvent).toHaveBeenCalledWith(
+        'Backup wallet apply during setup failed (NETWORK_ERROR): Network error',
+      );
+      // Canonical still holds the old backup: the user must be able to retry.
+      expect(mockGoto).not.toHaveBeenCalled();
+      expect(mockSetPassword).not.toHaveBeenCalled();
+      expect(mockSetIsReplacingBackup).not.toHaveBeenCalled();
+    });
+
+    it('moves on once the apply succeeds', async () => {
+      mockApplyBackupDuringSetup.mockResolvedValueOnce(undefined);
+      render(<SetupBackupSigner />);
+
+      fireEvent.click(screen.getByTestId('manual-finish'));
+
+      await waitFor(() =>
+        expect(mockGoto).toHaveBeenCalledWith(SETUP_SCREEN.AgentOnboarding),
+      );
+      expect(mockSetIsReplacingBackup).toHaveBeenCalledWith(false);
+    });
   });
 
   describe('when Web3Auth is disabled', () => {

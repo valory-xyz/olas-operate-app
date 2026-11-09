@@ -6,9 +6,11 @@ import { SETUP_SCREEN } from '@/constants';
 import { useMessageApi } from '@/context/MessageProvider';
 import {
   useApplyBackupDuringSetup,
+  useElectronApi,
   useLatchedWeb3AuthEnabled,
   useSetup,
 } from '@/hooks';
+import { BackupWalletError } from '@/service/BackupWalletService';
 import { Address } from '@/types/Address';
 import { BackupWalletType } from '@/types/BackupWallet';
 import { getErrorMessage } from '@/utils';
@@ -22,7 +24,9 @@ const { Title, Text } = Typography;
 export const SetupBackupSigner = () => {
   const [backupWalletType, setBackupWalletType] =
     useState<BackupWalletType>('web3auth');
-  const { goto } = useSetup();
+  const { goto, isReplacingBackup, setIsReplacingBackup, setPassword } =
+    useSetup();
+  const { logEvent } = useElectronApi();
   // Decided once for this screen, so a later refetch can't swap views mid-flow.
   const isWeb3AuthEnabled = useLatchedWeb3AuthEnabled(
     SETUP_SCREEN.SetupBackupSigner,
@@ -37,15 +41,31 @@ export const SetupBackupSigner = () => {
       try {
         await applyBackupDuringSetup(address);
       } catch (e: unknown) {
-        // Don't block onboarding — backend startup auto-migration writes
+        message.error(getErrorMessage(e));
+        const code = e instanceof BackupWalletError ? e.code : 'UNKNOWN';
+        logEvent?.(
+          `Backup wallet apply during setup failed (${code}): ${getErrorMessage(e)}`,
+        );
+        // Replacing: canonical still holds the old backup, and auto-migration won't
+        // change it. Stay here, keeping the password, so the user can retry.
+        if (isReplacingBackup) return;
+        // Otherwise don't block onboarding — backend startup auto-migration writes
         // canonical_backup_owner once Safes deploy. User will land in State A
         // until then, and in State B once auto-migration completes.
-        message.error(getErrorMessage(e));
-      } finally {
-        goto(SETUP_SCREEN.AgentOnboarding);
+        setPassword(null);
       }
+      setIsReplacingBackup(false);
+      goto(SETUP_SCREEN.AgentOnboarding);
     },
-    [applyBackupDuringSetup, goto, message],
+    [
+      applyBackupDuringSetup,
+      goto,
+      isReplacingBackup,
+      logEvent,
+      message,
+      setIsReplacingBackup,
+      setPassword,
+    ],
   );
 
   return (

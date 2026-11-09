@@ -189,6 +189,7 @@ jest.mock('../../../service/Wallet', () => ({
 
 const mockGoto = jest.fn();
 const mockSetPassword = jest.fn();
+const mockSetIsReplacingBackup = jest.fn();
 const mockGotoPage = jest.fn();
 const mockSetUserLoggedIn = jest.fn();
 const mockSetMnemonicExists = jest.fn();
@@ -207,7 +208,11 @@ const mockUseStore = jest.fn();
 const mockUseLogBackupSignerError = jest.fn();
 
 jest.mock('../../../hooks', () => ({
-  useSetup: jest.fn(() => ({ goto: mockGoto, setPassword: mockSetPassword })),
+  useSetup: jest.fn(() => ({
+    goto: mockGoto,
+    setPassword: mockSetPassword,
+    setIsReplacingBackup: mockSetIsReplacingBackup,
+  })),
   usePageState: jest.fn(() => ({
     goto: mockGotoPage,
     setUserLoggedIn: mockSetUserLoggedIn,
@@ -596,6 +601,27 @@ describe('SetupWelcomeLogin', () => {
       expect(mockGoto).not.toHaveBeenCalledWith(SETUP_SCREEN.FundYourAgent);
       // So the re-pick on the backup step replaces the canonical backup owner too.
       expect(mockSetPassword).toHaveBeenCalledWith('test-password');
+      expect(mockSetIsReplacingBackup).toHaveBeenCalledWith(true);
+    });
+
+    it('drops the login password after the first routing decision', async () => {
+      setupHooksNotInitialFunded();
+      mockUseBackupSignerState.mockReturnValue(signerState('0xbackup'));
+      mockLoginAccount.mockResolvedValue({ message: 'ok' });
+
+      const { rerender } = renderSetupWelcomeLogin();
+      fireEvent.submit(screen.getByTestId('login-form'));
+      await waitFor(() => {
+        expect(mockGoto).toHaveBeenCalledWith(SETUP_SCREEN.FundYourAgent);
+      });
+
+      // The signer changes before unmount (e.g. the status turned disabled).
+      mockUseBackupSignerState.mockReturnValue({ state: 'needsNewBackup' });
+      rerender(<SetupWelcomeLogin />);
+      await waitFor(() => {
+        expect(mockGoto).toHaveBeenCalledWith(SETUP_SCREEN.SetupBackupSigner);
+      });
+      expect(mockSetPassword).not.toHaveBeenCalled();
     });
 
     it('goes to the backup step with no service and no backup, without keeping the password', async () => {

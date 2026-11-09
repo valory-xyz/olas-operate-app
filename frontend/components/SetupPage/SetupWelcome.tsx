@@ -48,7 +48,7 @@ const useSetupNavigation = ({
   setIsLoggingIn,
   loginPasswordRef,
 }: UseSetupNavigationProps) => {
-  const { goto, setPassword } = useSetup();
+  const { goto, setPassword, setIsReplacingBackup } = useSetup();
   const { goto: gotoPage } = usePageState();
   const { isOnline } = useOnlineStatusContext();
   const {
@@ -123,7 +123,10 @@ const useSetupNavigation = ({
     if (isBackupWalletNotSet) {
       // Replacing an ignored Google/Apple pick: the new pick must replace the canonical
       // backup owner too, which needs the password (`useApplyBackupDuringSetup` clears it).
-      if (needsNewBackup && loginPassword) setPassword(loginPassword);
+      if (needsNewBackup && loginPassword) {
+        setPassword(loginPassword);
+        setIsReplacingBackup(true);
+      }
       goto(SETUP_SCREEN.SetupBackupSigner);
       return;
     }
@@ -162,6 +165,7 @@ const useSetupNavigation = ({
     selectedAgentConfig,
     selectedServiceOrAgentChainId,
     setIsLoggingIn,
+    setIsReplacingBackup,
     setPassword,
   ]);
 
