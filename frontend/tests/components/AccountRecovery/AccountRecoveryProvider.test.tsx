@@ -99,6 +99,25 @@ const renderProvider = () => {
   return { ...utils, queryClient };
 };
 
+/** Renders with Web3Auth enabled, picks a reset method, then turns Web3Auth off. */
+const pickWhileEnabledThenDisable = async (
+  pick: 'pick backup wallet' | 'pick recovery phrase',
+) => {
+  const { rerender } = renderProvider();
+  await waitFor(() =>
+    expect(screen.getByTestId('available')).toHaveTextContent('true'),
+  );
+  act(() => {
+    fireEvent.click(screen.getByText(pick));
+  });
+  mockStatus = 'disabled';
+  rerender(
+    <AccountRecoveryProvider>
+      <Consumer />
+    </AccountRecoveryProvider>,
+  );
+};
+
 describe('AccountRecoveryProvider', () => {
   beforeEach(() => {
     mockStatus = 'enabled';
@@ -137,59 +156,20 @@ describe('AccountRecoveryProvider', () => {
   });
 
   it('keeps a chosen backup-wallet recovery available if the status later turns disabled', async () => {
-    const { rerender } = renderProvider();
-    await waitFor(() =>
-      expect(screen.getByTestId('available')).toHaveTextContent('true'),
-    );
-
-    act(() => {
-      fireEvent.click(screen.getByText('pick backup wallet'));
-    });
-    mockStatus = 'disabled';
-    rerender(
-      <AccountRecoveryProvider>
-        <Consumer />
-      </AccountRecoveryProvider>,
-    );
+    await pickWhileEnabledThenDisable('pick backup wallet');
 
     expect(screen.getByTestId('available')).toHaveTextContent('true');
   });
 
   it('does not latch backup-wallet recovery for a recovery-phrase pick', async () => {
-    const { rerender } = renderProvider();
-    await waitFor(() =>
-      expect(screen.getByTestId('available')).toHaveTextContent('true'),
-    );
-
-    act(() => {
-      fireEvent.click(screen.getByText('pick recovery phrase'));
-    });
-    mockStatus = 'disabled';
-    rerender(
-      <AccountRecoveryProvider>
-        <Consumer />
-      </AccountRecoveryProvider>,
-    );
+    await pickWhileEnabledThenDisable('pick recovery phrase');
 
     expect(screen.getByTestId('available')).toHaveTextContent('false');
     expect(screen.getByTestId('address')).toHaveTextContent('none');
   });
 
   it('drops the latch once Back clears the backup-wallet pick while disabled', async () => {
-    const { rerender } = renderProvider();
-    await waitFor(() =>
-      expect(screen.getByTestId('available')).toHaveTextContent('true'),
-    );
-
-    act(() => {
-      fireEvent.click(screen.getByText('pick backup wallet'));
-    });
-    mockStatus = 'disabled';
-    rerender(
-      <AccountRecoveryProvider>
-        <Consumer />
-      </AccountRecoveryProvider>,
-    );
+    await pickWhileEnabledThenDisable('pick backup wallet');
     expect(screen.getByTestId('available')).toHaveTextContent('true');
 
     // CreateNewPassword -> SelectPasswordResetOption -> SelectRecoveryMethod (clears the pick)
