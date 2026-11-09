@@ -1,8 +1,10 @@
+import { QueryClientProvider } from '@tanstack/react-query';
 import { renderHook } from '@testing-library/react';
 import { act, PropsWithChildren } from 'react';
 
 import { AGENT_CONFIG } from '../../../config/agents';
 import { AgentMap } from '../../../constants/agent';
+import { REACT_QUERY_KEYS } from '../../../constants/reactQueryKeys';
 import {
   AutoRunProvider,
   useAutoRunContext,
@@ -14,6 +16,7 @@ import {
   MOCK_SERVICE_CONFIG_ID_2,
   MOCK_SERVICE_CONFIG_ID_3,
 } from '../../helpers/factories';
+import { createTestQueryClient } from '../../helpers/queryClient';
 
 // --- Mutable mock state ---
 const mockAutoRunStore = {
@@ -124,8 +127,12 @@ const { useServices, useWakeLock: mockUseWakeLock } = jest.requireMock(
 const scTrader = DEFAULT_SERVICE_CONFIG_ID;
 const scOptimus = MOCK_SERVICE_CONFIG_ID_2;
 
+const queryClient = createTestQueryClient();
+
 const wrapper = ({ children }: PropsWithChildren) => (
-  <AutoRunProvider>{children}</AutoRunProvider>
+  <QueryClientProvider client={queryClient}>
+    <AutoRunProvider>{children}</AutoRunProvider>
+  </QueryClientProvider>
 );
 
 describe('AutoRunProvider', () => {
@@ -766,6 +773,23 @@ describe('AutoRunProvider', () => {
       // Decommissioned instances are hidden from the excluded section
       // entirely, not rendered as blocked rows.
       expect(result.current.excludedInstances).not.toContain(scModius);
+    });
+  });
+
+  describe('onAutoRunInstanceStarted callback', () => {
+    it('refetches all deployments so the started instance becomes current', () => {
+      const refetchQueries = jest
+        .spyOn(queryClient, 'refetchQueries')
+        .mockResolvedValue();
+      renderHook(() => useAutoRunContext(), { wrapper });
+
+      act(() => {
+        capturedControllerCallbacks.onAutoRunInstanceStarted!(scOptimus);
+      });
+
+      expect(refetchQueries).toHaveBeenCalledWith({
+        queryKey: REACT_QUERY_KEYS.ALL_SERVICE_DEPLOYMENTS_KEY,
+      });
     });
   });
 

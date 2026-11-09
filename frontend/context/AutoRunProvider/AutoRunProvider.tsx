@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query';
 import {
   createContext,
   PropsWithChildren,
@@ -8,6 +9,7 @@ import {
   useState,
 } from 'react';
 
+import { REACT_QUERY_KEYS } from '@/constants';
 import {
   useArchivedAgents,
   useElectronApi,
@@ -62,6 +64,7 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
     selectedServiceConfigId,
   } = useServices();
   const { showNotification } = useElectronApi();
+  const queryClient = useQueryClient();
 
   // Derive agent metadata from services.
   const configuredAgents = useConfiguredAgents(services);
@@ -158,6 +161,13 @@ export const AutoRunProvider = ({ children }: PropsWithChildren) => {
     canCreateSafeForChain,
     createSafeIfNeeded,
     showNotification,
+    // Refresh the deployments poll that `runningServiceConfigId` comes from,
+    // so the scheduler sees the started instance as current right away.
+    onAutoRunInstanceStarted: () => {
+      void queryClient.refetchQueries({
+        queryKey: REACT_QUERY_KEYS.ALL_SERVICE_DEPLOYMENTS_KEY,
+      });
+    },
     onAutoRunStartStateChange: (isStarting) => {
       setIsStarting(isStarting);
     },

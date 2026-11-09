@@ -219,7 +219,12 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
       queryFn: ({ signal }) => ServicesService.getAllServiceDeployments(signal),
       enabled: isOnline && !!services?.length,
       refetchInterval: (query) => {
-        if (query.state.status !== 'success') return false;
+        if (query.state.status === 'pending') return false;
+        // A failed refetch sets `error` and keeps the last data. Keep polling,
+        // or that stale data would stand until something else refetches.
+        if (query.state.status === 'error') {
+          return allDeploymentsSlowRefetchInterval;
+        }
 
         const hasActiveBackendDeployment = Object.values(
           query.state.data ?? {},
