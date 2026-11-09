@@ -12,6 +12,11 @@ import {
   createTestQueryClient,
 } from '../helpers/queryClient';
 
+const mockLogEvent = jest.fn();
+jest.mock('../../hooks/useElectronApi', () => ({
+  useElectronApi: () => ({ logEvent: mockLogEvent }),
+}));
+
 const mockFetchResponse = (body: unknown, ok = true, status = 200) =>
   (global.fetch as jest.Mock).mockResolvedValue({
     ok,
@@ -36,6 +41,7 @@ const render = () =>
 describe('useWeb3AuthStatus', () => {
   beforeEach(() => {
     global.fetch = jest.fn();
+    mockLogEvent.mockClear();
   });
 
   let consoleError: jest.SpyInstance;
@@ -194,6 +200,14 @@ describe('useWeb3AuthStatus', () => {
         expect.any(Error),
       ),
     );
+    // Also in Pearl's exported logs, with the error.
+    expect(mockLogEvent).toHaveBeenCalledWith(
+      expect.stringMatching(
+        new RegExp(
+          `${WEB3AUTH_STATUS_URL}.*Failed to fetch Web3Auth status: 500`,
+        ),
+      ),
+    );
   });
 
   it('logs once per attempt, however many components read the status', async () => {
@@ -211,6 +225,7 @@ describe('useWeb3AuthStatus', () => {
     // One attempt plus one retry, shared by all three readers.
     expect(global.fetch).toHaveBeenCalledTimes(2);
     expect(consoleError).toHaveBeenCalledTimes(2);
+    expect(mockLogEvent).toHaveBeenCalledTimes(2);
   });
 
   it('turns disabled when a refetch fails after an earlier enabled read', async () => {
@@ -264,6 +279,7 @@ describe('useWeb3AuthStatus', () => {
     });
 
     expect(consoleError).not.toHaveBeenCalled();
+    expect(mockLogEvent).not.toHaveBeenCalled();
   });
 
   describe('useLatchedWeb3AuthEnabled', () => {

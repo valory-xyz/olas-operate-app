@@ -142,8 +142,16 @@ const getWeb3AuthStatus = async (
   signal?: AbortSignal,
 ): Promise<Web3AuthStatusResponse> => {
   const controller = new AbortController();
-  const abort = () => controller.abort();
-  const timeout = setTimeout(abort, WEB3AUTH_STATUS_TIMEOUT_MS);
+  const abort = () => controller.abort(signal?.reason);
+  const timeout = setTimeout(
+    () =>
+      controller.abort(
+        new Error(
+          `Web3Auth status timed out after ${WEB3AUTH_STATUS_TIMEOUT_MS} ms`,
+        ),
+      ),
+    WEB3AUTH_STATUS_TIMEOUT_MS,
+  );
   if (signal?.aborted) abort();
   signal?.addEventListener('abort', abort);
   try {

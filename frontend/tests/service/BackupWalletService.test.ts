@@ -305,8 +305,9 @@ describe('BackupWalletService.getWeb3AuthStatus', () => {
             reject(new DOMException('Aborted', 'AbortError'));
             return;
           }
+          // Real fetch rejects with the signal's abort reason.
           init.signal.addEventListener('abort', () =>
-            reject(new DOMException('Aborted', 'AbortError')),
+            reject(init.signal.reason),
           );
         }),
     ) as unknown as typeof fetch;
@@ -324,7 +325,10 @@ describe('BackupWalletService.getWeb3AuthStatus', () => {
     expect(signal.aborted).toBe(false);
 
     jest.advanceTimersByTime(1);
-    await expect(outcome).resolves.toHaveProperty('message', 'Aborted');
+    await expect(outcome).resolves.toHaveProperty(
+      'message',
+      'Web3Auth status timed out after 10000 ms',
+    );
     expect(WEB3AUTH_STATUS_TIMEOUT_MS).toBe(10_000);
   });
 
@@ -369,6 +373,7 @@ describe('BackupWalletService.getWeb3AuthStatus', () => {
 
     const pending = BackupWalletService.getWeb3AuthStatus(controller.signal);
     controller.abort();
-    await expect(pending).rejects.toThrow('Aborted');
+    // The caller's own abort reason, not the timeout's.
+    await expect(pending).rejects.toHaveProperty('name', 'AbortError');
   });
 });

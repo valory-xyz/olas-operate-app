@@ -8,6 +8,8 @@ import {
 } from '@/constants';
 import { BackupWalletService } from '@/service/BackupWalletService';
 
+import { useElectronApi } from './useElectronApi';
+
 /** `loading` until the first read settles (including while paused offline). */
 export type Web3AuthStatus = 'loading' | 'enabled' | 'disabled';
 
@@ -17,17 +19,19 @@ export type Web3AuthStatus = 'loading' | 'enabled' | 'disabled';
  * anything but `enabled: true` is `disabled`.
  */
 export const useWeb3AuthStatus = () => {
+  const { logEvent } = useElectronApi();
   const { data, isPending, isError } = useQuery({
     queryKey: REACT_QUERY_KEYS.WEB3AUTH_STATUS_KEY,
-    // Logged here, once per attempt, rather than once per mounted consumer.
+    // Logged here, once per attempt, rather than once per mounted consumer. `logEvent`
+    // puts it in Pearl's exported logs, which don't include the renderer console.
     queryFn: ({ signal }) =>
       BackupWalletService.getWeb3AuthStatus(signal).catch((error: unknown) => {
         // A cancelled query reverts to its previous state: nothing failed closed.
-        if (signal.aborted) throw error;
-        window.console.error(
-          `Web3Auth status unavailable from ${WEB3AUTH_STATUS_URL}; treating Google/Apple as off.`,
-          error,
-        );
+        if (!signal.aborted) {
+          const message = `Web3Auth status unavailable from ${WEB3AUTH_STATUS_URL}; treating Google/Apple as off.`;
+          window.console.error(message, error);
+          logEvent?.(`${message} ${error}`);
+        }
         throw error;
       }),
     staleTime: FIVE_MINUTE_INTERVAL,
