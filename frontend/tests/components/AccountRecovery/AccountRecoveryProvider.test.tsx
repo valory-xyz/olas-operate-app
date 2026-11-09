@@ -66,6 +66,7 @@ const Consumer = () => {
     isRecoveryAvailable,
     backupWalletAddress,
     selectResetMethodAndProceed,
+    onPrev,
   } = useAccountRecoveryContext();
   if (isLoading) return <div>loading</div>;
   return (
@@ -80,6 +81,7 @@ const Consumer = () => {
       <button onClick={() => selectResetMethodAndProceed(RESET_METHOD.SRP)}>
         pick recovery phrase
       </button>
+      <button onClick={onPrev}>back</button>
     </div>
   );
 };
@@ -173,5 +175,36 @@ describe('AccountRecoveryProvider', () => {
     );
 
     expect(screen.getByTestId('available')).toHaveTextContent('false');
+    expect(screen.getByTestId('address')).toHaveTextContent('none');
+  });
+
+  it('drops the latch once Back clears the backup-wallet pick while disabled', async () => {
+    const { rerender } = renderProvider();
+    await waitFor(() =>
+      expect(screen.getByTestId('available')).toHaveTextContent('true'),
+    );
+
+    act(() => {
+      fireEvent.click(screen.getByText('pick backup wallet'));
+    });
+    mockIsWeb3AuthEnabled = false;
+    rerender(
+      <AccountRecoveryProvider>
+        <Consumer />
+      </AccountRecoveryProvider>,
+    );
+    expect(screen.getByTestId('available')).toHaveTextContent('true');
+
+    // CreateNewPassword -> SelectPasswordResetOption -> SelectRecoveryMethod (clears the pick)
+    act(() => {
+      fireEvent.click(screen.getByText('back'));
+    });
+    expect(screen.getByTestId('available')).toHaveTextContent('true');
+    act(() => {
+      fireEvent.click(screen.getByText('back'));
+    });
+
+    expect(screen.getByTestId('available')).toHaveTextContent('false');
+    expect(screen.getByTestId('address')).toHaveTextContent('none');
   });
 });
