@@ -7,6 +7,7 @@ import {
   useBackupSignerState,
 } from '../../hooks/useBackupSigner';
 import { useMultisigs } from '../../hooks/useMultisig';
+import { useServices } from '../../hooks/useServices';
 import { useSetup } from '../../hooks/useSetup';
 import { useStore } from '../../hooks/useStore';
 import { useMasterWalletContext } from '../../hooks/useWallet';
@@ -24,6 +25,7 @@ jest.mock('../../hooks/useWallet', () => ({
   useMasterWalletContext: jest.fn(),
 }));
 jest.mock('../../hooks/useMultisig', () => ({ useMultisigs: jest.fn() }));
+jest.mock('../../hooks/useServices', () => ({ useServices: jest.fn() }));
 jest.mock('../../hooks/useWeb3AuthStatus', () => ({
   useWeb3AuthStatus: jest.fn(),
 }));
@@ -32,6 +34,7 @@ const mockUseSetup = useSetup as jest.Mock;
 const mockUseStore = useStore as jest.Mock;
 const mockUseMasterWalletContext = useMasterWalletContext as jest.Mock;
 const mockUseMultisigs = useMultisigs as jest.Mock;
+const mockUseServices = useServices as jest.Mock;
 const mockUseWeb3AuthStatus = useWeb3AuthStatus as jest.Mock;
 const mockGoto = jest.fn();
 
@@ -50,6 +53,7 @@ const given = ({
   owners = [],
   ownersData,
   ownersError = false,
+  homeChainId = EvmChainIdMap.Base,
 }: {
   status?: 'loading' | 'enabled' | 'disabled';
   /** The pick in the setup context. */
@@ -64,6 +68,8 @@ const given = ({
   /** Owner data from the owners query; like the real query, none without a Safe. */
   ownersData?: unknown[] | null;
   ownersError?: boolean;
+  /** The agent's home chain; by default not the chain `SAFE` is on, so a Safe will be created. */
+  homeChainId?: number;
 }) => {
   const ownerData =
     ownersData === undefined
@@ -77,6 +83,9 @@ const given = ({
         : undefined
       : (ownersData ?? undefined);
   mockUseWeb3AuthStatus.mockReturnValue({ status });
+  mockUseServices.mockReturnValue({
+    selectedAgentConfig: { evmHomeChainId: homeChainId },
+  });
   mockUseSetup.mockReturnValue({ goto: mockGoto, backupSigner: pick });
   mockUseStore.mockReturnValue({
     storeState: storeLoaded
@@ -128,6 +137,31 @@ describe('useBackupSignerState', () => {
 
       given({ masterSafes: [SAFE], ownersData: null, ownersError: true });
       expect(stateForSafeCreation()).toEqual({ state: 'error' });
+    });
+
+    it('for Safe creation, does not wait on the owners when the home chain already has a Safe', () => {
+      given({
+        masterSafes: [SAFE],
+        ownersData: null,
+        ownersError: true,
+        homeChainId: EvmChainIdMap.Gnosis,
+      });
+      expect(stateForSafeCreation()).toEqual({
+        state: 'ready',
+        backupSignerAddress: undefined,
+      });
+    });
+
+    it('for Safe creation, stays ready when a refresh fails after the owners were read', () => {
+      given({
+        masterSafes: [SAFE],
+        owners: [BACKUP_SIGNER_ADDRESS_2],
+        ownersError: true,
+      });
+      expect(stateForSafeCreation()).toEqual({
+        state: 'ready',
+        backupSignerAddress: BACKUP_SIGNER_ADDRESS_2,
+      });
     });
 
     it('for Safe creation, waits for the wallets (and reports a failed read) with no stored pick', () => {
@@ -287,6 +321,10 @@ describe('useBackupSignerState', () => {
         owners: [BACKUP_SIGNER_ADDRESS_2],
         ownersError: true,
       });
+      expect(stateForSafeCreation()).toEqual({
+        state: 'ready',
+        backupSignerAddress: BACKUP_SIGNER_ADDRESS_2,
+      });
       expect(state()).toEqual({
         state: 'ready',
         backupSignerAddress: BACKUP_SIGNER_ADDRESS_2,
@@ -370,6 +408,29 @@ describe('useBackupSignerGuard', () => {
         state: 'ready',
         backupSignerAddress: BACKUP_SIGNER_ADDRESS,
       },
+      isBackupSignerError: false,
+    });
+  });
+
+  it('keeps a latched signer, with no error, when a later owners read fails', () => {
+    const ready = {
+      status: 'disabled' as const,
+      pick: web3AuthPick,
+      masterSafes: [SAFE],
+      owners: [BACKUP_SIGNER_ADDRESS_2],
+    };
+    given(ready);
+    const { result, rerender } = renderHook(() => useBackupSignerGuard());
+    const latched = {
+      state: 'ready',
+      backupSignerAddress: BACKUP_SIGNER_ADDRESS_2,
+    };
+    expect(result.current.latchedSigner).toEqual(latched);
+
+    given({ ...ready, ownersData: null, ownersError: true });
+    rerender();
+    expect(result.current).toEqual({
+      latchedSigner: latched,
       isBackupSignerError: false,
     });
   });
