@@ -8,6 +8,7 @@ import {
   makeAgentLiveness,
   makeService,
   makeServiceDeployment,
+  MOCK_SERVICE_CONFIG_ID_2,
 } from '../helpers/factories';
 
 /* eslint-disable @typescript-eslint/no-var-requires */
@@ -239,6 +240,17 @@ describe('useAgentActivity', () => {
     });
 
     describe('starting and reachable (Send gate)', () => {
+      // The answered-since-start latch is module-level; a stopped render clears it.
+      beforeEach(() => {
+        mockUseServices.mockReturnValue({
+          selectedService: makeService({
+            deploymentStatus: MiddlewareDeploymentStatusMap.STOPPED,
+          }),
+          deploymentDetails: undefined,
+        });
+        renderHook(() => useAgentActivity()).unmount();
+      });
+
       it('reports a deployed agent starting until its first healthy probe', () => {
         const { result } = renderWithLiveness({ last_healthy_at: null });
 
@@ -303,6 +315,92 @@ describe('useAgentActivity', () => {
         expect(result.current.isAgentActive).toBe(false);
         expect(result.current.isAgentStarting).toBe(false);
         expect(result.current.isAgentReachable).toBe(false);
+      });
+
+      describe('once the agent has answered since this start', () => {
+        const ANSWERED = {
+          is_alive: false,
+          reason: 'agent_reported_unhealthy',
+          consecutive_failures: 3,
+          last_healthy_at: null,
+        } as const;
+        const UNRESPONSIVE_AFTER = {
+          is_alive: false,
+          reason: 'agent_unresponsive',
+          consecutive_failures: 4,
+          last_healthy_at: null,
+        } as const;
+
+        const servicesWith = (
+          liveness: Parameters<typeof makeAgentLiveness>[0],
+          service: Parameters<typeof makeService>[0] = {},
+        ) => ({
+          selectedService: makeService({
+            deploymentStatus: MiddlewareDeploymentStatusMap.DEPLOYED,
+            ...service,
+          }),
+          deploymentDetails: makeServiceDeployment({
+            agent_liveness: makeAgentLiveness(liveness),
+          }),
+        });
+
+        it('keeps it reachable when the next probe fails', () => {
+          const { result, rerender } = renderWithLiveness(ANSWERED);
+          mockUseServices.mockReturnValue(servicesWith(UNRESPONSIVE_AFTER));
+          rerender();
+
+          expect(result.current.isAgentStarting).toBe(false);
+          expect(result.current.isAgentReachable).toBe(true);
+        });
+
+        it('keeps it reachable across a remount', () => {
+          renderWithLiveness(ANSWERED).unmount();
+
+          const { result } = renderWithLiveness(UNRESPONSIVE_AFTER);
+
+          expect(result.current.isAgentReachable).toBe(true);
+        });
+
+        it('does not carry the answer over to another service', () => {
+          renderWithLiveness(ANSWERED);
+          mockUseServices.mockReturnValue(
+            servicesWith(UNRESPONSIVE_AFTER, {
+              service_config_id: MOCK_SERVICE_CONFIG_ID_2,
+            }),
+          );
+
+          const { result } = renderHook(() => useAgentActivity());
+
+          expect(result.current.isAgentStarting).toBe(true);
+        });
+
+        it('reports it starting again after the next start', () => {
+          const { result, rerender } = renderWithLiveness(ANSWERED);
+          mockUseServices.mockReturnValue({
+            selectedService: makeService({
+              deploymentStatus: MiddlewareDeploymentStatusMap.DEPLOYING,
+            }),
+            deploymentDetails: undefined,
+          });
+          rerender();
+          mockUseServices.mockReturnValue(servicesWith(UNRESPONSIVE_AFTER));
+          rerender();
+
+          expect(result.current.isAgentStarting).toBe(true);
+          expect(result.current.isAgentReachable).toBe(false);
+        });
+
+        it('reports it starting again when the middleware starts a fresh record unseen', () => {
+          const { result, rerender } = renderWithLiveness(ANSWERED);
+          mockUseServices.mockReturnValue(
+            servicesWith({ ...UNRESPONSIVE_AFTER, consecutive_failures: 1 }),
+          );
+          rerender();
+          mockUseServices.mockReturnValue(servicesWith(UNRESPONSIVE_AFTER));
+          rerender();
+
+          expect(result.current.isAgentStarting).toBe(true);
+        });
       });
 
       it('treats absent liveness as reachable, not starting', () => {
