@@ -16,6 +16,14 @@ jest.mock('../../../../../hooks/useSetup', () => ({
   useSetup: () => ({ setBackupSigner: mockSetBackupSigner }),
 }));
 
+let mockIsWeb3AuthEnabled = true;
+jest.mock('../../../../../hooks/useWeb3AuthStatus', () => ({
+  useWeb3AuthStatus: () => ({
+    isWeb3AuthEnabled: mockIsWeb3AuthEnabled,
+    isLoading: false,
+  }),
+}));
+
 jest.mock(
   '../../../../../components/SetupPage/Create/SetupBackupSigner/useWeb3AuthBackupWallet',
   () => ({
@@ -63,6 +71,7 @@ const submitWith = (address: string) => {
 describe('BackupWalletManual (setup)', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockIsWeb3AuthEnabled = true;
   });
 
   it('renders address input, Continue button, and Web3Auth link', () => {
@@ -139,5 +148,16 @@ describe('BackupWalletManual (setup)', () => {
     const onFinish = jest.fn();
     render(<BackupWalletManual onFinish={onFinish} />);
     expect(useWeb3AuthMock.lastOnFinish).toBe(onFinish);
+  });
+
+  it('hides the Google/Apple link when Web3Auth is disabled', () => {
+    mockIsWeb3AuthEnabled = false;
+    render(<BackupWalletManual onFinish={jest.fn()} />);
+    expect(
+      screen.queryByRole('button', { name: /Set Up Wallet with/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /Continue/i }),
+    ).toBeInTheDocument();
   });
 });

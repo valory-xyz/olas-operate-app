@@ -6,6 +6,7 @@ import { RiAppleFill, RiGoogleFill } from 'react-icons/ri';
 import { FormFlex } from '@/components/ui';
 import { COLOR } from '@/constants';
 import { useSetup } from '@/hooks/useSetup';
+import { useWeb3AuthStatus } from '@/hooks/useWeb3AuthStatus';
 import { Address } from '@/types/Address';
 
 import { useWeb3AuthBackupWallet } from './useWeb3AuthBackupWallet';
@@ -29,6 +30,7 @@ type BackupWalletManualProps = {
 
 export const BackupWalletManual = ({ onFinish }: BackupWalletManualProps) => {
   const { setBackupSigner } = useSetup();
+  const { isWeb3AuthEnabled } = useWeb3AuthStatus();
   const [form] = Form.useForm();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -86,19 +88,21 @@ export const BackupWalletManual = ({ onFinish }: BackupWalletManualProps) => {
         </Button>
       </FormFlex>
 
-      <Button
-        type="link"
-        size="large"
-        onClick={openWeb3AuthModel}
-        disabled={isSubmitting}
-      >
-        <Flex justify="center" align="center">
-          Set Up Wallet with&nbsp;
-          <RiGoogleFill fill={COLOR.PRIMARY} />
-          &nbsp;/&nbsp;
-          <RiAppleFill fill={COLOR.PRIMARY} />
-        </Flex>
-      </Button>
+      {isWeb3AuthEnabled && (
+        <Button
+          type="link"
+          size="large"
+          onClick={openWeb3AuthModel}
+          disabled={isSubmitting}
+        >
+          <Flex justify="center" align="center">
+            Set Up Wallet with&nbsp;
+            <RiGoogleFill fill={COLOR.PRIMARY} />
+            &nbsp;/&nbsp;
+            <RiAppleFill fill={COLOR.PRIMARY} />
+          </Flex>
+        </Button>
+      )}
 
       <Text type="secondary" className="text-sm mt-16">
         Keep your backup wallet secure. If you lose both your password and

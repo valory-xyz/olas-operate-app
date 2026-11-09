@@ -12,6 +12,7 @@ jest.mock('../../../../../constants/providers', () => ({ PROVIDERS: {} }));
 const mockGoto = jest.fn();
 const mockApplyBackupDuringSetup = jest.fn();
 const mockError = jest.fn();
+let mockIsWeb3AuthEnabled = true;
 
 // Expose the onFinish each child was rendered with so tests can invoke it.
 const capturedProps: {
@@ -23,6 +24,10 @@ const capturedProps: {
 jest.mock('../../../../../hooks', () => ({
   useSetup: () => ({ goto: mockGoto }),
   useApplyBackupDuringSetup: () => mockApplyBackupDuringSetup,
+  useWeb3AuthStatus: () => ({
+    isWeb3AuthEnabled: mockIsWeb3AuthEnabled,
+    isLoading: false,
+  }),
 }));
 
 jest.mock('../../../../../context/MessageProvider', () => ({
@@ -105,6 +110,7 @@ describe('SetupBackupSigner', () => {
     jest.clearAllMocks();
     capturedProps.web3AuthOnFinish = undefined;
     capturedProps.manualOnFinish = undefined;
+    mockIsWeb3AuthEnabled = true;
   });
 
   it('renders Web3Auth path by default', () => {
@@ -163,5 +169,33 @@ describe('SetupBackupSigner', () => {
     await waitFor(() =>
       expect(mockGoto).toHaveBeenCalledWith(SETUP_SCREEN.AgentOnboarding),
     );
+  });
+
+  describe('when Web3Auth is disabled', () => {
+    beforeEach(() => {
+      mockIsWeb3AuthEnabled = false;
+    });
+
+    it('shows address entry directly and no Google/Apple option', () => {
+      render(<SetupBackupSigner />);
+      expect(screen.getByTestId('manual')).toBeInTheDocument();
+      expect(screen.queryByTestId('web3auth')).not.toBeInTheDocument();
+    });
+
+    it('on manual finish: applies the backup and navigates to AgentOnboarding', async () => {
+      mockApplyBackupDuringSetup.mockResolvedValueOnce(undefined);
+      render(<SetupBackupSigner />);
+
+      fireEvent.click(screen.getByTestId('manual-finish'));
+
+      await waitFor(() =>
+        expect(mockApplyBackupDuringSetup).toHaveBeenCalledWith(
+          '0xAa72b201fc49e0837648d5c8a89fCeD3eAb1364f',
+        ),
+      );
+      await waitFor(() =>
+        expect(mockGoto).toHaveBeenCalledWith(SETUP_SCREEN.AgentOnboarding),
+      );
+    });
   });
 });
