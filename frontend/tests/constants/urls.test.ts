@@ -375,3 +375,33 @@ describe('TRANSACTION_HISTORY_SUBGRAPH_*_BY_EVM_CHAIN — Base', () => {
     );
   });
 });
+
+describe('TRANSACTION_HISTORY_SUBGRAPH_*_BY_EVM_CHAIN — Robinhood', () => {
+  let urls: typeof import('../../constants/urls');
+
+  beforeAll(async () => {
+    urls = await import('../../constants/urls');
+  });
+
+  it('points Robinhood at the transactions-robinhood squid', () => {
+    expect(
+      urls.TRANSACTION_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN[
+        EvmChainIdMap.Robinhood
+      ],
+    ).toBe(
+      'https://subgraph.autonolas.tech/squid/transactions-robinhood/graphql',
+    );
+  });
+
+  it('reads Robinhood with the sqd schema revision', () => {
+    expect(
+      urls.getTransactionHistorySchemaRevision(EvmChainIdMap.Robinhood),
+    ).toBe('sqd');
+  });
+
+  it('leaves Mode without an endpoint, so it keeps the not-available state', () => {
+    expect(
+      urls.TRANSACTION_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN[EvmChainIdMap.Mode],
+    ).toBeUndefined();
+  });
+});
