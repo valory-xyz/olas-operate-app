@@ -7,7 +7,7 @@
  * ensures deferred reads — see individual test files for usage.
  */
 
-/** 12-method staking contract mock — identical across all agent services. */
+/** 14-method staking contract mock — identical across all agent services. */
 export const createStakingContractMock = () => ({
   getServiceInfo: jest.fn().mockReturnValue('getServiceInfo'),
   livenessPeriod: jest.fn().mockReturnValue('livenessPeriod'),
@@ -22,6 +22,10 @@ export const createStakingContractMock = () => ({
   minStakingDuration: jest.fn().mockReturnValue('minStakingDuration'),
   numAgentInstances: jest.fn().mockReturnValue('numAgentInstances'),
   epochCounter: jest.fn().mockReturnValue('epochCounter'),
+  rebaselinePending: jest.fn().mockReturnValue('rebaselinePending'),
+  mapServiceIdBaselineMissing: jest
+    .fn()
+    .mockReturnValue('mapServiceIdBaselineMissing'),
 });
 
 /** Activity checker mock for nonce-based agents (Modius, Optimism, PettAi). */

@@ -2,7 +2,10 @@ import { ethers } from 'ethers';
 import { formatEther } from 'ethers/lib/utils';
 
 import { EvmChainIdMap } from '../../../constants/chains';
-import { STAKING_PROGRAM_IDS } from '../../../constants/stakingProgram';
+import {
+  STAKING_PROGRAM_IDS,
+  StakingProgramId,
+} from '../../../constants/stakingProgram';
 import { BasiusService } from '../../../service/agents/Basius';
 import { ONE_YEAR } from '../../../service/agents/shared-services/StakedAgentService';
 import { StakingState } from '../../../types/Autonolas';
@@ -82,6 +85,17 @@ jest.mock('../../../config/stakingPrograms', () => {
           },
           address: stakingAddr1,
           chainId: EvmChainIdMap.Base,
+        },
+        v04Program: {
+          get activityChecker() {
+            return shared.activityChecker;
+          },
+          get contract() {
+            return shared.stakingContract;
+          },
+          address: stakingAddr1,
+          chainId: EvmChainIdMap.Base,
+          stakingVersion: '0.4',
         },
         // BasiusII as marketplace-regime — matches production shape (all three
         // Basius programs ship with MarketplaceV2 mech + Requester V2 checker).
@@ -275,6 +289,60 @@ describe('BasiusService.getAgentStakingRewardsInfo', () => {
       REWARDS_PER_SECOND * (NOW_S - TS_CHECKPOINT),
     );
     expect(result!.availableRewardsForEpoch).toBe(expected);
+  });
+
+  describe('StakingToken v0.4 baseline', () => {
+    const V04_PROGRAM = 'v04Program' as StakingProgramId;
+
+    it.each([
+      ['the counter read failed (baseline missing)', false, true, false],
+      ['a refill left a rebaseline pending', true, false, false],
+      ['the baseline recovered (both flags clear)', false, false, true],
+    ])(
+      'when %s (rebaselinePending=%s, baselineMissing=%s), isEligibleForRewards is %s despite enough activity',
+      async (_case, rebaselinePending, baselineMissing, expected) => {
+        shared.multicallAll.mockResolvedValueOnce([
+          ...buildResponse(0, [20]),
+          rebaselinePending,
+          baselineMissing,
+        ]);
+
+        const result = await callWith({ stakingProgramId: V04_PROGRAM });
+
+        expect(shared.multicallAll.mock.calls[0][0]).toEqual(
+          expect.arrayContaining([
+            'rebaselinePending',
+            'mapServiceIdBaselineMissing',
+          ]),
+        );
+        expect(
+          shared.stakingContract.mapServiceIdBaselineMissing,
+        ).toHaveBeenCalledWith(DEFAULT_SERVICE_NFT_TOKEN_ID);
+        expect(result!.isEligibleForRewards).toBe(expected);
+        expect(result!.isAwaitingBaseline).toBe(!expected);
+      },
+    );
+
+    it('rejects on an RPC/multicall failure instead of assuming both flags false', async () => {
+      shared.multicallAll.mockRejectedValueOnce(new Error('multicall failed'));
+
+      await expect(callWith({ stakingProgramId: V04_PROGRAM })).rejects.toThrow(
+        'multicall failed',
+      );
+    });
+
+    it('older programme: makes no baseline reads and keeps the counter-based result', async () => {
+      shared.multicallAll.mockResolvedValueOnce(buildResponse(0, [20]));
+
+      const result = await callWith();
+
+      expect(shared.stakingContract.rebaselinePending).not.toHaveBeenCalled();
+      expect(
+        shared.stakingContract.mapServiceIdBaselineMissing,
+      ).not.toHaveBeenCalled();
+      expect(result!.isEligibleForRewards).toBe(true);
+      expect(result!.isAwaitingBaseline).toBe(false);
+    });
   });
 });
 
