@@ -5,6 +5,8 @@ import { AddressZero, ON_RAMP_CHAIN_MAP, SETUP_SCREEN } from '@/constants';
 import { useGetBridgeRequirementsParams, useServices, useSetup } from '@/hooks';
 import { asMiddlewareChain } from '@/utils';
 
+import { BackupSignerGate } from '../../BackupSignerGate';
+
 export const SetupOnRamp = () => {
   const { goto: gotoSetup, prevState } = useSetup();
   const { selectedAgentConfig } = useServices();
@@ -24,11 +26,16 @@ export const SetupOnRamp = () => {
     gotoSetup(prevState ?? SETUP_SCREEN.FundYourAgent);
   }, [gotoSetup, prevState]);
 
+  // The on-ramp creates the Pearl Safe at the end, with this screen's latched signer.
   return (
-    <OnRamp
-      mode="onboard"
-      getOnRampRequirementsParams={getOnRampRequirementsParams}
-      handleBack={handleBack}
-    />
+    <BackupSignerGate onBack={handleBack}>
+      {() => (
+        <OnRamp
+          mode="onboard"
+          getOnRampRequirementsParams={getOnRampRequirementsParams}
+          handleBack={handleBack}
+        />
+      )}
+    </BackupSignerGate>
   );
 };

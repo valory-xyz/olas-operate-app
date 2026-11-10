@@ -12,8 +12,13 @@ import { SETUP_SCREEN } from '../../../constants';
 const mockGoto = jest.fn();
 const mockSetCurrentStep = jest.fn();
 
+let mockStatus: 'loading' | 'enabled' | 'disabled' = 'enabled';
 jest.mock('../../../hooks', () => ({
   useSetup: () => ({ goto: mockGoto }),
+  useWeb3AuthStatus: () => ({
+    status: mockStatus,
+    isWeb3AuthEnabled: mockStatus === 'enabled',
+  }),
 }));
 
 // Default mock — overridden per test when needed via mockContextValue
@@ -121,6 +126,7 @@ describe('SelectRecoveryMethod', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockContextValue = { ...defaultContext };
+    mockStatus = 'enabled';
   });
 
   it('renders the "Select Recovery Option" title', () => {
@@ -154,6 +160,7 @@ describe('AccountRecovery guard', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockContextValue = { ...defaultContext };
+    mockStatus = 'enabled';
   });
 
   it('shows RecoveryNotAvailable when recovery is not available and method is not SRP', () => {
@@ -222,5 +229,51 @@ describe('AccountRecovery guard', () => {
     expect(
       screen.queryByTestId('recovery-not-available'),
     ).not.toBeInTheDocument();
+  });
+
+  it('mentions the backup wallet in the reset subtitle when Web3Auth is enabled, even with no backup to recover with', () => {
+    mockStatus = 'enabled';
+    mockContextValue = {
+      ...defaultContext,
+      isRecoveryAvailable: false,
+      currentStep: RECOVERY_STEPS.SelectPasswordResetOption,
+    };
+
+    render(<AccountRecovery />);
+    expect(
+      screen.getByText(
+        'You can restore access to your account via the seed phrase or the backup wallet.',
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('drops the backup wallet from the reset subtitle when Web3Auth is disabled', () => {
+    mockStatus = 'disabled';
+    mockContextValue = {
+      ...defaultContext,
+      currentStep: RECOVERY_STEPS.SelectPasswordResetOption,
+    };
+
+    render(<AccountRecovery />);
+    expect(
+      screen.getByText(
+        'You can restore access to your account via the seed phrase.',
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('shows the recovery-phrase subtitle while the status loads (e.g. offline)', () => {
+    mockStatus = 'loading';
+    mockContextValue = {
+      ...defaultContext,
+      currentStep: RECOVERY_STEPS.SelectPasswordResetOption,
+    };
+
+    render(<AccountRecovery />);
+    expect(
+      screen.getByText(
+        'You can restore access to your account via the seed phrase.',
+      ),
+    ).toBeInTheDocument();
   });
 });

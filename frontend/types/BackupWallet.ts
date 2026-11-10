@@ -1,5 +1,10 @@
 export type BackupWalletType = 'web3auth' | 'manual';
 
+/** Response of `WEB3AUTH_STATUS_URL` */
+export type Web3AuthStatusResponse = {
+  enabled: boolean;
+};
+
 export type BackupOwnerStatusChain = {
   chain: string;
   safe: string;

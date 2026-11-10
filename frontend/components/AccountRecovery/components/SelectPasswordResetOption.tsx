@@ -2,6 +2,7 @@ import { Button, Typography } from 'antd';
 import { TbCreditCard, TbWallet } from 'react-icons/tb';
 
 import { COLOR } from '@/constants';
+import { useWeb3AuthStatus } from '@/hooks';
 
 import { CardTitle, IconContainer } from '../../ui';
 import { useAccountRecoveryContext } from '../AccountRecoveryProvider';
@@ -82,9 +83,13 @@ const BackupWalletCard = () => {
   );
 };
 
-export const SelectPasswordResetOption = () => (
-  <>
-    <SrpCard />
-    <BackupWalletCard />
-  </>
-);
+export const SelectPasswordResetOption = () => {
+  const { isWeb3AuthEnabled } = useWeb3AuthStatus();
+
+  return (
+    <>
+      <SrpCard />
+      {isWeb3AuthEnabled && <BackupWalletCard />}
+    </>
+  );
+};

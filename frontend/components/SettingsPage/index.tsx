@@ -8,11 +8,18 @@ import {
 } from 'react-icons/tb';
 import { useBoolean } from 'usehooks-ts';
 
-import { Alert, CardSection, cardStyles, IconContainer } from '@/components/ui';
+import {
+  Alert,
+  CardSection,
+  CardSkeleton,
+  cardStyles,
+  IconContainer,
+} from '@/components/ui';
 import { COLOR } from '@/constants';
 import { SettingsScreenMap } from '@/constants/screen';
 import {
   useElectronApi,
+  useLatchedWeb3AuthEnabled,
   useMnemonicExists,
   useRecoveryPhraseBackup,
   useSettings,
@@ -193,16 +200,38 @@ const SettingsMain = () => {
 
 export const Settings = () => {
   const { screen } = useSettings();
+  const isMethodScreen =
+    screen === SettingsScreenMap.AddBackupWalletMethod ||
+    screen === SettingsScreenMap.UpdateBackupWalletMethod;
+  // Decided once per entry: switching the method screen later would drop a
+  // typed address, or the Google/Apple listener and its result modal.
+  const isWeb3AuthEnabled = useLatchedWeb3AuthEnabled(
+    isMethodScreen ? screen : null,
+  );
   const settingsScreen = useMemo(() => {
+    if (isMethodScreen && isWeb3AuthEnabled === undefined) {
+      return <CardSkeleton />;
+    }
+
     switch (screen) {
       case SettingsScreenMap.Main:
         return <SettingsMain />;
+      // The method screens only add the Google/Apple choice; while it is
+      // off, address entry is shown directly.
       case SettingsScreenMap.AddBackupWalletMethod:
-        return <AddBackupWalletMethodScreen />;
+        return isWeb3AuthEnabled ? (
+          <AddBackupWalletMethodScreen />
+        ) : (
+          <AddBackupWalletManualScreen standsInForMethod />
+        );
       case SettingsScreenMap.AddBackupWalletManual:
         return <AddBackupWalletManualScreen />;
       case SettingsScreenMap.UpdateBackupWalletMethod:
-        return <UpdateBackupWalletMethodScreen />;
+        return isWeb3AuthEnabled ? (
+          <UpdateBackupWalletMethodScreen />
+        ) : (
+          <UpdateBackupWalletManualScreen standsInForMethod />
+        );
       case SettingsScreenMap.UpdateBackupWalletManual:
         return <UpdateBackupWalletManualScreen />;
       case SettingsScreenMap.UpdateBackupWalletConfirm:
@@ -212,7 +241,7 @@ export const Settings = () => {
       default:
         return null;
     }
-  }, [screen]);
+  }, [screen, isMethodScreen, isWeb3AuthEnabled]);
 
   return (
     <AddBackupWalletProvider>

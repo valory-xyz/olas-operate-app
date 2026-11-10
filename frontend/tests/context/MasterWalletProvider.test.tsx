@@ -235,4 +235,26 @@ describe('MasterWalletProvider', () => {
     expect(types).toContain(WALLET_TYPE.EOA);
     expect(types).toContain(WALLET_TYPE.Safe);
   });
+
+  it('reports a failed wallets read as an error and logs it', async () => {
+    const error = new Error('wallets unavailable');
+    mockGetWallets.mockRejectedValue(error);
+    const consoleError = jest
+      .spyOn(console, 'error')
+      .mockImplementation(() => {});
+
+    const { result } = renderHook(() => useContext(MasterWalletContext), {
+      wrapper: createWrapper(),
+    });
+
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    // The backup signer's error reason names it.
+    expect(result.current.error).toBe(error);
+    expect(result.current.masterWallets).toBeUndefined();
+    expect(consoleError).toHaveBeenCalledWith(
+      'Failed to read the wallets',
+      error,
+    );
+    consoleError.mockRestore();
+  });
 });
