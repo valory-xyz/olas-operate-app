@@ -271,7 +271,7 @@ Newer staking contracts set the on-chain threshold to ~1 (staking unlocks after 
 
 ### StakingToken v0.4 baseline (rebaseline)
 
-StakingToken v0.4 keeps a service's counter snapshot unchanged when a read fails, and re-baselines every service after an empty reward reserve is refilled. While either is unresolved the activity counters prove nothing about the current epoch. A v0.4 programme sets `stakingVersion: '0.4'` in its config. No programme sets it yet; older contracts lack the two functions, so only flagged programmes call them.
+StakingToken v0.4 keeps a service's counter snapshot unchanged when a read fails, and re-baselines every service after an empty reward reserve is refilled. While either is unresolved the activity counters prove nothing about the current epoch. A v0.4 programme sets `stakingVersion: '0.4'` in its config. Older contracts lack the two functions, so only flagged programmes call them.
 
 - **Reads:** `StakedAgentService.readWithBaseline` adds `rebaselinePending()` and `mapServiceIdBaselineMissing(serviceId)` to the same multicall as each agent's eligibility reads. It returns `isAwaitingBaseline` (either flag true).
 - **Effect:** while `isAwaitingBaseline`, `isEligibleForRewards` is false, and `deriveIsEpochTargetMet` returns false in both regimes. The UI shows the ordinary "target not met" state; there is no dedicated copy.

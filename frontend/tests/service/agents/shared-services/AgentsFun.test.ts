@@ -101,6 +101,18 @@ jest.mock('../../../../config/stakingPrograms', () => {
           chainId: EvmChainIdMap.Base,
           stakingVersion: '0.4',
         },
+        v04NonceProgram: {
+          get activityChecker() {
+            return shared.activityChecker;
+          },
+          get contract() {
+            return shared.stakingContract;
+          },
+          mech: undefined,
+          address: stakingAddr2,
+          chainId: EvmChainIdMap.Base,
+          stakingVersion: '0.4',
+        },
         [STAKING_PROGRAM_IDS.MemeBaseAlpha2]: {
           get activityChecker() {
             return shared.activityChecker;
@@ -376,6 +388,28 @@ describe('AgentsFunService.getAgentStakingRewardsInfo', () => {
         expect(
           shared.stakingContract.mapServiceIdBaselineMissing,
         ).toHaveBeenCalledWith(DEFAULT_SERVICE_NFT_TOKEN_ID);
+        expect(result!.isEligibleForRewards).toBe(expected);
+        expect(result!.isAwaitingBaseline).toBe(!expected);
+      },
+    );
+
+    it.each([
+      ['the counter read failed (baseline missing)', false, true, false],
+      ['the baseline recovered (both flags clear)', false, false, true],
+    ])(
+      'nonce-based programme: when %s (rebaselinePending=%s, baselineMissing=%s), isEligibleForRewards is %s despite enough activity',
+      async (_case, rebaselinePending, baselineMissing, expected) => {
+        shared.multicallAll.mockResolvedValueOnce([
+          ...buildFirstResponse(0),
+          rebaselinePending,
+          baselineMissing,
+        ]);
+        shared.activityChecker.getMultisigNonces.mockResolvedValueOnce([20]);
+
+        const result = await callWith({
+          stakingProgramId: 'v04NonceProgram' as StakingProgramId,
+        });
+
         expect(result!.isEligibleForRewards).toBe(expected);
         expect(result!.isAwaitingBaseline).toBe(!expected);
       },

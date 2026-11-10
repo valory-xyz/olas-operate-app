@@ -7,7 +7,7 @@
  * ensures deferred reads — see individual test files for usage.
  */
 
-/** 14-method staking contract mock — identical across all agent services. */
+/** Staking contract mock — identical across all agent services. */
 export const createStakingContractMock = () => ({
   getServiceInfo: jest.fn().mockReturnValue('getServiceInfo'),
   livenessPeriod: jest.fn().mockReturnValue('livenessPeriod'),

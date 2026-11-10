@@ -217,7 +217,6 @@ describe('deriveIsEpochTargetMet', () => {
     ).toBe(false);
   });
 
-  // A v0.4 programme awaiting a baseline: the counters prove nothing this epoch.
   it.each([
     ['legacy', undefined],
     ['decoupled', 8],

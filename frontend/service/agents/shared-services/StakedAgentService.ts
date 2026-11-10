@@ -68,18 +68,14 @@ export abstract class StakedAgentService {
   ): Promise<unknown>;
   abstract getInstance(): StakedAgentService;
 
-  /**
-   * Runs `calls` in one multicall, adding the StakingToken v0.4 baseline reads
-   * for programmes flagged `stakingVersion: '0.4'`. A failed multicall or a
-   * malformed baseline read throws; neither is ever read as "baseline present".
-   */
+  /** Throws on a failed or malformed baseline read rather than treating it as false. */
   static readWithBaseline = async (
     provider: MulticallProvider,
     stakingProgramConfig: StakingProgramConfig,
     serviceId: number,
     calls: ContractCall[],
   ) => {
-    const { contract, stakingVersion } = stakingProgramConfig;
+    const { address, contract, stakingVersion } = stakingProgramConfig;
     const baselineCalls: ContractCall[] =
       stakingVersion === '0.4'
         ? [
@@ -95,7 +91,9 @@ export abstract class StakedAgentService {
       baselineReads.length !== baselineCalls.length ||
       baselineReads.some((read) => typeof read !== 'boolean')
     ) {
-      throw new Error('Unexpected StakingToken baseline reads');
+      throw new Error(
+        `Unexpected StakingToken baseline reads for ${address} service ${serviceId}: ${JSON.stringify(baselineReads)}`,
+      );
     }
 
     return {
