@@ -398,8 +398,18 @@ describe('TRANSACTION_HISTORY_SUBGRAPH_*_BY_EVM_CHAIN — Robinhood', () => {
       urls.getTransactionHistorySchemaRevision(EvmChainIdMap.Robinhood),
     ).toBe('sqd');
   });
+});
 
-  it('leaves Mode without an endpoint, so it keeps the not-available state', () => {
+describe('TRANSACTION_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN — Mode', () => {
+  let urls: typeof import('../../constants/urls');
+
+  beforeAll(async () => {
+    urls = await import('../../constants/urls');
+  });
+
+  // Mode is deprecated and has no indexer, so it must keep the not-available
+  // state while other chains gain endpoints.
+  it('leaves Mode without an endpoint', () => {
     expect(
       urls.TRANSACTION_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN[EvmChainIdMap.Mode],
     ).toBeUndefined();
