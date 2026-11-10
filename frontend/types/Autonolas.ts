@@ -5,31 +5,36 @@ const zodBigNumber = z.object({
   _hex: z.string().startsWith('0x'),
 });
 
-export const StakingRewardsInfoSchema = z.object({
-  serviceInfo: z.array(z.unknown()),
-  /* checkpoint period (in seconds). eg. 86400 */
-  livenessPeriod: zodBigNumber,
-  livenessRatio: zodBigNumber,
-  /* rewards per second */
-  rewardsPerSecond: zodBigNumber,
-  isEligibleForRewards: z.boolean(),
-  /** True while a StakingToken v0.4 programme awaits a counter baseline; always false on older programmes. */
-  isAwaitingBaseline: z.boolean(),
-  /**
-   * Raw on-chain activity count this epoch (requests since last checkpoint).
-   * Compared against a staking program's off-chain `activityTarget` to decide
-   * "epoch work done" in the decoupled-activity regime (OPE-1803). In the
-   * legacy regime this is the same count used to derive `isEligibleForRewards`.
-   * `.finite()` so a degenerate on-chain read (e.g. a missing nonce element →
-   * `NaN`) fails the parse loudly instead of silently reading as "target not met".
-   */
-  activityThisEpoch: z.number().finite(),
-  availableRewardsForEpoch: z.number(),
-  /* current epoch rewards */
-  accruedServiceStakingRewards: z.number(),
-  minimumStakedAmount: z.number(),
-  tsCheckpoint: zodBigNumber.transform((val) => parseInt(val._hex, 16)),
-});
+export const StakingRewardsInfoSchema = z
+  .object({
+    serviceInfo: z.array(z.unknown()),
+    /* checkpoint period (in seconds). eg. 86400 */
+    livenessPeriod: zodBigNumber,
+    livenessRatio: zodBigNumber,
+    /* rewards per second */
+    rewardsPerSecond: zodBigNumber,
+    isEligibleForRewards: z.boolean(),
+    /** True while a StakingToken v0.4 programme awaits a counter baseline; always false on older programmes. */
+    isAwaitingBaseline: z.boolean(),
+    /**
+     * Raw on-chain activity count this epoch (requests since last checkpoint).
+     * Compared against a staking program's off-chain `activityTarget` to decide
+     * "epoch work done" in the decoupled-activity regime (OPE-1803). In the
+     * legacy regime this is the same count used to derive `isEligibleForRewards`.
+     * `.finite()` so a degenerate on-chain read (e.g. a missing nonce element →
+     * `NaN`) fails the parse loudly instead of silently reading as "target not met".
+     */
+    activityThisEpoch: z.number().finite(),
+    availableRewardsForEpoch: z.number(),
+    /* current epoch rewards */
+    accruedServiceStakingRewards: z.number(),
+    minimumStakedAmount: z.number(),
+    tsCheckpoint: zodBigNumber.transform((val) => parseInt(val._hex, 16)),
+  })
+  .refine((info) => !(info.isAwaitingBaseline && info.isEligibleForRewards), {
+    message:
+      'isEligibleForRewards must be false while awaiting a StakingToken baseline',
+  });
 
 export type StakingRewardsInfo = z.infer<typeof StakingRewardsInfoSchema>;
 

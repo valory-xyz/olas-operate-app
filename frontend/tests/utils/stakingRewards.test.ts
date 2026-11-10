@@ -143,6 +143,19 @@ describe('fetchAgentStakingRewardsInfo', () => {
       fetchAgentStakingRewardsInfo(defaultParams),
     ).rejects.toBeInstanceOf(ZodError);
   });
+
+  it('rejects a response that is eligible while awaiting a baseline', async () => {
+    mockGetAgentStakingRewardsInfo.mockResolvedValue(
+      makeRawStakingRewardsInfo({
+        isAwaitingBaseline: true,
+        isEligibleForRewards: true,
+      }),
+    );
+
+    await expect(
+      fetchAgentStakingRewardsInfo(defaultParams),
+    ).rejects.toBeInstanceOf(ZodError);
+  });
 });
 
 describe('getStakingProgramActivityTarget', () => {
