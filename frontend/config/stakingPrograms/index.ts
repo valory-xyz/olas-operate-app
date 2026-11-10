@@ -33,6 +33,11 @@ export type StakingProgramConfig = {
    * agent's hardcoded `ACTIVITY_TARGET`.
    */
   activityTarget?: number;
+  /**
+   * Set on StakingToken v0.4 programmes, which also expose `rebaselinePending`
+   * and `mapServiceIdBaselineMissing`. Absent → an older contract that lacks them.
+   */
+  stakingVersion?: '0.4';
   name: string;
   address: Address;
   agentsSupported: AgentType[];
