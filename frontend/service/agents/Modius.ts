@@ -61,7 +61,13 @@ export abstract class ModiusService extends StakedAgentService {
       activityChecker.livenessRatio(),
       activityChecker.getMultisigNonces(agentMultisigAddress),
     ];
-    const multicallResponse = await provider.all(contractCalls);
+    const { reads: multicallResponse, isAwaitingBaseline } =
+      await StakedAgentService.readWithBaseline(
+        provider,
+        stakingProgramConfig,
+        serviceId,
+        contractCalls,
+      );
 
     const [
       serviceInfo,
@@ -91,7 +97,8 @@ export abstract class ModiusService extends StakedAgentService {
       : 0;
 
     // Check eligibility for rewards
-    const isEligibleForRewards = eligibleRequests >= requiredRequests;
+    const isEligibleForRewards =
+      !isAwaitingBaseline && eligibleRequests >= requiredRequests;
 
     // Available rewards for the current epoch
     const expectedEpochRewards = rewardsPerSecond * livenessPeriod;
@@ -113,6 +120,7 @@ export abstract class ModiusService extends StakedAgentService {
       livenessRatio,
       rewardsPerSecond,
       isEligibleForRewards,
+      isAwaitingBaseline,
       activityThisEpoch: eligibleRequests,
       availableRewardsForEpoch,
       accruedServiceStakingRewards: parseFloat(

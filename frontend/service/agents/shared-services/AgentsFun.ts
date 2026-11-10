@@ -58,7 +58,13 @@ export abstract class AgentsFunService extends StakedAgentService {
       stakingTokenProxyContract.tsCheckpoint(),
       activityChecker.livenessRatio(),
     ];
-    const multicallResponse = await provider.all(contractCalls);
+    const { reads: multicallResponse, isAwaitingBaseline } =
+      await StakedAgentService.readWithBaseline(
+        provider,
+        stakingProgramConfig,
+        serviceId,
+        contractCalls,
+      );
 
     const [
       serviceInfo,
@@ -94,7 +100,8 @@ export abstract class AgentsFunService extends StakedAgentService {
         : 0;
       eligibleRequests = mechRequestCount - mechRequestCountOnLastCheckpoint;
 
-      isEligibleForRewards = eligibleRequests >= requiredRequests;
+      isEligibleForRewards =
+        !isAwaitingBaseline && eligibleRequests >= requiredRequests;
     } else {
       // Define eligibility for rewards in legacy staking contracts
       // by checking the multisig nonces on the activity checker
@@ -105,7 +112,8 @@ export abstract class AgentsFunService extends StakedAgentService {
         ? currentMultisigNonces[0] - lastMultisigNonces[0]
         : 0;
 
-      isEligibleForRewards = eligibleRequests >= requiredRequests;
+      isEligibleForRewards =
+        !isAwaitingBaseline && eligibleRequests >= requiredRequests;
     }
 
     const availableRewardsForEpoch = Math.max(
@@ -124,6 +132,7 @@ export abstract class AgentsFunService extends StakedAgentService {
       livenessRatio,
       rewardsPerSecond,
       isEligibleForRewards,
+      isAwaitingBaseline,
       activityThisEpoch: eligibleRequests,
       availableRewardsForEpoch,
       accruedServiceStakingRewards: parseFloat(

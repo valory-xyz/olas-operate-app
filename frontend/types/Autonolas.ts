@@ -14,6 +14,12 @@ export const StakingRewardsInfoSchema = z.object({
   rewardsPerSecond: zodBigNumber,
   isEligibleForRewards: z.boolean(),
   /**
+   * StakingToken v0.4 has no valid counter baseline for the service this epoch
+   * (a rebaseline is pending or its baseline is missing), so the counters prove
+   * nothing and the epoch target counts as not met. Always false on older programmes.
+   */
+  isAwaitingBaseline: z.boolean(),
+  /**
    * Raw on-chain activity count this epoch (requests since last checkpoint).
    * Compared against a staking program's off-chain `activityTarget` to decide
    * "epoch work done" in the decoupled-activity regime (OPE-1803). In the
