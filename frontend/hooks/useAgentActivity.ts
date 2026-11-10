@@ -1,4 +1,5 @@
 import { MiddlewareDeploymentStatusMap } from '@/constants/deployment';
+import { hasAnsweredSinceStart } from '@/context/agentAnsweredLatch';
 import { AgentLivenessReason } from '@/types';
 
 import { useServices } from './useServices';
@@ -68,6 +69,21 @@ export const useAgentActivity = () => {
     return liveness.consecutive_failures >= MIN_FAILED_PROBES_TO_REPORT_DOWN;
   })();
 
+  const isAgentActive = isServiceRunning && !isAgentDown;
+
+  const hasAnswered =
+    !!selectedService &&
+    hasAnsweredSinceStart(selectedService.service_config_id, {
+      isDeployed: isServiceRunning,
+      liveness,
+    });
+
+  // Explicit null only, as a defensive guard: every middleware that sends
+  // `agent_liveness` also sends `last_healthy_at`, so a missing key is not a
+  // supported shape and counts as reachable, like a missing `agent_liveness`.
+  const isAgentStarting =
+    isAgentActive && liveness?.last_healthy_at === null && !hasAnswered;
+
   return {
     deploymentDetails,
     isServiceRunning,
@@ -80,6 +96,9 @@ export const useAgentActivity = () => {
      * would make its card read "Start the agent" directly under a "Stop agent"
      * button. Only the activity strip should act on liveness.
      */
-    isAgentActive: isServiceRunning && !isAgentDown,
+    isAgentActive,
+    /** Active, but its HTTP server may not be up yet, so a chat message would fail. */
+    isAgentStarting,
+    isAgentReachable: isAgentActive && !isAgentStarting,
   };
 };

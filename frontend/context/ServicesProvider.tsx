@@ -23,6 +23,7 @@ import {
   isActiveDeploymentStatus,
   MESSAGE_WIDTH,
   MiddlewareDeploymentStatus,
+  MiddlewareDeploymentStatusMap,
   PAGES,
   REACT_QUERY_KEYS,
 } from '@/constants';
@@ -56,6 +57,7 @@ import {
   sortByCreationTime,
 } from '@/utils';
 
+import { observeAgentLiveness } from './agentAnsweredLatch';
 import { migrateIsInitialFunded } from './migrations/isInitialFunded';
 import { resolveSelectedServiceConfigId } from './migrations/serviceSelection';
 import { OnlineStatusContext } from './OnlineStatusProvider';
@@ -236,6 +238,18 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
       refetchIntervalInBackground: true,
     },
   );
+
+  // Every service, not only the selected one, so that a start nobody is
+  // looking at still clears the agent's earlier answer.
+  useEffect(() => {
+    Object.entries(allDeployments ?? {}).forEach(([id, deployment]) =>
+      observeAgentLiveness(id, {
+        isDeployed:
+          deployment?.status === MiddlewareDeploymentStatusMap.DEPLOYED,
+        liveness: deployment?.agent_liveness,
+      }),
+    );
+  }, [allDeployments]);
 
   const deploymentDetails = selectedServiceConfigId
     ? allDeployments?.[selectedServiceConfigId]
