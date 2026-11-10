@@ -41,7 +41,7 @@ pearl-transactions — graph-node: Gnosis v1 | Optimism v1 — SQD squid: Polygo
 
 ## Schema revisions (v1 / v2 / sqd)
 
-The app supports three incompatible revisions: Gnosis/Optimism proxies pin subgraph **v0.0.6 (v1)**; Polygon and Base are served by the **SQD squid (sqd)** at `autonolas-subgraph/squids/pearl-transactions` (Polygon: OPE-1905, the graph-node deployment indexed too slowly to be usable, see the squid's `MIGRATION.md`; Base: [BDMARK-2309](https://linear.app/valory-xyz/issue/BDMARK-2309), endpoint `…/squid/transactions-base/graphql`; Robinhood: OPE-1995, endpoint `…/squid/transactions-robinhood/graphql`, whose squid does not index Stock Tokens, so their transfers never reach the app). **v0.0.7 (v2)** was Base's graph-node revision; no chain uses it now, but the code path is kept for rollback (Base → `https://transactions-base.subgraph.autonolas.tech/` + `v2`). Differences (verified against the live Base deployment and the live Polygon squid, not READMEs):
+The app supports three incompatible revisions: Gnosis/Optimism proxies pin subgraph **v0.0.6 (v1)**; Polygon, Base and Robinhood are served by the **SQD squid (sqd)** at `autonolas-subgraph/squids/pearl-transactions` (Polygon: OPE-1905, the graph-node deployment indexed too slowly to be usable, see the squid's `MIGRATION.md`; Base: [BDMARK-2309](https://linear.app/valory-xyz/issue/BDMARK-2309), endpoint `…/squid/transactions-base/graphql`; Robinhood: OPE-1995, endpoint `…/squid/transactions-robinhood/graphql`, whose squid does not index Stock Tokens, so their transfers never reach the app). **v0.0.7 (v2)** was Base's graph-node revision; no chain uses it now, but the code path is kept for rollback (Base → `https://transactions-base.subgraph.autonolas.tech/` + `v2`). Differences (verified against the live Base deployment and the live Polygon squid, not READMEs):
 
 | | v1 (v0.0.6) | v2 (v0.0.7) | sqd (squid) |
 |---|---|---|---|
@@ -183,7 +183,7 @@ Per `frontend/tests/TEST_PLAN.md` conventions, under `frontend/tests/`:
 
 ## Phasing (history)
 
-Shipped as planned: types/service/hook (VLOP-73), the history section inside `BalancesAndAssets` and the stale banner, then the Agent Wallet view (OPE-1773), Optimism, Base (v2 revision) and Polygon via SQD (OPE-1905). Multi-instance interaction remains as noted under Open questions.
+Shipped as planned: types/service/hook (VLOP-73), the history section inside `BalancesAndAssets` and the stale banner, then the Agent Wallet view (OPE-1773), Optimism, Base (v2 revision), Polygon via SQD (OPE-1905) and Robinhood via SQD (OPE-1995). Multi-instance interaction remains as noted under Open questions.
 
 ## Dependencies
 
