@@ -1,4 +1,5 @@
 import { ethers } from 'ethers';
+import { ContractCall, Provider as MulticallProvider } from 'ethers-multicall';
 
 import { StakingProgramConfig } from '../../../../config/stakingPrograms';
 import { EvmChainId, EvmChainIdMap } from '../../../../constants/chains';
@@ -346,4 +347,117 @@ describe('StakedAgentService', () => {
       expect(result).toBeNull();
     });
   });
+});
+
+describe('StakedAgentService.readWithBaseline', () => {
+  const ELIGIBILITY_CALLS = [
+    'getServiceInfo',
+    'tsCheckpoint',
+  ] as unknown as ContractCall[];
+  const ELIGIBILITY_READS = [{ 2: [5, 10] }, 1_710_000_000];
+
+  const mockRebaselinePending = jest.fn(() => 'rebaselinePending');
+  const mockMapServiceIdBaselineMissing = jest.fn(
+    () => 'mapServiceIdBaselineMissing',
+  );
+  const provider = { all: mockMulticallAll } as unknown as MulticallProvider;
+
+  const makeProgram = (stakingVersion?: '0.4') =>
+    makeStubConfig({
+      stakingVersion,
+      contract: {
+        rebaselinePending: mockRebaselinePending,
+        mapServiceIdBaselineMissing: mockMapServiceIdBaselineMissing,
+      },
+    });
+
+  const read = (stakingVersion?: '0.4') =>
+    StakedAgentService.readWithBaseline(
+      provider,
+      makeProgram(stakingVersion),
+      DEFAULT_SERVICE_NFT_TOKEN_ID,
+      ELIGIBILITY_CALLS,
+    );
+
+  beforeEach(() => {
+    mockMulticallAll.mockReset();
+    mockRebaselinePending.mockClear();
+    mockMapServiceIdBaselineMissing.mockClear();
+  });
+
+  it('older programme: makes only the eligibility calls and is never awaiting a baseline', async () => {
+    mockMulticallAll.mockResolvedValueOnce(ELIGIBILITY_READS);
+
+    const result = await read();
+
+    expect(mockMulticallAll).toHaveBeenCalledWith(ELIGIBILITY_CALLS);
+    expect(mockRebaselinePending).not.toHaveBeenCalled();
+    expect(mockMapServiceIdBaselineMissing).not.toHaveBeenCalled();
+    expect(result).toEqual({
+      reads: ELIGIBILITY_READS,
+      isAwaitingBaseline: false,
+    });
+  });
+
+  it('v0.4 programme: adds both baseline reads to the same multicall', async () => {
+    mockMulticallAll.mockResolvedValueOnce([
+      ...ELIGIBILITY_READS,
+      false,
+      false,
+    ]);
+
+    await read('0.4');
+
+    expect(mockMulticallAll).toHaveBeenCalledTimes(1);
+    expect(mockMulticallAll).toHaveBeenCalledWith([
+      ...ELIGIBILITY_CALLS,
+      'rebaselinePending',
+      'mapServiceIdBaselineMissing',
+    ]);
+    expect(mockMapServiceIdBaselineMissing).toHaveBeenCalledWith(
+      DEFAULT_SERVICE_NFT_TOKEN_ID,
+    );
+  });
+
+  it.each([
+    ['the counter read failed (baseline missing)', false, true, true],
+    ['a refill left a rebaseline pending', true, false, true],
+    ['the baseline recovered (both flags clear)', false, false, false],
+  ])(
+    'v0.4 programme: when %s (rebaselinePending=%s, baselineMissing=%s), isAwaitingBaseline is %s',
+    async (_case, rebaselinePending, baselineMissing, expected) => {
+      mockMulticallAll.mockResolvedValueOnce([
+        ...ELIGIBILITY_READS,
+        rebaselinePending,
+        baselineMissing,
+      ]);
+
+      const result = await read('0.4');
+
+      expect(result).toEqual({
+        reads: ELIGIBILITY_READS,
+        isAwaitingBaseline: expected,
+      });
+    },
+  );
+
+  it('v0.4 programme: an RPC/multicall failure rejects instead of assuming both flags false', async () => {
+    mockMulticallAll.mockRejectedValueOnce(new Error('multicall failed'));
+
+    await expect(read('0.4')).rejects.toThrow('multicall failed');
+  });
+
+  it.each([
+    ['missing', [...ELIGIBILITY_READS]],
+    ['non-boolean', [...ELIGIBILITY_READS, undefined, false]],
+  ])(
+    'v0.4 programme: rejects %s baseline reads instead of reading them as false',
+    async (_case, response) => {
+      mockMulticallAll.mockResolvedValueOnce(response);
+
+      await expect(read('0.4')).rejects.toThrow(
+        'Unexpected StakingToken baseline reads',
+      );
+    },
+  );
 });

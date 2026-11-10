@@ -124,6 +124,16 @@ describe('fetchAgentStakingRewardsInfo', () => {
     ).rejects.toBeInstanceOf(ZodError);
   });
 
+  it('rejects a response without isAwaitingBaseline instead of reading it as false', async () => {
+    const { isAwaitingBaseline: _omitted, ...withoutBaseline } =
+      makeRawStakingRewardsInfo();
+    mockGetAgentStakingRewardsInfo.mockResolvedValue(withoutBaseline);
+
+    await expect(fetchAgentStakingRewardsInfo(defaultParams)).rejects.toThrow(
+      ZodError,
+    );
+  });
+
   it('rejects a non-finite activityThisEpoch (degenerate on-chain read fails loud)', async () => {
     mockGetAgentStakingRewardsInfo.mockResolvedValue(
       makeRawStakingRewardsInfo({ activityThisEpoch: NaN }),
@@ -206,4 +216,23 @@ describe('deriveIsEpochTargetMet', () => {
       ),
     ).toBe(false);
   });
+
+  // A v0.4 programme awaiting a baseline: the counters prove nothing this epoch.
+  it.each([
+    ['legacy', undefined],
+    ['decoupled', 8],
+  ])(
+    '%s regime: false while a v0.4 baseline is awaited, even with activity above the target',
+    (_regime, activityTarget) => {
+      expect(
+        deriveIsEpochTargetMet(
+          makeStakingRewardsInfo({
+            isAwaitingBaseline: true,
+            activityThisEpoch: 20,
+          }),
+          activityTarget,
+        ),
+      ).toBe(false);
+    },
+  );
 });
