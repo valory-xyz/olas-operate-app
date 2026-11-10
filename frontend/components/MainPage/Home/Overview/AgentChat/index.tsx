@@ -13,7 +13,7 @@ import {
 } from '@/hooks';
 import { buildFeedItems } from '@/utils/agentChat';
 
-import { ChatInput } from './ChatInput';
+import { ChatAvailability, ChatInput } from './ChatInput';
 import { CHAT_COPY, SUGGESTED_QUESTIONS } from './constants';
 import { DotField } from './DotField';
 import { Feed } from './Feed';
@@ -68,13 +68,18 @@ const EmptyState = ({ questions, onPick }: EmptyStateProps) => (
  */
 export const AgentChat = () => {
   const { selectedService, selectedAgentType } = useServices();
-  const { isAgentActive } = useAgentActivity();
+  const { isAgentReachable, isAgentStarting } = useAgentActivity();
   const serviceConfigId = selectedService?.service_config_id;
   const deploymentStatus = selectedService?.deploymentStatus;
 
   // Stopped or never run: no input. Starting, stopping or down: the input is
   // shown but can't send, as the middleware only forwards while it runs.
   const isStopped = !isActiveDeploymentStatus(deploymentStatus);
+  const availability: ChatAvailability = (() => {
+    if (isAgentReachable) return 'ready';
+    if (isAgentStarting) return 'starting';
+    return 'unavailable';
+  })();
 
   const [text, setText] = useState('');
   const feed = useAgentFeed(serviceConfigId);
@@ -126,7 +131,7 @@ export const AgentChat = () => {
               text={text}
               onTextChange={setText}
               onSend={() => chat.send(text.trim())}
-              canSend={isAgentActive}
+              availability={availability}
               isMessagesOnly={chat.isMessagesOnly}
               onMessagesOnlyChange={chat.setMessagesOnly}
               isBusyNoticeOpen={chat.isBusyNoticeOpen}
