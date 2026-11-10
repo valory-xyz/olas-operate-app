@@ -1,6 +1,6 @@
 # Transaction History (VLOP-73)
 
-Per-chain ledger view inside Pearl Wallet and the Agent Wallet. Source: the pearl-transactions indexer — graph-node subgraphs for Gnosis/Optimism ([autonolas-subgraph-studio](https://github.com/valory-xyz/autonolas-subgraph-studio/tree/main/subgraphs/pearl-transactions)) and SQD squids for Polygon and Base ([autonolas-subgraph](https://github.com/valory-xyz/autonolas-subgraph/tree/main/squids/pearl-transactions)). Mirrors the rewards-history stack: Service (GraphQL) → Hook (React Query) → Component. Shipped on all four chains; sections marked *(as shipped)* are current, the rest is the original plan kept for history.
+Per-chain ledger view inside Pearl Wallet and the Agent Wallet. Source: the pearl-transactions indexer — graph-node subgraphs for Gnosis/Optimism ([autonolas-subgraph-studio](https://github.com/valory-xyz/autonolas-subgraph-studio/tree/main/subgraphs/pearl-transactions)) and SQD squids for Polygon, Base and Robinhood ([autonolas-subgraph](https://github.com/valory-xyz/autonolas-subgraph/tree/main/squids/pearl-transactions)). Mirrors the rewards-history stack: Service (GraphQL) → Hook (React Query) → Component. Shipped on Gnosis, Polygon, Optimism and Base, with Robinhood added in OPE-1995; sections marked *(as shipped)* are current, the rest is the original plan kept for history.
 
 Linear: [VLOP-73](https://linear.app/valory-xyz/issue/VLOP-73).
 
@@ -28,7 +28,7 @@ Acceptance criteria from VLOP-73:
 ## Data flow (as shipped)
 
 ```
-pearl-transactions — graph-node: Gnosis v1 | Optimism v1 — SQD squid: Polygon sqd | Base sqd
+pearl-transactions — graph-node: Gnosis v1 | Optimism v1 — SQD squid: Polygon sqd | Base sqd | Robinhood sqd
   └── TransactionHistoryService / AgentTransactionHistoryService
         (graphql-request; per-revision document + Zod schema + normalizer → v1-shaped domain)
         └── useTransactionHistory / useAgentTransactionHistory (React Query, 15-min refetch)
@@ -41,7 +41,7 @@ pearl-transactions — graph-node: Gnosis v1 | Optimism v1 — SQD squid: Polygo
 
 ## Schema revisions (v1 / v2 / sqd)
 
-The app supports three incompatible revisions: Gnosis/Optimism proxies pin subgraph **v0.0.6 (v1)**; Polygon and Base are served by the **SQD squid (sqd)** at `autonolas-subgraph/squids/pearl-transactions` (Polygon: OPE-1905, the graph-node deployment indexed too slowly to be usable, see the squid's `MIGRATION.md`; Base: [BDMARK-2309](https://linear.app/valory-xyz/issue/BDMARK-2309), endpoint `…/squid/transactions-base/graphql`). **v0.0.7 (v2)** was Base's graph-node revision; no chain uses it now, but the code path is kept for rollback (Base → `https://transactions-base.subgraph.autonolas.tech/` + `v2`). Differences (verified against the live Base deployment and the live Polygon squid, not READMEs):
+The app supports three incompatible revisions: Gnosis/Optimism proxies pin subgraph **v0.0.6 (v1)**; Polygon and Base are served by the **SQD squid (sqd)** at `autonolas-subgraph/squids/pearl-transactions` (Polygon: OPE-1905, the graph-node deployment indexed too slowly to be usable, see the squid's `MIGRATION.md`; Base: [BDMARK-2309](https://linear.app/valory-xyz/issue/BDMARK-2309), endpoint `…/squid/transactions-base/graphql`; Robinhood: OPE-1995, endpoint `…/squid/transactions-robinhood/graphql`, where only OLAS, WETH and USDG are indexed, so Stock Token transfers never reach the app). **v0.0.7 (v2)** was Base's graph-node revision; no chain uses it now, but the code path is kept for rollback (Base → `https://transactions-base.subgraph.autonolas.tech/` + `v2`). Differences (verified against the live Base deployment and the live Polygon squid, not READMEs):
 
 | | v1 (v0.0.6) | v2 (v0.0.7) | sqd (squid) |
 |---|---|---|---|
