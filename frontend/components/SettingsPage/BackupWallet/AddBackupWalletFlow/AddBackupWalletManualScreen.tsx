@@ -16,7 +16,14 @@ import {
 
 const { Title, Text } = Typography;
 
-export const AddBackupWalletManualScreen = () => {
+type AddBackupWalletManualScreenProps = {
+  /** Settings shows this screen in place of the method screen: Back leaves the flow. */
+  standsInForMethod?: boolean;
+};
+
+export const AddBackupWalletManualScreen = ({
+  standsInForMethod = false,
+}: AddBackupWalletManualScreenProps) => {
   const { goto } = useSettings();
   const [form] = Form.useForm();
   const addressValue = Form.useWatch('backup-signer', form) as
@@ -65,7 +72,11 @@ export const AddBackupWalletManualScreen = () => {
 
   const handleBack = () => {
     resetFlow();
-    goto(SettingsScreenMap.AddBackupWalletMethod);
+    goto(
+      standsInForMethod
+        ? SettingsScreenMap.Main
+        : SettingsScreenMap.AddBackupWalletMethod,
+    );
   };
 
   return (

@@ -16,7 +16,12 @@ import {
   SupportedMiddlewareChain,
 } from '@/constants';
 import { useOnlineStatus } from '@/context/OnlineStatusProvider';
-import { useMasterWalletContext, useSetup, useStore } from '@/hooks';
+import {
+  useMasterWalletContext,
+  useSetup,
+  useStore,
+  useWeb3AuthStatus,
+} from '@/hooks';
 import { RecoveryService } from '@/service/Recovery';
 import { Address } from '@/types';
 import { SwapSafeTransaction } from '@/types/Recovery';
@@ -179,6 +184,7 @@ export const AccountRecoveryProvider = ({
   // their EOA's private key (RecoverExistingAccountCard covers that flow).
   const isWeb3AuthBackup =
     storeState?.lastProvidedBackupWallet?.type === 'web3auth';
+  const { isWeb3AuthEnabled } = useWeb3AuthStatus();
 
   const [currentStep, setCurrentStep] = useState<RecoverySteps>(
     RECOVERY_STEPS.SelectRecoveryMethod,
@@ -261,7 +267,10 @@ export const AccountRecoveryProvider = ({
     return parseRecoveryFundingRequirements(recoveryFundingRequirements);
   }, [recoveryFundingRequirements]);
 
+  // The live status gates only the choice: once the user has picked the backup-wallet
+  // path, a later refetch (flag change or outage) doesn't cut the recovery off.
   const isRecoveryAvailable = !!(
+    (isWeb3AuthEnabled || selectedResetMethod === RESET_METHOD.BackupWallet) &&
     isWeb3AuthBackup &&
     backupWalletDetails?.areAllBackupOwnersSame &&
     backupWalletDetails?.hasBackupWalletsAcrossEveryChain

@@ -10,29 +10,35 @@ const mockOn = jest.fn();
 const mockRemoveListener = jest.fn();
 const mockSetBackupSigner = jest.fn();
 const mockMessageSuccess = jest.fn();
+let mockIsReplacingBackup = false;
 
 jest.mock('antd', () => ({
   message: { success: (...args: unknown[]) => mockMessageSuccess(...args) },
 }));
 
 jest.mock('../../../../../hooks', () => ({
-  useSetup: jest.fn(() => ({ setBackupSigner: mockSetBackupSigner })),
+  useSetup: jest.fn(() => ({
+    setBackupSigner: mockSetBackupSigner,
+    isReplacingBackup: mockIsReplacingBackup,
+  })),
   useElectronApi: jest.fn(() => ({
     ipcRenderer: { on: mockOn, removeListener: mockRemoveListener },
     web3AuthWindow: { show: mockShow, close: mockClose },
   })),
 }));
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
+/* eslint-disable @typescript-eslint/no-var-requires */
 const { useElectronApi } = require('../../../../../hooks') as {
   useElectronApi: jest.Mock;
 };
+/* eslint-enable @typescript-eslint/no-var-requires */
 
 describe('useWeb3AuthBackupWallet', () => {
   const onFinish = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockIsReplacingBackup = false;
     useElectronApi.mockReturnValue({
       ipcRenderer: { on: mockOn, removeListener: mockRemoveListener },
       web3AuthWindow: { show: mockShow, close: mockClose },
@@ -94,6 +100,19 @@ describe('useWeb3AuthBackupWallet', () => {
     expect(mockMessageSuccess).toHaveBeenCalledWith(
       'Backup wallet successfully set',
     );
+  });
+
+  it('leaves a replacement unsaved for the parent to apply first', () => {
+    mockIsReplacingBackup = true;
+    renderHook(() =>
+      useWeb3AuthBackupWallet({ onFinish, showSuccessMessage: false }),
+    );
+    const handler = mockOn.mock.calls[0][1];
+
+    act(() => handler(BACKUP_SIGNER_ADDRESS));
+
+    expect(onFinish).toHaveBeenCalledWith(BACKUP_SIGNER_ADDRESS);
+    expect(mockSetBackupSigner).not.toHaveBeenCalled();
   });
 
   it('closes web3AuthWindow when address is received', () => {

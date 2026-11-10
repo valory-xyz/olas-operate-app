@@ -9,7 +9,7 @@ import {
   IconContainer,
 } from '@/components/ui';
 import { COLOR } from '@/constants';
-import { useBackupOwnerStatus } from '@/hooks';
+import { useBackupOwnerStatus, useBackupWalletUpdatePrompt } from '@/hooks';
 import { Address } from '@/types/Address';
 
 import { AddBackupWalletPasswordModal } from './AddBackupWalletFlow';
@@ -20,6 +20,7 @@ const { Text } = Typography;
 
 export const BackupWalletSection = () => {
   const { backupOwnerStatus, isError, refetch } = useBackupOwnerStatus();
+  const { isUpdatePromptVisible } = useBackupWalletUpdatePrompt();
   const {
     value: isAddPasswordOpen,
     setTrue: openAddPassword,
@@ -114,8 +115,23 @@ export const BackupWalletSection = () => {
     );
   }
 
-  // State C: backup set but out of sync
-  if (canonicalAddress !== null && !allChainsSynced) {
+  // State C: backup set but out of sync, or (taking precedence) a Google/Apple
+  // backup to replace. Updating applies the new address to every chain.
+  if (isUpdatePromptVisible || !allChainsSynced) {
+    const warning = isUpdatePromptVisible
+      ? {
+          title: 'Backup Wallet Update Recommended',
+          body: 'We recommend a hardware wallet or a wallet with its own seed phrase as your backup, so you keep full control of recovery.',
+          action: 'Update Backup Wallet',
+          onAction: openUpdatePassword,
+        }
+      : {
+          title: 'Backup Wallet Out of Sync',
+          body: "Your backup wallet isn't applied across all chains. Sync now to apply it everywhere.",
+          action: 'Sync Now',
+          onAction: openSync,
+        };
+
     return (
       <>
         <CardSection $padding="24px" $borderBottom vertical gap={12}>
@@ -135,25 +151,27 @@ export const BackupWalletSection = () => {
             showIcon
             message={
               <Flex vertical gap={4}>
-                <Text className="text-sm font-weight-600">
-                  Backup Wallet Out of Sync
-                </Text>
-                <Text className="text-sm">
-                  Your backup wallet isn&apos;t applied across all chains. Sync
-                  now to apply it everywhere.
-                </Text>
-                <Button className="w-fit text-sm mt-6" onClick={openSync}>
-                  Sync Now
+                <Text className="text-sm font-weight-600">{warning.title}</Text>
+                <Text className="text-sm">{warning.body}</Text>
+                <Button
+                  className="w-fit text-sm mt-6"
+                  onClick={warning.onAction}
+                >
+                  {warning.action}
                 </Button>
               </Flex>
             }
           />
-          <Button className="w-fit text-sm" onClick={openUpdatePassword}>
-            Update Backup Wallet
-          </Button>
+          {!isUpdatePromptVisible && (
+            <Button className="w-fit text-sm" onClick={openUpdatePassword}>
+              Update Backup Wallet
+            </Button>
+          )}
         </CardSection>
 
-        <SyncBackupWalletModal open={isSyncOpen} onClose={closeSync} />
+        {!isUpdatePromptVisible && (
+          <SyncBackupWalletModal open={isSyncOpen} onClose={closeSync} />
+        )}
         <UpdateBackupWalletPasswordModal
           open={isUpdatePasswordOpen}
           onClose={closeUpdatePassword}

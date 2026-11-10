@@ -1,5 +1,12 @@
-import { BACKEND_URL, CONTENT_TYPE_JSON_UTF8 } from '@/constants';
-import { BackupOwnerStatus } from '@/types/BackupWallet';
+import {
+  BACKEND_URL,
+  CONTENT_TYPE_JSON_UTF8,
+  WEB3AUTH_STATUS_URL,
+} from '@/constants';
+import {
+  BackupOwnerStatus,
+  Web3AuthStatusResponse,
+} from '@/types/BackupWallet';
 
 export type ApplyBackupOwnerRequest = {
   backup_owner: string;
@@ -37,10 +44,18 @@ export type SyncBackupOwnerResponse = {
 //   canonical is stored but chains may still be out of sync).
 // NETWORK_ERROR    — HTTP 5xx / fetch rejection / any other 4xx. Canonical
 //   was NOT stored. Recovery: retry apply.
+// SIGNER_PENDING / SIGNER_UNAVAILABLE / SIGNER_NEEDS_NEW_BACKUP — onboarding
+//   refused to create the Pearl Safe: the backup signer is still being checked
+//   (wait and retry), can't be checked because a read keeps failing (check the
+//   connection; the reason is logged), or a new one must be chosen (go to the
+//   backup step).
 export type BackupWalletErrorCode =
   | 'PARTIAL_FAILURE'
   | 'ALREADY_LINKED'
-  | 'NETWORK_ERROR';
+  | 'NETWORK_ERROR'
+  | 'SIGNER_PENDING'
+  | 'SIGNER_UNAVAILABLE'
+  | 'SIGNER_NEEDS_NEW_BACKUP';
 
 export class BackupWalletError extends Error {
   constructor(
@@ -123,8 +138,58 @@ const syncBackupOwner = async (): Promise<SyncBackupOwnerResponse> =>
     return data;
   });
 
+/** A stalled pearl-api must turn into an error, which callers treat as disabled. */
+export const WEB3AUTH_STATUS_TIMEOUT_MS = 10_000;
+
+const getWeb3AuthStatus = async (
+  signal?: AbortSignal,
+): Promise<Web3AuthStatusResponse> => {
+  const controller = new AbortController();
+  const abort = () => controller.abort(signal?.reason);
+  const timeout = setTimeout(
+    () =>
+      controller.abort(
+        new Error(
+          `Web3Auth status timed out after ${WEB3AUTH_STATUS_TIMEOUT_MS} ms`,
+        ),
+      ),
+    WEB3AUTH_STATUS_TIMEOUT_MS,
+  );
+  if (signal?.aborted) abort();
+  signal?.addEventListener('abort', abort);
+  try {
+    const response = await fetch(WEB3AUTH_STATUS_URL, {
+      method: 'GET',
+      headers: { accept: 'application/json' },
+      signal: controller.signal,
+    });
+    if (!response.ok) {
+      const text = await response.text().catch(() => '');
+      throw new Error(
+        `Failed to fetch Web3Auth status: ${response.status} ${text}`.trim(),
+      );
+    }
+    // Awaited so reading the body stays inside the timeout.
+    const body: unknown = await response.json();
+    if (
+      typeof body !== 'object' ||
+      body === null ||
+      typeof (body as Partial<Web3AuthStatusResponse>).enabled !== 'boolean'
+    ) {
+      throw new Error(
+        `Unexpected Web3Auth status response: ${JSON.stringify(body)}`,
+      );
+    }
+    return body as Web3AuthStatusResponse;
+  } finally {
+    clearTimeout(timeout);
+    signal?.removeEventListener('abort', abort);
+  }
+};
+
 export const BackupWalletService = {
   getBackupOwnerStatus,
+  getWeb3AuthStatus,
   applyBackupOwner,
   syncBackupOwner,
 };

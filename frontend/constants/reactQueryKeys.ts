@@ -148,6 +148,7 @@ export const REACT_QUERY_KEYS = {
 
   // backup owner
   BACKUP_OWNER_STATUS_KEY: ['backupOwnerStatus'] as const,
+  WEB3AUTH_STATUS_KEY: ['web3AuthStatus'] as const,
 
   FUNDING_RUN_ACTIVE_KEY: ['fundingRunActive'] as const,
   FUNDING_RUN_SOURCES_KEY: ['fundingRunSources'] as const,

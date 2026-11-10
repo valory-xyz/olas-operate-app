@@ -21,11 +21,16 @@ type SetupObjectType = {
 type SetupContextType = {
   setupObject: SetupObjectType;
   setSetupObject: Dispatch<SetStateAction<SetupObjectType>>;
-  // Password captured in SetupPassword and consumed by the backup-wallet
-  // eager-write call (useApplyBackupDuringSetup). Held only for the duration
-  // of onboarding; cleared as soon as it's used.
+  // Password captured in SetupPassword (new account) or SetupWelcomeLogin (when
+  // replacing an ignored Google/Apple pick), and consumed by the backup-wallet
+  // eager-write call (useApplyBackupDuringSetup). Cleared once used, or once
+  // nothing will use it.
   password: string | null;
   setPassword: (password: string | null) => void;
+  // The backup step is replacing a backup whose canonical owner is already set,
+  // so the apply must succeed before onboarding moves on.
+  isReplacingBackup: boolean;
+  setIsReplacingBackup: (isReplacingBackup: boolean) => void;
 };
 
 export const SetupContext = createContext<SetupContextType>({
@@ -37,6 +42,8 @@ export const SetupContext = createContext<SetupContextType>({
   setSetupObject: () => {},
   password: null,
   setPassword: () => {},
+  isReplacingBackup: false,
+  setIsReplacingBackup: () => {},
 });
 
 export const SetupProvider = ({ children }: PropsWithChildren) => {
@@ -46,10 +53,18 @@ export const SetupProvider = ({ children }: PropsWithChildren) => {
     backupSigner: undefined,
   });
   const [password, setPassword] = useState<string | null>(null);
+  const [isReplacingBackup, setIsReplacingBackup] = useState(false);
 
   return (
     <SetupContext.Provider
-      value={{ setupObject, setSetupObject, password, setPassword }}
+      value={{
+        setupObject,
+        setSetupObject,
+        password,
+        setPassword,
+        isReplacingBackup,
+        setIsReplacingBackup,
+      }}
     >
       {children}
     </SetupContext.Provider>

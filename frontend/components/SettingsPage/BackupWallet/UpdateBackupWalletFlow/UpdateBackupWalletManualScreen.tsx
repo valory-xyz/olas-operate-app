@@ -11,10 +11,17 @@ import { useUpdateBackupWallet } from './UpdateBackupWalletContext';
 
 const { Title, Text } = Typography;
 
-export const UpdateBackupWalletManualScreen = () => {
+type UpdateBackupWalletManualScreenProps = {
+  /** Settings shows this screen in place of the method screen: Back leaves the flow. */
+  standsInForMethod?: boolean;
+};
+
+export const UpdateBackupWalletManualScreen = ({
+  standsInForMethod = false,
+}: UpdateBackupWalletManualScreenProps) => {
   const { goto } = useSettings();
   const { backupOwnerStatus } = useBackupOwnerStatus();
-  const { setNewAddress, sameAddressError, setSameAddressError } =
+  const { setNewAddress, sameAddressError, setSameAddressError, resetFlow } =
     useUpdateBackupWallet();
   const [form] = Form.useForm();
   const addressValue = Form.useWatch('backup-signer', form) as
@@ -50,13 +57,21 @@ export const UpdateBackupWalletManualScreen = () => {
     goto(SettingsScreenMap.UpdateBackupWalletConfirm);
   };
 
+  // Standing in for the method screen, Back leaves the flow, as the method screen's Back does.
+  const handleBack = () => {
+    if (!standsInForMethod) {
+      goto(SettingsScreenMap.UpdateBackupWalletMethod);
+      return;
+    }
+    resetFlow();
+    goto(SettingsScreenMap.Main);
+  };
+
   return (
     <Flex style={cardStyles} vertical gap={32}>
       <Card styles={{ body: { padding: 24 } }}>
         <Flex vertical gap={16}>
-          <BackButton
-            onPrev={() => goto(SettingsScreenMap.UpdateBackupWalletMethod)}
-          />
+          <BackButton onPrev={handleBack} />
           <Title level={4} className="m-0">
             Provide Existing Backup Wallet
           </Title>

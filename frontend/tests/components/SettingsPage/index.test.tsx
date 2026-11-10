@@ -5,6 +5,7 @@ import { Settings } from '../../../components/SettingsPage';
 import { SettingsScreen, SettingsScreenMap } from '../../../constants/screen';
 import {
   useElectronApi,
+  useLatchedWeb3AuthEnabled,
   useMnemonicExists,
   useRecoveryPhraseBackup,
   useSettings,
@@ -23,6 +24,7 @@ jest.mock('../../../hooks', () => ({
   useRecoveryPhraseBackup: jest.fn(),
   useSettings: jest.fn(),
   useStore: jest.fn(),
+  useLatchedWeb3AuthEnabled: jest.fn(),
 }));
 
 jest.mock('../../../components/SettingsPage/UpdatePassword', () => ({
@@ -49,8 +51,15 @@ jest.mock(
     AddBackupWalletMethodScreen: () => (
       <div data-testid="add-backup-wallet-method-screen" />
     ),
-    AddBackupWalletManualScreen: () => (
-      <div data-testid="add-backup-wallet-manual-screen" />
+    AddBackupWalletManualScreen: ({
+      standsInForMethod,
+    }: {
+      standsInForMethod?: boolean;
+    }) => (
+      <div
+        data-testid="add-backup-wallet-manual-screen"
+        data-stands-in={String(!!standsInForMethod)}
+      />
     ),
     AddBackupWalletPasswordModal: () => null,
     AddBackupWalletProvider: ({ children }: { children: React.ReactNode }) =>
@@ -64,8 +73,15 @@ jest.mock(
     UpdateBackupWalletMethodScreen: () => (
       <div data-testid="update-backup-wallet-method-screen" />
     ),
-    UpdateBackupWalletManualScreen: () => (
-      <div data-testid="update-backup-wallet-manual-screen" />
+    UpdateBackupWalletManualScreen: ({
+      standsInForMethod,
+    }: {
+      standsInForMethod?: boolean;
+    }) => (
+      <div
+        data-testid="update-backup-wallet-manual-screen"
+        data-stands-in={String(!!standsInForMethod)}
+      />
     ),
     UpdateBackupWalletConfirmScreen: () => (
       <div data-testid="update-backup-wallet-confirm-screen" />
@@ -96,6 +112,7 @@ jest.mock('../../../components/ui', () => ({
   CardSection: (props: { children?: React.ReactNode }) => (
     <div>{props.children}</div>
   ),
+  CardSkeleton: () => <div data-testid="card-skeleton" />,
   cardStyles: {},
   IconContainer: (props: { children?: React.ReactNode }) => (
     <div>{props.children}</div>
@@ -118,6 +135,7 @@ const mockUseMnemonicExists = useMnemonicExists as jest.Mock;
 const mockUseRecoveryPhraseBackup = useRecoveryPhraseBackup as jest.Mock;
 const mockUseElectronApi = useElectronApi as jest.Mock;
 const mockUseStore = useStore as jest.Mock;
+const mockUseLatchedWeb3AuthEnabled = useLatchedWeb3AuthEnabled as jest.Mock;
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -130,6 +148,7 @@ const setupDefaults = (
     mnemonicExists?: boolean;
     isBackedUp?: boolean;
     keepDeviceAwake?: boolean;
+    isWeb3AuthEnabled?: boolean;
   } = {},
 ) => {
   const {
@@ -137,7 +156,10 @@ const setupDefaults = (
     mnemonicExists = true,
     isBackedUp = false,
     keepDeviceAwake = false,
+    isWeb3AuthEnabled = true,
   } = overrides;
+
+  mockUseLatchedWeb3AuthEnabled.mockReturnValue(isWeb3AuthEnabled);
 
   mockUseSettings.mockReturnValue({ screen, goto: jest.fn() });
   mockUseMnemonicExists.mockReturnValue({ mnemonicExists });
@@ -179,7 +201,7 @@ describe('Settings (SettingsPage entry)', () => {
       render(<Settings />);
       expect(
         screen.getByTestId('add-backup-wallet-manual-screen'),
-      ).toBeInTheDocument();
+      ).toHaveAttribute('data-stands-in', 'false');
       expect(screen.queryByText('Settings')).not.toBeInTheDocument();
     });
 
@@ -196,7 +218,96 @@ describe('Settings (SettingsPage entry)', () => {
       render(<Settings />);
       expect(
         screen.getByTestId('update-backup-wallet-manual-screen'),
+      ).toHaveAttribute('data-stands-in', 'false');
+    });
+
+    it('renders AddBackupWalletManualScreen for AddBackupWalletMethod when Web3Auth is disabled', () => {
+      setupDefaults({
+        screen: SettingsScreenMap.AddBackupWalletMethod,
+        isWeb3AuthEnabled: false,
+      });
+      render(<Settings />);
+      expect(
+        screen.getByTestId('add-backup-wallet-manual-screen'),
+      ).toHaveAttribute('data-stands-in', 'true');
+      expect(
+        screen.queryByTestId('add-backup-wallet-method-screen'),
+      ).not.toBeInTheDocument();
+    });
+
+    it('renders UpdateBackupWalletManualScreen for UpdateBackupWalletMethod when Web3Auth is disabled', () => {
+      setupDefaults({
+        screen: SettingsScreenMap.UpdateBackupWalletMethod,
+        isWeb3AuthEnabled: false,
+      });
+      render(<Settings />);
+      expect(
+        screen.getByTestId('update-backup-wallet-manual-screen'),
+      ).toHaveAttribute('data-stands-in', 'true');
+      expect(
+        screen.queryByTestId('update-backup-wallet-method-screen'),
+      ).not.toBeInTheDocument();
+    });
+
+    it('shows a loader, not the address screen, on a method screen while the status loads', () => {
+      setupDefaults({ screen: SettingsScreenMap.AddBackupWalletMethod });
+      mockUseLatchedWeb3AuthEnabled.mockReturnValue(undefined);
+      const { rerender } = render(<Settings />);
+      expect(screen.getByTestId('card-skeleton')).toBeInTheDocument();
+      expect(
+        screen.queryByTestId('add-backup-wallet-manual-screen'),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByTestId('add-backup-wallet-method-screen'),
+      ).not.toBeInTheDocument();
+
+      mockUseLatchedWeb3AuthEnabled.mockReturnValue(true);
+      rerender(<Settings />);
+      expect(
+        screen.getByTestId('add-backup-wallet-method-screen'),
       ).toBeInTheDocument();
+    });
+
+    it('shows a loader on the Update method screen while the status loads, then the method screen once enabled', () => {
+      setupDefaults({ screen: SettingsScreenMap.UpdateBackupWalletMethod });
+      mockUseLatchedWeb3AuthEnabled.mockReturnValue(undefined);
+      const { rerender } = render(<Settings />);
+      expect(screen.getByTestId('card-skeleton')).toBeInTheDocument();
+      expect(
+        screen.queryByTestId('update-backup-wallet-manual-screen'),
+      ).not.toBeInTheDocument();
+
+      mockUseLatchedWeb3AuthEnabled.mockReturnValue(true);
+      rerender(<Settings />);
+      expect(
+        screen.getByTestId('update-backup-wallet-method-screen'),
+      ).toBeInTheDocument();
+    });
+
+    it('does not hold other Settings screens behind the status', () => {
+      setupDefaults({ screen: SettingsScreenMap.Main });
+      mockUseLatchedWeb3AuthEnabled.mockReturnValue(undefined);
+      render(<Settings />);
+      expect(screen.queryByTestId('card-skeleton')).not.toBeInTheDocument();
+      expect(screen.getByText('Password')).toBeInTheDocument();
+    });
+
+    it.each([
+      SettingsScreenMap.AddBackupWalletMethod,
+      SettingsScreenMap.UpdateBackupWalletMethod,
+    ])('decides Web3Auth once per entry into %s', (methodScreen) => {
+      setupDefaults({ screen: methodScreen });
+      render(<Settings />);
+      expect(mockUseLatchedWeb3AuthEnabled).toHaveBeenCalledWith(methodScreen);
+    });
+
+    it.each([
+      SettingsScreenMap.Main,
+      SettingsScreenMap.UpdateBackupWalletManual,
+    ])('clears the Web3Auth decision on %s', (otherScreen) => {
+      setupDefaults({ screen: otherScreen });
+      render(<Settings />);
+      expect(mockUseLatchedWeb3AuthEnabled).toHaveBeenCalledWith(null);
     });
 
     it('renders UpdateBackupWalletConfirmScreen when screen is UpdateBackupWalletConfirm', () => {

@@ -35,14 +35,16 @@ const pulse = keyframes`
   50% { opacity: 0.35; }
 `;
 
+// Width and height are whole multiples of background-size so no dot is clipped.
 const ActivityDots = styled.span<{ $tone: Tone }>`
   flex: none;
-  width: 14px;
-  height: 14px;
+  width: 20px;
+  height: 20px;
   background-image: radial-gradient(
     circle,
-    ${({ $tone }) => ($tone === 'active' ? COLOR.PURPLE : COLOR.NEUTRAL_4)} 1px,
-    transparent 1.5px
+    ${({ $tone }) => ($tone === 'active' ? COLOR.PURPLE : COLOR.NEUTRAL_4)}
+      1.4px,
+    transparent 1.6px
   );
   background-size: 4px 4px;
   ${({ $tone }) =>
@@ -138,8 +140,12 @@ export const LoaderRow = ({
   isMessagesOnly,
 }: LoaderRowProps) => {
   const { selectedService } = useServices();
-  const { deploymentDetails, isAgentActive, isServiceDeploying } =
-    useAgentActivity();
+  const {
+    deploymentDetails,
+    isAgentActive,
+    isAgentStarting,
+    isServiceDeploying,
+  } = useAgentActivity();
   const { workStatus } = useEpochWorkStatus();
   const {
     value: isModalOpen,
@@ -164,6 +170,7 @@ export const LoaderRow = ({
     if (isMessagesOnly) return null;
     if (isServiceDeploying) return { text: CHAT_COPY.loading, tone: 'active' };
     if (!isAgentActive) return { text: CHAT_COPY.notRunning, tone: 'still' };
+    if (isAgentStarting) return { text: CHAT_COPY.loading, tone: 'active' };
     if (workStatus === 'standby') {
       return { text: CHAT_COPY.standby, tone: 'still' };
     }
@@ -177,6 +184,7 @@ export const LoaderRow = ({
     return { text: CHAT_COPY.running, tone: 'active' };
   }, [
     isAgentActive,
+    isAgentStarting,
     isMessagesOnly,
     isPending,
     isServiceDeploying,

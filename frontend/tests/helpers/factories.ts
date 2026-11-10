@@ -375,12 +375,16 @@ export const makeServiceDeployment = (
   ...overrides,
 });
 
+/** Unix seconds of a healthy probe: the agent has answered since this start. */
+export const LAST_HEALTHY_AT = 1_760_000_100;
+
 export const makeAgentLiveness = (
   overrides: Partial<AgentLiveness> = {},
 ): AgentLiveness => ({
   is_alive: true,
   reason: null,
   consecutive_failures: 0,
+  last_healthy_at: LAST_HEALTHY_AT,
   restarts_since_last_healthy: 0,
   ...overrides,
 });

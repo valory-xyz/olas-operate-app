@@ -16,7 +16,7 @@ Master EOA (single, derived from mnemonic)
 - `frontend/context/MasterWalletProvider.tsx` — master wallet state (EOA + Safes from API, polling)
 - `frontend/context/PearlWalletProvider.tsx` — wallet chain/deposit/withdraw state for the Pearl Wallet UI
 - `frontend/hooks/useWallet.ts` — context accessor for `MasterWalletProvider`
-- `frontend/hooks/useBackupSigner.ts` — resolves backup signer address (setup context → on-chain fallback)
+- `frontend/hooks/useBackupSigner.ts` — resolves the backup signer (setup context → on-chain fallback; a Google/Apple pick is ignored while Web3Auth is off) and its readiness
 - `frontend/hooks/useMultisig.ts` — multisig owners via on-chain calls (single and batch)
 - `frontend/hooks/useMasterSafeCreationAndTransfer.ts` — safe creation + asset transfer mutation
 - `frontend/utils/wallet.ts` — token resolution helpers (`getTokenDetails`, `getFromToken`, `tokenBalancesToSentence`)
@@ -163,9 +163,15 @@ Derived values:
 - `masterSafes` — all wallets matching `type: Safe, owner: Master`
 - `getMasterSafeOf(chainId)` — find master safe for a specific chain
 
-### Backup signer resolution (`useBackupSigner`)
+### Backup signer resolution (`useBackupSignerState`)
 
-Returns `backupSigner.address` from setup context if available, otherwise falls back to `allBackupAddresses[0]` from `useMultisigs`. This means during setup the user-chosen signer is used, but post-setup it reads actual on-chain owners.
+`useBackupSignerState` returns `{ state: 'pending' | 'error' | 'needsNewBackup' | 'ready', backupSignerAddress? }`. It reads the stored pick from the setup context or, until that is restored, the pearl store (`pending` until the store loads).
+
+It has two modes. **Routing** (the default; `SetupWelcome`) never waits on the wallets or the Safe owners unless a Google/Apple pick is being ignored. **Safe creation** (`{ forSafeCreation: true }`; `BackupSignerGate` and `useMasterSafeCreationAndTransfer`) also waits for the wallets and, when the agent's home chain has no Pearl Safe yet (so one will be created), for the Safe owners before any on-chain fallback.
+
+- Normally (an address pick, no pick, or Web3Auth enabled): `ready` with the pick's address. Without one it falls back to `allBackupAddresses[0]` from `useMultisigs` — live in routing mode; in Safe-creation mode only once the reads above are in (`pending` while they load, `error` while one keeps failing). During setup the user-chosen signer is used; post-setup it reads actual on-chain owners.
+- A stored Google/Apple (`web3auth`) pick while pearl-api reports Web3Auth off is ignored: `pending` while the status or wallets load, `error` while the wallets read keeps failing, then `needsNewBackup` when there is no Pearl Safe yet. With a Safe it is `ready` with the on-chain backup owner, after the owners wait in Safe-creation mode. With no on-chain backup owner, routing is still `ready` with none (Settings' Add/Update covers it), but Safe-creation mode is `needsNewBackup` when it would create a Safe, so no Safe is created without one. Readiness keys off wallet and owner *data*, not query flags: a failed refresh keeps what was read before.
+- `useBackupSignerGuard`, through `BackupSignerGate` (wrapping `FundYourAgent`, `SetupOnRamp` and `SetupBridgeOnboarding`), waits for `ready`, redirects to `SetupBackupSigner` on `needsNewBackup`, and keeps its first `ready` decision and address for the screen's lifetime. On `error` (its `reason` names the failed read, and for owners the chain) it logs once to Pearl's logs (`logEvent`), and the gate's error view keeps the screen's Back. `SetupWelcome` doesn't route while `pending`/`error`, and shows a retrying message on `error`. `BackupSignerGate` shares the latched decision through `LatchedBackupSignerContext`; `useMasterSafeCreationAndTransfer` reads it (else the live state) and refuses to create the Safe unless `ready`.
 
 ### Multisig owners (`useMultisig` / `useMultisigs`)
 
@@ -230,7 +236,9 @@ Pure functions for token resolution:
 | `useMultisig` with `safe` = nil | Query disabled, returns `undefined` owners |
 | `useMultisigs` with no multicall provider for a chain | `console.error`, skips that chain (continues with others) |
 | Token config not found during safe creation transfer mapping | Throws `"Token config not found for symbol: {symbol} on chain: {chain}"` |
-| `useMasterSafeCreationAndTransfer` mutation error | `console.error` + `message.error('Failed to create master safe.')` |
+| `useMasterSafeCreationAndTransfer` refuses: backup signer not `ready` | Throws `BackupWalletError`: `SIGNER_PENDING` (`pending`; "Still checking your backup wallet…"), `SIGNER_UNAVAILABLE` (`error`; "Couldn't check your backup wallet…", reason logged via `logEvent`) or `SIGNER_NEEDS_NEW_BACKUP` ("The backup wallet is not set…", and routes to `SetupBackupSigner`). `onError` branches on the code |
+| `useMasterSafeCreationAndTransfer` — any other mutation error | `console.error` + `message.error('Failed to create master safe.')` |
+| `useMultisigs` owners read fails (`provider.all` rejects) | Logs the first chain whose owners read fails, then the query errors (`masterSafesOwnersIsError`) and the remaining chains are skipped; earlier owner data is kept |
 | `usePearlWallet` outside `PearlWalletProvider` | Returns the context default (no-op stubs) — the guard in the source (`if (!context)`) is unreachable because `createContext` provides a non-null default object |
 | `getFromToken` — token symbol not found on destination chain | Throws `"Failed to get token symbol for the destination token: {address}"` |
 | `getFromToken` — source token not found on source chain | Throws `"Failed to get source token for the destination token: {address}"` |
@@ -241,6 +249,6 @@ Pure functions for token resolution:
 - **`MasterWalletProvider`** — `transformMiddlewareWalletResponse` is not exported but contains the core logic. Test through the provider by mocking `WalletService.getWallets` and verifying `masterEoa`, `masterSafes`, `getMasterSafeOf` derivations. The `getAddress` call will throw for truly invalid addresses — not just return false.
 - **`useMultisig`** depends on `ethers.Contract` — needs mocking of the Contract constructor and `getOwners`. `useMultisig` uses case-insensitive `toLowerCase` to filter backup owners; `useMultisigs` uses strict `!==` — this difference matters for test fixtures.
 - **`useMultisigs`** additionally depends on `ethers-multicall` `MulticallContract` and `multicallProvider.all()`.
-- **`useMasterSafeCreationAndTransfer`** depends on `useBackupSigner`, `useServices`, `useBalanceAndRefillRequirementsContext`, and `useMessageApi` — all need mocking. The `TOKEN_CONFIG` lookup and `AddressZero` for native gas tokens are important edge cases.
+- **`useMasterSafeCreationAndTransfer`** depends on `useBackupSignerState`, `useLatchedBackupSigner` (`LatchedBackupSignerContext`), `useElectronApi`, `useSetup`, `usePageState`, `useServices`, `useBalanceAndRefillRequirementsContext`, and `useMessageApi` — all need mocking. The `TOKEN_CONFIG` lookup and `AddressZero` for native gas tokens are important edge cases.
 - **`PearlWalletProvider`** has many dependencies (`useServices`, `useService`, `useBalanceContext`, `useBalanceAndRefillRequirementsContext`, `useMasterWalletContext`, `usePageState`, `useAvailableAssets`). The chain-stability effect (skip sync on wallet pages) is an important branch. `getChainList` and `getMasterSafeAddress` are internal helpers — test through the provider.
 - **`utils/wallet.ts`** — pure functions, no mocking needed. Test `tokenBalancesToSentence` with 0/1/2/3+ tokens, `getTokenDetails` with `AddressZero` and real token addresses, `getFromToken` with bridged tokens (`USDC.e` → `USDC`) and error cases.

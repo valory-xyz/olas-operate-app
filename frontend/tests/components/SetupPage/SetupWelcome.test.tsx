@@ -3,6 +3,7 @@ import React from 'react';
 
 // Import after mocks
 import { SetupWelcomeLogin } from '../../../components/SetupPage/SetupWelcome';
+import { SETUP_SCREEN } from '../../../constants/setupScreen';
 import { AccountService } from '../../../service/Account';
 import { WalletService } from '../../../service/Wallet';
 
@@ -161,6 +162,8 @@ jest.mock('../../../components/SetupPage/SetupWelcomeCreate', () => ({
 jest.mock('../../../components/ui', () => ({
   ContentTransition: ({ children }: { children?: React.ReactNode }) =>
     require('react').createElement('div', null, children),
+  Alert: ({ message }: { message?: React.ReactNode }) =>
+    require('react').createElement('div', { role: 'alert' }, message),
 }));
 /* eslint-enable @typescript-eslint/no-var-requires */
 
@@ -185,6 +188,8 @@ jest.mock('../../../service/Wallet', () => ({
 // ---------------------------------------------------------------------------
 
 const mockGoto = jest.fn();
+const mockSetPassword = jest.fn();
+const mockSetIsReplacingBackup = jest.fn();
 const mockGotoPage = jest.fn();
 const mockSetUserLoggedIn = jest.fn();
 const mockSetMnemonicExists = jest.fn();
@@ -192,12 +197,22 @@ const mockMessageError = jest.fn();
 
 const mockUseOnlineStatusContext = jest.fn();
 const mockUseServices = jest.fn();
-const mockUseBackupSigner = jest.fn();
+const mockUseBackupSignerState = jest.fn();
+/** A ready `useBackupSignerState` result. */
+const signerState = (backupSignerAddress?: string) => ({
+  state: 'ready',
+  backupSignerAddress,
+});
 const mockUseIsInitiallyFunded = jest.fn();
 const mockUseStore = jest.fn();
+const mockUseLogBackupSignerError = jest.fn();
 
 jest.mock('../../../hooks', () => ({
-  useSetup: jest.fn(() => ({ goto: mockGoto })),
+  useSetup: jest.fn(() => ({
+    goto: mockGoto,
+    setPassword: mockSetPassword,
+    setIsReplacingBackup: mockSetIsReplacingBackup,
+  })),
   usePageState: jest.fn(() => ({
     goto: mockGotoPage,
     setUserLoggedIn: mockSetUserLoggedIn,
@@ -208,10 +223,13 @@ jest.mock('../../../hooks', () => ({
   useOnlineStatusContext: (...args: unknown[]) =>
     mockUseOnlineStatusContext(...args),
   useServices: (...args: unknown[]) => mockUseServices(...args),
-  useBackupSigner: (...args: unknown[]) => mockUseBackupSigner(...args),
+  useBackupSignerState: (...args: unknown[]) =>
+    mockUseBackupSignerState(...args),
   useIsInitiallyFunded: (...args: unknown[]) =>
     mockUseIsInitiallyFunded(...args),
   useStore: (...args: unknown[]) => mockUseStore(...args),
+  useLogBackupSignerError: (...args: unknown[]) =>
+    mockUseLogBackupSignerError(...args),
 }));
 
 jest.mock('../../../context/MessageProvider', () => ({
@@ -264,7 +282,7 @@ const setupHooksApplicationNotReady = () => {
     services: [],
     isFetched: false,
   });
-  mockUseBackupSigner.mockReturnValue(undefined);
+  mockUseBackupSignerState.mockReturnValue(signerState());
   mockUseIsInitiallyFunded.mockReturnValue({ isInitialFunded: false });
   mockUseStore.mockReturnValue({ storeState: {} });
 };
@@ -286,7 +304,7 @@ const setupHooksInitialFunded = () => {
     services: [{ service_public_id: 'test-public-id', home_chain: 100 }],
     isFetched: true,
   });
-  mockUseBackupSigner.mockReturnValue('0xbackup');
+  mockUseBackupSignerState.mockReturnValue(signerState('0xbackup'));
   mockUseIsInitiallyFunded.mockReturnValue({ isInitialFunded: true });
   mockUseStore.mockReturnValue({ storeState: {} });
 };
@@ -308,7 +326,7 @@ const setupHooksNotInitialFunded = () => {
     services: [{ service_public_id: 'test-public-id', home_chain: 100 }],
     isFetched: true,
   });
-  mockUseBackupSigner.mockReturnValue('0xbackup');
+  mockUseBackupSignerState.mockReturnValue(signerState('0xbackup'));
   mockUseIsInitiallyFunded.mockReturnValue({ isInitialFunded: false });
   mockUseStore.mockReturnValue({ storeState: {} });
 };
@@ -331,7 +349,7 @@ const setupHooksInitialFundedUndefined = () => {
     services: [{ service_public_id: 'test-public-id', home_chain: 100 }],
     isFetched: true,
   });
-  mockUseBackupSigner.mockReturnValue('0xbackup');
+  mockUseBackupSignerState.mockReturnValue(signerState('0xbackup'));
   mockUseIsInitiallyFunded.mockReturnValue({ isInitialFunded: undefined });
   mockUseStore.mockReturnValue({ storeState: {} });
 };
@@ -354,7 +372,7 @@ const setupHooksStoreNotHydrated = () => {
     services: [{ service_public_id: 'test-public-id', home_chain: 100 }],
     isFetched: true,
   });
-  mockUseBackupSigner.mockReturnValue('0xbackup');
+  mockUseBackupSignerState.mockReturnValue(signerState('0xbackup'));
   mockUseIsInitiallyFunded.mockReturnValue({ isInitialFunded: undefined });
   mockUseStore.mockReturnValue({ storeState: undefined });
 };
@@ -567,6 +585,149 @@ describe('SetupWelcomeLogin', () => {
       expect(mockGotoPage).not.toHaveBeenCalledWith(
         expect.stringContaining('Main'),
       );
+    });
+
+    it('returns to the backup wallet step when a new backup is needed, even with a service', async () => {
+      setupHooksNotInitialFunded();
+      mockUseBackupSignerState.mockReturnValue({ state: 'needsNewBackup' });
+      mockLoginAccount.mockResolvedValue({ message: 'ok' });
+
+      renderSetupWelcomeLogin();
+      fireEvent.submit(screen.getByTestId('login-form'));
+
+      await waitFor(() => {
+        expect(mockGoto).toHaveBeenCalledWith(SETUP_SCREEN.SetupBackupSigner);
+      });
+      expect(mockGoto).not.toHaveBeenCalledWith(SETUP_SCREEN.FundYourAgent);
+      // So the re-pick on the backup step replaces the canonical backup owner too.
+      expect(mockSetPassword).toHaveBeenCalledWith('test-password');
+      expect(mockSetIsReplacingBackup).toHaveBeenCalledWith(true);
+    });
+
+    it('drops the login password after the first routing decision', async () => {
+      setupHooksNotInitialFunded();
+      mockUseBackupSignerState.mockReturnValue(signerState('0xbackup'));
+      mockLoginAccount.mockResolvedValue({ message: 'ok' });
+
+      const { rerender } = renderSetupWelcomeLogin();
+      fireEvent.submit(screen.getByTestId('login-form'));
+      await waitFor(() => {
+        expect(mockGoto).toHaveBeenCalledWith(SETUP_SCREEN.FundYourAgent);
+      });
+
+      // The signer changes before unmount (e.g. the status turned disabled).
+      mockUseBackupSignerState.mockReturnValue({ state: 'needsNewBackup' });
+      rerender(<SetupWelcomeLogin />);
+      await waitFor(() => {
+        expect(mockGoto).toHaveBeenCalledWith(SETUP_SCREEN.SetupBackupSigner);
+      });
+      expect(mockSetPassword).not.toHaveBeenCalled();
+    });
+
+    it('goes to the backup step with no service and no backup, without keeping the password', async () => {
+      setupHooksNotInitialFunded();
+      mockUseServices.mockReturnValue({
+        ...mockUseServices(),
+        services: [],
+      });
+      mockUseBackupSignerState.mockReturnValue(signerState());
+      mockLoginAccount.mockResolvedValue({ message: 'ok' });
+
+      renderSetupWelcomeLogin();
+      fireEvent.submit(screen.getByTestId('login-form'));
+
+      await waitFor(() => {
+        expect(mockGoto).toHaveBeenCalledWith(SETUP_SCREEN.SetupBackupSigner);
+      });
+      // Only replacing an ignored Google/Apple pick needs it.
+      expect(mockSetPassword).not.toHaveBeenCalled();
+    });
+
+    it('keeps going to FundYourAgent when a service exists and no new backup is needed', async () => {
+      setupHooksNotInitialFunded();
+      mockUseBackupSignerState.mockReturnValue(signerState());
+      mockLoginAccount.mockResolvedValue({ message: 'ok' });
+
+      renderSetupWelcomeLogin();
+      fireEvent.submit(screen.getByTestId('login-form'));
+
+      await waitFor(() => {
+        expect(mockGoto).toHaveBeenCalledWith(SETUP_SCREEN.FundYourAgent);
+      });
+      expect(mockGoto).not.toHaveBeenCalledWith(SETUP_SCREEN.SetupBackupSigner);
+      // The password isn't kept when nothing will apply it.
+      expect(mockSetPassword).not.toHaveBeenCalled();
+    });
+
+    it('does not route while the backup signer is unreadable, and logs why', async () => {
+      setupHooksNotInitialFunded();
+      mockUseBackupSignerState.mockReturnValue({
+        state: 'error',
+        reason: 'Failed to read the wallets: HTTP 500',
+      });
+      mockLoginAccount.mockResolvedValue({ message: 'ok' });
+
+      renderSetupWelcomeLogin();
+      fireEvent.submit(screen.getByTestId('login-form'));
+
+      await waitFor(() => {
+        expect(mockSetUserLoggedIn).toHaveBeenCalledTimes(1);
+      });
+      expect(mockGoto).not.toHaveBeenCalledWith(SETUP_SCREEN.FundYourAgent);
+      expect(mockGoto).not.toHaveBeenCalledWith(SETUP_SCREEN.SetupBackupSigner);
+      expect(
+        screen.getByText(/Couldn.t check your backup wallet/),
+      ).toBeInTheDocument();
+      expect(mockUseLogBackupSignerError).toHaveBeenLastCalledWith(
+        'Failed to read the wallets: HTTP 500',
+        'at login',
+      );
+    });
+
+    it('shows no backup-signer warning before login, even when the backup signer is unreadable', () => {
+      setupHooksNotInitialFunded();
+      mockUseBackupSignerState.mockReturnValue({
+        state: 'error',
+        reason: 'Failed to read the wallets: HTTP 500',
+      });
+
+      renderSetupWelcomeLogin();
+      // Nothing to log before the user has logged in.
+      expect(mockUseLogBackupSignerError).toHaveBeenLastCalledWith(
+        null,
+        'at login',
+      );
+
+      expect(
+        screen.queryByText(/Couldn.t check your backup wallet/),
+      ).not.toBeInTheDocument();
+    });
+
+    it('does not route while the backup signer is pending, then routes once it settles as needing a new backup', async () => {
+      setupHooksNotInitialFunded();
+      mockUseBackupSignerState.mockReturnValue({ state: 'pending' });
+      mockLoginAccount.mockResolvedValue({ message: 'ok' });
+
+      const { rerender } = renderSetupWelcomeLogin();
+      fireEvent.submit(screen.getByTestId('login-form'));
+
+      await waitFor(() => {
+        expect(mockSetUserLoggedIn).toHaveBeenCalledTimes(1);
+      });
+      expect(mockGoto).not.toHaveBeenCalledWith(SETUP_SCREEN.FundYourAgent);
+      expect(mockGoto).not.toHaveBeenCalledWith(SETUP_SCREEN.SetupBackupSigner);
+      // Merely pending (not unreadable) shows no warning.
+      expect(
+        screen.queryByText(/Couldn.t check your backup wallet/),
+      ).not.toBeInTheDocument();
+
+      mockUseBackupSignerState.mockReturnValue({ state: 'needsNewBackup' });
+      rerender(<SetupWelcomeLogin />);
+
+      await waitFor(() => {
+        expect(mockGoto).toHaveBeenCalledWith(SETUP_SCREEN.SetupBackupSigner);
+      });
+      expect(mockGoto).not.toHaveBeenCalledWith(SETUP_SCREEN.FundYourAgent);
     });
 
     it('falls through to Main when isInitialFunded is undefined (store hydrating / legacy)', async () => {

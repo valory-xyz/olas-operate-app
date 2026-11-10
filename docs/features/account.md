@@ -20,7 +20,7 @@ Account (password-protected)
 - `frontend/hooks/useValidatePassword.ts` — password validation via login attempt
 - `frontend/hooks/useMnemonicExists.ts` — mnemonic existence flag (Electron store)
 - `frontend/hooks/useRecoveryPhraseBackup.ts` — recovery phrase backup flag (Electron store)
-- `frontend/hooks/useBackupSigner.ts` — resolves backup signer address (setup context → on-chain fallback; also documented in `wallet.md`)
+- `frontend/hooks/useBackupSigner.ts` — resolves the backup signer and its readiness (setup context → on-chain fallback; documented in `wallet.md`)
 - `frontend/types/Recovery.ts` — recovery types (`RecoveryStatus`, `ExtendedWallet`, `RecoveryPrepareProcess`, etc.)
 
 ## Contract / schema
