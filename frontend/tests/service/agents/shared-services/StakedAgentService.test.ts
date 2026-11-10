@@ -448,7 +448,7 @@ describe('StakedAgentService.readWithBaseline', () => {
   });
 
   it.each([
-    ['missing', [...ELIGIBILITY_READS]],
+    ['missing', ELIGIBILITY_READS],
     ['non-boolean', [...ELIGIBILITY_READS, undefined, false]],
   ])(
     'v0.4 programme: rejects %s baseline reads instead of reading them as false',

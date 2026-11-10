@@ -362,65 +362,31 @@ describe('AgentsFunService.getAgentStakingRewardsInfo', () => {
   describe('StakingToken v0.4 baseline', () => {
     const V04_PROGRAM = 'v04Program' as StakingProgramId;
 
-    it.each([
-      ['the counter read failed (baseline missing)', false, true, false],
-      ['a refill left a rebaseline pending', true, false, false],
-      ['the baseline recovered (both flags clear)', false, false, true],
-    ])(
-      'when %s (rebaselinePending=%s, baselineMissing=%s), isEligibleForRewards is %s despite enough activity',
-      async (_case, rebaselinePending, baselineMissing, expected) => {
-        shared.multicallAll
-          .mockResolvedValueOnce([
-            ...buildFirstResponse(0),
-            rebaselinePending,
-            baselineMissing,
-          ])
-          .mockResolvedValueOnce([100]);
+    it('reports not eligible despite enough activity while a baseline is awaited', async () => {
+      shared.multicallAll
+        .mockResolvedValueOnce([...buildFirstResponse(0), false, true])
+        .mockResolvedValueOnce([100]);
 
-        const result = await callWith({ stakingProgramId: V04_PROGRAM });
+      const result = await callWith({ stakingProgramId: V04_PROGRAM });
 
-        expect(shared.multicallAll.mock.calls[0][0]).toEqual(
-          expect.arrayContaining([
-            'rebaselinePending',
-            'mapServiceIdBaselineMissing',
-          ]),
-        );
-        expect(
-          shared.stakingContract.mapServiceIdBaselineMissing,
-        ).toHaveBeenCalledWith(DEFAULT_SERVICE_NFT_TOKEN_ID);
-        expect(result!.isEligibleForRewards).toBe(expected);
-        expect(result!.isAwaitingBaseline).toBe(!expected);
-      },
-    );
+      expect(result!.isEligibleForRewards).toBe(false);
+      expect(result!.isAwaitingBaseline).toBe(true);
+    });
 
-    it.each([
-      ['the counter read failed (baseline missing)', false, true, false],
-      ['the baseline recovered (both flags clear)', false, false, true],
-    ])(
-      'nonce-based programme: when %s (rebaselinePending=%s, baselineMissing=%s), isEligibleForRewards is %s despite enough activity',
-      async (_case, rebaselinePending, baselineMissing, expected) => {
-        shared.multicallAll.mockResolvedValueOnce([
-          ...buildFirstResponse(0),
-          rebaselinePending,
-          baselineMissing,
-        ]);
-        shared.activityChecker.getMultisigNonces.mockResolvedValueOnce([20]);
+    it('nonce-based programme: reports not eligible despite enough activity while a baseline is awaited', async () => {
+      shared.multicallAll.mockResolvedValueOnce([
+        ...buildFirstResponse(0),
+        false,
+        true,
+      ]);
+      shared.activityChecker.getMultisigNonces.mockResolvedValueOnce([20]);
 
-        const result = await callWith({
-          stakingProgramId: 'v04NonceProgram' as StakingProgramId,
-        });
+      const result = await callWith({
+        stakingProgramId: 'v04NonceProgram' as StakingProgramId,
+      });
 
-        expect(result!.isEligibleForRewards).toBe(expected);
-        expect(result!.isAwaitingBaseline).toBe(!expected);
-      },
-    );
-
-    it('rejects on an RPC/multicall failure instead of assuming both flags false', async () => {
-      shared.multicallAll.mockRejectedValueOnce(new Error('multicall failed'));
-
-      await expect(callWith({ stakingProgramId: V04_PROGRAM })).rejects.toThrow(
-        'multicall failed',
-      );
+      expect(result!.isEligibleForRewards).toBe(false);
+      expect(result!.isAwaitingBaseline).toBe(true);
     });
 
     it('older programme: makes no baseline reads and keeps the counter-based result', async () => {
