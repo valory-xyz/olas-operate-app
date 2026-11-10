@@ -186,7 +186,7 @@ All defined in `frontend/types/Autonolas.ts`:
 - `StakingContractDetails` — contract-level state (available rewards, max services, staking duration, APY, epoch info)
 - `ServiceStakingDetails` — per-service state (staking start time, staking state)
 - `StakingState` — enum: `NotStaked` (0), `Staked` (1), `Evicted` (2)
-- `StakingRewardsInfo` — detailed rewards + eligibility for a service (Zod-validated). Key fields: `isEligibleForRewards`, `accruedServiceStakingRewards`, `tsCheckpoint` (hex → int via Zod transform)
+- `StakingRewardsInfo` — detailed rewards + eligibility for a service (Zod-validated). Key fields: `isEligibleForRewards`, `isAwaitingBaseline` (StakingToken v0.4, see below), `accruedServiceStakingRewards`, `tsCheckpoint` (hex → int via Zod transform)
 
 ### Subgraph schema
 
@@ -268,6 +268,14 @@ Newer staking contracts set the on-chain threshold to ~1 (staking unlocks after 
 - **Activity goal (OPE-1801).** Each agent also publishes an `activity_goal` block in `agent_performance.json` (read via `useActivityGoal`). `useEpochWorkStatus` combines it with `isEpochTargetMet` (`deriveIsDoneForEpoch`, `frontend/utils/activityGoal.ts`): the Overview strip shows the current action until rewards are earned, then "earned activity rewards and keeps working toward its daily goal" (purple) until the goal is met, then "reached its daily goal … standby" (green gradient). AutoRun rotation uses the same combined signal (see `autorun.md` §3.2). Without a block (older agent builds) the staking signal alone decides, as before. `useNotifyOnActivityGoal` notifies when the running staking agent's goal turns met.
 - **Derived on-chain**, so it persists across service stop / app restart. The agent healthcheck is deliberately not consumed — the agent computes the same `completed >= target` from the same on-chain values, so reading it would add nothing and would vanish when the agent stops.
 - Phase-1 targets are hardcoded per program (8 for the trader-style agents, 1 for the DeFi agents) and must match each agent's `ACTIVITY_TARGET`.
+
+### StakingToken v0.4 baseline (rebaseline)
+
+StakingToken v0.4 keeps a service's counter snapshot unchanged when a read fails, and re-baselines every service after an empty reward reserve is refilled. While either is unresolved the activity counters prove nothing about the current epoch. A v0.4 programme sets `stakingVersion: '0.4'` in its config. No programme sets it yet; older contracts lack the two functions, so only flagged programmes call them.
+
+- **Reads:** `StakedAgentService.readWithBaseline` adds `rebaselinePending()` and `mapServiceIdBaselineMissing(serviceId)` to the same multicall as each agent's eligibility reads. It returns `isAwaitingBaseline` (either flag true).
+- **Effect:** while `isAwaitingBaseline`, `isEligibleForRewards` is false, and `deriveIsEpochTargetMet` returns false in both regimes. The UI shows the ordinary "target not met" state; there is no dedicated copy.
+- **Failure:** a failed multicall, or baseline reads that are missing or not booleans, throws. The query keeps its previous data and no eligibility is derived; the flags are never assumed false.
 
 ### Active contract eligibility (useActiveStakingContractDetails)
 
