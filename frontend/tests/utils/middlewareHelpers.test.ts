@@ -17,6 +17,13 @@ import {
 import { INVALID_CHAIN_ID, UNKNOWN_TOKEN_ADDRESS } from '../helpers/factories';
 
 describe('asEvmChainId', () => {
+  it('converts arbitrum_one to 42161 and celo to 42220', () => {
+    expect(asEvmChainId(MiddlewareChainMap.ARBITRUM_ONE)).toBe(
+      EvmChainIdMap.Arbitrum,
+    );
+    expect(asEvmChainId(MiddlewareChainMap.CELO)).toBe(EvmChainIdMap.Celo);
+  });
+
   it('converts gnosis to 100', () => {
     expect(asEvmChainId(MiddlewareChainMap.GNOSIS)).toBe(EvmChainIdMap.Gnosis);
   });
@@ -105,6 +112,14 @@ describe('asEvmChainDetails', () => {
     expect(result.chainId).toBe(AllEvmChainIdMap.Arbitrum);
   });
 
+  it('returns correct details for celo', () => {
+    const result = asEvmChainDetails(MiddlewareChainMap.CELO);
+    expect(result.name).toBe('celo');
+    expect(result.displayName).toBe('Celo');
+    expect(result.symbol).toBe(TokenSymbolMap.CELO);
+    expect(result.chainId).toBe(AllEvmChainIdMap.Celo);
+  });
+
   it('returns correct details for gnosis', () => {
     const result = asEvmChainDetails(MiddlewareChainMap.GNOSIS);
     expect(result.name).toBe('gnosis');
@@ -141,6 +156,15 @@ describe('asEvmChainDetails', () => {
     expect(() => asEvmChainDetails('invalid')).toThrow(
       'Invalid middleware chain enum',
     );
+  });
+});
+
+describe('asMiddlewareChain — Arbitrum and Celo', () => {
+  it('converts 42161 to arbitrum_one and 42220 to celo', () => {
+    expect(asMiddlewareChain(EvmChainIdMap.Arbitrum)).toBe(
+      MiddlewareChainMap.ARBITRUM_ONE,
+    );
+    expect(asMiddlewareChain(EvmChainIdMap.Celo)).toBe(MiddlewareChainMap.CELO);
   });
 });
 

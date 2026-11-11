@@ -45,10 +45,11 @@ describe('TokenSymbolMap', () => {
     expect(TokenSymbolMap['USDC.e']).toBe('USDC.e');
     expect(TokenSymbolMap.pUSD).toBe('pUSD');
     expect(TokenSymbolMap.USDG).toBe('USDG');
+    expect(TokenSymbolMap.CELO).toBe('CELO');
   });
 
-  it('covers exactly 9 token symbols', () => {
-    expect(Object.keys(TokenSymbolMap)).toHaveLength(9);
+  it('covers exactly 10 token symbols', () => {
+    expect(Object.keys(TokenSymbolMap)).toHaveLength(10);
   });
 });
 

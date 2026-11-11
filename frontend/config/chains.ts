@@ -96,6 +96,28 @@ const ROBINHOOD_CHAIN_CONFIG: ChainConfig = {
   safeCreationThreshold: BigInt(parseEther(0.005)),
 } as const;
 
+const ARBITRUM_CHAIN_CONFIG: ChainConfig = {
+  evmChainId: EvmChainIdMap.Arbitrum,
+  name: 'Arbitrum',
+  nativeToken: TOKEN_CONFIG[EvmChainIdMap.Arbitrum][
+    TokenSymbolMap.ETH
+  ] as TokenConfig,
+  middlewareChain: MiddlewareChainMap.ARBITRUM_ONE,
+  rpc: process.env.ARBITRUM_ONE_RPC as HttpUrl,
+  safeCreationThreshold: BigInt(parseEther(0.005)),
+} as const;
+
+const CELO_CHAIN_CONFIG: ChainConfig = {
+  evmChainId: EvmChainIdMap.Celo,
+  name: 'Celo',
+  nativeToken: TOKEN_CONFIG[EvmChainIdMap.Celo][
+    TokenSymbolMap.CELO
+  ] as TokenConfig,
+  middlewareChain: MiddlewareChainMap.CELO,
+  rpc: process.env.CELO_RPC as HttpUrl,
+  safeCreationThreshold: BigInt(parseEther(1.5)),
+} as const;
+
 export const CHAIN_CONFIG: {
   [evmChainId in EvmChainId]: ChainConfig;
 } = {
@@ -105,4 +127,6 @@ export const CHAIN_CONFIG: {
   [EvmChainIdMap.Optimism]: OPTIMISM_CHAIN_CONFIG,
   [EvmChainIdMap.Polygon]: POLYGON_CHAIN_CONFIG,
   [EvmChainIdMap.Robinhood]: ROBINHOOD_CHAIN_CONFIG,
+  [EvmChainIdMap.Arbitrum]: ARBITRUM_CHAIN_CONFIG,
+  [EvmChainIdMap.Celo]: CELO_CHAIN_CONFIG,
 } as const;

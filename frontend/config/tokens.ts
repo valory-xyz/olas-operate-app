@@ -18,6 +18,8 @@ export const TokenSymbolMap = {
   pUSD: 'pUSD',
   /** USDG: Paxos Global Dollar, the stablecoin of Robinhood Chain (no canonical USDC there) */
   USDG: 'USDG',
+  /** CELO: Celo's native gas token */
+  CELO: 'CELO',
 } as const;
 
 export type TokenSymbol = keyof typeof TokenSymbolMap;
@@ -32,6 +34,7 @@ export const TokenSymbolConfigMap: Record<TokenSymbol, { image: string }> = {
   [TokenSymbolMap['USDC.e']]: { image: '/tokens/usdc-icon.png' },
   [TokenSymbolMap.pUSD]: { image: '/tokens/pusd-icon.png' },
   [TokenSymbolMap.USDG]: { image: '/tokens/usdg-icon.png' },
+  [TokenSymbolMap.CELO]: { image: '/chains/celo-chain.png' },
 } as const;
 
 export enum TokenType {
@@ -294,18 +297,49 @@ export const ROBINHOOD_TOKEN_CONFIG: ChainTokenConfig = {
   },
 };
 
-/** Arbitrum One is a funding source only: native ETH and Circle USDC. */
+/** Arbitrum One: native ETH, OLAS and Circle USDC. */
 export const ARBITRUM_TOKEN_CONFIG: ChainTokenConfig = {
   [TokenSymbolMap.ETH]: {
     tokenType: TokenType.NativeGas,
     symbol: TokenSymbolMap.ETH,
     decimals: 18,
   },
+  [TokenSymbolMap.OLAS]: {
+    tokenType: TokenType.Erc20,
+    symbol: TokenSymbolMap.OLAS,
+    decimals: 18,
+    address: '0x064F8B858C2A603e1b106a2039f5446D32dc81c1',
+  },
   [TokenSymbolMap.USDC]: {
     tokenType: TokenType.Erc20,
     symbol: TokenSymbolMap.USDC,
     decimals: 6,
     address: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',
+  },
+};
+
+/**
+ * Celo: native CELO, OLAS and Circle USDC. Native CELO also has an ERC-20 face
+ * (0x471E…), which is the same coins, so it is deliberately not listed here:
+ * the middleware reports it as part of the native balance.
+ */
+export const CELO_TOKEN_CONFIG: ChainTokenConfig = {
+  [TokenSymbolMap.CELO]: {
+    tokenType: TokenType.NativeGas,
+    symbol: TokenSymbolMap.CELO,
+    decimals: 18,
+  },
+  [TokenSymbolMap.OLAS]: {
+    tokenType: TokenType.Erc20,
+    symbol: TokenSymbolMap.OLAS,
+    decimals: 18,
+    address: '0xaCFfAe8e57Ec6E394Eb1b41939A8CF7892DbDc51',
+  },
+  [TokenSymbolMap.USDC]: {
+    tokenType: TokenType.Erc20,
+    symbol: TokenSymbolMap.USDC,
+    decimals: 6,
+    address: '0xcebA9300f2b948710d2653dD7B07f33A8B32118C',
   },
 };
 
@@ -319,11 +353,12 @@ export const TOKEN_CONFIG: Record<EvmChainId, ChainTokenConfig> = {
   [EvmChainIdMap.Optimism]: OPTIMISM_TOKEN_CONFIG,
   [EvmChainIdMap.Polygon]: POLYGON_TOKEN_CONFIG,
   [EvmChainIdMap.Robinhood]: ROBINHOOD_TOKEN_CONFIG,
+  [EvmChainIdMap.Arbitrum]: ARBITRUM_TOKEN_CONFIG,
+  [EvmChainIdMap.Celo]: CELO_TOKEN_CONFIG,
 } as const;
 
 export const ALL_TOKEN_CONFIG: Record<AllEvmChainId, ChainTokenConfig> = {
   [AllEvmChainIdMap.Ethereum]: ETHEREUM_TOKEN_CONFIG,
-  [AllEvmChainIdMap.Arbitrum]: ARBITRUM_TOKEN_CONFIG,
   ...TOKEN_CONFIG,
 } as const;
 

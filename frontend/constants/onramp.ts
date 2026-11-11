@@ -59,4 +59,15 @@ export const ON_RAMP_CHAIN_MAP: Record<
     chain: EvmChainIdMap.Base,
     cryptoCurrency: 'ETH',
   },
+  [SupportedMiddlewareChainMap.arbitrum_one]: {
+    chain: EvmChainIdMap.Arbitrum,
+    cryptoCurrency: 'ETH',
+  },
+  // TODO(celo): inert while `IS_TRANSAK_UNAVAILABLE` is true. Like Robinhood,
+  // Celo needs a bridge leg (ETH bought on Base) and an ERC20 (USDC), so the
+  // same source-token gap applies before re-enabling the ramp here.
+  [SupportedMiddlewareChainMap.celo]: {
+    chain: EvmChainIdMap.Base,
+    cryptoCurrency: 'ETH',
+  },
 };

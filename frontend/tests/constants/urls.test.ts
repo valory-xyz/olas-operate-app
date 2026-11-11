@@ -346,9 +346,9 @@ describe('BLOCKSCOUT_URL_BY_MIDDLEWARE_CHAIN', () => {
     }
   });
 
-  it('covers exactly 6 chains', () => {
+  it('covers exactly 8 chains', () => {
     expect(Object.keys(urls.BLOCKSCOUT_URL_BY_MIDDLEWARE_CHAIN)).toHaveLength(
-      6,
+      8,
     );
   });
 

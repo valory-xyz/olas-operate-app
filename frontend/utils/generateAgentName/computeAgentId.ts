@@ -11,6 +11,8 @@ const SERVICE_REGISTRY_ADDRESSES: Record<EvmChainId, string> = {
   [EvmChainIdMap.Optimism]: '0x3d77596beb0f130a4415df3D2D8232B3d3D31e44',
   [EvmChainIdMap.Polygon]: '0xE3607b00E75f6405248323A9417ff6b39B244b50',
   [EvmChainIdMap.Robinhood]: '0xE3607b00E75f6405248323A9417ff6b39B244b50',
+  [EvmChainIdMap.Arbitrum]: '0xE3607b00E75f6405248323A9417ff6b39B244b50',
+  [EvmChainIdMap.Celo]: '0xE3607b00E75f6405248323A9417ff6b39B244b50',
 } as const;
 
 /**
