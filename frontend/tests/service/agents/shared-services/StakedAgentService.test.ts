@@ -73,6 +73,8 @@ const MOCK_STAKING_PROGRAMS: Record<
   [EvmChainIdMap.Mode]: {},
   [EvmChainIdMap.Optimism]: {},
   [EvmChainIdMap.Robinhood]: {},
+  [EvmChainIdMap.Arbitrum]: {},
+  [EvmChainIdMap.Celo]: {},
   [EvmChainIdMap.Polygon]: {},
 };
 

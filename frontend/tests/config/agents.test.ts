@@ -71,11 +71,13 @@ describe('AGENT_CONFIG', () => {
     }
   });
 
-  it('Connect lists USDC and pUSD on Polygon and USDG on Robinhood, no ERC20s on Gnosis', () => {
+  it('Connect lists USDC and pUSD on Polygon, USDG on Robinhood, USDC on Arbitrum and Celo, no ERC20s on Gnosis', () => {
     const connectErc20Tokens = AGENT_CONFIG[AgentMap.Connect].erc20Tokens;
     expect(connectErc20Tokens).toEqual({
       [EvmChainIdMap.Polygon]: [TokenSymbolMap.USDC, TokenSymbolMap.pUSD],
       [EvmChainIdMap.Robinhood]: [TokenSymbolMap.USDG],
+      [EvmChainIdMap.Arbitrum]: [TokenSymbolMap.USDC],
+      [EvmChainIdMap.Celo]: [TokenSymbolMap.USDC],
     });
   });
 
@@ -83,11 +85,13 @@ describe('AGENT_CONFIG', () => {
     expect(AGENT_CONFIG[AgentMap.Connect].isExcludedFromAutoRun).toBeFalsy();
   });
 
-  it('Connect supports Polygon, Gnosis and Robinhood', () => {
+  it('Connect supports Polygon, Gnosis, Robinhood, Arbitrum and Celo', () => {
     expect(AGENT_CONFIG[AgentMap.Connect].supportedChains).toEqual([
       EvmChainIdMap.Polygon,
       EvmChainIdMap.Gnosis,
       EvmChainIdMap.Robinhood,
+      EvmChainIdMap.Arbitrum,
+      EvmChainIdMap.Celo,
     ]);
   });
 
@@ -99,6 +103,10 @@ describe('AGENT_CONFIG', () => {
     expect(requirements?.[EvmChainIdMap.Robinhood]?.[TokenSymbolMap.USDG]).toBe(
       5,
     );
+    expect(requirements?.[EvmChainIdMap.Arbitrum]?.[TokenSymbolMap.USDC]).toBe(
+      5,
+    );
+    expect(requirements?.[EvmChainIdMap.Celo]?.[TokenSymbolMap.USDC]).toBe(5);
   });
 
   it('Polystrat additionalRequirements surfaces pUSD safe amount from service template', () => {

@@ -79,3 +79,23 @@ describe('CONNECT_FUND_REQUIREMENTS', () => {
     });
   });
 });
+
+describe('CONNECT_SERVICE_TEMPLATE chains', () => {
+  // Every chain Connect setup offers needs its requirements, its initial
+  // funding and the RPC Pearl computes for it.
+  const chains = [
+    { chain: MiddlewareChainMap.ARBITRUM_ONE, rpc: 'ARBITRUM_ONE_LEDGER_RPC' },
+    { chain: MiddlewareChainMap.CELO, rpc: 'CELO_LEDGER_RPC' },
+  ] as const;
+
+  it.each(chains)(
+    '$chain has fund requirements, a configuration and a computed ledger RPC',
+    ({ chain, rpc }) => {
+      expect(CONNECT_FUND_REQUIREMENTS[chain]).toBeDefined();
+      expect(CONNECT_SERVICE_TEMPLATE.configurations[chain]).toBeDefined();
+      expect(CONNECT_SERVICE_TEMPLATE.env_variables[rpc]?.provision_type).toBe(
+        'computed',
+      );
+    },
+  );
+});
