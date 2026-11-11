@@ -301,36 +301,41 @@ describe('useRewardsHistory', () => {
       });
     };
 
-    it('reads Base from the squid with the OpenReader query', async () => {
-      setupChain(EvmChainIdMap.Base, MiddlewareChainMap.BASE);
-      const serviceResponse = makeRewardsHistoryServiceResponse();
-      mockGraphqlRequest.mockResolvedValue(serviceResponse);
+    it.each([
+      ['Base', EvmChainIdMap.Base, MiddlewareChainMap.BASE],
+      ['Polygon', EvmChainIdMap.Polygon, MiddlewareChainMap.POLYGON],
+    ] as const)(
+      'reads %s from the squid with the OpenReader query',
+      async (name, chainId, middlewareChain) => {
+        setupChain(chainId, middlewareChain);
+        const serviceResponse = makeRewardsHistoryServiceResponse();
+        mockGraphqlRequest.mockResolvedValue(serviceResponse);
 
-      renderHook(() => useRewardsHistory());
-      const result = await capturedQueryFn()();
+        renderHook(() => useRewardsHistory());
+        const result = await capturedQueryFn()();
 
-      const [url, query, variables] = mockGraphqlRequest.mock.calls[0];
-      expect(url).toBe(
-        'https://subgraph.autonolas.tech/squid/staking-base/graphql',
-      );
-      expect(query).toContain('$serviceId: String!');
-      expect(query).toContain('service: serviceById(id: $serviceId)');
-      // Without id_DESC, rows sharing a blockTimestamp come back in a
-      // different order than graph-node's, shifting epoch start times.
-      expect(query).toContain('orderBy: [blockTimestamp_DESC, id_DESC]');
-      expect(query).toContain('limit: 1000');
-      expect(query).not.toContain('orderDirection');
-      expect(variables).toEqual({
-        serviceId: `${DEFAULT_SERVICE_NFT_TOKEN_ID}`,
-      });
-      expect(result).toEqual(serviceResponse.service);
-    });
+        const [url, query, variables] = mockGraphqlRequest.mock.calls[0];
+        expect(url).toBe(
+          `https://subgraph.autonolas.tech/squid/staking-${name.toLowerCase()}/graphql`,
+        );
+        expect(query).toContain('$serviceId: String!');
+        expect(query).toContain('service: serviceById(id: $serviceId)');
+        // Without id_DESC, rows sharing a blockTimestamp come back in a
+        // different order than graph-node's, shifting epoch start times.
+        expect(query).toContain('orderBy: [blockTimestamp_DESC, id_DESC]');
+        expect(query).toContain('limit: 1000');
+        expect(query).not.toContain('orderDirection');
+        expect(variables).toEqual({
+          serviceId: `${DEFAULT_SERVICE_NFT_TOKEN_ID}`,
+        });
+        expect(result).toEqual(serviceResponse.service);
+      },
+    );
 
     it.each([
       ['Gnosis', EvmChainIdMap.Gnosis, MiddlewareChainMap.GNOSIS],
       ['Mode', EvmChainIdMap.Mode, MiddlewareChainMap.MODE],
       ['Optimism', EvmChainIdMap.Optimism, MiddlewareChainMap.OPTIMISM],
-      ['Polygon', EvmChainIdMap.Polygon, MiddlewareChainMap.POLYGON],
     ] as const)(
       'keeps %s on the Graph query',
       async (name, evmHomeChainId, middlewareChain) => {
