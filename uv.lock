@@ -1047,7 +1047,7 @@ requires-dist = [
     { name = "open-aea-cli-ipfs", specifier = "==2.2.10" },
     { name = "open-aea-ledger-cosmos", specifier = "==2.2.10" },
     { name = "open-aea-ledger-ethereum", specifier = "==2.2.10" },
-    { name = "open-autonomy", extras = ["cli", "docker"], specifier = "==0.21.30" },
+    { name = "open-autonomy", extras = ["cli", "docker"], specifier = "==0.21.31rc2" },
 ]
 
 [package.metadata.requires-dev]
@@ -1150,7 +1150,7 @@ wheels = [
 
 [[package]]
 name = "open-autonomy"
-version = "0.21.30"
+version = "0.21.31rc2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiohttp" },
@@ -1167,9 +1167,9 @@ dependencies = [
     { name = "requests" },
     { name = "web3" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/6f/45/b7c26e596ea0292fee939276ca4eb558358e0f8bd3d5b4c5af80d2943b79/open_autonomy-0.21.30.tar.gz", hash = "sha256:dabe161302dbc5ab190d5e394d10e05a1f4cb8dd48355a8d4f144d7e2ed08e06", size = 1165695, upload-time = "2026-10-26T09:59:01.386Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/12/08/288950643881e7a711f2e168b2b8c7b94152fd82786aa4e45960879461bd/open_autonomy-0.21.31rc2.tar.gz", hash = "sha256:c5b0ccdb20c123925dbbe70d8c6f2186858ee60e83ff7261848bea72144f4377", size = 1123784, upload-time = "2026-11-11T21:24:00.36Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/bf/1a/7fd50d6961cfadc10cf282ed165ba1daa03f595952ccb56cb12c8dec61d9/open_autonomy-0.21.30-py3-none-any.whl", hash = "sha256:d84260a3f55d059be1a0dd23c9b492b38f493ccc3e903c92e784347cd925820e", size = 1675378, upload-time = "2026-10-26T09:58:59.982Z" },
+    { url = "https://files.pythonhosted.org/packages/a1/a6/1fa1b742110372e33b33289797967d06915a020bfa49431484273368e406/open_autonomy-0.21.31rc2-py3-none-any.whl", hash = "sha256:ce7ac45b4142a264eafcc385d7af49e86f72a75b387d2287c5facf53bdf47028", size = 1634716, upload-time = "2026-11-11T21:23:58.748Z" },
 ]
 
 [package.optional-dependencies]
