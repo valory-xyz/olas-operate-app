@@ -18,7 +18,6 @@ export const TokenSymbolMap = {
   pUSD: 'pUSD',
   /** USDG: Paxos Global Dollar, the stablecoin of Robinhood Chain (no canonical USDC there) */
   USDG: 'USDG',
-  /** CELO: Celo's native gas token */
   CELO: 'CELO',
 } as const;
 

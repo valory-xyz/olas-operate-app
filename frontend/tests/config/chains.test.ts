@@ -23,7 +23,7 @@ jest.mock(
 jest.mock('../../constants/providers', () => ({ PROVIDERS: {} }));
 
 describe('CHAIN_CONFIG', () => {
-  it('has entries for exactly 6 supported EVM chains', () => {
+  it('has entries for an entry for every supported EVM chain', () => {
     const supportedChainIds = Object.values(EvmChainIdMap);
     expect(Object.keys(CHAIN_CONFIG)).toHaveLength(supportedChainIds.length);
   });
@@ -192,6 +192,41 @@ describe('CHAIN_CONFIG', () => {
       );
     });
   });
+
+  describe.each([
+    {
+      chainId: EvmChainIdMap.Arbitrum,
+      name: 'Arbitrum',
+      middlewareChain: MiddlewareChainMap.ARBITRUM_ONE,
+      native: 'ETH',
+      // middleware DEFAULT_EOA_TOPUPS_WITHOUT_SAFE: 2 × 0.0025 ETH
+      threshold: BigInt('5000000000000000'),
+    },
+    {
+      chainId: EvmChainIdMap.Celo,
+      name: 'Celo',
+      middlewareChain: MiddlewareChainMap.CELO,
+      native: 'CELO',
+      // middleware DEFAULT_EOA_TOPUPS_WITHOUT_SAFE: 2 × 0.75 CELO
+      threshold: BigInt('1500000000000000000'),
+    },
+  ])(
+    '$name (chain $chainId)',
+    ({ chainId, name, middlewareChain, native, threshold }) => {
+      const config = CHAIN_CONFIG[chainId];
+
+      it('has its name, middleware chain and native token', () => {
+        expect(config.name).toBe(name);
+        expect(config.evmChainId).toBe(chainId);
+        expect(config.middlewareChain).toBe(middlewareChain);
+        expect(config.nativeToken.symbol).toBe(native);
+      });
+
+      it('safeCreationThreshold matches the middleware', () => {
+        expect(config.safeCreationThreshold).toBe(threshold);
+      });
+    },
+  );
 
   describe('cross-chain consistency', () => {
     it('every chain config has a non-empty string name', () => {

@@ -15,6 +15,8 @@ import {
 
 type Requirement = Record<string, unknown>;
 
+const ZERO = '0x0000000000000000000000000000000000000000';
+
 // Read from the value Connect actually receives, not from the constant behind it.
 const sent: Record<
   string,
@@ -81,8 +83,6 @@ describe('CONNECT_FUND_REQUIREMENTS', () => {
 });
 
 describe('CONNECT_SERVICE_TEMPLATE chains', () => {
-  // Every chain Connect setup offers needs its requirements, its initial
-  // funding and the RPC Pearl computes for it.
   const chains = [
     { chain: MiddlewareChainMap.ARBITRUM_ONE, rpc: 'ARBITRUM_ONE_LEDGER_RPC' },
     { chain: MiddlewareChainMap.CELO, rpc: 'CELO_LEDGER_RPC' },
@@ -98,4 +98,30 @@ describe('CONNECT_SERVICE_TEMPLATE chains', () => {
       );
     },
   );
+
+  // Amounts the scope left open, pinned so a change to them is a visible diff.
+  it('asks for 0.0005 ETH and 5 USDC on Arbitrum, 5 CELO and 5 USDC on Celo', () => {
+    expect(
+      CONNECT_FUND_REQUIREMENTS[MiddlewareChainMap.ARBITRUM_ONE]?.safe,
+    ).toEqual({
+      [ZERO]: { threshold: '100000000000000', topup: '500000000000000' },
+      '0xaf88d065e77c8cC2239327C5EDb3A432268e5831': {
+        threshold: '1000000',
+        topup: '5000000',
+      },
+    });
+    expect(CONNECT_FUND_REQUIREMENTS[MiddlewareChainMap.CELO]?.safe).toEqual({
+      [ZERO]: {
+        threshold: '1000000000000000000',
+        topup: '5000000000000000000',
+      },
+      '0xcebA9300f2b948710d2653dD7B07f33A8B32118C': {
+        threshold: '1000000',
+        topup: '5000000',
+      },
+    });
+    expect(CONNECT_FUND_REQUIREMENTS[MiddlewareChainMap.CELO]?.agent).toEqual({
+      [ZERO]: { threshold: '100000000000000000', topup: '500000000000000000' },
+    });
+  });
 });

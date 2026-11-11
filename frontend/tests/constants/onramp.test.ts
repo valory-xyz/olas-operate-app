@@ -51,6 +51,21 @@ describe('ON_RAMP_CHAIN_MAP', () => {
     });
   });
 
+  describe('arbitrum and celo chain routing', () => {
+    it('ramps ETH on Arbitrum itself', () => {
+      expect(
+        ON_RAMP_CHAIN_MAP[SupportedMiddlewareChainMap.arbitrum_one],
+      ).toEqual({ chain: EvmChainIdMap.Arbitrum, cryptoCurrency: 'ETH' });
+    });
+
+    it('routes celo agents to Base ETH (celo has no direct fiat ramp here)', () => {
+      expect(ON_RAMP_CHAIN_MAP[SupportedMiddlewareChainMap.celo]).toEqual({
+        chain: EvmChainIdMap.Base,
+        cryptoCurrency: 'ETH',
+      });
+    });
+  });
+
   describe('gnosis chain routing', () => {
     it('routes gnosis agents to Base for on-ramp (gnosis has no direct fiat ramp)', () => {
       expect(ON_RAMP_CHAIN_MAP[SupportedMiddlewareChainMap.gnosis].chain).toBe(

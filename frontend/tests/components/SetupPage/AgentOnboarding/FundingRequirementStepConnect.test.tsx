@@ -48,8 +48,7 @@ jest.mock('../../../../config/agents', () => ({
       displayName: 'Connect',
       servicePublicId: 'valory/connect:0.1.0',
       // The component reads the offered chains straight from this list, so it
-      // must match what ships: Polygon, Gnosis, Robinhood, Arbitrum, Celo, in
-      // display order.
+      // must match what ships, in display order.
       supportedChains: [137, 100, 4663, 42161, 42220],
       evmHomeChainId: 100,
       middlewareHomeChainId: 'gnosis',

@@ -19,6 +19,18 @@ jest.mock(
     require('../mocks/ethersMulticall').ethersMulticallMock,
 );
 
+describe('OLAS_CONTRACTS on Arbitrum and Celo', () => {
+  // The autonomy chain profiles give both chains Robinhood's registries.
+  it.each([EvmChainIdMap.Arbitrum, EvmChainIdMap.Celo])(
+    'chain %i shares the Robinhood registry contracts',
+    (chainId) => {
+      expect(OLAS_CONTRACTS[chainId]).toBe(
+        OLAS_CONTRACTS[EvmChainIdMap.Robinhood],
+      );
+    },
+  );
+});
+
 describe('OLAS_CONTRACTS', () => {
   it('has entries for all 5 supported EVM chains', () => {
     for (const chainId of Object.values(EvmChainIdMap)) {

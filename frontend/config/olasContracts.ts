@@ -63,20 +63,9 @@ const POLYGON_OLAS_CONTRACTS: ContractsByType = {
   ),
 };
 
-// autonolas-registries scripts/deployment/l2/globals_robinhood_mainnet.json (PR #325)
-const ROBINHOOD_OLAS_CONTRACTS: ContractsByType = {
-  [CONTRACT_TYPE.ServiceRegistryL2]: new MulticallContract(
-    '0xE3607b00E75f6405248323A9417ff6b39B244b50',
-    SERVICE_REGISTRY_L2_ABI,
-  ),
-  [CONTRACT_TYPE.ServiceRegistryTokenUtility]: new MulticallContract(
-    '0x3d77596beb0f130a4415df3D2D8232B3d3D31e44',
-    SERVICE_REGISTRY_TOKEN_UTILITY_ABI,
-  ),
-};
-
-// autonomy chain profiles (the middleware's CONTRACTS): same addresses as Robinhood
-const ARBITRUM_CELO_OLAS_CONTRACTS: ContractsByType = {
+// autonolas-registries scripts/deployment/l2/globals_robinhood_mainnet.json (PR #325).
+// Arbitrum and Celo use the same two addresses (autonomy chain profiles).
+const ROBINHOOD_ARBITRUM_CELO_OLAS_CONTRACTS: ContractsByType = {
   [CONTRACT_TYPE.ServiceRegistryL2]: new MulticallContract(
     '0xE3607b00E75f6405248323A9417ff6b39B244b50',
     SERVICE_REGISTRY_L2_ABI,
@@ -95,7 +84,7 @@ export const OLAS_CONTRACTS: {
   [EvmChainIdMap.Mode]: MODE_OLAS_CONTRACTS,
   [EvmChainIdMap.Optimism]: OPTIMISM_OLAS_CONTRACTS,
   [EvmChainIdMap.Polygon]: POLYGON_OLAS_CONTRACTS,
-  [EvmChainIdMap.Robinhood]: ROBINHOOD_OLAS_CONTRACTS,
-  [EvmChainIdMap.Arbitrum]: ARBITRUM_CELO_OLAS_CONTRACTS,
-  [EvmChainIdMap.Celo]: ARBITRUM_CELO_OLAS_CONTRACTS,
+  [EvmChainIdMap.Robinhood]: ROBINHOOD_ARBITRUM_CELO_OLAS_CONTRACTS,
+  [EvmChainIdMap.Arbitrum]: ROBINHOOD_ARBITRUM_CELO_OLAS_CONTRACTS,
+  [EvmChainIdMap.Celo]: ROBINHOOD_ARBITRUM_CELO_OLAS_CONTRACTS,
 };

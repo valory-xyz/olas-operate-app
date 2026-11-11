@@ -125,9 +125,9 @@ export const CONNECT_FUND_REQUIREMENTS: Partial<
       },
     },
   },
-  // Arbitrum and Celo follow the 1/5 rule. Arbitrum's ETH amounts match
-  // Robinhood's (both are Arbitrum-stack L2s with ETH gas), and Celo's are in
-  // CELO on Gnosis's scale.
+  // Arbitrum's ETH amounts match Robinhood's (both are Arbitrum-stack L2s with
+  // ETH gas). Celo's safe CELO matches Gnosis's xDAI; its agent gas budget is
+  // 10x Gnosis's, as CELO is worth less than a dollar.
   [MiddlewareChainMap.ARBITRUM_ONE]: {
     agent: {
       [ethers.constants.AddressZero]: {
@@ -184,8 +184,7 @@ export const connectFundRequirementsFor = (chain: MiddlewareChain): string => {
 /**
  * Connect service template.
  *
- * One `configurations` block per supported chain (Polygon / Gnosis / Robinhood /
- * Arbitrum / Celo),
+ * One `configurations` block per supported chain,
  * each with `staking_program_id: 'no_staking'`. The same `name` is shared across chains;
  * the chain is selected at setup time (see `SelectChain`).
  */
