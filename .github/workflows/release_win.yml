@@ -27,7 +27,8 @@ jobs:
             MODE_RPC: "https://mainnet.mode.network"
             POLYGON_RPC: "https://rpc-gate.autonolas.tech/polygon-rpc/"
             ROBINHOOD_RPC: "https://rpc-gate.autonolas.tech/robinhood-rpc/"
-            CELO_RPC: "https://forno.celo.org"
+            CELO_RPC: "https://celo-rpc.publicnode.com"
+            ARBITRUM_ONE_RPC: "https://arb1.arbitrum.io/rpc"
             arch: "x64"
     defaults:
       run:
@@ -185,6 +186,7 @@ jobs:
           POLYGON_RPC: ${{ matrix.POLYGON_RPC }}
           ROBINHOOD_RPC: ${{ matrix.ROBINHOOD_RPC }}
           CELO_RPC: ${{ matrix.CELO_RPC }}
+          ARBITRUM_ONE_RPC: ${{ matrix.ARBITRUM_ONE_RPC }}
           IS_STAGING: ${{ github.ref != 'refs/heads/main' && 'true' || 'false' }}
           GH_TOKEN: ${{ secrets.github_token}}
           RELEASE_TAG: ${{ inputs.tag }}
@@ -199,6 +201,7 @@ jobs:
           echo POLYGON_RPC=$POLYGON_RPC >> prod.env
           echo ROBINHOOD_RPC=$ROBINHOOD_RPC >> prod.env
           echo CELO_RPC=$CELO_RPC >> prod.env
+          echo ARBITRUM_ONE_RPC=$ARBITRUM_ONE_RPC >> prod.env
           cat prod.env
           echo GH_TOKEN=$GH_TOKEN >> prod.env
       - run: rm -rf /dist

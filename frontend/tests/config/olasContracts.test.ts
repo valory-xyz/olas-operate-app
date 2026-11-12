@@ -19,18 +19,6 @@ jest.mock(
     require('../mocks/ethersMulticall').ethersMulticallMock,
 );
 
-describe('OLAS_CONTRACTS on Arbitrum and Celo', () => {
-  // The autonomy chain profiles give both chains Robinhood's registries.
-  it.each([EvmChainIdMap.Arbitrum, EvmChainIdMap.Celo])(
-    'chain %i shares the Robinhood registry contracts',
-    (chainId) => {
-      expect(OLAS_CONTRACTS[chainId]).toBe(
-        OLAS_CONTRACTS[EvmChainIdMap.Robinhood],
-      );
-    },
-  );
-});
-
 describe('OLAS_CONTRACTS', () => {
   it('has an entry for every supported EVM chain', () => {
     for (const chainId of Object.values(EvmChainIdMap)) {
@@ -38,8 +26,10 @@ describe('OLAS_CONTRACTS', () => {
     }
   });
 
-  it('covers exactly 8 chains', () => {
-    expect(Object.keys(OLAS_CONTRACTS)).toHaveLength(8);
+  it('has no entries beyond the supported chains', () => {
+    expect(Object.keys(OLAS_CONTRACTS)).toHaveLength(
+      Object.keys(EvmChainIdMap).length,
+    );
   });
 
   it('every chain has a ServiceRegistryL2 contract', () => {
@@ -138,4 +128,16 @@ describe('OLAS_CONTRACTS', () => {
       '0xE3607b00E75f6405248323A9417ff6b39B244b50',
     );
   });
+});
+
+describe('OLAS_CONTRACTS on Arbitrum and Celo', () => {
+  // The autonomy chain profiles give both chains Robinhood's registries.
+  it.each([EvmChainIdMap.Arbitrum, EvmChainIdMap.Celo])(
+    'chain %i shares the Robinhood registry contracts',
+    (chainId) => {
+      expect(OLAS_CONTRACTS[chainId]).toBe(
+        OLAS_CONTRACTS[EvmChainIdMap.Robinhood],
+      );
+    },
+  );
 });

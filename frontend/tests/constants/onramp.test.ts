@@ -33,8 +33,10 @@ describe('ON_RAMP_CHAIN_MAP', () => {
     }
   });
 
-  it('covers exactly 8 entries — one per supported middleware chain', () => {
-    expect(Object.keys(ON_RAMP_CHAIN_MAP)).toHaveLength(8);
+  it('has one entry per supported middleware chain', () => {
+    expect(Object.keys(ON_RAMP_CHAIN_MAP)).toHaveLength(
+      Object.keys(SupportedMiddlewareChainMap).length,
+    );
   });
 
   describe('robinhood chain routing', () => {

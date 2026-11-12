@@ -316,11 +316,7 @@ export const ARBITRUM_TOKEN_CONFIG: ChainTokenConfig = {
   },
 };
 
-/**
- * Celo: native CELO, OLAS and Circle USDC. Native CELO also has an ERC-20 face
- * (0x471E…), which is the same coins, so it is deliberately not listed here:
- * the middleware reports it as part of the native balance.
- */
+// Native CELO's ERC-20 face (0x471E…) is the same balance, so it is omitted.
 export const CELO_TOKEN_CONFIG: ChainTokenConfig = {
   [TokenSymbolMap.CELO]: {
     tokenType: TokenType.NativeGas,

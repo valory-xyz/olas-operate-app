@@ -277,7 +277,8 @@ jobs:
           MODE_RPC: https://mainnet.mode.network
           POLYGON_RPC: https://rpc-gate.autonolas.tech/polygon-rpc/
           ROBINHOOD_RPC: https://rpc-gate.autonolas.tech/robinhood-rpc/
-          CELO_RPC: https://forno.celo.org
+          CELO_RPC: https://celo-rpc.publicnode.com
+          ARBITRUM_ONE_RPC: https://arb1.arbitrum.io/rpc
 
       # Run the build and notarization process for production
       - name: Build, notarize, and publish (Production)
@@ -299,7 +300,8 @@ jobs:
           MODE_RPC: https://mainnet.mode.network
           POLYGON_RPC: https://rpc-gate.autonolas.tech/polygon-rpc/
           ROBINHOOD_RPC: https://rpc-gate.autonolas.tech/robinhood-rpc/
-          CELO_RPC: https://forno.celo.org
+          CELO_RPC: https://celo-rpc.publicnode.com
+          ARBITRUM_ONE_RPC: https://arb1.arbitrum.io/rpc
         run: |
           echo "OPTIMISM_RPC=https://rpc-gate.autonolas.tech/optimism-rpc/" >> .env
           echo "BASE_RPC=https://rpc-gate.autonolas.tech/base-rpc/" >> .env
@@ -308,7 +310,8 @@ jobs:
           echo "MODE_RPC=https://mainnet.mode.network" >> .env
           echo "POLYGON_RPC=https://rpc-gate.autonolas.tech/polygon-rpc/" >> .env
           echo "ROBINHOOD_RPC=https://rpc-gate.autonolas.tech/robinhood-rpc/" >> .env
-          echo "CELO_RPC=https://forno.celo.org" >> .env
+          echo "CELO_RPC=https://celo-rpc.publicnode.com" >> .env
+          echo "ARBITRUM_ONE_RPC=https://arb1.arbitrum.io/rpc" >> .env
           export GITHUB_REF_TYPE="tag"
           export GITHUB_REF_NAME="${RELEASE_TAG}"
           export GITHUB_REF="refs/tags/${RELEASE_TAG}"

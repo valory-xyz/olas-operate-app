@@ -125,10 +125,6 @@ export const CONNECT_FUND_REQUIREMENTS: Partial<
       },
     },
   },
-  // Arbitrum's ETH topups match Robinhood's (both are Arbitrum-stack L2s with
-  // ETH gas); it keeps the 1/5 thresholds Robinhood drops. Celo's safe CELO
-  // matches Gnosis's xDAI; its agent gas budget is 10x Gnosis's, as a CELO buys
-  // far less gas than an xDAI.
   [MiddlewareChainMap.ARBITRUM_ONE]: {
     agent: {
       [ethers.constants.AddressZero]: {
@@ -185,8 +181,8 @@ export const connectFundRequirementsFor = (chain: MiddlewareChain): string => {
 /**
  * Connect service template.
  *
- * One `configurations` block per supported chain,
- * each with `staking_program_id: 'no_staking'`. The same `name` is shared across chains;
+ * One `configurations` block per supported chain, each with
+ * `staking_program_id: 'no_staking'`. The same `name` is shared across chains;
  * the chain is selected at setup time (see `SelectChain`).
  */
 export const CONNECT_SERVICE_TEMPLATE: ServiceTemplate = {

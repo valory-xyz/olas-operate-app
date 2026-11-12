@@ -74,10 +74,11 @@ describe('asAllEvmChainId', () => {
     );
   });
 
-  it('converts arbitrum_one to 42161', () => {
-    expect(asAllEvmChainId(MiddlewareChainMap.ARBITRUM_ONE)).toBe(
-      AllEvmChainIdMap.Arbitrum,
-    );
+  it.each([
+    [MiddlewareChainMap.ARBITRUM_ONE, AllEvmChainIdMap.Arbitrum],
+    [MiddlewareChainMap.CELO, AllEvmChainIdMap.Celo],
+  ])('converts %s to %i', (chain, chainId) => {
+    expect(asAllEvmChainId(chain)).toBe(chainId);
   });
 
   it('delegates non-ethereum chains to asEvmChainId', () => {
@@ -202,10 +203,11 @@ describe('asAllMiddlewareChain', () => {
     );
   });
 
-  it('converts the Arbitrum chain ID to arbitrum_one', () => {
-    expect(asAllMiddlewareChain(AllEvmChainIdMap.Arbitrum)).toBe(
-      MiddlewareChainMap.ARBITRUM_ONE,
-    );
+  it.each([
+    [AllEvmChainIdMap.Arbitrum, MiddlewareChainMap.ARBITRUM_ONE],
+    [AllEvmChainIdMap.Celo, MiddlewareChainMap.CELO],
+  ])('converts %i to %s', (chainId, chain) => {
+    expect(asAllMiddlewareChain(chainId)).toBe(chain);
   });
 
   it('delegates non-ethereum chain IDs to asMiddlewareChain', () => {

@@ -32,8 +32,8 @@ export const TERMS_AND_CONDITIONS_URL: Url = 'https://olas.network/pearl-terms';
 export const PEARL_CONNECT_RISKS_TERMS_URL: Url = `${TERMS_AND_CONDITIONS_URL}#section-6-1-2`;
 
 // thegraph
-// Absent for chains with no staking programmes (Robinhood, Arbitrum, Celo): `useRewardsHistory`
-// does not query there. Base is a SQD squid, served path-style under the shared
+// Absent for chains with no staking programmes: `useRewardsHistory` does not
+// query there. Base is a SQD squid, served path-style under the shared
 // host; the rest are graph-node subgraph proxies (host-style).
 // Base rollback: 'https://staking-base.subgraph.autonolas.tech' + drop its
 // REWARDS_HISTORY_SUBGRAPH_SCHEMA_BY_EVM_CHAIN entry.

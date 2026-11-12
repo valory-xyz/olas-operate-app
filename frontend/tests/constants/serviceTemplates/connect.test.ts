@@ -97,7 +97,6 @@ describe('CONNECT_SERVICE_TEMPLATE chains', () => {
     },
   );
 
-  // Amounts the scope left open, pinned so a change to them is a visible diff.
   it('asks for 0.0005 ETH and 5 USDC on Arbitrum, 5 CELO and 5 USDC on Celo', () => {
     expect(
       CONNECT_FUND_REQUIREMENTS[MiddlewareChainMap.ARBITRUM_ONE]?.safe,

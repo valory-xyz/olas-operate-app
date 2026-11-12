@@ -46,7 +46,7 @@ const SOURCES = {
     FUNDING_RUN_NATIVE,
     '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',
   ],
-  celo: [FUNDING_RUN_NATIVE, '0xcebA9300f2b948710d2653dD7B07f33A8B32118C'],
+  celo: [FUNDING_RUN_NATIVE],
   gnosis: [FUNDING_RUN_NATIVE],
   robinhood: [FUNDING_RUN_NATIVE],
 };
@@ -249,11 +249,11 @@ describe('FundingFlow — selection', () => {
     expect(screen.queryByRole('button', { name: /USDC/ })).toBeNull();
   });
 
-  it('offers CELO and USDC on Celo', () => {
+  it('offers only CELO on Celo', () => {
     renderFlow();
     fireEvent.click(screen.getByRole('button', { name: /Celo/ }));
     expect(screen.getByRole('button', { name: /CELO/ })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /USDC/ })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /USDC/ })).toBeNull();
   });
 
   it('creates an onboarding run when a token is picked, with no confirm step', () => {

@@ -1,4 +1,6 @@
-import { EvmChainIdMap } from '../../../constants/chains';
+import { utils } from 'ethers';
+
+import { EvmChainId, EvmChainIdMap } from '../../../constants/chains';
 import { computeAgentId } from '../../../utils/generateAgentName/computeAgentId';
 import { ALL_EVM_CHAIN_IDS, INVALID_CHAIN_ID } from '../../helpers/factories';
 
@@ -30,6 +32,26 @@ describe('computeAgentId', () => {
     for (const chain of ALL_EVM_CHAIN_IDS) {
       expect(() => computeAgentId(chain, 1)).not.toThrow();
     }
+  });
+
+  // Registry addresses from autonomy's CHAIN_PROFILES.
+  it.each<[EvmChainId, string]>([
+    [EvmChainIdMap.Gnosis, '0x9338b5153AE39BB89f50468E608eD9d764B755fD'],
+    [EvmChainIdMap.Base, '0x3C1fF68f5aa342D296d4DEe4Bb1cACCA912D95fE'],
+    [EvmChainIdMap.Mode, '0x3C1fF68f5aa342D296d4DEe4Bb1cACCA912D95fE'],
+    [EvmChainIdMap.Optimism, '0x3d77596beb0f130a4415df3D2D8232B3d3D31e44'],
+    [EvmChainIdMap.Polygon, '0xE3607b00E75f6405248323A9417ff6b39B244b50'],
+    [EvmChainIdMap.Robinhood, '0xE3607b00E75f6405248323A9417ff6b39B244b50'],
+    [EvmChainIdMap.Arbitrum, '0xE3607b00E75f6405248323A9417ff6b39B244b50'],
+    [EvmChainIdMap.Celo, '0xE3607b00E75f6405248323A9417ff6b39B244b50'],
+  ])('chain %i hashes with registry %s', (chainId, registry) => {
+    const expected = utils.keccak256(
+      utils.defaultAbiCoder.encode(
+        ['bytes32', 'address', 'uint256'],
+        [utils.keccak256(utils.toUtf8Bytes(`eip155:${chainId}`)), registry, 7],
+      ),
+    );
+    expect(computeAgentId(chainId, 7)).toBe(expected);
   });
 
   it('throws for unsupported chain ID', () => {

@@ -218,13 +218,19 @@ describe('REWARDS_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN', () => {
     }
   });
 
-  it('covers exactly 5 chains (Robinhood has no staking subgraph)', () => {
+  it('covers exactly 5 chains (none for chains without staking programmes)', () => {
     expect(
       Object.keys(urls.REWARDS_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN),
     ).toHaveLength(5);
-    expect(
-      urls.REWARDS_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN[EvmChainIdMap.Robinhood],
-    ).toBeUndefined();
+    for (const chainId of [
+      EvmChainIdMap.Robinhood,
+      EvmChainIdMap.Arbitrum,
+      EvmChainIdMap.Celo,
+    ]) {
+      expect(
+        urls.REWARDS_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN[chainId],
+      ).toBeUndefined();
+    }
   });
 
   it('all subgraph URLs contain "autonolas.tech"', () => {
@@ -346,9 +352,9 @@ describe('BLOCKSCOUT_URL_BY_MIDDLEWARE_CHAIN', () => {
     }
   });
 
-  it('covers exactly 8 chains', () => {
+  it('has no entries beyond the supported chains', () => {
     expect(Object.keys(urls.BLOCKSCOUT_URL_BY_MIDDLEWARE_CHAIN)).toHaveLength(
-      8,
+      Object.keys(SupportedMiddlewareChainMap).length,
     );
   });
 

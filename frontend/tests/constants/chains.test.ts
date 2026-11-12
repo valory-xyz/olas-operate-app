@@ -82,8 +82,10 @@ describe('EvmChainName', () => {
     expect(EvmChainName[EvmChainIdMap.Robinhood]).toBe('Robinhood');
   });
 
-  it('covers exactly 8 entries (one per supported EVM chain)', () => {
-    expect(Object.keys(EvmChainName)).toHaveLength(8);
+  it('has one entry per supported EVM chain', () => {
+    expect(Object.keys(EvmChainName)).toHaveLength(
+      Object.keys(EvmChainIdMap).length,
+    );
   });
 
   it('is consistent with EvmChainIdMap (every chain ID has a name)', () => {
@@ -108,8 +110,10 @@ describe('AllEvmChainIdMap', () => {
     }
   });
 
-  it('covers exactly 9 entries (Ethereum + 8 supported EVM chains)', () => {
-    expect(Object.keys(AllEvmChainIdMap)).toHaveLength(9);
+  it('is the supported EVM chains plus Ethereum', () => {
+    expect(Object.keys(AllEvmChainIdMap)).toHaveLength(
+      Object.keys(EvmChainIdMap).length + 1,
+    );
   });
 });
 
@@ -160,8 +164,10 @@ describe('SupportedMiddlewareChainMap', () => {
     expect(SupportedMiddlewareChainMap.polygon).toBe('polygon');
   });
 
-  it('covers exactly 8 agent-supported chains (excludes ethereum, goerli, solana)', () => {
-    expect(Object.keys(SupportedMiddlewareChainMap)).toHaveLength(8);
+  it('has one entry per supported EVM chain (excludes ethereum, goerli, solana)', () => {
+    expect(Object.keys(SupportedMiddlewareChainMap)).toHaveLength(
+      Object.keys(EvmChainIdMap).length,
+    );
   });
 
   it('every value is also present in MiddlewareChainMap', () => {
@@ -182,7 +188,7 @@ describe('isSupportedMiddlewareChain', () => {
     expect(isSupportedMiddlewareChain('celo')).toBe(true);
   });
 
-  it('rejects a source-only chain, an unknown string and a non-string', () => {
+  it('rejects ethereum, an unknown string and a non-string', () => {
     expect(isSupportedMiddlewareChain('ethereum')).toBe(false);
     expect(isSupportedMiddlewareChain('not-a-chain')).toBe(false);
     expect(isSupportedMiddlewareChain(137)).toBe(false);
