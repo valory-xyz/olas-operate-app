@@ -72,7 +72,13 @@ export abstract class BasiusService extends StakedAgentService {
         ? mechContract!.mapRequestCounts(agentMultisigAddress)
         : activityChecker.getMultisigNonces(agentMultisigAddress),
     ];
-    const multicallResponse = await provider.all(contractCalls);
+    const { reads: multicallResponse, isAwaitingBaseline } =
+      await StakedAgentService.readWithBaseline(
+        provider,
+        stakingProgramConfig,
+        serviceId,
+        contractCalls,
+      );
 
     const [
       serviceInfo,
@@ -103,7 +109,8 @@ export abstract class BasiusService extends StakedAgentService {
         : activityRead[0] - lastNonces[0]
       : 0;
 
-    const isEligibleForRewards = eligibleRequests >= requiredRequests;
+    const isEligibleForRewards =
+      !isAwaitingBaseline && eligibleRequests >= requiredRequests;
 
     const expectedEpochRewards = rewardsPerSecond * livenessPeriod;
     const lateCheckpointRewards = rewardsPerSecond * secondsSinceCheckpoint;
@@ -121,6 +128,7 @@ export abstract class BasiusService extends StakedAgentService {
       livenessRatio,
       rewardsPerSecond,
       isEligibleForRewards,
+      isAwaitingBaseline,
       activityThisEpoch: eligibleRequests,
       availableRewardsForEpoch,
       accruedServiceStakingRewards: parseFloat(

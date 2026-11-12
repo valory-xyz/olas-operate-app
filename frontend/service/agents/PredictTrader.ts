@@ -63,7 +63,13 @@ export abstract class PredictTraderService extends StakedAgentService {
       stakingTokenProxyContract.minStakingDeposit(),
       stakingTokenProxyContract.tsCheckpoint(),
     ];
-    const multicallResponse = await provider.all(contractCalls);
+    const { reads: multicallResponse, isAwaitingBaseline } =
+      await StakedAgentService.readWithBaseline(
+        provider,
+        stakingProgramConfig,
+        serviceId,
+        contractCalls,
+      );
 
     const [
       mechRequestCount,
@@ -88,7 +94,8 @@ export abstract class PredictTraderService extends StakedAgentService {
     const eligibleRequests =
       mechRequestCount - mechRequestCountOnLastCheckpoint;
 
-    const isEligibleForRewards = eligibleRequests >= requiredMechRequests;
+    const isEligibleForRewards =
+      !isAwaitingBaseline && eligibleRequests >= requiredMechRequests;
 
     const availableRewardsForEpoch = Math.max(
       rewardsPerSecond * livenessPeriod, // expected rewards for the epoch
@@ -106,6 +113,7 @@ export abstract class PredictTraderService extends StakedAgentService {
       livenessRatio,
       rewardsPerSecond,
       isEligibleForRewards,
+      isAwaitingBaseline,
       activityThisEpoch: eligibleRequests,
       availableRewardsForEpoch,
       accruedServiceStakingRewards: parseFloat(

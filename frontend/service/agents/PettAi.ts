@@ -62,7 +62,13 @@ export abstract class PettAiService extends StakedAgentService {
       activityChecker.livenessRatio(),
       activityChecker.getMultisigNonces(agentMultisigAddress),
     ];
-    const multicallResponse = await provider.all(contractCalls);
+    const { reads: multicallResponse, isAwaitingBaseline } =
+      await StakedAgentService.readWithBaseline(
+        provider,
+        stakingProgramConfig,
+        serviceId,
+        contractCalls,
+      );
 
     const [
       serviceInfo,
@@ -90,7 +96,8 @@ export abstract class PettAiService extends StakedAgentService {
       ? currentMultisigNonces[0] - lastMultisigNonces[0]
       : 0;
 
-    const isEligibleForRewards = eligibleRequests >= requiredRequests;
+    const isEligibleForRewards =
+      !isAwaitingBaseline && eligibleRequests >= requiredRequests;
 
     const availableRewardsForEpoch = Math.max(
       rewardsPerSecond * livenessPeriod, // expected rewards for the epoch
@@ -108,6 +115,7 @@ export abstract class PettAiService extends StakedAgentService {
       livenessRatio,
       rewardsPerSecond,
       isEligibleForRewards,
+      isAwaitingBaseline,
       activityThisEpoch: eligibleRequests,
       availableRewardsForEpoch,
       accruedServiceStakingRewards: parseFloat(

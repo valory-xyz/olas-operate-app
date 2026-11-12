@@ -186,7 +186,7 @@ All defined in `frontend/types/Autonolas.ts`:
 - `StakingContractDetails` — contract-level state (available rewards, max services, staking duration, APY, epoch info)
 - `ServiceStakingDetails` — per-service state (staking start time, staking state)
 - `StakingState` — enum: `NotStaked` (0), `Staked` (1), `Evicted` (2)
-- `StakingRewardsInfo` — detailed rewards + eligibility for a service (Zod-validated). Key fields: `isEligibleForRewards`, `accruedServiceStakingRewards`, `tsCheckpoint` (hex → int via Zod transform)
+- `StakingRewardsInfo` — detailed rewards + eligibility for a service (Zod-validated). Key fields: `isEligibleForRewards`, `isAwaitingBaseline` (StakingToken v0.4, see below), `accruedServiceStakingRewards`, `tsCheckpoint` (hex → int via Zod transform)
 
 ### Subgraph schema
 
@@ -269,6 +269,14 @@ Newer staking contracts set the on-chain threshold to ~1 (staking unlocks after 
 - **Derived on-chain**, so it persists across service stop / app restart. The agent healthcheck is deliberately not consumed — the agent computes the same `completed >= target` from the same on-chain values, so reading it would add nothing and would vanish when the agent stops.
 - Phase-1 targets are hardcoded per program (8 for the trader-style agents, 1 for the DeFi agents) and must match each agent's `ACTIVITY_TARGET`.
 
+### StakingToken v0.4 baseline (rebaseline)
+
+StakingToken v0.4 keeps a service's counter snapshot unchanged when a read fails, and re-baselines every service after an empty reward reserve is refilled. While either is unresolved the activity counters prove nothing about the current epoch. A v0.4 program sets `stakingVersion: '0.4'` in its config. Older contracts lack the two functions, so only flagged programs call them.
+
+- **Reads:** `StakedAgentService.readWithBaseline` adds `rebaselinePending()` and `mapServiceIdBaselineMissing(serviceId)` to the same multicall as each agent's eligibility reads. It returns `isAwaitingBaseline` (either flag true).
+- **Effect:** while `isAwaitingBaseline`, `isEligibleForRewards` is false, and `deriveIsEpochTargetMet` returns false in both regimes. The UI shows the ordinary "target not met" state; there is no dedicated copy.
+- **Failure:** a failed multicall, or baseline reads that are missing or not booleans, throws. The query keeps its previous data and no eligibility is derived; the flags are never assumed false.
+
 ### Active contract eligibility (useActiveStakingContractDetails)
 
 Derives several status flags from `selectedStakingContractDetails`:
@@ -350,7 +358,7 @@ Fetches all checkpoints for a service from the per-chain indexer:
 
 Epoch start time derivation: for epoch 0 or when the previous checkpoint is missing, uses `blockTimestamp - epochLength`. Otherwise uses the previous checkpoint's `blockTimestamp`.
 
-Indexer dialect: `REWARDS_HISTORY_SUBGRAPH_SCHEMA_BY_EVM_CHAIN` (`frontend/constants/urls.ts`) maps chain → `graph` or `sqd` (absent = `graph`). Base is `sqd`, served at `https://subgraph.autonolas.tech/squid/staking-base/graphql` ([BDMARK-2331](https://linear.app/valory-xyz/issue/BDMARK-2331)); older Pearl builds still read `https://staking-base.subgraph.autonolas.tech`, which is also the rollback URL. The squid query aliases `serviceById` to `service`, so the Zod schema and everything downstream are shared. Its `orderBy: [blockTimestamp_DESC, id_DESC]` is required: rows can share a `blockTimestamp`, and without `id_DESC` they come back in a different order than graph-node's, which shifts derived epoch start times.
+Indexer dialect: `REWARDS_HISTORY_SUBGRAPH_SCHEMA_BY_EVM_CHAIN` (`frontend/constants/urls.ts`) maps chain → `graph` or `sqd` (absent = `graph`). Base and Polygon use `sqd`, served at `https://subgraph.autonolas.tech/squid/staking-base/graphql` ([BDMARK-2331](https://linear.app/valory-xyz/issue/BDMARK-2331)) and `https://subgraph.autonolas.tech/squid/staking-polygon/graphql`, respectively. Older Pearl builds still read `https://staking-base.subgraph.autonolas.tech` and `https://staking-polygon.subgraph.autonolas.tech`; to roll back a chain, restore that URL and remove its schema-revision entry. The squid query aliases `serviceById` to `service`, so the Zod schema and everything downstream are shared. Its `orderBy: [blockTimestamp_DESC, id_DESC]` is required: rows can share a `blockTimestamp`, and without `id_DESC` they come back in a different order than graph-node's, which shifts derived epoch start times.
 
 ## Failure / guard behavior
 

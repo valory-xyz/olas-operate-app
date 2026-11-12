@@ -247,9 +247,12 @@ describe('REWARDS_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN', () => {
     );
   });
 
-  it('Base points at the staking squid', () => {
-    expect(urls.REWARDS_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN[8453]).toBe(
-      'https://subgraph.autonolas.tech/squid/staking-base/graphql',
+  it.each([
+    ['Base', EvmChainIdMap.Base],
+    ['Polygon', EvmChainIdMap.Polygon],
+  ] as const)('%s points at the staking squid', (name, chainId) => {
+    expect(urls.REWARDS_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN[chainId]).toBe(
+      `https://subgraph.autonolas.tech/squid/staking-${name.toLowerCase()}/graphql`,
     );
   });
 });
@@ -261,10 +264,11 @@ describe('getRewardsHistorySchemaRevision', () => {
     urls = await import('../../constants/urls');
   });
 
-  it('Base is served by a squid', () => {
-    expect(urls.getRewardsHistorySchemaRevision(EvmChainIdMap.Base)).toBe(
-      'sqd',
-    );
+  it.each([
+    ['Base', EvmChainIdMap.Base],
+    ['Polygon', EvmChainIdMap.Polygon],
+  ] as const)('%s is served by a squid', (_name, chainId) => {
+    expect(urls.getRewardsHistorySchemaRevision(chainId)).toBe('sqd');
   });
 
   it('every other chain stays on graph', () => {
@@ -272,7 +276,6 @@ describe('getRewardsHistorySchemaRevision', () => {
       EvmChainIdMap.Gnosis,
       EvmChainIdMap.Mode,
       EvmChainIdMap.Optimism,
-      EvmChainIdMap.Polygon,
     ]) {
       expect(urls.getRewardsHistorySchemaRevision(chainId)).toBe('graph');
     }
