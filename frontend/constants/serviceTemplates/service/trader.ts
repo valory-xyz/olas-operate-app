@@ -345,5 +345,12 @@ export const PREDICT_POLYMARKET_SERVICE_TEMPLATE: ServiceTemplate = {
       value: 'https://mech-analytics-api.autonolas.tech',
       provision_type: EnvProvisionType.FIXED,
     },
+    STAKING_POLYGON_SQUID_URL: {
+      name: 'Polygon staking squid URL',
+      description:
+        'GraphQL endpoint for Polystrat staking performance summaries. Required by the Trader agent at startup.',
+      value: 'https://subgraph.autonolas.tech/squid/staking-polygon/graphql',
+      provision_type: EnvProvisionType.FIXED,
+    },
   },
 } as const;
