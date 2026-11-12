@@ -52,6 +52,7 @@ const nextConfig = {
     CELO_RPC: process.env.CELO_RPC,
     POLYGON_RPC: process.env.POLYGON_RPC,
     ROBINHOOD_RPC: process.env.ROBINHOOD_RPC,
+    ARBITRUM_ONE_RPC: process.env.ARBITRUM_ONE_RPC,
   },
 };
 
