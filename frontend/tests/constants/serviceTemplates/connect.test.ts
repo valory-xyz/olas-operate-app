@@ -6,7 +6,7 @@
  * stops every Connect instance on that chain rather than just one alert.
  */
 
-import { MiddlewareChainMap } from '../../../constants';
+import { AddressZero, MiddlewareChainMap } from '../../../constants';
 import {
   CONNECT_FUND_REQUIREMENTS,
   CONNECT_SERVICE_TEMPLATE,
@@ -14,8 +14,6 @@ import {
 } from '../../../constants/serviceTemplates/service/connect';
 
 type Requirement = Record<string, unknown>;
-
-const ZERO = '0x0000000000000000000000000000000000000000';
 
 // Read from the value Connect actually receives, not from the constant behind it.
 const sent: Record<
@@ -104,14 +102,14 @@ describe('CONNECT_SERVICE_TEMPLATE chains', () => {
     expect(
       CONNECT_FUND_REQUIREMENTS[MiddlewareChainMap.ARBITRUM_ONE]?.safe,
     ).toEqual({
-      [ZERO]: { threshold: '100000000000000', topup: '500000000000000' },
+      [AddressZero]: { threshold: '100000000000000', topup: '500000000000000' },
       '0xaf88d065e77c8cC2239327C5EDb3A432268e5831': {
         threshold: '1000000',
         topup: '5000000',
       },
     });
     expect(CONNECT_FUND_REQUIREMENTS[MiddlewareChainMap.CELO]?.safe).toEqual({
-      [ZERO]: {
+      [AddressZero]: {
         threshold: '1000000000000000000',
         topup: '5000000000000000000',
       },
@@ -120,8 +118,16 @@ describe('CONNECT_SERVICE_TEMPLATE chains', () => {
         topup: '5000000',
       },
     });
+    expect(
+      CONNECT_FUND_REQUIREMENTS[MiddlewareChainMap.ARBITRUM_ONE]?.agent,
+    ).toEqual({
+      [AddressZero]: { threshold: '40000000000000', topup: '200000000000000' },
+    });
     expect(CONNECT_FUND_REQUIREMENTS[MiddlewareChainMap.CELO]?.agent).toEqual({
-      [ZERO]: { threshold: '100000000000000000', topup: '500000000000000000' },
+      [AddressZero]: {
+        threshold: '100000000000000000',
+        topup: '500000000000000000',
+      },
     });
   });
 });

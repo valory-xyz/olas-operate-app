@@ -32,7 +32,7 @@ describe('OLAS_CONTRACTS on Arbitrum and Celo', () => {
 });
 
 describe('OLAS_CONTRACTS', () => {
-  it('has entries for all 5 supported EVM chains', () => {
+  it('has an entry for every supported EVM chain', () => {
     for (const chainId of Object.values(EvmChainIdMap)) {
       expect(OLAS_CONTRACTS[chainId]).toBeDefined();
     }

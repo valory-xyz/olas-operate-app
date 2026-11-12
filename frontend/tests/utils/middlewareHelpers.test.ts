@@ -159,16 +159,14 @@ describe('asEvmChainDetails', () => {
   });
 });
 
-describe('asMiddlewareChain — Arbitrum and Celo', () => {
+describe('asMiddlewareChain', () => {
   it('converts 42161 to arbitrum_one and 42220 to celo', () => {
     expect(asMiddlewareChain(EvmChainIdMap.Arbitrum)).toBe(
       MiddlewareChainMap.ARBITRUM_ONE,
     );
     expect(asMiddlewareChain(EvmChainIdMap.Celo)).toBe(MiddlewareChainMap.CELO);
   });
-});
 
-describe('asMiddlewareChain', () => {
   it('converts chain IDs to middleware chain enums', () => {
     expect(asMiddlewareChain(EvmChainIdMap.Gnosis)).toBe(
       MiddlewareChainMap.GNOSIS,

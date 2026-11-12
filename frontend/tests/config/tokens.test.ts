@@ -122,7 +122,7 @@ describe('GNOSIS_TOKEN_CONFIG', () => {
 });
 
 describe('TOKEN_CONFIG — per-chain data integrity', () => {
-  it('has entries for all 6 supported EVM chains', () => {
+  it('has an entry for every supported EVM chain', () => {
     const supportedChainIds = Object.values(EvmChainIdMap);
     for (const chainId of supportedChainIds) {
       expect(TOKEN_CONFIG[chainId]).toBeDefined();

@@ -296,7 +296,6 @@ export const ROBINHOOD_TOKEN_CONFIG: ChainTokenConfig = {
   },
 };
 
-/** Arbitrum One: native ETH, OLAS and Circle USDC. */
 export const ARBITRUM_TOKEN_CONFIG: ChainTokenConfig = {
   [TokenSymbolMap.ETH]: {
     tokenType: TokenType.NativeGas,

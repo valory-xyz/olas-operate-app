@@ -125,9 +125,10 @@ export const CONNECT_FUND_REQUIREMENTS: Partial<
       },
     },
   },
-  // Arbitrum's ETH amounts match Robinhood's (both are Arbitrum-stack L2s with
-  // ETH gas). Celo's safe CELO matches Gnosis's xDAI; its agent gas budget is
-  // 10x Gnosis's, as CELO is worth less than a dollar.
+  // Arbitrum's ETH topups match Robinhood's (both are Arbitrum-stack L2s with
+  // ETH gas); it keeps the 1/5 thresholds Robinhood drops. Celo's safe CELO
+  // matches Gnosis's xDAI; its agent gas budget is 10x Gnosis's, as a CELO buys
+  // far less gas than an xDAI.
   [MiddlewareChainMap.ARBITRUM_ONE]: {
     agent: {
       [ethers.constants.AddressZero]: {

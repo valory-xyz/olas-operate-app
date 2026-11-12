@@ -23,7 +23,7 @@ jest.mock(
 jest.mock('../../constants/providers', () => ({ PROVIDERS: {} }));
 
 describe('CHAIN_CONFIG', () => {
-  it('has entries for an entry for every supported EVM chain', () => {
+  it('has an entry for every supported EVM chain', () => {
     const supportedChainIds = Object.values(EvmChainIdMap);
     expect(Object.keys(CHAIN_CONFIG)).toHaveLength(supportedChainIds.length);
   });

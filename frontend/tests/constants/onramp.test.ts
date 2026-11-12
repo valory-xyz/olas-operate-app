@@ -26,7 +26,7 @@ describe('MIN_ONRAMP_AMOUNT', () => {
 });
 
 describe('ON_RAMP_CHAIN_MAP', () => {
-  it('covers all 6 supported middleware chains', () => {
+  it('covers every supported middleware chain', () => {
     const supportedChains = Object.values(SupportedMiddlewareChainMap);
     for (const chain of supportedChains) {
       expect(ON_RAMP_CHAIN_MAP[chain]).toBeDefined();
