@@ -8,7 +8,11 @@
  * @warning DO NOT STORE STATE IN THESE CLASSES. THEY ARE SINGLETONS AND WILL BE SHARED ACROSS THE APPLICATION.
  */
 import { ethers } from 'ethers';
-import { Contract as MulticallContract } from 'ethers-multicall';
+import {
+  Contract as MulticallContract,
+  ContractCall,
+  Provider as MulticallProvider,
+} from 'ethers-multicall';
 import { entries } from 'lodash';
 
 import { OLAS_CONTRACTS } from '@/config/olasContracts';
@@ -63,6 +67,40 @@ export abstract class StakedAgentService {
     chainId: EvmChainId,
   ): Promise<unknown>;
   abstract getInstance(): StakedAgentService;
+
+  /** Throws on a failed or malformed baseline read rather than treating it as false. */
+  static readWithBaseline = async (
+    provider: MulticallProvider,
+    stakingProgramConfig: StakingProgramConfig,
+    serviceId: number,
+    calls: ContractCall[],
+  ) => {
+    const { address, contract, stakingVersion } = stakingProgramConfig;
+    const baselineCalls: ContractCall[] =
+      stakingVersion === '0.4'
+        ? [
+            contract.rebaselinePending(),
+            contract.mapServiceIdBaselineMissing(serviceId),
+          ]
+        : [];
+
+    const response = await provider.all([...calls, ...baselineCalls]);
+    const baselineReads = response.slice(calls.length);
+
+    if (
+      baselineReads.length !== baselineCalls.length ||
+      baselineReads.some((read) => typeof read !== 'boolean')
+    ) {
+      throw new Error(
+        `Unexpected StakingToken baseline reads for ${address} service ${serviceId}: ${JSON.stringify(baselineReads)}`,
+      );
+    }
+
+    return {
+      reads: response.slice(0, calls.length),
+      isAwaitingBaseline: baselineReads.some(Boolean),
+    };
+  };
 
   static getCurrentStakingProgramByServiceId = async (
     serviceNftTokenId: number,

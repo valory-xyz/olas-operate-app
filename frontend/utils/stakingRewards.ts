@@ -61,14 +61,16 @@ export const getStakingProgramActivityTarget = (
  * - legacy (`activityTarget` undefined): the on-chain staking KPI (`isEligibleForRewards`).
  *
  * In the legacy regime the two are identical, so existing behaviour is preserved.
+ * Either way, the target is not met while a v0.4 programme awaits a baseline.
  */
 export const deriveIsEpochTargetMet = (
   stakingRewardsInfo: Pick<
     StakingRewardsInfo,
-    'isEligibleForRewards' | 'activityThisEpoch'
+    'isEligibleForRewards' | 'activityThisEpoch' | 'isAwaitingBaseline'
   >,
   activityTarget: number | undefined,
 ): boolean => {
+  if (stakingRewardsInfo.isAwaitingBaseline) return false;
   if (activityTarget === undefined) {
     return stakingRewardsInfo.isEligibleForRewards;
   }

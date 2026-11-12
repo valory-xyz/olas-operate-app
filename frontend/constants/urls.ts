@@ -31,12 +31,12 @@ export const TERMS_AND_CONDITIONS_URL: Url = 'https://olas.network/pearl-terms';
 // Pearl Terms section covering the risks specific to Pearl Connect
 export const PEARL_CONNECT_RISKS_TERMS_URL: Url = `${TERMS_AND_CONDITIONS_URL}#section-6-1-2`;
 
-// thegraph
+// Staking history
 // Absent for chains with no staking programmes (Robinhood): `useRewardsHistory`
-// does not query there. Base is a SQD squid, served path-style under the shared
-// host; the rest are graph-node subgraph proxies (host-style).
-// Base rollback: 'https://staking-base.subgraph.autonolas.tech' + drop its
-// REWARDS_HISTORY_SUBGRAPH_SCHEMA_BY_EVM_CHAIN entry.
+// does not query there. Base and Polygon use SQD squids, served path-style under
+// the shared host; the rest are graph-node subgraph proxies (host-style).
+// Rollback: restore the chain's https://staking-{chain}.subgraph.autonolas.tech
+// URL and remove its REWARDS_HISTORY_SUBGRAPH_SCHEMA_BY_EVM_CHAIN entry.
 export const REWARDS_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN: Partial<
   Record<EvmChainId, Url>
 > = {
@@ -45,7 +45,8 @@ export const REWARDS_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN: Partial<
     'https://subgraph.autonolas.tech/squid/staking-base/graphql',
   [EvmChainIdMap.Mode]: 'https://staking-mode.subgraph.autonolas.tech',
   [EvmChainIdMap.Optimism]: 'https://staking-optimism.subgraph.autonolas.tech',
-  [EvmChainIdMap.Polygon]: 'https://staking-polygon.subgraph.autonolas.tech',
+  [EvmChainIdMap.Polygon]:
+    'https://subgraph.autonolas.tech/squid/staking-polygon/graphql',
 };
 
 export type RewardsHistorySchemaRevision = 'graph' | 'sqd';
@@ -57,6 +58,7 @@ export const REWARDS_HISTORY_SUBGRAPH_SCHEMA_BY_EVM_CHAIN: Partial<
   Record<EvmChainId, RewardsHistorySchemaRevision>
 > = {
   [EvmChainIdMap.Base]: 'sqd',
+  [EvmChainIdMap.Polygon]: 'sqd',
 };
 
 export const getRewardsHistorySchemaRevision = (

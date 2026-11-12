@@ -953,6 +953,25 @@ export const STAKING_TOKEN_PROXY_ABI: JsonFragment[] = [
         type: 'uint256',
       },
     ],
+    name: 'mapServiceIdBaselineMissing',
+    outputs: [
+      {
+        internalType: 'bool',
+        name: '',
+        type: 'bool',
+      },
+    ],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [
+      {
+        internalType: 'uint256',
+        name: '',
+        type: 'uint256',
+      },
+    ],
     name: 'mapServiceInfo',
     outputs: [
       {
@@ -1117,6 +1136,19 @@ export const STAKING_TOKEN_PROXY_ABI: JsonFragment[] = [
         internalType: 'bytes32',
         name: '',
         type: 'bytes32',
+      },
+    ],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'rebaselinePending',
+    outputs: [
+      {
+        internalType: 'bool',
+        name: '',
+        type: 'bool',
       },
     ],
     stateMutability: 'view',

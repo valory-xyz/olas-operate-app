@@ -3,7 +3,10 @@ import { ethers } from 'ethers';
 import { formatEther } from 'ethers/lib/utils';
 
 import { EvmChainIdMap } from '../../../constants/chains';
-import { STAKING_PROGRAM_IDS } from '../../../constants/stakingProgram';
+import {
+  STAKING_PROGRAM_IDS,
+  StakingProgramId,
+} from '../../../constants/stakingProgram';
 import { PettAiService } from '../../../service/agents/PettAi';
 import { ONE_YEAR } from '../../../service/agents/shared-services/StakedAgentService';
 import { StakingState } from '../../../types/Autonolas';
@@ -74,6 +77,17 @@ jest.mock('../../../config/stakingPrograms', () => {
           },
           address: stakingAddr1,
           chainId: EvmChainIdMap.Base,
+        },
+        v04Program: {
+          get activityChecker() {
+            return shared.activityChecker;
+          },
+          get contract() {
+            return shared.stakingContract;
+          },
+          address: stakingAddr1,
+          chainId: EvmChainIdMap.Base,
+          stakingVersion: '0.4',
         },
       },
       [EvmChainIdMap.Gnosis]: {},
@@ -244,6 +258,36 @@ describe('PettAiService.getAgentStakingRewardsInfo', () => {
       REWARDS_PER_SECOND * (NOW_S - TS_CHECKPOINT),
     );
     expect(result!.availableRewardsForEpoch).toBe(expected);
+  });
+
+  describe('StakingToken v0.4 baseline', () => {
+    const V04_PROGRAM = 'v04Program' as StakingProgramId;
+
+    it('reports not eligible despite enough activity while a baseline is awaited', async () => {
+      shared.multicallAll.mockResolvedValueOnce([
+        ...buildResponse(0, [20]),
+        false,
+        true,
+      ]);
+
+      const result = await callWith({ stakingProgramId: V04_PROGRAM });
+
+      expect(result!.isEligibleForRewards).toBe(false);
+      expect(result!.isAwaitingBaseline).toBe(true);
+    });
+
+    it('older programme: makes no baseline reads and keeps the counter-based result', async () => {
+      shared.multicallAll.mockResolvedValueOnce(buildResponse(0, [20]));
+
+      const result = await callWith();
+
+      expect(shared.stakingContract.rebaselinePending).not.toHaveBeenCalled();
+      expect(
+        shared.stakingContract.mapServiceIdBaselineMissing,
+      ).not.toHaveBeenCalled();
+      expect(result!.isEligibleForRewards).toBe(true);
+      expect(result!.isAwaitingBaseline).toBe(false);
+    });
   });
 });
 
