@@ -6,7 +6,7 @@
  * stops every Connect instance on that chain rather than just one alert.
  */
 
-import { MiddlewareChainMap } from '../../../constants';
+import { AddressZero, MiddlewareChainMap } from '../../../constants';
 import {
   CONNECT_FUND_REQUIREMENTS,
   CONNECT_SERVICE_TEMPLATE,
@@ -76,6 +76,57 @@ describe('CONNECT_FUND_REQUIREMENTS', () => {
     ).toEqual({
       [MiddlewareChainMap.GNOSIS]:
         CONNECT_FUND_REQUIREMENTS[MiddlewareChainMap.GNOSIS],
+    });
+  });
+});
+
+describe('CONNECT_SERVICE_TEMPLATE chains', () => {
+  const chains = [
+    { chain: MiddlewareChainMap.ARBITRUM_ONE, rpc: 'ARBITRUM_ONE_LEDGER_RPC' },
+    { chain: MiddlewareChainMap.CELO, rpc: 'CELO_LEDGER_RPC' },
+  ] as const;
+
+  it.each(chains)(
+    '$chain has fund requirements, a configuration and a computed ledger RPC',
+    ({ chain, rpc }) => {
+      expect(CONNECT_FUND_REQUIREMENTS[chain]).toBeDefined();
+      expect(CONNECT_SERVICE_TEMPLATE.configurations[chain]).toBeDefined();
+      expect(CONNECT_SERVICE_TEMPLATE.env_variables[rpc]?.provision_type).toBe(
+        'computed',
+      );
+    },
+  );
+
+  it('asks for 0.0005 ETH and 5 USDC on Arbitrum, 5 CELO and 5 USDC on Celo', () => {
+    expect(
+      CONNECT_FUND_REQUIREMENTS[MiddlewareChainMap.ARBITRUM_ONE]?.safe,
+    ).toEqual({
+      [AddressZero]: { threshold: '100000000000000', topup: '500000000000000' },
+      '0xaf88d065e77c8cC2239327C5EDb3A432268e5831': {
+        threshold: '1000000',
+        topup: '5000000',
+      },
+    });
+    expect(CONNECT_FUND_REQUIREMENTS[MiddlewareChainMap.CELO]?.safe).toEqual({
+      [AddressZero]: {
+        threshold: '1000000000000000000',
+        topup: '5000000000000000000',
+      },
+      '0xcebA9300f2b948710d2653dD7B07f33A8B32118C': {
+        threshold: '1000000',
+        topup: '5000000',
+      },
+    });
+    expect(
+      CONNECT_FUND_REQUIREMENTS[MiddlewareChainMap.ARBITRUM_ONE]?.agent,
+    ).toEqual({
+      [AddressZero]: { threshold: '40000000000000', topup: '200000000000000' },
+    });
+    expect(CONNECT_FUND_REQUIREMENTS[MiddlewareChainMap.CELO]?.agent).toEqual({
+      [AddressZero]: {
+        threshold: '100000000000000000',
+        topup: '500000000000000000',
+      },
     });
   });
 });

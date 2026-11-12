@@ -46,6 +46,7 @@ const SOURCES = {
     FUNDING_RUN_NATIVE,
     '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',
   ],
+  celo: [FUNDING_RUN_NATIVE],
   gnosis: [FUNDING_RUN_NATIVE],
   robinhood: [FUNDING_RUN_NATIVE],
 };
@@ -225,11 +226,12 @@ describe('FundingFlow — selection', () => {
       'Optimism',
       'Polygon',
       'Arbitrum',
+      'Celo',
       'Gnosis',
       'Robinhood',
       'Other chain',
     ]);
-    expect(screen.queryByText(/Celo|Solana/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Solana/)).not.toBeInTheDocument();
     expect(
       screen.getByText('Select the preferred chain to send funds from:'),
     ).toBeInTheDocument();
@@ -244,6 +246,13 @@ describe('FundingFlow — selection', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Change' }));
     fireEvent.click(screen.getByRole('button', { name: /Robinhood/ }));
     expect(screen.getByRole('button', { name: /ETH/ })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /USDC/ })).toBeNull();
+  });
+
+  it('offers only CELO on Celo', () => {
+    renderFlow();
+    fireEvent.click(screen.getByRole('button', { name: /Celo/ }));
+    expect(screen.getByRole('button', { name: /CELO/ })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /USDC/ })).toBeNull();
   });
 

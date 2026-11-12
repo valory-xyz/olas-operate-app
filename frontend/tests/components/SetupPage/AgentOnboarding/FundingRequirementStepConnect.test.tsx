@@ -48,8 +48,8 @@ jest.mock('../../../../config/agents', () => ({
       displayName: 'Connect',
       servicePublicId: 'valory/connect:0.1.0',
       // The component reads the offered chains straight from this list, so it
-      // must match what ships: Polygon, Gnosis, Robinhood, in display order.
-      supportedChains: [137, 100, 4663],
+      // must match what ships, in display order.
+      supportedChains: [137, 100, 4663, 42161, 42220],
       evmHomeChainId: 100,
       middlewareHomeChainId: 'gnosis',
     },
@@ -95,13 +95,15 @@ describe('FundingRequirementStep — Connect chain select', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('lists the chains in order: Polygon, Gnosis, Robinhood', () => {
+  it('lists the chains in order: Polygon, Gnosis, Robinhood, Arbitrum, Celo', () => {
     render(<FundingRequirementStep agentType={AgentMap.Connect} />);
     openDropdown();
     expect(getOptions().map((el) => el.textContent?.trim())).toEqual([
       'Polygon',
       'Gnosis',
       'Robinhood',
+      'Arbitrum',
+      'Celo',
     ]);
   });
 

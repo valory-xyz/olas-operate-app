@@ -32,8 +32,8 @@ export const TERMS_AND_CONDITIONS_URL: Url = 'https://olas.network/pearl-terms';
 export const PEARL_CONNECT_RISKS_TERMS_URL: Url = `${TERMS_AND_CONDITIONS_URL}#section-6-1-2`;
 
 // thegraph
-// Absent for chains with no staking programmes (Robinhood): `useRewardsHistory`
-// does not query there. Base is a SQD squid, served path-style under the shared
+// Absent for chains with no staking programmes: `useRewardsHistory` does not
+// query there. Base is a SQD squid, served path-style under the shared
 // host; the rest are graph-node subgraph proxies (host-style).
 // Base rollback: 'https://staking-base.subgraph.autonolas.tech' + drop its
 // REWARDS_HISTORY_SUBGRAPH_SCHEMA_BY_EVM_CHAIN entry.
@@ -136,6 +136,8 @@ const BASE_EXPLORER_URL: Url = 'https://basescan.org';
 const MODE_EXPLORER_URL: Url = 'https://explorer.mode.network';
 const OPTIMISM_EXPLORER_URL: Url = 'https://optimistic.etherscan.io';
 const POLYGON_EXPLORER_URL: Url = 'https://polygonscan.com';
+const ARBITRUM_EXPLORER_URL: Url = 'https://arbiscan.io';
+const CELO_EXPLORER_URL: Url = 'https://celoscan.io';
 // Blockscout is the only explorer on Robinhood Chain.
 const ROBINHOOD_EXPLORER_URL: Url = 'https://robinhoodchain.blockscout.com';
 
@@ -149,6 +151,8 @@ export const EXPLORER_URL_BY_MIDDLEWARE_CHAIN: Record<
   [MiddlewareChainMap.OPTIMISM]: OPTIMISM_EXPLORER_URL,
   [MiddlewareChainMap.POLYGON]: POLYGON_EXPLORER_URL,
   [MiddlewareChainMap.ROBINHOOD]: ROBINHOOD_EXPLORER_URL,
+  [MiddlewareChainMap.ARBITRUM_ONE]: ARBITRUM_EXPLORER_URL,
+  [MiddlewareChainMap.CELO]: CELO_EXPLORER_URL,
 };
 
 export const BLOCKSCOUT_URL_BY_MIDDLEWARE_CHAIN: Record<
@@ -161,6 +165,8 @@ export const BLOCKSCOUT_URL_BY_MIDDLEWARE_CHAIN: Record<
   [MiddlewareChainMap.OPTIMISM]: 'https://optimism.blockscout.com',
   [MiddlewareChainMap.POLYGON]: 'https://polygon.blockscout.com',
   [MiddlewareChainMap.ROBINHOOD]: ROBINHOOD_EXPLORER_URL,
+  [MiddlewareChainMap.ARBITRUM_ONE]: 'https://arbitrum.blockscout.com',
+  [MiddlewareChainMap.CELO]: 'https://celo.blockscout.com',
 };
 
 // on-ramp

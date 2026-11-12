@@ -20,14 +20,16 @@ jest.mock(
 );
 
 describe('OLAS_CONTRACTS', () => {
-  it('has entries for all 5 supported EVM chains', () => {
+  it('has an entry for every supported EVM chain', () => {
     for (const chainId of Object.values(EvmChainIdMap)) {
       expect(OLAS_CONTRACTS[chainId]).toBeDefined();
     }
   });
 
-  it('covers exactly 6 chains', () => {
-    expect(Object.keys(OLAS_CONTRACTS)).toHaveLength(6);
+  it('has no entries beyond the supported chains', () => {
+    expect(Object.keys(OLAS_CONTRACTS)).toHaveLength(
+      Object.keys(EvmChainIdMap).length,
+    );
   });
 
   it('every chain has a ServiceRegistryL2 contract', () => {
@@ -126,4 +128,30 @@ describe('OLAS_CONTRACTS', () => {
       '0xE3607b00E75f6405248323A9417ff6b39B244b50',
     );
   });
+});
+
+describe('OLAS_CONTRACTS on Arbitrum and Celo', () => {
+  // autonomy's CHAIN_PROFILES for arbitrum and celo
+  it.each([EvmChainIdMap.Arbitrum, EvmChainIdMap.Celo])(
+    'chain %i reads the registries at their deployed addresses',
+    (chainId) => {
+      expect(
+        OLAS_CONTRACTS[chainId][CONTRACT_TYPE.ServiceRegistryL2].address,
+      ).toBe('0xE3607b00E75f6405248323A9417ff6b39B244b50');
+      expect(
+        OLAS_CONTRACTS[chainId][CONTRACT_TYPE.ServiceRegistryTokenUtility]
+          .address,
+      ).toBe('0x3d77596beb0f130a4415df3D2D8232B3d3D31e44');
+    },
+  );
+
+  // The autonomy chain profiles give both chains Robinhood's registries.
+  it.each([EvmChainIdMap.Arbitrum, EvmChainIdMap.Celo])(
+    'chain %i shares the Robinhood registry contracts',
+    (chainId) => {
+      expect(OLAS_CONTRACTS[chainId]).toBe(
+        OLAS_CONTRACTS[EvmChainIdMap.Robinhood],
+      );
+    },
+  );
 });

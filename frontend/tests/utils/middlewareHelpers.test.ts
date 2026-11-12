@@ -17,6 +17,13 @@ import {
 import { INVALID_CHAIN_ID, UNKNOWN_TOKEN_ADDRESS } from '../helpers/factories';
 
 describe('asEvmChainId', () => {
+  it('converts arbitrum_one to 42161 and celo to 42220', () => {
+    expect(asEvmChainId(MiddlewareChainMap.ARBITRUM_ONE)).toBe(
+      EvmChainIdMap.Arbitrum,
+    );
+    expect(asEvmChainId(MiddlewareChainMap.CELO)).toBe(EvmChainIdMap.Celo);
+  });
+
   it('converts gnosis to 100', () => {
     expect(asEvmChainId(MiddlewareChainMap.GNOSIS)).toBe(EvmChainIdMap.Gnosis);
   });
@@ -67,10 +74,11 @@ describe('asAllEvmChainId', () => {
     );
   });
 
-  it('converts arbitrum_one to 42161', () => {
-    expect(asAllEvmChainId(MiddlewareChainMap.ARBITRUM_ONE)).toBe(
-      AllEvmChainIdMap.Arbitrum,
-    );
+  it.each([
+    [MiddlewareChainMap.ARBITRUM_ONE, AllEvmChainIdMap.Arbitrum],
+    [MiddlewareChainMap.CELO, AllEvmChainIdMap.Celo],
+  ])('converts %s to %i', (chain, chainId) => {
+    expect(asAllEvmChainId(chain)).toBe(chainId);
   });
 
   it('delegates non-ethereum chains to asEvmChainId', () => {
@@ -103,6 +111,14 @@ describe('asEvmChainDetails', () => {
     expect(result.displayName).toBe('Arbitrum');
     expect(result.symbol).toBe(TokenSymbolMap.ETH);
     expect(result.chainId).toBe(AllEvmChainIdMap.Arbitrum);
+  });
+
+  it('returns correct details for celo', () => {
+    const result = asEvmChainDetails(MiddlewareChainMap.CELO);
+    expect(result.name).toBe('celo');
+    expect(result.displayName).toBe('Celo');
+    expect(result.symbol).toBe(TokenSymbolMap.CELO);
+    expect(result.chainId).toBe(AllEvmChainIdMap.Celo);
   });
 
   it('returns correct details for gnosis', () => {
@@ -145,6 +161,13 @@ describe('asEvmChainDetails', () => {
 });
 
 describe('asMiddlewareChain', () => {
+  it('converts 42161 to arbitrum_one and 42220 to celo', () => {
+    expect(asMiddlewareChain(EvmChainIdMap.Arbitrum)).toBe(
+      MiddlewareChainMap.ARBITRUM_ONE,
+    );
+    expect(asMiddlewareChain(EvmChainIdMap.Celo)).toBe(MiddlewareChainMap.CELO);
+  });
+
   it('converts chain IDs to middleware chain enums', () => {
     expect(asMiddlewareChain(EvmChainIdMap.Gnosis)).toBe(
       MiddlewareChainMap.GNOSIS,
@@ -180,10 +203,11 @@ describe('asAllMiddlewareChain', () => {
     );
   });
 
-  it('converts the Arbitrum chain ID to arbitrum_one', () => {
-    expect(asAllMiddlewareChain(AllEvmChainIdMap.Arbitrum)).toBe(
-      MiddlewareChainMap.ARBITRUM_ONE,
-    );
+  it.each([
+    [AllEvmChainIdMap.Arbitrum, MiddlewareChainMap.ARBITRUM_ONE],
+    [AllEvmChainIdMap.Celo, MiddlewareChainMap.CELO],
+  ])('converts %i to %s', (chainId, chain) => {
+    expect(asAllMiddlewareChain(chainId)).toBe(chain);
   });
 
   it('delegates non-ethereum chain IDs to asMiddlewareChain', () => {

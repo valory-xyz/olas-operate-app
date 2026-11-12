@@ -1,6 +1,8 @@
 import { ethers } from 'ethers';
 
 import {
+  ARBITRUM_TOKEN_CONFIG,
+  CELO_TOKEN_CONFIG,
   POLYGON_TOKEN_CONFIG,
   ROBINHOOD_TOKEN_CONFIG,
   TokenSymbolMap,
@@ -26,6 +28,8 @@ const COMMON_CONFIG = {
 
 const POLYGON_USDC = POLYGON_TOKEN_CONFIG[TokenSymbolMap.USDC];
 const ROBINHOOD_USDG = ROBINHOOD_TOKEN_CONFIG[TokenSymbolMap.USDG];
+const ARBITRUM_USDC = ARBITRUM_TOKEN_CONFIG[TokenSymbolMap.USDC];
+const CELO_USDC = CELO_TOKEN_CONFIG[TokenSymbolMap.USDC];
 
 /**
  * One asset's entry in Connect's `FUND_REQUIREMENTS`, the `funds-manager`
@@ -121,6 +125,42 @@ export const CONNECT_FUND_REQUIREMENTS: Partial<
       },
     },
   },
+  [MiddlewareChainMap.ARBITRUM_ONE]: {
+    agent: {
+      [ethers.constants.AddressZero]: {
+        threshold: parseEther(0.00004),
+        topup: parseEther(0.0002),
+      },
+    },
+    safe: {
+      [ethers.constants.AddressZero]: {
+        threshold: parseEther(0.0001),
+        topup: parseEther(0.0005),
+      },
+      [ARBITRUM_USDC?.address as string]: {
+        threshold: parseUnits(1, ARBITRUM_USDC?.decimals),
+        topup: parseUnits(5, ARBITRUM_USDC?.decimals),
+      },
+    },
+  },
+  [MiddlewareChainMap.CELO]: {
+    agent: {
+      [ethers.constants.AddressZero]: {
+        threshold: parseEther(0.1),
+        topup: parseEther(0.5),
+      },
+    },
+    safe: {
+      [ethers.constants.AddressZero]: {
+        threshold: parseEther(1),
+        topup: parseEther(5),
+      },
+      [CELO_USDC?.address as string]: {
+        threshold: parseUnits(1, CELO_USDC?.decimals),
+        topup: parseUnits(5, CELO_USDC?.decimals),
+      },
+    },
+  },
 };
 
 /**
@@ -141,8 +181,8 @@ export const connectFundRequirementsFor = (chain: MiddlewareChain): string => {
 /**
  * Connect service template.
  *
- * One `configurations` block per supported chain (Polygon / Gnosis / Robinhood),
- * each with `staking_program_id: 'no_staking'`. The same `name` is shared across chains;
+ * One `configurations` block per supported chain, each with
+ * `staking_program_id: 'no_staking'`. The same `name` is shared across chains;
  * the chain is selected at setup time (see `SelectChain`).
  */
 export const CONNECT_SERVICE_TEMPLATE: ServiceTemplate = {
@@ -198,6 +238,32 @@ export const CONNECT_SERVICE_TEMPLATE: ServiceTemplate = {
         },
       },
     },
+    [MiddlewareChainMap.ARBITRUM_ONE]: {
+      ...COMMON_CONFIG,
+      fund_requirements: {
+        [ethers.constants.AddressZero]: {
+          agent: parseEther(0.0002),
+          safe: parseEther(0.0005),
+        },
+        [ARBITRUM_USDC?.address as string]: {
+          agent: '0',
+          safe: parseUnits(5, ARBITRUM_USDC?.decimals),
+        },
+      },
+    },
+    [MiddlewareChainMap.CELO]: {
+      ...COMMON_CONFIG,
+      fund_requirements: {
+        [ethers.constants.AddressZero]: {
+          agent: parseEther(0.5),
+          safe: parseEther(5),
+        },
+        [CELO_USDC?.address as string]: {
+          agent: '0',
+          safe: parseUnits(5, CELO_USDC?.decimals),
+        },
+      },
+    },
   },
   env_variables: {
     SAFE_CONTRACT_ADDRESSES: {
@@ -226,6 +292,18 @@ export const CONNECT_SERVICE_TEMPLATE: ServiceTemplate = {
     },
     ROBINHOOD_LEDGER_RPC: {
       name: 'Robinhood ledger RPC',
+      description: '',
+      value: '',
+      provision_type: EnvProvisionType.COMPUTED,
+    },
+    ARBITRUM_ONE_LEDGER_RPC: {
+      name: 'Arbitrum ledger RPC',
+      description: '',
+      value: '',
+      provision_type: EnvProvisionType.COMPUTED,
+    },
+    CELO_LEDGER_RPC: {
+      name: 'Celo ledger RPC',
       description: '',
       value: '',
       provision_type: EnvProvisionType.COMPUTED,

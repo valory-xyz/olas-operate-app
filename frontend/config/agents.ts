@@ -28,7 +28,9 @@ import { Address } from '@/types/Address';
 import { AgentConfig } from '@/types/Agent';
 
 import {
+  ARBITRUM_TOKEN_CONFIG,
   BASE_TOKEN_CONFIG,
+  CELO_TOKEN_CONFIG,
   MODE_TOKEN_CONFIG,
   OPTIMISM_TOKEN_CONFIG,
   POLYGON_TOKEN_CONFIG,
@@ -340,6 +342,8 @@ export const AGENT_CONFIG: {
       EvmChainIdMap.Polygon,
       EvmChainIdMap.Gnosis,
       EvmChainIdMap.Robinhood,
+      EvmChainIdMap.Arbitrum,
+      EvmChainIdMap.Celo,
     ],
     agentIds: [116],
     additionalRequirements: {
@@ -355,6 +359,18 @@ export const AGENT_CONFIG: {
           ROBINHOOD_TOKEN_CONFIG[TokenSymbolMap.USDG],
         ),
       },
+      [EvmChainIdMap.Arbitrum]: {
+        [TokenSymbolMap.USDC]: getConnectStablecoinConfig(
+          MiddlewareChainMap.ARBITRUM_ONE,
+          ARBITRUM_TOKEN_CONFIG[TokenSymbolMap.USDC],
+        ),
+      },
+      [EvmChainIdMap.Celo]: {
+        [TokenSymbolMap.USDC]: getConnectStablecoinConfig(
+          MiddlewareChainMap.CELO,
+          CELO_TOKEN_CONFIG[TokenSymbolMap.USDC],
+        ),
+      },
     },
     defaultStakingProgramId: 'no_staking',
     serviceApi: ConnectService,
@@ -364,11 +380,12 @@ export const AGENT_CONFIG: {
     doesChatUiRequireApiKey: false,
     // PLACEHOLDER: real public id lands with the minted Connect package (PR2).
     servicePublicId: 'valory/connect:0.1.0',
-    // Per-chain: Connect uses USDC and pUSD on Polygon and USDG on Robinhood.
     // Gnosis runs on native xDAI, so no ERC20 may appear in its agent wallet.
     erc20Tokens: {
       [EvmChainIdMap.Polygon]: [TokenSymbolMap.USDC, TokenSymbolMap.pUSD],
       [EvmChainIdMap.Robinhood]: [TokenSymbolMap.USDG],
+      [EvmChainIdMap.Arbitrum]: [TokenSymbolMap.USDC],
+      [EvmChainIdMap.Celo]: [TokenSymbolMap.USDC],
     },
   },
 };

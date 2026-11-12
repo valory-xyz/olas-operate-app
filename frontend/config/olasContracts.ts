@@ -63,8 +63,8 @@ const POLYGON_OLAS_CONTRACTS: ContractsByType = {
   ),
 };
 
-// autonolas-registries scripts/deployment/l2/globals_robinhood_mainnet.json (PR #325)
-const ROBINHOOD_OLAS_CONTRACTS: ContractsByType = {
+// autonolas-registries scripts/deployment/l2/globals_robinhood_mainnet.json (PR #325).
+const SHARED_REGISTRY_OLAS_CONTRACTS: ContractsByType = {
   [CONTRACT_TYPE.ServiceRegistryL2]: new MulticallContract(
     '0xE3607b00E75f6405248323A9417ff6b39B244b50',
     SERVICE_REGISTRY_L2_ABI,
@@ -83,5 +83,7 @@ export const OLAS_CONTRACTS: {
   [EvmChainIdMap.Mode]: MODE_OLAS_CONTRACTS,
   [EvmChainIdMap.Optimism]: OPTIMISM_OLAS_CONTRACTS,
   [EvmChainIdMap.Polygon]: POLYGON_OLAS_CONTRACTS,
-  [EvmChainIdMap.Robinhood]: ROBINHOOD_OLAS_CONTRACTS,
+  [EvmChainIdMap.Robinhood]: SHARED_REGISTRY_OLAS_CONTRACTS,
+  [EvmChainIdMap.Arbitrum]: SHARED_REGISTRY_OLAS_CONTRACTS,
+  [EvmChainIdMap.Celo]: SHARED_REGISTRY_OLAS_CONTRACTS,
 };

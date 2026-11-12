@@ -63,6 +63,8 @@ export const STAKING_PROGRAMS: {
   [EvmChainIdMap.Mode]: MODE_STAKING_PROGRAMS,
   [EvmChainIdMap.Optimism]: OPTIMISM_STAKING_PROGRAMS,
   [EvmChainIdMap.Polygon]: POLYGON_STAKING_PROGRAMS,
-  // No staking programmes on Robinhood Chain yet (Connect runs `no_staking`).
+  // No staking programmes on these chains yet (Connect runs `no_staking`).
   [EvmChainIdMap.Robinhood]: {},
+  [EvmChainIdMap.Arbitrum]: {},
+  [EvmChainIdMap.Celo]: {},
 };

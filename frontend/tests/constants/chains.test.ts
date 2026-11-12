@@ -41,8 +41,13 @@ describe('EvmChainIdMap', () => {
     expect(EvmChainIdMap.Robinhood).toBe(4663);
   });
 
-  it('covers exactly 6 supported chains', () => {
-    expect(Object.keys(EvmChainIdMap)).toHaveLength(6);
+  it('maps Arbitrum to chain ID 42161 and Celo to 42220', () => {
+    expect(EvmChainIdMap.Arbitrum).toBe(42161);
+    expect(EvmChainIdMap.Celo).toBe(42220);
+  });
+
+  it('covers exactly 8 supported chains', () => {
+    expect(Object.keys(EvmChainIdMap)).toHaveLength(8);
   });
 
   it('has no duplicate chain IDs', () => {
@@ -77,8 +82,10 @@ describe('EvmChainName', () => {
     expect(EvmChainName[EvmChainIdMap.Robinhood]).toBe('Robinhood');
   });
 
-  it('covers exactly 6 entries (one per supported EVM chain)', () => {
-    expect(Object.keys(EvmChainName)).toHaveLength(6);
+  it('has one entry per supported EVM chain', () => {
+    expect(Object.keys(EvmChainName)).toHaveLength(
+      Object.keys(EvmChainIdMap).length,
+    );
   });
 
   it('is consistent with EvmChainIdMap (every chain ID has a name)', () => {
@@ -103,12 +110,10 @@ describe('AllEvmChainIdMap', () => {
     }
   });
 
-  it('maps Arbitrum, a funding source only, to chain ID 42161', () => {
-    expect(AllEvmChainIdMap.Arbitrum).toBe(42161);
-  });
-
-  it('covers exactly 8 entries (Ethereum + Arbitrum + 6 supported EVM chains)', () => {
-    expect(Object.keys(AllEvmChainIdMap)).toHaveLength(8);
+  it('is the supported EVM chains plus Ethereum', () => {
+    expect(Object.keys(AllEvmChainIdMap)).toHaveLength(
+      Object.keys(EvmChainIdMap).length + 1,
+    );
   });
 });
 
@@ -124,10 +129,11 @@ describe('MiddlewareChainMap', () => {
     expect(MiddlewareChainMap.POLYGON).toBe('polygon');
     expect(MiddlewareChainMap.ROBINHOOD).toBe('robinhood');
     expect(MiddlewareChainMap.ARBITRUM_ONE).toBe('arbitrum_one');
+    expect(MiddlewareChainMap.CELO).toBe('celo');
   });
 
-  it('covers 10 middleware chains', () => {
-    expect(Object.keys(MiddlewareChainMap)).toHaveLength(10);
+  it('covers 11 middleware chains', () => {
+    expect(Object.keys(MiddlewareChainMap)).toHaveLength(11);
   });
 
   it('has no duplicate string values', () => {
@@ -158,8 +164,10 @@ describe('SupportedMiddlewareChainMap', () => {
     expect(SupportedMiddlewareChainMap.polygon).toBe('polygon');
   });
 
-  it('covers exactly 6 agent-supported chains (excludes ethereum, goerli, solana)', () => {
-    expect(Object.keys(SupportedMiddlewareChainMap)).toHaveLength(6);
+  it('has one entry per supported EVM chain (excludes ethereum, goerli, solana)', () => {
+    expect(Object.keys(SupportedMiddlewareChainMap)).toHaveLength(
+      Object.keys(EvmChainIdMap).length,
+    );
   });
 
   it('every value is also present in MiddlewareChainMap', () => {
@@ -175,9 +183,14 @@ describe('isSupportedMiddlewareChain', () => {
     expect(isSupportedMiddlewareChain('polygon')).toBe(true);
   });
 
-  it('rejects a source-only chain, an unknown string and a non-string', () => {
-    expect(isSupportedMiddlewareChain('arbitrum_one')).toBe(false);
-    expect(isSupportedMiddlewareChain('celo')).toBe(false);
+  it('accepts Arbitrum and Celo', () => {
+    expect(isSupportedMiddlewareChain('arbitrum_one')).toBe(true);
+    expect(isSupportedMiddlewareChain('celo')).toBe(true);
+  });
+
+  it('rejects ethereum, an unknown string and a non-string', () => {
+    expect(isSupportedMiddlewareChain('ethereum')).toBe(false);
+    expect(isSupportedMiddlewareChain('not-a-chain')).toBe(false);
     expect(isSupportedMiddlewareChain(137)).toBe(false);
   });
 });

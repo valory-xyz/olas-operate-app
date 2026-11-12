@@ -36,6 +36,10 @@ export const asEvmChainId = (
       return EvmChainIdMap.Polygon;
     case MiddlewareChainMap.ROBINHOOD:
       return EvmChainIdMap.Robinhood;
+    case MiddlewareChainMap.ARBITRUM_ONE:
+      return EvmChainIdMap.Arbitrum;
+    case MiddlewareChainMap.CELO:
+      return EvmChainIdMap.Celo;
   }
   throw new Error(`Invalid middleware chain enum: ${chain}`);
 };
@@ -43,9 +47,6 @@ export const asEvmChainId = (
 export const asAllEvmChainId = (chainId?: MiddlewareChain) => {
   if (MiddlewareChainMap.ETHEREUM === chainId) {
     return AllEvmChainIdMap.Ethereum;
-  }
-  if (MiddlewareChainMap.ARBITRUM_ONE === chainId) {
-    return AllEvmChainIdMap.Arbitrum;
   }
   return asEvmChainId(chainId);
 };
@@ -115,6 +116,13 @@ export const asEvmChainDetails = (
         symbol: TokenSymbolMap.ETH,
         chainId: AllEvmChainIdMap.Arbitrum,
       };
+    case MiddlewareChainMap.CELO:
+      return {
+        name: 'celo',
+        displayName: 'Celo',
+        symbol: TokenSymbolMap.CELO,
+        chainId: AllEvmChainIdMap.Celo,
+      };
   }
   throw new Error(`Invalid middleware chain enum: ${chain}`);
 };
@@ -137,6 +145,10 @@ export const asMiddlewareChain = (chainId?: EvmChainId | AllEvmChainId) => {
       return MiddlewareChainMap.POLYGON;
     case EvmChainIdMap.Robinhood:
       return MiddlewareChainMap.ROBINHOOD;
+    case EvmChainIdMap.Arbitrum:
+      return MiddlewareChainMap.ARBITRUM_ONE;
+    case EvmChainIdMap.Celo:
+      return MiddlewareChainMap.CELO;
   }
   throw new Error(`Invalid chain id: ${chainId}`);
 };
@@ -144,9 +156,6 @@ export const asMiddlewareChain = (chainId?: EvmChainId | AllEvmChainId) => {
 export const asAllMiddlewareChain = (chainId?: AllEvmChainId) => {
   if (AllEvmChainIdMap.Ethereum === chainId) {
     return MiddlewareChainMap.ETHEREUM;
-  }
-  if (AllEvmChainIdMap.Arbitrum === chainId) {
-    return MiddlewareChainMap.ARBITRUM_ONE;
   }
   return asMiddlewareChain(chainId);
 };

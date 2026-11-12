@@ -31,8 +31,10 @@ const mockBalanceOf = jest.fn(() => 'balanceOf-call');
 jest.mock('ethers-multicall', () => ({
   setMulticallAddress: jest.fn(),
   Provider: jest.fn().mockImplementation(() => ({})),
-  Contract: jest.fn().mockImplementation(() => ({
-    balanceOf: mockBalanceOf,
+  Contract: jest.fn().mockImplementation((address: string) => ({
+    address,
+    // deferred: contracts are built at import, before mockBalanceOf exists
+    balanceOf: (...args: unknown[]) => mockBalanceOf(...(args as [])),
   })),
 }));
 

@@ -218,13 +218,19 @@ describe('REWARDS_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN', () => {
     }
   });
 
-  it('covers exactly 5 chains (Robinhood has no staking subgraph)', () => {
+  it('covers exactly 5 chains (none for chains without staking programmes)', () => {
     expect(
       Object.keys(urls.REWARDS_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN),
     ).toHaveLength(5);
-    expect(
-      urls.REWARDS_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN[EvmChainIdMap.Robinhood],
-    ).toBeUndefined();
+    for (const chainId of [
+      EvmChainIdMap.Robinhood,
+      EvmChainIdMap.Arbitrum,
+      EvmChainIdMap.Celo,
+    ]) {
+      expect(
+        urls.REWARDS_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN[chainId],
+      ).toBeUndefined();
+    }
   });
 
   it('all subgraph URLs contain "autonolas.tech"', () => {
@@ -329,6 +335,18 @@ describe('EXPLORER_URL_BY_MIDDLEWARE_CHAIN', () => {
       'https://explorer.mode.network',
     );
   });
+
+  it('Arbitrum explorer is arbiscan.io', () => {
+    expect(
+      urls.EXPLORER_URL_BY_MIDDLEWARE_CHAIN[MiddlewareChainMap.ARBITRUM_ONE],
+    ).toBe('https://arbiscan.io');
+  });
+
+  it('Celo explorer is celoscan.io', () => {
+    expect(urls.EXPLORER_URL_BY_MIDDLEWARE_CHAIN[MiddlewareChainMap.CELO]).toBe(
+      'https://celoscan.io',
+    );
+  });
 });
 
 describe('BLOCKSCOUT_URL_BY_MIDDLEWARE_CHAIN', () => {
@@ -346,10 +364,21 @@ describe('BLOCKSCOUT_URL_BY_MIDDLEWARE_CHAIN', () => {
     }
   });
 
-  it('covers exactly 6 chains', () => {
+  it('has no entries beyond the supported chains', () => {
     expect(Object.keys(urls.BLOCKSCOUT_URL_BY_MIDDLEWARE_CHAIN)).toHaveLength(
-      6,
+      Object.keys(SupportedMiddlewareChainMap).length,
     );
+  });
+
+  it.each([
+    [MiddlewareChainMap.ARBITRUM_ONE, 'https://arbitrum.blockscout.com'],
+    [MiddlewareChainMap.CELO, 'https://celo.blockscout.com'],
+  ])('%s Blockscout is %s', (chain, url) => {
+    expect(
+      urls.BLOCKSCOUT_URL_BY_MIDDLEWARE_CHAIN[
+        chain as SupportedMiddlewareChain
+      ],
+    ).toBe(url);
   });
 
   it('all Blockscout URLs contain "blockscout" or "explorer"', () => {

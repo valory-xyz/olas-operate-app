@@ -26,15 +26,17 @@ describe('MIN_ONRAMP_AMOUNT', () => {
 });
 
 describe('ON_RAMP_CHAIN_MAP', () => {
-  it('covers all 6 supported middleware chains', () => {
+  it('covers every supported middleware chain', () => {
     const supportedChains = Object.values(SupportedMiddlewareChainMap);
     for (const chain of supportedChains) {
       expect(ON_RAMP_CHAIN_MAP[chain]).toBeDefined();
     }
   });
 
-  it('covers exactly 6 entries — one per supported middleware chain', () => {
-    expect(Object.keys(ON_RAMP_CHAIN_MAP)).toHaveLength(6);
+  it('has one entry per supported middleware chain', () => {
+    expect(Object.keys(ON_RAMP_CHAIN_MAP)).toHaveLength(
+      Object.keys(SupportedMiddlewareChainMap).length,
+    );
   });
 
   describe('robinhood chain routing', () => {
@@ -48,6 +50,21 @@ describe('ON_RAMP_CHAIN_MAP', () => {
       expect(
         ON_RAMP_CHAIN_MAP[SupportedMiddlewareChainMap.robinhood].cryptoCurrency,
       ).toBe('ETH');
+    });
+  });
+
+  describe('arbitrum and celo chain routing', () => {
+    it('ramps ETH on Arbitrum itself', () => {
+      expect(
+        ON_RAMP_CHAIN_MAP[SupportedMiddlewareChainMap.arbitrum_one],
+      ).toEqual({ chain: EvmChainIdMap.Arbitrum, cryptoCurrency: 'ETH' });
+    });
+
+    it('routes celo agents to Base ETH (celo has no direct fiat ramp here)', () => {
+      expect(ON_RAMP_CHAIN_MAP[SupportedMiddlewareChainMap.celo]).toEqual({
+        chain: EvmChainIdMap.Base,
+        cryptoCurrency: 'ETH',
+      });
     });
   });
 

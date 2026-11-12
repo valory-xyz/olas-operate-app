@@ -24,6 +24,8 @@ const PUBLIC_RPCS: Partial<Record<EvmChainId, string>> = {
   [EvmChainIdMap.Mode]: 'https://mainnet.mode.network',
   [EvmChainIdMap.Optimism]: 'https://mainnet.optimism.io',
   [EvmChainIdMap.Robinhood]: 'https://rpc.mainnet.chain.robinhood.com',
+  [EvmChainIdMap.Arbitrum]: 'https://arb1.arbitrum.io/rpc',
+  [EvmChainIdMap.Celo]: 'https://celo-rpc.publicnode.com',
 };
 
 const RPC_ENV_BY_CHAIN: Record<EvmChainId, string> = {
@@ -33,6 +35,8 @@ const RPC_ENV_BY_CHAIN: Record<EvmChainId, string> = {
   [EvmChainIdMap.Mode]: 'MODE_RPC',
   [EvmChainIdMap.Optimism]: 'OPTIMISM_RPC',
   [EvmChainIdMap.Robinhood]: 'ROBINHOOD_RPC',
+  [EvmChainIdMap.Arbitrum]: 'ARBITRUM_ONE_RPC',
+  [EvmChainIdMap.Celo]: 'CELO_RPC',
 };
 
 const PROXY_HASH_ABI = ['function proxyHash() view returns (bytes32)'];

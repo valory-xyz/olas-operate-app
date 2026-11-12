@@ -45,10 +45,11 @@ describe('TokenSymbolMap', () => {
     expect(TokenSymbolMap['USDC.e']).toBe('USDC.e');
     expect(TokenSymbolMap.pUSD).toBe('pUSD');
     expect(TokenSymbolMap.USDG).toBe('USDG');
+    expect(TokenSymbolMap.CELO).toBe('CELO');
   });
 
-  it('covers exactly 9 token symbols', () => {
-    expect(Object.keys(TokenSymbolMap)).toHaveLength(9);
+  it('covers exactly 10 token symbols', () => {
+    expect(Object.keys(TokenSymbolMap)).toHaveLength(10);
   });
 });
 
@@ -121,7 +122,7 @@ describe('GNOSIS_TOKEN_CONFIG', () => {
 });
 
 describe('TOKEN_CONFIG — per-chain data integrity', () => {
-  it('has entries for all 6 supported EVM chains', () => {
+  it('has an entry for every supported EVM chain', () => {
     const supportedChainIds = Object.values(EvmChainIdMap);
     for (const chainId of supportedChainIds) {
       expect(TOKEN_CONFIG[chainId]).toBeDefined();
@@ -273,6 +274,41 @@ describe('TOKEN_CONFIG — per-chain data integrity', () => {
         TOKEN_CONFIG[EvmChainIdMap.Polygon][TokenSymbolMap.pUSD]?.tokenType,
       ).toBe(TokenType.Erc20);
     });
+  });
+});
+
+describe('Arbitrum and Celo token configs', () => {
+  it.each([
+    {
+      chainId: EvmChainIdMap.Arbitrum,
+      native: TokenSymbolMap.ETH,
+      olas: '0x064F8B858C2A603e1b106a2039f5446D32dc81c1',
+      usdc: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',
+    },
+    {
+      chainId: EvmChainIdMap.Celo,
+      native: TokenSymbolMap.CELO,
+      olas: '0xaCFfAe8e57Ec6E394Eb1b41939A8CF7892DbDc51',
+      usdc: '0xcebA9300f2b948710d2653dD7B07f33A8B32118C',
+    },
+  ])(
+    'chain $chainId has native $native, OLAS and USDC',
+    ({ chainId, native, olas, usdc }) => {
+      const config = TOKEN_CONFIG[chainId];
+      expect(config[native]?.tokenType).toBe(TokenType.NativeGas);
+      expect(config[TokenSymbolMap.OLAS]?.address).toBe(olas);
+      expect(config[TokenSymbolMap.USDC]?.address).toBe(usdc);
+      expect(config[TokenSymbolMap.USDC]?.decimals).toBe(6);
+    },
+  );
+
+  it("does not list native CELO's ERC-20 face, which would count CELO twice", () => {
+    const addresses = Object.values(TOKEN_CONFIG[EvmChainIdMap.Celo]).map(
+      (token) => token.address?.toLowerCase(),
+    );
+    expect(addresses).not.toContain(
+      '0x471ece3750da237f93b8e339c536989b8978a438',
+    );
   });
 });
 

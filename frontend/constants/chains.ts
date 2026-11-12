@@ -7,6 +7,8 @@ export const EvmChainIdMap = {
   Optimism: 10,
   Polygon: 137,
   Robinhood: 4663,
+  Arbitrum: 42161,
+  Celo: 42220,
 } as const;
 export type EvmChainId = (typeof EvmChainIdMap)[keyof typeof EvmChainIdMap];
 
@@ -17,6 +19,8 @@ export const EvmChainName = {
   [EvmChainIdMap.Optimism]: 'Optimism',
   [EvmChainIdMap.Polygon]: 'Polygon',
   [EvmChainIdMap.Robinhood]: 'Robinhood',
+  [EvmChainIdMap.Arbitrum]: 'Arbitrum',
+  [EvmChainIdMap.Celo]: 'Celo',
 } as const;
 export type EvmChainName = ValueOf<typeof EvmChainName>;
 
@@ -28,8 +32,8 @@ export const AllEvmChainIdMap = {
   Optimism: EvmChainIdMap.Optimism,
   Polygon: EvmChainIdMap.Polygon,
   Robinhood: EvmChainIdMap.Robinhood,
-  /** Funding source only: no agent runs here, so it is not in `EvmChainIdMap`. */
-  Arbitrum: 42161,
+  Arbitrum: EvmChainIdMap.Arbitrum,
+  Celo: EvmChainIdMap.Celo,
 } as const;
 export type AllEvmChainId =
   (typeof AllEvmChainIdMap)[keyof typeof AllEvmChainIdMap];
@@ -52,6 +56,7 @@ export const MiddlewareChainMap = {
   POLYGON: 'polygon',
   ROBINHOOD: 'robinhood',
   ARBITRUM_ONE: 'arbitrum_one',
+  CELO: 'celo',
 } as const;
 export type MiddlewareChain = ValueOf<typeof MiddlewareChainMap>;
 
@@ -62,6 +67,8 @@ export const SupportedMiddlewareChainMap = {
   mode: MiddlewareChainMap.MODE,
   polygon: MiddlewareChainMap.POLYGON,
   robinhood: MiddlewareChainMap.ROBINHOOD,
+  arbitrum_one: MiddlewareChainMap.ARBITRUM_ONE,
+  celo: MiddlewareChainMap.CELO,
 } as const;
 export type SupportedMiddlewareChain = ValueOf<
   typeof SupportedMiddlewareChainMap
@@ -84,7 +91,8 @@ export const CHAIN_IMAGE_MAP = {
   [EvmChainIdMap.Optimism]: '/chains/optimism-chain.png',
   [EvmChainIdMap.Polygon]: '/chains/polygon-chain.png',
   [EvmChainIdMap.Robinhood]: '/chains/robinhood-chain.png',
-  [AllEvmChainIdMap.Arbitrum]: '/chains/arbitrum-chain.png',
+  [EvmChainIdMap.Arbitrum]: '/chains/arbitrum-chain.png',
+  [EvmChainIdMap.Celo]: '/chains/celo-chain.png',
 } as const;
 
 export type ChainImage = ValueOf<typeof CHAIN_IMAGE_MAP>;
