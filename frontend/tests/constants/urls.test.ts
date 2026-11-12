@@ -175,6 +175,12 @@ describe('static URL constants', () => {
     );
   });
 
+  it('WEB3AUTH_STATUS_URL points to the pearl-api status route', () => {
+    expect(urls.WEB3AUTH_STATUS_URL).toBe(
+      'https://pearl-api.olas.network/api/web3auth/status',
+    );
+  });
+
   it('PREDICT_WEBSITE_URL points to predict.olas.network', () => {
     expect(urls.PREDICT_WEBSITE_URL).toBe('https://predict.olas.network');
   });

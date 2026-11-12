@@ -10,9 +10,13 @@ import { BackupOwnerStatus } from '../../../../types/BackupWallet';
 
 const mockGotoPage = jest.fn();
 let mockBackupOwnerStatus: BackupOwnerStatus | undefined;
+let mockIsUpdatePromptVisible = false;
 
 jest.mock('../../../../hooks', () => ({
   useBackupOwnerStatus: () => ({ backupOwnerStatus: mockBackupOwnerStatus }),
+  useBackupWalletUpdatePrompt: () => ({
+    isUpdatePromptVisible: mockIsUpdatePromptVisible,
+  }),
   usePageState: () => ({ goto: mockGotoPage }),
 }));
 
@@ -61,6 +65,7 @@ describe('BackupWalletAlert', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockBackupOwnerStatus = undefined;
+    mockIsUpdatePromptVisible = false;
   });
 
   describe('visibility', () => {
@@ -124,6 +129,38 @@ describe('BackupWalletAlert', () => {
       fireEvent.click(screen.getByTestId('alert'));
       expect(screen.getByTestId('sync-modal')).toBeInTheDocument();
       expect(mockGotoPage).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Update variant (Google/Apple backup to replace)', () => {
+    beforeEach(() => {
+      mockIsUpdatePromptVisible = true;
+    });
+
+    it('renders "Update backup wallet" when the backup is in sync', () => {
+      mockBackupOwnerStatus = makeStatus({ canonical_backup_owner: '0xABC' });
+      render(<BackupWalletAlert />);
+      expect(screen.getByText('Update backup wallet')).toBeInTheDocument();
+    });
+
+    it('replaces "Sync backup wallet" when the backup is out of sync', () => {
+      mockBackupOwnerStatus = makeStatus({
+        canonical_backup_owner: '0xABC',
+        all_chains_synced: false,
+        any_backup_missing: true,
+      });
+      render(<BackupWalletAlert />);
+      expect(screen.getByText('Update backup wallet')).toBeInTheDocument();
+      expect(screen.queryByText('Sync backup wallet')).not.toBeInTheDocument();
+      expect(screen.getAllByTestId('alert')).toHaveLength(1);
+    });
+
+    it('navigates to Settings on click', () => {
+      mockBackupOwnerStatus = makeStatus({ canonical_backup_owner: '0xABC' });
+      render(<BackupWalletAlert />);
+      fireEvent.click(screen.getByTestId('alert'));
+      expect(mockGotoPage).toHaveBeenCalledWith(PAGES.Settings);
+      expect(screen.queryByTestId('sync-modal')).not.toBeInTheDocument();
     });
   });
 });

@@ -4,11 +4,16 @@ import { useBoolean } from 'usehooks-ts';
 import { SyncBackupWalletModal } from '@/components/SettingsPage/BackupWallet/SyncBackupWalletModal';
 import { Alert } from '@/components/ui';
 import { PAGES } from '@/constants';
-import { useBackupOwnerStatus, usePageState } from '@/hooks';
+import {
+  useBackupOwnerStatus,
+  useBackupWalletUpdatePrompt,
+  usePageState,
+} from '@/hooks';
 
 export const BackupWalletAlert = () => {
   const { goto: gotoPage } = usePageState();
   const { backupOwnerStatus } = useBackupOwnerStatus();
+  const { isUpdatePromptVisible } = useBackupWalletUpdatePrompt();
   const {
     value: isSyncOpen,
     setTrue: openSync,
@@ -19,15 +24,17 @@ export const BackupWalletAlert = () => {
   const allChainsSynced = backupOwnerStatus?.all_chains_synced ?? true;
   const anyBackupMissing = backupOwnerStatus?.any_backup_missing ?? false;
 
-  if (!anyBackupMissing && allChainsSynced) return null;
+  if (!isUpdatePromptVisible && !anyBackupMissing && allChainsSynced)
+    return null;
 
-  const isAddAlert = canonicalAddress === null;
-
-  if (isAddAlert) {
+  // "Update" takes the place of "Sync": updating applies the new address to every chain.
+  if (isUpdatePromptVisible || canonicalAddress === null) {
     return (
       <Alert
         type="warning"
-        message="Add backup wallet"
+        message={
+          isUpdatePromptVisible ? 'Update backup wallet' : 'Add backup wallet'
+        }
         onClick={() => gotoPage(PAGES.Settings)}
         showIcon
         customIcon={<LuWallet />}

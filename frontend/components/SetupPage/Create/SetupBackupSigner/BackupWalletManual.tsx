@@ -25,10 +25,17 @@ const walletFieldRules: FormItemProps['rules'] = [
 
 type BackupWalletManualProps = {
   onFinish: (address: Address) => void | Promise<void>;
+  onWeb3AuthFinish?: (address: Address) => void | Promise<void>;
+  /** The parent's latched decision, so the link can't appear or vanish mid-flow. */
+  isWeb3AuthEnabled: boolean;
 };
 
-export const BackupWalletManual = ({ onFinish }: BackupWalletManualProps) => {
-  const { setBackupSigner } = useSetup();
+export const BackupWalletManual = ({
+  onFinish,
+  onWeb3AuthFinish,
+  isWeb3AuthEnabled,
+}: BackupWalletManualProps) => {
+  const { setBackupSigner, isReplacingBackup } = useSetup();
   const [form] = Form.useForm();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -45,7 +52,9 @@ export const BackupWalletManual = ({ onFinish }: BackupWalletManualProps) => {
       return;
     }
 
-    setBackupSigner({ address: checksummedAddress, type: 'manual' });
+    if (!isReplacingBackup) {
+      setBackupSigner({ address: checksummedAddress, type: 'manual' });
+    }
     setIsSubmitting(true);
     try {
       await onFinish(checksummedAddress);
@@ -58,7 +67,7 @@ export const BackupWalletManual = ({ onFinish }: BackupWalletManualProps) => {
   // and shows its own error toast on failure. Firing a generic success toast
   // first would contradict the error toast if apply fails.
   const { openWeb3AuthModel } = useWeb3AuthBackupWallet({
-    onFinish,
+    onFinish: onWeb3AuthFinish ?? onFinish,
     showSuccessMessage: false,
   });
 
@@ -86,19 +95,21 @@ export const BackupWalletManual = ({ onFinish }: BackupWalletManualProps) => {
         </Button>
       </FormFlex>
 
-      <Button
-        type="link"
-        size="large"
-        onClick={openWeb3AuthModel}
-        disabled={isSubmitting}
-      >
-        <Flex justify="center" align="center">
-          Set Up Wallet with&nbsp;
-          <RiGoogleFill fill={COLOR.PRIMARY} />
-          &nbsp;/&nbsp;
-          <RiAppleFill fill={COLOR.PRIMARY} />
-        </Flex>
-      </Button>
+      {isWeb3AuthEnabled && (
+        <Button
+          type="link"
+          size="large"
+          onClick={openWeb3AuthModel}
+          disabled={isSubmitting}
+        >
+          <Flex justify="center" align="center">
+            Set Up Wallet with&nbsp;
+            <RiGoogleFill fill={COLOR.PRIMARY} />
+            &nbsp;/&nbsp;
+            <RiAppleFill fill={COLOR.PRIMARY} />
+          </Flex>
+        </Button>
+      )}
 
       <Text type="secondary" className="text-sm mt-16">
         Keep your backup wallet secure. If you lose both your password and

@@ -13,9 +13,11 @@ const mockSetSameAddressError = jest.fn();
 
 let mockSameAddressError = false;
 let mockCurrentAddress: string | null = null;
+let mockScreen: string = 'UpdateBackupWalletManual';
+const mockResetFlow = jest.fn();
 
 jest.mock('../../../../../hooks', () => ({
-  useSettings: () => ({ goto: mockGoto }),
+  useSettings: () => ({ goto: mockGoto, screen: mockScreen }),
   useBackupOwnerStatus: () => ({
     backupOwnerStatus: {
       canonical_backup_owner: mockCurrentAddress,
@@ -34,6 +36,7 @@ jest.mock(
       setNewAddress: mockSetNewAddress,
       sameAddressError: mockSameAddressError,
       setSameAddressError: mockSetSameAddressError,
+      resetFlow: mockResetFlow,
     }),
   }),
 );
@@ -75,6 +78,7 @@ describe('UpdateBackupWalletManualScreen', () => {
     jest.clearAllMocks();
     mockSameAddressError = false;
     mockCurrentAddress = null;
+    mockScreen = SettingsScreenMap.UpdateBackupWalletManual;
   });
 
   it('renders form with Continue button', () => {
@@ -105,6 +109,14 @@ describe('UpdateBackupWalletManualScreen', () => {
     expect(mockGoto).toHaveBeenCalledWith(
       SettingsScreenMap.UpdateBackupWalletMethod,
     );
+  });
+
+  it('Back button leaves the flow when shown in place of the method screen', () => {
+    // Settings shows this screen in place of the method screen (Web3Auth off).
+    render(<UpdateBackupWalletManualScreen standsInForMethod />);
+    fireEvent.click(screen.getByTestId('back'));
+    expect(mockGoto).toHaveBeenCalledWith(SettingsScreenMap.Main);
+    expect(mockResetFlow).toHaveBeenCalled();
   });
 
   it('rejects invalid address', async () => {

@@ -24,13 +24,15 @@ import { useSetup } from './useSetup';
  *   and Settings already shows State B from the moment the user lands there.
  *
  * Password flow:
- *   `SetupPassword` stores the password in SetupContext after login succeeds.
- *   This hook reads it, passes it to the bulk apply, and clears it
- *   immediately so it doesn't linger in React state.
+ *   `SetupPassword` (new account) stores the password in SetupContext after
+ *   login succeeds; `SetupWelcomeLogin` does too, but only when it routes to the
+ *   backup step to replace an ignored Google/Apple pick. This hook reads it,
+ *   passes it to the bulk apply, and clears it on success so it doesn't linger
+ *   in React state (the backup step clears it when a failed apply won't be retried).
  *
  * Fallback:
- *   If the password is missing — e.g. user reopened Pearl mid-setup and the
- *   in-memory SetupContext was re-initialised — this hook is a silent no-op.
+ *   If the password is missing — e.g. user reopened Pearl mid-setup, or logged
+ *   in on any route other than that replacement — this hook is a silent no-op.
  *   The user's backup address is still stored in `pearl_store` and applied
  *   on-chain by the legacy flow; the backend's startup auto-migration
  *   populates canonical once Safes deploy.

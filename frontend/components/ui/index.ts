@@ -6,6 +6,7 @@ export * from './BackButton';
 export * from './BetaTag';
 export * from './CardFlex';
 export * from './CardSection';
+export * from './CardSkeleton';
 export * from './Collapse';
 export * from './CopyAddress';
 export * from './Divider';

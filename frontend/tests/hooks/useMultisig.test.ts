@@ -324,6 +324,40 @@ describe('useMultisigs', () => {
     expect(mockMulticallAll).not.toHaveBeenCalled();
   });
 
+  it('logs and reports a failed owners read', async () => {
+    const consoleSpy = jest
+      .spyOn(console, 'error')
+      .mockImplementation(() => undefined);
+    const gnosisSafe = {
+      address: DEFAULT_SAFE_ADDRESS,
+      evmChainId: EvmChainIdMap.Gnosis,
+      type: WALLET_TYPE.Safe,
+      owner: WALLET_OWNER.Master,
+    };
+    const rpcError = new Error('rpc down');
+    mockMulticallAll.mockRejectedValueOnce(rpcError);
+
+    const { result } = renderHook(() => useMultisigs([gnosisSafe]), {
+      wrapper: createQueryClientWrapper(),
+    });
+
+    await waitFor(() =>
+      expect(result.current.masterSafesOwnersIsError).toBe(true),
+    );
+    expect(result.current.masterSafesOwners).toBeUndefined();
+    expect(result.current.allBackupAddresses).toEqual([]);
+    expect(consoleSpy).toHaveBeenCalledWith(
+      `Failed to read Safe owners on chain ${EvmChainIdMap.Gnosis}`,
+      rpcError,
+    );
+    // The query's error names the chain, for the onboarding gate's log line.
+    expect(result.current.masterSafesOwnersError?.message).toBe(
+      `Failed to read Safe owners on chain ${EvmChainIdMap.Gnosis}: Error: rpc down`,
+    );
+
+    consoleSpy.mockRestore();
+  });
+
   it('logs error when multicallProvider is missing for a chain', async () => {
     const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
 

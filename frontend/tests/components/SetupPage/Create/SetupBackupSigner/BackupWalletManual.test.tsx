@@ -66,7 +66,7 @@ describe('BackupWalletManual (setup)', () => {
   });
 
   it('renders address input, Continue button, and Web3Auth link', () => {
-    render(<BackupWalletManual onFinish={jest.fn()} />);
+    render(<BackupWalletManual onFinish={jest.fn()} isWeb3AuthEnabled />);
     expect(screen.getByPlaceholderText(/0x12345/)).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: /Continue/i }),
@@ -78,7 +78,7 @@ describe('BackupWalletManual (setup)', () => {
 
   it('on valid submit: persists backup signer and calls onFinish with checksummed address', async () => {
     const onFinish = jest.fn().mockResolvedValue(undefined);
-    render(<BackupWalletManual onFinish={onFinish} />);
+    render(<BackupWalletManual onFinish={onFinish} isWeb3AuthEnabled />);
 
     submitWith(VALID.toLowerCase());
 
@@ -92,7 +92,7 @@ describe('BackupWalletManual (setup)', () => {
 
   it('does not call onFinish for a malformed address', async () => {
     const onFinish = jest.fn();
-    render(<BackupWalletManual onFinish={onFinish} />);
+    render(<BackupWalletManual onFinish={onFinish} isWeb3AuthEnabled />);
 
     submitWith('not-an-address');
 
@@ -114,7 +114,7 @@ describe('BackupWalletManual (setup)', () => {
           resolveFinish = resolve;
         }),
     );
-    render(<BackupWalletManual onFinish={onFinish} />);
+    render(<BackupWalletManual onFinish={onFinish} isWeb3AuthEnabled />);
 
     submitWith(VALID);
     await waitFor(() => expect(onFinish).toHaveBeenCalledTimes(1));
@@ -128,7 +128,7 @@ describe('BackupWalletManual (setup)', () => {
   });
 
   it('clicking the Web3Auth link opens the Web3Auth window', () => {
-    render(<BackupWalletManual onFinish={jest.fn()} />);
+    render(<BackupWalletManual onFinish={jest.fn()} isWeb3AuthEnabled />);
     fireEvent.click(
       screen.getByRole('button', { name: /Set Up Wallet with/i }),
     );
@@ -137,7 +137,32 @@ describe('BackupWalletManual (setup)', () => {
 
   it('wires the same onFinish through to the Web3Auth hook so switching mid-path works', () => {
     const onFinish = jest.fn();
-    render(<BackupWalletManual onFinish={onFinish} />);
+    render(<BackupWalletManual onFinish={onFinish} isWeb3AuthEnabled />);
     expect(useWeb3AuthMock.lastOnFinish).toBe(onFinish);
+  });
+
+  it('uses the Google/Apple completion callback when the parent needs to distinguish the backup type', () => {
+    const onFinish = jest.fn();
+    const onWeb3AuthFinish = jest.fn();
+    render(
+      <BackupWalletManual
+        onFinish={onFinish}
+        onWeb3AuthFinish={onWeb3AuthFinish}
+        isWeb3AuthEnabled
+      />,
+    );
+    expect(useWeb3AuthMock.lastOnFinish).toBe(onWeb3AuthFinish);
+  });
+
+  it('hides the Google/Apple link when Web3Auth is disabled', () => {
+    render(
+      <BackupWalletManual onFinish={jest.fn()} isWeb3AuthEnabled={false} />,
+    );
+    expect(
+      screen.queryByRole('button', { name: /Set Up Wallet with/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /Continue/i }),
+    ).toBeInTheDocument();
   });
 });

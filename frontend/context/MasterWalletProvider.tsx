@@ -73,9 +73,15 @@ export const MasterWalletProvider = ({ children }: PropsWithChildren) => {
     data: masterWallets,
     refetch,
     isFetched,
+    isError,
+    error,
   } = useQuery({
     queryKey: REACT_QUERY_KEYS.WALLETS_KEY,
-    queryFn: ({ signal }) => WalletService.getWallets(signal),
+    queryFn: ({ signal }) =>
+      WalletService.getWallets(signal).catch((error: unknown) => {
+        if (!signal.aborted) console.error('Failed to read the wallets', error);
+        throw error;
+      }),
     enabled: isOnline,
     refetchInterval: isOnline && isUserLoggedIn ? FIVE_SECONDS_INTERVAL : false,
     select: (data) =>
@@ -119,6 +125,8 @@ export const MasterWalletProvider = ({ children }: PropsWithChildren) => {
         masterSafes,
         refetch,
         isFetched,
+        isError,
+        error,
         getMasterSafeOf,
       }}
     >

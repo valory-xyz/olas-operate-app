@@ -10,6 +10,11 @@ let mockContextValue: {
   selectResetMethodAndProceed: jest.Mock;
 };
 
+let mockIsWeb3AuthEnabled = true;
+jest.mock('../../../hooks', () => ({
+  useWeb3AuthStatus: () => ({ isWeb3AuthEnabled: mockIsWeb3AuthEnabled }),
+}));
+
 jest.mock(
   '../../../components/AccountRecovery/AccountRecoveryProvider',
   () => ({
@@ -43,6 +48,7 @@ jest.mock(
 describe('SelectPasswordResetOption', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockIsWeb3AuthEnabled = true;
     mockContextValue = {
       isRecoveryAvailable: true,
       selectResetMethodAndProceed: mockSelectResetMethodAndProceed,
@@ -101,5 +107,21 @@ describe('SelectPasswordResetOption', () => {
     expect(mockSelectResetMethodAndProceed).toHaveBeenCalledWith(
       RESET_METHOD.SRP,
     );
+  });
+
+  it('shows only the recovery phrase card when Web3Auth is disabled', () => {
+    mockIsWeb3AuthEnabled = false;
+    mockContextValue = {
+      ...mockContextValue,
+      isRecoveryAvailable: false,
+    };
+    render(<SelectPasswordResetOption />);
+    expect(screen.getByText('Via Secret Recovery Phrase')).toBeInTheDocument();
+    expect(screen.queryByText('Via Backup Wallet')).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(
+        'No backup wallet found. Set up a backup wallet first.',
+      ),
+    ).not.toBeInTheDocument();
   });
 });

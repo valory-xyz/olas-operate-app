@@ -1,13 +1,21 @@
 import { Button, Card, Flex, Form, Input, Spin, Typography } from 'antd';
 import Image from 'next/image';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  MutableRefObject,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 import { PAGES, SETUP_SCREEN } from '@/constants';
 import { useMessageApi } from '@/context/MessageProvider';
 import {
-  useBackupSigner,
+  useBackupSignerState,
   useElectronApi,
   useIsInitiallyFunded,
+  useLogBackupSignerError,
   useMnemonicExists,
   useOnlineStatusContext,
   usePageState,
@@ -23,6 +31,7 @@ import { asEvmChainId, getErrorMessage, matchesAgentConfig } from '@/utils';
 import { ContentTransition } from '../ui';
 import { FormFlex } from '../ui/FormFlex';
 import { FormLabel } from '../ui/Typography';
+import { BackupSignerUnavailableAlert } from './BackupSignerUnavailable';
 import { SetupWelcomeCreate } from './SetupWelcomeCreate';
 
 const { Title, Text } = Typography;
@@ -30,13 +39,16 @@ const { Title, Text } = Typography;
 type UseSetupNavigationProps = {
   canNavigate: boolean;
   setIsLoggingIn: (loading: boolean) => void;
+  /** The password just used to log in; read once, by the routing decision, then dropped. */
+  loginPasswordRef: MutableRefObject<string | null>;
 };
 
 const useSetupNavigation = ({
   canNavigate,
   setIsLoggingIn,
+  loginPasswordRef,
 }: UseSetupNavigationProps) => {
-  const { goto } = useSetup();
+  const { goto, setPassword, setIsReplacingBackup } = useSetup();
   const { goto: gotoPage } = usePageState();
   const { isOnline } = useOnlineStatusContext();
   const {
@@ -46,7 +58,16 @@ const useSetupNavigation = ({
     isFetched: isServicesFetched,
   } = useServices();
   const { isInitialFunded } = useIsInitiallyFunded();
-  const backupSignerAddress = useBackupSigner();
+  const backupSigner = useBackupSignerState();
+  // Routing on an unsettled (or unreadable) backup signer could skip or wrongly
+  // repeat the backup step.
+  const isBackupSignerUnsettled =
+    backupSigner.state === 'pending' || backupSigner.state === 'error';
+  const needsNewBackup = backupSigner.state === 'needsNewBackup';
+  const backupSignerAddress =
+    backupSigner.state === 'ready'
+      ? backupSigner.backupSignerAddress
+      : undefined;
   const { storeState } = useStore();
 
   const selectedServiceOrAgentChainId = selectedService?.home_chain
@@ -69,16 +90,26 @@ const useSetupNavigation = ({
       !isOnline ||
       !canNavigate ||
       !isServicesFetched ||
-      storeState === undefined
+      storeState === undefined ||
+      isBackupSignerUnsettled
     )
       return false;
     return true;
-  }, [canNavigate, isOnline, isServicesFetched, storeState]);
+  }, [
+    canNavigate,
+    isOnline,
+    isServicesFetched,
+    storeState,
+    isBackupSignerUnsettled,
+  ]);
 
   const isBackupWalletNotSet = useMemo(() => {
+    // An ignored Google/Apple pick with no Pearl Safe yet returns to the
+    // backup step even when a service already exists.
+    if (needsNewBackup) return true;
     // If no services are created and backup wallet is not set as well.
     return !services?.length && !backupSignerAddress;
-  }, [services?.length, backupSignerAddress]);
+  }, [needsNewBackup, services?.length, backupSignerAddress]);
 
   useEffect(() => {
     if (!isApplicationReady) return;
@@ -86,7 +117,16 @@ const useSetupNavigation = ({
 
     if (!selectedAgentConfig) return;
 
+    const loginPassword = loginPasswordRef.current;
+    loginPasswordRef.current = null;
+
     if (isBackupWalletNotSet) {
+      // Replacing an ignored Google/Apple pick: the new pick must replace the canonical
+      // backup owner too, which needs the password (`useApplyBackupDuringSetup` clears it).
+      if (needsNewBackup && loginPassword) {
+        setPassword(loginPassword);
+        setIsReplacingBackup(true);
+      }
       goto(SETUP_SCREEN.SetupBackupSigner);
       return;
     }
@@ -120,10 +160,20 @@ const useSetupNavigation = ({
     isBackupWalletNotSet,
     isInitialFunded,
     isServiceCreatedForAgent,
+    loginPasswordRef,
+    needsNewBackup,
     selectedAgentConfig,
     selectedServiceOrAgentChainId,
     setIsLoggingIn,
+    setIsReplacingBackup,
+    setPassword,
   ]);
+
+  // Login waits on an unreadable backup signer; say why instead of spinning silently.
+  const errorReason =
+    canNavigate && backupSigner.state === 'error' ? backupSigner.reason : null;
+  useLogBackupSignerError(errorReason, 'at login');
+  return { isBackupSignerError: errorReason !== null };
 };
 
 enum MiddlewareAccountIsSetup {
@@ -179,7 +229,12 @@ export const SetupWelcomeLogin = () => {
 
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [canNavigate, setCanNavigate] = useState(false);
-  useSetupNavigation({ canNavigate, setIsLoggingIn });
+  const loginPasswordRef = useRef<string | null>(null);
+  const { isBackupSignerError } = useSetupNavigation({
+    canNavigate,
+    setIsLoggingIn,
+    loginPasswordRef,
+  });
 
   const handleLogin = useCallback(
     async ({ password }: { password: string }) => {
@@ -200,6 +255,7 @@ export const SetupWelcomeLogin = () => {
             }
           });
 
+        loginPasswordRef.current = password;
         setCanNavigate(true);
         setUserLoggedIn();
       } catch (e) {
@@ -234,6 +290,7 @@ export const SetupWelcomeLogin = () => {
           >
             Continue
           </Button>
+          {isBackupSignerError && <BackupSignerUnavailableAlert />}
           <Flex justify="center" align="center" gap={4}>
             <Text type="secondary" className="text-sm">
               Can&apos;t sign in?

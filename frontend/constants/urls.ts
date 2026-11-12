@@ -178,6 +178,7 @@ export const PEARL_API_URL = 'https://pearl-api.olas.network';
 const WEB3AUTH_GATEWAY_URL = `${PEARL_API_URL}/web3auth`;
 export const WEB3AUTH_LOGIN_URL = `${WEB3AUTH_GATEWAY_URL}/login`;
 export const WEB3AUTH_SWAP_OWNER_URL = `${WEB3AUTH_GATEWAY_URL}/swap-owner-session`;
+export const WEB3AUTH_STATUS_URL = `${PEARL_API_URL}/api/web3auth/status`;
 
 // support API
 export const SUPPORT_API_URL = `${PEARL_API_URL}/api/zendesk`;
