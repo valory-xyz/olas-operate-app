@@ -1,5 +1,7 @@
 import { utils } from 'ethers';
 
+import { OLAS_CONTRACTS } from '../../../config/olasContracts';
+import { CONTRACT_TYPE } from '../../../constants';
 import { EvmChainId, EvmChainIdMap } from '../../../constants/chains';
 import { computeAgentId } from '../../../utils/generateAgentName/computeAgentId';
 import { ALL_EVM_CHAIN_IDS, INVALID_CHAIN_ID } from '../../helpers/factories';
@@ -52,6 +54,24 @@ describe('computeAgentId', () => {
       ),
     );
     expect(computeAgentId(chainId, 7)).toBe(expected);
+  });
+
+  it('hashes with the registry the app reads services from', () => {
+    for (const chainId of ALL_EVM_CHAIN_IDS) {
+      const registry =
+        OLAS_CONTRACTS[chainId][CONTRACT_TYPE.ServiceRegistryL2].address;
+      const expected = utils.keccak256(
+        utils.defaultAbiCoder.encode(
+          ['bytes32', 'address', 'uint256'],
+          [
+            utils.keccak256(utils.toUtf8Bytes(`eip155:${chainId}`)),
+            registry,
+            3,
+          ],
+        ),
+      );
+      expect(computeAgentId(chainId, 3)).toBe(expected);
+    }
   });
 
   it('throws for unsupported chain ID', () => {

@@ -1,21 +1,9 @@
 import { utils } from 'ethers';
 
-import { EvmChainId, EvmChainIdMap } from '@/constants';
+import { OLAS_CONTRACTS } from '@/config/olasContracts';
+import { CONTRACT_TYPE, EvmChainId } from '@/constants';
 
 const abi = utils.defaultAbiCoder;
-
-const L2_SERVICE_REGISTRY = '0xE3607b00E75f6405248323A9417ff6b39B244b50';
-
-const SERVICE_REGISTRY_ADDRESSES: Record<EvmChainId, string> = {
-  [EvmChainIdMap.Base]: '0x3C1fF68f5aa342D296d4DEe4Bb1cACCA912D95fE',
-  [EvmChainIdMap.Gnosis]: '0x9338b5153AE39BB89f50468E608eD9d764B755fD',
-  [EvmChainIdMap.Mode]: '0x3C1fF68f5aa342D296d4DEe4Bb1cACCA912D95fE',
-  [EvmChainIdMap.Optimism]: '0x3d77596beb0f130a4415df3D2D8232B3d3D31e44',
-  [EvmChainIdMap.Polygon]: L2_SERVICE_REGISTRY,
-  [EvmChainIdMap.Robinhood]: L2_SERVICE_REGISTRY,
-  [EvmChainIdMap.Arbitrum]: L2_SERVICE_REGISTRY,
-  [EvmChainIdMap.Celo]: L2_SERVICE_REGISTRY,
-} as const;
 
 /**
  * Matches:
@@ -35,7 +23,9 @@ const SERVICE_REGISTRY_ADDRESSES: Record<EvmChainId, string> = {
  * NOTE: This is abi.encode (NOT encodePacked), so we use AbiCoder.encode.
  */
 export function computeAgentId(chainId: EvmChainId, tokenId: number): string {
-  const serviceRegistryContract = SERVICE_REGISTRY_ADDRESSES[chainId];
+  // the registry the app reads the service from, so the id cannot drift from it
+  const serviceRegistryContract =
+    OLAS_CONTRACTS[chainId]?.[CONTRACT_TYPE.ServiceRegistryL2]?.address;
   if (!serviceRegistryContract) {
     throw new Error(`Unsupported chainId ${chainId} for computeAgentId`);
   }
