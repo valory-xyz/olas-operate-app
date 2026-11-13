@@ -1,4 +1,4 @@
-import { QueryClientProvider } from '@tanstack/react-query';
+import { Query, QueryClientProvider } from '@tanstack/react-query';
 import { renderHook, waitFor } from '@testing-library/react';
 import { message } from 'antd';
 import { act, createElement, PropsWithChildren, useContext } from 'react';
@@ -6,7 +6,10 @@ import { act, createElement, PropsWithChildren, useContext } from 'react';
 import { AGENT_CONFIG } from '../../config/agents';
 import { AgentMap, AgentType } from '../../constants/agent';
 import { EvmChainIdMap, MiddlewareChainMap } from '../../constants/chains';
-import { MiddlewareDeploymentStatusMap } from '../../constants/deployment';
+import {
+  MiddlewareDeploymentStatus,
+  MiddlewareDeploymentStatusMap,
+} from '../../constants/deployment';
 import {
   FIFTEEN_SECONDS_INTERVAL,
   FIVE_SECONDS_INTERVAL,
@@ -1499,11 +1502,13 @@ describe('ServicesProvider', () => {
       });
       expect(query).toBeDefined();
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const opts = query!.options as any;
-      return typeof opts.refetchInterval === 'function'
-        ? opts.refetchInterval(query!)
-        : opts.refetchInterval;
+      // `refetchInterval` is an observer option, so `Query.options` omits it.
+      const { refetchInterval } = query!.options as {
+        refetchInterval?: number | false | ((q: Query) => number | false);
+      };
+      return typeof refetchInterval === 'function'
+        ? refetchInterval(query!)
+        : refetchInterval;
     };
 
     it('uses fast interval when backend reports an active deployment', async () => {
@@ -1586,6 +1591,65 @@ describe('ServicesProvider', () => {
       expect(getDeploymentsRefetchInterval(wrapper.queryClient)).toBe(
         FIVE_SECONDS_INTERVAL,
       );
+    });
+
+    describe('after a failed refetch', () => {
+      beforeEach(() => {
+        jest.useFakeTimers();
+      });
+
+      afterEach(() => {
+        jest.useRealTimers();
+      });
+
+      it('keeps polling on the slow interval and recovers the latest status', async () => {
+        const traderService = serviceFor(AgentMap.PredictTrader);
+        const deploymentWith = (status: MiddlewareDeploymentStatus) => ({
+          [traderService.service_config_id]: {
+            status,
+            nodes: { agent: [], tendermint: [] },
+            healthcheck: {},
+          },
+        });
+        mockGetServices.mockResolvedValue([traderService]);
+        mockGetAllServiceDeployments
+          .mockResolvedValueOnce(
+            deploymentWith(MiddlewareDeploymentStatusMap.DEPLOYED),
+          )
+          .mockRejectedValueOnce(new TypeError('Failed to fetch'))
+          .mockResolvedValue(
+            deploymentWith(MiddlewareDeploymentStatusMap.STOPPED),
+          );
+
+        const wrapper = createWrapper();
+        const { result } = renderHook(() => useContext(ServicesContext), {
+          wrapper,
+        });
+
+        await waitFor(() => {
+          expect(
+            result.current.allDeployments?.[traderService.service_config_id]
+              ?.status,
+          ).toBe(MiddlewareDeploymentStatusMap.DEPLOYED);
+        });
+
+        // The fast-interval refetch fails, which puts the query in `error`.
+        await act(() => jest.advanceTimersByTimeAsync(FIVE_SECONDS_INTERVAL));
+        expect(mockGetAllServiceDeployments).toHaveBeenCalledTimes(2);
+        expect(getDeploymentsRefetchInterval(wrapper.queryClient)).toBe(
+          FIFTEEN_SECONDS_INTERVAL,
+        );
+
+        // Polling continues, so the stale DEPLOYED status gets replaced.
+        await act(() =>
+          jest.advanceTimersByTimeAsync(FIFTEEN_SECONDS_INTERVAL),
+        );
+        expect(mockGetAllServiceDeployments).toHaveBeenCalledTimes(3);
+        expect(
+          result.current.allDeployments?.[traderService.service_config_id]
+            ?.status,
+        ).toBe(MiddlewareDeploymentStatusMap.STOPPED);
+      });
     });
   });
 });
