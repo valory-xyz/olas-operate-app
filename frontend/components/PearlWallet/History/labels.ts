@@ -34,10 +34,9 @@ export const getTransactionRowLabel = (
     case FUNDS_CATEGORY.SERVICE_BOND_REFUND:
     case FUNDS_CATEGORY.UNSTAKE_REWARD:
       return `${agent} unstake`;
+    // The Pearl Wallet does not tell Agent Signer and Agent Safe funding
+    // apart; the Agent Wallet history does.
     case FUNDS_CATEGORY.MASTER_TO_AGENT:
-      // When the recipient is the Agent EOA (signer) rather than the Agent
-      // Safe, Pearl labels this as a gas top-up. See VLOP-73 design.
-      if (row.agentInstanceAddress) return 'Allocated for execution costs';
       return `Fund ${agent}`;
     default:
       return 'Transaction';

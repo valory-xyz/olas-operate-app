@@ -78,6 +78,14 @@ There is no month grouping, no separate lag hook, and no per-chain tab component
 | `frontend/components/PearlWallet/Withdraw/BalancesAndAssets/BalancesAndAssets.tsx` | Wrap content in tabs when `masterSafeAddress` truthy |
 | `frontend/components/PearlWallet/types.ts` | No change (steps unchanged) |
 
+## Agent Signer funding (OPE-1979, as shipped)
+
+A Fund Agent transfer can pay the Agent Signer and the Agent Safe in one MultiSend; a Funding Alert top-up pays the Agent Signer alone; the agent's own Agent Safe → Agent Signer top-up (OPE-1965) is automatic. The indexers book the Pearl Safe → Agent Signer leg as a `MASTER_TO_AGENT` row with `agentSafe` set and `to` = the Agent Signer, in the tx's `AgentFundingEvent`. A row is a Signer leg when `to != agentSafe.id`; no new category.
+
+- **Pearl Wallet** (`useTransactionHistory`): one "Fund \<agent\>" row per funding tx. `fundingEventToRow` sums the transfers per token, so the amount is what left the Pearl Safe whichever Agent Wallet address received it. It does not read `totalNativeAmount`, and no Pearl Wallet row sets `agentInstanceAddress`.
+- **Agent Wallet** (`useAgentTransactionHistory`): rows group by tx, category and recipient side, so a split shows a "Fund agent" row (Agent Safe) and an "Allocated for execution costs" row (Agent Signer, `agentInstanceAddress` set). Both are inflows with the "Fund agent" icon. The automatic top-up (`AGENT_SAFE_TO_AGENT_EOA`) also reads "Allocated for execution costs" but keeps its `'internal'` direction and icon. Only the v2 and sqd queries ask for `AGENT_SAFE_TO_AGENT_EOA`: v1 (v0.0.6) does not have the enum value and would reject the query.
+- **Amounts below display precision** (`formatBelowPrecision`) read `<0.01` (ETH, shown to 5 decimals: `<0.00001`) instead of `0.00`, in both histories. The check runs on the unrounded amount.
+
 ## Subgraph → UI category mapping
 
 VLOP-73's 7 displayed entry types map to subgraph categories/entities:

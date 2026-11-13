@@ -2,6 +2,7 @@ import {
   balanceFormat,
   formatAmount,
   formatAmountNormalized,
+  formatBelowPrecision,
   formatEther,
   formatNumber,
   formatUnits,
@@ -159,5 +160,24 @@ describe('formatAmountNormalized', () => {
     expect(formatAmountNormalized(null)).toBe('0');
     // @ts-expect-error Testing nullish values
     expect(formatAmountNormalized(undefined)).toBe('0');
+  });
+});
+
+describe('formatBelowPrecision', () => {
+  it('reads a positive amount below the precision as "<smallest unit"', () => {
+    expect(formatBelowPrecision(0.00000094, 2)).toBe('<0.01');
+    expect(formatBelowPrecision(0.009, 2)).toBe('<0.01');
+    expect(formatBelowPrecision(0.000003, 5)).toBe('<0.00001');
+  });
+
+  it('returns null when the amount shows at the precision', () => {
+    expect(formatBelowPrecision(0.01, 2)).toBeNull();
+    expect(formatBelowPrecision(29.98, 2)).toBeNull();
+    expect(formatBelowPrecision(0.00001, 5)).toBeNull();
+  });
+
+  it('returns null for zero and negative amounts', () => {
+    expect(formatBelowPrecision(0, 2)).toBeNull();
+    expect(formatBelowPrecision(-0.001, 2)).toBeNull();
   });
 });
