@@ -123,12 +123,13 @@ The rotation signal is regime-aware (OPE-1803): `refreshRewardsEligibility` retu
 
 An instance counts as done for the epoch only when **both** that staking signal and the agent's own activity goal are met (OPE-1801). The goal comes from the `activity_goal` block the agent writes into `agent_performance.json`, read through `ServicesService.getAgentPerformance` (`frontend/utils/activityGoal.ts` → `deriveIsDoneForEpoch`):
 
+- current block with `no_markets_left: true` (Omenstrat with nothing left to try or redeem this epoch) → done, with or without the staking signal (`deriveIsNoMarketsLeft`); `is_met` is reported apart and stays as the agent wrote it;
 - staking signal false → not done;
 - no (or malformed) block, i.e. an older agent build → the staking signal alone, as before;
 - block whose `period_start` predates the epoch's `tsCheckpoint` → goal not met;
 - otherwise → `activity_goal.is_met`.
 
-The goal is read only once the staking signal is met; until then the instance is not done and no performance request is made. A failed performance read leaves a staking agent whose staking signal is met unknown (`undefined`), so callers keep the previous snapshot and the scanner retries instead of starting it; for Connect it counts as not done. A malformed block is logged as `activity goal malformed: <id>: <zod issues>` and reads as no block. The decision log line carries `goal=<progress>/<target> goalMet=<bool> goalCurrent=<bool> → done=<bool>` (or `goal=none` / `goal=unavailable`, or `goal=unread` when the staking signal is not met). The selection-driven snapshot in `useAutoRunSignals` uses `useEpochWorkStatus().isDoneForEpoch`, so both writers agree.
+The goal is read on every poll, so a `no_markets_left` agent is done before its staking signal is met. A failed performance read leaves a staking agent whose staking signal is met unknown (`undefined`), so callers keep the previous snapshot and the scanner retries instead of starting it; before the staking signal is met it counts as not done, as for Connect. The snapshot records `noMarketsLeft`, and a later goal read that disagrees with it makes a stored `true` unknown, so a market that comes back is noticed. A malformed block is logged as `activity goal malformed: <id>: <zod issues>` and reads as no block. The decision log line carries `goal=<progress>/<target> goalMet=<bool> goalCurrent=<bool> → done=<bool>` (or `goal=none` / `goal=unavailable`, or `goal=unread` when the staking signal is not met). The selection-driven snapshot in `useAutoRunSignals` uses `useEpochWorkStatus().isDoneForEpoch`, so both writers agree.
 
 1. `REWARDS_POLL_SECONDS` interval calls `refreshRewardsEligibility(runningServiceConfigId)`.
 2. Snapshot update bumps `rewardsTick` → rotation effect fires.
@@ -150,6 +151,7 @@ Connect (`stakingProgramId === 'no_staking'`) has no epoch. It is an ordinary ch
 - **Running:** done when the block is current and `is_met`. Freshness is the only per-type difference: the block is current when `period_start >= floor(startRequestedAt / 1000)`, the moment the app last asked the backend to start the instance (`ServicesService.getStartRequestedAt`). `ServicesService.startService` records it on every path, so a manual start or restart counts the same as an Auto-run start. That ignores a leftover `is_met: true` from the previous process before the new one rewrites the file at boot. The record lives in memory: after a frontend reload while Connect keeps running there is no floor, and a leftover met block counts until the process rewrites it. The start request is used rather than `lastStartedAt`, which is stamped only once the deployment is confirmed, after the new process has already opened its window.
 - **Hand-over:** the §3.2 pre-check, and the scan starts the agent it chose. Connect is stopped only if one can start; the goal-reached notification ("Connect agent "…" finished its run") is sent on that stop, once per hand-over. Otherwise Connect keeps running and `lastRewardsEligibilityRef[connect]` is reset, as on a stop failure: Connect's `is_met` never goes back to false within a process, so the reset is what lets the next rewards poll re-check, and hand over once another agent becomes ready.
 - A watchdog or eviction hand-over sends no goal-reached notification.
+- **No market left (Omenstrat):** when the rewards edge hands over an agent whose last read had `noMarketsLeft`, the same notification is sent once the stop is confirmed, with the body "No markets left to trade this epoch. Moving to next agent." (`NO_MARKETS_LEFT_HAND_OVER_BODY`). A later scan in the epoch passes over it as done for the epoch.
 - `fetchDeployabilityForAgent` skips the staking reads for `no_staking`, and `AgentMeta.chainId` is the instance's own chain (`getServiceEvmChainId`).
 - **Upgrade:** Connect instances that exist when the version first loads are added once to `userExcludedAgentInstances` (`autoRun.connectAutoRunMigrated`); later instances are auto-added.
 
@@ -182,7 +184,9 @@ The eviction gate in `fetchDeployabilityForAgent` only runs when choosing a cand
 1. Every 10 minutes (`RUNNING_AGENT_ELIGIBILITY_CHECK_SECONDS`), the running instance's deployability is re-read. The read happens *outside* `isRotatingRef`, which is claimed only once there is something to do — otherwise every check would block the runtime watchdog and the rewards trigger for the duration of a network call.
 2. Not evicted, or a transient result (e.g. RPC failure) → no action. A failed staking read must never stop a healthy agent.
 3. Evicted and past `minimumStakingDuration` → `stopAgentWithRecovery`, then `COOLDOWN_SECONDS`, then `startAgentWithRetries` for the same instance; the start re-stakes it through the middleware's deploy endpoint. A failed stop aborts before the start and records the usual backoff. The cooldown is the same one rotation uses — the backend needs time to tear the service down before a start on the same instance is accepted. `runningSinceRef` is reset afterwards, since the instance id does not change across the recovery, as is the rewards guard.
-4. Evicted and still inside `minimumStakingDuration` → forced `rotateToNext`. Nothing can re-stake it until the window ends, so the queue should move on.
+4. Evicted and still inside `minimumStakingDuration` → forced `rotateToNext`. Nothing can re-stake it until the window ends, so the queue should move on. The pre-check passes over other evicted instances, so an agent that can run evicted (`AgentConfig.canRunWhileEvicted`, Omenstrat: it keeps redeeming) is handed over only when another agent can start; otherwise it keeps the slot.
+
+**Agents that can run evicted.** For an agent with `canRunWhileEvicted`, an eviction inside `minimumStakingDuration` does not block a start: `useDeployability` lets Start through, and `fetchDeployabilityForAgent` runs the remaining gates and then returns `{ canRun: false, reason: 'Evicted', isEvictedRunnable: true }`, ahead of the empty-pool check since an evicted agent earns nothing. The scanner defers such a candidate behind the empty-pool and stall-deferred ones, re-checks it before starting, and starts it only when no other agent could start (`scan: started evicted X to redeem, no other agent could start`). The selected-agent fast path defers it without a skip notification. Every other agent keeps the `Evicted` skip.
 
 The running instance is re-checked after the read as well as before it: a rotation can *complete* while the staking call is in flight, and acting on the original id then would stop a different agent.
 
@@ -349,6 +353,7 @@ Every delay and poll interval in auto-run uses `sleepAwareDelay`. On `false`:
 |---|----------|----------|----------------|
 | 8 | Low balance | Skip with notification (once) | `notifySkipOnce` + `hasBlocked` |
 | 9 | Evicted | Skip with notification | Via deployability |
+| 9a | Evicted inside `minimumStakingDuration`, agent with `canRunWhileEvicted` (Omenstrat) | Started last, only when no other agent can start; no skip notification | `isEvictedRunnable` deferral, §3.6 |
 | 10 | Region restricted | Skip with notification | Via deployability |
 | 11 | No slots | Skip with notification | Via deployability |
 | 12 | Under construction | Skip with notification | Via deployability |
