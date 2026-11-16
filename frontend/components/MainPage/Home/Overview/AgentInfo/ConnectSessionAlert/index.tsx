@@ -3,8 +3,14 @@ import { Button, Flex, Typography } from 'antd';
 import { Alert } from '@/components/ui';
 import { CLAUDE_CODE_CLI_INSTALL_URL } from '@/constants';
 import { useConnectSession } from '@/hooks';
+import { ConnectSessionErrorKind } from '@/types';
 
 const { Text } = Typography;
+
+const OCB_ALERT_COPY: Partial<Record<ConnectSessionErrorKind, string>> = {
+  'ocb-install-failed': "Pearl couldn't set up OCB on this machine.",
+  'ocb-launch-failed': "Pearl couldn't launch an OCB session.",
+};
 
 // Built the same way as AgentRunningAlert — centered info alert, default icon,
 // copy at text-sm.
@@ -27,6 +33,8 @@ const SessionInfoAlert = ({ message }: { message: string }) => (
  * - `not-installed`: no Claude harness is installed → prompt to install the
  *   Claude Code CLI, which is the harness Connect reaches for first.
  * - `launch-failed`: transient launch failure → a Retry button.
+ * - `ocb-install-failed` / `ocb-launch-failed`: OCB's own copy with a Retry
+ *   button and no download, since Connect installs OCB itself.
  */
 export const ConnectSessionAlert = () => {
   const {
@@ -85,6 +93,8 @@ export const ConnectSessionAlert = () => {
     );
   }
 
+  const ocbCopy = errorKind ? OCB_ALERT_COPY[errorKind] : undefined;
+
   return (
     <Alert
       showIcon
@@ -95,7 +105,9 @@ export const ConnectSessionAlert = () => {
       message={
         <Flex justify="space-between" gap={4}>
           <Text className="text-sm">
-            {errorMessage ?? "Pearl couldn't launch Claude Code session."}
+            {ocbCopy ??
+              errorMessage ??
+              "Pearl couldn't launch Claude Code session."}
           </Text>
           <Button
             size="small"
