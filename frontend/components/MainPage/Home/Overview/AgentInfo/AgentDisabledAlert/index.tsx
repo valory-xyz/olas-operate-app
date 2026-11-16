@@ -28,6 +28,7 @@ import {
   useStakingProgram,
 } from '@/hooks';
 import { AgentIssue } from '@/types';
+import { runsInsideEvictionWindow } from '@/utils/stakingProgram';
 
 import { AgentGeoBlockedAlert } from './AgentGeoBlockedAlert';
 import { AgentIssuesAlert } from './AgentIssuesAlert';
@@ -59,7 +60,7 @@ export const AgentDisabledAlert = () => {
     isSelectedStakingContractDetailsLoading,
     isAgentEvicted,
     isEligibleForStaking,
-    isServiceStakedForMinimumDuration,
+    evictionExpiresAt,
     hasEnoughServiceSlots,
     isServiceStaked,
     selectedStakingContractDetails,
@@ -173,11 +174,12 @@ export const AgentDisabledAlert = () => {
       };
     }
 
-    // A run inside the eviction window does not re-stake, so needs no slot.
-    const runsEvicted =
-      isAgentEvicted &&
-      !isServiceStakedForMinimumDuration &&
-      !!selectedAgentConfig.canRunWhileEvicted;
+    const runsEvicted = runsInsideEvictionWindow({
+      isAgentEvicted,
+      canRunWhileEvicted: selectedAgentConfig.canRunWhileEvicted,
+      evictionExpiresAt,
+      nowSeconds: Math.round(Date.now() / 1000),
+    });
     if (
       !isSelectedStakingContractDetailsLoading &&
       isServiceStaked === false &&
@@ -247,7 +249,7 @@ export const AgentDisabledAlert = () => {
     isSelectedStakingContractDetailsLoading,
     isServiceRunning,
     isServiceStaked,
-    isServiceStakedForMinimumDuration,
+    evictionExpiresAt,
     prestartCheck,
     runningAgentIssues,
     selectedAgentConfig,

@@ -268,6 +268,13 @@ describe('AgentActivity', () => {
         ),
       ).toBeInTheDocument();
       expect(screen.queryByText(STANDBY_COPY, { exact: false })).toBeNull();
+      expect(screen.getByTestId('info-tooltip')).toHaveAttribute(
+        'data-icon-color',
+        COLOR.TEXT_COLOR.SUCCESS.DEFAULT,
+      );
+      expect(
+        statusText('Agent is in standby until the next epoch'),
+      ).toHaveStyle({ color: COLOR.TEXT_COLOR.SUCCESS.DEFAULT });
     });
 
     it('renders the standby strip on the green gradient', () => {

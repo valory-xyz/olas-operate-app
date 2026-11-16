@@ -15,7 +15,10 @@ import {
 } from '@/utils/activityGoal';
 import { sleepAwareDelay } from '@/utils/delay';
 import { isValidServiceId } from '@/utils/service';
-import { isNoStakingProgram } from '@/utils/stakingProgram';
+import {
+  isNoStakingProgram,
+  runsInsideEvictionWindow,
+} from '@/utils/stakingProgram';
 import {
   deriveIsEpochTargetMet,
   fetchAgentStakingRewardsInfo,
@@ -247,7 +250,8 @@ const NO_EPOCH: Pick<RewardSnapshot, 'tsCheckpoint' | 'livenessPeriod'> = {
  * Fetch whether an instance is done for the epoch, throttled per serviceConfigId.
  *
  * "Done" is the same rule for every agent: the staking KPI is met (or the
- * agent has no staking), and its activity goal block is current and met. An
+ * agent has no staking), and its activity goal block is current and met; or
+ * a current block reports no market left to try, with or without the KPI. An
  * unreadable goal leaves a staking agent whose KPI is met unknown, and Connect
  * not done. Only the freshness of the block differs:
  * a staking agent's must belong to the current epoch, Connect's must come from
@@ -454,13 +458,11 @@ export const refreshRewardsEligibility = async ({
 
   const epochExpired = isStakingEpochExpired(response);
 
-  // The agent's own activity goal is the second half of "done". It is read on
-  // every poll, since an agent with no market left to try is done with or
-  // without the staking KPI. Once the KPI is met, an unreadable report leaves
-  // "done" unknown: a failure must neither override a met goal nor fake a
-  // false → true rotation. Before it, a failed read leaves the agent working,
-  // unless it was already done in this epoch, which only no markets left can
-  // make it; then the stored verdict is kept.
+  // Read on every poll: no markets left decides done before the KPI too. Once
+  // the KPI is met, an unreadable report leaves "done" unknown: a failure must
+  // neither override a met goal nor fake a false → true rotation. Before it, a
+  // failed read leaves the agent working, unless it was already done in this
+  // epoch, which only no markets left can make it; then that verdict is kept.
   const goalRead = await readActivityGoal(
     serviceConfigId,
     logMessage,
@@ -789,17 +791,21 @@ const runDeployabilityChecks = async (
         !isNil(minimumStakingDuration) &&
         Math.round(Date.now() / 1000) - serviceStakingStartTime >=
           minimumStakingDuration;
-      // A run inside the eviction window does not re-stake, so needs no slot.
       isEvictedRunnable =
         isAgentEvicted &&
         !isEligibleAfterEviction &&
         !!agentMeta.agentConfig.canRunWhileEvicted;
+      const runsEvicted = runsInsideEvictionWindow({
+        isAgentEvicted,
+        canRunWhileEvicted: agentMeta.agentConfig.canRunWhileEvicted,
+        evictionExpiresAt:
+          isNil(serviceStakingStartTime) || isNil(minimumStakingDuration)
+            ? 0
+            : serviceStakingStartTime + minimumStakingDuration,
+        nowSeconds: Math.round(Date.now() / 1000),
+      });
 
-      if (
-        hasEnoughServiceSlots === false &&
-        !isServiceStaked &&
-        !isEvictedRunnable
-      ) {
+      if (hasEnoughServiceSlots === false && !isServiceStaked && !runsEvicted) {
         return { canRun: false, reason: 'No available slots' };
       }
 

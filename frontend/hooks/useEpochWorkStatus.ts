@@ -51,8 +51,7 @@ export const useEpochWorkStatus = (): EpochWorkStatusResult => {
     if (isNil(isEpochTargetMet) || isNil(tsCheckpoint)) {
       return UNKNOWN_WORK_STATUS;
     }
-    // A failed read is unknown once the KPI is met, as in Auto-run's own
-    // poll, so the Overview and Auto-run never disagree about the instance.
+    // Once the KPI is met a failed read is unknown, as in Auto-run's poll.
     if (isLoading || isUnavailable) {
       return isEpochTargetMet
         ? UNKNOWN_WORK_STATUS

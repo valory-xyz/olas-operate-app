@@ -6,7 +6,7 @@ Staking is the mechanism that lets a Pearl agent earn OLAS rewards. When a servi
 
 - The agent earns **no OLAS rewards** regardless of how much work it does.
 - If all slots in a program are full, an **unstaked agent cannot start** ("No available slots" blocker in `useDeployability`).
-- **Inactive agents are evicted** — if a service fails the liveness check (insufficient mech requests or multisig nonce increments), it is removed from the staking program and blocked from restarting until the minimum staking duration has elapsed. An agent with `canRunWhileEvicted` (Omenstrat) is the exception: it can start inside that window, needs no free slot, and only redeems (see `autorun.md` §3.6).
+- **Inactive agents are evicted** — if a service fails the liveness check (insufficient mech requests or multisig nonce increments), it is removed from the staking program and blocked from restarting until the minimum staking duration has elapsed. An agent with `canRunWhileEvicted` (Omenstrat) is the exception: it can start inside that window, needs no free slot until the last 30 minutes of it, and only redeems (see `autorun.md` §3.6).
 
 One service can be staked in exactly one program at a time. Switching programs requires stopping the agent, migrating, then restarting.
 

@@ -77,3 +77,30 @@ export const getCompatibleStakingProgramIds = ({
 
     return [...acc, stakingProgramId];
   }, []);
+
+/**
+ * Time a start may take, so a start that begins this close to the end of an
+ * eviction is treated as one that re-stakes.
+ */
+export const EVICTION_RUN_START_MARGIN_SECONDS = 30 * 60;
+
+/**
+ * Whether an agent that can run evicted starts inside its eviction window, with
+ * enough of it left that the start cannot turn into a re-stake. Such a run does
+ * not re-stake, so it needs no free slot.
+ */
+export const runsInsideEvictionWindow = ({
+  isAgentEvicted,
+  canRunWhileEvicted,
+  evictionExpiresAt,
+  nowSeconds,
+}: {
+  isAgentEvicted: boolean;
+  canRunWhileEvicted: boolean | undefined;
+  /** When the eviction ends, in seconds; 0 when unknown. */
+  evictionExpiresAt: number;
+  nowSeconds: number;
+}): boolean =>
+  isAgentEvicted &&
+  !!canRunWhileEvicted &&
+  evictionExpiresAt - nowSeconds > EVICTION_RUN_START_MARGIN_SECONDS;

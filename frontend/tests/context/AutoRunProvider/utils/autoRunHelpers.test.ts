@@ -1014,8 +1014,28 @@ describe('refreshRewardsEligibility', () => {
         expect(result).toBe(true);
         expect(setRewardSnapshot).toHaveBeenCalledWith(
           DEFAULT_SERVICE_CONFIG_ID,
-          expect.objectContaining({ done: true, noMarketsStandby: true }),
+          expect.objectContaining({
+            done: true,
+            noMarketsLeft: true,
+            noMarketsStandby: true,
+          }),
         );
+
+        // the stored snapshot is reused until no_markets_left changes
+        const stored = setRewardSnapshot.mock.calls[0][1];
+        const current = {
+          stakingProgramId: stored.stakingProgramId,
+          nowMs: stored.readAt + 1,
+        };
+        const seen = (noMarketsLeft: boolean) => ({
+          ...current,
+          observedGoal: {
+            goal: makeActivityGoal({ no_markets_left: noMarketsLeft }),
+            observedAt: stored.readAt + 1,
+          },
+        });
+        expect(getUsableRewardStatus(stored, seen(true))).toBe(true);
+        expect(getUsableRewardStatus(stored, seen(false))).toBeUndefined();
       },
     );
 
@@ -2206,6 +2226,25 @@ describe('fetchDeployabilityForAgent', () => {
       );
       expect(result.isEvictedRunnable).toBe(true);
       expect(result.reason).toBe('Evicted');
+    });
+
+    it('needs a slot when the start could cross the end of the eviction', async () => {
+      const now = Math.floor(Date.now() / 1000);
+      mockGetStakingContractDetails.mockResolvedValue({
+        serviceIds: [1, 2],
+        maxNumServices: 2,
+        minimumStakingDuration: 86400,
+      });
+      mockGetServiceStakingDetails.mockResolvedValue({
+        serviceStakingState: StakingState.Evicted,
+        // ten minutes of the eviction left
+        serviceStakingStartTime: now - 86400 + 600,
+      });
+      const result = await fetchDeployabilityForAgent(
+        makeAgentMeta(),
+        makeCtx(),
+      );
+      expect(result.reason).toBe('No available slots');
     });
 
     it('is still held to the later gates', async () => {

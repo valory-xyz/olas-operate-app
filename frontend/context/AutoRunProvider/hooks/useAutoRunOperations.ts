@@ -52,7 +52,7 @@ type UseAutoRunOperationsParams = {
 /**
  * Composes operational primitives used by scanner/lifecycle:
  * - rewards refresh + skip notifications
- * - goal-reached notification for a Connect hand-over
+ * - finished-its-run notification for a hand-over
  * - guarded start with retries
  * - stop with deployment confirmation and recovery retries
  */

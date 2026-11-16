@@ -139,7 +139,7 @@ type StakingOverrides = {
   isEligibleForStaking?: boolean;
   hasEnoughServiceSlots?: boolean | null;
   isServiceStaked?: boolean;
-  isServiceStakedForMinimumDuration?: boolean;
+  evictionExpiresAt?: number;
   availableRewards?: number;
 };
 
@@ -300,21 +300,35 @@ describe('AgentDisabledAlert', () => {
       expect(screen.queryByText('no-rewards')).not.toBeInTheDocument();
     });
 
-    it('shows the eviction banner, not no-slots, for an agent that runs evicted on a full contract', () => {
-      setup({
-        staking: {
-          isAgentEvicted: true,
-          isEligibleForStaking: false,
-          isServiceStakedForMinimumDuration: false,
-          isServiceStaked: false,
-          hasEnoughServiceSlots: false,
-        },
-        agentConfig: { canRunWhileEvicted: true },
-      });
+    it.each([
+      ['evicted with a day left', true, 86_400, 'evicted-locked', 'no-slots'],
+      [
+        'evicted inside the start margin',
+        true,
+        10 * 60,
+        'no-slots',
+        'evicted-locked',
+      ],
+      ['evicted past its window', true, -60, 'no-slots', 'evicted-locked'],
+      ['not evicted', false, 86_400, 'no-slots', 'evicted-locked'],
+    ])(
+      'on a full contract, an agent that can run evicted and is %s shows %s',
+      (_, isAgentEvicted, secondsLeft, shown, hidden) => {
+        setup({
+          staking: {
+            isAgentEvicted,
+            isEligibleForStaking: false,
+            evictionExpiresAt: Math.round(Date.now() / 1000) + secondsLeft,
+            isServiceStaked: false,
+            hasEnoughServiceSlots: false,
+          },
+          agentConfig: { canRunWhileEvicted: true },
+        });
 
-      expect(screen.getByText('evicted-locked')).toBeInTheDocument();
-      expect(screen.queryByText('no-slots')).not.toBeInTheDocument();
-    });
+        expect(screen.getByText(shown)).toBeInTheDocument();
+        expect(screen.queryByText(hidden)).not.toBeInTheDocument();
+      },
+    );
 
     // A half-loaded `hasEnoughRewardsAndSlots` forces `isEligibleForStaking`
     // false, which would flash "evicted until <date>" at someone who can
