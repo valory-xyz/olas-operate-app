@@ -5,6 +5,7 @@ import { AgentType } from '@/constants';
 import { Service } from '@/types';
 import { getServiceInstanceName, matchesAgentConfig } from '@/utils/service';
 
+import { HAND_OVER_NOTIFICATION_BODY } from '../constants';
 import { AgentMeta, IncludedAgentInstance } from '../types';
 
 /**
@@ -41,7 +42,7 @@ export const notifyStartFailed = (
 ) => {
   showNotification?.(
     `Failed to start ${agentDisplayName} agent "${instanceName}"`,
-    'Moving to next agent.',
+    HAND_OVER_NOTIFICATION_BODY,
   );
 };
 
@@ -58,7 +59,7 @@ export const notifyGoalReached = (
   showNotification: ((title: string, body?: string) => void) | undefined,
   agentDisplayName: string,
   instanceName: string,
-  body = 'Moving to next agent.',
+  body = HAND_OVER_NOTIFICATION_BODY,
 ) => {
   showNotification?.(
     `${agentDisplayName} agent "${instanceName}" finished its run`,

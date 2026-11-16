@@ -7,6 +7,7 @@ import {
 } from '@/constants';
 import { useBalanceAndRefillRequirementsContext } from '@/hooks';
 import { ActivityGoal, StakingRewardsInfo } from '@/types';
+import { deriveIsNoMarketsStandby } from '@/utils/activityGoal';
 import { sleepAwareDelay } from '@/utils/delay';
 
 import {
@@ -207,6 +208,12 @@ export const useAutoRunSignals = ({
       goalUnit: selectedActivityGoal?.unit ?? null,
       goalTarget: selectedActivityGoal?.target ?? null,
       goalPeriodStart: selectedActivityGoal?.period_start ?? null,
+      ...(deriveIsNoMarketsStandby(
+        selectedActivityGoal ?? null,
+        selectedRewardsEpoch.tsCheckpoint,
+      )
+        ? { noMarketsLeft: true }
+        : {}),
     };
     setRewardsTick((value) => value + 1);
   }, [

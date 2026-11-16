@@ -164,7 +164,7 @@ export const useDeployability = ({
       return { isLoading, canRun: false, reason: 'No available slots' };
     }
 
-    // If was evicted and can't re-stake, unless the agent can run evicted
+    // If was evicted and can't re-stake; an agent that can run evicted still redeems
     if (
       isAgentEvicted &&
       !isEligibleForStaking &&

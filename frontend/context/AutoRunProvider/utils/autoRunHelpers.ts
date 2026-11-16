@@ -8,7 +8,7 @@ import { ActivityGoal, StakingRewardsInfo, StakingState } from '@/types';
 import {
   deriveIsActivityGoalMet,
   deriveIsDoneForEpoch,
-  deriveIsNoMarketsLeft,
+  deriveIsNoMarketsStandby,
   isActivityGoalCurrent,
   parseActivityGoal,
 } from '@/utils/activityGoal';
@@ -64,7 +64,7 @@ const isSnapshotGoal = (snapshot: RewardSnapshot, goal: ActivityGoal | null) =>
   snapshot.goalTarget === (goal?.target ?? null) &&
   snapshot.goalPeriodStart === (goal?.period_start ?? null) &&
   !!snapshot.noMarketsLeft ===
-    deriveIsNoMarketsLeft(goal, snapshot.tsCheckpoint);
+    deriveIsNoMarketsStandby(goal, snapshot.tsCheckpoint);
 
 /**
  * A working agent may finish at any time, so a stored `false` goes stale far
@@ -301,7 +301,7 @@ export const refreshRewardsEligibility = async ({
     goal: ActivityGoal | null = null,
     stalled = false,
   ) => {
-    const noMarketsLeft = deriveIsNoMarketsLeft(goal, epoch.tsCheckpoint);
+    const noMarketsLeft = deriveIsNoMarketsStandby(goal, epoch.tsCheckpoint);
     setRewardSnapshot(serviceConfigId, {
       done,
       readAt: Date.now(),
@@ -439,7 +439,9 @@ export const refreshRewardsEligibility = async ({
   // every poll, since an agent with no market left to try is done with or
   // without the staking KPI. Once the KPI is met, an unreadable report leaves
   // "done" unknown: a failure must neither override a met goal nor fake a
-  // false → true rotation. Before it, a failed read leaves the agent working.
+  // false → true rotation. Before it, a failed read leaves the agent working,
+  // unless it was already done in this epoch, which only no markets left can
+  // make it; then the stored verdict is kept.
   const goalRead = await readActivityGoal(
     serviceConfigId,
     logMessage,
@@ -458,7 +460,10 @@ export const refreshRewardsEligibility = async ({
     // Time before the staking KPI is met never counts toward a stall.
     delete stallClockRef.current[serviceConfigId];
   }
-  let doneForEpoch: boolean | undefined = epochTargetMet ? undefined : false;
+  const wasDoneThisEpoch =
+    !!snapshot?.done && snapshot.tsCheckpoint === response.tsCheckpoint;
+  let doneForEpoch: boolean | undefined =
+    epochTargetMet || wasDoneThisEpoch ? undefined : false;
   if (goalRead.ok) {
     doneForEpoch = deriveIsDoneForEpoch(
       epochTargetMet,
@@ -631,8 +636,7 @@ export type DeployabilityCheckResult = {
   isEligibleAfterEviction?: boolean;
   /**
    * true → the only thing blocking this agent is an eviction it cannot clear
-   * yet, and its config lets it run evicted. Deferred like an empty reward
-   * pool: started only when no other agent can start.
+   * yet, and its config lets it run evicted (see the scanner's fallbacks).
    */
   isEvictedRunnable?: boolean;
 };
@@ -718,7 +722,7 @@ const runDeployabilityChecks = async (
   // guarantees every other gate passed — which is what lets the scanner start
   // such an agent in degraded mode without re-running the remaining checks.
   let availableRewards: number | undefined;
-  // An agent that can run evicted is still held to every later gate.
+  // An agent that can run evicted is still held to the setup and balance gates.
   let isEvictedRunnable = false;
 
   // 4. On-chain staking state via direct API calls (same endpoints as

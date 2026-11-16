@@ -2,6 +2,7 @@ import {
   deriveIsActivityGoalMet,
   deriveIsDoneForEpoch,
   deriveIsNoMarketsLeft,
+  deriveIsNoMarketsStandby,
   isActivityGoalCurrent,
   parseActivityGoal,
 } from '../../utils/activityGoal';
@@ -178,4 +179,23 @@ describe('no_markets_left', () => {
       expect(deriveIsActivityGoalMet(goal, DEFAULT_TS_CHECKPOINT)).toBe(false);
     },
   );
+});
+
+describe('deriveIsNoMarketsStandby', () => {
+  it.each([
+    ['no market left before the goal', { no_markets_left: true }, true],
+    [
+      'no market left after the goal',
+      { no_markets_left: true, is_met: true, progress: 8 },
+      false,
+    ],
+    ['markets left', { no_markets_left: false }, false],
+  ])('%s → %s', (_, overrides, expected) => {
+    expect(
+      deriveIsNoMarketsStandby(
+        makeActivityGoal(overrides),
+        DEFAULT_TS_CHECKPOINT,
+      ),
+    ).toBe(expected);
+  });
 });

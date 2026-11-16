@@ -255,6 +255,6 @@ export const ELIGIBILITY_LOADING_REASON = {
  */
 export const EMPTY_REWARD_POOL_REASON = 'Staking contract reward pool is empty';
 
-/** Body of the hand-over notification for an agent with no market left to try. */
-export const NO_MARKETS_LEFT_HAND_OVER_BODY =
-  'No markets left to trade this epoch. Moving to next agent.';
+export const HAND_OVER_NOTIFICATION_BODY = 'Moving to next agent.';
+
+export const NO_MARKETS_LEFT_HAND_OVER_BODY = `No markets left to trade this epoch. ${HAND_OVER_NOTIFICATION_BODY}`;

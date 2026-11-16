@@ -143,10 +143,7 @@ export type AgentConfig = {
   hasPerformance: boolean;
   /** Shows the agent chat Overview (header, feed, chat input) instead of today's sections. */
   hasAgentChat?: boolean;
-  /**
-   * Can be started while evicted inside its minimum staking period: the agent
-   * then only redeems. Auto-run runs it only when no other agent can start.
-   */
+  /** Can be started while evicted inside its minimum staking period, to redeem. */
   canRunWhileEvicted?: boolean;
 } & needsOpenProfileEachAgentRun;
 

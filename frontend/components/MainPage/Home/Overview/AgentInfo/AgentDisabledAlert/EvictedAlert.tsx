@@ -10,31 +10,7 @@ const { Text } = Typography;
 export const EvictedAlert = () => {
   const { evictionExpiresAt } = useActiveStakingContractDetails();
   const { selectedAgentConfig } = useServices();
-
-  if (selectedAgentConfig.canRunWhileEvicted) {
-    return (
-      <Alert
-        showIcon
-        className="mt-16"
-        type="warning"
-        message={
-          <Text className="text-sm">
-            <span className="font-weight-600">
-              Agent is temporarily evicted
-            </span>{' '}
-            <br />
-            The agent didn&apos;t meet staking requirements, and will be evicted
-            until{' '}
-            <span className="font-weight-600">
-              {formatToShortDateTime(evictionExpiresAt * 1000)} (UTC).
-            </span>{' '}
-            Until then it earns no staking rewards and places no trades. You can
-            still run it to collect winnings from past trades.
-          </Text>
-        }
-      />
-    );
-  }
+  const { canRunWhileEvicted } = selectedAgentConfig;
 
   return (
     <Alert
@@ -45,12 +21,15 @@ export const EvictedAlert = () => {
         <Text className="text-sm">
           <span className="font-weight-600">Agent is temporarily evicted</span>{' '}
           <br />
-          The agent didn&apos;t meet staking requirements for three consecutive
-          epochs, and will be evicted until{' '}
+          {canRunWhileEvicted
+            ? "The agent didn't meet staking requirements, and will be evicted until "
+            : "The agent didn't meet staking requirements for three consecutive epochs, and will be evicted until "}
           <span className="font-weight-600">
             {formatToShortDateTime(evictionExpiresAt * 1000)} (UTC).
           </span>{' '}
-          You can run it again after the eviction period ends.
+          {canRunWhileEvicted
+            ? 'Until then it earns no staking rewards and places no trades. You can still run it to collect winnings from past trades.'
+            : 'You can run it again after the eviction period ends.'}
         </Text>
       }
     />

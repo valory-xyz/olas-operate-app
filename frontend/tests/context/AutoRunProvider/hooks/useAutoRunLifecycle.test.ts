@@ -1960,6 +1960,47 @@ describe('useAutoRunLifecycle', () => {
       );
     });
 
+    it('sends no no-markets notification on a forced eviction hand-over', async () => {
+      const params = makeRunningParams({
+        getDeployabilityForRunningInstance: jest.fn().mockResolvedValue({
+          canRun: false,
+          reason: 'Evicted',
+          isAgentEvicted: true,
+          isEligibleAfterEviction: false,
+          isEvictedRunnable: true,
+        }),
+        refreshRewardsEligibility: jest.fn().mockResolvedValue(false),
+        isNoMarketsLeft: jest.fn().mockReturnValue(true),
+      });
+
+      await runOneCheck(params);
+
+      expect(params.stopAgentWithRecovery).toHaveBeenCalledWith(scTrader);
+      expect(params.notifyGoalReachedOnHandOver).not.toHaveBeenCalled();
+    });
+
+    it('keeps an evicted agent running when no other agent can start', async () => {
+      const params = makeRunningParams({
+        getDeployabilityForRunningInstance: jest.fn().mockResolvedValue({
+          canRun: false,
+          reason: 'Evicted',
+          isAgentEvicted: true,
+          isEligibleAfterEviction: false,
+          isEvictedRunnable: true,
+        }),
+        getHandOverDeployability: jest.fn().mockResolvedValue({
+          canRun: false,
+          reason: 'Evicted',
+          isEvictedRunnable: true,
+        }),
+        refreshRewardsEligibility: jest.fn().mockResolvedValue(false),
+      });
+
+      await runOneCheck(params);
+
+      expect(params.stopAgentWithRecovery).not.toHaveBeenCalled();
+    });
+
     it('ignores a transient staking read', async () => {
       // A flaky RPC must never stop a healthy agent.
       const params = makeRunningParams({

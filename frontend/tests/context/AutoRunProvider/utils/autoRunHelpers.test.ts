@@ -1042,6 +1042,29 @@ describe('refreshRewardsEligibility', () => {
       );
     });
 
+    it('keeps a no-markets done when a later read fails in the same epoch', async () => {
+      mockFetchRewards.mockResolvedValue(stakingUnmet);
+      mockGetAgentPerformance.mockRejectedValue(new Error('boom'));
+      const setRewardSnapshot = jest.fn();
+
+      const result = await refreshRewardsEligibility(
+        makeParams({
+          setRewardSnapshot,
+          getRewardSnapshot: jest.fn().mockReturnValue(
+            makeRewardSnapshot({
+              done: true,
+              noMarketsLeft: true,
+              tsCheckpoint: DEFAULT_TS_CHECKPOINT,
+              readAt: 0,
+            }),
+          ),
+        }),
+      );
+
+      expect(result).toBeUndefined();
+      expect(setRewardSnapshot).not.toHaveBeenCalled();
+    });
+
     it('keeps an agent working when the goal read fails before the staking KPI is met', async () => {
       mockFetchRewards.mockResolvedValue(stakingUnmet);
       mockGetAgentPerformance.mockRejectedValue(new Error('boom'));

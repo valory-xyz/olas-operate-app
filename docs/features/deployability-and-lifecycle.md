@@ -126,8 +126,9 @@ The hook evaluates conditions in priority order. The first failing condition det
 7. hasEnoughServiceSlots === false && !isServiceStaked
    → canRun: false, reason: 'No available slots'
 
-8. isAgentEvicted && !isEligibleForStaking
+8. isAgentEvicted && !isEligibleForStaking && !selectedAgentConfig.canRunWhileEvicted
    → canRun: false, reason: 'Evicted'
+   (an agent that can run evicted, Omenstrat, keeps going: it redeems; see autorun.md §3.6)
 
 9. isAgentsFunFieldUpdateRequired
    → canRun: false, reason: 'Update required'

@@ -1,3 +1,4 @@
+import { isNil } from 'lodash';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { AGENT_CONFIG } from '@/config/agents';
@@ -12,6 +13,7 @@ import {
 import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRefillRequirementsContext';
 import { useIsAgentGeoRestricted } from '@/hooks/useIsAgentGeoRestricted';
 import { useIsInitiallyFunded } from '@/hooks/useIsInitiallyFunded';
+import { deriveIsNoMarketsLeft } from '@/utils/activityGoal';
 import { isNoStakingProgram } from '@/utils/stakingProgram';
 
 import {
@@ -95,7 +97,15 @@ export const useAutoRunController = ({
     activityGoal: selectedActivityGoal,
     dataUpdatedAt: selectedActivityGoalReadAt,
   } = useActivityGoal(selectedServiceConfigId);
-  const selectedRewardReadAt = isEpochTargetMet
+  // The goal decides done once the KPI is met, or before it with no markets left.
+  const isSelectedGoalDecisive =
+    isEpochTargetMet ||
+    (!isNil(stakingRewardsDetails?.tsCheckpoint) &&
+      deriveIsNoMarketsLeft(
+        selectedActivityGoal ?? null,
+        stakingRewardsDetails.tsCheckpoint,
+      ));
+  const selectedRewardReadAt = isSelectedGoalDecisive
     ? Math.min(
         stakingRewardsDataUpdatedAt ?? 0,
         selectedActivityGoalReadAt ?? 0,

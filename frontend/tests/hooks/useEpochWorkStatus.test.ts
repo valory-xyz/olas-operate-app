@@ -193,6 +193,18 @@ describe('useEpochWorkStatus', () => {
       expect(status.workStatus).toBe('working');
     });
 
+    it('shows the goal-reached standby when the goal was also reached', () => {
+      const status = setup({
+        isEpochTargetMet: true,
+        activityGoal: makeActivityGoal({
+          is_met: true,
+          progress: 8,
+          no_markets_left: true,
+        }),
+      });
+      expect(status).toEqual({ isDoneForEpoch: true, workStatus: 'standby' });
+    });
+
     it('keeps a goal-reached standby apart from the no-markets one', () => {
       const status = setup({
         isEpochTargetMet: true,

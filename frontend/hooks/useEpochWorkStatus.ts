@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 
 import {
   deriveIsDoneForEpoch,
-  deriveIsNoMarketsLeft,
+  deriveIsNoMarketsStandby,
 } from '@/utils/activityGoal';
 
 import { useActivityGoal } from './useActivityGoal';
@@ -13,15 +13,15 @@ import { useServices } from './useServices';
 /**
  * - `working`: staking KPI not met yet (the goal may already be met)
  * - `goal-pending`: staking KPI met, activity goal not met yet
- * - `standby`: both met, or no market is left to try (`isNoMarketsLeft`);
- *   the agent waits for the next epoch
+ * - `standby`: both met, or no market is left to try before the goal is
+ *   reached (`isNoMarketsLeft`); the agent waits for the next epoch
  */
 export type EpochWorkStatus = 'working' | 'goal-pending' | 'standby';
 
 type EpochWorkStatusResult = {
   isDoneForEpoch: boolean | undefined;
   workStatus: EpochWorkStatus | undefined;
-  /** The standby comes from the agent having no market left to try. */
+  /** The standby comes from no market being left to try before the goal. */
   isNoMarketsLeft?: boolean;
 };
 
@@ -54,7 +54,7 @@ export const useEpochWorkStatus = (): EpochWorkStatusResult => {
       return UNKNOWN_WORK_STATUS;
     }
     const isGoalRead = !isLoading && !isUnavailable;
-    if (isGoalRead && deriveIsNoMarketsLeft(activityGoal, tsCheckpoint)) {
+    if (isGoalRead && deriveIsNoMarketsStandby(activityGoal, tsCheckpoint)) {
       return NO_MARKETS_LEFT_STATUS;
     }
     if (!isEpochTargetMet) {

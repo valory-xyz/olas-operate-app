@@ -72,6 +72,16 @@ export const deriveIsNoMarketsLeft = (
   goal.no_markets_left === true;
 
 /**
+ * The agent idles for lack of markets before reaching its goal: the standby
+ * the Overview explains and Auto-run's hand-over notification announces. An
+ * agent that reached its goal keeps the goal-reached standby.
+ */
+export const deriveIsNoMarketsStandby = (
+  goal: ActivityGoal | null,
+  periodStartFloor: number,
+): boolean => deriveIsNoMarketsLeft(goal, periodStartFloor) && !goal?.is_met;
+
+/**
  * "Done for the epoch" for a staking agent: both the staking KPI and the
  * activity goal are met, or the agent has no market left to try, with or
  * without the KPI. Without a block it falls back to the staking KPI alone, so
