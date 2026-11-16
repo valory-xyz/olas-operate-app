@@ -381,6 +381,24 @@ describe('useAutoRunSignals', () => {
     expect(result.current.rewardsTick).toBe(initialTick + 1);
   });
 
+  it('isNoMarketsLeft reflects the last stored snapshot', () => {
+    const { result } = renderHook(() => useAutoRunSignals(makeHookParams()));
+    expect(result.current.isNoMarketsLeft(DEFAULT_SERVICE_CONFIG_ID)).toBe(
+      false,
+    );
+
+    act(() => {
+      result.current.setRewardSnapshot(
+        DEFAULT_SERVICE_CONFIG_ID,
+        makeRewardSnapshot({ done: true, noMarketsLeft: true }),
+      );
+    });
+
+    expect(result.current.isNoMarketsLeft(DEFAULT_SERVICE_CONFIG_ID)).toBe(
+      true,
+    );
+  });
+
   describe('stall helpers', () => {
     const STALL_MS = ACTIVITY_GOAL_STALL_SECONDS * 1000;
 

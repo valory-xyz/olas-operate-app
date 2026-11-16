@@ -1,7 +1,10 @@
 import { isNil } from 'lodash';
 import { useMemo } from 'react';
 
-import { deriveIsDoneForEpoch } from '@/utils/activityGoal';
+import {
+  deriveIsDoneForEpoch,
+  deriveIsNoMarketsLeft,
+} from '@/utils/activityGoal';
 
 import { useActivityGoal } from './useActivityGoal';
 import { useRewardContext } from './useRewardContext';
@@ -10,18 +13,27 @@ import { useServices } from './useServices';
 /**
  * - `working`: staking KPI not met yet (the goal may already be met)
  * - `goal-pending`: staking KPI met, activity goal not met yet
- * - `standby`: both met, the agent waits for the next epoch
+ * - `standby`: both met, or no market is left to try (`isNoMarketsLeft`);
+ *   the agent waits for the next epoch
  */
 export type EpochWorkStatus = 'working' | 'goal-pending' | 'standby';
 
 type EpochWorkStatusResult = {
   isDoneForEpoch: boolean | undefined;
   workStatus: EpochWorkStatus | undefined;
+  /** The standby comes from the agent having no market left to try. */
+  isNoMarketsLeft?: boolean;
 };
 
 const UNKNOWN_WORK_STATUS: EpochWorkStatusResult = {
   isDoneForEpoch: undefined,
   workStatus: undefined,
+};
+
+const NO_MARKETS_LEFT_STATUS: EpochWorkStatusResult = {
+  isDoneForEpoch: true,
+  workStatus: 'standby',
+  isNoMarketsLeft: true,
 };
 
 /**
@@ -41,12 +53,16 @@ export const useEpochWorkStatus = (): EpochWorkStatusResult => {
     if (isNil(isEpochTargetMet) || isNil(tsCheckpoint)) {
       return UNKNOWN_WORK_STATUS;
     }
+    const isGoalRead = !isLoading && !isUnavailable;
+    if (isGoalRead && deriveIsNoMarketsLeft(activityGoal, tsCheckpoint)) {
+      return NO_MARKETS_LEFT_STATUS;
+    }
     if (!isEpochTargetMet) {
       return { isDoneForEpoch: false, workStatus: 'working' };
     }
     // A failed read is unknown, as in Auto-run's own poll, so the Overview
     // and Auto-run never disagree about the same instance.
-    if (isLoading || isUnavailable) return UNKNOWN_WORK_STATUS;
+    if (!isGoalRead) return UNKNOWN_WORK_STATUS;
 
     const isDoneForEpoch = deriveIsDoneForEpoch(
       isEpochTargetMet,

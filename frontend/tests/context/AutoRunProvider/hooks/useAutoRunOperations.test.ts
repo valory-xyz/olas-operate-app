@@ -296,6 +296,23 @@ describe('useAutoRunOperations', () => {
         params.showNotification,
         'Omenstrat',
         'corzim-vardor96',
+        undefined,
+      );
+    });
+
+    it('passes a custom body through to the notification', () => {
+      const params = makeHookParams();
+      const { result } = renderHook(() => useAutoRunOperations(params));
+
+      act(() =>
+        result.current.notifyGoalReachedOnHandOver('sc-connect', 'Custom body'),
+      );
+
+      expect(mockNotifyGoalReached).toHaveBeenCalledWith(
+        params.showNotification,
+        'Omenstrat',
+        'corzim-vardor96',
+        'Custom body',
       );
     });
   });

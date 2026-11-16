@@ -154,4 +154,52 @@ describe('useEpochWorkStatus', () => {
     expect(status.workStatus).toBeUndefined();
     expect(status.isDoneForEpoch).toBeUndefined();
   });
+
+  describe('no market left to try', () => {
+    const noMarkets = makeActivityGoal({ no_markets_left: true });
+
+    it.each([true, false])(
+      'is standby with staking KPI met=%s',
+      (isEpochTargetMet) => {
+        expect(setup({ isEpochTargetMet, activityGoal: noMarkets })).toEqual({
+          isDoneForEpoch: true,
+          workStatus: 'standby',
+          isNoMarketsLeft: true,
+        });
+      },
+    );
+
+    it('ignores the flag from an earlier epoch', () => {
+      const status = setup({
+        isEpochTargetMet: false,
+        activityGoal: makeActivityGoal({
+          no_markets_left: true,
+          period_start: DEFAULT_TS_CHECKPOINT - 86_400,
+        }),
+      });
+      expect(status.workStatus).toBe('working');
+      expect(status.isNoMarketsLeft).toBeUndefined();
+    });
+
+    it.each([
+      ['loading', { isLoading: true }],
+      ['unavailable', { isUnavailable: true }],
+    ])('does not read the flag while the goal is %s', (_, state) => {
+      const status = setup({
+        isEpochTargetMet: false,
+        activityGoal: noMarkets,
+        ...state,
+      });
+      expect(status.workStatus).toBe('working');
+    });
+
+    it('keeps a goal-reached standby apart from the no-markets one', () => {
+      const status = setup({
+        isEpochTargetMet: true,
+        activityGoal: makeActivityGoal({ is_met: true, progress: 8 }),
+      });
+      expect(status.workStatus).toBe('standby');
+      expect(status.isNoMarketsLeft).toBeUndefined();
+    });
+  });
 });

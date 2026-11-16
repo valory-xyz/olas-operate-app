@@ -76,6 +76,7 @@ type Setup = {
   isAgentActive?: boolean;
   isAgentStarting?: boolean;
   workStatus?: EpochWorkStatus;
+  isNoMarketsLeft?: boolean;
   rounds?: string[];
   isPending?: boolean;
   isStillThinking?: boolean;
@@ -89,6 +90,7 @@ const renderRow = ({
   isAgentActive = true,
   isAgentStarting = false,
   workStatus = 'working',
+  isNoMarketsLeft,
   rounds = ['sampling_round'],
   isPending = false,
   isStillThinking = false,
@@ -111,7 +113,7 @@ const renderRow = ({
       },
     },
   });
-  mockUseEpochWorkStatus.mockReturnValue({ workStatus });
+  mockUseEpochWorkStatus.mockReturnValue({ workStatus, isNoMarketsLeft });
   mockUseRewardContext.mockReturnValue({
     isEpochTargetMet,
     stakingRewardsDetails: { tsCheckpoint: TS_CHECKPOINT },
@@ -194,7 +196,37 @@ describe('LoaderRow', () => {
       expect(
         screen.getByText('Standby until the next epoch'),
       ).toBeInTheDocument();
+      expect(screen.getAllByTestId('badges-tooltip')).toHaveLength(1);
     });
+
+    it.each([
+      ['after earning the rewards', true],
+      ['with no market from the epoch start', false],
+    ])(
+      'explains the standby when no market is left to trade, %s',
+      (_, isEpochTargetMet) => {
+        renderRow({
+          workStatus: 'standby',
+          isNoMarketsLeft: true,
+          isEpochTargetMet,
+        });
+
+        expect(
+          screen.getByText('Agent is in standby until the next epoch'),
+        ).toBeInTheDocument();
+        expect(
+          screen.getByText(
+            'No markets are left to trade in this epoch. If you keep the agent running, it collects winnings and tries again at the start of the next epoch.',
+          ),
+        ).toBeInTheDocument();
+        expect(screen.queryByText('Standby until the next epoch')).toBeNull();
+        const badges = screen.getAllByTestId(/badge-/);
+        expect(badges.map((badge) => badge.dataset.testid)).toEqual([
+          isEpochTargetMet ? 'badge-done' : 'badge-pending',
+          'badge-pending',
+        ]);
+      },
+    );
 
     it('says the agent is not running when it stopped on its own', () => {
       renderRow({ isAgentActive: false });

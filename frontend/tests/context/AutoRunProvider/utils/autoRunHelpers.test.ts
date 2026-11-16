@@ -977,23 +977,82 @@ describe('refreshRewardsEligibility', () => {
       );
     });
 
-    it('does not read the goal until the staking KPI is met', async () => {
+    it('reads the goal before the staking KPI is met and stays working', async () => {
       mockFetchRewards.mockResolvedValue(stakingUnmet);
+      mockGetAgentPerformance.mockResolvedValue(
+        makePerformance(makeActivityGoal({ is_met: true, progress: 8 })),
+      );
       const logMessage = jest.fn();
-      const onRewardsFetchError = jest.fn();
 
       const result = await refreshRewardsEligibility(
-        makeParams({ logMessage, onRewardsFetchError }),
+        makeParams({ logMessage }),
       );
 
       expect(result).toBe(false);
-      expect(mockGetAgentPerformance).not.toHaveBeenCalled();
-      expect(onRewardsFetchError).not.toHaveBeenCalled();
+      expect(mockGetAgentPerformance).toHaveBeenCalledTimes(1);
       expect(logMessage).toHaveBeenCalledWith(
-        expect.stringContaining(
-          'epochTargetMet=false goal=unread → done=false',
+        expect.stringContaining('epochTargetMet=false goal=8/8'),
+      );
+    });
+
+    it.each([
+      ['without the staking KPI', false],
+      ['with the staking KPI', true],
+    ])(
+      'treats a current no_markets_left block as done %s',
+      async (_label, kpiMet) => {
+        mockFetchRewards.mockResolvedValue(kpiMet ? stakingMet : stakingUnmet);
+        mockGetAgentPerformance.mockResolvedValue(
+          makePerformance(makeActivityGoal({ no_markets_left: true })),
+        );
+        const setRewardSnapshot = jest.fn();
+
+        const result = await refreshRewardsEligibility(
+          makeParams({ setRewardSnapshot }),
+        );
+
+        expect(result).toBe(true);
+        expect(setRewardSnapshot).toHaveBeenCalledWith(
+          DEFAULT_SERVICE_CONFIG_ID,
+          expect.objectContaining({ done: true, noMarketsLeft: true }),
+        );
+      },
+    );
+
+    it('ignores no_markets_left from an earlier epoch', async () => {
+      mockFetchRewards.mockResolvedValue(stakingUnmet);
+      mockGetAgentPerformance.mockResolvedValue(
+        makePerformance(
+          makeActivityGoal({
+            no_markets_left: true,
+            period_start: DEFAULT_TS_CHECKPOINT - 86_400,
+          }),
         ),
       );
+      const setRewardSnapshot = jest.fn();
+
+      const result = await refreshRewardsEligibility(
+        makeParams({ setRewardSnapshot }),
+      );
+
+      expect(result).toBe(false);
+      expect(setRewardSnapshot).toHaveBeenCalledWith(
+        DEFAULT_SERVICE_CONFIG_ID,
+        expect.not.objectContaining({ noMarketsLeft: true }),
+      );
+    });
+
+    it('keeps an agent working when the goal read fails before the staking KPI is met', async () => {
+      mockFetchRewards.mockResolvedValue(stakingUnmet);
+      mockGetAgentPerformance.mockRejectedValue(new Error('boom'));
+      const onRewardsFetchError = jest.fn();
+
+      const result = await refreshRewardsEligibility(
+        makeParams({ onRewardsFetchError }),
+      );
+
+      expect(result).toBe(false);
+      expect(onRewardsFetchError).toHaveBeenCalledTimes(1);
     });
 
     it('logs the validation issues of a malformed block and falls back to the staking KPI', async () => {
@@ -1465,10 +1524,24 @@ describe('getUsableRewardStatus', () => {
         makeActivityGoal({ period_start: DEFAULT_TS_CHECKPOINT + 60 }),
       ],
       ['removal', null],
+      ['no-markets', makeActivityGoal({ no_markets_left: true })],
     ])('is unknown after a goal %s change', (_, goal) => {
       expect(
         getUsableRewardStatus(doneWithGoal, seenLater(goal)),
       ).toBeUndefined();
+    });
+
+    it('is unknown once a market is back for an agent that had none left', () => {
+      const doneNoMarkets = { ...doneWithGoal, noMarketsLeft: true };
+      expect(
+        getUsableRewardStatus(doneNoMarkets, seenLater(makeActivityGoal())),
+      ).toBeUndefined();
+      expect(
+        getUsableRewardStatus(
+          doneNoMarkets,
+          seenLater(makeActivityGoal({ no_markets_left: true })),
+        ),
+      ).toBe(true);
     });
 
     it('keeps the true when the goal seen is the one it was read with', () => {
@@ -1988,11 +2061,59 @@ describe('fetchDeployabilityForAgent', () => {
       serviceStakingState: StakingState.Evicted,
       serviceStakingStartTime: now - 100, // only 100s since start, min is 86400
     });
-    const result = await fetchDeployabilityForAgent(makeAgentMeta(), makeCtx());
+    const base = makeAgentMeta();
+    const meta = {
+      ...base,
+      agentConfig: { ...base.agentConfig, canRunWhileEvicted: false },
+    };
+    const result = await fetchDeployabilityForAgent(meta, makeCtx());
     expect(result.canRun).toBe(false);
     expect(result.reason).toBe('Evicted');
     expect(result.isAgentEvicted).toBe(true);
     expect(result.isEligibleAfterEviction).toBe(false);
+    expect(result.isEvictedRunnable).toBeUndefined();
+  });
+
+  describe('an agent that can run evicted, inside its minimum staking period', () => {
+    beforeEach(() => {
+      const now = Math.floor(Date.now() / 1000);
+      mockGetStakingContractDetails.mockResolvedValue({
+        serviceIds: [1],
+        maxNumServices: 10,
+        minimumStakingDuration: 86400,
+        availableRewards: 0,
+      });
+      mockGetServiceStakingDetails.mockResolvedValue({
+        serviceStakingState: StakingState.Evicted,
+        serviceStakingStartTime: now - 100,
+      });
+    });
+
+    it('is deferred as runnable evicted, whatever the reward pool', async () => {
+      const result = await fetchDeployabilityForAgent(
+        makeAgentMeta(),
+        makeCtx(),
+      );
+      expect(result).toEqual(
+        expect.objectContaining({
+          canRun: false,
+          reason: 'Evicted',
+          isEvictedRunnable: true,
+          isAgentEvicted: true,
+          isEligibleAfterEviction: false,
+        }),
+      );
+      expect(result.isEmptyRewardPool).toBeUndefined();
+    });
+
+    it('is still held to the later gates', async () => {
+      const ctx = makeCtx({
+        allowStartAgentByServiceConfigId: jest.fn().mockReturnValue(false),
+      });
+      const result = await fetchDeployabilityForAgent(makeAgentMeta(), ctx);
+      expect(result.reason).toBe('Low balance');
+      expect(result.isEvictedRunnable).toBeUndefined();
+    });
   });
 
   it('returns canRun=true when agent is evicted but minimum duration elapsed', async () => {

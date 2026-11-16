@@ -345,6 +345,12 @@ export const useAutoRunSignals = ({
     [],
   );
 
+  const isNoMarketsLeft = useCallback(
+    (serviceConfigId: string) =>
+      !!rewardSnapshotRef.current[serviceConfigId]?.noMarketsLeft,
+    [],
+  );
+
   const restartStallClock = useCallback((serviceConfigId: string) => {
     const clock = stallClockRef.current[serviceConfigId];
     if (clock) clock.since = Date.now();
@@ -450,6 +456,7 @@ export const useAutoRunSignals = ({
     setRewardSnapshot,
     getObservedGoal,
     isStalled,
+    isNoMarketsLeft,
     restartStallClock,
     deferStalled,
     clearStallDeferral,

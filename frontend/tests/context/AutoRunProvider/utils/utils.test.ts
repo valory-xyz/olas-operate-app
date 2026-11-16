@@ -41,6 +41,20 @@ describe('notifyGoalReached', () => {
     );
   });
 
+  it('takes the body of an agent with no market left to try', () => {
+    const showNotification = jest.fn();
+    notifyGoalReached(
+      showNotification,
+      'Omenstrat',
+      'corzim-vardor96',
+      'No markets left to trade this epoch. Moving to next agent.',
+    );
+    expect(showNotification).toHaveBeenCalledWith(
+      'Omenstrat agent "corzim-vardor96" finished its run',
+      'No markets left to trade this epoch. Moving to next agent.',
+    );
+  });
+
   it('is a no-op without showNotification', () => {
     expect(() =>
       notifyGoalReached(undefined, 'Connect', 'connect-polygon'),

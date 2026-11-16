@@ -13,6 +13,7 @@ const ActivityGoalSchema: z.ZodType<ActivityGoal> = z.object({
   period_start: nonNegativeInt,
   last_met_at: nonNegativeInt.nullable(),
   updated_at: nonNegativeInt,
+  no_markets_left: z.boolean().optional(),
 });
 
 /**
@@ -59,14 +60,28 @@ export const deriveIsActivityGoalMet = (
 };
 
 /**
+ * The agent reports that it has nothing left to try or redeem in this epoch.
+ * Only a current block counts, and `is_met` is reported independently.
+ */
+export const deriveIsNoMarketsLeft = (
+  goal: ActivityGoal | null,
+  periodStartFloor: number,
+): boolean =>
+  !!goal &&
+  isActivityGoalCurrent(goal, periodStartFloor) &&
+  goal.no_markets_left === true;
+
+/**
  * "Done for the epoch" for a staking agent: both the staking KPI and the
- * activity goal are met. Without a block it falls back to the staking KPI
- * alone, so older agent builds behave as before. An agent stalled on its goal
- * reads as done, so Auto-run's usual rotation trigger moves on from it.
+ * activity goal are met, or the agent has no market left to try, with or
+ * without the KPI. Without a block it falls back to the staking KPI alone, so
+ * older agent builds behave as before. An agent stalled on its goal reads as
+ * done, so Auto-run's usual rotation trigger moves on from it.
  *
  * @example
  * deriveIsDoneForEpoch(true, null, 1000) // => true (fallback)
  * deriveIsDoneForEpoch(true, { ...goal, period_start: 900, is_met: true }, 1000) // => false (stale)
+ * deriveIsDoneForEpoch(false, { ...goal, period_start: 1000, no_markets_left: true }, 1000) // => true
  */
 export const deriveIsDoneForEpoch = (
   epochTargetMet: boolean,
@@ -74,5 +89,6 @@ export const deriveIsDoneForEpoch = (
   tsCheckpoint: number,
   isStalled = false,
 ): boolean =>
-  epochTargetMet &&
-  (isStalled || (deriveIsActivityGoalMet(goal, tsCheckpoint) ?? true));
+  deriveIsNoMarketsLeft(goal, tsCheckpoint) ||
+  (epochTargetMet &&
+    (isStalled || (deriveIsActivityGoalMet(goal, tsCheckpoint) ?? true)));

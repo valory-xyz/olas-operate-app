@@ -100,6 +100,8 @@ export type RewardSnapshot = {
   goalUnit: ActivityGoal['unit'] | null;
   goalTarget: number | null;
   goalPeriodStart: number | null;
+  /** The read's current goal block reported no market left to try. */
+  noMarketsLeft?: boolean;
 };
 
 /** An instance's activity goal as last seen outside a rewards read. */

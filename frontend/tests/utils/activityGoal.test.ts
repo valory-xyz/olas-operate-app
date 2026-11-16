@@ -1,6 +1,7 @@
 import {
   deriveIsActivityGoalMet,
   deriveIsDoneForEpoch,
+  deriveIsNoMarketsLeft,
   isActivityGoalCurrent,
   parseActivityGoal,
 } from '../../utils/activityGoal';
@@ -133,4 +134,48 @@ describe('deriveIsDoneForEpoch', () => {
       ),
     ).toBe(false);
   });
+});
+
+describe('no_markets_left', () => {
+  it('parses the field and accepts a block without it', () => {
+    const goal = makeActivityGoal({ no_markets_left: true });
+    expect(parseActivityGoal(goal)).toEqual(goal);
+    expect(parseActivityGoal(makeActivityGoal())?.no_markets_left).toBe(
+      undefined,
+    );
+  });
+
+  it('rejects a non-boolean value', () => {
+    expect(
+      parseActivityGoal({ ...makeActivityGoal(), no_markets_left: 'yes' }),
+    ).toBeNull();
+  });
+
+  it.each([
+    ['no block', null, false],
+    ['absent (older build)', makeActivityGoal(), false],
+    ['false', makeActivityGoal({ no_markets_left: false }), false],
+    ['current true', makeActivityGoal({ no_markets_left: true }), true],
+    [
+      'true from an earlier epoch',
+      makeActivityGoal({
+        no_markets_left: true,
+        period_start: PREVIOUS_EPOCH_START,
+      }),
+      false,
+    ],
+  ])('deriveIsNoMarketsLeft: %s → %s', (_, goal, expected) => {
+    expect(deriveIsNoMarketsLeft(goal, DEFAULT_TS_CHECKPOINT)).toBe(expected);
+  });
+
+  it.each([true, false])(
+    'a current no_markets_left is done with staking KPI met=%s, without is_met',
+    (epochTargetMet) => {
+      const goal = makeActivityGoal({ no_markets_left: true, is_met: false });
+      expect(
+        deriveIsDoneForEpoch(epochTargetMet, goal, DEFAULT_TS_CHECKPOINT),
+      ).toBe(true);
+      expect(deriveIsActivityGoalMet(goal, DEFAULT_TS_CHECKPOINT)).toBe(false);
+    },
+  );
 });

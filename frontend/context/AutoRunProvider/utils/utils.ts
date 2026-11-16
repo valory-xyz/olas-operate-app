@@ -46,8 +46,9 @@ export const notifyStartFailed = (
 };
 
 /**
- * Desktop notification when a no-staking agent (Connect) completed its run and
- * Auto-run hands the turn to the next agent.
+ * Desktop notification when an agent finished its run and Auto-run hands the
+ * turn to the next agent: Connect after its goal, Omenstrat with no market
+ * left to try (`body` = `NO_MARKETS_LEFT_HAND_OVER_BODY`).
  *
  * @example notifyGoalReached(show, "Connect", "connect-polygon")
  * // → title: 'Connect agent "connect-polygon" finished its run'
@@ -57,10 +58,11 @@ export const notifyGoalReached = (
   showNotification: ((title: string, body?: string) => void) | undefined,
   agentDisplayName: string,
   instanceName: string,
+  body = 'Moving to next agent.',
 ) => {
   showNotification?.(
     `${agentDisplayName} agent "${instanceName}" finished its run`,
-    'Moving to next agent.',
+    body,
   );
 };
 
