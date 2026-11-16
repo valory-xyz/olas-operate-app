@@ -76,7 +76,6 @@ type Setup = {
   isAgentActive?: boolean;
   isAgentStarting?: boolean;
   workStatus?: EpochWorkStatus;
-  isNoMarketsLeft?: boolean;
   rounds?: string[];
   isPending?: boolean;
   isStillThinking?: boolean;
@@ -90,7 +89,6 @@ const renderRow = ({
   isAgentActive = true,
   isAgentStarting = false,
   workStatus = 'working',
-  isNoMarketsLeft,
   rounds = ['sampling_round'],
   isPending = false,
   isStillThinking = false,
@@ -113,7 +111,7 @@ const renderRow = ({
       },
     },
   });
-  mockUseEpochWorkStatus.mockReturnValue({ workStatus, isNoMarketsLeft });
+  mockUseEpochWorkStatus.mockReturnValue({ workStatus });
   mockUseRewardContext.mockReturnValue({
     isEpochTargetMet,
     stakingRewardsDetails: { tsCheckpoint: TS_CHECKPOINT },
@@ -205,11 +203,7 @@ describe('LoaderRow', () => {
     ])(
       'explains the standby when no market is left to trade, %s',
       (_, isEpochTargetMet) => {
-        renderRow({
-          workStatus: 'standby',
-          isNoMarketsLeft: true,
-          isEpochTargetMet,
-        });
+        renderRow({ workStatus: 'no-markets-standby', isEpochTargetMet });
 
         expect(
           screen.getByText('Agent is in standby until the next epoch'),

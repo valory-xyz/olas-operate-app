@@ -80,6 +80,12 @@ type UseAutoRunScannerParams = {
  * If scan starts from `sc-aaa`, this hook checks `sc-bbb` first,
  * then `sc-ccc`, then wraps once.
  */
+/** Startable now, or deferred to a fallback tier that may still start it. */
+const isStartableOrDeferred = (deployability: DeployabilityCheckResult) =>
+  deployability.canRun ||
+  !!deployability.isEmptyRewardPool ||
+  !!deployability.isEvictedRunnable;
+
 export const useAutoRunScanner = ({
   enabledRef,
   orderedIncludedInstances,
@@ -316,11 +322,7 @@ export const useAutoRunScanner = ({
           evictedCandidates.push(candidateMeta);
           continue;
         }
-        if (
-          !deployability.canRun &&
-          !deployability.isEmptyRewardPool &&
-          !deployability.isEvictedRunnable
-        ) {
+        if (!isStartableOrDeferred(deployability)) {
           passOver(candidate, deployability.reason);
           if (deployability.isTransient) {
             hasLoading = true;
@@ -385,7 +387,8 @@ export const useAutoRunScanner = ({
 
       // Degraded mode: no rewarded candidate could be started, so fall back to
       // the instances deferred for an empty reward pool instead of idling,
-      // then to stalled ones, which run again with a fresh hour. Without this,
+      // then to stalled ones, which run again with a fresh hour, then to
+      // evicted ones that can still redeem. Without this,
       // a user whose agents all sit on drained contracts would have auto-run
       // start nothing at all.
       if (emptyPoolCandidates.length > 0) {
@@ -398,10 +401,7 @@ export const useAutoRunScanner = ({
       const passedOver = new Set(
         emptyPoolCandidates.map((meta) => meta.serviceConfigId),
       );
-      const fallbacks: {
-        meta: AgentMeta;
-        tier: 'emptyPool' | 'stalled' | 'evicted';
-      }[] = [
+      const fallbacks = [
         ...emptyPoolCandidates.map((meta) => ({
           meta,
           tier: 'emptyPool' as const,
@@ -425,11 +425,7 @@ export const useAutoRunScanner = ({
         // slots and eviction state can all have moved since the main loop.
         const recheck = await getDeployability(meta);
         if (!enabledRef.current) return notStarted;
-        if (
-          !recheck.canRun &&
-          !recheck.isEmptyRewardPool &&
-          !recheck.isEvictedRunnable
-        ) {
+        if (!isStartableOrDeferred(recheck)) {
           passOver(deferred, recheck.reason);
           if (recheck.isTransient) {
             hasLoading = true;
@@ -461,13 +457,17 @@ export const useAutoRunScanner = ({
               `scan: started stalled ${deferred}, no other agent could start`,
             );
             clearStallDeferral(deferred);
-          } else if (tier === 'evicted') {
+          } else if (recheck.isEvictedRunnable) {
             logVerbose(
               `scan: started evicted ${deferred} to redeem, no other agent could start`,
             );
-          } else {
+          } else if (recheck.isEmptyRewardPool) {
             logVerbose(
               `scan: started ${deferred} in degraded mode (empty reward pool)`,
+            );
+          } else {
+            logVerbose(
+              `scan: started deferred ${deferred}, no other agent could start`,
             );
           }
           notifyEmptyPoolSkips(passedOver);

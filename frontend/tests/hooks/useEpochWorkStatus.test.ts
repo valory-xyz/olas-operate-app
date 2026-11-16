@@ -5,6 +5,7 @@ import { useEpochWorkStatus } from '../../hooks/useEpochWorkStatus';
 import { useRewardContext } from '../../hooks/useRewardContext';
 import { useServices } from '../../hooks/useServices';
 import { ActivityGoal } from '../../types/Agent';
+import { deriveIsDoneForEpoch } from '../../utils/activityGoal';
 import {
   DEFAULT_SERVICE_CONFIG_ID,
   DEFAULT_TS_CHECKPOINT,
@@ -163,8 +164,7 @@ describe('useEpochWorkStatus', () => {
       (isEpochTargetMet) => {
         expect(setup({ isEpochTargetMet, activityGoal: noMarkets })).toEqual({
           isDoneForEpoch: true,
-          workStatus: 'standby',
-          isNoMarketsLeft: true,
+          workStatus: 'no-markets-standby',
         });
       },
     );
@@ -178,7 +178,6 @@ describe('useEpochWorkStatus', () => {
         }),
       });
       expect(status.workStatus).toBe('working');
-      expect(status.isNoMarketsLeft).toBeUndefined();
     });
 
     it.each([
@@ -193,25 +192,22 @@ describe('useEpochWorkStatus', () => {
       expect(status.workStatus).toBe('working');
     });
 
-    it('shows the goal-reached standby when the goal was also reached', () => {
-      const status = setup({
-        isEpochTargetMet: true,
-        activityGoal: makeActivityGoal({
+    it.each([true, false])(
+      'agrees with deriveIsDoneForEpoch when the goal was also reached, staking KPI met=%s',
+      (isEpochTargetMet) => {
+        const goal = makeActivityGoal({
           is_met: true,
           progress: 8,
           no_markets_left: true,
-        }),
-      });
-      expect(status).toEqual({ isDoneForEpoch: true, workStatus: 'standby' });
-    });
-
-    it('keeps a goal-reached standby apart from the no-markets one', () => {
-      const status = setup({
-        isEpochTargetMet: true,
-        activityGoal: makeActivityGoal({ is_met: true, progress: 8 }),
-      });
-      expect(status.workStatus).toBe('standby');
-      expect(status.isNoMarketsLeft).toBeUndefined();
-    });
+        });
+        expect(
+          deriveIsDoneForEpoch(isEpochTargetMet, goal, DEFAULT_TS_CHECKPOINT),
+        ).toBe(true);
+        expect(setup({ isEpochTargetMet, activityGoal: goal })).toEqual({
+          isDoneForEpoch: true,
+          workStatus: 'standby',
+        });
+      },
+    );
   });
 });

@@ -141,9 +141,9 @@ describe('no_markets_left', () => {
   it('parses the field and accepts a block without it', () => {
     const goal = makeActivityGoal({ no_markets_left: true });
     expect(parseActivityGoal(goal)).toEqual(goal);
-    expect(parseActivityGoal(makeActivityGoal())?.no_markets_left).toBe(
-      undefined,
-    );
+    expect(
+      parseActivityGoal(makeActivityGoal())?.no_markets_left,
+    ).toBeUndefined();
   });
 
   it('rejects a non-boolean value', () => {

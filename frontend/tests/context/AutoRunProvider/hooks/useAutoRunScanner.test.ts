@@ -1515,6 +1515,49 @@ describe('useAutoRunScanner', () => {
       expect(params.startAgentWithRetries).not.toHaveBeenCalled();
     });
 
+    it('starts it first when the pre-check chose it', async () => {
+      const params = makeHookParams({
+        getDeployabilityForAgent: deployabilityById({
+          [scOptimus]: evictedRunnable(),
+        }),
+      });
+      const { result } = renderHook(() => useAutoRunScanner(params));
+
+      let scanResult: ScanResult | undefined;
+      await act(async () => {
+        scanResult = await result.current.scanAndStartNext(scTrader, {
+          first: scOptimus,
+        });
+      });
+      expect(scanResult?.startedId).toBe(scOptimus);
+    });
+
+    it('logs the start from the recheck, not from the tier it was deferred to', async () => {
+      let optimusReads = 0;
+      const params = makeHookParams({
+        // evicted-runnable in the main loop, re-staked by the recheck
+        getDeployabilityForAgent: jest
+          .fn()
+          .mockImplementation(async (meta: { serviceConfigId: string }) => {
+            if (meta.serviceConfigId !== scOptimus) {
+              return { canRun: false, reason: 'Low balance' };
+            }
+            return ++optimusReads === 1 ? evictedRunnable() : { canRun: true };
+          }),
+      });
+      const { result } = renderHook(() => useAutoRunScanner(params));
+
+      await act(async () => {
+        await result.current.scanAndStartNext(scTrader);
+      });
+      expect(params.logMessage).toHaveBeenCalledWith(
+        `scan: started deferred ${scOptimus}, no other agent could start`,
+      );
+      expect(params.logMessage).not.toHaveBeenCalledWith(
+        expect.stringContaining('started evicted'),
+      );
+    });
+
     it('defers it on the selected-agent fast path without a notification', async () => {
       const params = makeHookParams({
         getDeployabilityForAgent: jest

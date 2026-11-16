@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 
 import {
   deriveIsDoneForEpoch,
+  deriveIsNoMarketsLeft,
   deriveIsNoMarketsStandby,
 } from '@/utils/activityGoal';
 
@@ -13,27 +14,25 @@ import { useServices } from './useServices';
 /**
  * - `working`: staking KPI not met yet (the goal may already be met)
  * - `goal-pending`: staking KPI met, activity goal not met yet
- * - `standby`: both met, or no market is left to try before the goal is
- *   reached (`isNoMarketsLeft`); the agent waits for the next epoch
+ * - `standby`: done for the epoch (both met, or no market left after the goal);
+ *   the agent waits for the next epoch
+ * - `no-markets-standby`: done because no market is left to try before the
+ *   goal is reached, with or without the staking KPI
  */
-export type EpochWorkStatus = 'working' | 'goal-pending' | 'standby';
+export type EpochWorkStatus =
+  | 'working'
+  | 'goal-pending'
+  | 'standby'
+  | 'no-markets-standby';
 
 type EpochWorkStatusResult = {
   isDoneForEpoch: boolean | undefined;
   workStatus: EpochWorkStatus | undefined;
-  /** The standby comes from no market being left to try before the goal. */
-  isNoMarketsLeft?: boolean;
 };
 
 const UNKNOWN_WORK_STATUS: EpochWorkStatusResult = {
   isDoneForEpoch: undefined,
   workStatus: undefined,
-};
-
-const NO_MARKETS_LEFT_STATUS: EpochWorkStatusResult = {
-  isDoneForEpoch: true,
-  workStatus: 'standby',
-  isNoMarketsLeft: true,
 };
 
 /**
@@ -54,8 +53,15 @@ export const useEpochWorkStatus = (): EpochWorkStatusResult => {
       return UNKNOWN_WORK_STATUS;
     }
     const isGoalRead = !isLoading && !isUnavailable;
-    if (isGoalRead && deriveIsNoMarketsStandby(activityGoal, tsCheckpoint)) {
-      return NO_MARKETS_LEFT_STATUS;
+    // Same rule as `deriveIsDoneForEpoch`, so Auto-run agrees on done; the
+    // standby kind only picks the row the Overview shows.
+    if (isGoalRead && deriveIsNoMarketsLeft(activityGoal, tsCheckpoint)) {
+      return {
+        isDoneForEpoch: true,
+        workStatus: deriveIsNoMarketsStandby(activityGoal, tsCheckpoint)
+          ? 'no-markets-standby'
+          : 'standby',
+      };
     }
     if (!isEpochTargetMet) {
       return { isDoneForEpoch: false, workStatus: 'working' };

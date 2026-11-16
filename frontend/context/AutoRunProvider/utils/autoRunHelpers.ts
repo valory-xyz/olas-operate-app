@@ -63,7 +63,7 @@ const isSnapshotGoal = (snapshot: RewardSnapshot, goal: ActivityGoal | null) =>
   snapshot.goalUnit === (goal?.unit ?? null) &&
   snapshot.goalTarget === (goal?.target ?? null) &&
   snapshot.goalPeriodStart === (goal?.period_start ?? null) &&
-  !!snapshot.noMarketsLeft ===
+  !!snapshot.noMarketsStandby ===
     deriveIsNoMarketsStandby(goal, snapshot.tsCheckpoint);
 
 /**
@@ -301,7 +301,7 @@ export const refreshRewardsEligibility = async ({
     goal: ActivityGoal | null = null,
     stalled = false,
   ) => {
-    const noMarketsLeft = deriveIsNoMarketsStandby(goal, epoch.tsCheckpoint);
+    const noMarketsStandby = deriveIsNoMarketsStandby(goal, epoch.tsCheckpoint);
     setRewardSnapshot(serviceConfigId, {
       done,
       readAt: Date.now(),
@@ -311,7 +311,7 @@ export const refreshRewardsEligibility = async ({
       goalTarget: goal?.target ?? null,
       goalPeriodStart: goal?.period_start ?? null,
       ...(stalled ? { stalled: true } : {}),
-      ...(noMarketsLeft ? { noMarketsLeft: true } : {}),
+      ...(noMarketsStandby ? { noMarketsStandby: true } : {}),
     });
     return done;
   };

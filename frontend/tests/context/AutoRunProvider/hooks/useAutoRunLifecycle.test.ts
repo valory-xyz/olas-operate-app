@@ -67,7 +67,7 @@ const makeHookParams = (
   hasScheduledScan: jest.fn().mockReturnValue(false),
   refreshRewardsEligibility: jest.fn().mockResolvedValue(false),
   isStalled: jest.fn().mockReturnValue(false),
-  isNoMarketsLeft: jest.fn().mockReturnValue(false),
+  isNoMarketsStandby: jest.fn().mockReturnValue(false),
   restartStallClock: jest.fn(),
   deferStalled: jest.fn(),
   isStallDeferred: jest.fn().mockReturnValue(false),
@@ -698,7 +698,7 @@ describe('useAutoRunLifecycle', () => {
           refreshRewardsEligibility: jest
             .fn()
             .mockImplementation(async (id: string) => id === scTrader),
-          isNoMarketsLeft: jest
+          isNoMarketsStandby: jest
             .fn()
             .mockImplementation((id: string) => id === scTrader),
           ...overrides,
@@ -734,7 +734,7 @@ describe('useAutoRunLifecycle', () => {
 
       it('sends no notification for an agent done by its goal', async () => {
         const params = makeIdleTraderParams({
-          isNoMarketsLeft: jest.fn().mockReturnValue(false),
+          isNoMarketsStandby: jest.fn().mockReturnValue(false),
         });
 
         renderHook(() => useAutoRunLifecycle(params));
@@ -1970,7 +1970,7 @@ describe('useAutoRunLifecycle', () => {
           isEvictedRunnable: true,
         }),
         refreshRewardsEligibility: jest.fn().mockResolvedValue(false),
-        isNoMarketsLeft: jest.fn().mockReturnValue(true),
+        isNoMarketsStandby: jest.fn().mockReturnValue(true),
       });
 
       await runOneCheck(params);

@@ -1014,7 +1014,7 @@ describe('refreshRewardsEligibility', () => {
         expect(result).toBe(true);
         expect(setRewardSnapshot).toHaveBeenCalledWith(
           DEFAULT_SERVICE_CONFIG_ID,
-          expect.objectContaining({ done: true, noMarketsLeft: true }),
+          expect.objectContaining({ done: true, noMarketsStandby: true }),
         );
       },
     );
@@ -1038,7 +1038,7 @@ describe('refreshRewardsEligibility', () => {
       expect(result).toBe(false);
       expect(setRewardSnapshot).toHaveBeenCalledWith(
         DEFAULT_SERVICE_CONFIG_ID,
-        expect.not.objectContaining({ noMarketsLeft: true }),
+        expect.not.objectContaining({ noMarketsStandby: true }),
       );
     });
 
@@ -1053,7 +1053,7 @@ describe('refreshRewardsEligibility', () => {
           getRewardSnapshot: jest.fn().mockReturnValue(
             makeRewardSnapshot({
               done: true,
-              noMarketsLeft: true,
+              noMarketsStandby: true,
               tsCheckpoint: DEFAULT_TS_CHECKPOINT,
               readAt: 0,
             }),
@@ -1063,6 +1063,32 @@ describe('refreshRewardsEligibility', () => {
 
       expect(result).toBeUndefined();
       expect(setRewardSnapshot).not.toHaveBeenCalled();
+    });
+
+    it('does not keep a done verdict from an earlier epoch when the read fails', async () => {
+      mockFetchRewards.mockResolvedValue(stakingUnmet);
+      mockGetAgentPerformance.mockRejectedValue(new Error('boom'));
+      const setRewardSnapshot = jest.fn();
+
+      const result = await refreshRewardsEligibility(
+        makeParams({
+          setRewardSnapshot,
+          getRewardSnapshot: jest.fn().mockReturnValue(
+            makeRewardSnapshot({
+              done: true,
+              noMarketsStandby: true,
+              tsCheckpoint: DEFAULT_TS_CHECKPOINT - 86_400,
+              readAt: 0,
+            }),
+          ),
+        }),
+      );
+
+      expect(result).toBe(false);
+      expect(setRewardSnapshot).toHaveBeenCalledWith(
+        DEFAULT_SERVICE_CONFIG_ID,
+        expect.objectContaining({ done: false }),
+      );
     });
 
     it('keeps an agent working when the goal read fails before the staking KPI is met', async () => {
@@ -1555,7 +1581,7 @@ describe('getUsableRewardStatus', () => {
     });
 
     it('is unknown once a market is back for an agent that had none left', () => {
-      const doneNoMarkets = { ...doneWithGoal, noMarketsLeft: true };
+      const doneNoMarkets = { ...doneWithGoal, noMarketsStandby: true };
       expect(
         getUsableRewardStatus(doneNoMarkets, seenLater(makeActivityGoal())),
       ).toBeUndefined();

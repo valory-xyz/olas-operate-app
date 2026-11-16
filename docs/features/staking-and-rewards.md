@@ -135,7 +135,7 @@ AutoRun schedules on "done for the epoch": staking eligibility combined with the
 **`refreshRewardsEligibility(candidate)`** returns whether the agent is done for the epoch:
 - Throttled per `serviceConfigId` (minimum 120 s between fetches)
 - Calls `fetchAgentStakingRewardsInfo()` to get the current epoch snapshot, and `getAgentPerformance()` for the `activity_goal` block
-- Done = `isEpochTargetMet` and the current activity goal met (`deriveIsDoneForEpoch`); without a block, `isEpochTargetMet` alone
+- Done = `isEpochTargetMet` and the current activity goal met, or a current block with `no_markets_left: true` with or without `isEpochTargetMet` (`deriveIsDoneForEpoch`); without a block, `isEpochTargetMet` alone
 - Stale epoch detection: if `isStakingEpochExpired()` returns `true` (i.e. `livenessPeriod ≤ now − tsCheckpoint`) and the agent is done, overrides it to `false` so the agent runs and triggers the on-chain checkpoint
 - Returns `true` (done), `false` (not done), or `undefined` (data missing, or the goal unreadable once `isEpochTargetMet` is true)
 

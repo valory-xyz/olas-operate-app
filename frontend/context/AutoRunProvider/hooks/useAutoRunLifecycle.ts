@@ -47,8 +47,8 @@ type UseAutoRunLifecycleParams = {
   ) => Promise<boolean | undefined>;
   /** Whether the running instance has gone an hour without goal progress. */
   isStalled: (serviceConfigId: string) => boolean;
-  /** Whether the instance's last rewards read found no market left to try. */
-  isNoMarketsLeft: (serviceConfigId: string) => boolean;
+  /** Whether the instance's last rewards read found it idle for lack of markets before its goal. */
+  isNoMarketsStandby: (serviceConfigId: string) => boolean;
   /** Starts the stall hour again, for a stalled instance kept running. */
   restartStallClock: (serviceConfigId: string) => void;
   /** Sends a stalled instance to the back of the queue for this epoch. */
@@ -107,7 +107,7 @@ export const useAutoRunLifecycle = ({
   hasScheduledScan,
   refreshRewardsEligibility,
   isStalled,
-  isNoMarketsLeft,
+  isNoMarketsStandby,
   restartStallClock,
   deferStalled,
   isStallDeferred,
@@ -385,17 +385,17 @@ export const useAutoRunLifecycle = ({
       // Only Connect finishing its minutes, or an agent with no market left
       // to try, finished its run: a watchdog, eviction or stall hand-over
       // does not.
-      const noMarketsLeft =
-        !isNoStakingAgent && isNoMarketsLeft(currentServiceConfigId);
+      const noMarketsStandby =
+        !isNoStakingAgent && isNoMarketsStandby(currentServiceConfigId);
       const notifyGoalReached =
-        (isNoStakingAgent || noMarketsLeft) && !options?.force;
+        (isNoStakingAgent || noMarketsStandby) && !options?.force;
       // Deferred only once stopped: after a stop timeout it is still running.
       const onStopped = () => {
         if (stalled) deferStalled(currentServiceConfigId);
         if (notifyGoalReached) {
           notifyGoalReachedOnHandOver(
             currentServiceConfigId,
-            noMarketsLeft ? NO_MARKETS_LEFT_HAND_OVER_BODY : undefined,
+            noMarketsStandby ? NO_MARKETS_LEFT_HAND_OVER_BODY : undefined,
           );
         }
       };
@@ -409,7 +409,7 @@ export const useAutoRunLifecycle = ({
       deferStalled,
       enabledRef,
       findRunnableAlternate,
-      isNoMarketsLeft,
+      isNoMarketsStandby,
       isStalled,
       lastRewardsEligibilityRef,
       logVerbose,

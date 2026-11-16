@@ -549,6 +549,37 @@ describe('useAutoRunController', () => {
       },
     );
 
+    it.each([
+      ['a current no-markets block', DEFAULT_TS_CHECKPOINT, 100_000],
+      [
+        'a no-markets block from an earlier epoch',
+        DEFAULT_TS_CHECKPOINT - 86_400,
+        200_000,
+      ],
+    ])(
+      'with the staking KPI unmet, takes the goal read time for %s',
+      (_, periodStart, expectedReadAt) => {
+        useRewardContext.mockReturnValue({
+          stakingRewardsDetails: makeStakingRewardsInfo(),
+          isEpochTargetMet: false,
+          stakingRewardsDataUpdatedAt: 200_000,
+        });
+        useActivityGoal.mockReturnValue({
+          activityGoal: makeActivityGoal({
+            no_markets_left: true,
+            period_start: periodStart,
+          }),
+          dataUpdatedAt: 100_000,
+        });
+        renderHook(() =>
+          useAutoRunController(
+            makeHookParams({ configuredAgents: [traderMeta] }),
+          ),
+        );
+        expect(lastSignalsArgs().selectedRewardReadAt).toBe(expectedReadAt);
+      },
+    );
+
     it('feeds the selected program, rewards epoch and activity goal to the signals', () => {
       const details = makeStakingRewardsInfo();
       const activityGoal = makeActivityGoal();

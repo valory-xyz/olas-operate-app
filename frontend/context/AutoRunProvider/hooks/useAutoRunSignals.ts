@@ -199,6 +199,10 @@ export const useAutoRunSignals = ({
     if (!selectedRewardReadAt) return;
     const previous = rewardSnapshotRef.current[selectedServiceConfigId];
     if (previous && previous.readAt > selectedRewardReadAt) return;
+    const noMarketsStandby = deriveIsNoMarketsStandby(
+      selectedActivityGoal ?? null,
+      selectedRewardsEpoch.tsCheckpoint,
+    );
     rewardSnapshotRef.current[selectedServiceConfigId] = {
       done: isEpochExpired ? false : isSelectedDoneForEpoch,
       readAt: selectedRewardReadAt,
@@ -208,12 +212,7 @@ export const useAutoRunSignals = ({
       goalUnit: selectedActivityGoal?.unit ?? null,
       goalTarget: selectedActivityGoal?.target ?? null,
       goalPeriodStart: selectedActivityGoal?.period_start ?? null,
-      ...(deriveIsNoMarketsStandby(
-        selectedActivityGoal ?? null,
-        selectedRewardsEpoch.tsCheckpoint,
-      )
-        ? { noMarketsLeft: true }
-        : {}),
+      ...(noMarketsStandby ? { noMarketsStandby: true } : {}),
     };
     setRewardsTick((value) => value + 1);
   }, [
@@ -352,9 +351,9 @@ export const useAutoRunSignals = ({
     [],
   );
 
-  const isNoMarketsLeft = useCallback(
+  const isNoMarketsStandby = useCallback(
     (serviceConfigId: string) =>
-      !!rewardSnapshotRef.current[serviceConfigId]?.noMarketsLeft,
+      !!rewardSnapshotRef.current[serviceConfigId]?.noMarketsStandby,
     [],
   );
 
@@ -463,7 +462,7 @@ export const useAutoRunSignals = ({
     setRewardSnapshot,
     getObservedGoal,
     isStalled,
-    isNoMarketsLeft,
+    isNoMarketsStandby,
     restartStallClock,
     deferStalled,
     clearStallDeferral,

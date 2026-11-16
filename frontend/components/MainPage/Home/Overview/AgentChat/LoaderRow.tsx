@@ -146,7 +146,7 @@ export const LoaderRow = ({
     isAgentStarting,
     isServiceDeploying,
   } = useAgentActivity();
-  const { workStatus, isNoMarketsLeft } = useEpochWorkStatus();
+  const { workStatus } = useEpochWorkStatus();
   const {
     value: isModalOpen,
     setTrue: openModal,
@@ -175,7 +175,7 @@ export const LoaderRow = ({
     if (isServiceDeploying) return { text: CHAT_COPY.loading, tone: 'active' };
     if (!isAgentActive) return { text: CHAT_COPY.notRunning, tone: 'still' };
     if (isAgentStarting) return { text: CHAT_COPY.loading, tone: 'active' };
-    if (workStatus === 'standby' && isNoMarketsLeft) {
+    if (workStatus === 'no-markets-standby') {
       return {
         text: CHAT_COPY.noMarketsStandby,
         tone: 'still',
@@ -197,7 +197,6 @@ export const LoaderRow = ({
     isAgentActive,
     isAgentStarting,
     isMessagesOnly,
-    isNoMarketsLeft,
     isPending,
     isServiceDeploying,
     isStillThinking,

@@ -359,9 +359,9 @@ describe('useAutoRunSignals', () => {
         });
         const { result } = renderHook(() => useAutoRunSignals(params));
 
-        expect(result.current.isNoMarketsLeft(DEFAULT_SERVICE_CONFIG_ID)).toBe(
-          expected,
-        );
+        expect(
+          result.current.isNoMarketsStandby(DEFAULT_SERVICE_CONFIG_ID),
+        ).toBe(expected);
       },
     );
 
@@ -403,20 +403,20 @@ describe('useAutoRunSignals', () => {
     expect(result.current.rewardsTick).toBe(initialTick + 1);
   });
 
-  it('isNoMarketsLeft reflects the last stored snapshot', () => {
+  it('isNoMarketsStandby reflects the last stored snapshot', () => {
     const { result } = renderHook(() => useAutoRunSignals(makeHookParams()));
-    expect(result.current.isNoMarketsLeft(DEFAULT_SERVICE_CONFIG_ID)).toBe(
+    expect(result.current.isNoMarketsStandby(DEFAULT_SERVICE_CONFIG_ID)).toBe(
       false,
     );
 
     act(() => {
       result.current.setRewardSnapshot(
         DEFAULT_SERVICE_CONFIG_ID,
-        makeRewardSnapshot({ done: true, noMarketsLeft: true }),
+        makeRewardSnapshot({ done: true, noMarketsStandby: true }),
       );
     });
 
-    expect(result.current.isNoMarketsLeft(DEFAULT_SERVICE_CONFIG_ID)).toBe(
+    expect(result.current.isNoMarketsStandby(DEFAULT_SERVICE_CONFIG_ID)).toBe(
       true,
     );
   });
