@@ -567,6 +567,34 @@ describe('useAutoRunController', () => {
       expect(lastSignalsArgs().selectedRewardReadAt).toBe(0);
     });
 
+    it.each([
+      ['older than the staking read', 100_000],
+      ['unread', 0],
+    ])(
+      'keeps the staking read time before the KPI for an agent that cannot report no markets left, goal %s',
+      (_, goalReadAt) => {
+        const polystratMeta = makeAutoRunAgentMeta(
+          AgentMap.Polystrat,
+          AGENT_CONFIG[AgentMap.Polystrat],
+        ) as AgentMeta;
+        useRewardContext.mockReturnValue({
+          stakingRewardsDetails: makeStakingRewardsInfo(),
+          isEpochTargetMet: false,
+          stakingRewardsDataUpdatedAt: 200_000,
+        });
+        useActivityGoal.mockReturnValue({
+          activityGoal: goalReadAt ? makeActivityGoal() : undefined,
+          dataUpdatedAt: goalReadAt,
+        });
+        renderHook(() =>
+          useAutoRunController(
+            makeHookParams({ configuredAgents: [polystratMeta] }),
+          ),
+        );
+        expect(lastSignalsArgs().selectedRewardReadAt).toBe(200_000);
+      },
+    );
+
     it('feeds the selected program, rewards epoch and activity goal to the signals', () => {
       const details = makeStakingRewardsInfo();
       const activityGoal = makeActivityGoal();
