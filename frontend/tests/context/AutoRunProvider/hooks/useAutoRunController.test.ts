@@ -518,7 +518,7 @@ describe('useAutoRunController', () => {
       useAutoRunSignals.mock.calls[useAutoRunSignals.mock.calls.length - 1][0];
 
     it.each([
-      [false, 200_000, 100_000, 200_000],
+      [false, 200_000, 100_000, 100_000],
       [true, 200_000, 100_000, 100_000],
       [true, 100_000, 200_000, 100_000],
       [true, 200_000, 0, 0],
@@ -549,36 +549,23 @@ describe('useAutoRunController', () => {
       },
     );
 
-    it.each([
-      ['a current no-markets block', DEFAULT_TS_CHECKPOINT, 100_000],
-      [
-        'a no-markets block from an earlier epoch',
-        DEFAULT_TS_CHECKPOINT - 86_400,
-        200_000,
-      ],
-    ])(
-      'with the staking KPI unmet, takes the goal read time for %s',
-      (_, periodStart, expectedReadAt) => {
-        useRewardContext.mockReturnValue({
-          stakingRewardsDetails: makeStakingRewardsInfo(),
-          isEpochTargetMet: false,
-          stakingRewardsDataUpdatedAt: 200_000,
-        });
-        useActivityGoal.mockReturnValue({
-          activityGoal: makeActivityGoal({
-            no_markets_left: true,
-            period_start: periodStart,
-          }),
-          dataUpdatedAt: 100_000,
-        });
-        renderHook(() =>
-          useAutoRunController(
-            makeHookParams({ configuredAgents: [traderMeta] }),
-          ),
-        );
-        expect(lastSignalsArgs().selectedRewardReadAt).toBe(expectedReadAt);
-      },
-    );
+    it('writes nothing while the goal is unread, so a loading goal cannot overwrite a no-markets done', () => {
+      useRewardContext.mockReturnValue({
+        stakingRewardsDetails: makeStakingRewardsInfo(),
+        isEpochTargetMet: false,
+        stakingRewardsDataUpdatedAt: 200_000,
+      });
+      useActivityGoal.mockReturnValue({
+        activityGoal: undefined,
+        dataUpdatedAt: 0,
+      });
+      renderHook(() =>
+        useAutoRunController(
+          makeHookParams({ configuredAgents: [traderMeta] }),
+        ),
+      );
+      expect(lastSignalsArgs().selectedRewardReadAt).toBe(0);
+    });
 
     it('feeds the selected program, rewards epoch and activity goal to the signals', () => {
       const details = makeStakingRewardsInfo();

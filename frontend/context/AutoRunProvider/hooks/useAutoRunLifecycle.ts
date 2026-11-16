@@ -76,7 +76,7 @@ type UseAutoRunLifecycleParams = {
   getHandOverDeployability: (
     serviceConfigId: string,
   ) => Promise<DeployabilityCheckResult | null>;
-  /** Goal-reached notification for a Connect or no-markets-left hand-over. */
+  /** Goal-reached notification for a hand-over that finished a run. */
   notifyGoalReachedOnHandOver: (serviceConfigId: string, body?: string) => void;
   stopRetryBackoffUntilRef: MutableRefObject<Partial<Record<string, number>>>;
   recordMetric: (metric: AutoRunLifecycleMetric) => void;

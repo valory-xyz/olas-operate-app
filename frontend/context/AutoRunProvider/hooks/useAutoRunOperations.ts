@@ -92,10 +92,7 @@ export const useAutoRunOperations = ({
     }
   }, [enabled]);
 
-  /**
-   * Sent once per hand-over, when Connect is stopped after meeting its goal or
-   * an agent with no market left to try is stopped (`body` overrides the text).
-   */
+  /** Sent once per hand-over that finished a run (decided in `rotateToNext`). */
   const notifyGoalReachedOnHandOver = useCallback(
     (serviceConfigId: string, body?: string) => {
       const { agentName, instanceName } = getInstanceDisplayNames(

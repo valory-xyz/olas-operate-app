@@ -123,8 +123,9 @@ The hook evaluates conditions in priority order. The first failing condition det
 6. isAnotherAgentRunning
    → canRun: false, reason: 'Another agent running'
 
-7. hasEnoughServiceSlots === false && !isServiceStaked
+7. hasEnoughServiceSlots === false && !isServiceStaked && !runsEvicted
    → canRun: false, reason: 'No available slots'
+   (`runsEvicted`: evicted inside the minimum staking period and `canRunWhileEvicted`; such a run does not re-stake, so it needs no slot)
 
 8. isAgentEvicted && !isEligibleForStaking && !selectedAgentConfig.canRunWhileEvicted
    → canRun: false, reason: 'Evicted'

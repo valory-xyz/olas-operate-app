@@ -3,7 +3,6 @@ import { useMemo } from 'react';
 
 import {
   deriveIsDoneForEpoch,
-  deriveIsNoMarketsLeft,
   deriveIsNoMarketsStandby,
 } from '@/utils/activityGoal';
 
@@ -52,32 +51,29 @@ export const useEpochWorkStatus = (): EpochWorkStatusResult => {
     if (isNil(isEpochTargetMet) || isNil(tsCheckpoint)) {
       return UNKNOWN_WORK_STATUS;
     }
-    const isGoalRead = !isLoading && !isUnavailable;
-    // Same rule as `deriveIsDoneForEpoch`, so Auto-run agrees on done; the
-    // standby kind only picks the row the Overview shows.
-    if (isGoalRead && deriveIsNoMarketsLeft(activityGoal, tsCheckpoint)) {
-      return {
-        isDoneForEpoch: true,
-        workStatus: deriveIsNoMarketsStandby(activityGoal, tsCheckpoint)
-          ? 'no-markets-standby'
-          : 'standby',
-      };
+    // A failed read is unknown once the KPI is met, as in Auto-run's own
+    // poll, so the Overview and Auto-run never disagree about the instance.
+    if (isLoading || isUnavailable) {
+      return isEpochTargetMet
+        ? UNKNOWN_WORK_STATUS
+        : { isDoneForEpoch: false, workStatus: 'working' };
     }
-    if (!isEpochTargetMet) {
-      return { isDoneForEpoch: false, workStatus: 'working' };
-    }
-    // A failed read is unknown, as in Auto-run's own poll, so the Overview
-    // and Auto-run never disagree about the same instance.
-    if (!isGoalRead) return UNKNOWN_WORK_STATUS;
-
     const isDoneForEpoch = deriveIsDoneForEpoch(
       isEpochTargetMet,
       activityGoal,
       tsCheckpoint,
     );
+    if (!isDoneForEpoch) {
+      return {
+        isDoneForEpoch,
+        workStatus: isEpochTargetMet ? 'goal-pending' : 'working',
+      };
+    }
     return {
       isDoneForEpoch,
-      workStatus: isDoneForEpoch ? 'standby' : 'goal-pending',
+      workStatus: deriveIsNoMarketsStandby(activityGoal, tsCheckpoint)
+        ? 'no-markets-standby'
+        : 'standby',
     };
   }, [activityGoal, isEpochTargetMet, isLoading, isUnavailable, tsCheckpoint]);
 };

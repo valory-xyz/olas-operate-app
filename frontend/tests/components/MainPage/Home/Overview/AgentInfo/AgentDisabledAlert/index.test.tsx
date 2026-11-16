@@ -139,6 +139,7 @@ type StakingOverrides = {
   isEligibleForStaking?: boolean;
   hasEnoughServiceSlots?: boolean | null;
   isServiceStaked?: boolean;
+  isServiceStakedForMinimumDuration?: boolean;
   availableRewards?: number;
 };
 
@@ -297,6 +298,22 @@ describe('AgentDisabledAlert', () => {
       expect(screen.getByText('low-balance')).toBeInTheDocument();
       // An evicted agent earns nothing, so an empty pool is not news.
       expect(screen.queryByText('no-rewards')).not.toBeInTheDocument();
+    });
+
+    it('shows the eviction banner, not no-slots, for an agent that runs evicted on a full contract', () => {
+      setup({
+        staking: {
+          isAgentEvicted: true,
+          isEligibleForStaking: false,
+          isServiceStakedForMinimumDuration: false,
+          isServiceStaked: false,
+          hasEnoughServiceSlots: false,
+        },
+        agentConfig: { canRunWhileEvicted: true },
+      });
+
+      expect(screen.getByText('evicted-locked')).toBeInTheDocument();
+      expect(screen.queryByText('no-slots')).not.toBeInTheDocument();
     });
 
     // A half-loaded `hasEnoughRewardsAndSlots` forces `isEligibleForStaking`

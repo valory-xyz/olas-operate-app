@@ -72,6 +72,12 @@ type UseAutoRunScannerParams = {
   logMessage: (message: string) => void;
 };
 
+/** Startable now, or deferred to a fallback tier that may still start it. */
+const isStartableOrDeferred = (deployability: DeployabilityCheckResult) =>
+  deployability.canRun ||
+  !!deployability.isEmptyRewardPool ||
+  !!deployability.isEvictedRunnable;
+
 /**
  * Queue-scanning logic for auto-run.
  *
@@ -80,12 +86,6 @@ type UseAutoRunScannerParams = {
  * If scan starts from `sc-aaa`, this hook checks `sc-bbb` first,
  * then `sc-ccc`, then wraps once.
  */
-/** Startable now, or deferred to a fallback tier that may still start it. */
-const isStartableOrDeferred = (deployability: DeployabilityCheckResult) =>
-  deployability.canRun ||
-  !!deployability.isEmptyRewardPool ||
-  !!deployability.isEvictedRunnable;
-
 export const useAutoRunScanner = ({
   enabledRef,
   orderedIncludedInstances,
@@ -402,20 +402,11 @@ export const useAutoRunScanner = ({
         emptyPoolCandidates.map((meta) => meta.serviceConfigId),
       );
       const fallbacks = [
-        ...emptyPoolCandidates.map((meta) => ({
-          meta,
-          tier: 'emptyPool' as const,
-        })),
-        ...stalledCandidates.map((meta) => ({
-          meta,
-          tier: 'stalled' as const,
-        })),
-        ...evictedCandidates.map((meta) => ({
-          meta,
-          tier: 'evicted' as const,
-        })),
+        ...emptyPoolCandidates.map((meta) => ({ meta, isStalled: false })),
+        ...stalledCandidates.map((meta) => ({ meta, isStalled: true })),
+        ...evictedCandidates.map((meta) => ({ meta, isStalled: false })),
       ];
-      for (const { meta, tier } of fallbacks) {
+      for (const { meta, isStalled } of fallbacks) {
         const deferred = meta.serviceConfigId;
         if (!enabledRef.current) return notStarted;
         passedOver.delete(deferred);
@@ -452,7 +443,7 @@ export const useAutoRunScanner = ({
 
         const startResult = await startIfStillDue(deferred);
         if (startResult.status === AUTO_RUN_START_STATUS.STARTED) {
-          if (tier === 'stalled') {
+          if (isStalled) {
             logVerbose(
               `scan: started stalled ${deferred}, no other agent could start`,
             );

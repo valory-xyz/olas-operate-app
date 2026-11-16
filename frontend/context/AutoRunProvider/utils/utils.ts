@@ -48,8 +48,7 @@ export const notifyStartFailed = (
 
 /**
  * Desktop notification when an agent finished its run and Auto-run hands the
- * turn to the next agent: Connect after its goal, Omenstrat with no market
- * left to try (`body` = `NO_MARKETS_LEFT_HAND_OVER_BODY`).
+ * turn to the next agent (when it is sent: `rotateToNext`).
  *
  * @example notifyGoalReached(show, "Connect", "connect-polygon")
  * // → title: 'Connect agent "connect-polygon" finished its run'

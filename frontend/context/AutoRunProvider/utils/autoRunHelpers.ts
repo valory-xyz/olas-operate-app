@@ -8,6 +8,7 @@ import { ActivityGoal, StakingRewardsInfo, StakingState } from '@/types';
 import {
   deriveIsActivityGoalMet,
   deriveIsDoneForEpoch,
+  deriveIsNoMarketsLeft,
   deriveIsNoMarketsStandby,
   isActivityGoalCurrent,
   parseActivityGoal,
@@ -59,12 +60,34 @@ export const isStakingEpochExpired = ({
   }
 };
 
+/** The goal fields of a `RewardSnapshot`, for every writer and `isSnapshotGoal`. */
+export const snapshotGoalFields = (
+  goal: ActivityGoal | null,
+  tsCheckpoint: number,
+): Pick<
+  RewardSnapshot,
+  | 'goalUnit'
+  | 'goalTarget'
+  | 'goalPeriodStart'
+  | 'noMarketsLeft'
+  | 'noMarketsStandby'
+> => ({
+  goalUnit: goal?.unit ?? null,
+  goalTarget: goal?.target ?? null,
+  goalPeriodStart: goal?.period_start ?? null,
+  ...(deriveIsNoMarketsLeft(goal, tsCheckpoint) ? { noMarketsLeft: true } : {}),
+  ...(deriveIsNoMarketsStandby(goal, tsCheckpoint)
+    ? { noMarketsStandby: true }
+    : {}),
+});
+
 const isSnapshotGoal = (snapshot: RewardSnapshot, goal: ActivityGoal | null) =>
   snapshot.goalUnit === (goal?.unit ?? null) &&
   snapshot.goalTarget === (goal?.target ?? null) &&
   snapshot.goalPeriodStart === (goal?.period_start ?? null) &&
-  !!snapshot.noMarketsStandby ===
-    deriveIsNoMarketsStandby(goal, snapshot.tsCheckpoint);
+  // any change in no markets left changes done, with or without the KPI
+  !!snapshot.noMarketsLeft ===
+    deriveIsNoMarketsLeft(goal, snapshot.tsCheckpoint);
 
 /**
  * A working agent may finish at any time, so a stored `false` goes stale far
@@ -301,17 +324,13 @@ export const refreshRewardsEligibility = async ({
     goal: ActivityGoal | null = null,
     stalled = false,
   ) => {
-    const noMarketsStandby = deriveIsNoMarketsStandby(goal, epoch.tsCheckpoint);
     setRewardSnapshot(serviceConfigId, {
       done,
       readAt: Date.now(),
       stakingProgramId,
       ...epoch,
-      goalUnit: goal?.unit ?? null,
-      goalTarget: goal?.target ?? null,
-      goalPeriodStart: goal?.period_start ?? null,
+      ...snapshotGoalFields(goal, epoch.tsCheckpoint),
       ...(stalled ? { stalled: true } : {}),
-      ...(noMarketsStandby ? { noMarketsStandby: true } : {}),
     });
     return done;
   };
@@ -765,29 +784,31 @@ const runDeployabilityChecks = async (
           ? null
           : serviceIds.length < maxNumServices;
 
-      if (hasEnoughServiceSlots === false && !isServiceStaked) {
+      const isEligibleAfterEviction =
+        !isNil(serviceStakingStartTime) &&
+        !isNil(minimumStakingDuration) &&
+        Math.round(Date.now() / 1000) - serviceStakingStartTime >=
+          minimumStakingDuration;
+      // A run inside the eviction window does not re-stake, so needs no slot.
+      isEvictedRunnable =
+        isAgentEvicted &&
+        !isEligibleAfterEviction &&
+        !!agentMeta.agentConfig.canRunWhileEvicted;
+
+      if (
+        hasEnoughServiceSlots === false &&
+        !isServiceStaked &&
+        !isEvictedRunnable
+      ) {
         return { canRun: false, reason: 'No available slots' };
       }
 
+      evictionFacts.isAgentEvicted = isAgentEvicted;
       if (isAgentEvicted) {
-        const isEligibleAfterEviction = (() => {
-          if (isNil(serviceStakingStartTime) || isNil(minimumStakingDuration))
-            return false;
-          return (
-            Math.round(Date.now() / 1000) - serviceStakingStartTime >=
-            minimumStakingDuration
-          );
-        })();
-        evictionFacts.isAgentEvicted = true;
         evictionFacts.isEligibleAfterEviction = isEligibleAfterEviction;
-        if (!isEligibleAfterEviction) {
-          if (!agentMeta.agentConfig.canRunWhileEvicted) {
-            return { canRun: false, reason: 'Evicted' };
-          }
-          isEvictedRunnable = true;
+        if (!isEligibleAfterEviction && !isEvictedRunnable) {
+          return { canRun: false, reason: 'Evicted' };
         }
-      } else {
-        evictionFacts.isAgentEvicted = false;
       }
     } catch (error) {
       ctx.logMessage(

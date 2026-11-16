@@ -7,7 +7,6 @@ import {
 } from '@/constants';
 import { useBalanceAndRefillRequirementsContext } from '@/hooks';
 import { ActivityGoal, StakingRewardsInfo } from '@/types';
-import { deriveIsNoMarketsStandby } from '@/utils/activityGoal';
 import { sleepAwareDelay } from '@/utils/delay';
 
 import {
@@ -18,6 +17,7 @@ import { ObservedGoal, RewardSnapshot, StallClock } from '../types';
 import {
   isStakingEpochExpired,
   isStallClockExpired,
+  snapshotGoalFields,
 } from '../utils/autoRunHelpers';
 import { probeDeploymentStatus } from '../utils/probeDeployment';
 
@@ -199,20 +199,16 @@ export const useAutoRunSignals = ({
     if (!selectedRewardReadAt) return;
     const previous = rewardSnapshotRef.current[selectedServiceConfigId];
     if (previous && previous.readAt > selectedRewardReadAt) return;
-    const noMarketsStandby = deriveIsNoMarketsStandby(
-      selectedActivityGoal ?? null,
-      selectedRewardsEpoch.tsCheckpoint,
-    );
     rewardSnapshotRef.current[selectedServiceConfigId] = {
       done: isEpochExpired ? false : isSelectedDoneForEpoch,
       readAt: selectedRewardReadAt,
       stakingProgramId: selectedStakingProgramId,
       tsCheckpoint: selectedRewardsEpoch.tsCheckpoint,
       livenessPeriod: selectedRewardsEpoch.livenessPeriod,
-      goalUnit: selectedActivityGoal?.unit ?? null,
-      goalTarget: selectedActivityGoal?.target ?? null,
-      goalPeriodStart: selectedActivityGoal?.period_start ?? null,
-      ...(noMarketsStandby ? { noMarketsStandby: true } : {}),
+      ...snapshotGoalFields(
+        selectedActivityGoal ?? null,
+        selectedRewardsEpoch.tsCheckpoint,
+      ),
     };
     setRewardsTick((value) => value + 1);
   }, [

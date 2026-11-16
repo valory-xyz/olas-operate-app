@@ -59,6 +59,7 @@ export const AgentDisabledAlert = () => {
     isSelectedStakingContractDetailsLoading,
     isAgentEvicted,
     isEligibleForStaking,
+    isServiceStakedForMinimumDuration,
     hasEnoughServiceSlots,
     isServiceStaked,
     selectedStakingContractDetails,
@@ -172,10 +173,16 @@ export const AgentDisabledAlert = () => {
       };
     }
 
+    // A run inside the eviction window does not re-stake, so needs no slot.
+    const runsEvicted =
+      isAgentEvicted &&
+      !isServiceStakedForMinimumDuration &&
+      !!selectedAgentConfig.canRunWhileEvicted;
     if (
       !isSelectedStakingContractDetailsLoading &&
       isServiceStaked === false &&
-      hasEnoughServiceSlots === false
+      hasEnoughServiceSlots === false &&
+      !runsEvicted
     ) {
       return { key: 'no-slots', content: <NoSlotsAvailableAlert /> };
     }
@@ -240,6 +247,7 @@ export const AgentDisabledAlert = () => {
     isSelectedStakingContractDetailsLoading,
     isServiceRunning,
     isServiceStaked,
+    isServiceStakedForMinimumDuration,
     prestartCheck,
     runningAgentIssues,
     selectedAgentConfig,

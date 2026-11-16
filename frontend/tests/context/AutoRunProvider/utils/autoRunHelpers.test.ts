@@ -1065,6 +1065,31 @@ describe('refreshRewardsEligibility', () => {
       expect(setRewardSnapshot).not.toHaveBeenCalled();
     });
 
+    it('keeps a not-done verdict of this epoch working when the read fails', async () => {
+      mockFetchRewards.mockResolvedValue(stakingUnmet);
+      mockGetAgentPerformance.mockRejectedValue(new Error('boom'));
+      const setRewardSnapshot = jest.fn();
+
+      const result = await refreshRewardsEligibility(
+        makeParams({
+          setRewardSnapshot,
+          getRewardSnapshot: jest.fn().mockReturnValue(
+            makeRewardSnapshot({
+              done: false,
+              tsCheckpoint: DEFAULT_TS_CHECKPOINT,
+              readAt: 0,
+            }),
+          ),
+        }),
+      );
+
+      expect(result).toBe(false);
+      expect(setRewardSnapshot).toHaveBeenCalledWith(
+        DEFAULT_SERVICE_CONFIG_ID,
+        expect.objectContaining({ done: false }),
+      );
+    });
+
     it('does not keep a done verdict from an earlier epoch when the read fails', async () => {
       mockFetchRewards.mockResolvedValue(stakingUnmet);
       mockGetAgentPerformance.mockRejectedValue(new Error('boom'));
@@ -1580,18 +1605,27 @@ describe('getUsableRewardStatus', () => {
       ).toBeUndefined();
     });
 
-    it('is unknown once a market is back for an agent that had none left', () => {
-      const doneNoMarkets = { ...doneWithGoal, noMarketsStandby: true };
-      expect(
-        getUsableRewardStatus(doneNoMarkets, seenLater(makeActivityGoal())),
-      ).toBeUndefined();
-      expect(
-        getUsableRewardStatus(
-          doneNoMarkets,
-          seenLater(makeActivityGoal({ no_markets_left: true })),
-        ),
-      ).toBe(true);
-    });
+    it.each([
+      ['before the goal', { is_met: false }],
+      ['after the goal', { is_met: true, progress: 8 }],
+    ])(
+      'is unknown once a market is back for an agent that had none left, %s',
+      (_, goal) => {
+        const doneNoMarkets = { ...doneWithGoal, noMarketsLeft: true };
+        expect(
+          getUsableRewardStatus(
+            doneNoMarkets,
+            seenLater(makeActivityGoal({ ...goal, no_markets_left: false })),
+          ),
+        ).toBeUndefined();
+        expect(
+          getUsableRewardStatus(
+            doneNoMarkets,
+            seenLater(makeActivityGoal({ ...goal, no_markets_left: true })),
+          ),
+        ).toBe(true);
+      },
+    );
 
     it('keeps the true when the goal seen is the one it was read with', () => {
       expect(
@@ -2153,6 +2187,25 @@ describe('fetchDeployabilityForAgent', () => {
         }),
       );
       expect(result.isEmptyRewardPool).toBeUndefined();
+    });
+
+    it('needs no slot on a full contract, since it does not re-stake', async () => {
+      const now = Math.floor(Date.now() / 1000);
+      mockGetStakingContractDetails.mockResolvedValue({
+        serviceIds: [1, 2],
+        maxNumServices: 2,
+        minimumStakingDuration: 86400,
+      });
+      mockGetServiceStakingDetails.mockResolvedValue({
+        serviceStakingState: StakingState.Evicted,
+        serviceStakingStartTime: now - 100,
+      });
+      const result = await fetchDeployabilityForAgent(
+        makeAgentMeta(),
+        makeCtx(),
+      );
+      expect(result.isEvictedRunnable).toBe(true);
+      expect(result.reason).toBe('Evicted');
     });
 
     it('is still held to the later gates', async () => {

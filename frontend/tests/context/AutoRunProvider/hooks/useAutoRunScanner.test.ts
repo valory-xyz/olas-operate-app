@@ -1493,6 +1493,38 @@ describe('useAutoRunScanner', () => {
       );
     });
 
+    it('keeps an evicted, stall-deferred candidate in the evicted tier', async () => {
+      const params = makeHookParams({
+        isStallDeferred: jest.fn((id: string) => id === scOptimus),
+        getDeployabilityForAgent: deployabilityById({
+          [scOptimus]: evictedRunnable(),
+          [scPolystrat]: emptyPool(),
+          [scTrader]: { canRun: false, reason: 'Low balance' },
+        }),
+        startAgentWithRetries: jest
+          .fn()
+          // polystrat (empty pool) fails; optimus (evicted) starts.
+          .mockResolvedValueOnce({
+            status: AUTO_RUN_START_STATUS.INFRA_FAILED,
+          })
+          .mockResolvedValue({ status: AUTO_RUN_START_STATUS.STARTED }),
+      });
+      const { result } = renderHook(() => useAutoRunScanner(params));
+
+      await act(async () => {
+        await result.current.scanAndStartNext(scTrader);
+      });
+      expect(
+        (params.startAgentWithRetries as jest.Mock).mock.calls.map(
+          ([id]) => id,
+        ),
+      ).toEqual([scPolystrat, scOptimus]);
+      expect(params.logMessage).toHaveBeenCalledWith(
+        `scan: started evicted ${scOptimus} to redeem, no other agent could start`,
+      );
+      expect(params.clearStallDeferral).not.toHaveBeenCalled();
+    });
+
     it('does not start it when the recheck finds it blocked', async () => {
       let optimusReads = 0;
       const params = makeHookParams({

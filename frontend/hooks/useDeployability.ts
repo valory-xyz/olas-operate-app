@@ -52,6 +52,7 @@ export const useDeployability = ({
   const {
     isAgentEvicted,
     isEligibleForStaking,
+    isServiceStakedForMinimumDuration,
     isServiceStaked,
     hasEnoughServiceSlots,
     isSelectedStakingContractDetailsLoading,
@@ -158,9 +159,15 @@ export const useDeployability = ({
       };
     }
 
+    // A run inside the eviction window does not re-stake, so needs no slot.
+    const runsEvicted =
+      isAgentEvicted &&
+      !isServiceStakedForMinimumDuration &&
+      !!selectedAgentConfig.canRunWhileEvicted;
+
     // If not enough service slots, and service is not staked
     const hasSlot = !isNil(hasEnoughServiceSlots) && !hasEnoughServiceSlots;
-    if (hasSlot && !isServiceStaked) {
+    if (hasSlot && !isServiceStaked && !runsEvicted) {
       return { isLoading, canRun: false, reason: 'No available slots' };
     }
 
@@ -200,6 +207,7 @@ export const useDeployability = ({
     isInitialFunded,
     isLoading,
     isServiceStaked,
+    isServiceStakedForMinimumDuration,
     safeEligibility,
     selectedAgentConfig.canRunWhileEvicted,
     selectedAgentConfig.isGeoLocationRestricted,

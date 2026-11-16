@@ -12,6 +12,7 @@ import {
   useEpochWorkStatus,
 } from '@/hooks';
 
+import { CHAT_COPY } from '../../AgentChat/constants';
 import { AgentActivityModal } from './AgentActivityModal';
 import { Container, Text } from './styles';
 import { AgentStatus } from './types';
@@ -49,6 +50,17 @@ const StandbyContent = () => (
       <Paragraph className="text-sm m-0">
         The agent is inactive during standby. If you keep it running, it will
         resume activity automatically at the start of the next epoch.
+      </Paragraph>
+    </InfoTooltip>
+  </Flex>
+);
+
+const NoMarketsStandbyContent = () => (
+  <Flex align="center" justify="center" gap={4}>
+    {CHAT_COPY.noMarketsStandby}{' '}
+    <InfoTooltip iconColor={COLOR.TEXT_COLOR.SUCCESS.DEFAULT}>
+      <Paragraph className="text-sm m-0">
+        {CHAT_COPY.noMarketsStandbyTooltip}
       </Paragraph>
     </InfoTooltip>
   </Flex>
@@ -99,6 +111,10 @@ export const AgentActivity = () => {
 
       if (workStatus === 'standby') {
         return { status: 'idle', content: <StandbyContent /> };
+      }
+
+      if (workStatus === 'no-markets-standby') {
+        return { status: 'idle', content: <NoMarketsStandbyContent /> };
       }
 
       if (workStatus === 'goal-pending') {

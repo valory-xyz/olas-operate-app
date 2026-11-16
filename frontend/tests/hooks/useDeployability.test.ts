@@ -94,6 +94,7 @@ const defaultBalanceContext = {
 const defaultStakingDetails = {
   isAgentEvicted: false,
   isEligibleForStaking: true,
+  isServiceStakedForMinimumDuration: true,
   isServiceStaked: false,
   hasEnoughServiceSlots: true,
   isSelectedStakingContractDetailsLoading: false,
@@ -513,6 +514,34 @@ describe('useDeployability', () => {
         const { result } = renderHook(() => useDeployability());
         expect(result.current.reason).toBe('Low balance');
       });
+
+      it.each([
+        [false, true, undefined],
+        [true, false, 'No available slots'],
+      ])(
+        'on a full contract, min duration elapsed=%s: canRun=%s',
+        (minDurationElapsed, canRun, reason) => {
+          setupDefaults({
+            staking: {
+              isAgentEvicted: true,
+              isEligibleForStaking: false,
+              isServiceStakedForMinimumDuration: minDurationElapsed,
+              hasEnoughServiceSlots: false,
+              isServiceStaked: false,
+            },
+          });
+          mockUseServices.mockReturnValue({
+            ...defaultServices,
+            selectedAgentConfig: {
+              ...defaultServices.selectedAgentConfig,
+              canRunWhileEvicted: true,
+            },
+          } as unknown as ReturnType<typeof useServices>);
+          const { result } = renderHook(() => useDeployability());
+          expect(result.current.canRun).toBe(canRun);
+          expect(result.current.reason).toBe(reason);
+        },
+      );
     });
 
     it('allows when not evicted regardless of eligibility', () => {

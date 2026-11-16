@@ -100,6 +100,8 @@ export type RewardSnapshot = {
   goalUnit: ActivityGoal['unit'] | null;
   goalTarget: number | null;
   goalPeriodStart: number | null;
+  /** The read's current goal reported no market left to try (`deriveIsNoMarketsLeft`). */
+  noMarketsLeft?: boolean;
   /** No market left to try before the goal was reached (`deriveIsNoMarketsStandby`). */
   noMarketsStandby?: boolean;
 };

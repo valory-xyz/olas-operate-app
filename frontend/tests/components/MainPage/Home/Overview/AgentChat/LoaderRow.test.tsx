@@ -164,6 +164,29 @@ describe('LoaderRow', () => {
       expect(screen.getByText('Agent is loading')).toBeInTheDocument();
     });
 
+    it.each([
+      [
+        'loading while it starts',
+        { isAgentStarting: true },
+        'Agent is loading',
+      ],
+      [
+        'not running once stopped',
+        { isAgentActive: false },
+        'Agent is not running',
+      ],
+    ] as const)(
+      'says %s rather than the no-markets standby',
+      (_, setup, text) => {
+        renderRow({ ...setup, workStatus: 'no-markets-standby' });
+
+        expect(screen.getByText(text)).toBeInTheDocument();
+        expect(
+          screen.queryByText('Agent is in standby until the next epoch'),
+        ).toBeNull();
+      },
+    );
+
     it('shows Thinking... over the starting state while a reply is pending', () => {
       renderRow({ isAgentStarting: true, isPending: true });
 
@@ -275,6 +298,11 @@ describe('LoaderRow', () => {
     ['grey', { isAgentActive: false }, COLOR.NEUTRAL_4],
     ['purple', {}, COLOR.PURPLE],
     ['purple starting', { isAgentStarting: true }, COLOR.PURPLE],
+    [
+      'grey no-markets standby',
+      { workStatus: 'no-markets-standby' },
+      COLOR.NEUTRAL_4,
+    ],
   ] as const)(
     'draws the %s dot icon as 5×5 whole dots',
     (_, setup, dotColor) => {
