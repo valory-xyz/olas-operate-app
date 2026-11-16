@@ -24,11 +24,11 @@ import {
   useMasterWalletContext,
   usePageState,
   usePrestartCheck,
+  useRunsInsideEvictionWindow,
   useServices,
   useStakingProgram,
 } from '@/hooks';
 import { AgentIssue } from '@/types';
-import { runsInsideEvictionWindow } from '@/utils/stakingProgram';
 
 import { AgentGeoBlockedAlert } from './AgentGeoBlockedAlert';
 import { AgentIssuesAlert } from './AgentIssuesAlert';
@@ -89,6 +89,12 @@ export const AgentDisabledAlert = () => {
   const { isAgentGeoRestricted } = useIsAgentGeoRestricted({
     agentType: selectedAgentType,
     agentConfig: selectedAgentConfig,
+  });
+
+  const runsEvicted = useRunsInsideEvictionWindow({
+    isAgentEvicted,
+    canRunWhileEvicted: selectedAgentConfig.canRunWhileEvicted,
+    evictionExpiresAt,
   });
 
   const isServiceRunning =
@@ -174,12 +180,6 @@ export const AgentDisabledAlert = () => {
       };
     }
 
-    const runsEvicted = runsInsideEvictionWindow({
-      isAgentEvicted,
-      canRunWhileEvicted: selectedAgentConfig.canRunWhileEvicted,
-      evictionExpiresAt,
-      nowSeconds: Math.round(Date.now() / 1000),
-    });
     if (
       !isSelectedStakingContractDetailsLoading &&
       isServiceStaked === false &&
@@ -249,7 +249,7 @@ export const AgentDisabledAlert = () => {
     isSelectedStakingContractDetailsLoading,
     isServiceRunning,
     isServiceStaked,
-    evictionExpiresAt,
+    runsEvicted,
     prestartCheck,
     runningAgentIssues,
     selectedAgentConfig,

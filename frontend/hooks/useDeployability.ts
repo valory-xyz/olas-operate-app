@@ -7,11 +7,11 @@ import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRef
 import { useIsAgentGeoRestricted } from '@/hooks/useIsAgentGeoRestricted';
 import { useIsInitiallyFunded } from '@/hooks/useIsInitiallyFunded';
 import { useOnlineStatusContext } from '@/hooks/useOnlineStatus';
+import { useRunsInsideEvictionWindow } from '@/hooks/useRunsInsideEvictionWindow';
 import { useServices } from '@/hooks/useServices';
 import { useSharedContext } from '@/hooks/useSharedContext';
 import { useActiveStakingContractDetails } from '@/hooks/useStakingContractDetails';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
-import { runsInsideEvictionWindow } from '@/utils/stakingProgram';
 
 type DeployabilityResult = {
   isLoading: boolean;
@@ -63,6 +63,12 @@ export const useDeployability = ({
   const { isAgentGeoRestricted, isGeoLoading } = useIsAgentGeoRestricted({
     agentType: selectedAgentType,
     agentConfig: selectedAgentConfig,
+  });
+
+  const runsEvicted = useRunsInsideEvictionWindow({
+    isAgentEvicted,
+    canRunWhileEvicted: selectedAgentConfig.canRunWhileEvicted,
+    evictionExpiresAt,
   });
 
   const selectedServiceConfigId = selectedService?.service_config_id;
@@ -160,13 +166,6 @@ export const useDeployability = ({
       };
     }
 
-    const runsEvicted = runsInsideEvictionWindow({
-      isAgentEvicted,
-      canRunWhileEvicted: selectedAgentConfig.canRunWhileEvicted,
-      evictionExpiresAt,
-      nowSeconds: Math.round(Date.now() / 1000),
-    });
-
     // If not enough service slots, and service is not staked
     const hasSlot = !isNil(hasEnoughServiceSlots) && !hasEnoughServiceSlots;
     if (hasSlot && !isServiceStaked && !runsEvicted) {
@@ -209,7 +208,7 @@ export const useDeployability = ({
     isInitialFunded,
     isLoading,
     isServiceStaked,
-    evictionExpiresAt,
+    runsEvicted,
     safeEligibility,
     selectedAgentConfig.canRunWhileEvicted,
     selectedAgentConfig.isGeoLocationRestricted,

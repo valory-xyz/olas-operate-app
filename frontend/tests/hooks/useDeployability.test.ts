@@ -1,4 +1,4 @@
-import { renderHook } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react';
 
 import { ELIGIBILITY_REASON } from '../../context/AutoRunProvider/constants';
 import { useAgentRunning } from '../../hooks/useAgentRunning';
@@ -11,6 +11,7 @@ import { useServices } from '../../hooks/useServices';
 import { useSharedContext } from '../../hooks/useSharedContext';
 import { useActiveStakingContractDetails } from '../../hooks/useStakingContractDetails';
 import { useStakingProgram } from '../../hooks/useStakingProgram';
+import { EVICTION_RUN_START_MARGIN_SECONDS } from '../../utils/stakingProgram';
 import { DEFAULT_SERVICE_CONFIG_ID } from '../helpers/factories';
 
 // --- mocks ---
@@ -554,6 +555,31 @@ describe('useDeployability', () => {
           expect(result.current.reason).toBe(reason);
         },
       );
+
+      it('needs a slot again once the start margin is reached, with no other input changing', () => {
+        jest.useFakeTimers();
+        try {
+          setupRunnableEvicted({
+            staking: {
+              evictionExpiresAt:
+                nowSeconds() + EVICTION_RUN_START_MARGIN_SECONDS + 60,
+              hasEnoughServiceSlots: false,
+              isServiceStaked: false,
+            },
+          });
+          const { result } = renderHook(() => useDeployability());
+          expect(result.current.canRun).toBe(true);
+
+          act(() => {
+            jest.advanceTimersByTime(62_000);
+          });
+
+          expect(result.current.canRun).toBe(false);
+          expect(result.current.reason).toBe('No available slots');
+        } finally {
+          jest.useRealTimers();
+        }
+      });
     });
 
     it('allows when not evicted regardless of eligibility', () => {

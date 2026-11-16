@@ -39,6 +39,9 @@ jest.mock('../../../../../../../hooks', () => ({
   useMasterWalletContext: jest.fn(),
   usePageState: jest.fn(),
   usePrestartCheck: jest.fn(),
+  useRunsInsideEvictionWindow: jest.requireActual(
+    '../../../../../../../hooks/useRunsInsideEvictionWindow',
+  ).useRunsInsideEvictionWindow,
   useServices: jest.fn(),
   useStakingProgram: jest.fn(),
   isPrestartCheckBlocking: jest.requireActual(
