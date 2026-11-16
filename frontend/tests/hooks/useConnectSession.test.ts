@@ -146,18 +146,25 @@ describe('useConnectSession', () => {
     expect(result.current.errorKind).toBe('ocb-launch-failed');
   });
 
-  it("keeps today's state for another harness whatever the reason says", async () => {
-    mockStartSession.mockResolvedValue({
-      reachable: true,
-      ok: true,
-      launched: false,
-      requested: 'codex_cli',
-      reason: 'not_installed',
-    });
-    const { result } = renderConnectSession();
-    await waitFor(() => expect(result.current.showAlert).toBe(true));
-    expect(result.current.errorKind).toBe('not-installed');
-  });
+  it.each([
+    ['codex_cli', 'not_installed'],
+    ['codex_cli', 'install_failed'],
+    ['claude_code_cli', 'launch_failed'],
+  ])(
+    "keeps today's state for %s whatever the reason (%s)",
+    async (requested, reason) => {
+      mockStartSession.mockResolvedValue({
+        reachable: true,
+        ok: true,
+        launched: false,
+        requested,
+        reason,
+      });
+      const { result } = renderConnectSession();
+      await waitFor(() => expect(result.current.showAlert).toBe(true));
+      expect(result.current.errorKind).toBe('not-installed');
+    },
+  );
 
   it('surfaces the "launch failed" state for a non-2xx response', async () => {
     mockStartSession.mockResolvedValue({
