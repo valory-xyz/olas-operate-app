@@ -145,6 +145,8 @@ export type AgentConfig = {
   hasAgentChat?: boolean;
   /** Can be started while evicted inside its minimum staking period, to redeem. */
   canRunWhileEvicted?: boolean;
+  /** Its activity goal can report `no_markets_left`, which decides done before the KPI. */
+  canReportNoMarketsLeft?: boolean;
 } & needsOpenProfileEachAgentRun;
 
 type AgentPerformanceMetric = {

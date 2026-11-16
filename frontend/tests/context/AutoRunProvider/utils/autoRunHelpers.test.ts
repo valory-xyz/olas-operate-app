@@ -995,6 +995,29 @@ describe('refreshRewardsEligibility', () => {
       );
     });
 
+    it('does not read the goal before the staking KPI is met for an agent that cannot report no markets left', async () => {
+      mockFetchRewards.mockResolvedValue(stakingUnmet);
+      const logMessage = jest.fn();
+
+      const result = await refreshRewardsEligibility(
+        makeParams({
+          configuredAgents: [
+            makeAutoRunAgentMeta(
+              AgentMap.Polystrat,
+              AGENT_CONFIG[AgentMap.Polystrat],
+            ),
+          ],
+          logMessage,
+        }),
+      );
+
+      expect(result).toBe(false);
+      expect(mockGetAgentPerformance).not.toHaveBeenCalled();
+      expect(logMessage).toHaveBeenCalledWith(
+        expect.stringContaining('epochTargetMet=false goal=unread'),
+      );
+    });
+
     it.each([
       ['without the staking KPI', false],
       ['with the staking KPI', true],

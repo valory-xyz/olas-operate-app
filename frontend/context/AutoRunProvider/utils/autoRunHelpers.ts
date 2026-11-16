@@ -458,18 +458,20 @@ export const refreshRewardsEligibility = async ({
 
   const epochExpired = isStakingEpochExpired(response);
 
-  // Read on every poll: no markets left decides done before the KPI too. Once
-  // the KPI is met, an unreadable report leaves "done" unknown: a failure must
-  // neither override a met goal nor fake a false → true rotation. Before it, a
-  // failed read leaves the agent working, unless it was already done in this
-  // epoch, which only no markets left can make it; then that verdict is kept.
-  const goalRead = await readActivityGoal(
-    serviceConfigId,
-    logMessage,
-    onRewardsFetchError,
-  );
+  // The goal is read once the staking KPI is met, and before it only for an
+  // agent that can report no markets left, which decides done without the KPI.
+  // Once the KPI is met, an unreadable report leaves "done" unknown: a failure
+  // must neither override a met goal nor fake a false → true rotation. Before
+  // it, a failed read leaves the agent working, unless it was already done in
+  // this epoch, which only no markets left can make it; then that verdict is
+  // kept.
+  const readsGoalBeforeKpi = !!meta.agentConfig.canReportNoMarketsLeft;
+  const goalRead =
+    epochTargetMet || readsGoalBeforeKpi
+      ? await readActivityGoal(serviceConfigId, logMessage, onRewardsFetchError)
+      : undefined;
   let isStalled = false;
-  if (epochTargetMet && goalRead.ok) {
+  if (epochTargetMet && goalRead?.ok) {
     isStalled = updateStallClock(stallClockRef.current, serviceConfigId, {
       isRunning,
       epochTargetMet,
@@ -484,8 +486,10 @@ export const refreshRewardsEligibility = async ({
   const wasDoneThisEpoch =
     !!snapshot?.done && snapshot.tsCheckpoint === response.tsCheckpoint;
   let doneForEpoch: boolean | undefined =
-    epochTargetMet || wasDoneThisEpoch ? undefined : false;
-  if (goalRead.ok) {
+    epochTargetMet || (readsGoalBeforeKpi && wasDoneThisEpoch)
+      ? undefined
+      : false;
+  if (goalRead?.ok) {
     doneForEpoch = deriveIsDoneForEpoch(
       epochTargetMet,
       goalRead.goal,
@@ -546,7 +550,7 @@ export const refreshRewardsEligibility = async ({
       tsCheckpoint: response.tsCheckpoint,
       livenessPeriod: response.livenessPeriod,
     },
-    goalRead.ok ? goalRead.goal : null,
+    goalRead?.ok ? goalRead.goal : null,
     isStalled && eligible,
   );
 };
