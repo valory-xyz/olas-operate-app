@@ -483,6 +483,38 @@ describe('useDeployability', () => {
       expect(result.current.canRun).toBe(true);
     });
 
+    describe('agent that can run evicted (Omenstrat)', () => {
+      const setupRunnableEvicted = (balanceOk = true) => {
+        setupDefaults({
+          staking: { isAgentEvicted: true, isEligibleForStaking: false },
+          balance: {
+            allowStartAgentByServiceConfigId: jest
+              .fn()
+              .mockReturnValue(balanceOk),
+          },
+        });
+        mockUseServices.mockReturnValue({
+          ...defaultServices,
+          selectedAgentConfig: {
+            ...defaultServices.selectedAgentConfig,
+            canRunWhileEvicted: true,
+          },
+        } as unknown as ReturnType<typeof useServices>);
+      };
+
+      it('can start inside its minimum staking period', () => {
+        setupRunnableEvicted();
+        const { result } = renderHook(() => useDeployability());
+        expect(result.current.canRun).toBe(true);
+      });
+
+      it('is still held to the balance check', () => {
+        setupRunnableEvicted(false);
+        const { result } = renderHook(() => useDeployability());
+        expect(result.current.reason).toBe('Low balance');
+      });
+    });
+
     it('allows when not evicted regardless of eligibility', () => {
       setupDefaults({
         staking: {

@@ -283,6 +283,22 @@ describe('AgentDisabledAlert', () => {
       expect(screen.queryByText('low-balance')).not.toBeInTheDocument();
     });
 
+    it('keeps the funding alerts under the banner of an agent that can run evicted', () => {
+      setup({
+        staking: {
+          isAgentEvicted: true,
+          isEligibleForStaking: false,
+          availableRewards: 0,
+        },
+        agentConfig: { canRunWhileEvicted: true },
+      });
+
+      expect(screen.getByText('evicted-locked')).toBeInTheDocument();
+      expect(screen.getByText('low-balance')).toBeInTheDocument();
+      // An evicted agent earns nothing, so an empty pool is not news.
+      expect(screen.queryByText('no-rewards')).not.toBeInTheDocument();
+    });
+
     // A half-loaded `hasEnoughRewardsAndSlots` forces `isEligibleForStaking`
     // false, which would flash "evicted until <date>" at someone who can
     // re-stake right now.

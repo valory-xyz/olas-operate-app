@@ -164,8 +164,12 @@ export const useDeployability = ({
       return { isLoading, canRun: false, reason: 'No available slots' };
     }
 
-    // If was evicted and can't re-stake
-    if (isAgentEvicted && !isEligibleForStaking) {
+    // If was evicted and can't re-stake, unless the agent can run evicted
+    if (
+      isAgentEvicted &&
+      !isEligibleForStaking &&
+      !selectedAgentConfig.canRunWhileEvicted
+    ) {
       return { isLoading, canRun: false, reason: 'Evicted' };
     }
 
@@ -197,6 +201,7 @@ export const useDeployability = ({
     isLoading,
     isServiceStaked,
     safeEligibility,
+    selectedAgentConfig.canRunWhileEvicted,
     selectedAgentConfig.isGeoLocationRestricted,
     selectedAgentConfig.isPhasedOut,
     selectedAgentConfig.isUnderConstruction,
