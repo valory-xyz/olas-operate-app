@@ -1,5 +1,7 @@
 import { renderHook } from '@testing-library/react';
 
+import { AGENT_CONFIG } from '../../config/agents';
+import { AgentMap } from '../../constants/agent';
 import { useActivityGoal } from '../../hooks/useActivityGoal';
 import { useEpochWorkStatus } from '../../hooks/useEpochWorkStatus';
 import { useRewardContext } from '../../hooks/useRewardContext';
@@ -60,6 +62,7 @@ describe('useEpochWorkStatus', () => {
       selectedService: makeService({
         service_config_id: DEFAULT_SERVICE_CONFIG_ID,
       }),
+      selectedAgentConfig: AGENT_CONFIG[AgentMap.PredictTrader],
     });
   });
 
@@ -168,6 +171,19 @@ describe('useEpochWorkStatus', () => {
         });
       },
     );
+
+    it('stays working before the staking KPI for an agent that cannot report no markets left', () => {
+      mockUseServices.mockReturnValue({
+        selectedService: makeService({
+          service_config_id: DEFAULT_SERVICE_CONFIG_ID,
+        }),
+        selectedAgentConfig: AGENT_CONFIG[AgentMap.Polystrat],
+      });
+
+      expect(
+        setup({ isEpochTargetMet: false, activityGoal: noMarkets }),
+      ).toEqual({ isDoneForEpoch: false, workStatus: 'working' });
+    });
 
     it('ignores the flag from an earlier epoch', () => {
       const status = setup({

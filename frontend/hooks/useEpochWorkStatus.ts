@@ -16,7 +16,7 @@ import { useServices } from './useServices';
  * - `standby`: done for the epoch (both met, or no market left after the goal);
  *   the agent waits for the next epoch
  * - `no-markets-standby`: done because no market is left to try before the
- *   goal is reached, with or without the staking KPI
+ *   goal is reached, with or without the staking KPI (`canReportNoMarketsLeft`)
  */
 export type EpochWorkStatus =
   | 'working'
@@ -40,7 +40,10 @@ const UNKNOWN_WORK_STATUS: EpochWorkStatusResult = {
  * Auto-run. Values are `undefined` while either side is unknown.
  */
 export const useEpochWorkStatus = (): EpochWorkStatusResult => {
-  const { selectedService } = useServices();
+  const { selectedService, selectedAgentConfig } = useServices();
+  // As in Auto-run's poll, the goal decides done before the KPI only for an
+  // agent that can report no markets left.
+  const readsGoalBeforeKpi = !!selectedAgentConfig.canReportNoMarketsLeft;
   const { isEpochTargetMet, stakingRewardsDetails } = useRewardContext();
   const { activityGoal, isLoading, isUnavailable } = useActivityGoal(
     selectedService?.service_config_id,
@@ -50,6 +53,9 @@ export const useEpochWorkStatus = (): EpochWorkStatusResult => {
   return useMemo(() => {
     if (isNil(isEpochTargetMet) || isNil(tsCheckpoint)) {
       return UNKNOWN_WORK_STATUS;
+    }
+    if (!isEpochTargetMet && !readsGoalBeforeKpi) {
+      return { isDoneForEpoch: false, workStatus: 'working' };
     }
     // Once the KPI is met a failed read is unknown, as in Auto-run's poll.
     if (isLoading || isUnavailable) {
@@ -74,5 +80,12 @@ export const useEpochWorkStatus = (): EpochWorkStatusResult => {
         ? 'no-markets-standby'
         : 'standby',
     };
-  }, [activityGoal, isEpochTargetMet, isLoading, isUnavailable, tsCheckpoint]);
+  }, [
+    activityGoal,
+    isEpochTargetMet,
+    isLoading,
+    isUnavailable,
+    readsGoalBeforeKpi,
+    tsCheckpoint,
+  ]);
 };
