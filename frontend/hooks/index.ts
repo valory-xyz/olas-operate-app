@@ -56,6 +56,7 @@ export * from './usePrestartCheck';
 export * from './useRecoveryPhraseBackup';
 export * from './useRewardContext';
 export * from './useRewardsHistory';
+export * from './useRunsInsideEvictionWindow';
 export * from './useService';
 export * from './useServiceBalances';
 export * from './useServiceDeployment';

@@ -7,6 +7,7 @@ import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRef
 import { useIsAgentGeoRestricted } from '@/hooks/useIsAgentGeoRestricted';
 import { useIsInitiallyFunded } from '@/hooks/useIsInitiallyFunded';
 import { useOnlineStatusContext } from '@/hooks/useOnlineStatus';
+import { useRunsInsideEvictionWindow } from '@/hooks/useRunsInsideEvictionWindow';
 import { useServices } from '@/hooks/useServices';
 import { useSharedContext } from '@/hooks/useSharedContext';
 import { useActiveStakingContractDetails } from '@/hooks/useStakingContractDetails';
@@ -52,6 +53,7 @@ export const useDeployability = ({
   const {
     isAgentEvicted,
     isEligibleForStaking,
+    evictionExpiresAt,
     isServiceStaked,
     hasEnoughServiceSlots,
     isSelectedStakingContractDetailsLoading,
@@ -61,6 +63,12 @@ export const useDeployability = ({
   const { isAgentGeoRestricted, isGeoLoading } = useIsAgentGeoRestricted({
     agentType: selectedAgentType,
     agentConfig: selectedAgentConfig,
+  });
+
+  const runsEvicted = useRunsInsideEvictionWindow({
+    isAgentEvicted,
+    canRunWhileEvicted: selectedAgentConfig.canRunWhileEvicted,
+    evictionExpiresAt,
   });
 
   const selectedServiceConfigId = selectedService?.service_config_id;
@@ -160,12 +168,16 @@ export const useDeployability = ({
 
     // If not enough service slots, and service is not staked
     const hasSlot = !isNil(hasEnoughServiceSlots) && !hasEnoughServiceSlots;
-    if (hasSlot && !isServiceStaked) {
+    if (hasSlot && !isServiceStaked && !runsEvicted) {
       return { isLoading, canRun: false, reason: 'No available slots' };
     }
 
-    // If was evicted and can't re-stake
-    if (isAgentEvicted && !isEligibleForStaking) {
+    // If was evicted and can't re-stake; an agent that can run evicted still redeems
+    if (
+      isAgentEvicted &&
+      !isEligibleForStaking &&
+      !selectedAgentConfig.canRunWhileEvicted
+    ) {
       return { isLoading, canRun: false, reason: 'Evicted' };
     }
 
@@ -196,7 +208,9 @@ export const useDeployability = ({
     isInitialFunded,
     isLoading,
     isServiceStaked,
+    runsEvicted,
     safeEligibility,
+    selectedAgentConfig.canRunWhileEvicted,
     selectedAgentConfig.isGeoLocationRestricted,
     selectedAgentConfig.isPhasedOut,
     selectedAgentConfig.isUnderConstruction,

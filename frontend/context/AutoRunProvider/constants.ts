@@ -254,3 +254,7 @@ export const ELIGIBILITY_LOADING_REASON = {
  * started in degraded mode when no rewarded candidate is startable.
  */
 export const EMPTY_REWARD_POOL_REASON = 'Staking contract reward pool is empty';
+
+export const HAND_OVER_NOTIFICATION_BODY = 'Moving to next agent.';
+
+export const NO_MARKETS_LEFT_HAND_OVER_BODY = `No markets left to trade this epoch. ${HAND_OVER_NOTIFICATION_BODY}`;

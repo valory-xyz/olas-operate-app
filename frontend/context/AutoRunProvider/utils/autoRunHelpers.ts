@@ -8,12 +8,17 @@ import { ActivityGoal, StakingRewardsInfo, StakingState } from '@/types';
 import {
   deriveIsActivityGoalMet,
   deriveIsDoneForEpoch,
+  deriveIsNoMarketsLeft,
+  deriveIsNoMarketsStandby,
   isActivityGoalCurrent,
   parseActivityGoal,
 } from '@/utils/activityGoal';
 import { sleepAwareDelay } from '@/utils/delay';
 import { isValidServiceId } from '@/utils/service';
-import { isNoStakingProgram } from '@/utils/stakingProgram';
+import {
+  isNoStakingProgram,
+  runsInsideEvictionWindow,
+} from '@/utils/stakingProgram';
 import {
   deriveIsEpochTargetMet,
   fetchAgentStakingRewardsInfo,
@@ -58,10 +63,34 @@ export const isStakingEpochExpired = ({
   }
 };
 
+/** The goal fields of a `RewardSnapshot`, for every writer and `isSnapshotGoal`. */
+export const snapshotGoalFields = (
+  goal: ActivityGoal | null,
+  tsCheckpoint: number,
+): Pick<
+  RewardSnapshot,
+  | 'goalUnit'
+  | 'goalTarget'
+  | 'goalPeriodStart'
+  | 'noMarketsLeft'
+  | 'noMarketsStandby'
+> => ({
+  goalUnit: goal?.unit ?? null,
+  goalTarget: goal?.target ?? null,
+  goalPeriodStart: goal?.period_start ?? null,
+  ...(deriveIsNoMarketsLeft(goal, tsCheckpoint) ? { noMarketsLeft: true } : {}),
+  ...(deriveIsNoMarketsStandby(goal, tsCheckpoint)
+    ? { noMarketsStandby: true }
+    : {}),
+});
+
 const isSnapshotGoal = (snapshot: RewardSnapshot, goal: ActivityGoal | null) =>
   snapshot.goalUnit === (goal?.unit ?? null) &&
   snapshot.goalTarget === (goal?.target ?? null) &&
-  snapshot.goalPeriodStart === (goal?.period_start ?? null);
+  snapshot.goalPeriodStart === (goal?.period_start ?? null) &&
+  // any change in no markets left changes done, with or without the KPI
+  !!snapshot.noMarketsLeft ===
+    deriveIsNoMarketsLeft(goal, snapshot.tsCheckpoint);
 
 /**
  * A working agent may finish at any time, so a stored `false` goes stale far
@@ -123,10 +152,11 @@ const formatGoalForLog = (
   if (!read) return 'goal=unread';
   if (!read.ok) return 'goal=unavailable';
   if (!read.goal) return 'goal=none';
-  const { progress, target, is_met } = read.goal;
+  const { progress, target, is_met, no_markets_left } = read.goal;
   return (
     `goal=${progress}/${target} goalMet=${is_met} ` +
-    `goalCurrent=${isActivityGoalCurrent(read.goal, periodStartFloor)}`
+    `goalCurrent=${isActivityGoalCurrent(read.goal, periodStartFloor)}` +
+    (no_markets_left ? ' noMarketsLeft=true' : '')
   );
 };
 
@@ -220,7 +250,8 @@ const NO_EPOCH: Pick<RewardSnapshot, 'tsCheckpoint' | 'livenessPeriod'> = {
  * Fetch whether an instance is done for the epoch, throttled per serviceConfigId.
  *
  * "Done" is the same rule for every agent: the staking KPI is met (or the
- * agent has no staking), and its activity goal block is current and met. An
+ * agent has no staking), and its activity goal block is current and met; or
+ * a current block reports no market left to try, with or without the KPI. An
  * unreadable goal leaves a staking agent whose KPI is met unknown, and Connect
  * not done. Only the freshness of the block differs:
  * a staking agent's must belong to the current epoch, Connect's must come from
@@ -302,9 +333,7 @@ export const refreshRewardsEligibility = async ({
       readAt: Date.now(),
       stakingProgramId,
       ...epoch,
-      goalUnit: goal?.unit ?? null,
-      goalTarget: goal?.target ?? null,
-      goalPeriodStart: goal?.period_start ?? null,
+      ...snapshotGoalFields(goal, epoch.tsCheckpoint),
       ...(stalled ? { stalled: true } : {}),
     });
     return done;
@@ -429,39 +458,44 @@ export const refreshRewardsEligibility = async ({
 
   const epochExpired = isStakingEpochExpired(response);
 
-  // The agent's own activity goal is the second half of "done", so it is only
-  // read once the staking KPI is met. An unreadable report leaves "done"
-  // unknown: a failure must neither override a met goal nor fake a
-  // false → true rotation.
-  let goalRead: ActivityGoalRead | undefined;
-  let doneForEpoch: boolean | undefined = false;
-  let isStalled = false;
-  if (epochTargetMet) {
-    goalRead = await readActivityGoal(
-      serviceConfigId,
-      logMessage,
-      onRewardsFetchError,
-    );
-    if (goalRead.ok) {
-      isStalled = updateStallClock(stallClockRef.current, serviceConfigId, {
-        isRunning,
-        epochTargetMet,
-        goal: goalRead.goal,
-        tsCheckpoint: response.tsCheckpoint,
-        nowMs: Date.now(),
-      });
-    }
-    doneForEpoch = goalRead.ok
-      ? deriveIsDoneForEpoch(
-          epochTargetMet,
-          goalRead.goal,
-          response.tsCheckpoint,
-          isStalled,
-        )
+  // The goal is read once the staking KPI is met, and before it only for an
+  // agent that can report no markets left, which decides done without the KPI.
+  // Once the KPI is met, an unreadable report leaves "done" unknown: a failure
+  // must neither override a met goal nor fake a false → true rotation. Before
+  // it, a failed read leaves the agent working, unless it was already done in
+  // this epoch, which only no markets left can make it; then that verdict is
+  // kept.
+  const readsGoalBeforeKpi = !!meta.agentConfig.canReportNoMarketsLeft;
+  const goalRead =
+    epochTargetMet || readsGoalBeforeKpi
+      ? await readActivityGoal(serviceConfigId, logMessage, onRewardsFetchError)
       : undefined;
-  } else {
+  let isStalled = false;
+  if (epochTargetMet && goalRead?.ok) {
+    isStalled = updateStallClock(stallClockRef.current, serviceConfigId, {
+      isRunning,
+      epochTargetMet,
+      goal: goalRead.goal,
+      tsCheckpoint: response.tsCheckpoint,
+      nowMs: Date.now(),
+    });
+  } else if (!epochTargetMet) {
     // Time before the staking KPI is met never counts toward a stall.
     delete stallClockRef.current[serviceConfigId];
+  }
+  const wasDoneThisEpoch =
+    !!snapshot?.done && snapshot.tsCheckpoint === response.tsCheckpoint;
+  let doneForEpoch: boolean | undefined =
+    epochTargetMet || (readsGoalBeforeKpi && wasDoneThisEpoch)
+      ? undefined
+      : false;
+  if (goalRead?.ok) {
+    doneForEpoch = deriveIsDoneForEpoch(
+      epochTargetMet,
+      goalRead.goal,
+      response.tsCheckpoint,
+      isStalled,
+    );
   }
 
   // Decision inputs — one line per evaluation (throttled to REWARDS_POLL_SECONDS),
@@ -625,6 +659,11 @@ export type DeployabilityCheckResult = {
   isAgentEvicted?: boolean;
   /** true → the eviction can be cleared by re-staking, i.e. past `minimumStakingDuration`. */
   isEligibleAfterEviction?: boolean;
+  /**
+   * true → the only thing blocking this agent is an eviction it cannot clear
+   * yet, and its config lets it run evicted (see the scanner's fallbacks).
+   */
+  isEvictedRunnable?: boolean;
 };
 
 /**
@@ -708,6 +747,8 @@ const runDeployabilityChecks = async (
   // guarantees every other gate passed — which is what lets the scanner start
   // such an agent in degraded mode without re-running the remaining checks.
   let availableRewards: number | undefined;
+  // An agent that can run evicted is still held to the setup and balance gates.
+  let isEvictedRunnable = false;
 
   // 4. On-chain staking state via direct API calls (same endpoints as
   //    StakingContractDetailsProvider, but for any service, not just selected).
@@ -749,26 +790,35 @@ const runDeployabilityChecks = async (
           ? null
           : serviceIds.length < maxNumServices;
 
-      if (hasEnoughServiceSlots === false && !isServiceStaked) {
+      const isEligibleAfterEviction =
+        !isNil(serviceStakingStartTime) &&
+        !isNil(minimumStakingDuration) &&
+        Math.round(Date.now() / 1000) - serviceStakingStartTime >=
+          minimumStakingDuration;
+      isEvictedRunnable =
+        isAgentEvicted &&
+        !isEligibleAfterEviction &&
+        !!agentMeta.agentConfig.canRunWhileEvicted;
+      const runsEvicted = runsInsideEvictionWindow({
+        isAgentEvicted,
+        canRunWhileEvicted: agentMeta.agentConfig.canRunWhileEvicted,
+        evictionExpiresAt:
+          isNil(serviceStakingStartTime) || isNil(minimumStakingDuration)
+            ? 0
+            : serviceStakingStartTime + minimumStakingDuration,
+        nowSeconds: Math.round(Date.now() / 1000),
+      });
+
+      if (hasEnoughServiceSlots === false && !isServiceStaked && !runsEvicted) {
         return { canRun: false, reason: 'No available slots' };
       }
 
+      evictionFacts.isAgentEvicted = isAgentEvicted;
       if (isAgentEvicted) {
-        const isEligibleAfterEviction = (() => {
-          if (isNil(serviceStakingStartTime) || isNil(minimumStakingDuration))
-            return false;
-          return (
-            Math.round(Date.now() / 1000) - serviceStakingStartTime >=
-            minimumStakingDuration
-          );
-        })();
-        evictionFacts.isAgentEvicted = true;
         evictionFacts.isEligibleAfterEviction = isEligibleAfterEviction;
-        if (!isEligibleAfterEviction) {
+        if (!isEligibleAfterEviction && !isEvictedRunnable) {
           return { canRun: false, reason: 'Evicted' };
         }
-      } else {
-        evictionFacts.isAgentEvicted = false;
       }
     } catch (error) {
       ctx.logMessage(
@@ -799,6 +849,11 @@ const runDeployabilityChecks = async (
   }
   if (!ctx.allowStartAgentByServiceConfigId(agentMeta.serviceConfigId)) {
     return { canRun: false, reason: 'Low balance' };
+  }
+
+  // An evicted agent earns nothing, so an empty pool does not matter to it.
+  if (isEvictedRunnable) {
+    return { canRun: false, reason: 'Evicted', isEvictedRunnable: true };
   }
 
   // 7. Empty staking reward pool — evaluated last so this reason is only ever

@@ -123,11 +123,13 @@ The hook evaluates conditions in priority order. The first failing condition det
 6. isAnotherAgentRunning
    → canRun: false, reason: 'Another agent running'
 
-7. hasEnoughServiceSlots === false && !isServiceStaked
+7. hasEnoughServiceSlots === false && !isServiceStaked && !runsEvicted
    → canRun: false, reason: 'No available slots'
+   (`runsEvicted` = `runsInsideEvictionWindow`: evicted, `canRunWhileEvicted`, and more than `EVICTION_RUN_START_MARGIN_SECONDS` (30 min) of the eviction left; such a run does not re-stake, so it needs no slot. Closer to the end, a start could cross into a re-stake, so the slot check applies)
 
-8. isAgentEvicted && !isEligibleForStaking
+8. isAgentEvicted && !isEligibleForStaking && !selectedAgentConfig.canRunWhileEvicted
    → canRun: false, reason: 'Evicted'
+   (an agent that can run evicted, Omenstrat, keeps going: it redeems; see autorun.md §3.6)
 
 9. isAgentsFunFieldUpdateRequired
    → canRun: false, reason: 'Update required'

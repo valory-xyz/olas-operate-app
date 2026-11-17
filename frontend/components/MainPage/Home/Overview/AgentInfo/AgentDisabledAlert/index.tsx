@@ -24,6 +24,7 @@ import {
   useMasterWalletContext,
   usePageState,
   usePrestartCheck,
+  useRunsInsideEvictionWindow,
   useServices,
   useStakingProgram,
 } from '@/hooks';
@@ -59,6 +60,7 @@ export const AgentDisabledAlert = () => {
     isSelectedStakingContractDetailsLoading,
     isAgentEvicted,
     isEligibleForStaking,
+    evictionExpiresAt,
     hasEnoughServiceSlots,
     isServiceStaked,
     selectedStakingContractDetails,
@@ -87,6 +89,12 @@ export const AgentDisabledAlert = () => {
   const { isAgentGeoRestricted } = useIsAgentGeoRestricted({
     agentType: selectedAgentType,
     agentConfig: selectedAgentConfig,
+  });
+
+  const runsEvicted = useRunsInsideEvictionWindow({
+    isAgentEvicted,
+    canRunWhileEvicted: selectedAgentConfig.canRunWhileEvicted,
+    evictionExpiresAt,
   });
 
   const isServiceRunning =
@@ -175,7 +183,8 @@ export const AgentDisabledAlert = () => {
     if (
       !isSelectedStakingContractDetailsLoading &&
       isServiceStaked === false &&
-      hasEnoughServiceSlots === false
+      hasEnoughServiceSlots === false &&
+      !runsEvicted
     ) {
       return { key: 'no-slots', content: <NoSlotsAvailableAlert /> };
     }
@@ -184,11 +193,12 @@ export const AgentDisabledAlert = () => {
     // load, `hasEnoughRewardsAndSlots` can be nil, which forces
     // `isEligibleForStaking` false and would flash the un-recoverable eviction
     // copy (with a date) at someone whose agent can actually re-stake now.
-    if (
+    const isEvictionLocked =
       !isSelectedStakingContractDetailsLoading &&
       isAgentEvicted &&
-      !isEligibleForStaking
-    ) {
+      !isEligibleForStaking;
+    // An agent that can run evicted keeps its funding alerts under the banner.
+    if (isEvictionLocked && !selectedAgentConfig.canRunWhileEvicted) {
       return { key: 'evicted', content: <EvictedAlert /> };
     }
 
@@ -201,10 +211,11 @@ export const AgentDisabledAlert = () => {
 
     // NOTE: Low-balance alerts, each component controls its own visibility.
     return {
-      key: 'low-balance',
+      key: isEvictionLocked ? 'evicted' : 'low-balance',
       content: (
         <>
-          {hasNoStakingRewards && (
+          {isEvictionLocked && <EvictedAlert />}
+          {!isEvictionLocked && hasNoStakingRewards && (
             <NoStakingRewardsAlert
               className="mt-16"
               onSwitch={() => goto(PAGES.SelectStaking)}
@@ -238,6 +249,7 @@ export const AgentDisabledAlert = () => {
     isSelectedStakingContractDetailsLoading,
     isServiceRunning,
     isServiceStaked,
+    runsEvicted,
     prestartCheck,
     runningAgentIssues,
     selectedAgentConfig,

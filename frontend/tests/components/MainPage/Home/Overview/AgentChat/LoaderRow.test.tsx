@@ -164,6 +164,29 @@ describe('LoaderRow', () => {
       expect(screen.getByText('Agent is loading')).toBeInTheDocument();
     });
 
+    it.each([
+      [
+        'loading while it starts',
+        { isAgentStarting: true },
+        'Agent is loading',
+      ],
+      [
+        'not running once stopped',
+        { isAgentActive: false },
+        'Agent is not running',
+      ],
+    ] as const)(
+      'says %s rather than the no-markets standby',
+      (_, setup, text) => {
+        renderRow({ ...setup, workStatus: 'no-markets-standby' });
+
+        expect(screen.getByText(text)).toBeInTheDocument();
+        expect(
+          screen.queryByText('Agent is in standby until the next epoch'),
+        ).toBeNull();
+      },
+    );
+
     it('shows Thinking... over the starting state while a reply is pending', () => {
       renderRow({ isAgentStarting: true, isPending: true });
 
@@ -194,7 +217,33 @@ describe('LoaderRow', () => {
       expect(
         screen.getByText('Standby until the next epoch'),
       ).toBeInTheDocument();
+      expect(screen.getAllByTestId('badges-tooltip')).toHaveLength(1);
     });
+
+    it.each([
+      ['after earning the rewards', true],
+      ['with no market from the epoch start', false],
+    ])(
+      'explains the standby when no market is left to trade, %s',
+      (_, isEpochTargetMet) => {
+        renderRow({ workStatus: 'no-markets-standby', isEpochTargetMet });
+
+        expect(
+          screen.getByText('Agent is in standby until the next epoch'),
+        ).toBeInTheDocument();
+        expect(
+          screen.getByText(
+            'No markets are left to trade in this epoch. If you keep the agent running, it collects winnings and tries again at the start of the next epoch.',
+          ),
+        ).toBeInTheDocument();
+        expect(screen.queryByText('Standby until the next epoch')).toBeNull();
+        const badges = screen.getAllByTestId(/badge-/);
+        expect(badges.map((badge) => badge.dataset.testid)).toEqual([
+          isEpochTargetMet ? 'badge-done' : 'badge-pending',
+          'badge-pending',
+        ]);
+      },
+    );
 
     it('says the agent is not running when it stopped on its own', () => {
       renderRow({ isAgentActive: false });
@@ -249,6 +298,11 @@ describe('LoaderRow', () => {
     ['grey', { isAgentActive: false }, COLOR.NEUTRAL_4],
     ['purple', {}, COLOR.PURPLE],
     ['purple starting', { isAgentStarting: true }, COLOR.PURPLE],
+    [
+      'grey no-markets standby',
+      { workStatus: 'no-markets-standby' },
+      COLOR.NEUTRAL_4,
+    ],
   ] as const)(
     'draws the %s dot icon as 5×5 whole dots',
     (_, setup, dotColor) => {

@@ -5,6 +5,7 @@ import { AgentType } from '@/constants';
 import { Service } from '@/types';
 import { getServiceInstanceName, matchesAgentConfig } from '@/utils/service';
 
+import { HAND_OVER_NOTIFICATION_BODY } from '../constants';
 import { AgentMeta, IncludedAgentInstance } from '../types';
 
 /**
@@ -41,13 +42,13 @@ export const notifyStartFailed = (
 ) => {
   showNotification?.(
     `Failed to start ${agentDisplayName} agent "${instanceName}"`,
-    'Moving to next agent.',
+    HAND_OVER_NOTIFICATION_BODY,
   );
 };
 
 /**
- * Desktop notification when a no-staking agent (Connect) completed its run and
- * Auto-run hands the turn to the next agent.
+ * Desktop notification when an agent finished its run and Auto-run hands the
+ * turn to the next agent (when it is sent: `rotateToNext`).
  *
  * @example notifyGoalReached(show, "Connect", "connect-polygon")
  * // → title: 'Connect agent "connect-polygon" finished its run'
@@ -57,10 +58,11 @@ export const notifyGoalReached = (
   showNotification: ((title: string, body?: string) => void) | undefined,
   agentDisplayName: string,
   instanceName: string,
+  body = HAND_OVER_NOTIFICATION_BODY,
 ) => {
   showNotification?.(
     `${agentDisplayName} agent "${instanceName}" finished its run`,
-    'Moving to next agent.',
+    body,
   );
 };
 

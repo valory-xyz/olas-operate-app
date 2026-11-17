@@ -1,10 +1,13 @@
 import { renderHook } from '@testing-library/react';
 
+import { AGENT_CONFIG } from '../../config/agents';
+import { AgentMap } from '../../constants/agent';
 import { useActivityGoal } from '../../hooks/useActivityGoal';
 import { useEpochWorkStatus } from '../../hooks/useEpochWorkStatus';
 import { useRewardContext } from '../../hooks/useRewardContext';
 import { useServices } from '../../hooks/useServices';
 import { ActivityGoal } from '../../types/Agent';
+import { deriveIsDoneForEpoch } from '../../utils/activityGoal';
 import {
   DEFAULT_SERVICE_CONFIG_ID,
   DEFAULT_TS_CHECKPOINT,
@@ -59,6 +62,7 @@ describe('useEpochWorkStatus', () => {
       selectedService: makeService({
         service_config_id: DEFAULT_SERVICE_CONFIG_ID,
       }),
+      selectedAgentConfig: AGENT_CONFIG[AgentMap.PredictTrader],
     });
   });
 
@@ -153,5 +157,73 @@ describe('useEpochWorkStatus', () => {
     const status = setup({ isEpochTargetMet: true, hasRewardsDetails: false });
     expect(status.workStatus).toBeUndefined();
     expect(status.isDoneForEpoch).toBeUndefined();
+  });
+
+  describe('no market left to try', () => {
+    const noMarkets = makeActivityGoal({ no_markets_left: true });
+
+    it.each([true, false])(
+      'is standby with staking KPI met=%s',
+      (isEpochTargetMet) => {
+        expect(setup({ isEpochTargetMet, activityGoal: noMarkets })).toEqual({
+          isDoneForEpoch: true,
+          workStatus: 'no-markets-standby',
+        });
+      },
+    );
+
+    it('stays working before the staking KPI for an agent that cannot report no markets left', () => {
+      mockUseServices.mockReturnValue({
+        selectedService: makeService({
+          service_config_id: DEFAULT_SERVICE_CONFIG_ID,
+        }),
+        selectedAgentConfig: AGENT_CONFIG[AgentMap.Polystrat],
+      });
+
+      expect(
+        setup({ isEpochTargetMet: false, activityGoal: noMarkets }),
+      ).toEqual({ isDoneForEpoch: false, workStatus: 'working' });
+    });
+
+    it('ignores the flag from an earlier epoch', () => {
+      const status = setup({
+        isEpochTargetMet: false,
+        activityGoal: makeActivityGoal({
+          no_markets_left: true,
+          period_start: DEFAULT_TS_CHECKPOINT - 86_400,
+        }),
+      });
+      expect(status.workStatus).toBe('working');
+    });
+
+    it.each([
+      ['loading', { isLoading: true }],
+      ['unavailable', { isUnavailable: true }],
+    ])('does not read the flag while the goal is %s', (_, state) => {
+      const status = setup({
+        isEpochTargetMet: false,
+        activityGoal: noMarkets,
+        ...state,
+      });
+      expect(status.workStatus).toBe('working');
+    });
+
+    it.each([true, false])(
+      'agrees with deriveIsDoneForEpoch when the goal was also reached, staking KPI met=%s',
+      (isEpochTargetMet) => {
+        const goal = makeActivityGoal({
+          is_met: true,
+          progress: 8,
+          no_markets_left: true,
+        });
+        expect(
+          deriveIsDoneForEpoch(isEpochTargetMet, goal, DEFAULT_TS_CHECKPOINT),
+        ).toBe(true);
+        expect(setup({ isEpochTargetMet, activityGoal: goal })).toEqual({
+          isDoneForEpoch: true,
+          workStatus: 'standby',
+        });
+      },
+    );
   });
 });
