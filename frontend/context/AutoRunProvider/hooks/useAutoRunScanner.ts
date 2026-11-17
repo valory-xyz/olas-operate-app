@@ -72,6 +72,12 @@ type UseAutoRunScannerParams = {
   logMessage: (message: string) => void;
 };
 
+/** Startable now, or deferred to a fallback tier that may still start it. */
+const isStartableOrDeferred = (deployability: DeployabilityCheckResult) =>
+  deployability.canRun ||
+  !!deployability.isEmptyRewardPool ||
+  !!deployability.isEvictedRunnable;
+
 /**
  * Queue-scanning logic for auto-run.
  *
@@ -262,8 +268,11 @@ export const useAutoRunScanner = ({
       // their on-chain work, they just don't earn while the pool is drained.
       // Metas, not ids: the fallback re-validates deployability before starting.
       const emptyPoolCandidates: AgentMeta[] = [];
-      // Candidates moved on from for a stall this epoch: tried last of all.
+      // Candidates moved on from for a stall this epoch.
       const stalledCandidates: AgentMeta[] = [];
+      // Evicted candidates that can only redeem: run like a done agent, only
+      // when nothing else can start, so tried last of all.
+      const evictedCandidates: AgentMeta[] = [];
 
       // Announces the deferred candidates that were genuinely passed over.
       // Deliberately NOT called for candidates that were attempted (those get
@@ -308,7 +317,12 @@ export const useAutoRunScanner = ({
         // Fetch deployability directly without switching UI selection.
         const deployability = await getDeployability(candidateMeta);
         if (!enabledRef.current) return notStarted;
-        if (!deployability.canRun && !deployability.isEmptyRewardPool) {
+        if (deployability.isEvictedRunnable && !isFirst) {
+          passOver(candidate, 'evicted, runs only when no other agent can');
+          evictedCandidates.push(candidateMeta);
+          continue;
+        }
+        if (!isStartableOrDeferred(deployability)) {
           passOver(candidate, deployability.reason);
           if (deployability.isTransient) {
             hasLoading = true;
@@ -325,7 +339,7 @@ export const useAutoRunScanner = ({
           stalledCandidates.push(candidateMeta);
           continue;
         }
-        if (!deployability.canRun && !isFirst) {
+        if (deployability.isEmptyRewardPool && !isFirst) {
           passOver(candidate, deployability.reason);
           emptyPoolCandidates.push(candidateMeta);
           continue;
@@ -373,7 +387,8 @@ export const useAutoRunScanner = ({
 
       // Degraded mode: no rewarded candidate could be started, so fall back to
       // the instances deferred for an empty reward pool instead of idling,
-      // then to stalled ones, which run again with a fresh hour. Without this,
+      // then to stalled ones, which run again with a fresh hour, then to
+      // evicted ones that can still redeem. Without this,
       // a user whose agents all sit on drained contracts would have auto-run
       // start nothing at all.
       if (emptyPoolCandidates.length > 0) {
@@ -389,6 +404,7 @@ export const useAutoRunScanner = ({
       const fallbacks = [
         ...emptyPoolCandidates.map((meta) => ({ meta, isStalled: false })),
         ...stalledCandidates.map((meta) => ({ meta, isStalled: true })),
+        ...evictedCandidates.map((meta) => ({ meta, isStalled: false })),
       ];
       for (const { meta, isStalled } of fallbacks) {
         const deferred = meta.serviceConfigId;
@@ -400,7 +416,7 @@ export const useAutoRunScanner = ({
         // slots and eviction state can all have moved since the main loop.
         const recheck = await getDeployability(meta);
         if (!enabledRef.current) return notStarted;
-        if (!recheck.canRun && !recheck.isEmptyRewardPool) {
+        if (!isStartableOrDeferred(recheck)) {
           passOver(deferred, recheck.reason);
           if (recheck.isTransient) {
             hasLoading = true;
@@ -432,9 +448,17 @@ export const useAutoRunScanner = ({
               `scan: started stalled ${deferred}, no other agent could start`,
             );
             clearStallDeferral(deferred);
-          } else {
+          } else if (recheck.isEvictedRunnable) {
+            logVerbose(
+              `scan: started evicted ${deferred} to redeem, no other agent could start`,
+            );
+          } else if (recheck.isEmptyRewardPool) {
             logVerbose(
               `scan: started ${deferred} in degraded mode (empty reward pool)`,
+            );
+          } else {
+            logVerbose(
+              `scan: started deferred ${deferred}, no other agent could start`,
             );
           }
           notifyEmptyPoolSkips(passedOver);
@@ -551,10 +575,13 @@ export const useAutoRunScanner = ({
         scheduleNextScan(SCAN_LOADING_RETRY_SECONDS);
         return false;
       }
-      // Empty pool is deferred, not notified, here: the caller falls through to
-      // `scanAndStartNext`, which may still start this instance in degraded
-      // mode. Notifying now would announce a skip that never happens.
-      if (!fastPathDeployability.isEmptyRewardPool) {
+      // Empty pool and a runnable eviction are deferred, not notified, here:
+      // the caller falls through to `scanAndStartNext`, which may still start
+      // this instance. Notifying now would announce a skip that never happens.
+      if (
+        !fastPathDeployability.isEmptyRewardPool &&
+        !fastPathDeployability.isEvictedRunnable
+      ) {
         notifySkipOnce(
           selectedServiceConfigId,
           fastPathDeployability.reason,

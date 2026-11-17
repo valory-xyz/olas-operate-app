@@ -8,6 +8,7 @@ import {
   AUTO_RUN_HEALTH_METRIC,
   AUTO_RUN_START_STATUS,
   COOLDOWN_SECONDS,
+  NO_MARKETS_LEFT_HAND_OVER_BODY,
   RUNNING_AGENT_ELIGIBILITY_CHECK_SECONDS,
   RUNNING_AGENT_MAX_RUNTIME_SECONDS,
   RUNNING_AGENT_WATCHDOG_CHECK_SECONDS,
@@ -66,6 +67,7 @@ const makeHookParams = (
   hasScheduledScan: jest.fn().mockReturnValue(false),
   refreshRewardsEligibility: jest.fn().mockResolvedValue(false),
   isStalled: jest.fn().mockReturnValue(false),
+  isNoMarketsStandby: jest.fn().mockReturnValue(false),
   restartStallClock: jest.fn(),
   deferStalled: jest.fn(),
   isStallDeferred: jest.fn().mockReturnValue(false),
@@ -675,6 +677,74 @@ describe('useAutoRunLifecycle', () => {
       expect(params.stopAgentWithRecovery).toHaveBeenCalledWith(scTrader);
     });
 
+    describe('Omenstrat with no market left to try', () => {
+      const makeIdleTraderParams = (
+        overrides: Partial<Parameters<typeof useAutoRunLifecycle>[0]> = {},
+      ) =>
+        makeHookParams({
+          enabled: true,
+          enabledRef: { current: true },
+          runningAgentType: AgentMap.PredictTrader,
+          runningServiceConfigId: scTrader,
+          runningAgentTypeRef: { current: AgentMap.PredictTrader },
+          runningServiceConfigIdRef: { current: scTrader },
+          orderedIncludedInstances: [scTrader, scConnect],
+          configuredAgents: [connectMeta, traderMeta],
+          lastRewardsEligibilityRef: {
+            current: { [scTrader]: false } as Partial<
+              Record<string, boolean | undefined>
+            >,
+          },
+          refreshRewardsEligibility: jest
+            .fn()
+            .mockImplementation(async (id: string) => id === scTrader),
+          isNoMarketsStandby: jest
+            .fn()
+            .mockImplementation((id: string) => id === scTrader),
+          ...overrides,
+        });
+
+      it('hands over with the no-markets notification', async () => {
+        const params = makeIdleTraderParams();
+
+        renderHook(() => useAutoRunLifecycle(params));
+        await flush();
+
+        expect(params.stopAgentWithRecovery).toHaveBeenCalledWith(scTrader);
+        expect(params.notifyGoalReachedOnHandOver).toHaveBeenCalledTimes(1);
+        expect(params.notifyGoalReachedOnHandOver).toHaveBeenCalledWith(
+          scTrader,
+          NO_MARKETS_LEFT_HAND_OVER_BODY,
+        );
+      });
+
+      it('sends no notification when it keeps running for lack of an alternate', async () => {
+        const params = makeIdleTraderParams({
+          getHandOverDeployability: jest
+            .fn()
+            .mockResolvedValue({ canRun: false, reason: 'Low balance' }),
+        });
+
+        renderHook(() => useAutoRunLifecycle(params));
+        await flush();
+
+        expect(params.stopAgentWithRecovery).not.toHaveBeenCalled();
+        expect(params.notifyGoalReachedOnHandOver).not.toHaveBeenCalled();
+      });
+
+      it('sends no notification for an agent done by its goal', async () => {
+        const params = makeIdleTraderParams({
+          isNoMarketsStandby: jest.fn().mockReturnValue(false),
+        });
+
+        renderHook(() => useAutoRunLifecycle(params));
+        await flush();
+
+        expect(params.stopAgentWithRecovery).toHaveBeenCalledWith(scTrader);
+        expect(params.notifyGoalReachedOnHandOver).not.toHaveBeenCalled();
+      });
+    });
+
     it('hands Connect over to a runnable alternate with one notification', async () => {
       const params = makeConnectRunningParams();
 
@@ -698,6 +768,7 @@ describe('useAutoRunLifecycle', () => {
       );
       expect(params.notifyGoalReachedOnHandOver).toHaveBeenCalledWith(
         scConnect,
+        undefined,
       );
     });
 
@@ -1887,6 +1958,47 @@ describe('useAutoRunLifecycle', () => {
         scTrader,
         expect.objectContaining({ first: scOptimus, trigger: 'eviction' }),
       );
+    });
+
+    it('sends no no-markets notification on a forced eviction hand-over', async () => {
+      const params = makeRunningParams({
+        getDeployabilityForRunningInstance: jest.fn().mockResolvedValue({
+          canRun: false,
+          reason: 'Evicted',
+          isAgentEvicted: true,
+          isEligibleAfterEviction: false,
+          isEvictedRunnable: true,
+        }),
+        refreshRewardsEligibility: jest.fn().mockResolvedValue(false),
+        isNoMarketsStandby: jest.fn().mockReturnValue(true),
+      });
+
+      await runOneCheck(params);
+
+      expect(params.stopAgentWithRecovery).toHaveBeenCalledWith(scTrader);
+      expect(params.notifyGoalReachedOnHandOver).not.toHaveBeenCalled();
+    });
+
+    it('keeps an evicted agent running when no other agent can start', async () => {
+      const params = makeRunningParams({
+        getDeployabilityForRunningInstance: jest.fn().mockResolvedValue({
+          canRun: false,
+          reason: 'Evicted',
+          isAgentEvicted: true,
+          isEligibleAfterEviction: false,
+          isEvictedRunnable: true,
+        }),
+        getHandOverDeployability: jest.fn().mockResolvedValue({
+          canRun: false,
+          reason: 'Evicted',
+          isEvictedRunnable: true,
+        }),
+        refreshRewardsEligibility: jest.fn().mockResolvedValue(false),
+      });
+
+      await runOneCheck(params);
+
+      expect(params.stopAgentWithRecovery).not.toHaveBeenCalled();
     });
 
     it('ignores a transient staking read', async () => {

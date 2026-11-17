@@ -1429,6 +1429,184 @@ describe('useAutoRunScanner', () => {
     });
   });
 
+  describe('scanAndStartNext — evicted candidates that can only redeem', () => {
+    const evictedRunnable = () => ({
+      canRun: false,
+      reason: 'Evicted',
+      isAgentEvicted: true,
+      isEligibleAfterEviction: false,
+      isEvictedRunnable: true,
+    });
+
+    it('starts any other runnable candidate first, without a skip notification', async () => {
+      const params = makeHookParams({
+        getDeployabilityForAgent: deployabilityById({
+          [scOptimus]: evictedRunnable(),
+        }),
+      });
+      const { result } = renderHook(() => useAutoRunScanner(params));
+
+      let scanResult: ScanResult | undefined;
+      await act(async () => {
+        scanResult = await result.current.scanAndStartNext(scTrader);
+      });
+      expect(scanResult?.startedId).toBe(scPolystrat);
+      expect(params.startAgentWithRetries).not.toHaveBeenCalledWith(
+        scOptimus,
+        expect.anything(),
+      );
+      expect(params.notifySkipOnce).not.toHaveBeenCalled();
+    });
+
+    it('starts it only after normal, empty-pool and stalled candidates failed', async () => {
+      const params = makeHookParams({
+        isStallDeferred: jest.fn((id: string) => id === scTrader),
+        getDeployabilityForAgent: deployabilityById({
+          [scOptimus]: evictedRunnable(),
+          [scPolystrat]: emptyPool(),
+        }),
+        startAgentWithRetries: jest
+          .fn()
+          // polystrat (empty pool) and trader (stalled) fail; optimus starts.
+          .mockResolvedValueOnce({
+            status: AUTO_RUN_START_STATUS.INFRA_FAILED,
+          })
+          .mockResolvedValueOnce({
+            status: AUTO_RUN_START_STATUS.INFRA_FAILED,
+          })
+          .mockResolvedValue({ status: AUTO_RUN_START_STATUS.STARTED }),
+      });
+      const { result } = renderHook(() => useAutoRunScanner(params));
+
+      let scanResult: ScanResult | undefined;
+      await act(async () => {
+        scanResult = await result.current.scanAndStartNext(scTrader);
+      });
+      expect(scanResult?.startedId).toBe(scOptimus);
+      expect(
+        (params.startAgentWithRetries as jest.Mock).mock.calls.map(
+          ([id]) => id,
+        ),
+      ).toEqual([scPolystrat, scTrader, scOptimus]);
+      expect(params.logMessage).toHaveBeenCalledWith(
+        `scan: started evicted ${scOptimus} to redeem, no other agent could start`,
+      );
+    });
+
+    it('keeps an evicted, stall-deferred candidate in the evicted tier', async () => {
+      const params = makeHookParams({
+        isStallDeferred: jest.fn((id: string) => id === scOptimus),
+        getDeployabilityForAgent: deployabilityById({
+          [scOptimus]: evictedRunnable(),
+          [scPolystrat]: emptyPool(),
+          [scTrader]: { canRun: false, reason: 'Low balance' },
+        }),
+        startAgentWithRetries: jest
+          .fn()
+          // polystrat (empty pool) fails; optimus (evicted) starts.
+          .mockResolvedValueOnce({
+            status: AUTO_RUN_START_STATUS.INFRA_FAILED,
+          })
+          .mockResolvedValue({ status: AUTO_RUN_START_STATUS.STARTED }),
+      });
+      const { result } = renderHook(() => useAutoRunScanner(params));
+
+      await act(async () => {
+        await result.current.scanAndStartNext(scTrader);
+      });
+      expect(
+        (params.startAgentWithRetries as jest.Mock).mock.calls.map(
+          ([id]) => id,
+        ),
+      ).toEqual([scPolystrat, scOptimus]);
+      expect(params.logMessage).toHaveBeenCalledWith(
+        `scan: started evicted ${scOptimus} to redeem, no other agent could start`,
+      );
+      expect(params.clearStallDeferral).not.toHaveBeenCalled();
+    });
+
+    it('does not start it when the recheck finds it blocked', async () => {
+      let optimusReads = 0;
+      const params = makeHookParams({
+        // optimus is evicted-runnable in the main loop, low on funds by the recheck
+        getDeployabilityForAgent: jest
+          .fn()
+          .mockImplementation(async (meta: { serviceConfigId: string }) =>
+            meta.serviceConfigId === scOptimus && ++optimusReads === 1
+              ? evictedRunnable()
+              : { canRun: false, reason: 'Low balance' },
+          ),
+      });
+      const { result } = renderHook(() => useAutoRunScanner(params));
+
+      let scanResult: ScanResult | undefined;
+      await act(async () => {
+        scanResult = await result.current.scanAndStartNext(scTrader);
+      });
+      expect(scanResult?.startedId).toBeNull();
+      expect(params.startAgentWithRetries).not.toHaveBeenCalled();
+    });
+
+    it('starts it first when the pre-check chose it', async () => {
+      const params = makeHookParams({
+        getDeployabilityForAgent: deployabilityById({
+          [scOptimus]: evictedRunnable(),
+        }),
+      });
+      const { result } = renderHook(() => useAutoRunScanner(params));
+
+      let scanResult: ScanResult | undefined;
+      await act(async () => {
+        scanResult = await result.current.scanAndStartNext(scTrader, {
+          first: scOptimus,
+        });
+      });
+      expect(scanResult?.startedId).toBe(scOptimus);
+    });
+
+    it('logs the start from the recheck, not from the tier it was deferred to', async () => {
+      let optimusReads = 0;
+      const params = makeHookParams({
+        // evicted-runnable in the main loop, re-staked by the recheck
+        getDeployabilityForAgent: jest
+          .fn()
+          .mockImplementation(async (meta: { serviceConfigId: string }) => {
+            if (meta.serviceConfigId !== scOptimus) {
+              return { canRun: false, reason: 'Low balance' };
+            }
+            return ++optimusReads === 1 ? evictedRunnable() : { canRun: true };
+          }),
+      });
+      const { result } = renderHook(() => useAutoRunScanner(params));
+
+      await act(async () => {
+        await result.current.scanAndStartNext(scTrader);
+      });
+      expect(params.logMessage).toHaveBeenCalledWith(
+        `scan: started deferred ${scOptimus}, no other agent could start`,
+      );
+      expect(params.logMessage).not.toHaveBeenCalledWith(
+        expect.stringContaining('started evicted'),
+      );
+    });
+
+    it('defers it on the selected-agent fast path without a notification', async () => {
+      const params = makeHookParams({
+        getDeployabilityForAgent: jest
+          .fn()
+          .mockResolvedValue(evictedRunnable()),
+      });
+      const { result } = renderHook(() => useAutoRunScanner(params));
+
+      let started: boolean | undefined;
+      await act(async () => {
+        started = await result.current.startSelectedAgentIfEligible();
+      });
+      expect(started).toBe(false);
+      expect(params.notifySkipOnce).not.toHaveBeenCalled();
+    });
+  });
+
   describe('scanAndStartNext — stall-deferred fallback', () => {
     // Order from trader: optimus (stall-deferred), then trader (done for the
     // epoch), so only the stalled fallback can start anything.

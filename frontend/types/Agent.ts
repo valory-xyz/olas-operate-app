@@ -143,6 +143,10 @@ export type AgentConfig = {
   hasPerformance: boolean;
   /** Shows the agent chat Overview (header, feed, chat input) instead of today's sections. */
   hasAgentChat?: boolean;
+  /** Can be started while evicted inside its minimum staking period, to redeem. */
+  canRunWhileEvicted?: boolean;
+  /** Its activity goal can report `no_markets_left`, which decides done before the KPI. */
+  canReportNoMarketsLeft?: boolean;
 } & needsOpenProfileEachAgentRun;
 
 type AgentPerformanceMetric = {
@@ -165,6 +169,8 @@ export type ActivityGoal = {
   period_start: number;
   last_met_at: number | null;
   updated_at: number;
+  /** Omenstrat found nothing left to try or redeem in this epoch; absent on older builds. */
+  no_markets_left?: boolean;
 };
 
 export type AgentPerformance = {

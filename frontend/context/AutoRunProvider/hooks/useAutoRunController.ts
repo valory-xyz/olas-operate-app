@@ -95,12 +95,6 @@ export const useAutoRunController = ({
     activityGoal: selectedActivityGoal,
     dataUpdatedAt: selectedActivityGoalReadAt,
   } = useActivityGoal(selectedServiceConfigId);
-  const selectedRewardReadAt = isEpochTargetMet
-    ? Math.min(
-        stakingRewardsDataUpdatedAt ?? 0,
-        selectedActivityGoalReadAt ?? 0,
-      )
-    : (stakingRewardsDataUpdatedAt ?? 0);
   const selectedMeta = useMemo(
     () =>
       configuredAgents.find(
@@ -108,6 +102,17 @@ export const useAutoRunController = ({
       ),
     [configuredAgents, selectedServiceConfigId],
   );
+  // The goal is half of done once the KPI is met; for an agent that can report
+  // no markets left it can decide done before the KPI too. Then the snapshot
+  // is as old as the older read, and nothing is written while the goal is
+  // unread.
+  const selectedRewardReadAt =
+    isEpochTargetMet || selectedMeta?.agentConfig.canReportNoMarketsLeft
+      ? Math.min(
+          stakingRewardsDataUpdatedAt ?? 0,
+          selectedActivityGoalReadAt ?? 0,
+        )
+      : (stakingRewardsDataUpdatedAt ?? 0);
   const isSelectedNoStakingAgent =
     !!selectedMeta && isNoStakingProgram(selectedMeta.stakingProgramId);
   const selectedRewardsEpoch = useMemo(
@@ -215,6 +220,7 @@ export const useAutoRunController = ({
     setRewardSnapshot,
     getObservedGoal,
     isStalled,
+    isNoMarketsStandby,
     restartStallClock,
     deferStalled,
     clearStallDeferral,
@@ -399,6 +405,7 @@ export const useAutoRunController = ({
     hasScheduledScan,
     refreshRewardsEligibility,
     isStalled,
+    isNoMarketsStandby,
     restartStallClock,
     deferStalled,
     isStallDeferred,

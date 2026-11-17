@@ -39,6 +39,9 @@ jest.mock('../../../../../../../hooks', () => ({
   useMasterWalletContext: jest.fn(),
   usePageState: jest.fn(),
   usePrestartCheck: jest.fn(),
+  useRunsInsideEvictionWindow: jest.requireActual(
+    '../../../../../../../hooks/useRunsInsideEvictionWindow',
+  ).useRunsInsideEvictionWindow,
   useServices: jest.fn(),
   useStakingProgram: jest.fn(),
   isPrestartCheckBlocking: jest.requireActual(
@@ -139,6 +142,7 @@ type StakingOverrides = {
   isEligibleForStaking?: boolean;
   hasEnoughServiceSlots?: boolean | null;
   isServiceStaked?: boolean;
+  evictionExpiresAt?: number;
   availableRewards?: number;
 };
 
@@ -282,6 +286,52 @@ describe('AgentDisabledAlert', () => {
       expect(screen.getByText('evicted-locked')).toBeInTheDocument();
       expect(screen.queryByText('low-balance')).not.toBeInTheDocument();
     });
+
+    it('keeps the funding alerts under the banner of an agent that can run evicted', () => {
+      setup({
+        staking: {
+          isAgentEvicted: true,
+          isEligibleForStaking: false,
+          availableRewards: 0,
+        },
+        agentConfig: { canRunWhileEvicted: true },
+      });
+
+      expect(screen.getByText('evicted-locked')).toBeInTheDocument();
+      expect(screen.getByText('low-balance')).toBeInTheDocument();
+      // An evicted agent earns nothing, so an empty pool is not news.
+      expect(screen.queryByText('no-rewards')).not.toBeInTheDocument();
+    });
+
+    it.each([
+      ['evicted with a day left', true, 86_400, 'evicted-locked', 'no-slots'],
+      [
+        'evicted inside the start margin',
+        true,
+        10 * 60,
+        'no-slots',
+        'evicted-locked',
+      ],
+      ['evicted past its window', true, -60, 'no-slots', 'evicted-locked'],
+      ['not evicted', false, 86_400, 'no-slots', 'evicted-locked'],
+    ])(
+      'on a full contract, an agent that can run evicted and is %s shows %s',
+      (_, isAgentEvicted, secondsLeft, shown, hidden) => {
+        setup({
+          staking: {
+            isAgentEvicted,
+            isEligibleForStaking: false,
+            evictionExpiresAt: Math.round(Date.now() / 1000) + secondsLeft,
+            isServiceStaked: false,
+            hasEnoughServiceSlots: false,
+          },
+          agentConfig: { canRunWhileEvicted: true },
+        });
+
+        expect(screen.getByText(shown)).toBeInTheDocument();
+        expect(screen.queryByText(hidden)).not.toBeInTheDocument();
+      },
+    );
 
     // A half-loaded `hasEnoughRewardsAndSlots` forces `isEligibleForStaking`
     // false, which would flash "evicted until <date>" at someone who can

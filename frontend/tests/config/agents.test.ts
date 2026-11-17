@@ -110,6 +110,16 @@ describe('AGENT_CONFIG', () => {
   });
 });
 
+describe('AGENT_CONFIG canRunWhileEvicted', () => {
+  it('lets only Omenstrat run while evicted', () => {
+    const agents = Object.entries(AGENT_CONFIG)
+      .filter(([, config]) => config.canRunWhileEvicted)
+      .map(([agentType]) => agentType);
+
+    expect(agents).toEqual([AgentMap.PredictTrader]);
+  });
+});
+
 describe('AGENT_CONFIG hasAgentChat', () => {
   it('shows the agent chat Overview only for Omenstrat, Polystrat, Optimus and Basius', () => {
     const agentsWithChat = Object.entries(AGENT_CONFIG)

@@ -160,7 +160,11 @@ export const LoaderRow = ({
   const roundsInfo = deploymentDetails?.healthcheck?.rounds_info;
   const canOpenModal = isAgentActive && rounds.length > 0;
 
-  const state = useMemo((): { text: string; tone: Tone } | null => {
+  const state = useMemo((): {
+    text: string;
+    tone: Tone;
+    tooltip?: string;
+  } | null => {
     if (isPending) {
       return {
         text: isStillThinking ? CHAT_COPY.stillThinking : CHAT_COPY.thinking,
@@ -171,6 +175,13 @@ export const LoaderRow = ({
     if (isServiceDeploying) return { text: CHAT_COPY.loading, tone: 'active' };
     if (!isAgentActive) return { text: CHAT_COPY.notRunning, tone: 'still' };
     if (isAgentStarting) return { text: CHAT_COPY.loading, tone: 'active' };
+    if (workStatus === 'no-markets-standby') {
+      return {
+        text: CHAT_COPY.noMarketsStandby,
+        tone: 'still',
+        tooltip: CHAT_COPY.noMarketsStandbyTooltip,
+      };
+    }
     if (workStatus === 'standby') {
       return { text: CHAT_COPY.standby, tone: 'still' };
     }
@@ -210,7 +221,13 @@ export const LoaderRow = ({
       >
         <ActivityDots $tone={state.tone} />
         <RowText $tone={state.tone} className="flex-auto">
-          {state.text}
+          {state.tooltip ? (
+            <Tooltip title={state.tooltip}>
+              <span>{state.text}</span>
+            </Tooltip>
+          ) : (
+            state.text
+          )}
         </RowText>
         {!isMessagesOnly && <RewardBadges />}
       </Row>

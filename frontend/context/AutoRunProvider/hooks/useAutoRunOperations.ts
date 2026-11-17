@@ -52,7 +52,7 @@ type UseAutoRunOperationsParams = {
 /**
  * Composes operational primitives used by scanner/lifecycle:
  * - rewards refresh + skip notifications
- * - goal-reached notification for a Connect hand-over
+ * - finished-its-run notification for a hand-over
  * - guarded start with retries
  * - stop with deployment confirmation and recovery retries
  */
@@ -92,14 +92,14 @@ export const useAutoRunOperations = ({
     }
   }, [enabled]);
 
-  /** Sent once per hand-over, when Connect is stopped after meeting its goal. */
+  /** Sent once per hand-over that finished a run (decided in `rotateToNext`). */
   const notifyGoalReachedOnHandOver = useCallback(
-    (serviceConfigId: string) => {
+    (serviceConfigId: string, body?: string) => {
       const { agentName, instanceName } = getInstanceDisplayNames(
         serviceConfigId,
         configuredAgents,
       );
-      notifyGoalReached(showNotification, agentName, instanceName);
+      notifyGoalReached(showNotification, agentName, instanceName, body);
       logMessage(`goal reached, handed over: ${serviceConfigId}`);
     },
     [configuredAgents, logMessage, showNotification],

@@ -11,6 +11,7 @@ import {
   AutoRunLifecycleMetric,
   AutoRunStartResult,
   COOLDOWN_SECONDS,
+  NO_MARKETS_LEFT_HAND_OVER_BODY,
   REWARDS_POLL_SECONDS,
   RUNNING_AGENT_ELIGIBILITY_CHECK_SECONDS,
   RUNNING_AGENT_MAX_RUNTIME_SECONDS,
@@ -46,6 +47,8 @@ type UseAutoRunLifecycleParams = {
   ) => Promise<boolean | undefined>;
   /** Whether the running instance has gone an hour without goal progress. */
   isStalled: (serviceConfigId: string) => boolean;
+  /** Whether the instance's last rewards read found it idle for lack of markets before its goal. */
+  isNoMarketsStandby: (serviceConfigId: string) => boolean;
   /** Starts the stall hour again, for a stalled instance kept running. */
   restartStallClock: (serviceConfigId: string) => void;
   /** Sends a stalled instance to the back of the queue for this epoch. */
@@ -73,8 +76,8 @@ type UseAutoRunLifecycleParams = {
   getHandOverDeployability: (
     serviceConfigId: string,
   ) => Promise<DeployabilityCheckResult | null>;
-  /** Goal-reached notification for a Connect hand-over. */
-  notifyGoalReachedOnHandOver: (serviceConfigId: string) => void;
+  /** Notification for a hand-over that finished a run. */
+  notifyGoalReachedOnHandOver: (serviceConfigId: string, body?: string) => void;
   stopRetryBackoffUntilRef: MutableRefObject<Partial<Record<string, number>>>;
   recordMetric: (metric: AutoRunLifecycleMetric) => void;
   logMessage: (message: string) => void;
@@ -104,6 +107,7 @@ export const useAutoRunLifecycle = ({
   hasScheduledScan,
   refreshRewardsEligibility,
   isStalled,
+  isNoMarketsStandby,
   restartStallClock,
   deferStalled,
   isStallDeferred,
@@ -378,14 +382,21 @@ export const useAutoRunLifecycle = ({
       logVerbose(
         `cycle=${cycleId} trigger=${trigger} phase=hand_over current=${currentServiceConfigId} next=${next}`,
       );
-      // Only Connect finishing its minutes means its goal was reached: a
-      // watchdog, eviction or stall hand-over does not.
-      const notifyGoalReached = isNoStakingAgent && !options?.force;
+      // Only Connect finishing its minutes, or an agent with no market left
+      // to try, finished its run: a watchdog, eviction or stall hand-over
+      // does not.
+      const noMarketsStandby =
+        !isNoStakingAgent && isNoMarketsStandby(currentServiceConfigId);
+      const notifyGoalReached =
+        (isNoStakingAgent || noMarketsStandby) && !options?.force;
       // Deferred only once stopped: after a stop timeout it is still running.
       const onStopped = () => {
         if (stalled) deferStalled(currentServiceConfigId);
         if (notifyGoalReached) {
-          notifyGoalReachedOnHandOver(currentServiceConfigId);
+          notifyGoalReachedOnHandOver(
+            currentServiceConfigId,
+            noMarketsStandby ? NO_MARKETS_LEFT_HAND_OVER_BODY : undefined,
+          );
         }
       };
       await stopAndScanFrom(currentServiceConfigId, cycleId, trigger, {
@@ -398,6 +409,7 @@ export const useAutoRunLifecycle = ({
       deferStalled,
       enabledRef,
       findRunnableAlternate,
+      isNoMarketsStandby,
       isStalled,
       lastRewardsEligibilityRef,
       logVerbose,
