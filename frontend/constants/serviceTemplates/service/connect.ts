@@ -151,14 +151,14 @@ export const CONNECT_SERVICE_TEMPLATE: ServiceTemplate = {
   description: `${KPI_DESC_PREFIX} An agent that provides on-chain wallet and agent capabilities for your AI agent`,
   image:
     'https://gateway.autonolas.tech/ipfs/bafybeidldvcrd7exlqwutoa5fj7nh6mjrkh7w6tuuwofwdifavvezj6g2e',
-  hash: 'bafybeihgmxvucmgejg6fhmvyxgquyeofi7rfsqjgdidivmmnqx566g65oy',
-  service_version: 'v0.1.16',
+  hash: 'bafybeiggok6agdjunwtner3pjthpvsd6oosw63zk4kb64lpp7qr2nhmvre',
+  service_version: 'v0.1.17',
   agent_release: {
     is_aea: false,
     repository: {
       owner: 'valory-xyz',
       name: 'connect',
-      version: 'v0.1.16',
+      version: 'v0.1.17',
     },
   },
   home_chain: MiddlewareChainMap.GNOSIS,
@@ -235,6 +235,30 @@ export const CONNECT_SERVICE_TEMPLATE: ServiceTemplate = {
       description: '',
       value: 'persistent_data/',
       provision_type: EnvProvisionType.COMPUTED,
+    },
+    MECHX_MARKETPLACE_POLYGON_SQUID_URL: {
+      name: 'Polygon mech marketplace squid URL',
+      description: '',
+      value: 'https://subgraph.autonolas.tech/squid/marketplace-polygon/graphql',
+      provision_type: EnvProvisionType.FIXED,
+    },
+    MECHX_REGISTRY_POLYGON_SQUID_URL: {
+      name: 'Polygon service registry squid URL',
+      description: '',
+      value: 'https://subgraph.autonolas.tech/squid/service-registry-polygon/graphql',
+      provision_type: EnvProvisionType.FIXED,
+    },
+    MECHX_MARKETPLACE_BASE_SQUID_URL: {
+      name: 'Base mech marketplace squid URL',
+      description: '',
+      value: 'https://subgraph.autonolas.tech/squid/marketplace-base/graphql',
+      provision_type: EnvProvisionType.FIXED,
+    },
+    MECHX_REGISTRY_BASE_SQUID_URL: {
+      name: 'Base service registry squid URL',
+      description: '',
+      value: 'https://subgraph.autonolas.tech/squid/service-registry-base/graphql',
+      provision_type: EnvProvisionType.FIXED,
     },
   },
 } as const;
