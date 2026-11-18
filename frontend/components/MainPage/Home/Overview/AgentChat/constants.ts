@@ -35,6 +35,9 @@ export const CHAT_COPY = {
   thinking: 'Thinking...',
   stillThinking: 'Still thinking...',
   standby: 'Standby until the next epoch',
+  noMarketsStandby: 'Agent is in standby until the next epoch',
+  noMarketsStandbyTooltip:
+    'No markets are left to trade in this epoch. If you keep the agent running, it collects winnings and tries again at the start of the next epoch.',
   loading: 'Agent is loading',
   notRunning: 'Agent is not running',
   running: 'Agent is running',

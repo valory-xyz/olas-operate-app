@@ -17,6 +17,7 @@ import { ObservedGoal, RewardSnapshot, StallClock } from '../types';
 import {
   isStakingEpochExpired,
   isStallClockExpired,
+  snapshotGoalFields,
 } from '../utils/autoRunHelpers';
 import { probeDeploymentStatus } from '../utils/probeDeployment';
 
@@ -204,9 +205,10 @@ export const useAutoRunSignals = ({
       stakingProgramId: selectedStakingProgramId,
       tsCheckpoint: selectedRewardsEpoch.tsCheckpoint,
       livenessPeriod: selectedRewardsEpoch.livenessPeriod,
-      goalUnit: selectedActivityGoal?.unit ?? null,
-      goalTarget: selectedActivityGoal?.target ?? null,
-      goalPeriodStart: selectedActivityGoal?.period_start ?? null,
+      ...snapshotGoalFields(
+        selectedActivityGoal ?? null,
+        selectedRewardsEpoch.tsCheckpoint,
+      ),
     };
     setRewardsTick((value) => value + 1);
   }, [
@@ -345,6 +347,12 @@ export const useAutoRunSignals = ({
     [],
   );
 
+  const isNoMarketsStandby = useCallback(
+    (serviceConfigId: string) =>
+      !!rewardSnapshotRef.current[serviceConfigId]?.noMarketsStandby,
+    [],
+  );
+
   const restartStallClock = useCallback((serviceConfigId: string) => {
     const clock = stallClockRef.current[serviceConfigId];
     if (clock) clock.since = Date.now();
@@ -450,6 +458,7 @@ export const useAutoRunSignals = ({
     setRewardSnapshot,
     getObservedGoal,
     isStalled,
+    isNoMarketsStandby,
     restartStallClock,
     deferStalled,
     clearStallDeferral,

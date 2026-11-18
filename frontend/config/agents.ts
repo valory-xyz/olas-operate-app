@@ -129,6 +129,8 @@ export const AGENT_CONFIG: {
     hasStaking: true,
     hasPerformance: true,
     hasAgentChat: true,
+    canRunWhileEvicted: true,
+    canReportNoMarketsLeft: true,
     requiresSetup: true,
     isX402Enabled: X402_ENABLED_FLAGS[AgentMap.PredictTrader],
     name: 'Predict Trader',

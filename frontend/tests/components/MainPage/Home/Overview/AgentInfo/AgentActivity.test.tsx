@@ -251,6 +251,32 @@ describe('AgentActivity', () => {
       });
     });
 
+    it('explains a standby with no markets left to trade', () => {
+      mockUseEpochWorkStatus.mockReturnValue({
+        workStatus: 'no-markets-standby',
+      });
+      setup(runningWithRounds);
+
+      expect(
+        screen.getByText('Agent is in standby until the next epoch', {
+          exact: false,
+        }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          'No markets are left to trade in this epoch. If you keep the agent running, it collects winnings and tries again at the start of the next epoch.',
+        ),
+      ).toBeInTheDocument();
+      expect(screen.queryByText(STANDBY_COPY, { exact: false })).toBeNull();
+      expect(screen.getByTestId('info-tooltip')).toHaveAttribute(
+        'data-icon-color',
+        COLOR.TEXT_COLOR.SUCCESS.DEFAULT,
+      );
+      expect(
+        statusText('Agent is in standby until the next epoch'),
+      ).toHaveStyle({ color: COLOR.TEXT_COLOR.SUCCESS.DEFAULT });
+    });
+
     it('renders the standby strip on the green gradient', () => {
       mockUseEpochWorkStatus.mockReturnValue({ workStatus: 'standby' });
       setup(runningWithRounds);

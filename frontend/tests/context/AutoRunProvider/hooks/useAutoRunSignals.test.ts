@@ -343,6 +343,28 @@ describe('useAutoRunSignals', () => {
       ).toBeUndefined();
     });
 
+    it.each([
+      ['before the goal', { is_met: false }, true],
+      ['after the goal', { is_met: true, progress: 8 }, false],
+    ])(
+      'records a no-markets standby %s for the hand-over notification',
+      (_, goal, expected) => {
+        const params = makeHookParams({
+          isSelectedDoneForEpoch: true,
+          selectedActivityGoal: makeActivityGoal({
+            ...goal,
+            period_start: DEFAULT_EPOCH_TS,
+            no_markets_left: true,
+          }),
+        });
+        const { result } = renderHook(() => useAutoRunSignals(params));
+
+        expect(
+          result.current.isNoMarketsStandby(DEFAULT_SERVICE_CONFIG_ID),
+        ).toBe(expected);
+      },
+    );
+
     it('does not overwrite the snapshot of a selected no-staking agent', () => {
       const params = makeHookParams({
         isSelectedDoneForEpoch: false,
@@ -379,6 +401,24 @@ describe('useAutoRunSignals', () => {
       snapshot,
     );
     expect(result.current.rewardsTick).toBe(initialTick + 1);
+  });
+
+  it('isNoMarketsStandby reflects the last stored snapshot', () => {
+    const { result } = renderHook(() => useAutoRunSignals(makeHookParams()));
+    expect(result.current.isNoMarketsStandby(DEFAULT_SERVICE_CONFIG_ID)).toBe(
+      false,
+    );
+
+    act(() => {
+      result.current.setRewardSnapshot(
+        DEFAULT_SERVICE_CONFIG_ID,
+        makeRewardSnapshot({ done: true, noMarketsStandby: true }),
+      );
+    });
+
+    expect(result.current.isNoMarketsStandby(DEFAULT_SERVICE_CONFIG_ID)).toBe(
+      true,
+    );
   });
 
   describe('stall helpers', () => {

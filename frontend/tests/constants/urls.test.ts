@@ -384,3 +384,43 @@ describe('TRANSACTION_HISTORY_SUBGRAPH_*_BY_EVM_CHAIN — Base', () => {
     );
   });
 });
+
+describe('TRANSACTION_HISTORY_SUBGRAPH_*_BY_EVM_CHAIN — Robinhood', () => {
+  let urls: typeof import('../../constants/urls');
+
+  beforeAll(async () => {
+    urls = await import('../../constants/urls');
+  });
+
+  it('points Robinhood at the transactions-robinhood squid', () => {
+    expect(
+      urls.TRANSACTION_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN[
+        EvmChainIdMap.Robinhood
+      ],
+    ).toBe(
+      'https://subgraph.autonolas.tech/squid/transactions-robinhood/graphql',
+    );
+  });
+
+  it('reads Robinhood with the sqd schema revision', () => {
+    expect(
+      urls.getTransactionHistorySchemaRevision(EvmChainIdMap.Robinhood),
+    ).toBe('sqd');
+  });
+});
+
+describe('TRANSACTION_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN — Mode', () => {
+  let urls: typeof import('../../constants/urls');
+
+  beforeAll(async () => {
+    urls = await import('../../constants/urls');
+  });
+
+  // Mode is deprecated and has no indexer, so it must keep the not-available
+  // state while other chains gain endpoints.
+  it('leaves Mode without an endpoint', () => {
+    expect(
+      urls.TRANSACTION_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN[EvmChainIdMap.Mode],
+    ).toBeUndefined();
+  });
+});

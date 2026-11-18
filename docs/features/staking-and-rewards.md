@@ -6,7 +6,7 @@ Staking is the mechanism that lets a Pearl agent earn OLAS rewards. When a servi
 
 - The agent earns **no OLAS rewards** regardless of how much work it does.
 - If all slots in a program are full, an **unstaked agent cannot start** ("No available slots" blocker in `useDeployability`).
-- **Inactive agents are evicted** — if a service fails the liveness check (insufficient mech requests or multisig nonce increments), it is removed from the staking program and blocked from restarting until the minimum staking duration has elapsed.
+- **Inactive agents are evicted** — if a service fails the liveness check (insufficient mech requests or multisig nonce increments), it is removed from the staking program and blocked from restarting until the minimum staking duration has elapsed. An agent with `canRunWhileEvicted` (Omenstrat) is the exception: it can start inside that window, needs no free slot until the last 30 minutes of it, and only redeems (see `autorun.md` §3.6).
 
 One service can be staked in exactly one program at a time. Switching programs requires stopping the agent, migrating, then restarting.
 
@@ -135,9 +135,9 @@ AutoRun schedules on "done for the epoch": staking eligibility combined with the
 **`refreshRewardsEligibility(candidate)`** returns whether the agent is done for the epoch:
 - Throttled per `serviceConfigId` (minimum 120 s between fetches)
 - Calls `fetchAgentStakingRewardsInfo()` to get the current epoch snapshot, and `getAgentPerformance()` for the `activity_goal` block
-- Done = `isEpochTargetMet` and the current activity goal met (`deriveIsDoneForEpoch`); without a block, `isEpochTargetMet` alone
+- Done = `isEpochTargetMet` and the current activity goal met, or a current block with `no_markets_left: true` (`deriveIsDoneForEpoch`), with or without `isEpochTargetMet` for an agent with `canReportNoMarketsLeft` (Omenstrat) and only once it is met for any other agent; without a block, `isEpochTargetMet` alone
 - Stale epoch detection: if `isStakingEpochExpired()` returns `true` (i.e. `livenessPeriod ≤ now − tsCheckpoint`) and the agent is done, overrides it to `false` so the agent runs and triggers the on-chain checkpoint
-- Returns `true` (done), `false` (not done), or `undefined` (data missing, or the goal unreadable once `isEpochTargetMet` is true)
+- Returns `true` (done), `false` (not done), or `undefined` (data missing, the goal unreadable once `isEpochTargetMet` is true, or the goal unreadable before it while the instance was already done this epoch)
 
 **Scanner logic** (`useAutoRunScanner.ts`):
 - `eligibility === true` → agent already done this epoch → skip, wait for next scan slot
@@ -265,7 +265,7 @@ Newer staking contracts set the on-chain threshold to ~1 (staking unlocks after 
 
 - **Signal source:** every agent reader now surfaces `StakingRewardsInfo.activityThisEpoch` — the raw on-chain request count this epoch (`currentCount − checkpointSnapshot`). `deriveIsEpochTargetMet(info, target)` returns `activityThisEpoch >= target` when a target is set, and falls back to the on-chain KPI (`isEligibleForRewards`) when it isn't — so legacy programs behave exactly as before.
 - **`isEpochTargetMet`** is the staking side of "agent has done its epoch work". `RewardProvider` exposes it for the selected service; `useAllInstancesRewardStatus` computes it per-service for the sidebar. It drives the streak flame, sidebar dot, the earned notification and the optimistic earned amount. The raw `isEligibleForRewards` is retained only as the documented on-chain KPI.
-- **Activity goal (OPE-1801).** Each agent also publishes an `activity_goal` block in `agent_performance.json` (read via `useActivityGoal`). `useEpochWorkStatus` combines it with `isEpochTargetMet` (`deriveIsDoneForEpoch`, `frontend/utils/activityGoal.ts`): the Overview strip shows the current action until rewards are earned, then "earned activity rewards and keeps working toward its daily goal" (purple) until the goal is met, then "reached its daily goal … standby" (green gradient). AutoRun rotation uses the same combined signal (see `autorun.md` §3.2). Without a block (older agent builds) the staking signal alone decides, as before. `useNotifyOnActivityGoal` notifies when the running staking agent's goal turns met.
+- **Activity goal (OPE-1801).** Each agent also publishes an `activity_goal` block in `agent_performance.json` (read via `useActivityGoal`). `useEpochWorkStatus` combines it with `isEpochTargetMet` (`deriveIsDoneForEpoch`, `frontend/utils/activityGoal.ts`): the Overview strip shows the current action until rewards are earned, then "earned activity rewards and keeps working toward its daily goal" (purple) until the goal is met, then "reached its daily goal … standby" (green gradient). A current block with `no_markets_left` is done with or without the staking signal; before the goal is reached that is the `no-markets-standby` state, whose row reads "Agent is in standby until the next epoch" with a tooltip. AutoRun rotation uses the same combined signal (see `autorun.md` §3.2). Without a block (older agent builds) the staking signal alone decides, as before. `useNotifyOnActivityGoal` notifies when the running staking agent's goal turns met.
 - **Derived on-chain**, so it persists across service stop / app restart. The agent healthcheck is deliberately not consumed — the agent computes the same `completed >= target` from the same on-chain values, so reading it would add nothing and would vanish when the agent stops.
 - Phase-1 targets are hardcoded per program (8 for the trader-style agents, 1 for the DeFi agents) and must match each agent's `ACTIVITY_TARGET`.
 

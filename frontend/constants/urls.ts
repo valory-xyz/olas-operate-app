@@ -69,8 +69,9 @@ export const getRewardsHistorySchemaRevision = (
 // pearl-transactions endpoints, one entry per shipped network (Mode is
 // deprecated). An undefined/absent entry surfaces the "not available on this
 // network yet" state instead of fetching. Gnosis/Optimism are graph-node
-// subgraph proxies (host-style); Polygon and Base are SQD squids, which are
-// served path-style under the shared host — the two URL shapes are deliberate.
+// subgraph proxies (host-style); Polygon, Base and Robinhood are SQD squids,
+// which are served path-style under the shared host — the two URL shapes are
+// deliberate.
 // Base rollback: 'https://transactions-base.subgraph.autonolas.tech/' + 'v2'.
 export const TRANSACTION_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN: Partial<
   Record<EvmChainId, Url>
@@ -83,11 +84,14 @@ export const TRANSACTION_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN: Partial<
     'https://transactions-optimism.subgraph.autonolas.tech/',
   [EvmChainIdMap.Base]:
     'https://subgraph.autonolas.tech/squid/transactions-base/graphql',
+  [EvmChainIdMap.Robinhood]:
+    'https://subgraph.autonolas.tech/squid/transactions-robinhood/graphql',
 };
 
 // Which pearl-transactions schema each chain's deployment serves (see
 // TransactionHistorySchemaRevision). Gnosis/Optimism proxies pin subgraph
-// v0.0.6 (v1); Polygon and Base are SQD squids (sqd), which speak OpenReader.
+// v0.0.6 (v1); Polygon, Base and Robinhood are SQD squids (sqd), which speak
+// OpenReader.
 // The v2 revision (graph-node v0.0.7, Base's previous backend) is unused but
 // kept for rollback. When a chain's backend changes, flip its entry here;
 // absent entries default to v1.
@@ -96,6 +100,7 @@ export const TRANSACTION_HISTORY_SUBGRAPH_SCHEMA_BY_EVM_CHAIN: Partial<
 > = {
   [EvmChainIdMap.Base]: 'sqd',
   [EvmChainIdMap.Polygon]: 'sqd',
+  [EvmChainIdMap.Robinhood]: 'sqd',
 };
 
 export const getTransactionHistorySchemaRevision = (

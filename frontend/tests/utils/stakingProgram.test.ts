@@ -7,9 +7,11 @@ import {
 import {
   chainHasPolySafePrograms,
   deriveStakingProgramId,
+  EVICTION_RUN_START_MARGIN_SECONDS,
   getCompatibleStakingProgramIds,
   isNoStakingProgram,
   isStakingProgramCompatibleWithMultisig,
+  runsInsideEvictionWindow,
 } from '../../utils/stakingProgram';
 import { makeStakingProgramConfig } from '../helpers/factories';
 
@@ -180,5 +182,42 @@ describe('getCompatibleStakingProgramIds', () => {
         currentStakingProgramId: null,
       }),
     ).toEqual([]);
+  });
+});
+
+describe('runsInsideEvictionWindow', () => {
+  const NOW = 1_800_000_000;
+  const run = (
+    overrides: Partial<Parameters<typeof runsInsideEvictionWindow>[0]>,
+  ) =>
+    runsInsideEvictionWindow({
+      isAgentEvicted: true,
+      canRunWhileEvicted: true,
+      evictionExpiresAt: NOW + 86_400,
+      nowSeconds: NOW,
+      ...overrides,
+    });
+
+  it('holds for an agent that can run evicted, with the window open', () => {
+    expect(run({})).toBe(true);
+  });
+
+  it.each([
+    ['not evicted', { isAgentEvicted: false }],
+    ['cannot run evicted', { canRunWhileEvicted: undefined }],
+    [
+      'exactly the start margin left',
+      { evictionExpiresAt: NOW + EVICTION_RUN_START_MARGIN_SECONDS },
+    ],
+    ['the window over', { evictionExpiresAt: NOW - 1 }],
+    ['the window unknown', { evictionExpiresAt: 0 }],
+  ])('does not hold when %s', (_, overrides) => {
+    expect(run(overrides)).toBe(false);
+  });
+
+  it('holds with one second more than the start margin left', () => {
+    expect(
+      run({ evictionExpiresAt: NOW + EVICTION_RUN_START_MARGIN_SECONDS + 1 }),
+    ).toBe(true);
   });
 });

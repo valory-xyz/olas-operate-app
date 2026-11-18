@@ -612,7 +612,7 @@ describe('useAutoRunController', () => {
       useAutoRunSignals.mock.calls[useAutoRunSignals.mock.calls.length - 1][0];
 
     it.each([
-      [false, 200_000, 100_000, 200_000],
+      [false, 200_000, 100_000, 100_000],
       [true, 200_000, 100_000, 100_000],
       [true, 100_000, 200_000, 100_000],
       [true, 200_000, 0, 0],
@@ -640,6 +640,52 @@ describe('useAutoRunController', () => {
         );
         expect(lastSignalsArgs().selectedRewardReadAt).toBe(expectedReadAt);
         expect(lastSignalsArgs().selectedActivityGoalReadAt).toBe(goalReadAt);
+      },
+    );
+
+    it('writes nothing while the goal is unread, so a loading goal cannot overwrite a no-markets done', () => {
+      useRewardContext.mockReturnValue({
+        stakingRewardsDetails: makeStakingRewardsInfo(),
+        isEpochTargetMet: false,
+        stakingRewardsDataUpdatedAt: 200_000,
+      });
+      useActivityGoal.mockReturnValue({
+        activityGoal: undefined,
+        dataUpdatedAt: 0,
+      });
+      renderHook(() =>
+        useAutoRunController(
+          makeHookParams({ configuredAgents: [traderMeta] }),
+        ),
+      );
+      expect(lastSignalsArgs().selectedRewardReadAt).toBe(0);
+    });
+
+    it.each([
+      ['older than the staking read', 100_000],
+      ['unread', 0],
+    ])(
+      'keeps the staking read time before the KPI for an agent that cannot report no markets left, goal %s',
+      (_, goalReadAt) => {
+        const polystratMeta = makeAutoRunAgentMeta(
+          AgentMap.Polystrat,
+          AGENT_CONFIG[AgentMap.Polystrat],
+        ) as AgentMeta;
+        useRewardContext.mockReturnValue({
+          stakingRewardsDetails: makeStakingRewardsInfo(),
+          isEpochTargetMet: false,
+          stakingRewardsDataUpdatedAt: 200_000,
+        });
+        useActivityGoal.mockReturnValue({
+          activityGoal: goalReadAt ? makeActivityGoal() : undefined,
+          dataUpdatedAt: goalReadAt,
+        });
+        renderHook(() =>
+          useAutoRunController(
+            makeHookParams({ configuredAgents: [polystratMeta] }),
+          ),
+        );
+        expect(lastSignalsArgs().selectedRewardReadAt).toBe(200_000);
       },
     );
 

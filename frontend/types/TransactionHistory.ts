@@ -149,7 +149,7 @@ export type AgentTransactionHistoryResponse = z.infer<
  *   ledger (which carries `bondType`), sweeps split into
  *   AGENT_OLAS_TO_MASTER, and Service.id reshaped to registry bytes with the
  *   numeric id in `serviceId`.
- * - sqd — the SQD squid port (Polygon, Base). Same entity shape as v2, but
+ * - sqd — the SQD squid port (Polygon, Base, Robinhood). Same entity shape as v2, but
  *   served over OpenReader rather than the Graph dialect (`limit`/`offset`,
  *   `orderBy: x_DESC`, relation filters as `{ id_eq }`, `<entity>ById`), and
  *   with an `IndexerStatus` singleton in place of `_meta`.
