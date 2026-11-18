@@ -63,6 +63,6 @@ export const AGENT_UI_RELEASES: Partial<Record<AgentType, AgentUiRelease>> = {
   [AgentMap.Connect]: {
     owner: 'valory-xyz',
     name: AGENT_UI_MONOREPO,
-    version: 'v0.1.2-connect',
+    version: 'v0.1.4-connect',
   },
 };
