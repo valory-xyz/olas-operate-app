@@ -1077,6 +1077,10 @@ ipcMain.handle('connect-start-session', async () => {
       reachable: true,
       ok: response.ok,
       launched: Boolean(body.launched),
+      // which harness a 200 aimed for, and why it failed: the renderer shows
+      // OCB's own alerts from these
+      requested: body.requested ?? undefined,
+      reason: body.reason,
       // 200 failures carry `error`; 4xx/5xx HTTPExceptions carry `detail`.
       error: body.error ?? body.detail,
     };

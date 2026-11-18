@@ -114,6 +114,58 @@ describe('useConnectSession', () => {
     );
   });
 
+  it.each([
+    ['install_failed', 'ocb-install-failed'],
+    ['launch_failed', 'ocb-launch-failed'],
+  ])(
+    "surfaces OCB's own state when an ocb_cli launch fails with %s",
+    async (reason, kind) => {
+      mockStartSession.mockResolvedValue({
+        reachable: true,
+        ok: true,
+        launched: false,
+        requested: 'ocb_cli',
+        reason,
+        error: 'uv download failed',
+      });
+      const { result } = renderConnectSession();
+      await waitFor(() => expect(result.current.showAlert).toBe(true));
+      expect(result.current.errorKind).toBe(kind);
+    },
+  );
+
+  it('never reads a failed OCB launch as "Claude isn\'t installed"', async () => {
+    mockStartSession.mockResolvedValue({
+      reachable: true,
+      ok: true,
+      launched: false,
+      requested: 'ocb_cli',
+    });
+    const { result } = renderConnectSession();
+    await waitFor(() => expect(result.current.showAlert).toBe(true));
+    expect(result.current.errorKind).toBe('ocb-launch-failed');
+  });
+
+  it.each([
+    ['codex_cli', 'not_installed'],
+    ['codex_cli', 'install_failed'],
+    ['claude_code_cli', 'launch_failed'],
+  ])(
+    "keeps today's state for %s whatever the reason (%s)",
+    async (requested, reason) => {
+      mockStartSession.mockResolvedValue({
+        reachable: true,
+        ok: true,
+        launched: false,
+        requested,
+        reason,
+      });
+      const { result } = renderConnectSession();
+      await waitFor(() => expect(result.current.showAlert).toBe(true));
+      expect(result.current.errorKind).toBe('not-installed');
+    },
+  );
+
   it('surfaces the "launch failed" state for a non-2xx response', async () => {
     mockStartSession.mockResolvedValue({
       reachable: true,

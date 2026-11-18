@@ -6,21 +6,12 @@ import {
   isActiveDeploymentStatus,
   MiddlewareDeploymentStatusMap,
 } from '@/constants/deployment';
-import { ConnectSessionResult } from '@/types';
+import { ConnectSessionErrorKind, ConnectSessionResult } from '@/types';
 
 import { useAgentRunning } from './useAgentRunning';
 import { useElectronApi } from './useElectronApi';
 import { useServices } from './useServices';
 import { useStore } from './useStore';
-
-/**
- * Which error state to surface for the Connect session:
- * - `not-installed`: the deep link wouldn't open → no Claude installed (or the
- *   wrong harness is selected) → prompt to download / surface the server message.
- * - `launch-failed`: transport error, or a non-2xx (unknown harness / not-ready
- *   / malformed) response → transient, retryable.
- */
-export type ConnectSessionErrorKind = 'not-installed' | 'launch-failed';
 
 const CONNECT_SESSION_QUERY_KEY = 'connectSession';
 
@@ -48,6 +39,13 @@ const toErrorKind = (
   if (!res.reachable || !res.ok) return 'launch-failed';
   // A session launched — nothing to surface.
   if (res.launched) return null;
+  // OCB never falls back, and Connect installs it itself: tell an install
+  // failure from a launch failure, and never send the user to download Claude.
+  if (res.requested === 'ocb_cli') {
+    return res.reason === 'install_failed'
+      ? 'ocb-install-failed'
+      : 'ocb-launch-failed';
+  }
   // Well-formed `200 { launched: false }`: the only cause is the deep link not
   // opening, i.e. Claude isn't installed (or the wrong harness is selected).
   return 'not-installed';

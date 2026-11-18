@@ -116,6 +116,22 @@ describe('ConnectSessionAlert', () => {
     expect(retry).toHaveBeenCalledTimes(1);
   });
 
+  it.each([
+    ['ocb-install-failed', "Pearl couldn't set up OCB on this machine."],
+    ['ocb-launch-failed', "Pearl couldn't launch an OCB session."],
+  ])("renders OCB's %s alert with Retry and no download", (errorKind, copy) => {
+    const retry = jest.fn();
+    setup({ errorKind, retry, errorMessage: 'uv download failed' });
+    expect(screen.getByText(copy)).toBeInTheDocument();
+    expect(screen.queryByText(/uv download failed/)).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('link', { name: /download/i }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/Claude/)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /retry/i }));
+    expect(retry).toHaveBeenCalledTimes(1);
+  });
+
   it('calls dismiss when the alert is closed', () => {
     const dismiss = jest.fn();
     const { container } = setup({ errorKind: 'launch-failed', dismiss });
