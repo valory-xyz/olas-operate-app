@@ -25,9 +25,9 @@
       "ghsa": "GHSA-fc5q-39xc-vjpf",
       "package": "picomatch",
       "severity": "high",
-      "reason": "No patched release (every picomatch version up to the latest 4.0.7 is affected). Only path is sass>@parcel/watcher>micromatch>picomatch: sass compiles our SCSS at frontend build time and the watcher is used only by `sass --watch` in development, with glob patterns from our own build config, never from user or network input. Not on any runtime code path in the app. Worst case is a slow or hung local build. Re-check when picomatch ships a fix.",
-      "added": "2026-11-17",
-      "review": "2026-12-17"
+      "reason": "No patched release exists (all versions <=4.0.7 affected). Only path is sass>@parcel/watcher>micromatch>picomatch: sass compiles SCSS at build time and is not in the static-export bundle, so the ReDoS is unreachable at runtime. Globs come from build config, not user input.",
+      "added": "2026-11-18",
+      "review": "2026-12-18"
     }
   ]
 }

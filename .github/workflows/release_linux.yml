@@ -87,6 +87,7 @@ jobs:
 
   # Jobs for production, running separately for x64 and arm64
   build-release:
+    name: Build Linux release (${{ matrix.os_arch }})
     needs: [build-pyinstaller]
     runs-on: ${{ matrix.runner }}
     permissions:
