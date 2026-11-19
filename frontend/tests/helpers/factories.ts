@@ -385,6 +385,7 @@ export const makeAgentLiveness = (
   reason: null,
   consecutive_failures: 0,
   last_healthy_at: LAST_HEALTHY_AT,
+  restarts_since_last_healthy: 0,
   ...overrides,
 });
 
