@@ -239,13 +239,15 @@ export const CONNECT_SERVICE_TEMPLATE: ServiceTemplate = {
     MECHX_MARKETPLACE_POLYGON_SQUID_URL: {
       name: 'Polygon mech marketplace squid URL',
       description: '',
-      value: 'https://subgraph.autonolas.tech/squid/marketplace-polygon/graphql',
+      value:
+        'https://subgraph.autonolas.tech/squid/marketplace-polygon/graphql',
       provision_type: EnvProvisionType.FIXED,
     },
     MECHX_REGISTRY_POLYGON_SQUID_URL: {
       name: 'Polygon service registry squid URL',
       description: '',
-      value: 'https://subgraph.autonolas.tech/squid/service-registry-polygon/graphql',
+      value:
+        'https://subgraph.autonolas.tech/squid/service-registry-polygon/graphql',
       provision_type: EnvProvisionType.FIXED,
     },
     MECHX_MARKETPLACE_BASE_SQUID_URL: {
@@ -257,7 +259,8 @@ export const CONNECT_SERVICE_TEMPLATE: ServiceTemplate = {
     MECHX_REGISTRY_BASE_SQUID_URL: {
       name: 'Base service registry squid URL',
       description: '',
-      value: 'https://subgraph.autonolas.tech/squid/service-registry-base/graphql',
+      value:
+        'https://subgraph.autonolas.tech/squid/service-registry-base/graphql',
       provision_type: EnvProvisionType.FIXED,
     },
   },
