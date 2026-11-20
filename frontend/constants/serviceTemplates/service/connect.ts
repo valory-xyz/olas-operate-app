@@ -263,5 +263,14 @@ export const CONNECT_SERVICE_TEMPLATE: ServiceTemplate = {
         'https://subgraph.autonolas.tech/squid/service-registry-base/graphql',
       provision_type: EnvProvisionType.FIXED,
     },
+    // Seconds a delivered mech request may stay unsettled before the nonce
+    // queue retries at the chain nonce; stays below the 21600s
+    // MECH_HARD_CANCEL_AFTER.
+    MECH_SETTLE_TIMEOUT: {
+      name: 'Mech settle timeout (s)',
+      description: '',
+      value: '300',
+      provision_type: EnvProvisionType.FIXED,
+    },
   },
 } as const;
