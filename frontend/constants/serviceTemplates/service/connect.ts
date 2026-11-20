@@ -152,13 +152,13 @@ export const CONNECT_SERVICE_TEMPLATE: ServiceTemplate = {
   image:
     'https://gateway.autonolas.tech/ipfs/bafybeidldvcrd7exlqwutoa5fj7nh6mjrkh7w6tuuwofwdifavvezj6g2e',
   hash: 'bafybeiggok6agdjunwtner3pjthpvsd6oosw63zk4kb64lpp7qr2nhmvre',
-  service_version: 'v0.1.18',
+  service_version: 'v0.1.19',
   agent_release: {
     is_aea: false,
     repository: {
       owner: 'valory-xyz',
       name: 'connect',
-      version: 'v0.1.18',
+      version: 'v0.1.19',
     },
   },
   home_chain: MiddlewareChainMap.GNOSIS,
@@ -261,6 +261,15 @@ export const CONNECT_SERVICE_TEMPLATE: ServiceTemplate = {
       description: '',
       value:
         'https://subgraph.autonolas.tech/squid/service-registry-base/graphql',
+      provision_type: EnvProvisionType.FIXED,
+    },
+    // Seconds a delivered mech request may stay unsettled before the nonce
+    // queue retries at the chain nonce; stays below the 21600s
+    // MECH_HARD_CANCEL_AFTER.
+    MECH_SETTLE_TIMEOUT: {
+      name: 'Mech settle timeout (s)',
+      description: '',
+      value: '300',
       provision_type: EnvProvisionType.FIXED,
     },
   },

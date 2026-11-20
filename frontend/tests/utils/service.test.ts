@@ -256,6 +256,31 @@ describe('updateServiceIfNeeded', () => {
     });
   });
 
+  it('adds missing fixed env variable from template', async () => {
+    const service = createService({
+      env_variables: {
+        STORE_PATH: { value: 'persistent_data/' },
+        PERSONA: { value: '' },
+      },
+    });
+
+    await updateServiceIfNeeded(service, AgentMap.AgentsFun);
+
+    expect(mockUpdateService).toHaveBeenCalledWith({
+      serviceConfigId: SERVICE_CONFIG_ID,
+      partialServiceTemplate: {
+        env_variables: {
+          RESET_PAUSE_DURATION: {
+            name: 'Reset pause duration',
+            description: '',
+            value: '300',
+            provision_type: 'fixed',
+          },
+        },
+      },
+    });
+  });
+
   it('adds missing computed env variable from template', async () => {
     const service = createService({
       env_variables: {
