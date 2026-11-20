@@ -68,9 +68,11 @@ const FETCH_AGENT_TRANSACTION_HISTORY_QUERY = gql`
 `;
 
 // v2 (subgraph v0.0.7) variant: no `bondType` on FundsMovement, service refs
-// carry the numeric id in `serviceId`. The category filter is unchanged — on
-// v2 OLAS reward sweeps are categorized AGENT_OLAS_TO_MASTER, so the same
-// filter now excludes them server-side (v1 hides them client-side).
+// carry the numeric id in `serviceId`. On v2 OLAS reward sweeps are
+// categorized AGENT_OLAS_TO_MASTER, so the filter excludes them server-side
+// (v1 hides them client-side). It also asks for the automatic Agent Safe →
+// Agent Signer top-ups, which v1 (v0.0.6) does not know: the enum value would
+// fail validation there.
 const FETCH_AGENT_TRANSACTION_HISTORY_QUERY_V2 = gql`
   query GetAgentTransactionHistoryV2(
     $agentSafe: Bytes!
@@ -80,7 +82,7 @@ const FETCH_AGENT_TRANSACTION_HISTORY_QUERY_V2 = gql`
     fundsMovements(
       where: {
         agentSafe: $agentSafe
-        category_in: [MASTER_TO_AGENT, AGENT_TO_MASTER]
+        category_in: [MASTER_TO_AGENT, AGENT_TO_MASTER, AGENT_SAFE_TO_AGENT_EOA]
       }
       orderBy: blockTimestamp
       orderDirection: desc
@@ -120,9 +122,10 @@ const FETCH_AGENT_TRANSACTION_HISTORY_QUERY_V2 = gql`
   }
 `;
 
-// sqd (SQD squid) variant — v2 selection set over OpenReader. See the master
-// query in TransactionHistory.ts for the dialect deltas; the only extra here
-// is that the agentSafe relation filter becomes `{ id_eq }` too.
+// sqd (SQD squid) variant — v2 selection set and categories over OpenReader.
+// See the master query in TransactionHistory.ts for the dialect deltas; the
+// only extra here is that the agentSafe relation filter becomes `{ id_eq }`
+// too.
 const FETCH_AGENT_TRANSACTION_HISTORY_QUERY_SQD = gql`
   query GetAgentTransactionHistorySqd(
     $agentSafe: String!
@@ -132,7 +135,7 @@ const FETCH_AGENT_TRANSACTION_HISTORY_QUERY_SQD = gql`
     fundsMovements(
       where: {
         agentSafe: { id_eq: $agentSafe }
-        category_in: [MASTER_TO_AGENT, AGENT_TO_MASTER]
+        category_in: [MASTER_TO_AGENT, AGENT_TO_MASTER, AGENT_SAFE_TO_AGENT_EOA]
       }
       orderBy: blockTimestamp_DESC
       limit: $limit

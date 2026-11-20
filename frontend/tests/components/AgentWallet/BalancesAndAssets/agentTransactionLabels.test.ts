@@ -2,22 +2,27 @@ import {
   getAgentIconCategory,
   getAgentTransactionRowLabel,
 } from '../../../../components/AgentWallet/BalancesAndAssets/agentTransactionLabels';
+import { Address } from '../../../../types/Address';
 import {
   FundsCategory,
   TransactionHistoryRow,
 } from '../../../../types/TransactionHistory';
 import {
+  MOCK_INSTANCE_ADDRESS,
   MOCK_MULTISIG_ADDRESS,
   MOCK_TX_HASH_1,
 } from '../../../helpers/factories';
 
-const makeRow = (category: FundsCategory): TransactionHistoryRow => ({
+const makeRow = (
+  category: FundsCategory,
+  agentInstanceAddress: Address | null = null,
+): TransactionHistoryRow => ({
   id: 'row-1',
   category,
   blockTimestamp: 1_720_000_000,
   transactionHash: MOCK_TX_HASH_1,
   agentSafeAddress: MOCK_MULTISIG_ADDRESS,
-  agentInstanceAddress: null,
+  agentInstanceAddress,
   transfers: [],
 });
 
@@ -34,10 +39,18 @@ describe('getAgentTransactionRowLabel', () => {
     );
   });
 
-  it('labels AGENT_SAFE_TO_AGENT_EOA as "Agent Safe to Agent Signer movement"', () => {
+  it('labels MASTER_TO_AGENT to the Agent Signer as "Allocated for execution costs"', () => {
+    expect(
+      getAgentTransactionRowLabel(
+        makeRow('MASTER_TO_AGENT', MOCK_INSTANCE_ADDRESS as Address),
+      ),
+    ).toBe('Allocated for execution costs');
+  });
+
+  it('labels AGENT_SAFE_TO_AGENT_EOA as "Allocated for execution costs"', () => {
     expect(
       getAgentTransactionRowLabel(makeRow('AGENT_SAFE_TO_AGENT_EOA')),
-    ).toBe('Agent Safe to Agent Signer movement');
+    ).toBe('Allocated for execution costs');
   });
 
   it('falls back to "Transaction" for other categories', () => {
@@ -50,6 +63,14 @@ describe('getAgentIconCategory', () => {
     expect(getAgentIconCategory(makeRow('MASTER_TO_AGENT'))).toBe(
       'MASTER_FUNDING_IN',
     );
+  });
+
+  it('gives the Agent Signer funding row the same inflow icon as "Fund agent"', () => {
+    expect(
+      getAgentIconCategory(
+        makeRow('MASTER_TO_AGENT', MOCK_INSTANCE_ADDRESS as Address),
+      ),
+    ).toBe('MASTER_FUNDING_IN');
   });
 
   it('maps AGENT_TO_MASTER to the outflow icon (MASTER_WITHDRAWAL)', () => {

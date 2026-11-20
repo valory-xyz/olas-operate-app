@@ -24,11 +24,11 @@ type UseAgentTransactionHistoryArgs = {
 
 // Direction is derived from the category, not the address. The query returns
 // only the agent-perspective categories, each with a fixed direction:
-// MASTER_TO_AGENT is always an inflow ("Fund agent"), AGENT_TO_MASTER always an
-// outflow ("Withdrawal"), AGENT_SAFE_TO_AGENT_EOA internal. An address check
-// would mis-sign the EOA leg of a funding tx — gas top-ups land on the Agent EOA
-// (not the Safe) yet still carry the agentSafe ref, so they'd read as outflows
-// under a green "Fund agent" row.
+// MASTER_TO_AGENT is always an inflow, AGENT_TO_MASTER always an outflow
+// ("Withdrawal"), AGENT_SAFE_TO_AGENT_EOA internal (the funds stay in the
+// Agent Wallet). An address check would mis-sign the Agent Signer leg of a
+// funding tx — it lands on the Agent Signer (not the Safe) yet still carries
+// the agentSafe ref.
 const directionForAgent = (
   category: FundsMovement['category'],
 ): TransferDirection => {
@@ -43,16 +43,31 @@ const toTransfer = (movement: FundsMovement): TransactionHistoryTransfer => ({
   direction: directionForAgent(movement.category),
 });
 
-// Group standalone movements by (txHash + category) so a multi-token movement
-// in one tx renders as a single row with several transfers. Simpler than the
-// master `groupMovementsByTxAndCategory` (no AgentFundingEvent dedup / agent-EOA
-// detection) — see useTransactionHistory.ts for the fuller variant.
+// Which Agent Wallet address a Pearl Safe funding leg landed on. A Fund Agent
+// split pays both in one tx, and each side is its own row: "Fund agent" for
+// the Agent Safe, "Allocated for execution costs" for the Agent Signer.
+type RecipientSide = 'safe' | 'signer';
+
+const recipientSide = (movement: FundsMovement): RecipientSide => {
+  const agentSafeId = movement.agentSafe?.id.toLowerCase();
+  return movement.category === FUNDS_CATEGORY.MASTER_TO_AGENT &&
+    !!agentSafeId &&
+    movement.to.toLowerCase() !== agentSafeId
+    ? 'signer'
+    : 'safe';
+};
+
+// Group standalone movements by (txHash + category + recipient side) so a
+// multi-token movement in one tx renders as a single row with several
+// transfers. Simpler than the master `groupMovementsByTxAndCategory` (no
+// AgentFundingEvent dedup) — see useTransactionHistory.ts.
 const groupMovementsByTxAndCategory = (
   movements: FundsMovement[],
 ): TransactionHistoryRow[] => {
   const byKey = new Map<string, TransactionHistoryRow>();
   for (const movement of movements) {
-    const key = `${movement.transactionHash}::${movement.category}`;
+    const side = recipientSide(movement);
+    const key = `${movement.transactionHash}::${movement.category}::${side}`;
     const transfer = toTransfer(movement);
     const existing = byKey.get(key);
     if (existing) {
@@ -65,7 +80,7 @@ const groupMovementsByTxAndCategory = (
       blockTimestamp: Number(movement.blockTimestamp),
       transactionHash: movement.transactionHash,
       agentSafeAddress: (movement.agentSafe?.id as Address | null) ?? null,
-      agentInstanceAddress: null,
+      agentInstanceAddress: side === 'signer' ? (movement.to as Address) : null,
       agentIds:
         movement.agentSafe?.service?.agentIds ??
         movement.service?.agentIds ??
