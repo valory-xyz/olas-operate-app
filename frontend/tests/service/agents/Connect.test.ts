@@ -144,6 +144,18 @@ describe('ConnectService.getAgentStakingRewardsInfo', () => {
     expect(result!.availableRewardsForEpoch).toBe(864000);
   });
 
+  it('needs a request even right after a checkpoint', async () => {
+    // the requirement never drops below one liveness period's worth
+    respond({ requestsSinceCheckpoint: 0, secondsSinceCheckpoint: 0 });
+
+    const result = await callWith();
+
+    expect(result!.isEligibleForRewards).toBe(false);
+    expect(result!.availableRewardsForEpoch).toBe(
+      REWARDS_PER_SECOND * DEFAULT_LIVENESS_PERIOD_S,
+    );
+  });
+
   it('does not earn it without a request', async () => {
     respond({ requestsSinceCheckpoint: 0 });
 

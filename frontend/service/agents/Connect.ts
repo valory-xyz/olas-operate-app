@@ -27,7 +27,8 @@ const REQUEST_COUNT_INDEX = 1;
  * on `no_staking` never reaches these methods, because the `no_staking` guards
  * in `StakingContractDetailsProvider` / `RewardProvider` short-circuit first.
  * Connect's contracts use a requester activity checker that counts the Agent
- * Safe's settled Marketplace requests on chain; one a day earns the epoch.
+ * Safe's settled Marketplace requests on chain, against the requirement its
+ * `livenessRatio` sets for the epoch.
  *
  * @warning DO NOT STORE STATE IN THIS CLASS. It is a singleton shared across
  * the application.
