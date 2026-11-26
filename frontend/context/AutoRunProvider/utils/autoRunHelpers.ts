@@ -705,6 +705,28 @@ type EvictionFacts = Pick<
   'isAgentEvicted' | 'isEligibleAfterEviction'
 >;
 
+/**
+ * The instance's current program, as the shared contract defines "on a
+ * retired program": the on-chain one while staked, else the stored one. The
+ * two differ when a switch PATCH went through but its start was refused.
+ */
+const getCurrentStakingProgramId = async (
+  agentMeta: AgentMeta,
+): Promise<StakingProgramId> => {
+  if (
+    !isValidServiceId(agentMeta.serviceNftTokenId) ||
+    isNoStakingProgram(agentMeta.stakingProgramId)
+  ) {
+    return agentMeta.stakingProgramId;
+  }
+  const onChainProgramId =
+    await agentMeta.agentConfig.serviceApi.getCurrentStakingProgramByServiceId(
+      agentMeta.serviceNftTokenId,
+      agentMeta.chainId,
+    );
+  return onChainProgramId ?? agentMeta.stakingProgramId;
+};
+
 /** The retired-contract alert's copy for this instance, by its Safe type. */
 const getRetiredProgramSkipReason = async (
   agentMeta: AgentMeta,
@@ -751,7 +773,12 @@ const runDeployabilityChecks = async (
       reason: RETIRED_STAKING_PROGRAM_COPY.WITHDRAWAL_ONLY,
     };
   }
-  if (isRetiredStakingProgram(agentMeta.chainId, agentMeta.stakingProgramId)) {
+  if (
+    isRetiredStakingProgram(
+      agentMeta.chainId,
+      await getCurrentStakingProgramId(agentMeta),
+    )
+  ) {
     return {
       canRun: false,
       reason: await getRetiredProgramSkipReason(agentMeta, ctx),

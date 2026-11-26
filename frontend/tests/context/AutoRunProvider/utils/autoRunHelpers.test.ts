@@ -2006,6 +2006,7 @@ describe('waitForEligibilityReadyHelper', () => {
 describe('fetchDeployabilityForAgent', () => {
   const mockGetStakingContractDetails = jest.fn();
   const mockGetServiceStakingDetails = jest.fn();
+  const mockGetCurrentStakingProgramByServiceId = jest.fn();
 
   const makeAgentMeta = (): AgentMeta => {
     const base = makeAutoRunAgentMeta(
@@ -2022,6 +2023,8 @@ describe('fetchDeployabilityForAgent', () => {
           ...base.agentConfig.serviceApi,
           getStakingContractDetails: mockGetStakingContractDetails,
           getServiceStakingDetails: mockGetServiceStakingDetails,
+          getCurrentStakingProgramByServiceId:
+            mockGetCurrentStakingProgramByServiceId,
         },
       },
     } as unknown as AgentMeta;
@@ -2058,12 +2061,45 @@ describe('fetchDeployabilityForAgent', () => {
     const { contractDetails, stakingDetails } = makeOkStaking();
     mockGetStakingContractDetails.mockResolvedValue(contractDetails);
     mockGetServiceStakingDetails.mockResolvedValue(stakingDetails);
+    // Not staked anywhere on-chain: the stored program decides.
+    mockGetCurrentStakingProgramByServiceId.mockResolvedValue(null);
   });
 
   it('returns canRun=true when all checks pass', async () => {
     const result = await fetchDeployabilityForAgent(makeAgentMeta(), makeCtx());
     expect(result).toEqual({ canRun: true, isAgentEvicted: false });
   });
+
+  it.each([
+    // A switch PATCH went through, but the service is still staked on the
+    // retired program on-chain: skip, as Home does.
+    [
+      STAKING_PROGRAM_IDS.OmenstratIII,
+      STAKING_PROGRAM_IDS.OmenstratVIII,
+      false,
+    ],
+    // Stored on a retired program, but staked on a live one on-chain.
+    [STAKING_PROGRAM_IDS.OmenstratVIII, STAKING_PROGRAM_IDS.OmenstratIII, true],
+  ])(
+    'decides "retired" from the on-chain program %s over the stored %s',
+    async (onChainProgramId, storedProgramId, canRun) => {
+      mockGetCurrentStakingProgramByServiceId.mockResolvedValue(
+        onChainProgramId,
+      );
+      const meta = { ...makeAgentMeta(), stakingProgramId: storedProgramId };
+
+      const result = await fetchDeployabilityForAgent(meta, makeCtx());
+
+      expect(mockGetCurrentStakingProgramByServiceId).toHaveBeenCalledWith(
+        meta.serviceNftTokenId,
+        meta.chainId,
+      );
+      expect(result.canRun).toBe(canRun);
+      if (!canRun) {
+        expect(result.reason).toBe(RETIRED_STAKING_PROGRAM_COPY.SWITCH);
+      }
+    },
+  );
 
   it('skips an agent on a retired program with the alert copy, before any read', async () => {
     const meta = {
