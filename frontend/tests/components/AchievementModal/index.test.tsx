@@ -136,6 +136,39 @@ describe('AchievementModal', () => {
     expect(mockSetAchievementPending).toHaveBeenLastCalledWith(false);
   });
 
+  it('holds the other modals again once the next achievement is current', async () => {
+    mockGetAgentTypeFromService.mockReturnValue(AgentMap.PredictTrader);
+    setCurrentAchievement(
+      makeOmenstratPayoutAchievement({ achievement_id: 'ach-1' }),
+    );
+    const rendered = await renderModal();
+    fireEvent.click(screen.getByRole('button', { name: 'close' }));
+    expect(mockSetAchievementPending).toHaveBeenLastCalledWith(false);
+
+    setCurrentAchievement(
+      makeOmenstratPayoutAchievement({ achievement_id: 'ach-2' }),
+    );
+    await act(async () => rendered.rerender(<AchievementModal />));
+    expect(mockSetAchievementPending).toHaveBeenLastCalledWith(true);
+  });
+
+  it('releases the other modals when it unmounts while pending', async () => {
+    mockGetAgentTypeFromService.mockReturnValue(AgentMap.PredictTrader);
+    setCurrentAchievement(makeOmenstratPayoutAchievement());
+    const rendered = await renderModal();
+    expect(mockSetAchievementPending).toHaveBeenLastCalledWith(true);
+
+    rendered.unmount();
+    expect(mockSetAchievementPending).toHaveBeenLastCalledWith(false);
+  });
+
+  it('holds nothing when the achievements cannot be read, even with one pending', async () => {
+    // a failed refetch over cached data: the modal renders nothing
+    setCurrentAchievement(makeOmenstratPayoutAchievement(), { isError: true });
+    await renderModal();
+    expect(mockSetAchievementPending).not.toHaveBeenCalledWith(true);
+  });
+
   it('holds the other modals while the achievements load', async () => {
     setCurrentAchievement(null, { isLoading: true });
     await renderModal();

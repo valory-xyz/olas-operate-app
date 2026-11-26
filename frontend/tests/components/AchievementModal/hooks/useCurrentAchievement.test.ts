@@ -58,8 +58,14 @@ describe('useCurrentAchievement', () => {
       isError: false,
     });
 
-    const { result } = renderHook(() => useCurrentAchievement());
-    expect(result.current.hasPendingAchievement).toBe(true);
+    const pendingPerRender: boolean[] = [];
+    const { result } = renderHook(() => {
+      const current = useCurrentAchievement();
+      pendingPerRender.push(current.hasPendingAchievement);
+      return current;
+    });
+    // pending from the first render, before an effect makes it current
+    expect(pendingPerRender[0]).toBe(true);
     await waitFor(() => {
       expect(result.current.currentAchievement?.achievement_id).toBe('ach-1');
     });

@@ -92,8 +92,9 @@ export const AchievementModal = () => {
   ]);
 
   // Pending while loading, while one shows, and while one is about to be
-  // decided; not once the user has closed it (it stays current a minute) or
-  // while the achievements cannot be read.
+  // decided; not once the user has closed it (it stays current until
+  // `markCurrentAchievementAsShown`'s delay clears it) or while the
+  // achievements cannot be read.
   const isPending =
     !isError &&
     (isLoading ||
