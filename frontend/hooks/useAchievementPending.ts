@@ -3,12 +3,7 @@ import { useCallback } from 'react';
 
 import { REACT_QUERY_KEYS } from '@/constants';
 
-/**
- * Whether `AchievementModal` has an achievement to show or is showing one,
- * counting the load and the moment before it opens. Its achievement lives in
- * that component's own state, so it publishes this through the query cache
- * for the modals that must not cover it.
- */
+/** Whether AchievementModal has an achievement pending, published through the query cache. */
 export const useAchievementPending = () => {
   const queryClient = useQueryClient();
 

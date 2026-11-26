@@ -21,14 +21,7 @@ import { StakedAgentService } from './shared-services/StakedAgentService';
 const REQUEST_COUNT_INDEX = 1;
 
 /**
- * Connect agent service.
- *
- * Staking is optional and per chain (`AgentConfig.stakingChains`): an instance
- * on `no_staking` never reaches these methods, because the `no_staking` guards
- * in `StakingContractDetailsProvider` / `RewardProvider` short-circuit first.
- * Connect's contracts use a requester activity checker that counts the Agent
- * Safe's settled Marketplace requests on chain, against the requirement its
- * `livenessRatio` sets for the epoch.
+ * Connect agent service; staking is optional and per chain (`AgentConfig.stakingChains`).
  *
  * @warning DO NOT STORE STATE IN THIS CLASS. It is a singleton shared across
  * the application.
@@ -121,8 +114,6 @@ export abstract class ConnectService extends StakedAgentService {
     } satisfies StakingRewardsInfo;
   };
 
-  // Connect's contracts are standard staking proxies, read the same way as
-  // Omenstrat's on the instance's own chain.
   static getAvailableRewardsForEpoch = async (
     stakingProgramId: StakingProgramId,
     chainId: EvmChainId,

@@ -76,9 +76,7 @@ export const AchievementModal = () => {
   useEffect(() => {
     if (!currentAchievement) return;
     if (!agentType) {
-      // once the services are in, an agent type that still cannot be found
-      // (its service was removed) never will be: skip it like an unpayable
-      // one, so it does not hold other modals back for good
+      // Its service was removed, so it will never resolve.
       if (isServicesFetched) skipCurrentAchievement();
       return;
     }
@@ -100,10 +98,7 @@ export const AchievementModal = () => {
     triggerAchievementBackgroundTasks,
   ]);
 
-  // Pending while loading, while one shows, and while one is about to be
-  // decided; not once the user has closed it (it stays current until
-  // `markCurrentAchievementAsShown`'s delay clears it) or while the
-  // achievements cannot be read.
+  // False once closed, though it stays current until markCurrentAchievementAsShown's delay.
   const isPending =
     !isError &&
     (isLoading ||

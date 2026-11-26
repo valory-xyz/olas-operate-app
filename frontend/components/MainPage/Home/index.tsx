@@ -67,9 +67,7 @@ export const Home = () => {
     // Track when user visits profile
     if (view === 'profile') {
       setHasVisitedProfile(true);
-      // Connect may run unstaked (always on Polygon), so it has no reliable reward signal — this visit is its equivalent of a
-      // first success and is what arms the post-setup questionnaire. The hook decides whether
-      // that actually shows anything; the reset below is local UI state and does not undo it.
+      // Arms the post-setup questionnaire for Connect (see reportConnectProfileVisit).
       reportConnectProfileVisit();
     }
     // Reset if profile was visited after agent run

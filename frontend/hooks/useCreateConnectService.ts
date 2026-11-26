@@ -74,12 +74,7 @@ export const useCreateConnectService = () => {
 
   return useCallback(
     async (chainId: EvmChainId) => {
-      // Select an existing/new Connect service and route it on: the staking
-      // step where it can stake, else funding. `resolveFundingRoute` is a
-      // network call — if it fails, the service already exists, so fall back
-      // to FundYourAgent rather than throwing (throwing would surface a
-      // "create failed" error to the caller and tempt the user into creating a
-      // duplicate service on retry).
+      // Never throw once the service exists: a retry would create a duplicate.
       const selectAndRoute = async (serviceConfigId: string) => {
         updateSelectedServiceConfigId(serviceConfigId);
         setDefaultStakingProgramId(NO_STAKING_PROGRAM_ID);

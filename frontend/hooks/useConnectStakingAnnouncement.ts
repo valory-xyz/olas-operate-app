@@ -19,13 +19,7 @@ import { useServices } from './useServices';
 import { useSetup } from './useSetup';
 import { useStore } from './useStore';
 
-/**
- * The one-time "Staking for Connect agents" announcement: shown to every user
- * the first time they open a version that ships it, and never again once
- * either button is pressed. It waits for the other first-run modals (the
- * onboarding survey, Connect's first-run modal, an achievement) rather than
- * covering them.
- */
+/** One-time "Staking for Connect agents" announcement. */
 export const useConnectStakingAnnouncement = () => {
   const { store } = useElectronApi();
   const { storeState } = useStore();
@@ -46,9 +40,7 @@ export const useConnectStakingAnnouncement = () => {
   const isStoreHydrated = storeState !== undefined;
   const isSeen = storeState?.connectStakingAnnouncementSeen === true;
 
-  // Connect's first-run modal shows on the first run of a selected instance
-  // until its flow is completed. Not `showFirstRunModal`, which also waits for
-  // the agent's server: this one must not open first and then be covered.
+  // Not showFirstRunModal: it also waits for the agent's server.
   const isConnectFirstRunPending =
     selectedAgentType === AgentMap.Connect &&
     selectedService?.deploymentStatus ===

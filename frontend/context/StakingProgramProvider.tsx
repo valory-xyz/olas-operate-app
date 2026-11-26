@@ -63,9 +63,7 @@ export const StakingProgramProvider = ({ children }: PropsWithChildren) => {
   // 1) On-chain value (where the user actually staked)
   // 2) If not available, use the selected service (can be updated during migration)
   // 3) Fall back to the default config value
-  // Where staking is optional (Connect) the service's own choice decides, as
-  // `isInStakingMode` does: the subgraph's cached contract can outlive an
-  // unstake, and would gate Start on a contract the agent has left.
+  // Where staking is optional the service's own choice decides, as in isInStakingMode.
   const selectedStakingProgramId = useMemo(() => {
     const serviceSelectedStakingProgramId =
       getServiceStakingProgramId(selectedService);

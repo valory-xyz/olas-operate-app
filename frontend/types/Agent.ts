@@ -137,11 +137,7 @@ export type AgentConfig = {
    * on Gnosis, which also defines USDC in its token config.
    */
   erc20Tokens?: TokenSymbol[] | Partial<Record<EvmChainId, TokenSymbol[]>>;
-  /**
-   * Whether the agent always stakes. An agent whose staking is optional
-   * (Connect) is `false` here and lists its chains in `stakingChains`, so read
-   * `isStakingAvailable` to ask whether an instance can stake.
-   */
+  /** Always stakes. Use isStakingAvailable to ask whether an instance can. */
   hasStaking: boolean;
   /** Whether the agent has performance metrics (shows the main-page Performance section). */
   hasPerformance: boolean;
@@ -149,16 +145,9 @@ export type AgentConfig = {
   hasAgentChat?: boolean;
   /** Can be started while evicted inside its minimum staking period. */
   canRunWhileEvicted?: boolean;
-  /**
-   * Chains where an agent that defaults to `no_staking` may stake. Absent →
-   * `hasStaking` alone decides. Read through `isStakingAvailable`.
-   */
+  /** Chains where an agent defaulting to no_staking may stake. */
   stakingChains?: EvmChainId[];
-  /**
-   * Auto-Run: the agent's turn is its minutes per run, and the staking skip
-   * conditions (eviction, empty reward pool, rewards already earned) never
-   * apply, even while it is staked.
-   */
+  /** Auto-Run gives it minutes per run and skips staking checks, even when staked. */
   runsOnMinutesPerRun?: boolean;
   /** Its activity goal can report `no_markets_left`, which decides done before the KPI. */
   canReportNoMarketsLeft?: boolean;
