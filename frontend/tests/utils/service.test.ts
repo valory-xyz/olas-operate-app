@@ -13,6 +13,7 @@ import {
 import { AgentConfig } from '../../types/Agent';
 import { Service, ServiceTemplate } from '../../types/Service';
 import {
+  enableWithdrawalOnlyMode,
   getServiceEvmChainId,
   getServiceInstanceName,
   isValidServiceId,
@@ -169,6 +170,30 @@ describe('isValidServiceId', () => {
 
   it('returns false for undefined', () => {
     expect(isValidServiceId(undefined)).toBe(false);
+  });
+});
+
+describe('enableWithdrawalOnlyMode', () => {
+  it('PATCHes use_staking=false on the home chain and a USER DISABLE_TRADING=true', async () => {
+    const service = createService({ home_chain: MiddlewareChainMap.POLYGON });
+
+    await enableWithdrawalOnlyMode(service);
+
+    expect(mockUpdateService).toHaveBeenCalledWith({
+      serviceConfigId: SERVICE_CONFIG_ID,
+      partialServiceTemplate: {
+        configurations: {
+          [MiddlewareChainMap.POLYGON]: { use_staking: false },
+        },
+        env_variables: {
+          DISABLE_TRADING: {
+            name: 'Disable trading',
+            value: 'true',
+            provision_type: EnvProvisionMap.USER,
+          },
+        },
+      },
+    });
   });
 });
 

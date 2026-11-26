@@ -5,6 +5,7 @@ import { MiddlewareDeploymentStatusMap } from '../../constants/deployment';
 import { useBalanceContext } from '../../hooks/useBalanceContext';
 import { useDeployability } from '../../hooks/useDeployability';
 import { useElectronApi } from '../../hooks/useElectronApi';
+import { useIsPolySafeService } from '../../hooks/useIsPolySafeService';
 import { useMultisigs } from '../../hooks/useMultisig';
 import { usePageState } from '../../hooks/usePageState';
 import { useService } from '../../hooks/useService';
@@ -61,6 +62,9 @@ jest.mock('../../hooks/useStakingProgram', () => ({
   useStakingProgram: jest.fn(),
 }));
 jest.mock('../../hooks/useMultisig', () => ({ useMultisigs: jest.fn() }));
+jest.mock('../../hooks/useIsPolySafeService', () => ({
+  useIsPolySafeService: jest.fn(),
+}));
 jest.mock('../../hooks/useStartService', () => ({
   PrestartCheckFailedError: jest.requireActual('../../hooks/useStartService')
     .PrestartCheckFailedError,
@@ -211,6 +215,9 @@ const setupDefaults = () => {
   mockUseMultisigs.mockReturnValue({
     masterSafesOwners: [],
   } as unknown as ReturnType<typeof useMultisigs>);
+  (useIsPolySafeService as jest.Mock).mockReturnValue({
+    isPolySafeService: false,
+  });
   mockUseStartService.mockReturnValue({
     startService: mockStartServiceFn,
   });
@@ -370,9 +377,36 @@ describe('useServiceDeployment', () => {
           agentType: 'trader',
           stakingProgramId: DEFAULT_STAKING_PROGRAM_ID,
           createServiceIfMissing: true,
+          withdrawalOnly: false,
         }),
       );
     });
+
+    it.each([
+      [true, true, true],
+      [true, false, false],
+      [false, true, false],
+    ])(
+      'starts withdrawal-only when retired=%s and PolySafe=%s → %s',
+      async (retired, isPolySafeService, withdrawalOnly) => {
+        mockUseStakingProgram.mockReturnValue({
+          selectedStakingProgramId: DEFAULT_STAKING_PROGRAM_ID,
+          selectedStakingProgramMeta: { retired },
+        } as unknown as ReturnType<typeof useStakingProgram>);
+        (useIsPolySafeService as jest.Mock).mockReturnValue({
+          isPolySafeService,
+        });
+        const { result } = renderHook(() => useServiceDeployment());
+
+        await act(async () => {
+          await result.current.handleStart();
+        });
+
+        expect(mockStartServiceFn).toHaveBeenCalledWith(
+          expect.objectContaining({ withdrawalOnly }),
+        );
+      },
+    );
 
     it('updates states sequentially after successful start', async () => {
       const callOrder: string[] = [];

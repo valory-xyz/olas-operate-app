@@ -7,6 +7,7 @@ import { isInsufficientGasError } from '@/constants/errors';
 import { useBalanceContext } from '@/hooks/useBalanceContext';
 import { useDeployability } from '@/hooks/useDeployability';
 import { useElectronApi } from '@/hooks/useElectronApi';
+import { useIsPolySafeService } from '@/hooks/useIsPolySafeService';
 import { MultisigOwners, useMultisigs } from '@/hooks/useMultisig';
 import { usePageState } from '@/hooks/usePageState';
 import { useService } from '@/hooks/useService';
@@ -94,7 +95,11 @@ export const useServiceDeployment = () => {
     setIsPaused: setIsStakingContractInfoPollingPaused,
     refetchSelectedStakingContractDetails: refetchActiveStakingContractDetails,
   } = useStakingContractContext();
-  const { selectedStakingProgramId } = useStakingProgram();
+  const { selectedStakingProgramId, selectedStakingProgramMeta } =
+    useStakingProgram();
+  const { isPolySafeService } = useIsPolySafeService();
+  const isWithdrawalOnly =
+    !!selectedStakingProgramMeta?.retired && isPolySafeService;
   const { masterSafesOwners } = useMultisigs(masterSafes);
   const { startService } = useStartService();
 
@@ -174,6 +179,7 @@ export const useServiceDeployment = () => {
         service,
         stakingProgramId: selectedStakingProgramId,
         createServiceIfMissing: true,
+        withdrawalOnly: isWithdrawalOnly,
         createSafeIfNeeded: () =>
           createSafeIfNeeded({
             masterSafes,
@@ -214,6 +220,7 @@ export const useServiceDeployment = () => {
   }, [
     masterWallets,
     selectedStakingProgramId,
+    isWithdrawalOnly,
     pauseAllPolling,
     overrideSelectedServiceStatus,
     resumeAllPolling,

@@ -225,6 +225,27 @@ export const updateServiceIfNeeded = async (
   }
 };
 
+/**
+ * Switches a service into withdrawal-only mode: it starts unstaked and only
+ * redeems, so its user can sell positions and withdraw. Used for PolySafe
+ * services on a retired staking program, which can't switch to a new one.
+ */
+export const enableWithdrawalOnlyMode = async (service: Service) => {
+  await ServicesService.updateService({
+    serviceConfigId: service.service_config_id,
+    partialServiceTemplate: {
+      configurations: { [service.home_chain]: { use_staking: false } },
+      env_variables: {
+        DISABLE_TRADING: {
+          name: 'Disable trading',
+          value: 'true',
+          provision_type: EnvProvisionMap.USER,
+        },
+      },
+    },
+  });
+};
+
 export const onDummyServiceCreation = async (
   stakingProgramId: StakingProgramId,
   serviceTemplateConfig: ServiceTemplate,

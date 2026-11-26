@@ -12,7 +12,10 @@ import {
 } from '../../hooks/useStartService';
 import { ServicesService } from '../../service/Services';
 import { Service } from '../../types/Service';
-import { updateServiceIfNeeded } from '../../utils/service';
+import {
+  enableWithdrawalOnlyMode,
+  updateServiceIfNeeded,
+} from '../../utils/service';
 import {
   DEFAULT_SERVICE_CONFIG_ID,
   DEFAULT_STAKING_PROGRAM_ID,
@@ -33,6 +36,7 @@ jest.mock('../../service/Services', () => ({
 }));
 
 jest.mock('../../utils/service', () => ({
+  enableWithdrawalOnlyMode: jest.fn(),
   updateServiceIfNeeded: jest.fn(),
 }));
 jest.mock('../../config/stakingPrograms', () => {
@@ -83,6 +87,7 @@ const renderStartService = (queryClient = createTestQueryClient()) =>
   });
 
 const mockUpdateServiceIfNeeded = updateServiceIfNeeded as jest.Mock;
+const mockEnableWithdrawalOnlyMode = enableWithdrawalOnlyMode as jest.Mock;
 
 const mockCreateSafeIfNeeded = jest.fn().mockResolvedValue(undefined);
 
@@ -147,6 +152,50 @@ describe('useStartService', () => {
       );
       expect(mockStartService).toHaveBeenCalledWith(DEFAULT_SERVICE_CONFIG_ID);
       expect(returned).toBe(existingService);
+    });
+
+    it('switches to withdrawal-only after the template sync, before the check and start', async () => {
+      const callOrder: string[] = [];
+      mockUpdateServiceIfNeeded.mockImplementation(async () => {
+        callOrder.push('updateService');
+      });
+      mockEnableWithdrawalOnlyMode.mockImplementation(async () => {
+        callOrder.push('withdrawalOnly');
+      });
+      mockGetPrestartCheck.mockImplementation(async () => {
+        callOrder.push('prestartCheck');
+        return PASSED;
+      });
+      mockStartService.mockImplementation(async () => {
+        callOrder.push('startService');
+      });
+
+      const { result } = renderStartService();
+      await result.current.startService({
+        ...baseInput,
+        service: existingService,
+        withdrawalOnly: true,
+      });
+
+      expect(mockEnableWithdrawalOnlyMode).toHaveBeenCalledWith(
+        existingService,
+      );
+      expect(callOrder).toEqual([
+        'updateService',
+        'withdrawalOnly',
+        'prestartCheck',
+        'startService',
+      ]);
+    });
+
+    it('leaves staking alone by default', async () => {
+      const { result } = renderStartService();
+      await result.current.startService({
+        ...baseInput,
+        service: existingService,
+      });
+
+      expect(mockEnableWithdrawalOnlyMode).not.toHaveBeenCalled();
     });
 
     it('does not create a new service when one already exists', async () => {

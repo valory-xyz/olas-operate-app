@@ -8,7 +8,10 @@ import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
 import { ServicesService } from '@/service/Services';
 import { AgentConfig } from '@/types/Agent';
 import { Service, ServiceConfigId } from '@/types/Service';
-import { updateServiceIfNeeded } from '@/utils/service';
+import {
+  enableWithdrawalOnlyMode,
+  updateServiceIfNeeded,
+} from '@/utils/service';
 import { isNoStakingProgram } from '@/utils/stakingProgram';
 
 import {
@@ -49,6 +52,8 @@ type StartServiceInput = {
   stakingProgramId?: StakingProgramId;
   createServiceIfMissing?: boolean;
   createSafeIfNeeded: () => Promise<void>;
+  /** Start the existing service unstaked and redeem-only (PolySafe on a retired program). */
+  withdrawalOnly?: boolean;
 };
 
 /**
@@ -66,6 +71,7 @@ export const useStartService = () => {
       stakingProgramId,
       createServiceIfMissing = false,
       createSafeIfNeeded,
+      withdrawalOnly = false,
     }: StartServiceInput) => {
       // Ensure safe exists before starting or creating service, as it's a prerequisite for both.
       await createSafeIfNeeded();
@@ -73,6 +79,8 @@ export const useStartService = () => {
       // If service exists, ensure it's up to date and start it
       if (service) {
         await updateServiceIfNeeded(service, agentType);
+        // After the template sync, whose PUT would reset DISABLE_TRADING.
+        if (withdrawalOnly) await enableWithdrawalOnlyMode(service);
         await runPrestartCheck(queryClient, service.service_config_id);
         await ServicesService.startService(service.service_config_id);
         return service;
