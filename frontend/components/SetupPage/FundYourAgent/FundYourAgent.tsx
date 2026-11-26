@@ -3,7 +3,7 @@ import { CardSkeleton } from '@/components/ui';
 import { SETUP_SCREEN } from '@/constants';
 import { useGetRefillRequirements, useServices, useSetup } from '@/hooks';
 import { asMiddlewareChain } from '@/utils';
-import { isNoStakingProgram, isStakingAvailable } from '@/utils/stakingProgram';
+import { hasUnstakedOption, isNoStakingProgram } from '@/utils/stakingProgram';
 
 import { BackupSignerGate } from '../BackupSignerGate';
 
@@ -19,7 +19,7 @@ export const FundYourAgent = () => {
     // stake on this chain, so back returns to the step it came from.
     goto(
       isNoStakingProgram(selectedAgentConfig.defaultStakingProgramId) &&
-        !isStakingAvailable(
+        !hasUnstakedOption(
           selectedAgentConfig,
           selectedAgentConfig.evmHomeChainId,
         )

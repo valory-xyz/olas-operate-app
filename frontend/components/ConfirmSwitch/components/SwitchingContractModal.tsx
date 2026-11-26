@@ -25,7 +25,7 @@ const ModalHeader = ({ status }: { status: SwitchingContractStatus }) => {
 type SwitchingContractModalProps = {
   status: SwitchingContractStatus;
   onClose: () => void;
-  stakingProgramIdToMigrateTo: string;
+  stakingProgramIdToMigrateTo: StakingProgramId;
 };
 
 export const SwitchingContractModal = ({
@@ -42,9 +42,7 @@ export const SwitchingContractModal = ({
     toggleSupportModal();
   }, [onClose, toggleSupportModal]);
 
-  const isUnstaking = isNoStakingProgram(
-    stakingProgramIdToMigrateTo as StakingProgramId,
-  );
+  const isUnstaking = isNoStakingProgram(stakingProgramIdToMigrateTo);
 
   const modalProps = useMemo(() => {
     if (status === 'IN_PROGRESS' && isUnstaking) {

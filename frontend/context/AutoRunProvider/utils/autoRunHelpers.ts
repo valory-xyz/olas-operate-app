@@ -392,7 +392,7 @@ export const refreshRewardsEligibility = async ({
     const doneForRun =
       deriveIsActivityGoalMet(read.goal, periodStartFloor) ?? false;
     logMessage(
-      `${serviceConfigId}: no staking, ` +
+      `${serviceConfigId}: minutes per run (${meta.stakingProgramId}), ` +
         `${formatGoalForLog(read, periodStartFloor)} → done=${doneForRun}`,
     );
     return store(meta.stakingProgramId, doneForRun, NO_EPOCH, read.goal);

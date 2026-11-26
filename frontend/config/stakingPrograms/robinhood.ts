@@ -12,7 +12,7 @@ import { deriveStakingProgramId } from '@/utils';
 
 import { ROBINHOOD_STAKING_PROGRAMS_ACTIVITY_CHECKERS } from '../activityCheckers';
 import { TokenSymbolMap } from '../tokens';
-import type { StakingProgramMap } from '.';
+import type { StakingProgramConfig } from '.';
 
 const ROBINHOOD_STAKING_PROGRAMS_CONTRACT_ADDRESSES: Record<
   RobinhoodStakingProgramId,
@@ -26,7 +26,10 @@ const ROBINHOOD_STAKING_PROGRAMS_CONTRACT_ADDRESSES: Record<
     '0x7Bb72fa48b274672Cb6A362045cdCf470aEe99b2',
 } as const;
 
-export const ROBINHOOD_STAKING_PROGRAMS: StakingProgramMap = {
+export const ROBINHOOD_STAKING_PROGRAMS: Record<
+  RobinhoodStakingProgramId,
+  StakingProgramConfig
+> = {
   [STAKING_PROGRAM_IDS.ConnectRobinhoodI]: {
     chainId: EvmChainIdMap.Robinhood,
     name: 'Connect I',

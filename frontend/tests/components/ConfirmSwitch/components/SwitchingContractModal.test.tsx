@@ -3,6 +3,7 @@ import React from 'react';
 
 import { SwitchingContractModal } from '../../../../components/ConfirmSwitch/components/SwitchingContractModal';
 import { EvmChainIdMap } from '../../../../constants/chains';
+import type { StakingProgramId } from '../../../../constants/stakingProgram';
 import { usePageState, useServices } from '../../../../hooks';
 
 jest.mock('../../../../components/ui', () => ({
@@ -48,7 +49,7 @@ beforeEach(() => {
 
 const renderModal = (
   status: 'IN_PROGRESS' | 'COMPLETED',
-  stakingProgramIdToMigrateTo: string,
+  stakingProgramIdToMigrateTo: StakingProgramId,
 ) =>
   render(
     <SwitchingContractModal

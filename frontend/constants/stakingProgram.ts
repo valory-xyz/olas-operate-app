@@ -32,7 +32,7 @@ const GNOSIS_STAKING_PROGRAM_IDS = {
   ConnectGnosisII: 'connect_ii',
 } as const;
 
-/** The new (decoupled-activity) Omenstrat contracts, PredictTrader on Gnosis. */
+/** The decoupled-activity Omenstrat contracts, PredictTrader on Gnosis. */
 export const OMENSTRAT_PROGRAM_IDS = [
   GNOSIS_STAKING_PROGRAM_IDS.OmenstratI,
   GNOSIS_STAKING_PROGRAM_IDS.OmenstratII,
