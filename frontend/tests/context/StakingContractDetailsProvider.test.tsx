@@ -341,7 +341,6 @@ describe('StakingContractDetailsProvider', () => {
     });
 
     it('stays an error, not a load, while a Retry after the failure runs', () => {
-      // React Query v5 resets a refetch with no data to pending.
       setupMocks({
         useQueryReturn: {
           data: undefined,

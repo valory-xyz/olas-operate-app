@@ -42,7 +42,6 @@ const polySafeMultisigQuery = (evmChainId: EvmChainId, multisig?: Address) =>
             const code = await PROVIDERS[evmChainId].provider.getCode(multisig);
             return ethers.utils.keccak256(code) === POLY_SAFE_PROXY_CODEHASH;
           } catch (error) {
-            // Not logged anywhere else, and it blocks a retired-program start.
             console.error(
               `Couldn't read the Safe type of multisig ${multisig} on chain ${evmChainId}:`,
               error,
@@ -58,7 +57,7 @@ const polySafeMultisigQuery = (evmChainId: EvmChainId, multisig?: Address) =>
     retry: 1,
   });
 
-/** Whether any service is a PolySafe one, by codehash (Auto-run); rejects when unreadable. */
+/** Whether `multisig` is a PolySafe, by codehash (Auto-run); rejects when unreadable. */
 export const fetchIsPolySafeService = async (
   queryClient: QueryClient,
   evmChainId: EvmChainId,
@@ -69,25 +68,7 @@ export const fetchIsPolySafeService = async (
   return queryClient.fetchQuery(polySafeMultisigQuery(evmChainId, multisig));
 };
 
-/**
- * Detects whether the selected service was deployed with a PolySafe multisig.
- *
- * Staking contracts pin `service.multisig.codehash`, so a PolySafe service can
- * only stake on `requiresPolySafe` programs and a standard Safe service only
- * on the others. The middleware does not expose the multisig type, so:
- * 1. Chain without `requiresPolySafe` programs → standard Safe, no RPC call.
- * 2. Service staked on-chain → the staked program's flag is proof either way
- *    (the contract enforces the codehash on stake), no RPC call. The
- *    service-stored `staking_program_id` is deliberately NOT used: it is only
- *    the user's choice and may predate a failed stake.
- * 3. Service not deployed yet (no multisig) → standard Safe. The pinned
- *    middleware deploys a standard Safe for every new service.
- * 4. Otherwise `keccak256(getCode(multisig)) === POLY_SAFE_PROXY_CODEHASH`.
- *    On RPC failure `isMultisigTypeError` is set instead of a guess.
- *
- * `isOnRetiredProgram` and `retiredSafeState` follow
- * docs/features/staking-and-rewards.md ("Retired staking programs").
- */
+/** The selected service's Safe type and retired-program state; see docs/features/staking-and-rewards.md. */
 export const useIsPolySafeService = () => {
   const { selectedService, selectedAgentConfig } = useServices();
   const {
@@ -134,8 +115,7 @@ export const useIsPolySafeService = () => {
       return activeProgram.requiresPolySafe ? 'polySafe' : 'standard';
     }
     if (!multisig) return 'standard';
-    // Only data decides the type. A retry after a failure resets the query to
-    // pending, which must not read as "standard".
+    // React Query v5 resets a failed query to pending on Retry; only data decides.
     if (isPolySafeFromCodehash === undefined) {
       return errorUpdateCount > 0 ? 'error' : 'loading';
     }

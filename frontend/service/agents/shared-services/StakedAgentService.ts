@@ -102,10 +102,7 @@ export abstract class StakedAgentService {
     };
   };
 
-  /**
-   * The program the service is staked on: `null` when on none, `undefined` for
-   * an invalid token or chain id. Rejects when the read fails.
-   */
+  /** The staked program: `null` when on none, `undefined` for an invalid token or chain; rejects on a failed read. */
   static getCurrentStakingProgramByServiceIdOrThrow = async (
     serviceNftTokenId: number,
     evmChainId: EvmChainId,

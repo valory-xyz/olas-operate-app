@@ -1,4 +1,3 @@
-/** The retired ids mirror the middleware (see `StakingProgramConfig.retired`). */
 import { MechType } from '../../../config/mechs';
 import {
   isRetiredStakingProgram,

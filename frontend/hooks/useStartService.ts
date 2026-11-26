@@ -92,7 +92,6 @@ export const useStartService = () => {
         await updateServiceIfNeeded(service, agentType);
         // After the template sync, so the withdrawal-only values are the last word.
         if (withdrawalOnly) {
-          // The PATCH stores `no_staking`; keep the retired id for the alert title.
           if (
             !isInWithdrawalOnlyMode(service) &&
             stakingProgramId &&

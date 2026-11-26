@@ -266,10 +266,7 @@ const getDisableTradingTemplateEntry = (agentType: AgentType) => {
   return entry;
 };
 
-/**
- * Whether the service is already set up for withdrawal-only mode: unstaked
- * (`no_staking`) and redeem-only (`DISABLE_TRADING=true`).
- */
+/** Whether the service is stored unstaked (`no_staking`) and redeem-only (`DISABLE_TRADING=true`). */
 export const isInWithdrawalOnlyMode = (service: Service) =>
   isNoStakingProgram(
     service.chain_configs[service.home_chain]?.chain_data.user_params

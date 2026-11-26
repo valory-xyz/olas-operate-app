@@ -83,7 +83,7 @@ export type PearlStore = {
   /** serviceConfigIds of archived instances (hidden from sidebar, restorable). */
   archivedInstances?: string[];
 
-  /** Each withdrawal-only service's retired program, saved before its `no_staking` PATCH, for the alert title. */
+  /** Each withdrawal-only service's retired program, for the alert title. */
   retiredStakingProgramIdByServiceConfigId?: Record<string, StakingProgramId>;
 
   recoveryPhraseBackedUp?: boolean;

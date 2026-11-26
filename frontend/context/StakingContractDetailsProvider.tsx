@@ -153,8 +153,6 @@ const useStakingContractDetailsByStakingProgram = ({
           };
         })
         .catch((error) => {
-          // A failure here blocks a retired-program switch, and the query
-          // error is not logged anywhere else.
           console.error(
             `Couldn't read the staking details of program ${stakingProgramId}, service ${serviceNftTokenId}, on chain ${evmHomeChainId}:`,
             error,
@@ -232,8 +230,6 @@ export const StakingContractDetailsProvider = ({
   const { allStakingContractDetailsRecord, isAllStakingContractDetailsLoaded } =
     useAllStakingContractDetails();
 
-  // A retry after a failed read resets the query to pending; it stays an
-  // error, not a load, until details arrive.
   const isSelectedStakingContractDetailsError =
     errorUpdateCount > 0 && !selectedStakingContractDetails;
 

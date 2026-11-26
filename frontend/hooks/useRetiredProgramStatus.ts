@@ -37,8 +37,6 @@ export const useRetiredProgramStatus = () => {
     [isOnRetiredProgram, retiredSafeState, stakingDetailsState],
   );
 
-  // A withdrawal-only service is stored as `no_staking`; its retired program
-  // was saved before that PATCH.
   const storedRetiredProgramId = selectedService
     ? storeState?.retiredStakingProgramIdByServiceConfigId?.[
         selectedService.service_config_id

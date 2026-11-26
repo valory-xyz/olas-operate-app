@@ -54,15 +54,7 @@ type GetCompatibleStakingProgramIdsParams = {
   currentStakingProgramId: Nullable<StakingProgramId>;
 };
 
-/**
- * Ordered list of staking programs the user may select:
- * 1. The current program first — even if deprecated, retired or incompatible, the user
- *    must be able to see the contract they are actually staked in.
- * 2. Deprecated and retired programs are hidden.
- * 3. Programs not supporting the agent type are hidden.
- * 4. Programs whose multisig requirement doesn't match the service are hidden
- *    (the contract would reject the stake transaction anyway).
- */
+/** The staking programs the user may select, in order; see "Program ordering" in docs/features/staking-and-rewards.md. */
 export const getCompatibleStakingProgramIds = ({
   programs,
   agentType,
@@ -111,10 +103,7 @@ export const runsInsideEvictionWindow = ({
   !!canRunWhileEvicted &&
   evictionExpiresAt - nowSeconds > EVICTION_RUN_START_MARGIN_SECONDS;
 
-/**
- * What a service on a retired program can do, by its Safe type: a PolySafe
- * can't switch (no live program accepts it), so it only withdraws.
- */
+/** What a service on a retired program can do, by its Safe type (a PolySafe only withdraws). */
 export type RetiredSafeState =
   | 'withdrawalOnly'
   | 'canSwitch'
