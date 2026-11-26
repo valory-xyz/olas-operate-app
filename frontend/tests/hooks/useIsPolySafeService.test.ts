@@ -375,6 +375,39 @@ describe('useIsPolySafeService', () => {
       },
     );
 
+    it.each([
+      // Deployed but unstaked: no active program, so the stored id decides.
+      [null, POLY_SAFE_PROGRAM, POLY_SAFE_PROGRAM],
+      [STANDARD_SAFE_PROGRAM, POLY_SAFE_PROGRAM, STANDARD_SAFE_PROGRAM],
+    ] as const)(
+      'is on a retired program by the selected id (active %s, stored %s → %s)',
+      (activeStakingProgramId, storedStakingProgramId, checkedId) => {
+        setupMocks({ activeStakingProgramId, storedStakingProgramId });
+        mockIsRetiredStakingProgram.mockImplementation(
+          (chainId, programId) =>
+            chainId === EvmChainIdMap.Polygon && programId === checkedId,
+        );
+
+        const { result } = renderIsPolySafe();
+        expect(result.current.isOnRetiredProgram).toBe(true);
+      },
+    );
+
+    it("checks on the agent config's chain, where the selected program lives", () => {
+      // Multi-chain agents: the service home chain can differ from the agent's.
+      setupMocks({
+        evmHomeChainId: EvmChainIdMap.Gnosis,
+        serviceHomeChain: MiddlewareChainMap.POLYGON,
+        storedStakingProgramId: POLY_SAFE_PROGRAM,
+      });
+
+      renderIsPolySafe();
+      expect(mockIsRetiredStakingProgram).toHaveBeenCalledWith(
+        EvmChainIdMap.Gnosis,
+        POLY_SAFE_PROGRAM,
+      );
+    });
+
     it('checks the selected program on the agent chain', () => {
       setupMocks({
         activeStakingProgramId: POLY_SAFE_PROGRAM,

@@ -115,13 +115,11 @@ const defaultGeoRestricted = {
 };
 const defaultStakingProgram = {
   isActiveStakingProgramLoaded: true,
-  selectedStakingProgramMeta: null as { retired?: boolean } | null,
 };
 const defaultPolySafe = {
   isOnRetiredProgram: false,
   isPolySafeService: false,
   isWithdrawalOnly: false as boolean | undefined,
-  isMultisigTypeLoaded: true,
   isMultisigTypeError: false,
 };
 
@@ -449,7 +447,6 @@ describe('useDeployability', () => {
         polySafe: {
           ...retired,
           isWithdrawalOnly: undefined,
-          isMultisigTypeLoaded: false,
         },
       });
       const { result } = renderHook(() => useDeployability());
@@ -458,9 +455,17 @@ describe('useDeployability', () => {
     });
 
     it('does not wait for the Safe type on a live program', () => {
-      setupDefaults({ polySafe: { isMultisigTypeLoaded: false } });
+      // The Safe type is still unknown, but only a retired program needs it.
+      setupDefaults({
+        polySafe: {
+          isOnRetiredProgram: false,
+          isWithdrawalOnly: undefined,
+          isMultisigTypeError: false,
+        },
+      });
       const { result } = renderHook(() => useDeployability());
       expect(result.current.canRun).toBe(true);
+      expect(result.current.loadingReason).toBeUndefined();
     });
 
     it('ignores an unreadable Safe type on a live program', () => {

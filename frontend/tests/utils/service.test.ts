@@ -237,7 +237,7 @@ describe('isInWithdrawalOnlyMode', () => {
 });
 
 describe('enableWithdrawalOnlyMode', () => {
-  it('PATCHes staking_program_id=no_staking, from which the middleware derives use_staking=false, and DISABLE_TRADING=true', async () => {
+  it('PATCHes staking_program_id=no_staking and DISABLE_TRADING=true', async () => {
     await enableWithdrawalOnlyMode(
       createPolystratService(),
       AgentMap.Polystrat,
@@ -307,6 +307,27 @@ describe('template sync, then withdrawal-only mode', () => {
     expect(
       partialServiceTemplate.env_variables.REMOVED_VARIABLE,
     ).toBeUndefined();
+  });
+
+  it("sends the template's default for a USER variable the service doesn't have yet", async () => {
+    // A Polystrat service created before DISABLE_TRADING existed.
+    const base = createPolystratService();
+    const { DISABLE_TRADING: _omitted, ...envWithoutDisableTrading } =
+      base.env_variables;
+    const service = {
+      ...base,
+      env_variables: {
+        ...envWithoutDisableTrading,
+        REMOVED_VARIABLE: { value: 'legacy' },
+      },
+    } as unknown as Service;
+
+    await updateServiceIfNeeded(service, AgentMap.Polystrat);
+
+    const [{ partialServiceTemplate }] = mockPutService.mock.calls[0];
+    expect(partialServiceTemplate.env_variables.DISABLE_TRADING).toEqual(
+      PREDICT_POLYMARKET_SERVICE_TEMPLATE.env_variables.DISABLE_TRADING,
+    );
   });
 });
 
@@ -518,11 +539,12 @@ describe('updateServiceIfNeeded', () => {
     expect(mockUpdateService).not.toHaveBeenCalled();
   });
 
-  it('replaces env_variables via PUT when the service has stale keys not in template, keeping USER values', async () => {
+  it('replaces env_variables via PUT when the service has stale keys not in template, keeping only USER values', async () => {
     const service = createService({
       env_variables: {
-        RESET_PAUSE_DURATION: { value: '300' },
-        STORE_PATH: { value: 'persistent_data/' },
+        // FIXED and COMPUTED values that differ go back to the template's.
+        RESET_PAUSE_DURATION: { value: '60' },
+        STORE_PATH: { value: 'elsewhere/' },
         PERSONA: { value: 'A curious agent' },
         REMOVED_VARIABLE: { value: 'legacy' },
       },
