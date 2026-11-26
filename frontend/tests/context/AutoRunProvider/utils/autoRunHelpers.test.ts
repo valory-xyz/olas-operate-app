@@ -2077,12 +2077,18 @@ describe('fetchDeployabilityForAgent', () => {
       STAKING_PROGRAM_IDS.OmenstratIII,
       STAKING_PROGRAM_IDS.OmenstratVIII,
       false,
+      RETIRED_STAKING_PROGRAM_COPY.SWITCH,
     ],
     // Stored on a retired program, but staked on a live one on-chain.
-    [STAKING_PROGRAM_IDS.OmenstratVIII, STAKING_PROGRAM_IDS.OmenstratIII, true],
+    [
+      STAKING_PROGRAM_IDS.OmenstratVIII,
+      STAKING_PROGRAM_IDS.OmenstratIII,
+      true,
+      undefined,
+    ],
   ])(
     'decides "retired" from the on-chain program %s over the stored %s',
-    async (onChainProgramId, storedProgramId, canRun) => {
+    async (onChainProgramId, storedProgramId, canRun, reason) => {
       mockGetCurrentStakingProgramByServiceId.mockResolvedValue(
         onChainProgramId,
       );
@@ -2095,9 +2101,7 @@ describe('fetchDeployabilityForAgent', () => {
         meta.chainId,
       );
       expect(result.canRun).toBe(canRun);
-      if (!canRun) {
-        expect(result.reason).toBe(RETIRED_STAKING_PROGRAM_COPY.SWITCH);
-      }
+      expect(result.reason).toBe(reason);
     },
   );
 
