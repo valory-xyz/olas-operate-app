@@ -1,7 +1,12 @@
 import { renderHook } from '@testing-library/react';
 
-import { useAreOmenstratContractsFull } from '../../../../components/SelectStakingPage/hooks/useAreOmenstratContractsFull';
+import {
+  getOmenstratProgramIds,
+  useAreOmenstratContractsFull,
+} from '../../../../components/SelectStakingPage/hooks/useAreOmenstratContractsFull';
+import { STAKING_PROGRAMS } from '../../../../config/stakingPrograms';
 import { AgentMap } from '../../../../constants/agent';
+import { EvmChainIdMap } from '../../../../constants/chains';
 import { STAKING_PROGRAM_IDS } from '../../../../constants/stakingProgram';
 import { useServices, useStakingContractContext } from '../../../../hooks';
 
@@ -10,6 +15,8 @@ jest.mock('../../../../hooks', () => ({
   useStakingContractContext: jest.fn(),
 }));
 
+// What Gnosis offers new PredictTraders today; #2244 retires these for VIII-X,
+// and this list must move with it.
 const OMENSTRAT_IDS = [
   STAKING_PROGRAM_IDS.OmenstratI,
   STAKING_PROGRAM_IDS.OmenstratII,
@@ -55,5 +62,29 @@ describe('useAreOmenstratContractsFull', () => {
 
   it("is false on any other agent's list", () => {
     expect(setup(allOmenstrat(full), AgentMap.Connect)).toBe(false);
+  });
+});
+
+describe('getOmenstratProgramIds', () => {
+  it('picks the Omenstrat contracts Gnosis offers today', () => {
+    expect(
+      getOmenstratProgramIds(STAKING_PROGRAMS[EvmChainIdMap.Gnosis]),
+    ).toEqual(OMENSTRAT_IDS);
+  });
+
+  it('keeps only offered PredictTrader contracts with an activity target', () => {
+    const program = (over: object) => ({
+      agentsSupported: [AgentMap.PredictTrader],
+      activityTarget: 1,
+      ...over,
+    });
+    const programs = {
+      kept: program({}),
+      deprecated: program({ deprecated: true }),
+      noTarget: program({ activityTarget: undefined }),
+      otherAgent: program({ agentsSupported: [AgentMap.Connect] }),
+    } as unknown as Parameters<typeof getOmenstratProgramIds>[0];
+
+    expect(getOmenstratProgramIds(programs)).toEqual(['kept']);
   });
 });

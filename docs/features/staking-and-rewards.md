@@ -313,7 +313,7 @@ Connect defaults to `no_staking` and may stake only on the chains in `AgentConfi
 - **Eligibility:** `ConnectService` reads the requester activity checker: `getMultisigNonces(safe)[1] - serviceInfo.nonces[1]` against `ceil(max(livenessPeriod, now - tsCheckpoint) * livenessRatio / 1e18)`, with no safety margin, so the one Marketplace request a day the user makes earns the epoch.
 - **Eviction:** `canRunWhileEvicted` keeps Start Agent enabled; `EvictedAlert` has a Connect branch.
 - **Announcement:** `ConnectStakingAnnouncement` (mounted in `MainPage`) shows "Staking for Connect agents" once per user (`connectStakingAnnouncementSeen`, backend-bound). It waits for the onboarding survey, Connect's first-run modal and an achievement that is loading, showing or about to show (`AchievementModal` publishes it through `useAchievementPending`), and for the services to load. "Stake your Connect Agent" opens the contract list of the first non-archived Connect instance in `stakingChains` order, else agent creation.
-- **Omenstrat full:** Omenstrat's list shows "All new Omenstrat contracts are full. You can stake a Connect agent on Gnosis instead." when no contract in `OMENSTRAT_PROGRAM_IDS` has a free slot (`useAreOmenstratContractsFull`).
+- **Omenstrat full:** Omenstrat's list shows "All new Omenstrat contracts are full. You can stake a Connect agent on Gnosis instead." when no Omenstrat contract still offered to PredictTrader (one with an `activityTarget`, not deprecated: `getOmenstratProgramIds`) has a free slot (`useAreOmenstratContractsFull`).
 
 ### Multisig compatibility (OPE-1919)
 

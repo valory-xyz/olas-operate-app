@@ -10,6 +10,7 @@ import {
   EVICTION_RUN_START_MARGIN_SECONDS,
   getCompatibleStakingProgramIds,
   getServiceStakingProgramId,
+  hasFreeServiceSlot,
   hasUnstakedOption,
   isNoStakingProgram,
   isServiceStaked,
@@ -343,5 +344,17 @@ describe('isServiceStaked', () => {
         service(stakingProgramId),
       ),
     ).toBe(expected);
+  });
+});
+
+describe('hasFreeServiceSlot', () => {
+  it.each([
+    ['a slot is free', { serviceIds: [1], maxNumServices: 2 }, true],
+    ['every slot is taken', { serviceIds: [1, 2], maxNumServices: 2 }, false],
+    ['the ids are unknown', { maxNumServices: 2 }, null],
+    ['the limit is unknown', { serviceIds: [1] }, null],
+    ['there are no details', undefined, null],
+  ])('is right when %s', (_, details, expected) => {
+    expect(hasFreeServiceSlot(details)).toBe(expected);
   });
 });

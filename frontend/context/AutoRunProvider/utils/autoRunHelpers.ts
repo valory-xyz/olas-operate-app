@@ -16,6 +16,7 @@ import {
 import { sleepAwareDelay } from '@/utils/delay';
 import { isValidServiceId } from '@/utils/service';
 import {
+  hasFreeServiceSlot,
   isNoStakingProgram,
   runsInsideEvictionWindow,
 } from '@/utils/stakingProgram';
@@ -792,10 +793,10 @@ const runDeployabilityChecks = async (
         availableRewards: contractAvailableRewards,
       } = contractDetails ?? {};
       availableRewards = contractAvailableRewards;
-      const hasEnoughServiceSlots =
-        isNil(serviceIds) || isNil(maxNumServices)
-          ? null
-          : serviceIds.length < maxNumServices;
+      const hasEnoughServiceSlots = hasFreeServiceSlot({
+        serviceIds,
+        maxNumServices,
+      });
 
       const isEligibleAfterEviction =
         !isNil(serviceStakingStartTime) &&

@@ -5,7 +5,7 @@ import { StakingProgramId } from '@/constants';
 import { StakingContractDetailsContext } from '@/context/StakingContractDetailsProvider';
 import { StakingProgramContext } from '@/context/StakingProgramProvider';
 import { Maybe, StakingState } from '@/types';
-import { isNoStakingProgram } from '@/utils/stakingProgram';
+import { hasFreeServiceSlot, isNoStakingProgram } from '@/utils/stakingProgram';
 
 export const useStakingContractContext = () =>
   useContext(StakingContractDetailsContext);
@@ -39,10 +39,10 @@ export const useActiveStakingContractDetails = () => {
 
   const isRewardsAvailable = (availableRewards ?? 0) > 0;
 
-  const hasEnoughServiceSlots =
-    isNil(serviceIds) || isNil(maxNumServices)
-      ? null
-      : serviceIds.length < maxNumServices;
+  const hasEnoughServiceSlots = hasFreeServiceSlot({
+    serviceIds,
+    maxNumServices,
+  });
 
   const hasEnoughRewardsAndSlots = isRewardsAvailable && hasEnoughServiceSlots;
 
@@ -112,9 +112,7 @@ export const useStakingContractDetails = (
   const isRewardsAvailable = (availableRewards ?? 0) > 0;
 
   const hasEnoughServiceSlots =
-    !isNil(serviceIds) &&
-    !isNil(maxNumServices) &&
-    serviceIds.length < maxNumServices;
+    hasFreeServiceSlot({ serviceIds, maxNumServices }) ?? false;
 
   const hasEnoughRewardsAndSlots = isRewardsAvailable && hasEnoughServiceSlots;
 

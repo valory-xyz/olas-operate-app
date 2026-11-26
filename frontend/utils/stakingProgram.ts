@@ -10,6 +10,7 @@ import {
   AgentConfig,
   MiddlewareServiceResponse,
   Nullable,
+  StakingContractDetails,
 } from '@/types';
 
 /**
@@ -86,6 +87,20 @@ export const isServiceStaked = (
   if (isNil(stakingProgramId)) return undefined;
   return !isNoStakingProgram(stakingProgramId);
 };
+
+/**
+ * Whether a contract has a free service slot; `null` while its details are
+ * unknown.
+ */
+export const hasFreeServiceSlot = (
+  details:
+    | Partial<Pick<StakingContractDetails, 'serviceIds' | 'maxNumServices'>>
+    | undefined
+    | null,
+): boolean | null =>
+  isNil(details?.serviceIds) || isNil(details?.maxNumServices)
+    ? null
+    : details.serviceIds.length < details.maxNumServices;
 
 /** Whether any program on the chain only accepts PolySafe-deployed services. */
 export const chainHasPolySafePrograms = (programs: StakingProgramMap) =>
