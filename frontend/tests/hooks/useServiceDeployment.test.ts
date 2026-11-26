@@ -382,11 +382,16 @@ describe('useServiceDeployment', () => {
       );
     });
 
-    it.each([true, false])(
-      "passes useIsPolySafeService's isWithdrawalOnly=%s to the start",
-      async (withdrawalOnly) => {
+    it.each([
+      [true, true],
+      [false, false],
+      // Not known yet: never a withdrawal-only start (useDeployability waits).
+      [undefined, false],
+    ])(
+      "starts with withdrawalOnly when useIsPolySafeService's isWithdrawalOnly=%s: %s",
+      async (isWithdrawalOnly, withdrawalOnly) => {
         (useIsPolySafeService as jest.Mock).mockReturnValue({
-          isWithdrawalOnly: withdrawalOnly,
+          isWithdrawalOnly,
         });
         const { result } = renderHook(() => useServiceDeployment());
 

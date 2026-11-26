@@ -76,8 +76,15 @@ export const useActiveStakingContractDetails = () => {
     );
   })();
 
-  /** Still in the contract (staked or evicted), so it hasn't been unstaked. */
   const isServiceInContract = isServiceStaked || isAgentEvicted;
+
+  /** Loaded and present: a failed read must not pass for "unstaked". */
+  const hasStakingDetails =
+    !isSelectedStakingContractDetailsLoading &&
+    !isNil(selectedStakingContractDetails);
+
+  /** Known to be out of the contract, which a switch to another program needs. */
+  const isServiceOutOfContract = hasStakingDetails && !isServiceInContract;
 
   /** In the contract and inside its minimum staking period: it can't be unstaked yet. */
   const isInMinimumStakingPeriod =
@@ -98,6 +105,8 @@ export const useActiveStakingContractDetails = () => {
     isServiceStaked,
     isServiceInContract,
     isInMinimumStakingPeriod,
+    hasStakingDetails,
+    isServiceOutOfContract,
     evictionExpiresAt,
     isSelectedStakingContractDetailsLoading,
     selectedStakingContractDetails,

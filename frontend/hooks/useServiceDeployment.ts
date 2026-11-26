@@ -176,7 +176,7 @@ export const useServiceDeployment = () => {
         service,
         stakingProgramId: selectedStakingProgramId,
         createServiceIfMissing: true,
-        withdrawalOnly: isWithdrawalOnly,
+        withdrawalOnly: isWithdrawalOnly === true,
         createSafeIfNeeded: () =>
           createSafeIfNeeded({
             masterSafes,

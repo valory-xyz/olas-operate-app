@@ -118,8 +118,9 @@ const defaultStakingProgram = {
   selectedStakingProgramMeta: null as { retired?: boolean } | null,
 };
 const defaultPolySafe = {
+  isOnRetiredProgram: false,
   isPolySafeService: false,
-  isWithdrawalOnly: false,
+  isWithdrawalOnly: false as boolean | undefined,
   isMultisigTypeLoaded: true,
   isMultisigTypeError: false,
 };
@@ -352,11 +353,12 @@ describe('useDeployability', () => {
   });
 
   describe('retired staking program', () => {
-    const retired = { selectedStakingProgramMeta: { retired: true } };
+    // The hook reads "on a retired program" from useIsPolySafeService.
+    const retired = { isOnRetiredProgram: true };
 
     it('blocks the start with the alert copy, ahead of evicted and low balance', () => {
       setupDefaults({
-        stakingProgram: retired,
+        polySafe: retired,
         staking: { isAgentEvicted: true, isEligibleForStaking: false },
         balance: {
           allowStartAgentByServiceConfigId: jest.fn().mockReturnValue(false),
@@ -369,8 +371,11 @@ describe('useDeployability', () => {
 
     it('lets a PolySafe service start, in withdrawal-only mode', () => {
       setupDefaults({
-        stakingProgram: retired,
-        polySafe: { isPolySafeService: true, isWithdrawalOnly: true },
+        polySafe: {
+          ...retired,
+          isPolySafeService: true,
+          isWithdrawalOnly: true,
+        },
       });
       const { result } = renderHook(() => useDeployability());
       expect(result.current.canRun).toBe(true);
@@ -389,8 +394,11 @@ describe('useDeployability', () => {
       'lets a PolySafe service start when %s, since it runs unstaked',
       (_, staking) => {
         setupDefaults({
-          stakingProgram: retired,
-          polySafe: { isPolySafeService: true, isWithdrawalOnly: true },
+          polySafe: {
+            ...retired,
+            isPolySafeService: true,
+            isWithdrawalOnly: true,
+          },
           staking,
         });
         const { result } = renderHook(() => useDeployability());
@@ -400,8 +408,11 @@ describe('useDeployability', () => {
 
     it('blocks the start instead of guessing when the Safe type cannot be read', () => {
       setupDefaults({
-        stakingProgram: retired,
-        polySafe: { isMultisigTypeError: true },
+        polySafe: {
+          ...retired,
+          isWithdrawalOnly: undefined,
+          isMultisigTypeError: true,
+        },
       });
       const { result } = renderHook(() => useDeployability());
       expect(result.current.canRun).toBe(false);
@@ -411,7 +422,7 @@ describe('useDeployability', () => {
     });
 
     it('comes after phased out and before under construction', () => {
-      setupDefaults({ stakingProgram: retired });
+      setupDefaults({ polySafe: retired });
       mockUseServices.mockReturnValue({
         ...defaultServices,
         selectedAgentConfig: {
@@ -435,8 +446,11 @@ describe('useDeployability', () => {
 
     it('waits for the Safe type before deciding', () => {
       setupDefaults({
-        stakingProgram: retired,
-        polySafe: { isMultisigTypeLoaded: false },
+        polySafe: {
+          ...retired,
+          isWithdrawalOnly: undefined,
+          isMultisigTypeLoaded: false,
+        },
       });
       const { result } = renderHook(() => useDeployability());
       expect(result.current.canRun).toBe(false);
@@ -445,6 +459,28 @@ describe('useDeployability', () => {
 
     it('does not wait for the Safe type on a live program', () => {
       setupDefaults({ polySafe: { isMultisigTypeLoaded: false } });
+      const { result } = renderHook(() => useDeployability());
+      expect(result.current.canRun).toBe(true);
+    });
+
+    it('ignores an unreadable Safe type on a live program', () => {
+      // A failed codehash read must not block agents on live programs.
+      setupDefaults({
+        polySafe: { isWithdrawalOnly: undefined, isMultisigTypeError: true },
+      });
+      const { result } = renderHook(() => useDeployability());
+      expect(result.current.canRun).toBe(true);
+    });
+
+    it('lets a service already in withdrawal-only mode start, even with an unreadable Safe type', () => {
+      setupDefaults({
+        polySafe: {
+          ...retired,
+          isWithdrawalOnly: true,
+          isMultisigTypeError: true,
+        },
+        staking: { isServiceStaked: false, hasEnoughServiceSlots: false },
+      });
       const { result } = renderHook(() => useDeployability());
       expect(result.current.canRun).toBe(true);
     });

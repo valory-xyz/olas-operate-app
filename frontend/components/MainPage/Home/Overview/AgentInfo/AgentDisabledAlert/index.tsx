@@ -39,7 +39,10 @@ import { ContractDeprecatedAlert } from './ContractDeprecatedAlert';
 import { EvictedAlert } from './EvictedAlert';
 import { MasterEoaLowBalanceAlert } from './MasterEoaLowBalanceAlert';
 import { NoSlotsAvailableAlert } from './NoSlotsAvailableAlert';
-import { RetiredContractAlert } from './RetiredContractAlert';
+import {
+  RetiredContractAlert,
+  RetiredContractAlertState,
+} from './RetiredContractAlert';
 import { UnderConstructionAlert } from './UnderConstructionAlert';
 import { UnfinishedSetupAlert } from './UnfinishedSetupAlert';
 
@@ -65,13 +68,14 @@ export const AgentDisabledAlert = () => {
     evictionExpiresAt,
     hasEnoughServiceSlots,
     isServiceStaked,
-    isServiceInContract,
     isInMinimumStakingPeriod,
+    hasStakingDetails,
+    isServiceOutOfContract,
     selectedStakingContractDetails,
   } = useActiveStakingContractDetails();
   const {
+    isOnRetiredProgram,
     isWithdrawalOnly,
-    isMultisigTypeLoaded,
     isMultisigTypeError,
     refetch: refetchMultisigType,
   } = useIsPolySafeService();
@@ -179,31 +183,31 @@ export const AgentDisabledAlert = () => {
       return { key: 'another-running', content: <AgentRunningAlert /> };
     }
 
-    if (selectedStakingProgramMeta?.retired) {
-      const areDetailsLoaded = !isSelectedStakingContractDetailsLoading;
+    if (isOnRetiredProgram) {
+      const state = ((): RetiredContractAlertState => {
+        if (isWithdrawalOnly) return { kind: 'withdrawalOnly' };
+        if (hasStakingDetails && isInMinimumStakingPeriod) {
+          return { kind: 'cooldown', endsAt: evictionExpiresAt };
+        }
+        if (isMultisigTypeError) {
+          return {
+            kind: 'safeTypeUnknown',
+            onRetry: () => refetchMultisigType(),
+          };
+        }
+        // The middleware refuses a switch until it has unstaked the agent.
+        return {
+          kind: 'switch',
+          canSwitch: isServiceOutOfContract && isWithdrawalOnly === false,
+        };
+      })();
       return {
         key: 'contract-retired',
         content: (
           <>
             <RetiredContractAlert
-              stakingProgramName={selectedStakingProgramMeta.name}
-              isWithdrawalOnly={isWithdrawalOnly}
-              cooldownEndsAt={
-                areDetailsLoaded && isInMinimumStakingPeriod
-                  ? evictionExpiresAt
-                  : undefined
-              }
-              // The switch is refused until the middleware has unstaked the
-              // agent, and needs the Safe type to be known.
-              canSwitch={
-                areDetailsLoaded &&
-                !isServiceInContract &&
-                isMultisigTypeLoaded &&
-                !isMultisigTypeError
-              }
-              onRetrySafeType={
-                isMultisigTypeError ? () => refetchMultisigType() : undefined
-              }
+              stakingProgramName={selectedStakingProgramMeta?.name}
+              state={state}
             />
             <MasterEoaLowBalanceAlert />
           </>
@@ -292,10 +296,11 @@ export const AgentDisabledAlert = () => {
     isSelectedStakingContractDetailsLoading,
     isServiceRunning,
     isServiceStaked,
-    isServiceInContract,
+    hasStakingDetails,
+    isServiceOutOfContract,
     isInMinimumStakingPeriod,
+    isOnRetiredProgram,
     isWithdrawalOnly,
-    isMultisigTypeLoaded,
     isMultisigTypeError,
     refetchMultisigType,
     runsEvicted,

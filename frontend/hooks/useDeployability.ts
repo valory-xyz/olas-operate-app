@@ -60,11 +60,9 @@ export const useDeployability = ({
     hasEnoughServiceSlots,
     isSelectedStakingContractDetailsLoading,
   } = useActiveStakingContractDetails();
-  const { isActiveStakingProgramLoaded, selectedStakingProgramMeta } =
-    useStakingProgram();
-  const isRetired = !!selectedStakingProgramMeta?.retired;
+  const { isActiveStakingProgramLoaded } = useStakingProgram();
   // Withdrawal-only starts unstaked, so slots and eviction don't apply.
-  const { isWithdrawalOnly, isMultisigTypeLoaded, isMultisigTypeError } =
+  const { isOnRetiredProgram, isWithdrawalOnly, isMultisigTypeError } =
     useIsPolySafeService();
   const { isInitialFunded } = useIsInitiallyFunded();
   const { isAgentGeoRestricted, isGeoLoading } = useIsAgentGeoRestricted({
@@ -106,7 +104,12 @@ export const useDeployability = ({
     )
       reasons.push('Staking');
     if (isGeoLoading) reasons.push('Geo');
-    if (isRetired && !isMultisigTypeLoaded) reasons.push('Safe type');
+    if (
+      isOnRetiredProgram &&
+      isWithdrawalOnly === undefined &&
+      !isMultisigTypeError
+    )
+      reasons.push('Safe type');
     if (safeEligibility?.isLoading) reasons.push('Safe');
     if (isInitialFunded === undefined) reasons.push('Setup');
     return reasons;
@@ -115,8 +118,9 @@ export const useDeployability = ({
     isBalancesAndFundingRequirementsEnabledForAllServices,
     isBalancesAndFundingRequirementsLoadingForAllServices,
     isGeoLoading,
-    isMultisigTypeLoaded,
-    isRetired,
+    isMultisigTypeError,
+    isOnRetiredProgram,
+    isWithdrawalOnly,
     hasSelectedAgentBalances,
     isOnline,
     isInitialFunded,
@@ -156,15 +160,19 @@ export const useDeployability = ({
     }
 
     // A PolySafe agent can't switch contracts; it still starts, unstaked, to
-    // redeem and withdraw.
-    if (isRetired && isMultisigTypeError) {
+    // redeem and withdraw. Which one it is waits on the Safe type.
+    if (
+      isOnRetiredProgram &&
+      isWithdrawalOnly === undefined &&
+      isMultisigTypeError
+    ) {
       return {
         isLoading,
         canRun: false,
         reason: RETIRED_STAKING_PROGRAM_COPY.SAFE_TYPE_UNKNOWN,
       };
     }
-    if (isRetired && !isWithdrawalOnly) {
+    if (isOnRetiredProgram && isWithdrawalOnly === false) {
       return {
         isLoading,
         canRun: false,
@@ -195,7 +203,12 @@ export const useDeployability = ({
 
     // If not enough service slots, and service is not staked
     const hasSlot = !isNil(hasEnoughServiceSlots) && !hasEnoughServiceSlots;
-    if (hasSlot && !isServiceStaked && !runsEvicted && !isWithdrawalOnly) {
+    if (
+      hasSlot &&
+      !isServiceStaked &&
+      !runsEvicted &&
+      isWithdrawalOnly !== true
+    ) {
       return { isLoading, canRun: false, reason: 'No available slots' };
     }
 
@@ -204,7 +217,7 @@ export const useDeployability = ({
       isAgentEvicted &&
       !isEligibleForStaking &&
       !selectedAgentConfig.canRunWhileEvicted &&
-      !isWithdrawalOnly
+      isWithdrawalOnly !== true
     ) {
       return { isLoading, canRun: false, reason: 'Evicted' };
     }
@@ -236,7 +249,7 @@ export const useDeployability = ({
     isInitialFunded,
     isLoading,
     isMultisigTypeError,
-    isRetired,
+    isOnRetiredProgram,
     isServiceStaked,
     isWithdrawalOnly,
     runsEvicted,

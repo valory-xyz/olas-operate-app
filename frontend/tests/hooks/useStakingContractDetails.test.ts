@@ -560,6 +560,60 @@ describe('useActiveStakingContractDetails', () => {
     });
   });
 
+  // ---- hasStakingDetails / isServiceOutOfContract ----
+
+  describe('hasStakingDetails and isServiceOutOfContract', () => {
+    it('are false when the details failed to load, not "unstaked"', () => {
+      const wrapper = makeWrapper({ selectedStakingContractDetails: null });
+      const { result } = renderHook(() => useActiveStakingContractDetails(), {
+        wrapper,
+      });
+      expect(result.current.isServiceInContract).toBe(false);
+      expect(result.current.hasStakingDetails).toBe(false);
+      expect(result.current.isServiceOutOfContract).toBe(false);
+    });
+
+    it('are false while the details load', () => {
+      const wrapper = makeWrapper({
+        isSelectedStakingContractDetailsLoading: true,
+        selectedStakingContractDetails: {
+          ...makeStakingContractDetails(),
+          ...makeServiceStakingDetails({
+            serviceStakingState: StakingState.NotStaked,
+          }),
+        },
+      });
+      const { result } = renderHook(() => useActiveStakingContractDetails(), {
+        wrapper,
+      });
+      expect(result.current.isServiceOutOfContract).toBe(false);
+    });
+
+    it.each([
+      [StakingState.NotStaked, true],
+      [StakingState.Staked, false],
+      [StakingState.Evicted, false],
+    ])(
+      'is out of the contract when %s: %s',
+      (serviceStakingState, expected) => {
+        const wrapper = makeWrapper({
+          selectedStakingContractDetails: {
+            ...makeStakingContractDetails(),
+            ...makeServiceStakingDetails({
+              serviceStakingState,
+              serviceStakingStartTime: DEFAULT_TS_CHECKPOINT,
+            }),
+          },
+        });
+        const { result } = renderHook(() => useActiveStakingContractDetails(), {
+          wrapper,
+        });
+        expect(result.current.hasStakingDetails).toBe(true);
+        expect(result.current.isServiceOutOfContract).toBe(expected);
+      },
+    );
+  });
+
   // ---- evictionExpiresAt ----
 
   describe('evictionExpiresAt', () => {
