@@ -139,22 +139,24 @@ const GeoLocationRestrictionCouldNotLoad = () => (
  * Display the onboarding of the selected agent.
  */
 export const AgentOnboarding = () => {
-  const { goto } = useSetup();
+  const { goto, preselectedAgentType, setPreselectedAgentType } = useSetup();
   const { goto: gotoPage } = usePageState();
   const {
     services,
     selectAgentTypeForSetup,
-    pendingAgentType,
     updateSelectedServiceConfigId,
     getAgentTypeFromService,
   } = useServices();
   const { archivedInstances, unarchiveInstance } = useArchivedAgents();
 
-  // Opens on the agent an entry point chose for setup (e.g. the Connect staking
-  // announcement), else with nothing selected.
+  // Opens on the agent an entry point outside Setup asked for (the Connect
+  // staking announcement), consumed once, else with nothing selected.
   const [selectedAgent, setSelectedAgent] = useState<Optional<AgentType>>(
-    () => pendingAgentType ?? undefined,
+    () => preselectedAgentType ?? undefined,
   );
+  useEffect(() => {
+    if (preselectedAgentType) setPreselectedAgentType(null);
+  }, [preselectedAgentType, setPreselectedAgentType]);
   const [selectedArchivedInstanceId, setSelectedArchivedInstanceId] =
     useState<Optional<string>>();
   const [activeTab, setActiveTab] = useState<AgentTab>(AGENT_TAB.New);

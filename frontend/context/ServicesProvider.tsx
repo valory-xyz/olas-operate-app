@@ -104,8 +104,6 @@ type ServicesContextType = {
   deploymentDetails: ServiceDeployment | undefined;
   updateAgentType: (agentType: AgentType) => void;
   selectAgentTypeForSetup: (agentType: AgentType) => void;
-  /** The agent type chosen for setup, before it has a service; cleared on leaving Setup. */
-  pendingAgentType: Nullable<AgentType>;
   updateSelectedServiceConfigId: (serviceConfigId: string) => void;
   overrideSelectedServiceStatus: (
     status?: Maybe<MiddlewareDeploymentStatus>,
@@ -127,7 +125,6 @@ export const ServicesContext = createContext<ServicesContextType>({
   deploymentDetails: undefined,
   updateAgentType: noop,
   selectAgentTypeForSetup: noop,
-  pendingAgentType: null,
   updateSelectedServiceConfigId: noop,
   overrideSelectedServiceStatus: noop,
   availableServiceConfigIds: [],
@@ -545,7 +542,6 @@ export const ServicesProvider = ({ children }: PropsWithChildren) => {
         serviceStatusOverrides,
         updateAgentType,
         selectAgentTypeForSetup,
-        pendingAgentType,
         updateSelectedServiceConfigId,
         overrideSelectedServiceStatus,
       }}

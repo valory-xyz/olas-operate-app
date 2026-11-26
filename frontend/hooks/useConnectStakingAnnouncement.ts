@@ -30,7 +30,7 @@ export const useConnectStakingAnnouncement = () => {
   const { store } = useElectronApi();
   const { storeState } = useStore();
   const { pageState, goto: gotoPage } = usePageState();
-  const { goto: gotoSetup } = useSetup();
+  const { goto: gotoSetup, setPreselectedAgentType } = useSetup();
   const { isModalOpen: isSurveyOpen } = useOnboardingSurvey();
   const {
     services,
@@ -95,6 +95,7 @@ export const useConnectStakingAnnouncement = () => {
     // No Connect agent on a chain that can stake (none, or only on Polygon):
     // Connect setup, with no chain preselected.
     selectAgentTypeForSetup(AgentMap.Connect);
+    setPreselectedAgentType(AgentMap.Connect);
     gotoPage(PAGES.Setup);
     gotoSetup(SETUP_SCREEN.AgentOnboarding);
   }, [
@@ -104,6 +105,7 @@ export const useConnectStakingAnnouncement = () => {
     gotoPage,
     gotoSetup,
     selectAgentTypeForSetup,
+    setPreselectedAgentType,
   ]);
 
   return { isOpen, stake, dismiss: markSeen };

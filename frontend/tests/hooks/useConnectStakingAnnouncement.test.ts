@@ -49,6 +49,7 @@ const mockGotoPage = jest.fn();
 const mockGotoSetup = jest.fn();
 const mockUpdateSelectedServiceConfigId = jest.fn();
 const mockSelectAgentTypeForSetup = jest.fn();
+const mockSetPreselectedAgentType = jest.fn();
 
 const connectOn = (home_chain: string, id = `sc-connect-${home_chain}`) => ({
   isConnect: true,
@@ -95,7 +96,10 @@ const setup = (overrides: Setup = {}) => {
     pageState,
     goto: mockGotoPage,
   });
-  (useSetup as jest.Mock).mockReturnValue({ goto: mockGotoSetup });
+  (useSetup as jest.Mock).mockReturnValue({
+    goto: mockGotoSetup,
+    setPreselectedAgentType: mockSetPreselectedAgentType,
+  });
   (useOnboardingSurvey as jest.Mock).mockReturnValue({
     isModalOpen: isSurveyOpen,
   });
@@ -195,6 +199,7 @@ describe('useConnectStakingAnnouncement', () => {
       );
       expect(mockGotoPage).toHaveBeenCalledWith(PAGES.SelectStaking);
       expect(mockSelectAgentTypeForSetup).not.toHaveBeenCalled();
+      expect(mockSetPreselectedAgentType).not.toHaveBeenCalled();
     });
 
     it("opens the Robinhood agent's list when there is no Gnosis agent", () => {
@@ -225,6 +230,7 @@ describe('useConnectStakingAnnouncement', () => {
       expect(mockGotoSetup).toHaveBeenCalledWith(SETUP_SCREEN.AgentOnboarding);
       // Connect setup, with no chain chosen
       expect(mockSelectAgentTypeForSetup).toHaveBeenCalledWith('connect');
+      expect(mockSetPreselectedAgentType).toHaveBeenCalledWith('connect');
     });
 
     it('skips an archived Gnosis agent for the Robinhood one', () => {
@@ -256,6 +262,7 @@ describe('useConnectStakingAnnouncement', () => {
       expect(mockGotoSetup).toHaveBeenCalledWith(SETUP_SCREEN.AgentOnboarding);
       // Connect setup, with no chain chosen
       expect(mockSelectAgentTypeForSetup).toHaveBeenCalledWith('connect');
+      expect(mockSetPreselectedAgentType).toHaveBeenCalledWith('connect');
     });
   });
 

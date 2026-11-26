@@ -22,7 +22,6 @@ describe('useServices', () => {
       deploymentDetails: undefined,
       updateAgentType: mockUpdateAgentType,
       selectAgentTypeForSetup: jest.fn(),
-      pendingAgentType: null,
       updateSelectedServiceConfigId: jest.fn(),
       overrideSelectedServiceStatus: jest.fn(),
       availableServiceConfigIds: [],

@@ -16,6 +16,8 @@ export const useSetup = () => {
     setPassword,
     isReplacingBackup,
     setIsReplacingBackup,
+    preselectedAgentType,
+    setPreselectedAgentType,
   } = useContext(SetupContext);
   const { store } = useElectronApi();
   const { storeState } = useStore();
@@ -57,5 +59,7 @@ export const useSetup = () => {
     setPassword,
     isReplacingBackup,
     setIsReplacingBackup,
+    preselectedAgentType,
+    setPreselectedAgentType,
   };
 };
