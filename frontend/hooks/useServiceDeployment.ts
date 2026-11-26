@@ -26,7 +26,7 @@ import {
   getSafeEligibility,
   getSafeEligibilityMessage,
 } from '@/utils/safe';
-import { isStakingAvailable } from '@/utils/stakingProgram';
+import { isNoStakingProgram, isStakingAvailable } from '@/utils/stakingProgram';
 
 const createSafeIfNeeded = async ({
   masterSafes,
@@ -101,13 +101,15 @@ export const useServiceDeployment = () => {
 
   const isLoading = useMemo(() => {
     if (isServicesLoading || isServiceRunning) return true;
-    // An agent that cannot stake on this chain has no staking contracts here,
-    // so its staking-details record never "loads": don't gate on it.
+    // An agent that cannot stake on this chain, or a service that runs
+    // unstaked, reads no staking contract to start: don't gate on the record,
+    // which may never load for it.
     if (
       isStakingAvailable(
         selectedAgentConfig,
         selectedAgentConfig.evmHomeChainId,
       ) &&
+      !isNoStakingProgram(selectedStakingProgramId) &&
       !isAllStakingContractDetailsRecordLoaded
     ) {
       return true;
@@ -115,6 +117,7 @@ export const useServiceDeployment = () => {
     return false;
   }, [
     selectedAgentConfig,
+    selectedStakingProgramId,
     isAllStakingContractDetailsRecordLoaded,
     isServiceRunning,
     isServicesLoading,

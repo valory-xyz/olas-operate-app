@@ -307,6 +307,28 @@ describe('useServiceDeployment', () => {
         expect(result.current.isLoading).toBe(expected);
       },
     );
+
+    it('does not wait for the staking details while the instance is unstaked', () => {
+      mockUseServices.mockReturnValue({
+        ...mockUseServices(),
+        selectedAgentConfig: {
+          evmHomeChainId: 100,
+          middlewareHomeChainId: 'gnosis',
+          hasStaking: false,
+          stakingChains: [100, 4663],
+        },
+        selectedAgentType: 'connect',
+      } as unknown as ReturnType<typeof useServices>);
+      mockUseStakingProgram.mockReturnValue({
+        selectedStakingProgramId: 'no_staking',
+      } as unknown as ReturnType<typeof useStakingProgram>);
+      mockUseStakingContractContext.mockReturnValue({
+        ...mockUseStakingContractContext(),
+        isAllStakingContractDetailsRecordLoaded: false,
+      } as unknown as ReturnType<typeof useStakingContractContext>);
+      const { result } = renderHook(() => useServiceDeployment());
+      expect(result.current.isLoading).toBe(false);
+    });
   });
 
   describe('isDeployable', () => {
