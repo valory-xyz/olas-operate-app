@@ -50,7 +50,7 @@ type GetCompatibleStakingProgramIdsParams = {
 
 /**
  * Ordered list of staking programs the user may select:
- * 1. The current program first — even if deprecated or incompatible, the user
+ * 1. The current program first — even if deprecated, retired or incompatible, the user
  *    must be able to see the contract they are actually staked in.
  * 2. Deprecated and retired programs are hidden.
  * 3. Programs not supporting the agent type are hidden.

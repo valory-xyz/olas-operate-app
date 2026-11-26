@@ -136,7 +136,7 @@ export type StakingProgramId =
 export const RETIRED_STAKING_PROGRAM_COPY = {
   SWITCH:
     'Switch to one of the available contracts to run your agent. Pearl no longer supports deprecated contracts.',
-  /** The Safe type can't be read, so neither variant above can be offered. */
+  /** The Safe type can't be read, so neither SWITCH nor WITHDRAWAL_ONLY can be offered. */
   SAFE_TYPE_UNKNOWN:
     "Pearl couldn't check whether this agent can switch to a new contract. Check your internet connection and try again.",
   WITHDRAWAL_ONLY:
