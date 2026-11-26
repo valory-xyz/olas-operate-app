@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 
 import { AgentDisabledAlert } from '../../../../../../../components/MainPage/Home/Overview/AgentInfo/AgentDisabledAlert';
@@ -114,16 +114,20 @@ jest.mock(
       stakingProgramName,
       isWithdrawalOnly,
       cooldownEndsAt,
-      isSafeTypeKnown,
+      canSwitch,
+      onRetrySafeType,
     }: {
       stakingProgramName: string;
       isWithdrawalOnly: boolean;
       cooldownEndsAt?: number;
-      isSafeTypeKnown?: boolean;
+      canSwitch: boolean;
+      onRetrySafeType?: () => void;
     }) => (
       <div>
-        {`contract-retired: ${stakingProgramName} withdrawalOnly=${isWithdrawalOnly} cooldownEndsAt=${cooldownEndsAt ?? 'none'}`}
-        {isSafeTypeKnown === false && ' safe-type-unknown'}
+        {`contract-retired: ${stakingProgramName} withdrawalOnly=${isWithdrawalOnly} cooldownEndsAt=${cooldownEndsAt ?? 'none'} canSwitch=${canSwitch}`}
+        {onRetrySafeType && (
+          <button onClick={onRetrySafeType}>retry-safe-type</button>
+        )}
       </div>
     ),
   }),
@@ -159,13 +163,16 @@ jest.mock(
   }),
 );
 
+const mockRefetchMultisigType = jest.fn();
+
 type StakingOverrides = {
   isSelectedStakingContractDetailsLoading?: boolean;
   isAgentEvicted?: boolean;
   isEligibleForStaking?: boolean;
   hasEnoughServiceSlots?: boolean | null;
   isServiceStaked?: boolean;
-  isServiceStakedForMinimumDuration?: boolean;
+  isServiceInContract?: boolean;
+  isInMinimumStakingPeriod?: boolean;
   evictionExpiresAt?: number;
   availableRewards?: number;
 };
@@ -181,7 +188,7 @@ const setup = ({
   isAgentGeoRestricted = false,
   deprecatedStakingProgram = false,
   retiredStakingProgram = false,
-  isPolySafeService = false,
+  isWithdrawalOnly = false,
   multisigType = { isMultisigTypeLoaded: true, isMultisigTypeError: false },
   isRunning = false,
   agentIssues,
@@ -198,7 +205,7 @@ const setup = ({
   isAgentGeoRestricted?: boolean;
   deprecatedStakingProgram?: boolean;
   retiredStakingProgram?: boolean;
-  isPolySafeService?: boolean;
+  isWithdrawalOnly?: boolean;
   multisigType?: {
     isMultisigTypeLoaded: boolean;
     isMultisigTypeError: boolean;
@@ -214,7 +221,9 @@ const setup = ({
     isEligibleForStaking: true,
     hasEnoughServiceSlots: true,
     isServiceStaked: true,
-    isServiceStakedForMinimumDuration: true,
+    isServiceInContract: true,
+    isInMinimumStakingPeriod: false,
+    evictionExpiresAt: 1_700_000_000,
     ...staking,
     selectedStakingContractDetails: {
       availableRewards: staking.availableRewards ?? 10,
@@ -271,8 +280,9 @@ const setup = ({
     },
   });
   (useIsPolySafeService as jest.Mock).mockReturnValue({
-    isPolySafeService,
+    isWithdrawalOnly,
     ...multisigType,
+    refetch: mockRefetchMultisigType,
   });
   return render(<AgentDisabledAlert />);
 };
@@ -579,6 +589,25 @@ describe('AgentDisabledAlert', () => {
   });
 
   describe('retired staking program', () => {
+    const retiredAlert = ({
+      withdrawalOnly = false,
+      cooldownEndsAt = 'none',
+      canSwitch,
+    }: {
+      withdrawalOnly?: boolean;
+      cooldownEndsAt?: number | 'none';
+      canSwitch: boolean;
+    }) =>
+      screen.getByText(
+        `contract-retired: Beta 3 withdrawalOnly=${withdrawalOnly} cooldownEndsAt=${cooldownEndsAt} canSwitch=${canSwitch}`,
+      );
+
+    const UNSTAKED = {
+      isServiceStaked: false,
+      isServiceInContract: false,
+      isInMinimumStakingPeriod: false,
+    };
+
     it('pre-empts no-slots, eviction, empty-pool and agent low-balance alerts, keeping the Master EOA one', () => {
       setup({
         retiredStakingProgram: true,
@@ -592,11 +621,7 @@ describe('AgentDisabledAlert', () => {
         },
       });
 
-      expect(
-        screen.getByText(
-          'contract-retired: Beta 3 withdrawalOnly=false cooldownEndsAt=none',
-        ),
-      ).toBeInTheDocument();
+      expect(retiredAlert({ canSwitch: false })).toBeInTheDocument();
       expect(screen.getByText('master-eoa-low-balance')).toBeInTheDocument();
       for (const marker of [
         'contract-deprecated',
@@ -609,83 +634,79 @@ describe('AgentDisabledAlert', () => {
       }
     });
 
-    it.each([
-      ['staked', { isServiceStaked: true }],
-      ['evicted', { isServiceStaked: false, isAgentEvicted: true }],
-    ])(
-      'passes the end of the minimum staking period while %s inside it',
-      (_, staking) => {
-        setup({
-          retiredStakingProgram: true,
-          staking: {
-            ...staking,
-            isServiceStakedForMinimumDuration: false,
-            evictionExpiresAt: 1_800_000_000,
-          },
-        });
-
-        expect(
-          screen.getByText(
-            'contract-retired: Beta 3 withdrawalOnly=false cooldownEndsAt=1800000000',
-          ),
-        ).toBeInTheDocument();
-      },
-    );
-
-    it('shows no cooldown once the agent is unstaked', () => {
+    it('passes the end of the minimum staking period while the agent is inside it', () => {
       setup({
         retiredStakingProgram: true,
         staking: {
-          isServiceStaked: false,
-          isServiceStakedForMinimumDuration: false,
+          isInMinimumStakingPeriod: true,
           evictionExpiresAt: 1_800_000_000,
         },
       });
 
       expect(
-        screen.getByText(
-          'contract-retired: Beta 3 withdrawalOnly=false cooldownEndsAt=none',
-        ),
+        retiredAlert({ cooldownEndsAt: 1_800_000_000, canSwitch: false }),
       ).toBeInTheDocument();
     });
 
-    it('shows no cooldown while the staking details reload', () => {
+    it('offers no switch once the period is over but the agent is still in the contract', () => {
+      // The middleware unstakes it up to 10 minutes later; a switch before
+      // then is refused with a 409.
+      setup({ retiredStakingProgram: true });
+
+      expect(retiredAlert({ canSwitch: false })).toBeInTheDocument();
+    });
+
+    it('offers the switch once the agent is unstaked', () => {
+      setup({ retiredStakingProgram: true, staking: UNSTAKED });
+
+      expect(retiredAlert({ canSwitch: true })).toBeInTheDocument();
+    });
+
+    it('shows neither the cooldown nor the switch while the staking details reload', () => {
       setup({
         retiredStakingProgram: true,
         staking: {
+          ...UNSTAKED,
           isSelectedStakingContractDetailsLoading: true,
-          isServiceStaked: true,
-          isServiceStakedForMinimumDuration: false,
+          isInMinimumStakingPeriod: true,
           evictionExpiresAt: 1_800_000_000,
         },
       });
 
-      expect(
-        screen.getByText(
-          'contract-retired: Beta 3 withdrawalOnly=false cooldownEndsAt=none',
-        ),
-      ).toBeInTheDocument();
+      expect(retiredAlert({ canSwitch: false })).toBeInTheDocument();
     });
 
-    it.each([
-      ['loading', { isMultisigTypeLoaded: false, isMultisigTypeError: false }],
-      ['unreadable', { isMultisigTypeLoaded: true, isMultisigTypeError: true }],
-    ])(
-      'tells the alert the Safe type is unknown while it is %s',
-      (_, multisigType) => {
-        setup({ retiredStakingProgram: true, multisigType });
+    it('offers no switch while the Safe type loads', () => {
+      setup({
+        retiredStakingProgram: true,
+        staking: UNSTAKED,
+        multisigType: {
+          isMultisigTypeLoaded: false,
+          isMultisigTypeError: false,
+        },
+      });
 
-        expect(screen.getByText(/safe-type-unknown/)).toBeInTheDocument();
-      },
-    );
+      expect(retiredAlert({ canSwitch: false })).toBeInTheDocument();
+      expect(screen.queryByText('retry-safe-type')).not.toBeInTheDocument();
+    });
 
-    it('uses the withdrawal-only variant for a PolySafe service', () => {
-      setup({ retiredStakingProgram: true, isPolySafeService: true });
+    it("offers a retry of the Safe type read when it couldn't be read", () => {
+      setup({
+        retiredStakingProgram: true,
+        staking: UNSTAKED,
+        multisigType: { isMultisigTypeLoaded: true, isMultisigTypeError: true },
+      });
+
+      expect(retiredAlert({ canSwitch: false })).toBeInTheDocument();
+      fireEvent.click(screen.getByText('retry-safe-type'));
+      expect(mockRefetchMultisigType).toHaveBeenCalledTimes(1);
+    });
+
+    it('uses the withdrawal-only variant for a withdrawal-only service', () => {
+      setup({ retiredStakingProgram: true, isWithdrawalOnly: true });
 
       expect(
-        screen.getByText(
-          'contract-retired: Beta 3 withdrawalOnly=true cooldownEndsAt=none',
-        ),
+        retiredAlert({ withdrawalOnly: true, canSwitch: false }),
       ).toBeInTheDocument();
     });
 

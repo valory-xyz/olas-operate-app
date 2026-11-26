@@ -76,6 +76,13 @@ export const useActiveStakingContractDetails = () => {
     );
   })();
 
+  /** Still in the contract (staked or evicted), so it hasn't been unstaked. */
+  const isServiceInContract = isServiceStaked || isAgentEvicted;
+
+  /** In the contract and inside its minimum staking period: it can't be unstaked yet. */
+  const isInMinimumStakingPeriod =
+    isServiceInContract && !isServiceStakedForMinimumDuration;
+
   // Eviction expire time in seconds
   const evictionExpiresAt =
     (serviceStakingStartTime ?? 0) + (minimumStakingDuration ?? 0);
@@ -89,6 +96,8 @@ export const useActiveStakingContractDetails = () => {
     isEligibleForStaking,
     isServiceStakedForMinimumDuration,
     isServiceStaked,
+    isServiceInContract,
+    isInMinimumStakingPeriod,
     evictionExpiresAt,
     isSelectedStakingContractDetailsLoading,
     selectedStakingContractDetails,

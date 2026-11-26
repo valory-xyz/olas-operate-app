@@ -65,11 +65,16 @@ export const AgentDisabledAlert = () => {
     evictionExpiresAt,
     hasEnoughServiceSlots,
     isServiceStaked,
-    isServiceStakedForMinimumDuration,
+    isServiceInContract,
+    isInMinimumStakingPeriod,
     selectedStakingContractDetails,
   } = useActiveStakingContractDetails();
-  const { isPolySafeService, isMultisigTypeLoaded, isMultisigTypeError } =
-    useIsPolySafeService();
+  const {
+    isWithdrawalOnly,
+    isMultisigTypeLoaded,
+    isMultisigTypeError,
+    refetch: refetchMultisigType,
+  } = useIsPolySafeService();
   const { isInitialFunded } = useIsInitiallyFunded();
   const { getMasterSafeOf, masterWallets } = useMasterWalletContext();
   const { isAnotherAgentRunning } = useAgentRunning();
@@ -175,19 +180,30 @@ export const AgentDisabledAlert = () => {
     }
 
     if (selectedStakingProgramMeta?.retired) {
-      const isInCooldown =
-        !isSelectedStakingContractDetailsLoading &&
-        (isServiceStaked || isAgentEvicted) &&
-        !isServiceStakedForMinimumDuration;
+      const areDetailsLoaded = !isSelectedStakingContractDetailsLoading;
       return {
         key: 'contract-retired',
         content: (
           <>
             <RetiredContractAlert
               stakingProgramName={selectedStakingProgramMeta.name}
-              isWithdrawalOnly={isPolySafeService}
-              isSafeTypeKnown={isMultisigTypeLoaded && !isMultisigTypeError}
-              cooldownEndsAt={isInCooldown ? evictionExpiresAt : undefined}
+              isWithdrawalOnly={isWithdrawalOnly}
+              cooldownEndsAt={
+                areDetailsLoaded && isInMinimumStakingPeriod
+                  ? evictionExpiresAt
+                  : undefined
+              }
+              // The switch is refused until the middleware has unstaked the
+              // agent, and needs the Safe type to be known.
+              canSwitch={
+                areDetailsLoaded &&
+                !isServiceInContract &&
+                isMultisigTypeLoaded &&
+                !isMultisigTypeError
+              }
+              onRetrySafeType={
+                isMultisigTypeError ? () => refetchMultisigType() : undefined
+              }
             />
             <MasterEoaLowBalanceAlert />
           </>
@@ -276,10 +292,12 @@ export const AgentDisabledAlert = () => {
     isSelectedStakingContractDetailsLoading,
     isServiceRunning,
     isServiceStaked,
-    isServiceStakedForMinimumDuration,
-    isPolySafeService,
+    isServiceInContract,
+    isInMinimumStakingPeriod,
+    isWithdrawalOnly,
     isMultisigTypeLoaded,
     isMultisigTypeError,
+    refetchMultisigType,
     runsEvicted,
     prestartCheck,
     runningAgentIssues,

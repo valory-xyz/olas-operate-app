@@ -13,8 +13,13 @@ type RetiredContractAlertProps = {
   isWithdrawalOnly: boolean;
   /** End of the minimum staking period in seconds, while the agent is inside it. */
   cooldownEndsAt?: number;
-  /** False while the Safe type is loading or unreadable: no button is offered, as either one could be wrong. */
-  isSafeTypeKnown?: boolean;
+  /**
+   * Whether the switch can go ahead now: the agent is unstaked and its Safe
+   * type is known. Otherwise the body shows without a button.
+   */
+  canSwitch: boolean;
+  /** Set when the Safe type couldn't be read: offers a retry instead of a variant that may be wrong. */
+  onRetrySafeType?: () => void;
 };
 
 const CooldownBody = ({ cooldownEndsAt }: { cooldownEndsAt: number }) => (
@@ -35,7 +40,8 @@ export const RetiredContractAlert = ({
   stakingProgramName,
   isWithdrawalOnly,
   cooldownEndsAt,
-  isSafeTypeKnown = true,
+  canSwitch,
+  onRetrySafeType,
 }: RetiredContractAlertProps) => {
   const { goto } = usePageState();
 
@@ -57,7 +63,20 @@ export const RetiredContractAlert = ({
       return <CooldownBody cooldownEndsAt={cooldownEndsAt} />;
     }
 
-    if (!isSafeTypeKnown) {
+    if (onRetrySafeType) {
+      return (
+        <>
+          <Text className="text-sm flex mt-4 mb-8">
+            {RETIRED_STAKING_PROGRAM_COPY.SAFE_TYPE_UNKNOWN}
+          </Text>
+          <Button size="small" onClick={onRetrySafeType}>
+            Retry
+          </Button>
+        </>
+      );
+    }
+
+    if (!canSwitch) {
       return (
         <Text className="text-sm flex mt-4">
           {RETIRED_STAKING_PROGRAM_COPY.SWITCH}

@@ -30,6 +30,7 @@ describe('RetiredContractAlert', () => {
       <RetiredContractAlert
         stakingProgramName="Polystrat IV"
         isWithdrawalOnly={false}
+        canSwitch
       />,
     );
 
@@ -48,6 +49,7 @@ describe('RetiredContractAlert', () => {
         stakingProgramName="Polystrat IV"
         isWithdrawalOnly={false}
         cooldownEndsAt={1_800_000_000}
+        canSwitch={false}
       />,
     );
 
@@ -57,12 +59,12 @@ describe('RetiredContractAlert', () => {
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
   });
 
-  it('offers no button while the Safe type is unknown', () => {
+  it('offers no button while the switch would be refused', () => {
     render(
       <RetiredContractAlert
         stakingProgramName="Polystrat III"
         isWithdrawalOnly={false}
-        isSafeTypeKnown={false}
+        canSwitch={false}
       />,
     );
 
@@ -72,12 +74,55 @@ describe('RetiredContractAlert', () => {
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
   });
 
+  it("offers a retry, not the switch copy, when the Safe type couldn't be read", () => {
+    const onRetrySafeType = jest.fn();
+    render(
+      <RetiredContractAlert
+        stakingProgramName="Polystrat III"
+        isWithdrawalOnly={false}
+        canSwitch={false}
+        onRetrySafeType={onRetrySafeType}
+      />,
+    );
+
+    expect(alertText()).toBe(
+      "Polystrat III contract is deprecatedPearl couldn't check whether this agent can switch to a new contract. Check your internet connection and try again.Retry",
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    expect(onRetrySafeType).toHaveBeenCalledTimes(1);
+    expect(mockGoto).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['loading', undefined],
+    ['unreadable', () => {}],
+  ])(
+    'keeps the cooldown end date while the Safe type is %s',
+    (_, onRetrySafeType) => {
+      render(
+        <RetiredContractAlert
+          stakingProgramName="Polystrat IV"
+          isWithdrawalOnly={false}
+          cooldownEndsAt={1_800_000_000}
+          canSwitch={false}
+          onRetrySafeType={onRetrySafeType}
+        />,
+      );
+
+      expect(alertText()).toContain(
+        'cooldown period until formatted:1800000000000 (UTC)',
+      );
+      expect(screen.queryByRole('button')).not.toBeInTheDocument();
+    },
+  );
+
   it('offers only Withdraw to a PolySafe agent, as in Figma frame 5, even inside the cooldown', () => {
     render(
       <RetiredContractAlert
         stakingProgramName="Polystrat III"
         isWithdrawalOnly
         cooldownEndsAt={1_800_000_000}
+        canSwitch={false}
       />,
     );
 

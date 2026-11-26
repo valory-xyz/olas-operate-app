@@ -511,6 +511,55 @@ describe('useActiveStakingContractDetails', () => {
     });
   });
 
+  // ---- isServiceInContract / isInMinimumStakingPeriod ----
+
+  describe('isServiceInContract and isInMinimumStakingPeriod', () => {
+    const START = DEFAULT_TS_CHECKPOINT;
+    const render = (
+      serviceStakingState: StakingState,
+      secondsSinceStart: number,
+    ) => {
+      jest
+        .spyOn(Date, 'now')
+        .mockReturnValue((START + secondsSinceStart) * 1000);
+      const wrapper = makeWrapper({
+        selectedStakingContractDetails: {
+          ...makeStakingContractDetails({
+            minimumStakingDuration: DEFAULT_LIVENESS_PERIOD_S,
+          }),
+          ...makeServiceStakingDetails({
+            serviceStakingState,
+            serviceStakingStartTime: START,
+          }),
+        },
+      });
+      return renderHook(() => useActiveStakingContractDetails(), { wrapper })
+        .result.current;
+    };
+
+    it.each([
+      ['staked', StakingState.Staked],
+      ['evicted', StakingState.Evicted],
+    ])('is in the period while %s inside it', (_, state) => {
+      const result = render(state, 10);
+      expect(result.isServiceInContract).toBe(true);
+      expect(result.isInMinimumStakingPeriod).toBe(true);
+    });
+
+    it('is out of the period once it is over, with the end date still set', () => {
+      const result = render(StakingState.Staked, DEFAULT_LIVENESS_PERIOD_S);
+      expect(result.evictionExpiresAt).toBe(START + DEFAULT_LIVENESS_PERIOD_S);
+      expect(result.isServiceInContract).toBe(true);
+      expect(result.isInMinimumStakingPeriod).toBe(false);
+    });
+
+    it('is neither once unstaked, even inside the period', () => {
+      const result = render(StakingState.NotStaked, 10);
+      expect(result.isServiceInContract).toBe(false);
+      expect(result.isInMinimumStakingPeriod).toBe(false);
+    });
+  });
+
   // ---- evictionExpiresAt ----
 
   describe('evictionExpiresAt', () => {
