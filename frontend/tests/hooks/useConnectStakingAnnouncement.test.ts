@@ -48,6 +48,7 @@ const mockStoreSet = jest.fn();
 const mockGotoPage = jest.fn();
 const mockGotoSetup = jest.fn();
 const mockUpdateSelectedServiceConfigId = jest.fn();
+const mockSelectAgentTypeForSetup = jest.fn();
 
 const connectOn = (home_chain: string, id = `sc-connect-${home_chain}`) => ({
   isConnect: true,
@@ -104,6 +105,7 @@ const setup = (overrides: Setup = {}) => {
     selectedService,
     selectedAgentType,
     updateSelectedServiceConfigId: mockUpdateSelectedServiceConfigId,
+    selectAgentTypeForSetup: mockSelectAgentTypeForSetup,
   });
   return renderHook(() => useConnectStakingAnnouncement()).result;
 };
@@ -192,6 +194,7 @@ describe('useConnectStakingAnnouncement', () => {
         'sc-connect-gnosis',
       );
       expect(mockGotoPage).toHaveBeenCalledWith(PAGES.SelectStaking);
+      expect(mockSelectAgentTypeForSetup).not.toHaveBeenCalled();
     });
 
     it("opens the Robinhood agent's list when there is no Gnosis agent", () => {
@@ -210,7 +213,7 @@ describe('useConnectStakingAnnouncement', () => {
       expect(mockGotoPage).toHaveBeenCalledWith(PAGES.SelectStaking);
     });
 
-    it('opens agent creation when the only Connect agent is on Polygon', () => {
+    it('opens Connect setup when the only Connect agent is on Polygon', () => {
       const result = setup({
         services: [connectOn(MiddlewareChainMap.POLYGON)],
       });
@@ -220,6 +223,8 @@ describe('useConnectStakingAnnouncement', () => {
       expect(mockUpdateSelectedServiceConfigId).not.toHaveBeenCalled();
       expect(mockGotoPage).toHaveBeenCalledWith(PAGES.Setup);
       expect(mockGotoSetup).toHaveBeenCalledWith(SETUP_SCREEN.AgentOnboarding);
+      // Connect setup, with no chain chosen
+      expect(mockSelectAgentTypeForSetup).toHaveBeenCalledWith('connect');
     });
 
     it('skips an archived Gnosis agent for the Robinhood one', () => {
@@ -249,6 +254,8 @@ describe('useConnectStakingAnnouncement', () => {
       act(() => result.current.stake());
 
       expect(mockGotoSetup).toHaveBeenCalledWith(SETUP_SCREEN.AgentOnboarding);
+      // Connect setup, with no chain chosen
+      expect(mockSelectAgentTypeForSetup).toHaveBeenCalledWith('connect');
     });
   });
 

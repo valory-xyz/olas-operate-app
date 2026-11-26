@@ -38,6 +38,7 @@ export const useConnectStakingAnnouncement = () => {
     selectedService,
     selectedAgentType,
     updateSelectedServiceConfigId,
+    selectAgentTypeForSetup,
   } = useServices();
   const { isArchived } = useArchivedAgents();
   const { isAchievementPending } = useAchievementPending();
@@ -92,7 +93,8 @@ export const useConnectStakingAnnouncement = () => {
       return;
     }
     // No Connect agent on a chain that can stake (none, or only on Polygon):
-    // agent creation, with no chain preselected.
+    // Connect setup, with no chain preselected.
+    selectAgentTypeForSetup(AgentMap.Connect);
     gotoPage(PAGES.Setup);
     gotoSetup(SETUP_SCREEN.AgentOnboarding);
   }, [
@@ -101,6 +103,7 @@ export const useConnectStakingAnnouncement = () => {
     updateSelectedServiceConfigId,
     gotoPage,
     gotoSetup,
+    selectAgentTypeForSetup,
   ]);
 
   return { isOpen, stake, dismiss: markSeen };

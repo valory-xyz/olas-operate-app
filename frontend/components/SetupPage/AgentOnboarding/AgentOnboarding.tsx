@@ -144,12 +144,17 @@ export const AgentOnboarding = () => {
   const {
     services,
     selectAgentTypeForSetup,
+    pendingAgentType,
     updateSelectedServiceConfigId,
     getAgentTypeFromService,
   } = useServices();
   const { archivedInstances, unarchiveInstance } = useArchivedAgents();
 
-  const [selectedAgent, setSelectedAgent] = useState<Optional<AgentType>>();
+  // Opens on the agent an entry point chose for setup (e.g. the Connect staking
+  // announcement), else with nothing selected.
+  const [selectedAgent, setSelectedAgent] = useState<Optional<AgentType>>(
+    () => pendingAgentType ?? undefined,
+  );
   const [selectedArchivedInstanceId, setSelectedArchivedInstanceId] =
     useState<Optional<string>>();
   const [activeTab, setActiveTab] = useState<AgentTab>(AGENT_TAB.New);

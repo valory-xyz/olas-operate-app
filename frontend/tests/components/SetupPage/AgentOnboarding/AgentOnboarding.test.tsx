@@ -176,6 +176,21 @@ describe('AgentOnboarding', () => {
     });
   });
 
+  it('opens with nothing selected when no agent was chosen for setup', () => {
+    render(<AgentOnboarding />);
+    expect(screen.queryByTestId('mock-has-accepted')).not.toBeInTheDocument();
+  });
+
+  it('opens on the agent an entry point chose for setup', () => {
+    mockUseServices.mockReturnValue({
+      ...mockUseServices(),
+      pendingAgentType: 'connect',
+    });
+    render(<AgentOnboarding />);
+    // Connect's own funding step, with no chain chosen yet
+    expect(screen.getByTestId('mock-has-accepted')).toHaveTextContent('false');
+  });
+
   it('keeps the new agents tab selected by default when archived instances exist', () => {
     render(<AgentOnboarding />);
 
