@@ -9,12 +9,12 @@ import { AgentMap } from '../../../constants/agent';
 import { EvmChainIdMap } from '../../../constants/chains';
 import { STAKING_PROGRAM_IDS } from '../../../constants/stakingProgram';
 
+/* eslint-disable @typescript-eslint/no-var-requires */
 jest.mock(
   'ethers-multicall',
-  () =>
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    require('../../mocks/ethersMulticall').ethersMulticallMock,
+  () => require('../../mocks/ethersMulticall').ethersMulticallMock,
 );
+/* eslint-enable @typescript-eslint/no-var-requires */
 
 describe('ROBINHOOD_STAKING_PROGRAMS', () => {
   it('is the Robinhood entry of STAKING_PROGRAMS', () => {

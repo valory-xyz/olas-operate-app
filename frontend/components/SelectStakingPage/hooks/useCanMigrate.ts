@@ -7,7 +7,7 @@ import {
   useServices,
   useStakingContractContext,
 } from '@/hooks';
-import { isValidServiceId } from '@/utils';
+import { isNoStakingProgram, isValidServiceId } from '@/utils';
 
 type UseCanMigrateProps = {
   stakingProgramId: StakingProgramId;
@@ -59,7 +59,8 @@ export const useCanMigrate = ({
           buttonText: MigrateButtonText.AgentInCooldownPeriod,
           canMigrate: false,
         };
-      case slotsTaken >= maxSlots:
+      // Unstaked has no contract, so it never runs out of slots
+      case !isNoStakingProgram(stakingProgramId) && slotsTaken >= maxSlots:
         return {
           buttonText: MigrateButtonText.NoSlotsAvailable,
           canMigrate: false,

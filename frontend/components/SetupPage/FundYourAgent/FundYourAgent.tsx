@@ -3,7 +3,7 @@ import { CardSkeleton } from '@/components/ui';
 import { SETUP_SCREEN } from '@/constants';
 import { useGetRefillRequirements, useServices, useSetup } from '@/hooks';
 import { asMiddlewareChain } from '@/utils';
-import { isNoStakingProgram } from '@/utils/stakingProgram';
+import { hasUnstakedOption, isNoStakingProgram } from '@/utils/stakingProgram';
 
 import { BackupSignerGate } from '../BackupSignerGate';
 
@@ -15,10 +15,15 @@ export const FundYourAgent = () => {
 
   const handleBack = () => {
     resetTokenRequirements();
-    // Connect (and any no_staking agent) skips SelectStaking, so back
-    // must return to the agent/chain step, not the staking screen.
+    // An agent that defaults to no_staking skips SelectStaking unless it can
+    // stake on this chain (Connect on Gnosis or Robinhood), so back returns
+    // to the step it came from.
     goto(
-      isNoStakingProgram(selectedAgentConfig.defaultStakingProgramId)
+      isNoStakingProgram(selectedAgentConfig.defaultStakingProgramId) &&
+        !hasUnstakedOption(
+          selectedAgentConfig,
+          selectedAgentConfig.evmHomeChainId,
+        )
         ? SETUP_SCREEN.AgentOnboarding
         : SETUP_SCREEN.SelectStaking,
     );

@@ -52,6 +52,9 @@ const GNOSIS_CONFIG = CONNECT_SERVICE_TEMPLATE.configurations.gnosis;
 // --- @/utils (onDummyServiceCreation + chain/config helpers) -----------------
 const mockOnDummyServiceCreation = jest.fn();
 const mockMatchesAgentConfig = jest.fn();
+// Whether Connect can stake on the chosen chain; the funding-route cases below
+// stand for a chain where it cannot.
+const mockHasUnstakedOption = jest.fn();
 const MIDDLEWARE_BY_EVM: Record<number, string> = {
   [EvmChainIdMap.Polygon]: MiddlewareChainMap.POLYGON,
   [EvmChainIdMap.Gnosis]: MiddlewareChainMap.GNOSIS,
@@ -79,6 +82,7 @@ jest.mock('../../utils', () => {
     asEvmChainId: (middlewareChain: string) =>
       EVM_BY_MIDDLEWARE[middlewareChain],
     matchesAgentConfig: (...args: unknown[]) => mockMatchesAgentConfig(...args),
+    hasUnstakedOption: (...args: unknown[]) => mockHasUnstakedOption(...args),
   };
 });
 
@@ -137,6 +141,7 @@ describe('useCreateConnectService', () => {
     mockResolveFundingRoute.mockResolvedValue(SETUP_SCREEN.FundYourAgent);
     mockRefetchServices.mockResolvedValue(undefined);
     mockMatchesAgentConfig.mockReturnValue(true);
+    mockHasUnstakedOption.mockReturnValue(false);
   });
 
   it('creates a single-chain no_staking Connect service on the chosen chain', async () => {
@@ -264,5 +269,44 @@ describe('useCreateConnectService', () => {
       EXISTING_SERVICE_CONFIG_ID,
     );
     expect(mockGotoSetup).toHaveBeenCalledWith(SETUP_SCREEN.FundYourAgent);
+  });
+
+  describe('on a chain where Connect can stake', () => {
+    beforeEach(() => mockHasUnstakedOption.mockReturnValue(true));
+
+    it('creates the service unstaked, then opens the staking step instead of funding', async () => {
+      const { result } = renderHook(() => useCreateConnectService());
+
+      await act(async () => {
+        await result.current(EvmChainIdMap.Gnosis);
+      });
+
+      expect(mockOnDummyServiceCreation.mock.calls[0][0]).toBe('no_staking');
+      expect(mockHasUnstakedOption.mock.calls[0][1]).toBe(EvmChainIdMap.Gnosis);
+      expect(mockUpdateSelectedServiceConfigId).toHaveBeenCalledWith(
+        NEW_SERVICE_CONFIG_ID,
+      );
+      expect(mockSetDefaultStakingProgramId).toHaveBeenCalledWith('no_staking');
+      expect(mockResolveFundingRoute).not.toHaveBeenCalled();
+      expect(mockGotoSetup).toHaveBeenCalledTimes(1);
+      expect(mockGotoSetup).toHaveBeenCalledWith(SETUP_SCREEN.SelectStaking);
+    });
+
+    it('opens the staking step for an existing instance on that chain too', async () => {
+      mockServices = [
+        {
+          service_config_id: 'sc-existing-gnosis-connect',
+          home_chain: MiddlewareChainMap.GNOSIS,
+        },
+      ];
+      const { result } = renderHook(() => useCreateConnectService());
+
+      await act(async () => {
+        await result.current(EvmChainIdMap.Gnosis);
+      });
+
+      expect(mockOnDummyServiceCreation).not.toHaveBeenCalled();
+      expect(mockGotoSetup).toHaveBeenCalledWith(SETUP_SCREEN.SelectStaking);
+    });
   });
 });

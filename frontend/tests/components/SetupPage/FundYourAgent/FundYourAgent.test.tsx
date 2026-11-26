@@ -52,12 +52,16 @@ jest.mock('../../../../components/FundingFlow', () => ({
   },
 }));
 
-const setup = (defaultStakingProgramId?: string) => {
+const setup = (
+  defaultStakingProgramId?: string,
+  agentConfig: Record<string, unknown> = {},
+) => {
   mockUseServices.mockReturnValue({
     selectedAgentConfig: {
       evmHomeChainId: EvmChainIdMap.Polygon,
       displayName: 'Polystrat',
       defaultStakingProgramId,
+      ...agentConfig,
     },
     selectedService: { service_config_id: 'sc-polystrat' },
   });
@@ -139,4 +143,24 @@ describe('FundYourAgent', () => {
     expect(mockResetTokenRequirements).toHaveBeenCalledTimes(1);
     expect(mockGotoSetup).toHaveBeenCalledWith(SETUP_SCREEN.SelectStaking);
   });
+
+  it.each([
+    [EvmChainIdMap.Gnosis, SETUP_SCREEN.SelectStaking],
+    [EvmChainIdMap.Robinhood, SETUP_SCREEN.SelectStaking],
+    [EvmChainIdMap.Polygon, SETUP_SCREEN.AgentOnboarding],
+  ])(
+    'routes Connect on chain %s back to the step it came from (%s)',
+    (evmHomeChainId, expected) => {
+      setup('no_staking', {
+        evmHomeChainId,
+        hasStaking: false,
+        stakingChains: [EvmChainIdMap.Gnosis, EvmChainIdMap.Robinhood],
+      });
+      render(<FundYourAgent />);
+
+      fireEvent.click(screen.getByTestId('back-button'));
+
+      expect(mockGotoSetup).toHaveBeenCalledWith(expected);
+    },
+  );
 });

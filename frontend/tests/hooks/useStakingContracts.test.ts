@@ -83,7 +83,13 @@ const MOCK_STAKING_PROGRAMS: Record<
   [EvmChainIdMap.Base]: {},
   [EvmChainIdMap.Mode]: {},
   [EvmChainIdMap.Optimism]: {},
-  [EvmChainIdMap.Robinhood]: {},
+  [EvmChainIdMap.Robinhood]: {
+    [STAKING_PROGRAM_IDS.ConnectRobinhoodI]: makeStakingProgramConfig({
+      chainId: EvmChainIdMap.Robinhood,
+      name: 'Connect I',
+      agentsSupported: [AgentMap.Connect],
+    }),
+  },
   [EvmChainIdMap.Polygon]: {
     [POLY_SAFE_PROGRAM]: makeStakingProgramConfig({
       chainId: EvmChainIdMap.Polygon,
@@ -119,6 +125,7 @@ const setupMocks = ({
   isPolySafeService = false,
   isMultisigTypeLoaded = true,
   isMultisigTypeError = false,
+  agentConfig = {},
 }: {
   isActiveStakingProgramLoaded?: boolean;
   activeStakingProgramId?: StakingProgramId | null;
@@ -128,6 +135,7 @@ const setupMocks = ({
   isPolySafeService?: boolean;
   isMultisigTypeLoaded?: boolean;
   isMultisigTypeError?: boolean;
+  agentConfig?: Record<string, unknown>;
 } = {}) => {
   mockUseIsPolySafeService.mockReturnValue({
     isPolySafeService,
@@ -136,7 +144,7 @@ const setupMocks = ({
     refetch: mockRefetchMultisigType,
   });
   mockUseServices.mockReturnValue({
-    selectedAgentConfig: { evmHomeChainId },
+    selectedAgentConfig: { evmHomeChainId, ...agentConfig },
     selectedAgentType,
     selectedService: serviceStakingProgramId
       ? makeService({
@@ -518,5 +526,69 @@ describe('useStakingContracts — multisig type verification failure', () => {
 
     const { result } = renderHook(() => useStakingContracts());
     expect(result.current.isStakingContractsError).toBe(false);
+  });
+});
+
+describe('useStakingContracts — the Unstaked option (optional staking)', () => {
+  const CONNECT_CONFIG = {
+    hasStaking: false,
+    defaultStakingProgramId: 'no_staking',
+    stakingChains: [EvmChainIdMap.Gnosis, EvmChainIdMap.Robinhood],
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('lists Unstaked first for Connect on a chain where it can stake', () => {
+    setupMocks({
+      evmHomeChainId: EvmChainIdMap.Robinhood,
+      selectedAgentType: AgentMap.Connect,
+      activeStakingProgramId: null,
+      agentConfig: CONNECT_CONFIG,
+    });
+
+    const { result } = renderHook(() => useStakingContracts());
+    expect(result.current.orderedStakingProgramIds).toEqual([
+      'no_staking',
+      STAKING_PROGRAM_IDS.ConnectRobinhoodI,
+    ]);
+  });
+
+  it('keeps Unstaked first while the instance is staked', () => {
+    setupMocks({
+      evmHomeChainId: EvmChainIdMap.Robinhood,
+      selectedAgentType: AgentMap.Connect,
+      activeStakingProgramId: STAKING_PROGRAM_IDS.ConnectRobinhoodI,
+      agentConfig: CONNECT_CONFIG,
+    });
+
+    const { result } = renderHook(() => useStakingContracts());
+    expect(result.current.orderedStakingProgramIds[0]).toBe('no_staking');
+  });
+
+  it('offers no Unstaked option on Polygon', () => {
+    setupMocks({
+      evmHomeChainId: EvmChainIdMap.Polygon,
+      selectedAgentType: AgentMap.Connect,
+      activeStakingProgramId: null,
+      agentConfig: CONNECT_CONFIG,
+    });
+
+    const { result } = renderHook(() => useStakingContracts());
+    expect(result.current.orderedStakingProgramIds).not.toContain('no_staking');
+  });
+
+  it('never offers Unstaked to an agent whose staking is not optional', () => {
+    setupMocks({
+      activeStakingProgramId: null,
+      agentConfig: { hasStaking: true, defaultStakingProgramId: MARKETPLACE_3 },
+    });
+
+    const { result } = renderHook(() => useStakingContracts());
+    expect(result.current.orderedStakingProgramIds).toEqual([
+      MARKETPLACE_3,
+      MARKETPLACE_4,
+    ]);
   });
 });

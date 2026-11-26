@@ -15,6 +15,7 @@ import { ServiceTemplate } from '@/types';
 import {
   asEvmChainId,
   asMiddlewareChain,
+  hasUnstakedOption,
   matchesAgentConfig,
   onDummyServiceCreation,
 } from '@/utils';
@@ -59,8 +60,9 @@ const buildSingleChainTemplate = (chainId: EvmChainId): ServiceTemplate => {
 
 /**
  * Creates a Connect service on the selected chain (connect-gated path — does
- * NOT touch the shared staking-select create), then routes to the appropriate
- * funding screen. Bypasses SelectStaking entirely (Connect uses `no_staking`).
+ * NOT touch the shared staking-select create), unstaked. On a chain where
+ * Connect can stake it then opens the staking step, whose default is Unstaked;
+ * elsewhere it routes straight to the appropriate funding screen.
  */
 export const useCreateConnectService = () => {
   const { goto: gotoSetup } = useSetup();
@@ -82,6 +84,10 @@ export const useCreateConnectService = () => {
       const selectAndRouteToFunding = async (serviceConfigId: string) => {
         updateSelectedServiceConfigId(serviceConfigId);
         setDefaultStakingProgramId(NO_STAKING);
+        if (hasUnstakedOption(AGENT_CONFIG[AgentMap.Connect], chainId)) {
+          gotoSetup(SETUP_SCREEN.SelectStaking);
+          return;
+        }
         try {
           const route = await resolveFundingRoute(serviceConfigId);
           gotoSetup(route);

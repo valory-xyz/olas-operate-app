@@ -1,8 +1,14 @@
 import { useCallback, useMemo } from 'react';
 
 import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
+import { StakingProgramId } from '@/constants';
 import { useIsPolySafeService, useServices, useStakingProgram } from '@/hooks';
-import { getCompatibleStakingProgramIds } from '@/utils/stakingProgram';
+import {
+  getCompatibleStakingProgramIds,
+  hasUnstakedOption,
+} from '@/utils/stakingProgram';
+
+const NO_STAKING: StakingProgramId = 'no_staking';
 
 export const useStakingContracts = () => {
   const { selectedAgentConfig, selectedAgentType, selectedService } =
@@ -43,25 +49,31 @@ export const useStakingContracts = () => {
 
   // Memoize so the array ref is stable across renders — downstream `useMemo`s
   // and effects list `orderedStakingProgramIds` in their deps.
-  const orderedStakingProgramIds = useMemo(
-    () =>
-      isStakingContractsLoaded && !isStakingContractsError
-        ? getCompatibleStakingProgramIds({
-            programs: STAKING_PROGRAMS[evmHomeChainId],
-            agentType: selectedAgentType,
-            isPolySafeService,
-            currentStakingProgramId,
-          })
-        : [],
-    [
-      isStakingContractsLoaded,
-      isStakingContractsError,
-      evmHomeChainId,
-      selectedAgentType,
+  // Staking is optional for this agent here (Connect on Gnosis or Robinhood):
+  // its lists start with the Unstaked option, `no_staking`.
+  const withUnstakedOption = hasUnstakedOption(
+    selectedAgentConfig,
+    evmHomeChainId,
+  );
+
+  const orderedStakingProgramIds = useMemo(() => {
+    if (!isStakingContractsLoaded || isStakingContractsError) return [];
+    const programIds = getCompatibleStakingProgramIds({
+      programs: STAKING_PROGRAMS[evmHomeChainId],
+      agentType: selectedAgentType,
       isPolySafeService,
       currentStakingProgramId,
-    ],
-  );
+    });
+    return withUnstakedOption ? [NO_STAKING, ...programIds] : programIds;
+  }, [
+    isStakingContractsLoaded,
+    isStakingContractsError,
+    evmHomeChainId,
+    selectedAgentType,
+    isPolySafeService,
+    currentStakingProgramId,
+    withUnstakedOption,
+  ]);
 
   const retryStakingContracts = useCallback(() => {
     refetchMultisigType();
