@@ -1,4 +1,5 @@
 /** The retired ids mirror the middleware (see `StakingProgramConfig.retired`); every new program is live. */
+import { MechType } from '../../../config/mechs';
 import {
   isRetiredStakingProgram,
   STAKING_PROGRAMS,
@@ -65,6 +66,14 @@ const RETIRED_IDS = {
 
 // Each chain's decoupled-activity checker, read on-chain from every new
 // program's `activityChecker()`.
+// Each agent's hardcoded activity target, the same as on its older programs.
+const ACTIVITY_TARGET = {
+  [EvmChainIdMap.Gnosis]: 8,
+  [EvmChainIdMap.Polygon]: 8,
+  [EvmChainIdMap.Optimism]: 1,
+  [EvmChainIdMap.Base]: 1,
+};
+
 const CHECKER = {
   [EvmChainIdMap.Gnosis]: '0x3514EeA47C03dF8d9FdD68A469908755d2870c48',
   [EvmChainIdMap.Polygon]: '0x5B70A66fe68c4c86FFd724B58cc56049c70e9D3D',
@@ -181,6 +190,8 @@ describe('retired staking programs', () => {
       expect(program.requiresPolySafe).toBeFalsy();
       expect(program.stakingVersion).toBe('0.4');
       expect(program.stakingRequirements.OLAS).toBe(olas);
+      expect(program.activityTarget).toBe(ACTIVITY_TARGET[chainId]);
+      expect(program.mechType).toBe(MechType.MarketplaceV2);
     },
   );
 });
@@ -188,6 +199,11 @@ describe('retired staking programs', () => {
 describe('isRetiredStakingProgram', () => {
   it.each([
     [EvmChainIdMap.Gnosis, STAKING_PROGRAM_IDS.OmenstratVII, true],
+    // A retired id on a chain it does not belong to.
+    [EvmChainIdMap.Polygon, STAKING_PROGRAM_IDS.OmenstratVII, false],
+    // A chain with no programs at all.
+    [EvmChainIdMap.Robinhood, STAKING_PROGRAM_IDS.PolystratI, false],
+    [999 as EvmChainId, STAKING_PROGRAM_IDS.PolystratI, false],
     [EvmChainIdMap.Gnosis, STAKING_PROGRAM_IDS.OmenstratVIII, false],
     [EvmChainIdMap.Polygon, STAKING_PROGRAM_IDS.PolystratI, true],
     [EvmChainIdMap.Base, STAKING_PROGRAM_IDS.AgentsFun1, false],

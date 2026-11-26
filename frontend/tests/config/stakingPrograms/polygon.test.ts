@@ -115,7 +115,7 @@ describe('POLYGON_STAKING_PROGRAMS', () => {
       }
     });
 
-    it('Polystrat IV/V/VI accept a standard Safe service', () => {
+    it('Polystrat IV–IX accept a standard Safe service', () => {
       for (const id of STANDARD_SAFE_IDS) {
         expect(POLYGON_STAKING_PROGRAMS[id].requiresPolySafe).toBe(false);
       }

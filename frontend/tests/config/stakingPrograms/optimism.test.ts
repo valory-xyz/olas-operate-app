@@ -130,7 +130,7 @@ describe('OPTIMISM_STAKING_PROGRAMS', () => {
   });
 
   describe('decoupled-activity regime (OPE-1803)', () => {
-    it('new OptimusI/II/III carry an off-chain activityTarget of 1', () => {
+    it('OptimusI–VI carry an off-chain activityTarget of 1', () => {
       const decoupledIds = [
         OPTIMISM_STAKING_PROGRAM_IDS.OptimusI,
         OPTIMISM_STAKING_PROGRAM_IDS.OptimusII,
