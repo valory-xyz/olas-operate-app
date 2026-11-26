@@ -58,6 +58,9 @@ jest.mock('../../../../context/AutoRunProvider/utils/autoRunHelpers', () => ({
   fetchDeployabilityForAgent: jest.fn().mockResolvedValue({ canRun: true }),
   getUsableRewardStatus: jest.fn().mockReturnValue(undefined),
   isStakingEpochExpired: jest.fn().mockReturnValue(false),
+  runsOnMinutesPerRun: (meta: {
+    agentConfig: { runsOnMinutesPerRun?: boolean };
+  }) => !!meta.agentConfig.runsOnMinutesPerRun,
 }));
 jest.mock(
   '../../../../context/AutoRunProvider/hooks/useLogAutoRunEvent',
@@ -348,6 +351,24 @@ describe('useAutoRunController', () => {
         useAutoRunController(
           makeHookParams({
             configuredAgents: [traderMeta, connectMeta],
+            selectedServiceConfigId: MOCK_SERVICE_CONFIG_ID_2,
+          }),
+        ),
+      );
+      expect(lastCallArgs(useAutoRunSignals).isSelectedNoStakingAgent).toBe(
+        true,
+      );
+    });
+
+    it('flags a selected Connect instance as no-staking while it is staked', () => {
+      const stakedConnectMeta = {
+        ...connectMeta,
+        stakingProgramId: 'connect_i' as const,
+      };
+      renderHook(() =>
+        useAutoRunController(
+          makeHookParams({
+            configuredAgents: [traderMeta, stakedConnectMeta],
             selectedServiceConfigId: MOCK_SERVICE_CONFIG_ID_2,
           }),
         ),

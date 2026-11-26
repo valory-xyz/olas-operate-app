@@ -2,7 +2,6 @@ import { MutableRefObject, useCallback, useEffect, useRef } from 'react';
 
 import { AgentType, isActiveDeploymentStatus } from '@/constants';
 import { sleepAwareDelay } from '@/utils/delay';
-import { isNoStakingProgram } from '@/utils/stakingProgram';
 
 import {
   AUTO_RUN_HEALTH_METRIC,
@@ -21,7 +20,10 @@ import {
   SCAN_LOADING_RETRY_SECONDS,
 } from '../constants';
 import { AgentMeta } from '../types';
-import { DeployabilityCheckResult } from '../utils/autoRunHelpers';
+import {
+  DeployabilityCheckResult,
+  runsOnMinutesPerRun,
+} from '../utils/autoRunHelpers';
 import { probeAllDeploymentStatuses } from '../utils/probeDeployment';
 import { ScanOptions, ScanResult } from './useAutoRunScanner';
 import { useAutoRunVerboseLogger } from './useAutoRunVerboseLogger';
@@ -330,7 +332,7 @@ export const useAutoRunLifecycle = ({
         (agent) => agent.serviceConfigId === currentServiceConfigId,
       );
       const isNoStakingAgent =
-        !!currentMeta && isNoStakingProgram(currentMeta.stakingProgramId);
+        !!currentMeta && runsOnMinutesPerRun(currentMeta);
       const stalled = !isNoStakingAgent && isStalled(currentServiceConfigId);
       const trigger =
         stalled && options?.trigger === 'rewards'

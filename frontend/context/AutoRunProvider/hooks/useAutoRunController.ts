@@ -12,7 +12,6 @@ import {
 import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRefillRequirementsContext';
 import { useIsAgentGeoRestricted } from '@/hooks/useIsAgentGeoRestricted';
 import { useIsInitiallyFunded } from '@/hooks/useIsInitiallyFunded';
-import { isNoStakingProgram } from '@/utils/stakingProgram';
 
 import {
   AUTO_RUN_VERBOSE_LOGS,
@@ -25,6 +24,7 @@ import {
   fetchDeployabilityForAgent,
   getUsableRewardStatus,
   isStakingEpochExpired,
+  runsOnMinutesPerRun,
 } from '../utils/autoRunHelpers';
 import { useAutoRunLifecycle } from './useAutoRunLifecycle';
 import { useAutoRunOperations } from './useAutoRunOperations';
@@ -114,7 +114,7 @@ export const useAutoRunController = ({
         )
       : (stakingRewardsDataUpdatedAt ?? 0);
   const isSelectedNoStakingAgent =
-    !!selectedMeta && isNoStakingProgram(selectedMeta.stakingProgramId);
+    !!selectedMeta && runsOnMinutesPerRun(selectedMeta);
   const selectedRewardsEpoch = useMemo(
     () =>
       stakingRewardsDetails

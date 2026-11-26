@@ -46,6 +46,14 @@ import { AgentMeta, ObservedGoal, RewardSnapshot, StallClock } from '../types';
  * Used to normalize the epoch-target-met signal to false so auto-run doesn't
  * skip all agents and stall until someone manually triggers the next checkpoint.
  */
+/**
+ * Whether Auto-Run gives the agent its minutes per run and ignores its
+ * staking (eviction, an empty reward pool, rewards already earned), whether or
+ * not it is staked. Connect: its rewards depend on the user's own request.
+ */
+export const runsOnMinutesPerRun = (meta: Pick<AgentMeta, 'agentConfig'>) =>
+  !!meta.agentConfig.runsOnMinutesPerRun;
+
 export const isStakingEpochExpired = ({
   livenessPeriod,
   tsCheckpoint,
@@ -339,9 +347,10 @@ export const refreshRewardsEligibility = async ({
     return done;
   };
 
-  // A no-staking agent that is not running is never done: no fetch needed,
-  // so it bypasses the throttle and the scanner never waits on its snapshot.
-  if (meta && isNoStakingProgram(meta.stakingProgramId) && !isRunning) {
+  // An agent on minutes per run that is not running is never done: no fetch
+  // needed, so it bypasses the throttle and the scanner never waits on its
+  // snapshot.
+  if (meta && runsOnMinutesPerRun(meta) && !isRunning) {
     return store(meta.stakingProgramId, false, NO_EPOCH);
   }
 
@@ -369,7 +378,7 @@ export const refreshRewardsEligibility = async ({
   lastRewardsFetchRef.current[serviceConfigId] = now;
   if (!meta) return;
 
-  if (isNoStakingProgram(meta.stakingProgramId)) {
+  if (runsOnMinutesPerRun(meta)) {
     const read = await readActivityGoal(
       serviceConfigId,
       logMessage,
@@ -753,11 +762,13 @@ const runDeployabilityChecks = async (
   // 4. On-chain staking state via direct API calls (same endpoints as
   //    StakingContractDetailsProvider, but for any service, not just selected).
   //    Skip if the service hasn't been deployed yet (no NFT token ID or staking
-  //    program), or has no staking contract at all (`no_staking`).
+  //    program), has no staking contract at all (`no_staking`), or runs on
+  //    minutes per run, which no staking state stops.
   if (
     isValidServiceId(agentMeta.serviceNftTokenId) &&
     agentMeta.stakingProgramId &&
-    !isNoStakingProgram(agentMeta.stakingProgramId)
+    !isNoStakingProgram(agentMeta.stakingProgramId) &&
+    !runsOnMinutesPerRun(agentMeta)
   ) {
     try {
       const [contractDetails, stakingDetails] = await Promise.all([
