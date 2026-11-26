@@ -130,16 +130,18 @@ Migration requires the agent to be stopped first (or auto-run to rotate away). T
 
 ## Retired staking programs
 
-`StakingProgramConfig.retired` marks the programs Pearl no longer stakes on or runs agents on (the old Omenstrat, Polystrat, Optimus and Basius programs, and the Pearl Alpha/Beta family). The middleware keeps the same ids in `RETIRED_STAKING_PROGRAMS` and does the unstaking itself: its funding job unstakes a service on a retired program once its minimum staking period is over. The app never calls an unstake route. `deprecated` keeps its older meaning (hidden, warning alert, can still run).
+`StakingProgramConfig.retired` marks the programs Pearl no longer stakes on or runs agents on: every program with `retired: true` in `frontend/config/stakingPrograms/*.ts`. The middleware keeps the same ids in `RETIRED_STAKING_PROGRAMS` and does the unstaking itself: its funding job unstakes a service on a retired program once its minimum staking period is over. The app never calls an unstake route. `deprecated` keeps its older meaning (hidden, warning alert, can still run).
 
 - **Lists**: `getCompatibleStakingProgramIds` hides retired programs, but still lists the current one first, labelled "Current" and not selectable.
-- **Alert**: `AgentDisabledAlert` shows `RetiredContractAlert` for a retired `selectedStakingProgramMeta`. It comes after the another-agent-running branch and pre-empts no-slots, eviction, empty-pool and Agent low-balance alerts. `MasterEoaLowBalanceAlert` still renders under it, because the unstake needs gas. Variants:
-  - "Switch Staking Contract" (switch flow, as for a normal migration);
-  - cooldown, while staked or evicted inside the minimum staking period: shows the end date (`evictionExpiresAt`) in UTC and has no button;
-  - withdrawal-only for a PolySafe service (`useIsPolySafeService`), which can't move to a new program: a "Withdraw" button opens the Agent Wallet.
-- **Start gate**: `useDeployability` returns `canRun: false` with the alert copy as `reason`, PolySafe services excepted. It waits for the Safe type (`Safe type` loading reason) on a retired program.
-- **Withdrawal-only mode**: starting a PolySafe service on a retired program passes `withdrawalOnly` to `useStartService`, which, after `updateServiceIfNeeded`, PATCHes `configurations.<home_chain>.use_staking: false` and `DISABLE_TRADING=true` (a USER env var in the Polystrat template). The agent runs unstaked and only redeems. The user sells positions on the Profile tab. The middleware refuses (409) any deploy that would stay staked on a retired program.
-- **Auto-run**: see [autorun.md](autorun.md#3-core-flows); retired instances are skipped, PolySafe included.
+- **Alert**: `AgentDisabledAlert` shows `RetiredContractAlert` for a retired `selectedStakingProgramMeta`. It comes after the another-agent-running branch and pre-empts no-slots, eviction, empty-pool and Agent low-balance alerts. `MasterEoaLowBalanceAlert` still renders under it, because the unstake needs gas. Variants, in this order:
+  - withdrawal-only (`useIsPolySafeService().isWithdrawalOnly`: a PolySafe service, which can't move to a new program): a "Withdraw" button opens the Agent Wallet;
+  - cooldown, while staked or evicted inside the minimum staking period (`isInMinimumStakingPeriod`): shows the end date (`evictionExpiresAt`) in UTC and has no button;
+  - Safe type unreadable: its own copy (`RETIRED_STAKING_PROGRAM_COPY.SAFE_TYPE_UNKNOWN`) and a "Retry" button that re-reads it;
+  - the switch copy with no button while the staking details or the Safe type load, or while the agent is still in the contract (`isServiceInContract`) after its period: the middleware has yet to unstake it, and would refuse a switch with a 409;
+  - "Switch Staking Contract" once it is unstaked (switch flow, as for a normal migration).
+- **Start gate**: `useDeployability` returns `canRun: false` with the alert copy as `reason`, withdrawal-only services excepted. It waits for the Safe type (`Safe type` loading reason) on a retired program.
+- **Withdrawal-only mode**: starting a withdrawal-only service passes `withdrawalOnly` to `useStartService`, which, after `updateServiceIfNeeded`, calls `enableWithdrawalOnlyMode`. That PATCHes `configurations.<home_chain>.staking_program_id: no_staking` (the middleware's `use_staking` is read-only, derived from `staking_program_id`) and `DISABLE_TRADING=true` (a USER env var in the Polystrat template, so the template sync leaves it alone). It sends nothing when `isInWithdrawalOnlyMode` says the service already has both, since every PATCH re-downloads the service package. The agent runs unstaked and only redeems. The user sells positions on the Profile tab. The middleware refuses (409) any deploy that would stay staked on a retired program. The alert keeps showing after the unstake, because the subgraph's `latestStakingContract` still names the retired program.
+- **Auto-run**: see [autorun.md](autorun.md#310-retired-staking-program); retired instances are skipped, withdrawal-only ones included.
 
 ## AutoRun integration
 

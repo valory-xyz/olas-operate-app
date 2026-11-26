@@ -6,7 +6,7 @@ The deployability and lifecycle system determines whether an agent can be starte
 
 The system has four layers:
 
-1. **Deployability check** — `useDeployability` evaluates ~11 conditions to produce a `canRun` boolean with a reason string
+1. **Deployability check** — `useDeployability` evaluates ~13 conditions to produce a `canRun` boolean with a reason string
 2. **Service start** — `useStartService` handles safe creation, service creation/update, and starting the service (shared by manual and auto-run)
 3. **Deployment workflow** — `useServiceDeployment` orchestrates the full manual start flow: polling control, status overrides, state refresh, and error handling
 4. **Stop** — `stopDeployment` stops a running service
@@ -18,6 +18,8 @@ useServiceDeployment (manual start orchestration)
   │     ├── useServices (selectedService, selectedAgentConfig)
   │     ├── useBalanceAndRefillRequirementsContext (allowStart, hasBalances)
   │     ├── useActiveStakingContractDetails (eviction, eligibility, slots)
+  │     ├── useStakingProgram (selectedStakingProgramMeta.retired)
+  │     ├── useIsPolySafeService (isWithdrawalOnly, Safe type loaded/error)
   │     ├── useIsInitiallyFunded
   │     ├── useIsAgentGeoRestricted
   │     ├── useAgentRunning (isAnotherAgentRunning)
@@ -26,6 +28,7 @@ useServiceDeployment (manual start orchestration)
   ├── useStartService (shared start logic)
   │     ├── createSafeIfNeeded (safe eligibility + creation)
   │     ├── updateServiceIfNeeded (hash, env vars, fund requirements)
+  │     ├── enableWithdrawalOnlyMode (only with withdrawalOnly)
   │     └── ServicesService.startService / createService
   │
   └── polling control (pause/resume services, balances, staking)
@@ -41,10 +44,10 @@ SettingsService (backend config)
 
 ## Source of truth
 
-- `frontend/hooks/useDeployability.ts` — deployability decision tree (~11 branches, returns `canRun` + `reason`)
+- `frontend/hooks/useDeployability.ts` — deployability decision tree (~13 branches, returns `canRun` + `reason`)
 - `frontend/hooks/useStartService.ts` — shared service start logic (safe creation, service create/update, start)
 - `frontend/hooks/useServiceDeployment.ts` — manual deployment workflow (polling control, status overrides, error handling)
-- `frontend/utils/service.ts` — `updateServiceIfNeeded` (hash, env vars, fund requirements, agent release comparison), `isValidServiceId`
+- `frontend/utils/service.ts` — `updateServiceIfNeeded` (hash, env vars, fund requirements, agent release comparison), `isValidServiceId`, `enableWithdrawalOnlyMode` / `isInWithdrawalOnlyMode`
 - `frontend/utils/safe.ts` — `getSafeEligibility` (safe status derivation), `getSafeEligibilityMessage` (user-facing messages), `BACKUP_SIGNER_STATUS`
 - `frontend/context/SharedProvider/SharedProvider.tsx` — shared context (AgentsFun field check, recovery status, OLAS balance animation)
 - `frontend/hooks/useSharedContext.ts` — context accessor
@@ -114,37 +117,46 @@ The hook evaluates conditions in priority order. The first failing condition det
 3. selectedAgentConfig.isPhasedOut
    → canRun: false, reason: 'Phased out'
 
-4. selectedAgentConfig.isUnderConstruction
+4. retired program && Safe type unreadable (isMultisigTypeError)
+   → canRun: false, reason: RETIRED_STAKING_PROGRAM_COPY.SAFE_TYPE_UNKNOWN
+
+5. retired program && !isWithdrawalOnly
+   → canRun: false, reason: RETIRED_STAKING_PROGRAM_COPY.SWITCH
+   (a withdrawal-only service, PolySafe on a retired program, goes on: it starts unstaked)
+
+6. selectedAgentConfig.isUnderConstruction
    → canRun: false, reason: 'Under construction'
 
-5. isGeoLocationRestricted && isAgentGeoRestricted
+7. isGeoLocationRestricted && isAgentGeoRestricted
    → canRun: false, reason: 'Region restricted'
 
-6. isAnotherAgentRunning
+8. isAnotherAgentRunning
    → canRun: false, reason: 'Another agent running'
 
-7. hasEnoughServiceSlots === false && !isServiceStaked && !runsEvicted
+9. hasEnoughServiceSlots === false && !isServiceStaked && !runsEvicted && !isWithdrawalOnly
    → canRun: false, reason: 'No available slots'
-   (`runsEvicted` = `runsInsideEvictionWindow`: evicted, `canRunWhileEvicted`, and more than `EVICTION_RUN_START_MARGIN_SECONDS` (30 min) of the eviction left; such a run does not re-stake, so it needs no slot. Closer to the end, a start could cross into a re-stake, so the slot check applies)
+   (`runsEvicted` = `runsInsideEvictionWindow`: evicted, `canRunWhileEvicted`, and more than `EVICTION_RUN_START_MARGIN_SECONDS` (30 min) of the eviction left; such a run does not re-stake, so it needs no slot. Closer to the end, a start could cross into a re-stake, so the slot check applies. A withdrawal-only start never stakes, so it needs no slot either)
 
-8. isAgentEvicted && !isEligibleForStaking && !selectedAgentConfig.canRunWhileEvicted
-   → canRun: false, reason: 'Evicted'
-   (an agent that can run evicted, Omenstrat, keeps going: it redeems; see autorun.md §3.6)
+10. isAgentEvicted && !isEligibleForStaking && !selectedAgentConfig.canRunWhileEvicted && !isWithdrawalOnly
+    → canRun: false, reason: 'Evicted'
+    (an agent that can run evicted, Omenstrat, keeps going: it redeems; see autorun.md §3.6. So does a withdrawal-only one)
 
-9. isAgentsFunFieldUpdateRequired
-   → canRun: false, reason: 'Update required'
+11. isAgentsFunFieldUpdateRequired
+    → canRun: false, reason: 'Update required'
 
-10. isInitialFunded === false
+12. isInitialFunded === false
     → canRun: false, reason: 'Unfinished setup'
 
-11. !canStartSelectedAgent (from refill requirements)
+13. !canStartSelectedAgent (from refill requirements)
     → canRun: false, reason: 'Low balance'
 
-12. All checks pass
+14. All checks pass
     → canRun: true
 ```
 
-**Loading sources** checked (in order): Offline, Services, Balances (3 sub-checks: not enabled, loading, or no balances for selected agent), Staking, Geo, Safe, Setup (`isInitialFunded === undefined`).
+Steps 4 and 5 and the withdrawal-only exemptions are explained in [staking-and-rewards.md](staking-and-rewards.md#retired-staking-programs).
+
+**Loading sources** checked (in order): Offline, Services, Balances (3 sub-checks: not enabled, loading, or no balances for selected agent), Staking, Geo, Safe type (only on a retired program, until `isMultisigTypeLoaded`), Safe, Setup (`isInitialFunded === undefined`).
 
 The `safeEligibility` parameter is optional. Currently only auto-run's `useSelectedEligibility` passes it — `useServiceDeployment` calls `useDeployability()` with no argument, so manual deployment is **not** pre-blocked by safe eligibility at this level (safe eligibility is instead checked inside `createSafeIfNeeded` during the start flow). When provided, it's checked first, even before loading state.
 
@@ -179,6 +191,9 @@ Shared by both manual start (`useServiceDeployment`) and auto-run:
 
 2. If service exists:
    ├── updateServiceIfNeeded(service, agentType)
+   ├── If withdrawalOnly → enableWithdrawalOnlyMode(service)
+   │     (after the sync, whose PUT would reset DISABLE_TRADING; PATCHes staking_program_id=no_staking
+   │      and DISABLE_TRADING=true, skipped when the service already has both)
    ├── runPrestartCheck(service.service_config_id)
    └── ServicesService.startService(service.service_config_id)
 
@@ -214,7 +229,7 @@ handleStart()
   │
   ├── overrideSelectedServiceStatus(DEPLOYING)
   │
-  ├── startService({ ... createServiceIfMissing: true })
+  ├── startService({ ... createServiceIfMissing: true, withdrawalOnly: useIsPolySafeService().isWithdrawalOnly })
   │     ├── On error:
   │     │     ├── showNotification('An error occurred...') — not for gas errors (modal) or PrestartCheckFailedError (agent alert)
   │     │     ├── overrideSelectedServiceStatus(null)
