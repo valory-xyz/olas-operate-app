@@ -72,13 +72,22 @@ const mockUseStakingContracts = useStakingContracts as jest.MockedFunction<
 const mockRetry = jest.fn();
 
 const setup = ({
-  orderedStakingProgramIds = [] as string[],
+  orderedStakingProgramIds = [],
+  stakingContractIds = orderedStakingProgramIds.filter(
+    (id) => id !== 'no_staking',
+  ),
   isStakingContractsLoaded = true,
   isStakingContractsError = false,
+}: {
+  orderedStakingProgramIds?: string[];
+  stakingContractIds?: string[];
+  isStakingContractsLoaded?: boolean;
+  isStakingContractsError?: boolean;
 } = {}) => {
   mockUseStakingContracts.mockReturnValue({
     currentStakingProgramId: null,
     orderedStakingProgramIds,
+    stakingContractIds,
     isStakingContractsLoaded,
     isStakingContractsError,
     retryStakingContracts: mockRetry,
@@ -151,6 +160,7 @@ describe('SelectActivityRewardsConfiguration — empty state (OPE-1919)', () => 
     mockUseStakingContracts.mockReturnValue({
       currentStakingProgramId: null,
       orderedStakingProgramIds: [],
+      stakingContractIds: [],
       isStakingContractsLoaded: true,
       isStakingContractsError: false,
       retryStakingContracts: mockRetry,
@@ -167,6 +177,12 @@ describe('SelectActivityRewardsConfiguration — empty state (OPE-1919)', () => 
     ).not.toBeInTheDocument();
   });
 
+  it('still says no contract is compatible when the list holds only Unstaked', () => {
+    setup({ orderedStakingProgramIds: ['no_staking'] });
+    expect(screen.getByTestId('alert-info')).toBeInTheDocument();
+    expect(screen.getByTestId('card-no_staking')).toBeInTheDocument();
+  });
+
   it('keeps the existing card order when the same ids arrive re-sorted', () => {
     const { rerender } = setup({
       orderedStakingProgramIds: [
@@ -177,6 +193,10 @@ describe('SelectActivityRewardsConfiguration — empty state (OPE-1919)', () => 
     mockUseStakingContracts.mockReturnValue({
       currentStakingProgramId: SECOND_STAKING_PROGRAM_ID,
       orderedStakingProgramIds: [
+        SECOND_STAKING_PROGRAM_ID,
+        DEFAULT_STAKING_PROGRAM_ID,
+      ],
+      stakingContractIds: [
         SECOND_STAKING_PROGRAM_ID,
         DEFAULT_STAKING_PROGRAM_ID,
       ],

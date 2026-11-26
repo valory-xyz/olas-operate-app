@@ -52,17 +52,16 @@ export const useStakingContracts = () => {
     evmHomeChainId,
   );
 
-  const orderedStakingProgramIds = useMemo(() => {
+  // The contracts alone, without the Unstaked option: "no compatible
+  // contracts" is about these.
+  const stakingContractIds = useMemo(() => {
     if (!isStakingContractsLoaded || isStakingContractsError) return [];
-    const programIds = getCompatibleStakingProgramIds({
+    return getCompatibleStakingProgramIds({
       programs: STAKING_PROGRAMS[evmHomeChainId],
       agentType: selectedAgentType,
       isPolySafeService,
       currentStakingProgramId,
     });
-    return withUnstakedOption
-      ? [NO_STAKING_PROGRAM_ID, ...programIds]
-      : programIds;
   }, [
     isStakingContractsLoaded,
     isStakingContractsError,
@@ -70,8 +69,20 @@ export const useStakingContracts = () => {
     selectedAgentType,
     isPolySafeService,
     currentStakingProgramId,
-    withUnstakedOption,
   ]);
+
+  const orderedStakingProgramIds = useMemo(
+    () =>
+      withUnstakedOption && isStakingContractsLoaded && !isStakingContractsError
+        ? [NO_STAKING_PROGRAM_ID, ...stakingContractIds]
+        : stakingContractIds,
+    [
+      withUnstakedOption,
+      isStakingContractsLoaded,
+      isStakingContractsError,
+      stakingContractIds,
+    ],
+  );
 
   const retryStakingContracts = useCallback(() => {
     refetchMultisigType();
@@ -80,6 +91,7 @@ export const useStakingContracts = () => {
   return {
     currentStakingProgramId,
     orderedStakingProgramIds,
+    stakingContractIds,
     isStakingContractsLoaded,
     isStakingContractsError,
     retryStakingContracts,

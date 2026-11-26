@@ -145,6 +145,7 @@ export const SelectActivityRewardsConfiguration = ({
 }: SelectActivityRewardsConfigurationProps) => {
   const {
     orderedStakingProgramIds,
+    stakingContractIds,
     isStakingContractsLoaded,
     isStakingContractsError,
     retryStakingContracts,
@@ -169,7 +170,7 @@ export const SelectActivityRewardsConfiguration = ({
   const hasNoCompatibleContracts =
     isStakingContractsLoaded &&
     !isStakingContractsError &&
-    orderedStakingProgramIds.length === 0;
+    stakingContractIds.length === 0;
 
   return (
     <Flex vertical justify="center" className="w-full">

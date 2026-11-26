@@ -553,6 +553,10 @@ describe('useStakingContracts — the Unstaked option (optional staking)', () =>
       'no_staking',
       STAKING_PROGRAM_IDS.ConnectRobinhoodI,
     ]);
+    // the contracts alone, for "no compatible contracts"
+    expect(result.current.stakingContractIds).toEqual([
+      STAKING_PROGRAM_IDS.ConnectRobinhoodI,
+    ]);
   });
 
   it('keeps Unstaked first while the instance is staked', () => {
