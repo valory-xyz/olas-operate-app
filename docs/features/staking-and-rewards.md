@@ -302,6 +302,19 @@ Derives several status flags from `selectedStakingContractDetails`:
 
 The pure logic lives in `getCompatibleStakingProgramIds()` (`frontend/utils/stakingProgram.ts`). Returns empty array (and `isStakingContractsLoaded: false`) while `isActiveStakingProgramLoaded` or `isMultisigTypeLoaded` is false.
 
+When staking is optional for the agent on this chain (`hasUnstakedOption`: its default is `no_staking` and `isStakingAvailable` allows the chain), `no_staking` is put first: the Unstaked tile (0 OLAS reward, 0 OLAS deposit). Only Connect on Gnosis and Robinhood Chain has it.
+
+### Optional staking (Connect)
+
+Connect defaults to `no_staking` and may stake only on the chains in `AgentConfig.stakingChains` (Gnosis, Robinhood Chain); `isStakingAvailable(agentConfig, chainId)` replaces direct `hasStaking` reads, and agents without `stakingChains` keep `hasStaking`. Polygon Connect has no staking UI.
+
+- **Setup:** `useCreateConnectService` creates the instance unstaked, then opens `SelectStaking` (instead of funding) on a chain where it can stake. The Configure view shows Unstaked as the *Default configuration*; Continue keeps it unstaked, Change Configuration opens the list. FundYourAgent's Back returns there.
+- **Existing instance:** the Overview shows a Staking section with the not-staked card and Manage Staking (to the contract list) while unstaked, and the usual countdown, streak and Manage Staking once staked. Picking Unstaked while staked goes through Confirm Switch with `no_staking` (no OLAS needed, `useShouldAllowStakingContractSwitch`), after the minimum staking period (`useCanMigrate`). `SwitchingContractModal` has its own unstaking copy.
+- **Eligibility:** `ConnectService` reads the requester activity checker: `getMultisigNonces(safe)[1] - serviceInfo.nonces[1]` against `ceil(max(livenessPeriod, now - tsCheckpoint) * livenessRatio / 1e18)`, with no safety margin, so the one Marketplace request a day the user makes earns the epoch.
+- **Eviction:** `canRunWhileEvicted` keeps Start Agent enabled; `EvictedAlert` has a Connect branch.
+- **Announcement:** `ConnectStakingAnnouncement` (mounted in `MainPage`) shows "Staking for Connect agents" once per user (`connectStakingAnnouncementSeen`, backend-bound). It waits for the onboarding survey and Connect's first-run modal. "Stake your Connect Agent" opens the Gnosis Connect instance's contract list, else the Robinhood one's, else agent creation.
+- **Omenstrat full:** Omenstrat's list shows "All new Omenstrat contracts are full. You can stake a Connect agent on Gnosis instead." when no Omenstrat I–VII contract has a free slot (`useAreOmenstratContractsFull`).
+
 ### Multisig compatibility (OPE-1919)
 
 Staking contracts pin `service.multisig.codehash`. The original six Polygon contracts (Polygon Beta I–III, Polystrat I–III) only accept services deployed with a **PolySafe** multisig (`proxyHash() = POLY_SAFE_PROXY_CODEHASH`), while new Pearl versions deploy a standard Safe — so old and new Polystrat services need different contract sets. Polystrat IV/V/VI (same 100/1000/10000 OLAS tiers, same activity checker) accept a standard Safe and are the default for new services (`defaultStakingProgramId: PolystratIV`).
@@ -339,7 +352,7 @@ Clamps to 0 when negative. Returns `countdownDisplay` as a formatted string via 
 
 Aggregates rewards across all services on a given chain:
 
-1. Filters services matching the chain
+1. Filters services matching the chain, skipping those whose own `staking_program_id` is `no_staking` (an unstaked Connect)
 2. For each service, queries `activeStakingProgramId` via `createActiveStakingProgramIdQuery` (multicall, not subgraph)
 3. For each service + program pair, queries rewards via `createStakingRewardsQuery`
 4. Sums `accruedServiceStakingRewards` across all successful queries
