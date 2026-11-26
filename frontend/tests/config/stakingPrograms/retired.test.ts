@@ -3,14 +3,15 @@ import {
   isRetiredStakingProgram,
   STAKING_PROGRAMS,
 } from '../../../config/stakingPrograms';
-import { EvmChainIdMap } from '../../../constants/chains';
+import { EvmChainId, EvmChainIdMap } from '../../../constants/chains';
 import { STAKING_PROGRAM_IDS } from '../../../constants/stakingProgram';
 
+// Contracts keep their address, so the activity checkers can be pinned.
 /* eslint-disable @typescript-eslint/no-var-requires */
-jest.mock(
-  'ethers-multicall',
-  () => require('../../mocks/ethersMulticall').ethersMulticallMock,
-);
+jest.mock('ethers-multicall', () => ({
+  ...require('../../mocks/ethersMulticall').ethersMulticallMock,
+  Contract: jest.fn().mockImplementation((address: string) => ({ address })),
+}));
 /* eslint-enable @typescript-eslint/no-var-requires */
 
 const RETIRED_IDS = {
@@ -62,26 +63,98 @@ const RETIRED_IDS = {
   [EvmChainIdMap.Mode]: [],
 };
 
+// Each chain's decoupled-activity checker, read on-chain from every new
+// program's `activityChecker()`.
+const CHECKER = {
+  [EvmChainIdMap.Gnosis]: '0x3514EeA47C03dF8d9FdD68A469908755d2870c48',
+  [EvmChainIdMap.Polygon]: '0x5B70A66fe68c4c86FFd724B58cc56049c70e9D3D',
+  [EvmChainIdMap.Optimism]: '0x408dCA2b565f5eC7779C181870feFb51Ed67C3F4',
+  [EvmChainIdMap.Base]: '0xE73C4e90983aa65d42b2de968E0C8F25Ced835A8',
+};
+
+// Addresses and min stakes from the scope (D38).
 const NEW_PROGRAMS = [
-  [EvmChainIdMap.Gnosis, STAKING_PROGRAM_IDS.OmenstratVIII, 50],
-  [EvmChainIdMap.Gnosis, STAKING_PROGRAM_IDS.OmenstratIX, 2500],
-  [EvmChainIdMap.Gnosis, STAKING_PROGRAM_IDS.OmenstratX, 5000],
-  [EvmChainIdMap.Polygon, STAKING_PROGRAM_IDS.PolystratVII, 50],
-  [EvmChainIdMap.Polygon, STAKING_PROGRAM_IDS.PolystratVIII, 500],
-  [EvmChainIdMap.Polygon, STAKING_PROGRAM_IDS.PolystratIX, 5000],
-  [EvmChainIdMap.Optimism, STAKING_PROGRAM_IDS.OptimusIV, 50],
-  [EvmChainIdMap.Optimism, STAKING_PROGRAM_IDS.OptimusV, 500],
-  [EvmChainIdMap.Optimism, STAKING_PROGRAM_IDS.OptimusVI, 2500],
-  [EvmChainIdMap.Base, STAKING_PROGRAM_IDS.BasiusIV, 50],
-  [EvmChainIdMap.Base, STAKING_PROGRAM_IDS.BasiusV, 500],
-  [EvmChainIdMap.Base, STAKING_PROGRAM_IDS.BasiusVI, 2500],
+  [
+    EvmChainIdMap.Gnosis,
+    STAKING_PROGRAM_IDS.OmenstratVIII,
+    '0x9C254A169D71cFF6766D9702425Ec467B62B95EC',
+    50,
+  ],
+  [
+    EvmChainIdMap.Gnosis,
+    STAKING_PROGRAM_IDS.OmenstratIX,
+    '0x36CB5b4e6befc5Cc3f6801Cc290C3d9148f6D7Cf',
+    2500,
+  ],
+  [
+    EvmChainIdMap.Gnosis,
+    STAKING_PROGRAM_IDS.OmenstratX,
+    '0xd467492f65FCA11786982b9743ed4E1F79cE81A1',
+    5000,
+  ],
+  [
+    EvmChainIdMap.Polygon,
+    STAKING_PROGRAM_IDS.PolystratVII,
+    '0x1eFb70d9e7ec63F7CC51BF684E3e4AF54eF3CE46',
+    50,
+  ],
+  [
+    EvmChainIdMap.Polygon,
+    STAKING_PROGRAM_IDS.PolystratVIII,
+    '0x003685C1F4B978e4D975D2457f707e8d6Eedc62E',
+    500,
+  ],
+  [
+    EvmChainIdMap.Polygon,
+    STAKING_PROGRAM_IDS.PolystratIX,
+    '0x1674997dA73Bfb3116aC251fF9E1dB2905D18223',
+    5000,
+  ],
+  [
+    EvmChainIdMap.Optimism,
+    STAKING_PROGRAM_IDS.OptimusIV,
+    '0xaDa8AFB446576483B791f58Da33b20ebd217c1fE',
+    50,
+  ],
+  [
+    EvmChainIdMap.Optimism,
+    STAKING_PROGRAM_IDS.OptimusV,
+    '0x767F4101183Ca56325270facbF0FcdDFEfd043aA',
+    500,
+  ],
+  [
+    EvmChainIdMap.Optimism,
+    STAKING_PROGRAM_IDS.OptimusVI,
+    '0x307a23a821f7B837308cfd7673650674B5780b36',
+    2500,
+  ],
+  [
+    EvmChainIdMap.Base,
+    STAKING_PROGRAM_IDS.BasiusIV,
+    '0x180E4A9A59BA5B6817fA0668A864343147E8A63b',
+    50,
+  ],
+  [
+    EvmChainIdMap.Base,
+    STAKING_PROGRAM_IDS.BasiusV,
+    '0xad7f7DE6909f1DE49c14F4003d37485A02012159',
+    500,
+  ],
+  [
+    EvmChainIdMap.Base,
+    STAKING_PROGRAM_IDS.BasiusVI,
+    '0x3639E1C2F9a7FF11aAdD239Cd778A7b5af39820b',
+    2500,
+  ],
 ] as const;
 
 describe('retired staking programs', () => {
   it.each(Object.entries(RETIRED_IDS))(
     'chain %s retires exactly the middleware list',
     (chainId, expected) => {
-      const retired = Object.entries(STAKING_PROGRAMS[Number(chainId) as 100])
+      const retired = Object.entries(
+        STAKING_PROGRAMS[Number(chainId) as EvmChainId],
+      )
         .filter(([, program]) => program.retired)
         .map(([id]) => id);
       expect(retired.sort()).toEqual([...expected].sort());
@@ -96,9 +169,13 @@ describe('retired staking programs', () => {
   });
 
   it.each(NEW_PROGRAMS)(
-    'new program %s/%s is live, StakingToken v0.4 and needs %d OLAS',
-    (chainId, id, olas) => {
+    'new program %s/%s is at %s, live, StakingToken v0.4 and needs %d OLAS',
+    (chainId, id, address, olas) => {
       const program = STAKING_PROGRAMS[chainId][id];
+      expect(program.address).toBe(address);
+      expect(
+        (program.activityChecker as unknown as { address: string }).address,
+      ).toBe(CHECKER[chainId]);
       expect(program.retired).toBeFalsy();
       expect(program.deprecated).toBeFalsy();
       expect(program.requiresPolySafe).toBeFalsy();

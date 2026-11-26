@@ -106,7 +106,8 @@ describe('useCanMigrate', () => {
         isCurrentStakingProgram: true,
       });
       const { result } = renderUseCanMigrate(isCurrentStakingProgram);
-      expect(result.current.buttonText).toBe(MigrateButtonText.CurrentContract);
+      // The literal copy (D14), so a change of the enum's text fails here.
+      expect(result.current.buttonText).toBe('Current');
       expect(result.current.canMigrate).toBe(false);
     });
 
