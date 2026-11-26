@@ -123,7 +123,7 @@ export const STAKING_PROGRAM_IDS = {
 export const POLY_SAFE_PROXY_CODEHASH =
   '0x92565062fdea8761e07d9df2fcdbd66c0582af6ddf0e0355bc07754ad97400b0';
 
-const NO_STAKING_PROGRAM_ID = 'no_staking';
+export const NO_STAKING_PROGRAM_ID = 'no_staking';
 
 export type StakingProgramId =
   | ValueOf<typeof STAKING_PROGRAM_IDS>

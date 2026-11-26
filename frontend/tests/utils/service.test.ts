@@ -10,12 +10,15 @@ import {
   CONNECT_SERVICE_TEMPLATE,
   connectFundRequirementsFor,
 } from '../../constants/serviceTemplates/service/connect';
+import { PREDICT_POLYMARKET_SERVICE_TEMPLATE } from '../../constants/serviceTemplates/service/trader';
+import { STAKING_PROGRAM_IDS } from '../../constants/stakingProgram';
 import { AgentConfig } from '../../types/Agent';
 import { Service, ServiceTemplate } from '../../types/Service';
 import {
   enableWithdrawalOnlyMode,
   getServiceEvmChainId,
   getServiceInstanceName,
+  isInWithdrawalOnlyMode,
   isValidServiceId,
   matchesAgentConfig,
   onDummyServiceCreation,
@@ -46,6 +49,9 @@ jest.mock('../../constants/serviceTemplates', () => {
   const {
     CONNECT_SERVICE_TEMPLATE: connectTemplate,
   } = require('../../constants/serviceTemplates/service/connect');
+  const {
+    PREDICT_POLYMARKET_SERVICE_TEMPLATE: polystratTemplate,
+  } = require('../../constants/serviceTemplates/service/trader');
   return {
     KPI_DESC_PREFIX: '[Pearl service]',
     SERVICE_TEMPLATES: [
@@ -95,6 +101,7 @@ jest.mock('../../constants/serviceTemplates', () => {
         },
       },
       connectTemplate,
+      polystratTemplate,
     ],
   };
 });
@@ -173,27 +180,92 @@ describe('isValidServiceId', () => {
   });
 });
 
-describe('enableWithdrawalOnlyMode', () => {
-  it('PATCHes use_staking=false on the home chain and a USER DISABLE_TRADING=true', async () => {
-    const service = createService({ home_chain: MiddlewareChainMap.POLYGON });
+/** A Polystrat service in sync with its template, with `user_params` overrides. */
+const createPolystratService = ({
+  stakingProgramId = STAKING_PROGRAM_IDS.PolystratII,
+  disableTrading = 'false',
+  hash = PREDICT_POLYMARKET_SERVICE_TEMPLATE.hash,
+}: {
+  stakingProgramId?: StakingProgramId;
+  disableTrading?: string;
+  hash?: string;
+} = {}) => {
+  const template = PREDICT_POLYMARKET_SERVICE_TEMPLATE;
+  return {
+    service_config_id: SERVICE_CONFIG_ID,
+    name: template.name,
+    hash,
+    description: template.description,
+    home_chain: template.home_chain,
+    env_variables: {
+      ...template.env_variables,
+      DISABLE_TRADING: {
+        ...template.env_variables.DISABLE_TRADING,
+        value: disableTrading,
+      },
+    },
+    chain_configs: {
+      [template.home_chain]: {
+        chain_data: {
+          user_params: {
+            staking_program_id: stakingProgramId,
+            fund_requirements:
+              template.configurations[template.home_chain]?.fund_requirements,
+          },
+        },
+      },
+    },
+    agent_release: template.agent_release,
+  } as unknown as Service;
+};
 
-    await enableWithdrawalOnlyMode(service);
+describe('isInWithdrawalOnlyMode', () => {
+  it.each([
+    ['no_staking', 'true', true],
+    ['no_staking', 'false', false],
+    [STAKING_PROGRAM_IDS.PolystratII, 'true', false],
+  ] as const)(
+    'staking_program_id=%s, DISABLE_TRADING=%s -> %s',
+    (stakingProgramId, disableTrading, expected) => {
+      expect(
+        isInWithdrawalOnlyMode(
+          createPolystratService({ stakingProgramId, disableTrading }),
+        ),
+      ).toBe(expected);
+    },
+  );
+});
+
+describe('enableWithdrawalOnlyMode', () => {
+  it('PATCHes staking_program_id=no_staking, from which the middleware derives use_staking=false, and DISABLE_TRADING=true', async () => {
+    await enableWithdrawalOnlyMode(createPolystratService());
 
     expect(mockUpdateService).toHaveBeenCalledWith({
       serviceConfigId: SERVICE_CONFIG_ID,
       partialServiceTemplate: {
         configurations: {
-          [MiddlewareChainMap.POLYGON]: { use_staking: false },
+          [MiddlewareChainMap.POLYGON]: { staking_program_id: 'no_staking' },
         },
         env_variables: {
-          DISABLE_TRADING: expect.objectContaining({
-            name: 'Disable trading',
+          DISABLE_TRADING: {
+            ...PREDICT_POLYMARKET_SERVICE_TEMPLATE.env_variables
+              .DISABLE_TRADING,
             value: 'true',
-            provision_type: EnvProvisionMap.USER,
-          }),
+          },
         },
       },
     });
+  });
+
+  it('sends no PATCH when the service is already in withdrawal-only mode', async () => {
+    await enableWithdrawalOnlyMode(
+      createPolystratService({
+        stakingProgramId: 'no_staking',
+        disableTrading: 'true',
+      }),
+    );
+
+    expect(mockUpdateService).not.toHaveBeenCalled();
   });
 });
 
@@ -202,6 +274,26 @@ describe('updateServiceIfNeeded', () => {
     const service = createService({ name: 'Unknown service' });
     await updateServiceIfNeeded(service, AgentMap.PredictTrader);
     expect(mockUpdateService).not.toHaveBeenCalled();
+  });
+
+  it("keeps a withdrawal-only DISABLE_TRADING=true out of the template sync's PATCH", async () => {
+    // A stale hash forces a PATCH, so the env diff is actually sent.
+    const service = createPolystratService({
+      disableTrading: 'true',
+      hash: 'bafy-stale-hash',
+    });
+
+    await updateServiceIfNeeded(service, AgentMap.Polystrat);
+
+    expect(mockUpdateService).toHaveBeenCalledTimes(1);
+    const [{ partialServiceTemplate }] = mockUpdateService.mock.calls[0];
+    expect(partialServiceTemplate.hash).toBe(
+      PREDICT_POLYMARKET_SERVICE_TEMPLATE.hash,
+    );
+    expect(
+      partialServiceTemplate.env_variables?.DISABLE_TRADING,
+    ).toBeUndefined();
+    expect(mockPutService).not.toHaveBeenCalled();
   });
 
   it('does not update when the service already matches the template', async () => {

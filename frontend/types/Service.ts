@@ -86,8 +86,6 @@ export type ConfigurationTemplate = {
    */
   cost_of_bond: string;
   fund_requirements: FundRequirements; // provided by agent teams, used by BE to send initial funds
-  /** Merged into `user_params` by PATCH; false starts the service unstaked. */
-  use_staking?: boolean;
 };
 
 export type ServiceTemplate = {

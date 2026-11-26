@@ -1,12 +1,19 @@
 import { isEmpty, isEqual } from 'lodash';
 
-import { AgentMap, AgentType, EvmChainId, StakingProgramId } from '@/constants';
+import {
+  AgentMap,
+  AgentType,
+  EvmChainId,
+  NO_STAKING_PROGRAM_ID,
+  StakingProgramId,
+} from '@/constants';
 import { MiddlewareChain } from '@/constants/chains';
 import { EnvProvisionMap } from '@/constants/envVariables';
 import {
   KPI_DESC_PREFIX,
   SERVICE_TEMPLATES,
 } from '@/constants/serviceTemplates';
+import { PREDICT_POLYMARKET_SERVICE_TEMPLATE } from '@/constants/serviceTemplates/service/trader';
 import { ServicesService } from '@/service/Services';
 import {
   Address,
@@ -20,6 +27,7 @@ import {
 
 import { generateAgentName } from './generateAgentName';
 import { asEvmChainId, asMiddlewareChain } from './middlewareHelpers';
+import { isNoStakingProgram } from './stakingProgram';
 
 /**
  * Returns the creation timestamp of a service from its hash_history.
@@ -225,17 +233,38 @@ export const updateServiceIfNeeded = async (
   }
 };
 
-/** Starts the service unstaked and redeem-only, so the user can sell positions and withdraw. */
+/**
+ * Whether the service is already set up for withdrawal-only mode: unstaked
+ * (`no_staking`, from which the middleware derives `use_staking: false`) and
+ * redeem-only (`DISABLE_TRADING=true`).
+ */
+export const isInWithdrawalOnlyMode = (service: Service) =>
+  isNoStakingProgram(
+    service.chain_configs[service.home_chain]?.chain_data.user_params
+      .staking_program_id,
+  ) && service.env_variables.DISABLE_TRADING?.value === 'true';
+
+/**
+ * Starts the service unstaked and redeem-only, so the user can sell positions
+ * and withdraw. The middleware's `use_staking` is read-only, derived from
+ * `staking_program_id`, so the PATCH sets that to `no_staking`.
+ * Skipped when nothing would change: every PATCH re-downloads the service
+ * package from IPFS.
+ */
 export const enableWithdrawalOnlyMode = async (service: Service) => {
+  if (isInWithdrawalOnlyMode(service)) return;
   await ServicesService.updateService({
     serviceConfigId: service.service_config_id,
     partialServiceTemplate: {
-      configurations: { [service.home_chain]: { use_staking: false } },
+      configurations: {
+        [service.home_chain]: { staking_program_id: NO_STAKING_PROGRAM_ID },
+      },
       env_variables: {
+        // Read here, not at module load: this module is part of the
+        // service-template import cycle.
         DISABLE_TRADING: {
-          name: 'Disable trading',
+          ...PREDICT_POLYMARKET_SERVICE_TEMPLATE.env_variables.DISABLE_TRADING,
           value: 'true',
-          provision_type: EnvProvisionMap.USER,
         },
       },
     },
