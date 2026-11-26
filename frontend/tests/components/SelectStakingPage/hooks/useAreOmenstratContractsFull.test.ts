@@ -42,13 +42,8 @@ describe('useAreOmenstratContractsFull', () => {
     expect(setup(allOmenstrat(full))).toBe(true);
   });
 
-  it('is false while any one of them has a free slot', () => {
-    expect(
-      setup({
-        ...allOmenstrat(full),
-        [STAKING_PROGRAM_IDS.OmenstratVII]: withSlot,
-      }),
-    ).toBe(false);
+  it.each(OMENSTRAT_IDS)('is false while %s has a free slot', (programId) => {
+    expect(setup({ ...allOmenstrat(full), [programId]: withSlot })).toBe(false);
   });
 
   it('is false while any one of them has not loaded', () => {
