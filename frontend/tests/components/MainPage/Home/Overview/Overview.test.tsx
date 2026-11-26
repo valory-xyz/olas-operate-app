@@ -3,11 +3,10 @@ import React from 'react';
 
 import { Overview } from '../../../../../components/MainPage/Home/Overview/Overview';
 import { EvmChainIdMap } from '../../../../../constants/chains';
-import { useServices, useStakingProgram } from '../../../../../hooks';
+import { useServices } from '../../../../../hooks';
 
 jest.mock('../../../../../hooks', () => ({
   useServices: jest.fn(),
-  useStakingProgram: jest.fn(),
 }));
 
 jest.mock('../../../../../components/ui', () => ({
@@ -39,15 +38,29 @@ jest.mock('../../../../../components/MainPage/Home/Overview/Wallet', () => ({
 }));
 
 const mockUseServices = useServices as jest.Mock;
-const mockUseStakingProgram = useStakingProgram as jest.Mock;
 
-const mockStakingProgram = (serviceStakingProgramId?: string | null) =>
-  mockUseStakingProgram.mockReturnValue({
-    stakingProgramIdByServiceConfigId: new Map(
-      serviceStakingProgramId === undefined
-        ? []
-        : [['sc-1', serviceStakingProgramId]],
-    ),
+const serviceStakedIn = (stakingProgramId?: string | null) =>
+  stakingProgramId === undefined
+    ? undefined
+    : {
+        home_chain: 'gnosis',
+        chain_configs: {
+          gnosis: {
+            chain_data: {
+              user_params: { staking_program_id: stakingProgramId },
+            },
+          },
+        },
+      };
+
+const mockServices = (
+  agentConfig: Record<string, unknown>,
+  serviceStakingProgramId?: string | null,
+) =>
+  mockUseServices.mockReturnValue({
+    selectedServiceConfigId: 'sc-1',
+    selectedService: serviceStakedIn(serviceStakingProgramId),
+    selectedAgentConfig: agentConfig,
   });
 
 /** `serviceStakingProgramId` is the selected service's own stored program. */
@@ -55,11 +68,7 @@ const renderOverview = (
   agentConfig: Record<string, unknown>,
   serviceStakingProgramId: string | null = 'pearl_beta',
 ) => {
-  mockUseServices.mockReturnValue({
-    selectedServiceConfigId: 'sc-1',
-    selectedAgentConfig: agentConfig,
-  });
-  mockStakingProgram(serviceStakingProgramId);
+  mockServices(agentConfig, serviceStakingProgramId);
   return render(<Overview openProfile={jest.fn()} />);
 };
 
@@ -126,15 +135,15 @@ describe('Overview', () => {
     });
 
     it('shows the not-staked card as soon as the service is unstaked', () => {
-      // the subgraph's cached contract can outlive an unstake by a day; the
-      // service's own program is what the card follows
+      // the subgraph's cached contract (selectedStakingProgramId) can outlive
+      // an unstake by a day; the service's own program is what the card follows
       const { rerender } = renderOverview(
         connectOn(EvmChainIdMap.Gnosis),
         'connect_i',
       );
       expect(screen.getByText('Staking')).toBeInTheDocument();
 
-      mockStakingProgram('no_staking');
+      mockServices(connectOn(EvmChainIdMap.Gnosis), 'no_staking');
       rerender(<Overview openProfile={jest.fn()} />);
 
       expect(screen.getByText('NotStaked')).toBeInTheDocument();
@@ -144,11 +153,7 @@ describe('Overview', () => {
     it.each([undefined, null])(
       'shows neither staking section while the program is unknown (%s)',
       (serviceStakingProgramId) => {
-        mockUseServices.mockReturnValue({
-          selectedServiceConfigId: 'sc-1',
-          selectedAgentConfig: connectOn(EvmChainIdMap.Gnosis),
-        });
-        mockStakingProgram(serviceStakingProgramId);
+        mockServices(connectOn(EvmChainIdMap.Gnosis), serviceStakingProgramId);
         render(<Overview openProfile={jest.fn()} />);
 
         expect(screen.queryByText('Staking')).toBeNull();
