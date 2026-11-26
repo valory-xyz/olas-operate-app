@@ -80,7 +80,7 @@ The user picks which staking program to use. The view cycles through these state
 
 Component: `frontend/components/MainPage/Home/Overview/Staking/Staking.tsx`
 
-Always visible in the main page Overview section. Displays:
+Visible in the main page Overview section wherever the agent can stake; for an agent whose staking is optional see [Optional staking (Connect)](#optional-staking-connect). Displays:
 
 - **`EpochClock`** — countdown to epoch end. Color-coded: warning (yellow) when < 12 h remain, danger (red) when < 3 h remain. Derived from `currentEpochLifetime` in `useStakingDetails`.
 - **`Streak`** — consecutive epochs with rewards earned, with a flame icon. Uses `optimisticStreak` (adds 1 if `isEligibleForRewards` is true, since the subgraph lags the current epoch).
@@ -134,7 +134,7 @@ AutoRun schedules on "done for the epoch": staking eligibility combined with the
 
 **`refreshRewardsEligibility(candidate)`** returns whether the agent is done for the epoch:
 - Throttled per `serviceConfigId` (minimum 120 s between fetches)
-- Calls `fetchAgentStakingRewardsInfo()` to get the current epoch snapshot, and `getAgentPerformance()` for the `activity_goal` block
+- Calls `fetchAgentStakingRewardsInfo()` to get the current epoch snapshot, and `getAgentPerformance()` for the `activity_goal` block. An agent with `runsOnMinutesPerRun` (Connect) skips the staking read: done is its run window's goal ([Optional staking (Connect)](#optional-staking-connect))
 - Done = `isEpochTargetMet` and the current activity goal met, or a current block with `no_markets_left: true` (`deriveIsDoneForEpoch`), with or without `isEpochTargetMet` for an agent with `canReportNoMarketsLeft` (Omenstrat) and only once it is met for any other agent; without a block, `isEpochTargetMet` alone
 - Stale epoch detection: if `isStakingEpochExpired()` returns `true` (i.e. `livenessPeriod ≤ now − tsCheckpoint`) and the agent is done, overrides it to `false` so the agent runs and triggers the on-chain checkpoint
 - Returns `true` (done), `false` (not done), or `undefined` (data missing, the goal unreadable once `isEpochTargetMet` is true, or the goal unreadable before it while the instance was already done this epoch)
@@ -313,7 +313,7 @@ Connect defaults to `no_staking` and may stake only on the chains in `AgentConfi
 - **Eligibility:** `ConnectService` reads the requester activity checker: `getMultisigNonces(safe)[1] - serviceInfo.nonces[1]` against `ceil(max(livenessPeriod, now - tsCheckpoint) * livenessRatio / 1e18)`, with no safety margin, so the one Marketplace request a day the user makes earns the epoch.
 - **Eviction:** `canRunWhileEvicted` keeps Start Agent enabled; `EvictedAlert` has a Connect branch.
 - **Announcement:** `ConnectStakingAnnouncement` (mounted in `MainPage`) shows "Staking for Connect agents" once per user (`connectStakingAnnouncementSeen`, backend-bound). It waits for the onboarding survey, Connect's first-run modal and an achievement that is loading, showing or about to show (`AchievementModal` publishes it through `useAchievementPending`), and for the services to load. "Stake your Connect Agent" opens the contract list of the first non-archived Connect instance in `stakingChains` order, else agent creation.
-- **Omenstrat full:** Omenstrat's list shows "All new Omenstrat contracts are full. You can stake a Connect agent on Gnosis instead." when no Omenstrat I–VII contract has a free slot (`useAreOmenstratContractsFull`).
+- **Omenstrat full:** Omenstrat's list shows "All new Omenstrat contracts are full. You can stake a Connect agent on Gnosis instead." when no contract in `OMENSTRAT_PROGRAM_IDS` has a free slot (`useAreOmenstratContractsFull`).
 
 ### Multisig compatibility (OPE-1919)
 

@@ -231,9 +231,10 @@ export const CONNECT_SERVICE_TEMPLATE: ServiceTemplate = {
       value: '',
       provision_type: EnvProvisionType.COMPUTED,
     },
-    // Set by the middleware at deploy for the instance's chain: the zero
-    // address while `no_staking`. Connect reads them to remind the session of
-    // the day's Marketplace request and to call `checkpoint()`.
+    // Set by the middleware at deploy for the instance's chain; the two
+    // contract addresses are the zero address while `no_staking`. Connect
+    // reads them to remind the session of the day's Marketplace request and to
+    // call `checkpoint()`.
     STAKING_CONTRACT_ADDRESS: {
       name: 'Staking contract address',
       description: '',

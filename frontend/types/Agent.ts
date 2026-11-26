@@ -147,7 +147,7 @@ export type AgentConfig = {
   hasPerformance: boolean;
   /** Shows the agent chat Overview (header, feed, chat input) instead of today's sections. */
   hasAgentChat?: boolean;
-  /** Can be started while evicted inside its minimum staking period, to redeem. */
+  /** Can be started while evicted inside its minimum staking period. */
   canRunWhileEvicted?: boolean;
   /**
    * Chains where an agent that defaults to `no_staking` may stake. Absent →
