@@ -276,8 +276,7 @@ const getDisableTradingTemplateEntry = (agentType: AgentType) => {
 
 /**
  * Whether the service is already set up for withdrawal-only mode: unstaked
- * (`no_staking`, from which the middleware derives `use_staking: false`) and
- * redeem-only (`DISABLE_TRADING=true`).
+ * (`no_staking`) and redeem-only (`DISABLE_TRADING=true`).
  */
 export const isInWithdrawalOnlyMode = (service: Service) =>
   isNoStakingProgram(
@@ -286,8 +285,8 @@ export const isInWithdrawalOnlyMode = (service: Service) =>
   ) && service.env_variables.DISABLE_TRADING?.value === 'true';
 
 /**
- * Starts the service unstaked and redeem-only, so the user can sell positions
- * and withdraw. The middleware's `use_staking` is read-only, derived from
+ * Configures the service to run unstaked and redeem-only, so the user can
+ * sell positions and withdraw. The middleware's `use_staking` is read-only, derived from
  * `staking_program_id`, so the PATCH sets that to `no_staking`.
  * Skipped when nothing would change: every PATCH re-downloads the service
  * package from IPFS.

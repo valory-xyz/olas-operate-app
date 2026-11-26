@@ -102,7 +102,7 @@ export type SafeType = 'loading' | 'error' | 'polySafe' | 'standard';
  *
  * `isWithdrawalOnly`: `true` for a service already in withdrawal-only mode, or
  * a PolySafe one on a retired program (`isWithdrawalOnly` rule); `false` when
- * it is not; `undefined` while that depends on a Safe type not yet known.
+ * it is not; `undefined` while that depends on a Safe type that is loading or couldn't be read.
  */
 export const useIsPolySafeService = () => {
   const { selectedService, selectedAgentConfig } = useServices();

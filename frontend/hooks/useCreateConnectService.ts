@@ -4,8 +4,8 @@ import { AGENT_CONFIG } from '@/config/agents';
 import {
   AgentMap,
   EvmChainId,
+  NO_STAKING_PROGRAM_ID,
   SETUP_SCREEN,
-  StakingProgramId,
 } from '@/constants';
 import {
   CONNECT_SERVICE_TEMPLATE,
@@ -24,8 +24,6 @@ import { useIsInitiallyFunded } from './useIsInitiallyFunded';
 import { useServices } from './useServices';
 import { useSetup } from './useSetup';
 import { useStakingProgram } from './useStakingProgram';
-
-const NO_STAKING: StakingProgramId = 'no_staking';
 
 /**
  * Build a single-chain Connect service template for the chosen chain: clone
@@ -81,7 +79,7 @@ export const useCreateConnectService = () => {
       // and tempt the user into creating a duplicate service on retry).
       const selectAndRouteToFunding = async (serviceConfigId: string) => {
         updateSelectedServiceConfigId(serviceConfigId);
-        setDefaultStakingProgramId(NO_STAKING);
+        setDefaultStakingProgramId(NO_STAKING_PROGRAM_ID);
         try {
           const route = await resolveFundingRoute(serviceConfigId);
           gotoSetup(route);
@@ -107,7 +105,10 @@ export const useCreateConnectService = () => {
 
       const template = buildSingleChainTemplate(chainId);
 
-      const newService = await onDummyServiceCreation(NO_STAKING, template);
+      const newService = await onDummyServiceCreation(
+        NO_STAKING_PROGRAM_ID,
+        template,
+      );
       const newServiceConfigId = newService.service_config_id;
 
       markServiceAsNotInitiallyFunded(newServiceConfigId);

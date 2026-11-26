@@ -61,7 +61,6 @@ export const useDeployability = ({
     isSelectedStakingContractDetailsLoading,
   } = useActiveStakingContractDetails();
   const { isActiveStakingProgramLoaded } = useStakingProgram();
-  // Withdrawal-only starts unstaked, so slots and eviction don't apply.
   const { isOnRetiredProgram, isWithdrawalOnly, isMultisigTypeError } =
     useIsPolySafeService();
   const { isInitialFunded } = useIsInitiallyFunded();
@@ -201,7 +200,8 @@ export const useDeployability = ({
       };
     }
 
-    // If not enough service slots, and service is not staked
+    // If not enough service slots, and service is not staked. Withdrawal-only
+    // starts unstaked, so neither slots nor eviction (below) apply to it.
     const hasSlot = !isNil(hasEnoughServiceSlots) && !hasEnoughServiceSlots;
     if (
       hasSlot &&
