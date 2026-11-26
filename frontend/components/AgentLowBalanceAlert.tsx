@@ -1,12 +1,8 @@
 import { Button, Typography } from 'antd';
 
 import { Alert } from '@/components/ui';
-import {
-  useAgentFundingRequests,
-  useServices,
-  useStakingProgram,
-} from '@/hooks';
-import { isNoStakingProgram, isStakingAvailable } from '@/utils/stakingProgram';
+import { useAgentFundingRequests, useServices } from '@/hooks';
+import { isServiceStaked } from '@/utils/stakingProgram';
 
 const { Text } = Typography;
 
@@ -17,15 +13,15 @@ type AgentLowBalanceAlertProps = {
 export const AgentLowBalanceAlert = ({ onFund }: AgentLowBalanceAlertProps) => {
   const { isAgentBalanceLow, agentTokenRequirementsFormatted } =
     useAgentFundingRequests();
-  const { selectedAgentConfig } = useServices();
-  const { selectedStakingProgramId } = useStakingProgram();
-  // Staking requirements apply only to an agent that can stake here and is
-  // staked: an unstaked Connect has none.
+  const { selectedAgentConfig, selectedService } = useServices();
+  // Staking requirements apply only to a staked instance: an unstaked Connect
+  // has none, and the Overview decides the same way.
   const hasStakingRequirements =
-    isStakingAvailable(
+    isServiceStaked(
       selectedAgentConfig,
       selectedAgentConfig.evmHomeChainId,
-    ) && !isNoStakingProgram(selectedStakingProgramId);
+      selectedService,
+    ) === true;
 
   if (!isAgentBalanceLow) return null;
 

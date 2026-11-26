@@ -107,6 +107,17 @@ describe('Overview', () => {
     expect(screen.queryByText('Staking')).toBeNull();
   });
 
+  it.each([undefined, null])(
+    'keeps the Staking section for a staking agent whose service program is %s',
+    (serviceStakingProgramId) => {
+      mockServices({ hasStaking: true }, serviceStakingProgramId);
+      render(<Overview openProfile={jest.fn()} />);
+
+      expect(screen.getByText('Staking')).toBeInTheDocument();
+      expect(screen.queryByText('NotStaked')).toBeNull();
+    },
+  );
+
   describe('Connect, whose staking is optional and per chain', () => {
     const connectOn = (evmHomeChainId: number) => ({
       hasStaking: false,
@@ -135,8 +146,6 @@ describe('Overview', () => {
     });
 
     it('shows the not-staked card as soon as the service is unstaked', () => {
-      // the subgraph's cached contract (selectedStakingProgramId) can outlive
-      // an unstake by a day; the service's own program is what the card follows
       const { rerender } = renderOverview(
         connectOn(EvmChainIdMap.Gnosis),
         'connect_i',

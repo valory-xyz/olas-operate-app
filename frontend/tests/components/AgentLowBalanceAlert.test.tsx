@@ -2,49 +2,66 @@ import { render, screen } from '@testing-library/react';
 
 import { AgentLowBalanceAlert } from '../../components/AgentLowBalanceAlert';
 import { EvmChainIdMap } from '../../constants/chains';
-import {
-  useAgentFundingRequests,
-  useServices,
-  useStakingProgram,
-} from '../../hooks';
+import { useAgentFundingRequests, useServices } from '../../hooks';
 
 jest.mock('../../hooks', () => ({
   useAgentFundingRequests: jest.fn(),
   useServices: jest.fn(),
-  useStakingProgram: jest.fn(),
+  // The alert must not read the subgraph-first program: a stale one names a
+  // contract after an unstake.
+  useStakingProgram: () => ({ selectedStakingProgramId: 'connect_i' }),
 }));
 
 const mockUseAgentFundingRequests = useAgentFundingRequests as jest.Mock;
 const mockUseServices = useServices as jest.Mock;
 
+const CONNECT = {
+  hasStaking: false,
+  defaultStakingProgramId: 'no_staking',
+  stakingChains: [EvmChainIdMap.Gnosis, EvmChainIdMap.Robinhood],
+};
+
 const setup = (
   over: {
     isAgentBalanceLow?: boolean;
-    hasStaking?: boolean;
-    stakingChains?: number[];
+    agentConfig?: Record<string, unknown>;
     evmHomeChainId?: number;
-    selectedStakingProgramId?: string;
+    /** The service's own stored program; `undefined` is no service. */
+    serviceStakingProgramId?: string | null;
   } = {},
 ) => {
   const {
     isAgentBalanceLow = true,
-    hasStaking = true,
-    stakingChains,
+    agentConfig = { hasStaking: true },
     evmHomeChainId = EvmChainIdMap.Gnosis,
-    selectedStakingProgramId = 'connect_i',
   } = over;
-  (useStakingProgram as jest.Mock).mockReturnValue({
-    selectedStakingProgramId,
-  });
   mockUseAgentFundingRequests.mockReturnValue({
     isAgentBalanceLow,
     agentTokenRequirementsFormatted: '5 XDAI',
   });
   mockUseServices.mockReturnValue({
-    selectedAgentConfig: { hasStaking, stakingChains, evmHomeChainId },
+    selectedAgentConfig: { ...agentConfig, evmHomeChainId },
+    selectedService:
+      'serviceStakingProgramId' in over
+        ? {
+            home_chain: 'gnosis',
+            chain_configs: {
+              gnosis: {
+                chain_data: {
+                  user_params: {
+                    staking_program_id: over.serviceStakingProgramId,
+                  },
+                },
+              },
+            },
+          }
+        : undefined,
   });
   return render(<AgentLowBalanceAlert onFund={jest.fn()} />);
 };
+
+const mentionsStaking = () =>
+  !!screen.queryByText(/meet staking requirements/i);
 
 describe('AgentLowBalanceAlert', () => {
   beforeEach(() => jest.clearAllMocks());
@@ -55,7 +72,7 @@ describe('AgentLowBalanceAlert', () => {
   });
 
   it('mentions staking requirements for staking agents', () => {
-    setup({ hasStaking: true });
+    setup();
     expect(
       screen.getByText(
         /perform on-chain activity and meet staking requirements\./i,
@@ -63,40 +80,35 @@ describe('AgentLowBalanceAlert', () => {
     ).toBeInTheDocument();
   });
 
-  it('omits staking requirements for non-staking agents (e.g. Connect)', () => {
-    setup({ hasStaking: false });
+  it('omits staking requirements for an agent that cannot stake', () => {
+    setup({ agentConfig: { hasStaking: false } });
     expect(
       screen.getByText(/perform on-chain activity\./i),
     ).toBeInTheDocument();
-    expect(
-      screen.queryByText(/meet staking requirements/i),
-    ).not.toBeInTheDocument();
+    expect(mentionsStaking()).toBe(false);
   });
 
   it.each([
-    [EvmChainIdMap.Gnosis, true],
-    [EvmChainIdMap.Polygon, false],
+    ['staked on Gnosis', EvmChainIdMap.Gnosis, 'connect_i', true],
+    ['on Polygon', EvmChainIdMap.Polygon, 'connect_i', false],
+    ['unstaked on Gnosis', EvmChainIdMap.Gnosis, 'no_staking', false],
+    ['with no stored program', EvmChainIdMap.Gnosis, null, false],
   ])(
-    'follows where Connect can stake (chain %s → mentions staking: %s)',
-    (evmHomeChainId, mentionsStaking) => {
-      setup({
-        hasStaking: false,
-        stakingChains: [EvmChainIdMap.Gnosis, EvmChainIdMap.Robinhood],
-        evmHomeChainId,
-      });
-      expect(!!screen.queryByText(/meet staking requirements/i)).toBe(
-        mentionsStaking,
-      );
+    'follows the Connect service %s',
+    (_, evmHomeChainId, serviceStakingProgramId, expected) => {
+      setup({ agentConfig: CONNECT, evmHomeChainId, serviceStakingProgramId });
+      expect(mentionsStaking()).toBe(expected);
     },
   );
 
-  it('omits staking requirements for an unstaked Connect where it could stake', () => {
-    setup({
-      hasStaking: false,
-      stakingChains: [EvmChainIdMap.Gnosis, EvmChainIdMap.Robinhood],
-      evmHomeChainId: EvmChainIdMap.Gnosis,
-      selectedStakingProgramId: 'no_staking',
-    });
-    expect(screen.queryByText(/meet staking requirements/i)).toBeNull();
+  it('omits them for an unstaked Connect while the subgraph still names a contract', () => {
+    // useStakingProgram (mocked above) still answers connect_i
+    setup({ agentConfig: CONNECT, serviceStakingProgramId: 'no_staking' });
+    expect(mentionsStaking()).toBe(false);
+  });
+
+  it('omits them while the Connect service has not loaded', () => {
+    setup({ agentConfig: CONNECT });
+    expect(mentionsStaking()).toBe(false);
   });
 });

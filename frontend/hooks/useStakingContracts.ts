@@ -5,6 +5,7 @@ import { NO_STAKING_PROGRAM_ID } from '@/constants';
 import { useIsPolySafeService, useServices, useStakingProgram } from '@/hooks';
 import {
   getCompatibleStakingProgramIds,
+  getServiceStakingProgramId,
   hasUnstakedOption,
 } from '@/utils/stakingProgram';
 
@@ -25,8 +26,7 @@ export const useStakingContracts = () => {
   // picks a contract, so it reflects an actual user choice (unlike the
   // agent-config default).
   const serviceStakingProgramId =
-    selectedService?.chain_configs?.[selectedService?.home_chain]?.chain_data
-      ?.user_params?.staking_program_id ?? null;
+    getServiceStakingProgramId(selectedService) ?? null;
 
   // "Current" must never fall back to the agent-config default: showing the
   // default as the joined/selected contract fabricates a stake the user never

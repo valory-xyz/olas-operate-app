@@ -2,11 +2,7 @@ import { isNil } from 'lodash';
 
 import { MainContentContainer } from '@/components/ui';
 import { useServices } from '@/hooks';
-import {
-  hasUnstakedOption,
-  isNoStakingProgram,
-  isStakingAvailable,
-} from '@/utils/stakingProgram';
+import { isServiceStaked, isStakingAvailable } from '@/utils/stakingProgram';
 
 import { AgentChat } from './AgentChat';
 import { AgentInfo } from './AgentInfo';
@@ -25,25 +21,15 @@ export const Overview = ({ openProfile, hasVisitedProfile }: OverviewProps) => {
     useServices();
   const { hasPerformance, hasAgentChat, evmHomeChainId } = selectedAgentConfig;
   const canStake = isStakingAvailable(selectedAgentConfig, evmHomeChainId);
-  const isStakingOptional = hasUnstakedOption(
+  const isStaked = isServiceStaked(
     selectedAgentConfig,
     evmHomeChainId,
+    selectedService,
   );
-  // Where staking is optional, the service's own program decides: the
-  // subgraph's latest contract is cached for a day and outlives an unstake.
-  const serviceStakingProgramId =
-    selectedService?.chain_configs?.[selectedService.home_chain]?.chain_data
-      ?.user_params?.staking_program_id;
 
   const renderStaking = () => {
-    if (!canStake) return null;
-    if (!isStakingOptional) return <Staking />;
-    if (isNil(serviceStakingProgramId)) return null;
-    return isNoStakingProgram(serviceStakingProgramId) ? (
-      <NotStaked />
-    ) : (
-      <Staking />
-    );
+    if (!canStake || isNil(isStaked)) return null;
+    return isStaked ? <Staking /> : <NotStaked />;
   };
 
   if (hasAgentChat) {

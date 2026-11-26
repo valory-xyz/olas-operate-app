@@ -9,8 +9,10 @@ import {
   deriveStakingProgramId,
   EVICTION_RUN_START_MARGIN_SECONDS,
   getCompatibleStakingProgramIds,
+  getServiceStakingProgramId,
   hasUnstakedOption,
   isNoStakingProgram,
+  isServiceStaked,
   isStakingAvailable,
   isStakingProgramCompatibleWithMultisig,
   runsInsideEvictionWindow,
@@ -276,5 +278,70 @@ describe('hasUnstakedOption', () => {
         EvmChainIdMap.Gnosis,
       ),
     ).toBe(false);
+  });
+});
+
+describe('getServiceStakingProgramId', () => {
+  const serviceIn = (staking_program_id?: string) => ({
+    home_chain: 'gnosis',
+    chain_configs: {
+      gnosis: { chain_data: { user_params: { staking_program_id } } },
+      base: { chain_data: { user_params: { staking_program_id: 'other' } } },
+    },
+  });
+
+  it("reads the home chain's stored program", () => {
+    expect(
+      getServiceStakingProgramId(
+        serviceIn('connect_i') as unknown as Parameters<
+          typeof getServiceStakingProgramId
+        >[0],
+      ),
+    ).toBe('connect_i');
+  });
+
+  it('is undefined with no service', () => {
+    expect(getServiceStakingProgramId(undefined)).toBeUndefined();
+  });
+});
+
+describe('isServiceStaked', () => {
+  const CONNECT = {
+    hasStaking: false,
+    defaultStakingProgramId: 'no_staking' as const,
+    stakingChains: [EvmChainIdMap.Gnosis],
+  };
+  const service = (staking_program_id: string | null) =>
+    ({
+      home_chain: 'gnosis',
+      chain_configs: {
+        gnosis: { chain_data: { user_params: { staking_program_id } } },
+      },
+    }) as unknown as Parameters<typeof isServiceStaked>[2];
+
+  it.each([
+    [
+      'an agent that cannot stake there',
+      { hasStaking: false },
+      'connect_i',
+      false,
+    ],
+    [
+      'an agent that always stakes, program unknown',
+      { hasStaking: true },
+      null,
+      true,
+    ],
+    ['an optional agent, staked', CONNECT, 'connect_i', true],
+    ['an optional agent, unstaked', CONNECT, 'no_staking', false],
+    ['an optional agent, program unknown', CONNECT, null, undefined],
+  ])('answers %s', (_, agentConfig, stakingProgramId, expected) => {
+    expect(
+      isServiceStaked(
+        agentConfig as Parameters<typeof isServiceStaked>[0],
+        EvmChainIdMap.Gnosis,
+        service(stakingProgramId),
+      ),
+    ).toBe(expected);
   });
 });

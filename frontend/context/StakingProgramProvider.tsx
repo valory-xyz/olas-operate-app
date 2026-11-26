@@ -9,6 +9,7 @@ import {
 import { StakingProgramId } from '@/constants';
 import { useActiveStakingProgramId, useServices } from '@/hooks';
 import { Maybe, Nullable } from '@/types';
+import { getServiceStakingProgramId } from '@/utils/stakingProgram';
 
 export const StakingProgramContext = createContext<{
   isActiveStakingProgramLoaded: boolean;
@@ -63,8 +64,7 @@ export const StakingProgramProvider = ({ children }: PropsWithChildren) => {
     if (isLoading) return null;
 
     const serviceSelectedStakingProgramId =
-      selectedService?.chain_configs?.[selectedService?.home_chain]?.chain_data
-        ?.user_params?.staking_program_id;
+      getServiceStakingProgramId(selectedService);
 
     return (
       activeStakingProgramId ||
@@ -88,10 +88,10 @@ export const StakingProgramProvider = ({ children }: PropsWithChildren) => {
     const map = new Map<string, Nullable<StakingProgramId>>();
     if (!services) return map;
     for (const service of services) {
-      const stakingProgramId =
-        service.chain_configs?.[service.home_chain]?.chain_data?.user_params
-          ?.staking_program_id ?? null;
-      map.set(service.service_config_id, stakingProgramId);
+      map.set(
+        service.service_config_id,
+        getServiceStakingProgramId(service) ?? null,
+      );
     }
     return map;
   }, [services]);
