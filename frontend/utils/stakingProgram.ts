@@ -104,3 +104,17 @@ export const runsInsideEvictionWindow = ({
   isAgentEvicted &&
   !!canRunWhileEvicted &&
   evictionExpiresAt - nowSeconds > EVICTION_RUN_START_MARGIN_SECONDS;
+
+/**
+ * Withdrawal-only mode: a PolySafe service on a retired program can't switch,
+ * as no live program accepts a PolySafe. It only starts unstaked, to redeem
+ * and withdraw. The one definition of the rule; callers differ only in how
+ * they read the Safe type.
+ */
+export const isWithdrawalOnly = ({
+  isRetired,
+  isPolySafeService,
+}: {
+  isRetired: boolean;
+  isPolySafeService: boolean;
+}) => isRetired && isPolySafeService;

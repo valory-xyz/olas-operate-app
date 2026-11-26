@@ -11,6 +11,7 @@ import {
   getCompatibleStakingProgramIds,
   isNoStakingProgram,
   isStakingProgramCompatibleWithMultisig,
+  isWithdrawalOnly,
   runsInsideEvictionWindow,
 } from '../../utils/stakingProgram';
 import { makeStakingProgramConfig } from '../helpers/factories';
@@ -244,4 +245,18 @@ describe('runsInsideEvictionWindow', () => {
       run({ evictionExpiresAt: NOW + EVICTION_RUN_START_MARGIN_SECONDS + 1 }),
     ).toBe(true);
   });
+});
+
+describe('isWithdrawalOnly', () => {
+  it.each([
+    [true, true, true],
+    [true, false, false],
+    [false, true, false],
+    [false, false, false],
+  ])(
+    'retired=%s, PolySafe=%s -> %s',
+    (isRetired, isPolySafeService, expected) => {
+      expect(isWithdrawalOnly({ isRetired, isPolySafeService })).toBe(expected);
+    },
+  );
 });

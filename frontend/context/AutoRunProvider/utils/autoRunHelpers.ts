@@ -2,10 +2,7 @@ import { BigNumber } from 'ethers';
 import { isNil } from 'lodash';
 import { MutableRefObject } from 'react';
 
-import {
-  isRetiredStakingProgram,
-  STAKING_PROGRAMS,
-} from '@/config/stakingPrograms';
+import { isRetiredStakingProgram } from '@/config/stakingPrograms';
 import {
   AgentType,
   EvmChainId,
@@ -23,9 +20,10 @@ import {
   parseActivityGoal,
 } from '@/utils/activityGoal';
 import { sleepAwareDelay } from '@/utils/delay';
-import { isValidServiceId } from '@/utils/service';
+import { isInWithdrawalOnlyMode, isValidServiceId } from '@/utils/service';
 import {
   isNoStakingProgram,
+  isWithdrawalOnly,
   runsInsideEvictionWindow,
 } from '@/utils/stakingProgram';
 import {
@@ -633,6 +631,8 @@ export type FetchDeployabilityContext = {
     agentType: AgentType,
   ) => boolean;
   isGeoRestrictedForAgent: (agentType: AgentType) => boolean;
+  /** The instance's Safe type, as `useIsPolySafeService` reads it. Rejects when unreadable. */
+  isPolySafeService: (agentMeta: AgentMeta) => Promise<boolean>;
   logMessage: (message: string) => void;
   /**
    * Skip the "Another agent running" gate, to ask whether an agent could take
@@ -705,6 +705,22 @@ type EvictionFacts = Pick<
   'isAgentEvicted' | 'isEligibleAfterEviction'
 >;
 
+/** The retired-contract alert's copy for this instance, by its Safe type. */
+const getRetiredProgramSkipReason = async (
+  agentMeta: AgentMeta,
+  ctx: FetchDeployabilityContext,
+) => {
+  try {
+    const isPolySafeService = await ctx.isPolySafeService(agentMeta);
+    return isWithdrawalOnly({ isRetired: true, isPolySafeService })
+      ? RETIRED_STAKING_PROGRAM_COPY.WITHDRAWAL_ONLY
+      : RETIRED_STAKING_PROGRAM_COPY.SWITCH;
+  } catch {
+    // Logged where the Safe type is read; the instance is skipped either way.
+    return RETIRED_STAKING_PROGRAM_COPY.SAFE_TYPE_UNKNOWN;
+  }
+};
+
 const runDeployabilityChecks = async (
   agentMeta: AgentMeta,
   ctx: FetchDeployabilityContext,
@@ -727,14 +743,18 @@ const runDeployabilityChecks = async (
     return { canRun: false, reason: 'Phased out' };
   }
 
-  // Skipped, PolySafe agents included: those run only when the user starts them.
+  // Skipped, PolySafe agents included: those run only when the user starts
+  // them. One started withdrawal-only is stored as `no_staking`.
+  if (isInWithdrawalOnlyMode(agentMeta.service)) {
+    return {
+      canRun: false,
+      reason: RETIRED_STAKING_PROGRAM_COPY.WITHDRAWAL_ONLY,
+    };
+  }
   if (isRetiredStakingProgram(agentMeta.chainId, agentMeta.stakingProgramId)) {
     return {
       canRun: false,
-      reason: STAKING_PROGRAMS[agentMeta.chainId][agentMeta.stakingProgramId]
-        .requiresPolySafe
-        ? RETIRED_STAKING_PROGRAM_COPY.WITHDRAWAL_ONLY
-        : RETIRED_STAKING_PROGRAM_COPY.SWITCH,
+      reason: await getRetiredProgramSkipReason(agentMeta, ctx),
     };
   }
 

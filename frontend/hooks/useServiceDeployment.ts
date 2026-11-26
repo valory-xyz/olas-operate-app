@@ -95,11 +95,8 @@ export const useServiceDeployment = () => {
     setIsPaused: setIsStakingContractInfoPollingPaused,
     refetchSelectedStakingContractDetails: refetchActiveStakingContractDetails,
   } = useStakingContractContext();
-  const { selectedStakingProgramId, selectedStakingProgramMeta } =
-    useStakingProgram();
-  const { isPolySafeService } = useIsPolySafeService();
-  const isWithdrawalOnly =
-    !!selectedStakingProgramMeta?.retired && isPolySafeService;
+  const { selectedStakingProgramId } = useStakingProgram();
+  const { isWithdrawalOnly } = useIsPolySafeService();
   const { masterSafesOwners } = useMultisigs(masterSafes);
   const { startService } = useStartService();
 

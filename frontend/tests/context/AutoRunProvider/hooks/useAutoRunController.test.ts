@@ -49,6 +49,14 @@ jest.mock('../../../../hooks/useIsAgentGeoRestricted', () => ({
     .fn()
     .mockReturnValue({ isAgentGeoRestricted: false }),
 }));
+const mockQueryClient = {};
+jest.mock('@tanstack/react-query', () => ({
+  ...jest.requireActual('@tanstack/react-query'),
+  useQueryClient: () => mockQueryClient,
+}));
+jest.mock('../../../../hooks/useIsPolySafeService', () => ({
+  fetchIsPolySafeService: jest.fn().mockResolvedValue(true),
+}));
 jest.mock('../../../../hooks/useIsInitiallyFunded', () => ({
   useIsInitiallyFunded: jest.fn().mockReturnValue({
     isInstanceInitiallyFunded: jest.fn().mockReturnValue(true),
@@ -149,6 +157,9 @@ const { useActivityGoal, useEpochWorkStatus, useRewardContext } =
     useEpochWorkStatus: jest.Mock;
     useRewardContext: jest.Mock;
   };
+const { fetchIsPolySafeService } = jest.requireMock(
+  '../../../../hooks/useIsPolySafeService',
+) as { fetchIsPolySafeService: jest.Mock };
 const { fetchDeployabilityForAgent, getUsableRewardStatus } = jest.requireMock(
   '../../../../context/AutoRunProvider/utils/autoRunHelpers',
 ) as {
@@ -385,6 +396,26 @@ describe('useAutoRunController', () => {
       expect(fetchDeployabilityForAgent).toHaveBeenCalledWith(
         traderMeta,
         expect.objectContaining({ ignoreRunningAgent: true }),
+      );
+    });
+
+    it("reads each instance's Safe type through the shared PolySafe query", async () => {
+      renderHook(() =>
+        useAutoRunController(
+          makeHookParams({ configuredAgents: [traderMeta] }),
+        ),
+      );
+      const { getHandOverDeployability } = lastCallArgs(useAutoRunLifecycle);
+      await act(async () => {
+        await getHandOverDeployability(DEFAULT_SERVICE_CONFIG_ID);
+      });
+      const [, ctx] = fetchDeployabilityForAgent.mock.calls[0];
+
+      await expect(ctx.isPolySafeService(traderMeta)).resolves.toBe(true);
+      expect(fetchIsPolySafeService).toHaveBeenCalledWith(
+        mockQueryClient,
+        traderMeta.chainId,
+        traderMeta.multisig,
       );
     });
 

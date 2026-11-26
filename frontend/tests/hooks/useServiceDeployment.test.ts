@@ -216,7 +216,7 @@ const setupDefaults = () => {
     masterSafesOwners: [],
   } as unknown as ReturnType<typeof useMultisigs>);
   (useIsPolySafeService as jest.Mock).mockReturnValue({
-    isPolySafeService: false,
+    isWithdrawalOnly: false,
   });
   mockUseStartService.mockReturnValue({
     startService: mockStartServiceFn,
@@ -382,19 +382,11 @@ describe('useServiceDeployment', () => {
       );
     });
 
-    it.each([
-      [true, true, true],
-      [true, false, false],
-      [false, true, false],
-    ])(
-      'starts withdrawal-only when retired=%s and PolySafe=%s → %s',
-      async (retired, isPolySafeService, withdrawalOnly) => {
-        mockUseStakingProgram.mockReturnValue({
-          selectedStakingProgramId: DEFAULT_STAKING_PROGRAM_ID,
-          selectedStakingProgramMeta: { retired },
-        } as unknown as ReturnType<typeof useStakingProgram>);
+    it.each([true, false])(
+      "passes useIsPolySafeService's isWithdrawalOnly=%s to the start",
+      async (withdrawalOnly) => {
         (useIsPolySafeService as jest.Mock).mockReturnValue({
-          isPolySafeService,
+          isWithdrawalOnly: withdrawalOnly,
         });
         const { result } = renderHook(() => useServiceDeployment());
 

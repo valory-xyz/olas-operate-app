@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { AGENT_CONFIG } from '@/config/agents';
@@ -12,6 +13,7 @@ import {
 import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRefillRequirementsContext';
 import { useIsAgentGeoRestricted } from '@/hooks/useIsAgentGeoRestricted';
 import { useIsInitiallyFunded } from '@/hooks/useIsInitiallyFunded';
+import { fetchIsPolySafeService } from '@/hooks/useIsPolySafeService';
 import { isNoStakingProgram } from '@/utils/stakingProgram';
 
 import {
@@ -160,6 +162,17 @@ export const useAutoRunController = ({
     [isPolystratGeoRestricted],
   );
 
+  const queryClient = useQueryClient();
+  const isPolySafeService = useCallback(
+    (agentMeta: AgentMeta) =>
+      fetchIsPolySafeService(
+        queryClient,
+        agentMeta.chainId,
+        agentMeta.multisig,
+      ),
+    [queryClient],
+  );
+
   const healthStatsRef = useRef({
     startErrors: 0,
     stopTimeouts: 0,
@@ -270,6 +283,7 @@ export const useAutoRunController = ({
         hasBalancesForServiceConfigId,
         isInstanceInitiallyFunded,
         isGeoRestrictedForAgent,
+        isPolySafeService,
         logMessage,
         ...contextOptions,
       });
@@ -281,6 +295,7 @@ export const useAutoRunController = ({
       hasBalancesForServiceConfigId,
       isInstanceInitiallyFunded,
       isGeoRestrictedForAgent,
+      isPolySafeService,
       logMessage,
     ],
   );

@@ -1,6 +1,9 @@
 import { AGENT_CONFIG } from '../../../../config/agents';
 import { AgentMap } from '../../../../constants/agent';
-import { EvmChainIdMap } from '../../../../constants/chains';
+import {
+  EvmChainIdMap,
+  MiddlewareChainMap,
+} from '../../../../constants/chains';
 import {
   RETIRED_STAKING_PROGRAM_COPY,
   STAKING_PROGRAM_IDS,
@@ -2033,6 +2036,7 @@ describe('fetchDeployabilityForAgent', () => {
     hasBalancesForServiceConfigId: jest.fn().mockReturnValue(true),
     isInstanceInitiallyFunded: jest.fn().mockReturnValue(true),
     isGeoRestrictedForAgent: jest.fn().mockReturnValue(false),
+    isPolySafeService: jest.fn().mockResolvedValue(false),
     logMessage: jest.fn(),
     ...overrides,
   });
@@ -2095,18 +2099,94 @@ describe('fetchDeployabilityForAgent', () => {
     },
   );
 
-  it('skips a PolySafe agent on a retired program with the withdrawal-only copy', async () => {
+  it.each([
+    // Stored on a retired PolySafe program, but the Safe is a standard one
+    // (e.g. never staked there): Home shows the switch variant, so must Auto-run.
+    [
+      STAKING_PROGRAM_IDS.PolystratII,
+      false,
+      RETIRED_STAKING_PROGRAM_COPY.SWITCH,
+    ],
+    [
+      STAKING_PROGRAM_IDS.PolystratII,
+      true,
+      RETIRED_STAKING_PROGRAM_COPY.WITHDRAWAL_ONLY,
+    ],
+    // A retired standard-Safe program: a chain check alone would get this wrong.
+    [
+      STAKING_PROGRAM_IDS.PolystratIV,
+      false,
+      RETIRED_STAKING_PROGRAM_COPY.SWITCH,
+    ],
+  ])(
+    'skips a Polygon agent on retired %s with a PolySafe=%s Safe with the matching alert copy',
+    async (stakingProgramId, isPolySafe, reason) => {
+      const meta = {
+        ...makeAgentMeta(),
+        chainId: EvmChainIdMap.Polygon,
+        stakingProgramId,
+      };
+      const isPolySafeService = jest.fn().mockResolvedValue(isPolySafe);
+
+      const result = await fetchDeployabilityForAgent(
+        meta,
+        makeCtx({ isPolySafeService }),
+      );
+
+      expect(isPolySafeService).toHaveBeenCalledWith(meta);
+      expect(result.canRun).toBe(false);
+      expect(result.reason).toBe(reason);
+      expect(result.isTransient).toBeUndefined();
+    },
+  );
+
+  it("skips with the Safe-type copy when the Safe type can't be read", async () => {
     const meta = {
       ...makeAgentMeta(),
       chainId: EvmChainIdMap.Polygon,
       stakingProgramId: STAKING_PROGRAM_IDS.PolystratII,
     };
 
+    const result = await fetchDeployabilityForAgent(
+      meta,
+      makeCtx({
+        isPolySafeService: jest.fn().mockRejectedValue(new Error('rpc down')),
+      }),
+    );
+
+    expect(result).toEqual({
+      canRun: false,
+      reason: RETIRED_STAKING_PROGRAM_COPY.SAFE_TYPE_UNKNOWN,
+    });
+  });
+
+  it('keeps skipping an agent already started withdrawal-only, now stored as no_staking', async () => {
+    const base = makeAgentMeta();
+    const meta = {
+      ...base,
+      chainId: EvmChainIdMap.Polygon,
+      stakingProgramId: 'no_staking',
+      service: {
+        ...base.service,
+        home_chain: MiddlewareChainMap.POLYGON,
+        chain_configs: {
+          [MiddlewareChainMap.POLYGON]: {
+            chain_data: { user_params: { staking_program_id: 'no_staking' } },
+          },
+        },
+        env_variables: {
+          ...base.service.env_variables,
+          DISABLE_TRADING: { value: 'true' },
+        },
+      },
+    } as unknown as AgentMeta;
+
     const result = await fetchDeployabilityForAgent(meta, makeCtx());
 
-    expect(result.canRun).toBe(false);
-    expect(result.reason).toBe(RETIRED_STAKING_PROGRAM_COPY.WITHDRAWAL_ONLY);
-    expect(result.isTransient).toBeUndefined();
+    expect(result).toEqual({
+      canRun: false,
+      reason: RETIRED_STAKING_PROGRAM_COPY.WITHDRAWAL_ONLY,
+    });
   });
 
   it('never reads staking details for a no-staking agent', async () => {

@@ -136,6 +136,9 @@ export type StakingProgramId =
 export const RETIRED_STAKING_PROGRAM_COPY = {
   SWITCH:
     'Switch to one of the available contracts to run your agent. Pearl no longer supports deprecated contracts.',
+  /** The Safe type can't be read, so neither variant above can be offered. */
+  SAFE_TYPE_UNKNOWN:
+    "Pearl couldn't check whether this agent can switch to a new contract. Check your internet connection and try again.",
   WITHDRAWAL_ONLY:
     'This agent can no longer trade because it cannot switch to a new staking contract. To keep using Polystrat, add a new agent. To get your funds back, start your agent and sell its positions on the Profile tab. Then withdraw from your Agent Wallet.',
 } as const;

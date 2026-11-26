@@ -14,7 +14,10 @@ import {
   STAKING_PROGRAM_IDS,
   StakingProgramId,
 } from '../../constants/stakingProgram';
-import { useIsPolySafeService } from '../../hooks/useIsPolySafeService';
+import {
+  fetchIsPolySafeService,
+  useIsPolySafeService,
+} from '../../hooks/useIsPolySafeService';
 import { useServices } from '../../hooks/useServices';
 import { useStakingProgram } from '../../hooks/useStakingProgram';
 import { Address } from '../../types/Address';
@@ -23,7 +26,10 @@ import {
   makeService,
   makeStakingProgramConfig,
 } from '../helpers/factories';
-import { createQueryClientWrapper } from '../helpers/queryClient';
+import {
+  createQueryClientWrapper,
+  createTestQueryClient,
+} from '../helpers/queryClient';
 
 const mockGetCodePolygon = jest.fn();
 const mockGetCodeGnosis = jest.fn();
@@ -107,6 +113,7 @@ const setupMocks = ({
   storedStakingProgramId = STANDARD_SAFE_PROGRAM,
   activeStakingProgramId = null as StakingProgramId | null,
   isActiveStakingProgramLoaded = true,
+  isRetired = false,
 }: {
   evmHomeChainId?: EvmChainId;
   serviceHomeChain?: SupportedMiddlewareChain;
@@ -115,6 +122,7 @@ const setupMocks = ({
   storedStakingProgramId?: StakingProgramId;
   activeStakingProgramId?: StakingProgramId | null;
   isActiveStakingProgramLoaded?: boolean;
+  isRetired?: boolean;
 } = {}) => {
   mockUseServices.mockReturnValue({
     selectedAgentConfig: { evmHomeChainId },
@@ -131,6 +139,7 @@ const setupMocks = ({
   mockUseStakingProgram.mockReturnValue({
     activeStakingProgramId,
     isActiveStakingProgramLoaded,
+    selectedStakingProgramMeta: { retired: isRetired },
   });
 };
 
@@ -276,7 +285,9 @@ describe('useIsPolySafeService', () => {
   });
 
   it('reports an error instead of guessing when the RPC call fails, and can retry', async () => {
-    mockGetCodePolygon.mockRejectedValue(new Error('rpc down'));
+    const consoleError = jest.spyOn(console, 'error').mockImplementation();
+    const rpcError = new Error('rpc down');
+    mockGetCodePolygon.mockRejectedValue(rpcError);
     setupMocks();
 
     const { result } = renderIsPolySafe();
@@ -289,6 +300,11 @@ describe('useIsPolySafeService', () => {
     expect(result.current.isMultisigTypeError).toBe(true);
     expect(result.current.isPolySafeService).toBe(false);
     expect(mockGetCodePolygon).toHaveBeenCalledTimes(2);
+    // Logged, so a disabled Start can be traced to the chain and multisig.
+    expect(consoleError).toHaveBeenCalledWith(
+      `Couldn't read the Safe type of multisig ${MULTISIG} on chain ${EvmChainIdMap.Polygon}:`,
+      rpcError,
+    );
 
     mockGetCodePolygon.mockResolvedValue(POLY_SAFE_PROXY_BYTECODE);
     await act(async () => {
@@ -297,5 +313,85 @@ describe('useIsPolySafeService', () => {
     await waitFor(() => expect(result.current.isMultisigTypeError).toBe(false));
     expect(result.current.isPolySafeService).toBe(true);
     expect(mockGetCodePolygon).toHaveBeenCalledTimes(3);
+  });
+  describe('isWithdrawalOnly', () => {
+    it.each([
+      [true, POLY_SAFE_PROGRAM, true],
+      [true, STANDARD_SAFE_PROGRAM, false],
+      [false, POLY_SAFE_PROGRAM, false],
+    ])(
+      'retired=%s, staked on %s -> %s',
+      (isRetired, activeStakingProgramId, expected) => {
+        setupMocks({ isRetired, activeStakingProgramId });
+
+        const { result } = renderIsPolySafe();
+        expect(result.current.isWithdrawalOnly).toBe(expected);
+      },
+    );
+
+    it('is false while the Safe type is unreadable', async () => {
+      jest.spyOn(console, 'error').mockImplementation();
+      mockGetCodePolygon.mockRejectedValue(new Error('rpc down'));
+      setupMocks({ isRetired: true });
+
+      const { result } = renderIsPolySafe();
+      await waitFor(
+        () => expect(result.current.isMultisigTypeError).toBe(true),
+        { timeout: 4000 },
+      );
+      expect(result.current.isWithdrawalOnly).toBe(false);
+    });
+  });
+});
+
+describe('fetchIsPolySafeService', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('answers standard Safe without an RPC call on chains with no PolySafe programs', async () => {
+    await expect(
+      fetchIsPolySafeService(
+        createTestQueryClient(),
+        EvmChainIdMap.Gnosis,
+        MULTISIG,
+      ),
+    ).resolves.toBe(false);
+    expectNoRpcCall();
+  });
+
+  it('answers standard Safe without an RPC call for a service with no multisig yet', async () => {
+    await expect(
+      fetchIsPolySafeService(createTestQueryClient(), EvmChainIdMap.Polygon),
+    ).resolves.toBe(false);
+    expectNoRpcCall();
+  });
+
+  it.each([
+    [POLY_SAFE_PROXY_BYTECODE, true],
+    [STANDARD_SAFE_PROXY_BYTECODE, false],
+  ])('reads the codehash, once per multisig', async (bytecode, expected) => {
+    mockGetCodePolygon.mockResolvedValue(bytecode);
+    const queryClient = createTestQueryClient();
+
+    for (let i = 0; i < 2; i += 1) {
+      await expect(
+        fetchIsPolySafeService(queryClient, EvmChainIdMap.Polygon, MULTISIG),
+      ).resolves.toBe(expected);
+    }
+    expect(mockGetCodePolygon).toHaveBeenCalledTimes(1);
+  });
+
+  it('rejects when the codehash cannot be read', async () => {
+    jest.spyOn(console, 'error').mockImplementation();
+    mockGetCodePolygon.mockRejectedValue(new Error('rpc down'));
+
+    await expect(
+      fetchIsPolySafeService(
+        createTestQueryClient(),
+        EvmChainIdMap.Polygon,
+        MULTISIG,
+      ),
+    ).rejects.toThrow('rpc down');
   });
 });

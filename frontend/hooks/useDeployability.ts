@@ -15,9 +15,6 @@ import { useSharedContext } from '@/hooks/useSharedContext';
 import { useActiveStakingContractDetails } from '@/hooks/useStakingContractDetails';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
 
-export const SAFE_TYPE_UNKNOWN_REASON =
-  "Couldn't check the agent's Safe type. Check your internet connection and restart Pearl.";
-
 type DeployabilityResult = {
   isLoading: boolean;
   canRun: boolean;
@@ -66,10 +63,9 @@ export const useDeployability = ({
   const { isActiveStakingProgramLoaded, selectedStakingProgramMeta } =
     useStakingProgram();
   const isRetired = !!selectedStakingProgramMeta?.retired;
-  const { isPolySafeService, isMultisigTypeLoaded, isMultisigTypeError } =
+  // Withdrawal-only starts unstaked, so slots and eviction don't apply.
+  const { isWithdrawalOnly, isMultisigTypeLoaded, isMultisigTypeError } =
     useIsPolySafeService();
-  // Starts unstaked (use_staking=false), so slots and eviction don't apply.
-  const isWithdrawalOnly = isRetired && isPolySafeService;
   const { isInitialFunded } = useIsInitiallyFunded();
   const { isAgentGeoRestricted, isGeoLoading } = useIsAgentGeoRestricted({
     agentType: selectedAgentType,
@@ -162,9 +158,13 @@ export const useDeployability = ({
     // A PolySafe agent can't switch contracts; it still starts, unstaked, to
     // redeem and withdraw.
     if (isRetired && isMultisigTypeError) {
-      return { isLoading, canRun: false, reason: SAFE_TYPE_UNKNOWN_REASON };
+      return {
+        isLoading,
+        canRun: false,
+        reason: RETIRED_STAKING_PROGRAM_COPY.SAFE_TYPE_UNKNOWN,
+      };
     }
-    if (isRetired && !isPolySafeService) {
+    if (isRetired && !isWithdrawalOnly) {
       return {
         isLoading,
         canRun: false,
@@ -236,7 +236,6 @@ export const useDeployability = ({
     isInitialFunded,
     isLoading,
     isMultisigTypeError,
-    isPolySafeService,
     isRetired,
     isServiceStaked,
     isWithdrawalOnly,

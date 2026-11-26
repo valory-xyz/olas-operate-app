@@ -4,10 +4,7 @@ import { RETIRED_STAKING_PROGRAM_COPY } from '../../constants/stakingProgram';
 import { ELIGIBILITY_REASON } from '../../context/AutoRunProvider/constants';
 import { useAgentRunning } from '../../hooks/useAgentRunning';
 import { useBalanceAndRefillRequirementsContext } from '../../hooks/useBalanceAndRefillRequirementsContext';
-import {
-  SAFE_TYPE_UNKNOWN_REASON,
-  useDeployability,
-} from '../../hooks/useDeployability';
+import { useDeployability } from '../../hooks/useDeployability';
 import { useIsAgentGeoRestricted } from '../../hooks/useIsAgentGeoRestricted';
 import { useIsInitiallyFunded } from '../../hooks/useIsInitiallyFunded';
 import { useIsPolySafeService } from '../../hooks/useIsPolySafeService';
@@ -122,6 +119,7 @@ const defaultStakingProgram = {
 };
 const defaultPolySafe = {
   isPolySafeService: false,
+  isWithdrawalOnly: false,
   isMultisigTypeLoaded: true,
   isMultisigTypeError: false,
 };
@@ -372,7 +370,7 @@ describe('useDeployability', () => {
     it('lets a PolySafe service start, in withdrawal-only mode', () => {
       setupDefaults({
         stakingProgram: retired,
-        polySafe: { isPolySafeService: true },
+        polySafe: { isPolySafeService: true, isWithdrawalOnly: true },
       });
       const { result } = renderHook(() => useDeployability());
       expect(result.current.canRun).toBe(true);
@@ -392,7 +390,7 @@ describe('useDeployability', () => {
       (_, staking) => {
         setupDefaults({
           stakingProgram: retired,
-          polySafe: { isPolySafeService: true },
+          polySafe: { isPolySafeService: true, isWithdrawalOnly: true },
           staking,
         });
         const { result } = renderHook(() => useDeployability());
@@ -407,7 +405,9 @@ describe('useDeployability', () => {
       });
       const { result } = renderHook(() => useDeployability());
       expect(result.current.canRun).toBe(false);
-      expect(result.current.reason).toBe(SAFE_TYPE_UNKNOWN_REASON);
+      expect(result.current.reason).toBe(
+        RETIRED_STAKING_PROGRAM_COPY.SAFE_TYPE_UNKNOWN,
+      );
     });
 
     it('comes after phased out and before under construction', () => {
