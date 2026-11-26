@@ -128,6 +128,19 @@ When the user clicks "Switch Staking Contract", SelectStakingPage opens in **mig
 
 Migration requires the agent to be stopped first (or auto-run to rotate away). The new program's slot availability and rewards are checked before the UI allows selection.
 
+## Retired staking programs (PSA-25)
+
+`StakingProgramConfig.retired` marks the programs Pearl no longer stakes on or runs agents on (the old Omenstrat, Polystrat, Optimus and Basius programs, and the Pearl Alpha/Beta family). The middleware keeps the same ids in `RETIRED_STAKING_PROGRAMS` and does the unstaking itself: its funding job unstakes a service on a retired program once its minimum staking period is over. The app never calls an unstake route. `deprecated` keeps its older meaning (hidden, warning alert, can still run).
+
+- **Lists**: `getCompatibleStakingProgramIds` hides retired programs, but still lists the current one first, labelled "Current" and not selectable.
+- **Alert**: `AgentDisabledAlert` shows `RetiredContractAlert` for a retired `selectedStakingProgramMeta`. It comes after the another-agent-running branch and pre-empts no-slots, eviction, empty-pool and Agent low-balance alerts. `MasterEoaLowBalanceAlert` still renders under it, because the unstake needs gas. Variants:
+  - "Switch Staking Contract" (switch flow, as for a normal migration);
+  - cooldown, while staked or evicted inside the minimum staking period: shows the end date (`evictionExpiresAt`) in UTC and has no button;
+  - withdrawal-only for a PolySafe service (`useIsPolySafeService`), which can't move to a new program: a "Withdraw" button opens the Agent Wallet.
+- **Start gate**: `useDeployability` returns `canRun: false` with the alert copy as `reason`, PolySafe services excepted. It waits for the Safe type (`Safe type` loading reason) on a retired program.
+- **Withdrawal-only mode**: starting a PolySafe service on a retired program passes `withdrawalOnly` to `useStartService`, which, after `updateServiceIfNeeded`, PATCHes `configurations.<home_chain>.use_staking: false` and `DISABLE_TRADING=true` (a USER env var in the Polystrat template). The agent runs unstaked and only redeems. The user sells positions on the Profile tab. The middleware refuses (409) any deploy that would stay staked on a retired program.
+- **Auto-run**: see [autorun.md](autorun.md#3-core-flows); retired instances are skipped, PolySafe included.
+
 ## AutoRun integration
 
 AutoRun schedules on "done for the epoch": staking eligibility combined with the activity goal. The key function is `refreshRewardsEligibility()` in `frontend/context/AutoRunProvider/utils/autoRunHelpers.ts`.
@@ -295,7 +308,7 @@ Derives several status flags from `selectedStakingContractDetails`:
 `orderedStakingProgramIds` is built by filtering and sorting available programs:
 
 1. Place the current staking program first — even if deprecated or incompatible, so a user staked in a legacy contract can still see it marked as selected
-2. Skip remaining deprecated programs
+2. Skip remaining deprecated and retired programs
 3. Skip programs that don't support the selected agent type
 4. Skip programs whose multisig requirement doesn't match the service (see below)
 5. Append remaining programs in original order

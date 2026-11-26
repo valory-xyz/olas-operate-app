@@ -230,6 +230,10 @@ A staking agent can meet its staking KPI but never reach its activity goal (e.g.
 
 ---
 
+### 3.10 Retired Staking Program
+
+`runDeployabilityChecks` skips an instance whose `stakingProgramId` is `retired` right after the phased-out check, before any staking read. The skip is deterministic (not transient), and its `reason` is the retired-contract alert copy (`RETIRED_STAKING_PROGRAM_COPY`), so `notifySkipped` sends it as the notification body. A PolySafe instance (its program `requiresPolySafe`) is skipped too, with the withdrawal-only copy: it runs only when the user starts it. Instances stay in the rotation (not `getDecommissionedInstances`) and are picked again once they are on a new program.
+
 ## 4. Wait Loop Guardrails
 
 All waits are guarded by `enabledRef.current`, `sleepAwareDelay()`, and hard timeouts:
