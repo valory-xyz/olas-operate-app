@@ -19,6 +19,7 @@ useServiceDeployment (manual start orchestration)
   │     ├── useBalanceAndRefillRequirementsContext (allowStart, hasBalances)
   │     ├── useActiveStakingContractDetails (eviction, eligibility, slots)
   │     ├── useIsPolySafeService (isOnRetiredProgram, isWithdrawalOnly, Safe type error)
+  │     ├── getRetiredProgramStatus (with useActiveStakingContractDetails' stakingDetailsState)
   │     ├── useIsInitiallyFunded
   │     ├── useIsAgentGeoRestricted
   │     ├── useAgentRunning (isAnotherAgentRunning)
@@ -116,46 +117,45 @@ The hook evaluates conditions in priority order. The first failing condition det
 3. selectedAgentConfig.isPhasedOut
    → canRun: false, reason: 'Phased out'
 
-4. isOnRetiredProgram && isWithdrawalOnly === undefined && Safe type unreadable (isMultisigTypeError)
-   → canRun: false, reason: RETIRED_STAKING_PROGRAM_COPY.SAFE_TYPE_UNKNOWN
+4. isOnRetiredProgram, by getRetiredProgramStatus (the alert's classifier):
+   - `safeTypeUnknown` → canRun: false, reason: RETIRED_STAKING_PROGRAM_COPY.SAFE_TYPE_UNKNOWN
+   - `withdrawalOnly` → goes on: a PolySafe on a retired program starts unstaked
+   - any other status → canRun: false, reason: RETIRED_STAKING_PROGRAM_COPY.SWITCH
+   (`safeTypeLoading` is a loading source, below)
 
-5. isOnRetiredProgram && isWithdrawalOnly === false
-   → canRun: false, reason: RETIRED_STAKING_PROGRAM_COPY.SWITCH
-   (a withdrawal-only service, PolySafe on a retired program, goes on: it starts unstaked)
-
-6. selectedAgentConfig.isUnderConstruction
+5. selectedAgentConfig.isUnderConstruction
    → canRun: false, reason: 'Under construction'
 
-7. isGeoLocationRestricted && isAgentGeoRestricted
+6. isGeoLocationRestricted && isAgentGeoRestricted
    → canRun: false, reason: 'Region restricted'
 
-8. isAnotherAgentRunning
+7. isAnotherAgentRunning
    → canRun: false, reason: 'Another agent running'
 
-9. hasEnoughServiceSlots === false && !isServiceStaked && !runsEvicted && isWithdrawalOnly !== true
+8. hasEnoughServiceSlots === false && !isServiceStaked && !runsEvicted && !isWithdrawalOnlyStart
    → canRun: false, reason: 'No available slots'
    (`runsEvicted` = `runsInsideEvictionWindow`: evicted, `canRunWhileEvicted`, and more than `EVICTION_RUN_START_MARGIN_SECONDS` (30 min) of the eviction left; such a run does not re-stake, so it needs no slot. Closer to the end, a start could cross into a re-stake, so the slot check applies. A withdrawal-only start never stakes, so it needs no slot either)
 
-10. isAgentEvicted && !isEligibleForStaking && !selectedAgentConfig.canRunWhileEvicted && isWithdrawalOnly !== true
+9. isAgentEvicted && !isEligibleForStaking && !selectedAgentConfig.canRunWhileEvicted && !isWithdrawalOnlyStart
     → canRun: false, reason: 'Evicted'
     (an agent that can run evicted, Omenstrat, keeps going: it redeems; see autorun.md §3.6. So does a withdrawal-only one)
 
-11. isAgentsFunFieldUpdateRequired
+10. isAgentsFunFieldUpdateRequired
     → canRun: false, reason: 'Update required'
 
-12. isInitialFunded === false
+11. isInitialFunded === false
     → canRun: false, reason: 'Unfinished setup'
 
-13. !canStartSelectedAgent (from refill requirements)
+12. !canStartSelectedAgent (from refill requirements)
     → canRun: false, reason: 'Low balance'
 
-14. All checks pass
+13. All checks pass
     → canRun: true
 ```
 
-Steps 4 and 5 and the withdrawal-only exemptions are explained in [staking-and-rewards.md](staking-and-rewards.md#retired-staking-programs).
+Step 4 and the withdrawal-only exemptions are explained in [staking-and-rewards.md](staking-and-rewards.md#retired-staking-programs).
 
-**Loading sources** checked (in order): Offline, Services, Balances (3 sub-checks: not enabled, loading, or no balances for selected agent), Staking, Geo, Safe type (only on a retired program, until `isMultisigTypeLoaded`), Safe, Setup (`isInitialFunded === undefined`).
+**Loading sources** checked (in order): Offline, Services, Balances (3 sub-checks: not enabled, loading, or no balances for selected agent), Staking, Geo, Safe type (status `safeTypeLoading`, on a retired program only), Safe, Setup (`isInitialFunded === undefined`).
 
 The `safeEligibility` parameter is optional. Currently only auto-run's `useSelectedEligibility` passes it — `useServiceDeployment` calls `useDeployability()` with no argument, so manual deployment is **not** pre-blocked by safe eligibility at this level (safe eligibility is instead checked inside `createSafeIfNeeded` during the start flow). When provided, it's checked first, even before loading state.
 
@@ -291,8 +291,8 @@ On mount, SharedProvider queries recovery status once (via React Query with `sta
 
 ## Test-relevant notes
 
-- `useDeployability` has ~11 prioritized branches — test each in isolation by mocking all dependencies. Priority order matters: safe eligibility blocks before loading, loading blocks before all runtime checks, and `isPhasedOut` blocks before all other config/runtime checks (verify it pre-empts e.g. evicted/low-balance).
-- `useDeployability` loading sources — test each of the 7 loading conditions independently. The `loadingReason` string is comma-separated and reflects which sources are still loading.
+- `useDeployability`'s prioritized branches (the decision tree above) — test each in isolation by mocking all dependencies. Priority order matters: safe eligibility blocks before loading, loading blocks before all runtime checks, and `isPhasedOut` blocks before all other config/runtime checks (verify it pre-empts e.g. evicted/low-balance).
+- `useDeployability` loading sources (listed under the decision tree) — test each independently. The `loadingReason` string is comma-separated and reflects which sources are still loading.
 - `useDeployability` balance loading has 3 sub-checks: `!isBalancesAndFundingRequirementsEnabledForAllServices`, `isBalancesAndFundingRequirementsLoadingForAllServices`, and `!hasSelectedAgentBalances`. All three produce `'Balances'` in `loadingReason`.
 - `useDeployability` slot check — verify the `!isNil(hasEnoughServiceSlots)` guard: `undefined` should NOT trigger "No available slots", but `false` should (when not staked).
 - `useDeployability` geo check — only blocks when BOTH `isGeoLocationRestricted` AND `isAgentGeoRestricted` are true.
