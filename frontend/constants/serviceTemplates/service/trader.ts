@@ -11,14 +11,14 @@ import { MECH_FACILITATOR_ENABLED_FLAGS, X402_ENABLED_FLAGS } from '../../x402';
 import { KPI_DESC_PREFIX } from '../constants';
 
 export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
-  hash: 'bafybeica4is6iu2q4hrjaplkh2hcf3b26y7kjmcjhv4kkughte7wblb67q',
-  service_version: 'v0.42.0-rc1',
+  hash: 'bafybeihuqeumiiw6s4zorrrw6u2vsgm6ado3awy4o4ujnrdgeqxezqhhia',
+  service_version: 'v0.42.0',
   agent_release: {
     is_aea: true,
     repository: {
       owner: 'valory-xyz',
       name: 'trader',
-      version: 'v0.42.0-rc1',
+      version: 'v0.42.0',
     },
   },
   agentType: AgentMap.PredictTrader,
@@ -187,14 +187,14 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
 } as const;
 
 export const PREDICT_POLYMARKET_SERVICE_TEMPLATE: ServiceTemplate = {
-  hash: 'bafybeieszwcstohfyqktigsyhbwmt44n3hmjxkr4cg5vcw5sfidm4zonfe',
-  service_version: 'v0.42.0-rc1',
+  hash: 'bafybeifzij6kldnjmrvbaot5i5l3rqhqdgamidbfpebl3vsj5ug35lehea',
+  service_version: 'v0.42.0',
   agent_release: {
     is_aea: true,
     repository: {
       owner: 'valory-xyz',
       name: 'trader',
-      version: 'v0.42.0-rc1',
+      version: 'v0.42.0',
     },
   },
   agentType: AgentMap.Polystrat,
@@ -357,15 +357,6 @@ export const PREDICT_POLYMARKET_SERVICE_TEMPLATE: ServiceTemplate = {
       description:
         'The most the agent signs per mech request, per payment asset, in base units (0.08 USDC). The agent offers each mech a rate from its published cost, up to this.',
       value: '{"token_usdc":80000}',
-      provision_type: EnvProvisionType.FIXED,
-    },
-    // TESTING ONLY: limits Polystrat to Polygon mech 25, the one mech with
-    // dynamic pricing on. Remove before this reaches a release.
-    VALID_MECHS: {
-      name: 'Valid mechs',
-      description:
-        'TESTING ONLY. The mechs the agent may request from: Polygon mech 25 alone, for the dynamic mech pricing test.',
-      value: '["0x45f25db135e83d7a010b05ffc1202f8473e3ae7d"]',
       provision_type: EnvProvisionType.FIXED,
     },
   },
