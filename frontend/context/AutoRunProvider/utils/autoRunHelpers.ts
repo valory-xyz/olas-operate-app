@@ -722,7 +722,7 @@ const getCurrentStakingProgramId = async (
     return agentMeta.stakingProgramId;
   }
   const onChainProgramId =
-    await agentMeta.agentConfig.serviceApi.readCurrentStakingProgramByServiceId(
+    await agentMeta.agentConfig.serviceApi.getCurrentStakingProgramByServiceIdOrThrow(
       agentMeta.serviceNftTokenId,
       agentMeta.chainId,
     );

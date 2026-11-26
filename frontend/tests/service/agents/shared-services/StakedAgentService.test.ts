@@ -135,14 +135,14 @@ describe('StakedAgentService', () => {
     });
   });
 
-  describe('readCurrentStakingProgramByServiceId', () => {
-    it('rejects when the multicall fails, unlike getCurrentStakingProgramByServiceId', async () => {
+  describe('getCurrentStakingProgramByServiceIdOrThrow', () => {
+    it('rejects when the multicall fails, unlike getCurrentStakingProgramByServiceIdOrNull', async () => {
       mockGetStakingStateA.mockReturnValue('call_a');
       mockGetStakingStateB.mockReturnValue('call_b');
       mockMulticallAll.mockRejectedValue(new Error('RPC failure'));
 
       await expect(
-        StakedAgentService.readCurrentStakingProgramByServiceId(
+        StakedAgentService.getCurrentStakingProgramByServiceIdOrThrow(
           DEFAULT_SERVICE_NFT_TOKEN_ID,
           MOCK_CHAIN_ID,
         ),
@@ -155,7 +155,7 @@ describe('StakedAgentService', () => {
       mockMulticallAll.mockResolvedValue([0, 0]);
 
       await expect(
-        StakedAgentService.readCurrentStakingProgramByServiceId(
+        StakedAgentService.getCurrentStakingProgramByServiceIdOrThrow(
           DEFAULT_SERVICE_NFT_TOKEN_ID,
           MOCK_CHAIN_ID,
         ),
@@ -163,10 +163,10 @@ describe('StakedAgentService', () => {
     });
   });
 
-  describe('getCurrentStakingProgramByServiceId', () => {
+  describe('getCurrentStakingProgramByServiceIdOrNull', () => {
     it('returns undefined for serviceNftTokenId of 0', async () => {
       const result =
-        await StakedAgentService.getCurrentStakingProgramByServiceId(
+        await StakedAgentService.getCurrentStakingProgramByServiceIdOrNull(
           0,
           MOCK_CHAIN_ID,
         );
@@ -176,7 +176,7 @@ describe('StakedAgentService', () => {
 
     it('returns undefined for negative serviceNftTokenId', async () => {
       const result =
-        await StakedAgentService.getCurrentStakingProgramByServiceId(
+        await StakedAgentService.getCurrentStakingProgramByServiceIdOrNull(
           -1,
           MOCK_CHAIN_ID,
         );
@@ -186,7 +186,7 @@ describe('StakedAgentService', () => {
 
     it('returns undefined for falsy evmChainId', async () => {
       const result =
-        await StakedAgentService.getCurrentStakingProgramByServiceId(
+        await StakedAgentService.getCurrentStakingProgramByServiceIdOrNull(
           DEFAULT_SERVICE_NFT_TOKEN_ID,
           0 as EvmChainId,
         );
@@ -204,7 +204,7 @@ describe('StakedAgentService', () => {
       mockMulticallAll.mockResolvedValue([0, 1]);
 
       const result =
-        await StakedAgentService.getCurrentStakingProgramByServiceId(
+        await StakedAgentService.getCurrentStakingProgramByServiceIdOrNull(
           DEFAULT_SERVICE_NFT_TOKEN_ID,
           MOCK_CHAIN_ID,
         );
@@ -223,7 +223,7 @@ describe('StakedAgentService', () => {
       mockMulticallAll.mockResolvedValue([0, 0]);
 
       const result =
-        await StakedAgentService.getCurrentStakingProgramByServiceId(
+        await StakedAgentService.getCurrentStakingProgramByServiceIdOrNull(
           DEFAULT_SERVICE_NFT_TOKEN_ID,
           MOCK_CHAIN_ID,
         );
@@ -239,7 +239,7 @@ describe('StakedAgentService', () => {
       mockMulticallAll.mockRejectedValue(new Error('RPC failure'));
 
       const result =
-        await StakedAgentService.getCurrentStakingProgramByServiceId(
+        await StakedAgentService.getCurrentStakingProgramByServiceIdOrNull(
           DEFAULT_SERVICE_NFT_TOKEN_ID,
           MOCK_CHAIN_ID,
         );
@@ -257,7 +257,7 @@ describe('StakedAgentService', () => {
       // Only 2 calls should be made (PROGRAM_A and PROGRAM_B), not 3
       mockMulticallAll.mockResolvedValue([0, 0]);
 
-      await StakedAgentService.getCurrentStakingProgramByServiceId(
+      await StakedAgentService.getCurrentStakingProgramByServiceIdOrNull(
         DEFAULT_SERVICE_NFT_TOKEN_ID,
         MOCK_CHAIN_ID,
       );
@@ -355,7 +355,7 @@ describe('StakedAgentService', () => {
     });
   });
 
-  describe('getCurrentStakingProgramByServiceId – activeStakingProgramId fallback', () => {
+  describe('getCurrentStakingProgramByServiceIdOrNull – activeStakingProgramId fallback', () => {
     it('returns null when the active entry index is out of bounds', async () => {
       mockGetStakingStateA.mockReturnValue('call_a');
       mockGetStakingStateB.mockReturnValue('call_b');
@@ -366,7 +366,7 @@ describe('StakedAgentService', () => {
       mockMulticallAll.mockResolvedValue([0, 0, 1]);
 
       const result =
-        await StakedAgentService.getCurrentStakingProgramByServiceId(
+        await StakedAgentService.getCurrentStakingProgramByServiceIdOrNull(
           DEFAULT_SERVICE_NFT_TOKEN_ID,
           MOCK_CHAIN_ID,
         );

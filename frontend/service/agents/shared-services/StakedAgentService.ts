@@ -106,7 +106,7 @@ export abstract class StakedAgentService {
    * The program the service is staked on, `null` when it is staked on none.
    * Rejects when the read fails, so a caller can tell the two apart.
    */
-  static readCurrentStakingProgramByServiceId = async (
+  static getCurrentStakingProgramByServiceIdOrThrow = async (
     serviceNftTokenId: number,
     evmChainId: EvmChainId,
   ): Promise<Maybe<StakingProgramId>> => {
@@ -150,13 +150,13 @@ export abstract class StakedAgentService {
       : null;
   };
 
-  /** As `readCurrentStakingProgramByServiceId`, but a failed read is logged and returns `null`. */
-  static getCurrentStakingProgramByServiceId = async (
+  /** As `getCurrentStakingProgramByServiceIdOrThrow`, but a failed read is logged and returns `null`. */
+  static getCurrentStakingProgramByServiceIdOrNull = async (
     serviceNftTokenId: number,
     evmChainId: EvmChainId,
   ): Promise<Maybe<StakingProgramId>> => {
     try {
-      return await StakedAgentService.readCurrentStakingProgramByServiceId(
+      return await StakedAgentService.getCurrentStakingProgramByServiceIdOrThrow(
         serviceNftTokenId,
         evmChainId,
       );

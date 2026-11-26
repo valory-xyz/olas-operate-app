@@ -3,6 +3,7 @@ import type {
   StakingProgramMap,
 } from '@/config/stakingPrograms';
 import type { AgentType, StakingProgramId } from '@/constants';
+import { NO_STAKING_PROGRAM_ID } from '@/constants/stakingProgram';
 import { Address, Nullable } from '@/types';
 
 /**
@@ -21,7 +22,7 @@ export const deriveStakingProgramId = (address: Address): string => {
  */
 export const isNoStakingProgram = (
   stakingProgramId: Nullable<StakingProgramId> | undefined,
-) => stakingProgramId === 'no_staking';
+) => stakingProgramId === NO_STAKING_PROGRAM_ID;
 
 /** Whether any program on the chain only accepts PolySafe-deployed services. */
 export const chainHasPolySafePrograms = (programs: StakingProgramMap) =>

@@ -2023,7 +2023,7 @@ describe('fetchDeployabilityForAgent', () => {
           ...base.agentConfig.serviceApi,
           getStakingContractDetails: mockGetStakingContractDetails,
           getServiceStakingDetails: mockGetServiceStakingDetails,
-          readCurrentStakingProgramByServiceId:
+          getCurrentStakingProgramByServiceIdOrThrow:
             mockReadCurrentStakingProgramByServiceId,
         },
       },

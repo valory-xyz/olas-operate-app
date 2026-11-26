@@ -4,6 +4,7 @@ import { entries } from 'lodash';
 import {
   EvmChainIdMap,
   MiddlewareChainMap,
+  NO_STAKING_PROGRAM_ID,
   STAKING_PROGRAM_IDS,
   SupportedMiddlewareChain,
 } from '@/constants';
@@ -358,7 +359,7 @@ export const AGENT_CONFIG: {
         ),
       },
     },
-    defaultStakingProgramId: 'no_staking',
+    defaultStakingProgramId: NO_STAKING_PROGRAM_ID,
     serviceApi: ConnectService,
     displayName: 'Connect',
     description: 'Connect agent powered by a local Claude Code session.',
