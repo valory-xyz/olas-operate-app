@@ -23,7 +23,11 @@ import { sleepAwareDelay } from '@/utils/delay';
 import { isInWithdrawalOnlyMode, isValidServiceId } from '@/utils/service';
 import {
   computeIsWithdrawalOnly,
+  getLoadedRetiredProgramStakingDetails,
+  getRetiredProgramReason,
+  getRetiredProgramStatus,
   isNoStakingProgram,
+  RetiredProgramStakingDetails,
   runsInsideEvictionWindow,
 } from '@/utils/stakingProgram';
 import {
@@ -631,7 +635,7 @@ export type FetchDeployabilityContext = {
     agentType: AgentType,
   ) => boolean;
   isGeoRestrictedForAgent: (agentType: AgentType) => boolean;
-  /** The instance's Safe type, as `useIsPolySafeService` reads it. Rejects when unreadable. */
+  /** The instance's Safe type, from `fetchIsPolySafeService`. Rejects when unreadable. */
   isPolySafeService: (agentMeta: AgentMeta) => Promise<boolean>;
   logMessage: (message: string) => void;
   /**
@@ -705,13 +709,7 @@ type EvictionFacts = Pick<
   'isAgentEvicted' | 'isEligibleAfterEviction'
 >;
 
-/**
- * The instance's current program, by the rule `useIsPolySafeService`'s
- * `isOnRetiredProgram` also follows: the on-chain one while staked, else the
- * stored one. The two differ when a switch PATCH went through but its start
- * was refused. Rejects when the on-chain read fails: falling back to the
- * stored id then could start a service the middleware refuses.
- */
+/** The on-chain program while staked, else the stored one; rejects when the on-chain read fails. */
 const getCurrentStakingProgramId = async (
   agentMeta: AgentMeta,
 ): Promise<StakingProgramId> => {
@@ -729,24 +727,91 @@ const getCurrentStakingProgramId = async (
   return onChainProgramId ?? agentMeta.stakingProgramId;
 };
 
-/** The retired-contract alert's copy for this instance, by its Safe type. */
-const getRetiredProgramSkipReason = async (
+/** The instance's place in its retired program, as `useActiveStakingContractDetails` reads it. */
+const readRetiredProgramStakingDetails = async (
+  agentMeta: AgentMeta,
+  stakingProgramId: StakingProgramId,
+): Promise<RetiredProgramStakingDetails> => {
+  if (!isValidServiceId(agentMeta.serviceNftTokenId)) {
+    return { state: 'loaded', placement: 'outOfContract' };
+  }
+  const { serviceApi } = agentMeta.agentConfig;
+  const [contractDetails, stakingDetails] = await Promise.all([
+    serviceApi.getStakingContractDetails(stakingProgramId, agentMeta.chainId),
+    serviceApi.getServiceStakingDetails(
+      agentMeta.serviceNftTokenId,
+      stakingProgramId,
+      agentMeta.chainId,
+    ),
+  ]);
+  const { serviceStakingState, serviceStakingStartTime } = stakingDetails;
+  const minimumStakingDuration = contractDetails?.minimumStakingDuration;
+  const isServiceInContract =
+    serviceStakingState === StakingState.Evicted ||
+    (!!serviceStakingStartTime && serviceStakingState === StakingState.Staked);
+  return getLoadedRetiredProgramStakingDetails({
+    isServiceInContract,
+    isServiceStakedForMinimumDuration:
+      !isNil(serviceStakingStartTime) &&
+      !isNil(minimumStakingDuration) &&
+      Math.round(Date.now() / 1000) - serviceStakingStartTime >=
+        minimumStakingDuration,
+    cooldownEndsAt:
+      (serviceStakingStartTime ?? 0) + (minimumStakingDuration ?? 0),
+  });
+};
+
+/** The retired-contract alert's copy for this instance, as the skip reason. */
+const getRetiredProgramSkip = async (
   agentMeta: AgentMeta,
   ctx: FetchDeployabilityContext,
-  isRetired: boolean,
-) => {
+  stakingProgramId: StakingProgramId,
+): Promise<DeployabilityCheckResult> => {
+  let isPolySafeService: boolean;
   try {
-    const isPolySafeService = await ctx.isPolySafeService(agentMeta);
-    return computeIsWithdrawalOnly({ isRetired, isPolySafeService })
-      ? RETIRED_STAKING_PROGRAM_COPY.WITHDRAWAL_ONLY
-      : RETIRED_STAKING_PROGRAM_COPY.SWITCH;
+    isPolySafeService = await ctx.isPolySafeService(agentMeta);
   } catch (error) {
     // The read's own log is renderer-only; this one reaches the saved logs.
     ctx.logMessage(
       `fetchDeployabilityForAgent: Safe type read failed for ${agentMeta.serviceConfigId} (multisig ${agentMeta.multisig} on chain ${agentMeta.chainId}): ${error}`,
     );
-    return RETIRED_STAKING_PROGRAM_COPY.SAFE_TYPE_UNKNOWN;
+    return {
+      canRun: false,
+      reason: RETIRED_STAKING_PROGRAM_COPY.SAFE_TYPE_UNKNOWN,
+    };
   }
+  if (computeIsWithdrawalOnly({ isRetired: true, isPolySafeService })) {
+    return {
+      canRun: false,
+      reason: RETIRED_STAKING_PROGRAM_COPY.WITHDRAWAL_ONLY,
+    };
+  }
+  let stakingDetails: RetiredProgramStakingDetails;
+  try {
+    stakingDetails = await readRetiredProgramStakingDetails(
+      agentMeta,
+      stakingProgramId,
+    );
+  } catch (error) {
+    ctx.logMessage(
+      `fetchDeployabilityForAgent: retired-program staking details read failed for ${agentMeta.serviceConfigId}: ${error}`,
+    );
+    return {
+      canRun: false,
+      reason: RETIRED_STAKING_PROGRAM_COPY.STAKING_DETAILS_UNKNOWN,
+      isTransient: true,
+    };
+  }
+  const status = getRetiredProgramStatus({
+    isWithdrawalOnly: false,
+    isSafeTypeError: false,
+    stakingDetails,
+  });
+  return {
+    canRun: false,
+    reason:
+      getRetiredProgramReason(status) ?? RETIRED_STAKING_PROGRAM_COPY.SWITCH,
+  };
 };
 
 const runDeployabilityChecks = async (
@@ -771,35 +836,11 @@ const runDeployabilityChecks = async (
     return { canRun: false, reason: 'Phased out' };
   }
 
-  // Skipped, PolySafe agents included: those run only when the user starts
-  // them. One started withdrawal-only is stored as `no_staking`.
+  // Withdrawal-only instances run only when the user starts them.
   if (isInWithdrawalOnlyMode(agentMeta.service)) {
     return {
       canRun: false,
       reason: RETIRED_STAKING_PROGRAM_COPY.WITHDRAWAL_ONLY,
-    };
-  }
-  let currentStakingProgramId: StakingProgramId;
-  try {
-    currentStakingProgramId = await getCurrentStakingProgramId(agentMeta);
-  } catch (error) {
-    ctx.logMessage(
-      `fetchDeployabilityForAgent: current staking program read failed for ${agentMeta.serviceConfigId}: ${error}`,
-    );
-    return {
-      canRun: false,
-      reason: 'Staking data unavailable',
-      isTransient: true,
-    };
-  }
-  const isRetired = isRetiredStakingProgram(
-    agentMeta.chainId,
-    currentStakingProgramId,
-  );
-  if (isRetired) {
-    return {
-      canRun: false,
-      reason: await getRetiredProgramSkipReason(agentMeta, ctx, isRetired),
     };
   }
 
@@ -825,6 +866,24 @@ const runDeployabilityChecks = async (
       reason: 'Another agent running',
       isTransient: true,
     };
+  }
+
+  // 4a. Retired current program: the on-chain read joins the other step-4 reads.
+  let currentStakingProgramId: StakingProgramId;
+  try {
+    currentStakingProgramId = await getCurrentStakingProgramId(agentMeta);
+  } catch (error) {
+    ctx.logMessage(
+      `fetchDeployabilityForAgent: current staking program read failed for ${agentMeta.serviceConfigId}: ${error}`,
+    );
+    return {
+      canRun: false,
+      reason: 'Staking data unavailable',
+      isTransient: true,
+    };
+  }
+  if (isRetiredStakingProgram(agentMeta.chainId, currentStakingProgramId)) {
+    return getRetiredProgramSkip(agentMeta, ctx, currentStakingProgramId);
   }
 
   // Reward-pool balance of the staking contract, read in step 4 but evaluated

@@ -3,8 +3,12 @@ import type {
   StakingProgramMap,
 } from '@/config/stakingPrograms';
 import type { AgentType, StakingProgramId } from '@/constants';
-import { NO_STAKING_PROGRAM_ID } from '@/constants/stakingProgram';
+import {
+  NO_STAKING_PROGRAM_ID,
+  RETIRED_STAKING_PROGRAM_COPY,
+} from '@/constants/stakingProgram';
 import { Address, Nullable } from '@/types';
+import { formatToShortDateTime } from '@/utils/time';
 
 /**
  * Given an address, returns a normalized staking program ID by lowercasing the address
@@ -22,7 +26,8 @@ export const deriveStakingProgramId = (address: Address): string => {
  */
 export const isNoStakingProgram = (
   stakingProgramId: Nullable<StakingProgramId> | undefined,
-) => stakingProgramId === NO_STAKING_PROGRAM_ID;
+): stakingProgramId is typeof NO_STAKING_PROGRAM_ID =>
+  stakingProgramId === NO_STAKING_PROGRAM_ID;
 
 /** Whether any program on the chain only accepts PolySafe-deployed services. */
 export const chainHasPolySafePrograms = (programs: StakingProgramMap) =>
@@ -119,38 +124,38 @@ export const computeIsWithdrawalOnly = ({
 export type RetiredProgramStakingDetails =
   | { state: 'loading' }
   | { state: 'error' }
-  | {
-      state: 'loaded';
-      /** In the contract and inside its minimum staking period. */
-      isInMinimumStakingPeriod: boolean;
-      /** Known to be out of the contract. */
-      isServiceOutOfContract: boolean;
-      /** End of the minimum staking period, in seconds. */
-      cooldownEndsAt: number;
-    };
+  | { state: 'loaded'; placement: 'inMinimumPeriod'; cooldownEndsAt: number }
+  | { state: 'loaded'; placement: 'pastMinimumPeriod' | 'outOfContract' };
 
-/** What can be said about a service on a retired program. */
+/** The loaded details, from the contract's reads; `cooldownEndsAt` in seconds. */
+export const getLoadedRetiredProgramStakingDetails = ({
+  isServiceInContract,
+  isServiceStakedForMinimumDuration,
+  cooldownEndsAt,
+}: {
+  isServiceInContract: boolean;
+  isServiceStakedForMinimumDuration: boolean;
+  cooldownEndsAt: number;
+}): RetiredProgramStakingDetails => {
+  if (!isServiceInContract)
+    return { state: 'loaded', placement: 'outOfContract' };
+  return isServiceStakedForMinimumDuration
+    ? { state: 'loaded', placement: 'pastMinimumPeriod' }
+    : { state: 'loaded', placement: 'inMinimumPeriod', cooldownEndsAt };
+};
+
+/** What can be said about a service on a retired program; `endsAt` in seconds. */
 export type RetiredProgramStatus =
-  /** PolySafe (or already set up so): it only redeems and withdraws. */
   | { kind: 'withdrawalOnly' }
-  /** In the contract, inside its minimum staking period; `endsAt` in seconds. */
   | { kind: 'cooldown'; endsAt: number }
-  /** The Safe type couldn't be read, so neither withdraw nor switch can be offered. */
   | { kind: 'safeTypeUnknown' }
   | { kind: 'safeTypeLoading' }
-  /** The staking details couldn't be read, so cooldown and switch are unknown. */
   | { kind: 'stakingDetailsUnknown' }
   | { kind: 'stakingDetailsLoading' }
-  /** Past its period but still in the contract: the middleware has yet to unstake it. */
   | { kind: 'awaitingUnstake' }
-  /** Unstaked, standard Safe: it can switch to a live program. */
   | { kind: 'switch' };
 
-/**
- * Classifies a service already known to be on a retired program, for the
- * alert and the start gate, so a state can't read as "switch" while it is
- * unknown. The Safe type is resolved before the staking details.
- */
+/** Classifies a service on a retired program for the alert and the start gate. */
 export const getRetiredProgramStatus = ({
   isWithdrawalOnly,
   isSafeTypeError,
@@ -164,7 +169,7 @@ export const getRetiredProgramStatus = ({
   if (isWithdrawalOnly === true) return { kind: 'withdrawalOnly' };
   if (
     stakingDetails.state === 'loaded' &&
-    stakingDetails.isInMinimumStakingPeriod
+    stakingDetails.placement === 'inMinimumPeriod'
   ) {
     return { kind: 'cooldown', endsAt: stakingDetails.cooldownEndsAt };
   }
@@ -177,6 +182,31 @@ export const getRetiredProgramStatus = ({
     return { kind: 'stakingDetailsLoading' };
   }
   return {
-    kind: stakingDetails.isServiceOutOfContract ? 'switch' : 'awaitingUnstake',
+    kind:
+      stakingDetails.placement === 'outOfContract'
+        ? 'switch'
+        : 'awaitingUnstake',
   };
+};
+
+/** The alert's copy for a status, as a start-gate or Auto-run reason; `null` while loading. */
+export const getRetiredProgramReason = (
+  status: RetiredProgramStatus,
+): string | null => {
+  switch (status.kind) {
+    case 'withdrawalOnly':
+      return RETIRED_STAKING_PROGRAM_COPY.WITHDRAWAL_ONLY;
+    case 'cooldown':
+      return `${RETIRED_STAKING_PROGRAM_COPY.COOLDOWN_PREFIX} ${formatToShortDateTime(status.endsAt * 1000)} (UTC)${RETIRED_STAKING_PROGRAM_COPY.COOLDOWN_SUFFIX}`;
+    case 'safeTypeUnknown':
+      return RETIRED_STAKING_PROGRAM_COPY.SAFE_TYPE_UNKNOWN;
+    case 'stakingDetailsUnknown':
+      return RETIRED_STAKING_PROGRAM_COPY.STAKING_DETAILS_UNKNOWN;
+    case 'safeTypeLoading':
+    case 'stakingDetailsLoading':
+      return null;
+    case 'awaitingUnstake':
+    case 'switch':
+      return RETIRED_STAKING_PROGRAM_COPY.SWITCH;
+  }
 };

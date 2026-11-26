@@ -39,6 +39,7 @@ import { ServicesService } from '../../../../service/Services';
 import { StakingState } from '../../../../types';
 import * as delayModule from '../../../../utils/delay';
 import { fetchAgentStakingRewardsInfo } from '../../../../utils/stakingRewards';
+import { formatToShortDateTime } from '../../../../utils/time';
 import {
   DEFAULT_SERVICE_CONFIG_ID,
   DEFAULT_STAKING_PROGRAM_ID,
@@ -2056,6 +2057,13 @@ describe('fetchDeployabilityForAgent', () => {
     },
   });
 
+  // Out of the contract: a retired-program skip then gives the switch copy.
+  const setUnstaked = () =>
+    mockGetServiceStakingDetails.mockResolvedValue({
+      serviceStakingState: StakingState.NotStaked,
+      serviceStakingStartTime: 0,
+    });
+
   beforeEach(() => {
     jest.clearAllMocks();
     const { contractDetails, stakingDetails } = makeOkStaking();
@@ -2092,6 +2100,7 @@ describe('fetchDeployabilityForAgent', () => {
       mockReadCurrentStakingProgramByServiceId.mockResolvedValue(
         onChainProgramId,
       );
+      if (!canRun) setUnstaked();
       const meta = { ...makeAgentMeta(), stakingProgramId: storedProgramId };
 
       const result = await fetchDeployabilityForAgent(meta, makeCtx());
@@ -2125,11 +2134,11 @@ describe('fetchDeployabilityForAgent', () => {
     expect(mockGetStakingContractDetails).not.toHaveBeenCalled();
   });
 
-  it('skips an agent on a retired program with the alert copy, before any read', async () => {
-    const meta = {
-      ...makeAgentMeta(),
-      stakingProgramId: STAKING_PROGRAM_IDS.OmenstratIII,
-    };
+  const RETIRED = STAKING_PROGRAM_IDS.OmenstratIII;
+
+  it('skips an unstaked agent on a retired program with the switch copy, reading that program', async () => {
+    setUnstaked();
+    const meta = { ...makeAgentMeta(), stakingProgramId: RETIRED };
 
     const result = await fetchDeployabilityForAgent(meta, makeCtx());
 
@@ -2137,25 +2146,84 @@ describe('fetchDeployabilityForAgent', () => {
       canRun: false,
       reason: RETIRED_STAKING_PROGRAM_COPY.SWITCH,
     });
-    expect(mockGetStakingContractDetails).not.toHaveBeenCalled();
+    expect(mockGetServiceStakingDetails).toHaveBeenCalledWith(
+      meta.serviceNftTokenId,
+      RETIRED,
+      meta.chainId,
+    );
+  });
+
+  it('skips with the switch copy, no button implied, once past the period but still staked', async () => {
+    mockGetServiceStakingDetails.mockResolvedValue({
+      serviceStakingState: StakingState.Staked,
+      serviceStakingStartTime: Math.floor(Date.now() / 1000) - 90_000,
+    });
+    const meta = { ...makeAgentMeta(), stakingProgramId: RETIRED };
+
+    const result = await fetchDeployabilityForAgent(meta, makeCtx());
+
+    expect(result.reason).toBe(RETIRED_STAKING_PROGRAM_COPY.SWITCH);
+  });
+
+  it('skips with the cooldown copy and end date inside the minimum period, as Home shows', async () => {
+    const start = Math.floor(Date.now() / 1000) - 100;
+    mockGetServiceStakingDetails.mockResolvedValue({
+      serviceStakingState: StakingState.Staked,
+      serviceStakingStartTime: start,
+    });
+    const meta = { ...makeAgentMeta(), stakingProgramId: RETIRED };
+
+    const result = await fetchDeployabilityForAgent(meta, makeCtx());
+
+    expect(result.canRun).toBe(false);
+    expect(result.isTransient).toBeUndefined();
+    expect(result.reason).toBe(
+      `${RETIRED_STAKING_PROGRAM_COPY.COOLDOWN_PREFIX} ${formatToShortDateTime((start + 86400) * 1000)} (UTC)${RETIRED_STAKING_PROGRAM_COPY.COOLDOWN_SUFFIX}`,
+    );
+  });
+
+  it("defers with the staking-status copy when the retired program's details can't be read", async () => {
+    mockGetServiceStakingDetails.mockRejectedValue(new Error('rpc down'));
+    const ctx = makeCtx();
+    const meta = { ...makeAgentMeta(), stakingProgramId: RETIRED };
+
+    const result = await fetchDeployabilityForAgent(meta, ctx);
+
+    expect(result).toEqual({
+      canRun: false,
+      reason: RETIRED_STAKING_PROGRAM_COPY.STAKING_DETAILS_UNKNOWN,
+      isTransient: true,
+    });
+    expect(ctx.logMessage).toHaveBeenCalledWith(
+      expect.stringContaining('retired-program staking details read failed'),
+    );
   });
 
   it.each([
-    [{ isPhasedOut: true }, 'Phased out'],
-    [{ isUnderConstruction: true }, RETIRED_STAKING_PROGRAM_COPY.SWITCH],
+    [{ isPhasedOut: true }, {}, 'Phased out'],
+    [{ isUnderConstruction: true }, {}, 'Under construction'],
+    [
+      {},
+      { runningServiceConfigId: 'another-service' },
+      'Another agent running',
+    ],
   ])(
-    'checks a retired program after phased-out and before under-construction (%o)',
-    async (agentConfigOverrides, reason) => {
+    'checks a retired program after the cheap gates (%o, %o)',
+    async (agentConfigOverrides, ctxOverrides, reason) => {
       const base = makeAgentMeta();
       const meta = {
         ...base,
-        stakingProgramId: STAKING_PROGRAM_IDS.OmenstratIII,
+        stakingProgramId: RETIRED,
         agentConfig: { ...base.agentConfig, ...agentConfigOverrides },
       } as AgentMeta;
 
-      const result = await fetchDeployabilityForAgent(meta, makeCtx());
+      const result = await fetchDeployabilityForAgent(
+        meta,
+        makeCtx(ctxOverrides),
+      );
 
       expect(result.reason).toBe(reason);
+      expect(mockReadCurrentStakingProgramByServiceId).not.toHaveBeenCalled();
     },
   );
 
@@ -2181,6 +2249,7 @@ describe('fetchDeployabilityForAgent', () => {
   ])(
     'skips a Polygon agent on retired %s with a PolySafe=%s Safe with the matching alert copy',
     async (stakingProgramId, isPolySafe, reason) => {
+      setUnstaked();
       const meta = {
         ...makeAgentMeta(),
         chainId: EvmChainIdMap.Polygon,
@@ -2207,17 +2276,19 @@ describe('fetchDeployabilityForAgent', () => {
       stakingProgramId: STAKING_PROGRAM_IDS.PolystratII,
     };
 
-    const result = await fetchDeployabilityForAgent(
-      meta,
-      makeCtx({
-        isPolySafeService: jest.fn().mockRejectedValue(new Error('rpc down')),
-      }),
-    );
+    const ctx = makeCtx({
+      isPolySafeService: jest.fn().mockRejectedValue(new Error('rpc down')),
+    });
+
+    const result = await fetchDeployabilityForAgent(meta, ctx);
 
     expect(result).toEqual({
       canRun: false,
       reason: RETIRED_STAKING_PROGRAM_COPY.SAFE_TYPE_UNKNOWN,
     });
+    expect(ctx.logMessage).toHaveBeenCalledWith(
+      expect.stringContaining('Safe type read failed for'),
+    );
   });
 
   it('keeps skipping an agent already started withdrawal-only, now stored as no_staking', async () => {

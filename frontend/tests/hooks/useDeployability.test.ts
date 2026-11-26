@@ -17,6 +17,7 @@ import {
   EVICTION_RUN_START_MARGIN_SECONDS,
   RetiredProgramStakingDetails,
 } from '../../utils/stakingProgram';
+import { formatToShortDateTime } from '../../utils/time';
 import { DEFAULT_SERVICE_CONFIG_ID } from '../helpers/factories';
 
 // --- mocks ---
@@ -106,9 +107,7 @@ const defaultBalanceContext = {
 const defaultStakingDetails = {
   stakingDetailsState: {
     state: 'loaded',
-    isInMinimumStakingPeriod: false,
-    isServiceOutOfContract: true,
-    cooldownEndsAt: 0,
+    placement: 'outOfContract',
   } as RetiredProgramStakingDetails,
   isAgentEvicted: false,
   isEligibleForStaking: true,
@@ -127,7 +126,6 @@ const defaultStakingProgram = {
 };
 const defaultPolySafe = {
   isOnRetiredProgram: false,
-  isPolySafeService: false,
   isWithdrawalOnly: false as boolean | undefined,
   isMultisigTypeError: false,
 };
@@ -376,16 +374,72 @@ describe('useDeployability', () => {
       expect(result.current.reason).toBe(RETIRED_STAKING_PROGRAM_COPY.SWITCH);
     });
 
-    it('lets a PolySafe service start, in withdrawal-only mode', () => {
+    it('lets a withdrawal-only service start, and says the start is withdrawal-only', () => {
       setupDefaults({
-        polySafe: {
-          ...retired,
-          isPolySafeService: true,
-          isWithdrawalOnly: true,
-        },
+        polySafe: { ...retired, isWithdrawalOnly: true },
       });
       const { result } = renderHook(() => useDeployability());
       expect(result.current.canRun).toBe(true);
+      expect(result.current.isWithdrawalOnlyStart).toBe(true);
+    });
+
+    it('does not mark a start on a live program withdrawal-only', () => {
+      setupDefaults();
+      const { result } = renderHook(() => useDeployability());
+      expect(result.current.isWithdrawalOnlyStart).toBe(false);
+    });
+
+    const IN_PERIOD: RetiredProgramStakingDetails = {
+      state: 'loaded',
+      placement: 'inMinimumPeriod',
+      cooldownEndsAt: 1_800_000_000,
+    };
+
+    it.each([
+      [
+        'awaitingUnstake',
+        { state: 'loaded', placement: 'pastMinimumPeriod' },
+        RETIRED_STAKING_PROGRAM_COPY.SWITCH,
+      ],
+      [
+        'switch',
+        { state: 'loaded', placement: 'outOfContract' },
+        RETIRED_STAKING_PROGRAM_COPY.SWITCH,
+      ],
+      [
+        'stakingDetailsUnknown',
+        { state: 'error' },
+        RETIRED_STAKING_PROGRAM_COPY.STAKING_DETAILS_UNKNOWN,
+      ],
+      [
+        'cooldown',
+        IN_PERIOD,
+        `${RETIRED_STAKING_PROGRAM_COPY.COOLDOWN_PREFIX} ${formatToShortDateTime(1_800_000_000_000)} (UTC)${RETIRED_STAKING_PROGRAM_COPY.COOLDOWN_SUFFIX}`,
+      ],
+    ] as const)(
+      'blocks a %s service with its alert copy',
+      (_, stakingDetailsState, reason) => {
+        setupDefaults({
+          polySafe: retired,
+          staking: {
+            stakingDetailsState:
+              stakingDetailsState as RetiredProgramStakingDetails,
+          },
+        });
+        const { result } = renderHook(() => useDeployability());
+        expect(result.current.canRun).toBe(false);
+        expect(result.current.reason).toBe(reason);
+      },
+    );
+
+    it('waits for the staking details on a retired program', () => {
+      setupDefaults({
+        polySafe: retired,
+        staking: { stakingDetailsState: { state: 'loading' } },
+      });
+      const { result } = renderHook(() => useDeployability());
+      expect(result.current.canRun).toBe(false);
+      expect(result.current.loadingReason).toBe('Staking');
     });
 
     it.each([
@@ -398,14 +452,10 @@ describe('useDeployability', () => {
         { isServiceStaked: false, hasEnoughServiceSlots: false },
       ],
     ])(
-      'lets a PolySafe service start when %s, since it runs unstaked',
+      'lets a withdrawal-only service start when %s, since it runs unstaked',
       (_, staking) => {
         setupDefaults({
-          polySafe: {
-            ...retired,
-            isPolySafeService: true,
-            isWithdrawalOnly: true,
-          },
+          polySafe: { ...retired, isWithdrawalOnly: true },
           staking,
         });
         const { result } = renderHook(() => useDeployability());

@@ -358,6 +358,36 @@ describe('useIsPolySafeService', () => {
       expect(result.current.isWithdrawalOnly).toBeUndefined();
     });
 
+    it('is false on a live program while the Safe type loads', () => {
+      mockGetCodePolygon.mockReturnValue(new Promise(() => {}));
+      setupMocks({ isRetired: false });
+
+      const { result } = renderIsPolySafe();
+      expect(result.current.isMultisigTypeLoaded).toBe(false);
+      expect(result.current.isWithdrawalOnly).toBe(false);
+    });
+
+    it('is false on a live program when the Safe type is unreadable', async () => {
+      jest.spyOn(console, 'error').mockImplementation();
+      mockGetCodePolygon.mockRejectedValue(new Error('rpc down'));
+      setupMocks({ isRetired: false });
+
+      const { result } = renderIsPolySafe();
+      await waitFor(
+        () => expect(result.current.isMultisigTypeError).toBe(true),
+        { timeout: 4000 },
+      );
+      expect(result.current.isWithdrawalOnly).toBe(false);
+    });
+
+    it('reports the codehash read as fetching while it runs', () => {
+      mockGetCodePolygon.mockReturnValue(new Promise(() => {}));
+      setupMocks({ isRetired: true });
+
+      const { result } = renderIsPolySafe();
+      expect(result.current.isMultisigTypeFetching).toBe(true);
+    });
+
     it.each([
       [POLY_SAFE_PROXY_BYTECODE, true],
       [STANDARD_SAFE_PROXY_BYTECODE, false],

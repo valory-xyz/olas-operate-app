@@ -14,13 +14,18 @@ import { useServices } from '@/hooks/useServices';
 import { useSharedContext } from '@/hooks/useSharedContext';
 import { useActiveStakingContractDetails } from '@/hooks/useStakingContractDetails';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
-import { getRetiredProgramStatus } from '@/utils/stakingProgram';
+import {
+  getRetiredProgramReason,
+  getRetiredProgramStatus,
+} from '@/utils/stakingProgram';
 
 type DeployabilityResult = {
   isLoading: boolean;
   canRun: boolean;
   reason?: string;
   loadingReason?: string;
+  /** The start runs unstaked and redeem-only; the start call must follow it. */
+  isWithdrawalOnlyStart: boolean;
 };
 
 /**
@@ -65,13 +70,17 @@ export const useDeployability = ({
   const { isActiveStakingProgramLoaded } = useStakingProgram();
   const { isOnRetiredProgram, isWithdrawalOnly, isMultisigTypeError } =
     useIsPolySafeService();
-  // The same classification as the retired-contract alert.
-  const retiredStatusKind = isOnRetiredProgram
+  // The same classification and copy as the retired-contract alert.
+  const retiredStatus = isOnRetiredProgram
     ? getRetiredProgramStatus({
         isWithdrawalOnly,
         isSafeTypeError: isMultisigTypeError,
         stakingDetails: stakingDetailsState,
-      }).kind
+      })
+    : null;
+  const retiredStatusKind = retiredStatus?.kind ?? null;
+  const retiredReason = retiredStatus
+    ? getRetiredProgramReason(retiredStatus)
     : null;
   const isWithdrawalOnlyStart = retiredStatusKind === 'withdrawalOnly';
   const { isInitialFunded } = useIsInitiallyFunded();
@@ -110,7 +119,8 @@ export const useDeployability = ({
     }
     if (
       !isActiveStakingProgramLoaded ||
-      isSelectedStakingContractDetailsLoading
+      isSelectedStakingContractDetailsLoading ||
+      retiredStatusKind === 'stakingDetailsLoading'
     )
       reasons.push('Staking');
     if (isGeoLoading) reasons.push('Geo');
@@ -138,7 +148,10 @@ export const useDeployability = ({
   const loadingReason =
     loadingReasons.length > 0 ? loadingReasons.join(', ') : undefined;
 
-  return useMemo(() => {
+  const result = useMemo((): Omit<
+    DeployabilityResult,
+    'isWithdrawalOnlyStart'
+  > => {
     if (safeEligibility && !safeEligibility.ok && !safeEligibility.isLoading) {
       return {
         isLoading,
@@ -162,16 +175,11 @@ export const useDeployability = ({
       return { isLoading, canRun: false, reason: 'Phased out' };
     }
 
-    // On a retired program only a withdrawal-only (PolySafe) agent starts,
-    // unstaked, to redeem and withdraw; any other must switch first.
     if (retiredStatusKind && !isWithdrawalOnlyStart) {
       return {
         isLoading,
         canRun: false,
-        reason:
-          retiredStatusKind === 'safeTypeUnknown'
-            ? RETIRED_STAKING_PROGRAM_COPY.SAFE_TYPE_UNKNOWN
-            : RETIRED_STAKING_PROGRAM_COPY.SWITCH,
+        reason: retiredReason ?? RETIRED_STAKING_PROGRAM_COPY.SWITCH,
       };
     }
 
@@ -240,6 +248,7 @@ export const useDeployability = ({
     isInitialFunded,
     isLoading,
     retiredStatusKind,
+    retiredReason,
     isServiceStaked,
     isWithdrawalOnlyStart,
     runsEvicted,
@@ -250,4 +259,9 @@ export const useDeployability = ({
     selectedAgentConfig.isUnderConstruction,
     loadingReason,
   ]);
+
+  return useMemo(
+    () => ({ ...result, isWithdrawalOnlyStart }),
+    [result, isWithdrawalOnlyStart],
+  );
 };

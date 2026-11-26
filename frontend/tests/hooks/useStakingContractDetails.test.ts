@@ -78,6 +78,7 @@ function makeWrapper(overrides: ContextValue = {}) {
               overrides.isSelectedStakingContractDetailsLoading ?? false,
             isSelectedStakingContractDetailsError:
               overrides.isSelectedStakingContractDetailsError ?? false,
+            isSelectedStakingContractDetailsFetching: false,
             allStakingContractDetailsRecord:
               overrides.allStakingContractDetailsRecord,
             isAllStakingContractDetailsRecordLoaded:
@@ -514,11 +515,11 @@ describe('useActiveStakingContractDetails', () => {
     });
   });
 
-  // ---- isServiceInContract / isInMinimumStakingPeriod ----
+  // ---- stakingDetailsState ----
 
-  describe('isServiceInContract and isInMinimumStakingPeriod', () => {
+  describe('stakingDetailsState', () => {
     const START = DEFAULT_TS_CHECKPOINT;
-    const render = (
+    const renderLoaded = (
       serviceStakingState: StakingState,
       secondsSinceStart: number,
     ) => {
@@ -536,47 +537,48 @@ describe('useActiveStakingContractDetails', () => {
           }),
         },
       });
-      return renderHook(() => useActiveStakingContractDetails(), { wrapper })
-        .result.current;
+      return renderHook(() => useActiveStakingContractDetails(), { wrapper });
     };
 
     it.each([
       ['staked', StakingState.Staked],
       ['evicted', StakingState.Evicted],
-    ])('is in the period while %s inside it', (_, state) => {
-      const result = render(state, 10);
-      expect(result.isInMinimumStakingPeriod).toBe(true);
-      expect(result.stakingDetailsState).toMatchObject({
+    ])('is in the minimum period while %s inside it', (_, state) => {
+      const { result } = renderLoaded(state, 10);
+      expect(result.current.stakingDetailsState).toEqual({
         state: 'loaded',
-        isInMinimumStakingPeriod: true,
-        isServiceOutOfContract: false,
-      });
-    });
-
-    it('is out of the period once it is over, with the end date still set', () => {
-      const result = render(StakingState.Staked, DEFAULT_LIVENESS_PERIOD_S);
-      expect(result.evictionExpiresAt).toBe(START + DEFAULT_LIVENESS_PERIOD_S);
-      expect(result.isServiceOutOfContract).toBe(false);
-      expect(result.isInMinimumStakingPeriod).toBe(false);
-      expect(result.stakingDetailsState).toEqual({
-        state: 'loaded',
-        isInMinimumStakingPeriod: false,
-        isServiceOutOfContract: false,
+        placement: 'inMinimumPeriod',
         cooldownEndsAt: START + DEFAULT_LIVENESS_PERIOD_S,
       });
     });
 
-    it('is neither once unstaked, even inside the period', () => {
-      const result = render(StakingState.NotStaked, 10);
-      expect(result.isServiceOutOfContract).toBe(true);
-      expect(result.isInMinimumStakingPeriod).toBe(false);
+    it('is past the minimum period once it is over, still in the contract', () => {
+      const { result } = renderLoaded(
+        StakingState.Staked,
+        DEFAULT_LIVENESS_PERIOD_S,
+      );
+      expect(result.current.stakingDetailsState).toEqual({
+        state: 'loaded',
+        placement: 'pastMinimumPeriod',
+      });
     });
-  });
 
-  // ---- hasStakingDetails / isServiceOutOfContract ----
+    it('is out of the contract once unstaked, even inside the period', () => {
+      const { result } = renderLoaded(StakingState.NotStaked, 10);
+      expect(result.current.stakingDetailsState).toEqual({
+        state: 'loaded',
+        placement: 'outOfContract',
+      });
+    });
 
-  describe('isInMinimumStakingPeriod without staking details', () => {
-    it('is false while the details reload, even if the stale ones were in the period', () => {
+    it('is the same object across renders with unchanged inputs', () => {
+      const { result, rerender } = renderLoaded(StakingState.Staked, 10);
+      const first = result.current.stakingDetailsState;
+      rerender();
+      expect(result.current.stakingDetailsState).toBe(first);
+    });
+
+    it('is loading while the details reload, even if the stale ones were in the period', () => {
       jest
         .spyOn(Date, 'now')
         .mockReturnValue((DEFAULT_TS_CHECKPOINT + 10) * 1000);
@@ -595,71 +597,26 @@ describe('useActiveStakingContractDetails', () => {
       const { result } = renderHook(() => useActiveStakingContractDetails(), {
         wrapper,
       });
-      expect(result.current.isInMinimumStakingPeriod).toBe(false);
       expect(result.current.stakingDetailsState).toEqual({ state: 'loading' });
     });
 
-    it('passes on the read error', () => {
+    it('is an error on a failed read, not "unstaked"', () => {
       const wrapper = makeWrapper({
         isSelectedStakingContractDetailsError: true,
       });
       const { result } = renderHook(() => useActiveStakingContractDetails(), {
         wrapper,
       });
-      expect(result.current.isStakingDetailsError).toBe(true);
       expect(result.current.stakingDetailsState).toEqual({ state: 'error' });
     });
-  });
 
-  describe('hasStakingDetails and isServiceOutOfContract', () => {
-    it('are false when the details failed to load, not "unstaked"', () => {
+    it('is loading without details and without an error', () => {
       const wrapper = makeWrapper({ selectedStakingContractDetails: null });
       const { result } = renderHook(() => useActiveStakingContractDetails(), {
         wrapper,
       });
-      expect(result.current.hasStakingDetails).toBe(false);
-      expect(result.current.isServiceOutOfContract).toBe(false);
+      expect(result.current.stakingDetailsState).toEqual({ state: 'loading' });
     });
-
-    it('are false while the details load', () => {
-      const wrapper = makeWrapper({
-        isSelectedStakingContractDetailsLoading: true,
-        selectedStakingContractDetails: {
-          ...makeStakingContractDetails(),
-          ...makeServiceStakingDetails({
-            serviceStakingState: StakingState.NotStaked,
-          }),
-        },
-      });
-      const { result } = renderHook(() => useActiveStakingContractDetails(), {
-        wrapper,
-      });
-      expect(result.current.isServiceOutOfContract).toBe(false);
-    });
-
-    it.each([
-      [StakingState.NotStaked, true],
-      [StakingState.Staked, false],
-      [StakingState.Evicted, false],
-    ])(
-      'is out of the contract when %s: %s',
-      (serviceStakingState, expected) => {
-        const wrapper = makeWrapper({
-          selectedStakingContractDetails: {
-            ...makeStakingContractDetails(),
-            ...makeServiceStakingDetails({
-              serviceStakingState,
-              serviceStakingStartTime: DEFAULT_TS_CHECKPOINT,
-            }),
-          },
-        });
-        const { result } = renderHook(() => useActiveStakingContractDetails(), {
-          wrapper,
-        });
-        expect(result.current.hasStakingDetails).toBe(true);
-        expect(result.current.isServiceOutOfContract).toBe(expected);
-      },
-    );
   });
 
   // ---- evictionExpiresAt ----

@@ -5,7 +5,6 @@ import { MiddlewareDeploymentStatusMap } from '../../constants/deployment';
 import { useBalanceContext } from '../../hooks/useBalanceContext';
 import { useDeployability } from '../../hooks/useDeployability';
 import { useElectronApi } from '../../hooks/useElectronApi';
-import { useIsPolySafeService } from '../../hooks/useIsPolySafeService';
 import { useMultisigs } from '../../hooks/useMultisig';
 import { usePageState } from '../../hooks/usePageState';
 import { useService } from '../../hooks/useService';
@@ -62,9 +61,6 @@ jest.mock('../../hooks/useStakingProgram', () => ({
   useStakingProgram: jest.fn(),
 }));
 jest.mock('../../hooks/useMultisig', () => ({ useMultisigs: jest.fn() }));
-jest.mock('../../hooks/useIsPolySafeService', () => ({
-  useIsPolySafeService: jest.fn(),
-}));
 jest.mock('../../hooks/useStartService', () => ({
   PrestartCheckFailedError: jest.requireActual('../../hooks/useStartService')
     .PrestartCheckFailedError,
@@ -215,15 +211,13 @@ const setupDefaults = () => {
   mockUseMultisigs.mockReturnValue({
     masterSafesOwners: [],
   } as unknown as ReturnType<typeof useMultisigs>);
-  (useIsPolySafeService as jest.Mock).mockReturnValue({
-    isWithdrawalOnly: false,
-  });
   mockUseStartService.mockReturnValue({
     startService: mockStartServiceFn,
   });
   mockUseDeployability.mockReturnValue({
     canRun: true,
     isLoading: false,
+    isWithdrawalOnlyStart: false,
   });
 };
 
@@ -309,6 +303,7 @@ describe('useServiceDeployment', () => {
         canRun: false,
         isLoading: false,
         reason: 'Low balance',
+        isWithdrawalOnlyStart: false,
       });
       const { result } = renderHook(() => useServiceDeployment());
       expect(result.current.isDeployable).toBe(false);
@@ -382,16 +377,13 @@ describe('useServiceDeployment', () => {
       );
     });
 
-    it.each([
-      [true, true],
-      [false, false],
-      // Not known yet: never a withdrawal-only start (useDeployability waits).
-      [undefined, false],
-    ])(
-      "starts with withdrawalOnly when useIsPolySafeService's isWithdrawalOnly=%s: %s",
-      async (isWithdrawalOnly, withdrawalOnly) => {
-        (useIsPolySafeService as jest.Mock).mockReturnValue({
-          isWithdrawalOnly,
+    it.each([true, false])(
+      "starts with useDeployability's isWithdrawalOnlyStart=%s",
+      async (isWithdrawalOnlyStart) => {
+        mockUseDeployability.mockReturnValue({
+          canRun: true,
+          isLoading: false,
+          isWithdrawalOnlyStart,
         });
         const { result } = renderHook(() => useServiceDeployment());
 
@@ -400,19 +392,23 @@ describe('useServiceDeployment', () => {
         });
 
         expect(mockStartServiceFn).toHaveBeenCalledWith(
-          expect.objectContaining({ withdrawalOnly }),
+          expect.objectContaining({ withdrawalOnly: isWithdrawalOnlyStart }),
         );
       },
     );
 
-    it('starts withdrawal-only when the Safe type resolves after mount', async () => {
-      (useIsPolySafeService as jest.Mock).mockReturnValue({
-        isWithdrawalOnly: undefined,
+    it('starts withdrawal-only when the gate decides so after mount', async () => {
+      mockUseDeployability.mockReturnValue({
+        canRun: true,
+        isLoading: false,
+        isWithdrawalOnlyStart: false,
       });
       const { result, rerender } = renderHook(() => useServiceDeployment());
 
-      (useIsPolySafeService as jest.Mock).mockReturnValue({
-        isWithdrawalOnly: true,
+      mockUseDeployability.mockReturnValue({
+        canRun: true,
+        isLoading: false,
+        isWithdrawalOnlyStart: true,
       });
       rerender();
       await act(async () => {

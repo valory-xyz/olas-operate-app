@@ -27,10 +27,7 @@ import {
 import { useServices } from './useServices';
 import { useStakingProgram } from './useStakingProgram';
 
-/**
- * Query for whether `multisig` is a PolySafe proxy, by its codehash. Shared by
- * this hook and Auto-run so both read the same cache entry.
- */
+/** Whether `multisig` is a PolySafe proxy, by codehash; one cache entry for the hook and Auto-run. */
 const polySafeMultisigQuery = (evmChainId: EvmChainId, multisig?: Address) =>
   queryOptions({
     queryKey: REACT_QUERY_KEYS.MULTISIG_CODEHASH_KEY(
@@ -43,8 +40,7 @@ const polySafeMultisigQuery = (evmChainId: EvmChainId, multisig?: Address) =>
             const code = await PROVIDERS[evmChainId].provider.getCode(multisig);
             return ethers.utils.keccak256(code) === POLY_SAFE_PROXY_CODEHASH;
           } catch (error) {
-            // A failure here blocks starting an agent on a retired program, and
-            // the query error is not logged anywhere else.
+            // Not logged anywhere else, and it blocks a retired-program start.
             console.error(
               `Couldn't read the Safe type of multisig ${multisig} on chain ${evmChainId}:`,
               error,
@@ -60,12 +56,7 @@ const polySafeMultisigQuery = (evmChainId: EvmChainId, multisig?: Address) =>
     retry: 1,
   });
 
-/**
- * Whether any service is a PolySafe one, for callers outside the selected
- * service (Auto-run). Same answer as `useIsPolySafeService`, without its step 2
- * shortcut: the contract enforces the codehash, so the codehash agrees with it.
- * Rejects when the codehash can't be read.
- */
+/** Whether any service is a PolySafe one, by codehash (Auto-run); rejects when unreadable. */
 export const fetchIsPolySafeService = async (
   queryClient: QueryClient,
   evmChainId: EvmChainId,
@@ -77,11 +68,10 @@ export const fetchIsPolySafeService = async (
 };
 
 /** What is known of the selected service's multisig. */
-export type SafeType = 'loading' | 'error' | 'polySafe' | 'standard';
+type SafeType = 'loading' | 'error' | 'polySafe' | 'standard';
 
 /**
- * Detects whether the selected service was deployed with a PolySafe multisig,
- * and whether it is in withdrawal-only mode.
+ * Detects whether the selected service was deployed with a PolySafe multisig.
  *
  * Staking contracts pin `service.multisig.codehash`, so a PolySafe service can
  * only stake on `requiresPolySafe` programs and a standard Safe service only
@@ -94,15 +84,10 @@ export type SafeType = 'loading' | 'error' | 'polySafe' | 'standard';
  * 3. Service not deployed yet (no multisig) → standard Safe. The pinned
  *    middleware deploys a standard Safe for every new service.
  * 4. Otherwise `keccak256(getCode(multisig)) === POLY_SAFE_PROXY_CODEHASH`.
- *    On RPC failure `safeType` is `'error'` instead of a guess.
+ *    On RPC failure `isMultisigTypeError` is set instead of a guess.
  *
- * `isOnRetiredProgram`: the selected program is retired, or the service was
- * already started withdrawal-only (stored as `no_staking`, so the retired id
- * is gone once the middleware has unstaked it).
- *
- * `isWithdrawalOnly`: `true` for a service already in withdrawal-only mode, or
- * a PolySafe one on a retired program (`isWithdrawalOnly` rule); `false` when
- * it is not; `undefined` while that depends on a Safe type that is loading or couldn't be read.
+ * `isOnRetiredProgram` and `isWithdrawalOnly` follow `computeIsWithdrawalOnly`
+ * and docs/features/staking-and-rewards.md ("Retired staking programs").
  */
 export const useIsPolySafeService = () => {
   const { selectedService, selectedAgentConfig } = useServices();
@@ -137,6 +122,7 @@ export const useIsPolySafeService = () => {
     data: isPolySafeFromCodehash,
     isFetched,
     isError,
+    isFetching,
     refetch,
   } = useQuery({
     ...polySafeMultisigQuery(evmChainId, multisig),
@@ -183,6 +169,7 @@ export const useIsPolySafeService = () => {
     isPolySafeService,
     isMultisigTypeLoaded: safeType !== 'loading',
     isMultisigTypeError: safeType === 'error',
+    isMultisigTypeFetching: isFetching,
     isOnRetiredProgram,
     isWithdrawalOnly,
     refetch,

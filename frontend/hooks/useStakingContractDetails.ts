@@ -1,11 +1,12 @@
 import { isNil } from 'lodash';
-import { useContext } from 'react';
+import { useContext, useMemo } from 'react';
 
 import { StakingProgramId } from '@/constants';
 import { StakingContractDetailsContext } from '@/context/StakingContractDetailsProvider';
 import { StakingProgramContext } from '@/context/StakingProgramProvider';
 import { Maybe, StakingState } from '@/types';
 import {
+  getLoadedRetiredProgramStakingDetails,
   isNoStakingProgram,
   RetiredProgramStakingDetails,
 } from '@/utils/stakingProgram';
@@ -24,6 +25,7 @@ export const useActiveStakingContractDetails = () => {
     selectedStakingContractDetails,
     isSelectedStakingContractDetailsLoading,
     isSelectedStakingContractDetailsError,
+    isSelectedStakingContractDetailsFetching,
     refetchSelectedStakingContractDetails,
   } = useStakingContractContext();
   const { selectedStakingProgramId } = useContext(StakingProgramContext);
@@ -83,38 +85,34 @@ export const useActiveStakingContractDetails = () => {
 
   const isServiceInContract = isServiceStaked || isAgentEvicted;
 
-  /** Loaded and present: a failed read must not pass for "unstaked". */
-  const hasStakingDetails =
-    !isSelectedStakingContractDetailsLoading &&
-    !isNil(selectedStakingContractDetails);
-
-  /** Known to be out of the contract, which a switch to another program needs. */
-  const isServiceOutOfContract = hasStakingDetails && !isServiceInContract;
-
-  /** Known to be in the contract and inside its minimum staking period: it can't be unstaked yet. */
-  const isInMinimumStakingPeriod =
-    hasStakingDetails &&
-    isServiceInContract &&
-    !isServiceStakedForMinimumDuration;
-
   // Eviction expire time in seconds
   const evictionExpiresAt =
     (serviceStakingStartTime ?? 0) + (minimumStakingDuration ?? 0);
 
-  /** The same facts for `getRetiredProgramStatus`, which can't misread them. */
-  const stakingDetailsState: RetiredProgramStakingDetails = (() => {
+  // Loaded and present: a failed read must not pass for "unstaked".
+  const hasStakingDetails =
+    !isSelectedStakingContractDetailsLoading &&
+    !isNil(selectedStakingContractDetails);
+
+  // Memoised: the alert's transition re-renders on every new object.
+  const stakingDetailsState = useMemo((): RetiredProgramStakingDetails => {
     if (hasStakingDetails) {
-      return {
-        state: 'loaded',
-        isInMinimumStakingPeriod,
-        isServiceOutOfContract,
+      return getLoadedRetiredProgramStakingDetails({
+        isServiceInContract,
+        isServiceStakedForMinimumDuration,
         cooldownEndsAt: evictionExpiresAt,
-      };
+      });
     }
     return isSelectedStakingContractDetailsError
       ? { state: 'error' }
       : { state: 'loading' };
-  })();
+  }, [
+    hasStakingDetails,
+    isServiceInContract,
+    isServiceStakedForMinimumDuration,
+    evictionExpiresAt,
+    isSelectedStakingContractDetailsError,
+  ]);
 
   const isEligibleForStaking =
     !isNil(hasEnoughRewardsAndSlots) &&
@@ -125,11 +123,8 @@ export const useActiveStakingContractDetails = () => {
     isEligibleForStaking,
     isServiceStakedForMinimumDuration,
     isServiceStaked,
-    isInMinimumStakingPeriod,
-    hasStakingDetails,
-    isServiceOutOfContract,
-    isStakingDetailsError: isSelectedStakingContractDetailsError,
     stakingDetailsState,
+    isSelectedStakingContractDetailsFetching,
     refetchSelectedStakingContractDetails,
     evictionExpiresAt,
     isSelectedStakingContractDetailsLoading,
