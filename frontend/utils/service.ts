@@ -235,11 +235,7 @@ export const updateServiceIfNeeded = async (
   }
 };
 
-/**
- * The template's env set, with the service's own values kept for USER
- * variables: a PUT replaces the whole set, and must not reset what the user
- * (or withdrawal-only mode, for `DISABLE_TRADING`) chose.
- */
+/** The template's env set with the service's USER values kept, since a PUT replaces the whole set. */
 const keepUserEnvValues = (
   templateEnv: ServiceTemplate['env_variables'],
   serviceEnv: Service['env_variables'],
@@ -257,11 +253,7 @@ const keepUserEnvValues = (
     }),
   );
 
-/**
- * The agent's `DISABLE_TRADING` template entry. Looked up on call through
- * `SERVICE_TEMPLATES`: importing a template module here, or reading it at
- * module load, enters the service-template import cycle from the wrong end.
- */
+/** The agent's `DISABLE_TRADING` template entry, read on call to stay out of the template import cycle. */
 const getDisableTradingTemplateEntry = (agentType: AgentType) => {
   const entry = SERVICE_TEMPLATES.find(
     (template) => template.agentType === agentType,
@@ -284,13 +276,7 @@ export const isInWithdrawalOnlyMode = (service: Service) =>
       .staking_program_id,
   ) && service.env_variables.DISABLE_TRADING?.value === 'true';
 
-/**
- * Configures the service to run unstaked and redeem-only, so the user can
- * sell positions and withdraw. The middleware's `use_staking` is read-only, derived from
- * `staking_program_id`, so the PATCH sets that to `no_staking`.
- * Skipped when nothing would change: every PATCH re-downloads the service
- * package from IPFS.
- */
+/** Sets the service to run unstaked and redeem-only; skipped when already so, as a PATCH re-downloads the package. */
 export const enableWithdrawalOnlyMode = async (
   service: Service,
   agentType: AgentType,

@@ -1,4 +1,4 @@
-/** The retired ids mirror the middleware (see `StakingProgramConfig.retired`); every new program is live. */
+/** The retired ids mirror the middleware (see `StakingProgramConfig.retired`). */
 import { MechType } from '../../../config/mechs';
 import {
   isRetiredStakingProgram,
@@ -64,7 +64,6 @@ const RETIRED_IDS = {
   [EvmChainIdMap.Mode]: [],
 };
 
-// Each agent's hardcoded activity target, the same as on its older programs.
 const ACTIVITY_TARGET = {
   [EvmChainIdMap.Gnosis]: 8,
   [EvmChainIdMap.Polygon]: 8,
@@ -72,8 +71,6 @@ const ACTIVITY_TARGET = {
   [EvmChainIdMap.Base]: 1,
 };
 
-// Each chain's decoupled-activity checker, read on-chain from every new
-// program's `activityChecker()`.
 const CHECKER = {
   [EvmChainIdMap.Gnosis]: '0x3514EeA47C03dF8d9FdD68A469908755d2870c48',
   [EvmChainIdMap.Polygon]: '0x5B70A66fe68c4c86FFd724B58cc56049c70e9D3D',
@@ -81,7 +78,6 @@ const CHECKER = {
   [EvmChainIdMap.Base]: '0xE73C4e90983aa65d42b2de968E0C8F25Ced835A8',
 };
 
-// Addresses and min stakes from the scope.
 const NEW_PROGRAMS = [
   [
     EvmChainIdMap.Gnosis,

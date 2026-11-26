@@ -252,8 +252,6 @@ describe('STAKING_PROGRAM_IDS', () => {
 
   describe('completeness and uniqueness', () => {
     it('covers exactly 69 staking programs across all chains', () => {
-      // Chain totals: 26 Gnosis (16 legacy + 10 Omenstrat) + 17 Base (11 + 6 Basius)
-      // + 5 Mode + 9 Optimism (3 legacy + 6 Optimus) + 12 Polygon (3 legacy + 9 Polystrat) = 69
       expect(Object.keys(STAKING_PROGRAM_IDS)).toHaveLength(69);
     });
 

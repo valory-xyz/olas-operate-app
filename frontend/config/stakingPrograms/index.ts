@@ -81,5 +81,5 @@ export const STAKING_PROGRAMS: {
 
 export const isRetiredStakingProgram = (
   chainId: EvmChainId,
-  programId?: Nullable<StakingProgramId>,
+  programId: Nullable<StakingProgramId> | undefined,
 ): boolean => !!programId && !!STAKING_PROGRAMS[chainId]?.[programId]?.retired;

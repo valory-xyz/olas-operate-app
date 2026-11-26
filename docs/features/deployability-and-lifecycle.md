@@ -118,10 +118,10 @@ The hook evaluates conditions in priority order. The first failing condition det
    → canRun: false, reason: 'Phased out'
 
 4. isOnRetiredProgram, by getRetiredProgramStatus (the alert's classifier):
-   - `safeTypeUnknown` → canRun: false, reason: RETIRED_STAKING_PROGRAM_COPY.SAFE_TYPE_UNKNOWN
-   - `withdrawalOnly` → goes on: a PolySafe on a retired program starts unstaked
-   - any other status → canRun: false, reason: RETIRED_STAKING_PROGRAM_COPY.SWITCH
-   (`safeTypeLoading` is a loading source, below)
+   - `withdrawalOnly` → goes on: a withdrawal-only service starts unstaked (isWithdrawalOnlyStart)
+   - any other status → canRun: false, reason: getRetiredProgramReason(status), the alert's copy
+     (cooldown with its end date, STAKING_DETAILS_UNKNOWN, SAFE_TYPE_UNKNOWN, or SWITCH)
+   (`safeTypeLoading` and `stakingDetailsLoading` are loading sources, below)
 
 5. selectedAgentConfig.isUnderConstruction
    → canRun: false, reason: 'Under construction'
@@ -155,7 +155,7 @@ The hook evaluates conditions in priority order. The first failing condition det
 
 Step 4 and the withdrawal-only exemptions are explained in [staking-and-rewards.md](staking-and-rewards.md#retired-staking-programs).
 
-**Loading sources** checked (in order): Offline, Services, Balances (3 sub-checks: not enabled, loading, or no balances for selected agent), Staking, Geo, Safe type (status `safeTypeLoading`, on a retired program only), Safe, Setup (`isInitialFunded === undefined`).
+**Loading sources** checked (in order): Offline, Services, Balances (3 sub-checks: not enabled, loading, or no balances for selected agent), Staking (also status `stakingDetailsLoading`), Geo, Safe type (status `safeTypeLoading`, on a retired program only), Safe, Setup (`isInitialFunded === undefined`).
 
 The `safeEligibility` parameter is optional. Currently only auto-run's `useSelectedEligibility` passes it — `useServiceDeployment` calls `useDeployability()` with no argument, so manual deployment is **not** pre-blocked by safe eligibility at this level (safe eligibility is instead checked inside `createSafeIfNeeded` during the start flow). When provided, it's checked first, even before loading state.
 
@@ -182,6 +182,8 @@ Full lifecycle ladder: sunsetting (`shutdownDate`, banner only, still runs) → 
 Shared by both manual start (`useServiceDeployment`) and auto-run:
 
 ```
+0. If withdrawalOnly and no service → throw (withdrawal-only needs an existing service)
+
 1. createSafeIfNeeded()
    ├── getSafeEligibility() → check if safe exists on home chain
    ├── If HasSafe → return (no-op)
@@ -206,7 +208,7 @@ Shared by both manual start (`useServiceDeployment`) and auto-run:
    └── throw Error('Service not found for agent: {agentType}')
 ```
 
-`useStartService` always creates the safe first (step 1) before any service operations.
+Past step 0, `useStartService` always creates the safe first (step 1) before any service operations.
 
 **Prestart check.** Before every start, `runPrestartCheck` runs the agent's own checks (`GET /api/v2/service/{id}/prestart_check`) via `queryClient.fetchQuery(prestartCheckQuery(id))`. `failed` and `error` throw `PrestartCheckFailedError` before the on-chain start; `passed` and `not_supported` go on. A failed request counts as `error`, with its cause in `detail` and the error message. The cached result (`gcTime: Infinity`, so it lasts until the next start replaces it) drives the run button's "Checking" state and the alerts (see `services.md`). The contract switch (`ConfirmSwitchButton`) and the settings restart (`useConfirmModal`) start the service directly, so they call the exported `runPrestartCheck` themselves.
 

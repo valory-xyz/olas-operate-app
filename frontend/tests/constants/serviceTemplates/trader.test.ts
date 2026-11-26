@@ -1,11 +1,3 @@
-/**
- * Tests for Polystrat's `DISABLE_TRADING` env var.
- *
- * Withdrawal-only mode sets it to "true". It must stay a USER variable:
- * `updateServiceIfNeeded` resets every FIXED variable to the template on each
- * start, which would turn trading back on.
- */
-
 import { AgentMap } from '../../../constants/agent';
 import { EnvProvisionMap } from '../../../constants/envVariables';
 // Through the barrel, as the app loads it: importing `service/trader` first

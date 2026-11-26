@@ -52,7 +52,7 @@ type StartServiceInput = {
   stakingProgramId?: StakingProgramId;
   createServiceIfMissing?: boolean;
   createSafeIfNeeded: () => Promise<void>;
-  /** Start the existing service unstaked and redeem-only (PolySafe on a retired program). */
+  /** Start the existing service unstaked and redeem-only (see `computeIsWithdrawalOnly`). */
   withdrawalOnly?: boolean;
 };
 

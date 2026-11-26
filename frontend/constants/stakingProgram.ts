@@ -131,10 +131,7 @@ export type StakingProgramId =
 
 const NO_LONGER_SUPPORTED = 'Pearl no longer supports deprecated contracts.';
 
-/**
- * Copy of the retired-contract alert. SWITCH, WITHDRAWAL_ONLY and
- * SAFE_TYPE_UNKNOWN double as Auto-run skip notification bodies.
- */
+/** Copy of the retired-contract alert, also used as start-gate and Auto-run skip reasons. */
 export const RETIRED_STAKING_PROGRAM_COPY = {
   SWITCH: `Switch to one of the available contracts to run your agent. ${NO_LONGER_SUPPORTED}`,
   /** Around the cooldown's end date, which the alert renders between the two. */
