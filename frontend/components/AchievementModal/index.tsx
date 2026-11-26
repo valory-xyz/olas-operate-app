@@ -4,7 +4,7 @@ import { useUnmount } from 'usehooks-ts';
 
 import { Modal } from '@/components/ui';
 import { AgentType } from '@/constants';
-import { useServices } from '@/hooks';
+import { useAchievementModalOpen, useServices } from '@/hooks';
 import { Achievement } from '@/types/Achievement';
 import { Nullable } from '@/types/Util';
 
@@ -86,8 +86,20 @@ export const AchievementModal = () => {
     triggerAchievementBackgroundTasks,
   ]);
 
+  const isShowing =
+    showModal &&
+    !isLoading &&
+    !isError &&
+    !!currentAchievement &&
+    !!payoutAgentType;
+  const { setAchievementModalOpen } = useAchievementModalOpen();
+  useEffect(() => {
+    setAchievementModalOpen(isShowing);
+  }, [isShowing, setAchievementModalOpen]);
+
   useUnmount(() => {
     setShowModal(false);
+    setAchievementModalOpen(false);
   });
 
   if (isLoading || isError) return null;

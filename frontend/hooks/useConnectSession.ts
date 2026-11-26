@@ -6,7 +6,11 @@ import {
   isActiveDeploymentStatus,
   MiddlewareDeploymentStatusMap,
 } from '@/constants/deployment';
-import { ConnectSessionErrorKind, ConnectSessionResult } from '@/types';
+import {
+  ConnectSessionErrorKind,
+  ConnectSessionResult,
+  PearlStore,
+} from '@/types';
 
 import { useAgentRunning } from './useAgentRunning';
 import { useElectronApi } from './useElectronApi';
@@ -29,6 +33,17 @@ const CONNECT_SESSION_QUERY_KEY = 'connectSession';
  * `useConnectSession` has several independent call sites that must agree on it.
  */
 const CONNECT_LAUNCH_SUPPRESSED_QUERY_KEY = 'connectLaunchSuppressed';
+
+/**
+ * Whether the instance's first-run modal flow is complete. A store not yet
+ * loaded, or an instance with no entry, is still on its first run.
+ */
+export const isConnectFirstRunComplete = (
+  storeState: PearlStore | undefined,
+  serviceConfigId: string | undefined,
+) =>
+  storeState !== undefined &&
+  storeState.connect?.firstRunCompleted?.[serviceConfigId ?? ''] === true;
 
 const toErrorKind = (
   res: ConnectSessionResult,
@@ -87,11 +102,11 @@ export const useConnectSession = () => {
   const serviceConfigId = selectedService?.service_config_id;
 
   // First-run gate: suppress auto-launch until the user has completed the
-  // first-run modal flow. `undefined` entries are treated as first-run.
-  const isFirstRunComplete =
-    storeState !== undefined &&
-    (storeState.connect?.firstRunCompleted?.[serviceConfigId ?? ''] ??
-      false) === true;
+  // first-run modal flow.
+  const isFirstRunComplete = isConnectFirstRunComplete(
+    storeState,
+    serviceConfigId,
+  );
 
   const [dismissed, setDismissed] = useState(false);
 

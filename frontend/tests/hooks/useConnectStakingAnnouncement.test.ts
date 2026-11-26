@@ -4,7 +4,8 @@ import { MiddlewareChainMap } from '../../constants/chains';
 import { MiddlewareDeploymentStatusMap } from '../../constants/deployment';
 import { PAGES } from '../../constants/pages';
 import { SETUP_SCREEN } from '../../constants/setupScreen';
-import { useConnectSession } from '../../hooks/useConnectSession';
+import { useAchievementModalOpen } from '../../hooks/useAchievementModalOpen';
+import { useArchivedAgents } from '../../hooks/useArchivedAgents';
 import { useConnectStakingAnnouncement } from '../../hooks/useConnectStakingAnnouncement';
 import { useElectronApi } from '../../hooks/useElectronApi';
 import { useOnboardingSurvey } from '../../hooks/useOnboardingSurvey';
@@ -28,8 +29,11 @@ jest.mock('../../utils', () => ({
     ({ gnosis: 100, robinhood: 4663, polygon: 137 })[chain],
   matchesAgentConfig: (service: { isConnect?: boolean }) => !!service.isConnect,
 }));
-jest.mock('../../hooks/useConnectSession', () => ({
-  useConnectSession: jest.fn(),
+jest.mock('../../hooks/useAchievementModalOpen', () => ({
+  useAchievementModalOpen: jest.fn(),
+}));
+jest.mock('../../hooks/useArchivedAgents', () => ({
+  useArchivedAgents: jest.fn(),
 }));
 jest.mock('../../hooks/useElectronApi', () => ({ useElectronApi: jest.fn() }));
 jest.mock('../../hooks/useOnboardingSurvey', () => ({
@@ -58,7 +62,8 @@ type Setup = {
   services?: object[];
   selectedAgentType?: string;
   selectedService?: object;
-  showFirstRunModal?: boolean;
+  archivedInstances?: string[];
+  isAchievementModalOpen?: boolean;
 };
 
 const setup = (overrides: Setup = {}) => {
@@ -68,9 +73,13 @@ const setup = (overrides: Setup = {}) => {
     services = [],
     selectedAgentType = 'trader',
     selectedService,
-    showFirstRunModal = false,
+    archivedInstances = [],
+    isAchievementModalOpen = false,
   } = overrides;
-  (useConnectSession as jest.Mock).mockReturnValue({ showFirstRunModal });
+  (useArchivedAgents as jest.Mock).mockReturnValue({ archivedInstances });
+  (useAchievementModalOpen as jest.Mock).mockReturnValue({
+    isAchievementModalOpen,
+  });
   // An explicit `undefined` is the not-yet-loaded store, not "use the default".
   const storeState = 'storeState' in overrides ? overrides.storeState : {};
   (useElectronApi as jest.Mock).mockReturnValue({
@@ -110,7 +119,18 @@ describe('useConnectStakingAnnouncement', () => {
       ['the store has not loaded', { storeState: undefined }],
       ['the user is in setup', { pageState: PAGES.Setup }],
       ['the onboarding survey is open', { isSurveyOpen: true }],
-      ["Connect's first-run modal is showing", { showFirstRunModal: true }],
+      ['an achievement is showing', { isAchievementModalOpen: true }],
+      [
+        "a running Connect's first run is pending, before its server is ready",
+        {
+          selectedAgentType: 'connect',
+          selectedService: {
+            service_config_id: 'sc-1',
+            deploymentStatus: MiddlewareDeploymentStatusMap.DEPLOYED,
+          },
+          storeState: { connect: { firstRunCompleted: {} } },
+        },
+      ],
     ])('stays closed while %s', (_, overrides) => {
       expect(setup(overrides as Setup).current.isOpen).toBe(false);
     });
@@ -120,11 +140,6 @@ describe('useConnectStakingAnnouncement', () => {
         'a stopped Connect before its first run',
         'connect',
         MiddlewareDeploymentStatusMap.STOPPED,
-      ],
-      [
-        "a running Connect whose first-run modal is not showing (its server isn't ready)",
-        'connect',
-        MiddlewareDeploymentStatusMap.DEPLOYED,
       ],
       ['a running trader', 'trader', MiddlewareDeploymentStatusMap.DEPLOYED],
     ])('opens for %s', (_, selectedAgentType, deploymentStatus) => {
@@ -196,6 +211,23 @@ describe('useConnectStakingAnnouncement', () => {
       expect(mockUpdateSelectedServiceConfigId).not.toHaveBeenCalled();
       expect(mockGotoPage).toHaveBeenCalledWith(PAGES.Setup);
       expect(mockGotoSetup).toHaveBeenCalledWith(SETUP_SCREEN.AgentOnboarding);
+    });
+
+    it('skips an archived Gnosis agent for the Robinhood one', () => {
+      const result = setup({
+        services: [
+          connectOn(MiddlewareChainMap.GNOSIS),
+          connectOn(MiddlewareChainMap.ROBINHOOD),
+        ],
+        archivedInstances: ['sc-connect-gnosis'],
+      });
+
+      act(() => result.current.stake());
+
+      expect(mockUpdateSelectedServiceConfigId).toHaveBeenCalledWith(
+        'sc-connect-robinhood',
+      );
+      expect(mockGotoPage).toHaveBeenCalledWith(PAGES.SelectStaking);
     });
 
     it('ignores other agents on Gnosis', () => {

@@ -145,6 +145,7 @@ export const REACT_QUERY_KEYS = {
   // achievements
   ACHIEVEMENTS_KEY: (serviceConfigId: Maybe<string>) =>
     ['achievements', serviceConfigId] as const,
+  ACHIEVEMENT_MODAL_OPEN_KEY: ['achievementModalOpen'] as const,
 
   // backup owner
   BACKUP_OWNER_STATUS_KEY: ['backupOwnerStatus'] as const,

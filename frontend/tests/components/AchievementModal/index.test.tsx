@@ -59,8 +59,12 @@ jest.mock(
 );
 
 const mockGetAgentTypeFromService = jest.fn();
+const mockSetAchievementModalOpen = jest.fn();
 jest.mock('../../../hooks', () => ({
   useServices: () => ({ getAgentTypeFromService: mockGetAgentTypeFromService }),
+  useAchievementModalOpen: () => ({
+    setAchievementModalOpen: mockSetAchievementModalOpen,
+  }),
 }));
 
 const mockMarkCurrentAchievementAsShown = jest.fn();
@@ -116,6 +120,26 @@ describe('AchievementModal', () => {
     expect(screen.getByTestId('payout-content')).toHaveTextContent(agentType);
     expect(mockTriggerBackgroundTasks).toHaveBeenCalledWith(achievement);
     expect(mockMarkCurrentAchievementAsShown).not.toHaveBeenCalled();
+  });
+
+  it('tells the other modals while it is showing, and when it closes', async () => {
+    mockGetAgentTypeFromService.mockReturnValue(AgentMap.PredictTrader);
+    setCurrentAchievement(makeOmenstratPayoutAchievement());
+
+    await renderModal();
+    expect(mockSetAchievementModalOpen).toHaveBeenLastCalledWith(true);
+
+    fireEvent.click(screen.getByRole('button', { name: 'close' }));
+    expect(mockSetAchievementModalOpen).toHaveBeenLastCalledWith(false);
+  });
+
+  it('never reports itself open for an achievement it skips', async () => {
+    mockGetAgentTypeFromService.mockReturnValue(AgentMap.Optimus);
+    setCurrentAchievement(makeOmenstratPayoutAchievement());
+
+    await renderModal();
+
+    expect(mockSetAchievementModalOpen).not.toHaveBeenCalledWith(true);
   });
 
   it.each(['close', 'share'])(

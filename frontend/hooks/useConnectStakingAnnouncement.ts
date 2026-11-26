@@ -1,10 +1,17 @@
 import { useCallback, useMemo } from 'react';
 
 import { AGENT_CONFIG } from '@/config/agents';
-import { AgentMap, PAGES, SETUP_SCREEN } from '@/constants';
+import {
+  AgentMap,
+  MiddlewareDeploymentStatusMap,
+  PAGES,
+  SETUP_SCREEN,
+} from '@/constants';
 import { asEvmChainId, matchesAgentConfig } from '@/utils';
 
-import { useConnectSession } from './useConnectSession';
+import { useAchievementModalOpen } from './useAchievementModalOpen';
+import { useArchivedAgents } from './useArchivedAgents';
+import { isConnectFirstRunComplete } from './useConnectSession';
 import { useElectronApi } from './useElectronApi';
 import { useOnboardingSurvey } from './useOnboardingSurvey';
 import { usePageState } from './usePageState';
@@ -16,7 +23,8 @@ import { useStore } from './useStore';
  * The one-time "Staking for Connect agents" announcement: shown to every user
  * the first time they open a version that ships it, and never again once
  * either button is pressed. It waits for the other first-run modals (the
- * onboarding survey, Connect's first-run modal) rather than covering them.
+ * onboarding survey, Connect's first-run modal, an achievement) rather than
+ * covering them.
  */
 export const useConnectStakingAnnouncement = () => {
   const { store } = useElectronApi();
@@ -24,18 +32,34 @@ export const useConnectStakingAnnouncement = () => {
   const { pageState, goto: gotoPage } = usePageState();
   const { goto: gotoSetup } = useSetup();
   const { isModalOpen: isSurveyOpen } = useOnboardingSurvey();
-  const { services, updateSelectedServiceConfigId } = useServices();
-  const { showFirstRunModal } = useConnectSession();
+  const {
+    services,
+    selectedService,
+    selectedAgentType,
+    updateSelectedServiceConfigId,
+  } = useServices();
+  const { archivedInstances } = useArchivedAgents();
+  const { isAchievementModalOpen } = useAchievementModalOpen();
 
   const isStoreHydrated = storeState !== undefined;
   const isSeen = storeState?.connectStakingAnnouncementSeen === true;
+
+  // Connect's first-run modal shows on the first run of a selected instance
+  // until its flow is completed. Not `showFirstRunModal`, which also waits for
+  // the agent's server: this one must not open first and then be covered.
+  const isConnectFirstRunPending =
+    selectedAgentType === AgentMap.Connect &&
+    selectedService?.deploymentStatus ===
+      MiddlewareDeploymentStatusMap.DEPLOYED &&
+    !isConnectFirstRunComplete(storeState, selectedService.service_config_id);
 
   const isOpen =
     isStoreHydrated &&
     !isSeen &&
     pageState === PAGES.Main &&
     !isSurveyOpen &&
-    !showFirstRunModal;
+    !isConnectFirstRunPending &&
+    !isAchievementModalOpen;
 
   // The Connect instance whose contract list the button opens, if any: in
   // `stakingChains` order, Gnosis first.
@@ -45,12 +69,13 @@ export const useConnectStakingAnnouncement = () => {
       const service = (services ?? []).find(
         (candidate) =>
           matchesAgentConfig(candidate, connectConfig) &&
-          asEvmChainId(candidate.home_chain) === chainId,
+          asEvmChainId(candidate.home_chain) === chainId &&
+          !archivedInstances.includes(candidate.service_config_id),
       );
       if (service) return service.service_config_id;
     }
     return null;
-  }, [services]);
+  }, [services, archivedInstances]);
 
   const markSeen = useCallback(() => {
     store?.set?.('connectStakingAnnouncementSeen', true);
