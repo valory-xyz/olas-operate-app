@@ -9,6 +9,7 @@
  * even when they have completed work — leading to missed rewards and eviction.
  */
 
+import { REQUESTER_ACTIVITY_CHECKER_ABI } from '../../abis/requesterActivityChecker';
 import {
   BASE_STAKING_PROGRAMS_ACTIVITY_CHECKERS,
   GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS,
@@ -27,9 +28,11 @@ jest.mock(
     require('../mocks/ethersMulticall').ethersMulticallMock,
 );
 
-/** How many checker contracts the config built for one address. */
-const checkerContractsAt = (address: string) =>
-  mockMulticallContract.mock.calls.filter(([at]) => at === address).length;
+/** How many requester-checker contracts the config built for one address. */
+const requesterCheckersAt = (address: string) =>
+  mockMulticallContract.mock.calls.filter(
+    ([at, abi]) => at === address && abi === REQUESTER_ACTIVITY_CHECKER_ABI,
+  ).length;
 
 describe('GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS', () => {
   const gnosisIds = [
@@ -78,7 +81,7 @@ describe('GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS', () => {
   it("gives Connect Omenstrat's V2 requester checker", () => {
     // 7 Omenstrat + 2 Connect programs share the one checker
     expect(
-      checkerContractsAt('0x3514EeA47C03dF8d9FdD68A469908755d2870c48'),
+      requesterCheckersAt('0x3514EeA47C03dF8d9FdD68A469908755d2870c48'),
     ).toBe(9);
   });
 });
@@ -91,7 +94,7 @@ describe('ROBINHOOD_STAKING_PROGRAMS_ACTIVITY_CHECKERS', () => {
       'connect_iii',
     ]);
     expect(
-      checkerContractsAt('0x8d790f3ac75fD9c0F7fdB84fd09FE8CF7D0dBB6B'),
+      requesterCheckersAt('0x8d790f3ac75fD9c0F7fdB84fd09FE8CF7D0dBB6B'),
     ).toBe(3);
   });
 });

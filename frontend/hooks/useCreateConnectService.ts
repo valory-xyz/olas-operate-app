@@ -74,12 +74,13 @@ export const useCreateConnectService = () => {
 
   return useCallback(
     async (chainId: EvmChainId) => {
-      // Select an existing/new Connect service and route to the appropriate
-      // funding screen. `resolveFundingRoute` is a network call — if it fails,
-      // the service already exists, so fall back to FundYourAgent rather than
-      // throwing (throwing would surface a "create failed" error to the caller
-      // and tempt the user into creating a duplicate service on retry).
-      const selectAndRouteToFunding = async (serviceConfigId: string) => {
+      // Select an existing/new Connect service and route it on: the staking
+      // step where it can stake, else funding. `resolveFundingRoute` is a
+      // network call — if it fails, the service already exists, so fall back
+      // to FundYourAgent rather than throwing (throwing would surface a
+      // "create failed" error to the caller and tempt the user into creating a
+      // duplicate service on retry).
+      const selectAndRoute = async (serviceConfigId: string) => {
         updateSelectedServiceConfigId(serviceConfigId);
         setDefaultStakingProgramId(NO_STAKING_PROGRAM_ID);
         if (hasUnstakedOption(AGENT_CONFIG[AgentMap.Connect], chainId)) {
@@ -97,7 +98,7 @@ export const useCreateConnectService = () => {
 
       // Occupancy guard: Connect is one instance per chain. If the chosen chain
       // already has a Connect instance, never create a second one — select the
-      // existing instance and route to funding instead.
+      // existing instance and route it on instead.
       const connectConfig = AGENT_CONFIG[AgentMap.Connect];
       const existing = (services ?? []).find(
         (service) =>
@@ -105,7 +106,7 @@ export const useCreateConnectService = () => {
           asEvmChainId(service.home_chain) === chainId,
       );
       if (existing) {
-        await selectAndRouteToFunding(existing.service_config_id);
+        await selectAndRoute(existing.service_config_id);
         return;
       }
 
@@ -119,7 +120,7 @@ export const useCreateConnectService = () => {
 
       markServiceAsNotInitiallyFunded(newServiceConfigId);
       await refetchServices?.();
-      await selectAndRouteToFunding(newServiceConfigId);
+      await selectAndRoute(newServiceConfigId);
     },
     [
       services,

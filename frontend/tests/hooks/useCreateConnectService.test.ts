@@ -1,5 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 
+import { AGENT_CONFIG } from '../../config/agents';
+import { AgentMap } from '../../constants/agent';
 import { EvmChainIdMap, MiddlewareChainMap } from '../../constants/chains';
 import { SETUP_SCREEN } from '../../constants/setupScreen';
 import { useCreateConnectService } from '../../hooks/useCreateConnectService';
@@ -86,11 +88,17 @@ jest.mock('../../utils', () => {
   };
 });
 
-// AGENT_CONFIG is only read to hand the Connect config to `matchesAgentConfig`
-// (which is mocked), so any object per agent key suffices.
-jest.mock('../../config/agents', () => ({
-  AGENT_CONFIG: new Proxy({}, { get: () => ({ servicePublicId: 'connect' }) }),
-}));
+// AGENT_CONFIG is only read to hand the Connect config to the mocked
+// `matchesAgentConfig` and `hasUnstakedOption`; one stable object per key, so a
+// test can check which config they were handed.
+jest.mock('../../config/agents', () => {
+  const configs: Record<string, object> = {};
+  return {
+    AGENT_CONFIG: new Proxy(configs, {
+      get: (target, key: string) => (target[key] ??= { servicePublicId: key }),
+    }),
+  };
+});
 
 // --- resolveFundingRoute ----------------------------------------------------
 const mockResolveFundingRoute = jest.fn();
@@ -282,6 +290,10 @@ describe('useCreateConnectService', () => {
       });
 
       expect(mockOnDummyServiceCreation.mock.calls[0][0]).toBe('no_staking');
+      // decided on Connect's own config, not whichever agent is selected
+      expect(mockHasUnstakedOption.mock.calls[0][0]).toBe(
+        AGENT_CONFIG[AgentMap.Connect],
+      );
       expect(mockHasUnstakedOption.mock.calls[0][1]).toBe(EvmChainIdMap.Gnosis);
       expect(mockUpdateSelectedServiceConfigId).toHaveBeenCalledWith(
         NEW_SERVICE_CONFIG_ID,

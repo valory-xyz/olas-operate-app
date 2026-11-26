@@ -58,9 +58,9 @@ jest.mock('../../../../context/AutoRunProvider/utils/autoRunHelpers', () => ({
   fetchDeployabilityForAgent: jest.fn().mockResolvedValue({ canRun: true }),
   getUsableRewardStatus: jest.fn().mockReturnValue(undefined),
   isStakingEpochExpired: jest.fn().mockReturnValue(false),
-  runsOnMinutesPerRun: (meta: {
-    agentConfig: { runsOnMinutesPerRun?: boolean };
-  }) => !!meta.agentConfig.runsOnMinutesPerRun,
+  runsOnMinutesPerRun: jest.requireActual(
+    '../../../../context/AutoRunProvider/utils/autoRunHelpers',
+  ).runsOnMinutesPerRun,
 }));
 jest.mock(
   '../../../../context/AutoRunProvider/hooks/useLogAutoRunEvent',
