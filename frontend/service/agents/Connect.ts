@@ -1,12 +1,7 @@
 import { formatEther } from 'ethers/lib/utils';
 
 import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
-import {
-  EvmChainId,
-  EvmChainIdMap,
-  PROVIDERS,
-  StakingProgramId,
-} from '@/constants';
+import { EvmChainId, PROVIDERS, StakingProgramId } from '@/constants';
 import {
   Address,
   ServiceStakingDetails,
@@ -42,12 +37,13 @@ export abstract class ConnectService extends StakedAgentService {
     agentMultisigAddress,
     serviceId,
     stakingProgramId,
-    chainId = EvmChainIdMap.Gnosis,
+    chainId,
   }: {
     agentMultisigAddress: Address;
     serviceId: number;
     stakingProgramId: StakingProgramId;
-    chainId?: EvmChainId;
+    // required: Connect's program ids repeat across its chains
+    chainId: EvmChainId;
   }): Promise<StakingRewardsInfo | undefined> => {
     if (!agentMultisigAddress) return;
     if (!isValidServiceId(serviceId)) return;
@@ -131,14 +127,14 @@ export abstract class ConnectService extends StakedAgentService {
   // Omenstrat's on the instance's own chain.
   static getAvailableRewardsForEpoch = async (
     stakingProgramId: StakingProgramId,
-    chainId: EvmChainId = EvmChainIdMap.Gnosis,
+    chainId: EvmChainId,
   ): Promise<bigint | undefined> =>
     PredictTraderService.getAvailableRewardsForEpoch(stakingProgramId, chainId);
 
   static getServiceStakingDetails = async (
     serviceNftTokenId: number,
     stakingProgramId: StakingProgramId,
-    chainId: EvmChainId = EvmChainIdMap.Gnosis,
+    chainId: EvmChainId,
   ): Promise<ServiceStakingDetails> =>
     PredictTraderService.getServiceStakingDetails(
       serviceNftTokenId,
