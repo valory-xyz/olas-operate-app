@@ -142,7 +142,8 @@ export const connectFundRequirementsFor = (chain: MiddlewareChain): string => {
  * Connect service template.
  *
  * One `configurations` block per supported chain (Polygon / Gnosis / Robinhood),
- * each with `staking_program_id: 'no_staking'`. The same `name` is shared across chains;
+ * each created with `staking_program_id: 'no_staking'`; on Gnosis and Robinhood
+ * the user may then stake it (`AgentConfig.stakingChains`). The same `name` is shared across chains;
  * the chain is selected at setup time (see `SelectChain`).
  */
 export const CONNECT_SERVICE_TEMPLATE: ServiceTemplate = {
@@ -226,6 +227,27 @@ export const CONNECT_SERVICE_TEMPLATE: ServiceTemplate = {
     },
     ROBINHOOD_LEDGER_RPC: {
       name: 'Robinhood ledger RPC',
+      description: '',
+      value: '',
+      provision_type: EnvProvisionType.COMPUTED,
+    },
+    // Set by the middleware at deploy for the instance's chain: the zero
+    // address while `no_staking`. Connect reads them to remind the session of
+    // the day's Marketplace request and to call `checkpoint()`.
+    STAKING_CONTRACT_ADDRESS: {
+      name: 'Staking contract address',
+      description: '',
+      value: '',
+      provision_type: EnvProvisionType.COMPUTED,
+    },
+    ACTIVITY_CHECKER_CONTRACT_ADDRESS: {
+      name: 'Activity checker contract address',
+      description: '',
+      value: '',
+      provision_type: EnvProvisionType.COMPUTED,
+    },
+    SERVICE_ID: {
+      name: 'Service ID',
       description: '',
       value: '',
       provision_type: EnvProvisionType.COMPUTED,

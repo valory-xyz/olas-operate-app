@@ -241,14 +241,23 @@ describe('STAKING_PROGRAM_IDS', () => {
   describe('completeness and uniqueness', () => {
     it('covers exactly 57 staking programs across all chains', () => {
       // Chain totals: 23 Gnosis (16 legacy + 7 Omenstrat) + 14 Base (11 + 3 Basius)
-      // + 5 Mode + 6 Optimism (3 legacy + 3 Optimus) + 9 Polygon (3 legacy + 6 Polystrat) = 57
-      expect(Object.keys(STAKING_PROGRAM_IDS)).toHaveLength(57);
+      // + 5 Mode + 6 Optimism (3 legacy + 3 Optimus) + 9 Polygon (3 legacy + 6 Polystrat)
+      // + 2 Connect on Gnosis + 3 Connect on Robinhood = 62
+      expect(Object.keys(STAKING_PROGRAM_IDS)).toHaveLength(62);
     });
 
-    it('has no duplicate ID strings (each program has a unique registry key)', () => {
-      const ids = Object.values(STAKING_PROGRAM_IDS);
-      const unique = new Set(ids);
-      expect(unique.size).toBe(ids.length);
+    it('repeats an ID string only for Connect, whose ids are unique per chain', () => {
+      const keysById = new Map<string, string[]>();
+      for (const [key, id] of Object.entries(STAKING_PROGRAM_IDS)) {
+        keysById.set(id, [...(keysById.get(id) ?? []), key]);
+      }
+      const repeated = [...keysById.entries()].filter(
+        ([, keys]) => keys.length > 1,
+      );
+      expect(repeated).toEqual([
+        ['connect_i', ['ConnectGnosisI', 'ConnectRobinhoodI']],
+        ['connect_ii', ['ConnectGnosisII', 'ConnectRobinhoodII']],
+      ]);
     });
 
     it('all IDs are non-empty lowercase snake_case strings', () => {
