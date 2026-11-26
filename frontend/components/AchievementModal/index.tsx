@@ -40,7 +40,8 @@ const getPayoutAgentType = (
 };
 
 export const AchievementModal = () => {
-  const { getAgentTypeFromService } = useServices();
+  const { getAgentTypeFromService, isFetched: isServicesFetched } =
+    useServices();
   const {
     currentAchievement,
     markCurrentAchievementAsShown,
@@ -73,7 +74,14 @@ export const AchievementModal = () => {
   };
 
   useEffect(() => {
-    if (!currentAchievement || !agentType) return;
+    if (!currentAchievement) return;
+    if (!agentType) {
+      // once the services are in, an agent type that still cannot be found
+      // (its service was removed) never will be: skip it like an unpayable
+      // one, so it does not hold other modals back for good
+      if (isServicesFetched) skipCurrentAchievement();
+      return;
+    }
 
     if (!payoutAgentType) {
       skipCurrentAchievement();
@@ -85,6 +93,7 @@ export const AchievementModal = () => {
   }, [
     currentAchievement,
     agentType,
+    isServicesFetched,
     payoutAgentType,
     markCurrentAchievementAsShown,
     skipCurrentAchievement,

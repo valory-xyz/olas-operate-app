@@ -59,9 +59,13 @@ jest.mock(
 );
 
 const mockGetAgentTypeFromService = jest.fn();
+const mockIsServicesFetched = jest.fn(() => false);
 const mockSetAchievementPending = jest.fn();
 jest.mock('../../../hooks', () => ({
-  useServices: () => ({ getAgentTypeFromService: mockGetAgentTypeFromService }),
+  useServices: () => ({
+    getAgentTypeFromService: mockGetAgentTypeFromService,
+    isFetched: mockIsServicesFetched(),
+  }),
   useAchievementPending: () => ({
     setAchievementPending: mockSetAchievementPending,
   }),
@@ -108,7 +112,10 @@ const renderModal = async () => {
 };
 
 describe('AchievementModal', () => {
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockIsServicesFetched.mockReturnValue(false);
+  });
 
   it.each([
     [AgentMap.PredictTrader, makeOmenstratPayoutAchievement()],
@@ -238,6 +245,18 @@ describe('AchievementModal', () => {
       expect(mockTriggerBackgroundTasks).not.toHaveBeenCalled();
     },
   );
+
+  it('skips an achievement whose agent type is not found once services load', async () => {
+    mockGetAgentTypeFromService.mockReturnValue(null);
+    mockIsServicesFetched.mockReturnValue(true);
+    setCurrentAchievement(makeOmenstratPayoutAchievement());
+
+    await renderModal();
+
+    expect(screen.queryByTestId('achievement-modal')).not.toBeInTheDocument();
+    expect(mockSkipCurrentAchievement).toHaveBeenCalled();
+    expect(mockTriggerBackgroundTasks).not.toHaveBeenCalled();
+  });
 
   it('waits for the agent type before deciding', async () => {
     mockGetAgentTypeFromService.mockReturnValue(null);
