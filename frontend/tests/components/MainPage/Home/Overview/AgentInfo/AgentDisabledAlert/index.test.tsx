@@ -11,6 +11,7 @@ import {
   useCompleteAgentSetup,
   useIsAgentGeoRestricted,
   useIsInitiallyFunded,
+  useIsPolySafeService,
   useMasterWalletContext,
   usePageState,
   usePrestartCheck,
@@ -36,6 +37,7 @@ jest.mock('../../../../../../../hooks', () => ({
   useCompleteAgentSetup: jest.fn(),
   useIsAgentGeoRestricted: jest.fn(),
   useIsInitiallyFunded: jest.fn(),
+  useIsPolySafeService: jest.fn(),
   useMasterWalletContext: jest.fn(),
   usePageState: jest.fn(),
   usePrestartCheck: jest.fn(),
@@ -106,6 +108,24 @@ jest.mock(
   }),
 );
 jest.mock(
+  '../../../../../../../components/MainPage/Home/Overview/AgentInfo/AgentDisabledAlert/RetiredContractAlert',
+  () => ({
+    RetiredContractAlert: ({
+      stakingProgramName,
+      isWithdrawalOnly,
+      cooldownEndsAt,
+    }: {
+      stakingProgramName: string;
+      isWithdrawalOnly: boolean;
+      cooldownEndsAt?: number;
+    }) => (
+      <div>
+        {`contract-retired: ${stakingProgramName} withdrawalOnly=${isWithdrawalOnly} cooldownEndsAt=${cooldownEndsAt ?? 'none'}`}
+      </div>
+    ),
+  }),
+);
+jest.mock(
   '../../../../../../../components/MainPage/Home/Overview/AgentInfo/AgentDisabledAlert/EvictedAlert',
   () => ({
     EvictedAlert: () => <div>evicted-locked</div>,
@@ -142,6 +162,7 @@ type StakingOverrides = {
   isEligibleForStaking?: boolean;
   hasEnoughServiceSlots?: boolean | null;
   isServiceStaked?: boolean;
+  isServiceStakedForMinimumDuration?: boolean;
   evictionExpiresAt?: number;
   availableRewards?: number;
 };
@@ -156,6 +177,8 @@ const setup = ({
   isAnotherAgentRunning = false,
   isAgentGeoRestricted = false,
   deprecatedStakingProgram = false,
+  retiredStakingProgram = false,
+  isPolySafeService = false,
   isRunning = false,
   agentIssues,
   prestartCheck,
@@ -170,6 +193,8 @@ const setup = ({
   isAnotherAgentRunning?: boolean;
   isAgentGeoRestricted?: boolean;
   deprecatedStakingProgram?: boolean;
+  retiredStakingProgram?: boolean;
+  isPolySafeService?: boolean;
   isRunning?: boolean;
   agentIssues?: AgentIssue[];
   prestartCheck?: PrestartCheck;
@@ -181,6 +206,7 @@ const setup = ({
     isEligibleForStaking: true,
     hasEnoughServiceSlots: true,
     isServiceStaked: true,
+    isServiceStakedForMinimumDuration: true,
     ...staking,
     selectedStakingContractDetails: {
       availableRewards: staking.availableRewards ?? 10,
@@ -230,10 +256,13 @@ const setup = ({
     isAgentGeoRestricted,
   });
   (useStakingProgram as jest.Mock).mockReturnValue({
-    selectedStakingProgramMeta: deprecatedStakingProgram
-      ? { deprecated: true, name: 'Beta 3' }
-      : { deprecated: false, name: 'Beta 3' },
+    selectedStakingProgramMeta: {
+      deprecated: deprecatedStakingProgram,
+      retired: retiredStakingProgram,
+      name: 'Beta 3',
+    },
   });
+  (useIsPolySafeService as jest.Mock).mockReturnValue({ isPolySafeService });
   return render(<AgentDisabledAlert />);
 };
 
@@ -535,6 +564,94 @@ describe('AgentDisabledAlert', () => {
 
       expect(screen.getByText('geo-blocked')).toBeInTheDocument();
       expect(screen.queryByText(/^issue:/)).not.toBeInTheDocument();
+    });
+  });
+
+  describe('retired staking program', () => {
+    it('pre-empts no-slots, eviction, empty-pool and agent low-balance alerts, keeping the Master EOA one', () => {
+      setup({
+        retiredStakingProgram: true,
+        deprecatedStakingProgram: true,
+        staking: {
+          isServiceStaked: false,
+          hasEnoughServiceSlots: false,
+          isAgentEvicted: true,
+          isEligibleForStaking: false,
+          availableRewards: 0,
+        },
+      });
+
+      expect(
+        screen.getByText(
+          'contract-retired: Beta 3 withdrawalOnly=false cooldownEndsAt=none',
+        ),
+      ).toBeInTheDocument();
+      expect(screen.getByText('master-eoa-low-balance')).toBeInTheDocument();
+      for (const marker of [
+        'contract-deprecated',
+        'no-slots',
+        'evicted',
+        'no-rewards',
+        'low-balance',
+      ]) {
+        expect(screen.queryByText(marker)).not.toBeInTheDocument();
+      }
+    });
+
+    it.each([
+      ['staked', { isServiceStaked: true }],
+      ['evicted', { isServiceStaked: false, isAgentEvicted: true }],
+    ])(
+      'passes the end of the minimum staking period while %s inside it',
+      (_, staking) => {
+        setup({
+          retiredStakingProgram: true,
+          staking: {
+            ...staking,
+            isServiceStakedForMinimumDuration: false,
+            evictionExpiresAt: 1_800_000_000,
+          },
+        });
+
+        expect(
+          screen.getByText(
+            'contract-retired: Beta 3 withdrawalOnly=false cooldownEndsAt=1800000000',
+          ),
+        ).toBeInTheDocument();
+      },
+    );
+
+    it('shows no cooldown once the agent is unstaked', () => {
+      setup({
+        retiredStakingProgram: true,
+        staking: {
+          isServiceStaked: false,
+          isServiceStakedForMinimumDuration: false,
+          evictionExpiresAt: 1_800_000_000,
+        },
+      });
+
+      expect(
+        screen.getByText(
+          'contract-retired: Beta 3 withdrawalOnly=false cooldownEndsAt=none',
+        ),
+      ).toBeInTheDocument();
+    });
+
+    it('uses the withdrawal-only variant for a PolySafe service', () => {
+      setup({ retiredStakingProgram: true, isPolySafeService: true });
+
+      expect(
+        screen.getByText(
+          'contract-retired: Beta 3 withdrawalOnly=true cooldownEndsAt=none',
+        ),
+      ).toBeInTheDocument();
+    });
+
+    it('yields to the earlier blocking alerts', () => {
+      setup({ retiredStakingProgram: true, isAnotherAgentRunning: true });
+
+      expect(screen.getByText('another-running')).toBeInTheDocument();
     });
   });
 

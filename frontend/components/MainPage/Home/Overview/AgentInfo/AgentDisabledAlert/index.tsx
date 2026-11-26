@@ -21,6 +21,7 @@ import {
   useCompleteAgentSetup,
   useIsAgentGeoRestricted,
   useIsInitiallyFunded,
+  useIsPolySafeService,
   useMasterWalletContext,
   usePageState,
   usePrestartCheck,
@@ -38,6 +39,7 @@ import { ContractDeprecatedAlert } from './ContractDeprecatedAlert';
 import { EvictedAlert } from './EvictedAlert';
 import { MasterEoaLowBalanceAlert } from './MasterEoaLowBalanceAlert';
 import { NoSlotsAvailableAlert } from './NoSlotsAvailableAlert';
+import { RetiredContractAlert } from './RetiredContractAlert';
 import { UnderConstructionAlert } from './UnderConstructionAlert';
 import { UnfinishedSetupAlert } from './UnfinishedSetupAlert';
 
@@ -63,8 +65,10 @@ export const AgentDisabledAlert = () => {
     evictionExpiresAt,
     hasEnoughServiceSlots,
     isServiceStaked,
+    isServiceStakedForMinimumDuration,
     selectedStakingContractDetails,
   } = useActiveStakingContractDetails();
+  const { isPolySafeService } = useIsPolySafeService();
   const { isInitialFunded } = useIsInitiallyFunded();
   const { getMasterSafeOf, masterWallets } = useMasterWalletContext();
   const { isAnotherAgentRunning } = useAgentRunning();
@@ -169,6 +173,26 @@ export const AgentDisabledAlert = () => {
       return { key: 'another-running', content: <AgentRunningAlert /> };
     }
 
+    if (selectedStakingProgramMeta?.retired) {
+      const isInCooldown =
+        !isSelectedStakingContractDetailsLoading &&
+        (isServiceStaked || isAgentEvicted) &&
+        !isServiceStakedForMinimumDuration;
+      return {
+        key: 'contract-retired',
+        content: (
+          <>
+            <RetiredContractAlert
+              stakingProgramName={selectedStakingProgramMeta.name}
+              isWithdrawalOnly={isPolySafeService}
+              cooldownEndsAt={isInCooldown ? evictionExpiresAt : undefined}
+            />
+            <MasterEoaLowBalanceAlert />
+          </>
+        ),
+      };
+    }
+
     if (selectedStakingProgramMeta && selectedStakingProgramMeta.deprecated) {
       return {
         key: 'contract-deprecated',
@@ -243,12 +267,15 @@ export const AgentDisabledAlert = () => {
     isAgentGeoRestricted,
     isAnotherAgentRunning,
     isEligibleForStaking,
+    evictionExpiresAt,
     isHomeChainSafeMissing,
     isChecking,
     isInitialFunded,
     isSelectedStakingContractDetailsLoading,
     isServiceRunning,
     isServiceStaked,
+    isServiceStakedForMinimumDuration,
+    isPolySafeService,
     runsEvicted,
     prestartCheck,
     runningAgentIssues,
